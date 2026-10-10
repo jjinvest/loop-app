@@ -1,22 +1,7 @@
-4:let catraca = {
-5:  status: 'PAUSADA',
-13:    status: 'ok',
-14:    catraca
-18:router.post('/pausar', (req, res) => {
-19:  catraca.status = 'PAUSADA';
-22:    status: 'ok',
-24:    catraca
-29:  catraca.status = 'ABERTA';
-32:    status: 'ok',
-34:    catraca
-38:router.post('/liberar', (req, res) => {
-39:  if (catraca.status !== 'ABERTA') {
-40:    return res.status(409).json({
-41:      status: 'bloqueado',
-46:  catraca.liberacoes += 1;
-47:  catraca.ultimaLiberacao = new Date().toISOString();
-50:    status: 'ok',
-52:    catraca
-57:router.post('/retomar', (req, res) => {
-58:  estado.status = 'ATIVA';
-59:  res.json({ status: 'ok', message: 'Catraca retomada', catraca: estado });
+router.get('/', (req, res) => {
+  res.json({
+    status: 'ok',
+    catraca
+  });
+});
+

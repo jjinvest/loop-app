@@ -1,4 +1,5 @@
 const express = require('express');
+const filasRouter = require('./routes/filas').router;
 
 const app = express();
 const participantsRouter = require('./routes/participants');
@@ -21,4 +22,6 @@ app.get('/', (req, res) => {
 
 app.listen(PORT, () => {
   console.log(`Loop rodando na porta ${PORT}`);
-});
+});app.use('/filas', filasRouter);
+
+
