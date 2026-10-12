@@ -1,0 +1,19 @@
+src/routes/filas.js:36:router.get('/', (req, res) => {
+src/routes/filas.js:53:router.post('/entrar', (req, res) => {
+src/routes/filas.js:77:router.post('/promover/:id', (req, res) => {
+src/routes/filas.js:100:router.post('/proximo', (req, res) => {
+src/routes/filas.js:117:module.exports = router;
+src/routes/filas.js:118:module.exports.proximoDaFila = proximoDaFila;
+src/routes/catraca.js:12:router.get('/', (req, res) => {
+src/routes/catraca.js:19:router.post('/pausar', (req, res) => {
+src/routes/catraca.js:29:router.post('/abrir', (req, res) => {
+src/routes/catraca.js:39:router.post('/liberar', (req, res) => {
+src/routes/catraca.js:58:router.post('/retomar', (req, res) => {
+src/routes/catraca.js:63:module.exports = router;
+src/routes/participants.js:5:router.get('/', (req, res) => {
+src/routes/participants.js:12:module.exports = router;
+src/server.js:11:app.use(express.json());
+src/server.js:13:app.use('/health', healthRouter);
+src/server.js:14:app.use('/catraca', catracaRouter);
+src/server.js:15:app.use('/filas', filasRouter);
+src/server.js:16:app.use('/participants', participantsRouter);

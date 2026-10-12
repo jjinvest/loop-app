@@ -1,5 +1,6 @@
 const express = require('express');
 const router = express.Router();
+const { proximoDaFila } = require('./filas');
 
 let catraca = {
   status: 'PAUSADA',

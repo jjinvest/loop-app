@@ -1,0 +1,45 @@
+=== PUBLIC ===
+public/index.html
+public/js/app.js
+public/css/style.css
+
+=== PACKAGE ===
+{
+  "name": "loop-app",
+  "version": "1.0.0",
+  "description": "loop",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/jjinvest/loop-app.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/jjinvest/loop-app/issues"
+  },
+  "homepage": "https://github.com/jjinvest/loop-app#readme",
+  "dependencies": {
+    "express": "^5.2.1"
+  }
+}
+
+=== STATUS ===
+ M RESULTADO.txt
+ M src/routes/catraca.js
+ M src/routes/filas.js
+?? BLOCO_LIBERAR.txt
+?? CHECK_LOOP.txt
+?? ROTAS.txt
+?? ROTAS_COMPLETAS.txt
+?? TRECHO_CATRACA.txt
+?? TRECHO_FILAS.txt
+?? public/
+?? src/routes/catraca.backup.js
+?? src/routes/catraca.backup2.js
+?? src/routes/filas.backup2.js

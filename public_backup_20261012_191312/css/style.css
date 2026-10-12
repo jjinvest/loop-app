@@ -1,0 +1,36 @@
+*{box-sizing:border-box}
+body{margin:0;font-family:Arial,sans-serif;background:#0c1017;color:#fff}
+header{display:flex;justify-content:space-between;align-items:center;padding:18px 5%;background:#151b25;border-bottom:1px solid #293241}
+h1{margin:0;color:#ffd400;letter-spacing:3px}
+header small{color:#aaa}
+button{border:0;border-radius:8px;padding:10px 16px;font-weight:bold;cursor:pointer}
+.perfil{background:#ffd400;color:#111}
+main{max-width:1000px;margin:auto;padding:20px}
+.painel{background:#151b25;border-radius:18px;padding:20px;text-align:center}
+.tabuleiro{position:relative;width:330px;height:330px;margin:15px auto}
+.centro,.vaga{position:absolute;display:flex;align-items:center;justify-content:center;border-radius:50%;font-weight:bold}
+.centro{width:115px;height:115px;background:#d62828;left:108px;top:108px;flex-direction:column;border:5px solid #fff}
+.centro span{font-size:12px}
+.vaga{width:68px;height:68px;background:#ffd400;color:#fff;border:4px solid #fff;font-size:22px}
+.v1{top:5px;left:131px}
+.v2{top:80px;right:10px}
+.v3{bottom:25px;right:45px}
+.v4{bottom:25px;left:45px}
+.v5{top:80px;left:10px}
+.marcos{font-size:28px;letter-spacing:8px;color:#8e44ad}
+.filas{display:grid;grid-template-columns:1fr 1fr;gap:15px;margin-top:20px}
+.fila{border-radius:15px;padding:20px;text-align:center}
+.fila h3,.fila p{margin:4px}
+.fila strong{font-size:32px}
+.fila-a{background:#ffd400;color:#111}
+.fila-b{background:#fff;color:#111;border:3px solid #ddd}
+.loja{margin-top:20px}
+.produtos{display:grid;grid-template-columns:1fr 1fr;gap:15px}
+.produtos article{background:#151b25;padding:20px;border-radius:15px}
+.produtos button{background:#ffd400;color:#111}
+@media(max-width:600px){
+ main{padding:12px}
+ .tabuleiro{transform:scale(.88);margin:-5px auto}
+ .produtos{grid-template-columns:1fr}
+ header{padding:14px}
+}

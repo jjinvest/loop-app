@@ -1,0 +1,13 @@
+src/routes/catraca.js:11:router.get('/', (req, res) => {
+src/routes/catraca.js:18:router.post('/pausar', (req, res) => {
+src/routes/catraca.js:28:router.post('/abrir', (req, res) => {
+src/routes/catraca.js:38:router.post('/liberar', (req, res) => {
+src/routes/catraca.js:57:router.post('/retomar', (req, res) => {
+src/routes/filas.backup.js:7:router.get('/', (req, res) => {
+src/routes/filas.backup.js:11:router.post('/entrar', (req, res) => {
+src/routes/filas.js:36:router.get('/', (req, res) => {
+src/routes/filas.js:53:router.post('/entrar', (req, res) => {
+src/routes/filas.js:77:router.post('/promover/:id', (req, res) => {
+src/routes/filas.js:100:router.post('/proximo', (req, res) => {
+src/routes/health.js:5:router.get('/', (req, res) => {
+src/routes/participants.js:5:router.get('/', (req, res) => {

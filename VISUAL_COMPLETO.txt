@@ -1,0 +1,126 @@
+]633;E;echo '===== INDEX.HTML =====';ea5a7853-7c8c-47c8-a158-dc83bdde1e6d]633;C===== INDEX.HTML =====
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>LOOP — Escritório Virtual</title>
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+<header>
+  <div>
+    <h1>LOOP</h1>
+    <small>Escritório Virtual</small>
+  </div>
+  <button class="perfil">Minha conta</button>
+</header>
+
+<main>
+  <section class="painel">
+    <h2>Meu ciclo</h2>
+
+    <div class="tabuleiro">
+      <div class="vaga v1">1</div>
+      <div class="vaga v2">2</div>
+      <div class="vaga v3">3</div>
+      <div class="vaga v4">4</div>
+      <div class="vaga v5">5</div>
+
+      <div class="centro">
+        <span>CENTRO</span>
+        <strong>Participante</strong>
+      </div>
+    </div>
+
+    <div class="marcos">
+      <span>●</span><span>●</span><span>●</span><span>●</span><span>●</span>
+    </div>
+  </section>
+
+  <section class="filas">
+    <div class="fila fila-a">
+      <h3>FILA A</h3>
+      <p>AMARELO</p>
+      <strong id="totalA">0</strong>
+    </div>
+
+    <div class="fila fila-b">
+      <h3>FILA B</h3>
+      <p>BRANCO</p>
+      <strong id="totalB">0</strong>
+    </div>
+  </section>
+
+  <section class="loja">
+    <h2>Produtos e Cursos</h2>
+    <div class="produtos">
+      <article>
+        <h3>Curso</h3>
+        <p>Conteúdo digital em PDF</p>
+        <button>Ver produto</button>
+      </article>
+
+      <article>
+        <h3>Produtos</h3>
+        <p>Confira nosso catálogo</p>
+        <button>Ver produtos</button>
+      </article>
+    </div>
+  </section>
+</main>
+
+<script src="/js/app.js"></script>
+</body>
+</html>
+
+===== APP.JS =====
+async function atualizarFilas(){
+  try{
+    const r=await fetch('/filas');
+    const dados=await r.json();
+    document.getElementById('totalA').textContent =
+      dados.amarelo?.length ?? dados.filaA?.length ?? 0;
+    document.getElementById('totalB').textContent =
+      dados.branco?.length ?? dados.filaB?.length ?? 0;
+  }catch(e){}
+}
+atualizarFilas();
+
+===== STYLE.CSS =====
+*{box-sizing:border-box}
+body{margin:0;font-family:Arial,sans-serif;background:#0c1017;color:#fff}
+header{display:flex;justify-content:space-between;align-items:center;padding:18px 5%;background:#151b25;border-bottom:1px solid #293241}
+h1{margin:0;color:#ffd400;letter-spacing:3px}
+header small{color:#aaa}
+button{border:0;border-radius:8px;padding:10px 16px;font-weight:bold;cursor:pointer}
+.perfil{background:#ffd400;color:#111}
+main{max-width:1000px;margin:auto;padding:20px}
+.painel{background:#151b25;border-radius:18px;padding:20px;text-align:center}
+.tabuleiro{position:relative;width:330px;height:330px;margin:15px auto}
+.centro,.vaga{position:absolute;display:flex;align-items:center;justify-content:center;border-radius:50%;font-weight:bold}
+.centro{width:115px;height:115px;background:#d62828;left:108px;top:108px;flex-direction:column;border:5px solid #fff}
+.centro span{font-size:12px}
+.vaga{width:68px;height:68px;background:#ffd400;color:#fff;border:4px solid #fff;font-size:22px}
+.v1{top:5px;left:131px}
+.v2{top:80px;right:10px}
+.v3{bottom:25px;right:45px}
+.v4{bottom:25px;left:45px}
+.v5{top:80px;left:10px}
+.marcos{font-size:28px;letter-spacing:8px;color:#8e44ad}
+.filas{display:grid;grid-template-columns:1fr 1fr;gap:15px;margin-top:20px}
+.fila{border-radius:15px;padding:20px;text-align:center}
+.fila h3,.fila p{margin:4px}
+.fila strong{font-size:32px}
+.fila-a{background:#ffd400;color:#111}
+.fila-b{background:#fff;color:#111;border:3px solid #ddd}
+.loja{margin-top:20px}
+.produtos{display:grid;grid-template-columns:1fr 1fr;gap:15px}
+.produtos article{background:#151b25;padding:20px;border-radius:15px}
+.produtos button{background:#ffd400;color:#111}
+@media(max-width:600px){
+ main{padding:12px}
+ .tabuleiro{transform:scale(.88);margin:-5px auto}
+ .produtos{grid-template-columns:1fr}
+ header{padding:14px}
+}

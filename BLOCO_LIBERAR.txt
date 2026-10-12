@@ -1,0 +1,14 @@
+    catraca
+  });
+});
+
+router.post('/liberar', (req, res) => {
+  if (catraca.status !== 'ABERTA') {
+    return res.status(409).json({
+      status: 'bloqueado',
+      message: 'Catraca pausada. Nenhuma liberacao foi realizada.'
+    });
+  }
+
+  catraca.liberacoes += 1;
+  catraca.ultimaLiberacao = new Date().toISOString();

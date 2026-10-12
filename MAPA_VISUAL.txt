@@ -1,0 +1,59 @@
+]633;E;echo '===== ESTRUTURA HTML =====';ea5a7853-7c8c-47c8-a158-dc83bdde1e6d]633;C===== ESTRUTURA HTML =====
+10:<header>
+12:    <h1>LOOP</h1>
+15:  <button class="perfil">Minha conta</button>
+18:<main>
+19:  <section class="painel">
+20:    <h2>Meu ciclo</h2>
+22:    <div class="tabuleiro">
+23:      <div class="vaga v1">1</div>
+24:      <div class="vaga v2">2</div>
+25:      <div class="vaga v3">3</div>
+26:      <div class="vaga v4">4</div>
+27:      <div class="vaga v5">5</div>
+29:      <div class="centro">
+35:    <div class="marcos">
+40:  <section class="filas">
+41:    <div class="fila fila-a">
+42:      <h3>FILA A</h3>
+44:      <strong id="totalA">0</strong>
+47:    <div class="fila fila-b">
+48:      <h3>FILA B</h3>
+50:      <strong id="totalB">0</strong>
+54:  <section class="loja">
+55:    <h2>Produtos e Cursos</h2>
+56:    <div class="produtos">
+58:        <h3>Curso</h3>
+60:        <button>Ver produto</button>
+64:        <h3>Produtos</h3>
+66:        <button>Ver produtos</button>
+
+===== FUNCOES APP.JS =====
+1:async function atualizarFilas(){
+3:    const r=await fetch('/filas');
+
+===== BLOCOS CSS =====
+7:.perfil{background:#ffd400;color:#111}
+9:.painel{background:#151b25;border-radius:18px;padding:20px;text-align:center}
+10:.tabuleiro{position:relative;width:330px;height:330px;margin:15px auto}
+11:.centro,.vaga{position:absolute;display:flex;align-items:center;justify-content:center;border-radius:50%;font-weight:bold}
+12:.centro{width:115px;height:115px;background:#d62828;left:108px;top:108px;flex-direction:column;border:5px solid #fff}
+13:.centro span{font-size:12px}
+14:.vaga{width:68px;height:68px;background:#ffd400;color:#fff;border:4px solid #fff;font-size:22px}
+15:.v1{top:5px;left:131px}
+16:.v2{top:80px;right:10px}
+17:.v3{bottom:25px;right:45px}
+18:.v4{bottom:25px;left:45px}
+19:.v5{top:80px;left:10px}
+20:.marcos{font-size:28px;letter-spacing:8px;color:#8e44ad}
+21:.filas{display:grid;grid-template-columns:1fr 1fr;gap:15px;margin-top:20px}
+22:.fila{border-radius:15px;padding:20px;text-align:center}
+23:.fila h3,.fila p{margin:4px}
+24:.fila strong{font-size:32px}
+25:.fila-a{background:#ffd400;color:#111}
+26:.fila-b{background:#fff;color:#111;border:3px solid #ddd}
+27:.loja{margin-top:20px}
+28:.produtos{display:grid;grid-template-columns:1fr 1fr;gap:15px}
+29:.produtos article{background:#151b25;padding:20px;border-radius:15px}
+30:.produtos button{background:#ffd400;color:#111}
+31:@media(max-width:600px){

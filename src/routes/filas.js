@@ -115,3 +115,4 @@ router.post('/proximo', (req, res) => {
 });
 
 module.exports = router;
+module.exports.proximoDaFila = proximoDaFila;

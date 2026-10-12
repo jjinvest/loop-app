@@ -27,7 +27,9 @@ app.get('/', (req, res) => {
 app.use('/filas', filasRouter);
 
 app.listen(PORT, () => {
-  console.log(`Loop rodando na porta ${PORT}`
+  
+
+.log(`Loop rodando na porta ${PORT}`
 );
 });
 

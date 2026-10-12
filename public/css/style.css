@@ -1,0 +1,38 @@
+*{box-sizing:border-box}
+body{margin:0;background:#090d14;color:#fff;font-family:Arial,sans-serif}
+header{background:#111827;padding:16px 18px;display:flex;justify-content:space-between;align-items:center;border-bottom:2px solid #ffd400}
+header h1{margin:0;color:#ffd400;font-size:27px}
+header small{color:#aaa}
+.perfil,button{background:#ffd400;color:#111;border:0;border-radius:10px;padding:10px 15px;font-weight:bold}
+main{max-width:900px;margin:auto;padding:14px}
+.painel,.loja{background:#151b25;border:1px solid #293244;border-radius:18px;padding:16px;margin-bottom:14px}
+h2{margin:0 0 15px;color:#fff}
+.tabuleiro{position:relative;width:340px;height:340px;margin:10px auto 18px;border-radius:50%;background:#0d131d;border:2px solid #273244}
+.centro,.vaga{position:absolute;border-radius:50%;display:flex;align-items:center;justify-content:center;text-align:center;font-weight:bold}
+.centro{width:115px;height:115px;left:112px;top:112px;background:#d92525;color:#fff;border:5px solid #fff}
+.centro span{font-size:12px}
+.vaga{width:68px;height:68px;background:#ffd400;color:#fff;border:3px solid #fff;font-size:22px}
+.v1{top:5px;left:136px}
+.v2{top:78px;right:14px}
+.v3{bottom:28px;right:48px}
+.v4{bottom:28px;left:48px}
+.v5{top:78px;left:14px}
+.marcos{display:flex;justify-content:center;gap:9px;margin:10px}
+.marcos span{width:16px;height:16px;border-radius:50%;background:#6f2dbd;border:2px solid #fff}
+.filas{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.fila{border-radius:15px;padding:15px;text-align:center;min-height:105px}
+.fila-a{background:#ffd400;color:#111}
+.fila-b{background:#fff;color:#111;border:2px solid #ddd}
+.fila h3{margin:0 0 8px}
+.fila strong{font-size:27px}
+.produtos{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.produto{background:#202938;border-radius:14px;padding:16px}
+.produto h3{margin-top:0;color:#ffd400}
+@media(max-width:600px){
+ main{padding:10px}
+ .tabuleiro{width:310px;height:310px}
+ .centro{left:97px;top:97px}
+ .v1{left:121px}
+ .filas,.produtos{grid-template-columns:1fr 1fr}
+ header{padding:13px}
+}
