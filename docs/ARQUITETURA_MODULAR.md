@@ -53,14 +53,21 @@ automaticamente barata ou sem migracoes.
 - `src/domain/motor-filas.js`, `tabuleiro-loop.js` e `simulador-loop.js`
   ja estao separados. O registro de posicoes deve continuar ligado apenas
   a confirmacao de venda confiavel, nao a clicadas na interface.
+- `VinculosFornecedoresSQLite` persiste separadamente o relacionamento
+  produto LOOP ↔ fornecedor/SKU com a mesma base SQLite do catalogo.
+  O esquema evoluiu de **v2 para v3** com migracao, revisao
+  concorrente, desativacao e historico de trocas. Mudar o parceiro
+  nao modifica o identificador, preco, fotos nem dados publicos
+  do produto. Nao ha envios de pedido nem APIs reais.
 - `ImportadorCatalogoSimulado` usa uma extensao **opcional**
   `listarProdutos()` nos adaptadores de fornecedor v1. A previa gera um
   identificador de revisao do lote; a aplicacao recusa lote alterado e
   so insere produtos como rascunho, sem preco, fotos externas ou checkout.
   Importar novamente nao altera o produto ja editado pelo administrador.
   A importacao continua interna e de laboratorio, sem ligacao com API real.
-  Mapeamentos externos SKU↔produto ainda precisam de persistencia
-  independente antes de suporte a troca de fornecedor em producao.
+  Os vinculos SKU↔produto ja tem persistencia no laboratorio
+  (`docs/VINCULOS_FORNECEDORES.md`), mas a importacao simulada ainda
+  nao grava esses vinculos automaticamente e nao ha sincronizacao real.
 - `docs/INTEGRACAO_FORNECEDORES.md` estabelece o fluxo futuro de pedidos
   e o que depende da API real do parceiro.
 
