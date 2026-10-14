@@ -5,7 +5,7 @@ const { MotorFilas } = require('../src/domain/motor-filas');
 
 function motorNovo() {
   let instante = 0;
-  return new MotorFilas({ relogio: () => 'instante-' + (++instante) });
+  return new MotorFilas({ relogio: () => new Date(Date.UTC(2026, 9, 14, 5, 0, ++instante)).toISOString() });
 }
 
 test('cada venda tem uma posicao propria e a mesma venda nao duplica posicoes', () => {
@@ -59,7 +59,7 @@ test('indicacao validada move todas as posicoes B da mesma pessoa para A', () =>
   assert.equal(motor.informacoesParticipante('x').quantidade, 1);
 });
 
-test('fila A prioriza mais indicacoes e desempata pela primeira conquista', () => {
+test('fila A prioriza quantidade; empate depende do primeiro convite, nao do ultimo patamar', () => {
   const motor = motorNovo();
   const antigo = motor.registrarPosicao({ participanteId:'antigo' }).posicao;
   const novo = motor.registrarPosicao({ participanteId:'novo' }).posicao;
@@ -69,6 +69,52 @@ test('fila A prioriza mais indicacoes e desempata pela primeira conquista', () =
   motor.registrarIndicacaoValidada({ indicadorId:'lider', eventoId:'ref-3' });
   motor.registrarIndicacaoValidada({ indicadorId:'lider', eventoId:'ref-4' });
   assert.deepEqual(motor.resumo().A.pessoas.map(p => p.id), [lider.id, antigo.id, novo.id]);
+});
+
+test('primeiro convite define desempate ate os segundos, mesmo se o terceiro veio depois', () => {
+  const motor = motorNovo();
+  const joao = motor.registrarPosicao({ participanteId:'joao' }).posicao;
+  const pedro = motor.registrarPosicao({ participanteId:'pedro' }).posicao;
+  motor.registrarIndicacaoValidada({ indicadorId:'pedro', eventoId:'p1', convidouEm:'2026-10-14T10:15:35-03:00' });
+  motor.registrarIndicacaoValidada({ indicadorId:'joao', eventoId:'j1', convidouEm:'2026-10-14T10:15:20-03:00' });
+  motor.registrarIndicacaoValidada({ indicadorId:'joao', eventoId:'j2', convidouEm:'2026-10-14T10:16:20-03:00' });
+  motor.registrarIndicacaoValidada({ indicadorId:'pedro', eventoId:'p2', convidouEm:'2026-10-14T10:16:10-03:00' });
+  motor.registrarIndicacaoValidada({ indicadorId:'pedro', eventoId:'p3', convidouEm:'2026-10-14T10:17:00-03:00' });
+  motor.registrarIndicacaoValidada({ indicadorId:'joao', eventoId:'j3', convidouEm:'2026-10-14T10:18:00-03:00' });
+  assert.deepEqual(motor.resumo().A.pessoas.map(p => p.id), [joao.id, pedro.id]);
+  assert.equal(motor.informacoesParticipante('joao').primeiroConviteEm, '2026-10-14T13:15:20.000Z');
+  assert.equal(motor.informacoesParticipante('pedro').primeiroConviteEm, '2026-10-14T13:15:35.000Z');
+});
+
+test('convites validados fora de ordem conservam o horario real mais antigo', () => {
+  const motor = motorNovo();
+  const ana = motor.registrarPosicao({ participanteId: 'ana' }).posicao;
+  const bia = motor.registrarPosicao({ participanteId: 'bia' }).posicao;
+  motor.registrarIndicacaoValidada({ indicadorId:'ana', eventoId:'a2', convidouEm:'2026-10-14T15:00:00Z' });
+  motor.registrarIndicacaoValidada({ indicadorId:'bia', eventoId:'b1', convidouEm:'2026-10-14T14:00:00Z' });
+  assert.deepEqual(motor.resumo().A.pessoas.map(p => p.id), [bia.id,ana.id]);
+  motor.registrarIndicacaoValidada({ indicadorId:'ana', eventoId:'a1', convidouEm:'2026-10-14T13:00:00Z' });
+  motor.registrarIndicacaoValidada({ indicadorId:'bia', eventoId:'b2', convidouEm:'2026-10-14T16:00:00Z' });
+  assert.deepEqual(motor.resumo().A.pessoas.map(p => p.id), [ana.id,bia.id]);
+});
+
+test('convites com milissegundos iguais usam ordem de processamento como desempate residual', () => {
+  const motor = motorNovo();
+  const primeiro = motor.registrarPosicao({ participanteId:'primeiro' }).posicao;
+  const segundo = motor.registrarPosicao({ participanteId:'segundo' }).posicao;
+  motor.registrarIndicacaoValidada({ indicadorId:'segundo', eventoId:'s1', convidouEm:'2026-10-14T10:00:00.000Z' });
+  motor.registrarIndicacaoValidada({ indicadorId:'primeiro', eventoId:'p1', convidouEm:'2026-10-14T10:00:00.000Z' });
+  assert.deepEqual(motor.resumo().A.pessoas.map(p => p.id), [segundo.id,primeiro.id]);
+});
+
+test('um convite com horario invalido nao e contabilizado', () => {
+  const motor = motorNovo();
+  motor.registrarPosicao({ participanteId:'p' });
+  assert.throws(() => motor.registrarIndicacaoValidada({
+    indicadorId:'p', eventoId:'ev1', convidouEm:'hoje 10h'
+  }), /Horario do convite invalido/);
+  assert.equal(motor.resumo().B.quantidade, 1);
+  assert.equal(motor.informacoesParticipante('p').quantidade, 0);
 });
 
 test('promocao simulada por posicao preserva identidade e nao promove terceiros', () => {
