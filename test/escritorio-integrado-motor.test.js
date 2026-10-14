@@ -81,7 +81,12 @@ test('rotas preservam o exemplo estatico e protegem o novo modo motor com token'
   assert.equal(visao.posicoesConcluidas,1);
   assert.equal(visao.tabuleiro.giros,1);
   assert.equal(visao.valores.status,'NAO_EXISTEM_SALDOS_NEM_CREDITOS_REAIS');
-  assert.doesNotMatch(JSON.stringify(visao),/cpf|endereco|saldoCentavos|contaBancaria/i);
+  // "possuiCpfReal:false" e um marcador de seguranca, NAO dado pessoal.
+  assert.equal(visao.possuiCpfReal,false);
+  for(const chave of ['cpf','endereco','saldoCentavos','contaBancaria']) {
+    assert.equal(Object.hasOwn(visao,chave),false);
+    assert.equal(Object.hasOwn(visao.titular,chave),false);
+  }
   const antigo=await (await fetch(base+'/api/admin/escritorio-demo/conta-demo-a',{headers:auth})).json();
   assert.equal(antigo.posicoesAtivas,5);
   assert.equal(antigo.vagasDisponiveis,0);
