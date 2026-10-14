@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>LOOP | Painel de produtos (laboratório)</title>
+  <link rel="stylesheet" href="/css/style.css">
+  <style>
+    /* Painel local: melhorias de legibilidade para formularios longos. */
+    main{max-width:1000px}
+    .admin-grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,2fr);gap:16px}
+    .campo{display:flex;flex-direction:column;gap:6px;margin-bottom:12px}
+    .campo label{font-size:.88rem;color:#d2dbe8;font-weight:700}
+    .campo input,.campo select,.campo textarea{background:#101827;color:#fff;border:1px solid #475569;border-radius:10px;font:inherit;padding:12px;width:100%}
+    .campo textarea{min-height:80px;resize:vertical}
+    .duas-colunas{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+    .lista-produtos{display:flex;flex-direction:column;gap:9px}
+    .lista-produtos button{background:#273446;color:#fff;text-align:left;border:1px solid #45546b;width:100%;cursor:pointer}
+    .lista-produtos button:hover{border-color:#ffd400}
+    .ajuda{color:#b6c3d5;font-size:.87rem;line-height:1.5}
+    .estado-admin{color:#f8e1a1;min-height:30px;line-height:1.5}
+    .acoes-admin{display:flex;gap:9px;flex-wrap:wrap}
+    .acoes-admin button{cursor:pointer}
+    .acoes-admin .secundario{background:#35445b;color:#fff}
+    #formProduto[hidden],#areaPainel[hidden]{display:none}
+    @media(max-width:660px){.admin-grid,.duas-colunas{grid-template-columns:1fr}}
+  </style>
+</head>
+<body>
+  <header>
+    <div><h1>LOOP</h1><small>Administração — laboratório local</small></div>
+    <a class="voltar-loja" href="/">Ver vitrine</a>
+  </header>
+  <main>
+    <section class="painel">
+      <h2>Cadastro de produtos</h2>
+      <p class="aviso-demo">Ambiente de testes locais. Nenhum produto cadastrado aqui pode ser comprado. Não utilize dados reais de clientes nem segredos de fornecedores.</p>
+      <div class="campo">
+        <label for="adminToken">Chave temporária do laboratório</label>
+        <input type="password" id="adminToken" autocomplete="off" placeholder="Cole a chave configurada no servidor" spellcheck="false">
+      </div>
+      <div class="acoes-admin">
+        <button type="button" id="conectarAdmin">Abrir painel</button>
+        <button type="button" class="secundario" id="sairAdmin">Limpar chave</button>
+      </div>
+      <p id="mensagemAdmin" class="estado-admin" role="status" aria-live="polite"></p>
+      <p class="ajuda">A chave fica somente na memória desta página. Ela não é salva no navegador nem incluída no código.</p>
+    </section>
+
+    <section id="areaPainel" hidden class="admin-grid">
+      <div class="painel">
+        <h2>Produtos cadastrados</h2>
+        <div class="acoes-admin"><button type="button" id="novoProduto">Novo produto</button>
+          <button type="button" id="atualizarLista" class="secundario">Atualizar lista</button></div>
+        <p class="ajuda">Rascunho: invisível na loja. Demonstração e publicado: visíveis, mas sem compra habilitada.</p>
+        <div id="listaAdmin" class="lista-produtos" aria-live="polite"></div>
+      </div>
+      <div class="painel">
+        <h2 id="tituloFormulario">Novo produto</h2>
+        <form id="formProduto" autocomplete="off">
+          <div class="campo"><label for="idProduto">Identificador (sem espaços)</label>
+            <input id="idProduto" name="id" required maxlength="80" pattern="[a-z0-9-]{3,80}" placeholder="ex: curso-iniciante"></div>
+          <div class="campo"><label for="nomeProduto">Nome</label>
+            <input id="nomeProduto" name="nome" required maxlength="150"></div>
+          <div class="duas-colunas">
+            <div class="campo"><label for="tipoProduto">Tipo</label><select id="tipoProduto" name="tipo">
+              <option value="FISICO">Produto físico — fornecedor integrado</option>
+              <option value="PDF">Curso PDF — download</option>
+            </select></div>
+            <div class="campo"><label for="estadoProduto">Visibilidade</label><select id="estadoProduto" name="estado">
+              <option value="RASCUNHO">Rascunho (oculto)</option>
+              <option value="DEMONSTRACAO">Demonstração</option>
+              <option value="PUBLICADO">Publicado (sem checkout)</option>
+            </select></div>
+          </div>
+          <div class="campo"><label for="precoProduto">Preço de exibição em R$ (pode ficar vazio em rascunhos)</label>
+            <input id="precoProduto" name="preco" type="number" step="0.01" min="0.01" placeholder="Ex: 99.90"></div>
+          <div class="campo"><label for="descricaoProduto">Descrição</label>
+            <textarea id="descricaoProduto" name="descricao" required maxlength="2000"></textarea></div>
+          <div class="campo"><label for="fotosProduto">Caminhos das fotos (um por linha)</label>
+            <textarea id="fotosProduto" name="fotos" placeholder="/imagens/catalogo/foto-1.webp"></textarea>
+            <span class="ajuda">Até 10 imagens autorizadas, previamente colocadas na pasta local do catálogo. Upload ainda não disponível.</span></div>
+          <div class="campo"><label for="videoProduto">Link de vídeo opcional (YouTube ou Vimeo)</label>
+            <input id="videoProduto" name="video" type="url" placeholder="https://www.youtube.com/watch?v=..."></div>
+          <div class="campo"><label for="detalhesProduto">Características (uma por linha)</label>
+            <textarea id="detalhesProduto" name="detalhes" placeholder="Material, conteúdo, dimensões..."></textarea></div>
+          <div class="acoes-admin"><button type="submit" id="salvarProduto">Salvar produto</button>
+            <button type="button" class="secundario" id="cancelarEdicao">Limpar formulário</button></div>
+        </form>
+      </div>
+    </section>
+  </main>
+  <script src="/admin/painel.js"></script>
+</body>
+</html>
