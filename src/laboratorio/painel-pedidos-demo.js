@@ -14,7 +14,9 @@ const LABELS_ESTADO = {
   ENTREGUE: 'Entrega fictícia registrada',
   OCORRENCIA: 'Ocorrência no transporte',
   CANCELAMENTO_SOLICITADO: 'Cancelamento solicitado',
-  CANCELADO: 'Cancelado no laboratório'
+  CANCELADO: 'Cancelado no laboratório',
+  DEVOLUCAO_SOLICITADA: 'Devolução solicitada',
+  DEVOLVIDO: 'Produto devolvido (fictício)'
 };
 const ACOES_DEMO = [
   {tipo:'CONFIRMAR_PAGAMENTO_SIMULADO',nome:'Confirmar pagamento fictício',de:['AGUARDANDO_CONFIRMACAO']},
@@ -26,8 +28,10 @@ const ACOES_DEMO = [
   {tipo:'RETOMAR_TRANSPORTE',nome:'Retomar transporte fictício',de:['OCORRENCIA']},
   {tipo:'SOLICITAR_CANCELAMENTO',nome:'Solicitar cancelamento fictício',de:['AGUARDANDO_CONFIRMACAO','CONFIRMADO_SIMULADO','ENVIADO_FORNECEDOR','EM_SEPARACAO','EM_TRANSPORTE','OCORRENCIA']},
   {tipo:'REGISTRAR_CANCELAMENTO',nome:'Concluir cancelamento fictício',de:['CANCELAMENTO_SOLICITADO']},
-  {tipo:'SOLICITAR_REEMBOLSO_SIMULADO',nome:'Registrar solicitação de reembolso fictícia',de:['OCORRENCIA','CANCELAMENTO_SOLICITADO','CANCELADO'],reembolso:'NAO_SOLICITADO'},
-  {tipo:'REGISTRAR_REEMBOLSO_SIMULADO',nome:'Registrar reembolso fictício (sem valores)',de:['CANCELADO'],reembolso:'SOLICITADO_SIMULADO'}
+  {tipo:'SOLICITAR_DEVOLUCAO',nome:'Solicitar devolução após entrega fictícia',de:['ENTREGUE']},
+  {tipo:'CONFIRMAR_DEVOLUCAO',nome:'Confirmar devolução fictícia',de:['DEVOLUCAO_SOLICITADA']},
+  {tipo:'SOLICITAR_REEMBOLSO_SIMULADO',nome:'Registrar solicitação de reembolso fictícia',de:['OCORRENCIA','CANCELAMENTO_SOLICITADO','CANCELADO','DEVOLUCAO_SOLICITADA','DEVOLVIDO'],reembolso:'NAO_SOLICITADO'},
+  {tipo:'REGISTRAR_REEMBOLSO_SIMULADO',nome:'Registrar reembolso fictício (sem valores)',de:['CANCELADO','DEVOLVIDO'],reembolso:'SOLICITADO_SIMULADO'}
 ];
 
 function mensagemPedidoDemo(texto) {
