@@ -147,11 +147,16 @@ async function conectar() {
   try {
     await atualizarProdutos();
     $('areaPainel').hidden = false;
+    $('areaImportacao').hidden = false;
     editarFormulario(null);
+    try { await carregarDistribuidoresDemo(); }
+    catch (erro) { $('statusImportacao').textContent = erro.message; }
     mensagem('Painel de teste aberto. Compras continuam desativadas.');
   } catch (erro) {
     chaveTemporaria = '';
     $('areaPainel').hidden = true;
+    $('areaImportacao').hidden = true;
+    limparPreviaImportacao();
     mensagem(erro.message);
   }
 }
@@ -262,6 +267,8 @@ $('sairAdmin').addEventListener('click', () => {
   registroEditando = null;
   $('adminToken').value = '';
   $('areaPainel').hidden = true;
+  $('areaImportacao').hidden = true;
+  limparPreviaImportacao();
   $('areaFornecedor').hidden = true;
   $('historicoFornecedor').replaceChildren();
   mensagem('Chave removida da memória desta página.');
