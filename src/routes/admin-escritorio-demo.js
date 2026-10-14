@@ -6,6 +6,8 @@ const express = require('express');
 const { criarAutorizacao } = require('./admin-catalogo-laboratorio');
 const { criarVisaoEscritorioDemo, TITULARES_FICTICIOS } =
   require('../domain/visao-escritorio-demo');
+const { criarCenarioEscritorioMotor, extrairVisaoDoMotor } =
+  require('../laboratorio/cenario-escritorio-motor');
 
 function criarRouterEscritorioDemo({segredo}={}) {
   const router=express.Router();
@@ -21,6 +23,17 @@ function criarRouterEscritorioDemo({segredo}={}) {
       semClientesReais:true,
       semPagamentosReais:true
     });
+  });
+  // Consulta alternativa ao MESMO motor de filas/tabuleiro, sobre um
+  // cenario totalmente ficticio e imutavel por chamadas HTTP.
+  // A rota especifica deve anteceder o segmento dinamico :id.
+  const cenarioMotor=criarCenarioEscritorioMotor();
+  router.get('/escritorio-demo/motor/:id',(req,res)=>{
+    const resultado=extrairVisaoDoMotor({
+      simulador:cenarioMotor,titularId:req.params.id
+    });
+    if(!resultado) return res.status(404).json({erro:'TITULAR_DEMO_NAO_ENCONTRADO'});
+    res.json(resultado);
   });
   router.get('/escritorio-demo/:id',(req,res)=>{
     const resultado=criarVisaoEscritorioDemo({titularId:req.params.id});
