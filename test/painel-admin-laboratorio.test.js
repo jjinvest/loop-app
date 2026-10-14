@@ -6,6 +6,7 @@ const { once } = require('node:events');
 const fs = require('node:fs');
 const os = require('node:os');
 const path = require('node:path');
+const http = require('node:http');
 const { RepositorioCatalogoSQLite } = require('../src/domain/repositorio-catalogo-sqlite');
 const { criarAppAdminLaboratorio } = require('../src/laboratorio/servidor-catalogo');
 
@@ -54,6 +55,23 @@ async function chamar(base, rota, { method='GET', dados, token=CHAVE, headers={}
   let body=texto;
   try{body=JSON.parse(texto);}catch{}
   return {status:resposta.status,body,headers:resposta.headers};
+}
+
+// fetch pode substituir Host automaticamente; http.request permite testar DNS rebinding.
+function requisicaoComHost(base, caminho, host) {
+  return new Promise((resolve,reject)=>{
+    const url = new URL(base + caminho);
+    const req=http.request({
+      hostname:url.hostname,port:url.port,path:url.pathname,
+      method:'GET',
+      headers:{Host:host,Authorization:'Bearer '+CHAVE}
+    },res=>{
+      res.resume();
+      res.on('end',()=>resolve(res.statusCode));
+    });
+    req.on('error',reject);
+    req.end();
+  });
 }
 
 test('painel abre em localhost, nao divulga chave e exige autenticacao', async(t)=>{
@@ -180,15 +198,11 @@ test('bloquear campos extras, mudancas de ID e publicacao sem preco',async(t)=>{
 test('proteger contra host forjado, origem externa e producao',async(t)=>{
   const {repositorio}=bancoTemporario(t);
   const base=await appLocal(t,repositorio);
-  assert.equal((await chamar(base,'/api/admin/produtos',{
-    headers:{'host':'site-malicioso.example'}
-  })).status,403);
+  assert.equal(await requisicaoComHost(base, '/api/admin/produtos', 'site-malicioso.example'),403);
   assert.equal((await chamar(base,'/api/admin/produtos',{
     headers:{'origin':'https://site-malicioso.example'}
   })).status,403);
-  assert.equal((await chamar(base,'/admin',{
-    token:null,headers:{'host':'site-malicioso.example'}
-  })).status,403);
+  assert.equal(await requisicaoComHost(base, '/admin', 'site-malicioso.example'),403);
   assert.throws(()=>criarAppAdminLaboratorio({repositorio,segredo:'curto'}),/32 caracteres/);
 
   const anterior=process.env.NODE_ENV;
