@@ -83,7 +83,7 @@ test('snapshot danificado ou com versao desconhecida e recusado', () => {
   alterar(s=>{s.tabuleiro.vagas[0]=s.tabuleiro.centro;});
   alterar(s=>{s.tabuleiro.vagas=[];});
   alterar(s=>{s.filas.indicacoesProcessadas=[];});
-  alterar(s=>{s.filas.filaA[0].fila='B';});
+  alterar(s=>{s.filas.filaB[0].fila='A';});
   assert.deepEqual(loop.exportarSnapshot(),base); // dados originais nao alterados
 });
 
