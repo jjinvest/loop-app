@@ -1,5 +1,6 @@
 const express = require('express');
 const path = require('path');
+const { bloquearMutacoesSimuladas } = require('./middleware/proteger-simulacao');
 
 const healthRouter = require('./routes/health');
 const catracaRouter = require('./routes/catraca');
@@ -12,8 +13,8 @@ const PORT = process.env.PORT || 3000;
 app.use(express.json());
 
 app.use('/health', healthRouter);
-app.use('/catraca', catracaRouter);
-app.use('/filas', filasRouter);
+app.use('/catraca', bloquearMutacoesSimuladas, catracaRouter);
+app.use('/filas', bloquearMutacoesSimuladas, filasRouter);
 app.use('/participants', participantsRouter);
 
 // Serve a interface web existente do LOOP.
