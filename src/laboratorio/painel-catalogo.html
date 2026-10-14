@@ -68,6 +68,29 @@
           <div class="acoes-admin"><button type="submit" id="salvarProduto">Salvar produto</button>
             <button type="button" class="secundario" id="cancelarEdicao">Limpar formulário</button></div>
         </form>
+        <section id="areaFornecedor" hidden aria-labelledby="tituloFornecedor" class="historico-admin">
+          <h3 id="tituloFornecedor">Fornecedor associado (laboratório)</h3>
+          <p class="ajuda">Somente para produto físico já cadastrado. O fornecedor pode mudar sem alterar o produto LOOP. Não faz pedidos nem consulta estoque real.</p>
+          <p id="statusFornecedor" class="estado-admin" aria-live="polite"></p>
+          <form id="formFornecedor">
+            <div class="duas-colunas">
+              <div class="campo">
+                <label for="codigoFornecedor">Código interno do fornecedor</label>
+                <input id="codigoFornecedor" required maxlength="80" pattern="[a-zA-Z0-9_-]{1,80}" placeholder="ex: franquia-teste">
+              </div>
+              <div class="campo">
+                <label for="codigoSKU">SKU do produto no fornecedor</label>
+                <input id="codigoSKU" required maxlength="80" pattern="[a-zA-Z0-9_-]{1,80}" placeholder="ex: ITEM_001">
+              </div>
+            </div>
+            <div class="acoes-admin">
+              <button type="submit" id="salvarFornecedor">Salvar vínculo</button>
+              <button type="button" id="desativarFornecedor" class="secundario">Desativar vínculo</button>
+            </div>
+          </form>
+          <h3>Histórico de fornecedores</h3>
+          <ol id="historicoFornecedor" aria-live="polite"></ol>
+        </section>
         <section aria-labelledby="tituloHistorico" class="historico-admin">
           <h3 id="tituloHistorico">Histórico de alterações</h3>
           <p class="ajuda">Registros de laboratório: revisões, data e campos editados. Só aparecem após selecionar um produto.</p>
