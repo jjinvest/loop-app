@@ -45,6 +45,44 @@ obrigacoes. O preco de venda ser o dobro do custo
 indica markup de 100% sobre o custo, nao margem
 liquida de 100%.
 
+## Outros esclarecimentos de negocio preservados
+
+- Exemplo anterior: produto anunciado por R$250,
+  custo de fornecedor R$50, parcela de referencia
+  de fila R$100 e **diferenca BRUTA** de R$100
+  antes de custos adicionais efetivos.
+- O idealizador pretende precos de venda de
+  **R$100 para cima**, com o curso PDF citado
+  como o produto de referencia de R$100.
+  Se uma venda custar R$100 e destinar R$100
+  a fila, **nao sobra margem comercial
+  adicional** antes de custos eventuais.
+- Um cliente pode efetuar varias compras,
+  adquirir varias posicoes e retornar ao
+  LOOP mesmo apos ter concluido seu ciclo:
+  **recompra nao significa cliente novo**.
+- A operacao pretende diferenciar o momento
+  em que cadastros e recebimentos sao feitos
+  do horario das liberacoes de valores.
+  Pausar pagamento nao altera direitos
+  legais nem torna caixa comprometido livre.
+- Uma estimativa pessoal de R$500 por mes
+  para manter a plataforma aberta,
+  possiveis reservas e investimentos
+  inclusive criptoativos sao hipoteses
+  a validar. Investimentos podem perder
+  valor; caixa de reembolso/obrigacoes
+  nao deve financiar apostas de risco.
+- Foi proposta uma fase promocional de
+  **aproximadamente 30 dias antes de iniciar
+  a catraca**, com cadastros e indicacoes.
+  O idealizador deseja ocupar o primeiro
+  centro do tabuleiro sem pagamento proprio.
+  Ha ambiguidades relevantes e risco
+  juridico/equidade a analisar; **nao
+  implementar essa excecao automaticamente**.
+  Consultar `docs/PRE_LANCAMENTO_30_DIAS.md`.
+
 ## 2. Venda, fila e ciclo — modelo informado
 
 - Cada venda valida e confirmada de produto gera exatamente uma
