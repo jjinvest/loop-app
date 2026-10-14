@@ -1,0 +1,73 @@
+'use strict';
+
+// Servidor separado, somente para prototipo em 127.0.0.1.
+// Nao montar estas rotas no app publico sem autenticacao de producao.
+const express = require('express');
+const path = require('node:path');
+const { RepositorioCatalogoSQLite } = require('../domain/repositorio-catalogo-sqlite');
+const { criarRouterCatalogo } = require('../routes/catalogo');
+const { criarRouterAdminCatalogo, localSeguro } = require('../routes/admin-catalogo-laboratorio');
+
+function criarAppAdminLaboratorio({ repositorio, segredo } = {}) {
+  if (process.env.NODE_ENV === 'production') {
+    throw new Error('O painel de laboratorio nao funciona em producao');
+  }
+  const app = express();
+  app.disable('x-powered-by');
+  app.use(express.json({limit:'16kb',strict:true}));
+
+  function somenteLocal(req, res, next) {
+    if (!localSeguro(req) || process.env.NODE_ENV === 'production') {
+      return res.status(403).send('Painel disponivel apenas localmente');
+    }
+    res.set('Cache-Control', 'no-store');
+    res.set('Content-Security-Policy',
+      "default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self'; connect-src 'self'; base-uri 'none'; form-action 'self'; frame-ancestors 'none'");
+    next();
+  }
+  app.use('/api/admin', criarRouterAdminCatalogo({ repositorio, segredo }));
+  app.get('/admin', somenteLocal, (req, res) => {
+    res.sendFile(path.join(__dirname, 'painel-catalogo.html'));
+  });
+  app.get('/admin/painel.js', somenteLocal, (req, res) => {
+    res.type('application/javascript').sendFile(path.join(__dirname,'painel-catalogo.js'));
+  });
+  app.use('/catalogo', criarRouterCatalogo({ repositorio }));
+  app.use(express.static(path.join(__dirname, '..', '..', 'public')));
+  return app;
+}
+
+function iniciarLaboratorio({ ambiente = process.env } = {}) {
+  if (ambiente.LOOP_ADMIN_CATALOGO_LOCAL !== '1' || ambiente.NODE_ENV === 'production') {
+    throw new Error('Exija LOOP_ADMIN_CATALOGO_LOCAL=1 e ambiente de desenvolvimento');
+  }
+  const caminho = ambiente.LOOP_CATALOGO_DB;
+  if (!caminho || !path.isAbsolute(caminho)) {
+    throw new Error('LOOP_CATALOGO_DB precisa ser um caminho absoluto');
+  }
+  const publicDir = path.resolve(__dirname,'..','..','public') + path.sep;
+  const pastaRepo = path.resolve(__dirname,'..','..') + path.sep;
+  if (caminho.startsWith(publicDir) || caminho.startsWith(pastaRepo)) {
+    throw new Error('Banco de catalogo deve ficar fora da pasta do projeto');
+  }
+  const banco = new RepositorioCatalogoSQLite({ caminho });
+  try {
+    const app = criarAppAdminLaboratorio({ repositorio:banco, segredo:ambiente.LOOP_ADMIN_TEST_TOKEN });
+    const porta = ambiente.PORT ? Number(ambiente.PORT) : 3001;
+    if (!Number.isSafeInteger(porta) || porta < 1 || porta > 65535) {
+      throw new Error('Porta invalida');
+    }
+    const servidor = app.listen(porta,'127.0.0.1', () => {
+      process.stdout.write('Catalogo LOOP em teste local: http://127.0.0.1:' + porta + '/admin\n');
+    });
+    servidor.on('close',() => banco.fechar());
+    return { servidor, banco };
+  } catch (erro) {
+    banco.fechar();
+    throw erro;
+  }
+}
+
+if (require.main === module) iniciarLaboratorio();
+
+module.exports = { criarAppAdminLaboratorio, iniciarLaboratorio };
