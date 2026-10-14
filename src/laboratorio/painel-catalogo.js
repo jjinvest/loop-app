@@ -42,7 +42,27 @@ async function requisitar(caminho, options = {}) {
   return dados;
 }
 
+function limparHistorico() {
+  const lista = $('historicoProduto');
+  if (lista) lista.replaceChildren();
+}
+
+async function carregarHistorico(id) {
+  const lista = $('historicoProduto');
+  if (!lista) return;
+  lista.replaceChildren();
+  const dados = await requisitar('/produtos/' + encodeURIComponent(id) + '/historico');
+  for (const evento of dados.eventos) {
+    const li = document.createElement('li');
+    const campos = evento.campos.length ? evento.campos.join(', ') : 'registro importado';
+    li.textContent = 'Revisão ' + evento.revisao + ' — ' +
+      evento.tipo + ' — ' + evento.ocorridoEm + ' — ' + campos;
+    lista.appendChild(li);
+  }
+}
+
 function editarFormulario(registro) {
+  limparHistorico();
   const p = registro?.produto;
   registroEditando = registro ? {id:p.id, revisao:registro.revisao} : null;
   $('tituloFormulario').textContent = p ? 'Editar produto: ' + p.id : 'Novo produto';
@@ -79,6 +99,7 @@ async function abrirProduto(id) {
   try {
     const dado = await requisitar('/produtos/' + encodeURIComponent(id));
     editarFormulario(dado);
+    await carregarHistorico(id);
     mensagem('Editando ' + id + ' — revisão ' + dado.revisao + '.');
   } catch (erro) { mensagem(erro.message); }
 }
