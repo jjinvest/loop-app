@@ -53,6 +53,14 @@ automaticamente barata ou sem migracoes.
 - `src/domain/motor-filas.js`, `tabuleiro-loop.js` e `simulador-loop.js`
   ja estao separados. O registro de posicoes deve continuar ligado apenas
   a confirmacao de venda confiavel, nao a clicadas na interface.
+- `ImportadorCatalogoSimulado` usa uma extensao **opcional**
+  `listarProdutos()` nos adaptadores de fornecedor v1. A previa gera um
+  identificador de revisao do lote; a aplicacao recusa lote alterado e
+  so insere produtos como rascunho, sem preco, fotos externas ou checkout.
+  Importar novamente nao altera o produto ja editado pelo administrador.
+  A importacao continua interna e de laboratorio, sem ligacao com API real.
+  Mapeamentos externos SKU↔produto ainda precisam de persistencia
+  independente antes de suporte a troca de fornecedor em producao.
 - `docs/INTEGRACAO_FORNECEDORES.md` estabelece o fluxo futuro de pedidos
   e o que depende da API real do parceiro.
 
