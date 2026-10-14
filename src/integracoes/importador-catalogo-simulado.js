@@ -7,6 +7,7 @@ const { createHash } = require('node:crypto');
 const { validarProduto } = require('../domain/catalogo');
 const { RepositorioCatalogoSQLite } = require('../domain/repositorio-catalogo-sqlite');
 const { AplicadorLoteCatalogoSQLite } = require('./aplicador-lote-catalogo-sqlite');
+const { VinculosFornecedoresSQLite } = require('../domain/vinculos-fornecedores-sqlite');
 
 const MAX_ITENS = 100;
 const MARCADOR_CONFIRMACAO = 'IMPORTAR_RASCUNHOS_SIMULADOS';
@@ -68,6 +69,8 @@ class ImportadorCatalogoSimulado {
     this.catalogo = repositorioCatalogo;
     this.aplicador = repositorioCatalogo instanceof RepositorioCatalogoSQLite
       ? new AplicadorLoteCatalogoSQLite({ repositorioCatalogo }) : null;
+    this.vinculos = repositorioCatalogo instanceof RepositorioCatalogoSQLite
+      ? new VinculosFornecedoresSQLite({ repositorioCatalogo }) : null;
   }
 
   async obterLote(fornecedorId) {
@@ -103,10 +106,15 @@ class ImportadorCatalogoSimulado {
     const itens = [];
     for (const info of validados) {
       const existente = await this.catalogo.buscarRegistro(info.produto.id);
+      const vinculo = existente && this.vinculos
+        ? this.vinculos.consultar({ produtoId:info.produto.id }) : null;
+      const vinculoPendente = Boolean(existente && this.vinculos &&
+        (!vinculo || vinculo.fornecedorId !== fornecedorId || vinculo.sku !== info.sku));
       itens.push({
         sku: info.sku,
         produtoId: info.produto.id,
-        situacao: existente ? 'JA_CADASTRADO' : 'NOVO_RASCUNHO',
+        situacao: !existente ? 'NOVO_RASCUNHO' :
+          (vinculoPendente ? 'VINCULO_PENDENTE' : 'JA_CADASTRADO'),
         // Nenhum valor de fornecedor vira preco final da loja.
         nomeSugerido: info.produto.nome
       });
