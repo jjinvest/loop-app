@@ -32,6 +32,13 @@ automaticamente barata ou sem migracoes.
   exclusivamente interna em testes. O arquivo SQLite e local, com controle
   de revisao, versao inicial do esquema e gravacao transacional. O
   repositorio em memoria continua como padrao da interface por enquanto.
+- O esquema do catalogo SQLite evoluiu de **v1 para v2**, com
+  tabela de historico de alteracoes. Criacao e edicao sao registradas
+  atomicamente junto ao produto e contam com revisao e data. A migracao
+  dos bancos v1 conserva o estado atual e o identifica como `IMPORTADO_V1`,
+  sem fabricar dados de edicoes anteriores. Triggers bloqueiam alteracao
+  casual do historico, mas nao substituem uma trilha auditavel externa,
+  backups e identidade de operadores em producao.
 - `produtoParaVitrine()` delimita o contrato publico: produtos
   `RASCUNHO` nao aparecem; campos internos do fornecedor, tokens,
   custos privados e revisoes nunca devem ser copiados para a resposta
@@ -79,7 +86,8 @@ nenhum pedido real e enviado, nenhum CPF e coletado nesta etapa.
 
 Os repositorios de filas/tabuleiro ainda usam simulacao e snapshots;
 regras de negocio de producao nao sao configuraveis nem aprovadas; nao ha
-painel administrativo, ligacao automatica da vitrine ao catalogo SQLite,
-catalogo persistente definitivo de producao ou despacho real.
+painel administrativo de producao autenticado, catalogo persistente
+definitivo de producao ou despacho real. O painel de laboratorio e seu
+historico ainda nao possuem identidade individual do operador.
 A arquitetura modular atual e **fundacao para evolucao**, nao garantia
 de manutencao futura sem trabalho.
