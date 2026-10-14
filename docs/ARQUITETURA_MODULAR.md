@@ -27,6 +27,18 @@ automaticamente barata ou sem migracoes.
   `salvar()` e `atualizar()`; a rota de leitura `criarRouterCatalogo()`
   recebe outro repositorio com o contrato `listar()/buscar()`, inclusive
   assincrono, sem modificar o endereco `GET /catalogo`.
+- `RepositorioCatalogoSQLite` implementa `listar()/buscar()` para a
+  vitrine e `buscarRegistro()/salvar()/atualizar()` para manutencao
+  exclusivamente interna em testes. O arquivo SQLite e local, com controle
+  de revisao, versao inicial do esquema e gravacao transacional. O
+  repositorio em memoria continua como padrao da interface por enquanto.
+- `produtoParaVitrine()` delimita o contrato publico: produtos
+  `RASCUNHO` nao aparecem; campos internos do fornecedor, tokens,
+  custos privados e revisoes nunca devem ser copiados para a resposta
+  ao cliente. `PUBLICADO` representa apenas visibilidade, nao
+  autorizacao para compra ou pagamento.
+- O banco de catalogo deve ser **separado** do SQLite do simulador de
+  ciclos e mantido fora de `public/` e do Git.
 - `RegistroFornecedores` e um registro de **adaptadores v1**. Cada fornecedor
   fornece `consultarEstoque({sku})` e
   `consultarStatus({pedidoParceiroId})`. Substituir um adaptador nao exige
@@ -67,6 +79,7 @@ nenhum pedido real e enviado, nenhum CPF e coletado nesta etapa.
 
 Os repositorios de filas/tabuleiro ainda usam simulacao e snapshots;
 regras de negocio de producao nao sao configuraveis nem aprovadas; nao ha
-painel administrativo, catalogo persistente definitivo ou despacho real.
+painel administrativo, ligacao automatica da vitrine ao catalogo SQLite,
+catalogo persistente definitivo de producao ou despacho real.
 A arquitetura modular atual e **fundacao para evolucao**, nao garantia
 de manutencao futura sem trabalho.
