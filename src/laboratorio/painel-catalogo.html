@@ -119,8 +119,34 @@
       </div>
       <button type="button" id="confirmarImportacao" disabled>Importar rascunhos da prévia</button>
     </section>
+    <section id="areaPedidosDemo" class="painel" hidden aria-labelledby="tituloPedidosDemo">
+      <h2 id="tituloPedidosDemo">Acompanhar pedidos — demonstração</h2>
+      <p class="aviso-demo">Pedidos e pagamentos fictícios. Não há clientes, endereços, transportadoras conectadas, movimentação de dinheiro ou filas.</p>
+      <div class="acoes-admin">
+        <button type="button" id="atualizarPedidosDemo" class="secundario">Atualizar pedidos</button>
+      </div>
+      <div class="admin-grid">
+        <div>
+          <h3>Pedidos de teste</h3>
+          <div id="listaPedidosDemo" class="lista-produtos" aria-live="polite"></div>
+        </div>
+        <div>
+          <h3>Andamento do pedido</h3>
+          <p id="detalhePedidoDemo" class="ajuda">Selecione um pedido fictício.</p>
+          <div class="campo">
+            <label for="eventoPedidoDemo">Simular próxima ocorrência</label>
+            <select id="eventoPedidoDemo" disabled></select>
+          </div>
+          <button type="button" id="aplicarEventoDemo" disabled>Registrar evento fictício</button>
+          <h3>Histórico</h3>
+          <ol id="historicoPedidoDemo" aria-live="polite"></ol>
+        </div>
+      </div>
+      <p id="mensagemPedidosDemo" class="estado-admin" role="status" aria-live="polite"></p>
+    </section>
   </main>
   <script src="/admin/painel.js"></script>
   <script src="/admin/importacao.js"></script>
+  <script src="/admin/pedidos-demo.js"></script>
 </body>
 </html>
