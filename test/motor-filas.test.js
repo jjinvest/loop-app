@@ -86,6 +86,56 @@ test('desempate com tres indicacoes usa o terceiro convite, mesmo quando o prime
   assert.equal(motor.informacoesParticipante('pedro').ultimoConviteEm, '2026-10-14T13:17:00.000Z');
 });
 
+test('desempate funciona com cinco indicacoes - concluiu primeiro fica na frente', () => {
+  const motor = motorNovo();
+  const ana = motor.registrarPosicao({ participanteId:'ana-cinco' }).posicao;
+  const bruno = motor.registrarPosicao({ participanteId:'bruno-cinco' }).posicao;
+  for (let i = 1; i <= 5; i++) {
+    motor.registrarIndicacaoValidada({
+      indicadorId:'ana-cinco', eventoId:'ana5-' + i,
+      convidouEm:'2026-10-14T13:00:' + String(i + 10).padStart(2, '0') + 'Z'
+    });
+    motor.registrarIndicacaoValidada({
+      indicadorId:'bruno-cinco', eventoId:'bruno5-' + i,
+      convidouEm:'2026-10-14T13:00:' + String(i + 20).padStart(2, '0') + 'Z'
+    });
+  }
+  assert.equal(motor.informacoesParticipante('ana-cinco').quantidade, 5);
+  assert.equal(motor.informacoesParticipante('bruno-cinco').quantidade, 5);
+  assert.deepEqual(motor.resumo().A.pessoas.map(p => p.id), [ana.id,bruno.id]);
+});
+
+test('desempate funciona com dez indicacoes e inverte quando um chega a onze', () => {
+  const motor = motorNovo();
+  const ana = motor.registrarPosicao({ participanteId:'ana-dez' }).posicao;
+  const bruno = motor.registrarPosicao({ participanteId:'bruno-dez' }).posicao;
+  // Bruno comecou antes, mas Ana concluiu a 10a indicacao primeiro.
+  for (let i = 1; i <= 9; i++) {
+    motor.registrarIndicacaoValidada({
+      indicadorId:'bruno-dez', eventoId:'b10-' + i,
+      convidouEm:'2026-10-14T12:00:' + String(i).padStart(2, '0') + 'Z'
+    });
+    motor.registrarIndicacaoValidada({
+      indicadorId:'ana-dez', eventoId:'a10-' + i,
+      convidouEm:'2026-10-14T12:10:' + String(i).padStart(2, '0') + 'Z'
+    });
+  }
+  motor.registrarIndicacaoValidada({
+    indicadorId:'ana-dez', eventoId:'a10-10', convidouEm:'2026-10-14T14:30:10Z'
+  });
+  motor.registrarIndicacaoValidada({
+    indicadorId:'bruno-dez', eventoId:'b10-10', convidouEm:'2026-10-14T14:35:20Z'
+  });
+  assert.equal(motor.informacoesParticipante('ana-dez').quantidade, 10);
+  assert.equal(motor.informacoesParticipante('bruno-dez').quantidade, 10);
+  assert.deepEqual(motor.resumo().A.pessoas.map(p => p.id), [ana.id,bruno.id]);
+  // Quantidade maior sempre vence o desempate por horario.
+  motor.registrarIndicacaoValidada({
+    indicadorId:'bruno-dez', eventoId:'b10-11', convidouEm:'2026-10-14T14:36:00Z'
+  });
+  assert.deepEqual(motor.resumo().A.pessoas.map(p => p.id), [bruno.id,ana.id]);
+});
+
 test('eventos validados fora de ordem conservam o ultimo horario cronologico', () => {
   const motor = motorNovo();
   const ana = motor.registrarPosicao({ participanteId: 'ana' }).posicao;
