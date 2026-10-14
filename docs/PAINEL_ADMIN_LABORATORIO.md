@@ -96,6 +96,21 @@ venda automatico. Os itens chegam como rascunhos com vinculos SKU
 persistentes e historico no SQLite local. Consulte
 `docs/IMPORTACAO_CATALOGO_SIMULADA.md`.
 
+## Acompanhamento de pedidos ficticios
+
+A secao **Acompanhar pedidos — demonstracao** apresenta dois pedidos
+sem endereco, CPF, preco ou dados de pagamento. O operador acompanha
+a confirmacao **simulada** de compra, repasse ao fornecedor ficticio,
+separacao, transporte, entrega, ocorrencias, cancelamentos e devolucoes
+mesmo depois de uma entrega. Os eventos sao restritos a estados
+permitidos e o historico mostra revisoes e datas.
+
+As rotas `/api/admin/pedidos-demo` so existem no painel local,
+exigem a mesma chave de testes e nao alteram o catalogo nem as filas.
+O painel usa um **banco SQLite em memoria**: ao reiniciar o servidor
+os dois pedidos ficticios voltam ao inicio. Nao existem reembolsos
+ou pagamentos reais. Ver `docs/PEDIDOS_LOGISTICOS_SIMULADOS.md`.
+
 ## Arquitetura para futura troca
 
 `src/routes/admin-catalogo-laboratorio.js` recebe uma implementação de
