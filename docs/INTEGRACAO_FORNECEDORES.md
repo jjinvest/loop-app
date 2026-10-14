@@ -14,42 +14,36 @@ Apos confirmacao verificavel, o backend devera transmitir o pedido
 ao distribuidor pela API aprovada, com os dados minimos de entrega. O distribuidor processa
 a entrega, e o sistema atualiza o rastreamento.
 
-## Fluxo de pagamento pretendido pelo idealizador — esclarecido
+## Dropshipping com o LOOP como vendedor da mercadoria
 
-O LOOP **nao compra antecipadamente nem armazena
-mercadorias**. O fluxo que o idealizador descreveu agora e:
+**Definicao de negocio confirmada pelo idealizador em 14/10/2026:**
+o LOOP e a loja vendedora, faz a venda ao cliente,
+recebe pelo checkout proprio e atende o consumidor.
+O distribuidor e o fornecedor contratado para entregar
+o produto diretamente ao endereco do comprador.
+Nao ha compra antecipada de estoque; a aquisicao
+ou liquidacao da mercadoria acontece vinculada a
+cada pedido, com seu custo obrigatoriamente contabilizado.
 
-1. O cliente seleciona o produto da vitrine LOOP.
-2. O valor e recebido pelo sistema de pagamento associado
-   ao LOOP, em modalidade ainda sujeita a validacao.
-3. O LOOP repassa o **valor contratado do produto** ao
-   distribuidor (exemplo hipotetico: R$50).
-4. O parceiro providencia a mercadoria e executa toda a
-   separacao, embalagem, frete e entrega.
-5. O LOOP informa ao cliente os status recebidos e cuida
-   das obrigacoes de atendimento a seu cargo.
-6. No exemplo de venda a R$250, destinacao hipotetica
-   de R$100 a dinamica da fila e R$50 ao fornecedor
-   deixa R$100 de diferenca bruta comercial, **ainda
-   sujeita a tributos, tarifas, despesas, estornos e
-   compromissos**.
+A arquitetura deve conter um **custo de fornecedor**
+para cada item/SKU/pedido (valor vigente e documentado),
+independente do preco final definido pelo LOOP.
+Exemplo ilustrativo: preco final R$600, fornecedor
+R$300, parcela de referencia da fila R$100.
+Restam R$200 de contribuicao BRUTA hipotetica,
+antes de tributos, taxas financeiras, estornos, suporte
+e demais custos realmente atribuiveis a operacao.
 
-Nao presumir imposto de 27% sobre todo o valor bruto nem
-isencao automatica porque o parceiro ja quitou custos e
-tributos da propria mercadoria. A base fiscal depende
-do contrato e do enquadramento efetivo.
+O cliente nao precisara contatar o distribuidor:
+o LOOP exibe andamento, atende reclamacoes e deve
+cumprir suas responsabilidades legais de vendedor.
+A plataforma parceira administra estoque, postagem
+e transporte, reportando os eventos por integracao.
 
-**Ainda precisa ser definido juridicamente** quem aparece
-como vendedor no documento fiscal, recebe formalmente os
-fundos, opera eventuais pagamentos fracionados, assume
-taxas do gateway, devolucoes e reembolsos. Os fluxos so
-serao implementados apos autorizacao dos parceiros e
-confirmacao por assessoria contábil, juridica e financeira.
-
-A premiacao e o motor de filas nao podem supor que
-todo dinheiro recebido e receita livre ou que a reserva
-de R$100 e garantia de pagamento, sem verificar a
-sustentabilidade e a legalidade das regras.
+O enquadramento fiscal e os instrumentos necessarios
+para checkout, nota fiscal, repasses e reembolsos
+continuam pendentes de validacao por profissionais;
+isto nao torna o LOOP uma simples afiliada de comissoes.
 
 ## Regra operacional: LOOP e vitrine, nao operador de frete
 
