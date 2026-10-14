@@ -114,6 +114,8 @@ test('produto preexistente sem vinculo fica preservado e demanda revisao manual'
   const plano=await importador.preparar({fornecedorId:'parceiro-a'});
   const id=plano.itens[0].produtoId;
   banco.salvar({produto:produtoManual(id),revisaoEsperada:0});
+  const novaPrevia=await importador.preparar({fornecedorId:'parceiro-a'});
+  assert.equal(novaPrevia.itens[0].situacao,'VINCULO_PENDENTE');
   const resultado=await importador.aplicar({
     fornecedorId:'parceiro-a',revisaoLote:plano.revisaoLote,
     confirmacao:MARCADOR_CONFIRMACAO
@@ -133,6 +135,8 @@ test('vinculo existente trocado manualmente nao e restaurado pelo importador',as
   const id=a.plano.itens[0].produtoId;
   vinculos.vincular({produtoId:id,fornecedorId:'novo-distribuidor',
     sku:'sku-substituto',revisaoEsperada:1});
+  const previa=await importador.preparar({fornecedorId:'parceiro-a'});
+  assert.equal(previa.itens[0].situacao,'VINCULO_PENDENTE');
   const novamente=await importar(importador);
   assert.equal(novamente.resultado.pendentesVinculo,1);
   assert.equal(vinculos.consultar({produtoId:id}).fornecedorId,'novo-distribuidor');
