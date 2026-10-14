@@ -21,6 +21,24 @@ automaticamente barata ou sem migracoes.
 | Financeiro/razao | Lancamentos e saldos auditaveis separados | Regras de exibicao da vitrine |
 | Administracao | Parametros aprovados e historico de mudancas | Reescrever silenciosamente movimentos antigos |
 
+## Fronteira operacional das entregas
+
+O LOOP **nao opera logistica propria**. A plataforma apresenta a
+mercadoria e sua informacao comercial, encaminha o pedido aprovado
+ao fornecedor autorizado e, quando disponivel, espelha ao cliente
+os eventos recebidos do operador logistico do parceiro.
+
+O distribuidor e a fonte operacional de estoque, expedicao, frete,
+transportadoras e entrega. O LOOP nao deve reinventar controle
+interno dessas etapas. O modulo de rastreio e uma interface
+de consulta e conciliacao, desacoplada tanto dos parceiros quanto
+do motor de filas. O registro manual de eventos atualmente existente
+e exclusivamente para testes, e nao constitui a operacao futura.
+
+O atendimento ao cliente e a gestao de reclamacoes/reembolsos
+que sejam de responsabilidade do vendedor continuam necessarios,
+ainda que a execucao fisica seja terceirizada.
+
 ## Pontos de substituicao ja iniciados
 
 - `RepositorioCatalogoMemoria` oferece `listar()`, `buscar()`,
