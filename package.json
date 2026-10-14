@@ -6,7 +6,8 @@
   "scripts": {
     "test": "node --test",
     "start": "node src/server.js",
-    "start:admin-demo": "node src/laboratorio/servidor-catalogo.js"
+    "start:admin-demo": "node src/laboratorio/servidor-catalogo.js",
+    "simular:sustentabilidade": "node scripts/simular-sustentabilidade.js"
   },
   "repository": {
     "type": "git",
