@@ -7,43 +7,49 @@ A maioria dos produtos fisicos sera apresentada na vitrine do LOOP, mas
 plataformas parceiras**. O LOOP deve disponibilizar fotos, video de apresentacao
 opcional, descricao, preco e status de pedido.
 
-O cliente devera, **caso contratualmente e tecnicamente autorizado**, finalizar
-a compra no LOOP. Depois da confirmacao do pagamento por um intermediador
-autorizado, o backend transmite o pedido ao distribuidor pela API aprovada,
-incluindo somente os dados de entrega necessarios. O distribuidor processa
+O modelo pretendido envolve **recebimento da compra na plataforma
+LOOP e posterior repasse do preco contratado ao distribuidor**, desde
+que autorizado contratualmente e por um provedor de pagamentos adequado.
+Apos confirmacao verificavel, o backend devera transmitir o pedido
+ao distribuidor pela API aprovada, com os dados minimos de entrega. O distribuidor processa
 a entrega, e o sistema atualiza o rastreamento.
 
-## Modelo comercial: intermediacao versus venda em nome proprio
+## Fluxo de pagamento pretendido pelo idealizador — esclarecido
 
-O LOOP nao compra nem estoca mercadorias. O idealizador descreveu
-a funcao principal de **conectar o cliente a plataforma do
-distribuidor**, que ja opera as mercadorias. Isso nao define,
-por si so, qual empresa e juridicamente a vendedora, emite
-documentos fiscais ou recebe o pagamento.
+O LOOP **nao compra antecipadamente nem armazena
+mercadorias**. O fluxo que o idealizador descreveu agora e:
 
-Antes de integrar a franquia, confirmar contratualmente:
-- quem emite a nota da mercadoria e responde como vendedor;
-- se o checkout e no parceiro ou dentro do LOOP;
-- qual empresa recebe o valor total e em qual conta;
-- qual remuneracao o LOOP recebe (comissao, margem comercial
-  contratual ou outra), quando e como e liquidada;
-- quem paga e/ou absorve as tarifas do checkout;
-- se o parceiro autoriza remuneracao de clientes do LOOP
-  com recursos provenientes das vendas, e que deveres legais
-  isso envolve.
+1. O cliente seleciona o produto da vitrine LOOP.
+2. O valor e recebido pelo sistema de pagamento associado
+   ao LOOP, em modalidade ainda sujeita a validacao.
+3. O LOOP repassa o **valor contratado do produto** ao
+   distribuidor (exemplo hipotetico: R$50).
+4. O parceiro providencia a mercadoria e executa toda a
+   separacao, embalagem, frete e entrega.
+5. O LOOP informa ao cliente os status recebidos e cuida
+   das obrigacoes de atendimento a seu cargo.
+6. No exemplo de venda a R$250, destinacao hipotetica
+   de R$100 a dinamica da fila e R$50 ao fornecedor
+   deixa R$100 de diferenca bruta comercial, **ainda
+   sujeita a tributos, tarifas, despesas, estornos e
+   compromissos**.
 
-Os custos de adquirir estoque, recolher tributos da propria
-venda e executar a logistica nao devem ser **atribuidos
-automaticamente ao LOOP** num modelo genuino de intermediação.
-Ainda assim, a receita de intermediacao pode ser tributada
-e a natureza juridica das operacoes deve ser confirmada
-por contador e advogado. O parceiro pagar imposto sobre
-mercadorias nao isenta automaticamente o LOOP por suas receitas.
+Nao presumir imposto de 27% sobre todo o valor bruto nem
+isencao automatica porque o parceiro ja quitou custos e
+tributos da propria mercadoria. A base fiscal depende
+do contrato e do enquadramento efetivo.
 
-A regra de R$100 da fila nao pode ser tratada como dinheiro
-recebido pela plataforma ate que a origem contratual,
-a liquidacao financeira, a base legal e a separacao
-entre receita e fundos de terceiros estejam demonstradas.
+**Ainda precisa ser definido juridicamente** quem aparece
+como vendedor no documento fiscal, recebe formalmente os
+fundos, opera eventuais pagamentos fracionados, assume
+taxas do gateway, devolucoes e reembolsos. Os fluxos so
+serao implementados apos autorizacao dos parceiros e
+confirmacao por assessoria contábil, juridica e financeira.
+
+A premiacao e o motor de filas nao podem supor que
+todo dinheiro recebido e receita livre ou que a reserva
+de R$100 e garantia de pagamento, sem verificar a
+sustentabilidade e a legalidade das regras.
 
 ## Regra operacional: LOOP e vitrine, nao operador de frete
 
