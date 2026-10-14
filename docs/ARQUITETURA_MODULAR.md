@@ -113,6 +113,24 @@ da fila e separada das parcelas de centro/empresa, evitando
 contar o mesmo dinheiro duas vezes. Ver
 `docs/SIMULADOR_SUSTENTABILIDADE.md`.
 
+## Primeira previa do Escritorio Virtual (somente laboratorio)
+
+A interface de consulta do participante foi iniciada como **modulo
+novo, separado da area comercial, sem alterar o tabuleiro nem as filas**.
+No laboratorio local, quatro contas artificiais exibem posicoes
+ativas e concluidas, vagas disponiveis entre cinco por titular,
+historico e avisos sobre modulos ainda nao integrados.
+As rotas GET de leitura exigem token local e nao sao montadas
+no servidor publico. Nao contem CPF, clientes, saldo ou
+pagamentos reais.
+
+O limite validado e de **ate cinco posicoes ativas por CPF**;
+cada posicao concluida libera uma vaga de compra, sem apagar
+seu historico. Nenhuma verificacao de CPF real ou bloqueio
+transacional foi ativado. Ver
+`docs/LIMITE_CINCO_COMPRAS_POR_CPF.md` e
+`docs/ESCRITORIO_VIRTUAL_DEMONSTRATIVO.md`.
+
 ## Pontos de substituicao ja iniciados
 
 - `RepositorioCatalogoMemoria` oferece `listar()`, `buscar()`,
