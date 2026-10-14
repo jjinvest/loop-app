@@ -75,6 +75,19 @@ function criarRouterAdminCatalogo({ repositorio, segredo } = {}) {
     } catch (erro) { next(erro); }
   });
 
+  router.get('/produtos/:id/historico', async (req, res, next) => {
+    try {
+      if (typeof repositorio.historico !== 'function') {
+        return res.status(501).json({ erro:'HISTORICO_NAO_SUPORTADO' });
+      }
+      const registro = await repositorio.buscarRegistro(req.params.id);
+      if (!registro) return res.status(404).json({ erro:'PRODUTO_NAO_ENCONTRADO' });
+      const eventos = await repositorio.historico(req.params.id);
+      res.set('Cache-Control', 'no-store');
+      res.json({ modo:'ADMIN_LOCAL_TESTE', produtoId:req.params.id, eventos });
+    } catch (erro) { responderErro(erro, res, next); }
+  });
+
   router.get('/produtos/:id', async (req, res, next) => {
     try {
       const registro = await repositorio.buscarRegistro(req.params.id);
