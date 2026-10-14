@@ -227,7 +227,7 @@ function projetarSustentabilidade({ posicoesIniciais = 0, periodos } = {}) {
       'Nao comprova lucro, liquidez, rentabilidade nem viabilidade juridica.',
       'Reservas e parcelas da empresa sao destinos do mesmo valor, nunca nova receita.',
       'Posicoes pendentes incluem tabuleiro e fila; nao equivalem a pessoas unicas nem automaticamente a dividas exigiveis.',
-      'As posicoes iniciais sao um retrato hipotetico posterior a operacao, nunca 10 mil posicoes no lancamento.'
+      'As posicoes iniciais sao um retrato hipotetico posterior a operacao, nunca 10 mil posicoes no lancamento.',
       'Saques, taxas de saque, reservas antigas, cancelamento tardio e obrigacoes legais nao foram simulados.',
       'Crescimento de filas depende de novas vendas; parar vendas paralisa novos ciclos nesta hipotese.'
     ]
