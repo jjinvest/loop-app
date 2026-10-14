@@ -67,6 +67,18 @@ e webhooks verificados. Somente a plataforma que tiver API autorizada
 sera conectada. O catalogo demonstrativo hoje nao tem integracoes reais
 nem recebe pagamentos.
 
+## Importacao de vitrine de fornecedor (somente laboratorio)
+
+A base de integracao inclui um **importador de catalogo simulado**: um
+adaptador pode entregar ate 100 itens por lote, preparar a visualizacao,
+e so gerar rascunhos no banco apos confirmacao explicita e conferencia
+da revisao do lote. Nao ha preco de venda automatico, envio de mercadoria,
+importacao de fotos externas ou criacao de posicoes em filas. Produtos
+ja editados pelo administrador nao sao sobrescritos.
+
+Ver `docs/IMPORTACAO_CATALOGO_SIMULADA.md`. A API real de distribuidores
+e as permissoes da Shopee ainda nao foram confirmadas.
+
 ## Construido nesta etapa
 
 - `src/domain/catalogo.js`: modelos de FISICO com
@@ -79,5 +91,6 @@ nem recebe pagamentos.
 - `public/css/style.css`: apresentacao responsiva.
 - `test/catalogo.test.js`: testes automatizados do catalogo demonstrativo.
 
-Os modelos nao sao ofertas reais: nao ha estoque, preco definido, checkout,
-painel administrativo de cadastro, upload de imagens nem integracao de fornecedor.
+Os modelos demonstrativos nao sao ofertas reais. Existe um painel
+administrativo de laboratorio isolado, mas nao existe checkout, upload de imagens,
+integracao de fornecedores reais, estoque sincronizado ou pagamentos.
