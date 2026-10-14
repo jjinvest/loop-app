@@ -202,3 +202,23 @@ test('exemplo do idealizador: R$250, R$50 ao parceiro, R$100 a fila',()=>{
   // R$100 de cada mercadoria e sobra antes de custos nao incluidos,
   // nao resultado liquido certificado.
 });
+
+test('dropshipping: loja vende por R$600, custo contratado R$300 e R$100 de referencia da fila',()=>{
+  const c=projetar([periodo(5,{
+    precoCentavos:60000,
+    custoFornecedorCentavos:30000,
+    impostosCentavos:0,
+    tarifaPagamentoCentavos:0,
+    despesaOperacionalCentavos:0
+  })],6);
+  assert.equal(c.resumo.receitaLiquidaCentavos,300000);
+  assert.equal(c.resumo.contribuicaoAntesDaFilaCentavos,150000);
+  assert.equal(c.resumo.reservaFilaCentavos,50000);
+  assert.equal(c.resumo.margemComercialAposReservaFilaCentavos,100000);
+  assert.equal(c.resumo.ciclosConcluidos,1);
+  assert.equal(c.resumo.posicoesCriadas,5);
+  assert.equal(c.resumo.parcelasCentroReferenciaisCentavos,30000);
+  assert.equal(c.resumo.parcelasEmpresaReferenciaisCentavos,20000);
+  // Por produto a sobra BRUTA e de R$200 antes dos custos omitidos;
+  // 100% de markup sobre custo nao e 100% de lucro liquido.
+});
