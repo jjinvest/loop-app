@@ -85,6 +85,41 @@ O fornecedor nao define o preco de venda para o cliente LOOP.
 - Nenhum pedido e transmitido, nenhuma compra/pagamento e executada
   e nenhuma posicao de fila e criada.
 
+## Previa pelo painel local do LOOP
+
+O painel administrativo de **laboratorio** agora possui a secao
+"Importar produtos de distribuidores — demonstracao", acessivel somente
+apos autenticar-se no servidor local `npm run start:admin-demo`.
+
+- Dois distribuidores **inteiramente ficticios**, definidos em
+  `src/laboratorio/fornecedores-demo.js`, aparecem na lista. Nenhuma
+  chamada externa ou credencial e utilizada.
+- `POST /api/admin/importacao/previa` devolve produtos candidatos,
+  situacao `NOVO_RASCUNHO`, `JA_CADASTRADO` ou
+  `VINCULO_PENDENTE`, e uma revisao hash do lote.
+- O botao de importacao so habilita apos a pessoa **marcar uma
+  confirmacao** correspondente a previa. A troca de fornecedor limpa
+  a aprovacao anterior.
+- `POST /api/admin/importacao/aplicar` exige o hash e a string de
+  confirmacao; o servidor consulta novamente o lote e rejeita
+  revisao desatualizada com HTTP 409.
+- A aplicacao usa a transacao SQLite de laboratorio para inserir
+  produtos fisicos como rascunho, seus SKUs e os dois historicos
+  juntos. Retorna quantos foram criados, ignorados e quantos vinculos
+  dependem de revisao manual.
+- Ambas as rotas sao protegidas pela chave administrativa de teste
+  e checagens de loopback/Host/Origin. Nao existem no servidor
+  publico do LOOP.
+
+Arquivos: `src/routes/admin-importacao-laboratorio.js`,
+`src/laboratorio/fornecedores-demo.js`,
+`src/laboratorio/painel-importacao.js` e
+`test/painel-importacao-laboratorio.test.js`.
+
+A nova interface **nao conecta a Shopee nem a franquia real** e
+nao pode importar arquivos do usuario ou conectar endpoints arbitrarios.
+A autenticacao local ainda nao e suficiente para producao.
+
 ## Proximas etapas quando a API da franquia estiver disponivel
 
 1. Avaliar a documentacao, autorizacoes e limites tecnicos da API real.
