@@ -5,6 +5,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 const vm = require('node:vm');
 
+process.env.LOOP_MODO_SIMULACAO = '1';
 const app = require('../src/server');
 
 async function request(baseUrl, route, method = 'GET', body) {
@@ -89,3 +90,53 @@ test('interface mostra quantidades recebidas das filas A e B', async () => {
   assert.equal(elements.totalA.textContent, 3);
   assert.equal(elements.totalB.textContent, 7);
 });
+
+test('mutacoes remotas ou sem modo de teste sao bloqueadas; filas publicas sao anonimas', async (t) => {
+  const server = app.listen(0, '127.0.0.1');
+  await once(server, 'listening');
+  t.after(() => new Promise((resolve, reject) => {
+    server.close(err => err ? reject(err) : resolve());
+  }));
+  const baseUrl = 'http://127.0.0.1:' + server.address().port;
+
+  // O modo local de testes e desativado: nem cabecalhos falsificados liberam.
+  const anterior = process.env.LOOP_MODO_SIMULACAO;
+  process.env.LOOP_MODO_SIMULACAO = '0';
+  try {
+    const resposta = await fetch(baseUrl + '/filas/entrar', {
+      method:'POST',
+      headers:{ 'content-type':'application/json','x-forwarded-for':'127.0.0.1' },
+      body: JSON.stringify({ nome:'Tentativa sem autorizacao' })
+    });
+    assert.equal(resposta.status, 403);
+    const catraca = await request(baseUrl, '/catraca/abrir', 'POST');
+    assert.equal(catraca.status, 403);
+    const filas = await request(baseUrl, '/filas');
+    assert.equal(filas.status, 200);
+    assert.equal('pessoas' in filas.data.A, false);
+    assert.equal('pessoas' in filas.data.B, false);
+    assert.equal('contadorA' in filas.data, false);
+  } finally {
+    process.env.LOOP_MODO_SIMULACAO = anterior;
+  }
+});
+
+test('em producao, mutacoes continuam bloqueadas mesmo com flag ativa', async (t) => {
+  const server = app.listen(0, '127.0.0.1');
+  await once(server, 'listening');
+  t.after(() => new Promise((resolve, reject) => {
+    server.close(err => err ? reject(err) : resolve());
+  }));
+  const antes = process.env.NODE_ENV;
+  process.env.NODE_ENV = 'production';
+  try {
+    const base = 'http://127.0.0.1:' + server.address().port;
+    assert.equal((await request(base,'/filas/promover/1','POST')).status,403);
+    assert.equal((await request(base,'/filas/proximo','POST')).status,403);
+    assert.equal((await request(base,'/catraca/liberar','POST')).status,403);
+  } finally {
+    if (antes === undefined) delete process.env.NODE_ENV;
+    else process.env.NODE_ENV = antes;
+  }
+});
+
