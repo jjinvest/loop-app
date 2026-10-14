@@ -146,6 +146,28 @@ garantida:
 O sistema nao deve anunciar lucro garantido, prazo certo ou
 saque incondicional com base nessas premissas.
 
+## Primeira ferramenta de simulacao matematica
+
+Foi criado um modulo offline de laboratorio em
+`src/domain/projecao-sustentabilidade-loop.js`, testado em
+`test/projecao-sustentabilidade-loop.test.js`, com relatorio
+`npm run simular:sustentabilidade`.
+
+Ele separa contribuicao comercial apos custos e parcela de
+referencia das filas, eventos do centro/empresa e crescimento
+das posicoes pendentes. Simula vendas constantes, decrescentes,
+paradas, precos e custos variados, e estornos ocorridos antes
+da geracao de posicao. **Nao** simula estorno tardio, receita
+efetivamente liquidada, taxa/minimo de saque, custos fixos,
+indicacoes e criterios juridicos de distribuicao.
+
+O teste evidencia que, numa fila com 10 mil posicoes
+preexistentes, 100 vendas adicionais gerariam 100 posicoes
+novas e 20 ciclos concluidos, mantendo 10.080 pendentes
+sob essas premissas. Este resultado nao representa a
+ordem real de atendimento nem torna qualquer beneficio
+prometido seguro. Ver `docs/SIMULADOR_SUSTENTABILIDADE.md`.
+
 ## 7. Regra de engenharia
 
 Manter modulos separados para produtos e integracoes,
