@@ -82,6 +82,20 @@ administrativo real precisará login por identidade, MFA, sessão segura,
 controle de permissões, auditoria com identidade de cada operador, proteção CSRF, política
 de upload de arquivos, operação com HTTPS e revisão de segurança.
 
+## Conferencia de lotes simulados na interface
+
+Depois de inserir a chave do laboratorio, a secao **Importar produtos
+de distribuidores — demonstracao** mostra dois fornecedores ficticios.
+A pessoa seleciona um fornecedor, clica em **Conferir produtos**, revisa
+os SKUs, marca o aceite de laboratorio e confirma. Uma mudanca na lista
+obriga nova previa. Nao ha importacao de fornecedores reais.
+
+A nova interface usa `painel-importacao.js` e as rotas autenticadas
+de `admin-importacao-laboratorio.js`, sem permitir vendas ou preco de
+venda automatico. Os itens chegam como rascunhos com vinculos SKU
+persistentes e historico no SQLite local. Consulte
+`docs/IMPORTACAO_CATALOGO_SIMULADA.md`.
+
 ## Arquitetura para futura troca
 
 `src/routes/admin-catalogo-laboratorio.js` recebe uma implementação de
