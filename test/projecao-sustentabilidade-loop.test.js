@@ -166,3 +166,39 @@ test('sem conexao com motor das filas, banco e rotas de saque',()=>{
   assert.equal('autorizarPagamento' in r,false);
   assert.equal('rentabilidadeGarantida' in r,false);
 });
+
+test('lancamento do zero e compras repetidas contam posicoes, nao pessoas',()=>{
+  const r=projetar([periodo(10),periodo(90)],0);
+  assert.equal(r.resumo.posicoesCriadas,100);
+  assert.equal(r.resumo.ciclosConcluidos,18);
+  assert.equal(r.resumo.posicoesPendentes,82);
+  assert.equal(r.resumo.posicoesNoTabuleiroEstimadas,6);
+  assert.equal(r.resumo.posicoesAguardandoFilaEstimadas,76);
+  assert.equal(r.premissas.compradoresRepetidosContamPorCompra,true);
+  assert.equal(r.premissas.posicoesIniciaisIncluemTabuleiro,true);
+});
+
+test('partir de dez posicoes ja ativas nao e o mesmo que assumir dez mil no lancamento',()=>{
+  const r=projetar([periodo(100)],10);
+  assert.equal(r.resumo.ciclosConcluidos,20);
+  assert.equal(r.resumo.posicoesPendentes,90);
+  assert.equal(r.resumo.posicoesAguardandoFilaEstimadas,84);
+  assert.equal(r.resumo.posicoesNoTabuleiroEstimadas,6);
+});
+
+test('exemplo do idealizador: R$250, R$50 ao parceiro, R$100 a fila',()=>{
+  const r=projetar([periodo(5,{
+    precoCentavos:25000,
+    custoFornecedorCentavos:5000,
+    impostosCentavos:0,
+    tarifaPagamentoCentavos:0,
+    despesaOperacionalCentavos:0
+  })],6);
+  assert.equal(r.resumo.margemComercialAposReservaFilaCentavos,50000);
+  assert.equal(r.resumo.parcelasCentroReferenciaisCentavos,30000);
+  assert.equal(r.resumo.parcelasEmpresaReferenciaisCentavos,20000);
+  assert.equal(r.resumo.posicoesCriadas,5);
+  assert.equal(r.resumo.ciclosConcluidos,1);
+  // R$100 de cada mercadoria e sobra antes de custos nao incluidos,
+  // nao resultado liquido certificado.
+});
