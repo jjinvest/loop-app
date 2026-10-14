@@ -59,7 +59,7 @@ test('indicacao validada move todas as posicoes B da mesma pessoa para A', () =>
   assert.equal(motor.informacoesParticipante('x').quantidade, 1);
 });
 
-test('fila A prioriza quantidade; empate depende do primeiro convite, nao do ultimo patamar', () => {
+test('fila A prioriza quantidade e desempata pelo ultimo convite registrado', () => {
   const motor = motorNovo();
   const antigo = motor.registrarPosicao({ participanteId:'antigo' }).posicao;
   const novo = motor.registrarPosicao({ participanteId:'novo' }).posicao;
@@ -71,7 +71,7 @@ test('fila A prioriza quantidade; empate depende do primeiro convite, nao do ult
   assert.deepEqual(motor.resumo().A.pessoas.map(p => p.id), [lider.id, antigo.id, novo.id]);
 });
 
-test('primeiro convite define desempate ate os segundos, mesmo se o terceiro veio depois', () => {
+test('desempate com tres indicacoes usa o terceiro convite, mesmo quando o primeiro foi mais cedo', () => {
   const motor = motorNovo();
   const joao = motor.registrarPosicao({ participanteId:'joao' }).posicao;
   const pedro = motor.registrarPosicao({ participanteId:'pedro' }).posicao;
@@ -81,12 +81,12 @@ test('primeiro convite define desempate ate os segundos, mesmo se o terceiro vei
   motor.registrarIndicacaoValidada({ indicadorId:'pedro', eventoId:'p2', convidouEm:'2026-10-14T10:16:10-03:00' });
   motor.registrarIndicacaoValidada({ indicadorId:'pedro', eventoId:'p3', convidouEm:'2026-10-14T10:17:00-03:00' });
   motor.registrarIndicacaoValidada({ indicadorId:'joao', eventoId:'j3', convidouEm:'2026-10-14T10:18:00-03:00' });
-  assert.deepEqual(motor.resumo().A.pessoas.map(p => p.id), [joao.id, pedro.id]);
-  assert.equal(motor.informacoesParticipante('joao').primeiroConviteEm, '2026-10-14T13:15:20.000Z');
-  assert.equal(motor.informacoesParticipante('pedro').primeiroConviteEm, '2026-10-14T13:15:35.000Z');
+  assert.deepEqual(motor.resumo().A.pessoas.map(p => p.id), [pedro.id, joao.id]);
+  assert.equal(motor.informacoesParticipante('joao').ultimoConviteEm, '2026-10-14T13:18:00.000Z');
+  assert.equal(motor.informacoesParticipante('pedro').ultimoConviteEm, '2026-10-14T13:17:00.000Z');
 });
 
-test('convites validados fora de ordem conservam o horario real mais antigo', () => {
+test('eventos validados fora de ordem conservam o ultimo horario cronologico', () => {
   const motor = motorNovo();
   const ana = motor.registrarPosicao({ participanteId: 'ana' }).posicao;
   const bia = motor.registrarPosicao({ participanteId: 'bia' }).posicao;
