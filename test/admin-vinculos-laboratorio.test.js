@@ -84,3 +84,23 @@ test('protecoes de laboratorio exigem chave e rejeitam edicoes conflitantes',asy
   const content=await publicResp.text();
   assert.doesNotMatch(content,/franquia|SKU_001|apiKey|revisao/);
 });
+
+test('interface de laboratorio mostra campos fornecedor e SKU apenas no painel local',async t=>{
+  const {url}=await ambiente(t);
+  const pagina=await fetch(url+'/admin');
+  assert.equal(pagina.status,200);
+  const html=await pagina.text();
+  assert.match(html,/id="areaFornecedor"/);
+  assert.match(html,/id="codigoFornecedor"/);
+  assert.match(html,/id="codigoSKU"/);
+  assert.match(html,/id="historicoFornecedor"/);
+  assert.match(html,/id="desativarFornecedor"/);
+  const script=await fetch(url+'/admin/painel.js');
+  assert.equal(script.status,200);
+  const codigo=await script.text();
+  assert.match(codigo,/carregarFornecedor/);
+  assert.match(codigo,/revisaoEsperada:revisaoFornecedor/);
+  assert.match(codigo,/\/fornecedor\/desativar/);
+  assert.doesNotMatch(html,/somente-laboratorio-com-segredo-longo/);
+  assert.equal((await chamar(url,'/produtos/produto-a/fornecedor/historico',{token:false})).status,401);
+});
