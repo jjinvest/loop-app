@@ -1,4 +1,4 @@
-# LOOP — limite inicial de compras por CPF (regra proposta)
+# LOOP — limite confirmado: ate cinco posicoes ativas por CPF
 
 > Alinhamento do idealizador em 14/10/2026.
 > Registro de regra de negocio pretendida, sem coleta de CPFs,
@@ -6,7 +6,7 @@
 
 ## Regra informada
 
-**Limite inicial pretendido: ate CINCO compras por CPF.**
+**Limite inicial confirmado: ate CINCO posicoes ativas simultaneamente por CPF.**
 Cada compra validada de produto gera uma posicao propria,
 independentemente do valor do produto. O limite e para
 impedir concentracao excessiva em poucos compradores
@@ -28,9 +28,13 @@ analise dos impactos em vendas, filas e direitos.
 - Uma compra nao e uma pessoa nova.
 - Cada venda valida gera uma posicao.
 - As posicoes podem pertencer ao mesmo CPF;
-  no entanto, a politica inicial **nao admite
-  mais de cinco compras por CPF no escopo
-  do limite**, ainda a ser especificado.
+  a politica inicial nao admite mais de cinco
+  **posicoes ativas simultaneamente** por CPF.
+- Quando uma posicao encerra seu ciclo por
+  contemplacao concluida, deixa de ser ativa
+  e libera uma vaga para nova compra valida.
+- O historico da posicao concluida e preservado.
+- Nao existe limite de cinco compras vitalicias.
 - Indicar, cadastrar-se e ter posicao sao
   eventos separados; indicacoes validas
   continuam seguindo as regras A/B.
@@ -39,25 +43,14 @@ analise dos impactos em vendas, filas e direitos.
   cinco eventos por ciclo, prioridades e
   preparo de pre-lancamento.
 
-## Questao que precisa ser confirmada ANTES de codificar
+## Regra confirmada de recomposicao das vagas
 
-A expressao "ate cinco compras por CPF" foi confirmada;
-**nao foi confirmado** se o limite vale para:
-
-A. Ate cinco compras **no historico total**
-   daquele CPF, mesmo depois de uma posicao
-   completar o ciclo; ou
-B. Ate cinco **posicoes ativas simultaneamente**
-   por CPF, voltando a liberar capacidade
-   quando uma posicao e efetivamente encerrada;
-   ou outra janela especifica.
-
-Esta distincao importa porque o idealizador
-tambem descreveu a possibilidade de clientes
-voltarem a participar depois de concluir ciclos.
-Nao presumir que retornos permitem ultrapassar
-automaticamente o limite, nem proibir recompras
-apos ciclo sem uma definicao expressa.
+Com cinco posicoes ativas, a conta tem zero vagas para nova compra.
+Se uma posicao e contemplada e conclui o ciclo, passam a existir
+quatro posicoes ativas e UMA vaga disponivel para nova compra.
+Se duas concluem, existem DUAS vagas. Ter apenas recebido
+parte de um ciclo nao e o mesmo que ter concluido a posicao.
+Nenhuma operacao apaga o historico de compras e conclusoes.
 
 ## Implementacao futura, depois da confirmacao
 
