@@ -11,7 +11,14 @@ function proximoDaFila() {
 }
 
 router.get('/', (req, res) => {
-  res.json(motor.resumo());
+  // Nunca enviar nomes ou identificadores pessoais a uma interface publica.
+  // A UI existente so necessita dos totais das filas.
+  const { regra, modo, A, B } = motor.resumo();
+  res.json({
+    regra, modo,
+    A: { nome: A.nome, quantidade: A.quantidade },
+    B: { nome: B.nome, quantidade: B.quantidade }
+  });
 });
 
 router.post('/entrar', (req, res) => {
