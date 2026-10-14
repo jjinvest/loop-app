@@ -21,67 +21,29 @@ plataformas conveniadas, via integracoes autorizadas.
   responsabilidades contratuais, de consumidor, LGPD, contabeis,
   tributarias nem custo de suporte e integracoes.
 
-## Esclarecimento de 14/10/2026: fluxo financeiro pretendido
+## Definicao reforcada: LOOP e vendedor em dropshipping, sem estoque
 
-O idealizador explicou que o LOOP **recebera o pagamento do cliente
-na plataforma** e, em seguida, repassara ao distribuidor o custo
-contratado da mercadoria. O fornecedor cuidara integralmente de
-estoque, separacao e entrega. O LOOP nao compra estoque para
-armazenar, mas sua intervencao no recebimento nao e mera
-indicacao sem caixa.
+O idealizador explicou que a loja LOOP **e a vendedora
+perante o cliente**: realiza o checkout, recebe os valores,
+responde pelo atendimento e paga ao distribuidor o preco
+de fornecimento contratado para cada mercadoria.
+O distribuidor executa estoque, separacao, expedicao
+e entrega direto ao consumidor, sem estoque proprio LOOP.
 
-Exemplo comercial informado, **antes de outros custos e obrigações**:
-- O cliente paga R$250 por produto na vitrine.
-- O LOOP repassa R$50 ao distribuidor pelo produto.
-- R$100 formam a parcela hipotetica de referencia do sistema
-  de filas e tabuleiro.
-- Restam R$100 de diferenca bruta comercial para o LOOP
-  **antes** de tributos efetivamente aplicaveis, tarifas do
-  meio de pagamento, operacao, estornos, garantias e reservas.
+Dizer que o LOOP nao compra produtos significa que
+**nao compra estoque antes das vendas**, mas ha custo
+de mercadoria vinculado a venda que deve ser calculado.
+Nao e um caso de apenas levar o cliente a um link
+de parceiro e receber pequena comissao.
 
-O preco minimo pretendido e R$100. O produto citado para esse
-valor e o PDF, enquanto mercadorias fisicas serao ofertadas por
-precos variados superiores. A predominancia de produtos de R$100
-retira a margem adicional de mercadoria; na hipotese de um PDF
-de R$100 inteiramente alocado a fila, nao sobra margem comercial
-independente antes de custos, ainda que existam duas parcelas
-referenciais de R$100 por ciclo destinadas a empresa.
-
-A estrategia inclui compras recorrentes: uma pessoa pode
-comprar cinco produtos, deter cinco posicoes e participar
-novamente depois de concluir um ciclo. Uma nova venda gera
-uma nova **posicao, nao necessariamente uma pessoa nova**.
-Posicoes de clientes antigos continuam ativas ate conclusao
-ou outra regra legitima; repetir a identidade nao equivale
-a apagar a obrigacao potencial da posicao.
-
-O idealizador tambem descreveu: janelas de operacao em que
-pagamentos e cadastros continuam enquanto certas liberacoes
-so acontecem no horario de funcionamento; uso de caixa e
-eventuais investimentos, inclusive criptoativos; e uma
-estimativa pessoal de cerca de R$500 mensais para manter o
-servidor aberto. Tudo isso e **hipotese a validar**: adiamento
-de pagamentos altera a liquidez e o prazo, nao cria receita;
-investimentos podem perder valor e caixa necessario a
-reembolsos/remuneracoes nao deve ser tratado como livre;
-R$500 nao e orcamento total de operacao comprovado.
-
-**Forma juridica a confirmar com contador/advogado e com a
-franquia:** quem aparece como vendedor, emite a nota,
-contrata o meio de pagamento, coleta o valor bruto, realiza
-os repasses e assume estornos. Receber R$250 e pagar
-R$50 ao fornecedor nao implica automaticamente que todos
-os R$250 sejam receita tributavel do LOOP nem o contrario.
-O enquadramento depende de contrato, documentos e normas
-aplicaveis. O distribuidor pagar seus tributos nao elimina
-automaticamente obrigacoes da empresa LOOP.
-
-O simulador financeiro atual e um **modelo de recebimento
-do preco bruto seguido de repasse ao fornecedor**, com custos
-opcionais exemplificativos. Nem custos ficticios devem ser
-tratados como despesas certas nem campos preenchidos com zero
-como isencao tributaria comprovada. A modelagem definitiva
-devera suportar termos de contrato, tributacao e conciliacao.
+Exemplo fornecido: mercadoria custa R$300 ao LOOP,
+loja vende por R$600 e destina R$100 como parcela
+referencial da fila. A sobra BRUTA hipotetica para
+o caixa e R$200 ANTES de impostos devidos, meio de
+pagamento, estornos, garantias, custos fixos e outras
+obrigacoes. O preco de venda ser o dobro do custo
+indica markup de 100% sobre o custo, nao margem
+liquida de 100%.
 
 ## 2. Venda, fila e ciclo — modelo informado
 
