@@ -75,6 +75,13 @@ automaticamente barata ou sem migracoes.
   novos, confirmacao explicita e retorno dos rascunhos gravados.
   Rotas administrativas isoladas revalidam o hash antes de aplicar
   o lote. `docs/IMPORTACAO_CATALOGO_SIMULADA.md` descreve os limites.
+- `PedidosLogisticosSimuladosSQLite` registra estados de entrega,
+  ocorrencia, cancelamento, devolucao e reembolso **ficticios**, com
+  transicoes controladas e eventos auditaveis. O painel local tem dois
+  pedidos predefinidos para consulta e testes de eventos, sem CPF,
+  enderecos, valores, pagamento real ou movimentacao de fila.
+  A tela usa um banco em memoria, nao duravel entre reinicios.
+  Ver `docs/PEDIDOS_LOGISTICOS_SIMULADOS.md`.
 - `docs/INTEGRACAO_FORNECEDORES.md` estabelece o fluxo futuro de pedidos
   e o que depende da API real do parceiro.
 
