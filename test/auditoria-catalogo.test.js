@@ -81,7 +81,7 @@ test('trilha persistida resiste ao reinicio e bloqueia update/delete direto', (t
   assert.throws(()=>db.prepare('DELETE FROM catalogo_historico WHERE produto_id=?').run('produto-a'),/historico imutavel/);
   assert.throws(()=>db.prepare('UPDATE catalogo_historico SET tipo=? WHERE produto_id=?').run('CRIADO','produto-a'),/historico imutavel/);
   assert.equal(db.prepare('SELECT COUNT(*) AS n FROM catalogo_historico').get().n,2);
-  assert.equal(db.prepare('PRAGMA user_version').get().user_version,2);
+  assert.equal(db.prepare('PRAGMA user_version').get().user_version,3);
   db.close();
 });
 
