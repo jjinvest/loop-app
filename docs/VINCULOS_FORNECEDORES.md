@@ -43,19 +43,24 @@ sao transacoes SQLite que tambem registram o evento historico.
   **nao cria posicoes** nas filas.
 - Nenhuma API da franquia ou Shopee foi conectada. Nao existe
   checkout nem despacho de mercadoria.
-- Esta camada e interna, usada em testes por codigo: **ainda nao esta
-  ligada ao formulario administrativo**, e nao deve ser exposta nas
-  rotas publicas.
+- Esta camada agora pode ser usada pelo **painel administrativo
+  isolado do laboratorio local**. A tela so mostra controles de
+  fornecedor/SKU para produto fisico que ja foi salvo. A API usa a
+  mesma chave de teste e as restricoes de localhost das demais rotas
+  administrativas; ela nao e exposta pelo servidor publico.
+- As operacoes internas `PUT /api/admin/produtos/:id/fornecedor`,
+  `POST /api/admin/produtos/:id/fornecedor/desativar`,
+  `GET /api/admin/produtos/:id/fornecedor` e
+  `GET /api/admin/produtos/:id/fornecedor/historico` exigem
+  autenticacao. Os registros nao aparecem em `GET /catalogo`.
 
 ## Proximas etapas
 
-1. Adicionar controles autenticados de fornecedor/SKU ao painel
-   administrativo de laboratorio.
-2. Ligar a importacao simulada a esse novo vinculo persistente, sem
-   perder edicoes e evitando duplicacao.
-3. Quando a documentacao e as permissoes da franquia estiverem
+1. Ligar a importacao simulada a esse vinculo persistente sem perder
+   edicoes e evitando duplicacoes, com tratamento de falhas parciais.
+2. Quando a documentacao e as permissoes da franquia estiverem
    disponiveis, criar adaptador de integracao homologado por fornecedor.
-4. Antes da operacao real: autorizacao comercial, seguranca financeira,
+3. Antes da operacao real: autorizacao comercial, seguranca financeira,
    verificacao legal, login administrativo forte, conciliacao e auditoria.
 
 ## Testes
@@ -64,3 +69,6 @@ sao transacoes SQLite que tambem registram o evento historico.
 sem mudar o produto, desativacao, religacao, deduplicacao, revisoes
 concorrentes, preservacao do historico, migracao SQLite v2->v3 e
 bloqueio de vinculos em PDFs.
+
+`test/admin-vinculos-laboratorio.test.js` verifica HTTP autenticado,
+conflitos, troca e desativacao de fornecedor, e os controles locais da tela.
