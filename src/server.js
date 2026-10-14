@@ -6,6 +6,7 @@ const healthRouter = require('./routes/health');
 const catracaRouter = require('./routes/catraca');
 const filasRouter = require('./routes/filas');
 const participantsRouter = require('./routes/participants');
+const catalogoRouter = require('./routes/catalogo');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -16,6 +17,7 @@ app.use('/health', healthRouter);
 app.use('/catraca', bloquearMutacoesSimuladas, catracaRouter);
 app.use('/filas', bloquearMutacoesSimuladas, filasRouter);
 app.use('/participants', participantsRouter);
+app.use('/catalogo', catalogoRouter);
 
 // Serve a interface web existente do LOOP.
 app.use(express.static(path.join(__dirname, '..', 'public')));
