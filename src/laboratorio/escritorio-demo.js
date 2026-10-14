@@ -7,6 +7,7 @@
   const mensagem=byId('estadoEscritorioDemo');
   const conteudo=byId('conteudoEscritorioDemo');
   const selecao=byId('titularEscritorioDemo');
+  const origem=byId('origemEscritorioDemo');
   let segredo='';
   let versaoSolicitacao=0;
 
@@ -19,6 +20,8 @@
     texto('vagasDisponiveisDemo','—');
     texto('concluidasDemo','—');
     texto('titularResumoDemo','');
+    texto('etapaMotorDemo','');
+    texto('indicacoesMotorDemo','');
     conteudo.hidden=true;
   }
   async function buscar(recurso) {
@@ -53,6 +56,16 @@
     texto('totalAtivasDemo',visao.posicoesAtivas+' de '+visao.limitePosicoesAtivas);
     texto('vagasDisponiveisDemo',visao.vagasDisponiveis);
     texto('concluidasDemo',visao.posicoesConcluidas);
+    if(visao.origem==='MOTOR_EXISTENTE_EM_CENARIO_FICTICIO'){
+      texto('etapaMotorDemo','Cenário do motor existente: '+
+        visao.tabuleiro.giros+' giro fictício; ciclo atual nº '+
+        visao.tabuleiro.cicloAtual+'; catraca '+visao.tabuleiro.catraca+'.');
+      texto('indicacoesMotorDemo','Indicações fictícias reconhecidas pelo motor: '+
+        visao.indicacoes.quantidade+'.');
+    } else {
+      texto('etapaMotorDemo','Exemplo estático preservado, sem leitura do motor.');
+      texto('indicacoesMotorDemo','Indicações: não integradas neste exemplo.');
+    }
     preencherLista('listaAtivasDemo',visao.ativas,p=>
       p.id+' — '+(p.local==='FILA'?'Fila '+p.fila:
         p.local==='CENTRO'?'Centro':p.local.replace('_',' ')));
@@ -68,7 +81,8 @@
     try {
       const id=selecao.value;
       if(!id)throw new Error('Selecione uma conta fictícia.');
-      const dados=await buscar('/api/admin/escritorio-demo/'+encodeURIComponent(id));
+      const sufixo=origem.value==='motor'?'motor/':'';
+      const dados=await buscar('/api/admin/escritorio-demo/'+sufixo+encodeURIComponent(id));
       if(esta===versaoSolicitacao) apresentar(dados);
     } catch(erro) {
       if(esta===versaoSolicitacao) {
@@ -109,5 +123,6 @@
     mensagem.textContent='Sessão fictícia encerrada; chave descartada da página.';
   });
   selecao.addEventListener('change',carregarConta);
+  origem.addEventListener('change',carregarConta);
   byId('atualizarEscritorioDemo').addEventListener('click',carregarConta);
 })();
