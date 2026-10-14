@@ -68,7 +68,9 @@ function contarEventosPorDestino(totalEventos) {
  * posicao. As primeiras seis posicoes, caso nao existam, preenchem
  * centro + cinco vagas e NAO contam como eventos do primeiro ciclo.
  * Quando o tabuleiro ja esta preenchido, cada nova venda representa
- * um evento de ciclo. Nao modela indicacoes, ordem A/B, saques ou
+ * um evento de ciclo. 'posicoesPendentes' inclui ate seis posicoes
+ * no tabuleiro, nao somente a fila, e nao significa pessoas unicas.
+ * Nao modela indicacoes, ordem A/B, saques ou
  * reversao de posicao por estorno tardio.
  */
 function projetarSustentabilidade({ posicoesIniciais = 0, periodos } = {}) {
@@ -167,6 +169,10 @@ function projetarSustentabilidade({ posicoesIniciais = 0, periodos } = {}) {
       eventosDoCiclo:vendasContadasNoCiclo,
       ciclosConcluidos:concluidos,
       posicoesPendentes,
+      // Cenarios agregados: estimativas de contagem, nao simulacao
+      // da ordem real, de indicacoes nem da identidade de pessoas.
+      posicoesNoTabuleiroEstimadas:Math.min(posicoesPendentes,POSICOES_PARA_INICIAR),
+      posicoesAguardandoFilaEstimadas:Math.max(0,posicoesPendentes-POSICOES_PARA_INICIAR),
       saldoFilaSemDestinacaoCentavos:saldoFilaSemDestinacao,
       alertaMargemInsuficiente: margemComercialAposReservaFila < 0
     });
@@ -184,6 +190,8 @@ function projetarSustentabilidade({ posicoesIniciais = 0, periodos } = {}) {
       referenciaCentroPorCicloCentavos:CENTAVOS_CENTRO_POR_CICLO,
       referenciaEmpresaPorCicloCentavos:CENTAVOS_EMPRESA_POR_CICLO,
       posicoesIniciais,
+      posicoesIniciaisIncluemTabuleiro:true,
+      compradoresRepetidosContamPorCompra:true,
       posicoesIniciaisSemCaixaModelado:true,
       estornosApenasDoMesmoPeriodo:true,
       taxasDeSaqueNaoModeladas:true,
@@ -208,6 +216,8 @@ function projetarSustentabilidade({ posicoesIniciais = 0, periodos } = {}) {
       ciclosConcluidos:centrosConcluidosAnterior,
       posicoesCriadas:vendasAcumuladas,
       posicoesPendentes,
+      posicoesNoTabuleiroEstimadas:Math.min(posicoesPendentes,POSICOES_PARA_INICIAR),
+      posicoesAguardandoFilaEstimadas:Math.max(0,posicoesPendentes-POSICOES_PARA_INICIAR),
       eventosEmCicloIncompleto:eventosDeCiclo % VENDAS_POR_CICLO,
       exposicaoTeoricaSeTodasAsPosicoesRecebessemCentroCentavos:
         multiplicar(posicoesPendentes,CENTAVOS_CENTRO_POR_CICLO,'exposicaoTeorica')
@@ -216,7 +226,8 @@ function projetarSustentabilidade({ posicoesIniciais = 0, periodos } = {}) {
     alertas:[
       'Nao comprova lucro, liquidez, rentabilidade nem viabilidade juridica.',
       'Reservas e parcelas da empresa sao destinos do mesmo valor, nunca nova receita.',
-      'Posicoes pendentes nao equivalem automaticamente a valores legalmente devidos.',
+      'Posicoes pendentes incluem tabuleiro e fila; nao equivalem a pessoas unicas nem automaticamente a dividas exigiveis.',
+      'As posicoes iniciais sao um retrato hipotetico posterior a operacao, nunca 10 mil posicoes no lancamento.'
       'Saques, taxas de saque, reservas antigas, cancelamento tardio e obrigacoes legais nao foram simulados.',
       'Crescimento de filas depende de novas vendas; parar vendas paralisa novos ciclos nesta hipotese.'
     ]
