@@ -42,6 +42,16 @@ function idLocal(fornecedorId, sku) {
   return 'forn-' + identificador;
 }
 
+function montarProduto(fornecedorId, item) {
+  return validarProduto({
+    id: idLocal(fornecedorId, item.sku),
+    nome: item.nome, tipo: 'FISICO', estado: 'RASCUNHO',
+    descricao: item.descricao, precoCentavos: null,
+    entrega: 'FORNECEDOR_INTEGRADO',
+    fotos: [], videoApresentacaoUrl: null, detalhes: []
+  });
+}
+
 class ImportadorCatalogoSimulado {
   constructor({ registroFornecedores, repositorioCatalogo } = {}) {
     if (!registroFornecedores || typeof registroFornecedores.obter !== 'function') {
@@ -56,7 +66,7 @@ class ImportadorCatalogoSimulado {
     this.catalogo = repositorioCatalogo;
   }
 
-  async preparar({ fornecedorId } = {}) {
+  async obterLote(fornecedorId) {
     validarCodigo(fornecedorId, 'Fornecedor');
     const adaptador = this.fornecedores.obter(fornecedorId);
     if (typeof adaptador.listarProdutos !== 'function') {
@@ -66,27 +76,25 @@ class ImportadorCatalogoSimulado {
     if (!Array.isArray(resultado) || resultado.length > MAX_ITENS) {
       throw new Error('Resposta de fornecedor invalida ou excede limite do lote');
     }
+    const vistos = new Set();
+    const infos = resultado.map(item => {
+      const valido = validarItem(item);
+      if (vistos.has(valido.sku)) throw new Error('SKU duplicado no lote do fornecedor');
+      vistos.add(valido.sku);
+      return valido;
+    }).sort((a, b) => a.sku.localeCompare(b.sku));
 
-    // Toda a resposta e validada ANTES de criar um unico rascunho.
-    const encontrados = new Set();
-    const validados = resultado.map(item => {
-      const info = validarItem(item);
-      if (encontrados.has(info.sku)) throw new Error('SKU duplicado no lote do fornecedor');
-      encontrados.add(info.sku);
-      const produto = validarProduto({
-        id: idLocal(fornecedorId, info.sku),
-        nome: info.nome,
-        tipo: 'FISICO',
-        estado: 'RASCUNHO',
-        descricao: info.descricao,
-        precoCentavos: null,
-        entrega: 'FORNECEDOR_INTEGRADO',
-        fotos: [],
-        videoApresentacaoUrl: null,
-        detalhes: []
-      });
-      return { sku: info.sku, produto };
-    });
+    // Vincula a confirmacao ao conteudo exato do lote visualizado.
+    const revisaoLote = createHash('sha256').update(
+      JSON.stringify({ fornecedorId, infos })
+    ).digest('hex');
+    return { revisaoLote, itens: infos.map(info => ({
+      sku: info.sku, produto: montarProduto(fornecedorId, info)
+    })) };
+  }
+
+  async preparar({ fornecedorId } = {}) {
+    const { revisaoLote, itens: validados } = await this.obterLote(fornecedorId);
 
     const itens = [];
     for (const info of validados) {
@@ -103,39 +111,23 @@ class ImportadorCatalogoSimulado {
       modo: 'IMPORTACAO_SIMULADA_SEM_VENDAS',
       fornecedorId,
       limiteLote: MAX_ITENS,
+      revisaoLote,
       itens
     };
   }
 
-  async aplicar({ fornecedorId, confirmacao } = {}) {
+  async aplicar({ fornecedorId, revisaoLote, confirmacao } = {}) {
     if (confirmacao !== MARCADOR_CONFIRMACAO) {
       throw new Error('Confirmacao de importacao de laboratorio obrigatoria');
     }
-    validarCodigo(fornecedorId, 'Fornecedor');
-
-    // Reconsulta o parceiro; o plano pode ficar desatualizado entre as chamadas.
-    const adaptador = this.fornecedores.obter(fornecedorId);
-    if (typeof adaptador.listarProdutos !== 'function') {
-      throw new Error('Fornecedor ainda nao oferece listagem de catalogo');
+    if (typeof revisaoLote !== 'string' || !/^[a-f0-9]{64}$/.test(revisaoLote)) {
+      throw new Error('Revisao do lote aprovada e obrigatoria');
     }
-    const lista = await adaptador.listarProdutos();
-    if (!Array.isArray(lista) || lista.length > MAX_ITENS) {
-      throw new Error('Resposta de fornecedor invalida ou excede limite do lote');
+    const lote = await this.obterLote(fornecedorId);
+    if (lote.revisaoLote !== revisaoLote) {
+      throw new Error('Lote mudou depois da previa: revise antes de importar');
     }
-    const skus = new Set();
-    const produtos = lista.map(item => {
-      const valido = validarItem(item);
-      if (skus.has(valido.sku)) throw new Error('SKU duplicado no lote do fornecedor');
-      skus.add(valido.sku);
-      return validarProduto({
-        id: idLocal(fornecedorId, valido.sku),
-        nome: valido.nome,
-        tipo:'FISICO', estado:'RASCUNHO',
-        descricao: valido.descricao, precoCentavos: null,
-        entrega:'FORNECEDOR_INTEGRADO',
-        fotos:[], videoApresentacaoUrl:null, detalhes:[]
-      });
-    });
+    const produtos = lote.itens.map(item => item.produto);
 
     let criados = 0;
     let ignorados = 0;
