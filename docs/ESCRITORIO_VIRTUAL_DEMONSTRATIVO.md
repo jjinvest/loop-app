@@ -84,6 +84,65 @@ A regra está documentada em
 Ainda não existe cadastro real nem verificação
 de CPF; **nenhum bloqueio real foi ativado**.
 
+## Nova etapa: comparar a tela com o motor existente
+
+A prévia preserva o **modo estático anterior** e acrescenta,
+de forma opcional, **"Exemplo calculado pelo motor de filas e
+tabuleiro"**. Ambos usam participantes fictícios e não
+alteram a aplicação pública.
+
+O cenário alternativo é criado no backend local com
+`SimuladorLoop`: seis posições iniciais, cinco compras/eventos
+fictícios adicionais, duas indicações validadas com horários
+de teste, e um único giro. O resultado é lido pelo
+adaptador `src/laboratorio/cenario-escritorio-motor.js`:
+
+- `simulador.estado().filas.A/B` fornece as posições nas filas;
+- `simulador.estado().tabuleiro` fornece centro e cinco vagas;
+- `simulador.tabuleiro.ciclosConcluidos` fornece as posições
+  que já saíram do centro e foram concluídas;
+- `simulador.filas.informacoesParticipante()` fornece
+  **somente a quantidade simulada** de indicações do titular.
+
+A projeção é **somente leitura**: a consulta não executa
+novo giro, não cria posição ou indicação e não confirma
+compras, saldos nem pagamentos. As posições são extraídas
+uma vez do mesmo estado e verificadas contra identificadores
+duplicados e o limite de cinco ativas por titular.
+
+No exemplo do motor, a conta fictícia A possui quatro
+posições ativas e uma concluída, liberando uma vaga;
+a B possui três posições ativas, com uma indicação
+fictícia registrada; a C possui duas posições ativas
+e uma indicação; a D possui uma posição ativa. Nenhuma
+conta excede cinco vagas ativas.
+
+A página apresenta o ciclo do tabuleiro e a contagem
+das indicações apenas no novo modo. **A ordem das filas
+3A/1B e a regra de desempate são do próprio motor
+existente; não foram copiadas ou reinventadas na UI.**
+Os cinco eventos fictícios que alimentaram o ciclo
+têm identificadores de venda associados às novas
+posições fictícias; não existem eventos financeiros
+ou logísticos reais.
+
+### Endpoint adicional
+
+`GET /api/admin/escritorio-demo/motor/:id` exige a mesma
+credencial local de testes. Retorna somente os dados
+do titular fictício solicitado e não permite escritas.
+O endpoint original
+`GET /api/admin/escritorio-demo/:id` permanece funcionando
+inalterado com a amostra estática. O servidor público
+não monta nenhum dos dois.
+
+`test/escritorio-integrado-motor.test.js` verifica
+os giros, posições, histórico, indicação, ausência
+de mutação por consulta, isolamento do laboratório
+e que a interface estática anterior continua
+disponível. Esta etapa não define uma nova regra
+de negócio nem autenticação de clientes reais.
+
 ## APIs locais e separação de dados
 
 - `GET /api/admin/escritorio-demo`:
