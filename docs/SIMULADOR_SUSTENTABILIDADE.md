@@ -5,6 +5,37 @@
 > capacidade de liquidar saques nem legitimidade de contemplacoes.
 > Nao usa dados de clientes e nao movimenta dinheiro ou filas reais.
 
+## ALERTA: o modelo comercial de intermediacao ainda nao esta parametrizado
+
+O idealizador esclareceu que o LOOP quer atuar primordialmente como
+**vitrine/intermediador**, sem comprar mercadorias e sem administrar
+estoque, frete ou entrega. Nessa modalidade, o vendedor efetivo
+pode ser o distribuidor, que recebe o pagamento, e o LOOP pode
+ter **somente a comissao ou remuneracao de intermediação**
+como receita, de acordo com contrato.
+
+ATENCAO: os exemplos abaixo **supõem recebimento integral do
+preco de venda e subtracao de custo da mercadoria**.
+Eles nao representam automaticamente a economia de uma loja
+que apenas encaminha o comprador ao checkout do parceiro.
+Em intermediacao pura, o valor total da mercadoria **nao e
+receita propria do LOOP**. Nao basta zerar o campo
+`custoFornecedorCentavos`, pois isso superestimaria a margem.
+
+O calculo agregado de crescimentos das posicoes depende do
+numero de vendas validas, nao de quem recebe o preco. Mas
+a distribuicao financeira proposta de R$100 por venda **depende**
+de qual fluxo efetivamente transfere recursos ao LOOP
+e de validação legal, comercial e contratual. Ate esclarecer
+quem recebe o pagamento, o modo de comissao/intermediacao
+nao deve ser simulado como se o preco total fosse caixa do LOOP.
+
+Proxima revisao do simulador: parametrizar modalidades
+`INTERMEDIACAO_COMISSAO` versus `VENDA_EM_NOME_PROPRIO`,
+com fonte de fundos, comissao, custos efetivos e tributos
+da atividade, sem pressupor que a comissao seja suficiente
+para cobrir a parcela interna de R$100 ou pagamentos futuros.
+
 ## Objetivo
 
 A ideia de uma empresa enxuta pela terceirizacao da logistica e
