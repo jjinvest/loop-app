@@ -7,6 +7,8 @@ const path = require('node:path');
 const { RepositorioCatalogoSQLite } = require('../domain/repositorio-catalogo-sqlite');
 const { criarRouterCatalogo } = require('../routes/catalogo');
 const { criarRouterAdminCatalogo, localSeguro } = require('../routes/admin-catalogo-laboratorio');
+const { VinculosFornecedoresSQLite } = require('../domain/vinculos-fornecedores-sqlite');
+const { criarRouterVinculosLaboratorio } = require('../routes/admin-vinculos-laboratorio');
 
 function criarAppAdminLaboratorio({ repositorio, segredo } = {}) {
   if (process.env.NODE_ENV === 'production') {
@@ -24,6 +26,10 @@ function criarAppAdminLaboratorio({ repositorio, segredo } = {}) {
     res.set('Content-Security-Policy',
       "default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self'; connect-src 'self'; base-uri 'none'; form-action 'self'; frame-ancestors 'none'");
     next();
+  }
+  if (repositorio instanceof RepositorioCatalogoSQLite) {
+    const vinculos = new VinculosFornecedoresSQLite({ repositorioCatalogo: repositorio });
+    app.use('/api/admin', criarRouterVinculosLaboratorio({ repositorio, vinculos, segredo }));
   }
   app.use('/api/admin', criarRouterAdminCatalogo({ repositorio, segredo }));
   app.get('/admin', somenteLocal, (req, res) => {
