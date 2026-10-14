@@ -21,7 +21,7 @@ class MotorFilas {
   }
 
   informacoesParticipante(participanteId) {
-    return this.indicacoes.get(String(participanteId)) || { quantidade: 0, primeiroConviteEm: null, ordemPrimeiroConvite: Infinity };
+    return this.indicacoes.get(String(participanteId)) || { quantidade: 0, ultimoConviteEm: null, ordemUltimoConvite: Infinity };
   }
 
   registrarPosicao({ nome, participanteId, vendaId } = {}) {
@@ -57,8 +57,8 @@ class MotorFilas {
       const na = this.informacoesParticipante(a.participanteId);
       const nb = this.informacoesParticipante(b.participanteId);
       return (nb.quantidade - na.quantidade)
-        || String(na.primeiroConviteEm).localeCompare(String(nb.primeiroConviteEm))
-        || (na.ordemPrimeiroConvite - nb.ordemPrimeiroConvite)
+        || String(na.ultimoConviteEm).localeCompare(String(nb.ultimoConviteEm))
+        || (na.ordemUltimoConvite - nb.ordemUltimoConvite)
         || (a.id - b.id);
     });
   }
@@ -75,9 +75,9 @@ class MotorFilas {
       return { repetida: true, promovidas: [], quantidade: this.informacoesParticipante(chave).quantidade };
     }
 
-    // O desempate usa o horario do PRIMEIRO convite valido, nunca o horario
-    // de conquista da segunda/terceira indicacao. convidouEm deve vir
-    // exclusivamente de um evento confiavel do servidor (nao do navegador).
+    // Em empate no total de indicacoes, ganha quem fez PRIMEIRO o ultimo
+    // convite desse total (ex.: o 3o convite, se ambos tiverem tres).
+    // Horario deve ter origem confiavel, jamais arbitrado pelo navegador.
     const marca = convidouEm === undefined ? this.relogio() : convidouEm;
     if (typeof marca !== 'string' || !/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?(?:Z|[+-]\d{2}:\d{2})$/.test(marca)
         || Number.isNaN(Date.parse(marca))) {
@@ -86,11 +86,13 @@ class MotorFilas {
     const horario = new Date(marca).toISOString();
     const anterior = this.informacoesParticipante(chave);
     const ordemEvento = ++this.evento;
-    const conviteMaisAntigo = !anterior.primeiroConviteEm || horario < anterior.primeiroConviteEm;
+    // Um evento antigo pode ser validado depois de outro mais recente.
+    // O ultimo convite cronologico e a maior data/hora entre os validos.
+    const conviteMaisRecente = !anterior.ultimoConviteEm || horario > anterior.ultimoConviteEm;
     const novo = {
       quantidade: anterior.quantidade + 1,
-      primeiroConviteEm: conviteMaisAntigo ? horario : anterior.primeiroConviteEm,
-      ordemPrimeiroConvite: conviteMaisAntigo ? ordemEvento : anterior.ordemPrimeiroConvite
+      ultimoConviteEm: conviteMaisRecente ? horario : anterior.ultimoConviteEm,
+      ordemUltimoConvite: conviteMaisRecente ? ordemEvento : anterior.ordemUltimoConvite
     };
     this.indicacoes.set(chave, novo);
     this.indicacoesProcessadas.add(eventoId);
