@@ -39,6 +39,22 @@ O atendimento ao cliente e a gestao de reclamacoes/reembolsos
 que sejam de responsabilidade do vendedor continuam necessarios,
 ainda que a execucao fisica seja terceirizada.
 
+## Premissas financeiras e testes pendentes
+
+O idealizador descreveu uma estrutura que busca ser complexa nas regras,
+mas enxuta na operacao gracas a fornecedores e convenios. As premissas
+sobre cinco vendas por ciclo, tres parcelas ao centro, duas alocadas
+a empresa, margens comerciais de produtos com precos variados,
+reservas, limites de saque, taxas propostas e travas futuras estao
+registradas em `docs/PREMISSAS_FINANCEIRAS_E_RISCOS.md`.
+
+Essas premissas ainda **nao provam lucro liquido, liquidez ou
+sustentabilidade da fila**. O eventual modulo financeiro deve
+ser isolado, versionado, auditavel, testado sob queda de vendas,
+reembolsos e crescimento das posicoes, e so deve operar de verdade
+apos parecer juridico e validacao contabil. Nenhuma posicao
+administrativa ficticia gera recursos financeiros por si so.
+
 ## Pontos de substituicao ja iniciados
 
 - `RepositorioCatalogoMemoria` oferece `listar()`, `buscar()`,
