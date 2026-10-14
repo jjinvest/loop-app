@@ -37,6 +37,12 @@ async function requisitar(caminho, options = {}) {
   });
   const dados = await resposta.json().catch(() => ({}));
   if (!resposta.ok) {
+    if (dados.erro === 'FORNECEDOR_SKU_JA_UTILIZADO') {
+      throw new Error('Este SKU já está vinculado a outro produto. Confira fornecedor e código.');
+    }
+    if (dados.erro === 'CONFLITO_FORNECEDOR') {
+      throw new Error('O fornecedor foi alterado em outra tela. Abra o produto novamente.');
+    }
     if (resposta.status === 409) throw new Error('Este produto foi alterado em outra tela. Recarregue antes de salvar.');
     if (resposta.status === 401 || resposta.status === 403) throw new Error('Chave incorreta ou acesso local não permitido.');
     throw new Error(dados.mensagem || dados.erro || 'Não foi possível concluir a operação.');
