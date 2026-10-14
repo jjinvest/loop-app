@@ -70,6 +70,11 @@ automaticamente barata ou sem migracoes.
   cria rascunhos, vinculos e seus historicos **na mesma transacao**.
   Produtos ja cadastrados sao preservados; vinculos ausentes ou trocados
   sao sinalizados para revisao manual. Nao existe sincronizacao real.
+- O **painel local de laboratorio** recebeu uma interface de previa de
+  importacao: dois fornecedores ficticios, identificacao dos produtos
+  novos, confirmacao explicita e retorno dos rascunhos gravados.
+  Rotas administrativas isoladas revalidam o hash antes de aplicar
+  o lote. `docs/IMPORTACAO_CATALOGO_SIMULADA.md` descreve os limites.
 - `docs/INTEGRACAO_FORNECEDORES.md` estabelece o fluxo futuro de pedidos
   e o que depende da API real do parceiro.
 
