@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Produto — LOOP</title>
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+  <header>
+    <div>
+      <h1>LOOP</h1>
+      <small>Escritório Virtual</small>
+    </div>
+    <a href="/" class="voltar-loja">← Voltar à loja</a>
+  </header>
+  <main>
+    <section class="painel detalhe-produto" aria-labelledby="tituloProduto">
+      <p class="aviso-demo">Vitrine demonstrativa: não é possível comprar ou pagar nesta versão.</p>
+      <p id="produtoStatus" role="status" aria-live="polite">Carregando informações do produto...</p>
+      <div id="produtoDetalhes" hidden>
+        <div class="detalhe-grid">
+          <div>
+            <div id="produtoFotoPrincipal" class="produto-foto-grande"></div>
+            <div id="produtoMiniaturas" class="produto-miniaturas"></div>
+          </div>
+          <div class="detalhe-informacoes">
+            <span id="produtoTipo" class="produto-tipo"></span>
+            <h2 id="tituloProduto"></h2>
+            <p id="produtoDescricao"></p>
+            <p id="produtoPreco" class="detalhe-preco"></p>
+            <p id="produtoEntrega"></p>
+            <ul id="produtoCaracteristicas"></ul>
+            <div id="produtoVideo"></div>
+            <button type="button" disabled class="botao-inativo">Compra indisponível nesta prévia</button>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+  <script src="/js/produto.js"></script>
+</body>
+</html>
