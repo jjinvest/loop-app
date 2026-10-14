@@ -86,7 +86,7 @@ test('validacoes de produto impedem origem de foto insegura, video arbitrario e 
   assert.throws(()=>validarProduto({...base,fotos:['https://site-nao-confiavel.com/teste.jpg']}),/Fotos/);
   assert.throws(()=>validarProduto({...base,videoApresentacaoUrl:'javascript:alert(1)'}),/Video|links HTTPS/);
   assert.throws(()=>validarProduto({...base,videoApresentacaoUrl:'https://example.com/player'}),/Somente links/);
-  assert.throws(()=>validarProduto({...base,precoCentavos:999.90}),/Preco/);
+  assert.throws(()=>validarProduto({...base,precoCentavos:999.90}),/[Pp]reco/);
   assert.throws(()=>validarProduto({...base,entrega:'TRANSPORTADORA'}),/entrega/);
   assert.throws(()=>validarProduto({...base,tipo:'PDF'}),/entrega/);
 });
