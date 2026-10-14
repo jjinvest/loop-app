@@ -11,6 +11,26 @@ Nao ha cliente real, CPF, endereco, preco, numerario, nota fiscal,
 rastreamento de transportadora, API de distribuidores, evento financeiro
 confiavel ou webhook. Nenhuma posicao e criada na fila.
 
+## Limite operacional definido para producao
+
+**LOOP e uma vitrine comercial e uma ponte de dados, nao uma central
+de logistica.** A empresa parceira administra e executa todo o processo
+fisico (estoque, embalagem, postagem, transportadora e entrega). O LOOP
+somente envia os dados necessarios do pedido e recebe eventos de
+rastreamento/ocorrencias pela integracao autorizada, repassando essa
+informacao ao cliente.
+
+Na operacao real, o sistema de origem do parceiro sera a fonte dos
+eventos de expedicao e entrega. O modulo LOOP devera fazer
+**espelhamento de status**, guardando origem, ID externo do pedido,
+ID externo do evento, data, recebimento, idempotencia e conciliacao.
+O LOOP podera solicitar ao parceiro uma verificacao ou cancelamento,
+mas nao determinar uma entrega real pelo painel administrativo.
+
+Os comandos manuais do prototipo sao **somente simulacao**, nao um
+modelo de gestao de frete. A terceirizacao do frete nao exclui
+responsabilidades legais do vendedor diante do consumidor.
+
 ## Estados de teste
 
 Cada pedido de laboratorio passa, quando aplicavel, pelas seguintes etapas:
