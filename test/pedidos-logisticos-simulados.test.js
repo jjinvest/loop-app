@@ -141,3 +141,30 @@ test('não permite confirmação de pedido digitando campos desconhecidos pela A
   assert.throws(()=>banco.cadastrar({...dados,sku:'https://site'}),/sku invalido/);
   assert.equal(banco.listar().length,0);
 });
+
+test('apos entrega, devolucao e reembolso ficticio continuam registrados',t=>{
+  const {banco}=criarBanco(t);
+  banco.cadastrar(dados);
+  const passos=[
+    'CONFIRMAR_PAGAMENTO_SIMULADO',
+    'REPASSAR_PEDIDO_SIMULADO',
+    'INICIAR_SEPARACAO',
+    'REGISTRAR_TRANSPORTE',
+    'REGISTRAR_ENTREGA',
+    'SOLICITAR_DEVOLUCAO',
+    'SOLICITAR_REEMBOLSO_SIMULADO',
+    'CONFIRMAR_DEVOLUCAO',
+    'REGISTRAR_REEMBOLSO_SIMULADO'
+  ];
+  let revisao=1;
+  for(const tipo of passos) {
+    const r=evento(banco,tipo,revisao,revisao);
+    assert.equal(r.pedido.revisao,++revisao);
+  }
+  const final=banco.buscar(dados.pedidoId);
+  assert.equal(final.status,'DEVOLVIDO');
+  assert.equal(final.reembolso,'REGISTRADO_SIMULADO');
+  assert.equal(banco.historico(dados.pedidoId).length,10);
+  assert.equal(final.valorCentavos,undefined);
+  assert.equal(final.valorRetido,undefined);
+});
