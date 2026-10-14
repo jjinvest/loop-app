@@ -47,11 +47,12 @@ class RepositorioCatalogoSQLite {
     this.banco = new DatabaseSync(caminho);
     try {
       this.banco.exec('PRAGMA busy_timeout=5000;');
+      this.banco.exec('PRAGMA foreign_keys=ON;');
       this.banco.exec('PRAGMA journal_mode=WAL;');
       this.banco.exec('PRAGMA synchronous=FULL;');
 
       const versao = this.banco.prepare('PRAGMA user_version').get().user_version;
-      if (versao !== 0 && versao !== 1 && versao !== 2) {
+      if (versao !== 0 && versao !== 1 && versao !== 2 && versao !== 3) {
         throw new Error('Versao do catalogo SQLite nao suportada');
       }
 
@@ -114,6 +115,56 @@ class RepositorioCatalogoSQLite {
           BEFORE DELETE ON catalogo_historico
           BEGIN SELECT RAISE(ABORT, 'historico imutavel'); END;
       `);
+      // Migracao v2 -> v3: vinculo externo independente do cadastro
+      // publico. Trocar distribuidor nao modifica o produto LOOP.
+      if (versao < 3) {
+        this.banco.exec('BEGIN IMMEDIATE;');
+        try {
+          this.banco.exec(`
+            CREATE TABLE catalogo_vinculos_fornecedor (
+              produto_id TEXT PRIMARY KEY NOT NULL
+                REFERENCES catalogo_produtos(id) ON DELETE RESTRICT,
+              fornecedor_id TEXT,
+              sku TEXT,
+              revisao INTEGER NOT NULL CHECK (revisao >= 1),
+              atualizado_em TEXT NOT NULL,
+              CHECK ((fornecedor_id IS NULL AND sku IS NULL)
+                  OR (fornecedor_id IS NOT NULL AND sku IS NOT NULL))
+            );
+            CREATE UNIQUE INDEX idx_catalogo_vinculos_parceiro_sku
+              ON catalogo_vinculos_fornecedor (fornecedor_id, sku)
+              WHERE fornecedor_id IS NOT NULL;
+            CREATE TABLE catalogo_vinculos_historico (
+              sequencia INTEGER PRIMARY KEY AUTOINCREMENT,
+              produto_id TEXT NOT NULL,
+              revisao INTEGER NOT NULL CHECK (revisao >= 1),
+              acao TEXT NOT NULL CHECK
+                (acao IN ('VINCULADO','SUBSTITUIDO','DESATIVADO')),
+              antes_fornecedor TEXT,
+              antes_sku TEXT,
+              depois_fornecedor TEXT,
+              depois_sku TEXT,
+              ocorrido_em TEXT NOT NULL,
+              UNIQUE (produto_id, revisao),
+              FOREIGN KEY(produto_id) REFERENCES catalogo_produtos(id)
+                ON DELETE RESTRICT
+            );
+            CREATE INDEX idx_catalogo_vinculos_historico_produto
+              ON catalogo_vinculos_historico (produto_id, revisao);
+            CREATE TRIGGER catalogo_vinculos_historico_bloqueia_update
+              BEFORE UPDATE ON catalogo_vinculos_historico
+              BEGIN SELECT RAISE(ABORT, 'historico vinculos imutavel'); END;
+            CREATE TRIGGER catalogo_vinculos_historico_bloqueia_delete
+              BEFORE DELETE ON catalogo_vinculos_historico
+              BEGIN SELECT RAISE(ABORT, 'historico vinculos imutavel'); END;
+            PRAGMA user_version=3;
+          `);
+          this.banco.exec('COMMIT;');
+        } catch (erro) {
+          this.banco.exec('ROLLBACK;');
+          throw erro;
+        }
+      }
       if (caminho !== ':memory:') fs.chmodSync(caminho, 0o600);
     } catch (erro) {
       this.banco.close();
