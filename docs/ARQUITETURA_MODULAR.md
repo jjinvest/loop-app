@@ -55,6 +55,22 @@ reembolsos e crescimento das posicoes, e so deve operar de verdade
 apos parecer juridico e validacao contabil. Nenhuma posicao
 administrativa ficticia gera recursos financeiros por si so.
 
+## Laboratorio de sustentabilidade das filas
+
+`projetarSustentabilidade()` analisa entradas por periodo, custo de
+fornecedor, impostos, taxas de pagamento, despesas, referencia de
+R$ 100 por venda, destino R$ 300/R$ 200 por ciclo, estoque de posicoes
+pendentes e estornos do mesmo periodo. A ferramenta calcula **cenarios
+hipoteticos** e nao faz credito ou pagamento. O relatorio roda com
+`npm run simular:sustentabilidade`, inteiramente offline.
+
+O calculo considera a preparacao inicial do tabuleiro com seis
+posicoes e permite testar 5 mil ou 10 mil pendentes com queda ou
+paralisacao de novas vendas. A margem apos reservar a parcela
+da fila e separada das parcelas de centro/empresa, evitando
+contar o mesmo dinheiro duas vezes. Ver
+`docs/SIMULADOR_SUSTENTABILIDADE.md`.
+
 ## Pontos de substituicao ja iniciados
 
 - `RepositorioCatalogoMemoria` oferece `listar()`, `buscar()`,
