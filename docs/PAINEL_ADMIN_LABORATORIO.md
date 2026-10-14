@@ -59,6 +59,12 @@ O arquivo SQLite permanece no computador local e é ignorado pelo Git.
 - **Não há upload de fotos**; o formulário aceita apenas caminhos locais
   autorizados de imagens já armazenadas em `/imagens/catalogo/`.
 - O cliente nunca vê rascunhos, chaves, custos internos ou revisões.
+- Em produtos fisicos ja salvos, a secao de fornecedor permite vincular
+  identificador de parceiro + SKU e alterar/desativar essa associacao.
+  O historico do fornecedor usa tabela separada do historico comercial
+  do produto; essas operacoes nunca habilitam checkout.
+- Essa tela usa os endpoints internos de `admin-vinculos-laboratorio.js`
+  com a mesma chave temporaria. Cursos PDFs nao exibem vinculo logístico.
 
 ## Bloqueios presentes
 
@@ -92,6 +98,7 @@ Arquivos:
 - `src/laboratorio/painel-catalogo.css`
 - `src/laboratorio/painel-catalogo.js`
 - `src/routes/admin-catalogo-laboratorio.js`
+- `src/routes/admin-vinculos-laboratorio.js`
 - `test/painel-admin-laboratorio.test.js`
 - `test/auditoria-catalogo.test.js`
 
