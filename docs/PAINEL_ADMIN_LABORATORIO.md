@@ -42,6 +42,18 @@ O arquivo SQLite permanece no computador local e é ignorado pelo Git.
 - Reabrir o banco e continuar de onde parou.
 - Rejeitar atualização antiga com HTTP 409, evitando sobrescrever edição
   de outra pessoa sem aviso.
+- Consultar em **Histórico de alterações** as revisões, datas e campos
+  modificados. A criação e cada edição gravam uma linha no histórico
+  na **mesma transação SQLite** que altera o produto.
+- O histórico só está acessível pela API local autenticada
+  `GET /api/admin/produtos/:id/historico`; não fica na vitrine pública.
+- Bancos antigos de laboratório com esquema v1 migram para **v2**:
+  cada produto existente ganha o marco `IMPORTADO_V1` na revisão atual;
+  o sistema **não inventa versões antigas que nunca foram registradas**.
+- Disparadores SQLite impedem atualizar/apagar diretamente linhas do
+  histórico por operações comuns. Isso **não é à prova de adulteração**
+  por quem administra o banco: produção requer backups, permissões,
+  identidade do operador e auditoria externa.
 - O identificador do produto não é alterado após o cadastro. Não existe
   exclusão direta nesta etapa; voltar a rascunho retira da vitrine.
 - **Não há upload de fotos**; o formulário aceita apenas caminhos locais
@@ -61,13 +73,14 @@ O arquivo SQLite permanece no computador local e é ignorado pelo Git.
 
 Essas proteções são apropriadas **para ensaios locais somente**. Um painel
 administrativo real precisará login por identidade, MFA, sessão segura,
-controle de permissões, proteção CSRF, registros de auditoria, política
+controle de permissões, auditoria com identidade de cada operador, proteção CSRF, política
 de upload de arquivos, operação com HTTPS e revisão de segurança.
 
 ## Arquitetura para futura troca
 
 `src/routes/admin-catalogo-laboratorio.js` recebe uma implementação de
-repositório com `listar(), buscarRegistro(), salvar(), atualizar()`.
+repositório com `listar(), buscarRegistro(), salvar(), atualizar()`
+e, para auditoria, `historico(id)`.
 `src/routes/catalogo.js` usa `listar(), buscar()`. Assim a loja e o
 administrador podem compartilhar **uma mesma fonte de dados substituível**.
 A próxima versão pode usar PostgreSQL ou outro banco sem alterar os nomes
@@ -80,6 +93,7 @@ Arquivos:
 - `src/laboratorio/painel-catalogo.js`
 - `src/routes/admin-catalogo-laboratorio.js`
 - `test/painel-admin-laboratorio.test.js`
+- `test/auditoria-catalogo.test.js`
 
 **Sem integração com Shopee/distribuidores, sem checkout, sem entrega de
 PDFs, sem cadastro de usuários reais e sem pagamentos.**
