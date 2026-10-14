@@ -44,7 +44,11 @@ Cada evento tem identificador proprio para evitar repeticao. O ultimo (quinto) e
 **Nenhum destes motores autentica compras reais, confirma pagamentos, libera saldos ou realiza contemplacoes.**
 
 - O `SimuladorLoop` nao e exposto em rotas HTTP publicas; testes invocam o codigo diretamente.
-- O prototipo usa memoria volatil, portanto reiniciar o servidor perde seus dados.
+- O prototipo usa memoria volatil por padrao; reiniciar o servidor perde seus dados se nao houver captura externa.
+- O `SimuladorLoop` agora fornece `exportarSnapshot()` e `SimuladorLoop.restaurarSnapshot(snapshot)`, que permitem recuperar um estado serializado como JSON **apenas em simulacoes controladas**.
+- Os snapshots sao versionados, validados no carregamento e preservam IDs de vendas ja processadas para evitar repeticao apos a restauracao. Ha testes automatizados para pausas, retomadas, ciclos concluidos, arquivo temporario e rejeicao de dados corrompidos.
+- **Nao ha gravacao automatica em disco ou banco de dados.** A persistencia definitiva devera ser transacional, autenticada, resiliente a falhas e protegida contra acesso indevido.
+- Snapshots de simulacoes podem conter nomes e identificadores; **nao os exponha em endpoints publicos, nao os publique no GitHub e nao os use para dados reais de clientes**.
 - Em producao, o banco transacional precisa registrar vendas confirmadas, ids unicos, participantes e seus CPFs, indicacoes e timestamps confiaveis; so entao gerar posicoes e eventos de ciclo com idempotencia.
 - A catraca publica antiga e o motor novo ainda **nao** foram interligados. O fluxo end-to-end foi testado no orquestrador isolado; isto nao significa que a interface existente ja execute ciclos.
 - O financeiro e a autorizacao administrativa precisam ser implementados e auditados antes de qualquer liberacao real.
