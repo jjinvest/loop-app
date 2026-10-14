@@ -5,31 +5,31 @@
 > capacidade de liquidar saques nem legitimidade de contemplacoes.
 > Nao usa dados de clientes e nao movimenta dinheiro ou filas reais.
 
-## Fluxo comercial pretendido — corrigido apos esclarecimento
+## Modelo comercial confirmado: vendedor em dropshipping
 
-O LOOP pretende **receber o valor do cliente na propria plataforma,
-pagar ao distribuidor o preco contratado e oferecer o produto pela
-vitrine**. O fornecedor e responsavel pela logistica fisica.
-Nao ha compra antecipada para estoque, mas ha recebimento,
-repasse comercial e possiveis responsabilidades da plataforma.
+No modelo pretendido pelo idealizador, o LOOP e
+**a loja vendedora**. O checkout recebe o pagamento
+do cliente no LOOP; a loja registra o custo contratado
+e repassa ao distribuidor a quantia devida para atender
+a venda. Estoque, transporte e entrega sao
+operacoes do fornecedor, mas **o custo do produto
+precisa constar no calculo da loja**.
 
-Exemplo do idealizador: produto vendido por R$250, fornecedor
-recebe R$50, parcela de referencia da fila e R$100. A
-diferenca de R$100 e **valor bruto residual hipotetico**,
-antes de tributos, tarifas financeiras, custos, devolucoes e
-outras obrigacoes. Os campos zero em um teste representam
-**custos NAO contemplados**, nao isencao de impostos.
+Exemplos ilustrativos:
+- Venda R$250, fornecedor R$50, referencia fila R$100:
+  sobra comercial BRUTA R$100 antes dos demais custos.
+- Venda R$600, fornecedor R$300, referencia fila R$100:
+  sobra comercial BRUTA R$200 antes dos demais custos.
 
-O preco minimo pretendido de R$100 e atribuido ao produto
-PDF. A venda do PDF a R$100 inteiramente destinada a
-parcela da fila deixa **R$0 de margem comercial residual**
-antes dos outros custos. Isso nao transforma automaticamente
-a alocacao bruta de duas parcelas por ciclo em lucro liquido.
-
-O enquadramento de receita, meio de pagamento, tributos e
-responsabilidade depende de contratos e assessoria juridica
-e contabil. O simulador e um calculo de hipotese, nao
-comprovante de dinheiro liquido disponivel.
+O simulador existente usa o custo do fornecedor,
+alocacao da fila e custos opcionais exemplificativos.
+Assim, seu formato de recebimento integral com repasse
+ao fornecedor e compativel com o dropshipping pretendido,
+mas **ainda nao modela** obrigacoes tributarias reais,
+liquidacao da operadora, devolucoes tardias ou
+compromissos de recebiveis em datas distintas.
+Zerar um custo em teste significa que ele nao
+foi modelado, NAO que a empresa tenha isencao.
 
 ## Objetivo
 
