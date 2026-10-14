@@ -148,7 +148,10 @@ async function conectar() {
     await atualizarProdutos();
     $('areaPainel').hidden = false;
     $('areaImportacao').hidden = false;
+    $('areaPedidosDemo').hidden = false;
     editarFormulario(null);
+    try { await carregarPedidosDemo(); }
+    catch(erro) { mensagemPedidoDemo(erro.message); }
     try { await carregarDistribuidoresDemo(); }
     catch (erro) { $('statusImportacao').textContent = erro.message; }
     mensagem('Painel de teste aberto. Compras continuam desativadas.');
@@ -156,6 +159,8 @@ async function conectar() {
     chaveTemporaria = '';
     $('areaPainel').hidden = true;
     $('areaImportacao').hidden = true;
+    $('areaPedidosDemo').hidden = true;
+    limparPedidosDemo();
     limparPreviaImportacao();
     mensagem(erro.message);
   }
@@ -268,6 +273,8 @@ $('sairAdmin').addEventListener('click', () => {
   $('adminToken').value = '';
   $('areaPainel').hidden = true;
   $('areaImportacao').hidden = true;
+  $('areaPedidosDemo').hidden = true;
+  limparPedidosDemo();
   limparPreviaImportacao();
   $('areaFornecedor').hidden = true;
   $('historicoFornecedor').replaceChildren();
