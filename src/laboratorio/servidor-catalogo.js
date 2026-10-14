@@ -9,6 +9,8 @@ const { criarRouterCatalogo } = require('../routes/catalogo');
 const { criarRouterAdminCatalogo, localSeguro } = require('../routes/admin-catalogo-laboratorio');
 const { VinculosFornecedoresSQLite } = require('../domain/vinculos-fornecedores-sqlite');
 const { criarRouterVinculosLaboratorio } = require('../routes/admin-vinculos-laboratorio');
+const { criarFornecedoresDemonstrativos } = require('./fornecedores-demo');
+const { criarRouterImportacaoLaboratorio } = require('../routes/admin-importacao-laboratorio');
 
 function criarAppAdminLaboratorio({ repositorio, segredo } = {}) {
   if (process.env.NODE_ENV === 'production') {
@@ -30,6 +32,13 @@ function criarAppAdminLaboratorio({ repositorio, segredo } = {}) {
   if (repositorio instanceof RepositorioCatalogoSQLite) {
     const vinculos = new VinculosFornecedoresSQLite({ repositorioCatalogo: repositorio });
     app.use('/api/admin', criarRouterVinculosLaboratorio({ repositorio, vinculos, segredo }));
+    const amostra = criarFornecedoresDemonstrativos();
+    app.use('/api/admin', criarRouterImportacaoLaboratorio({
+      repositorioCatalogo: repositorio,
+      registroFornecedores: amostra.registro,
+      fornecedores: amostra.fornecedores,
+      segredo
+    }));
   }
   app.use('/api/admin', criarRouterAdminCatalogo({ repositorio, segredo }));
   app.get('/admin', somenteLocal, (req, res) => {
