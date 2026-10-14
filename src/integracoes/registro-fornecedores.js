@@ -3,6 +3,8 @@
 // Contrato versionado para futuras APIs de dropshipping.
 // Este registro so consulta dados internos/simulados; nao transmite pedidos
 // nem enderecos, nao tem credenciais e nao faz chamadas HTTP.
+// Adaptadores podem implementar listarProdutos() como capacidade OPCIONAL;
+// os metodos de estoque/status do contrato v1 permanecem inalterados.
 const CONTRATO_FORNECEDOR = 1;
 
 function codigo(x, campo) {
