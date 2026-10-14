@@ -12,6 +12,7 @@ const { criarRouterVinculosLaboratorio } = require('../routes/admin-vinculos-lab
 const { criarFornecedoresDemonstrativos } = require('./fornecedores-demo');
 const { criarRouterImportacaoLaboratorio } = require('../routes/admin-importacao-laboratorio');
 const { criarRouterPedidosLogisticaDemo } = require('../routes/admin-pedidos-logistica-demo');
+const { criarRouterEscritorioDemo } = require('../routes/admin-escritorio-demo');
 
 function criarAppAdminLaboratorio({ repositorio, segredo } = {}) {
   if (process.env.NODE_ENV === 'production') {
@@ -43,8 +44,18 @@ function criarAppAdminLaboratorio({ repositorio, segredo } = {}) {
   }
   app.use('/api/admin', criarRouterAdminCatalogo({ repositorio, segredo }));
   app.use('/api/admin', criarRouterPedidosLogisticaDemo({ segredo }));
+  app.use('/api/admin', criarRouterEscritorioDemo({ segredo }));
   app.get('/admin', somenteLocal, (req, res) => {
     res.sendFile(path.join(__dirname, 'painel-catalogo.html'));
+  });
+  app.get('/admin/escritorio-demo', somenteLocal, (req, res) => {
+    res.sendFile(path.join(__dirname, 'escritorio-demo.html'));
+  });
+  app.get('/admin/escritorio-demo.js', somenteLocal, (req, res) => {
+    res.type('application/javascript').sendFile(path.join(__dirname,'escritorio-demo.js'));
+  });
+  app.get('/admin/escritorio-demo.css', somenteLocal, (req, res) => {
+    res.type('text/css').sendFile(path.join(__dirname,'escritorio-demo.css'));
   });
   app.get('/admin/painel.js', somenteLocal, (req, res) => {
     res.type('application/javascript').sendFile(path.join(__dirname,'painel-catalogo.js'));
