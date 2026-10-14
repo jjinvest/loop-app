@@ -1,5 +1,20 @@
 # Arquitetura modular do LOOP - diretriz de longo prazo
 
+## Identidade e finalidade
+
+O **LOOP e a plataforma principal**, concebida pelo idealizador
+para oferecer oportunidades de renda extra a participantes por
+meio de um ecossistema de comercio, cursos digitais, compras
+recorrentes, historico de participacao, indicacoes e mecanismos
+de filas/tabuleiro. **Dropshipping caracteriza apenas a area
+de vendas de produtos fisicos, nao a identidade do LOOP.**
+
+A proposta de beneficio financeiro associada a novas compras
+e indicacoes deve ser avaliada juridicamente, inclusive por
+risco de piramide, e testada quanto a sustentabilidade antes
+de qualquer promessa comercial ou pagamento real.
+Ver `docs/IDENTIDADE_LOOP.md`.
+
 ## Principio permanente
 
 **Mudar uma parte nao deve obrigar a reconstruir as outras.**
@@ -41,7 +56,8 @@ ainda que a execucao fisica seja terceirizada.
 
 ## Papel comercial e pre-lancamento planejados
 
-O LOOP sera o **vendedor em dropshipping**: a loja
+Na **area comercial de produtos fisicos**, a loja LOOP atua
+como vendedora em dropshipping: a loja
 recebe o pagamento, registra o custo de cada mercadoria,
 repassa o valor contratado ao distribuidor e presta
 atendimento ao comprador. O parceiro executa a
