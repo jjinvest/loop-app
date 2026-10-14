@@ -1,4 +1,5 @@
 const express = require('express');
+const path = require('path');
 
 const healthRouter = require('./routes/health');
 const catracaRouter = require('./routes/catraca');
@@ -14,6 +15,9 @@ app.use('/health', healthRouter);
 app.use('/catraca', catracaRouter);
 app.use('/filas', filasRouter);
 app.use('/participants', participantsRouter);
+
+// Serve a interface web existente do LOOP.
+app.use(express.static(path.join(__dirname, '..', 'public')));
 
 app.get('/', (req, res) => {
   res.json({
