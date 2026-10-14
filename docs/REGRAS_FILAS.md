@@ -11,12 +11,12 @@
 ## Como a fila A e ordenada
 
 1. **Mais indicacoes validas vem primeiro.**
-2. **Empate na quantidade: primeiro quem realizou o primeiro convite valido mais cedo.**
-3. O horario do primeiro convite e um dado imutavel para o desempate. **Nao** se usa o horario em que a pessoa atingiu 2, 3 ou outra quantidade de indicacoes.
-4. O horario precisa ter data, hora, segundos e, quando disponivel, milissegundos, de origem confiavel do servidor.
-5. Se dois registros tiverem o mesmo horario exato, a ordem de processamento confirmada pelo sistema desempata.
+2. **Empate na quantidade: fica na frente quem completou aquela mesma quantidade primeiro.** Se ambos tem 3, vale o horario do 3o convite; se ambos tem 5, vale o do 5o; se ambos tem 10, vale o do 10o; e assim para qualquer quantidade.
+3. **Nao** usar o horario do primeiro convite quando ambos possuem varios convites. Comparar a data e hora do ULTIMO convite valido contabilizado de cada participante (o horario em que concluiu a quantidade empatada).
+4. O registro de horario deve conter data, segundos e, quando disponivel, milissegundos, com origem confiavel no servidor.
+5. Quando os instantes forem identicos ate o milissegundo, usar uma ordem de evento confiavel como desempate residual.
 
-> Exemplo: Joao e Pedro tem 3 indicacoes cada. Joao convidou primeiro as 10:15:20; Pedro, as 10:15:35. Joao fica na frente, mesmo se Pedro completou a terceira indicacao antes.
+> Exemplo: Ana e Bruno tem 10 indicacoes validas cada. Ana concluiu a decima as 14:30:10 e Bruno as 14:35:20. Ana fica na frente, mesmo que Bruno tenha feito seu primeiro convite mais cedo. Se Bruno fizer uma 11a indicacao valida, ele passa a frente por ter uma indicacao a mais.
 
 A validacao de convites pode acontecer depois do momento real do convite; por isso, na futura integracao definitiva, o campo `convidouEm` precisara vir de um **registro confiavel do instante em que o convite foi feito**, nao de horario digitado ou enviado arbitrariamente pelo cliente.
 
