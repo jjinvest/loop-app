@@ -5,26 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>LOOP | Painel de produtos (laboratório)</title>
   <link rel="stylesheet" href="/css/style.css">
-  <style>
-    /* Painel local: melhorias de legibilidade para formularios longos. */
-    main{max-width:1000px}
-    .admin-grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,2fr);gap:16px}
-    .campo{display:flex;flex-direction:column;gap:6px;margin-bottom:12px}
-    .campo label{font-size:.88rem;color:#d2dbe8;font-weight:700}
-    .campo input,.campo select,.campo textarea{background:#101827;color:#fff;border:1px solid #475569;border-radius:10px;font:inherit;padding:12px;width:100%}
-    .campo textarea{min-height:80px;resize:vertical}
-    .duas-colunas{display:grid;grid-template-columns:1fr 1fr;gap:12px}
-    .lista-produtos{display:flex;flex-direction:column;gap:9px}
-    .lista-produtos button{background:#273446;color:#fff;text-align:left;border:1px solid #45546b;width:100%;cursor:pointer}
-    .lista-produtos button:hover{border-color:#ffd400}
-    .ajuda{color:#b6c3d5;font-size:.87rem;line-height:1.5}
-    .estado-admin{color:#f8e1a1;min-height:30px;line-height:1.5}
-    .acoes-admin{display:flex;gap:9px;flex-wrap:wrap}
-    .acoes-admin button{cursor:pointer}
-    .acoes-admin .secundario{background:#35445b;color:#fff}
-    #formProduto[hidden],#areaPainel[hidden]{display:none}
-    @media(max-width:660px){.admin-grid,.duas-colunas{grid-template-columns:1fr}}
-  </style>
+  <link rel="stylesheet" href="/admin/painel.css">
 </head>
 <body>
   <header>
