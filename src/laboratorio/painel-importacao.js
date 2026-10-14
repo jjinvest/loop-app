@@ -114,10 +114,12 @@ async function aplicarPreviaImportacao() {
       })
     });
     limparPreviaImportacao();
-    await atualizarProdutos();
+    let avisoLista = '';
+    try { await atualizarProdutos(); }
+    catch { avisoLista = ' A lista lateral não atualizou; use Atualizar lista.'; }
     statusDaImportacao('Importação de testes concluída: ' + resultado.criados +
       ' novos rascunhos, ' + resultado.ignorados + ' já cadastrados, ' +
-      (resultado.pendentesVinculo || 0) + ' vínculos para revisão manual. Nenhum produto foi colocado à venda.');
+      (resultado.pendentesVinculo || 0) + ' vínculos para revisão manual. Nenhum produto foi colocado à venda.' + avisoLista);
   } catch (erro) {
     limparPreviaImportacao();
     statusDaImportacao('Importação não realizada. Faça nova prévia. ' + erro.message);
