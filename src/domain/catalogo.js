@@ -4,7 +4,11 @@
 // em estoque, preco ofertado ou compra habilitada.
 const TIPOS = Object.freeze(['FISICO', 'PDF']);
 const ESTADOS = Object.freeze(['RASCUNHO', 'PUBLICADO', 'DEMONSTRACAO']);
-const TIPOS_ENTREGA = Object.freeze({ FISICO: 'TRANSPORTADORA', PDF: 'DOWNLOAD_APOS_CONFIRMACAO' });
+// Mercadoria fisica e expedida pelo parceiro, nao pelo escritorio LOOP.
+const TIPOS_ENTREGA = Object.freeze({
+  FISICO: 'FORNECEDOR_INTEGRADO',
+  PDF: 'DOWNLOAD_APOS_CONFIRMACAO'
+});
 
 function validarProduto(produto) {
   if (!produto || typeof produto !== 'object' || Array.isArray(produto)) {
@@ -83,12 +87,12 @@ const MODELOS = [
     nome: 'Produto fisico — modelo demonstrativo',
     tipo: 'FISICO',
     estado: 'DEMONSTRACAO',
-    descricao: 'Modelo de pagina para mercadorias com fotos, caracteristicas, preco, entrega e video opcional de apresentacao.',
+    descricao: 'Modelo de produto fisico vendido na vitrine LOOP e expedido por um fornecedor parceiro conectado por API, quando a integracao for homologada.',
     precoCentavos: null,
-    entrega: 'TRANSPORTADORA',
+    entrega: 'FORNECEDOR_INTEGRADO',
     fotos: [],
     videoApresentacaoUrl: null,
-    detalhes: ['Galeria de fotografias do produto', 'Caracteristicas e descricao detalhada', 'Entrega no endereco do cliente apos compra confirmada']
+    detalhes: ['Fotos e caracteristicas do produto', 'Pedido sera transmitido por integracao autorizada ao fornecedor', 'Fornecedor parceiro cuida da separacao e da entrega']
   }
 ].map(validarProduto);
 
