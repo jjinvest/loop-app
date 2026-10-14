@@ -52,6 +52,9 @@ function criarAppAdminLaboratorio({ repositorio, segredo } = {}) {
   app.get('/admin/importacao.js', somenteLocal, (req, res) => {
     res.type('application/javascript').sendFile(path.join(__dirname, 'painel-importacao.js'));
   });
+  app.get('/admin/pedidos-demo.js', somenteLocal, (req, res) => {
+    res.type('application/javascript').sendFile(path.join(__dirname,'painel-pedidos-demo.js'));
+  });
   app.get('/admin/painel.css', somenteLocal, (req, res) => {
     res.type('text/css').sendFile(path.join(__dirname,'painel-catalogo.css'));
   });
