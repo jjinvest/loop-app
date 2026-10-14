@@ -149,3 +149,24 @@ test('interface inclui controle, historico e JS externo restrito ao laboratorio'
   assert.doesNotMatch(js.data,/chave-de-teste-local-de-pedidos-1234567890000/);
   assert.equal((await req(base,'/pedidos-demo',{token:null})).status,404);
 });
+
+test('painel permite solicitar devolucao apos entrega ficticia',async t=>{
+  const {base}=await lab(t);
+  const id='pedido-demo-001';
+  let rev=1;
+  for(const tipo of [
+    'CONFIRMAR_PAGAMENTO_SIMULADO','REPASSAR_PEDIDO_SIMULADO',
+    'INICIAR_SEPARACAO','REGISTRAR_TRANSPORTE','REGISTRAR_ENTREGA',
+    'SOLICITAR_DEVOLUCAO','SOLICITAR_REEMBOLSO_SIMULADO',
+    'CONFIRMAR_DEVOLUCAO','REGISTRAR_REEMBOLSO_SIMULADO'
+  ]) {
+    const r=await passo(base,id,tipo,rev++);
+    assert.equal(r.status,200);
+  }
+  const pedido=(await estado(base)).pedidos.find(x=>x.pedidoId===id);
+  assert.equal(pedido.status,'DEVOLVIDO');
+  assert.equal(pedido.reembolso,'REGISTRADO_SIMULADO');
+  const historico=await req(base,'/api/admin/pedidos-demo/'+id+'/historico');
+  assert.equal(historico.data.eventos.length,10);
+  assert.equal((await passo(base,id,'CONFIRMAR_PAGAMENTO_SIMULADO',rev)).status,409);
+});
