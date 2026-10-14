@@ -32,6 +32,9 @@ function criarAppAdminLaboratorio({ repositorio, segredo } = {}) {
   app.get('/admin/painel.js', somenteLocal, (req, res) => {
     res.type('application/javascript').sendFile(path.join(__dirname,'painel-catalogo.js'));
   });
+  app.get('/admin/painel.css', somenteLocal, (req, res) => {
+    res.type('text/css').sendFile(path.join(__dirname,'painel-catalogo.css'));
+  });
   app.use('/catalogo', criarRouterCatalogo({ repositorio }));
   app.use(express.static(path.join(__dirname, '..', '..', 'public')));
   return app;
