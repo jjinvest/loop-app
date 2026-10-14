@@ -98,6 +98,27 @@
         </section>
       </div>
     </section>
+    <section id="areaImportacao" class="painel" hidden aria-labelledby="tituloImportacao">
+      <h2 id="tituloImportacao">Importar produtos de distribuidores — demonstração</h2>
+      <p class="aviso-demo">Somente fornecedores fictícios. Esta operação cria rascunhos sem preço, sem checkout e sem conexão com Shopee ou sua franquia.</p>
+      <div class="campo">
+        <label for="fornecedorImportacao">Escolha o distribuidor fictício</label>
+        <select id="fornecedorImportacao"></select>
+      </div>
+      <div class="acoes-admin">
+        <button type="button" id="verPreviaImportacao">Conferir produtos</button>
+        <button type="button" id="limparPreviaImportacao" class="secundario">Limpar prévia</button>
+      </div>
+      <p id="statusImportacao" class="estado-admin" role="status" aria-live="polite"></p>
+      <div id="listaPreviaImportacao" aria-live="polite"></div>
+      <div class="campo">
+        <label>
+          <input type="checkbox" id="aceitarImportacao" disabled>
+          Conferi a prévia. Autorizo importar somente os novos rascunhos fictícios.
+        </label>
+      </div>
+      <button type="button" id="confirmarImportacao" disabled>Importar rascunhos da prévia</button>
+    </section>
   </main>
   <script src="/admin/painel.js"></script>
 </body>
