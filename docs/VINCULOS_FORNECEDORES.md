@@ -56,11 +56,16 @@ sao transacoes SQLite que tambem registram o evento historico.
 
 ## Proximas etapas
 
-1. Ligar a importacao simulada a esse vinculo persistente sem perder
-   edicoes e evitando duplicacoes, com tratamento de falhas parciais.
-2. Quando a documentacao e as permissoes da franquia estiverem
+1. A importacao simulada **ja grava produtos e vinculos novos
+   juntos, numa transacao SQLite**, sem perder edicoes. Produtos
+   preexistentes sem vinculo correspondente ficam marcados como
+   `VINCULO_PENDENTE` para revisao manual. Ver
+   `docs/IMPORTACAO_CATALOGO_SIMULADA.md`.
+2. Proxima etapa: oferecer previa e confirmacao de lotes diretamente
+   no painel administrativo do laboratorio.
+3. Quando a documentacao e as permissoes da franquia estiverem
    disponiveis, criar adaptador de integracao homologado por fornecedor.
-3. Antes da operacao real: autorizacao comercial, seguranca financeira,
+4. Antes da operacao real: autorizacao comercial, seguranca financeira,
    verificacao legal, login administrativo forte, conciliacao e auditoria.
 
 ## Testes
@@ -72,3 +77,6 @@ bloqueio de vinculos em PDFs.
 
 `test/admin-vinculos-laboratorio.test.js` verifica HTTP autenticado,
 conflitos, troca e desativacao de fornecedor, e os controles locais da tela.
+
+`test/importador-vinculado-sqlite.test.js` comprova que novos produtos e
+vinculos sao inseridos juntos, e que conflitos revertem todo o lote.
