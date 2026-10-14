@@ -51,7 +51,9 @@ class RepositorioCatalogoSQLite {
       this.banco.exec('PRAGMA synchronous=FULL;');
 
       const versao = this.banco.prepare('PRAGMA user_version').get().user_version;
-      if (versao !== 0 && versao !== 1) throw new Error('Versao do catalogo SQLite nao suportada');
+      if (versao !== 0 && versao !== 1 && versao !== 2) {
+        throw new Error('Versao do catalogo SQLite nao suportada');
+      }
 
       this.banco.exec(`
         CREATE TABLE IF NOT EXISTS catalogo_produtos (
@@ -61,7 +63,57 @@ class RepositorioCatalogoSQLite {
           atualizado_em TEXT NOT NULL
         );
       `);
-      if (versao === 0) this.banco.exec('PRAGMA user_version=1;');
+      // Migracao transacional v1 -> v2. A base antiga nao contem as
+      // revisoes anteriores: registrar apenas o estado encontrado na migracao.
+      if (versao < 2) {
+        this.banco.exec('BEGIN IMMEDIATE;');
+        try {
+          this.banco.exec(`
+            CREATE TABLE IF NOT EXISTS catalogo_historico (
+              sequencia INTEGER PRIMARY KEY AUTOINCREMENT,
+              produto_id TEXT NOT NULL,
+              revisao INTEGER NOT NULL CHECK (revisao >= 1),
+              tipo TEXT NOT NULL CHECK (tipo IN ('CRIADO','ATUALIZADO','IMPORTADO_V1')),
+              campos_json TEXT NOT NULL,
+              antes_json TEXT NOT NULL,
+              depois_json TEXT NOT NULL,
+              ocorrido_em TEXT NOT NULL,
+              UNIQUE (produto_id, revisao)
+            );
+            CREATE INDEX IF NOT EXISTS idx_catalogo_historico_produto
+              ON catalogo_historico (produto_id, revisao);
+          `);
+          if (versao === 1) {
+            const antigos = this.banco.prepare(
+              'SELECT id, revisao, dados_json, atualizado_em FROM catalogo_produtos'
+            ).all();
+            const inserir = this.banco.prepare(
+              'INSERT INTO catalogo_historico (produto_id, revisao, tipo, campos_json, antes_json, depois_json, ocorrido_em) VALUES (?, ?, ?, ?, ?, ?, ?)'
+            );
+            for (const linha of antigos) {
+              const registro = extrairProduto(linha);
+              inserir.run(
+                linha.id, linha.revisao, 'IMPORTADO_V1',
+                JSON.stringify([]), JSON.stringify({}),
+                JSON.stringify(registro.produto), linha.atualizado_em
+              );
+            }
+          }
+          this.banco.exec('PRAGMA user_version=2;');
+          this.banco.exec('COMMIT;');
+        } catch (erro) {
+          this.banco.exec('ROLLBACK;');
+          throw erro;
+        }
+      }
+      this.banco.exec(`
+        CREATE TRIGGER IF NOT EXISTS catalogo_historico_bloqueia_update
+          BEFORE UPDATE ON catalogo_historico
+          BEGIN SELECT RAISE(ABORT, 'historico imutavel'); END;
+        CREATE TRIGGER IF NOT EXISTS catalogo_historico_bloqueia_delete
+          BEFORE DELETE ON catalogo_historico
+          BEGIN SELECT RAISE(ABORT, 'historico imutavel'); END;
+      `);
       if (caminho !== ':memory:') fs.chmodSync(caminho, 0o600);
     } catch (erro) {
       this.banco.close();
@@ -102,7 +154,7 @@ class RepositorioCatalogoSQLite {
     this.banco.exec('BEGIN IMMEDIATE;');
     try {
       const anterior = this.banco.prepare(
-        'SELECT revisao FROM catalogo_produtos WHERE id = ?'
+        'SELECT id, revisao, dados_json, atualizado_em FROM catalogo_produtos WHERE id = ?'
       ).get(validado.id);
       const revisaoAtual = anterior ? anterior.revisao : 0;
       if (revisaoAtual !== revisaoEsperada) {
@@ -118,6 +170,24 @@ class RepositorioCatalogoSQLite {
           'INSERT INTO catalogo_produtos (id, revisao, dados_json, atualizado_em) VALUES (?, ?, ?, ?)'
         ).run(validado.id, novaRevisao, JSON.stringify(validado), atualizadoEm);
       }
+      // Produto e trilha de alteracoes entram na MESMA transacao.
+      // Falha no historico desfez tambem a mudanca do produto.
+      const antigo = anterior ? extrairProduto(anterior).produto : null;
+      const campos = Object.keys(validado).filter(chave =>
+        !antigo || JSON.stringify(antigo[chave]) !== JSON.stringify(validado[chave])
+      );
+      const antes = {}, depois = {};
+      for (const chave of campos) {
+        if (antigo) antes[chave] = antigo[chave];
+        depois[chave] = validado[chave];
+      }
+      this.banco.prepare(
+        'INSERT INTO catalogo_historico (produto_id, revisao, tipo, campos_json, antes_json, depois_json, ocorrido_em) VALUES (?, ?, ?, ?, ?, ?, ?)'
+      ).run(
+        validado.id, novaRevisao, antigo ? 'ATUALIZADO' : 'CRIADO',
+        JSON.stringify(campos), JSON.stringify(antes),
+        JSON.stringify(depois), atualizadoEm
+      );
       this.banco.exec('COMMIT;');
       return { id: validado.id, revisao: novaRevisao, atualizadoEm };
     } catch (erro) {
@@ -142,6 +212,21 @@ class RepositorioCatalogoSQLite {
       produto: { ...registro.produto, ...alteracoes, id },
       revisaoEsperada
     });
+  }
+
+  historico(id) {
+    verificarId(id);
+    const linhas = this.banco.prepare(
+      'SELECT revisao, tipo, campos_json, antes_json, depois_json, ocorrido_em FROM catalogo_historico WHERE produto_id = ? ORDER BY revisao ASC'
+    ).all(id);
+    return linhas.map(linha => ({
+      revisao: linha.revisao,
+      tipo: linha.tipo,
+      campos: JSON.parse(linha.campos_json),
+      antes: JSON.parse(linha.antes_json),
+      depois: JSON.parse(linha.depois_json),
+      ocorridoEm: linha.ocorrido_em
+    }));
   }
 
   fechar() {
