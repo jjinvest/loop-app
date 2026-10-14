@@ -65,9 +65,11 @@ automaticamente barata ou sem migracoes.
   so insere produtos como rascunho, sem preco, fotos externas ou checkout.
   Importar novamente nao altera o produto ja editado pelo administrador.
   A importacao continua interna e de laboratorio, sem ligacao com API real.
-  Os vinculos SKU↔produto ja tem persistencia no laboratorio
-  (`docs/VINCULOS_FORNECEDORES.md`), mas a importacao simulada ainda
-  nao grava esses vinculos automaticamente e nao ha sincronizacao real.
+  Os vinculos SKU↔produto persistem no laboratorio
+  (`docs/VINCULOS_FORNECEDORES.md`). Para SQLite, a importacao simulada
+  cria rascunhos, vinculos e seus historicos **na mesma transacao**.
+  Produtos ja cadastrados sao preservados; vinculos ausentes ou trocados
+  sao sinalizados para revisao manual. Nao existe sincronizacao real.
 - `docs/INTEGRACAO_FORNECEDORES.md` estabelece o fluxo futuro de pedidos
   e o que depende da API real do parceiro.
 
