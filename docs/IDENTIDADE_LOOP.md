@@ -30,8 +30,10 @@ conforme regras transparentes e juridicamente validadas.
    compra validada, independentemente da logistica fisica.
 4. **Participacao e indicacoes:** cadastro, compra, indicacao,
    posicao e saldo sao conceitos separados. Uma mesma pessoa
-   pode adquirir varios produtos e varias posicoes; cada
-   venda validada corresponde a uma posicao no modelo proposto.
+   pode adquirir produtos e ter **ate cinco posicoes ativas
+   por CPF ao mesmo tempo**; cada venda validada corresponde
+   a uma posicao no modelo proposto. A conclusao da posicao
+   libera uma vaga para nova compra, sem apagar seu historico.
    Indicacoes validas influenciam a prioridade conforme as regras.
 5. **Filas e tabuleiro:** duas filas com regra 3A/1B, centro,
    cinco vagas, catraca e ciclos de cinco eventos de venda,
@@ -79,6 +81,8 @@ societaria. Definir e formalizar o tipo de relacionamento antes
 de comunicar beneficios ao publico.
 
 Documentos relacionados:
+- `docs/LIMITE_CINCO_COMPRAS_POR_CPF.md`
+- `docs/ESCRITORIO_VIRTUAL_DEMONSTRATIVO.md`
 - `docs/ARQUITETURA_MODULAR.md`
 - `docs/INTEGRACAO_FORNECEDORES.md`
 - `docs/REGRAS_FILAS.md`
