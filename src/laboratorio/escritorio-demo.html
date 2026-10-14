@@ -36,11 +36,21 @@
       <div class="painel">
         <h2 id="tituloResumo">Resumo da conta fictícia</h2>
         <div class="campo">
+          <label for="origemEscritorioDemo">Fonte dos dados fictícios</label>
+          <select id="origemEscritorioDemo">
+            <option value="estatico">Exemplo estático anterior (preservado)</option>
+            <option value="motor">Exemplo calculado pelo motor de filas e tabuleiro</option>
+          </select>
+          <span class="ajuda">As duas opções são simulações separadas. O motor calcula o cenário com compras, indicações e um giro fictícios. Não altera posições reais.</span>
+        </div>
+        <div class="campo">
           <label for="titularEscritorioDemo">Escolher conta de demonstração</label>
           <select id="titularEscritorioDemo"></select>
         </div>
         <button type="button" class="secundario" id="atualizarEscritorioDemo">Atualizar prévia</button>
         <p id="titularResumoDemo" class="ajuda" aria-live="polite"></p>
+        <p id="etapaMotorDemo" class="ajuda" aria-live="polite"></p>
+        <p id="indicacoesMotorDemo" class="ajuda" aria-live="polite"></p>
         <div class="escritorio-resumo">
           <div class="resumo-estatistica"><span>Posições ativas</span><strong id="totalAtivasDemo">—</strong></div>
           <div class="resumo-estatistica"><span>Novas vagas disponíveis</span><strong id="vagasDisponiveisDemo">—</strong></div>
@@ -53,7 +63,7 @@
         <section class="painel" aria-labelledby="tituloPosicoesDemo">
           <h2 id="tituloPosicoesDemo">Minhas posições ativas</h2>
           <ol id="listaAtivasDemo" aria-live="polite"></ol>
-          <p class="ajuda">As posições desta demonstração são inventadas. Fila A e B continuam regidas pelo motor existente; esta página não muda prioridades.</p>
+          <p class="ajuda">Ambos os cenários são fictícios. No modo Motor, fila A/B, tabuleiro e histórico são lidos da simulação real já existente; esta página nunca muda prioridades.</p>
         </section>
 
         <section class="painel" aria-labelledby="tituloHistoricoDemo">
