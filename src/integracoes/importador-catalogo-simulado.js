@@ -5,6 +5,8 @@
 // Adaptadores sao injetados; nenhuma credencial e armazenada neste modulo.
 const { createHash } = require('node:crypto');
 const { validarProduto } = require('../domain/catalogo');
+const { RepositorioCatalogoSQLite } = require('../domain/repositorio-catalogo-sqlite');
+const { AplicadorLoteCatalogoSQLite } = require('./aplicador-lote-catalogo-sqlite');
 
 const MAX_ITENS = 100;
 const MARCADOR_CONFIRMACAO = 'IMPORTAR_RASCUNHOS_SIMULADOS';
@@ -64,6 +66,8 @@ class ImportadorCatalogoSimulado {
     }
     this.fornecedores = registroFornecedores;
     this.catalogo = repositorioCatalogo;
+    this.aplicador = repositorioCatalogo instanceof RepositorioCatalogoSQLite
+      ? new AplicadorLoteCatalogoSQLite({ repositorioCatalogo }) : null;
   }
 
   async obterLote(fornecedorId) {
@@ -127,6 +131,9 @@ class ImportadorCatalogoSimulado {
     if (lote.revisaoLote !== revisaoLote) {
       throw new Error('Lote mudou depois da previa: revise antes de importar');
     }
+    if (this.aplicador) return this.aplicador.aplicar({ fornecedorId, itens:lote.itens });
+
+    // Repositorios nao-SQLite de laboratorio mantem o fluxo legado nao atomico.
     const produtos = lote.itens.map(item => item.produto);
 
     let criados = 0;
