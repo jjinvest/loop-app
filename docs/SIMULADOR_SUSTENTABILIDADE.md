@@ -5,36 +5,31 @@
 > capacidade de liquidar saques nem legitimidade de contemplacoes.
 > Nao usa dados de clientes e nao movimenta dinheiro ou filas reais.
 
-## ALERTA: o modelo comercial de intermediacao ainda nao esta parametrizado
+## Fluxo comercial pretendido — corrigido apos esclarecimento
 
-O idealizador esclareceu que o LOOP quer atuar primordialmente como
-**vitrine/intermediador**, sem comprar mercadorias e sem administrar
-estoque, frete ou entrega. Nessa modalidade, o vendedor efetivo
-pode ser o distribuidor, que recebe o pagamento, e o LOOP pode
-ter **somente a comissao ou remuneracao de intermediação**
-como receita, de acordo com contrato.
+O LOOP pretende **receber o valor do cliente na propria plataforma,
+pagar ao distribuidor o preco contratado e oferecer o produto pela
+vitrine**. O fornecedor e responsavel pela logistica fisica.
+Nao ha compra antecipada para estoque, mas ha recebimento,
+repasse comercial e possiveis responsabilidades da plataforma.
 
-ATENCAO: os exemplos abaixo **supõem recebimento integral do
-preco de venda e subtracao de custo da mercadoria**.
-Eles nao representam automaticamente a economia de uma loja
-que apenas encaminha o comprador ao checkout do parceiro.
-Em intermediacao pura, o valor total da mercadoria **nao e
-receita propria do LOOP**. Nao basta zerar o campo
-`custoFornecedorCentavos`, pois isso superestimaria a margem.
+Exemplo do idealizador: produto vendido por R$250, fornecedor
+recebe R$50, parcela de referencia da fila e R$100. A
+diferenca de R$100 e **valor bruto residual hipotetico**,
+antes de tributos, tarifas financeiras, custos, devolucoes e
+outras obrigacoes. Os campos zero em um teste representam
+**custos NAO contemplados**, nao isencao de impostos.
 
-O calculo agregado de crescimentos das posicoes depende do
-numero de vendas validas, nao de quem recebe o preco. Mas
-a distribuicao financeira proposta de R$100 por venda **depende**
-de qual fluxo efetivamente transfere recursos ao LOOP
-e de validação legal, comercial e contratual. Ate esclarecer
-quem recebe o pagamento, o modo de comissao/intermediacao
-nao deve ser simulado como se o preco total fosse caixa do LOOP.
+O preco minimo pretendido de R$100 e atribuido ao produto
+PDF. A venda do PDF a R$100 inteiramente destinada a
+parcela da fila deixa **R$0 de margem comercial residual**
+antes dos outros custos. Isso nao transforma automaticamente
+a alocacao bruta de duas parcelas por ciclo em lucro liquido.
 
-Proxima revisao do simulador: parametrizar modalidades
-`INTERMEDIACAO_COMISSAO` versus `VENDA_EM_NOME_PROPRIO`,
-com fonte de fundos, comissao, custos efetivos e tributos
-da atividade, sem pressupor que a comissao seja suficiente
-para cobrir a parcela interna de R$100 ou pagamentos futuros.
+O enquadramento de receita, meio de pagamento, tributos e
+responsabilidade depende de contratos e assessoria juridica
+e contabil. O simulador e um calculo de hipotese, nao
+comprovante de dinheiro liquido disponivel.
 
 ## Objetivo
 
@@ -106,6 +101,44 @@ distribuicao hipotetica, **nao dinheiro pago ou saldo liberado**.
 Parcelas destinadas a empresa/caixa podem continuar comprometidas
 por passivos, reembolsos, tributos ou necessidades de liquidez.
 
+## Primeiro comecar pequeno, depois testar filas grandes
+
+O comando `npm run simular:sustentabilidade` agora mostra
+**primeiro um lancamento partindo de zero** e um cenario
+partindo de dez posicoes ja registradas. As filas de 5 mil
+e 10 mil aparecem apenas como **situacoes de estresse
+futuras, depois de muitas compras e varios ciclos**, nao
+como um ponto de partida real da empresa.
+
+- Cada compra valida cria uma **posicao**, mesmo que
+  seja a segunda, terceira ou quinta compra da mesma pessoa.
+  O modulo **nao calcula participantes unicos**.
+- `posicoesPendentes` e uma contagem de **todas as posicoes
+  ainda ativas**, incluindo centro e ate cinco vagas,
+  nao so aquelas aguardando nas filas A ou B.
+- `posicoesNoTabuleiroEstimadas` indica ate seis posicoes
+  no tabuleiro na hipotese agregada; e
+  `posicoesAguardandoFilaEstimadas` indica o restante.
+  Nao estima quem estara em A/B nem quem chegara ao centro.
+- Se um participante contemplado compra novamente, a
+  nova compra e nova posicao. A saida da posicao anterior
+  so ocorre quando o ciclo respectivo e concluido.
+
+Com **100 vendas desde o zero**, seis posicoes iniciam
+o tabuleiro, restam 94 eventos contabilizados,
+ocorrem 18 ciclos concluidos e ficam 82 posicoes ativas,
+sendo aproximadamente 76 na fila e seis no tabuleiro.
+
+Com **dez posicoes iniciais ja ativas**, mais 100 vendas
+somam 110 posicoes criadas/anteriores. Vinte ciclos
+concluidos deixam 90 posicoes ainda ativas, 84 na fila
+e seis no tabuleiro. Esse e um exemplo de contagem,
+nao uma previsao do tempo de cada cliente.
+
+O tempo de espera afeta o momento de pagamento e o
+fluxo de caixa, mas nao equivale a nova receita; uma
+posicao criada sem compra efetiva nao gera recurso novo.
+
 ## Crescimento da fila
 
 Premissas deliberadamente explicitas para este calculo agregado:
@@ -123,11 +156,14 @@ Premissas deliberadamente explicitas para este calculo agregado:
 - Nao simula indicacoes, prioridades A/B, a ordem das posicoes,
   datas reais de entrada ou promessa de prazo.
 
-Com 10 mil posicoes preexistentes e 100 novas vendas:
-`10.000 + 100 - 20 = 10.080` posicoes ainda pendentes.
+**Somente teste de estresse num instante futuro:** com 10 mil posicoes
+ja ativas (incluindo seis do tabuleiro), mais 100 vendas geram
+`10.000 + 100 - 20 = 10.080` posicoes ainda ativas, aproximadamente
+10.074 aguardando na fila. Esse numero nao descreve o lancamento do LOOP.
 
-Com 5 mil posicoes preexistentes e 100 novas vendas:
-`5.000 + 100 - 20 = 5.080` posicoes ainda pendentes.
+Em outro **teste de estresse futuro** com 5 mil posicoes ja ativas,
+100 vendas adicionais deixam 5.080 posicoes ativas, estimando 5.074
+fora do tabuleiro.
 
 Se a venda parar, a simulacao nao gera novos eventos de ciclo; a
 fila nao diminui so porque existe reserva contabil. A existencia
