@@ -26,6 +26,10 @@ app.get('/', (req, res) => {
   });
 });
 
-app.listen(PORT, '0.0.0.0', () => {
-  console.log(`LOOP rodando na porta ${PORT}`);
-});
+if (require.main === module) {
+  app.listen(PORT, '0.0.0.0', () => {
+    console.log(`LOOP rodando na porta ${PORT}`);
+  });
+}
+
+module.exports = app;
