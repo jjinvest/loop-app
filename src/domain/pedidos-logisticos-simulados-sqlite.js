@@ -8,7 +8,8 @@ const fs = require('node:fs');
 const ESTADOS = Object.freeze([
   'AGUARDANDO_CONFIRMACAO', 'CONFIRMADO_SIMULADO',
   'ENVIADO_FORNECEDOR', 'EM_SEPARACAO', 'EM_TRANSPORTE',
-  'ENTREGUE', 'OCORRENCIA', 'CANCELAMENTO_SOLICITADO', 'CANCELADO'
+  'ENTREGUE', 'OCORRENCIA', 'CANCELAMENTO_SOLICITADO', 'CANCELADO',
+  'DEVOLUCAO_SOLICITADA', 'DEVOLVIDO'
 ]);
 
 const TRANSICOES = Object.freeze({
@@ -36,7 +37,9 @@ const TRANSICOES = Object.freeze({
   },
   REGISTRAR_CANCELAMENTO: {
     de: ['CANCELAMENTO_SOLICITADO'], para: 'CANCELADO'
-  }
+  },
+  SOLICITAR_DEVOLUCAO: { de: ['ENTREGUE'], para: 'DEVOLUCAO_SOLICITADA' },
+  CONFIRMAR_DEVOLUCAO: { de: ['DEVOLUCAO_SOLICITADA'], para: 'DEVOLVIDO' }
 });
 
 const REEMBOLSO = Object.freeze(['NAO_SOLICITADO', 'SOLICITADO_SIMULADO', 'REGISTRADO_SIMULADO']);
@@ -213,13 +216,14 @@ class PedidosLogisticosSimuladosSQLite {
         novoStatus=transicao.para;
       } else if(tipo === 'SOLICITAR_REEMBOLSO_SIMULADO') {
         // Registro informativo; nao movimenta saldo nem define valor.
-        if(!['CANCELAMENTO_SOLICITADO','CANCELADO','OCORRENCIA'].includes(pedido.status) ||
+        if(!['CANCELAMENTO_SOLICITADO','CANCELADO','OCORRENCIA',
+              'DEVOLUCAO_SOLICITADA','DEVOLVIDO'].includes(pedido.status) ||
            pedido.reembolso !== 'NAO_SOLICITADO') {
           throw new Error('Solicitacao de reembolso nao permitida');
         }
         novoReembolso='SOLICITADO_SIMULADO';
       } else {
-        if(pedido.status !== 'CANCELADO' ||
+        if(!['CANCELADO','DEVOLVIDO'].includes(pedido.status) ||
            pedido.reembolso !== 'SOLICITADO_SIMULADO') {
           throw new Error('Registro de reembolso nao permitido');
         }
