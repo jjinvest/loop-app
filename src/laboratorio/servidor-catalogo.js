@@ -11,6 +11,7 @@ const { VinculosFornecedoresSQLite } = require('../domain/vinculos-fornecedores-
 const { criarRouterVinculosLaboratorio } = require('../routes/admin-vinculos-laboratorio');
 const { criarFornecedoresDemonstrativos } = require('./fornecedores-demo');
 const { criarRouterImportacaoLaboratorio } = require('../routes/admin-importacao-laboratorio');
+const { criarRouterPedidosLogisticaDemo } = require('../routes/admin-pedidos-logistica-demo');
 
 function criarAppAdminLaboratorio({ repositorio, segredo } = {}) {
   if (process.env.NODE_ENV === 'production') {
@@ -41,6 +42,7 @@ function criarAppAdminLaboratorio({ repositorio, segredo } = {}) {
     }));
   }
   app.use('/api/admin', criarRouterAdminCatalogo({ repositorio, segredo }));
+  app.use('/api/admin', criarRouterPedidosLogisticaDemo({ segredo }));
   app.get('/admin', somenteLocal, (req, res) => {
     res.sendFile(path.join(__dirname, 'painel-catalogo.html'));
   });
