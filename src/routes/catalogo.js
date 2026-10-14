@@ -2,6 +2,7 @@
 const express = require('express');
 const { listarCatalogo } = require('../domain/catalogo');
 const { RepositorioCatalogoMemoria } = require('../domain/repositorio-catalogo-memoria');
+const { produtoParaVitrine } = require('../domain/catalogo-publico');
 
 // A API depende do contrato listar()/buscar(). O banco pode ser trocado sem
 // alterar as URLs publicas nem a camada visual do LOOP.
@@ -20,7 +21,7 @@ function criarRouterCatalogo({ repositorio } = {}) {
       res.json({
         modo: 'CATALOGO_DEMONSTRATIVO_SEM_VENDAS',
         compraDisponivel: false,
-        produtos: produtos.map(p => ({ ...p, compraDisponivel: false }))
+        produtos: produtos.map(produtoParaVitrine).filter(Boolean)
       });
     } catch (erro) {
       next(erro);
@@ -30,10 +31,11 @@ function criarRouterCatalogo({ repositorio } = {}) {
   router.get('/:id', async (req, res, next) => {
     try {
       const produto = await armazenamento.buscar(req.params.id);
-      if (!produto) return res.status(404).json({ erro: 'Produto nao encontrado' });
+      const publico = produto ? produtoParaVitrine(produto) : null;
+      if (!publico) return res.status(404).json({ erro: 'Produto nao encontrado' });
       res.json({
         modo: 'CATALOGO_DEMONSTRATIVO_SEM_VENDAS',
-        produto: { ...produto, compraDisponivel: false }
+        produto: publico
       });
     } catch (erro) {
       next(erro);
