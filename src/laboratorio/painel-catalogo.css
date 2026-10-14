@@ -15,3 +15,10 @@ main{max-width:1000px}
 .acoes-admin .secundario{background:#35445b;color:#fff}
 #formProduto[hidden],#areaPainel[hidden]{display:none}
 @media(max-width:660px){.admin-grid,.duas-colunas{grid-template-columns:1fr}}
+
+#areaImportacao{margin-top:18px}
+#areaImportacao .campo label:has(#aceitarImportacao){display:flex;gap:10px;align-items:flex-start;line-height:1.5;cursor:pointer}
+#aceitarImportacao{width:18px;height:18px;min-width:18px;padding:0;margin:3px 0 0;accent-color:#ffd400}
+#listaPreviaImportacao ol{padding-left:24px}
+#listaPreviaImportacao li{line-height:1.45;margin:8px 0;overflow-wrap:anywhere}
+#confirmarImportacao:disabled{opacity:.6;cursor:not-allowed}
