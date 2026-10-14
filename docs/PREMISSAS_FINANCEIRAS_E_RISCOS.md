@@ -21,6 +21,56 @@ plataformas conveniadas, via integracoes autorizadas.
   responsabilidades contratuais, de consumidor, LGPD, contabeis,
   tributarias nem custo de suporte e integracoes.
 
+## Complemento de 14/10/2026: LOOP como intermediador, sem estoque
+
+O idealizador esclareceu que o LOOP pretende **expor mercadorias
+de distribuidores, levar o cliente ao produto e fazer a ponte**
+entre os participantes e a loja parceira. Nao pretende comprar
+estoque nem recolher tributos ou contratar frete como dono da
+mercadoria. Os custos de aquisicao de mercadorias, armazenagem,
+despacho e logistica comercial pertencem, em principio, ao
+distribuidor, conforme os contratos que forem efetivamente
+firmados. No modelo pretendido, o LOOP tambem nao realiza
+o recolhimento dos tributos da venda efetuada pelo parceiro.
+
+Isso **nao torna a atividade do LOOP livre de tributos e custos**.
+A remuneracao por indicacao/intermediacao, eventual margem ou
+receita de plataforma pode ser tributavel, segundo enquadramento
+fiscal e responsabilidades contratuais. Nao supor isencao
+porque o distribuidor ja pagou tributos da propria atividade.
+
+Distinguir duas modalidades, ainda NAO resolvidas:
+1. **Indicacao/intermediacao:** parceiro e o vendedor e recebe
+   o pagamento do cliente. O LOOP recebe comissao ou remuneracao
+   contratada. Nesse modelo, o preco total da mercadoria **nao
+   e automaticamente receita do LOOP**, e nao se pode alocar
+   livremente R$100 de cada venda a fila sem que exista fonte
+   real, contrato, recebimento e autorizacao juridica.
+2. **Checkout no LOOP ou pagamento repartido:** se o LOOP
+   vende em nome proprio ou participa dos recebimentos/repasse,
+   podem surgir tributos, despesas do intermediador de pagamento,
+   obrigacoes de plataforma e riscos de devolucoes e chargeback.
+   Depende de quem figura como vendedor, emite nota, recebe e
+   liquida o valor da transacao. Pode ser um modelo distinto
+   de mera indicacao, mesmo sem estoque proprio.
+
+O simulador economico atual usa preco total da mercadoria como
+receita bruta do cenario e custo do fornecedor como despesa.
+**Esta e uma hipotese de revenda/recebimento integral, NAO
+o fluxo de intermediação puro pretendido como referencia.**
+Os campos de custos podem ser zero conforme o contrato, mas
+zerar custos por si so NAO transforma receita bruta da mercadoria
+em comissao efetiva. Antes de calcular margens, definir
+o fluxo financeiro e o papel do LOOP, sem presumir que
+"dinheiro que passou pela plataforma" e lucro ou receita sua.
+
+Bases de pesquisa para contador/advogado:
+- Receita Federal, Solucao de Consulta COSIT 16/2020:
+  intermediacao em nome alheio versus prestacao em nome proprio.
+- Banco Central, FAQ de liquidacao centralizada: marketplace
+  comercial versus marketplace com atividade de subcredenciamento.
+- Receita Federal, orientacoes da Reforma Tributaria 2026.
+
 ## 2. Venda, fila e ciclo — modelo informado
 
 - Cada venda valida e confirmada de produto gera exatamente uma
