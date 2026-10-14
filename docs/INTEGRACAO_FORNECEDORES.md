@@ -13,6 +13,35 @@ autorizado, o backend transmite o pedido ao distribuidor pela API aprovada,
 incluindo somente os dados de entrega necessarios. O distribuidor processa
 a entrega, e o sistema atualiza o rastreamento.
 
+## Regra operacional: LOOP e vitrine, nao operador de frete
+
+Esta e uma decisao central do negocio:
+
+- **LOOP** exibe e vende o produto (quando checkout dentro do LOOP
+  estiver tecnicamente e contratualmente autorizado). Registra o pedido
+  e transmite ao parceiro somente os dados necessarios para atendimento.
+- **Parceiro/franqueador/distribuidor** administra o estoque, separacao,
+  embalagem, transportadora, postagem, movimentacao, rastreio e entrega.
+  A operacao material de logistica e integralmente terceirizada.
+- **LOOP** recebe do parceiro o identificador do pedido e as atualizacoes
+  de situacao por API ou notificacoes autorizadas e as **repassa ao
+  cliente** na vitrine/area de acompanhamento. O LOOP nao deve se tornar
+  controlador operacional de frete, estoque ou transportadoras.
+- Em problemas, o LOOP registra a ocorrencia, encaminha a solicitacao
+  ao parceiro e transmite as respostas ao cliente. Isso nao elimina
+  eventuais deveres de atendimento, garantia, solucao e reembolso
+  da empresa vendedora perante a legislacao brasileira.
+- No sistema definitivo, status de separacao/transporte/entrega sao
+  espelhados do **sistema de origem do parceiro**, com identificadores
+  externos, instante do evento, validacao de origem, deduplicacao,
+  reconciliacao e historico. Um administrador do LOOP nao deve
+  declarar entrega real apenas alterando uma tela local.
+
+A mudanca de transportadora, operador ou fornecedor nao deve exigir
+alterar o cadastro comercial do produto ou o motor das filas.
+O painel atual permite simular eventos manualmente **somente para testes**.
+
+
 Cursos digitais continuarao como **PDFs para download**, sem videoaulas hospedadas.
 A compra de um produto e a posicao correspondente nas filas permanecem
 registros distintos.
