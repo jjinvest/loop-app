@@ -25,7 +25,10 @@ Cada pedido de laboratorio passa, quando aplicavel, pelas seguintes etapas:
 Em pedidos de laboratorio pode ser registrada uma `OCORRENCIA`
 (ex.: suspeita de extravio), retomado o transporte ou aberta uma
 solicitacao de cancelamento, com `CANCELAMENTO_SOLICITADO`
-e posterior `CANCELADO`.
+e posterior `CANCELADO`. **Mesmo depois de `ENTREGUE`**, o simulador
+admite `SOLICITAR_DEVOLUCAO` e `CONFIRMAR_DEVOLUCAO`, passando por
+`DEVOLUCAO_SOLICITADA` e `DEVOLVIDO`. Essa estrutura nao restringe
+nem substitui direitos legais do consumidor.
 
 Reembolso tem **estado independente**:
 `NAO_SOLICITADO`, `SOLICITADO_SIMULADO`,
