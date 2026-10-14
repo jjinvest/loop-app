@@ -21,7 +21,7 @@ class MotorFilas {
   }
 
   informacoesParticipante(participanteId) {
-    return this.indicacoes.get(String(participanteId)) || { quantidade: 0, ordemPatamar: Infinity };
+    return this.indicacoes.get(String(participanteId)) || { quantidade: 0, primeiroConviteEm: null, ordemPrimeiroConvite: Infinity };
   }
 
   registrarPosicao({ nome, participanteId, vendaId } = {}) {
@@ -57,12 +57,13 @@ class MotorFilas {
       const na = this.informacoesParticipante(a.participanteId);
       const nb = this.informacoesParticipante(b.participanteId);
       return (nb.quantidade - na.quantidade)
-        || (na.ordemPatamar - nb.ordemPatamar)
+        || String(na.primeiroConviteEm).localeCompare(String(nb.primeiroConviteEm))
+        || (na.ordemPrimeiroConvite - nb.ordemPrimeiroConvite)
         || (a.id - b.id);
     });
   }
 
-  registrarIndicacaoValidada({ indicadorId, eventoId } = {}) {
+  registrarIndicacaoValidada({ indicadorId, eventoId, convidouEm } = {}) {
     const chave = String(indicadorId ?? '').trim();
     if (!chave || !this.participantesConhecidos.has(chave)) {
       throw new Error('Indicador desconhecido');
@@ -74,8 +75,23 @@ class MotorFilas {
       return { repetida: true, promovidas: [], quantidade: this.informacoesParticipante(chave).quantidade };
     }
 
+    // O desempate usa o horario do PRIMEIRO convite valido, nunca o horario
+    // de conquista da segunda/terceira indicacao. convidouEm deve vir
+    // exclusivamente de um evento confiavel do servidor (nao do navegador).
+    const marca = convidouEm === undefined ? this.relogio() : convidouEm;
+    if (typeof marca !== 'string' || !/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?(?:Z|[+-]\d{2}:\d{2})$/.test(marca)
+        || Number.isNaN(Date.parse(marca))) {
+      throw new Error('Horario do convite invalido');
+    }
+    const horario = new Date(marca).toISOString();
     const anterior = this.informacoesParticipante(chave);
-    const novo = { quantidade: anterior.quantidade + 1, ordemPatamar: ++this.evento };
+    const ordemEvento = ++this.evento;
+    const conviteMaisAntigo = !anterior.primeiroConviteEm || horario < anterior.primeiroConviteEm;
+    const novo = {
+      quantidade: anterior.quantidade + 1,
+      primeiroConviteEm: conviteMaisAntigo ? horario : anterior.primeiroConviteEm,
+      ordemPrimeiroConvite: conviteMaisAntigo ? ordemEvento : anterior.ordemPrimeiroConvite
+    };
     this.indicacoes.set(chave, novo);
     this.indicacoesProcessadas.add(eventoId);
 
