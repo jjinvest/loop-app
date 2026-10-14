@@ -21,55 +21,67 @@ plataformas conveniadas, via integracoes autorizadas.
   responsabilidades contratuais, de consumidor, LGPD, contabeis,
   tributarias nem custo de suporte e integracoes.
 
-## Complemento de 14/10/2026: LOOP como intermediador, sem estoque
+## Esclarecimento de 14/10/2026: fluxo financeiro pretendido
 
-O idealizador esclareceu que o LOOP pretende **expor mercadorias
-de distribuidores, levar o cliente ao produto e fazer a ponte**
-entre os participantes e a loja parceira. Nao pretende comprar
-estoque nem recolher tributos ou contratar frete como dono da
-mercadoria. Os custos de aquisicao de mercadorias, armazenagem,
-despacho e logistica comercial pertencem, em principio, ao
-distribuidor, conforme os contratos que forem efetivamente
-firmados. No modelo pretendido, o LOOP tambem nao realiza
-o recolhimento dos tributos da venda efetuada pelo parceiro.
+O idealizador explicou que o LOOP **recebera o pagamento do cliente
+na plataforma** e, em seguida, repassara ao distribuidor o custo
+contratado da mercadoria. O fornecedor cuidara integralmente de
+estoque, separacao e entrega. O LOOP nao compra estoque para
+armazenar, mas sua intervencao no recebimento nao e mera
+indicacao sem caixa.
 
-Isso **nao torna a atividade do LOOP livre de tributos e custos**.
-A remuneracao por indicacao/intermediacao, eventual margem ou
-receita de plataforma pode ser tributavel, segundo enquadramento
-fiscal e responsabilidades contratuais. Nao supor isencao
-porque o distribuidor ja pagou tributos da propria atividade.
+Exemplo comercial informado, **antes de outros custos e obrigações**:
+- O cliente paga R$250 por produto na vitrine.
+- O LOOP repassa R$50 ao distribuidor pelo produto.
+- R$100 formam a parcela hipotetica de referencia do sistema
+  de filas e tabuleiro.
+- Restam R$100 de diferenca bruta comercial para o LOOP
+  **antes** de tributos efetivamente aplicaveis, tarifas do
+  meio de pagamento, operacao, estornos, garantias e reservas.
 
-Distinguir duas modalidades, ainda NAO resolvidas:
-1. **Indicacao/intermediacao:** parceiro e o vendedor e recebe
-   o pagamento do cliente. O LOOP recebe comissao ou remuneracao
-   contratada. Nesse modelo, o preco total da mercadoria **nao
-   e automaticamente receita do LOOP**, e nao se pode alocar
-   livremente R$100 de cada venda a fila sem que exista fonte
-   real, contrato, recebimento e autorizacao juridica.
-2. **Checkout no LOOP ou pagamento repartido:** se o LOOP
-   vende em nome proprio ou participa dos recebimentos/repasse,
-   podem surgir tributos, despesas do intermediador de pagamento,
-   obrigacoes de plataforma e riscos de devolucoes e chargeback.
-   Depende de quem figura como vendedor, emite nota, recebe e
-   liquida o valor da transacao. Pode ser um modelo distinto
-   de mera indicacao, mesmo sem estoque proprio.
+O preco minimo pretendido e R$100. O produto citado para esse
+valor e o PDF, enquanto mercadorias fisicas serao ofertadas por
+precos variados superiores. A predominancia de produtos de R$100
+retira a margem adicional de mercadoria; na hipotese de um PDF
+de R$100 inteiramente alocado a fila, nao sobra margem comercial
+independente antes de custos, ainda que existam duas parcelas
+referenciais de R$100 por ciclo destinadas a empresa.
 
-O simulador economico atual usa preco total da mercadoria como
-receita bruta do cenario e custo do fornecedor como despesa.
-**Esta e uma hipotese de revenda/recebimento integral, NAO
-o fluxo de intermediação puro pretendido como referencia.**
-Os campos de custos podem ser zero conforme o contrato, mas
-zerar custos por si so NAO transforma receita bruta da mercadoria
-em comissao efetiva. Antes de calcular margens, definir
-o fluxo financeiro e o papel do LOOP, sem presumir que
-"dinheiro que passou pela plataforma" e lucro ou receita sua.
+A estrategia inclui compras recorrentes: uma pessoa pode
+comprar cinco produtos, deter cinco posicoes e participar
+novamente depois de concluir um ciclo. Uma nova venda gera
+uma nova **posicao, nao necessariamente uma pessoa nova**.
+Posicoes de clientes antigos continuam ativas ate conclusao
+ou outra regra legitima; repetir a identidade nao equivale
+a apagar a obrigacao potencial da posicao.
 
-Bases de pesquisa para contador/advogado:
-- Receita Federal, Solucao de Consulta COSIT 16/2020:
-  intermediacao em nome alheio versus prestacao em nome proprio.
-- Banco Central, FAQ de liquidacao centralizada: marketplace
-  comercial versus marketplace com atividade de subcredenciamento.
-- Receita Federal, orientacoes da Reforma Tributaria 2026.
+O idealizador tambem descreveu: janelas de operacao em que
+pagamentos e cadastros continuam enquanto certas liberacoes
+so acontecem no horario de funcionamento; uso de caixa e
+eventuais investimentos, inclusive criptoativos; e uma
+estimativa pessoal de cerca de R$500 mensais para manter o
+servidor aberto. Tudo isso e **hipotese a validar**: adiamento
+de pagamentos altera a liquidez e o prazo, nao cria receita;
+investimentos podem perder valor e caixa necessario a
+reembolsos/remuneracoes nao deve ser tratado como livre;
+R$500 nao e orcamento total de operacao comprovado.
+
+**Forma juridica a confirmar com contador/advogado e com a
+franquia:** quem aparece como vendedor, emite a nota,
+contrata o meio de pagamento, coleta o valor bruto, realiza
+os repasses e assume estornos. Receber R$250 e pagar
+R$50 ao fornecedor nao implica automaticamente que todos
+os R$250 sejam receita tributavel do LOOP nem o contrario.
+O enquadramento depende de contrato, documentos e normas
+aplicaveis. O distribuidor pagar seus tributos nao elimina
+automaticamente obrigacoes da empresa LOOP.
+
+O simulador financeiro atual e um **modelo de recebimento
+do preco bruto seguido de repasse ao fornecedor**, com custos
+opcionais exemplificativos. Nem custos ficticios devem ser
+tratados como despesas certas nem campos preenchidos com zero
+como isencao tributaria comprovada. A modelagem definitiva
+devera suportar termos de contrato, tributacao e conciliacao.
 
 ## 2. Venda, fila e ciclo — modelo informado
 
@@ -195,6 +207,32 @@ garantida:
 
 O sistema nao deve anunciar lucro garantido, prazo certo ou
 saque incondicional com base nessas premissas.
+
+## Observacao adicional sobre a contagem de filas
+
+A conta `10.000 + 100 - 20 = 10.080` era **um teste de estresse
+com 10 mil posicoes ja ativas, nao a origem da empresa**.
+Para chegar a 10 mil posicoes, o sistema ja teria processado
+muitas vendas, varios tabuleiros e saídas; esse historico
+nao era representado no teste. O parametro `posicoesIniciais`
+inclui as posicoes no centro e nas cinco vagas, nao apenas
+pessoas aguardando fora do tabuleiro.
+
+No modelo agregado (sem pausas) com lancamento do ZERO e
+100 vendas validas, as seis primeiras posicoes preenchem
+o tabuleiro, as outras 94 geram eventos: 18 ciclos concluidos,
+82 posicoes ainda ativas no total, 76 delas aguardando na
+fila e seis dentro do tabuleiro. Se o cenario ja partir de
+10 posicoes ativas e acrescentar 100 vendas, registra
+20 ciclos e 90 posicoes ativas, sendo 84 aguardando.
+O resultado e de contagem de **posicoes**, nao pessoas
+distintas, tempos de espera ou pagamentos liquidados.
+
+Variaveis de comportamento e preco nao impedem estudar
+contagens matematicas condicionais: tornam incerta a
+previsao de vendas, de liquidez, de ritmo dos ciclos e da
+capacidade de honrar compromissos. A ferramenta nao
+substitui dados reais nem revisao regulatoria.
 
 ## Primeira ferramenta de simulacao matematica
 
