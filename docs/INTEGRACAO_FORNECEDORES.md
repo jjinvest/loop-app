@@ -13,6 +13,38 @@ autorizado, o backend transmite o pedido ao distribuidor pela API aprovada,
 incluindo somente os dados de entrega necessarios. O distribuidor processa
 a entrega, e o sistema atualiza o rastreamento.
 
+## Modelo comercial: intermediacao versus venda em nome proprio
+
+O LOOP nao compra nem estoca mercadorias. O idealizador descreveu
+a funcao principal de **conectar o cliente a plataforma do
+distribuidor**, que ja opera as mercadorias. Isso nao define,
+por si so, qual empresa e juridicamente a vendedora, emite
+documentos fiscais ou recebe o pagamento.
+
+Antes de integrar a franquia, confirmar contratualmente:
+- quem emite a nota da mercadoria e responde como vendedor;
+- se o checkout e no parceiro ou dentro do LOOP;
+- qual empresa recebe o valor total e em qual conta;
+- qual remuneracao o LOOP recebe (comissao, margem comercial
+  contratual ou outra), quando e como e liquidada;
+- quem paga e/ou absorve as tarifas do checkout;
+- se o parceiro autoriza remuneracao de clientes do LOOP
+  com recursos provenientes das vendas, e que deveres legais
+  isso envolve.
+
+Os custos de adquirir estoque, recolher tributos da propria
+venda e executar a logistica nao devem ser **atribuidos
+automaticamente ao LOOP** num modelo genuino de intermediação.
+Ainda assim, a receita de intermediacao pode ser tributada
+e a natureza juridica das operacoes deve ser confirmada
+por contador e advogado. O parceiro pagar imposto sobre
+mercadorias nao isenta automaticamente o LOOP por suas receitas.
+
+A regra de R$100 da fila nao pode ser tratada como dinheiro
+recebido pela plataforma ate que a origem contratual,
+a liquidacao financeira, a base legal e a separacao
+entre receita e fundos de terceiros estejam demonstradas.
+
 ## Regra operacional: LOOP e vitrine, nao operador de frete
 
 Esta e uma decisao central do negocio:
