@@ -50,6 +50,16 @@ class SimuladorLoop {
     return resultado;
   }
 
+  exportarSnapshot() {
+    const { exportarSnapshot } = require('./estado-simulacao');
+    return exportarSnapshot(this);
+  }
+
+  static restaurarSnapshot(snapshot, opcoes = {}) {
+    const { restaurarSnapshot } = require('./estado-simulacao');
+    return restaurarSnapshot(snapshot, () => new SimuladorLoop(opcoes));
+  }
+
   estado() {
     return {
       modo: 'SIMULACAO_SEM_PAGAMENTOS',
