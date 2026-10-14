@@ -1,116 +1,55 @@
 const express = require('express');
+const { MotorFilas } = require('../domain/motor-filas');
+
 const router = express.Router();
+const motor = new MotorFilas();
 
-const filaA = []; // AMARELA - prioridade
-const filaB = []; // BRANCA - entrada normal
-
-let sequencia = 0;
-let contadorA = 0;
-
-function agora() {
-  return new Date().toISOString();
-}
-
+// Rotas de prototipo: nao representam confirmacao real de pagamento.
+// Em producao, somente eventos de venda e indicacao autenticados podem acionar o motor.
 function proximoDaFila() {
-  let pessoa = null;
-  let origem = null;
-
-  // Regra: 3 da A para 1 da B
-  if (filaA.length > 0 && (contadorA < 3 || filaB.length === 0)) {
-    pessoa = filaA.shift();
-    origem = 'A';
-    contadorA++;
-  } else if (filaB.length > 0) {
-    pessoa = filaB.shift();
-    origem = 'B';
-    contadorA = 0;
-  } else if (filaA.length > 0) {
-    pessoa = filaA.shift();
-    origem = 'A';
-    contadorA++;
-  }
-
-  return pessoa ? { pessoa, origem } : null;
+  return motor.proximoDaFila();
 }
 
 router.get('/', (req, res) => {
-  res.json({
-    regra: '3A/1B',
-    A: {
-      nome: 'AMARELA',
-      quantidade: filaA.length,
-      pessoas: filaA
-    },
-    B: {
-      nome: 'BRANCA',
-      quantidade: filaB.length,
-      pessoas: filaB
-    },
-    contadorA
-  });
+  res.json(motor.resumo());
 });
 
 router.post('/entrar', (req, res) => {
-  const { nome, participanteId } = req.body;
-
-  if (!nome && !participanteId) {
-    return res.status(400).json({
-      erro: 'Informe nome ou participanteId'
+  try {
+    const { posicao, repetida } = motor.registrarPosicao(req.body || {});
+    res.status(repetida ? 200 : 201).json({
+      mensagem: repetida ? 'Venda simulada ja registrada' : 'Posicao criada na fila B (BRANCA)',
+      pessoa: posicao,
+      repetida
     });
+  } catch (erro) {
+    res.status(400).json({ erro: erro.message });
   }
-
-  const pessoa = {
-    id: participanteId || ++sequencia,
-    nome: nome || `Participante ${participanteId}`,
-    fila: 'B',
-    entrouEm: agora()
-  };
-
-  filaB.push(pessoa);
-
-  res.status(201).json({
-    mensagem: 'Participante entrou na fila B (BRANCA)',
-    pessoa
-  });
 });
 
 router.post('/promover/:id', (req, res) => {
-  const id = String(req.params.id);
-
-  const indice = filaB.findIndex(p => String(p.id) === id);
-
-  if (indice === -1) {
-    return res.status(404).json({
-      erro: 'Participante não encontrado na fila B'
-    });
+  const resultado = motor.promoverPosicaoSimulada(req.params.id);
+  if (!resultado) {
+    return res.status(404).json({ erro: 'Posicao nao encontrada na fila B' });
   }
 
-  const pessoa = filaB.splice(indice, 1)[0];
-  pessoa.fila = 'A';
-  pessoa.promovidoEm = agora();
-
-  filaA.push(pessoa);
-
+  const pessoa = resultado.promovidas.find(p => String(p.id) === String(req.params.id));
   res.json({
-    mensagem: 'Participante promovido para fila A (AMARELA)',
-    pessoa
+    mensagem: 'Posicoes do participante promovidas para fila A (AMARELA) - SIMULACAO',
+    pessoa,
+    quantidadePromovidas: resultado.promovidas.length,
+    indicacoesValidasSimuladas: resultado.quantidade
   });
 });
 
 router.post('/proximo', (req, res) => {
   const resultado = proximoDaFila();
-
-  if (!resultado) {
-    return res.status(404).json({
-      erro: 'As filas estão vazias'
-    });
-  }
-
+  if (!resultado) return res.status(404).json({ erro: 'As filas estao vazias' });
   res.json({
-    mensagem: 'Próximo participante liberado',
+    mensagem: 'Proxima posicao selecionada em simulacao',
     origem: resultado.origem,
     pessoa: resultado.pessoa,
-    contadorA
+    contadorA: motor.contadorA
   });
 });
 
