@@ -39,6 +39,32 @@ O atendimento ao cliente e a gestao de reclamacoes/reembolsos
 que sejam de responsabilidade do vendedor continuam necessarios,
 ainda que a execucao fisica seja terceirizada.
 
+## Papel comercial e pre-lancamento planejados
+
+O LOOP sera o **vendedor em dropshipping**: a loja
+recebe o pagamento, registra o custo de cada mercadoria,
+repassa o valor contratado ao distribuidor e presta
+atendimento ao comprador. O parceiro executa a
+logistica e informa os status de pedido. Nao ha
+compra antecipada de estoque, mas ha custo por
+produto vendido. O simulador separa preco de venda,
+repasse ao parceiro, parcela hipotetica da fila,
+custos aplicaveis e sobra BRUTA da operacao.
+
+O idealizador preve **aproximadamente 30 dias**
+de divulgacao e formacao de uma base de inscritos
+e indicacoes antes de liberar o giro do tabuleiro.
+Ha uma proposta de primeiro centro ocupado pelo
+fundador, como excecao ao cadastro usual por
+venda valida; essa excecao **NAO esta programada**
+e dependera de transparencia e analise juridica.
+A distincao entre cadastro, indicacao, compra e
+posicao precisa permanecer estrita.
+
+Consultar `docs/INTEGRACAO_FORNECEDORES.md`,
+`docs/PRE_LANCAMENTO_30_DIAS.md` e
+`docs/PREMISSAS_FINANCEIRAS_E_RISCOS.md`.
+
 ## Premissas financeiras e testes pendentes
 
 O idealizador descreveu uma estrutura que busca ser complexa nas regras,
