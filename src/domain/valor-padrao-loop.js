@@ -52,22 +52,26 @@ function analisarCarrinhoSimulado({itens,taxasETributosCentavos=0,
   !Number.isSafeInteger(custoFornecedorCentavos)){
   throw new RangeError('Multiplicacao monetaria excedeu limite numerico');
  }
- const sobraComercialCentavos=precoTotalCentavos-
-  VALOR_PADRAO_LOOP_CENTAVOS-custoFornecedorCentavos-taxasETributosCentavos;
  const atingeValorReferencia=precoTotalCentavos>=VALOR_PADRAO_LOOP_CENTAVOS;
- const cobreCustos=atingeValorReferencia&&
-  sobraComercialCentavos>=margemMinimaCentavos;
+ const parcelaLoopAplicadaCentavos=atingeValorReferencia?VALOR_PADRAO_LOOP_CENTAVOS:0;
+ const sobraComercialCentavos=precoTotalCentavos-
+  parcelaLoopAplicadaCentavos-custoFornecedorCentavos-taxasETributosCentavos;
+ const cobreCustos=sobraComercialCentavos>=margemMinimaCentavos;
  return {
   modo:'ANALISE_MATEMATICA_DE_CARRINHO_FICTICIO',
   referenciaLoopCentavos:VALOR_PADRAO_LOOP_CENTAVOS,
+  parcelaLoopAplicadaCentavos,
   precoTotalCentavos,custoFornecedorCentavos,taxasETributosCentavos,
   margemMinimaCentavos,sobraComercialCentavos,
   atingeValorReferencia,cobreCustos,
-  botaoCheckoutPodeAparecerPeloValor:atingeValorReferencia,
+  // Loja aberta para pedidos de qualquer valor positivo; a fila e opcional.
+  botaoCheckoutPodeAparecerPeloValor:true,
+  compraLojaPermitida:true,
+  participaLoopSeConfirmado:atingeValorReferencia,
   resultadoComercialNaoNegativo:cobreCustos,
   alertaMargemInsuficiente:!cobreCustos,
-  elegivelNaSimulacao:atingeValorReferencia, // trava comercial: minimo de R$250, apenas.
-  // Margem fica como alerta admin e nao bloqueia o carrinho do cliente.
+  elegivelNaSimulacao:atingeValorReferencia, // elegibilidade LOOP, nao checkout
+  // Margem negativa e somente alerta admin: nao bloqueia venda da loja.
   itensDistintos:itens.length,unidades,
   projecaoPosicoesSeConfirmado:atingeValorReferencia?1:0,
   criacaoRealDePosicao:false,pagamentoReal:false,
