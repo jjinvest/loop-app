@@ -559,6 +559,120 @@ idempotencia, transacao atomica,
 historico imutavel, saídas/retornos/ajustes,
 API admin protegida e ausencia no app publico).
 
+## Simulador de confirmacao/estorno de PSP (somente laboratorio, 15/10/2026)
+
+Este incremento foi criado como experimento local e **NAO tem acesso
+a provedores de pagamento, dinheiro real, contas de clientes ou filas**.
+
+Arquivos:
+- `src/domain/recebimentos-psp-demo-sqlite.js`: fixture fixa de
+  **dez pagamentos inventados de R$600**, em dois cenarios
+  independentes de cinco vendas (`split` e `reserva`),
+  com estado inicial `AGUARDANDO_FICTICIO`.
+- `src/routes/admin-recebimentos-psp-demo.js`: API de
+  simulacao acessivel somente ao escritorio administrativo
+  de laboratorio, protegida por token de desenvolvimento.
+- `src/laboratorio/financeiro-admin-demo.html` e
+  `.js`: area para consultar cada pagamento
+  inventado, simular confirmacao ou estorno e
+  inspecionar historico.
+- `test/recebimentos-psp-demo.test.js`: testes
+  de transicoes, persistencia, atomicidade,
+  idempotencia e isolamento da aplicacao publica.
+
+**Contrato experimental:**
+- `GET /api/admin/recebimentos-psp-demo` mostra os
+  pagamentos inventados, valores e estados.
+- `GET /api/admin/recebimentos-psp-demo/:id/historico`
+  devolve seus eventos anteriores.
+- `POST /api/admin/recebimentos-psp-demo/:id/eventos`
+  recebe somente `eventoId` e `tipo`,
+  onde `tipo` e `CONFIRMAR_FICTICIO` ou
+  `ESTORNAR_FICTICIO`.
+- **Nao existe webhook externo ou callback publico**.
+  O unico emissor e o administrador do
+  servidor local de desenvolvimento.
+- Cada `eventoId` pertence a uma unica
+  combinacao de pagamento e tipo. Repetir
+  o MESMO evento e a MESMA acao nao cria
+  novos lancamentos (idempotencia).
+  Reutilizar o mesmo ID com pagamento/tipo
+  diferente causa conflito e nao credita
+  recurso ficticio.
+- Estorno antes de confirmacao, confirmacao
+  duplicada com outro identificador e
+  nova confirmacao apos estorno sao
+  estados impossiveis nesta fixture
+  e sao recusados para preservar
+  integridade do exemplo.
+  **Nao sao bloqueios de saques reais
+  do administrador**.
+
+**Integracao atomica com o livro de laboratorio:**
+- Uma confirmacao ficticia gera no livro,
+  em centavos, uma entrada no cofre LOOP
+  correspondente a etapa fixa do ciclo
+  (centro/esquerda/centro/direita/centro)
+  e a sobra bruta no caixa comercial.
+- No modo `reserva`, tambem gera
+  entrada no caixa fornecedor a pagar.
+  No modo `split`, a parte do
+  distribuidor e apenas conceito de
+  **repasse EXTERNO ficticio** — sem
+  transferencia nem credito duplicado.
+- O estorno ficticio faz lancamentos
+  de **SAIDA reversa** somente das
+  parcelas internas anteriormente creditadas.
+  Se houve split externo de verdade, um
+  sistema futuro precisara tratar
+  independentemente recuperacao junto
+  ao fornecedor, encargos e estorno
+  integral ao cliente. Esta fixture
+  NAO resolve essas obrigacoes.
+- **Confirmacao/estorno e seus lancamentos
+  contabilizados compartilham a mesma
+  transacao SQLite**; se um lado falha,
+  o outro tambem e desfeito.
+- Os eventos nao podem ser alterados
+  ou apagados e continuam disponiveis
+  depois de reiniciar a base de testes.
+
+**Limites deliberados de implementacao:**
+1. O operador apenas simula um
+   comprovante; nao existe autenticacao
+   criptografica de um PSP, antifraude,
+   consulta de liquidacao, recebivel
+   bancario ou transferencia real.
+2. As vendas usadas foram inventadas
+   e cadastradas como amostras fixas.
+   Nao sao pedidos da loja, nao geram
+   posicoes, nao adiantam catraca e
+   nao criam direito de saque.
+3. A logica real de convite, credito
+   de R$10 por indicacao e bonus de
+   eventos permanece sem integracao
+   financeira nesta etapa.
+4. Futuro webhook real precisara
+   verificar assinatura, autenticidade,
+   conta/recebedor, IDs de pedido,
+   valores liquidaveis, taxas,
+   estornos parciais, chargebacks
+   e conciliacao independente antes
+   de ingressar no mesmo dominio.
+5. O administrador da operacao
+   continua com gestao dos seus
+   recursos licitamente disponiveis;
+   estas transicoes de teste nao
+   implementam bloqueio de saque.
+   O futuro sistema precisara
+   distinguir recursos corporativos
+   e valores devidos aos clientes.
+
+**O codigo e documentacao nesta secao
+ainda sao da branch de desenvolvimento**,
+sem deploy publico, banco integrado
+ou liberacao de transacoes reais.
+
 ## Isolamento e seguranca do projeto
 
 - Movimentacoes reais so mediante
