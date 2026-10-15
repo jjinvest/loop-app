@@ -68,7 +68,8 @@ function analisarCarrinhoSimulado({itens,taxasETributosCentavos=0,
   alertaMargemInsuficiente:!cobreCustos,
   elegivelNaSimulacao:atingeValorReferencia, // trava comercial: minimo de R$250, apenas.
   // Margem fica como alerta admin e nao bloqueia o carrinho do cliente.
-  itensDistintos:itens.length,unidades,projecaoPosicoesSeConfirmado:1,
+  itensDistintos:itens.length,unidades,
+  projecaoPosicoesSeConfirmado:atingeValorReferencia?1:0,
   criacaoRealDePosicao:false,pagamentoReal:false,
   contemplacaoOuSaqueReal:false
  };
