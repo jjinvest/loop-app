@@ -13,6 +13,7 @@ const { criarFornecedoresDemonstrativos } = require('./fornecedores-demo');
 const { criarRouterImportacaoLaboratorio } = require('../routes/admin-importacao-laboratorio');
 const { criarRouterPedidosLogisticaDemo } = require('../routes/admin-pedidos-logistica-demo');
 const { criarRouterEscritorioDemo } = require('../routes/admin-escritorio-demo');
+const { criarRouterFinanceiroAdminDemo } = require('../routes/admin-financeiro-demo');
 
 function criarAppAdminLaboratorio({ repositorio, segredo } = {}) {
   if (process.env.NODE_ENV === 'production') {
@@ -45,8 +46,18 @@ function criarAppAdminLaboratorio({ repositorio, segredo } = {}) {
   app.use('/api/admin', criarRouterAdminCatalogo({ repositorio, segredo }));
   app.use('/api/admin', criarRouterPedidosLogisticaDemo({ segredo }));
   app.use('/api/admin', criarRouterEscritorioDemo({ segredo }));
+  app.use('/api/admin', criarRouterFinanceiroAdminDemo({ segredo }));
   app.get('/admin', somenteLocal, (req, res) => {
     res.sendFile(path.join(__dirname, 'painel-catalogo.html'));
+  });
+  app.get('/admin/financeiro-demo', somenteLocal, (req, res) => {
+    res.sendFile(path.join(__dirname,'financeiro-admin-demo.html'));
+  });
+  app.get('/admin/financeiro-demo.js', somenteLocal, (req, res) => {
+    res.type('application/javascript').sendFile(path.join(__dirname,'financeiro-admin-demo.js'));
+  });
+  app.get('/admin/financeiro-demo.css', somenteLocal, (req, res) => {
+    res.type('text/css').sendFile(path.join(__dirname,'financeiro-admin-demo.css'));
   });
   app.get('/admin/escritorio-demo', somenteLocal, (req, res) => {
     res.sendFile(path.join(__dirname, 'escritorio-demo.html'));
