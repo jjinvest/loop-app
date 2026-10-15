@@ -26,6 +26,8 @@ const { criarRouterPedidosPDFDemo } = require('../routes/admin-pedidos-pdf-demo'
 const { criarRouterEscritorioDemo } = require('../routes/admin-escritorio-demo');
 const { ContasParticipantesDemoSQLite } = require('../domain/contas-participantes-demo-sqlite');
 const { criarRouterContasParticipantesDemo } = require('../routes/admin-contas-participantes-demo');
+const { PonteComprasConvitesDemoSQLite } = require('../domain/ponte-compras-convites-demo-sqlite');
+const { criarRouterPonteComprasConvitesDemo } = require('../routes/admin-ponte-compras-convites-demo');
 const { criarRouterFinanceiroAdminDemo } = require('../routes/admin-financeiro-demo');
 const { RepositorioAparenciaCofresSQLite } = require('../domain/repositorio-aparencia-cofres-sqlite');
 const { RazaoFinanceiroDemoSQLite } = require('../domain/razao-financeiro-demo-sqlite');
@@ -84,6 +86,17 @@ function criarAppAdminLaboratorio({ repositorio, segredo, webhookDemo } = {}) {
     const contasDemo=new ContasParticipantesDemoSQLite({banco:repositorio.banco});
     app.use('/api/admin',criarRouterContasParticipantesDemo({
       segredo,contas:contasDemo
+    }));
+    // Ponte somente de leitura no HTTP; a confirmacao confiavel e
+    // injetada apenas por testes/scripts do servidor, NUNCA pelo navegador.
+    const ponteDemo=new PonteComprasConvitesDemoSQLite({
+      banco:repositorio.banco,contas:contasDemo,
+      consultarPagamentoConfiavel:async()=>{
+        throw new Error('Nao ha verificador de compra configurado no HTTP');
+      }
+    });
+    app.use('/api/admin',criarRouterPonteComprasConvitesDemo({
+      segredo,ponte:ponteDemo
     }));
   }
   const configuracaoCofres = repositorio instanceof RepositorioCatalogoSQLite
