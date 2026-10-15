@@ -5,6 +5,7 @@
 // Nao controla nem altera a catraca existente. Ela apenas fornece o padrao
 // de destinos ja acordado, importado do modulo de simulacao.
 const { DESTINOS } = require('./tabuleiro-loop');
+const { VALOR_PADRAO_LOOP_CENTAVOS } = require('./valor-padrao-loop');
 
 const MODOS = Object.freeze({
   SPLIT:'SPLIT_DISTRIBUIDOR_SIMULADO',
@@ -28,7 +29,7 @@ const EXEMPLOS = Object.freeze(Array.from({length:5},(_,i)=>Object.freeze({
   vendaId:'venda-financeira-ficticia-'+(i+1),
   precoCentavos:60000,
   fornecedorCentavos:30000,
-  parcelaLoopCentavos:10000
+  parcelaLoopCentavos:VALOR_PADRAO_LOOP_CENTAVOS
 })));
 
 function validarCentavos(n){
@@ -68,8 +69,8 @@ function criarVisaoFinanceiraAdminDemo({modo=MODOS.SPLIT,vendas=EXEMPLOS}={}){
       throw new Error('Venda demonstrativa invalida ou duplicada');
     }
     IDs.add(v.vendaId);
-    if(v.parcelaLoopCentavos!==10000){
-      throw new Error('Parcela de referencia do ciclo deve ser R$100 neste exemplo');
+    if(v.parcelaLoopCentavos!==VALOR_PADRAO_LOOP_CENTAVOS){
+      throw new Error('Parcela de referencia do ciclo deve ser R$250 neste exemplo');
     }
     const sobra=v.precoCentavos-v.fornecedorCentavos-v.parcelaLoopCentavos;
     if(!validarCentavos(sobra))throw new Error('Venda ficticia nao cobre obrigacoes');
