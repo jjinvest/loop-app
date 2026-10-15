@@ -15,6 +15,8 @@ const { criarRouterPedidosLogisticaDemo } = require('../routes/admin-pedidos-log
 const { PedidosLogisticosSimuladosSQLite } = require('../domain/pedidos-logisticos-simulados-sqlite');
 const { VinculosPedidosPagamentosDemoSQLite } = require('../domain/vinculos-pedidos-pagamentos-demo-sqlite');
 const { criarRouterVinculosPedidosPagamentosDemo } = require('../routes/admin-vinculos-pedidos-pagamentos-demo');
+const { PedidosComerciaisDemoSQLite } = require('../domain/pedidos-comerciais-demo-sqlite');
+const { criarRouterPedidosComerciaisDemo } = require('../routes/admin-pedidos-comerciais-demo');
 const { criarRouterEscritorioDemo } = require('../routes/admin-escritorio-demo');
 const { criarRouterFinanceiroAdminDemo } = require('../routes/admin-financeiro-demo');
 const { RepositorioAparenciaCofresSQLite } = require('../domain/repositorio-aparencia-cofres-sqlite');
@@ -95,6 +97,18 @@ function criarAppAdminLaboratorio({ repositorio, segredo, webhookDemo } = {}) {
   app.use('/api/admin', criarRouterVinculosPedidosPagamentosDemo({
     segredo,vinculos:vinculosPedidoPagamentoDemo
   }));
+  const pedidosComerciaisDemo=recebimentosDemo
+    ? new PedidosComerciaisDemoSQLite({
+      repositorioCatalogo:repositorio,
+      vinculosFornecedor:new VinculosFornecedoresSQLite({repositorioCatalogo:repositorio}),
+      recebimentos:recebimentosDemo
+    })
+    : null;
+  if (pedidosComerciaisDemo) {
+    app.use('/api/admin', criarRouterPedidosComerciaisDemo({
+      segredo,pedidos:pedidosComerciaisDemo
+    }));
+  }
   app.get('/admin', somenteLocal, (req, res) => {
     res.sendFile(path.join(__dirname, 'painel-catalogo.html'));
   });
