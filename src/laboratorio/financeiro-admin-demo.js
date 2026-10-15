@@ -20,6 +20,8 @@
   let versaoLivro=0;
   let versaoRecebimentos=0;
   let versaoPonte=0;
+  let versaoComercial=0;
+  let salvandoPedidoComercial=false;
   let versaoHistoricoPonte=0;
   let pedidosAssociados=[];
   let salvandoEventoPSP=false;
@@ -32,6 +34,11 @@
     ++versaoLivro;
     ++versaoRecebimentos;
     ++versaoPonte;
+    ++versaoComercial;
+    el('listaPedidosComerciaisDemo').replaceChildren();
+    el('produtoPedidoComercialDemo').replaceChildren();
+    el('pagamentoPedidoComercialDemo').replaceChildren();
+    el('statusPedidosComerciaisDemo').textContent='';
     ++versaoHistoricoPonte;
     pedidosAssociados=[];
     el('listaPontePedidoPagamentoDemo').replaceChildren();
@@ -165,6 +172,81 @@
     }catch(e){
       if(atual===versaoConciliacao) situacao.textContent=e.message;
     }
+  }
+
+  async function carregarPedidosComerciais(){
+    const atual=++versaoComercial;
+    const aviso=el('statusPedidosComerciaisDemo');
+    if(!token){aviso.textContent='Abra a demonstração com a chave local.';return;}
+    try{
+      const [lista,opcoes]=await Promise.all([
+        requisitar('pedidos-comerciais-demo'),
+        requisitar('pedidos-comerciais-demo/opcoes')
+      ]);
+      if(atual!==versaoComercial)return;
+      function popular(id,items,getId,getText){
+        const select=el(id),anterior=select.value;
+        select.replaceChildren();
+        for(const item of items){
+          const opt=document.createElement('option');
+          opt.value=getId(item);
+          opt.textContent=getText(item);
+          select.append(opt);
+        }
+        if(items.some(item=>getId(item)===anterior))select.value=anterior;
+      }
+      popular('produtoPedidoComercialDemo',opcoes.produtos,
+        p=>p.produtoId,p=>p.nome+' — '+money(p.precoCentavos));
+      popular('pagamentoPedidoComercialDemo',opcoes.pagamentos,
+        p=>p.pagamentoId,p=>p.pagamentoId+' — '+money(p.valorCentavos));
+      const destino=el('listaPedidosComerciaisDemo');
+      destino.replaceChildren();
+      for(const p of lista.pedidos){
+        const artigo=document.createElement('div');
+        artigo.className='financeiro-caixa';
+        const titulo=document.createElement('strong');
+        titulo.textContent=p.pedidoId+' — '+p.nomeProduto;
+        const linha=document.createElement('span');
+        linha.className='financeiro-linha-saldos';
+        linha.textContent='Preço do pedido: '+money(p.precoBrutoCentavos)+
+          ' | Pagamento '+p.pagamentoId+' — '+p.situacaoPagamentoFicticio;
+        const legenda=document.createElement('small');
+        legenda.textContent='Fornecedor de teste '+p.fornecedorId+' / SKU '+p.sku+
+          ' | Parcela LOOP '+money(p.parcelaLoopExemploCentavos)+
+          ' | Sobra bruta '+money(p.sobraComercialBrutaExemploCentavos)+
+          '. Fotografia imutável da compra fictícia.';
+        artigo.append(titulo,linha,legenda);
+        destino.append(artigo);
+      }
+      aviso.textContent=lista.pedidos.length+' pedido(s) comercial(is) fictício(s) registrado(s). '+
+        opcoes.produtos.length+' produto(s) físico(s) publicado(s) com fornecedor e '+
+        opcoes.pagamentos.length+' fatura(s) de teste pendente(s).';
+    }catch(e){if(atual===versaoComercial)aviso.textContent=e.message;}
+  }
+  async function criarPedidoComercial(e){
+    e.preventDefault();
+    if(!token||salvandoPedidoComercial)return;
+    const aviso=el('statusPedidosComerciaisDemo');
+    const botao=el('registrarPedidoComercialDemo');
+    salvandoPedidoComercial=true;
+    botao.disabled=true;
+    try{
+      const produtoId=el('produtoPedidoComercialDemo').value;
+      const pagamentoId=el('pagamentoPedidoComercialDemo').value;
+      if(!produtoId||!pagamentoId)throw new Error('Escolha produto e pagamento fictícios disponíveis.');
+      const resultado=await requisitar('pedidos-comerciais-demo',{
+        method:'POST',
+        body:JSON.stringify({
+          pedidoId:el('idPedidoComercialDemo').value.trim(),
+          produtoId,pagamentoId
+        })
+      });
+      await carregarPedidosComerciais();
+      aviso.textContent=resultado.repetido?
+        'Pedido fictício já estava registrado; nada foi duplicado.':
+        'Pedido comercial fictício salvo com preço, fornecedor e pagamento vinculados. Nenhuma venda real.';
+    }catch(e){aviso.textContent=e.message;}
+    finally{salvandoPedidoComercial=false;botao.disabled=false;}
   }
 
   // Correlacao somente LEITURA; intencionalmente nao altera pedidos,
@@ -308,7 +390,7 @@
       const ret=await requisitar('recebimentos-psp-demo/'+encodeURIComponent(pagamentoId)+'/eventos',{
         method:'POST',body:JSON.stringify(corpo)
       });
-      await Promise.all([carregarRecebimentos(),carregarLivro(),carregarPontePedidoPagamento()]);
+      await Promise.all([carregarRecebimentos(),carregarLivro(),carregarPontePedidoPagamento(),carregarPedidosComerciais()]);
       aviso.textContent=ret.resultado.repetido?
         'Evento fictício repetido: nenhum lançamento adicional.':
         'Evento fictício confirmado no livro de teste; nenhuma cobrança ou movimentação real.';
@@ -476,7 +558,7 @@
       if(atual!==versao)return;
       preencherConfiguracoes(config.cofres);
       mostrar(visao);
-      await Promise.all([carregarHistorico(),carregarConciliacao(),carregarLivro(),carregarRecebimentos(),carregarPontePedidoPagamento()]);
+      await Promise.all([carregarHistorico(),carregarConciliacao(),carregarLivro(),carregarRecebimentos(),carregarPontePedidoPagamento(),carregarPedidosComerciais()]);
     }catch(e){
       if(atual===versao){limpar();status.textContent=e.message;}
     }
@@ -515,6 +597,8 @@
     carregarHistorico();
   });
   el('formAparenciaCofreDemo').addEventListener('submit',salvar);
+  el('formPedidosComerciaisDemo').addEventListener('submit',criarPedidoComercial);
+  el('atualizarPedidosComerciaisDemo').addEventListener('click',carregarPedidosComerciais);
   el('atualizarPontePedidoPagamentoDemo').addEventListener('click',carregarPontePedidoPagamento);
   el('pedidoHistoricoPonteDemo').addEventListener('change',carregarHistoricoPonte);
   el('atualizarRecebimentosPSPDemo').addEventListener('click',async()=>{
