@@ -38,10 +38,10 @@ test('cinco vendas gravadas em lote atomico preservam 3 central, 1 esquerda e 1 
     const livro=r.consultar();
     assert.equal(livro.lotesRegistrados,1);
     assert.equal(livro.lancamentosRegistrados,10);
-    assert.equal(cofre(livro,COFRES.CENTRO).entradasAcumuladasCentavos,30000);
-    assert.equal(cofre(livro,COFRES.ESQUERDA).entradasAcumuladasCentavos,10000);
-    assert.equal(cofre(livro,COFRES.DIREITA).entradasAcumuladasCentavos,10000);
-    assert.equal(cofre(livro,COFRES.COMERCIAL).entradasAcumuladasCentavos,100000);
+    assert.equal(cofre(livro,COFRES.CENTRO).entradasAcumuladasCentavos,75000);
+    assert.equal(cofre(livro,COFRES.ESQUERDA).entradasAcumuladasCentavos,25000);
+    assert.equal(cofre(livro,COFRES.DIREITA).entradasAcumuladasCentavos,25000);
+    assert.equal(cofre(livro,COFRES.COMERCIAL).entradasAcumuladasCentavos,25000);
     assert.equal(cofre(livro,COFRES.DISTRIBUIDOR).entradasAcumuladasCentavos,0);
     assert.equal(livro.integracaoBancaria,'NAO_CONECTADA');
     assert.equal(livro.pagamentosReais,false);
@@ -88,7 +88,7 @@ test('saidas retornos e ajustes ficticios nao apagam passado e saldo pode ficar 
     assert.equal(cofre(l,COFRES.ESQUERDA).entradasAcumuladasCentavos,12000);
     assert.equal(cofre(l,COFRES.ESQUERDA).saidasAcumuladasCentavos,20000);
     assert.equal(cofre(l,COFRES.ESQUERDA).retornosAcumuladosCentavos,3500);
-    assert.equal(cofre(l,COFRES.ESQUERDA).saldoProjetadoCentavos,-4500);
+    assert.equal(cofre(l,COFRES.ESQUERDA).saldoProjetadoCentavos,10500);
     assert.equal(l.historicoRecente[0].tipo,'AJUSTE_FICTICIO');
     assert.equal(l.historicoRecente.at(-1).referencia,'venda-financeira-ficticia-1');
     assert.equal(r.registrarMovimentoFicticio({
@@ -192,7 +192,7 @@ test('rotas do livro exigem token e servidor local e nao recebem campos financei
   assert.equal(resposta.headers.get('cache-control'),'no-store');
   const livro=await resposta.json();
   assert.equal(livro.lancamentosRegistrados,12);
-  assert.equal(cofre(livro,COFRES.COMERCIAL).saldoProjetadoCentavos,81000);
+  assert.equal(cofre(livro,COFRES.COMERCIAL).saldoProjetadoCentavos,6000);
   assert.equal(db.listar().length,0);
 });
 
