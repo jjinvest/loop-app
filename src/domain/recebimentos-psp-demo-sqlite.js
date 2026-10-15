@@ -6,7 +6,8 @@
 // atomica com os lancamentos de laboratorio no livro financeiro.
 const {COFRES,MODOS}=require('./financeiro-admin-demo');
 const {DESTINOS}=require('./tabuleiro-loop');
-const ID=/^[a-z0-9][a-z0-9-]{2,79}$/;
+// Limite de 63 caracteres: IDs internos adicionam prefixos contabil-/receb-.
+const ID=/^[a-z0-9][a-z0-9-]{2,62}$/;
 const TIPOS=Object.freeze({
   CONFIRMAR:'CONFIRMAR_FICTICIO',
   ESTORNAR:'ESTORNAR_FICTICIO'
