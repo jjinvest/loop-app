@@ -108,6 +108,34 @@ class PedidosComerciaisDemoSQLite{
       ).all().map(row=>this.comStatus(exposicao(row)))
     };
   }
+  // Cotacao READ-ONLY para precos VARIAVEIS de produtos fisicos.
+  // Sem fatura PSP criada, sem custo definitivo do distribuidor e
+  // sem inventar como a parcela LOOP sera financiada em cada preco.
+  cotacoesPrecosVariaveis(){
+    const produtos=this.catalogo.listar().filter(p=>
+      p.tipo==='FISICO'&&p.estado==='PUBLICADO'&&
+      Number.isSafeInteger(p.precoCentavos)&&p.precoCentavos>0
+    ).map(p=>{
+      const f=this.vinculosFornecedor.consultar({produtoId:p.id});
+      if(!f?.ativo)return null;
+      return {
+        produtoId:p.id,nomeProduto:p.nome,precoCatalogoCentavos:p.precoCentavos,
+        fornecedorId:f.fornecedorId,sku:f.sku,
+        custoFornecedorReal:null,
+        valorParcelaLOOPDefinido:false,
+        faturaPSPRealCriada:false,
+        cobrancaReal:false
+      };
+    }).filter(Boolean);
+    return {
+      modo:'PRE_COTACAO_FISICA_SEM_PAGAMENTO',
+      precosLivresDoCatalogo:true,
+      fornecedorDeveSerCotadoExternamente:true,
+      splitNaoCalculado:true,
+      pedidosReaisCriados:false,
+      produtos
+    };
+  }
   opcoes(){
     const usados=new Set(this.banco.prepare(
       'SELECT pagamento_id AS id FROM admin_pedidos_comerciais_demo'
