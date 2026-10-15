@@ -36,6 +36,12 @@ class EscritorioIndividualDemo{
    FROM admin_ponte_compras_demo WHERE conta_id=?
    ORDER BY confirmado_em,pedido_id
   `).all(contaId);
+  const comprasLojaSemLoop=this.banco.prepare(`
+   SELECT pedido_id AS pedidoId,produto_id AS produtoId,
+    valor_centavos AS valorCentavos,confirmado_em AS confirmadoEm
+   FROM admin_ponte_vendas_loja_sem_loop_demo WHERE conta_id=?
+   ORDER BY confirmado_em,pedido_id
+  `).all(contaId);
   const indicacoes=this.banco.prepare(`
    SELECT c.id AS convidadoId,
     v.convidado_id AS confirmadoId,
@@ -77,6 +83,10 @@ class EscritorioIndividualDemo{
    conta:{nome:conta.nome,login:conta.login,codigoConvite:conta.codigoConvite},
    compras:compras.map(c=>({...c,confirmacao:'INTERNA_SIMULADA',
     status:'CONFIRMADO_SOMENTE_TESTE'})),
+   comprasLojaSemLoop:comprasLojaSemLoop.map(c=>({
+    ...c,confirmacao:'INTERNA_SIMULADA',
+    status:'VENDA_LOJA_SEM_POSICAO_LOOP',posicaoCriada:false
+   })),
    posicoes:posicoes.sort((a,b)=>a.posicaoId-b.posicaoId),
    limitePosicoesAtivas:LIMITE_ATIVAS,
    vagasLivres:LIMITE_ATIVAS-posicoes.length,
