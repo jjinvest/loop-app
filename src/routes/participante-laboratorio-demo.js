@@ -37,7 +37,19 @@ function criarRouterParticipanteDemo({contas,ponte,sessoes=null}={}){
   res.set('X-Content-Type-Options','nosniff');
   next();
  });
- router.post('/entrar',(req,res)=>{
+ router.use((req,res,next)=>{
+  if(req.method!=='POST')return next();
+  // Uma pagina externa nao pode enviar cabecalho customizado com
+  // cookies sem preflight CORS, nao habilitado no laboratorio.
+  // SameSite=Strict e verificacao de Origin sao protecoes adicionais.
+  const fetchSite=req.get('sec-fetch-site');
+  if(req.get('x-loop-lab')!=='participante'||
+    (fetchSite&&!['same-origin','none'].includes(fetchSite))){
+   return res.status(403).json({erro:'OPERACAO_LOCAL_INDEVIDA'});
+  }
+  next();
+ });
+ router.post('/entrar',(req,res,next)=>{
   if(!req.is('application/json')){
    return res.status(415).json({erro:'USE_APPLICATION_JSON'});
   }
@@ -49,23 +61,33 @@ function criarRouterParticipanteDemo({contas,ponte,sessoes=null}={}){
    const sessao=gerenciador.entrar({
     nome:req.body.nome,senha:req.body.senha,origem:req.socket?.remoteAddress
    });
+   const anterior=lerCookie(req);
+   if(anterior&&anterior!==sessao.token){
+    // Revoga a sessao anterior ao rotacionar login no mesmo navegador.
+    gerenciador.sair(anterior,{motivo:'SESSAO_REVOGADA'});
+   }
    setCookie(res,sessao.token,sessao.duracaoSegundos);
    return res.json({modo:'SESSAO_FICTICIA_LOCAL',autenticadoNoTeste:true,
     expiraEmSegundos:DURACAO/1000,
     clienteReal:false,pagamentoReal:false});
   }catch(erro){
+   if(!['LIMITE_LOGIN_DE_TESTE','LOGIN_DE_TESTE_INVALIDO'].includes(erro.codigo)){
+    return next(erro);
+   }
    return res.status(erro.codigo==='LIMITE_LOGIN_DE_TESTE'?429:401)
     .json({erro:erro.codigo==='LIMITE_LOGIN_DE_TESTE'?
       'LIMITE_LOGIN_DE_TESTE':'CREDENCIAIS_INVALIDAS'});
   }
  });
- router.post('/sair',(req,res)=>{
+ router.post('/sair',(req,res,next)=>{
   if(!req.is('application/json')){
    return res.status(415).json({erro:'USE_APPLICATION_JSON'});
   }
-  gerenciador.sair(lerCookie(req));
-  setCookie(res,'',0);
-  return res.json({sessaoEncerradaNoTeste:true});
+  try{
+   gerenciador.sair(lerCookie(req));
+   setCookie(res,'',0);
+   return res.json({sessaoEncerradaNoTeste:true});
+  }catch(erro){return next(erro);}
  });
  router.get('/minha-conta',(req,res,next)=>{
   try{
