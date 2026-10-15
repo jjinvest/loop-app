@@ -17,6 +17,8 @@ const { VinculosPedidosPagamentosDemoSQLite } = require('../domain/vinculos-pedi
 const { criarRouterVinculosPedidosPagamentosDemo } = require('../routes/admin-vinculos-pedidos-pagamentos-demo');
 const { PedidosComerciaisDemoSQLite } = require('../domain/pedidos-comerciais-demo-sqlite');
 const { criarRouterPedidosComerciaisDemo } = require('../routes/admin-pedidos-comerciais-demo');
+const { PlanejamentoVendasFisicasDemoSQLite } = require('../domain/planejamento-vendas-fisicas-demo-sqlite');
+const { criarRouterPlanejamentoFisicoDemo } = require('../routes/admin-planejamento-fisico-demo');
 const { PedidosPDFPagamentosDemoSQLite } = require('../domain/pedidos-pdf-pagamentos-demo-sqlite');
 const { criarRouterPedidosPDFDemo } = require('../routes/admin-pedidos-pdf-demo');
 const { criarRouterEscritorioDemo } = require('../routes/admin-escritorio-demo');
@@ -116,6 +118,17 @@ function criarAppAdminLaboratorio({ repositorio, segredo, webhookDemo } = {}) {
   if (repositorio instanceof RepositorioCatalogoSQLite) {
     const pedidosPDF=new PedidosPDFPagamentosDemoSQLite({repositorioCatalogo:repositorio});
     app.use('/api/admin',criarRouterPedidosPDFDemo({segredo,pedidos:pedidosPDF}));
+  }
+  // Compra fisica com preco livre: so PRE-PEDIDO ficticio, com
+  // custo preenchido pelo admin, sem caixa, PSP ou criacao de posicao.
+  if(repositorio instanceof RepositorioCatalogoSQLite){
+    const planejamentoFisicoDemo=new PlanejamentoVendasFisicasDemoSQLite({
+      repositorioCatalogo:repositorio,
+      vinculosFornecedor:new VinculosFornecedoresSQLite({repositorioCatalogo:repositorio})
+    });
+    app.use('/api/admin',criarRouterPlanejamentoFisicoDemo({
+      segredo,planejamento:planejamentoFisicoDemo
+    }));
   }
   app.get('/admin', somenteLocal, (req, res) => {
     res.sendFile(path.join(__dirname, 'painel-catalogo.html'));
