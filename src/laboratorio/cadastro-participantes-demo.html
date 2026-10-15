@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>LOOP | Cadastro fictício — laboratório</title>
+  <link rel="stylesheet" href="/css/style.css">
+  <link rel="stylesheet" href="/admin/painel.css">
+  <link rel="stylesheet" href="/admin/cadastro-participantes-demo.css">
+</head>
+<body>
+  <header>
+    <div><h1>LOOP</h1><small>Cadastro e convites — laboratório local</small></div>
+    <nav class="acoes-admin" aria-label="Navegação administrativa">
+      <a class="voltar-loja" href="/admin">Painel administrativo</a>
+      <a class="voltar-loja" href="/admin/escritorio-demo">Escritório Virtual</a>
+    </nav>
+  </header>
+  <main>
+    <section class="painel">
+      <h2>Contas e indicações — apenas simulação</h2>
+      <p class="aviso-demo">Use exclusivamente identidades, e-mails e senhas inventados. Esta página não cadastra clientes reais, não verifica CPF, não faz login público nem movimenta fila, catraca, pagamentos ou fornecedores.</p>
+      <div class="campo">
+        <label for="chaveCadastroDemo">Chave temporária do laboratório</label>
+        <input id="chaveCadastroDemo" type="password" autocomplete="off" spellcheck="false">
+      </div>
+      <div class="acoes-admin">
+        <button id="abrirCadastroDemo" type="button">Abrir laboratório</button>
+        <button id="sairCadastroDemo" type="button" class="secundario">Limpar sessão</button>
+      </div>
+      <p id="estadoCadastroDemo" role="status" aria-live="polite" class="estado-admin">Aguardando chave local.</p>
+    </section>
+    <div id="areaCadastroDemo" hidden>
+      <section class="painel">
+        <h2>Criar conta fictícia</h2>
+        <p class="ajuda">Cadastro com nome, e-mail e senha. O nome cadastrado é o nome usado depois no login. O código de convite vem preenchido automaticamente quando esta página é aberta por um link de indicação.</p>
+        <form id="formContaDemo" autocomplete="off">
+          <div class="campo">
+            <label for="nomeContaDemo">Nome de acesso (único)</label>
+            <input id="nomeContaDemo" type="text" required maxlength="60" autocomplete="off" placeholder="Conta Exemplo Um">
+          </div>
+          <div class="campo">
+            <label for="emailContaDemo">E-mail fictício</label>
+            <input id="emailContaDemo" type="email" required maxlength="254" autocomplete="off" placeholder="conta1@exemplo.invalid">
+          </div>
+          <div class="campo">
+            <label for="senhaContaDemo">Senha de demonstração (mínimo 10 caracteres)</label>
+            <input id="senhaContaDemo" type="password" required minlength="10" maxlength="128" autocomplete="new-password">
+          </div>
+          <div class="campo">
+            <label for="conviteContaDemo">Código do indicador (opcional)</label>
+            <input id="conviteContaDemo" type="text" maxlength="23" pattern="lp-[a-f0-9]{20}" spellcheck="false" autocomplete="off" placeholder="lp-...">
+            <p class="ajuda">Convite associado ao cadastro permanece PENDENTE. Só uma compra efetivamente validada poderá torná-lo elegível futuramente.</p>
+          </div>
+          <button type="submit" id="criarContaDemo">Cadastrar conta de teste</button>
+        </form>
+        <p id="resultadoContaDemo" class="estado-admin" role="status" aria-live="polite"></p>
+      </section>
+      <section class="painel">
+        <h2>Conferir login por nome e senha</h2>
+        <form id="formLoginContaDemo" autocomplete="off">
+          <div class="campo">
+            <label for="nomeLoginContaDemo">Nome de acesso</label>
+            <input id="nomeLoginContaDemo" type="text" required maxlength="60" autocomplete="off">
+          </div>
+          <div class="campo">
+            <label for="senhaLoginContaDemo">Senha fictícia</label>
+            <input id="senhaLoginContaDemo" type="password" required autocomplete="off">
+          </div>
+          <button type="submit" id="conferirSenhaContaDemo">Conferir senha (sem criar sessão real)</button>
+        </form>
+        <p id="resultadoLoginContaDemo" class="estado-admin" role="status" aria-live="polite"></p>
+      </section>
+      <section class="painel">
+        <h2>Contas e convites pendentes</h2>
+        <button type="button" id="atualizarContasDemo" class="secundario">Atualizar contas fictícias</button>
+        <p class="ajuda">Sem validação de compra, todas as indicações permanecem pendentes. Nenhuma conta nesta lista ocupa posição ou recebe valor.</p>
+        <div id="listaContasDemo" aria-live="polite" class="cadastro-lista"></div>
+      </section>
+    </div>
+  </main>
+  <script src="/admin/cadastro-participantes-demo.js"></script>
+</body>
+</html>
