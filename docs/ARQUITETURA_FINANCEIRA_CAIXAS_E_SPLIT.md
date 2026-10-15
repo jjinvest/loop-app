@@ -244,6 +244,78 @@ recebimentos, riscos de estorno, obrigacoes
 com distribuidores e eventuais bonus de
 indicacao, sem dupla contagem de dinheiro.
 
+## Prototipo implementado: demonstrativo financeiro administrativo local
+
+O proximo passo de engenharia foi construido como **modulo separado
+de laboratorio, sem dinheiro real e sem acesso de participantes**.
+Ele preserva o tabuleiro, a catraca, o catalogo e todos os modulos
+anteriores. A nova tela nao estabelece ligacao real com PSP,
+bancos ou fornecedores.
+
+Arquivos:
+- `src/domain/financeiro-admin-demo.js` — calculo e conciliacao
+  *ficticios* de cinco parcelas para os destinos acordados;
+  importa a sequencia de `DESTINOS` do `tabuleiro-loop.js`
+  para nao duplicar ou mudar a regra 1/3/5 e 2/4.
+- `src/routes/admin-financeiro-demo.js` — API de leitura protegida.
+- `src/laboratorio/financeiro-admin-demo.html`,
+  `.js`, `.css` — tela local para o administrador.
+- `test/financeiro-admin-demo.test.js` — verificacoes das
+  parcelas, dos quatro/cinco caixas, das somas,
+  do isolamento de rotas e da ausencia de escrita.
+
+Para abrir, usar o servidor de laboratorio ja descrito
+em `docs/ESCRITORIO_VIRTUAL_DEMONSTRATIVO.md` e ir para
+`http://127.0.0.1:3001/admin/financeiro-demo` no
+**mesmo computador que iniciou o Node.js**. Informar
+a chave temporaria de teste `LOOP_ADMIN_TEST_TOKEN`.
+A chave fica apenas na memoria da pagina, nao e
+registrada em URL ou armazenamento local.
+
+API, disponivel apenas no laboratorio:
+- `GET /api/admin/financeiro-demo?modo=split`: quatro
+  caixas visuais (3 LOOP + 1 comercial) e coluna
+  de repasse EXTERNO ficticio ao distribuidor.
+- `GET /api/admin/financeiro-demo?modo=reserva`:
+  cinco caixas (3 LOOP + comercial + reserva
+  ficticia para distribuidor).
+
+Todos os endpoints exigem a credencial do
+administrador local e usam `Cache-Control: no-store`.
+Nao ha metodo HTTP de movimentacao: nenhuma funcao
+de saque real foi criada nem uma politica financeira
+de bloqueio do administrador. Esse demonstrativo
+apenas calcula e apresenta dados de teste.
+Nomes e cores seguem provisórios, pois acabamento
+e configuracao visual definitiva foram adiados
+pelo idealizador.
+
+**Exemplo ficticio de cinco vendas de R$600:**
+- R$300.000 centavos (R$3.000) de vendas brutas;
+- R$150.000 centavos (R$1.500) custo do distribuidor;
+- R$50.000 centavos (R$500) parcela LOOP:
+  central R$300, esquerda R$100, direita R$100;
+- R$100.000 centavos (R$1.000) de sobra bruta da loja;
+- 15 registros de demonstracao de parcelas
+  ligados a cinco identificadores ficticios de venda.
+
+No modo 'reserva', R$1.500 aparecem na categoria
+ficticia de fornecedor a pagar; no modo 'split',
+esse repasse e EXTERNO apenas no cenario, nao
+transfere recursos bancarios. Os dois modos
+conferem R$3.000 aritmeticamente sem duplicar
+destinos. Nenhum saldo ou entrada da amostra
+reflete disponibilidade bancaria. Impostos,
+tarifas, estornos e bonificacao de indicacoes
+**nao estao incluidos** na conta de teste.
+
+A visao detalhada fica restrita ao laboratorio
+administrativo. O escritorio do participante
+nao recebe rotas nem informacoes de margem,
+custo do fornecedor ou cofres internos.
+Autenticacao de producao e permissoes
+granulares de operadores ainda NAO existem.
+
 ## Isolamento e seguranca do projeto
 
 - Movimentacoes reais so mediante
