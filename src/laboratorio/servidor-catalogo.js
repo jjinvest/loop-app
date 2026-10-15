@@ -19,6 +19,8 @@ const { PedidosComerciaisDemoSQLite } = require('../domain/pedidos-comerciais-de
 const { criarRouterPedidosComerciaisDemo } = require('../routes/admin-pedidos-comerciais-demo');
 const { PlanejamentoVendasFisicasDemoSQLite } = require('../domain/planejamento-vendas-fisicas-demo-sqlite');
 const { criarRouterPlanejamentoFisicoDemo } = require('../routes/admin-planejamento-fisico-demo');
+const { PagamentosPrePedidosFisicosDemoSQLite } = require('../domain/pagamentos-pre-pedidos-fisicos-demo-sqlite');
+const { criarRouterPagamentosPrePedidosFisicosDemo } = require('../routes/admin-pagamentos-pre-pedidos-fisicos-demo');
 const { PedidosPDFPagamentosDemoSQLite } = require('../domain/pedidos-pdf-pagamentos-demo-sqlite');
 const { criarRouterPedidosPDFDemo } = require('../routes/admin-pedidos-pdf-demo');
 const { criarRouterEscritorioDemo } = require('../routes/admin-escritorio-demo');
@@ -128,6 +130,12 @@ function criarAppAdminLaboratorio({ repositorio, segredo, webhookDemo } = {}) {
     });
     app.use('/api/admin',criarRouterPlanejamentoFisicoDemo({
       segredo,planejamento:planejamentoFisicoDemo
+    }));
+    const pagamentosPrePedidosFisicosDemo=new PagamentosPrePedidosFisicosDemoSQLite({
+      planejamento:planejamentoFisicoDemo
+    });
+    app.use('/api/admin',criarRouterPagamentosPrePedidosFisicosDemo({
+      segredo,pagamentos:pagamentosPrePedidosFisicosDemo
     }));
   }
   app.get('/admin', somenteLocal, (req, res) => {
