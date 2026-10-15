@@ -148,6 +148,44 @@ obrigacoes precisa de regras, conciliacao e demonstracao contabil.
   ou mais posicoes) sem interromper a atividade e preservando
   os compromissos comerciais LICITOS.
 
+## 5. Indicacoes: 10% fixos e minimo de saque esclarecido
+
+Em 15/10/2026, o idealizador **confirmou expressamente** a
+regra pretendida de remuneracao por indicacao: **10% sobre a
+base de referencia de R$ 100 = R$ 10 por indicacao elegivel**.
+Isso NAO significa 10% sobre o valor comercial total de
+qualquer produto. Exemplos: dez creditos de R$ 10 somam
+R$ 100, que e o **minimo de saque do saldo de indicacoes**.
+Os creditos individuais aparecerao na area propria do
+participante no Escritorio Virtual.
+
+O idealizador tambem explicou que **bonus de eventos**
+podem ser exibidos/registrados nessa area e somados
+aos resultados individuais quando acontecerem eventos
+aprovados. **Nao ha valor ou gatilho automatico definido
+para bonus de eventos**.
+
+A regra ja registrada de **indicacao valida** pressupoe
+convidado que se cadastra pelo vinculo unico e paga,
+enquanto a frase recente sobre convidar familiar pode
+gerar ambiguidade sobre o instante exato de lancamento.
+**Antes de codificar, confirmar se o credito de R$ 10
+so ocorre apos uma compra validada do convidado.**
+Tambem nao assumir repeticao de credito para cada
+compra futura do mesmo indicado sem autorizacao.
+
+**Distincao de saldos:** a fixacao de R$ 100 como minimo
+deste saldo de indicacoes nao define o minimo de
+outras modalidades de credito ou contemplacao.
+
+**Seguranca financeira:** esse incentivo deve ser
+contabilmente conciliado com a parcela de R$ 100
+associada a cada venda, incluindo origem dos
+recursos, custos e reserva para estornos. Beneficios
+associados a compras de convidados exigem
+avaliacao juridica/regulatoria antes de ativar
+saldos, promessas publicas, saque ou pagamento.
+
 ## 5. Saques e taxas — pontos mencionados, ainda ambiguos
 
 Foram mencionados um desconto de 3% no saque e possiveis minimos
@@ -159,7 +197,8 @@ a ideia de um minimo de R$ 300.
 
 **Nao transformar em configuracao fixa sem esclarecer**:
 - Quantos saldos/carteiras existem e seus nomes exatos.
-- Qual tipo de saldo teria minimo de R$ 100 e qual nao teria.
+- O minimo de R$ 100 para o saldo de indicacoes esta CONFIRMADO;
+  falta definir o minimo de outros saldos, se existirem.
 - Se a taxa de 3% incidira em ambos os saques, apenas um,
   ou se e apenas proposta; quem a cobra e se ha custos adicionais.
 - Se valores do centro podem ser liberados por parcelas de
