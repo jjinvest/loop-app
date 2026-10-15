@@ -42,6 +42,8 @@
   let recebimentos=[];
   let configuracoes=[];
   let salvando=false;
+  let valorLoopAtual=null;
+  let salvandoValorLoop=false;
 
   function limpar(){
     ++versaoConciliacao;
@@ -100,6 +102,10 @@
     el('historicoConciliacaoDemo').replaceChildren();
     el('statusConciliacaoDemo').textContent='';
     configuracoes=[];
+    valorLoopAtual=null;
+    el('referenciaAtualLoopDemo').textContent='Referência de laboratório indisponível.';
+    el('historicoValorLoopDemo').replaceChildren();
+    el('statusValorLoopDemo').textContent='';
     selecionar.replaceChildren();
     statusEdicao.textContent='';
     el('historicoAparenciaCofreDemo').replaceChildren();
@@ -108,6 +114,58 @@
     }
     for(const id of ['vendasBrutasFinanceiroDemo','distribuidorFinanceiroDemo','parcelaFinanceiroDemo','sobraFinanceiroDemo']){
       el(id).textContent='—';
+    }
+  }
+  async function carregarValorLoop(){
+    if(!token)return;
+    const res=await requisitar('valor-loop-demo');
+    valorLoopAtual=res.atual;
+    el('referenciaAtualLoopDemo').textContent='Referência vigente: '+
+      money(res.atual.valorCentavos)+' — revisão '+res.atual.revisao+
+      ' — desde '+res.atual.vigenteDesde+'.';
+    const historico=el('historicoValorLoopDemo');
+    historico.replaceChildren();
+    for(const marco of res.historico){
+      const li=document.createElement('li');
+      li.textContent='Revisão '+marco.revisao+
+        ': '+money(marco.valorCentavos)+' — início '+marco.vigenteDesde;
+      historico.append(li);
+    }
+    el('novoValorLoopDemo').value=(res.atual.valorCentavos/100).toFixed(2);
+  }
+  async function salvarValorLoop(evento){
+    evento.preventDefault();
+    if(!token||!valorLoopAtual||salvandoValorLoop)return;
+    const campo=el('novoValorLoopDemo');
+    const bruto=campo.value;
+    const estado=el('statusValorLoopDemo');
+    if(!/^[0-9]+(?:\.[0-9]{1,2})?$/.test(bruto)){
+      estado.textContent='Digite um valor em reais com até duas casas decimais.';
+      return;
+    }
+    const centavos=Math.round(Number(bruto)*100);
+    if(!Number.isSafeInteger(centavos)||centavos<100||centavos>100000000){
+      estado.textContent='O valor está fora do intervalo de teste permitido.';
+      return;
+    }
+    salvandoValorLoop=true;
+    el('salvarValorLoopDemo').disabled=true;
+    try{
+      const retorno=await requisitar('valor-loop-demo',{
+        method:'PATCH',
+        body:JSON.stringify({valorCentavos:centavos,
+          revisaoEsperada:valorLoopAtual.revisao})
+      });
+      await carregarValorLoop();
+      estado.textContent=retorno.alterado?
+       'Nova referência registrada no histórico para compras posteriores. Posições anteriores preservadas.':
+       'Referência já estava nesse valor; nenhuma alteração histórica.';
+    }catch(e){
+      estado.textContent=e.message;
+      try{await carregarValorLoop();}catch{}
+    }finally{
+      salvandoValorLoop=false;
+      el('salvarValorLoopDemo').disabled=false;
     }
   }
   async function requisitar(recurso,opcoes={}){
@@ -1077,7 +1135,7 @@
       if(atual!==versao)return;
       preencherConfiguracoes(config.cofres);
       mostrar(visao);
-      await Promise.all([carregarHistorico(),carregarConciliacao(),carregarLivro(),carregarRecebimentos(),carregarPontePedidoPagamento(),carregarPedidosComerciais(),carregarPedidosPDF(),carregarPlanejamentoFisico(),carregarPagamentosFisicos()]);
+      await Promise.all([carregarValorLoop(),carregarHistorico(),carregarConciliacao(),carregarLivro(),carregarRecebimentos(),carregarPontePedidoPagamento(),carregarPedidosComerciais(),carregarPedidosPDF(),carregarPlanejamentoFisico(),carregarPagamentosFisicos()]);
     }catch(e){
       if(atual===versao){limpar();status.textContent=e.message;}
     }
@@ -1116,6 +1174,7 @@
     carregarHistorico();
   });
   el('formAparenciaCofreDemo').addEventListener('submit',salvar);
+  el('formValorLoopDemo').addEventListener('submit',salvarValorLoop);
   el('formPedidosPDFDemo').addEventListener('submit',registrarPedidoPDF);
   el('formEventoPDFDemo').addEventListener('submit',registrarEventoPDF);
   el('atualizarPedidosPDFDemo').addEventListener('click',carregarPedidosPDF);
