@@ -48,7 +48,7 @@ async function abrirServidor(t,repo){
 }
 async function entrar(base,nome,senha='senha-inventada-muito-segura'){
  return fetch(base+'/api/laboratorio/participante/entrar',{
-  method:'POST',headers:{'Content-Type':'application/json'},
+  method:'POST',headers:{'Content-Type':'application/json','X-LOOP-LAB':'participante'},
   body:JSON.stringify({nome,senha})
  });
 }
@@ -191,7 +191,7 @@ test('API individual so devolve dados do titular de sua sessao, sem chave admin'
  assert.equal((await fetch(minha,{headers:{Cookie:cookie+'; '+cookie}})).status,401);
  assert.equal((await fetch(minha,{headers:{Cookie:cookie,Origin:'https://example.org'}})).status,403);
  const logout=await fetch(base+'/api/laboratorio/participante/sair',{
-  method:'POST',headers:{Cookie:cookie,'Content-Type':'application/json'},
+  method:'POST',headers:{Cookie:cookie,'Content-Type':'application/json','X-LOOP-LAB':'participante'},
   body:'{}'
  });
  assert.equal(logout.status,200);
@@ -205,15 +205,19 @@ test('login individual rejeita campos extras e pedido de autenticacao por email'
  assert.equal((await entrar(base,'cliente@exemplo.invalid')).status,401);
  assert.equal((await entrar(base,a.nome,'senha-incorreta-de-teste')).status,401);
  const url=base+'/api/laboratorio/participante/entrar';
- assert.equal((await fetch(url,{
+  assert.equal((await fetch(url,{
   method:'POST',headers:{'Content-Type':'application/json'},
+  body:JSON.stringify({nome:a.nome,senha:'senha-inventada-muito-segura'})
+ })).status,403);
+ assert.equal((await fetch(url,{
+  method:'POST',headers:{'Content-Type':'application/json','X-LOOP-LAB':'participante'},
   body:JSON.stringify({nome:a.nome,senha:'senha-inventada-muito-segura',contaId:a.contaId})
  })).status,400);
  assert.equal((await fetch(url,{
-  method:'POST',headers:{'Content-Type':'text/plain'},body:'nada'
+  method:'POST',headers:{'Content-Type':'text/plain','X-LOOP-LAB':'participante'},body:'nada'
  })).status,415);
  assert.equal((await fetch(url,{
-  method:'POST',headers:{Origin:'https://externo.invalid','Content-Type':'application/json'},
+  method:'POST',headers:{Origin:'https://externo.invalid','Content-Type':'application/json','X-LOOP-LAB':'participante'},
   body:JSON.stringify({nome:a.nome,senha:'senha-inventada-muito-segura'})
  })).status,403);
 });
@@ -240,7 +244,7 @@ test('interface individual so existe no laboratorio; servidor publico e diferent
  assert.equal((await fetch(pub+'/laboratorio/participante')).status,404);
  assert.equal((await fetch(pub+'/api/laboratorio/participante/minha-conta')).status,404);
  assert.equal((await fetch(pub+'/api/laboratorio/participante/entrar',{
-  method:'POST',headers:{'Content-Type':'application/json'},
+  method:'POST',headers:{'Content-Type':'application/json','X-LOOP-LAB':'participante'},
   body:'{}'
  })).status,404);
 });
