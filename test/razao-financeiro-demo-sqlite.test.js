@@ -85,7 +85,7 @@ test('saidas retornos e ajustes ficticios nao apagam passado e saldo pode ficar 
     const l=r.consultar();
     assert.equal(l.lotesRegistrados,4);
     assert.equal(l.lancamentosRegistrados,13);
-    assert.equal(cofre(l,COFRES.ESQUERDA).entradasAcumuladasCentavos,12000);
+    assert.equal(cofre(l,COFRES.ESQUERDA).entradasAcumuladasCentavos,27000);
     assert.equal(cofre(l,COFRES.ESQUERDA).saidasAcumuladasCentavos,20000);
     assert.equal(cofre(l,COFRES.ESQUERDA).retornosAcumuladosCentavos,3500);
     assert.equal(cofre(l,COFRES.ESQUERDA).saldoProjetadoCentavos,10500);
