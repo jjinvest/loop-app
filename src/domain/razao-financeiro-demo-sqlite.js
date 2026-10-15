@@ -94,11 +94,14 @@ class RazaoFinanceiroDemoSQLite{
         BEGIN SELECT RAISE(ABORT,'livro imutavel'); END;
     `);
   }
-  registrarLote({loteId,eventos}={}){
+  registrarLote({loteId,eventos}={}, {transacaoAberta=false}={}){
     const validos=validarLote(loteId,eventos);
     const documento=JSON.stringify(validos);
     const agora=new Date().toISOString();
-    this.banco.exec('BEGIN IMMEDIATE');
+    // Chamado isoladamente: controla propria transacao. Quando integrado
+    // ao recebimento simulado: usa a transacao externa, permitindo commit
+    // atomico do comprovante ficticio e do seu lancamento no livro.
+    if(!transacaoAberta)this.banco.exec('BEGIN IMMEDIATE');
     try{
       const existente=this.banco.prepare(
         'SELECT eventos_json FROM admin_fin_demo_lotes WHERE lote_id=?'
@@ -109,7 +112,7 @@ class RazaoFinanceiroDemoSQLite{
           conflito.codigo='CONFLITO_IDEMPOTENCIA';
           throw conflito;
         }
-        this.banco.exec('COMMIT');
+        if(!transacaoAberta)this.banco.exec('COMMIT');
         return {loteId,repetido:true,eventos:validos.length};
       }
       const jaUsados=this.banco.prepare(
@@ -137,10 +140,10 @@ class RazaoFinanceiroDemoSQLite{
           inserirLinha.run(evento.eventoId,l.cofreId,l.natureza,l.valorCentavos,agora);
         }
       }
-      this.banco.exec('COMMIT');
+      if(!transacaoAberta)this.banco.exec('COMMIT');
       return {loteId,repetido:false,eventos:validos.length};
     }catch(erro){
-      this.banco.exec('ROLLBACK');
+      if(!transacaoAberta)this.banco.exec('ROLLBACK');
       throw erro;
     }
   }
