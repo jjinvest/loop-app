@@ -21,6 +21,11 @@
   let versaoRecebimentos=0;
   let versaoPonte=0;
   let versaoComercial=0;
+  let versaoPDF=0;
+  let versaoHistoricoPDF=0;
+  let salvandoPDF=false;
+  let salvandoEventoPDF=false;
+  let pedidosPDF=[];
   let salvandoPedidoComercial=false;
   let versaoHistoricoPonte=0;
   let pedidosAssociados=[];
@@ -35,6 +40,13 @@
     ++versaoRecebimentos;
     ++versaoPonte;
     ++versaoComercial;
+    ++versaoPDF;
+    ++versaoHistoricoPDF;
+    pedidosPDF=[];
+    for(const id of ['listaPedidosPDFDemo','historicoEventoPDFDemo',
+      'produtoPedidoPDFDemo','pedidoEventoPDFDemo'])el(id).replaceChildren();
+    el('statusPedidosPDFDemo').textContent='';
+    el('statusEventoPDFDemo').textContent='';
     el('listaPedidosComerciaisDemo').replaceChildren();
     el('produtoPedidoComercialDemo').replaceChildren();
     el('pagamentoPedidoComercialDemo').replaceChildren();
@@ -172,6 +184,125 @@
     }catch(e){
       if(atual===versaoConciliacao) situacao.textContent=e.message;
     }
+  }
+
+  // Curso PDF de teste: pagamento de valor variavel e elegibilidade ficticia
+  // para entrega. Nenhum PDF REAL nem transferencia de valores.
+  async function carregarHistoricoPDF(){
+    const atual=++versaoHistoricoPDF;
+    const id=el('pedidoEventoPDFDemo').value;
+    const lista=el('historicoEventoPDFDemo');
+    lista.replaceChildren();
+    if(!id||!token)return;
+    try{
+      const dados=await requisitar('pedidos-pdf-demo/'+encodeURIComponent(id)+'/historico');
+      if(atual!==versaoHistoricoPDF || id!==el('pedidoEventoPDFDemo').value)return;
+      for(const evento of dados.eventos){
+        const li=document.createElement('li');
+        li.textContent=evento.tipo+' — '+evento.eventoId+' — '+evento.registradoEm;
+        lista.append(li);
+      }
+      if(!dados.eventos.length){
+        const li=document.createElement('li');
+        li.textContent='Nenhum pagamento fictício confirmado.';
+        lista.append(li);
+      }
+    }catch(erro){if(atual===versaoHistoricoPDF)el('statusEventoPDFDemo').textContent=erro.message;}
+  }
+  async function carregarPedidosPDF(){
+    const atual=++versaoPDF;
+    const status=el('statusPedidosPDFDemo');
+    if(!token){status.textContent='Abra o laboratório com a chave administrativa.';return;}
+    try{
+      const [dados,opcoes]=await Promise.all([
+        requisitar('pedidos-pdf-demo'),requisitar('pedidos-pdf-demo/opcoes')
+      ]);
+      if(atual!==versaoPDF)return;
+      pedidosPDF=dados.pedidos;
+      const cursoSelect=el('produtoPedidoPDFDemo');
+      const cursoAntigo=cursoSelect.value;
+      cursoSelect.replaceChildren();
+      for(const curso of opcoes.produtos){
+        const opt=document.createElement('option');
+        opt.value=curso.produtoId;
+        opt.textContent=curso.nome+' — '+money(curso.precoCentavos);
+        cursoSelect.append(opt);
+      }
+      if(opcoes.produtos.some(c=>c.produtoId===cursoAntigo))cursoSelect.value=cursoAntigo;
+      const pedidoSelect=el('pedidoEventoPDFDemo');
+      const pedidoAntigo=pedidoSelect.value;
+      pedidoSelect.replaceChildren();
+      const lista=el('listaPedidosPDFDemo');
+      lista.replaceChildren();
+      for(const pedido of pedidosPDF){
+        const opt=document.createElement('option');
+        opt.value=pedido.pedidoId;
+        opt.textContent=pedido.pedidoId+' — '+money(pedido.precoBrutoCentavos);
+        pedidoSelect.append(opt);
+        const item=document.createElement('div');
+        item.className='financeiro-caixa';
+        const titulo=document.createElement('strong');
+        titulo.textContent=pedido.nomeProduto;
+        const info=document.createElement('span');
+        info.className='financeiro-linha-saldos';
+        info.textContent='Pedido '+pedido.pedidoId+' | '+money(pedido.precoBrutoCentavos)+
+          ' | '+pedido.situacaoPagamentoFicticio;
+        const legenda=document.createElement('small');
+        legenda.textContent='Fatura fictícia '+pedido.pagamentoId+
+          ' — '+(pedido.habilitacaoDownloadFicticia?'Elegibilidade de download SIMULADA':
+          'Download não habilitado na simulação')+
+          '. Nenhum PDF real foi entregue.';
+        item.append(titulo,info,legenda);
+        lista.append(item);
+      }
+      if(pedidosPDF.some(p=>p.pedidoId===pedidoAntigo))pedidoSelect.value=pedidoAntigo;
+      status.textContent=pedidosPDF.length+' pedido(s) PDF de teste. '+
+        opcoes.produtos.length+' curso(s) PDF publicado(s) no catálogo.';
+      await carregarHistoricoPDF();
+    }catch(erro){if(atual===versaoPDF)status.textContent=erro.message;}
+  }
+  async function registrarPedidoPDF(evento){
+    evento.preventDefault();
+    if(!token||salvandoPDF)return;
+    salvandoPDF=true;
+    const botao=el('registrarPedidoPDFDemo');
+    botao.disabled=true;
+    const aviso=el('statusPedidosPDFDemo');
+    try{
+      const produtoId=el('produtoPedidoPDFDemo').value;
+      if(!produtoId)throw new Error('Cadastre e publique um curso PDF com preço de demonstração.');
+      const resposta=await requisitar('pedidos-pdf-demo',{
+        method:'POST',body:JSON.stringify({
+          pedidoId:el('idPedidoPDFDemo').value.trim(),produtoId
+        })
+      });
+      await carregarPedidosPDF();
+      aviso.textContent=resposta.repetido?'Pedido fictício já registrado; sem duplicação.':
+        'Pedido PDF fictício salvo com preço do catálogo e fatura de teste. Nenhuma cobrança.';
+    }catch(erro){aviso.textContent=erro.message;}
+    finally{salvandoPDF=false;botao.disabled=false;}
+  }
+  async function registrarEventoPDF(evento){
+    evento.preventDefault();
+    if(!token||salvandoEventoPDF)return;
+    salvandoEventoPDF=true;
+    const botao=el('registrarEventoPDFDemo');
+    botao.disabled=true;
+    const aviso=el('statusEventoPDFDemo');
+    try{
+      const pedidoId=el('pedidoEventoPDFDemo').value;
+      if(!pedidoId)throw new Error('Selecione um pedido de curso PDF fictício.');
+      const resposta=await requisitar('pedidos-pdf-demo/'+encodeURIComponent(pedidoId)+'/eventos',{
+        method:'POST',body:JSON.stringify({
+          eventoId:el('idEventoPDFDemo').value.trim(),
+          tipo:el('tipoEventoPDFDemo').value
+        })
+      });
+      await carregarPedidosPDF();
+      aviso.textContent=resposta.repetido?'Evento fictício repetido: nada foi duplicado.':
+        'Pagamento PDF fictício registrado. Nenhum arquivo real ou valor transferido.';
+    }catch(erro){aviso.textContent=erro.message;}
+    finally{salvandoEventoPDF=false;botao.disabled=false;}
   }
 
   async function carregarPedidosComerciais(){
@@ -558,7 +689,7 @@
       if(atual!==versao)return;
       preencherConfiguracoes(config.cofres);
       mostrar(visao);
-      await Promise.all([carregarHistorico(),carregarConciliacao(),carregarLivro(),carregarRecebimentos(),carregarPontePedidoPagamento(),carregarPedidosComerciais()]);
+      await Promise.all([carregarHistorico(),carregarConciliacao(),carregarLivro(),carregarRecebimentos(),carregarPontePedidoPagamento(),carregarPedidosComerciais(),carregarPedidosPDF()]);
     }catch(e){
       if(atual===versao){limpar();status.textContent=e.message;}
     }
@@ -597,6 +728,10 @@
     carregarHistorico();
   });
   el('formAparenciaCofreDemo').addEventListener('submit',salvar);
+  el('formPedidosPDFDemo').addEventListener('submit',registrarPedidoPDF);
+  el('formEventoPDFDemo').addEventListener('submit',registrarEventoPDF);
+  el('atualizarPedidosPDFDemo').addEventListener('click',carregarPedidosPDF);
+  el('pedidoEventoPDFDemo').addEventListener('change',carregarHistoricoPDF);
   el('formPedidosComerciaisDemo').addEventListener('submit',criarPedidoComercial);
   el('atualizarPedidosComerciaisDemo').addEventListener('click',carregarPedidosComerciais);
   el('atualizarPontePedidoPagamentoDemo').addEventListener('click',carregarPontePedidoPagamento);
