@@ -228,9 +228,18 @@ class PlanejamentoVendasFisicasDemoSQLite{
     return {repetido:true,pedido:snapshot(anterior)};
    }
    // IDs sao globais dentro deste laboratorio, inclusive nos modulos antigos.
-   if(this.banco.prepare('SELECT 1 FROM admin_pedidos_comerciais_demo WHERE pedido_id=?').get(pedidoId)||
-      this.banco.prepare('SELECT 1 FROM admin_pdf_demo_pedidos WHERE pedido_id=?').get(pedidoId)){
-    throw falha('CONFLITO','ID ja associado a outro tipo de pedido');
+   // Em teste unitario esta base pode nao conter os outros modulos;
+   // no escritorio completo, a mesma validacao impede colisoes de IDs.
+   for(const tabela of ['admin_pedidos_comerciais_demo','admin_pdf_demo_pedidos']){
+    const existeTabela=this.banco.prepare(
+     "SELECT 1 FROM sqlite_master WHERE type='table' AND name=?"
+    ).get(tabela);
+    if(existeTabela){
+     const existePedido=this.banco.prepare(
+      'SELECT 1 FROM '+tabela+' WHERE pedido_id=?'
+     ).get(pedidoId);
+     if(existePedido)throw falha('CONFLITO','ID ja associado a outro tipo de pedido');
+    }
    }
    const d=this.diagnostico(produtoId);
    if(!d)throw falha('NAO_ENCONTRADO','Produto inexistente');
