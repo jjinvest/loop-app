@@ -28,7 +28,7 @@ function ambiente(arquivo){
  const razao=new RazaoFinanceiroDemoSQLite({banco:catalogo.banco});
  return {catalogo,vinculos,planejamento,pagamentos,razao};
 }
-function cadastrar(m,{id='produto-fisico-a',preco=25990,custo=8000}={}){
+function cadastrar(m,{id='produto-fisico-a',preco=35990,custo=8000}={}){
  m.catalogo.salvar({produto:{
   id,nome:'Produto fisico demonstrativo',tipo:'FISICO',estado:'PUBLICADO',
   descricao:'Venda somente de laboratorio',precoCentavos:preco,
@@ -69,11 +69,11 @@ async function post(base,id,corpo,headers=AUTH){
 
 test('pagamento ficticio guarda mesmo valor do pre-pedido variavel sem criar movimento real',t=>{
  const m=ambiente(novoArquivo(t));t.after(()=>m.catalogo.fechar());
- cadastrar(m,{preco:25990,custo:8000});
+ cadastrar(m,{preco:35990,custo:8000});
  const pedido=criar(m);
  const antes=m.pagamentos.buscar(pedido.pedidoId);
- assert.equal(antes.valorVinculadoPagamentoFicticioCentavos,25990);
- assert.equal(antes.precoCatalogoCentavos,25990);
+ assert.equal(antes.valorVinculadoPagamentoFicticioCentavos,35990);
+ assert.equal(antes.precoCatalogoCentavos,35990);
  assert.equal(antes.situacaoPagamentoFicticio,'AGUARDANDO_FICTICIO');
  assert.equal(antes.integridade,'VINCULO_FICTICIO_CONFERIDO');
  assert.equal(antes.autorizacaoLogistica,false);
@@ -86,7 +86,7 @@ test('pagamento ficticio guarda mesmo valor do pre-pedido variavel sem criar mov
  assert.equal(retorno.conferencia.posicaoCriada,false);
  assert.equal(retorno.conferencia.pagamentoPSPReal,false);
  assert.equal(retorno.conferencia.reservaRealEfetuada,false);
- assert.equal(m.pagamentos.historico(pedido.pedidoId)[0].valorCentavos,25990);
+ assert.equal(m.pagamentos.historico(pedido.pedidoId)[0].valorCentavos,35990);
  assert.equal(m.razao.consultar().lancamentosRegistrados,0);
 });
 
@@ -160,7 +160,7 @@ test('mudanca no preco/fornecedor nao modifica valor imutavel do evento nem pre-
 test('SQLite armazena confirmacao e estorno apos reinicio, sem disparar a logistica',t=>{
  const arquivo=novoArquivo(t);
  const a=ambiente(arquivo);
- cadastrar(a,{preco:33000,custo:12000});
+ cadastrar(a,{preco:43000,custo:12000});
  const p=criar(a);
  a.pagamentos.registrarEvento(evt(p,'CONFIRMAR_FICTICIO','evt-de-antes-reinicio'));
  a.catalogo.fechar();
@@ -186,7 +186,7 @@ test('API exige autorizacao local, recusa valor e nao existe na loja publica',as
  // Registra apenas dados ficticios por rotas de laboratorio.
  catalogo.salvar({produto:{
   id:'produto-api-teste',nome:'Produto teste',tipo:'FISICO',estado:'PUBLICADO',
-  descricao:'Demonstracao da API',precoCentavos:19990,entrega:'FORNECEDOR_INTEGRADO',
+  descricao:'Demonstracao da API',precoCentavos:34990,entrega:'FORNECEDOR_INTEGRADO',
   fotos:[],videoApresentacaoUrl:null,detalhes:[]
  },revisaoEsperada:0});
  m.vincular({produtoId:'produto-api-teste',fornecedorId:'fornecedor-teste',
