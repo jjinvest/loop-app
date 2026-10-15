@@ -16,11 +16,16 @@
   let token='';
   let versao=0;
   let versaoHistorico=0;
+  let versaoConciliacao=0;
   let configuracoes=[];
   let salvando=false;
 
   function limpar(){
+    ++versaoConciliacao;
     dados.hidden=true;
+    el('linhasConciliacaoDemo').replaceChildren();
+    el('historicoConciliacaoDemo').replaceChildren();
+    el('statusConciliacaoDemo').textContent='';
     configuracoes=[];
     selecionar.replaceChildren();
     statusEdicao.textContent='';
@@ -89,6 +94,55 @@
     dados.hidden=false;
     status.textContent='Demonstração carregada. Nenhuma transação real foi executada.';
   }
+  async function carregarConciliacao(){
+    const atual=++versaoConciliacao;
+    const destino=el('linhasConciliacaoDemo');
+    const historico=el('historicoConciliacaoDemo');
+    const situacao=el('statusConciliacaoDemo');
+    destino.replaceChildren();
+    historico.replaceChildren();
+    if(!token){situacao.textContent='Informe a chave do laboratório.';return;}
+    situacao.textContent='Conferindo dois conjuntos de valores FICTÍCIOS...';
+    const parametros=new URLSearchParams({
+      modo:modo.value,
+      fluxo:el('fluxoConciliacaoDemo').value,
+      extrato:el('extratoConciliacaoDemo').value
+    });
+    try{
+      const res=await requisitar('conciliacao-cofres-demo?'+parametros.toString());
+      if(atual!==versaoConciliacao)return;
+      for(const linha of res.conciliacao.linhas){
+        const artigo=document.createElement('div');
+        artigo.className='financeiro-caixa';
+        const titulo=document.createElement('strong');
+        titulo.textContent=linha.nomeExibicao;
+        const descricao=document.createElement('span');
+        descricao.className='financeiro-linha-saldos';
+        descricao.textContent='Projetado: '+money(linha.saldoProjetadoCentavos)+
+          ' | Reserva FICTÍCIA: '+(linha.saldoReservaFicticiaCentavos===null?'indisponível':money(linha.saldoReservaFicticiaCentavos));
+        const detalhe=document.createElement('small');
+        detalhe.textContent=linha.status==='CONFERIDO_NO_TESTE'?'Conferido SOMENTE no teste':
+          linha.status==='DIVERGENCIA_FICTICIA'?'DIVERGÊNCIA fictícia: '+money(linha.diferencaCentavos):
+          'Sem extrato de demonstração';
+        artigo.append(titulo,descricao,detalhe);
+        destino.append(artigo);
+      }
+      situacao.textContent=res.conciliacao.todasConferidasNoTeste?
+        'Contas do exemplo coincidem. NÃO é uma confirmação bancária.':
+        'Existe diferença no extrato fictício. Nenhum dinheiro foi movimentado.';
+      // Manter tela enxuta. O livro completo esta na API do admin local.
+      const ultimos=res.razao.historico.slice(-10);
+      for(const lancamento of ultimos){
+        const item=document.createElement('li');
+        item.textContent=lancamento.tipo+' — '+lancamento.cofreId+
+          ' — '+money(lancamento.valorCentavos)+' — '+lancamento.referencia;
+        historico.append(item);
+      }
+    }catch(e){
+      if(atual===versaoConciliacao) situacao.textContent=e.message;
+    }
+  }
+
   function selecionado(){
     return configuracoes.find(c=>c.id===selecionar.value)||null;
   }
@@ -144,6 +198,7 @@
   async function buscar(){
     const atual=++versao;
     if(!token){status.textContent='Informe a chave do laboratório.';return;}
+    ++versaoConciliacao;
     dados.hidden=true;
     status.textContent='Consultando cenários fictícios e aparência...';
     try{
@@ -154,7 +209,7 @@
       if(atual!==versao)return;
       preencherConfiguracoes(config.cofres);
       mostrar(visao);
-      await carregarHistorico();
+      await Promise.all([carregarHistorico(),carregarConciliacao()]);
     }catch(e){
       if(atual===versao){limpar();status.textContent=e.message;}
     }
@@ -193,6 +248,7 @@
     carregarHistorico();
   });
   el('formAparenciaCofreDemo').addEventListener('submit',salvar);
+  el('verConciliacaoDemo').addEventListener('click',carregarConciliacao);
   el('limparFinanceiroDemo').addEventListener('click',()=>{
     ++versao;
     ++versaoHistorico;
