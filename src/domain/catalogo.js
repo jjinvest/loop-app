@@ -76,7 +76,7 @@ const MODELOS = [
     tipo: 'PDF',
     estado: 'DEMONSTRACAO',
     descricao: 'Exemplo da futura vitrine de cursos digitais do LOOP. Nenhum curso real esta sendo vendido aqui.',
-    precoCentavos: null,
+    precoCentavos: 25000,
     entrega: 'DOWNLOAD_APOS_CONFIRMACAO',
     fotos: [],
     videoApresentacaoUrl: null,
