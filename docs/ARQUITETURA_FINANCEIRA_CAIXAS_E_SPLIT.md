@@ -673,6 +673,103 @@ ainda sao da branch de desenvolvimento**,
 sem deploy publico, banco integrado
 ou liberacao de transacoes reais.
 
+## Preparacao de notificacoes assinadas de pagamento — somente teste local
+
+**Etapa de seguranca em 15/10/2026:** foi criado um **webhook
+COMPLETAMENTE FICTICIO**, para ensaiar como notificacoes de um futuro
+provedor seriam autenticadas e associadas ao livro financeiro existente.
+
+Arquivos:
+- `src/domain/verificador-webhook-psp-demo.js`: verificador
+  HMAC-SHA256 da MENSAGEM BRUTA com carimbo Unix
+  de segundos, comparacao em tempo constante,
+  janela maxima de 5 minutos, limite de 4096 bytes
+  e formato de evento estrito.
+- `src/routes/webhook-psp-demo-local.js`: recebe o
+  exemplo somente por localhost e com ativacao
+  intencional; checa assinatura ANTES de processar
+  JSON de evento e antes de registrar valores.
+- `src/laboratorio/servidor-catalogo.js`: monta essa
+  rota ANTES do parser JSON comum para verificar
+  os bytes originais. Desativada por padrao,
+  nao existe no app publico.
+- `test/webhook-psp-demo-local.test.js`: casos de
+  sucesso, duplicacao, estorno, assinatura falsa,
+  mensagem alterada, timestamp vencido,
+  dados extras, valor divergente, acesso externo,
+  tamanho excessivo, persitencia entre instancias
+  e inexistencia no ambiente publico.
+
+**Ativacao EXCLUSIVAMENTE no laboratorio local:**
+- `LOOP_ADMIN_CATALOGO_LOCAL=1` e os demais requisitos
+  normais do laboratorio continuam obrigatorios.
+- `LOOP_WEBHOOK_DEMO_LOCAL=1` ativa a rota **somente
+  nesse servidor local nao produtivo**.
+- `LOOP_WEBHOOK_DEMO_SECRET` deve ser uma chave
+  secreta de TESTE distinta da chave administrativa,
+  com 32 a 1024 caracteres, sem armazenamento
+  em GitHub. Sem a ativacao, a rota nem existe.
+- Rota: `POST /api/laboratorio/webhook-psp-demo`,
+  com `Content-Type: application/json`,
+  `x-loop-demo-timestamp` e
+  `x-loop-demo-signature: sha256=<hexadecimal>`.
+  O HMAC de teste e calculado sobre os bytes
+  `timestamp + "." + corpoBruto`, usando a
+  chave especifica do laboratorio.
+- JSON de exemplo limitado estritamente a
+  `eventoId`, `pagamentoId`,
+  `tipo` (`CONFIRMAR_FICTICIO` ou
+  `ESTORNAR_FICTICIO`),
+  `valorCentavos`, `moeda:"BRL"` e
+  `ambiente:"laboratorio"`. Nada disso e
+  um esquema oficial de banco ou PSP existente.
+
+**Fluxo de validacao do exemplo:**
+1. Rejeita acesso fora da maquina local, origem
+   ou Host nao autorizado, ambiente de producao,
+   conteudo nao JSON ou corpo acima do limite.
+2. Verifica assinatura HMAC e timestamp antes de
+   interpretar o conteudo. Sem assinatura
+   correta, NENHUM lancamento acontece.
+3. Valida o contrato do evento e localiza
+   a fatura FICTICIA ja cadastrada
+   (uma das dez fixtures do simulador).
+   Rejeita valor diferente dos R$600
+   definidos nessa amostra.
+4. Entrega ao modulo ja existente de
+   `RecebimentosPSPDemoSQLite`, que registra
+   evento e movimento no livro em uma
+   **mesma transacao SQLite**; falha
+   causa rollback de ambas as partes.
+5. O mesmo `eventoId` com a mesma
+   operacao retorna `repetido:true`
+   sem contabilizar de novo. Usos
+   conflitantes do ID nao sao aceitos.
+
+**NUNCA confundir esse teste com uma integracao de
+provedor em producao:** HMAC, campos e headers
+acima sao convenções LOCAIS inventadas para
+o laboratorio, nao protocolo de Pagar.me, Asaas,
+Mercado Pago ou outro PSP. Um adaptador REAL
+exigira documentacao oficial do provedor,
+autenticacao propria, reconsulta quando
+necessaria, correlacao com pedidos legitimos
+e saldos liquidados, afiliacao de recebedores,
+gestao segura de chaves, TLS publico, politica
+de reprocessamento, reconciliacao, impostos,
+estornos/chargebacks e testes de seguranca.
+
+A **catraca nao e acionada**, posicoes nao sao
+criadas, fornecedores nao recebem transferencias,
+nenhum saldo bancario e consultado e nenhuma
+movimentacao monetaria real ou saque acontece.
+
+O acesso completo a registros financeiros e
+configuracoes continua restrito ao administrador.
+Esta rota opcional e apenas uma entrada de
+notificacao assinada da simulacao, sem painel
+de cliente ou disponibilizacao publica.
+
 ## Isolamento e seguranca do projeto
 
 - Movimentacoes reais so mediante
