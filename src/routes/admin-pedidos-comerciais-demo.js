@@ -7,6 +7,7 @@ function criarRouterPedidosComerciaisDemo({segredo,pedidos}={}){
  r.use((_req,res,next)=>{res.set('Cache-Control','no-store');next();});
  r.get('/pedidos-comerciais-demo',(_req,res)=>res.json(pedidos.listar()));
  r.get('/pedidos-comerciais-demo/opcoes',(_req,res)=>res.json(pedidos.opcoes()));
+ r.get('/pedidos-comerciais-demo/cotacoes-teste',(_req,res)=>res.json(pedidos.cotacoesPrecosVariaveis()));
  r.get('/pedidos-comerciais-demo/:id',(req,res)=>{
   try{
    const p=pedidos.buscar(req.params.id);
