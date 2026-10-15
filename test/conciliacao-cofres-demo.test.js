@@ -50,7 +50,7 @@ test('movimentos ficticios registram entrada saida retorno, sem restringir contr
   assert.equal(p.historico.length,16);
   assert.equal(saldo(p,COFRES.CENTRO).saldoProjetadoCentavos,65000);
   assert.equal(saldo(p,COFRES.CENTRO).saidasAcumuladasCentavos,10000);
-  assert.equal(saldo(p,COFRES.ESQUERDA).saldoProjetadoCentavos,65000);
+  assert.equal(saldo(p,COFRES.ESQUERDA).saldoProjetadoCentavos,20000);
   assert.equal(saldo(p,COFRES.ESQUERDA).saidasAcumuladasCentavos,8000);
   assert.equal(saldo(p,COFRES.ESQUERDA).retornosAcumuladosCentavos,3000);
   assert.equal(saldo(p,COFRES.DIREITA).saldoProjetadoCentavos,24000);
