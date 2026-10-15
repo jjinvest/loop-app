@@ -15,6 +15,7 @@ const { criarRouterPedidosLogisticaDemo } = require('../routes/admin-pedidos-log
 const { criarRouterEscritorioDemo } = require('../routes/admin-escritorio-demo');
 const { criarRouterFinanceiroAdminDemo } = require('../routes/admin-financeiro-demo');
 const { RepositorioAparenciaCofresSQLite } = require('../domain/repositorio-aparencia-cofres-sqlite');
+const { RazaoFinanceiroDemoSQLite } = require('../domain/razao-financeiro-demo-sqlite');
 
 function criarAppAdminLaboratorio({ repositorio, segredo } = {}) {
   if (process.env.NODE_ENV === 'production') {
@@ -50,7 +51,12 @@ function criarAppAdminLaboratorio({ repositorio, segredo } = {}) {
   const configuracaoCofres = repositorio instanceof RepositorioCatalogoSQLite
     ? new RepositorioAparenciaCofresSQLite({ banco:repositorio.banco })
     : null;
-  app.use('/api/admin', criarRouterFinanceiroAdminDemo({ segredo, configuracao:configuracaoCofres }));
+  const razaoPersistente = repositorio instanceof RepositorioCatalogoSQLite
+    ? new RazaoFinanceiroDemoSQLite({ banco:repositorio.banco })
+    : null;
+  app.use('/api/admin', criarRouterFinanceiroAdminDemo({
+    segredo, configuracao:configuracaoCofres, razaoPersistente
+  }));
   app.get('/admin', somenteLocal, (req, res) => {
     res.sendFile(path.join(__dirname, 'painel-catalogo.html'));
   });
