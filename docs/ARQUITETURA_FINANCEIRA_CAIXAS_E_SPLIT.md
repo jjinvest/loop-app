@@ -32,6 +32,99 @@ auditaveis da mesma venda. Nao confundir o caixa da loja com
 os tres caixas da dinamica interna, nem com saldos individuais
 de participantes.
 
+## Distribuicao dos cinco eventos por cofre — definicao do idealizador (15/10/2026)
+
+O idealizador detalhou agora a finalidade e a ordem de destinacao
+interna de cada evento do ciclo de cinco parcelas de referencia
+de R$100 por venda elegivel:
+
+| Evento do ciclo | Destino planejado da parcela de referencia |
+| --- | --- |
+| 1o | Cofre CENTRAL — beneficio do participante do centro |
+| 2o | Cofre ESQUERDO — investimento da empresa |
+| 3o | Cofre CENTRAL — beneficio do participante do centro |
+| 4o | Cofre DIREITO — reserva de suporte ao LOOP |
+| 5o | Cofre CENTRAL — beneficio do participante do centro |
+
+**Resultado de referencia por ciclo completo:** R$300 direcionados
+ao cofre central para os tres eventos do participante; R$100
+direcionados ao cofre de investimento; R$100 direcionados ao
+cofre de reserva. Esta vinculacao das duas parcelas da empresa
+aos cofres esquerdo e direito foi descrita pelo idealizador;
+nao altera o padrao anterior 1/3/5 participante e 2/4 empresa.
+
+**Cofre central:** os registros administrativos precisam
+mostrar entradas e saidas, junto de saldo contabil, valores
+devidos a participantes, valores ja pagos, reembolsos e
+conciliacao com efetivos recebimentos/liquidacoes. Entrada
+contabil de evento NAO garante que o dinheiro esteja
+efetivamente disponivel para pagamento.
+
+**Cofres laterais:** o idealizador deseja que a visualizacao
+principal destaque o TOTAL ACUMULADO DE ENTRADAS;
+investimentos, retiradas, aplicacoes e retornos ficam
+sob gestao administrativa. Para que qualquer cofre
+represente reserva REAL, e indispensavel gravar tambem
+todos os movimentos de saida/retorno no livro contabil e
+conciliar com as contas financeiras; pode-se ocultar esses
+detalhes na visualizacao resumida sem apagar lancamentos.
+A saida para investimento NAO e uma simples mudanca de cor
+ou rotulo e deve ter comprovante, autorizacao e destinacao.
+
+A expressao coloquial "caixa 2" foi usada para o cofre
+DIREITO, mas aqui significa **reserva administrativa
+CONTABILIZADA** e NAO caixa paralelo ou fora dos livros.
+
+A separacao efetiva de valores em subcontas/reservas
+financeiras de uma instituicao (quando houver
+integracao e suporte contratado) e a preferencia
+indicada pelo idealizador. Nao afirmar que divisao
+de categorias do software corresponde automaticamente
+a subcontas reais de instituicao financeira.
+
+**Bonificacao de indicacoes:** 10% da base de R$100
+(R$10 por indicacao elegivel), com minimo de saque
+de R$100 do saldo individual, ja foi mencionado.
+Ainda falta conciliar a ORIGEM FINANCEIRA desses
+R$10 com os cinco destinos acima, sem dupla contagem;
+tambem faltam gatilhos precisos de elegibilidade,
+regras dos bonus de eventos e aprovacao legal.
+NAO criar credito real nem assumir que bonus
+sai automaticamente do cofre central.
+
+## Dropshipping: um caixa regular ou dois conforme repasse externo
+
+A operacao comercial e administrada em modulo
+SEPARADO dos tres cofres internos do LOOP:
+
+- **Cenario com split contratado:** a parcela do
+  distribuidor e direcionada externamente pelo
+  PSP, e a loja mantem seu caixa comercial proprio.
+  O custo e o repasse ao distribuidor continuam
+  registrados e conciliados, mesmo que nao exista
+  um segundo cofre de reserva para pagamento.
+  Somados aos tres cofres internos: **quatro
+  cofres de visualizacao** (3 LOOP + 1 loja).
+- **Cenario sem split automatico:** a loja utiliza
+  um caixa comercial e outro para o valor
+  **comprometido a pagar ao distribuidor**,
+  ate a liquidacao da obrigacao. Somados
+  aos tres cofres internos: **cinco cofres
+  de visualizacao** (3 LOOP + 2 loja).
+
+O idealizador mencionou "lucro bruto" e "valor bruto"
+para o caixa comercial. **Ainda requer confirmacao**
+se o numero principal desse caixa deve ser
+a receita bruta da venda, o montante apos repasse
+ao distribuidor ou a margem comercial bruta.
+Essas tres grandezas sao diferentes e, no
+registro tecnico, devem aparecer em contas
+distintas independentemente do rotulo visual.
+
+**Nao criar cofre financeiro real ou impor repasse
+sem suporte de API, contrato com o distribuidor,
+reconciliacao fiscal/contabil e validacao juridica.**
+
 ## Conta bancária x livro de saldos interno x split de pagamento
 
 Ha tres solucoes possiveis; podem coexistir:
@@ -101,14 +194,15 @@ mostrar claramente **valor bruto,
 custo do fornecedor, tarifas,
 valor liquidado e passivos pendentes**.
 
-Os R$ 100 de referencia destinados a
-dinamica do LOOP nao especificam, por
-si so, quanto do dinheiro deve entrar
-em cada um dos tres caixas internos.
-**Nao inferir uma nova distribuicao**.
-As regras de ciclo ja discutidas devem
-ser preservadas e conciliadas antes
-de ativar qualquer lancamento.
+Conforme o esclarecimento posterior do idealizador,
+os cinco eventos de referencia sao destinados
+na ordem CENTRAL, ESQUERDO, CENTRAL, DIREITO,
+CENTRAL (R$300, R$100 e R$100 por ciclo,
+respectivamente). A destinacao financeira
+so podera ser efetivada depois de conciliar
+recebimentos, riscos de estorno, obrigacoes
+com distribuidores e eventuais bonus de
+indicacao, sem dupla contagem de dinheiro.
 
 ## Isolamento e seguranca do projeto
 
