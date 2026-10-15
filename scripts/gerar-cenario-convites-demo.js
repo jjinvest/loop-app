@@ -7,6 +7,7 @@ const path=require('node:path');
 const {RepositorioCatalogoSQLite}=require('../src/domain/repositorio-catalogo-sqlite');
 const {ContasParticipantesDemoSQLite}=require('../src/domain/contas-participantes-demo-sqlite');
 const {PonteComprasConvitesDemoSQLite}=require('../src/domain/ponte-compras-convites-demo-sqlite');
+const {PedidosTitularidadeDemoSQLite}=require('../src/domain/pedidos-titularidade-demo-sqlite');
 const {STATUS_CONFIRMADO}=require('../src/domain/processador-pedidos-simulados');
 
 async function executar(ambiente=process.env){
@@ -62,8 +63,20 @@ async function executar(ambiente=process.env){
     status:STATUS_CONFIRMADO,confirmadoEm:'2026-10-15T12:02:00.000Z'
    }]
   ]);
+  const pedidos=new PedidosTitularidadeDemoSQLite({
+   banco:repo.banco,contas,relogio:()=> '2026-10-15T11:59:00.000Z'
+  });
+  // Pedido identificado, titular, preco e intento sao gravados ANTES
+  // de o verificador interno considerar o pagamento ficticio confirmado.
+  for(const [pedidoId,evento] of eventos){
+   const preparado=pedidos.preparar({
+    pedidoId,contaId:evento.contaId,produtoId:evento.produtoId,
+    valorCentavos:evento.valorCentavos
+   });
+   evento.intentoPagamentoId=preparado.intentoPagamentoId;
+  }
   const ponte=new PonteComprasConvitesDemoSQLite({
-   banco:repo.banco,contas,
+   banco:repo.banco,contas,pedidosIdentificados:pedidos,
    consultarPagamentoConfiavel:async id=>eventos.get(id)
   });
   for(const pedidoId of eventos.keys()){
@@ -74,6 +87,8 @@ async function executar(ambiente=process.env){
    modo:'CENARIO_100_POR_CENTO_FICTICIO',
    contas:contas.listar().contas.length,
    comprasSimuladas:estado.compras.length,
+   pedidosIdentificados:pedidos.listarResumo().pedidos.length,
+   vinculosPedidoPagamento:estado.vinculosIdentificados,
    convitesValidadosNoTeste:estado.convites.length,
    filaA:estado.filas.A.quantidade,
    filaB:estado.filas.B.quantidade,
