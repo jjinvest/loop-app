@@ -7,7 +7,7 @@ const {criarAutorizacao}=require('./admin-catalogo-laboratorio');
 const {criarVisaoFinanceiraAdminDemo,MODOS}=require('../domain/financeiro-admin-demo');
 const {criarConciliacaoAdministrativaDemo}=require('../domain/conciliacao-cofres-demo');
 
-function criarRouterFinanceiroAdminDemo({segredo,configuracao}={}){
+function criarRouterFinanceiroAdminDemo({segredo,configuracao,razaoPersistente}={}){
   const router=express.Router();
   router.use(criarAutorizacao({segredo}));
   router.use((_req,res,next)=>{res.set('Cache-Control','no-store');next();});
@@ -54,6 +54,59 @@ function criarRouterFinanceiroAdminDemo({segredo,configuracao}={}){
       }
     });
   });
+
+  // Livro financeiro PERSISTENTE apenas no laboratorio. Toda entrada POST
+  // representa uma simulacao explicitamente identificada, nunca dinheiro real.
+  router.get('/livro-financeiro-demo',(_req,res)=>{
+    if(!razaoPersistente)return res.status(501).json({erro:'LIVRO_DEMO_INDISPONIVEL'});
+    res.json(razaoPersistente.consultar());
+  });
+  function camposExatos(obj,lista){
+    return obj&&typeof obj==='object'&&!Array.isArray(obj)&&
+      Object.keys(obj).length===lista.length&&
+      Object.keys(obj).every(k=>lista.includes(k));
+  }
+  function respostaEscrita(res,executar){
+    try {
+      res.json({
+        modo:'LANCAMENTO_APENAS_FICTICIO',
+        resultado:executar(),
+        movimentacaoBancariaReal:false
+      });
+    }catch(e){
+      if(e.codigo==='CONFLITO_IDEMPOTENCIA'){
+        return res.status(409).json({erro:'IDENTIFICADOR_JA_UTILIZADO'});
+      }
+      if(/invalido|invalida|desconhecido|obrigatori|repetid|nao suportado|referencia|Descricao|Referencia|Lancamento/.test(e.message)){
+        return res.status(400).json({erro:'REGISTRO_FICTICIO_INVALIDO'});
+      }
+      throw e;
+    }
+  }
+  router.post('/livro-financeiro-demo/ciclos',(req,res)=>{
+    if(!razaoPersistente)return res.status(501).json({erro:'LIVRO_DEMO_INDISPONIVEL'});
+    if(!camposExatos(req.body,['cicloId','modo'])||
+       !['split','reserva'].includes(req.body.modo) ||
+       typeof req.body.cicloId!=='string' ){
+      return res.status(400).json({erro:'CICLO_DEMO_INVALIDO'});
+    }
+    return respostaEscrita(res,()=>razaoPersistente.registrarCicloFicticio({
+      cicloId:req.body.cicloId,
+      modo:req.body.modo==='split'?MODOS.SPLIT:MODOS.RESERVA
+    }));
+  });
+  function gravarMovimento(req,res,ajuste=false){
+    if(!razaoPersistente)return res.status(501).json({erro:'LIVRO_DEMO_INDISPONIVEL'});
+    if(!camposExatos(req.body,['eventoId','cofreId','natureza','valorCentavos','referencia'])){
+      return res.status(400).json({erro:'MOVIMENTO_DEMO_INVALIDO'});
+    }
+    return respostaEscrita(res,()=>(
+      ajuste?razaoPersistente.registrarAjusteFicticio(req.body):
+        razaoPersistente.registrarMovimentoFicticio(req.body)
+    ));
+  }
+  router.post('/livro-financeiro-demo/movimentos',(req,res)=>gravarMovimento(req,res));
+  router.post('/livro-financeiro-demo/ajustes',(req,res)=>gravarMovimento(req,res,true));
 
   // Apenas campos de APARENCIA, nunca valores, finalidades ou contas.
   router.get('/cofres-demo/configuracoes',(_req,res)=>{
