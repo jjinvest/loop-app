@@ -17,6 +17,8 @@ const { VinculosPedidosPagamentosDemoSQLite } = require('../domain/vinculos-pedi
 const { criarRouterVinculosPedidosPagamentosDemo } = require('../routes/admin-vinculos-pedidos-pagamentos-demo');
 const { PedidosComerciaisDemoSQLite } = require('../domain/pedidos-comerciais-demo-sqlite');
 const { criarRouterPedidosComerciaisDemo } = require('../routes/admin-pedidos-comerciais-demo');
+const { PedidosPDFPagamentosDemoSQLite } = require('../domain/pedidos-pdf-pagamentos-demo-sqlite');
+const { criarRouterPedidosPDFDemo } = require('../routes/admin-pedidos-pdf-demo');
 const { criarRouterEscritorioDemo } = require('../routes/admin-escritorio-demo');
 const { criarRouterFinanceiroAdminDemo } = require('../routes/admin-financeiro-demo');
 const { RepositorioAparenciaCofresSQLite } = require('../domain/repositorio-aparencia-cofres-sqlite');
@@ -108,6 +110,12 @@ function criarAppAdminLaboratorio({ repositorio, segredo, webhookDemo } = {}) {
     app.use('/api/admin', criarRouterPedidosComerciaisDemo({
       segredo,pedidos:pedidosComerciaisDemo
     }));
+  }
+  // Fluxo de cursos digitais: faturas com preco do catalogo e sem
+  // distribuicao de valores na catraca. Simulacao separada do PSP legado.
+  if (repositorio instanceof RepositorioCatalogoSQLite) {
+    const pedidosPDF=new PedidosPDFPagamentosDemoSQLite({repositorioCatalogo:repositorio});
+    app.use('/api/admin',criarRouterPedidosPDFDemo({segredo,pedidos:pedidosPDF}));
   }
   app.get('/admin', somenteLocal, (req, res) => {
     res.sendFile(path.join(__dirname, 'painel-catalogo.html'));
