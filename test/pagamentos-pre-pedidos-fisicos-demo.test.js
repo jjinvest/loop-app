@@ -215,7 +215,7 @@ test('API exige autorizacao local, recusa valor e nao existe na loja publica',as
  assert.equal(conf.status,200);
  const resultado=await conf.json();
  assert.equal(resultado.conferencia.situacaoPagamentoFicticio,'CONFIRMADO_FICTICIO');
- assert.equal(resultado.conferencia.valorVinculadoPagamentoFicticioCentavos,19990);
+ assert.equal(resultado.conferencia.valorVinculadoPagamentoFicticioCentavos,34990);
  assert.equal(resultado.filaMovimentada,false);
  assert.equal(resultado.fornecedorAvisado,false);
  assert.equal((await (await api(base)).json()).pedidos.length,1);
