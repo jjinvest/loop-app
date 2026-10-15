@@ -1027,6 +1027,102 @@ sob um contrato configuravel e assinado,
 sem duplicar contabilizacao e sem receber
 valores reais antes da homologacao.
 
+## Download protegido de PDF ficticio e precos fisicos variados (15/10/2026)
+
+**Esta etapa somente acrescenta ferramentas de LABORATORIO LOCAL.**
+Nao publica cursos reais, nao recebe pagamentos, nao cria clientes,
+nao aciona a catraca e nao estabelece uma divisao financeira
+nova para produtos abaixo ou acima dos valores ja modelados.
+
+### Entrega de material PDF FICTICIO
+
+O modulo `src/domain/material-pdf-teste.js` gera em memoria
+um **arquivo PDF valido**, contendo exclusivamente texto de
+demonstração e aviso de que **nao e curso real**. Nao existem
+uploads nem arquivos de aulas servidos ao publico nesta etapa.
+
+A rota administrativa local de teste
+`GET /api/admin/pedidos-pdf-demo/:id/material-teste.pdf`
+exige **a mesma chave Bearer do escritorio administrativo**
+e verifica o estado do pagamento FICTICIO associado ao
+pedido. Pedido pendente, inexistente ou estornado nao
+recebe o PDF. Somente a confirmacao simulada da
+compra PDF permite baixar a fixture, com resposta
+`application/pdf`, `Content-Disposition: attachment`,
+`Cache-Control: no-store` e `X-Content-Type-Options: nosniff`.
+A chave nao e transmitida pela URL.
+
+A tabela `admin_pdf_demo_solicitacoes` registra
+**solicitacoes autorizadas de material ficticio**
+com identificador do pedido e horario, preservando
+historico append-only por triggers. Este registro
+**nao comprova que o usuario recebeu o arquivo**
+(queda de conexao apos autorizacao e possivel).
+A consulta de auditoria
+`GET /api/admin/pedidos-pdf-demo/:id/solicitacoes-material-teste`
+tambem exige a chave administrativa local.
+
+A interface `/admin/financeiro-demo` ganhou botao
+de download de teste, ativado somente quando
+`materialTesteBaixavel:true`, alem da quantidade
+de solicitacoes autorizadas. O arquivo e buscado
+por `fetch` com credencial em cabecalho,
+nao por link publico ou token na query string.
+A sinalizacao `downloadRealDisponivel:false`
+continua verdadeira: ainda nao existe
+**arquivo de curso real nem acesso autenticado do comprador**.
+
+Para disponibilizar cursos de verdade, precisaremos
+implementar upload e armazenamento privado,
+ligacao do arquivo ao produto e versao comprada,
+autenticacao de cliente, direitos individuais,
+validacao de pagamento de PSP verdadeiro,
+limites/expiracao de URL assinada quando aplicavel,
+regras de reembolso, disponibilidade do conteudo,
+LGPD, auditoria, backups e seguranca de producao.
+Nao promover este prototipo local a servidor publico.
+
+### Previa de precos variados para produtos fisicos
+
+`PedidosComerciaisDemoSQLite.cotacoesPrecosVariaveis()`
+e a API somente leitura
+`GET /api/admin/pedidos-comerciais-demo/cotacoes-teste`
+retornam produtos fisicos **publicados e com fornecedor
+de laboratorio ativo**, mostrando o preco atual do
+catalogo em centavos e identidade/SKU do fornecedor.
+Isso permite visualizar exemplos com **precos distintos
+de R$600**, sem inventar cobranca correspondente.
+
+Nao e cotacao contratada do fornecedor nem calculo
+de lucro, de `split`, de parcela fixa de entrada no
+LOOP ou de taxas. As propriedades
+`faturaPSPRealCriada:false`,
+`valorParcelaLOOPDefinido:false`,
+`custoFornecedorReal:null` e
+`cobrancaReal:false` deixam explicito que
+a precificacao financeira continua pendente
+de regras aprovadas. Nenhum pedido comercial
+novo e criado por esta consulta.
+O painel mostra esta previa sem liberar
+checkout ou valores reais.
+
+Arquivos atualizados:
+- `src/domain/material-pdf-teste.js`
+- `src/domain/pedidos-pdf-pagamentos-demo-sqlite.js`
+- `src/routes/admin-pedidos-pdf-demo.js`
+- `src/domain/pedidos-comerciais-demo-sqlite.js`
+- `src/routes/admin-pedidos-comerciais-demo.js`
+- `src/laboratorio/financeiro-admin-demo.html` e `.js`
+- `test/entrega-pdf-protegida-laboratorio.test.js`
+
+Os testes cobrem validade basica da fixture PDF,
+autenticacao local, negativa para pedido pendente,
+inexistente ou estornado, auditoria persistente,
+imutabilidade, inexistencia de rota no app publico,
+ausencia de entrada financeira e precos fisicos
+variados. A sequencia original de cinco etapas
+do tabuleiro e as filas A/B permanecem intactas.
+
 ## Isolamento e seguranca do projeto
 
 - Movimentacoes reais so mediante
