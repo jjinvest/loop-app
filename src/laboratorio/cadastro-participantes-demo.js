@@ -62,8 +62,9 @@
    ' · Bloqueios de acesso: '+ac.LOGIN_BLOQUEADO+
    ' · Sessões encerradas: '+ac.SESSAO_ENCERRADA+
    ' · Sessões substituídas: '+ac.SESSAO_REVOGADA+'.';
-  el('resumoPonteDemo').textContent='Compras fictícias confirmadas pelo verificador: '+
-   ponte.compras.length+' · Pedidos vinculados ao titular: '+
+  el('resumoPonteDemo').textContent='Compras fictícias com posição LOOP: '+
+   ponte.compras.length+' · Vendas somente da loja: '+
+   ponte.comprasLojaSemLoop.length+' · Pedidos LOOP vinculados ao titular: '
    ponte.vinculosIdentificados+' · Convites validados no teste: '+
    ponte.convites.length+' · Fila A: '+ponte.filas.A.quantidade+
    ' · Fila B: '+ponte.filas.B.quantidade+
@@ -77,6 +78,7 @@
    const referencia=document.createElement('p');
    const convitesValidados=ponte.convites.filter(v=>v.indicadorId===conta.contaId);
    const comprasConta=ponte.compras.filter(c=>c.contaId===conta.contaId);
+   const vendasLojaConta=ponte.comprasLojaSemLoop.filter(c=>c.contaId===conta.contaId);
    const posicoes=[...ponte.filas.A.pessoas,...ponte.filas.B.pessoas,
     ponte.tabuleiro.centro,...ponte.tabuleiro.vagas]
     .filter(p=>p&&p.participanteId===conta.contaId);
@@ -85,7 +87,8 @@
     ' · Cadastros por convite pendentes de compra: '+
     Math.max(0,conta.convitesPendentes-convitesValidados.length)+
     ' · Convites validados no teste: '+convitesValidados.length+
-    ' · Compras fictícias: '+comprasConta.length+
+    ' · Compras LOOP fictícias: '+comprasConta.length+
+    ' · Vendas da loja sem posição: '+vendasLojaConta.length+
     ' · Posições ativas: '+posicoes.length+
     ' · Na fila A: '+prioridades;
    const link=document.createElement('small');
