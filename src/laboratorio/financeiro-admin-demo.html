@@ -163,6 +163,45 @@
         <ol id="historicoEventoPDFDemo" class="financeiro-historico" aria-live="polite"></ol>
         <p class="ajuda" id="auditoriaMaterialPDFDemo">Solicitações de download fictício: 0</p>
       </section>
+      <section class="painel" aria-labelledby="tituloPlanejamentoFisicoDemo">
+        <h2 id="tituloPlanejamentoFisicoDemo">Planejamento de vendas físicas — laboratório</h2>
+        <p class="aviso-demo">Informe um CUSTO HIPOTÉTICO do fornecedor para testar preços variados. O quadro separa preço, custo, referência de R$ 100 para o LOOP e margem BRUTA preliminar (antes de taxas e impostos). Não é cotação contratada, venda ou distribuição financeira real.</p>
+        <div class="acoes-admin">
+          <button type="button" id="atualizarPlanejamentoFisicoDemo" class="secundario">Atualizar análise dos produtos físicos</button>
+        </div>
+        <div id="listaPlanejamentoFisicoDemo" class="financeiro-conciliacao" aria-live="polite"></div>
+        <h3>Informar custo hipotético de fornecedor</h3>
+        <form id="formCustoFisicoDemo" autocomplete="off">
+          <div class="duas-colunas">
+            <div class="campo">
+              <label for="produtoCustoFisicoDemo">Produto físico cadastrado</label>
+              <select id="produtoCustoFisicoDemo" required></select>
+            </div>
+            <div class="campo">
+              <label for="valorCustoFisicoDemo">Custo hipotético (R$, exemplo: 250,00)</label>
+              <input id="valorCustoFisicoDemo" type="text" required inputmode="decimal" pattern="[0-9]+([.,][0-9]{1,2})?" placeholder="250,00">
+            </div>
+          </div>
+          <button type="submit" id="salvarCustoFisicoDemo">Salvar custo de teste</button>
+        </form>
+        <p id="statusPlanejamentoFisicoDemo" class="estado-admin" role="status" aria-live="polite"></p>
+        <h3>Registrar pré-pedido fictício</h3>
+        <form id="formPrePedidoFisicoDemo" autocomplete="off">
+          <div class="duas-colunas">
+            <div class="campo">
+              <label for="idPrePedidoFisicoDemo">Número do pré-pedido</label>
+              <input id="idPrePedidoFisicoDemo" type="text" maxlength="71" required pattern="[a-z0-9][a-z0-9-]{2,70}" placeholder="ex: pre-pedido-loja-001">
+            </div>
+            <div class="campo">
+              <label for="produtoPrePedidoFisicoDemo">Produto com margem preliminar positiva</label>
+              <select id="produtoPrePedidoFisicoDemo" required></select>
+            </div>
+          </div>
+          <button type="submit" id="salvarPrePedidoFisicoDemo">Criar pré-pedido sem cobrança</button>
+        </form>
+        <p id="statusPrePedidoFisicoDemo" class="estado-admin" role="status" aria-live="polite"></p>
+        <div id="listaPrePedidosFisicosDemo" class="financeiro-conciliacao" aria-live="polite"></div>
+      </section>
       <section class="painel" aria-labelledby="tituloPedidosComerciaisDemo">
         <h2 id="tituloPedidosComerciaisDemo">Registrar pedido comercial — laboratório</h2>
         <p class="aviso-demo">Crie um pedido de TESTE ligando um produto físico publicado a uma fatura fictícia ainda pendente. O produto precisa ter preço de teste igual ao da fatura e fornecedor associado. Não gera cobrança, despacho ou posição no tabuleiro.</p>
