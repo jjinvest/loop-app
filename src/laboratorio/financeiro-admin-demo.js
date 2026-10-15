@@ -211,7 +211,7 @@
         rota='livro-financeiro-demo/ciclos';
         corpo={cicloId:el('idCicloPersistenteDemo').value.trim(),modo:modo.value};
       }else{
-        rota='livro-financeiro-demo/movimentos';
+        rota='livro-financeiro-demo/'+el('tipoLancamentoPersistenteDemo').value;
         corpo={
           eventoId:el('idMovimentoPersistenteDemo').value.trim(),
           cofreId:el('cofreMovimentoPersistenteDemo').value,
