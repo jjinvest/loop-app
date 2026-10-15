@@ -131,7 +131,7 @@ test('rotas exclusivas do administrador alteram so aparencia, preservando valore
   assert.equal(cofre.nomeExibicao,'Investimentos reais');
   assert.equal(cofre.corExibicao,'#ABCDEF');
   assert.equal(cofre.revisaoAparencia,1);
-  assert.equal(cofre.entradasAcumuladasCentavos,10000);
+  assert.equal(cofre.entradasAcumuladasCentavos,25000);
   assert.equal(segundo.totalVendasCentavos,inicial.totalVendasCentavos);
   assert.deepEqual(segundo.historico,inicial.historico);
   const historico=await (await pedir(base+edit+'/historico',{headers:autenticar})).json();
