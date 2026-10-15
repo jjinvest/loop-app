@@ -19,6 +19,9 @@
   let versaoConciliacao=0;
   let versaoLivro=0;
   let versaoRecebimentos=0;
+  let versaoPonte=0;
+  let versaoHistoricoPonte=0;
+  let pedidosAssociados=[];
   let salvandoEventoPSP=false;
   let recebimentos=[];
   let configuracoes=[];
@@ -28,6 +31,13 @@
     ++versaoConciliacao;
     ++versaoLivro;
     ++versaoRecebimentos;
+    ++versaoPonte;
+    ++versaoHistoricoPonte;
+    pedidosAssociados=[];
+    el('listaPontePedidoPagamentoDemo').replaceChildren();
+    el('historicoPontePedidoPagamentoDemo').replaceChildren();
+    el('pedidoHistoricoPonteDemo').replaceChildren();
+    el('statusPontePedidoPagamentoDemo').textContent='';
     recebimentos=[];
     el('pagamentoSelecionadoPSPDemo').replaceChildren();
     el('historicoRecebimentoPSPDemo').replaceChildren();
@@ -157,6 +167,85 @@
     }
   }
 
+  // Correlacao somente LEITURA; intencionalmente nao altera pedidos,
+  // nao cria posicoes e nao simula cobranca de cliente real.
+  async function carregarHistoricoPonte(){
+    const atual=++versaoHistoricoPonte;
+    const pedidoId=el('pedidoHistoricoPonteDemo').value;
+    const lista=el('historicoPontePedidoPagamentoDemo');
+    lista.replaceChildren();
+    if(!token||!pedidoId)return;
+    try{
+      const ret=await requisitar('pedidos-pagamentos-demo/'+encodeURIComponent(pedidoId)+'/historico');
+      if(atual!==versaoHistoricoPonte||pedidoId!==el('pedidoHistoricoPonteDemo').value)return;
+      const blocos=[
+        {nome:'Logística fictícia',eventos:ret.eventosLogistica},
+        {nome:'Pagamento fictício',eventos:ret.eventosFinanceiros}
+      ];
+      for(const bloco of blocos){
+        for(const evento of bloco.eventos){
+          const li=document.createElement('li');
+          li.textContent=bloco.nome+' — '+evento.tipo+
+            ' — '+evento.eventoId+' — '+
+            (evento.ocorridoEm||evento.registradoEm||'');
+          lista.append(li);
+        }
+      }
+      if(!lista.childNodes.length){
+        const li=document.createElement('li');
+        li.textContent='Nenhum evento neste exemplo.';
+        lista.append(li);
+      }
+    }catch(e){
+      if(atual===versaoHistoricoPonte){
+        el('statusPontePedidoPagamentoDemo').textContent=e.message;
+      }
+    }
+  }
+  async function carregarPontePedidoPagamento(){
+    const atual=++versaoPonte;
+    const alvo=el('listaPontePedidoPagamentoDemo');
+    const statusPonte=el('statusPontePedidoPagamentoDemo');
+    alvo.replaceChildren();
+    if(!token){statusPonte.textContent='Informe a chave administrativa de teste.';return;}
+    try{
+      const dados=await requisitar('pedidos-pagamentos-demo');
+      if(atual!==versaoPonte)return;
+      pedidosAssociados=dados.pedidos;
+      const selecionar=el('pedidoHistoricoPonteDemo');
+      const anterior=selecionar.value;
+      selecionar.replaceChildren();
+      for(const p of pedidosAssociados){
+        const artigo=document.createElement('div');
+        artigo.className='financeiro-caixa';
+        const titulo=document.createElement('strong');
+        titulo.textContent=p.pedidoId+' ↔ '+p.pagamentoId;
+        const estado=document.createElement('span');
+        estado.className='financeiro-linha-saldos';
+        estado.textContent='Logística: '+p.statusLogisticoSimulado+
+          ' | Pagamento: '+p.statusPSPSimulado;
+        const alerta=document.createElement('small');
+        alerta.textContent='Conferência: '+p.integridade+
+          ' | Venda fictícia '+money(p.precoBrutoCentavos)+
+          ', fornecedor '+money(p.fornecedorCentavos)+
+          ', parcela LOOP '+money(p.parcelaLoopCentavos)+
+          ', sobra bruta '+money(p.sobraBrutaCentavos)+
+          '. Não movimenta fila, catraca ou recursos.';
+        artigo.append(titulo,estado,alerta);
+        alvo.append(artigo);
+        const option=document.createElement('option');
+        option.value=p.pedidoId;
+        option.textContent=p.pedidoId+' → '+p.pagamentoId;
+        selecionar.append(option);
+      }
+      if(pedidosAssociados.some(p=>p.pedidoId===anterior))selecionar.value=anterior;
+      statusPonte.textContent='Relação fictícia de pedidos e pagamentos conferida. Nenhum pedido real foi enviado.';
+      await carregarHistoricoPonte();
+    }catch(e){
+      if(atual===versaoPonte)statusPonte.textContent=e.message;
+    }
+  }
+
   // Estes pagamentos nao existem fora do ambiente administrativo local.
   // Confirmar/estornar aciona somente o livro SQLite de simulacao.
   async function carregarHistoricoPSP(){
@@ -219,7 +308,7 @@
       const ret=await requisitar('recebimentos-psp-demo/'+encodeURIComponent(pagamentoId)+'/eventos',{
         method:'POST',body:JSON.stringify(corpo)
       });
-      await Promise.all([carregarRecebimentos(),carregarLivro()]);
+      await Promise.all([carregarRecebimentos(),carregarLivro(),carregarPontePedidoPagamento()]);
       aviso.textContent=ret.resultado.repetido?
         'Evento fictício repetido: nenhum lançamento adicional.':
         'Evento fictício confirmado no livro de teste; nenhuma cobrança ou movimentação real.';
@@ -387,7 +476,7 @@
       if(atual!==versao)return;
       preencherConfiguracoes(config.cofres);
       mostrar(visao);
-      await Promise.all([carregarHistorico(),carregarConciliacao(),carregarLivro(),carregarRecebimentos()]);
+      await Promise.all([carregarHistorico(),carregarConciliacao(),carregarLivro(),carregarRecebimentos(),carregarPontePedidoPagamento()]);
     }catch(e){
       if(atual===versao){limpar();status.textContent=e.message;}
     }
@@ -426,6 +515,8 @@
     carregarHistorico();
   });
   el('formAparenciaCofreDemo').addEventListener('submit',salvar);
+  el('atualizarPontePedidoPagamentoDemo').addEventListener('click',carregarPontePedidoPagamento);
+  el('pedidoHistoricoPonteDemo').addEventListener('change',carregarHistoricoPonte);
   el('atualizarRecebimentosPSPDemo').addEventListener('click',async()=>{
     try{await carregarRecebimentos();}
     catch(e){el('statusEventoPSPDemo').textContent=e.message;}
