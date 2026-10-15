@@ -1,0 +1,24 @@
+body{background:#090b0b;color:#f0f0e8}
+.cabecalho-participante{background:#080808;border-bottom:1px solid #b38a30;padding:16px max(18px,5vw);display:flex;justify-content:space-between;gap:16px;align-items:center;flex-wrap:wrap}
+.cabecalho-participante h1{color:#f3c956;margin:0}
+.cabecalho-participante a{color:#b9f5a5}
+.portal-participante{max-width:1020px;margin:24px auto;padding:0 15px 50px}
+.cartao-participante{padding:22px;border:1px solid #8c702e;background:#141715;border-radius:14px;margin-bottom:16px}
+.cartao-participante h2{color:#f3c956;margin:0 0 14px}
+.cartao-participante form{display:grid;gap:10px;max-width:470px}
+.cartao-participante label{color:#e7dab8;font-weight:650}
+.cartao-participante input{color:#fff;background:#202722;border:1px solid #8c702e;border-radius:8px;padding:12px}
+.cartao-participante button{border:1px solid #37923d;border-radius:8px;padding:11px 16px;background:#9ff482;color:#08120a;font-weight:750;cursor:pointer;width:fit-content}
+.cartao-participante .botao-sair{background:#151d16;color:#b9f5a5;margin-top:13px}
+.cartao-participante button:disabled{opacity:.5;cursor:wait}
+.aviso-portal{background:#252016;border-left:3px solid #f3c956;padding:12px}
+.ajuda-portal{color:#bcc9b9;line-height:1.5}
+.codigo-indicacao{overflow-wrap:anywhere;color:#a7f5a1}
+.resumos-participante{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin-top:18px}
+.resumos-participante>div{background:#202820;padding:16px;border-radius:9px;display:grid;gap:8px}
+.resumos-participante strong{font-size:1.6rem;color:#a7f5a1}
+.resumos-participante span{color:#d4d4c9;font-size:.85rem}
+.duas-colunas-participante{display:grid;grid-template-columns:1fr 1fr;gap:15px}
+.cartao-participante li{overflow-wrap:anywhere;padding:9px 0;border-bottom:1px solid #445044}
+[hidden]{display:none!important}
+@media(max-width:680px){.resumos-participante{grid-template-columns:repeat(2,minmax(0,1fr))}.duas-colunas-participante{grid-template-columns:1fr}.cartao-participante{padding:16px}}
