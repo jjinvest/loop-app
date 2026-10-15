@@ -60,10 +60,10 @@ async function post(base,url,obj,headers=AUTH){
  });
 }
 
-test('sem custo ativo nao cria pre-pedido e custo de teste calcula margem preliminar de R$100 referencial',t=>{
+test('sem custo ativo nao cria pre-pedido e custo de teste calcula margem preliminar de R$250 referencial',t=>{
  const m=contexto(temporario(t));t.after(()=>m.catalogo.fechar());
  montarProduto(m);
- assert.equal(RESERVA_REFERENCIAL_LOOP,10000);
+ assert.equal(RESERVA_REFERENCIAL_LOOP,25000);
  assert.equal(m.planejamento.diagnostico('produto-teste-loja').situacao,'SEM_CUSTO_TESTE');
  assert.throws(()=>m.planejamento.criarPrePedido(refs),e=>e.codigo==='CONFLITO');
  const c=m.planejamento.registrarCusto({
@@ -74,8 +74,8 @@ test('sem custo ativo nao cria pre-pedido e custo de teste calcula margem prelim
  const d=m.planejamento.diagnostico('produto-teste-loja');
  assert.equal(d.precoCatalogoCentavos,60000);
  assert.equal(d.custoFornecedorTesteCentavos,30000);
- assert.equal(d.reservaReferencialLoopCentavos,10000);
- assert.equal(d.margemBrutaPreliminarCentavos,20000);
+ assert.equal(d.reservaReferencialLoopCentavos,25000);
+ assert.equal(d.margemBrutaPreliminarCentavos,5000);
  assert.equal(d.situacao,'PRE_PEDIDO_FICTICIO_POSSIVEL');
  assert.equal(d.taxaPagamentoIncluida,false);
  assert.equal(d.impostosIncluidos,false);
@@ -83,8 +83,8 @@ test('sem custo ativo nao cria pre-pedido e custo de teste calcula margem prelim
  assert.equal(r.repetido,false);
  assert.equal(r.pedido.pagamentoIntentoTesteId,'intent-fisico-pre-compra-001');
  assert.equal(r.pedido.precoCatalogoCentavos,60000);
- assert.equal(r.pedido.reservaReferencialLoopCentavos,10000);
- assert.equal(r.pedido.margemBrutaPreliminarCentavos,20000);
+ assert.equal(r.pedido.reservaReferencialLoopCentavos,25000);
+ assert.equal(r.pedido.margemBrutaPreliminarCentavos,5000);
  assert.equal(r.pedido.pagamentoRealEfetuado,false);
  assert.equal(r.pedido.posicaoCriada,false);
  assert.equal(m.livro.consultar().lancamentosRegistrados,0);
@@ -138,7 +138,7 @@ test('nao trata insuficiencia de margem preliminar como venda elegivel',t=>{
  montarProduto(m,{preco:11500});
  m.planejamento.registrarCusto({produtoId:refs.produtoId,custoCentavos:2000,revisaoEsperada:0});
  const d=m.planejamento.diagnostico(refs.produtoId);
- assert.equal(d.margemBrutaPreliminarCentavos,-500);
+ assert.equal(d.margemBrutaPreliminarCentavos,-15500);
  assert.equal(d.situacao,'MARGEM_PRELIMINAR_INSUFICIENTE');
  assert.throws(()=>m.planejamento.criarPrePedido(refs),e=>e.codigo==='INVALIDO');
  assert.equal(m.planejamento.listarPrePedidos().pedidos.length,0);
