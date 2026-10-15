@@ -18,13 +18,24 @@ const { RepositorioAparenciaCofresSQLite } = require('../domain/repositorio-apar
 const { RazaoFinanceiroDemoSQLite } = require('../domain/razao-financeiro-demo-sqlite');
 const { RecebimentosPSPDemoSQLite } = require('../domain/recebimentos-psp-demo-sqlite');
 const { criarRouterRecebimentosPSPDemo } = require('../routes/admin-recebimentos-psp-demo');
+const { criarRouterWebhookPSPDemoLocal } = require('../routes/webhook-psp-demo-local');
 
-function criarAppAdminLaboratorio({ repositorio, segredo } = {}) {
+function criarAppAdminLaboratorio({ repositorio, segredo, webhookDemo } = {}) {
   if (process.env.NODE_ENV === 'production') {
     throw new Error('O painel de laboratorio nao funciona em producao');
   }
   const app = express();
   app.disable('x-powered-by');
+  // A rota opcional precisa ler bytes ORIGINAIS antes do parser JSON geral.
+  // Nao existe no laboratorio normal nem na aplicacao publica.
+  let recebimentosDemo = null;
+  if (webhookDemo?.habilitado === true) {
+    app.use('/api/laboratorio', criarRouterWebhookPSPDemoLocal({
+      segredo:webhookDemo.segredo,
+      obterRecebimentos:()=>recebimentosDemo,
+      ...(webhookDemo.agoraSegundos?{agoraSegundos:webhookDemo.agoraSegundos}:{})
+    }));
+  }
   app.use(express.json({limit:'16kb',strict:true}));
 
   function somenteLocal(req, res, next) {
@@ -59,7 +70,7 @@ function criarAppAdminLaboratorio({ repositorio, segredo } = {}) {
   app.use('/api/admin', criarRouterFinanceiroAdminDemo({
     segredo, configuracao:configuracaoCofres, razaoPersistente
   }));
-  const recebimentosDemo = razaoPersistente
+  recebimentosDemo = razaoPersistente
     ? new RecebimentosPSPDemoSQLite({ banco:repositorio.banco,razao:razaoPersistente })
     : null;
   app.use('/api/admin', criarRouterRecebimentosPSPDemo({
@@ -118,7 +129,15 @@ function iniciarLaboratorio({ ambiente = process.env } = {}) {
   }
   const banco = new RepositorioCatalogoSQLite({ caminho });
   try {
-    const app = criarAppAdminLaboratorio({ repositorio:banco, segredo:ambiente.LOOP_ADMIN_TEST_TOKEN });
+    const app = criarAppAdminLaboratorio({
+      repositorio:banco,
+      segredo:ambiente.LOOP_ADMIN_TEST_TOKEN,
+      // Explicito, opcional e exclusivamente para testes locais.
+      webhookDemo:{
+        habilitado:ambiente.LOOP_WEBHOOK_DEMO_LOCAL==='1',
+        segredo:ambiente.LOOP_WEBHOOK_DEMO_SECRET
+      }
+    });
     const porta = ambiente.PORT ? Number(ambiente.PORT) : 3001;
     if (!Number.isSafeInteger(porta) || porta < 1 || porta > 65535) {
       throw new Error('Porta invalida');
