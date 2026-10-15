@@ -28,6 +28,7 @@ const { ContasParticipantesDemoSQLite } = require('../domain/contas-participante
 const { criarRouterContasParticipantesDemo } = require('../routes/admin-contas-participantes-demo');
 const { PonteComprasConvitesDemoSQLite } = require('../domain/ponte-compras-convites-demo-sqlite');
 const { criarRouterPonteComprasConvitesDemo } = require('../routes/admin-ponte-compras-convites-demo');
+const { criarRouterParticipanteDemo } = require('../routes/participante-laboratorio-demo');
 const { criarRouterFinanceiroAdminDemo } = require('../routes/admin-financeiro-demo');
 const { RepositorioAparenciaCofresSQLite } = require('../domain/repositorio-aparencia-cofres-sqlite');
 const { RazaoFinanceiroDemoSQLite } = require('../domain/razao-financeiro-demo-sqlite');
@@ -97,6 +98,11 @@ function criarAppAdminLaboratorio({ repositorio, segredo, webhookDemo } = {}) {
     });
     app.use('/api/admin',criarRouterPonteComprasConvitesDemo({
       segredo,ponte:ponteDemo
+    }));
+    // O titular usa uma sessao ficticia segregada: nenhuma credencial admin
+    // nem ID de outro participante e aceita na rota individual.
+    app.use('/api/laboratorio/participante',criarRouterParticipanteDemo({
+      contas:contasDemo,ponte:ponteDemo
     }));
   }
   const configuracaoCofres = repositorio instanceof RepositorioCatalogoSQLite
@@ -172,6 +178,15 @@ function criarAppAdminLaboratorio({ repositorio, segredo, webhookDemo } = {}) {
   });
   app.get('/admin/financeiro-demo.css', somenteLocal, (req, res) => {
     res.type('text/css').sendFile(path.join(__dirname,'financeiro-admin-demo.css'));
+  });
+  app.get('/laboratorio/participante', somenteLocal, (req, res) => {
+    res.sendFile(path.join(__dirname,'participante-demo.html'));
+  });
+  app.get('/laboratorio/participante.js', somenteLocal, (req, res) => {
+    res.type('application/javascript').sendFile(path.join(__dirname,'participante-demo.js'));
+  });
+  app.get('/laboratorio/participante.css', somenteLocal, (req, res) => {
+    res.type('text/css').sendFile(path.join(__dirname,'participante-demo.css'));
   });
   app.get('/admin/cadastro-participantes-demo', somenteLocal, (req, res) => {
     res.sendFile(path.join(__dirname,'cadastro-participantes-demo.html'));
