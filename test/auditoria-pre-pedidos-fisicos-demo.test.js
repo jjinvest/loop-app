@@ -26,7 +26,7 @@ function iniciar(caminho){
  const pagamentos=new PagamentosPrePedidosFisicosDemoSQLite({planejamento});
  return {catalogo,vinculos,planejamento,pagamentos};
 }
-function produto(m,{id='fisico-a',preco=25990,custo=8000}={}){
+function produto(m,{id='fisico-a',preco=35990,custo=8000}={}){
  m.catalogo.salvar({produto:{
   id,nome:'Produto somente ficticio',tipo:'FISICO',estado:'PUBLICADO',
   descricao:'Laboratorio',precoCentavos:preco,
@@ -68,7 +68,7 @@ test('auditoria vazia registra zero, nao inventa valor recebido nem libera nada'
 
 test('soma snapshots variados e separa aguardando, confirmado e estornado',t=>{
  const m=iniciar(bancoTeste(t));t.after(()=>m.catalogo.fechar());
- produto(m,{preco:25990,custo:8000});
+ produto(m,{preco:35990,custo:8000});
  const a=pedido(m,'pre-auditoria-a');
  const b=pedido(m,'pre-auditoria-b');
  produto(m,{id:'fisico-b',preco:42000,custo:10000});
@@ -86,15 +86,15 @@ test('soma snapshots variados e separa aguardando, confirmado e estornado',t=>{
  );
  assert.equal(r.totais.quantidadeEventosFicticios,3);
  assert.equal(r.totais.valorTotalPrePedidosCentavos,93980);
- assert.equal(r.totais.valorAguardandoCentavos,25990);
- assert.equal(r.totais.valorConfirmadoFicticioCentavos,25990);
+ assert.equal(r.totais.valorAguardandoCentavos,35990);
+ assert.equal(r.totais.valorConfirmadoFicticioCentavos,35990);
  assert.equal(r.totais.valorEstornadoFicticioCentavos,42000);
  assert.deepEqual(r.conferencias.map(x=>x.estado).sort(),
   ['AGUARDANDO_FICTICIO','CONFIRMADO_FICTICIO','ESTORNADO_FICTICIO'].sort());
  assert.equal(r.conferencias.every(x=>x.fornecedorBloqueado&&!x.filaMovimentada),true);
  assert.equal(m.catalogo.banco.prepare(
   'SELECT COUNT(*) AS quantidade FROM admin_pre_pedidos_pagamentos_eventos_demo').get().quantidade,antes);
- assert.equal(a.precoCatalogoCentavos,25990);
+ assert.equal(a.precoCatalogoCentavos,35990);
 });
 
 test('detecta evento inconsistente inserido no laboratorio sem lançar nova ordem',t=>{
@@ -137,7 +137,7 @@ test('auditoria sobrevive a reinicio e snapshots antigos nao variam com preco at
 
 test('agrupa por fornecedor do snapshot e nao permite repasse mesmo apos confirmacao',t=>{
  const m=iniciar(bancoTeste(t));t.after(()=>m.catalogo.fechar());
- produto(m,{preco:25990,custo:8000});
+ produto(m,{preco:35990,custo:8000});
  const antigo=pedido(m,'pre-snapshot-fornecedor-a');
  evento(m,antigo,'CONFIRMAR_FICTICIO','aud-fornecedor-antigo');
  m.vinculos.vincular({produtoId:'fisico-a',fornecedorId:'novo-parceiro',
@@ -156,7 +156,7 @@ test('agrupa por fornecedor do snapshot e nao permite repasse mesmo apos confirm
  const a=r.resumoPorFornecedor.find(x=>x.fornecedorId==='fornecedor-demo');
  const b=r.resumoPorFornecedor.find(x=>x.fornecedorId==='novo-parceiro');
  assert.equal(a.prePedidos,1);
- assert.equal(a.valorPrePedidosFicticiosCentavos,25990);
+ assert.equal(a.valorPrePedidosFicticiosCentavos,35990);
  assert.equal(a.custoTesteConfirmadoCentavos,8000);
  assert.equal(b.valorConfirmadoFicticioCentavos,36000);
  assert.equal(b.custoTesteConfirmadoCentavos,9000);
