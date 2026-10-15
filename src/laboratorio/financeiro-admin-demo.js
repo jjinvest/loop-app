@@ -23,6 +23,7 @@
   let versaoComercial=0;
   let versaoPlanejamentoFisico=0;
   let versaoPagamentoFisico=0;
+  let versaoAuditoriaFisica=0;
   let versaoHistoricoPagamentoFisico=0;
   let pagamentosFisicos=[];
   let salvandoPagamentoFisico=false;
@@ -50,12 +51,15 @@
     ++versaoComercial;
     ++versaoPlanejamentoFisico;
     ++versaoPagamentoFisico;
+    ++versaoAuditoriaFisica;
     ++versaoHistoricoPagamentoFisico;
     pagamentosFisicos=[];
     el('pedidoPagamentoFisicoDemo').replaceChildren();
     el('listaPagamentosPrePedidosFisicosDemo').replaceChildren();
     el('historicoPagamentoPrePedidoFisicoDemo').replaceChildren();
     el('statusPagamentoPrePedidoFisicoDemo').textContent='';
+    el('resumoAuditoriaFisicosDemo').textContent='Aguardando conferência local.';
+    el('listaAuditoriaFisicosDemo').replaceChildren();
     analisesFisicas=[];
     for(const id of ['listaPlanejamentoFisicoDemo','listaPrePedidosFisicosDemo',
       'produtoCustoFisicoDemo','produtoPrePedidoFisicoDemo'])el(id).replaceChildren();
@@ -407,10 +411,55 @@
       }
     }
   }
+  async function carregarAuditoriaPagamentosFisicos(){
+    const atual=++versaoAuditoriaFisica;
+    const resumo=el('resumoAuditoriaFisicosDemo');
+    const lista=el('listaAuditoriaFisicosDemo');
+    lista.replaceChildren();
+    if(!token){resumo.textContent='Aguardando autenticação local.';return;}
+    try{
+      const dados=await requisitar('pagamentos-pre-pedidos-fisicos-demo/auditoria');
+      if(atual!==versaoAuditoriaFisica)return;
+      const t=dados.totais;
+      resumo.textContent='Pré-pedidos: '+t.quantidadePrePedidos+
+        ' · Aguardando: '+t.aguardando+
+        ' · Confirmados fictícios: '+t.confirmados+
+        ' ('+money(t.valorConfirmadoFicticioCentavos)+')'+
+        ' · Estornados fictícios: '+t.estornados+
+        ' ('+money(t.valorEstornadoFicticioCentavos)+')'+
+        ' · Divergências: '+t.divergentes+
+        ' · Situação: '+dados.integridade+
+        '. Nenhum valor bancário confirmado.';
+      for(const pedido of dados.conferencias){
+        if(pedido.problemas.length===0)continue;
+        const linha=document.createElement('li');
+        linha.textContent=pedido.pedidoId+' — '+pedido.problemas.join(', ')+
+          ' — valor original '+money(pedido.precoSnapshotCentavos)+
+          '. Fornecedor permanece bloqueado.';
+        lista.append(linha);
+      }
+      for(const evento of dados.eventosOrfaos){
+        const linha=document.createElement('li');
+        linha.textContent='Evento órfão '+evento.eventoId+' — '+evento.problema;
+        lista.append(linha);
+      }
+      if(!lista.childNodes.length){
+        const linha=document.createElement('li');
+        linha.textContent='Nenhuma divergência encontrada nos registros de teste.';
+        lista.append(linha);
+      }
+    }catch(e){
+      if(atual===versaoAuditoriaFisica){
+        resumo.textContent='Não foi possível conferir o laboratório: '+e.message;
+      }
+    }
+  }
   async function carregarPagamentosFisicos(){
     const atual=++versaoPagamentoFisico;
     const aviso=el('statusPagamentoPrePedidoFisicoDemo');
     if(!token){aviso.textContent='Abra o laboratório com a chave local.';return;}
+    // Rota independente: exibe anomalías mesmo se o endpoint de listagem recusar dados corrompidos.
+    void carregarAuditoriaPagamentosFisicos();
     try{
       const dados=await requisitar('pagamentos-pre-pedidos-fisicos-demo');
       if(atual!==versaoPagamentoFisico)return;
