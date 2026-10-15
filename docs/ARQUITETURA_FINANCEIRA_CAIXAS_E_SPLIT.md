@@ -862,6 +862,90 @@ Testes: `test/vinculos-pedidos-pagamentos-demo.test.js`
 verifica persistencia da vinculacao, imutabilidade,
 autenticacao admin e inexistencia no app publico).
 
+## Cadastro comercial de pedido vinculado a produto e PSP ficticios (15/10/2026)
+
+**Etapa de laboratorio, sem checkout nem cobrança real.** O novo
+`src/domain/pedidos-comerciais-demo-sqlite.js` cria um
+pedido administrativo DE TESTE diretamente a partir de um
+**produto físico PUBLICADO no catálogo local**, com um vínculo
+**ativo** a fornecedor/SKU na base de laboratório, e uma
+**fatura PSP FICTÍCIA ainda aguardando confirmação**.
+
+No momento da criação, uma única transação SQLite grava:
+- Identificador imutável do pedido;
+- Identificador, nome, tipo e revisão do produto;
+- Identificador, SKU e revisão do fornecedor de teste;
+- Identificador da fatura PSP de teste (relação única 1:1);
+- Preço do catálogo em centavos, valor de exemplo do
+  fornecedor, parcela referencial LOOP e sobra comercial
+  BRUTA prevista pelo cenário da fatura fictícia;
+- Modo hipotético de fornecedor (split ou reserva)
+  e data da criação.
+
+**O preço da compra vem do catálogo, NÃO do solicitante.**
+O exemplo somente permite selecionar fatura fictícia
+de mesmo preço (no conjunto de dados atual, R$600).
+Não inventa cotação real do fornecedor: R$300
+de custo no simulador é **premissa de demonstração**.
+Valores e SKU históricos não são alterados se o
+administrador editar o produto ou trocar o
+fornecedor depois.
+
+É proibido associar a um novo pedido fatura
+já confirmada, estornada, já utilizada por outro
+pedido comercial ou reservada pelos dois vínculos
+logísticos de teste previamente existentes.
+A repetição do MESMO identificador e referências
+é idempotente; tentativa de reutilização com
+outras referências gera conflito. Triggers
+impedem editar ou apagar o snapshot comercial.
+
+A **situação do pagamento** é consultada pelo
+identificador da fatura e apresentada separadamente:
+`AGUARDANDO_FICTICIO`, `CONFIRMADO_FICTICIO`,
+`ESTORNADO_FICTICIO`. O status atualizado NÃO
+reescreve a fotografia comercial e NÃO aciona
+nenhum fornecedor, posição de fila ou catraca.
+É uma ligação para auditoria, não um checkout.
+
+Arquivos:
+- `src/domain/pedidos-comerciais-demo-sqlite.js`
+- `src/routes/admin-pedidos-comerciais-demo.js`
+- `src/laboratorio/financeiro-admin-demo.html` e `.js`
+- `test/pedidos-comerciais-demo.test.js`
+
+Apenas no servidor administrativo LOCAL, com
+a credencial temporária de laboratório, existem:
+- `GET /api/admin/pedidos-comerciais-demo`
+- `GET /api/admin/pedidos-comerciais-demo/opcoes`
+- `GET /api/admin/pedidos-comerciais-demo/:id`
+- `POST /api/admin/pedidos-comerciais-demo`
+  somente com os três IDs fictícios: `pedidoId`,
+  `produtoId` e `pagamentoId`.
+
+**Limites:** a implementação aceita apenas
+**produto FÍSICO** nesta primeira etapa. Cursos
+PDF permanecem parte da identidade e do catálogo
+LOOP, mas demandarão um fluxo comercial próprio,
+sem fornecedor, com arquivo entregue após
+pagamento confiável. Não existe compra por cliente
+real, cadastro de endereço, pedido a fornecedor,
+cotação em tempo real, taxa de pagamento calculada,
+reembolso real, integração bancária, CPF,
+contabilização de bônus de indicação, emissão
+fiscal ou acionamento da fila. A base de catálogo,
+PSP fictício e registro comercial está no
+SQLite local e não serve para operação financeira
+de produção.
+
+**Próximo incremento planejado:** ampliar o contrato
+de pedidos para novos preços e produtos PDF usando
+faturas de teste geradas a partir da fotografia
+do pedido, e não depender das dez faturas estáticas
+do simulador; somente depois conectar um PSP real
+e um checkout auditado, após aprovação juridica e
+contábil da operação.
+
 ## Isolamento e seguranca do projeto
 
 - Movimentacoes reais so mediante
