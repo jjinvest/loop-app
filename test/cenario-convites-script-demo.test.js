@@ -38,6 +38,8 @@ test('gerador cria 3 contas, 3 compras, 2 convites validados e fila A sem catrac
  assert.equal(resumo.modo,'CENARIO_100_POR_CENTO_FICTICIO');
  assert.equal(resumo.contas,3);
  assert.equal(resumo.comprasSimuladas,3);
+ assert.equal(resumo.pedidosIdentificados,3);
+ assert.equal(resumo.vinculosPedidoPagamento,3);
  assert.equal(resumo.convitesValidadosNoTeste,2);
  assert.equal(resumo.filaA,1);
  assert.equal(resumo.filaB,2);
@@ -52,6 +54,10 @@ test('gerador cria 3 contas, 3 compras, 2 convites validados e fila A sem catrac
   });
   const estado=ponte.consultar();
   assert.equal(estado.compras.length,3);
+  assert.equal(estado.vinculosIdentificados,3);
+  assert.equal(repo.banco.prepare(
+   'SELECT COUNT(*) AS n FROM admin_pedidos_titularidade_demo'
+  ).get().n,3);
   assert.equal(estado.convites.filter(c=>c.aplicadoNoMotor).length,2);
   assert.equal(estado.filas.A.quantidade,1);
   assert.equal(estado.filas.A.pessoas[0].nome,'Conta Demo Principal');
@@ -63,5 +69,6 @@ test('gerador cria 3 contas, 3 compras, 2 convites validados e fila A sem catrac
  const repo2=new RepositorioCatalogoSQLite({caminho});
  try{
   assert.equal(repo2.banco.prepare('SELECT COUNT(*) AS n FROM admin_ponte_compras_demo').get().n,3);
+  assert.equal(repo2.banco.prepare('SELECT COUNT(*) AS n FROM admin_ponte_vinculos_identificados_demo').get().n,3);
  }finally{repo2.fechar();}
 });
