@@ -67,6 +67,7 @@ class PagamentosPrePedidosFisicosDemoSQLite{
    ultimo.tipo===TIPOS.CONFIRMAR?'CONFIRMADO_FICTICIO':'ESTORNADO_FICTICIO';
   return {
    ...pedido,
+   pagamentoFicticioAguardando:situacao==='AGUARDANDO_FICTICIO',
    situacaoPagamentoFicticio:situacao,
    quantidadeEventosPagamentoFicticio:eventos.length,
    valorVinculadoPagamentoFicticioCentavos:pedido.precoCatalogoCentavos,
