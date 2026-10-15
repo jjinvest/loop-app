@@ -55,6 +55,31 @@
         <div id="cofresLojaFinanceiroDemo" class="financeiro-cofres"></div>
         <p class="ajuda">O caixa do distribuidor aparece apenas na simulação sem split externo. O histórico registra o custo do fornecedor em ambos os cenários.</p>
       </section>
+      <section class="painel" aria-labelledby="tituloConciliacaoDemo">
+        <h2 id="tituloConciliacaoDemo">Conciliação com reservas bancárias — simulação</h2>
+        <p class="aviso-demo">Duas informações fictícias: o saldo projetado no LOOP e um extrato bancário INVENTADO para testar a conferência. Nenhuma instituição, conta ou subconta real está conectada.</p>
+        <div class="duas-colunas">
+          <div class="campo">
+            <label for="fluxoConciliacaoDemo">Movimentações de exemplo</label>
+            <select id="fluxoConciliacaoDemo">
+              <option value="sem-movimentos">Apenas entradas da venda</option>
+              <option value="com-movimentos">Com retiradas e retornos fictícios</option>
+            </select>
+          </div>
+          <div class="campo">
+            <label for="extratoConciliacaoDemo">Resposta fictícia da instituição</label>
+            <select id="extratoConciliacaoDemo">
+              <option value="conferido">Valores fictícios iguais</option>
+              <option value="divergente">Mostrar divergência fictícia</option>
+            </select>
+          </div>
+        </div>
+        <button type="button" id="verConciliacaoDemo" class="secundario">Conferir cenários fictícios</button>
+        <p id="statusConciliacaoDemo" class="estado-admin" role="status" aria-live="polite"></p>
+        <div id="linhasConciliacaoDemo" class="financeiro-conciliacao" aria-live="polite"></div>
+        <h3>Últimos lançamentos da simulação</h3>
+        <ol id="historicoConciliacaoDemo" class="financeiro-historico" aria-live="polite"></ol>
+      </section>
       <section class="painel" aria-labelledby="tituloEditarCofres">
         <h2 id="tituloEditarCofres">Personalizar nomes e cores dos cofres</h2>
         <p class="ajuda">Edição administrativa de aparência, gravada apenas neste laboratório local. As posições, funções financeiras, valores e registros de vendas não podem ser modificados por este formulário.</p>
