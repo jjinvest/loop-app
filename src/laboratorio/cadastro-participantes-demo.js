@@ -26,6 +26,13 @@
     d.erro||'Falha na operação de teste ('+r.status+').');
   return d;
  }
+ async function lerPonte(){
+  const resposta=await fetch('/api/admin/ponte-compras-convites-demo',{
+   headers:{Authorization:'Bearer '+token},cache:'no-store',credentials:'omit'
+  });
+  if(!resposta.ok)throw new Error('Não foi possível consultar compras e convites do teste.');
+  return resposta.json();
+ }
  function limpar(){
   ++versao;
   token='';
@@ -40,8 +47,13 @@
  async function atualizar(){
   if(!token)return;
   const atual=++versao;
-  const dados=await api('');
+  const [dados,ponte]=await Promise.all([api(''),lerPonte()]);
   if(atual!==versao)return;
+  el('resumoPonteDemo').textContent='Compras fictícias confirmadas pelo verificador: '+
+   ponte.compras.length+' · Convites validados no teste: '+
+   ponte.convites.length+' · Fila A: '+ponte.filas.A.quantidade+
+   ' · Fila B: '+ponte.filas.B.quantidade+
+   '. Nenhuma movimentação financeira ou catraca real.';
   lista.replaceChildren();
   for(const conta of dados.contas){
    const item=document.createElement('article');
@@ -49,9 +61,19 @@
    const titulo=document.createElement('strong');
    titulo.textContent=conta.nome+' — acesso: '+conta.login;
    const referencia=document.createElement('p');
+   const convitesValidados=ponte.convites.filter(v=>v.indicadorId===conta.contaId);
+   const comprasConta=ponte.compras.filter(c=>c.contaId===conta.contaId);
+   const posicoes=[...ponte.filas.A.pessoas,...ponte.filas.B.pessoas,
+    ponte.tabuleiro.centro,...ponte.tabuleiro.vagas]
+    .filter(p=>p&&p.participanteId===conta.contaId);
+   const prioridades=ponte.filas.A.pessoas.filter(p=>p.participanteId===conta.contaId).length;
    referencia.textContent='Código: '+conta.codigoConvite+
-    ' · Cadastros por convite ainda pendentes: '+conta.convitesPendentes+
-    ' · Posições: '+conta.posicoesCriadas;
+    ' · Cadastros por convite pendentes de compra: '+
+    Math.max(0,conta.convitesPendentes-convitesValidados.length)+
+    ' · Convites validados no teste: '+convitesValidados.length+
+    ' · Compras fictícias: '+comprasConta.length+
+    ' · Posições ativas: '+posicoes.length+
+    ' · Na fila A: '+prioridades;
    const link=document.createElement('small');
    link.textContent='Endereço para simular um convite neste computador: '+
     location.origin+'/admin/cadastro-participantes-demo?convite='+
