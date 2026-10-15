@@ -33,6 +33,13 @@
   if(!resposta.ok)throw new Error('Não foi possível consultar compras e convites do teste.');
   return resposta.json();
  }
+ async function lerAuditoria(){
+  const resposta=await fetch('/api/admin/auditoria-acessos-participante-demo',{
+   headers:{Authorization:'Bearer '+token},cache:'no-store',credentials:'omit'
+  });
+  if(!resposta.ok)throw new Error('Não foi possível consultar a auditoria local.');
+  return resposta.json();
+ }
  function limpar(){
   ++versao;
   token='';
@@ -47,8 +54,14 @@
  async function atualizar(){
   if(!token)return;
   const atual=++versao;
-  const [dados,ponte]=await Promise.all([api(''),lerPonte()]);
+  const [dados,ponte,auditoria]=await Promise.all([api(''),lerPonte(),lerAuditoria()]);
   if(atual!==versao)return;
+  const ac=auditoria.quantidades;
+  el('resumoAuditoriaDemo').textContent='Entradas fictícias: '+ac.LOGIN_SUCESSO+
+   ' · Senhas incorretas: '+ac.LOGIN_INVALIDO+
+   ' · Bloqueios de acesso: '+ac.LOGIN_BLOQUEADO+
+   ' · Sessões encerradas: '+ac.SESSAO_ENCERRADA+
+   ' · Sessões substituídas: '+ac.SESSAO_REVOGADA+'.';
   el('resumoPonteDemo').textContent='Compras fictícias confirmadas pelo verificador: '+
    ponte.compras.length+' · Convites validados no teste: '+
    ponte.convites.length+' · Fila A: '+ponte.filas.A.quantidade+
