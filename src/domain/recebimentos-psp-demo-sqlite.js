@@ -189,7 +189,7 @@ class RecebimentosPSPDemoSQLite {
         loteId:'receb-'+eventoId,
         eventos:[{
           eventoId:'contabil-'+eventoId,
-          tipo:'AJUSTE_FICTICIO',
+          tipo:'RECEBIMENTO_PSP_FICTICIO',
           referencia:pagamentoId,
           descricao:tipo+' por evento demonstrativo '+eventoId,
           lancamentos
