@@ -1213,6 +1213,84 @@ confirmacao PSP autentica, conciliacao financeira,
 logistica e elegibilidade de cada venda para o
 motor de filas, com autorizacao juridica/contabil.
 
+## Ponte de pre-pedidos fisicos para pagamentos simulados variaveis (15/10/2026)
+
+A proxima etapa amplia o laboratorio sem alterar o checkout
+publico (ainda inexistente), a fila A/B ou a catraca. Os
+**pre-pedidos fisicos de precos variados** criados pelo modulo
+de planejamento agora podem receber confirmacoes e estornos
+**exclusivamente ficticios**, vinculados ao identificador de
+intencao de pagamento de teste criado junto ao pre-pedido.
+
+### Contrato do simulador financeiro fisico
+
+Em `src/domain/pagamentos-pre-pedidos-fisicos-demo-sqlite.js`,
+o simulador recebe como fonte imutavel o pre-pedido
+`admin_pre_pedidos_fisicos_demo`. O valor usado por cada
+evento e **sempre o preco do snapshot do pre-pedido**,
+e NAO um numero recebido da tela ou da API.
+
+A nova tabela `admin_pre_pedidos_pagamentos_eventos_demo`
+grava em SQLite `eventoId`, `pedidoId`,
+`pagamentoIntentoTesteId`, `tipo`, `valorCentavos`
+e horario. Unique ID de evento, FK de pedido, transacao
+`BEGIN IMMEDIATE` e triggers imutaveis de eventos
+impedem registros duplicados ou alteracao e exclusao
+silenciosa. A repeticao do mesmo evento com exatamente
+os mesmos dados e **idempotente**; IDs reutilizados
+com referencias distintas sao rejeitados.
+
+Estados disponiveis:
+- `AGUARDANDO_FICTICIO` — antes de confirmar;
+- `CONFIRMADO_FICTICIO` — um evento de confirmacao
+  demonstrativo, sem PSP externo;
+- `ESTORNADO_FICTICIO` — apos um evento de estorno,
+  que exige confirmacao anterior.
+
+As transicoes recusam confirmacao repetida com outro
+ID de evento, estorno sem confirmacao e reconfirmacao
+apos estorno. O historico original e mantido inclusive
+apos reiniciar o SQLite.
+
+**Conferencia:** o servidor devolve o valor registrado
+no pre-pedido, modo de fornecedor e intencao de teste.
+A integridade da referencia e do valor de todos os
+eventos e verificada a cada consulta. Mesmo em
+`CONFIRMADO_FICTICIO`, o retorno usa
+`fornecedorBloqueado:true`, `situacaoLogistica:'NAO_INICIADA'`,
+`autorizacaoLogistica:false`, `pagamentoPSPReal:false`,
+`cofresMovimentados:false`, `posicaoCriada:false`
+e `catracaMovimentada:false`. Isso e um ensaio,
+NAO prova de venda ou movimentacao financeira real.
+
+API ADMIN LOCAL com chave temporaria:
+- `GET /api/admin/pagamentos-pre-pedidos-fisicos-demo`
+- `GET /api/admin/pagamentos-pre-pedidos-fisicos-demo/:id`
+- `GET /api/admin/pagamentos-pre-pedidos-fisicos-demo/:id/historico`
+- `POST /api/admin/pagamentos-pre-pedidos-fisicos-demo/:id/eventos`,
+  somente com `pagamentoIntentoTesteId`, `eventoId`
+  e `tipo`. Enviar preco, cliente, CPF ou dados
+  bancarios e recusado.
+
+O painel `/admin/financeiro-demo` mostra a situacao
+do pagamento e consulta o historico do pre-pedido
+com opcoes de confirmacao e estorno ficticios.
+`test/pagamentos-pre-pedidos-fisicos-demo.test.js`
+verifica valores diferentes, duplicidades, estorno,
+mudancas de fornecedor/preco posteriores, persistencia,
+controle de acesso e isolamento da aplicacao publica.
+
+**Fronteira que continua faltando:** um PSP real com
+assinatura especifica do provedor e conciliacao
+bancaria; faturas efetivas e verificacao do valor
+liquidado; pedidos efetivos com clientes e direitos;
+regras juridico-contabeis de entrada no LOOP;
+integracao e autorizacao separada do despacho
+ao distribuidor; tratamento de taxas, impostos,
+frete e reembolso. Este simulador NAO alimenta
+a razao financeira dos cofres de demonstracao
+nem aciona qualquer funcao operacional da catraca.
+
 ## Isolamento e seguranca do projeto
 
 - Movimentacoes reais so mediante
