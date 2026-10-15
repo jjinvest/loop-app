@@ -1344,3 +1344,35 @@ Documentos preservados:
 - `docs/DIRETRIZES_ESCRITORIOS_E_CAIXAS.md`
 - `docs/PREMISSAS_FINANCEIRAS_E_RISCOS.md`
 - `docs/ARQUITETURA_MODULAR.md`
+
+
+## Auditoria consolidada de pre-pedidos fisicos ficticios (15/10/2026)
+
+Modulo de leitura: `src/domain/auditoria-pre-pedidos-fisicos-demo.js`.
+Compara cada pre-pedido fisico (snapshot imutavel de preco, fornecedor
+e ID de intencao de teste) com o historico de eventos ficticios do SQLite.
+
+- Distingue **AGUARDANDO_FICTICIO**, **CONFIRMADO_FICTICIO** e
+  **ESTORNADO_FICTICIO** e soma valores em centavos por situacao.
+- Sinaliza **DIVERGENTE_NO_TESTE** para preco diferente do snapshot,
+  intencao de pagamento incompatível, quantidade ou sequencia de eventos
+  irregular, alem de eventos sem pedido de origem.
+- Os totais de confirmacao e estorno sao **volumes historicos dos pedidos**,
+  nao credito disponivel nem saldo contabil ou bancario.
+- Nunca modifica os eventos; a auditoria nao valida a origem de um PSP
+  real, nao realiza repasse, nao autoriza despacho, nao ativa logistica,
+  nao paga beneficios, nao cria posicoes e nao gira a catraca.
+- Consulta protegida `GET /api/admin/pagamentos-pre-pedidos-fisicos-demo/auditoria`
+  e resumo na tela local `/admin/financeiro-demo`. Sem rota no app publico.
+- Testes: `test/auditoria-pre-pedidos-fisicos-demo.test.js`, incluindo
+  estados diferentes, snapshot antigo preservado apos mudanca de preco,
+  historico apos reinicio, adulteracao de evento apenas em laboratorio,
+  acesso com token e bloqueio no servidor publico.
+
+**Pendente para operar:** identidade e permissoes de administrador reais;
+clientes/autenticacao; integracao homologada de PSP e contratos de
+fornecedores; conciliacao bancaria independente; mecanismo transacional
+auditavel que combine pagamento elegivel, produto entregue, criacao
+unica de posicao e regras de cancelamento; validacao juridica/contabil
+sobre destinacao de recursos, beneficios e devolucoes. Nao conectar
+um status `CONFIRMADO_FICTICIO` automaticamente a qualquer acao real.
