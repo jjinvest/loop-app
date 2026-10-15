@@ -6,11 +6,50 @@ const express=require('express');
 const {criarAutorizacao}=require('./admin-catalogo-laboratorio');
 const {criarVisaoFinanceiraAdminDemo,MODOS}=require('../domain/financeiro-admin-demo');
 const {criarConciliacaoAdministrativaDemo}=require('../domain/conciliacao-cofres-demo');
+const {compararParcelaAntigaComNova}=require('../domain/configuracao-valor-loop-demo-sqlite');
 
-function criarRouterFinanceiroAdminDemo({segredo,configuracao,razaoPersistente}={}){
+function criarRouterFinanceiroAdminDemo({segredo,configuracao,razaoPersistente,configuracaoValorLoop=null}={}){
   const router=express.Router();
   router.use(criarAutorizacao({segredo}));
   router.use((_req,res,next)=>{res.set('Cache-Control','no-store');next();});
+  router.get('/valor-loop-demo',(_req,res)=>{
+    if(!configuracaoValorLoop)return res.status(501).json({erro:'REFERENCIA_INDISPONIVEL'});
+    return res.json(configuracaoValorLoop.resumo());
+  });
+  router.patch('/valor-loop-demo',(req,res)=>{
+    if(!configuracaoValorLoop)return res.status(501).json({erro:'REFERENCIA_INDISPONIVEL'});
+    if(!req.is('application/json'))return res.status(415).json({erro:'JSON_OBRIGATORIO'});
+    if(!req.body||typeof req.body!=='object'||Array.isArray(req.body)||
+      Object.keys(req.body).sort().join(',')!=='revisaoEsperada,valorCentavos'){
+      return res.status(400).json({erro:'CAMPOS_NAO_PERMITIDOS'});
+    }
+    try{
+      const atualizado=configuracaoValorLoop.alterar(req.body);
+      return res.json({modo:'VALOR_ALTERADO_SOMENTE_LABORATORIO',
+       alterado:atualizado.alterado,atual:configuracaoValorLoop.atual(),
+       historico:configuracaoValorLoop.historico(),pagamentosReais:false});
+    }catch(err){
+      if(err.codigo==='CONFLITO_REVISAO')
+       return res.status(409).json({erro:err.codigo});
+      if(['REVISAO_INVALIDA','VALOR_INVALIDO','HORARIO_INVALIDO'].includes(err.codigo))
+       return res.status(400).json({erro:err.codigo});
+      throw err;
+    }
+  });
+  router.get('/valor-loop-demo/comparacao',(req,res)=>{
+    if(!configuracaoValorLoop)return res.status(501).json({erro:'REFERENCIA_INDISPONIVEL'});
+    const original=Number(req.query.valorCentroOriginalCentavos);
+    const novo=Number(req.query.valorNovaVendaLoopCentavos);
+    const evento=req.query.evento;
+    if(Object.keys(req.query).sort().join(',')!=='evento,valorCentroOriginalCentavos,valorNovaVendaLoopCentavos'){
+      return res.status(400).json({erro:'PARAMETROS_INVALIDOS'});
+    }
+    try {
+      return res.json(compararParcelaAntigaComNova({
+       valorCentroOriginalCentavos:original,valorNovaVendaLoopCentavos:novo,evento
+      }));
+    }catch(err){return res.status(400).json({erro:'COMPARACAO_INVALIDA'});}
+  });
   router.get('/financeiro-demo',(req,res)=>{
     const tipo=req.query.modo;
     if(typeof tipo!=='string' || !['split','reserva'].includes(tipo)){
