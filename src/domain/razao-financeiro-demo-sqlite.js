@@ -6,7 +6,7 @@
 const {criarVisaoFinanceiraAdminDemo,MODOS,COFRES}=require('./financeiro-admin-demo');
 const COFRES_VALIDOS=new Set(Object.values(COFRES));
 const NATUREZAS=new Set(['ENTRADA','SAIDA','RETORNO']);
-const EVENTOS=new Set(['VENDA_FICTICIA','MOVIMENTO_FICTICIO','AJUSTE_FICTICIO']);
+const EVENTOS=new Set(['VENDA_FICTICIA','MOVIMENTO_FICTICIO','AJUSTE_FICTICIO','RECEBIMENTO_PSP_FICTICIO']);
 const RE_ID=/^[a-z0-9][a-z0-9-]{2,79}$/;
 function validarTexto(valor,campo,max=140){
   if(typeof valor!=='string'||!valor.trim()||valor.length>max||
