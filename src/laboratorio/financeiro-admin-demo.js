@@ -451,7 +451,7 @@
     try{
       const produtoId=el('produtoCustoFisicoDemo').value;
       const valor=el('valorCustoFisicoDemo').value.trim();
-      if(!/^\\d+(?:[.,]\\d{1,2})?$/.test(valor))throw new Error('Informe um valor em reais, por exemplo 250,00.');
+      if(!/^[0-9]+(?:[.,][0-9]{1,2})?$/.test(valor))throw new Error('Informe um valor em reais, por exemplo 250,00.');
       const [inteira,fracao='']=valor.replace(',','.').split('.');
       const custo=Number(inteira)*100+Number(fracao.padEnd(2,'0'));
       if(!Number.isSafeInteger(custo)||custo<=0)throw new Error('Custo de teste inválido.');
