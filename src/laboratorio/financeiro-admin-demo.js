@@ -22,6 +22,10 @@
   let versaoPonte=0;
   let versaoComercial=0;
   let versaoPlanejamentoFisico=0;
+  let versaoPagamentoFisico=0;
+  let versaoHistoricoPagamentoFisico=0;
+  let pagamentosFisicos=[];
+  let salvandoPagamentoFisico=false;
   let analisesFisicas=[];
   let salvandoCustoFisico=false;
   let salvandoPrePedidoFisico=false;
@@ -45,6 +49,13 @@
     ++versaoPonte;
     ++versaoComercial;
     ++versaoPlanejamentoFisico;
+    ++versaoPagamentoFisico;
+    ++versaoHistoricoPagamentoFisico;
+    pagamentosFisicos=[];
+    el('pedidoPagamentoFisicoDemo').replaceChildren();
+    el('listaPagamentosPrePedidosFisicosDemo').replaceChildren();
+    el('historicoPagamentoPrePedidoFisicoDemo').replaceChildren();
+    el('statusPagamentoPrePedidoFisicoDemo').textContent='';
     analisesFisicas=[];
     for(const id of ['listaPlanejamentoFisicoDemo','listaPrePedidosFisicosDemo',
       'produtoCustoFisicoDemo','produtoPrePedidoFisicoDemo'])el(id).replaceChildren();
@@ -368,6 +379,103 @@
     finally{salvandoEventoPDF=false;botao.disabled=false;}
   }
 
+  async function carregarHistoricoPagamentoFisico(){
+    const atual=++versaoHistoricoPagamentoFisico;
+    const pedidoId=el('pedidoPagamentoFisicoDemo').value;
+    const alvo=el('historicoPagamentoPrePedidoFisicoDemo');
+    alvo.replaceChildren();
+    if(!token||!pedidoId)return;
+    try{
+      const resultado=await requisitar('pagamentos-pre-pedidos-fisicos-demo/'+
+        encodeURIComponent(pedidoId)+'/historico');
+      if(atual!==versaoHistoricoPagamentoFisico ||
+         pedidoId!==el('pedidoPagamentoFisicoDemo').value)return;
+      for(const evento of resultado.eventos){
+        const linha=document.createElement('li');
+        linha.textContent=evento.tipo+' — '+money(evento.valorCentavos)+
+          ' — '+evento.eventoId+' — '+evento.registradoEm;
+        alvo.append(linha);
+      }
+      if(!resultado.eventos.length){
+        const linha=document.createElement('li');
+        linha.textContent='Ainda não existem eventos para este pré-pedido fictício.';
+        alvo.append(linha);
+      }
+    }catch(e){
+      if(atual===versaoHistoricoPagamentoFisico){
+        el('statusPagamentoPrePedidoFisicoDemo').textContent=e.message;
+      }
+    }
+  }
+  async function carregarPagamentosFisicos(){
+    const atual=++versaoPagamentoFisico;
+    const aviso=el('statusPagamentoPrePedidoFisicoDemo');
+    if(!token){aviso.textContent='Abra o laboratório com a chave local.';return;}
+    try{
+      const dados=await requisitar('pagamentos-pre-pedidos-fisicos-demo');
+      if(atual!==versaoPagamentoFisico)return;
+      pagamentosFisicos=dados.pedidos;
+      const select=el('pedidoPagamentoFisicoDemo');
+      const anterior=select.value;
+      select.replaceChildren();
+      const lista=el('listaPagamentosPrePedidosFisicosDemo');
+      lista.replaceChildren();
+      for(const p of pagamentosFisicos){
+        const opcao=document.createElement('option');
+        opcao.value=p.pedidoId;
+        opcao.textContent=p.pedidoId+' — '+money(p.precoCatalogoCentavos);
+        select.append(opcao);
+        const linha=document.createElement('div');
+        linha.className='financeiro-caixa';
+        const titulo=document.createElement('strong');
+        titulo.textContent=p.pedidoId+' — '+p.nomeProduto;
+        const status=document.createElement('span');
+        status.className='financeiro-linha-saldos';
+        status.textContent='Valor da compra fictícia: '+money(p.valorVinculadoPagamentoFicticioCentavos)+
+          ' | '+p.situacaoPagamentoFicticio;
+        const detalhe=document.createElement('small');
+        detalhe.textContent='Intenção '+p.pagamentoIntentoTesteId+
+          ' | eventos: '+p.quantidadeEventosPagamentoFicticio+
+          ' | logística '+p.situacaoLogistica+
+          ' | fornecedor BLOQUEADO. Sem PSP, dinheiro, cofre ou catraca real.';
+        linha.append(titulo,status,detalhe);
+        lista.append(linha);
+      }
+      if(pagamentosFisicos.some(p=>p.pedidoId===anterior))select.value=anterior;
+      aviso.textContent=pagamentosFisicos.length+
+        ' pré-pedido(s) físicos com conferência de pagamento fictício.';
+      await carregarHistoricoPagamentoFisico();
+    }catch(e){
+      if(atual===versaoPagamentoFisico)aviso.textContent=e.message;
+    }
+  }
+  async function registrarEventoPagamentoFisico(evento){
+    evento.preventDefault();
+    if(!token||salvandoPagamentoFisico)return;
+    salvandoPagamentoFisico=true;
+    const botao=el('registrarEventoPagamentoFisicoDemo');
+    botao.disabled=true;
+    const aviso=el('statusPagamentoPrePedidoFisicoDemo');
+    try{
+      const pedidoId=el('pedidoPagamentoFisicoDemo').value;
+      const pedido=pagamentosFisicos.find(x=>x.pedidoId===pedidoId);
+      if(!pedido)throw new Error('Primeiro registre um pré-pedido físico de teste.');
+      const resultado=await requisitar('pagamentos-pre-pedidos-fisicos-demo/'+
+        encodeURIComponent(pedidoId)+'/eventos',{
+        method:'POST',body:JSON.stringify({
+          pagamentoIntentoTesteId:pedido.pagamentoIntentoTesteId,
+          eventoId:el('idEventoPagamentoFisicoDemo').value.trim(),
+          tipo:el('tipoPagamentoFisicoDemo').value
+        })
+      });
+      await carregarPagamentosFisicos();
+      aviso.textContent=resultado.repetido?
+        'Evento fictício repetido; nenhum novo lançamento.':
+        'Pagamento fictício conferido. Fornecedor, cofres e fila continuam bloqueados.';
+    }catch(e){aviso.textContent=e.message;}
+    finally{salvandoPagamentoFisico=false;botao.disabled=false;}
+  }
+
   async function carregarPlanejamentoFisico(){
     const atual=++versaoPlanejamentoFisico;
     const aviso=el('statusPlanejamentoFisicoDemo');
@@ -489,7 +597,7 @@
           revisaoCustoTeste:d.revisaoCustoTeste
         })
       });
-      await carregarPlanejamentoFisico();
+      await Promise.all([carregarPlanejamentoFisico(),carregarPagamentosFisicos()]);
       aviso.textContent=resposta.repetido?
         'Pré-pedido já existia; sem registro duplicado.':
         'Pré-pedido fictício guardado. Nenhum pagamento, envio ou posição ocorreu.';
@@ -898,7 +1006,7 @@
       if(atual!==versao)return;
       preencherConfiguracoes(config.cofres);
       mostrar(visao);
-      await Promise.all([carregarHistorico(),carregarConciliacao(),carregarLivro(),carregarRecebimentos(),carregarPontePedidoPagamento(),carregarPedidosComerciais(),carregarPedidosPDF(),carregarPlanejamentoFisico()]);
+      await Promise.all([carregarHistorico(),carregarConciliacao(),carregarLivro(),carregarRecebimentos(),carregarPontePedidoPagamento(),carregarPedidosComerciais(),carregarPedidosPDF(),carregarPlanejamentoFisico(),carregarPagamentosFisicos()]);
     }catch(e){
       if(atual===versao){limpar();status.textContent=e.message;}
     }
@@ -945,6 +1053,9 @@
   el('formPedidosComerciaisDemo').addEventListener('submit',criarPedidoComercial);
   el('formCustoFisicoDemo').addEventListener('submit',registrarCustoFisico);
   el('formPrePedidoFisicoDemo').addEventListener('submit',registrarPrePedidoFisico);
+  el('formEventoPagPrePedidoFisicoDemo').addEventListener('submit',registrarEventoPagamentoFisico);
+  el('atualizarPagamentosFisicosDemo').addEventListener('click',carregarPagamentosFisicos);
+  el('pedidoPagamentoFisicoDemo').addEventListener('change',carregarHistoricoPagamentoFisico);
   el('atualizarPlanejamentoFisicoDemo').addEventListener('click',carregarPlanejamentoFisico);
   el('atualizarPedidosComerciaisDemo').addEventListener('click',carregarPedidosComerciais);
   el('atualizarPontePedidoPagamentoDemo').addEventListener('click',carregarPontePedidoPagamento);
