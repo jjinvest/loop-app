@@ -9,3 +9,7 @@
 .financeiro-historico li{line-height:1.5;border-bottom:1px solid #46576e;padding:10px 0;overflow-wrap:anywhere}
 @media(max-width:750px){.financeiro-indicadores{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:540px){.financeiro-cofres{grid-template-columns:1fr}}
+
+.financeiro-conciliacao{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin:16px 0}
+.financeiro-linha-saldos{font-size:1rem!important;line-height:1.5}
+@media(max-width:660px){.financeiro-conciliacao{grid-template-columns:1fr}}
