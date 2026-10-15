@@ -112,14 +112,54 @@ SEPARADO dos tres cofres internos do LOOP:
   aos tres cofres internos: **cinco cofres
   de visualizacao** (3 LOOP + 2 loja).
 
-O idealizador mencionou "lucro bruto" e "valor bruto"
-para o caixa comercial. **Ainda requer confirmacao**
-se o numero principal desse caixa deve ser
-a receita bruta da venda, o montante apos repasse
-ao distribuidor ou a margem comercial bruta.
-Essas tres grandezas sao diferentes e, no
-registro tecnico, devem aparecer em contas
-distintas independentemente do rotulo visual.
+**Indicador PRINCIPAL CONFIRMADO (15/10/2026):**
+no painel exclusivo do administrador, o caixa
+comercial da loja deve destacar o **RESULTADO
+COMERCIAL BRUTO / SOBRA BRUTA**, isto e, o valor
+da venda apos separar o custo do distribuidor
+e a parcela referencial vinculada ao LOOP,
+conforme regras e valores confirmados por venda.
+No exemplo de R$600 recebidos, R$300 destinados
+ao fornecedor e R$100 de referencia para o LOOP,
+o indicador principal seria **R$200 BRUTOS**,
+antes de taxas, tributos, estornos, logistica,
+despesas e demais compromissos.
+
+**NAO rotular como lucro liquido, saldo livre
+para retirada ou montante pessoal do administrador.**
+O titular pode decidir a utilizacao dos recursos
+legitimamente disponiveis da empresa, mas precisa
+preservar impostos, despesas, reembolsos, obrigações
+com clientes e reservas legal/contratualmente exigidas.
+
+**Registro COMPLETO e exclusivo da administracao:**
+independentemente do numero principal mostrado,
+guardar e permitir auditoria da receita total
+da venda, preco comercial, custo e status do
+repasse ao distribuidor, parcela de referencia
+do LOOP, margem comercial bruta, taxas,
+impostos, saldo liquidado, obrigações a pagar,
+estornos, reservas e entradas, saidas e retornos.
+As alteracoes de registros financeiros devem
+ser auditadas por lancamentos corretivos;
+nao apagar nem reescrever silenciosamente o
+historico original.
+
+**PERMISSOES:** visao completa, relatorios,
+conferencia e gestao desses registros pertencem
+exclusivamente ao Escritorio Administrativo,
+com permissao especifica para cada operador.
+O participante nunca ve o custo de fornecedor,
+margens, caixa interno ou fluxo financeiro geral;
+podera ver apenas suas proprias compras,
+pagamentos, reembolsos e eventuais creditos
+individuais, conforme regras e direitos aplicaveis.
+
+As tres grandezas (venda bruta, valor remanescente
+apos repasse e resultado comercial bruto)
+continuam contabilizadas em campos distintos,
+mesmo que apenas o resultado bruto seja
+destacado visualmente no caixa da loja.
 
 **Nao criar cofre financeiro real ou impor repasse
 sem suporte de API, contrato com o distribuidor,
