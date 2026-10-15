@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>LOOP | Cofres administrativos — demonstração</title>
+  <link rel="stylesheet" href="/css/style.css">
+  <link rel="stylesheet" href="/admin/painel.css">
+  <link rel="stylesheet" href="/admin/financeiro-demo.css">
+</head>
+<body>
+  <header>
+    <div><h1>LOOP</h1><small>Escritório Administrativo — laboratório</small></div>
+    <a class="voltar-loja" href="/admin">Voltar ao laboratório</a>
+  </header>
+  <main>
+    <section class="painel">
+      <h2>Cofres e loja — simulação financeira</h2>
+      <p class="aviso-demo">Somente valores fictícios. Esta página NÃO acessa banco, distribuidor, pagamentos reais ou saldos de clientes e NÃO movimenta recursos.</p>
+      <div class="campo">
+        <label for="chaveFinanceiroDemo">Chave temporária do laboratório</label>
+        <input id="chaveFinanceiroDemo" type="password" autocomplete="off" spellcheck="false" placeholder="Chave configurada no servidor">
+      </div>
+      <div class="campo">
+        <label for="repasseFinanceiroDemo">Cenário demonstrativo</label>
+        <select id="repasseFinanceiroDemo">
+          <option value="split">Distribuidor recebe pelo split fictício — quatro caixas</option>
+          <option value="reserva">Pagamento reservado para distribuidor — cinco caixas</option>
+        </select>
+      </div>
+      <div class="acoes-admin">
+        <button type="button" id="abrirFinanceiroDemo">Abrir demonstração</button>
+        <button type="button" id="limparFinanceiroDemo" class="secundario">Limpar chave e dados</button>
+      </div>
+      <p id="statusFinanceiroDemo" class="estado-admin" role="status" aria-live="polite">Aguardando acesso local.</p>
+    </section>
+    <div id="dadosFinanceiroDemo" hidden>
+      <section class="painel">
+        <h2>Resumo da loja (fictício)</h2>
+        <div class="financeiro-indicadores">
+          <div><span>Vendas brutas</span><strong id="vendasBrutasFinanceiroDemo">—</strong></div>
+          <div><span>Valor do distribuidor</span><strong id="distribuidorFinanceiroDemo">—</strong></div>
+          <div><span>Parcela LOOP</span><strong id="parcelaFinanceiroDemo">—</strong></div>
+          <div><span>Sobra bruta da loja</span><strong id="sobraFinanceiroDemo">—</strong></div>
+        </div>
+        <p class="ajuda">Sobra bruta não é lucro líquido nem saldo disponível para retirada. Os exemplos não incluem impostos, taxas, estornos ou obrigações adicionais.</p>
+      </section>
+      <section class="painel">
+        <h2>Três cofres do LOOP</h2>
+        <div id="cofresLoopFinanceiroDemo" class="financeiro-cofres"></div>
+        <p class="ajuda">Esquerda: investimento. Centro: bonificações/participação. Direita: reserva de suporte. Nomes e cores definitivos serão definidos depois.</p>
+      </section>
+      <section class="painel">
+        <h2>Caixas comerciais da loja</h2>
+        <div id="cofresLojaFinanceiroDemo" class="financeiro-cofres"></div>
+        <p class="ajuda">O caixa do distribuidor aparece apenas na simulação sem split externo. O histórico registra o custo do fornecedor em ambos os cenários.</p>
+      </section>
+      <section class="painel">
+        <h2>Histórico administrativo completo — exemplo</h2>
+        <p class="ajuda">Todas as parcelas de cada venda ficam registradas. A saída financeira real, impostos, movimentações bancárias e bônus de indicação não são executados nem simulados aqui.</p>
+        <ol id="historicoFinanceiroDemo" class="financeiro-historico" aria-live="polite"></ol>
+      </section>
+    </div>
+  </main>
+  <script src="/admin/financeiro-demo.js"></script>
+</body>
+</html>
