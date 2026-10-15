@@ -17,12 +17,17 @@
   let versao=0;
   let versaoHistorico=0;
   let versaoConciliacao=0;
+  let versaoLivro=0;
   let configuracoes=[];
   let salvando=false;
 
   function limpar(){
     ++versaoConciliacao;
+    ++versaoLivro;
     dados.hidden=true;
+    el('caixasLivroPersistenteDemo').replaceChildren();
+    el('historicoLivroPersistenteDemo').replaceChildren();
+    el('statusLivroPersistenteDemo').textContent='';
     el('linhasConciliacaoDemo').replaceChildren();
     el('historicoConciliacaoDemo').replaceChildren();
     el('statusConciliacaoDemo').textContent='';
@@ -49,7 +54,7 @@
       }
     });
     if(!resposta.ok){
-      if(resposta.status===409)throw new Error('Aparência alterada em outra sessão. Recarregue e confira antes de salvar.');
+      if(resposta.status===409)throw new Error('Identificador já usado com dados diferentes ou revisão alterada. Confira e recarregue.');
       if(resposta.status===401 || resposta.status===403)throw new Error('Chave inválida ou acesso local não permitido.');
       throw new Error('Operação não concluída ('+resposta.status+').');
     }
@@ -143,6 +148,90 @@
     }
   }
 
+  // Livro independente do ciclo aritmetico anterior: seu historico so muda
+  // quando uma operacao de teste foi explicitamente registrada pelo admin.
+  async function carregarLivro(){
+    const atual=++versaoLivro;
+    const aviso=el('statusLivroPersistenteDemo');
+    aviso.textContent='Consultando livro persistente do laboratório...';
+    try{
+      const livro=await requisitar('livro-financeiro-demo');
+      if(atual!==versaoLivro)return;
+      const caixas=el('caixasLivroPersistenteDemo');
+      const historico=el('historicoLivroPersistenteDemo');
+      caixas.replaceChildren();
+      historico.replaceChildren();
+      for(const c of livro.caixas){
+        const artigo=document.createElement('div');
+        artigo.className='financeiro-caixa';
+        const titulo=document.createElement('strong');
+        titulo.textContent=configuracoes.find(cfg=>cfg.id===c.id)?.nome||c.id;
+        const linha=document.createElement('span');
+        linha.className='financeiro-linha-saldos';
+        linha.textContent='Entradas: '+money(c.entradasAcumuladasCentavos)+
+          ' · Saídas: '+money(c.saidasAcumuladasCentavos)+
+          ' · Retornos: '+money(c.retornosAcumuladosCentavos);
+        const resumo=document.createElement('small');
+        resumo.textContent='Saldo PROJETADO fictício: '+money(c.saldoProjetadoCentavos)+
+          ' — não representa saldo bancário';
+        artigo.append(titulo,linha,resumo);
+        caixas.append(artigo);
+      }
+      for(const e of livro.historicoRecente){
+        const item=document.createElement('li');
+        item.textContent='#'+e.sequencia+' — '+e.eventoId+' — '+e.cofreId+
+          ' — '+e.natureza+' '+money(e.valorCentavos)+
+          ' — '+e.referencia+' — '+e.criadoEm;
+        historico.append(item);
+      }
+      aviso.textContent='Livro local: '+livro.lotesRegistrados+' lotes, '+
+        livro.lancamentosRegistrados+' lançamentos fictícios. Sem banco conectado.';
+    }catch(e){
+      if(atual===versaoLivro)aviso.textContent=e.message;
+    }
+  }
+  function centavosDoFormulario(){
+    const valor=el('valorMovimentoPersistenteDemo').value.trim();
+    const n=Number(valor);
+    if(!valor||!Number.isFinite(n)||n<=0||!Number.isSafeInteger(Math.round(n*100))||
+       Math.abs(n*100-Math.round(n*100))>0.00001){
+      throw new Error('Informe um valor positivo com até duas casas decimais.');
+    }
+    return Math.round(n*100);
+  }
+  async function registrarLivro(e,tipo){
+    e.preventDefault();
+    if(!token){el('statusLivroPersistenteDemo').textContent='Abra a demonstração com a chave local.';return;}
+    const botao=e.submitter;
+    if(botao)botao.disabled=true;
+    const aviso=el('statusLivroPersistenteDemo');
+    try{
+      let rota,corpo;
+      if(tipo==='ciclo'){
+        rota='livro-financeiro-demo/ciclos';
+        corpo={cicloId:el('idCicloPersistenteDemo').value.trim(),modo:modo.value};
+      }else{
+        rota='livro-financeiro-demo/movimentos';
+        corpo={
+          eventoId:el('idMovimentoPersistenteDemo').value.trim(),
+          cofreId:el('cofreMovimentoPersistenteDemo').value,
+          natureza:el('naturezaMovimentoPersistenteDemo').value,
+          valorCentavos:centavosDoFormulario(),
+          referencia:el('referenciaMovimentoPersistenteDemo').value.trim()
+        };
+      }
+      const r=await requisitar(rota,{method:'POST',body:JSON.stringify(corpo)});
+      await carregarLivro();
+      aviso.textContent=r.resultado.repetido?
+        'Operação fictícia já constava no livro. Nada foi duplicado.':
+        'Operação fictícia registrada permanentemente no laboratório. Nenhum dinheiro transferido.';
+    }catch(erro){
+      aviso.textContent='Falha no registro fictício: '+erro.message;
+    }finally{
+      if(botao)botao.disabled=false;
+    }
+  }
+
   function selecionado(){
     return configuracoes.find(c=>c.id===selecionar.value)||null;
   }
@@ -169,6 +258,16 @@
     }
     if(configuracoes.some(c=>c.id===idAntes))selecionar.value=idAntes;
     preencherFormulario();
+    const selecaoMovimento=el('cofreMovimentoPersistenteDemo');
+    const antes=selecaoMovimento.value;
+    selecaoMovimento.replaceChildren();
+    for(const c of configuracoes){
+      const option=document.createElement('option');
+      option.value=c.id;
+      option.textContent=c.nome+' ('+c.posicao+')';
+      selecaoMovimento.append(option);
+    }
+    if(configuracoes.some(c=>c.id===antes))selecaoMovimento.value=antes;
   }
   async function carregarHistorico(){
     const atual=++versaoHistorico;
@@ -209,7 +308,7 @@
       if(atual!==versao)return;
       preencherConfiguracoes(config.cofres);
       mostrar(visao);
-      await Promise.all([carregarHistorico(),carregarConciliacao()]);
+      await Promise.all([carregarHistorico(),carregarConciliacao(),carregarLivro()]);
     }catch(e){
       if(atual===versao){limpar();status.textContent=e.message;}
     }
@@ -248,6 +347,9 @@
     carregarHistorico();
   });
   el('formAparenciaCofreDemo').addEventListener('submit',salvar);
+  el('formCicloPersistenteDemo').addEventListener('submit',e=>registrarLivro(e,'ciclo'));
+  el('formMovimentoPersistenteDemo').addEventListener('submit',e=>registrarLivro(e,'movimento'));
+  el('atualizarLivroPersistenteDemo').addEventListener('click',carregarLivro);
   el('verConciliacaoDemo').addEventListener('click',carregarConciliacao);
   el('limparFinanceiroDemo').addEventListener('click',()=>{
     ++versao;
