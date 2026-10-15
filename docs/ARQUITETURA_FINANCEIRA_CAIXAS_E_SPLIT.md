@@ -379,6 +379,93 @@ administrativo e manutencao dos valores.
 aprovacao**: esta edicao basica nao define
 a identidade visual final.
 
+## Etapa de conciliacao ficticia: ponte para futuras reservas/subcontas (15/10/2026)
+
+**Entregue em laboratorio, SEM conexao financeira real:**
+`src/domain/conciliacao-cofres-demo.js` adiciona duas responsabilidades
+isoladas da vitrine, pedidos reais e motor de filas:
+
+1. **Razao projetado em memoria:** converte o conjunto das cinco
+   vendas ficticias ja existentes em lancamentos internos
+   por cofre. Guarda ID de lancamento, cofre fixo,
+   referencia a venda, tipo e valor em centavos,
+   preservando entrada acumulada, saida acumulada,
+   retorno acumulado e saldo contabil PROJETADO.
+   Ha simulacoes opcionais de saida e retorno
+   administrados pelo titular, inclusive com
+   fornecedor reservado no cenario sem split.
+   Esses exemplos NAO estabelecem limites de
+   movimentacao para o administrador.
+2. **Contrato de adaptador para reservas:** um objeto com
+   `consultarSaldos(ids)` fornece, futuramente,
+   saldos de subcontas/reservas de uma instituicao,
+   sem depender de nomes e cores de interface.
+   Por enquanto, o unico adaptador
+   `criarAdaptadorReservasFicticio`
+   usa dados explicitamente INVENTADOS em memoria,
+   sem credenciais, sem Internet e sem
+   qualquer comando de transferencia.
+
+O comparador produz `CONFERIDO_NO_TESTE`,
+`DIVERGENCIA_FICTICIA` ou `SEM_DADO_FICTICIO`
+por cofre. A hipotese de dados iguais nos dois
+lados e preparada a partir do **mesmo cenario
+ficticio** e nao prova conciliacao com banco.
+Pode-se simular extrato divergente (R$10 a mais
+no cofre central) para exercitar a verificacao.
+
+No ambiente local protegido:
+`GET /api/admin/conciliacao-cofres-demo?modo=split&fluxo=sem-movimentos&extrato=conferido`
+aceita `modo=split|reserva`,
+`fluxo=sem-movimentos|com-movimentos` e
+`extrato=conferido|divergente`. Essa rota
+e estritamente **GET** e exige o token do
+servidor admin local. A tela
+`/admin/financeiro-demo` apresenta as
+comparacoes e ultimos lancamentos, com
+rotulos editaveis de seus cofres.
+
+Para testar no mesmo computador com Node.js 22+
+ja preparado para o laboratorio, abrir
+`http://127.0.0.1:3001/admin/financeiro-demo`
+depois de iniciar `npm run start:admin-demo`
+com `LOOP_ADMIN_CATALOGO_LOCAL=1`,
+`LOOP_CATALOGO_DB` em arquivo absoluto
+fora do repo e `LOOP_ADMIN_TEST_TOKEN`
+com pelo menos 32 caracteres.
+A pagina nao esta publicada na Internet.
+
+**O que esta etapa NAO faz:**
+- Nao grava lancamentos financeiros em SQLite
+  (o historico desta demonstracao e reconstruido
+  em memoria a partir de exemplos imutaveis).
+- Nao recebe webhooks bancarios, nao consulta saldos
+  de verdade, nao faz conciliacao independente
+  nem usa credenciais ou transacoes reais.
+- Nao oferece API de depositos, pagamentos,
+  saques, bloqueios ou movimentacao real.
+- Nao ativa distribuicao de bonificacao, nem
+  decide origem dos R$10 das indicacoes.
+- Nao valida direitos de terceiros para
+  transferir dinheiro que esteja comprometido.
+- Nao altera as cinco etapas da catraca ou
+  posicoes de participantes.
+
+**Proximo caminho, sujeito a aprovacao:**
+definir registro financeiro persistente e
+imutavel para operacoes reais, conciliacao por
+IDs externos, tratamento de eventos duplicados,
+chargeback/estorno e permissao de administrador;
+so depois selecionar PSP e negociar contratos
+de contas/subcontas e split. A ferramenta atual
+e apenas uma prova de contrato e reconciliacao
+matematica, nao uma integracao com bancos.
+
+Testes: `test/conciliacao-cofres-demo.test.js`
+(confere origens, saídas, retornos, divergencias,
+dados ausentes, isolamento de rotas e nenhum
+efeito no catalogo ou app publico).
+
 ## Isolamento e seguranca do projeto
 
 - Movimentacoes reais so mediante
