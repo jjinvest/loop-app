@@ -18,12 +18,21 @@
   let versaoHistorico=0;
   let versaoConciliacao=0;
   let versaoLivro=0;
+  let versaoRecebimentos=0;
+  let salvandoEventoPSP=false;
+  let recebimentos=[];
   let configuracoes=[];
   let salvando=false;
 
   function limpar(){
     ++versaoConciliacao;
     ++versaoLivro;
+    ++versaoRecebimentos;
+    recebimentos=[];
+    el('pagamentoSelecionadoPSPDemo').replaceChildren();
+    el('historicoRecebimentoPSPDemo').replaceChildren();
+    el('detalhePagamentoPSPDemo').textContent='Abra a demonstração para consultar os exemplos.';
+    el('statusEventoPSPDemo').textContent='';
     dados.hidden=true;
     el('caixasLivroPersistenteDemo').replaceChildren();
     el('historicoLivroPersistenteDemo').replaceChildren();
@@ -146,6 +155,76 @@
     }catch(e){
       if(atual===versaoConciliacao) situacao.textContent=e.message;
     }
+  }
+
+  // Estes pagamentos nao existem fora do ambiente administrativo local.
+  // Confirmar/estornar aciona somente o livro SQLite de simulacao.
+  async function carregarHistoricoPSP(){
+    const valor=el('pagamentoSelecionadoPSPDemo').value;
+    const pagamento=recebimentos.find(p=>p.pagamentoId===valor);
+    const lista=el('historicoRecebimentoPSPDemo');
+    lista.replaceChildren();
+    if(!pagamento)return;
+    el('detalhePagamentoPSPDemo').textContent=
+      pagamento.pagamentoId+' — '+pagamento.situacao+
+      ' — '+money(pagamento.valorCentavos)+' (Fornecedor '+money(pagamento.fornecedorCentavos)+
+      ', LOOP '+money(pagamento.parcelaLoopCentavos)+
+      ', sobra bruta '+money(pagamento.sobraBrutaCentavos)+') — evento '+
+      pagamento.ordemCiclo+'/5, cenário '+pagamento.cicloDemo+'. Tudo fictício.';
+    try{
+      const ret=await requisitar('recebimentos-psp-demo/'+encodeURIComponent(valor)+'/historico');
+      if(el('pagamentoSelecionadoPSPDemo').value!==valor)return;
+      for(const e of ret.eventos){
+        const li=document.createElement('li');
+        li.textContent=e.tipo+' — '+e.eventoId+' — '+e.registradoEm;
+        lista.append(li);
+      }
+      if(!ret.eventos.length){
+        const li=document.createElement('li');
+        li.textContent='Nenhum evento fictício registrado.';
+        lista.append(li);
+      }
+    }catch(e){el('statusEventoPSPDemo').textContent=e.message;}
+  }
+  async function carregarRecebimentos(){
+    const atual=++versaoRecebimentos;
+    const dados=await requisitar('recebimentos-psp-demo');
+    if(atual!==versaoRecebimentos)return;
+    recebimentos=dados.pagamentos;
+    const escolha=el('pagamentoSelecionadoPSPDemo');
+    const anterior=escolha.value;
+    escolha.replaceChildren();
+    for(const p of recebimentos){
+      const option=document.createElement('option');
+      option.value=p.pagamentoId;
+      option.textContent=p.pagamentoId+' — '+p.situacao;
+      escolha.append(option);
+    }
+    if(recebimentos.some(p=>p.pagamentoId===anterior))escolha.value=anterior;
+    await carregarHistoricoPSP();
+  }
+  async function registrarEventoPSP(e){
+    e.preventDefault();
+    if(salvandoEventoPSP || !token)return;
+    salvandoEventoPSP=true;
+    const botao=el('registrarEventoPSPDemo');
+    botao.disabled=true;
+    const aviso=el('statusEventoPSPDemo');
+    try{
+      const pagamentoId=el('pagamentoSelecionadoPSPDemo').value;
+      const corpo={
+        eventoId:el('idEventoPSPDemo').value.trim(),
+        tipo:el('tipoEventoPSPDemo').value
+      };
+      const ret=await requisitar('recebimentos-psp-demo/'+encodeURIComponent(pagamentoId)+'/eventos',{
+        method:'POST',body:JSON.stringify(corpo)
+      });
+      await Promise.all([carregarRecebimentos(),carregarLivro()]);
+      aviso.textContent=ret.resultado.repetido?
+        'Evento fictício repetido: nenhum lançamento adicional.':
+        'Evento fictício confirmado no livro de teste; nenhuma cobrança ou movimentação real.';
+    }catch(erro){aviso.textContent='Não foi possível simular: '+erro.message;}
+    finally{salvandoEventoPSP=false;botao.disabled=false;}
   }
 
   // Livro independente do ciclo aritmetico anterior: seu historico so muda
@@ -308,7 +387,7 @@
       if(atual!==versao)return;
       preencherConfiguracoes(config.cofres);
       mostrar(visao);
-      await Promise.all([carregarHistorico(),carregarConciliacao(),carregarLivro()]);
+      await Promise.all([carregarHistorico(),carregarConciliacao(),carregarLivro(),carregarRecebimentos()]);
     }catch(e){
       if(atual===versao){limpar();status.textContent=e.message;}
     }
@@ -347,6 +426,12 @@
     carregarHistorico();
   });
   el('formAparenciaCofreDemo').addEventListener('submit',salvar);
+  el('atualizarRecebimentosPSPDemo').addEventListener('click',async()=>{
+    try{await carregarRecebimentos();}
+    catch(e){el('statusEventoPSPDemo').textContent=e.message;}
+  });
+  el('pagamentoSelecionadoPSPDemo').addEventListener('change',carregarHistoricoPSP);
+  el('formEventoPSPDemo').addEventListener('submit',registrarEventoPSP);
   el('formCicloPersistenteDemo').addEventListener('submit',e=>registrarLivro(e,'ciclo'));
   el('formMovimentoPersistenteDemo').addEventListener('submit',e=>registrarLivro(e,'movimento'));
   el('atualizarLivroPersistenteDemo').addEventListener('click',carregarLivro);
