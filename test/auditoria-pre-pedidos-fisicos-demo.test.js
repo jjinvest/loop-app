@@ -85,7 +85,7 @@ test('soma snapshots variados e separa aguardando, confirmado e estornado',t=>{
   [1,1,1,0]
  );
  assert.equal(r.totais.quantidadeEventosFicticios,3);
- assert.equal(r.totais.valorTotalPrePedidosCentavos,93980);
+ assert.equal(r.totais.valorTotalPrePedidosCentavos,113980);
  assert.equal(r.totais.valorAguardandoCentavos,35990);
  assert.equal(r.totais.valorConfirmadoFicticioCentavos,35990);
  assert.equal(r.totais.valorEstornadoFicticioCentavos,42000);
@@ -165,7 +165,7 @@ test('agrupa por fornecedor do snapshot e nao permite repasse mesmo apos confirm
  assert.equal(a.repasseEfetuado,false);
  assert.equal(b.repasseEfetuado,false);
  assert.equal(r.repassesReaisAFornecedores,0);
- assert.equal(r.totais.valorConfirmadoFicticioCentavos,61990);
+ assert.equal(r.totais.valorConfirmadoFicticioCentavos,71990);
  assert.equal(r.geracaoDePosicoes,false);
 });
 
