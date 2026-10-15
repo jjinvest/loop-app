@@ -64,7 +64,7 @@ if (require.main === module) {
   produtoExemplo.despesaOperacionalCentavos=0;
   const hipotese = projetarSustentabilidade({posicoesIniciais:6,periodos:[produtoExemplo]});
   process.stdout.write('\n=== PRODUTO R$250 E CUSTO FORNECEDOR R$50 (EXEMPLO BRUTO) ===\n' +
-    'Por venda: R$250 recebidos - R$50 ao parceiro - R$100 de referencia da fila = R$100 antes de outros custos e obrigacoes.\n' +
+    'Por venda: R$250 recebidos - R$50 ao parceiro - R$250 de referencia da fila = -R$50 antes de outros custos e obrigacoes.\n' +
     'Em 5 vendas: ' + reais(hipotese.resumo.margemComercialAposReservaFilaCentavos) +
     ' de diferenca BRUTA hipotetica, sem impostos, operadoras, suporte, perdas e outras obrigacoes modelados.\n');
 }
