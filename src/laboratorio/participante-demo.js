@@ -15,7 +15,7 @@
  async function chamada(url,body){
   const r=await fetch('/api/laboratorio/participante/'+url,{
    method:body===undefined?'GET':'POST',
-   headers:body===undefined?{}:{'Content-Type':'application/json'},
+   headers:body===undefined?{}:{'Content-Type':'application/json','X-LOOP-LAB':'participante'},
    body:body===undefined?undefined:JSON.stringify(body),
    credentials:'same-origin',cache:'no-store'
   });
