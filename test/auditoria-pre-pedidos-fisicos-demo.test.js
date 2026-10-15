@@ -190,6 +190,11 @@ test('endpoint local auditavel exige chave e fica ausente do app publico',async 
  assert.equal(r.totais.aguardando,1);
  assert.equal(r.integridade,'CONFERIDO_NO_TESTE');
  assert.equal(r.operacaoSomenteLeitura,true);
+ assert.equal(r.resumoPorFornecedor.length,1);
+ const painel=await (await fetch(base+'/admin/financeiro-demo')).text();
+ assert.match(painel,/id="resumoFornecedorAuditoriaFisicosDemo"/);
+ const script=await (await fetch(base+'/admin/financeiro-demo.js')).text();
+ assert.match(script,/fornecedor\.custoTesteConfirmadoCentavos/);
  assert.equal((await fetch(base+rota,{
   method:'POST',headers:{...AUTH,'Content-Type':'application/json'},body:'{}'
  })).status,404);
