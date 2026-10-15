@@ -946,6 +946,87 @@ do simulador; somente depois conectar um PSP real
 e um checkout auditado, após aprovação juridica e
 contábil da operação.
 
+## Pedidos de cursos PDF com valores variados — laboratorio (15/10/2026)
+
+O LOOP vende cursos de conteudo real principalmente em PDF, para
+DOWNLOAD **somente apos compra validada**. Nesta etapa foi construida
+uma SIMULACAO, sem arquivos de curso hospedados e sem clientes reais.
+
+**Arquitetura preservada:** o mecanismo de cursos PDF foi montado
+separadamente da logistica de produtos fisicos e do simulador PSP
+que usa dez faturas estaticas de R$600. O novo modulo aceita
+qualquer preco positivo registrado no catalogo de teste,
+por exemplo R$39,90 ou R$149,90. O cliente ou administrador
+nao informa o preco no formulario do pedido: ele vem da
+versao publicada do produto no catalogo.
+
+Componentes implementados:
+- `src/domain/pedidos-pdf-pagamentos-demo-sqlite.js`:
+  `admin_pdf_demo_pedidos` grava pedido, identificador
+  de pagamento ficticio, produto PDF, nome, revisao,
+  **preco original em centavos** e horario.
+- `admin_pdf_demo_eventos` guarda confirmacoes ou
+  estornos FICTICIOS, com IDs unicos de evento,
+  transacao atomica, validacao de sequencia,
+  idempotencia e triggers contra alteracao/exclusao.
+- `src/routes/admin-pedidos-pdf-demo.js`:
+  consultas e simulacao sob credencial administrativa
+  no servidor LOCAL, sem rota no aplicativo publico.
+- `/admin/financeiro-demo`: formularios para escolher
+  curso PDF publicado, registrar pedido de laboratorio,
+  simular confirmacao ou estorno e ler o historico.
+- `test/pedidos-pdf-pagamentos-demo.test.js`:
+  verificacao de precos variados, registros imutaveis,
+  repeticoes, estornos, reinicio do SQLite e acesso admin.
+
+API:
+- `GET /api/admin/pedidos-pdf-demo` e
+  `GET /api/admin/pedidos-pdf-demo/opcoes`;
+- `GET /api/admin/pedidos-pdf-demo/:id` e
+  `GET /api/admin/pedidos-pdf-demo/:id/historico`;
+- `POST /api/admin/pedidos-pdf-demo` apenas
+  com `pedidoId` e `produtoId` (ambos ficticios);
+- `POST /api/admin/pedidos-pdf-demo/:id/eventos`
+  apenas com `eventoId` e `tipo`, sendo
+  `CONFIRMAR_FICTICIO` ou `ESTORNAR_FICTICIO`.
+
+**Modelo de liberacao simulada:** antes da confirmacao
+`habilitacaoDownloadFicticia=false`; depois da
+confirmacao, `true`; apos estorno, `false`.
+**Isso NAO e um link nem uma entrega de PDF real.**
+Todos os registros indicam
+`downloadRealDisponivel:false` e
+`arquivoPDFRealDisponivel:false`.
+O futuro modulo de arquivos reais precisara
+validar pagamento autentico, associacao
+ao usuario comprador e direito de acesso
+individual, inclusive revogacoes/estornos.
+
+**Financeiro e catraca:** pedidos PDF nesta etapa
+NAO lancam valores nos cofres da operacao nem
+atribuem R$100 a uma venda de qualquer preco,
+porque a regra de distribuicao de valores
+por produto ainda nao esta definida para
+todos os precos possiveis. Nao ha comissao,
+participacao, nova posicao, indicacao ou
+giro de catraca. Isso NAO altera a premissa
+comercial de uma posicao por venda validada
+na operacao futura: apenas nao a implementa
+sem os controles e aprovacoes necessarios.
+
+O mecanismo de pagamento PDF aqui tem
+identificadores FICTICIOS gerados internamente
+como `pdf-<pedidoId>` e NAO tem assinatura
+de PSP, webhook, transacao externa,
+recebivel real ou reconciliacao bancaria.
+A API do simulador PSP fixo e a
+contabilidade do livro anterior continuam
+intactas e separadas. Um futuro passo
+sera unificar as interfaces de pagamento
+sob um contrato configuravel e assinado,
+sem duplicar contabilizacao e sem receber
+valores reais antes da homologacao.
+
 ## Isolamento e seguranca do projeto
 
 - Movimentacoes reais so mediante
