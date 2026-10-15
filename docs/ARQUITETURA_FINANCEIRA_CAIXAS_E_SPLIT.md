@@ -466,6 +466,99 @@ Testes: `test/conciliacao-cofres-demo.test.js`
 dados ausentes, isolamento de rotas e nenhum
 efeito no catalogo ou app publico).
 
+## Livro financeiro persistente do laboratorio (etapa 15/10/2026)
+
+**Adicionado** `src/domain/razao-financeiro-demo-sqlite.js`:
+um livro **persistente apenas para eventos FICTICIOS** de
+vendas do ciclo, movimentos do administrador e
+ajustes contabeis demonstrativos. Os eventos ficam
+registrados no SQLite LOCAL do laboratorio, sem
+modificar o esquema preexistente do catalogo
+ou o motor de filas/tabuleiro.
+
+Tabelas isoladas no banco do laboratorio:
+- `admin_fin_demo_lotes`: lote e assinatura JSON dos eventos
+  que o compoem, para evitar duplicacao na repeticao de pedidos;
+- `admin_fin_demo_eventos`: identidade unica da ocorrencia,
+  tipo, lote, referencia e descricao;
+- `admin_fin_demo_lancamentos`: sequencia auditavel,
+  identificador do cofre FIXO, natureza `ENTRADA`/`SAIDA`/
+  `RETORNO`, valor exato em centavos, data e evento origem.
+
+**Propriedades demonstradas:**
+1. A gravacao dos cinco eventos de um ciclo ficticio
+   ocorre dentro de uma UNICA transacao. Se algum
+   componente falhar, nao ha lote parcial.
+2. Repetir lote com o MESMO ID e conteudo retorna
+   `repetido:true`, sem lancar valores novamente.
+   Reaproveitar o ID com conteudo diferente
+   nao sobrescreve o registro anterior;
+   o administrador pode registrar um novo ID
+   para a operacao pretendida.
+3. Triggers do SQLite impedem UPDATE/DELETE das
+   tres tabelas do livro. Retificacao de
+   operacao usa NOVO evento de ajuste, com
+   referencia explicativa, mantendo a original.
+4. O demonstrativo agrega entradas, saidas,
+   retornos e saldo PROJETADO por cofre.
+   **Nao representa saldo bancario verdadeiro.**
+   O exemplo nao bloqueia saidas ficticias
+   por saldo insuficiente; pode mostrar saldo
+   projetado negativo para alertar sobre
+   diferenca a reconciliar.
+5. O fornecedor em `modo=split` e informacao
+   hipotetica da venda e NAO recebe um deposito
+   no livro interno; em `modo=reserva`, o
+   comprometimento ao fornecedor e registrado
+   no cofre de fornecedor a pagar.
+6. Os identificadores e finalidades permanentes
+   dos cofres nao dependem de nomes ou cores,
+   que continuam editaveis pela administracao.
+   Os valores do ciclo seguem o simulador
+   existente: centro/esquerda/centro/direita/
+   centro. Os R$10 de indicacao NAO estao
+   incorporados nesta prova de engenharia.
+
+**Rotas exclusivas do servidor ADMINISTRATIVO LOCAL
+com token temporario de desenvolvimento:**
+- `GET /api/admin/livro-financeiro-demo`: saldos
+  projetados e historico recente FICTICIOS;
+- `POST /api/admin/livro-financeiro-demo/ciclos`:
+  registra as cinco vendas do exemplo;
+- `POST /api/admin/livro-financeiro-demo/movimentos`:
+  simula retirada/entrada/retorno com ID;
+- `POST /api/admin/livro-financeiro-demo/ajustes`:
+  documenta ajuste corretivo por novo evento.
+
+A pagina `/admin/financeiro-demo` agora permite
+consultar o livro, registrar ciclos ficticios,
+testar entradas/saidas/retornos, registrar ajustes
+e conferir o historico. Os comandos exigem
+identificador unico e valor ficticio;
+nenhuma chamada e encaminhada a banco ou PSP.
+A senha do laboratorio e mantida apenas na
+memoria temporaria da pagina.
+
+**NAO esta feito nem prometido nesta etapa:**
+autenticacao real dos administradores, seguranca
+para operacao bancaria de producao, recebiveis,
+split contratado, conta ou reserva real,
+movimentacao e saque verdadeiro, postagem
+de webhooks, garantia de pagamento, custodia
+de terceiros, credito real por indicacao ou
+travas reais sobre a administracao. Uma futura
+infraestrutura de producao precisara separar
+seu proprio livro financeiro do SQLite do
+catalogo de laboratorio e implementar
+auditoria, conciliacao independente, backups,
+controle de erros bancarios e revisao juridica.
+
+Testes: `test/razao-financeiro-demo-sqlite.test.js`
+(verifica persistencia apos reinicio,
+idempotencia, transacao atomica,
+historico imutavel, saídas/retornos/ajustes,
+API admin protegida e ausencia no app publico).
+
 ## Isolamento e seguranca do projeto
 
 - Movimentacoes reais so mediante
