@@ -34,6 +34,7 @@ const { SessoesParticipanteDemo } = require('../domain/sessoes-participante-demo
 const { AuditoriaAcessoParticipanteDemoSQLite } = require('../domain/auditoria-acesso-participante-demo-sqlite');
 const { criarRouterAuditoriaParticipanteDemo } = require('../routes/admin-auditoria-participante-demo');
 const { criarRouterFinanceiroAdminDemo } = require('../routes/admin-financeiro-demo');
+const { ConfiguracaoValorLoopDemoSQLite } = require('../domain/configuracao-valor-loop-demo-sqlite');
 const { RepositorioAparenciaCofresSQLite } = require('../domain/repositorio-aparencia-cofres-sqlite');
 const { RazaoFinanceiroDemoSQLite } = require('../domain/razao-financeiro-demo-sqlite');
 const { RecebimentosPSPDemoSQLite } = require('../domain/recebimentos-psp-demo-sqlite');
@@ -92,6 +93,7 @@ function criarAppAdminLaboratorio({ repositorio, segredo, webhookDemo } = {}) {
     app.use('/api/admin',criarRouterContasParticipantesDemo({
       segredo,contas:contasDemo
     }));
+    const configuracaoValorLoopDemo=new ConfiguracaoValorLoopDemoSQLite({banco:repositorio.banco});
     const pedidosIdentificadosDemo=new PedidosTitularidadeDemoSQLite({
       banco:repositorio.banco,contas:contasDemo
     });
@@ -100,6 +102,7 @@ function criarAppAdminLaboratorio({ repositorio, segredo, webhookDemo } = {}) {
     const ponteDemo=new PonteComprasConvitesDemoSQLite({
       banco:repositorio.banco,contas:contasDemo,
       pedidosIdentificados:pedidosIdentificadosDemo,
+      configuracaoValor:configuracaoValorLoopDemo,
       consultarPagamentoConfiavel:async()=>{
         throw new Error('Nao ha verificador de compra configurado no HTTP');
       }
@@ -129,7 +132,9 @@ function criarAppAdminLaboratorio({ repositorio, segredo, webhookDemo } = {}) {
     ? new RazaoFinanceiroDemoSQLite({ banco:repositorio.banco })
     : null;
   app.use('/api/admin', criarRouterFinanceiroAdminDemo({
-    segredo, configuracao:configuracaoCofres, razaoPersistente
+    segredo, configuracao:configuracaoCofres, razaoPersistente,
+    configuracaoValorLoop:repositorio instanceof RepositorioCatalogoSQLite?
+      new ConfiguracaoValorLoopDemoSQLite({banco:repositorio.banco}):null
   }));
   recebimentosDemo = razaoPersistente
     ? new RecebimentosPSPDemoSQLite({ banco:repositorio.banco,razao:razaoPersistente })
