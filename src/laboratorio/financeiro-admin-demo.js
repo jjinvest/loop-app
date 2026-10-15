@@ -51,6 +51,7 @@
     el('auditoriaMaterialPDFDemo').textContent='Solicitações de download fictício: 0';
     el('baixarMaterialPDFDemo').disabled=true;
     el('listaPedidosComerciaisDemo').replaceChildren();
+    el('listaCotacoesFisicasDemo').replaceChildren();
     el('produtoPedidoComercialDemo').replaceChildren();
     el('pagamentoPedidoComercialDemo').replaceChildren();
     el('statusPedidosComerciaisDemo').textContent='';
@@ -362,9 +363,10 @@
     const aviso=el('statusPedidosComerciaisDemo');
     if(!token){aviso.textContent='Abra a demonstração com a chave local.';return;}
     try{
-      const [lista,opcoes]=await Promise.all([
+      const [lista,opcoes,cotacoes]=await Promise.all([
         requisitar('pedidos-comerciais-demo'),
-        requisitar('pedidos-comerciais-demo/opcoes')
+        requisitar('pedidos-comerciais-demo/opcoes'),
+        requisitar('pedidos-comerciais-demo/cotacoes-teste')
       ]);
       if(atual!==versaoComercial)return;
       function popular(id,items,getId,getText){
@@ -400,6 +402,22 @@
           '. Fotografia imutável da compra fictícia.';
         artigo.append(titulo,linha,legenda);
         destino.append(artigo);
+      }
+      const cotacoesAlvo=el('listaCotacoesFisicasDemo');
+      cotacoesAlvo.replaceChildren();
+      for(const cotacao of cotacoes.produtos){
+        const artigo=document.createElement('div');
+        artigo.className='financeiro-caixa';
+        const nomeProduto=document.createElement('strong');
+        nomeProduto.textContent=cotacao.nomeProduto;
+        const preco=document.createElement('span');
+        preco.className='financeiro-linha-saldos';
+        preco.textContent=money(cotacao.precoCatalogoCentavos);
+        const nota=document.createElement('small');
+        nota.textContent='Fornecedor de teste: '+cotacao.fornecedorId+
+          ' — sem cotação de custo, divisão financeira ou cobrança.';
+        artigo.append(nomeProduto,preco,nota);
+        cotacoesAlvo.append(artigo);
       }
       aviso.textContent=lista.pedidos.length+' pedido(s) comercial(is) fictício(s) registrado(s). '+
         opcoes.produtos.length+' produto(s) físico(s) publicado(s) com fornecedor e '+
