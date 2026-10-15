@@ -58,10 +58,30 @@ autorizadas e auditadas. Cliente nao ve os controles internos.
   mostrar as pessoas convidadas, registros de cadastro
   e situacao de validacao das indicacoes conforme
   autorizacao e regras de privacidade.
-- Percentual por indicacao, comissao ou beneficio
-  **NAO ESTA DEFINIDO**: 10% foi um EXEMPLO,
-  nao uma regra aprovada. Nao calcular, prometer
-  nem implantar remuneracao com esse percentual.
+- **Percentual de indicacao CONFIRMADO: 10%.**
+  Base de referencia informada pelo idealizador:
+  R$ 100; credito correspondente: **R$ 10 por
+  indicacao elegivel**, nao 10% do preco total
+  de qualquer produto. Exemplo: dez creditos
+  de R$ 10 totalizam R$ 100.
+- **Saque minimo desse saldo individual: R$ 100**,
+  conforme esclarecimento de 15/10/2026.
+  Bonus de eventos tambem podem ser registrados
+  na area individual; tipos, valores e condicoes
+  desses eventos ainda precisam de definicao.
+- Gatilho preciso do credito de indicacao
+  (somente cadastro ou compra paga validada,
+  considerando a regra ja existente de
+  indicacao valida) sera confirmado com
+  o idealizador antes de codificar.
+- **Nao executar pagamentos, saques ou creditos
+  financeiros reais nesta etapa**. Antes da
+  implementacao operacional, conciliar a fonte
+  contabil do bonus com as alocacoes do ciclo
+  e obter revisao juridica/contabil.
+- Os 10% de indicacao nao definem qualquer
+  outro percentual de participacao ou
+  distribuicao financeira dentro do LOOP.
 - 'Minha Rede' foi proposto como nome da area, mas
   aguarda escolha/confirmacao definitiva.
 
