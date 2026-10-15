@@ -5,6 +5,7 @@
 const { SimuladorLoop }=require('./simulador-loop');
 const { STATUS_CONFIRMADO }=require('./processador-pedidos-simulados');
 const { VALOR_PADRAO_LOOP_CENTAVOS }=require('./valor-padrao-loop');
+const {ConfiguracaoValorLoopDemoSQLite}=require('./configuracao-valor-loop-demo-sqlite');
 
 function falha(codigo,mensagem){
  const e=new Error(mensagem);e.codigo=codigo;return e;
@@ -51,7 +52,7 @@ function posicoesAtivas(simulador,contaId){
   .filter(p=>p&&p.participanteId===contaId).length;
 }
 class PonteComprasConvitesDemoSQLite{
- constructor({banco,contas,consultarPagamentoConfiavel,pedidosIdentificados=null,relogio=()=>new Date().toISOString()}={}){
+ constructor({banco,contas,consultarPagamentoConfiavel,pedidosIdentificados=null,configuracaoValor=null,relogio=()=>new Date().toISOString()}={}){
   if(!banco||typeof banco.prepare!=='function'||!contas||
     typeof contas.buscar!=='function'){
    throw new TypeError('SQLite e cadastro de laboratorio sao obrigatorios');
@@ -69,6 +70,11 @@ class PonteComprasConvitesDemoSQLite{
   this.verificador=consultarPagamentoConfiavel;
   this.relogio=relogio;
   this.pedidosIdentificados=pedidosIdentificados;
+  this.configuracaoValor=configuracaoValor||new ConfiguracaoValorLoopDemoSQLite({banco});
+  if(this.configuracaoValor.banco!==banco||
+    typeof this.configuracaoValor.vigenteEm!=='function'){
+   throw new TypeError('Configuracao de valor LOOP deve usar SQLite compartilhado');
+  }
   banco.exec(`
    CREATE TABLE IF NOT EXISTS admin_ponte_estado_demo(
     id INTEGER PRIMARY KEY CHECK(id=1),
@@ -100,6 +106,18 @@ class PonteComprasConvitesDemoSQLite{
    CREATE TRIGGER IF NOT EXISTS admin_ponte_vendas_loja_sem_loop_no_delete
     BEFORE DELETE ON admin_ponte_vendas_loja_sem_loop_demo
     BEGIN SELECT RAISE(ABORT,'venda de loja ficticia imutavel'); END;
+   CREATE TABLE IF NOT EXISTS admin_ponte_posicoes_valores_demo(
+    pedido_id TEXT PRIMARY KEY NOT NULL REFERENCES admin_ponte_compras_demo(pedido_id) ON DELETE RESTRICT,
+    revisao_valor INTEGER NOT NULL REFERENCES admin_valor_loop_versoes_demo(revisao) ON DELETE RESTRICT,
+    valor_referencia_centavos INTEGER NOT NULL CHECK(valor_referencia_centavos>=100),
+    criado_em TEXT NOT NULL
+   );
+   CREATE TRIGGER IF NOT EXISTS admin_ponte_posicoes_valores_no_update
+    BEFORE UPDATE ON admin_ponte_posicoes_valores_demo
+    BEGIN SELECT RAISE(ABORT,'referencia da posicao imutavel'); END;
+   CREATE TRIGGER IF NOT EXISTS admin_ponte_posicoes_valores_no_delete
+    BEFORE DELETE ON admin_ponte_posicoes_valores_demo
+    BEGIN SELECT RAISE(ABORT,'referencia da posicao imutavel'); END;
    CREATE TABLE IF NOT EXISTS admin_ponte_vinculos_identificados_demo(
     pedido_id TEXT PRIMARY KEY NOT NULL REFERENCES admin_ponte_compras_demo(pedido_id) ON DELETE RESTRICT,
     intento_pagamento_id TEXT NOT NULL UNIQUE,
@@ -139,6 +157,18 @@ class PonteComprasConvitesDemoSQLite{
     BEFORE DELETE ON admin_ponte_convites_validados_demo
     BEGIN SELECT RAISE(ABORT,'convites demo imutaveis'); END;
   `);
+  // Para bancos do laboratorio criados antes desta atualizacao:
+  // atribui a referencia historica unica R$250, sem alterar pedidos.
+  banco.prepare(`
+   INSERT INTO admin_ponte_posicoes_valores_demo(
+    pedido_id,revisao_valor,valor_referencia_centavos,criado_em)
+   SELECT c.pedido_id,1,25000,c.confirmado_em
+   FROM admin_ponte_compras_demo c
+   WHERE NOT EXISTS (
+    SELECT 1 FROM admin_ponte_posicoes_valores_demo v
+    WHERE v.pedido_id=c.pedido_id
+   )
+  `).run();
  }
  _restaurar(){
   const linha=this.banco.prepare(
@@ -205,10 +235,17 @@ class PonteComprasConvitesDemoSQLite{
      }
     }
     this.banco.exec('COMMIT');
+    const anteriorValor=this.banco.prepare(`
+     SELECT revisao_valor AS revisaoValor,
+      valor_referencia_centavos AS valorReferenciaCentavos
+     FROM admin_ponte_posicoes_valores_demo WHERE pedido_id=?
+    `).get(pedidoId);
     return {
      repetido:true,criado:false,pedidoId,contaId:anterior.conta_id,
      posicaoId:anterior.posicao_id,indicacaoNova:false,
-     compraElegivelLoop:true,posicaoCriada:true,vendaLojaRegistrada:true
+     compraElegivelLoop:true,posicaoCriada:true,vendaLojaRegistrada:true,
+     revisaoValorPosicao:anteriorValor.revisaoValor,
+     valorReferenciaPosicaoCentavos:anteriorValor.valorReferenciaCentavos
     };
    }
    const lojaAnterior=this.banco.prepare(`
@@ -229,9 +266,10 @@ class PonteComprasConvitesDemoSQLite{
      compraElegivelLoop:false,posicaoCriada:false,vendaLojaRegistrada:true,
      posicaoId:null,filaAtual:null,indicacaoNova:false};
    }
+   const referenciaVigente=this.configuracaoValor.vigenteEm(comprovante.confirmadoEm);
    const conta=this.contas.buscar(comprovante.contaId);
    if(!conta)throw falha('CONTA_DESCONHECIDA','Conta ficticia nao cadastrada');
-   if(comprovante.valorCentavos<VALOR_PADRAO_LOOP_CENTAVOS){
+   if(comprovante.valorCentavos<referenciaVigente.valorCentavos){
     // Compra valida da LOJA, sem mexer no snapshot, nas filas ou em convites.
     // A regra de cinco posicoes so se aplica a pedidos elegiveis ao LOOP.
     this.banco.prepare(`
@@ -270,6 +308,12 @@ class PonteComprasConvitesDemoSQLite{
      (pedido_id,intento_pagamento_id,verificado_em) VALUES(?,?,?)
     `).run(pedidoId,pedidoVinculado.intentoPagamentoId,comprovante.confirmadoEm);
    }
+   this.banco.prepare(`
+    INSERT INTO admin_ponte_posicoes_valores_demo
+      (pedido_id,revisao_valor,valor_referencia_centavos,criado_em)
+    VALUES (?,?,?,?)
+   `).run(pedidoId,referenciaVigente.revisao,
+     referenciaVigente.valorCentavos,comprovante.confirmadoEm);
    let indicacaoNova=false;
    if(conta.indicadoPorId){
     const conviteExistente=this.banco.prepare(`
@@ -302,6 +346,8 @@ class PonteComprasConvitesDemoSQLite{
     posicaoId:posicao.posicao.id,indicacaoNova,
     filaAtual:simulador.filas.filaA.some(p=>p.id===posicao.posicao.id)?'A':'B',
     compraElegivelLoop:true,posicaoCriada:true,vendaLojaRegistrada:true,
+    valorReferenciaPosicaoCentavos:referenciaVigente.valorCentavos,
+    revisaoValorPosicao:referenciaVigente.revisao,
     movimentouCatraca:false,registrouPagamentoReal:false
    };
   }catch(erro){this.banco.exec('ROLLBACK');throw erro;}
@@ -328,6 +374,16 @@ class PonteComprasConvitesDemoSQLite{
    semPagamentoReal:true,semCPF:true,semSessaoPublica:true,
    catracaMovimentada:false,compraNaoConfirmaBeneficioReal:true,
    compras,convites,
+   valoresDeCadaPosicao:this.banco.prepare(`
+    SELECT c.pedido_id AS pedidoId,c.posicao_id AS posicaoId,
+      v.revisao_valor AS revisaoValor,
+      v.valor_referencia_centavos AS valorReferenciaCentavos,
+      v.criado_em AS confirmadoEm
+    FROM admin_ponte_compras_demo c
+    JOIN admin_ponte_posicoes_valores_demo v ON v.pedido_id=c.pedido_id
+    ORDER BY c.confirmado_em,c.pedido_id
+   `).all(),
+   referenciaAtualLoop:this.configuracaoValor.atual(),
    comprasLojaSemLoop:this.banco.prepare(`
     SELECT pedido_id AS pedidoId,conta_id AS contaId,
      produto_id AS produtoId,valor_centavos AS valorCentavos,
