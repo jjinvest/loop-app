@@ -34,7 +34,7 @@ function pessoa(contas,nome,email,codigoIndicador=null){
  });
 }
 function recibo(m,pedidoId,contaId,{
- valorCentavos=10000,produtoId='curso-simulado',status=STATUS_CONFIRMADO,
+ valorCentavos=25000,produtoId='curso-simulado',status=STATUS_CONFIRMADO,
  confirmadoEm='2026-10-15T12:00:00.000Z'
 }={}){
  const evento={pedidoId,contaId,valorCentavos,produtoId,status,confirmadoEm};
@@ -88,7 +88,7 @@ test('segundo pedido do mesmo convidado gera outra posicao mas NAO outra indicac
  const raiz=pessoa(m.contas,'Indicador Teste','ind@exemplo.invalid');
  const b=pessoa(m.contas,'Indicado Teste','indicado@exemplo.invalid',raiz.codigoConvite);
  recibo(m,'p-1',raiz.contaId);
- recibo(m,'p-2',b.contaId,{valorCentavos:500});
+ recibo(m,'p-2',b.contaId,{valorCentavos:25000});
  recibo(m,'p-3',b.contaId,{valorCentavos:150000});
  await m.ponte.processar({pedidoId:'p-1'});
  const primeiro=await m.ponte.processar({pedidoId:'p-2'});
@@ -132,7 +132,7 @@ test('reprocessar comprovante e idempotente; remapear titular ou preco nao alter
  const m=preparar(arquivo(t));t.after(()=>m.repo.fechar());
  const a=pessoa(m.contas,'Primeira Conta','a@exemplo.invalid');
  const b=pessoa(m.contas,'Segunda Conta','b@exemplo.invalid');
- const original=recibo(m,'p001',a.contaId,{valorCentavos:1000});
+ const original=recibo(m,'p001',a.contaId,{valorCentavos:25000});
  const criado=await m.ponte.processar({pedidoId:'p001'});
  const repetido=await m.ponte.processar({pedidoId:'p001'});
  assert.equal(repetido.repetido,true);
