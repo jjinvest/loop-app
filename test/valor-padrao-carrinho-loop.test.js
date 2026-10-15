@@ -13,12 +13,16 @@ test('referencia do LOOP passa a ser R$250 sem mudar cinco vendas ou distribuica
  assert.equal(VALOR_CICLO_PARTICIPANTE_CENTAVOS,75000);
  assert.equal(VALOR_CICLO_EMPRESA_CENTAVOS,50000);
 });
-test('R$249,99 nao pode comprar; R$250 exatos libera valor para checkout futuro',()=>{
+test('R$249,99 e compra da loja sem LOOP; R$250 gera elegibilidade LOOP',()=>{
  const insuficiente=analisarCarrinhoSimulado({
   itens:[item('item-um',24999,5000)]
  });
  assert.equal(insuficiente.atingeValorReferencia,false);
- assert.equal(insuficiente.botaoCheckoutPodeAparecerPeloValor,false);
+ assert.equal(insuficiente.botaoCheckoutPodeAparecerPeloValor,true);
+ assert.equal(insuficiente.compraLojaPermitida,true);
+ assert.equal(insuficiente.participaLoopSeConfirmado,false);
+ assert.equal(insuficiente.parcelaLoopAplicadaCentavos,0);
+ assert.equal(insuficiente.sobraComercialCentavos,19999);
  assert.equal(insuficiente.elegivelNaSimulacao,false);
  assert.equal(insuficiente.projecaoPosicoesSeConfirmado,0);
  const minimo=analisarCarrinhoSimulado({
@@ -26,16 +30,21 @@ test('R$249,99 nao pode comprar; R$250 exatos libera valor para checkout futuro'
  });
  assert.equal(minimo.precoTotalCentavos,25000);
  assert.equal(minimo.botaoCheckoutPodeAparecerPeloValor,true);
+ assert.equal(minimo.participaLoopSeConfirmado,true);
+ assert.equal(minimo.parcelaLoopAplicadaCentavos,25000);
  assert.equal(minimo.elegivelNaSimulacao,true);
  assert.equal(minimo.sobraComercialCentavos,0);
  assert.equal(minimo.criacaoRealDePosicao,false);
 });
-test('produto unitario de R$50 pode ser somado ao carrinho, mas nao comprado sozinho',()=>{
+test('produto unitario de R$50 pode ser comprado sozinho sem LOOP; cinco unidades habilitam LOOP',()=>{
  const quatro=analisarCarrinhoSimulado({
   itens:[item('produto-cinquenta',5000,1000,4)]
  });
  assert.equal(quatro.precoTotalCentavos,20000);
  assert.equal(quatro.elegivelNaSimulacao,false);
+ assert.equal(quatro.compraLojaPermitida,true);
+ assert.equal(quatro.parcelaLoopAplicadaCentavos,0);
+ assert.equal(quatro.sobraComercialCentavos,16000);
  const cinco=analisarCarrinhoSimulado({
   itens:[item('produto-cinquenta',5000,1000,5)]
  });
