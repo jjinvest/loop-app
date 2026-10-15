@@ -60,6 +60,7 @@
     el('statusPagamentoPrePedidoFisicoDemo').textContent='';
     el('resumoAuditoriaFisicosDemo').textContent='Aguardando conferência local.';
     el('listaAuditoriaFisicosDemo').replaceChildren();
+    el('resumoFornecedorAuditoriaFisicosDemo').replaceChildren();
     analisesFisicas=[];
     for(const id of ['listaPlanejamentoFisicoDemo','listaPrePedidosFisicosDemo',
       'produtoCustoFisicoDemo','produtoPrePedidoFisicoDemo'])el(id).replaceChildren();
@@ -415,7 +416,9 @@
     const atual=++versaoAuditoriaFisica;
     const resumo=el('resumoAuditoriaFisicosDemo');
     const lista=el('listaAuditoriaFisicosDemo');
+    const painelFornecedores=el('resumoFornecedorAuditoriaFisicosDemo');
     lista.replaceChildren();
+    painelFornecedores.replaceChildren();
     if(!token){resumo.textContent='Aguardando autenticação local.';return;}
     try{
       const dados=await requisitar('pagamentos-pre-pedidos-fisicos-demo/auditoria');
@@ -447,6 +450,25 @@
         const linha=document.createElement('li');
         linha.textContent='Nenhuma divergência encontrada nos registros de teste.';
         lista.append(linha);
+      }
+      for(const fornecedor of dados.resumoPorFornecedor){
+        const quadro=document.createElement('div');
+        quadro.className='financeiro-caixa';
+        const titulo=document.createElement('strong');
+        titulo.textContent=fornecedor.fornecedorId;
+        const linha=document.createElement('span');
+        linha.className='financeiro-linha-saldos';
+        linha.textContent=fornecedor.prePedidos+' pré-pedido(s) fictício(s), '+
+          fornecedor.confirmados+' confirmado(s), '+
+          fornecedor.estornados+' estornado(s), '+
+          fornecedor.divergentes+' divergente(s).';
+        const detalhe=document.createElement('small');
+        detalhe.textContent='Compras fictícias: '+money(fornecedor.valorPrePedidosFicticiosCentavos)+
+          '; valor confirmado no teste: '+money(fornecedor.valorConfirmadoFicticioCentavos)+
+          '; custo HIPOTÉTICO desses confirmados: '+money(fornecedor.custoTesteConfirmadoCentavos)+
+          '. Sem repasse real ou envio de pedido.';
+        quadro.append(titulo,linha,detalhe);
+        painelFornecedores.append(quadro);
       }
     }catch(e){
       if(atual===versaoAuditoriaFisica){
