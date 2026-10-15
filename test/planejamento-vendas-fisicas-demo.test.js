@@ -65,7 +65,7 @@ test('sem custo ativo nao cria pre-pedido e custo de teste calcula margem prelim
  montarProduto(m);
  assert.equal(RESERVA_REFERENCIAL_LOOP,10000);
  assert.equal(m.planejamento.diagnostico('produto-teste-loja').situacao,'SEM_CUSTO_TESTE');
- assert.throws(()=>m.planejamento.criarPrePedido(refs),e=>e.codigo==='INVALIDO');
+ assert.throws(()=>m.planejamento.criarPrePedido(refs),e=>e.codigo==='CONFLITO');
  const c=m.planejamento.registrarCusto({
   produtoId:refs.produtoId,custoCentavos:30000,revisaoEsperada:0
  });
