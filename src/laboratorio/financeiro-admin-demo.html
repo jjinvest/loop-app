@@ -112,6 +112,18 @@
         <h3>Histórico do pagamento selecionado</h3>
         <ol id="historicoRecebimentoPSPDemo" class="financeiro-historico" aria-live="polite"></ol>
       </section>
+      <section class="painel" aria-labelledby="tituloPontePedidoPagamentoDemo">
+        <h2 id="tituloPontePedidoPagamentoDemo">Pedidos da loja vinculados a pagamentos — demonstração</h2>
+        <p class="aviso-demo">Relação de dois pedidos LOGÍSTICOS fictícios com dois pagamentos PSP fictícios. O acompanhamento apenas compara os status: confirmação financeira NÃO libera fornecedor, NÃO cria posição e NÃO movimenta catraca.</p>
+        <button type="button" id="atualizarPontePedidoPagamentoDemo" class="secundario">Conferir pedidos e pagamentos fictícios</button>
+        <p id="statusPontePedidoPagamentoDemo" class="estado-admin" role="status" aria-live="polite"></p>
+        <div id="listaPontePedidoPagamentoDemo" class="financeiro-conciliacao" aria-live="polite"></div>
+        <div class="campo">
+          <label for="pedidoHistoricoPonteDemo">Histórico conjunto de pedido e pagamento</label>
+          <select id="pedidoHistoricoPonteDemo"></select>
+        </div>
+        <ol id="historicoPontePedidoPagamentoDemo" class="financeiro-historico" aria-live="polite"></ol>
+      </section>
       <section class="painel" aria-labelledby="tituloLivroPersistenteDemo">
         <h2 id="tituloLivroPersistenteDemo">Livro persistente de registros fictícios</h2>
         <p class="aviso-demo">Somente no laboratório e sob acesso administrativo. Registros ficam salvos no SQLite local mesmo após reiniciar. Nenhum lançamento é um pagamento, depósito, reserva ou saque bancário real.</p>
