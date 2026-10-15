@@ -316,6 +316,69 @@ custo do fornecedor ou cofres internos.
 Autenticacao de producao e permissoes
 granulares de operadores ainda NAO existem.
 
+## Etapa seguinte implementada: nomes e cores editaveis (laboratorio local)
+
+A interface do administrador em `/admin/financeiro-demo`
+agora permite personalizar **nome de exibicao** e **cor
+hexadecimal** de cada um dos cinco cofres possiveis
+(3 LOOP + 2 loja). Em cenario com split, a loja so
+exibe o cofre comercial, mas a configuracao de
+reserva do distribuidor pode ser mantida para um
+futuro cenario sem split.
+
+**As posicoes e finalidades NAO sao editaveis**:
+- `LOOP_ESQUERDA`: investimento (esquerda);
+- `LOOP_CENTRO`: participacao e bonificacoes (centro);
+- `LOOP_DIREITA`: suporte ao LOOP (direita);
+- `LOJA_COMERCIAL`: sobra comercial bruta da loja;
+- `LOJA_FORNECEDOR_A_PAGAR`: pagamento reservado ao distribuidor
+  apenas quando nao houver split externo contratado.
+
+Essa identidade estavel tambem **prepara uma associacao futura
+de cada cofre a reserva/subconta de um parceiro financeiro**,
+sem depender de seu nome visual. No momento, todos retornam
+`integracaoBancaria: NAO_CONFIGURADA`. **Nao existe API bancaria
+ativa, chave de provedor, saldo real, vinculacao de conta,
+split ou ordem de transferencia.** Um futuro adaptador
+devera conferir autenticacao institucional, registro contábil,
+conciliacao, autorizacao e disponibilidade do produto
+financeiro antes de qualquer transferencia.
+
+A persistencia e de **laboratorio**: tabela isolada
+`admin_cofres_aparencia` no SQLite local do catalogo;
+nao altera a migracao de versao nem o registro de
+produtos. Cada edicao tem controle de revisao,
+e o historico `admin_cofres_aparencia_historico`
+e append-only (trigger impede update/delete).
+Os registros financeiros ficticios mantem o mesmo
+valor e destinatario antes e depois de editar.
+
+Endpoints locais autenticados:
+- `GET /api/admin/cofres-demo/configuracoes`;
+- `GET /api/admin/cofres-demo/:id/historico`;
+- `PATCH /api/admin/cofres-demo/:id` com SOMENTE
+  `nome`, `cor` e `revisaoEsperada`.
+
+O PATCH nao permite alterar finalidade, ordem,
+contas bancarias, saldos, transacoes, porcentagens
+ou beneficiarios. O controle de revisao impede
+perder a configuracao por edicao simultanea, e
+nao e um bloqueio de saque: **nao ha saque
+nem sistema bancario nesta demonstracao**.
+A validacao rejeita caracteres de controle,
+nomes extensos, HTML e cores nao hexadecimais.
+O cliente nao recebe essas APIs; a autenticacao
+de producao ainda sera desenvolvida.
+
+Testes em `test/aparencia-cofres-admin.test.js`
+verificam alteracao, historico imutavel,
+revisao, reinicio de SQLite, isolamento
+administrativo e manutencao dos valores.
+
+**Acabamento visual continua pendente de
+aprovacao**: esta edicao basica nao define
+a identidade visual final.
+
 ## Isolamento e seguranca do projeto
 
 - Movimentacoes reais so mediante
