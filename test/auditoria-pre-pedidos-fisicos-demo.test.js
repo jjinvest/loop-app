@@ -55,6 +55,7 @@ test('auditoria vazia registra zero, nao inventa valor recebido nem libera nada'
  const r=auditar(m);
  assert.equal(r.integridade,'CONFERIDO_NO_TESTE');
  assert.deepEqual(r.conferencias,[]);
+ assert.deepEqual(r.resumoPorFornecedor,[]);
  assert.equal(r.totais.quantidadePrePedidos,0);
  assert.equal(r.totais.valorConfirmadoFicticioCentavos,0);
  assert.equal(r.confirmacaoPSPReal,false);
@@ -132,6 +133,40 @@ test('auditoria sobrevive a reinicio e snapshots antigos nao variam com preco at
   assert.equal(r.conferencias[0].precoSnapshotCentavos,39990);
   assert.equal(r.integridade,'CONFERIDO_NO_TESTE');
  }finally{reaberto.catalogo.fechar();}
+});
+
+test('agrupa por fornecedor do snapshot e nao permite repasse mesmo apos confirmacao',t=>{
+ const m=iniciar(bancoTeste(t));t.after(()=>m.catalogo.fechar());
+ produto(m,{preco:25990,custo:8000});
+ const antigo=pedido(m,'pre-snapshot-fornecedor-a');
+ evento(m,antigo,'CONFIRMAR_FICTICIO','aud-fornecedor-antigo');
+ m.vinculos.vincular({produtoId:'fisico-a',fornecedorId:'novo-parceiro',
+  sku:'SKU_NOVO',revisaoEsperada:1});
+ m.catalogo.atualizar({id:'fisico-a',revisaoEsperada:1,
+  alteracoes:{precoCentavos:36000}});
+ m.planejamento.registrarCusto({produtoId:'fisico-a',custoCentavos:9000,
+  revisaoEsperada:1});
+ const novo=m.planejamento.criarPrePedido({
+  pedidoId:'pre-snapshot-fornecedor-b',produtoId:'fisico-a',
+  revisaoProduto:2,revisaoCustoTeste:2
+ }).pedido;
+ evento(m,novo,'CONFIRMAR_FICTICIO','aud-fornecedor-novo');
+ const r=auditar(m);
+ assert.equal(r.resumoPorFornecedor.length,2);
+ const a=r.resumoPorFornecedor.find(x=>x.fornecedorId==='fornecedor-demo');
+ const b=r.resumoPorFornecedor.find(x=>x.fornecedorId==='novo-parceiro');
+ assert.equal(a.prePedidos,1);
+ assert.equal(a.valorPrePedidosFicticiosCentavos,25990);
+ assert.equal(a.custoTesteConfirmadoCentavos,8000);
+ assert.equal(b.valorConfirmadoFicticioCentavos,36000);
+ assert.equal(b.custoTesteConfirmadoCentavos,9000);
+ assert.equal(a.fornecedorLiberado,false);
+ assert.equal(b.fornecedorLiberado,false);
+ assert.equal(a.repasseEfetuado,false);
+ assert.equal(b.repasseEfetuado,false);
+ assert.equal(r.repassesReaisAFornecedores,0);
+ assert.equal(r.totais.valorConfirmadoFicticioCentavos,61990);
+ assert.equal(r.geracaoDePosicoes,false);
 });
 
 test('endpoint local auditavel exige chave e fica ausente do app publico',async t=>{
