@@ -2,9 +2,14 @@
 
 // SIMULACAO MATEMATICA ISOLADA. NAO autoriza credito, saldo, saque,
 // receita contabil ou promessa de contemplacao. Nenhum dado real.
-const CENTAVOS_FILA_POR_VENDA = 10000;
-const CENTAVOS_CENTRO_POR_CICLO = 30000;
-const CENTAVOS_EMPRESA_POR_CICLO = 20000;
+const {
+ VALOR_PADRAO_LOOP_CENTAVOS,
+ VALOR_CICLO_PARTICIPANTE_CENTAVOS,
+ VALOR_CICLO_EMPRESA_CENTAVOS
+}=require('./valor-padrao-loop');
+const CENTAVOS_FILA_POR_VENDA = VALOR_PADRAO_LOOP_CENTAVOS;
+const CENTAVOS_CENTRO_POR_CICLO = VALOR_CICLO_PARTICIPANTE_CENTAVOS;
+const CENTAVOS_EMPRESA_POR_CICLO = VALOR_CICLO_EMPRESA_CENTAVOS;
 const VENDAS_POR_CICLO = 5;
 const POSICOES_PARA_INICIAR = 6;
 const MAX_PERIODOS = 240;
@@ -41,7 +46,7 @@ function camposDoPeriodo(periodo, indice) {
     throw new Error('Preco unitario deve ser positivo quando ha vendas');
   }
   if (vendasValidas > 0 && precoCentavos < CENTAVOS_FILA_POR_VENDA) {
-    throw new Error('Preco menor que a parcela hipotetica de R$100 da fila');
+    throw new Error('Preco menor que a parcela hipotetica de R$250 da fila');
   }
   return {
     periodo: typeof periodo.rotulo === 'string' && periodo.rotulo.length <= 70
