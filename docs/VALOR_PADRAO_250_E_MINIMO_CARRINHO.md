@@ -1,69 +1,77 @@
-# LOOP V5 — padrao comercial R$ 250 (decisao 15/10/2026)
+# LOOP V5 — R$ 250 para participar, loja sem pedido minimo (15/10/2026)
 
-**Fonte de verdade aprovada pelo idealizador:** o valor-padrao e
-**R$ 250,00 por posicao elegivel**. Esta mudanca nao altera o
-motor de filas, a prioridade 3 A : 1 B, o tabuleiro de cinco
-vagas e centro, nem as cinco vendas de cada ciclo.
+**Decisao vigente:** a loja virtual vende produtos de qualquer valor
+positivo. O limite de R$ 250,00 **nao restringe compras da loja**:
+determina apenas se um pedido de compra confirmado tambem cria uma
+posicao no LOOP. Substitui a regra anterior de pedido minimo de
+R$ 250,00. Esta alteracao nao modifica motor, prioridades ou tabuleiro.
 
-## Regras do futuro checkout da loja
+## Distincao central
 
-1. **Pedido minimo de R$ 250,00 no TOTAL do carrinho.**
-2. O cliente pode adicionar produtos individuais de qualquer
-   preco comercial adequado (por exemplo R$ 50,00), mas **nao
-   pode confirmar, pagar ou gerar Pix antes dos R$ 250,00**.
-3. Um produto sozinho de R$ 250,00 ou mais pode seguir para
-   checkout. Varios produtos que somem R$ 250,00 ou mais
-   tambem podem seguir.
-4. Cada pedido pago e confirmado cria **exatamente uma**
-   posicao na fila B, independentemente de quantos produtos ou
-   unidades compuseram aquele carrinho. Nenhum pedido nao
-   confirmado cria posicao. Indicacao continua sendo
-   validada somente pela primeira compra confirmada do convidado.
-5. Os cursos PDF padrao na vitrine ficam em **R$ 250,00**.
-   No catalogo demonstrativo, o curso modelo mostra esse preco.
-6. O financeiro de cinco eventos agora utiliza referencia de
-   R$ 250,00 por evento: tres referenciais do participante
-   (R$ 750,00 no total) e dois da empresa (R$ 500,00 no total).
-   **Sao projecoes matematicas, nao promessa ou pagamento real.**
+| Pedido confirmado | Loja | LOOP |
+|---|---|---|
+| R$ 10,00; R$ 50,00; R$ 249,99 | Venda normal | 0 posicoes; nao valida indicacao |
+| Exatamente R$ 250,00 | Venda normal | 1 posicao B |
+| R$ 500,00 ou mais | Venda normal | 1 posicao B |
 
-## Planejamento comercial de produtos fisicos
+Os produtos fisicos podem ser mais baratos e o cliente pode levar
+um ou muitos itens. A soma do carrinho **dentro do mesmo pedido**
+define a elegibilidade. Compras de R$ 100 e R$ 150 realizadas
+**separadamente** nao se tornam uma compra de R$ 250 para fins de
+LOOP. Uma compra confirmada >= R$ 250 vale exatamente UMA posicao
+independentemente do numero de itens comprados. Produtos PDF padrao
+continuam em R$ 250. Nao existe produto de afiliado.
 
-O fornecedor recebe o custo acordado de seus itens;
-a reserva referencial do LOOP e **por pedido elegivel**,
-nao por produto individual do carrinho.
+Um comprador pode comprar so na loja sem participar do LOOP. Uma
+indicacao somente e valida depois que o convidado confirmar UMA
+compra de R$ 250 ou mais. Compras menores nao fazem o indicador
+migrar para A. O limite de cinco posicoes ativas restringe so
+compras elegiveis para o LOOP; nao impede mais compras comuns.
 
-Formula bruta: `sobra comercial = total carrinho -
-custo total dos fornecedores - R$ 250,00 -
-taxas/tributos/despesas modeladas`.
+## Financeiro de cada pedido
 
-Exemplo A: um produto de R$ 500,00, fornecedor R$ 100,00:
-sobra R$ 150,00, **antes dos demais custos**.
+Parcela LOOP referencial de R$ 250,00 **so para o pedido
+elegivel**. No pedido comum, parcela referencial = R$ 0,00.
 
-Exemplo B: cinco unidades de R$ 50,00 (custo R$ 10,00/un.):
-total R$ 250,00, fornecedores R$ 50,00,
-reserva referencial R$ 250,00: sobra **-R$ 50,00**
-antes dos demais custos. A regra de checkout continua
-baseada no total >= R$ 250,00; margem negativa
-e alerta do administrador, nao altera a regra de fila.
+Margem BRUTA preliminar (sem tributos ou custos que nao foram
+modelados): valor de venda - custo dos fornecedores -
+parcela referencial aplicavel - demais custos informados.
 
-## Implementado e pendente
+- Venda comum de R$ 50 com fornecedor a R$ 10:
+  margem bruta R$ 40 antes de outros custos; 0 posicoes
+  e 0 reserva LOOP.
+- Pedido de R$ 500 com fornecedor a R$ 100:
+  R$ 250 referenciais ao LOOP e R$ 150 de margem bruta
+  antes dos demais custos; 1 posicao.
+- Um pedido de cinco unidades a R$ 50 (fornecedor a R$ 10
+  cada) totaliza R$ 250; mesmo elegivel ao LOOP, faltam
+  R$ 50 para cobrir ao mesmo tempo fornecedor e referencia
+  LOOP. A analise administrativa sinaliza o deficit.
+  Nenhuma margem ou contemplacao e garantida.
 
-- Implementado: fonte monetaria de referencia em
-  `src/domain/valor-padrao-loop.js`, simulador de
-  carrinho multitem, calculos administrativos dos cinco
-  eventos e reserva simulada por pre-pedido fisico;
-  tests de soma, limiar e contabilizacao separada.
-- Preservado: componentes historicos do laboratorio
-  anteriores ao futuro checkout podem ter pedidos de teste
-  abaixo do minimo. Sao exercicios isolados e nao autorizam
-  a comercializacao; isso nao e um caminho de compra publica.
-- Pendente: carrinho real no frontend, API segura de checkout
-  com precos e custos recalculados **no servidor**,
-  protecao transacional do limite R$ 250,00,
-  integracao Pix/PSP e conciliacao. A vitrine publica continua
-  demonstrativa e nao pode cobrar nem emitir Pix.
-- Pendente: validacao operacional e juridico-contabil
-  das contemplacoes e das obrigacoes comerciais.
+Cinco eventos de ciclo continuam com tres parcelas
+referenciais do participante e duas da empresa; a conta
+teorica usa R$ 250 por parcela, sem pagamentos reais.
 
-**Nao converter esse documento em autorizacao de venda ou
-remuneracao real de participantes.**
+## Implementacao em laboratorio
+
+- `src/domain/valor-padrao-loop.js` calcula cart de multiplos
+  itens, venda permitida de qualquer preco >0, elegibilidade
+  separada, reserva 0/250, margem e uma posicao por pedido.
+- `src/domain/ponte-compras-convites-demo-sqlite.js` registra
+  vendas ficticias confirmadas <250 em livro SQLite imutavel
+  separado, SEM posicao, convite, motor ou snapshot alterado.
+  Ao atingir >=250, usa a ponte de fila ja existente.
+- `src/domain/escritorio-individual-demo.js` permite que o
+  titular veja separadamente suas compras comuns e posicoes.
+  Visao do admin tambem separa as duas modalidades.
+- A vitrine informa que a loja permite qualquer valor, mas
+  o checkout e Pix reais **ainda nao existem**.
+- O planejamento antigo de pre-pedidos fisicos e o simulador de
+  pagamentos sao modulos isolados; integrar seus calculos
+  comercial/LOOP ao checkout real continua pendente.
+
+Antes de abrir a operacao: implementar carrinho/checkout no
+servidor com catalogo e impostos reais, PSP/Pix com confirmacao
+assinada e idempotente, fluxo logistico e juridico-contabil
+aprovado. Nenhum teste atual autoriza pagamentos ou premio real.
