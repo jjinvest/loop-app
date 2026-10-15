@@ -46,15 +46,15 @@ async function request(base,url,body,headers=AUTH){
  });
 }
 
-test('dois cursos PDF de precos diferentes possuem faturas ficticias e snapshots distintos',t=>{
+test('cursos PDF mantem preco padrao de R$250 nas faturas ficticias',t=>{
  const m=preparar(tmp(t));t.after(()=>m.catalogo.fechar());
- m.catalogo.salvar({produto:produto('curso-basico',3990),revisaoEsperada:0});
- m.catalogo.salvar({produto:produto('curso-avancado',14990),revisaoEsperada:0});
+ m.catalogo.salvar({produto:produto('curso-basico',25000),revisaoEsperada:0});
+ m.catalogo.salvar({produto:produto('curso-avancado',25000),revisaoEsperada:0});
  assert.equal(m.pedidos.opcoes().produtos.length,2);
  const a=criar(m.pedidos,'pedido-pdf-barato','curso-basico').pedido;
  const b=criar(m.pedidos,'pedido-pdf-caro','curso-avancado').pedido;
- assert.equal(a.precoBrutoCentavos,3990);
- assert.equal(b.precoBrutoCentavos,14990);
+ assert.equal(a.precoBrutoCentavos,25000);
+ assert.equal(b.precoBrutoCentavos,25000);
  assert.equal(a.pagamentoId,'pdf-pedido-pdf-barato');
  assert.equal(b.pagamentoId,'pdf-pedido-pdf-caro');
  assert.equal(a.situacaoPagamentoFicticio,'AGUARDANDO_FICTICIO');
@@ -69,13 +69,13 @@ test('dois cursos PDF de precos diferentes possuem faturas ficticias e snapshots
 
 test('preco e nome da compra PDF ficam congelados mesmo ao editar catalogo',t=>{
  const m=preparar(tmp(t));t.after(()=>m.catalogo.fechar());
- m.catalogo.salvar({produto:produto('curso-memoria',7990),revisaoEsperada:0});
+ m.catalogo.salvar({produto:produto('curso-memoria',25000),revisaoEsperada:0});
  const a=criar(m.pedidos,'pedido-antigo','curso-memoria');
  assert.equal(a.repetido,false);
  m.catalogo.atualizar({id:'curso-memoria',revisaoEsperada:1,alteracoes:{
-  nome:'Outro nome',precoCentavos:9990
+  nome:'Outro nome',precoCentavos:25000
  }});
- assert.equal(m.pedidos.buscar('pedido-antigo').precoBrutoCentavos,7990);
+ assert.equal(m.pedidos.buscar('pedido-antigo').precoBrutoCentavos,25000);
  assert.equal(m.pedidos.buscar('pedido-antigo').nomeProduto,a.pedido.nomeProduto);
  assert.equal(m.pedidos.buscar('pedido-antigo').revisaoProduto,1);
  assert.equal(criar(m.pedidos,'pedido-antigo','curso-memoria').repetido,true);
@@ -86,7 +86,7 @@ test('preco e nome da compra PDF ficam congelados mesmo ao editar catalogo',t=>{
 
 test('confirmacao, retry e estorno ficticios controlam apenas elegibilidade de download simulada',t=>{
  const m=preparar(tmp(t));t.after(()=>m.catalogo.fechar());
- m.catalogo.salvar({produto:produto('curso-fluxo',1990),revisaoEsperada:0});
+ m.catalogo.salvar({produto:produto('curso-fluxo',25000),revisaoEsperada:0});
  criar(m.pedidos,'pedido-fluxo','curso-fluxo');
  assert.throws(()=>m.pedidos.registrarEvento({
   pedidoId:'pedido-fluxo',eventoId:'evento-sem-pagamento',tipo:'ESTORNAR_FICTICIO'
@@ -121,7 +121,7 @@ test('confirmacao, retry e estorno ficticios controlam apenas elegibilidade de d
 
 test('mesmo evento nao pertence a dois pedidos e estados invalidos nao gravam eventos parciais',t=>{
  const m=preparar(tmp(t));t.after(()=>m.catalogo.fechar());
- m.catalogo.salvar({produto:produto('curso-um',3000),revisaoEsperada:0});
+ m.catalogo.salvar({produto:produto('curso-um',25000),revisaoEsperada:0});
  criar(m.pedidos,'pedido-um','curso-um');
  criar(m.pedidos,'pedido-dois','curso-um');
  m.pedidos.registrarEvento({pedidoId:'pedido-um',eventoId:'evento-compartilhado',tipo:'CONFIRMAR_FICTICIO'});
@@ -150,7 +150,7 @@ test('pedidos e eventos sobrevivem ao reinicio do SQLite com historico intacto',
  const arquivo=tmp(t);
  const um=preparar(arquivo);
  try{
-  um.catalogo.salvar({produto:produto('curso-persistente',12550),revisaoEsperada:0});
+  um.catalogo.salvar({produto:produto('curso-persistente',25000),revisaoEsperada:0});
   criar(um.pedidos,'pedido-persistente','curso-persistente');
   um.pedidos.registrarEvento({
    pedidoId:'pedido-persistente',eventoId:'evento-persistente',tipo:'CONFIRMAR_FICTICIO'
@@ -159,7 +159,7 @@ test('pedidos e eventos sobrevivem ao reinicio do SQLite com historico intacto',
  const dois=preparar(arquivo);
  try{
   const pedido=dois.pedidos.buscar('pedido-persistente');
-  assert.equal(pedido.precoBrutoCentavos,12550);
+  assert.equal(pedido.precoBrutoCentavos,25000);
   assert.equal(pedido.situacaoPagamentoFicticio,'CONFIRMADO_FICTICIO');
   assert.equal(pedido.habilitacaoDownloadFicticia,true);
   assert.equal(dois.pedidos.historico('pedido-persistente').length,1);
@@ -171,7 +171,7 @@ test('pedidos e eventos sobrevivem ao reinicio do SQLite com historico intacto',
 
 test('API PDF de laboratorio requer token e nao aparece no app publico',async t=>{
  const {url,catalogo}=await servidor(t,tmp(t));
- const item=produto('curso-api',4590);
+ const item=produto('curso-api',25000);
  catalogo.salvar({produto:item,revisaoEsperada:0});
  assert.equal((await fetch(url+'/api/admin/pedidos-pdf-demo')).status,401);
  assert.equal((await fetch(url+'/api/admin/pedidos-pdf-demo',{headers:{
@@ -182,10 +182,10 @@ test('API PDF de laboratorio requer token e nao aparece no app publico',async t=
  assert.equal((await request(url,'pedidos-pdf-demo',{pedidoId:'pedido-api',produtoId:'curso-api',cpf:'inventado'})).status,400);
  const op=(await (await fetch(url+'/api/admin/pedidos-pdf-demo/opcoes',{headers:AUTH})).json()).produtos;
  assert.equal(op.length,1);
- assert.equal(op[0].precoCentavos,4590);
+ assert.equal(op[0].precoCentavos,25000);
  const pedidoCriado=await request(url,'pedidos-pdf-demo',{pedidoId:'pedido-api',produtoId:'curso-api'});
  assert.equal(pedidoCriado.status,200);
- assert.equal((await pedidoCriado.json()).pedido.precoBrutoCentavos,4590);
+ assert.equal((await pedidoCriado.json()).pedido.precoBrutoCentavos,25000);
  assert.equal((await request(url,'pedidos-pdf-demo',{pedidoId:'pedido-api',produtoId:'curso-api'})).status,200);
  const confirm=await request(url,'pedidos-pdf-demo/pedido-api/eventos',{
   eventoId:'evento-api-confirmacao',tipo:'CONFIRMAR_FICTICIO'
