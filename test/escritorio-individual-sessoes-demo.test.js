@@ -32,7 +32,7 @@ function cadastrar(m,nome,email,codigoIndicador){
   ...(codigoIndicador?{codigoIndicador}:{})
  });
 }
-async function confirmar(m,pedidoId,contaId,valorCentavos=10500){
+async function confirmar(m,pedidoId,contaId,valorCentavos=25000){
  m.eventos.set(pedidoId,{
   pedidoId,contaId,produtoId:'curso-pdf-exemplo',valorCentavos,
   status:STATUS_CONFIRMADO,confirmadoEm:'2026-10-15T17:00:00.000Z'
@@ -57,7 +57,7 @@ test('projecao individual inclui apenas compras e posicoes da propria conta',asy
  const a=cadastrar(m,'Conta Demo Alfa','alfa@exemplo.invalid');
  const b=cadastrar(m,'Conta Demo Beta','beta@exemplo.invalid');
  await confirmar(m,'pedido-alfa',a.contaId);
- await confirmar(m,'pedido-beta',b.contaId,20500);
+ await confirmar(m,'pedido-beta',b.contaId,25000);
  const visA=m.visao.consultar(a.contaId);
  const visB=m.visao.consultar(b.contaId);
  assert.equal(visA.conta.nome,'Conta Demo Alfa');
