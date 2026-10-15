@@ -58,7 +58,7 @@ async function servidor(t,arquivo){
  t.after(()=>catalogo.fechar());
  return {base:'http://127.0.0.1:'+s.address().port,catalogo};
 }
-async function api(base,caminho,headers=AUTH){
+async function api(base,caminho='',headers=AUTH){
  return fetch(base+'/api/admin/pagamentos-pre-pedidos-fisicos-demo'+caminho,{headers});
 }
 async function post(base,id,corpo,headers=AUTH){
