@@ -770,6 +770,98 @@ Esta rota opcional e apenas uma entrada de
 notificacao assinada da simulacao, sem painel
 de cliente ou disponibilizacao publica.
 
+## Ponte entre pedido da loja e pagamento — somente simulacao (15/10/2026)
+
+**Nova etapa de engenharia:** associar um pedido de teste a uma
+fatura de teste persistente para que o administrador consiga
+conferir divergencias sem permitir a um cliente informar
+arbitrariamente que uma compra foi paga. **Nao existem
+pedidos ou pagamentos reais conectados nesta etapa.**
+
+Foram associados dois **pedidos logisticos ficticios ja presentes
+no laboratorio** a dois **pagamentos PSP ficticios ja existentes**:
+- `pedido-demo-001` ↔ `pag-split-01`;
+- `pedido-demo-002` ↔ `pag-reserva-02`.
+
+O modulo `src/domain/vinculos-pedidos-pagamentos-demo-sqlite.js`
+mantem no banco de laboratorio a relacao imutavel
+pedidoId ↔ pagamentoId e uma foto de produto,
+fornecedor, SKU e valor da fatura (R$600 neste
+exemplo). Existe unicidade dos dois identificadores:
+uma fatura de teste nao pode ser vinculada
+a dois pedidos de teste. Triggers impedem
+troca/exclusao oculta desses registros.
+
+A informacao **logistica** e consultada no mesmo
+repositorio ficticio que abastece o painel
+`/api/admin/pedidos-demo`. A informacao **financeira**
+vem do mesmo PSP ficticio que grava no livro
+administrativo. O sistema mostra os dois
+estados SEPARADAMENTE, o valor de referencia
+da venda, o custo do fornecedor, a parcela
+LOOP, a sobra bruta e o destino fixo do evento
+de cinco entradas do ciclo. Um status logístico
+manual, isoladamente, **NAO se converte em
+pagamento confiavel**.
+
+Novas APIs SOMENTE leitura, exclusivas do
+laboratorio admin com token:
+- `GET /api/admin/pedidos-pagamentos-demo`;
+- `GET /api/admin/pedidos-pagamentos-demo/:id/historico`.
+
+A secao `Pedidos da loja vinculados a pagamentos`
+na pagina `/admin/financeiro-demo` mostra
+um alerta de divergencia nos casos de:
+- pedido marcado confirmado na logistica
+  **SEM** recebimento PSP ficticio confirmado;
+- pagamento ficticio confirmado enquanto a
+  logistica ainda aguarda confirmacao;
+- estorno financeiro simulado quando o pedido
+  logístico ja avanca ou foi concluido;
+- pedido cancelado/devolvido sem o
+  respectivo tratamento financeiro simulado.
+
+**Nao existe API de alterar vinculacao, despacho,
+pagamento ou fila nesta ponte.** A confirmacao
+financeira simulada NAO muda automaticamente o
+pedido logistico. A confirmacao manual no
+laboratorio logístico NAO credita o livro.
+Os alertas sao apenas para o administrador
+interpretar e tomar decisoes de teste.
+
+**Limite relevante:** o repositorio atual de
+logistica usado pelo painel de laboratorio
+continua em **memoria**, enquanto vinculacao
+e PSP ficticio ficam no SQLite local do
+catalogo. Se reiniciar o servidor, o pedido
+logístico de teste volta ao estado inicial e
+o painel sinaliza eventual descompasso com
+o pagamento ficticio persistido. Nao apresentar
+isso como persistencia completa de pedido real.
+
+**Para pedidos reais, ainda faltam** o checkout,
+criação de pedido comercial antes da cobranca,
+vinculo com produto real e preço imutavel
+no momento da venda, identidade do comprador,
+recebivel de PSP validado, tratamento de
+estorno/reembolso, garantia transacional
+e conciliacao de pagamento liquidado.
+Precisaremos conferir vinculos por ID externo
+autentico e impedir reuso de recibo; nenhuma
+dessas funcionalidades de producao esta ativa.
+
+Tambem **NAO existe autorizacao de entrega
+ao fornecedor, criacao da posicao por venda,
+migracao de fila ou giro de catraca** nesta etapa.
+A regra de uma posicao por venda validada e
+todos os compromissos do ciclo ficam
+preservados, nao simulados como operacao real.
+
+Testes: `test/vinculos-pedidos-pagamentos-demo.test.js`
+(compara os dois estados, alerta divergencia,
+verifica persistencia da vinculacao, imutabilidade,
+autenticacao admin e inexistencia no app publico).
+
 ## Isolamento e seguranca do projeto
 
 - Movimentacoes reais so mediante
