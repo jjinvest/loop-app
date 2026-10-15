@@ -168,7 +168,7 @@ test('API admin protege cadastro e nao permite parametros de preco, fornecedor o
  assert.equal(criado.status,200);
  assert.equal((await criado.json()).repetido,false);
  assert.equal((await post(url,entrada)).status,200);
- const pedido=(await (await get(url+'/'+entrada.pedidoId)).json()).pedido;
+ const pedido=(await (await get(url,'/'+entrada.pedidoId)).json()).pedido;
  assert.equal(pedido.pagamentoId,entrada.pagamentoId);
  assert.equal(pedido.fornecedorId,'fornecedor-ficticio-a');
  const lista=await (await get(url)).json();
