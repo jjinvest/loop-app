@@ -39,7 +39,10 @@ class EscritorioIndividualDemo{
   const comprasLojaSemLoop=this.banco.prepare(`
    SELECT pedido_id AS pedidoId,produto_id AS produtoId,
     valor_centavos AS valorCentavos,confirmado_em AS confirmadoEm
-   FROM admin_ponte_vendas_loja_sem_loop_demo WHERE conta_id=?
+   FROM (
+    SELECT * FROM admin_ponte_vendas_loja_sem_loop_demo
+    UNION ALL SELECT * FROM admin_ponte_vendas_loja_apos_reajuste_demo
+   ) WHERE conta_id=?
    ORDER BY confirmado_em,pedido_id
   `).all(contaId);
   const indicacoes=this.banco.prepare(`
@@ -81,8 +84,14 @@ class EscritorioIndividualDemo{
   return {
    modo:'ESCRITORIO_INDIVIDUAL_EXCLUSIVAMENTE_FICTICIO',
    conta:{nome:conta.nome,login:conta.login,codigoConvite:conta.codigoConvite},
-   compras:compras.map(c=>({...c,confirmacao:'INTERNA_SIMULADA',
-    status:'CONFIRMADO_SOMENTE_TESTE'})),
+   compras:compras.map(c=>{
+    const ref=this.banco.prepare(
+     'SELECT revisao_valor AS revisaoValor, valor_referencia_centavos AS valorReferenciaCentavos FROM admin_ponte_posicoes_valores_demo WHERE pedido_id=?'
+    ).get(c.pedidoId);
+    if(!ref)throw new Error('Referencia da posicao de teste nao identificada');
+    return {...c,...ref,confirmacao:'INTERNA_SIMULADA',
+     status:'CONFIRMADO_SOMENTE_TESTE'};
+   }),
    comprasLojaSemLoop:comprasLojaSemLoop.map(c=>({
     ...c,confirmacao:'INTERNA_SIMULADA',
     status:'VENDA_LOJA_SEM_POSICAO_LOOP',posicaoCriada:false
