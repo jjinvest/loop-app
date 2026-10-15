@@ -50,6 +50,20 @@ class PedidosPDFPagamentosDemoSQLite{
    CREATE TRIGGER IF NOT EXISTS admin_pdf_demo_eventos_no_delete
     BEFORE DELETE ON admin_pdf_demo_eventos
     BEGIN SELECT RAISE(ABORT,'historico PDF demo imutavel'); END;
+   CREATE TABLE IF NOT EXISTS admin_pdf_demo_solicitacoes (
+    sequencia INTEGER PRIMARY KEY AUTOINCREMENT,
+    pedido_id TEXT NOT NULL REFERENCES admin_pdf_demo_pedidos(pedido_id) ON DELETE RESTRICT,
+    material TEXT NOT NULL CHECK(material='FIXTURE_PDF'),
+    solicitado_em TEXT NOT NULL
+   );
+   CREATE INDEX IF NOT EXISTS idx_pdf_demo_solicitacoes_pedido
+    ON admin_pdf_demo_solicitacoes(pedido_id,sequencia);
+   CREATE TRIGGER IF NOT EXISTS admin_pdf_demo_solicitacoes_no_update
+    BEFORE UPDATE ON admin_pdf_demo_solicitacoes
+    BEGIN SELECT RAISE(ABORT,'auditoria PDF demo imutavel'); END;
+   CREATE TRIGGER IF NOT EXISTS admin_pdf_demo_solicitacoes_no_delete
+    BEFORE DELETE ON admin_pdf_demo_solicitacoes
+    BEGIN SELECT RAISE(ABORT,'auditoria PDF demo imutavel'); END;
   `);
  }
  status(pedidoId){
@@ -77,6 +91,7 @@ class PedidosPDFPagamentosDemoSQLite{
    tipoProduto:'PDF',entrega:'DOWNLOAD_APOS_CONFIRMACAO',
    criadoEm:row.criado_em,...this.status(row.pedido_id),
    downloadRealDisponivel:false,arquivoPDFRealDisponivel:false,
+   materialTesteBaixavel:Boolean(this.status(row.pedido_id).habilitacaoDownloadFicticia),
    meioPagamentoRealConectado:false,parcelaLOOPCalculada:false,
    posicaoCriada:false,catracaMovimentada:false,snapshotImutavel:true
   };
@@ -86,6 +101,36 @@ class PedidosPDFPagamentosDemoSQLite{
   return this.saida(this.banco.prepare(
    'SELECT * FROM admin_pdf_demo_pedidos WHERE pedido_id=?'
   ).get(pedidoId));
+ }
+ // A rota protegida serve uma fixture gerada em memoria, nunca o curso real.
+ // O historico abaixo registra SOLICITACAO AUTORIZADA, nao prova de recebimento.
+ registrarSolicitacaoMaterialTeste(pedidoId){
+  idOk(pedidoId,ID_PEDIDO,'pedidoId');
+  this.banco.exec('BEGIN IMMEDIATE');
+  try{
+   const existe=this.banco.prepare(
+    'SELECT pedido_id FROM admin_pdf_demo_pedidos WHERE pedido_id=?'
+   ).get(pedidoId);
+   if(!existe)throw falha('NAO_ENCONTRADO','Pedido PDF ficticio nao encontrado');
+   if(this.status(pedidoId).situacaoPagamentoFicticio!=='CONFIRMADO_FICTICIO'){
+    throw falha('SEM_DIREITO','Pagamento ficticio nao confirmado ou ja estornado');
+   }
+   const data=new Date().toISOString();
+   this.banco.prepare(
+    "INSERT INTO admin_pdf_demo_solicitacoes(pedido_id,material,solicitado_em) VALUES (?,'FIXTURE_PDF',?)"
+   ).run(pedidoId,data);
+   this.banco.exec('COMMIT');
+   return {pedidoId,material:'FIXTURE_PDF',solicitadoEm:data};
+  }catch(e){this.banco.exec('ROLLBACK');throw e;}
+ }
+ historicoSolicitacoesMaterialTeste(pedidoId){
+  idOk(pedidoId,ID_PEDIDO,'pedidoId');
+  if(!this.banco.prepare('SELECT 1 FROM admin_pdf_demo_pedidos WHERE pedido_id=?').get(pedidoId)){
+   throw falha('NAO_ENCONTRADO','Pedido PDF ficticio nao encontrado');
+  }
+  return this.banco.prepare(
+   'SELECT sequencia,material,solicitado_em AS solicitadoEm FROM admin_pdf_demo_solicitacoes WHERE pedido_id=? ORDER BY sequencia'
+  ).all(pedidoId);
  }
  listar(){
   return {
