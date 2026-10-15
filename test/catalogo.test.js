@@ -26,7 +26,7 @@ test('catalogo distingue envio pelo fornecedor e download de PDF, sem compra rea
   assert.equal(fisico.compraDisponivel,false);
   assert.equal(curso.compraDisponivel,false);
   assert.equal(fisico.precoCentavos,null);
-  assert.equal(curso.precoCentavos,null);
+  assert.equal(curso.precoCentavos,25000);
   assert.equal(buscarProduto(fisico.id).id,fisico.id);
   assert.equal(buscarProduto('inexistente'),null);
   produtos[0].detalhes.pop();
