@@ -35,7 +35,7 @@ function conta(m,nome,email,codigoIndicador){
  });
 }
 function preparar(m,{pedidoId,contaId,produtoId='curso-pdf-exemplo',
- valorCentavos=10000}){
+ valorCentavos=25000}){
  return m.pedidos.preparar({pedidoId,contaId,produtoId,valorCentavos});
 }
 function confirmar(m,pedido,alteracoes={}){
@@ -217,7 +217,7 @@ test('sexto pedido identificado nao supera cinco posicoes ativas, sem recibo par
  const m=local(t);
  const titular=conta(m,'Titular Limite','limite@exemplo.invalid');
  for(let i=1;i<=5;i++){
-  const p=preparar(m,{pedidoId:'cap-'+i,contaId:titular.contaId,valorCentavos:5000+i});
+  const p=preparar(m,{pedidoId:'cap-'+i,contaId:titular.contaId,valorCentavos:25000+i});
   assert.equal((await confirmar(m,p)).criado,true);
  }
  const sexto=preparar(m,{pedidoId:'cap-6',contaId:titular.contaId});
