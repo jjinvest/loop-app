@@ -49,17 +49,17 @@ async function executar(ambiente=process.env){
   const eventos=new Map([
    ['demo-venda-raiz',{
     pedidoId:'demo-venda-raiz',contaId:raiz.contaId,
-    produtoId:'curso-pdf-ficticio',valorCentavos:10000,
+    produtoId:'curso-pdf-ficticio',valorCentavos:25000,
     status:STATUS_CONFIRMADO,confirmadoEm:'2026-10-15T12:00:00.000Z'
    }],
    ['demo-venda-um',{
     pedidoId:'demo-venda-um',contaId:b.contaId,
-    produtoId:'produto-ficticio-a',valorCentavos:17500,
+    produtoId:'produto-ficticio-a',valorCentavos:50000,
     status:STATUS_CONFIRMADO,confirmadoEm:'2026-10-15T12:01:00.000Z'
    }],
    ['demo-venda-dois',{
     pedidoId:'demo-venda-dois',contaId:c.contaId,
-    produtoId:'curso-pdf-ficticio',valorCentavos:10000,
+    produtoId:'curso-pdf-ficticio',valorCentavos:25000,
     status:STATUS_CONFIRMADO,confirmadoEm:'2026-10-15T12:02:00.000Z'
    }]
   ]);
