@@ -63,7 +63,8 @@
    ' · Sessões encerradas: '+ac.SESSAO_ENCERRADA+
    ' · Sessões substituídas: '+ac.SESSAO_REVOGADA+'.';
   el('resumoPonteDemo').textContent='Compras fictícias confirmadas pelo verificador: '+
-   ponte.compras.length+' · Convites validados no teste: '+
+   ponte.compras.length+' · Pedidos vinculados ao titular: '+
+   ponte.vinculosIdentificados+' · Convites validados no teste: '+
    ponte.convites.length+' · Fila A: '+ponte.filas.A.quantidade+
    ' · Fila B: '+ponte.filas.B.quantidade+
    '. Nenhuma movimentação financeira ou catraca real.';
