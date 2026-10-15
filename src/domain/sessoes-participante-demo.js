@@ -17,16 +17,28 @@ function chaveToken(token){
 function somenteTexto(val,limite){
  return typeof val==='string'&&val.length>0&&val.length<=limite;
 }
+function tokenValido(token){
+ return somenteTexto(token,128)&&/^[A-Za-z0-9_-]{43}$/.test(token);
+}
 class SessoesParticipanteDemo{
- constructor({contas,agoraMs=()=>Date.now()}={}){
+ constructor({contas,agoraMs=()=>Date.now(),auditoria=null}={}){
   if(!contas||typeof contas.autenticar!=='function'||typeof contas.buscar!=='function'){
    throw new TypeError('Cadastro local obrigatorio');
   }
   if(typeof agoraMs!=='function')throw new TypeError('Relogio invalido');
+  if(auditoria!==null&&typeof auditoria.registrar!=='function'){
+   throw new TypeError('Auditoria local invalida');
+  }
   this.contas=contas;
   this.agoraMs=agoraMs;
+  this.auditoria=auditoria;
   this.sessoes=new Map();
   this.falhas=new Map();
+ }
+ _evento(tipo,contaId=null){
+  if(this.auditoria)this.auditoria.registrar({
+   tipo,contaId,registradoEm:new Date(this.agoraMs()).toISOString()
+  });
  }
  _limpar(agora){
   for(const [id,s] of this.sessoes)if(s.venceEm<=agora)this.sessoes.delete(id);
@@ -35,12 +47,19 @@ class SessoesParticipanteDemo{
  entrar({nome,senha,origem='loopback'}={}){
   const agora=this.agoraMs();
   this._limpar(agora);
-  // Apenas endereco local e usado como chave de limitacao. A ausencia
-  // de usuario nunca gera resposta distinguivel de senha incorreta.
+  // Somente IP do socket local: nunca confiar em X-Forwarded-For.
+  // Ausencia de usuario e senha errada produzem a mesma resposta.
   const chave=String(origem).slice(0,128);
   const tentativas=this.falhas.get(chave);
-  if(tentativas&&tentativas.quantidade>=MAX_FALHAS)throw falha('LIMITE_LOGIN_DE_TESTE');
+  if(tentativas&&tentativas.quantidade>=MAX_FALHAS){
+   if(!tentativas.bloqueioAuditado){
+    this._evento('LOGIN_BLOQUEADO');
+    tentativas.bloqueioAuditado=true;
+   }
+   throw falha('LIMITE_LOGIN_DE_TESTE');
+  }
   if(!somenteTexto(nome,200)||!somenteTexto(senha,128)){
+   this._evento('LOGIN_INVALIDO');
    throw falha('LOGIN_DE_TESTE_INVALIDO');
   }
   let autenticada;
@@ -50,26 +69,38 @@ class SessoesParticipanteDemo{
    const proximo=tentativas||{quantidade:0,ate:agora+JANELA};
    proximo.quantidade++;
    this.falhas.set(chave,proximo);
+   this._evento('LOGIN_INVALIDO');
    throw falha('LOGIN_DE_TESTE_INVALIDO');
   }
-  this.falhas.delete(chave);
   if(this.sessoes.size>=MAX_SESSOES)throw falha('MAXIMO_SESSOES_DE_TESTE');
   const token=randomBytes(32).toString('base64url');
   const contaId=autenticada.conta.contaId;
+  // Registro antes da abertura da sessao: caso a auditoria falhe
+  // a autenticacao nao e aceita parcialmente.
+  this._evento('LOGIN_SUCESSO',contaId);
+  this.falhas.delete(chave);
   this.sessoes.set(chaveToken(token),{contaId,venceEm:agora+DURACAO});
   return {token,duracaoSegundos:DURACAO/1000};
  }
  identificar(token){
-  if(!somenteTexto(token,128)||!/^[A-Za-z0-9_-]{43}$/.test(token))return null;
+  if(!tokenValido(token))return null;
   const agora=this.agoraMs();
   this._limpar(agora);
   const sessao=this.sessoes.get(chaveToken(token));
   if(!sessao||sessao.venceEm<=agora)return null;
   return this.contas.buscar(sessao.contaId)?.contaId||null;
  }
- sair(token){
-  if(!somenteTexto(token,128)||!/^[A-Za-z0-9_-]{43}$/.test(token))return;
-  this.sessoes.delete(chaveToken(token));
+ sair(token,{motivo='SESSAO_ENCERRADA'}={}){
+  if(!tokenValido(token))return false;
+  const chave=chaveToken(token);
+  const sessao=this.sessoes.get(chave);
+  if(!sessao)return false;
+  if(!['SESSAO_ENCERRADA','SESSAO_REVOGADA'].includes(motivo)){
+   throw new TypeError('Motivo de saida invalido');
+  }
+  this._evento(motivo,sessao.contaId);
+  this.sessoes.delete(chave);
+  return true;
  }
 }
 module.exports={SessoesParticipanteDemo,DURACAO,MAX_FALHAS};
