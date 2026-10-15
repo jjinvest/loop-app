@@ -1,0 +1,6 @@
+#areaCadastroDemo[hidden]{display:none}
+.cadastro-lista{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,310px),1fr));gap:12px;margin-top:16px}
+.cadastro-conta{background:#122036;border:1px solid #887125;border-radius:12px;padding:16px;overflow-wrap:anywhere}
+.cadastro-conta strong{color:#f6d365}
+.cadastro-conta p{margin:10px 0;color:#d8e0e9;line-height:1.5}
+.cadastro-conta small{display:block;color:#b7c5d8;line-height:1.5}
