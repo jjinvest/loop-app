@@ -21,6 +21,10 @@
   let versaoRecebimentos=0;
   let versaoPonte=0;
   let versaoComercial=0;
+  let versaoPlanejamentoFisico=0;
+  let analisesFisicas=[];
+  let salvandoCustoFisico=false;
+  let salvandoPrePedidoFisico=false;
   let versaoPDF=0;
   let versaoHistoricoPDF=0;
   let salvandoPDF=false;
@@ -40,6 +44,12 @@
     ++versaoRecebimentos;
     ++versaoPonte;
     ++versaoComercial;
+    ++versaoPlanejamentoFisico;
+    analisesFisicas=[];
+    for(const id of ['listaPlanejamentoFisicoDemo','listaPrePedidosFisicosDemo',
+      'produtoCustoFisicoDemo','produtoPrePedidoFisicoDemo'])el(id).replaceChildren();
+    el('statusPlanejamentoFisicoDemo').textContent='';
+    el('statusPrePedidoFisicoDemo').textContent='';
     ++versaoPDF;
     ++versaoHistoricoPDF;
     pedidosPDF=[];
@@ -356,6 +366,135 @@
         'Pagamento PDF fictício registrado. Nenhum arquivo real ou valor transferido.';
     }catch(erro){aviso.textContent=erro.message;}
     finally{salvandoEventoPDF=false;botao.disabled=false;}
+  }
+
+  async function carregarPlanejamentoFisico(){
+    const atual=++versaoPlanejamentoFisico;
+    const aviso=el('statusPlanejamentoFisicoDemo');
+    if(!token){aviso.textContent='Abra a demonstração com a chave local.';return;}
+    try{
+      const [dados,prePedidos]=await Promise.all([
+        requisitar('planejamento-fisico-demo'),
+        requisitar('planejamento-fisico-demo/pre-pedidos')
+      ]);
+      if(atual!==versaoPlanejamentoFisico)return;
+      analisesFisicas=dados.produtos;
+      const cotacoes=el('listaPlanejamentoFisicoDemo');
+      cotacoes.replaceChildren();
+      const selecionado=el('produtoCustoFisicoDemo');
+      const anterior=selecionado.value;
+      selecionado.replaceChildren();
+      const elegiveis=el('produtoPrePedidoFisicoDemo');
+      const antigoElegivel=elegiveis.value;
+      elegiveis.replaceChildren();
+      for(const d of analisesFisicas){
+        const quadro=document.createElement('div');
+        quadro.className='financeiro-caixa';
+        const titulo=document.createElement('strong');
+        titulo.textContent=d.nomeProduto+' — '+d.produtoId;
+        const financeiro=document.createElement('span');
+        financeiro.className='financeiro-linha-saldos';
+        financeiro.textContent='Vitrine '+(d.precoCatalogoCentavos===null?'sem preço':
+          money(d.precoCatalogoCentavos))+
+          ' | fornecedor '+(d.custoFornecedorTesteCentavos===null?'não informado':
+          money(d.custoFornecedorTesteCentavos))+
+          ' | referência LOOP '+money(d.reservaReferencialLoopCentavos);
+        const avisoEstado=document.createElement('small');
+        avisoEstado.textContent='Situação: '+d.situacao+
+          (d.margemBrutaPreliminarCentavos===null?'':
+          ' | margem bruta ANTES de impostos e taxas '+money(d.margemBrutaPreliminarCentavos));
+        quadro.append(titulo,financeiro,avisoEstado);
+        cotacoes.append(quadro);
+        if(d.fornecedorId){
+          const opt=document.createElement('option');
+          opt.value=d.produtoId;
+          opt.textContent=d.nomeProduto;
+          selecionado.append(opt);
+        }
+        if(d.situacao==='PRE_PEDIDO_FICTICIO_POSSIVEL'){
+          const opt=document.createElement('option');
+          opt.value=d.produtoId;
+          opt.textContent=d.nomeProduto+' — '+money(d.precoCatalogoCentavos);
+          elegiveis.append(opt);
+        }
+      }
+      if(analisesFisicas.some(x=>x.produtoId===anterior&&x.fornecedorId))selecionado.value=anterior;
+      if(analisesFisicas.some(x=>x.produtoId===antigoElegivel&&
+        x.situacao==='PRE_PEDIDO_FICTICIO_POSSIVEL'))elegiveis.value=antigoElegivel;
+      const destino=el('listaPrePedidosFisicosDemo');
+      destino.replaceChildren();
+      for(const p of prePedidos.pedidos){
+        const quadro=document.createElement('div');
+        quadro.className='financeiro-caixa';
+        const titulo=document.createElement('strong');
+        titulo.textContent=p.pedidoId+' — '+p.nomeProduto;
+        const corpo=document.createElement('small');
+        corpo.textContent='Preço '+money(p.precoCatalogoCentavos)+
+          ' | custo de teste '+money(p.custoFornecedorTesteCentavos)+
+          ' | referência LOOP '+money(p.reservaReferencialLoopCentavos)+
+          ' | margem bruta preliminar '+money(p.margemBrutaPreliminarCentavos)+
+          ' | ID de intenção sem cobrança '+p.pagamentoIntentoTesteId;
+        quadro.append(titulo,corpo);
+        destino.append(quadro);
+      }
+      aviso.textContent=analisesFisicas.length+' produto(s) físicos no catálogo, '+
+        prePedidos.pedidos.length+' pré-pedido(s) fictício(s). Nenhum pagamento ou posição criado.';
+    }catch(e){if(atual===versaoPlanejamentoFisico)aviso.textContent=e.message;}
+  }
+  async function registrarCustoFisico(evento){
+    evento.preventDefault();
+    if(!token||salvandoCustoFisico)return;
+    salvandoCustoFisico=true;
+    const botao=el('salvarCustoFisicoDemo');
+    botao.disabled=true;
+    const aviso=el('statusPlanejamentoFisicoDemo');
+    try{
+      const produtoId=el('produtoCustoFisicoDemo').value;
+      const valor=el('valorCustoFisicoDemo').value.trim();
+      if(!/^\\d+(?:[.,]\\d{1,2})?$/.test(valor))throw new Error('Informe um valor em reais, por exemplo 250,00.');
+      const [inteira,fracao='']=valor.replace(',','.').split('.');
+      const custo=Number(inteira)*100+Number(fracao.padEnd(2,'0'));
+      if(!Number.isSafeInteger(custo)||custo<=0)throw new Error('Custo de teste inválido.');
+      const d=analisesFisicas.find(p=>p.produtoId===produtoId);
+      if(!d)throw new Error('Selecione um produto físico com fornecedor.');
+      const resposta=await requisitar('planejamento-fisico-demo/custos',{
+        method:'POST',body:JSON.stringify({
+          produtoId,custoCentavos:custo,revisaoEsperada:d.revisaoCustoTeste
+        })
+      });
+      await carregarPlanejamentoFisico();
+      aviso.textContent=resposta.alterado?
+        'Custo hipotético registrado. Isso não é contrato com fornecedor nem cobrança.':
+        'Custo de teste já registrado; nenhuma alteração.';
+    }catch(e){aviso.textContent=e.message;}
+    finally{salvandoCustoFisico=false;botao.disabled=false;}
+  }
+  async function registrarPrePedidoFisico(evento){
+    evento.preventDefault();
+    if(!token||salvandoPrePedidoFisico)return;
+    salvandoPrePedidoFisico=true;
+    const botao=el('salvarPrePedidoFisicoDemo');
+    botao.disabled=true;
+    const aviso=el('statusPrePedidoFisicoDemo');
+    try{
+      const produtoId=el('produtoPrePedidoFisicoDemo').value;
+      const d=analisesFisicas.find(x=>x.produtoId===produtoId);
+      if(!d||d.situacao!=='PRE_PEDIDO_FICTICIO_POSSIVEL'){
+        throw new Error('Falta preço, custo atualizado ou margem preliminar positiva.');
+      }
+      const resposta=await requisitar('planejamento-fisico-demo/pre-pedidos',{
+        method:'POST',body:JSON.stringify({
+          pedidoId:el('idPrePedidoFisicoDemo').value.trim(),
+          produtoId,revisaoProduto:d.revisaoProduto,
+          revisaoCustoTeste:d.revisaoCustoTeste
+        })
+      });
+      await carregarPlanejamentoFisico();
+      aviso.textContent=resposta.repetido?
+        'Pré-pedido já existia; sem registro duplicado.':
+        'Pré-pedido fictício guardado. Nenhum pagamento, envio ou posição ocorreu.';
+    }catch(e){aviso.textContent=e.message;}
+    finally{salvandoPrePedidoFisico=false;botao.disabled=false;}
   }
 
   async function carregarPedidosComerciais(){
@@ -759,7 +898,7 @@
       if(atual!==versao)return;
       preencherConfiguracoes(config.cofres);
       mostrar(visao);
-      await Promise.all([carregarHistorico(),carregarConciliacao(),carregarLivro(),carregarRecebimentos(),carregarPontePedidoPagamento(),carregarPedidosComerciais(),carregarPedidosPDF()]);
+      await Promise.all([carregarHistorico(),carregarConciliacao(),carregarLivro(),carregarRecebimentos(),carregarPontePedidoPagamento(),carregarPedidosComerciais(),carregarPedidosPDF(),carregarPlanejamentoFisico()]);
     }catch(e){
       if(atual===versao){limpar();status.textContent=e.message;}
     }
@@ -804,6 +943,9 @@
   el('pedidoEventoPDFDemo').addEventListener('change',carregarHistoricoPDF);
   el('baixarMaterialPDFDemo').addEventListener('click',baixarMaterialPDF);
   el('formPedidosComerciaisDemo').addEventListener('submit',criarPedidoComercial);
+  el('formCustoFisicoDemo').addEventListener('submit',registrarCustoFisico);
+  el('formPrePedidoFisicoDemo').addEventListener('submit',registrarPrePedidoFisico);
+  el('atualizarPlanejamentoFisicoDemo').addEventListener('click',carregarPlanejamentoFisico);
   el('atualizarPedidosComerciaisDemo').addEventListener('click',carregarPedidosComerciais);
   el('atualizarPontePedidoPagamentoDemo').addEventListener('click',carregarPontePedidoPagamento);
   el('pedidoHistoricoPonteDemo').addEventListener('change',carregarHistoricoPonte);
