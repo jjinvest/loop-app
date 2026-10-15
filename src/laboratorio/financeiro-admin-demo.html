@@ -35,6 +35,22 @@
       <p id="statusFinanceiroDemo" class="estado-admin" role="status" aria-live="polite">Aguardando acesso local.</p>
     </section>
     <div id="dadosFinanceiroDemo" hidden>
+      <section class="painel" aria-labelledby="tituloValorLoopDemo">
+        <h2 id="tituloValorLoopDemo">Valor de entrada no LOOP — configuração futura</h2>
+        <p class="ajuda">A loja pode vender por qualquer valor. Somente compras confirmadas que atingirem a referência vigente entram na fila. A alteração vale para posições futuras, sem recalcular posições antigas. Tudo aqui é simulação local.</p>
+        <p id="referenciaAtualLoopDemo" class="estado-admin" aria-live="polite">Referência atual do laboratório: R$ 250,00.</p>
+        <form id="formValorLoopDemo" autocomplete="off">
+          <div class="campo">
+            <label for="novoValorLoopDemo">Novo valor da referência (R$)</label>
+            <input id="novoValorLoopDemo" type="number" min="1" max="1000000" step="0.01" inputmode="decimal" required value="250.00">
+          </div>
+          <button type="submit" id="salvarValorLoopDemo">Registrar novo valor para posições futuras (teste)</button>
+        </form>
+        <p id="statusValorLoopDemo" class="estado-admin" role="status" aria-live="polite"></p>
+        <h3>Marcos históricos do valor</h3>
+        <ol id="historicoValorLoopDemo" class="financeiro-historico" aria-live="polite"></ol>
+        <p class="ajuda">Comparação hipotética: posição original R$ 250; referência de venda posterior R$ 500; em um evento destinado ao participante, R$ 250 seriam referência do participante e R$ 250 diferença proposta para a empresa. <strong>Não é divisão executada, saque nem direito aprovado.</strong></p>
+      </section>
       <section class="painel">
         <h2>Resumo da loja (fictício)</h2>
         <div class="financeiro-indicadores">
