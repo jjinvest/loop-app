@@ -40,7 +40,8 @@ function validarComprovante(recebido,pedidoId){
  return {
   pedidoId,contaId:recebido.contaId,produtoId:recebido.produtoId,
   valorCentavos:recebido.valorCentavos,
-  confirmadoEm:dataConfiavel(recebido.confirmadoEm)
+  confirmadoEm:dataConfiavel(recebido.confirmadoEm),
+  intentoPagamentoId:recebido.intentoPagamentoId
  };
 }
 function posicoesAtivas(simulador,contaId){
@@ -49,7 +50,7 @@ function posicoesAtivas(simulador,contaId){
   .filter(p=>p&&p.participanteId===contaId).length;
 }
 class PonteComprasConvitesDemoSQLite{
- constructor({banco,contas,consultarPagamentoConfiavel,relogio=()=>new Date().toISOString()}={}){
+ constructor({banco,contas,consultarPagamentoConfiavel,pedidosIdentificados=null,relogio=()=>new Date().toISOString()}={}){
   if(!banco||typeof banco.prepare!=='function'||!contas||
     typeof contas.buscar!=='function'){
    throw new TypeError('SQLite e cadastro de laboratorio sao obrigatorios');
@@ -57,11 +58,16 @@ class PonteComprasConvitesDemoSQLite{
   if(typeof consultarPagamentoConfiavel!=='function'){
    throw new TypeError('Verificador interno de pagamentos simulados obrigatorio');
   }
+  if(pedidosIdentificados!==null&&(
+    pedidosIdentificados.banco!==banco||typeof pedidosIdentificados.conferir!=='function')){
+   throw new TypeError('Pedidos identificados devem compartilhar SQLite com a ponte');
+  }
   if(typeof relogio!=='function')throw new TypeError('Relogio de teste invalido');
   this.banco=banco;
   this.contas=contas;
   this.verificador=consultarPagamentoConfiavel;
   this.relogio=relogio;
+  this.pedidosIdentificados=pedidosIdentificados;
   banco.exec(`
    CREATE TABLE IF NOT EXISTS admin_ponte_estado_demo(
     id INTEGER PRIMARY KEY CHECK(id=1),
@@ -75,6 +81,17 @@ class PonteComprasConvitesDemoSQLite{
     confirmado_em TEXT NOT NULL,
     posicao_id INTEGER NOT NULL UNIQUE CHECK(posicao_id>0)
    );
+   CREATE TABLE IF NOT EXISTS admin_ponte_vinculos_identificados_demo(
+    pedido_id TEXT PRIMARY KEY NOT NULL REFERENCES admin_ponte_compras_demo(pedido_id) ON DELETE RESTRICT,
+    intento_pagamento_id TEXT NOT NULL UNIQUE,
+    verificado_em TEXT NOT NULL
+   );
+   CREATE TRIGGER IF NOT EXISTS admin_ponte_vinculos_identificados_no_update
+    BEFORE UPDATE ON admin_ponte_vinculos_identificados_demo
+    BEGIN SELECT RAISE(ABORT,'vinculo pedido-pagamento ficticio imutavel'); END;
+   CREATE TRIGGER IF NOT EXISTS admin_ponte_vinculos_identificados_no_delete
+    BEFORE DELETE ON admin_ponte_vinculos_identificados_demo
+    BEGIN SELECT RAISE(ABORT,'vinculo pedido-pagamento ficticio imutavel'); END;
    CREATE INDEX IF NOT EXISTS idx_ponte_compras_titular
     ON admin_ponte_compras_demo(conta_id);
    CREATE TABLE IF NOT EXISTS admin_ponte_convites_validados_demo(
@@ -145,6 +162,10 @@ class PonteComprasConvitesDemoSQLite{
   );
   this.banco.exec('BEGIN IMMEDIATE');
   try{
+   // A identidade do pedido precisa existir ANTES da compra. O
+   // comprovante so valida, nunca cria ou troca titularidade.
+   const pedidoVinculado=this.pedidosIdentificados?
+    this.pedidosIdentificados.conferir(comprovante):null;
    const anterior=this.banco.prepare(`
     SELECT pedido_id,conta_id,produto_id,valor_centavos,confirmado_em,posicao_id
     FROM admin_ponte_compras_demo WHERE pedido_id=?
@@ -155,6 +176,14 @@ class PonteComprasConvitesDemoSQLite{
       anterior.valor_centavos!==comprovante.valorCentavos||
       anterior.confirmado_em!==comprovante.confirmadoEm){
      throw falha('PEDIDO_DIVERGENTE','Pedido ja registrado com dados diferentes');
+    }
+    if(pedidoVinculado){
+     const vinculo=this.banco.prepare(
+      'SELECT intento_pagamento_id AS intentoPagamentoId FROM admin_ponte_vinculos_identificados_demo WHERE pedido_id=?'
+     ).get(pedidoId);
+     if(!vinculo||vinculo.intentoPagamentoId!==pedidoVinculado.intentoPagamentoId){
+      throw falha('VINCULO_DIVERGENTE','Compra anterior nao possui o mesmo pedido identificado');
+     }
     }
     this.banco.exec('COMMIT');
     return {
@@ -181,6 +210,12 @@ class PonteComprasConvitesDemoSQLite{
     pedidoId,conta.contaId,comprovante.produtoId,
     comprovante.valorCentavos,comprovante.confirmadoEm,posicao.posicao.id
    );
+   if(pedidoVinculado){
+    this.banco.prepare(`
+     INSERT INTO admin_ponte_vinculos_identificados_demo
+     (pedido_id,intento_pagamento_id,verificado_em) VALUES(?,?,?)
+    `).run(pedidoId,pedidoVinculado.intentoPagamentoId,comprovante.confirmadoEm);
+   }
    let indicacaoNova=false;
    if(conta.indicadoPorId){
     const conviteExistente=this.banco.prepare(`
@@ -238,6 +273,10 @@ class PonteComprasConvitesDemoSQLite{
    semPagamentoReal:true,semCPF:true,semSessaoPublica:true,
    catracaMovimentada:false,compraNaoConfirmaBeneficioReal:true,
    compras,convites,
+   pedidosIdentificadosObrigatorios:!!this.pedidosIdentificados,
+   vinculosIdentificados:this.banco.prepare(
+    'SELECT COUNT(*) AS quantidade FROM admin_ponte_vinculos_identificados_demo'
+   ).get().quantidade,
    filas:sim.estado().filas,
    tabuleiro:sim.estado().tabuleiro
   };
