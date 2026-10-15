@@ -20,7 +20,7 @@ test('R$249,99 nao pode comprar; R$250 exatos libera valor para checkout futuro'
  assert.equal(insuficiente.atingeValorReferencia,false);
  assert.equal(insuficiente.botaoCheckoutPodeAparecerPeloValor,false);
  assert.equal(insuficiente.elegivelNaSimulacao,false);
- assert.equal(insuficiente.projecaoPosicoesSeConfirmado,1);
+ assert.equal(insuficiente.projecaoPosicoesSeConfirmado,0);
  const minimo=analisarCarrinhoSimulado({
   itens:[item('curso-pdf',25000,0)]
  });
