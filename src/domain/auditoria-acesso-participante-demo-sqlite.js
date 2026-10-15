@@ -59,12 +59,12 @@ class AuditoriaAcessoParticipanteDemoSQLite{
   if(!Number.isSafeInteger(limite)||limite<1||limite>100){
    throw new TypeError('Limite de consulta invalido');
   }
-  const eventos=this.banco.prepare("
+  const eventos=this.banco.prepare(`
    SELECT sequencia,tipo,registrado_em AS registradoEm
    FROM admin_acessos_participante_demo
    ORDER BY sequencia DESC LIMIT ?
   `).all(limite);
-  const contadores=this.banco.prepare("
+  const contadores=this.banco.prepare(`
    SELECT tipo,COUNT(*) AS quantidade FROM admin_acessos_participante_demo
    GROUP BY tipo
   `).all();
