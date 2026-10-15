@@ -47,6 +47,9 @@
       'produtoPedidoPDFDemo','pedidoEventoPDFDemo'])el(id).replaceChildren();
     el('statusPedidosPDFDemo').textContent='';
     el('statusEventoPDFDemo').textContent='';
+    el('statusMaterialPDFDemo').textContent='';
+    el('auditoriaMaterialPDFDemo').textContent='Solicitações de download fictício: 0';
+    el('baixarMaterialPDFDemo').disabled=true;
     el('listaPedidosComerciaisDemo').replaceChildren();
     el('produtoPedidoComercialDemo').replaceChildren();
     el('pagamentoPedidoComercialDemo').replaceChildren();
@@ -188,15 +191,64 @@
 
   // Curso PDF de teste: pagamento de valor variavel e elegibilidade ficticia
   // para entrega. Nenhum PDF REAL nem transferencia de valores.
+  // Faz o download por fetch com a chave administrativa em cabecalho,
+  // nunca em parametros de URL ou links publicos.
+  async function baixarMaterialPDF(){
+    const pedidoId=el('pedidoEventoPDFDemo').value;
+    const pedido=pedidosPDF.find(p=>p.pedidoId===pedidoId);
+    const aviso=el('statusMaterialPDFDemo');
+    if(!token||!pedido?.materialTesteBaixavel){
+      aviso.textContent='Escolha um pedido PDF com pagamento fictício confirmado.';
+      return;
+    }
+    const botao=el('baixarMaterialPDFDemo');
+    botao.disabled=true;
+    aviso.textContent='Solicitando PDF fictício autorizado ao laboratório...';
+    try{
+      const resposta=await fetch('/api/admin/pedidos-pdf-demo/'+encodeURIComponent(pedidoId)+'/material-teste.pdf',{
+        headers:{Authorization:'Bearer '+token},cache:'no-store',credentials:'omit'
+      });
+      if(!resposta.ok)throw new Error('Material de teste não autorizado ('+resposta.status+').');
+      if(!String(resposta.headers.get('content-type')).startsWith('application/pdf')){
+        throw new Error('Arquivo de laboratório inesperado.');
+      }
+      const arquivo=await resposta.blob();
+      const url=URL.createObjectURL(arquivo);
+      try{
+        const link=document.createElement('a');
+        link.href=url;
+        link.download='loop-material-de-teste.pdf';
+        document.body.append(link);
+        link.click();
+        link.remove();
+      }finally{
+        setTimeout(()=>URL.revokeObjectURL(url),3000);
+      }
+      aviso.textContent='Material PDF fictício solicitado. Nenhum curso real foi entregue.';
+      await carregarHistoricoPDF();
+    }catch(e){aviso.textContent=e.message;}
+    finally{
+      const atual=pedidosPDF.find(p=>p.pedidoId===el('pedidoEventoPDFDemo').value);
+      botao.disabled=!atual?.materialTesteBaixavel;
+    }
+  }
   async function carregarHistoricoPDF(){
     const atual=++versaoHistoricoPDF;
     const id=el('pedidoEventoPDFDemo').value;
     const lista=el('historicoEventoPDFDemo');
     lista.replaceChildren();
+    const pedidoAtual=pedidosPDF.find(p=>p.pedidoId===id);
+    el('baixarMaterialPDFDemo').disabled=!pedidoAtual?.materialTesteBaixavel;
+    el('auditoriaMaterialPDFDemo').textContent='Consultando solicitações de material fictício...';
     if(!id||!token)return;
     try{
-      const dados=await requisitar('pedidos-pdf-demo/'+encodeURIComponent(id)+'/historico');
+      const [dados,auditoria]=await Promise.all([
+        requisitar('pedidos-pdf-demo/'+encodeURIComponent(id)+'/historico'),
+        requisitar('pedidos-pdf-demo/'+encodeURIComponent(id)+'/solicitacoes-material-teste')
+      ]);
       if(atual!==versaoHistoricoPDF || id!==el('pedidoEventoPDFDemo').value)return;
+      el('auditoriaMaterialPDFDemo').textContent=
+        'Solicitações autorizadas de PDF fictício: '+auditoria.solicitacoes.length;
       for(const evento of dados.eventos){
         const li=document.createElement('li');
         li.textContent=evento.tipo+' — '+evento.eventoId+' — '+evento.registradoEm;
@@ -732,6 +784,7 @@
   el('formEventoPDFDemo').addEventListener('submit',registrarEventoPDF);
   el('atualizarPedidosPDFDemo').addEventListener('click',carregarPedidosPDF);
   el('pedidoEventoPDFDemo').addEventListener('change',carregarHistoricoPDF);
+  el('baixarMaterialPDFDemo').addEventListener('click',baixarMaterialPDF);
   el('formPedidosComerciaisDemo').addEventListener('submit',criarPedidoComercial);
   el('atualizarPedidosComerciaisDemo').addEventListener('click',carregarPedidosComerciais);
   el('atualizarPontePedidoPagamentoDemo').addEventListener('click',carregarPontePedidoPagamento);
