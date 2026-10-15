@@ -1123,6 +1123,96 @@ ausencia de entrada financeira e precos fisicos
 variados. A sequencia original de cinco etapas
 do tabuleiro e as filas A/B permanecem intactas.
 
+## Pre-pedidos de produtos fisicos com custo e margem em simulacao (15/10/2026)
+
+A vitrine LOOP continuara priorizando produtos fisicos e nao sera
+obrigada a operar somente cursos. Os cursos PDF sao uma linha
+pequena, normalmente de 1 a 3 opcoes administradas de forma
+flexivel, com troca conforme interesse do dono e acordos comerciais.
+**Nao existe afiliacao externa de cursos no modelo acordado**:
+cursos serao proprios ou com direito de revenda negociado;
+esta etapa NAO cria novo fluxo de afiliado.
+
+### Novo planejamento comercial de produtos FISICOS
+
+O modulo `src/domain/planejamento-vendas-fisicas-demo-sqlite.js`
+usa o catalogo local e os vinculos de fornecedor ja existentes.
+O admin registra um **custo hipotetico do fornecedor em centavos**
+para testar a viabilidade de cada produto. O fornecedor/SKU e a
+revisao atual de seu vinculo ficam associados ao custo. Se o
+vinculo externo mudar, o custo fica **desatualizado** e precisa
+ser informado de novo antes de gerar novos pre-pedidos.
+Cada revisao de custo e gravada num historico imutavel.
+
+Para demonstracao, a conta usa:
+
+```
+preco publicado no catalogo
+- custo hipotetico do fornecedor informado pelo administrador
+- R$ 100,00 de referencia reservada ao mecanismo LOOP
+= margem BRUTA preliminar (antes de impostos, taxas e demais custos)
+```
+
+Este nao e um preco contratado nem garantia de lucro.
+A parcela de R$100 **ainda NAO e debitada, creditada ou
+depositada em cofre**, e a margem liquida pode ser negativa
+apos taxas, tributos, frete ou estornos. Valores inferiores
+ao necessario retornam diagnostico
+`MARGEM_PRELIMINAR_INSUFICIENTE`
+e bloqueiam ate mesmo a geracao de pre-pedido
+**ficticio**. Assim o teste nao afirma viabilidade
+economica de vendas deficitarias.
+
+Um `pre-pedido` so pode ser criado no painel local
+quando o produto e FISICO, esta PUBLICADO, tem
+fornecedor/SKU ativo, custo ficticio da revisao
+atual e margem bruta preliminar positiva.
+E necessario informar o ID do pedido, o produto
+e as revisoes consultadas de produto e custo;
+isso impede preencher o pedido usando versoes
+obsoletas. O servidor **nao recebe o preco do navegador**
+e nao aceita cobranca ou parametros bancarios.
+
+A tabela SQLite `admin_pre_pedidos_fisicos_demo`
+registra fotografia imutavel do pre-pedido:
+produto, preco original, fornecedor/SKU original,
+revisoes de catalogo e custo, custo hipotetico
+em centavos, referencia R$100 e margem bruta
+preliminar, com data e **ID local de intencao de
+pagamento nao cobrada**. Repetir mesmo ID e
+referencias e idempotente; IDs em conflito sao
+recusados. O ID nao e um pagamento PSP real.
+O modulo anterior de 10 faturas fixas de R$600
+permanece inalterado; os dois simuladores nao
+contabilizam a mesma venda.
+
+API somente administrativa LOCAL:
+- `GET /api/admin/planejamento-fisico-demo`
+- `GET /api/admin/planejamento-fisico-demo/pre-pedidos`
+- `GET /api/admin/planejamento-fisico-demo/:produtoId`
+- `GET /api/admin/planejamento-fisico-demo/:produtoId/custos-historico`
+- `POST /api/admin/planejamento-fisico-demo/custos`
+- `POST /api/admin/planejamento-fisico-demo/pre-pedidos`
+
+No painel `/admin/financeiro-demo`, o administrador
+consegue informar o custo de exemplo, ver os alertas
+de margem, criar o pre-pedido ficticio e consultar
+seu snapshot. A funcionalidade NAO esta no app
+publico e nao realiza cobranca, despacho, envio ao
+fornecedor, contribuicao ao LOOP, caixa real,
+CPF, posicao de fila nem movimentacao de catraca.
+
+Testes: `test/planejamento-vendas-fisicas-demo.test.js`
+(custo com revisao, fornecedor substituido, margem
+insuficiente, persistencia, idempotencia, protecao
+da API e inexistencia de efeitos financeiros).
+
+**Proximos passos:** definir custos por fornecedor
+homologado e regras de frete/taxas/impostos,
+confirmacao PSP autentica, conciliacao financeira,
+logistica e elegibilidade de cada venda para o
+motor de filas, com autorizacao juridica/contabil.
+
 ## Isolamento e seguranca do projeto
 
 - Movimentacoes reais so mediante
