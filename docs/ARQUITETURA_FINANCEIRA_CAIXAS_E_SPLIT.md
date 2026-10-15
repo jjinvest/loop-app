@@ -1376,3 +1376,15 @@ auditavel que combine pagamento elegivel, produto entregue, criacao
 unica de posicao e regras de cancelamento; validacao juridica/contabil
 sobre destinacao de recursos, beneficios e devolucoes. Nao conectar
 um status `CONFIRMADO_FICTICIO` automaticamente a qualquer acao real.
+
+### Totalizacao adicional por fornecedor de origem (snapshot)
+
+A mesma auditoria agora agrupa os pre-pedidos pelo `fornecedorId`
+gravado quando cada pedido ficticio foi criado. Trocar o parceiro,
+SKU, custo ou preco do catalogo depois **nao transfere** um pedido
+antigo para o novo fornecedor. O quadro distingue quantidades e
+valores de pedidos aguardando, confirmados e estornados FICTICIAMENTE.
+O custo da amostra confirmado e meramente HIPOTETICO: nao significa
+valor devido, repasse aprovado, pagamento realizado ou ordem para
+o distribuidor. O painel administrativo local exibe este agrupamento
+com bloqueio permanente de logistica e sem exposicao publica.
