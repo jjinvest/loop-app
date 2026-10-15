@@ -123,11 +123,34 @@ IMPORTANTE:
   sao **exclusivos do administrador**.
   Participante ve apenas seu proprio
   historico e eventuais valores individuais.
-- **Nao ha caixa financeiro real** implementado
-  nem foi aprovada uma regra de distribuicao
-  para cada caixa apenas a partir desta
-  disposicao visual. Regras economicas
-  ja documentadas permanecem separadas.
+- O idealizador confirmou posteriormente a
+  distribuicao teorica dos cinco eventos
+  do ciclo: 1o, 3o e 5o no cofre CENTRAL;
+  2o no ESQUERDO; 4o no DIREITO.
+  Isso complementa as regras economicas
+  anteriores, mas nao constitui
+  movimentacao financeira ativa.
+- O central precisa registrar entradas
+  e saidas. Os laterais podem destacar
+  as entradas acumuladas na tela, mas
+  saques, investimentos e retornos
+  tambem precisam de registros contabeis
+  e conciliacao para que os saldos sejam
+  confiaveis.
+- A loja dropshipping tem seus proprios
+  controles: um caixa comercial se
+  o distribuidor for pago por split
+  efetivo, ou dois se houver parcela
+  temporariamente reservada para pagar
+  o distribuidor. Sao portanto quatro
+  ou cinco caixas visuais no conjunto
+  das duas areas, sem confundir fundos.
+- O idealizador prefere reservas/subcontas
+  financeiras efetivamente segregadas
+  quando a instituicao e sua API permitirem,
+  e nao apenas uma representacao virtual.
+  **Nenhum caixa financeiro real foi ativado.**
+  Ver `docs/ARQUITETURA_FINANCEIRA_CAIXAS_E_SPLIT.md`.
 
 ## 5. Ordem de desenvolvimento confirmada
 
