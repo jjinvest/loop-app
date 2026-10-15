@@ -3,12 +3,46 @@
 // API restrita ao administrador LOCAL, sem checkout, arquivo nem dinheiro real.
 const express=require('express');
 const {criarAutorizacao}=require('./admin-catalogo-laboratorio');
+const {criarMaterialPDFTeste}=require('../domain/material-pdf-teste');
 function criarRouterPedidosPDFDemo({segredo,pedidos}={}){
  const r=express.Router();
  r.use(criarAutorizacao({segredo}));
  r.use((_req,res,next)=>{res.set('Cache-Control','no-store');next();});
  r.get('/pedidos-pdf-demo',(_req,res)=>res.json(pedidos.listar()));
  r.get('/pedidos-pdf-demo/opcoes',(_req,res)=>res.json(pedidos.opcoes()));
+ // O arquivo retorna SOMENTE apos confirmacao ficticia do pedido,
+ // e apenas para administrador local com bearer de laboratorio.
+ r.get('/pedidos-pdf-demo/:id/material-teste.pdf',(req,res)=>{
+  try{
+   // Criar primeiro o material: nenhum evento de download se a fixture falhar.
+   const material=criarMaterialPDFTeste();
+   pedidos.registrarSolicitacaoMaterialTeste(req.params.id);
+   res.set({
+    'Content-Type':'application/pdf',
+    'Content-Disposition':'attachment; filename="loop-material-de-teste.pdf"',
+    'X-Content-Type-Options':'nosniff'
+   });
+   return res.send(material);
+  }catch(e){
+   if(e.codigo==='SEM_DIREITO')return res.status(403).json({erro:'MATERIAL_TESTE_SEM_PAGAMENTO_CONFIRMADO'});
+   if(e.codigo==='NAO_ENCONTRADO')return res.status(404).json({erro:'PEDIDO_PDF_DEMO_NAO_ENCONTRADO'});
+   if(e.codigo==='INVALIDO')return res.status(400).json({erro:'ID_INVALIDO'});
+   throw e;
+  }
+ });
+ r.get('/pedidos-pdf-demo/:id/solicitacoes-material-teste',(req,res)=>{
+  try{
+   return res.json({
+    modo:'AUDITORIA_DE_SOLICITACOES_DE_PDF_FICTICIO',
+    materialReal:false,
+    solicitacoes:pedidos.historicoSolicitacoesMaterialTeste(req.params.id)
+   });
+  }catch(e){
+   if(e.codigo==='NAO_ENCONTRADO')return res.status(404).json({erro:'PEDIDO_PDF_DEMO_NAO_ENCONTRADO'});
+   if(e.codigo==='INVALIDO')return res.status(400).json({erro:'ID_INVALIDO'});
+   throw e;
+  }
+ });
  r.get('/pedidos-pdf-demo/:id',(req,res)=>{
   try{
    const p=pedidos.buscar(req.params.id);
