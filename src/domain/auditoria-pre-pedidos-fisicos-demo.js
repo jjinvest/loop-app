@@ -34,6 +34,7 @@ function auditarPrePedidosFisicosDemo({planejamento,pagamentos}={}){
   valorConfirmadoFicticioCentavos:0,valorEstornadoFicticioCentavos:0,
   valorDivergenteCentavos:0
  };
+ const fornecedores=new Map();
  const conferencias=pedidos.map(pedido=>{
   const grupo=porPedido.get(pedido.pedidoId);
   const problemas=[];
@@ -65,6 +66,38 @@ function auditarPrePedidosFisicosDemo({planejamento,pagamentos}={}){
   totais[campo]=adicionar(totais[campo],pedido.precoCatalogoCentavos);
   totais.valorTotalPrePedidosCentavos=adicionar(
    totais.valorTotalPrePedidosCentavos,pedido.precoCatalogoCentavos);
+  // Os fornecedores sao identificados pelo snapshot da compra, nunca
+  // pelo vinculo atualmente cadastrado para um produto.
+  let fornecedor=fornecedores.get(pedido.fornecedorId);
+  if(!fornecedor){
+   fornecedor={
+    fornecedorId:pedido.fornecedorId,prePedidos:0,aguardando:0,
+    confirmados:0,estornados:0,divergentes:0,
+    valorPrePedidosFicticiosCentavos:0,
+    custoFornecedorTesteTotalCentavos:0,
+    valorConfirmadoFicticioCentavos:0,
+    custoTesteConfirmadoCentavos:0,
+    valorEstornadoFicticioCentavos:0,
+    fornecedorLiberado:false,repasseEfetuado:false,obrigacaoRealConstituida:false
+   };
+   fornecedores.set(pedido.fornecedorId,fornecedor);
+  }
+  fornecedor.prePedidos++;
+  fornecedor[contador]++;
+  fornecedor.valorPrePedidosFicticiosCentavos=adicionar(
+   fornecedor.valorPrePedidosFicticiosCentavos,pedido.precoCatalogoCentavos);
+  fornecedor.custoFornecedorTesteTotalCentavos=adicionar(
+   fornecedor.custoFornecedorTesteTotalCentavos,pedido.custoFornecedorTesteCentavos);
+  if(estado==='CONFIRMADO_FICTICIO'){
+   fornecedor.valorConfirmadoFicticioCentavos=adicionar(
+    fornecedor.valorConfirmadoFicticioCentavos,pedido.precoCatalogoCentavos);
+   fornecedor.custoTesteConfirmadoCentavos=adicionar(
+    fornecedor.custoTesteConfirmadoCentavos,pedido.custoFornecedorTesteCentavos);
+  }
+  if(estado==='ESTORNADO_FICTICIO'){
+   fornecedor.valorEstornadoFicticioCentavos=adicionar(
+    fornecedor.valorEstornadoFicticioCentavos,pedido.precoCatalogoCentavos);
+  }
   return {
    pedidoId:pedido.pedidoId,pagamentoIntentoTesteId:pedido.pagamentoIntentoTesteId,
    produtoId:pedido.produtoId,fornecedorIdSnapshot:pedido.fornecedorId,
@@ -78,6 +111,8 @@ function auditarPrePedidosFisicosDemo({planejamento,pagamentos}={}){
   integridade:totais.divergentes===0&&orfaos.length===0?
    'CONFERIDO_NO_TESTE':'DIVERGENCIAS_ENCONTRADAS',
   totais,conferencias,eventosOrfaos:orfaos,
+  resumoPorFornecedor:[...fornecedores.values()].sort((a,b)=>a.fornecedorId.localeCompare(b.fornecedorId)),
+  repassesReaisAFornecedores:0,
   conciliacaoBancariaReal:false,confirmacaoPSPReal:false,
   autorizacaoFornecedor:false,liberacaoLogistica:false,
   distribuicaoCofres:false,geracaoDePosicoes:false,
