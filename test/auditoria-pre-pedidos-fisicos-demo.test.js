@@ -155,7 +155,9 @@ test('endpoint local auditavel exige chave e fica ausente do app publico',async 
  assert.equal(r.totais.aguardando,1);
  assert.equal(r.integridade,'CONFERIDO_NO_TESTE');
  assert.equal(r.operacaoSomenteLeitura,true);
- assert.equal((await fetch(base+rota,{method:'POST',headers:AUTH})).status,404);
+ assert.equal((await fetch(base+rota,{
+  method:'POST',headers:{...AUTH,'Content-Type':'application/json'},body:'{}'
+ })).status,404);
  const publico=require('../src/server');
  const site=publico.listen(0,'127.0.0.1');
  await once(site,'listening');
