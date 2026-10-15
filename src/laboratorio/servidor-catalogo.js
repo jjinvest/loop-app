@@ -16,6 +16,8 @@ const { criarRouterEscritorioDemo } = require('../routes/admin-escritorio-demo')
 const { criarRouterFinanceiroAdminDemo } = require('../routes/admin-financeiro-demo');
 const { RepositorioAparenciaCofresSQLite } = require('../domain/repositorio-aparencia-cofres-sqlite');
 const { RazaoFinanceiroDemoSQLite } = require('../domain/razao-financeiro-demo-sqlite');
+const { RecebimentosPSPDemoSQLite } = require('../domain/recebimentos-psp-demo-sqlite');
+const { criarRouterRecebimentosPSPDemo } = require('../routes/admin-recebimentos-psp-demo');
 
 function criarAppAdminLaboratorio({ repositorio, segredo } = {}) {
   if (process.env.NODE_ENV === 'production') {
@@ -56,6 +58,12 @@ function criarAppAdminLaboratorio({ repositorio, segredo } = {}) {
     : null;
   app.use('/api/admin', criarRouterFinanceiroAdminDemo({
     segredo, configuracao:configuracaoCofres, razaoPersistente
+  }));
+  const recebimentosDemo = razaoPersistente
+    ? new RecebimentosPSPDemoSQLite({ banco:repositorio.banco,razao:razaoPersistente })
+    : null;
+  app.use('/api/admin', criarRouterRecebimentosPSPDemo({
+    segredo,recebimentos:recebimentosDemo
   }));
   app.get('/admin', somenteLocal, (req, res) => {
     res.sendFile(path.join(__dirname, 'painel-catalogo.html'));
