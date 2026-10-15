@@ -28,10 +28,10 @@ test('primeiras 6 posicoes preenchem tabuleiro e nao concluem ciclo sem novas ve
   assert.equal(r.resumo.posicoesCriadas,11);
   assert.equal(r.resumo.ciclosConcluidos,1);
   assert.equal(r.resumo.posicoesPendentes,10);
-  assert.equal(r.resumo.parcelasCentroReferenciaisCentavos,30000);
-  assert.equal(r.resumo.parcelasEmpresaReferenciaisCentavos,20000);
-  assert.equal(r.resumo.reservaFilaCentavos,110000);
-  assert.equal(r.resumo.saldoFilaSemDestinacaoCentavos,60000);
+  assert.equal(r.resumo.parcelasCentroReferenciaisCentavos,75000);
+  assert.equal(r.resumo.parcelasEmpresaReferenciaisCentavos,50000);
+  assert.equal(r.resumo.reservaFilaCentavos,275000);
+  assert.equal(r.resumo.saldoFilaSemDestinacaoCentavos,150000);
   assert.equal(r.resumo.eventosEmCicloIncompleto,0);
 });
 
@@ -40,18 +40,18 @@ test('em cinco vendas com tabuleiro existente, uma posicao sai e cinco entram',(
   assert.equal(r.resumo.posicoesCriadas,5);
   assert.equal(r.resumo.ciclosConcluidos,1);
   assert.equal(r.resumo.posicoesPendentes,10);
-  assert.equal(r.resumo.reservaFilaCentavos,50000);
-  assert.equal(r.resumo.parcelasCentroReferenciaisCentavos,30000);
-  assert.equal(r.resumo.parcelasEmpresaReferenciaisCentavos,20000);
+  assert.equal(r.resumo.reservaFilaCentavos,125000);
+  assert.equal(r.resumo.parcelasCentroReferenciaisCentavos,75000);
+  assert.equal(r.resumo.parcelasEmpresaReferenciaisCentavos,50000);
   assert.equal(r.resumo.saldoFilaSemDestinacaoCentavos,0);
 });
 
 test('centro recebe parcelas 1 3 5; empresa 2 4 ao longo de periodos',()=>{
   const r=projetar([periodo(1),periodo(1),periodo(1),periodo(1),periodo(1)],6);
   assert.deepEqual(r.periodos.map(p=>p.parcelasCentroReferenciaisCentavos),
-    [10000,0,10000,0,10000]);
+    [25000,0,25000,0,25000]);
   assert.deepEqual(r.periodos.map(p=>p.parcelasEmpresaReferenciaisCentavos),
-    [0,10000,0,10000,0]);
+    [0,25000,0,25000,0]);
   assert.deepEqual(r.periodos.map(p=>p.ciclosConcluidos),[0,0,0,0,1]);
   assert.equal(r.resumo.posicoesPendentes,10);
 });
@@ -62,9 +62,9 @@ test('5000 e 10000 posicoes antigas nao trazem dinheiro novo para o modelo',()=>
     assert.equal(r.resumo.ciclosConcluidos,10);
     assert.equal(r.resumo.posicoesPendentes,antigas+50-10);
     assert.equal(r.premissas.posicoesIniciaisSemCaixaModelado,true);
-    assert.equal(r.resumo.reservaFilaCentavos,50*10000);
+    assert.equal(r.resumo.reservaFilaCentavos,50*25000);
     assert.equal(r.resumo.exposicaoTeoricaSeTodasAsPosicoesRecebessemCentroCentavos,
-      (antigas+40)*30000);
+      (antigas+40)*75000);
   }
 });
 
@@ -80,28 +80,28 @@ test('distinguimos receita liquida, custos, fila e margem — sem duplicar parce
   assert.equal(r.receitaLiquidaCentavos,125000);
   assert.equal(r.contribuicaoAntesDaFilaCentavos,
     5*(25000-9000-2000-800-700));
-  assert.equal(r.reservaFilaCentavos,50000);
+  assert.equal(r.reservaFilaCentavos,125000);
   assert.equal(r.margemComercialAposReservaFilaCentavos,
-    5*(25000-9000-2000-800-700-10000));
-  assert.equal(r.parcelasCentroReferenciaisCentavos,30000);
-  assert.equal(r.parcelasEmpresaReferenciaisCentavos,20000);
+    5*(25000-9000-2000-800-700-25000));
+  assert.equal(r.parcelasCentroReferenciaisCentavos,75000);
+  assert.equal(r.parcelasEmpresaReferenciaisCentavos,50000);
   assert.equal(r.reservaFilaCentavos,
     r.parcelasCentroReferenciaisCentavos+r.parcelasEmpresaReferenciaisCentavos);
 });
 
 test('custo de produto pode tornar margem negativa mesmo com parcela da empresa',()=>{
-  const p=periodo(5,{precoCentavos:20000,custoFornecedorCentavos:12000,
+  const p=periodo(5,{precoCentavos:25000,custoFornecedorCentavos:12000,
     impostosCentavos:3000,tarifaPagamentoCentavos:800,
     despesaOperacionalCentavos:1200});
   const r=projetar([p],6);
-  assert.equal(r.periodos[0].margemComercialAposReservaFilaCentavos,-35000);
+  assert.equal(r.periodos[0].margemComercialAposReservaFilaCentavos,-85000);
   assert.equal(r.periodos[0].alertaMargemInsuficiente,true);
-  assert.equal(r.resumo.parcelasEmpresaReferenciaisCentavos,20000);
+  assert.equal(r.resumo.parcelasEmpresaReferenciaisCentavos,50000);
   assert.ok(r.alertas.some(x=>x.includes('nunca nova receita')));
 });
 
 test('precos variados nao alteram posicoes geradas mas alteram margem comercial',()=>{
-  const barato=projetar([periodo(5,{precoCentavos:20000})],6);
+  const barato=projetar([periodo(5,{precoCentavos:25000})],6);
   const caro=projetar([periodo(5,{precoCentavos:50000})],6);
   assert.equal(barato.resumo.posicoesCriadas,caro.resumo.posicoesCriadas);
   assert.equal(barato.resumo.ciclosConcluidos,caro.resumo.ciclosConcluidos);
@@ -144,7 +144,7 @@ test('nao permite numeros negativos, fracionados, ausentes e preco abaixo da par
   assert.throws(()=>projetar([periodo(-1)]),/vendasValidas/);
   assert.throws(()=>projetar([periodo(1.5)]),/vendasValidas/);
   assert.throws(()=>projetar([periodo(1,{vendasReembolsadas:-1})]),/vendasReembolsadas/);
-  assert.throws(()=>projetar([periodo(1,{precoCentavos:9900})]),/Preco menor/);
+  assert.throws(()=>projetar([periodo(1,{precoCentavos:24999})]),/Preco menor/);
   assert.throws(()=>projetar([periodo(1,{precoCentavos:NaN})]),/precoCentavos/);
   assert.throws(()=>projetar([periodo(1,{custoFornecedorCentavos:undefined})]),/custoFornecedorCentavos/);
   assert.throws(()=>projetar([periodo(1)],-1),/posicoesIniciais/);
@@ -186,24 +186,24 @@ test('partir de dez posicoes ja ativas nao e o mesmo que assumir dez mil no lanc
   assert.equal(r.resumo.posicoesNoTabuleiroEstimadas,6);
 });
 
-test('exemplo do idealizador: R$250, R$50 ao parceiro, R$100 a fila',()=>{
+test('exemplo do idealizador: R$500, R$100 ao parceiro, R$250 ao LOOP',()=>{
   const r=projetar([periodo(5,{
-    precoCentavos:25000,
-    custoFornecedorCentavos:5000,
+    precoCentavos:50000,
+    custoFornecedorCentavos:10000,
     impostosCentavos:0,
     tarifaPagamentoCentavos:0,
     despesaOperacionalCentavos:0
   })],6);
-  assert.equal(r.resumo.margemComercialAposReservaFilaCentavos,50000);
-  assert.equal(r.resumo.parcelasCentroReferenciaisCentavos,30000);
-  assert.equal(r.resumo.parcelasEmpresaReferenciaisCentavos,20000);
+  assert.equal(r.resumo.margemComercialAposReservaFilaCentavos,75000);
+  assert.equal(r.resumo.parcelasCentroReferenciaisCentavos,75000);
+  assert.equal(r.resumo.parcelasEmpresaReferenciaisCentavos,50000);
   assert.equal(r.resumo.posicoesCriadas,5);
   assert.equal(r.resumo.ciclosConcluidos,1);
-  // R$100 de cada mercadoria e sobra antes de custos nao incluidos,
+  // R$150 de margem bruta por compra, antes de custos nao incluidos,
   // nao resultado liquido certificado.
 });
 
-test('dropshipping: loja vende por R$600, custo contratado R$300 e R$100 de referencia da fila',()=>{
+test('loja vende por R$600, fornecedor R$300 e referencia LOOP de R$250',()=>{
   const c=projetar([periodo(5,{
     precoCentavos:60000,
     custoFornecedorCentavos:30000,
@@ -213,12 +213,12 @@ test('dropshipping: loja vende por R$600, custo contratado R$300 e R$100 de refe
   })],6);
   assert.equal(c.resumo.receitaLiquidaCentavos,300000);
   assert.equal(c.resumo.contribuicaoAntesDaFilaCentavos,150000);
-  assert.equal(c.resumo.reservaFilaCentavos,50000);
-  assert.equal(c.resumo.margemComercialAposReservaFilaCentavos,100000);
+  assert.equal(c.resumo.reservaFilaCentavos,125000);
+  assert.equal(c.resumo.margemComercialAposReservaFilaCentavos,25000);
   assert.equal(c.resumo.ciclosConcluidos,1);
   assert.equal(c.resumo.posicoesCriadas,5);
-  assert.equal(c.resumo.parcelasCentroReferenciaisCentavos,30000);
-  assert.equal(c.resumo.parcelasEmpresaReferenciaisCentavos,20000);
-  // Por produto a sobra BRUTA e de R$200 antes dos custos omitidos;
+  assert.equal(c.resumo.parcelasCentroReferenciaisCentavos,75000);
+  assert.equal(c.resumo.parcelasEmpresaReferenciaisCentavos,50000);
+  // Por produto a sobra BRUTA e de R$50 antes dos custos omitidos;
   // 100% de markup sobre custo nao e 100% de lucro liquido.
 });
