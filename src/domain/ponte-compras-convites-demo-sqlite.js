@@ -4,7 +4,6 @@
 // verificador INJETADO NO SERVIDOR, nunca de um corpo HTTP. Nao e PSP.
 const { SimuladorLoop }=require('./simulador-loop');
 const { STATUS_CONFIRMADO }=require('./processador-pedidos-simulados');
-const { VALOR_PADRAO_LOOP_CENTAVOS }=require('./valor-padrao-loop');
 const {ConfiguracaoValorLoopDemoSQLite}=require('./configuracao-valor-loop-demo-sqlite');
 
 function falha(codigo,mensagem){
@@ -106,6 +105,22 @@ class PonteComprasConvitesDemoSQLite{
    CREATE TRIGGER IF NOT EXISTS admin_ponte_vendas_loja_sem_loop_no_delete
     BEFORE DELETE ON admin_ponte_vendas_loja_sem_loop_demo
     BEGIN SELECT RAISE(ABORT,'venda de loja ficticia imutavel'); END;
+   -- Pedidos que ficaram abaixo de um novo padrao maior que R$250.
+   -- A tabela de vendas pequenas anterior continua intocada.
+   CREATE TABLE IF NOT EXISTS admin_ponte_vendas_loja_apos_reajuste_demo(
+    pedido_id TEXT PRIMARY KEY NOT NULL,
+    conta_id TEXT NOT NULL REFERENCES admin_contas_participantes_demo(id) ON DELETE RESTRICT,
+    produto_id TEXT NOT NULL,
+    valor_centavos INTEGER NOT NULL CHECK(valor_centavos>=25000),
+    confirmado_em TEXT NOT NULL,
+    intento_pagamento_id TEXT UNIQUE
+   );
+   CREATE TRIGGER IF NOT EXISTS admin_ponte_vendas_reajuste_no_update
+    BEFORE UPDATE ON admin_ponte_vendas_loja_apos_reajuste_demo
+    BEGIN SELECT RAISE(ABORT,'venda ficticia imutavel'); END;
+   CREATE TRIGGER IF NOT EXISTS admin_ponte_vendas_reajuste_no_delete
+    BEFORE DELETE ON admin_ponte_vendas_loja_apos_reajuste_demo
+    BEGIN SELECT RAISE(ABORT,'venda ficticia imutavel'); END;
    CREATE TABLE IF NOT EXISTS admin_ponte_posicoes_valores_demo(
     pedido_id TEXT PRIMARY KEY NOT NULL REFERENCES admin_ponte_compras_demo(pedido_id) ON DELETE RESTRICT,
     revisao_valor INTEGER NOT NULL REFERENCES admin_valor_loop_versoes_demo(revisao) ON DELETE RESTRICT,
@@ -251,7 +266,11 @@ class PonteComprasConvitesDemoSQLite{
    const lojaAnterior=this.banco.prepare(`
     SELECT pedido_id,conta_id,produto_id,valor_centavos,
      confirmado_em,intento_pagamento_id
-    FROM admin_ponte_vendas_loja_sem_loop_demo WHERE pedido_id=?
+    FROM (
+     SELECT * FROM admin_ponte_vendas_loja_sem_loop_demo
+     UNION ALL
+     SELECT * FROM admin_ponte_vendas_loja_apos_reajuste_demo
+    ) WHERE pedido_id=?
    `).get(pedidoId);
    if(lojaAnterior){
     if(lojaAnterior.conta_id!==comprovante.contaId||
@@ -272,8 +291,11 @@ class PonteComprasConvitesDemoSQLite{
    if(comprovante.valorCentavos<referenciaVigente.valorCentavos){
     // Compra valida da LOJA, sem mexer no snapshot, nas filas ou em convites.
     // A regra de cinco posicoes so se aplica a pedidos elegiveis ao LOOP.
+    const tabelaLoja=comprovante.valorCentavos<25000?
+      'admin_ponte_vendas_loja_sem_loop_demo':
+      'admin_ponte_vendas_loja_apos_reajuste_demo';
     this.banco.prepare(`
-     INSERT INTO admin_ponte_vendas_loja_sem_loop_demo
+     INSERT INTO ${tabelaLoja}
      (pedido_id,conta_id,produto_id,valor_centavos,confirmado_em,intento_pagamento_id)
      VALUES (?,?,?,?,?,?)
     `).run(pedidoId,conta.contaId,comprovante.produtoId,
@@ -388,8 +410,11 @@ class PonteComprasConvitesDemoSQLite{
     SELECT pedido_id AS pedidoId,conta_id AS contaId,
      produto_id AS produtoId,valor_centavos AS valorCentavos,
      confirmado_em AS confirmadoEm
-    FROM admin_ponte_vendas_loja_sem_loop_demo
-    ORDER BY confirmado_em,pedido_id
+    FROM (
+     SELECT * FROM admin_ponte_vendas_loja_sem_loop_demo
+     UNION ALL
+     SELECT * FROM admin_ponte_vendas_loja_apos_reajuste_demo
+    ) ORDER BY confirmado_em,pedido_id
    `).all(),
    pedidosIdentificadosObrigatorios:!!this.pedidosIdentificados,
    vinculosIdentificados:this.banco.prepare(
