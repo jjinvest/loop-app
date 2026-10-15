@@ -29,6 +29,9 @@ const { criarRouterContasParticipantesDemo } = require('../routes/admin-contas-p
 const { PonteComprasConvitesDemoSQLite } = require('../domain/ponte-compras-convites-demo-sqlite');
 const { criarRouterPonteComprasConvitesDemo } = require('../routes/admin-ponte-compras-convites-demo');
 const { criarRouterParticipanteDemo } = require('../routes/participante-laboratorio-demo');
+const { SessoesParticipanteDemo } = require('../domain/sessoes-participante-demo');
+const { AuditoriaAcessoParticipanteDemoSQLite } = require('../domain/auditoria-acesso-participante-demo-sqlite');
+const { criarRouterAuditoriaParticipanteDemo } = require('../routes/admin-auditoria-participante-demo');
 const { criarRouterFinanceiroAdminDemo } = require('../routes/admin-financeiro-demo');
 const { RepositorioAparenciaCofresSQLite } = require('../domain/repositorio-aparencia-cofres-sqlite');
 const { RazaoFinanceiroDemoSQLite } = require('../domain/razao-financeiro-demo-sqlite');
@@ -101,8 +104,17 @@ function criarAppAdminLaboratorio({ repositorio, segredo, webhookDemo } = {}) {
     }));
     // O titular usa uma sessao ficticia segregada: nenhuma credencial admin
     // nem ID de outro participante e aceita na rota individual.
+    const auditoriaDemo=new AuditoriaAcessoParticipanteDemoSQLite({
+      banco:repositorio.banco
+    });
+    const sessoesDemo=new SessoesParticipanteDemo({
+      contas:contasDemo,auditoria:auditoriaDemo
+    });
     app.use('/api/laboratorio/participante',criarRouterParticipanteDemo({
-      contas:contasDemo,ponte:ponteDemo
+      contas:contasDemo,ponte:ponteDemo,sessoes:sessoesDemo
+    }));
+    app.use('/api/admin',criarRouterAuditoriaParticipanteDemo({
+      segredo,auditoria:auditoriaDemo
     }));
   }
   const configuracaoCofres = repositorio instanceof RepositorioCatalogoSQLite
