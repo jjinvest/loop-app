@@ -12,6 +12,9 @@ const { criarRouterVinculosLaboratorio } = require('../routes/admin-vinculos-lab
 const { criarFornecedoresDemonstrativos } = require('./fornecedores-demo');
 const { criarRouterImportacaoLaboratorio } = require('../routes/admin-importacao-laboratorio');
 const { criarRouterPedidosLogisticaDemo } = require('../routes/admin-pedidos-logistica-demo');
+const { PedidosLogisticosSimuladosSQLite } = require('../domain/pedidos-logisticos-simulados-sqlite');
+const { VinculosPedidosPagamentosDemoSQLite } = require('../domain/vinculos-pedidos-pagamentos-demo-sqlite');
+const { criarRouterVinculosPedidosPagamentosDemo } = require('../routes/admin-vinculos-pedidos-pagamentos-demo');
 const { criarRouterEscritorioDemo } = require('../routes/admin-escritorio-demo');
 const { criarRouterFinanceiroAdminDemo } = require('../routes/admin-financeiro-demo');
 const { RepositorioAparenciaCofresSQLite } = require('../domain/repositorio-aparencia-cofres-sqlite');
@@ -59,7 +62,11 @@ function criarAppAdminLaboratorio({ repositorio, segredo, webhookDemo } = {}) {
     }));
   }
   app.use('/api/admin', criarRouterAdminCatalogo({ repositorio, segredo }));
-  app.use('/api/admin', criarRouterPedidosLogisticaDemo({ segredo }));
+  const pedidosLogisticaDemo=new PedidosLogisticosSimuladosSQLite({caminho:':memory:'});
+  app.locals.pedidosLogisticaDemo=pedidosLogisticaDemo;
+  app.use('/api/admin', criarRouterPedidosLogisticaDemo({
+    segredo, repositorio:pedidosLogisticaDemo
+  }));
   app.use('/api/admin', criarRouterEscritorioDemo({ segredo }));
   const configuracaoCofres = repositorio instanceof RepositorioCatalogoSQLite
     ? new RepositorioAparenciaCofresSQLite({ banco:repositorio.banco })
@@ -75,6 +82,18 @@ function criarAppAdminLaboratorio({ repositorio, segredo, webhookDemo } = {}) {
     : null;
   app.use('/api/admin', criarRouterRecebimentosPSPDemo({
     segredo,recebimentos:recebimentosDemo
+  }));
+  // Ponte apenas de LEITURA. O mesmo repo de logistica do painel preexistente
+  // e os pagamentos PSP ficticios sao fontes separadas de status, nunca
+  // um comando de confirmacao automatica, reserva real ou criacao de posicao.
+  const vinculosPedidoPagamentoDemo=recebimentosDemo
+    ? new VinculosPedidosPagamentosDemoSQLite({
+      banco:repositorio.banco, recebimentos:recebimentosDemo,
+      logistica:pedidosLogisticaDemo
+    })
+    : null;
+  app.use('/api/admin', criarRouterVinculosPedidosPagamentosDemo({
+    segredo,vinculos:vinculosPedidoPagamentoDemo
   }));
   app.get('/admin', somenteLocal, (req, res) => {
     res.sendFile(path.join(__dirname, 'painel-catalogo.html'));
