@@ -51,7 +51,7 @@ async function server(t,arquivo){
  return {base:'http://127.0.0.1:'+svr.address().port,catalogo,
   fornecedores:new VinculosFornecedoresSQLite({repositorioCatalogo:catalogo})};
 }
-async function get(base,url,headers=AUTH){
+async function get(base,url='',headers=AUTH){
  return fetch(base+'/api/admin/planejamento-fisico-demo'+url,{headers});
 }
 async function post(base,url,obj,headers=AUTH){
