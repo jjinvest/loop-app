@@ -3,7 +3,6 @@
 // Pedido identificado APENAS em laboratorio: o titular e fixado ANTES da
 // verificacao interna de pagamento. Sem checkout, cobranca ou rota publica.
 const {randomUUID}=require('node:crypto');
-const {VALOR_PADRAO_LOOP_CENTAVOS}=require('./valor-padrao-loop');
 
 function falha(codigo,mensagem){
  const erro=new Error(mensagem);erro.codigo=codigo;return erro;
@@ -71,9 +70,6 @@ class PedidosTitularidadeDemoSQLite{
   contaIdOk(contaId);
   validarId(produtoId,'produtoId');
   centavos(valorCentavos);
-  if(valorCentavos<VALOR_PADRAO_LOOP_CENTAVOS){
-   throw falha('MINIMO_CARRINHO','Pedido de teste abaixo do minimo de R$250');
-  }
   // So scripts/testes internos podem chamar este metodo. Identidade
   // cliente no HTTP NAO pode ser prova de titularidade de pedido.
   this.banco.exec('BEGIN IMMEDIATE');
