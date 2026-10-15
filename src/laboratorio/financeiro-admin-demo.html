@@ -48,12 +48,37 @@
       <section class="painel">
         <h2>Três cofres do LOOP</h2>
         <div id="cofresLoopFinanceiroDemo" class="financeiro-cofres"></div>
-        <p class="ajuda">Esquerda: investimento. Centro: bonificações/participação. Direita: reserva de suporte. Nomes e cores definitivos serão definidos depois.</p>
+        <p class="ajuda">Esquerda: investimento. Centro: bonificações/participação. Direita: reserva de suporte. Seus nomes e cores são editáveis abaixo, mas a organização financeira permanece fixa.</p>
       </section>
       <section class="painel">
         <h2>Caixas comerciais da loja</h2>
         <div id="cofresLojaFinanceiroDemo" class="financeiro-cofres"></div>
         <p class="ajuda">O caixa do distribuidor aparece apenas na simulação sem split externo. O histórico registra o custo do fornecedor em ambos os cenários.</p>
+      </section>
+      <section class="painel" aria-labelledby="tituloEditarCofres">
+        <h2 id="tituloEditarCofres">Personalizar nomes e cores dos cofres</h2>
+        <p class="ajuda">Edição administrativa de aparência, gravada apenas neste laboratório local. As posições, funções financeiras, valores e registros de vendas não podem ser modificados por este formulário.</p>
+        <form id="formAparenciaCofreDemo" autocomplete="off">
+          <div class="campo">
+            <label for="cofreEditarFinanceiroDemo">Escolher cofre</label>
+            <select id="cofreEditarFinanceiroDemo" required></select>
+          </div>
+          <div class="duas-colunas">
+            <div class="campo">
+              <label for="nomeCofreFinanceiroDemo">Nome de exibição</label>
+              <input id="nomeCofreFinanceiroDemo" type="text" required maxlength="70" autocomplete="off">
+            </div>
+            <div class="campo">
+              <label for="corCofreFinanceiroDemo">Cor de exibição</label>
+              <input id="corCofreFinanceiroDemo" type="color" required>
+            </div>
+          </div>
+          <p id="finalidadeCofreFinanceiroDemo" class="ajuda"></p>
+          <button type="submit" id="salvarAparenciaCofreDemo">Salvar nome e cor</button>
+        </form>
+        <p id="statusAparenciaCofreDemo" class="estado-admin" role="status" aria-live="polite"></p>
+        <h3>Histórico de alterações visuais</h3>
+        <ol id="historicoAparenciaCofreDemo" class="financeiro-historico" aria-live="polite"></ol>
       </section>
       <section class="painel">
         <h2>Histórico administrativo completo — exemplo</h2>
