@@ -75,9 +75,12 @@ test('eventos financeiros repetidos, cofres estranhos e valores errados sao reje
   assert.throws(()=>projetarRazaoCofresDemo({movimentos:[{...entrada,cofreId:'NOVO_COFRE'}]}),/invalido/);
   assert.throws(()=>projetarRazaoCofresDemo({movimentos:[{...entrada,valorCentavos:2.5}]}),/invalido/);
   assert.throws(()=>projetarRazaoCofresDemo({movimentos:[{...entrada,tipo:'TRANSFIRA_AGORA'}]}),/invalido/);
-  assert.throws(()=>projetarRazaoCofresDemo({modo:MODOS.RESERVA,movimentos:[{
+  // O administrador pode simular saidas validas do fornecedor reservado:
+  // este simulador NAO cria uma trava financeira real.
+  const saidaFornecedor=projetarRazaoCofresDemo({modo:MODOS.RESERVA,movimentos:[{
     ...entrada,valorCentavos:10000,cofreId:COFRES.DISTRIBUIDOR
-  }],comMovimentos:false}),/^[^\n]*$/);
+  }]});
+  assert.equal(saldo(saidaFornecedor,COFRES.DISTRIBUIDOR).saldoProjetadoCentavos,140000);
 });
 
 test('adaptador de teste compara valores, encontra diferencas e detecta dados ausentes',async()=>{
