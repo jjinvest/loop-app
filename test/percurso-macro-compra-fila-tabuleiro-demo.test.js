@@ -40,7 +40,7 @@ function cadastrar(m,nome,email,codigoIndicador=null){
 async function comprar(m,pedidoId,contaId,status=STATUS_CONFIRMADO){
  const pedido=m.pedidos.preparar({
   pedidoId,contaId,produtoId:'curso-pdf-macro-ficticio',
-  valorCentavos:13900
+  valorCentavos:25000
  });
  m.comprovantes.set(pedidoId,{
   pedidoId,contaId,produtoId:pedido.produtoId,
