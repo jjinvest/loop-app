@@ -5,6 +5,7 @@
 const express=require('express');
 const {criarAutorizacao}=require('./admin-catalogo-laboratorio');
 const {criarVisaoFinanceiraAdminDemo,MODOS}=require('../domain/financeiro-admin-demo');
+const {criarConciliacaoAdministrativaDemo}=require('../domain/conciliacao-cofres-demo');
 
 function criarRouterFinanceiroAdminDemo({segredo,configuracao}={}){
   const router=express.Router();
@@ -29,6 +30,31 @@ function criarRouterFinanceiroAdminDemo({segredo,configuracao}={}){
       }))
     });
   });
+  router.get('/conciliacao-cofres-demo',async(req,res)=>{
+    const {modo,fluxo,extrato}=req.query;
+    if(!['split','reserva'].includes(modo)||
+       !['sem-movimentos','com-movimentos'].includes(fluxo)||
+       !['conferido','divergente'].includes(extrato)){
+      return res.status(400).json({erro:'CENARIO_DE_CONCILIACAO_INVALIDO'});
+    }
+    const resultado=await criarConciliacaoAdministrativaDemo({
+      modo:modo==='split'?MODOS.SPLIT:MODOS.RESERVA,
+      comMovimentos:fluxo==='com-movimentos',
+      divergenciaFicticia:extrato==='divergente'
+    });
+    // Dados financeiros e mesmo o extrato falso sao exclusivos da rota admin.
+    const nomes=new Map((configuracao?configuracao.listar():[]).map(c=>[c.id,c.nome]));
+    res.json({
+      ...resultado,
+      conciliacao:{
+        ...resultado.conciliacao,
+        linhas:resultado.conciliacao.linhas.map(l=>({
+          ...l,nomeExibicao:nomes.get(l.cofreId)||l.cofreId
+        }))
+      }
+    });
+  });
+
   // Apenas campos de APARENCIA, nunca valores, finalidades ou contas.
   router.get('/cofres-demo/configuracoes',(_req,res)=>{
     if(!configuracao)return res.status(501).json({erro:'CONFIGURACAO_DEMO_INDISPONIVEL'});
