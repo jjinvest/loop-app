@@ -3,7 +3,8 @@
 // PLANEJAMENTO LOCAL: custo de fornecedor INFORMADO pelo administrador,
 // estudo de margem e pre-pedido com preco variavel. NAO e cotacao
 // contratual, PSP, split, logistica, venda nem posicao de fila.
-const RESERVA_REFERENCIAL_LOOP=10000;
+const {VALOR_PADRAO_LOOP_CENTAVOS}=require('./valor-padrao-loop');
+const RESERVA_REFERENCIAL_LOOP=VALOR_PADRAO_LOOP_CENTAVOS;
 const ID=/^[a-z0-9][a-z0-9-]{2,70}$/;
 const PRODUTO=/^[a-z0-9-]{3,80}$/;
 function falha(codigo,mensagem){const e=new Error(mensagem);e.codigo=codigo;return e;}
@@ -77,7 +78,7 @@ class PlanejamentoVendasFisicasDemoSQLite{
     revisao_custo_teste INTEGER NOT NULL,
     preco_catalogo_centavos INTEGER NOT NULL CHECK(preco_catalogo_centavos>0),
     custo_fornecedor_teste_centavos INTEGER NOT NULL CHECK(custo_fornecedor_teste_centavos>0),
-    reserva_referencial_loop_centavos INTEGER NOT NULL CHECK(reserva_referencial_loop_centavos=10000),
+    reserva_referencial_loop_centavos INTEGER NOT NULL CHECK(reserva_referencial_loop_centavos=25000),
     margem_bruta_preliminar_centavos INTEGER NOT NULL CHECK(margem_bruta_preliminar_centavos>0),
     criado_em TEXT NOT NULL,
     CHECK(preco_catalogo_centavos =
