@@ -81,7 +81,7 @@ function criarVisaoFinanceiraAdminDemo({modo=MODOS.SPLIT,vendas=EXEMPLOS}={}){
     if(modo===MODOS.RESERVA)acumulado[COFRES.DISTRIBUIDOR]=somar([acumulado[COFRES.DISTRIBUIDOR],v.fornecedorCentavos]);
     acumulado[destinoCiclo]=somar([acumulado[destinoCiclo],v.parcelaLoopCentavos]);
     acumulado[COFRES.COMERCIAL]=somar([acumulado[COFRES.COMERCIAL],sobra]);
-    registrar(v.vendaId,fornecedorDestino,modo===MODOS.SPLIT?'SPLIT_EXTERN0_PREVISTO':'FORNECEDOR_RESERVADO',v.fornecedorCentavos);
+    registrar(v.vendaId,fornecedorDestino,modo===MODOS.SPLIT?'SPLIT_EXTERNO_PREVISTO':'FORNECEDOR_RESERVADO',v.fornecedorCentavos);
     registrar(v.vendaId,destinoCiclo,'PARCELA_LOOP_PREVISTA',v.parcelaLoopCentavos);
     registrar(v.vendaId,COFRES.COMERCIAL,'SOBRA_BRUTA_COMERCIAL',sobra);
     vendasConferidas.push({
