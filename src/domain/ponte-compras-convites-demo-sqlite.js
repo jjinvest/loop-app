@@ -4,6 +4,7 @@
 // verificador INJETADO NO SERVIDOR, nunca de um corpo HTTP. Nao e PSP.
 const { SimuladorLoop }=require('./simulador-loop');
 const { STATUS_CONFIRMADO }=require('./processador-pedidos-simulados');
+const {VALOR_PADRAO_LOOP_CENTAVOS}=require('./valor-padrao-loop');
 
 function falha(codigo,mensagem){
  const e=new Error(mensagem);e.codigo=codigo;return e;
@@ -160,6 +161,9 @@ class PonteComprasConvitesDemoSQLite{
   const comprovante=validarComprovante(
    await this.verificador(pedidoId),pedidoId
   );
+  if(comprovante.valorCentavos<VALOR_PADRAO_LOOP_CENTAVOS){
+   throw falha('MINIMO_CARRINHO','Compra ficticia abaixo de R$250 nao gera posicao');
+  }
   this.banco.exec('BEGIN IMMEDIATE');
   try{
    // A identidade do pedido precisa existir ANTES da compra. O
