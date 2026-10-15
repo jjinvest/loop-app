@@ -24,6 +24,33 @@ registros financeiros e configuracoes futuras.
 As alteracoes administrativas devem ser versionadas,
 autorizadas e auditadas. Cliente nao ve os controles internos.
 
+**Esclarecimento adicional da loja (15/10/2026):**
+o painel administrativo da operacao comercial deve destacar
+a sobra/margem comercial BRUTA apos separar o fornecedor
+e a parcela referencial do LOOP. Exemplo ja discutido:
+R$600 de venda - R$300 de fornecimento - R$100 de
+referencia ao LOOP = R$200 brutos antes de impostos,
+taxas, garantias, estornos e demais obrigacoes.
+Nao tratar isso como lucro liquido ou saldo livre pessoal.
+
+**Registros comerciais e financeiros completos ficam
+sob VISUALIZACAO E GESTAO ADMINISTRATIVA**, inclusive
+valor total vendido, custo/repasse do fornecedor,
+parcela do LOOP, margem bruta, tributos, tarifas,
+saldos efetivamente liquidados, compromissos,
+reservas, saidas e eventuais retornos. Registros
+de auditoria devem ser imutaveis; correcoes sao
+novos lancamentos rastreaveis e autorizados,
+nao alteracoes escondidas no passado.
+
+O cliente pode acessar SEUS proprios pedidos,
+pagamentos, estornos, indicacoes, creditos e
+historico individual conforme o modulo aplicavel,
+sem acesso a margem comercial e registros gerais.
+Essa divisao de permissao vale para consultas,
+relatorios, exportacoes e APIs, nao apenas telas.
+Ver `docs/ARQUITETURA_FINANCEIRA_CAIXAS_E_SPLIT.md`.
+
 ## 2. Identidade permanente da posicao e letra da fila
 
 - **Numero nunca muda**: posicao 200 na fila B e identificada
