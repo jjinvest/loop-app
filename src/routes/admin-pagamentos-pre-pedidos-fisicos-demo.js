@@ -3,6 +3,7 @@
 // Uso estritamente LOCAL, no painel administrativo do laboratorio.
 const express=require('express');
 const {criarAutorizacao}=require('./admin-catalogo-laboratorio');
+const {auditarPrePedidosFisicosDemo}=require('../domain/auditoria-pre-pedidos-fisicos-demo');
 function falhaHttp(e,res){
  if(e.codigo==='INVALIDO')return res.status(400).json({erro:'EVENTO_FINANCEIRO_FICTICIO_INVALIDO'});
  if(e.codigo==='CONFLITO')return res.status(409).json({erro:'PAGAMENTO_FICTICIO_EM_CONFLITO'});
@@ -14,6 +15,12 @@ function criarRouterPagamentosPrePedidosFisicosDemo({segredo,pagamentos}={}){
  r.use(criarAutorizacao({segredo}));
  r.use((_req,res,next)=>{res.set('Cache-Control','no-store');next();});
  r.get('/pagamentos-pre-pedidos-fisicos-demo',(_req,res)=>res.json(pagamentos.listar()));
+ // Conferencia consolidada somente de leitura, sem expor auditoria ao cliente.
+ r.get('/pagamentos-pre-pedidos-fisicos-demo/auditoria',(_req,res)=>{
+  return res.json(auditarPrePedidosFisicosDemo({
+   planejamento:pagamentos.planejamento,pagamentos
+  }));
+ });
  r.get('/pagamentos-pre-pedidos-fisicos-demo/:id/historico',(req,res)=>{
   try{
    const c=pagamentos.buscar(req.params.id);
