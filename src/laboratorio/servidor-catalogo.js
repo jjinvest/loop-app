@@ -24,6 +24,8 @@ const { criarRouterPagamentosPrePedidosFisicosDemo } = require('../routes/admin-
 const { PedidosPDFPagamentosDemoSQLite } = require('../domain/pedidos-pdf-pagamentos-demo-sqlite');
 const { criarRouterPedidosPDFDemo } = require('../routes/admin-pedidos-pdf-demo');
 const { criarRouterEscritorioDemo } = require('../routes/admin-escritorio-demo');
+const { ContasParticipantesDemoSQLite } = require('../domain/contas-participantes-demo-sqlite');
+const { criarRouterContasParticipantesDemo } = require('../routes/admin-contas-participantes-demo');
 const { criarRouterFinanceiroAdminDemo } = require('../routes/admin-financeiro-demo');
 const { RepositorioAparenciaCofresSQLite } = require('../domain/repositorio-aparencia-cofres-sqlite');
 const { RazaoFinanceiroDemoSQLite } = require('../domain/razao-financeiro-demo-sqlite');
@@ -76,6 +78,14 @@ function criarAppAdminLaboratorio({ repositorio, segredo, webhookDemo } = {}) {
     segredo, repositorio:pedidosLogisticaDemo
   }));
   app.use('/api/admin', criarRouterEscritorioDemo({ segredo }));
+  // Cadastro de pessoas APENAS FICTICIAS: sem CPF, confirmacao de compra,
+  // sessao publica, codigo validado de fila ou movimentacao de catraca.
+  if(repositorio instanceof RepositorioCatalogoSQLite){
+    const contasDemo=new ContasParticipantesDemoSQLite({banco:repositorio.banco});
+    app.use('/api/admin',criarRouterContasParticipantesDemo({
+      segredo,contas:contasDemo
+    }));
+  }
   const configuracaoCofres = repositorio instanceof RepositorioCatalogoSQLite
     ? new RepositorioAparenciaCofresSQLite({ banco:repositorio.banco })
     : null;
@@ -149,6 +159,15 @@ function criarAppAdminLaboratorio({ repositorio, segredo, webhookDemo } = {}) {
   });
   app.get('/admin/financeiro-demo.css', somenteLocal, (req, res) => {
     res.type('text/css').sendFile(path.join(__dirname,'financeiro-admin-demo.css'));
+  });
+  app.get('/admin/cadastro-participantes-demo', somenteLocal, (req, res) => {
+    res.sendFile(path.join(__dirname,'cadastro-participantes-demo.html'));
+  });
+  app.get('/admin/cadastro-participantes-demo.js', somenteLocal, (req, res) => {
+    res.type('application/javascript').sendFile(path.join(__dirname,'cadastro-participantes-demo.js'));
+  });
+  app.get('/admin/cadastro-participantes-demo.css', somenteLocal, (req, res) => {
+    res.type('text/css').sendFile(path.join(__dirname,'cadastro-participantes-demo.css'));
   });
   app.get('/admin/escritorio-demo', somenteLocal, (req, res) => {
     res.sendFile(path.join(__dirname, 'escritorio-demo.html'));
