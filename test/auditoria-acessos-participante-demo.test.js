@@ -188,3 +188,20 @@ test('relatorio de acesso exige token admin, nao aceita consulta arbitraria e na
  assert.equal((await fetch('http://127.0.0.1:'+publico.address().port+
   '/api/admin/auditoria-acessos-participante-demo')).status,404);
 });
+
+test('painel admin exibe resumo agregado sem credenciais ou nomes nos eventos',async t=>{
+ const m=preparar(t);
+ const base=await servidor(t,m.repo);
+ const h=await fetch(base+'/admin/cadastro-participantes-demo');
+ assert.equal(h.status,200);
+ const html=await h.text();
+ assert.match(html,/id="resumoAuditoriaDemo"/);
+ assert.match(html,/Auditoria de acesso individual/);
+ const script=await fetch(base+'/admin/cadastro-participantes-demo.js');
+ assert.equal(script.status,200);
+ const js=await script.text();
+ assert.match(js,/auditoria-acessos-participante-demo/);
+ assert.match(js,/resumoAuditoriaDemo/);
+ assert.match(js,/LOGIN_BLOQUEADO/);
+ assert.doesNotMatch(js,/innerHTML|localStorage|sessionStorage/);
+});
