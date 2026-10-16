@@ -18,6 +18,16 @@
   e('estadoAtivacaoParticipante').textContent='';
   e('posicoesParticipante').replaceChildren();
   e('pedidosParticipante').replaceChildren();
+  e('enderecoLinkParticipante').value='';
+  e('copiarLinkParticipante').disabled=true;
+  e('statusLinkIndicacaoParticipante').textContent='';
+  e('avisoLinkParticipante').textContent='';
+  e('bonusSaldoParticipante').textContent='R$ 0,00';
+  e('bonusQuantidadeParticipante').textContent='0';
+  e('bonusPercentualParticipante').textContent='10%';
+  e('bonusMinimoParticipante').textContent='R$ 100,00';
+  e('bonusSaqueStatusParticipante').textContent='';
+  e('bonusHistoricoParticipante').replaceChildren();
   e('historicoPedidosLojaParticipante').replaceChildren();
   e('totalPedidosLojaParticipante').textContent='0';
   e('aguardandoPedidosLojaParticipante').textContent='0';
@@ -225,7 +235,24 @@
  }
   function mostrar(visao){
   e('nomeLogadoParticipante').textContent=visao.conta.nome+' — meu resumo';
-  e('conviteParticipante').textContent='Meu código de convite fictício: '+visao.conta.codigoConvite;
+  const link=visao.linkIndicacao;
+  e('enderecoLinkParticipante').value=location.origin+link.link;
+  e('apelidoLinkParticipante').value=link.apelido==='meu-loop'?'':link.apelido;
+  e('copiarLinkParticipante').disabled=!link.ativo;
+  e('statusLinkIndicacaoParticipante').textContent=link.ativo?
+   'Link ATIVO: você pode divulgar e receber bonificações por posições qualificadas de indicados.':
+   'Link INATIVO: faça uma compra confirmada de qualquer valor na loja. Não precisa ter posição no LOOP.';
+  const bonus=visao.bonusIndicacoes;
+  e('bonusSaldoParticipante').textContent=dinheiro(bonus.totalSimuladoCentavos);
+  e('bonusQuantidadeParticipante').textContent=String(bonus.quantidade);
+  e('bonusPercentualParticipante').textContent=bonus.porcentagemAtual.percentual+'%';
+  e('bonusMinimoParticipante').textContent=dinheiro(bonus.minimoSaqueCentavos);
+  e('bonusSaqueStatusParticipante').textContent=bonus.atingiuMinimoSaque?
+   'Mínimo de R$ 100 alcançado. Saque real ainda indisponível no laboratório.':
+   'Faltam '+dinheiro(bonus.faltaParaMinimoCentavos)+' para alcançar o mínimo de saque.';
+  lista('bonusHistoricoParticipante',bonus.registros,p=>
+   'Posição #'+p.posicaoId+' · '+p.percentual+'% de '+
+   dinheiro(p.valorBaseCentavos)+' = '+dinheiro(p.valorCentavos)+' · Caixa reserva');
   e('ativasParticipante').textContent=visao.posicoes.length+' / '+visao.limitePosicoesAtivas;
   e('vagasParticipante').textContent=visao.vagasLivres;
   e('indicacoesParticipante').textContent=visao.indicacoes.comprasConfirmadasFicticias;
@@ -329,6 +356,26 @@
   });
  }
  atualizarControlesMapa();
+ e('copiarLinkParticipante').addEventListener('click',async()=>{
+  if(e('copiarLinkParticipante').disabled)return;
+  try{
+   await navigator.clipboard.writeText(e('enderecoLinkParticipante').value);
+   e('avisoLinkParticipante').textContent='Link copiado para divulgação.';
+  }catch{
+   e('enderecoLinkParticipante').focus();e('enderecoLinkParticipante').select();
+   e('avisoLinkParticipante').textContent='Selecione e copie o endereço acima.';
+  }
+ });
+ e('formApelidoLinkParticipante').addEventListener('submit',async ev=>{
+  ev.preventDefault();const botao=e('salvarApelidoLinkParticipante');
+  botao.disabled=true;
+  try{
+   await chamada('meu-link',{apelido:e('apelidoLinkParticipante').value});
+   await atualizar();
+   e('avisoLinkParticipante').textContent='Nome do link atualizado; rastreamento preservado.';
+  }catch(err){e('avisoLinkParticipante').textContent=err.message;}
+  finally{botao.disabled=false;}
+ });
  e('atualizarParticipante').addEventListener('click',atualizar);
  atualizar();
 })();
