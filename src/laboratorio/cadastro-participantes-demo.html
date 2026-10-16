@@ -33,7 +33,7 @@
     <div id="areaCadastroDemo" hidden>
       <section class="painel">
         <h2>Criar conta fictícia</h2>
-        <p class="ajuda">Cadastro com nome, e-mail e senha. O nome cadastrado é o nome usado depois no login. O código de convite vem preenchido automaticamente quando esta página é aberta por um link de indicação.</p>
+        <p class="ajuda">Cadastro com nome, telefone, e-mail e senha. O nome cadastrado é o nome usado depois no login. O código de convite vem preenchido automaticamente quando esta página é aberta por um link de indicação.</p>
         <form id="formContaDemo" autocomplete="off">
           <div class="campo">
             <label for="nomeContaDemo">Nome de acesso (único)</label>
@@ -42,6 +42,11 @@
           <div class="campo">
             <label for="emailContaDemo">E-mail fictício</label>
             <input id="emailContaDemo" type="email" required maxlength="254" autocomplete="off" placeholder="conta1@exemplo.invalid">
+          </div>
+          <div class="campo">
+            <label for="telefoneContaDemo">Telefone brasileiro fictício com DDD</label>
+            <input id="telefoneContaDemo" type="tel" required maxlength="24" autocomplete="off" placeholder="(24) 99999-1234" inputmode="tel">
+            <p class="ajuda">Use somente número inventado no laboratório. CPF fica para a ativação da posição azul.</p>
           </div>
           <div class="campo">
             <label for="senhaContaDemo">Senha de demonstração (mínimo 10 caracteres)</label>
