@@ -6,6 +6,7 @@
 // atomica com os lancamentos de laboratorio no livro financeiro.
 const {COFRES,MODOS}=require('./financeiro-admin-demo');
 const {DESTINOS}=require('./tabuleiro-loop');
+const {VENDAS_POR_CICLO}=require('./valor-padrao-loop');
 // Limite de 63 caracteres: IDs internos adicionam prefixos contabil-/receb-.
 const ID=/^[a-z0-9][a-z0-9-]{2,62}$/;
 const TIPOS=Object.freeze({
@@ -13,7 +14,7 @@ const TIPOS=Object.freeze({
   ESTORNAR:'ESTORNAR_FICTICIO'
 });
 const POSICOES=Object.freeze([
-  COFRES.CENTRO,COFRES.ESQUERDA,COFRES.CENTRO,COFRES.DIREITA,COFRES.CENTRO
+  COFRES.CENTRO,COFRES.ESQUERDA,COFRES.CENTRO,COFRES.DIREITA,COFRES.CENTRO,COFRES.ESQUERDA
 ]);
 function erro(codigo,mensagem){
   const e=new Error(mensagem);
@@ -26,13 +27,14 @@ function validarId(id){
   }
 }
 function validarDestino(){
-  if(DESTINOS.length!==5||POSICOES.some((p,i)=>
-    (p===COFRES.CENTRO)!==(DESTINOS[i]==='PARTICIPANTE'))){
+  if(DESTINOS.length!==VENDAS_POR_CICLO||POSICOES.some((p,i)=>
+    (p===COFRES.CENTRO)!==(DESTINOS[i]==='PARTICIPANTE')||
+     (DESTINOS[i]==='EMPRESA_INVESTIMENTO'&&p!==COFRES.ESQUERDA))){
     throw new Error('Premissa do tabuleiro e do financeiro divergiu');
   }
 }
 const FATURAS=Object.freeze([
-  ...Array.from({length:5},(_,i)=>Object.freeze({
+  ...Array.from({length:VENDAS_POR_CICLO},(_,i)=>Object.freeze({
     pagamentoId:'pag-split-'+(i+1).toString().padStart(2,'0'),
     cicloDemo:'split',ordemCiclo:i+1,modo:MODOS.SPLIT,
     valorCentavos:60000,fornecedorCentavos:30000,
