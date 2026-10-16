@@ -326,7 +326,7 @@ class PonteComprasConvitesDemoSQLite{
    }
    // A promocao exige uma posicao PRÓPRIA do indicador, ainda na fila
    // ou no tabuleiro e comprada ate a confirmacao do indicado.
-   // CPF e aceite alteram apenas a cor; nao definem ingresso no LOOP.
+   // CPF e aceite liberam bonus; cadeira propria determina percentual superior.
    let posicaoAtivaIndicadorId=null;
    if(conta.indicadoPorId){
     const candidatas=[
@@ -342,11 +342,22 @@ class PonteComprasConvitesDemoSQLite{
      if(adquirida){posicaoAtivaIndicadorId=p.id;break;}
     }
    }
+   const aceiteAnterior=this.linksComissoes.adesaoVigente(conta.contaId,comprovante.confirmadoEm);
    const posicao=simulador.registrarPosicaoSimulada({
     nome:conta.nome,participanteId:conta.contaId,
-    vendaId:'compra-demo-'+pedidoId,adesaoPendente:true
+    vendaId:'compra-demo-'+pedidoId,adesaoPendente:!aceiteAnterior
    });
    if(posicao.repetida)throw new Error('Estado simulado e comprovantes divergentes');
+   // Quem ja aceitou CPF e termos nao precisa preencher o formulario outra vez.
+   if(aceiteAnterior){
+    const nova=simulador.filas.filaB.find(p=>p.id===posicao.posicao.id);
+    nova.statusAdesao='ATIVA';nova.ativadaEm=comprovante.confirmadoEm;
+    posicao.posicao.statusAdesao='ATIVA';posicao.posicao.ativadaEm=comprovante.confirmadoEm;
+    this.banco.prepare(`
+     INSERT INTO admin_loop_adesoes_posicoes_demo(posicao_id,conta_id,ativada_em)
+     VALUES (?,?,?)
+    `).run(nova.id,conta.contaId,comprovante.confirmadoEm);
+   }
    this.banco.prepare(`
     INSERT INTO admin_ponte_compras_demo
     (pedido_id,conta_id,produto_id,valor_centavos,confirmado_em,posicao_id)
@@ -413,7 +424,7 @@ class PonteComprasConvitesDemoSQLite{
     filaAtual:simulador.filas.filaA.some(p=>p.id===posicao.posicao.id)?'A':'B',
     compraElegivelLoop:true,posicaoCriada:true,vendaLojaRegistrada:true,
     valorElegivelLoopCentavos:comprovante.valorElegivelLoopCentavos,
-    statusAdesao:'PENDENTE',
+    statusAdesao:aceiteAnterior?'ATIVA':'PENDENTE',
      valorReferenciaPosicaoCentavos:referenciaVigente.valorCentavos,
     revisaoValorPosicao:referenciaVigente.revisao,
     movimentouCatraca:false,registrouPagamentoReal:false
