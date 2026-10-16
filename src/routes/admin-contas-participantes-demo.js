@@ -46,7 +46,7 @@ function criarRouterContasParticipantesDemo({segredo,contas}={}){
   }catch(erro){return erroHttp(erro,res,next);}
  });
  router.post('/contas-participantes-demo/cadastrar',(req,res,next)=>{
-  if(!corpoEstrito(req.body,['nome','email','senha'],['codigoIndicador'])){
+  if(!corpoEstrito(req.body,['nome','email','senha'],['codigoIndicador','telefone'])){
    return res.status(400).json({erro:'CAMPOS_CADASTRO_DE_TESTE_INVALIDOS'});
   }
   try{
