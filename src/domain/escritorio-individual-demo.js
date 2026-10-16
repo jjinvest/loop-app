@@ -2,7 +2,7 @@
 
 // Projecao individual do laboratorio; nunca retorna a lista geral do admin.
 // Sem consulta financeira real, CPF, entrega, saque ou autorizacao de pedido.
-const LIMITE_ATIVAS=5;
+const LIMITE_ATIVAS=6;
 
 function posicoesTitular(sim,contaId){
  const f=sim.filas,t=sim.tabuleiro;
