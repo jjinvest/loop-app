@@ -220,7 +220,7 @@ test('setimo pedido identificado nao supera seis posicoes ativas, sem recibo par
   const p=preparar(m,{pedidoId:'cap-'+i,contaId:titular.contaId,valorCentavos:25000+i});
   assert.equal((await confirmar(m,p)).criado,true);
  }
- const sexto=preparar(m,{pedidoId:'cap-6',contaId:titular.contaId});
+ const sexto=preparar(m,{pedidoId:'cap-7',contaId:titular.contaId});
  await assert.rejects(confirmar(m,sexto),e=>e.codigo==='LIMITE_ATIVO');
  const estado=m.ponte.consultar();
  assert.equal(estado.compras.length,6);
