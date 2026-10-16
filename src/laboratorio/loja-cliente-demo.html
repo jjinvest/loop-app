@@ -22,6 +22,14 @@
   </section>
   <p id="estadoLojaLoop" role="status" aria-live="polite">Conferindo seu acesso ao laboratório...</p>
   <div id="conteudoLojaLoop" hidden>
+   <section class="painel-loja-loop" aria-labelledby="tituloDivulgarLojaLoop">
+    <h2 id="tituloDivulgarLojaLoop">Divulgar esta Loja</h2>
+    <p>Copie o link da loja para seus contatos. É o mesmo código pessoal de indicação utilizado no Escritório.</p>
+    <label for="enderecoDivulgarLojaLoop">Meu link da Loja</label>
+    <input type="text" id="enderecoDivulgarLojaLoop" readonly autocomplete="off" spellcheck="false">
+    <button type="button" id="copiarDivulgarLojaLoop" disabled>Copiar link da Loja</button>
+    <p id="statusDivulgarLojaLoop" role="status" aria-live="polite"></p>
+   </section>
    <section aria-labelledby="tituloCatalogoLoja">
     <div class="cabecalho-secao-loja">
      <div>
@@ -34,7 +42,7 @@
    </section>
    <section class="painel-loja-loop" aria-labelledby="tituloCarrinhoLoja">
     <h2 id="tituloCarrinhoLoja">Meu carrinho</h2>
-    <p>Você pode combinar produtos e quantidades no mesmo pedido. Uma compra qualificada cria apenas uma posição após a confirmação fictícia.</p>
+    <p>Você pode combinar produtos e quantidades no mesmo pedido. Uma compra qualificada cria uma posição por padrão; somente produtos especiais configurados podem criar cinco posições, respeitando o limite da conta.</p>
     <div id="itensLojaLoop"></div>
     <p id="totalLojaLoop" class="total-loja-loop">Total: R$ 0,00</p>
     <button type="button" id="registrarPedidoLoja" disabled>Registrar pedido de demonstração</button>
