@@ -200,6 +200,54 @@
         <ol id="historicoEventoPDFDemo" class="financeiro-historico" aria-live="polite"></ol>
         <p class="ajuda" id="auditoriaMaterialPDFDemo">Solicitações de download fictício: 0</p>
       </section>
+      <section class="painel" aria-labelledby="tituloCarrinhoLoopDemo">
+        <h2 id="tituloCarrinhoLoopDemo">Carrinho com vários produtos — LOOP laboratório</h2>
+        <p class="aviso-demo">Um único pedido soma os itens pelo preço do catálogo. A compra fictícia confirmada gera UMA posição azul ao atingir o mínimo vigente do LOOP. Compras separadas não se acumulam. Não há cobrança ou entrega real.</p>
+        <form id="formCarrinhoLoopDemo" autocomplete="off">
+          <div class="duas-colunas">
+            <div class="campo">
+              <label for="pedidoCarrinhoLoopDemo">Identificador do pedido fictício</label>
+              <input id="pedidoCarrinhoLoopDemo" required maxlength="70" pattern="[a-z0-9][a-z0-9-]{2,69}" placeholder="ex: carrinho-001" spellcheck="false">
+            </div>
+            <div class="campo">
+              <label for="contaCarrinhoLoopDemo">Comprador fictício cadastrado</label>
+              <select id="contaCarrinhoLoopDemo" required></select>
+            </div>
+          </div>
+          <div id="itensCarrinhoLoopDemo" class="financeiro-conciliacao" aria-label="Itens do carrinho"></div>
+          <button id="adicionarItemCarrinhoLoopDemo" type="button" class="secundario">Adicionar item ao carrinho</button>
+          <p id="totalCarrinhoLoopDemo" class="ajuda" aria-live="polite">Total do carrinho: R$ 0,00</p>
+          <button id="salvarCarrinhoLoopDemo" type="submit">Registrar pedido de teste</button>
+        </form>
+        <p id="statusCarrinhoLoopDemo" class="estado-admin" role="status" aria-live="polite"></p>
+        <div class="acoes-admin">
+          <button type="button" id="atualizarCarrinhosLoopDemo" class="secundario">Atualizar pedidos do carrinho</button>
+        </div>
+        <div id="listaCarrinhosLoopDemo" class="financeiro-conciliacao" aria-live="polite"></div>
+        <h3>Confirmar pagamento fictício e gerar posição</h3>
+        <form id="formEventoCarrinhoLoopDemo" autocomplete="off">
+          <div class="duas-colunas">
+            <div class="campo">
+              <label for="pedidoEventoCarrinhoLoopDemo">Pedido do carrinho</label>
+              <select id="pedidoEventoCarrinhoLoopDemo" required></select>
+            </div>
+            <div class="campo">
+              <label for="tipoEventoCarrinhoLoopDemo">Evento fictício</label>
+              <select id="tipoEventoCarrinhoLoopDemo">
+                <option value="CONFIRMAR_FICTICIO">Confirmar ficticiamente</option>
+                <option value="ESTORNAR_FICTICIO">Estornar ficticiamente</option>
+              </select>
+            </div>
+          </div>
+          <div class="campo">
+            <label for="idEventoCarrinhoLoopDemo">Identificador único do evento</label>
+            <input id="idEventoCarrinhoLoopDemo" required maxlength="70" pattern="[a-z0-9][a-z0-9-]{2,69}" placeholder="ex: confirmar-carrinho-001">
+          </div>
+          <button id="registrarEventoCarrinhoLoopDemo" type="submit">Registrar evento fictício</button>
+        </form>
+        <p id="statusEventoCarrinhoLoopDemo" class="estado-admin" role="status" aria-live="polite"></p>
+        <button id="sincronizarCarrinhoLoopDemo" type="button" class="secundario">Conferir sincronização com a fila</button>
+      </section>
       <section class="painel" aria-labelledby="tituloPlanejamentoFisicoDemo">
         <h2 id="tituloPlanejamentoFisicoDemo">Planejamento de vendas físicas — laboratório</h2>
         <p class="aviso-demo">Informe um CUSTO HIPOTÉTICO do fornecedor para testar preços variados. O quadro separa preço, custo, referência de R$ 100 para o LOOP e margem BRUTA preliminar (antes de taxas e impostos). Não é cotação contratada, venda ou distribuição financeira real.</p>
