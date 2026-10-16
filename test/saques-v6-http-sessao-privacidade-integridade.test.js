@@ -40,7 +40,7 @@ test('API de saque exige sessao, valida origem, reserva uma vez e nao revela sal
  const url='http://127.0.0.1:'+servidor.address().port+'/api/laboratorio/participante';
  const cabeca={'Content-Type':'application/json','X-LOOP-LAB':'participante'};
  async function chamar(caminho,{method='GET',cookie=null,body=null,header=cabeca}={}){
-  const res=await fetch(url+caminho,{method,headers:{...header,...cookie?{Cookie:cookie}:{}},
+  const res=await fetch(url+caminho,{method,headers:{...header,...(cookie?{Cookie:cookie}:{})},
    ...(body===null?{}:{body:JSON.stringify(body)})});
   return {status:res.status,body:await res.json(),headers:res.headers};
  }
