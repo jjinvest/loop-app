@@ -193,6 +193,30 @@ class PonteComprasConvitesDemoSQLite{
     BEFORE DELETE ON admin_ponte_convites_validados_demo
     BEGIN SELECT RAISE(ABORT,'convites demo imutaveis'); END;
   `);
+  // Livro das posicoes adicionais: ampliar CHECK sem tocar os pedidos antigos.
+  const antiga=this.banco.prepare("SELECT sql FROM sqlite_master WHERE type='table' AND name='admin_ponte_posicoes_adicionais_demo'").get()?.sql||'';
+  if(antiga.includes('BETWEEN 2 AND 5')){
+   this.banco.exec('BEGIN IMMEDIATE');
+   try{
+    this.banco.exec(`CREATE TABLE admin_ponte_posicoes_adicionais_demo_v6(
+     pedido_id TEXT NOT NULL REFERENCES admin_ponte_compras_demo(pedido_id) ON DELETE RESTRICT,
+     ordem INTEGER NOT NULL CHECK(ordem BETWEEN 2 AND 6),
+     posicao_id INTEGER NOT NULL UNIQUE CHECK(posicao_id>0),
+     PRIMARY KEY(pedido_id,ordem))`);
+    this.banco.exec('INSERT INTO admin_ponte_posicoes_adicionais_demo_v6 SELECT * FROM admin_ponte_posicoes_adicionais_demo');
+    this.banco.exec('DROP TABLE admin_ponte_posicoes_adicionais_demo');
+    this.banco.exec('ALTER TABLE admin_ponte_posicoes_adicionais_demo_v6 RENAME TO admin_ponte_posicoes_adicionais_demo');
+    this.banco.exec('COMMIT');
+   }catch(e){this.banco.exec('ROLLBACK');throw e;}
+  }
+  this.banco.exec(`
+   CREATE TRIGGER IF NOT EXISTS admin_ponte_posicoes_adicionais_no_update
+    BEFORE UPDATE ON admin_ponte_posicoes_adicionais_demo
+    BEGIN SELECT RAISE(ABORT,'pacote de posicoes imutavel'); END;
+   CREATE TRIGGER IF NOT EXISTS admin_ponte_posicoes_adicionais_no_delete
+    BEFORE DELETE ON admin_ponte_posicoes_adicionais_demo
+    BEGIN SELECT RAISE(ABORT,'pacote de posicoes imutavel'); END;
+  `);
   // Para bancos do laboratorio criados antes desta atualizacao:
   // atribui a referencia historica unica R$250, sem alterar pedidos.
   banco.prepare(`
@@ -328,15 +352,15 @@ class PonteComprasConvitesDemoSQLite{
      ON e.pedido_id=k.pedido_id AND e.ordem=k.ordem
     JOIN admin_carrinho_item_quantidade_minima_demo q
      ON q.pedido_id=k.pedido_id AND q.ordem=k.ordem
-    WHERE k.pedido_id=? AND k.posicoes_por_pedido=6
+    WHERE k.pedido_id=? AND k.posicoes_por_pedido IN (5,6)
      AND e.elegivel_loop=1 AND i.quantidade>=q.quantidade_minima
    `).all(pedidoId):[];
-   const quantidadePosicoes=pacote.length?6:1;
+   const quantidadePosicoes=pacote.length?Math.max(...pacote.map(p=>p.quantidade)):1;
    // Uma cadeira do pacote gera seu proprio ciclo; exigir ao menos seis
    // referencias no subtotal do(s) produto(s) ESPECIAIS, antes de custos.
-   if(quantidadePosicoes===6&&
-    pacote.reduce((v,p)=>v+p.elegivel,0)<6*referenciaVigente.valorCentavos)
-    throw falha('PACOTE_VALOR_INSUFICIENTE','Pacote de seis posicoes abaixo de seis referencias LOOP');
+   if(quantidadePosicoes>1&&
+    pacote.reduce((v,p)=>v+p.elegivel,0)<quantidadePosicoes*referenciaVigente.valorCentavos)
+    throw falha('PACOTE_VALOR_INSUFICIENTE','Pacote de posicoes abaixo do numero de referencias LOOP');
    const conta=this.contas.buscar(comprovante.contaId);
    if(!conta)throw falha('CONTA_DESCONHECIDA','Conta ficticia nao cadastrada');
    if(comprovante.valorElegivelLoopCentavos<referenciaVigente.valorCentavos){
