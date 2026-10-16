@@ -106,7 +106,7 @@ function criarRouterParticipanteDemo({contas,ponte,sessoes=null,adesoes=null,car
   }catch(err){
    if(['ACEITE_TERMOS_OBRIGATORIO','CPF_FICTICIO_INVALIDO','CONTA_INVALIDA'].includes(err.codigo))
     return res.status(400).json({erro:err.codigo});
-   if(['CPF_JA_FIXADO_NA_CONTA','CPF_JA_ASSOCIADO','NENHUMA_POSICAO_AZUL_NA_FILA'].includes(err.codigo))
+   if(['CPF_JA_FIXADO_NA_CONTA','CPF_JA_ASSOCIADO','COMPRA_INICIAL_OBRIGATORIA','ADESAO_JA_REALIZADA'].includes(err.codigo))
     return res.status(409).json({erro:err.codigo});
    return next(err);
   }
