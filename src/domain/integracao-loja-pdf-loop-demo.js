@@ -73,6 +73,7 @@ class IntegracaoLojaPDFLoopDemo{
   return {
    pedidoId,contaId:vinculo.contaId,
    produtoId:vinculo.produtoId,valorCentavos:vinculo.valorCentavos,
+   valorElegivelLoopCentavos:pdf.valorElegivelLoopCentavos,
    intentoPagamentoId:vinculo.intentoPagamentoId,
    confirmadoEm:primeiro.registradoEm,status:STATUS_CONFIRMADO
   };
