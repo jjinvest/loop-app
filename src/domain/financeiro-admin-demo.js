@@ -5,6 +5,7 @@
 // Nao controla nem altera a catraca existente. Ela apenas fornece o padrao
 // de destinos ja acordado, importado do modulo de simulacao.
 const { DESTINOS } = require('./tabuleiro-loop');
+const {cofreDoEvento,centroDoLoop,origemDoCentro,COFRE_DOURADAS}=require('./destino-financeiro-centro-loop');
 const { VALOR_PADRAO_LOOP_CENTAVOS,VENDAS_POR_CICLO } = require('./valor-padrao-loop');
 
 const MODOS = Object.freeze({
@@ -13,6 +14,7 @@ const MODOS = Object.freeze({
 });
 const COFRES = Object.freeze({
   CENTRO:'LOOP_CENTRO',
+  DOURADAS:COFRE_DOURADAS,
   ESQUERDA:'LOOP_ESQUERDA',
   DIREITA:'LOOP_DIREITA',
   COMERCIAL:'LOJA_COMERCIAL',
@@ -21,6 +23,7 @@ const COFRES = Object.freeze({
 const TITULOS = Object.freeze({
   [COFRES.ESQUERDA]:'Investimento LOOP',
   [COFRES.CENTRO]:'Bonificacoes e participacao dos clientes',
+  [COFRES.DOURADAS]:'Posicoes douradas e desistentes assumidas pelo LOOP',
   [COFRES.DIREITA]:'Reserva de suporte LOOP',
   [COFRES.COMERCIAL]:'Sobra bruta comercial',
   [COFRES.DISTRIBUIDOR]:'Reserva para pagar distribuidor'
@@ -42,8 +45,10 @@ function somar(valores){
   },0);
 }
 function criarVisaoFinanceiraAdminDemo({
- modo=MODOS.SPLIT,vendas,parcelaReferenciaCentavos=VALOR_PADRAO_LOOP_CENTAVOS
+ modo=MODOS.SPLIT,vendas,centroPosicao=null,parcelaReferenciaCentavos=VALOR_PADRAO_LOOP_CENTAVOS
 }={}){
+  if(centroPosicao!==null&&(!centroPosicao||typeof centroPosicao!=='object'||
+    Array.isArray(centroPosicao)))throw new Error('Posicao central demonstrativa invalida');
   if(!Number.isSafeInteger(parcelaReferenciaCentavos)||
      parcelaReferenciaCentavos<100||parcelaReferenciaCentavos>100000000){
     throw new Error('Referencia financeira de laboratorio invalida');
@@ -60,8 +65,9 @@ function criarVisaoFinanceiraAdminDemo({
     throw new Error('Cenario requer os seis eventos ficticios do ciclo');
   }
   const IDs=new Set();
-  const caixaCiclo=[COFRES.CENTRO,COFRES.ESQUERDA,COFRES.CENTRO,COFRES.DIREITA,COFRES.CENTRO,COFRES.ESQUERDA];
-  const caixasIds=[COFRES.ESQUERDA,COFRES.CENTRO,COFRES.DIREITA,COFRES.COMERCIAL];
+  const caixaCiclo=Array.from({length:VENDAS_POR_CICLO},(_,i)=>
+   cofreDoEvento({posicaoCentro:centroPosicao,ordem:i+1}));
+  const caixasIds=[COFRES.ESQUERDA,COFRES.CENTRO,COFRES.DIREITA,COFRES.DOURADAS,COFRES.COMERCIAL];
   if(modo===MODOS.RESERVA)caixasIds.push(COFRES.DISTRIBUIDOR);
   const acumulado=Object.fromEntries(caixasIds.map(id=>[id,0]));
   const historico=[];
@@ -88,7 +94,8 @@ function criarVisaoFinanceiraAdminDemo({
     const sobra=v.precoCentavos-v.fornecedorCentavos-v.parcelaLoopCentavos;
     if(!validarCentavos(sobra))throw new Error('Venda ficticia nao cobre obrigacoes');
     const destinoCiclo=caixaCiclo[i];
-    if((DESTINOS[i]==='PARTICIPANTE')!==(destinoCiclo===COFRES.CENTRO)||
+    if((DESTINOS[i]==='PARTICIPANTE')&&![COFRES.CENTRO,COFRES.DOURADAS].includes(destinoCiclo)||
+       (DESTINOS[i]!=='PARTICIPANTE'&&[COFRES.CENTRO,COFRES.DOURADAS].includes(destinoCiclo))||
        (DESTINOS[i]==='EMPRESA_INVESTIMENTO'&&destinoCiclo!==COFRES.ESQUERDA)){
       throw new Error('Destino do ciclo divergente do tabuleiro existente');
     }
@@ -102,7 +109,8 @@ function criarVisaoFinanceiraAdminDemo({
     vendasConferidas.push({
       vendaId:v.vendaId,eventoCiclo:i+1,precoCentavos:v.precoCentavos,
       fornecedorCentavos:v.fornecedorCentavos,parcelaLoopCentavos:v.parcelaLoopCentavos,
-      sobraBrutaCentavos:sobra,destinoCiclo,fornecedorDestino
+      sobraBrutaCentavos:sobra,destinoCiclo,fornecedorDestino,
+      titularOperacionalCentro:origemDoCentro(centroPosicao)
     });
   }
   const totalVendasCentavos=somar(vendasConferidas.map(v=>v.precoCentavos));
@@ -118,6 +126,8 @@ function criarVisaoFinanceiraAdminDemo({
     repasseSimulado:modo,
     parcelaReferenciaVigenteNoCenarioCentavos:parcelaReferenciaCentavos,
     simulacaoApenasProspectiva:true,
+    centroAssumidoPeloLoop:centroDoLoop(centroPosicao),
+    origemTitularCentro:origemDoCentro(centroPosicao),
     acesso:'LABORATORIO_ADMIN_LOCAL',
     movimentacaoBancariaReal:false,
     splitBancarioReal:false,
