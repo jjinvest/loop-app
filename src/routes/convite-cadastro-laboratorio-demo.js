@@ -1,7 +1,7 @@
 'use strict';
 const express=require('express');
 const {localSeguro}=require('./admin-catalogo-laboratorio');
-function criarRouterConviteCadastroDemo({contas,links}={}){
+function criarRouterConviteCadastroDemo({contas,links,carrinhos=null}={}){
  if(!contas||!links)throw new TypeError('Cadastro e links de laboratorio obrigatorios');
  const r=express.Router();
  r.use((req,res,next)=>{
@@ -18,8 +18,27 @@ function criarRouterConviteCadastroDemo({contas,links}={}){
    const verificado=links.resolver(req.query.link);
    return res.json({ativo:verificado.ativo,
     nomeIndicador:verificado.ativo?verificado.nomeIndicador:null,
-    cadastroPermitido:verificado.ativo,ambienteFicticio:true});
+    cadastroPermitido:verificado.ativo,destino:verificado.destino,
+    ambienteFicticio:true});
   }catch(e){return res.status(404).json({erro:'LINK_INVALIDO'});}
+ });
+ // Vitrine visivel para convidados, sem permitir compras anonimas,
+ // divulgacao de dados de titulares ou operacoes financeiras.
+ r.get('/vitrine',(req,res)=>{
+  if(!carrinhos)return res.status(501).json({erro:'VITRINE_INDISPONIVEL'});
+  if(typeof req.query.link!=='string')
+   return res.status(400).json({erro:'LINK_INVALIDO'});
+  let link;
+  try{link=links.resolver(req.query.link);}
+  catch{return res.status(404).json({erro:'LINK_INVALIDO'});}
+  if(!link.ativo)return res.status(403).json({erro:'LINK_AINDA_INATIVO'});
+  const itens=carrinhos.opcoes().produtos.map(p=>({
+   produtoId:p.produtoId,nome:p.nome,tipo:p.tipo,precoCentavos:p.precoCentavos,
+   elegivelLoop:p.elegivelLoop,quantidadeMinimaLoop:p.quantidadeMinimaLoop,
+   posicoesPorPedidoLoop:p.posicoesPorPedidoLoop
+  }));
+  return res.json({produtos:itens,destino:'loja',necessarioCadastroParaComprar:true,
+   pagamentoReal:false});
  });
  r.post('/cadastrar',(req,res,next)=>{
   if(!req.is('application/json'))return res.status(415).json({erro:'USE_APPLICATION_JSON'});
