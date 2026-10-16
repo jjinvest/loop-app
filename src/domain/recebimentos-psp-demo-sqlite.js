@@ -41,7 +41,7 @@ const FATURAS=Object.freeze([
     parcelaLoopCentavos:10000,sobraBrutaCentavos:20000,
     destinoCofre:POSICOES[i]
   })),
-  ...Array.from({length:5},(_,i)=>Object.freeze({
+  ...Array.from({length:VENDAS_POR_CICLO},(_,i)=>Object.freeze({
     pagamentoId:'pag-reserva-'+(i+1).toString().padStart(2,'0'),
     cicloDemo:'reserva',ordemCiclo:i+1,modo:MODOS.RESERVA,
     valorCentavos:60000,fornecedorCentavos:30000,
