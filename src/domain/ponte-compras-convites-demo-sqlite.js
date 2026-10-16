@@ -93,6 +93,21 @@ class PonteComprasConvitesDemoSQLite{
     confirmado_em TEXT NOT NULL,
     posicao_id INTEGER NOT NULL UNIQUE CHECK(posicao_id>0)
    );
+   -- Um unico pedido qualificado pode ter ate cinco posicoes se o produto
+   -- de pacote foi explicitamente configurado antes do pedido. A posicao 1
+   -- permanece no esquema anterior para nao quebrar o historico legado.
+   CREATE TABLE IF NOT EXISTS admin_ponte_posicoes_adicionais_demo(
+    pedido_id TEXT NOT NULL REFERENCES admin_ponte_compras_demo(pedido_id) ON DELETE RESTRICT,
+    ordem INTEGER NOT NULL CHECK(ordem BETWEEN 2 AND 5),
+    posicao_id INTEGER NOT NULL UNIQUE CHECK(posicao_id>0),
+    PRIMARY KEY(pedido_id,ordem)
+   );
+   CREATE TRIGGER IF NOT EXISTS admin_ponte_posicoes_adicionais_no_update
+    BEFORE UPDATE ON admin_ponte_posicoes_adicionais_demo
+    BEGIN SELECT RAISE(ABORT,'pacote de posicoes imutavel'); END;
+   CREATE TRIGGER IF NOT EXISTS admin_ponte_posicoes_adicionais_no_delete
+    BEFORE DELETE ON admin_ponte_posicoes_adicionais_demo
+    BEGIN SELECT RAISE(ABORT,'pacote de posicoes imutavel'); END;
    -- Compras de loja com total menor que R$250: sao vendas sem posicao.
    -- A loja e independente do motor de filas e convites.
    CREATE TABLE IF NOT EXISTS admin_ponte_vendas_loja_sem_loop_demo(
@@ -264,7 +279,11 @@ class PonteComprasConvitesDemoSQLite{
     `).get(pedidoId);
     return {
      repetido:true,criado:false,pedidoId,contaId:anterior.conta_id,
-     posicaoId:anterior.posicao_id,indicacaoNova:false,
+     posicaoId:anterior.posicao_id,
+     posicaoIds:[anterior.posicao_id,...this.banco.prepare(
+      'SELECT posicao_id AS id FROM admin_ponte_posicoes_adicionais_demo WHERE pedido_id=? ORDER BY ordem'
+     ).all(pedidoId).map(r=>r.id)],
+     indicacaoNova:false,
      compraElegivelLoop:true,posicaoCriada:true,vendaLojaRegistrada:true,
      valorElegivelLoopCentavos:comprovante.valorElegivelLoopCentavos,
      revisaoValorPosicao:anteriorValor.revisaoValor,
@@ -294,6 +313,28 @@ class PonteComprasConvitesDemoSQLite{
      posicaoId:null,filaAtual:null,indicacaoNova:false};
    }
    const referenciaVigente=this.configuracaoValor.vigenteEm(comprovante.confirmadoEm);
+   // Somente um pedido do carrinho, com regras congeladas no SQLite,
+   // pode solicitar cinco posicoes. Um campo externo nao pode forcar pacote.
+   const pacote=this.banco.prepare(`
+    SELECT k.posicoes_por_pedido AS quantidade,i.subtotal_centavos AS subtotal,
+     e.subtotal_elegivel_centavos AS elegivel,
+     i.quantidade AS unidades,q.quantidade_minima AS minima
+    FROM admin_carrinho_item_pacote_posicoes_demo k
+    JOIN admin_carrinho_loop_itens_demo i
+     ON i.pedido_id=k.pedido_id AND i.ordem=k.ordem
+    JOIN admin_carrinho_item_elegibilidade_demo e
+     ON e.pedido_id=k.pedido_id AND e.ordem=k.ordem
+    JOIN admin_carrinho_item_quantidade_minima_demo q
+     ON q.pedido_id=k.pedido_id AND q.ordem=k.ordem
+    WHERE k.pedido_id=? AND k.posicoes_por_pedido=5
+     AND e.elegivel_loop=1 AND i.quantidade>=q.quantidade_minima
+   `).all(comprovante.produtoId==='carrinho-loop-demo'?pedidoId:'');
+   const quantidadePosicoes=pacote.length?5:1;
+   // Uma cadeira do pacote gera seu proprio ciclo; exigir ao menos cinco
+   // referencias no subtotal do(s) produto(s) ESPECIAIS, antes de custos.
+   if(quantidadePosicoes===5&&
+    pacote.reduce((v,p)=>v+p.elegivel,0)<5*referenciaVigente.valorCentavos)
+    throw falha('PACOTE_VALOR_INSUFICIENTE','Pacote de cinco posicoes abaixo de cinco referencias LOOP');
    const conta=this.contas.buscar(comprovante.contaId);
    if(!conta)throw falha('CONTA_DESCONHECIDA','Conta ficticia nao cadastrada');
    if(comprovante.valorElegivelLoopCentavos<referenciaVigente.valorCentavos){
@@ -321,7 +362,7 @@ class PonteComprasConvitesDemoSQLite{
      movimentouCatraca:false,registrouPagamentoReal:false};
    }
    const simulador=this._restaurar();
-   if(posicoesAtivas(simulador,conta.contaId)>=5){
+   if(posicoesAtivas(simulador,conta.contaId)+quantidadePosicoes>5){
     throw falha('LIMITE_ATIVO','Limite de cinco posicoes ativas no teste');
    }
    // A promocao exige uma posicao PRÓPRIA do indicador, ainda na fila
@@ -336,36 +377,49 @@ class PonteComprasConvitesDemoSQLite{
      p.statusAdesao!=='PRAZO_ENCERRADO'&&p.empresa!==true);
     for(const p of candidatas){
      const adquirida=this.banco.prepare(`
-      SELECT 1 FROM admin_ponte_compras_demo
-      WHERE conta_id=? AND posicao_id=? AND confirmado_em<=?
-     `).get(conta.indicadoPorId,p.id,comprovante.confirmadoEm);
+      SELECT 1 FROM admin_ponte_compras_demo c
+      WHERE c.conta_id=? AND c.confirmado_em<=? AND
+       (c.posicao_id=? OR EXISTS (
+        SELECT 1 FROM admin_ponte_posicoes_adicionais_demo a
+        WHERE a.pedido_id=c.pedido_id AND a.posicao_id=?
+       ))
+     `).get(conta.indicadoPorId,comprovante.confirmadoEm,p.id,p.id);
      if(adquirida){posicaoAtivaIndicadorId=p.id;break;}
     }
    }
    const aceiteAnterior=this.linksComissoes.adesaoVigente(conta.contaId,comprovante.confirmadoEm);
-   const posicao=simulador.registrarPosicaoSimulada({
-    nome:conta.nome,participanteId:conta.contaId,
-    vendaId:'compra-demo-'+pedidoId,adesaoPendente:!aceiteAnterior
-   });
-   if(posicao.repetida)throw new Error('Estado simulado e comprovantes divergentes');
-   // Quem ja aceitou CPF e termos nao precisa preencher o formulario outra vez.
-   if(aceiteAnterior){
-    const nova=simulador.filas.filaB.find(p=>p.id===posicao.posicao.id);
-    nova.statusAdesao='ATIVA';nova.ativadaEm=comprovante.confirmadoEm;
-    posicao.posicao.statusAdesao='ATIVA';posicao.posicao.ativadaEm=comprovante.confirmadoEm;
-    this.banco.prepare(`
-     INSERT INTO admin_loop_adesoes_posicoes_demo(posicao_id,conta_id,ativada_em)
-     VALUES (?,?,?)
-    `).run(nova.id,conta.contaId,comprovante.confirmadoEm);
+   const novasPosicoes=[];
+   for(let ordem=1;ordem<=quantidadePosicoes;ordem++){
+    const posicao=simulador.registrarPosicaoSimulada({
+     nome:conta.nome,participanteId:conta.contaId,
+     vendaId:'compra-demo-'+pedidoId+(ordem>1?'-'+ordem:''),
+     adesaoPendente:!aceiteAnterior
+    });
+    if(posicao.repetida)throw new Error('Estado simulado e comprovantes divergentes');
+    if(aceiteAnterior){
+     const nova=simulador.filas.filaB.find(p=>p.id===posicao.posicao.id);
+     nova.statusAdesao='ATIVA';nova.ativadaEm=comprovante.confirmadoEm;
+     posicao.posicao.statusAdesao='ATIVA';posicao.posicao.ativadaEm=comprovante.confirmadoEm;
+     this.banco.prepare(`
+      INSERT INTO admin_loop_adesoes_posicoes_demo(posicao_id,conta_id,ativada_em)
+      VALUES (?,?,?)
+     `).run(nova.id,conta.contaId,comprovante.confirmadoEm);
+    }
+    novasPosicoes.push(posicao.posicao);
    }
+   const posicao= {posicao:novasPosicoes[0]};
    this.banco.prepare(`
     INSERT INTO admin_ponte_compras_demo
     (pedido_id,conta_id,produto_id,valor_centavos,confirmado_em,posicao_id)
     VALUES (?,?,?,?,?,?)
-   `).run(
-    pedidoId,conta.contaId,comprovante.produtoId,
-    comprovante.valorCentavos,comprovante.confirmadoEm,posicao.posicao.id
-   );
+   `).run(pedidoId,conta.contaId,comprovante.produtoId,
+    comprovante.valorCentavos,comprovante.confirmadoEm,posicao.posicao.id);
+   for(let ordem=2;ordem<=novasPosicoes.length;ordem++){
+    this.banco.prepare(`
+     INSERT INTO admin_ponte_posicoes_adicionais_demo(pedido_id,ordem,posicao_id)
+     VALUES (?,?,?)
+    `).run(pedidoId,ordem,novasPosicoes[ordem-1].id);
+   }
    if(pedidoVinculado){
     this.banco.prepare(`
      INSERT INTO admin_ponte_vinculos_identificados_demo
@@ -416,7 +470,9 @@ class PonteComprasConvitesDemoSQLite{
    this.banco.exec('COMMIT');
    return {
     criado:true,repetido:false,pedidoId,contaId:conta.contaId,
-    posicaoId:posicao.posicao.id,indicacaoNova,
+    posicaoId:posicao.posicao.id,
+    posicaoIds:novasPosicoes.map(p=>p.id),
+    posicoesCriadas:novasPosicoes.length,indicacaoNova,
     linkDivulgacaoLiberado:true,
     comissaoSimuladaCentavos:comissao?.valorComissaoCentavos??0,
     percentualBonusAplicado:comissao?.taxaPercentual??null,
