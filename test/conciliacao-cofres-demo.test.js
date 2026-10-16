@@ -32,7 +32,7 @@ test('razao projeta distribuicao do ciclo mas nao inventa saldo ou transferencia
   const p=projetarRazaoCofresDemo();
   assert.equal(p.modo,'RAZAO_CONTABIL_APENAS_FICTICIO');
   assert.equal(p.historico.length,12);
-  assert.equal(p.cofres.length,4);
+  assert.equal(p.cofres.length,5);
   assert.equal(saldo(p,COFRES.ESQUERDA).entradasAcumuladasCentavos,50000);
   assert.equal(saldo(p,COFRES.CENTRO).entradasAcumuladasCentavos,75000);
   assert.equal(saldo(p,COFRES.DIREITA).saldoProjetadoCentavos,25000);
@@ -60,7 +60,7 @@ test('movimentos ficticios registram entrada saida retorno, sem restringir contr
   assert.ok(p.historico.every(x=>x.simulado===true));
 
   const reserva=projetarRazaoCofresDemo({modo:MODOS.RESERVA,comMovimentos:true});
-  assert.equal(reserva.cofres.length,5);
+  assert.equal(reserva.cofres.length,6);
   assert.equal(reserva.historico.length,25);
   assert.equal(saldo(reserva,COFRES.DISTRIBUIDOR).entradasAcumuladasCentavos,180000);
   assert.equal(saldo(reserva,COFRES.DISTRIBUIDOR).saidasAcumuladasCentavos,30000);
@@ -132,7 +132,7 @@ test('API de conciliacao e somente do administrador local, sem mutacao ou public
   assert.equal(ok.status,200);
   assert.equal(ok.headers.get('cache-control'),'no-store');
   const body=await ok.json();
-  assert.equal(body.razao.cofres.length,4);
+  assert.equal(body.razao.cofres.length,5);
   assert.equal(body.conciliacao.todasConferidasNoTeste,false);
   assert.equal(body.razao.historico.length,18);
   assert.equal(body.razao.movimentacaoBancariaReal,false);
