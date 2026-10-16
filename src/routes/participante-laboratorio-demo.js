@@ -113,6 +113,22 @@ function criarRouterParticipanteDemo({contas,ponte,sessoes=null,adesoes=null,car
  });
   // Loja acessada pelo proprio titular. O navegador NAO informa o CPF,
   // conta, preco, pedidoId nem estado do pagamento. Apenas os itens.
+  router.post('/meu-link',(req,res,next)=>{
+   if(!req.is('application/json'))return res.status(415).json({erro:'USE_APPLICATION_JSON'});
+   if(!req.body||typeof req.body!=='object'||Array.isArray(req.body)||
+    Object.keys(req.body).join(',')!=='apelido')
+    return res.status(400).json({erro:'APELIDO_INVALIDO'});
+   try{
+    const contaId=gerenciador.identificar(lerCookie(req));
+    if(!contaId)return res.status(401).json({erro:'SESSAO_AUSENTE_OU_EXPIRADA'});
+    return res.json(ponte.linksComissoes.personalizar({
+     contaId,apelido:req.body.apelido
+    }));
+   }catch(e){
+    if(e.codigo==='APELIDO_INVALIDO')return res.status(400).json({erro:e.codigo});
+    return next(e);
+   }
+  });
   router.get('/loja/catalogo',(req,res,next)=>{
    if(!carrinhos)return res.status(501).json({erro:'LOJA_NAO_CONFIGURADA'});
    try{
