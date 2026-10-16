@@ -129,6 +129,36 @@ class CarrinhoLojaLoopDemoSQLite{
     BEFORE DELETE ON admin_carrinho_loop_eventos_demo
     BEGIN SELECT RAISE(ABORT,'eventos imutaveis'); END;
   `);
+  // Migracao SQLite dos carrinhos anteriores ao pacote de 6: conservar
+  // cada fotografia 1/5 imutavel, mas permitir novas fotografias de 6.
+  const tabela='admin_carrinho_item_pacote_posicoes_demo';
+  const ddl=this.banco.prepare("SELECT sql FROM sqlite_master WHERE type='table' AND name=?").get(tabela)?.sql||'';
+  if(ddl.includes('IN (1,5)')){
+   this.banco.exec('BEGIN IMMEDIATE');
+   try{
+    this.banco.exec(`CREATE TABLE admin_carrinho_item_pacote_posicoes_demo_v6(
+     pedido_id TEXT NOT NULL REFERENCES admin_carrinho_loop_demo(pedido_id) ON DELETE RESTRICT,
+     ordem INTEGER NOT NULL CHECK(ordem>=1),
+     posicoes_por_pedido INTEGER NOT NULL CHECK(posicoes_por_pedido IN (1,5,6)),
+     revisao_pacote INTEGER NOT NULL CHECK(revisao_pacote>=1),
+     PRIMARY KEY(pedido_id,ordem),
+     FOREIGN KEY(pedido_id,ordem)
+      REFERENCES admin_carrinho_loop_itens_demo(pedido_id,ordem) ON DELETE RESTRICT)`);
+    this.banco.exec(`INSERT INTO admin_carrinho_item_pacote_posicoes_demo_v6
+     SELECT * FROM admin_carrinho_item_pacote_posicoes_demo`);
+    this.banco.exec('DROP TABLE admin_carrinho_item_pacote_posicoes_demo');
+    this.banco.exec('ALTER TABLE admin_carrinho_item_pacote_posicoes_demo_v6 RENAME TO admin_carrinho_item_pacote_posicoes_demo');
+    this.banco.exec('COMMIT');
+   }catch(e){this.banco.exec('ROLLBACK');throw e;}
+  }
+  this.banco.exec(`
+   CREATE TRIGGER IF NOT EXISTS admin_carrinho_pacote_no_update
+    BEFORE UPDATE ON admin_carrinho_item_pacote_posicoes_demo
+    BEGIN SELECT RAISE(ABORT,'pacote congelado no pedido'); END;
+   CREATE TRIGGER IF NOT EXISTS admin_carrinho_pacote_no_delete
+    BEFORE DELETE ON admin_carrinho_item_pacote_posicoes_demo
+    BEGIN SELECT RAISE(ABORT,'pacote congelado no pedido'); END;
+  `);
  }
  opcoes(){
   return {produtos:this.catalogo.listar().filter(p=>
