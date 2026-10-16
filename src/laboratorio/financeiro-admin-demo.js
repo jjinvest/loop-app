@@ -196,6 +196,13 @@
           revisaoEsperada:valorLoopAtual.revisao})
       });
       await carregarValorLoop();
+      if(retorno.alterado){
+        const financeiro=await requisitar('financeiro-demo?modo='+encodeURIComponent(modo.value));
+        mostrar(financeiro);
+        el('statusImpactoValorLoopDemo').textContent=
+          'Reajuste registrado no laboratório. Faça outra prévia para comparar o novo marco.';
+        el('listaImpactoValorLoopDemo').replaceChildren();
+      }
       estado.textContent=retorno.alterado?
        'Nova referência registrada no histórico para compras posteriores. Posições anteriores preservadas.':
        'Referência já estava nesse valor; nenhuma alteração histórica.';
