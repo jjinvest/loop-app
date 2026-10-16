@@ -5,6 +5,7 @@ const {RepositorioCatalogoSQLite}=require('../src/domain/repositorio-catalogo-sq
 const {ContasParticipantesDemoSQLite}=require('../src/domain/contas-participantes-demo-sqlite');
 const {PonteComprasConvitesDemoSQLite}=require('../src/domain/ponte-compras-convites-demo-sqlite');
 const {STATUS_CONFIRMADO}=require('../src/domain/processador-pedidos-simulados');
+const {EscritorioIndividualDemo}=require('../src/domain/escritorio-individual-demo');
 
 test('tres anos depois: campanha 50% exige cadeira no minimo atual de R$500, senao mantem 10%',async t=>{
  const repo=new RepositorioCatalogoSQLite({caminho:':memory:'});
@@ -43,6 +44,12 @@ test('tres anos depois: campanha 50% exige cadeira no minimo atual de R$500, sen
  assert.equal(convidado1.comissaoSimuladaCentavos,5000);
  assert.equal(convidado1.percentualBonusAplicado,10);
  assert.equal(convidado1.indicadorElegivelBonusExtra,false);
+ const escritorio=new EscritorioIndividualDemo({ponte,contas});
+ let bonusEscritorio=escritorio.consultar(indicador.contaId).bonusIndicacoes;
+ assert.equal(bonusEscritorio.ativoNoLoopAgora,false);
+ assert.equal(bonusEscritorio.porcentagemCampanhaHoje,50);
+ assert.equal(bonusEscritorio.porcentagemAplicavelHoje,10);
+ assert.equal(bonusEscritorio.valorMinimoPosicaoHojeCentavos,50000);
  // Na nova referencia R$250 NAO cria cadeira, so mantem link ja liberado.
  const insuficiente=await comprar('compra-indicador-250',indicador,25000,dia(3));
  assert.equal(insuficiente.posicaoCriada,false);
@@ -53,6 +60,9 @@ test('tres anos depois: campanha 50% exige cadeira no minimo atual de R$500, sen
  const ativacao=await comprar('compra-indicador-500',indicador,50000,dia(5));
  assert.equal(ativacao.posicaoCriada,true);
  assert.equal(ativacao.statusAdesao,'PENDENTE'); // Azul ja e cadeira no LOOP.
+ bonusEscritorio=escritorio.consultar(indicador.contaId).bonusIndicacoes;
+ assert.equal(bonusEscritorio.ativoNoLoopAgora,true);
+ assert.equal(bonusEscritorio.porcentagemAplicavelHoje,50);
  assert.equal(ponte.consultar().filas.A.quantidade,1); // Indicacoes anteriores promovem.
  const convidado3=await comprar('compra-convidado-500-3',comprador,50000,dia(6));
  assert.equal(convidado3.comissaoSimuladaCentavos,25000);
