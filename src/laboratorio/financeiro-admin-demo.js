@@ -457,7 +457,12 @@
         legenda.textContent='Fatura fictícia '+pedido.pagamentoId+
           ' — '+(pedido.habilitacaoDownloadFicticia?'Elegibilidade de download SIMULADA':
           'Download não habilitado na simulação')+
-          '. Nenhum PDF real foi entregue.';
+          '. Nenhum PDF real foi entregue.'+
+          (pedido.integracaoLoop?.posicaoCriada?' Posição LOOP #'+
+            pedido.integracaoLoop.posicaoId+' criada.':
+           pedido.integracaoLoop?.lojaSemPosicao?' Venda somente da loja.':
+           pedido.integracaoLoop?.vinculado?' Comprador vinculado: aguardando confirmação.':
+           ' Ainda sem comprador vinculado ao LOOP.');
         item.append(titulo,info,legenda);
         lista.append(item);
       }
