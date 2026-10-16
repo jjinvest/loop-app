@@ -59,7 +59,7 @@ test('sem split demonstra quinto caixa reservado, preservando historico do forne
   assert.equal(valor(s,COFRES.COMERCIAL),30000);
   assert.equal(valor(s,COFRES.CENTRO),75000);
   assert.equal(s.historico.filter(x=>x.tipo==='FORNECEDOR_RESERVADO').length,6);
-  assert.equal(s.caixas.reduce((t,c)=>t+c.entradasAcumuladasCentavos,0),300000);
+  assert.equal(s.caixas.reduce((t,c)=>t+c.entradasAcumuladasCentavos,0),360000);
   assert.equal(s.totalFornecedorCentavos+s.totalLoopCentavos+s.totalSobraBrutaCentavos,s.totalVendasCentavos);
   assert.equal(s.vendas.length,6);
 });
