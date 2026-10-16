@@ -10,6 +10,9 @@
   const statusEdicao=el('statusAparenciaCofreDemo');
   const dados=el('dadosFinanceiroDemo');
   const modo=el('repasseFinanceiroDemo');
+  const tipoCentro=el('centroFinanceiroDemo');
+  const consultaFinanceira=()=> 'financeiro-demo?modo='+encodeURIComponent(modo.value)+
+   '&centro='+encodeURIComponent(tipoCentro.value);
   const selecionar=el('cofreEditarFinanceiroDemo');
   const nome=el('nomeCofreFinanceiroDemo');
   const cor=el('corCofreFinanceiroDemo');
@@ -225,7 +228,7 @@
       });
       await carregarValorLoop();
       if(retorno.alterado){
-        const financeiro=await requisitar('financeiro-demo?modo='+encodeURIComponent(modo.value));
+        const financeiro=await requisitar(consultaFinanceira());
         mostrar(financeiro);
         el('statusImpactoValorLoopDemo').textContent=
           'Reajuste registrado no laboratório. Faça outra prévia para comparar o novo marco.';
@@ -1466,7 +1469,8 @@
       let rota,corpo;
       if(tipo==='ciclo'){
         rota='livro-financeiro-demo/ciclos';
-        corpo={cicloId:el('idCicloPersistenteDemo').value.trim(),modo:modo.value};
+        corpo={cicloId:el('idCicloPersistenteDemo').value.trim(),modo:modo.value,
+         centro:tipoCentro.value};
       }else{
         rota='livro-financeiro-demo/'+el('tipoLancamentoPersistenteDemo').value;
         corpo={
@@ -1645,6 +1649,7 @@
   el('formMovimentoPersistenteDemo').addEventListener('submit',e=>registrarLivro(e,'movimento'));
   el('atualizarLivroPersistenteDemo').addEventListener('click',carregarLivro);
   el('verConciliacaoDemo').addEventListener('click',carregarConciliacao);
+  tipoCentro.addEventListener('change',()=>{if(token)buscar();});
   el('limparFinanceiroDemo').addEventListener('click',()=>{
     ++versao;
     ++versaoHistorico;
