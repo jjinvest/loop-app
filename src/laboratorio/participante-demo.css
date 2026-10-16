@@ -54,6 +54,7 @@ body{background:#090b0b;color:#f0f0e8}
 .tabuleiro-vaga-3{grid-column:3;grid-row:2}
 .tabuleiro-vaga-4{grid-column:2;grid-row:3}
 .tabuleiro-vaga-5{grid-column:1;grid-row:2}
+.tabuleiro-vaga-6{grid-column:1;grid-row:3}
 .espaco-meu-tabuleiro-demo{box-shadow:0 0 0 2px #bce69f}
 .atalhos-participante{position:sticky;top:5px;z-index:4;display:flex;flex-wrap:wrap;gap:8px;margin-bottom:18px;padding:10px;border-radius:12px;border:1px solid #6e7247;background:#182017}
 .atalhos-participante a{display:inline-flex;align-items:center;justify-content:center;padding:10px;border-radius:8px;min-height:44px;text-align:center;text-decoration:none;color:#d9fbd8;border:1px solid #466949;font-weight:700}
