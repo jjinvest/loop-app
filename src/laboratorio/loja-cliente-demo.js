@@ -62,13 +62,13 @@
    else if(quantidade<p.quantidadeMinimaLoop)
     regra.textContent='É necessário comprar '+p.quantidadeMinimaLoop+
      ' unidades deste produto no mesmo pedido para contar no LOOP.';
-   else regra.textContent=p.posicoesPorPedidoLoop===5?
-    'Produto especial: pode gerar 5 posições no mesmo pedido, se houver cinco vagas livres e o valor mínimo for atingido.':
+   else regra.textContent=p.posicoesPorPedidoLoop===6?
+    'Produto especial: pode gerar 6 posições no mesmo pedido, se houver seis vagas livres e o valor mínimo for atingido.':
     'Quantidade suficiente: o subtotal deste item conta para o LOOP.';
    total+=p.precoCentavos*quantidade;
    if(p.elegivelLoop&&quantidade>=p.quantidadeMinimaLoop){
     totalElegivel+=p.precoCentavos*quantidade;
-    if(p.posicoesPorPedidoLoop===5)valorPacoteEspecial+=p.precoCentavos*quantidade;
+    if(p.posicoesPorPedidoLoop===6)valorPacoteEspecial+=p.precoCentavos*quantidade;
    }
    const remover=document.createElement('button');
    remover.type='button';remover.className='botao-secundario-loja';
@@ -88,10 +88,10 @@
    ' · Produtos válidos para o LOOP: '+dinheiro(totalElegivel)+
    ' · Mínimo da posição: '+dinheiro(referenciaCentavos)+
    (valorPacoteEspecial>0?
-    (valorPacoteEspecial>=5*referenciaCentavos?
-      ' · Produto especial: 5 posições após confirmação, desde que existam 5 vagas livres.':
-      ' · Pacote de 5 exige produtos especiais no valor de pelo menos '+
-       dinheiro(5*referenciaCentavos)+'; sem isso, não haverá ativação do pacote.'):
+    (valorPacoteEspecial>=6*referenciaCentavos?
+      ' · Produto especial: 6 posições após confirmação, desde que existam 6 vagas livres.':
+      ' · Pacote de 6 exige produtos especiais no valor de pelo menos '+
+       dinheiro(6*referenciaCentavos)+'; sem isso, não haverá ativação do pacote.'):
     (totalElegivel>=referenciaCentavos?' · Pode gerar uma posição após confirmação':
      ' · Não atinge o mínimo da posição'));
   el('registrarPedidoLoja').disabled=!carrinho.size||pedidoEmAndamento;
@@ -132,8 +132,8 @@
      'Conta para o LOOP somente a partir de '+p.quantidadeMinimaLoop+
       ' unidade(s) no mesmo pedido'):
     'Produto só da loja: não conta para a posição';
-   if(p.elegivelLoop&&p.posicoesPorPedidoLoop===5){
-    aviso.textContent+=' · Produto especial de 5 posições (sujeito às regras e às vagas livres)';
+   if(p.elegivelLoop&&p.posicoesPorPedidoLoop===6){
+    aviso.textContent+=' · Produto especial de 6 posições (sujeito às regras e às vagas livres)';
    }
    const preco=document.createElement('p');preco.className='preco-loja-loop';
    preco.textContent=dinheiro(p.precoCentavos);
