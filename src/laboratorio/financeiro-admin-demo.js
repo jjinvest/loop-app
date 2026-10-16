@@ -37,6 +37,11 @@
   let salvandoVinculoPDF=false;
   let sincronizandoPDF=false;
   let pedidosPDF=[];
+  let opcoesCarrinho=[];
+  let pedidosCarrinho=[];
+  let versaoCarrinho=0;
+  let salvandoCarrinho=false;
+  let salvandoEventoCarrinho=false;
   let salvandoPedidoComercial=false;
   let versaoHistoricoPonte=0;
   let pedidosAssociados=[];
@@ -73,6 +78,16 @@
     ++versaoPDF;
     ++versaoHistoricoPDF;
     pedidosPDF=[];
+    ++versaoCarrinho;
+    pedidosCarrinho=[];
+    opcoesCarrinho=[];
+    el('itensCarrinhoLoopDemo').replaceChildren();
+    el('contaCarrinhoLoopDemo').replaceChildren();
+    el('pedidoEventoCarrinhoLoopDemo').replaceChildren();
+    el('listaCarrinhosLoopDemo').replaceChildren();
+    el('statusCarrinhoLoopDemo').textContent='';
+    el('statusEventoCarrinhoLoopDemo').textContent='';
+    el('totalCarrinhoLoopDemo').textContent='Total do carrinho: '+money(0);
     for(const id of ['listaPedidosPDFDemo','historicoEventoPDFDemo',
       'produtoPedidoPDFDemo','pedidoEventoPDFDemo','titularPedidoPDFLoopDemo',
       'pedidoVinculoPDFLoopDemo'])el(id).replaceChildren();
@@ -472,6 +487,178 @@
         opcoes.produtos.length+' curso(s) PDF publicado(s) no catálogo.';
       await carregarHistoricoPDF();
     }catch(erro){if(atual===versaoPDF)status.textContent=erro.message;}
+  }
+  function atualizarTotalCarrinho(){
+    const linhas=el('itensCarrinhoLoopDemo').querySelectorAll('.item-carrinho-lab');
+    let total=0;
+    for(const linha of linhas){
+      const produto=opcoesCarrinho.find(p=>p.produtoId===
+        linha.querySelector('.produto-carrinho-lab').value);
+      const qtd=Number(linha.querySelector('.quantidade-carrinho-lab').value);
+      if(produto&&Number.isSafeInteger(qtd)&&qtd>0&&qtd<=100)
+        total+=produto.precoCentavos*qtd;
+    }
+    el('totalCarrinhoLoopDemo').textContent='Total do carrinho: '+money(total)+
+      ' (uma posição no máximo por pedido; sujeito ao mínimo vigente).';
+  }
+  function adicionarLinhaCarrinho(){
+    const container=el('itensCarrinhoLoopDemo');
+    if(container.children.length>=20 || !opcoesCarrinho.length)return;
+    const linha=document.createElement('div');
+    linha.className='financeiro-caixa item-carrinho-lab';
+    const labelProduto=document.createElement('label');
+    labelProduto.textContent='Produto do catálogo';
+    const select=document.createElement('select');
+    select.className='produto-carrinho-lab';
+    select.required=true;
+    for(const produto of opcoesCarrinho){
+      const option=document.createElement('option');
+      option.value=produto.produtoId;
+      option.textContent=produto.nome+' — '+money(produto.precoCentavos);
+      select.append(option);
+    }
+    const labelQuantidade=document.createElement('label');
+    labelQuantidade.textContent='Quantidade (1 a 100)';
+    const quantidade=document.createElement('input');
+    quantidade.type='number';
+    quantidade.min='1';quantidade.max='100';quantidade.step='1';
+    quantidade.value='1';quantidade.required=true;
+    quantidade.className='quantidade-carrinho-lab';
+    const remover=document.createElement('button');
+    remover.type='button';remover.className='secundario';
+    remover.textContent='Remover item';
+    remover.addEventListener('click',()=>{linha.remove();atualizarTotalCarrinho();});
+    select.addEventListener('change',atualizarTotalCarrinho);
+    quantidade.addEventListener('input',atualizarTotalCarrinho);
+    labelProduto.append(select);labelQuantidade.append(quantidade);
+    linha.append(labelProduto,labelQuantidade,remover);
+    container.append(linha);
+    atualizarTotalCarrinho();
+  }
+  async function carregarCarrinhosLoop(){
+    const atual=++versaoCarrinho;
+    const lista=el('listaCarrinhosLoopDemo');
+    if(!token)return;
+    try{
+      const [opcoes,carrinhos,contas]=await Promise.all([
+        requisitar('carrinho-loop-demo/opcoes'),
+        requisitar('carrinho-loop-demo'),
+        requisitar('contas-participantes-demo')
+      ]);
+      if(atual!==versaoCarrinho)return;
+      opcoesCarrinho=opcoes.produtos;
+      pedidosCarrinho=carrinhos.pedidos;
+      const escolhaConta=el('contaCarrinhoLoopDemo');
+      const antigaConta=escolhaConta.value;
+      escolhaConta.replaceChildren();
+      for(const conta of contas.contas){
+        const opt=document.createElement('option');
+        opt.value=conta.contaId;opt.textContent=conta.nome;
+        escolhaConta.append(opt);
+      }
+      if(contas.contas.some(c=>c.contaId===antigaConta))escolhaConta.value=antigaConta;
+      const linhas=[...el('itensCarrinhoLoopDemo').children].map(l=>({
+        produtoId:l.querySelector('.produto-carrinho-lab').value,
+        quantidade:l.querySelector('.quantidade-carrinho-lab').value
+      }));
+      el('itensCarrinhoLoopDemo').replaceChildren();
+      for(const antigo of linhas){
+        adicionarLinhaCarrinho();
+        const linha=el('itensCarrinhoLoopDemo').lastElementChild;
+        if(!linha)break;
+        const produto=linha.querySelector('.produto-carrinho-lab');
+        if(opcoesCarrinho.some(p=>p.produtoId===antigo.produtoId))produto.value=antigo.produtoId;
+        linha.querySelector('.quantidade-carrinho-lab').value=antigo.quantidade;
+      }
+      if(!linhas.length)adicionarLinhaCarrinho();
+      atualizarTotalCarrinho();
+      const selectPedido=el('pedidoEventoCarrinhoLoopDemo');
+      const anterior=selectPedido.value;
+      selectPedido.replaceChildren();lista.replaceChildren();
+      for(const pedido of pedidosCarrinho){
+        const opt=document.createElement('option');
+        opt.value=pedido.pedidoId;
+        opt.textContent=pedido.pedidoId+' — '+money(pedido.totalCentavos);
+        selectPedido.append(opt);
+        const item=document.createElement('div');item.className='financeiro-caixa';
+        const nome=document.createElement('strong');nome.textContent='Carrinho '+pedido.pedidoId;
+        const detalhes=document.createElement('span');
+        detalhes.textContent=pedido.itens.map(i=>i.quantidade+' × '+i.nome).join(' + ')+
+          ' = '+money(pedido.totalCentavos);
+        const situacao=document.createElement('small');
+        situacao.textContent=pedido.situacaoPagamentoFicticio+' · '+
+          (pedido.posicaoCriada?'Posição azul LOOP #'+pedido.posicaoId:
+           pedido.vendaSomenteLoja?'Venda apenas da loja, sem posição':
+           'Ainda sem posição (aguardando pagamento fictício)')+
+          ' · Nenhuma entrega real.';
+        item.append(nome,detalhes,situacao);lista.append(item);
+      }
+      if(pedidosCarrinho.some(p=>p.pedidoId===anterior))selectPedido.value=anterior;
+      el('statusCarrinhoLoopDemo').textContent=pedidosCarrinho.length+
+        ' carrinho(s) fictícios registrados.';
+    }catch(e){
+      if(atual===versaoCarrinho)el('statusCarrinhoLoopDemo').textContent=e.message;
+    }
+  }
+  async function salvarCarrinhoLoop(evento){
+    evento.preventDefault();
+    if(!token||salvandoCarrinho)return;
+    const itens=[...el('itensCarrinhoLoopDemo').children].map(l=>({
+      produtoId:l.querySelector('.produto-carrinho-lab').value,
+      quantidade:Number(l.querySelector('.quantidade-carrinho-lab').value)
+    }));
+    const status=el('statusCarrinhoLoopDemo');
+    if(!itens.length){status.textContent='Adicione pelo menos um produto.';return;}
+    salvandoCarrinho=true;
+    const botao=el('salvarCarrinhoLoopDemo');botao.disabled=true;
+    try{
+      const r=await requisitar('carrinho-loop-demo',{
+        method:'POST',body:JSON.stringify({
+          pedidoId:el('pedidoCarrinhoLoopDemo').value.trim(),
+          contaId:el('contaCarrinhoLoopDemo').value,itens
+        })
+      });
+      await carregarCarrinhosLoop();
+      status.textContent=(r.pedido.repetido?'Carrinho já registrado. ':
+        'Carrinho criado. ')+'Total congelado: '+money(r.pedido.totalCentavos)+
+        '. Confirme o evento fictício para gerar posição se qualificar.';
+    }catch(e){status.textContent=e.message;}
+    finally{salvandoCarrinho=false;botao.disabled=false;}
+  }
+  async function eventoCarrinhoLoop(evento){
+    evento.preventDefault();
+    if(!token||salvandoEventoCarrinho)return;
+    salvandoEventoCarrinho=true;
+    const botao=el('registrarEventoCarrinhoLoopDemo');botao.disabled=true;
+    const status=el('statusEventoCarrinhoLoopDemo');
+    try{
+      const id=el('pedidoEventoCarrinhoLoopDemo').value;
+      const r=await requisitar('carrinho-loop-demo/'+encodeURIComponent(id)+'/eventos',{
+        method:'POST',body:JSON.stringify({
+          eventoId:el('idEventoCarrinhoLoopDemo').value.trim(),
+          tipo:el('tipoEventoCarrinhoLoopDemo').value
+        })
+      });
+      await carregarCarrinhosLoop();
+      status.textContent=(r.repetido?'Evento repetido. ':'Evento registrado. ')+
+        'LOOP: '+r.integracao.situacao+
+        (r.integracao.posicaoId?' · Posição '+r.integracao.posicaoId:'')+
+        '. Apenas simulação.';
+    }catch(e){status.textContent=e.message;}
+    finally{salvandoEventoCarrinho=false;botao.disabled=false;}
+  }
+  async function sincronizarCarrinhoLoop(){
+    const id=el('pedidoEventoCarrinhoLoopDemo').value;
+    const status=el('statusEventoCarrinhoLoopDemo');
+    if(!token||!id)return;
+    try{
+      const r=await requisitar('carrinho-loop-demo/'+encodeURIComponent(id)+'/sincronizar',{
+        method:'POST',body:'{}'
+      });
+      await carregarCarrinhosLoop();
+      status.textContent='Conferência do carrinho: '+r.situacao+
+        (r.posicaoId?' · Posição '+r.posicaoId:'')+'.';
+    }catch(e){status.textContent=e.message;}
   }
   async function consultarVinculoPDF(){
     const id=el('pedidoVinculoPDFLoopDemo').value;
@@ -1268,7 +1455,7 @@
       if(atual!==versao)return;
       preencherConfiguracoes(config.cofres);
       mostrar(visao);
-      await Promise.all([carregarValorLoop(),carregarHistorico(),carregarConciliacao(),carregarLivro(),carregarRecebimentos(),carregarPontePedidoPagamento(),carregarPedidosComerciais(),carregarPedidosPDF(),carregarPlanejamentoFisico(),carregarPagamentosFisicos()]);
+      await Promise.all([carregarValorLoop(),carregarHistorico(),carregarConciliacao(),carregarLivro(),carregarRecebimentos(),carregarPontePedidoPagamento(),carregarPedidosComerciais(),carregarPedidosPDF(),carregarCarrinhosLoop(),carregarPlanejamentoFisico(),carregarPagamentosFisicos()]);
     }catch(e){
       if(atual===versao){limpar();status.textContent=e.message;}
     }
@@ -1310,6 +1497,11 @@
   el('formValorLoopDemo').addEventListener('submit',salvarValorLoop);
   el('simularImpactoValorLoopDemo').addEventListener('click',simularImpactoValorLoop);
   el('formPedidosPDFDemo').addEventListener('submit',registrarPedidoPDF);
+  el('formCarrinhoLoopDemo').addEventListener('submit',salvarCarrinhoLoop);
+  el('formEventoCarrinhoLoopDemo').addEventListener('submit',eventoCarrinhoLoop);
+  el('adicionarItemCarrinhoLoopDemo').addEventListener('click',adicionarLinhaCarrinho);
+  el('atualizarCarrinhosLoopDemo').addEventListener('click',carregarCarrinhosLoop);
+  el('sincronizarCarrinhoLoopDemo').addEventListener('click',sincronizarCarrinhoLoop);
   el('formEventoPDFDemo').addEventListener('submit',registrarEventoPDF);
   el('formVincularPDFLoopDemo').addEventListener('submit',vincularCompradorPDF);
   el('sincronizarPDFLoopDemo').addEventListener('click',conferirSincronizacaoPDF);
