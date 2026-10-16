@@ -213,23 +213,23 @@ test('vinculos de pedidos, confirmacoes e posicoes sobrevivem a reinicio',async 
  assert.equal(b.ponte.consultar().vinculosIdentificados,1);
 });
 
-test('sexto pedido identificado nao supera cinco posicoes ativas, sem recibo parcial',async t=>{
+test('setimo pedido identificado nao supera seis posicoes ativas, sem recibo parcial',async t=>{
  const m=local(t);
  const titular=conta(m,'Titular Limite','limite@exemplo.invalid');
- for(let i=1;i<=5;i++){
+ for(let i=1;i<=6;i++){
   const p=preparar(m,{pedidoId:'cap-'+i,contaId:titular.contaId,valorCentavos:25000+i});
   assert.equal((await confirmar(m,p)).criado,true);
  }
  const sexto=preparar(m,{pedidoId:'cap-6',contaId:titular.contaId});
  await assert.rejects(confirmar(m,sexto),e=>e.codigo==='LIMITE_ATIVO');
  const estado=m.ponte.consultar();
- assert.equal(estado.compras.length,5);
- assert.equal(estado.vinculosIdentificados,5);
- assert.equal(estado.filas.B.quantidade,5);
- assert.equal(m.pedidos.listarResumo().pedidos.length,6);
+ assert.equal(estado.compras.length,6);
+ assert.equal(estado.vinculosIdentificados,6);
+ assert.equal(estado.filas.B.quantidade,6);
+ assert.equal(m.pedidos.listarResumo().pedidos.length,7);
  assert.equal(m.pedidos.buscar(sexto.pedidoId).contaId,titular.contaId);
  // A idempotencia do quinto pedido permanece apesar do limite cheio.
- const repetida=await confirmar(m,m.pedidos.buscar('cap-5'));
+ const repetida=await confirmar(m,m.pedidos.buscar('cap-6'));
  assert.equal(repetida.repetido,true);
- assert.equal(m.ponte.consultar().compras.length,5);
+ assert.equal(m.ponte.consultar().compras.length,6);
 });
