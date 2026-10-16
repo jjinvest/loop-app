@@ -41,9 +41,22 @@ function somar(valores){
     return t+v;
   },0);
 }
-function criarVisaoFinanceiraAdminDemo({modo=MODOS.SPLIT,vendas=EXEMPLOS}={}){
+function criarVisaoFinanceiraAdminDemo({
+ modo=MODOS.SPLIT,vendas,parcelaReferenciaCentavos=VALOR_PADRAO_LOOP_CENTAVOS
+}={}){
+  if(!Number.isSafeInteger(parcelaReferenciaCentavos)||
+     parcelaReferenciaCentavos<100||parcelaReferenciaCentavos>100000000){
+    throw new Error('Referencia financeira de laboratorio invalida');
+  }
+  // Os cinco exemplos da pagina acompanham o valor atual. Nao mudam
+  // registros de compras ou razao financeiro ja existentes.
+  const vendasCenario=vendas===undefined?EXEMPLOS.map(v=>({
+    ...v,
+    precoCentavos:v.precoCentavos+parcelaReferenciaCentavos-VALOR_PADRAO_LOOP_CENTAVOS,
+    parcelaLoopCentavos:parcelaReferenciaCentavos
+  })):vendas;
   if(!Object.values(MODOS).includes(modo))throw new Error('Modo de repasse ficticio invalido');
-  if(!Array.isArray(vendas) || vendas.length!==5 || DESTINOS.length!==5){
+  if(!Array.isArray(vendasCenario) || vendasCenario.length!==5 || DESTINOS.length!==5){
     throw new Error('Cenario requer os cinco eventos ficticios do ciclo');
   }
   const IDs=new Set();
@@ -61,16 +74,64 @@ function criarVisaoFinanceiraAdminDemo({modo=MODOS.SPLIT,vendas=EXEMPLOS}={}){
       comprovanteReal:false
     });
   }
-  for(let i=0;i<vendas.length;i++){
-    const v=vendas[i];
+  for(let i=0;i<vendasCenario.length;i++){
+    const v=vendasCenario[i];
     if(!v || typeof v!=='object' || typeof v.vendaId!=='string' ||
        !/^venda-[a-z0-9-]{1,70}$/.test(v.vendaId) || IDs.has(v.vendaId) ||
        ![v.precoCentavos,v.fornecedorCentavos,v.parcelaLoopCentavos].every(validarCentavos)){
       throw new Error('Venda demonstrativa invalida ou duplicada');
     }
     IDs.add(v.vendaId);
-    if(v.parcelaLoopCentavos!==VALOR_PADRAO_LOOP_CENTAVOS){
-      throw new Error('Parcela de referencia do ciclo deve ser R$250 neste exemplo');
+    if(v.parcelaLoopCentavos!==parcelaReferenciaCentavos){
+      throw new Error('Parcela de referencia do ciclo deve ser R
+    }
+    const sobra=v.precoCentavos-v.fornecedorCentavos-v.parcelaLoopCentavos;
+    if(!validarCentavos(sobra))throw new Error('Venda ficticia nao cobre obrigacoes');
+    const destinoCiclo=caixaCiclo[i];
+    if((DESTINOS[i]==='PARTICIPANTE')!==(destinoCiclo===COFRES.CENTRO)){
+      throw new Error('Destino do ciclo divergente do tabuleiro existente');
+    }
+    const fornecedorDestino=modo===MODOS.SPLIT?'DISTRIBUIDOR_EXTERNO_SIMULADO':COFRES.DISTRIBUIDOR;
+    if(modo===MODOS.RESERVA)acumulado[COFRES.DISTRIBUIDOR]=somar([acumulado[COFRES.DISTRIBUIDOR],v.fornecedorCentavos]);
+    acumulado[destinoCiclo]=somar([acumulado[destinoCiclo],v.parcelaLoopCentavos]);
+    acumulado[COFRES.COMERCIAL]=somar([acumulado[COFRES.COMERCIAL],sobra]);
+    registrar(v.vendaId,fornecedorDestino,modo===MODOS.SPLIT?'SPLIT_EXTERNO_PREVISTO':'FORNECEDOR_RESERVADO',v.fornecedorCentavos);
+    registrar(v.vendaId,destinoCiclo,'PARCELA_LOOP_PREVISTA',v.parcelaLoopCentavos);
+    registrar(v.vendaId,COFRES.COMERCIAL,'SOBRA_BRUTA_COMERCIAL',sobra);
+    vendasConferidas.push({
+      vendaId:v.vendaId,eventoCiclo:i+1,precoCentavos:v.precoCentavos,
+      fornecedorCentavos:v.fornecedorCentavos,parcelaLoopCentavos:v.parcelaLoopCentavos,
+      sobraBrutaCentavos:sobra,destinoCiclo,fornecedorDestino
+    });
+  }
+  const totalVendasCentavos=somar(vendasConferidas.map(v=>v.precoCentavos));
+  const totalFornecedorCentavos=somar(vendasConferidas.map(v=>v.fornecedorCentavos));
+  const totalLoopCentavos=somar(vendasConferidas.map(v=>v.parcelaLoopCentavos));
+  const totalSobraBrutaCentavos=somar(vendasConferidas.map(v=>v.sobraBrutaCentavos));
+  if(somar([totalFornecedorCentavos,totalLoopCentavos,totalSobraBrutaCentavos])!==totalVendasCentavos ||
+     somar(Object.values(acumulado))!==totalVendasCentavos-(modo===MODOS.SPLIT?totalFornecedorCentavos:0)){
+    throw new Error('Conciliacao matematica ficticia falhou');
+  }
+  return {
+    modo:'FINANCEIRO_ADMINISTRATIVO_APENAS_DEMONSTRACAO',
+    repasseSimulado:modo,
+    parcelaReferenciaVigenteNoCenarioCentavos:parcelaReferenciaCentavos,
+    simulacaoApenasProspectiva:true,
+    acesso:'LABORATORIO_ADMIN_LOCAL',
+    movimentacaoBancariaReal:false,
+    splitBancarioReal:false,
+    saquesReaisHabilitados:false,
+    modeloSemTaxasTributosOuEstornos:true,
+    totalVendasCentavos,totalFornecedorCentavos,totalLoopCentavos,totalSobraBrutaCentavos,
+    caixas:caixasIds.map(id=>({
+      id,nomeProvisorio:TITULOS[id],entradasAcumuladasCentavos:acumulado[id],
+      saldoRealConhecido:false
+    })),
+    historico,vendas:vendasConferidas
+  };
+}
+module.exports={criarVisaoFinanceiraAdminDemo,MODOS,COFRES,EXEMPLOS};
++(parcelaReferenciaCentavos/100)+' neste exemplo');
     }
     const sobra=v.precoCentavos-v.fornecedorCentavos-v.parcelaLoopCentavos;
     if(!validarCentavos(sobra))throw new Error('Venda ficticia nao cobre obrigacoes');
