@@ -47,6 +47,8 @@ test('cores por sessao, ativacao de teste e encerramento ao entrar no tabuleiro'
  assert.equal(visao.consultar(b.contaId).posicoesComPrazoEncerrado,1);
  assert.equal(visao.consultar(b.contaId).posicoes.length,0);
  assert.equal(ponte.consultar().filas.B.quantidade,0);
- assert.throws(()=>adesoes.ativar({contaId:b.contaId,cpfFicticio:'11144477735',
-  aceitaTermos:true,versaoTermos:'LOOP-DEMO-V1'}),e=>e.codigo==='NENHUMA_POSICAO_AZUL_NA_FILA');
+ // Aceite tardio habilita bonificacoes futuras, mas NAO recupera posicao dourada.
+ assert.equal(adesoes.ativar({contaId:b.contaId,cpfFicticio:'52998224725',
+  aceitaTermos:true,versaoTermos:'LOOP-DEMO-V1'}).ativadas,0);
+ assert.equal(visao.consultar(b.contaId).posicoesComPrazoEncerrado,1);
 });
