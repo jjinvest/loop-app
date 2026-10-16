@@ -51,13 +51,13 @@ test('fluxo integrado: fila gera tabuleiro, seis vendas autorizam giro, catraca 
 
 test('indicacao prioriza nova vaga; ocupantes atuais nao mudam', () => {
   const loop = new SimuladorLoop();
-  for (let i = 1; i <= 7; i++) {
+  for (let i = 1; i <= 8; i++) {
     loop.registrarPosicaoSimulada({ participanteId:'p' + i, vendaId:'compra-' + i });
   }
   const montado = loop.prepararTabuleiro();
   assert.equal(montado.centro.id, 1);
   assert.deepEqual(montado.vagas.map(p => p.id), [2,3,4,5,6,7]);
-  loop.registrarIndicacaoSimulada({ indicadorId:'p7', eventoId:'convite-p7' });
+  loop.registrarIndicacaoSimulada({ indicadorId:'p8', eventoId:'convite-p8' });
   assert.deepEqual(loop.estado().tabuleiro.vagas.map(p => p.id), [2,3,4,5,6,7]);
   assert.equal(loop.estado().filas.A.quantidade, 1);
   for (let i=1; i<=6; i++) {
@@ -65,7 +65,7 @@ test('indicacao prioriza nova vaga; ocupantes atuais nao mudam', () => {
   }
   loop.abrirCatraca();
   const giro = loop.tentarGiro();
-  assert.equal(giro.novaPosicao6.id, 7);
+  assert.equal(giro.novaPosicao6.id, 8);
   assert.equal(giro.novaPosicao6.origemFila, 'A');
 });
 
