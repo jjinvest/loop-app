@@ -91,6 +91,23 @@ function criarRouterParticipanteDemo({contas,ponte,sessoes=null,adesoes=null,car
    return res.json({sessaoEncerradaNoTeste:true});
   }catch(erro){return next(erro);}
  });
+ router.post('/desistir-vaga-6',(req,res,next)=>{
+  if(!req.is('application/json'))return res.status(415).json({erro:'USE_APPLICATION_JSON'});
+  const body=req.body;
+  if(!body||typeof body!=='object'||Array.isArray(body)||
+     Object.keys(body).sort().join(',')!=='aceiteExpresso,posicaoId')
+    return res.status(400).json({erro:'CAMPOS_DESISTENCIA_INVALIDOS'});
+  try{
+   const contaId=gerenciador.identificar(lerCookie(req));
+   if(!contaId)return res.status(401).json({erro:'SESSAO_AUSENTE_OU_EXPIRADA'});
+   return res.json(ponte.desistirDaVaga6Demo({...body,contaId}));
+  }catch(e){
+   if(['ACEITE_DESISTENCIA_OBRIGATORIO','POSICAO_FORA_DA_VAGA_6',
+       'POSICAO_NAO_PERTENCE_A_CONTA'].includes(e.codigo))
+    return res.status(409).json({erro:e.codigo});
+   return next(e);
+  }
+ });
  router.post('/ativar-posicoes',(req,res,next)=>{
   if(!adesoes)return res.status(501).json({erro:'ATIVACAO_NAO_CONFIGURADA'});
   if(!req.is('application/json'))return res.status(415).json({erro:'USE_APPLICATION_JSON'});
