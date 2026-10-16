@@ -32,6 +32,10 @@ class SimuladorLoop {
     return this.tabuleiro.registrarVendaSimulada({ vendaId });
   }
 
+  registrarDesistenciaNaVaga6Simulada(dados){
+    return this.tabuleiro.registrarDesistenciaNaVaga6Simulada(dados);
+  }
+
   pausarCatraca() {
     this.catracaAberta = false;
     return this.estado();
