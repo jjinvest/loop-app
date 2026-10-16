@@ -26,6 +26,25 @@ A estrutura continua sendo uma única fila B com promoção por indicação para
 
 Para referência de R$ 250 por evento, somente como **projeção aritmética**, isso representa três parcelas de R$ 250 (R$ 750) ao centro, duas (R$ 500) ao investimento e uma (R$ 250) à reserva, em seis eventos totalizando R$ 1.500 na referência do ciclo. Não se trata de dinheiro novo, renda ou recebimento garantido. Os ciclos dependem de vendas efetivas, custos e análise de solvência.
 
+## Caixa exclusivo das bolas douradas e das desistências
+
+A distribuição **não muda** na ordem das seis vendas. Quando o centro pertence a uma pessoa real e mantém a titularidade, suas parcelas continuam em `LOOP_CENTRO`. Quando a posição do centro é assumida operacionalmente pela empresa, seja por **prazo de ativação encerrado** (posição dourada) ou **desistência expressa após a entrada na vaga 6** (posição desistente, convertida em dourada), as parcelas originalmente destinadas ao participante (1ª, 3ª e 5ª) passam **integralmente para o caixa separado `LOOP_DOURADAS`**.
+
+| Evento do ciclo | Centro normal | Centro dourado ou desistente |
+|---|---|---|
+| 1 | LOOP_CENTRO | LOOP_DOURADAS |
+| 2 | LOOP_ESQUERDA (investimento) | LOOP_ESQUERDA (investimento) |
+| 3 | LOOP_CENTRO | LOOP_DOURADAS |
+| 4 | LOOP_DIREITA (reserva) | LOOP_DIREITA (reserva) |
+| 5 | LOOP_CENTRO | LOOP_DOURADAS |
+| 6 | LOOP_ESQUERDA (investimento) | LOOP_ESQUERDA (investimento) |
+
+A referência hipotética de R$ 250 por evento resulta, no centro dourado, em **R$ 750 para o caixa das douradas, R$ 500 para investimento e R$ 250 para reserva**; nenhum desses valores é pagamento real. A empresa não pode tratar as três parcelas douradas como renda ou saque de um CPF de participante.
+
+No laboratório, a desistência exige **aceite expresso do próprio titular autenticado** e somente pode ser registrada para a posição dele que já ocupa a **vaga 6**. A posição mantém ID e posição física, passa a pertencer operacionalmente ao LOOP, ganha estado `DESISTENTE` e aparece em dourado. A vaga anteriormente ocupada no limite daquele titular fica livre. O livro de desistências é imutável e o mesmo ato não pode ser duplicado; a desistência fictícia não realiza estorno, reembolso ou movimentação bancária.
+
+O roteamento é derivado da **titularidade operacional** (inclusive empresa/dourada), e não apenas da cor CSS. Para um centro real, o caixa das douradas não recebe suas parcelas. O Escritório Administrativo mostra um quarto caixa LOOP, separado do centro, investimento e reserva; permite visualizar cenários demonstrativos de centro real, dourado ou desistente. A simulação de saque mínimo R$ 25 com taxa de 3% também registra solicitações em livro fictício idempotente, mas não autoriza dinheiro real. Saque de participação de lucro continua bloqueado enquanto não existir saldo específico verificado.
+
 ## Limite por CPF e pacote de seis
 
 - **Seis posições abertas simultaneamente** no máximo, por CPF quando houver identidade real validada. No laboratório, o limite é aplicado por **conta fictícia**.
