@@ -205,6 +205,22 @@ class PonteComprasConvitesDemoSQLite{
     BEFORE DELETE ON admin_ponte_convites_validados_demo
     BEGIN SELECT RAISE(ABORT,'convites demo imutaveis'); END;
   `);
+  // Bolas douradas criadas somente pelo administrador do laboratorio.
+  // Sem CPF, pedido, pagamento, comissao, receita ou direito de saque.
+  banco.exec(`
+   CREATE TABLE IF NOT EXISTS admin_ponte_douradas_manuais_demo(
+    evento_id TEXT PRIMARY KEY NOT NULL,
+    posicao_id INTEGER NOT NULL UNIQUE CHECK(posicao_id>0),
+    criada_em TEXT NOT NULL,
+    origem TEXT NOT NULL CHECK(origem='ADMIN_MANUAL_SEM_COMPRA')
+   );
+   CREATE TRIGGER IF NOT EXISTS admin_douradas_manuais_no_update
+    BEFORE UPDATE ON admin_ponte_douradas_manuais_demo
+    BEGIN SELECT RAISE(ABORT,'bola dourada imutavel'); END;
+   CREATE TRIGGER IF NOT EXISTS admin_douradas_manuais_no_delete
+    BEFORE DELETE ON admin_ponte_douradas_manuais_demo
+    BEGIN SELECT RAISE(ABORT,'bola dourada imutavel'); END;
+  `);
   // Livro das posicoes adicionais: ampliar CHECK sem tocar os pedidos antigos.
   const antiga=this.banco.prepare("SELECT sql FROM sqlite_master WHERE type='table' AND name='admin_ponte_posicoes_adicionais_demo'").get()?.sql||'';
   if(antiga.includes('BETWEEN 2 AND 5')){
@@ -525,6 +541,44 @@ class PonteComprasConvitesDemoSQLite{
    };
   }catch(erro){this.banco.exec('ROLLBACK');throw erro;}
  }
+ // Registro manual exclusivo da empresa. Cria UM ID unico na fila B,
+ // sem pedido, sem CPF e sem venda validada. Nao gera receita em cofre.
+ criarDouradaManualDemo({eventoId}={}){
+  if(typeof eventoId!=='string'||!/^[a-z0-9-]{3,80}$/.test(eventoId))
+   throw falha('EVENTO_DOURADA_INVALIDO','Identificador administrativo invalido');
+  this.banco.exec('BEGIN IMMEDIATE');
+  try{
+   const existente=this.banco.prepare(
+    'SELECT posicao_id AS posicaoId,criada_em AS criadaEm FROM admin_ponte_douradas_manuais_demo WHERE evento_id=?'
+   ).get(eventoId);
+   if(existente){
+    this.banco.exec('COMMIT');
+    return {...existente,eventoId,repetida:true,
+     origem:'ADMIN_MANUAL_SEM_COMPRA',semCompra:true,semDinheiroReal:true};
+   }
+   const sim=this._restaurar();
+   const gerada=sim.registrarPosicaoSimulada({
+    nome:'Posição dourada LOOP',participanteId:'LOOP_EMPRESA'
+   }).posicao;
+   const p=sim.filas.filaB.find(v=>v.id===gerada.id);
+   p.empresa=true;p.titularOperacional='LOOP_EMPRESA';
+   p.statusAdesao='POSICAO_LOOP';
+   p.origemOperacional='ADMIN_MANUAL_SEM_COMPRA';
+   p.geradaSemCompra=true;
+   this.banco.prepare(`
+    INSERT INTO admin_ponte_douradas_manuais_demo(evento_id,posicao_id,criada_em,origem)
+    VALUES(?,?,?,'ADMIN_MANUAL_SEM_COMPRA')
+   `).run(eventoId,p.id,p.entrouEm);
+   this.banco.prepare(`
+    INSERT INTO admin_ponte_estado_demo(id,snapshot_json) VALUES(1,?)
+    ON CONFLICT(id) DO UPDATE SET snapshot_json=excluded.snapshot_json
+   `).run(JSON.stringify(sim.exportarSnapshot()));
+   this.banco.exec('COMMIT');
+   return {eventoId,posicaoId:p.id,criadaEm:p.entrouEm,repetida:false,
+    origem:p.origemOperacional,fila:'B',cor:'DOURADO',
+    semCPF:true,semCompra:true,semComissao:true,semDinheiroReal:true};
+  }catch(e){this.banco.exec('ROLLBACK');throw e;}
+ }
  // Preenchimento ADMINISTRATIVO local, sem criar pagamentos ou vendas.
  prepararTabuleiroDemo(){
   this.banco.exec('BEGIN IMMEDIATE');
@@ -594,6 +648,9 @@ class PonteComprasConvitesDemoSQLite{
    semPagamentoReal:true,semCPF:true,semSessaoPublica:true,
    catracaMovimentada:false,compraNaoConfirmaBeneficioReal:true,
    compras,convites,
+   douradasManuais:this.banco.prepare(`SELECT evento_id AS eventoId,
+    posicao_id AS posicaoId,criada_em AS criadaEm,origem
+    FROM admin_ponte_douradas_manuais_demo ORDER BY posicao_id`).all(),
    comissoesSimuladas:this.banco.prepare(`
     SELECT pedido_id AS pedidoId,indicador_id AS indicadorId,
      convidado_id AS convidadoId,posicao_id AS posicaoId,
