@@ -95,8 +95,8 @@ test('escritorio reune pedidos pendentes, somente-loja, azul, vermelho e dourado
  const posB=await criar(a,'pdf-250-loop');
  await concluir(posB,'evento-posicao-segunda');
  visao=await obter(a);
- assert.equal(visao.historicoLoja.contagens.aguardandoAtivacao,1);
- assert.equal(visao.historicoLoja.contagens.comPosicaoAtivada,1);
+ assert.equal(visao.historicoLoja.contagens.aguardandoAtivacao,0);
+ assert.equal(visao.historicoLoja.contagens.comPosicaoAtivada,2);
  const preparo=await fetch(base+'/api/admin/ponte-compras-convites-demo/preparar-tabuleiro',{
   method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+segredo},
   body:'{}'
@@ -107,10 +107,11 @@ test('escritorio reune pedidos pendentes, somente-loja, azul, vermelho e dourado
  assert.equal(segundo.estado,'POSICAO_ATIVADA');
  assert.equal(visao.historicoLoja.contagens.aguardandoAtivacao,0);
  assert.equal(visao.historicoLoja.contagens.posicoesDouradas,0);
- assert.equal(visao.historicoLoja.contagens.comPosicaoAtivada,1);
+ assert.equal(visao.historicoLoja.contagens.comPosicaoAtivada,2);
  assert.equal(visao.historicoLoja.contagens.total,4);
  const retornoB=await obter(b);
  assert.equal(retornoB.historicoLoja.contagens.total,1);
+ assert.equal(retornoB.historicoLoja.contagens.posicoesDouradas,1);
  assert.doesNotMatch(JSON.stringify(retornoB.historicoLoja),/principal@exemplo.invalid/);
  assert.ok(!JSON.stringify(retornoB.historicoLoja).includes(posA));
  assert.ok(!JSON.stringify(retornoB.historicoLoja).includes(posB));
