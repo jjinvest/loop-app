@@ -11,6 +11,7 @@
  let token='';
  let versao=0;
  let enviandoCadastro=false,enviandoLogin=false;
+ let revisaoTaxaIndicacao=1;
  const conviteLink=new URLSearchParams(location.search).get('convite');
  if(conviteLink && /^lp-[a-f0-9]{20}$/.test(conviteLink)){
   el('conviteContaDemo').value=conviteLink;
@@ -24,6 +25,16 @@
   const d=await r.json();
   if(!r.ok)throw new Error(r.status===401?'Chave ou senha de teste inválida.':
     d.erro||'Falha na operação de teste ('+r.status+').');
+  return d;
+ }
+ async function consultarTaxa({method='GET',body}={}){
+  const r=await fetch('/api/admin/indicacoes-taxa-demo',{
+   method,credentials:'omit',cache:'no-store',
+   headers:{Authorization:'Bearer '+token,...(body?{'Content-Type':'application/json'}:{})},
+   ...(body?{body:JSON.stringify(body)}:{})
+  });
+  const d=await r.json();
+  if(!r.ok)throw new Error(d.erro||'Não foi possível configurar a bonificação.');
   return d;
  }
  async function lerPonte(){
@@ -54,8 +65,13 @@
  async function atualizar(){
   if(!token)return;
   const atual=++versao;
-  const [dados,ponte,auditoria]=await Promise.all([api(''),lerPonte(),lerAuditoria()]);
+  const [dados,ponte,auditoria,taxa]=await Promise.all([api(''),lerPonte(),lerAuditoria(),consultarTaxa()]);
   if(atual!==versao)return;
+  revisaoTaxaIndicacao=taxa.atual.revisao;
+  el('percentualIndicacaoDemo').value=String(taxa.atual.percentual);
+  el('taxaAtualIndicacaoDemo').textContent='Percentual vigente: '+taxa.atual.percentual+
+   '% · revisão '+taxa.atual.revisao+
+   ' · aplicado somente a posições futuras · caixa reserva (direita).';
   const ac=auditoria.quantidades;
   el('resumoAuditoriaDemo').textContent='Entradas fictícias: '+ac.LOGIN_SUCESSO+
    ' · Senhas incorretas: '+ac.LOGIN_INVALIDO+
@@ -104,6 +120,23 @@
    lista.append(p);
   }
  }
+ el('formTaxaIndicacaoDemo').addEventListener('submit',async ev=>{
+  ev.preventDefault();
+  if(!token)return;
+  const botao=el('salvarTaxaIndicacaoDemo');botao.disabled=true;
+  try{
+   const percentual=Number(el('percentualIndicacaoDemo').value);
+   if(!Number.isSafeInteger(percentual)||percentual<1||percentual>100)
+    throw new Error('Digite um percentual inteiro de 1 a 100.');
+   const resultado=await consultarTaxa({
+    method:'POST',body:{percentual,revisaoEsperada:revisaoTaxaIndicacao}
+   });
+   revisaoTaxaIndicacao=resultado.atual.revisao;
+   el('taxaAtualIndicacaoDemo').textContent='Nova porcentagem: '+resultado.atual.percentual+
+    '% · a comissão automática usará essa taxa nas próximas posições.';
+  }catch(e){el('taxaAtualIndicacaoDemo').textContent=e.message;}
+  finally{botao.disabled=false;}
+ });
  el('abrirCadastroDemo').addEventListener('click',async()=>{
   token=chave.value;
   chave.value='';
