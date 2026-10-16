@@ -42,6 +42,27 @@ class ElegibilidadeProdutosLoopDemoSQLite{
     registrado_em TEXT NOT NULL,
     UNIQUE(produto_id,revisao)
    );
+   -- Modalidade comercial: somente produto explicitamente autorizado abre cinco posicoes.
+   CREATE TABLE IF NOT EXISTS admin_produtos_pacote_posicoes_loop_demo(
+    produto_id TEXT PRIMARY KEY REFERENCES catalogo_produtos(id) ON DELETE RESTRICT,
+    posicoes_por_pedido INTEGER NOT NULL CHECK(posicoes_por_pedido IN (1,5)),
+    revisao INTEGER NOT NULL CHECK(revisao>=2),
+    atualizado_em TEXT NOT NULL
+   );
+   CREATE TABLE IF NOT EXISTS admin_produtos_pacote_posicoes_historico_demo(
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    produto_id TEXT NOT NULL REFERENCES catalogo_produtos(id) ON DELETE RESTRICT,
+    revisao INTEGER NOT NULL CHECK(revisao>=2),
+    anterior INTEGER NOT NULL CHECK(anterior IN (1,5)),
+    novo INTEGER NOT NULL CHECK(novo IN (1,5)),
+    registrado_em TEXT NOT NULL,UNIQUE(produto_id,revisao)
+   );
+   CREATE TRIGGER IF NOT EXISTS admin_pacote_posicoes_historico_no_update
+    BEFORE UPDATE ON admin_produtos_pacote_posicoes_historico_demo
+    BEGIN SELECT RAISE(ABORT,'historico de pacotes imutavel'); END;
+   CREATE TRIGGER IF NOT EXISTS admin_pacote_posicoes_historico_no_delete
+    BEFORE DELETE ON admin_produtos_pacote_posicoes_historico_demo
+    BEGIN SELECT RAISE(ABORT,'historico de pacotes imutavel'); END;
    CREATE TRIGGER IF NOT EXISTS admin_quantidade_minima_hist_no_update
     BEFORE UPDATE ON admin_produtos_quantidade_minima_historico_demo
     BEGIN SELECT RAISE(ABORT,'historico de quantidade imutavel'); END;
@@ -65,7 +86,12 @@ class ElegibilidadeProdutosLoopDemoSQLite{
   const quantidade=this.banco.prepare(
    'SELECT quantidade_minima AS minima,revisao,atualizado_em AS atualizadoEm FROM admin_produtos_quantidade_minima_loop_demo WHERE produto_id=?'
   ).get(produtoId);
+  const pacote=this.banco.prepare(
+   'SELECT posicoes_por_pedido AS total,revisao FROM admin_produtos_pacote_posicoes_loop_demo WHERE produto_id=?'
+  ).get(produtoId);
   return {produtoId,elegivelLoop:reg?!!reg.elegivel:true,
+   posicoesPorPedidoLoop:pacote?.total??1,
+   revisaoPacotePosicoes:pacote?.revisao??1,
    revisaoElegibilidade:reg?.revisao??1,
    quantidadeMinimaLoop:quantidade?.minima??1,
    revisaoQuantidadeMinima:quantidade?.revisao??1,
@@ -138,6 +164,40 @@ class ElegibilidadeProdutosLoopDemoSQLite{
    this.banco.exec('COMMIT');
    return {...this.consultar(produtoId),alterado:true};
   }catch(e){this.banco.exec('ROLLBACK');throw e;}
+ }
+ alterarPacotePosicoes({produtoId,posicoesPorPedidoLoop,revisaoEsperada}={}){
+  if(![1,5].includes(posicoesPorPedidoLoop)||
+    !Number.isSafeInteger(revisaoEsperada)||revisaoEsperada<1)
+   throw erro('DADOS_INVALIDOS');
+  this.banco.exec('BEGIN IMMEDIATE');
+  try{
+   const anterior=this.consultar(produtoId);
+   if(anterior.revisaoPacotePosicoes!==revisaoEsperada)throw erro('CONFLITO_REVISAO');
+   if(anterior.posicoesPorPedidoLoop===posicoesPorPedidoLoop){
+    this.banco.exec('COMMIT');return {...anterior,alterado:false};
+   }
+   const revisao=anterior.revisaoPacotePosicoes+1,agora=new Date().toISOString();
+   this.banco.prepare(`
+    INSERT INTO admin_produtos_pacote_posicoes_loop_demo
+    (produto_id,posicoes_por_pedido,revisao,atualizado_em) VALUES (?,?,?,?)
+    ON CONFLICT(produto_id) DO UPDATE SET
+    posicoes_por_pedido=excluded.posicoes_por_pedido,
+    revisao=excluded.revisao,atualizado_em=excluded.atualizado_em
+   `).run(produtoId,posicoesPorPedidoLoop,revisao,agora);
+   this.banco.prepare(`
+    INSERT INTO admin_produtos_pacote_posicoes_historico_demo
+    (produto_id,revisao,anterior,novo,registrado_em) VALUES (?,?,?,?,?)
+   `).run(produtoId,revisao,anterior.posicoesPorPedidoLoop,posicoesPorPedidoLoop,agora);
+   this.banco.exec('COMMIT');return {...this.consultar(produtoId),alterado:true};
+  }catch(e){this.banco.exec('ROLLBACK');throw e;}
+ }
+ historicoPacotePosicoes(produtoId){
+  this.consultar(produtoId);
+  return this.banco.prepare(`
+   SELECT produto_id AS produtoId,revisao,anterior,novo,registrado_em AS registradoEm
+   FROM admin_produtos_pacote_posicoes_historico_demo
+   WHERE produto_id=? ORDER BY revisao
+  `).all(produtoId);
  }
  historicoQuantidadeMinima(produtoId){
   this.consultar(produtoId);
