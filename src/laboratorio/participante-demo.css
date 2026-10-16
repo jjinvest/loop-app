@@ -87,3 +87,29 @@ body{background:#090b0b;color:#f0f0e8}
 .estado-pedido-posicao-dourada-loop{background:#e5b545;color:#231a00}
 .estado-pedido-compra-sem-posicao{background:#3b525b;color:#f0f5f5}
 .estado-pedido-estorno-em-conferencia{background:#805c25;color:#fff}
+
+/* Layout único responsivo: cards, links e mapa sempre dentro da viewport. */
+.portal-participante,
+.portal-participante > *,
+.cartao-participante,
+.cartao-participante > *,
+.duas-colunas-participante > *,
+.area-indicacoes-participante{min-width:0;max-width:100%}
+.cartao-participante input:not([type=checkbox]),
+.cartao-participante select,
+.cartao-participante textarea{box-sizing:border-box;max-width:100%;min-width:0;width:100%}
+.cartao-participante button{max-width:100%;min-height:44px;white-space:normal;text-align:center}
+.area-indicacoes-participante{display:grid;gap:10px}
+.area-indicacoes-participante > form{min-width:0}
+#enderecoLinkParticipante,#enderecoLinkLojaParticipante{font-size:.88rem;overflow:hidden;text-overflow:ellipsis}
+.cabecalho-participante > div,.cabecalho-participante small{min-width:0;overflow-wrap:anywhere}
+.resumos-participante > div{min-width:0}
+.resumos-participante strong{font-size:clamp(1.12rem,3.2vw,1.6rem);overflow-wrap:anywhere}
+@media(max-width:360px){
+ .resumos-participante{gap:8px}
+ .resumos-participante > div{padding:10px}
+ .cabecalho-participante{padding:12px}
+ .mapa-tabuleiro-posicoes-demo{gap:4px}
+ .espaco-tabuleiro-demo{font-size:.72rem}
+}
+
