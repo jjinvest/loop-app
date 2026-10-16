@@ -30,7 +30,7 @@ async function validarViewport(page,largura,rotulo){
   const html=document.documentElement;
   return {janela:window.innerWidth,conteudo:html.scrollWidth,
    centro:document.querySelectorAll('.tabuleiro-centro').length,
-   vagas:document.querySelectorAll('.tabuleiro-vaga-1, .tabuleiro-vaga-2, .tabuleiro-vaga-3, .tabuleiro-vaga-4, .tabuleiro-vaga-5').length,
+   vagas:document.querySelectorAll('.tabuleiro-vaga-1, .tabuleiro-vaga-2, .tabuleiro-vaga-3, .tabuleiro-vaga-4, .tabuleiro-vaga-5, .tabuleiro-vaga-6').length,
    colunas:(getComputedStyle(document.querySelector('#mapaTabuleiroParticipante'))
     .gridTemplateColumns.split(' ').length)};
  });
@@ -38,7 +38,7 @@ async function validarViewport(page,largura,rotulo){
   rotulo+' '+largura+'px: rolagem horizontal inesperada '+
   JSON.stringify(medicao));
  assert.equal(medicao.centro,1,rotulo+' centro unico');
- assert.equal(medicao.vagas,5,rotulo+' cinco vagas');
+ assert.equal(medicao.vagas,6,rotulo+' seis vagas');
  assert.equal(medicao.colunas,3,rotulo+' tabuleiro em tres colunas');
  await page.screenshot({path:path.join(pasta,rotulo+'-'+largura+'px.png'),fullPage:true});
 }
@@ -69,7 +69,7 @@ async function main(){
   await page.locator('#senhaParticipante').fill(senha);
   await page.locator('#botaoEntrarParticipante').click();
   await page.locator('#conteudoParticipante').waitFor({state:'visible'});
-  assert.equal(await page.locator('.espaco-tabuleiro-demo').count(),6);
+  assert.equal(await page.locator('.espaco-tabuleiro-demo').count(),7);
   await page.locator('#filtroTodasMapaParticipante').click();
   assert.equal(await page.locator('#filtroTodasMapaParticipante').getAttribute('aria-pressed'),'true');
   await page.locator('#filtroResumoMapaParticipante').click();
