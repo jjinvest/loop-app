@@ -26,85 +26,85 @@ function cadastrarPosicoes(motor, qtd, prefixo = 'cliente') {
   }
 }
 
-function registrarCinco(tabuleiro, prefixo = 'ciclo-1') {
-  for (let i = 1; i <= 5; i++) {
+function registrarSeis(tabuleiro, prefixo = 'ciclo-1') {
+  for (let i = 1; i <= 6; i++) {
     tabuleiro.registrarVendaSimulada({ vendaId: prefixo + '-' + i });
   }
 }
 
-test('tabuleiro preenche centro e cinco vagas em ordem sem duplicar posicoes', () => {
+test('tabuleiro preenche centro e seis vagas em ordem sem duplicar posicoes', () => {
   const { motor, tabuleiro } = criarSimulador();
   cadastrarPosicoes(motor, 8);
   const estado = tabuleiro.preencherInicial();
   assert.equal(estado.centro.id, 1);
-  assert.deepEqual(estado.vagas.map(p => p.id), [2,3,4,5,6]);
-  assert.equal(motor.resumo().B.quantidade, 2);
+  assert.deepEqual(estado.vagas.map(p => p.id), [2,3,4,5,6,7]);
+  assert.equal(motor.resumo().B.quantidade, 1);
   assert.equal(estado.cicloAtual, 1);
   assert.equal(estado.vendasNoCiclo, 0);
   assert.equal(estado.ciclosConcluidos, 0);
 });
 
-test('cinco vendas usam PART-EMP-PART-EMP-PART sem mover posicoes antes do giro', () => {
+test('seis vendas usam PART-EMP-PART-EMP-PART sem mover posicoes antes do giro', () => {
   const { motor, tabuleiro } = criarSimulador();
   cadastrarPosicoes(motor, 7);
   const inicial = tabuleiro.preencherInicial();
-  assert.deepEqual(DESTINOS, ['PARTICIPANTE','EMPRESA','PARTICIPANTE','EMPRESA','PARTICIPANTE']);
-  for (let i = 1; i <= 5; i++) {
+  assert.deepEqual(DESTINOS, ['PARTICIPANTE','EMPRESA','PARTICIPANTE','EMPRESA','PARTICIPANTE','EMPRESA_INVESTIMENTO']);
+  for (let i = 1; i <= 6; i++) {
     const evento = tabuleiro.registrarVendaSimulada({ vendaId: 'ciclo-1-venda-' + i });
     assert.equal(evento.venda.ordem, i);
     assert.equal(evento.venda.destinoPrevisto, DESTINOS[i - 1]);
-    assert.equal(evento.elegivelParaGiro, i === 5);
+    assert.equal(evento.elegivelParaGiro, i === 6);
     assert.deepEqual(evento.estado.vagas.map(p => p.id), inicial.vagas.map(p => p.id));
     assert.equal(evento.estado.centro.id, inicial.centro.id);
   }
-  assert.equal(tabuleiro.estado().vendasNoCiclo, 5);
-  assert.throws(() => tabuleiro.registrarVendaSimulada({ vendaId: 'sexta' }), /aguarde a catraca/);
+  assert.equal(tabuleiro.estado().vendasNoCiclo, 6);
+  assert.throws(() => tabuleiro.registrarVendaSimulada({ vendaId: 'setima' }), /aguarde a catraca/);
   assert.equal(tabuleiro.estado().elegivelParaGiro, true);
 });
 
-test('catraca pausada nao gira, mesmo com cinco vendas concluidas', () => {
+test('catraca pausada nao gira, mesmo com seis vendas concluidas', () => {
   const { motor, tabuleiro } = criarSimulador();
   cadastrarPosicoes(motor, 7);
   const antes = tabuleiro.preencherInicial();
-  registrarCinco(tabuleiro);
+  registrarSeis(tabuleiro);
   const resultado = tabuleiro.girarSimulado({ catracaAberta: false });
   assert.equal(resultado.girou, false);
   assert.equal(resultado.motivo, 'CATRACA_PAUSADA');
   assert.equal(tabuleiro.estado().centro.id, antes.centro.id);
   assert.deepEqual(tabuleiro.estado().vagas.map(p => p.id), antes.vagas.map(p => p.id));
-  assert.equal(tabuleiro.estado().vendasNoCiclo, 5);
+  assert.equal(tabuleiro.estado().vendasNoCiclo, 6);
   assert.equal(tabuleiro.estado().ciclosConcluidos, 0);
 });
 
-test('giro 1->centro, 2->1, 3->2, 4->3, 5->4, proximo->5', () => {
+test('giro 1->centro, 2->1, 3->2, 4->3, 5->4, 6->5, proximo->6', () => {
   const { motor, tabuleiro } = criarSimulador();
   cadastrarPosicoes(motor, 9);
   const antes = tabuleiro.preencherInicial();
   assert.equal(tabuleiro.girarSimulado({ catracaAberta: true }).motivo, 'CICLO_INCOMPLETO');
-  registrarCinco(tabuleiro);
+  registrarSeis(tabuleiro);
   const giro = tabuleiro.girarSimulado({ catracaAberta: true });
   assert.equal(giro.girou, true);
   assert.equal(giro.centroConcluido.id, antes.centro.id);
   assert.equal(giro.estado.centro.id, antes.vagas[0].id);
-  assert.deepEqual(giro.estado.vagas.slice(0, 4).map(p => p.id),
-    antes.vagas.slice(1, 5).map(p => p.id));
-  assert.equal(giro.estado.vagas[4].id, 7);
+  assert.deepEqual(giro.estado.vagas.slice(0, 5).map(p => p.id),
+    antes.vagas.slice(1, 6).map(p => p.id));
+  assert.equal(giro.estado.vagas[5].id, 8);
   assert.equal(giro.estado.vendasNoCiclo, 0);
   assert.equal(giro.estado.ciclosConcluidos, 1);
   assert.equal(giro.estado.cicloAtual, 2);
-  assert.equal(tabuleiro.ciclosConcluidos[0].vendas.length, 5);
+  assert.equal(tabuleiro.ciclosConcluidos[0].vendas.length, 6);
 });
 
-test('segundo giro respeita a catraca e mantem cinco vendas por ciclo', () => {
+test('segundo giro respeita a catraca e mantem seis vendas por ciclo', () => {
   const { motor, tabuleiro } = criarSimulador();
   cadastrarPosicoes(motor, 10);
   tabuleiro.preencherInicial();
-  registrarCinco(tabuleiro,'primeiro');
+  registrarSeis(tabuleiro,'primeiro');
   tabuleiro.girarSimulado({ catracaAberta: true });
-  registrarCinco(tabuleiro,'segundo');
+  registrarSeis(tabuleiro,'segundo');
   const segundo = tabuleiro.girarSimulado({ catracaAberta: true });
   assert.equal(segundo.estado.centro.id, 3);
-  assert.equal(segundo.estado.vagas[4].id, 8);
+  assert.equal(segundo.estado.vagas[5].id, 9);
   assert.equal(segundo.estado.ciclosConcluidos, 2);
   assert.equal(tabuleiro.ciclosConcluidos[0].vendas[0].destinoPrevisto, 'PARTICIPANTE');
   assert.equal(tabuleiro.ciclosConcluidos[1].vendas[0].destinoPrevisto, 'PARTICIPANTE');
@@ -132,23 +132,23 @@ test('regra 3A/1B das filas determina quem entra no tabuleiro', () => {
   cadastrarPosicoes(motor, 3, 'branca');
   const estado = tabuleiro.preencherInicial();
   const origens = [estado.centro, ...estado.vagas].map(p => p.origemFila);
-  assert.deepEqual(origens, ['A','A','A','B','A','A']);
-  registrarCinco(tabuleiro);
+  assert.deepEqual(origens, ['A','A','A','B','A','A','A']);
+  registrarSeis(tabuleiro);
   const giro = tabuleiro.girarSimulado({ catracaAberta:true });
-  assert.equal(giro.novaPosicao5.origemFila, 'A');
-  registrarCinco(tabuleiro, 'ciclo-2');
+  assert.equal(giro.novaPosicao6.origemFila, 'A');
+  registrarSeis(tabuleiro, 'ciclo-2');
   const giro2 = tabuleiro.girarSimulado({ catracaAberta:true });
-  assert.equal(giro2.novaPosicao5.origemFila, 'B');
+  assert.equal(giro2.novaPosicao6.origemFila, 'A');
 });
 
-test('sem nova entrada a posicao 5 fica vazia, sem inventar participante', () => {
+test('sem nova entrada a posicao 6 fica vazia, sem inventar participante', () => {
   const { motor, tabuleiro } = criarSimulador();
   cadastrarPosicoes(motor, 6);
   tabuleiro.preencherInicial();
-  registrarCinco(tabuleiro);
+  registrarSeis(tabuleiro);
   const giro = tabuleiro.girarSimulado({ catracaAberta:true });
   assert.equal(giro.girou, true);
-  assert.equal(giro.estado.vagas[4], null);
+  assert.equal(giro.estado.vagas[5], null);
   assert.equal(giro.estado.centro.id, 2);
 });
 
