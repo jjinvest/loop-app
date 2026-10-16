@@ -32,8 +32,21 @@
     </section>
     <div id="areaCadastroDemo" hidden>
       <section class="painel">
+       <h2>Porcentagem da bonificação por indicação</h2>
+       <p class="ajuda">O administrador pode alterar o percentual, inicialmente 10%. A comissão é calculada sobre o valor único da posição LOOP e reservada exclusivamente no caixa extra (reserva). O novo percentual vale apenas para futuras posições; bônus antigos não são reescritos.</p>
+       <form id="formTaxaIndicacaoDemo">
+        <div class="campo">
+         <label for="percentualIndicacaoDemo">Percentual das novas posições (1% a 100%)</label>
+         <input id="percentualIndicacaoDemo" type="number" min="1" max="100" step="1" value="10" required>
+        </div>
+        <button type="submit" id="salvarTaxaIndicacaoDemo">Salvar percentual de bonificação</button>
+       </form>
+       <p id="taxaAtualIndicacaoDemo" role="status" aria-live="polite"></p>
+       <p class="ajuda">Saque mínimo individual: R$ 100. O laboratório registra compromisso no caixa reserva, mas não movimenta dinheiro real.</p>
+      </section>
+      <section class="painel">
         <h2>Criar conta fictícia</h2>
-        <p class="ajuda">Cadastro com nome, telefone, e-mail e senha. O nome cadastrado é o nome usado depois no login. O código de convite vem preenchido automaticamente quando esta página é aberta por um link de indicação.</p>
+        <p class="ajuda">Cadastro com nome, telefone, e-mail e senha. O nome cadastrado é o nome usado depois no login. O rastreio vem dentro do link de indicação, sem código separado na experiência do cliente.</p>
         <form id="formContaDemo" autocomplete="off">
           <div class="campo">
             <label for="nomeContaDemo">Nome de acesso (único)</label>
@@ -53,7 +66,7 @@
             <input id="senhaContaDemo" type="password" required minlength="10" maxlength="128" autocomplete="new-password">
           </div>
           <div class="campo">
-            <label for="conviteContaDemo">Código do indicador (opcional)</label>
+            <label for="conviteContaDemo">Código de teste legado do indicador (opcional; o cliente usa apenas o link)</label>
             <input id="conviteContaDemo" type="text" maxlength="23" pattern="lp-[a-f0-9]{20}" spellcheck="false" autocomplete="off" placeholder="lp-...">
             <p class="ajuda">Convite associado ao cadastro permanece PENDENTE. Só uma compra efetivamente validada poderá torná-lo elegível futuramente.</p>
           </div>
