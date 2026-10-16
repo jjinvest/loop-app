@@ -35,6 +35,7 @@ test('snapshot preserva o tabuleiro, ordem das filas e os eventos de ciclo', () 
 
   importado.registrarVendaNoCicloSimulada({vendaId:'ciclo-1-4'});
   importado.registrarVendaNoCicloSimulada({vendaId:'ciclo-1-5'});
+  importado.registrarVendaNoCicloSimulada({vendaId:'ciclo-1-6'});
   assert.equal(importado.tentarGiro().motivo,'CATRACA_PAUSADA');
   importado.abrirCatraca();
   assert.equal(importado.tentarGiro().girou,true);
@@ -44,14 +45,14 @@ test('snapshot preserva o tabuleiro, ordem das filas e os eventos de ciclo', () 
 
 test('snapshot apos giro restaura historico e permite iniciar proximo ciclo', () => {
   const loop=criarCenario();
-  for(let i=1;i<=5;i++)loop.registrarVendaNoCicloSimulada({vendaId:'c1-'+i});
+  for(let i=1;i<=6;i++)loop.registrarVendaNoCicloSimulada({vendaId:'c1-'+i});
   loop.abrirCatraca();
   assert.equal(loop.tentarGiro().girou,true);
   loop.pausarCatraca();
   loop.registrarVendaNoCicloSimulada({vendaId:'c2-1'});
   const recuperado=SimuladorLoop.restaurarSnapshot(loop.exportarSnapshot());
   assert.deepEqual(recuperado.estado(),loop.estado());
-  for(let i=2;i<=5;i++)recuperado.registrarVendaNoCicloSimulada({vendaId:'c2-'+i});
+  for(let i=2;i<=6;i++)recuperado.registrarVendaNoCicloSimulada({vendaId:'c2-'+i});
   assert.equal(recuperado.tentarGiro().motivo,'CATRACA_PAUSADA');
   recuperado.abrirCatraca();
   assert.equal(recuperado.tentarGiro().girou,true);
