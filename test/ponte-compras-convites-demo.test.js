@@ -161,15 +161,15 @@ test('pedido pendente, sem comprovante, com horario invalido ou titular inexiste
  assert.equal(m.ponte.consultar().filas.B.quantidade,0);
 });
 
-test('limite de cinco posicoes ativas por conta no laboratorio bloqueia sexta confirmacao',async t=>{
+test('limite de seis posicoes ativas por conta no laboratorio bloqueia setima confirmacao',async t=>{
  const m=preparar(arquivo(t));t.after(()=>m.repo.fechar());
  const a=pessoa(m.contas,'Conta Maximo','a@exemplo.invalid');
- for(let i=1;i<=5;i++){
+ for(let i=1;i<=6;i++){
   recibo(m,'limite-'+i,a.contaId);
   assert.equal((await m.ponte.processar({pedidoId:'limite-'+i})).criado,true);
  }
- recibo(m,'limite-6',a.contaId);
- await assert.rejects(m.ponte.processar({pedidoId:'limite-6'}),e=>e.codigo==='LIMITE_ATIVO');
+ recibo(m,'limite-7',a.contaId);
+ await assert.rejects(m.ponte.processar({pedidoId:'limite-7'}),e=>e.codigo==='LIMITE_ATIVO');
  const s=m.ponte.consultar();
  assert.equal(s.compras.length,5);
  assert.equal(s.filas.B.quantidade,5);
