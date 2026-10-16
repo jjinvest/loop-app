@@ -1460,6 +1460,37 @@
     }
     return Math.round(n*100);
   }
+  async function carregarDouradasManuais(){
+    const status=el('statusDouradasManuaisDemo'),lista=el('listaDouradasManuaisDemo');
+    if(!token){status.textContent='Acesso administrativo requerido.';return;}
+    try{
+      const res=await requisitar('ponte-compras-convites-demo');
+      lista.replaceChildren();
+      for(const p of res.douradasManuais||[]){
+        const li=document.createElement('li');
+        li.textContent='Posição #'+p.posicaoId+' · origem administrativa · '+
+          p.criadaEm+' · sem CPF e sem pagamento';
+        lista.append(li);
+      }
+      status.textContent=(res.douradasManuais||[]).length?
+       (res.douradasManuais||[]).length+' bolas douradas administrativas no laboratório.':
+       'Nenhuma bola dourada criada manualmente.';
+    }catch(e){status.textContent='Erro na consulta: '+e.message;}
+  }
+  async function criarDouradaManual(){
+    const b=el('criarDouradaManualDemo'),status=el('statusDouradasManuaisDemo');
+    if(!token){status.textContent='Informe a chave administrativa.';return;}
+    b.disabled=true;
+    try{
+      const r=await requisitar('ponte-compras-convites-demo/douradas',{
+        method:'POST',body:JSON.stringify({eventoId:'dourada-'+crypto.randomUUID()})
+      });
+      status.textContent='Bola dourada #'+r.resultado.posicaoId+
+       ' criada na fila B. Sem CPF, sem compra e sem saldo gerado.';
+      await carregarDouradasManuais();
+    }catch(e){status.textContent='Não foi possível criar: '+e.message;}
+    finally{b.disabled=false;}
+  }
   async function registrarLivro(e,tipo){
     e.preventDefault();
     if(!token){el('statusLivroPersistenteDemo').textContent='Abra a demonstração com a chave local.';return;}
@@ -1570,7 +1601,7 @@
       if(atual!==versao)return;
       preencherConfiguracoes(config.cofres);
       mostrar(visao);
-      await Promise.all([carregarValorLoop(),carregarHistorico(),carregarConciliacao(),carregarLivro(),carregarRecebimentos(),carregarPontePedidoPagamento(),carregarPedidosComerciais(),carregarPedidosPDF(),carregarCarrinhosLoop(),carregarPlanejamentoFisico(),carregarPagamentosFisicos()]);
+      await Promise.all([carregarValorLoop(),carregarHistorico(),carregarConciliacao(),carregarLivro(),carregarDouradasManuais(),carregarRecebimentos(),carregarPontePedidoPagamento(),carregarPedidosComerciais(),carregarPedidosPDF(),carregarCarrinhosLoop(),carregarPlanejamentoFisico(),carregarPagamentosFisicos()]);
     }catch(e){
       if(atual===versao){limpar();status.textContent=e.message;}
     }
@@ -1646,6 +1677,8 @@
   });
   el('pagamentoSelecionadoPSPDemo').addEventListener('change',carregarHistoricoPSP);
   el('formEventoPSPDemo').addEventListener('submit',registrarEventoPSP);
+  el('criarDouradaManualDemo').addEventListener('click',criarDouradaManual);
+  el('conferirDouradasManuaisDemo').addEventListener('click',carregarDouradasManuais);
   el('formCicloPersistenteDemo').addEventListener('submit',e=>registrarLivro(e,'ciclo'));
   el('formMovimentoPersistenteDemo').addEventListener('submit',e=>registrarLivro(e,'movimento'));
   el('atualizarLivroPersistenteDemo').addEventListener('click',carregarLivro);
