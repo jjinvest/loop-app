@@ -6,6 +6,7 @@ const {ContasParticipantesDemoSQLite}=require('../src/domain/contas-participante
 const {PonteComprasConvitesDemoSQLite}=require('../src/domain/ponte-compras-convites-demo-sqlite');
 const {STATUS_CONFIRMADO}=require('../src/domain/processador-pedidos-simulados');
 const {EscritorioIndividualDemo}=require('../src/domain/escritorio-individual-demo');
+const {AdesoesPosicoesDemoSQLite}=require('../src/domain/adesoes-posicoes-demo-sqlite');
 
 test('tres anos depois: campanha 50% exige cadeira no minimo atual de R$500, senao mantem 10%',async t=>{
  const repo=new RepositorioCatalogoSQLite({caminho:':memory:'});
@@ -33,6 +34,9 @@ test('tres anos depois: campanha 50% exige cadeira no minimo atual de R$500, sen
   '2030-01-02T12:00:00.000Z');
  assert.equal(base.posicaoCriada,false);
  assert.equal(ponte.linksComissoes.linkDaConta(indicador.contaId).ativo,true);
+ const adesoes=new AdesoesPosicoesDemoSQLite({ponte,relogio:()=>'2030-01-03T12:00:00.000Z'});
+ assert.equal(adesoes.ativar({contaId:indicador.contaId,cpfFicticio:'11144477735',
+  aceitaTermos:true,versaoTermos:'LOOP-DEMO-V1'}).ativadas,0);
  const config=ponte.configuracaoValor;
  config.agora=()=>dia(1);
  assert.equal(config.alterar({valorCentavos:50000,revisaoEsperada:1}).valorCentavos,50000);
@@ -59,7 +63,7 @@ test('tres anos depois: campanha 50% exige cadeira no minimo atual de R$500, sen
  // O indicador precisa de R$500 naquele momento para criar sua cadeira.
  const ativacao=await comprar('compra-indicador-500',indicador,50000,dia(5));
  assert.equal(ativacao.posicaoCriada,true);
- assert.equal(ativacao.statusAdesao,'PENDENTE'); // Azul ja e cadeira no LOOP.
+ assert.equal(ativacao.statusAdesao,'ATIVA'); // Aceite anterior ativa a cadeira automaticamente.
  bonusEscritorio=escritorio.consultar(indicador.contaId).bonusIndicacoes;
  assert.equal(bonusEscritorio.ativoNoLoopAgora,true);
  assert.equal(bonusEscritorio.porcentagemAplicavelHoje,50);
@@ -115,6 +119,10 @@ test('cadeira azul que virou ouro LOOP nao habilita bonificacao promocional do a
  const preparada=ponte.prepararTabuleiroDemo();
  assert.equal(preparada.tabuleiro.centro.statusAdesao,'PRAZO_ENCERRADO');
  assert.equal(preparada.tabuleiro.centro.participanteId,indicar.contaId);
+ // A cadeira perdeu o prazo; CPF agora habilita apenas os bonus basicos futuros.
+ const adesoesOuro=new AdesoesPosicoesDemoSQLite({ponte,relogio:()=>tempo(7)});
+ assert.equal(adesoesOuro.ativar({contaId:indicar.contaId,cpfFicticio:'52998224725',
+  aceitaTermos:true,versaoTermos:'LOOP-DEMO-V1'}).ativadas,0);
  ponte.linksComissoes.taxas.agora=()=>tempo(7);
  ponte.linksComissoes.taxas.alterar({percentual:30,revisaoEsperada:1});
  const bonificacao=await comprar('convidado-ouro-250',convidado,25000,8);
