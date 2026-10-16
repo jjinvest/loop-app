@@ -7,7 +7,7 @@
 A estrutura continua sendo uma única fila B com promoção por indicação para a fila A, mantida a prioridade A/B existente e o mesmo motor de catraca.
 
 - O tabuleiro possui **um centro e seis posições periféricas**, numeradas de 1 a 6.
-- A entrada de cada nova posição selecionada da fila ocorre **exclusivamente pela vaga 6**.
+- A entrada de cada nova posição selecionada da fila ocorre **exclusivamente pela vaga 6**. Enquanto a posição aguarda nas filas A/B, pode permanecer azul sem transferência para a empresa. Se, ao cruzar a vaga 6, o CPF e o aceite não tiverem sido confirmados, ela se torna dourada e a titularidade operacional passa ao LOOP naquele instante. A montagem inicial usa a mesma fronteira lógica de entrada antes de distribuir as posições nos lugares iniciais. Aceite posterior não reverte a titularidade dourada.
 - Após conclusão do ciclo e liberação da catraca, o centro sai, a vaga 1 vira o novo centro, 2 vai para 1, 3 para 2, 4 para 3, 5 para 4 e **6 para 5**. Outra posição da fila ocupa a vaga 6, se houver. Ninguém pula etapas.
 - O tabuleiro inicialmente cheio requer **sete posições** (centro + 6); a montagem gradual pode deixar vagas vazias.
 - Um ciclo completo requer **seis vendas fictícias** confirmadas e vinculadas ao ocupante do centro; a catraca permanece pausada até a autorização de giro, inclusive depois da sexta venda.
