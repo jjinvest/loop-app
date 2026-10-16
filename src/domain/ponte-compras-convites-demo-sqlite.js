@@ -313,7 +313,7 @@ class PonteComprasConvitesDemoSQLite{
    }
    const posicao=simulador.registrarPosicaoSimulada({
     nome:conta.nome,participanteId:conta.contaId,
-    vendaId:'compra-demo-'+pedidoId
+    vendaId:'compra-demo-'+pedidoId,adesaoPendente:true
    });
    if(posicao.repetida)throw new Error('Estado simulado e comprovantes divergentes');
    this.banco.prepare(`
@@ -368,11 +368,27 @@ class PonteComprasConvitesDemoSQLite{
     posicaoId:posicao.posicao.id,indicacaoNova,
     filaAtual:simulador.filas.filaA.some(p=>p.id===posicao.posicao.id)?'A':'B',
     compraElegivelLoop:true,posicaoCriada:true,vendaLojaRegistrada:true,
-    valorReferenciaPosicaoCentavos:referenciaVigente.valorCentavos,
+    statusAdesao:'PENDENTE',
+     valorReferenciaPosicaoCentavos:referenciaVigente.valorCentavos,
     revisaoValorPosicao:referenciaVigente.revisao,
     movimentouCatraca:false,registrouPagamentoReal:false
    };
   }catch(erro){this.banco.exec('ROLLBACK');throw erro;}
+ }
+ // Preenchimento ADMINISTRATIVO local, sem criar pagamentos ou vendas.
+ prepararTabuleiroDemo(){
+  this.banco.exec('BEGIN IMMEDIATE');
+  try{
+   const sim=this._restaurar();
+   const estado=sim.prepararTabuleiro();
+   this.banco.prepare(`
+    INSERT INTO admin_ponte_estado_demo(id,snapshot_json) VALUES(1,?)
+    ON CONFLICT(id) DO UPDATE SET snapshot_json=excluded.snapshot_json
+   `).run(JSON.stringify(sim.exportarSnapshot()));
+   this.banco.exec('COMMIT');
+   return {tabuleiro:estado,semPagamentoReal:true,
+    operacao:'PREENCHIMENTO_MANUAL_FICTICIO'};
+  }catch(err){this.banco.exec('ROLLBACK');throw err;}
  }
  consultar(){
   const sim=this._restaurar();
