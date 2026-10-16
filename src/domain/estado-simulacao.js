@@ -112,12 +112,12 @@ function restaurarSnapshot(snapshot, criarLoop) {
 
   if (t.centro !== null) checarPosicao(t.centro, 'centro', true);
   const vagas = lista(t.vagas,'vagas');
-  exigir(vagas.length === 5, 'tabuleiro precisa de cinco vagas');
+  exigir(vagas.length === 6, 'tabuleiro precisa de seis vagas');
   for (let i = 0; i < vagas.length; i++) {
     if (vagas[i] !== null) checarPosicao(vagas[i], 'vaga ' + (i+1), true);
   }
   const vendas = lista(t.vendasDoCiclo,'vendasDoCiclo');
-  exigir(vendas.length <= 5, 'ciclo com mais de cinco vendas');
+  exigir(vendas.length <= DESTINOS.length, 'ciclo com mais de seis vendas');
   const concluidos = lista(t.ciclosConcluidos, 'ciclosConcluidos');
   const processadas = textosUnicos(t.vendasProcessadas,'vendasProcessadas');
   const idsVendas = new Set();
@@ -131,7 +131,7 @@ function restaurarSnapshot(snapshot, criarLoop) {
   concluidos.forEach((completo, i) => {
     exigir(objeto(completo) && completo.ciclo === i+1 &&
       objeto(completo.centro) && Array.isArray(completo.vendas) &&
-      completo.vendas.length === 5, 'ciclo concluido invalido');
+      (completo.vendas.length === 5||completo.vendas.length === 6), 'ciclo concluido invalido');
     checarPosicao(completo.centro, 'centro de ciclo concluido');
     completo.vendas.forEach((v,j) => conferirVenda(v,j,i+1,completo.centro.id));
   });
