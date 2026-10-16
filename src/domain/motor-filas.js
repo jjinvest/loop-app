@@ -24,7 +24,8 @@ class MotorFilas {
     return this.indicacoes.get(String(participanteId)) || { quantidade: 0, ultimoConviteEm: null, ordemUltimoConvite: Infinity };
   }
 
-  registrarPosicao({ nome, participanteId, vendaId } = {}) {
+  registrarPosicao({ nome, participanteId, vendaId, adesaoPendente = false } = {}) {
+    if(typeof adesaoPendente!=='boolean')throw new TypeError('adesaoPendente invalida');
     if ((!nome || !String(nome).trim()) && (participanteId === undefined || participanteId === null || String(participanteId).trim() === '')) {
       throw new Error('Informe nome ou participanteId');
     }
@@ -44,7 +45,8 @@ class MotorFilas {
       participanteId: chaveParticipante,
       nome: nome ? String(nome).trim() : 'Participante ' + chaveParticipante,
       fila: 'B',
-      entrouEm: this.relogio()
+      entrouEm: this.relogio(),
+      ...(adesaoPendente?{statusAdesao:'PENDENTE'}:{})
     };
     this.filaB.push(posicao);
     this.participantesConhecidos.add(chaveParticipante);
