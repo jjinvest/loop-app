@@ -37,10 +37,10 @@ test('seis vendas gravadas em lote atomico preservam 3 central, 2 esquerda e 1 d
     assert.deepEqual(novo,{loteId:'ciclo-teste-001',repetido:false,eventos:6});
     const livro=r.consultar();
     assert.equal(livro.lotesRegistrados,1);
-    assert.equal(livro.lancamentosRegistrados,14);
+    assert.equal(livro.lancamentosRegistrados,12);
     assert.equal(cofre(livro,COFRES.CENTRO).entradasAcumuladasCentavos,75000);
     assert.equal(cofre(livro,COFRES.ESQUERDA).entradasAcumuladasCentavos,50000);
-    assert.equal(cofre(livro,COFRES.DIREITA).entradasAcumuladasCentavos,50000);
+    assert.equal(cofre(livro,COFRES.DIREITA).entradasAcumuladasCentavos,25000);
     assert.equal(cofre(livro,COFRES.COMERCIAL).entradasAcumuladasCentavos,30000);
     assert.equal(cofre(livro,COFRES.DISTRIBUIDOR).entradasAcumuladasCentavos,0);
     assert.equal(livro.integracaoBancaria,'NAO_CONECTADA');
@@ -56,9 +56,9 @@ test('mesmo identificador e payload = idempotencia; ID repetido com modo diferen
     const r=new RazaoFinanceiroDemoSQLite({banco:db.banco});
     r.registrarCicloFicticio({cicloId:'ciclo-idempotente',modo:MODOS.SPLIT});
     assert.equal(r.registrarCicloFicticio({cicloId:'ciclo-idempotente',modo:MODOS.SPLIT}).repetido,true);
-    assert.equal(r.consultar().lancamentosRegistrados,14);
+    assert.equal(r.consultar().lancamentosRegistrados,12);
     assert.throws(()=>r.registrarCicloFicticio({cicloId:'ciclo-idempotente',modo:MODOS.RESERVA}),/Mesmo ID/);
-    assert.equal(r.consultar().lancamentosRegistrados,14);
+    assert.equal(r.consultar().lancamentosRegistrados,12);
     r.registrarCicloFicticio({cicloId:'ciclo-idempotente-2',modo:MODOS.RESERVA});
     assert.equal(r.consultar().lancamentosRegistrados,30);
     assert.equal(cofre(r.consultar(),COFRES.DISTRIBUIDOR).saldoProjetadoCentavos,180000);
@@ -191,7 +191,7 @@ test('rotas do livro exigem token e servidor local e nao recebem campos financei
   assert.equal(resposta.status,200);
   assert.equal(resposta.headers.get('cache-control'),'no-store');
   const livro=await resposta.json();
-  assert.equal(livro.lancamentosRegistrados,14);
+  assert.equal(livro.lancamentosRegistrados,12);
   assert.equal(cofre(livro,COFRES.COMERCIAL).saldoProjetadoCentavos,6000);
   assert.equal(db.listar().length,0);
 });
