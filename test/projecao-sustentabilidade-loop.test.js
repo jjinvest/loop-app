@@ -93,7 +93,7 @@ test('custo de produto pode tornar margem negativa mesmo com parcela da empresa'
   const p=periodo(6,{precoCentavos:25000,custoFornecedorCentavos:12000,
     impostosCentavos:3000,tarifaPagamentoCentavos:800,
     despesaOperacionalCentavos:1200});
-  const r=projetar([p],6);
+  const r=projetar([p],7);
   assert.equal(r.periodos[0].margemComercialAposReservaFilaCentavos,-102000);
   assert.equal(r.periodos[0].alertaMargemInsuficiente,true);
   assert.equal(r.resumo.parcelasEmpresaReferenciaisCentavos,75000);
@@ -113,7 +113,7 @@ test('precos variados nao alteram posicoes geradas mas alteram margem comercial'
 
 test('estornos integrais do proprio periodo nao geram posicoes e geram custo',()=>{
   const p=periodo(6,{vendasReembolsadas:2});
-  const r=projetar([p],6);
+  const r=projetar([p],7);
   assert.equal(r.periodos[0].receitaBrutaCentavos,200000);
   assert.equal(r.periodos[0].reembolsosIntegraisCentavos,50000);
   assert.equal(r.periodos[0].receitaLiquidaCentavos,150000);
