@@ -4,6 +4,7 @@
 // codigo imutavel de rastreio; o apelido alteravel nao e a identidade.
 const {randomUUID}=require('node:crypto');
 const {ConfiguracaoTaxaIndicacaoDemoSQLite}=require('./configuracao-taxa-indicacao-demo-sqlite');
+const {VERSAO_TERMOS_DEMO}=require('./adesoes-posicoes-demo-sqlite');
 const TOKEN=/^lp-[a-f0-9]{20}$/;
 const PATH=/^\/laboratorio\/convite\/(lp-[a-f0-9]{20})(?:\/([a-z0-9][a-z0-9-]{1,30}[a-z0-9]))?\/?$/;
 function falha(codigo){const e=new Error(codigo);e.codigo=codigo;return e;}
@@ -88,7 +89,7 @@ class IndicacoesLinksComissoesDemoSQLite{
     CHECK(indicador_id<>convidado_id)
    );
    -- Guarda a condicao do indicador no instante da geracao do bonus.
-   -- Nao consulta a adesao de CPF; uma posicao na fila/tabuleiro basta.
+   -- Prova posicao propria para campanhas; CPF e aceite sao exigidos antes do credito.
    CREATE TABLE IF NOT EXISTS admin_comissoes_criterio_v2_demo(
     pedido_id TEXT PRIMARY KEY REFERENCES admin_comissoes_indicacoes_v2_demo(pedido_id) ON DELETE RESTRICT,
     indicador_posicao_id INTEGER,
@@ -147,6 +148,16 @@ class IndicacoesLinksComissoesDemoSQLite{
   `).all(contaId,contaId,contaId);
   return rows.some(r=>!ate||r.data<=ate);
  }
+ // A compra ativa o link; CPF e termos, em momento posterior, liberam bonus.
+ adesaoVigente(contaId,ate=null){
+  const tabela=this.banco.prepare("SELECT 1 FROM sqlite_master WHERE type='table' AND name='admin_loop_adesoes_contas_demo'").get();
+  if(!tabela)return false;
+  const row=this.banco.prepare('SELECT termos_versao,aceito_em FROM admin_loop_adesoes_contas_demo WHERE conta_id=?').get(contaId);
+  return !!row&&row.termos_versao===VERSAO_TERMOS_DEMO&&(!ate||row.aceito_em<=ate);
+ }
+ habilitadoBonificacoes(contaId,ate=null){
+  return this.ativado(contaId,ate)&&this.adesaoVigente(contaId,ate);
+ }
  linkDaConta(contaId){
   const conta=this.contas.buscar(contaId);
   if(!conta)throw falha('CONTA_INVALIDA');
@@ -155,6 +166,7 @@ class IndicacoesLinksComissoesDemoSQLite{
   ).get(contaId)?.apelido||'meu-loop';
   return {link:caminhoLink(conta.codigoConvite,apelido),apelido,
    ativo:this.ativado(contaId),podeDivulgar:this.ativado(contaId),
+   bonificacoesHabilitadas:this.habilitadoBonificacoes(contaId),
    referencia:'CODIGO_DENTRO_DO_LINK',semComissaoReal:true};
  }
  personalizar({contaId,apelido}={}){
@@ -183,7 +195,8 @@ class IndicacoesLinksComissoesDemoSQLite{
   posicaoAtivaIndicadorId=null}={}){
   if(!referencia||!Number.isSafeInteger(referencia.valorCentavos)||
    !Number.isSafeInteger(referencia.revisao))throw falha('REFERENCIA_INVALIDA');
-  if(!this.ativado(indicadorId,quando))return null;
+  // Nao provisionar nem creditar bonus retroativos anteriores ao aceite.
+  if(!this.habilitadoBonificacoes(indicadorId,quando))return null;
   const taxa=this.taxas.vigenteEm(quando);
   // A compra pequena libera somente o LINK. O bonus superior a 10%
   // depende de posicao propria ativa na fila ou no tabuleiro.
@@ -266,13 +279,16 @@ class IndicacoesLinksComissoesDemoSQLite{
   const total=rows.reduce((v,x)=>v+x.valorCentavos,0);
   if(!Number.isSafeInteger(total))throw new Error('Total de comissao excede limite');
   const minimo=10000;
+  const cpfTermosConfirmados=this.adesaoVigente(contaId);
+  const bonificacoesHabilitadas=this.habilitadoBonificacoes(contaId);
   return {
    quantidade:rows.length,totalSimuladoCentavos:total,
    minimoSaqueCentavos:minimo,
    atingiuMinimoSaque:total>=minimo,
    faltaParaMinimoCentavos:Math.max(0,minimo-total),
    saqueDisponivelReal:false,
-   solicitarSaqueSimuladoHabilitado:total>=minimo,
+   solicitarSaqueSimuladoHabilitado:total>=minimo&&bonificacoesHabilitadas,
+   cpfTermosConfirmados,bonificacoesHabilitadas,
    pagamentoReal:false,bonificacaoProvisionadaCentavos:total,
    origemExclusiva:'LOOP_DIREITA',caixaCentralIntocado:true,
    caixaInvestimentoIntocado:true,
@@ -282,10 +298,11 @@ class IndicacoesLinksComissoesDemoSQLite{
   };
  }
 }
-function simularElegibilidadeSaque({saldoSimuladoCentavos,valorSolicitadoCentavos}={}){
+function simularElegibilidadeSaque({saldoSimuladoCentavos,valorSolicitadoCentavos,cpfTermosConfirmados=false}={}){
  if(!Number.isSafeInteger(saldoSimuladoCentavos)||saldoSimuladoCentavos<0||
   !Number.isSafeInteger(valorSolicitadoCentavos)||valorSolicitadoCentavos<=0)
   throw falha('SAQUE_INVALIDO');
+ if(cpfTermosConfirmados!==true)throw falha('CPF_E_TERMOS_OBRIGATORIOS');
  if(valorSolicitadoCentavos<10000)throw falha('MINIMO_SAQUE_100_REAIS');
  if(valorSolicitadoCentavos>saldoSimuladoCentavos)throw falha('SALDO_SIMULADO_INSUFICIENTE');
  return {apenasSimulacao:true,atingiuMinimo:true,
