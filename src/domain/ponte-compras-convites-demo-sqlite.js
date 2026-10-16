@@ -39,9 +39,14 @@ function validarComprovante(recebido,pedidoId){
  if(!Number.isSafeInteger(recebido.valorCentavos)||recebido.valorCentavos<=0){
   throw falha('DADOS_INVALIDOS','Valor simulado invalido');
  }
+ const valorElegivelLoopCentavos=recebido.valorElegivelLoopCentavos===undefined?
+  recebido.valorCentavos:recebido.valorElegivelLoopCentavos;
+ if(!Number.isSafeInteger(valorElegivelLoopCentavos)||
+  valorElegivelLoopCentavos<0||valorElegivelLoopCentavos>recebido.valorCentavos)
+  throw falha('DADOS_INVALIDOS','Subtotal LOOP invalido');
  return {
   pedidoId,contaId:recebido.contaId,produtoId:recebido.produtoId,
-  valorCentavos:recebido.valorCentavos,
+  valorCentavos:recebido.valorCentavos,valorElegivelLoopCentavos,
   confirmadoEm:dataConfiavel(recebido.confirmadoEm),
   intentoPagamentoId:recebido.intentoPagamentoId
  };
@@ -261,6 +266,7 @@ class PonteComprasConvitesDemoSQLite{
      repetido:true,criado:false,pedidoId,contaId:anterior.conta_id,
      posicaoId:anterior.posicao_id,indicacaoNova:false,
      compraElegivelLoop:true,posicaoCriada:true,vendaLojaRegistrada:true,
+     valorElegivelLoopCentavos:comprovante.valorElegivelLoopCentavos,
      revisaoValorPosicao:anteriorValor.revisaoValor,
      valorReferenciaPosicaoCentavos:anteriorValor.valorReferenciaCentavos
     };
@@ -290,10 +296,10 @@ class PonteComprasConvitesDemoSQLite{
    const referenciaVigente=this.configuracaoValor.vigenteEm(comprovante.confirmadoEm);
    const conta=this.contas.buscar(comprovante.contaId);
    if(!conta)throw falha('CONTA_DESCONHECIDA','Conta ficticia nao cadastrada');
-   if(comprovante.valorCentavos<referenciaVigente.valorCentavos){
+   if(comprovante.valorElegivelLoopCentavos<referenciaVigente.valorCentavos){
     // Compra valida da LOJA, sem mexer no snapshot, nas filas ou em convites.
     // A regra de cinco posicoes so se aplica a pedidos elegiveis ao LOOP.
-    const tabelaLoja=comprovante.valorCentavos<25000?
+    const tabelaLoja=comprovante.valorElegivelLoopCentavos<25000?
       'admin_ponte_vendas_loja_sem_loop_demo':
       'admin_ponte_vendas_loja_apos_reajuste_demo';
     this.banco.prepare(`
@@ -308,6 +314,7 @@ class PonteComprasConvitesDemoSQLite{
      compraElegivelLoop:false,posicaoCriada:false,vendaLojaRegistrada:true,
      posicaoId:null,filaAtual:null,indicacaoNova:false,
      linkDivulgacaoLiberado:true,comissaoSimuladaCentavos:0,
+     valorElegivelLoopCentavos:comprovante.valorElegivelLoopCentavos,
      movimentouCatraca:false,registrouPagamentoReal:false};
    }
    const simulador=this._restaurar();
