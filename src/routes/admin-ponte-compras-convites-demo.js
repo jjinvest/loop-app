@@ -15,6 +15,20 @@ function criarRouterPonteComprasConvitesDemo({segredo,ponte}={}){
   try{return res.json(ponte.consultar());}
   catch(erro){return next(erro);}
  });
+ router.post('/ponte-compras-convites-demo/douradas',(req,res,next)=>{
+  if(!req.is('application/json'))return res.status(415).json({erro:'JSON_OBRIGATORIO'});
+  const b=req.body;
+  if(!b||typeof b!=='object'||Array.isArray(b)||
+   Object.keys(b).join(',')!=='eventoId')
+   return res.status(400).json({erro:'SOMENTE_EVENTO_DOURADA'});
+  try{return res.json({resultado:ponte.criarDouradaManualDemo(b),
+   pagamentosReais:false,receitaRegistrada:false,semCPF:true});}
+  catch(e){
+   if(e.codigo==='EVENTO_DOURADA_INVALIDO')
+    return res.status(400).json({erro:e.codigo});
+   return next(e);
+  }
+ });
  router.post('/ponte-compras-convites-demo/preparar-tabuleiro',(req,res,next)=>{
   if(!req.is('application/json'))return res.status(415).json({erro:'JSON_OBRIGATORIO'});
   if(!req.body||typeof req.body!=='object'||Array.isArray(req.body)||
