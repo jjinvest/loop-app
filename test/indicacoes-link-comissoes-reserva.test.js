@@ -59,21 +59,34 @@ test('link so ativa apos compra pequena, comissao por posicao e versoes 10%, 20%
  links.taxas.agora=()=>dia(5);
  assert.equal(links.taxas.alterar({percentual:20,revisaoEsperada:1}).revisao,2);
  const vinte=await comprar('pedido-convidado-20',b,25000,6);
- assert.equal(vinte.comissaoSimuladaCentavos,5000);
+ assert.equal(vinte.comissaoSimuladaCentavos,2500);
+ assert.equal(vinte.percentualBonusAplicado,10);
+ assert.equal(vinte.indicadorElegivelBonusExtra,false);
  links.taxas.agora=()=>dia(7);
  assert.equal(links.taxas.alterar({percentual:30,revisaoEsperada:2}).revisao,3);
  const trinta=await comprar('pedido-convidado-30',b,25000,8);
- assert.equal(trinta.comissaoSimuladaCentavos,7500);
+ assert.equal(trinta.comissaoSimuladaCentavos,2500);
+ assert.equal(trinta.indicadorElegivelBonusExtra,false);
+ // O indicador compra sua propria posicao de R$250 no minimo vigente.
+ // Sua posicao AZUL na fila ja basta; CPF nao define entrada no LOOP.
+ const posicaoPropria=await comprar('indicador-entra-loop',a,25000,9);
+ assert.equal(posicaoPropria.posicaoCriada,true);
+ assert.equal(posicaoPropria.statusAdesao,'PENDENTE');
+ const depoisDeEntrar=await comprar('pedido-convidado-com-bonus',b,25000,10);
+ assert.equal(depoisDeEntrar.comissaoSimuladaCentavos,7500);
+ assert.equal(depoisDeEntrar.percentualBonusAplicado,30);
+ assert.equal(depoisDeEntrar.indicadorElegivelBonusExtra,true);
  const extrato=links.comissoesDaConta(a.contaId);
- assert.equal(extrato.quantidade,4);
+ assert.equal(extrato.quantidade,5);
  assert.equal(extrato.totalSimuladoCentavos,17500);
  assert.equal(extrato.atingiuMinimoSaque,true);
  assert.equal(extrato.minimoSaqueCentavos,10000);
  assert.equal(extrato.porcentagemAtual.percentual,30);
- assert.deepEqual(extrato.registros.map(x=>x.percentual),[10,10,20,30]);
- assert.deepEqual(extrato.registros.map(x=>x.valorCentavos),[2500,2500,5000,7500]);
+ assert.deepEqual(extrato.registros.map(x=>x.percentual),[10,10,10,10,30]);
+ assert.deepEqual(extrato.registros.map(x=>x.valorCentavos),[2500,2500,2500,2500,7500]);
  assert.ok(extrato.registros.every(x=>x.cofreOrigem==='LOOP_DIREITA'));
- assert.equal(repo.banco.prepare('SELECT COUNT(*) AS total FROM admin_comissoes_reserva_v2_demo').get().total,4);
+ assert.equal(repo.banco.prepare('SELECT COUNT(*) AS total FROM admin_comissoes_reserva_v2_demo').get().total,5);
+ assert.equal(repo.banco.prepare('SELECT COUNT(*) AS total FROM admin_comissoes_criterio_v2_demo WHERE ativo_no_loop=1').get().total,1);
  assert.equal(repo.banco.prepare('SELECT COUNT(*) AS total FROM admin_comissoes_indicacoes_demo').get().total,0);
  assert.deepEqual(simularElegibilidadeSaque({
   saldoSimuladoCentavos:17500,valorSolicitadoCentavos:10000
