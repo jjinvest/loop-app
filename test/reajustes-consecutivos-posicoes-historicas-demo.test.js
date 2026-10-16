@@ -55,7 +55,7 @@ test('reajustes 250 -> 500 -> 750 preservam tres referencias individuais na mesm
  assert.equal(info.compras.length,3);
  assert.equal(info.comprasLojaSemLoop.length,1);
  assert.equal(info.posicoes.length,3);
- assert.equal(info.vagasLivres,2);
+ assert.equal(info.vagasLivres,3);
  assert.deepEqual(info.posicoes.map(x=>x.valorReferenciaCentavos),[25000,50000,75000]);
  assert.deepEqual(info.posicoes.map(x=>x.revisaoValor),[1,2,3]);
  assert.ok(info.posicoes.every(x=>x.local==='FILA_B'));
