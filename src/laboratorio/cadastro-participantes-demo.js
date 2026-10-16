@@ -164,7 +164,23 @@
    enviandoLogin=false;botao.disabled=false;
   }
  });
- el('atualizarContasDemo').addEventListener('click',async()=>{
+ el('prepararTabuleiroCadastroDemo').addEventListener('click',async()=>{
+  const botao=el('prepararTabuleiroCadastroDemo');
+  const aviso=el('estadoTabuleiroCadastroDemo');
+  if(!token)return;
+  botao.disabled=true;
+  try{
+   const resultado=await api('/preparar-tabuleiro',{method:'POST',body:'{}'});
+   const centro=resultado.tabuleiro.centro;
+   const vagas=resultado.tabuleiro.vagas.filter(Boolean);
+   const expiradas=[centro,...vagas].filter(p=>p&&p.statusAdesao==='PRAZO_ENCERRADO').length;
+   aviso.textContent='Tabuleiro de teste preparado: '+(centro?'1 centro':'sem centro')+
+    ', '+vagas.length+' vagas ocupadas, '+expiradas+' posições com prazo encerrado.';
+   await atualizar();
+  }catch(err){aviso.textContent=err.message;}
+  finally{botao.disabled=false;}
+ });
+  el('atualizarContasDemo').addEventListener('click',async()=>{
   try{await atualizar();status.textContent='Contas fictícias atualizadas.';}
   catch(e){status.textContent=e.message;}
  });
