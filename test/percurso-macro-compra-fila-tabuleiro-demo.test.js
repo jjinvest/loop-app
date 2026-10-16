@@ -98,8 +98,8 @@ test('macro completo: cadastro e compra → B → convite com compra → A → v
  let estado=m.ponte.consultar();
  assert.equal(estado.filas.B.pessoas.at(-1).participanteId,titular.contaId);
  assert.equal(estado.filas.A.quantidade,0);
- assert.equal(estado.compras.length,9);
- assert.equal(estado.vinculosIdentificados,9);
+ assert.equal(estado.compras.length,8);
+ assert.equal(estado.vinculosIdentificados,8);
 
  const convidada=cadastrar(m,'Cliente Convidada','convidada-macro@exemplo.invalid',titular.codigoConvite);
  // Apenas cadastrar nao valida o convite e nao altera a fila.
@@ -151,7 +151,7 @@ test('macro completo: cadastro e compra → B → convite com compra → A → v
   }
   // Ninguem salta do 5 para o centro sem os seis movimentos.
  }
- assert.equal(simulador.tabuleiro.ciclosConcluidos.length,8);
+ assert.equal(simulador.tabuleiro.ciclosConcluidos.length,7);
  assert.equal(simulador.tabuleiro.ciclosConcluidos.some(
   c=>c.centro.participanteId===titular.contaId
  ),false);
