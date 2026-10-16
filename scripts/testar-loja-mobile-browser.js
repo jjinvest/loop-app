@@ -91,6 +91,9 @@ async function main(){
   await page.locator('#botaoEntrarParticipante').click();
   await page.locator('#conteudoParticipante').waitFor({state:'visible'});
   assert.equal(await page.locator('.espaco-tabuleiro-demo').count(),7);
+  assert.equal(await page.locator('.marcos-v6 span').count(),6);
+  assert.equal(await page.locator('.marcos-v6 span:nth-child(odd)').count(),3);
+  assert.equal(await page.locator('.marcos-v6 span:nth-child(even)').count(),3);
   await page.locator('#filtroTodasMapaParticipante').click();
   assert.equal(await page.locator('#filtroTodasMapaParticipante').getAttribute('aria-pressed'),'true');
   await page.locator('#filtroResumoMapaParticipante').click();
@@ -156,6 +159,16 @@ async function main(){
   await page.goto(base+'/',{waitUntil:'networkidle'});
   assert.equal(await page.locator('.tabuleiro .vaga').count(),6);
   assert.equal(await page.locator('.tabuleiro .v6').count(),1);
+  assert.equal(await page.locator('.marcos span').count(),6);
+  assert.equal(await page.locator('.marcos span:nth-child(odd)').count(),3);
+  assert.equal(await page.locator('.marcos span:nth-child(even)').count(),3);
+  const coresMarcos=await page.evaluate(()=>{
+   const odd=getComputedStyle(document.querySelector('.marcos span:first-child')).backgroundImage;
+   const even=getComputedStyle(document.querySelector('.marcos span:nth-child(2)')).backgroundImage;
+   return {odd,even,tema:[...document.styleSheets].some(s=>s.href?.includes('loop-futurista-v6.css'))};
+  });
+  assert.equal(coresMarcos.tema,true,'Tema metálico não carregou na apresentação');
+  assert.notEqual(coresMarcos.odd,coresMarcos.even,'Roxo e preto devem ser visualmente distintos');
   for(const width of [320,390,768])
    await conferirLargura(page,width,'home-mobile',{captura:width===320});
 
