@@ -85,6 +85,8 @@
     regrasProdutosLoop=[];
     el('produtoElegibilidadeLoopDemo').replaceChildren();
     el('statusElegibilidadeLoopDemo').textContent='';
+    el('statusQuantidadeMinimaLoopDemo').textContent='';
+    el('quantidadeMinimaLoopDemo').value='1';
     el('itensCarrinhoLoopDemo').replaceChildren();
     el('contaCarrinhoLoopDemo').replaceChildren();
     el('pedidoEventoCarrinhoLoopDemo').replaceChildren();
@@ -502,7 +504,8 @@
       if(produto&&Number.isSafeInteger(qtd)&&qtd>0&&qtd<=100){
         const subtotal=produto.precoCentavos*qtd;
         total+=subtotal;
-        if(produto.elegivelLoop)totalElegivel+=subtotal;
+        if(produto.elegivelLoop&&qtd>=produto.quantidadeMinimaLoop)
+          totalElegivel+=subtotal;
       }
     }
     el('totalCarrinhoLoopDemo').textContent='Total da compra: '+money(total)+
@@ -523,7 +526,7 @@
       const option=document.createElement('option');
       option.value=produto.produtoId;
       option.textContent=produto.nome+' — '+money(produto.precoCentavos)+
-        (produto.elegivelLoop?' · válido LOOP':' · somente loja');
+        (produto.elegivelLoop?' · mínimo '+produto.quantidadeMinimaLoop+' un. para LOOP':' · somente loja');
       select.append(option);
     }
     const labelQuantidade=document.createElement('label');
@@ -548,10 +551,11 @@
     const p=regrasProdutosLoop.find(x=>x.produtoId===el('produtoElegibilidadeLoopDemo').value);
     if(!p)return;
     el('valorElegibilidadeLoopDemo').value=p.elegivelLoop?'sim':'nao';
+    el('quantidadeMinimaLoopDemo').value=String(p.quantidadeMinimaLoop);
     el('statusElegibilidadeLoopDemo').textContent=
       p.nome+': '+(p.elegivelLoop?'valor autorizado para a fila.':
        'continua à venda, mas não conta para a fila.')+
-       ' Revisão '+p.revisaoElegibilidade+'.';
+       ' Revisão '+p.revisaoElegibilidade+'. Quantidade mínima: '+p.quantidadeMinimaLoop+'.';
   }
   async function salvarRegraProdutoLoop(ev){
     ev.preventDefault();
@@ -574,6 +578,33 @@
         '. Vale para novos pedidos; os anteriores estão protegidos.';
     }catch(e){el('statusElegibilidadeLoopDemo').textContent=e.message;}
     finally{botao.disabled=false;}
+  }
+  async function salvarQuantidadeMinimaLoop(ev){
+    ev.preventDefault();
+    if(!token)return;
+    const p=regrasProdutosLoop.find(x=>x.produtoId===el('produtoElegibilidadeLoopDemo').value);
+    if(!p)return;
+    const numero=Number(el('quantidadeMinimaLoopDemo').value);
+    if(!Number.isSafeInteger(numero)||numero<1||numero>100){
+      el('statusQuantidadeMinimaLoopDemo').textContent='A quantidade mínima precisa ser de 1 a 100 unidades.';
+      return;
+    }
+    const botao=el('salvarQuantidadeMinimaLoopDemo');botao.disabled=true;
+    try{
+      const resultado=await requisitar('carrinho-loop-demo/quantidade-minima',{
+       method:'POST',
+       body:JSON.stringify({
+        produtoId:p.produtoId,quantidadeMinimaLoop:numero,
+        revisaoEsperada:p.revisaoQuantidadeMinima
+       })
+      });
+      await carregarCarrinhosLoop();
+      el('statusQuantidadeMinimaLoopDemo').textContent=
+       'Quantidade mínima de '+resultado.regra.quantidadeMinimaLoop+
+       ' unidades salva para '+p.nome+'. Pedidos anteriores permanecem inalterados.';
+    }catch(err){
+      el('statusQuantidadeMinimaLoopDemo').textContent=err.message;
+    }finally{botao.disabled=false;}
   }
   async function carregarCarrinhosLoop(){
     const atual=++versaoCarrinho;
@@ -1555,6 +1586,7 @@
   el('formPedidosPDFDemo').addEventListener('submit',registrarPedidoPDF);
   el('formCarrinhoLoopDemo').addEventListener('submit',salvarCarrinhoLoop);
   el('formElegibilidadeLoopDemo').addEventListener('submit',salvarRegraProdutoLoop);
+  el('formQuantidadeMinimaLoopDemo').addEventListener('submit',salvarQuantidadeMinimaLoop);
   el('produtoElegibilidadeLoopDemo').addEventListener('change',mostrarRegraProdutoLoop);
   el('formEventoCarrinhoLoopDemo').addEventListener('submit',eventoCarrinhoLoop);
   el('adicionarItemCarrinhoLoopDemo').addEventListener('click',adicionarLinhaCarrinho);
