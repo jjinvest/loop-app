@@ -22,6 +22,7 @@ const { criarRouterPlanejamentoFisicoDemo } = require('../routes/admin-planejame
 const { PagamentosPrePedidosFisicosDemoSQLite } = require('../domain/pagamentos-pre-pedidos-fisicos-demo-sqlite');
 const { criarRouterPagamentosPrePedidosFisicosDemo } = require('../routes/admin-pagamentos-pre-pedidos-fisicos-demo');
 const { PedidosPDFPagamentosDemoSQLite } = require('../domain/pedidos-pdf-pagamentos-demo-sqlite');
+const { IntegracaoLojaPDFLoopDemo } = require('../domain/integracao-loja-pdf-loop-demo');
 const { criarRouterPedidosPDFDemo } = require('../routes/admin-pedidos-pdf-demo');
 const { criarRouterEscritorioDemo } = require('../routes/admin-escritorio-demo');
 const { ContasParticipantesDemoSQLite } = require('../domain/contas-participantes-demo-sqlite');
@@ -87,6 +88,8 @@ function criarAppAdminLaboratorio({ repositorio, segredo, webhookDemo } = {}) {
     segredo, repositorio:pedidosLogisticaDemo
   }));
   app.use('/api/admin', criarRouterEscritorioDemo({ segredo }));
+  let pedidosPDFDemo=null;
+  let integracaoPDFLoopDemo=null;
   // Cadastro de pessoas APENAS FICTICIAS: sem CPF, confirmacao de compra,
   // sessao publica, codigo validado de fila ou movimentacao de catraca.
   if(repositorio instanceof RepositorioCatalogoSQLite){
@@ -98,15 +101,20 @@ function criarAppAdminLaboratorio({ repositorio, segredo, webhookDemo } = {}) {
     const pedidosIdentificadosDemo=new PedidosTitularidadeDemoSQLite({
       banco:repositorio.banco,contas:contasDemo
     });
+    pedidosPDFDemo=new PedidosPDFPagamentosDemoSQLite({repositorioCatalogo:repositorio});
     // Ponte somente de leitura no HTTP; a confirmacao confiavel e
     // injetada apenas por testes/scripts do servidor, NUNCA pelo navegador.
     const ponteDemo=new PonteComprasConvitesDemoSQLite({
       banco:repositorio.banco,contas:contasDemo,
       pedidosIdentificados:pedidosIdentificadosDemo,
       configuracaoValor:configuracaoValorLoopDemo,
-      consultarPagamentoConfiavel:async()=>{
-        throw new Error('Nao ha verificador de compra configurado no HTTP');
+      consultarPagamentoConfiavel:async pedidoId=>{
+        if(!integracaoPDFLoopDemo)throw new Error('Verificador interno PDF nao configurado');
+        return integracaoPDFLoopDemo.comprovanteConfirmado(pedidoId);
       }
+    });
+    integracaoPDFLoopDemo=new IntegracaoLojaPDFLoopDemo({
+      pedidosPDF:pedidosPDFDemo,pedidosIdentificados:pedidosIdentificadosDemo,ponte:ponteDemo
     });
     const adesoesDemo=new AdesoesPosicoesDemoSQLite({ponte:ponteDemo});
     app.use('/api/admin',criarRouterPonteComprasConvitesDemo({
@@ -171,8 +179,9 @@ function criarAppAdminLaboratorio({ repositorio, segredo, webhookDemo } = {}) {
   // Fluxo de cursos digitais: faturas com preco do catalogo e sem
   // distribuicao de valores na catraca. Simulacao separada do PSP legado.
   if (repositorio instanceof RepositorioCatalogoSQLite) {
-    const pedidosPDF=new PedidosPDFPagamentosDemoSQLite({repositorioCatalogo:repositorio});
-    app.use('/api/admin',criarRouterPedidosPDFDemo({segredo,pedidos:pedidosPDF}));
+    app.use('/api/admin',criarRouterPedidosPDFDemo({
+      segredo,pedidos:pedidosPDFDemo,integracaoLoop:integracaoPDFLoopDemo
+    }));
   }
   // Compra fisica com preco livre: so PRE-PEDIDO ficticio, com
   // custo preenchido pelo admin, sem caixa, PSP ou criacao de posicao.
