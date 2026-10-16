@@ -35,7 +35,32 @@
    </nav>
    <section class="cartao-participante">
     <h2 id="nomeLogadoParticipante">Meu resumo</h2>
-    <p id="conviteParticipante" class="codigo-indicacao"></p>
+    <div class="area-indicacoes-participante">
+     <h3>Meu link de indicação</h3>
+     <p id="statusLinkIndicacaoParticipante" class="ajuda-portal"></p>
+     <label for="enderecoLinkParticipante">Link com rastreamento integrado</label>
+     <input id="enderecoLinkParticipante" type="text" readonly autocomplete="off" spellcheck="false">
+     <button type="button" id="copiarLinkParticipante" disabled>Copiar meu link</button>
+     <form id="formApelidoLinkParticipante" autocomplete="off">
+      <label for="apelidoLinkParticipante">Personalizar o final do link</label>
+      <input id="apelidoLinkParticipante" maxlength="80" placeholder="ex.: vilela" required>
+      <button type="submit" id="salvarApelidoLinkParticipante">Salvar nome do link</button>
+     </form>
+     <p id="avisoLinkParticipante" role="status" aria-live="polite"></p>
+    </div>
+    <div class="area-bonus-participante" aria-labelledby="tituloBonusParticipante">
+     <h3 id="tituloBonusParticipante">Minhas bonificações por indicação</h3>
+     <p>Os bônus são calculados sobre o valor único da posição criada no LOOP, não sobre a venda inteira.</p>
+     <div class="resumos-participante">
+      <div><span>Bonificações registradas</span><strong id="bonusQuantidadeParticipante">0</strong></div>
+      <div><span>Saldo de bônus (simulado)</span><strong id="bonusSaldoParticipante">R$ 0,00</strong></div>
+      <div><span>Percentual atual</span><strong id="bonusPercentualParticipante">10%</strong></div>
+      <div><span>Mínimo para saque</span><strong id="bonusMinimoParticipante">R$ 100,00</strong></div>
+     </div>
+     <p id="bonusSaqueStatusParticipante" role="status"></p>
+     <p class="ajuda-portal">Origem exclusiva: caixa reserva do LOOP. O caixa central e o de investimento não financiam estas bonificações. Nenhum saque ou pagamento real está habilitado neste laboratório.</p>
+     <ol id="bonusHistoricoParticipante"></ol>
+    </div>
     <p class="ajuda-portal">Um convidado cadastrado ainda não é uma indicação validada; somente uma compra confirmada pelo verificador de simulação pode contar.</p>
     <div class="resumos-participante">
      <div><span>Posições ativas</span><strong id="ativasParticipante">0</strong></div>
