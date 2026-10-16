@@ -1,0 +1,40 @@
+:root{color-scheme:dark}
+*{box-sizing:border-box}
+body{margin:0;background:#0b1116;color:#ecf4f5;font-family:system-ui,-apple-system,Arial,sans-serif;line-height:1.5}
+.cabecalho-loja-loop{display:flex;justify-content:space-between;align-items:center;gap:16px;padding:22px max(4vw,18px);background:#101d22;border-bottom:1px solid #365056}
+.cabecalho-loja-loop h1{font-size:2rem;letter-spacing:.09em;margin:0;color:#ddf9e5}
+.cabecalho-loja-loop p{margin:2px 0;color:#b9ced1}
+.cabecalho-loja-loop a{color:#e2ffef;border:1px solid #5c9b7c;padding:10px 14px;border-radius:12px}
+.loja-loop{max-width:1150px;margin:0 auto;padding:22px 18px 64px}
+.aviso-loja-loop{padding:15px 18px;background:#243026;border-left:4px solid #dcb878;border-radius:8px}
+.cabecalho-secao-loja{display:flex;justify-content:space-between;align-items:center;gap:18px;flex-wrap:wrap;margin-top:26px}
+.cabecalho-secao-loja h2{margin-bottom:2px}
+.produtos-loja-loop{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:15px;margin:18px 0 28px}
+.produto-loja-loop,.painel-loja-loop{background:#14232a;border:1px solid #345058;border-radius:15px;padding:20px}
+.produto-loja-loop{display:flex;flex-direction:column;gap:8px}
+.produto-loja-loop h3{font-size:1.06rem;margin:0}
+.produto-loja-loop p{margin:0}
+.tipo-loja-loop{color:#a6c4cf;font-size:.84rem;font-weight:700}
+.preco-loja-loop{color:#b7f4c6;font-size:1.32rem;font-weight:800}
+.produto-loja-loop button{margin-top:auto}
+.painel-loja-loop{margin-bottom:24px}
+.painel-loja-loop h2{margin-top:0}
+button{border:0;border-radius:10px;padding:12px 15px;background:#87d9ac;color:#10231c;font-size:1rem;font-weight:700;cursor:pointer}
+button:hover:not(:disabled){filter:brightness(1.13)}
+button:disabled{opacity:.48;cursor:not-allowed}
+.botao-secundario-loja{background:#2c4851;color:#e5f3f5;border:1px solid #59818b}
+.item-carrinho-loja{display:grid;grid-template-columns:minmax(150px,1fr) 110px auto auto;gap:14px;align-items:center;padding:14px 0;border-bottom:1px solid #33505b}
+.item-carrinho-loja label{display:flex;gap:5px;flex-direction:column;color:#b8d0d6}
+.item-carrinho-loja input{width:100%;padding:8px;border-radius:7px;background:#0b161b;color:white;border:1px solid #638490;font-size:1rem}
+.item-carrinho-loja button{padding:9px 10px}
+.total-loja-loop{text-align:right;font-weight:800;font-size:1.4rem;color:#caf2cd}
+.pedidos-loja-loop{padding-left:25px}
+.pedidos-loja-loop li{padding:13px 4px;border-bottom:1px solid #33505b}
+.pedidos-loja-loop strong{display:block}
+.pedidos-loja-loop small{display:block;color:#b5c6cd}
+#estadoLojaLoop,#statusPedidoLoja{min-height:22px}
+@media(max-width:650px){
+ .item-carrinho-loja{grid-template-columns:minmax(130px,1fr) 90px;gap:8px}
+ .item-carrinho-loja button{justify-self:start}
+ .cabecalho-loja-loop a{font-size:.86rem}
+}
