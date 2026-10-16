@@ -2,6 +2,7 @@
 (()=>{
  const e=id=>document.getElementById(id);
  const path=location.pathname;
+ const semIndicacao=path==='/laboratorio/cadastro';
  const estado=e('estadoConvite');
  const form=e('formConviteCliente');
  async function api(rota,body){
@@ -17,6 +18,10 @@
  }
  (async()=>{
   try{
+   if(semIndicacao){
+    estado.textContent='Cadastro espontâneo: você pode participar sem convite. Seu link próprio começa inativo até a primeira compra de qualquer valor.';
+    form.hidden=false;return;
+   }
    const info=await api('estado?link='+encodeURIComponent(path));
    if(!info.ativo){
     estado.textContent='Este link ainda não está ativo. O indicador precisa primeiro comprar um produto na loja.';
@@ -33,7 +38,8 @@
   try{
    const criado=await api('cadastrar',{
     nome:e('nomeConvite').value,email:e('emailConvite').value,
-    telefone:e('telefoneConvite').value,senha:e('senhaConvite').value,link:path
+    telefone:e('telefoneConvite').value,senha:e('senhaConvite').value,
+    link:semIndicacao?null:path
    });
    form.hidden=true;e('senhaConvite').value='';
    estado.textContent='Cadastro fictício realizado. Seu link foi criado, mas fica inativo até a primeira compra de qualquer valor. Entre pelo Escritório Virtual.';
