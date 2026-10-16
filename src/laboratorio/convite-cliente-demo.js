@@ -7,6 +7,7 @@
  const destino=new URLSearchParams(location.search).get('destino')==='loja'?'loja':'escritorio';
  const titulo=e('tituloDestinoConvite'),descricao=e('descricaoDestinoConvite');
  titulo.textContent=destino==='loja'?'Conheça a loja do LOOP':'Conheça o escritório LOOP';
+ e('apresentacaoEmpresaConvite').hidden=destino==='loja';
  descricao.textContent=destino==='loja'?
   'Veja os produtos e os preços da loja antes de fazer seu cadastro.':
   'Conheça a empresa, as regras e a participação pelo Escritório Virtual.';
