@@ -215,8 +215,8 @@ class CarrinhoLojaLoopDemoSQLite{
   const totalElegivelLoopCentavos=itens.reduce((n,i)=>n+i.subtotalElegivelCentavos,0);
   if(!Number.isSafeInteger(totalElegivelLoopCentavos)||totalElegivelLoopCentavos>row.totalCentavos)
    throw new Error('Integridade de elegibilidade do carrinho comprometida');
-  const posicoesSolicitadas=itens.some(i=>i.elegivelLoop&&
-   i.quantidade>=i.quantidadeMinimaLoop&&i.posicoesPorPedidoLoop===6)?6:1;
+  const posicoesSolicitadas=Math.max(1,...itens.filter(i=>i.elegivelLoop&&
+   i.quantidade>=i.quantidadeMinimaLoop).map(i=>i.posicoesPorPedidoLoop));
   const posicaoIds=posicao?[posicao.id,...this.banco.prepare(
    'SELECT posicao_id AS id FROM admin_ponte_posicoes_adicionais_demo WHERE pedido_id=? ORDER BY ordem'
   ).all(pedidoId).map(p=>p.id)]:[];
