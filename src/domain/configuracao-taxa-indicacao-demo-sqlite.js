@@ -2,7 +2,7 @@
 const MARCO='1970-01-01T00:00:00.000Z';
 function falha(c){const e=new Error(c);e.codigo=c;return e;}
 function validar(n){
- if(!Number.isSafeInteger(n)||n<1||n>100)
+ if(!Number.isSafeInteger(n)||n<10||n>100)
   throw falha('PORCENTAGEM_INVALIDA');
  return n;
 }
@@ -13,7 +13,7 @@ class ConfiguracaoTaxaIndicacaoDemoSQLite{
   banco.exec(`
    CREATE TABLE IF NOT EXISTS admin_indicacao_taxas_demo(
     revisao INTEGER PRIMARY KEY CHECK(revisao>=1),
-    percentual INTEGER NOT NULL CHECK(percentual BETWEEN 1 AND 100),
+    percentual INTEGER NOT NULL CHECK(percentual BETWEEN 10 AND 100),
     vigente_desde TEXT NOT NULL UNIQUE,
     registrado_em TEXT NOT NULL
    );
