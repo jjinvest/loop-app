@@ -170,7 +170,13 @@
   if(!token)return;
   botao.disabled=true;
   try{
-   const resultado=await api('/preparar-tabuleiro',{method:'POST',body:'{}'});
+   const resposta=await fetch('/api/admin/ponte-compras-convites-demo/preparar-tabuleiro',{
+    method:'POST',credentials:'omit',cache:'no-store',
+    headers:{Authorization:'Bearer '+token,'Content-Type':'application/json'},
+    body:'{}'
+   });
+   if(!resposta.ok)throw new Error('Falha ao preparar o tabuleiro ('+resposta.status+').');
+   const resultado=await resposta.json();
    const centro=resultado.tabuleiro.centro;
    const vagas=resultado.tabuleiro.vagas.filter(Boolean);
    const expiradas=[centro,...vagas].filter(p=>p&&p.statusAdesao==='PRAZO_ENCERRADO').length;
