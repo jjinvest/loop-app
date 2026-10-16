@@ -4,6 +4,7 @@
 // Valores dos itens sao buscados no catalogo, nunca declarados pelo cliente.
 // Somente laboratorio administrativo, sem cobranca ou entregas reais.
 const {STATUS_CONFIRMADO}=require('./processador-pedidos-simulados');
+const {ElegibilidadeProdutosLoopDemoSQLite}=require('./elegibilidade-produtos-loop-demo-sqlite');
 const ID=/^[a-z0-9][a-z0-9-]{2,69}$/;
 const PRODUTO_VIRTUAL='carrinho-loop-demo';
 function falha(codigo,mensagem){const e=new Error(mensagem);e.codigo=codigo;return e;}
@@ -34,6 +35,7 @@ class CarrinhoLojaLoopDemoSQLite{
   this.banco=banco;this.catalogo=catalogo;this.contas=contas;
   this.pedidosIdentificados=pedidosIdentificados;
   this.ponte=ponte;this.relogio=relogio;
+  this.elegibilidade=new ElegibilidadeProdutosLoopDemoSQLite({catalogo});
   banco.exec(`
    CREATE TABLE IF NOT EXISTS admin_carrinho_loop_demo(
     pedido_id TEXT PRIMARY KEY NOT NULL,
@@ -53,6 +55,22 @@ class CarrinhoLojaLoopDemoSQLite{
     subtotal_centavos INTEGER NOT NULL CHECK(subtotal_centavos>0),
     PRIMARY KEY(pedido_id,ordem),UNIQUE(pedido_id,produto_id)
    );
+   CREATE TABLE IF NOT EXISTS admin_carrinho_item_elegibilidade_demo(
+    pedido_id TEXT NOT NULL REFERENCES admin_carrinho_loop_demo(pedido_id) ON DELETE RESTRICT,
+    ordem INTEGER NOT NULL CHECK(ordem>=1),
+    elegivel_loop INTEGER NOT NULL CHECK(elegivel_loop IN (0,1)),
+    revisao_elegibilidade INTEGER NOT NULL CHECK(revisao_elegibilidade>=1),
+    subtotal_elegivel_centavos INTEGER NOT NULL CHECK(subtotal_elegivel_centavos>=0),
+    PRIMARY KEY(pedido_id,ordem),
+    FOREIGN KEY(pedido_id,ordem)
+     REFERENCES admin_carrinho_loop_itens_demo(pedido_id,ordem) ON DELETE RESTRICT
+   );
+   CREATE TRIGGER IF NOT EXISTS admin_carrinho_elegibilidade_no_update
+    BEFORE UPDATE ON admin_carrinho_item_elegibilidade_demo
+    BEGIN SELECT RAISE(ABORT,'regra congelada do pedido'); END;
+   CREATE TRIGGER IF NOT EXISTS admin_carrinho_elegibilidade_no_delete
+    BEFORE DELETE ON admin_carrinho_item_elegibilidade_demo
+    BEGIN SELECT RAISE(ABORT,'regra congelada do pedido'); END;
    CREATE TABLE IF NOT EXISTS admin_carrinho_loop_eventos_demo(
     evento_id TEXT PRIMARY KEY NOT NULL,
     pedido_id TEXT NOT NULL REFERENCES admin_carrinho_loop_demo(pedido_id) ON DELETE RESTRICT,
@@ -85,7 +103,8 @@ class CarrinhoLojaLoopDemoSQLite{
   return {produtos:this.catalogo.listar().filter(p=>
     ['PDF','FISICO'].includes(p.tipo)&&p.estado==='PUBLICADO'&&
     Number.isSafeInteger(p.precoCentavos)&&p.precoCentavos>0
-   ).map(p=>({produtoId:p.id,nome:p.nome,tipo:p.tipo,precoCentavos:p.precoCentavos})),
+   ).map(p=>({produtoId:p.id,nome:p.nome,tipo:p.tipo,precoCentavos:p.precoCentavos,
+    elegivelLoop:this.elegibilidade.consultar(p.id).elegivelLoop})),
    semCheckout:true};
  }
  buscar(pedidoId){
@@ -96,9 +115,16 @@ class CarrinhoLojaLoopDemoSQLite{
   if(!row)return null;
   const itens=this.banco.prepare(
    `
-    SELECT ordem,produto_id AS produtoId,tipo,nome,revisao,quantidade,
-    unitario_centavos AS unitarioCentavos,subtotal_centavos AS subtotalCentavos
-    FROM admin_carrinho_loop_itens_demo WHERE pedido_id=? ORDER BY ordem
+    SELECT i.ordem,i.produto_id AS produtoId,i.tipo,i.nome,i.revisao,
+     i.quantidade,i.unitario_centavos AS unitarioCentavos,
+     i.subtotal_centavos AS subtotalCentavos,
+     COALESCE(e.elegivel_loop,1) AS elegivelLoop,
+     COALESCE(e.revisao_elegibilidade,1) AS revisaoElegibilidade,
+     COALESCE(e.subtotal_elegivel_centavos,i.subtotal_centavos) AS subtotalElegivelCentavos
+    FROM admin_carrinho_loop_itens_demo i
+    LEFT JOIN admin_carrinho_item_elegibilidade_demo e
+     ON e.pedido_id=i.pedido_id AND e.ordem=i.ordem
+    WHERE i.pedido_id=? ORDER BY i.ordem
    `
   ).all(pedidoId);
   if(itens.reduce((n,i)=>n+i.subtotalCentavos,0)!==row.totalCentavos)
@@ -115,7 +141,10 @@ class CarrinhoLojaLoopDemoSQLite{
     UNION ALL SELECT pedido_id FROM admin_ponte_vendas_loja_apos_reajuste_demo WHERE pedido_id=?
    `
   ).get(pedidoId,pedidoId);
-  return {...row,itens,
+  const totalElegivelLoopCentavos=itens.reduce((n,i)=>n+i.subtotalElegivelCentavos,0);
+  if(!Number.isSafeInteger(totalElegivelLoopCentavos)||totalElegivelLoopCentavos>row.totalCentavos)
+   throw new Error('Integridade de elegibilidade do carrinho comprometida');
+  return {...row,itens,totalElegivelLoopCentavos,
    situacaoPagamentoFicticio:!evento?'AGUARDANDO_FICTICIO':
     evento.tipo==='CONFIRMAR_FICTICIO'?'CONFIRMADO_FICTICIO':'ESTORNADO_FICTICIO',
    posicaoCriada:!!posicao,posicaoId:posicao?.id??null,
@@ -172,7 +201,13 @@ class CarrinhoLojaLoopDemoSQLite{
     if(!Number.isSafeInteger(subtotalCentavos)||subtotalCentavos>1000000000)
      throw falha('VALOR_INVALIDO','Subtotal de item excede limite de teste');
     return {ordem:indice+1,produtoId,nome:p.nome,tipo:p.tipo,
-     revisao:r.revisao,quantidade,unitarioCentavos:p.precoCentavos,subtotalCentavos};
+     revisao:r.revisao,quantidade,unitarioCentavos:p.precoCentavos,subtotalCentavos,
+     ...(()=>{
+      const eleg=this.elegibilidade.consultar(produtoId);
+      return {elegivelLoop:eleg.elegivelLoop,
+       revisaoElegibilidade:eleg.revisaoElegibilidade,
+       subtotalElegivelCentavos:eleg.elegivelLoop?subtotalCentavos:0};
+     })()};
    });
    const totalCentavos=fotografias.reduce((n,i)=>n+i.subtotalCentavos,0);
    if(!Number.isSafeInteger(totalCentavos)||totalCentavos<=0||totalCentavos>1000000000)
@@ -190,8 +225,17 @@ class CarrinhoLojaLoopDemoSQLite{
     INSERT INTO admin_carrinho_loop_itens_demo(pedido_id,ordem,produto_id,tipo,nome,revisao,quantidade,unitario_centavos,subtotal_centavos)
     VALUES (?,?,?,?,?,?,?,?,?)
    `);
-   for(const i of fotografias)inserir.run(pedidoId,i.ordem,i.produtoId,
-    i.tipo,i.nome,i.revisao,i.quantidade,i.unitarioCentavos,i.subtotalCentavos);
+   const inserirRegra=this.banco.prepare(`
+    INSERT INTO admin_carrinho_item_elegibilidade_demo
+    (pedido_id,ordem,elegivel_loop,revisao_elegibilidade,subtotal_elegivel_centavos)
+    VALUES(?,?,?,?,?)
+   `);
+   for(const i of fotografias){
+    inserir.run(pedidoId,i.ordem,i.produtoId,
+     i.tipo,i.nome,i.revisao,i.quantidade,i.unitarioCentavos,i.subtotalCentavos);
+    inserirRegra.run(pedidoId,i.ordem,i.elegivelLoop?1:0,
+     i.revisaoElegibilidade,i.subtotalElegivelCentavos);
+   }
    this.banco.exec('COMMIT');
    return {...this.buscar(pedidoId),repetido:false};
   }catch(e){this.banco.exec('ROLLBACK');throw e;}
@@ -246,7 +290,9 @@ class CarrinhoLojaLoopDemoSQLite{
   const evento=this.eventos(pedidoId).find(x=>x.tipo==='CONFIRMAR_FICTICIO');
   if(!evento)throw falha('NAO_CONFIRMADO','Sem evento comprovado');
   return {pedidoId,contaId:pedido.contaId,produtoId:PRODUTO_VIRTUAL,
-   valorCentavos:carrinho.totalCentavos,intentoPagamentoId:pedido.intentoPagamentoId,
+   valorCentavos:carrinho.totalCentavos,
+   valorElegivelLoopCentavos:carrinho.totalElegivelLoopCentavos,
+   intentoPagamentoId:pedido.intentoPagamentoId,
    confirmadoEm:evento.registradoEm,status:STATUS_CONFIRMADO};
  }
  async sincronizar(pedidoId){
