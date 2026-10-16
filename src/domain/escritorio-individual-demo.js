@@ -91,14 +91,19 @@ class EscritorioIndividualDemo{
   }
   const comprasPorPosicao=new Map();
   for(const c of compras){
-   if(comprasPorPosicao.has(c.posicaoId)){
-    throw new Error('Posicao de teste associada a multiplos pedidos');
+   c.posicaoIds=[c.posicaoId,...this.banco.prepare(`
+    SELECT posicao_id AS id FROM admin_ponte_posicoes_adicionais_demo
+    WHERE pedido_id=? ORDER BY ordem
+   `).all(c.pedidoId).map(r=>r.id)];
+   for(const id of c.posicaoIds){
+    if(comprasPorPosicao.has(id))
+     throw new Error('Posicao de teste associada a multiplos pedidos');
+    comprasPorPosicao.set(id,c.pedidoId);
    }
-   comprasPorPosicao.set(c.posicaoId,c.pedidoId);
   }
   // Ponte ainda nao cria giros nem historico de posicoes concluídas:
   // o ledger de compras deve corresponder exatamente a posicoes ativas.
-  if(posicoes.length+encerradas!==compras.length||
+  if(posicoes.length+encerradas>comprasPorPosicao.size||
     posicoes.some(p=>!comprasPorPosicao.has(p.posicaoId))){
    throw new Error('Integridade entre compras e posicoes do titular divergente');
   }
@@ -147,8 +152,12 @@ class EscritorioIndividualDemo{
       v.valor_referencia_centavos AS valorReferenciaCentavos
      FROM admin_ponte_posicoes_valores_demo v
      JOIN admin_ponte_compras_demo c ON c.pedido_id=v.pedido_id
-     WHERE c.pedido_id=? AND c.posicao_id=? AND c.conta_id=?
-    `).get(pedidoId,p.posicaoId,contaId);
+     WHERE c.pedido_id=? AND c.conta_id=?
+      AND (c.posicao_id=? OR EXISTS(
+       SELECT 1 FROM admin_ponte_posicoes_adicionais_demo x
+       WHERE x.pedido_id=c.pedido_id AND x.posicao_id=?
+      ))
+    `).get(pedidoId,contaId,p.posicaoId,p.posicaoId);
     if(!referencia)throw new Error('Referencia da posicao de teste ausente');
     return {...p,...referencia};
    }).sort((a,b)=>a.posicaoId-b.posicaoId),
