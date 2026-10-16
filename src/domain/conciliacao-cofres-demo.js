@@ -139,9 +139,9 @@ async function conciliarComAdaptadorFicticio({razao,adaptador}={}){
 }
 
 async function criarConciliacaoAdministrativaDemo({
-  modo=MODOS.SPLIT,comMovimentos=false,divergenciaFicticia=false
+  modo=MODOS.SPLIT,centroPosicao=null,comMovimentos=false,divergenciaFicticia=false
 }={}){
-  const razao=projetarRazaoCofresDemo({modo,comMovimentos});
+  const razao=projetarRazaoCofresDemo({modo,centroPosicao,comMovimentos});
   // Dois lados sao simulados. O extrato do 'banco' e montado como
   // fixture de teste e NAO e informacao independente de uma instituicao.
   const fixture=Object.fromEntries(razao.cofres.map(c=>[c.id,c.saldoProjetadoCentavos]));
