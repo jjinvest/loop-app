@@ -225,6 +225,15 @@ function criarAppAdminLaboratorio({ repositorio, segredo, webhookDemo } = {}) {
   app.get('/admin/financeiro-demo.css', somenteLocal, (req, res) => {
     res.type('text/css').sendFile(path.join(__dirname,'financeiro-admin-demo.css'));
   });
+  app.get('/laboratorio/loja', somenteLocal, (req, res) => {
+    res.sendFile(path.join(__dirname,'loja-cliente-demo.html'));
+  });
+  app.get('/laboratorio/loja.js', somenteLocal, (req, res) => {
+    res.type('application/javascript').sendFile(path.join(__dirname,'loja-cliente-demo.js'));
+  });
+  app.get('/laboratorio/loja.css', somenteLocal, (req, res) => {
+    res.type('text/css').sendFile(path.join(__dirname,'loja-cliente-demo.css'));
+  });
   app.get('/laboratorio/participante', somenteLocal, (req, res) => {
     res.sendFile(path.join(__dirname,'participante-demo.html'));
   });
