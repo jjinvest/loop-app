@@ -615,7 +615,7 @@
     const p=regrasProdutosLoop.find(x=>x.produtoId===el('produtoElegibilidadeLoopDemo').value);
     if(!p)return;
     const numero=Number(el('pacotePosicoesLoopDemo').value);
-    if(![1,5].includes(numero))return;
+    if(![1,6].includes(numero))return;
     const botao=el('salvarPacotePosicoesLoopDemo');botao.disabled=true;
     try{
       const resultado=await requisitar('carrinho-loop-demo/pacote-posicoes',{
@@ -1348,7 +1348,7 @@
       ' — '+money(pagamento.valorCentavos)+' (Fornecedor '+money(pagamento.fornecedorCentavos)+
       ', LOOP '+money(pagamento.parcelaLoopCentavos)+
       ', sobra bruta '+money(pagamento.sobraBrutaCentavos)+') — evento '+
-      pagamento.ordemCiclo+'/5, cenário '+pagamento.cicloDemo+'. Tudo fictício.';
+      pagamento.ordemCiclo+'/6, cenário '+pagamento.cicloDemo+'. Tudo fictício.';
     try{
       const ret=await requisitar('recebimentos-psp-demo/'+encodeURIComponent(valor)+'/historico');
       if(el('pagamentoSelecionadoPSPDemo').value!==valor)return;
