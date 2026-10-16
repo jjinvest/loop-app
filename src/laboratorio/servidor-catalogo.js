@@ -123,9 +123,6 @@ function criarAppAdminLaboratorio({ repositorio, segredo, webhookDemo } = {}) {
     app.use('/api/admin',criarRouterIndicacoesAdminDemo({
       segredo,links:ponteDemo.linksComissoes
     }));
-    app.use('/api/laboratorio/convite',criarRouterConviteCadastroDemo({
-      contas:contasDemo,links:ponteDemo.linksComissoes
-    }));
     integracaoPDFLoopDemo=new IntegracaoLojaPDFLoopDemo({
       pedidosPDF:pedidosPDFDemo,pedidosIdentificados:pedidosIdentificadosDemo,ponte:ponteDemo
     });
@@ -135,6 +132,9 @@ function criarAppAdminLaboratorio({ repositorio, segredo, webhookDemo } = {}) {
     });
     app.use('/api/admin',criarRouterCarrinhoLoopDemo({
       segredo,carrinhos:carrinhosLojaLoopDemo
+    }));
+    app.use('/api/laboratorio/convite',criarRouterConviteCadastroDemo({
+      contas:contasDemo,links:ponteDemo.linksComissoes,carrinhos:carrinhosLojaLoopDemo
     }));
     const adesoesDemo=new AdesoesPosicoesDemoSQLite({ponte:ponteDemo});
     app.use('/api/admin',criarRouterPonteComprasConvitesDemo({
