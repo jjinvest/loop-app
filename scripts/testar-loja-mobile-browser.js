@@ -165,7 +165,7 @@ async function main(){
   await page.locator('#dadosFinanceiroDemo').waitFor({state:'visible'});
   await page.locator('#criarDouradaManualDemo').click();
   await page.locator('#listaDouradasManuaisDemo li').first().waitFor();
-  assert.match(await page.locator('#listaDouradasManuaisDemo').innerText(),/Posição #1/);
+  assert.match(await page.locator('#listaDouradasManuaisDemo').innerText(),/Posição #2/);
   await page.locator('#centroFinanceiroDemo').selectOption('dourado');
   await page.locator('#abrirFinanceiroDemo').click();
   await page.locator('#dadosFinanceiroDemo').waitFor({state:'visible'});
