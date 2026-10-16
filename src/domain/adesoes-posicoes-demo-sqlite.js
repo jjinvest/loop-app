@@ -66,7 +66,7 @@ class AdesoesPosicoesDemoSQLite{
   this.banco.exec('BEGIN IMMEDIATE');
   try{
    const conf=this.banco.prepare(
-    'SELECT conta_id FROM admin_contas_participantes_demo WHERE id=?'
+    'SELECT id FROM admin_contas_participantes_demo WHERE id=?'
    ).get(contaId);
    if(!conf)throw falhar('CONTA_INVALIDA');
    const sim=this.ponte._restaurar();
