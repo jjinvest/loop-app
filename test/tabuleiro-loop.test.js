@@ -135,7 +135,7 @@ test('regra 3A/1B das filas determina quem entra no tabuleiro', () => {
   assert.deepEqual(origens, ['A','A','A','B','A','A','A']);
   registrarSeis(tabuleiro);
   const giro = tabuleiro.girarSimulado({ catracaAberta:true });
-  assert.equal(giro.novaPosicao6.origemFila, 'A');
+  assert.equal(giro.novaPosicao6.origemFila, 'B');
   registrarSeis(tabuleiro, 'ciclo-2');
   const giro2 = tabuleiro.girarSimulado({ catracaAberta:true });
   assert.equal(giro2.novaPosicao6.origemFila, 'A');
