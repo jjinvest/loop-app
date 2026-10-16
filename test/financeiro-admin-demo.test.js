@@ -34,7 +34,7 @@ test('ciclo ficticio de 6 eventos preserva 3 parcelas ao centro e 3 laterais',()
   assert.equal(a.totalFornecedorCentavos,180000);
   assert.equal(a.totalLoopCentavos,150000);
   assert.equal(a.totalSobraBrutaCentavos,30000);
-  assert.equal(a.caixas.length,4);
+  assert.equal(a.caixas.length,5);
   assert.equal(valor(a,COFRES.CENTRO),75000);
   assert.equal(valor(a,COFRES.ESQUERDA),50000);
   assert.equal(valor(a,COFRES.DIREITA),25000);
@@ -54,7 +54,7 @@ test('ciclo ficticio de 6 eventos preserva 3 parcelas ao centro e 3 laterais',()
 
 test('sem split demonstra quinto caixa reservado, preservando historico do fornecedor',()=>{
   const s=criarVisaoFinanceiraAdminDemo({modo:MODOS.RESERVA});
-  assert.equal(s.caixas.length,5);
+  assert.equal(s.caixas.length,6);
   assert.equal(valor(s,COFRES.DISTRIBUIDOR),180000);
   assert.equal(valor(s,COFRES.COMERCIAL),30000);
   assert.equal(valor(s,COFRES.CENTRO),75000);
@@ -93,10 +93,10 @@ test('endpoint financeiro exige token e origem local e nao disponibiliza escrita
   assert.equal(resposta.status,200);
   assert.equal(resposta.headers.get('cache-control'),'no-store');
   const split=await resposta.json();
-  assert.equal(split.caixas.length,4);
+  assert.equal(split.caixas.length,5);
   assert.equal(split.totalSobraBrutaCentavos,30000);
   const reserva=await (await fetch(base+'/api/admin/financeiro-demo?modo=reserva',{headers})).json();
-  assert.equal(reserva.caixas.length,5);
+  assert.equal(reserva.caixas.length,6);
   assert.equal(valor(reserva,COFRES.DISTRIBUIDOR),180000);
   assert.equal((await fetch(base+endpoint,{
     method:'POST',headers:{...headers,'Content-Type':'application/json'},body:'{}'
