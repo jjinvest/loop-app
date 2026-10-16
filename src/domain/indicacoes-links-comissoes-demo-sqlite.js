@@ -292,7 +292,7 @@ class IndicacoesLinksComissoesDemoSQLite{
    throw new Error('Conciliacao de bonificacao e caixa reserva divergente');
   const total=rows.reduce((v,x)=>v+x.valorCentavos,0);
   if(!Number.isSafeInteger(total))throw new Error('Total de comissao excede limite');
-  const minimo=10000;
+  const minimo=2500;
   const cpfTermosConfirmados=this.adesaoVigente(contaId);
   const bonificacoesHabilitadas=this.habilitadoBonificacoes(contaId);
   return {
@@ -312,15 +312,19 @@ class IndicacoesLinksComissoesDemoSQLite{
   };
  }
 }
-function simularElegibilidadeSaque({saldoSimuladoCentavos,valorSolicitadoCentavos,cpfTermosConfirmados=false}={}){
+function simularElegibilidadeSaque({saldoSimuladoCentavos,valorSolicitadoCentavos,cpfTermosConfirmados=false,tipo='BONUS'}={}){
  if(!Number.isSafeInteger(saldoSimuladoCentavos)||saldoSimuladoCentavos<0||
   !Number.isSafeInteger(valorSolicitadoCentavos)||valorSolicitadoCentavos<=0)
   throw falha('SAQUE_INVALIDO');
  if(cpfTermosConfirmados!==true)throw falha('CPF_E_TERMOS_OBRIGATORIOS');
- if(valorSolicitadoCentavos<10000)throw falha('MINIMO_SAQUE_100_REAIS');
+ if(!['BONUS','PARTICIPACAO_LUCRO'].includes(tipo))throw falha('TIPO_SAQUE_INVALIDO');
+ if(valorSolicitadoCentavos<2500)throw falha('MINIMO_SAQUE_25_REAIS');
  if(valorSolicitadoCentavos>saldoSimuladoCentavos)throw falha('SALDO_SIMULADO_INSUFICIENTE');
- return {apenasSimulacao:true,atingiuMinimo:true,
-  valorSolicitadoCentavos,origemExclusiva:'LOOP_DIREITA',
+ const taxaSaqueCentavos=Math.round(valorSolicitadoCentavos*3/100);
+ const valorLiquidoCentavos=valorSolicitadoCentavos-taxaSaqueCentavos;
+ return {apenasSimulacao:true,atingiuMinimo:true,tipoSaque:tipo,
+  valorSolicitadoCentavos,taxaPercentual:3,taxaSaqueCentavos,
+  valorLiquidoCentavos,origemExclusiva:tipo==='BONUS'?'LOOP_DIREITA':'LOOP_CENTRO',
   transferenciaExecutada:false,necessitaSaldoRealReserva:true};
 }
 module.exports={IndicacoesLinksComissoesDemoSQLite,caminhoLink,caminhoLinkDestino,extrairLink,apelidoSeguro,simularElegibilidadeSaque};
