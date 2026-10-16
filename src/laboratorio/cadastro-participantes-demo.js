@@ -129,6 +129,7 @@
   const body={
    nome:el('nomeContaDemo').value,
    email:el('emailContaDemo').value,
+   telefone:el('telefoneContaDemo').value.trim(),
    senha
   };
   const codigo=el('conviteContaDemo').value.trim();
@@ -138,6 +139,7 @@
    aviso.textContent='Conta '+r.conta.nome+' cadastrada no teste. Código individual: '+
     r.conta.codigoConvite+'. Convites pendentes; nenhuma posição criada.';
    el('emailContaDemo').value='';
+   el('telefoneContaDemo').value='';
    await atualizar();
   }catch(err){aviso.textContent=err.message;}
   finally{
