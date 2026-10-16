@@ -88,8 +88,8 @@ test('financeiro separa parcelas douradas, conserva investimento e reserva, livr
  assert.equal(raiz.registrarCicloFicticio({cicloId:id,centroPosicao:dourada}).repetido,false);
  assert.equal(raiz.registrarCicloFicticio({cicloId:id,centroPosicao:dourada}).repetido,true);
  const extrato=raiz.consultar();
- assert.equal(extrato.cofres.find(x=>x.id===COFRES.DOURADAS).saldoProjetadoCentavos,75000);
- assert.equal(extrato.cofres.find(x=>x.id===COFRES.CENTRO).saldoProjetadoCentavos,0);
- assert.equal(extrato.cofres.find(x=>x.id===COFRES.ESQUERDA).saldoProjetadoCentavos,50000);
- assert.equal(extrato.cofres.find(x=>x.id===COFRES.DIREITA).saldoProjetadoCentavos,25000);
+ assert.equal(extrato.caixas.find(x=>x.id===COFRES.DOURADAS).saldoProjetadoCentavos,75000);
+ assert.equal(extrato.caixas.find(x=>x.id===COFRES.CENTRO).saldoProjetadoCentavos,0);
+ assert.equal(extrato.caixas.find(x=>x.id===COFRES.ESQUERDA).saldoProjetadoCentavos,50000);
+ assert.equal(extrato.caixas.find(x=>x.id===COFRES.DIREITA).saldoProjetadoCentavos,25000);
 });
