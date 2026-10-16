@@ -31,12 +31,12 @@ async function servidor(t){
 test('razao projeta distribuicao do ciclo mas nao inventa saldo ou transferencia real',()=>{
   const p=projetarRazaoCofresDemo();
   assert.equal(p.modo,'RAZAO_CONTABIL_APENAS_FICTICIO');
-  assert.equal(p.historico.length,10);
+  assert.equal(p.historico.length,12);
   assert.equal(p.cofres.length,4);
-  assert.equal(saldo(p,COFRES.ESQUERDA).entradasAcumuladasCentavos,25000);
+  assert.equal(saldo(p,COFRES.ESQUERDA).entradasAcumuladasCentavos,50000);
   assert.equal(saldo(p,COFRES.CENTRO).entradasAcumuladasCentavos,75000);
   assert.equal(saldo(p,COFRES.DIREITA).saldoProjetadoCentavos,25000);
-  assert.equal(saldo(p,COFRES.COMERCIAL).saldoProjetadoCentavos,25000);
+  assert.equal(saldo(p,COFRES.COMERCIAL).saldoProjetadoCentavos,30000);
   assert.ok(p.cofres.every(c=>c.saidasAcumuladasCentavos===0&&
     c.retornosAcumuladosCentavos===0&&c.saldoRealConhecido===false));
   assert.equal(p.movimentacaoBancariaReal,false);
@@ -47,24 +47,24 @@ test('razao projeta distribuicao do ciclo mas nao inventa saldo ou transferencia
 
 test('movimentos ficticios registram entrada saida retorno, sem restringir controle admin',()=>{
   const p=projetarRazaoCofresDemo({comMovimentos:true});
-  assert.equal(p.historico.length,16);
+  assert.equal(p.historico.length,18);
   assert.equal(saldo(p,COFRES.CENTRO).saldoProjetadoCentavos,65000);
   assert.equal(saldo(p,COFRES.CENTRO).saidasAcumuladasCentavos,10000);
-  assert.equal(saldo(p,COFRES.ESQUERDA).saldoProjetadoCentavos,20000);
+  assert.equal(saldo(p,COFRES.ESQUERDA).saldoProjetadoCentavos,45000);
   assert.equal(saldo(p,COFRES.ESQUERDA).saidasAcumuladasCentavos,8000);
   assert.equal(saldo(p,COFRES.ESQUERDA).retornosAcumuladosCentavos,3000);
   assert.equal(saldo(p,COFRES.DIREITA).saldoProjetadoCentavos,24000);
-  assert.equal(saldo(p,COFRES.COMERCIAL).saldoProjetadoCentavos,5000);
+  assert.equal(saldo(p,COFRES.COMERCIAL).saldoProjetadoCentavos,10000);
   assert.equal(p.historico.filter(x=>x.tipo===TIPOS.SAIDA).length,4);
   assert.equal(p.historico.filter(x=>x.tipo===TIPOS.RETORNO).length,2);
   assert.ok(p.historico.every(x=>x.simulado===true));
 
   const reserva=projetarRazaoCofresDemo({modo:MODOS.RESERVA,comMovimentos:true});
   assert.equal(reserva.cofres.length,5);
-  assert.equal(reserva.historico.length,22);
-  assert.equal(saldo(reserva,COFRES.DISTRIBUIDOR).entradasAcumuladasCentavos,150000);
+  assert.equal(reserva.historico.length,24);
+  assert.equal(saldo(reserva,COFRES.DISTRIBUIDOR).entradasAcumuladasCentavos,180000);
   assert.equal(saldo(reserva,COFRES.DISTRIBUIDOR).saidasAcumuladasCentavos,30000);
-  assert.equal(saldo(reserva,COFRES.DISTRIBUIDOR).saldoProjetadoCentavos,120000);
+  assert.equal(saldo(reserva,COFRES.DISTRIBUIDOR).saldoProjetadoCentavos,150000);
   assert.equal(saldo(reserva,COFRES.COMERCIAL).saldoProjetadoCentavos,5000);
 });
 
@@ -80,7 +80,7 @@ test('eventos financeiros repetidos, cofres estranhos e valores errados sao reje
   const saidaFornecedor=projetarRazaoCofresDemo({modo:MODOS.RESERVA,movimentos:[{
     ...entrada,valorCentavos:10000,cofreId:COFRES.DISTRIBUIDOR
   }]});
-  assert.equal(saldo(saidaFornecedor,COFRES.DISTRIBUIDOR).saldoProjetadoCentavos,140000);
+  assert.equal(saldo(saidaFornecedor,COFRES.DISTRIBUIDOR).saldoProjetadoCentavos,170000);
 });
 
 test('adaptador de teste compara valores, encontra diferencas e detecta dados ausentes',async()=>{
@@ -134,7 +134,7 @@ test('API de conciliacao e somente do administrador local, sem mutacao ou public
   const body=await ok.json();
   assert.equal(body.razao.cofres.length,4);
   assert.equal(body.conciliacao.todasConferidasNoTeste,false);
-  assert.equal(body.razao.historico.length,16);
+  assert.equal(body.razao.historico.length,18);
   assert.equal(body.razao.movimentacaoBancariaReal,false);
   assert.equal(body.conciliacao.movimentacaoBancariaReal,false);
   assert.equal(body.razao.cofres.find(c=>c.id===COFRES.CENTRO).saldoProjetadoCentavos,65000);
