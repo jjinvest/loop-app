@@ -1,5 +1,8 @@
 # LOOP V5 — Regra final dos bônus de indicação e da cadeira (laboratório)
 
+
+> **Atualizacao de 16/10/2026:** esta documentacao descreve a **regra padrao de uma posicao por pedido**. A excecao de **produto especial autorizado para cinco posicoes no mesmo pedido** foi implementada em laboratorio e esta detalhada em `docs/PRODUTO_ESPECIAL_CINCO_POSICOES_LOOP.md`. O limite de cinco posicoes abertas simultaneamente por CPF (simulado por conta em laboratorio) continua valendo, e uma posicao que conclui o ciclo libera uma vaga. A configuracao especial exige disponibilidade integral de cinco vagas e subtotal especial minimo equivalente a cinco referencias LOOP; nao habilita pagamento real.
+
 ## Duas ativações e uma compra qualificada
 
 **1. Link de indicação:** toda conta recebe um único link de rastreamento. O código fica DENTRO do link e o final do endereço pode ser personalizado sem mudar o rastreamento. O link começa inativo e é liberado quando o titular conclui **qualquer compra** na loja, mesmo inferior ao mínimo de posição.
