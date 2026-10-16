@@ -10,9 +10,26 @@ body{background:#0e1a15;color:#eef8ef}
 .convite-loop input{display:block;width:100%;box-sizing:border-box;padding:12px;font:inherit}
 .convite-loop button{margin:18px 0 6px;padding:12px 18px}
 .convite-loop a{color:#a8e5b9}
+.opcoes-convite-loop{display:flex;flex-wrap:wrap;gap:12px;margin:12px 0 22px}
+.opcoes-convite-loop a{display:inline-block;padding:9px 12px;border:1px solid #42684e;border-radius:10px}
+.vitrine-convite-loop{border-top:1px solid #42684e;margin:20px 0;padding-top:12px}
+.vitrine-convite-loop li{padding:12px 0;border-bottom:1px solid #42684e}
+.vitrine-convite-loop li strong{display:block}
+.vitrine-convite-loop li small{display:block;color:#bfdbc5;margin-top:4px}
 </style></head><body>
 <main class="convite-loop">
-<h1>Bem-vindo ao LOOP</h1>
+<h1 id="tituloDestinoConvite">Bem-vindo ao LOOP</h1>
+<p id="descricaoDestinoConvite">Conheça os produtos da loja e o funcionamento do escritório do LOOP.</p>
+<nav class="opcoes-convite-loop" aria-label="Conhecer o LOOP">
+ <a id="linkApresentarEscritorioConvite" href="/laboratorio/cadastro">Conhecer o escritório</a>
+ <a id="linkApresentarLojaConvite" href="/laboratorio/cadastro">Conhecer a loja</a>
+</nav>
+<section id="vitrineConviteLoop" class="vitrine-convite-loop" hidden aria-label="Produtos da loja">
+ <h2>Vitrine da loja</h2>
+ <p>Preços definidos pela administração. Para registrar um pedido no teste, cadastre-se e entre no escritório.</p>
+ <ul id="produtosVitrineConvite"></ul>
+ <p id="statusVitrineConvite" role="status"></p>
+</section>
 <p><strong>Ambiente fictício de laboratório.</strong> Este cadastro não movimenta dinheiro, não gera comissão real nem cria posição no LOOP.</p>
 <p id="estadoConvite" role="status" aria-live="polite">Verificando o link...</p>
 <form id="formConviteCliente" hidden autocomplete="off">
@@ -22,7 +39,7 @@ body{background:#0e1a15;color:#eef8ef}
 <label for="senhaConvite">Senha de teste (mínimo 10 caracteres)</label><input id="senhaConvite" type="password" required minlength="10">
 <button type="submit" id="criarConviteCliente">Cadastrar pela indicação</button>
 </form>
-<p>Você também pode acessar o <a href="/laboratorio/participante">Escritório Virtual de testes</a>.</p>
+<p>Já tem conta? Acesse o <a href="/laboratorio/participante" id="irEscritorioConvite">Escritório Virtual de testes</a> para entrar. As compras exigem sessão e o pagamento é fictício.</p>
 </main>
 <script src="/laboratorio/convite.js" defer></script>
 </body></html>
