@@ -141,7 +141,8 @@ function criarAppAdminLaboratorio({ repositorio, segredo, webhookDemo } = {}) {
       contas:contasDemo,auditoria:auditoriaDemo
     });
     app.use('/api/laboratorio/participante',criarRouterParticipanteDemo({
-      contas:contasDemo,ponte:ponteDemo,sessoes:sessoesDemo,adesoes:adesoesDemo
+      contas:contasDemo,ponte:ponteDemo,sessoes:sessoesDemo,adesoes:adesoesDemo,
+      carrinhos:carrinhosLojaLoopDemo
     }));
     app.use('/api/admin',criarRouterAuditoriaParticipanteDemo({
       segredo,auditoria:auditoriaDemo
