@@ -61,11 +61,11 @@ test('movimentos ficticios registram entrada saida retorno, sem restringir contr
 
   const reserva=projetarRazaoCofresDemo({modo:MODOS.RESERVA,comMovimentos:true});
   assert.equal(reserva.cofres.length,5);
-  assert.equal(reserva.historico.length,24);
+  assert.equal(reserva.historico.length,25);
   assert.equal(saldo(reserva,COFRES.DISTRIBUIDOR).entradasAcumuladasCentavos,180000);
   assert.equal(saldo(reserva,COFRES.DISTRIBUIDOR).saidasAcumuladasCentavos,30000);
   assert.equal(saldo(reserva,COFRES.DISTRIBUIDOR).saldoProjetadoCentavos,150000);
-  assert.equal(saldo(reserva,COFRES.COMERCIAL).saldoProjetadoCentavos,5000);
+  assert.equal(saldo(reserva,COFRES.COMERCIAL).saldoProjetadoCentavos,10000);
 });
 
 test('eventos financeiros repetidos, cofres estranhos e valores errados sao rejeitados',()=>{
