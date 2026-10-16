@@ -100,7 +100,6 @@ h2{margin:0 0 15px;color:#fff}
 }
 
 /* LOOP V6: a mesma prévia fluida deve caber em celular ou computador. */
-html{overflow-x:clip}
 body{min-width:0}
 header{gap:12px;flex-wrap:wrap}
 main,.painel,.loja,.produto-card,.detalhe-informacoes{min-width:0}
@@ -114,6 +113,5 @@ main,.painel,.loja,.produto-card,.detalhe-informacoes{min-width:0}
 }
 @media(max-width:340px){
  .produtos{grid-template-columns:1fr}
- .vagas{min-width:0}
  .marcos{flex-wrap:wrap}
 }
