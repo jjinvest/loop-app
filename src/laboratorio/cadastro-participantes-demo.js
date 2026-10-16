@@ -126,8 +126,8 @@
   const botao=el('salvarTaxaIndicacaoDemo');botao.disabled=true;
   try{
    const percentual=Number(el('percentualIndicacaoDemo').value);
-   if(!Number.isSafeInteger(percentual)||percentual<1||percentual>100)
-    throw new Error('Digite um percentual inteiro de 1 a 100.');
+   if(!Number.isSafeInteger(percentual)||percentual<10||percentual>100)
+    throw new Error('Digite um percentual inteiro de 10 a 100.');
    const resultado=await consultarTaxa({
     method:'POST',body:{percentual,revisaoEsperada:revisaoTaxaIndicacao}
    });
