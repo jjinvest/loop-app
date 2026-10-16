@@ -151,7 +151,17 @@ test('admin local muda valor; acesso publico nao oferece configurar e rejeita ex
  assert.equal((await fetch(base+path,{headers:{
   ...auth,Origin:'https://outro-site.invalid'
  }})).status,403);
- const antesHttp=await(await fetch(base+path,{headers:auth})).json();
+ const prevSemPermissao=await fetch(base+path+'/impacto?novoValorCentavos=50000');
+ assert.equal(prevSemPermissao.status,401);
+ const prevOK=await fetch(base+path+'/impacto?novoValorCentavos=50000',{headers:auth});
+ assert.equal(prevOK.status,200);
+ const impact=await prevOK.json();
+ assert.equal(impact.valorNovoCentavos,50000);
+ assert.equal(impact.simulacaoSemSalvar,true);
+ assert.equal(impact.filaUnica,true);
+ assert.equal((await fetch(base+path+'/impacto?novoValorCentavos=0',{headers:auth})).status,400);
+ assert.equal((await fetch(base+path+'/impacto?novoValorCentavos=50000&cpf=extra',{headers:auth})).status,400);
+  const antesHttp=await(await fetch(base+path,{headers:auth})).json();
  assert.equal(antesHttp.atual.valorCentavos,25000);
  assert.equal(antesHttp.historico.length,1);
  const patch=async body=>fetch(base+path,{
@@ -175,8 +185,10 @@ test('admin local muda valor; acesso publico nao oferece configurar e rejeita ex
  assert.equal(preview.dinheiroMovimentado,false);
  const pag=await(await fetch(base+'/admin/financeiro-demo')).text();
  assert.match(pag,/formValorLoopDemo/);
+ assert.match(pag,/simularImpactoValorLoopDemo/);
  const js=await(await fetch(base+'/admin/financeiro-demo.js')).text();
  assert.match(js,/carregarValorLoop/);
+ assert.match(js,/simularImpactoValorLoop/);
  assert.doesNotMatch(js,/localStorage|sessionStorage|innerHTML/);
  const publico=require('../src/server');
  const open=publico.listen(0,'127.0.0.1');
@@ -187,4 +199,33 @@ test('admin local muda valor; acesso publico nao oferece configurar e rejeita ex
  assert.equal((await fetch(url+path,{method:'PATCH',headers:{
   'Content-Type':'application/json'
  },body:'{}'})).status,404);
+});
+
+test('previa de R$500 mostra grupos historicos e nao altera posicoes ou configuracao',async t=>{
+ const m=configurar(t);
+ const pessoa=cadastrar(m.contas,'Cohort Antiga','cohort@exemplo.invalid');
+ await venda(m,'compra-cohort-250',pessoa,25000,antes);
+ const primeiro=m.conf.simularImpacto({novoValorCentavos:50000});
+ assert.equal(primeiro.valorAtualCentavos,25000);
+ assert.equal(primeiro.valorNovoCentavos,50000);
+ assert.equal(primeiro.totalPosicoesRegistradas,1);
+ assert.equal(primeiro.grupos.length,1);
+ assert.equal(primeiro.grupos[0].posicoesRegistradas,1);
+ assert.equal(primeiro.grupos[0].referenciaOriginalCentavos,25000);
+ assert.equal(primeiro.grupos[0].comparacaoEventoParticipante.valorEmpresaPropostoCentavos,25000);
+ assert.equal(primeiro.grupos[0].comparacaoEventoParticipante.dinheiroMovimentado,false);
+ assert.equal(primeiro.diferencaNaoVaiAutomaticamenteParaEmpresa,true);
+ assert.equal(m.conf.atual().valorCentavos,25000);
+ assert.equal(m.ponte.consultar().filas.B.quantidade,1);
+ m.conf.alterar({valorCentavos:50000,revisaoEsperada:1});
+ await venda(m,'compra-cohort-500',pessoa,50000,depois);
+ const segundo=m.conf.simularImpacto({novoValorCentavos:75000});
+ assert.equal(segundo.totalPosicoesRegistradas,2);
+ assert.deepEqual(segundo.grupos.map(g=>g.referenciaOriginalCentavos),[25000,50000]);
+ assert.equal(segundo.grupos[0].comparacaoEventoParticipante.valorEmpresaPropostoCentavos,50000);
+ assert.equal(segundo.grupos[1].comparacaoEventoParticipante.valorEmpresaPropostoCentavos,25000);
+ assert.equal(m.ponte.consultar().filas.B.quantidade,2);
+ assert.equal(m.conf.atual().valorCentavos,50000);
+ assert.throws(()=>m.conf.simularImpacto({novoValorCentavos:-5}),
+  e=>e.codigo==='VALOR_INVALIDO');
 });
