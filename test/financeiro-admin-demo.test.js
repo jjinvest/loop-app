@@ -27,25 +27,25 @@ function valor(d,id){
   return d.caixas.find(c=>c.id===id)?.entradasAcumuladasCentavos;
 }
 
-test('ciclo ficticio de 5 eventos preserva 3 parcelas ao centro e 2 laterais',()=>{
+test('ciclo ficticio de 6 eventos preserva 3 parcelas ao centro e 3 laterais',()=>{
   const a=criarVisaoFinanceiraAdminDemo();
   assert.equal(a.modo,'FINANCEIRO_ADMINISTRATIVO_APENAS_DEMONSTRACAO');
-  assert.equal(a.totalVendasCentavos,300000);
-  assert.equal(a.totalFornecedorCentavos,150000);
-  assert.equal(a.totalLoopCentavos,125000);
-  assert.equal(a.totalSobraBrutaCentavos,25000);
+  assert.equal(a.totalVendasCentavos,360000);
+  assert.equal(a.totalFornecedorCentavos,180000);
+  assert.equal(a.totalLoopCentavos,150000);
+  assert.equal(a.totalSobraBrutaCentavos,30000);
   assert.equal(a.caixas.length,4);
   assert.equal(valor(a,COFRES.CENTRO),75000);
-  assert.equal(valor(a,COFRES.ESQUERDA),25000);
+  assert.equal(valor(a,COFRES.ESQUERDA),50000);
   assert.equal(valor(a,COFRES.DIREITA),25000);
-  assert.equal(valor(a,COFRES.COMERCIAL),25000);
+  assert.equal(valor(a,COFRES.COMERCIAL),30000);
   assert.equal(valor(a,COFRES.DISTRIBUIDOR),undefined);
   assert.deepEqual(a.vendas.map(v=>v.destinoCiclo),
-    [COFRES.CENTRO,COFRES.ESQUERDA,COFRES.CENTRO,COFRES.DIREITA,COFRES.CENTRO]);
-  assert.equal(a.historico.length,15);
-  assert.deepEqual(a.historico.map(e=>e.sequencia),Array.from({length:15},(_,i)=>i+1));
+    [COFRES.CENTRO,COFRES.ESQUERDA,COFRES.CENTRO,COFRES.DIREITA,COFRES.CENTRO,COFRES.ESQUERDA]);
+  assert.equal(a.historico.length,18);
+  assert.deepEqual(a.historico.map(e=>e.sequencia),Array.from({length:18},(_,i)=>i+1));
   assert.deepEqual(a.historico.filter(e=>e.cofreId==='DISTRIBUIDOR_EXTERNO_SIMULADO').map(e=>e.valorCentavos),
-    [30000,30000,30000,30000,30000]);
+    [30000,30000,30000,30000,30000,30000]);
   assert.equal(a.movimentacaoBancariaReal,false);
   assert.equal(a.splitBancarioReal,false);
   assert.equal(a.saquesReaisHabilitados,false);
@@ -55,19 +55,19 @@ test('ciclo ficticio de 5 eventos preserva 3 parcelas ao centro e 2 laterais',()
 test('sem split demonstra quinto caixa reservado, preservando historico do fornecedor',()=>{
   const s=criarVisaoFinanceiraAdminDemo({modo:MODOS.RESERVA});
   assert.equal(s.caixas.length,5);
-  assert.equal(valor(s,COFRES.DISTRIBUIDOR),150000);
-  assert.equal(valor(s,COFRES.COMERCIAL),25000);
+  assert.equal(valor(s,COFRES.DISTRIBUIDOR),180000);
+  assert.equal(valor(s,COFRES.COMERCIAL),30000);
   assert.equal(valor(s,COFRES.CENTRO),75000);
-  assert.equal(s.historico.filter(x=>x.tipo==='FORNECEDOR_RESERVADO').length,5);
+  assert.equal(s.historico.filter(x=>x.tipo==='FORNECEDOR_RESERVADO').length,6);
   assert.equal(s.caixas.reduce((t,c)=>t+c.entradasAcumuladasCentavos,0),300000);
   assert.equal(s.totalFornecedorCentavos+s.totalLoopCentavos+s.totalSobraBrutaCentavos,s.totalVendasCentavos);
-  assert.equal(s.vendas.length,5);
+  assert.equal(s.vendas.length,6);
 });
 
 test('entrada invalida, repeticao e receita insuficiente sao recusadas sem criar saldo falso',()=>{
   assert.throws(()=>criarVisaoFinanceiraAdminDemo({modo:'BANCO_REAL'}),/Modo/);
-  assert.throws(()=>criarVisaoFinanceiraAdminDemo({vendas:EXEMPLOS.slice(0,4)}),/cinco eventos/);
-  assert.throws(()=>criarVisaoFinanceiraAdminDemo({vendas:[...EXEMPLOS.slice(0,4),EXEMPLOS[0]]}),/duplicada/);
+  assert.throws(()=>criarVisaoFinanceiraAdminDemo({vendas:EXEMPLOS.slice(0,4)}),/seis eventos/);
+  assert.throws(()=>criarVisaoFinanceiraAdminDemo({vendas:[...EXEMPLOS.slice(0,5),EXEMPLOS[0]]}),/duplicada/);
   assert.throws(()=>criarVisaoFinanceiraAdminDemo({vendas:[
     {...EXEMPLOS[0],precoCentavos:-1},...EXEMPLOS.slice(1)
   ]}),/invalida/);
@@ -94,10 +94,10 @@ test('endpoint financeiro exige token e origem local e nao disponibiliza escrita
   assert.equal(resposta.headers.get('cache-control'),'no-store');
   const split=await resposta.json();
   assert.equal(split.caixas.length,4);
-  assert.equal(split.totalSobraBrutaCentavos,25000);
+  assert.equal(split.totalSobraBrutaCentavos,30000);
   const reserva=await (await fetch(base+'/api/admin/financeiro-demo?modo=reserva',{headers})).json();
   assert.equal(reserva.caixas.length,5);
-  assert.equal(valor(reserva,COFRES.DISTRIBUIDOR),150000);
+  assert.equal(valor(reserva,COFRES.DISTRIBUIDOR),180000);
   assert.equal((await fetch(base+endpoint,{
     method:'POST',headers:{...headers,'Content-Type':'application/json'},body:'{}'
   })).status,404);
