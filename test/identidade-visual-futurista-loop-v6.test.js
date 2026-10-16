@@ -24,7 +24,7 @@ test('identidade visual metálica única vinculada à plataforma toda',()=>{
 });
 test('tabuleiro público V6 exibe centro, seis vagas e três roxos/três pretos',()=>{
  const html=file('public/index.html');
- assert.equal((html.match(/class="vaga v[1-6]"/g)||[]).length,5);
+ assert.equal((html.match(/class="vaga v[1-6]"/g)||[]).length,6);
  assert.match(html,/class="vaga v6"/);
  assert.match(html,/class="centro"/);
  assert.equal((html.match(/<span title="[1-6]º evento: (?:participante|empresa)"><\/span>/g)||[]).length,6);
