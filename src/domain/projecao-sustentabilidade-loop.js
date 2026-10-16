@@ -64,7 +64,9 @@ function contarEventosPorDestino(totalEventos) {
   return {
     ciclos,
     eventosCentro: seguro(ciclos * 3 + Math.ceil(restantes / 2), 'eventosCentro'),
-    eventosEmpresa: seguro(ciclos * 3 + Math.floor(restantes / 2), 'eventosEmpresa')
+    eventosEmpresa: seguro(ciclos * 3 + Math.floor(restantes / 2), 'eventosEmpresa'),
+    eventosInvestimento:seguro(ciclos*2+(restantes>=2?1:0),'eventosInvestimento'),
+    eventosReserva:seguro(ciclos+(restantes>=4?1:0),'eventosReserva')
   };
 }
 
