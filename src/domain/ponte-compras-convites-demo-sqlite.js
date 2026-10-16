@@ -315,7 +315,9 @@ class PonteComprasConvitesDemoSQLite{
    const referenciaVigente=this.configuracaoValor.vigenteEm(comprovante.confirmadoEm);
    // Somente um pedido do carrinho, com regras congeladas no SQLite,
    // pode solicitar cinco posicoes. Um campo externo nao pode forcar pacote.
-   const pacote=this.banco.prepare(`
+   const pacoteTabela=comprovante.produtoId==='carrinho-loop-demo'&&
+    !!this.banco.prepare("SELECT 1 FROM sqlite_master WHERE type='table' AND name='admin_carrinho_item_pacote_posicoes_demo'").get();
+   const pacote=pacoteTabela?this.banco.prepare(`
     SELECT k.posicoes_por_pedido AS quantidade,i.subtotal_centavos AS subtotal,
      e.subtotal_elegivel_centavos AS elegivel,
      i.quantidade AS unidades,q.quantidade_minima AS minima
@@ -328,7 +330,7 @@ class PonteComprasConvitesDemoSQLite{
      ON q.pedido_id=k.pedido_id AND q.ordem=k.ordem
     WHERE k.pedido_id=? AND k.posicoes_por_pedido=5
      AND e.elegivel_loop=1 AND i.quantidade>=q.quantidade_minima
-   `).all(comprovante.produtoId==='carrinho-loop-demo'?pedidoId:'');
+   `).all(pedidoId):[];
    const quantidadePosicoes=pacote.length?5:1;
    // Uma cadeira do pacote gera seu proprio ciclo; exigir ao menos cinco
    // referencias no subtotal do(s) produto(s) ESPECIAIS, antes de custos.
