@@ -27,6 +27,7 @@ const { criarRouterEscritorioDemo } = require('../routes/admin-escritorio-demo')
 const { ContasParticipantesDemoSQLite } = require('../domain/contas-participantes-demo-sqlite');
 const { criarRouterContasParticipantesDemo } = require('../routes/admin-contas-participantes-demo');
 const { PonteComprasConvitesDemoSQLite } = require('../domain/ponte-compras-convites-demo-sqlite');
+const { AdesoesPosicoesDemoSQLite } = require('../domain/adesoes-posicoes-demo-sqlite');
 const { PedidosTitularidadeDemoSQLite } = require('../domain/pedidos-titularidade-demo-sqlite');
 const { criarRouterPonteComprasConvitesDemo } = require('../routes/admin-ponte-compras-convites-demo');
 const { criarRouterParticipanteDemo } = require('../routes/participante-laboratorio-demo');
@@ -107,6 +108,7 @@ function criarAppAdminLaboratorio({ repositorio, segredo, webhookDemo } = {}) {
         throw new Error('Nao ha verificador de compra configurado no HTTP');
       }
     });
+    const adesoesDemo=new AdesoesPosicoesDemoSQLite({ponte:ponteDemo});
     app.use('/api/admin',criarRouterPonteComprasConvitesDemo({
       segredo,ponte:ponteDemo
     }));
@@ -119,7 +121,7 @@ function criarAppAdminLaboratorio({ repositorio, segredo, webhookDemo } = {}) {
       contas:contasDemo,auditoria:auditoriaDemo
     });
     app.use('/api/laboratorio/participante',criarRouterParticipanteDemo({
-      contas:contasDemo,ponte:ponteDemo,sessoes:sessoesDemo
+      contas:contasDemo,ponte:ponteDemo,sessoes:sessoesDemo,adesoes:adesoesDemo
     }));
     app.use('/api/admin',criarRouterAuditoriaParticipanteDemo({
       segredo,auditoria:auditoriaDemo
