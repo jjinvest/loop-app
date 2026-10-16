@@ -95,6 +95,41 @@ class ConfiguracaoValorLoopDemoSQLite{
    return {...nova,alterado:true};
   }catch(err){this.banco.exec('ROLLBACK');throw err;}
  }
+ simularImpacto({novoValorCentavos}={}){
+  dinheiro(novoValorCentavos);
+  const atual=this.atual();
+  const tabelaExiste=this.banco.prepare(
+   "SELECT 1 AS existe FROM sqlite_master WHERE type='table' AND name='admin_ponte_posicoes_valores_demo'"
+  ).get();
+  const grupos=tabelaExiste?this.banco.prepare(`
+   SELECT revisao_valor AS revisaoValor,
+    valor_referencia_centavos AS referenciaOriginalCentavos,
+    COUNT(*) AS posicoesRegistradas
+   FROM admin_ponte_posicoes_valores_demo
+   GROUP BY revisao_valor,valor_referencia_centavos
+   ORDER BY revisao_valor,valor_referencia_centavos
+  `).all():[];
+  return {
+   modo:'PREVIA_REAJUSTE_SEM_EFEITO_FINANCEIRO',
+   valorAtualCentavos:atual.valorCentavos,
+   valorNovoCentavos:novoValorCentavos,
+   pedidoMinimoNovoLoopCentavos:novoValorCentavos,
+   revisaoProjetada:atual.revisao+(novoValorCentavos===atual.valorCentavos?0:1),
+   totalPosicoesRegistradas:grupos.reduce((a,g)=>a+g.posicoesRegistradas,0),
+   grupos:grupos.map(g=>({
+    ...g,
+    comparacaoEventoParticipante:compararParcelaAntigaComNova({
+     valorCentroOriginalCentavos:g.referenciaOriginalCentavos,
+     valorNovaVendaLoopCentavos:novoValorCentavos,
+     evento:'PARTICIPANTE'
+    })
+   })),
+   impactoSobrePosicoesAntigas:false,
+   filaUnica:true,simulacaoSemSalvar:true,
+   diferencaNaoVaiAutomaticamenteParaEmpresa:true,
+   pagamentoReal:false
+  };
+ }
  resumo(){
   return {modo:'CONFIGURACAO_VALOR_LOOP_LOCAL_FICTICIA',
    atual:this.atual(),historico:this.historico(),
