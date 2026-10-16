@@ -69,7 +69,14 @@ function criarRouterFinanceiroAdminDemo({segredo,configuracao,razaoPersistente,c
     if(typeof tipo!=='string' || !['split','reserva'].includes(tipo)){
       return res.status(400).json({erro:'MODO_DEMONSTRATIVO_INVALIDO'});
     }
-    const demonstracao=criarVisaoFinanceiraAdminDemo({
+    const centro=req.query.centro||'participante';
+    if(!['participante','dourado','desistente'].includes(centro)||
+       Object.keys(req.query).some(k=>!['modo','centro'].includes(k)))
+      return res.status(400).json({erro:'CENARIO_CENTRO_INVALIDO'});
+    const centroPosicao=centro==='participante'?null:
+      centro==='desistente'?{statusAdesao:'DESISTENTE',titularOperacional:'LOOP_EMPRESA',empresa:true}:
+        {statusAdesao:'PRAZO_ENCERRADO',titularOperacional:'LOOP_EMPRESA',empresa:true};
+    const demonstracao=criarVisaoFinanceiraAdminDemo({centroPosicao,
       modo:tipo==='split'?MODOS.SPLIT:MODOS.RESERVA,
       parcelaReferenciaCentavos:configuracaoValorLoop?
         configuracaoValorLoop.atual().valorCentavos:25000
@@ -140,14 +147,20 @@ function criarRouterFinanceiroAdminDemo({segredo,configuracao,razaoPersistente,c
   }
   router.post('/livro-financeiro-demo/ciclos',(req,res)=>{
     if(!razaoPersistente)return res.status(501).json({erro:'LIVRO_DEMO_INDISPONIVEL'});
-    if(!camposExatos(req.body,['cicloId','modo'])||
+    if(!(camposExatos(req.body,['cicloId','modo'])||
+         camposExatos(req.body,['cicloId','modo','centro']))||
        !['split','reserva'].includes(req.body.modo) ||
+       (req.body.centro&&!['participante','dourado','desistente'].includes(req.body.centro)) ||
        typeof req.body.cicloId!=='string' ){
       return res.status(400).json({erro:'CICLO_DEMO_INVALIDO'});
     }
     return respostaEscrita(res,()=>razaoPersistente.registrarCicloFicticio({
       cicloId:req.body.cicloId,
-      modo:req.body.modo==='split'?MODOS.SPLIT:MODOS.RESERVA
+      modo:req.body.modo==='split'?MODOS.SPLIT:MODOS.RESERVA,
+      centroPosicao:req.body.centro==='dourado'?
+        {statusAdesao:'PRAZO_ENCERRADO',empresa:true,titularOperacional:'LOOP_EMPRESA'}:
+        req.body.centro==='desistente'?
+        {statusAdesao:'DESISTENTE',empresa:true,titularOperacional:'LOOP_EMPRESA'}:null
     }));
   });
   function gravarMovimento(req,res,ajuste=false){
