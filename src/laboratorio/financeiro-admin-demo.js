@@ -313,6 +313,7 @@
     situacao.textContent='Conferindo dois conjuntos de valores FICTÍCIOS...';
     const parametros=new URLSearchParams({
       modo:modo.value,
+      centro:tipoCentro.value,
       fluxo:el('fluxoConciliacaoDemo').value,
       extrato:el('extratoConciliacaoDemo').value
     });
