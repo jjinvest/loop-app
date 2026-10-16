@@ -133,6 +133,19 @@ class CarrinhoLojaLoopDemoSQLite{
   const lista=validarLista(itens);
   this.banco.exec('BEGIN IMMEDIATE');
   try{
+   const anterior=this.banco.prepare(
+    'SELECT pedido_id FROM admin_carrinho_loop_demo WHERE pedido_id=?'
+   ).get(pedidoId);
+   if(anterior){
+    const existente=this.buscar(pedidoId);
+    const equivalentes=existente.contaId===contaId&&
+     existente.itens.length===lista.length&&
+     existente.itens.every((p,i)=>p.produtoId===lista[i].produtoId&&
+      p.quantidade===lista[i].quantidade);
+    if(!equivalentes)throw falha('CONFLITO','Pedido ja usado para outro carrinho');
+    this.banco.exec('COMMIT');
+    return {...existente,repetido:true};
+   }
    // Primeiro snapshot da lista com dados imutaveis do catalogo.
    const fotografias=lista.map(({produtoId,quantidade},indice)=>{
     const r=this.catalogo.buscarRegistro(produtoId);
@@ -149,21 +162,6 @@ class CarrinhoLojaLoopDemoSQLite{
    const totalCentavos=fotografias.reduce((n,i)=>n+i.subtotalCentavos,0);
    if(!Number.isSafeInteger(totalCentavos)||totalCentavos<=0||totalCentavos>1000000000)
     throw falha('VALOR_INVALIDO','Total de carrinho invalido');
-   const anterior=this.banco.prepare(
-    'SELECT pedido_id FROM admin_carrinho_loop_demo WHERE pedido_id=?'
-   ).get(pedidoId);
-   if(anterior){
-    const existente=this.buscar(pedidoId);
-    const equivalentes=existente.contaId===contaId&&
-     existente.itens.length===fotografias.length&&
-     existente.itens.every((p,i)=>p.produtoId===fotografias[i].produtoId&&
-      p.quantidade===fotografias[i].quantidade&&
-      p.unitarioCentavos===fotografias[i].unitarioCentavos&&
-      p.revisao===fotografias[i].revisao);
-    if(!equivalentes)throw falha('CONFLITO','Pedido ja usado para outro carrinho');
-    this.banco.exec('COMMIT');
-    return {...existente,repetido:true};
-   }
    if(!this.contas.buscar(contaId))throw falha('TITULAR_INVALIDO','Comprador ficticio inexistente');
    const criadoEm=this.relogio();
    // SAVEPOINT protege o vinculo mesmo dentro desta transacao externa.
