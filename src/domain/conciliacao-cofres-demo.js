@@ -78,6 +78,8 @@ function projetarRazaoCofresDemo({modo=MODOS.SPLIT,centroPosicao=null,comMovimen
   }
   return {
     modo:'RAZAO_CONTABIL_APENAS_FICTICIO',
+    centroAssumidoPeloLoop:visao.centroAssumidoPeloLoop,
+    origemTitularCentro:visao.origemTitularCentro,
     repasseSimulado:modo,comMovimentos:movimentosUsados.length>0,
     historico,cofres,movimentacaoBancariaReal:false,
     autenticacaoBancariaConfigurada:false,
