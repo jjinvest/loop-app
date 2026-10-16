@@ -41,6 +41,8 @@ test('cores por sessao, ativacao de teste e encerramento ao entrar no tabuleiro'
  const entrada=ponte.prepararTabuleiroDemo();
  assert.equal(entrada.tabuleiro.centro.statusAdesao,'ATIVA');
  assert.equal(entrada.tabuleiro.vagas[0].statusAdesao,'PRAZO_ENCERRADO');
+ assert.equal(entrada.tabuleiro.vagas[0].titularOperacional,'LOOP_EMPRESA');
+ assert.equal(entrada.tabuleiro.vagas[0].empresa,true);
  assert.equal(visao.consultar(b.contaId).mapaCores.tabuleiro.vagas[0].cor,'DOURADO');
  assert.equal(visao.consultar(b.contaId).posicoesComPrazoEncerrado,1);
  assert.equal(visao.consultar(b.contaId).posicoes.length,0);
