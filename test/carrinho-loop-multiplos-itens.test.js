@@ -122,6 +122,19 @@ test('carrinho de varios itens soma R$250 em um pedido e cria UMA posicao azul',
  assert.equal(es.status,200);
  assert.equal(es.body.integracao.situacao,'ESTORNADO_REQUER_CONFERENCIA');
  assert.equal((await ponte()).body.compras.length,3);
+ const tela=await fetch(base+'/admin/financeiro-demo');
+ assert.equal(tela.status,200);
+ const html=await tela.text();
+ for(const id of ['formCarrinhoLoopDemo','itensCarrinhoLoopDemo',
+  'contaCarrinhoLoopDemo','pedidoEventoCarrinhoLoopDemo',
+  'sincronizarCarrinhoLoopDemo']){
+  assert.match(html,new RegExp('id="'+id+'"'));
+ }
+ const front=await(await fetch(base+'/admin/financeiro-demo.js')).text();
+ assert.match(front,/adicionarLinhaCarrinho/);
+ assert.match(front,/registrarEventoCarrinhoLoopDemo/);
+ assert.match(front,/carrinho-loop-demo/);
+ assert.doesNotMatch(front,/innerHTML|localStorage|sessionStorage/);
  // A API permanece fora do servidor publico.
  const publico=require('../src/server').listen(0,'127.0.0.1');
  await once(publico,'listening');t.after(()=>new Promise(resolve=>publico.close(resolve)));
@@ -149,4 +162,50 @@ test('falha de criacao desfaz carrinho e titularidade juntos',t=>{
  assert.equal(identificados.buscar('pedido-rollback'),null);
  assert.equal(carrinhos.buscar('pedido-rollback'),null);
  assert.equal(ponte.consultar().filas.B.quantidade,0);
+});
+
+test('referencia LOOP reajustada para R$500 vale sobre total do carrinho futuro',async t=>{
+ const repo=new RepositorioCatalogoSQLite({caminho:':memory:'});t.after(()=>repo.fechar());
+ repo.salvar({produto:produto('produto-reajuste',25000),revisaoEsperada:0});
+ const contas=new ContasParticipantesDemoSQLite({banco:repo.banco});
+ const c=contas.cadastrar({nome:'Pessoa Reajuste Carrinho',
+  email:'reajuste@exemplo.invalid',senha:'senha-segura-ficticia-2026'});
+ const {ConfiguracaoValorLoopDemoSQLite}=require('../src/domain/configuracao-valor-loop-demo-sqlite');
+ const config=new ConfiguracaoValorLoopDemoSQLite({
+  banco:repo.banco,agora:()=>new Date(Date.now()-1000).toISOString()
+ });
+ const a=config.alterar({valorCentavos:50000,revisaoEsperada:1});
+ assert.equal(a.revisao,2);
+ const senha='chave-reajuste-carrinho-2026';
+ const srv=criarAppAdminLaboratorio({repositorio:repo,segredo:senha}).listen(0,'127.0.0.1');
+ await once(srv,'listening');t.after(()=>new Promise(resolve=>srv.close(resolve)));
+ const base='http://127.0.0.1:'+srv.address().port;
+ const headers={'Content-Type':'application/json',Authorization:'Bearer '+senha};
+ const post=async(path,data)=>{
+  const res=await fetch(base+'/api/admin/'+path,{method:'POST',headers,body:JSON.stringify(data)});
+  assert.equal(res.status,path==='carrinho-loop-demo'?201:200);
+  return res.json();
+ };
+ const criar=async(id,qtd)=>{
+  const p=await post('carrinho-loop-demo',{pedidoId:id,contaId:c.contaId,
+   itens:[{produtoId:'produto-reajuste',quantidade:qtd}]});
+  assert.equal(p.pedido.totalCentavos,qtd*25000);
+  return p;
+ };
+ await criar('carrinho-reajuste-250',1);
+ const primeira=await post('carrinho-loop-demo/carrinho-reajuste-250/eventos',{
+  eventoId:'conf-reajuste-250',tipo:'CONFIRMAR_FICTICIO'
+ });
+ assert.equal(primeira.integracao.posicaoCriada,false);
+ await criar('carrinho-reajuste-500',2);
+ const segunda=await post('carrinho-loop-demo/carrinho-reajuste-500/eventos',{
+  eventoId:'conf-reajuste-500',tipo:'CONFIRMAR_FICTICIO'
+ });
+ assert.equal(segunda.integracao.posicaoCriada,true);
+ assert.equal(segunda.integracao.valorReferenciaPosicaoCentavos,50000);
+ assert.equal(segunda.integracao.revisaoValorPosicao,2);
+ const dados=await(await fetch(base+'/api/admin/ponte-compras-convites-demo',{headers})).json();
+ assert.equal(dados.filas.B.quantidade,1);
+ assert.equal(dados.comprasLojaSemLoop.length,1);
+ assert.equal(dados.compras.length,1);
 });
