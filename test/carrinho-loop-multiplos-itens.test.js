@@ -105,7 +105,9 @@ test('carrinho de varios itens soma R$250 em um pedido e cria UMA posicao azul',
  assert.equal(maior.body.pedido.totalCentavos,50000);
  assert.equal((await confirmar('pedido-500','evt-500')).body.integracao.posicaoCriada,true);
  assert.equal((await ponte()).body.compras.length,3);
- assert.equal((await ponte()).body.filas.A.quantidade,2);
+ // Cada NOVA posicao comeca em B; as antigas ja promovidas continuam em A.
+ assert.equal((await ponte()).body.filas.A.quantidade,1);
+ assert.equal((await ponte()).body.filas.B.quantidade,2);
  // Rejeita flag arbitraria "pago".
  assert.equal((await req('POST',cart+'/'+id+'/eventos',{
   eventoId:'fraude-1',tipo:'CONFIRMAR_FICTICIO',pago:true})).status,400);
