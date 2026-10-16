@@ -299,7 +299,10 @@ class PonteComprasConvitesDemoSQLite{
    if(comprovante.valorElegivelLoopCentavos<referenciaVigente.valorCentavos){
     // Compra valida da LOJA, sem mexer no snapshot, nas filas ou em convites.
     // A regra de cinco posicoes so se aplica a pedidos elegiveis ao LOOP.
-    const tabelaLoja=comprovante.valorElegivelLoopCentavos<25000?
+    // As tabelas legadas separam pelo valor TOTAL efetivamente comprado,
+    // nao pelo subtotal elegivel. A decisao de criar cadeira acima ja
+    // usou somente valorElegivelLoopCentavos.
+    const tabelaLoja=comprovante.valorCentavos<25000?
       'admin_ponte_vendas_loja_sem_loop_demo':
       'admin_ponte_vendas_loja_apos_reajuste_demo';
     this.banco.prepare(`
