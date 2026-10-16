@@ -24,8 +24,16 @@
       <div class="campo">
         <label for="repasseFinanceiroDemo">Cenário demonstrativo</label>
         <select id="repasseFinanceiroDemo">
-          <option value="split">Distribuidor recebe pelo split fictício — quatro caixas</option>
-          <option value="reserva">Pagamento reservado para distribuidor — seis parcelas</option>
+          <option value="split">Distribuidor recebe pelo split fictício</option>
+          <option value="reserva">Pagamento reservado para distribuidor</option>
+        </select>
+      </div>
+      <div class="campo">
+        <label for="centroFinanceiroDemo">Titular operacional do centro (cenário)</label>
+        <select id="centroFinanceiroDemo">
+          <option value="participante">Participante de demonstração</option>
+          <option value="dourado">Posição dourada — prazo encerrado</option>
+          <option value="desistente">Posição desistente assumida pelo LOOP</option>
         </select>
       </div>
       <div class="acoes-admin">
@@ -65,9 +73,9 @@
         <p class="ajuda">A sobra bruta é um indicador antes de impostos, taxas, estornos e outras obrigações. Este laboratório não conecta banco nem realiza saques; não estabelece qualquer bloqueio de retirada ao administrador na operação futura.</p>
       </section>
       <section class="painel">
-        <h2>Três cofres do LOOP</h2>
+        <h2>Quatro cofres do LOOP, incluindo o das bolas douradas</h2>
         <div id="cofresLoopFinanceiroDemo" class="financeiro-cofres"></div>
-        <p class="ajuda">Esquerda: investimento. Centro: bonificações/participação. Direita: reserva de suporte. Seus nomes e cores são editáveis abaixo, mas a organização financeira permanece fixa.</p>
+        <p class="ajuda">Esquerda: investimento. Centro: participação do cliente real. Direita: reserva de suporte. Douradas: recebe as parcelas 1, 3 e 5 quando o centro pertence ao LOOP, por desistência ou prazo encerrado. As demais destinações permanecem iguais. Valores somente simulados.</p>
       </section>
       <section class="painel">
         <h2>Caixas comerciais da loja</h2>
