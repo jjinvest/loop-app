@@ -12,28 +12,30 @@
     <h1>LOOP</h1>
     <small>Escritório Virtual</small>
   </div>
-  <button class="perfil">Minha conta</button>
+  <span class="perfil" role="status">Prévia da plataforma</span>
 </header>
 
 <main>
   <section class="painel">
-    <h2>Meu ciclo</h2>
+    <h2>Tabuleiro LOOP V6 — demonstração</h2>
+    <p class="loja-intro">Um centro e seis posições periféricas. A entrada acontece pela vaga 6; a catraca avança após seis eventos válidos do ciclo.</p>
 
-    <div class="tabuleiro">
+    <div class="tabuleiro" role="group" aria-label="Tabuleiro ilustrativo: um centro e seis vagas, com entrada na vaga 6">
       <div class="vaga v1">1</div>
       <div class="vaga v2">2</div>
       <div class="vaga v3">3</div>
       <div class="vaga v4">4</div>
       <div class="vaga v5">5</div>
+      <div class="vaga v6" aria-label="Vaga 6, entrada na catraca">6</div>
 
       <div class="centro">
         <span>CENTRO</span>
-        <strong>Participante</strong>
+        <strong>Posição</strong>
       </div>
     </div>
 
     <div class="marcos">
-      <span>●</span><span>●</span><span>●</span><span>●</span><span>●</span>
+      <span>●</span><span>●</span><span>●</span><span>●</span><span>●</span><span>●</span>
     </div>
   </section>
 
@@ -54,7 +56,7 @@
   <section class="loja" aria-labelledby="tituloCatalogo">
     <h2 id="tituloCatalogo">Produtos e Cursos</h2>
     <p class="loja-intro">Conheça como será a vitrine do LOOP: produtos físicos e cursos em PDF para download.</p>
-    <p class="aviso-demo">A loja aceita compras de qualquer valor. Compras confirmadas de R$ 250,00 ou mais participam do LOOP, com uma posição por pedido. Abaixo disso, a compra é só da loja. Esta prévia ainda não recebe pagamentos nem gera Pix.</p>
+    <p class="aviso-demo">A loja aceita produtos de diversos valores. No laboratório, compras qualificadas pela referência atual do LOOP (R$ 250,00) geram uma posição por padrão, ou seis no caso de produto especial configurado. Esta página é somente uma prévia pública; não oferece compra, cadastro, saque nem recebimento real.</p>
     <div class="produtos" id="catalogoProdutos" aria-live="polite">
       <p>Preparando a vitrine...</p>
     </div>
