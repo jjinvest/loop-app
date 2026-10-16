@@ -9,6 +9,10 @@
  function encerrarTela(){
   ++versao;conteudo.hidden=true;form.hidden=false;sair.hidden=true;
   e('senhaParticipante').value='';
+  e('cpfFicticioParticipante').value='';
+  e('aceiteTermosParticipante').checked=false;
+  e('secaoAtivacaoParticipante').hidden=true;
+  e('estadoAtivacaoParticipante').textContent='';
   e('posicoesParticipante').replaceChildren();
   e('pedidosParticipante').replaceChildren();
   e('mapaFilaAParticipante').replaceChildren();
@@ -80,6 +84,8 @@
   lista('posicoesParticipante',visao.posicoes,p=>'Posição '+p.posicaoId+' — '+
    p.local.replace('_',' ')+' — '+(p.statusAdesao==='PENDENTE'?'aguardando ativação':'ativada'));
   if(visao.mapaCores)mostrarMapa(visao.mapaCores);
+  const temAzul=visao.posicoes.some(p=>p.statusAdesao==='PENDENTE');
+  e('secaoAtivacaoParticipante').hidden=!temAzul;
   lista('pedidosParticipante',visao.compras,p=>'Pedido fictício '+p.pedidoId+
    ' — '+p.produtoId+' — '+(p.valorCentavos/100).toLocaleString('pt-BR',{style:'currency',currency:'BRL'})+
    ' (verificador interno de teste)');
@@ -109,7 +115,32 @@
   }catch(erro){encerrarTela();msg.textContent=erro.message;}
   finally{botao.disabled=false;}
  });
- sair.addEventListener('click',async()=>{
+ e('formAtivacaoParticipante').addEventListener('submit',async ev=>{
+  ev.preventDefault();
+  const botao=e('confirmarAtivacaoParticipante');
+  if(botao.disabled)return;
+  const aviso=e('estadoAtivacaoParticipante');
+  const valor=e('cpfFicticioParticipante').value.trim();
+  if(!/^\d{11}$/.test(valor)){
+   aviso.textContent='Informe onze dígitos fictícios de teste.';return;
+  }
+  botao.disabled=true;
+  try{
+   const resultado=await chamada('ativar-posicoes',{
+    cpfFicticio:valor,
+    aceitaTermos:e('aceiteTermosParticipante').checked,
+    versaoTermos:'LOOP-DEMO-V1'
+   });
+   e('cpfFicticioParticipante').value='';
+   e('aceiteTermosParticipante').checked=false;
+   await atualizar();
+   aviso.textContent=resultado.ativadas+' posições ativadas nesta simulação.';
+  }catch(erro){
+   aviso.textContent=erro.message;
+   e('cpfFicticioParticipante').value='';
+  }finally{botao.disabled=false;}
+ });
+  sair.addEventListener('click',async()=>{
   encerrarTela();
   try{await chamada('sair',{});msg.textContent='Sessão fictícia encerrada.';}
   catch(erro){msg.textContent=erro.message;}
