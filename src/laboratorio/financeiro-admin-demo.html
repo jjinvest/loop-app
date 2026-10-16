@@ -202,7 +202,28 @@
       </section>
       <section class="painel" aria-labelledby="tituloCarrinhoLoopDemo">
         <h2 id="tituloCarrinhoLoopDemo">Carrinho com vários produtos — LOOP laboratório</h2>
-        <p class="aviso-demo">Um único pedido soma os itens pelo preço do catálogo. A compra fictícia confirmada gera UMA posição azul ao atingir o mínimo vigente do LOOP. Compras separadas não se acumulam. Não há cobrança ou entrega real.</p>
+        <p class="aviso-demo">Um único pedido soma os produtos pelo preço do catálogo, mas só os itens AUTORIZADOS contam para alcançar o mínimo do LOOP. A compra fictícia confirmada gera no máximo UMA posição azul. Compras separadas não se acumulam. Não há cobrança ou entrega real.</p>
+        <div class="financeiro-caixa">
+         <h3>Quais produtos contam para ganhar posição no LOOP?</h3>
+         <p class="ajuda">Todos os produtos já começam autorizados. Você pode tirar ou devolver a autorização de um produto sem retirá-lo da loja e sem alterar pedidos antigos.</p>
+         <form id="formElegibilidadeLoopDemo" autocomplete="off">
+          <div class="duas-colunas">
+           <div class="campo">
+            <label for="produtoElegibilidadeLoopDemo">Produto do catálogo</label>
+            <select id="produtoElegibilidadeLoopDemo" required></select>
+           </div>
+           <div class="campo">
+            <label for="valorElegibilidadeLoopDemo">Conta para posição do LOOP?</label>
+            <select id="valorElegibilidadeLoopDemo">
+             <option value="sim">Sim, contar o valor deste produto</option>
+             <option value="nao">Não, somente venda da loja</option>
+            </select>
+           </div>
+          </div>
+          <button id="salvarElegibilidadeLoopDemo" type="submit">Salvar autorização do produto</button>
+         </form>
+         <p id="statusElegibilidadeLoopDemo" role="status" aria-live="polite"></p>
+        </div>
         <form id="formCarrinhoLoopDemo" autocomplete="off">
           <div class="duas-colunas">
             <div class="campo">
