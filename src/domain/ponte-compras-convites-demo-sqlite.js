@@ -5,6 +5,7 @@
 const { SimuladorLoop }=require('./simulador-loop');
 const { STATUS_CONFIRMADO }=require('./processador-pedidos-simulados');
 const {ConfiguracaoValorLoopDemoSQLite}=require('./configuracao-valor-loop-demo-sqlite');
+const {IndicacoesLinksComissoesDemoSQLite}=require('./indicacoes-links-comissoes-demo-sqlite');
 
 function falha(codigo,mensagem){
  const e=new Error(mensagem);e.codigo=codigo;return e;
@@ -184,6 +185,7 @@ class PonteComprasConvitesDemoSQLite{
     WHERE v.pedido_id=c.pedido_id
    )
   `).run();
+  this.linksComissoes=new IndicacoesLinksComissoesDemoSQLite({banco,contas});
  }
  _restaurar(){
   const linha=this.banco.prepare(
@@ -305,6 +307,7 @@ class PonteComprasConvitesDemoSQLite{
     return {criado:true,repetido:false,pedidoId,contaId:conta.contaId,
      compraElegivelLoop:false,posicaoCriada:false,vendaLojaRegistrada:true,
      posicaoId:null,filaAtual:null,indicacaoNova:false,
+     linkDivulgacaoLiberado:true,comissaoSimuladaCentavos:0,
      movimentouCatraca:false,registrouPagamentoReal:false};
    }
    const simulador=this._restaurar();
@@ -351,6 +354,14 @@ class PonteComprasConvitesDemoSQLite{
      indicacaoNova=true;
     }
    }
+   // Uma comissao por POSICAO criada por indicado, nao sobre o total
+   // da venda ou do cadastro. O indicador nao precisa ter cadeira.
+   const comissao=conta.indicadoPorId?
+    this.linksComissoes.comissaoDaPosicao({
+     pedidoId,indicadorId:conta.indicadoPorId,
+     convidadoId:conta.contaId,posicaoId:posicao.posicao.id,
+     referencia:referenciaVigente,quando:comprovante.confirmadoEm
+    }):null;
    // O indicador sem compra ainda nao esta no motor: preservar sua
    // indicacao validada ate que ele tenha uma posicao propria.
    this._aplicarConvites(simulador,conta.contaId);
@@ -366,6 +377,8 @@ class PonteComprasConvitesDemoSQLite{
    return {
     criado:true,repetido:false,pedidoId,contaId:conta.contaId,
     posicaoId:posicao.posicao.id,indicacaoNova,
+    linkDivulgacaoLiberado:true,
+    comissaoSimuladaCentavos:comissao?.valorComissaoCentavos??0,
     filaAtual:simulador.filas.filaA.some(p=>p.id===posicao.posicao.id)?'A':'B',
     compraElegivelLoop:true,posicaoCriada:true,vendaLojaRegistrada:true,
     statusAdesao:'PENDENTE',
@@ -412,6 +425,14 @@ class PonteComprasConvitesDemoSQLite{
    semPagamentoReal:true,semCPF:true,semSessaoPublica:true,
    catracaMovimentada:false,compraNaoConfirmaBeneficioReal:true,
    compras,convites,
+   comissoesSimuladas:this.banco.prepare(`
+    SELECT pedido_id AS pedidoId,indicador_id AS indicadorId,
+     convidado_id AS convidadoId,posicao_id AS posicaoId,
+     valor_posicao_centavos AS basePosicaoCentavos,
+     taxa_base_pontos AS taxaBasePontos,
+     valor_comissao_centavos AS valorComissaoCentavos
+    FROM admin_comissoes_indicacoes_demo ORDER BY calculado_em,pedido_id
+   `).all(),
    valoresDeCadaPosicao:this.banco.prepare(`
     SELECT c.pedido_id AS pedidoId,c.posicao_id AS posicaoId,
       v.revisao_valor AS revisaoValor,
