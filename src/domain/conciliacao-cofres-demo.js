@@ -30,8 +30,8 @@ const MOVIMENTOS_EXEMPLO=Object.freeze([
   Object.freeze({id:'retirada-loja-simulada-01',cofreId:COFRES.COMERCIAL,tipo:TIPOS.SAIDA,valorCentavos:20000,referencia:'retirada ficticia administrador'})
 ]);
 
-function projetarRazaoCofresDemo({modo=MODOS.SPLIT,comMovimentos=false,movimentos=null}={}){
-  const visao=criarVisaoFinanceiraAdminDemo({modo});
+function projetarRazaoCofresDemo({modo=MODOS.SPLIT,centroPosicao=null,comMovimentos=false,movimentos=null}={}){
+  const visao=criarVisaoFinanceiraAdminDemo({modo,centroPosicao});
   const mapa=new Map(visao.caixas.map(c=>[c.id,{
     id:c.id,entradasAcumuladasCentavos:0,saidasAcumuladasCentavos:0,
     retornosAcumuladosCentavos:0,saldoProjetadoCentavos:0,
