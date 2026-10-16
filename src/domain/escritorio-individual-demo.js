@@ -8,7 +8,7 @@ function posicoesTitular(sim,contaId){
  const f=sim.filas,t=sim.tabuleiro;
  const itens=[];
  function anexar(posicao,local){
-  if(posicao&&posicao.participanteId===contaId&&posicao.statusAdesao!=='PRAZO_ENCERRADO'){
+  if(posicao&&posicao.participanteId===contaId&&!['PRAZO_ENCERRADO','DESISTENTE'].includes(posicao.statusAdesao)&&posicao.empresa!==true){
    itens.push({posicaoId:posicao.id,local,entrouEm:posicao.entrouEm,
     statusAdesao:posicao.statusAdesao||'ATIVA_LEGADA'});
   }
@@ -30,7 +30,7 @@ function mapaCoresDoEscritorio(sim,contaId){
   // Apenas sinalizamos titularidade AO PROPRIO TITULAR.
   // Azul continua azul para todos; o destaque nao interfere na fila.
   const minha=p.participanteId===contaId &&
-   p.statusAdesao!=='PRAZO_ENCERRADO' && p.empresa!==true;
+   !['PRAZO_ENCERRADO','DESISTENTE'].includes(p.statusAdesao) && p.empresa!==true;
   return {posicaoId:p.id,cor,minha};
  }
  return {
@@ -82,6 +82,8 @@ class EscritorioIndividualDemo{
   const mapaCores=mapaCoresDoEscritorio(simulador,contaId);
   const encerradas=[simulador.tabuleiro.centro,...simulador.tabuleiro.vagas]
    .filter(p=>p&&p.participanteId===contaId&&p.statusAdesao==='PRAZO_ENCERRADO').length;
+  const desistidas=[simulador.tabuleiro.centro,...simulador.tabuleiro.vagas]
+   .filter(p=>p&&p.participanteId===contaId&&p.statusAdesao==='DESISTENTE').length;
   const idsAtivos=new Set();
   for(const p of posicoes){
    if(!Number.isSafeInteger(p.posicaoId)||idsAtivos.has(p.posicaoId)){
@@ -103,7 +105,7 @@ class EscritorioIndividualDemo{
   }
   // Ponte ainda nao cria giros nem historico de posicoes concluídas:
   // o ledger de compras deve corresponder exatamente a posicoes ativas.
-  if(posicoes.length+encerradas>comprasPorPosicao.size||
+  if(posicoes.length+encerradas+desistidas>comprasPorPosicao.size||
     posicoes.some(p=>!comprasPorPosicao.has(p.posicaoId))){
    throw new Error('Integridade entre compras e posicoes do titular divergente');
   }
@@ -163,6 +165,7 @@ class EscritorioIndividualDemo{
    }).sort((a,b)=>a.posicaoId-b.posicaoId),
    mapaCores,
    posicoesComPrazoEncerrado:encerradas,
+   posicoesDesistidasAssumidasPeloLoop:desistidas,
    limitePosicoesAtivas:LIMITE_ATIVAS,
    vagasLivres:LIMITE_ATIVAS-posicoes.length,
    indicacoes:{
