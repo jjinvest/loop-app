@@ -255,7 +255,7 @@
    destinoInicialTratado=true;
    const destinos=['tituloHistoricoLojaParticipante','tituloMapaParticipante',
     'secaoAtivacaoParticipante'];
-   const alvo=decodeURIComponent(location.hash.slice(1));
+   const alvo=location.hash.slice(1);
    if(destinos.includes(alvo)){
     const elemento=e(alvo);
     if(elemento && !elemento.hidden){
