@@ -8,10 +8,10 @@ const {
 function item(produtoId,precoUnitarioCentavos,custoUnitarioCentavos,quantidade=1){
  return {produtoId,precoUnitarioCentavos,custoUnitarioCentavos,quantidade};
 }
-test('referencia do LOOP passa a ser R$250 sem mudar cinco vendas ou distribuicao 3/2',()=>{
+test('referencia do LOOP passa a ser R$250 sem mudar seis vendas e distribuicao 3/3',()=>{
  assert.equal(VALOR_PADRAO_LOOP_CENTAVOS,25000);
  assert.equal(VALOR_CICLO_PARTICIPANTE_CENTAVOS,75000);
- assert.equal(VALOR_CICLO_EMPRESA_CENTAVOS,50000);
+ assert.equal(VALOR_CICLO_EMPRESA_CENTAVOS,75000);
 });
 test('R$249,99 e compra da loja sem LOOP; R$250 gera elegibilidade LOOP',()=>{
  const insuficiente=analisarCarrinhoSimulado({
