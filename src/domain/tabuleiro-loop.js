@@ -38,6 +38,8 @@ class TabuleiroLoop {
     const posicao=this.copiarPosicao(selecionado.pessoa);
     if(posicao.statusAdesao==='PENDENTE'){
       posicao.statusAdesao='PRAZO_ENCERRADO';
+      posicao.titularOperacional='LOOP_EMPRESA';
+      posicao.empresa=true;
       posicao.prazoEncerradoEm=this.relogio();
     }
     return {...posicao,origemFila:selecionado.origem};
@@ -78,7 +80,9 @@ class TabuleiroLoop {
       destinoPrevisto: DESTINOS[ordem - 1],
       ciclo: this.ciclosConcluidos.length + 1,
       posicaoCentroId: this.centro.id,
-      registradaEm: this.relogio()
+      registradaEm: this.relogio(),
+      ...(this.centro.titularOperacional==='LOOP_EMPRESA'?
+        {destinoParticipanteDoCentro:'LOOP_EMPRESA'}:{})
     };
     this.vendasDoCiclo.push(registro);
     this.vendasProcessadas.add(vendaId);
