@@ -7,6 +7,7 @@ const {ContasParticipantesDemoSQLite}=require('../src/domain/contas-participante
 const {PonteComprasConvitesDemoSQLite}=require('../src/domain/ponte-compras-convites-demo-sqlite');
 const {STATUS_CONFIRMADO}=require('../src/domain/processador-pedidos-simulados');
 const {simularElegibilidadeSaque,extrairLink}=require('../src/domain/indicacoes-links-comissoes-demo-sqlite');
+const {AdesoesPosicoesDemoSQLite}=require('../src/domain/adesoes-posicoes-demo-sqlite');
 const {criarAppAdminLaboratorio}=require('../src/laboratorio/servidor-catalogo');
 
 test('link so ativa apos compra pequena, comissao por posicao e versoes 10%, 20%, 30% no caixa reserva',async t=>{
@@ -37,6 +38,11 @@ test('link so ativa apos compra pequena, comissao por posicao e versoes 10%, 20%
  assert.equal(loja.linkDivulgacaoLiberado,true);
  assert.equal(links.linkDaConta(a.contaId).ativo,true);
  assert.equal(ponte.consultar().filas.B.quantidade,0);
+ // CPF + aceite sao possiveis depois de R$ 50, sem comprar cadeira.
+ const adesoes=new AdesoesPosicoesDemoSQLite({ponte,relogio:()=>dia(1).replace('T12:00','T12:30')});
+ assert.equal(adesoes.ativar({contaId:a.contaId,cpfFicticio:'11144477735',
+  aceitaTermos:true,versaoTermos:'LOOP-DEMO-V1'}).ativadas,0);
+ assert.equal(links.habilitadoBonificacoes(a.contaId,dia(2)),true);
  const b=contas.cadastrar({nome:'Comprador Convidado',email:'convidado@exemplo.invalid',
   senha:'senha-ficticia-123456',codigoIndicador:a.codigoConvite});
  const pequeno=await comprar('pedido-convidado-100',b,10000,2);
@@ -50,7 +56,7 @@ test('link so ativa apos compra pequena, comissao por posicao e versoes 10%, 20%
  assert.equal(links.comissoesDaConta(a.contaId).quantidade,1);
  assert.equal(links.comissoesDaConta(a.contaId).faltaParaMinimoCentavos,7500);
  assert.throws(()=>simularElegibilidadeSaque({
-  saldoSimuladoCentavos:2500,valorSolicitadoCentavos:2500
+  saldoSimuladoCentavos:2500,valorSolicitadoCentavos:2500,cpfTermosConfirmados:true
  }),e=>e.codigo==='MINIMO_SAQUE_100_REAIS');
  // Proxima compra maior nao altera comissao da cadeira unica.
  const extra=await comprar('pedido-convidado-500',b,50000,4);
@@ -68,10 +74,10 @@ test('link so ativa apos compra pequena, comissao por posicao e versoes 10%, 20%
  assert.equal(trinta.comissaoSimuladaCentavos,2500);
  assert.equal(trinta.indicadorElegivelBonusExtra,false);
  // O indicador compra sua propria posicao de R$250 no minimo vigente.
- // Sua posicao AZUL na fila ja basta; CPF nao define entrada no LOOP.
+ // Sua posicao agora nasce ativa pois CPF e termos ja estavam confirmados.
  const posicaoPropria=await comprar('indicador-entra-loop',a,25000,9);
  assert.equal(posicaoPropria.posicaoCriada,true);
- assert.equal(posicaoPropria.statusAdesao,'PENDENTE');
+ assert.equal(posicaoPropria.statusAdesao,'ATIVA');
  const depoisDeEntrar=await comprar('pedido-convidado-com-bonus',b,25000,10);
  assert.equal(depoisDeEntrar.comissaoSimuladaCentavos,7500);
  assert.equal(depoisDeEntrar.percentualBonusAplicado,30);
@@ -89,7 +95,7 @@ test('link so ativa apos compra pequena, comissao por posicao e versoes 10%, 20%
  assert.equal(repo.banco.prepare('SELECT COUNT(*) AS total FROM admin_comissoes_criterio_v2_demo WHERE ativo_no_loop=1').get().total,1);
  assert.equal(repo.banco.prepare('SELECT COUNT(*) AS total FROM admin_comissoes_indicacoes_demo').get().total,0);
  assert.deepEqual(simularElegibilidadeSaque({
-  saldoSimuladoCentavos:17500,valorSolicitadoCentavos:10000
+  saldoSimuladoCentavos:17500,valorSolicitadoCentavos:10000,cpfTermosConfirmados:true
  }).transferenciaExecutada,false);
  // Rate changes do not touch already-created rows.
  assert.equal((await ponte.processar({pedidoId:'pedido-convidado-250'})).repetido,true);
