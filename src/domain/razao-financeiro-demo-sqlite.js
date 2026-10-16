@@ -4,6 +4,7 @@
 // Nao usa PSP, banco, carteira, saque real, CPF ou participantes verdadeiros.
 // Cada lote e atomico, idempotente e imutavel; correcoes = novos lancamentos.
 const {criarVisaoFinanceiraAdminDemo,MODOS,COFRES}=require('./financeiro-admin-demo');
+const {VENDAS_POR_CICLO}=require('./valor-padrao-loop');
 const COFRES_VALIDOS=new Set(Object.values(COFRES));
 const NATUREZAS=new Set(['ENTRADA','SAIDA','RETORNO']);
 const EVENTOS=new Set(['VENDA_FICTICIA','MOVIMENTO_FICTICIO','AJUSTE_FICTICIO','RECEBIMENTO_PSP_FICTICIO']);
@@ -15,7 +16,7 @@ function validarTexto(valor,campo,max=140){
 }
 function validarLote(loteId,eventos){
   if(typeof loteId!=='string'||!RE_ID.test(loteId)||
-     !Array.isArray(eventos)||eventos.length<1||eventos.length>5){
+     !Array.isArray(eventos)||eventos.length<1||eventos.length>VENDAS_POR_CICLO){
     throw new Error('Lote de laboratorio invalido');
   }
   const ids=new Set();
