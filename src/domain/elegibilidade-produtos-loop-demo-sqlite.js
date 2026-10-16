@@ -42,10 +42,10 @@ class ElegibilidadeProdutosLoopDemoSQLite{
     registrado_em TEXT NOT NULL,
     UNIQUE(produto_id,revisao)
    );
-   -- Modalidade comercial: somente produto explicitamente autorizado abre cinco posicoes.
+   -- Modalidade comercial: somente produto explicitamente autorizado abre seis posicoes.
    CREATE TABLE IF NOT EXISTS admin_produtos_pacote_posicoes_loop_demo(
     produto_id TEXT PRIMARY KEY REFERENCES catalogo_produtos(id) ON DELETE RESTRICT,
-    posicoes_por_pedido INTEGER NOT NULL CHECK(posicoes_por_pedido IN (1,5)),
+    posicoes_por_pedido INTEGER NOT NULL CHECK(posicoes_por_pedido IN (1,5,6)),
     revisao INTEGER NOT NULL CHECK(revisao>=2),
     atualizado_em TEXT NOT NULL
    );
@@ -166,7 +166,7 @@ class ElegibilidadeProdutosLoopDemoSQLite{
   }catch(e){this.banco.exec('ROLLBACK');throw e;}
  }
  alterarPacotePosicoes({produtoId,posicoesPorPedidoLoop,revisaoEsperada}={}){
-  if(![1,5].includes(posicoesPorPedidoLoop)||
+  if(![1,6].includes(posicoesPorPedidoLoop)||
     !Number.isSafeInteger(revisaoEsperada)||revisaoEsperada<1)
    throw erro('DADOS_INVALIDOS');
   this.banco.exec('BEGIN IMMEDIATE');
