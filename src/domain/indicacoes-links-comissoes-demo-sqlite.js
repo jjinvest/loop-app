@@ -59,6 +59,19 @@ class IndicacoesLinksComissoesDemoSQLite{
     calculado_em TEXT NOT NULL,
     CHECK(indicador_id<>convidado_id)
    );
+   CREATE TABLE IF NOT EXISTS admin_comissoes_reserva_demo(
+    pedido_id TEXT PRIMARY KEY NOT NULL REFERENCES admin_comissoes_indicacoes_demo(pedido_id) ON DELETE RESTRICT,
+    cofre_origem TEXT NOT NULL DEFAULT 'LOOP_DIREITA' CHECK(cofre_origem='LOOP_DIREITA'),
+    tipo TEXT NOT NULL DEFAULT 'RESERVA_COMPROMETIDA_FICTICIA' CHECK(tipo='RESERVA_COMPROMETIDA_FICTICIA'),
+    valor_centavos INTEGER NOT NULL CHECK(valor_centavos>0),
+    criado_em TEXT NOT NULL
+   );
+   CREATE TRIGGER IF NOT EXISTS admin_comissoes_reserva_no_update
+    BEFORE UPDATE ON admin_comissoes_reserva_demo
+    BEGIN SELECT RAISE(ABORT,'provisao de reserva imutavel'); END;
+   CREATE TRIGGER IF NOT EXISTS admin_comissoes_reserva_no_delete
+    BEFORE DELETE ON admin_comissoes_reserva_demo
+    BEGIN SELECT RAISE(ABORT,'provisao de reserva imutavel'); END;
    CREATE INDEX IF NOT EXISTS idx_comissoes_indicador_demo
     ON admin_comissoes_indicacoes_demo(indicador_id,calculado_em);
    CREATE TRIGGER IF NOT EXISTS admin_comissoes_sem_update
@@ -126,20 +139,64 @@ class IndicacoesLinksComissoesDemoSQLite{
    VALUES (?,?,?,?,?,?,1000,?,?)
   `).run(pedidoId,indicadorId,convidadoId,posicaoId,referencia.revisao,
    referencia.valorCentavos,valor,quando);
-  return {valorComissaoCentavos:valor,taxaPercentual:10,
+  // Lancamento de compromisso da reserva, NAO saque/saida bancaria.
+  // Caixa CENTRAL e INVESTIMENTO nunca recebem debito de comissao.
+  this.banco.prepare(`
+   INSERT INTO admin_comissoes_reserva_demo
+   (pedido_id,cofre_origem,tipo,valor_centavos,criado_em)
+   VALUES (?,'LOOP_DIREITA','RESERVA_COMPROMETIDA_FICTICIA',?,?)
+  `).run(pedidoId,valor,quando);
+  return {cofreOrigem:'LOOP_DIREITA',
+   estadoReserva:'COMPROMISSO_FICTICIO_SEM_LIQUIDACAO',
+   valorComissaoCentavos:valor,taxaPercentual:10,
    basePosicaoCentavos:referencia.valorCentavos,
    referenciaRevisao:referencia.revisao,registroFicticio:true};
  }
  comissoesDaConta(contaId){
+  if(!this.contas.buscar(contaId))throw falha('CONTA_INVALIDA');
   const rows=this.banco.prepare(`
-   SELECT pedido_id AS pedidoId,posicao_id AS posicaoId,
-    valor_posicao_centavos AS valorBaseCentavos,
-    valor_comissao_centavos AS valorCentavos,calculado_em AS calculadoEm
-   FROM admin_comissoes_indicacoes_demo
-   WHERE indicador_id=? ORDER BY calculado_em,pedido_id
+   SELECT c.pedido_id AS pedidoId,c.posicao_id AS posicaoId,
+    c.valor_posicao_centavos AS valorBaseCentavos,
+    c.valor_comissao_centavos AS valorCentavos,
+    c.calculado_em AS calculadoEm,
+    r.cofre_origem AS cofreOrigem,
+    r.valor_centavos AS valorComprometidoReservaCentavos
+   FROM admin_comissoes_indicacoes_demo c
+   JOIN admin_comissoes_reserva_demo r ON r.pedido_id=c.pedido_id
+   WHERE c.indicador_id=? ORDER BY c.calculado_em,c.pedido_id
   `).all(contaId);
-  return {quantidade:rows.length,totalSimuladoCentavos:rows.reduce((v,x)=>v+x.valorCentavos,0),
-   registros:rows,semPagamentoReal:true};
+  const contagem=this.banco.prepare(
+   'SELECT COUNT(*) AS total FROM admin_comissoes_indicacoes_demo WHERE indicador_id=?'
+  ).get(contaId).total;
+  if(rows.length!==contagem||rows.some(x=>x.cofreOrigem!=='LOOP_DIREITA'||
+   x.valorCentavos!==x.valorComprometidoReservaCentavos))
+   throw new Error('Conciliacao de bonificacao e caixa reserva divergente');
+  const total=rows.reduce((v,x)=>v+x.valorCentavos,0);
+  if(!Number.isSafeInteger(total))throw new Error('Total de comissao excede limite');
+  const minimo=10000;
+  return {
+   quantidade:rows.length,totalSimuladoCentavos:total,
+   minimoSaqueCentavos:minimo,
+   atingiuMinimoSaque:total>=minimo,
+   faltaParaMinimoCentavos:Math.max(0,minimo-total),
+   saqueDisponivelReal:false,
+   solicitarSaqueSimuladoHabilitado:total>=minimo,
+   pagamentoReal:false,bonificacaoProvisionadaCentavos:total,
+   origemExclusiva:'LOOP_DIREITA',caixaCentralIntocado:true,
+   caixaInvestimentoIntocado:true,
+   provisaoNaoComprovaSaldoDaReserva:true,
+   registros:rows,semPagamentoReal:true
+  };
  }
 }
-module.exports={IndicacoesLinksComissoesDemoSQLite,caminhoLink,extrairLink,apelidoSeguro};
+function simularElegibilidadeSaque({saldoSimuladoCentavos,valorSolicitadoCentavos}={}){
+ if(!Number.isSafeInteger(saldoSimuladoCentavos)||saldoSimuladoCentavos<0||
+  !Number.isSafeInteger(valorSolicitadoCentavos)||valorSolicitadoCentavos<=0)
+  throw falha('SAQUE_INVALIDO');
+ if(valorSolicitadoCentavos<10000)throw falha('MINIMO_SAQUE_100_REAIS');
+ if(valorSolicitadoCentavos>saldoSimuladoCentavos)throw falha('SALDO_SIMULADO_INSUFICIENTE');
+ return {apenasSimulacao:true,atingiuMinimo:true,
+  valorSolicitadoCentavos,origemExclusiva:'LOOP_DIREITA',
+  transferenciaExecutada:false,necessitaSaldoRealReserva:true};
+}
+module.exports={IndicacoesLinksComissoesDemoSQLite,caminhoLink,extrairLink,apelidoSeguro,simularElegibilidadeSaque};
