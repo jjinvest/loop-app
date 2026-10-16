@@ -70,7 +70,9 @@ function criarRouterFinanceiroAdminDemo({segredo,configuracao,razaoPersistente,c
       return res.status(400).json({erro:'MODO_DEMONSTRATIVO_INVALIDO'});
     }
     const demonstracao=criarVisaoFinanceiraAdminDemo({
-      modo:tipo==='split'?MODOS.SPLIT:MODOS.RESERVA
+      modo:tipo==='split'?MODOS.SPLIT:MODOS.RESERVA,
+      parcelaReferenciaCentavos:configuracaoValorLoop?
+        configuracaoValorLoop.atual().valorCentavos:25000
     });
     const mapa=new Map((configuracao?configuracao.listar():[]).map(c=>[c.id,c]));
     res.json({
