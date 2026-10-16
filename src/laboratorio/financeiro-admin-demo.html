@@ -25,7 +25,7 @@
         <label for="repasseFinanceiroDemo">Cenário demonstrativo</label>
         <select id="repasseFinanceiroDemo">
           <option value="split">Distribuidor recebe pelo split fictício — quatro caixas</option>
-          <option value="reserva">Pagamento reservado para distribuidor — cinco caixas</option>
+          <option value="reserva">Pagamento reservado para distribuidor — seis parcelas</option>
         </select>
       </div>
       <div class="acoes-admin">
@@ -224,7 +224,7 @@
          </form>
          <p id="statusElegibilidadeLoopDemo" role="status" aria-live="polite"></p>
          <h3>Quantidade mínima deste produto para contar no LOOP</h3>
-         <p class="ajuda">Exemplo: caneta de R$ 50, mínimo de 20 unidades. Com 19 unidades, a compra continua válida na loja, mas a caneta não conta para formar uma posição. Com 20 unidades no mesmo pedido, conta seu subtotal integral; o pedido cria uma posição por padrão, salvo produto especial expressamente configurado para cinco.</p>
+         <p class="ajuda">Exemplo: caneta de R$ 50, mínimo de 20 unidades. Com 19 unidades, a compra continua válida na loja, mas a caneta não conta para formar uma posição. Com 20 unidades no mesmo pedido, conta seu subtotal integral; o pedido cria uma posição por padrão, salvo produto especial expressamente configurado para seis.</p>
          <form id="formQuantidadeMinimaLoopDemo" autocomplete="off">
           <div class="campo">
            <label for="quantidadeMinimaLoopDemo">Unidades exigidas do produto selecionado (1 a 100)</label>
@@ -233,14 +233,14 @@
           <button id="salvarQuantidadeMinimaLoopDemo" type="submit">Salvar quantidade mínima</button>
          </form>
          <p id="statusQuantidadeMinimaLoopDemo" role="status" aria-live="polite"></p>
-         <h3>Produto especial: cinco posições no LOOP</h3>
-         <p class="ajuda">Somente o produto selecionado poderá abrir cinco posições em um único pedido, mediante quantidade mínima e valor elegível suficiente para cinco referências LOOP. Se o CPF já tiver qualquer posição ocupada, o pacote não entra parcialmente; deve haver cinco vagas livres. As cinco posições possuem números próprios, e cada ciclo concluído libera uma vaga. Compras comuns continuam gerando uma posição.</p>
+         <h3>Produto especial: seis posições no LOOP</h3>
+         <p class="ajuda">Somente o produto selecionado poderá abrir seis posições em um único pedido, mediante quantidade mínima e valor elegível suficiente para seis referências LOOP. Se o CPF já tiver qualquer posição ocupada, o pacote não entra parcialmente; deve haver seis vagas livres. As seis posições possuem números próprios, e cada ciclo concluído libera uma vaga. Compras comuns continuam gerando uma posição.</p>
          <form id="formPacotePosicoesLoopDemo" autocomplete="off">
           <div class="campo">
            <label for="pacotePosicoesLoopDemo">Quantas posições o produto selecionado abre?</label>
            <select id="pacotePosicoesLoopDemo">
             <option value="1">1 posição (regra padrão)</option>
-            <option value="5">5 posições (produto especial)</option>
+            <option value="6">6 posições (produto especial)</option>
            </select>
           </div>
           <button type="submit" id="salvarPacotePosicoesLoopDemo">Salvar modalidade do produto</button>
@@ -414,7 +414,7 @@
             <label for="idCicloPersistenteDemo">Identificador do ciclo fictício (único)</label>
             <input id="idCicloPersistenteDemo" type="text" required maxlength="70" pattern="[a-z0-9][a-z0-9-]{2,69}" placeholder="ex: ciclo-demo-001" spellcheck="false">
           </div>
-          <button type="submit" id="gravarCicloPersistenteDemo">Registrar cinco vendas fictícias</button>
+          <button type="submit" id="gravarCicloPersistenteDemo">Registrar seis vendas fictícias</button>
           <p class="ajuda">Usa o cenário de fornecedor escolhido no alto da página. A repetição do mesmo ID e dos mesmos dados não duplica lançamentos.</p>
         </form>
         <hr>
