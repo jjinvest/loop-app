@@ -54,10 +54,10 @@ test('link so ativa apos compra pequena, comissao por posicao e versoes 10%, 20%
  assert.equal(ponte.consultar().filas.A.quantidade,0,'indicador sem cadeira nao precisa estar na fila');
  assert.equal((await ponte.processar({pedidoId:'pedido-convidado-250'})).repetido,true);
  assert.equal(links.comissoesDaConta(a.contaId).quantidade,1);
- assert.equal(links.comissoesDaConta(a.contaId).faltaParaMinimoCentavos,7500);
+ assert.equal(links.comissoesDaConta(a.contaId).faltaParaMinimoCentavos,0);
  assert.throws(()=>simularElegibilidadeSaque({
-  saldoSimuladoCentavos:2500,valorSolicitadoCentavos:2500,cpfTermosConfirmados:true
- }),e=>e.codigo==='MINIMO_SAQUE_100_REAIS');
+  saldoSimuladoCentavos:2500,valorSolicitadoCentavos:2400,cpfTermosConfirmados:true
+ }),e=>e.codigo==='MINIMO_SAQUE_25_REAIS');
  // Proxima compra maior nao altera comissao da cadeira unica.
  const extra=await comprar('pedido-convidado-500',b,50000,4);
  assert.equal(extra.comissaoSimuladaCentavos,2500);
@@ -86,7 +86,7 @@ test('link so ativa apos compra pequena, comissao por posicao e versoes 10%, 20%
  assert.equal(extrato.quantidade,5);
  assert.equal(extrato.totalSimuladoCentavos,17500);
  assert.equal(extrato.atingiuMinimoSaque,true);
- assert.equal(extrato.minimoSaqueCentavos,10000);
+ assert.equal(extrato.minimoSaqueCentavos,2500);
  assert.equal(extrato.porcentagemAtual.percentual,30);
  assert.deepEqual(extrato.registros.map(x=>x.percentual),[10,10,10,10,30]);
  assert.deepEqual(extrato.registros.map(x=>x.valorCentavos),[2500,2500,2500,2500,7500]);
