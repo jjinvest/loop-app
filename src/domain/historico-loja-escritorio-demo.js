@@ -37,7 +37,11 @@ function montarHistoricoLojaDemo({visao,carrinhos}={}){
  for(const pedido of visao.compras){
   legados.set(pedido.pedidoId,{
    pedidoId:pedido.pedidoId,valorCentavos:pedido.valorCentavos,
-   posicaoId:pedido.posicaoId,estado:estadoPosicao(pedido.posicaoId),
+   posicaoId:pedido.posicaoId,
+   posicaoIds:pedido.posicaoIds||[pedido.posicaoId],
+   estado:(pedido.posicaoIds||[pedido.posicaoId]).map(estadoPosicao).find(x=>x===ESTADOS.AZUL)
+    ||(pedido.posicaoIds||[pedido.posicaoId]).map(estadoPosicao).find(x=>x===ESTADOS.VERMELHO)
+    ||estadoPosicao(pedido.posicaoId),
    confirmadoEm:pedido.confirmadoEm
   });
  }
@@ -69,6 +73,7 @@ function montarHistoricoLojaDemo({visao,carrinhos}={}){
     nome:i.nome,quantidade:i.quantidade,subtotalCentavos:i.subtotalCentavos
    })),
    estado,posicaoId:confirmacao?.posicaoId??null,
+   posicaoIds:confirmacao?.posicaoIds??[],
    registradoEm:p.criadoEm
   });
   legados.delete(p.pedidoId);
@@ -76,7 +81,8 @@ function montarHistoricoLojaDemo({visao,carrinhos}={}){
  for(const p of legados.values())salvar({
   pedidoId:p.pedidoId,origem:'COMPRA_INDIVIDUAL',
   valorCentavos:p.valorCentavos,itens:[],
-  estado:p.estado,posicaoId:p.posicaoId,registradoEm:p.confirmadoEm
+  estado:p.estado,posicaoId:p.posicaoId,
+  posicaoIds:p.posicaoIds??[],registradoEm:p.confirmadoEm
  });
  const pedidos=[...porId.values()].sort((a,b)=>
   String(b.registradoEm).localeCompare(String(a.registradoEm))||
