@@ -113,6 +113,23 @@ test('pedido PDF confirmado cria posicao azul, move indicador a A e ignora compr
  assert.equal(estorno.status,200);
  assert.equal(estorno.body.integracaoLoop.situacao,'ESTORNADO_REQUER_CONFERENCIA');
  assert.equal((await get(ponte)).body.compras.length,2);
+ const tela=await fetch(base+'/admin/financeiro-demo');
+ assert.equal(tela.status,200);
+ const html=await tela.text();
+ assert.match(html,/id="formVincularPDFLoopDemo"/);
+ assert.match(html,/id="titularPedidoPDFLoopDemo"/);
+ assert.match(html,/id="pedidoVinculoPDFLoopDemo"/);
+ assert.match(html,/id="sincronizarPDFLoopDemo"/);
+ const js=await(await fetch(base+'/admin/financeiro-demo.js')).text();
+ assert.match(js,/vincular-loop/);
+ assert.match(js,/sincronizar-loop/);
+ assert.doesNotMatch(js,/innerHTML/);
+ const exibicao=(await get(pdf)).body.pedidos;
+ const integrado=exibicao.find(x=>x.pedidoId==='pedido-pdf-azul-a');
+ assert.equal(integrado.integracaoLoop.posicaoCriada,true);
+ assert.equal(integrado.integracaoLoop.vinculado,true);
+ const soLoja=exibicao.find(x=>x.pedidoId==='pedido-pdf-loja-barata');
+ assert.equal(soLoja.integracaoLoop.lojaSemPosicao,true);
  // No servidor publico nenhuma destas rotas existe.
  const publicServer=require('../src/server').listen(0,'127.0.0.1');
  await once(publicServer,'listening');
