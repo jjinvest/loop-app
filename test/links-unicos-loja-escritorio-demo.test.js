@@ -72,7 +72,7 @@ test('mesma indicacao apresenta loja ou escritorio, com vitrine e precos livres'
    body:JSON.stringify({
     nome:link===ativo.linkLoja?'Convidado Pela Loja':'Convidado Pelo Escritorio',
     email:link===ativo.linkLoja?'convidado-loja@exemplo.invalid':'convidado-escritorio@exemplo.invalid',
-    telefone:'(24) 99999-8611',senha,link
+    telefone:link===ativo.linkLoja?'(24) 99999-8611':'(24) 99999-8622',senha,link
    })
   });
   assert.equal(resposta.status,201);
