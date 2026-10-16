@@ -69,7 +69,7 @@ test('projecao individual inclui apenas compras e posicoes da propria conta',asy
  assert.equal(visA.posicoes.length,1);
  assert.equal(visB.posicoes.length,1);
  assert.equal(visA.posicoes[0].local,'FILA_B');
- assert.equal(visA.vagasLivres,4);
+ assert.equal(visA.vagasLivres,6);
  assert.equal(visA.indicacoes.cadastrosPorConvite,0);
  assert.equal(JSON.stringify(visA).includes('pedido-beta'),false);
  assert.equal(JSON.stringify(visA).includes('Conta Demo Beta'),false);
@@ -97,7 +97,7 @@ test('convites no escritorio individual distinguem cadastro pendente e compra co
  assert.equal(r.indicacoes.aplicadasNaFilaA,1);
  assert.equal(r.posicoes[0].local,'FILA_A');
  assert.equal(m.visao.consultar(p.contaId).posicoes.length,0);
- assert.equal(m.visao.consultar(p.contaId).vagasLivres,5);
+ assert.equal(m.visao.consultar(p.contaId).vagasLivres,6);
  assert.equal(JSON.stringify(r).includes(p.nome),false);
  assert.equal(JSON.stringify(r).includes(v.nome),false);
  assert.equal(JSON.stringify(r).includes(v.contaId),false);
@@ -107,7 +107,7 @@ test('limite das vagas e integridade entre posicao e pedido valem na projecao',a
  const a=cadastrar(m,'Conta Sem Venda','semvenda@exemplo.invalid');
  const zero=m.visao.consultar(a.contaId);
  assert.equal(zero.posicoes.length,0);
- assert.equal(zero.vagasLivres,5);
+ assert.equal(zero.vagasLivres,6);
  assert.equal(m.visao.consultar('11111111-1111-1111-1111-111111111111'),null);
  await confirmar(m,'pedido-um',a.contaId);
  const snap=m.repo.banco.prepare('SELECT snapshot_json FROM admin_ponte_estado_demo WHERE id=1').get();
