@@ -3,6 +3,9 @@
 // Snapshots sao somente para testes e preparacao da futura persistencia.
 // NAO constituem banco de dados, comprovantes de venda ou registros financeiros.
 const { DESTINOS } = require('./tabuleiro-loop');
+const {
+ cofreDoEvento,origemDoCentro,centroDoLoop
+}=require('./destino-financeiro-centro-loop');
 
 function exigir(condicao, mensagem) {
   if (!condicao) throw new Error('Snapshot LOOP invalido: ' + mensagem);
@@ -70,7 +73,8 @@ function restaurarSnapshot(snapshot, criarLoop) {
   // Migracao de snapshots ficticios antigos: preserva IDs, fila, centro,
   // cinco vagas e ciclos concluidos de cinco. A nova sexta vaga nasce vazia;
   // ciclos antigos continuam historicos, sem reabrir pagamentos ou giros.
-  if(Array.isArray(t?.vagas)&&t.vagas.length===5)t.vagas.push(null);
+  const migradoV5=Array.isArray(t?.vagas)&&t.vagas.length===5;
+  if(migradoV5)t.vagas.push(null);
   exigir(objeto(f) && objeto(t) && objeto(c), 'secoes incompletas');
   for (const campo of ['sequencia','contadorA','evento']) {
     exigir(inteiro(f[campo]), 'filas.' + campo + ' invalido');
@@ -125,10 +129,33 @@ function restaurarSnapshot(snapshot, criarLoop) {
   const concluidos = lista(t.ciclosConcluidos, 'ciclosConcluidos');
   const processadas = textosUnicos(t.vendasProcessadas,'vendasProcessadas');
   const idsVendas = new Set();
-  function conferirVenda(v, indice, ciclo, centroId) {
+  function conferirVenda(v, indice, ciclo, centro, legadoV5=false) {
     exigir(objeto(v) && texto(v.vendaId) && v.ordem === indice + 1 &&
-      v.ciclo === ciclo && v.posicaoCentroId === centroId &&
+      v.ciclo === ciclo && v.posicaoCentroId === centro.id &&
       v.destinoPrevisto === DESTINOS[indice], 'registro do ciclo invalido');
+    // Na versao V6, o destino e determinado pelo centro real, dourado
+    // ou desistente no instante da venda, nunca por um campo arbitrario
+    // de snapshot. Preservar os registros historicos V5 sem esse campo.
+    const destinoCorreto=cofreDoEvento({posicaoCentro:centro,ordem:indice+1});
+    const origemCorreta=origemDoCentro(centro);
+    const dourada=centroDoLoop(centro);
+    exigir(legadoV5||(
+      v.destinoCofre===destinoCorreto &&
+      v.origemTitularCentro===origemCorreta &&
+      (dourada?v.destinoParticipanteDoCentro==='LOOP_DOURADAS':
+       v.destinoParticipanteDoCentro===undefined)
+    ),'destino financeiro do ciclo divergente da titularidade central');
+    if(legadoV5){
+      // Historicos antigos nao trazem marcadores novos; se os trouxerem,
+      // nao permitir marcadores incoerentes com a posicao central.
+      exigir(
+       (v.destinoCofre===undefined||v.destinoCofre===destinoCorreto)&&
+       (v.origemTitularCentro===undefined||v.origemTitularCentro===origemCorreta)&&
+       (v.destinoParticipanteDoCentro===undefined||
+         (dourada&&v.destinoParticipanteDoCentro==='LOOP_DOURADAS')),
+       'marcador financeiro historico divergente'
+      );
+    }
     exigir(!idsVendas.has(v.vendaId), 'venda repetida entre ciclos');
     idsVendas.add(v.vendaId);
   }
@@ -137,11 +164,11 @@ function restaurarSnapshot(snapshot, criarLoop) {
       objeto(completo.centro) && Array.isArray(completo.vendas) &&
       (completo.vendas.length === 5||completo.vendas.length === 6), 'ciclo concluido invalido');
     checarPosicao(completo.centro, 'centro de ciclo concluido');
-    completo.vendas.forEach((v,j) => conferirVenda(v,j,i+1,completo.centro.id));
+    completo.vendas.forEach((v,j) => conferirVenda(v,j,i+1,completo.centro,completo.vendas.length===5));
   });
   vendas.forEach((v,i) => {
     exigir(t.centro !== null, 'vendas sem centro');
-    conferirVenda(v,i,concluidos.length+1,t.centro.id);
+    conferirVenda(v,i,concluidos.length+1,t.centro,migradoV5);
   });
   exigir(processadas.length === idsVendas.size &&
     processadas.every(id => idsVendas.has(id)), 'indice de vendas processadas inconsistente');
