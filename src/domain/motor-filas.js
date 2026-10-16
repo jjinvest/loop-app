@@ -67,6 +67,9 @@ class MotorFilas {
 
   registrarIndicacaoValidada({ indicadorId, eventoId, convidouEm } = {}) {
     const chave = String(indicadorId ?? '').trim();
+    if (chave==='LOOP_EMPRESA') {
+      throw new Error('Bola dourada do LOOP nao participa de indicacoes');
+    }
     if (!chave || !this.participantesConhecidos.has(chave)) {
       throw new Error('Indicador desconhecido');
     }
