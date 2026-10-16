@@ -17,7 +17,13 @@
 </header>
 
 <main>
-  <section class="painel">
+  <section class="hero-loop" aria-label="Apresentação da plataforma LOOP V6">
+    <span class="hero-eyebrow">PLATAFORMA DIGITAL · LOOP V6</span>
+    <h2>Seu espaço. <em>Sua estratégia.</em></h2>
+    <p>Uma experiência visual de loja, Escritório Virtual e acompanhamento de posições. Tudo em uma plataforma para celular e computador.</p>
+    <div class="hero-atributos" aria-label="Recursos de demonstração"><span>6 POSIÇÕES + CENTRO</span><span>FILAS A / B</span><span>ESTRATÉGIA DE INDICAÇÕES</span></div>
+  </section>
+  <section class="painel painel-tabuleiro-loop">
     <h2>Tabuleiro LOOP V6 — demonstração</h2>
     <p class="loja-intro">Um centro e seis posições periféricas. A entrada acontece pela vaga 6; a catraca avança após seis eventos válidos do ciclo.</p>
 
@@ -35,20 +41,31 @@
       </div>
     </div>
 
-    <div class="marcos">
-      <span>●</span><span>●</span><span>●</span><span>●</span><span>●</span><span>●</span>
+    <p class="titulo-marcos-loop">REFERÊNCIA DOS SEIS EVENTOS DO CENTRO</p>
+    <div class="marcos" role="img" aria-label="Seis eventos alternados: participante, empresa, participante, empresa, participante, empresa">
+      <span title="1º evento: participante"></span>
+      <span title="2º evento: empresa"></span>
+      <span title="3º evento: participante"></span>
+      <span title="4º evento: empresa"></span>
+      <span title="5º evento: participante"></span>
+      <span title="6º evento: empresa"></span>
     </div>
+    <div class="legenda-marcos" aria-label="Legenda dos marcadores">
+      <span><i class="amostra-roxo" aria-hidden="true"></i> 3 roxos · participante</span>
+      <span><i class="amostra-preto" aria-hidden="true"></i> 3 pretos · empresa</span>
+    </div>
+    <p class="marcos-nota">Quando o centro pertence ao LOOP, as três destinações roxas são direcionadas ao caixa das posições douradas. Os marcadores representam a regra de destinação, não pagamentos realizados.</p>
   </section>
 
   <section class="filas">
     <div class="fila fila-a">
-      <h3>FILA A</h3>
+      <h3>FILA A <span class="indicador-fila-loop" aria-hidden="true">✦</span></h3>
       <p>AMARELO</p>
       <strong id="totalA">0</strong>
     </div>
 
     <div class="fila fila-b">
-      <h3>FILA B</h3>
+      <h3>FILA B <span class="indicador-fila-loop" aria-hidden="true">✦</span></h3>
       <p>BRANCO</p>
       <strong id="totalB">0</strong>
     </div>
