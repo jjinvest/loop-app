@@ -89,7 +89,27 @@ function criarRouterParticipanteDemo({contas,ponte,sessoes=null,adesoes=null}={}
    return res.json({sessaoEncerradaNoTeste:true});
   }catch(erro){return next(erro);}
  });
- router.get('/minha-conta',(req,res,next)=>{
+ router.post('/ativar-posicoes',(req,res,next)=>{
+  if(!adesoes)return res.status(501).json({erro:'ATIVACAO_NAO_CONFIGURADA'});
+  if(!req.is('application/json'))return res.status(415).json({erro:'USE_APPLICATION_JSON'});
+  const body=req.body;
+  if(!body||typeof body!=='object'||Array.isArray(body)||
+   Object.keys(body).sort().join(',')!=='aceitaTermos,cpfFicticio,versaoTermos'){
+   return res.status(400).json({erro:'CAMPOS_ATIVACAO_INVALIDOS'});
+  }
+  try{
+   const contaId=gerenciador.identificar(lerCookie(req));
+   if(!contaId)return res.status(401).json({erro:'SESSAO_AUSENTE_OU_EXPIRADA'});
+   return res.json(adesoes.ativar({...body,contaId}));
+  }catch(err){
+   if(['ACEITE_TERMOS_OBRIGATORIO','CPF_FICTICIO_INVALIDO','CONTA_INVALIDA'].includes(err.codigo))
+    return res.status(400).json({erro:err.codigo});
+   if(['CPF_JA_FIXADO_NA_CONTA','CPF_JA_ASSOCIADO','NENHUMA_POSICAO_AZUL_NA_FILA'].includes(err.codigo))
+    return res.status(409).json({erro:err.codigo});
+   return next(err);
+  }
+ });
+  router.get('/minha-conta',(req,res,next)=>{
   try{
    const contaId=gerenciador.identificar(lerCookie(req));
    if(!contaId)return res.status(401).json({erro:'SESSAO_AUSENTE_OU_EXPIRADA'});
