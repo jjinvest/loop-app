@@ -83,7 +83,7 @@ function criarVisaoFinanceiraAdminDemo({
     }
     IDs.add(v.vendaId);
     if(v.parcelaLoopCentavos!==parcelaReferenciaCentavos){
-      throw new Error('Parcela de referencia do ciclo deve ser R
+      throw new Error('Parcela de referencia do ciclo deve ser R'+String.fromCharCode(36)+(parcelaReferenciaCentavos/100)+' neste exemplo');
     }
     const sobra=v.precoCentavos-v.fornecedorCentavos-v.parcelaLoopCentavos;
     if(!validarCentavos(sobra))throw new Error('Venda ficticia nao cobre obrigacoes');
