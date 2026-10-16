@@ -29,6 +29,7 @@ const { criarRouterPedidosPDFDemo } = require('../routes/admin-pedidos-pdf-demo'
 const { criarRouterEscritorioDemo } = require('../routes/admin-escritorio-demo');
 const { ContasParticipantesDemoSQLite } = require('../domain/contas-participantes-demo-sqlite');
 const { criarRouterContasParticipantesDemo } = require('../routes/admin-contas-participantes-demo');
+const { criarRouterIndicacoesAdminDemo }=require('../routes/admin-indicacoes-taxa-demo');
 const { PonteComprasConvitesDemoSQLite } = require('../domain/ponte-compras-convites-demo-sqlite');
 const { AdesoesPosicoesDemoSQLite } = require('../domain/adesoes-posicoes-demo-sqlite');
 const { PedidosTitularidadeDemoSQLite } = require('../domain/pedidos-titularidade-demo-sqlite');
@@ -118,6 +119,9 @@ function criarAppAdminLaboratorio({ repositorio, segredo, webhookDemo } = {}) {
         return integracaoPDFLoopDemo.comprovanteConfirmado(pedidoId);
       }
     });
+    app.use('/api/admin',criarRouterIndicacoesAdminDemo({
+      segredo,links:ponteDemo.linksComissoes
+    }));
     integracaoPDFLoopDemo=new IntegracaoLojaPDFLoopDemo({
       pedidosPDF:pedidosPDFDemo,pedidosIdentificados:pedidosIdentificadosDemo,ponte:ponteDemo
     });
