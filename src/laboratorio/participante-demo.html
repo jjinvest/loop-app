@@ -38,7 +38,23 @@
      <div><span>Convites pendentes</span><strong id="pendentesParticipante">0</strong></div>
     </div>
    </section>
-   <div class="duas-colunas-participante">
+   <section class="cartao-participante" aria-labelledby="tituloMapaParticipante">
+    <h2 id="tituloMapaParticipante">Mapa das posições — laboratório</h2>
+    <p class="ajuda-portal">Vermelho: minhas posições ativadas · Cinza: outros participantes ativados · Azul: aguardando ativação · Dourado: posições da empresa ou prazo de ativação encerrado.</p>
+    <div class="legenda-posicoes-demo">
+     <span class="selo-posicao-demo posicao-vermelho">Minha</span>
+     <span class="selo-posicao-demo posicao-cinza">Outros</span>
+     <span class="selo-posicao-demo posicao-azul">Pendente</span>
+     <span class="selo-posicao-demo posicao-dourado">LOOP</span>
+    </div>
+    <div class="duas-colunas-participante">
+     <div><h3>Fila A</h3><ol id="mapaFilaAParticipante" class="mapa-fila-posicoes-demo"></ol></div>
+     <div><h3>Fila B</h3><ol id="mapaFilaBParticipante" class="mapa-fila-posicoes-demo"></ol></div>
+    </div>
+    <h3>Tabuleiro</h3>
+    <div id="mapaTabuleiroParticipante" class="mapa-tabuleiro-posicoes-demo"></div>
+   </section>
+      <div class="duas-colunas-participante">
     <section class="cartao-participante">
      <h2>Minhas posições</h2>
      <ol id="posicoesParticipante"></ol>
