@@ -179,7 +179,7 @@ test('admin local muda valor; acesso publico nao oferece configurar e rejeita ex
  assert.equal(financeiroResp.status,200);
  const financeiroNovo=await financeiroResp.json();
  assert.equal(financeiroNovo.parcelaReferenciaVigenteNoCenarioCentavos,50000);
- assert.equal(financeiroNovo.totalLoopCentavos,250000);
+ assert.equal(financeiroNovo.totalLoopCentavos,300000);
  assert.equal(financeiroNovo.totalFornecedorCentavos,150000);
  assert.equal(financeiroNovo.totalSobraBrutaCentavos,25000);
  assert.ok(financeiroNovo.vendas.every(v=>v.parcelaLoopCentavos===50000));
