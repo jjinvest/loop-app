@@ -106,6 +106,8 @@
     el('referenciaAtualLoopDemo').textContent='Referência de laboratório indisponível.';
     el('historicoValorLoopDemo').replaceChildren();
     el('statusValorLoopDemo').textContent='';
+    el('statusImpactoValorLoopDemo').textContent='';
+    el('listaImpactoValorLoopDemo').replaceChildren();
     selecionar.replaceChildren();
     statusEdicao.textContent='';
     el('historicoAparenciaCofreDemo').replaceChildren();
@@ -132,6 +134,43 @@
       historico.append(li);
     }
     el('novoValorLoopDemo').value=(res.atual.valorCentavos/100).toFixed(2);
+  }
+  async function simularImpactoValorLoop(){
+    const statusImpacto=el('statusImpactoValorLoopDemo');
+    const itens=el('listaImpactoValorLoopDemo');
+    itens.replaceChildren();
+    if(!token){statusImpacto.textContent='Informe a chave do laboratório.';return;}
+    const bruto=el('novoValorLoopDemo').value;
+    if(!/^[0-9]+(?:\.[0-9]{1,2})?$/.test(bruto)){
+      statusImpacto.textContent='Informe reais com até duas casas decimais.';return;
+    }
+    const centavos=Math.round(Number(bruto)*100);
+    if(!Number.isSafeInteger(centavos)||centavos<100||centavos>100000000){
+      statusImpacto.textContent='Valor de teste fora do intervalo.';return;
+    }
+    try{
+      const preview=await requisitar(
+       'valor-loop-demo/impacto?novoValorCentavos='+encodeURIComponent(String(centavos)));
+      statusImpacto.textContent='Simulação: '+money(preview.valorAtualCentavos)+
+        ' → '+money(preview.valorNovoCentavos)+'. '+
+        preview.totalPosicoesRegistradas+' posições já registradas; nenhuma alterada.';
+      if(preview.grupos.length===0){
+        const li=document.createElement('li');
+        li.textContent='Ainda não existem posições fictícias para comparar.';
+        itens.append(li);
+      }
+      for(const grupo of preview.grupos){
+        const li=document.createElement('li');
+        const c=grupo.comparacaoEventoParticipante;
+        li.textContent=grupo.posicoesRegistradas+' posições da revisão '+grupo.revisaoValor+
+          ' ('+money(grupo.referenciaOriginalCentavos)+'). Cenário de evento do participante: '+
+          money(c.valorParticipanteCentavos)+' em referência ao participante; '+
+          money(c.valorEmpresaPropostoCentavos)+' excedente hipotético para empresa'+
+          (c.exigeAnaliseDeCobertura?' — atenção: falta '+money(c.deficitDeCoberturaCentavos)+' na referência antiga':'')+
+          '. Nenhum repasse calculado foi executado.';
+        itens.append(li);
+      }
+    }catch(err){statusImpacto.textContent='Falha ao simular: '+err.message;}
   }
   async function salvarValorLoop(evento){
     evento.preventDefault();
@@ -1175,6 +1214,7 @@
   });
   el('formAparenciaCofreDemo').addEventListener('submit',salvar);
   el('formValorLoopDemo').addEventListener('submit',salvarValorLoop);
+  el('simularImpactoValorLoopDemo').addEventListener('click',simularImpactoValorLoop);
   el('formPedidosPDFDemo').addEventListener('submit',registrarPedidoPDF);
   el('formEventoPDFDemo').addEventListener('submit',registrarEventoPDF);
   el('atualizarPedidosPDFDemo').addEventListener('click',carregarPedidosPDF);
