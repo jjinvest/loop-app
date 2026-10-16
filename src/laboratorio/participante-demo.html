@@ -114,7 +114,20 @@
     <p id="alertaAzulParticipante" class="aviso-portal" hidden></p>
     <ol id="historicoPedidosLojaParticipante" class="historico-loja-participante"></ol>
    </section>
-   <section class="cartao-participante" id="secaoAtivacaoParticipante" hidden>
+   <section class="cartao-participante" id="secaoDesistenciaVaga6Participante" hidden>
+     <h2>Desistência expressa na vaga 6 — demonstração</h2>
+     <p class="aviso-portal">Se sua posição ativa já entrou na sexta vaga do tabuleiro, você pode simular a desistência. O LOOP assume essa posição como dourada; caso ela chegue ao centro, as três parcelas do centro irão ao caixa das bolas douradas. Esta ação no laboratório é irreversível e não processa reembolso.</p>
+     <form id="formDesistenciaVaga6Participante">
+      <input type="hidden" id="posicaoDesistenciaVaga6Participante">
+      <label class="checkbox-adesao-demo">
+       <input type="checkbox" id="aceiteDesistenciaVaga6Participante" required>
+       Confirmo expressamente que desejo simular a desistência desta posição na vaga 6.
+      </label>
+      <button type="submit" id="registrarDesistenciaVaga6Participante">Registrar desistência fictícia</button>
+     </form>
+     <p id="statusDesistenciaVaga6Participante" role="status" aria-live="polite"></p>
+    </section>
+    <section class="cartao-participante" id="secaoAtivacaoParticipante" hidden>
     <h2>Segunda ativação: CPF e termos</h2>
     <p class="aviso-portal">Após a primeira compra de qualquer valor, a identificação e o aceite das regras liberam as bonificações de teste de 10%. Uma compra qualificada no valor vigente do LOOP habilita as campanhas superiores. Se houver posição azul, este aceite também a ativa antes da entrada no tabuleiro. Nenhuma comissão anterior ao aceite é gerada retroativamente.</p>
     <details class="ajuda-portal" id="regrasDemonstracaoParticipante">
