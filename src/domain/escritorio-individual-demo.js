@@ -109,15 +109,16 @@ class EscritorioIndividualDemo{
   const bonus=this.ponte.linksComissoes.comissoesDaConta(contaId);
   const minima=this.ponte.configuracaoValor.atual().valorCentavos;
   const temCadeira=posicoes.length>0;
+  const habilitado=bonus.bonificacoesHabilitadas;
   const bonusIndicacoes={
    ...bonus,
    ativoNoLoopAgora:temCadeira,
    porcentagemCampanhaHoje:bonus.porcentagemAtual.percentual,
-   porcentagemAplicavelHoje:temCadeira?bonus.porcentagemAtual.percentual:10,
+   porcentagemAplicavelHoje:habilitado?(temCadeira?bonus.porcentagemAtual.percentual:10):0,
    valorMinimoPosicaoHojeCentavos:minima,
    criterioExtra:'POSICAO_PROPRIA_EM_FILA_OU_TABULEIRO',
    ativacaoLinkNaoEquivaleAPosicao:true,
-   necessitaAceiteCPFApenasParaCor:true
+   necessitaAceiteCPFParaComissoesESaques:true
   };
   return {
    modo:'ESCRITORIO_INDIVIDUAL_EXCLUSIVAMENTE_FICTICIO',
