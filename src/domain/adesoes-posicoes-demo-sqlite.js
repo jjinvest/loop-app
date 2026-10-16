@@ -52,9 +52,11 @@ class AdesoesPosicoesDemoSQLite{
  }
  consultarConta(contaId){
   const linha=this.banco.prepare(
-   'SELECT conta_id FROM admin_loop_adesoes_contas_demo WHERE conta_id=?'
+   'SELECT conta_id,termos_versao,aceito_em FROM admin_loop_adesoes_contas_demo WHERE conta_id=?'
   ).get(contaId);
   return {cpfConfirmadoNoTeste:!!linha,versaoTermos:VERSAO_TERMOS_DEMO,
+   termosVersaoAceita:linha?.termos_versao||null,
+   aceiteRegistradoEm:linha?.aceito_em||null,
    termosReaisAprovados:false,cpfRealArmazenado:false};
  }
  ativar({contaId,cpfFicticio,aceitaTermos,versaoTermos}={}){
@@ -69,17 +71,20 @@ class AdesoesPosicoesDemoSQLite{
     'SELECT id FROM admin_contas_participantes_demo WHERE id=?'
    ).get(contaId);
    if(!conf)throw falhar('CONTA_INVALIDA');
+   // O aceite deve ser possivel apos a primeira compra, mesmo sem cadeira.
+   if(!this.ponte.linksComissoes.ativado(contaId))throw falhar('COMPRA_INICIAL_OBRIGATORIA');
    const sim=this.ponte._restaurar();
    const pendentes=[...sim.filas.filaA,...sim.filas.filaB].filter(p=>
     p.participanteId===contaId&&p.statusAdesao==='PENDENTE'
    );
-   if(!pendentes.length)throw falhar('NENHUMA_POSICAO_AZUL_NA_FILA');
+   // Uma adesao anterior permanece valida; nao registrar novo aceite duplicado.
    const chave=this.banco.prepare('SELECT chave_hex FROM admin_loop_chave_cpf_demo WHERE id=1').get().chave_hex;
    const digest=createHmac('sha256',Buffer.from(chave,'hex')).update(cpfFicticio).digest('hex');
    const existente=this.banco.prepare(
     'SELECT cpf_digest FROM admin_loop_adesoes_contas_demo WHERE conta_id=?'
    ).get(contaId);
    if(existente&&existente.cpf_digest!==digest)throw falhar('CPF_JA_FIXADO_NA_CONTA');
+   if(existente&&!pendentes.length)throw falhar('ADESAO_JA_REALIZADA');
    const conflito=this.banco.prepare(
     'SELECT conta_id FROM admin_loop_adesoes_contas_demo WHERE cpf_digest=?'
    ).get(digest);
@@ -105,7 +110,7 @@ class AdesoesPosicoesDemoSQLite{
    `).run(JSON.stringify(sim.exportarSnapshot()));
    this.banco.exec('COMMIT');
    return {ativadas:ids.length,posicoesIds:ids,
-    termosVersao:versaoTermos,cpfConfirmadoNoTeste:true,
+    adesaoComissoesAtivada:true,termosVersao:versaoTermos,cpfConfirmadoNoTeste:true,
     cpfRealArmazenado:false,semPagamentoReal:true};
   }catch(erro){this.banco.exec('ROLLBACK');throw erro;}
  }
