@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>LOOP | Loja do cliente — laboratório</title>
+  <link rel="stylesheet" href="/css/style.css">
+  <link rel="stylesheet" href="/laboratorio/loja.css">
+</head>
+<body>
+ <header class="cabecalho-loja-loop">
+  <div><h1>LOOP</h1><p>Loja · ambiente de demonstração</p></div>
+  <a href="/laboratorio/participante">Meu Escritório</a>
+ </header>
+ <main class="loja-loop">
+  <section class="aviso-loja-loop" aria-label="Aviso de simulação">
+   <strong>Somente laboratório.</strong> Não há pagamento, entrega, envio, dinheiro ou contemplação real. É necessário entrar na conta fictícia pelo Meu Escritório.
+  </section>
+  <p id="estadoLojaLoop" role="status" aria-live="polite">Conferindo seu acesso ao laboratório...</p>
+  <div id="conteudoLojaLoop" hidden>
+   <section aria-labelledby="tituloCatalogoLoja">
+    <div class="cabecalho-secao-loja">
+     <div>
+      <h2 id="tituloCatalogoLoja">Escolha seus produtos</h2>
+      <p id="referenciaLojaLoop"></p>
+     </div>
+     <button id="atualizarCatalogoLoja" type="button" class="botao-secundario-loja">Atualizar catálogo</button>
+    </div>
+    <div id="catalogoLojaLoop" class="produtos-loja-loop"></div>
+   </section>
+   <section class="painel-loja-loop" aria-labelledby="tituloCarrinhoLoja">
+    <h2 id="tituloCarrinhoLoja">Meu carrinho</h2>
+    <p>Você pode combinar produtos e quantidades no mesmo pedido. Uma compra qualificada cria apenas uma posição após a confirmação fictícia.</p>
+    <div id="itensLojaLoop"></div>
+    <p id="totalLojaLoop" class="total-loja-loop">Total: R$ 0,00</p>
+    <button type="button" id="registrarPedidoLoja" disabled>Registrar pedido de demonstração</button>
+    <p id="statusPedidoLoja" role="status" aria-live="polite"></p>
+   </section>
+   <section class="painel-loja-loop" aria-labelledby="tituloMeusPedidosLoja">
+    <div class="cabecalho-secao-loja">
+     <h2 id="tituloMeusPedidosLoja">Meus pedidos</h2>
+     <button id="atualizarPedidosLoja" type="button" class="botao-secundario-loja">Atualizar pedidos</button>
+    </div>
+    <p>Após registrar um pedido, ele aguarda confirmação no laboratório. Você acompanha o resultado aqui e suas posições no Meu Escritório.</p>
+    <ol id="pedidosLojaLoop" class="pedidos-loja-loop"></ol>
+   </section>
+  </div>
+ </main>
+ <script src="/laboratorio/loja.js" defer></script>
+</body>
+</html>
