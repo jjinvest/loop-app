@@ -2,6 +2,7 @@
 
 // Simulador isolado do tabuleiro LOOP.
 // Nao executa pagamentos nem valida compras; a integracao real fica para outra etapa.
+const {centroDoLoop,cofreDoEvento,origemDoCentro}=require('./destino-financeiro-centro-loop');
 const DESTINOS = Object.freeze([
   'PARTICIPANTE',
   'EMPRESA',
@@ -79,11 +80,13 @@ class TabuleiroLoop {
       vendaId,
       ordem,
       destinoPrevisto: DESTINOS[ordem - 1],
+      destinoCofre:cofreDoEvento({posicaoCentro:this.centro,ordem}),
+      origemTitularCentro:origemDoCentro(this.centro),
       ciclo: this.ciclosConcluidos.length + 1,
       posicaoCentroId: this.centro.id,
       registradaEm: this.relogio(),
-      ...(this.centro.titularOperacional==='LOOP_EMPRESA'?
-        {destinoParticipanteDoCentro:'LOOP_EMPRESA'}:{})
+      ...(centroDoLoop(this.centro)?
+        {destinoParticipanteDoCentro:'LOOP_DOURADAS'}:{})
     };
     this.vendasDoCiclo.push(registro);
     this.vendasProcessadas.add(vendaId);
@@ -93,6 +96,22 @@ class TabuleiroLoop {
       elegivelParaGiro: this.vendasDoCiclo.length === DESTINOS.length,
       estado: this.estado()
     };
+  }
+
+  // Desistencia VOLUNTARIA somente depois de entrar na vaga 6.
+  // Nao apaga posicao, nao antecipa ciclo e exige aceite expresso do titular.
+  registrarDesistenciaNaVaga6Simulada({posicaoId,aceiteExpresso}={}){
+    if(aceiteExpresso!==true)throw new Error('Desistencia exige aceite expresso');
+    const p=this.vagas[5];
+    if(!p||p.id!==posicaoId||centroDoLoop(p))
+      throw new Error('Desistencia permitida apenas ao titular da vaga 6 ativa');
+    if(p.statusAdesao==='PENDENTE')
+      throw new Error('Posicao ainda azul nao pode usar a desistencia da vaga 6');
+    p.titularOperacional='LOOP_EMPRESA';p.empresa=true;
+    p.statusAdesao='DESISTENTE';p.desistenciaRegistradaEm=this.relogio();
+    p.motivoAssuncao='DESISTENCIA_EXPRESSA_APOS_VAGA_6';
+    return {posicaoId,assumidaPeloLoop:true,statusAdesao:p.statusAdesao,
+      registradaEm:p.desistenciaRegistradaEm,movimentoDaCatraca:false};
   }
 
   // O sexto evento NAO permite girar enquanto a catraca esta pausada.
