@@ -101,7 +101,11 @@ function criarRouterFinanceiroAdminDemo({segredo,configuracao,razaoPersistente,c
        !['conferido','divergente'].includes(extrato)){
       return res.status(400).json({erro:'CENARIO_DE_CONCILIACAO_INVALIDO'});
     }
+    const centroPosicao=centro==='participante'?null:
+       centro==='dourado'?{statusAdesao:'PRAZO_ENCERRADO',empresa:true,titularOperacional:'LOOP_EMPRESA'}:
+       {statusAdesao:'DESISTENTE',empresa:true,titularOperacional:'LOOP_EMPRESA'};
     const resultado=await criarConciliacaoAdministrativaDemo({
+      centroPosicao,
       modo:modo==='split'?MODOS.SPLIT:MODOS.RESERVA,
       comMovimentos:fluxo==='com-movimentos',
       divergenciaFicticia:extrato==='divergente'
