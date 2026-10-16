@@ -25,6 +25,29 @@ class ElegibilidadeProdutosLoopDemoSQLite{
     registrado_em TEXT NOT NULL,
     UNIQUE(produto_id,revisao)
    );
+   -- Quantidade minima independente da chave de autorizacao.
+   -- Por padrao, uma unidade basta para contar o subtotal do produto.
+   CREATE TABLE IF NOT EXISTS admin_produtos_quantidade_minima_loop_demo(
+    produto_id TEXT PRIMARY KEY NOT NULL REFERENCES catalogo_produtos(id) ON DELETE RESTRICT,
+    quantidade_minima INTEGER NOT NULL CHECK(quantidade_minima BETWEEN 1 AND 100),
+    revisao INTEGER NOT NULL CHECK(revisao>=2),
+    atualizado_em TEXT NOT NULL
+   );
+   CREATE TABLE IF NOT EXISTS admin_produtos_quantidade_minima_historico_demo(
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    produto_id TEXT NOT NULL REFERENCES catalogo_produtos(id) ON DELETE RESTRICT,
+    revisao INTEGER NOT NULL CHECK(revisao>=2),
+    quantidade_anterior INTEGER NOT NULL CHECK(quantidade_anterior BETWEEN 1 AND 100),
+    quantidade_nova INTEGER NOT NULL CHECK(quantidade_nova BETWEEN 1 AND 100),
+    registrado_em TEXT NOT NULL,
+    UNIQUE(produto_id,revisao)
+   );
+   CREATE TRIGGER IF NOT EXISTS admin_quantidade_minima_hist_no_update
+    BEFORE UPDATE ON admin_produtos_quantidade_minima_historico_demo
+    BEGIN SELECT RAISE(ABORT,'historico de quantidade imutavel'); END;
+   CREATE TRIGGER IF NOT EXISTS admin_quantidade_minima_hist_no_delete
+    BEFORE DELETE ON admin_produtos_quantidade_minima_historico_demo
+    BEGIN SELECT RAISE(ABORT,'historico de quantidade imutavel'); END;
    CREATE TRIGGER IF NOT EXISTS admin_produtos_elegibilidade_historico_no_update
     BEFORE UPDATE ON admin_produtos_elegibilidade_historico_demo
     BEGIN SELECT RAISE(ABORT,'historico imutavel'); END;
@@ -39,8 +62,13 @@ class ElegibilidadeProdutosLoopDemoSQLite{
   const reg=this.banco.prepare(
    'SELECT elegivel,revisao,atualizado_em AS atualizadoEm FROM admin_produtos_elegibilidade_loop_demo WHERE produto_id=?'
   ).get(produtoId);
+  const quantidade=this.banco.prepare(
+   'SELECT quantidade_minima AS minima,revisao,atualizado_em AS atualizadoEm FROM admin_produtos_quantidade_minima_loop_demo WHERE produto_id=?'
+  ).get(produtoId);
   return {produtoId,elegivelLoop:reg?!!reg.elegivel:true,
    revisaoElegibilidade:reg?.revisao??1,
+   quantidadeMinimaLoop:quantidade?.minima??1,
+   revisaoQuantidadeMinima:quantidade?.revisao??1,
    padrao:!reg,atualizadoEm:reg?.atualizadoEm??null};
  }
  listar(){
@@ -76,6 +104,50 @@ class ElegibilidadeProdutosLoopDemoSQLite{
    this.banco.exec('COMMIT');
    return {...this.consultar(produtoId),alterado:true};
   }catch(e){this.banco.exec('ROLLBACK');throw e;}
+ }
+ // Somente novos pedidos recebem a nova quantidade exigida;
+ // um pedido ja registrado preserva a fotografia no proprio pedido.
+ alterarQuantidadeMinima({produtoId,quantidadeMinimaLoop,revisaoEsperada}={}){
+  if(!Number.isSafeInteger(quantidadeMinimaLoop)||
+   quantidadeMinimaLoop<1||quantidadeMinimaLoop>100||
+   !Number.isSafeInteger(revisaoEsperada)||revisaoEsperada<1)
+   throw erro('DADOS_INVALIDOS');
+  this.banco.exec('BEGIN IMMEDIATE');
+  try{
+   const atual=this.consultar(produtoId);
+   if(atual.revisaoQuantidadeMinima!==revisaoEsperada)
+    throw erro('CONFLITO_REVISAO');
+   if(atual.quantidadeMinimaLoop===quantidadeMinimaLoop){
+    this.banco.exec('COMMIT');
+    return {...atual,alterado:false};
+   }
+   const nova=atual.revisaoQuantidadeMinima+1,agora=new Date().toISOString();
+   this.banco.prepare(`
+    INSERT INTO admin_produtos_quantidade_minima_loop_demo
+     (produto_id,quantidade_minima,revisao,atualizado_em)
+    VALUES(?,?,?,?)
+    ON CONFLICT(produto_id) DO UPDATE SET
+     quantidade_minima=excluded.quantidade_minima,
+     revisao=excluded.revisao,atualizado_em=excluded.atualizado_em
+   `).run(produtoId,quantidadeMinimaLoop,nova,agora);
+   this.banco.prepare(`
+    INSERT INTO admin_produtos_quantidade_minima_historico_demo
+     (produto_id,revisao,quantidade_anterior,quantidade_nova,registrado_em)
+    VALUES(?,?,?,?,?)
+   `).run(produtoId,nova,atual.quantidadeMinimaLoop,quantidadeMinimaLoop,agora);
+   this.banco.exec('COMMIT');
+   return {...this.consultar(produtoId),alterado:true};
+  }catch(e){this.banco.exec('ROLLBACK');throw e;}
+ }
+ historicoQuantidadeMinima(produtoId){
+  this.consultar(produtoId);
+  return this.banco.prepare(`
+   SELECT produto_id AS produtoId,revisao,
+    quantidade_anterior AS quantidadeAnterior,quantidade_nova AS quantidadeNova,
+    registrado_em AS registradoEm
+   FROM admin_produtos_quantidade_minima_historico_demo
+   WHERE produto_id=? ORDER BY revisao
+  `).all(produtoId);
  }
  historico(produtoId){
   this.consultar(produtoId);
