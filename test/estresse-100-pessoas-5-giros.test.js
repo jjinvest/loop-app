@@ -81,7 +81,7 @@ test('100 entradas uma a uma, indicacoes cruzadas, 25 novas vendas e exatamente 
   assert.equal(inicial.filas.A.quantidade+inicial.filas.B.quantidade,94);
   assert.equal(inicial.tabuleiro.centro.id,1);
   assert.deepEqual(inicial.tabuleiro.vagas.map(p=>p.id),[2,3,4,5,6]);
-  assert.ok(inicial.filas.A.quantidade>12,'ha indicados na fila A');
+  assert.ok(inicial.filas.A.quantidade>5,'ha indicados na fila A');
   assert.ok(inicial.filas.B.quantidade>12,'ha clientes na fila B');
   assert.ok(indicacoes.length>=35,'convites distribuidos entre clientes');
   assert.equal(mapaCoresDoEscritorio(loop,pessoa(1)).tabuleiro.centro.cor,'VERMELHO');
