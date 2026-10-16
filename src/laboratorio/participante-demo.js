@@ -241,13 +241,15 @@
   e('apelidoLinkParticipante').value=link.apelido==='meu-loop'?'':link.apelido;
   e('copiarLinkParticipante').disabled=!link.ativo;
   e('statusLinkIndicacaoParticipante').textContent=link.ativo?
-   'Link ATIVO: você pode divulgar e receber bonificações por posições qualificadas de indicados.':
+   'Link ATIVO para divulgação. Bonificações somente após CPF e aceite expresso dos termos.':
    'Link INATIVO: faça uma compra confirmada de qualquer valor na loja. Não precisa ter posição no LOOP.';
   const bonus=visao.bonusIndicacoes;
   e('bonusSaldoParticipante').textContent=dinheiro(bonus.totalSimuladoCentavos);
   e('bonusQuantidadeParticipante').textContent=String(bonus.quantidade);
   e('bonusPercentualParticipante').textContent=bonus.porcentagemAplicavelHoje+'%';
   e('bonusCampanhaStatusParticipante').textContent=
+   !bonus.bonificacoesHabilitadas?
+    'Bonificações bloqueadas: confirme CPF e regras depois da primeira compra. Nenhum crédito é gerado antes do aceite.':
    bonus.porcentagemCampanhaHoje>10?
     (bonus.ativoNoLoopAgora?
      'Você tem posição própria no LOOP e pode participar da campanha de '+
@@ -257,7 +259,8 @@
       dinheiro(bonus.valorMinimoPosicaoHojeCentavos)+'.'):
     'Comissão básica vigente: 10%. Seu link é liberado pela primeira compra de qualquer valor; o bônus superior a 10% exige uma posição própria no LOOP.';
   e('bonusMinimoParticipante').textContent=dinheiro(bonus.minimoSaqueCentavos);
-  e('bonusSaqueStatusParticipante').textContent=bonus.atingiuMinimoSaque?
+  e('bonusSaqueStatusParticipante').textContent=!bonus.bonificacoesHabilitadas?
+   'Saques bloqueados até a segunda ativação: CPF e aceite dos termos. Não há saques reais neste teste.':bonus.atingiuMinimoSaque?
    'Mínimo de R$ 100 alcançado. Saque real ainda indisponível no laboratório.':
    'Faltam '+dinheiro(bonus.faltaParaMinimoCentavos)+' para alcançar o mínimo de saque.';
   lista('bonusHistoricoParticipante',bonus.registros,p=>
@@ -271,8 +274,10 @@
    p.local.replace('_',' ')+' — '+(p.statusAdesao==='PENDENTE'?'aguardando ativação':'ativada'));
   if(visao.mapaCores)mostrarMapa(visao.mapaCores);
   const temAzul=visao.posicoes.some(p=>p.statusAdesao==='PENDENTE');
-  e('secaoAtivacaoParticipante').hidden=!temAzul;
-  e('atalhoAtivarParticipante').hidden=!temAzul;
+  const cpfTermosConfirmados=visao.adesao?.cpfConfirmadoNoTeste===true;
+  const mostrarAtivacao=link.ativo&&(!cpfTermosConfirmados||temAzul);
+  e('secaoAtivacaoParticipante').hidden=!mostrarAtivacao;
+  e('atalhoAtivarParticipante').hidden=!mostrarAtivacao;
   const aviso=e('alertaAzulParticipante');
   aviso.hidden=!temAzul;
   if(temAzul){
@@ -343,7 +348,7 @@
    e('cpfFicticioParticipante').value='';
    e('aceiteTermosParticipante').checked=false;
    await atualizar();
-   aviso.textContent=resultado.ativadas+' posições ativadas nesta simulação.';
+   aviso.textContent='CPF e regras confirmados no teste. '+resultado.ativadas+' posição(ões) ativada(s).';
   }catch(erro){
    aviso.textContent=erro.message;
    e('cpfFicticioParticipante').value='';
