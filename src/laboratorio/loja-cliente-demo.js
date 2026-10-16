@@ -56,6 +56,13 @@
    label.append(campo);
    const subtotal=document.createElement('span');
    subtotal.textContent=dinheiro(p.precoCentavos*quantidade);
+   const regra=document.createElement('small');
+   regra.className='regra-item-loja-loop';
+   if(!p.elegivelLoop)regra.textContent='Este item não conta para posições do LOOP.';
+   else if(quantidade<p.quantidadeMinimaLoop)
+    regra.textContent='É necessário comprar '+p.quantidadeMinimaLoop+
+     ' unidades deste produto no mesmo pedido para contar no LOOP.';
+   else regra.textContent='Quantidade suficiente: o subtotal deste item conta para o LOOP.';
    total+=p.precoCentavos*quantidade;
    if(p.elegivelLoop&&quantidade>=p.quantidadeMinimaLoop)
     totalElegivel+=p.precoCentavos*quantidade;
@@ -65,7 +72,7 @@
    remover.addEventListener('click',()=>{
     carrinho.delete(id);atualizarCarrinho();
    });
-   div.append(titulo,label,subtotal,remover);
+   div.append(titulo,label,subtotal,regra,remover);
    destino.append(div);
   }
   if(!carrinho.size){
@@ -137,7 +144,9 @@
    const titulo=document.createElement('strong');
    titulo.textContent='Pedido '+pedido.pedidoId+' · '+dinheiro(pedido.totalCentavos);
    const itens=document.createElement('small');
-   itens.textContent=pedido.itens.map(i=>i.quantidade+' × '+i.nome).join(' + ')+
+   itens.textContent=pedido.itens.map(i=>i.quantidade+' × '+i.nome+
+    (i.elegivelLoop&&i.quantidade<i.quantidadeMinimaLoop?
+     ' (não alcançou o mínimo do produto para LOOP)':'')).join(' + ')+
     ' · Total válido para LOOP: '+dinheiro(pedido.totalElegivelLoopCentavos);
    const status=document.createElement('span');
    if(pedido.situacaoPagamentoFicticio==='AGUARDANDO_FICTICIO')
