@@ -11,6 +11,9 @@
   e('senhaParticipante').value='';
   e('posicoesParticipante').replaceChildren();
   e('pedidosParticipante').replaceChildren();
+  e('mapaFilaAParticipante').replaceChildren();
+  e('mapaFilaBParticipante').replaceChildren();
+  e('mapaTabuleiroParticipante').replaceChildren();
  }
  async function chamada(url,body){
   const r=await fetch('/api/laboratorio/participante/'+url,{
@@ -40,14 +43,43 @@
    li.textContent=formatar(i);alvo.append(li);
   }
  }
- function mostrar(visao){
+ function elementoPosicao(p,rotulo){
+  const item=document.createElement('span');
+  item.className='selo-posicao-demo posicao-'+p.cor.toLowerCase();
+  item.textContent=rotulo+' #'+p.posicaoId;
+  return item;
+ }
+ function mostrarMapa(mapa){
+  for(const [campo,id] of [['filaA','mapaFilaAParticipante'],['filaB','mapaFilaBParticipante']]){
+   const lista=e(id);lista.replaceChildren();
+   for(const posicao of mapa[campo]){
+    const li=document.createElement('li');
+    li.append(elementoPosicao(posicao,'Posição'));
+    lista.append(li);
+   }
+   if(!mapa[campo].length){const li=document.createElement('li');li.textContent='Fila vazia';lista.append(li);}
+  }
+  const tabuleiro=e('mapaTabuleiroParticipante');tabuleiro.replaceChildren();
+  const todas=[{valor:mapa.tabuleiro.centro,rotulo:'Centro'},
+   ...mapa.tabuleiro.vagas.map((valor,i)=>({valor,rotulo:'Vaga '+(i+1)}))];
+  for(const {valor,rotulo} of todas){
+   const bloco=document.createElement('div');
+   bloco.className='espaco-tabuleiro-demo';
+   if(valor)bloco.append(elementoPosicao(valor,rotulo));
+   else bloco.textContent=rotulo+' — livre';
+   tabuleiro.append(bloco);
+  }
+ }
+  function mostrar(visao){
   e('nomeLogadoParticipante').textContent=visao.conta.nome+' — meu resumo';
   e('conviteParticipante').textContent='Meu código de convite fictício: '+visao.conta.codigoConvite;
   e('ativasParticipante').textContent=visao.posicoes.length+' / '+visao.limitePosicoesAtivas;
   e('vagasParticipante').textContent=visao.vagasLivres;
   e('indicacoesParticipante').textContent=visao.indicacoes.comprasConfirmadasFicticias;
   e('pendentesParticipante').textContent=visao.indicacoes.cadastrosPendentes;
-  lista('posicoesParticipante',visao.posicoes,p=>'Posição '+p.posicaoId+' — '+p.local.replace('_',' '));
+  lista('posicoesParticipante',visao.posicoes,p=>'Posição '+p.posicaoId+' — '+
+   p.local.replace('_',' ')+' — '+(p.statusAdesao==='PENDENTE'?'aguardando ativação':'ativada'));
+  if(visao.mapaCores)mostrarMapa(visao.mapaCores);
   lista('pedidosParticipante',visao.compras,p=>'Pedido fictício '+p.pedidoId+
    ' — '+p.produtoId+' — '+(p.valorCentavos/100).toLocaleString('pt-BR',{style:'currency',currency:'BRL'})+
    ' (verificador interno de teste)');
