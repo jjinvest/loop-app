@@ -94,7 +94,10 @@ async function main(){
    await page.screenshot({path:path.join(pasta,'loja-'+width+'px.png'),fullPage:true});
   }
   await page.locator('#registrarPedidoLoja').click();
-  await page.locator('#pedidosLojaLoop li').first().waitFor();
+  // A lista inclui um texto vazio inicial; aguardar especificamente
+  // o pedido criado evita a condicao de corrida da atualizacao da tela.
+  await page.locator('#pedidosLojaLoop li')
+   .filter({hasText:'Aguardando confirmação fictícia'}).first().waitFor();
   assert.match(await page.locator('#pedidosLojaLoop').innerText(),/Aguardando confirmação fictícia/);
   const registro=banco.banco.prepare(
    'SELECT pedido_id AS id,total_centavos AS total FROM admin_carrinho_loop_demo LIMIT 1'
