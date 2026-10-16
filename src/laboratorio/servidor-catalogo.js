@@ -23,6 +23,8 @@ const { PagamentosPrePedidosFisicosDemoSQLite } = require('../domain/pagamentos-
 const { criarRouterPagamentosPrePedidosFisicosDemo } = require('../routes/admin-pagamentos-pre-pedidos-fisicos-demo');
 const { PedidosPDFPagamentosDemoSQLite } = require('../domain/pedidos-pdf-pagamentos-demo-sqlite');
 const { IntegracaoLojaPDFLoopDemo } = require('../domain/integracao-loja-pdf-loop-demo');
+const { CarrinhoLojaLoopDemoSQLite } = require('../domain/carrinho-loja-loop-demo-sqlite');
+const { criarRouterCarrinhoLoopDemo } = require('../routes/admin-carrinho-loop-demo');
 const { criarRouterPedidosPDFDemo } = require('../routes/admin-pedidos-pdf-demo');
 const { criarRouterEscritorioDemo } = require('../routes/admin-escritorio-demo');
 const { ContasParticipantesDemoSQLite } = require('../domain/contas-participantes-demo-sqlite');
@@ -90,6 +92,7 @@ function criarAppAdminLaboratorio({ repositorio, segredo, webhookDemo } = {}) {
   app.use('/api/admin', criarRouterEscritorioDemo({ segredo }));
   let pedidosPDFDemo=null;
   let integracaoPDFLoopDemo=null;
+  let carrinhosLojaLoopDemo=null;
   // Cadastro de pessoas APENAS FICTICIAS: sem CPF, confirmacao de compra,
   // sessao publica, codigo validado de fila ou movimentacao de catraca.
   if(repositorio instanceof RepositorioCatalogoSQLite){
@@ -109,6 +112,8 @@ function criarAppAdminLaboratorio({ repositorio, segredo, webhookDemo } = {}) {
       pedidosIdentificados:pedidosIdentificadosDemo,
       configuracaoValor:configuracaoValorLoopDemo,
       consultarPagamentoConfiavel:async pedidoId=>{
+        if(carrinhosLojaLoopDemo?.buscar(pedidoId))
+          return carrinhosLojaLoopDemo.comprovanteConfirmado(pedidoId);
         if(!integracaoPDFLoopDemo)throw new Error('Verificador interno PDF nao configurado');
         return integracaoPDFLoopDemo.comprovanteConfirmado(pedidoId);
       }
@@ -116,6 +121,13 @@ function criarAppAdminLaboratorio({ repositorio, segredo, webhookDemo } = {}) {
     integracaoPDFLoopDemo=new IntegracaoLojaPDFLoopDemo({
       pedidosPDF:pedidosPDFDemo,pedidosIdentificados:pedidosIdentificadosDemo,ponte:ponteDemo
     });
+    carrinhosLojaLoopDemo=new CarrinhoLojaLoopDemoSQLite({
+      catalogo:repositorio,contas:contasDemo,
+      pedidosIdentificados:pedidosIdentificadosDemo,ponte:ponteDemo
+    });
+    app.use('/api/admin',criarRouterCarrinhoLoopDemo({
+      segredo,carrinhos:carrinhosLojaLoopDemo
+    }));
     const adesoesDemo=new AdesoesPosicoesDemoSQLite({ponte:ponteDemo});
     app.use('/api/admin',criarRouterPonteComprasConvitesDemo({
       segredo,ponte:ponteDemo
