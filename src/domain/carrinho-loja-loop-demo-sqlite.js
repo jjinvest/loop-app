@@ -187,10 +187,13 @@ class CarrinhoLojaLoopDemoSQLite{
    throw new Error('Integridade de elegibilidade do carrinho comprometida');
   const posicoesSolicitadas=itens.some(i=>i.elegivelLoop&&
    i.quantidade>=i.quantidadeMinimaLoop&&i.posicoesPorPedidoLoop===5)?5:1;
+  const posicaoIds=posicao?[posicao.id,...this.banco.prepare(
+   'SELECT posicao_id AS id FROM admin_ponte_posicoes_adicionais_demo WHERE pedido_id=? ORDER BY ordem'
+  ).all(pedidoId).map(p=>p.id)]:[];
   return {...row,itens,totalElegivelLoopCentavos,posicoesSolicitadas,
    situacaoPagamentoFicticio:!evento?'AGUARDANDO_FICTICIO':
     evento.tipo==='CONFIRMAR_FICTICIO'?'CONFIRMADO_FICTICIO':'ESTORNADO_FICTICIO',
-   posicaoCriada:!!posicao,posicaoId:posicao?.id??null,
+   posicaoCriada:!!posicao,posicaoId:posicao?.id??null,posicaoIds,
    vendaSomenteLoja:!!loja,semPagamentoReal:true,entregaReal:false};
  }
  listar(){
