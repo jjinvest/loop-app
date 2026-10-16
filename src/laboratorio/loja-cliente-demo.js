@@ -57,7 +57,8 @@
    const subtotal=document.createElement('span');
    subtotal.textContent=dinheiro(p.precoCentavos*quantidade);
    total+=p.precoCentavos*quantidade;
-   if(p.elegivelLoop)totalElegivel+=p.precoCentavos*quantidade;
+   if(p.elegivelLoop&&quantidade>=p.quantidadeMinimaLoop)
+    totalElegivel+=p.precoCentavos*quantidade;
    const remover=document.createElement('button');
    remover.type='button';remover.className='botao-secundario-loja';
    remover.textContent='Remover';
@@ -110,7 +111,10 @@
    const titulo=document.createElement('h3');titulo.textContent=p.nome;
    const aviso=document.createElement('small');
    aviso.className='tipo-loja-loop';
-   aviso.textContent=p.elegivelLoop?'Conta para gerar posição no LOOP':
+   aviso.textContent=p.elegivelLoop?
+    (p.quantidadeMinimaLoop===1?'Conta para gerar posição no LOOP':
+     'Conta para o LOOP somente a partir de '+p.quantidadeMinimaLoop+
+      ' unidade(s) no mesmo pedido'):
     'Produto só da loja: não conta para a posição';
    const preco=document.createElement('p');preco.className='preco-loja-loop';
    preco.textContent=dinheiro(p.precoCentavos);
