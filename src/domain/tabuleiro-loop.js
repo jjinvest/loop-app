@@ -35,10 +35,12 @@ class TabuleiroLoop {
     if (!selecionado.pessoa || selecionado.pessoa.id === undefined) {
       throw new Error('Selecao de fila retornou posicao invalida');
     }
-    return {
-      ...this.copiarPosicao(selecionado.pessoa),
-      origemFila: selecionado.origem
-    };
+    const posicao=this.copiarPosicao(selecionado.pessoa);
+    if(posicao.statusAdesao==='PENDENTE'){
+      posicao.statusAdesao='PRAZO_ENCERRADO';
+      posicao.prazoEncerradoEm=this.relogio();
+    }
+    return {...posicao,origemFila:selecionado.origem};
   }
 
   // Preenchimento inicial, sem movimentacao de posicoes ja ocupadas.
