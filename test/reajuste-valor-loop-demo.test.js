@@ -175,6 +175,15 @@ test('admin local muda valor; acesso publico nao oferece configurar e rejeita ex
  assert.equal(valido.status,200);
  const resposta=await valido.json();
  assert.equal(resposta.atual.valorCentavos,50000);
+ const financeiroResp=await fetch(base+'/api/admin/financeiro-demo?modo=split',{headers:auth});
+ assert.equal(financeiroResp.status,200);
+ const financeiroNovo=await financeiroResp.json();
+ assert.equal(financeiroNovo.parcelaReferenciaVigenteNoCenarioCentavos,50000);
+ assert.equal(financeiroNovo.totalLoopCentavos,250000);
+ assert.equal(financeiroNovo.totalFornecedorCentavos,150000);
+ assert.equal(financeiroNovo.totalSobraBrutaCentavos,25000);
+ assert.ok(financeiroNovo.vendas.every(v=>v.parcelaLoopCentavos===50000));
+ assert.equal(financeiroNovo.simulacaoApenasProspectiva,true);
  assert.equal(resposta.historico.length,2);
  assert.equal(resposta.pagamentosReais,false);
  assert.equal((await patch({valorCentavos:75000,revisaoEsperada:1})).status,409);
