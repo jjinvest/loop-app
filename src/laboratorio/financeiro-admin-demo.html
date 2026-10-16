@@ -133,7 +133,7 @@
       </section>
       <section class="painel" aria-labelledby="tituloPedidosPDFDemo">
         <h2 id="tituloPedidosPDFDemo">Cursos PDF com preços variados — laboratório</h2>
-        <p class="aviso-demo">Cadastre um curso PDF com preço no catálogo antes de testar. Aqui o preço vem do produto, não do formulário. A confirmação de pagamento é FICTÍCIA e NÃO entrega arquivo, não cria posição nem transfere valores.</p>
+        <p class="aviso-demo">Cadastre um curso PDF com preço no catálogo antes de testar. Aqui o preço vem do produto, não do formulário. A confirmação de pagamento é FICTÍCIA e não entrega curso nem transfere valores. Se o pedido tiver comprador fictício vinculado antes do pagamento, uma compra qualificada cria automaticamente posição azul no LOOP.</p>
         <form id="formPedidosPDFDemo" autocomplete="off">
           <div class="duas-colunas">
             <div class="campo">
@@ -152,6 +152,24 @@
           <button type="button" id="atualizarPedidosPDFDemo" class="secundario">Atualizar pedidos PDF de teste</button>
         </div>
         <div id="listaPedidosPDFDemo" class="financeiro-conciliacao" aria-live="polite"></div>
+        <h3>Vincular pedido PDF a uma conta fictícia</h3>
+        <p class="ajuda">Selecione um pedido existente e uma conta cadastrada no laboratório ANTES de confirmar o pagamento. O vínculo é permanente no teste e não exige CPF.</p>
+        <form id="formVincularPDFLoopDemo" autocomplete="off">
+          <div class="duas-colunas">
+            <div class="campo">
+              <label for="titularPedidoPDFLoopDemo">Conta compradora fictícia</label>
+              <select id="titularPedidoPDFLoopDemo" required></select>
+            </div>
+            <div class="campo">
+              <label for="pedidoVinculoPDFLoopDemo">Pedido que será vinculado</label>
+              <select id="pedidoVinculoPDFLoopDemo" required></select>
+            </div>
+          </div>
+          <button type="submit" id="confirmarVinculoPDFLoopDemo">Vincular comprador ao pedido</button>
+        </form>
+        <p id="estadoVinculoPDFLoopDemo" role="status" aria-live="polite" class="estado-admin"></p>
+        <button type="button" id="sincronizarPDFLoopDemo" class="secundario">Conferir sincronização do pedido com o LOOP</button>
+        <p id="estadoSincronizacaoPDFLoopDemo" role="status" aria-live="polite" class="ajuda"></p>
         <h3>Simular pagamento do pedido PDF</h3>
         <form id="formEventoPDFDemo" autocomplete="off">
           <div class="duas-colunas">
