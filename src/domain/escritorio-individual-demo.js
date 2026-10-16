@@ -106,11 +106,24 @@ class EscritorioIndividualDemo{
   const confirmadas=indicacoes.filter(c=>c.confirmadoId!==null).length;
   const aplicadas=indicacoes.filter(c=>c.aplicadoId!==null).length;
   if(aplicadas>confirmadas)throw new Error('Historico de indicacoes inconsistente');
+  const bonus=this.ponte.linksComissoes.comissoesDaConta(contaId);
+  const minima=this.ponte.configuracaoValor.atual().valorCentavos;
+  const temCadeira=posicoes.length>0;
+  const bonusIndicacoes={
+   ...bonus,
+   ativoNoLoopAgora:temCadeira,
+   porcentagemCampanhaHoje:bonus.porcentagemAtual.percentual,
+   porcentagemAplicavelHoje:temCadeira?bonus.porcentagemAtual.percentual:10,
+   valorMinimoPosicaoHojeCentavos:minima,
+   criterioExtra:'POSICAO_PROPRIA_EM_FILA_OU_TABULEIRO',
+   ativacaoLinkNaoEquivaleAPosicao:true,
+   necessitaAceiteCPFApenasParaCor:true
+  };
   return {
    modo:'ESCRITORIO_INDIVIDUAL_EXCLUSIVAMENTE_FICTICIO',
    conta:{nome:conta.nome,login:conta.login},
    linkIndicacao:this.ponte.linksComissoes.linkDaConta(contaId),
-   bonusIndicacoes:this.ponte.linksComissoes.comissoesDaConta(contaId),
+   bonusIndicacoes,
    compras:compras.map(c=>{
     const ref=this.banco.prepare(
      'SELECT revisao_valor AS revisaoValor, valor_referencia_centavos AS valorReferenciaCentavos FROM admin_ponte_posicoes_valores_demo WHERE pedido_id=?'
