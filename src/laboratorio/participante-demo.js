@@ -25,6 +25,7 @@
   e('bonusSaldoParticipante').textContent='R$ 0,00';
   e('bonusQuantidadeParticipante').textContent='0';
   e('bonusPercentualParticipante').textContent='10%';
+  e('bonusCampanhaStatusParticipante').textContent='';
   e('bonusMinimoParticipante').textContent='R$ 100,00';
   e('bonusSaqueStatusParticipante').textContent='';
   e('bonusHistoricoParticipante').replaceChildren();
@@ -245,7 +246,16 @@
   const bonus=visao.bonusIndicacoes;
   e('bonusSaldoParticipante').textContent=dinheiro(bonus.totalSimuladoCentavos);
   e('bonusQuantidadeParticipante').textContent=String(bonus.quantidade);
-  e('bonusPercentualParticipante').textContent=bonus.porcentagemAtual.percentual+'%';
+  e('bonusPercentualParticipante').textContent=bonus.porcentagemAplicavelHoje+'%';
+  e('bonusCampanhaStatusParticipante').textContent=
+   bonus.porcentagemCampanhaHoje>10?
+    (bonus.ativoNoLoopAgora?
+     'Você tem posição própria no LOOP e pode participar da campanha de '+
+      bonus.porcentagemCampanhaHoje+'% nas próximas posições geradas pelos seus indicados.':
+     'Campanha atual: '+bonus.porcentagemCampanhaHoje+
+      '%. Como você ainda não tem posição própria no LOOP, permanece recebendo 10%. Para participar da campanha, faça uma compra qualificada pelo mínimo vigente de '+
+      dinheiro(bonus.valorMinimoPosicaoHojeCentavos)+'.'):
+    'Comissão básica vigente: 10%. Seu link é liberado pela primeira compra de qualquer valor; o bônus superior a 10% exige uma posição própria no LOOP.';
   e('bonusMinimoParticipante').textContent=dinheiro(bonus.minimoSaqueCentavos);
   e('bonusSaqueStatusParticipante').textContent=bonus.atingiuMinimoSaque?
    'Mínimo de R$ 100 alcançado. Saque real ainda indisponível no laboratório.':
