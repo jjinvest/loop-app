@@ -113,13 +113,23 @@ function compararParcelaAntigaComNova({
  dinheiro(valorCentroOriginalCentavos);
  dinheiro(valorNovaVendaLoopCentavos);
  if(!['PARTICIPANTE','EMPRESA'].includes(evento))throw falha('DESTINO_INVALIDO','Evento invalido');
+ // Se o valor futuro for MENOR, o simulador explicita o deficit.
+ // Nao redefine automaticamente a referencia original do titular.
+ const referenciaHistoricaParticipanteCentavos=evento==='PARTICIPANTE'?
+  valorCentroOriginalCentavos:0;
  const valorParticipanteCentavos=evento==='PARTICIPANTE'?
   Math.min(valorCentroOriginalCentavos,valorNovaVendaLoopCentavos):0;
+ const deficitDeCoberturaCentavos=evento==='PARTICIPANTE'?
+  Math.max(0,referenciaHistoricaParticipanteCentavos-valorNovaVendaLoopCentavos):0;
  const valorEmpresaPropostoCentavos=valorNovaVendaLoopCentavos-valorParticipanteCentavos;
  return {
   modo:'CENARIO_MATEMATICO_SEM_TRANSFERENCIA',
   valorCentroOriginalCentavos,valorNovaVendaLoopCentavos,
   evento,valorParticipanteCentavos,valorEmpresaPropostoCentavos,
+  referenciaHistoricaParticipanteCentavos,
+  deficitDeCoberturaCentavos,
+  exigeAnaliseDeCobertura:deficitDeCoberturaCentavos>0,
+  preservaValorOriginalDaPosicao:true,
   diferencaDeReferenciaCentavos:valorNovaVendaLoopCentavos-valorCentroOriginalCentavos,
   dinheiroMovimentado:false,obrigacaoRealDefinida:false,
   necessitaRevisaoJuridicoContabil:true
