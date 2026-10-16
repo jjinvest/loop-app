@@ -48,7 +48,7 @@ function validarComprovante(recebido,pedidoId){
 function posicoesAtivas(simulador,contaId){
  const f=simulador.filas,t=simulador.tabuleiro;
  return [...f.filaA,...f.filaB,t.centro,...t.vagas]
-  .filter(p=>p&&p.participanteId===contaId).length;
+  .filter(p=>p&&p.participanteId===contaId&&p.statusAdesao!=='PRAZO_ENCERRADO').length;
 }
 class PonteComprasConvitesDemoSQLite{
  constructor({banco,contas,consultarPagamentoConfiavel,pedidosIdentificados=null,configuracaoValor=null,relogio=()=>new Date().toISOString()}={}){
