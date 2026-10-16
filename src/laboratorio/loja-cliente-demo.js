@@ -33,7 +33,7 @@
  function atualizarCarrinho(){
   const destino=el('itensLojaLoop');
   destino.replaceChildren();
-  let total=0,totalElegivel=0;
+  let total=0,totalElegivel=0,valorPacoteEspecial=0;
   for(const [id,quantidade] of carrinho){
    const p=produto(id);
    if(!p){carrinho.delete(id);continue;}
@@ -62,10 +62,14 @@
    else if(quantidade<p.quantidadeMinimaLoop)
     regra.textContent='É necessário comprar '+p.quantidadeMinimaLoop+
      ' unidades deste produto no mesmo pedido para contar no LOOP.';
-   else regra.textContent='Quantidade suficiente: o subtotal deste item conta para o LOOP.';
+   else regra.textContent=p.posicoesPorPedidoLoop===5?
+    'Produto especial: pode gerar 5 posições no mesmo pedido, se houver cinco vagas livres e o valor mínimo for atingido.':
+    'Quantidade suficiente: o subtotal deste item conta para o LOOP.';
    total+=p.precoCentavos*quantidade;
-   if(p.elegivelLoop&&quantidade>=p.quantidadeMinimaLoop)
+   if(p.elegivelLoop&&quantidade>=p.quantidadeMinimaLoop){
     totalElegivel+=p.precoCentavos*quantidade;
+    if(p.posicoesPorPedidoLoop===5)valorPacoteEspecial+=p.precoCentavos*quantidade;
+   }
    const remover=document.createElement('button');
    remover.type='button';remover.className='botao-secundario-loja';
    remover.textContent='Remover';
@@ -83,8 +87,13 @@
   el('totalLojaLoop').textContent='Total da compra: '+dinheiro(total)+
    ' · Produtos válidos para o LOOP: '+dinheiro(totalElegivel)+
    ' · Mínimo da posição: '+dinheiro(referenciaCentavos)+
-   (totalElegivel>=referenciaCentavos?' · Pode gerar uma posição após confirmação':
-    ' · Não atinge o mínimo da posição');
+   (valorPacoteEspecial>0?
+    (valorPacoteEspecial>=5*referenciaCentavos?
+      ' · Produto especial: 5 posições após confirmação, desde que existam 5 vagas livres.':
+      ' · Pacote de 5 exige produtos especiais no valor de pelo menos '+
+       dinheiro(5*referenciaCentavos)+'; sem isso, não haverá ativação do pacote.'):
+    (totalElegivel>=referenciaCentavos?' · Pode gerar uma posição após confirmação':
+     ' · Não atinge o mínimo da posição'));
   el('registrarPedidoLoja').disabled=!carrinho.size||pedidoEmAndamento;
  }
  function adicionar(p){
@@ -123,6 +132,9 @@
      'Conta para o LOOP somente a partir de '+p.quantidadeMinimaLoop+
       ' unidade(s) no mesmo pedido'):
     'Produto só da loja: não conta para a posição';
+   if(p.elegivelLoop&&p.posicoesPorPedidoLoop===5){
+    aviso.textContent+=' · Produto especial de 5 posições (sujeito às regras e às vagas livres)';
+   }
    const preco=document.createElement('p');preco.className='preco-loja-loop';
    preco.textContent=dinheiro(p.precoCentavos);
    const botao=document.createElement('button');botao.type='button';
@@ -154,7 +166,10 @@
    else if(pedido.situacaoPagamentoFicticio==='ESTORNADO_FICTICIO')
     status.textContent='Estorno fictício registrado; verificar eventual posição.';
    else if(pedido.posicaoCriada)
-    status.textContent='Compra qualificada: posição LOOP nº '+
+    status.textContent=pedido.posicaoIds?.length>1?
+     'Pacote de '+pedido.posicaoIds.length+' posições LOOP nº '+
+      pedido.posicaoIds.join(', ')+'. Confira no Meu Escritório.':
+     'Compra qualificada: posição LOOP nº '+
       pedido.posicaoId+' criada. Veja a cor no Meu Escritório.';
    else if(pedido.vendaSomenteLoja)
     status.textContent='Compra de loja confirmada no teste, sem posição LOOP.';
