@@ -16,6 +16,20 @@ function criarRouterFinanceiroAdminDemo({segredo,configuracao,razaoPersistente,c
     if(!configuracaoValorLoop)return res.status(501).json({erro:'REFERENCIA_INDISPONIVEL'});
     return res.json(configuracaoValorLoop.resumo());
   });
+  router.get('/valor-loop-demo/impacto',(req,res)=>{
+    if(!configuracaoValorLoop)return res.status(501).json({erro:'REFERENCIA_INDISPONIVEL'});
+    if(Object.keys(req.query).join(',')!=='novoValorCentavos'){
+      return res.status(400).json({erro:'PARAMETROS_INVALIDOS'});
+    }
+    const valor=Number(req.query.novoValorCentavos);
+    try{
+      return res.json(configuracaoValorLoop.simularImpacto({novoValorCentavos:valor}));
+    }catch(err){
+      if(err.codigo==='VALOR_INVALIDO')
+        return res.status(400).json({erro:'VALOR_INVALIDO'});
+      throw err;
+    }
+  });
   router.patch('/valor-loop-demo',(req,res)=>{
     if(!configuracaoValorLoop)return res.status(501).json({erro:'REFERENCIA_INDISPONIVEL'});
     if(!req.is('application/json'))return res.status(415).json({erro:'JSON_OBRIGATORIO'});
