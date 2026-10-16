@@ -20,14 +20,25 @@ function caminhoLink(token,apelido){
  if(!TOKEN.test(token))throw falha('LINK_INVALIDO');
  return '/laboratorio/convite/'+token+'/'+(apelido||'meu-loop');
 }
+// Dois destinos de divulgacao, sempre com o MESMO identificador de indicador.
+function caminhoLinkDestino(token,apelido,destino){
+ if(!['escritorio','loja'].includes(destino))throw falha('DESTINO_LINK_INVALIDO');
+ return caminhoLink(token,apelido)+'?destino='+destino;
+}
 function extrairLink(url){
  if(typeof url!=='string'||url.length>500)throw falha('LINK_INVALIDO');
  let u;
  try{u=new URL(url,'http://localhost');}catch{throw falha('LINK_INVALIDO');}
- if(u.search||u.hash||u.username||u.password)throw falha('LINK_INVALIDO');
+ if(u.hash||u.username||u.password)throw falha('LINK_INVALIDO');
+ const campos=[...u.searchParams.keys()];
+ if(campos.some(c=>c!=='destino')||campos.length>1)
+  throw falha('LINK_INVALIDO');
+ const destino=u.searchParams.get('destino')||'escritorio';
+ if(!['escritorio','loja'].includes(destino)||u.searchParams.has('destino')&&
+  !u.searchParams.get('destino'))throw falha('LINK_INVALIDO');
  const m=PATH.exec(u.pathname);
  if(!m)throw falha('LINK_INVALIDO');
- return {token:m[1],apelido:m[2]||null};
+ return {token:m[1],apelido:m[2]||null,destino};
 }
 class IndicacoesLinksComissoesDemoSQLite{
  constructor({banco,contas}={}){
@@ -164,7 +175,10 @@ class IndicacoesLinksComissoesDemoSQLite{
   const apelido=this.banco.prepare(
    'SELECT apelido FROM admin_links_apelidos_demo WHERE conta_id=?'
   ).get(contaId)?.apelido||'meu-loop';
-  return {link:caminhoLink(conta.codigoConvite,apelido),apelido,
+  return {link:caminhoLink(conta.codigoConvite,apelido),
+   linkEscritorio:caminhoLinkDestino(conta.codigoConvite,apelido,'escritorio'),
+   linkLoja:caminhoLinkDestino(conta.codigoConvite,apelido,'loja'),
+   mesmoCodigoIndicador:true,apelido,
    ativo:this.ativado(contaId),podeDivulgar:this.ativado(contaId),
    bonificacoesHabilitadas:this.habilitadoBonificacoes(contaId),
    referencia:'CODIGO_DENTRO_DO_LINK',semComissaoReal:true};
@@ -183,13 +197,13 @@ class IndicacoesLinksComissoesDemoSQLite{
   return this.linkDaConta(contaId);
  }
  resolver(link){
-  const {token}=extrairLink(link);
+  const {token,destino}=extrairLink(link);
   const row=this.banco.prepare(`
    SELECT id,nome FROM admin_contas_participantes_demo WHERE codigo_convite=?
   `).get(token);
   if(!row)throw falha('LINK_INVALIDO');
   return {indicadorId:row.id,nomeIndicador:row.nome,
-   ativo:this.ativado(row.id),token};
+   ativo:this.ativado(row.id),token,destino};
  }
  comissaoDaPosicao({pedidoId,indicadorId,convidadoId,posicaoId,referencia,quando,
   posicaoAtivaIndicadorId=null}={}){
@@ -309,4 +323,4 @@ function simularElegibilidadeSaque({saldoSimuladoCentavos,valorSolicitadoCentavo
   valorSolicitadoCentavos,origemExclusiva:'LOOP_DIREITA',
   transferenciaExecutada:false,necessitaSaldoRealReserva:true};
 }
-module.exports={IndicacoesLinksComissoesDemoSQLite,caminhoLink,extrairLink,apelidoSeguro,simularElegibilidadeSaque};
+module.exports={IndicacoesLinksComissoesDemoSQLite,caminhoLink,caminhoLinkDestino,extrairLink,apelidoSeguro,simularElegibilidadeSaque};
