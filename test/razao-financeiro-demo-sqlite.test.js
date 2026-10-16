@@ -191,8 +191,8 @@ test('rotas do livro exigem token e servidor local e nao recebem campos financei
   assert.equal(resposta.status,200);
   assert.equal(resposta.headers.get('cache-control'),'no-store');
   const livro=await resposta.json();
-  assert.equal(livro.lancamentosRegistrados,12);
-  assert.equal(cofre(livro,COFRES.COMERCIAL).saldoProjetadoCentavos,6000);
+  assert.equal(livro.lancamentosRegistrados,14);
+  assert.equal(cofre(livro,COFRES.COMERCIAL).saldoProjetadoCentavos,11000);
   assert.equal(db.listar().length,0);
 });
 
