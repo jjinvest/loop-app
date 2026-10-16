@@ -43,3 +43,4 @@ O histórico consolida carrinhos e compras confirmadas individualmente, de forma
 ## Limitações
 
 A integração não habilita pagamento real nem entrega de mercadoria. Um pedido ainda pode precisar de conferência depois de um estorno ou problema de sincronização; o histórico não altera automaticamente posições já criadas. O protótipo ainda precisa de autenticação e infraestrutura apropriadas para produção.
+\n## Atualização da segunda ativação (16/10/2026)\n\nApós uma compra fictícia de qualquer valor, a conta pode confirmar CPF fictício e termos, mesmo sem posição. Isso habilita bonificações apenas em eventos posteriores. Quando o CPF e os termos já estão confirmados, posições novas nascem ativas, sem exigir novo aceite; posições azuis antigas ainda podem ser ativadas antes de entrarem no tabuleiro. Nenhum direito real a saque ou bonificação foi implementado.\n
