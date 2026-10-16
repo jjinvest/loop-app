@@ -1564,7 +1564,7 @@
     status.textContent='Consultando cenários fictícios e aparência...';
     try{
       const [visao,config]=await Promise.all([
-        requisitar('financeiro-demo?modo='+encodeURIComponent(modo.value)),
+        requisitar(consultaFinanceira()),
         requisitar('cofres-demo/configuracoes')
       ]);
       if(atual!==versao)return;
