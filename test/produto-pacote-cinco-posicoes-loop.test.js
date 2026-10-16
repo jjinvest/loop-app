@@ -13,9 +13,9 @@ function produto(id,valor){
   descricao:'Produto apenas demonstrativo',precoCentavos:valor,
   entrega:'FORNECEDOR_INTEGRADO',fotos:[],videoApresentacaoUrl:null,detalhes:[]};
 }
-test('produto especial cria cinco posicoes atomicas, bloqueia sexta e libera uma apos ciclo concluido',async t=>{
+test('produto especial cria seis posicoes atomicas, bloqueia sexta e libera uma apos ciclo concluido',async t=>{
  const repo=new RepositorioCatalogoSQLite({caminho:':memory:'});t.after(()=>repo.fechar());
- repo.salvar({produto:produto('pacote-cinco',125000),revisaoEsperada:0});
+ repo.salvar({produto:produto('pacote-cinco',150000),revisaoEsperada:0});
  repo.salvar({produto:produto('produto-comum',25000),revisaoEsperada:0});
  const contas=new ContasParticipantesDemoSQLite({banco:repo.banco});
  const usuario=contas.cadastrar({nome:'Cliente Pacote Cinco',
@@ -36,16 +36,16 @@ test('produto especial cria cinco posicoes atomicas, bloqueia sexta e libera uma
  const inicial=(await req('GET',caminho+'/elegibilidade')).data.produtos;
  assert.equal(inicial.find(p=>p.produtoId==='pacote-cinco').posicoesPorPedidoLoop,1);
  assert.equal((await req('POST',caminho+'/pacote-posicoes',{
-  produtoId:'pacote-cinco',posicoesPorPedidoLoop:6,revisaoEsperada:1
+  produtoId:'pacote-cinco',posicoesPorPedidoLoop:7,revisaoEsperada:1
  })).status,400);
  assert.equal((await req('POST',caminho+'/pacote-posicoes',{
-  produtoId:'pacote-cinco',posicoesPorPedidoLoop:5,revisaoEsperada:1
+  produtoId:'pacote-cinco',posicoesPorPedidoLoop:6,revisaoEsperada:1
  },{'Content-Type':'application/json'})).status,401);
  const configurado=await req('POST',caminho+'/pacote-posicoes',{
-  produtoId:'pacote-cinco',posicoesPorPedidoLoop:5,revisaoEsperada:1
+  produtoId:'pacote-cinco',posicoesPorPedidoLoop:6,revisaoEsperada:1
  });
  assert.equal(configurado.status,200);
- assert.equal(configurado.data.regra.posicoesPorPedidoLoop,5);
+ assert.equal(configurado.data.regra.posicoesPorPedidoLoop,6);
  assert.equal((await req('POST',caminho+'/pacote-posicoes',{
   produtoId:'pacote-cinco',posicoesPorPedidoLoop:1,revisaoEsperada:1
  })).status,409);
@@ -62,34 +62,34 @@ test('produto especial cria cinco posicoes atomicas, bloqueia sexta e libera uma
   return r.data.integracao;
  }
  const pedido=await criar('compra-pacote',usuario.contaId,'pacote-cinco');
- assert.equal(pedido.posicoesSolicitadas,5);
- assert.equal(pedido.itens[0].posicoesPorPedidoLoop,5);
+ assert.equal(pedido.posicoesSolicitadas,6);
+ assert.equal(pedido.itens[0].posicoesPorPedidoLoop,6);
  const pagamento=await pagar('compra-pacote');
- assert.equal(pagamento.posicoesCriadas,5,JSON.stringify(pagamento));
- assert.equal(pagamento.posicaoIds.length,5);
- assert.equal(new Set(pagamento.posicaoIds).size,5);
- assert.equal((await req('GET','ponte-compras-convites-demo')).data.filas.B.quantidade,5);
+ assert.equal(pagamento.posicoesCriadas,6,JSON.stringify(pagamento));
+ assert.equal(pagamento.posicaoIds.length,6);
+ assert.equal(new Set(pagamento.posicaoIds).size,6);
+ assert.equal((await req('GET','ponte-compras-convites-demo')).data.filas.B.quantidade,6);
  assert.equal((await req('POST',caminho+'/compra-pacote/sincronizar',{})).data.repetido,true);
  assert.equal(repo.banco.prepare(
   "SELECT COUNT(*) AS n FROM admin_ponte_posicoes_adicionais_demo WHERE pedido_id='compra-pacote'"
- ).get().n,4);
+ ).get().n,5);
  const ponte=new PonteComprasConvitesDemoSQLite({banco:repo.banco,contas,
   consultarPagamentoConfiavel:async()=>null});
  const escritorio=new EscritorioIndividualDemo({ponte,contas});
- assert.equal(escritorio.consultar(usuario.contaId).posicoes.length,5);
+ assert.equal(escritorio.consultar(usuario.contaId).posicoes.length,6);
  assert.equal(escritorio.consultar(usuario.contaId).vagasLivres,0);
- assert.equal(escritorio.consultar(usuario.contaId).compras[0].posicaoIds.length,5);
+ assert.equal(escritorio.consultar(usuario.contaId).compras[0].posicaoIds.length,6);
  const rejeitado=await criar('sexta-vaga-bloqueada',usuario.contaId,'produto-comum');
  const integracao=await pagar('sexta-vaga-bloqueada');
  assert.equal(integracao.situacao,'SINCRONIZACAO_PENDENTE');
  assert.equal(integracao.erro,'LIMITE_ATIVO');
  assert.equal(escritorio.consultar(usuario.contaId).vagasLivres,0);
- // Um segundo titular continua tendo direito a suas proprias cinco vagas.
+ // Um segundo titular continua tendo direito a suas proprias seis vagas.
  const normal=await criar('pedido-comum-outro',segundo.contaId,'produto-comum');
  assert.equal(normal.posicoesSolicitadas,1);
  assert.equal((await pagar('pedido-comum-outro')).posicoesCriadas,1);
  const pacoteParcial=await criar('pacote-sem-cinco-vagas',segundo.contaId,'pacote-cinco');
- assert.equal(pacoteParcial.posicoesSolicitadas,5);
+ assert.equal(pacoteParcial.posicoesSolicitadas,6);
  const naoParcial=await pagar('pacote-sem-cinco-vagas');
  assert.equal(naoParcial.situacao,'SINCRONIZACAO_PENDENTE');
  assert.equal(naoParcial.erro,'LIMITE_ATIVO');
@@ -99,12 +99,12 @@ test('produto especial cria cinco posicoes atomicas, bloqueia sexta e libera uma
  // O CPF ficticio e termos continuam independentes do produto comprado.
  const adesoes=new AdesoesPosicoesDemoSQLite({ponte,relogio:()=>new Date().toISOString()});
  assert.equal(adesoes.ativar({contaId:usuario.contaId,
-  cpfFicticio:'11144477735',aceitaTermos:true,versaoTermos:'LOOP-DEMO-V1'}).ativadas,5);
+  cpfFicticio:'11144477735',aceitaTermos:true,versaoTermos:'LOOP-DEMO-V1'}).ativadas,6);
  const preparado=ponte.prepararTabuleiroDemo();
  assert.ok(preparado.tabuleiro.centro);
  assert.equal(preparado.tabuleiro.centro.participanteId,usuario.contaId);
  const sim=ponte._restaurar();
- for(let i=0;i<5;i++)sim.registrarVendaNoCicloSimulada({vendaId:'venda-do-ciclo-'+i});
+ for(let i=0;i<6;i++)sim.registrarVendaNoCicloSimulada({vendaId:'venda-do-ciclo-'+i});
  sim.abrirCatraca();
  assert.equal(sim.tentarGiro().girou,true);
  // Registra so o estado da simulacao, sem dinheiro nem saques.
@@ -117,9 +117,9 @@ test('produto especial cria cinco posicoes atomicas, bloqueia sexta e libera uma
  assert.equal(retomado.status,200,JSON.stringify(retomado.data));
  assert.equal(retomado.data.posicoesCriadas,1);
  assert.equal(escritorio.consultar(usuario.contaId).vagasLivres,0);
- assert.equal(escritorio.consultar(usuario.contaId).posicoes.length,5);
+ assert.equal(escritorio.consultar(usuario.contaId).posicoes.length,6);
  assert.equal(repo.banco.prepare('SELECT COUNT(*) AS n FROM admin_ponte_compras_demo').get().n,3);
- assert.equal(repo.banco.prepare('SELECT COUNT(*) AS n FROM admin_ponte_posicoes_adicionais_demo').get().n,4);
+ assert.equal(repo.banco.prepare('SELECT COUNT(*) AS n FROM admin_ponte_posicoes_adicionais_demo').get().n,5);
  assert.throws(()=>repo.banco.exec(
   'UPDATE admin_produtos_pacote_posicoes_historico_demo SET novo=1'
  ),/historico de pacotes imutavel/);
