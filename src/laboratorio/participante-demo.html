@@ -27,6 +27,12 @@
    <p id="estadoParticipante" role="status" aria-live="polite">Nenhuma sessão de teste aberta.</p>
   </section>
   <div id="conteudoParticipante" hidden>
+   <nav class="atalhos-participante" aria-label="Navegação do meu escritório">
+    <a href="/laboratorio/loja">Loja</a>
+    <a href="#tituloHistoricoLojaParticipante">Meus pedidos</a>
+    <a href="#tituloMapaParticipante">Filas e tabuleiro</a>
+    <a href="#secaoAtivacaoParticipante" id="atalhoAtivarParticipante" hidden>Ativar posição azul</a>
+   </nav>
    <section class="cartao-participante">
     <h2 id="nomeLogadoParticipante">Meu resumo</h2>
     <p id="conviteParticipante" class="codigo-indicacao"></p>
@@ -80,12 +86,26 @@
      <span class="selo-posicao-demo posicao-azul">Pendente</span>
      <span class="selo-posicao-demo posicao-dourado">LOOP</span>
     </div>
-    <div class="duas-colunas-participante">
-     <div><h3>Fila A</h3><ol id="mapaFilaAParticipante" class="mapa-fila-posicoes-demo"></ol></div>
-     <div><h3>Fila B</h3><ol id="mapaFilaBParticipante" class="mapa-fila-posicoes-demo"></ol></div>
+    <p id="resumoMapaParticipante" class="ajuda-portal" aria-live="polite"></p>
+    <div class="controle-mapa-participante" role="group" aria-label="Como mostrar as filas">
+     <button type="button" id="filtroResumoMapaParticipante" aria-pressed="true">Resumo</button>
+     <button type="button" id="filtroMinhasMapaParticipante" aria-pressed="false">Minhas posições</button>
+     <button type="button" id="filtroTodasMapaParticipante" aria-pressed="false">Fila completa</button>
     </div>
-    <h3>Tabuleiro</h3>
-    <div id="mapaTabuleiroParticipante" class="mapa-tabuleiro-posicoes-demo"></div>
+    <p class="ajuda-portal" id="ajudaFiltroMapaParticipante">O resumo mostra as primeiras posições de cada fila e todas as suas posições, mantendo os números reais de ordem.</p>
+    <div class="duas-colunas-participante colunas-filas-participante">
+     <div class="bloco-fila-participante">
+      <h3>Fila A <small id="contadorFilaAParticipante"></small></h3>
+      <ol id="mapaFilaAParticipante" class="mapa-fila-posicoes-demo"></ol>
+     </div>
+     <div class="bloco-fila-participante">
+      <h3>Fila B <small id="contadorFilaBParticipante"></small></h3>
+      <ol id="mapaFilaBParticipante" class="mapa-fila-posicoes-demo"></ol>
+     </div>
+    </div>
+    <h3 class="titulo-tabuleiro-participante">Tabuleiro <small>Centro + 5 vagas</small></h3>
+    <p class="ajuda-portal">A posição no desenho não muda a prioridade ou a ordem das filas.</p>
+    <div id="mapaTabuleiroParticipante" class="mapa-tabuleiro-posicoes-demo" role="group" aria-label="Centro e cinco posições do tabuleiro"></div>
    </section>
       <div class="duas-colunas-participante">
     <section class="cartao-participante">
