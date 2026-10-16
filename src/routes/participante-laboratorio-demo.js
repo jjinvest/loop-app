@@ -24,7 +24,7 @@ function setCookie(res,token,maxAge){
  res.append('Set-Cookie',COOKIE+'='+token+'; HttpOnly; SameSite=Strict; Path='+CAMINHO+
   '; Max-Age='+maxAge);
 }
-function criarRouterParticipanteDemo({contas,ponte,sessoes=null,adesoes=null,carrinhos=null}={}){
+function criarRouterParticipanteDemo({contas,ponte,sessoes=null,adesoes=null,carrinhos=null,saques=null}={}){
  if(!contas||!ponte)throw new TypeError('Cadastro e ponte do laboratorio obrigatorios');
  const gerenciador=sessoes||new SessoesParticipanteDemo({contas});
  const escritorio=new EscritorioIndividualDemo({contas,ponte});
@@ -111,6 +111,35 @@ function criarRouterParticipanteDemo({contas,ponte,sessoes=null,adesoes=null,car
    return next(err);
   }
  });
+  // Controle somente ficticio de solicitacoes; nunca aceita saldo do navegador.
+  router.get('/saques-simulados',(req,res,next)=>{
+   if(!saques)return res.status(501).json({erro:'SAQUES_SIMULADOS_NAO_CONFIGURADOS'});
+   try{
+    const contaId=gerenciador.identificar(lerCookie(req));
+    if(!contaId)return res.status(401).json({erro:'SESSAO_AUSENTE_OU_EXPIRADA'});
+    return res.json(saques.consultar(contaId));
+   }catch(e){return next(e);}
+  });
+  router.post('/saques-simulados',(req,res,next)=>{
+   if(!saques)return res.status(501).json({erro:'SAQUES_SIMULADOS_NAO_CONFIGURADOS'});
+   if(!req.is('application/json'))return res.status(415).json({erro:'USE_APPLICATION_JSON'});
+   const body=req.body;
+   if(!body||typeof body!=='object'||Array.isArray(body)||
+    Object.keys(body).sort().join(',')!=='solicitacaoId,tipo,valorSolicitadoCentavos')
+    return res.status(400).json({erro:'CAMPOS_SAQUE_INVALIDOS'});
+   try{
+    const contaId=gerenciador.identificar(lerCookie(req));
+    if(!contaId)return res.status(401).json({erro:'SESSAO_AUSENTE_OU_EXPIRADA'});
+    return res.json(saques.registrar({...body,contaId}));
+   }catch(e){
+    if(['SAQUE_INVALIDO','MINIMO_SAQUE_25_REAIS','TIPO_SAQUE_INVALIDO',
+     'SOLICITACAO_ID_INVALIDO'].includes(e.codigo))return res.status(400).json({erro:e.codigo});
+    if(['CPF_E_TERMOS_OBRIGATORIOS','SALDO_SIMULADO_INSUFICIENTE',
+     'SALDO_PARTICIPACAO_INDISPONIVEL','CONFLITO_IDEMPOTENCIA'].includes(e.codigo))
+     return res.status(409).json({erro:e.codigo});
+    return next(e);
+   }
+  });
   // Loja acessada pelo proprio titular. O navegador NAO informa o CPF,
   // conta, preco, pedidoId nem estado do pagamento. Apenas os itens.
   router.get('/meus-links',(req,res,next)=>{
@@ -212,6 +241,7 @@ function criarRouterParticipanteDemo({contas,ponte,sessoes=null,adesoes=null,car
    }):null;
    return res.json({...visao,
     historicoLoja,
+    saquesSimulados:saques?saques.consultar(contaId):null,
     adesao:adesoes?adesoes.consultarConta(contaId):null});
   }catch(erro){return next(erro);}
  });
