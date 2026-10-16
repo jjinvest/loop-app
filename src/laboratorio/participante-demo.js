@@ -221,7 +221,9 @@
    item.append(titulo,detalhes,estado);
    if(pedido.posicaoId!==null){
     const numero=document.createElement('small');
-    numero.textContent='Posição LOOP nº '+pedido.posicaoId;
+    const numeros=pedido.posicaoIds?.length?pedido.posicaoIds:[pedido.posicaoId];
+    numero.textContent=numeros.length===1?'Posição LOOP nº '+numeros[0]:
+     'Pacote LOOP: '+numeros.length+' posições individuais nº '+numeros.join(', ');
     item.append(numero);
    }
    if(pedido.estado==='AGUARDANDO_ATIVACAO'){
