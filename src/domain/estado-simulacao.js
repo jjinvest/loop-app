@@ -67,6 +67,10 @@ function restaurarSnapshot(snapshot, criarLoop) {
   const s = copiar(snapshot);
   exigir(s.formato === 'LOOP_SIMULADOR_V1' && s.versao === 1, 'versao nao suportada');
   const f = s.filas, t = s.tabuleiro, c = s.catraca;
+  // Migracao de snapshots ficticios antigos: preserva IDs, fila, centro,
+  // cinco vagas e ciclos concluidos de cinco. A nova sexta vaga nasce vazia;
+  // ciclos antigos continuam historicos, sem reabrir pagamentos ou giros.
+  if(Array.isArray(t?.vagas)&&t.vagas.length===5)t.vagas.push(null);
   exigir(objeto(f) && objeto(t) && objeto(c), 'secoes incompletas');
   for (const campo of ['sequencia','contadorA','evento']) {
     exigir(inteiro(f[campo]), 'filas.' + campo + ' invalido');
