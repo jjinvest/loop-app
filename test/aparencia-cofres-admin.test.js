@@ -41,7 +41,7 @@ test('seis cofres recebem configuracoes visuais sem alterar estrutura ou transac
     assert.equal(list.length,6);
     assert.equal(DEFINICOES.length,6);
     assert.deepEqual(list.map(x=>x.id),[
-      COFRES.ESQUERDA,COFRES.CENTRO,COFRES.DIREITA,COFRES.COMERCIAL,COFRES.DISTRIBUIDOR
+      COFRES.ESQUERDA,COFRES.CENTRO,COFRES.DOURADAS,COFRES.DIREITA,COFRES.COMERCIAL,COFRES.DISTRIBUIDOR
     ]);
     assert.ok(list.every(x=>x.revisao===0 && x.integracaoBancaria==='NAO_CONFIGURADA'));
     const editado=repo.salvar({
