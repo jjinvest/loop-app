@@ -34,6 +34,8 @@
   let versaoHistoricoPDF=0;
   let salvandoPDF=false;
   let salvandoEventoPDF=false;
+  let salvandoVinculoPDF=false;
+  let sincronizandoPDF=false;
   let pedidosPDF=[];
   let salvandoPedidoComercial=false;
   let versaoHistoricoPonte=0;
@@ -72,9 +74,12 @@
     ++versaoHistoricoPDF;
     pedidosPDF=[];
     for(const id of ['listaPedidosPDFDemo','historicoEventoPDFDemo',
-      'produtoPedidoPDFDemo','pedidoEventoPDFDemo'])el(id).replaceChildren();
+      'produtoPedidoPDFDemo','pedidoEventoPDFDemo','titularPedidoPDFLoopDemo',
+      'pedidoVinculoPDFLoopDemo'])el(id).replaceChildren();
     el('statusPedidosPDFDemo').textContent='';
     el('statusEventoPDFDemo').textContent='';
+    el('estadoVinculoPDFLoopDemo').textContent='';
+    el('estadoSincronizacaoPDFLoopDemo').textContent='';
     el('statusMaterialPDFDemo').textContent='';
     el('auditoriaMaterialPDFDemo').textContent='Solicitações de download fictício: 0';
     el('baixarMaterialPDFDemo').disabled=true;
@@ -397,8 +402,9 @@
     const status=el('statusPedidosPDFDemo');
     if(!token){status.textContent='Abra o laboratório com a chave administrativa.';return;}
     try{
-      const [dados,opcoes]=await Promise.all([
-        requisitar('pedidos-pdf-demo'),requisitar('pedidos-pdf-demo/opcoes')
+      const [dados,opcoes,contas]=await Promise.all([
+        requisitar('pedidos-pdf-demo'),requisitar('pedidos-pdf-demo/opcoes'),
+        requisitar('contas-participantes-demo')
       ]);
       if(atual!==versaoPDF)return;
       pedidosPDF=dados.pedidos;
@@ -412,6 +418,19 @@
         cursoSelect.append(opt);
       }
       if(opcoes.produtos.some(c=>c.produtoId===cursoAntigo))cursoSelect.value=cursoAntigo;
+      const titularSelect=el('titularPedidoPDFLoopDemo');
+      const titularAnterior=titularSelect.value;
+      titularSelect.replaceChildren();
+      for(const conta of contas.contas){
+        const opt=document.createElement('option');
+        opt.value=conta.contaId;
+        opt.textContent=conta.nome+' — '+conta.login;
+        titularSelect.append(opt);
+      }
+      if(contas.contas.some(c=>c.contaId===titularAnterior))titularSelect.value=titularAnterior;
+      const pedidoVinculo=el('pedidoVinculoPDFLoopDemo');
+      const pedidoVinculoAnterior=pedidoVinculo.value;
+      pedidoVinculo.replaceChildren();
       const pedidoSelect=el('pedidoEventoPDFDemo');
       const pedidoAntigo=pedidoSelect.value;
       pedidoSelect.replaceChildren();
@@ -422,6 +441,10 @@
         opt.value=pedido.pedidoId;
         opt.textContent=pedido.pedidoId+' — '+money(pedido.precoBrutoCentavos);
         pedidoSelect.append(opt);
+        const outra=document.createElement('option');
+        outra.value=pedido.pedidoId;
+        outra.textContent=pedido.pedidoId+' — '+money(pedido.precoBrutoCentavos);
+        pedidoVinculo.append(outra);
         const item=document.createElement('div');
         item.className='financeiro-caixa';
         const titulo=document.createElement('strong');
@@ -439,10 +462,59 @@
         lista.append(item);
       }
       if(pedidosPDF.some(p=>p.pedidoId===pedidoAntigo))pedidoSelect.value=pedidoAntigo;
+      if(pedidosPDF.some(p=>p.pedidoId===pedidoVinculoAnterior))pedidoVinculo.value=pedidoVinculoAnterior;
       status.textContent=pedidosPDF.length+' pedido(s) PDF de teste. '+
         opcoes.produtos.length+' curso(s) PDF publicado(s) no catálogo.';
       await carregarHistoricoPDF();
     }catch(erro){if(atual===versaoPDF)status.textContent=erro.message;}
+  }
+  async function consultarVinculoPDF(){
+    const id=el('pedidoVinculoPDFLoopDemo').value;
+    if(!id||!token)return;
+    const estado=await requisitar('pedidos-pdf-demo/'+encodeURIComponent(id)+'/estado-loop');
+    const aviso=el('estadoSincronizacaoPDFLoopDemo');
+    if(!estado.vinculado)aviso.textContent='Pedido '+id+': ainda sem comprador identificado.';
+    else aviso.textContent='Pedido '+id+' vinculado. '+
+      (estado.posicaoCriada?'Posição '+estado.posicaoId+' criada no LOOP.':
+      estado.lojaSemPosicao?'Venda somente da loja, sem posição.':
+      'Aguardando confirmação do pagamento ou conferência.')+
+      ' Status: '+estado.situacaoPagamento+'.';
+  }
+  async function vincularCompradorPDF(evento){
+    evento.preventDefault();
+    if(!token||salvandoVinculoPDF)return;
+    const id=el('pedidoVinculoPDFLoopDemo').value;
+    const contaId=el('titularPedidoPDFLoopDemo').value;
+    const aviso=el('estadoVinculoPDFLoopDemo');
+    if(!id||!contaId){aviso.textContent='Escolha um pedido e uma conta fictícia.';return;}
+    salvandoVinculoPDF=true;
+    const botao=el('confirmarVinculoPDFLoopDemo');botao.disabled=true;
+    try{
+      const dado=await requisitar('pedidos-pdf-demo/'+encodeURIComponent(id)+'/vincular-loop',{
+        method:'POST',body:JSON.stringify({contaId})
+      });
+      aviso.textContent=dado.repetido?
+        'Comprador já vinculado ao mesmo pedido; nenhum dado duplicado.':
+        'Comprador identificado e fixado antes da confirmação fictícia.';
+      await consultarVinculoPDF();
+    }catch(e){aviso.textContent=e.message;}
+    finally{salvandoVinculoPDF=false;botao.disabled=false;}
+  }
+  async function conferirSincronizacaoPDF(){
+    const id=el('pedidoVinculoPDFLoopDemo').value;
+    const aviso=el('estadoSincronizacaoPDFLoopDemo');
+    if(!id||!token)return;
+    if(sincronizandoPDF)return;
+    sincronizandoPDF=true;const botao=el('sincronizarPDFLoopDemo');botao.disabled=true;
+    try{
+      const r=await requisitar('pedidos-pdf-demo/'+encodeURIComponent(id)+'/sincronizar-loop',{
+        method:'POST',body:'{}'
+      });
+      aviso.textContent='Conferência: '+r.situacao+
+        (r.posicaoId?' — posição '+r.posicaoId:'')+'.';
+      await carregarPedidosPDF();
+    }catch(e){aviso.textContent=e.message;}
+    finally{sincronizandoPDF=false;botao.disabled=false;}
   }
   async function registrarPedidoPDF(evento){
     evento.preventDefault();
@@ -482,8 +554,18 @@
         })
       });
       await carregarPedidosPDF();
-      aviso.textContent=resposta.repetido?'Evento fictício repetido: nada foi duplicado.':
-        'Pagamento PDF fictício registrado. Nenhum arquivo real ou valor transferido.';
+      const integracao=resposta.integracaoLoop;
+      aviso.textContent=(resposta.repetido?'Evento fictício repetido. ':'Evento PDF registrado. ')+
+        (integracao?.situacao==='POSICAO_LOOP_CRIADA_OU_EXISTENTE'?
+        'Compra qualificada: posição azul registrada no LOOP.':
+        integracao?.situacao==='SOMENTE_LOJA'?
+        'Compra de loja sem posição LOOP.':
+        integracao?.situacao==='SINCRONIZACAO_PENDENTE'?
+        'Conferência do LOOP pendente; use o botão de sincronização.':
+        integracao?.situacao==='SEM_TITULAR_PREDEFINIDO'?
+        'Sem posição: pedido não foi vinculado antes da confirmação.':
+        'Nenhuma posição criada neste evento.')+
+        ' Nenhum dinheiro real movimentado.';
     }catch(erro){aviso.textContent=erro.message;}
     finally{salvandoEventoPDF=false;botao.disabled=false;}
   }
@@ -1224,6 +1306,11 @@
   el('simularImpactoValorLoopDemo').addEventListener('click',simularImpactoValorLoop);
   el('formPedidosPDFDemo').addEventListener('submit',registrarPedidoPDF);
   el('formEventoPDFDemo').addEventListener('submit',registrarEventoPDF);
+  el('formVincularPDFLoopDemo').addEventListener('submit',vincularCompradorPDF);
+  el('sincronizarPDFLoopDemo').addEventListener('click',conferirSincronizacaoPDF);
+  el('pedidoVinculoPDFLoopDemo').addEventListener('change',()=>{
+    consultarVinculoPDF().catch(e=>{el('estadoSincronizacaoPDFLoopDemo').textContent=e.message;});
+  });
   el('atualizarPedidosPDFDemo').addEventListener('click',carregarPedidosPDF);
   el('pedidoEventoPDFDemo').addEventListener('change',carregarHistoricoPDF);
   el('baixarMaterialPDFDemo').addEventListener('click',baixarMaterialPDF);
