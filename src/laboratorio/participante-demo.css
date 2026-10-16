@@ -37,3 +37,17 @@ body{background:#090b0b;color:#f0f0e8}
 .checkbox-adesao-demo{display:flex;align-items:center;gap:10px;line-height:1.5;font-size:.95rem}
 .cartao-participante input[type=checkbox]{width:20px;height:20px;flex:none}
 @media(max-width:480px){.mapa-tabuleiro-posicoes-demo{grid-template-columns:repeat(2,minmax(0,1fr))}.espaco-tabuleiro-demo:first-child{grid-column:1/-1;grid-row:auto}}
+
+/* Historico pessoal da loja; cores descrevem estados, nao valores financeiros. */
+.cabecalho-historico-loja-participante{display:flex;justify-content:space-between;gap:14px;align-items:center;flex-wrap:wrap}
+.link-loja-participante,.acao-ativar-pedido-participante{display:inline-block;padding:10px 13px;border:1px solid #63b18b;border-radius:9px;color:#b5f6ce;text-decoration:none;font-weight:700}
+.link-loja-participante:hover,.acao-ativar-pedido-participante:hover{text-decoration:underline}
+.historico-loja-participante{list-style:none;padding:0;display:grid;gap:12px}
+.pedido-historico-participante{padding:15px;background:#13252a;border:1px solid #467077;border-radius:11px;display:flex;flex-direction:column;gap:7px;overflow-wrap:anywhere}
+.pedido-historico-participante small{color:#bacbd1;font-size:.87rem}
+.estado-pedido-participante{font-size:.88rem;font-weight:700;border-radius:7px;padding:6px 9px;background:#304b58;color:#edf8fc;align-self:flex-start}
+.estado-pedido-aguardando-ativacao{background:#1c519c;color:#fff}
+.estado-pedido-posicao-ativada{background:#a62735;color:#fff}
+.estado-pedido-posicao-dourada-loop{background:#e5b545;color:#231a00}
+.estado-pedido-compra-sem-posicao{background:#3b525b;color:#f0f5f5}
+.estado-pedido-estorno-em-conferencia{background:#805c25;color:#fff}
