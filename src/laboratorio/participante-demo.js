@@ -19,7 +19,9 @@
   e('posicoesParticipante').replaceChildren();
   e('pedidosParticipante').replaceChildren();
   e('enderecoLinkParticipante').value='';
+  e('enderecoLinkLojaParticipante').value='';
   e('copiarLinkParticipante').disabled=true;
+  e('copiarLinkLojaParticipante').disabled=true;
   e('statusLinkIndicacaoParticipante').textContent='';
   e('avisoLinkParticipante').textContent='';
   e('bonusSaldoParticipante').textContent='R$ 0,00';
@@ -239,9 +241,11 @@
   function mostrar(visao){
   e('nomeLogadoParticipante').textContent=visao.conta.nome+' — meu resumo';
   const link=visao.linkIndicacao;
-  e('enderecoLinkParticipante').value=location.origin+link.link;
+  e('enderecoLinkParticipante').value=location.origin+(link.linkEscritorio||link.link);
+  e('enderecoLinkLojaParticipante').value=location.origin+link.linkLoja;
   e('apelidoLinkParticipante').value=link.apelido==='meu-loop'?'':link.apelido;
   e('copiarLinkParticipante').disabled=!link.ativo;
+  e('copiarLinkLojaParticipante').disabled=!link.ativo;
   e('statusLinkIndicacaoParticipante').textContent=link.ativo?
    'Link ATIVO para divulgação. Bonificações somente após CPF e aceite expresso dos termos.':
    'Link INATIVO: faça uma compra confirmada de qualquer valor na loja. Não precisa ter posição no LOOP.';
@@ -377,10 +381,20 @@
   if(e('copiarLinkParticipante').disabled)return;
   try{
    await navigator.clipboard.writeText(e('enderecoLinkParticipante').value);
-   e('avisoLinkParticipante').textContent='Link copiado para divulgação.';
+   e('avisoLinkParticipante').textContent='Link do Escritório copiado para divulgação.';
   }catch{
    e('enderecoLinkParticipante').focus();e('enderecoLinkParticipante').select();
    e('avisoLinkParticipante').textContent='Selecione e copie o endereço acima.';
+  }
+ });
+ e('copiarLinkLojaParticipante').addEventListener('click',async()=>{
+  if(e('copiarLinkLojaParticipante').disabled)return;
+  try{
+   await navigator.clipboard.writeText(e('enderecoLinkLojaParticipante').value);
+   e('avisoLinkParticipante').textContent='Link da Loja copiado para divulgação.';
+  }catch{
+   e('enderecoLinkLojaParticipante').focus();e('enderecoLinkLojaParticipante').select();
+   e('avisoLinkParticipante').textContent='Selecione e copie o endereço da Loja acima.';
   }
  });
  e('formApelidoLinkParticipante').addEventListener('submit',async ev=>{
