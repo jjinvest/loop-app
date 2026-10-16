@@ -4,9 +4,9 @@
 // Valores em centavos: somente calculos de laboratorio, sem caixa real.
 // Nao alterar historico ja confirmado por uma mudanca de configuracao.
 const VALOR_PADRAO_LOOP_CENTAVOS=25000;
-const VENDAS_POR_CICLO=5;
+const VENDAS_POR_CICLO=6;
 const EVENTOS_PARTICIPANTE=3;
-const EVENTOS_EMPRESA=2;
+const EVENTOS_EMPRESA=3;
 const VALOR_CICLO_PARTICIPANTE_CENTAVOS=VALOR_PADRAO_LOOP_CENTAVOS*EVENTOS_PARTICIPANTE;
 const VALOR_CICLO_EMPRESA_CENTAVOS=VALOR_PADRAO_LOOP_CENTAVOS*EVENTOS_EMPRESA;
 
