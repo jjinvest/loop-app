@@ -64,3 +64,27 @@ test('painel envia telefone opcional de legado mas exige formato valido, sem exp
  t.after(()=>new Promise(resolve=>srv2.close(resolve)));
  assert.equal((await fetch('http://127.0.0.1:'+srv2.address().port+'/admin/cadastro-participantes-demo')).status,404);
 });
+
+test('rota nova usada pelo formulario exige telefone tambem no servidor',async t=>{
+ const repo=new RepositorioCatalogoSQLite({caminho:':memory:'});t.after(()=>repo.fechar());
+ const chave='chave-teste-cadastro-obrigatorio-2026';
+ const app=criarAppAdminLaboratorio({repositorio:repo,segredo:chave});
+ const srv=app.listen(0,'127.0.0.1');await once(srv,'listening');
+ t.after(()=>new Promise(resolve=>srv.close(resolve)));
+ const base='http://127.0.0.1:'+srv.address().port;
+ const endpoint=base+'/api/admin/contas-participantes-demo/cadastrar-com-telefone';
+ const headers={'Content-Type':'application/json',Authorization:'Bearer '+chave};
+ const cliente={nome:'Nova Regra Telefone',email:'novo@exemplo.invalid',
+  senha:'senha-ficticia-segura-2026'};
+ const post=body=>fetch(endpoint,{method:'POST',headers,body:JSON.stringify(body)});
+ assert.equal((await post(cliente)).status,400,'nao aceita registro sem telefone');
+ assert.equal((await post({...cliente,telefone:''})).status,400,'nao aceita telefone vazio');
+ assert.equal((await post({...cliente,telefone:'111'})).status,400,'nao aceita telefone invalido');
+ const comTelefone=await post({...cliente,telefone:'(24) 99999-8833'});
+ assert.equal(comTelefone.status,201);
+ assert.equal((await comTelefone.json()).conta.telefoneInformadoNoTeste,true);
+ const script=await(await fetch(base+'/admin/cadastro-participantes-demo.js')).text();
+ assert.match(script,/cadastrar-com-telefone/);
+ const contas=new ContasParticipantesDemoSQLite({banco:repo.banco});
+ assert.equal(contas.listar().contas.length,1);
+});
