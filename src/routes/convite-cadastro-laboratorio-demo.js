@@ -30,14 +30,17 @@ function criarRouterConviteCadastroDemo({contas,links}={}){
    Object.keys(req.body).sort().join(',')!=='email,link,nome,senha,telefone'||
    typeof req.body.telefone!=='string'||!req.body.telefone.trim())
    return res.status(400).json({erro:'CADASTRO_INVALIDO'});
-  let verificado;
-  try{verificado=links.resolver(req.body.link);}
-  catch(e){return res.status(404).json({erro:'LINK_INVALIDO'});}
-  if(!verificado.ativo)return res.status(403).json({erro:'LINK_AINDA_INATIVO'});
+  let verificado=null;
+  // Entrada espontanea usa o mesmo cadastro, sem criar relacao de indicacao.
+  if(req.body.link!==null){
+   try{verificado=links.resolver(req.body.link);}
+   catch(e){return res.status(404).json({erro:'LINK_INVALIDO'});}
+   if(!verificado.ativo)return res.status(403).json({erro:'LINK_AINDA_INATIVO'});
+  }
   try{
    const conta=contas.cadastrar({
     nome:req.body.nome,email:req.body.email,telefone:req.body.telefone,
-    senha:req.body.senha,codigoIndicador:verificado.token
+    senha:req.body.senha,codigoIndicador:verificado?.token??null
    });
    return res.status(201).json({
     cadastradoNoTeste:true,contaId:conta.contaId,
