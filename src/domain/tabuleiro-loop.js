@@ -31,6 +31,10 @@ class TabuleiroLoop {
     return posicao ? { ...posicao } : null;
   }
 
+  // Todas as selecoes da fila cruzam a ENTRADA (vaga 6).
+  // Durante a montagem inicial o tabuleiro e distribuido em seus lugares
+  // definitivos, mas cada posicao cruza esta mesma fronteira antes de ocupar
+  // qualquer vaga interna ou o centro. Nao ha conversao na fila A ou B.
   selecionar() {
     const selecionado = this.proximoDaFila();
     if (!selecionado) return null;
@@ -38,11 +42,16 @@ class TabuleiroLoop {
       throw new Error('Selecao de fila retornou posicao invalida');
     }
     const posicao=this.copiarPosicao(selecionado.pessoa);
+    const entradaEm=this.relogio();
+    posicao.entradaPelaVaga6Em=entradaEm;
     if(posicao.statusAdesao==='PENDENTE'){
+      // O aceite nao aconteceu ANTES de cruzar a entrada na vaga 6:
+      // deixa de ser azul, passa a dourada e a titularidade e do LOOP.
       posicao.statusAdesao='PRAZO_ENCERRADO';
       posicao.titularOperacional='LOOP_EMPRESA';
       posicao.empresa=true;
-      posicao.prazoEncerradoEm=this.relogio();
+      posicao.prazoEncerradoEm=entradaEm;
+      posicao.motivoAssuncao='SEM_CPF_E_TERMOS_NA_ENTRADA_VAGA_6';
     }
     return {...posicao,origemFila:selecionado.origem};
   }
