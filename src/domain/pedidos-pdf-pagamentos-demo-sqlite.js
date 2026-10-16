@@ -36,6 +36,17 @@ class PedidosPDFPagamentosDemoSQLite{
     elegivel_loop INTEGER NOT NULL CHECK(elegivel_loop IN (0,1)),
     revisao_elegibilidade INTEGER NOT NULL CHECK(revisao_elegibilidade>=1)
    );
+   CREATE TABLE IF NOT EXISTS admin_pdf_demo_quantidade_minima_loop(
+    pedido_id TEXT PRIMARY KEY REFERENCES admin_pdf_demo_pedidos(pedido_id) ON DELETE RESTRICT,
+    quantidade_minima INTEGER NOT NULL CHECK(quantidade_minima BETWEEN 1 AND 100),
+    revisao_minima INTEGER NOT NULL CHECK(revisao_minima>=1)
+   );
+   CREATE TRIGGER IF NOT EXISTS admin_pdf_minimo_no_update
+    BEFORE UPDATE ON admin_pdf_demo_quantidade_minima_loop
+    BEGIN SELECT RAISE(ABORT,'quantidade minima PDF congelada'); END;
+   CREATE TRIGGER IF NOT EXISTS admin_pdf_minimo_no_delete
+    BEFORE DELETE ON admin_pdf_demo_quantidade_minima_loop
+    BEGIN SELECT RAISE(ABORT,'quantidade minima PDF congelada'); END;
    CREATE TRIGGER IF NOT EXISTS admin_pdf_elegibilidade_no_update
     BEFORE UPDATE ON admin_pdf_demo_elegibilidade_loop
     BEGIN SELECT RAISE(ABORT,'regra de elegibilidade do PDF imutavel'); END;
@@ -100,10 +111,16 @@ class PedidosPDFPagamentosDemoSQLite{
   const eleg=this.banco.prepare(
    'SELECT elegivel_loop AS elegivel,revisao_elegibilidade AS revisao FROM admin_pdf_demo_elegibilidade_loop WHERE pedido_id=?'
   ).get(row.pedido_id);
+  const regraQuantidade=this.banco.prepare(
+   'SELECT quantidade_minima AS minima,revisao_minima AS revisao FROM admin_pdf_demo_quantidade_minima_loop WHERE pedido_id=?'
+  ).get(row.pedido_id);
+  const minimo=regraQuantidade?.minima??1;
+  const contaLoop=(!eleg||Boolean(eleg.elegivel))&&minimo<=1;
   return {
    elegivelLoop:eleg?Boolean(eleg.elegivel):true,
+   quantidadeMinimaLoop:minimo,revisaoQuantidadeMinima:regraQuantidade?.revisao??1,
    revisaoElegibilidade:eleg?.revisao??1,
-   valorElegivelLoopCentavos:eleg&&!eleg.elegivel?0:row.preco_centavos,
+   valorElegivelLoopCentavos:contaLoop?row.preco_centavos:0,
    pedidoId:row.pedido_id,pagamentoId:row.pagamento_id,
    produtoId:row.produto_id,nomeProduto:row.nome_produto,
    revisaoProduto:row.revisao_produto,precoBrutoCentavos:row.preco_centavos,
@@ -168,7 +185,8 @@ class PedidosPDFPagamentosDemoSQLite{
     p.tipo==='PDF'&&p.estado==='PUBLICADO'&&
     Number.isSafeInteger(p.precoCentavos)&&p.precoCentavos>0
    ).map(p=>({produtoId:p.id,nome:p.nome,precoCentavos:p.precoCentavos,
-    elegivelLoop:this.elegibilidade.consultar(p.id).elegivelLoop})),
+    elegivelLoop:this.elegibilidade.consultar(p.id).elegivelLoop,
+    quantidadeMinimaLoop:this.elegibilidade.consultar(p.id).quantidadeMinimaLoop})),
    pagamentoReal:false,entregaReal:false
   };
  }
@@ -201,6 +219,10 @@ class PedidosPDFPagamentosDemoSQLite{
     INSERT INTO admin_pdf_demo_elegibilidade_loop(
      pedido_id,elegivel_loop,revisao_elegibilidade) VALUES (?,?,?)
    `).run(pedidoId,politica.elegivelLoop?1:0,politica.revisaoElegibilidade);
+   this.banco.prepare(`
+    INSERT INTO admin_pdf_demo_quantidade_minima_loop
+     (pedido_id,quantidade_minima,revisao_minima) VALUES (?,?,?)
+   `).run(pedidoId,politica.quantidadeMinimaLoop,politica.revisaoQuantidadeMinima);
    this.banco.exec('COMMIT');
    return {repetido:false,pedido:this.buscar(pedidoId)};
   }catch(e){this.banco.exec('ROLLBACK');throw e;}
