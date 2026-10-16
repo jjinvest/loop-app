@@ -148,9 +148,9 @@ class RazaoFinanceiroDemoSQLite{
       throw erro;
     }
   }
-  registrarCicloFicticio({cicloId,modo=MODOS.SPLIT}={}){
+  registrarCicloFicticio({cicloId,modo=MODOS.SPLIT,centroPosicao=null}={}){
     nomeSeguro(cicloId);
-    const base=criarVisaoFinanceiraAdminDemo({modo});
+    const base=criarVisaoFinanceiraAdminDemo({modo,centroPosicao});
     const eventos=base.vendas.map(v=>{
       const lancamentos=[
         {cofreId:v.destinoCiclo,natureza:'ENTRADA',valorCentavos:v.parcelaLoopCentavos},
@@ -165,7 +165,8 @@ class RazaoFinanceiroDemoSQLite{
         eventoId:cicloId+'-v'+v.eventoCiclo,
         tipo:'VENDA_FICTICIA',
         referencia:v.vendaId,
-        descricao:'Venda hipotetica R$600; custo fornecedor R$300; parcela LOOP R$100; '+modo,
+        descricao:'Venda hipotetica R$600; custo fornecedor R$300; parcela LOOP; '+modo+
+         '; centro: '+base.origemTitularCentro,
         lancamentos
       };
     });
