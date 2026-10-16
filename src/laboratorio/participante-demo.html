@@ -31,7 +31,7 @@
     <a href="/laboratorio/loja">Loja</a>
     <a href="#tituloHistoricoLojaParticipante">Meus pedidos</a>
     <a href="#tituloMapaParticipante">Filas e tabuleiro</a>
-    <a href="#secaoAtivacaoParticipante" id="atalhoAtivarParticipante" hidden>Ativar posição azul</a>
+    <a href="#secaoAtivacaoParticipante" id="atalhoAtivarParticipante" hidden>Confirmar CPF e termos</a>
    </nav>
    <section class="cartao-participante">
     <h2 id="nomeLogadoParticipante">Meu resumo</h2>
@@ -93,13 +93,13 @@
     <ol id="historicoPedidosLojaParticipante" class="historico-loja-participante"></ol>
    </section>
    <section class="cartao-participante" id="secaoAtivacaoParticipante" hidden>
-    <h2>Ative sua posição azul</h2>
-    <p class="aviso-portal">Sua posição já está na fila. Para ativá-la, confirme seus dados e aceite os termos de demonstração antes de entrar no tabuleiro.</p>
+    <h2>Segunda ativação: CPF e termos</h2>
+    <p class="aviso-portal">Após a primeira compra de qualquer valor, a identificação e o aceite das regras liberam as bonificações de teste de 10%. Uma compra qualificada no valor vigente do LOOP habilita as campanhas superiores. Se houver posição azul, este aceite também a ativa antes da entrada no tabuleiro. Nenhuma comissão anterior ao aceite é gerada retroativamente.</p>
     <form id="formAtivacaoParticipante" autocomplete="off">
      <label for="cpfFicticioParticipante">CPF de teste (não use CPF real)</label>
      <input id="cpfFicticioParticipante" type="text" inputmode="numeric" pattern="[0-9]{11}" maxlength="11" placeholder="Somente CPF fictício" autocomplete="off" required>
      <label class="checkbox-adesao-demo"><input id="aceiteTermosParticipante" type="checkbox" required> Li e aceito as regras de demonstração LOOP-DEMO-V1 (sem efeitos financeiros reais).</label>
-     <button type="submit" id="confirmarAtivacaoParticipante">Confirmar ativação no teste</button>
+     <button type="submit" id="confirmarAtivacaoParticipante">Confirmar CPF e termos no teste</button>
     </form>
     <p id="estadoAtivacaoParticipante" role="status" aria-live="polite"></p>
    </section>
