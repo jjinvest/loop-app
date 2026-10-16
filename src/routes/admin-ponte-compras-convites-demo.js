@@ -15,6 +15,18 @@ function criarRouterPonteComprasConvitesDemo({segredo,ponte}={}){
   try{return res.json(ponte.consultar());}
   catch(erro){return next(erro);}
  });
+ router.get('/ponte-compras-convites-demo/auditoria-ciclo',(req,res,next)=>{
+  if(Object.keys(req.query).join(',')!=='ciclo')
+   return res.status(400).json({erro:'INFORME_CICLO'});
+  const cicloNumero=Number(req.query.ciclo);
+  try{return res.json(ponte.auditarCicloFinanceiroDemo({cicloNumero}));}
+  catch(e){
+   if(e.codigo==='CICLO_INVALIDO')return res.status(400).json({erro:e.codigo});
+   if(['CICLO_INEXISTENTE','CENTRO_AUSENTE'].includes(e.codigo))
+    return res.status(404).json({erro:e.codigo});
+   return next(e);
+  }
+ });
  router.post('/ponte-compras-convites-demo/douradas',(req,res,next)=>{
   if(!req.is('application/json'))return res.status(415).json({erro:'JSON_OBRIGATORIO'});
   const b=req.body;
