@@ -15,6 +15,11 @@
   e('estadoAtivacaoParticipante').textContent='';
   e('posicoesParticipante').replaceChildren();
   e('pedidosParticipante').replaceChildren();
+  e('historicoPedidosLojaParticipante').replaceChildren();
+  e('totalPedidosLojaParticipante').textContent='0';
+  e('aguardandoPedidosLojaParticipante').textContent='0';
+  e('azuisPedidosLojaParticipante').textContent='0';
+  e('alertaAzulParticipante').hidden=true;
   e('mapaFilaAParticipante').replaceChildren();
   e('mapaFilaBParticipante').replaceChildren();
   e('mapaTabuleiroParticipante').replaceChildren();
@@ -74,6 +79,61 @@
    tabuleiro.append(bloco);
   }
  }
+ function dinheiro(centavos){
+  return (centavos/100).toLocaleString('pt-BR',{
+   style:'currency',currency:'BRL'
+  });
+ }
+ const rotulos={
+  AGUARDANDO_CONFIRMACAO:'Aguardando confirmação do pagamento de teste',
+  AGUARDANDO_ATIVACAO:'Posição azul: aguardando sua ativação',
+  POSICAO_ATIVADA:'Posição ativada',
+  POSICAO_DOURADA_LOOP:'Posição dourada: pertence ao LOOP',
+  COMPRA_SEM_POSICAO:'Compra confirmada, sem posição no LOOP',
+  ESTORNO_EM_CONFERENCIA:'Estorno de teste: em conferência',
+  SINCRONIZACAO_PENDENTE:'Confirmação ou posição em conferência'
+ };
+ function mostrarHistorico(historico){
+  const res=historico?.contagens||{};
+  e('totalPedidosLojaParticipante').textContent=res.total||0;
+  e('aguardandoPedidosLojaParticipante').textContent=res.aguardandoConfirmacao||0;
+  e('azuisPedidosLojaParticipante').textContent=res.aguardandoAtivacao||0;
+  const destino=e('historicoPedidosLojaParticipante');
+  destino.replaceChildren();
+  const pedidos=historico?.pedidos||[];
+  if(!pedidos.length){
+   const vazio=document.createElement('li');
+   vazio.textContent='Nenhum pedido registrado na loja de testes.';
+   destino.append(vazio);return;
+  }
+  for(const pedido of pedidos){
+   const item=document.createElement('li');
+   item.className='pedido-historico-participante';
+   const titulo=document.createElement('strong');
+   titulo.textContent='Pedido '+pedido.pedidoId+' · '+dinheiro(pedido.valorCentavos);
+   const detalhes=document.createElement('small');
+   detalhes.textContent=pedido.itens.length?
+    pedido.itens.map(p=>p.quantidade+' × '+p.nome).join(' + '):
+    'Compra individual registrada no laboratório';
+   const estado=document.createElement('span');
+   estado.className='estado-pedido-participante estado-pedido-'+pedido.estado.toLowerCase().replaceAll('_','-');
+   estado.textContent=rotulos[pedido.estado]||'Situação não identificada';
+   item.append(titulo,detalhes,estado);
+   if(pedido.posicaoId!==null){
+    const numero=document.createElement('small');
+    numero.textContent='Posição LOOP nº '+pedido.posicaoId;
+    item.append(numero);
+   }
+   if(pedido.estado==='AGUARDANDO_ATIVACAO'){
+    const link=document.createElement('a');
+    link.href='#secaoAtivacaoParticipante';
+    link.textContent='Ativar minha posição';
+    link.className='acao-ativar-pedido-participante';
+    item.append(link);
+   }
+   destino.append(item);
+  }
+ }
   function mostrar(visao){
   e('nomeLogadoParticipante').textContent=visao.conta.nome+' — meu resumo';
   e('conviteParticipante').textContent='Meu código de convite fictício: '+visao.conta.codigoConvite;
@@ -86,6 +146,14 @@
   if(visao.mapaCores)mostrarMapa(visao.mapaCores);
   const temAzul=visao.posicoes.some(p=>p.statusAdesao==='PENDENTE');
   e('secaoAtivacaoParticipante').hidden=!temAzul;
+  const aviso=e('alertaAzulParticipante');
+  aviso.hidden=!temAzul;
+  if(temAzul){
+   const quantidade=visao.posicoes.filter(p=>p.statusAdesao==='PENDENTE').length;
+   aviso.textContent='Você tem '+quantidade+
+    ' posição(ões) azul(is) na fila. Informe o CPF fictício e aceite os termos na seção de ativação antes da entrada no tabuleiro.';
+  }
+  mostrarHistorico(visao.historicoLoja);
   lista('pedidosParticipante',visao.compras,p=>'Pedido fictício '+p.pedidoId+
    ' — '+p.produtoId+' — '+(p.valorCentavos/100).toLocaleString('pt-BR',{style:'currency',currency:'BRL'})+
    ' (verificador interno de teste)');
