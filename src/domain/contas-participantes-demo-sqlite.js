@@ -23,6 +23,30 @@ function emailNormalizado(email){
  }
  return email.trim().toLowerCase();
 }
+// Cadastro inicial: telefone brasileiro opcional somente para legado
+// das simulacoes ja existentes. Interface nova o exige no navegador.
+function telefoneNormalizado(telefone){
+ if(telefone===undefined||telefone===null||telefone==='')return null;
+ if(typeof telefone!=='string'||telefone.length>32||
+  !/^[+() .0-9-]+$/.test(telefone)){
+  throw falha('INVALIDO','Telefone de teste invalido');
+ }
+ let digitos=telefone.replace(/\D/g,'');
+ if(digitos.length===12||digitos.length===13){
+  if(!digitos.startsWith('55'))throw falha('INVALIDO','Use telefone brasileiro');
+  digitos=digitos.slice(2);
+ }
+ if(!/^\d{10,11}$/.test(digitos))throw falha('INVALIDO','Telefone brasileiro deve ter DDD');
+ const ddd=Number(digitos.slice(0,2));
+ if(ddd<11||ddd>99)throw falha('INVALIDO','DDD invalido');
+ const numero=digitos.slice(2);
+ if((numero.length===9&&!numero.startsWith('9'))||
+  (numero.length===8&&!/^[2-5]/.test(numero))||
+  /^([0-9])\1+$/.test(numero)){
+  throw falha('INVALIDO','Numero de telefone invalido');
+ }
+ return '+55'+digitos;
+}
 function senhaValida(senha){
  if(typeof senha!=='string'||senha.length<10||senha.length>128||
     /[\u0000-\u001f\u007f]/.test(senha)){
@@ -41,6 +65,7 @@ function contaExterna(linha){
   codigoConvite:linha.codigo_convite,
   indicadoPorId:linha.indicado_por_id,
   criadoEm:linha.criado_em,
+  telefoneInformadoNoTeste:Boolean(linha.tem_telefone),
   cadastroConfirmadoNoTeste:true,
   compraConfirmada:false,indicacaoValida:false,
   fila:'NAO_INTEGRADA',posicoesCriadas:0,
@@ -64,6 +89,17 @@ class ContasParticipantesDemoSQLite{
     criado_em TEXT NOT NULL,
     CHECK(id<>indicado_por_id)
    );
+   CREATE TABLE IF NOT EXISTS admin_contas_telefones_demo(
+    conta_id TEXT PRIMARY KEY NOT NULL REFERENCES admin_contas_participantes_demo(id) ON DELETE RESTRICT,
+    telefone_normalizado TEXT NOT NULL UNIQUE,
+    CHECK(length(telefone_normalizado) IN (13,14))
+   );
+   CREATE TRIGGER IF NOT EXISTS admin_contas_telefones_no_update
+    BEFORE UPDATE ON admin_contas_telefones_demo
+    BEGIN SELECT RAISE(ABORT,'telefone demo imutavel'); END;
+   CREATE TRIGGER IF NOT EXISTS admin_contas_telefones_no_delete
+    BEFORE DELETE ON admin_contas_telefones_demo
+    BEGIN SELECT RAISE(ABORT,'telefone demo imutavel'); END;
    CREATE INDEX IF NOT EXISTS idx_contas_demo_indicador
     ON admin_contas_participantes_demo(indicado_por_id);
    CREATE TABLE IF NOT EXISTS admin_contas_eventos_demo(
@@ -82,8 +118,9 @@ class ContasParticipantesDemoSQLite{
   this.hashFalso=scryptSync('senha-inexistente-no-laboratorio',
     Buffer.from('00000000000000000000000000000000','hex'),64);
  }
- cadastrar({nome,email,senha,codigoIndicador=null}={}){
+ cadastrar({nome,email,telefone,senha,codigoIndicador=null}={}){
   const dados=nomeLogin(nome),emailLimpo=emailNormalizado(email);
+  const telefoneLimpo=telefoneNormalizado(telefone);
   senhaValida(senha);
   if(codigoIndicador!==null&&(typeof codigoIndicador!=='string'||!CODIGO.test(codigoIndicador))){
    throw falha('INVALIDO','Codigo de convite invalido');
@@ -96,6 +133,9 @@ class ContasParticipantesDemoSQLite{
    if(this.banco.prepare('SELECT 1 FROM admin_contas_participantes_demo WHERE email_normalizado=?').get(emailLimpo)){
     throw falha('CONFLITO','Email de teste ja cadastrado');
    }
+   if(telefoneLimpo&&this.banco.prepare(
+    'SELECT 1 FROM admin_contas_telefones_demo WHERE telefone_normalizado=?'
+   ).get(telefoneLimpo))throw falha('CONFLITO','Telefone de teste ja cadastrado');
    let indicador=null;
    if(codigoIndicador!==null){
     indicador=this.banco.prepare('SELECT id FROM admin_contas_participantes_demo WHERE codigo_convite=?').get(codigoIndicador);
@@ -112,6 +152,9 @@ class ContasParticipantesDemoSQLite{
     VALUES (?,?,?,?,?,?,?,?,?)
    `).run(contaId,dados.nome,dados.login,emailLimpo,salt,hash,
     codigoConvite,indicador?.id||null,data);
+   if(telefoneLimpo)this.banco.prepare(
+    'INSERT INTO admin_contas_telefones_demo(conta_id,telefone_normalizado) VALUES (?,?)'
+   ).run(contaId,telefoneLimpo);
    this.banco.prepare(`
     INSERT INTO admin_contas_eventos_demo(conta_id,tipo,registrado_em)
     VALUES (?,'CADASTRO_FICTICIO',?)
@@ -122,7 +165,7 @@ class ContasParticipantesDemoSQLite{
  }
  buscar(contaId){
   const linha=this.banco.prepare(
-   'SELECT * FROM admin_contas_participantes_demo WHERE id=?'
+   'SELECT c.*,CASE WHEN t.conta_id IS NULL THEN 0 ELSE 1 END AS tem_telefone FROM admin_contas_participantes_demo c LEFT JOIN admin_contas_telefones_demo t ON t.conta_id=c.id WHERE c.id=?'
   ).get(idSeguro(contaId));
   return contaExterna(linha);
  }
@@ -130,7 +173,7 @@ class ContasParticipantesDemoSQLite{
   const dados=nomeLogin(nome);
   senhaValida(senha);
   const linha=this.banco.prepare(
-   'SELECT * FROM admin_contas_participantes_demo WHERE login=?'
+   'SELECT c.*,CASE WHEN t.conta_id IS NULL THEN 0 ELSE 1 END AS tem_telefone FROM admin_contas_participantes_demo c LEFT JOIN admin_contas_telefones_demo t ON t.conta_id=c.id WHERE c.login=?'
   ).get(dados.login);
   const recebido=scryptSync(senha,linha?Buffer.from(linha.salt_hex,'hex'):
    Buffer.from('00000000000000000000000000000000','hex'),64);
@@ -151,7 +194,7 @@ class ContasParticipantesDemoSQLite{
  }
  listar(){
   const contas=this.banco.prepare(
-   'SELECT * FROM admin_contas_participantes_demo ORDER BY criado_em,id'
+   'SELECT c.*,CASE WHEN t.conta_id IS NULL THEN 0 ELSE 1 END AS tem_telefone FROM admin_contas_participantes_demo c LEFT JOIN admin_contas_telefones_demo t ON t.conta_id=c.id ORDER BY c.criado_em,c.id'
   ).all();
   const pendentes=new Map();
   for(const c of contas){
@@ -178,4 +221,4 @@ class ContasParticipantesDemoSQLite{
   };
  }
 }
-module.exports={ContasParticipantesDemoSQLite};
+module.exports={ContasParticipantesDemoSQLite,telefoneNormalizado};
