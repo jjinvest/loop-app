@@ -8,3 +8,12 @@
 .escritorio-duas-colunas li{padding:10px 6px;line-height:1.45;border-bottom:1px solid #475569;overflow-wrap:anywhere}
 .escritorio-modulos p{padding:8px 0;border-bottom:1px solid #475569;line-height:1.5}
 @media(max-width:660px){.escritorio-resumo,.escritorio-duas-colunas{grid-template-columns:1fr}}
+
+/* Visao de escritorio usada no desktop e celular. */
+.escritorio-resumo>*,.escritorio-duas-colunas>*,.escritorio-modulos{min-width:0;overflow-wrap:anywhere}
+@media(max-width:420px){
+ .escritorio-resumo,.escritorio-duas-colunas{grid-template-columns:minmax(0,1fr)}
+ .resumo-estatistica{padding:12px}
+ .resumo-estatistica strong{font-size:1.4rem}
+}
+
