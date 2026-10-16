@@ -316,7 +316,13 @@
   const atual=++versao;
   try{
    const visao=await chamada('minha-conta');
-   if(atual===versao)mostrar(visao);
+   if(atual===versao){
+    if(new URLSearchParams(location.search).get('destino')==='loja'){
+     location.replace('/laboratorio/loja');
+     return;
+    }
+    mostrar(visao);
+   }
   }catch(erro){
    if(atual!==versao)return;
    if(erro.status===401)encerrarTela();
