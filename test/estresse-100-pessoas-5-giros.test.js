@@ -6,8 +6,8 @@ const {SimuladorLoop} = require('../src/domain/simulador-loop');
 const {DESTINOS} = require('../src/domain/tabuleiro-loop');
 const {mapaCoresDoEscritorio} = require('../src/domain/escritorio-individual-demo');
 
-// Cenario reproduzivel: 100 compras iniciais + 25 novas compras em cinco
-// ciclos de cinco vendas. Tudo ficticio, sem pagamento nem contemplacao real.
+// Cenario reproduzivel: 100 compras iniciais + 30 novas compras em cinco
+// ciclos de seis vendas. Tudo ficticio, sem pagamento nem contemplacao real.
 test('100 entradas uma a uma, indicacoes cruzadas, 25 novas vendas e exatamente 5 giros', () => {
   let relogioTick = 0;
   const relogio = () => new Date(Date.UTC(2026, 9, 16, 10) + (++relogioTick)*1000).toISOString();
@@ -27,7 +27,7 @@ test('100 entradas uma a uma, indicacoes cruzadas, 25 novas vendas e exatamente 
     const ids=ativos.map(p=>p.id);
     assert.equal(new Set(ids).size,ids.length,'posicoes ativas duplicadas');
     assert.ok(ativos.every(p=>todas.has(p.id)),'posicao nao criada pela compra');
-    assert.equal(tab.length,Math.min(qtdCompras-concluidos,6),'ocupacao do tabuleiro');
+    assert.equal(tab.length,Math.min(qtdCompras-concluidos,7),'ocupacao do tabuleiro');
     assert.equal(ativos.length,qtdCompras-concluidos,'conservacao das posicoes');
     assert.equal(fila.length,qtdCompras-concluidos-tab.length,'contagem da fila');
     assert.equal(s.catraca.giros,concluidos,'contagem de giros');
@@ -68,48 +68,48 @@ test('100 entradas uma a uma, indicacoes cruzadas, 25 novas vendas e exatamente 
     return idPedido;
   }
 
-  // Abrir o tabuleiro progressivamente: 1, 2, 3, 4, 5, 6 pessoas.
+  // Abrir o tabuleiro progressivamente: 1, 2, 3, 4, 5, 6, 7 pessoas.
   for(let i=1;i<=100;i++){
     registrarCompra(i);
-    if(i<=6){
+    if(i<=7){
       const inicial=loop.prepararTabuleiro();
       assert.equal([inicial.centro,...inicial.vagas].filter(Boolean).length,i);
     }
     conferirIntegridade(i,0);
   }
   const inicial=loop.estado();
-  assert.equal(inicial.filas.A.quantidade+inicial.filas.B.quantidade,94);
+  assert.equal(inicial.filas.A.quantidade+inicial.filas.B.quantidade,93);
   assert.equal(inicial.tabuleiro.centro.id,1);
-  assert.deepEqual(inicial.tabuleiro.vagas.map(p=>p.id),[2,3,4,5,6]);
+  assert.deepEqual(inicial.tabuleiro.vagas.map(p=>p.id),[2,3,4,5,6,7]);
   assert.ok(inicial.filas.A.quantidade>5,'ha indicados na fila A');
   assert.ok(inicial.filas.B.quantidade>12,'ha clientes na fila B');
   assert.ok(indicacoes.length>=35,'convites distribuidos entre clientes');
   assert.equal(mapaCoresDoEscritorio(loop,pessoa(1)).tabuleiro.centro.cor,'VERMELHO');
   assert.equal(mapaCoresDoEscritorio(loop,pessoa(100)).tabuleiro.vagas[1].cor,'DOURADO');
 
-  // Cada um dos cinco ciclos recebe cinco NOVAS compras qualificadas.
+  // Cada um dos cinco ciclos recebe seis NOVAS compras qualificadas.
   // A compra cria uma posicao e, uma unica vez, constitui uma venda do
   // ciclo que esta com ocupante no centro no momento.
   for(let giro=1;giro<=5;giro++){
     const tabAntes=loop.estado().tabuleiro;
     const filaAntes=loop.estado().filas;
     assert.equal(loop.tentarGiro().motivo,'CATRACA_PAUSADA');
-    for(let etapa=1;etapa<=5;etapa++){
-      const i=100+(giro-1)*5+etapa;
+    for(let etapa=1;etapa<=6;etapa++){
+      const i=100+(giro-1)*6+etapa;
       const idPedido=registrarCompra(i);
       const venda=loop.registrarVendaNoCicloSimulada({vendaId:idPedido});
       assert.equal(venda.repetida,false);
       assert.equal(venda.venda.ordem,etapa);
       assert.equal(venda.venda.destinoPrevisto,DESTINOS[etapa-1]);
       assert.equal(venda.venda.posicaoCentroId,tabAntes.centro.id);
-      assert.equal(venda.elegivelParaGiro,etapa===5);
+      assert.equal(venda.elegivelParaGiro,etapa===6);
       const idempotente=loop.registrarVendaNoCicloSimulada({vendaId:idPedido});
       assert.equal(idempotente.repetida,true,'venda duplicada nao acelera o ciclo');
       assert.equal(loop.estado().tabuleiro.centro.id,tabAntes.centro.id);
     }
-    assert.equal(loop.estado().tabuleiro.vendasNoCiclo,5);
+    assert.equal(loop.estado().tabuleiro.vendasNoCiclo,6);
     assert.equal(loop.tentarGiro().motivo,'CATRACA_PAUSADA',
-      'nem a quinta venda gira com catraca fechada');
+      'nem a sexta venda gira com catraca fechada');
     loop.abrirCatraca();
     const indice=loop.estado().filas;
     const esperado=indice.A.quantidade>0&&
@@ -118,18 +118,18 @@ test('100 entradas uma a uma, indicacoes cruzadas, 25 novas vendas e exatamente 
     assert.equal(resultado.girou,true);
     assert.equal(resultado.centroConcluido.id,tabAntes.centro.id);
     assert.equal(resultado.estado.centro.id,tabAntes.vagas[0].id);
-    assert.deepEqual(resultado.estado.vagas.slice(0,4).map(p=>p.id),
-      tabAntes.vagas.slice(1,5).map(p=>p.id));
-    assert.equal(resultado.novaPosicao5.origemFila,esperado,
+    assert.deepEqual(resultado.estado.vagas.slice(0,5).map(p=>p.id),
+      tabAntes.vagas.slice(1,6).map(p=>p.id));
+    assert.equal(resultado.novaPosicao6.origemFila,esperado,
       'admissao prioritaria de 3A para 1B');
     assert.equal(resultado.estado.vendasNoCiclo,0);
     assert.equal(loop.tentarGiro().motivo,'CICLO_INCOMPLETO');
     loop.pausarCatraca();
-    const quantidade=100+5*giro;
+    const quantidade=100+6*giro;
     const situacao=conferirIntegridade(quantidade,giro);
     assert.equal(situacao.filas.A.quantidade+situacao.filas.B.quantidade,
-      94+4*giro,'cinco novas compras e uma entrada da fila');
-    assert.equal(loop.tabuleiro.ciclosConcluidos[giro-1].vendas.length,5);
+      93+5*giro,'seis novas compras e uma entrada da fila');
+    assert.equal(loop.tabuleiro.ciclosConcluidos[giro-1].vendas.length,6);
     assert.deepEqual(loop.tabuleiro.ciclosConcluidos[giro-1].vendas.map(v=>v.destinoPrevisto),DESTINOS);
     giros.push({
       giro,totalCompras:quantidade,concluidos:giro,
@@ -137,8 +137,8 @@ test('100 entradas uma a uma, indicacoes cruzadas, 25 novas vendas e exatamente 
       filaB:situacao.filas.B.quantidade,
       totalFila:situacao.filas.A.quantidade+situacao.filas.B.quantidade,
       centro:situacao.tabuleiro.centro.id,
-      novoNoTabuleiro:resultado.novaPosicao5.id,
-      origem:resultado.novaPosicao5.origemFila
+      novoNoTabuleiro:resultado.novaPosicao6.id,
+      origem:resultado.novaPosicao6.origemFila
     });
 
     // Em meio ao teste, reproduzir reinicio do servidor a partir do snapshot.
@@ -151,17 +151,17 @@ test('100 entradas uma a uma, indicacoes cruzadas, 25 novas vendas e exatamente 
     assert.ok(filaAntes.A.quantidade+filaAntes.B.quantidade>=6);
   }
 
-  assert.equal(todas.size,125);
+  assert.equal(todas.size,130);
   assert.equal(indicacoes.length,loop.filas.indicacoesProcessadas.size);
   assert.equal(loop.tabuleiro.ciclosConcluidos.length,5);
-  assert.equal(loop.tabuleiro.vendasProcessadas.size,25);
-  assert.equal(giros.at(-1).totalFila,114);
-  assert.equal(giros.at(-1).filaA+giros.at(-1).filaB,114);
+  assert.equal(loop.tabuleiro.vendasProcessadas.size,30);
+  assert.equal(giros.at(-1).totalFila,118);
+  assert.equal(giros.at(-1).filaA+giros.at(-1).filaB,118);
   assert.equal(giros.filter(g=>g.origem==='A').length,4);
   assert.equal(giros.filter(g=>g.origem==='B').length,1);
   console.log('RESULTADO_LOOP_100_PESSOAS_5_GIROS='+JSON.stringify({
-    iniciais:100,novas:25,total:125,indicacoesValidadas:indicacoes.length,
-    posicoesNoTabuleiro:6,posicoesConcluidas:5,giros:5,
-    filaFinal:114,prioridadeAdmissoes:'4A/1B',rodadas:giros
+    iniciais:100,novas:30,total:130,indicacoesValidadas:indicacoes.length,
+    posicoesNoTabuleiro:7,posicoesConcluidas:5,giros:5,
+    filaFinal:118,prioridadeAdmissoes:'4A/1B',rodadas:giros
   }));
 });
