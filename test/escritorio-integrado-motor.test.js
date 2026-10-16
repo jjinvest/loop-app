@@ -30,7 +30,7 @@ test('cenario usa o motor existente e preserva ordem de posicoes apos um giro fi
   assert.equal(estado.catraca.giros,1);
   assert.equal(estado.tabuleiro.centro.participanteId,'conta-demo-a');
   assert.equal(estado.tabuleiro.centro.id,2);
-  assert.deepEqual(estado.tabuleiro.vagas.map(p=>p.id),[3,4,5,6,7]);
+  assert.deepEqual(estado.tabuleiro.vagas.map(p=>p.id),[3,4,5,6,7,8]);
   assert.equal(estado.filas.A.quantidade,3);
   assert.equal(estado.filas.B.quantidade,1);
   assert.equal(sim.tabuleiro.ciclosConcluidos[0].centro.id,1);
@@ -44,12 +44,12 @@ test('projecao le posicoes, historico e indicacoes do motor sem alterar seu esta
   const b=extrairVisaoDoMotor({simulador:sim,titularId:'conta-demo-b'});
   const c=extrairVisaoDoMotor({simulador:sim,titularId:'conta-demo-c'});
   const d=extrairVisaoDoMotor({simulador:sim,titularId:'conta-demo-d'});
-  assert.deepEqual([a.posicoesAtivas,b.posicoesAtivas,c.posicoesAtivas,d.posicoesAtivas],[4,3,2,1]);
-  assert.deepEqual([a.vagasDisponiveis,b.vagasDisponiveis,c.vagasDisponiveis,d.vagasDisponiveis],[1,2,3,4]);
+  assert.deepEqual([a.posicoesAtivas,b.posicoesAtivas,c.posicoesAtivas,d.posicoesAtivas],[5,3,2,2]);
+  assert.deepEqual([a.vagasDisponiveis,b.vagasDisponiveis,c.vagasDisponiveis,d.vagasDisponiveis],[1,3,4,4]);
   assert.deepEqual([a.posicoesConcluidas,b.posicoesConcluidas,c.posicoesConcluidas,d.posicoesConcluidas],[1,0,0,0]);
   assert.deepEqual(a.historico,[{id:'posicao-motor-1',situacao:'CONCLUIDA'}]);
-  assert.deepEqual(a.ativas.map(p=>p.id),['posicao-motor-2','posicao-motor-3','posicao-motor-4','posicao-motor-5']);
-  assert.ok(b.ativas.some(p=>p.local==='VAGA_5' && p.id==='posicao-motor-7'));
+  assert.deepEqual(a.ativas.map(p=>p.id),['posicao-motor-2','posicao-motor-3','posicao-motor-4','posicao-motor-5','posicao-motor-6']);
+  assert.ok(b.ativas.some(p=>p.local==='VAGA_6' && p.id==='posicao-motor-7'));
   assert.ok(b.ativas.some(p=>p.local==='FILA' && p.fila==='A'));
   assert.ok(c.ativas.every(p=>p.local==='FILA' && p.fila==='A'));
   assert.ok(d.ativas.every(p=>p.local==='FILA' && p.fila==='B'));
@@ -76,7 +76,7 @@ test('rotas preservam o exemplo estatico e protegem o novo modo motor com token'
   assert.equal(response.headers.get('cache-control'),'no-store');
   const visao=await response.json();
   assert.equal(visao.origem,'MOTOR_EXISTENTE_EM_CENARIO_FICTICIO');
-  assert.equal(visao.posicoesAtivas,4);
+  assert.equal(visao.posicoesAtivas,5);
   assert.equal(visao.vagasDisponiveis,1);
   assert.equal(visao.posicoesConcluidas,1);
   assert.equal(visao.tabuleiro.giros,1);
@@ -89,7 +89,7 @@ test('rotas preservam o exemplo estatico e protegem o novo modo motor com token'
   }
   const antigo=await (await fetch(base+'/api/admin/escritorio-demo/conta-demo-a',{headers:auth})).json();
   assert.equal(antigo.posicoesAtivas,5);
-  assert.equal(antigo.vagasDisponiveis,0);
+  assert.equal(antigo.vagasDisponiveis,1);
   assert.equal(antigo.origem,undefined);
   const repetida=await (await fetch(base+url,{headers:auth})).json();
   assert.deepEqual(repetida,visao);
