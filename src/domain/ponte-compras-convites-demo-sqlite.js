@@ -93,12 +93,12 @@ class PonteComprasConvitesDemoSQLite{
     confirmado_em TEXT NOT NULL,
     posicao_id INTEGER NOT NULL UNIQUE CHECK(posicao_id>0)
    );
-   -- Um unico pedido qualificado pode ter ate cinco posicoes se o produto
+   -- Um unico pedido qualificado pode ter ate seis posicoes se o produto
    -- de pacote foi explicitamente configurado antes do pedido. A posicao 1
    -- permanece no esquema anterior para nao quebrar o historico legado.
    CREATE TABLE IF NOT EXISTS admin_ponte_posicoes_adicionais_demo(
     pedido_id TEXT NOT NULL REFERENCES admin_ponte_compras_demo(pedido_id) ON DELETE RESTRICT,
-    ordem INTEGER NOT NULL CHECK(ordem BETWEEN 2 AND 5),
+    ordem INTEGER NOT NULL CHECK(ordem BETWEEN 2 AND 6),
     posicao_id INTEGER NOT NULL UNIQUE CHECK(posicao_id>0),
     PRIMARY KEY(pedido_id,ordem)
    );
@@ -314,7 +314,7 @@ class PonteComprasConvitesDemoSQLite{
    }
    const referenciaVigente=this.configuracaoValor.vigenteEm(comprovante.confirmadoEm);
    // Somente um pedido do carrinho, com regras congeladas no SQLite,
-   // pode solicitar cinco posicoes. Um campo externo nao pode forcar pacote.
+   // pode solicitar seis posicoes. Um campo externo nao pode forcar pacote.
    const pacoteTabela=comprovante.produtoId==='carrinho-loop-demo'&&
     !!this.banco.prepare("SELECT 1 FROM sqlite_master WHERE type='table' AND name='admin_carrinho_item_pacote_posicoes_demo'").get();
    const pacote=pacoteTabela?this.banco.prepare(`
@@ -328,20 +328,20 @@ class PonteComprasConvitesDemoSQLite{
      ON e.pedido_id=k.pedido_id AND e.ordem=k.ordem
     JOIN admin_carrinho_item_quantidade_minima_demo q
      ON q.pedido_id=k.pedido_id AND q.ordem=k.ordem
-    WHERE k.pedido_id=? AND k.posicoes_por_pedido=5
+    WHERE k.pedido_id=? AND k.posicoes_por_pedido=6
      AND e.elegivel_loop=1 AND i.quantidade>=q.quantidade_minima
    `).all(pedidoId):[];
-   const quantidadePosicoes=pacote.length?5:1;
-   // Uma cadeira do pacote gera seu proprio ciclo; exigir ao menos cinco
+   const quantidadePosicoes=pacote.length?6:1;
+   // Uma cadeira do pacote gera seu proprio ciclo; exigir ao menos seis
    // referencias no subtotal do(s) produto(s) ESPECIAIS, antes de custos.
-   if(quantidadePosicoes===5&&
-    pacote.reduce((v,p)=>v+p.elegivel,0)<5*referenciaVigente.valorCentavos)
-    throw falha('PACOTE_VALOR_INSUFICIENTE','Pacote de cinco posicoes abaixo de cinco referencias LOOP');
+   if(quantidadePosicoes===6&&
+    pacote.reduce((v,p)=>v+p.elegivel,0)<6*referenciaVigente.valorCentavos)
+    throw falha('PACOTE_VALOR_INSUFICIENTE','Pacote de seis posicoes abaixo de seis referencias LOOP');
    const conta=this.contas.buscar(comprovante.contaId);
    if(!conta)throw falha('CONTA_DESCONHECIDA','Conta ficticia nao cadastrada');
    if(comprovante.valorElegivelLoopCentavos<referenciaVigente.valorCentavos){
     // Compra valida da LOJA, sem mexer no snapshot, nas filas ou em convites.
-    // A regra de cinco posicoes so se aplica a pedidos elegiveis ao LOOP.
+    // A regra de seis posicoes so se aplica a pedidos elegiveis ao LOOP.
     // As tabelas legadas separam pelo valor TOTAL efetivamente comprado,
     // nao pelo subtotal elegivel. A decisao de criar cadeira acima ja
     // usou somente valorElegivelLoopCentavos.
@@ -364,8 +364,8 @@ class PonteComprasConvitesDemoSQLite{
      movimentouCatraca:false,registrouPagamentoReal:false};
    }
    const simulador=this._restaurar();
-   if(posicoesAtivas(simulador,conta.contaId)+quantidadePosicoes>5){
-    throw falha('LIMITE_ATIVO','Limite de cinco posicoes ativas no teste');
+   if(posicoesAtivas(simulador,conta.contaId)+quantidadePosicoes>6){
+    throw falha('LIMITE_ATIVO','Limite de seis posicoes ativas no teste');
    }
    // A promocao exige uma posicao PRÓPRIA do indicador, ainda na fila
    // ou no tabuleiro e comprada ate a confirmacao do indicado.
