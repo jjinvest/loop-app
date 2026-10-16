@@ -87,6 +87,23 @@ class IndicacoesLinksComissoesDemoSQLite{
     calculado_em TEXT NOT NULL,
     CHECK(indicador_id<>convidado_id)
    );
+   -- Guarda a condicao do indicador no instante da geracao do bonus.
+   -- Nao consulta a adesao de CPF; uma posicao na fila/tabuleiro basta.
+   CREATE TABLE IF NOT EXISTS admin_comissoes_criterio_v2_demo(
+    pedido_id TEXT PRIMARY KEY REFERENCES admin_comissoes_indicacoes_v2_demo(pedido_id) ON DELETE RESTRICT,
+    indicador_posicao_id INTEGER,
+    ativo_no_loop INTEGER NOT NULL CHECK(ativo_no_loop IN (0,1)),
+    percentual_campanha INTEGER NOT NULL CHECK(percentual_campanha BETWEEN 10 AND 100),
+    percentual_efetivo INTEGER NOT NULL CHECK(percentual_efetivo BETWEEN 10 AND 100),
+    CHECK ((ativo_no_loop=1 AND indicador_posicao_id IS NOT NULL AND percentual_efetivo=percentual_campanha)
+      OR (ativo_no_loop=0 AND indicador_posicao_id IS NULL AND percentual_efetivo=10))
+   );
+   CREATE TRIGGER IF NOT EXISTS admin_criterio_v2_sem_update
+    BEFORE UPDATE ON admin_comissoes_criterio_v2_demo
+    BEGIN SELECT RAISE(ABORT,'criterio de bonus imutavel'); END;
+   CREATE TRIGGER IF NOT EXISTS admin_criterio_v2_sem_delete
+    BEFORE DELETE ON admin_comissoes_criterio_v2_demo
+    BEGIN SELECT RAISE(ABORT,'criterio de bonus imutavel'); END;
    CREATE TABLE IF NOT EXISTS admin_comissoes_reserva_v2_demo(
     pedido_id TEXT PRIMARY KEY REFERENCES admin_comissoes_indicacoes_v2_demo(pedido_id) ON DELETE RESTRICT,
     cofre_origem TEXT NOT NULL CHECK(cofre_origem='LOOP_DIREITA'),
@@ -162,12 +179,18 @@ class IndicacoesLinksComissoesDemoSQLite{
   return {indicadorId:row.id,nomeIndicador:row.nome,
    ativo:this.ativado(row.id),token};
  }
- comissaoDaPosicao({pedidoId,indicadorId,convidadoId,posicaoId,referencia,quando}={}){
+ comissaoDaPosicao({pedidoId,indicadorId,convidadoId,posicaoId,referencia,quando,
+  posicaoAtivaIndicadorId=null}={}){
   if(!referencia||!Number.isSafeInteger(referencia.valorCentavos)||
    !Number.isSafeInteger(referencia.revisao))throw falha('REFERENCIA_INVALIDA');
   if(!this.ativado(indicadorId,quando))return null;
   const taxa=this.taxas.vigenteEm(quando);
-  const valor=Math.round(referencia.valorCentavos*taxa.percentual/100);
+  // A compra pequena libera somente o LINK. O bonus superior a 10%
+  // depende de posicao propria ativa na fila ou no tabuleiro.
+  const elegivelExtra=Number.isSafeInteger(posicaoAtivaIndicadorId)&&
+   posicaoAtivaIndicadorId>0;
+  const percentualEfetivo=elegivelExtra?taxa.percentual:10;
+  const valor=Math.round(referencia.valorCentavos*percentualEfetivo/100);
   if(!Number.isSafeInteger(valor))throw falha('VALOR_INVALIDO');
   // V2 permite 10%, 20%, 30% etc. Historico V1 continua inalterado.
   if(this.banco.prepare(
@@ -179,14 +202,23 @@ class IndicacoesLinksComissoesDemoSQLite{
     valor_posicao_centavos,percentual,valor_comissao_centavos,calculado_em)
    VALUES (?,?,?,?,?,?,?,?,?,?)
   `).run(pedidoId,indicadorId,convidadoId,posicaoId,
-   referencia.revisao,taxa.revisao,referencia.valorCentavos,taxa.percentual,valor,quando);
+   referencia.revisao,taxa.revisao,referencia.valorCentavos,
+   percentualEfetivo,valor,quando);
+  this.banco.prepare(`
+   INSERT INTO admin_comissoes_criterio_v2_demo
+   (pedido_id,indicador_posicao_id,ativo_no_loop,percentual_campanha,percentual_efetivo)
+   VALUES (?,?,?,?,?)
+  `).run(pedidoId,elegivelExtra?posicaoAtivaIndicadorId:null,
+   elegivelExtra?1:0,taxa.percentual,percentualEfetivo);
   this.banco.prepare(`
    INSERT INTO admin_comissoes_reserva_v2_demo
     (pedido_id,cofre_origem,valor_centavos,criado_em)
    VALUES (?,'LOOP_DIREITA',?,?)
   `).run(pedidoId,valor,quando);
   return {cofreOrigem:'LOOP_DIREITA',estadoReserva:'COMPROMISSO_FICTICIO_SEM_LIQUIDACAO',
-   valorComissaoCentavos:valor,taxaPercentual:taxa.percentual,
+   valorComissaoCentavos:valor,taxaPercentual:percentualEfetivo,
+   percentualCampanha:taxa.percentual,elegivelBonusExtra:elegivelExtra,
+   posicaoAtivaIndicadorId:elegivelExtra?posicaoAtivaIndicadorId:null,
    basePosicaoCentavos:referencia.valorCentavos,
    referenciaRevisao:referencia.revisao,taxaRevisao:taxa.revisao,
    registroFicticio:true};
@@ -210,9 +242,14 @@ class IndicacoesLinksComissoesDemoSQLite{
     c.valor_comissao_centavos AS valorCentavos,
     c.calculado_em AS calculadoEm,c.percentual,
     c.revisao_taxa AS revisaoTaxa,r.cofre_origem AS cofreOrigem,
-    r.valor_centavos AS valorComprometidoReservaCentavos
+    r.valor_centavos AS valorComprometidoReservaCentavos,
+    COALESCE(k.percentual_campanha,t.percentual) AS percentualCampanha,
+    k.indicador_posicao_id AS posicaoIndicadorId,
+    k.ativo_no_loop AS indicadorAtivoNoLoop
    FROM admin_comissoes_indicacoes_v2_demo c
    JOIN admin_comissoes_reserva_v2_demo r ON r.pedido_id=c.pedido_id
+   JOIN admin_indicacao_taxas_demo t ON t.revisao=c.revisao_taxa
+   LEFT JOIN admin_comissoes_criterio_v2_demo k ON k.pedido_id=c.pedido_id
    WHERE c.indicador_id=?
   `).all(contaId);
   const rows=[...legados,...novos].sort((a,b)=>
