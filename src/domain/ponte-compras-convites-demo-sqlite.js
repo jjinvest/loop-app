@@ -6,6 +6,8 @@ const { SimuladorLoop }=require('./simulador-loop');
 const { STATUS_CONFIRMADO }=require('./processador-pedidos-simulados');
 const {ConfiguracaoValorLoopDemoSQLite}=require('./configuracao-valor-loop-demo-sqlite');
 const {IndicacoesLinksComissoesDemoSQLite}=require('./indicacoes-links-comissoes-demo-sqlite');
+const {cofreDoEvento,origemDoCentro,centroDoLoop}=require('./destino-financeiro-centro-loop');
+const {DESTINOS}=require('./tabuleiro-loop');
 
 function falha(codigo,mensagem){
  const e=new Error(mensagem);e.codigo=codigo;return e;
@@ -593,6 +595,47 @@ class PonteComprasConvitesDemoSQLite{
    return {tabuleiro:estado,semPagamentoReal:true,
     operacao:'PREENCHIMENTO_MANUAL_FICTICIO'};
   }catch(err){this.banco.exec('ROLLBACK');throw err;}
+ }
+ // Auditoria de ponta a ponta dos destinos, sem registrar dinheiro inexistente.
+ // As vendas do motor sao marcadores da SIMULACAO, nao comprovantes de PSP.
+ auditarCicloFinanceiroDemo({cicloNumero}={}){
+  if(!Number.isSafeInteger(cicloNumero)||cicloNumero<1||cicloNumero>1000000)
+   throw falha('CICLO_INVALIDO');
+  const sim=this._restaurar();
+  const t=sim.tabuleiro;
+  const completos=t.ciclosConcluidos.length;
+  let centro,vendas,concluido;
+  if(cicloNumero<=completos){
+   const c=t.ciclosConcluidos[cicloNumero-1];
+   centro=c.centro;vendas=c.vendas;concluido=true;
+  }else if(cicloNumero===completos+1){
+   centro=t.centro;vendas=t.vendasDoCiclo;concluido=false;
+  }else throw falha('CICLO_INEXISTENTE');
+  if(!centro)throw falha('CENTRO_AUSENTE');
+  const seisEventos=vendas.length===DESTINOS.length;
+  const resultados=vendas.map((v,i)=>{
+   const ordem=i+1;
+   const cofrePrevisto=cofreDoEvento({posicaoCentro:centro,ordem});
+   const correto=v.ordem===ordem&&v.posicaoCentroId===centro.id&&
+    v.destinoPrevisto===DESTINOS[i]&&v.ciclo===cicloNumero&&
+    v.destinoCofre===cofrePrevisto;
+   return {ordem,cofrePrevisto,cofreRegistrado:v.destinoCofre||null,
+    vendaId:v.vendaId,registroCoerente:correto,
+    recebimentoPSPComprovado:false,valorLiquidadoCentavos:null};
+  });
+  const coerente=resultados.every(x=>x.registroCoerente)&&vendas.length<=DESTINOS.length;
+  return {cicloNumero,centroPosicaoId:centro.id,
+   centroTitular:'LOOP_EMPRESA'===centro.titularOperacional||centroDoLoop(centro)?'LOOP_EMPRESA':'PARTICIPANTE',
+   origemCentro:origemDoCentro(centro),
+   cofreParcelasCentro:centroDoLoop(centro)?'LOOP_DOURADAS':'LOOP_CENTRO',
+   vendaEventoCount:vendas.length,concluidoNoTabuleiro:concluido,
+   seisEventosRegistrados:seisEventos,
+   destinosConferidos:coerente,
+   aptoAConferirDestinos:seisEventos&&coerente,
+   recebimentosFinanceirosComprovados:false,
+   podeGerarCreditoFinanceiro:false,
+   transferenciasReais:false,
+   eventos:resultados};
  }
  // Desistencia EXPRESSA do titular na vaga 6, so em ambiente ficticio.
  desistirDaVaga6Demo({contaId,posicaoId,aceiteExpresso}={}){
