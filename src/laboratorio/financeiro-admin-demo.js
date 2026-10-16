@@ -38,6 +38,7 @@
   let sincronizandoPDF=false;
   let pedidosPDF=[];
   let opcoesCarrinho=[];
+  let regrasProdutosLoop=[];
   let pedidosCarrinho=[];
   let versaoCarrinho=0;
   let salvandoCarrinho=false;
@@ -81,6 +82,9 @@
     ++versaoCarrinho;
     pedidosCarrinho=[];
     opcoesCarrinho=[];
+    regrasProdutosLoop=[];
+    el('produtoElegibilidadeLoopDemo').replaceChildren();
+    el('statusElegibilidadeLoopDemo').textContent='';
     el('itensCarrinhoLoopDemo').replaceChildren();
     el('contaCarrinhoLoopDemo').replaceChildren();
     el('pedidoEventoCarrinhoLoopDemo').replaceChildren();
@@ -490,16 +494,20 @@
   }
   function atualizarTotalCarrinho(){
     const linhas=el('itensCarrinhoLoopDemo').querySelectorAll('.item-carrinho-lab');
-    let total=0;
+    let total=0,totalElegivel=0;
     for(const linha of linhas){
       const produto=opcoesCarrinho.find(p=>p.produtoId===
         linha.querySelector('.produto-carrinho-lab').value);
       const qtd=Number(linha.querySelector('.quantidade-carrinho-lab').value);
-      if(produto&&Number.isSafeInteger(qtd)&&qtd>0&&qtd<=100)
-        total+=produto.precoCentavos*qtd;
+      if(produto&&Number.isSafeInteger(qtd)&&qtd>0&&qtd<=100){
+        const subtotal=produto.precoCentavos*qtd;
+        total+=subtotal;
+        if(produto.elegivelLoop)totalElegivel+=subtotal;
+      }
     }
-    el('totalCarrinhoLoopDemo').textContent='Total do carrinho: '+money(total)+
-      ' (uma posição no máximo por pedido; sujeito ao mínimo vigente).';
+    el('totalCarrinhoLoopDemo').textContent='Total da compra: '+money(total)+
+      ' · Conta para o LOOP: '+money(totalElegivel)+
+      ' (uma posição no máximo por pedido; regra congelada ao registrar).';
   }
   function adicionarLinhaCarrinho(){
     const container=el('itensCarrinhoLoopDemo');
@@ -514,7 +522,8 @@
     for(const produto of opcoesCarrinho){
       const option=document.createElement('option');
       option.value=produto.produtoId;
-      option.textContent=produto.nome+' — '+money(produto.precoCentavos);
+      option.textContent=produto.nome+' — '+money(produto.precoCentavos)+
+        (produto.elegivelLoop?' · válido LOOP':' · somente loja');
       select.append(option);
     }
     const labelQuantidade=document.createElement('label');
@@ -535,19 +544,64 @@
     container.append(linha);
     atualizarTotalCarrinho();
   }
+  function mostrarRegraProdutoLoop(){
+    const p=regrasProdutosLoop.find(x=>x.produtoId===el('produtoElegibilidadeLoopDemo').value);
+    if(!p)return;
+    el('valorElegibilidadeLoopDemo').value=p.elegivelLoop?'sim':'nao';
+    el('statusElegibilidadeLoopDemo').textContent=
+      p.nome+': '+(p.elegivelLoop?'valor autorizado para a fila.':
+       'continua à venda, mas não conta para a fila.')+
+       ' Revisão '+p.revisaoElegibilidade+'.';
+  }
+  async function salvarRegraProdutoLoop(ev){
+    ev.preventDefault();
+    if(!token)return;
+    const p=regrasProdutosLoop.find(x=>x.produtoId===el('produtoElegibilidadeLoopDemo').value);
+    if(!p)return;
+    const botao=el('salvarElegibilidadeLoopDemo');
+    botao.disabled=true;
+    try{
+      const r=await requisitar('carrinho-loop-demo/elegibilidade',{
+        method:'POST',
+        body:JSON.stringify({
+          produtoId:p.produtoId,revisaoEsperada:p.revisaoElegibilidade,
+          elegivelLoop:el('valorElegibilidadeLoopDemo').value==='sim'
+        })
+      });
+      await carregarCarrinhosLoop();
+      el('statusElegibilidadeLoopDemo').textContent=
+        'Regra salva: '+(r.regra.elegivelLoop?'válido para LOOP':'somente loja')+
+        '. Vale para novos pedidos; os anteriores estão protegidos.';
+    }catch(e){el('statusElegibilidadeLoopDemo').textContent=e.message;}
+    finally{botao.disabled=false;}
+  }
   async function carregarCarrinhosLoop(){
     const atual=++versaoCarrinho;
     const lista=el('listaCarrinhosLoopDemo');
     if(!token)return;
     try{
-      const [opcoes,carrinhos,contas]=await Promise.all([
+      const [opcoes,carrinhos,contas,regras]=await Promise.all([
         requisitar('carrinho-loop-demo/opcoes'),
         requisitar('carrinho-loop-demo'),
-        requisitar('contas-participantes-demo')
+        requisitar('contas-participantes-demo'),
+        requisitar('carrinho-loop-demo/elegibilidade')
       ]);
       if(atual!==versaoCarrinho)return;
       opcoesCarrinho=opcoes.produtos;
       pedidosCarrinho=carrinhos.pedidos;
+      regrasProdutosLoop=regras.produtos;
+      const seletorRegra=el('produtoElegibilidadeLoopDemo');
+      const anteriorRegra=seletorRegra.value;
+      seletorRegra.replaceChildren();
+      for(const p of regrasProdutosLoop){
+        const opt=document.createElement('option');
+        opt.value=p.produtoId;
+        opt.textContent=p.nome+' · '+(p.elegivelLoop?'conta para LOOP':'somente loja');
+        seletorRegra.append(opt);
+      }
+      if(regrasProdutosLoop.some(p=>p.produtoId===anteriorRegra))
+        seletorRegra.value=anteriorRegra;
+      mostrarRegraProdutoLoop();
       const escolhaConta=el('contaCarrinhoLoopDemo');
       const antigaConta=escolhaConta.value;
       escolhaConta.replaceChildren();
@@ -584,7 +638,8 @@
         const nome=document.createElement('strong');nome.textContent='Carrinho '+pedido.pedidoId;
         const detalhes=document.createElement('span');
         detalhes.textContent=pedido.itens.map(i=>i.quantidade+' × '+i.nome).join(' + ')+
-          ' = '+money(pedido.totalCentavos);
+          ' = '+money(pedido.totalCentavos)+
+          ' · válido LOOP '+money(pedido.totalElegivelLoopCentavos);
         const situacao=document.createElement('small');
         situacao.textContent=pedido.situacaoPagamentoFicticio+' · '+
           (pedido.posicaoCriada?'Posição azul LOOP #'+pedido.posicaoId:
@@ -620,7 +675,8 @@
       });
       await carregarCarrinhosLoop();
       status.textContent=(r.pedido.repetido?'Carrinho já registrado. ':
-        'Carrinho criado. ')+'Total congelado: '+money(r.pedido.totalCentavos)+
+        'Carrinho criado. ')+'Total: '+money(r.pedido.totalCentavos)+
+        ' · válido LOOP: '+money(r.pedido.totalElegivelLoopCentavos)+
         '. Confirme o evento fictício para gerar posição se qualificar.';
     }catch(e){status.textContent=e.message;}
     finally{salvandoCarrinho=false;botao.disabled=false;}
@@ -1498,6 +1554,8 @@
   el('simularImpactoValorLoopDemo').addEventListener('click',simularImpactoValorLoop);
   el('formPedidosPDFDemo').addEventListener('submit',registrarPedidoPDF);
   el('formCarrinhoLoopDemo').addEventListener('submit',salvarCarrinhoLoop);
+  el('formElegibilidadeLoopDemo').addEventListener('submit',salvarRegraProdutoLoop);
+  el('produtoElegibilidadeLoopDemo').addEventListener('change',mostrarRegraProdutoLoop);
   el('formEventoCarrinhoLoopDemo').addEventListener('submit',eventoCarrinhoLoop);
   el('adicionarItemCarrinhoLoopDemo').addEventListener('click',adicionarLinhaCarrinho);
   el('atualizarCarrinhosLoopDemo').addEventListener('click',carregarCarrinhosLoop);
