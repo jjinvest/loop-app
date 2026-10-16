@@ -22,7 +22,7 @@ function setCookie(res,token,maxAge){
  res.append('Set-Cookie',COOKIE+'='+token+'; HttpOnly; SameSite=Strict; Path='+CAMINHO+
   '; Max-Age='+maxAge);
 }
-function criarRouterParticipanteDemo({contas,ponte,sessoes=null}={}){
+function criarRouterParticipanteDemo({contas,ponte,sessoes=null,adesoes=null}={}){
  if(!contas||!ponte)throw new TypeError('Cadastro e ponte do laboratorio obrigatorios');
  const gerenciador=sessoes||new SessoesParticipanteDemo({contas});
  const escritorio=new EscritorioIndividualDemo({contas,ponte});
@@ -95,7 +95,7 @@ function criarRouterParticipanteDemo({contas,ponte,sessoes=null}={}){
    if(!contaId)return res.status(401).json({erro:'SESSAO_AUSENTE_OU_EXPIRADA'});
    const visao=escritorio.consultar(contaId);
    if(!visao)return res.status(401).json({erro:'SESSAO_AUSENTE_OU_EXPIRADA'});
-   return res.json(visao);
+   return res.json({...visao,adesao:adesoes?adesoes.consultarConta(contaId):null});
   }catch(erro){return next(erro);}
  });
  return router;
