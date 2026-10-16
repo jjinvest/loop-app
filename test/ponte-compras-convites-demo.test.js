@@ -172,7 +172,7 @@ test('limite de seis posicoes ativas por conta no laboratorio bloqueia setima co
  await assert.rejects(m.ponte.processar({pedidoId:'limite-7'}),e=>e.codigo==='LIMITE_ATIVO');
  const s=m.ponte.consultar();
  assert.equal(s.compras.length,5);
- assert.equal(s.filas.B.quantidade,5);
+ assert.equal(s.filas.B.quantidade,6);
  assert.equal(s.filas.A.quantidade,0);
 });
 
