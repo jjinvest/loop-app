@@ -412,6 +412,7 @@ class PonteComprasConvitesDemoSQLite{
     indicadorElegivelBonusExtra:comissao?.elegivelBonusExtra??false,
     filaAtual:simulador.filas.filaA.some(p=>p.id===posicao.posicao.id)?'A':'B',
     compraElegivelLoop:true,posicaoCriada:true,vendaLojaRegistrada:true,
+    valorElegivelLoopCentavos:comprovante.valorElegivelLoopCentavos,
     statusAdesao:'PENDENTE',
      valorReferenciaPosicaoCentavos:referenciaVigente.valorCentavos,
     revisaoValorPosicao:referenciaVigente.revisao,
