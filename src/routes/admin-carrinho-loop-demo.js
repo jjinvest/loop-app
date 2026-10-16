@@ -37,6 +37,20 @@ function criarRouterCarrinhoLoopDemo({segredo,carrinhos}={}){
    return next(e);
   }
  });
+ r.post('/carrinho-loop-demo/quantidade-minima',(req,res,next)=>{
+  const b=req.body;
+  if(!b||typeof b!=='object'||Array.isArray(b)||
+   Object.keys(b).sort().join(',')!=='produtoId,quantidadeMinimaLoop,revisaoEsperada')
+   return res.status(400).json({erro:'CAMPOS_QUANTIDADE_INVALIDOS'});
+  try{return res.json({regra:carrinhos.elegibilidade.alterarQuantidadeMinima(b),
+   somenteNovosPedidos:true,semPagamentoReal:true});}
+  catch(e){
+   if(e.codigo==='DADOS_INVALIDOS')return res.status(400).json({erro:e.codigo});
+   if(e.codigo==='PRODUTO_INEXISTENTE')return res.status(404).json({erro:e.codigo});
+   if(e.codigo==='CONFLITO_REVISAO')return res.status(409).json({erro:e.codigo});
+   return next(e);
+  }
+ });
  r.get('/carrinho-loop-demo/:pedidoId',(req,res,next)=>{
   try{
    const c=carrinhos.buscar(req.params.pedidoId);
