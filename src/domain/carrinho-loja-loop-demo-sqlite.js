@@ -65,6 +65,22 @@ class CarrinhoLojaLoopDemoSQLite{
     FOREIGN KEY(pedido_id,ordem)
      REFERENCES admin_carrinho_loop_itens_demo(pedido_id,ordem) ON DELETE RESTRICT
    );
+   -- Snapshot especifico da quantidade minima na criacao do carrinho.
+   -- Pedidos antigos sem este snapshot possuem minimo padrao de 1.
+   CREATE TABLE IF NOT EXISTS admin_carrinho_item_quantidade_minima_demo(
+    pedido_id TEXT NOT NULL REFERENCES admin_carrinho_loop_demo(pedido_id) ON DELETE RESTRICT,
+    ordem INTEGER NOT NULL CHECK(ordem>=1),
+    quantidade_minima INTEGER NOT NULL CHECK(quantidade_minima BETWEEN 1 AND 100),
+    revisao_minima INTEGER NOT NULL CHECK(revisao_minima>=1),
+    PRIMARY KEY(pedido_id,ordem),
+    FOREIGN KEY(pedido_id,ordem) REFERENCES admin_carrinho_loop_itens_demo(pedido_id,ordem) ON DELETE RESTRICT
+   );
+   CREATE TRIGGER IF NOT EXISTS admin_carrinho_minimo_no_update
+    BEFORE UPDATE ON admin_carrinho_item_quantidade_minima_demo
+    BEGIN SELECT RAISE(ABORT,'quantidade minima congelada no pedido'); END;
+   CREATE TRIGGER IF NOT EXISTS admin_carrinho_minimo_no_delete
+    BEFORE DELETE ON admin_carrinho_item_quantidade_minima_demo
+    BEGIN SELECT RAISE(ABORT,'quantidade minima congelada no pedido'); END;
    CREATE TRIGGER IF NOT EXISTS admin_carrinho_elegibilidade_no_update
     BEFORE UPDATE ON admin_carrinho_item_elegibilidade_demo
     BEGIN SELECT RAISE(ABORT,'regra congelada do pedido'); END;
@@ -104,7 +120,8 @@ class CarrinhoLojaLoopDemoSQLite{
     ['PDF','FISICO'].includes(p.tipo)&&p.estado==='PUBLICADO'&&
     Number.isSafeInteger(p.precoCentavos)&&p.precoCentavos>0
    ).map(p=>({produtoId:p.id,nome:p.nome,tipo:p.tipo,precoCentavos:p.precoCentavos,
-    elegivelLoop:this.elegibilidade.consultar(p.id).elegivelLoop})),
+    elegivelLoop:this.elegibilidade.consultar(p.id).elegivelLoop,
+    quantidadeMinimaLoop:this.elegibilidade.consultar(p.id).quantidadeMinimaLoop})),
    semCheckout:true};
  }
  buscar(pedidoId){
@@ -120,10 +137,14 @@ class CarrinhoLojaLoopDemoSQLite{
      i.subtotal_centavos AS subtotalCentavos,
      COALESCE(e.elegivel_loop,1) AS elegivelLoop,
      COALESCE(e.revisao_elegibilidade,1) AS revisaoElegibilidade,
-     COALESCE(e.subtotal_elegivel_centavos,i.subtotal_centavos) AS subtotalElegivelCentavos
+     COALESCE(e.subtotal_elegivel_centavos,i.subtotal_centavos) AS subtotalElegivelCentavos,
+     COALESCE(q.quantidade_minima,1) AS quantidadeMinimaLoop,
+     COALESCE(q.revisao_minima,1) AS revisaoQuantidadeMinima
     FROM admin_carrinho_loop_itens_demo i
     LEFT JOIN admin_carrinho_item_elegibilidade_demo e
      ON e.pedido_id=i.pedido_id AND e.ordem=i.ordem
+    LEFT JOIN admin_carrinho_item_quantidade_minima_demo q
+     ON q.pedido_id=i.pedido_id AND q.ordem=i.ordem
     WHERE i.pedido_id=? ORDER BY i.ordem
    `
   ).all(pedidoId);
@@ -206,7 +227,10 @@ class CarrinhoLojaLoopDemoSQLite{
       const eleg=this.elegibilidade.consultar(produtoId);
       return {elegivelLoop:eleg.elegivelLoop,
        revisaoElegibilidade:eleg.revisaoElegibilidade,
-       subtotalElegivelCentavos:eleg.elegivelLoop?subtotalCentavos:0};
+       quantidadeMinimaLoop:eleg.quantidadeMinimaLoop,
+       revisaoQuantidadeMinima:eleg.revisaoQuantidadeMinima,
+       subtotalElegivelCentavos:eleg.elegivelLoop&&
+        quantidade>=eleg.quantidadeMinimaLoop?subtotalCentavos:0};
      })()};
    });
    const totalCentavos=fotografias.reduce((n,i)=>n+i.subtotalCentavos,0);
@@ -225,6 +249,11 @@ class CarrinhoLojaLoopDemoSQLite{
     INSERT INTO admin_carrinho_loop_itens_demo(pedido_id,ordem,produto_id,tipo,nome,revisao,quantidade,unitario_centavos,subtotal_centavos)
     VALUES (?,?,?,?,?,?,?,?,?)
    `);
+   const inserirQuantidade=this.banco.prepare(`
+    INSERT INTO admin_carrinho_item_quantidade_minima_demo
+     (pedido_id,ordem,quantidade_minima,revisao_minima)
+    VALUES(?,?,?,?)
+   `);
    const inserirRegra=this.banco.prepare(`
     INSERT INTO admin_carrinho_item_elegibilidade_demo
     (pedido_id,ordem,elegivel_loop,revisao_elegibilidade,subtotal_elegivel_centavos)
@@ -235,6 +264,8 @@ class CarrinhoLojaLoopDemoSQLite{
      i.tipo,i.nome,i.revisao,i.quantidade,i.unitarioCentavos,i.subtotalCentavos);
     inserirRegra.run(pedidoId,i.ordem,i.elegivelLoop?1:0,
      i.revisaoElegibilidade,i.subtotalElegivelCentavos);
+    inserirQuantidade.run(pedidoId,i.ordem,i.quantidadeMinimaLoop,
+     i.revisaoQuantidadeMinima);
    }
    this.banco.exec('COMMIT');
    return {...this.buscar(pedidoId),repetido:false};
