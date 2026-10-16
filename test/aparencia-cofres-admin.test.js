@@ -33,13 +33,13 @@ async function pedir(url,opcoes={}){
 }
 const autenticar={Authorization:'Bearer '+TOKEN};
 
-test('cinco cofres recebem configuracoes visuais sem alterar estrutura ou transacoes',()=>{
+test('seis cofres recebem configuracoes visuais sem alterar estrutura ou transacoes',()=>{
   const db=new RepositorioCatalogoSQLite({caminho:':memory:'});
   try{
     const repo=new RepositorioAparenciaCofresSQLite({banco:db.banco});
     const list=repo.listar();
-    assert.equal(list.length,5);
-    assert.equal(DEFINICOES.length,5);
+    assert.equal(list.length,6);
+    assert.equal(DEFINICOES.length,6);
     assert.deepEqual(list.map(x=>x.id),[
       COFRES.ESQUERDA,COFRES.CENTRO,COFRES.DIREITA,COFRES.COMERCIAL,COFRES.DISTRIBUIDOR
     ]);
@@ -118,7 +118,7 @@ test('rotas exclusivas do administrador alteram so aparencia, preservando valore
   assert.equal((await pedir(base+edit,{method:'PATCH',headers:{'Content-Type':'application/json'},body:'{}'})).status,401);
   assert.equal((await pedir(base+config,{headers:{...autenticar,Origin:'https://site-externo.invalid'}})).status,403);
   const list=await (await pedir(base+config,{headers:autenticar})).json();
-  assert.equal(list.cofres.length,5);
+  assert.equal(list.cofres.length,6);
   assert.equal(list.cofres[0].revisao,0);
   const inicial=await (await pedir(base+finan,{headers:autenticar})).json();
   const patch=async(v)=>pedir(base+edit,{method:'PATCH',headers:{...autenticar,'Content-Type':'application/json'},body:JSON.stringify(v)});
