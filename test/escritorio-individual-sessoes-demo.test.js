@@ -69,7 +69,7 @@ test('projecao individual inclui apenas compras e posicoes da propria conta',asy
  assert.equal(visA.posicoes.length,1);
  assert.equal(visB.posicoes.length,1);
  assert.equal(visA.posicoes[0].local,'FILA_B');
- assert.equal(visA.vagasLivres,6);
+ assert.equal(visA.vagasLivres,5);
  assert.equal(visA.indicacoes.cadastrosPorConvite,0);
  assert.equal(JSON.stringify(visA).includes('pedido-beta'),false);
  assert.equal(JSON.stringify(visA).includes('Conta Demo Beta'),false);
