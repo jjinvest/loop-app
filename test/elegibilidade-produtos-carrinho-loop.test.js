@@ -148,3 +148,59 @@ test('todos produtos autorizados por padrao; admin exclui sem retirar da loja, f
  assert.equal((await fetch('http://127.0.0.1:'+publicServer.address().port+
   '/api/admin/carrinho-loop-demo/elegibilidade')).status,404);
 });
+
+test('curso PDF individual segue autorizacao do produto congelada no pedido',async t=>{
+ const repo=new RepositorioCatalogoSQLite({caminho:':memory:'});
+ t.after(()=>repo.fechar());
+ repo.salvar({produto:produto('pdf-regra-250',25000),revisaoEsperada:0});
+ const contas=new ContasParticipantesDemoSQLite({banco:repo.banco});
+ const usuario=contas.cadastrar({
+  nome:'Cliente de PDF Individual',email:'pdf-regra@exemplo.invalid',
+  senha:'senha-ficticia-grande-2026'
+ });
+ const segredo='chave-pdf-elegivel-2026-123456789';
+ const app=criarAppAdminLaboratorio({repositorio:repo,segredo});
+ const srv=app.listen(0,'127.0.0.1');await once(srv,'listening');
+ t.after(()=>new Promise(resolve=>srv.close(resolve)));
+ const base='http://127.0.0.1:'+srv.address().port;
+ const headers={'Content-Type':'application/json',Authorization:'Bearer '+segredo};
+ const post=async(p,b)=>{
+  const r=await fetch(base+'/api/admin/'+p,{method:'POST',headers,body:JSON.stringify(b)});
+  assert.equal(r.status,200,p+' '+r.status);
+  return r.json();
+ };
+ const novo=async(id)=>{
+  const criado=await post('pedidos-pdf-demo',{pedidoId:id,produtoId:'pdf-regra-250'});
+  assert.equal(criado.pedido.precoBrutoCentavos,25000);
+  const v=await post('pedidos-pdf-demo/'+id+'/vincular-loop',{contaId:usuario.contaId});
+  assert.equal(v.titularFixado,true);
+  return criado.pedido;
+ };
+ const pagar=async(id)=>{
+  const x=await post('pedidos-pdf-demo/'+id+'/eventos',{
+   eventoId:'evento-'+id,tipo:'CONFIRMAR_FICTICIO'
+  });
+  return x.integracaoLoop;
+ };
+ // Regra padrao do PDF: ele conta.
+ const inicio=await novo('pdf-inicial250');
+ assert.equal(inicio.elegivelLoop,true);
+ assert.equal((await pagar('pdf-inicial250')).posicaoCriada,true);
+ // Desmarcar PDF nao remove a venda da loja.
+ await post('carrinho-loop-demo/elegibilidade',{
+  produtoId:'pdf-regra-250',elegivelLoop:false,revisaoEsperada:1
+ });
+ const excluido=await novo('pdf-excluido250');
+ assert.equal(excluido.precoBrutoCentavos,25000);
+ assert.equal(excluido.valorElegivelLoopCentavos,0);
+ // Reautorizar antes de confirmar NAO muda a regra do pedido antigo.
+ await post('carrinho-loop-demo/elegibilidade',{
+  produtoId:'pdf-regra-250',elegivelLoop:true,revisaoEsperada:2
+ });
+ assert.equal((await pagar('pdf-excluido250')).posicaoCriada,false);
+ assert.equal((await novo('pdf-restaurado250')).elegivelLoop,true);
+ assert.equal((await pagar('pdf-restaurado250')).posicaoCriada,true);
+ const ponte=await(await fetch(base+'/api/admin/ponte-compras-convites-demo',{headers})).json();
+ assert.equal(ponte.compras.length,2);
+ assert.equal(ponte.comprasLojaSemLoop.length,1);
+});
