@@ -1491,6 +1491,29 @@
     }catch(e){status.textContent='Não foi possível criar: '+e.message;}
     finally{b.disabled=false;}
   }
+  async function conferirCicloDouradas(){
+    const status=el('statusCicloDouradasDemo'),lista=el('listaCicloDouradasDemo');
+    lista.replaceChildren();
+    if(!token){status.textContent='Informe a chave administrativa.';return;}
+    const ciclo=Number(el('cicloAuditoriaDouradasDemo').value);
+    if(!Number.isSafeInteger(ciclo)||ciclo<1||ciclo>1000000){
+      status.textContent='Informe um ciclo válido.';return;
+    }
+    try{
+      const r=await requisitar('ponte-compras-convites-demo/auditoria-ciclo?ciclo='+ciclo);
+      status.textContent='Ciclo '+r.cicloNumero+' · centro #'+r.centroPosicaoId+
+       ' · '+r.origemCentro+' · '+r.vendaEventoCount+' de 6 eventos · '+
+       (r.destinosConferidos?'destinos coerentes':'destinos divergentes')+
+       '. Sem pagamentos reais confirmados.';
+      for(const ev of r.eventos){
+        const li=document.createElement('li');
+        li.textContent=ev.ordem+'ª venda: '+ev.cofrePrevisto+
+         ' · '+(ev.registroCoerente?'conferido no motor':'DIVERGÊNCIA no motor')+
+         ' · receita não comprovada';
+        lista.append(li);
+      }
+    }catch(e){status.textContent='Auditoria não concluída: '+e.message;}
+  }
   async function registrarLivro(e,tipo){
     e.preventDefault();
     if(!token){el('statusLivroPersistenteDemo').textContent='Abra a demonstração com a chave local.';return;}
@@ -1679,6 +1702,7 @@
   el('formEventoPSPDemo').addEventListener('submit',registrarEventoPSP);
   el('criarDouradaManualDemo').addEventListener('click',criarDouradaManual);
   el('conferirDouradasManuaisDemo').addEventListener('click',carregarDouradasManuais);
+  el('conferirCicloDouradasDemo').addEventListener('click',conferirCicloDouradas);
   el('formCicloPersistenteDemo').addEventListener('submit',e=>registrarLivro(e,'ciclo'));
   el('formMovimentoPersistenteDemo').addEventListener('submit',e=>registrarLivro(e,'movimento'));
   el('atualizarLivroPersistenteDemo').addEventListener('click',carregarLivro);
