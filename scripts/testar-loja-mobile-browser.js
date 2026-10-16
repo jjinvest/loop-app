@@ -42,6 +42,27 @@ async function validarViewport(page,largura,rotulo){
  assert.equal(medicao.colunas,3,rotulo+' tabuleiro em tres colunas');
  await page.screenshot({path:path.join(pasta,rotulo+'-'+largura+'px.png'),fullPage:true});
 }
+async function conferirLargura(page,largura,rotulo,{captura=false}={}){
+ await page.setViewportSize({width:largura,height:812});
+ await page.waitForTimeout(55);
+ const tamanho=await page.evaluate(()=>({
+  viewport:window.innerWidth,
+  html:document.documentElement.scrollWidth,
+  body:document.body.scrollWidth,
+  controlesEstourando:[...document.querySelectorAll('input,select,button,a')].filter(e=>{
+   if(!e.getClientRects().length)return false;
+   const r=e.getBoundingClientRect();
+   return r.left < -2||r.right>window.innerWidth+2;
+  }).slice(0,4).map(e=>({tag:e.tagName,id:e.id||null,classe:e.className||null}))
+ }));
+ assert.ok(tamanho.html<=tamanho.viewport+1&&tamanho.body<=tamanho.viewport+1,
+  rotulo+' '+largura+'px: rolagem horizontal '+JSON.stringify(tamanho));
+ assert.deepEqual(tamanho.controlesEstourando,[],
+  rotulo+' '+largura+'px: controles fora da viewport');
+ if(captura)await page.screenshot({
+  path:path.join(pasta,rotulo+'-'+largura+'px.png'),fullPage:false
+ });
+}
 async function main(){
  let banco,servidor,browser,page;
  try{
@@ -130,9 +151,82 @@ async function main(){
   assert.equal(await page.locator('.linha-minha-demo .posicao-vermelho').count(),1);
   await page.screenshot({path:path.join(pasta,'escritorio-posicao-ativada.png'),fullPage:true});
 
+  // Uma plataforma, não telas exclusivas de telefone: validar desktop real.
+  // Mobile: visita também a prévia pública e todos os painéis administrativos.
+  await page.goto(base+'/',{waitUntil:'networkidle'});
+  assert.equal(await page.locator('.tabuleiro .vaga').count(),6);
+  assert.equal(await page.locator('.tabuleiro .v6').count(),1);
+  for(const width of [320,390,768])
+   await conferirLargura(page,width,'home-mobile',{captura:width===320});
+
+  await page.goto(base+'/admin/financeiro-demo',{waitUntil:'networkidle'});
+  await page.locator('#chaveFinanceiroDemo').fill(admin);
+  await page.locator('#abrirFinanceiroDemo').click();
+  await page.locator('#dadosFinanceiroDemo').waitFor({state:'visible'});
+  await page.locator('#criarDouradaManualDemo').click();
+  await page.locator('#listaDouradasManuaisDemo li').first().waitFor();
+  assert.match(await page.locator('#listaDouradasManuaisDemo').innerText(),/Posição #1/);
+  await page.locator('#centroFinanceiroDemo').selectOption('dourado');
+  await page.locator('#abrirFinanceiroDemo').click();
+  await page.locator('#dadosFinanceiroDemo').waitFor({state:'visible'});
+  assert.match(await page.locator('#cofresLoopFinanceiroDemo').innerText(),/dourad/i);
+  for(const width of [320,390,768])
+   await conferirLargura(page,width,'admin-financeiro-mobile',{captura:width===320});
+
+  for(const rota of [
+   ['/admin','admin-catalogo'],
+   ['/admin/escritorio-demo','admin-escritorio'],
+   ['/admin/cadastro-participantes-demo','admin-cadastros'],
+   ['/produto.html?id=curso-mobile-100','produto-publico']
+  ]){
+   await page.goto(base+rota[0],{waitUntil:'networkidle'});
+   for(const width of [320,390])
+    await conferirLargura(page,width,rota[1]+'-mobile',{captura:width===320});
+  }
+  // Browser de computador, sem emular toque ou dispositivo móvel.
+  const desktopCtx=await browser.newContext({
+   viewport:{width:1366,height:900},deviceScaleFactor:1,isMobile:false
+  });
+  const desktop=await desktopCtx.newPage();
+  desktop.on('pageerror',erro=>erros.push('desktop: '+erro.message));
+  await desktop.goto(base+'/laboratorio/participante',{waitUntil:'networkidle'});
+  await desktop.locator('#nomeParticipante').fill(titular.nome);
+  await desktop.locator('#senhaParticipante').fill(senha);
+  await desktop.locator('#botaoEntrarParticipante').click();
+  await desktop.locator('#conteudoParticipante').waitFor({state:'visible'});
+  for(const width of [768,1024,1366]){
+   await conferirLargura(desktop,width,'escritorio-desktop',{captura:width===1366});
+   assert.equal(await desktop.locator('.tabuleiro-vaga-6').count(),1);
+  }
+  await desktop.goto(base+'/laboratorio/loja',{waitUntil:'networkidle'});
+  await desktop.locator('#conteudoLojaLoop').waitFor({state:'visible'});
+  for(const width of [768,1024,1366])
+   await conferirLargura(desktop,width,'loja-desktop',{captura:width===1366});
+  await desktop.goto(base+'/admin/financeiro-demo',{waitUntil:'networkidle'});
+  await desktop.locator('#chaveFinanceiroDemo').fill(admin);
+  await desktop.locator('#abrirFinanceiroDemo').click();
+  await desktop.locator('#dadosFinanceiroDemo').waitFor({state:'visible'});
+  for(const width of [768,1024,1366])
+   await conferirLargura(desktop,width,'admin-financeiro-desktop',{captura:width===1366});
+  for(const [rota,rotulo] of [
+   ['/','home-desktop'],
+   ['/admin','admin-catalogo-desktop'],
+   ['/admin/escritorio-demo','admin-escritorio-desktop'],
+   ['/admin/cadastro-participantes-demo','admin-cadastro-desktop'],
+   ['/produto.html?id=curso-mobile-100','produto-publico-desktop']
+  ]){
+   await desktop.goto(base+rota,{waitUntil:'networkidle'});
+   await conferirLargura(desktop,1366,rotulo,{captura:true});
+   if(rota==='/')assert.equal(await desktop.locator('.tabuleiro .vaga').count(),6);
+  }
+  await desktopCtx.close();
+
   assert.deepEqual(erros,[], 'Erros de execucao no navegador');
   const relatorio={status:'APROVADO',
-   tamanhosPx:[320,360,390,412],pedidosCriados:1,
+   tamanhosPx:[320,360,390,412,768,1024,1366],
+   paginasVerificadas:['home','escritorio-participante','loja','admin-financeiro',
+    'admin-catalogo','admin-escritorio','admin-cadastro','produto'],
+   celularEComputador:true,douradaCriadaPeloNavegador:true,pedidosCriados:1,
    totalPedidoCentavos:25000,clienteFicticio:true,
    lojaParaEscritorio:true,ativacaoAzulParaVermelho:true,
    semRolagemHorizontal:true,imagens:fs.readdirSync(pasta).filter(x=>x.endsWith('.png'))};
