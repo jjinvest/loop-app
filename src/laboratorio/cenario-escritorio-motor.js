@@ -61,7 +61,7 @@ function extrairVisaoDoMotor({ simulador, titularId, titulares=TITULARES_FICTICI
 }
 
 // Reproduz de maneira isolada as regras que o motor ja possui:
-// 6 posicoes iniciais, 5 vendas com posicoes, indicacoes A/B e um giro.
+// 7 posicoes iniciais, 6 vendas com posicoes, indicacoes A/B e um giro.
 // NUNCA preenche CPF, conta bancaria, valores ou pedidos reais.
 function criarCenarioEscritorioMotor() {
   const simulador = new SimuladorLoop({
@@ -76,12 +76,12 @@ function criarCenarioEscritorioMotor() {
     if (nova.repetida) throw new Error('Venda de teste duplicada');
     return vendaId;
   };
-  for (let i=1;i<=5;i++) compra('a',i);
+  for (let i=1;i<=6;i++) compra('a',i);
   compra('b',1);
   simulador.prepararTabuleiro();
 
   for (const [titular,sufixo] of [
-    ['b',2],['b',3],['c',1],['c',2],['d',1]
+    ['b',2],['b',3],['c',1],['c',2],['d',1],['d',2]
   ]) {
     const vendaId=compra(titular,sufixo);
     simulador.registrarVendaNoCicloSimulada({vendaId});
