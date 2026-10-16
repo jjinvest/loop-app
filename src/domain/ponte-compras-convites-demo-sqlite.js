@@ -429,9 +429,15 @@ class PonteComprasConvitesDemoSQLite{
     SELECT pedido_id AS pedidoId,indicador_id AS indicadorId,
      convidado_id AS convidadoId,posicao_id AS posicaoId,
      valor_posicao_centavos AS basePosicaoCentavos,
-     taxa_base_pontos AS taxaBasePontos,
-     valor_comissao_centavos AS valorComissaoCentavos
-    FROM admin_comissoes_indicacoes_demo ORDER BY calculado_em,pedido_id
+     10 AS percentual,taxa_base_pontos AS taxaBasePontos,
+     valor_comissao_centavos AS valorComissaoCentavos,calculado_em AS calculadoEm
+    FROM admin_comissoes_indicacoes_demo
+    UNION ALL
+    SELECT pedido_id,indicador_id,convidado_id,posicao_id,
+     valor_posicao_centavos,percentual,percentual*100,
+     valor_comissao_centavos,calculado_em
+    FROM admin_comissoes_indicacoes_v2_demo
+    ORDER BY calculadoEm,pedidoId
    `).all(),
    valoresDeCadaPosicao:this.banco.prepare(`
     SELECT c.pedido_id AS pedidoId,c.posicao_id AS posicaoId,
