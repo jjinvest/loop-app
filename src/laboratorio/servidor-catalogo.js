@@ -30,6 +30,7 @@ const { criarRouterEscritorioDemo } = require('../routes/admin-escritorio-demo')
 const { ContasParticipantesDemoSQLite } = require('../domain/contas-participantes-demo-sqlite');
 const { criarRouterContasParticipantesDemo } = require('../routes/admin-contas-participantes-demo');
 const { criarRouterIndicacoesAdminDemo }=require('../routes/admin-indicacoes-taxa-demo');
+const { criarRouterConviteCadastroDemo }=require('../routes/convite-cadastro-laboratorio-demo');
 const { PonteComprasConvitesDemoSQLite } = require('../domain/ponte-compras-convites-demo-sqlite');
 const { AdesoesPosicoesDemoSQLite } = require('../domain/adesoes-posicoes-demo-sqlite');
 const { PedidosTitularidadeDemoSQLite } = require('../domain/pedidos-titularidade-demo-sqlite');
@@ -121,6 +122,9 @@ function criarAppAdminLaboratorio({ repositorio, segredo, webhookDemo } = {}) {
     });
     app.use('/api/admin',criarRouterIndicacoesAdminDemo({
       segredo,links:ponteDemo.linksComissoes
+    }));
+    app.use('/api/laboratorio/convite',criarRouterConviteCadastroDemo({
+      contas:contasDemo,links:ponteDemo.linksComissoes
     }));
     integracaoPDFLoopDemo=new IntegracaoLojaPDFLoopDemo({
       pedidosPDF:pedidosPDFDemo,pedidosIdentificados:pedidosIdentificadosDemo,ponte:ponteDemo
@@ -237,6 +241,12 @@ function criarAppAdminLaboratorio({ repositorio, segredo, webhookDemo } = {}) {
   });
   app.get('/laboratorio/loja.css', somenteLocal, (req, res) => {
     res.type('text/css').sendFile(path.join(__dirname,'loja-cliente-demo.css'));
+  });
+  app.get(/^\\/laboratorio\\/convite\\/lp-[a-f0-9]{20}(?:\\/[a-z0-9-]+)?\\/?$/,somenteLocal,(_req,res)=>{
+    res.sendFile(path.join(__dirname,'convite-cliente-demo.html'));
+  });
+  app.get('/laboratorio/convite.js',somenteLocal,(_req,res)=>{
+    res.type('application/javascript').sendFile(path.join(__dirname,'convite-cliente-demo.js'));
   });
   app.get('/laboratorio/participante', somenteLocal, (req, res) => {
     res.sendFile(path.join(__dirname,'participante-demo.html'));
