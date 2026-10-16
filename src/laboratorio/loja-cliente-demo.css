@@ -42,3 +42,28 @@ button:disabled{opacity:.48;cursor:not-allowed}
  .cabecalho-loja-loop a{font-size:.86rem}
 }
 @media(max-width:650px){.cabecalho-loja-loop{flex-direction:column;align-items:stretch}.navegacao-loja-loop{display:grid;grid-template-columns:repeat(2,minmax(0,1fr))}.navegacao-loja-loop a{padding:9px;font-size:.86rem;justify-content:center;text-align:center}}
+
+/* Mesma loja em celular, tablet e computador, sem coluna que exceda a tela. */
+.loja-loop,.loja-loop > *,.painel-loja-loop,.produto-loja-loop,
+.produtos-loja-loop > *, .item-carrinho-loja > *{min-width:0;max-width:100%}
+.painel-loja-loop input,.painel-loja-loop select{box-sizing:border-box;max-width:100%;min-width:0}
+#enderecoDivulgarLojaLoop{width:100%;padding:12px;border-radius:9px;
+ background:#0b161b;border:1px solid #638490;color:#ecf4f5;font:inherit;
+ text-overflow:ellipsis}
+.cabecalho-loja-loop > div{min-width:0;overflow-wrap:anywhere}
+.produto-loja-loop{overflow-wrap:anywhere}
+.loja-loop button,.navegacao-loja-loop a{min-height:44px;white-space:normal}
+@media(max-width:420px){
+ .loja-loop{padding:14px 10px 50px}
+ .painel-loja-loop,.produto-loja-loop{padding:14px}
+ .produtos-loja-loop{grid-template-columns:repeat(auto-fit,minmax(min(100%,205px),1fr))}
+ .item-carrinho-loja{grid-template-columns:minmax(0,1fr) minmax(0,90px)}
+ .cabecalho-secao-loja button{width:100%}
+ .total-loja-loop{font-size:1.15rem}
+ #registrarPedidoLoja{width:100%}
+}
+@media(min-width:1000px){
+ .loja-loop{padding-top:30px}
+ .produtos-loja-loop{grid-template-columns:repeat(auto-fill,minmax(250px,1fr))}
+}
+
