@@ -10,8 +10,8 @@ const {
 const CENTAVOS_FILA_POR_VENDA = VALOR_PADRAO_LOOP_CENTAVOS;
 const CENTAVOS_CENTRO_POR_CICLO = VALOR_CICLO_PARTICIPANTE_CENTAVOS;
 const CENTAVOS_EMPRESA_POR_CICLO = VALOR_CICLO_EMPRESA_CENTAVOS;
-const VENDAS_POR_CICLO = 5;
-const POSICOES_PARA_INICIAR = 6;
+const VENDAS_POR_CICLO = 6;
+const POSICOES_PARA_INICIAR = 7;
 const MAX_PERIODOS = 240;
 
 function inteiro(valor, campo, { minimo = 0, maximo = 10000000 } = {}) {
@@ -64,16 +64,16 @@ function contarEventosPorDestino(totalEventos) {
   return {
     ciclos,
     eventosCentro: seguro(ciclos * 3 + Math.ceil(restantes / 2), 'eventosCentro'),
-    eventosEmpresa: seguro(ciclos * 2 + Math.floor(restantes / 2), 'eventosEmpresa')
+    eventosEmpresa: seguro(ciclos * 3 + Math.floor(restantes / 2), 'eventosEmpresa')
   };
 }
 
 /**
  * Modelo agregado com periodos sequenciais. Cada venda valida cria UMA
- * posicao. As primeiras seis posicoes, caso nao existam, preenchem
- * centro + cinco vagas e NAO contam como eventos do primeiro ciclo.
+ * posicao. As primeiras sete posicoes, caso nao existam, preenchem
+ * centro + seis vagas e NAO contam como eventos do primeiro ciclo.
  * Quando o tabuleiro ja esta preenchido, cada nova venda representa
- * um evento de ciclo. 'posicoesPendentes' inclui ate seis posicoes
+ * um evento de ciclo. 'posicoesPendentes' inclui ate sete posicoes
  * no tabuleiro, nao somente a fila, e nao significa pessoas unicas.
  * Nao modela indicacoes, ordem A/B, saques ou
  * reversao de posicao por estorno tardio.
@@ -189,7 +189,7 @@ function projetarSustentabilidade({ posicoesIniciais = 0, periodos } = {}) {
   const finalDestinos = contarEventosPorDestino(eventosDeCiclo);
   return {
     modo:'PROJECAO_HIPOTETICA_SEM_PAGAMENTOS',
-    hipotese:'Cinco vendas por ciclo, uma nova posicao por venda; seis posicoes para iniciar',
+    hipotese:'Seis vendas por ciclo, uma nova posicao por venda; sete posicoes para iniciar',
     premissas:{
       parcelaFilaPorVendaCentavos:CENTAVOS_FILA_POR_VENDA,
       referenciaCentroPorCicloCentavos:CENTAVOS_CENTRO_POR_CICLO,
