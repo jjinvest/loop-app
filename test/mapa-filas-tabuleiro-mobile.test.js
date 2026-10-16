@@ -32,7 +32,7 @@ test('cem entradas: mapa marca minhas posicoes corretamente sem alterar fila nem
  const antes=sim.exportarSnapshot();
  const mapa99=mapaCoresDoEscritorio(sim,'cliente-099');
  assert.equal(mapa99.filaA.length,1);
- assert.equal(mapa99.filaB.length,93);
+ assert.equal(mapa99.filaB.length,92);
  assert.equal(mapa99.filaA[0].posicaoId,97);
  assert.equal(mapa99.filaA[0].minha,false);
  const p99=mapa99.filaB.find(p=>p.posicaoId===99);
@@ -63,7 +63,7 @@ test('cem entradas: mapa marca minhas posicoes corretamente sem alterar fila nem
  }
 });
 
-test('layout da fila e tabuleiro no celular preserva centro e cinco vagas, filtros e acessibilidade',()=>{
+test('layout da fila e tabuleiro no celular preserva centro e seis vagas, filtros e acessibilidade',()=>{
  const html=arq('participante-demo.html');
  const css=arq('participante-demo.css');
  const js=arq('participante-demo.js');
@@ -83,7 +83,7 @@ test('layout da fila e tabuleiro no celular preserva centro e cinco vagas, filtr
  assert.match(js,/tabuleiro-centro|classe:'centro'/);
  assert.doesNotMatch(js,/innerHTML|localStorage|sessionStorage/);
  assert.match(css,/\.tabuleiro-centro\{grid-column:2;grid-row:2/);
- for(let i=1;i<=5;i++)assert.match(css,new RegExp('\\.tabuleiro-vaga-'+i+'\\{'));
+ for(let i=1;i<=6;i++)assert.match(css,new RegExp('\\.tabuleiro-vaga-'+i+'\\{'));
  assert.match(css,/@media\(max-width:480px\)/);
  assert.match(css,/\.minha-posicao-demo/);
  assert.match(css,/\.atalhos-participante/);
