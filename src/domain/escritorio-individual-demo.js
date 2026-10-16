@@ -96,7 +96,21 @@ class EscritorioIndividualDemo{
     ...c,confirmacao:'INTERNA_SIMULADA',
     status:'VENDA_LOJA_SEM_POSICAO_LOOP',posicaoCriada:false
    })),
-   posicoes:posicoes.sort((a,b)=>a.posicaoId-b.posicaoId),
+   // A posicao conserva a referencia do instante da compra,
+   // mesmo apos mudanca da configuracao global de valor.
+   posicoes:posicoes.map(p=>{
+    const pedidoId=comprasPorPosicao.get(p.posicaoId);
+    if(!pedidoId)throw new Error('Posicao sem pedido associado');
+    const referencia=this.banco.prepare(`
+     SELECT v.revisao_valor AS revisaoValor,
+      v.valor_referencia_centavos AS valorReferenciaCentavos
+     FROM admin_ponte_posicoes_valores_demo v
+     JOIN admin_ponte_compras_demo c ON c.pedido_id=v.pedido_id
+     WHERE c.pedido_id=? AND c.posicao_id=? AND c.conta_id=?
+    `).get(pedidoId,p.posicaoId,contaId);
+    if(!referencia)throw new Error('Referencia da posicao de teste ausente');
+    return {...p,...referencia};
+   }).sort((a,b)=>a.posicaoId-b.posicaoId),
    limitePosicoesAtivas:LIMITE_ATIVAS,
    vagasLivres:LIMITE_ATIVAS-posicoes.length,
    indicacoes:{
