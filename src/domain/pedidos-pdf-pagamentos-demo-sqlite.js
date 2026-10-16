@@ -4,6 +4,7 @@
 // Sem arquivos reais, dados de clientes, checkout, PSP externo, carteira,
 // alocacao de R$100, indicacoes, criacao de posicao ou giro de catraca.
 // A confirmacao abaixo apenas simula a elegibilidade futura de um download.
+const {ElegibilidadeProdutosLoopDemoSQLite}=require('./elegibilidade-produtos-loop-demo-sqlite');
 const ID_PEDIDO=/^[a-z0-9][a-z0-9-]{2,54}$/;
 const ID_EVENTO=/^[a-z0-9][a-z0-9-]{2,62}$/;
 const TIPOS=Object.freeze({CONFIRMAR:'CONFIRMAR_FICTICIO',ESTORNAR:'ESTORNAR_FICTICIO'});
@@ -19,6 +20,7 @@ class PedidosPDFPagamentosDemoSQLite{
   if(!banco||typeof banco.prepare!=='function')throw new TypeError('Catalogo local SQLite obrigatorio');
   this.banco=banco;
   this.catalogo=repositorioCatalogo;
+  this.elegibilidade=new ElegibilidadeProdutosLoopDemoSQLite({catalogo:repositorioCatalogo});
   banco.exec(`
    CREATE TABLE IF NOT EXISTS admin_pdf_demo_pedidos (
     pedido_id TEXT PRIMARY KEY NOT NULL,
@@ -29,6 +31,17 @@ class PedidosPDFPagamentosDemoSQLite{
     preco_centavos INTEGER NOT NULL CHECK(preco_centavos>0),
     criado_em TEXT NOT NULL
    );
+   CREATE TABLE IF NOT EXISTS admin_pdf_demo_elegibilidade_loop(
+    pedido_id TEXT PRIMARY KEY REFERENCES admin_pdf_demo_pedidos(pedido_id) ON DELETE RESTRICT,
+    elegivel_loop INTEGER NOT NULL CHECK(elegivel_loop IN (0,1)),
+    revisao_elegibilidade INTEGER NOT NULL CHECK(revisao_elegibilidade>=1)
+   );
+   CREATE TRIGGER IF NOT EXISTS admin_pdf_elegibilidade_no_update
+    BEFORE UPDATE ON admin_pdf_demo_elegibilidade_loop
+    BEGIN SELECT RAISE(ABORT,'regra de elegibilidade do PDF imutavel'); END;
+   CREATE TRIGGER IF NOT EXISTS admin_pdf_elegibilidade_no_delete
+    BEFORE DELETE ON admin_pdf_demo_elegibilidade_loop
+    BEGIN SELECT RAISE(ABORT,'regra de elegibilidade do PDF imutavel'); END;
    CREATE TABLE IF NOT EXISTS admin_pdf_demo_eventos (
     sequencia INTEGER PRIMARY KEY AUTOINCREMENT,
     evento_id TEXT NOT NULL UNIQUE,
@@ -84,7 +97,13 @@ class PedidosPDFPagamentosDemoSQLite{
  }
  saida(row){
   if(!row)return null;
+  const eleg=this.banco.prepare(
+   'SELECT elegivel_loop AS elegivel,revisao_elegibilidade AS revisao FROM admin_pdf_demo_elegibilidade_loop WHERE pedido_id=?'
+  ).get(row.pedido_id);
   return {
+   elegivelLoop:eleg?Boolean(eleg.elegivel):true,
+   revisaoElegibilidade:eleg?.revisao??1,
+   valorElegivelLoopCentavos:eleg&&!eleg.elegivel?0:row.preco_centavos,
    pedidoId:row.pedido_id,pagamentoId:row.pagamento_id,
    produtoId:row.produto_id,nomeProduto:row.nome_produto,
    revisaoProduto:row.revisao_produto,precoBrutoCentavos:row.preco_centavos,
@@ -148,7 +167,8 @@ class PedidosPDFPagamentosDemoSQLite{
    produtos:this.catalogo.listar().filter(p=>
     p.tipo==='PDF'&&p.estado==='PUBLICADO'&&
     Number.isSafeInteger(p.precoCentavos)&&p.precoCentavos>0
-   ).map(p=>({produtoId:p.id,nome:p.nome,precoCentavos:p.precoCentavos})),
+   ).map(p=>({produtoId:p.id,nome:p.nome,precoCentavos:p.precoCentavos,
+    elegivelLoop:this.elegibilidade.consultar(p.id).elegivelLoop})),
    pagamentoReal:false,entregaReal:false
   };
  }
@@ -176,6 +196,11 @@ class PedidosPDFPagamentosDemoSQLite{
    this.banco.prepare(
     'INSERT INTO admin_pdf_demo_pedidos(pedido_id,pagamento_id,produto_id,nome_produto,revisao_produto,preco_centavos,criado_em) VALUES (?,?,?,?,?,?,?)'
    ).run(pedidoId,pagamentoId,produtoId,item.nome,registro.revisao,item.precoCentavos,agora);
+   const politica=this.elegibilidade.consultar(produtoId);
+   this.banco.prepare(`
+    INSERT INTO admin_pdf_demo_elegibilidade_loop(
+     pedido_id,elegivel_loop,revisao_elegibilidade) VALUES (?,?,?)
+   `).run(pedidoId,politica.elegivelLoop?1:0,politica.revisaoElegibilidade);
    this.banco.exec('COMMIT');
    return {repetido:false,pedido:this.buscar(pedidoId)};
   }catch(e){this.banco.exec('ROLLBACK');throw e;}
