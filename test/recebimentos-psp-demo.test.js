@@ -43,7 +43,7 @@ test('10 pagamentos sao fixtures pendentes e nao originam saldo, fila ou recebim
   const {banco,razao,recebimentos}=montar();
   try{
     const l=recebimentos.listar();
-    assert.equal(l.pagamentos.length,10);
+    assert.equal(l.pagamentos.length,12);
     assert.equal(l.modo,'CONFIRMACOES_TOTALMENTE_FICTICIAS');
     assert.equal(l.pagamentosReais,false);
     assert.equal(l.webhookExternoAtivo,false);
@@ -130,16 +130,16 @@ test('estorno so apos confirmacao e gera saidas sem apagar entradas ou simular r
 test('IDs e ordem de destino seguem tabuleiro; outras vendas nao sao processadas',()=>{
   const {banco,razao,recebimentos}=montar();
   try{
-    for(let i=1;i<=5;i++){
+    for(let i=1;i<=6;i++){
       const id='pag-split-'+String(i).padStart(2,'0');
       recebimentos.registrarEvento({pagamentoId:id,eventoId:'confirmar-ciclo-'+i,tipo:TIPOS.CONFIRMAR});
     }
     const l=razao.consultar();
-    assert.equal(l.lancamentosRegistrados,10);
+    assert.equal(l.lancamentosRegistrados,12);
     assert.equal(quantia(l,COFRES.CENTRO),30000);
-    assert.equal(quantia(l,COFRES.ESQUERDA),10000);
+    assert.equal(quantia(l,COFRES.ESQUERDA),20000);
     assert.equal(quantia(l,COFRES.DIREITA),10000);
-    assert.equal(quantia(l,COFRES.COMERCIAL),100000);
+    assert.equal(quantia(l,COFRES.COMERCIAL),120000);
     assert.throws(()=>recebimentos.registrarEvento({
       pagamentoId:'pagamento-inventado',eventoId:'evt-qualquer',tipo:TIPOS.CONFIRMAR
     }),e=>e.codigo==='NAO_ENCONTRADO');
@@ -183,7 +183,7 @@ test('confirmacoes e estornos ficticios persistem apos reabrir SQLite',()=>{
     }finally{um.banco.fechar();}
     const dois=montar(arquivo);
     try{
-      assert.equal(dois.recebimentos.listar().pagamentos.length,10);
+      assert.equal(dois.recebimentos.listar().pagamentos.length,12);
       assert.equal(dois.recebimentos.listar().pagamentos.find(p=>p.pagamentoId==='pag-split-05').situacao,'CONFIRMADO_FICTICIO');
       assert.equal(dois.razao.consultar().lancamentosRegistrados,2);
       dois.recebimentos.registrarEvento({pagamentoId:'pag-split-05',eventoId:'estorno-persistido',tipo:TIPOS.ESTORNAR});
@@ -205,7 +205,7 @@ test('rotas de confirmacao ficticia exigem chave e nao ficam no app publico',asy
   const listado=await fetch(uri,{headers:auth});
   assert.equal(listado.status,200);
   assert.equal(listado.headers.get('cache-control'),'no-store');
-  assert.equal((await listado.json()).pagamentos.length,10);
+  assert.equal((await listado.json()).pagamentos.length,12);
   assert.equal((await post(uri+'/pag-split-01/eventos',{eventoId:'evt-a',tipo:TIPOS.CONFIRMAR,dinheiro:5000})).status,400);
   assert.equal((await post(uri+'/pag-split-01/eventos',{eventoId:'evento-api-01',tipo:TIPOS.ESTORNAR})).status,409);
   const confirmado=await post(uri+'/pag-split-01/eventos',{eventoId:'evento-api-01',tipo:TIPOS.CONFIRMAR});
