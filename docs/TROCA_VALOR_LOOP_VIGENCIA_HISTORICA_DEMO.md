@@ -84,3 +84,38 @@ Implementacao e testes: `configuracao-valor-loop-demo-sqlite.js`,
 `escritorio-individual-demo.js`,
 `admin-financeiro-demo.js`, painel HTML/JS e
 `test/reajuste-valor-loop-demo.test.js`.
+
+
+## Previa do impacto antes de registrar
+
+No mesmo painel administrativo, o botao
+**"Simular impacto sem salvar"** recebe o valor cogitado (por
+exemplo R$ 500). Consulta exclusivamente as referencias
+historicas ja gravadas, agrupa o numero de posicoes em
+cada revisao e compara o evento hipotetico do participante.
+Nao altera o valor em vigor, cria posicoes ou repassa nada.
+
+A rota `GET /api/admin/valor-loop-demo/impacto?novoValorCentavos=50000`
+exige a mesma autenticacao administrativa local. Retorna
+quantidades agregadas; nao expõe titular, CPF, pedido ou
+convite. A lista de posicoes individuais exibe o valor
+historico de referencia em cada local atual (B, A ou vaga),
+sem mesclar referencias de outros titulares.
+
+Se uma referencia hipotetica cair de R$ 500 para R$ 250,
+a comparacao mostra **R$ 250 de deficit de cobertura**
+em um evento originalmente referenciado a R$ 500. Nao reduz
+automaticamente a referencia antiga nem trata a falta de
+recursos como saldo disponivel.
+
+A proposta de diferencial para a empresa em ciclos antigos
+continua exclusivamente uma comparacao — **nao foi gravada
+como regra de credito ou saque**. Nada que envolva dinheiro
+real e automatico, mesmo quando o administrador muda o valor
+no simulador.
+
+Casos exercitados: reajustes sucessivos com posicoes
+registradas a R$ 250, R$ 500 e R$ 750,
+`test/reajustes-consecutivos-posicoes-historicas-demo.test.js`
+e previas autenticadas de grupos historicos em
+`test/reajuste-valor-loop-demo.test.js`.
