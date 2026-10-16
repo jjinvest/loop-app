@@ -97,6 +97,9 @@ async function main(){
   await page.locator('#filtroTodasMapaParticipante').click();
   assert.equal(await page.locator('#filtroTodasMapaParticipante').getAttribute('aria-pressed'),'true');
   await page.locator('#filtroResumoMapaParticipante').click();
+  await page.locator('.painel-tabuleiro-imersivo').screenshot({
+   path:path.join(pasta,'tabuleiro-escritorio-mobile.png')
+  });
   for(const width of [320,360,390,412])await validarViewport(page,width,'escritorio');
 
   await page.goto(base+'/laboratorio/loja',{waitUntil:'networkidle'});
@@ -171,6 +174,10 @@ async function main(){
   assert.notEqual(coresMarcos.odd,coresMarcos.even,'Roxo e preto devem ser visualmente distintos');
   for(const width of [320,390,768])
    await conferirLargura(page,width,'home-mobile',{captura:width===320});
+  await page.setViewportSize({width:390,height:812});
+  await page.locator('.painel-tabuleiro-loop').screenshot({
+   path:path.join(pasta,'tabuleiro-publico-mobile.png')
+  });
 
   await page.goto(base+'/admin/financeiro-demo',{waitUntil:'networkidle'});
   await page.locator('#chaveFinanceiroDemo').fill(admin);
@@ -232,6 +239,10 @@ async function main(){
    await conferirLargura(desktop,1366,rotulo,{captura:true});
    if(rota==='/')assert.equal(await desktop.locator('.tabuleiro .vaga').count(),6);
   }
+  await desktop.goto(base+'/',{waitUntil:'networkidle'});
+  await desktop.locator('.painel-tabuleiro-loop').screenshot({
+   path:path.join(pasta,'tabuleiro-publico-desktop.png')
+  });
   await desktopCtx.close();
 
   assert.deepEqual(erros,[], 'Erros de execucao no navegador');
