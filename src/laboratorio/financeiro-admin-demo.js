@@ -87,6 +87,8 @@
     el('statusElegibilidadeLoopDemo').textContent='';
     el('statusQuantidadeMinimaLoopDemo').textContent='';
     el('quantidadeMinimaLoopDemo').value='1';
+    el('pacotePosicoesLoopDemo').value='1';
+    el('statusPacotePosicoesLoopDemo').textContent='';
     el('itensCarrinhoLoopDemo').replaceChildren();
     el('contaCarrinhoLoopDemo').replaceChildren();
     el('pedidoEventoCarrinhoLoopDemo').replaceChildren();
@@ -552,6 +554,7 @@
     if(!p)return;
     el('valorElegibilidadeLoopDemo').value=p.elegivelLoop?'sim':'nao';
     el('quantidadeMinimaLoopDemo').value=String(p.quantidadeMinimaLoop);
+    el('pacotePosicoesLoopDemo').value=String(p.posicoesPorPedidoLoop||1);
     el('statusElegibilidadeLoopDemo').textContent=
       p.nome+': '+(p.elegivelLoop?'valor autorizado para a fila.':
        'continua à venda, mas não conta para a fila.')+
@@ -605,6 +608,26 @@
     }catch(err){
       el('statusQuantidadeMinimaLoopDemo').textContent=err.message;
     }finally{botao.disabled=false;}
+  }
+  async function salvarPacotePosicoesLoop(ev){
+    ev.preventDefault();
+    if(!token)return;
+    const p=regrasProdutosLoop.find(x=>x.produtoId===el('produtoElegibilidadeLoopDemo').value);
+    if(!p)return;
+    const numero=Number(el('pacotePosicoesLoopDemo').value);
+    if(![1,5].includes(numero))return;
+    const botao=el('salvarPacotePosicoesLoopDemo');botao.disabled=true;
+    try{
+      const resultado=await requisitar('carrinho-loop-demo/pacote-posicoes',{
+        method:'POST',body:JSON.stringify({produtoId:p.produtoId,
+         posicoesPorPedidoLoop:numero,revisaoEsperada:p.revisaoPacotePosicoes})
+      });
+      await carregarCarrinhosLoop();
+      el('statusPacotePosicoesLoopDemo').textContent=
+       p.nome+': modalidade de '+resultado.regra.posicoesPorPedidoLoop+
+       ' posição(ões) salva somente para novos pedidos. Revisão registrada.';
+    }catch(err){el('statusPacotePosicoesLoopDemo').textContent=err.message;}
+    finally{botao.disabled=false;}
   }
   async function carregarCarrinhosLoop(){
     const atual=++versaoCarrinho;
@@ -1587,6 +1610,7 @@
   el('formCarrinhoLoopDemo').addEventListener('submit',salvarCarrinhoLoop);
   el('formElegibilidadeLoopDemo').addEventListener('submit',salvarRegraProdutoLoop);
   el('formQuantidadeMinimaLoopDemo').addEventListener('submit',salvarQuantidadeMinimaLoop);
+  el('formPacotePosicoesLoopDemo').addEventListener('submit',salvarPacotePosicoesLoop);
   el('produtoElegibilidadeLoopDemo').addEventListener('change',mostrarRegraProdutoLoop);
   el('formEventoCarrinhoLoopDemo').addEventListener('submit',eventoCarrinhoLoop);
   el('adicionarItemCarrinhoLoopDemo').addEventListener('click',adicionarLinhaCarrinho);
