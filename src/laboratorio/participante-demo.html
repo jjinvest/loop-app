@@ -44,6 +44,22 @@
     <a href="/laboratorio/loja" class="link-loja-participante">Entrar na loja do LOOP</a>
     <p class="ajuda-portal">O pedido fica aguardando confirmação fictícia do laboratório. A tela da loja nunca confirma pagamentos.</p>
    </section>
+   <section class="cartao-participante" aria-labelledby="tituloHistoricoLojaParticipante">
+    <div class="cabecalho-historico-loja-participante">
+     <div>
+      <h2 id="tituloHistoricoLojaParticipante">Meus pedidos da loja</h2>
+      <p class="ajuda-portal">Acompanhe o pedido desde a criação até a posição no LOOP, sem sair do escritório.</p>
+     </div>
+     <a href="/laboratorio/loja" class="link-loja-participante">Fazer uma compra de teste</a>
+    </div>
+    <div class="resumos-participante">
+     <div><span>Meus pedidos</span><strong id="totalPedidosLojaParticipante">0</strong></div>
+     <div><span>Aguardando confirmação</span><strong id="aguardandoPedidosLojaParticipante">0</strong></div>
+     <div><span>Posições azuis</span><strong id="azuisPedidosLojaParticipante">0</strong></div>
+    </div>
+    <p id="alertaAzulParticipante" class="aviso-portal" hidden></p>
+    <ol id="historicoPedidosLojaParticipante" class="historico-loja-participante"></ol>
+   </section>
    <section class="cartao-participante" id="secaoAtivacaoParticipante" hidden>
     <h2>Ative sua posição azul</h2>
     <p class="aviso-portal">Sua posição já está na fila. Para ativá-la, confirme seus dados e aceite os termos de demonstração antes de entrar no tabuleiro.</p>
@@ -77,13 +93,13 @@
      <ol id="posicoesParticipante"></ol>
     </section>
     <section class="cartao-participante">
-     <h2>Meus pedidos simulados</h2>
+     <h2>Compras que geraram posições</h2>
      <ol id="pedidosParticipante"></ol>
     </section>
    </div>
    <section class="cartao-participante">
     <h2>Limites deste laboratório</h2>
-    <p>Os dados mostrados são somente desta conta fictícia. A sessão expira automaticamente, não há pagamento real, análise de CPF nem contemplação. Esta página não cria pedidos nem movimenta a catraca.</p>
+    <p>Os dados mostrados são somente desta conta fictícia. A sessão expira automaticamente, não há pagamento real, análise de CPF nem contemplação. O escritório mostra seus pedidos, mas não movimenta a catraca nem confirma pagamentos. O pedido pode ser criado pela loja de teste.</p>
     <button type="button" id="atualizarParticipante" class="botao-sair">Atualizar meu resumo</button>
    </section>
   </div>
