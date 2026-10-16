@@ -7,6 +7,7 @@ const {randomUUID}=require('node:crypto');
 const {localSeguro}=require('./admin-catalogo-laboratorio');
 const {SessoesParticipanteDemo,DURACAO}=require('../domain/sessoes-participante-demo');
 const {EscritorioIndividualDemo}=require('../domain/escritorio-individual-demo');
+const {montarHistoricoLojaDemo}=require('../domain/historico-loja-escritorio-demo');
 const COOKIE='loop_participante_demo';
 const CAMINHO='/api/laboratorio/participante';
 function lerCookie(req){
@@ -183,7 +184,12 @@ function criarRouterParticipanteDemo({contas,ponte,sessoes=null,adesoes=null,car
    if(!contaId)return res.status(401).json({erro:'SESSAO_AUSENTE_OU_EXPIRADA'});
    const visao=escritorio.consultar(contaId);
    if(!visao)return res.status(401).json({erro:'SESSAO_AUSENTE_OU_EXPIRADA'});
-   return res.json({...visao,adesao:adesoes?adesoes.consultarConta(contaId):null});
+   const historicoLoja=carrinhos?montarHistoricoLojaDemo({
+    visao,carrinhos:carrinhos.listarDaConta(contaId).pedidos
+   }):null;
+   return res.json({...visao,
+    historicoLoja,
+    adesao:adesoes?adesoes.consultarConta(contaId):null});
   }catch(erro){return next(erro);}
  });
  return router;
