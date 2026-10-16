@@ -29,19 +29,19 @@ async function post(url,body,headers=auth){
   return fetch(url,{method:'POST',headers:{...headers,'Content-Type':'application/json'},body:JSON.stringify(body)});
 }
 
-test('cinco vendas gravadas em lote atomico preservam 3 central, 1 esquerda e 1 direita',()=>{
+test('seis vendas gravadas em lote atomico preservam 3 central, 2 esquerda e 1 direita',()=>{
   const db=new RepositorioCatalogoSQLite({caminho:':memory:'});
   try{
     const r=new RazaoFinanceiroDemoSQLite({banco:db.banco});
     const novo=r.registrarCicloFicticio({cicloId:'ciclo-teste-001'});
-    assert.deepEqual(novo,{loteId:'ciclo-teste-001',repetido:false,eventos:5});
+    assert.deepEqual(novo,{loteId:'ciclo-teste-001',repetido:false,eventos:6});
     const livro=r.consultar();
     assert.equal(livro.lotesRegistrados,1);
-    assert.equal(livro.lancamentosRegistrados,10);
+    assert.equal(livro.lancamentosRegistrados,14);
     assert.equal(cofre(livro,COFRES.CENTRO).entradasAcumuladasCentavos,75000);
-    assert.equal(cofre(livro,COFRES.ESQUERDA).entradasAcumuladasCentavos,25000);
-    assert.equal(cofre(livro,COFRES.DIREITA).entradasAcumuladasCentavos,25000);
-    assert.equal(cofre(livro,COFRES.COMERCIAL).entradasAcumuladasCentavos,25000);
+    assert.equal(cofre(livro,COFRES.ESQUERDA).entradasAcumuladasCentavos,50000);
+    assert.equal(cofre(livro,COFRES.DIREITA).entradasAcumuladasCentavos,50000);
+    assert.equal(cofre(livro,COFRES.COMERCIAL).entradasAcumuladasCentavos,30000);
     assert.equal(cofre(livro,COFRES.DISTRIBUIDOR).entradasAcumuladasCentavos,0);
     assert.equal(livro.integracaoBancaria,'NAO_CONECTADA');
     assert.equal(livro.pagamentosReais,false);
@@ -56,12 +56,12 @@ test('mesmo identificador e payload = idempotencia; ID repetido com modo diferen
     const r=new RazaoFinanceiroDemoSQLite({banco:db.banco});
     r.registrarCicloFicticio({cicloId:'ciclo-idempotente',modo:MODOS.SPLIT});
     assert.equal(r.registrarCicloFicticio({cicloId:'ciclo-idempotente',modo:MODOS.SPLIT}).repetido,true);
-    assert.equal(r.consultar().lancamentosRegistrados,10);
+    assert.equal(r.consultar().lancamentosRegistrados,14);
     assert.throws(()=>r.registrarCicloFicticio({cicloId:'ciclo-idempotente',modo:MODOS.RESERVA}),/Mesmo ID/);
-    assert.equal(r.consultar().lancamentosRegistrados,10);
+    assert.equal(r.consultar().lancamentosRegistrados,14);
     r.registrarCicloFicticio({cicloId:'ciclo-idempotente-2',modo:MODOS.RESERVA});
-    assert.equal(r.consultar().lancamentosRegistrados,25);
-    assert.equal(cofre(r.consultar(),COFRES.DISTRIBUIDOR).saldoProjetadoCentavos,150000);
+    assert.equal(r.consultar().lancamentosRegistrados,30);
+    assert.equal(cofre(r.consultar(),COFRES.DISTRIBUIDOR).saldoProjetadoCentavos,180000);
   }finally{db.fechar();}
 });
 
@@ -84,18 +84,18 @@ test('saidas retornos e ajustes ficticios nao apagam passado e saldo pode ficar 
     });
     const l=r.consultar();
     assert.equal(l.lotesRegistrados,4);
-    assert.equal(l.lancamentosRegistrados,13);
-    assert.equal(cofre(l,COFRES.ESQUERDA).entradasAcumuladasCentavos,27000);
+    assert.equal(l.lancamentosRegistrados,15);
+    assert.equal(cofre(l,COFRES.ESQUERDA).entradasAcumuladasCentavos,52000);
     assert.equal(cofre(l,COFRES.ESQUERDA).saidasAcumuladasCentavos,20000);
     assert.equal(cofre(l,COFRES.ESQUERDA).retornosAcumuladosCentavos,3500);
-    assert.equal(cofre(l,COFRES.ESQUERDA).saldoProjetadoCentavos,10500);
+    assert.equal(cofre(l,COFRES.ESQUERDA).saldoProjetadoCentavos,35500);
     assert.equal(l.historicoRecente[0].tipo,'AJUSTE_FICTICIO');
     assert.equal(l.historicoRecente.at(-1).referencia,'venda-financeira-ficticia-1');
     assert.equal(r.registrarMovimentoFicticio({
       eventoId:'retorno-admin-teste',cofreId:COFRES.ESQUERDA,
       natureza:'RETORNO',valorCentavos:3500,referencia:'retorno ficticio de investimento'
     }).repetido,true);
-    assert.equal(r.consultar().lancamentosRegistrados,13);
+    assert.equal(r.consultar().lancamentosRegistrados,15);
   }finally{db.fechar();}
 });
 
@@ -146,9 +146,9 @@ test('lancamentos de laboratorio sobrevivem a reiniciar SQLite sem mudar esquema
     try{
       const r=new RazaoFinanceiroDemoSQLite({banco:db.banco});
       const l=r.consultar();
-      assert.equal(l.lancamentosRegistrados,16);
+      assert.equal(l.lancamentosRegistrados,19);
       assert.equal(l.lotesRegistrados,2);
-      assert.equal(cofre(l,COFRES.DISTRIBUIDOR).saldoProjetadoCentavos,120000);
+      assert.equal(cofre(l,COFRES.DISTRIBUIDOR).saldoProjetadoCentavos,150000);
       assert.equal(db.listar().length,0);
       assert.equal(db.banco.prepare('PRAGMA user_version').get().user_version,3);
     }finally{db.fechar();}
@@ -191,7 +191,7 @@ test('rotas do livro exigem token e servidor local e nao recebem campos financei
   assert.equal(resposta.status,200);
   assert.equal(resposta.headers.get('cache-control'),'no-store');
   const livro=await resposta.json();
-  assert.equal(livro.lancamentosRegistrados,12);
+  assert.equal(livro.lancamentosRegistrados,14);
   assert.equal(cofre(livro,COFRES.COMERCIAL).saldoProjetadoCentavos,6000);
   assert.equal(db.listar().length,0);
 });
