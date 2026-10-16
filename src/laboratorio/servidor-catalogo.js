@@ -242,6 +242,9 @@ function criarAppAdminLaboratorio({ repositorio, segredo, webhookDemo } = {}) {
   app.get('/laboratorio/loja.css', somenteLocal, (req, res) => {
     res.type('text/css').sendFile(path.join(__dirname,'loja-cliente-demo.css'));
   });
+  app.get('/laboratorio/cadastro',somenteLocal,(_req,res)=>{
+    res.sendFile(path.join(__dirname,'convite-cliente-demo.html'));
+  });
   app.get(['/laboratorio/convite/:token','/laboratorio/convite/:token/:apelido'],somenteLocal,(req,res)=>{
     const token=req.params.token;
     if(typeof token!=='string'||token.length!==23||!/^lp-[a-f0-9]+/.test(token))
