@@ -48,6 +48,19 @@ class ElegibilidadeProdutosLoopDemoSQLite{
    CREATE TRIGGER IF NOT EXISTS admin_quantidade_minima_hist_no_delete
     BEFORE DELETE ON admin_produtos_quantidade_minima_historico_demo
     BEGIN SELECT RAISE(ABORT,'historico de quantidade imutavel'); END;
+   CREATE TABLE IF NOT EXISTS admin_produtos_quantidade_minima_loop_demo(
+    produto_id TEXT NOT NULL REFERENCES catalogo_produtos(id) ON DELETE RESTRICT,
+    revisao INTEGER NOT NULL CHECK(revisao>=2),
+    quantidade_minima INTEGER NOT NULL CHECK(quantidade_minima BETWEEN 1 AND 100),
+    registrado_em TEXT NOT NULL,
+    PRIMARY KEY(produto_id,revisao)
+   );
+   CREATE TRIGGER IF NOT EXISTS admin_produtos_quantidade_minima_sem_update
+    BEFORE UPDATE ON admin_produtos_quantidade_minima_loop_demo
+    BEGIN SELECT RAISE(ABORT,'quantidade de elegibilidade imutavel'); END;
+   CREATE TRIGGER IF NOT EXISTS admin_produtos_quantidade_minima_sem_delete
+    BEFORE DELETE ON admin_produtos_quantidade_minima_loop_demo
+    BEGIN SELECT RAISE(ABORT,'quantidade de elegibilidade imutavel'); END;
    CREATE TRIGGER IF NOT EXISTS admin_produtos_elegibilidade_historico_no_update
     BEFORE UPDATE ON admin_produtos_elegibilidade_historico_demo
     BEGIN SELECT RAISE(ABORT,'historico imutavel'); END;
@@ -65,7 +78,11 @@ class ElegibilidadeProdutosLoopDemoSQLite{
   const quantidade=this.banco.prepare(
    'SELECT quantidade_minima AS minima,revisao,atualizado_em AS atualizadoEm FROM admin_produtos_quantidade_minima_loop_demo WHERE produto_id=?'
   ).get(produtoId);
+  const q=this.banco.prepare(
+   'SELECT quantidade_minima AS minima FROM admin_produtos_quantidade_minima_loop_demo WHERE produto_id=? ORDER BY revisao DESC LIMIT 1'
+  ).get(produtoId);
   return {produtoId,elegivelLoop:reg?!!reg.elegivel:true,
+   quantidadeMinimaLoop:q?.minima??1,
    revisaoElegibilidade:reg?.revisao??1,
    quantidadeMinimaLoop:quantidade?.minima??1,
    revisaoQuantidadeMinima:quantidade?.revisao??1,
@@ -77,14 +94,19 @@ class ElegibilidadeProdutosLoopDemoSQLite{
    estado:p.estado,...this.consultar(p.id)
   })),padraoElegivel:true,semPagamentoReal:true};
  }
- alterar({produtoId,elegivelLoop,revisaoEsperada}={}){
+ alterar({produtoId,elegivelLoop,quantidadeMinimaLoop,revisaoEsperada}={}){
   if(typeof elegivelLoop!=='boolean'||!Number.isSafeInteger(revisaoEsperada)||
-   revisaoEsperada<1)throw erro('DADOS_INVALIDOS');
+   revisaoEsperada<1||
+   (quantidadeMinimaLoop!==undefined&&
+    (!Number.isSafeInteger(quantidadeMinimaLoop)||
+     quantidadeMinimaLoop<1||quantidadeMinimaLoop>100)))
+   throw erro('DADOS_INVALIDOS');
   this.banco.exec('BEGIN IMMEDIATE');
   try{
    const atual=this.consultar(produtoId);
    if(atual.revisaoElegibilidade!==revisaoEsperada)throw erro('CONFLITO_REVISAO');
-   if(atual.elegivelLoop===elegivelLoop){
+   const novaQuantidade=quantidadeMinimaLoop??atual.quantidadeMinimaLoop;
+   if(atual.elegivelLoop===elegivelLoop&&atual.quantidadeMinimaLoop===novaQuantidade){
     this.banco.exec('COMMIT');
     return {...atual,alterado:false};
    }
@@ -101,6 +123,11 @@ class ElegibilidadeProdutosLoopDemoSQLite{
      produto_id,revisao,de_elegivel,para_elegivel,registrado_em)
     VALUES(?,?,?,?,?)
    `).run(produtoId,nova,atual.elegivelLoop?1:0,elegivelLoop?1:0,agora);
+   this.banco.prepare(`
+    INSERT INTO admin_produtos_quantidade_minima_loop_demo
+     (produto_id,revisao,quantidade_minima,registrado_em)
+    VALUES (?,?,?,?)
+   `).run(produtoId,nova,novaQuantidade,agora);
    this.banco.exec('COMMIT');
    return {...this.consultar(produtoId),alterado:true};
   }catch(e){this.banco.exec('ROLLBACK');throw e;}
@@ -152,12 +179,17 @@ class ElegibilidadeProdutosLoopDemoSQLite{
  historico(produtoId){
   this.consultar(produtoId);
   return this.banco.prepare(`
-   SELECT produto_id AS produtoId,revisao,de_elegivel AS deElegivel,
-    para_elegivel AS paraElegivel,registrado_em AS registradoEm
-   FROM admin_produtos_elegibilidade_historico_demo
-   WHERE produto_id=? ORDER BY revisao
+   SELECT h.produto_id AS produtoId,h.revisao,
+    h.de_elegivel AS deElegivel,h.para_elegivel AS paraElegivel,
+    q.quantidade_minima AS quantidadeMinimaLoop,
+    h.registrado_em AS registradoEm
+   FROM admin_produtos_elegibilidade_historico_demo h
+   LEFT JOIN admin_produtos_quantidade_minima_loop_demo q
+    ON q.produto_id=h.produto_id AND q.revisao=h.revisao
+   WHERE h.produto_id=? ORDER BY h.revisao
   `).all(produtoId).map(p=>({
-   ...p,deElegivel:!!p.deElegivel,paraElegivel:!!p.paraElegivel
+   ...p,deElegivel:!!p.deElegivel,paraElegivel:!!p.paraElegivel,
+   quantidadeMinimaLoop:p.quantidadeMinimaLoop??1
   }));
  }
 }
