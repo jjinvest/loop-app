@@ -75,11 +75,11 @@ class CarrinhoLojaLoopDemoSQLite{
     PRIMARY KEY(pedido_id,ordem),
     FOREIGN KEY(pedido_id,ordem) REFERENCES admin_carrinho_loop_itens_demo(pedido_id,ordem) ON DELETE RESTRICT
    );
-   -- Fotografia da modalidade de 1 ou 5 posicoes: compras antigas nao mudam.
+   -- Fotografia da modalidade de 1 ou 6 posicoes: compras antigas nao mudam.
    CREATE TABLE IF NOT EXISTS admin_carrinho_item_pacote_posicoes_demo(
     pedido_id TEXT NOT NULL REFERENCES admin_carrinho_loop_demo(pedido_id) ON DELETE RESTRICT,
     ordem INTEGER NOT NULL CHECK(ordem>=1),
-    posicoes_por_pedido INTEGER NOT NULL CHECK(posicoes_por_pedido IN (1,5)),
+    posicoes_por_pedido INTEGER NOT NULL CHECK(posicoes_por_pedido IN (1,5,6)),
     revisao_pacote INTEGER NOT NULL CHECK(revisao_pacote>=1),
     PRIMARY KEY(pedido_id,ordem),
     FOREIGN KEY(pedido_id,ordem) REFERENCES admin_carrinho_loop_itens_demo(pedido_id,ordem) ON DELETE RESTRICT
@@ -186,7 +186,7 @@ class CarrinhoLojaLoopDemoSQLite{
   if(!Number.isSafeInteger(totalElegivelLoopCentavos)||totalElegivelLoopCentavos>row.totalCentavos)
    throw new Error('Integridade de elegibilidade do carrinho comprometida');
   const posicoesSolicitadas=itens.some(i=>i.elegivelLoop&&
-   i.quantidade>=i.quantidadeMinimaLoop&&i.posicoesPorPedidoLoop===5)?5:1;
+   i.quantidade>=i.quantidadeMinimaLoop&&i.posicoesPorPedidoLoop===6)?6:1;
   const posicaoIds=posicao?[posicao.id,...this.banco.prepare(
    'SELECT posicao_id AS id FROM admin_ponte_posicoes_adicionais_demo WHERE pedido_id=? ORDER BY ordem'
   ).all(pedidoId).map(p=>p.id)]:[];
