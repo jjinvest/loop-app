@@ -1,11 +1,11 @@
 'use strict';
 
-// Financeiro de LABORATORIO: projecao aritmetica de cinco vendas FICTICIAS.
+// Financeiro de LABORATORIO: projecao aritmetica de seis vendas FICTICIAS.
 // Nao recebe pagamentos, CPF, saldos reais, extratos, ordens de saque ou split.
 // Nao controla nem altera a catraca existente. Ela apenas fornece o padrao
 // de destinos ja acordado, importado do modulo de simulacao.
 const { DESTINOS } = require('./tabuleiro-loop');
-const { VALOR_PADRAO_LOOP_CENTAVOS } = require('./valor-padrao-loop');
+const { VALOR_PADRAO_LOOP_CENTAVOS,VENDAS_POR_CICLO } = require('./valor-padrao-loop');
 
 const MODOS = Object.freeze({
   SPLIT:'SPLIT_DISTRIBUIDOR_SIMULADO',
@@ -25,7 +25,7 @@ const TITULOS = Object.freeze({
   [COFRES.COMERCIAL]:'Sobra bruta comercial',
   [COFRES.DISTRIBUIDOR]:'Reserva para pagar distribuidor'
 });
-const EXEMPLOS = Object.freeze(Array.from({length:5},(_,i)=>Object.freeze({
+const EXEMPLOS = Object.freeze(Array.from({length:VENDAS_POR_CICLO},(_,i)=>Object.freeze({
   vendaId:'venda-financeira-ficticia-'+(i+1),
   precoCentavos:60000,
   fornecedorCentavos:30000,
@@ -48,7 +48,7 @@ function criarVisaoFinanceiraAdminDemo({
      parcelaReferenciaCentavos<100||parcelaReferenciaCentavos>100000000){
     throw new Error('Referencia financeira de laboratorio invalida');
   }
-  // Os cinco exemplos da pagina acompanham o valor atual. Nao mudam
+  // Os seis exemplos da pagina acompanham o valor atual. Nao mudam
   // registros de compras ou razao financeiro ja existentes.
   const vendasCenario=vendas===undefined?EXEMPLOS.map(v=>({
     ...v,
@@ -56,11 +56,11 @@ function criarVisaoFinanceiraAdminDemo({
     parcelaLoopCentavos:parcelaReferenciaCentavos
   })):vendas;
   if(!Object.values(MODOS).includes(modo))throw new Error('Modo de repasse ficticio invalido');
-  if(!Array.isArray(vendasCenario) || vendasCenario.length!==5 || DESTINOS.length!==5){
-    throw new Error('Cenario requer os cinco eventos ficticios do ciclo');
+  if(!Array.isArray(vendasCenario) || vendasCenario.length!==VENDAS_POR_CICLO || DESTINOS.length!==VENDAS_POR_CICLO){
+    throw new Error('Cenario requer os seis eventos ficticios do ciclo');
   }
   const IDs=new Set();
-  const caixaCiclo=[COFRES.CENTRO,COFRES.ESQUERDA,COFRES.CENTRO,COFRES.DIREITA,COFRES.CENTRO];
+  const caixaCiclo=[COFRES.CENTRO,COFRES.ESQUERDA,COFRES.CENTRO,COFRES.DIREITA,COFRES.CENTRO,COFRES.ESQUERDA];
   const caixasIds=[COFRES.ESQUERDA,COFRES.CENTRO,COFRES.DIREITA,COFRES.COMERCIAL];
   if(modo===MODOS.RESERVA)caixasIds.push(COFRES.DISTRIBUIDOR);
   const acumulado=Object.fromEntries(caixasIds.map(id=>[id,0]));
@@ -88,7 +88,8 @@ function criarVisaoFinanceiraAdminDemo({
     const sobra=v.precoCentavos-v.fornecedorCentavos-v.parcelaLoopCentavos;
     if(!validarCentavos(sobra))throw new Error('Venda ficticia nao cobre obrigacoes');
     const destinoCiclo=caixaCiclo[i];
-    if((DESTINOS[i]==='PARTICIPANTE')!==(destinoCiclo===COFRES.CENTRO)){
+    if((DESTINOS[i]==='PARTICIPANTE')!==(destinoCiclo===COFRES.CENTRO)||
+       (DESTINOS[i]==='EMPRESA_INVESTIMENTO'&&destinoCiclo!==COFRES.ESQUERDA)){
       throw new Error('Destino do ciclo divergente do tabuleiro existente');
     }
     const fornecedorDestino=modo===MODOS.SPLIT?'DISTRIBUIDOR_EXTERNO_SIMULADO':COFRES.DISTRIBUIDOR;
