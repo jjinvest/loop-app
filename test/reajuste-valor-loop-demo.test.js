@@ -181,7 +181,7 @@ test('admin local muda valor; acesso publico nao oferece configurar e rejeita ex
  assert.equal(financeiroNovo.parcelaReferenciaVigenteNoCenarioCentavos,50000);
  assert.equal(financeiroNovo.totalLoopCentavos,300000);
  assert.equal(financeiroNovo.totalFornecedorCentavos,180000);
- assert.equal(financeiroNovo.totalSobraBrutaCentavos,25000);
+ assert.equal(financeiroNovo.totalSobraBrutaCentavos,30000);
  assert.ok(financeiroNovo.vendas.every(v=>v.parcelaLoopCentavos===50000));
  assert.equal(financeiroNovo.simulacaoApenasProspectiva,true);
  assert.equal(resposta.historico.length,2);
