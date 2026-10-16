@@ -6,6 +6,8 @@
  const conteudo=e('conteudoParticipante');
  const sair=e('botaoSairParticipante');
  let versao=0;
+ let mapaAtual=null;
+ let filtroMapa='resumo';
  function encerrarTela(){
   ++versao;conteudo.hidden=true;form.hidden=false;sair.hidden=true;
   e('senhaParticipante').value='';
@@ -23,6 +25,13 @@
   e('mapaFilaAParticipante').replaceChildren();
   e('mapaFilaBParticipante').replaceChildren();
   e('mapaTabuleiroParticipante').replaceChildren();
+  e('resumoMapaParticipante').textContent='';
+  e('contadorFilaAParticipante').textContent='';
+  e('contadorFilaBParticipante').textContent='';
+  e('atalhoAtivarParticipante').hidden=true;
+  mapaAtual=null;
+  filtroMapa='resumo';
+  atualizarControlesMapa();
  }
  async function chamada(url,body){
   const r=await fetch('/api/laboratorio/participante/'+url,{
@@ -54,28 +63,106 @@
  }
  function elementoPosicao(p,rotulo){
   const item=document.createElement('span');
-  item.className='selo-posicao-demo posicao-'+p.cor.toLowerCase();
-  item.textContent=rotulo+' #'+p.posicaoId;
+  item.className='selo-posicao-demo posicao-'+p.cor.toLowerCase()+
+   (p.minha?' minha-posicao-demo':'');
+  const descricao=p.cor==='AZUL'?'aguardando ativação':
+   p.cor==='VERMELHO'?'ativada':
+   p.cor==='DOURADO'?'pertence ao LOOP':'ativada por outra pessoa';
+  item.textContent=rotulo+' #'+p.posicaoId+(p.minha?' · Minha':'');
+  item.setAttribute('aria-label',rotulo+' '+p.posicaoId+
+   ', '+descricao+(p.minha?', minha posição':''));
   return item;
  }
- function mostrarMapa(mapa){
-  for(const [campo,id] of [['filaA','mapaFilaAParticipante'],['filaB','mapaFilaBParticipante']]){
-   const lista=e(id);lista.replaceChildren();
-   for(const posicao of mapa[campo]){
-    const li=document.createElement('li');
-    li.append(elementoPosicao(posicao,'Posição'));
-    lista.append(li);
-   }
-   if(!mapa[campo].length){const li=document.createElement('li');li.textContent='Fila vazia';lista.append(li);}
+ function atualizarControlesMapa(){
+  const controles=[
+   ['filtroResumoMapaParticipante','resumo'],
+   ['filtroMinhasMapaParticipante','minhas'],
+   ['filtroTodasMapaParticipante','todas']
+  ];
+  for(const [id,valor] of controles){
+   e(id).setAttribute('aria-pressed',String(filtroMapa===valor));
   }
+  e('ajudaFiltroMapaParticipante').textContent=filtroMapa==='resumo'?
+   'Resumo: primeiras 12 posições de cada fila, mais todas as suas posições. Os números indicam a ordem original.':
+   filtroMapa==='minhas'?
+   'Somente suas posições, com a ordem verdadeira dentro de A e B. Outras posições continuam na fila.':
+   'Exibindo todas as posições em ordem. As cores não mudam a prioridade.';
+ }
+ function indicesDaFila(posicoes){
+  if(filtroMapa==='todas')return posicoes.map((_,i)=>i);
+  return posicoes.flatMap((p,i)=>
+   filtroMapa==='minhas'?(p.minha?[i]:[]):
+   (i<12||p.minha?[i]:[]));
+ }
+ function renderizarFila(posicoes,idFila,idContador,nomeFila){
+  const lista=e(idFila);lista.replaceChildren();
+  const minhas=posicoes.filter(p=>p.minha).length;
+  e(idContador).textContent=posicoes.length+' posições · '+minhas+' minhas';
+  const indices=indicesDaFila(posicoes);
+  if(!indices.length){
+   const item=document.createElement('li');
+   item.className='fila-vazia-demo';
+   item.textContent=posicoes.length===0?'Nenhuma posição nesta fila.':
+    'Você não tem posições nesta fila.';
+   lista.append(item);
+   return;
+  }
+  let anterior=-1;
+  for(const i of indices){
+   const ocultas=i-anterior-1;
+   if(ocultas>0){
+    const intervalo=document.createElement('li');
+    intervalo.className='intervalo-fila-demo';
+    intervalo.textContent=ocultas+' posição(ões) entre os trechos exibidos';
+    lista.append(intervalo);
+   }
+   const p=posicoes[i],item=document.createElement('li');
+   item.className='linha-fila-demo'+(p.minha?' linha-minha-demo':'');
+   const ordem=document.createElement('span');
+   ordem.className='ordem-fila-demo';
+   ordem.textContent=(i+1)+'º';
+   ordem.setAttribute('aria-label',(i+1)+'ª posição na '+nomeFila);
+   item.append(ordem,elementoPosicao(p,'Posição'));
+   lista.append(item);
+   anterior=i;
+  }
+  if(posicoes.length-anterior-1>0){
+   const intervalo=document.createElement('li');
+   intervalo.className='intervalo-fila-demo';
+   intervalo.textContent=(posicoes.length-anterior-1)+' posição(ões) após as exibidas';
+   lista.append(intervalo);
+  }
+ }
+ function mostrarMapa(mapa){
+  mapaAtual=mapa;
+  atualizarControlesMapa();
+  renderizarFila(mapa.filaA,'mapaFilaAParticipante','contadorFilaAParticipante','Fila A');
+  renderizarFila(mapa.filaB,'mapaFilaBParticipante','contadorFilaBParticipante','Fila B');
+  const todas=[...mapa.filaA,...mapa.filaB];
+  const minhas=todas.filter(p=>p.minha).length;
+  e('resumoMapaParticipante').textContent='Fila A: '+mapa.filaA.length+
+   ' posições · Fila B: '+mapa.filaB.length+
+   ' posições · '+minhas+' posição(ões) sua(s) nas filas.';
   const tabuleiro=e('mapaTabuleiroParticipante');tabuleiro.replaceChildren();
-  const todas=[{valor:mapa.tabuleiro.centro,rotulo:'Centro'},
-   ...mapa.tabuleiro.vagas.map((valor,i)=>({valor,rotulo:'Vaga '+(i+1)}))];
-  for(const {valor,rotulo} of todas){
+  const posicoes=[{valor:mapa.tabuleiro.centro,rotulo:'Centro',classe:'centro'},
+   ...mapa.tabuleiro.vagas.map((valor,i)=>({
+    valor,rotulo:'Vaga '+(i+1),classe:'vaga-'+(i+1)
+   }))];
+  for(const {valor,rotulo,classe} of posicoes){
    const bloco=document.createElement('div');
-   bloco.className='espaco-tabuleiro-demo';
-   if(valor)bloco.append(elementoPosicao(valor,rotulo));
-   else bloco.textContent=rotulo+' — livre';
+   bloco.className='espaco-tabuleiro-demo tabuleiro-'+classe+
+    (valor?.minha?' espaco-meu-tabuleiro-demo':'');
+   const titulo=document.createElement('strong');
+   titulo.className='titulo-espaco-tabuleiro-demo';
+   titulo.textContent=rotulo;
+   bloco.append(titulo);
+   if(valor)bloco.append(elementoPosicao(valor,'Posição'));
+   else{
+    const vazio=document.createElement('span');
+    vazio.textContent='Livre';
+    vazio.className='vazio-tabuleiro-demo';
+    bloco.append(vazio);
+   }
    tabuleiro.append(bloco);
   }
  }
@@ -146,6 +233,7 @@
   if(visao.mapaCores)mostrarMapa(visao.mapaCores);
   const temAzul=visao.posicoes.some(p=>p.statusAdesao==='PENDENTE');
   e('secaoAtivacaoParticipante').hidden=!temAzul;
+  e('atalhoAtivarParticipante').hidden=!temAzul;
   const aviso=e('alertaAzulParticipante');
   aviso.hidden=!temAzul;
   if(temAzul){
@@ -213,6 +301,18 @@
   try{await chamada('sair',{});msg.textContent='Sessão fictícia encerrada.';}
   catch(erro){msg.textContent=erro.message;}
  });
+ for(const [id,modo] of [
+  ['filtroResumoMapaParticipante','resumo'],
+  ['filtroMinhasMapaParticipante','minhas'],
+  ['filtroTodasMapaParticipante','todas']
+ ]){
+  e(id).addEventListener('click',()=>{
+   filtroMapa=modo;
+   if(mapaAtual)mostrarMapa(mapaAtual);
+   else atualizarControlesMapa();
+  });
+ }
+ atualizarControlesMapa();
  e('atualizarParticipante').addEventListener('click',atualizar);
  atualizar();
 })();
