@@ -72,7 +72,7 @@ class PedidosTitularidadeDemoSQLite{
   centavos(valorCentavos);
   // So scripts/testes internos podem chamar este metodo. Identidade
   // cliente no HTTP NAO pode ser prova de titularidade de pedido.
-  this.banco.exec('BEGIN IMMEDIATE');
+  this.banco.exec('SAVEPOINT pedido_titularidade_demo');
   try{
    const anterior=this.buscar(pedidoId);
    if(anterior){
@@ -81,7 +81,7 @@ class PedidosTitularidadeDemoSQLite{
       anterior.valorCentavos!==valorCentavos){
      throw falha('PEDIDO_IMUTAVEL','Pedido ja vinculado a outro titular, produto ou valor');
     }
-    this.banco.exec('COMMIT');
+    this.banco.exec('RELEASE SAVEPOINT pedido_titularidade_demo');
     return {...anterior,repetido:true};
    }
    if(!this.contas.buscar(contaId)){
@@ -98,10 +98,11 @@ class PedidosTitularidadeDemoSQLite{
      pedido_id,conta_id,produto_id,valor_centavos,intento_pagamento_id,criado_em
     ) VALUES(?,?,?,?,?,?)
    `).run(pedidoId,contaId,produtoId,valorCentavos,intentoPagamentoId,criadoEm);
-   this.banco.exec('COMMIT');
+   this.banco.exec('RELEASE SAVEPOINT pedido_titularidade_demo');
    return {pedidoId,contaId,produtoId,valorCentavos,
     intentoPagamentoId,criadoEm,repetido:false};
-  }catch(e){this.banco.exec('ROLLBACK');throw e;}
+  }catch(e){this.banco.exec('ROLLBACK TO SAVEPOINT pedido_titularidade_demo');
+   this.banco.exec('RELEASE SAVEPOINT pedido_titularidade_demo');throw e;}
  }
  buscar(pedidoId){
   validarId(pedidoId,'pedidoId');
