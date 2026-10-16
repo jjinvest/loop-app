@@ -54,7 +54,8 @@ function validarComprovante(recebido,pedidoId){
 function posicoesAtivas(simulador,contaId){
  const f=simulador.filas,t=simulador.tabuleiro;
  return [...f.filaA,...f.filaB,t.centro,...t.vagas]
-  .filter(p=>p&&p.participanteId===contaId&&p.statusAdesao!=='PRAZO_ENCERRADO').length;
+  .filter(p=>p&&p.participanteId===contaId&&p.empresa!==true&&
+    !['PRAZO_ENCERRADO','DESISTENTE'].includes(p.statusAdesao)).length;
 }
 class PonteComprasConvitesDemoSQLite{
  constructor({banco,contas,consultarPagamentoConfiavel,pedidosIdentificados=null,configuracaoValor=null,relogio=()=>new Date().toISOString()}={}){
@@ -85,6 +86,17 @@ class PonteComprasConvitesDemoSQLite{
     id INTEGER PRIMARY KEY CHECK(id=1),
     snapshot_json TEXT NOT NULL
    );
+   CREATE TABLE IF NOT EXISTS admin_loop_desistencias_vaga6_demo(
+    posicao_id INTEGER PRIMARY KEY CHECK(posicao_id>0),
+    conta_id TEXT NOT NULL REFERENCES admin_contas_participantes_demo(id) ON DELETE RESTRICT,
+    registrado_em TEXT NOT NULL,origem TEXT NOT NULL CHECK(origem='ACEITE_EXPRESSO')
+   );
+   CREATE TRIGGER IF NOT EXISTS admin_loop_desistencias_vaga6_no_update
+    BEFORE UPDATE ON admin_loop_desistencias_vaga6_demo
+    BEGIN SELECT RAISE(ABORT,'desistencia de teste imutavel'); END;
+   CREATE TRIGGER IF NOT EXISTS admin_loop_desistencias_vaga6_no_delete
+    BEFORE DELETE ON admin_loop_desistencias_vaga6_demo
+    BEGIN SELECT RAISE(ABORT,'desistencia de teste imutavel'); END;
    CREATE TABLE IF NOT EXISTS admin_ponte_compras_demo(
     pedido_id TEXT PRIMARY KEY NOT NULL,
     conta_id TEXT NOT NULL REFERENCES admin_contas_participantes_demo(id) ON DELETE RESTRICT,
@@ -527,6 +539,38 @@ class PonteComprasConvitesDemoSQLite{
    return {tabuleiro:estado,semPagamentoReal:true,
     operacao:'PREENCHIMENTO_MANUAL_FICTICIO'};
   }catch(err){this.banco.exec('ROLLBACK');throw err;}
+ }
+ // Desistencia EXPRESSA do titular na vaga 6, so em ambiente ficticio.
+ desistirDaVaga6Demo({contaId,posicaoId,aceiteExpresso}={}){
+  if(!this.contas.buscar(contaId))throw falha('CONTA_INVALIDA');
+  if(!Number.isSafeInteger(posicaoId)||posicaoId<=0||aceiteExpresso!==true)
+   throw falha('ACEITE_DESISTENCIA_OBRIGATORIO');
+  this.banco.exec('BEGIN IMMEDIATE');
+  try{
+   const anterior=this.banco.prepare(
+    'SELECT conta_id FROM admin_loop_desistencias_vaga6_demo WHERE posicao_id=?'
+   ).get(posicaoId);
+   if(anterior){
+    if(anterior.conta_id!==contaId)throw falha('POSICAO_NAO_PERTENCE_A_CONTA');
+    this.banco.exec('COMMIT');
+    return {posicaoId,assumidaPeloLoop:true,repetida:true,
+     caixaDasDouradas:'LOOP_DOURADAS',pagamentoReal:false};
+   }
+   const sim=this._restaurar();
+   const pos=sim.tabuleiro.vagas[5];
+   if(!pos||pos.id!==posicaoId||pos.participanteId!==contaId)
+    throw falha('POSICAO_FORA_DA_VAGA_6');
+   const resultado=sim.registrarDesistenciaNaVaga6Simulada({posicaoId,aceiteExpresso});
+   this.banco.prepare(
+    'INSERT INTO admin_loop_desistencias_vaga6_demo(posicao_id,conta_id,registrado_em,origem) VALUES(?,?,?,?)'
+   ).run(posicaoId,contaId,resultado.registradaEm,'ACEITE_EXPRESSO');
+   this.banco.prepare(
+    'INSERT INTO admin_ponte_estado_demo(id,snapshot_json) VALUES(1,?) ON CONFLICT(id) DO UPDATE SET snapshot_json=excluded.snapshot_json'
+   ).run(JSON.stringify(sim.exportarSnapshot()));
+   this.banco.exec('COMMIT');
+   return {...resultado,repetida:false,caixaDasDouradas:'LOOP_DOURADAS',
+    semDevolucaoAutomatica:true,pagamentoReal:false};
+  }catch(e){this.banco.exec('ROLLBACK');throw e;}
  }
  consultar(){
   const sim=this._restaurar();
