@@ -1,0 +1,28 @@
+<!doctype html><html lang="pt-BR"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>LOOP | Convite de demonstração</title>
+<link rel="stylesheet" href="/laboratorio/participante.css">
+<style>
+body{background:#0e1a15;color:#eef8ef}
+.convite-loop{max-width:540px;margin:25px auto;padding:24px;background:#17291f;border:1px solid #42684e;border-radius:16px}
+.convite-loop h1{margin-top:0}
+.convite-loop label{display:block;margin-top:13px}
+.convite-loop input{display:block;width:100%;box-sizing:border-box;padding:12px;font:inherit}
+.convite-loop button{margin:18px 0 6px;padding:12px 18px}
+.convite-loop a{color:#a8e5b9}
+</style></head><body>
+<main class="convite-loop">
+<h1>Bem-vindo ao LOOP</h1>
+<p><strong>Ambiente fictício de laboratório.</strong> Este cadastro não movimenta dinheiro, não gera comissão real nem cria posição no LOOP.</p>
+<p id="estadoConvite" role="status" aria-live="polite">Verificando o link...</p>
+<form id="formConviteCliente" hidden autocomplete="off">
+<label for="nomeConvite">Seu nome de acesso</label><input id="nomeConvite" required maxlength="60">
+<label for="emailConvite">E-mail fictício</label><input id="emailConvite" type="email" required maxlength="254">
+<label for="telefoneConvite">Telefone brasileiro fictício com DDD</label><input id="telefoneConvite" type="tel" required maxlength="24">
+<label for="senhaConvite">Senha de teste (mínimo 10 caracteres)</label><input id="senhaConvite" type="password" required minlength="10">
+<button type="submit" id="criarConviteCliente">Cadastrar pela indicação</button>
+</form>
+<p>Você também pode acessar o <a href="/laboratorio/participante">Escritório Virtual de testes</a>.</p>
+</main>
+<script src="/laboratorio/convite.js" defer></script>
+</body></html>
