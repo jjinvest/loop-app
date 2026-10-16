@@ -3,6 +3,7 @@
 // API de acesso individual SOMENTE no servidor de laboratorio local.
 // Nenhuma rota recebe contaId do usuario. A identidade vem da sessao.
 const express=require('express');
+const {randomUUID}=require('node:crypto');
 const {localSeguro}=require('./admin-catalogo-laboratorio');
 const {SessoesParticipanteDemo,DURACAO}=require('../domain/sessoes-participante-demo');
 const {EscritorioIndividualDemo}=require('../domain/escritorio-individual-demo');
@@ -22,7 +23,7 @@ function setCookie(res,token,maxAge){
  res.append('Set-Cookie',COOKIE+'='+token+'; HttpOnly; SameSite=Strict; Path='+CAMINHO+
   '; Max-Age='+maxAge);
 }
-function criarRouterParticipanteDemo({contas,ponte,sessoes=null,adesoes=null}={}){
+function criarRouterParticipanteDemo({contas,ponte,sessoes=null,adesoes=null,carrinhos=null}={}){
  if(!contas||!ponte)throw new TypeError('Cadastro e ponte do laboratorio obrigatorios');
  const gerenciador=sessoes||new SessoesParticipanteDemo({contas});
  const escritorio=new EscritorioIndividualDemo({contas,ponte});
@@ -109,6 +110,71 @@ function criarRouterParticipanteDemo({contas,ponte,sessoes=null,adesoes=null}={}
    return next(err);
   }
  });
+  // Loja acessada pelo proprio titular. O navegador NAO informa o CPF,
+  // conta, preco, pedidoId nem estado do pagamento. Apenas os itens.
+  router.get('/loja/catalogo',(req,res,next)=>{
+   if(!carrinhos)return res.status(501).json({erro:'LOJA_NAO_CONFIGURADA'});
+   try{
+    if(!gerenciador.identificar(lerCookie(req)))
+     return res.status(401).json({erro:'SESSAO_AUSENTE_OU_EXPIRADA'});
+    return res.json({...carrinhos.opcoes(),pedidoFicticio:true,pagamentoReal:false});
+   }catch(e){return next(e);}
+  });
+  router.get('/loja/pedidos',(req,res,next)=>{
+   if(!carrinhos)return res.status(501).json({erro:'LOJA_NAO_CONFIGURADA'});
+   try{
+    const contaId=gerenciador.identificar(lerCookie(req));
+    if(!contaId)return res.status(401).json({erro:'SESSAO_AUSENTE_OU_EXPIRADA'});
+    return res.json(carrinhos.listarDaConta(contaId));
+   }catch(e){return next(e);}
+  });
+  router.get('/loja/pedidos/:pedidoId',(req,res,next)=>{
+   if(!carrinhos)return res.status(501).json({erro:'LOJA_NAO_CONFIGURADA'});
+   try{
+    const contaId=gerenciador.identificar(lerCookie(req));
+    if(!contaId)return res.status(401).json({erro:'SESSAO_AUSENTE_OU_EXPIRADA'});
+    const pedido=carrinhos.buscarDaConta(req.params.pedidoId,contaId);
+    return pedido?res.json({pedido,semPagamentoReal:true}):
+     res.status(404).json({erro:'PEDIDO_NAO_ENCONTRADO'});
+   }catch(e){
+    if(e.codigo==='INVALIDO')return res.status(404).json({erro:'PEDIDO_NAO_ENCONTRADO'});
+    return next(e);
+   }
+  });
+  router.post('/loja/pedidos',(req,res,next)=>{
+   if(!carrinhos)return res.status(501).json({erro:'LOJA_NAO_CONFIGURADA'});
+   if(!req.is('application/json'))return res.status(415).json({erro:'USE_APPLICATION_JSON'});
+   if(!req.body||typeof req.body!=='object'||Array.isArray(req.body)||
+    Object.keys(req.body).join(',')!=='itens'){
+    return res.status(400).json({erro:'SOMENTE_ITENS_PERMITIDOS'});
+   }
+   try{
+    const contaId=gerenciador.identificar(lerCookie(req));
+    if(!contaId)return res.status(401).json({erro:'SESSAO_AUSENTE_OU_EXPIRADA'});
+    const pendentes=carrinhos.banco.prepare(`
+     SELECT COUNT(*) AS total FROM admin_carrinho_loop_demo c
+     WHERE c.conta_id=? AND NOT EXISTS (
+      SELECT 1 FROM admin_carrinho_loop_eventos_demo e
+      WHERE e.pedido_id=c.pedido_id
+     )
+    `).get(contaId).total;
+    if(pendentes>=20)return res.status(409).json({erro:'LIMITE_PEDIDOS_PENDENTES_DE_TESTE'});
+    const pedido=carrinhos.criar({
+     pedidoId:'carrinho-'+randomUUID(),contaId,itens:req.body.itens
+    });
+    return res.status(201).json({
+     pedido,aguardandoPagamentoFicticio:true,
+     posicaoCriada:false,pagamentoReal:false
+    });
+   }catch(e){
+    if(['INVALIDO','VALOR_INVALIDO'].includes(e.codigo))
+     return res.status(400).json({erro:e.codigo});
+    if(e.codigo==='PRODUTO_INVALIDO')return res.status(409).json({erro:e.codigo});
+    if(['LIMITE_ATIVO','CONFLITO'].includes(e.codigo))
+     return res.status(409).json({erro:e.codigo});
+    return next(e);
+   }
+  });
   router.get('/minha-conta',(req,res,next)=>{
   try{
    const contaId=gerenciador.identificar(lerCookie(req));
