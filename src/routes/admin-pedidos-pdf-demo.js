@@ -8,7 +8,13 @@ function criarRouterPedidosPDFDemo({segredo,pedidos,integracaoLoop=null}={}){
  const r=express.Router();
  r.use(criarAutorizacao({segredo}));
  r.use((_req,res,next)=>{res.set('Cache-Control','no-store');next();});
- r.get('/pedidos-pdf-demo',(_req,res)=>res.json(pedidos.listar()));
+ r.get('/pedidos-pdf-demo',(_req,res)=>{
+  const lista=pedidos.listar();
+  if(!integracaoLoop)return res.json(lista);
+  return res.json({...lista,pedidos:lista.pedidos.map(p=>({
+   ...p,integracaoLoop:integracaoLoop.consultarEstado(p.pedidoId)
+  }))});
+ });
  r.get('/pedidos-pdf-demo/opcoes',(_req,res)=>res.json(pedidos.opcoes()));
  // O arquivo retorna SOMENTE apos confirmacao ficticia do pedido,
  // e apenas para administrador local com bearer de laboratorio.
