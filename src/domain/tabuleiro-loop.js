@@ -7,7 +7,8 @@ const DESTINOS = Object.freeze([
   'EMPRESA',
   'PARTICIPANTE',
   'EMPRESA',
-  'PARTICIPANTE'
+  'PARTICIPANTE',
+  'EMPRESA_INVESTIMENTO'
 ]);
 
 class TabuleiroLoop {
@@ -18,7 +19,7 @@ class TabuleiroLoop {
     this.proximoDaFila = proximoDaFila;
     this.relogio = relogio;
     this.centro = null;
-    this.vagas = [null, null, null, null, null];
+    this.vagas = Array(6).fill(null);
     this.vendasDoCiclo = [];
     this.vendasProcessadas = new Set();
     this.ciclosConcluidos = [];
@@ -46,14 +47,14 @@ class TabuleiroLoop {
   }
 
   // Preenchimento inicial, sem movimentacao de posicoes ja ocupadas.
-  // Se ainda nao houver seis posicoes, pode ser chamado novamente quando
+  // Se ainda nao houver sete posicoes, pode ser chamado novamente quando
   // novas vendas simuladas entrarem nas filas.
   preencherInicial() {
     if (this.iniciado) {
       throw new Error('O tabuleiro ja iniciou o primeiro ciclo');
     }
     if (!this.centro) this.centro = this.selecionar();
-    for (let i = 0; i < 5; i++) {
+    for (let i = 0; i < this.vagas.length; i++) {
       if (!this.vagas[i]) this.vagas[i] = this.selecionar();
     }
     return this.estado();
@@ -70,7 +71,7 @@ class TabuleiroLoop {
       throw new Error('Nao ha participante no centro');
     }
     if (this.vendasDoCiclo.length >= DESTINOS.length) {
-      throw new Error('Ciclo ja tem cinco vendas: aguarde a catraca');
+      throw new Error('Ciclo ja tem seis vendas: aguarde a catraca');
     }
     this.iniciado = true;
     const ordem = this.vendasDoCiclo.length + 1;
@@ -94,7 +95,7 @@ class TabuleiroLoop {
     };
   }
 
-  // O quinto evento NAO permite girar enquanto a catraca esta pausada.
+  // O sexto evento NAO permite girar enquanto a catraca esta pausada.
   // A catraca so autoriza o deslocamento fisico das posicoes;
   // nao altera quem ocupa ou a ordem preexistente do tabuleiro.
   girarSimulado({ catracaAberta = false } = {}) {
@@ -113,22 +114,16 @@ class TabuleiroLoop {
       concluidoEm: this.relogio()
     };
 
-    // Giro fixo: Centro sai; 1 -> Centro; 2 -> 1 ... 5 -> 4.
-    // Somente uma nova selecao da fila abastece a posicao 5.
+    // Giro fixo: Centro sai; 1 -> Centro; 2 -> 1 ... 6 -> 5.
+    // Somente uma nova selecao da fila abastece a posicao 6.
     this.centro = vagasAnteriores[0];
-    this.vagas = [
-      vagasAnteriores[1],
-      vagasAnteriores[2],
-      vagasAnteriores[3],
-      vagasAnteriores[4],
-      this.selecionar()
-    ];
+    this.vagas = [...vagasAnteriores.slice(1),this.selecionar()];
     this.ciclosConcluidos.push(concluido);
     this.vendasDoCiclo = [];
     return {
       girou: true,
       centroConcluido: centroAnterior,
-      novaPosicao5: this.copiarPosicao(this.vagas[4]),
+      novaPosicao6: this.copiarPosicao(this.vagas[5]),
       estado: this.estado()
     };
   }
