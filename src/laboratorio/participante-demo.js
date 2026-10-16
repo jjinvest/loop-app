@@ -8,6 +8,7 @@
  let versao=0;
  let mapaAtual=null;
  let filtroMapa='resumo';
+ let destinoInicialTratado=false;
  function encerrarTela(){
   ++versao;conteudo.hidden=true;form.hidden=false;sair.hidden=true;
   e('senhaParticipante').value='';
@@ -31,6 +32,7 @@
   e('atalhoAtivarParticipante').hidden=true;
   mapaAtual=null;
   filtroMapa='resumo';
+  destinoInicialTratado=false;
   atualizarControlesMapa();
  }
  async function chamada(url,body){
@@ -247,6 +249,20 @@
    ' (verificador interno de teste)');
   form.hidden=true;sair.hidden=false;conteudo.hidden=false;
   msg.textContent='Visão individual carregada. Nenhuma operação real executada.';
+  // A loja pode retornar com #pedidos ou #filas ANTES do conteudo
+  // assíncrono ficar visivel. Rolar apenas uma vez após carregar a sessão.
+  if(!destinoInicialTratado){
+   destinoInicialTratado=true;
+   const destinos=['tituloHistoricoLojaParticipante','tituloMapaParticipante',
+    'secaoAtivacaoParticipante'];
+   const alvo=decodeURIComponent(location.hash.slice(1));
+   if(destinos.includes(alvo)){
+    const elemento=e(alvo);
+    if(elemento && !elemento.hidden){
+     requestAnimationFrame(()=>elemento.scrollIntoView({block:'start'}));
+    }
+   }
+  }
  }
  async function atualizar(){
   const atual=++versao;
