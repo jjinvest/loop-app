@@ -31,6 +31,15 @@
   e('bonusMinimoParticipante').textContent='R$ 25,00';
   e('bonusSaqueStatusParticipante').textContent='';
   e('bonusHistoricoParticipante').replaceChildren();
+   e('historicoSaqueTesteParticipante').replaceChildren();
+   e('bonusDisponivelSaqueParticipante').textContent='R$ 0,00';
+   e('bonusReservadoSaqueParticipante').textContent='R$ 0,00';
+   e('valorSaqueTesteParticipante').value='';
+   e('enviarSaqueTesteParticipante').disabled=true;
+   e('avisoSaqueTesteParticipante').textContent='';
+   e('secaoDesistenciaVaga6Participante').hidden=true;
+   e('aceiteDesistenciaVaga6Participante').checked=false;
+   e('statusDesistenciaVaga6Participante').textContent='';
   e('historicoPedidosLojaParticipante').replaceChildren();
   e('totalPedidosLojaParticipante').textContent='0';
   e('aguardandoPedidosLojaParticipante').textContent='0';
@@ -272,7 +281,20 @@
   lista('bonusHistoricoParticipante',bonus.registros,p=>
    'Posição #'+p.posicaoId+' · '+p.percentual+'% de '+
    dinheiro(p.valorBaseCentavos)+' = '+dinheiro(p.valorCentavos)+' · Caixa reserva');
-  e('ativasParticipante').textContent=visao.posicoes.length+' / '+visao.limitePosicoesAtivas;
+  const extrato=visao.saquesSimulados;
+   if(extrato){
+    e('bonusDisponivelSaqueParticipante').textContent=dinheiro(extrato.bonusDisponivelSimuladoCentavos);
+    e('bonusReservadoSaqueParticipante').textContent=dinheiro(extrato.bonusSolicitadoSimuladoCentavos);
+    e('enviarSaqueTesteParticipante').disabled=!extrato.podeSolicitarBonus;
+    lista('historicoSaqueTesteParticipante',extrato.historico,r=>
+     'Solicitação '+r.solicitacaoId+' · Bruto '+dinheiro(r.valorSolicitadoCentavos)+
+     ' · Taxa 3% '+dinheiro(r.taxaSaqueCentavos)+
+     ' · Líquido fictício '+dinheiro(r.valorLiquidoCentavos)+' · NÃO transferido');
+   }
+   const vagaDesistente=visao.posicoes.find(p=>p.local==='VAGA_6'&&p.statusAdesao!=='PENDENTE');
+   e('secaoDesistenciaVaga6Participante').hidden=!vagaDesistente;
+   e('posicaoDesistenciaVaga6Participante').value=vagaDesistente?String(vagaDesistente.posicaoId):'';
+   e('ativasParticipante').textContent=visao.posicoes.length+' / '+visao.limitePosicoesAtivas;
   e('vagasParticipante').textContent=visao.vagasLivres;
   e('indicacoesParticipante').textContent=visao.indicacoes.comprasConfirmadasFicticias;
   e('pendentesParticipante').textContent=visao.indicacoes.cadastrosPendentes;
@@ -341,7 +363,46 @@
   }catch(erro){encerrarTela();msg.textContent=erro.message;}
   finally{botao.disabled=false;}
  });
- e('formAtivacaoParticipante').addEventListener('submit',async ev=>{
+ e('formSaqueTesteParticipante').addEventListener('submit',async ev=>{
+   ev.preventDefault();
+   const botao=e('enviarSaqueTesteParticipante');
+   if(botao.disabled)return;
+   const valor=e('valorSaqueTesteParticipante').value;
+   if(!/^\\d+(?:\\.\\d{1,2})?$/.test(valor)){
+    e('avisoSaqueTesteParticipante').textContent='Informe reais e até dois centavos.';return;
+   }
+   const centavos=Math.round(Number(valor)*100);
+   if(!Number.isSafeInteger(centavos)||centavos<2500){
+    e('avisoSaqueTesteParticipante').textContent='Mínimo de R$ 25,00 por solicitação.';return;
+   }
+   botao.disabled=true;
+   try{
+    const resultado=await chamada('saques-simulados',{
+     solicitacaoId:'saque-'+crypto.randomUUID(),tipo:'BONUS',valorSolicitadoCentavos:centavos
+    });
+    e('valorSaqueTesteParticipante').value='';
+    await atualizar();
+    e('avisoSaqueTesteParticipante').textContent='Solicitação apenas fictícia: taxa '+
+     dinheiro(resultado.taxaSaqueCentavos)+' e líquido '+
+     dinheiro(resultado.valorLiquidoCentavos)+'. Nenhum dinheiro transferido.';
+   }catch(erro){e('avisoSaqueTesteParticipante').textContent=erro.message;}
+   finally{botao.disabled=false;}
+  });
+  e('formDesistenciaVaga6Participante').addEventListener('submit',async ev=>{
+   ev.preventDefault();
+   if(!e('aceiteDesistenciaVaga6Participante').checked)return;
+   const botao=e('registrarDesistenciaVaga6Participante');
+   if(botao.disabled)return;
+   botao.disabled=true;
+   try{
+    const posicaoId=Number(e('posicaoDesistenciaVaga6Participante').value);
+    await chamada('desistir-vaga-6',{posicaoId,aceiteExpresso:true});
+    await atualizar();
+    e('statusDesistenciaVaga6Participante').textContent='Desistência fictícia registrada. A posição agora pertence operacionalmente ao LOOP e é dourada.';
+   }catch(erro){e('statusDesistenciaVaga6Participante').textContent=erro.message;}
+   finally{botao.disabled=false;}
+  });
+  e('formAtivacaoParticipante').addEventListener('submit',async ev=>{
   ev.preventDefault();
   const botao=e('confirmarAtivacaoParticipante');
   if(botao.disabled)return;
