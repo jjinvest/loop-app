@@ -8,6 +8,7 @@ const {COFRES}=require('./financeiro-admin-demo');
 const DEFINICOES=Object.freeze([
   Object.freeze({id:COFRES.ESQUERDA,posicao:'ESQUERDA',grupo:'LOOP',finalidade:'INVESTIMENTO',nomePadrao:'Investimento LOOP',corPadrao:'#D5A62A'}),
   Object.freeze({id:COFRES.CENTRO,posicao:'CENTRO',grupo:'LOOP',finalidade:'PARTICIPANTES',nomePadrao:'Bonificacoes e participacao dos clientes',corPadrao:'#319774'}),
+  Object.freeze({id:COFRES.DOURADAS,posicao:'DOURADAS',grupo:'LOOP',finalidade:'POSICOES_ASSUMIDAS',nomePadrao:'Caixa das bolas douradas',corPadrao:'#E1B74B'}),
   Object.freeze({id:COFRES.DIREITA,posicao:'DIREITA',grupo:'LOOP',finalidade:'RESERVA',nomePadrao:'Reserva de suporte LOOP',corPadrao:'#5D789D'}),
   Object.freeze({id:COFRES.COMERCIAL,posicao:'COMERCIAL',grupo:'LOJA',finalidade:'SOBRA_BRUTA',nomePadrao:'Sobra bruta comercial',corPadrao:'#D5A62A'}),
   Object.freeze({id:COFRES.DISTRIBUIDOR,posicao:'FORNECEDOR_A_PAGAR',grupo:'LOJA',finalidade:'COMPROMISSO_FORNECEDOR',nomePadrao:'Reserva para pagar distribuidor',corPadrao:'#5D789D'})
