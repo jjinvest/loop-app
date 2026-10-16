@@ -26,7 +26,7 @@ function exemplo() {
   return loop;
 }
 function completarCiclo(loop, prefixo) {
-  for (let i=1; i<=5; i++) {
+  for (let i=1; i<=6; i++) {
     loop.registrarVendaNoCicloSimulada({ vendaId:prefixo+'-'+i });
   }
 }
@@ -49,7 +49,7 @@ test('SQLite salva estado e recupera apos fechar e reabrir o banco', (t) => {
   assert.equal(lido.revisao,1);
   assert.equal(lido.simulador.registrarVendaNoCicloSimulada({ vendaId:'c1-1' }).repetida,true);
   assert.equal(lido.simulador.registrarPosicaoSimulada({ participanteId:'p1',vendaId:'pedido-1' }).repetida,true);
-  for (let i=3;i<=5;i++)lido.simulador.registrarVendaNoCicloSimulada({vendaId:'c1-'+i});
+  for (let i=3;i<=6;i++)lido.simulador.registrarVendaNoCicloSimulada({vendaId:'c1-'+i});
   assert.equal(lido.simulador.tentarGiro().motivo,'CATRACA_PAUSADA');
   lido.simulador.abrirCatraca();
   assert.equal(lido.simulador.tentarGiro().girou,true);
