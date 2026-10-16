@@ -128,6 +128,21 @@ class CarrinhoLojaLoopDemoSQLite{
   return {pedidos:ids.map(x=>this.buscar(x.pedidoId)),semPagamentoReal:true,
    modulo:'CARRINHO_MULTIPLOS_ITENS_DEMO'};
  }
+ // Visao estritamente do titular, usada apenas pela API com sessao autenticada.
+ listarDaConta(contaId){
+  const ids=this.banco.prepare(
+   'SELECT pedido_id AS pedidoId FROM admin_carrinho_loop_demo WHERE conta_id=? ORDER BY criado_em DESC,pedido_id DESC LIMIT 100'
+  ).all(contaId);
+  return {pedidos:ids.map(x=>this.buscar(x.pedidoId)),semPagamentoReal:true,
+   modulo:'LOJA_INDIVIDUAL_LOCAL'};
+ }
+ buscarDaConta(pedidoId,contaId){
+  idValido(pedidoId);
+  const dono=this.banco.prepare(
+   'SELECT 1 FROM admin_carrinho_loop_demo WHERE pedido_id=? AND conta_id=?'
+  ).get(pedidoId,contaId);
+  return dono?this.buscar(pedidoId):null;
+ }
  criar({pedidoId,contaId,itens}={}){
   idValido(pedidoId);
   const lista=validarLista(itens);
