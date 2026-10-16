@@ -187,9 +187,18 @@
   referenciaCentavos=dados.referenciaLoopCentavos;
   mostrarCatalogo();
  }
+ async function carregarLinkDivulgacaoLoja(){
+  const link=await api('meus-links');
+  const campo=el('enderecoDivulgarLojaLoop');
+  campo.value=location.origin+link.linkLoja;
+  el('copiarDivulgarLojaLoop').disabled=!link.ativo;
+  el('statusDivulgarLojaLoop').textContent=link.ativo?
+   'Link da Loja ativo e pronto para divulgação.':
+   'Seu link já existe, mas só poderá ser divulgado após sua primeira compra confirmada de qualquer valor.';
+ }
  async function inicializar(){
   try{
-   await Promise.all([carregarCatalogo(),carregarPedidos()]);
+   await Promise.all([carregarCatalogo(),carregarPedidos(),carregarLinkDivulgacaoLoja()]);
    el('conteudoLojaLoop').hidden=false;
    informar('Loja de demonstração pronta. Nenhum pagamento real é realizado.');
   }catch(err){
@@ -197,6 +206,16 @@
    informar(err.message);
   }
  }
+ el('copiarDivulgarLojaLoop').addEventListener('click',async()=>{
+  if(el('copiarDivulgarLojaLoop').disabled)return;
+  try{
+   await navigator.clipboard.writeText(el('enderecoDivulgarLojaLoop').value);
+   el('statusDivulgarLojaLoop').textContent='Link da Loja copiado para compartilhar.';
+  }catch{
+   el('enderecoDivulgarLojaLoop').focus();el('enderecoDivulgarLojaLoop').select();
+   el('statusDivulgarLojaLoop').textContent='Selecione e copie o endereço da Loja acima.';
+  }
+ });
  el('registrarPedidoLoja').addEventListener('click',async()=>{
   if(pedidoEmAndamento||!carrinho.size)return;
   pedidoEmAndamento=true;atualizarCarrinho();
