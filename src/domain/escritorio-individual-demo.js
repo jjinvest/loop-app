@@ -108,7 +108,9 @@ class EscritorioIndividualDemo{
   if(aplicadas>confirmadas)throw new Error('Historico de indicacoes inconsistente');
   return {
    modo:'ESCRITORIO_INDIVIDUAL_EXCLUSIVAMENTE_FICTICIO',
-   conta:{nome:conta.nome,login:conta.login,codigoConvite:conta.codigoConvite},
+   conta:{nome:conta.nome,login:conta.login},
+   linkIndicacao:this.ponte.linksComissoes.linkDaConta(contaId),
+   bonusIndicacoes:this.ponte.linksComissoes.comissoesDaConta(contaId),
    compras:compras.map(c=>{
     const ref=this.banco.prepare(
      'SELECT revisao_valor AS revisaoValor, valor_referencia_centavos AS valorReferenciaCentavos FROM admin_ponte_posicoes_valores_demo WHERE pedido_id=?'
