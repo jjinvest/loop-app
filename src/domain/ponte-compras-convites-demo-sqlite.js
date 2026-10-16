@@ -314,6 +314,24 @@ class PonteComprasConvitesDemoSQLite{
    if(posicoesAtivas(simulador,conta.contaId)>=5){
     throw falha('LIMITE_ATIVO','Limite de cinco posicoes ativas no teste');
    }
+   // A promocao exige uma posicao PRÓPRIA do indicador, ainda na fila
+   // ou no tabuleiro e comprada ate a confirmacao do indicado.
+   // CPF e aceite alteram apenas a cor; nao definem ingresso no LOOP.
+   let posicaoAtivaIndicadorId=null;
+   if(conta.indicadoPorId){
+    const candidatas=[
+     ...simulador.filas.filaA,...simulador.filas.filaB,
+     simulador.tabuleiro.centro,...simulador.tabuleiro.vagas
+    ].filter(p=>p&&p.participanteId===conta.indicadoPorId&&
+     p.statusAdesao!=='PRAZO_ENCERRADO'&&p.empresa!==true);
+    for(const p of candidatas){
+     const adquirida=this.banco.prepare(`
+      SELECT 1 FROM admin_ponte_compras_demo
+      WHERE conta_id=? AND posicao_id=? AND confirmado_em<=?
+     `).get(conta.indicadoPorId,p.id,comprovante.confirmadoEm);
+     if(adquirida){posicaoAtivaIndicadorId=p.id;break;}
+    }
+   }
    const posicao=simulador.registrarPosicaoSimulada({
     nome:conta.nome,participanteId:conta.contaId,
     vendaId:'compra-demo-'+pedidoId,adesaoPendente:true
@@ -360,7 +378,8 @@ class PonteComprasConvitesDemoSQLite{
     this.linksComissoes.comissaoDaPosicao({
      pedidoId,indicadorId:conta.indicadoPorId,
      convidadoId:conta.contaId,posicaoId:posicao.posicao.id,
-     referencia:referenciaVigente,quando:comprovante.confirmadoEm
+     referencia:referenciaVigente,quando:comprovante.confirmadoEm,
+     posicaoAtivaIndicadorId
     }):null;
    // O indicador sem compra ainda nao esta no motor: preservar sua
    // indicacao validada ate que ele tenha uma posicao propria.
@@ -379,6 +398,8 @@ class PonteComprasConvitesDemoSQLite{
     posicaoId:posicao.posicao.id,indicacaoNova,
     linkDivulgacaoLiberado:true,
     comissaoSimuladaCentavos:comissao?.valorComissaoCentavos??0,
+    percentualBonusAplicado:comissao?.taxaPercentual??null,
+    indicadorElegivelBonusExtra:comissao?.elegivelBonusExtra??false,
     filaAtual:simulador.filas.filaA.some(p=>p.id===posicao.posicao.id)?'A':'B',
     compraElegivelLoop:true,posicaoCriada:true,vendaLojaRegistrada:true,
     statusAdesao:'PENDENTE',
