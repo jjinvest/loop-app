@@ -93,8 +93,10 @@ function criarRouterFinanceiroAdminDemo({segredo,configuracao,razaoPersistente,c
     });
   });
   router.get('/conciliacao-cofres-demo',async(req,res)=>{
-    const {modo,fluxo,extrato}=req.query;
-    if(!['split','reserva'].includes(modo)||
+    const {modo,fluxo,extrato,centro='participante'}=req.query;
+    if(!['participante','dourado','desistente'].includes(centro)||
+       Object.keys(req.query).some(k=>!['modo','fluxo','extrato','centro'].includes(k))||
+       !['split','reserva'].includes(modo)||
        !['sem-movimentos','com-movimentos'].includes(fluxo)||
        !['conferido','divergente'].includes(extrato)){
       return res.status(400).json({erro:'CENARIO_DE_CONCILIACAO_INVALIDO'});
