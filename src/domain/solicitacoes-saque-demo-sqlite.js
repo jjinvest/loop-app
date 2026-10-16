@@ -68,7 +68,7 @@ class SolicitacoesSaqueDemoSQLite{
    participacaoLucroSaldoConhecido:false,
    podeSolicitarParticipacaoLucro:false,
    motivoBloqueioParticipacaoLucro:'SEM_LIVRO_DE_PARTICIPACAO_LUCRO',
-   solicitaçõesReaisHabilitadas:false,
+   solicitacoesReaisHabilitadas:false,
    pagamentosReais:false,transferenciasExecutadas:false,
    historico:registros.map(({contaId:_contaId,...r})=>({
     ...r,status:'REGISTRADA_APENAS_SIMULACAO',transferenciaExecutada:false
