@@ -135,7 +135,7 @@
   const codigo=el('conviteContaDemo').value.trim();
   if(codigo)body.codigoIndicador=codigo;
   try{
-   const r=await api('/cadastrar',{method:'POST',body:JSON.stringify(body)});
+   const r=await api('/cadastrar-com-telefone',{method:'POST',body:JSON.stringify(body)});
    aviso.textContent='Conta '+r.conta.nome+' cadastrada no teste. Código individual: '+
     r.conta.codigoConvite+'. Convites pendentes; nenhuma posição criada.';
    el('emailContaDemo').value='';
