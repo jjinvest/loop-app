@@ -176,7 +176,7 @@ test('referencia LOOP reajustada para R$500 vale sobre total do carrinho futuro'
  });
  const a=config.alterar({valorCentavos:50000,revisaoEsperada:1});
  assert.equal(a.revisao,2);
- const senha='chave-reajuste-carrinho-2026';
+ const senha='chave-reajuste-carrinho-2026-1234567890';
  const srv=criarAppAdminLaboratorio({repositorio:repo,segredo:senha}).listen(0,'127.0.0.1');
  await once(srv,'listening');t.after(()=>new Promise(resolve=>srv.close(resolve)));
  const base='http://127.0.0.1:'+srv.address().port;
