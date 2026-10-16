@@ -22,3 +22,15 @@ main{max-width:1000px}
 #listaPreviaImportacao ol{padding-left:24px}
 #listaPreviaImportacao li{line-height:1.45;margin:8px 0;overflow-wrap:anywhere}
 #confirmarImportacao:disabled{opacity:.6;cursor:not-allowed}
+
+/* Formularios administrativos responsivos em todos os dispositivos. */
+main,.admin-grid > *,.duas-colunas > *,.painel,.painel form{min-width:0;max-width:100%}
+.campo input,.campo select,.campo textarea{box-sizing:border-box;min-width:0}
+.acoes-admin button{min-height:44px;max-width:100%;white-space:normal}
+.painel li,.painel p{overflow-wrap:anywhere}
+@media(max-width:420px){
+ .painel{padding:12px}
+ .acoes-admin button{flex:1 1 100%}
+ .admin-grid,.duas-colunas{grid-template-columns:minmax(0,1fr)}
+}
+
