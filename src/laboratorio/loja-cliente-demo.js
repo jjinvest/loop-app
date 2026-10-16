@@ -33,7 +33,7 @@
  function atualizarCarrinho(){
   const destino=el('itensLojaLoop');
   destino.replaceChildren();
-  let total=0;
+  let total=0,totalElegivel=0;
   for(const [id,quantidade] of carrinho){
    const p=produto(id);
    if(!p){carrinho.delete(id);continue;}
@@ -57,6 +57,7 @@
    const subtotal=document.createElement('span');
    subtotal.textContent=dinheiro(p.precoCentavos*quantidade);
    total+=p.precoCentavos*quantidade;
+   if(p.elegivelLoop)totalElegivel+=p.precoCentavos*quantidade;
    const remover=document.createElement('button');
    remover.type='button';remover.className='botao-secundario-loja';
    remover.textContent='Remover';
@@ -71,9 +72,11 @@
    vazio.textContent='Seu carrinho está vazio.';
    destino.append(vazio);
   }
-  el('totalLojaLoop').textContent='Total estimado: '+dinheiro(total)+
-   ' · Mínimo vigente de demonstração: '+dinheiro(referenciaCentavos)+
-   (total>=referenciaCentavos?' · Pedido qualificado':' · Compra apenas da loja');
+  el('totalLojaLoop').textContent='Total da compra: '+dinheiro(total)+
+   ' · Produtos válidos para o LOOP: '+dinheiro(totalElegivel)+
+   ' · Mínimo da posição: '+dinheiro(referenciaCentavos)+
+   (totalElegivel>=referenciaCentavos?' · Pode gerar uma posição após confirmação':
+    ' · Não atinge o mínimo da posição');
   el('registrarPedidoLoja').disabled=!carrinho.size||pedidoEmAndamento;
  }
  function adicionar(p){
@@ -105,12 +108,16 @@
    const tipo=document.createElement('span');tipo.className='tipo-loja-loop';
    tipo.textContent=p.tipo==='PDF'?'Curso PDF':'Produto físico';
    const titulo=document.createElement('h3');titulo.textContent=p.nome;
+   const aviso=document.createElement('small');
+   aviso.className='tipo-loja-loop';
+   aviso.textContent=p.elegivelLoop?'Conta para gerar posição no LOOP':
+    'Produto só da loja: não conta para a posição';
    const preco=document.createElement('p');preco.className='preco-loja-loop';
    preco.textContent=dinheiro(p.precoCentavos);
    const botao=document.createElement('button');botao.type='button';
    botao.textContent='Adicionar ao carrinho';
    botao.addEventListener('click',()=>adicionar(p));
-   card.append(tipo,titulo,preco,botao);destino.append(card);
+   card.append(tipo,titulo,preco,aviso,botao);destino.append(card);
   }
   atualizarCarrinho();
  }
@@ -126,7 +133,8 @@
    const titulo=document.createElement('strong');
    titulo.textContent='Pedido '+pedido.pedidoId+' · '+dinheiro(pedido.totalCentavos);
    const itens=document.createElement('small');
-   itens.textContent=pedido.itens.map(i=>i.quantidade+' × '+i.nome).join(' + ');
+   itens.textContent=pedido.itens.map(i=>i.quantidade+' × '+i.nome).join(' + ')+
+    ' · Total válido para LOOP: '+dinheiro(pedido.totalElegivelLoopCentavos);
    const status=document.createElement('span');
    if(pedido.situacaoPagamentoFicticio==='AGUARDANDO_FICTICIO')
     status.textContent='Aguardando confirmação fictícia do laboratório.';
