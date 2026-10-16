@@ -1,18 +1,18 @@
 # LOOP V5 — Regra final dos bônus de indicação e da cadeira (laboratório)
 
-## Duas ativações independentes
+## Duas ativações e uma compra qualificada
 
 **1. Link de indicação:** toda conta recebe um único link de rastreamento. O código fica DENTRO do link e o final do endereço pode ser personalizado sem mudar o rastreamento. O link começa inativo e é liberado quando o titular conclui **qualquer compra** na loja, mesmo inferior ao mínimo de posição.
 
-**2. Participação no LOOP:** uma compra qualificada pelo **valor mínimo único vigente na data da confirmação** cria uma posição própria na fila B. Essa posição habilita o titular a participar de campanhas de comissão acima de 10%. O aceite de CPF posterior só muda a cor azul para vermelha: não é necessário para determinar a aquisição da posição. Uma posição azul transferida ao LOOP como dourada não conta mais como posição própria para campanhas.
+**2. Ativação de CPF e termos:** após qualquer compra confirmada, o usuário pode aceitar a versão dos termos do laboratório, com CPF fictício de teste. Só depois disso a indicação qualificada gera bônus de 10% ou de campanha. Não existem créditos retroativos por eventos anteriores ao aceite. O comprador que só compra produtos não precisa aderir para continuar comprando.\n\n**3. Participação no LOOP:** uma compra qualificada pelo **valor mínimo único vigente na data da confirmação** cria uma posição própria na fila B. Essa posição habilita o titular a participar de campanhas de comissão acima de 10%. CPF e termos nao determinam se a compra cria uma posicao, mas sao indispensaveis para provisionar bonificacoes e verificar a elegibilidade do saque simulado. Se a adesao ja foi aceita antes da compra qualificada, a posicao nasce ativa. Aceite tardio nao recupera posicao dourada. Uma posição azul transferida ao LOOP como dourada não conta mais como posição própria para campanhas.
 
-O cadastro pode ser espontâneo ou por link. O participante sem posição pode ganhar **10% da base da posição que seu convidado adquirir**, desde que seu próprio link tenha sido liberado. Ele **não** ganha comissão sobre um cadastro ou sobre uma venda do convidado que não crie posição.
+O cadastro pode ser espontâneo ou por link. O participante sem posição pode ganhar **10% da base da posição que seu convidado adquirir**, desde que seu próprio link tenha sido liberado e o CPF/termos tenham sido confirmados antes da indicação qualificada. Ele **não** ganha comissão sobre um cadastro ou sobre uma venda do convidado que não crie posição.
 
 ## Regra da campanha por indicador
 
 Para cada nova posição criada pelo convidado, o motor verifica:
 
-- O indicador fez alguma compra confirmada de qualquer valor antes desse evento, liberando seu link?
+- O indicador fez alguma compra confirmada de qualquer valor antes desse evento, liberando seu link?\n- O indicador confirmou CPF de teste e aceitou a versao dos termos ANTES do evento? Caso contrario, nao criar credito nem provisao (inclusive 10%).
 - Ele possuía pelo menos uma posição própria **ainda em A, em B ou no tabuleiro**, não transferida à empresa e comprada antes da confirmação da posição indicada?
 - Qual era o percentual administrativo **vigente na data do evento**?
 - Qual era o **valor da cadeira vigente** na data do evento? A comissão usa esse valor, e não o total do pedido.
@@ -43,6 +43,6 @@ O percentual de campanha, configurável pelo administrador de **10% a 100%**, é
 - `test/indicacoes-campanha-so-com-cadeira.test.js`: três anos depois, valor mínimo R$ 500, campanha 50%, compra insuficiente de R$ 250, mudança para bônus de 50% só após aquisição de posição própria, compras retroativas e posição azul que se tornou dourada.
 - `test/loja-cliente-sessao-carrinho.test.js`: pagamentos de demonstração controlados pelo administrador e apenas uma posição por pedido qualificado.
 
-## Limitações
+## Sequência implementada\n\n- Cadastro gera link inativo.\n- Primeira compra de qualquer valor libera link.\n- CPF ficticio e termos habilitam bonificacoes apenas futuras e bloqueiam simulacao de saque enquanto pendentes.\n- Compra qualificada no minimo vigente cria uma posicao e permite campanhas superiores a 10%.\n- O limite de uma posicao por pedido e configuracao de quantidade minima por produto permanecem independentes.\n- O laboratorio nao valida ou armazena CPF real e nao processa saques reais.\n\n## Limitações
 
 Essa política está implementada no simulador SQLite local, não em gateway financeiro, sistema de saques reais ou plataforma publicada. A regra é aplicada a partir das novas bonificações, sem reescrever registros anteriores.
