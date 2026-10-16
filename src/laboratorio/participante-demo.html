@@ -66,11 +66,28 @@
      <p class="ajuda-portal">Saque de bônus ou participação de lucro: taxa de 3% sobre o valor bruto solicitado. Mínimo de R$ 25 por solicitação. Apenas simulação, sem transferências reais.</p>
      <p class="ajuda-portal">Origem exclusiva: caixa reserva do LOOP. O caixa central e o de investimento não financiam estas bonificações. Nenhum saque ou pagamento real está habilitado neste laboratório.</p>
      <ol id="bonusHistoricoParticipante"></ol>
+     <section aria-labelledby="tituloSaqueTesteParticipante" class="saques-teste-participante">
+      <h3 id="tituloSaqueTesteParticipante">Solicitações de saque fictício</h3>
+      <p class="ajuda-portal">Apenas laboratório. Mínimo R$ 25 brutos, taxa de 3%. Solicitar compromete somente saldo de bônus fictício; nenhum Pix ou transferência será executado.</p>
+      <div class="resumos-participante">
+       <div><span>Bônus ainda disponível para simular</span><strong id="bonusDisponivelSaqueParticipante">R$ 0,00</strong></div>
+       <div><span>Já solicitado neste teste</span><strong id="bonusReservadoSaqueParticipante">R$ 0,00</strong></div>
+      </div>
+      <form id="formSaqueTesteParticipante" autocomplete="off">
+       <label for="valorSaqueTesteParticipante">Valor bruto para solicitar (R$)</label>
+       <input type="number" min="25" step="0.01" id="valorSaqueTesteParticipante" inputmode="decimal" placeholder="25.00" required>
+       <button type="submit" id="enviarSaqueTesteParticipante" disabled>Registrar solicitação de bônus fictício</button>
+      </form>
+      <p id="avisoSaqueTesteParticipante" role="status" aria-live="polite"></p>
+      <h4>Histórico das solicitações fictícias</h4>
+      <ol id="historicoSaqueTesteParticipante"></ol>
+      <p class="ajuda-portal">Participação de lucro: mesmo mínimo e taxa de 3%, mas não habilitada até existir saldo próprio e verificado. Não criamos saldo de lucro artificial.</p>
+     </section>
     </div>
     <p class="ajuda-portal">Um convidado cadastrado ainda não é uma indicação validada; somente uma compra confirmada pelo verificador de simulação pode contar.</p>
     <div class="resumos-participante">
      <div><span>Posições ativas</span><strong id="ativasParticipante">0</strong></div>
-     <div><span>Vagas disponíveis</span><strong id="vagasParticipante">5</strong></div>
+     <div><span>Vagas disponíveis</span><strong id="vagasParticipante">6</strong></div>
      <div><span>Indicações validadas no teste</span><strong id="indicacoesParticipante">0</strong></div>
      <div><span>Convites pendentes</span><strong id="pendentesParticipante">0</strong></div>
     </div>
