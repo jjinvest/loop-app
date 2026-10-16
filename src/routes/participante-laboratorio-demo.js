@@ -117,7 +117,9 @@ function criarRouterParticipanteDemo({contas,ponte,sessoes=null,adesoes=null,car
    try{
     if(!gerenciador.identificar(lerCookie(req)))
      return res.status(401).json({erro:'SESSAO_AUSENTE_OU_EXPIRADA'});
-    return res.json({...carrinhos.opcoes(),pedidoFicticio:true,pagamentoReal:false});
+    return res.json({...carrinhos.opcoes(),
+     referenciaLoopCentavos:ponte.configuracaoValor.atual().valorCentavos,
+     pedidoFicticio:true,pagamentoReal:false});
    }catch(e){return next(e);}
   });
   router.get('/loja/pedidos',(req,res,next)=>{
