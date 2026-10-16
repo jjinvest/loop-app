@@ -8,8 +8,9 @@ function posicoesTitular(sim,contaId){
  const f=sim.filas,t=sim.tabuleiro;
  const itens=[];
  function anexar(posicao,local){
-  if(posicao&&posicao.participanteId===contaId){
-   itens.push({posicaoId:posicao.id,local,entrouEm:posicao.entrouEm});
+  if(posicao&&posicao.participanteId===contaId&&posicao.statusAdesao!=='PRAZO_ENCERRADO'){
+   itens.push({posicaoId:posicao.id,local,entrouEm:posicao.entrouEm,
+    statusAdesao:posicao.statusAdesao||'ATIVA_LEGADA'});
   }
  }
  f.filaA.forEach(p=>anexar(p,'FILA_A'));
@@ -17,6 +18,22 @@ function posicoesTitular(sim,contaId){
  anexar(t.centro,'CENTRO');
  t.vagas.forEach((p,i)=>anexar(p,'VAGA_'+(i+1)));
  return itens;
+}
+// Visao PUBLICAVEL por sessao: nunca expor nome, CPF, email ou ID de outras contas.
+function mapaCoresDoEscritorio(sim,contaId){
+ function marcar(p){
+  if(!p)return null;
+  let cor='CINZA';
+  if(p.empresa===true||p.statusAdesao==='PRAZO_ENCERRADO')cor='DOURADO';
+  else if(p.statusAdesao==='PENDENTE')cor='AZUL';
+  else if(p.participanteId===contaId)cor='VERMELHO';
+  return {posicaoId:p.id,cor};
+ }
+ return {
+  filaA:sim.filas.filaA.map(marcar),
+  filaB:sim.filas.filaB.map(marcar),
+  tabuleiro:{centro:marcar(sim.tabuleiro.centro),vagas:sim.tabuleiro.vagas.map(marcar)}
+ };
 }
 class EscritorioIndividualDemo{
  constructor({ponte,contas}={}){
@@ -56,7 +73,11 @@ class EscritorioIndividualDemo{
      ON a.convidado_id=v.convidado_id
    WHERE c.indicado_por_id=?
   `).all(contaId,contaId);
-  const posicoes=posicoesTitular(this.ponte._restaurar(),contaId);
+  const simulador=this.ponte._restaurar();
+  const posicoes=posicoesTitular(simulador,contaId);
+  const mapaCores=mapaCoresDoEscritorio(simulador,contaId);
+  const encerradas=[simulador.tabuleiro.centro,...simulador.tabuleiro.vagas]
+   .filter(p=>p&&p.participanteId===contaId&&p.statusAdesao==='PRAZO_ENCERRADO').length;
   const idsAtivos=new Set();
   for(const p of posicoes){
    if(!Number.isSafeInteger(p.posicaoId)||idsAtivos.has(p.posicaoId)){
@@ -73,7 +94,7 @@ class EscritorioIndividualDemo{
   }
   // Ponte ainda nao cria giros nem historico de posicoes concluídas:
   // o ledger de compras deve corresponder exatamente a posicoes ativas.
-  if(posicoes.length!==compras.length||
+  if(posicoes.length+encerradas!==compras.length||
     posicoes.some(p=>!comprasPorPosicao.has(p.posicaoId))){
    throw new Error('Integridade entre compras e posicoes do titular divergente');
   }
@@ -111,6 +132,8 @@ class EscritorioIndividualDemo{
     if(!referencia)throw new Error('Referencia da posicao de teste ausente');
     return {...p,...referencia};
    }).sort((a,b)=>a.posicaoId-b.posicaoId),
+   mapaCores,
+   posicoesComPrazoEncerrado:encerradas,
    limitePosicoesAtivas:LIMITE_ATIVAS,
    vagasLivres:LIMITE_ATIVAS-posicoes.length,
    indicacoes:{
@@ -125,4 +148,4 @@ class EscritorioIndividualDemo{
   };
  }
 }
-module.exports={EscritorioIndividualDemo,posicoesTitular};
+module.exports={EscritorioIndividualDemo,posicoesTitular,mapaCoresDoEscritorio};
