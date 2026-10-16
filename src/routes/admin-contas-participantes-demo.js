@@ -45,8 +45,9 @@ function criarRouterContasParticipantesDemo({segredo,contas}={}){
     res.status(404).json({erro:'CONTA_FICTICIA_NAO_ENCONTRADA'});
   }catch(erro){return erroHttp(erro,res,next);}
  });
- router.post('/contas-participantes-demo/cadastrar',(req,res,next)=>{
-  if(!corpoEstrito(req.body,['nome','email','senha'],['codigoIndicador','telefone'])){
+ function cadastrarNoTeste(req,res,next,{exigirTelefone=false}={}){
+  if(!corpoEstrito(req.body,exigirTelefone?['nome','email','senha','telefone']:['nome','email','senha'],
+    ['codigoIndicador',...(exigirTelefone?[]:['telefone'])])){
    return res.status(400).json({erro:'CAMPOS_CADASTRO_DE_TESTE_INVALIDOS'});
   }
   try{
@@ -57,7 +58,11 @@ function criarRouterContasParticipantesDemo({segredo,contas}={}){
     posicaoCriada:false,catracaMovimentada:false
    });
   }catch(erro){return erroHttp(erro,res,next);}
- });
+ }
+ router.post('/contas-participantes-demo/cadastrar-com-telefone',(req,res,next)=>
+  cadastrarNoTeste(req,res,next,{exigirTelefone:true}));
+ router.post('/contas-participantes-demo/cadastrar',(req,res,next)=>
+  cadastrarNoTeste(req,res,next));
  router.post('/contas-participantes-demo/login-teste',(req,res,next)=>{
   if(!corpoEstrito(req.body,['nome','senha'])){
    return res.status(400).json({erro:'CAMPOS_LOGIN_DE_TESTE_INVALIDOS'});
