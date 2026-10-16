@@ -311,7 +311,7 @@
   if(temAzul){
    const quantidade=visao.posicoes.filter(p=>p.statusAdesao==='PENDENTE').length;
    aviso.textContent='Você tem '+quantidade+
-    ' posição(ões) azul(is) na fila. Informe o CPF fictício e aceite os termos na seção de ativação antes da entrada no tabuleiro.';
+    ' posição(ões) azul(is) nas filas A/B. Confirme CPF fictício e termos antes da entrada na vaga 6: sem aceite nesse momento, a posição vira dourada e passa ao LOOP.';
   }
   mostrarHistorico(visao.historicoLoja);
   lista('pedidosParticipante',visao.compras,p=>'Pedido fictício '+p.pedidoId+
