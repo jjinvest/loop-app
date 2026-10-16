@@ -76,6 +76,70 @@ class ElegibilidadeProdutosLoopDemoSQLite{
     BEFORE DELETE ON admin_produtos_elegibilidade_historico_demo
     BEGIN SELECT RAISE(ABORT,'historico imutavel'); END;
   `);
+  // SQLite legado possuia CHECK(1,5). Reconstruir somente as tabelas de
+  // configuracao; comprovantes de compras e historicos nao sao reescritos.
+  const tabelas=[
+   {
+    nome:'admin_produtos_pacote_posicoes_loop_demo',
+    colunas:'produto_id,posicoes_por_pedido,revisao,atualizado_em',
+    ddl:`CREATE TABLE admin_produtos_pacote_posicoes_loop_demo_v6(
+     produto_id TEXT PRIMARY KEY REFERENCES catalogo_produtos(id) ON DELETE RESTRICT,
+     posicoes_por_pedido INTEGER NOT NULL CHECK(posicoes_por_pedido IN (1,5,6)),
+     revisao INTEGER NOT NULL CHECK(revisao>=2),atualizado_em TEXT NOT NULL)`
+   },
+   {
+    nome:'admin_produtos_pacote_posicoes_historico_demo',
+    colunas:'id,produto_id,revisao,anterior,novo,registrado_em',
+    ddl:`CREATE TABLE admin_produtos_pacote_posicoes_historico_demo_v6(
+     id INTEGER PRIMARY KEY AUTOINCREMENT,
+     produto_id TEXT NOT NULL REFERENCES catalogo_produtos(id) ON DELETE RESTRICT,
+     revisao INTEGER NOT NULL CHECK(revisao>=2),
+     anterior INTEGER NOT NULL CHECK(anterior IN (1,5,6)),
+     novo INTEGER NOT NULL CHECK(novo IN (1,5,6)),
+     registrado_em TEXT NOT NULL,UNIQUE(produto_id,revisao))`
+   }
+  ];
+  for(const t of tabelas){
+   const sql=this.banco.prepare("SELECT sql FROM sqlite_master WHERE type='table' AND name=?").get(t.nome)?.sql||'';
+   if(!sql.includes('IN (1,5)'))continue;
+   this.banco.exec('BEGIN IMMEDIATE');
+   try{
+    this.banco.exec(t.ddl);
+    this.banco.exec(`INSERT INTO ${t.nome}_v6(${t.colunas}) SELECT ${t.colunas} FROM ${t.nome}`);
+    this.banco.exec(`DROP TABLE ${t.nome}`);
+    this.banco.exec(`ALTER TABLE ${t.nome}_v6 RENAME TO ${t.nome}`);
+    this.banco.exec('COMMIT');
+   }catch(e){this.banco.exec('ROLLBACK');throw e;}
+  }
+  // Triggers de protecao, removidos pelo DROP TABLE, sao restaurados.
+  this.banco.exec(`
+   CREATE TRIGGER IF NOT EXISTS admin_pacote_posicoes_historico_no_update
+    BEFORE UPDATE ON admin_produtos_pacote_posicoes_historico_demo
+    BEGIN SELECT RAISE(ABORT,'historico de pacotes imutavel'); END;
+   CREATE TRIGGER IF NOT EXISTS admin_pacote_posicoes_historico_no_delete
+    BEFORE DELETE ON admin_produtos_pacote_posicoes_historico_demo
+    BEGIN SELECT RAISE(ABORT,'historico de pacotes imutavel'); END;
+  `);
+  // Produtos previamente programados para 5 passam a 6 nos NOVOS pedidos.
+  // Revise historica nao e apagada nem altera snapshots de carrinhos antigos.
+  this.banco.exec('BEGIN IMMEDIATE');
+  try{
+   const legados=this.banco.prepare(`
+    SELECT produto_id,revisao FROM admin_produtos_pacote_posicoes_loop_demo
+    WHERE posicoes_por_pedido=5`).all();
+   const gravarHistorico=this.banco.prepare(`
+    INSERT INTO admin_produtos_pacote_posicoes_historico_demo
+    (produto_id,revisao,anterior,novo,registrado_em) VALUES (?,?,?,?,?)`);
+   const atualizar=this.banco.prepare(`
+    UPDATE admin_produtos_pacote_posicoes_loop_demo
+    SET posicoes_por_pedido=6,revisao=?,atualizado_em=? WHERE produto_id=?`);
+   for(const p of legados){
+    const agora=new Date().toISOString(),nova=p.revisao+1;
+    gravarHistorico.run(p.produto_id,nova,5,6,agora);
+    atualizar.run(nova,agora,p.produto_id);
+   }
+   this.banco.exec('COMMIT');
+  }catch(e){this.banco.exec('ROLLBACK');throw e;}
  }
  consultar(produtoId){
   if(typeof produtoId!=='string'||!this.catalogo.buscarRegistro(produtoId))
