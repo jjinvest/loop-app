@@ -36,6 +36,7 @@ const { AdesoesPosicoesDemoSQLite } = require('../domain/adesoes-posicoes-demo-s
 const { PedidosTitularidadeDemoSQLite } = require('../domain/pedidos-titularidade-demo-sqlite');
 const { criarRouterPonteComprasConvitesDemo } = require('../routes/admin-ponte-compras-convites-demo');
 const { criarRouterParticipanteDemo } = require('../routes/participante-laboratorio-demo');
+const { SolicitacoesSaqueDemoSQLite }=require('../domain/solicitacoes-saque-demo-sqlite');
 const { SessoesParticipanteDemo } = require('../domain/sessoes-participante-demo');
 const { AuditoriaAcessoParticipanteDemoSQLite } = require('../domain/auditoria-acesso-participante-demo-sqlite');
 const { criarRouterAuditoriaParticipanteDemo } = require('../routes/admin-auditoria-participante-demo');
@@ -137,6 +138,9 @@ function criarAppAdminLaboratorio({ repositorio, segredo, webhookDemo } = {}) {
       contas:contasDemo,links:ponteDemo.linksComissoes,carrinhos:carrinhosLojaLoopDemo
     }));
     const adesoesDemo=new AdesoesPosicoesDemoSQLite({ponte:ponteDemo});
+    const saquesDemo=new SolicitacoesSaqueDemoSQLite({
+      banco:repositorio.banco,contas:contasDemo,links:ponteDemo.linksComissoes
+    });
     app.use('/api/admin',criarRouterPonteComprasConvitesDemo({
       segredo,ponte:ponteDemo
     }));
@@ -150,7 +154,7 @@ function criarAppAdminLaboratorio({ repositorio, segredo, webhookDemo } = {}) {
     });
     app.use('/api/laboratorio/participante',criarRouterParticipanteDemo({
       contas:contasDemo,ponte:ponteDemo,sessoes:sessoesDemo,adesoes:adesoesDemo,
-      carrinhos:carrinhosLojaLoopDemo
+      carrinhos:carrinhosLojaLoopDemo,saques:saquesDemo
     }));
     app.use('/api/admin',criarRouterAuditoriaParticipanteDemo({
       segredo,auditoria:auditoriaDemo
