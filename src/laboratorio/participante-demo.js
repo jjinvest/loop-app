@@ -368,7 +368,7 @@
    const botao=e('enviarSaqueTesteParticipante');
    if(botao.disabled)return;
    const valor=e('valorSaqueTesteParticipante').value;
-   if(!/^\\d+(?:\\.\\d{1,2})?$/.test(valor)){
+   if(!/^\d+(?:\.\d{1,2})?$/.test(valor)){
     e('avisoSaqueTesteParticipante').textContent='Informe reais e até dois centavos.';return;
    }
    const centavos=Math.round(Number(valor)*100);
