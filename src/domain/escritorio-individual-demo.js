@@ -27,7 +27,11 @@ function mapaCoresDoEscritorio(sim,contaId){
   if(p.empresa===true||p.statusAdesao==='PRAZO_ENCERRADO')cor='DOURADO';
   else if(p.statusAdesao==='PENDENTE')cor='AZUL';
   else if(p.participanteId===contaId)cor='VERMELHO';
-  return {posicaoId:p.id,cor};
+  // Apenas sinalizamos titularidade AO PROPRIO TITULAR.
+  // Azul continua azul para todos; o destaque nao interfere na fila.
+  const minha=p.participanteId===contaId &&
+   p.statusAdesao!=='PRAZO_ENCERRADO' && p.empresa!==true;
+  return {posicaoId:p.id,cor,minha};
  }
  return {
   filaA:sim.filas.filaA.map(marcar),
