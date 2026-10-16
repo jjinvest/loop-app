@@ -50,6 +50,8 @@ test('botao cria bola dourada unica em B, idempotente, sem CPF/compra/saldo',t=>
   assert.equal(p.origemOperacional,'ADMIN_MANUAL_SEM_COMPRA');
   assert.equal(p.geradaSemCompra,true);
  }
+ assert.throws(()=>s.registrarIndicacaoSimulada({indicadorId:'LOOP_EMPRESA',
+  eventoId:'indicacao-forjada'}),/nao participa de indicacoes/);
  assert.equal(ponte.consultar().douradasManuais.length,2);
  assert.equal(ponte.consultar().compras.length,0);
  assert.equal(ponte.consultar().comissoesSimuladas.length,0);
