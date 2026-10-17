@@ -41,7 +41,9 @@ function criarRouterCircuitBreakV6Demo({segredo,controle,ponteControle=null,prog
     const p=req.body;
     if(!req.is('application/json'))return res.status(415).json({erro:'JSON_OBRIGATORIO'});
     if(!p||typeof p!=='object'||Array.isArray(p)||
-       Object.keys(p).sort().join(',')!=='agendaId,fimEm,inicioEm,modo,quantidade')
+       !['agendaId,fimEm,inicioEm,modo,quantidade',
+         'agendaId,alvo,fimEm,inicioEm,modo,quantidade'].includes(
+           Object.keys(p).sort().join(',')))
       return res.status(400).json({erro:'CAMPOS_INVALIDOS'});
     try{return res.status(201).json(programador.criar(p));}
     catch(e){
