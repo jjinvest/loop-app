@@ -14,7 +14,7 @@ test('50 giros: participantes com quatro e seis posicoes sem perder assentos',()
  assert.equal(r.aguardando,343);
  assert.equal(r.filaA+r.filaB,343);
  assert.ok(r.promocoesDeTitularComQuatroPosicoes>=5);
- assert.ok(r.convites>30);
+ assert.equal(r.convites,30);
  assert.ok(r.entradasA>0);
  assert.ok(r.entradasB>0);
  assert.equal(r.saldoRealCentavos,0);
