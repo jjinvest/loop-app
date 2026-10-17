@@ -65,20 +65,14 @@ class CircuitBreakPonteV6DemoSQLite{
       creditoRealDisponivelCentavos:0,
       provisoes:this.livro.resumo(),preLancamento:this.preLancamento.resumo()};
   }
-  liberar({comandoId,revisaoEsperada,quantidade,participantes}={}){
+  liberar({comandoId,revisaoEsperada,quantidade}={}){
     if(typeof comandoId!=='string'||!/^cb-[a-z0-9-]{5,70}$/.test(comandoId))
       throw falha('COMANDO_ID_INVALIDO');
     if(!Number.isSafeInteger(revisaoEsperada)||revisaoEsperada<0||revisaoEsperada>1000000)
       throw falha('REVISAO_INVALIDA');
-    const modoPessoas=participantes!==undefined;
-    if(modoPessoas){
-      if(quantidade!==undefined||!Number.isSafeInteger(participantes)||
-         participantes<1||participantes>100)throw falha('QUANTIDADE_PARTICIPANTES_INVALIDA');
-    }else if(!LOTES.includes(quantidade))throw falha('LOTE_INVALIDO');
-    const tipo=modoPessoas?'LIBERAR_PARTICIPANTES_PONTE':'LIBERAR_LOTE_PONTE';
-    const entrada={tipo,valor:modoPessoas?participantes:quantidade};
-    if(modoPessoas&&!this.preLancamento.estado())
-      throw falha('PRE_LANCAMENTO_DESATIVADO');
+    if(!LOTES.includes(quantidade))throw falha('LOTE_INVALIDO');
+    const tipo='LIBERAR_LOTE_PONTE';
+    const entrada={tipo,valor:quantidade};
     const b=this.banco;
     b.exec('BEGIN IMMEDIATE;');
     try{
@@ -96,7 +90,7 @@ class CircuitBreakPonteV6DemoSQLite{
       if(estado.status!=='ABERTA')throw falha('CATRACA_PAUSADA');
       const agora=this.agora(),dia=diaLocal(agora);
       const usadosHoje=dia===estado.dia_local?estado.giros_dia:0;
-      if(usadosHoje+(modoPessoas?participantes:quantidade)>estado.limite_diario)
+      if(usadosHoje+quantidade>estado.limite_diario)
         throw falha('LIMITE_DIARIO_ATINGIDO');
       const sim=this.ponte._restaurar();
       if(sim.tabuleiro.vendasDoCiclo.length!==0)
@@ -104,7 +98,7 @@ class CircuitBreakPonteV6DemoSQLite{
       const compras=this.comprasConfirmadas();
       const elegiveis=compras.filter(c=>
         !sim.tabuleiro.vendasProcessadas.has('compra-demo-'+c.pedidoId));
-      if(elegiveis.length<(modoPessoas?participantes:quantidade)*6)
+      if(elegiveis.length<quantidade*6)
         throw falha('COMPRAS_CONFIRMADAS_INSUFICIENTES');
       if(!sim.tabuleiro.iniciado){
         sim.prepararTabuleiro();
@@ -112,15 +106,11 @@ class CircuitBreakPonteV6DemoSQLite{
       // O tabuleiro precisa ter as 7 posicoes e cada giro, uma nova
       // entrada pela vaga 6. Nenhuma vaga some para forcar girar.
       if(!sim.tabuleiro.centro||sim.tabuleiro.vagas.some(p=>!p)||
-         sim.filas.filaA.length+sim.filas.filaB.length<(modoPessoas?participantes:quantidade))
+         sim.filas.filaA.length+sim.filas.filaB.length<quantidade)
         throw falha('TABULEIRO_SEM_REPOSICAO');
-      const disponiveis=Math.floor(elegiveis.length/6);
-      const restantes=estado.limite_diario-usadosHoje;
-      const fila=sim.filas.filaA.length+sim.filas.filaB.length;
-      const tentativas=modoPessoas?Math.min(disponiveis,restantes,fila):quantidade;
       const giros=[];
-      let contemplados=0;
-      for(let i=0;i<tentativas;i++){
+      let centrosParticipantes=0;
+      for(let i=0;i<quantidade;i++){
         const vendas=elegiveis.slice(i*6,(i+1)*6);
         const eventos=[];
         for(const compra of vendas){
@@ -136,16 +126,15 @@ class CircuitBreakPonteV6DemoSQLite{
         const giro=sim.tentarGiro();
         sim.pausarCatraca();
         if(!giro.girou||!giro.novaPosicao6)throw falha('GIRO_NAO_AUTORIZADO');
-        if(!centroDoLoop(giro.centroConcluido))contemplados++;
+        if(!centroDoLoop(giro.centroConcluido))centrosParticipantes++;
         giros.push({giro:sim.giros,centroPosicaoId:giro.centroConcluido.id,
           titularCentroId:giro.centroConcluido.participanteId,
           centroEmpresa:centroDoLoop(giro.centroConcluido),
           eventos:eventos.map(v=>({vendaId:v.vendaId,
             ordem:v.ordem,destinoCofre:v.destinoCofre}))});
-        if(modoPessoas&&contemplados>=participantes)break;
       }
-      if(modoPessoas&&contemplados!==participantes)
-        throw falha('PARTICIPANTES_ELEGIVEIS_INSUFICIENTES');
+      // Um giro remove o centro atual mesmo quando pertence ao LOOP.
+      // A identidade altera somente o destino contabil, nunca o ritmo nem a fila.
       // Livro das seis fontes de cada ciclo na MESMA transacao atomica.
       // Se uma origem nao corresponde a pedido interno, todo lote reverte.
       this.livro.registrarCiclos({sim,transacaoAberta:true});
@@ -163,7 +152,8 @@ class CircuitBreakPonteV6DemoSQLite{
       const resposta={comando:tipo,
         girosLiberados:giros,modo:'PONTE_FICTICIA',
         resultado:this.avaliar(sim,compras),
-        participantesContemplados:contemplados,centrosDaEmpresa:giros.length-contemplados,
+        centrosDeParticipantes:centrosParticipantes,
+        centrosDourados:giros.length-centrosParticipantes,
         semPagamentoReal:true,semSaldoSacavel:true,repetido:false,
         revisaoControle:estado.revisao+1};
       b.prepare([
