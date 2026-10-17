@@ -2,7 +2,7 @@
 const express=require('express');
 const {criarAutorizacao}=require('./admin-catalogo-laboratorio');
 
-function criarRouterCircuitBreakV6Demo({segredo,controle,ponteControle=null}={}){
+function criarRouterCircuitBreakV6Demo({segredo,controle,ponteControle=null,programador=null}={}){
   const router=express.Router();
   router.use(criarAutorizacao({segredo}));
   router.use((_req,res,next)=>{res.set('Cache-Control','no-store');next();});
@@ -17,6 +17,38 @@ function criarRouterCircuitBreakV6Demo({segredo,controle,ponteControle=null}={})
       !Number.isSafeInteger(limite)||limite<1||limite>100)
       return res.status(400).json({erro:'LIMITE_INVALIDO'});
     return res.json({modo:'SOMENTE_LABORATORIO',historico:controle.historico({limite})});
+  });
+  router.get('/circuit-break-v6-demo/programacoes',(_req,res)=>{
+    if(!programador)return res.status(501).json({erro:'PROGRAMADOR_INDISPONIVEL'});
+    return res.json(programador.listar());
+  });
+  router.post('/circuit-break-v6-demo/programacoes',(req,res)=>{
+    if(!programador)return res.status(501).json({erro:'PROGRAMADOR_INDISPONIVEL'});
+    const p=req.body;
+    if(!req.is('application/json'))return res.status(415).json({erro:'JSON_OBRIGATORIO'});
+    if(!p||typeof p!=='object'||Array.isArray(p)||
+       Object.keys(p).sort().join(',')!=='agendaId,fimEm,inicioEm,modo,quantidade')
+      return res.status(400).json({erro:'CAMPOS_INVALIDOS'});
+    try{return res.status(201).json(programador.criar(p));}
+    catch(e){
+      if(e.codigo)return res.status([
+        'AGENDA_ID_REUTILIZADA','LIMITE_AGENDAMENTO_DIARIO'
+      ].includes(e.codigo)?409:400).json({erro:e.codigo});
+      throw e;
+    }
+  });
+  router.post('/circuit-break-v6-demo/programacoes/:id/cancelar',(req,res)=>{
+    if(!programador)return res.status(501).json({erro:'PROGRAMADOR_INDISPONIVEL'});
+    if(!req.is('application/json'))return res.status(415).json({erro:'JSON_OBRIGATORIO'});
+    if(!req.body||typeof req.body!=='object'||Array.isArray(req.body)||
+       Object.keys(req.body).length!==0)
+      return res.status(400).json({erro:'SEM_PARAMETROS'});
+    try{return res.json(programador.cancelar(req.params.id));}
+    catch(e){
+      if(e.codigo)return res.status(e.codigo==='AGENDA_INEXISTENTE_OU_FINALIZADA'?409:400)
+        .json({erro:e.codigo});
+      throw e;
+    }
   });
   router.get('/circuit-break-v6-demo/ponte/provisoes',(_req,res)=>{
     if(!ponteControle||!ponteControle.livro)
