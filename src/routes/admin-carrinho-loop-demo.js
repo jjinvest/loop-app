@@ -2,6 +2,7 @@
 // API ADMINISTRATIVA restrita ao laboratorio local, nunca no app publico.
 const express=require('express');
 const {criarAutorizacao}=require('./admin-catalogo-laboratorio');
+const {auditarEntregasEstornosCarrinhoDemo}=require('../domain/auditoria-entregas-estornos-carrinho-demo');
 function criarRouterCarrinhoLoopDemo({segredo,carrinhos}={}){
  if(!carrinhos||typeof carrinhos.criar!=='function')throw new TypeError('Carrinho laboratorio obrigatorio');
  const r=express.Router();
@@ -64,6 +65,14 @@ function criarRouterCarrinhoLoopDemo({segredo,carrinhos}={}){
    if(e.codigo==='CONFLITO_REVISAO')return res.status(409).json({erro:e.codigo});
    return next(e);
   }
+ });
+ // Endpoint estritamente de leitura: detecta estorno apos criacao de vaga,
+ // comissao e indicacao; nao exclui direitos e nao chama PSP/fornecedor.
+ r.get('/carrinho-loop-demo/auditoria-entregas-estornos',(req,res,next)=>{
+  if(Object.keys(req.query).length)
+   return res.status(400).json({erro:'SEM_PARAMETROS'});
+  try{return res.json(auditarEntregasEstornosCarrinhoDemo({carrinhos}));}
+  catch(e){return next(e);}
  });
  r.get('/carrinho-loop-demo/:pedidoId',(req,res,next)=>{
   try{
