@@ -44,12 +44,25 @@ function extrairVisaoDoMotor({ simulador, titularId, titulares=TITULARES_FICTICI
   const visao = criarVisaoEscritorioDemo({titularId,titulares,posicoes});
   if (!visao) return null;
   const informacoes=simulador.filas.informacoesParticipante(titularId);
+  // Projecao visual SOMENTE LEITURA, da mesma fonte do motor; nunca muda filas.
+  const visualizar=p=>p?{
+    id:p.id,titularId:p.participanteId,
+    minha:p.participanteId===titularId,
+    dourada:p.empresa===true||p.titularOperacional==='LOOP_EMPRESA',
+    pendente:p.statusAdesao==='PENDENTE'
+  }:null;
   return {
     ...visao,
     origem:'MOTOR_EXISTENTE_EM_CENARIO_FICTICIO',
     indicacoes: {
       status:'CONTAGEM_SIMULADA_PELO_MOTOR',
       quantidade:informacoes.quantidade
+    },
+    mapa:{
+      filaA:estado.filas.A.pessoas.map(visualizar),
+      filaB:estado.filas.B.pessoas.map(visualizar),
+      centro:visualizar(estado.tabuleiro.centro),
+      vagas:estado.tabuleiro.vagas.map(visualizar)
     },
     tabuleiro:{
       status:'CONSULTA_SIMULADA',
