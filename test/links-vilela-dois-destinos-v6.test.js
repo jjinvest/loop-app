@@ -16,6 +16,8 @@ test('dois enderecos Loja Vilela e Escritorio Vilela preservam mesmo indicador e
   nome:'Indicador Laboratorio Links',email:'indicador-vilela@exemplo.invalid',
   senha:'senha-ficticia-segura-2026'
  });
+ // O servidor monta previamente as tabelas da ponte/carrinho usadas para ativacao.
+ const app=criarAppAdminLaboratorio({repositorio:repo,segredo:'chave-laboratorio-vilela-2026'});
  const links=new IndicacoesLinksComissoesDemoSQLite({banco:repo.banco,contas});
  const dados=links.linkDaConta(indicador.contaId);
  assert.match(dados.linkLoja,/^\/loja-vilela\/convite\/lp-[a-f0-9]{20}\/meu-loop$/);
@@ -46,7 +48,6 @@ test('dois enderecos Loja Vilela e Escritorio Vilela preservam mesmo indicador e
  assert.equal(extrairLink(alterado.linkEscritorio).token,loja.token);
  assert.equal(links.resolver(dados.linkLoja).indicadorId,indicador.contaId);
  assert.equal(links.resolver(alterado.linkEscritorio).indicadorId,indicador.contaId);
- const app=criarAppAdminLaboratorio({repositorio:repo,segredo:'chave-laboratorio-vilela-2026'});
  const server=app.listen(0,'127.0.0.1');
  await once(server,'listening');
  t.after(()=>new Promise(resolve=>server.close(resolve)));
