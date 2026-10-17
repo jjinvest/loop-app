@@ -6,6 +6,7 @@
 // Nunca processa Pix, dinheiro real, PSP ou saldo sacavel.
 const {LOTES}=require('./circuit-break-v6-demo-sqlite');
 const {centroDoLoop}=require('./destino-financeiro-centro-loop');
+const {LivroProvisoesV6DemoSQLite}=require('./livro-provisoes-v6-demo-sqlite');
 
 function falha(codigo){const e=new Error(codigo);e.codigo=codigo;return e;}
 function diaLocal(iso){
@@ -20,6 +21,7 @@ class CircuitBreakPonteV6DemoSQLite{
     if(!banco||!ponte||!controle||ponte.banco!==banco||controle.banco!==banco)
       throw new TypeError('Circuit Break e ponte devem compartilhar banco de laboratorio');
     this.banco=banco;this.ponte=ponte;this.controle=controle;this.agora=agora;
+    this.livro=new LivroProvisoesV6DemoSQLite({banco,ponte});
   }
   comprasConfirmadas(){
     return this.banco.prepare([
@@ -55,7 +57,8 @@ class CircuitBreakPonteV6DemoSQLite{
       limiteDiario:controle.limiteDiario,girosHoje:controle.girosHoje,
       restantesHoje:controle.restantesHoje,revisaoControle:controle.revisao,
       compartilhadoComCenarioArtificial:true,
-      creditoRealDisponivelCentavos:0};
+      creditoRealDisponivelCentavos:0,
+      provisoes:this.livro.resumo()};
   }
   liberar({comandoId,revisaoEsperada,quantidade}={}){
     if(typeof comandoId!=='string'||!/^cb-[a-z0-9-]{5,70}$/.test(comandoId))
@@ -122,6 +125,9 @@ class CircuitBreakPonteV6DemoSQLite{
           eventos:eventos.map(v=>({vendaId:v.vendaId,
             ordem:v.ordem,destinoCofre:v.destinoCofre}))});
       }
+      // Livro das seis fontes de cada ciclo na MESMA transacao atomica.
+      // Se uma origem nao corresponde a pedido interno, todo lote reverte.
+      this.livro.registrarCiclos({sim,transacaoAberta:true});
       // Giro, controle de ritmo e auditoria gravados no MESMO COMMIT.
       b.prepare([
         'INSERT INTO admin_ponte_estado_demo(id,snapshot_json) VALUES(1,?)',
