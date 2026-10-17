@@ -85,9 +85,19 @@ function criarRouterCircuitBreakV6Demo({segredo,controle,ponteControle=null,prog
     responderPre(res,()=>ponteControle.preLancamento.resumo()));
   router.post('/circuit-break-v6-demo/ponte/prelancamento/configurar',(req,res)=>{
     if(!req.body||typeof req.body!=='object'||Array.isArray(req.body)||
-       Object.keys(req.body).join(',')!=='liquidoPorCompraCentavos')
+       Object.keys(req.body).join(',')!=='valorFixoLoopCentavos')
       return res.status(400).json({erro:'CAMPOS_INVALIDOS'});
     return responderPre(res,()=>ponteControle.preLancamento.habilitar(req.body));
+  });
+  router.post('/circuit-break-v6-demo/ponte/prelancamento/aporte-ficticio',(req,res)=>{
+    const body=req.body;
+    if(!body||typeof body!=='object'||Array.isArray(body)||
+       Object.keys(body).sort().join(',')!=='aporteId,pedidoId,valorLoopCentavos')
+      return res.status(400).json({erro:'CAMPOS_INVALIDOS'});
+    return responderPre(res,()=>({
+      registro:ponteControle.preLancamento.registrarAporteFicticio(body),
+      caixa:ponteControle.preLancamento.resumo()
+    }));
   });
   router.post('/circuit-break-v6-demo/ponte/prelancamento/sincronizar',(req,res)=>{
     if(!req.body||typeof req.body!=='object'||Array.isArray(req.body)||
