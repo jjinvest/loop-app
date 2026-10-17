@@ -34,3 +34,32 @@ main,.admin-grid > *,.duas-colunas > *,.painel,.painel form{min-width:0;max-widt
  .admin-grid,.duas-colunas{grid-template-columns:minmax(0,1fr)}
 }
 
+
+/* Navegacao central: somente a aba ativa aparece. Funciona sem tela duplicada. */
+#navAdminCentral[hidden],#areaVisaoAdmin[hidden],
+#areaPainel[hidden],#areaImportacao[hidden],#areaPedidosDemo[hidden]{
+ display:none!important
+}
+.abas-admin-central{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}
+.abas-admin-central button{background:#23354b;color:#edf6ff;border:1px solid #5a738c;
+ border-radius:12px;min-height:46px;padding:10px 15px;cursor:pointer}
+.abas-admin-central button[aria-selected="true"]{border-color:#ffdf54;
+ background:#3d4b25;color:#fff}
+.abas-admin-central button:focus-visible{outline:3px solid #ffdf54;outline-offset:3px}
+.resumo-admin-v6{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));
+ gap:12px;margin:16px 0}
+.resumo-admin-v6>div{border:1px solid #536e81;border-radius:12px;
+ padding:15px;background:#1a2a38;display:flex;flex-direction:column;gap:7px}
+.resumo-admin-v6 strong{font-size:1.15rem;color:#ffdf54;overflow-wrap:anywhere}
+.resumo-admin-v6 span{font-size:.85rem;color:#e3ebf6}
+.mapa-admin-central{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.mapa-admin-central a{padding:15px;border:1px solid #51697e;border-radius:12px;
+ display:flex;flex-direction:column;gap:7px;background:#192b3d;color:#fff;text-decoration:none}
+.mapa-admin-central a:hover,.mapa-admin-central a:focus-visible{border-color:#ffdf54}
+.mapa-admin-central a span{font-size:.84rem;color:#d1ddec;line-height:1.45}
+.calculadora-admin-v6{border:1px solid #63788c;border-radius:12px;
+ padding:14px;margin-bottom:16px;background:#172c3d}
+.calculadora-admin-v6 h3{margin:0 0 10px}
+@media(max-width:800px){.resumo-admin-v6{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:600px){.mapa-admin-central{grid-template-columns:1fr}}
+@media(max-width:400px){.resumo-admin-v6{grid-template-columns:1fr}}
