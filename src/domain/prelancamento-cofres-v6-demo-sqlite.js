@@ -4,12 +4,14 @@
 // Nao e saldo de PSP/banco; nao transfere e nunca cria saldo sacavel.
 // Registrar compras, dar START e autorizar giros sao 3 eventos separados.
 const {centroDoLoop}=require('./destino-financeiro-centro-loop');
+const {LivroProvisoesV6DemoSQLite}=require('./livro-provisoes-v6-demo-sqlite');
 function erro(c){const e=new Error(c);e.codigo=c;return e;}
 function valor(n){return Number.isSafeInteger(n)&&n>0&&n<=100000000;}
 class PreLancamentoCofresV6DemoSQLite{
  constructor({banco,ponte}={}){
   if(!banco||!ponte||banco!==ponte.banco)throw new TypeError('Ponte e SQLite obrigatorios');
   this.banco=banco;this.ponte=ponte;
+  this.livro=new LivroProvisoesV6DemoSQLite({banco,ponte});
   banco.exec([
    'CREATE TABLE IF NOT EXISTS loop_v6_pre_config (',
    'id INTEGER PRIMARY KEY CHECK(id=1),',
@@ -140,11 +142,8 @@ class PreLancamentoCofresV6DemoSQLite{
        valorSaida+=fonte.valor;
       }
     }else{
-      const doc=this.ponte._restaurar();
       // Obrigacao individual registrada pelo livro de seis fontes.
-      const livro=require('./livro-provisoes-v6-demo-sqlite');
-      const obj=new livro.LivroProvisoesV6DemoSQLite({banco:b,ponte:this.ponte});
-      const projetado=obj._documentar(ciclo);
+      const projetado=this.livro._documentar(ciclo);
       valorSaida=projetado.previstoCentroCentavos;
     }
     if(!valor(valorSaida))throw erro('OBRIGACAO_INVALIDA');
