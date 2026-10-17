@@ -18,10 +18,10 @@
     <a class="voltar-loja" href="/admin">Voltar ao laboratório</a>
   </header>
   <main>
-    <section class="painel" aria-labelledby="tituloEscritorio">
-      <h2 id="tituloEscritorio">Minha participação — exemplo fictício</h2>
-      <p class="aviso-demo">Somente demonstração em computador local. Não existem clientes reais, CPF, compras, dinheiro, saques ou contemplações efetivas nesta tela.</p>
-      <p class="ajuda">Esta página mostra o desenho do escritório do participante, sem alterar o motor do tabuleiro, a vitrine ou os pedidos.</p>
+    <section class="painel" id="acessoEscritorioDemo" aria-labelledby="tituloEscritorio">
+      <h2 id="tituloEscritorio">Acesso à prévia do Escritório LOOP</h2>
+      <p class="aviso-demo">Laboratório administrativo local, sem clientes nem dinheiro real.</p>
+      <p class="ajuda">A identidade visual e a estrutura do projeto são preservadas. A casinha mostra publicações administradas; o tabuleiro está na segunda aba.</p>
       <div class="campo">
         <label for="tokenEscritorioDemo">Chave temporária do laboratório</label>
         <input type="password" id="tokenEscritorioDemo" autocomplete="off" spellcheck="false" placeholder="Chave configurada no servidor">
@@ -44,7 +44,7 @@
           <button type="button" id="botaoContaEscritorio" role="tab" data-aba-escritorio="conta"
             aria-selected="false" aria-controls="abaContaEscritorio"><span aria-hidden="true">▤</span> Conta e posições</button>
         </nav>
-        <p class="ajuda">As outras áreas continuarão sendo ajustadas uma por vez, sem duplicar abas.</p>
+        <button type="button" id="sairMenuEscritorioDemo" class="sair-menu-escritorio">Encerrar prévia</button>
       </aside>
       <div class="conteudo-central-escritorio">
         <section id="abaHomeEscritorio" role="tabpanel" aria-labelledby="botaoHomeEscritorio" class="painel painel-home-escritorio">
