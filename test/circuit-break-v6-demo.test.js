@@ -80,7 +80,7 @@ test('circuit break: avanco por ondas acrescenta compradores sem giros inventado
     const c=new CircuitBreakV6DemoSQLite({banco});
     const cmd=(tipo,valor)=>{
       const rev=c.resumo().revisao;
-      return c.executar({tipo,valor,comandoId:'cb-wave-'+rev+'-'+tipo.toLowerCase(),
+      return c.executar({tipo,valor,comandoId:'cb-wave-'+rev+'-'+tipo.toLowerCase().replaceAll('_','-'),
         revisaoEsperada:rev});
     };
     cmd('GERAR_30_COMPRAS');
