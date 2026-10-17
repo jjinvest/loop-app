@@ -41,7 +41,7 @@ class AsaasSandboxLojaV6{
   const data=await this._requisitar('POST','/payments',{
    customer:clienteAsaasId,billingType:'PIX',value:valorCentavos/100,
    dueDate:vencimento,externalReference:'LOOPLAB-'+pedidoId,
-   description:'Loja Vilela - cobranca EXCLUSIVAMENTE SANDBOX'
+   description:'AKITEMM - cobranca EXCLUSIVAMENTE SANDBOX'
   });
   if(!data||!ID.test(data.id||'')||data.billingType!=='PIX'||
      Math.round(Number(data.value)*100)!==valorCentavos||
