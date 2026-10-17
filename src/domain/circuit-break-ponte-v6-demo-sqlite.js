@@ -27,6 +27,7 @@ class CircuitBreakPonteV6DemoSQLite{
     this.preLancamento=new PreLancamentoCofresV6DemoSQLite({banco,ponte});
     this.conciliacao=new ConciliacaoCofresV6DemoSQLite({banco,
       preLancamento:this.preLancamento,livro:this.livro});
+    this.preLancamento.conciliacao=this.conciliacao;
     // Reconstrucao idempotente de giros de laboratorio anteriores ao livro.
     // Falha fechada se o snapshot divergir das compras documentadas.
     this.livro.registrarCiclos({sim:this.ponte._restaurar()});
