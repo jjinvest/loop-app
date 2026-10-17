@@ -123,7 +123,7 @@ test('loja individual: cliente prepara pedido sem admin; so admin ficticio confi
  assert.match(arquivoJS,/loja\/pedidos/);
  assert.doesNotMatch(arquivoJS,/innerHTML|localStorage|sessionStorage/);
  const participanteHTML=await(await fetch(base+'/laboratorio/participante')).text();
- assert.match(participanteHTML,/href="\/laboratorio\/loja"/);
+ assert.match(participanteHTML,/href="\/loja-vilela"/);
 });
 test('comprador nao acessa itens fora do catalogo e valores de pedidos sao congelados',async t=>{
  const repo=new RepositorioCatalogoSQLite({caminho:':memory:'});t.after(()=>repo.fechar());
