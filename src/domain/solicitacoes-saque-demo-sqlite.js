@@ -7,6 +7,18 @@ const {simularElegibilidadeSaque}=require('./indicacoes-links-comissoes-demo-sql
 const ID=/^saque-[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$/;
 const MINIMO_SAQUE_CENTAVOS=2500;
 const TAXA_SAQUE_PERCENTUAL=3;
+const PRAZO_SAQUE_CALENDARIO_MS=24*60*60*1000;
+function prazoDaSolicitacao(registradoEm,agora){
+  const momento=Date.parse(registradoEm),atual=Date.parse(agora);
+  if(!Number.isFinite(momento)||!Number.isFinite(atual))
+    throw new Error('Relogio de saque invalido');
+  return {prazoMaximoAnaliseEm:new Date(momento+PRAZO_SAQUE_CALENDARIO_MS).toISOString(),
+    prazoHorasCorridas:24,consideraSabadosDomingosFeriados:true,
+    prazoUltrapassadoNoTeste:atual>momento+PRAZO_SAQUE_CALENDARIO_MS,
+    permiteLiberacaoAntecipadaSomenteAposConciliacao:true,
+    liberacaoRealHabilitada:false};
+}
+
 function erro(codigo){const e=new Error(codigo);e.codigo=codigo;return e;}
 const SELECAO=`
  SELECT solicitacao_id AS solicitacaoId,conta_id AS contaId,
@@ -70,8 +82,11 @@ class SolicitacoesSaqueDemoSQLite{
    motivoBloqueioParticipacaoLucro:'SEM_LIVRO_DE_PARTICIPACAO_LUCRO',
    solicitacoesReaisHabilitadas:false,
    pagamentosReais:false,transferenciasExecutadas:false,
+   politicaPrazoSaque:{horasCorridas:24,diasCorridos:true,
+    anteciparSeValidado:true,transferenciaRealAindaNaoImplementada:true},
    historico:registros.map(({contaId:_contaId,...r})=>({
-    ...r,status:'REGISTRADA_APENAS_SIMULACAO',transferenciaExecutada:false
+    ...r,...prazoDaSolicitacao(r.registradoEm,this.relogio()),
+    status:'REGISTRADA_APENAS_SIMULACAO',transferenciaExecutada:false
    }))
   };
  }
@@ -90,7 +105,8 @@ class SolicitacoesSaqueDemoSQLite{
      throw erro('CONFLITO_IDEMPOTENCIA');
     this.banco.exec('COMMIT');
     const {contaId:_id,...seguro}=anterior;
-    return {...seguro,repetida:true,transferenciaExecutada:false,
+    return {...seguro,...prazoDaSolicitacao(anterior.registradoEm,this.relogio()),
+     repetida:true,transferenciaExecutada:false,
      status:'REGISTRADA_APENAS_SIMULACAO'};
    }
    if(tipo==='PARTICIPACAO_LUCRO')
@@ -119,9 +135,11 @@ class SolicitacoesSaqueDemoSQLite{
     taxaSaqueCentavos:calculo.taxaSaqueCentavos,
     valorLiquidoCentavos:calculo.valorLiquidoCentavos,
     origemExclusiva:calculo.origemExclusiva,registradoEm,
+    ...prazoDaSolicitacao(registradoEm,this.relogio()),
     repetida:false,status:'REGISTRADA_APENAS_SIMULACAO',
     transferenciaExecutada:false};
   }catch(e){this.banco.exec('ROLLBACK');throw e;}
  }
 }
-module.exports={SolicitacoesSaqueDemoSQLite,MINIMO_SAQUE_CENTAVOS,TAXA_SAQUE_PERCENTUAL};
+module.exports={SolicitacoesSaqueDemoSQLite,MINIMO_SAQUE_CENTAVOS,TAXA_SAQUE_PERCENTUAL,
+ PRAZO_SAQUE_CALENDARIO_MS,prazoDaSolicitacao};
