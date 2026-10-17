@@ -25,6 +25,11 @@
   e('statusLinkIndicacaoParticipante').textContent='';
   e('avisoLinkParticipante').textContent='';
   e('estadoLivroProvisoesV6').textContent='';
+  e('resumoRetornoCentroV6').textContent='Nenhuma solicitação simulada.';
+  e('historicoRetornoCentroV6').replaceChildren();
+  e('mensagemSaqueCentroV6').textContent='';
+  e('valorSaqueCentroV6').value='';
+  e('solicitarSaqueCentroV6').disabled=true;
   e('bonusSaldoParticipante').textContent='R$ 0,00';
   e('bonusQuantidadeParticipante').textContent='0';
   e('bonusPercentualParticipante').textContent='10%';
@@ -270,6 +275,24 @@
    ' · Três parcelas previstas de '+dinheiro(c.parcelas[0].valorPrevistoCentavos)+
    ' · Total '+dinheiro(c.valorPrevistoCentavos)+
    ' · NÃO SACÁVEL / aguardando conciliação.');
+  const retorno=visao.simulacaoRetornoSaqueCentroV6;
+  e('resumoRetornoCentroV6').textContent=retorno?
+   'Saldo de referência FICTÍCIA liberada para novo pedido de teste: '+
+   dinheiro(retorno.referenciaParaNovoPedidoFicticioCentavos)+
+   ' | Reservado em simulações: '+
+   dinheiro(retorno.reservadoEmPedidosDeTesteCentavos)+
+   ' | Devolução confirmada fictícia: '+
+   dinheiro(retorno.totalHistoricoRetornadoCentavos)+
+   ' | Saldo real disponível: R$ 0,00.' :
+   'Ensaio de retorno bancário não configurado.';
+  e('solicitarSaqueCentroV6').disabled=!retorno||
+   retorno.referenciaParaNovoPedidoFicticioCentavos<=0;
+  lista('historicoRetornoCentroV6',retorno?.historico||[],r=>
+   'Pedido '+r.solicitacaoId+' · '+dinheiro(r.valorSimuladoCentavos)+
+   ' · '+r.status+
+   (r.motivoDeFalha?' · '+r.motivoDeFalha:'')+
+   (r.podeSolicitarNovamente?' · referência liberada para novo pedido fictício':'')+
+   ' · Não houve movimentação financeira real.');
 
   const link=visao.linkIndicacao;
   e('enderecoLinkParticipante').value=location.origin+(link.linkEscritorio||link.link);
@@ -389,6 +412,33 @@
    await chamada('entrar',{nome:e('nomeParticipante').value,senha});
    await atualizar();
   }catch(erro){encerrarTela();msg.textContent=erro.message;}
+  finally{botao.disabled=false;}
+ });
+ e('formSaqueCentroV6').addEventListener('submit',async ev=>{
+  ev.preventDefault();
+  const botao=e('solicitarSaqueCentroV6');
+  if(botao.disabled)return;
+  const valor=e('valorSaqueCentroV6').value;
+  if(!/^\d+(?:\.\d{1,2})?$/.test(valor)){
+    e('mensagemSaqueCentroV6').textContent='Digite um valor válido com até dois centavos.';
+    return;
+  }
+  const centavos=Math.round(Number(valor)*100);
+  if(!Number.isSafeInteger(centavos)||centavos<1){
+    e('mensagemSaqueCentroV6').textContent='Valor inválido.';
+    return;
+  }
+  botao.disabled=true;
+  try{
+   const registro=await chamada('saque-centro-v6-demo',{
+    solicitacaoId:'saque-centro-'+crypto.randomUUID(),
+    valorCentavos:centavos
+   });
+   e('valorSaqueCentroV6').value='';
+   await atualizar();
+   e('mensagemSaqueCentroV6').textContent='Pedido '+registro.solicitacaoId+
+    ' apenas FICTÍCIO. Não existe transferência para banco neste laboratório.';
+  }catch(err){e('mensagemSaqueCentroV6').textContent=err.message;}
   finally{botao.disabled=false;}
  });
  e('formSaqueTesteParticipante').addEventListener('submit',async ev=>{
