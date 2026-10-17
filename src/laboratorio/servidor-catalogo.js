@@ -168,6 +168,11 @@ function criarAppAdminLaboratorio({ repositorio, segredo, webhookDemo } = {}) {
   const razaoPersistente = repositorio instanceof RepositorioCatalogoSQLite
     ? new RazaoFinanceiroDemoSQLite({ banco:repositorio.banco })
     : null;
+  const circuitoDemo = repositorio instanceof RepositorioCatalogoSQLite
+    ? new CircuitBreakV6DemoSQLite({banco:repositorio.banco}) : null;
+  app.use('/api/admin',criarRouterCircuitBreakV6Demo({
+    segredo,controle:circuitoDemo
+  }));
   app.use('/api/admin', criarRouterFinanceiroAdminDemo({
     segredo, configuracao:configuracaoCofres, razaoPersistente,
     configuracaoValorLoop:repositorio instanceof RepositorioCatalogoSQLite?
