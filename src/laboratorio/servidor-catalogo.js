@@ -237,6 +237,13 @@ function criarAppAdminLaboratorio({ repositorio, segredo, webhookDemo } = {}) {
   app.get('/admin/financeiro-demo.css', somenteLocal, (req, res) => {
     res.type('text/css').sendFile(path.join(__dirname,'financeiro-admin-demo.css'));
   });
+  // Apelidos de rota: duas portas identificadas, sem dominio externo publicado.
+  app.get('/loja-vilela', somenteLocal, (_req, res) => {
+    res.sendFile(path.join(__dirname,'loja-cliente-demo.html'));
+  });
+  app.get('/escritorio-vilela', somenteLocal, (_req, res) => {
+    res.sendFile(path.join(__dirname,'participante-demo.html'));
+  });
   app.get('/laboratorio/loja', somenteLocal, (req, res) => {
     res.sendFile(path.join(__dirname,'loja-cliente-demo.html'));
   });
@@ -249,7 +256,11 @@ function criarAppAdminLaboratorio({ repositorio, segredo, webhookDemo } = {}) {
   app.get('/laboratorio/cadastro',somenteLocal,(_req,res)=>{
     res.sendFile(path.join(__dirname,'convite-cliente-demo.html'));
   });
-  app.get(['/laboratorio/convite/:token','/laboratorio/convite/:token/:apelido'],somenteLocal,(req,res)=>{
+  app.get([
+    '/laboratorio/convite/:token','/laboratorio/convite/:token/:apelido',
+    '/loja-vilela/convite/:token','/loja-vilela/convite/:token/:apelido',
+    '/escritorio-vilela/convite/:token','/escritorio-vilela/convite/:token/:apelido'
+  ],somenteLocal,(req,res)=>{
     const token=req.params.token;
     if(typeof token!=='string'||token.length!==23||!/^lp-[a-f0-9]+/.test(token))
       return res.status(404).end();
