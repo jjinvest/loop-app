@@ -72,6 +72,23 @@
       </section>
       <section class="painel"><h2>Giros dos clientes cadastrados — laboratório</h2><p class="aviso-demo">Somente pedidos fictícios confirmados na ponte. Compartilha pausa e limite diário, sem usar os compradores artificiais ou liberar dinheiro.</p><p id="resumoPonteCBV6">Aguardando consulta.</p><p id="provisoesPonteCBV6" aria-live="polite">Livro de previsões ainda não consultado.</p><button type="button" id="atualizarPonteCBV6">Atualizar a ponte</button><form id="formLotePonteCBV6"><label for="quantidadeLotePonteCBV6">Lote da ponte</label><select id="quantidadeLotePonteCBV6"><option value="1">1 giro</option><option value="3">3 giros</option><option value="4">4 giros</option><option value="5">5 giros</option><option value="10">10 giros</option></select><button id="liberarPonteCBV6" type="submit">Liberar giros das compras fictícias cadastradas</button></form><p id="resultadoPonteCBV6" role="status" aria-live="polite"></p><p class="ajuda">Seis pedidos distintos por giro, fila com reposição e extrato somente previsto. Nenhum saldo sacável.</p></section>
       <section class="painel">
+        <h2>Programação automática por horário — somente laboratório</h2>
+        <p class="aviso-demo">Você escolhe QUANTOS GIROS tentar e em quais horários. Não é ordem para pagar pessoas. Cada giro requer 6 pedidos diferentes; pausas, limites, falta de compras e indisponibilidade bloqueiam o giro. A empresa no centro não conta como cliente contemplado. Nenhum PIX é emitido.</p>
+        <form id="formAgendaCBV6">
+          <div class="campo"><label for="dataAgendaCBV6">Dia da programação</label><input id="dataAgendaCBV6" type="date" required></div>
+          <div class="campo"><label for="modoAgendaCBV6">Modo</label><select id="modoAgendaCBV6"><option value="DISTRIBUIDO">Distribuir ao longo do período</option><option value="PONTUAL">Começar em um horário (um giro por minuto, no máximo)</option></select></div>
+          <div class="campo"><label for="quantidadeAgendaCBV6">Quantidade máxima de giros programados</label><input id="quantidadeAgendaCBV6" type="number" min="1" max="300" step="1" value="20" required></div>
+          <div class="campo"><label for="inicioAgendaCBV6">Começar às</label><input id="inicioAgendaCBV6" type="time" value="09:00" required></div>
+          <div class="campo"><label for="fimAgendaCBV6">Encerrar às</label><input id="fimAgendaCBV6" type="time" value="18:00" required></div>
+          <div class="acoes-admin"><button type="button" id="programarAgoraCBV6" class="secundario">Preencher: agora</button><button type="button" id="programarUmaHoraCBV6" class="secundario">Preencher: daqui a 1 hora</button></div>
+          <button type="submit" id="salvarAgendaCBV6">Salvar programação automática fictícia</button>
+        </form>
+        <p class="ajuda">Para programar 20 giros, configure primeiro o limite diário para pelo menos 20. A automação só atua enquanto o servidor local de laboratório estiver em execução e o Circuit Break estiver aberto. Sem compensações automáticas em massa após o fim do horário.</p>
+        <p id="resultadoAgendaCBV6" role="status" aria-live="polite"></p>
+        <button type="button" id="atualizarAgendaCBV6" class="secundario">Atualizar programações</button>
+        <ol id="programacoesCBV6" aria-live="polite"></ol>
+      </section>
+      <section class="painel">
         <h2>Histórico de comandos (imutável)</h2>
         <button type="button" id="historicoAtualizarCBV6" class="secundario">Atualizar histórico</button>
         <ol id="historicoCBV6" aria-live="polite" class="financeiro-historico"></ol>
