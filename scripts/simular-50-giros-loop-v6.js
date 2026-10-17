@@ -176,6 +176,59 @@ function executarCenario50Giros(){
   assert.ok(v>=1&&v<=4);
   convidadosPorIndicador[v]++;
  }
+ // Balanco de DESTINACOES do motor, nao contabilidade bancária:
+ // cada evento de seis vendas traz referencia de R$250, independentemente
+ // do preco efetivo do produto, fornecedor, impostos e eventuais estornos.
+ const referenciaCentavos=25000;
+ const destinosFinanceirosReferenciais={
+  LOOP_CENTRO:0,LOOP_DOURADAS:0,LOOP_ESQUERDA:0,LOOP_DIREITA:0
+ };
+ let centrosDeClientes=0,centrosDoLoop=0;
+ for(const ciclo of sim.tabuleiro.ciclosConcluidos){
+  assert.equal(ciclo.vendas.length,6);
+  if(ciclo.centro.empresa===true||ciclo.centro.titularOperacional==='LOOP_EMPRESA'){
+   centrosDoLoop++;
+  }else centrosDeClientes++;
+  for(const v of ciclo.vendas){
+   assert.ok(Object.hasOwn(destinosFinanceirosReferenciais,v.destinoCofre));
+   destinosFinanceirosReferenciais[v.destinoCofre]+=referenciaCentavos;
+  }
+ }
+ const totalAlocadoReferencialCentavos=Object.values(
+  destinosFinanceirosReferenciais).reduce((a,b)=>a+b,0);
+ assert.equal(totalAlocadoReferencialCentavos,GIROS*EVENTOS_POR_GIRO*referenciaCentavos);
+ const comissoesHipoteticas10PorcentoCentavos=indicar.total*2500;
+ // Comparacao de sustentabilidade comercial: nao altera os cofres
+ // e explicita que parcela LOOP de R$250 + custo de fornecedor
+ // nao cabe em venda a R$250.
+ const custoFornecedorExemploCentavos=30000;
+ const precoProdutoExemploCentavos=60000;
+ const margemBrutaExemploPorVendaCentavos=
+  precoProdutoExemploCentavos-custoFornecedorExemploCentavos-referenciaCentavos;
+ const financeiro={
+  modo:'DISTRIBUICAO_REFERENCIAL_NAO_CAIXA',
+  referenciaPorEventoCentavos:referenciaCentavos,
+  eventosCiclo:GIROS*EVENTOS_POR_GIRO,
+  distribuicaoReferencialCentavos:destinosFinanceirosReferenciais,
+  totalAlocadoReferencialCentavos,
+  centrosDeClientes,centrosDoLoop,
+  comprasIniciaisNaoIncluidasNosEventosDeCiclo:INICIAIS,
+  vendaBrutaHipoteticaSeCadaUmaDas400ComprasFosse250Centavos:
+   (INICIAIS+GIROS*EVENTOS_POR_GIRO)*referenciaCentavos,
+  novasVendasHipoteticasSePrecoFor250Centavos:
+   GIROS*EVENTOS_POR_GIRO*referenciaCentavos,
+  comissoesHipoteticas10PorcentoCentavos,
+  comissoesEfetivamentePagasCentavos:0,
+  precoProdutoExemploCentavos,custoFornecedorExemploCentavos,
+  margemBrutaExemploPorVendaCentavos,
+  margemBrutaComercialExemploTotalCentavos:
+   margemBrutaExemploPorVendaCentavos*GIROS*EVENTOS_POR_GIRO,
+  margemComercialExemploAposComissaoHipoteticaCentavos:
+   margemBrutaExemploPorVendaCentavos*GIROS*EVENTOS_POR_GIRO-
+   comissoesHipoteticas10PorcentoCentavos,
+  pagamentosReaisCentavos:0,saldoBancarioVerificado:false,
+  lucrosReaisComprovados:false,obrigacoesTributariasCalculadas:false
+ };
  const relatorio={
   tipo:'SIMULACAO_DE_FILAS_E_GIROS_LOO P_V6'.replace(' ',''),
   hipotese:'100 pessoas no inicio e 6 novos compradores por giro; uma unica posicao por compra',
@@ -200,6 +253,7 @@ function executarCenario50Giros(){
   },
   pontosDeControle:evolucao.filter(x=>[1,5,10,15,20,25,30,35,40,45,50].includes(x.giro)),
   historico:evolucao,
+  financeiro,
   dinheiroReal:false,pagamentosReais:0,
   saquesReais:0,contemplacoesFinanceirasReais:0,
   promessaDeRecebimento:false
