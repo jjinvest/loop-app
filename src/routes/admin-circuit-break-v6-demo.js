@@ -3,7 +3,7 @@ const express=require('express');
 const {criarAutorizacao}=require('./admin-catalogo-laboratorio');
 const {projetarCaixaPrelancamentoV6}=require('../domain/projetar-caixa-prelancamento-v6');
 
-function criarRouterCircuitBreakV6Demo({segredo,controle,ponteControle=null,programador=null}={}){
+function criarRouterCircuitBreakV6Demo({segredo,controle,ponteControle=null,programador=null,retornoSaqueCentroDemo=null}={}){
   const router=express.Router();
   router.use(criarAutorizacao({segredo}));
   router.use((_req,res,next)=>{res.set('Cache-Control','no-store');next();});
@@ -62,6 +62,24 @@ function criarRouterCircuitBreakV6Demo({segredo,controle,ponteControle=null,prog
       if(e.codigo)return res.status(e.codigo==='AGENDA_INEXISTENTE_OU_FINALIZADA'?409:400)
         .json({erro:e.codigo});
       throw e;
+    }
+  });
+  // Somente administrador pode injetar resposta SIMULADA de banco.
+  // O participante nunca confirma o retorno ou o sucesso de seu proprio Pix.
+  router.post('/circuit-break-v6-demo/saque-centro-v6-demo/eventos',(req,res)=>{
+    if(!retornoSaqueCentroDemo)
+      return res.status(501).json({erro:'SAQUE_CENTRO_DEMO_INDISPONIVEL'});
+    if(!req.is('application/json'))return res.status(415).json({erro:'JSON_OBRIGATORIO'});
+    const body=req.body;
+    if(!body||typeof body!=='object'||Array.isArray(body)||
+       !['eventoId,solicitacaoId,tipo',
+         'eventoId,motivo,solicitacaoId,tipo'].includes(Object.keys(body).sort().join(',')))
+      return res.status(400).json({erro:'CAMPOS_INVALIDOS'});
+    try{return res.json(retornoSaqueCentroDemo.evento(body));}
+    catch(e){
+      if(!e.codigo)throw e;
+      return res.status(['CONFLITO_IDEMPOTENCIA','TRANSICAO_INVALIDA',
+        'PEDIDO_NAO_ENCONTRADO'].includes(e.codigo)?409:400).json({erro:e.codigo});
     }
   });
   router.get('/circuit-break-v6-demo/ponte/provisoes',(_req,res)=>{
