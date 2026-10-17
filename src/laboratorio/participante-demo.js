@@ -311,7 +311,13 @@
     lista('historicoSaqueTesteParticipante',extrato.historico,r=>
      'Solicitação '+r.solicitacaoId+' · Bruto '+dinheiro(r.valorSolicitadoCentavos)+
      ' · Taxa 3% '+dinheiro(r.taxaSaqueCentavos)+
-     ' · Líquido fictício '+dinheiro(r.valorLiquidoCentavos)+' · NÃO transferido');
+     ' · Líquido fictício '+dinheiro(r.valorLiquidoCentavos)+
+     ' · Revisão até '+new Date(r.prazoMaximoAnaliseEm).toLocaleString('pt-BR',{
+       timeZone:'America/Sao_Paulo',day:'2-digit',month:'2-digit',year:'numeric',
+       hour:'2-digit',minute:'2-digit'})+
+     ' (24 horas corridas, incluindo sábados e domingos)'+
+     (r.prazoUltrapassadoNoTeste?' · PRAZO DE ANÁLISE ULTRAPASSADO':'')+
+     ' · NÃO transferido');
    }
    const vagaDesistente=visao.posicoes.find(p=>p.local==='VAGA_6'&&p.statusAdesao!=='PENDENTE');
    e('secaoDesistenciaVaga6Participante').hidden=!vagaDesistente;
