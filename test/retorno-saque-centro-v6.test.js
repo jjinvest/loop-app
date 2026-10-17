@@ -41,10 +41,10 @@ test('saque central errado somente restaura referencia apos comprovacao ficticia
   valorLoopCentavos:25000
  });
  cb.preLancamento.iniciar();
- controle.executar({tipo:'ABRIR',comandoId:'abrir-catraca-saquecentro-test-001',
+ controle.executar({tipo:'ABRIR',comandoId:'cb-abrir-catraca-saquecentro-test-001',
   revisaoEsperada:0});
  const primeiro=cb.liberar({quantidade:1,
-  comandoId:'giro-saquecentro-teste-001',revisaoEsperada:1});
+  comandoId:'cb-giro-saquecentro-teste-001',revisaoEsperada:1});
  assert.equal(primeiro.centrosDeParticipantes,1);
  const titular=pessoas[0].contaId;
  assert.equal(cb.livro.extrato(titular).totalPrevistoCentavos,75000);
