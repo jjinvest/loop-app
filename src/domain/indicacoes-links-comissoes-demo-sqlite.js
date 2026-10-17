@@ -7,6 +7,7 @@ const {ConfiguracaoTaxaIndicacaoDemoSQLite}=require('./configuracao-taxa-indicac
 const {VERSAO_TERMOS_DEMO}=require('./adesoes-posicoes-demo-sqlite');
 const TOKEN=/^lp-[a-f0-9]{20}$/;
 const PATH=/^\/laboratorio\/convite\/(lp-[a-f0-9]{20})(?:\/([a-z0-9][a-z0-9-]{1,30}[a-z0-9]))?\/?$/;
+const PATH_VILELA=/^\/(escritorio-vilela|loja-vilela)\/convite\/(lp-[a-f0-9]{20})(?:\/([a-z0-9][a-z0-9-]{1,30}[a-z0-9]))?\/?$/;
 function falha(codigo){const e=new Error(codigo);e.codigo=codigo;return e;}
 function apelidoSeguro(s){
  if(typeof s!=='string'||s.length>80)throw falha('APELIDO_INVALIDO');
@@ -23,7 +24,9 @@ function caminhoLink(token,apelido){
 // Dois destinos de divulgacao, sempre com o MESMO identificador de indicador.
 function caminhoLinkDestino(token,apelido,destino){
  if(!['escritorio','loja'].includes(destino))throw falha('DESTINO_LINK_INVALIDO');
- return caminhoLink(token,apelido)+'?destino='+destino;
+ if(!TOKEN.test(token))throw falha('LINK_INVALIDO');
+ const nome=destino==='loja'?'loja-vilela':'escritorio-vilela';
+ return '/'+nome+'/convite/'+token+'/'+(apelido||'meu-loop');
 }
 function extrairLink(url){
  if(typeof url!=='string'||url.length>500)throw falha('LINK_INVALIDO');
@@ -36,9 +39,15 @@ function extrairLink(url){
  const destino=u.searchParams.get('destino')||'escritorio';
  if(!['escritorio','loja'].includes(destino)||u.searchParams.has('destino')&&
   !u.searchParams.get('destino'))throw falha('LINK_INVALIDO');
- const m=PATH.exec(u.pathname);
- if(!m)throw falha('LINK_INVALIDO');
- return {token:m[1],apelido:m[2]||null,destino};
+ const antigo=PATH.exec(u.pathname);
+ const branded=PATH_VILELA.exec(u.pathname);
+ if(!antigo&&!branded)throw falha('LINK_INVALIDO');
+ if(branded){
+  const destinoDoCaminho=branded[1]==='loja-vilela'?'loja':'escritorio';
+  if(campos.length>0)throw falha('LINK_INVALIDO');
+  return {token:branded[2],apelido:branded[3]||null,destino:destinoDoCaminho};
+ }
+ return {token:antigo[1],apelido:antigo[2]||null,destino};
 }
 class IndicacoesLinksComissoesDemoSQLite{
  constructor({banco,contas}={}){
