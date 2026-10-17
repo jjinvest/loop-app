@@ -39,6 +39,9 @@ test('prelancamento separa venda da loja e aporte fixo, so libera depois do STAR
  const ativo=cb.preLancamento.habilitar({valorFixoLoopCentavos:25000});
  assert.equal(ativo.fase,'ARRECADACAO');
  assert.equal(ativo.comprasConferidas,0);
+ assert.equal(cb.conciliacao.conferir().integridadeDemonstrativa,
+  'CONFERIDA_APENAS_EM_SIMULACAO');
+ assert.equal(cb.conciliacao.conferir().quantidadeDivergencias,0);
  assert.equal(ativo.centroRestanteSimuladoCentavos,0);
  assert.equal(ativo.totalHipoteticoCentavos,0);
  assert.equal(cb.preLancamento.sincronizar().comprasNovas,0);
@@ -65,6 +68,9 @@ test('prelancamento separa venda da loja e aporte fixo, so libera depois do STAR
  assert.equal(caixa.reservaRestanteSimuladoCentavos,50000);
  assert.equal(caixa.girosRegistrados,0);
  assert.equal(caixa.valorParaSaqueCentavos,0);
+ assert.equal(cb.conciliacao.conferir().quantidadeAportesSeparados,12);
+ assert.equal(cb.conciliacao.conferir().entradasAportesSimuladosCentavos,300000);
+ assert.equal(cb.conciliacao.conferir().quantidadeDivergencias,0);
  assert.equal(caixa.douradasAcumuladoSimuladoCentavos,0);
  assert.deepEqual(caixa.cofresDoLoop,
   ['LOOP_CENTRO','LOOP_ESQUERDA','LOOP_DIREITA','LOOP_DOURADAS']);
@@ -95,6 +101,14 @@ test('prelancamento separa venda da loja e aporte fixo, so libera depois do STAR
  assert.equal(cb.preLancamento.resumo().escritoriosPrevistosSimuladoCentavos,75000);
  assert.equal(cb.preLancamento.resumo().douradasAcumuladoSimuladoCentavos,75000);
  assert.equal(cb.preLancamento.resumo().totalDemonstrativoConservadoCentavos,300000);
+ const conciliado=cb.conciliacao.conferir();
+ assert.equal(conciliado.integridadeDemonstrativa,'CONFERIDA_APENAS_EM_SIMULACAO');
+ assert.equal(conciliado.quantidadeDivergencias,0);
+ assert.equal(conciliado.somaDestinacoesConservadasCentavos,300000);
+ assert.equal(conciliado.cofreDouradasSimuladoCentavos,75000);
+ assert.equal(conciliado.valoresApenasPrevistosNosEscritoriosCentavos,75000);
+ assert.equal(conciliado.dinheiroBancarioComprovadoCentavos,0);
+ assert.equal(conciliado.disponivelParaSaqueCentavos,0);
  assert.equal(cb.preLancamento.resumo().saldoRealCentavos,0);
  assert.equal(cb.preLancamento.resumo().valorParaSaqueCentavos,0);
  assert.equal(cb.preLancamento.sincronizar().comprasNovas,0);
