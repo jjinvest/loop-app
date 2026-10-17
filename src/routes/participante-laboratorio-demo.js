@@ -25,7 +25,7 @@ function setCookie(res,token,maxAge){
  res.append('Set-Cookie',COOKIE+'='+token+'; HttpOnly; SameSite=Strict; Path='+CAMINHO+
   '; Max-Age='+maxAge);
 }
-function criarRouterParticipanteDemo({contas,ponte,sessoes=null,adesoes=null,carrinhos=null,saques=null,obterLivroProvisoesV6=null}={}){
+function criarRouterParticipanteDemo({contas,ponte,sessoes=null,adesoes=null,carrinhos=null,saques=null,obterLivroProvisoesV6=null,obterRetornoSaqueCentroDemo=null}={}){
  if(!contas||!ponte)throw new TypeError('Cadastro e ponte do laboratorio obrigatorios');
  const gerenciador=sessoes||new SessoesParticipanteDemo({contas});
  const escritorio=new EscritorioIndividualDemo({contas,ponte});
@@ -129,6 +129,35 @@ function criarRouterParticipanteDemo({contas,ponte,sessoes=null,adesoes=null,car
    return next(err);
   }
  });
+  // Cenario do centro: saldo AQUI e referencia ficticia, nunca credito sacavel.
+  router.get('/saque-centro-v6-demo',(req,res,next)=>{
+   const servico=obterRetornoSaqueCentroDemo?.();
+   if(!servico)return res.status(501).json({erro:'SAQUE_CENTRO_TESTE_INDISPONIVEL'});
+   try{
+    const contaId=gerenciador.identificar(lerCookie(req));
+    if(!contaId)return res.status(401).json({erro:'SESSAO_AUSENTE_OU_EXPIRADA'});
+    return res.json(servico.consultar(contaId));
+   }catch(e){return next(e);}
+  });
+  router.post('/saque-centro-v6-demo',(req,res,next)=>{
+   const servico=obterRetornoSaqueCentroDemo?.();
+   if(!servico)return res.status(501).json({erro:'SAQUE_CENTRO_TESTE_INDISPONIVEL'});
+   if(!req.is('application/json'))return res.status(415).json({erro:'USE_APPLICATION_JSON'});
+   const body=req.body;
+   if(!body||typeof body!=='object'||Array.isArray(body)||
+     Object.keys(body).sort().join(',')!=='solicitacaoId,valorCentavos')
+     return res.status(400).json({erro:'CAMPOS_SAQUE_CENTRO_INVALIDOS'});
+   try{
+    const contaId=gerenciador.identificar(lerCookie(req));
+    if(!contaId)return res.status(401).json({erro:'SESSAO_AUSENTE_OU_EXPIRADA'});
+    return res.status(201).json(servico.solicitar({...body,contaId}));
+   }catch(e){
+    if(e.codigo)return res.status(['CONFLITO_IDEMPOTENCIA',
+     'REFERENCIA_CENTRO_TESTE_INSUFICIENTE'].includes(e.codigo)?409:400)
+      .json({erro:e.codigo});
+    return next(e);
+   }
+  });
   // Controle somente ficticio de solicitacoes; nunca aceita saldo do navegador.
   router.get('/saques-simulados',(req,res,next)=>{
    if(!saques)return res.status(501).json({erro:'SAQUES_SIMULADOS_NAO_CONFIGURADOS'});
@@ -262,6 +291,7 @@ function criarRouterParticipanteDemo({contas,ponte,sessoes=null,adesoes=null,car
     saquesSimulados:saques?saques.consultar(contaId):null,
     creditosPrevistosV6:extratoCentrosPrevistosV6({ponte,contas,contaId}),
     provisoesAuditadasV6:obterLivroProvisoesV6?.()?.extrato(contaId)||null,
+    simulacaoRetornoSaqueCentroV6:obterRetornoSaqueCentroDemo?.()?.consultar(contaId)||null,
     adesao:adesoes?adesoes.consultarConta(contaId):null});
   }catch(erro){return next(erro);}
  });
