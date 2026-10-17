@@ -8,6 +8,7 @@ const {localSeguro}=require('./admin-catalogo-laboratorio');
 const {SessoesParticipanteDemo,DURACAO}=require('../domain/sessoes-participante-demo');
 const {EscritorioIndividualDemo}=require('../domain/escritorio-individual-demo');
 const {montarHistoricoLojaDemo}=require('../domain/historico-loja-escritorio-demo');
+const {extratoCentrosPrevistosV6}=require('../domain/extrato-creditos-previstos-v6-demo');
 const COOKIE='loop_participante_demo';
 const CAMINHO='/api/laboratorio/participante';
 function lerCookie(req){
@@ -259,6 +260,7 @@ function criarRouterParticipanteDemo({contas,ponte,sessoes=null,adesoes=null,car
    return res.json({...visao,
     historicoLoja,
     saquesSimulados:saques?saques.consultar(contaId):null,
+    creditosPrevistosV6:extratoCentrosPrevistosV6({ponte,contas,contaId}),
     adesao:adesoes?adesoes.consultarConta(contaId):null});
   }catch(erro){return next(erro);}
  });
