@@ -81,6 +81,28 @@ function criarRouterCircuitBreakV6Demo({segredo,controle,ponteControle=null,prog
       ].includes(e.codigo)?409:400).json({erro:e.codigo});
     }
   }
+  router.get('/circuit-break-v6-demo/ponte/gestao-proprietario',(_req,res)=>{
+    if(!ponteControle?.gestaoProprietario)
+      return res.status(501).json({erro:'GESTAO_PROPRIETARIO_INDISPONIVEL'});
+    return res.json(ponteControle.gestaoProprietario.listar());
+  });
+  router.post('/circuit-break-v6-demo/ponte/gestao-proprietario',(req,res)=>{
+    if(!ponteControle?.gestaoProprietario)
+      return res.status(501).json({erro:'GESTAO_PROPRIETARIO_INDISPONIVEL'});
+    if(!req.is('application/json'))return res.status(415).json({erro:'JSON_OBRIGATORIO'});
+    const body=req.body;
+    if(!body||typeof body!=='object'||Array.isArray(body)||
+       Object.keys(body).sort().join(',')!==
+         'cofreOrigem,destino,justificativa,movimentoId,valorCentavos')
+      return res.status(400).json({erro:'CAMPOS_INVALIDOS'});
+    try{return res.status(201).json(ponteControle.gestaoProprietario.solicitar(body));}
+    catch(e){
+      if(!e.codigo)throw e;
+      return res.status(['CONFLITO_IDEMPOTENCIA','CONCILIACAO_COFRES_DIVERGENTE',
+        'SALDO_DEMONSTRATIVO_INSUFICIENTE','COFRES_NAO_CONFIGURADOS']
+        .includes(e.codigo)?409:400).json({erro:e.codigo});
+    }
+  });
   router.get('/circuit-break-v6-demo/ponte/conciliacao',(_req,res)=>{
     if(!ponteControle?.conciliacao)
       return res.status(501).json({erro:'CONCILIACAO_COFRES_INDISPONIVEL'});
