@@ -6,12 +6,10 @@
 const MINUTO=60*1000;
 const VALID_ID=/^agenda-[a-z0-9-]{6,70}$/;
 const NOMES=['DISTRIBUIDO','PONTUAL','A_CADA_30_MIN','A_CADA_60_MIN'];
-const ALVOS=['GIROS','PESSOAS'];
 const TRANSITORIOS=new Set(['CATRACA_PAUSADA','LIMITE_DIARIO_ATINGIDO',
   'COMPRAS_CONFIRMADAS_INSUFICIENTES','TABULEIRO_SEM_REPOSICAO',
   'CICLO_PARCIAL_NAO_GERENCIADO','CONFLITO_REVISAO',
-  'AGUARDANDO_START','SALDO_CENTRAL_SIMULADO_INSUFICIENTE',
-  'PARTICIPANTES_ELEGIVEIS_INSUFICIENTES']);
+  'AGUARDANDO_START','SALDO_CENTRAL_SIMULADO_INSUFICIENTE']);
 function falha(codigo){const e=new Error(codigo);e.codigo=codigo;return e;}
 function ms(valor){
   if(typeof valor!=='string'||!/^\d{4}-\d\d-\d\dT\d\d:\d\d:\d\d(?:\.\d{1,3})?(?:Z|[+-]\d\d:\d\d)$/.test(valor))
@@ -71,10 +69,14 @@ class ProgramadorCatracaV6DemoSQLite{
     const colunas=banco.prepare('PRAGMA table_info(loop_v6_agendas_demo)').all();
     if(!colunas.some(c=>c.name==='alvo'))
       banco.exec("ALTER TABLE loop_v6_agendas_demo ADD COLUMN alvo TEXT NOT NULL DEFAULT 'GIROS'");
+    // Fases antigas PESSOAS eram outra contagem. Nunca reinterpretar uma
+    // agenda ativa silenciosamente: cancelar e exigir nova escolha de GIROS.
+    banco.prepare("UPDATE loop_v6_agendas_demo SET estado='CANCELADA',cancelada_em=? " +
+      "WHERE estado='ATIVA' AND alvo='PESSOAS'").run(this.agora());
   }
-  criar({agendaId,quantidade,modo,inicioEm,fimEm,alvo='GIROS'}={}){
+  criar({agendaId,quantidade,modo,inicioEm,fimEm}={}){
     if(!VALID_ID.test(agendaId||''))throw falha('AGENDA_ID_INVALIDA');
-    if(!NOMES.includes(modo)||!ALVOS.includes(alvo)||
+    if(!NOMES.includes(modo)||
        !Number.isSafeInteger(quantidade)||quantidade<1||quantidade>300)
       throw falha('AGENDA_INVALIDA');
     const inicio=ms(inicioEm),fim=ms(fimEm),agora=ms(this.agora());
@@ -99,10 +101,10 @@ class ProgramadorCatracaV6DemoSQLite{
       if(total+quantidade>limite)throw falha('LIMITE_AGENDAMENTO_DIARIO');
       b.prepare([
         'INSERT INTO loop_v6_agendas_demo',
-        '(agenda_id,modo,quantidade,inicio_em,fim_em,dia_sp,estado,criada_em,alvo)',
-        "VALUES(?,?,?,?,?,?,'ATIVA',?,?)"
+        '(agenda_id,modo,quantidade,inicio_em,fim_em,dia_sp,estado,criada_em)',
+        "VALUES(?,?,?,?,?,?,'ATIVA',?)"
       ].join(' ')).run(agendaId,modo,quantidade,new Date(inicio).toISOString(),
-        new Date(fim).toISOString(),diaSP(inicio),this.agora(),alvo);
+        new Date(fim).toISOString(),diaSP(inicio),this.agora());
       const save=b.prepare([
         'INSERT INTO loop_v6_agenda_slots_demo',
         "(agenda_id,ordem,horario_em,estado,comando_id)",
@@ -129,7 +131,7 @@ class ProgramadorCatracaV6DemoSQLite{
       'SELECT ordem,horario_em AS horario,estado FROM loop_v6_agenda_slots_demo WHERE agenda_id=? ORDER BY ordem'
     ).all(id);
     const concluidos=slots.filter(x=>x.estado==='CONCLUIDO').length;
-    return {agendaId:a.agenda_id,modo:a.modo,alvo:a.alvo||'GIROS',quantidade:a.quantidade,
+    return {agendaId:a.agenda_id,modo:a.modo,quantidade:a.quantidade,
       status:a.estado,inicioEm:a.inicio_em,fimEm:a.fim_em,
       girosExecutados:concluidos,girosNaoExecutados:a.quantidade-concluidos,
       horarios:slots.map(x=>({ordem:x.ordem,horarioBrasilia:horarioBrasil(x.horario),
@@ -152,9 +154,9 @@ class ProgramadorCatracaV6DemoSQLite{
     // Um unico giro no maximo por chamada, independentemente de slots atrasados.
     const slot=b.prepare([
       'SELECT s.agenda_id AS agendaId,s.ordem,s.comando_id AS comandoId,',
-      'a.fim_em AS fimEm,a.alvo AS alvo FROM loop_v6_agenda_slots_demo s',
+      'a.fim_em AS fimEm FROM loop_v6_agenda_slots_demo s',
       'JOIN loop_v6_agendas_demo a ON a.agenda_id=s.agenda_id',
-      "WHERE a.estado='ATIVA' AND s.estado='PENDENTE'",
+      "WHERE a.estado='ATIVA' AND a.alvo='GIROS' AND s.estado='PENDENTE'", 
       'AND s.horario_em<=? AND a.inicio_em<=? AND a.fim_em>=?',
       'ORDER BY s.horario_em,s.agenda_id,s.ordem LIMIT 1'
     ].join(' ')).get(agora,agora,agora);
@@ -166,8 +168,7 @@ class ProgramadorCatracaV6DemoSQLite{
     let retorno;
     try{
       retorno=this.ponte.liberar({
-        ...(slot.alvo==='PESSOAS'?{participantes:1}:{quantidade:1}),
-        comandoId:slot.comandoId,
+        quantidade:1,comandoId:slot.comandoId,
         revisaoEsperada:this.controle.resumo().revisao
       });
     }catch(e){
@@ -193,7 +194,6 @@ class ProgramadorCatracaV6DemoSQLite{
       ].join(' ')).run(slot.agendaId,slot.ordem,slot.comandoId,agora,
         JSON.stringify({giro:retorno.girosLiberados[0]?.giro,
           centroEmpresa:retorno.girosLiberados[0]?.centroEmpresa,
-          participantesContemplados:retorno.participantesContemplados||0,
           semPagamentoReal:true}));
       b.exec('COMMIT');
     }catch(e){b.exec('ROLLBACK');throw e;}
