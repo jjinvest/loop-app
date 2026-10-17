@@ -26,6 +26,75 @@ function mostrarAbaAdmin(aba){
 const $ = id => document.getElementById(id);
 const mensagem = texto => { $('mensagemAdmin').textContent = texto; };
 
+let produtosPainelAdmin=[];
+const formatarReais=centavos=>new Intl.NumberFormat('pt-BR',{
+ style:'currency',currency:'BRL'
+}).format(centavos/100);
+async function atualizarDiagnosticoAdmin(){
+ if(!chaveTemporaria)return;
+ $('mensagemDiagnosticoAdmin').textContent='Consultando dados internos do LOOP...';
+ const [concil,ambiente]=await Promise.allSettled([
+  requisitar('/circuit-break-v6-demo/ponte/conciliacao'),
+  requisitar('/akitemm/sandbox/status')
+ ]);
+ $('resumoProdutosAdmin').textContent=String(produtosPainelAdmin.length);
+ $('resumoPublicadosAdmin').textContent=String(
+  produtosPainelAdmin.filter(x=>x.estado==='PUBLICADO').length
+ );
+ if(concil.status==='fulfilled'){
+  const x=concil.value;
+  $('resumoCofresAdmin').textContent=x.quantidadeDivergencias?
+   x.quantidadeDivergencias+' divergência(s)':
+   x.fase==='INATIVO'?'Não configurado':'Sem divergências fictícias';
+ }else $('resumoCofresAdmin').textContent='Indisponível';
+ $('resumoPixAdmin').textContent=ambiente.status==='fulfilled'?
+  (ambiente.value.sandbox?'Sandbox habilitado':'Sandbox desligado'):'Indisponível';
+ $('mensagemDiagnosticoAdmin').textContent=
+  'Painel de laboratório: valores informados não representam saldo bancário, '+
+  'movimentação de dinheiro ou autorização de saque.';
+}
+function atualizarCalculadoraAdmin(){
+ const destino=$('resultadoCalcAdmin');
+ const preco=$('precoProduto').value;
+ const custo=$('custoUnitarioCalcAdmin').value;
+ const quantidade=Number($('quantidadeCalcAdmin').value);
+ if(preco===''||custo===''){
+  destino.textContent='Informe o preço escolhido, o custo unitário e a quantidade para conferir o pedido.';
+  return;
+ }
+ try{
+  if(!Number.isSafeInteger(quantidade)||quantidade<1||quantidade>100)
+   throw new TypeError('Quantidade deve ser um número inteiro entre 1 e 100');
+  const precoUnitario=precoCentavos(preco);
+  const custoUnitario=precoCentavos(custo)==null?0:precoCentavos(custo);
+  const valorVendaCentavos=precoUnitario*quantidade;
+  const custoProdutosCentavos=custoUnitario*quantidade;
+  if(!Number.isSafeInteger(valorVendaCentavos)||!Number.isSafeInteger(custoProdutosCentavos))
+   throw new TypeError('Valor fora do limite');
+  const r=window.PonteFinanceiraAkitemmLoopV6.calcularPonteAkitemmLoop({
+   valorVendaCentavos,custoProdutosCentavos
+  });
+  let frase='Pedido simulado: '+formatarReais(r.vendaCentavos)+
+   ' | Produto: '+formatarReais(r.custoProdutosCentavos)+'. ';
+  if(r.situacao==='COBERTURA_CALCULADA_SEM_TRANSFERENCIA'){
+   frase+='LOOP: '+formatarReais(r.loopSeparavelCentavos)+
+    ' | Restante do proprietário: '+formatarReais(r.restanteProprietarioCentavos)+
+    '. É uma estimativa, não separação real de dinheiro.';
+  }else if(r.situacao==='VENDA_SOMENTE_AKITEMM'){
+   frase+='Esta venda isolada não atinge R$ 250; não qualifica posição. '+
+    'Restante após produto: '+formatarReais(r.restanteProprietarioCentavos)+'.';
+  }else if(r.situacao==='SEM_COBERTURA_PARA_LOOP'){
+   frase+='Este preço não cobre simultaneamente produto e os R$ 250 do LOOP. '+
+    'Faltam '+formatarReais(r.insuficienciaCentavos)+'.';
+  }else{
+   frase+='O custo do produto ultrapassa a venda em '+
+    formatarReais(r.insuficienciaCentavos)+'.';
+  }
+  destino.textContent=frase;
+ }catch(e){destino.textContent=e.message||'Confira os valores';}
+}
+
+
 function linhas(texto) {
   return texto.split(/\r?\n/).map(v => v.trim()).filter(Boolean);
 }
@@ -96,6 +165,8 @@ function editarFormulario(registro) {
   registroEditando = registro ? {id:p.id, revisao:registro.revisao} : null;
   $('tituloFormulario').textContent = p ? 'Editar produto: ' + p.id : 'Novo produto';
   $('formProduto').reset();
+  $('quantidadeCalcAdmin').value='1';
+  $('custoUnitarioCalcAdmin').value='';
   $('idProduto').disabled = Boolean(p);
   $('idProduto').value = p?.id || '';
   $('nomeProduto').value = p?.nome || '';
@@ -106,6 +177,7 @@ function editarFormulario(registro) {
   $('fotosProduto').value = p?.fotos?.join('\n') || '';
   $('videoProduto').value = p?.videoApresentacaoUrl || '';
   $('detalhesProduto').value = p?.detalhes?.join('\n') || '';
+  atualizarCalculadoraAdmin();
 }
 
 function montarProduto() {
@@ -136,6 +208,7 @@ async function abrirProduto(id) {
 
 async function atualizarProdutos() {
   const dados = await requisitar('/produtos');
+  produtosPainelAdmin=dados.produtos;
   const lista = $('listaAdmin');
   lista.replaceChildren();
   if (!dados.produtos.length) {
@@ -165,6 +238,7 @@ async function conectar() {
     await atualizarProdutos();
     $('navAdminCentral').hidden=false;
     mostrarAbaAdmin('inicio');
+    await atualizarDiagnosticoAdmin();
     editarFormulario(null);
     try { await carregarPedidosDemo(); }
     catch(erro) { mensagemPedidoDemo(erro.message); }
@@ -201,6 +275,7 @@ async function salvar(evento) {
       });
     }
     await atualizarProdutos();
+    await atualizarDiagnosticoAdmin();
     await abrirProduto(resultado.id);
     mensagem('Produto salvo com sucesso na revisão ' + resultado.revisao + '.');
   } catch (erro) { mensagem(erro.message); }
@@ -320,3 +395,12 @@ $('atualizarLista').addEventListener('click', async () => {
   catch (erro) { mensagem(erro.message); }
 });
 $('formProduto').addEventListener('submit', salvar);
+$('atualizarDiagnosticoAdmin').addEventListener('click',()=>{
+ atualizarDiagnosticoAdmin().catch(e=>{
+  $('mensagemDiagnosticoAdmin').textContent=e.message;
+ });
+});
+for(const id of ['precoProduto','quantidadeCalcAdmin','custoUnitarioCalcAdmin']){
+ $(id).addEventListener('input',atualizarCalculadoraAdmin);
+}
+
