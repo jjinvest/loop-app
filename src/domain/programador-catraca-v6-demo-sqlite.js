@@ -87,7 +87,7 @@ class ProgramadorCatracaV6DemoSQLite{
       ].join(' ')).get(diaSP(inicio)).n;
       if(total+quantidade>limite)throw falha('LIMITE_AGENDAMENTO_DIARIO');
       b.prepare([
-        'INSERT INTO loop_v6_agendas_demo'
+        'INSERT INTO loop_v6_agendas_demo',
         '(agenda_id,modo,quantidade,inicio_em,fim_em,dia_sp,estado,criada_em)',
         "VALUES(?,?,?,?,?,?,'ATIVA',?)"
       ].join(' ')).run(agendaId,modo,quantidade,new Date(inicio).toISOString(),
