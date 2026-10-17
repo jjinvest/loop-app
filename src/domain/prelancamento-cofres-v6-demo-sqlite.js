@@ -144,6 +144,9 @@ class PreLancamentoCofresV6DemoSQLite{
    if(!l)throw erro('PRE_LANCAMENTO_DESATIVADO');
    if(l.fase!=='ARRECADACAO')throw erro('START_JA_EXECUTADO');
    this.sincronizar({transacaoAberta:true});
+   // START nao pode habilitar operacao com lancamentos desencontrados.
+   if(this.conciliacao?.conferir().quantidadeDivergencias)
+    throw erro('CONCILIACAO_COFRES_DIVERGENTE');
    b.prepare("UPDATE loop_v6_pre_config SET fase='EM_OPERACAO',iniciado_em=? WHERE id=1")
     .run(new Date().toISOString());
    b.exec('COMMIT');return this.resumo();
