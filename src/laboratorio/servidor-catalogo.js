@@ -47,6 +47,8 @@ const { RazaoFinanceiroDemoSQLite } = require('../domain/razao-financeiro-demo-s
 const { RecebimentosPSPDemoSQLite } = require('../domain/recebimentos-psp-demo-sqlite');
 const { criarRouterRecebimentosPSPDemo } = require('../routes/admin-recebimentos-psp-demo');
 const { criarRouterWebhookPSPDemoLocal } = require('../routes/webhook-psp-demo-local');
+const {CircuitBreakV6DemoSQLite}=require('../domain/circuit-break-v6-demo-sqlite');
+const {criarRouterCircuitBreakV6Demo}=require('../routes/admin-circuit-break-v6-demo');
 
 function criarAppAdminLaboratorio({ repositorio, segredo, webhookDemo } = {}) {
   if (process.env.NODE_ENV === 'production') {
