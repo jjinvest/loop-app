@@ -8,6 +8,7 @@ const {LOTES}=require('./circuit-break-v6-demo-sqlite');
 const {centroDoLoop}=require('./destino-financeiro-centro-loop');
 const {LivroProvisoesV6DemoSQLite}=require('./livro-provisoes-v6-demo-sqlite');
 const {PreLancamentoCofresV6DemoSQLite}=require('./prelancamento-cofres-v6-demo-sqlite');
+const {ConciliacaoCofresV6DemoSQLite}=require('./conciliacao-cofres-v6-demo-sqlite');
 
 function falha(codigo){const e=new Error(codigo);e.codigo=codigo;return e;}
 function diaLocal(iso){
@@ -24,6 +25,8 @@ class CircuitBreakPonteV6DemoSQLite{
     this.banco=banco;this.ponte=ponte;this.controle=controle;this.agora=agora;
     this.livro=new LivroProvisoesV6DemoSQLite({banco,ponte});
     this.preLancamento=new PreLancamentoCofresV6DemoSQLite({banco,ponte});
+    this.conciliacao=new ConciliacaoCofresV6DemoSQLite({banco,
+      preLancamento:this.preLancamento,livro:this.livro});
     // Reconstrucao idempotente de giros de laboratorio anteriores ao livro.
     // Falha fechada se o snapshot divergir das compras documentadas.
     this.livro.registrarCiclos({sim:this.ponte._restaurar()});
@@ -63,7 +66,8 @@ class CircuitBreakPonteV6DemoSQLite{
       restantesHoje:controle.restantesHoje,revisaoControle:controle.revisao,
       compartilhadoComCenarioArtificial:true,
       creditoRealDisponivelCentavos:0,
-      provisoes:this.livro.resumo(),preLancamento:this.preLancamento.resumo()};
+      provisoes:this.livro.resumo(),preLancamento:this.preLancamento.resumo(),
+      conciliacaoCofres:this.conciliacao.conferir()};
   }
   liberar({comandoId,revisaoEsperada,quantidade}={}){
     if(typeof comandoId!=='string'||!/^cb-[a-z0-9-]{5,70}$/.test(comandoId))
@@ -139,6 +143,9 @@ class CircuitBreakPonteV6DemoSQLite{
       // Se uma origem nao corresponde a pedido interno, todo lote reverte.
       this.livro.registrarCiclos({sim,transacaoAberta:true});
       this.preLancamento.registrarSaidas({sim,transacaoAberta:true});
+      const demonstrativo=this.conciliacao.conferir();
+      if(demonstrativo.quantidadeDivergencias)
+        throw falha('CONCILIACAO_COFRES_DIVERGENTE');
       // Giro, controle de ritmo e auditoria gravados no MESMO COMMIT.
       b.prepare([
         'INSERT INTO admin_ponte_estado_demo(id,snapshot_json) VALUES(1,?)',
