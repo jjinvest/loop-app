@@ -47,6 +47,42 @@
     el('pausarCatracaCBV6').disabled=!aberto;
     el('gerarComprasCBV6').disabled=dados.comprasFicticiasGeradas>=1800;
   }
+  async function carregarPonte(){
+    const dados=await api('/ponte');
+    el('resumoPonteCBV6').textContent=
+      'Ponte cadastrada: '+dados.comprasElegiveis+
+      ' pedidos internos fictícios; '+dados.comprasPendentes+
+      ' ainda não utilizados; '+dados.girosProntosPorCompras+
+      ' giros possíveis por compras, '+dados.girosConcluidos+
+      ' concluídos. Lugares ocupados: '+dados.lugaresOcupados+
+      '/7; aguardando na fila: '+dados.posicoesNaFila+
+      '. Catraca: '+dados.catraca+'. Limite restante hoje: '+
+      dados.restantesHoje+'. Créditos reais: R$ 0,00.';
+    return dados;
+  }
+  async function liberarPonte(e){
+    e.preventDefault();
+    if(ocupado||!estado||!token)return;
+    ocupado=true;
+    const btn=el('liberarPonteCBV6');
+    btn.disabled=true;
+    try{
+      const payload={
+        comandoId:comandoId(),revisaoEsperada:estado.revisao,
+        quantidade:Number(el('quantidadeLotePonteCBV6').value)
+      };
+      const retorno=await api('/ponte/liberar',{
+        method:'POST',body:JSON.stringify(payload)
+      });
+      el('resultadoPonteCBV6').textContent=
+        'Lote de '+retorno.girosLiberados.length+
+        ' giros fictícios da ponte concluído. Sem pagamentos reais.';
+      await carregar();
+    }catch(err){
+      el('resultadoPonteCBV6').textContent='Liberação recusada: '+err.message;
+      try{await carregar();}catch(_){}
+    }finally{ocupado=false;btn.disabled=false;}
+  }
   async function carregarHistorico(){
     const dados=await api('/historico');
     const lista=el('historicoCBV6');
@@ -69,6 +105,7 @@
   async function carregar(){
     if(!token)return;
     mostrar(await api());
+    await carregarPonte();
     await carregarHistorico();
   }
   async function executar(tipo,valor){
@@ -114,6 +151,10 @@
     el('conteudoCBV6').hidden=true;
     el('statusCBV6').textContent='Chave descartada desta página.';
     el('resultadoCBV6').textContent='';
+  });
+  el('formLotePonteCBV6').addEventListener('submit',liberarPonte);
+  el('atualizarPonteCBV6').addEventListener('click',async()=>{
+    try{await carregarPonte();}catch(e){el('resultadoPonteCBV6').textContent=e.message;}
   });
   el('abrirCatracaCBV6').addEventListener('click',()=>executar('ABRIR'));
   el('pausarCatracaCBV6').addEventListener('click',()=>executar('PAUSAR'));
