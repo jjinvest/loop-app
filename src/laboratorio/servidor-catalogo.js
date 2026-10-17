@@ -48,6 +48,7 @@ const { RecebimentosPSPDemoSQLite } = require('../domain/recebimentos-psp-demo-s
 const { criarRouterRecebimentosPSPDemo } = require('../routes/admin-recebimentos-psp-demo');
 const { criarRouterWebhookPSPDemoLocal } = require('../routes/webhook-psp-demo-local');
 const {CircuitBreakV6DemoSQLite}=require('../domain/circuit-break-v6-demo-sqlite');
+const {CircuitBreakPonteV6DemoSQLite}=require('../domain/circuit-break-ponte-v6-demo-sqlite');
 const {criarRouterCircuitBreakV6Demo}=require('../routes/admin-circuit-break-v6-demo');
 
 function criarAppAdminLaboratorio({ repositorio, segredo, webhookDemo } = {}) {
@@ -98,6 +99,7 @@ function criarAppAdminLaboratorio({ repositorio, segredo, webhookDemo } = {}) {
   let pedidosPDFDemo=null;
   let integracaoPDFLoopDemo=null;
   let carrinhosLojaLoopDemo=null;
+  let ponteParaCircuito=null;
   // Cadastro de pessoas APENAS FICTICIAS: sem CPF, confirmacao de compra,
   // sessao publica, codigo validado de fila ou movimentacao de catraca.
   if(repositorio instanceof RepositorioCatalogoSQLite){
@@ -123,6 +125,7 @@ function criarAppAdminLaboratorio({ repositorio, segredo, webhookDemo } = {}) {
         return integracaoPDFLoopDemo.comprovanteConfirmado(pedidoId);
       }
     });
+    ponteParaCircuito=ponteDemo;
     app.use('/api/admin',criarRouterIndicacoesAdminDemo({
       segredo,links:ponteDemo.linksComissoes
     }));
@@ -170,8 +173,11 @@ function criarAppAdminLaboratorio({ repositorio, segredo, webhookDemo } = {}) {
     : null;
   const circuitoDemo = repositorio instanceof RepositorioCatalogoSQLite
     ? new CircuitBreakV6DemoSQLite({banco:repositorio.banco}) : null;
+  const circuitoPonteDemo=circuitoDemo&&ponteParaCircuito?
+    new CircuitBreakPonteV6DemoSQLite({banco:repositorio.banco,
+      ponte:ponteParaCircuito,controle:circuitoDemo}):null;
   app.use('/api/admin',criarRouterCircuitBreakV6Demo({
-    segredo,controle:circuitoDemo
+    segredo,controle:circuitoDemo,ponteControle:circuitoPonteDemo
   }));
   app.use('/api/admin', criarRouterFinanceiroAdminDemo({
     segredo, configuracao:configuracaoCofres, razaoPersistente,
