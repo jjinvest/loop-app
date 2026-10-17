@@ -17,11 +17,11 @@ Implementação em laboratório, sem autorização de pagamento real, criação 
 
 O Circuit Break de 300 giros usa 1.800 compradores ARTIFICIAIS com identificadores do tipo onda-0-pessoa-1. Ele continua SEPARADO da ponte de clientes registrados com contaId e comprovantes internos de laboratório. Esses compradores não correspondem às contas reais de teste cadastradas; não atribuir automaticamente suas contemplações.
 
-A ponte de contas já permite compras validadas internamente, filas e tabuleiro. O novo extrato lê giros dessa ponte se existirem. Nesta etapa, os testes geram o giro da ponte internamente: ainda NÃO há acionamento unificado entre o Circuit Break e essa ponte. Esta unificação é o próximo trabalho de integração.
+A ponte de contas permite compras validadas internamente, filas e tabuleiro. O extrato lê exclusivamente giros dessa ponte. O Circuit Break V6 já possui comando administrativo autenticado para liberar seus giros em lotes de 1, 3, 4, 5 e 10 usando apenas seis pedidos internos distintos por giro, fila apta, estado global aberto e limite diário compartilhado. O registro da ponte, o contador diário e o histórico imutável são escritos na mesma transação SQLite. Os dois cenários têm históricos de compras separados e nunca convertem números matemáticos em saldos sacáveis. O controle é apenas local, em laboratório.
 
 ## Pendências anteriores a dinheiro real
 
-1. Unificar controle de ritmo e motor da ponte usando os mesmos seis eventos confirmados.
+1. Substituir comprovantes internos de teste por verificação do provedor real com conciliação, estornos e validação jurídica. O Circuit Break já governa a ponte, apenas no laboratório.
 2. Criar razão conciliado imutável de créditos, PSP autenticado, obrigações, disponibilidade de fundos e bloqueio de duplicidades.
 3. Validar legalidade e sustentabilidade, relação com direitos do consumidor, LGPD e tratamento de estornos.
 4. Permitir saque pelo próprio titular SOMENTE depois da conciliação e da validação jurídica, nunca com dinheiro de laboratório.
