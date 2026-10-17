@@ -111,3 +111,38 @@ test('status divergente ou falso da cobranca externa nunca e contabilizado',asyn
  assert.equal(servico.consultar('carrinho-livro-teste').status,'PENDENTE_SANDBOX');
  assert.equal(servico.historico('carrinho-livro-teste').conferencias.length,0);
 });
+
+test('API AKITEMM sandbox desativada por padrao e protegida por admin da plataforma',async t=>{
+ const {once}=require('node:events');
+ const {RepositorioCatalogoSQLite}=require('../src/domain/repositorio-catalogo-sqlite');
+ const {criarAppAdminLaboratorio}=require('../src/laboratorio/servidor-catalogo');
+ const repo=new RepositorioCatalogoSQLite({caminho:':memory:'});t.after(()=>repo.fechar());
+ const secret='akitemm-teste-segredo-local-2026-forte';
+ const anterior=process.env.ASAAS_SANDBOX_API_KEY;
+ delete process.env.ASAAS_SANDBOX_API_KEY;
+ let server;
+ try{
+  server=criarAppAdminLaboratorio({repositorio:repo,segredo:secret})
+   .listen(0,'127.0.0.1');
+ }finally{
+  if(anterior!==undefined)process.env.ASAAS_SANDBOX_API_KEY=anterior;
+ }
+ await once(server,'listening');
+ t.after(()=>new Promise(resolve=>server.close(resolve)));
+ const host='http://127.0.0.1:'+server.address().port;
+ const url=host+'/api/admin/akitemm/sandbox';
+ assert.equal((await fetch(url+'/status')).status,401);
+ const headers={Authorization:'Bearer '+secret};
+ const status=await fetch(url+'/status',{headers});
+ assert.equal(status.status,200);
+ const json=await status.json();
+ assert.equal(json.loja,'AKITEMM');
+ assert.equal(json.plataforma,'LOOP');
+ assert.equal(json.sandbox,false);
+ assert.equal(json.recebimentosReais,false);
+ const attempted=await fetch(url+'/cobrancas',{method:'POST',
+  headers:{...headers,'Content-Type':'application/json'},
+  body:JSON.stringify({clienteAsaasId:'cus_ClienteTeste123',
+   origem:'PDF',pedidoId:'pedido-inventado'})});
+ assert.equal(attempted.status,501);
+});
