@@ -81,6 +81,11 @@ function criarRouterCircuitBreakV6Demo({segredo,controle,ponteControle=null,prog
       ].includes(e.codigo)?409:400).json({erro:e.codigo});
     }
   }
+  router.get('/circuit-break-v6-demo/ponte/conciliacao',(_req,res)=>{
+    if(!ponteControle?.conciliacao)
+      return res.status(501).json({erro:'CONCILIACAO_COFRES_INDISPONIVEL'});
+    return res.json(ponteControle.conciliacao.conferir());
+  });
   router.get('/circuit-break-v6-demo/ponte/prelancamento',(_req,res)=>
     responderPre(res,()=>ponteControle.preLancamento.resumo()));
   router.post('/circuit-break-v6-demo/ponte/prelancamento/configurar',(req,res)=>{
@@ -128,7 +133,8 @@ function criarRouterCircuitBreakV6Demo({segredo,controle,ponteControle=null,prog
         return res.status([
           'CONFLITO_COMANDO_ID','CONFLITO_REVISAO','CATRACA_PAUSADA',
           'LIMITE_DIARIO_ATINGIDO','COMPRAS_CONFIRMADAS_INSUFICIENTES',
-          'TABULEIRO_SEM_REPOSICAO','CICLO_PARCIAL_NAO_GERENCIADO'
+          'TABULEIRO_SEM_REPOSICAO','CICLO_PARCIAL_NAO_GERENCIADO',
+          'CONCILIACAO_COFRES_DIVERGENTE','SALDO_CENTRAL_SIMULADO_INSUFICIENTE','AGUARDANDO_START'
         ].includes(e.codigo)?409:400).json({erro:e.codigo});
       }
       throw e;
