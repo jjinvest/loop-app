@@ -235,6 +235,12 @@ function criarAppAdminLaboratorio({ repositorio, segredo, webhookDemo } = {}) {
   app.get('/admin', somenteLocal, (req, res) => {
     res.sendFile(path.join(__dirname, 'painel-catalogo.html'));
   });
+  app.get('/admin/circuit-break-v6', somenteLocal, (_req,res)=>{
+    res.sendFile(path.join(__dirname,'circuit-break-v6-demo.html'));
+  });
+  app.get('/admin/circuit-break-v6.js', somenteLocal, (_req,res)=>{
+    res.type('application/javascript').sendFile(path.join(__dirname,'circuit-break-v6-demo.js'));
+  });
   app.get('/admin/financeiro-demo', somenteLocal, (req, res) => {
     res.sendFile(path.join(__dirname,'financeiro-admin-demo.html'));
   });
