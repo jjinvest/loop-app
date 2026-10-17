@@ -41,9 +41,7 @@ function criarRouterCircuitBreakV6Demo({segredo,controle,ponteControle=null,prog
     const p=req.body;
     if(!req.is('application/json'))return res.status(415).json({erro:'JSON_OBRIGATORIO'});
     if(!p||typeof p!=='object'||Array.isArray(p)||
-       !['agendaId,fimEm,inicioEm,modo,quantidade',
-         'agendaId,alvo,fimEm,inicioEm,modo,quantidade'].includes(
-           Object.keys(p).sort().join(',')))
+       Object.keys(p).sort().join(',')!=='agendaId,fimEm,inicioEm,modo,quantidade')
       return res.status(400).json({erro:'CAMPOS_INVALIDOS'});
     try{return res.status(201).json(programador.criar(p));}
     catch(e){
@@ -113,23 +111,6 @@ function criarRouterCircuitBreakV6Demo({segredo,controle,ponteControle=null,prog
     if(!req.body||typeof req.body!=='object'||Array.isArray(req.body)||
        Object.keys(req.body).length!==0)return res.status(400).json({erro:'CAMPOS_INVALIDOS'});
     return responderPre(res,()=>ponteControle.preLancamento.iniciar());
-  });
-  router.post('/circuit-break-v6-demo/ponte/liberar-participantes',(req,res)=>{
-    if(!ponteControle)return res.status(501).json({erro:'PONTE_INDISPONIVEL'});
-    const body=req.body;
-    if(!body||typeof body!=='object'||Array.isArray(body)||
-      Object.keys(body).sort().join(',')!=='comandoId,participantes,revisaoEsperada')
-      return res.status(400).json({erro:'CAMPOS_INVALIDOS'});
-    try{return res.json(ponteControle.liberar(body));}
-    catch(e){
-      if(!e.codigo)throw e;
-      return res.status([
-        'CATRACA_PAUSADA','LIMITE_DIARIO_ATINGIDO','AGUARDANDO_START',
-        'SALDO_CENTRAL_SIMULADO_INSUFICIENTE','PARTICIPANTES_ELEGIVEIS_INSUFICIENTES',
-        'CONFLITO_REVISAO','CONFLITO_COMANDO_ID','COMPRAS_CONFIRMADAS_INSUFICIENTES',
-        'TABULEIRO_SEM_REPOSICAO'
-      ].includes(e.codigo)?409:400).json({erro:e.codigo});
-    }
   });
   router.get('/circuit-break-v6-demo/ponte',(_req,res)=>{
     if(!ponteControle)return res.status(501).json({erro:'PONTE_INDISPONIVEL'});
