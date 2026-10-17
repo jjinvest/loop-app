@@ -77,7 +77,7 @@ function criarRouterCircuitBreakV6Demo({segredo,controle,ponteControle=null,prog
       return res.status([
         'PRE_LANCAMENTO_JA_CONFIGURADO','START_JA_EXECUTADO',
         'PRE_LANCAMENTO_APOS_GIROS','LIQUIDO_SUPERA_VENDA',
-        'COMPRA_DIVERGENTE_CAIXA'
+        'COMPRA_DIVERGENTE_CAIXA','CONCILIACAO_COFRES_DIVERGENTE'
       ].includes(e.codigo)?409:400).json({erro:e.codigo});
     }
   }
