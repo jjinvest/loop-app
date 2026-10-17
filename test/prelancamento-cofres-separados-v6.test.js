@@ -90,7 +90,10 @@ test('prelancamento separa venda da loja e aporte fixo, so libera depois do STAR
  assert.equal(cb.preLancamento.resumo().centroRestanteSimuladoCentavos,0);
  assert.equal(cb.preLancamento.resumo().girosRegistrados,2);
  assert.equal(cb.preLancamento.resumo().centroComprometidoSimuladoCentavos,150000);
- assert.equal(cb.preLancamento.resumo().escritoriosPrevistosSimuladoCentavos,150000);
+ assert.equal(segundo.girosLiberados[0].centroEmpresa,true);
+ assert.equal(segundo.centrosDourados,1);
+ assert.equal(cb.preLancamento.resumo().escritoriosPrevistosSimuladoCentavos,75000);
+ assert.equal(cb.preLancamento.resumo().douradasAcumuladoSimuladoCentavos,75000);
  assert.equal(cb.preLancamento.resumo().totalDemonstrativoConservadoCentavos,300000);
  assert.equal(cb.preLancamento.resumo().saldoRealCentavos,0);
  assert.equal(cb.preLancamento.resumo().valorParaSaqueCentavos,0);
