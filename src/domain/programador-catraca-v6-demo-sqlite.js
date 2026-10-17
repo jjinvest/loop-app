@@ -43,7 +43,7 @@ class ProgramadorCatracaV6DemoSQLite{
       'CREATE TABLE IF NOT EXISTS loop_v6_agendas_demo(',
       'agenda_id TEXT PRIMARY KEY, modo TEXT NOT NULL,',
       'quantidade INTEGER NOT NULL CHECK(quantidade BETWEEN 1 AND 300),',
-      'inicio_em TEXT NOT NULL, fim_em TEXT NOT NULL,',
+      'inicio_em TEXT NOT NULL, fim_em TEXT NOT NULL, dia_sp TEXT NOT NULL,',
       "estado TEXT NOT NULL CHECK(estado IN ('ATIVA','CANCELADA')),",
       'criada_em TEXT NOT NULL, cancelada_em TEXT);',
       'CREATE TABLE IF NOT EXISTS loop_v6_agenda_slots_demo(',
@@ -71,7 +71,7 @@ class ProgramadorCatracaV6DemoSQLite{
     if(inicio<agora-2*MINUTO||fim<inicio||fim-inicio>24*60*MINUTO||
        diaSP(inicio)!==diaSP(fim))
       throw falha('JANELA_INVALIDA');
-    if(modo==='DISTRIBUIDO' && (fim-inicio<quantidade*MINUTO))
+    if(fim-inicio<Math.max(1,quantidade-1)*MINUTO)
       throw falha('JANELA_CURTA');
     const slots=gerarSlots(inicio,fim,quantidade,modo);
     const b=this.banco;
@@ -83,15 +83,15 @@ class ProgramadorCatracaV6DemoSQLite{
       const total=b.prepare([
         'SELECT COALESCE(SUM(quantidade),0) AS n',
         "FROM loop_v6_agendas_demo WHERE estado='ATIVA'",
-        'AND substr(inicio_em,1,10)=?'
-      ].join(' ')).get(new Date(inicio).toISOString().slice(0,10)).n;
+        'AND dia_sp=?'
+      ].join(' ')).get(diaSP(inicio)).n;
       if(total+quantidade>limite)throw falha('LIMITE_AGENDAMENTO_DIARIO');
       b.prepare([
-        'INSERT INTO loop_v6_agendas_demo',
-        '(agenda_id,modo,quantidade,inicio_em,fim_em,estado,criada_em)',
-        "VALUES(?,?,?,?,?,'ATIVA',?)"
+        'INSERT INTO loop_v6_agendas_demo'
+        '(agenda_id,modo,quantidade,inicio_em,fim_em,dia_sp,estado,criada_em)',
+        "VALUES(?,?,?,?,?,?,'ATIVA',?)"
       ].join(' ')).run(agendaId,modo,quantidade,new Date(inicio).toISOString(),
-        new Date(fim).toISOString(),this.agora());
+        new Date(fim).toISOString(),diaSP(inicio),this.agora());
       const save=b.prepare([
         'INSERT INTO loop_v6_agenda_slots_demo',
         "(agenda_id,ordem,horario_em,estado,comando_id)",
