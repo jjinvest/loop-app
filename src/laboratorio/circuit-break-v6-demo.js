@@ -58,6 +58,18 @@
       '/7; aguardando na fila: '+dados.posicoesNaFila+
       '. Catraca: '+dados.catraca+'. Limite restante hoje: '+
       dados.restantesHoje+'. Créditos reais: R$ 0,00.';
+    const livro=await api('/ponte/provisoes');
+    el('provisoesPonteCBV6').textContent=
+      'LIVRO DE PREVISÕES (sem dinheiro): '+livro.ciclosRegistrados+
+      ' ciclos documentados, '+livro.eventosDocumentados+
+      ' pedidos por eventos, '+livro.parcelasPrevistas+
+      ' parcelas individuais previstas. Total das obrigações dos centros: '+
+      money(livro.totalPrevistoParaTitularesCentavos)+
+      '. Total referencial de compras fictícias: '+
+      money(livro.referenciasDeComprasFicticiasCentavos)+
+      '. Diferença entre fontes e obrigações do centro: '+
+      money(livro.divergenciaReferenciasCentroCentavos)+
+      '. Valor bancário liquidado: R$ 0,00; disponível para saques: R$ 0,00.';
     return dados;
   }
   async function liberarPonte(e){
