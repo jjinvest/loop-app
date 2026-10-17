@@ -17,7 +17,7 @@ test('dois enderecos Loja Vilela e Escritorio Vilela preservam mesmo indicador e
   senha:'senha-ficticia-segura-2026'
  });
  // O servidor monta previamente as tabelas da ponte/carrinho usadas para ativacao.
- const app=criarAppAdminLaboratorio({repositorio:repo,segredo:'chave-laboratorio-vilela-2026'});
+ const app=criarAppAdminLaboratorio({repositorio:repo,segredo:'chave-super-segura-laboratorio-vilela-2026'});
  const links=new IndicacoesLinksComissoesDemoSQLite({banco:repo.banco,contas});
  const dados=links.linkDaConta(indicador.contaId);
  assert.match(dados.linkLoja,/^\/loja-vilela\/convite\/lp-[a-f0-9]{20}\/meu-loop$/);
