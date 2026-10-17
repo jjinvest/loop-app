@@ -5,6 +5,23 @@ let chaveTemporaria = '';
 let registroEditando = null;
 let revisaoFornecedor = 0;
 let fornecedorAtivo = false;
+let abaAtualAdmin = 'inicio';
+const ABAS_ADMIN={
+  inicio:{secao:'areaVisaoAdmin',botao:'abaAdminInicio'},
+  produtos:{secao:'areaPainel',botao:'abaAdminProdutos'},
+  importacao:{secao:'areaImportacao',botao:'abaAdminImportacao'},
+  pedidos:{secao:'areaPedidosDemo',botao:'abaAdminPedidos'}
+};
+function mostrarAbaAdmin(aba){
+ if(!Object.hasOwn(ABAS_ADMIN,aba)||!chaveTemporaria)return;
+ abaAtualAdmin=aba;
+ for(const [nome,config] of Object.entries(ABAS_ADMIN)){
+  $(config.secao).hidden=nome!==aba;
+  $(config.botao).setAttribute('aria-selected',nome===aba?'true':'false');
+  $(config.botao).tabIndex=nome===aba?0:-1;
+ }
+}
+
 
 const $ = id => document.getElementById(id);
 const mensagem = texto => { $('mensagemAdmin').textContent = texto; };
@@ -146,9 +163,8 @@ async function conectar() {
   $('adminToken').value = '';
   try {
     await atualizarProdutos();
-    $('areaPainel').hidden = false;
-    $('areaImportacao').hidden = false;
-    $('areaPedidosDemo').hidden = false;
+    $('navAdminCentral').hidden=false;
+    mostrarAbaAdmin('inicio');
     editarFormulario(null);
     try { await carregarPedidosDemo(); }
     catch(erro) { mensagemPedidoDemo(erro.message); }
@@ -157,6 +173,8 @@ async function conectar() {
     mensagem('Painel de teste aberto. Compras continuam desativadas.');
   } catch (erro) {
     chaveTemporaria = '';
+    $('navAdminCentral').hidden = true;
+    $('areaVisaoAdmin').hidden = true;
     $('areaPainel').hidden = true;
     $('areaImportacao').hidden = true;
     $('areaPedidosDemo').hidden = true;
@@ -266,11 +284,26 @@ async function desativarFornecedor() {
 $('formFornecedor').addEventListener('submit', salvarFornecedor);
 $('desativarFornecedor').addEventListener('click', desativarFornecedor);
 
+for(const botao of document.querySelectorAll('[data-aba-admin]')){
+ botao.addEventListener('click',()=>mostrarAbaAdmin(botao.dataset.abaAdmin));
+ botao.addEventListener('keydown',evento=>{
+  if(!['ArrowLeft','ArrowRight','Home','End'].includes(evento.key))return;
+  evento.preventDefault();
+  const nomes=Object.keys(ABAS_ADMIN);
+  const i=nomes.indexOf(botao.dataset.abaAdmin);
+  const proximo=evento.key==='Home'?0:evento.key==='End'?nomes.length-1:
+   (i+(evento.key==='ArrowRight'?1:-1)+nomes.length)%nomes.length;
+  mostrarAbaAdmin(nomes[proximo]);
+  $(ABAS_ADMIN[nomes[proximo]].botao).focus();
+ });
+}
 $('conectarAdmin').addEventListener('click', conectar);
 $('sairAdmin').addEventListener('click', () => {
   chaveTemporaria = '';
   registroEditando = null;
   $('adminToken').value = '';
+  $('navAdminCentral').hidden = true;
+  $('areaVisaoAdmin').hidden = true;
   $('areaPainel').hidden = true;
   $('areaImportacao').hidden = true;
   $('areaPedidosDemo').hidden = true;
@@ -280,7 +313,7 @@ $('sairAdmin').addEventListener('click', () => {
   $('historicoFornecedor').replaceChildren();
   mensagem('Chave removida da memória desta página.');
 });
-$('novoProduto').addEventListener('click', () => { editarFormulario(null); mensagem('Novo produto em rascunho.'); });
+$('novoProduto').addEventListener('click', () => { mostrarAbaAdmin('produtos'); editarFormulario(null); mensagem('Novo produto em rascunho.'); });
 $('cancelarEdicao').addEventListener('click', () => editarFormulario(null));
 $('atualizarLista').addEventListener('click', async () => {
   try { await atualizarProdutos(); mensagem('Lista atualizada.'); }
