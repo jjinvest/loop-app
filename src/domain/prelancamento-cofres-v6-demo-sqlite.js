@@ -16,8 +16,14 @@ class PreLancamentoCofresV6DemoSQLite{
    'CREATE TABLE IF NOT EXISTS loop_v6_pre_config (',
    'id INTEGER PRIMARY KEY CHECK(id=1),',
    "fase TEXT NOT NULL CHECK(fase IN ('ARRECADACAO','EM_OPERACAO')),",
-   'liquido_por_compra INTEGER NOT NULL CHECK(liquido_por_compra>0),',
+   'liquido_por_compra INTEGER NOT NULL CHECK(liquido_por_compra=25000),',
    'iniciado_em TEXT, configurado_em TEXT NOT NULL);',
+   'CREATE TABLE IF NOT EXISTS loop_v6_pre_aportes_demo (',
+   'aporte_id TEXT PRIMARY KEY NOT NULL,',
+   'pedido_id TEXT NOT NULL UNIQUE,',
+   'valor_loop_centavos INTEGER NOT NULL CHECK(valor_loop_centavos=25000),',
+   "origem TEXT NOT NULL CHECK(origem='APORTE_FICTICIO_ADMIN_LOCAL'),",
+   'registrado_em TEXT NOT NULL);',
    'CREATE TABLE IF NOT EXISTS loop_v6_pre_receitas (',
    'pedido_id TEXT PRIMARY KEY, conta_id TEXT NOT NULL,',
    'bruto_centavos INTEGER NOT NULL, liquido_centavos INTEGER NOT NULL,',
@@ -28,7 +34,7 @@ class PreLancamentoCofresV6DemoSQLite{
    'posicao_id INTEGER NOT NULL, beneficiario TEXT,',
    'destino TEXT NOT NULL, valor_centavos INTEGER NOT NULL,',
    'registrado_em TEXT NOT NULL);',
-   ...['loop_v6_pre_receitas','loop_v6_pre_saidas'].flatMap(nome=>[
+   ...['loop_v6_pre_aportes_demo','loop_v6_pre_receitas','loop_v6_pre_saidas'].flatMap(nome=>[
     'CREATE TRIGGER IF NOT EXISTS '+nome+'_no_update',
     'BEFORE UPDATE ON '+nome+" BEGIN SELECT RAISE(ABORT,'caixa-demo imutavel'); END;",
     'CREATE TRIGGER IF NOT EXISTS '+nome+'_no_delete',
@@ -37,8 +43,8 @@ class PreLancamentoCofresV6DemoSQLite{
   ].join('\n'));
  }
  estado(){return this.banco.prepare('SELECT * FROM loop_v6_pre_config WHERE id=1').get()||null;}
- habilitar({liquidoPorCompraCentavos}={}){
-  if(!valor(liquidoPorCompraCentavos))throw erro('LIQUIDO_INVALIDO');
+ habilitar({valorFixoLoopCentavos}={}){
+  if(valorFixoLoopCentavos!==25000)throw erro('VALOR_FIXO_LOOP_INVALIDO');
   const b=this.banco;b.exec('BEGIN IMMEDIATE');
   try{
    if(this.estado())throw erro('PRE_LANCAMENTO_JA_CONFIGURADO');
@@ -46,9 +52,46 @@ class PreLancamentoCofresV6DemoSQLite{
    b.prepare([
     'INSERT INTO loop_v6_pre_config',
     "(id,fase,liquido_por_compra,configurado_em) VALUES(1,'ARRECADACAO',?,?)"
-   ].join(' ')).run(liquidoPorCompraCentavos,new Date().toISOString());
+   ].join(' ')).run(25000,new Date().toISOString());
    this.sincronizar({transacaoAberta:true});
    b.exec('COMMIT');return this.resumo();
+  }catch(e){b.exec('ROLLBACK');throw e;}
+ }
+ // Esta operacao simula um registro de aporte SEPARADO da compra.
+ // Nao prova recebimento bancario. NUNCA expor como um PSP conciliado.
+ registrarAporteFicticio({aporteId,pedidoId,valorLoopCentavos}={}){
+  if(typeof aporteId!=='string'||!/^aporte-[a-z0-9-]{6,90}$/.test(aporteId)||
+     typeof pedidoId!=='string'||pedidoId.length<3||pedidoId.length>120)
+    throw erro('APORTE_ID_INVALIDO');
+  if(valorLoopCentavos!==25000)throw erro('SOMENTE_250_REAIS_LOOP');
+  const b=this.banco;b.exec('BEGIN IMMEDIATE');
+  try{
+   const config=this.estado();
+   if(!config)throw erro('PRE_LANCAMENTO_DESATIVADO');
+   const compra=b.prepare('SELECT pedido_id FROM admin_ponte_compras_demo WHERE pedido_id=?')
+     .get(pedidoId);
+   if(!compra)throw erro('COMPRA_VINCULADA_INEXISTENTE');
+   const anterior=b.prepare(
+     'SELECT aporte_id, pedido_id FROM loop_v6_pre_aportes_demo WHERE aporte_id=?'
+   ).get(aporteId);
+   if(anterior){
+    if(anterior.pedido_id!==pedidoId)throw erro('CONFLITO_IDEMPOTENCIA');
+    b.exec('COMMIT');return {registrado:true,repetido:true,
+      valorLoopCentavos:25000,semPagamentoReal:true};
+   }
+   const duplicado=b.prepare(
+     'SELECT aporte_id FROM loop_v6_pre_aportes_demo WHERE pedido_id=?'
+   ).get(pedidoId);
+   if(duplicado)throw erro('APORTE_JA_VINCULADO_A_COMPRA');
+   b.prepare([
+    'INSERT INTO loop_v6_pre_aportes_demo',
+    '(aporte_id,pedido_id,valor_loop_centavos,origem,registrado_em)',
+    "VALUES(?,?,?,'APORTE_FICTICIO_ADMIN_LOCAL',?)"
+   ].join(' ')).run(aporteId,pedidoId,25000,new Date().toISOString());
+   this.sincronizar({transacaoAberta:true});
+   b.exec('COMMIT');
+   return {registrado:true,repetido:false,valorLoopCentavos:25000,
+     fonte:'APORTE_FICTICIO_ADMIN_LOCAL',semPagamentoReal:true};
   }catch(e){b.exec('ROLLBACK');throw e;}
  }
  sincronizar({transacaoAberta=false}={}){
@@ -57,9 +100,10 @@ class PreLancamentoCofresV6DemoSQLite{
   if(!transacaoAberta)b.exec('BEGIN IMMEDIATE');
   try{
    const compras=b.prepare([
-    'SELECT pedido_id AS pedidoId,conta_id AS contaId,',
-    'valor_centavos AS brutoCentavos',
-    'FROM admin_ponte_compras_demo ORDER BY confirmado_em,pedido_id'
+    'SELECT c.pedido_id AS pedidoId,c.conta_id AS contaId,',
+    'c.valor_centavos AS brutoCentavos'
+    'FROM admin_ponte_compras_demo c JOIN loop_v6_pre_aportes_demo a',
+    'ON a.pedido_id=c.pedido_id ORDER BY c.confirmado_em,c.pedido_id'
    ].join(' ')).all();
    const inserir=b.prepare([
     'INSERT OR IGNORE INTO loop_v6_pre_receitas',
@@ -68,9 +112,10 @@ class PreLancamentoCofresV6DemoSQLite{
     'VALUES(?,?,?,?,?,?,?,?)'
    ].join(' '));
    let novas=0;
+   let numeroAportes=b.prepare('SELECT COUNT(*) AS n FROM loop_v6_pre_receitas').get().n;
    for(const compra of compras){
-    if(compra.brutoCentavos<l.liquido_por_compra)
-      throw erro('LIQUIDO_SUPERA_VENDA');
+    // Aporte foi confirmado somente no LIVRO FICTICIO SEPARADO, nao pela venda.
+    // Nao comparar bruto da loja com aporte distinto: fluxo comercial independente.
     const atual=b.prepare('SELECT * FROM loop_v6_pre_receitas WHERE pedido_id=?')
       .get(compra.pedidoId);
     if(atual){
@@ -81,10 +126,12 @@ class PreLancamentoCofresV6DemoSQLite{
     }
     const net=l.liquido_por_compra;
     const centro=Math.floor(net/2);
-    const esquerda=Math.floor(net/3);
+    const esquerda=Math.floor((numeroAportes+1)*net/3)-
+      Math.floor(numeroAportes*net/3);
     const direita=net-centro-esquerda;
-    novas+=inserir.run(compra.pedidoId,compra.contaId,compra.brutoCentavos,
+    const feito=inserir.run(compra.pedidoId,compra.contaId,compra.brutoCentavos,
       net,centro,esquerda,direita,new Date().toISOString()).changes;
+    novas+=feito;numeroAportes+=feito;
    }
    if(!transacaoAberta)b.exec('COMMIT');
    return {comprasNovas:novas,semDinheiroReal:true};
@@ -181,7 +228,8 @@ class PreLancamentoCofresV6DemoSQLite{
    'FROM loop_v6_pre_saidas'
   ].join(' ')).get();
   return {configurado:true,fase:l.fase,iniciadoEm:l.iniciado_em,
-   liquidoHipoteticoPorCompraCentavos:l.liquido_por_compra,
+   valorFixoLoopCentavos:l.liquido_por_compra,
+   aportesFicticiosConfirmados:r.compras,
    comprasConferidas:r.compras,totalHipoteticoCentavos:r.total,
    centroRecebidoSimuladoCentavos:r.centro,
    centroComprometidoSimuladoCentavos:s.total,
