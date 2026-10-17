@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>LOOP V6 | Circuit Break — laboratório</title>
+  <link rel="stylesheet" href="/css/style.css">
+  <link rel="stylesheet" href="/admin/painel.css">
+  <link rel="stylesheet" href="/admin/financeiro-demo.css">
+  <link rel="stylesheet" href="/css/loop-futurista-v6.css">
+</head>
+<body>
+  <header>
+    <div><h1>LOOP</h1><small>Circuit Break V6 — controle administrativo fictício</small></div>
+    <a class="voltar-loja" href="/admin/financeiro-demo">Voltar ao financeiro</a>
+  </header>
+  <main>
+    <section class="painel">
+      <h2>Controle da catraca — Circuit Break</h2>
+      <p class="aviso-demo">LABORATÓRIO LOCAL. Nenhum pagamento confirmado, crédito disponível ou saque real. O comando “Gerar 30 compras fictícias” cria somente dados artificiais de teste; não é venda verdadeira.</p>
+      <div class="campo">
+        <label for="chaveCBV6">Chave temporária do laboratório</label>
+        <input type="password" id="chaveCBV6" autocomplete="off" placeholder="Chave configurada no servidor">
+      </div>
+      <div class="acoes-admin">
+        <button type="button" id="abrirPainelCBV6">Consultar controle</button>
+        <button type="button" id="limparCBV6" class="secundario">Sair / descartar chave</button>
+      </div>
+      <p role="status" aria-live="polite" id="statusCBV6">Informe a chave administrativa local.</p>
+    </section>
+    <div id="conteudoCBV6" hidden>
+      <section class="painel">
+        <h2>Estado atual da catraca</h2>
+        <p id="resumoCBV6" aria-live="polite"></p>
+        <p id="filaCBV6"></p>
+        <p id="caixaCBV6"></p>
+        <div class="acoes-admin">
+          <button type="button" id="abrirCatracaCBV6">Abrir catraca</button>
+          <button type="button" id="pausarCatracaCBV6" class="secundario">Pausar catraca</button>
+          <button type="button" id="atualizarCBV6" class="secundario">Atualizar quadro</button>
+        </div>
+        <h3>Limite máximo de giros por dia</h3>
+        <form id="formLimiteCBV6">
+          <div class="campo">
+            <label for="limiteDiarioCBV6">Limite (1 a 300 giros, horário de Brasília)</label>
+            <input type="number" id="limiteDiarioCBV6" min="1" max="300" step="1" required>
+          </div>
+          <button type="submit">Salvar limite diário</button>
+        </form>
+      </section>
+      <section class="painel">
+        <h2>Compras fictícias e liberações</h2>
+        <p class="ajuda">Primeiro adicione uma onda artificial de 30 compras (30 pessoas, com as mesmas oito indicações do cenário de testes). Cada seis compras diferentes permitem no máximo um giro. Os lotes consomem apenas essas compras existentes.</p>
+        <div class="acoes-admin">
+          <button type="button" id="gerarComprasCBV6">Gerar 30 compras fictícias</button>
+        </div>
+        <form id="formLoteCBV6">
+          <div class="campo">
+            <label for="quantidadeLoteCBV6">Liberar um lote de giros prontos</label>
+            <select id="quantidadeLoteCBV6">
+              <option value="1">1 giro</option>
+              <option value="3">3 giros</option>
+              <option value="4">4 giros</option>
+              <option value="5" selected>5 giros</option>
+              <option value="10">10 giros</option>
+            </select>
+          </div>
+          <button type="submit">Liberar lote fictício</button>
+        </form>
+        <p class="ajuda">Se a catraca estiver pausada, o limite diário tiver sido atingido ou faltarem seis eventos por giro, a operação inteira é recusada. Os giros não criam novas vendas e não movimentam nenhum cofre real.</p>
+        <p id="resultadoCBV6" role="status" aria-live="polite"></p>
+      </section>
+      <section class="painel">
+  <h2>Pré-lançamento: arrecadar → START → contemplar</h2>
+  <p class="aviso-demo">O preço do PDF e o custo do distribuidor ficam na LOJA. Apenas aportes fictícios separados e identificados de R$ 250 entram nos cofres demonstrativos do LOOP. Compras sozinhas não fazem depósitos. Nenhum dinheiro bancário entra ou sai aqui.</p>
+  <p id="resumoPreV6" role="status">Fase ainda não consultada.</p>
+  <h3>Conciliação dos quatro cofres</h3>
+  <p id="balancoCofresV6" role="status" aria-live="polite">Ainda sem conferência da razão fictícia.</p>
+  <p class="ajuda">A conferência verifica lançamentos de laboratório, não comprovantes bancários. Divergência bloqueia novos giros. O Dourado é o quarto cofre do LOOP; as receitas da loja e as previsões dos escritórios são controles separados. Saldo real sacável continua zero.</p>
+  <h3>Gestão administrativa dos cofres — solicitações fictícias</h3>
+  <p class="ajuda">O proprietário pode solicitar movimentações a qualquer horário, independentemente da catraca. Este formulário NÃO retira dinheiro, não debita o caixa, não transfere Pix e não autoriza usar valores comprometidos: registra uma solicitação auditável, pendente de conciliação real.</p>
+  <form id="formGestaoProprietarioV6">
+    <div class="campo"><label for="cofreOrigemGestaoV6">Cofre de origem</label>
+      <select id="cofreOrigemGestaoV6" required>
+        <option value="LOOP_CENTRO">Central</option><option value="LOOP_ESQUERDA">Investimento</option>
+        <option value="LOOP_DIREITA">Reserva</option><option value="LOOP_DOURADAS">Douradas</option>
+      </select></div>
+    <div class="campo"><label for="destinoGestaoV6">Destino solicitado</label>
+      <select id="destinoGestaoV6" required>
+        <option value="EMPRESA_EXTERNA">Empresa (saída futura)</option>
+        <option value="LOOP_CENTRO">Cofre Central</option><option value="LOOP_ESQUERDA">Investimento</option>
+        <option value="LOOP_DIREITA">Reserva</option><option value="LOOP_DOURADAS">Douradas</option>
+      </select></div>
+    <div class="campo"><label for="valorGestaoV6">Valor solicitado (R$)</label>
+      <input type="number" id="valorGestaoV6" min="0.01" step="0.01" value="10.00" required></div>
+    <div class="campo"><label for="motivoGestaoV6">Motivo contábil</label>
+      <input id="motivoGestaoV6" type="text" minlength="8" maxlength="300" placeholder="Descreva a finalidade do movimento" required></div>
+    <button type="submit">Registrar solicitação administrativa (sem dinheiro real)</button>
+  </form>
+  <p id="estadoGestaoProprietarioV6" role="status" aria-live="polite"></p>
+  <ol id="historicoGestaoProprietarioV6" aria-live="polite"></ol>
+  <div class="acoes-admin">
+    <button type="button" id="configurarPreV6">Ativar período de arrecadação (R$ 250 fixos)</button>
+    <button type="button" id="startPreV6">Dar START e habilitar saídas autorizadas</button>
+    <button type="button" id="atualizarPreV6">Atualizar cofres</button>
+  </div>
+  <form id="formAportePreV6">
+    <label for="pedidoAportePreV6">Pedido de compra fictícia vinculado</label>
+    <input id="pedidoAportePreV6" type="text" maxlength="120" placeholder="ID da compra confirmada no laboratório" required>
+    <button type="submit">Registrar aporte separado FICTÍCIO de R$ 250</button>
+  </form>
+  <p id="resultadoPreV6" role="status" aria-live="polite"></p>
+  <h3>Liberação manual de giros</h3>
+  <p class="ajuda">O giro é o único movimento: completa seis compras distintas, sai a posição do centro e as outras avançam. Tanto faz se o centro é participante ou dourado: isso só determina o destino contábil, não a ordem.</p>
+  <p class="ajuda">Para liberar 3 giros agora, use o controle de lotes da ponte logo abaixo. O START e o caixa demonstrativo continuam protegendo a operação fictícia.</p>
+</section>
+<section class="painel"><h2>Giros dos clientes cadastrados — laboratório</h2><p class="aviso-demo">Somente pedidos fictícios confirmados na ponte. Compartilha pausa e limite diário, sem usar os compradores artificiais ou liberar dinheiro.</p><p id="resumoPonteCBV6">Aguardando consulta.</p><p id="provisoesPonteCBV6" aria-live="polite">Livro de previsões ainda não consultado.</p><button type="button" id="atualizarPonteCBV6">Atualizar a ponte</button><form id="formLotePonteCBV6"><label for="quantidadeLotePonteCBV6">Lote da ponte</label><select id="quantidadeLotePonteCBV6"><option value="1">1 giro</option><option value="3">3 giros</option><option value="4">4 giros</option><option value="5">5 giros</option><option value="10">10 giros</option></select><button id="liberarPonteCBV6" type="submit">Liberar giros das compras fictícias cadastradas</button></form><p id="resultadoPonteCBV6" role="status" aria-live="polite"></p><p class="ajuda">Seis pedidos distintos por giro, fila com reposição e extrato somente previsto. Nenhum saldo sacável.</p></section>
+      <section class="painel">
+        <h2>Pré-lançamento: simular caixa e limite seguro</h2>
+        <p class="aviso-demo">Hipótese matemática, NÃO é preço de produto nem dinheiro liquidado. Compra comercial não credita o LOOP. O sistema compara a quantidade de compras com a capacidade hipotética dos três cofres. Custos, impostos, estornos e compromissos existentes precisam ser conciliados separadamente.</p>
+        <form id="formProjecaoPrelancamentoV6">
+          <div class="campo"><label for="comprasPrelancamentoV6">Quantidade de compras independentes</label><input id="comprasPrelancamentoV6" type="number" min="0" max="1000000" value="100" required></div>
+          <div class="campo"><label for="liquidoPdfPrelancamentoV6">Hipótese de aporte líquido ao LOOP (R$)</label><input id="liquidoPdfPrelancamentoV6" type="number" step="0.01" min="0" max="100000" value="225.00" required></div>
+          <button type="submit">Conferir caixa hipotético e giros possíveis</button>
+        </form>
+        <p id="resultadoProjecaoPrelancamentoV6" role="status" aria-live="polite">Referência nominal por compra qualificada: R$ 250,00. Não implica liquidação real.</p>
+      </section>
+      <section class="painel">
+        <h2>Programação automática por horário — somente laboratório</h2>
+        <p class="aviso-demo">Você escolhe QUANTOS GIROS tentar e quando. Cada giro exige seis compras distintas; o centro avança seja de cliente ou dourado. A identidade do centro muda apenas o cofre de destino. Pausas, limites e caixa demonstrativo insuficiente bloqueiam giros. Nenhum PIX é emitido.</p>
+        <form id="formAgendaCBV6">
+          <div class="campo"><label for="dataAgendaCBV6">Dia da programação</label><input id="dataAgendaCBV6" type="date" required></div>
+          <div class="campo"><label for="modoAgendaCBV6">Modo</label><select id="modoAgendaCBV6"><option value="DISTRIBUIDO">Distribuir ao longo do período</option><option value="PONTUAL">Começar no horário escolhido</option><option value="A_CADA_30_MIN">A cada 30 minutos</option><option value="A_CADA_60_MIN">A cada hora</option></select></div>
+          <div class="campo"><label for="quantidadeAgendaCBV6">Quantidade máxima programada</label><input id="quantidadeAgendaCBV6" type="number" min="1" max="300" step="1" value="20" required></div>
+          <div class="campo"><label for="inicioAgendaCBV6">Começar às</label><input id="inicioAgendaCBV6" type="time" value="09:00" required></div>
+          <div class="campo"><label for="fimAgendaCBV6">Encerrar às</label><input id="fimAgendaCBV6" type="time" value="18:00" required></div>
+          <div class="acoes-admin"><button type="button" id="programarAgoraCBV6" class="secundario">Preencher: agora</button><button type="button" id="programarUmaHoraCBV6" class="secundario">Preencher: daqui a 1 hora</button></div>
+          <button type="submit" id="salvarAgendaCBV6">Salvar programação automática fictícia</button>
+        </form>
+        <p class="ajuda">Para programar 20 giros, configure primeiro o limite diário para pelo menos 20. A automação só atua enquanto o servidor local de laboratório estiver em execução e o Circuit Break estiver aberto. Sem compensações automáticas em massa após o fim do horário.</p>
+        <p id="resultadoAgendaCBV6" role="status" aria-live="polite"></p>
+        <button type="button" id="atualizarAgendaCBV6" class="secundario">Atualizar programações</button>
+        <ol id="programacoesCBV6" aria-live="polite"></ol>
+      </section>
+      <section class="painel">
+        <h2>Histórico de comandos (imutável)</h2>
+        <button type="button" id="historicoAtualizarCBV6" class="secundario">Atualizar histórico</button>
+        <ol id="historicoCBV6" aria-live="polite" class="financeiro-historico"></ol>
+      </section>
+    </div>
+  </main>
+  <script src="/admin/circuit-break-v6.js"></script>
+</body>
+</html>

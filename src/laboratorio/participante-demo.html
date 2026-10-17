@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+ <meta charset="UTF-8">
+ <meta name="viewport" content="width=device-width,initial-scale=1">
+ <title>LOOP | Escritório Vilela — teste local</title>
+ <link rel="stylesheet" href="/css/style.css">
+ <link rel="stylesheet" href="/laboratorio/participante.css">
+  <link rel="stylesheet" href="/css/loop-futurista-v6.css">
+</head>
+<body>
+ <header class="cabecalho-participante">
+  <div><h1>LOOP</h1><small>Escritório Vilela — acesso individual de laboratório</small></div>
+  <small>Ambiente individual fictício · sem acesso ao painel administrativo</small>
+ </header>
+ <main class="portal-participante">
+  <section class="cartao-participante">
+   <h2>Meu acesso</h2>
+   <p class="aviso-portal">Demonstração acessível por celular ou computador no ambiente local de testes, com contas inventadas e sem CPF real, compras reais, créditos, saques ou movimentações financeiras.</p>
+   <form id="formEntrarParticipante" autocomplete="off">
+    <label for="nomeParticipante">Nome de acesso</label>
+    <input id="nomeParticipante" type="text" maxlength="60" required autocomplete="off" placeholder="Conta Demo Principal">
+    <label for="senhaParticipante">Senha fictícia</label>
+    <input id="senhaParticipante" type="password" required autocomplete="off">
+    <button type="submit" id="botaoEntrarParticipante">Entrar na conta de teste</button>
+   </form>
+   <button type="button" class="botao-sair" id="botaoSairParticipante" hidden>Sair e encerrar sessão</button>
+   <p id="estadoParticipante" role="status" aria-live="polite">Nenhuma sessão de teste aberta.</p>
+  </section>
+  <div id="conteudoParticipante" hidden>
+   <nav class="atalhos-participante" aria-label="Navegação do meu escritório">
+    <a href="/loja-vilela">Loja Vilela</a>
+    <a href="#tituloHistoricoLojaParticipante">Meus pedidos</a>
+    <a href="#tituloMapaParticipante">Filas e tabuleiro</a>
+    <a href="#secaoAtivacaoParticipante" id="atalhoAtivarParticipante" hidden>Confirmar CPF e termos</a>
+   </nav>
+   <section class="cartao-participante" aria-labelledby="tituloCreditosPrevistosV6">
+    <h2 id="tituloCreditosPrevistosV6">Meu extrato de contemplações — V6</h2>
+    <p class="aviso-portal">CRÉDITOS APENAS PREVISTOS EM LABORATÓRIO. Não são dinheiro recebido, saldo disponível, rendimento garantido nem autorização de saque. Só aparecem após seis compras fictícias distintas comprovadas no motor e o encerramento da sua própria posição central.</p>
+    <div class="resumos-participante">
+      <div><span>Total previsto pelos meus giros</span><strong id="creditoPrevistoCentroV6">R$ 0,00</strong></div>
+      <div><span>Saldo disponível para sacar destes giros</span><strong id="creditoDisponivelCentroV6">R$ 0,00</strong></div>
+      <div><span>Minhas contemplações registradas</span><strong id="creditoCiclosCentroV6">0</strong></div>
+    </div>
+    <p id="avisoCreditosCentroV6" class="ajuda-portal" role="status">Aguardando consulta ao histórico da sua conta.</p>
+    <p id="estadoLivroProvisoesV6" class="ajuda-portal" role="status">Livro de provisões: aguardando consulta.</p>
+    <ol id="historicoCreditoCentroV6" aria-live="polite"></ol>
+    <h3>Laboratório: saque do centro devolvido pelo banco</h3>
+    <p class="aviso-portal">Ensaio fictício: reserve um valor REFERENCIAL de um ciclo concluído; caso a transferência simulada falhe por dados incorretos, ele só volta para novo pedido depois da confirmação simulada do retorno. Não existe Pix, saldo bancário ou possibilidade de sacar dinheiro real aqui.</p>
+    <p id="resumoRetornoCentroV6" role="status">Nenhuma solicitação simulada.</p>
+    <form id="formSaqueCentroV6" autocomplete="off">
+      <label for="valorSaqueCentroV6">Referência do saque simulado (R$)</label>
+      <input id="valorSaqueCentroV6" type="number" step="0.01" min="0.01" required>
+      <button type="submit" id="solicitarSaqueCentroV6" disabled>Simular pedido de saque do centro</button>
+    </form>
+    <p id="mensagemSaqueCentroV6" role="status" aria-live="polite"></p>
+    <ol id="historicoRetornoCentroV6" aria-live="polite"></ol>
+   </section>
+   <section class="cartao-participante">
+    <h2 id="nomeLogadoParticipante">Meu resumo</h2>
+    <div class="area-indicacoes-participante">
+     <h3>Meus dois links de indicação</h3>
+     <p id="statusLinkIndicacaoParticipante" class="ajuda-portal"></p>
+     <p class="ajuda-portal">Um único código de indicação, com dois destinos. Escolha o que deseja apresentar; o cadastro de convidados continuará atribuído à sua conta.</p>
+     <label for="enderecoLinkParticipante">Meu link para apresentar o Escritório Vilela</label>
+     <input id="enderecoLinkParticipante" type="text" readonly autocomplete="off" spellcheck="false">
+     <button type="button" id="copiarLinkParticipante" disabled>Copiar link Escritório Vilela</button>
+     <label for="enderecoLinkLojaParticipante">Meu link para apresentar a Loja Vilela</label>
+     <input id="enderecoLinkLojaParticipante" type="text" readonly autocomplete="off" spellcheck="false">
+     <button type="button" id="copiarLinkLojaParticipante" disabled>Copiar link Loja Vilela</button>
+     <form id="formApelidoLinkParticipante" autocomplete="off">
+      <label for="apelidoLinkParticipante">Personalizar o final do link</label>
+      <input id="apelidoLinkParticipante" maxlength="80" placeholder="ex.: vilela" required>
+      <button type="submit" id="salvarApelidoLinkParticipante">Salvar nome do link</button>
+     </form>
+     <p id="avisoLinkParticipante" role="status" aria-live="polite"></p>
+    </div>
+    <div class="area-bonus-participante" aria-labelledby="tituloBonusParticipante">
+     <h3 id="tituloBonusParticipante">Minhas bonificações por indicação</h3>
+     <p>Os bônus são calculados sobre o valor único da posição criada no LOOP, não sobre a venda inteira.</p>
+     <div class="resumos-participante">
+      <div><span>Bonificações registradas</span><strong id="bonusQuantidadeParticipante">0</strong></div>
+      <div><span>Saldo de bônus (simulado)</span><strong id="bonusSaldoParticipante">R$ 0,00</strong></div>
+      <div><span>Minha comissão nas próximas indicações</span><strong id="bonusPercentualParticipante">10%</strong></div>
+      <div><span>Mínimo para saque</span><strong id="bonusMinimoParticipante">R$ 25,00</strong></div>
+     </div>
+     <p id="bonusCampanhaStatusParticipante" class="ajuda-portal" role="status"></p>
+     <p id="bonusSaqueStatusParticipante" role="status"></p>
+     <p class="ajuda-portal">Saque de bônus ou participação de lucro: taxa de 3% sobre o valor bruto solicitado. Mínimo de R$ 25 por solicitação. Apenas simulação, sem transferências reais.</p>
+     <p class="ajuda-portal">Origem exclusiva: caixa reserva do LOOP. O caixa central e o de investimento não financiam estas bonificações. Nenhum saque ou pagamento real está habilitado neste laboratório.</p>
+     <ol id="bonusHistoricoParticipante"></ol>
+     <section aria-labelledby="tituloSaqueTesteParticipante" class="saques-teste-participante">
+      <h3 id="tituloSaqueTesteParticipante">Solicitações de saque fictício</h3>
+      <p class="ajuda-portal">Regra planejada para a operação futura: prazo de conferência e liberação em até 24 horas CORRIDAS após a solicitação, inclusive sábados, domingos e feriados. Se todas as verificações e o saldo REAL conciliado permitirem, poderá acontecer antes. Neste laboratório não existe Pix ou liquidação real; o prazo é acompanhado, não executado.</p>
+      <p class="ajuda-portal">Apenas laboratório. Mínimo R$ 25 brutos, taxa de 3%. Solicitar compromete somente saldo de bônus fictício; nenhum Pix ou transferência será executado.</p>
+      <div class="resumos-participante">
+       <div><span>Bônus ainda disponível para simular</span><strong id="bonusDisponivelSaqueParticipante">R$ 0,00</strong></div>
+       <div><span>Já solicitado neste teste</span><strong id="bonusReservadoSaqueParticipante">R$ 0,00</strong></div>
+      </div>
+      <form id="formSaqueTesteParticipante" autocomplete="off">
+       <label for="valorSaqueTesteParticipante">Valor bruto para solicitar (R$)</label>
+       <input type="number" min="25" step="0.01" id="valorSaqueTesteParticipante" inputmode="decimal" placeholder="25.00" required>
+       <button type="submit" id="enviarSaqueTesteParticipante" disabled>Registrar solicitação de bônus fictício</button>
+      </form>
+      <p id="avisoSaqueTesteParticipante" role="status" aria-live="polite"></p>
+      <h4>Histórico das solicitações fictícias</h4>
+      <ol id="historicoSaqueTesteParticipante"></ol>
+      <p class="ajuda-portal">Participação de lucro: mesmo mínimo e taxa de 3%, mas não habilitada até existir saldo próprio e verificado. Não criamos saldo de lucro artificial.</p>
+     </section>
+    </div>
+    <p class="ajuda-portal">Um convidado cadastrado ainda não é uma indicação validada; somente uma compra confirmada pelo verificador de simulação pode contar.</p>
+    <div class="resumos-participante">
+     <div><span>Posições ativas</span><strong id="ativasParticipante">0</strong></div>
+     <div><span>Vagas disponíveis</span><strong id="vagasParticipante">6</strong></div>
+     <div><span>Indicações validadas no teste</span><strong id="indicacoesParticipante">0</strong></div>
+     <div><span>Convites pendentes</span><strong id="pendentesParticipante">0</strong></div>
+    </div>
+   </section>
+   <section class="cartao-participante">
+    <h2>Minha loja de testes</h2>
+    <p>Escolha cursos PDF e outros produtos, monte um único carrinho e acompanhe os pedidos pela sua própria conta.</p>
+    <a href="/loja-vilela" class="link-loja-participante">Entrar na Loja Vilela</a>
+    <p class="ajuda-portal">O pedido fica aguardando confirmação fictícia do laboratório. A tela da loja nunca confirma pagamentos.</p>
+   </section>
+   <section class="cartao-participante" aria-labelledby="tituloHistoricoLojaParticipante">
+    <div class="cabecalho-historico-loja-participante">
+     <div>
+      <h2 id="tituloHistoricoLojaParticipante">Meus pedidos da loja</h2>
+      <p class="ajuda-portal">Acompanhe o pedido desde a criação até a posição no LOOP, sem sair do escritório.</p>
+     </div>
+     <a href="/loja-vilela" class="link-loja-participante">Fazer uma compra de teste</a>
+    </div>
+    <div class="resumos-participante">
+     <div><span>Meus pedidos</span><strong id="totalPedidosLojaParticipante">0</strong></div>
+     <div><span>Aguardando confirmação</span><strong id="aguardandoPedidosLojaParticipante">0</strong></div>
+     <div><span>Posições azuis</span><strong id="azuisPedidosLojaParticipante">0</strong></div>
+    </div>
+    <p id="alertaAzulParticipante" class="aviso-portal" hidden></p>
+    <ol id="historicoPedidosLojaParticipante" class="historico-loja-participante"></ol>
+   </section>
+   <section class="cartao-participante" id="secaoDesistenciaVaga6Participante" hidden>
+     <h2>Desistência expressa na vaga 6 — demonstração</h2>
+     <p class="aviso-portal">Se sua posição ativa já entrou na sexta vaga do tabuleiro, você pode simular a desistência. O LOOP assume essa posição como dourada; caso ela chegue ao centro, as três parcelas do centro irão ao caixa das bolas douradas. Esta ação no laboratório é irreversível e não processa reembolso.</p>
+     <form id="formDesistenciaVaga6Participante">
+      <input type="hidden" id="posicaoDesistenciaVaga6Participante">
+      <label class="checkbox-adesao-demo">
+       <input type="checkbox" id="aceiteDesistenciaVaga6Participante" required>
+       Confirmo expressamente que desejo simular a desistência desta posição na vaga 6.
+      </label>
+      <button type="submit" id="registrarDesistenciaVaga6Participante">Registrar desistência fictícia</button>
+     </form>
+     <p id="statusDesistenciaVaga6Participante" role="status" aria-live="polite"></p>
+    </section>
+    <section class="cartao-participante" id="secaoAtivacaoParticipante" hidden>
+    <h2>Segunda ativação: CPF e termos</h2>
+    <p class="aviso-portal">Após a primeira compra de qualquer valor, a identificação e o aceite das regras liberam as bonificações de teste de 10%. Uma compra qualificada no valor vigente do LOOP habilita as campanhas superiores. Se houver posição azul, este aceite também a ativa enquanto ela estiver nas filas A ou B. Ao cruzar a entrada da vaga 6 sem confirmação, a posição vira dourada imediatamente e passa a pertencer operacionalmente ao LOOP; o aceite posterior não a recupera. Nenhuma comissão anterior ao aceite é gerada retroativamente.</p>
+    <details class="ajuda-portal" id="regrasDemonstracaoParticipante">
+     <summary>Ler as regras desta demonstracao (LOOP-DEMO-V1)</summary>
+     <p>O cadastro cria um link individual, liberado apos a primeira compra confirmada de qualquer valor. O aceite de CPF ficticio e termos habilita somente bonificacoes de simulacao por indicacoes posteriores. Compras qualificadas pela referencia vigente podem criar uma posicao e habilitar campanhas acima de 10%; quantidades minimas e autorizacao de cada produto continuam aplicaveis. A posicao azul permanece nas filas A e B ate a entrada na vaga 6. Sem CPF e termos confirmados antes dessa entrada, a posicao vira dourada e passa a pertencer operacionalmente ao LOOP, sem retorno retroativo.</p>
+     <p>Os saldos, campanhas, compras e saques aqui sao ficticios. Este texto e apenas um resumo para testes e nao constitui contrato, politica de privacidade final nem aprovacao juridica para operacoes reais.</p>
+    </details>
+    <form id="formAtivacaoParticipante" autocomplete="off">
+     <label for="cpfFicticioParticipante">CPF de teste (não use CPF real)</label>
+     <input id="cpfFicticioParticipante" type="text" inputmode="numeric" pattern="[0-9]{11}" maxlength="11" placeholder="Somente CPF fictício" autocomplete="off" required>
+     <label class="checkbox-adesao-demo"><input id="aceiteTermosParticipante" type="checkbox" required> Li e aceito as regras de demonstração LOOP-DEMO-V1 (sem efeitos financeiros reais).</label>
+     <button type="submit" id="confirmarAtivacaoParticipante">Confirmar CPF e termos no teste</button>
+    </form>
+    <p id="estadoAtivacaoParticipante" role="status" aria-live="polite"></p>
+   </section>
+   <section class="cartao-participante" aria-labelledby="tituloMapaParticipante">
+    <h2 id="tituloMapaParticipante">Mapa das posições — laboratório</h2>
+    <p class="ajuda-portal">Vermelho: minhas posições ativadas · Cinza: outros participantes ativados · Azul: aguardando CPF e termos nas filas · Dourado: assumida pelo LOOP na entrada da vaga 6 ou após desistência.</p>
+    <div class="legenda-posicoes-demo">
+     <span class="selo-posicao-demo posicao-vermelho">Minha</span>
+     <span class="selo-posicao-demo posicao-cinza">Outros</span>
+     <span class="selo-posicao-demo posicao-azul">Pendente</span>
+     <span class="selo-posicao-demo posicao-dourado">LOOP</span>
+    </div>
+    <p id="resumoMapaParticipante" class="ajuda-portal" aria-live="polite"></p>
+    <div class="controle-mapa-participante" role="group" aria-label="Como mostrar as filas">
+     <button type="button" id="filtroResumoMapaParticipante" aria-pressed="true">Resumo</button>
+     <button type="button" id="filtroMinhasMapaParticipante" aria-pressed="false">Minhas posições</button>
+     <button type="button" id="filtroTodasMapaParticipante" aria-pressed="false">Fila completa</button>
+    </div>
+    <p class="ajuda-portal" id="ajudaFiltroMapaParticipante">O resumo mostra as primeiras posições de cada fila e todas as suas posições, mantendo os números reais de ordem.</p>
+    <div class="duas-colunas-participante colunas-filas-participante">
+     <div class="bloco-fila-participante">
+      <h3>Fila A <small id="contadorFilaAParticipante"></small></h3>
+      <ol id="mapaFilaAParticipante" class="mapa-fila-posicoes-demo"></ol>
+     </div>
+     <div class="bloco-fila-participante">
+      <h3>Fila B <small id="contadorFilaBParticipante"></small></h3>
+      <ol id="mapaFilaBParticipante" class="mapa-fila-posicoes-demo"></ol>
+     </div>
+    </div>
+    <h3 class="titulo-tabuleiro-participante">Tabuleiro <small>Centro + 6 vagas</small></h3>
+    <p class="ajuda-portal">A posição no desenho não muda a prioridade ou a ordem das filas.</p>
+    <div class="painel-tabuleiro-imersivo">
+     <div id="mapaTabuleiroParticipante" class="mapa-tabuleiro-posicoes-demo" role="group" aria-label="Centro e seis posições do tabuleiro"></div>
+     <p class="titulo-marcos-loop">SEIS EVENTOS DO CICLO · REFERÊNCIA VISUAL</p>
+     <div class="marcos-v6" role="img" aria-label="Seis eventos alternados: participante, empresa, participante, empresa, participante, empresa">
+      <span title="1º: participante"></span><span title="2º: empresa"></span>
+      <span title="3º: participante"></span><span title="4º: empresa"></span>
+      <span title="5º: participante"></span><span title="6º: empresa"></span>
+     </div>
+     <div class="legenda-marcos-v6">
+      <span><i class="amostra-roxo" aria-hidden="true"></i> Participante · roxo metálico</span>
+      <span><i class="amostra-preto" aria-hidden="true"></i> Empresa · preto metálico</span>
+     </div>
+     <p class="ajuda-portal texto-marcos-v6">Quando o centro pertence ao LOOP, as parcelas do participante são destinadas ao caixa das bolas douradas. Os marcadores não são pagamentos realizados.</p>
+    </div>
+   </section>
+      <div class="duas-colunas-participante">
+    <section class="cartao-participante">
+     <h2>Minhas posições</h2>
+     <ol id="posicoesParticipante"></ol>
+    </section>
+    <section class="cartao-participante">
+     <h2>Compras que geraram posições</h2>
+     <ol id="pedidosParticipante"></ol>
+    </section>
+   </div>
+   <section class="cartao-participante">
+    <h2>Limites deste laboratório</h2>
+    <p>Os dados mostrados são somente desta conta fictícia. A sessão expira automaticamente, não há pagamento real, análise de CPF nem contemplação. O escritório mostra seus pedidos, mas não movimenta a catraca nem confirma pagamentos. O pedido pode ser criado pela loja de teste.</p>
+    <button type="button" id="atualizarParticipante" class="botao-sair">Atualizar meu resumo</button>
+   </section>
+  </div>
+ </main>
+ <script src="/laboratorio/participante.js"></script>
+</body>
+</html>

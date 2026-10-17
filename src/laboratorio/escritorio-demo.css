@@ -1,0 +1,19 @@
+#conteudoEscritorioDemo[hidden]{display:none}
+.escritorio-resumo{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin:16px 0}
+.resumo-estatistica{background:#142339;border:1px solid #475569;border-radius:12px;padding:16px;display:flex;flex-direction:column;gap:9px}
+.resumo-estatistica span{color:#cbd5e1;font-size:.87rem}
+.resumo-estatistica strong{font-size:1.7rem;color:#ffd400}
+.escritorio-duas-colunas{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin:16px 0}
+.escritorio-duas-colunas ol{list-style:decimal;padding-left:23px}
+.escritorio-duas-colunas li{padding:10px 6px;line-height:1.45;border-bottom:1px solid #475569;overflow-wrap:anywhere}
+.escritorio-modulos p{padding:8px 0;border-bottom:1px solid #475569;line-height:1.5}
+@media(max-width:660px){.escritorio-resumo,.escritorio-duas-colunas{grid-template-columns:1fr}}
+
+/* Visao de escritorio usada no desktop e celular. */
+.escritorio-resumo>*,.escritorio-duas-colunas>*,.escritorio-modulos{min-width:0;overflow-wrap:anywhere}
+@media(max-width:420px){
+ .escritorio-resumo,.escritorio-duas-colunas{grid-template-columns:minmax(0,1fr)}
+ .resumo-estatistica{padding:12px}
+ .resumo-estatistica strong{font-size:1.4rem}
+}
+

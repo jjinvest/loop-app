@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>LOOP | Cadastro fictício — laboratório</title>
+  <link rel="stylesheet" href="/css/style.css">
+  <link rel="stylesheet" href="/admin/painel.css">
+  <link rel="stylesheet" href="/admin/cadastro-participantes-demo.css">
+  <link rel="stylesheet" href="/css/loop-futurista-v6.css">
+</head>
+<body>
+  <header>
+    <div><h1>LOOP</h1><small>Cadastro e convites — laboratório local</small></div>
+    <nav class="acoes-admin" aria-label="Navegação administrativa">
+      <a class="voltar-loja" href="/admin">Painel administrativo</a>
+      <a class="voltar-loja" href="/admin/escritorio-demo">Escritório Virtual</a>
+    </nav>
+  </header>
+  <main>
+    <section class="painel">
+      <h2>Contas e indicações — apenas simulação</h2>
+      <p class="aviso-demo">Use exclusivamente identidades, e-mails e senhas inventados. Esta página não cadastra clientes reais, não verifica CPF, não faz login público nem movimenta fila, catraca, pagamentos ou fornecedores.</p>
+      <div class="campo">
+        <label for="chaveCadastroDemo">Chave temporária do laboratório</label>
+        <input id="chaveCadastroDemo" type="password" autocomplete="off" spellcheck="false">
+      </div>
+      <div class="acoes-admin">
+        <button id="abrirCadastroDemo" type="button">Abrir laboratório</button>
+        <button id="sairCadastroDemo" type="button" class="secundario">Limpar sessão</button>
+      </div>
+      <p id="estadoCadastroDemo" role="status" aria-live="polite" class="estado-admin">Aguardando chave local.</p>
+    </section>
+    <div id="areaCadastroDemo" hidden>
+      <section class="painel">
+       <h2>Porcentagem da bonificação por indicação</h2>
+       <p class="ajuda">O administrador pode alterar o percentual, inicialmente 10%. A comissão é calculada sobre o valor único da posição LOOP e reservada exclusivamente no caixa extra (reserva). O novo percentual vale apenas para futuras posições; bônus antigos não são reescritos.</p>
+       <form id="formTaxaIndicacaoDemo">
+        <div class="campo">
+         <label for="percentualIndicacaoDemo">Percentual das novas posições (10% a 100%)</label>
+         <input id="percentualIndicacaoDemo" type="number" min="10" max="100" step="1" value="10" required>
+        </div>
+        <button type="submit" id="salvarTaxaIndicacaoDemo">Salvar percentual de bonificação</button>
+       </form>
+       <p id="taxaAtualIndicacaoDemo" role="status" aria-live="polite"></p>
+       <p class="ajuda">Saque mínimo individual: R$ 100. O laboratório registra compromisso no caixa reserva, mas não movimenta dinheiro real.</p>
+      </section>
+      <section class="painel">
+        <h2>Criar conta fictícia</h2>
+        <p class="ajuda">Cadastro com nome, telefone, e-mail e senha. O nome cadastrado é o nome usado depois no login. O rastreio vem dentro do link de indicação, sem código separado na experiência do cliente.</p>
+        <form id="formContaDemo" autocomplete="off">
+          <div class="campo">
+            <label for="nomeContaDemo">Nome de acesso (único)</label>
+            <input id="nomeContaDemo" type="text" required maxlength="60" autocomplete="off" placeholder="Conta Exemplo Um">
+          </div>
+          <div class="campo">
+            <label for="emailContaDemo">E-mail fictício</label>
+            <input id="emailContaDemo" type="email" required maxlength="254" autocomplete="off" placeholder="conta1@exemplo.invalid">
+          </div>
+          <div class="campo">
+            <label for="telefoneContaDemo">Telefone brasileiro fictício com DDD</label>
+            <input id="telefoneContaDemo" type="tel" required maxlength="24" autocomplete="off" placeholder="(24) 99999-1234" inputmode="tel">
+            <p class="ajuda">Use somente número inventado no laboratório. CPF fica para a ativação da posição azul.</p>
+          </div>
+          <div class="campo">
+            <label for="senhaContaDemo">Senha de demonstração (mínimo 10 caracteres)</label>
+            <input id="senhaContaDemo" type="password" required minlength="10" maxlength="128" autocomplete="new-password">
+          </div>
+          <div class="campo">
+            <label for="conviteContaDemo">Código de teste legado do indicador (opcional; o cliente usa apenas o link)</label>
+            <input id="conviteContaDemo" type="text" maxlength="23" pattern="lp-[a-f0-9]{20}" spellcheck="false" autocomplete="off" placeholder="lp-...">
+            <p class="ajuda">Convite associado ao cadastro permanece PENDENTE. Só uma compra efetivamente validada poderá torná-lo elegível futuramente.</p>
+          </div>
+          <button type="submit" id="criarContaDemo">Cadastrar conta de teste</button>
+        </form>
+        <p id="resultadoContaDemo" class="estado-admin" role="status" aria-live="polite"></p>
+      </section>
+      <section class="painel">
+        <h2>Conferir login por nome e senha</h2>
+        <form id="formLoginContaDemo" autocomplete="off">
+          <div class="campo">
+            <label for="nomeLoginContaDemo">Nome de acesso</label>
+            <input id="nomeLoginContaDemo" type="text" required maxlength="60" autocomplete="off">
+          </div>
+          <div class="campo">
+            <label for="senhaLoginContaDemo">Senha fictícia</label>
+            <input id="senhaLoginContaDemo" type="password" required autocomplete="off">
+          </div>
+          <button type="submit" id="conferirSenhaContaDemo">Conferir senha (sem criar sessão real)</button>
+        </form>
+        <p id="resultadoLoginContaDemo" class="estado-admin" role="status" aria-live="polite"></p>
+      </section>
+      <section class="painel">
+        <h2>Auditoria de acesso individual — teste</h2>
+        <p class="ajuda">Registro de entradas, tentativas negadas, bloqueios e saídas fictícias. Este resumo não divulga nomes, senhas, cookies, IPs ou tokens.</p>
+        <p id="resumoAuditoriaDemo" role="status" aria-live="polite">Nenhuma consulta de segurança realizada.</p>
+      </section>
+      <section class="painel">
+        <h2>Contas e convites pendentes</h2>
+        <button type="button" id="atualizarContasDemo" class="secundario">Atualizar contas fictícias</button>
+        <button type="button" id="prepararTabuleiroCadastroDemo">Testar entrada no tabuleiro</button>
+        <p id="estadoTabuleiroCadastroDemo" class="estado-admin" role="status" aria-live="polite"></p>
+        <p class="ajuda">Ação manual de laboratório: quem entrar com posição azul terá a janela de ativação encerrada, passando a aparecer em dourado. Não cria vendas nem movimenta dinheiro.</p>
+        <p class="ajuda">Cadastros por convite permanecem pendentes até uma compra fictícia confirmada pelo verificador interno. Somente o motor isolado de testes recebe posições; nenhum valor real é entregue.</p>
+        <p id="resumoPonteDemo" class="ajuda" aria-live="polite">Sem compras fictícias registradas no verificador interno.</p>
+        <div id="listaContasDemo" aria-live="polite" class="cadastro-lista"></div>
+      </section>
+    </div>
+  </main>
+  <script src="/admin/cadastro-participantes-demo.js"></script>
+</body>
+</html>

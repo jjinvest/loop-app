@@ -1,0 +1,37 @@
+name: LOOP - Navegador celular e computador
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  testar-mobile:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - name: Instalar dependencias do projeto
+        run: npm ci
+      - name: Preparar Chromium apenas para este teste
+        run: |
+          npm install --no-save --package-lock=false playwright@1.56.1
+          npx playwright install --with-deps chromium
+      - name: Validar jornada real celular, tablet e computador
+        run: node scripts/testar-loja-mobile-browser.js
+      - name: Salvar capturas e diagnostico para revisao
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: capturas-responsivas-loop
+          path: artifacts/mobile-loop/
+          retention-days: 14
+          if-no-files-found: warn

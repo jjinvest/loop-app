@@ -1,0 +1,26 @@
+# Dependencias e arquivos locais
+node_modules/
+npm-debug.log*
+*.log
+
+# Credenciais locais (nunca fazer commit)
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+
+# Bancos SQLite e arquivos auxiliares (dados apenas locais)
+*.sqlite
+*.sqlite-*
+*.sqlite3
+*.sqlite3-*
+*.db
+*.db-*
+data/
+dados/
+
+# Sistemas operacionais e editores
+.DS_Store
+Thumbs.db
+.vscode/

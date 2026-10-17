@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <title>LOOP — Escritório Virtual</title>
   <link rel="stylesheet" href="/css/style.css">
+  <link rel="stylesheet" href="/css/loop-futurista-v6.css">
 </head>
 <body>
 <header>
@@ -12,63 +13,75 @@
     <h1>LOOP</h1>
     <small>Escritório Virtual</small>
   </div>
-  <button class="perfil">Minha conta</button>
+  <span class="perfil" role="status">Prévia da plataforma</span>
 </header>
 
 <main>
-  <section class="painel">
-    <h2>Meu ciclo</h2>
+  <section class="hero-loop" aria-label="Apresentação da plataforma LOOP V6">
+    <span class="hero-eyebrow">PLATAFORMA DIGITAL · LOOP V6</span>
+    <h2>Seu espaço. <em>Sua estratégia.</em></h2>
+    <p>Uma experiência visual de loja, Escritório Virtual e acompanhamento de posições. Tudo em uma plataforma para celular e computador.</p>
+    <div class="hero-atributos" aria-label="Recursos de demonstração"><span>6 POSIÇÕES + CENTRO</span><span>FILAS A / B</span><span>ESTRATÉGIA DE INDICAÇÕES</span></div>
+  </section>
+  <section class="painel painel-tabuleiro-loop">
+    <h2>Tabuleiro LOOP V6 — demonstração</h2>
+    <p class="loja-intro">Um centro e seis posições periféricas. A entrada acontece pela vaga 6; a catraca avança após seis eventos válidos do ciclo.</p>
 
-    <div class="tabuleiro">
+    <div class="tabuleiro" role="group" aria-label="Tabuleiro ilustrativo: um centro e seis vagas, com entrada na vaga 6">
       <div class="vaga v1">1</div>
       <div class="vaga v2">2</div>
       <div class="vaga v3">3</div>
       <div class="vaga v4">4</div>
       <div class="vaga v5">5</div>
+      <div class="vaga v6" aria-label="Vaga 6, entrada na catraca">6</div>
 
       <div class="centro">
         <span>CENTRO</span>
-        <strong>Participante</strong>
+        <strong>Posição</strong>
       </div>
     </div>
 
-    <div class="marcos">
-      <span>●</span><span>●</span><span>●</span><span>●</span><span>●</span>
+    <p class="titulo-marcos-loop">REFERÊNCIA DOS SEIS EVENTOS DO CENTRO</p>
+    <div class="marcos" role="img" aria-label="Seis eventos alternados: participante, empresa, participante, empresa, participante, empresa">
+      <span title="1º evento: participante"></span>
+      <span title="2º evento: empresa"></span>
+      <span title="3º evento: participante"></span>
+      <span title="4º evento: empresa"></span>
+      <span title="5º evento: participante"></span>
+      <span title="6º evento: empresa"></span>
     </div>
+    <div class="legenda-marcos" aria-label="Legenda dos marcadores">
+      <span><i class="amostra-roxo" aria-hidden="true"></i> 3 roxos · participante</span>
+      <span><i class="amostra-preto" aria-hidden="true"></i> 3 pretos · empresa</span>
+    </div>
+    <p class="marcos-nota">Quando o centro pertence ao LOOP, as três destinações roxas são direcionadas ao caixa das posições douradas. Os marcadores representam a regra de destinação, não pagamentos realizados.</p>
   </section>
 
   <section class="filas">
     <div class="fila fila-a">
-      <h3>FILA A</h3>
+      <h3>FILA A <span class="indicador-fila-loop" aria-hidden="true">✦</span></h3>
       <p>AMARELO</p>
       <strong id="totalA">0</strong>
     </div>
 
     <div class="fila fila-b">
-      <h3>FILA B</h3>
+      <h3>FILA B <span class="indicador-fila-loop" aria-hidden="true">✦</span></h3>
       <p>BRANCO</p>
       <strong id="totalB">0</strong>
     </div>
   </section>
 
-  <section class="loja">
-    <h2>Produtos e Cursos</h2>
-    <div class="produtos">
-      <article>
-        <h3>Curso</h3>
-        <p>Conteúdo digital em PDF</p>
-        <button>Ver produto</button>
-      </article>
-
-      <article>
-        <h3>Produtos</h3>
-        <p>Confira nosso catálogo</p>
-        <button>Ver produtos</button>
-      </article>
+  <section class="loja" aria-labelledby="tituloCatalogo">
+    <h2 id="tituloCatalogo">Produtos e Cursos</h2>
+    <p class="loja-intro">Conheça como será a vitrine do LOOP: produtos físicos e cursos em PDF para download.</p>
+    <p class="aviso-demo">A loja aceita produtos de diversos valores. No laboratório, compras qualificadas pela referência atual do LOOP (R$ 250,00) geram uma posição por padrão, ou seis no caso de produto especial configurado. Esta página é somente uma prévia pública; não oferece compra, cadastro, saque nem recebimento real.</p>
+    <div class="produtos" id="catalogoProdutos" aria-live="polite">
+      <p>Preparando a vitrine...</p>
     </div>
   </section>
 </main>
 
 <script src="/js/app.js"></script>
+<script src="/js/catalogo.js"></script>
 </body>
 </html>

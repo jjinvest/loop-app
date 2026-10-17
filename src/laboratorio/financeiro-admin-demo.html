@@ -1,0 +1,528 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>LOOP | Cofres administrativos — demonstração</title>
+  <link rel="stylesheet" href="/css/style.css">
+  <link rel="stylesheet" href="/admin/painel.css">
+  <link rel="stylesheet" href="/admin/financeiro-demo.css">
+  <link rel="stylesheet" href="/css/loop-futurista-v6.css">
+</head>
+<body>
+  <header>
+    <div><h1>LOOP</h1><small>Escritório Administrativo — laboratório</small></div>
+    <a class="voltar-loja" href="/admin">Voltar ao laboratório</a>
+  </header>
+  <main>
+    <section class="painel">
+      <h2>Cofres e loja — simulação financeira</h2>
+      <p class="aviso-demo">Somente valores fictícios. Esta página NÃO acessa banco, distribuidor, pagamentos reais ou saldos de clientes e NÃO movimenta recursos.</p>
+      <div class="campo">
+        <label for="chaveFinanceiroDemo">Chave temporária do laboratório</label>
+        <input id="chaveFinanceiroDemo" type="password" autocomplete="off" spellcheck="false" placeholder="Chave configurada no servidor">
+      </div>
+      <div class="campo">
+        <label for="repasseFinanceiroDemo">Cenário demonstrativo</label>
+        <select id="repasseFinanceiroDemo">
+          <option value="split">Distribuidor recebe pelo split fictício</option>
+          <option value="reserva">Pagamento reservado para distribuidor</option>
+        </select>
+      </div>
+      <div class="campo">
+        <label for="centroFinanceiroDemo">Titular operacional do centro (cenário)</label>
+        <select id="centroFinanceiroDemo">
+          <option value="participante">Participante de demonstração</option>
+          <option value="dourado">Posição dourada — prazo encerrado</option>
+          <option value="desistente">Posição desistente assumida pelo LOOP</option>
+        </select>
+      </div>
+      <div class="acoes-admin">
+        <button type="button" id="abrirFinanceiroDemo">Abrir demonstração</button>
+        <button type="button" id="limparFinanceiroDemo" class="secundario">Limpar chave e dados</button>
+        <a class="voltar-loja" href="/admin/circuit-break-v6">Abrir Circuit Break V6</a>
+      </div>
+      <p id="statusFinanceiroDemo" class="estado-admin" role="status" aria-live="polite">Aguardando acesso local.</p>
+    </section>
+    <div id="dadosFinanceiroDemo" hidden>
+      <section class="painel" aria-labelledby="tituloDouradasManuaisDemo">
+        <h2 id="tituloDouradasManuaisDemo">Criar bola dourada do LOOP</h2>
+        <p class="aviso-demo">Apenas administrador local. Cada clique cria uma posição exclusiva do LOOP, com número próprio, na fila B. Não há CPF, cadastro, pedido, pagamento ou receita fictícia gerada pela criação. A posição anda pelas regras normais da fila e, ao chegar ao centro, os destinos das seis parcelas são os dos cofres do LOOP. O avanço depende dos eventos válidos simulados, não do botão.</p>
+        <button type="button" id="criarDouradaManualDemo">Criar 1 bola dourada</button>
+        <button type="button" id="conferirDouradasManuaisDemo" class="secundario">Atualizar posições douradas</button>
+        <p id="statusDouradasManuaisDemo" role="status" aria-live="polite"></p>
+        <ol id="listaDouradasManuaisDemo" class="financeiro-historico"></ol>
+        <h3>Conferir distribuição de um ciclo</h3>
+        <p class="aviso-demo">Lê o centro do tabuleiro e os marcadores de venda simulada. Confirma a rota das parcelas, mas NÃO credita dinheiro, nem confirma pagamento de fornecedor ou PSP.</p>
+        <label for="cicloAuditoriaDouradasDemo">Número do ciclo (iniciando em 1)</label>
+        <input id="cicloAuditoriaDouradasDemo" type="number" min="1" max="1000000" value="1" step="1">
+        <button type="button" id="conferirCicloDouradasDemo">Conferir as seis destinações</button>
+        <p id="statusCicloDouradasDemo" role="status" aria-live="polite"></p>
+        <ol id="listaCicloDouradasDemo" class="financeiro-historico"></ol>
+      </section>
+      <section class="painel" aria-labelledby="tituloValorLoopDemo">
+        <h2 id="tituloValorLoopDemo">Valor de entrada no LOOP — configuração futura</h2>
+        <p class="ajuda">A loja pode vender por qualquer valor. Somente compras confirmadas que atingirem a referência vigente entram na fila. A alteração vale para posições futuras, sem recalcular posições antigas. Tudo aqui é simulação local.</p>
+        <p id="referenciaAtualLoopDemo" class="estado-admin" aria-live="polite">Referência atual do laboratório: R$ 250,00.</p>
+        <form id="formValorLoopDemo" autocomplete="off">
+          <div class="campo">
+            <label for="novoValorLoopDemo">Novo valor da referência (R$)</label>
+            <input id="novoValorLoopDemo" type="number" min="1" max="1000000" step="0.01" inputmode="decimal" required value="250.00">
+          </div>
+          <button type="button" id="simularImpactoValorLoopDemo" class="secundario">Simular impacto sem salvar</button>
+           <button type="submit" id="salvarValorLoopDemo">Registrar novo valor para posições futuras (teste)</button>
+        </form>
+        <p id="statusImpactoValorLoopDemo" class="estado-admin" role="status" aria-live="polite"></p>
+         <ol id="listaImpactoValorLoopDemo" class="financeiro-historico" aria-live="polite"></ol>
+         <p id="statusValorLoopDemo" class="estado-admin" role="status" aria-live="polite"></p>
+        <h3>Marcos históricos do valor</h3>
+        <ol id="historicoValorLoopDemo" class="financeiro-historico" aria-live="polite"></ol>
+        <p class="ajuda">Comparação hipotética: posição original R$ 250; referência de venda posterior R$ 500; em um evento destinado ao participante, R$ 250 seriam referência do participante e R$ 250 diferença proposta para a empresa. <strong>Não é divisão executada, saque nem direito aprovado.</strong></p>
+      </section>
+      <section class="painel">
+        <h2>Resumo da loja (fictício)</h2>
+        <div class="financeiro-indicadores">
+          <div><span>Vendas brutas</span><strong id="vendasBrutasFinanceiroDemo">—</strong></div>
+          <div><span>Valor do distribuidor</span><strong id="distribuidorFinanceiroDemo">—</strong></div>
+          <div><span>Parcela LOOP</span><strong id="parcelaFinanceiroDemo">—</strong></div>
+          <div><span>Sobra bruta da loja</span><strong id="sobraFinanceiroDemo">—</strong></div>
+        </div>
+        <p class="ajuda">A sobra bruta é um indicador antes de impostos, taxas, estornos e outras obrigações. Este laboratório não conecta banco nem realiza saques; não estabelece qualquer bloqueio de retirada ao administrador na operação futura.</p>
+      </section>
+      <section class="painel">
+        <h2>Quatro cofres do LOOP, incluindo o das bolas douradas</h2>
+        <div id="cofresLoopFinanceiroDemo" class="financeiro-cofres"></div>
+        <p class="ajuda">Esquerda: investimento. Centro: participação do cliente real. Direita: reserva de suporte. Douradas: recebe as parcelas 1, 3 e 5 quando o centro pertence ao LOOP, por desistência ou prazo encerrado. As demais destinações permanecem iguais. Valores somente simulados.</p>
+      </section>
+      <section class="painel">
+        <h2>Caixas comerciais da loja</h2>
+        <div id="cofresLojaFinanceiroDemo" class="financeiro-cofres"></div>
+        <p class="ajuda">O caixa do distribuidor aparece apenas na simulação sem split externo. O histórico registra o custo do fornecedor em ambos os cenários.</p>
+      </section>
+      <section class="painel" aria-labelledby="tituloConciliacaoDemo">
+        <h2 id="tituloConciliacaoDemo">Conciliação com reservas bancárias — simulação</h2>
+        <p class="aviso-demo">Duas informações fictícias: o saldo projetado no LOOP e um extrato bancário INVENTADO para testar a conferência. Nenhuma instituição, conta ou subconta real está conectada.</p>
+        <div class="duas-colunas">
+          <div class="campo">
+            <label for="fluxoConciliacaoDemo">Movimentações de exemplo</label>
+            <select id="fluxoConciliacaoDemo">
+              <option value="sem-movimentos">Apenas entradas da venda</option>
+              <option value="com-movimentos">Com retiradas e retornos fictícios</option>
+            </select>
+          </div>
+          <div class="campo">
+            <label for="extratoConciliacaoDemo">Resposta fictícia da instituição</label>
+            <select id="extratoConciliacaoDemo">
+              <option value="conferido">Valores fictícios iguais</option>
+              <option value="divergente">Mostrar divergência fictícia</option>
+            </select>
+          </div>
+        </div>
+        <button type="button" id="verConciliacaoDemo" class="secundario">Conferir cenários fictícios</button>
+        <p id="statusConciliacaoDemo" class="estado-admin" role="status" aria-live="polite"></p>
+        <div id="linhasConciliacaoDemo" class="financeiro-conciliacao" aria-live="polite"></div>
+        <h3>Últimos lançamentos da simulação</h3>
+        <ol id="historicoConciliacaoDemo" class="financeiro-historico" aria-live="polite"></ol>
+      </section>
+      <section class="painel" aria-labelledby="tituloConfirmacoesPSPDemo">
+        <h2 id="tituloConfirmacoesPSPDemo">Confirmação de pagamentos — simulador do intermediador</h2>
+        <p class="aviso-demo">Estes pagamentos NÃO EXISTEM. São dez compras fictícias de R$ 600 para testar confirmações, duplicidades e estornos. Nenhuma cobrança, webhook externo, cadastro real, saldo bancário ou movimento de fila é realizado.</p>
+        <div class="acoes-admin">
+          <button type="button" id="atualizarRecebimentosPSPDemo" class="secundario">Atualizar pagamentos fictícios</button>
+        </div>
+        <div class="campo">
+          <label for="pagamentoSelecionadoPSPDemo">Pagamento fictício</label>
+          <select id="pagamentoSelecionadoPSPDemo"></select>
+        </div>
+        <p id="detalhePagamentoPSPDemo" class="ajuda">Abra a demonstração para consultar os exemplos.</p>
+        <form id="formEventoPSPDemo" autocomplete="off">
+          <div class="duas-colunas">
+            <div class="campo">
+              <label for="tipoEventoPSPDemo">Operação fictícia</label>
+              <select id="tipoEventoPSPDemo">
+                <option value="CONFIRMAR_FICTICIO">Confirmar pagamento fictício</option>
+                <option value="ESTORNAR_FICTICIO">Estornar pagamento fictício</option>
+              </select>
+            </div>
+            <div class="campo">
+              <label for="idEventoPSPDemo">Identificador único do evento fictício</label>
+              <input id="idEventoPSPDemo" type="text" pattern="[a-z0-9][a-z0-9-]{2,62}" maxlength="63" required placeholder="ex: confirmacao-falsa-001" spellcheck="false">
+            </div>
+          </div>
+          <button type="submit" id="registrarEventoPSPDemo">Registrar evento fictício</button>
+          <p class="ajuda">Confirme antes de estornar. Repita o mesmo identificador e ação para testar deduplicação. A confirmação entra no livro financeiro sem criar posição na catraca.</p>
+        </form>
+        <p id="statusEventoPSPDemo" class="estado-admin" role="status" aria-live="polite"></p>
+        <h3>Histórico do pagamento selecionado</h3>
+        <ol id="historicoRecebimentoPSPDemo" class="financeiro-historico" aria-live="polite"></ol>
+      </section>
+      <section class="painel" aria-labelledby="tituloPedidosPDFDemo">
+        <h2 id="tituloPedidosPDFDemo">Cursos PDF com preços variados — laboratório</h2>
+        <p class="aviso-demo">Cadastre um curso PDF com preço no catálogo antes de testar. Aqui o preço vem do produto, não do formulário. A confirmação de pagamento é FICTÍCIA e não entrega curso nem transfere valores. Se o pedido tiver comprador fictício vinculado antes do pagamento, uma compra qualificada cria automaticamente posição azul no LOOP.</p>
+        <form id="formPedidosPDFDemo" autocomplete="off">
+          <div class="duas-colunas">
+            <div class="campo">
+              <label for="idPedidoPDFDemo">Identificador único de pedido PDF</label>
+              <input id="idPedidoPDFDemo" type="text" required maxlength="55" pattern="[a-z0-9][a-z0-9-]{2,54}" placeholder="ex: pedido-pdf-001" spellcheck="false">
+            </div>
+            <div class="campo">
+              <label for="produtoPedidoPDFDemo">Curso PDF publicado para demonstração</label>
+              <select id="produtoPedidoPDFDemo" required></select>
+            </div>
+          </div>
+          <button type="submit" id="registrarPedidoPDFDemo">Registrar pedido PDF fictício</button>
+        </form>
+        <p id="statusPedidosPDFDemo" role="status" aria-live="polite" class="estado-admin"></p>
+        <div class="acoes-admin">
+          <button type="button" id="atualizarPedidosPDFDemo" class="secundario">Atualizar pedidos PDF de teste</button>
+        </div>
+        <div id="listaPedidosPDFDemo" class="financeiro-conciliacao" aria-live="polite"></div>
+        <h3>Vincular pedido PDF a uma conta fictícia</h3>
+        <p class="ajuda">Selecione um pedido existente e uma conta cadastrada no laboratório ANTES de confirmar o pagamento. O vínculo é permanente no teste e não exige CPF.</p>
+        <form id="formVincularPDFLoopDemo" autocomplete="off">
+          <div class="duas-colunas">
+            <div class="campo">
+              <label for="titularPedidoPDFLoopDemo">Conta compradora fictícia</label>
+              <select id="titularPedidoPDFLoopDemo" required></select>
+            </div>
+            <div class="campo">
+              <label for="pedidoVinculoPDFLoopDemo">Pedido que será vinculado</label>
+              <select id="pedidoVinculoPDFLoopDemo" required></select>
+            </div>
+          </div>
+          <button type="submit" id="confirmarVinculoPDFLoopDemo">Vincular comprador ao pedido</button>
+        </form>
+        <p id="estadoVinculoPDFLoopDemo" role="status" aria-live="polite" class="estado-admin"></p>
+        <button type="button" id="sincronizarPDFLoopDemo" class="secundario">Conferir sincronização do pedido com o LOOP</button>
+        <p id="estadoSincronizacaoPDFLoopDemo" role="status" aria-live="polite" class="ajuda"></p>
+        <h3>Simular pagamento do pedido PDF</h3>
+        <form id="formEventoPDFDemo" autocomplete="off">
+          <div class="duas-colunas">
+            <div class="campo">
+              <label for="pedidoEventoPDFDemo">Pedido PDF fictício</label>
+              <select id="pedidoEventoPDFDemo" required></select>
+            </div>
+            <div class="campo">
+              <label for="tipoEventoPDFDemo">Tipo de evento</label>
+              <select id="tipoEventoPDFDemo">
+                <option value="CONFIRMAR_FICTICIO">Pagamento confirmado fictício</option>
+                <option value="ESTORNAR_FICTICIO">Pagamento estornado fictício</option>
+              </select>
+            </div>
+          </div>
+          <div class="campo">
+            <label for="idEventoPDFDemo">Identificador único do evento</label>
+            <input id="idEventoPDFDemo" type="text" maxlength="63" pattern="[a-z0-9][a-z0-9-]{2,62}" required placeholder="ex: pdf-evento-001">
+          </div>
+          <button type="submit" id="registrarEventoPDFDemo">Registrar evento fictício</button>
+        </form>
+        <p id="statusEventoPDFDemo" role="status" aria-live="polite" class="estado-admin"></p>
+        <h3>Testar download protegido</h3>
+        <p class="ajuda">O arquivo baixado é um PDF válido, mas contém apenas uma página informando que é MATERIAL DE LABORATÓRIO. Não é um curso real. Só será disponibilizado para pedido com pagamento fictício confirmado.</p>
+        <button type="button" id="baixarMaterialPDFDemo" class="secundario" disabled>Baixar PDF de teste do pedido confirmado</button>
+        <p id="statusMaterialPDFDemo" role="status" aria-live="polite" class="estado-admin"></p>
+        <h3>Histórico do pedido PDF selecionado</h3>
+        <ol id="historicoEventoPDFDemo" class="financeiro-historico" aria-live="polite"></ol>
+        <p class="ajuda" id="auditoriaMaterialPDFDemo">Solicitações de download fictício: 0</p>
+      </section>
+      <section class="painel" aria-labelledby="tituloCarrinhoLoopDemo">
+        <h2 id="tituloCarrinhoLoopDemo">Carrinho com vários produtos — LOOP laboratório</h2>
+        <p class="aviso-demo">Um único pedido soma os produtos pelo preço do catálogo, mas só os itens AUTORIZADOS contam para alcançar o mínimo do LOOP. A compra fictícia confirmada gera no máximo UMA posição azul. Compras separadas não se acumulam. Não há cobrança ou entrega real.</p>
+        <div class="financeiro-caixa">
+         <h3>Quais produtos contam para ganhar posição no LOOP?</h3>
+         <p class="ajuda">Todos os produtos já começam autorizados. Você pode tirar ou devolver a autorização de um produto sem retirá-lo da loja e sem alterar pedidos antigos.</p>
+         <form id="formElegibilidadeLoopDemo" autocomplete="off">
+          <div class="duas-colunas">
+           <div class="campo">
+            <label for="produtoElegibilidadeLoopDemo">Produto do catálogo</label>
+            <select id="produtoElegibilidadeLoopDemo" required></select>
+           </div>
+           <div class="campo">
+            <label for="valorElegibilidadeLoopDemo">Conta para posição do LOOP?</label>
+            <select id="valorElegibilidadeLoopDemo">
+             <option value="sim">Sim, contar o valor deste produto</option>
+             <option value="nao">Não, somente venda da loja</option>
+            </select>
+           </div>
+          </div>
+          <button id="salvarElegibilidadeLoopDemo" type="submit">Salvar autorização do produto</button>
+         </form>
+         <p id="statusElegibilidadeLoopDemo" role="status" aria-live="polite"></p>
+         <h3>Quantidade mínima deste produto para contar no LOOP</h3>
+         <p class="ajuda">Exemplo: caneta de R$ 50, mínimo de 20 unidades. Com 19 unidades, a compra continua válida na loja, mas a caneta não conta para formar uma posição. Com 20 unidades no mesmo pedido, conta seu subtotal integral; o pedido cria uma posição por padrão, salvo produto especial expressamente configurado para seis.</p>
+         <form id="formQuantidadeMinimaLoopDemo" autocomplete="off">
+          <div class="campo">
+           <label for="quantidadeMinimaLoopDemo">Unidades exigidas do produto selecionado (1 a 100)</label>
+           <input id="quantidadeMinimaLoopDemo" type="number" min="1" max="100" step="1" value="1" required>
+          </div>
+          <button id="salvarQuantidadeMinimaLoopDemo" type="submit">Salvar quantidade mínima</button>
+         </form>
+         <p id="statusQuantidadeMinimaLoopDemo" role="status" aria-live="polite"></p>
+         <h3>Produto especial: seis posições no LOOP</h3>
+         <p class="ajuda">Somente o produto selecionado poderá abrir seis posições em um único pedido, mediante quantidade mínima e valor elegível suficiente para seis referências LOOP. Se o CPF já tiver qualquer posição ocupada, o pacote não entra parcialmente; deve haver seis vagas livres. As seis posições possuem números próprios, e cada ciclo concluído libera uma vaga. Compras comuns continuam gerando uma posição.</p>
+         <form id="formPacotePosicoesLoopDemo" autocomplete="off">
+          <div class="campo">
+           <label for="pacotePosicoesLoopDemo">Quantas posições o produto selecionado abre?</label>
+           <select id="pacotePosicoesLoopDemo">
+            <option value="1">1 posição (regra padrão)</option>
+            <option value="6">6 posições (produto especial)</option>
+           </select>
+          </div>
+          <button type="submit" id="salvarPacotePosicoesLoopDemo">Salvar modalidade do produto</button>
+         </form>
+         <p id="statusPacotePosicoesLoopDemo" role="status" aria-live="polite"></p>
+        </div>
+        <form id="formCarrinhoLoopDemo" autocomplete="off">
+          <div class="duas-colunas">
+            <div class="campo">
+              <label for="pedidoCarrinhoLoopDemo">Identificador do pedido fictício</label>
+              <input id="pedidoCarrinhoLoopDemo" required maxlength="70" pattern="[a-z0-9][a-z0-9-]{2,69}" placeholder="ex: carrinho-001" spellcheck="false">
+            </div>
+            <div class="campo">
+              <label for="contaCarrinhoLoopDemo">Comprador fictício cadastrado</label>
+              <select id="contaCarrinhoLoopDemo" required></select>
+            </div>
+          </div>
+          <div id="itensCarrinhoLoopDemo" class="financeiro-conciliacao" aria-label="Itens do carrinho"></div>
+          <button id="adicionarItemCarrinhoLoopDemo" type="button" class="secundario">Adicionar item ao carrinho</button>
+          <p id="totalCarrinhoLoopDemo" class="ajuda" aria-live="polite">Total do carrinho: R$ 0,00</p>
+          <button id="salvarCarrinhoLoopDemo" type="submit">Registrar pedido de teste</button>
+        </form>
+        <p id="statusCarrinhoLoopDemo" class="estado-admin" role="status" aria-live="polite"></p>
+        <div class="acoes-admin">
+          <button type="button" id="atualizarCarrinhosLoopDemo" class="secundario">Atualizar pedidos do carrinho</button>
+        </div>
+        <div id="listaCarrinhosLoopDemo" class="financeiro-conciliacao" aria-live="polite"></div>
+        <h3>Confirmar pagamento fictício e gerar posição</h3>
+        <form id="formEventoCarrinhoLoopDemo" autocomplete="off">
+          <div class="duas-colunas">
+            <div class="campo">
+              <label for="pedidoEventoCarrinhoLoopDemo">Pedido do carrinho</label>
+              <select id="pedidoEventoCarrinhoLoopDemo" required></select>
+            </div>
+            <div class="campo">
+              <label for="tipoEventoCarrinhoLoopDemo">Evento fictício</label>
+              <select id="tipoEventoCarrinhoLoopDemo">
+                <option value="CONFIRMAR_FICTICIO">Confirmar ficticiamente</option>
+                <option value="ESTORNAR_FICTICIO">Estornar ficticiamente</option>
+              </select>
+            </div>
+          </div>
+          <div class="campo">
+            <label for="idEventoCarrinhoLoopDemo">Identificador único do evento</label>
+            <input id="idEventoCarrinhoLoopDemo" required maxlength="70" pattern="[a-z0-9][a-z0-9-]{2,69}" placeholder="ex: confirmar-carrinho-001">
+          </div>
+          <button id="registrarEventoCarrinhoLoopDemo" type="submit">Registrar evento fictício</button>
+        </form>
+        <p id="statusEventoCarrinhoLoopDemo" class="estado-admin" role="status" aria-live="polite"></p>
+        <button id="sincronizarCarrinhoLoopDemo" type="button" class="secundario">Conferir sincronização com a fila</button>
+      </section>
+      <section class="painel" aria-labelledby="tituloPlanejamentoFisicoDemo">
+        <h2 id="tituloPlanejamentoFisicoDemo">Planejamento de vendas físicas — laboratório</h2>
+        <p class="aviso-demo">Informe um CUSTO HIPOTÉTICO do fornecedor para testar preços variados. O quadro separa preço, custo, referência de R$ 100 para o LOOP e margem BRUTA preliminar (antes de taxas e impostos). Não é cotação contratada, venda ou distribuição financeira real.</p>
+        <div class="acoes-admin">
+          <button type="button" id="atualizarPlanejamentoFisicoDemo" class="secundario">Atualizar análise dos produtos físicos</button>
+        </div>
+        <div id="listaPlanejamentoFisicoDemo" class="financeiro-conciliacao" aria-live="polite"></div>
+        <h3>Informar custo hipotético de fornecedor</h3>
+        <form id="formCustoFisicoDemo" autocomplete="off">
+          <div class="duas-colunas">
+            <div class="campo">
+              <label for="produtoCustoFisicoDemo">Produto físico cadastrado</label>
+              <select id="produtoCustoFisicoDemo" required></select>
+            </div>
+            <div class="campo">
+              <label for="valorCustoFisicoDemo">Custo hipotético (R$, exemplo: 250,00)</label>
+              <input id="valorCustoFisicoDemo" type="text" required inputmode="decimal" pattern="[0-9]+([.,][0-9]{1,2})?" placeholder="250,00">
+            </div>
+          </div>
+          <button type="submit" id="salvarCustoFisicoDemo">Salvar custo de teste</button>
+        </form>
+        <p id="statusPlanejamentoFisicoDemo" class="estado-admin" role="status" aria-live="polite"></p>
+        <h3>Registrar pré-pedido fictício</h3>
+        <form id="formPrePedidoFisicoDemo" autocomplete="off">
+          <div class="duas-colunas">
+            <div class="campo">
+              <label for="idPrePedidoFisicoDemo">Número do pré-pedido</label>
+              <input id="idPrePedidoFisicoDemo" type="text" maxlength="71" required pattern="[a-z0-9][a-z0-9-]{2,70}" placeholder="ex: pre-pedido-loja-001">
+            </div>
+            <div class="campo">
+              <label for="produtoPrePedidoFisicoDemo">Produto com margem preliminar positiva</label>
+              <select id="produtoPrePedidoFisicoDemo" required></select>
+            </div>
+          </div>
+          <button type="submit" id="salvarPrePedidoFisicoDemo">Criar pré-pedido sem cobrança</button>
+        </form>
+        <p id="statusPrePedidoFisicoDemo" class="estado-admin" role="status" aria-live="polite"></p>
+        <div id="listaPrePedidosFisicosDemo" class="financeiro-conciliacao" aria-live="polite"></div>
+      </section>
+      <section class="painel" aria-labelledby="tituloPagPrePedidosFisicosDemo">
+        <h2 id="tituloPagPrePedidosFisicosDemo">Conferir pagamento do pré-pedido físico — somente teste</h2>
+        <p class="aviso-demo">Vincula os pré-pedidos físicos de diferentes preços aos seus eventos financeiros FICTÍCIOS. Não há PSP real, saldo ou split, liberação do fornecedor, entrega nem avanço no LOOP. O status logístico fica bloqueado mesmo após uma confirmação fictícia.</p>
+        <form id="formEventoPagPrePedidoFisicoDemo" autocomplete="off">
+          <div class="duas-colunas">
+            <div class="campo">
+              <label for="pedidoPagamentoFisicoDemo">Pré-pedido com valor preservado</label>
+              <select id="pedidoPagamentoFisicoDemo" required></select>
+            </div>
+            <div class="campo">
+              <label for="tipoPagamentoFisicoDemo">Evento simulado</label>
+              <select id="tipoPagamentoFisicoDemo" required>
+                <option value="CONFIRMAR_FICTICIO">Confirmar ficticiamente</option>
+                <option value="ESTORNAR_FICTICIO">Estornar ficticiamente</option>
+              </select>
+            </div>
+          </div>
+          <div class="campo">
+            <label for="idEventoPagamentoFisicoDemo">Identificador único do evento fictício</label>
+            <input id="idEventoPagamentoFisicoDemo" type="text" required maxlength="63" pattern="[a-z0-9][a-z0-9-]{2,62}" placeholder="ex: simulacao-fisica-001" spellcheck="false">
+          </div>
+          <button type="submit" id="registrarEventoPagamentoFisicoDemo">Registrar evento financeiro fictício</button>
+        </form>
+        <p id="statusPagamentoPrePedidoFisicoDemo" role="status" aria-live="polite" class="estado-admin"></p>
+        <button type="button" id="atualizarPagamentosFisicosDemo" class="secundario">Atualizar conferência dos pré-pedidos</button>
+        <div id="listaPagamentosPrePedidosFisicosDemo" class="financeiro-conciliacao" aria-live="polite"></div>
+        <h3>Histórico da referência selecionada</h3>
+        <ol id="historicoPagamentoPrePedidoFisicoDemo" class="financeiro-historico" aria-live="polite"></ol>
+        <h3>Auditoria consolidada de pré-pedidos — somente teste</h3>
+        <p class="ajuda">Conferência independente dos valores preservados em cada pré-pedido e da sequência de eventos fictícios. Divergências não liberam fornecedores ou pagamentos reais.</p>
+        <p id="resumoAuditoriaFisicosDemo" class="estado-admin" role="status" aria-live="polite">Aguardando autenticação local.</p>
+        <ol id="listaAuditoriaFisicosDemo" class="financeiro-historico" aria-live="polite"></ol>
+        <h3>Conferência de fornecedores — valores de teste</h3>
+        <p class="ajuda">Agrupamento pelo fornecedor registrado no momento do pré-pedido, sem repasse, bloqueio de saldo ou despacho real.</p>
+        <div id="resumoFornecedorAuditoriaFisicosDemo" class="financeiro-conciliacao" aria-live="polite"></div>
+      </section>
+      <section class="painel" aria-labelledby="tituloPedidosComerciaisDemo">
+        <h2 id="tituloPedidosComerciaisDemo">Registrar pedido comercial — laboratório</h2>
+        <p class="aviso-demo">Crie um pedido de TESTE ligando um produto físico publicado a uma fatura fictícia ainda pendente. O produto precisa ter preço de teste igual ao da fatura e fornecedor associado. Não gera cobrança, despacho ou posição no tabuleiro.</p>
+        <form id="formPedidosComerciaisDemo" autocomplete="off">
+          <div class="campo">
+            <label for="idPedidoComercialDemo">Identificador único do pedido fictício</label>
+            <input id="idPedidoComercialDemo" type="text" required maxlength="70" pattern="[a-z0-9][a-z0-9-]{2,69}" placeholder="ex: pedido-comercial-lab-001" spellcheck="false">
+          </div>
+          <div class="duas-colunas">
+            <div class="campo">
+              <label for="produtoPedidoComercialDemo">Produto físico do catálogo de teste</label>
+              <select id="produtoPedidoComercialDemo" required></select>
+            </div>
+            <div class="campo">
+              <label for="pagamentoPedidoComercialDemo">Pagamento fictício pendente</label>
+              <select id="pagamentoPedidoComercialDemo" required></select>
+            </div>
+          </div>
+          <button type="submit" id="registrarPedidoComercialDemo">Registrar pedido fictício</button>
+        </form>
+        <p id="statusPedidosComerciaisDemo" class="estado-admin" role="status" aria-live="polite"></p>
+        <div class="acoes-admin"><button type="button" id="atualizarPedidosComerciaisDemo" class="secundario">Atualizar pedidos comerciais de teste</button></div>
+        <div id="listaPedidosComerciaisDemo" class="financeiro-conciliacao" aria-live="polite"></div>
+        <h3>Produtos físicos com preços variados — prévia</h3>
+        <p class="ajuda">Os valores abaixo vêm do catálogo de teste. Ainda não há fatura bancária variável, custo definitivo do fornecedor, distribuição financeira aprovada ou envio de produto.</p>
+        <div id="listaCotacoesFisicasDemo" class="financeiro-conciliacao" aria-live="polite"></div>
+      </section>
+      <section class="painel" aria-labelledby="tituloPontePedidoPagamentoDemo">
+        <h2 id="tituloPontePedidoPagamentoDemo">Pedidos da loja vinculados a pagamentos — demonstração</h2>
+        <p class="aviso-demo">Relação de dois pedidos LOGÍSTICOS fictícios com dois pagamentos PSP fictícios. O acompanhamento apenas compara os status: confirmação financeira NÃO libera fornecedor, NÃO cria posição e NÃO movimenta catraca.</p>
+        <button type="button" id="atualizarPontePedidoPagamentoDemo" class="secundario">Conferir pedidos e pagamentos fictícios</button>
+        <p id="statusPontePedidoPagamentoDemo" class="estado-admin" role="status" aria-live="polite"></p>
+        <div id="listaPontePedidoPagamentoDemo" class="financeiro-conciliacao" aria-live="polite"></div>
+        <div class="campo">
+          <label for="pedidoHistoricoPonteDemo">Histórico conjunto de pedido e pagamento</label>
+          <select id="pedidoHistoricoPonteDemo"></select>
+        </div>
+        <ol id="historicoPontePedidoPagamentoDemo" class="financeiro-historico" aria-live="polite"></ol>
+      </section>
+      <section class="painel" aria-labelledby="tituloLivroPersistenteDemo">
+        <h2 id="tituloLivroPersistenteDemo">Livro persistente de registros fictícios</h2>
+        <p class="aviso-demo">Somente no laboratório e sob acesso administrativo. Registros ficam salvos no SQLite local mesmo após reiniciar. Nenhum lançamento é um pagamento, depósito, reserva ou saque bancário real.</p>
+        <form id="formCicloPersistenteDemo" autocomplete="off">
+          <div class="campo">
+            <label for="idCicloPersistenteDemo">Identificador do ciclo fictício (único)</label>
+            <input id="idCicloPersistenteDemo" type="text" required maxlength="70" pattern="[a-z0-9][a-z0-9-]{2,69}" placeholder="ex: ciclo-demo-001" spellcheck="false">
+          </div>
+          <button type="submit" id="gravarCicloPersistenteDemo">Registrar seis vendas fictícias</button>
+          <p class="ajuda">Usa o cenário de fornecedor escolhido no alto da página. A repetição do mesmo ID e dos mesmos dados não duplica lançamentos.</p>
+        </form>
+        <hr>
+        <h3>Registrar retirada, entrada ou retorno fictício</h3>
+        <form id="formMovimentoPersistenteDemo" autocomplete="off">
+          <div class="duas-colunas">
+            <div class="campo">
+              <label for="idMovimentoPersistenteDemo">Identificador único</label>
+              <input id="idMovimentoPersistenteDemo" type="text" required maxlength="70" pattern="[a-z0-9][a-z0-9-]{2,69}" placeholder="ex: mov-demo-001" spellcheck="false">
+            </div>
+            <div class="campo">
+              <label for="cofreMovimentoPersistenteDemo">Cofre de destino</label>
+              <select id="cofreMovimentoPersistenteDemo" required></select>
+            </div>
+          </div>
+          <div class="campo">
+            <label for="tipoLancamentoPersistenteDemo">Tipo de registro</label>
+            <select id="tipoLancamentoPersistenteDemo">
+              <option value="movimentos">Movimentação fictícia comum</option>
+              <option value="ajustes">Ajuste fictício / correção de lançamento</option>
+            </select>
+          </div>
+          <div class="duas-colunas">
+            <div class="campo">
+              <label for="naturezaMovimentoPersistenteDemo">Natureza do movimento</label>
+              <select id="naturezaMovimentoPersistenteDemo">
+                <option value="ENTRADA">Entrada fictícia</option>
+                <option value="SAIDA">Saída/retirada fictícia</option>
+                <option value="RETORNO">Retorno fictício</option>
+              </select>
+            </div>
+            <div class="campo">
+              <label for="valorMovimentoPersistenteDemo">Valor fictício em R$</label>
+              <input id="valorMovimentoPersistenteDemo" type="number" step="0.01" min="0.01" required placeholder="100.00">
+            </div>
+          </div>
+          <div class="campo">
+            <label for="referenciaMovimentoPersistenteDemo">Motivo ou referência</label>
+            <input id="referenciaMovimentoPersistenteDemo" type="text" required maxlength="140" placeholder="Ex.: transferência de teste">
+          </div>
+          <button type="submit" id="gravarMovimentoPersistenteDemo">Registrar movimento fictício</button>
+          <p class="ajuda">O administrador pode registrar saídas e retornos; o painel apenas documenta a operação do laboratório. Para corrigir um lançamento, faça um novo registro de ajuste, sem apagar o anterior.</p>
+        </form>
+        <p id="statusLivroPersistenteDemo" class="estado-admin" role="status" aria-live="polite"></p>
+        <div class="acoes-admin">
+          <button type="button" id="atualizarLivroPersistenteDemo" class="secundario">Atualizar livro</button>
+        </div>
+        <div id="caixasLivroPersistenteDemo" class="financeiro-conciliacao" aria-live="polite"></div>
+        <h3>Últimos lançamentos persistentes</h3>
+        <ol id="historicoLivroPersistenteDemo" class="financeiro-historico" aria-live="polite"></ol>
+      </section>
+      <section class="painel" aria-labelledby="tituloEditarCofres">
+        <h2 id="tituloEditarCofres">Personalizar nomes e cores dos cofres</h2>
+        <p class="ajuda">Edição administrativa de aparência, gravada apenas neste laboratório local. As posições, funções financeiras, valores e registros de vendas não podem ser modificados por este formulário.</p>
+        <form id="formAparenciaCofreDemo" autocomplete="off">
+          <div class="campo">
+            <label for="cofreEditarFinanceiroDemo">Escolher cofre</label>
+            <select id="cofreEditarFinanceiroDemo" required></select>
+          </div>
+          <div class="duas-colunas">
+            <div class="campo">
+              <label for="nomeCofreFinanceiroDemo">Nome de exibição</label>
+              <input id="nomeCofreFinanceiroDemo" type="text" required maxlength="70" autocomplete="off">
+            </div>
+            <div class="campo">
+              <label for="corCofreFinanceiroDemo">Cor de exibição</label>
+              <input id="corCofreFinanceiroDemo" type="color" required>
+            </div>
+          </div>
+          <p id="finalidadeCofreFinanceiroDemo" class="ajuda"></p>
+          <button type="submit" id="salvarAparenciaCofreDemo">Salvar nome e cor</button>
+        </form>
+        <p id="statusAparenciaCofreDemo" class="estado-admin" role="status" aria-live="polite"></p>
+        <h3>Histórico de alterações visuais</h3>
+        <ol id="historicoAparenciaCofreDemo" class="financeiro-historico" aria-live="polite"></ol>
+      </section>
+      <section class="painel">
+        <h2>Histórico administrativo completo — exemplo</h2>
+        <p class="ajuda">As parcelas de cada venda ficam registradas no exemplo. Saídas e retornos FICTÍCIOS aparecem na seção de conciliação acima. Nenhuma operação bancária real, imposto ou bonificação de indicação é processada.</p>
+        <ol id="historicoFinanceiroDemo" class="financeiro-historico" aria-live="polite"></ol>
+      </section>
+    </div>
+  </main>
+  <script src="/admin/financeiro-demo.js"></script>
+</body>
+</html>

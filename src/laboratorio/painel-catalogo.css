@@ -1,0 +1,36 @@
+main{max-width:1000px}
+.admin-grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,2fr);gap:16px}
+.campo{display:flex;flex-direction:column;gap:6px;margin-bottom:12px}
+.campo label{font-size:.88rem;color:#d2dbe8;font-weight:700}
+.campo input,.campo select,.campo textarea{background:#101827;color:#fff;border:1px solid #475569;border-radius:10px;font:inherit;padding:12px;width:100%}
+.campo textarea{min-height:80px;resize:vertical}
+.duas-colunas{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.lista-produtos{display:flex;flex-direction:column;gap:9px}
+.lista-produtos button{background:#273446;color:#fff;text-align:left;border:1px solid #45546b;width:100%;cursor:pointer}
+.lista-produtos button:hover{border-color:#ffd400}
+.ajuda{color:#b6c3d5;font-size:.87rem;line-height:1.5}
+.estado-admin{color:#f8e1a1;min-height:30px;line-height:1.5}
+.acoes-admin{display:flex;gap:9px;flex-wrap:wrap}
+.acoes-admin button{cursor:pointer}
+.acoes-admin .secundario{background:#35445b;color:#fff}
+#formProduto[hidden],#areaPainel[hidden]{display:none}
+@media(max-width:660px){.admin-grid,.duas-colunas{grid-template-columns:1fr}}
+
+#areaImportacao{margin-top:18px}
+#areaImportacao .campo label:has(#aceitarImportacao){display:flex;gap:10px;align-items:flex-start;line-height:1.5;cursor:pointer}
+#aceitarImportacao{width:18px;height:18px;min-width:18px;padding:0;margin:3px 0 0;accent-color:#ffd400}
+#listaPreviaImportacao ol{padding-left:24px}
+#listaPreviaImportacao li{line-height:1.45;margin:8px 0;overflow-wrap:anywhere}
+#confirmarImportacao:disabled{opacity:.6;cursor:not-allowed}
+
+/* Formularios administrativos responsivos em todos os dispositivos. */
+main,.admin-grid > *,.duas-colunas > *,.painel,.painel form{min-width:0;max-width:100%}
+.campo input,.campo select,.campo textarea{box-sizing:border-box;min-width:0}
+.acoes-admin button{min-height:44px;max-width:100%;white-space:normal}
+.painel li,.painel p{overflow-wrap:anywhere}
+@media(max-width:420px){
+ .painel{padding:12px}
+ .acoes-admin button{flex:1 1 100%}
+ .admin-grid,.duas-colunas{grid-template-columns:minmax(0,1fr)}
+}
+
