@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>LOOP V6 | Circuit Break — laboratório</title>
+  <link rel="stylesheet" href="/css/style.css">
+  <link rel="stylesheet" href="/admin/painel.css">
+  <link rel="stylesheet" href="/admin/financeiro-demo.css">
+  <link rel="stylesheet" href="/css/loop-futurista-v6.css">
+</head>
+<body>
+  <header>
+    <div><h1>LOOP</h1><small>Circuit Break V6 — controle administrativo fictício</small></div>
+    <a class="voltar-loja" href="/admin/financeiro-demo">Voltar ao financeiro</a>
+  </header>
+  <main>
+    <section class="painel">
+      <h2>Controle da catraca — Circuit Break</h2>
+      <p class="aviso-demo">LABORATÓRIO LOCAL. Nenhum pagamento confirmado, crédito disponível ou saque real. O comando “Gerar 30 compras fictícias” cria somente dados artificiais de teste; não é venda verdadeira.</p>
+      <div class="campo">
+        <label for="chaveCBV6">Chave temporária do laboratório</label>
+        <input type="password" id="chaveCBV6" autocomplete="off" placeholder="Chave configurada no servidor">
+      </div>
+      <div class="acoes-admin">
+        <button type="button" id="abrirPainelCBV6">Consultar controle</button>
+        <button type="button" id="limparCBV6" class="secundario">Sair / descartar chave</button>
+      </div>
+      <p role="status" aria-live="polite" id="statusCBV6">Informe a chave administrativa local.</p>
+    </section>
+    <div id="conteudoCBV6" hidden>
+      <section class="painel">
+        <h2>Estado atual da catraca</h2>
+        <p id="resumoCBV6" aria-live="polite"></p>
+        <p id="filaCBV6"></p>
+        <p id="caixaCBV6"></p>
+        <div class="acoes-admin">
+          <button type="button" id="abrirCatracaCBV6">Abrir catraca</button>
+          <button type="button" id="pausarCatracaCBV6" class="secundario">Pausar catraca</button>
+          <button type="button" id="atualizarCBV6" class="secundario">Atualizar quadro</button>
+        </div>
+        <h3>Limite máximo de giros por dia</h3>
+        <form id="formLimiteCBV6">
+          <div class="campo">
+            <label for="limiteDiarioCBV6">Limite (1 a 300 giros, horário de Brasília)</label>
+            <input type="number" id="limiteDiarioCBV6" min="1" max="300" step="1" required>
+          </div>
+          <button type="submit">Salvar limite diário</button>
+        </form>
+      </section>
+      <section class="painel">
+        <h2>Compras fictícias e liberações</h2>
+        <p class="ajuda">Primeiro adicione uma onda artificial de 30 compras (30 pessoas, com as mesmas oito indicações do cenário de testes). Cada seis compras diferentes permitem no máximo um giro. Os lotes consomem apenas essas compras existentes.</p>
+        <div class="acoes-admin">
+          <button type="button" id="gerarComprasCBV6">Gerar 30 compras fictícias</button>
+        </div>
+        <form id="formLoteCBV6">
+          <div class="campo">
+            <label for="quantidadeLoteCBV6">Liberar um lote de giros prontos</label>
+            <select id="quantidadeLoteCBV6">
+              <option value="1">1 giro</option>
+              <option value="3">3 giros</option>
+              <option value="4">4 giros</option>
+              <option value="5" selected>5 giros</option>
+              <option value="10">10 giros</option>
+            </select>
+          </div>
+          <button type="submit">Liberar lote fictício</button>
+        </form>
+        <p class="ajuda">Se a catraca estiver pausada, o limite diário tiver sido atingido ou faltarem seis eventos por giro, a operação inteira é recusada. Os giros não criam novas vendas e não movimentam nenhum cofre real.</p>
+        <p id="resultadoCBV6" role="status" aria-live="polite"></p>
+      </section>
+      <section class="painel">
+        <h2>Histórico de comandos (imutável)</h2>
+        <button type="button" id="historicoAtualizarCBV6" class="secundario">Atualizar histórico</button>
+        <ol id="historicoCBV6" aria-live="polite" class="financeiro-historico"></ol>
+      </section>
+    </div>
+  </main>
+  <script src="/admin/circuit-break-v6.js"></script>
+</body>
+</html>
