@@ -51,6 +51,11 @@ class CircuitBreakPonteV6DemoSQLite{
     const ocupados=[tab.centro,...tab.vagas].filter(Boolean).length;
     return {comprasElegiveis:compras.length,comprasConsumidas:usadas.size,
       comprasPendentes:pendentes.length,girosProntosPorCompras:Math.floor(pendentes.length/6),
+      posicoesAguardandoCentro:tab.vagas.filter(Boolean).length+livres,
+      creditoDoCicloParaPosicoesAguardandoCentavos:0,
+      centroAtualTemCreditoAutomatico:false,
+      criterioDeCreditoDoCiclo:'SOMENTE_CENTRO_COM_CICLO_CONCLUIDO',
+      obrigaEntregaProdutosIndependentementeDoGiro:true,
       girosConcluidos:sim.giros,centro:tab.centro?.participanteId??null,
       centroEmpresa:centroDoLoop(tab.centro),
       lugaresOcupados:ocupados,posicoesNaFila:livres,
@@ -72,6 +77,15 @@ class CircuitBreakPonteV6DemoSQLite{
       compartilhadoComCenarioArtificial:true,
       creditoRealDisponivelCentavos:0,
       provisoes:this.livro.resumo(),preLancamento:this.preLancamento.resumo(),
+      politicaDoCiclo:{
+        filaNaoGeraDireitoAdquiridoDeContemplacao:true,
+        centroAtualNaoGeraCreditoAntesDeConcluirCiclo:true,
+        creditosPrevistosSomenteDosCiclosConcluidos:true,
+        posicaoDouradaSegueMesmaOrdemDeFila:true,
+        cofreDouradoSoRecebeSeCentroDouradoConcluirCiclo:true,
+        deveresComerciaisDaLojaSaoIndependentes:true,
+        outrosDireitosLegaisNaoSaoExcluidos:true
+      },
       conciliacaoCofres:this.conciliacao.conferir()};
   }
   liberar({comandoId,revisaoEsperada,quantidade}={}){
