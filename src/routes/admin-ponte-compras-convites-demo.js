@@ -15,6 +15,11 @@ function criarRouterPonteComprasConvitesDemo({segredo,ponte}={}){
   try{return res.json(ponte.consultar());}
   catch(erro){return next(erro);}
  });
+ router.get('/ponte-compras-convites-demo/auditoria-integridade',(req,res,next)=>{
+  if(Object.keys(req.query).length)return res.status(400).json({erro:'SEM_PARAMETROS'});
+  try{return res.json(ponte.auditarIntegridadeOperacionalDemo());}
+  catch(e){return next(e);}
+ });
  router.get('/ponte-compras-convites-demo/auditoria-ciclo',(req,res,next)=>{
   if(Object.keys(req.query).join(',')!=='ciclo')
    return res.status(400).json({erro:'INFORME_CICLO'});
