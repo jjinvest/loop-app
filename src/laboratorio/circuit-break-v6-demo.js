@@ -54,7 +54,9 @@
       ' | Cofre central: '+money(d.centroRestanteSimuladoCentavos||0)+
       ' | Esquerda: '+money(d.investimentoRestanteSimuladoCentavos||0)+
       ' | Direita: '+money(d.reservaRestanteSimuladoCentavos||0)+
-      ' | Saques reais: R$ 0,00.';
+      ' | Douradas (quarto cofre): '+money(d.douradasAcumuladoSimuladoCentavos||0)+
+      ' | Previsões lançadas no escritório: '+money(d.escritoriosPrevistosSimuladoCentavos||0)+
+      ' | Saldo real sacável: R$ 0,00.';
     el('configurarPreV6').disabled=!!d.configurado;
     el('startPreV6').disabled=!d.configurado||d.fase!=='ARRECADACAO';
   }
@@ -75,25 +77,6 @@
       await carregar();
     }catch(e){el('resultadoPreV6').textContent='Operação recusada: '+e.message;}
     finally{ocupado=false;}
-  }
-  async function liberarPessoas(ev){
-    ev.preventDefault();
-    if(ocupado||!token||!estado)return;
-    ocupado=true;
-    try{
-      const p=Number(el('quantidadePessoasPreV6').value);
-      const resultado=await api('/ponte/liberar-participantes',{
-        method:'POST',body:JSON.stringify({
-          comandoId:comandoId(),revisaoEsperada:estado.revisao,participantes:p
-        })});
-      el('resultadoPreV6').textContent=
-        resultado.participantesContemplados+' titulares concluídos em '+
-        resultado.girosLiberados.length+' giros fictícios, sem dinheiro real ou Pix.';
-      await carregar();
-    }catch(e){
-      el('resultadoPreV6').textContent='Liberação bloqueada: '+e.message;
-      try{await carregar();}catch(_){}
-    }finally{ocupado=false;}
   }
   async function carregarPonte(){
     const dados=await api('/ponte');
@@ -176,7 +159,7 @@
     for(const a of dados.agendas){
       const li=document.createElement('li');
       li.textContent=a.status+' — '+a.modo+' — '+a.quantidade+
-        ' '+(a.alvo==='PESSOAS'?'titulares':'giros')+' planejados, '+a.girosExecutados+' concluídos, '+
+        ' giros planejados, '+a.girosExecutados+' concluídos, '+
         a.girosNaoExecutados+' não executados. Horários: '+
         (a.horarios.length?a.horarios[0].horarioBrasilia+' até '+
         a.horarios[a.horarios.length-1].horarioBrasilia:'nenhum')+'. ';
@@ -221,7 +204,7 @@
       const payload={
         agendaId:'agenda-'+Array.from(crypto.getRandomValues(new Uint8Array(12)),
           x=>x.toString(16).padStart(2,'0')).join(''),
-        modo,quantidade,alvo:el('alvoAgendaCBV6').value,
+        modo,quantidade,
         inicioEm:dia+'T'+inicio+':00-03:00',
         fimEm:dia+'T'+fim+':00-03:00'
       };
@@ -319,7 +302,6 @@
       pedidoId:el('pedidoAportePreV6').value.trim(),valorLoopCentavos:25000
     });
   });
-  el('formPessoasPreV6').addEventListener('submit',liberarPessoas);
   el('formProjecaoPrelancamentoV6').addEventListener('submit',async ev=>{
     ev.preventDefault();
     if(ocupado||!token)return;
