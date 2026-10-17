@@ -8,6 +8,7 @@ const {ConfiguracaoValorLoopDemoSQLite}=require('./configuracao-valor-loop-demo-
 const {IndicacoesLinksComissoesDemoSQLite}=require('./indicacoes-links-comissoes-demo-sqlite');
 const {cofreDoEvento,origemDoCentro,centroDoLoop}=require('./destino-financeiro-centro-loop');
 const {DESTINOS}=require('./tabuleiro-loop');
+const {auditarIntegridadeOperacionalDemo}=require('./auditoria-integridade-operacional-demo');
 
 function falha(codigo,mensagem){
  const e=new Error(mensagem);e.codigo=codigo;return e;
@@ -598,6 +599,9 @@ class PonteComprasConvitesDemoSQLite{
  }
  // Auditoria de ponta a ponta dos destinos, sem registrar dinheiro inexistente.
  // As vendas do motor sao marcadores da SIMULACAO, nao comprovantes de PSP.
+ auditarIntegridadeOperacionalDemo(){
+  return auditarIntegridadeOperacionalDemo(this);
+ }
  auditarCicloFinanceiroDemo({cicloNumero}={}){
   if(!Number.isSafeInteger(cicloNumero)||cicloNumero<1||cicloNumero>1000000)
    throw falha('CICLO_INVALIDO');
