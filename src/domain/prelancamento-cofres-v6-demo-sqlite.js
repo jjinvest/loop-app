@@ -224,7 +224,10 @@ class PreLancamentoCofresV6DemoSQLite{
    'FROM loop_v6_pre_receitas'
   ].join(' ')).get();
   const s=b.prepare([
-   'SELECT COUNT(*) AS giros, COALESCE(SUM(valor_centavos),0) AS total',
+   'SELECT COUNT(*) AS giros, COALESCE(SUM(valor_centavos),0) AS total,',
+   "COALESCE(SUM(CASE WHEN destino='LOOP_DOURADAS' THEN valor_centavos ELSE 0 END),0) AS douradas,",
+   "COALESCE(SUM(CASE WHEN destino='ESCRITORIO_PREVISTO' THEN valor_centavos ELSE 0 END),0) AS escritorios,",
+   "COALESCE(SUM(CASE WHEN destino='LOOP_DOURADAS' THEN 1 ELSE 0 END),0) AS girosDouradas",
    'FROM loop_v6_pre_saidas'
   ].join(' ')).get();
   return {configurado:true,fase:l.fase,iniciadoEm:l.iniciado_em,
@@ -234,9 +237,17 @@ class PreLancamentoCofresV6DemoSQLite{
    centroRecebidoSimuladoCentavos:r.centro,
    centroComprometidoSimuladoCentavos:s.total,
    centroRestanteSimuladoCentavos:r.centro-s.total,
+   // O quarto cofre nao e um pagamento nem volta automaticamente ao centro.
+   douradasAcumuladoSimuladoCentavos:s.douradas,
+   escritoriosPrevistosSimuladoCentavos:s.escritorios,
+   girosComCentroDourado:s.girosDouradas,
    investimentoRestanteSimuladoCentavos:r.esquerda,
    reservaRestanteSimuladoCentavos:r.direita,
-   girosRegistrados:s.giros,valoresReaisConciliados:false,
+   totalDemonstrativoConservadoCentavos:r.centro-s.total+
+     s.douradas+s.escritorios+r.esquerda+r.direita,
+   girosRegistrados:s.giros,
+   cofresDoLoop:['LOOP_CENTRO','LOOP_ESQUERDA','LOOP_DIREITA','LOOP_DOURADAS'],
+   caixaDaLojaSeparado:true,valoresReaisConciliados:false,
    saldoRealCentavos:0,valorParaSaqueCentavos:0,
    fluxoBancario:'NAO_CONECTADO',tipo:'PROJECAO_SEM_RECEITA_REAL'};
  }
