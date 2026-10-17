@@ -1,6 +1,7 @@
 'use strict';
 const express=require('express');
 const {criarAutorizacao}=require('./admin-catalogo-laboratorio');
+const {projetarCaixaPrelancamentoV6}=require('../domain/projetar-caixa-prelancamento-v6');
 
 function criarRouterCircuitBreakV6Demo({segredo,controle,ponteControle=null,programador=null}={}){
   const router=express.Router();
@@ -17,6 +18,19 @@ function criarRouterCircuitBreakV6Demo({segredo,controle,ponteControle=null,prog
       !Number.isSafeInteger(limite)||limite<1||limite>100)
       return res.status(400).json({erro:'LIMITE_INVALIDO'});
     return res.json({modo:'SOMENTE_LABORATORIO',historico:controle.historico({limite})});
+  });
+  router.post('/circuit-break-v6-demo/projecao-prelancamento',(req,res)=>{
+    if(!req.is('application/json'))return res.status(415).json({erro:'JSON_OBRIGATORIO'});
+    const p=req.body;
+    if(!p||typeof p!=='object'||Array.isArray(p)||
+       Object.keys(p).sort().join(',')!=='compras,liquidoPorCompraCentavos')
+      return res.status(400).json({erro:'CAMPOS_INVALIDOS'});
+    try{return res.json(projetarCaixaPrelancamentoV6(p));}
+    catch(e){
+      if(/INVALIDO|INVALIDAS|INVALIDO/.test(e.message))
+        return res.status(400).json({erro:'PROJECAO_INVALIDA'});
+      throw e;
+    }
   });
   router.get('/circuit-break-v6-demo/programacoes',(_req,res)=>{
     if(!programador)return res.status(501).json({erro:'PROGRAMADOR_INDISPONIVEL'});
