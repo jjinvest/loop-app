@@ -1,6 +1,7 @@
 'use strict';
 const {test}=require('node:test');
 const assert=require('node:assert/strict');
+const {once}=require('node:events');
 const {RepositorioCatalogoSQLite}=require('../src/domain/repositorio-catalogo-sqlite');
 const {ContasParticipantesDemoSQLite}=require('../src/domain/contas-participantes-demo-sqlite');
 const {PonteComprasConvitesDemoSQLite}=require('../src/domain/ponte-compras-convites-demo-sqlite');
@@ -10,6 +11,38 @@ const {AdesoesPosicoesDemoSQLite}=require('../src/domain/adesoes-posicoes-demo-s
 const {RetornoSaqueCentroV6DemoSQLite}=require('../src/domain/retorno-saque-centro-v6-demo-sqlite');
 const {STATUS_CONFIRMADO}=require('../src/domain/processador-pedidos-simulados');
 
+test('resposta bancaria falsa nao pode ser produzida pelo titular ou rota publica',async t=>{
+ const {criarAppAdminLaboratorio}=require('../src/laboratorio/servidor-catalogo');
+ const repo=new RepositorioCatalogoSQLite({caminho:':memory:'});
+ t.after(()=>repo.fechar());
+ const segredo='senha-admin-lab-retorno-2026-forte';
+ const server=criarAppAdminLaboratorio({repositorio:repo,segredo})
+  .listen(0,'127.0.0.1');
+ await once(server,'listening');
+ t.after(()=>new Promise(resolve=>server.close(resolve)));
+ const origem='http://127.0.0.1:'+server.address().port;
+ const participante=origem+'/api/laboratorio/participante/saque-centro-v6-demo';
+ const admin=origem+'/api/admin/circuit-break-v6-demo/saque-centro-v6-demo/eventos';
+ assert.equal((await fetch(participante)).status,401);
+ assert.equal((await fetch(participante,{method:'POST',
+  headers:{'Content-Type':'application/json','X-LOOP-LAB':'participante'},
+  body:JSON.stringify({solicitacaoId:'saque-centro-teste-sem-sessao',
+   valorCentavos:1000})
+ })).status,401);
+ const fake={solicitacaoId:'saque-centro-nao-existe-12345',
+  eventoId:'evt-saque-nao-existe-12345',tipo:'RETORNO_CONFIRMADO_SIMULADO'};
+ assert.equal((await fetch(admin,{method:'POST',
+  headers:{'Content-Type':'application/json'},body:JSON.stringify(fake)
+ })).status,401);
+ assert.equal((await fetch(admin,{method:'POST',
+  headers:{Authorization:'Bearer '+segredo,'Content-Type':'application/json'},
+  body:JSON.stringify({...fake,saldoRealCentavos:75000})
+ })).status,400);
+ assert.equal((await fetch(admin,{method:'POST',
+  headers:{Authorization:'Bearer '+segredo,'Content-Type':'application/json'},
+  body:JSON.stringify(fake)
+ })).status,409);
+});
 test('saque central errado somente restaura referencia apos comprovacao ficticia de retorno',async t=>{
  const repo=new RepositorioCatalogoSQLite({caminho:':memory:'});t.after(()=>repo.fechar());
  const contas=new ContasParticipantesDemoSQLite({banco:repo.banco});
