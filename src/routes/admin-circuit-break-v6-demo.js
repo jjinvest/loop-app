@@ -69,6 +69,56 @@ function criarRouterCircuitBreakV6Demo({segredo,controle,ponteControle=null,prog
       return res.status(501).json({erro:'LIVRO_PROVISOES_INDISPONIVEL'});
     return res.json(ponteControle.livro.resumo());
   });
+  function responderPre(res,acao){
+    if(!ponteControle?.preLancamento)return res.status(501).json({erro:'PRE_LANCAMENTO_INDISPONIVEL'});
+    try{return res.json(acao());}
+    catch(e){
+      if(!e.codigo)throw e;
+      return res.status([
+        'PRE_LANCAMENTO_JA_CONFIGURADO','START_JA_EXECUTADO',
+        'PRE_LANCAMENTO_APOS_GIROS','LIQUIDO_SUPERA_VENDA',
+        'COMPRA_DIVERGENTE_CAIXA'
+      ].includes(e.codigo)?409:400).json({erro:e.codigo});
+    }
+  }
+  router.get('/circuit-break-v6-demo/ponte/prelancamento',(_req,res)=>
+    responderPre(res,()=>ponteControle.preLancamento.resumo()));
+  router.post('/circuit-break-v6-demo/ponte/prelancamento/configurar',(req,res)=>{
+    if(!req.body||typeof req.body!=='object'||Array.isArray(req.body)||
+       Object.keys(req.body).join(',')!=='liquidoPorCompraCentavos')
+      return res.status(400).json({erro:'CAMPOS_INVALIDOS'});
+    return responderPre(res,()=>ponteControle.preLancamento.habilitar(req.body));
+  });
+  router.post('/circuit-break-v6-demo/ponte/prelancamento/sincronizar',(req,res)=>{
+    if(!req.body||typeof req.body!=='object'||Array.isArray(req.body)||
+       Object.keys(req.body).length!==0)return res.status(400).json({erro:'CAMPOS_INVALIDOS'});
+    return responderPre(res,()=>({
+      sincronizacao:ponteControle.preLancamento.sincronizar(),
+      caixa:ponteControle.preLancamento.resumo()
+    }));
+  });
+  router.post('/circuit-break-v6-demo/ponte/prelancamento/start',(req,res)=>{
+    if(!req.body||typeof req.body!=='object'||Array.isArray(req.body)||
+       Object.keys(req.body).length!==0)return res.status(400).json({erro:'CAMPOS_INVALIDOS'});
+    return responderPre(res,()=>ponteControle.preLancamento.iniciar());
+  });
+  router.post('/circuit-break-v6-demo/ponte/liberar-participantes',(req,res)=>{
+    if(!ponteControle)return res.status(501).json({erro:'PONTE_INDISPONIVEL'});
+    const body=req.body;
+    if(!body||typeof body!=='object'||Array.isArray(body)||
+      Object.keys(body).sort().join(',')!=='comandoId,participantes,revisaoEsperada')
+      return res.status(400).json({erro:'CAMPOS_INVALIDOS'});
+    try{return res.json(ponteControle.liberar(body));}
+    catch(e){
+      if(!e.codigo)throw e;
+      return res.status([
+        'CATRACA_PAUSADA','LIMITE_DIARIO_ATINGIDO','AGUARDANDO_START',
+        'SALDO_CENTRAL_SIMULADO_INSUFICIENTE','PARTICIPANTES_ELEGIVEIS_INSUFICIENTES',
+        'CONFLITO_REVISAO','CONFLITO_COMANDO_ID','COMPRAS_CONFIRMADAS_INSUFICIENTES',
+        'TABULEIRO_SEM_REPOSICAO'
+      ].includes(e.codigo)?409:400).json({erro:e.codigo});
+    }
+  });
   router.get('/circuit-break-v6-demo/ponte',(_req,res)=>{
     if(!ponteControle)return res.status(501).json({erro:'PONTE_INDISPONIVEL'});
     return res.json(ponteControle.resumo());
