@@ -49,6 +49,7 @@ const { criarRouterRecebimentosPSPDemo } = require('../routes/admin-recebimentos
 const { criarRouterWebhookPSPDemoLocal } = require('../routes/webhook-psp-demo-local');
 const {CircuitBreakV6DemoSQLite}=require('../domain/circuit-break-v6-demo-sqlite');
 const {CircuitBreakPonteV6DemoSQLite}=require('../domain/circuit-break-ponte-v6-demo-sqlite');
+const {ProgramadorCatracaV6DemoSQLite}=require('../domain/programador-catraca-v6-demo-sqlite');
 const {criarRouterCircuitBreakV6Demo}=require('../routes/admin-circuit-break-v6-demo');
 
 function criarAppAdminLaboratorio({ repositorio, segredo, webhookDemo } = {}) {
@@ -178,8 +179,13 @@ function criarAppAdminLaboratorio({ repositorio, segredo, webhookDemo } = {}) {
   circuitoPonteDemo=circuitoDemo&&ponteParaCircuito?
     new CircuitBreakPonteV6DemoSQLite({banco:repositorio.banco,
       ponte:ponteParaCircuito,controle:circuitoDemo}):null;
+  const programadorCatracaDemo=circuitoPonteDemo?
+    new ProgramadorCatracaV6DemoSQLite({banco:repositorio.banco,
+      ponteControle:circuitoPonteDemo,controle:circuitoDemo}):null;
+  app.locals.programadorCatracaDemo=programadorCatracaDemo;
   app.use('/api/admin',criarRouterCircuitBreakV6Demo({
-    segredo,controle:circuitoDemo,ponteControle:circuitoPonteDemo
+    segredo,controle:circuitoDemo,ponteControle:circuitoPonteDemo,
+    programador:programadorCatracaDemo
   }));
   app.use('/api/admin', criarRouterFinanceiroAdminDemo({
     segredo, configuracao:configuracaoCofres, razaoPersistente,
@@ -365,7 +371,18 @@ function iniciarLaboratorio({ ambiente = process.env } = {}) {
     const servidor = app.listen(porta,'127.0.0.1', () => {
       process.stdout.write('Catalogo LOOP em teste local: http://127.0.0.1:' + porta + '/admin\n');
     });
-    servidor.on('close',() => banco.fechar());
+    // Agenda automatica SOMENTE no processo de laboratorio LOCAL em execucao.
+    // Em testes HTTP com app factory nao criamos timers externos.
+    const programa=app.locals.programadorCatracaDemo;
+    const timer=programa?setInterval(()=>{
+      try{programa.processarVencimento();}
+      catch(e){process.stderr.write('[LOOP demo] programacao falhou: '+e.message+'\n');}
+    },60_000):null;
+    if(timer)timer.unref();
+    servidor.on('close',()=>{
+      if(timer)clearInterval(timer);
+      banco.fechar();
+    });
     return { servidor, banco };
   } catch (erro) {
     banco.fechar();
