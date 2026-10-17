@@ -72,6 +72,16 @@
       </section>
       <section class="painel"><h2>Giros dos clientes cadastrados — laboratório</h2><p class="aviso-demo">Somente pedidos fictícios confirmados na ponte. Compartilha pausa e limite diário, sem usar os compradores artificiais ou liberar dinheiro.</p><p id="resumoPonteCBV6">Aguardando consulta.</p><p id="provisoesPonteCBV6" aria-live="polite">Livro de previsões ainda não consultado.</p><button type="button" id="atualizarPonteCBV6">Atualizar a ponte</button><form id="formLotePonteCBV6"><label for="quantidadeLotePonteCBV6">Lote da ponte</label><select id="quantidadeLotePonteCBV6"><option value="1">1 giro</option><option value="3">3 giros</option><option value="4">4 giros</option><option value="5">5 giros</option><option value="10">10 giros</option></select><button id="liberarPonteCBV6" type="submit">Liberar giros das compras fictícias cadastradas</button></form><p id="resultadoPonteCBV6" role="status" aria-live="polite"></p><p class="ajuda">Seis pedidos distintos por giro, fila com reposição e extrato somente previsto. Nenhum saldo sacável.</p></section>
       <section class="painel">
+        <h2>Pré-lançamento: simular caixa e limite seguro</h2>
+        <p class="aviso-demo">Simulação matemática, não dinheiro liquidado. O sistema compara a quantidade de compras com a capacidade hipotética dos três cofres. Custos, impostos, estornos e compromissos existentes precisam ser conciliados separadamente.</p>
+        <form id="formProjecaoPrelancamentoV6">
+          <div class="campo"><label for="comprasPrelancamentoV6">Quantidade de compras independentes</label><input id="comprasPrelancamentoV6" type="number" min="0" max="1000000" value="100" required></div>
+          <div class="campo"><label for="liquidoPdfPrelancamentoV6">Líquido disponível por PDF (R$)</label><input id="liquidoPdfPrelancamentoV6" type="number" step="0.01" min="0" max="100000" value="225.00" required></div>
+          <button type="submit">Conferir caixa hipotético e giros possíveis</button>
+        </form>
+        <p id="resultadoProjecaoPrelancamentoV6" role="status" aria-live="polite">Referência nominal por compra qualificada: R$ 250,00. Não implica liquidação real.</p>
+      </section>
+      <section class="painel">
         <h2>Programação automática por horário — somente laboratório</h2>
         <p class="aviso-demo">Você escolhe QUANTOS GIROS tentar e em quais horários. Não é ordem para pagar pessoas. Cada giro requer 6 pedidos diferentes; pausas, limites, falta de compras e indisponibilidade bloqueiam o giro. A empresa no centro não conta como cliente contemplado. Nenhum PIX é emitido.</p>
         <form id="formAgendaCBV6">
