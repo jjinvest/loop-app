@@ -85,13 +85,9 @@
     <button type="submit">Registrar aporte separado FICTÍCIO de R$ 250</button>
   </form>
   <p id="resultadoPreV6" role="status" aria-live="polite"></p>
-  <h3>Liberação manual por pessoa contemplada</h3>
-  <form id="formPessoasPreV6">
-    <label for="quantidadePessoasPreV6">Quantos titulares contemplar agora?</label>
-    <input id="quantidadePessoasPreV6" type="number" min="1" max="100" step="1" value="3" required>
-    <button type="submit">Tentar liberar participantes elegíveis agora</button>
-  </form>
-  <p class="ajuda">A quantidade é uma meta, não uma promessa: sem START, aportes simulados suficientes, seis compras válidas por giro e titular elegível, a operação é recusada e nada é debitado. A ordem da fila não pode ser alterada manualmente.</p>
+  <h3>Liberação manual de giros</h3>
+  <p class="ajuda">O giro é o único movimento: completa seis compras distintas, sai a posição do centro e as outras avançam. Tanto faz se o centro é participante ou dourado: isso só determina o destino contábil, não a ordem.</p>
+  <p class="ajuda">Para liberar 3 giros agora, use o controle de lotes da ponte logo abaixo. O START e o caixa demonstrativo continuam protegendo a operação fictícia.</p>
 </section>
 <section class="painel"><h2>Giros dos clientes cadastrados — laboratório</h2><p class="aviso-demo">Somente pedidos fictícios confirmados na ponte. Compartilha pausa e limite diário, sem usar os compradores artificiais ou liberar dinheiro.</p><p id="resumoPonteCBV6">Aguardando consulta.</p><p id="provisoesPonteCBV6" aria-live="polite">Livro de previsões ainda não consultado.</p><button type="button" id="atualizarPonteCBV6">Atualizar a ponte</button><form id="formLotePonteCBV6"><label for="quantidadeLotePonteCBV6">Lote da ponte</label><select id="quantidadeLotePonteCBV6"><option value="1">1 giro</option><option value="3">3 giros</option><option value="4">4 giros</option><option value="5">5 giros</option><option value="10">10 giros</option></select><button id="liberarPonteCBV6" type="submit">Liberar giros das compras fictícias cadastradas</button></form><p id="resultadoPonteCBV6" role="status" aria-live="polite"></p><p class="ajuda">Seis pedidos distintos por giro, fila com reposição e extrato somente previsto. Nenhum saldo sacável.</p></section>
       <section class="painel">
@@ -106,11 +102,10 @@
       </section>
       <section class="painel">
         <h2>Programação automática por horário — somente laboratório</h2>
-        <p class="aviso-demo">Você escolhe QUANTOS GIROS tentar e em quais horários. Não é ordem para pagar pessoas. Cada giro requer 6 pedidos diferentes; pausas, limites, falta de compras e indisponibilidade bloqueiam o giro. A empresa no centro não conta como cliente contemplado. Nenhum PIX é emitido.</p>
+        <p class="aviso-demo">Você escolhe QUANTOS GIROS tentar e quando. Cada giro exige seis compras distintas; o centro avança seja de cliente ou dourado. A identidade do centro muda apenas o cofre de destino. Pausas, limites e caixa demonstrativo insuficiente bloqueiam giros. Nenhum PIX é emitido.</p>
         <form id="formAgendaCBV6">
           <div class="campo"><label for="dataAgendaCBV6">Dia da programação</label><input id="dataAgendaCBV6" type="date" required></div>
           <div class="campo"><label for="modoAgendaCBV6">Modo</label><select id="modoAgendaCBV6"><option value="DISTRIBUIDO">Distribuir ao longo do período</option><option value="PONTUAL">Começar no horário escolhido</option><option value="A_CADA_30_MIN">A cada 30 minutos</option><option value="A_CADA_60_MIN">A cada hora</option></select></div>
-          <div class="campo"><label for="alvoAgendaCBV6">O que liberar?</label><select id="alvoAgendaCBV6"><option value="PESSOAS">Participantes contemplados</option><option value="GIROS">Giros da catraca</option></select></div>
           <div class="campo"><label for="quantidadeAgendaCBV6">Quantidade máxima programada</label><input id="quantidadeAgendaCBV6" type="number" min="1" max="300" step="1" value="20" required></div>
           <div class="campo"><label for="inicioAgendaCBV6">Começar às</label><input id="inicioAgendaCBV6" type="time" value="09:00" required></div>
           <div class="campo"><label for="fimAgendaCBV6">Encerrar às</label><input id="fimAgendaCBV6" type="time" value="18:00" required></div>
