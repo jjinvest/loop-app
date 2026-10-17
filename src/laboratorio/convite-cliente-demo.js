@@ -4,17 +4,27 @@
  const path=location.pathname;
  const semIndicacao=path==='/laboratorio/cadastro';
  const linkConvite=path+location.search;
- const destino=new URLSearchParams(location.search).get('destino')==='loja'?'loja':'escritorio';
+ const destino=path.startsWith('/loja-vilela/convite/')?'loja':
+  path.startsWith('/escritorio-vilela/convite/')?'escritorio':
+  new URLSearchParams(location.search).get('destino')==='loja'?'loja':'escritorio';
+ const prefixo=path.startsWith('/loja-vilela/convite/')?'/loja-vilela/convite/':
+  path.startsWith('/escritorio-vilela/convite/')?'/escritorio-vilela/convite/':null;
+ const trocaDestino=(para)=>{
+  if(semIndicacao)return path;
+  if(prefixo)return '/'+(para==='loja'?'loja-vilela':'escritorio-vilela')+
+   '/convite/'+path.slice(prefixo.length);
+  return path+'?destino='+para;
+ };
  const titulo=e('tituloDestinoConvite'),descricao=e('descricaoDestinoConvite');
- titulo.textContent=destino==='loja'?'Conheça a loja do LOOP':'Conheça o escritório LOOP';
+ titulo.textContent=destino==='loja'?'Conheça a Loja Vilela':'Conheça o Escritório Vilela';
  e('apresentacaoEmpresaConvite').hidden=destino==='loja';
  descricao.textContent=destino==='loja'?
   'Veja os produtos e os preços da loja antes de fazer seu cadastro.':
   'Conheça a empresa, as regras e a participação pelo Escritório Virtual.';
- e('linkApresentarEscritorioConvite').href=semIndicacao?path:path+'?destino=escritorio';
- e('linkApresentarLojaConvite').href=semIndicacao?path:path+'?destino=loja';
+ e('linkApresentarEscritorioConvite').href=trocaDestino('escritorio');
+ e('linkApresentarLojaConvite').href=trocaDestino('loja');
  e('irEscritorioConvite').href=destino==='loja'?
-  '/laboratorio/participante?destino=loja':'/laboratorio/participante';
+  '/escritorio-vilela?destino=loja':'/escritorio-vilela';
  e('linkApresentarEscritorioConvite').setAttribute('aria-current',destino==='escritorio'?'page':'false');
  e('linkApresentarLojaConvite').setAttribute('aria-current',destino==='loja'?'page':'false');
  const estado=e('estadoConvite');
