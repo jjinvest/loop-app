@@ -25,7 +25,7 @@ function setCookie(res,token,maxAge){
  res.append('Set-Cookie',COOKIE+'='+token+'; HttpOnly; SameSite=Strict; Path='+CAMINHO+
   '; Max-Age='+maxAge);
 }
-function criarRouterParticipanteDemo({contas,ponte,sessoes=null,adesoes=null,carrinhos=null,saques=null}={}){
+function criarRouterParticipanteDemo({contas,ponte,sessoes=null,adesoes=null,carrinhos=null,saques=null,obterLivroProvisoesV6=null}={}){
  if(!contas||!ponte)throw new TypeError('Cadastro e ponte do laboratorio obrigatorios');
  const gerenciador=sessoes||new SessoesParticipanteDemo({contas});
  const escritorio=new EscritorioIndividualDemo({contas,ponte});
@@ -261,6 +261,7 @@ function criarRouterParticipanteDemo({contas,ponte,sessoes=null,adesoes=null,car
     historicoLoja,
     saquesSimulados:saques?saques.consultar(contaId):null,
     creditosPrevistosV6:extratoCentrosPrevistosV6({ponte,contas,contaId}),
+    provisoesAuditadasV6:obterLivroProvisoesV6?.()?.extrato(contaId)||null,
     adesao:adesoes?adesoes.consultarConta(contaId):null});
   }catch(erro){return next(erro);}
  });
