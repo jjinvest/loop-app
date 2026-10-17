@@ -23,6 +23,21 @@ test('50 giros V6 conservam todas as posicoes: 100 iniciais, 300 novas, 50 saida
   assert.equal(x.posicoesCriadasAcumuladas,100+6*x.giro);
   assert.equal(x.filaA+x.filaB,x.totalAguardando);
  }
+ const fin=r.financeiro;
+ assert.equal(fin.totalAlocadoReferencialCentavos,7500000);
+ assert.equal(fin.distribuicaoReferencialCentavos.LOOP_CENTRO,3750000);
+ assert.equal(fin.distribuicaoReferencialCentavos.LOOP_ESQUERDA,2500000);
+ assert.equal(fin.distribuicaoReferencialCentavos.LOOP_DIREITA,1250000);
+ assert.equal(fin.distribuicaoReferencialCentavos.LOOP_DOURADAS,0);
+ assert.equal(fin.centrosDeClientes,50);
+ assert.equal(fin.centrosDoLoop,0);
+ assert.equal(fin.vendaBrutaHipoteticaSeCadaUmaDas400ComprasFosse250Centavos,10000000);
+ assert.equal(fin.comissoesHipoteticas10PorcentoCentavos,320000);
+ assert.equal(fin.comissoesEfetivamentePagasCentavos,0);
+ assert.equal(fin.margemBrutaComercialExemploTotalCentavos,1500000);
+ assert.equal(fin.margemComercialExemploAposComissaoHipoteticaCentavos,1180000);
+ assert.equal(fin.pagamentosReaisCentavos,0);
+ assert.equal(fin.saldoBancarioVerificado,false);
  assert.equal(r.dinheiroReal,false);
  assert.equal(r.contemplacoesFinanceirasReais,0);
  assert.equal(r.promessaDeRecebimento,false);
