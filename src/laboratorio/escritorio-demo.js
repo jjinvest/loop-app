@@ -25,6 +25,7 @@
     limparTabuleiro();
     byId('publicacoesHomeEscritorio').replaceChildren();
     conteudo.hidden=true;
+    byId('acessoEscritorioDemo').hidden=false;
   }
   async function buscar(recurso) {
     const resposta=await fetch(recurso,{
@@ -244,6 +245,7 @@
       p.id+' — participação concluída (fictícia)');
     mostrarMapa(visao);
     conteudo.hidden=false;
+    byId('acessoEscritorioDemo').hidden=true;
     mensagem.textContent='Prévia local carregada. Nenhuma operação real foi executada.';
   }
   async function carregarConta() {
@@ -290,6 +292,7 @@
       mensagem.textContent=erro.message;
     }
   });
+  byId('sairMenuEscritorioDemo').addEventListener('click',()=>byId('sairEscritorioDemo').click());
   byId('sairEscritorioDemo').addEventListener('click',()=>{
     ++versaoSolicitacao;
     segredo='';
