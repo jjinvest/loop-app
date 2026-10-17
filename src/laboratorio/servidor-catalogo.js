@@ -52,6 +52,9 @@ const {CircuitBreakV6DemoSQLite}=require('../domain/circuit-break-v6-demo-sqlite
 const {CircuitBreakPonteV6DemoSQLite}=require('../domain/circuit-break-ponte-v6-demo-sqlite');
 const {ProgramadorCatracaV6DemoSQLite}=require('../domain/programador-catraca-v6-demo-sqlite');
 const {criarRouterCircuitBreakV6Demo}=require('../routes/admin-circuit-break-v6-demo');
+const {AsaasSandboxLojaV6}=require('../domain/asaas-sandbox-loja-v6');
+const {CobrancasAkitemmAsaasSandboxSQLite}=require('../domain/cobrancas-akitemm-asaas-sandbox-v6');
+const {criarRouterCobrancasAkitemmSandboxV6}=require('../routes/admin-cobrancas-akitemm-sandbox-v6');
 
 function criarAppAdminLaboratorio({ repositorio, segredo, webhookDemo } = {}) {
   if (process.env.NODE_ENV === 'production') {
@@ -237,6 +240,19 @@ function criarAppAdminLaboratorio({ repositorio, segredo, webhookDemo } = {}) {
       segredo,pedidos:pedidosPDFDemo,integracaoLoop:integracaoPDFLoopDemo
     }));
   }
+  // AKITEMM dentro do LOOP: conector opcional EXCLUSIVAMENTE SANDBOX.
+  // Sem chave de teste, rotas respondem desativadas. Em producao o servidor
+  // de laboratorio ja recusa inicializacao. Jamais expor a chave ao cliente.
+  const asaasSandbox=process.env.ASAAS_SANDBOX_API_KEY&&
+    repositorio instanceof RepositorioCatalogoSQLite?
+    new CobrancasAkitemmAsaasSandboxSQLite({
+      banco:repositorio.banco,
+      provedor:new AsaasSandboxLojaV6({apiKey:process.env.ASAAS_SANDBOX_API_KEY})
+    }):null;
+  app.use('/api/admin',criarRouterCobrancasAkitemmSandboxV6({
+    segredo,servico:asaasSandbox
+  }));
+  app.locals.akitemmSandboxHabilitado=Boolean(asaasSandbox);
   // Compra fisica com preco livre: so PRE-PEDIDO ficticio, com
   // custo preenchido pelo admin, sem caixa, PSP ou criacao de posicao.
   if(repositorio instanceof RepositorioCatalogoSQLite){
