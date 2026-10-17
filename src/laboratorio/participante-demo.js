@@ -249,6 +249,19 @@
  }
   function mostrar(visao){
   e('nomeLogadoParticipante').textContent=visao.conta.nome+' — meu resumo';
+  const previstos=visao.creditosPrevistosV6;
+  e('creditoPrevistoCentroV6').textContent=dinheiro(previstos?.creditoPrevistoCentavos||0);
+  e('creditoDisponivelCentroV6').textContent=dinheiro(previstos?.disponivelParaSaqueCentavos||0);
+  e('creditoCiclosCentroV6').textContent=String(previstos?.quantidadeCiclos||0);
+  e('avisoCreditosCentroV6').textContent=previstos?.quantidadeCiclos?
+   'Parcelas 1, 3 e 5 previstas na conclusão do ciclo, SEM liquidação ou direito de saque neste laboratório.':
+   'Nenhum ciclo de seis vendas da sua posição foi concluído no laboratório; nenhum crédito previsto.';
+  lista('historicoCreditoCentroV6',previstos?.historico||[],c=>
+   'Giro '+c.cicloNumero+' · Posição #'+c.posicaoCentroId+
+   ' · Três parcelas previstas de '+dinheiro(c.parcelas[0].valorPrevistoCentavos)+
+   ' · Total '+dinheiro(c.valorPrevistoCentavos)+
+   ' · NÃO SACÁVEL / aguardando conciliação.');
+
   const link=visao.linkIndicacao;
   e('enderecoLinkParticipante').value=location.origin+(link.linkEscritorio||link.link);
   e('enderecoLinkLojaParticipante').value=location.origin+link.linkLoja;
