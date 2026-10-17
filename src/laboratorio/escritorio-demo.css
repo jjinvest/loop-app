@@ -158,3 +158,7 @@ main{max-width:1480px}
  .mapa-escritorio-tres-colunas>section{padding:9px}
  .itens-menu-escritorio button{padding:9px}
 }
+
+#acessoEscritorioDemo[hidden]{display:none!important}
+.menu-lateral-escritorio .sair-menu-escritorio{margin-top:18px;width:100%;border:1px solid #526c5c;border-radius:12px;background:#131e1a;color:#bcead0;padding:12px;cursor:pointer;font:inherit}
+.menu-lateral-escritorio .sair-menu-escritorio:focus-visible{outline:3px solid #dfbe70;outline-offset:2px}
