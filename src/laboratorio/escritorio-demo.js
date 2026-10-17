@@ -22,6 +22,8 @@
     texto('titularResumoDemo','');
     texto('etapaMotorDemo','');
     texto('indicacoesMotorDemo','');
+    limparTabuleiro();
+    byId('publicacoesHomeEscritorio').replaceChildren();
     conteudo.hidden=true;
   }
   async function buscar(recurso) {
@@ -35,6 +37,175 @@
       'Não foi possível consultar a demonstração ('+resposta.status+').'
     );
     return resposta.json();
+  }
+  let abaAtual='home';
+  const secoes={home:'abaHomeEscritorio',tabuleiro:'abaTabuleiroEscritorio',
+    conta:'abaContaEscritorio'};
+  function abrirAba(nome){
+    if(!Object.hasOwn(secoes,nome))return;
+    abaAtual=nome;
+    for(const [chave,id] of Object.entries(secoes)){
+      byId(id).hidden=chave!==nome;
+      const botao=document.querySelector('[data-aba-escritorio="'+chave+'"]');
+      botao.setAttribute('aria-selected',chave===nome?'true':'false');
+      botao.tabIndex=chave===nome?0:-1;
+    }
+    if(nome==='tabuleiro'&&segredo){
+      if(origem.value!=='motor')origem.value='motor';
+      carregarConta();
+    }
+  }
+  function classePosicao(p){
+    return p?.dourada?'dourada':p?.pendente?'pendente':p?.minha?'minha':'outra';
+  }
+  function limparTabuleiro(){
+    for(const id of ['listaFilaAEscritorio','listaFilaBEscritorio',
+      'anelTabuleiroEscritorio'])byId(id).replaceChildren();
+    texto('qtdFilaAEscritorio','0');
+    texto('qtdFilaBEscritorio','0');
+    texto('estadoTabuleiroEscritorio','Nenhum dado do tabuleiro consultado.');
+  }
+  function mostrarFila(id,lista){
+    const alvo=byId(id);alvo.replaceChildren();
+    if(!lista.length){
+      const linha=document.createElement('li');
+      linha.className='fila-vazia-escritorio';
+      linha.textContent='Aguardando posições';
+      alvo.append(linha);return;
+    }
+    lista.forEach((p,i)=>{
+      const li=document.createElement('li');
+      li.className='linha-fila-escritorio tom-'+classePosicao(p);
+      const ordem=document.createElement('span');
+      ordem.className='numero-fila-escritorio';
+      ordem.textContent=String(i+1).padStart(2,'0');
+      const descricao=document.createElement('span');
+      descricao.textContent='#'+p.id+(p.minha?' · Sua posição':p.dourada?' · LOOP':'');
+      li.append(ordem,descricao);alvo.append(li);
+    });
+  }
+  function criarEsfera(posicao,rotulo,classe){
+    const node=document.createElement('div');
+    node.className='esfera-tabuleiro-escritorio esfera-'+classe+
+      ' tom-'+classePosicao(posicao);
+    node.setAttribute('aria-label',rotulo+': '+
+      (posicao?'posição '+posicao.id:'posição vazia'));
+    const small=document.createElement('small');
+    small.textContent=rotulo;
+    const numero=document.createElement('strong');
+    numero.textContent=posicao?'#'+posicao.id:'—';
+    node.append(small,numero);
+    if(posicao?.minha){
+      const mark=document.createElement('span');
+      mark.className='marca-titular-escritorio';mark.textContent='SUA';
+      node.append(mark);
+    }
+    return node;
+  }
+  function mostrarMapa(visao){
+    limparTabuleiro();
+    if(!visao.mapa){
+      texto('estadoTabuleiroEscritorio',
+        'Para conferir o tabuleiro, selecione o cenário do motor do LOOP.');
+      return;
+    }
+    const m=visao.mapa;
+    texto('qtdFilaAEscritorio',m.filaA.length);
+    texto('qtdFilaBEscritorio',m.filaB.length);
+    mostrarFila('listaFilaAEscritorio',m.filaA);
+    mostrarFila('listaFilaBEscritorio',m.filaB);
+    const board=byId('anelTabuleiroEscritorio');
+    board.replaceChildren();
+    m.vagas.forEach((p,i)=>board.append(criarEsfera(p,'Vaga '+(i+1),'vaga-'+(i+1))));
+    board.append(criarEsfera(m.centro,'CENTRO','centro'));
+    texto('estadoTabuleiroEscritorio',
+      'Giros simulados: '+visao.tabuleiro.giros+
+      ' · Ciclo nº '+visao.tabuleiro.cicloAtual+
+      ' · Catraca: '+visao.tabuleiro.catraca+'.');
+  }
+  async function enviarPublicacao(rota,corpo){
+    const resposta=await fetch('/api/admin/escritorio-demo/publicacoes'+rota,{
+      method:'POST',cache:'no-store',credentials:'omit',
+      headers:{Authorization:'Bearer '+segredo,'Content-Type':'application/json'},
+      body:JSON.stringify(corpo)
+    });
+    const payload=await resposta.json();
+    if(!resposta.ok)throw new Error(payload.erro||'Publicação recusada');
+    return payload;
+  }
+  async function atualizarPublicacoesHome(){
+    if(!segredo)return;
+    const dados=await buscar('/api/admin/escritorio-demo/publicacoes');
+    const alvo=byId('publicacoesHomeEscritorio');
+    alvo.replaceChildren();
+    if(!dados.publicacoes.length){
+      const vazio=document.createElement('p');
+      vazio.className='ajuda';vazio.textContent=
+       'Nenhum comunicado publicado. A casinha ficará reservada às peças que você escolher.';
+      alvo.append(vazio);return;
+    }
+    for(const pub of dados.publicacoes){
+      const card=document.createElement('article');
+      card.className='publicacao-home-escritorio';
+      if(pub.imagemCaminho){
+        const img=document.createElement('img');
+        img.src=pub.imagemCaminho;img.alt=pub.titulo;
+        img.loading='lazy';card.append(img);
+      }
+      const tipo=document.createElement('small');
+      tipo.className='tipo-publicacao-escritorio';
+      tipo.textContent=pub.tipo==='AKITEMM'?'AKITEMM · Loja':
+        pub.tipo==='EVENTO'?'Evento LOOP':'Comunicado';
+      const titulo=document.createElement('h3');titulo.textContent=pub.titulo;
+      const descricao=document.createElement('p');descricao.textContent=pub.descricao;
+      card.append(tipo,titulo,descricao);
+      if(pub.linkDestino){
+        const link=document.createElement('a');link.href=pub.linkDestino;
+        link.textContent=pub.linkDestino==='/loja'?'Abrir AKITEMM':'Abrir conteúdo';
+        card.append(link);
+      }
+      const arquivar=document.createElement('button');
+      arquivar.type='button';arquivar.className='acao-arquivar-publicacao';
+      arquivar.textContent='Arquivar publicação';
+      arquivar.addEventListener('click',async()=>{
+        arquivar.disabled=true;
+        try{await enviarPublicacao('/'+pub.id+'/arquivar',{});
+          await atualizarPublicacoesHome();}
+        catch(e){texto('estadoPublicacaoHome',e.message);arquivar.disabled=false;}
+      });
+      card.append(arquivar);alvo.append(card);
+    }
+  }
+  byId('formPublicacaoHome').addEventListener('submit',async evento=>{
+    evento.preventDefault();
+    if(!segredo)return;
+    const botao=byId('publicarHomeEscritorio');botao.disabled=true;
+    try{
+      const tipo=byId('tipoPublicacaoHome').value;
+      const destino=byId('destinoPublicacaoHome').value||null;
+      await enviarPublicacao('',{
+        tipo,titulo:byId('tituloPublicacaoHome').value.trim(),
+        descricao:byId('descricaoPublicacaoHome').value.trim(),
+        linkDestino:tipo==='AKITEMM'?'/loja':destino,
+        imagemCaminho:byId('imagemPublicacaoHome').value.trim()||null
+      });
+      byId('formPublicacaoHome').reset();
+      texto('estadoPublicacaoHome','Publicação criada somente pelo administrador.');
+      await atualizarPublicacoesHome();
+    }catch(e){texto('estadoPublicacaoHome',e.message);}
+    finally{botao.disabled=false;}
+  });
+  for(const botao of document.querySelectorAll('[data-aba-escritorio]')){
+    botao.addEventListener('click',()=>abrirAba(botao.dataset.abaEscritorio));
+    botao.addEventListener('keydown',e=>{
+      if(!['ArrowDown','ArrowUp','ArrowRight','ArrowLeft'].includes(e.key))return;
+      e.preventDefault();
+      const nomes=Object.keys(secoes);
+      const index=nomes.indexOf(botao.dataset.abaEscritorio);
+      const proximo=(index+(['ArrowDown','ArrowRight'].includes(e.key)?1:-1)+nomes.length)%nomes.length;
+      abrirAba(nomes[proximo]);
+      document.querySelector('[data-aba-escritorio="'+nomes[proximo]+'"]').focus();
+    });
   }
   function preencherLista(id,lista,formatador) {
     const alvo=byId(id);
@@ -71,6 +242,7 @@
         p.local==='CENTRO'?'Centro':p.local.replace('_',' ')));
     preencherLista('listaConcluidasDemo',visao.historico,p=>
       p.id+' — participação concluída (fictícia)');
+    mostrarMapa(visao);
     conteudo.hidden=false;
     mensagem.textContent='Prévia local carregada. Nenhuma operação real foi executada.';
   }
@@ -107,7 +279,10 @@
         option.textContent=titular.nome;
         selecao.append(option);
       }
+      origem.value='motor';
+      abrirAba('home');
       await carregarConta();
+      await atualizarPublicacoesHome();
     }catch(erro){
       if(esta!==versaoSolicitacao)return;
       segredo='';
