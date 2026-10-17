@@ -9,20 +9,24 @@ O controle anterior tinha pausa/abertura, limite diário e lotes manuais 1, 3, 4
 - PAUSAR interrompe qualquer execução; ABRIR permite novamente apenas dentro das regras. Exceções, compras insuficientes, tabuleiro incompleto ou limite diário atingido deixam o slot pendente; fora do período programado nada é disparado em atraso.
 - O intervalo automático é de 60 segundos, no servidor local; consultas do navegador nunca disparam pagamentos ou geram compras. O registro de cada slot tem comando estável idempotente. Se houver reinício entre o giro e a anotação do slot, o mesmo comando impede giro duplicado.
 - O limite diário permanece compartilhado entre o cenário artificial de 300 giros e as compras fictícias cadastradas. A soma de novas agendas ativas de um dia não pode exceder o limite diário configurado ao salvar. Se o limite for alterado depois, prevalece o limite atual.
-- Uma posição de empresa ou dourada no centro não equivale a um participante recebendo. Por isso o campo do agendador é número máximo de GIROS, e não número garantido de pessoas pagas.
+- Uma posição de empresa ou dourada no centro não equivale a um participante recebendo; seu destino é o quarto cofre. Por isso o campo do agendador é número máximo de GIROS, nunca número de pessoas pagas.
 - Cada giro continua exigindo seis compras fictícias distintas, verificadas no banco, com estado da fila e tabuleiro válido. Nenhum crédito previsto é convertido em disponível.
 
-## Exemplo matemático: 100 compradores de PDFs
+## Lançamentos distintos: loja, LOOP e Cofre Dourado
 
-Se cada uma das 100 compras deixar exatamente R$ 225 LÍQUIDOS e TOTALMENTE LIVRES para estes três cofres (hipótese, não comprovante), a entrada é R$ 22.500. Sob divisão matemática 3:2:1: centro R$ 11.250; investimento R$ 7.500; reserva R$ 3.750.
+Vender um produto ou PDF NÃO significa receber R$ 250 para o LOOP. A loja mantém sua receita, fornecedores, taxas, impostos e margens comerciais em controles próprios. O motor de filas pode registrar a posição originada de uma compra qualificada, mas o demonstrativo dos cofres só é alimentado por um aporte separado de R$ 250, identificado no laboratório e que ainda não é recebimento bancário comprovado.
 
-Com referência nominal de R$ 250 por evento, 100 compras independentes permitiriam no máximo 16 giros de seis eventos (com 4 compras restantes), mas **16 giros requereriam R$ 24.000** nas três destinações. No exemplo de R$ 22.500, o teto MATEMÁTICO de caixa seria 15 giros, não 16; faltariam R$ 2.500 para preencher a referência nominal de todas as 100 compras. Isso não significa que 15 giros são financeiramente seguros ou juridicamente permitidos: custos, impostos, estornos e responsabilidades anteriores podem reduzir esse teto.
+**Exemplo:** 100 vendas de PDF com R$ 225 líquidos comerciais = R$ 22.500 na simulação da LOJA; zero nos cofres do LOOP se não existirem aportes separados. No cenário independente de 100 aportes fictícios de R$ 250, seriam R$ 25.000 de referência para o LOOP, divididos em R$ 12.500 para o centro, aproximadamente R$ 8.333,33 para investimento e R$ 4.166,67 para reserva (com arredondamento de centavos). Esses montantes não se somam à receita comercial sem verificação da origem, não provam caixa bancário e não autorizam pagamentos.
 
-O painel agora oferece a projeção dessas grandezas sem permitir que o usuário informe saldo sacável ou transforme a previsão em crédito. O controle agendado continua exclusivamente fictício, com saldos bancários REAIS de R$ 0 e saques reais desabilitados.
+Os cofres do LOOP são **CENTRO, ESQUERDA, DIREITA e DOURADAS**. O Dourado não participa da arrecadação inicial dos três principais: quando uma posição dourada conclui seu ciclo, as parcelas 1, 3 e 5 são separadas do centro para o quarto cofre. Se o centro é de participante ativo, os mesmos eventos geram apenas previsão no escritório correspondente. O movimento da fila e o número de giros são iguais nos dois casos.
+
+Um giro ocorre depois de seis eventos internos distintos de compra. A catraca não tem modo alternativo de 'contar pessoas': a identidade da posição altera exclusivamente o destino contábil. A escolha manual ou programada é sempre uma quantidade de GIROS. Nenhum desses registros é dinheiro sacável ou Pix real.
+
+## Limites do cenário
 
 ## Ainda não implementado
 
-- Não existem depósitos reais reconciliados nos três cofres nem conexão PSP licenciada que execute PIX. O agendador só gira o motor fictício; ele NÃO efetua o saque/repasse ao participante.
+- Não existem depósitos reais reconciliados nos quatro cofres nem conexão PSP licenciada que execute PIX. O agendador só gira o motor fictício; ele NÃO efetua o saque/repasse ao participante.
 - Antes de pagamentos será preciso demonstrar liquidez REAL por cofre, reservas e obrigações presentes e futuras; bloquear liberação financeira se caixa do centro estiver insuficiente; conciliar estornos e saldos reais; e obter análise jurídica e de sustentabilidade independente do modelo de remuneração por compras e indicações.
 - O número de pessoas que recebe benefício não pode ser imposto pelo calendário: o calendário é teto de tentativas e depende de seis compras verdadeiramente qualificadas e de titular elegível no centro. A programação não deve ser apresentada ao consumidor como garantia de retorno.
 
