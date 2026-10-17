@@ -289,6 +289,14 @@ function criarAppAdminLaboratorio({ repositorio, segredo, webhookDemo } = {}) {
     res.type('text/css').sendFile(path.join(__dirname,'financeiro-admin-demo.css'));
   });
   // Apelidos de rota: duas portas identificadas, sem dominio externo publicado.
+  // A plataforma LOOP e unica; AKITEMM e a aba loja e o escritorio e central.
+  // Os links personalizados de todos os titulares entram por portas genericas.
+  app.get('/loja', somenteLocal, (_req,res)=>{
+    res.sendFile(path.join(__dirname,'loja-cliente-demo.html'));
+  });
+  app.get('/escritorio', somenteLocal, (_req,res)=>{
+    res.sendFile(path.join(__dirname,'participante-demo.html'));
+  });
   app.get('/loja-vilela', somenteLocal, (_req, res) => {
     res.sendFile(path.join(__dirname,'loja-cliente-demo.html'));
   });
@@ -310,7 +318,9 @@ function criarAppAdminLaboratorio({ repositorio, segredo, webhookDemo } = {}) {
   app.get([
     '/laboratorio/convite/:token','/laboratorio/convite/:token/:apelido',
     '/loja-vilela/convite/:token','/loja-vilela/convite/:token/:apelido',
-    '/escritorio-vilela/convite/:token','/escritorio-vilela/convite/:token/:apelido'
+    '/escritorio-vilela/convite/:token','/escritorio-vilela/convite/:token/:apelido',
+    '/loja/convite/:token','/loja/convite/:token/:apelido',
+    '/escritorio/convite/:token','/escritorio/convite/:token/:apelido'
   ],somenteLocal,(req,res)=>{
     const token=req.params.token;
     if(typeof token!=='string'||token.length!==23||!/^lp-[a-f0-9]+/.test(token))
