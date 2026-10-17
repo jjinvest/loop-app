@@ -7,7 +7,8 @@ const {ConfiguracaoTaxaIndicacaoDemoSQLite}=require('./configuracao-taxa-indicac
 const {VERSAO_TERMOS_DEMO}=require('./adesoes-posicoes-demo-sqlite');
 const TOKEN=/^lp-[a-f0-9]{20}$/;
 const PATH=/^\/laboratorio\/convite\/(lp-[a-f0-9]{20})(?:\/([a-z0-9][a-z0-9-]{1,30}[a-z0-9]))?\/?$/;
-const PATH_VILELA=/^\/(escritorio-vilela|loja-vilela)\/convite\/(lp-[a-f0-9]{20})(?:\/([a-z0-9][a-z0-9-]{1,30}[a-z0-9]))?\/?$/;
+// Os dois links publicaveis sao neutros; links Vilela antigos seguem validos.
+const PATH_VILELA=/^\/(escritorio-vilela|loja-vilela|escritorio|loja)\/convite\/(lp-[a-f0-9]{20})(?:\/([a-z0-9][a-z0-9-]{1,30}[a-z0-9]))?\/?$/;
 function falha(codigo){const e=new Error(codigo);e.codigo=codigo;return e;}
 function apelidoSeguro(s){
  if(typeof s!=='string'||s.length>80)throw falha('APELIDO_INVALIDO');
@@ -25,7 +26,7 @@ function caminhoLink(token,apelido){
 function caminhoLinkDestino(token,apelido,destino){
  if(!['escritorio','loja'].includes(destino))throw falha('DESTINO_LINK_INVALIDO');
  if(!TOKEN.test(token))throw falha('LINK_INVALIDO');
- const nome=destino==='loja'?'loja-vilela':'escritorio-vilela';
+ const nome=destino==='loja'?'loja':'escritorio';
  return '/'+nome+'/convite/'+token+'/'+(apelido||'meu-loop');
 }
 function extrairLink(url){
@@ -43,7 +44,7 @@ function extrairLink(url){
  const branded=PATH_VILELA.exec(u.pathname);
  if(!antigo&&!branded)throw falha('LINK_INVALIDO');
  if(branded){
-  const destinoDoCaminho=branded[1]==='loja-vilela'?'loja':'escritorio';
+  const destinoDoCaminho=['loja','loja-vilela'].includes(branded[1])?'loja':'escritorio';
   if(campos.length>0)throw falha('LINK_INVALIDO');
   return {token:branded[2],apelido:branded[3]||null,destino:destinoDoCaminho};
  }
