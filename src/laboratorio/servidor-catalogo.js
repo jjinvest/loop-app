@@ -100,6 +100,7 @@ function criarAppAdminLaboratorio({ repositorio, segredo, webhookDemo } = {}) {
   let integracaoPDFLoopDemo=null;
   let carrinhosLojaLoopDemo=null;
   let ponteParaCircuito=null;
+  let circuitoPonteDemo=null;
   // Cadastro de pessoas APENAS FICTICIAS: sem CPF, confirmacao de compra,
   // sessao publica, codigo validado de fila ou movimentacao de catraca.
   if(repositorio instanceof RepositorioCatalogoSQLite){
@@ -159,7 +160,8 @@ function criarAppAdminLaboratorio({ repositorio, segredo, webhookDemo } = {}) {
     });
     app.use('/api/laboratorio/participante',criarRouterParticipanteDemo({
       contas:contasDemo,ponte:ponteDemo,sessoes:sessoesDemo,adesoes:adesoesDemo,
-      carrinhos:carrinhosLojaLoopDemo,saques:saquesDemo
+      carrinhos:carrinhosLojaLoopDemo,saques:saquesDemo,
+      obterLivroProvisoesV6:()=>circuitoPonteDemo?.livro||null
     }));
     app.use('/api/admin',criarRouterAuditoriaParticipanteDemo({
       segredo,auditoria:auditoriaDemo
@@ -173,7 +175,7 @@ function criarAppAdminLaboratorio({ repositorio, segredo, webhookDemo } = {}) {
     : null;
   const circuitoDemo = repositorio instanceof RepositorioCatalogoSQLite
     ? new CircuitBreakV6DemoSQLite({banco:repositorio.banco}) : null;
-  const circuitoPonteDemo=circuitoDemo&&ponteParaCircuito?
+  circuitoPonteDemo=circuitoDemo&&ponteParaCircuito?
     new CircuitBreakPonteV6DemoSQLite({banco:repositorio.banco,
       ponte:ponteParaCircuito,controle:circuitoDemo}):null;
   app.use('/api/admin',criarRouterCircuitBreakV6Demo({
