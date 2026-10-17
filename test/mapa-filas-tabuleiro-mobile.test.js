@@ -88,6 +88,6 @@ test('layout da fila e tabuleiro no celular preserva centro e seis vagas, filtro
  assert.match(css,/\.minha-posicao-demo/);
  assert.match(css,/\.atalhos-participante/);
  const loja=arq('loja-cliente-demo.html');
- assert.match(loja,/href="\/escritorio-vilela#tituloMapaParticipante"/);
- assert.match(loja,/href="\/escritorio-vilela#tituloHistoricoLojaParticipante"/);
+ assert.match(loja,/href="\/escritorio#tituloMapaParticipante"/);
+ assert.match(loja,/href="\/escritorio#tituloHistoricoLojaParticipante"/);
 });
