@@ -45,6 +45,16 @@
     <p id="avisoCreditosCentroV6" class="ajuda-portal" role="status">Aguardando consulta ao histórico da sua conta.</p>
     <p id="estadoLivroProvisoesV6" class="ajuda-portal" role="status">Livro de provisões: aguardando consulta.</p>
     <ol id="historicoCreditoCentroV6" aria-live="polite"></ol>
+    <h3>Laboratório: saque do centro devolvido pelo banco</h3>
+    <p class="aviso-portal">Ensaio fictício: reserve um valor REFERENCIAL de um ciclo concluído; caso a transferência simulada falhe por dados incorretos, ele só volta para novo pedido depois da confirmação simulada do retorno. Não existe Pix, saldo bancário ou possibilidade de sacar dinheiro real aqui.</p>
+    <p id="resumoRetornoCentroV6" role="status">Nenhuma solicitação simulada.</p>
+    <form id="formSaqueCentroV6" autocomplete="off">
+      <label for="valorSaqueCentroV6">Referência do saque simulado (R$)</label>
+      <input id="valorSaqueCentroV6" type="number" step="0.01" min="0.01" required>
+      <button type="submit" id="solicitarSaqueCentroV6" disabled>Simular pedido de saque do centro</button>
+    </form>
+    <p id="mensagemSaqueCentroV6" role="status" aria-live="polite"></p>
+    <ol id="historicoRetornoCentroV6" aria-live="polite"></ol>
    </section>
    <section class="cartao-participante">
     <h2 id="nomeLogadoParticipante">Meu resumo</h2>
