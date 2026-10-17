@@ -93,6 +93,7 @@ function executarLancamento30Dias({ ondasAdicionais = 59 } = {}) {
     const r = sim.registrarVendaNoCicloSimulada({ vendaId: compraId });
     assert.equal(r.repetida, false);
     if (r.elegivelParaGiro) {
+      sim.pausarCatraca();
       assert.equal(sim.tentarGiro().motivo, 'CATRACA_PAUSADA');
       sim.abrirCatraca();
       const giro = sim.tentarGiro();
@@ -139,8 +140,8 @@ function executarLancamento30Dias({ ondasAdicionais = 59 } = {}) {
   // elegivel na A ocupa a vaga 1. A entrada fisica sempre passa pela vaga 6.
   sim.prepararTabuleiro();
   primeiroA = sim.tabuleiro.vagas[0].participanteId;
-  seisPrimeirasVagas = sim.tabuleiro.vagas.map(p => ({
-    vaga: seisPrimeirasVagas.length + 1, titular: p.participanteId,
+  seisPrimeirasVagas = sim.tabuleiro.vagas.map((p, i) => ({
+    vaga: i + 1, titular: p.participanteId,
     origemFila: p.origemFila
   }));
   // A(3 convites), A(2), A(1 mais antigo), B, A(1), A(1).
