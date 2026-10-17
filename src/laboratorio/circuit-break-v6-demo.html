@@ -70,13 +70,36 @@
         <p class="ajuda">Se a catraca estiver pausada, o limite diário tiver sido atingido ou faltarem seis eventos por giro, a operação inteira é recusada. Os giros não criam novas vendas e não movimentam nenhum cofre real.</p>
         <p id="resultadoCBV6" role="status" aria-live="polite"></p>
       </section>
-      <section class="painel"><h2>Giros dos clientes cadastrados — laboratório</h2><p class="aviso-demo">Somente pedidos fictícios confirmados na ponte. Compartilha pausa e limite diário, sem usar os compradores artificiais ou liberar dinheiro.</p><p id="resumoPonteCBV6">Aguardando consulta.</p><p id="provisoesPonteCBV6" aria-live="polite">Livro de previsões ainda não consultado.</p><button type="button" id="atualizarPonteCBV6">Atualizar a ponte</button><form id="formLotePonteCBV6"><label for="quantidadeLotePonteCBV6">Lote da ponte</label><select id="quantidadeLotePonteCBV6"><option value="1">1 giro</option><option value="3">3 giros</option><option value="4">4 giros</option><option value="5">5 giros</option><option value="10">10 giros</option></select><button id="liberarPonteCBV6" type="submit">Liberar giros das compras fictícias cadastradas</button></form><p id="resultadoPonteCBV6" role="status" aria-live="polite"></p><p class="ajuda">Seis pedidos distintos por giro, fila com reposição e extrato somente previsto. Nenhum saldo sacável.</p></section>
+      <section class="painel">
+  <h2>Pré-lançamento: arrecadar → START → contemplar</h2>
+  <p class="aviso-demo">O preço do PDF e o custo do distribuidor ficam na LOJA. Apenas aportes fictícios separados e identificados de R$ 250 entram nos cofres demonstrativos do LOOP. Compras sozinhas não fazem depósitos. Nenhum dinheiro bancário entra ou sai aqui.</p>
+  <p id="resumoPreV6" role="status">Fase ainda não consultada.</p>
+  <div class="acoes-admin">
+    <button type="button" id="configurarPreV6">Ativar período de arrecadação (R$ 250 fixos)</button>
+    <button type="button" id="startPreV6">Dar START e habilitar saídas autorizadas</button>
+    <button type="button" id="atualizarPreV6">Atualizar cofres</button>
+  </div>
+  <form id="formAportePreV6">
+    <label for="pedidoAportePreV6">Pedido de compra fictícia vinculado</label>
+    <input id="pedidoAportePreV6" type="text" maxlength="120" placeholder="ID da compra confirmada no laboratório" required>
+    <button type="submit">Registrar aporte separado FICTÍCIO de R$ 250</button>
+  </form>
+  <p id="resultadoPreV6" role="status" aria-live="polite"></p>
+  <h3>Liberação manual por pessoa contemplada</h3>
+  <form id="formPessoasPreV6">
+    <label for="quantidadePessoasPreV6">Quantos titulares contemplar agora?</label>
+    <input id="quantidadePessoasPreV6" type="number" min="1" max="100" step="1" value="3" required>
+    <button type="submit">Tentar liberar participantes elegíveis agora</button>
+  </form>
+  <p class="ajuda">A quantidade é uma meta, não uma promessa: sem START, aportes simulados suficientes, seis compras válidas por giro e titular elegível, a operação é recusada e nada é debitado. A ordem da fila não pode ser alterada manualmente.</p>
+</section>
+<section class="painel"><h2>Giros dos clientes cadastrados — laboratório</h2><p class="aviso-demo">Somente pedidos fictícios confirmados na ponte. Compartilha pausa e limite diário, sem usar os compradores artificiais ou liberar dinheiro.</p><p id="resumoPonteCBV6">Aguardando consulta.</p><p id="provisoesPonteCBV6" aria-live="polite">Livro de previsões ainda não consultado.</p><button type="button" id="atualizarPonteCBV6">Atualizar a ponte</button><form id="formLotePonteCBV6"><label for="quantidadeLotePonteCBV6">Lote da ponte</label><select id="quantidadeLotePonteCBV6"><option value="1">1 giro</option><option value="3">3 giros</option><option value="4">4 giros</option><option value="5">5 giros</option><option value="10">10 giros</option></select><button id="liberarPonteCBV6" type="submit">Liberar giros das compras fictícias cadastradas</button></form><p id="resultadoPonteCBV6" role="status" aria-live="polite"></p><p class="ajuda">Seis pedidos distintos por giro, fila com reposição e extrato somente previsto. Nenhum saldo sacável.</p></section>
       <section class="painel">
         <h2>Pré-lançamento: simular caixa e limite seguro</h2>
-        <p class="aviso-demo">Simulação matemática, não dinheiro liquidado. O sistema compara a quantidade de compras com a capacidade hipotética dos três cofres. Custos, impostos, estornos e compromissos existentes precisam ser conciliados separadamente.</p>
+        <p class="aviso-demo">Hipótese matemática, NÃO é preço de produto nem dinheiro liquidado. Compra comercial não credita o LOOP. O sistema compara a quantidade de compras com a capacidade hipotética dos três cofres. Custos, impostos, estornos e compromissos existentes precisam ser conciliados separadamente.</p>
         <form id="formProjecaoPrelancamentoV6">
           <div class="campo"><label for="comprasPrelancamentoV6">Quantidade de compras independentes</label><input id="comprasPrelancamentoV6" type="number" min="0" max="1000000" value="100" required></div>
-          <div class="campo"><label for="liquidoPdfPrelancamentoV6">Líquido disponível por PDF (R$)</label><input id="liquidoPdfPrelancamentoV6" type="number" step="0.01" min="0" max="100000" value="225.00" required></div>
+          <div class="campo"><label for="liquidoPdfPrelancamentoV6">Hipótese de aporte líquido ao LOOP (R$)</label><input id="liquidoPdfPrelancamentoV6" type="number" step="0.01" min="0" max="100000" value="225.00" required></div>
           <button type="submit">Conferir caixa hipotético e giros possíveis</button>
         </form>
         <p id="resultadoProjecaoPrelancamentoV6" role="status" aria-live="polite">Referência nominal por compra qualificada: R$ 250,00. Não implica liquidação real.</p>
@@ -86,8 +109,9 @@
         <p class="aviso-demo">Você escolhe QUANTOS GIROS tentar e em quais horários. Não é ordem para pagar pessoas. Cada giro requer 6 pedidos diferentes; pausas, limites, falta de compras e indisponibilidade bloqueiam o giro. A empresa no centro não conta como cliente contemplado. Nenhum PIX é emitido.</p>
         <form id="formAgendaCBV6">
           <div class="campo"><label for="dataAgendaCBV6">Dia da programação</label><input id="dataAgendaCBV6" type="date" required></div>
-          <div class="campo"><label for="modoAgendaCBV6">Modo</label><select id="modoAgendaCBV6"><option value="DISTRIBUIDO">Distribuir ao longo do período</option><option value="PONTUAL">Começar em um horário (um giro por minuto, no máximo)</option></select></div>
-          <div class="campo"><label for="quantidadeAgendaCBV6">Quantidade máxima de giros programados</label><input id="quantidadeAgendaCBV6" type="number" min="1" max="300" step="1" value="20" required></div>
+          <div class="campo"><label for="modoAgendaCBV6">Modo</label><select id="modoAgendaCBV6"><option value="DISTRIBUIDO">Distribuir ao longo do período</option><option value="PONTUAL">Começar no horário escolhido</option><option value="A_CADA_30_MIN">A cada 30 minutos</option><option value="A_CADA_60_MIN">A cada hora</option></select></div>
+          <div class="campo"><label for="alvoAgendaCBV6">O que liberar?</label><select id="alvoAgendaCBV6"><option value="PESSOAS">Participantes contemplados</option><option value="GIROS">Giros da catraca</option></select></div>
+          <div class="campo"><label for="quantidadeAgendaCBV6">Quantidade máxima programada</label><input id="quantidadeAgendaCBV6" type="number" min="1" max="300" step="1" value="20" required></div>
           <div class="campo"><label for="inicioAgendaCBV6">Começar às</label><input id="inicioAgendaCBV6" type="time" value="09:00" required></div>
           <div class="campo"><label for="fimAgendaCBV6">Encerrar às</label><input id="fimAgendaCBV6" type="time" value="18:00" required></div>
           <div class="acoes-admin"><button type="button" id="programarAgoraCBV6" class="secundario">Preencher: agora</button><button type="button" id="programarUmaHoraCBV6" class="secundario">Preencher: daqui a 1 hora</button></div>
