@@ -24,6 +24,7 @@
   e('copiarLinkLojaParticipante').disabled=true;
   e('statusLinkIndicacaoParticipante').textContent='';
   e('avisoLinkParticipante').textContent='';
+  e('estadoLivroProvisoesV6').textContent='';
   e('bonusSaldoParticipante').textContent='R$ 0,00';
   e('bonusQuantidadeParticipante').textContent='0';
   e('bonusPercentualParticipante').textContent='10%';
@@ -253,6 +254,14 @@
   e('creditoPrevistoCentroV6').textContent=dinheiro(previstos?.creditoPrevistoCentavos||0);
   e('creditoDisponivelCentroV6').textContent=dinheiro(previstos?.disponivelParaSaqueCentavos||0);
   e('creditoCiclosCentroV6').textContent=String(previstos?.quantidadeCiclos||0);
+  const livro=visao.provisoesAuditadasV6;
+  const batendo=livro?.totalPrevistoCentavos===(previstos?.creditoPrevistoCentavos||0);
+  e('estadoLivroProvisoesV6').textContent=
+    !livro?'Conferência do livro ainda não configurada. Nenhum saldo real.' :
+    'Livro de provisões imutável: '+dinheiro(livro.totalPrevistoCentavos)+
+    ' previsto ('+livro.parcelas.length+' parcelas). '+
+    (batendo?'Projeção e livro conferem.':'ATENÇÃO: divergência de registros!')+
+    ' Liquidado: R$ 0,00. Sacável: R$ 0,00.';
   e('avisoCreditosCentroV6').textContent=previstos?.quantidadeCiclos?
    'Parcelas 1, 3 e 5 previstas na conclusão do ciclo, SEM liquidação ou direito de saque neste laboratório.':
    'Nenhum ciclo de seis vendas da sua posição foi concluído no laboratório; nenhum crédito previsto.';
