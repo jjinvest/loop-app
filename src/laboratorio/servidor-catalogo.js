@@ -37,6 +37,7 @@ const { PedidosTitularidadeDemoSQLite } = require('../domain/pedidos-titularidad
 const { criarRouterPonteComprasConvitesDemo } = require('../routes/admin-ponte-compras-convites-demo');
 const { criarRouterParticipanteDemo } = require('../routes/participante-laboratorio-demo');
 const { SolicitacoesSaqueDemoSQLite }=require('../domain/solicitacoes-saque-demo-sqlite');
+const {RetornoSaqueCentroV6DemoSQLite}=require('../domain/retorno-saque-centro-v6-demo-sqlite');
 const { SessoesParticipanteDemo } = require('../domain/sessoes-participante-demo');
 const { AuditoriaAcessoParticipanteDemoSQLite } = require('../domain/auditoria-acesso-participante-demo-sqlite');
 const { criarRouterAuditoriaParticipanteDemo } = require('../routes/admin-auditoria-participante-demo');
@@ -102,10 +103,13 @@ function criarAppAdminLaboratorio({ repositorio, segredo, webhookDemo } = {}) {
   let carrinhosLojaLoopDemo=null;
   let ponteParaCircuito=null;
   let circuitoPonteDemo=null;
+  let retornoSaqueCentroDemo=null;
+  let contasParaRetornoSaqueCentro=null;
   // Cadastro de pessoas APENAS FICTICIAS: sem CPF, confirmacao de compra,
   // sessao publica, codigo validado de fila ou movimentacao de catraca.
   if(repositorio instanceof RepositorioCatalogoSQLite){
     const contasDemo=new ContasParticipantesDemoSQLite({banco:repositorio.banco});
+    contasParaRetornoSaqueCentro=contasDemo;
     app.use('/api/admin',criarRouterContasParticipantesDemo({
       segredo,contas:contasDemo
     }));
@@ -162,7 +166,8 @@ function criarAppAdminLaboratorio({ repositorio, segredo, webhookDemo } = {}) {
     app.use('/api/laboratorio/participante',criarRouterParticipanteDemo({
       contas:contasDemo,ponte:ponteDemo,sessoes:sessoesDemo,adesoes:adesoesDemo,
       carrinhos:carrinhosLojaLoopDemo,saques:saquesDemo,
-      obterLivroProvisoesV6:()=>circuitoPonteDemo?.livro||null
+      obterLivroProvisoesV6:()=>circuitoPonteDemo?.livro||null,
+      obterRetornoSaqueCentroDemo:()=>retornoSaqueCentroDemo
     }));
     app.use('/api/admin',criarRouterAuditoriaParticipanteDemo({
       segredo,auditoria:auditoriaDemo
@@ -179,6 +184,9 @@ function criarAppAdminLaboratorio({ repositorio, segredo, webhookDemo } = {}) {
   circuitoPonteDemo=circuitoDemo&&ponteParaCircuito?
     new CircuitBreakPonteV6DemoSQLite({banco:repositorio.banco,
       ponte:ponteParaCircuito,controle:circuitoDemo}):null;
+  retornoSaqueCentroDemo=circuitoPonteDemo&&contasParaRetornoSaqueCentro?
+    new RetornoSaqueCentroV6DemoSQLite({banco:repositorio.banco,
+      livro:circuitoPonteDemo.livro,contas:contasParaRetornoSaqueCentro}):null;
   const programadorCatracaDemo=circuitoPonteDemo?
     new ProgramadorCatracaV6DemoSQLite({banco:repositorio.banco,
       ponteControle:circuitoPonteDemo,controle:circuitoDemo}):null;
