@@ -48,6 +48,14 @@
     <section id="areaVisaoAdmin" hidden class="painel" role="tabpanel" aria-labelledby="abaAdminInicio">
       <h2>Central administrativa</h2>
       <p class="ajuda">Primeiro a administração, depois os ajustes visuais do cliente. Selecione uma aba acima ou abra os controles especializados abaixo.</p>
+      <div class="acoes-admin"><button type="button" id="atualizarDiagnosticoAdmin">Atualizar diagnóstico do LOOP</button></div>
+      <div class="resumo-admin-v6" aria-label="Situação da plataforma" aria-live="polite">
+        <div><strong id="resumoProdutosAdmin">—</strong><span>Produtos cadastrados</span></div>
+        <div><strong id="resumoPublicadosAdmin">—</strong><span>Produtos publicados</span></div>
+        <div><strong id="resumoCofresAdmin">—</strong><span>Conciliação dos cofres</span></div>
+        <div><strong id="resumoPixAdmin">—</strong><span>Pix em testes</span></div>
+      </div>
+      <p id="mensagemDiagnosticoAdmin" role="status" class="ajuda">Abra o painel para consultar o diagnóstico.</p>
       <div class="mapa-admin-central">
         <a href="/admin/circuit-break-v6"><strong>Operação LOOP</strong><span>Catraca, START, giros, agendas e pré-lançamento</span></a>
         <a href="/admin/financeiro-demo"><strong>Cofres e financeiro</strong><span>Quatro cofres, simulações e conferências</span></a>
@@ -85,6 +93,18 @@
           </div>
           <div class="campo"><label for="precoProduto">Preço de exibição em R$ (pode ficar vazio em rascunhos)</label>
             <input id="precoProduto" name="preco" type="number" step="0.01" min="0.01" placeholder="Ex: 99.90"></div>
+          <section class="calculadora-admin-v6" aria-labelledby="tituloCalcAdmin">
+            <h3 id="tituloCalcAdmin">Conferência comercial interna — AKITEMM</h3>
+            <p class="ajuda">Calcule com o preço que VOCÊ escolheu. Não altera o preço do produto, não grava custo negociado, não cria cobrança e não deposita no LOOP. É apenas uma conferência deste item e de sua quantidade no mesmo carrinho.</p>
+            <div class="duas-colunas">
+              <div class="campo"><label for="quantidadeCalcAdmin">Unidades deste produto no pedido</label>
+                <input id="quantidadeCalcAdmin" type="number" min="1" max="100" step="1" value="1"></div>
+              <div class="campo"><label for="custoUnitarioCalcAdmin">Custo combinado por unidade (R$)</label>
+                <input id="custoUnitarioCalcAdmin" type="number" min="0" max="1000000" step="0.01" placeholder="Informe apenas para calcular" autocomplete="off"></div>
+            </div>
+            <p id="resultadoCalcAdmin" role="status" class="estado-admin">Digite preço, custo e quantidade para conferir o resultado deste pedido.</p>
+            <p class="ajuda">A qualificação final da posição depende dos produtos elegíveis, do pedido fechado e do pagamento confirmado. Compras separadas não se acumulam. Nenhum custo preenchido aqui é enviado ao servidor.</p>
+          </section>
           <div class="campo"><label for="descricaoProduto">Descrição</label>
             <textarea id="descricaoProduto" name="descricao" required maxlength="2000"></textarea></div>
           <div class="campo"><label for="fotosProduto">Caminhos das fotos (um por linha)</label>
@@ -174,6 +194,7 @@
       <p id="mensagemPedidosDemo" class="estado-admin" role="status" aria-live="polite"></p>
     </section>
   </main>
+  <script src="/admin/precificacao.js"></script>
   <script src="/admin/painel.js"></script>
   <script src="/admin/importacao.js"></script>
   <script src="/admin/pedidos-demo.js"></script>
