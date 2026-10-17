@@ -77,6 +77,8 @@ class CircuitBreakPonteV6DemoSQLite{
     }else if(!LOTES.includes(quantidade))throw falha('LOTE_INVALIDO');
     const tipo=modoPessoas?'LIBERAR_PARTICIPANTES_PONTE':'LIBERAR_LOTE_PONTE';
     const entrada={tipo,valor:modoPessoas?participantes:quantidade};
+    if(modoPessoas&&!this.preLancamento.estado())
+      throw falha('PRE_LANCAMENTO_DESATIVADO');
     const b=this.banco;
     b.exec('BEGIN IMMEDIATE;');
     try{
