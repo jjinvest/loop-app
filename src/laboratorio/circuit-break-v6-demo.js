@@ -95,6 +95,96 @@
       try{await carregar();}catch(_){}
     }finally{ocupado=false;btn.disabled=false;}
   }
+
+  function partesBR(data){
+    const partes=new Intl.DateTimeFormat('en-GB',{timeZone:'America/Sao_Paulo',
+      year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',
+      minute:'2-digit',hour12:false}).formatToParts(data);
+    const campo=k=>partes.find(p=>p.type===k)?.value;
+    return {dia:campo('year')+'-'+campo('month')+'-'+campo('day'),
+      hora:campo('hour')+':'+campo('minute')};
+  }
+  function preencherHorario(adianteMinutos){
+    const inicio=new Date(Date.now()+adianteMinutos*60_000);
+    const fim=new Date(inicio.getTime()+60*60_000);
+    const a=partesBR(inicio),b=partesBR(fim);
+    el('modoAgendaCBV6').value='PONTUAL';
+    el('dataAgendaCBV6').value=a.dia;
+    el('inicioAgendaCBV6').value=a.hora;
+    el('fimAgendaCBV6').value=a.dia===b.dia?b.hora:'23:59';
+    el('quantidadeAgendaCBV6').value='1';
+    el('resultadoAgendaCBV6').textContent=
+      'Horário preenchido, mas não confirmado. Clique em salvar a programação.';
+  }
+  async function carregarAgendas(){
+    const dados=await api('/programacoes');
+    const lista=el('programacoesCBV6');
+    lista.replaceChildren();
+    if(!dados.agendas.length){
+      const li=document.createElement('li');
+      li.textContent='Nenhuma programação ainda.';
+      lista.append(li);
+    }
+    for(const a of dados.agendas){
+      const li=document.createElement('li');
+      li.textContent=a.status+' — '+a.modo+' — '+a.quantidade+
+        ' giros planejados, '+a.girosExecutados+' concluídos, '+
+        a.girosNaoExecutados+' não executados. Horários: '+
+        (a.horarios.length?a.horarios[0].horarioBrasilia+' até '+
+        a.horarios[a.horarios.length-1].horarioBrasilia:'nenhum')+'. ';
+      if(a.status==='ATIVA'){
+        const btn=document.createElement('button');
+        btn.type='button';
+        btn.className='secundario';
+        btn.textContent='Cancelar esta programação';
+        btn.addEventListener('click',async()=>{
+          if(ocupado)return;
+          ocupado=true;btn.disabled=true;
+          try{
+            await api('/programacoes/'+encodeURIComponent(a.agendaId)+'/cancelar',{
+              method:'POST',body:'{}'
+            });
+            await carregarAgendas();
+            el('resultadoAgendaCBV6').textContent='Programação cancelada.';
+          }catch(err){
+            el('resultadoAgendaCBV6').textContent='Não foi possível cancelar: '+err.message;
+          }finally{ocupado=false;}
+        });
+        li.append(btn);
+      }
+      lista.append(li);
+    }
+  }
+  async function salvarAgenda(e){
+    e.preventDefault();
+    if(ocupado||!token||!estado)return;
+    ocupado=true;
+    const botao=el('salvarAgendaCBV6');
+    botao.disabled=true;
+    try{
+      const dia=el('dataAgendaCBV6').value;
+      const inicio=el('inicioAgendaCBV6').value;
+      const fim=el('fimAgendaCBV6').value;
+      const quantidade=Number(el('quantidadeAgendaCBV6').value);
+      if(!/^\d{4}-\d\d-\d\d$/.test(dia)||
+         !/^\d\d:\d\d$/.test(inicio)||!/^\d\d:\d\d$/.test(fim))
+        throw new Error('Informe dia e horários válidos.');
+      const modo=el('modoAgendaCBV6').value;
+      const payload={
+        agendaId:'agenda-'+Array.from(crypto.getRandomValues(new Uint8Array(12)),
+          x=>x.toString(16).padStart(2,'0')).join(''),
+        modo,quantidade,
+        inicioEm:dia+'T'+inicio+':00-03:00',
+        fimEm:dia+'T'+fim+':00-03:00'
+      };
+      const a=await api('/programacoes',{method:'POST',body:JSON.stringify(payload)});
+      el('resultadoAgendaCBV6').textContent='Programação de '+a.quantidade+
+        ' giros fictícios criada. Nenhum pagamento autorizado ou executado.';
+      await carregarAgendas();
+    }catch(err){
+      el('resultadoAgendaCBV6').textContent='Não foi possível programar: '+err.message;
+    }finally{ocupado=false;botao.disabled=false;}
+  }
   async function carregarHistorico(){
     const dados=await api('/historico');
     const lista=el('historicoCBV6');
@@ -118,6 +208,7 @@
     if(!token)return;
     mostrar(await api());
     await carregarPonte();
+    await carregarAgendas();
     await carregarHistorico();
   }
   async function executar(tipo,valor){
@@ -164,6 +255,13 @@
     el('statusCBV6').textContent='Chave descartada desta página.';
     el('resultadoCBV6').textContent='';
   });
+  el('formAgendaCBV6').addEventListener('submit',salvarAgenda);
+  el('programarAgoraCBV6').addEventListener('click',()=>preencherHorario(0));
+  el('programarUmaHoraCBV6').addEventListener('click',()=>preencherHorario(60));
+  el('atualizarAgendaCBV6').addEventListener('click',async()=>{
+    try{await carregarAgendas();}catch(e){el('resultadoAgendaCBV6').textContent=e.message;}
+  });
+  el('dataAgendaCBV6').value=partesBR(new Date()).dia;
   el('formLotePonteCBV6').addEventListener('submit',liberarPonte);
   el('atualizarPonteCBV6').addEventListener('click',async()=>{
     try{await carregarPonte();}catch(e){el('resultadoPonteCBV6').textContent=e.message;}
