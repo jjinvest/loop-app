@@ -18,6 +18,11 @@ function criarRouterCircuitBreakV6Demo({segredo,controle,ponteControle=null}={})
       return res.status(400).json({erro:'LIMITE_INVALIDO'});
     return res.json({modo:'SOMENTE_LABORATORIO',historico:controle.historico({limite})});
   });
+  router.get('/circuit-break-v6-demo/ponte/provisoes',(_req,res)=>{
+    if(!ponteControle||!ponteControle.livro)
+      return res.status(501).json({erro:'LIVRO_PROVISOES_INDISPONIVEL'});
+    return res.json(ponteControle.livro.resumo());
+  });
   router.get('/circuit-break-v6-demo/ponte',(_req,res)=>{
     if(!ponteControle)return res.status(501).json({erro:'PONTE_INDISPONIVEL'});
     return res.json(ponteControle.resumo());
