@@ -76,6 +76,13 @@ test('ponte e Circuit Break compartilham limite e geram somente creditos previst
  assert.equal(parc.disponivelParaSaqueCentavos,0);
  assert.equal(livro.extrato(titulares[1].contaId).totalPrevistoCentavos,0);
  assert.equal(livro.registrarCiclos({sim:ponte._restaurar()}).ciclosNovos,0);
+ const adulterado=ponte._restaurar();
+ adulterado.tabuleiro.ciclosConcluidos[0].vendas[0].vendaId=
+   'compra-demo-pedido-inexistente';
+ assert.throws(()=>livro.registrarCiclos({sim:adulterado}),
+   {codigo:'PEDIDO_SEM_CONFIRMACAO_DEMO'});
+ assert.equal(livro.resumo().ciclosRegistrados,1);
+ assert.equal(livro.resumo().eventosDocumentados,6);
  assert.equal(livro.resumo().parcelasPrevistas,3);
  assert.throws(()=>repo.banco.exec('DELETE FROM loop_v6_provisoes_parcelas'),
    /provisao imutavel/);
