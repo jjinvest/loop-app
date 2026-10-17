@@ -53,9 +53,9 @@ test('AKITEMM sandbox: so endpoint fixo, preco real do pedido imutavel e uma cob
  assert.equal(JSON.parse(chamadas[0].opts.body).value,39.9);
  assert.equal(JSON.parse(chamadas[0].opts.body).description,
   'AKITEMM - cobranca EXCLUSIVAMENTE SANDBOX');
- assert.throws(()=>servico.criar({
+ await assert.rejects(()=>servico.criar({
   pedidoId:'pdf-livro-teste',origem:'PDF',clienteAsaasId:'cus_OutraConta99'
- }),/./);
+ }),{codigo:'CONFLITO_COBRANCA'});
  estado='CONFIRMED';
  assert.equal((await servico.conferir('pdf-livro-teste')).status,'PENDENTE_SANDBOX');
  estado='RECEIVED';
