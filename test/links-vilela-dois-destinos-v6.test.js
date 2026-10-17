@@ -8,7 +8,7 @@ const {IndicacoesLinksComissoesDemoSQLite,extrairLink}=
   require('../src/domain/indicacoes-links-comissoes-demo-sqlite');
 const {criarAppAdminLaboratorio}=require('../src/laboratorio/servidor-catalogo');
 
-test('dois enderecos Loja Vilela e Escritorio Vilela preservam mesmo indicador e links antigos', async t=>{
+test('dois enderecos AKITEMM e Escritorio LOOP preservam mesmo indicador e links Vilela antigos', async t=>{
  const repo=new RepositorioCatalogoSQLite({caminho:':memory:'});
  t.after(()=>repo.fechar());
  const contas=new ContasParticipantesDemoSQLite({banco:repo.banco});
@@ -20,8 +20,8 @@ test('dois enderecos Loja Vilela e Escritorio Vilela preservam mesmo indicador e
  const app=criarAppAdminLaboratorio({repositorio:repo,segredo:'chave-super-segura-laboratorio-vilela-2026'});
  const links=new IndicacoesLinksComissoesDemoSQLite({banco:repo.banco,contas});
  const dados=links.linkDaConta(indicador.contaId);
- assert.match(dados.linkLoja,/^\/loja-vilela\/convite\/lp-[a-f0-9]{20}\/meu-loop$/);
- assert.match(dados.linkEscritorio,/^\/escritorio-vilela\/convite\/lp-[a-f0-9]{20}\/meu-loop$/);
+ assert.match(dados.linkLoja,/^\/loja\/convite\/lp-[a-f0-9]{20}\/meu-loop$/);
+ assert.match(dados.linkEscritorio,/^\/escritorio\/convite\/lp-[a-f0-9]{20}\/meu-loop$/);
  assert.equal(dados.mesmoCodigoIndicador,true);
  assert.equal(dados.ativo,false);
  const loja=extrairLink(dados.linkLoja);
@@ -60,8 +60,8 @@ test('dois enderecos Loja Vilela e Escritorio Vilela preservam mesmo indicador e
  const te=await texto('/escritorio-vilela');
  assert.equal(tl.status,200);
  assert.equal(te.status,200);
- assert.match(tl.body,/Loja Vilela/);
- assert.match(te.body,/Escritório Vilela/);
+ assert.match(tl.body,/AKITEMM/);
+ assert.match(te.body,/Escritório LOOP/);
  for(const novo of [dados.linkLoja,dados.linkEscritorio,
    alterado.linkLoja,alterado.linkEscritorio]){
   const r=await texto(novo);
