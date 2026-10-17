@@ -77,6 +77,28 @@
   <h3>Conciliação dos quatro cofres</h3>
   <p id="balancoCofresV6" role="status" aria-live="polite">Ainda sem conferência da razão fictícia.</p>
   <p class="ajuda">A conferência verifica lançamentos de laboratório, não comprovantes bancários. Divergência bloqueia novos giros. O Dourado é o quarto cofre do LOOP; as receitas da loja e as previsões dos escritórios são controles separados. Saldo real sacável continua zero.</p>
+  <h3>Gestão administrativa dos cofres — solicitações fictícias</h3>
+  <p class="ajuda">O proprietário pode solicitar movimentações a qualquer horário, independentemente da catraca. Este formulário NÃO retira dinheiro, não debita o caixa, não transfere Pix e não autoriza usar valores comprometidos: registra uma solicitação auditável, pendente de conciliação real.</p>
+  <form id="formGestaoProprietarioV6">
+    <div class="campo"><label for="cofreOrigemGestaoV6">Cofre de origem</label>
+      <select id="cofreOrigemGestaoV6" required>
+        <option value="LOOP_CENTRO">Central</option><option value="LOOP_ESQUERDA">Investimento</option>
+        <option value="LOOP_DIREITA">Reserva</option><option value="LOOP_DOURADAS">Douradas</option>
+      </select></div>
+    <div class="campo"><label for="destinoGestaoV6">Destino solicitado</label>
+      <select id="destinoGestaoV6" required>
+        <option value="EMPRESA_EXTERNA">Empresa (saída futura)</option>
+        <option value="LOOP_CENTRO">Cofre Central</option><option value="LOOP_ESQUERDA">Investimento</option>
+        <option value="LOOP_DIREITA">Reserva</option><option value="LOOP_DOURADAS">Douradas</option>
+      </select></div>
+    <div class="campo"><label for="valorGestaoV6">Valor solicitado (R$)</label>
+      <input type="number" id="valorGestaoV6" min="0.01" step="0.01" value="10.00" required></div>
+    <div class="campo"><label for="motivoGestaoV6">Motivo contábil</label>
+      <input id="motivoGestaoV6" type="text" minlength="8" maxlength="300" placeholder="Descreva a finalidade do movimento" required></div>
+    <button type="submit">Registrar solicitação administrativa (sem dinheiro real)</button>
+  </form>
+  <p id="estadoGestaoProprietarioV6" role="status" aria-live="polite"></p>
+  <ol id="historicoGestaoProprietarioV6" aria-live="polite"></ol>
   <div class="acoes-admin">
     <button type="button" id="configurarPreV6">Ativar período de arrecadação (R$ 250 fixos)</button>
     <button type="button" id="startPreV6">Dar START e habilitar saídas autorizadas</button>
