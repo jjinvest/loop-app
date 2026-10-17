@@ -47,6 +47,54 @@
     el('pausarCatracaCBV6').disabled=!aberto;
     el('gerarComprasCBV6').disabled=dados.comprasFicticiasGeradas>=1800;
   }
+  function exibirCofresPre(d){
+    el('resumoPreV6').textContent=
+      'Fase: '+d.fase+' | Aportes fictícios separados: '+(d.aportesFicticiosConfirmados||0)+
+      ' | Total alocado no LOOP (sem dinheiro real): '+money(d.totalHipoteticoCentavos||0)+
+      ' | Cofre central: '+money(d.centroRestanteSimuladoCentavos||0)+
+      ' | Esquerda: '+money(d.investimentoRestanteSimuladoCentavos||0)+
+      ' | Direita: '+money(d.reservaRestanteSimuladoCentavos||0)+
+      ' | Saques reais: R$ 0,00.';
+    el('configurarPreV6').disabled=!!d.configurado;
+    el('startPreV6').disabled=!d.configurado||d.fase!=='ARRECADACAO';
+  }
+  async function atualizarPre(){
+    const dados=await api('/ponte/prelancamento');
+    exibirCofresPre(dados);
+    return dados;
+  }
+  async function registrarPre(rota,payload){
+    if(ocupado||!token)return;
+    ocupado=true;
+    try{
+      const data=await api('/ponte/prelancamento/'+rota,{
+        method:'POST',body:JSON.stringify(payload)});
+      const estado=data.caixa||data;
+      exibirCofresPre(estado);
+      el('resultadoPreV6').textContent='Operação de laboratório registrada. Não houve depósito bancário.';
+      await carregar();
+    }catch(e){el('resultadoPreV6').textContent='Operação recusada: '+e.message;}
+    finally{ocupado=false;}
+  }
+  async function liberarPessoas(ev){
+    ev.preventDefault();
+    if(ocupado||!token||!estado)return;
+    ocupado=true;
+    try{
+      const p=Number(el('quantidadePessoasPreV6').value);
+      const resultado=await api('/ponte/liberar-participantes',{
+        method:'POST',body:JSON.stringify({
+          comandoId:comandoId(),revisaoEsperada:estado.revisao,participantes:p
+        })});
+      el('resultadoPreV6').textContent=
+        resultado.participantesContemplados+' titulares concluídos em '+
+        resultado.girosLiberados.length+' giros fictícios, sem dinheiro real ou Pix.';
+      await carregar();
+    }catch(e){
+      el('resultadoPreV6').textContent='Liberação bloqueada: '+e.message;
+      try{await carregar();}catch(_){}
+    }finally{ocupado=false;}
+  }
   async function carregarPonte(){
     const dados=await api('/ponte');
     el('resumoPonteCBV6').textContent=
@@ -128,7 +176,7 @@
     for(const a of dados.agendas){
       const li=document.createElement('li');
       li.textContent=a.status+' — '+a.modo+' — '+a.quantidade+
-        ' giros planejados, '+a.girosExecutados+' concluídos, '+
+        ' '+(a.alvo==='PESSOAS'?'titulares':'giros')+' planejados, '+a.girosExecutados+' concluídos, '+
         a.girosNaoExecutados+' não executados. Horários: '+
         (a.horarios.length?a.horarios[0].horarioBrasilia+' até '+
         a.horarios[a.horarios.length-1].horarioBrasilia:'nenhum')+'. ';
@@ -173,7 +221,7 @@
       const payload={
         agendaId:'agenda-'+Array.from(crypto.getRandomValues(new Uint8Array(12)),
           x=>x.toString(16).padStart(2,'0')).join(''),
-        modo,quantidade,
+        modo,quantidade,alvo:el('alvoAgendaCBV6').value,
         inicioEm:dia+'T'+inicio+':00-03:00',
         fimEm:dia+'T'+fim+':00-03:00'
       };
@@ -208,6 +256,7 @@
     if(!token)return;
     mostrar(await api());
     await carregarPonte();
+    await atualizarPre();
     await carregarAgendas();
     await carregarHistorico();
   }
@@ -255,6 +304,22 @@
     el('statusCBV6').textContent='Chave descartada desta página.';
     el('resultadoCBV6').textContent='';
   });
+  el('configurarPreV6').addEventListener('click',()=>
+    registrarPre('configurar',{valorFixoLoopCentavos:25000}));
+  el('startPreV6').addEventListener('click',()=>
+    registrarPre('start',{}));
+  el('atualizarPreV6').addEventListener('click',async()=>{
+    try{await atualizarPre();}catch(e){el('resultadoPreV6').textContent=e.message;}
+  });
+  el('formAportePreV6').addEventListener('submit',async ev=>{
+    ev.preventDefault();
+    const bits=new Uint8Array(10);crypto.getRandomValues(bits);
+    await registrarPre('aporte-ficticio',{
+      aporteId:'aporte-'+Array.from(bits,x=>x.toString(16).padStart(2,'0')).join(''),
+      pedidoId:el('pedidoAportePreV6').value.trim(),valorLoopCentavos:25000
+    });
+  });
+  el('formPessoasPreV6').addEventListener('submit',liberarPessoas);
   el('formProjecaoPrelancamentoV6').addEventListener('submit',async ev=>{
     ev.preventDefault();
     if(ocupado||!token)return;
