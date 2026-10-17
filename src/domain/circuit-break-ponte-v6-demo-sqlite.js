@@ -7,6 +7,7 @@
 const {LOTES}=require('./circuit-break-v6-demo-sqlite');
 const {centroDoLoop}=require('./destino-financeiro-centro-loop');
 const {LivroProvisoesV6DemoSQLite}=require('./livro-provisoes-v6-demo-sqlite');
+const {PreLancamentoCofresV6DemoSQLite}=require('./prelancamento-cofres-v6-demo-sqlite');
 
 function falha(codigo){const e=new Error(codigo);e.codigo=codigo;return e;}
 function diaLocal(iso){
@@ -22,6 +23,7 @@ class CircuitBreakPonteV6DemoSQLite{
       throw new TypeError('Circuit Break e ponte devem compartilhar banco de laboratorio');
     this.banco=banco;this.ponte=ponte;this.controle=controle;this.agora=agora;
     this.livro=new LivroProvisoesV6DemoSQLite({banco,ponte});
+    this.preLancamento=new PreLancamentoCofresV6DemoSQLite({banco,ponte});
     // Reconstrucao idempotente de giros de laboratorio anteriores ao livro.
     // Falha fechada se o snapshot divergir das compras documentadas.
     this.livro.registrarCiclos({sim:this.ponte._restaurar()});
@@ -61,15 +63,20 @@ class CircuitBreakPonteV6DemoSQLite{
       restantesHoje:controle.restantesHoje,revisaoControle:controle.revisao,
       compartilhadoComCenarioArtificial:true,
       creditoRealDisponivelCentavos:0,
-      provisoes:this.livro.resumo()};
+      provisoes:this.livro.resumo(),preLancamento:this.preLancamento.resumo()};
   }
-  liberar({comandoId,revisaoEsperada,quantidade}={}){
+  liberar({comandoId,revisaoEsperada,quantidade,participantes}={}){
     if(typeof comandoId!=='string'||!/^cb-[a-z0-9-]{5,70}$/.test(comandoId))
       throw falha('COMANDO_ID_INVALIDO');
     if(!Number.isSafeInteger(revisaoEsperada)||revisaoEsperada<0||revisaoEsperada>1000000)
       throw falha('REVISAO_INVALIDA');
-    if(!LOTES.includes(quantidade))throw falha('LOTE_INVALIDO');
-    const entrada={tipo:'LIBERAR_LOTE_PONTE',valor:quantidade};
+    const modoPessoas=participantes!==undefined;
+    if(modoPessoas){
+      if(quantidade!==undefined||!Number.isSafeInteger(participantes)||
+         participantes<1||participantes>100)throw falha('QUANTIDADE_PARTICIPANTES_INVALIDA');
+    }else if(!LOTES.includes(quantidade))throw falha('LOTE_INVALIDO');
+    const tipo=modoPessoas?'LIBERAR_PARTICIPANTES_PONTE':'LIBERAR_LOTE_PONTE';
+    const entrada={tipo,valor:modoPessoas?participantes:quantidade};
     const b=this.banco;
     b.exec('BEGIN IMMEDIATE;');
     try{
@@ -87,7 +94,7 @@ class CircuitBreakPonteV6DemoSQLite{
       if(estado.status!=='ABERTA')throw falha('CATRACA_PAUSADA');
       const agora=this.agora(),dia=diaLocal(agora);
       const usadosHoje=dia===estado.dia_local?estado.giros_dia:0;
-      if(usadosHoje+quantidade>estado.limite_diario)
+      if(usadosHoje+(modoPessoas?participantes:quantidade)>estado.limite_diario)
         throw falha('LIMITE_DIARIO_ATINGIDO');
       const sim=this.ponte._restaurar();
       if(sim.tabuleiro.vendasDoCiclo.length!==0)
@@ -95,7 +102,7 @@ class CircuitBreakPonteV6DemoSQLite{
       const compras=this.comprasConfirmadas();
       const elegiveis=compras.filter(c=>
         !sim.tabuleiro.vendasProcessadas.has('compra-demo-'+c.pedidoId));
-      if(elegiveis.length<quantidade*6)
+      if(elegiveis.length<(modoPessoas?participantes:quantidade)*6)
         throw falha('COMPRAS_CONFIRMADAS_INSUFICIENTES');
       if(!sim.tabuleiro.iniciado){
         sim.prepararTabuleiro();
@@ -103,10 +110,15 @@ class CircuitBreakPonteV6DemoSQLite{
       // O tabuleiro precisa ter as 7 posicoes e cada giro, uma nova
       // entrada pela vaga 6. Nenhuma vaga some para forcar girar.
       if(!sim.tabuleiro.centro||sim.tabuleiro.vagas.some(p=>!p)||
-         sim.filas.filaA.length+sim.filas.filaB.length<quantidade)
+         sim.filas.filaA.length+sim.filas.filaB.length<(modoPessoas?participantes:quantidade))
         throw falha('TABULEIRO_SEM_REPOSICAO');
+      const disponiveis=Math.floor(elegiveis.length/6);
+      const restantes=estado.limite_diario-usadosHoje;
+      const fila=sim.filas.filaA.length+sim.filas.filaB.length;
+      const tentativas=modoPessoas?Math.min(disponiveis,restantes,fila):quantidade;
       const giros=[];
-      for(let i=0;i<quantidade;i++){
+      let contemplados=0;
+      for(let i=0;i<tentativas;i++){
         const vendas=elegiveis.slice(i*6,(i+1)*6);
         const eventos=[];
         for(const compra of vendas){
@@ -122,15 +134,20 @@ class CircuitBreakPonteV6DemoSQLite{
         const giro=sim.tentarGiro();
         sim.pausarCatraca();
         if(!giro.girou||!giro.novaPosicao6)throw falha('GIRO_NAO_AUTORIZADO');
+        if(!centroDoLoop(giro.centroConcluido))contemplados++;
         giros.push({giro:sim.giros,centroPosicaoId:giro.centroConcluido.id,
           titularCentroId:giro.centroConcluido.participanteId,
           centroEmpresa:centroDoLoop(giro.centroConcluido),
           eventos:eventos.map(v=>({vendaId:v.vendaId,
             ordem:v.ordem,destinoCofre:v.destinoCofre}))});
+        if(modoPessoas&&contemplados>=participantes)break;
       }
+      if(modoPessoas&&contemplados!==participantes)
+        throw falha('PARTICIPANTES_ELEGIVEIS_INSUFICIENTES');
       // Livro das seis fontes de cada ciclo na MESMA transacao atomica.
       // Se uma origem nao corresponde a pedido interno, todo lote reverte.
       this.livro.registrarCiclos({sim,transacaoAberta:true});
+      this.preLancamento.registrarSaidas({sim,transacaoAberta:true});
       // Giro, controle de ritmo e auditoria gravados no MESMO COMMIT.
       b.prepare([
         'INSERT INTO admin_ponte_estado_demo(id,snapshot_json) VALUES(1,?)',
@@ -139,18 +156,19 @@ class CircuitBreakPonteV6DemoSQLite{
       const atualizado=b.prepare([
         'UPDATE loop_cb_v6_estado SET revisao=?,dia_local=?,giros_dia=?',
         'WHERE id=1 AND revisao=?'
-      ].join(' ')).run(estado.revisao+1,dia,usadosHoje+quantidade,estado.revisao);
+      ].join(' ')).run(estado.revisao+1,dia,usadosHoje+giros.length,estado.revisao);
       if(atualizado.changes!==1)throw falha('CONFLITO_REVISAO');
-      const resposta={comando:'LIBERAR_LOTE_PONTE',
+      const resposta={comando:tipo,
         girosLiberados:giros,modo:'PONTE_FICTICIA',
         resultado:this.avaliar(sim,compras),
+        participantesContemplados:contemplados,centrosDaEmpresa:giros.length-contemplados,
         semPagamentoReal:true,semSaldoSacavel:true,repetido:false,
         revisaoControle:estado.revisao+1};
       b.prepare([
         'INSERT INTO loop_cb_v6_auditoria',
         '(comando_id,tipo,entrada_json,saida_json,registrado_em)',
         'VALUES (?,?,?,?,?)'
-      ].join(' ')).run(comandoId,'LIBERAR_LOTE_PONTE',
+      ].join(' ')).run(comandoId,tipo,
         JSON.stringify(entrada),JSON.stringify(resposta),agora);
       b.exec('COMMIT;');
       return resposta;
