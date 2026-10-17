@@ -86,6 +86,49 @@
     }
     return dados;
   }
+  async function atualizarGestao(){
+    const resposta=await api('/ponte/gestao-proprietario');
+    const lista=el('historicoGestaoProprietarioV6');
+    lista.replaceChildren();
+    if(!resposta.registros.length){
+      const item=document.createElement('li');
+      item.textContent='Nenhuma solicitação de gestão registrada.';
+      lista.append(item);
+    }
+    for(const linha of resposta.registros){
+      const item=document.createElement('li');
+      item.textContent=linha.criadoEm+' — '+linha.cofreOrigem+' → '+linha.destino+
+        ': '+money(linha.valorCentavos)+' — '+linha.status+
+        ' — '+linha.justificativa+' (nenhuma transferência real)';
+      lista.append(item);
+    }
+  }
+  async function solicitarGestao(e){
+    e.preventDefault();
+    if(ocupado||!token)return;
+    ocupado=true;
+    const msg=el('estadoGestaoProprietarioV6');
+    try{
+      const v=Number(el('valorGestaoV6').value);
+      if(!Number.isFinite(v)||v<=0||!Number.isSafeInteger(Math.round(v*100)))
+        throw new Error('Valor inválido');
+      const body={
+        movimentoId:'mov-prop-'+Array.from(
+          crypto.getRandomValues(new Uint8Array(12)),
+          x=>x.toString(16).padStart(2,'0')).join(''),
+        cofreOrigem:el('cofreOrigemGestaoV6').value,
+        destino:el('destinoGestaoV6').value,
+        valorCentavos:Math.round(v*100),
+        justificativa:el('motivoGestaoV6').value.trim()
+      };
+      const registro=await api('/ponte/gestao-proprietario',{
+        method:'POST',body:JSON.stringify(body)});
+      msg.textContent='Solicitação '+registro.movimentoId+
+        ' registrada para análise. O saldo dos cofres não foi alterado e não houve Pix.';
+      await atualizarGestao();
+    }catch(err){msg.textContent='Solicitação recusada: '+err.message;}
+    finally{ocupado=false;}
+  }
   async function registrarPre(rota,payload){
     if(ocupado||!token)return;
     ocupado=true;
@@ -261,6 +304,7 @@
     mostrar(await api());
     await carregarPonte();
     await atualizarPre();
+    await atualizarGestao();
     await carregarAgendas();
     await carregarHistorico();
   }
@@ -315,6 +359,7 @@
   el('atualizarPreV6').addEventListener('click',async()=>{
     try{await atualizarPre();}catch(e){el('resultadoPreV6').textContent=e.message;}
   });
+  el('formGestaoProprietarioV6').addEventListener('submit',solicitarGestao);
   el('formAportePreV6').addEventListener('submit',async ev=>{
     ev.preventDefault();
     const bits=new Uint8Array(10);crypto.getRandomValues(bits);
