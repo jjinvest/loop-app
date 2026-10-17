@@ -23,9 +23,16 @@ Em caso de divergência, o START é recusado; depois dele, qualquer lote de giro
 
 Endpoint GET autenticado `/api/admin/circuit-break-v6-demo/ponte/conciliacao` devolve valores DEMONSTRATIVOS por cofre, quantidade de lançamentos, códigos de alerta e indicador `dinheiroBancarioComprovadoCentavos:0`. O painel mostra um resumo. A rota não existe na aplicação pública.
 
+## Estornos comerciais e gestão do proprietário
+
+- **Cancelamento, devolução e estorno comercial são operações da LOJA**, em uma contabilidade distinta. O motor de giros do LOOP não oferece o comando `ESTORNO_COMERCIAL`, nem devolve valores por cancelar um produto. Isso NÃO dispensa verificar se um recebimento originário foi estornado pelo provedor: divergências de cobertura ou aportes revertidos precisam ser identificados, e liberações incompatíveis devem ser bloqueadas até conciliação.
+- **O proprietário pode solicitar movimentações a qualquer horário**, sem depender de START, Circuit Break ou janela de liberação de giros. A identidade administrativa não modifica a ordem das filas nem os direitos dos titulares.
+- Registro administrativo independente `loop_v6_gestao_cofres_solicitacoes_demo`, com origem entre os quatro cofres, destino informado, justificativa, valor e ID idempotente. Auditado em SQLite e imutável; sem acesso ao fluxo público de participantes.
+- Por enquanto a movimentação do proprietário é **uma solicitação de laboratório**, não uma saída financeira executada. Nenhum cofre é debitado por ela, mesmo que mostre saldo demonstrativo suficiente. Uma retirada efetiva somente poderá ser autorizada após comprovação bancária e análise de valores já comprometidos e de obrigações da empresa. Não há retirada ilimitada de dinheiro pertencente a terceiros.
+- Rotas de laboratório com autenticação administrativa: `GET/POST /api/admin/circuit-break-v6-demo/ponte/gestao-proprietario`. Cada pedido permanece `PENDENTE_CONCILIACAO_REAL`, sem Pix ou liquidação.
 ## O que ainda falta para dinheiro real
 
-Integrar PSP autorizado, conciliar recursos realmente liquidados, despesas comerciais, estornos, impostos, reservas e pagamentos; rejeitar saques com saldo insuficiente; registrar decisões de antifraude; proteger a identidade do titular e assegurar a observância da legislação. O prazo planejado de revisão de saque é de 24 horas corridas a partir da solicitação, podendo liberar mais cedo apenas se houver saldo real disponível e todas as validações. **Não existe saque real neste laboratório.**
+Integrar PSP autorizado, conciliar recursos realmente liquidados, despesas comerciais, estornos da LOJA, eventuais reversões de recebimentos bancários, impostos, reservas e pagamentos; rejeitar saques com saldo insuficiente; registrar decisões de antifraude; proteger a identidade do titular e assegurar a observância da legislação. O prazo planejado de revisão de saque é de 24 horas corridas a partir da solicitação, podendo liberar mais cedo apenas se houver saldo real disponível e todas as validações. **Não existe saque real neste laboratório.**
 
 Revisar previamente a legalidade e a sustentabilidade do modelo em que benefícios se vinculam a compras e indicação de outros clientes, com análise independente do risco de pirâmide financeira e das responsabilidades do consumidor.
 
