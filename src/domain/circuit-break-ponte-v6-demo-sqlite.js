@@ -22,6 +22,9 @@ class CircuitBreakPonteV6DemoSQLite{
       throw new TypeError('Circuit Break e ponte devem compartilhar banco de laboratorio');
     this.banco=banco;this.ponte=ponte;this.controle=controle;this.agora=agora;
     this.livro=new LivroProvisoesV6DemoSQLite({banco,ponte});
+    // Reconstrucao idempotente de giros de laboratorio anteriores ao livro.
+    // Falha fechada se o snapshot divergir das compras documentadas.
+    this.livro.registrarCiclos({sim:this.ponte._restaurar()});
   }
   comprasConfirmadas(){
     return this.banco.prepare([
