@@ -391,7 +391,7 @@
    const visao=await chamada('minha-conta');
    if(atual===versao){
     if(new URLSearchParams(location.search).get('destino')==='loja'){
-     location.replace('/loja-vilela');
+     location.replace('/loja');
      return;
     }
     mostrar(visao);
@@ -526,7 +526,7 @@
   if(e('copiarLinkParticipante').disabled)return;
   try{
    await navigator.clipboard.writeText(e('enderecoLinkParticipante').value);
-   e('avisoLinkParticipante').textContent='Link do Escritório Vilela copiado para divulgação.';
+   e('avisoLinkParticipante').textContent='Link do Escritório LOOP copiado para divulgação.';
   }catch{
    e('enderecoLinkParticipante').focus();e('enderecoLinkParticipante').select();
    e('avisoLinkParticipante').textContent='Selecione e copie o endereço acima.';
@@ -536,7 +536,7 @@
   if(e('copiarLinkLojaParticipante').disabled)return;
   try{
    await navigator.clipboard.writeText(e('enderecoLinkLojaParticipante').value);
-   e('avisoLinkParticipante').textContent='Link da Loja Vilela copiado para divulgação.';
+   e('avisoLinkParticipante').textContent='Link da AKITEMM copiado para divulgação.';
   }catch{
    e('enderecoLinkLojaParticipante').focus();e('enderecoLinkLojaParticipante').select();
    e('avisoLinkParticipante').textContent='Selecione e copie o endereço da Loja acima.';
