@@ -84,6 +84,10 @@ test('ponte e Circuit Break compartilham limite e geram somente creditos previst
  assert.equal(livro.resumo().ciclosRegistrados,1);
  assert.equal(livro.resumo().eventosDocumentados,6);
  assert.equal(livro.resumo().parcelasPrevistas,3);
+ const reiniciado=new CircuitBreakPonteV6DemoSQLite({
+   banco:repo.banco,ponte,controle,agora});
+ assert.equal(reiniciado.livro.resumo().ciclosRegistrados,1);
+ assert.equal(reiniciado.livro.resumo().parcelasPrevistas,3);
  assert.throws(()=>repo.banco.exec('DELETE FROM loop_v6_provisoes_parcelas'),
    /provisao imutavel/);
  assert.throws(()=>repo.banco.exec('UPDATE loop_v6_provisoes_ciclos SET previsto_centro=1'),
