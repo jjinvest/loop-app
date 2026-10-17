@@ -53,4 +53,9 @@ function calcularPonteAkitemmLoop({
   separacaoRealExecutada:false,dinheiroRealRecebidoCentavos:0
  };
 }
-module.exports={calcularPonteAkitemmLoop,MINIMO_LOOP_CENTAVOS};
+const API_PONTE_FINANCEIRA={calcularPonteAkitemmLoop,MINIMO_LOOP_CENTAVOS};
+if(typeof module==='object'&&module.exports){
+ module.exports=API_PONTE_FINANCEIRA;
+}else if(typeof window!=='undefined'){
+ window.PonteFinanceiraAkitemmLoopV6=API_PONTE_FINANCEIRA;
+}
