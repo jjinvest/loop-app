@@ -255,6 +255,32 @@
     el('statusCBV6').textContent='Chave descartada desta página.';
     el('resultadoCBV6').textContent='';
   });
+  el('formProjecaoPrelancamentoV6').addEventListener('submit',async ev=>{
+    ev.preventDefault();
+    if(ocupado||!token)return;
+    const campo=el('resultadoProjecaoPrelancamentoV6');
+    try{
+      const compras=Number(el('comprasPrelancamentoV6').value);
+      const liquidoPorCompraCentavos=Math.round(
+        Number(el('liquidoPdfPrelancamentoV6').value)*100);
+      const projecao=await api('/projecao-prelancamento',{
+        method:'POST',body:JSON.stringify({compras,liquidoPorCompraCentavos})
+      });
+      campo.textContent='RECURSOS HIPOTÉTICOS: '+money(projecao.totalLiquidoHipoteticoCentavos)+
+        ' | Centro: '+money(projecao.alocacaoMatematicaCentavos.centro)+
+        ' | Investimento: '+money(projecao.alocacaoMatematicaCentavos.investimento)+
+        ' | Reserva: '+money(projecao.alocacaoMatematicaCentavos.reserva)+
+        ' | Giros por seis compras distintas: '+projecao.girosPelasCompras+
+        ' | Giros suportados matematicamente pela alocação: '+
+        projecao.girosPeloCaixaMatematico+
+        ' | Máximo teórico considerando ambos: '+projecao.tetoHipoteticoDeGiros+
+        ' | Falta para referência de todas as compras: '+
+        money(projecao.diferencaReferenciaMenosLiquidoCentavos)+
+        '. COMPROVAÇÃO BANCÁRIA: ZERO. NÃO É DINHEIRO SACÁVEL.';
+    }catch(e){
+      campo.textContent='Projeção recusada: '+e.message;
+    }
+  });
   el('formAgendaCBV6').addEventListener('submit',salvarAgenda);
   el('programarAgoraCBV6').addEventListener('click',()=>preencherHorario(0));
   el('programarUmaHoraCBV6').addEventListener('click',()=>preencherHorario(60));
