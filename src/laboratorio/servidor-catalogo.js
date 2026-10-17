@@ -360,6 +360,9 @@ function criarAppAdminLaboratorio({ repositorio, segredo, webhookDemo } = {}) {
   app.get('/admin/escritorio-demo.css', somenteLocal, (req, res) => {
     res.type('text/css').sendFile(path.join(__dirname,'escritorio-demo.css'));
   });
+  app.get('/admin/precificacao.js', somenteLocal, (_req,res)=>{
+    res.type('application/javascript').sendFile(path.join(__dirname,'../domain/ponte-financeira-simples-akitemm-loop-v6.js'));
+  });
   app.get('/admin/painel.js', somenteLocal, (req, res) => {
     res.type('application/javascript').sendFile(path.join(__dirname,'painel-catalogo.js'));
   });
