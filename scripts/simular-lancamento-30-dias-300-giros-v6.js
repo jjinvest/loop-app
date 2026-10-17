@@ -14,9 +14,12 @@ const INDICADOR_DO_CONVIDADO = new Map([
   [11, 3], [12, 4], [13, 5]
 ]);
 
-function executarLancamento30Dias({ ondasAdicionais = 59 } = {}) {
+function executarLancamento30Dias({ ondasAdicionais = 59,
+  incluirHistoricoFinanceiro = false } = {}) {
   assert.ok(Number.isSafeInteger(ondasAdicionais) &&
     ondasAdicionais >= 0 && ondasAdicionais <= 59, 'ondas invalidas');
+  assert.equal(typeof incluirHistoricoFinanceiro, 'boolean',
+    'opcao de historico financeiro invalida');
   let tick = 0;
   const relogio = () =>
     new Date(Date.UTC(2026, 10, 1) + tick++ * 1000).toISOString();
@@ -213,6 +216,19 @@ function executarLancamento30Dias({ ondasAdicionais = 59 } = {}) {
     noTabuleiro: 7,
     entradasPelaVaga6A: entradasA, entradasPelaVaga6B: entradasB,
     marcoDia30, evolucao, dias,
+    ...(incluirHistoricoFinanceiro ? {
+      historicoFinanceiro: sim.tabuleiro.ciclosConcluidos.map(ciclo => ({
+        giro: ciclo.ciclo,
+        posicaoCentroId: ciclo.centro.id,
+        centroEmpresa: ciclo.centro.empresa === true ||
+          ciclo.centro.titularOperacional === 'LOOP_EMPRESA',
+        eventos: ciclo.vendas.map(venda => ({
+          vendaId: venda.vendaId,
+          ordem: venda.ordem,
+          destinoCofre: venda.destinoCofre
+        }))
+      }))
+    } : {}),
     recebimentosReais: 0, saquesReais: 0,
     hipoteseEssencial: 'Cada compra e uma posicao e um evento; 300 giros so ocorrem se houver 1800 compras validas, incluidas as 30 iniciais.'
   };
