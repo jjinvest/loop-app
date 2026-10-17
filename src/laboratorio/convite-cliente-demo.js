@@ -78,7 +78,7 @@
    estado.textContent='Convite de '+info.nomeIndicador+
     '. Cadastre-se para receber seu próprio link, inicialmente inativo.';
    form.hidden=false;
-   await mostrarVitrine();
+   // A vitrine completa abre somente depois do cadastro e do login.
   }catch(err){estado.textContent=err.message;}
  })();
  form.addEventListener('submit',async ev=>{
@@ -90,10 +90,21 @@
     telefone:e('telefoneConvite').value,senha:e('senhaConvite').value,
     link:semIndicacao?null:linkConvite
    });
-   form.hidden=true;e('senhaConvite').value='';
-   estado.textContent=destino==='loja'?
-    'Cadastro fictício realizado. Entre no Escritório Virtual e abra a loja para comprar; seu link individual começa inativo até a primeira compra.':
-    'Cadastro fictício realizado. Entre no Escritório Virtual; seu link começa inativo até a primeira compra de qualquer valor.';
+   form.hidden=true;
+   estado.textContent='Cadastro realizado. Abrindo seu acesso ao LOOP...';
+   // O convite grava o indicador na conta. Agora cria a sessao e abre
+   // SOMENTE a porta solicitada: AKITEMM ou Escritorio LOOP.
+   const resposta=await fetch('/api/laboratorio/participante/entrar',{
+    method:'POST',credentials:'same-origin',cache:'no-store',
+    headers:{'Content-Type':'application/json','X-LOOP-LAB':'participante'},
+    body:JSON.stringify({nome:e('nomeConvite').value,senha:e('senhaConvite').value})
+   });
+   e('senhaConvite').value='';
+   if(!resposta.ok){
+    estado.textContent='Cadastro concluído. Faça login pelo Escritório LOOP para acessar sua conta.';
+    return;
+   }
+   location.replace(destino==='loja'?'/loja':'/escritorio');
   }catch(err){estado.textContent=err.message;}
   finally{botao.disabled=false;e('senhaConvite').value='';}
  });
