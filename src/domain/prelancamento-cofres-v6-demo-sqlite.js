@@ -101,7 +101,7 @@ class PreLancamentoCofresV6DemoSQLite{
   try{
    const compras=b.prepare([
     'SELECT c.pedido_id AS pedidoId,c.conta_id AS contaId,',
-    'c.valor_centavos AS brutoCentavos'
+    'c.valor_centavos AS brutoCentavos',
     'FROM admin_ponte_compras_demo c JOIN loop_v6_pre_aportes_demo a',
     'ON a.pedido_id=c.pedido_id ORDER BY c.confirmado_em,c.pedido_id'
    ].join(' ')).all();
