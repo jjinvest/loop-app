@@ -66,7 +66,12 @@ function atualizarCalculadoraAdmin(){
   if(!Number.isSafeInteger(quantidade)||quantidade<1||quantidade>100)
    throw new TypeError('Quantidade deve ser um número inteiro entre 1 e 100');
   const precoUnitario=precoCentavos(preco);
-  const custoUnitario=precoCentavos(custo)==null?0:precoCentavos(custo);
+  const custoNumero=Number(custo);
+  if(!Number.isFinite(custoNumero)||custoNumero<0||
+     !Number.isSafeInteger(Math.round(custoNumero*100))||
+     Math.abs(custoNumero*100-Math.round(custoNumero*100))>0.00001)
+   throw new TypeError('Custo inválido: use reais e até duas casas decimais');
+  const custoUnitario=Math.round(custoNumero*100);
   const valorVendaCentavos=precoUnitario*quantidade;
   const custoProdutosCentavos=custoUnitario*quantidade;
   if(!Number.isSafeInteger(valorVendaCentavos)||!Number.isSafeInteger(custoProdutosCentavos))
