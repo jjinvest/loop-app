@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>LOOP | Painel de produtos (laboratório)</title>
+  <title>LOOP | Painel central administrativo (laboratório)</title>
   <link rel="stylesheet" href="/css/style.css">
   <link rel="stylesheet" href="/admin/painel.css">
   <link rel="stylesheet" href="/css/loop-futurista-v6.css">
@@ -21,7 +21,7 @@
   </header>
   <main>
     <section class="painel">
-      <h2>Cadastro de produtos</h2>
+      <h2>Acesso ao painel de administração</h2>
       <p class="aviso-demo">Ambiente de testes locais. Nenhum produto cadastrado aqui pode ser comprado. Não utilize dados reais de clientes nem segredos de fornecedores.</p>
       <div class="campo">
         <label for="adminToken">Chave temporária do laboratório</label>
@@ -35,7 +35,29 @@
       <p class="ajuda">A chave fica somente na memória desta página. Ela não é salva no navegador nem incluída no código.</p>
     </section>
 
-    <section id="areaPainel" hidden class="admin-grid">
+    <section id="navAdminCentral" class="painel" hidden aria-label="Abas do painel administrativo">
+      <h2>Painel central do LOOP</h2>
+      <p class="ajuda">Organize primeiro a operação administrativa. A AKITEMM é a aba comercial da mesma plataforma; a catraca e os cofres pertencem ao LOOP. Somente demonstração local.</p>
+      <div class="abas-admin-central" role="tablist" aria-label="Áreas do painel">
+        <button id="abaAdminInicio" type="button" role="tab" aria-controls="areaVisaoAdmin" aria-selected="true" data-aba-admin="inicio">Visão geral</button>
+        <button id="abaAdminProdutos" type="button" role="tab" aria-controls="areaPainel" aria-selected="false" data-aba-admin="produtos">Catálogo e preços</button>
+        <button id="abaAdminImportacao" type="button" role="tab" aria-controls="areaImportacao" aria-selected="false" data-aba-admin="importacao">Importação</button>
+        <button id="abaAdminPedidos" type="button" role="tab" aria-controls="areaPedidosDemo" aria-selected="false" data-aba-admin="pedidos">Pedidos</button>
+      </div>
+    </section>
+    <section id="areaVisaoAdmin" hidden class="painel" role="tabpanel" aria-labelledby="abaAdminInicio">
+      <h2>Central administrativa</h2>
+      <p class="ajuda">Primeiro a administração, depois os ajustes visuais do cliente. Selecione uma aba acima ou abra os controles especializados abaixo.</p>
+      <div class="mapa-admin-central">
+        <a href="/admin/circuit-break-v6"><strong>Operação LOOP</strong><span>Catraca, START, giros, agendas e pré-lançamento</span></a>
+        <a href="/admin/financeiro-demo"><strong>Cofres e financeiro</strong><span>Quatro cofres, simulações e conferências</span></a>
+        <a href="/admin/cadastro-participantes-demo"><strong>Participantes</strong><span>Contas, vínculos de indicação e cadastro</span></a>
+        <a href="/admin/escritorio-demo"><strong>Escritório LOOP</strong><span>Prévia administrativa do escritório principal</span></a>
+        <a href="/laboratorio/loja"><strong>AKITEMM</strong><span>Prévia da loja na plataforma integrada</span></a>
+      </div>
+      <p class="ajuda">Os atalhos abrem áreas já existentes no laboratório; não habilitam pagamentos, entregas ou saques reais. Estratégias de preço e custo pertencem exclusivamente à administração.</p>
+    </section>
+    <section id="areaPainel" hidden class="admin-grid" role="tabpanel" aria-labelledby="abaAdminProdutos">
       <div class="painel">
         <h2>Produtos cadastrados</h2>
         <div class="acoes-admin"><button type="button" id="novoProduto">Novo produto</button>
@@ -105,7 +127,7 @@
         </section>
       </div>
     </section>
-    <section id="areaImportacao" class="painel" hidden aria-labelledby="tituloImportacao">
+    <section id="areaImportacao" class="painel" hidden role="tabpanel" aria-labelledby="abaAdminImportacao">
       <h2 id="tituloImportacao">Importar produtos de distribuidores — demonstração</h2>
       <p class="aviso-demo">Somente fornecedores fictícios. Esta operação cria rascunhos sem preço, sem checkout e sem conexão com Shopee ou sua franquia.</p>
       <div class="campo">
@@ -126,7 +148,7 @@
       </div>
       <button type="button" id="confirmarImportacao" disabled>Importar rascunhos da prévia</button>
     </section>
-    <section id="areaPedidosDemo" class="painel" hidden aria-labelledby="tituloPedidosDemo">
+    <section id="areaPedidosDemo" class="painel" hidden role="tabpanel" aria-labelledby="abaAdminPedidos">
       <h2 id="tituloPedidosDemo">Acompanhar pedidos — demonstração</h2>
       <p class="aviso-demo">Pedidos e pagamentos fictícios. Não há clientes, endereços, transportadoras conectadas, movimentação de dinheiro ou filas.</p>
       <div class="acoes-admin">
