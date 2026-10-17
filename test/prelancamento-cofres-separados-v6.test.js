@@ -65,18 +65,22 @@ test('prelancamento separa venda da loja e aporte fixo, so libera depois do STAR
  assert.equal(caixa.reservaRestanteSimuladoCentavos,50000);
  assert.equal(caixa.girosRegistrados,0);
  assert.equal(caixa.valorParaSaqueCentavos,0);
+ assert.equal(caixa.douradasAcumuladoSimuladoCentavos,0);
+ assert.deepEqual(caixa.cofresDoLoop,
+  ['LOOP_CENTRO','LOOP_ESQUERDA','LOOP_DIREITA','LOOP_DOURADAS']);
+ assert.equal(caixa.caixaDaLojaSeparado,true);
  controle.executar({tipo:'ABRIR',comandoId:'cb-start-demo-open1',revisaoEsperada:0});
  assert.throws(()=>cb.liberar({
-  comandoId:'cb-tentativa-antes-do-start',participantes:1,revisaoEsperada:1
+  comandoId:'cb-tentativa-antes-do-start',quantidade:1,revisaoEsperada:1
  }),{codigo:'AGUARDANDO_START'});
  assert.equal(cb.preLancamento.resumo().centroRestanteSimuladoCentavos,150000);
  assert.equal(cb.livro.resumo().ciclosRegistrados,0);
  assert.equal(cb.resumo().girosConcluidos,0);
  cb.preLancamento.iniciar();
  const primeiro=cb.liberar({
-  comandoId:'cb-depois-do-start-001',participantes:1,revisaoEsperada:1
+  comandoId:'cb-depois-do-start-001',quantidade:1,revisaoEsperada:1
  });
- assert.equal(primeiro.participantesContemplados,1);
+ assert.equal(primeiro.centrosDeParticipantes,1);
  assert.equal(primeiro.girosLiberados.length,1);
  assert.equal(cb.preLancamento.resumo().centroRestanteSimuladoCentavos,75000);
  const segundo=cb.liberar({
@@ -85,6 +89,9 @@ test('prelancamento separa venda da loja e aporte fixo, so libera depois do STAR
  assert.equal(segundo.girosLiberados.length,1);
  assert.equal(cb.preLancamento.resumo().centroRestanteSimuladoCentavos,0);
  assert.equal(cb.preLancamento.resumo().girosRegistrados,2);
+ assert.equal(cb.preLancamento.resumo().centroComprometidoSimuladoCentavos,150000);
+ assert.equal(cb.preLancamento.resumo().escritoriosPrevistosSimuladoCentavos,150000);
+ assert.equal(cb.preLancamento.resumo().totalDemonstrativoConservadoCentavos,300000);
  assert.equal(cb.preLancamento.resumo().saldoRealCentavos,0);
  assert.equal(cb.preLancamento.resumo().valorParaSaqueCentavos,0);
  assert.equal(cb.preLancamento.sincronizar().comprasNovas,0);
