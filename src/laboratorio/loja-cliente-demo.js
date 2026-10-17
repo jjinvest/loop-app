@@ -94,6 +94,15 @@
        dinheiro(6*referenciaCentavos)+'; sem isso, não haverá ativação do pacote.'):
     (totalElegivel>=referenciaCentavos?' · Pode gerar uma posição após confirmação':
      ' · Não atinge o mínimo da posição'));
+  // A plataforma ensina a regra enquanto o cliente monta ESTE pedido.
+  // Apenas preços e elegibilidade são públicos; custos e margens não saem do admin.
+  const orientacao=window.EducacaoCarrinhoLoopV6.orientar({
+   itens:carrinho.size,totalElegivelCentavos:totalElegivel,
+   referenciaCentavos,valorPacoteEspecialCentavos:valorPacoteEspecial
+  });
+  el('orientacaoMinimoLoop').textContent=orientacao.mensagem;
+  el('progressoMinimoLoop').max=orientacao.minimoCentavos;
+  el('progressoMinimoLoop').value=orientacao.progressoCentavos;
   el('registrarPedidoLoja').disabled=!carrinho.size||pedidoEmAndamento;
  }
  function adicionar(p){
@@ -172,7 +181,7 @@
      'Compra qualificada: posição LOOP nº '+
       pedido.posicaoId+' criada. Veja a cor no Meu Escritório.';
    else if(pedido.vendaSomenteLoja)
-    status.textContent='Compra de loja confirmada no teste, sem posição LOOP.';
+    status.textContent='Compra confirmada na AKITEMM, sem posição LOOP. Esta compra não se soma a pedidos futuros. Seu link de divulgação pode ser usado após a primeira compra confirmada.';
    else status.textContent='Confirmação fictícia registrada; conferência do LOOP pendente.';
    li.append(titulo,itens,status);lista.append(li);
   }
