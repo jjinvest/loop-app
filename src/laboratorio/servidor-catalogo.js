@@ -306,6 +306,9 @@ function criarAppAdminLaboratorio({ repositorio, segredo, webhookDemo } = {}) {
   app.get('/laboratorio/loja', somenteLocal, (req, res) => {
     res.sendFile(path.join(__dirname,'loja-cliente-demo.html'));
   });
+  app.get('/laboratorio/educacao-carrinho.js', somenteLocal, (_req,res)=>{
+    res.type('application/javascript').sendFile(path.join(__dirname,'educacao-carrinho-loop-v6.js'));
+  });
   app.get('/laboratorio/loja.js', somenteLocal, (req, res) => {
     res.type('application/javascript').sendFile(path.join(__dirname,'loja-cliente-demo.js'));
   });
