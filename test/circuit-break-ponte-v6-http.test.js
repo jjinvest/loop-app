@@ -21,6 +21,17 @@ test('API da ponte exige admin local, rejeita pedido inventado e nao existe no p
  const estado=await leitura.json();
  assert.equal(estado.comprasElegiveis,0);
  assert.equal(estado.catraca,'PAUSADA');
+ const recursoLivro=base+uri+'/provisoes';
+ assert.equal((await fetch(recursoLivro)).status,401);
+ const livro=await fetch(recursoLivro,{headers:cabecalho});
+ assert.equal(livro.status,200);
+ const vazio=await livro.json();
+ assert.equal(vazio.ciclosRegistrados,0);
+ assert.equal(vazio.eventosDocumentados,0);
+ assert.equal(vazio.centroDisponivelParaSaqueCentavos,0);
+ assert.equal(vazio.valorRealLiquidadoCentavos,0);
+ assert.equal((await fetch(recursoLivro,{method:'POST',headers:cabecalho,
+   body:JSON.stringify({saldoSacavel:75000})})).status,404);
  const enviar=async body=>{
    const r=await fetch(base+uri+'/liberar',{method:'POST',headers:cabecalho,
     body:JSON.stringify(body)});
@@ -38,4 +49,5 @@ test('API da ponte exige admin local, rejeita pedido inventado e nao existe no p
  await once(publico,'listening');
  t.after(()=>new Promise(resolve=>publico.close(resolve)));
  assert.equal((await fetch('http://127.0.0.1:'+publico.address().port+uri)).status,404);
+ assert.equal((await fetch('http://127.0.0.1:'+publico.address().port+uri+'/provisoes')).status,404);
 });
