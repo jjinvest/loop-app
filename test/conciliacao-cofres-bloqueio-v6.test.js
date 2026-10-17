@@ -50,6 +50,7 @@ test('concilia entradas comerciais, aportes separados e impede giro com aporte i
  assert.equal(antes.somaDestinacoesConservadasCentavos,200000);
  assert.equal(antes.cofreCentroRestanteSimuladoCentavos,100000);
  assert.equal(antes.dinheiroBancarioComprovadoCentavos,0);
+ bridge.preLancamento.iniciar();
  // Corrupcao simulada por acesso interno ao banco, sem passar pelas rotas.
  // O erro NAO pode permitir giro nem auto-ajustar um saldo inventado.
  repo.banco.prepare([
@@ -63,7 +64,6 @@ test('concilia entradas comerciais, aportes separados e impede giro com aporte i
  assert.equal(adulterado.integridadeDemonstrativa,'DIVERGENTE');
  assert.equal(adulterado.divergencias.some(x=>x.codigo==='RECEITA_LOOP_SEM_APORTE'),true);
  controle.executar({tipo:'ABRIR',comandoId:'cb-abrir-conciliacao-v6',revisaoEsperada:0});
- bridge.preLancamento.iniciar();
  assert.throws(()=>bridge.liberar({
   comandoId:'cb-giro-conciliacao-bloqueado',
   revisaoEsperada:1,quantidade:1
@@ -72,6 +72,29 @@ test('concilia entradas comerciais, aportes separados e impede giro com aporte i
  assert.equal(bridge.livro.resumo().ciclosRegistrados,0);
  assert.equal(bridge.preLancamento.resumo().girosRegistrados,0);
  assert.equal(bridge.conciliacao.conferir().disponivelParaSaqueCentavos,0);
+});
+test('START bloqueado quando existe caixa inventado sem aporte do LOOP',()=>{
+ const repo=new RepositorioCatalogoSQLite({caminho:':memory:'});
+ const contas=new ContasParticipantesDemoSQLite({banco:repo.banco});
+ const ponte=new PonteComprasConvitesDemoSQLite({banco:repo.banco,contas,
+  consultarPagamentoConfiavel:async()=>null});
+ const controle=new CircuitBreakV6DemoSQLite({banco:repo.banco});
+ const bridge=new CircuitBreakPonteV6DemoSQLite({banco:repo.banco,ponte,controle});
+ bridge.preLancamento.habilitar({valorFixoLoopCentavos:25000});
+ repo.banco.prepare([
+  'INSERT INTO loop_v6_pre_receitas',
+  '(pedido_id,conta_id,bruto_centavos,liquido_centavos,',
+  'centro_centavos,esquerda_centavos,direita_centavos,registrado_em)',
+  'VALUES(?,?,?,?,?,?,?,?)'
+ ].join(' ')).run('pedido-sem-origem', 'conta-nao-validada',25000,
+  25000,12500,8333,4167,'2026-10-17T10:00:00.000Z');
+ assert.equal(bridge.conciliacao.conferir().quantidadeDivergencias>0,true);
+ assert.throws(()=>bridge.preLancamento.iniciar(),{
+  codigo:'CONCILIACAO_COFRES_DIVERGENTE'
+ });
+ assert.equal(bridge.preLancamento.resumo().fase,'ARRECADACAO');
+ assert.equal(bridge.preLancamento.resumo().girosRegistrados,0);
+ repo.fechar();
 });
 test('API conciliacao dos quatro cofres apenas admin no laboratorio',async t=>{
  const repo=new RepositorioCatalogoSQLite({caminho:':memory:'});
