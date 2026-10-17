@@ -4,19 +4,20 @@
  const path=location.pathname;
  const semIndicacao=path==='/laboratorio/cadastro';
  const linkConvite=path+location.search;
- const destino=path.startsWith('/loja-vilela/convite/')?'loja':
-  path.startsWith('/escritorio-vilela/convite/')?'escritorio':
+ const destino=(path.startsWith('/loja-vilela/convite/')||path.startsWith('/loja/convite/'))?'loja':
+  (path.startsWith('/escritorio-vilela/convite/')||path.startsWith('/escritorio/convite/'))?'escritorio':
   new URLSearchParams(location.search).get('destino')==='loja'?'loja':'escritorio';
- const prefixo=path.startsWith('/loja-vilela/convite/')?'/loja-vilela/convite/':
-  path.startsWith('/escritorio-vilela/convite/')?'/escritorio-vilela/convite/':null;
+ const prefixo=['/loja/convite/','/escritorio/convite/',
+  '/loja-vilela/convite/','/escritorio-vilela/convite/']
+  .find(v=>path.startsWith(v))||null;
  const trocaDestino=(para)=>{
   if(semIndicacao)return path;
-  if(prefixo)return '/'+(para==='loja'?'loja-vilela':'escritorio-vilela')+
+  if(prefixo)return '/'+(para==='loja'?'loja':'escritorio')+
    '/convite/'+path.slice(prefixo.length);
   return path+'?destino='+para;
  };
  const titulo=e('tituloDestinoConvite'),descricao=e('descricaoDestinoConvite');
- titulo.textContent=destino==='loja'?'Conheça a Loja Vilela':'Conheça o Escritório Vilela';
+ titulo.textContent=destino==='loja'?'Conheça a AKITEMM':'Conheça o Escritório LOOP';
  e('apresentacaoEmpresaConvite').hidden=destino==='loja';
  descricao.textContent=destino==='loja'?
   'Veja os produtos e os preços da loja antes de fazer seu cadastro.':
@@ -24,7 +25,7 @@
  e('linkApresentarEscritorioConvite').href=trocaDestino('escritorio');
  e('linkApresentarLojaConvite').href=trocaDestino('loja');
  e('irEscritorioConvite').href=destino==='loja'?
-  '/escritorio-vilela?destino=loja':'/escritorio-vilela';
+  '/escritorio?destino=loja':'/escritorio';
  e('linkApresentarEscritorioConvite').setAttribute('aria-current',destino==='escritorio'?'page':'false');
  e('linkApresentarLojaConvite').setAttribute('aria-current',destino==='loja'?'page':'false');
  const estado=e('estadoConvite');
