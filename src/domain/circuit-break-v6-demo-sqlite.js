@@ -90,7 +90,7 @@ class CircuitBreakV6DemoSQLite {
     banco.exec('BEGIN IMMEDIATE;');
     try{
       if(!banco.prepare('SELECT id FROM loop_cb_v6_estado WHERE id=1').get()){
-        banco.prepare('INSERT INTO loop_cb_v6_estado VALUES (1,0,?,?,?,?,?,?)')
+        banco.prepare('INSERT INTO loop_cb_v6_estado VALUES (1,0,?,?,?,?,?,?,?)')
           .run('PAUSADA',10,diaBrasil(agora()),0,0,1,
             JSON.stringify(criarSimuladorInicial().exportarSnapshot()));
       }
