@@ -9,6 +9,7 @@ const {centroDoLoop}=require('./destino-financeiro-centro-loop');
 const {LivroProvisoesV6DemoSQLite}=require('./livro-provisoes-v6-demo-sqlite');
 const {PreLancamentoCofresV6DemoSQLite}=require('./prelancamento-cofres-v6-demo-sqlite');
 const {ConciliacaoCofresV6DemoSQLite}=require('./conciliacao-cofres-v6-demo-sqlite');
+const {GestaoCofresProprietarioV6DemoSQLite}=require('./gestao-cofres-proprietario-v6-demo-sqlite');
 
 function falha(codigo){const e=new Error(codigo);e.codigo=codigo;return e;}
 function diaLocal(iso){
@@ -28,6 +29,9 @@ class CircuitBreakPonteV6DemoSQLite{
     this.conciliacao=new ConciliacaoCofresV6DemoSQLite({banco,
       preLancamento:this.preLancamento,livro:this.livro});
     this.preLancamento.conciliacao=this.conciliacao;
+    this.gestaoProprietario=new GestaoCofresProprietarioV6DemoSQLite({
+      banco,preLancamento:this.preLancamento,conciliacao:this.conciliacao,agora
+    });
     // Reconstrucao idempotente de giros de laboratorio anteriores ao livro.
     // Falha fechada se o snapshot divergir das compras documentadas.
     this.livro.registrarCiclos({sim:this.ponte._restaurar()});
