@@ -63,6 +63,27 @@
   async function atualizarPre(){
     const dados=await api('/ponte/prelancamento');
     exibirCofresPre(dados);
+    const conciliacao=await api('/ponte/conciliacao');
+    const mostrar=el('balancoCofresV6');
+    if(conciliacao.fase==='INATIVO'){
+      mostrar.textContent='Pré-lançamento não configurado; nenhum saldo do LOOP apurado.';
+    }else{
+      mostrar.textContent=
+        'Conferência: '+conciliacao.integridadeDemonstrativa+
+        ' | Compras comerciais (não são saldo do LOOP): '+
+        conciliacao.comprasComerciaisSemCreditoAutomatico+
+        ' | Aportes separados: '+conciliacao.quantidadeAportesSeparados+
+        ' | Centro restante: '+money(conciliacao.cofreCentroRestanteSimuladoCentavos)+
+        ' | Investimento: '+money(conciliacao.cofreEsquerdaSimuladoCentavos)+
+        ' | Reserva: '+money(conciliacao.cofreDireitaSimuladoCentavos)+
+        ' | Douradas: '+money(conciliacao.cofreDouradasSimuladoCentavos)+
+        ' | Escritórios (somente previsto): '+
+        money(conciliacao.valoresApenasPrevistosNosEscritoriosCentavos)+
+        ' | Divergências: '+conciliacao.quantidadeDivergencias+
+        (conciliacao.divergencias.length?
+          ' ('+conciliacao.divergencias.map(d=>d.codigo).join(', ')+')':'')+
+        '. CONFERÊNCIA BANCÁRIA REAL: NÃO REALIZADA. Saques: R$ 0,00.';
+    }
     return dados;
   }
   async function registrarPre(rota,payload){
