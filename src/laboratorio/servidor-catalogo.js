@@ -27,6 +27,7 @@ const { CarrinhoLojaLoopDemoSQLite } = require('../domain/carrinho-loja-loop-dem
 const { criarRouterCarrinhoLoopDemo } = require('../routes/admin-carrinho-loop-demo');
 const { criarRouterPedidosPDFDemo } = require('../routes/admin-pedidos-pdf-demo');
 const { criarRouterEscritorioDemo } = require('../routes/admin-escritorio-demo');
+const {PublicacoesHomeLoopV6DemoSQLite}=require('../domain/publicacoes-home-loop-v6-demo-sqlite');
 const { ContasParticipantesDemoSQLite } = require('../domain/contas-participantes-demo-sqlite');
 const { criarRouterContasParticipantesDemo } = require('../routes/admin-contas-participantes-demo');
 const { criarRouterIndicacoesAdminDemo }=require('../routes/admin-indicacoes-taxa-demo');
@@ -100,7 +101,9 @@ function criarAppAdminLaboratorio({ repositorio, segredo, webhookDemo } = {}) {
   app.use('/api/admin', criarRouterPedidosLogisticaDemo({
     segredo, repositorio:pedidosLogisticaDemo
   }));
-  app.use('/api/admin', criarRouterEscritorioDemo({ segredo }));
+  const publicacoesHomeLoop= repositorio?.banco ?
+    new PublicacoesHomeLoopV6DemoSQLite({banco:repositorio.banco}):null;
+  app.use('/api/admin', criarRouterEscritorioDemo({ segredo,publicacoes:publicacoesHomeLoop }));
   let pedidosPDFDemo=null;
   let integracaoPDFLoopDemo=null;
   let carrinhosLojaLoopDemo=null;
