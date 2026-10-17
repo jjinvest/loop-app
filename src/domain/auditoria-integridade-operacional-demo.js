@@ -5,7 +5,9 @@
 function auditarIntegridadeOperacionalDemo(ponte){
  const sim=ponte._restaurar(); // A restauracao valida ciclo e destinos de cofres.
  const db=ponte.banco,alertas=[],origens=new Map(),posicoes=new Map();
+ let totalAlertas=0;
  const alertar=(codigo,posicaoId=null)=>{
+  totalAlertas+=1;
   if(alertas.length<100)alertas.push({codigo,...(posicaoId===null?{}:{posicaoId})});
  };
  const registrar=(id,tipo,contaId=null)=>{
@@ -97,8 +99,8 @@ function auditarIntegridadeOperacionalDemo(ponte){
   alertar('INDICACAO_INDEVIDA_DA_EMPRESA');
  return {
   modo:'AUDITORIA_INTEGRIDADE_SOMENTE_LABORATORIO',
-  integridade:alertas.length?'DIVERGENCIAS_ENCONTRADAS':'SEM_DIVERGENCIAS_DETECTADAS',
-  totalAlertas:alertas.length,alertas,
+  integridade:totalAlertas?'DIVERGENCIAS_ENCONTRADAS':'SEM_DIVERGENCIAS_DETECTADAS',
+  totalAlertas,alertas,alertasTruncados:totalAlertas>alertas.length,
   indicadores:{
    comprasQualificadas:compras.length,posicoesAdicionais:adicionais.length,
    douradasManuais:manuais.length,desistenciasExpressas:desistencias.length,
