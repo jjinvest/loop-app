@@ -13,7 +13,7 @@
   <header>
     <div>
       <h1>LOOP</h1>
-      <small>Escritório Virtual — laboratório de demonstração</small>
+      <small>Escritório Virtual · Prévia administrativa do LOOP</small>
     </div>
     <a class="voltar-loja" href="/admin">Voltar ao laboratório</a>
   </header>
@@ -33,7 +33,96 @@
       <p id="estadoEscritorioDemo" class="estado-admin" role="status" aria-live="polite">Aguardando acesso de laboratório.</p>
     </section>
 
-    <section id="conteudoEscritorioDemo" hidden aria-labelledby="tituloResumo">
+    <section id="conteudoEscritorioDemo" hidden class="escritorio-adm-shell" aria-label="Escritório Virtual do LOOP">
+      <aside class="menu-lateral-escritorio" aria-label="Menu do Escritório Virtual">
+        <p class="assinatura-escritorio">LOOP <span>V6</span></p>
+        <nav class="itens-menu-escritorio" role="tablist" aria-label="Áreas do escritório">
+          <button type="button" id="botaoHomeEscritorio" role="tab" data-aba-escritorio="home"
+            aria-selected="true" aria-controls="abaHomeEscritorio"><span aria-hidden="true">⌂</span> Início</button>
+          <button type="button" id="botaoTabuleiroEscritorio" role="tab" data-aba-escritorio="tabuleiro"
+            aria-selected="false" aria-controls="abaTabuleiroEscritorio"><span aria-hidden="true">◉</span> Tabuleiro</button>
+          <button type="button" id="botaoContaEscritorio" role="tab" data-aba-escritorio="conta"
+            aria-selected="false" aria-controls="abaContaEscritorio"><span aria-hidden="true">▤</span> Conta e posições</button>
+        </nav>
+        <p class="ajuda">As outras áreas continuarão sendo ajustadas uma por vez, sem duplicar abas.</p>
+      </aside>
+      <div class="conteudo-central-escritorio">
+        <section id="abaHomeEscritorio" role="tabpanel" aria-labelledby="botaoHomeEscritorio" class="painel painel-home-escritorio">
+          <div class="cabecalho-aba-escritorio">
+            <div><p class="sobretitulo-escritorio">ESCRITÓRIO LOOP</p>
+              <h2>Novidades e eventos</h2>
+              <p class="ajuda">Esta área é reservada às publicações escolhidas pela administração do LOOP.</p>
+            </div>
+            <span class="luz-status-escritorio">Painel de comunicação</span>
+          </div>
+          <div id="publicacoesHomeEscritorio" class="lista-publicacoes-home" aria-live="polite">
+            <p class="ajuda">Nenhuma publicação selecionada até o momento.</p>
+          </div>
+          <details class="editor-publicacoes-home">
+            <summary>Gerenciar publicações da casinha (somente administrador)</summary>
+            <form id="formPublicacaoHome" autocomplete="off">
+              <div class="campo">
+                <label for="tipoPublicacaoHome">Tipo de publicação</label>
+                <select id="tipoPublicacaoHome">
+                  <option value="EVENTO">Evento do LOOP</option>
+                  <option value="AKITEMM">Banner da AKITEMM</option>
+                  <option value="COMUNICADO">Comunicado</option>
+                </select>
+              </div>
+              <div class="campo">
+                <label for="tituloPublicacaoHome">Título</label>
+                <input id="tituloPublicacaoHome" maxlength="90" minlength="5" required>
+              </div>
+              <div class="campo">
+                <label for="descricaoPublicacaoHome">Texto do comunicado</label>
+                <textarea id="descricaoPublicacaoHome" maxlength="450" minlength="8" required></textarea>
+              </div>
+              <div class="campo">
+                <label for="destinoPublicacaoHome">Destino ao tocar no banner</label>
+                <select id="destinoPublicacaoHome">
+                  <option value="">Apenas informar</option>
+                  <option value="/loja">Abrir AKITEMM</option>
+                  <option value="/escritorio">Abrir Escritório LOOP</option>
+                </select>
+              </div>
+              <div class="campo">
+                <label for="imagemPublicacaoHome">Imagem local opcional</label>
+                <input id="imagemPublicacaoHome" placeholder="/imagens/catalogo/banner.webp" maxlength="160">
+                <small class="ajuda">Use apenas imagem autorizada já existente no catálogo.</small>
+              </div>
+              <button type="submit" id="publicarHomeEscritorio">Publicar no painel</button>
+              <p id="estadoPublicacaoHome" role="status" class="ajuda"></p>
+            </form>
+          </details>
+        </section>
+        <section id="abaTabuleiroEscritorio" role="tabpanel" aria-labelledby="botaoTabuleiroEscritorio"
+          class="painel painel-tabuleiro-escritorio" hidden>
+          <div class="cabecalho-aba-escritorio">
+            <div><p class="sobretitulo-escritorio">LOOP · MOTOR DE FILAS</p>
+              <h2>Tabuleiro e filas</h2>
+              <p class="ajuda">A mesma ordem do motor já existente: fila A à esquerda, tabuleiro ao centro, fila B à direita.</p>
+            </div>
+            <span class="luz-status-escritorio">Prévia do tabuleiro</span>
+          </div>
+          <p id="estadoTabuleiroEscritorio" role="status" class="ajuda">Aguardando a leitura das posições do laboratório.</p>
+          <div class="mapa-escritorio-tres-colunas">
+            <section class="coluna-fila-escritorio">
+              <h3>Fila A <small id="qtdFilaAEscritorio">0</small></h3>
+              <ol id="listaFilaAEscritorio" aria-label="Ordem da fila A"></ol>
+            </section>
+            <section class="coluna-tabuleiro-escritorio">
+              <h3>Tabuleiro LOOP <small>Centro + 6 posições</small></h3>
+              <div id="anelTabuleiroEscritorio" class="anel-tabuleiro-escritorio"
+                role="group" aria-label="Seis posições periféricas e o centro"></div>
+            </section>
+            <section class="coluna-fila-escritorio">
+              <h3>Fila B <small id="qtdFilaBEscritorio">0</small></h3>
+              <ol id="listaFilaBEscritorio" aria-label="Ordem da fila B"></ol>
+            </section>
+          </div>
+          <p class="ajuda">Cores indicativas nesta prévia: sua posição, outros titulares, posições pendentes e Douradas. As posições não mudam de ordem pela cor. Acabamento e numeração serão refinados com você.</p>
+        </section>
+        <section id="abaContaEscritorio" role="tabpanel" aria-labelledby="botaoContaEscritorio" hidden>
       <div class="painel">
         <h2 id="tituloResumo">Resumo da conta fictícia</h2>
         <div class="campo">
@@ -84,6 +173,8 @@
           <p><strong>Valores:</strong> nenhum crédito, saldo ou saque real nesta prévia.</p>
         </div>
       </section>
+        </section>
+      </div>
     </section>
   </main>
   <script src="/admin/escritorio-demo.js"></script>
