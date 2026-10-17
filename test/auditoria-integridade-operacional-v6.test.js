@@ -34,7 +34,7 @@ test('auditoria vazia e somente leitura nao inventa receita, cpf ou operacao',t=
  assert.equal(diag.auditoriaContabilIndependente,false);
  assert.equal(diag.indicadores.posicoesComOrigemContabil,0);
  assert.equal(repo.banco.prepare('SELECT COUNT(*) AS n FROM admin_ponte_douradas_manuais_demo').get().n,inicio);
- assert.equal(repo.banco.prepare('SELECT COUNT(*) AS n FROM sqlite_master WHERE type='table' AND name='admin_fin_demo_lancamentos'').get().n,0);
+ assert.equal(repo.banco.prepare(`SELECT COUNT(*) AS n FROM sqlite_master WHERE type='table' AND name='admin_fin_demo_lancamentos'`).get().n,0);
 });
 test('auditoria confere compra, posicao ativa, seis bolas douradas e desistente sem CPF',async t=>{
  const {repo,contas,ponte,adesoes,comprar}=criar();t.after(()=>repo.fechar());
@@ -62,7 +62,7 @@ test('auditoria confere compra, posicao ativa, seis bolas douradas e desistente 
  assert.equal(depois.indicadores.desistenciasExpressas,1);
  assert.equal(depois.indicadores.douradasManuais,6);
  assert.equal(depois.indicadores.posicoesIdentificadasNoMotor,7);
- assert.equal(repo.banco.prepare('SELECT COUNT(*) AS n FROM sqlite_master WHERE type='table' AND name='admin_fin_demo_lancamentos'').get().n,0);
+ assert.equal(repo.banco.prepare(`SELECT COUNT(*) AS n FROM sqlite_master WHERE type='table' AND name='admin_fin_demo_lancamentos'`).get().n,0);
  assert.doesNotMatch(JSON.stringify(depois),/11144477735|audit-loja@exemplo\.invalid|Conta Laboratorio|senha-ficticia/);
 });
 test('auditoria detecta empresa manual adulterada sem alterar banco ou motor',t=>{
