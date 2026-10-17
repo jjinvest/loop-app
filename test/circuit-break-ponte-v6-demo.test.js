@@ -56,6 +56,31 @@ test('ponte e Circuit Break compartilham limite e geram somente creditos previst
  assert.throws(()=>girar(3),{codigo:'LIMITE_DIARIO_ATINGIDO'});
  const primeiro=girar(1,'cb-ponte-giro-primeiro');
  assert.equal(primeiro.girosLiberados.length,1);
+ const livro=circuito.livro;
+ const prov=livro.resumo();
+ assert.equal(prov.ciclosRegistrados,1);
+ assert.equal(prov.eventosDocumentados,6);
+ assert.equal(prov.parcelasPrevistas,3);
+ assert.equal(prov.referenciasDeComprasFicticiasCentavos,150000);
+ assert.equal(prov.totalPrevistoParaTitularesCentavos,75000);
+ assert.equal(prov.destinoMatematicoPorCofreCentavos.LOOP_CENTRO,75000);
+ assert.equal(prov.destinoMatematicoPorCofreCentavos.LOOP_ESQUERDA,50000);
+ assert.equal(prov.destinoMatematicoPorCofreCentavos.LOOP_DIREITA,25000);
+ assert.equal(prov.divergenciaReferenciasCentroCentavos,0);
+ assert.equal(prov.comprovantesBancariosReconciliados,0);
+ assert.equal(prov.valorRealLiquidadoCentavos,0);
+ assert.equal(prov.centroDisponivelParaSaqueCentavos,0);
+ const parc=livro.extrato(titulares[0].contaId);
+ assert.deepEqual(parc.parcelas.map(x=>x.ordem),[1,3,5]);
+ assert.equal(parc.totalPrevistoCentavos,75000);
+ assert.equal(parc.disponivelParaSaqueCentavos,0);
+ assert.equal(livro.extrato(titulares[1].contaId).totalPrevistoCentavos,0);
+ assert.equal(livro.registrarCiclos({sim:ponte._restaurar()}).ciclosNovos,0);
+ assert.equal(livro.resumo().parcelasPrevistas,3);
+ assert.throws(()=>repo.banco.exec('DELETE FROM loop_v6_provisoes_parcelas'),
+   /provisao imutavel/);
+ assert.throws(()=>repo.banco.exec('UPDATE loop_v6_provisoes_ciclos SET previsto_centro=1'),
+   /provisao imutavel/);
  assert.equal(primeiro.girosLiberados[0].eventos.length,6);
  assert.equal(primeiro.girosLiberados[0].titularCentroId,titulares[0].contaId);
  const v=extratoCentrosPrevistosV6({ponte,contas,contaId:titulares[0].contaId});
@@ -78,5 +103,8 @@ test('ponte e Circuit Break compartilham limite e geram somente creditos previst
  const segundo=girar(1);
  assert.equal(segundo.girosLiberados.length,1);
  assert.equal(circuito.resumo().comprasPendentes,0);
+ assert.equal(livro.resumo().ciclosRegistrados,2);
+ assert.equal(livro.resumo().eventosDocumentados,12);
+ assert.equal(livro.resumo().valorRealLiquidadoCentavos,0);
  assert.equal(controle.historico().filter(x=>x.tipo==='LIBERAR_LOTE_PONTE').length,2);
 });
