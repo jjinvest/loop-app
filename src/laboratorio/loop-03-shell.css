@@ -197,8 +197,27 @@ body.loop03-logado{background:radial-gradient(ellipse at 5% 14%,#42167580,transp
 .loop03-grade-posicoes .loop03-posicao-vazia{border-color:#645084!important;opacity:.85;cursor:default}
 .loop03-posicao-vazia .loop03-cartao-selo{background:#312246;color:#b6a0dc;border-color:#6e51a2}
 .loop03-grade-posicoes .loop03-pendencia-ponto{bottom:6px;right:9px;left:auto;transform:none}
-@media(max-width:860px){.loop03-grade-posicoes{grid-template-columns:repeat(2,minmax(0,1fr))}}
-@media(max-width:520px){.loop03-grade-posicoes{gap:8px}.loop03-grade-posicoes .loop03-cartao-posicao{min-height:175px;padding:8px!important;gap:8px}.loop03-cartao-miolo{gap:7px}.loop03-cartao-selo{width:38px;height:38px;font-size:1.1rem}.loop03-cartao-identidade strong{font-size:1.14rem}.loop03-cartao-identidade span{font-size:.58rem}.loop03-cartao-resumo strong{font-size:.68rem}.loop03-cartao-resumo small{font-size:.64rem}}
+@media(max-width:860px){.loop03-grade-posicoes{grid-template-columns:repeat(3,minmax(0,1fr))}}
+/* Mesma composição aprovada para telefone em pé: três posições por fileira.
+ O navegador mantém o pinch-zoom nativo; nenhuma posição desaparece. */
+@media(max-width:520px){
+ .loop03-grade-posicoes{grid-template-columns:repeat(3,minmax(0,1fr));gap:6px}
+ .loop03-grade-posicoes .loop03-unidade-posicao{gap:5px;min-width:0}
+ .loop03-grade-posicoes .loop03-cartao-posicao{
+  min-height:147px!important;padding:6px 5px 8px!important;gap:5px!important;
+  border-radius:12px!important;border-width:1px!important
+ }
+ .loop03-grade-posicoes .loop03-cartao-rotulo{font-size:.56rem!important;padding:5px 4px!important}
+ .loop03-grade-posicoes .loop03-cartao-miolo{gap:4px!important;flex-direction:row!important;align-items:center!important}
+ .loop03-grade-posicoes .loop03-cartao-selo{width:25px!important;height:25px!important;font-size:.8rem!important;border-width:1px!important}
+ .loop03-grade-posicoes .loop03-cartao-identidade strong{font-size:.8rem!important;line-height:1.1!important}
+ .loop03-grade-posicoes .loop03-cartao-identidade span{font-size:.48rem!important;line-height:1.1!important}
+ .loop03-grade-posicoes .loop03-cartao-resumo{padding-top:4px!important;gap:3px!important}
+ .loop03-grade-posicoes .loop03-cartao-resumo strong{font-size:.58rem!important;overflow-wrap:anywhere}
+ .loop03-grade-posicoes .loop03-cartao-resumo small{font-size:.49rem!important;line-height:1.1!important;overflow-wrap:anywhere}
+ .loop03-grade-posicoes .loop03-adicionar-indicado{min-height:35px!important;padding:5px 2px!important;font-size:.56rem!important;line-height:1.15!important}
+ .loop03-grade-posicoes .loop03-pendencia-ponto{width:8px!important;height:8px!important}
+}
 
 /* Paineis de Minha Rede: total de posicoes e posicoes a distribuir. */
 .loop03-cabecalho-equipe{display:grid;grid-template-columns:minmax(130px,1fr) minmax(160px,1.5fr) minmax(130px,1fr);
@@ -461,4 +480,44 @@ body.loop03-logado{
 }
 #loop03-tabuleiro .loop03-mapa-grade .loop03-inicial-fila.loop03-b:not(.loop03-dourada):not(.loop03-azul){
  color:#101724!important;
+}
+
+
+/* Celular deitado: a mesma composição de computador volta a exibir a lateral
+ completa. É o mesmo menu e os mesmos botões, não uma tela alternativa. */
+@media (orientation:landscape) and (min-width:560px) and (max-width:950px){
+ .loop03-shell{
+  display:grid!important;
+  grid-template-columns:clamp(132px,20vw,185px) minmax(0,1fr)!important;
+  grid-template-rows:auto minmax(0,1fr)!important;
+  gap:8px!important;padding:8px!important;
+ }
+ .loop03-banner-topo{grid-column:1/-1!important;grid-row:1!important}
+ .loop03-sidebar{
+  position:sticky!important;grid-column:1!important;grid-row:2!important;
+  transform:none!important;transition:none!important;
+  top:6px!important;left:auto!important;bottom:auto!important;
+  width:100%!important;max-height:calc(100vh - 12px)!important;
+  min-height:0!important;overflow:auto!important;
+  border-radius:14px!important;z-index:12!important;
+  padding:10px 6px!important;gap:10px!important;
+ }
+ .loop03-sidebar nav{gap:3px!important}
+ .loop03-sidebar nav button,.loop03-sidebar nav a{
+  min-height:38px!important;padding:7px 5px!important;
+  font-size:.7rem!important;gap:5px!important;
+ }
+ .loop03-sidebar .loop03-marca{font-size:1.3rem!important;padding:3px!important}
+ .loop03-vitrine-lateral{margin:4px 2px!important}
+ .loop03-corpo{grid-column:2!important;grid-row:2!important;min-width:0!important}
+ .loop03-hamburguer{display:none!important}
+ .loop03-indicadores{grid-template-columns:repeat(4,minmax(0,1fr))!important;gap:5px!important}
+ .loop03-indicador{min-height:94px!important;padding:7px 5px!important}
+ .loop03-indicador strong{font-size:clamp(.95rem,2vw,1.35rem)!important}
+ .loop03-indicador small,.loop03-indicador span{font-size:.54rem!important}
+ .loop03-grade-posicoes{grid-template-columns:repeat(3,minmax(0,1fr))!important;gap:8px!important}
+ .loop03-grade-posicoes .loop03-cartao-posicao{padding:6px!important;min-height:155px!important}
+ .loop03-grade-posicoes .loop03-cartao-identidade strong{font-size:1rem!important}
+ .loop03-grade-posicoes .loop03-cartao-selo{width:32px!important;height:32px!important}
+ .loop03-grade-posicoes .loop03-adicionar-indicado{font-size:.62rem!important}
 }
