@@ -410,3 +410,65 @@ body.loop03-logado .portal-participante{position:relative;z-index:1}
 @media(prefers-reduced-motion:reduce){
  body.loop03-logado::before{animation:none!important;transform:none!important}
 }
+
+
+/* Estudio do escritorio e numeracao radial: decoracao de CSS, DOM real intocado. */
+#loop03-home .loop03-cenario-escritorio{
+ isolation:isolate;
+ background:
+  radial-gradient(ellipse at 50% 95%,#b87b4947,transparent 45%),
+  radial-gradient(ellipse at 12% 35%,#3862b875,transparent 31%),
+  radial-gradient(ellipse at 90% 29%,#943dea83,transparent 28%);
+}
+#loop03-home .loop03-cenario-escritorio::before,
+#loop03-home .loop03-cenario-escritorio::after{
+ content:"";position:absolute;top:8%;bottom:13%;width:23%;z-index:1;pointer-events:none;
+ border:2px solid #6561a16b;
+ background:
+  repeating-linear-gradient(0deg,transparent 0 26px,#dfb36437 27px 29px,transparent 30px 64px),
+  repeating-linear-gradient(90deg,#060c1b97 0 18px,#35327081 20px 23px,#07071b6e 24px 46px);
+ box-shadow:inset 0 0 17px #b079ea8c,0 0 25px #d0959f52;
+}
+#loop03-home .loop03-cenario-escritorio::before{
+ left:-3%;transform:perspective(380px) rotateY(-24deg) skewY(1deg);
+ border-left:7px solid #d4b76c7a;
+}
+#loop03-home .loop03-cenario-escritorio::after{
+ right:-3%;transform:perspective(380px) rotateY(24deg) skewY(-1deg);
+ border-right:7px solid #e6bd7e8a;
+}
+#loop03-home .loop03-cenario-monitor{z-index:3}
+#loop03-home .loop03-cenario-base{z-index:4}
+#loop03-home .loop03-cenario-mesa{z-index:5}
+#loop03-home .loop03-cenario-luz{z-index:0}
+#loop03-home .loop03-hero-escritorio{
+ border:2px solid #ffc45d!important;
+ box-shadow:inset 0 0 0 2px #7340b47a,0 0 22px #d59b5d8a,0 0 35px #b16ffc65!important;
+}
+#loop03-tabuleiro .loop03-roda .tabuleiro-vaga-1::before{content:"1"}
+#loop03-tabuleiro .loop03-roda .tabuleiro-vaga-2::before{content:"2"}
+#loop03-tabuleiro .loop03-roda .tabuleiro-vaga-3::before{content:"3"}
+#loop03-tabuleiro .loop03-roda .tabuleiro-vaga-4::before{content:"4"}
+#loop03-tabuleiro .loop03-roda .tabuleiro-vaga-5::before{content:"5"}
+#loop03-tabuleiro .loop03-roda .tabuleiro-vaga-6::before{content:"6"}
+#loop03-tabuleiro .loop03-roda .espaco-tabuleiro-demo:not(.tabuleiro-centro)::before{
+ display:block;flex:0 0 auto;
+ color:#141923;font-weight:950;font-size:clamp(1.1rem,2.2vw,2.1rem);line-height:1.05;
+ text-shadow:0 1px #ffffff80;
+}
+#loop03-tabuleiro .loop03-roda .espaco-tabuleiro-demo.tabuleiro-vaga-6::before{
+ color:#fff;font-size:clamp(1.2rem,2.4vw,2.3rem);
+ text-shadow:0 1px 3px #72102b;
+}
+#loop03-tabuleiro .loop03-roda .espaco-tabuleiro-demo:not(.tabuleiro-centro)>.titulo-espaco-tabuleiro-demo{
+ font-size:.48rem;line-height:1.1;max-height:1.1em;overflow:hidden;
+}
+#loop03-tabuleiro .loop03-roda .espaco-tabuleiro-demo:not(.tabuleiro-centro)>.selo-posicao-demo{
+ font-size:clamp(.49rem,.8vw,.77rem);line-height:1.15;
+}
+@media(max-width:520px){
+ #loop03-home .loop03-cenario-escritorio::before,
+ #loop03-home .loop03-cenario-escritorio::after{width:15%;opacity:.8}
+ #loop03-tabuleiro .loop03-roda .espaco-tabuleiro-demo:not(.tabuleiro-centro)::before{font-size:1.16rem}
+ #loop03-tabuleiro .loop03-roda .espaco-tabuleiro-demo:not(.tabuleiro-centro)>.titulo-espaco-tabuleiro-demo{font-size:.43rem}
+}
