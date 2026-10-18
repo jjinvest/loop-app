@@ -67,3 +67,7 @@ button:disabled{opacity:.48;cursor:not-allowed}
  .produtos-loja-loop{grid-template-columns:repeat(auto-fill,minmax(250px,1fr))}
 }
 
+
+/* Bordas discretas da elegibilidade de cada produto da AKITEMM. */
+.produto-loja-loop.produto-loja-loop-elegivel{border-color:#5da97c;box-shadow:inset 0 0 0 1px #5da97c36}
+.produto-loja-loop.produto-loja-loop-nao-elegivel{border-color:#6b757a;box-shadow:inset 0 0 0 1px #6b757a22}

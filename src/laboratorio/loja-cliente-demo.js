@@ -130,17 +130,20 @@
    destino.append(vazio);
   }
   for(const p of catalogo){
-   const card=document.createElement('article');card.className='produto-loja-loop';
+   const card=document.createElement('article');
+    card.className='produto-loja-loop '+(p.elegivelLoop?
+     'produto-loja-loop-elegivel':'produto-loja-loop-nao-elegivel');
    const tipo=document.createElement('span');tipo.className='tipo-loja-loop';
    tipo.textContent=p.tipo==='PDF'?'Curso PDF':'Produto físico';
    const titulo=document.createElement('h3');titulo.textContent=p.nome;
    const aviso=document.createElement('small');
    aviso.className='tipo-loja-loop';
    aviso.textContent=p.elegivelLoop?
-    (p.quantidadeMinimaLoop===1?'Conta para gerar posição no LOOP':
-     'Conta para o LOOP somente a partir de '+p.quantidadeMinimaLoop+
-      ' unidade(s) no mesmo pedido'):
-    'Produto só da loja: não conta para a posição';
+    ('Pode gerar uma posição no LOOP'+
+     (p.quantidadeMinimaLoop>1?' · Mínimo de '+p.quantidadeMinimaLoop+
+      ' unidades no mesmo pedido':'')+
+     ' · conforme valor e quantidade exigidos'):
+    'Este produto não gera posição no LOOP';
    if(p.elegivelLoop&&p.posicoesPorPedidoLoop===6){
     aviso.textContent+=' · Produto especial de 6 posições (sujeito às regras e às vagas livres)';
    }
