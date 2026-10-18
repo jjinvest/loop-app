@@ -369,7 +369,7 @@ async function main(){
   page.once('dialog',dialog=>dialog.accept());
   await page.locator('#loop03OpcoesPosicoes .loop03-adicionar-indicado').first().click();
   await page.waitForFunction(()=>document.querySelector('#loop03SaldoDisponivel')?.textContent==='0');
-  assert.match(await page.locator('#loop03OpcoesPosicoes').innerText(),/2 indicação/);
+  assert.match(await page.locator('#loop03OpcoesPosicoes').innerText(),/2 indicações válidas/);
   await page.screenshot({path:path.join(pasta,'minhas-posicoes-botao-mais-um.png'),fullPage:true});
   await page.locator('#loop03Menu').click();
   await page.locator('#loop03Sidebar [data-loop03-aba="rede"]').click();
