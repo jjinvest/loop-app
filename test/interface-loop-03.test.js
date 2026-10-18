@@ -50,8 +50,21 @@ test('LOOP 0.3 integra escritorio real e duas abas sem criar aplicativo paralelo
  assert.match(css,/loop03-mapa-grade/);
  assert.match(css,/loop03-iluminada/);
  const participante=ler('participante-demo.js');
- assert.match(participante,/simbolo\.textContent=p\.cor==='DOURADO'\?'●':filaA\?'A':'B'/);
+ // Dourado nao tem letra; A e branco na bola amarela; B e preto na branca.
+ assert.match(participante,/simbolo\.textContent=p\.cor==='DOURADO'\?'':filaA\?'A':'B'/);
+ assert.match(participante,/POSICAO_AZUL_NAO_PODE_ENTRAR_NA_FILA_A/);
+ assert.match(css,/loop03-inicial-fila\.loop03-a:not\(\.loop03-dourada\)/);
+ assert.match(css,/loop03-inicial-fila\.loop03-b:not\(\.loop03-dourada\):not\(\.loop03-azul\)/);
+ assert.match(css,/loop03-inicial-fila\.loop03-azul/);
+ assert.match(css,/loop03-bonequinho-indicacoes/);
  assert.match(participante,/convitesValidadosFilaA\[i\]/);
+ assert.match(participante,/loop03-quantidade-a-direita/);
+ assert.match(participante,/dados\.append\(quantidade,boneco\)/);
+ assert.match(participante,/dados\.append\(referencia\)/);
+ assert.match(js,/id="loop03RedeTotalPosicoes">0/);
+ assert.match(js,/id="loop03RedeADistribuir">0/);
+ assert.match(js,/visao\.contadoresRede\?\.aDistribuir/);
+ assert.match(css,/loop03-cabecalho-equipe/);
  assert.match(participante,/referencia\.textContent='#'\+p\.posicaoId;/);
  assert.doesNotMatch(participante,/Minha: '\+nomeTitular/);
  assert.match(participante,/elementoPosicao\(valor,'Número'\)/);

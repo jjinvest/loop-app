@@ -41,6 +41,9 @@ test('um convidado confirmado atribuido a uma posicao ativa promove somente ela 
  assert.equal(visao.posicoes.length,2);
  assert(visao.posicoes.every(p=>p.statusAdesao==='PENDENTE'));
  assert.equal(visao.mapaCores.filaB.length,2);
+ assert.equal(visao.contadoresRede.totalPosicoes,0);
+ assert.equal(visao.contadoresRede.aDistribuir,0);
+ // So cadastrar pelo link nao aumenta o total de posicoes distribuidas.
  adesoes.ativar({contaId:raiz.contaId,posicaoId:primeira.posicaoId,
   cpfFicticio:'11144477735',aceitaTermos:true,versaoTermos:'LOOP-DEMO-V1'});
  visao=escritorio.consultar(raiz.contaId);
@@ -52,12 +55,19 @@ test('um convidado confirmado atribuido a uma posicao ativa promove somente ela 
  const compraConvidado=await comprar(convidado,'c-1');
  assert.equal(ponte.consultar().filas.A.quantidade,0);
  assert.equal(escritorio.consultar(raiz.contaId).equipe[0].situacao,'AGUARDANDO_CONFIRMACAO');
+ visao=escritorio.consultar(raiz.contaId);
+ assert.equal(visao.contadoresRede.totalPosicoes,1);
+ assert.equal(visao.contadoresRede.aDistribuir,1);
+ assert.equal(visao.contadoresRede.aguardandoAtivacao,1);
+ // Mesmo que o PDF tenha sido comprado, nao ha promocao automatica.
  assert.throws(()=>ponte.atribuirIndicacao({contaId:raiz.contaId,
   convidadoId:convidado.contaId,posicaoId:segunda.posicaoId}),
   {codigo:'INDICADO_AGUARDANDO_ATIVACAO'});
  adesoes.ativar({contaId:convidado.contaId,posicaoId:compraConvidado.posicaoId,
   cpfFicticio:'12345678909',aceitaTermos:true,versaoTermos:'LOOP-DEMO-V1'});
  assert.equal(escritorio.consultar(raiz.contaId).equipe[0].situacao,'ATIVO');
+ assert.equal(escritorio.consultar(raiz.contaId).contadoresRede.aDistribuir,1);
+ assert.equal(ponte.consultar().filas.A.quantidade,0);
  const vinculada=ponte.atribuirIndicacao({contaId:raiz.contaId,
   convidadoId:convidado.contaId,posicaoId:primeira.posicaoId});
  assert.equal(vinculada.repetida,false);
@@ -78,6 +88,9 @@ test('um convidado confirmado atribuido a uma posicao ativa promove somente ela 
  assert.equal(visao.posicoes.find(p=>p.posicaoId===primeira.posicaoId).indicacoesRecebidas,1);
  assert.equal(visao.posicoes.find(p=>p.posicaoId===segunda.posicaoId).indicacoesRecebidas,0);
  assert.equal(visao.convitesValidosFilaA[0],1);
+ assert.equal(visao.contadoresRede.totalPosicoes,1);
+ assert.equal(visao.contadoresRede.aDistribuir,0);
+ assert.equal(visao.contadoresRede.jaDistribuidas,1);
  // Vínculo posterior a entrada do titular no tabuleiro preserva o motor.
  const proximoConvidado=contas.cadastrar({
   nome:'Segunda Pessoa Indicada',email:'convidado2@exemplo.invalid',
@@ -88,6 +101,9 @@ test('um convidado confirmado atribuido a uma posicao ativa promove somente ela 
  ponte.banco.prepare('UPDATE admin_ponte_estado_demo SET snapshot_json=? WHERE id=1')
   .run(JSON.stringify(preparando.exportarSnapshot()));
  const compraProxima=await comprar(proximoConvidado,'c-2');
+ visao=escritorio.consultar(raiz.contaId);
+ assert.equal(visao.contadoresRede.totalPosicoes,2);
+ assert.equal(visao.contadoresRede.aDistribuir,1);
  adesoes.ativar({contaId:proximoConvidado.contaId,posicaoId:compraProxima.posicaoId,
   cpfFicticio:'52998224725',aceitaTermos:true,versaoTermos:'LOOP-DEMO-V1'});
  const vinculoTabuleiro=ponte.atribuirIndicacao({contaId:raiz.contaId,
@@ -101,4 +117,7 @@ test('um convidado confirmado atribuido a uma posicao ativa promove somente ela 
  const novaVisao=escritorio.consultar(raiz.contaId);
  assert.equal(novaVisao.posicoes.find(p=>p.posicaoId===primeira.posicaoId).indicacoesRecebidas,1);
  assert.equal(novaVisao.posicoes.find(p=>p.posicaoId===segunda.posicaoId).indicacoesRecebidas,1);
+ assert.equal(novaVisao.contadoresRede.totalPosicoes,2);
+ assert.equal(novaVisao.contadoresRede.aDistribuir,0);
+ assert.equal(novaVisao.contadoresRede.jaDistribuidas,2);
 });
