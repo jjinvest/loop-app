@@ -17,7 +17,6 @@
     <nav aria-label="Áreas do escritório">
      <button data-loop03-aba="home" type="button"><span>⌂</span> Escritório Virtual</button>
      <button data-loop03-aba="tabuleiro" type="button"><span>◉</span> Tabuleiro</button>
-     <button data-loop03-aba="ativacoes" type="button"><span>ϟ</span> Minhas Ativações</button>
      <button data-loop03-aba="posicoes" type="button"><span>▤</span> Minhas Posições</button>
      <button data-loop03-aba="rede" type="button"><span>♧</span> Rede e Equipe</button>
      <button data-loop03-aba="financeiro" type="button"><span>▥</span> Financeiro</button>
@@ -45,7 +44,7 @@
      </div>
     </div>
     <div class="loop03-indicadores" aria-label="Resumo da conta">
-     <button data-loop03-aba="ativacoes" type="button" class="loop03-indicador"><small>ϟ ATIVAÇÕES</small><strong id="loop03TotalAtivacoes">0/6</strong><span>Minhas ativações</span></button>
+     <button data-loop03-aba="posicoes" type="button" class="loop03-indicador"><small>ϟ POSIÇÕES</small><strong id="loop03TotalAtivacoes">0/6</strong><span>Minhas posições</span></button>
      <div class="loop03-indicador"><small>◷ GIROS</small><strong id="loop03Giros24">—</strong><span>Últimas 24 horas · aguardando indicador</span></div>
      <button data-loop03-aba="posicoes" type="button" class="loop03-indicador"><small>♙ NÚMERO</small><strong id="loop03Numero">—</strong><span id="loop03NumeroDetalhe">Escolha uma ativação</span></button>
      <button data-loop03-aba="financeiro" type="button" class="loop03-indicador"><small>▥ FINANCEIRO</small><strong id="loop03Saldo">R$ 0,00</strong><span>Saldo fictício disponível</span></button>
@@ -71,9 +70,9 @@
       <header class="loop03-titulo-pagina"><div><small>ACOMPANHAMENTO INDIVIDUAL</small><h2>Minhas Posições</h2></div></header>
       <p>Escolha uma ativação para ver o número, a fila e localizar sua posição no tabuleiro.</p>
       <div id="loop03OpcoesPosicoes" class="loop03-opcoes"></div>
-      <div id="loop03DetalhesPosicao" class="loop03-detalhes" aria-live="polite">Nenhuma ativação selecionada.</div>
+      <div id="loop03DetalhesPosicao" class="loop03-detalhes" aria-live="polite">Nenhuma posição selecionada.</div>
      </section>
-     <section id="loop03-rede" class="loop03-pagina" aria-label="Rede e Equipe"><header class="loop03-titulo-pagina"><div><small>INDICAÇÕES</small><h2>Rede e Equipe</h2></div></header></section>
+     <section id="loop03-rede" class="loop03-pagina" aria-label="Rede e Equipe"><header class="loop03-titulo-pagina"><div><small>INDICAÇÕES</small><h2>Minha Equipe</h2></div></header><div id="loop03ListaEquipe" class="loop03-opcoes" aria-live="polite"></div></section>
      <section id="loop03-financeiro" class="loop03-pagina" aria-label="Financeiro"><header class="loop03-titulo-pagina"><div><small>EXTRATO E SAQUES</small><h2>Financeiro</h2></div></header></section>
      <section id="loop03-perfil" class="loop03-pagina" aria-label="Meu perfil"><header class="loop03-titulo-pagina"><div><small>CADASTRO</small><h2>Meu perfil</h2></div></header><p>Atualização de foto, telefone e e-mail ainda será integrada. A área de CPF fictício e aceite permanece em Minhas Ativações.</p></section>
     </div>
@@ -93,12 +92,12 @@
    const bonus=resumo.querySelector('.area-bonus-participante');
    if(links)e('loop03-rede').append(links);
    if(bonus)e('loop03-financeiro').append(bonus);
-   e('loop03-ativacoes').append(resumo);
+   e('loop03-posicoes').append(resumo);
   }
   const historico=e('tituloHistoricoLojaParticipante')?.closest('section.cartao-participante');
-  if(historico)e('loop03-ativacoes').append(historico);
+  if(historico)e('loop03-posicoes').append(historico);
   for(const id of ['secaoAtivacaoParticipante','secaoDesistenciaVaga6Participante']){
-   mover('#'+id,'ativacoes');
+   mover('#'+id,'posicoes');
   }
   const mapa=e('tituloMapaParticipante')?.closest('section.cartao-participante');
   if(mapa){
@@ -132,7 +131,7 @@
   const posicoes=e('posicoesParticipante')?.closest('section.cartao-participante');
   const compras=e('pedidosParticipante')?.closest('section.cartao-participante');
   if(posicoes)e('loop03-posicoes').append(posicoes);
-  if(compras)e('loop03-ativacoes').append(compras);
+  if(compras)e('loop03-posicoes').append(compras);
   const limites=e('atualizarParticipante')?.closest('section.cartao-participante');
   if(limites)e('loop03-perfil').append(limites);
   // Cartao anterior de atalho à loja: preservar a mesma loja.
@@ -178,8 +177,25 @@
   if(abrirTabuleiro)abrir('tabuleiro');
   e('loop03Numero').textContent='#'+p.posicaoId;
   e('loop03NumeroDetalhe').textContent=statusPosicao(p);
-  e('loop03EscolhaTexto').textContent='Ativação #'+p.posicaoId+' · '+statusPosicao(p);
+  e('loop03EscolhaTexto').textContent='Posição #'+p.posicaoId+' · '+statusPosicao(p);
   e('loop03SituacaoBaixo').textContent=statusPosicao(p);
+  const ordem=(visaoAtual?.posicoes||[]).findIndex(x=>x.posicaoId===p.posicaoId);
+  if(ordem>=0)e('loop03TotalAtivacoes').textContent=(ordem+1)+'/'+visaoAtual.limitePosicoesAtivas;
+  const precisa=p.statusAdesao==='PENDENTE';
+  const caixa=e('secaoAtivacaoParticipante');
+  if(caixa)caixa.hidden=!precisa;
+  const primeiro=!visaoAtual?.adesao?.cpfConfirmadoNoTeste;
+  for(const id of ['cpfFicticioParticipante','aceiteTermosParticipante']){
+   const campo=e(id);if(!campo)continue;
+   campo.required=precisa&&primeiro;
+   campo.disabled=!primeiro;
+   const rotulo=campo.id==='cpfFicticioParticipante'?document.querySelector('label[for="cpfFicticioParticipante"]'):campo.closest('label');
+   if(rotulo)rotulo.hidden=!primeiro;
+   if(campo.id==='cpfFicticioParticipante')campo.hidden=!primeiro;
+  }
+  const btn=e('confirmarAtivacaoParticipante');
+  if(btn)btn.textContent=primeiro?'Confirmar CPF fictício e esta posição':'Confirmar somente esta posição';
+  const tit=caixa?.querySelector('h2');if(tit)tit.textContent='Confirmar posição #'+p.posicaoId;
   const alvo=e('loop03DetalhesPosicao');
   alvo.replaceChildren();
   const titulo=document.createElement('h3');titulo.textContent='Posição nº '+p.posicaoId;
@@ -244,9 +260,11 @@
     b.dataset.loop03Posicao=String(p.posicaoId);
     b.setAttribute('aria-pressed',String(p.posicaoId===selecionada));
     const titulo=document.createElement('strong');
-    titulo.textContent='Ativação '+(i+1);
+    titulo.textContent='Posição '+(i+1);
     const subtitulo=document.createElement('small');
-    subtitulo.textContent=statusPosicao(p)+' · Nº '+p.posicaoId;
+    subtitulo.textContent=statusPosicao(p)+' · Nº '+p.posicaoId+
+      ' · '+(p.indicacoesRecebidas||0)+' indicação(ões)'+
+      (p.statusAdesao==='PENDENTE'?' · 🔴 Aguardando confirmação':'');
     b.append(titulo,subtitulo);
     b.addEventListener('click',()=>{
      selecionar(p,id==='loop03AtivacoesTabuleiro');
@@ -255,22 +273,70 @@
     alvo.append(b);
    });
   }
+  const equipes=e('loop03ListaEquipe');equipes.replaceChildren();
+  for(const pessoa of visao.equipe||[]){
+   const cartao=document.createElement('div');cartao.className='loop03-opcao';
+   const titulo=document.createElement('strong');titulo.textContent=pessoa.nome;
+   const dados=document.createElement('small');
+   dados.textContent=(pessoa.telefone||'Telefone não informado')+' · '+
+    (pessoa.estado==='ATIVO'?'Ativo':'Pendente')+
+    (pessoa.filaAtual?' · Fila '+pessoa.filaAtual:'')+
+    (pessoa.posicaoAtribuidaId?' · Indicada para #'+pessoa.posicaoAtribuidaId:'');
+   cartao.append(titulo,dados);
+   if(pessoa.posicaoAtribuidaId===null&&pessoa.estado==='ATIVO'){
+    const botao=document.createElement('button');botao.type='button';
+    botao.textContent='⋮';botao.setAttribute('aria-label','Escolher posição para '+pessoa.nome);
+    const escolhas=document.createElement('div');escolhas.hidden=true;
+    const op=document.createElement('select');op.setAttribute('aria-label','Posição destinatária');
+    const vazio=document.createElement('option');vazio.value='';vazio.textContent='Escolher minha posição';
+    op.append(vazio);
+    for(const [i,p] of visao.posicoes.entries()){
+     if(p.statusAdesao==='PENDENTE'||!/^FILA_[AB]$/.test(p.local))continue;
+     const item=document.createElement('option');item.value=String(p.posicaoId);
+     item.textContent='Posição '+(i+1)+' · #'+p.posicaoId;op.append(item);
+    }
+    const confirmar=document.createElement('button');confirmar.type='button';
+    confirmar.textContent='Confirmar vínculo definitivo';
+    const aviso=document.createElement('small');aviso.setAttribute('role','status');
+    botao.addEventListener('click',()=>{escolhas.hidden=!escolhas.hidden;});
+    confirmar.addEventListener('click',async()=>{
+     const posicaoId=Number(op.value);
+     if(!op.value)return aviso.textContent='Escolha uma posição ativa.';
+     if(!window.confirm('Vincular '+pessoa.nome+' à posição #'+posicaoId+
+       '? Depois de confirmado, não será possível alterar.'))return;
+     confirmar.disabled=true;
+     try{
+      const resposta=await fetch('/api/laboratorio/participante/atribuir-indicacao',{
+       method:'POST',headers:{'Content-Type':'application/json','X-LOOP-LAB':'participante'},
+       credentials:'same-origin',body:JSON.stringify({convidadoId:pessoa.convidadoId,posicaoId})
+      });
+      const resultado=await resposta.json();
+      if(!resposta.ok)throw Error(resultado.erro||'Falha ao atribuir');
+      await window.LoopParticipanteAtualizar?.();
+     }catch(err){aviso.textContent=err.message;confirmar.disabled=false;}
+    });
+    escolhas.append(op,confirmar,aviso);cartao.append(botao,escolhas);
+   }
+   equipes.append(cartao);
+  }
+  if(!visao.equipe?.length)equipes.textContent='Ainda não há pessoas cadastradas pelo seu link.';
   destacarPosicoes();
   const atual=visao.posicoes.find(p=>p.posicaoId===selecionada);
   if(atual)selecionar(atual);
   else{
    selecionada=null;
-   e('loop03Numero').textContent='—';
-   e('loop03NumeroDetalhe').textContent='Escolha uma ativação';
+   e('loop03Numero').textContent='#0000';
+   e('loop03NumeroDetalhe').textContent='Escolha uma posição';
    e('loop03EscolhaTexto').textContent='Visão geral, nenhuma ativação escolhida';
-   e('loop03SituacaoBaixo').textContent='Nenhuma ativação selecionada';
-   e('loop03DetalhesPosicao').textContent='Selecione uma ativação acima.';
+   e('loop03SituacaoBaixo').textContent='Nenhuma posição selecionada';
+   e('loop03DetalhesPosicao').textContent='Selecione uma posição acima.';
+   const caixa=e('secaoAtivacaoParticipante');if(caixa)caixa.hidden=true;
   }
   if(!destinoInicialTratado){
    destinoInicialTratado=true;
    const hash=location.hash.slice(1);
    if(hash==='tituloMapaParticipante')abrir('tabuleiro');
-   if(hash==='tituloHistoricoLojaParticipante'||hash==='secaoAtivacaoParticipante')abrir('ativacoes');
+   if(hash==='tituloHistoricoLojaParticipante'||hash==='secaoAtivacaoParticipante')abrir('posicoes');
   }
  }
  async function carregarPublicacoes(){
@@ -303,6 +369,7 @@
   }
  }
  function encerrar(){document.body.classList.remove('loop03-logado');selecionada=null;visaoAtual=null;destinoInicialTratado=false;abrir('home');}
- window.Loop03Shell={montar,atualizar,encerrar,abrir,destacarPosicoes};
+ window.Loop03Shell={montar,atualizar,encerrar,abrir,destacarPosicoes,
+  posicaoSelecionada:()=>selecionada};
  montar();
 })();
