@@ -120,6 +120,7 @@ class EscritorioIndividualDemo{
   const totalPosicoes=indicacoesValidas.length;
   const jaDistribuidas=indicacoesValidas.filter(p=>p.posicaoAtribuidaId!==null).length;
   const aDistribuir=totalPosicoes-jaDistribuidas;
+  const disponiveisParaVincular=equipe.filter(p=>p.estado==='ATIVO'&&p.posicaoAtribuidaId===null).length;
   const aguardandoAtivacao=indicacoesValidas.filter(
    p=>p.situacao==='AGUARDANDO_CONFIRMACAO'&&p.posicaoAtribuidaId===null).length;
   const encerradas=[simulador.tabuleiro.centro,...simulador.tabuleiro.vagas]
@@ -210,7 +211,7 @@ class EscritorioIndividualDemo{
     return {...p,...referencia,indicacoesRecebidas:vinculos};
    }).sort((a,b)=>a.posicaoId-b.posicaoId),
    mapaCores,equipe,
-   contadoresRede:{totalPosicoes,aDistribuir,jaDistribuidas,aguardandoAtivacao},
+   contadoresRede:{totalPosicoes,aDistribuir,jaDistribuidas,aguardandoAtivacao,disponiveisParaVincular},
    // No modo manual, contagem da A SEMPRE POR POSICAO; nunca total do link.
    convitesValidosFilaA:simulador.filas.filaA.map(p=>
     p.indicacoesVinculadas ??
