@@ -194,6 +194,76 @@ async function main(){
   assert.equal(await page.locator('.linha-minha-demo .posicao-vermelho').count(),1);
   await page.screenshot({path:path.join(pasta,'escritorio-posicao-ativada.png'),fullPage:true});
 
+  // Percurso do cliente: convidado compra PDF; o titular precisa distribuir.
+  const convidado=contas.cadastrar({
+   nome:'Indicado Teste Mobile',email:'indicado-mobile@exemplo.invalid',
+   senha,codigoIndicador:titular.codigoConvite
+  });
+  const cabAdmin={'Content-Type':'application/json',Authorization:'Bearer '+admin};
+  const compraConvidado=await fetch(base+'/api/admin/carrinho-loop-demo',{
+   method:'POST',headers:cabAdmin,
+   body:JSON.stringify({pedidoId:'pedido-do-indicado-mobile',contaId:convidado.contaId,
+    itens:[{produtoId:'curso-mobile-100',quantidade:1},{produtoId:'curso-mobile-150',quantidade:1}]})
+  });
+  assert.equal(compraConvidado.status,201,await compraConvidado.text());
+  const confirmouConvidado=await fetch(base+
+   '/api/admin/carrinho-loop-demo/pedido-do-indicado-mobile/eventos',{
+   method:'POST',headers:cabAdmin,
+   body:JSON.stringify({eventoId:'evento-indicado-mobile',tipo:'CONFIRMAR_FICTICIO'})
+  });
+  assert.equal(confirmouConvidado.status,200,await confirmouConvidado.text());
+  await page.goto(base+'/laboratorio/participante',{waitUntil:'networkidle'});
+  await page.locator('#conteudoParticipante').waitFor({state:'visible'});
+  await page.locator('#loop03Menu').click();
+  await page.locator('#loop03Sidebar [data-loop03-aba="rede"]').click();
+  assert.equal(await page.locator('#loop03RedeTotalPosicoes').innerText(),'1');
+  assert.equal(await page.locator('#loop03RedeADistribuir').innerText(),'1');
+  await page.screenshot({path:path.join(pasta,'rede-indicado-aguardando.png'),fullPage:true});
+  // Outro navegador, outra conta. Ativar a posicao do indicado nao promove o titular.
+  const ctxIndicado=await browser.newContext({viewport:{width:390,height:812},
+   deviceScaleFactor:1,isMobile:true,hasTouch:true});
+  const paginaIndicado=await ctxIndicado.newPage();
+  paginaIndicado.on('pageerror',err=>erros.push('convidado: '+err.message));
+  await paginaIndicado.goto(base+'/laboratorio/participante',{waitUntil:'networkidle'});
+  await paginaIndicado.locator('#nomeParticipante').fill(convidado.nome);
+  await paginaIndicado.locator('#senhaParticipante').fill(senha);
+  await paginaIndicado.locator('#botaoEntrarParticipante').click();
+  await paginaIndicado.locator('#conteudoParticipante').waitFor({state:'visible'});
+  await paginaIndicado.locator('#loop03Menu').click();
+  await paginaIndicado.locator('#loop03Sidebar [data-loop03-aba="posicoes"]').click();
+  await paginaIndicado.locator('#loop03OpcoesPosicoes [data-loop03-posicao]').first().click();
+  await paginaIndicado.locator('#cpfFicticioParticipante').fill('52998224725');
+  await paginaIndicado.locator('#aceiteTermosParticipante').check();
+  await paginaIndicado.locator('#confirmarAtivacaoParticipante').click();
+  await paginaIndicado.locator('#secaoAtivacaoParticipante').waitFor({state:'hidden'});
+  await ctxIndicado.close();
+  await page.reload({waitUntil:'networkidle'});
+  await page.locator('#conteudoParticipante').waitFor({state:'visible'});
+  await page.locator('#loop03Menu').click();
+  await page.locator('#loop03Sidebar [data-loop03-aba="rede"]').click();
+  assert.equal(await page.locator('#loop03RedeTotalPosicoes').innerText(),'1');
+  assert.equal(await page.locator('#loop03RedeADistribuir').innerText(),'1');
+  const linhaIndicado=page.locator('#loop03ListaEquipe .loop03-equipe-linha')
+   .filter({hasText:convidado.nome});
+  await linhaIndicado.getByRole('button',{name:'Escolher posição para '+convidado.nome}).click();
+  await linhaIndicado.getByRole('combobox',{name:'Posição destinatária'}).selectOption('1');
+  page.once('dialog',dialog=>dialog.accept());
+  await linhaIndicado.getByRole('button',{name:'Confirmar vínculo definitivo'}).click();
+  await page.waitForFunction(()=>document.querySelector('#loop03RedeADistribuir')?.textContent==='0');
+  assert.equal(await page.locator('#loop03RedeTotalPosicoes').innerText(),'1');
+  assert.equal(await page.locator('#loop03RedeADistribuir').innerText(),'0');
+  await page.screenshot({path:path.join(pasta,'rede-um-indicado-distribuido.png'),fullPage:true});
+  await page.locator('#loop03Menu').click();
+  await page.locator('#loop03Sidebar [data-loop03-aba="tabuleiro"]').click();
+  await page.locator('#filtroTodasMapaParticipante').click();
+  const promovida=page.locator('#mapaFilaAParticipante .loop03-linha-fila').filter({hasText:'#1'});
+  assert.equal(await promovida.count(),1);
+  assert.equal(await promovida.locator('.loop03-inicial-fila.loop03-a').innerText(),'A');
+  assert.equal(await promovida.locator('.loop03-quantidade-a-direita').innerText(),'1 indicação');
+  assert.equal(await promovida.locator('.loop03-bonequinho-indicacoes').count(),1);
+  assert.equal(await page.locator('#mapaFilaBParticipante .loop03-quantidade-a-direita').count(),0);
+  await page.screenshot({path:path.join(pasta,'fila-a-contagem-posicao.png'),fullPage:true});
+
   // Uma plataforma, não telas exclusivas de telefone: validar desktop real.
   // Mobile: visita também a prévia pública e todos os painéis administrativos.
   await page.goto(base+'/',{waitUntil:'networkidle'});
