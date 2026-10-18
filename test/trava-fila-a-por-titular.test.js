@@ -81,6 +81,22 @@ test('A e B do mesmo titular entram ambas sem bloqueio extra, respeitando tres A
  assert.deepEqual(escolhidos.map(x=>x.pessoa.id),
   [primeira.id,...outros.map(p=>p.id),segunda.id]);
 });
+test('atalho legado de promover todas as posicoes e bloqueado no motor manual',()=>{
+ const sim=new SimuladorLoop();
+ sim.filas.travaPromocaoAtiva=true;
+ const a=sim.registrarPosicaoSimulada({
+  participanteId:'pessoa',vendaId:'pedido-1'}).posicao;
+ sim.registrarPosicaoSimulada({participanteId:'pessoa',vendaId:'pedido-2'});
+ assert.throws(()=>sim.filas.promoverPosicaoSimulada(a.id),
+  /ATRIBUICAO_MANUAL_POR_POSICAO_OBRIGATORIA/);
+ assert.throws(()=>sim.registrarIndicacaoSimulada({
+  indicadorId:'pessoa',eventoId:'atalho-todo-link'
+ }),/ATRIBUICAO_MANUAL_POR_POSICAO_OBRIGATORIA/);
+ assert.equal(sim.filas.resumo().A.quantidade,0);
+ assert.deepEqual(sim.filas.resumo().B.pessoas.map(p=>p.id),[1,2]);
+ assert.equal(sim.filas.informacoesParticipante('pessoa').quantidade,0);
+ assert.equal(sim.filas.indicacoesProcessadas.size,0);
+});
 test('vaga 6 libera a segunda posicao assim que a primeira entrou no tabuleiro',()=>{
  const {loop,posicoes}=preparar(3);
  assert.deepEqual(loop.filas.filaA.map(p=>p.id),[posicoes[0]]);

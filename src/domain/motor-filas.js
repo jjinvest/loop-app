@@ -83,6 +83,10 @@ class MotorFilas {
     if (typeof eventoId !== 'string' || !eventoId.trim()) {
       throw new Error('eventoId e obrigatorio para impedir indicacao duplicada');
     }
+    // No LOOP 0.3 NENHUMA indicacao sem posicao escolhida pode promover.
+    // A chamada legada sem alvo, mesmo feita internamente, nao furara a trava.
+    if(this.travaPromocaoAtiva&&posicaoAlvoId===undefined)
+      throw new Error('ATRIBUICAO_MANUAL_POR_POSICAO_OBRIGATORIA');
     if (this.indicacoesProcessadas.has(eventoId)) {
       return { repetida: true, promovidas: [], quantidade: this.informacoesParticipante(chave).quantidade };
     }
