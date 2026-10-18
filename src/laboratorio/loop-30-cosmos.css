@@ -216,3 +216,10 @@ body.loop03-logado{
  outline-offset:2px;
  box-shadow:0 0 15px #5ef8b77c,0 0 23px #78e7c55e!important;
 }
+
+
+/* Tabuleiro central em evidencia: nota explicativa embaixo do circulo,
+   mantendo a explicacao verdadeira e os controles originais acessiveis. */
+#loop03-tabuleiro .loop03-roda{display:flex;flex-direction:column}
+#loop03-tabuleiro .loop03-roda>.painel-tabuleiro-imersivo{order:1}
+#loop03-tabuleiro .loop03-roda>p{order:2;color:#d6c6eb;font-size:.78rem;margin:6px 0 0}
