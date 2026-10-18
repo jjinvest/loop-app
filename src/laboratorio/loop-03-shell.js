@@ -82,7 +82,6 @@
    const node=root.querySelector(selector);
    if(node)e('loop03-'+pagina).append(node);
   };
-  mover('#tituloCreditosPrevistosV6','financeiro'); // heading is inside the financial section; move parent below.
   const extrato=e('tituloCreditosPrevistosV6')?.closest('section.cartao-participante');
   if(extrato)e('loop03-financeiro').append(extrato);
   const resumo=e('nomeLogadoParticipante')?.closest('section.cartao-participante');
@@ -131,7 +130,11 @@
   if(atalhoLoja)e('loop03-home').append(atalhoLoja);
   const antiga=root.querySelector('.atalhos-participante');
   if(antiga)antiga.classList.add('loop03-atalhos-legados');
-  root.querySelector('.duas-colunas-participante')?.remove();
+  const tituloMarcos=mapa?.querySelector('.titulo-marcos-loop');
+  if(tituloMarcos)tituloMarcos.remove();
+  for(const container of root.querySelectorAll('.duas-colunas-participante')){
+   if(!container.children.length)container.remove();
+  }
   for(const control of root.querySelectorAll('[data-loop03-aba]'))
    control.addEventListener('click',()=>abrir(control.dataset.loop03Aba));
   e('loop03Menu').addEventListener('click',()=>{
@@ -156,7 +159,7 @@
  }
  function statusPosicao(p){
   const l=p.local||'';
-  return l==='FILA'?'Fila '+(p.fila||'—'):l==='CENTRO'?'Centro do giro':
+  return /^FILA_[AB]$/.test(l)?'Fila '+l.slice(-1):l==='FILA'?'Fila '+(p.fila||'—'):l==='CENTRO'?'Centro do giro':
     l.startsWith('VAGA_')?'Dentro do giro · Vaga '+l.slice(5):l||'Em acompanhamento';
  }
  function selecionar(p,abrirTabuleiro=false){
@@ -191,7 +194,14 @@
   e('loop03TotalAtivacoes').textContent=n+'/'+visao.limitePosicoesAtivas;
   const bonus=visao.saquesSimulados?.bonusDisponivelSimuladoCentavos||0;
   e('loop03Saldo').textContent=(bonus/100).toLocaleString('pt-BR',{style:'currency',currency:'BRL'});
+  // Cadastros pendentes de validacao; distribuicao de indicacoes ainda nao opera.
   e('loop03Pendentes').textContent=String(visao.indicacoes?.cadastrosPendentes||0);
+  const etapa=visao.progressoCiclo?.eventosValidos;
+  for(const [i,m] of [...document.querySelectorAll('.marcos-v6 > span')].entries()){
+   m.classList.toggle('loop03-aceso',Number.isSafeInteger(etapa)&&i<etapa);
+   m.setAttribute('aria-label','Evento '+(i+1)+': '+
+    (!Number.isSafeInteger(etapa)?'andamento ainda nao disponivel':i<etapa?'registrado':'aguardando'));
+  }
   for(const id of ['loop03AtivacoesLista','loop03AtivacoesTabuleiro','loop03OpcoesPosicoes']){
    const alvo=e(id);alvo.replaceChildren();
    if(!n){const p=document.createElement('p');p.textContent='Você ainda não possui ativações nesta conta.';alvo.append(p);}
@@ -211,6 +221,9 @@
     });
     alvo.append(b);
    });
+  }
+  for(const node of document.querySelectorAll('.mapa-fila-posicoes-demo .selo-posicao-demo, .mapa-tabuleiro-posicoes-demo .selo-posicao-demo')){
+   node.classList.toggle('loop03-iluminada',node.classList.contains('minha-posicao-demo'));
   }
   const atual=visao.posicoes.find(p=>p.posicaoId===selecionada);
   if(atual)selecionar(atual);
