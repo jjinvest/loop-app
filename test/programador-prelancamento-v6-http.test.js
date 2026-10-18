@@ -56,9 +56,11 @@ test('API da projeção e da agenda exige chave local, rejeita campos extras',as
  assert.equal(calculo.status,200);
  assert.equal(calculo.data.tetoHipoteticoDeGiros,15);
  assert.equal(calculo.data.transferenciasHabilitadas,false);
+ // O teste deve agendar no futuro, nao depender da data em que roda o CI.
+ const diaFuturo=new Date(Date.now()+3*24*60*60*1000).toISOString().slice(0,10);
  const plano={agendaId:'agenda-http-circuit-2026',modo:'DISTRIBUIDO',
-  quantidade:2,inicioEm:'2026-10-18T09:00:00-03:00',
-  fimEm:'2026-10-18T18:00:00-03:00'};
+  quantidade:2,inicioEm:diaFuturo+'T09:00:00-03:00',
+  fimEm:diaFuturo+'T18:00:00-03:00'};
  const agendar=async payload=>{
   const r=await fetch(url+'/programacoes',{method:'POST',headers,
    body:JSON.stringify(payload)});
