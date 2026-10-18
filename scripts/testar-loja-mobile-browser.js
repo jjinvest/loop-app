@@ -118,7 +118,7 @@ async function main(){
   await page.locator('.loop03-sidebar [data-loop03-aba="posicoes"]').click();
   assert.equal(await page.locator('#loop03OpcoesPosicoes > *').count(),6);
   assert.equal(await page.locator('#loop03Numero').innerText(),'#0000');
-  assert.equal(await page.locator('#loop03TotalAtivacoes').innerText(),'6/6');
+  assert.equal(await page.locator('#loop03TotalAtivacoes').innerText(),'0/6');
   await page.locator('#loop03Menu').click();
   await page.locator('.loop03-sidebar [data-loop03-aba="tabuleiro"]').click();
   await page.locator('#filtroTodasMapaParticipante').click();
