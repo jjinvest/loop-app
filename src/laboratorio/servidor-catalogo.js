@@ -373,6 +373,9 @@ function criarAppAdminLaboratorio({ repositorio, segredo, webhookDemo } = {}) {
   app.get('/laboratorio/loop-03-shell.css',somenteLocal,(_req,res)=>{
     res.type('text/css').sendFile(path.join(__dirname,'loop-03-shell.css'));
   });
+  app.get('/laboratorio/loop-30-cosmos.css',somenteLocal,(_req,res)=>{
+    res.type('text/css').sendFile(path.join(__dirname,'loop-30-cosmos.css'));
+  });
   app.get('/admin/cadastro-participantes-demo', somenteLocal, (req, res) => {
     res.sendFile(path.join(__dirname,'cadastro-participantes-demo.html'));
   });
