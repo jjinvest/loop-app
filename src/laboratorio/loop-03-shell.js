@@ -61,6 +61,11 @@
      </section>
      <section id="loop03-posicoes" class="loop03-pagina" aria-label="Minhas Posições">
       <header class="loop03-titulo-pagina loop03-titulo-central"><div><h2>Minhas Posições</h2><p>Acompanhe suas posições e o andamento de cada uma no LOOP.</p></div></header>
+      <div class="loop03-saldo-indicados" aria-live="polite">
+       <span>Indicações disponíveis para distribuir</span>
+       <strong id="loop03SaldoDisponivel">0</strong>
+      </div>
+      <p id="loop03AvisoDistribuicao" class="loop03-aviso-distribuicao" role="status" aria-live="polite"></p>
       <div id="loop03OpcoesPosicoes" class="loop03-opcoes loop03-grade-posicoes"></div>
       <div id="loop03DetalhesPosicao" class="loop03-detalhes" aria-live="polite">Nenhuma posição selecionada.</div>
      </section>
@@ -289,10 +294,43 @@
     cartao.append(ponto);
    }
    if(p)cartao.addEventListener('click',()=>selecionar(p));
-   cartoes.append(cartao);
+   const unidade=document.createElement('div');unidade.className='loop03-unidade-posicao';
+   unidade.append(cartao);
+   if(p){
+    const adicionar=document.createElement('button');
+    adicionar.type='button';adicionar.className='loop03-adicionar-indicado';
+    adicionar.textContent='+ Adicionar indicado';
+    adicionar.setAttribute('aria-label','Adicionar um indicado à posição #'+p.posicaoId);
+    const ativa=p.statusAdesao!=='PENDENTE'&&
+     /^(FILA_[AB]|CENTRO|VAGA_[1-6])$/.test(p.local);
+    adicionar.disabled=!ativa||!(visao.contadoresRede?.disponiveisParaVincular>0);
+    adicionar.title=!ativa?'Confirme esta posição primeiro':
+     'Vincular definitivamente o próximo indicado ativo disponível';
+    adicionar.addEventListener('click',async()=>{
+     const aviso=e('loop03AvisoDistribuicao');
+     if(!window.confirm('Vincular uma indicação à posição #'+p.posicaoId+
+      '? Esse vínculo é definitivo.'))return;
+     adicionar.disabled=true;aviso.textContent='Registrando indicação…';
+     try{
+      const resposta=await fetch('/api/laboratorio/participante/atribuir-proxima-indicacao',{
+       method:'POST',credentials:'same-origin',
+       headers:{'Content-Type':'application/json','X-LOOP-LAB':'participante'},
+       body:JSON.stringify({posicaoId:p.posicaoId})
+      });
+      const dados=await resposta.json();
+      if(!resposta.ok)throw Error(dados.erro||'Não foi possível adicionar');
+      aviso.textContent='Indicação vinculada à posição #'+p.posicaoId+'.';
+      await window.LoopParticipanteAtualizar?.();
+     }catch(err){aviso.textContent='Falha ao adicionar: '+err.message;
+      adicionar.disabled=false;}
+    });
+    unidade.append(adicionar);
+   }
+   cartoes.append(unidade);
   }
   // A esquerda o total so aumenta; a direita somente os vinculos ainda nao
   // atribuidos manualmente (nunca auto-repassados pelo sistema).
+  e('loop03SaldoDisponivel').textContent=String(visao.contadoresRede?.disponiveisParaVincular??0);
   e('loop03RedeTotalPosicoes').textContent=String(visao.contadoresRede?.totalPosicoes??0);
   e('loop03RedeADistribuir').textContent=String(visao.contadoresRede?.aDistribuir??0);
   const equipes=e('loop03ListaEquipe');equipes.replaceChildren();
