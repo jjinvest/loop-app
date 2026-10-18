@@ -312,7 +312,7 @@
    const resumoTitulo=document.createElement('strong');
    resumoTitulo.textContent=!p?'Espaço disponível':estado==='pendente'?
     'Confirmação individual necessária':estado==='centro'?'Ciclo em andamento':
-    (p.indicacoesRecebidas||0)+' indicação(ões) válida(s)';
+    (p.indicacoesRecebidas||0)+((p.indicacoesRecebidas||0)===1?' indicação válida':' indicações válidas');
    const resumoTexto=document.createElement('small');
    resumoTexto.textContent=!p?'Sem posição cadastrada':estado==='pendente'?
     'Selecione para confirmar':estado==='centro'?'Acompanhamento ativo':'Aguardando avanço';

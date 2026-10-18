@@ -1,4 +1,4 @@
-/* LOOP 0.3: a mesma plataforma, a mesma identidade, conteudo por abas. */
+/* LOOP 3.0: a mesma plataforma, a mesma identidade, conteudo por abas. */
 :root{--l03-gold:#e9c178;--l03-silver:#c4cbd0;--l03-green:#69edab}
 body.loop03-logado{background:radial-gradient(ellipse at 85% 0,#372b40,transparent 35%),radial-gradient(ellipse at 15% 44%,#122a25,transparent 55%),#070b0d;color:#f0f1eb}
 .loop03-logado .cabecalho-participante,.loop03-logado .portal-participante>.cartao-participante:first-child{display:none}

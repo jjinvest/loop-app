@@ -9,7 +9,7 @@ const {criarAppAdminLaboratorio}=require('../src/laboratorio/servidor-catalogo')
 const raiz=path.resolve(__dirname,'..','src','laboratorio');
 const ler=nome=>readFileSync(path.join(raiz,nome),'utf8');
 
-test('LOOP 0.3 integra escritorio real e duas abas sem criar aplicativo paralelo',()=>{
+test('LOOP 3.0 integra escritorio real e duas abas sem criar aplicativo paralelo',()=>{
  const html=ler('participante-demo.html');
  const js=ler('loop-03-shell.js');
  const css=ler('loop-03-shell.css');
