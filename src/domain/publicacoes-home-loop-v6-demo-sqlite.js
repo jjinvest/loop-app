@@ -21,13 +21,21 @@ class PublicacoesHomeLoopV6DemoSQLite{
   ].join(' '));
  }
  listar({incluirArquivadas=false}={}){
-  return this.banco.prepare([
+  const publicacoes=this.banco.prepare([
    'SELECT id,tipo,titulo,descricao,link_destino AS linkDestino,',
    'imagem_caminho AS imagemCaminho,situacao,publicada_em AS publicadaEm',
    'FROM loop_home_publicacoes_demo',
    incluirArquivadas?'':'WHERE situacao=\'PUBLICADA\'',
    'ORDER BY id DESC LIMIT 25'
   ].filter(Boolean).join(' ')).all();
+  const existe=this.banco.prepare("SELECT 1 FROM sqlite_master WHERE type='table' AND name='loop_eventos_comerciais_especiais_demo'").get();
+  if(!existe||incluirArquivadas)return publicacoes;
+  const hoje=this.agora().slice(0,10);
+  const procurar=this.banco.prepare("SELECT estado,data_inicio AS dataInicio,data_fim AS dataFim FROM loop_eventos_comerciais_especiais_demo WHERE publicacao_id=?");
+  return publicacoes.filter(pub=>{
+   const evento=procurar.get(pub.id);
+   return !evento||(evento.estado==='ATIVO'&&(!evento.dataInicio||evento.dataInicio<=hoje)&&(!evento.dataFim||evento.dataFim>=hoje));
+  });
  }
  publicar({tipo,titulo,descricao,linkDestino=null,imagemCaminho=null}={}){
   if(!TIPOS.includes(tipo)||

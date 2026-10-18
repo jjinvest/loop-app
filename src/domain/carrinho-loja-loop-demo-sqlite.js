@@ -189,7 +189,8 @@ class CarrinhoLojaLoopDemoSQLite{
      elegivelLoop:!!ev||padrao.elegivelLoop,
      quantidadeMinimaLoop:ev?.quantidadeMinimaLoop??padrao.quantidadeMinimaLoop,
      posicoesPorPedidoLoop:ev?.posicoesPorPedidoLoop??1,
-     eventoId:ev?.eventoId??null};
+     eventoId:ev?.eventoId??null,
+     eventoTitulo:ev?.titulo??null,dataInicio:ev?.dataInicio??null,dataFim:ev?.dataFim??null};
    }),semCheckout:true};
  }
  buscar(pedidoId){

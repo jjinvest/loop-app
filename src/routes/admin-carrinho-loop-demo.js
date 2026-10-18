@@ -23,7 +23,7 @@ function criarRouterCarrinhoLoopDemo({segredo,carrinhos}={}){
  r.post('/carrinho-loop-demo/eventos-especiais',(req,res,next)=>{
   const b=req.body;
   if(!b||typeof b!=='object'||Array.isArray(b)||
-   Object.keys(b).sort().join(',')!=='descricao,eventoId,posicoesPorPedidoLoop,produtoId,quantidadeMinimaLoop,titulo')
+   Object.keys(b).sort().join(',')!=='dataFim,dataInicio,descricao,eventoId,posicoesPorPedidoLoop,produtoId,quantidadeMinimaLoop,titulo')
    return res.status(400).json({erro:'CAMPOS_EVENTO_INVALIDOS'});
   try{return res.status(201).json({evento:carrinhos.eventosEspeciais.criar(b),
     bannerPublicado:true,semPagamentoReal:true});}

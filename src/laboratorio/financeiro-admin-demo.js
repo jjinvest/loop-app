@@ -620,7 +620,7 @@
     for(const evt of resposta.eventos){
       const item=document.createElement('li');
       item.textContent=evt.titulo+' — '+evt.quantidadeMinimaLoop+' unidade(s) dão '+
-        evt.posicoesPorPedidoLoop+' posição(ões) — '+evt.estado+' ';
+        evt.posicoesPorPedidoLoop+' posição(ões) — '+(evt.dataInicio||'—')+' a '+(evt.dataFim||'—')+' — '+evt.estado+' ';
       if(evt.estado==='ATIVO'){
         const botao=document.createElement('button');
         botao.type='button';botao.textContent='Encerrar evento';
@@ -645,6 +645,10 @@
       lista.append(item);
     }
   }
+  const hoje=new Date();
+  el('eventoEspecialInicioLoopDemo').value=hoje.toISOString().slice(0,10);
+  el('eventoEspecialFimLoopDemo').value=
+   new Date(hoje.getTime()+7*86400000).toISOString().slice(0,10);
   async function criarEventoEspecialLoopDemo(ev){
     ev.preventDefault();
     if(!token)return;
@@ -658,6 +662,8 @@
           eventoId:el('eventoEspecialIdLoopDemo').value,
           produtoId:p.produtoId,titulo:el('eventoEspecialTituloLoopDemo').value,
           descricao:el('eventoEspecialDescricaoLoopDemo').value,
+          dataInicio:el('eventoEspecialInicioLoopDemo').value,
+          dataFim:el('eventoEspecialFimLoopDemo').value,
           quantidadeMinimaLoop:Number(el('eventoEspecialQuantidadeLoopDemo').value),
           posicoesPorPedidoLoop:Number(el('eventoEspecialPosicoesLoopDemo').value)
         })

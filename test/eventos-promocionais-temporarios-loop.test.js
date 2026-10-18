@@ -29,10 +29,12 @@ test('promoção criada manualmente: cinza, 10/20/30 unidades, banners e fim',as
   return {status:res.status,data:await res.json()};
  }
  const cart='carrinho-loop-demo';
+ const inicio=new Date().toISOString().slice(0,10);
+ const fim=new Date(Date.now()+7*86400000).toISOString().slice(0,10);
  const evento=(id,produtoId,min,pos)=>({
   eventoId:id,produtoId,titulo:'Promoção manual '+id,
   descricao:'Condição temporária do produto '+produtoId,
-  quantidadeMinimaLoop:min,posicoesPorPedidoLoop:pos
+  dataInicio:inicio,dataFim:fim,quantidadeMinimaLoop:min,posicoesPorPedidoLoop:pos
  });
  const criar=(id,produtoId,qtd)=>api('POST',cart,{
   pedidoId:id,contaId:conta.contaId,itens:[{produtoId,quantidade:qtd}]
