@@ -29,6 +29,14 @@ test('LOOP 0.3 integra escritorio real e duas abas sem criar aplicativo paralelo
  assert.match(js,/window\.Loop03Shell/);
  assert.match(css,/loop03-mapa-grade/);
  assert.match(css,/loop03-iluminada/);
+ const participante=ler('participante-demo.js');
+ assert.match(participante,/simbolo\.textContent=p\.cor==='DOURADO'\?'●':filaA\?'A':'B'/);
+ assert.match(participante,/convitesValidadosFilaA\[i\]/);
+ assert.match(participante,/p\.minha\?' · Minha: '\+nomeTitular/);
+ assert.match(participante,/elementoPosicao\(valor,'Número'\)/);
+ assert.doesNotMatch(participante,/nomeDeTerceiro/);
+ assert.match(css,/loop03-inicial-fila/);
+
  assert.match(css,/loop03-aceso/);
  assert.match(css,/marcos-v6 span:nth-child\(even\)/);
  assert.doesNotThrow(()=>new Function(js));
