@@ -13,8 +13,18 @@ test('LOOP 3.0 integra escritorio real e duas abas sem criar aplicativo paralelo
  const html=ler('participante-demo.html');
  const js=ler('loop-03-shell.js');
  const css=ler('loop-03-shell.css');
+ const cosmos=ler('loop-30-cosmos.css');
  assert.match(html,/\/laboratorio\/loop-03-shell.js/);
  assert.match(html,/\/laboratorio\/loop-03-shell.css/);
+ assert.match(html,/\/laboratorio\/loop-30-cosmos\.css/);
+ assert.ok(html.indexOf('/laboratorio/loop-03-shell.css')<
+  html.indexOf('/laboratorio/loop-30-cosmos.css'));
+ assert.match(cosmos,/@keyframes loop30Nebulosa/);
+ assert.match(cosmos,/@keyframes loop30Estrelas/);
+ assert.match(cosmos,/@media\(prefers-reduced-motion:reduce\)/);
+ assert.match(cosmos,/\.loop03-pagina::before/);
+ assert.match(cosmos,/\.loop03-pagina::after/);
+ assert.match(cosmos,/#loop03-tabuleiro \.loop03-mapa-grade/);
  assert.ok(html.indexOf('/css/loop-futurista-v6.css')<html.indexOf('/laboratorio/loop-03-shell.css'));
  assert.match(js,/shell\.prepend\(shell\.querySelector\('\.loop03-banner-topo'\)\)/);
  for(const area of ['home','tabuleiro','posicoes','rede','financeiro']){
