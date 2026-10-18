@@ -409,6 +409,24 @@ class PonteComprasConvitesDemoSQLite{
    return {convidadoId,posicaoId,vinculada:true,repetida:false,semPagamentoReal:true};
   }catch(e){this.banco.exec('ROLLBACK');throw e;}
  }
+
+ atribuirProximaIndicacao({contaId,posicaoId}={}){
+  if(!this.atribuicaoManualPorPosicao)throw falha('ATRIBUICAO_MANUAL_INDISPONIVEL');
+  if(typeof contaId!=='string'||!Number.isSafeInteger(posicaoId)||posicaoId<1)
+   throw falha('DADOS_ATRIBUICAO_INVALIDOS');
+  const escolhido=this.banco.prepare(
+   'SELECT v.convidado_id AS id FROM admin_ponte_convites_validados_demo v '+
+   'JOIN admin_loop_adesoes_posicoes_demo a ON a.conta_id=v.convidado_id '+
+   'LEFT JOIN admin_loop_vinculos_indicacao_posicao_demo m ON m.convidado_id=v.convidado_id '+
+   'LEFT JOIN admin_ponte_convites_aplicados_demo j ON j.convidado_id=v.convidado_id '+
+   'WHERE v.indicador_id=? AND m.convidado_id IS NULL AND j.convidado_id IS NULL '+
+   'ORDER BY v.confirmado_em,v.convidado_id LIMIT 1'
+  ).get(contaId);
+  if(!escolhido)throw falha('SEM_INDICADOS_ATIVOS_DISPONIVEIS');
+  const vinculo=this.atribuirIndicacao({contaId,convidadoId:escolhido.id,posicaoId});
+  if(vinculo.repetida)throw falha('CONCORRENCIA_NA_DISTRIBUICAO');
+  return {posicaoId,vinculada:true,repetida:false,semPagamentoReal:true};
+ }
  async processar({pedidoId}={}){
   identificador(pedidoId,'pedidoId');
   // Consulta a fonte interna antes da transacao. Usuario nao injeta
