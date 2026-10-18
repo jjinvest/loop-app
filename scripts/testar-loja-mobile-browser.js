@@ -375,6 +375,11 @@ async function main(){
   await page.locator('#loop03Sidebar [data-loop03-aba="rede"]').click();
   assert.match(await page.locator('#loop03ListaEquipe .loop03-equipe-linha')
    .filter({hasText:novoIndicado.nome}).innerText(),/Vinculada à posição #1/);
+  // A barra lateral possui animacao de 0,2 s no mobile: a captura deve
+  // mostrar a aba Minha Equipe, nao uma sobreposicao transitoria do menu.
+  await page.waitForFunction(()=>
+   !document.querySelector('#loop03Sidebar')?.classList.contains('loop03-aberto'));
+  await page.waitForTimeout(350);
   await page.screenshot({path:path.join(pasta,'minha-equipe-duas-atribuicoes.png'),fullPage:true});
 
   await page.locator('#loop03Menu').click();
