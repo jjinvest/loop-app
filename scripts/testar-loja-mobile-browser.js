@@ -95,6 +95,22 @@ async function main(){
   await page.locator('#senhaParticipante').fill(senha);
   await page.locator('#botaoEntrarParticipante').click();
   await page.locator('#conteudoParticipante').waitFor({state:'visible'});
+  // As quatro telas de verdade compartilham a mesma atmosfera animada.
+  // A preferencia de acessibilidade cancela o movimento, sem ocultar o painel.
+  const cosmos=await page.evaluate(()=>['home','tabuleiro','posicoes','rede'].map(aba=>{
+   const secao=document.getElementById('loop03-'+aba);
+   const estilo=getComputedStyle(secao,'::before');
+   const estrelas=getComputedStyle(secao,'::after');
+   return {aba,nebulosa:estilo.animationName,estrelas:estrelas.animationName};
+  }));
+  for(const efeito of cosmos){
+   assert.equal(efeito.nebulosa,'loop30Nebulosa',efeito.aba+' com movimento');
+   assert.equal(efeito.estrelas,'loop30Estrelas',efeito.aba+' com estrelas');
+  }
+  await page.emulateMedia({reducedMotion:'reduce'});
+  assert.equal(await page.locator('#loop03-home').evaluate(el=>
+   getComputedStyle(el,'::before').animationName),'none');
+  await page.emulateMedia({reducedMotion:'no-preference'});
   assert.equal(await page.locator('.espaco-tabuleiro-demo').count(),7);
   assert.equal(await page.locator('.marcos-v6 span').count(),6);
   assert.equal(await page.locator('.marcos-v6 span:nth-child(odd)').count(),3);
