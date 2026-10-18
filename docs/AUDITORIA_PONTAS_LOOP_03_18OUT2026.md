@@ -48,3 +48,14 @@ Cenário exercitado em testes: pessoa compra um PDF elegível, recebe posição 
 
 ## Critério para o próximo aceite do idealizador
 Validar **cada aba** em cima da arte aprovada e do comportamento real: seis destinos no menu (sem Ativações), indicadores verdadeiros, B só números, A com quantidade da posição, dois contadores da rede, acesso e confirmação individuais, Financeiro e AKITEMM claramente diferenciados. Somente após o confere visual/funcional o status poderá mudar de “implementado e testado no laboratório” para “aprovado pelo idealizador”. 
+
+## Atualização após conferência da lista — 18/10/2026
+
+**Situação das quatro pendências da imagem do idealizador:**
+
+1. **Pacotes 5/6 posições: RESOLVIDA COMO EVENTO MANUAL.** Produtos comuns/cinzas não geram posição; produtos verdes podem somar subtotais elegíveis de diferentes itens no mesmo pedido para NO MÁXIMO UMA posição, desde que alcance a referência vigente e eventuais mínimos por produto. Eventos especiais temporários, explicitamente criados e encerrados pelo operador, podem conceder 1–6 posições quando o pedido cumpre a condição e o lastro mínimo; evento multiposições aparece na vitrine em **DOURADO COM ROXO**, jamais tarja vermelha, com período de início/fim e banner. Regras originais ficam congeladas no pedido. Rotina antiga de produto com pacote permanente está bloqueada.
+2. **Protótipos legados: AGUARDA CONFERÊNCIA DO IDEALIZADOR EM CASA.** Não eliminar código histórico inadvertidamente.
+3. **Segurança/antifraude/viabilidade legal: AGUARDA CONFERÊNCIA DO IDEALIZADOR EM CASA.** Não confundir trava por CPF/conta com garantia antifraude ou testes com homologação jurídica.
+4. **Acabamento visual dos menus: AGUARDA CONFERÊNCIA DO IDEALIZADOR EM CASA.** Preservar quatro imagens aprovadas e nenhuma aba global de Ativações.
+
+**Trabalho extra FORA da lista, solicitado em seguida:** posição dourada criada MANUALMENTE pela empresa não pode mais nascer sem aportar a referência vigente. Foi incorporado ledger de compromisso contra o saldo demonstrativo LIVRE do cofre de segurança `LOOP_DIREITA`, com reserva cumulativa, idempotência e atomicidade de SQLite; sem saldo ou cofre sem configuração, retorna 409 sem criar posição. Saldo BRUTO não muda nem constitui receita nova; saldo LIVRE diminui. Douradas históricas sem aporte permanecem imutáveis e não podem ser recriadas pela rota. A passagem de posição AZUL já paga para DOURADA no tabuleiro foi preservada e NÃO exige novo aporte. O laboratório não comprova dinheiro bancário nem pagamento real; integração com banco/PSP e revisão contábil/regulatória permanecem necessárias antes da operação real. Testes com aporte fictício, repetição, saldo zero e reinício do SQLite estão em `test/dourada-manual-auditoria-pontas-loop-v6.test.js`.
