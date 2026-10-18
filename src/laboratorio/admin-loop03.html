@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>LOOP 0.3 | Escritório do Administrador</title>
+<link rel="stylesheet" href="/admin/loop03.css">
+</head>
+<body>
+<main class="escritorio-admin">
+ <header class="marca-topo">
+  <div class="marca">LOOP <em>0.3</em></div>
+  <div class="slogan">CENTRAL DE COMANDO <small>ESCRITÓRIO VIRTUAL DO ADMINISTRADOR</small></div>
+  <div class="painel-etiqueta">AMBIENTE DE LABORATÓRIO</div>
+ </header>
+ <div class="estrutura">
+  <aside class="barra" aria-label="Áreas administrativas">
+   <strong class="grupo">DIREÇÃO E OPERAÇÃO</strong>
+   <nav>
+    <a class="ativo" href="#visaoGeral">◈ <span>Visão geral</span></a>
+    <a href="#regraTrava">◉ <span>Controle das filas</span></a>
+    <a href="/admin/circuit-break-v6">⏱ <span>Catraca e giros</span></a>
+    <a href="/admin/financeiro-demo">▤ <span>Financeiro</span></a>
+    <a href="/admin">▦ <span>AKITEMM e produtos</span></a>
+    <a href="/admin/escritorio-demo">✦ <span>Publicações</span></a>
+    <a href="/admin/cadastro-participantes-demo">♧ <span>Contas e cadastros</span></a>
+   </nav>
+   <div class="barra-final"><span class="sinal"></span> Painel reservado ao operador<br><small>Somente dados fictícios de laboratório</small></div>
+  </aside>
+  <section class="conteudo">
+   <div class="boas-vindas">
+    <div><span class="sobretitulo">PAINEL DE CONTROLE</span><h1>Escritório do Administrador</h1><p>Acompanhe as filas, ajuste regras e consulte os controles do LOOP.</p></div>
+    <span class="estado" id="situacaoPainel">SEM AUTENTICAÇÃO</span>
+   </div>
+   <form id="formAcessoAdminLoop03" class="acesso">
+    <label for="chaveAdminLoop03">Chave administrativa do laboratório</label>
+    <input id="chaveAdminLoop03" type="password" autocomplete="off" required placeholder="Chave privada do servidor">
+    <button type="submit">Acessar painel</button>
+    <button type="button" id="sairAdminLoop03" class="secundario">Encerrar acesso</button>
+   </form>
+   <p id="mensagemAcessoAdminLoop03" role="status" aria-live="polite">Informe sua chave para consultar dados reais do laboratório.</p>
+   <div id="dadosAdminLoop03" hidden>
+    <section id="visaoGeral" class="indicadores" aria-label="Estado do motor">
+     <article><small>FILA A</small><strong id="numeroFilaAAdmin">—</strong><span>Posições prioritárias</span></article>
+     <article><small>FILA B</small><strong id="numeroFilaBAdmin">—</strong><span>Ordem de entrada</span></article>
+     <article><small>GIROS CONCLUÍDOS</small><strong id="numeroGirosAdmin">—</strong><span>Movimentos registrados</span></article>
+     <article><small>TRAVA POR TITULAR</small><strong id="numeroVagaAdmin">—</strong><span>Vaga de liberação</span></article>
+    </section>
+    <div class="paineis">
+     <section class="painel vidro">
+      <small class="sobretitulo">CONTROLE OPERACIONAL</small>
+      <h2>Motor e catraca</h2>
+      <div class="status-linha"><span>Estado atual</span><strong id="catracaAdmin">—</strong></div>
+      <div class="status-linha"><span>Giros de hoje</span><strong id="girosHojeAdmin">—</strong></div>
+      <div class="status-linha"><span>Limite diário</span><strong id="limiteAdmin">—</strong></div>
+      <div class="status-linha"><span>Vagas disponíveis na fila</span><strong id="filaTotalAdmin">—</strong></div>
+      <a class="acesso-link" href="/admin/circuit-break-v6">Abrir controles da catraca ↗</a>
+      <p class="observacao">Sem pagamentos reais, autorização de saque ou transferência.</p>
+     </section>
+     <section class="painel regra" id="regraTrava">
+      <small class="sobretitulo">REGRAS DE PRIORIDADE</small>
+      <h2>Alternância da Fila A</h2>
+      <p>Um titular pode atribuir indicações a várias posições, mas apenas uma por vez ocupa a Fila A. A próxima é liberada depois que a anterior alcança a vaga indicada.</p>
+      <form id="formRegraAdminLoop03">
+       <label for="vagaAdminLoop03">Liberar próxima posição na vaga:</label>
+       <select id="vagaAdminLoop03" required>
+        <option value="6">6 · Liberação mais rápida</option>
+        <option value="5">5 · Regra inicial</option>
+        <option value="4">4 · Espaçamento maior</option>
+        <option value="3">3 · Espaçamento reforçado</option>
+        <option value="2">2 · Espaçamento intenso</option>
+        <option value="1">1 · Espaçamento máximo</option>
+       </select>
+       <label for="motivoAdminLoop03">Justificativa da alteração</label>
+       <input id="motivoAdminLoop03" minlength="8" maxlength="250" required placeholder="Explique a necessidade da mudança">
+       <button type="submit">Salvar regra e registrar histórico</button>
+      </form>
+      <p class="observacao">A alteração não retira posições que já estão na Fila A ou no Tabuleiro.</p>
+     </section>
+    </div>
+    <section class="painel historico">
+      <div class="historico-titulo"><div><small class="sobretitulo">AUDITORIA</small><h2>Histórico das regras</h2></div><button type="button" id="atualizarAdminLoop03" class="secundario">Atualizar quadro</button></div>
+      <ol id="listaHistoricoAdminLoop03"><li>Nenhuma alteração registrada.</li></ol>
+    </section>
+   </div>
+   <p id="statusRegrasAdminLoop03" role="status" aria-live="polite"></p>
+  </section>
+ </div>
+ <footer>LOOP 0.3 · ESCRITÓRIO DA DIREÇÃO · Protótipo com dados fictícios · Sem movimentação financeira real</footer>
+</main>
+<script src="/admin/loop03.js"></script>
+</body>
+</html>

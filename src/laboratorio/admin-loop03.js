@@ -1,0 +1,82 @@
+'use strict';
+// Central do proprietario: UI apenas sobre APIs autenticadas do LABORATORIO.
+(()=>{
+ const $=id=>document.getElementById(id);
+ let token='',config=null;
+ async function api(caminho){
+  const r=await fetch('/api/admin/circuit-break-v6-demo'+caminho,{
+   cache:'no-store',headers:{Authorization:'Bearer '+token}});
+  const d=await r.json();
+  if(!r.ok)throw Error(d.erro||'Acesso recusado');
+  return d;
+ }
+ async function post(caminho,body){
+  const r=await fetch('/api/admin/circuit-break-v6-demo'+caminho,{
+   method:'POST',cache:'no-store',
+   headers:{Authorization:'Bearer '+token,'Content-Type':'application/json'},
+   body:JSON.stringify(body)});
+  const d=await r.json();
+  if(!r.ok)throw Error(d.erro||'Alteração recusada');
+  return d;
+ }
+ function renderizarTrava(d){
+  config=d.configuracao;
+  $('numeroVagaAdmin').textContent=String(config.vagaLiberacao);
+  $('vagaAdminLoop03').value=String(config.vagaLiberacao);
+  const lista=$('listaHistoricoAdminLoop03');lista.replaceChildren();
+  if(!d.historico.length){
+   const li=document.createElement('li');li.textContent='Nenhuma mudança registrada; padrão inicial na vaga 5.';lista.append(li);
+  }
+  for(const h of d.historico){
+   const li=document.createElement('li');
+   li.textContent='Revisão '+h.revisao+' · Vaga '+h.anterior+' → '+h.nova+
+     ' · '+h.motivo+' · '+h.registradoEm;lista.append(li);
+  }
+ }
+ async function carregar(){
+  const [controle,trava]=await Promise.all([api(''),api('/trava-fila-a')]);
+  $('numeroFilaAAdmin').textContent=String(controle.filaA);
+  $('numeroFilaBAdmin').textContent=String(controle.filaB);
+  $('numeroGirosAdmin').textContent=String(controle.girosConcluidos);
+  $('catracaAdmin').textContent=controle.status;
+  $('girosHojeAdmin').textContent=String(controle.girosHoje);
+  $('limiteAdmin').textContent=String(controle.limiteDiario);
+  $('filaTotalAdmin').textContent=String(controle.filaA+controle.filaB);
+  renderizarTrava(trava);
+  $('dadosAdminLoop03').hidden=false;
+  $('situacaoPainel').textContent='CONTROLE AUTENTICADO';
+ }
+ $('formAcessoAdminLoop03').addEventListener('submit',async ev=>{
+  ev.preventDefault();token=$('chaveAdminLoop03').value;$('chaveAdminLoop03').value='';
+  try{await carregar();$('mensagemAcessoAdminLoop03').textContent='Acesso administrativo ao laboratório autorizado.';}
+  catch(err){token='';config=null;$('dadosAdminLoop03').hidden=true;
+   $('situacaoPainel').textContent='SEM AUTENTICAÇÃO';
+   $('mensagemAcessoAdminLoop03').textContent='Acesso recusado: '+err.message;}
+ });
+ $('sairAdminLoop03').addEventListener('click',()=>{
+  token='';config=null;$('chaveAdminLoop03').value='';
+  $('dadosAdminLoop03').hidden=true;$('situacaoPainel').textContent='SEM AUTENTICAÇÃO';
+  $('mensagemAcessoAdminLoop03').textContent='Chave descartada desta página.';
+ });
+ $('formRegraAdminLoop03').addEventListener('submit',async ev=>{
+  ev.preventDefault();
+  if(!token||!config)return;
+  const vagaLiberacao=Number($('vagaAdminLoop03').value);
+  const motivo=$('motivoAdminLoop03').value.trim();
+  if(!window.confirm('Registrar mudança para a vaga '+vagaLiberacao+
+   '? Esta regra valerá para futuras liberações, sem realocar posições existentes.'))return;
+  const b=ev.target.querySelector('button[type=submit]');b.disabled=true;
+  try{
+   await post('/trava-fila-a',{vagaLiberacao,revisaoEsperada:config.revisao,motivo});
+   $('motivoAdminLoop03').value='';await carregar();
+   $('statusRegrasAdminLoop03').textContent='Regra salva, com histórico imutável.';
+  }catch(err){
+   $('statusRegrasAdminLoop03').textContent='Alteração recusada: '+err.message;
+   await carregar().catch(()=>{});
+  }finally{b.disabled=false;}
+ });
+ $('atualizarAdminLoop03').addEventListener('click',async()=>{
+  try{await carregar();$('statusRegrasAdminLoop03').textContent='Painel atualizado.';}
+  catch(err){$('statusRegrasAdminLoop03').textContent=err.message;}
+ });
+})();
