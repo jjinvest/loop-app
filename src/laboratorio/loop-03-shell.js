@@ -105,6 +105,14 @@
    e('loop03-tabuleiro').append(mapa);
    const filas=mapa.querySelector('.colunas-filas-participante');
    const filaA=filas?.children[0], filaB=filas?.children[1];
+   // Simbolos definidos no desenho: moedas amarelas na A, boneco branco na B.
+   for(const [coluna,icone] of [[filaA,'🪙'],[filaB,'♟']]){
+    const h=coluna?.querySelector('h3');
+    if(!h)continue;
+    const tag=document.createElement('span');tag.className='loop03-icone-cabecalho';
+    tag.textContent=icone;tag.setAttribute('aria-hidden','true');
+    h.prepend(tag);
+   }
    const painel=mapa.querySelector('.painel-tabuleiro-imersivo');
    const titulo=mapa.querySelector('.titulo-tabuleiro-participante');
    if(filaA&&filaB&&painel&&titulo){
