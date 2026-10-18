@@ -22,6 +22,13 @@
      <button data-loop03-aba="financeiro" type="button"><span>▥</span> Financeiro</button>
      <a href="/loja"><span>▦</span> AKITEMM</a>
     </nav>
+    <a href="/loja" class="loop03-vitrine-lateral" aria-label="Abrir vitrine AKITEMM">
+     <span class="loop03-vitrine-marca">AKITEMM</span>
+     <small>VITRINE ROTATIVA</small>
+     <span class="loop03-vitrine-ilustracao" aria-hidden="true"><span class="loop03-vitrine-caneta"></span></span>
+     <strong>PRODUTOS E CURSOS</strong>
+     <span class="loop03-vitrine-link">CONHECER A LOJA →</span>
+    </a>
     <div class="loop03-identidade" aria-label="Identificação visual, sem ação">
      <div class="loop03-avatar" aria-hidden="true">◉</div>
      <div><strong id="loop03NomeBaixo">Participante</strong><small id="loop03SituacaoBaixo">Selecione sua posição</small></div>
@@ -52,7 +59,19 @@
     <div class="loop03-paginas">
      <section id="loop03-home" class="loop03-pagina" aria-label="Escritório Virtual">
       <header class="loop03-titulo-pagina"><div><small>ESCRITÓRIO LOOP 0.3</small><h2>Novidades e eventos</h2></div><span class="loop03-luz">● Comunicados</span></header>
-      <div id="loop03Publicacoes" class="loop03-publicacoes" aria-live="polite"><p>Os banners selecionados pela administração aparecerão aqui.</p></div>
+      <div class="loop03-hero-escritorio" aria-label="Escritório Virtual LOOP 0.3">
+        <div class="loop03-hero-titulo">ESCRITÓRIO <span>VIRTUAL</span></div>
+        <p class="loop03-hero-subtitulo">GERENCIE <b>·</b> ACOMPANHE <b>·</b> EVOLUA</p>
+        <div class="loop03-cenario-escritorio" aria-hidden="true">
+         <div class="loop03-cenario-luz loop03-cenario-luz-a"></div>
+         <div class="loop03-cenario-luz loop03-cenario-luz-b"></div>
+         <div class="loop03-cenario-monitor"><div class="loop03-cenario-tela"><span>LOOP <em>0.3</em></span><small>ACOMPANHE SUAS POSIÇÕES</small></div><div class="loop03-cenario-base"></div></div>
+         <div class="loop03-cenario-mesa"></div>
+        </div>
+        <button type="button" data-loop03-aba="posicoes" class="loop03-hero-botao">ACOMPANHAR MINHAS POSIÇÕES →</button>
+       </div>
+       <div class="loop03-mural-titulo">COMUNICADOS DA ADMINISTRAÇÃO</div>
+       <div id="loop03Publicacoes" class="loop03-publicacoes" aria-live="polite"><p>Os banners selecionados pela administração aparecerão aqui.</p></div>
      </section>
      <section id="loop03-tabuleiro" class="loop03-pagina" aria-label="Tabuleiro">
       <header class="loop03-titulo-pagina"><div><small>LOOP · MOTOR DE FILAS</small><h2>Tabuleiro LOOP 0.3</h2></div><span class="loop03-luz">● Ciclo em andamento</span></header>
