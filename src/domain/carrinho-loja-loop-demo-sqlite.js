@@ -5,6 +5,9 @@
 // Somente laboratorio administrativo, sem cobranca ou entregas reais.
 const {STATUS_CONFIRMADO}=require('./processador-pedidos-simulados');
 const {ElegibilidadeProdutosLoopDemoSQLite}=require('./elegibilidade-produtos-loop-demo-sqlite');
+const {EventosPromocionaisLoopDemoSQLite}=require('./eventos-promocionais-loop-demo-sqlite');
+const {PublicacoesHomeLoopV6DemoSQLite}=require('./publicacoes-home-loop-v6-demo-sqlite');
+const {ConfiguracaoValorLoopDemoSQLite}=require('./configuracao-valor-loop-demo-sqlite');
 const ID=/^[a-z0-9][a-z0-9-]{2,69}$/;
 const PRODUTO_VIRTUAL='carrinho-loop-demo';
 function falha(codigo,mensagem){const e=new Error(mensagem);e.codigo=codigo;return e;}
@@ -27,7 +30,7 @@ function validarLista(itens){
  });
 }
 class CarrinhoLojaLoopDemoSQLite{
- constructor({catalogo,contas,pedidosIdentificados,ponte,relogio=()=>new Date().toISOString()}={}){
+ constructor({catalogo,contas,pedidosIdentificados,ponte,publicacoes=null,configuracaoValor=null,relogio=()=>new Date().toISOString()}={}){
   const banco=catalogo?.banco;
   if(!banco||contas?.banco!==banco||pedidosIdentificados?.banco!==banco||
    ponte?.banco!==banco||typeof relogio!=='function')
@@ -36,6 +39,10 @@ class CarrinhoLojaLoopDemoSQLite{
   this.pedidosIdentificados=pedidosIdentificados;
   this.ponte=ponte;this.relogio=relogio;
   this.elegibilidade=new ElegibilidadeProdutosLoopDemoSQLite({catalogo});
+  this.eventosEspeciais=new EventosPromocionaisLoopDemoSQLite({
+   catalogo,publicacoes:publicacoes||new PublicacoesHomeLoopV6DemoSQLite({banco}),
+   configuracaoValor:configuracaoValor||new ConfiguracaoValorLoopDemoSQLite({banco}),relogio
+  });
   banco.exec(`
    CREATE TABLE IF NOT EXISTS admin_carrinho_loop_demo(
     pedido_id TEXT PRIMARY KEY NOT NULL,
@@ -102,6 +109,18 @@ class CarrinhoLojaLoopDemoSQLite{
    CREATE TRIGGER IF NOT EXISTS admin_carrinho_elegibilidade_no_delete
     BEFORE DELETE ON admin_carrinho_item_elegibilidade_demo
     BEGIN SELECT RAISE(ABORT,'regra congelada do pedido'); END;
+   CREATE TABLE IF NOT EXISTS admin_carrinho_item_evento_especial_demo(
+    pedido_id TEXT NOT NULL REFERENCES admin_carrinho_loop_demo(pedido_id) ON DELETE RESTRICT,
+    ordem INTEGER NOT NULL CHECK(ordem>=1),evento_id TEXT NOT NULL,
+    PRIMARY KEY(pedido_id,ordem),
+    FOREIGN KEY(pedido_id,ordem) REFERENCES admin_carrinho_loop_itens_demo(pedido_id,ordem) ON DELETE RESTRICT
+   );
+   CREATE TRIGGER IF NOT EXISTS admin_carrinho_evento_no_update
+    BEFORE UPDATE ON admin_carrinho_item_evento_especial_demo
+    BEGIN SELECT RAISE(ABORT,'evento congelado no pedido'); END;
+   CREATE TRIGGER IF NOT EXISTS admin_carrinho_evento_no_delete
+    BEFORE DELETE ON admin_carrinho_item_evento_especial_demo
+    BEGIN SELECT RAISE(ABORT,'evento congelado no pedido'); END;
    CREATE TABLE IF NOT EXISTS admin_carrinho_loop_eventos_demo(
     evento_id TEXT PRIMARY KEY NOT NULL,
     pedido_id TEXT NOT NULL REFERENCES admin_carrinho_loop_demo(pedido_id) ON DELETE RESTRICT,
@@ -162,13 +181,16 @@ class CarrinhoLojaLoopDemoSQLite{
  }
  opcoes(){
   return {produtos:this.catalogo.listar().filter(p=>
-    ['PDF','FISICO'].includes(p.tipo)&&p.estado==='PUBLICADO'&&
-    Number.isSafeInteger(p.precoCentavos)&&p.precoCentavos>0
-   ).map(p=>({produtoId:p.id,nome:p.nome,tipo:p.tipo,precoCentavos:p.precoCentavos,
-    elegivelLoop:this.elegibilidade.consultar(p.id).elegivelLoop,
-    quantidadeMinimaLoop:this.elegibilidade.consultar(p.id).quantidadeMinimaLoop,
-    posicoesPorPedidoLoop:this.elegibilidade.consultar(p.id).posicoesPorPedidoLoop})),
-   semCheckout:true};
+   ['PDF','FISICO'].includes(p.tipo)&&p.estado==='PUBLICADO'&&
+   Number.isSafeInteger(p.precoCentavos)&&p.precoCentavos>0).map(p=>{
+    const padrao=this.elegibilidade.consultar(p.id);
+    const ev=this.eventosEspeciais.consultarProduto(p.id);
+    return {produtoId:p.id,nome:p.nome,tipo:p.tipo,precoCentavos:p.precoCentavos,
+     elegivelLoop:!!ev||padrao.elegivelLoop,
+     quantidadeMinimaLoop:ev?.quantidadeMinimaLoop??padrao.quantidadeMinimaLoop,
+     posicoesPorPedidoLoop:ev?.posicoesPorPedidoLoop??1,
+     eventoId:ev?.eventoId??null};
+   }),semCheckout:true};
  }
  buscar(pedidoId){
   idValido(pedidoId);
@@ -187,7 +209,8 @@ class CarrinhoLojaLoopDemoSQLite{
      COALESCE(q.quantidade_minima,1) AS quantidadeMinimaLoop,
      COALESCE(q.revisao_minima,1) AS revisaoQuantidadeMinima,
      COALESCE(k.posicoes_por_pedido,1) AS posicoesPorPedidoLoop,
-     COALESCE(k.revisao_pacote,1) AS revisaoPacotePosicoes
+     COALESCE(k.revisao_pacote,1) AS revisaoPacotePosicoes,
+     ev.evento_id AS eventoId
     FROM admin_carrinho_loop_itens_demo i
     LEFT JOIN admin_carrinho_item_elegibilidade_demo e
      ON e.pedido_id=i.pedido_id AND e.ordem=i.ordem
@@ -195,6 +218,8 @@ class CarrinhoLojaLoopDemoSQLite{
      ON q.pedido_id=i.pedido_id AND q.ordem=i.ordem
     LEFT JOIN admin_carrinho_item_pacote_posicoes_demo k
      ON k.pedido_id=i.pedido_id AND k.ordem=i.ordem
+    LEFT JOIN admin_carrinho_item_evento_especial_demo ev
+     ON ev.pedido_id=i.pedido_id AND ev.ordem=i.ordem
     WHERE i.pedido_id=? ORDER BY i.ordem
    `
   ).all(pedidoId);
@@ -280,14 +305,17 @@ class CarrinhoLojaLoopDemoSQLite{
      revisao:r.revisao,quantidade,unitarioCentavos:p.precoCentavos,subtotalCentavos,
      ...(()=>{
       const eleg=this.elegibilidade.consultar(produtoId);
-      return {elegivelLoop:eleg.elegivelLoop,
+      const ev=this.eventosEspeciais.consultarProduto(produtoId);
+      const minimo=ev?.quantidadeMinimaLoop??eleg.quantidadeMinimaLoop;
+      const elegivel=!!ev||eleg.elegivelLoop;
+      return {elegivelLoop:elegivel,
        revisaoElegibilidade:eleg.revisaoElegibilidade,
-       quantidadeMinimaLoop:eleg.quantidadeMinimaLoop,
+       quantidadeMinimaLoop:minimo,
        revisaoQuantidadeMinima:eleg.revisaoQuantidadeMinima,
-       posicoesPorPedidoLoop:eleg.posicoesPorPedidoLoop,
+       posicoesPorPedidoLoop:ev?.posicoesPorPedidoLoop??1,
        revisaoPacotePosicoes:eleg.revisaoPacotePosicoes,
-       subtotalElegivelCentavos:eleg.elegivelLoop&&
-        quantidade>=eleg.quantidadeMinimaLoop?subtotalCentavos:0};
+       eventoId:ev?.eventoId??null,
+       subtotalElegivelCentavos:elegivel&&quantidade>=minimo?subtotalCentavos:0};
      })()};
    });
    const totalCentavos=fotografias.reduce((n,i)=>n+i.subtotalCentavos,0);
@@ -315,6 +343,10 @@ class CarrinhoLojaLoopDemoSQLite{
     INSERT INTO admin_carrinho_item_pacote_posicoes_demo
     (pedido_id,ordem,posicoes_por_pedido,revisao_pacote) VALUES(?,?,?,?)
    `);
+   const inserirEvento=this.banco.prepare(`
+    INSERT INTO admin_carrinho_item_evento_especial_demo
+    (pedido_id,ordem,evento_id) VALUES(?,?,?)
+   `);
    const inserirRegra=this.banco.prepare(`
     INSERT INTO admin_carrinho_item_elegibilidade_demo
     (pedido_id,ordem,elegivel_loop,revisao_elegibilidade,subtotal_elegivel_centavos)
@@ -328,6 +360,7 @@ class CarrinhoLojaLoopDemoSQLite{
     inserirQuantidade.run(pedidoId,i.ordem,i.quantidadeMinimaLoop,
      i.revisaoQuantidadeMinima);
     inserirPacote.run(pedidoId,i.ordem,i.posicoesPorPedidoLoop,i.revisaoPacotePosicoes);
+    if(i.eventoId)inserirEvento.run(pedidoId,i.ordem,i.eventoId);
    }
    this.banco.exec('COMMIT');
    return {...this.buscar(pedidoId),repetido:false};
