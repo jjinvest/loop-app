@@ -41,6 +41,46 @@ function giro(loop,n){
  assert.equal(resultado.girou,true);
  return resultado;
 }
+test('cem indicacoes sao atribuidas a seis posicoes sem concentrar seis na A',()=>{
+ const {loop,posicoes}=preparar(6);
+ for(let i=6;i<100;i++)loop.registrarIndicacaoSimulada({
+  indicadorId:'influencer',eventoId:'convite-extra-'+i,
+  posicaoAlvoId:posicoes[i%6]
+ });
+ const suas=[...loop.filas.filaA,...loop.filas.filaB]
+  .filter(p=>p.participanteId==='influencer');
+ assert.equal(suas.reduce((s,p)=>s+(p.indicacoesVinculadas||0),0),100);
+ assert.equal(loop.filas.informacoesParticipante('influencer').quantidade,100);
+ assert.deepEqual(loop.filas.filaA.filter(p=>p.participanteId==='influencer').map(p=>p.id),
+  [posicoes[0]]);
+ assert.deepEqual(loop.filas.filaB.filter(p=>p.participanteId==='influencer').map(p=>p.id),
+  posicoes.slice(1));
+ giro(loop,1);
+ assert.equal(loop.tabuleiro.vagas[5].id,posicoes[0]);
+ assert.deepEqual(loop.filas.filaA.filter(p=>p.participanteId==='influencer').map(p=>p.id),
+  [posicoes[1]]);
+});
+test('A e B do mesmo titular entram ambas sem bloqueio extra, respeitando tres A para uma B',()=>{
+ const loop=new SimuladorLoop();
+ loop.filas.travaPromocaoAtiva=true;
+ const primeira=loop.registrarPosicaoSimulada({participanteId:'titular',
+  vendaId:'compra-titular-a'}).posicao;
+ const segunda=loop.registrarPosicaoSimulada({participanteId:'titular',
+  vendaId:'compra-titular-b'}).posicao;
+ const outros=['convidado-x','convidado-y'].map(id=>
+  loop.registrarPosicaoSimulada({participanteId:id,vendaId:'compra-'+id}).posicao);
+ for(const [indicadorId,posicaoAlvoId] of [
+  ['titular',primeira.id],...outros.map(p=>[p.participanteId,p.id])]){
+  loop.registrarIndicacaoSimulada({indicadorId,posicaoAlvoId,
+   eventoId:'convite-'+indicadorId});
+ }
+ assert.equal(loop.filas.filaA.length,3);
+ assert.deepEqual(loop.filas.filaB.map(p=>p.id),[segunda.id]);
+ const escolhidos=Array.from({length:4},()=>loop.filas.proximoDaFila());
+ assert.deepEqual(escolhidos.map(x=>x.origem),['A','A','A','B']);
+ assert.deepEqual(escolhidos.map(x=>x.pessoa.id),
+  [primeira.id,...outros.map(p=>p.id),segunda.id]);
+});
 test('vaga 6 libera a segunda posicao assim que a primeira entrou no tabuleiro',()=>{
  const {loop,posicoes}=preparar(3);
  assert.deepEqual(loop.filas.filaA.map(p=>p.id),[posicoes[0]]);
