@@ -34,7 +34,7 @@
   }
  }
  async function carregar(){
-  const [controle,trava,ponte]=await Promise.all([api(''),api('/trava-fila-a'),api('/ponte')]);
+  const [controle,trava,ponte,indicacoes]=await Promise.all([api(''),api('/trava-fila-a'),api('/ponte'),api('/indicacoes')]);
   $('numeroFilaAAdmin').textContent=String(ponte.filaA);
   $('numeroFilaBAdmin').textContent=String(ponte.filaB);
   $('numeroGirosAdmin').textContent=String(ponte.girosConcluidos);
@@ -42,6 +42,10 @@
   $('girosHojeAdmin').textContent=String(controle.girosHoje);
   $('limiteAdmin').textContent=String(controle.limiteDiario);
   $('filaTotalAdmin').textContent=String(ponte.filaA+ponte.filaB);
+  $('indicacoesConfirmadasAdmin').textContent=String(indicacoes.confirmadas);
+  $('indicacoesDisponiveisAdmin').textContent=String(indicacoes.disponiveis);
+  $('indicacoesVinculadasAdmin').textContent=String(indicacoes.vinculadas);
+  $('indicacoesAguardandoAdmin').textContent=String(indicacoes.aguardandoAtivacao);
   renderizarTrava(trava);
   $('dadosAdminLoop03').hidden=false;
   $('situacaoPainel').textContent='CONTROLE AUTENTICADO';
