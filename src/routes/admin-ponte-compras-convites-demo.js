@@ -39,10 +39,14 @@ function criarRouterPonteComprasConvitesDemo({segredo,ponte}={}){
    Object.keys(b).join(',')!=='eventoId')
    return res.status(400).json({erro:'SOMENTE_EVENTO_DOURADA'});
   try{return res.json({resultado:ponte.criarDouradaManualDemo(b),
-   pagamentosReais:false,receitaRegistrada:false,semCPF:true});}
+   pagamentosReais:false,receitaRegistrada:false,semCPF:true,
+   aporteInternoDemonstrativo:true});}
   catch(e){
    if(e.codigo==='EVENTO_DOURADA_INVALIDO')
     return res.status(400).json({erro:e.codigo});
+   if(['RESERVA_NAO_CONFIGURADA','SALDO_RESERVA_INSUFICIENTE',
+    'CONCILIACAO_COFRES_DIVERGENTE','EVENTO_DOURADA_LEGADO'].includes(e.codigo))
+    return res.status(409).json({erro:e.codigo});
    return next(e);
   }
  });

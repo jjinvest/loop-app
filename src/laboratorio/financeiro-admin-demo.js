@@ -1510,8 +1510,10 @@
       lista.replaceChildren();
       for(const p of res.douradasManuais||[]){
         const li=document.createElement('li');
-        li.textContent='Posição #'+p.posicaoId+' · origem administrativa · '+
-          p.criadaEm+' · sem CPF e sem pagamento';
+        li.textContent='Posição #'+p.posicaoId+' · origem administrativa · '+p.criadaEm+
+          (p.valorReferenciaCentavos>0?
+           ' · reserva comprometida: '+money(p.valorReferenciaCentavos)+' · sem banco/PSP':
+           ' · legado anterior sem aporte');
         lista.append(li);
       }
       status.textContent=(res.douradasManuais||[]).length?
@@ -1528,7 +1530,9 @@
         method:'POST',body:JSON.stringify({eventoId:'dourada-'+crypto.randomUUID()})
       });
       status.textContent='Bola dourada #'+r.resultado.posicaoId+
-       ' criada na fila B. Sem CPF, sem compra e sem saldo gerado.';
+       ' criada na fila B. Reserva interna comprometida: '+
+        money(r.resultado.valorReferenciaCentavos)+
+        '. Não houve receita nova nem pagamento bancário.';
       await carregarDouradasManuais();
     }catch(e){status.textContent='Não foi possível criar: '+e.message;}
     finally{b.disabled=false;}
