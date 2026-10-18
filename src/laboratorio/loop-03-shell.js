@@ -156,6 +156,16 @@
   const compras=e('pedidosParticipante')?.closest('section.cartao-participante');
   if(posicoes)e('loop03-posicoes').append(posicoes);
   if(compras)e('loop03-posicoes').append(compras);
+  // Seis cartoes e contador primeiro; nenhum formulario e removido.
+  const secundarios=[resumo,historico,posicoes,compras].filter(Boolean);
+  if(secundarios.length){
+   const detalhes=document.createElement('details');
+   detalhes.className='loop03-extras-posicoes';
+   const cabeca=document.createElement('summary');
+   cabeca.textContent='Consultar histórico, pedidos e informações da conta';
+   detalhes.append(cabeca,...secundarios);
+   e('loop03-posicoes').append(detalhes);
+  }
   const limites=e('atualizarParticipante')?.closest('section.cartao-participante');
   if(limites)e('loop03-perfil').append(limites);
   // Cartao anterior de atalho à loja: preservar a mesma loja.
