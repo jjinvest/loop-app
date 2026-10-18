@@ -411,7 +411,7 @@ async function main(){
   // Quatro capturas REAIS da mesma conta ficticia e mesmo layout funcional.
   // Referencias PNG aprovadas sao arquivos separados, nao estas capturas.
   const ctxQuadros=await browser.newContext({
-   viewport:{width:1254,height:1100},deviceScaleFactor:1
+   viewport:{width:1254,height:1254},deviceScaleFactor:1
   });
   const quatroAbas=await ctxQuadros.newPage();
   quatroAbas.on('pageerror',err=>erros.push('painel quatro abas: '+err.message));
@@ -431,6 +431,7 @@ async function main(){
    await quatroAbas.locator('#loop03-'+aba).waitFor({state:'visible'});
    await quatroAbas.waitForTimeout(170);
    await quatroAbas.screenshot({path:path.join(pasta,arquivo),fullPage:false});
+   await quatroAbas.screenshot({path:path.join(pasta,arquivo.replace('.png','_COMPLETA.png')),fullPage:true});
   }
   await ctxQuadros.close();
 
