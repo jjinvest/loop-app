@@ -100,6 +100,8 @@ test('um convidado confirmado atribuido a uma posicao ativa promove somente ela 
  preparando.prepararTabuleiro();
  ponte.banco.prepare('UPDATE admin_ponte_estado_demo SET snapshot_json=? WHERE id=1')
   .run(JSON.stringify(preparando.exportarSnapshot()));
+ assert.equal(escritorio.consultar(raiz.contaId).equipe.find(
+  x=>x.convidadoId===convidado.contaId).filaAtual,'TABULEIRO');
  const compraProxima=await comprar(proximoConvidado,'c-2');
  visao=escritorio.consultar(raiz.contaId);
  assert.equal(visao.contadoresRede.totalPosicoes,2);

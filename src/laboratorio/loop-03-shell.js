@@ -303,10 +303,10 @@
    const situacao=pessoa.situacao==='AGUARDANDO_CONFIRMACAO'?'AGUARDANDO CONFIRMAÇÃO':
     pessoa.estado==='ATIVO'?'ATIVO':'PENDENTE';
    dados.textContent=(pessoa.telefone||'Telefone não informado')+' · '+situacao;
-   if(pessoa.filaAtual==='A'||pessoa.filaAtual==='B'){
+   if(pessoa.filaAtual==='A'||pessoa.filaAtual==='B'||pessoa.filaAtual==='TABULEIRO'){
     const fila=document.createElement('span');
     fila.className='loop03-fila-equipe-'+pessoa.filaAtual.toLowerCase();
-    fila.textContent=' · Fila '+pessoa.filaAtual;
+    fila.textContent=pessoa.filaAtual==='TABULEIRO'?' · Tabuleiro':' · Fila '+pessoa.filaAtual;
     dados.append(fila);
    }
    if(pessoa.posicaoAtribuidaId!==null){

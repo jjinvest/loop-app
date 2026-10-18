@@ -101,13 +101,16 @@ class EscritorioIndividualDemo{
    WHERE c.indicado_por_id=?
    ORDER BY c.criado_em,c.id
   `).all(contaId,contaId,contaId).map(c=>{
-   const pos=[...simulador.filas.filaA,...simulador.filas.filaB,
-    simulador.tabuleiro.centro,...simulador.tabuleiro.vagas]
-    .find(p=>p&&p.participanteId===c.convidadoId&&p.empresa!==true);
+   const emA=simulador.filas.filaA.some(p=>p.participanteId===c.convidadoId&&p.empresa!==true);
+   const emB=simulador.filas.filaB.some(p=>p.participanteId===c.convidadoId&&p.empresa!==true);
+   const noTabuleiro=[simulador.tabuleiro.centro,...simulador.tabuleiro.vagas]
+    .some(p=>p&&p.participanteId===c.convidadoId&&p.empresa!==true);
+   // Nao utilizar p.fila: sua origem A/B permanece depois da entrada no Tabuleiro.
+   const localAtual=emA?'A':emB?'B':noTabuleiro?'TABULEIRO':null;
    return {convidadoId:c.convidadoId,nome:c.nome,telefone:c.telefone,
     estado:c.compraConfirmadaEm&&c.posicaoAtivada?'ATIVO':'PENDENTE',
      situacao:c.compraConfirmadaEm?(c.posicaoAtivada?'ATIVO':'AGUARDANDO_CONFIRMACAO'):'PENDENTE',
-    filaAtual:pos?pos.fila:null,posicaoAtribuidaId:c.posicaoAtribuidaId,
+    filaAtual:localAtual,posicaoAtribuidaId:c.posicaoAtribuidaId,
     atribuicaoPendente:!!c.compraConfirmadaEm&&!!c.posicaoAtivada&&
      c.posicaoAtribuidaId===null};
   });

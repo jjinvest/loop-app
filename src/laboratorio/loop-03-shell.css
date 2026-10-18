@@ -245,3 +245,6 @@ body.loop03-logado{background:radial-gradient(ellipse at 5% 14%,#42167580,transp
 @media(max-width:520px){.loop03-mapa-grade .loop03-fila-identificacao{gap:4px}
  .loop03-mapa-grade .loop03-quantidade-a-direita{font-size:.64rem}
  .loop03-mapa-grade .loop03-bonequinho-indicacoes{width:14px;height:14px}}
+
+/* Nao rotular como Fila B uma posicao que ja esta no Tabuleiro. */
+.loop03-fila-equipe-tabuleiro{color:#81f0c8;font-weight:800}
