@@ -16,6 +16,11 @@ function preparar(qtd=6,vaga=5){
  for(let i=0;i<7;i++)loop.registrarPosicaoSimulada({
   participanteId:'neutro-'+i,vendaId:'pedido-neutro-'+i});
  loop.prepararTabuleiro();
+ // B continua FIFO e entra normalmente no tabuleiro mesmo sem indicacoes.
+ // Deixar neutros na frente evita confundir entrada regular da B com
+ // liberacao PRIORITARIA pela A do influencer.
+ for(let i=7;i<33;i++)loop.registrarPosicaoSimulada({
+  participanteId:'neutro-'+i,vendaId:'pedido-neutro-'+i});
  const posicoes=[];
  for(let i=0;i<qtd;i++){
   const p=loop.registrarPosicaoSimulada({
@@ -39,22 +44,23 @@ function giro(loop,n){
 test('titular com seis posicoes e seis convites nao domina a Fila A',()=>{
  const {loop,posicoes}=preparar(6);
  assert.deepEqual(loop.filas.filaA.map(p=>p.id),[posicoes[0]]);
- assert.deepEqual(loop.filas.filaB.map(p=>p.id),posicoes.slice(1));
- for(const p of loop.filas.filaB)assert.equal(p.indicacoesVinculadas,1);
+ assert.deepEqual(loop.filas.filaB.filter(p=>p.participanteId==='influencer').map(p=>p.id),posicoes.slice(1));
+ for(const p of loop.filas.filaB.filter(p=>p.participanteId==='influencer'))
+  assert.equal(p.indicacoesVinculadas,1);
  giro(loop,1);
  assert.equal(loop.tabuleiro.vagas[5].id,posicoes[0]);
  assert.deepEqual(loop.filas.filaA.map(p=>p.id),[]);
  giro(loop,2);
  assert.equal(loop.tabuleiro.vagas[4].id,posicoes[0]);
  assert.deepEqual(loop.filas.filaA.map(p=>p.id),[posicoes[1]]);
- assert.deepEqual(loop.filas.filaB.map(p=>p.id),posicoes.slice(2));
+ assert.deepEqual(loop.filas.filaB.filter(p=>p.participanteId==='influencer').map(p=>p.id),posicoes.slice(2));
  giro(loop,3);
  assert.equal(loop.tabuleiro.vagas[5].id,posicoes[1]);
  assert.deepEqual(loop.filas.filaA.map(p=>p.id),[]);
  giro(loop,4);
  assert.equal(loop.tabuleiro.vagas[4].id,posicoes[1]);
  assert.deepEqual(loop.filas.filaA.map(p=>p.id),[posicoes[2]]);
- assert.deepEqual(loop.filas.filaB.map(p=>p.id),posicoes.slice(3));
+ assert.deepEqual(loop.filas.filaB.filter(p=>p.participanteId==='influencer').map(p=>p.id),posicoes.slice(3));
 });
 test('trava na vaga 4 ou 3 altera somente futuras liberacoes',()=>{
  const {loop,posicoes}=preparar(3,4);
@@ -67,7 +73,7 @@ test('trava na vaga 4 ou 3 altera somente futuras liberacoes',()=>{
  giro(loop,4); // agora na vaga 3
  assert.equal(loop.tabuleiro.vagas[2].id,posicoes[0]);
  assert.deepEqual(loop.filas.filaA.map(p=>p.id),[posicoes[1]]);
- assert.deepEqual(loop.filas.filaB.map(p=>p.id),[posicoes[2]]);
+ assert.deepEqual(loop.filas.filaB.filter(p=>p.participanteId==='influencer').map(p=>p.id),[posicoes[2]]);
 });
 test('snapshot recupera ultima posicao promovida e a sequencia da trava',()=>{
  const {loop,posicoes}=preparar(2);
@@ -94,7 +100,7 @@ test('configuracao administrativa persiste, audita e rejeita revisao concorrente
 });
 test('API do administrador protege o controle da Fila A e exige justificativa',async t=>{
  const repo=new RepositorioCatalogoSQLite({caminho:':memory:'});t.after(()=>repo.fechar());
- const segredo='chave-local-trava-fila-a-2026';
+ const segredo='chave-local-trava-fila-a-2026-1234567890';
  const server=criarAppAdminLaboratorio({repositorio:repo,segredo}).listen(0,'127.0.0.1');
  await once(server,'listening');t.after(()=>new Promise(done=>server.close(done)));
  const url='http://127.0.0.1:'+server.address().port+
