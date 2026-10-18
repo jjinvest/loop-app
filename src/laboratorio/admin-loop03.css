@@ -23,3 +23,11 @@ button{cursor:pointer;padding:11px 15px;border-radius:11px;border:1px solid #ffd
 @media(max-width:1080px){.estrutura{grid-template-columns:185px minmax(0,1fr)}.paineis{grid-template-columns:1fr}}
 @media(max-width:750px){.escritorio-admin{margin:7px;padding:8px;border-radius:16px}.marca-topo{gap:12px;padding:9px;flex-wrap:wrap}.painel-etiqueta{margin-left:0}.estrutura{grid-template-columns:minmax(0,1fr)}.barra{padding:10px}.barra nav{grid-template-columns:repeat(2,minmax(0,1fr))}.barra nav a{font-size:.78rem}.barra-final{display:none}.indicadores{grid-template-columns:repeat(2,minmax(0,1fr))}.boas-vindas{flex-wrap:wrap}.paineis{grid-template-columns:1fr}.acesso label{width:100%}}
 @media(max-width:360px){.barra nav{grid-template-columns:1fr}.slogan{font-size:.76rem}.acesso button{flex:1}.painel-etiqueta{font-size:.6rem}}
+
+/* Missao 4: leitura operacional do proprietario, sem expor dados individuais ao cliente. */
+.loop03-resumo-indicacoes-admin{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin:16px 0}
+.loop03-resumo-indicacoes-admin>div{min-width:0;min-height:98px;padding:15px;border:1px solid #9f7848;border-radius:15px;background:linear-gradient(135deg,#101c36,#24163c)}
+.loop03-resumo-indicacoes-admin small{display:block;color:#ddd2e5;font-size:.78rem;line-height:1.35}
+.loop03-resumo-indicacoes-admin strong{display:block;font-size:clamp(1.7rem,3vw,2.5rem);color:#f8e0aa;margin-top:9px;font-variant-numeric:tabular-nums}
+@media(max-width:880px){.loop03-resumo-indicacoes-admin{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:360px){.loop03-resumo-indicacoes-admin{grid-template-columns:1fr}}
