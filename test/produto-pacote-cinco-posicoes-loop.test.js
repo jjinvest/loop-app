@@ -39,7 +39,9 @@ test('produto especial cria seis posicoes atomicas, bloqueia sexta e libera uma 
   eventoId:'evento-pacote-6',produtoId:'pacote-cinco',
   titulo:'Evento Especial de Seis Posições',
   descricao:'Compre o produto especial e obtenha seis posições de teste',
-  quantidadeMinimaLoop:1,posicoesPorPedidoLoop:6
+  quantidadeMinimaLoop:1,posicoesPorPedidoLoop:6,
+  dataInicio:new Date().toISOString().slice(0,10),
+  dataFim:new Date(Date.now()+7*86400000).toISOString().slice(0,10)
  };
  assert.equal((await req('POST',caminho+'/pacote-posicoes',{
   produtoId:'pacote-cinco',posicoesPorPedidoLoop:6,revisaoEsperada:1
