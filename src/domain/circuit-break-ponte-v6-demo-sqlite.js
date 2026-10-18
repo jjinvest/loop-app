@@ -71,6 +71,7 @@ class CircuitBreakPonteV6DemoSQLite{
     const controle=this.controle.resumo();
     return {modo:'PONTE_DE_CONTAS_APENAS_FICTICIAS',
       ...this.avaliar(sim,compras),
+      filaA:sim.filas.filaA.length,filaB:sim.filas.filaB.length,
       catraca:controle.status,
       limiteDiario:controle.limiteDiario,girosHoje:controle.girosHoje,
       restantesHoje:controle.restantesHoje,revisaoControle:controle.revisao,
