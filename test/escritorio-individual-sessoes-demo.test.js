@@ -98,9 +98,12 @@ test('convites no escritorio individual distinguem cadastro pendente e compra co
  assert.equal(r.posicoes[0].local,'FILA_A');
  assert.equal(m.visao.consultar(p.contaId).posicoes.length,0);
  assert.equal(m.visao.consultar(p.contaId).vagasLivres,6);
- assert.equal(JSON.stringify(r).includes(p.nome),false);
- assert.equal(JSON.stringify(r).includes(v.nome),false);
- assert.equal(JSON.stringify(r).includes(v.contaId),false);
+ // O indicador vê SOMENTE seus indicados diretos, exigido por Minha Equipe.
+ assert.equal(r.equipe.length,2);
+ assert.deepEqual(new Set(r.equipe.map(x=>x.convidadoId)),new Set([p.contaId,v.contaId]));
+ assert.equal(r.equipe.find(x=>x.convidadoId===p.contaId).estado,'PENDENTE');
+ // Uma conta convidada não tem acesso aos dados de outra.
+ assert.equal(JSON.stringify(m.visao.consultar(p.contaId)).includes(v.nome),false);
 });
 test('limite das vagas e integridade entre posicao e pedido valem na projecao',async t=>{
  const m=ambiente(t);
