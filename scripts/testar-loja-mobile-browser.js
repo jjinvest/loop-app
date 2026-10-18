@@ -171,6 +171,35 @@ async function main(){
   assert.match(cores.tarja,/rgb\(90, 49, 142\)/,'Tarja deve ser ROXA e dourada');
   assert.match(cores.fundo,/rgb\(49, 32, 80\)/,'Fundo deve ser ROXO');
   assert.equal(await eventoCard.locator('.tarja-vermelha-promocao-loop').count(),0);
+  // Borda viva de ambas as classes com conteudo estatico e eventos sem
+  // piscadas agressivas. A classe CINZA deve permanecer SEM animacao.
+  await page.emulateMedia({reducedMotion:'no-preference'});
+  const animacoes=await page.evaluate(()=>{
+   const leitura=classe=>{
+    const card=document.querySelector(classe);
+    const before=getComputedStyle(card,'::before');
+    return {nome:before.animationName,duracao:before.animationDuration,
+     ponteiro:before.pointerEvents,contorno:before.borderRadius};
+   };
+   return {verde:leitura('.produto-loja-loop-elegivel'),
+    ouro:leitura('.produto-loja-loop-especial'),
+    cinza:leitura('.produto-loja-loop-nao-elegivel')};
+  });
+  assert.equal(animacoes.verde.nome,'loop-akitemm-borda-viva');
+  assert.equal(animacoes.verde.duracao,'10s');
+  assert.equal(animacoes.ouro.nome,'loop-akitemm-borda-viva');
+  assert.equal(animacoes.ouro.duracao,'8s');
+  assert.equal(animacoes.verde.ponteiro,'none');
+  assert.equal(animacoes.ouro.ponteiro,'none');
+  assert.equal(animacoes.cinza.nome,'none');
+  await page.emulateMedia({reducedMotion:'reduce'});
+  const reduzidas=await page.evaluate(()=>({
+   verde:getComputedStyle(document.querySelector('.produto-loja-loop-elegivel'),'::before').animationName,
+   ouro:getComputedStyle(document.querySelector('.produto-loja-loop-especial'),'::before').animationName
+  }));
+  assert.equal(reduzidas.verde,'none');
+  assert.equal(reduzidas.ouro,'none');
+  await page.emulateMedia({reducedMotion:'no-preference'});
   await page.locator('.produto-loja-loop').filter({hasText:'Curso Móvel Básico'})
    .getByRole('button',{name:'Adicionar ao carrinho'}).click();
   await page.locator('.produto-loja-loop').filter({hasText:'Curso Móvel Completo'})
@@ -410,6 +439,14 @@ async function main(){
   assert.equal(await desktop.locator('.produto-loja-loop-nao-elegivel').count(),1);
   assert.equal(await desktop.locator('.produto-loja-loop-especial .tarja-promocao-especial-loop').innerText(),
    'PROMOÇÃO ESPECIAL');
+  const desktopBordas=await desktop.evaluate(()=>({
+   verde:getComputedStyle(document.querySelector('.produto-loja-loop-elegivel'),'::before').animationName,
+   especial:getComputedStyle(document.querySelector('.produto-loja-loop-especial'),'::before').animationName,
+   cinza:getComputedStyle(document.querySelector('.produto-loja-loop-nao-elegivel'),'::before').animationName
+  }));
+  assert.equal(desktopBordas.verde,'loop-akitemm-borda-viva');
+  assert.equal(desktopBordas.especial,'loop-akitemm-borda-viva');
+  assert.equal(desktopBordas.cinza,'none');
   for(const width of [768,1024,1366])
    await conferirLargura(desktop,width,'loja-desktop',{captura:width===1366});
   await desktop.goto(base+'/admin/financeiro-demo',{waitUntil:'networkidle'});
@@ -445,6 +482,7 @@ async function main(){
    lojaParaEscritorio:true,ativacaoAzulParaVermelho:true,
    indicacaoManualValidadaPeloNavegador:true,contadoresDaRedeValidados:true,
    coresAKITEMMValidadas:true,eventosDouradosRoxosSemTarjaVermelha:true,
+   bordasVerdeEDouradoRoxoAnimadas:true,movimentoReduzidoRespeitado:true,
    semRolagemHorizontal:true,imagens:fs.readdirSync(pasta).filter(x=>x.endsWith('.png'))};
   fs.writeFileSync(path.join(pasta,'resultado.json'),JSON.stringify(relatorio,null,2)+'\n');
   process.stdout.write('MOBILE_LOOP_RESULTADO='+JSON.stringify(relatorio)+'\n');

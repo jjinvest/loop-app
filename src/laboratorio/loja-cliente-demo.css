@@ -102,3 +102,67 @@ button:disabled{opacity:.48;cursor:not-allowed}
 @media(prefers-reduced-motion:no-preference){
  .produto-loja-loop.produto-loja-loop-especial{transition:border-color .16s,box-shadow .16s}
 }
+
+
+/* Bordas vivas da AKITEMM: VERDE (1 posicao) e DOURADO+ROXO (evento).
+   O proprio card mantem uma borda fixa legivel; a aura gira DEVAGAR.
+   Pseudoelementos nao interferem no clique nem criam scroll em mobile.
+   @property habilita interpolacao suave do angulo nos Chromium atuais.
+   Em navegadores sem @property, a borda ornamental permanece estatica.
+*/
+@property --loop-akitemm-borda-giro {
+ syntax: '<angle>';
+ inherits: false;
+ initial-value: 0deg;
+}
+.produto-loja-loop:is(.produto-loja-loop-elegivel,.produto-loja-loop-especial){
+ position:relative;
+ isolation:isolate;
+}
+.produto-loja-loop:is(.produto-loja-loop-elegivel,.produto-loja-loop-especial)::before{
+ content:'';
+ position:absolute;
+ inset:-2px;
+ border-radius:inherit;
+ padding:2px;
+ z-index:0;
+ pointer-events:none;
+ background:conic-gradient(from var(--loop-akitemm-borda-giro),
+  transparent 0deg 66deg,
+  var(--loop-akitemm-energia-a) 90deg,
+  var(--loop-akitemm-energia-b) 124deg,
+  transparent 165deg 270deg,
+  var(--loop-akitemm-energia-a) 296deg,
+  transparent 335deg 360deg);
+ -webkit-mask:linear-gradient(#fff 0 0) content-box,linear-gradient(#fff 0 0);
+ -webkit-mask-composite:xor;
+ mask:linear-gradient(#fff 0 0) content-box,linear-gradient(#fff 0 0);
+ mask-composite:exclude;
+}
+.produto-loja-loop.produto-loja-loop-elegivel{
+ --loop-akitemm-energia-a:#b7ffca;
+ --loop-akitemm-energia-b:#45d888;
+ box-shadow:inset 0 0 0 1px #5da97c36,0 0 10px #48bb7840;
+}
+.produto-loja-loop.produto-loja-loop-especial{
+ --loop-akitemm-energia-a:#ffdf8c;
+ --loop-akitemm-energia-b:#aa75eb;
+}
+@keyframes loop-akitemm-borda-viva {
+ to{--loop-akitemm-borda-giro:360deg}
+}
+@media(prefers-reduced-motion:no-preference){
+ .produto-loja-loop.produto-loja-loop-elegivel::before{
+  animation:loop-akitemm-borda-viva 10s linear infinite;
+ }
+ .produto-loja-loop.produto-loja-loop-especial::before{
+  animation:loop-akitemm-borda-viva 8s linear infinite;
+ }
+}
+@media(prefers-reduced-motion:reduce){
+ .produto-loja-loop:is(.produto-loja-loop-elegivel,.produto-loja-loop-especial)::before{
+  animation:none;
+ }
+}
+/* Cinza e totalmente parado; botoes e textos nao sao animados.
+   O brilho gira so ao longo do contorno e respeita o arredondamento. */
