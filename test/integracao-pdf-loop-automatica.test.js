@@ -12,7 +12,7 @@ function produto(id,preco){
   precoCentavos:preco,entrega:'DOWNLOAD_APOS_CONFIRMACAO',
   fotos:[],videoApresentacaoUrl:null,detalhes:[]};
 }
-test('pedido PDF confirmado cria posicao azul, move indicador a A e ignora compra abaixo do minimo',async t=>{
+test('pedido PDF cria posicao azul e nao promove sem vinculo por posicao, ignorando compra barata',async t=>{
  const repo=new RepositorioCatalogoSQLite({caminho:':memory:'});
  t.after(()=>repo.fechar());
  repo.salvar({produto:produto('curso-loop-integrado',25000),revisaoEsperada:0});
@@ -88,11 +88,10 @@ test('pedido PDF confirmado cria posicao azul, move indicador a A e ignora compr
  estado=(await get(ponte)).body;
  assert.equal(estado.compras.length,2);
  assert.equal(estado.convites.length,1);
- assert.equal(estado.filas.A.quantidade,1);
- assert.equal(estado.filas.B.quantidade,1);
- assert.equal(estado.filas.A.pessoas[0].participanteId,a.contaId);
- assert.equal(estado.filas.A.pessoas[0].statusAdesao,'PENDENTE');
- assert.equal(estado.filas.B.pessoas[0].participanteId,b.contaId);
+ assert.equal(estado.filas.A.quantidade,0);
+ assert.equal(estado.filas.B.quantidade,2);
+ assert.deepEqual(estado.filas.B.pessoas.map(p=>p.participanteId),[a.contaId,b.contaId]);
+ assert(estado.filas.B.pessoas.every(p=>p.statusAdesao==='PENDENTE'));
  const repetido=await post(pdf+'/pedido-pdf-azul-b/eventos',{
   eventoId:'confirm-b',tipo:'CONFIRMAR_FICTICIO'
  });

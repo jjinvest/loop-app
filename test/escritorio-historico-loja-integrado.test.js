@@ -81,8 +81,8 @@ test('escritorio reune pedidos pendentes, somente-loja, azul, vermelho e dourado
  // Apenas o proprio cliente pode confirmar CPF ficticio e termos.
  const ativacao=await fetch(local+'/ativar-posicoes',{method:'POST',
   headers:{...cabe,Cookie:a},
-  body:JSON.stringify({cpfFicticio:'11144477735',aceitaTermos:true,
-   versaoTermos:'LOOP-DEMO-V1'})});
+  body:JSON.stringify({posicaoId:visao.posicoes[0].posicaoId,
+   cpfFicticio:'11144477735',aceitaTermos:true,versaoTermos:'LOOP-DEMO-V1'})});
  assert.equal(ativacao.status,200);
  visao=await obter(a);
  assert.equal(visao.historicoLoja.contagens.comPosicaoAtivada,1);
@@ -95,8 +95,8 @@ test('escritorio reune pedidos pendentes, somente-loja, azul, vermelho e dourado
  const posB=await criar(a,'pdf-250-loop');
  await concluir(posB,'evento-posicao-segunda');
  visao=await obter(a);
- assert.equal(visao.historicoLoja.contagens.aguardandoAtivacao,0);
- assert.equal(visao.historicoLoja.contagens.comPosicaoAtivada,2);
+ assert.equal(visao.historicoLoja.contagens.aguardandoAtivacao,1);
+ assert.equal(visao.historicoLoja.contagens.comPosicaoAtivada,1);
  const preparo=await fetch(base+'/api/admin/ponte-compras-convites-demo/preparar-tabuleiro',{
   method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+segredo},
   body:'{}'
@@ -104,10 +104,10 @@ test('escritorio reune pedidos pendentes, somente-loja, azul, vermelho e dourado
  assert.equal(preparo.status,200);
  visao=await obter(a);
  const segundo=visao.historicoLoja.pedidos.find(p=>p.pedidoId===posB);
- assert.equal(segundo.estado,'POSICAO_ATIVADA');
+ assert.equal(segundo.estado,'POSICAO_DOURADA');
  assert.equal(visao.historicoLoja.contagens.aguardandoAtivacao,0);
- assert.equal(visao.historicoLoja.contagens.posicoesDouradas,0);
- assert.equal(visao.historicoLoja.contagens.comPosicaoAtivada,2);
+ assert.equal(visao.historicoLoja.contagens.posicoesDouradas,1);
+ assert.equal(visao.historicoLoja.contagens.comPosicaoAtivada,1);
  assert.equal(visao.historicoLoja.contagens.total,4);
  const retornoB=await obter(b);
  assert.equal(retornoB.historicoLoja.contagens.total,1);

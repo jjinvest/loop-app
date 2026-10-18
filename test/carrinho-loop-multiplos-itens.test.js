@@ -89,14 +89,14 @@ test('carrinho de varios itens soma R$250 em um pedido e cria UMA posicao azul',
  const qtd=await criar('qtd-225',b.contaId,[{produtoId:'item-c',quantidade:3}]);
  assert.equal(qtd.body.pedido.totalCentavos,22500);
  assert.equal((await confirmar('qtd-225','evt-qtd-225')).body.integracao.posicaoCriada,false);
- // Uma compra com itens somando 250 valida o primeiro convite.
+ // Compra confirma convite, mas NAO promove o indicador antes do vinculo individual.
  const convidada=await criar('convidada-250',b.contaId,[
   {produtoId:'item-d',quantidade:2}]);
  assert.equal(convidada.body.pedido.totalCentavos,25000);
  assert.equal((await confirmar('convidada-250','evt-convidada')).body.integracao.indicacaoNova,true);
  const estado=(await ponte()).body;
- assert.equal(estado.filas.A.quantidade,1);
- assert.equal(estado.filas.B.quantidade,1);
+ assert.equal(estado.filas.A.quantidade,0);
+ assert.equal(estado.filas.B.quantidade,2);
  assert.equal(estado.convites.length,1);
  assert.equal(estado.compras.length,2);
  assert.equal(estado.comprasLojaSemLoop.length,3);
@@ -105,9 +105,9 @@ test('carrinho de varios itens soma R$250 em um pedido e cria UMA posicao azul',
  assert.equal(maior.body.pedido.totalCentavos,50000);
  assert.equal((await confirmar('pedido-500','evt-500')).body.integracao.posicaoCriada,true);
  assert.equal((await ponte()).body.compras.length,3);
- // Cada NOVA posicao comeca em B; as antigas ja promovidas continuam em A.
- assert.equal((await ponte()).body.filas.A.quantidade,1);
- assert.equal((await ponte()).body.filas.B.quantidade,2);
+ // Convite ainda sem atribuicao: nenhuma posicao promove automaticamente.
+ assert.equal((await ponte()).body.filas.A.quantidade,0);
+ assert.equal((await ponte()).body.filas.B.quantidade,3);
  // Rejeita flag arbitraria "pago".
  assert.equal((await req('POST',cart+'/'+id+'/eventos',{
   eventoId:'fraude-1',tipo:'CONFIRMAR_FICTICIO',pago:true})).status,400);
