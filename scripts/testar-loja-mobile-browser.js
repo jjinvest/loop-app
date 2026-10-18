@@ -376,6 +376,10 @@ async function main(){
   await page.locator('#chaveFinanceiroDemo').fill(admin);
   await page.locator('#abrirFinanceiroDemo').click();
   await page.locator('#dadosFinanceiroDemo').waitFor({state:'visible'});
+  await page.locator('#caixa2CapacidadeFinanceiroDemo').waitFor({state:'visible'});
+  assert.match(await page.locator('#statusCaixa2FinanceiroDemo').innerText(),
+   /pré-lançamento fictício|Saldo livre/);
+  assert.equal(await page.locator('#caixa2LivreFinanceiroDemo').innerText(),'—');
   // Sem reserva demonstrativa, nem o ADMIN pode criar posicao gratuita.
   await page.locator('#criarDouradaManualDemo').click();
   await page.getByText(/Não foi possível criar:.*Configure o pré-lançamento e a reserva demonstrativa/).waitFor();
@@ -453,6 +457,9 @@ async function main(){
   await desktop.locator('#chaveFinanceiroDemo').fill(admin);
   await desktop.locator('#abrirFinanceiroDemo').click();
   await desktop.locator('#dadosFinanceiroDemo').waitFor({state:'visible'});
+  await desktop.locator('#caixa2CapacidadeFinanceiroDemo').waitFor({state:'visible'});
+  await desktop.locator('#atualizarCaixa2FinanceiroDemo').click();
+  assert.equal(await desktop.locator('#caixa2BonusFinanceiroDemo').innerText(),'—');
   for(const width of [768,1024,1366])
    await conferirLargura(desktop,width,'admin-financeiro-desktop',{captura:width===1366});
   for(const [rota,rotulo] of [

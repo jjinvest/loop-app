@@ -62,7 +62,8 @@
     ++versaoCaixa2;
     for(const id of ['caixa2BrutoFinanceiroDemo','caixa2BonusFinanceiroDemo',
      'caixa2DouradasFinanceiroDemo','caixa2GestaoFinanceiroDemo',
-     'caixa2LivreFinanceiroDemo','caixaCentralSeparadoFinanceiroDemo'])
+     'caixa2LivreFinanceiroDemo','caixaCentralSeparadoFinanceiroDemo',
+     'caixa2CapacidadeFinanceiroDemo'])
       el(id).textContent='—';
     el('statusCaixa2FinanceiroDemo').textContent='';
     ++versaoLivro;
@@ -1524,11 +1525,15 @@
     const aviso=el('statusCaixa2FinanceiroDemo');
     if(!token){aviso.textContent='Autenticação administrativa necessária.';return;}
     try{
-      const saldo=await requisitar('circuit-break-v6-demo/ponte/conciliacao');
+      const [saldo,ref]=await Promise.all([
+       requisitar('circuit-break-v6-demo/ponte/conciliacao'),
+       requisitar('valor-loop-demo')
+      ]);
       if(atual!==versaoCaixa2||!token)return;
       const ids=['caixa2BrutoFinanceiroDemo','caixa2BonusFinanceiroDemo',
         'caixa2DouradasFinanceiroDemo','caixa2GestaoFinanceiroDemo',
-        'caixa2LivreFinanceiroDemo','caixaCentralSeparadoFinanceiroDemo'];
+        'caixa2LivreFinanceiroDemo','caixaCentralSeparadoFinanceiroDemo',
+        'caixa2CapacidadeFinanceiroDemo'];
       if(saldo.fase==='INATIVO'){
         for(const id of ids)el(id).textContent='—';
         aviso.textContent='Configure o pré-lançamento fictício para visualizar a simulação. Nenhum dinheiro bancário foi confirmado.';
@@ -1542,7 +1547,13 @@
         saldo.cofreDireitaDisponivelSimuladoCentavos,
         saldo.cofreCentroRestanteSimuladoCentavos
       ];
-      ids.forEach((id,i)=>el(id).textContent=Number.isSafeInteger(valores[i])?money(valores[i]):'—');
+      ids.slice(0,6).forEach((id,i)=>el(id).textContent=Number.isSafeInteger(valores[i])?money(valores[i]):'—');
+      const valor=ref.atual?.valorCentavos,livre=saldo.cofreDireitaDisponivelSimuladoCentavos;
+      el('caixa2CapacidadeFinanceiroDemo').textContent=
+       !saldo.quantidadeDivergencias&&Number.isSafeInteger(valor)&&valor>0&&
+       Number.isSafeInteger(livre)?
+        String(Math.max(0,Math.floor(livre/valor)))+' posição(ões) de '+money(valor):
+        'Indisponível';
       aviso.textContent=saldo.quantidadeDivergencias?
         'DIVERGÊNCIA no caixa demonstrativo: novas operações devem ficar bloqueadas.':
         'Saldo livre = bruto - bonificações - douradas - gestão pendente. Sem banco, PSP ou saque real.';

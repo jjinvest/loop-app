@@ -121,3 +121,18 @@ test('marcos do ciclo usam contagem REAL do motor de laboratorio, sem registrar 
  assert.match(shell,/andamento ainda nao disponivel/);
  assert.doesNotMatch(shell,/setInterval\(/);
 });
+
+
+test('template administrativo: segundo caixa, reservas e capacidade estimada nao sao saldo bancario',()=>{
+ const html=ler('financeiro-admin-demo.html'),js=ler('financeiro-admin-demo.js');
+ for(const id of ['caixa2BrutoFinanceiroDemo','caixa2BonusFinanceiroDemo',
+  'caixa2DouradasFinanceiroDemo','caixa2GestaoFinanceiroDemo',
+  'caixa2LivreFinanceiroDemo','caixaCentralSeparadoFinanceiroDemo',
+  'caixa2CapacidadeFinanceiroDemo','atualizarCaixa2FinanceiroDemo']){
+  assert.match(html,new RegExp('id="'+id+'"'));
+  assert.match(js,new RegExp(id));
+ }
+ assert.match(js,/Math\.floor\(livre\/valor\)/);
+ assert.match(html,/não autorização/);
+ assert.match(js,/Sem banco|Nenhum dinheiro bancário/);
+});
