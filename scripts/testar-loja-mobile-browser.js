@@ -307,7 +307,7 @@ async function main(){
   await page.locator('#dadosFinanceiroDemo').waitFor({state:'visible'});
   await page.locator('#criarDouradaManualDemo').click();
   await page.locator('#listaDouradasManuaisDemo li').first().waitFor();
-  assert.match(await page.locator('#listaDouradasManuaisDemo').innerText(),/Posição #2/);
+  assert.match(await page.locator('#listaDouradasManuaisDemo').innerText(),/Posição #\\d+ · origem administrativa/);
   await page.locator('#centroFinanceiroDemo').selectOption('dourado');
   await page.locator('#abrirFinanceiroDemo').click();
   await page.locator('#dadosFinanceiroDemo').waitFor({state:'visible'});
@@ -387,9 +387,10 @@ async function main(){
    tamanhosPx:[320,360,390,412,768,1024,1366],
    paginasVerificadas:['home','escritorio-participante','loja','admin-financeiro',
     'admin-catalogo','admin-escritorio','admin-cadastro','produto'],
-   celularEComputador:true,douradaCriadaPeloNavegador:true,pedidosCriados:1,
+   celularEComputador:true,douradaCriadaPeloNavegador:true,pedidosCriados:2,
    totalPedidoCentavos:25000,clienteFicticio:true,
    lojaParaEscritorio:true,ativacaoAzulParaVermelho:true,
+   indicacaoManualValidadaPeloNavegador:true,contadoresDaRedeValidados:true,
    semRolagemHorizontal:true,imagens:fs.readdirSync(pasta).filter(x=>x.endsWith('.png'))};
   fs.writeFileSync(path.join(pasta,'resultado.json'),JSON.stringify(relatorio,null,2)+'\n');
   process.stdout.write('MOBILE_LOOP_RESULTADO='+JSON.stringify(relatorio)+'\n');
