@@ -440,3 +440,25 @@ body.loop03-logado{
  .loop03-grade-posicoes{gap:17px}
  .loop03-grade-posicoes .loop03-unidade-posicao>.loop03-cartao-posicao{min-height:203px}
 }
+
+
+/* Tabuleiro em primeiro plano, como na arte aprovada: o motor e as
+   filas ocupam a area principal; explicacoes seguem abaixo e clicaveis. */
+#loop03-tabuleiro>.loop03-titulo-pagina{display:none}
+#loop03-tabuleiro>.loop03-escolha{margin:0 0 12px;padding:8px 13px;min-height:50px}
+#loop03-tabuleiro>.loop03-escolha button{min-height:40px}
+#loop03-tabuleiro .loop03-mapa-grade{margin:0}
+#loop03-tabuleiro .loop03-roda{
+ background:radial-gradient(ellipse at 50% 65%,#37136980,transparent 70%);
+ border-color:#bb8442!important;
+}
+#loop03-tabuleiro .loop03-mapa-grade>.bloco-fila-participante{
+ border-color:#c98b38!important;
+}
+#loop03-tabuleiro .loop03-mapa-grade .loop03-inicial-fila.loop03-a:not(.loop03-dourada){
+ color:#fff!important;
+ text-shadow:0 1px 2px #603b09;
+}
+#loop03-tabuleiro .loop03-mapa-grade .loop03-inicial-fila.loop03-b:not(.loop03-dourada):not(.loop03-azul){
+ color:#101724!important;
+}
