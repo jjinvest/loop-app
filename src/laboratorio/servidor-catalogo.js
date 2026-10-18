@@ -287,6 +287,16 @@ function criarAppAdminLaboratorio({ repositorio, segredo, webhookDemo } = {}) {
   app.get('/admin', somenteLocal, (req, res) => {
     res.sendFile(path.join(__dirname, 'painel-catalogo.html'));
   });
+  // Escritorio da direcao LOOP 0.3: pagina local; APIs administrativas protegidas.
+  app.get('/admin/loop03',somenteLocal,(_req,res)=>{
+    res.sendFile(path.join(__dirname,'admin-loop03.html'));
+  });
+  app.get('/admin/loop03.css',somenteLocal,(_req,res)=>{
+    res.type('text/css').sendFile(path.join(__dirname,'admin-loop03.css'));
+  });
+  app.get('/admin/loop03.js',somenteLocal,(_req,res)=>{
+    res.type('application/javascript').sendFile(path.join(__dirname,'admin-loop03.js'));
+  });
   app.get('/admin/circuit-break-v6', somenteLocal, (_req,res)=>{
     res.sendFile(path.join(__dirname,'circuit-break-v6-demo.html'));
   });
