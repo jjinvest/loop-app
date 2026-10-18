@@ -392,6 +392,32 @@ async function main(){
   assert.equal(await promovida.locator('.loop03-bonequinho-indicacoes').count(),1);
   assert.equal(await page.locator('#mapaFilaBParticipante .loop03-quantidade-a-direita').count(),0);
   await page.screenshot({path:path.join(pasta,'fila-a-contagem-posicao.png'),fullPage:true});
+  // Quatro capturas REAIS da mesma conta ficticia e mesmo layout funcional.
+  // Referencias PNG aprovadas sao arquivos separados, nao estas capturas.
+  const ctxQuadros=await browser.newContext({
+   viewport:{width:1254,height:1100},deviceScaleFactor:1
+  });
+  const quatroAbas=await ctxQuadros.newPage();
+  quatroAbas.on('pageerror',err=>erros.push('painel quatro abas: '+err.message));
+  await quatroAbas.goto(base+'/laboratorio/participante',{waitUntil:'networkidle'});
+  await quatroAbas.locator('#nomeParticipante').fill(titular.nome);
+  await quatroAbas.locator('#senhaParticipante').fill(senha);
+  await quatroAbas.locator('#botaoEntrarParticipante').click();
+  await quatroAbas.locator('#conteudoParticipante').waitFor({state:'visible'});
+  const fotos=[
+   ['home','LOOP_TELA_01_ESCRITORIO_VIRTUAL.png'],
+   ['tabuleiro','LOOP_TELA_02_TABULEIRO.png'],
+   ['posicoes','LOOP_TELA_03_MINHAS_POSICOES.png'],
+   ['rede','LOOP_TELA_04_MINHA_EQUIPE.png']
+  ];
+  for(const [aba,arquivo] of fotos){
+   await quatroAbas.locator('#loop03Sidebar [data-loop03-aba="'+aba+'"]').click();
+   await quatroAbas.locator('#loop03-'+aba).waitFor({state:'visible'});
+   await quatroAbas.waitForTimeout(170);
+   await quatroAbas.screenshot({path:path.join(pasta,arquivo),fullPage:false});
+  }
+  await ctxQuadros.close();
+
 
   // Uma plataforma, não telas exclusivas de telefone: validar desktop real.
   // Mobile: visita também a prévia pública e todos os painéis administrativos.
