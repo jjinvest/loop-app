@@ -7,7 +7,6 @@
  const sair=e('botaoSairParticipante');
  let versao=0;
  let mapaAtual=null;
- let nomeTitular='';
  let cpfConfirmadoAtual=false;
  let convitesValidadosFilaA=[];
  let filtroMapa='resumo';
@@ -162,7 +161,10 @@
    const dados=document.createElement('div');
    dados.className='loop03-fila-identificacao';
    const referencia=elementoPosicao(p,'Posição');
-   referencia.textContent='#'+p.posicaoId+(p.minha?' · Minha: '+nomeTitular:'');
+   // O ID visivel pertence à posicao, sem nome ou numero de indicacoes na B.
+   referencia.textContent='#'+p.posicaoId;
+   referencia.setAttribute('aria-label','#'+p.posicaoId+' · '+nomeFila+
+    (p.minha?' · minha posição':''));
    referencia.classList.add('loop03-numero-titular');
    dados.append(referencia);
    if(filaA){
@@ -278,7 +280,6 @@
   }
  }
   function mostrar(visao){
-  nomeTitular=visao.conta.nome;
   convitesValidadosFilaA=Array.isArray(visao.convitesValidosFilaA)?visao.convitesValidosFilaA:[];
   e('nomeLogadoParticipante').textContent=visao.conta.nome+' — meu resumo';
   const previstos=visao.creditosPrevistosV6;

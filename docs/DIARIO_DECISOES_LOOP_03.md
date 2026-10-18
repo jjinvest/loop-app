@@ -82,3 +82,15 @@ As quatro artes **são referências estáticas aprovadas**, não screenshots do 
 **Implementação base verificada:** commits `693d00d5` (trava por titular no motor), `e4eaf201` (configuração via área administrativa), `aa1865f5` (testes de seis posições e entrada FIFO independente da trava), `93f7fbff` (vaga 6 inicial, testes da B e migração auditada). No commit `93f7fbff`, GitHub Actions de testes e navegador passaram. O escritório do administrador em `/admin/loop03` é somente para laboratório local, não interface pública final.
 
 **Objetivo de controle:** impedir concentração simultânea de PRIORIDADE na A, não limitar os ganhos com base em igualdade artificial. Antes da oferta ao público, assegurar termos transparentes, aviso prévio de mudanças administrativas, testes de abuso e análise jurídica, comercial e econômica.
+
+## Revisao dos menus e separacao de etapas — 18/10/2026
+
+**Última orientação do idealizador:** há **três abas encaminhadas aguardando ajustes finos e mínimos**, além de outras abas ainda não estabelecidas. Ele não enumerou explicitamente neste pedido quais são as três; não rotular arbitrariamente três como prontas. A revisão visual dos menus pelo idealizador ocorrerá depois da consolidação funcional. Critério de aceite: nenhum elemento de menu já descartado, especialmente o antigo “Vzinho” de Ativações, pode voltar por causa de uma imagem de referência antiga.
+
+**Contrato objetivo do menu único do cliente:** Escritório Virtual (home) → Tabuleiro → Minhas Posições → Rede e Equipe (título Minha Equipe) → Financeiro → AKITEMM (link para a loja existente). Perfil é atalho do cabeçalho, não aba adicional na lateral. Ativações NÃO é item de menu, nem página própria: as ações individuais necessárias permanecem dentro de Minhas Posições. A navegação legada permanece oculta. Nunca inferir que a arte estática antiga com ícone de Ativações representa a navegação válida.
+
+**Fila B:** cada linha exibe o número real #ID, sem nomes nem contagem de indicações. A própria posição é realçada por estilo e rótulo acessível. Ordem FIFO preservada, saltando IDs que já saíram para A ou Tabuleiro. A Fila A classifica por convite individual confirmado; regra 3A:1B e trava de uma posição na A por titular continuam, padrão vaga 6.
+
+**Verificações desta rodada:** contrato estático dos destinos e proibição de Ativações em `test/interface-loop-03.test.js`; navegação real pelas cinco telas internas em celular e computador, com uma tela visível por vez e sem menu legado, em `scripts/testar-loja-mobile-browser.js`. Testes do navegador e testes gerais precisam ser aprovados neste commit. Os testes não substituem aprovação estética nem jurídica.
+
+**Próxima revisão:** conferir com o idealizador os ícones, composições e nomes do menu; comparar Escritório Virtual, Tabuleiro, Minhas Posições e Minha Equipe às quatro referências; retomar as abas pendentes (Financeiro, AKITEMM, painel administrativo e integrações) sem presumir que já estão acabadas.

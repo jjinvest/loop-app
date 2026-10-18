@@ -27,6 +27,16 @@ test('LOOP 0.3 integra escritorio real e duas abas sem criar aplicativo paralelo
  assert.match(js,/loop03Giros24/);
  assert.match(js,/loop03Publicacoes/);
  assert.doesNotMatch(js,/id="loop03-ativacoes"|loop03DistribuirIndicacao|loop03AtivacoesLista/);
+ // Seis destinos exatos, uma unica lateral sem ativacoes.
+ const indiceMenu=js.indexOf('<nav aria-label="Áreas do escritório">');
+ assert.ok(indiceMenu>=0);
+ const menu=js.slice(indiceMenu,js.indexOf('</nav>',indiceMenu));
+ const identificadores=[...menu.matchAll(/data-loop03-aba="([^"]+)"|href="(\/loja)"/g)]
+  .map(m=>m[1]||m[2]);
+ assert.deepEqual(identificadores,
+  ['home','tabuleiro','posicoes','rede','financeiro','/loja']);
+ assert.doesNotMatch(menu,/Ativações|Ativacoes|Minhas Ativações/i);
+ assert.match(css,/\.loop03-atalhos-legados\{display:none!important\}/);
  assert.match(js,/loop03-grade-posicoes/);
  assert.match(js,/Sem posição cadastrada/);
  assert.match(js,/loop03-cartao-selo/);
@@ -42,7 +52,8 @@ test('LOOP 0.3 integra escritorio real e duas abas sem criar aplicativo paralelo
  const participante=ler('participante-demo.js');
  assert.match(participante,/simbolo\.textContent=p\.cor==='DOURADO'\?'●':filaA\?'A':'B'/);
  assert.match(participante,/convitesValidadosFilaA\[i\]/);
- assert.match(participante,/p\.minha\?' · Minha: '\+nomeTitular/);
+ assert.match(participante,/referencia\.textContent='#'\+p\.posicaoId;/);
+ assert.doesNotMatch(participante,/Minha: '\+nomeTitular/);
  assert.match(participante,/elementoPosicao\(valor,'Número'\)/);
  assert.doesNotMatch(participante,/nomeDeTerceiro/);
  assert.match(css,/loop03-inicial-fila/);

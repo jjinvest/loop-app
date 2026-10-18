@@ -97,6 +97,21 @@ async function main(){
   assert.equal(await page.locator('.marcos-v6 span').count(),6);
   assert.equal(await page.locator('.marcos-v6 span:nth-child(odd)').count(),3);
   assert.equal(await page.locator('.marcos-v6 span:nth-child(even)').count(),3);
+  const destinos=['home','tabuleiro','posicoes','rede','financeiro','/loja'];
+  assert.deepEqual(await page.locator('#loop03Sidebar nav > *').evaluateAll(nodes=>
+   nodes.map(n=>n.dataset.loop03Aba||n.getAttribute('href'))),destinos);
+  assert.equal(await page.locator('#loop03Sidebar nav').getByText(/Ativações/i).count(),0);
+  assert.equal(await page.locator('.atalhos-participante').isVisible(),false);
+  for(const aba of destinos.slice(0,5)){
+   await page.locator('#loop03Menu').click();
+   await page.locator('#loop03Sidebar [data-loop03-aba="'+aba+'"]').click();
+   await page.locator('#loop03-'+aba).waitFor({state:'visible'});
+   assert.equal(await page.locator('.loop03-pagina:not([hidden])').count(),1);
+   assert.equal(await page.locator('#loop03Sidebar [data-loop03-aba="'+aba+'"]')
+    .getAttribute('aria-current'),'page');
+  }
+  await page.locator('#loop03Menu').click();
+  await page.locator('#loop03Sidebar [data-loop03-aba="home"]').click();
   await page.locator('#loop03Menu').click();
   await page.locator('.loop03-sidebar [data-loop03-aba="posicoes"]').click();
   assert.equal(await page.locator('#loop03OpcoesPosicoes > *').count(),6);
@@ -155,7 +170,10 @@ async function main(){
   await page.locator('#conteudoParticipante').waitFor({state:'visible'});
   await page.locator('#filtroMinhasMapaParticipante').click();
   assert.equal(await page.locator('.linha-minha-demo').count(),1);
-  assert.match(await page.locator('.linha-minha-demo').innerText(),/Minha/);
+  assert.match(await page.locator('.linha-minha-demo .loop03-numero-titular')
+   .innerText(),/^#\d+$/);
+  assert.match(await page.locator('.linha-minha-demo .loop03-numero-titular')
+   .getAttribute('aria-label'),/minha posição/);
   assert.match(await page.locator('.linha-minha-demo').getAttribute('class'),/linha-minha-demo/);
   assert.equal(await page.locator('.linha-minha-demo .posicao-azul').count(),1);
   await page.screenshot({path:path.join(pasta,'escritorio-posicao-azul.png'),fullPage:true});
@@ -251,6 +269,13 @@ async function main(){
   for(const width of [768,1024,1366]){
    await conferirLargura(desktop,width,'escritorio-desktop',{captura:width===1366});
    assert.equal(await desktop.locator('.tabuleiro-vaga-6').count(),1);
+  }
+  for(const aba of ['home','tabuleiro','posicoes','rede','financeiro']){
+   await desktop.locator('#loop03Sidebar [data-loop03-aba="'+aba+'"]').click();
+   assert.equal(await desktop.locator('.loop03-pagina:not([hidden])').count(),1);
+   assert.equal(await desktop.locator('#loop03-'+aba).isVisible(),true);
+   assert.equal(await desktop.locator('#loop03Sidebar nav')
+    .getByText(/Ativações/i).count(),0);
   }
   await desktop.goto(base+'/admin/loop03',{waitUntil:'networkidle'});
   await desktop.locator('#chaveAdminLoop03').fill(admin);
