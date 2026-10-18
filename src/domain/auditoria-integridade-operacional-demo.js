@@ -22,6 +22,11 @@ function auditarIntegridadeOperacionalDemo(ponte){
   'SELECT pedido_id AS pedidoId,posicao_id AS posicaoId,ordem FROM admin_ponte_posicoes_adicionais_demo'
  ).all();
  const manuais=db.prepare('SELECT posicao_id AS posicaoId FROM admin_ponte_douradas_manuais_demo').all();
+ const financiadas=db.prepare(`
+  SELECT posicao_id AS posicaoId,valor_referencia_centavos AS valorCentavos,
+   revisao_valor AS revisaoValor,cofre_origem AS cofreOrigem
+  FROM admin_ponte_douradas_financiadas_demo
+ `).all();
  const desistencias=db.prepare(
   'SELECT posicao_id AS posicaoId,conta_id AS contaId FROM admin_loop_desistencias_vaga6_demo'
  ).all();
@@ -42,6 +47,7 @@ function auditarIntegridadeOperacionalDemo(ponte){
   indiceEsperado.set(p.posicaoId,'compra-demo-'+p.pedidoId+'-'+p.ordem);
  }
  for(const d of manuais)registrar(d.posicaoId,'DOURADA_MANUAL');
+ for(const d of financiadas)registrar(d.posicaoId,'DOURADA_FINANCIADA');
  const inserir=(p,local)=>{
   if(!p)return;
   if(posicoes.has(p.id)){alertar('POSICAO_DUPLICADA_NO_ESTADO',p.id);return;}
@@ -60,6 +66,17 @@ function auditarIntegridadeOperacionalDemo(ponte){
      p.titularOperacional!=='LOOP_EMPRESA'||p.statusAdesao!=='POSICAO_LOOP'||
      p.origemOperacional!=='ADMIN_MANUAL_SEM_COMPRA'||p.geradaSemCompra!==true)
     alertar('DOURADA_MANUAL_ALTERADA',id);
+   if(local==='FILA_A')alertar('DOURADA_MANUAL_PROMOVIDA_INDEVIDAMENTE',id);
+  }else if(origem.tipo==='DOURADA_FINANCIADA'){
+   const lancamento=financiadas.find(v=>v.posicaoId===id);
+   if(p.participanteId!=='LOOP_EMPRESA'||p.empresa!==true||
+     p.titularOperacional!=='LOOP_EMPRESA'||p.statusAdesao!=='POSICAO_LOOP'||
+     p.origemOperacional!=='ADMIN_MANUAL_COM_APORTE_RESERVA_DEMO'||
+     p.geradaSemCompra!==false||
+     p.aporteInternoCentavos!==lancamento.valorCentavos||
+     p.revisaoValorPosicao!==lancamento.revisaoValor||
+     lancamento.cofreOrigem!=='LOOP_DIREITA')
+    alertar('DOURADA_FINANCIADA_DIVERGENTE',id);
    if(local==='FILA_A')alertar('DOURADA_MANUAL_PROMOVIDA_INDEVIDAMENTE',id);
   }else{
    if(p.participanteId!==origem.contaId||p.geradaSemCompra===true)
@@ -103,7 +120,10 @@ function auditarIntegridadeOperacionalDemo(ponte){
   totalAlertas,alertas,alertasTruncados:totalAlertas>alertas.length,
   indicadores:{
    comprasQualificadas:compras.length,posicoesAdicionais:adicionais.length,
-   douradasManuais:manuais.length,desistenciasExpressas:desistencias.length,
+   douradasManuais:manuais.length+financiadas.length,
+   douradasManuaisFinanciadas:financiadas.length,
+   compromissosDouradasCentavos:financiadas.reduce((acc,v)=>acc+v.valorCentavos,0),
+   desistenciasExpressas:desistencias.length,
    posicoesAtivadasRegistradas:aceites.length,
    posicoesComOrigemContabil:origens.size,posicoesIdentificadasNoMotor:posicoes.size,
    ciclosConcluidos:sim.tabuleiro.ciclosConcluidos.length,
