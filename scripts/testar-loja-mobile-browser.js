@@ -198,6 +198,21 @@ async function main(){
    path:path.join(pasta,'tabuleiro-publico-mobile.png')
   });
 
+  // Painel real do proprietário: seleção de vaga protegida por chave local.
+  await page.goto(base+'/admin/loop03',{waitUntil:'networkidle'});
+  await page.locator('#chaveAdminLoop03').fill(admin);
+  await page.locator('#formAcessoAdminLoop03 button[type=submit]').click();
+  await page.locator('#dadosAdminLoop03').waitFor({state:'visible'});
+  assert.equal(await page.locator('#numeroVagaAdmin').innerText(),'5');
+  await page.locator('#vagaAdminLoop03').selectOption('4');
+  await page.locator('#motivoAdminLoop03').fill('Revisão interna da alternância');
+  page.once('dialog',dialog=>dialog.accept());
+  await page.locator('#formRegraAdminLoop03 button[type=submit]').click();
+  await page.locator('#numeroVagaAdmin').getByText('4').waitFor();
+  assert.match(await page.locator('#listaHistoricoAdminLoop03').innerText(),/Vaga 5 → 4/);
+  for(const largura of [320,390,768])await conferirLargura(page,largura,'admin-loop03',{captura:true});
+  await page.screenshot({path:path.join(pasta,'escritorio-administrador-mobile.png'),fullPage:true});
+
   await page.goto(base+'/admin/financeiro-demo',{waitUntil:'networkidle'});
   await page.locator('#chaveFinanceiroDemo').fill(admin);
   await page.locator('#abrirFinanceiroDemo').click();
@@ -237,6 +252,14 @@ async function main(){
    await conferirLargura(desktop,width,'escritorio-desktop',{captura:width===1366});
    assert.equal(await desktop.locator('.tabuleiro-vaga-6').count(),1);
   }
+  await desktop.goto(base+'/admin/loop03',{waitUntil:'networkidle'});
+  await desktop.locator('#chaveAdminLoop03').fill(admin);
+  await desktop.locator('#formAcessoAdminLoop03 button[type=submit]').click();
+  await desktop.locator('#dadosAdminLoop03').waitFor({state:'visible'});
+  assert.equal(await desktop.locator('#numeroVagaAdmin').innerText(),'4');
+  for(const largura of [768,1024,1366])
+   await conferirLargura(desktop,largura,'escritorio-administrador',{captura:largura===1366});
+
   await desktop.goto(base+'/laboratorio/loja',{waitUntil:'networkidle'});
   await desktop.locator('#conteudoLojaLoop').waitFor({state:'visible'});
   for(const width of [768,1024,1366])
