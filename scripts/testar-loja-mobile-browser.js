@@ -383,6 +383,43 @@ async function main(){
    )
   );
   assert.equal(await page.locator('#caixa2LivreFinanceiroDemo').innerText(),'—');
+  // Uma resposta coerente pode preencher o painel, mas nao e dinheiro real.
+  // Se uma nova conferencia falhar, todos os valores antigos SOMEM.
+  const resumoMock={
+   fase:'ATIVO',quantidadeDivergencias:0,
+   cofreDireitaSimuladoCentavos:50000,
+   bonificacoesComprometidasCentavos:2500,
+   reservaDouradasComprometidaCentavos:25000,
+   gestaoPendenteComprometidaCentavos:10000,
+   cofreDireitaDisponivelSimuladoCentavos:12500,
+   cofreCentroRestanteSimuladoCentavos:120000
+  };
+  const urlConcil=base+'/api/admin/circuit-break-v6-demo/ponte/conciliacao';
+  await page.route(urlConcil,rota=>rota.fulfill({
+   status:200,contentType:'application/json',body:JSON.stringify(resumoMock)
+  }));
+  await page.locator('#atualizarCaixa2FinanceiroDemo').click();
+  await page.waitForFunction(()=>
+   document.querySelector('#caixa2LivreFinanceiroDemo')?.textContent==='R$ 125,00' ||
+   document.querySelector('#caixa2LivreFinanceiroDemo')?.textContent==='R$ 125,00'
+  );
+  assert.match(await page.locator('#caixa2BonusFinanceiroDemo').innerText(),/25,00/);
+  assert.match(await page.locator('#caixa2DouradasFinanceiroDemo').innerText(),/250,00/);
+  await page.unroute(urlConcil);
+  await page.route(urlConcil,rota=>rota.fulfill({
+   status:503,contentType:'application/json',body:JSON.stringify({erro:'SALDO_INDISPONIVEL'})
+  }));
+  await page.locator('#atualizarCaixa2FinanceiroDemo').click();
+  await page.getByText(/Não foi possível confirmar o saldo do caixa 2/).waitFor();
+  for(const nome of [
+   '#caixa2BrutoFinanceiroDemo','#caixa2BonusFinanceiroDemo',
+   '#caixa2DouradasFinanceiroDemo','#caixa2GestaoFinanceiroDemo',
+   '#caixa2LivreFinanceiroDemo','#caixa2CapacidadeFinanceiroDemo',
+   '#caixaCentralSeparadoFinanceiroDemo'
+  ])assert.equal(await page.locator(nome).innerText(),'—');
+  await page.unroute(urlConcil);
+  await page.locator('#atualizarCaixa2FinanceiroDemo').click();
+  await page.getByText(/Configure o pré-lançamento fictício/).waitFor();
   // Sem reserva demonstrativa, nem o ADMIN pode criar posicao gratuita.
   await page.locator('#criarDouradaManualDemo').click();
   await page.getByText(/Não foi possível criar:.*Configure o pré-lançamento e a reserva demonstrativa/).waitFor();

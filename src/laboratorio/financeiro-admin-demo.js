@@ -1523,17 +1523,21 @@
   async function carregarResumoCaixa2(){
     const atual=++versaoCaixa2;
     const aviso=el('statusCaixa2FinanceiroDemo');
+    const ids=['caixa2BrutoFinanceiroDemo','caixa2BonusFinanceiroDemo',
+      'caixa2DouradasFinanceiroDemo','caixa2GestaoFinanceiroDemo',
+      'caixa2LivreFinanceiroDemo','caixaCentralSeparadoFinanceiroDemo',
+      'caixa2CapacidadeFinanceiroDemo'];
+    // Saldo antigo nao pode permanecer como disponivel durante falha de
+    // rede, troca de chave, autenticacao recusada ou recarga concorrente.
+    for(const id of ids)el(id).textContent='—';
     if(!token){aviso.textContent='Autenticação administrativa necessária.';return;}
+    aviso.textContent='Conferindo os saldos demonstrativos; nenhuma autorização em andamento.';
     try{
       const [saldo,ref]=await Promise.all([
        requisitar('circuit-break-v6-demo/ponte/conciliacao'),
        requisitar('valor-loop-demo')
       ]);
       if(atual!==versaoCaixa2||!token)return;
-      const ids=['caixa2BrutoFinanceiroDemo','caixa2BonusFinanceiroDemo',
-        'caixa2DouradasFinanceiroDemo','caixa2GestaoFinanceiroDemo',
-        'caixa2LivreFinanceiroDemo','caixaCentralSeparadoFinanceiroDemo',
-        'caixa2CapacidadeFinanceiroDemo'];
       if(saldo.fase==='INATIVO'){
         for(const id of ids)el(id).textContent='—';
         aviso.textContent='Configure o pré-lançamento fictício para visualizar a simulação. Nenhum dinheiro bancário foi confirmado.';
@@ -1558,7 +1562,10 @@
         'DIVERGÊNCIA no caixa demonstrativo: novas operações devem ficar bloqueadas.':
         'Saldo livre = bruto - bonificações - douradas - gestão pendente. Sem banco, PSP ou saque real.';
     }catch(e){
-      if(atual===versaoCaixa2)aviso.textContent='Erro ao conferir caixa 2: '+e.message;
+      if(atual===versaoCaixa2){
+        for(const id of ids)el(id).textContent='—';
+        aviso.textContent='Não foi possível confirmar o saldo do caixa 2. Valores indisponíveis; não autorize nova dourada. '+e.message;
+      }
     }
   }
   async function carregarDouradasManuais(){
