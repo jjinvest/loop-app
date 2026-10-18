@@ -4,7 +4,7 @@
 (()=>{
  const e=id=>document.getElementById(id);
  let selecionada=null, visaoAtual=null, abaAtual='home', destinoInicialTratado=false;
- const paginas=['home','tabuleiro','ativacoes','posicoes','rede','financeiro','perfil'];
+ const paginas=['home','tabuleiro','posicoes','rede','financeiro','perfil'];
  function montar(){
   const root=e('conteudoParticipante');
   if(!root||e('loop03Shell'))return;
@@ -24,7 +24,7 @@
     </nav>
     <div class="loop03-identidade" aria-label="Identificação visual, sem ação">
      <div class="loop03-avatar" aria-hidden="true">◉</div>
-     <div><strong id="loop03NomeBaixo">Participante</strong><small id="loop03SituacaoBaixo">Selecione sua ativação</small></div>
+     <div><strong id="loop03NomeBaixo">Participante</strong><small id="loop03SituacaoBaixo">Selecione sua posição</small></div>
     </div>
     <button id="loop03Sair" type="button" class="loop03-sair">Sair da conta de teste</button>
    </aside>
@@ -44,9 +44,9 @@
      </div>
     </div>
     <div class="loop03-indicadores" aria-label="Resumo da conta">
-     <button data-loop03-aba="posicoes" type="button" class="loop03-indicador"><small>ϟ POSIÇÕES</small><strong id="loop03TotalAtivacoes">0/6</strong><span>Minhas posições</span></button>
+     <button data-loop03-aba="posicoes" type="button" class="loop03-indicador"><small>ϟ POSIÇÕES</small><strong id="loop03TotalAtivacoes">6/6</strong><span>Minhas posições</span></button>
      <div class="loop03-indicador"><small>◷ GIROS</small><strong id="loop03Giros24">—</strong><span>Últimas 24 horas · aguardando indicador</span></div>
-     <button data-loop03-aba="posicoes" type="button" class="loop03-indicador"><small>♙ NÚMERO</small><strong id="loop03Numero">—</strong><span id="loop03NumeroDetalhe">Escolha uma ativação</span></button>
+     <button data-loop03-aba="posicoes" type="button" class="loop03-indicador"><small>♙ NÚMERO</small><strong id="loop03Numero">#0000</strong><span id="loop03NumeroDetalhe">Escolha uma posição</span></button>
      <button data-loop03-aba="financeiro" type="button" class="loop03-indicador"><small>▥ FINANCEIRO</small><strong id="loop03Saldo">R$ 0,00</strong><span>Saldo fictício disponível</span></button>
     </div>
     <div class="loop03-paginas">
@@ -56,25 +56,18 @@
      </section>
      <section id="loop03-tabuleiro" class="loop03-pagina" aria-label="Tabuleiro">
       <header class="loop03-titulo-pagina"><div><small>LOOP · MOTOR DE FILAS</small><h2>Tabuleiro LOOP 0.3</h2></div><span class="loop03-luz">● Ciclo em andamento</span></header>
-      <div class="loop03-escolha"><span id="loop03EscolhaTexto">Visão geral, nenhuma ativação escolhida</span><button id="loop03EscolherNoTabuleiro" type="button">Escolher minha ativação</button></div>
-      <div id="loop03EscolhaPainel" class="loop03-escolha-painel" hidden><h3>Qual ativação você quer acompanhar?</h3><div id="loop03AtivacoesTabuleiro" class="loop03-opcoes"></div></div>
-     </section>
-     <section id="loop03-ativacoes" class="loop03-pagina" aria-label="Minhas Ativações">
-      <header class="loop03-titulo-pagina"><div><small>COMPRAS E CADASTRO</small><h2>Minhas Ativações</h2></div><a class="loop03-link-compra" href="/loja">Comprar na AKITEMM ↗</a></header>
-      <div id="loop03AtivacoesLista" class="loop03-opcoes"></div>
-      <h3>Escolher ativação para receber uma indicação</h3><p>Prévia de escolha: o encaminhamento somente ficará disponível depois da validação da indicação e integração ao motor.</p>
-      <div id="loop03DistribuirIndicacao" class="loop03-opcoes" role="radiogroup" aria-label="Ativação para indicação validada"></div><p id="loop03DistribuirAviso" role="status">Aguardando uma indicação validada para distribuir.</p>
-      <div class="loop03-alerta-indicacoes"><span aria-hidden="true">♙</span><div><strong>Novas indicações recebidas</strong><p>Cadastros pelo seu link aguardando verificação; distribuição entre ativações será integrada ao motor.</p></div><strong id="loop03Pendentes">0</strong></div>
+      <div class="loop03-escolha"><span id="loop03EscolhaTexto">Visão geral, nenhuma posição escolhida</span><button id="loop03EscolherNoTabuleiro" type="button">Escolher minha posição</button></div>
+      <div id="loop03EscolhaPainel" class="loop03-escolha-painel" hidden><h3>Qual posição você quer acompanhar?</h3><div id="loop03AtivacoesTabuleiro" class="loop03-opcoes"></div></div>
      </section>
      <section id="loop03-posicoes" class="loop03-pagina" aria-label="Minhas Posições">
       <header class="loop03-titulo-pagina"><div><small>ACOMPANHAMENTO INDIVIDUAL</small><h2>Minhas Posições</h2></div></header>
-      <p>Escolha uma ativação para ver o número, a fila e localizar sua posição no tabuleiro.</p>
-      <div id="loop03OpcoesPosicoes" class="loop03-opcoes"></div>
+      <p>Selecione uma posição para acompanhar seu número, fila e indicações.</p>
+      <div id="loop03OpcoesPosicoes" class="loop03-opcoes loop03-grade-posicoes"></div>
       <div id="loop03DetalhesPosicao" class="loop03-detalhes" aria-live="polite">Nenhuma posição selecionada.</div>
      </section>
-     <section id="loop03-rede" class="loop03-pagina" aria-label="Rede e Equipe"><header class="loop03-titulo-pagina"><div><small>INDICAÇÕES</small><h2>Minha Equipe</h2></div></header><div id="loop03ListaEquipe" class="loop03-opcoes" aria-live="polite"></div></section>
+     <section id="loop03-rede" class="loop03-pagina" aria-label="Rede e Equipe"><header class="loop03-titulo-pagina"><div><small>INDICAÇÕES</small><h2>Minha Equipe</h2><p>Pessoas que entraram pelo seu link</p></div></header><div id="loop03ListaEquipe" class="loop03-opcoes" aria-live="polite"></div></section>
      <section id="loop03-financeiro" class="loop03-pagina" aria-label="Financeiro"><header class="loop03-titulo-pagina"><div><small>EXTRATO E SAQUES</small><h2>Financeiro</h2></div></header></section>
-     <section id="loop03-perfil" class="loop03-pagina" aria-label="Meu perfil"><header class="loop03-titulo-pagina"><div><small>CADASTRO</small><h2>Meu perfil</h2></div></header><p>Atualização de foto, telefone e e-mail ainda será integrada. A área de CPF fictício e aceite permanece em Minhas Ativações.</p></section>
+     <section id="loop03-perfil" class="loop03-pagina" aria-label="Meu perfil"><header class="loop03-titulo-pagina"><div><small>CADASTRO</small><h2>Meu perfil</h2></div></header><p>Atualização de foto, telefone e e-mail ainda será integrada. A confirmação individual e o CPF fictício ficam em Minhas Posições.</p></section>
     </div>
    </div>`;
   root.prepend(shell);
@@ -200,7 +193,7 @@
   alvo.replaceChildren();
   const titulo=document.createElement('h3');titulo.textContent='Posição nº '+p.posicaoId;
   const info=document.createElement('p');
-  info.textContent=statusPosicao(p)+' · '+(p.statusAdesao==='PENDENTE'?'Aguardando CPF e termos':'Ativação confirmada no laboratório');
+  info.textContent=statusPosicao(p)+' · '+(p.statusAdesao==='PENDENTE'?'Aguardando confirmação individual':'Posição confirmada no laboratório');
   const ir=document.createElement('button');ir.type='button';
   ir.textContent='Localizar no tabuleiro';ir.addEventListener('click',()=>abrir('tabuleiro'));
   alvo.append(titulo,info,ir);
@@ -224,54 +217,54 @@
   e('loop03BoasVindas').textContent='Bem-vindo, '+nome.split(/\s+/)[0]+'!';
   e('loop03PerfilTopo').textContent=nome+' ⚙';
   const n=visao.posicoes.length;
-  e('loop03TotalAtivacoes').textContent=n+'/'+visao.limitePosicoesAtivas;
+  e('loop03TotalAtivacoes').textContent='6/'+visao.limitePosicoesAtivas;
   const bonus=visao.saquesSimulados?.bonusDisponivelSimuladoCentavos||0;
   e('loop03Giros24').textContent=Number.isSafeInteger(visao.girosUltimas24Horas)?String(visao.girosUltimas24Horas):'—';
   e('loop03Saldo').textContent=(bonus/100).toLocaleString('pt-BR',{style:'currency',currency:'BRL'});
-  // Cadastros pendentes de validacao; distribuicao de indicacoes ainda nao opera.
-  e('loop03Pendentes').textContent=String(visao.indicacoes?.cadastrosPendentes||0);
   const etapa=visao.progressoCiclo?.eventosValidos;
   for(const [i,m] of [...document.querySelectorAll('.marcos-v6 > span')].entries()){
    m.classList.toggle('loop03-aceso',Number.isSafeInteger(etapa)&&i<etapa);
    m.setAttribute('aria-label','Evento '+(i+1)+': '+
     (!Number.isSafeInteger(etapa)?'andamento ainda nao disponivel':i<etapa?'registrado':'aguardando'));
   }
-  const destino=e('loop03DistribuirIndicacao');destino.replaceChildren();
-  visao.posicoes.forEach((p,i)=>{
-   const rotulo=document.createElement('label');rotulo.className='loop03-opcao';
-   const escolha=document.createElement('input');escolha.type='radio';
-   escolha.name='loop03DistribuirRascunho';escolha.value=String(p.posicaoId);
-   escolha.addEventListener('change',()=>{
-    e('loop03DistribuirAviso').textContent='Ativação '+(i+1)+
-     ' · '+statusPosicao(p)+' · Nº '+p.posicaoId+
-     ' selecionada na prévia. Nenhuma indicação foi movimentada.';
-   });
-   const titulo=document.createElement('strong');titulo.textContent='Ativação '+(i+1);
-   const detalhes=document.createElement('small');detalhes.textContent=statusPosicao(p)+' · Nº '+p.posicaoId;
-   rotulo.append(escolha,titulo,detalhes);destino.append(rotulo);
-  });
-  if(!n)e('loop03DistribuirAviso').textContent='Não existem ativações elegíveis nesta conta.';
-  for(const id of ['loop03AtivacoesLista','loop03AtivacoesTabuleiro','loop03OpcoesPosicoes']){
-   const alvo=e(id);alvo.replaceChildren();
-   if(!n){const p=document.createElement('p');p.textContent='Você ainda não possui ativações nesta conta.';alvo.append(p);}
-   visao.posicoes.forEach((p,i)=>{
-    const b=document.createElement('button');
-    b.type='button';b.className='loop03-opcao';
-    b.dataset.loop03Posicao=String(p.posicaoId);
-    b.setAttribute('aria-pressed',String(p.posicaoId===selecionada));
-    const titulo=document.createElement('strong');
-    titulo.textContent='Posição '+(i+1);
-    const subtitulo=document.createElement('small');
-    subtitulo.textContent=statusPosicao(p)+' · Nº '+p.posicaoId+
-      ' · '+(p.indicacoesRecebidas||0)+' indicação(ões)'+
-      (p.statusAdesao==='PENDENTE'?' · 🔴 Aguardando confirmação':'');
-    b.append(titulo,subtitulo);
-    b.addEventListener('click',()=>{
-     selecionar(p,id==='loop03AtivacoesTabuleiro');
-     if(id==='loop03AtivacoesTabuleiro')e('loop03EscolhaPainel').hidden=true;
-    });
-    alvo.append(b);
-   });
+  // Opcoes existentes do titular para localizar a sua posicao no Tabuleiro.
+  const opcoesTabuleiro=e('loop03AtivacoesTabuleiro');
+  opcoesTabuleiro.replaceChildren();
+  for(const [indice,p] of visao.posicoes.entries()){
+   const botao=document.createElement('button');botao.type='button';
+   botao.className='loop03-opcao';botao.dataset.loop03Posicao=String(p.posicaoId);
+   const titulo=document.createElement('strong');titulo.textContent='Posição '+(indice+1)+' · #'+p.posicaoId;
+   const detalhe=document.createElement('small');detalhe.textContent=statusPosicao(p);
+   botao.append(titulo,detalhe);
+   botao.addEventListener('click',()=>{selecionar(p,true);e('loop03EscolhaPainel').hidden=true;});
+   opcoesTabuleiro.append(botao);
+  }
+  // Exibir seis ESPACOS fixos, sem criar posicoes ficticias para completar a grade.
+  const cartoes=e('loop03OpcoesPosicoes');cartoes.replaceChildren();
+  for(let indice=0;indice<6;indice++){
+   const p=visao.posicoes[indice];
+   if(!p){
+    const vazio=document.createElement('div');vazio.className='loop03-opcao loop03-posicao-vazia';
+    const titulo=document.createElement('strong');titulo.textContent='Posição '+(indice+1);
+    const situacao=document.createElement('small');situacao.textContent='Sem posição · Espaço disponível';
+    vazio.append(titulo,situacao);cartoes.append(vazio);continue;
+   }
+   const botao=document.createElement('button');botao.type='button';
+   botao.className='loop03-opcao';botao.dataset.loop03Posicao=String(p.posicaoId);
+   botao.setAttribute('aria-pressed',String(p.posicaoId===selecionada));
+   const titulo=document.createElement('strong');titulo.textContent='Posição '+(indice+1)+' · #'+p.posicaoId;
+   const descricao=document.createElement('small');
+   descricao.textContent=statusPosicao(p)+' · '+(p.statusAdesao==='PENDENTE'?'Pendente':'Confirmada')+
+    ' · '+(p.indicacoesRecebidas||0)+' indicação(ões) vinculada(s)';
+   botao.append(titulo,descricao);
+   if(p.statusAdesao==='PENDENTE'){
+    const ponto=document.createElement('span');ponto.className='loop03-pendencia-ponto';
+    ponto.title='Confirmação individual pendente';
+    ponto.setAttribute('aria-label','Posição aguardando confirmação');
+    botao.append(ponto);
+   }
+   botao.addEventListener('click',()=>selecionar(p));
+   cartoes.append(botao);
   }
   const equipes=e('loop03ListaEquipe');equipes.replaceChildren();
   for(const pessoa of visao.equipe||[]){
@@ -341,7 +334,7 @@
    selecionada=null;
    e('loop03Numero').textContent='#0000';
    e('loop03NumeroDetalhe').textContent='Escolha uma posição';
-   e('loop03EscolhaTexto').textContent='Visão geral, nenhuma ativação escolhida';
+   e('loop03EscolhaTexto').textContent='Visão geral, nenhuma posição escolhida';
    e('loop03SituacaoBaixo').textContent='Nenhuma posição selecionada';
    e('loop03DetalhesPosicao').textContent='Selecione uma posição acima.';
    const caixa=e('secaoAtivacaoParticipante');if(caixa)caixa.hidden=true;

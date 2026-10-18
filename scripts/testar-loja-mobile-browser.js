@@ -98,6 +98,11 @@ async function main(){
   assert.equal(await page.locator('.marcos-v6 span:nth-child(odd)').count(),3);
   assert.equal(await page.locator('.marcos-v6 span:nth-child(even)').count(),3);
   await page.locator('#loop03Menu').click();
+  await page.locator('.loop03-sidebar [data-loop03-aba="posicoes"]').click();
+  assert.equal(await page.locator('#loop03OpcoesPosicoes > *').count(),6);
+  assert.equal(await page.locator('#loop03Numero').innerText(),'#0000');
+  assert.equal(await page.locator('#loop03TotalAtivacoes').innerText(),'6/6');
+  await page.locator('#loop03Menu').click();
   await page.locator('.loop03-sidebar [data-loop03-aba="tabuleiro"]').click();
   await page.locator('#filtroTodasMapaParticipante').click();
   assert.equal(await page.locator('#filtroTodasMapaParticipante').getAttribute('aria-pressed'),'true');
@@ -157,11 +162,17 @@ async function main(){
 
   await page.locator('#loop03Menu').click();
   await page.locator('.loop03-sidebar [data-loop03-aba="posicoes"]').click();
+  assert.equal(await page.locator('#loop03OpcoesPosicoes > *').count(),6);
+  assert.equal(await page.locator('#loop03OpcoesPosicoes .loop03-posicao-vazia').count(),5);
+  assert.equal(await page.locator('#loop03OpcoesPosicoes .loop03-pendencia-ponto').count(),1);
   await page.locator('#loop03OpcoesPosicoes [data-loop03-posicao]').first().click();
+  assert.equal(await page.locator('#loop03TotalAtivacoes').innerText(),'1/6');
+  assert.equal(await page.locator('#loop03Numero').innerText(),'#1');
   await page.locator('#cpfFicticioParticipante').fill('11144477735');
   await page.locator('#aceiteTermosParticipante').check();
   await page.locator('#confirmarAtivacaoParticipante').click();
   await page.locator('#secaoAtivacaoParticipante').waitFor({state:'hidden'});
+  assert.equal(await page.locator('#loop03OpcoesPosicoes .loop03-pendencia-ponto').count(),0);
   assert.equal(await page.locator('.linha-minha-demo .posicao-vermelho').count(),1);
   await page.screenshot({path:path.join(pasta,'escritorio-posicao-ativada.png'),fullPage:true});
 

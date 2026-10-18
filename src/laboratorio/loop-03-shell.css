@@ -132,3 +132,9 @@ button.loop03-indicador:hover{border-color:#dfb15c;box-shadow:0 0 16px #e3b55338
  .loop03-mapa-grade .loop03-numero-titular{font-size:.74rem}
  .loop03-mapa-grade .loop03-quantidade-convites{font-size:.64rem}
 }
+
+/* Somente os seis cartões de Minhas Posições; Tabuleiro não foi redesenhado. */
+.loop03-grade-posicoes .loop03-opcao{position:relative;min-height:125px;padding-bottom:30px}
+.loop03-grade-posicoes .loop03-posicao-vazia{border-style:dashed;opacity:.76;cursor:default}
+.loop03-grade-posicoes .loop03-pendencia-ponto{position:absolute;bottom:10px;left:50%;transform:translateX(-50%);width:11px;height:11px;border-radius:50%;background:#eb364e;box-shadow:0 0 8px #ff334d99}
+@media(max-width:520px){.loop03-grade-posicoes .loop03-opcao{min-height:112px}}

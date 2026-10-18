@@ -15,7 +15,7 @@ test('LOOP 0.3 integra escritorio real e duas abas sem criar aplicativo paralelo
  const css=ler('loop-03-shell.css');
  assert.match(html,/\/laboratorio\/loop-03-shell.js/);
  assert.match(html,/\/laboratorio\/loop-03-shell.css/);
- for(const area of ['home','tabuleiro','ativacoes','posicoes','rede','financeiro']){
+ for(const area of ['home','tabuleiro','posicoes','rede','financeiro']){
   assert.match(js,new RegExp('id="loop03-'+area+'"'));
  }
  assert.match(js,/LOOP <span>0\.3<\/span>/);
@@ -24,8 +24,11 @@ test('LOOP 0.3 integra escritorio real e duas abas sem criar aplicativo paralelo
  assert.match(js,/Giros/);
  assert.match(js,/loop03Giros24/);
  assert.match(js,/loop03Publicacoes/);
- assert.match(js,/loop03DistribuirIndicacao/);
- assert.match(js,/Nenhuma indicação foi movimentada/);
+ assert.doesNotMatch(js,/id="loop03-ativacoes"|loop03DistribuirIndicacao|loop03AtivacoesLista/);
+ assert.match(js,/loop03-grade-posicoes/);
+ assert.match(js,/Sem posição · Espaço disponível/);
+ assert.match(js,/loop03-pendencia-ponto/);
+ assert.match(js,/id="loop03Numero">#0000/);
  assert.match(js,/window\.Loop03Shell/);
  assert.match(css,/loop03-mapa-grade/);
  assert.match(css,/loop03-iluminada/);
