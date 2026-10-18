@@ -3,6 +3,7 @@
 // A regra ordinaria de cada produto e preservada fora do periodo da campanha.
 function erro(codigo){const e=new Error(codigo);e.codigo=codigo;return e;}
 const ID=/^[a-z0-9][a-z0-9-]{2,69}$/;
+const dataValida=d=>typeof d==='string'&&/^\d{4}-\d{2}-\d{2}$/.test(d)&&!Number.isNaN(Date.parse(d))&&new Date(d+'T00:00:00Z').toISOString().slice(0,10)===d;
 class EventosPromocionaisLoopDemoSQLite {
  constructor({catalogo,publicacoes,configuracaoValor,relogio=()=>new Date().toISOString()}={}){
   if(!catalogo?.banco||publicacoes?.banco!==catalogo.banco||
@@ -17,6 +18,7 @@ class EventosPromocionaisLoopDemoSQLite {
       quantidade_minima INTEGER NOT NULL CHECK(quantidade_minima BETWEEN 1 AND 100),
       posicoes INTEGER NOT NULL CHECK(posicoes BETWEEN 1 AND 6),
       referencia_no_inicio INTEGER NOT NULL CHECK(referencia_no_inicio>0),
+      data_inicio TEXT,data_fim TEXT CHECK(data_inicio<=data_fim),
       estado TEXT NOT NULL CHECK(estado IN ('ATIVO','ENCERRADO')),
       publicacao_id INTEGER NOT NULL REFERENCES loop_home_publicacoes_demo(id),
       criado_em TEXT NOT NULL,encerrado_em TEXT
@@ -35,23 +37,31 @@ class EventosPromocionaisLoopDemoSQLite {
       BEFORE DELETE ON loop_evento_especial_historico_demo
       BEGIN SELECT RAISE(ABORT,'historico imutavel'); END;
   `);
+  const col=this.banco.prepare('PRAGMA table_info(loop_eventos_comerciais_especiais_demo)').all().map(p=>p.name);
+  if(!col.includes('data_inicio'))this.banco.exec('ALTER TABLE loop_eventos_comerciais_especiais_demo ADD COLUMN data_inicio TEXT');
+  if(!col.includes('data_fim'))this.banco.exec('ALTER TABLE loop_eventos_comerciais_especiais_demo ADD COLUMN data_fim TEXT');
  }
  listar(){
   return this.banco.prepare(`
    SELECT evento_id AS eventoId,produto_id AS produtoId,titulo,descricao,
     quantidade_minima AS quantidadeMinimaLoop,
     posicoes AS posicoesPorPedidoLoop,referencia_no_inicio AS referenciaNoInicioCentavos,
+    data_inicio AS dataInicio,data_fim AS dataFim,
     estado,publicacao_id AS publicacaoId,criado_em AS criadoEm,encerrado_em AS encerradoEm
    FROM loop_eventos_comerciais_especiais_demo ORDER BY criado_em DESC,evento_id DESC LIMIT 100
   `).all();
  }
  consultarProduto(produtoId){
   return this.banco.prepare(`
-   SELECT evento_id AS eventoId,quantidade_minima AS quantidadeMinimaLoop,
+   SELECT evento_id AS eventoId,titulo,descricao,
+    data_inicio AS dataInicio,data_fim AS dataFim,
+    quantidade_minima AS quantidadeMinimaLoop,
     posicoes AS posicoesPorPedidoLoop
    FROM loop_eventos_comerciais_especiais_demo
    WHERE produto_id=? AND estado='ATIVO'
-  `).get(produtoId)||null;
+    AND (data_inicio IS NULL OR data_inicio<=?)
+    AND (data_fim IS NULL OR data_fim>=?)
+  `).get(produtoId,this.relogio().slice(0,10),this.relogio().slice(0,10))||null;
  }
  historico(eventoId){
   if(typeof eventoId!=='string'||!ID.test(eventoId))throw erro('EVENTO_INVALIDO');
@@ -60,11 +70,12 @@ class EventosPromocionaisLoopDemoSQLite {
    WHERE evento_id=? ORDER BY sequencia
   `).all(eventoId);
  }
- criar({eventoId,produtoId,titulo,descricao,quantidadeMinimaLoop,posicoesPorPedidoLoop}={}){
+ criar({eventoId,produtoId,titulo,descricao,quantidadeMinimaLoop,posicoesPorPedidoLoop,dataInicio,dataFim}={}){
   if(typeof eventoId!=='string'||!ID.test(eventoId)||
      typeof produtoId!=='string'||!ID.test(produtoId)||
      typeof titulo!=='string'||titulo.trim().length<5||titulo.length>90||
      typeof descricao!=='string'||descricao.trim().length<8||descricao.length>450||
+     !dataValida(dataInicio)||!dataValida(dataFim)||dataInicio>dataFim||dataFim<this.relogio().slice(0,10)||
      !Number.isSafeInteger(quantidadeMinimaLoop)||quantidadeMinimaLoop<1||quantidadeMinimaLoop>100||
      !Number.isSafeInteger(posicoesPorPedidoLoop)||posicoesPorPedidoLoop<1||posicoesPorPedidoLoop>6)
     throw erro('EVENTO_INVALIDO');
@@ -80,16 +91,16 @@ class EventosPromocionaisLoopDemoSQLite {
   try{
    if(this.banco.prepare('SELECT 1 FROM loop_eventos_comerciais_especiais_demo WHERE evento_id=?').get(eventoId))
     throw erro('EVENTO_JA_EXISTE');
-   if(this.consultarProduto(produtoId))throw erro('EVENTO_ATIVO_NO_PRODUTO');
+   if(this.banco.prepare("SELECT 1 FROM loop_eventos_comerciais_especiais_demo WHERE produto_id=? AND estado='ATIVO' AND (data_fim IS NULL OR data_fim>=?)").get(produtoId,this.relogio().slice(0,10)))throw erro('EVENTO_ATIVO_NO_PRODUTO');
    const pub=this.publicacoes.publicar({tipo:'EVENTO',titulo,descricao,linkDestino:'/loja'});
    const agora=this.relogio();
    this.banco.prepare(`
     INSERT INTO loop_eventos_comerciais_especiais_demo
      (evento_id,produto_id,titulo,descricao,quantidade_minima,posicoes,referencia_no_inicio,
-      estado,publicacao_id,criado_em)
-    VALUES(?,?,?,?,?,?,?,'ATIVO',?,?)
+      data_inicio,data_fim,estado,publicacao_id,criado_em)
+    VALUES(?,?,?,?,?,?,?,?,?,'ATIVO',?,?)
    `).run(eventoId,produtoId,titulo.trim(),descricao.trim(),quantidadeMinimaLoop,
-     posicoesPorPedidoLoop,referencia,pub.id,agora);
+     posicoesPorPedidoLoop,referencia,dataInicio,dataFim,pub.id,agora);
    this.banco.prepare(`
     INSERT INTO loop_evento_especial_historico_demo(evento_id,acao,registrado_em)
     VALUES(?,'CRIADO',?)
