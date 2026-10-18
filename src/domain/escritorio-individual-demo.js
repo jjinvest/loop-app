@@ -111,6 +111,14 @@ class EscritorioIndividualDemo{
     atribuicaoPendente:!!c.compraConfirmadaEm&&!!c.posicaoAtivada&&
      c.posicaoAtribuidaId===null};
   });
+  // Um indicado com compra confirmada = uma indicacao disponivel,
+  // independentemente de quantas posicoes ele mesmo tenha comprado.
+  const indicacoesValidas=equipe.filter(p=>p.situacao!=='PENDENTE');
+  const totalPosicoes=indicacoesValidas.length;
+  const jaDistribuidas=indicacoesValidas.filter(p=>p.posicaoAtribuidaId!==null).length;
+  const aDistribuir=totalPosicoes-jaDistribuidas;
+  const aguardandoAtivacao=indicacoesValidas.filter(
+   p=>p.situacao==='AGUARDANDO_CONFIRMACAO'&&p.posicaoAtribuidaId===null).length;
   const encerradas=[simulador.tabuleiro.centro,...simulador.tabuleiro.vagas]
    .filter(p=>p&&p.participanteId===contaId&&p.statusAdesao==='PRAZO_ENCERRADO').length;
   const desistidas=[simulador.tabuleiro.centro,...simulador.tabuleiro.vagas]
@@ -199,11 +207,12 @@ class EscritorioIndividualDemo{
     return {...p,...referencia,indicacoesRecebidas:vinculos};
    }).sort((a,b)=>a.posicaoId-b.posicaoId),
    mapaCores,equipe,
-   // Contagem da fila A vem dos convites VALIDADOS pelo motor; sem dados
-   // pessoais de terceiros. O indice segue rigorosamente a ordem da fila A.
+   contadoresRede:{totalPosicoes,aDistribuir,jaDistribuidas,aguardandoAtivacao},
+   // No modo manual, contagem da A SEMPRE POR POSICAO; nunca total do link.
    convitesValidosFilaA:simulador.filas.filaA.map(p=>
     p.indicacoesVinculadas ??
-     simulador.filas.informacoesParticipante(p.participanteId).quantidade),
+     (this.ponte.atribuicaoManualPorPosicao?0:
+      simulador.filas.informacoesParticipante(p.participanteId).quantidade)),
    // Eventos simulados do CENTRO ATUAL; nao comprovam credito financeiro.
    progressoCiclo:{eventosValidos:simulador.tabuleiro.vendasDoCiclo.length,
     totalEventos:6,modo:'LABORATORIO_SEM_PAGAMENTOS'},

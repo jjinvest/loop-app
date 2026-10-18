@@ -64,7 +64,14 @@
       <div id="loop03OpcoesPosicoes" class="loop03-opcoes loop03-grade-posicoes"></div>
       <div id="loop03DetalhesPosicao" class="loop03-detalhes" aria-live="polite">Nenhuma posição selecionada.</div>
      </section>
-     <section id="loop03-rede" class="loop03-pagina" aria-label="Rede e Equipe"><header class="loop03-titulo-pagina"><div><small>INDICAÇÕES</small><h2>Minha Equipe</h2><p>Pessoas que entraram pelo seu link</p></div></header><div id="loop03ListaEquipe" class="loop03-opcoes" aria-live="polite"></div></section>
+     <section id="loop03-rede" class="loop03-pagina" aria-label="Rede e Equipe">
+      <header class="loop03-titulo-pagina loop03-cabecalho-equipe">
+       <div class="loop03-contador-rede loop03-contador-total"><small>TOTAL DE POSIÇÕES</small><strong id="loop03RedeTotalPosicoes">0</strong><span>Indicações confirmadas</span></div>
+       <div class="loop03-titulo-equipe"><small>INDICAÇÕES</small><h2>Minha Equipe</h2><p>Pessoas que entraram pelo seu link</p></div>
+       <div class="loop03-contador-rede loop03-contador-pendentes"><small>POSIÇÕES A DISTRIBUIR</small><strong id="loop03RedeADistribuir">0</strong><span>Aguardando sua escolha</span></div>
+      </header>
+      <div id="loop03ListaEquipe" class="loop03-opcoes" aria-live="polite"></div>
+     </section>
      <section id="loop03-financeiro" class="loop03-pagina" aria-label="Financeiro"><header class="loop03-titulo-pagina"><div><small>EXTRATO E SAQUES</small><h2>Financeiro</h2></div></header></section>
      <section id="loop03-perfil" class="loop03-pagina" aria-label="Meu perfil"><header class="loop03-titulo-pagina"><div><small>CADASTRO</small><h2>Meu perfil</h2></div></header><p>Atualização de foto, telefone e e-mail ainda será integrada. A confirmação individual e o CPF fictício ficam em Minhas Posições.</p></section>
     </div>
@@ -284,6 +291,10 @@
    if(p)cartao.addEventListener('click',()=>selecionar(p));
    cartoes.append(cartao);
   }
+  // A esquerda o total so aumenta; a direita somente os vinculos ainda nao
+  // atribuidos manualmente (nunca auto-repassados pelo sistema).
+  e('loop03RedeTotalPosicoes').textContent=String(visao.contadoresRede?.totalPosicoes??0);
+  e('loop03RedeADistribuir').textContent=String(visao.contadoresRede?.aDistribuir??0);
   const equipes=e('loop03ListaEquipe');equipes.replaceChildren();
   for(const pessoa of visao.equipe||[]){
    const cartao=document.createElement('div');cartao.className='loop03-opcao loop03-equipe-linha';

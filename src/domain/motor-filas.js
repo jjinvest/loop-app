@@ -61,8 +61,8 @@ class MotorFilas {
     this.filaA.sort((a, b) => {
       const na = this.informacoesParticipante(a.participanteId);
       const nb = this.informacoesParticipante(b.participanteId);
-      const qa = a.indicacoesVinculadas ?? na.quantidade;
-      const qb = b.indicacoesVinculadas ?? nb.quantidade;
+      const qa = a.indicacoesVinculadas ?? (this.travaPromocaoAtiva?0:na.quantidade);
+      const qb = b.indicacoesVinculadas ?? (this.travaPromocaoAtiva?0:nb.quantidade);
       return (qb - qa)
         || String(a.ultimoConvitePosicaoEm ?? na.ultimoConviteEm).localeCompare(
           String(b.ultimoConvitePosicaoEm ?? nb.ultimoConviteEm))

@@ -156,7 +156,12 @@
    const simbolo=document.createElement('span');
    simbolo.className='ordem-fila-demo loop03-inicial-fila'+(filaA?' loop03-a':' loop03-b');
    if(p.cor==='DOURADO')simbolo.classList.add('loop03-dourada');
-   simbolo.textContent=p.cor==='DOURADO'?'●':filaA?'A':'B';
+   if(p.cor==='AZUL'&&filaA){
+    throw new Error('POSICAO_AZUL_NAO_PODE_ENTRAR_NA_FILA_A');
+   }
+   if(p.cor==='AZUL')simbolo.classList.add('loop03-azul');
+   // Bola dourada SEM letra; letra A/B mora DENTRO da propria bola.
+   simbolo.textContent=p.cor==='DOURADO'?'':filaA?'A':'B';
    simbolo.setAttribute('aria-label',(i+1)+'ª posição na '+nomeFila);
    const dados=document.createElement('div');
    dados.className='loop03-fila-identificacao';
@@ -166,15 +171,34 @@
    referencia.setAttribute('aria-label','#'+p.posicaoId+' · '+nomeFila+
     (p.minha?' · minha posição':''));
    referencia.classList.add('loop03-numero-titular');
+   // Ordem da A: [bola amarela com A branco] [#ID] [N indicacao(oes)] [boneco amarelo].
+   // Na B: [bola branca com B preto] [#ID]. Nomes nunca entram na B.
    dados.append(referencia);
    if(filaA){
-    const quantidade=document.createElement('small');
-    quantidade.className='loop03-quantidade-convites';
     const qt=convitesValidadosFilaA[i];
+    const quantidade=document.createElement('span');
+    quantidade.className='loop03-quantidade-convites loop03-quantidade-a-direita';
     quantidade.textContent=Number.isSafeInteger(qt)?
-      qt+' convite'+(qt===1?' válido':'s válidos'):
-      'Convites: não disponíveis';
-    dados.append(quantidade);
+     qt+' indicação'+(qt===1?'':'ões'):'Indicações: —';
+    quantidade.setAttribute('aria-label',Number.isSafeInteger(qt)?
+     qt+' indicações desta posição':'Contagem não disponível');
+    // SVG com stroke CSS: o bonequinho permanece amarelo em Android/iOS.
+    const boneco=document.createElementNS('http://www.w3.org/2000/svg','svg');
+    boneco.setAttribute('class','loop03-bonequinho-indicacoes');
+    boneco.setAttribute('viewBox','0 0 24 24');
+    boneco.setAttribute('fill','none');
+    boneco.setAttribute('stroke','currentColor');
+    boneco.setAttribute('stroke-width','2.2');
+    boneco.setAttribute('stroke-linecap','round');
+    boneco.setAttribute('stroke-linejoin','round');
+    boneco.setAttribute('aria-hidden','true');
+    for(const [tag,attrs] of [['circle',{cx:'12',cy:'8',r:'4'}],
+      ['path',{d:'M4 21v-2a8 8 0 0 1 16 0v2'}]]){
+     const node=document.createElementNS('http://www.w3.org/2000/svg',tag);
+     for(const [key,value] of Object.entries(attrs))node.setAttribute(key,value);
+     boneco.append(node);
+    }
+    dados.append(quantidade,boneco);
    }
    // O participante visualiza os proprios dados; outros: numero somente.
    linha.append(simbolo,dados);lista.append(linha);

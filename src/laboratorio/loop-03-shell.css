@@ -199,3 +199,49 @@ body.loop03-logado{background:radial-gradient(ellipse at 5% 14%,#42167580,transp
 .loop03-grade-posicoes .loop03-pendencia-ponto{bottom:6px;right:9px;left:auto;transform:none}
 @media(max-width:860px){.loop03-grade-posicoes{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:520px){.loop03-grade-posicoes{gap:8px}.loop03-grade-posicoes .loop03-cartao-posicao{min-height:175px;padding:8px!important;gap:8px}.loop03-cartao-miolo{gap:7px}.loop03-cartao-selo{width:38px;height:38px;font-size:1.1rem}.loop03-cartao-identidade strong{font-size:1.14rem}.loop03-cartao-identidade span{font-size:.58rem}.loop03-cartao-resumo strong{font-size:.68rem}.loop03-cartao-resumo small{font-size:.64rem}}
+
+/* Paineis de Minha Rede: total de posicoes e posicoes a distribuir. */
+.loop03-cabecalho-equipe{display:grid;grid-template-columns:minmax(130px,1fr) minmax(160px,1.5fr) minmax(130px,1fr);
+ gap:clamp(8px,1.5vw,17px);align-items:center;margin-bottom:20px}
+.loop03-titulo-equipe{min-width:0;text-align:center}
+.loop03-titulo-equipe h2{color:#ffd071;font-size:clamp(1.35rem,3vw,2rem);margin:4px 0}
+.loop03-titulo-equipe p{color:#d5c5ec;font-size:.84rem;line-height:1.35;margin:4px 0}
+.loop03-contador-rede{min-width:0;min-height:112px;display:flex;flex-direction:column;justify-content:center;align-items:center;gap:7px;
+ border:2px solid #d4a353;border-radius:17px;padding:11px 9px;text-align:center;
+ background:radial-gradient(ellipse at 50% -15%,#78448a65,transparent 70%),linear-gradient(140deg,#1b1735,#081023);
+ box-shadow:inset 0 1px #fce5b07c,0 0 17px #b684484d}
+.loop03-contador-rede small{color:#ffdda0;font-size:clamp(.64rem,.9vw,.8rem);font-weight:800;letter-spacing:.04em;line-height:1.2}
+.loop03-contador-rede strong{color:#fff;font-size:clamp(1.85rem,3vw,2.8rem);line-height:1;font-variant-numeric:tabular-nums}
+.loop03-contador-rede span{font-size:.7rem;color:#cfc4e0;line-height:1.23}
+.loop03-contador-pendentes{border-color:#a187dd;box-shadow:inset 0 1px #d3bfff70,0 0 17px #6648af55}
+.loop03-contador-pendentes small{color:#e5d2ff}
+@media(max-width:900px){.loop03-cabecalho-equipe{grid-template-columns:minmax(100px,1fr) minmax(145px,1.45fr) minmax(100px,1fr)}}
+@media(max-width:590px){.loop03-cabecalho-equipe{grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}
+ .loop03-titulo-equipe{grid-column:1/-1;grid-row:1}
+ .loop03-contador-rede{grid-row:2;min-height:103px;padding:9px 5px}
+ .loop03-contador-rede small{font-size:.64rem}
+ .loop03-contador-rede strong{font-size:2rem}
+ .loop03-contador-rede span{font-size:.63rem}}
+/* Fila A: bola AMARELA com A BRANCO; #ID; N indicacoes; bonequinho amarelo.
+   Fila B: bola BRANCA com B PRETO; #ID. Pendentes AZUIS so na B.
+   Empresa: bola DOURADA sem letra, priorizando atributo visual de cor. */
+.loop03-mapa-grade .loop03-linha-fila .loop03-inicial-fila.loop03-a:not(.loop03-dourada){
+ color:#fff;background:radial-gradient(circle at 29% 22%,#fff4ad,#f4b827 83%);
+ border:2px solid #fce797;text-shadow:0 1px 2px #62420c;box-shadow:0 0 10px #e6ac407b}
+.loop03-mapa-grade .loop03-linha-fila .loop03-inicial-fila.loop03-b:not(.loop03-dourada):not(.loop03-azul){
+ color:#111827;background:radial-gradient(circle at 28% 20%,#fff,#d6dde7 80%);
+ border:2px solid #fff;box-shadow:0 0 7px #cfdcff55}
+.loop03-mapa-grade .loop03-linha-fila .loop03-inicial-fila.loop03-azul{
+ color:#fff;background:radial-gradient(circle at 30% 20%,#69a7f5,#1e58b0 77%);
+ border:2px solid #96c3ff}
+.loop03-mapa-grade .loop03-linha-fila .loop03-inicial-fila.loop03-dourada{
+ color:transparent;background:radial-gradient(circle at 30% 20%,#fff0ab,#c38b24 70%);
+ border:2px solid #ffe2a4;box-shadow:0 0 12px #ffd57177}
+.loop03-mapa-grade .loop03-fila-identificacao{display:flex;align-items:center;flex-wrap:wrap;gap:7px;min-width:0}
+.loop03-mapa-grade .loop03-quantidade-a-direita{color:#fce29a;font-size:.78rem;font-weight:850;white-space:nowrap;
+ letter-spacing:0;font-variant-numeric:tabular-nums}
+.loop03-mapa-grade .loop03-bonequinho-indicacoes{width:17px;height:17px;color:#f7cb42;flex:none}
+.loop03-mapa-grade .loop03-numero-titular{flex:none;overflow-wrap:normal}
+@media(max-width:520px){.loop03-mapa-grade .loop03-fila-identificacao{gap:4px}
+ .loop03-mapa-grade .loop03-quantidade-a-direita{font-size:.64rem}
+ .loop03-mapa-grade .loop03-bonequinho-indicacoes{width:14px;height:14px}}
