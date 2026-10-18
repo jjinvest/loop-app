@@ -81,7 +81,9 @@
       ordem.className='numero-fila-escritorio';
       ordem.textContent=String(i+1).padStart(2,'0');
       const descricao=document.createElement('span');
-      descricao.textContent='#'+p.id+(p.minha?' · Sua posição':p.dourada?' · LOOP':'');
+      descricao.textContent='#'+p.id+' · '+(p.nome||'Titular em consulta')+
+        ' · '+(p.convitesValidados??0)+' convites validados'+
+        (p.minha?' · Sua posição':p.dourada?' · LOOP':'');
       li.append(ordem,descricao);alvo.append(li);
     });
   }
