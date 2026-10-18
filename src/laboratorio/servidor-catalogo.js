@@ -104,6 +104,15 @@ function criarAppAdminLaboratorio({ repositorio, segredo, webhookDemo } = {}) {
   const publicacoesHomeLoop= repositorio?.banco ?
     new PublicacoesHomeLoopV6DemoSQLite({banco:repositorio.banco}):null;
   app.use('/api/admin', criarRouterEscritorioDemo({ segredo,publicacoes:publicacoesHomeLoop }));
+  // Publicacoes escolhidas pelo dono, visiveis ao participante, somente leitura.
+  // Nenhuma credencial, custo, dado interno ou endpoint admin e exposto.
+  app.get('/api/laboratorio/loop03/publicacoes',somenteLocal,(_req,res)=>{
+    const publicacoes=publicacoesHomeLoop?publicacoesHomeLoop.listar().map(p=>({
+      tipo:p.tipo,titulo:p.titulo,descricao:p.descricao,
+      imagemCaminho:p.imagemCaminho,linkDestino:p.linkDestino
+    })):[];
+    res.json({publicacoes,modo:'LABORATORIO_LOCAL'});
+  });
   let pedidosPDFDemo=null;
   let integracaoPDFLoopDemo=null;
   let carrinhosLojaLoopDemo=null;
@@ -344,6 +353,12 @@ function criarAppAdminLaboratorio({ repositorio, segredo, webhookDemo } = {}) {
   });
   app.get('/laboratorio/participante.css', somenteLocal, (req, res) => {
     res.type('text/css').sendFile(path.join(__dirname,'participante-demo.css'));
+  });
+  app.get('/laboratorio/loop-03-shell.js',somenteLocal,(_req,res)=>{
+    res.type('application/javascript').sendFile(path.join(__dirname,'loop-03-shell.js'));
+  });
+  app.get('/laboratorio/loop-03-shell.css',somenteLocal,(_req,res)=>{
+    res.type('text/css').sendFile(path.join(__dirname,'loop-03-shell.css'));
   });
   app.get('/admin/cadastro-participantes-demo', somenteLocal, (req, res) => {
     res.sendFile(path.join(__dirname,'cadastro-participantes-demo.html'));
