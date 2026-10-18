@@ -404,3 +404,38 @@ body.loop03-logado{
  .loop03-hero-botao{font-size:.7rem}
  .loop03-shell:before{inset:3px}
 }
+
+
+/* Painel recolhivel: pedidos e historicos reais continuam navegaveis,
+   enquanto as seis posicoes permanecem a primeira leitura da aba. */
+.loop03-extras-posicoes{margin-top:21px;padding:0;border:1px solid #9975ce;border-radius:14px;background:#090e24}
+.loop03-extras-posicoes>summary{
+ padding:15px 17px;cursor:pointer;color:#f6dbb1;font-weight:850;
+ background:linear-gradient(110deg,#19112f,#241340,#12172c);
+ border-radius:13px;outline-offset:3px;
+}
+.loop03-extras-posicoes[open]>summary{border-bottom:1px solid #ba90f6}
+.loop03-extras-posicoes>.cartao-participante{margin:13px!important}
+.loop03-extras-posicoes>summary:focus-visible{outline:3px solid #ffdc85}
+.loop03-cartao-resumo strong{font-variant-numeric:tabular-nums}
+.loop03-grade-posicoes .loop03-unidade-posicao>.loop03-cartao-posicao{
+ background:linear-gradient(155deg,#0a0f27,#090c1a)!important;
+ box-shadow:inset 0 0 0 4px #28163f,0 2px 9px #000a!important;
+}
+.loop03-grade-posicoes .loop03-posicao-vazia{opacity:1}
+.loop03-grade-posicoes .loop03-posicao-vazia .loop03-cartao-rotulo{color:#bd9ee6}
+.loop03-grade-posicoes .loop03-unidade-posicao:has(.loop03-posicao-centro) .loop03-cartao-rotulo{border-left:3px solid #51e6af}
+.loop03-grade-posicoes .loop03-unidade-posicao:has(.loop03-posicao-a) .loop03-cartao-rotulo{border-left:3px solid #ffc85f}
+.loop03-grade-posicoes .loop03-unidade-posicao:has(.loop03-posicao-b) .loop03-cartao-rotulo{border-left:3px solid #d4d7e7}
+#loop03-rede .loop03-equipe-linha{
+ border-color:#8d6dad!important;
+ background:linear-gradient(110deg,#111127,#1a1234 82%)!important;
+ box-shadow:inset 0 1px 0 #c7a3f829!important;
+}
+#loop03-rede .loop03-equipe-linha>strong{color:#fff1c8}
+#loop03-rede .loop03-equipe-linha>button{border-color:#dda94f;color:#ffe2a5}
+#loop03-rede .loop03-equipe-linha>button:focus-visible{outline:3px solid #ffd268;outline-offset:3px}
+@media(min-width:861px){
+ .loop03-grade-posicoes{gap:17px}
+ .loop03-grade-posicoes .loop03-unidade-posicao>.loop03-cartao-posicao{min-height:203px}
+}
