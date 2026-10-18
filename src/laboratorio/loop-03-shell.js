@@ -146,7 +146,8 @@
     if(detalhe?.matches('p'))centro.append(detalhe);
     centro.append(painel);
     grid.append(filaA,centro,filaB);
-    mapa.append(grid);
+    // Desenho das filas e centro primeiro; explicacoes e filtros seguem acessiveis abaixo.
+    mapa.prepend(grid);
     filas.remove();
    }
    const contaB=e('contadorFilaBParticipante');
