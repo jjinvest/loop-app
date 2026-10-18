@@ -72,17 +72,33 @@ button:disabled{opacity:.48;cursor:not-allowed}
 .produto-loja-loop.produto-loja-loop-elegivel{border-color:#5da97c;box-shadow:inset 0 0 0 1px #5da97c36}
 .produto-loja-loop.produto-loja-loop-nao-elegivel{border-color:#6b757a;box-shadow:inset 0 0 0 1px #6b757a22}
 
-/* Terceira classificacao AKITEMM: CINZA sem LOOP, VERDE uma posicao
-   por pedido elegivel, VERMELHO apenas durante evento especial multiposicoes. */
+/* Tres categorias AKITEMM: CINZA sem LOOP, VERDE ate uma posicao
+   por pedido elegivel, DOURADO + ROXO em evento especial multiposicoes.
+   Nenhuma tarja vermelha: dourado/roxo e a identidade aprovada. */
 .produto-loja-loop.produto-loja-loop-especial{
- border:2px solid #e14b52;background:linear-gradient(165deg,#2b202c,#15222a 62%);
- box-shadow:inset 0 0 0 1px #ff898544,0 0 17px #d8374844
+ border:2px solid #e8bc58;
+ background:radial-gradient(circle at 85% 0%,#8e61bd3d,transparent 62%),
+  linear-gradient(145deg,#312050,#241737 52%,#121827);
+ box-shadow:inset 0 0 0 1px #f6d9847a,0 0 18px #8960bc70,0 0 8px #e6bf6555;
+}
+.produto-loja-loop.produto-loja-loop-especial:focus-within{
+ outline:2px solid #f7dc98;outline-offset:2px
 }
 .tarja-promocao-especial-loop{
- display:block;align-self:stretch;background:linear-gradient(90deg,#ad1a29,#ed5353);
- color:#fff;text-align:center;padding:7px 9px;border-radius:8px;
+ display:block;align-self:stretch;
+ background:linear-gradient(105deg,#5a318e 0%,#402268 35%,#c39738 80%,#f1d27a 100%);
+ border:1px solid #e4bd63;color:#fffbea;text-align:center;
+ padding:7px 9px;border-radius:8px;font-weight:900;
+ text-shadow:0 1px 2px #26123b;
+ box-shadow:0 2px 13px #0f0b1c72;
  font-size:.78rem;letter-spacing:.08em;text-transform:uppercase
 }
 .datas-promocao-especial-loop{
- color:#ffced0;font-size:.74rem;font-weight:650;line-height:1.35
+ color:#f6dfae;font-size:.74rem;font-weight:650;line-height:1.35
+}
+.produto-loja-loop.produto-loja-loop-especial .preco-loja-loop{
+ color:#ffdf8b
+}
+@media(prefers-reduced-motion:no-preference){
+ .produto-loja-loop.produto-loja-loop-especial{transition:border-color .16s,box-shadow .16s}
 }

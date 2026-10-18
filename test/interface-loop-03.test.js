@@ -74,6 +74,11 @@ test('LOOP 0.3 integra escritorio real e duas abas sem criar aplicativo paralelo
  assert.match(css,/loop03-aceso/);
  assert.match(css,/marcos-v6 span:nth-child\(even\)/);
  assert.doesNotThrow(()=>new Function(js));
+ const lojaCss=ler('loja-cliente-demo.css');
+ assert.match(lojaCss,/produto-loja-loop\.produto-loja-loop-especial/);
+ assert.match(lojaCss,/#e8bc58/); // ouro no contorno
+ assert.match(lojaCss,/#5a318e/); // roxo na tarja
+ assert.doesNotMatch(lojaCss,/#e14b52|#ad1a29|#ed5353/); // tarja vermelha descartada
 });
 
 test('publicacoes escolhidas pelo administrador tem apenas leitura publica, sem dados internos',async t=>{
