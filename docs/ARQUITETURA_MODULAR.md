@@ -1,3 +1,5 @@
+> **ATENÇÃO — DOCUMENTO HISTÓRICO (18/10/2026).** Registro mantido apenas para rastreabilidade; não é fonte de regras vigentes. Consulte [`COMANDO_MESTRE_LOOP_03_CONTINUIDADE.md`](./COMANDO_MESTRE_LOOP_03_CONTINUIDADE.md) e [`ISOLAMENTO_PROTOTIPOS_ANTIGOS_LOOP_03.md`](./ISOLAMENTO_PROTOTIPOS_ANTIGOS_LOOP_03.md). Regras V5/cinco posições e promoções por titular foram substituídas por V6/seis posições e indicação atribuída por posição; a Fila A tem trava escalonada por titular. Não utilizar este texto como especificação para novos códigos.
+
 # Arquitetura modular do LOOP - diretriz de longo prazo
 
 ## Identidade e finalidade

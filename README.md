@@ -1,3 +1,5 @@
+> **CONTINUIDADE VIGENTE:** Regras aprovadas e último contexto ficam em [`docs/COMANDO_MESTRE_LOOP_03_CONTINUIDADE.md`](docs/COMANDO_MESTRE_LOOP_03_CONTINUIDADE.md). Versões anteriores e backups foram isolados conforme [`docs/ISOLAMENTO_PROTOTIPOS_ANTIGOS_LOOP_03.md`](docs/ISOLAMENTO_PROTOTIPOS_ANTIGOS_LOOP_03.md). Este repositório contém laboratório e compatibilidade histórica, não pagamentos de produção.
+
 # LOOP V6 — Plataforma de loja e Escritório Virtual
 
 O **LOOP é uma plataforma web**, acessível por navegador em **celular, tablet e computador**, com a mesma base de dados e as mesmas regras de operação. Não é um aplicativo móvel instalável nem existem versões separadas para Android, iOS e Windows.
