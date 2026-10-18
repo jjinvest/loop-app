@@ -15,6 +15,8 @@ test('LOOP 0.3 integra escritorio real e duas abas sem criar aplicativo paralelo
  const css=ler('loop-03-shell.css');
  assert.match(html,/\/laboratorio\/loop-03-shell.js/);
  assert.match(html,/\/laboratorio\/loop-03-shell.css/);
+ assert.ok(html.indexOf('/css/loop-futurista-v6.css')<html.indexOf('/laboratorio/loop-03-shell.css'));
+ assert.match(js,/shell\.prepend\(shell\.querySelector\('\.loop03-banner-topo'\)\)/);
  for(const area of ['home','tabuleiro','posicoes','rede','financeiro']){
   assert.match(js,new RegExp('id="loop03-'+area+'"'));
  }

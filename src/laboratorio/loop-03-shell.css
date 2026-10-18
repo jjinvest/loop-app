@@ -149,3 +149,24 @@ button.loop03-indicador:hover{border-color:#dfb15c;box-shadow:0 0 16px #e3b55338
 .loop03-equipe-linha>div,.loop03-equipe-linha>small:not(.loop03-equipe-informacoes){grid-column:1/-1}
 .loop03-fila-equipe-a{color:#ffe07f;font-weight:800}
 .loop03-fila-equipe-b{color:#f5f7fa;font-weight:800}
+
+/* Fundo e estrutura do Escritorio Virtual: arte aprovada, mas dados sempre reais. */
+body.loop03-logado{background:radial-gradient(ellipse at 5% 14%,#42167580,transparent 40%),radial-gradient(ellipse at 94% 82%,#8e4c1a66,transparent 33%),#040715}
+.loop03-logado .portal-participante{max-width:1540px;padding:14px clamp(7px,2vw,22px) 45px}
+.loop03-shell{display:grid;grid-template-columns:215px minmax(0,1fr);grid-template-rows:auto minmax(0,1fr);gap:15px;padding:15px;border:2px solid #c7934a;border-radius:29px;background:radial-gradient(ellipse at 65% 90%,#4215777a,transparent 65%),linear-gradient(135deg,#090b17,#0c0c26);box-shadow:inset 0 0 0 1px #ffc87c66,0 0 35px #c98a3f66,0 18px 55px #000d}
+.loop03-banner-topo{grid-column:1/-1;grid-row:1;min-height:111px;padding:9px 23px;border:0;border-radius:11px;box-shadow:none;background:linear-gradient(105deg,#0b0c19,#111329 80%)}
+.loop03-banner-topo>div:first-child{display:flex;align-items:center;gap:25px;flex-wrap:wrap}
+.loop03-banner-topo .loop03-logomarca{font-size:clamp(2.3rem,5vw,4.3rem);line-height:1;color:#f7c35d;text-shadow:0 1px #ffe5b6,0 4px #5f350c,0 0 17px #e1a54480}
+.loop03-banner-topo p{letter-spacing:.18em;color:#eeeaf4}
+.loop03-banner-topo small{letter-spacing:.16em;color:#c6bada}
+.loop03-sidebar{grid-column:1;grid-row:2;min-height:760px;background:linear-gradient(155deg,#111629,#060c19 80%);border-color:#5a463c}
+.loop03-corpo{grid-column:2;grid-row:2}
+.loop03-sidebar nav button[aria-current=page]{border-left:4px solid #f6c056;background:linear-gradient(110deg,#78512e,#27213a 80%)}
+.loop03-boasvindas{margin:0 0 14px;min-height:58px}
+.loop03-boasvindas h2{color:#ffe0a0}
+.loop03-indicadores .loop03-indicador{background:linear-gradient(145deg,#182035,#070d1b)!important;border:1px solid #ae7b40!important;border-radius:15px!important;box-shadow:inset 0 1px 0 #ffe8b72d,0 5px 16px #0009!important;color:#f8f1f1!important;min-height:110px!important;padding:13px 14px!important}
+.loop03-indicadores .loop03-indicador strong{color:white!important}
+.loop03-indicadores .loop03-indicador span{color:#c2bed6}
+.loop03-pagina{min-height:525px;border:1px solid #cc9d4a;border-radius:25px;background:radial-gradient(circle at 7% 12%,#ffffff9c .8px,transparent 1.5px) 0 0/41px 47px,radial-gradient(circle at 68% 57%,#bcabffad 1px,transparent 2px) 0 0/97px 91px,radial-gradient(ellipse at 55% 50%,#371372,#14082e 80%);box-shadow:inset 0 0 0 2px #271454,0 12px 30px #0008}
+@media(max-width:860px){.loop03-shell{grid-template-columns:1fr;grid-template-rows:auto auto;padding:8px}.loop03-banner-topo{grid-column:1;grid-row:1}.loop03-corpo{grid-column:1;grid-row:2}.loop03-sidebar{grid-column:1;grid-row:2;min-height:0;top:0}}
+@media(max-width:520px){.loop03-banner-topo{padding:9px;min-height:90px}.loop03-banner-topo>div:first-child{gap:7px}.loop03-banner-topo .loop03-logomarca{font-size:2.1rem}.loop03-banner-topo p{font-size:.59rem;letter-spacing:.04em}.loop03-banner-topo small{font-size:.53rem;letter-spacing:.04em}}

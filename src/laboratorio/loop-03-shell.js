@@ -70,6 +70,7 @@
      <section id="loop03-perfil" class="loop03-pagina" aria-label="Meu perfil"><header class="loop03-titulo-pagina"><div><small>CADASTRO</small><h2>Meu perfil</h2></div></header><p>Atualização de foto, telefone e e-mail ainda será integrada. A confirmação individual e o CPF fictício ficam em Minhas Posições.</p></section>
     </div>
    </div>`;
+  shell.prepend(shell.querySelector('.loop03-banner-topo'));
   root.prepend(shell);
   // Reaproveita as telas e operacoes existentes, sem duplicar IDs ou formularios.
   const mover=(selector,pagina)=>{
