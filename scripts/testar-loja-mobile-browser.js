@@ -203,13 +203,13 @@ async function main(){
   await page.locator('#chaveAdminLoop03').fill(admin);
   await page.locator('#formAcessoAdminLoop03 button[type=submit]').click();
   await page.locator('#dadosAdminLoop03').waitFor({state:'visible'});
-  assert.equal(await page.locator('#numeroVagaAdmin').innerText(),'5');
+  assert.equal(await page.locator('#numeroVagaAdmin').innerText(),'6');
   await page.locator('#vagaAdminLoop03').selectOption('4');
   await page.locator('#motivoAdminLoop03').fill('Revisão interna da alternância');
   page.once('dialog',dialog=>dialog.accept());
   await page.locator('#formRegraAdminLoop03 button[type=submit]').click();
   await page.locator('#numeroVagaAdmin').getByText('4').waitFor();
-  assert.match(await page.locator('#listaHistoricoAdminLoop03').innerText(),/Vaga 5 → 4/);
+  assert.match(await page.locator('#listaHistoricoAdminLoop03').innerText(),/Vaga 6 → 4/);
   for(const largura of [320,390,768])await conferirLargura(page,largura,'admin-loop03',{captura:true});
   await page.screenshot({path:path.join(pasta,'escritorio-administrador-mobile.png'),fullPage:true});
 

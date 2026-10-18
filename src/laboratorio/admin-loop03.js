@@ -25,7 +25,7 @@
   $('vagaAdminLoop03').value=String(config.vagaLiberacao);
   const lista=$('listaHistoricoAdminLoop03');lista.replaceChildren();
   if(!d.historico.length){
-   const li=document.createElement('li');li.textContent='Nenhuma mudança registrada; padrão inicial na vaga 5.';lista.append(li);
+   const li=document.createElement('li');li.textContent='Nenhuma mudança registrada; padrão inicial na vaga 6.';lista.append(li);
   }
   for(const h of d.historico){
    const li=document.createElement('li');

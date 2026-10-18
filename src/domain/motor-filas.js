@@ -15,7 +15,7 @@ class MotorFilas {
     this.vendasRegistradas = new Map();
     this.participantesConhecidos = new Set();
     this.travaPromocaoAtiva=false;
-    this.vagaLiberacao=5;
+    this.vagaLiberacao=6;
     this.ultimaPromovidaPorTitular=new Map();
   }
 

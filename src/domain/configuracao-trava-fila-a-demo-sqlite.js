@@ -19,7 +19,23 @@ class ConfiguracaoTravaFilaADemoSQLite {
     BEFORE DELETE ON loop03_trava_fila_a_historico_demo
     BEGIN SELECT RAISE(ABORT,'historico imutavel'); END;
   `);
-  banco.prepare('INSERT OR IGNORE INTO loop03_trava_fila_a_demo VALUES(1,5,1,?)').run(this.relogio());
+  // Nova regra aprovada: vaga 6 (assim que a primeira entra no tabuleiro).
+  banco.prepare('INSERT OR IGNORE INTO loop03_trava_fila_a_demo VALUES(1,6,1,?)').run(this.relogio());
+  // Bancos criados com o antigo valor inicial 5 (revisao 1, sem historico)
+  // migram uma UNICA vez, com trilha auditavel. Regra configurada pelo admin
+  // (revisao > 1, inclusive se ela for 5) nunca e sobrescrita.
+  banco.exec('BEGIN IMMEDIATE');
+  try{
+   const atual=banco.prepare('SELECT vaga,revisao FROM loop03_trava_fila_a_demo WHERE id=1').get();
+   const h=banco.prepare('SELECT COUNT(*) AS n FROM loop03_trava_fila_a_historico_demo').get().n;
+   if(atual.vaga===5&&atual.revisao===1&&h===0){
+    const agora=this.relogio();
+    banco.prepare('UPDATE loop03_trava_fila_a_demo SET vaga=6,revisao=2,alterado_em=? WHERE id=1').run(agora);
+    banco.prepare('INSERT INTO loop03_trava_fila_a_historico_demo VALUES(2,5,6,?,?)')
+     .run('Atualizacao da regra inicial aprovada para liberar na vaga 6',agora);
+   }
+   banco.exec('COMMIT');
+  }catch(e){banco.exec('ROLLBACK');throw e;}
  }
  consultar(){
   const x=this.banco.prepare('SELECT vaga,revisao,alterado_em FROM loop03_trava_fila_a_demo WHERE id=1').get();

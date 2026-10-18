@@ -7,7 +7,7 @@ const {RepositorioCatalogoSQLite}=require('../src/domain/repositorio-catalogo-sq
 const {ConfiguracaoTravaFilaADemoSQLite}=require('../src/domain/configuracao-trava-fila-a-demo-sqlite');
 const {criarAppAdminLaboratorio}=require('../src/laboratorio/servidor-catalogo');
 
-function preparar(qtd=6,vaga=5){
+function preparar(qtd=6,vaga=6){
  let t=0;const loop=new SimuladorLoop({
   relogio:()=>new Date(Date.UTC(2026,9,18,9,0,++t)).toISOString()
  });
@@ -41,8 +41,20 @@ function giro(loop,n){
  assert.equal(resultado.girou,true);
  return resultado;
 }
+test('vaga 6 libera a segunda posicao assim que a primeira entrou no tabuleiro',()=>{
+ const {loop,posicoes}=preparar(3);
+ assert.deepEqual(loop.filas.filaA.map(p=>p.id),[posicoes[0]]);
+ giro(loop,1);
+ assert.equal(loop.tabuleiro.vagas[5].id,posicoes[0]);
+ assert.deepEqual(loop.filas.filaA.map(p=>p.id),[posicoes[1]]);
+ assert.deepEqual(loop.filas.filaB.filter(p=>p.participanteId==='influencer')
+  .map(p=>p.id),[posicoes[2]]);
+ giro(loop,2);
+ assert.equal(loop.tabuleiro.vagas[5].id,posicoes[1]);
+ assert.deepEqual(loop.filas.filaA.map(p=>p.id),[posicoes[2]]);
+});
 test('titular com seis posicoes e seis convites nao domina a Fila A',()=>{
- const {loop,posicoes}=preparar(6);
+ const {loop,posicoes}=preparar(6,5);
  assert.deepEqual(loop.filas.filaA.map(p=>p.id),[posicoes[0]]);
  assert.deepEqual(loop.filas.filaB.filter(p=>p.participanteId==='influencer').map(p=>p.id),posicoes.slice(1));
  for(const p of loop.filas.filaB.filter(p=>p.participanteId==='influencer'))
@@ -76,7 +88,7 @@ test('trava na vaga 4 ou 3 altera somente futuras liberacoes',()=>{
  assert.deepEqual(loop.filas.filaB.filter(p=>p.participanteId==='influencer').map(p=>p.id),[posicoes[2]]);
 });
 test('snapshot recupera ultima posicao promovida e a sequencia da trava',()=>{
- const {loop,posicoes}=preparar(2);
+ const {loop,posicoes}=preparar(2,5);
  giro(loop,1);
  const restaurado=SimuladorLoop.restaurarSnapshot(loop.exportarSnapshot());
  restaurado.filas.travaPromocaoAtiva=true;
@@ -86,10 +98,44 @@ test('snapshot recupera ultima posicao promovida e a sequencia da trava',()=>{
  giro(restaurado,2);
  assert.deepEqual(restaurado.filas.filaA.map(p=>p.id),[posicoes[1]]);
 });
+test('fila B mostra IDs em ordem de entrada, saltando quem ja saiu para a A',()=>{
+ const {MotorFilas}=require('../src/domain/motor-filas');
+ const m=new MotorFilas();
+ for(let id=1;id<=20;id++)m.registrarPosicao({participanteId:'titular-'+id,vendaId:'pedido-'+id});
+ assert.deepEqual(m.resumo().B.pessoas.slice(0,10).map(p=>p.id),
+  [1,2,3,4,5,6,7,8,9,10]);
+ assert.equal(m.proximoDaFila().pessoa.id,1);
+ assert.deepEqual(m.resumo().B.pessoas.slice(0,10).map(p=>p.id),
+  [2,3,4,5,6,7,8,9,10,11]);
+ const p3=m.resumo().B.pessoas.find(p=>p.id===3);
+ m.registrarIndicacaoValidada({indicadorId:p3.participanteId,eventoId:'convite-3'});
+ assert.deepEqual(m.resumo().A.pessoas.map(p=>p.id),[3]);
+ assert.deepEqual(m.resumo().B.pessoas.slice(0,5).map(p=>p.id),[2,4,5,6,7]);
+ assert.equal(m.proximoDaFila().pessoa.id,3); // 3A/1B faz A avançar, sem reordenar B
+ assert.equal(m.proximoDaFila().pessoa.id,2);
+ assert.deepEqual(m.resumo().B.pessoas.slice(0,5).map(p=>p.id),[4,5,6,7,8]);
+});
+test('migracao da vaga 5 antiga altera apenas banco sem escolhas administrativas',t=>{
+ const repo=new RepositorioCatalogoSQLite({caminho:':memory:'});t.after(()=>repo.fechar());
+ repo.banco.exec(`CREATE TABLE loop03_trava_fila_a_demo(
+  id INTEGER PRIMARY KEY,vaga INTEGER,revisao INTEGER,alterado_em TEXT);
+  INSERT INTO loop03_trava_fila_a_demo VALUES(1,5,1,'2026-10-18T10:00:00Z');`);
+ const cfg=new ConfiguracaoTravaFilaADemoSQLite({banco:repo.banco});
+ assert.equal(cfg.consultar().vagaLiberacao,6);
+ assert.equal(cfg.consultar().revisao,2);
+ assert.equal(cfg.historico().length,1);
+ new ConfiguracaoTravaFilaADemoSQLite({banco:repo.banco});
+ assert.equal(cfg.historico().length,1);
+ const alterada=cfg.alterar({vagaLiberacao:5,revisaoEsperada:2,motivo:'Opcao administrativa de volta a cinco'});
+ assert.equal(alterada.vagaLiberacao,5);
+ new ConfiguracaoTravaFilaADemoSQLite({banco:repo.banco});
+ assert.equal(cfg.consultar().vagaLiberacao,5);
+ assert.equal(cfg.historico().length,2);
+});
 test('configuracao administrativa persiste, audita e rejeita revisao concorrente',t=>{
  const repo=new RepositorioCatalogoSQLite({caminho:':memory:'});t.after(()=>repo.fechar());
  const c=new ConfiguracaoTravaFilaADemoSQLite({banco:repo.banco});
- assert.equal(c.consultar().vagaLiberacao,5);
+ assert.equal(c.consultar().vagaLiberacao,6);
  const nova=c.alterar({vagaLiberacao:4,revisaoEsperada:1,motivo:'Aumentar o espacamento'});
  assert.equal(nova.vagaLiberacao,4);
  assert.equal(new ConfiguracaoTravaFilaADemoSQLite({banco:repo.banco}).consultar().vagaLiberacao,4);
@@ -108,7 +154,7 @@ test('API do administrador protege o controle da Fila A e exige justificativa',a
  assert.equal((await fetch(url)).status,401);
  const headers={Authorization:'Bearer '+segredo,'Content-Type':'application/json'};
  const get=await fetch(url,{headers});assert.equal(get.status,200);
- assert.equal((await get.json()).configuracao.vagaLiberacao,5);
+ assert.equal((await get.json()).configuracao.vagaLiberacao,6);
  const post=async dados=>fetch(url,{method:'POST',headers,body:JSON.stringify(dados)});
  assert.equal((await post({vagaLiberacao:3,revisaoEsperada:1,motivo:'x'})).status,400);
  const gravado=await post({vagaLiberacao:3,revisaoEsperada:1,motivo:'Equilibrar a distribuicao'});
