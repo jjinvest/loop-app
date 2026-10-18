@@ -133,6 +133,36 @@ async function main(){
   await page.locator('#loop03Menu').click();
   await page.locator('.loop03-sidebar [data-loop03-aba="posicoes"]').click();
   assert.equal(await page.locator('#loop03OpcoesPosicoes > *').count(),6);
+  // Mesmo visual aprovado: 3 posições em cima e 3 embaixo no celular em pé.
+  const medir=()=>page.locator('#loop03OpcoesPosicoes > *').evaluateAll(nodes=>
+   nodes.map(node=>({x:node.getBoundingClientRect().x,y:node.getBoundingClientRect().y})));
+  const pe=await medir();
+  assert.equal(pe.length,6);
+  assert.ok(Math.abs(pe[0].y-pe[2].y)<2,'3 cartões na primeira linha em pé');
+  assert.ok(pe[3].y>pe[2].y+20,'3 cartões na segunda linha em pé');
+  assert.ok(Math.abs(pe[3].y-pe[5].y)<2,'3 cartões alinhados embaixo');
+  await page.screenshot({path:path.join(pasta,'minhas-posicoes-celular-em-pe-3x2.png'),fullPage:false});
+  // Ao girar o mesmo celular, sua lateral reaparece como na tela do computador.
+  await page.setViewportSize({width:844,height:390});
+  await page.waitForTimeout(260);
+  const paisagem=await page.evaluate(()=>{
+   const nav=document.getElementById('loop03Sidebar');
+   return {position:getComputedStyle(nav).position,
+    transform:getComputedStyle(nav).transform,
+    left:nav.getBoundingClientRect().x,
+    width:nav.getBoundingClientRect().width,
+    mainLeft:document.getElementById('loop03-posicoes').getBoundingClientRect().x};
+  });
+  assert.equal(paisagem.position,'sticky','lateral deitada no mesmo estilo desktop');
+  assert.equal(paisagem.transform,'none','lateral visível deitada');
+  assert.ok(paisagem.width>110&&paisagem.left<paisagem.mainLeft,'lateral à esquerda');
+  const deitado=await medir();
+  assert.ok(Math.abs(deitado[0].y-deitado[2].y)<2,'3 em cima deitado');
+  assert.ok(deitado[3].y>deitado[2].y+20,'3 embaixo deitado');
+  await page.screenshot({path:path.join(pasta,'minhas-posicoes-celular-deitado-3x2.png'),fullPage:false});
+  await page.setViewportSize({width:390,height:812});
+  await page.waitForTimeout(260);
+
   assert.equal(await page.locator('#loop03Numero').innerText(),'#0000');
   assert.equal(await page.locator('#loop03TotalAtivacoes').innerText(),'0/6');
   await page.locator('#loop03Menu').click();
