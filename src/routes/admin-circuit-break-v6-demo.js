@@ -3,7 +3,7 @@ const express=require('express');
 const {criarAutorizacao}=require('./admin-catalogo-laboratorio');
 const {projetarCaixaPrelancamentoV6}=require('../domain/projetar-caixa-prelancamento-v6');
 
-function criarRouterCircuitBreakV6Demo({segredo,controle,ponteControle=null,programador=null,retornoSaqueCentroDemo=null,travaFilaA=null}={}){
+function criarRouterCircuitBreakV6Demo({segredo,controle,ponteControle=null,programador=null,retornoSaqueCentroDemo=null,travaFilaA=null,ponteIndicacoes=null}={}){
   const router=express.Router();
   router.use(criarAutorizacao({segredo}));
   router.use((_req,res,next)=>{res.set('Cache-Control','no-store');next();});
@@ -20,6 +20,26 @@ function criarRouterCircuitBreakV6Demo({segredo,controle,ponteControle=null,prog
       return res.status(400).json({erro:'CAMPOS_INVALIDOS'});
     try{return res.json({configuracao:travaFilaA.alterar(p),historico:travaFilaA.historico()});}
     catch(e){if(e.codigo)return res.status(e.codigo==='CONFLITO_REVISAO'?409:400).json({erro:e.codigo});throw e;}
+  });
+
+  router.get('/circuit-break-v6-demo/indicacoes',(_req,res)=>{
+    if(!ponteIndicacoes)return res.status(501).json({erro:'INDICACOES_INDISPONIVEIS'});
+    const b=ponteIndicacoes.banco;
+    const total=b.prepare('SELECT COUNT(*) AS n FROM admin_ponte_convites_validados_demo').get().n;
+    const vinculadas=b.prepare('SELECT COUNT(*) AS n FROM admin_loop_vinculos_indicacao_posicao_demo').get().n;
+    const disponiveis=b.prepare(`
+      SELECT COUNT(DISTINCT v.convidado_id) AS n
+      FROM admin_ponte_convites_validados_demo v
+      JOIN admin_loop_adesoes_posicoes_demo a ON a.conta_id=v.convidado_id
+      LEFT JOIN admin_loop_vinculos_indicacao_posicao_demo m ON m.convidado_id=v.convidado_id
+      LEFT JOIN admin_ponte_convites_aplicados_demo j ON j.convidado_id=v.convidado_id
+      WHERE m.convidado_id IS NULL AND j.convidado_id IS NULL
+    `).get().n;
+    return res.json({modo:'SOMENTE_LABORATORIO',
+      regraGlobal:'3A/1B',limiteFilaAPorTitular:1,
+      vagaLiberacao:travaFilaA?.consultar()?.vagaLiberacao??6,
+      confirmadas:total,vinculadas,disponiveis,
+      aguardandoAtivacao:Math.max(0,total-vinculadas-disponiveis)});
   });
   router.get('/circuit-break-v6-demo',(_req,res)=>{
     if(!controle)return res.status(501).json({erro:'CONTROLE_INDISPONIVEL'});
