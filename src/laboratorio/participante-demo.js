@@ -7,6 +7,8 @@
  const sair=e('botaoSairParticipante');
  let versao=0;
  let mapaAtual=null;
+ let nomeTitular='';
+ let convitesValidadosFilaA=[];
  let filtroMapa='resumo';
  let destinoInicialTratado=false;
  function encerrarTela(){
@@ -136,8 +138,7 @@
    item.className='fila-vazia-demo';
    item.textContent=posicoes.length===0?'Nenhuma posição nesta fila.':
     'Você não tem posições nesta fila.';
-   lista.append(item);
-   return;
+   lista.append(item);return;
   }
   let anterior=-1;
   for(const i of indices){
@@ -148,14 +149,31 @@
     intervalo.textContent=ocultas+' posição(ões) entre os trechos exibidos';
     lista.append(intervalo);
    }
-   const p=posicoes[i],item=document.createElement('li');
-   item.className='linha-fila-demo'+(p.minha?' linha-minha-demo':'');
-   const ordem=document.createElement('span');
-   ordem.className='ordem-fila-demo';
-   ordem.textContent=(i+1)+'º';
-   ordem.setAttribute('aria-label',(i+1)+'ª posição na '+nomeFila);
-   item.append(ordem,elementoPosicao(p,'Posição'));
-   lista.append(item);
+   const p=posicoes[i],filaA=nomeFila==='Fila A';
+   const linha=document.createElement('li');
+   linha.className='linha-fila-demo loop03-linha-fila'+(p.minha?' linha-minha-demo':'');
+   const simbolo=document.createElement('span');
+   simbolo.className='ordem-fila-demo loop03-inicial-fila'+(filaA?' loop03-a':' loop03-b');
+   if(p.cor==='DOURADO')simbolo.classList.add('loop03-dourada');
+   simbolo.textContent=p.cor==='DOURADO'?'●':filaA?'A':'B';
+   simbolo.setAttribute('aria-label',(i+1)+'ª posição na '+nomeFila);
+   const dados=document.createElement('div');
+   dados.className='loop03-fila-identificacao';
+   const referencia=elementoPosicao(p,'Posição');
+   referencia.textContent='#'+p.posicaoId+(p.minha?' · Minha: '+nomeTitular:'');
+   referencia.classList.add('loop03-numero-titular');
+   dados.append(referencia);
+   if(filaA){
+    const quantidade=document.createElement('small');
+    quantidade.className='loop03-quantidade-convites';
+    const qt=convitesValidadosFilaA[i];
+    quantidade.textContent=Number.isSafeInteger(qt)?
+      qt+' convite'+(qt===1?' válido':'s válidos'):
+      'Convites: não disponíveis';
+    dados.append(quantidade);
+   }
+   // O participante visualiza os proprios dados; outros: numero somente.
+   linha.append(simbolo,dados);lista.append(linha);
    anterior=i;
   }
   if(posicoes.length-anterior-1>0){
@@ -257,6 +275,8 @@
   }
  }
   function mostrar(visao){
+  nomeTitular=visao.conta.nome;
+  convitesValidadosFilaA=Array.isArray(visao.convitesValidosFilaA)?visao.convitesValidosFilaA:[];
   e('nomeLogadoParticipante').textContent=visao.conta.nome+' — meu resumo';
   const previstos=visao.creditosPrevistosV6;
   e('creditoPrevistoCentroV6').textContent=dinheiro(previstos?.creditoPrevistoCentavos||0);
