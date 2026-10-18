@@ -377,8 +377,11 @@ async function main(){
   await page.locator('#abrirFinanceiroDemo').click();
   await page.locator('#dadosFinanceiroDemo').waitFor({state:'visible'});
   await page.locator('#caixa2CapacidadeFinanceiroDemo').waitFor({state:'visible'});
-  assert.match(await page.locator('#statusCaixa2FinanceiroDemo').innerText(),
-   /pré-lançamento fictício|Saldo livre/);
+  await page.waitForFunction(()=>
+   /pré-lançamento fictício|Saldo livre/.test(
+    document.querySelector('#statusCaixa2FinanceiroDemo')?.textContent||''
+   )
+  );
   assert.equal(await page.locator('#caixa2LivreFinanceiroDemo').innerText(),'—');
   // Sem reserva demonstrativa, nem o ADMIN pode criar posicao gratuita.
   await page.locator('#criarDouradaManualDemo').click();
