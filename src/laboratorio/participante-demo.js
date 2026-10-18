@@ -102,7 +102,8 @@
    p.cor==='VERMELHO'?'ativada':
    p.cor==='DOURADO'?'pertence ao LOOP':'ativada por outra pessoa';
   item.dataset.posicaoId=String(p.posicaoId);
-   item.textContent=rotulo+' #'+p.posicaoId+(p.minha?' · Minha':'');
+  item.textContent=rotulo==='Número'?String(p.posicaoId):
+   rotulo+' #'+p.posicaoId+(p.minha?' · Minha':'');
   item.setAttribute('aria-label',rotulo+' '+p.posicaoId+
    ', '+descricao+(p.minha?', minha posição':''));
   return item;
@@ -206,7 +207,8 @@
    titulo.className='titulo-espaco-tabuleiro-demo';
    titulo.textContent=rotulo;
    bloco.append(titulo);
-   if(valor)bloco.append(elementoPosicao(valor,'Posição'));
+   if(valor)bloco.append(elementoPosicao(valor,'Número'));
+   // Visual do cliente: somente identificador; nomes de terceiros sao privados.
    else{
     const vazio=document.createElement('span');
     vazio.textContent='Livre';
