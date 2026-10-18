@@ -28,6 +28,9 @@ test('LOOP 0.3 integra escritorio real e duas abas sem criar aplicativo paralelo
  assert.match(js,/loop03-grade-posicoes/);
  assert.match(js,/Sem posição · Espaço disponível/);
  assert.match(js,/loop03-pendencia-ponto/);
+ assert.match(js,/loop03-equipe-linha/);
+ assert.match(js,/loop03-fila-equipe-/);
+ assert.match(css,/#loop03ListaEquipe\{grid-template-columns:minmax\(0,1fr\)/);
  assert.match(js,/id="loop03Numero">#0000/);
  assert.match(js,/window\.Loop03Shell/);
  assert.match(css,/loop03-mapa-grade/);

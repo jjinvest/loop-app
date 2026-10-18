@@ -106,6 +106,7 @@ class EscritorioIndividualDemo{
     .find(p=>p&&p.participanteId===c.convidadoId&&p.empresa!==true);
    return {convidadoId:c.convidadoId,nome:c.nome,telefone:c.telefone,
     estado:c.compraConfirmadaEm&&c.posicaoAtivada?'ATIVO':'PENDENTE',
+     situacao:c.compraConfirmadaEm?(c.posicaoAtivada?'ATIVO':'AGUARDANDO_CONFIRMACAO'):'PENDENTE',
     filaAtual:pos?pos.fila:null,posicaoAtribuidaId:c.posicaoAtribuidaId,
     atribuicaoPendente:!!c.compraConfirmadaEm&&!!c.posicaoAtivada&&
      c.posicaoAtribuidaId===null};

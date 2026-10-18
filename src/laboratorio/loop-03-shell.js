@@ -268,13 +268,23 @@
   }
   const equipes=e('loop03ListaEquipe');equipes.replaceChildren();
   for(const pessoa of visao.equipe||[]){
-   const cartao=document.createElement('div');cartao.className='loop03-opcao';
+   const cartao=document.createElement('div');cartao.className='loop03-opcao loop03-equipe-linha';
    const titulo=document.createElement('strong');titulo.textContent=pessoa.nome;
-   const dados=document.createElement('small');
-   dados.textContent=(pessoa.telefone||'Telefone não informado')+' · '+
-    (pessoa.estado==='ATIVO'?'Ativo':'Pendente')+
-    (pessoa.filaAtual?' · Fila '+pessoa.filaAtual:'')+
-    (pessoa.posicaoAtribuidaId?' · Indicada para #'+pessoa.posicaoAtribuidaId:'');
+   const dados=document.createElement('small');dados.className='loop03-equipe-informacoes';
+   const situacao=pessoa.situacao==='AGUARDANDO_CONFIRMACAO'?'AGUARDANDO CONFIRMAÇÃO':
+    pessoa.estado==='ATIVO'?'ATIVO':'PENDENTE';
+   dados.textContent=(pessoa.telefone||'Telefone não informado')+' · '+situacao;
+   if(pessoa.filaAtual==='A'||pessoa.filaAtual==='B'){
+    const fila=document.createElement('span');
+    fila.className='loop03-fila-equipe-'+pessoa.filaAtual.toLowerCase();
+    fila.textContent=' · Fila '+pessoa.filaAtual;
+    dados.append(fila);
+   }
+   if(pessoa.posicaoAtribuidaId!==null){
+    dados.append(document.createTextNode(' · Vinculada à posição #'+pessoa.posicaoAtribuidaId));
+   }else if(pessoa.estado!=='ATIVO'){
+    dados.append(document.createTextNode(' · Atribuição indisponível até a confirmação'));
+   }
    cartao.append(titulo,dados);
    if(pessoa.posicaoAtribuidaId===null&&pessoa.estado==='ATIVO'){
     const botao=document.createElement('button');botao.type='button';

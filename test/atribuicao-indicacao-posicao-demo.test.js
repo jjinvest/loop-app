@@ -51,11 +51,13 @@ test('um convidado confirmado atribuido a uma posicao ativa promove somente ela 
  adesoes.ativar({contaId:raiz.contaId,posicaoId:segunda.posicaoId});
  const compraConvidado=await comprar(convidado,'c-1');
  assert.equal(ponte.consultar().filas.A.quantidade,0);
+ assert.equal(escritorio.consultar(raiz.contaId).equipe[0].situacao,'AGUARDANDO_CONFIRMACAO');
  assert.throws(()=>ponte.atribuirIndicacao({contaId:raiz.contaId,
   convidadoId:convidado.contaId,posicaoId:segunda.posicaoId}),
   {codigo:'INDICADO_AGUARDANDO_ATIVACAO'});
  adesoes.ativar({contaId:convidado.contaId,posicaoId:compraConvidado.posicaoId,
   cpfFicticio:'12345678909',aceitaTermos:true,versaoTermos:'LOOP-DEMO-V1'});
+ assert.equal(escritorio.consultar(raiz.contaId).equipe[0].situacao,'ATIVO');
  const vinculada=ponte.atribuirIndicacao({contaId:raiz.contaId,
   convidadoId:convidado.contaId,posicaoId:primeira.posicaoId});
  assert.equal(vinculada.repetida,false);
