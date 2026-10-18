@@ -51,6 +51,9 @@ async function conferirLargura(page,largura,rotulo,{captura=false}={}){
   body:document.body.scrollWidth,
   controlesEstourando:[...document.querySelectorAll('input,select,button,a')].filter(e=>{
    if(!e.getClientRects().length)return false;
+   // Menu lateral fechado fica intencionalmente fora da viewport.
+   if(e.closest('.loop03-sidebar:not(.loop03-aberto)') &&
+      window.matchMedia('(max-width:860px)').matches)return false;
    const r=e.getBoundingClientRect();
    return r.left < -2||r.right>window.innerWidth+2;
   }).slice(0,4).map(e=>({tag:e.tagName,id:e.id||null,classe:e.className||null}))
@@ -94,6 +97,8 @@ async function main(){
   assert.equal(await page.locator('.marcos-v6 span').count(),6);
   assert.equal(await page.locator('.marcos-v6 span:nth-child(odd)').count(),3);
   assert.equal(await page.locator('.marcos-v6 span:nth-child(even)').count(),3);
+  await page.locator('#loop03Menu').click();
+  await page.locator('.loop03-sidebar [data-loop03-aba="tabuleiro"]').click();
   await page.locator('#filtroTodasMapaParticipante').click();
   assert.equal(await page.locator('#filtroTodasMapaParticipante').getAttribute('aria-pressed'),'true');
   await page.locator('#filtroResumoMapaParticipante').click();
@@ -150,6 +155,8 @@ async function main(){
   assert.equal(await page.locator('.linha-minha-demo .posicao-azul').count(),1);
   await page.screenshot({path:path.join(pasta,'escritorio-posicao-azul.png'),fullPage:true});
 
+  await page.locator('#loop03Menu').click();
+  await page.locator('.loop03-sidebar [data-loop03-aba="ativacoes"]').click();
   await page.locator('#cpfFicticioParticipante').fill('11144477735');
   await page.locator('#aceiteTermosParticipante').check();
   await page.locator('#confirmarAtivacaoParticipante').click();
