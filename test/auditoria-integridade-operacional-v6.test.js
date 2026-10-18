@@ -23,6 +23,28 @@ function criar(){
  }
  return {repo,contas,ponte,adesoes,comprar};
 }
+// Fixture LEGADA, apenas no teste de compatibilidade historica.
+ // Nunca exposta pela API; cria registros que existiam antes da trava de aporte.
+function inserirDouradaLegada(ponte,eventoId){
+ const sim=ponte._restaurar();
+ const item=sim.registrarPosicaoSimulada({
+  participanteId:'LOOP_EMPRESA',nome:'Dourada historica'
+ }).posicao;
+ const p=sim.filas.filaB.find(x=>x.id===item.id);
+ p.empresa=true;p.titularOperacional='LOOP_EMPRESA';
+ p.statusAdesao='POSICAO_LOOP';
+ p.origemOperacional='ADMIN_MANUAL_SEM_COMPRA';
+ p.geradaSemCompra=true;
+ ponte.banco.prepare(`
+  INSERT INTO admin_ponte_douradas_manuais_demo(evento_id,posicao_id,criada_em,origem)
+  VALUES(?,?,?,'ADMIN_MANUAL_SEM_COMPRA')
+ `).run(eventoId,p.id,p.entrouEm);
+ ponte.banco.prepare(`
+  INSERT INTO admin_ponte_estado_demo(id,snapshot_json) VALUES(1,?)
+  ON CONFLICT(id) DO UPDATE SET snapshot_json=excluded.snapshot_json
+ `).run(JSON.stringify(sim.exportarSnapshot()));
+ return {posicaoId:p.id};
+}
 test('auditoria vazia e somente leitura nao inventa receita, cpf ou operacao',t=>{
  const {repo,ponte}=criar();t.after(()=>repo.fechar());
  const inicio=repo.banco.prepare('SELECT COUNT(*) AS n FROM admin_ponte_douradas_manuais_demo').get().n;
@@ -42,7 +64,7 @@ test('auditoria confere compra, posicao ativa, seis bolas douradas e desistente 
  assert.equal((await comprar('primeira-compra-simples',a,5000)).posicaoCriada,false);
  adesoes.ativar({contaId:a.contaId,cpfFicticio:'11144477735',
   aceitaTermos:true,versaoTermos:'LOOP-DEMO-V1'});
- for(let i=0;i<6;i++)ponte.criarDouradaManualDemo({eventoId:'gold-auditoria-'+i});
+ for(let i=0;i<6;i++)inserirDouradaLegada(ponte,'gold-auditoria-'+i);
  const compra=await comprar('pedido-qualificado-audit',a);
  assert.equal(compra.posicaoCriada,true);
  const antes=ponte.auditarIntegridadeOperacionalDemo();
@@ -67,7 +89,7 @@ test('auditoria confere compra, posicao ativa, seis bolas douradas e desistente 
 });
 test('auditoria detecta empresa manual adulterada sem alterar banco ou motor',t=>{
  const {repo,ponte}=criar();t.after(()=>repo.fechar());
- const criada=ponte.criarDouradaManualDemo({eventoId:'dourada-inspecao'});
+ const criada=inserirDouradaLegada(ponte,'dourada-inspecao');
  assert.equal(ponte.auditarIntegridadeOperacionalDemo().totalAlertas,0);
  const registro=repo.banco.prepare('SELECT snapshot_json AS v FROM admin_ponte_estado_demo').get().v;
  const snapshot=JSON.parse(registro);
