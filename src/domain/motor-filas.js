@@ -14,6 +14,9 @@ class MotorFilas {
     this.indicacoesProcessadas = new Set();
     this.vendasRegistradas = new Map();
     this.participantesConhecidos = new Set();
+    this.travaPromocaoAtiva=false;
+    this.vagaLiberacao=5;
+    this.ultimaPromovidaPorTitular=new Map();
   }
 
   copiar(posicao) {
@@ -120,7 +123,7 @@ class MotorFilas {
     this.indicacoes.set(chave, novo);
     this.indicacoesProcessadas.add(eventoId);
 
-    const promovidas = this.filaB.filter(p =>
+    const promovidas = porPosicao&&this.travaPromocaoAtiva?[]:this.filaB.filter(p =>
       p.participanteId === chave && (!porPosicao || p.id === posicaoAlvoId));
     this.filaB = this.filaB.filter(p => !promovidas.includes(p));
     if (porPosicao) {
@@ -137,6 +140,33 @@ class MotorFilas {
     }
     this.ordenarFilaA();
     return { repetida: false, promovidas: promovidas.map(p => this.copiar(p)), quantidade: novo.quantidade };
+  }
+
+  // Permite no maximo uma posicao na Fila A por titular. A proxima
+  // aguarda na B, contando indicacoes, ate a anterior chegar na vaga
+  // configurada. A B preserva integralmente a ordem de chegada.
+  liberarEscalonadas(tabuleiro){
+    if(!this.travaPromocaoAtiva)return [];
+    if(!tabuleiro||!Array.isArray(tabuleiro.vagas)||tabuleiro.vagas.length!==6)
+      throw Error('TABULEIRO_INVALIDO');
+    const lugares=[tabuleiro.centro,...tabuleiro.vagas];
+    for(const marco of this.ultimaPromovidaPorTitular.values()){
+      const indice=lugares.findIndex(p=>p?.id===marco.posicaoId);
+      if(indice>=0)marco.menorVaga=Math.min(marco.menorVaga,indice);
+    }
+    const movidas=[];
+    for(const p of [...this.filaB]){
+      if(!(p.indicacoesVinculadas>0)||p.statusAdesao==='PENDENTE'||p.empresa===true)continue;
+      if(this.filaA.some(a=>a.participanteId===p.participanteId))continue;
+      const anterior=this.ultimaPromovidaPorTitular.get(p.participanteId);
+      if(anterior&&anterior.menorVaga>this.vagaLiberacao)continue;
+      this.filaB.splice(this.filaB.indexOf(p),1);
+      p.fila='A';p.promovidoEm=this.relogio();this.filaA.push(p);
+      this.ultimaPromovidaPorTitular.set(p.participanteId,{posicaoId:p.id,menorVaga:7});
+      movidas.push(this.copiar(p));
+    }
+    if(movidas.length)this.ordenarFilaA();
+    return movidas;
   }
 
   // Compatibilidade com a rota de testes /filas/promover/:id.

@@ -25,13 +25,17 @@ class SimuladorLoop {
     const alvoId=dados?.posicaoAlvoId;
     const posicaoNoTabuleiro=[this.tabuleiro.centro,...this.tabuleiro.vagas]
       .find(p=>p?.id===alvoId);
-    return this.filas.registrarIndicacaoValidada({
+    const resultado=this.filas.registrarIndicacaoValidada({
       ...dados,...(posicaoNoTabuleiro?{posicaoNoTabuleiro}:{})
     });
+    const promovidas=this.filas.liberarEscalonadas(this.tabuleiro);
+    return {...resultado,promovidas:[...resultado.promovidas,...promovidas]};
   }
 
   prepararTabuleiro() {
-    return this.tabuleiro.preencherInicial();
+    const resultado=this.tabuleiro.preencherInicial();
+    this.filas.liberarEscalonadas(this.tabuleiro);
+    return resultado;
   }
 
   registrarVendaNoCicloSimulada({ vendaId } = {}) {
@@ -56,7 +60,9 @@ class SimuladorLoop {
     const resultado = this.tabuleiro.girarSimulado({
       catracaAberta: this.catracaAberta
     });
-    if (resultado.girou) this.giros += 1;
+    if (resultado.girou){this.giros += 1;
+      this.filas.liberarEscalonadas(this.tabuleiro);
+    }
     return resultado;
   }
 

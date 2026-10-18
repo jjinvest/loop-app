@@ -8,6 +8,7 @@ const {ConfiguracaoValorLoopDemoSQLite}=require('./configuracao-valor-loop-demo-
 const {IndicacoesLinksComissoesDemoSQLite}=require('./indicacoes-links-comissoes-demo-sqlite');
 const {cofreDoEvento,origemDoCentro,centroDoLoop}=require('./destino-financeiro-centro-loop');
 const {DESTINOS}=require('./tabuleiro-loop');
+const {ConfiguracaoTravaFilaADemoSQLite}=require('./configuracao-trava-fila-a-demo-sqlite');
 const {auditarIntegridadeOperacionalDemo}=require('./auditoria-integridade-operacional-demo');
 
 function falha(codigo,mensagem){
@@ -79,6 +80,7 @@ class PonteComprasConvitesDemoSQLite{
   this.verificador=consultarPagamentoConfiavel;
   this.relogio=relogio;
   this.atribuicaoManualPorPosicao=atribuicaoManualPorPosicao===true;
+  this.configuracaoTravaFilaA=new ConfiguracaoTravaFilaADemoSQLite({banco,relogio});
   this.pedidosIdentificados=pedidosIdentificados;
   this.configuracaoValor=configuracaoValor||new ConfiguracaoValorLoopDemoSQLite({banco});
   if(this.configuracaoValor.banco!==banco||
@@ -281,11 +283,28 @@ class PonteComprasConvitesDemoSQLite{
   const linha=this.banco.prepare(
    'SELECT snapshot_json FROM admin_ponte_estado_demo WHERE id=1'
   ).get();
-  if(!linha)return new SimuladorLoop({relogio:this.relogio});
+  if(!linha){
+    const sim=new SimuladorLoop({relogio:this.relogio});
+    sim.filas.travaPromocaoAtiva=this.atribuicaoManualPorPosicao;
+    sim.filas.vagaLiberacao=this.configuracaoTravaFilaA.consultar().vagaLiberacao;
+    return sim;
+  }
   let snapshot;
   try{snapshot=JSON.parse(linha.snapshot_json);}
   catch{throw new Error('Snapshot de laboratorio corrompido');}
-  return SimuladorLoop.restaurarSnapshot(snapshot,{relogio:this.relogio});
+  const sim=SimuladorLoop.restaurarSnapshot(snapshot,{relogio:this.relogio});
+  sim.filas.travaPromocaoAtiva=this.atribuicaoManualPorPosicao;
+  sim.filas.vagaLiberacao=this.configuracaoTravaFilaA.consultar().vagaLiberacao;
+  if(this.atribuicaoManualPorPosicao&&!snapshot.filas.ultimaPromovidaPorTitular){
+    // Snapshot antigo: nao desfazer promocao existente nem duplicar fila A.
+    const ativas=[...sim.filas.filaA,...sim.tabuleiro.vagas,sim.tabuleiro.centro]
+      .filter(p=>p&&(p.fila==='A'||p.origemFila==='A'));
+    for(const p of ativas){
+      if(!sim.filas.ultimaPromovidaPorTitular.has(p.participanteId))
+        sim.filas.ultimaPromovidaPorTitular.set(p.participanteId,{posicaoId:p.id,menorVaga:7});
+    }
+  }
+  return sim;
  }
  _aplicarConvites(simulador,indicadorId){
   if(!simulador.filas.participantesConhecidos.has(indicadorId))return 0;

@@ -51,7 +51,8 @@ function exportarSnapshot(loop) {
       indicacoes: [...f.indicacoes.entries()],
       indicacoesProcessadas: [...f.indicacoesProcessadas],
       vendasRegistradas: [...f.vendasRegistradas.entries()],
-      participantesConhecidos: [...f.participantesConhecidos]
+      participantesConhecidos: [...f.participantesConhecidos],
+      ultimaPromovidaPorTitular: [...f.ultimaPromovidaPorTitular.entries()]
     },
     tabuleiro: {
       centro: t.centro, vagas: t.vagas,
@@ -86,6 +87,13 @@ function restaurarSnapshot(snapshot, criarLoop) {
   const conjuntoConhecidos = new Set(conhecidos);
   const indiceVendas = pares(f.vendasRegistradas, 'vendasRegistradas');
   const indicacoes = pares(f.indicacoes, 'indicacoes');
+  const marcos=pares(f.ultimaPromovidaPorTitular||[],'ultimaPromovidaPorTitular');
+  for(const [titular,marco] of marcos){
+    exigir(conjuntoConhecidos.has(titular)&&objeto(marco)&&
+      Number.isSafeInteger(marco.posicaoId)&&marco.posicaoId>0&&
+      Number.isSafeInteger(marco.menorVaga)&&marco.menorVaga>=0&&marco.menorVaga<=7,
+      'trava individual invalida');
+  }
   const vistosAtivos = new Set();
   let maiorId = 0;
   const checarPosicao = (p, nome, ativa = false) => {
@@ -187,6 +195,7 @@ function restaurarSnapshot(snapshot, criarLoop) {
   loop.filas.indicacoesProcessadas = new Set(eventos);
   loop.filas.vendasRegistradas = new Map(copiar(indiceVendas));
   loop.filas.participantesConhecidos = new Set(conhecidos);
+  loop.filas.ultimaPromovidaPorTitular = new Map(copiar(marcos));
   loop.tabuleiro.centro = copiar(t.centro);
   loop.tabuleiro.vagas = copiar(t.vagas);
   loop.tabuleiro.vendasDoCiclo = copiar(vendas);
