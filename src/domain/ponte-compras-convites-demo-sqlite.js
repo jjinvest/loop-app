@@ -8,6 +8,8 @@ const {ConfiguracaoValorLoopDemoSQLite}=require('./configuracao-valor-loop-demo-
 const {IndicacoesLinksComissoesDemoSQLite}=require('./indicacoes-links-comissoes-demo-sqlite');
 const {cofreDoEvento,origemDoCentro,centroDoLoop}=require('./destino-financeiro-centro-loop');
 const {DESTINOS}=require('./tabuleiro-loop');
+const {PreLancamentoCofresV6DemoSQLite}=require('./prelancamento-cofres-v6-demo-sqlite');
+const {ConciliacaoCofresV6DemoSQLite}=require('./conciliacao-cofres-v6-demo-sqlite');
 const {ConfiguracaoTravaFilaADemoSQLite}=require('./configuracao-trava-fila-a-demo-sqlite');
 const {auditarIntegridadeOperacionalDemo}=require('./auditoria-integridade-operacional-demo');
 
@@ -240,6 +242,27 @@ class PonteComprasConvitesDemoSQLite{
    CREATE TRIGGER IF NOT EXISTS admin_douradas_manuais_no_delete
     BEFORE DELETE ON admin_ponte_douradas_manuais_demo
     BEGIN SELECT RAISE(ABORT,'bola dourada imutavel'); END;
+  `);
+  // Douradas financiadas internamente em ledger separado e imutavel;
+  // douradas antigas sem aporte permanecem historicas e nao sao replicadas.
+  banco.exec(`
+   CREATE TABLE IF NOT EXISTS admin_ponte_douradas_financiadas_demo(
+    evento_id TEXT PRIMARY KEY NOT NULL,
+    posicao_id INTEGER NOT NULL UNIQUE CHECK(posicao_id>0),
+    criada_em TEXT NOT NULL,
+    cofre_origem TEXT NOT NULL CHECK(cofre_origem='LOOP_DIREITA'),
+    valor_referencia_centavos INTEGER NOT NULL CHECK(valor_referencia_centavos>0),
+    revisao_valor INTEGER NOT NULL REFERENCES admin_valor_loop_versoes_demo(revisao),
+    reserva_bruta_antes_centavos INTEGER NOT NULL,
+    reserva_livre_antes_centavos INTEGER NOT NULL,
+    origem TEXT NOT NULL CHECK(origem='ADMIN_MANUAL_COM_APORTE_RESERVA_DEMO')
+   );
+   CREATE TRIGGER IF NOT EXISTS admin_ponte_douradas_financiadas_no_update
+    BEFORE UPDATE ON admin_ponte_douradas_financiadas_demo
+    BEGIN SELECT RAISE(ABORT,'aporte dourada imutavel'); END;
+   CREATE TRIGGER IF NOT EXISTS admin_ponte_douradas_financiadas_no_delete
+    BEFORE DELETE ON admin_ponte_douradas_financiadas_demo
+    BEGIN SELECT RAISE(ABORT,'aporte dourada imutavel'); END;
   `);
   // Livro das posicoes adicionais: ampliar CHECK sem tocar os pedidos antigos.
   const antiga=this.banco.prepare("SELECT sql FROM sqlite_master WHERE type='table' AND name='admin_ponte_posicoes_adicionais_demo'").get()?.sql||'';
@@ -630,43 +653,70 @@ class PonteComprasConvitesDemoSQLite{
    };
   }catch(erro){this.banco.exec('ROLLBACK');throw erro;}
  }
- // Registro manual exclusivo da empresa. Cria UM ID unico na fila B,
- // sem pedido, sem CPF e sem venda validada. Nao gera receita em cofre.
+ // Somente a DOURADA manual compromete a reserva de seguranca.
+ // Azul que vira dourada ja veio de compra e nao sofre segunda cobranca.
  criarDouradaManualDemo({eventoId}={}){
   if(typeof eventoId!=='string'||!/^[a-z0-9-]{3,80}$/.test(eventoId))
    throw falha('EVENTO_DOURADA_INVALIDO','Identificador administrativo invalido');
-  this.banco.exec('BEGIN IMMEDIATE');
+  const banco=this.banco;banco.exec('BEGIN IMMEDIATE');
   try{
-   const existente=this.banco.prepare(
-    'SELECT posicao_id AS posicaoId,criada_em AS criadaEm FROM admin_ponte_douradas_manuais_demo WHERE evento_id=?'
-   ).get(eventoId);
+   const existente=banco.prepare(`
+    SELECT evento_id AS eventoId,posicao_id AS posicaoId,
+     criada_em AS criadaEm,valor_referencia_centavos AS valorReferenciaCentavos
+    FROM admin_ponte_douradas_financiadas_demo WHERE evento_id=?
+   `).get(eventoId);
    if(existente){
-    this.banco.exec('COMMIT');
-    return {...existente,eventoId,repetida:true,
-     origem:'ADMIN_MANUAL_SEM_COMPRA',semCompra:true,semDinheiroReal:true};
+    banco.exec('COMMIT');return {...existente,repetida:true,
+     origem:'ADMIN_MANUAL_COM_APORTE_RESERVA_DEMO',
+     aporteRegistrado:true,semPagamentoReal:true};
    }
+   if(banco.prepare('SELECT 1 FROM admin_ponte_douradas_manuais_demo WHERE evento_id=?').get(eventoId))
+    throw falha('EVENTO_DOURADA_LEGADO','Id reservado em dourada antiga');
+   const ref=this.configuracaoValor.atual();
+   const pre=new PreLancamentoCofresV6DemoSQLite({banco,ponte:this});
+   if(!pre.estado())throw falha('RESERVA_NAO_CONFIGURADA','Cofres demonstrativos nao configurados');
+   const conciliado=new ConciliacaoCofresV6DemoSQLite({banco,preLancamento:pre,livro:pre.livro}).conferir();
+   if(conciliado.quantidadeDivergencias||conciliado.fase==='INATIVO')
+    throw falha('CONCILIACAO_COFRES_DIVERGENTE','Reserva demonstrativa inconsistente');
+   const saldoBruto=conciliado.cofreDireitaSimuladoCentavos;
+   const comprometido=banco.prepare(`
+    SELECT COALESCE(SUM(valor_referencia_centavos),0) AS total
+    FROM admin_ponte_douradas_financiadas_demo
+   `).get().total;
+   const livre=saldoBruto-comprometido;
+   if(!Number.isSafeInteger(livre)||livre<ref.valorCentavos)
+    throw falha('SALDO_RESERVA_INSUFICIENTE','Saldo demonstrativo insuficiente');
    const sim=this._restaurar();
-   const gerada=sim.registrarPosicaoSimulada({
+   const nova=sim.registrarPosicaoSimulada({
     nome:'Posição dourada LOOP',participanteId:'LOOP_EMPRESA'
    }).posicao;
-   const p=sim.filas.filaB.find(v=>v.id===gerada.id);
+   const p=sim.filas.filaB.find(x=>x.id===nova.id);
    p.empresa=true;p.titularOperacional='LOOP_EMPRESA';
    p.statusAdesao='POSICAO_LOOP';
-   p.origemOperacional='ADMIN_MANUAL_SEM_COMPRA';
-   p.geradaSemCompra=true;
-   this.banco.prepare(`
-    INSERT INTO admin_ponte_douradas_manuais_demo(evento_id,posicao_id,criada_em,origem)
-    VALUES(?,?,?,'ADMIN_MANUAL_SEM_COMPRA')
-   `).run(eventoId,p.id,p.entrouEm);
-   this.banco.prepare(`
+   p.origemOperacional='ADMIN_MANUAL_COM_APORTE_RESERVA_DEMO';
+   p.geradaSemCompra=false;p.aporteInternoCentavos=ref.valorCentavos;
+   p.revisaoValorPosicao=ref.revisao;
+   const data=this.relogio();
+   banco.prepare(`
+    INSERT INTO admin_ponte_douradas_financiadas_demo(
+     evento_id,posicao_id,criada_em,cofre_origem,
+     valor_referencia_centavos,revisao_valor,reserva_bruta_antes_centavos,
+     reserva_livre_antes_centavos,origem)
+    VALUES(?,?,?,'LOOP_DIREITA',?,?,?,?,'ADMIN_MANUAL_COM_APORTE_RESERVA_DEMO')
+   `).run(eventoId,p.id,data,ref.valorCentavos,ref.revisao,saldoBruto,livre);
+   banco.prepare(`
     INSERT INTO admin_ponte_estado_demo(id,snapshot_json) VALUES(1,?)
     ON CONFLICT(id) DO UPDATE SET snapshot_json=excluded.snapshot_json
    `).run(JSON.stringify(sim.exportarSnapshot()));
-   this.banco.exec('COMMIT');
-   return {eventoId,posicaoId:p.id,criadaEm:p.entrouEm,repetida:false,
+   banco.exec('COMMIT');
+   return {eventoId,posicaoId:p.id,criadaEm:data,repetida:false,
     origem:p.origemOperacional,fila:'B',cor:'DOURADO',
-    semCPF:true,semCompra:true,semComissao:true,semDinheiroReal:true};
-  }catch(e){this.banco.exec('ROLLBACK');throw e;}
+    cofreOrigem:'LOOP_DIREITA',valorReferenciaCentavos:ref.valorCentavos,
+    revisaoValor:ref.revisao,reservaBrutaAntesCentavos:saldoBruto,
+    reservaDisponivelDepoisCentavos:livre-ref.valorCentavos,
+    aporteRegistrado:true,receitaNovaCentavos:0,
+    bancoConciliado:false,semPagamentoReal:true,semCPF:true,semComissao:true};
+  }catch(e){banco.exec('ROLLBACK');throw e;}
  }
  // Preenchimento ADMINISTRATIVO local, sem criar pagamentos ou vendas.
  prepararTabuleiroDemo(){
@@ -781,9 +831,15 @@ class PonteComprasConvitesDemoSQLite{
    semPagamentoReal:true,semCPF:true,semSessaoPublica:true,
    catracaMovimentada:false,compraNaoConfirmaBeneficioReal:true,
    compras,convites,
-   douradasManuais:this.banco.prepare(`SELECT evento_id AS eventoId,
-    posicao_id AS posicaoId,criada_em AS criadaEm,origem
-    FROM admin_ponte_douradas_manuais_demo ORDER BY posicao_id`).all(),
+   douradasManuais:this.banco.prepare(`
+    SELECT evento_id AS eventoId,posicao_id AS posicaoId,criada_em AS criadaEm,
+     origem,0 AS valorReferenciaCentavos
+    FROM admin_ponte_douradas_manuais_demo
+    UNION ALL
+    SELECT evento_id,posicao_id,criada_em,origem,valor_referencia_centavos
+    FROM admin_ponte_douradas_financiadas_demo
+    ORDER BY posicaoId
+   `).all(),
    comissoesSimuladas:this.banco.prepare(`
     SELECT pedido_id AS pedidoId,indicador_id AS indicadorId,
      convidado_id AS convidadoId,posicao_id AS posicaoId,
