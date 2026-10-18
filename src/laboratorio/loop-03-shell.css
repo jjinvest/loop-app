@@ -104,6 +104,9 @@ button.loop03-indicador:hover{border-color:#dfb15c;box-shadow:0 0 16px #e3b55338
 .loop03-pagina #tituloMapaParticipante,.loop03-pagina .legenda-posicoes-demo,.loop03-pagina #contadorFilaBParticipante,.loop03-pagina .titulo-marcos-loop{display:none}
 .loop03-pagina .mapa-fila-posicoes-demo .selo-posicao-demo{background:#4f585b;color:#fff;border-color:#677273;outline:none}
 .loop03-pagina .mapa-fila-posicoes-demo .linha-minha-demo{background:transparent;box-shadow:none}
+/* A fila permanece neutra; azul pendente e dourado LOOP nunca desaparecem. */
+.loop03-pagina .mapa-fila-posicoes-demo .selo-posicao-demo.posicao-azul{background:#255aa8;color:#fff;border-color:#7eb5f6}
+.loop03-pagina .mapa-fila-posicoes-demo .selo-posicao-demo.posicao-dourado{background:linear-gradient(130deg,#ffe49a,#be8a24);color:#392406;border-color:#ffe8a4}
 .loop03-pagina .mapa-fila-posicoes-demo .selo-posicao-demo.loop03-iluminada{box-shadow:0 0 12px #67eba791;outline:1px solid #a7fcd3}
 .loop03-pagina .mapa-fila-posicoes-demo .selo-posicao-demo.loop03-destaque-posicao{outline:2px solid white;box-shadow:0 0 16px #fffc}
 .loop03-pagina button:focus-visible,.loop03-sidebar button:focus-visible{outline:3px solid #f8d48a;outline-offset:2px}
