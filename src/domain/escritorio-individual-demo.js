@@ -80,6 +80,31 @@ class EscritorioIndividualDemo{
   const simulador=this.ponte._restaurar();
   const posicoes=posicoesTitular(simulador,contaId);
   const mapaCores=mapaCoresDoEscritorio(simulador,contaId);
+  // Apenas indicados DIRETOS do titular da sessao, nao a rede alheia.
+  const equipe=this.banco.prepare(`
+   SELECT c.id AS convidadoId,c.nome,
+    tel.telefone_normalizado AS telefone,
+    v.confirmado_em AS compraConfirmadaEm,
+    m.posicao_indicador_id AS posicaoAtribuidaId,
+    EXISTS(SELECT 1 FROM admin_loop_adesoes_posicoes_demo a WHERE a.conta_id=c.id) AS posicaoAtivada
+   FROM admin_contas_participantes_demo c
+   LEFT JOIN admin_contas_telefones_demo tel ON tel.conta_id=c.id
+   LEFT JOIN admin_ponte_convites_validados_demo v
+    ON v.convidado_id=c.id AND v.indicador_id=?
+   LEFT JOIN admin_loop_vinculos_indicacao_posicao_demo m
+    ON m.convidado_id=c.id AND m.indicador_id=?
+   WHERE c.indicado_por_id=?
+   ORDER BY c.criado_em,c.id
+  `).all(contaId,contaId,contaId).map(c=>{
+   const pos=[...simulador.filas.filaA,...simulador.filas.filaB,
+    simulador.tabuleiro.centro,...simulador.tabuleiro.vagas]
+    .find(p=>p&&p.participanteId===c.convidadoId&&p.empresa!==true);
+   return {convidadoId:c.convidadoId,nome:c.nome,telefone:c.telefone,
+    estado:c.compraConfirmadaEm&&c.posicaoAtivada?'ATIVO':'PENDENTE',
+    filaAtual:pos?pos.fila:null,posicaoAtribuidaId:c.posicaoAtribuidaId,
+    atribuicaoPendente:!!c.compraConfirmadaEm&&!!c.posicaoAtivada&&
+     c.posicaoAtribuidaId===null};
+  });
   const encerradas=[simulador.tabuleiro.centro,...simulador.tabuleiro.vagas]
    .filter(p=>p&&p.participanteId===contaId&&p.statusAdesao==='PRAZO_ENCERRADO').length;
   const desistidas=[simulador.tabuleiro.centro,...simulador.tabuleiro.vagas]
@@ -161,13 +186,18 @@ class EscritorioIndividualDemo{
       ))
     `).get(pedidoId,contaId,p.posicaoId,p.posicaoId);
     if(!referencia)throw new Error('Referencia da posicao de teste ausente');
-    return {...p,...referencia};
+    const vinculos=this.banco.prepare(`
+     SELECT COUNT(*) AS total FROM admin_loop_vinculos_indicacao_posicao_demo
+     WHERE indicador_id=? AND posicao_indicador_id=?
+    `).get(contaId,p.posicaoId).total;
+    return {...p,...referencia,indicacoesRecebidas:vinculos};
    }).sort((a,b)=>a.posicaoId-b.posicaoId),
-   mapaCores,
+   mapaCores,equipe,
    // Contagem da fila A vem dos convites VALIDADOS pelo motor; sem dados
    // pessoais de terceiros. O indice segue rigorosamente a ordem da fila A.
    convitesValidosFilaA:simulador.filas.filaA.map(p=>
-    simulador.filas.informacoesParticipante(p.participanteId).quantidade),
+    p.indicacoesVinculadas ??
+     simulador.filas.informacoesParticipante(p.participanteId).quantidade),
    // Eventos simulados do CENTRO ATUAL; nao comprovam credito financeiro.
    progressoCiclo:{eventosValidos:simulador.tabuleiro.vendasDoCiclo.length,
     totalEventos:6,modo:'LABORATORIO_SEM_PAGAMENTOS'},
