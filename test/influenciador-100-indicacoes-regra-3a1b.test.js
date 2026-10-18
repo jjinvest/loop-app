@@ -59,7 +59,8 @@ test('100 indicacoes em quatro posicoes, quinta vaga e preferencia 3A/1B coexist
   const naAmarela=sim.filas.filaA.filter(p=>p.participanteId==='influenciador');
   assert.ok(naAmarela.length<=1,'um titular nao pode ocupar duas vagas da A');
   const todas=[...sim.filas.filaA,...sim.filas.filaB,
-   sim.tabuleiro.centro,...sim.tabuleiro.vagas].filter(Boolean);
+   sim.tabuleiro.centro,...sim.tabuleiro.vagas,
+   ...sim.tabuleiro.ciclosConcluidos.map(c=>c.centro)].filter(Boolean);
   const p=doInfluenciador.map(id=>todas.find(v=>v.id===id));
   assert.ok(p.every(Boolean),'todas as seis posicoes permanecem rastreaveis');
   assert.deepEqual(p.map(x=>x.indicacoesVinculadas||0),[25,25,25,25,0,0]);
