@@ -60,8 +60,7 @@
       <div id="loop03EscolhaPainel" class="loop03-escolha-painel" hidden><h3>Qual posição você quer acompanhar?</h3><div id="loop03AtivacoesTabuleiro" class="loop03-opcoes"></div></div>
      </section>
      <section id="loop03-posicoes" class="loop03-pagina" aria-label="Minhas Posições">
-      <header class="loop03-titulo-pagina"><div><small>ACOMPANHAMENTO INDIVIDUAL</small><h2>Minhas Posições</h2></div></header>
-      <p>Selecione uma posição para acompanhar seu número, fila e indicações.</p>
+      <header class="loop03-titulo-pagina loop03-titulo-central"><div><h2>Minhas Posições</h2><p>Acompanhe suas posições e o andamento de cada uma no LOOP.</p></div></header>
       <div id="loop03OpcoesPosicoes" class="loop03-opcoes loop03-grade-posicoes"></div>
       <div id="loop03DetalhesPosicao" class="loop03-detalhes" aria-live="polite">Nenhuma posição selecionada.</div>
      </section>
@@ -240,32 +239,50 @@
    botao.addEventListener('click',()=>{selecionar(p,true);e('loop03EscolhaPainel').hidden=true;});
    opcoesTabuleiro.append(botao);
   }
-  // Exibir seis ESPACOS fixos, sem criar posicoes ficticias para completar a grade.
+
+  // Seis espacos da grade aprovada. Apenas as posicoes compradas tem numero e acao.
   const cartoes=e('loop03OpcoesPosicoes');cartoes.replaceChildren();
   for(let indice=0;indice<6;indice++){
    const p=visao.posicoes[indice];
-   if(!p){
-    const vazio=document.createElement('div');vazio.className='loop03-opcao loop03-posicao-vazia';
-    const titulo=document.createElement('strong');titulo.textContent='Posição '+(indice+1);
-    const situacao=document.createElement('small');situacao.textContent='Sem posição · Espaço disponível';
-    vazio.append(titulo,situacao);cartoes.append(vazio);continue;
+   const estado=p?.statusAdesao==='PENDENTE'?'pendente':
+    p?.local==='CENTRO'?'centro':p?.local==='FILA_A'?'a':
+    p?.local==='FILA_B'?'b':p?'giro':'vazia';
+   const cartao=document.createElement(p?'button':'div');
+   cartao.className='loop03-opcao loop03-cartao-posicao loop03-posicao-'+estado+
+    (p?'':' loop03-posicao-vazia');
+   if(p){
+    cartao.type='button';cartao.dataset.loop03Posicao=String(p.posicaoId);
+    cartao.setAttribute('aria-pressed',String(p.posicaoId===selecionada));
    }
-   const botao=document.createElement('button');botao.type='button';
-   botao.className='loop03-opcao';botao.dataset.loop03Posicao=String(p.posicaoId);
-   botao.setAttribute('aria-pressed',String(p.posicaoId===selecionada));
-   const titulo=document.createElement('strong');titulo.textContent='Posição '+(indice+1)+' · #'+p.posicaoId;
-   const descricao=document.createElement('small');
-   descricao.textContent=statusPosicao(p)+' · '+(p.statusAdesao==='PENDENTE'?'Pendente':'Confirmada')+
-    ' · '+(p.indicacoesRecebidas||0)+' indicação(ões) vinculada(s)';
-   botao.append(titulo,descricao);
-   if(p.statusAdesao==='PENDENTE'){
+   const rotulo=document.createElement('span');rotulo.className='loop03-cartao-rotulo';
+   rotulo.textContent='POSIÇÃO '+(indice+1);
+   const miolo=document.createElement('div');miolo.className='loop03-cartao-miolo';
+   const selo=document.createElement('span');selo.className='loop03-cartao-selo';
+   selo.textContent=estado==='centro'?'C':estado==='a'?'A':estado==='b'?'B':
+    estado==='pendente'?'•':estado==='giro'?'◉':'+';
+   const identidade=document.createElement('div');identidade.className='loop03-cartao-identidade';
+   const numero=document.createElement('strong');numero.textContent=p?'#'+p.posicaoId:'—';
+   const situacao=document.createElement('span');
+   situacao.textContent=!p?'SEM POSIÇÃO':estado==='pendente'?'AGUARDANDO CONFIRMAÇÃO':
+    statusPosicao(p).toUpperCase();
+   identidade.append(numero,situacao);miolo.append(selo,identidade);
+   const resumo=document.createElement('div');resumo.className='loop03-cartao-resumo';
+   const resumoTitulo=document.createElement('strong');
+   resumoTitulo.textContent=!p?'Espaço disponível':estado==='pendente'?
+    'Confirmação individual necessária':estado==='centro'?'Ciclo em andamento':
+    (p.indicacoesRecebidas||0)+' indicação(ões) válida(s)';
+   const resumoTexto=document.createElement('small');
+   resumoTexto.textContent=!p?'Sem posição cadastrada':estado==='pendente'?
+    'Selecione para confirmar':estado==='centro'?'Acompanhamento ativo':'Aguardando avanço';
+   resumo.append(resumoTitulo,resumoTexto);cartao.append(rotulo,miolo,resumo);
+   if(estado==='pendente'){
     const ponto=document.createElement('span');ponto.className='loop03-pendencia-ponto';
     ponto.title='Confirmação individual pendente';
     ponto.setAttribute('aria-label','Posição aguardando confirmação');
-    botao.append(ponto);
+    cartao.append(ponto);
    }
-   botao.addEventListener('click',()=>selecionar(p));
-   cartoes.append(botao);
+   if(p)cartao.addEventListener('click',()=>selecionar(p));
+   cartoes.append(cartao);
   }
   const equipes=e('loop03ListaEquipe');equipes.replaceChildren();
   for(const pessoa of visao.equipe||[]){
