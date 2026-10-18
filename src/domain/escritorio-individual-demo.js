@@ -164,6 +164,10 @@ class EscritorioIndividualDemo{
     return {...p,...referencia};
    }).sort((a,b)=>a.posicaoId-b.posicaoId),
    mapaCores,
+   // Contagem da fila A vem dos convites VALIDADOS pelo motor; sem dados
+   // pessoais de terceiros. O indice segue rigorosamente a ordem da fila A.
+   convitesValidosFilaA:simulador.filas.filaA.map(p=>
+    simulador.filas.informacoesParticipante(p.participanteId).quantidade),
    // Eventos simulados do CENTRO ATUAL; nao comprovam credito financeiro.
    progressoCiclo:{eventosValidos:simulador.tabuleiro.vendasDoCiclo.length,
     totalEventos:6,modo:'LABORATORIO_SEM_PAGAMENTOS'},
