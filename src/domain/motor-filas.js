@@ -69,7 +69,7 @@ class MotorFilas {
     });
   }
 
-  registrarIndicacaoValidada({ indicadorId, eventoId, convidouEm, posicaoAlvoId } = {}) {
+  registrarIndicacaoValidada({ indicadorId, eventoId, convidouEm, posicaoAlvoId, posicaoNoTabuleiro } = {}) {
     const chave = String(indicadorId ?? '').trim();
     if (chave==='LOOP_EMPRESA') {
       throw new Error('Bola dourada do LOOP nao participa de indicacoes');
@@ -91,7 +91,8 @@ class MotorFilas {
     if (porPosicao) {
       if(!Number.isSafeInteger(posicaoAlvoId) || posicaoAlvoId < 1)
         throw new Error('POSICAO_ALVO_INVALIDA');
-      alvo = [...this.filaA,...this.filaB].find(p => p.id === posicaoAlvoId);
+      alvo = [...this.filaA,...this.filaB].find(p => p.id === posicaoAlvoId) ||
+        (posicaoNoTabuleiro?.id === posicaoAlvoId ? posicaoNoTabuleiro : null);
       if(!alvo || alvo.participanteId !== chave || alvo.empresa === true)
         throw new Error('POSICAO_ALVO_NAO_PERTENCE_A_CONTA');
       if(alvo.statusAdesao === 'PENDENTE')

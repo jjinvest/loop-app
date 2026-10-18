@@ -21,7 +21,13 @@ class SimuladorLoop {
   }
 
   registrarIndicacaoSimulada(dados) {
-    return this.filas.registrarIndicacaoValidada(dados);
+    // Uma posicao ja no tabuleiro pode receber indicacao sem voltar a fila.
+    const alvoId=dados?.posicaoAlvoId;
+    const posicaoNoTabuleiro=[this.tabuleiro.centro,...this.tabuleiro.vagas]
+      .find(p=>p?.id===alvoId);
+    return this.filas.registrarIndicacaoValidada({
+      ...dados,...(posicaoNoTabuleiro?{posicaoNoTabuleiro}:{})
+    });
   }
 
   prepararTabuleiro() {

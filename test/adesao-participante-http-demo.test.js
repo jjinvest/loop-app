@@ -38,7 +38,8 @@ test('botao de ativacao autenticado e rota privada, sem CPF na resposta',async t
  assert.equal(antes.adesao.cpfConfirmadoNoTeste,false);
  const ativar=(body,extra={})=>fetch(api+'/ativar-posicoes',{method:'POST',
   headers:{...headers,...extra},body:JSON.stringify(body)});
- const dados={cpfFicticio:'11144477735',aceitaTermos:true,versaoTermos:'LOOP-DEMO-V1'};
+ const dados={posicaoId:antes.posicoes[0].posicaoId,
+  cpfFicticio:'11144477735',aceitaTermos:true,versaoTermos:'LOOP-DEMO-V1'};
  assert.equal((await ativar(dados)).status,401);
  assert.equal((await ativar(dados,{Cookie:cookie,Origin:'https://fora.invalid'})).status,403);
  assert.equal((await ativar({...dados,contaId:'fabricado'},{Cookie:cookie})).status,400);

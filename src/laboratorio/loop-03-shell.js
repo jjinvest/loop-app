@@ -291,7 +291,8 @@
     const vazio=document.createElement('option');vazio.value='';vazio.textContent='Escolher minha posição';
     op.append(vazio);
     for(const [i,p] of visao.posicoes.entries()){
-     if(p.statusAdesao==='PENDENTE'||!/^FILA_[AB]$/.test(p.local))continue;
+     if(p.statusAdesao==='PENDENTE'||
+      !/^(FILA_[AB]|CENTRO|VAGA_[1-6])$/.test(p.local))continue;
      const item=document.createElement('option');item.value=String(p.posicaoId);
      item.textContent='Posição '+(i+1)+' · #'+p.posicaoId;op.append(item);
     }
@@ -316,6 +317,19 @@
      }catch(err){aviso.textContent=err.message;confirmar.disabled=false;}
     });
     escolhas.append(op,confirmar,aviso);cartao.append(botao,escolhas);
+   } else if(pessoa.posicaoAtribuidaId!==null){
+    const botao=document.createElement('button');botao.type='button';
+    botao.textContent='⋮';botao.setAttribute('aria-label','Ver vínculo de '+pessoa.nome);
+    const leitura=document.createElement('small');leitura.hidden=true;
+    leitura.textContent='Vinculada definitivamente à posição #'+pessoa.posicaoAtribuidaId;
+    botao.addEventListener('click',()=>{leitura.hidden=!leitura.hidden;});
+    cartao.append(botao,leitura);
+   } else {
+    const botao=document.createElement('button');botao.type='button';
+    botao.textContent='⋮';botao.disabled=true;
+    botao.title='Aguarde a confirmação individual da posição do indicado';
+    botao.setAttribute('aria-label','Indicação ainda pendente de confirmação');
+    cartao.append(botao);
    }
    equipes.append(cartao);
   }

@@ -333,10 +333,13 @@ class PonteComprasConvitesDemoSQLite{
     return {convidadoId,posicaoId,vinculada:true,repetida:true};
    }
    const sim=this._restaurar();
-   const alvo=[...sim.filas.filaA,...sim.filas.filaB].find(p=>
-    p.id===posicaoId&&p.participanteId===contaId&&p.empresa!==true);
+   const alvo=[...sim.filas.filaA,...sim.filas.filaB,
+    sim.tabuleiro.centro,...sim.tabuleiro.vagas].find(p=>
+    p&&p.id===posicaoId&&p.participanteId===contaId&&p.empresa!==true);
    if(!alvo)throw falha('POSICAO_NAO_ELEGIVEL');
-   if(alvo.statusAdesao==='PENDENTE')throw falha('POSICAO_NAO_ATIVA');
+   if(alvo.statusAdesao==='PENDENTE'||!this.banco.prepare(
+    'SELECT 1 FROM admin_loop_adesoes_posicoes_demo WHERE posicao_id=? AND conta_id=?'
+   ).get(posicaoId,contaId))throw falha('POSICAO_NAO_ATIVA');
    if(!this.banco.prepare(
     'SELECT 1 FROM admin_loop_adesoes_posicoes_demo WHERE conta_id=? LIMIT 1'
    ).get(convidadoId))throw falha('INDICADO_AGUARDANDO_ATIVACAO');

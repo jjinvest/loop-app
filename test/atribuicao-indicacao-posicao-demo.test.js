@@ -76,4 +76,27 @@ test('um convidado confirmado atribuido a uma posicao ativa promove somente ela 
  assert.equal(visao.posicoes.find(p=>p.posicaoId===primeira.posicaoId).indicacoesRecebidas,1);
  assert.equal(visao.posicoes.find(p=>p.posicaoId===segunda.posicaoId).indicacoesRecebidas,0);
  assert.equal(visao.convitesValidosFilaA[0],1);
+ // Vínculo posterior a entrada do titular no tabuleiro preserva o motor.
+ const proximoConvidado=contas.cadastrar({
+  nome:'Segunda Pessoa Indicada',email:'convidado2@exemplo.invalid',
+  senha:'senha-ficticia-segura',codigoIndicador:raiz.codigoConvite
+ });
+ const preparando=ponte._restaurar();
+ preparando.prepararTabuleiro();
+ ponte.banco.prepare('UPDATE admin_ponte_estado_demo SET snapshot_json=? WHERE id=1')
+  .run(JSON.stringify(preparando.exportarSnapshot()));
+ const compraProxima=await comprar(proximoConvidado,'c-2');
+ adesoes.ativar({contaId:proximoConvidado.contaId,posicaoId:compraProxima.posicaoId,
+  cpfFicticio:'52998224725',aceitaTermos:true,versaoTermos:'LOOP-DEMO-V1'});
+ const vinculoTabuleiro=ponte.atribuirIndicacao({contaId:raiz.contaId,
+  convidadoId:proximoConvidado.contaId,posicaoId:segunda.posicaoId});
+ assert.equal(vinculoTabuleiro.repetida,false);
+ const depoisTabuleiro=ponte._restaurar();
+ const alvos=[depoisTabuleiro.tabuleiro.centro,...depoisTabuleiro.tabuleiro.vagas];
+ assert.equal(alvos.find(p=>p?.id===segunda.posicaoId)?.indicacoesVinculadas,1);
+ assert.equal(ponte.atribuirIndicacao({contaId:raiz.contaId,
+  convidadoId:proximoConvidado.contaId,posicaoId:segunda.posicaoId}).repetida,true);
+ const novaVisao=escritorio.consultar(raiz.contaId);
+ assert.equal(novaVisao.posicoes.find(p=>p.posicaoId===primeira.posicaoId).indicacoesRecebidas,1);
+ assert.equal(novaVisao.posicoes.find(p=>p.posicaoId===segunda.posicaoId).indicacoesRecebidas,1);
 });
