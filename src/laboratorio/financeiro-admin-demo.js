@@ -90,8 +90,9 @@
     el('statusElegibilidadeLoopDemo').textContent='';
     el('statusQuantidadeMinimaLoopDemo').textContent='';
     el('quantidadeMinimaLoopDemo').value='1';
-    el('pacotePosicoesLoopDemo').value='1';
-    el('statusPacotePosicoesLoopDemo').textContent='';
+    el('eventoEspecialPosicoesLoopDemo').value='1';
+    el('statusEventoEspecialLoopDemo').textContent='';
+    el('listaEventosEspeciaisLoopDemo').replaceChildren();
     el('itensCarrinhoLoopDemo').replaceChildren();
     el('contaCarrinhoLoopDemo').replaceChildren();
     el('pedidoEventoCarrinhoLoopDemo').replaceChildren();
@@ -558,7 +559,7 @@
     if(!p)return;
     el('valorElegibilidadeLoopDemo').value=p.elegivelLoop?'sim':'nao';
     el('quantidadeMinimaLoopDemo').value=String(p.quantidadeMinimaLoop);
-    el('pacotePosicoesLoopDemo').value=String(p.posicoesPorPedidoLoop||1);
+    // Modalidade regular permanece independente dos eventos temporarios.
     el('statusElegibilidadeLoopDemo').textContent=
       p.nome+': '+(p.elegivelLoop?'valor autorizado para a fila.':
        'continua à venda, mas não conta para a fila.')+
@@ -613,24 +614,58 @@
       el('statusQuantidadeMinimaLoopDemo').textContent=err.message;
     }finally{botao.disabled=false;}
   }
-  async function salvarPacotePosicoesLoop(ev){
+  async function carregarEventosEspeciaisLoopDemo(){
+    const lista=el('listaEventosEspeciaisLoopDemo');lista.replaceChildren();
+    const resposta=await requisitar('carrinho-loop-demo/eventos-especiais');
+    for(const evt of resposta.eventos){
+      const item=document.createElement('li');
+      item.textContent=evt.titulo+' — '+evt.quantidadeMinimaLoop+' unidade(s) dão '+
+        evt.posicoesPorPedidoLoop+' posição(ões) — '+evt.estado+' ';
+      if(evt.estado==='ATIVO'){
+        const botao=document.createElement('button');
+        botao.type='button';botao.textContent='Encerrar evento';
+        botao.addEventListener('click',async()=>{
+          if(!window.confirm('Encerrar '+evt.titulo+' e arquivar seu banner?'))return;
+          botao.disabled=true;
+          try{
+            await requisitar('carrinho-loop-demo/eventos-especiais/'+
+              encodeURIComponent(evt.eventoId)+'/encerrar',
+              {method:'POST',body:'{}'});
+            await carregarCarrinhosLoop();
+            el('statusEventoEspecialLoopDemo').textContent='Evento encerrado e banner arquivado.';
+          }catch(e){botao.disabled=false;el('statusEventoEspecialLoopDemo').textContent=e.message;}
+        });
+        item.append(botao);
+      }
+      lista.append(item);
+    }
+    if(!resposta.eventos.length){
+      const item=document.createElement('li');
+      item.textContent='Nenhum evento especial cadastrado.';
+      lista.append(item);
+    }
+  }
+  async function criarEventoEspecialLoopDemo(ev){
     ev.preventDefault();
     if(!token)return;
     const p=regrasProdutosLoop.find(x=>x.produtoId===el('produtoElegibilidadeLoopDemo').value);
     if(!p)return;
-    const numero=Number(el('pacotePosicoesLoopDemo').value);
-    if(![1,6].includes(numero))return;
-    const botao=el('salvarPacotePosicoesLoopDemo');botao.disabled=true;
+    if(!window.confirm('Criar e publicar promoção especial para '+p.nome+'?'))return;
+    const botao=el('criarEventoEspecialLoopDemo');botao.disabled=true;
     try{
-      const resultado=await requisitar('carrinho-loop-demo/pacote-posicoes',{
-        method:'POST',body:JSON.stringify({produtoId:p.produtoId,
-         posicoesPorPedidoLoop:numero,revisaoEsperada:p.revisaoPacotePosicoes})
+      const resposta=await requisitar('carrinho-loop-demo/eventos-especiais',{
+        method:'POST',body:JSON.stringify({
+          eventoId:el('eventoEspecialIdLoopDemo').value,
+          produtoId:p.produtoId,titulo:el('eventoEspecialTituloLoopDemo').value,
+          descricao:el('eventoEspecialDescricaoLoopDemo').value,
+          quantidadeMinimaLoop:Number(el('eventoEspecialQuantidadeLoopDemo').value),
+          posicoesPorPedidoLoop:Number(el('eventoEspecialPosicoesLoopDemo').value)
+        })
       });
       await carregarCarrinhosLoop();
-      el('statusPacotePosicoesLoopDemo').textContent=
-       p.nome+': modalidade de '+resultado.regra.posicoesPorPedidoLoop+
-       ' posição(ões) salva somente para novos pedidos. Revisão registrada.';
-    }catch(err){el('statusPacotePosicoesLoopDemo').textContent=err.message;}
+      el('statusEventoEspecialLoopDemo').textContent='Evento '+resposta.evento.eventoId+
+        ' publicado no banner do Escritório Virtual para os próximos pedidos.';
+    }catch(e){el('statusEventoEspecialLoopDemo').textContent=e.message;}
     finally{botao.disabled=false;}
   }
   async function carregarCarrinhosLoop(){
@@ -709,6 +744,7 @@
       if(pedidosCarrinho.some(p=>p.pedidoId===anterior))selectPedido.value=anterior;
       el('statusCarrinhoLoopDemo').textContent=pedidosCarrinho.length+
         ' carrinho(s) fictícios registrados.';
+      await carregarEventosEspeciaisLoopDemo();
     }catch(e){
       if(atual===versaoCarrinho)el('statusCarrinhoLoopDemo').textContent=e.message;
     }
@@ -1669,7 +1705,7 @@
   el('formCarrinhoLoopDemo').addEventListener('submit',salvarCarrinhoLoop);
   el('formElegibilidadeLoopDemo').addEventListener('submit',salvarRegraProdutoLoop);
   el('formQuantidadeMinimaLoopDemo').addEventListener('submit',salvarQuantidadeMinimaLoop);
-  el('formPacotePosicoesLoopDemo').addEventListener('submit',salvarPacotePosicoesLoop);
+  el('formEventoEspecialLoopDemo').addEventListener('submit',criarEventoEspecialLoopDemo);
   el('produtoElegibilidadeLoopDemo').addEventListener('change',mostrarRegraProdutoLoop);
   el('formEventoCarrinhoLoopDemo').addEventListener('submit',eventoCarrinhoLoop);
   el('adicionarItemCarrinhoLoopDemo').addEventListener('click',adicionarLinhaCarrinho);
