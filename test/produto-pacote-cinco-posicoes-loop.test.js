@@ -35,20 +35,28 @@ test('produto especial cria seis posicoes atomicas, bloqueia sexta e libera uma 
  const caminho='carrinho-loop-demo';
  const inicial=(await req('GET',caminho+'/elegibilidade')).data.produtos;
  assert.equal(inicial.find(p=>p.produtoId==='pacote-cinco').posicoesPorPedidoLoop,1);
+ const evento={
+  eventoId:'evento-pacote-6',produtoId:'pacote-cinco',
+  titulo:'Evento Especial de Seis Posições',
+  descricao:'Compre o produto especial e obtenha seis posições de teste',
+  quantidadeMinimaLoop:1,posicoesPorPedidoLoop:6
+ };
  assert.equal((await req('POST',caminho+'/pacote-posicoes',{
-  produtoId:'pacote-cinco',posicoesPorPedidoLoop:7,revisaoEsperada:1
+  produtoId:'pacote-cinco',posicoesPorPedidoLoop:6,revisaoEsperada:1
+ })).status,409); // pacote permanente nao pode mais ser configurado
+ assert.equal((await req('POST',caminho+'/eventos-especiais',{
+  ...evento,posicoesPorPedidoLoop:7
  })).status,400);
- assert.equal((await req('POST',caminho+'/pacote-posicoes',{
-  produtoId:'pacote-cinco',posicoesPorPedidoLoop:6,revisaoEsperada:1
- },{'Content-Type':'application/json'})).status,401);
- const configurado=await req('POST',caminho+'/pacote-posicoes',{
-  produtoId:'pacote-cinco',posicoesPorPedidoLoop:6,revisaoEsperada:1
- });
- assert.equal(configurado.status,200);
- assert.equal(configurado.data.regra.posicoesPorPedidoLoop,6);
- assert.equal((await req('POST',caminho+'/pacote-posicoes',{
-  produtoId:'pacote-cinco',posicoesPorPedidoLoop:1,revisaoEsperada:1
- })).status,409);
+ assert.equal((await req('POST',caminho+'/eventos-especiais',evento,
+  {'Content-Type':'application/json'})).status,401);
+ const configurado=await req('POST',caminho+'/eventos-especiais',evento);
+ assert.equal(configurado.status,201,JSON.stringify(configurado.data));
+ assert.equal(configurado.data.evento.posicoesPorPedidoLoop,6);
+ assert.equal((await req('GET',caminho+'/opcoes')).data.produtos
+  .find(p=>p.produtoId==='pacote-cinco').eventoId,'evento-pacote-6');
+ assert.equal((await req('POST',caminho+'/eventos-especiais',evento)).status,409);
+ assert.equal((await req('GET','escritorio-demo/publicacoes')).data.publicacoes
+  .some(p=>p.tipo==='EVENTO'),true);
  async function criar(id,contaId,produtoId){
   const r=await req('POST',caminho,{pedidoId:id,contaId,itens:[{produtoId,quantidade:1}]});
   assert.equal(r.status,201,JSON.stringify(r.data));
@@ -127,7 +135,7 @@ test('produto especial cria seis posicoes atomicas, bloqueia sexta e libera uma 
   'UPDATE admin_carrinho_item_pacote_posicoes_demo SET posicoes_por_pedido=1'
  ),/pacote congelado no pedido/);
  const painel=await(await fetch(base+'/admin/financeiro-demo')).text();
- assert.match(painel,/formPacotePosicoesLoopDemo/);
+ assert.match(painel,/formEventoEspecialLoopDemo/);
  const codigo=await(await fetch(base+'/admin/financeiro-demo.js')).text();
- assert.match(codigo,/salvarPacotePosicoesLoop/);
+ assert.match(codigo,/criarEventoEspecialLoopDemo/);
 });
