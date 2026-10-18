@@ -86,6 +86,7 @@
   };
   const extrato=e('tituloCreditosPrevistosV6')?.closest('section.cartao-participante');
   if(extrato)e('loop03-financeiro').append(extrato);
+  if(e('tituloCreditosPrevistosV6'))e('tituloCreditosPrevistosV6').textContent='Meu extrato de ciclos — LOOP 0.3';
   const resumo=e('nomeLogadoParticipante')?.closest('section.cartao-participante');
   if(resumo){
    const links=resumo.querySelector('.area-indicacoes-participante');
@@ -109,8 +110,8 @@
    if(filaA&&filaB&&painel&&titulo){
     const grid=document.createElement('div');grid.className='loop03-mapa-grade';
     const centro=document.createElement('div');centro.className='loop03-roda';
-    centro.append(titulo);
     const detalhe=titulo.nextElementSibling;
+    centro.append(titulo);
     if(detalhe?.matches('p'))centro.append(detalhe);
     centro.append(painel);
     grid.append(filaA,centro,filaB);
