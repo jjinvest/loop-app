@@ -215,7 +215,7 @@
   e('loop03EscolhaTexto').textContent='Posição #'+p.posicaoId+' · '+statusPosicao(p);
   e('loop03SituacaoBaixo').textContent=statusPosicao(p);
   const ordem=(visaoAtual?.posicoes||[]).findIndex(x=>x.posicaoId===p.posicaoId);
-  if(ordem>=0)e('loop03TotalAtivacoes').textContent=(ordem+1)+'/'+visaoAtual.limitePosicoesAtivas;
+  if(ordem>=0)e('loop03TotalAtivacoes').textContent=visaoAtual.posicoes.length+'/'+visaoAtual.limitePosicoesAtivas;
   const precisa=p.statusAdesao==='PENDENTE';
   const caixa=e('secaoAtivacaoParticipante');
   if(caixa)caixa.hidden=!precisa;
@@ -259,7 +259,7 @@
   e('loop03BoasVindas').textContent='Bem-vindo, '+nome.split(/\s+/)[0]+'!';
   e('loop03PerfilTopo').textContent=nome+' ⚙';
   const n=visao.posicoes.length;
-  e('loop03TotalAtivacoes').textContent='6/'+visao.limitePosicoesAtivas;
+  e('loop03TotalAtivacoes').textContent=n+'/'+visao.limitePosicoesAtivas;
   const bonus=visao.saquesSimulados?.bonusDisponivelSimuladoCentavos||0;
   e('loop03Giros24').textContent=Number.isSafeInteger(visao.girosUltimas24Horas)?String(visao.girosUltimas24Horas):'—';
   e('loop03Saldo').textContent=(bonus/100).toLocaleString('pt-BR',{style:'currency',currency:'BRL'});
