@@ -72,6 +72,8 @@ async function main(){
   banco=new RepositorioCatalogoSQLite({caminho:':memory:'});
   banco.salvar({produto:curso('curso-mobile-100','Curso Móvel Básico',10000),revisaoEsperada:0});
   banco.salvar({produto:curso('curso-mobile-150','Curso Móvel Completo',15000),revisaoEsperada:0});
+  banco.salvar({produto:curso('curso-cinza-30','Curso Cinza Comum',3000),revisaoEsperada:0});
+  banco.salvar({produto:curso('curso-especial-600','Curso Evento Dourado Roxo',60000),revisaoEsperada:0});
   const contas=new ContasParticipantesDemoSQLite({banco:banco.banco});
   const titular=contas.cadastrar({
    nome:'Comprador Mobile Ficticio',email:'mobile@exemplo.invalid',senha
@@ -127,8 +129,48 @@ async function main(){
   });
   for(const width of [320,360,390,412])await validarViewport(page,width,'escritorio');
 
+  // O ADMIN escolhe explicitamente as tres categorias antes de abrir a vitrine.
+  const cabShop={'Content-Type':'application/json',Authorization:'Bearer '+admin};
+  const cinza=await fetch(base+'/api/admin/carrinho-loop-demo/elegibilidade',{
+   method:'POST',headers:cabShop,
+   body:JSON.stringify({produtoId:'curso-cinza-30',elegivelLoop:false,revisaoEsperada:1})
+  });
+  assert.equal(cinza.status,200,await cinza.text());
+  const dia=new Date().toISOString().slice(0,10);
+  const fim=new Date(Date.now()+7*86400000).toISOString().slice(0,10);
+  const eventoLoja=await fetch(base+'/api/admin/carrinho-loop-demo/eventos-especiais',{
+   method:'POST',headers:cabShop,body:JSON.stringify({
+    eventoId:'evento-vitrine-dourada-roxa',produtoId:'curso-especial-600',
+    titulo:'Evento Dourado com Roxo AKITEMM',
+    descricao:'Compra de um curso especial pode gerar duas posicoes no LOOP',
+    quantidadeMinimaLoop:1,posicoesPorPedidoLoop:2,
+    dataInicio:dia,dataFim:fim
+   })
+  });
+  assert.equal(eventoLoja.status,201,await eventoLoja.text());
   await page.goto(base+'/laboratorio/loja',{waitUntil:'networkidle'});
   await page.locator('#conteudoLojaLoop').waitFor({state:'visible'});
+  // CINZA sem posicoes; VERDE acumula ate 1; DOURADO+ROXO apenas no evento.
+  const cinzaCard=page.locator('.produto-loja-loop').filter({hasText:'Curso Cinza Comum'});
+  const verdeCard=page.locator('.produto-loja-loop').filter({hasText:'Curso Móvel Básico'});
+  const eventoCard=page.locator('.produto-loja-loop').filter({hasText:'Curso Evento Dourado Roxo'});
+  assert.equal(await cinzaCard.count(),1);
+  assert.equal(await cinzaCard.getAttribute('class'),'produto-loja-loop produto-loja-loop-nao-elegivel');
+  assert.equal(await verdeCard.getAttribute('class'),'produto-loja-loop produto-loja-loop-elegivel');
+  assert.equal(await eventoCard.getAttribute('class'),'produto-loja-loop produto-loja-loop-especial');
+  assert.equal(await eventoCard.locator('.tarja-promocao-especial-loop').innerText(),'PROMOÇÃO ESPECIAL');
+  assert.match(await eventoCard.locator('.datas-promocao-especial-loop').innerText(),
+   /De \d{4}-\d{2}-\d{2} até \d{4}-\d{2}-\d{2}.*2 posições/);
+  const cores=await eventoCard.evaluate(node=>{
+   const tarja=node.querySelector('.tarja-promocao-especial-loop');
+   return {borda:getComputedStyle(node).borderColor,
+    tarja:getComputedStyle(tarja).backgroundImage,
+    fundo:getComputedStyle(node).backgroundImage};
+  });
+  assert.equal(cores.borda,'rgb(232, 188, 88)','Borda de promoção deve ser DOURADA');
+  assert.match(cores.tarja,/rgb\(90, 49, 142\)/,'Tarja deve ser ROXA e dourada');
+  assert.match(cores.fundo,/rgb\(49, 32, 80\)/,'Fundo deve ser ROXO');
+  assert.equal(await eventoCard.locator('.tarja-vermelha-promocao-loop').count(),0);
   await page.locator('.produto-loja-loop').filter({hasText:'Curso Móvel Básico'})
    .getByRole('button',{name:'Adicionar ao carrinho'}).click();
   await page.locator('.produto-loja-loop').filter({hasText:'Curso Móvel Completo'})
@@ -357,6 +399,11 @@ async function main(){
 
   await desktop.goto(base+'/laboratorio/loja',{waitUntil:'networkidle'});
   await desktop.locator('#conteudoLojaLoop').waitFor({state:'visible'});
+  assert.equal(await desktop.locator('.produto-loja-loop-especial').count(),1);
+  assert.equal(await desktop.locator('.produto-loja-loop-elegivel').count(),2);
+  assert.equal(await desktop.locator('.produto-loja-loop-nao-elegivel').count(),1);
+  assert.equal(await desktop.locator('.produto-loja-loop-especial .tarja-promocao-especial-loop').innerText(),
+   'PROMOÇÃO ESPECIAL');
   for(const width of [768,1024,1366])
    await conferirLargura(desktop,width,'loja-desktop',{captura:width===1366});
   await desktop.goto(base+'/admin/financeiro-demo',{waitUntil:'networkidle'});
@@ -391,6 +438,7 @@ async function main(){
    totalPedidoCentavos:25000,clienteFicticio:true,
    lojaParaEscritorio:true,ativacaoAzulParaVermelho:true,
    indicacaoManualValidadaPeloNavegador:true,contadoresDaRedeValidados:true,
+   coresAKITEMMValidadas:true,eventosDouradosRoxosSemTarjaVermelha:true,
    semRolagemHorizontal:true,imagens:fs.readdirSync(pasta).filter(x=>x.endsWith('.png'))};
   fs.writeFileSync(path.join(pasta,'resultado.json'),JSON.stringify(relatorio,null,2)+'\n');
   process.stdout.write('MOBILE_LOOP_RESULTADO='+JSON.stringify(relatorio)+'\n');
