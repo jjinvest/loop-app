@@ -382,7 +382,16 @@
    }else if(pessoa.estado!=='ATIVO'){
     dados.append(document.createTextNode(' · Atribuição indisponível até a confirmação'));
    }
-   cartao.append(titulo,dados);
+   // Avatar tipografico: visual da equipe sem imagem ou identidade ficticia.
+   const avatar=document.createElement('span');avatar.className='loop03-equipe-avatar';
+   avatar.setAttribute('aria-hidden','true');
+   avatar.textContent=String(pessoa.nome||'?').trim().split(/\s+/).slice(0,2)
+    .map(parte=>parte[0]||'').join('').toLocaleUpperCase('pt-BR');
+   const faixa=document.createElement('span');
+   faixa.className='loop03-equipe-estado '+(situacao==='ATIVO'?'loop03-equipe-ativo':
+    situacao==='PENDENTE'?'loop03-equipe-pendente':'loop03-equipe-conferencia');
+   faixa.textContent=situacao;
+   cartao.append(avatar,titulo,faixa,dados);
    if(pessoa.posicaoAtribuidaId===null&&pessoa.estado==='ATIVO'){
     const botao=document.createElement('button');botao.type='button';
     botao.textContent='⋮';botao.setAttribute('aria-label','Escolher posição para '+pessoa.nome);
