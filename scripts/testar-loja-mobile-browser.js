@@ -415,6 +415,10 @@ async function main(){
   await page.locator('#chaveAdminLoop03').fill(admin);
   await page.locator('#formAcessoAdminLoop03 button[type=submit]').click();
   await page.locator('#dadosAdminLoop03').waitFor({state:'visible'});
+  assert.equal(await page.locator('#indicacoesConfirmadasAdmin').innerText(),'2');
+  assert.equal(await page.locator('#indicacoesVinculadasAdmin').innerText(),'2');
+  assert.equal(await page.locator('#indicacoesDisponiveisAdmin').innerText(),'0');
+  assert.match(await page.locator('#painelIndicacoesAdmin').innerText(),/três amarelas e uma branca/i);
   assert.equal(await page.locator('#numeroVagaAdmin').innerText(),'6');
   await page.locator('#vagaAdminLoop03').selectOption('4');
   await page.locator('#motivoAdminLoop03').fill('Revisão interna da alternância');
