@@ -104,7 +104,7 @@ test('escritorio reune pedidos pendentes, somente-loja, azul, vermelho e dourado
  assert.equal(preparo.status,200);
  visao=await obter(a);
  const segundo=visao.historicoLoja.pedidos.find(p=>p.pedidoId===posB);
- assert.equal(segundo.estado,'POSICAO_DOURADA');
+ assert.equal(segundo.estado,'POSICAO_DOURADA_LOOP');
  assert.equal(visao.historicoLoja.contagens.aguardandoAtivacao,0);
  assert.equal(visao.historicoLoja.contagens.posicoesDouradas,1);
  assert.equal(visao.historicoLoja.contagens.comPosicaoAtivada,1);
