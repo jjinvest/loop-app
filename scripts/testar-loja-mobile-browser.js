@@ -156,7 +156,8 @@ async function main(){
   await page.screenshot({path:path.join(pasta,'escritorio-posicao-azul.png'),fullPage:true});
 
   await page.locator('#loop03Menu').click();
-  await page.locator('.loop03-sidebar [data-loop03-aba="ativacoes"]').click();
+  await page.locator('.loop03-sidebar [data-loop03-aba="posicoes"]').click();
+  await page.locator('#loop03OpcoesPosicoes [data-loop03-posicao]').first().click();
   await page.locator('#cpfFicticioParticipante').fill('11144477735');
   await page.locator('#aceiteTermosParticipante').check();
   await page.locator('#confirmarAtivacaoParticipante').click();
