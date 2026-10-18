@@ -347,9 +347,15 @@ async function main(){
   await page.locator('#chaveFinanceiroDemo').fill(admin);
   await page.locator('#abrirFinanceiroDemo').click();
   await page.locator('#dadosFinanceiroDemo').waitFor({state:'visible'});
+  // Sem reserva demonstrativa, nem o ADMIN pode criar posicao gratuita.
   await page.locator('#criarDouradaManualDemo').click();
-  await page.locator('#listaDouradasManuaisDemo li').first().waitFor();
-  assert.match(await page.locator('#listaDouradasManuaisDemo').innerText(),/Posição #\d+ · origem administrativa/);
+  await page.getByText(/Não foi possível criar:.*Cofres demonstrativos não configurados/).waitFor();
+  assert.equal(await page.locator('#listaDouradasManuaisDemo li').count(),0);
+  const douradaNegada=await fetch(base+'/api/admin/ponte-compras-convites-demo/douradas',{
+   method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+admin},
+   body:JSON.stringify({eventoId:'dourada-sem-reserva-browser'})
+  });
+  assert.equal(douradaNegada.status,409);
   await page.locator('#centroFinanceiroDemo').selectOption('dourado');
   await page.locator('#abrirFinanceiroDemo').click();
   await page.locator('#dadosFinanceiroDemo').waitFor({state:'visible'});
@@ -434,7 +440,7 @@ async function main(){
    tamanhosPx:[320,360,390,412,768,1024,1366],
    paginasVerificadas:['home','escritorio-participante','loja','admin-financeiro',
     'admin-catalogo','admin-escritorio','admin-cadastro','produto'],
-   celularEComputador:true,douradaCriadaPeloNavegador:true,pedidosCriados:2,
+   celularEComputador:true,douradaSemReservaBloqueada:true,pedidosCriados:2,
    totalPedidoCentavos:25000,clienteFicticio:true,
    lojaParaEscritorio:true,ativacaoAzulParaVermelho:true,
    indicacaoManualValidadaPeloNavegador:true,contadoresDaRedeValidados:true,
