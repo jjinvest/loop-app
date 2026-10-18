@@ -1,0 +1,203 @@
+/* LOOP 3.0 — Atmosfera cósmica viva das quatro abas.
+ * Sobreposição visual sobre componentes funcionais existentes.
+ * Sem imagens de tela, sem elementos clicáveis fictícios e sem alteração de dados.
+ * Preferências de movimento reduzido são respeitadas.
+ */
+body.loop03-logado{
+  background:
+   radial-gradient(ellipse at 8% 4%,#71338d72,transparent 35%),
+   radial-gradient(ellipse at 96% 88%,#e3a64038,transparent 43%),
+   radial-gradient(ellipse at 67% 64%,#22115b9c,transparent 58%),
+   #050715!important;
+}
+.loop03-shell{
+  isolation:isolate;
+  border:3px solid transparent!important;
+  background:
+   radial-gradient(ellipse at 72% 93%,#671f924d,transparent 60%),
+   linear-gradient(140deg,#090b1a,#13102c 50%,#060c1b) padding-box,
+   linear-gradient(112deg,#fff7cd,#d89232 10%,#ffce61 19%,#fff7df 28%,#9d4d1f 46%,#f8c059 60%,#fff3c4 74%,#aa5419 87%,#f5c377) border-box!important;
+  box-shadow:inset 0 0 0 2px #ffda8a80,inset 0 0 22px #f4a73d4a,0 0 19px #ffbd4e7a,0 14px 60px #000c!important;
+}
+.loop03-shell:before{
+  border-color:#ffe6a499!important;
+  box-shadow:inset 0 0 18px #ffc65c52,0 0 12px #f1b54a72!important;
+}
+.loop03-banner-topo{
+  background:
+   radial-gradient(ellipse at 0% 0%,#873cba42,transparent 46%),
+   radial-gradient(ellipse at 94% 16%,#fcb94942,transparent 37%),
+   linear-gradient(110deg,#070916,#0d0c24 65%,#070e21)!important;
+  border-bottom:1px solid #d18d4f55!important;
+}
+.loop03-logomarca,.loop03-marca{
+  color:#f7c158!important;
+  text-shadow:0 1px 0 #fff1b4,0 4px 2px #713b11,0 0 20px #e8a5329c!important;
+}
+.loop03-logomarca span,.loop03-marca span{
+  color:#e8e9f2!important;
+  text-shadow:0 2px 1px #697187,0 0 16px #fff9d480!important;
+}
+.loop03-sidebar{
+  background:
+   radial-gradient(ellipse at 4% 96%,#5f237557,transparent 38%),
+   linear-gradient(154deg,#101728,#070b19 72%,#100c21)!important;
+  border:1px solid #d0a05c!important;
+  box-shadow:inset 0 0 0 1px #ffdc9050,0 0 21px #c27f3f58!important;
+}
+.loop03-sidebar nav button,.loop03-sidebar nav a{border-radius:12px}
+.loop03-sidebar nav button[aria-current=page]{
+  background:linear-gradient(99deg,#a76c35,#3a2b30 72%,#221a2e)!important;
+  border-color:#f4c474!important;
+  box-shadow:inset 0 1px #fff5c16e,0 0 14px #d89b5c4d!important;
+}
+.loop03-vitrine-lateral{
+  background:
+   radial-gradient(ellipse at 50% 54%,#673ba25e,transparent 55%),
+   linear-gradient(156deg,#11152a,#060c1a)!important;
+  border-color:#eab253!important;
+  box-shadow:inset 0 0 0 1px #ffe4ab38,0 0 18px #ba713f70!important;
+}
+.loop03-indicador{
+  background:linear-gradient(135deg,#1c1b30,#080e1d 81%)!important;
+  border-color:#cb9250!important;
+  box-shadow:inset 0 1px #fff2bb4d,0 0 12px #b7793d55,0 5px 18px #0009!important;
+}
+.loop03-indicador strong{text-shadow:0 0 12px #f8e5ae32}
+.loop03-pagina{
+  position:relative;
+  isolation:isolate;
+  overflow:hidden;
+  border:2px solid #edb758!important;
+  background:
+   radial-gradient(ellipse at 50% 43%,#3f137bb0,transparent 75%),
+   radial-gradient(ellipse at 0% 100%,#261466c4,transparent 72%),
+   #13082d!important;
+  box-shadow:inset 0 0 0 2px #30205c,inset 0 0 25px #311079b8,0 0 18px #dc974945!important;
+}
+.loop03-pagina>*{position:relative;z-index:1}
+.loop03-pagina::before,.loop03-pagina::after{
+  content:"";
+  position:absolute;
+  pointer-events:none;
+  z-index:0;
+  inset:-15%;
+}
+.loop03-pagina::before{
+  background:
+   radial-gradient(ellipse at 20% 36%,#753ddd82,transparent 32%),
+   radial-gradient(ellipse at 85% 17%,#9843e36e,transparent 35%),
+   radial-gradient(ellipse at 72% 92%,#da8a2452,transparent 24%),
+   conic-gradient(from 235deg at 78% 68%,transparent 0deg,#e9a03f2f 8deg,transparent 18deg,transparent 290deg,#b166f83c 312deg,transparent 331deg);
+  opacity:.83;
+  transform:translate3d(0,0,0) scale(1);
+  animation:loop30Nebulosa 31s ease-in-out infinite alternate;
+}
+.loop03-pagina::after{
+  background-image:
+   radial-gradient(circle,#fff7d9 1.1px,transparent 1.7px),
+   radial-gradient(circle,#e7bbff 1px,transparent 1.55px),
+   radial-gradient(circle,#ffe19d .85px,transparent 1.5px),
+   radial-gradient(circle,#b9d7ff .65px,transparent 1.3px);
+  background-size:109px 113px,71px 89px,147px 131px,55px 69px;
+  background-position:8px 21px,32px 5px,55px 63px,7px 37px;
+  opacity:.57;
+  transform:translate3d(0,0,0);
+  animation:loop30Estrelas 43s linear infinite alternate;
+}
+@keyframes loop30Nebulosa{
+  0%{transform:translate3d(-2%,1%,0) scale(1.04);opacity:.78}
+  45%{opacity:1}
+  100%{transform:translate3d(3%,-2%,0) scale(1.11);opacity:.93}
+}
+@keyframes loop30Estrelas{
+  0%{transform:translate3d(-1%,0,0);opacity:.52}
+  55%{opacity:.8}
+  100%{transform:translate3d(2%,-3%,0);opacity:.64}
+}
+.loop03-pagina .loop03-cartao-posicao{
+  box-shadow:inset 0 0 0 3px #271340,0 0 12px #8e52c54d,0 4px 16px #0008!important;
+}
+.loop03-pagina .loop03-cartao-posicao.loop03-posicao-a{
+  box-shadow:inset 0 0 0 3px #533513,0 0 15px #f9c24e82,0 4px 16px #0009!important;
+}
+.loop03-pagina .loop03-cartao-posicao.loop03-posicao-centro{
+  box-shadow:inset 0 0 0 3px #133c35,0 0 15px #4ce6a17a!important;
+}
+.loop03-pagina .loop03-adicionar-indicado:not(:disabled){
+  border:1px solid #ffcf74;
+  background:linear-gradient(110deg,#2f1749,#53266a 48%,#1c1c38);
+  box-shadow:inset 0 1px #ffe8c254,0 0 10px #b77bec3a;
+}
+.loop03-pagina .loop03-saldo-indicados{
+  border-color:#d7a866;
+  background:linear-gradient(103deg,#120f2fdd,#21123ce0 65%,#141331de);
+  box-shadow:inset 0 1px #ffe6ae52,0 0 12px #d0955542;
+}
+#loop03-tabuleiro .loop03-mapa-grade>.bloco-fila-participante{
+  background:linear-gradient(150deg,#101525e8,#070e1dee)!important;
+  border:2px solid #c88b3f!important;
+  border-radius:20px!important;
+  box-shadow:inset 0 0 0 1px #f8cd7455,0 0 16px #d58c3657!important;
+}
+#loop03-tabuleiro .loop03-mapa-grade>.bloco-fila-participante:last-child{
+  border-color:#ccd2e0!important;
+  box-shadow:inset 0 0 0 1px #a6b4c957,0 0 13px #8b9bc34a!important;
+}
+#loop03-tabuleiro .loop03-mapa-grade .loop03-linha-fila{
+  background:linear-gradient(100deg,#10182a,#080d1a)!important;
+  border:1px solid #b482454b!important;
+  box-shadow:inset 0 1px #f6d7951e!important;
+}
+#loop03-tabuleiro .loop03-roda{
+  position:relative;
+  overflow:visible;
+  background:
+   radial-gradient(ellipse at 50% 55%,#2a186b8a,transparent 76%),
+   linear-gradient(155deg,#0b0c1d,#080e20)!important;
+  border:2px solid #e9b15e!important;
+  box-shadow:inset 0 0 0 1px #ffeac15c,0 0 22px #d69e5878,inset 0 0 24px #27177494!important;
+}
+#loop03-tabuleiro .loop03-roda .mapa-tabuleiro-posicoes-demo{
+  border:5px solid #eab45a!important;
+  background:radial-gradient(circle at 50% 50%,#164c41 0,#12172f 48%,#080d1a 61%,#19112d 76%)!important;
+  box-shadow:0 0 0 2px #51311f,0 0 20px #e9af5788,inset 0 0 24px #eebd493e!important;
+}
+#loop03-tabuleiro .loop03-roda .espaco-tabuleiro-demo{
+  box-shadow:inset -7px -7px 14px #252e45a0,inset 3px 3px 8px #ffffffb0,0 3px 15px #000a,0 0 8px #e3e4ff55!important;
+}
+#loop03-tabuleiro .loop03-roda .espaco-tabuleiro-demo.tabuleiro-vaga-6:not(:has(.posicao-dourado)){
+  box-shadow:inset 1px 2px 7px #ffe1df80,0 0 12px #fb4345b5!important;
+}
+#loop03-tabuleiro .loop03-roda .espaco-tabuleiro-demo.tabuleiro-centro:not(:has(.posicao-dourado)){
+  box-shadow:inset 1px 2px 7px #fff9c180,0 0 17px #42f0abbb!important;
+}
+#loop03-rede .loop03-equipe-linha{
+  border-color:#a682d0!important;
+  box-shadow:inset 0 1px #d8b3f64b,0 0 10px #9556db3c!important;
+}
+#loop03-home .loop03-hero-escritorio{
+  background:
+   radial-gradient(ellipse at 55% 94%,#e8a4484d,transparent 46%),
+   radial-gradient(ellipse at 8% 40%,#295ae072,transparent 40%),
+   radial-gradient(ellipse at 90% 40%,#9528df8c,transparent 42%),
+   linear-gradient(150deg,#070a25,#1c0d51 53%,#0d1636)!important;
+  box-shadow:inset 0 0 0 3px #482276,0 0 22px #d59b5d8a!important;
+}
+#loop03-home .loop03-cenario-tela{
+  background:
+   radial-gradient(ellipse at 53% 53%,#3b2b9d8a,transparent 69%),
+   linear-gradient(125deg,#102456,#090c27 53%,#301a63);
+}
+#loop03-home .loop03-cenario-monitor{
+  border-color:#080a22;
+  box-shadow:0 0 0 2px #edbe78,0 0 22px #ac66e9a8,0 17px 33px #000b;
+}
+@media(max-width:520px){
+ .loop03-pagina::after{opacity:.44}
+ #loop03-tabuleiro .loop03-roda{border-width:1px!important}
+ #loop03-tabuleiro .loop03-roda .mapa-tabuleiro-posicoes-demo{border-width:3px!important}
+}
+@media(prefers-reduced-motion:reduce){
+ .loop03-pagina::before,.loop03-pagina::after{animation:none!important;transform:none!important}
+}
