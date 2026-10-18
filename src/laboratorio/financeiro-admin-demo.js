@@ -258,7 +258,17 @@
       }
     });
     if(!resposta.ok){
-      if(resposta.status===409)throw new Error('Identificador já usado com dados diferentes ou revisão alterada. Confira e recarregue.');
+      if(resposta.status===409){
+        const dados=await resposta.json().catch(()=>({}));
+        const errosDouradas={
+         RESERVA_NAO_CONFIGURADA:'Configure o pré-lançamento e a reserva demonstrativa antes de criar uma dourada.',
+         SALDO_RESERVA_INSUFICIENTE:'Saldo demonstrativo da reserva de segurança insuficiente. Nenhuma posição foi criada.',
+         CONCILIACAO_COFRES_DIVERGENTE:'A reserva apresenta divergência de conciliação. Nenhuma posição foi criada.',
+         EVENTO_DOURADA_LEGADO:'Esse identificador já pertence a uma dourada histórica sem aporte.'
+        };
+        throw new Error(errosDouradas[dados.erro]||
+         'Identificador já usado com dados diferentes ou revisão alterada. Confira e recarregue.');
+      }
       if(resposta.status===401 || resposta.status===403)throw new Error('Chave inválida ou acesso local não permitido.');
       throw new Error('Operação não concluída ('+resposta.status+').');
     }

@@ -349,7 +349,7 @@ async function main(){
   await page.locator('#dadosFinanceiroDemo').waitFor({state:'visible'});
   // Sem reserva demonstrativa, nem o ADMIN pode criar posicao gratuita.
   await page.locator('#criarDouradaManualDemo').click();
-  await page.getByText(/Não foi possível criar:.*Cofres demonstrativos não configurados/).waitFor();
+  await page.getByText(/Não foi possível criar:.*Configure o pré-lançamento e a reserva demonstrativa/).waitFor();
   assert.equal(await page.locator('#listaDouradasManuaisDemo li').count(),0);
   const douradaNegada=await fetch(base+'/api/admin/ponte-compras-convites-demo/douradas',{
    method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+admin},
