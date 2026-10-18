@@ -8,6 +8,7 @@
  let versao=0;
  let mapaAtual=null;
  let nomeTitular='';
+ let cpfConfirmadoAtual=false;
  let convitesValidadosFilaA=[];
  let filtroMapa='resumo';
  let destinoInicialTratado=false;
@@ -379,6 +380,7 @@
   if(visao.mapaCores)mostrarMapa(visao.mapaCores);
   const temAzul=visao.posicoes.some(p=>p.statusAdesao==='PENDENTE');
   const cpfTermosConfirmados=visao.adesao?.cpfConfirmadoNoTeste===true;
+  cpfConfirmadoAtual=cpfTermosConfirmados;
   const mostrarAtivacao=link.ativo&&(!cpfTermosConfirmados||temAzul);
   e('secaoAtivacaoParticipante').hidden=!mostrarAtivacao;
   e('atalhoAtivarParticipante').hidden=!mostrarAtivacao;
@@ -511,21 +513,26 @@
   const botao=e('confirmarAtivacaoParticipante');
   if(botao.disabled)return;
   const aviso=e('estadoAtivacaoParticipante');
+  const posicaoId=window.Loop03Shell?.posicaoSelecionada?.();
+  if(!Number.isSafeInteger(posicaoId)||posicaoId<1){
+   aviso.textContent='Selecione uma posição pendente em Minhas Posições.';return;
+  }
   const valor=e('cpfFicticioParticipante').value.trim();
-  if(!/^\d{11}$/.test(valor)){
+  if(!cpfConfirmadoAtual&&!/^\d{11}$/.test(valor)){
    aviso.textContent='Informe onze dígitos fictícios de teste.';return;
   }
   botao.disabled=true;
   try{
-   const resultado=await chamada('ativar-posicoes',{
-    cpfFicticio:valor,
+   const dados=cpfConfirmadoAtual?{posicaoId}:{
+    posicaoId,cpfFicticio:valor,
     aceitaTermos:e('aceiteTermosParticipante').checked,
     versaoTermos:'LOOP-DEMO-V1'
-   });
+   };
+   const resultado=await chamada('ativar-posicoes',dados);
    e('cpfFicticioParticipante').value='';
    e('aceiteTermosParticipante').checked=false;
    await atualizar();
-   aviso.textContent='CPF e regras confirmados no teste. '+resultado.ativadas+' posição(ões) ativada(s).';
+   aviso.textContent='Posição #'+posicaoId+' confirmada individualmente. '+resultado.ativadas+' posição ativada no teste.';
   }catch(erro){
    aviso.textContent=erro.message;
    e('cpfFicticioParticipante').value='';
@@ -579,5 +586,6 @@
   finally{botao.disabled=false;}
  });
  e('atualizarParticipante').addEventListener('click',atualizar);
+ window.LoopParticipanteAtualizar=atualizar;
  atualizar();
 })();
