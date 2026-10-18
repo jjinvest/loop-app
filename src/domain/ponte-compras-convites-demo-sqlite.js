@@ -458,7 +458,10 @@ class PonteComprasConvitesDemoSQLite{
     throw falha('PACOTE_VALOR_INSUFICIENTE','Pacote de posicoes abaixo do numero de referencias LOOP');
    const conta=this.contas.buscar(comprovante.contaId);
    if(!conta)throw falha('CONTA_DESCONHECIDA','Conta ficticia nao cadastrada');
-   if(comprovante.valorElegivelLoopCentavos<referenciaVigente.valorCentavos){
+   // Se a compra exceder o teto de cadeiras, ela continua sendo venda da loja.
+   const simulador=this._restaurar();
+   const limiteAtingido=posicoesAtivas(simulador,conta.contaId)+quantidadePosicoes>6;
+   if(comprovante.valorElegivelLoopCentavos<referenciaVigente.valorCentavos||limiteAtingido){
     // Compra valida da LOJA, sem mexer no snapshot, nas filas ou em convites.
     // A regra de seis posicoes so se aplica a pedidos elegiveis ao LOOP.
     // As tabelas legadas separam pelo valor TOTAL efetivamente comprado,
@@ -480,11 +483,8 @@ class PonteComprasConvitesDemoSQLite{
      posicaoId:null,filaAtual:null,indicacaoNova:false,
      linkDivulgacaoLiberado:true,comissaoSimuladaCentavos:0,
      valorElegivelLoopCentavos:comprovante.valorElegivelLoopCentavos,
-     movimentouCatraca:false,registrouPagamentoReal:false};
-   }
-   const simulador=this._restaurar();
-   if(posicoesAtivas(simulador,conta.contaId)+quantidadePosicoes>6){
-    throw falha('LIMITE_ATIVO','Limite de seis posicoes ativas no teste');
+     movimentouCatraca:false,registrouPagamentoReal:false,
+     motivoSemPosicao:limiteAtingido?'LIMITE_SEIS_POSICOES':'COMPRA_NAO_QUALIFICADA'};
    }
    // A promocao exige uma posicao PRÓPRIA do indicador, ainda na fila
    // ou no tabuleiro e comprada ate a confirmacao do indicado.
