@@ -6,7 +6,7 @@
   const money=centavos=>new Intl.NumberFormat('pt-BR',
     {style:'currency',currency:'BRL'}).format(centavos/100);
   const recurso='/api/admin/circuit-break-v6-demo';
-  let token='',estado=null,ocupado=false;
+  let token='',estado=null,ocupado=false,travaAtual=null;
 
   async function api(caminho='',opcoes={}){
     const resposta=await fetch(recurso+caminho,{
@@ -299,6 +299,45 @@
     crypto.getRandomValues(bits);
     return 'cb-'+Array.from(bits,x=>x.toString(16).padStart(2,'0')).join('');
   }
+  function mostrarTrava(dados){
+    travaAtual=dados.configuracao;
+    el('vagaLiberacaoTravaCBV6').value=String(travaAtual.vagaLiberacao);
+    el('resumoTravaFilaACBV6').textContent=
+      'Regra atual: vaga '+travaAtual.vagaLiberacao+
+      ' · Revisão '+travaAtual.revisao+
+      '. As posições que já estão na Fila A e no Tabuleiro não são realocadas.';
+    const historico=el('historicoTravaFilaACBV6');historico.replaceChildren();
+    for(const h of dados.historico){
+      const li=document.createElement('li');
+      li.textContent='Revisão '+h.revisao+' | Vaga '+h.anterior+' → '+h.nova+
+        ' | '+h.motivo+' | '+h.registradoEm;
+      historico.append(li);
+    }
+    if(!dados.historico.length){
+      const li=document.createElement('li');li.textContent='Ainda não há alterações.';
+      historico.append(li);
+    }
+  }
+  async function carregarTrava(){mostrarTrava(await api('/trava-fila-a'));}
+  async function salvarTrava(evento){
+    evento.preventDefault();
+    if(ocupado||!token||!travaAtual)return;
+    const vagaLiberacao=Number(el('vagaLiberacaoTravaCBV6').value);
+    if(!window.confirm('Aplicar vaga '+vagaLiberacao+
+      ' às PRÓXIMAS liberações? A alteração será auditada.'))return;
+    const aviso=el('statusTravaFilaACBV6');
+    try{
+      const dados=await api('/trava-fila-a',{method:'POST',body:JSON.stringify({
+        vagaLiberacao,revisaoEsperada:travaAtual.revisao,
+        motivo:el('motivoTravaCBV6').value.trim()
+      })});
+      mostrarTrava(dados);el('motivoTravaCBV6').value='';
+      aviso.textContent='Regra registrada. Nenhuma cadeira existente foi alterada.';
+    }catch(err){
+      aviso.textContent='Alteração recusada: '+err.message;
+      await carregarTrava().catch(()=>{});
+    }
+  }
   async function carregar(){
     if(!token)return;
     mostrar(await api());
@@ -307,6 +346,7 @@
     await atualizarGestao();
     await carregarAgendas();
     await carregarHistorico();
+    await carregarTrava();
   }
   async function executar(tipo,valor){
     if(ocupado||!token||!estado)return;
@@ -360,6 +400,7 @@
     try{await atualizarPre();}catch(e){el('resultadoPreV6').textContent=e.message;}
   });
   el('formGestaoProprietarioV6').addEventListener('submit',solicitarGestao);
+  el('formTravaFilaACBV6').addEventListener('submit',salvarTrava);
   el('formAportePreV6').addEventListener('submit',async ev=>{
     ev.preventDefault();
     const bits=new Uint8Array(10);crypto.getRandomValues(bits);

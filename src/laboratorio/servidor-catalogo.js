@@ -209,7 +209,8 @@ function criarAppAdminLaboratorio({ repositorio, segredo, webhookDemo } = {}) {
   app.locals.programadorCatracaDemo=programadorCatracaDemo;
   app.use('/api/admin',criarRouterCircuitBreakV6Demo({
     segredo,controle:circuitoDemo,ponteControle:circuitoPonteDemo,
-    programador:programadorCatracaDemo,retornoSaqueCentroDemo
+    programador:programadorCatracaDemo,retornoSaqueCentroDemo,
+    travaFilaA:ponteParaCircuito?.configuracaoTravaFilaA||null
   }));
   app.use('/api/admin', criarRouterFinanceiroAdminDemo({
     segredo, configuracao:configuracaoCofres, razaoPersistente,

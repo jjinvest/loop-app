@@ -48,6 +48,30 @@
           <button type="submit">Salvar limite diário</button>
         </form>
       </section>
+      <section class="painel" id="configTravaFilaALOOP">
+        <h2>LOOP 0.3 · Controle das posições na Fila A</h2>
+        <p class="aviso-demo">Laboratório local: somente uma posição por titular na Fila A. Outras posições conservam suas indicações na B. A liberação da próxima posição depende da chegada da anterior à vaga configurada do tabuleiro.</p>
+        <p id="resumoTravaFilaACBV6" aria-live="polite">Consultando a regra atual.</p>
+        <form id="formTravaFilaACBV6">
+         <div class="campo">
+          <label for="vagaLiberacaoTravaCBV6">Liberar a próxima posição quando a anterior chegar à:</label>
+          <select id="vagaLiberacaoTravaCBV6" required>
+           <option value="6">Vaga 6 — assim que entra no tabuleiro</option>
+           <option value="5" selected>Vaga 5 — padrão atual</option>
+           <option value="4">Vaga 4 — espaçamento maior</option>
+           <option value="3">Vaga 3 — espaçamento reforçado</option>
+           <option value="2">Vaga 2 — espaçamento intenso</option>
+           <option value="1">Vaga 1 — espaçamento máximo</option>
+          </select>
+         </div>
+         <div class="campo"><label for="motivoTravaCBV6">Justificativa da mudança (auditada)</label>
+          <input id="motivoTravaCBV6" minlength="8" maxlength="250" required placeholder="Motivo da revisão da regra"></div>
+         <button type="submit">Salvar regra de alternância</button>
+        </form>
+        <p id="statusTravaFilaACBV6" role="status" aria-live="polite"></p>
+        <h3>Alterações registradas</h3>
+        <ol id="historicoTravaFilaACBV6" aria-live="polite"></ol>
+      </section>
       <section class="painel">
         <h2>Compras fictícias e liberações</h2>
         <p class="ajuda">Primeiro adicione uma onda artificial de 30 compras (30 pessoas, com as mesmas oito indicações do cenário de testes). Cada seis compras diferentes permitem no máximo um giro. Os lotes consomem apenas essas compras existentes.</p>

@@ -3,10 +3,24 @@ const express=require('express');
 const {criarAutorizacao}=require('./admin-catalogo-laboratorio');
 const {projetarCaixaPrelancamentoV6}=require('../domain/projetar-caixa-prelancamento-v6');
 
-function criarRouterCircuitBreakV6Demo({segredo,controle,ponteControle=null,programador=null,retornoSaqueCentroDemo=null}={}){
+function criarRouterCircuitBreakV6Demo({segredo,controle,ponteControle=null,programador=null,retornoSaqueCentroDemo=null,travaFilaA=null}={}){
   const router=express.Router();
   router.use(criarAutorizacao({segredo}));
   router.use((_req,res,next)=>{res.set('Cache-Control','no-store');next();});
+  router.get('/circuit-break-v6-demo/trava-fila-a',(_req,res)=>{
+    if(!travaFilaA)return res.status(501).json({erro:'TRAVA_INDISPONIVEL'});
+    return res.json({configuracao:travaFilaA.consultar(),historico:travaFilaA.historico()});
+  });
+  router.post('/circuit-break-v6-demo/trava-fila-a',(req,res)=>{
+    if(!travaFilaA)return res.status(501).json({erro:'TRAVA_INDISPONIVEL'});
+    if(!req.is('application/json'))return res.status(415).json({erro:'JSON_OBRIGATORIO'});
+    const p=req.body;
+    if(!p||typeof p!=='object'||Array.isArray(p)||
+      Object.keys(p).sort().join(',')!=='motivo,revisaoEsperada,vagaLiberacao')
+      return res.status(400).json({erro:'CAMPOS_INVALIDOS'});
+    try{return res.json({configuracao:travaFilaA.alterar(p),historico:travaFilaA.historico()});}
+    catch(e){if(e.codigo)return res.status(e.codigo==='CONFLITO_REVISAO'?409:400).json({erro:e.codigo});throw e;}
+  });
   router.get('/circuit-break-v6-demo',(_req,res)=>{
     if(!controle)return res.status(501).json({erro:'CONTROLE_INDISPONIVEL'});
     return res.json(controle.resumo());
