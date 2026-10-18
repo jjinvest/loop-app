@@ -46,7 +46,7 @@ test('segundo caixa deduz bonificacao confirmada, dourada e gestao sem utilizar 
  }
  const pre=new PreLancamentoCofresV6DemoSQLite({banco:b,ponte});
  const conf=pre.habilitar({valorFixoLoopCentavos:25000});
- assert.equal(conf.configurado,undefined);
+ assert.equal(conf.configurado,true);
  for(let i=1;i<=12;i++){
   pre.registrarAporteFicticio({
    aporteId:'aporte-saldo-caixa2-'+String(i).padStart(2,'0'),
