@@ -249,7 +249,7 @@
          </form>
          <p id="statusElegibilidadeLoopDemo" role="status" aria-live="polite"></p>
          <h3>Quantidade mínima deste produto para contar no LOOP</h3>
-         <p class="ajuda">Exemplo: caneta de R$ 50, mínimo de 20 unidades. Com 19 unidades, a compra continua válida na loja, mas a caneta não conta para formar uma posição. Com 20 unidades no mesmo pedido, conta seu subtotal integral; o pedido cria uma posição por padrão, salvo produto especial expressamente configurado para seis.</p>
+         <p class="ajuda">Exemplo: caneta de R$ 50, mínimo de 20 unidades. Com 19 unidades, a compra continua válida na loja, mas a caneta não conta para formar uma posição. Com 20 unidades no mesmo pedido, conta seu subtotal integral; o pedido cria uma posição por padrão. Uma campanha de EVENTO aprovada manualmente pode alterar essa regra apenas enquanto estiver ativa.</p>
          <form id="formQuantidadeMinimaLoopDemo" autocomplete="off">
           <div class="campo">
            <label for="quantidadeMinimaLoopDemo">Unidades exigidas do produto selecionado (1 a 100)</label>
@@ -258,19 +258,31 @@
           <button id="salvarQuantidadeMinimaLoopDemo" type="submit">Salvar quantidade mínima</button>
          </form>
          <p id="statusQuantidadeMinimaLoopDemo" role="status" aria-live="polite"></p>
-         <h3>Produto especial: seis posições no LOOP</h3>
-         <p class="ajuda">Somente o produto selecionado poderá abrir seis posições em um único pedido, mediante quantidade mínima e valor elegível suficiente para seis referências LOOP. Se o CPF já tiver qualquer posição ocupada, o pacote não entra parcialmente; deve haver seis vagas livres. As seis posições possuem números próprios, e cada ciclo concluído libera uma vaga. Compras comuns continuam gerando uma posição.</p>
-         <form id="formPacotePosicoesLoopDemo" autocomplete="off">
-          <div class="campo">
-           <label for="pacotePosicoesLoopDemo">Quantas posições o produto selecionado abre?</label>
-           <select id="pacotePosicoesLoopDemo">
-            <option value="1">1 posição (regra padrão)</option>
-            <option value="6">6 posições (produto especial)</option>
-           </select>
+         <h3>Evento especial de posições — decisão manual da administração</h3>
+         <p class="ajuda">A regra normal continua uma posição por pedido qualificado. Somente um evento que você criar e publicar pode conceder uma, duas, três, quatro, cinco ou seis posições por compra. Encerrar a campanha arquiva o banner e restaura a regra normal para os próximos pedidos. Pedidos anteriores preservam suas condições.</p>
+         <form id="formEventoEspecialLoopDemo" autocomplete="off">
+          <div class="campo"><label for="eventoEspecialIdLoopDemo">Identificador único do evento</label>
+           <input id="eventoEspecialIdLoopDemo" required maxlength="70" pattern="[a-z0-9][a-z0-9-]{2,69}" placeholder="ex: evento-carro-2026"></div>
+          <div class="campo"><label for="eventoEspecialTituloLoopDemo">Título do banner</label>
+           <input id="eventoEspecialTituloLoopDemo" required minlength="5" maxlength="90" placeholder="Evento especial AKITEMM"></div>
+          <div class="campo"><label for="eventoEspecialDescricaoLoopDemo">Condições e descrição no banner</label>
+           <textarea id="eventoEspecialDescricaoLoopDemo" required minlength="8" maxlength="450" rows="2" placeholder="Compre X unidades deste produto e receba Y posições"></textarea></div>
+          <div class="duas-colunas">
+           <div class="campo"><label for="eventoEspecialQuantidadeLoopDemo">Quantidade mínima do produto</label>
+            <input id="eventoEspecialQuantidadeLoopDemo" type="number" min="1" max="100" value="1" required></div>
+           <div class="campo"><label for="eventoEspecialPosicoesLoopDemo">Posições concedidas por pedido</label>
+            <select id="eventoEspecialPosicoesLoopDemo" required>
+             <option value="1">1 posição</option><option value="2">2 posições</option>
+             <option value="3">3 posições</option><option value="4">4 posições</option>
+             <option value="5">5 posições</option><option value="6">6 posições</option>
+            </select>
+           </div>
           </div>
-          <button type="submit" id="salvarPacotePosicoesLoopDemo">Salvar modalidade do produto</button>
+          <button id="criarEventoEspecialLoopDemo" type="submit">Criar evento e publicar banner</button>
          </form>
-         <p id="statusPacotePosicoesLoopDemo" role="status" aria-live="polite"></p>
+         <p class="ajuda">Proteção inicial: o valor das unidades exigidas precisa cobrir pelo menos a referência LOOP de cada posição. É indispensável avaliar também fornecedor, impostos, despesas e lucro. Este laboratório não recebe pagamentos reais.</p>
+         <p id="statusEventoEspecialLoopDemo" role="status" aria-live="polite"></p>
+         <h4>Eventos cadastrados</h4><ul id="listaEventosEspeciaisLoopDemo" aria-live="polite"></ul>
         </div>
         <form id="formCarrinhoLoopDemo" autocomplete="off">
           <div class="duas-colunas">
