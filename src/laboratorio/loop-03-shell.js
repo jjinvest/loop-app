@@ -1,5 +1,5 @@
 'use strict';
-// LOOP 0.3: camada visual sobre o escritorio JA EXISTENTE.
+// LOOP 3.0: camada visual sobre o escritorio JA EXISTENTE.
 // Os formularios, IDs, sessoes, motor de filas e a loja continuam os mesmos.
 (()=>{
  const e=id=>document.getElementById(id);
@@ -12,8 +12,8 @@
   shell.id='loop03Shell';
   shell.className='loop03-shell';
   shell.innerHTML=String.raw`
-   <aside class="loop03-sidebar" id="loop03Sidebar" aria-label="Menu LOOP 0.3">
-    <div class="loop03-marca">LOOP <span>0.3</span></div>
+   <aside class="loop03-sidebar" id="loop03Sidebar" aria-label="Menu LOOP 3.0">
+    <div class="loop03-marca">LOOP <span>3.0</span></div>
     <nav aria-label="Áreas do escritório">
      <button data-loop03-aba="home" type="button"><span>⌂</span> Escritório Virtual</button>
      <button data-loop03-aba="tabuleiro" type="button"><span>◉</span> Tabuleiro</button>
@@ -37,7 +37,7 @@
    </aside>
    <div class="loop03-corpo">
     <div class="loop03-banner-topo">
-     <div><div class="loop03-logomarca">LOOP <span>0.3</span></div>
+     <div><div class="loop03-logomarca">LOOP <span>3.0</span></div>
       <p>PLATAFORMA DE CICLOS INTELIGENTES</p>
       <small>ESTRATÉGIA · ORGANIZAÇÃO · RESULTADOS</small></div>
      <div class="loop03-enfeite" aria-hidden="true">✧</div>
@@ -58,14 +58,14 @@
     </div>
     <div class="loop03-paginas">
      <section id="loop03-home" class="loop03-pagina" aria-label="Escritório Virtual">
-      <header class="loop03-titulo-pagina"><div><small>ESCRITÓRIO LOOP 0.3</small><h2>Novidades e eventos</h2></div><span class="loop03-luz">● Comunicados</span></header>
-      <div class="loop03-hero-escritorio" aria-label="Escritório Virtual LOOP 0.3">
+      <header class="loop03-titulo-pagina"><div><small>ESCRITÓRIO LOOP 3.0</small><h2>Novidades e eventos</h2></div><span class="loop03-luz">● Comunicados</span></header>
+      <div class="loop03-hero-escritorio" aria-label="Escritório Virtual LOOP 3.0">
         <div class="loop03-hero-titulo">ESCRITÓRIO <span>VIRTUAL</span></div>
         <p class="loop03-hero-subtitulo">GERENCIE <b>·</b> ACOMPANHE <b>·</b> EVOLUA</p>
         <div class="loop03-cenario-escritorio" aria-hidden="true">
          <div class="loop03-cenario-luz loop03-cenario-luz-a"></div>
          <div class="loop03-cenario-luz loop03-cenario-luz-b"></div>
-         <div class="loop03-cenario-monitor"><div class="loop03-cenario-tela"><span>LOOP <em>0.3</em></span><small>ACOMPANHE SUAS POSIÇÕES</small></div><div class="loop03-cenario-base"></div></div>
+         <div class="loop03-cenario-monitor"><div class="loop03-cenario-tela"><span>LOOP <em>3.0</em></span><small>ACOMPANHE SUAS POSIÇÕES</small></div><div class="loop03-cenario-base"></div></div>
          <div class="loop03-cenario-mesa"></div>
         </div>
         <button type="button" data-loop03-aba="posicoes" class="loop03-hero-botao">ACOMPANHAR MINHAS POSIÇÕES →</button>
@@ -74,7 +74,7 @@
        <div id="loop03Publicacoes" class="loop03-publicacoes" aria-live="polite"><p>Os banners selecionados pela administração aparecerão aqui.</p></div>
      </section>
      <section id="loop03-tabuleiro" class="loop03-pagina" aria-label="Tabuleiro">
-      <header class="loop03-titulo-pagina"><div><small>LOOP · MOTOR DE FILAS</small><h2>Tabuleiro LOOP 0.3</h2></div><span class="loop03-luz">● Ciclo em andamento</span></header>
+      <header class="loop03-titulo-pagina"><div><small>LOOP · MOTOR DE FILAS</small><h2>Tabuleiro LOOP 3.0</h2></div><span class="loop03-luz">● Ciclo em andamento</span></header>
       <div class="loop03-escolha"><span id="loop03EscolhaTexto">Visão geral, nenhuma posição escolhida</span><button id="loop03EscolherNoTabuleiro" type="button">Escolher minha posição</button></div>
       <div id="loop03EscolhaPainel" class="loop03-escolha-painel" hidden><h3>Qual posição você quer acompanhar?</h3><div id="loop03AtivacoesTabuleiro" class="loop03-opcoes"></div></div>
      </section>
@@ -109,7 +109,7 @@
   };
   const extrato=e('tituloCreditosPrevistosV6')?.closest('section.cartao-participante');
   if(extrato)e('loop03-financeiro').append(extrato);
-  if(e('tituloCreditosPrevistosV6'))e('tituloCreditosPrevistosV6').textContent='Meu extrato de ciclos — LOOP 0.3';
+  if(e('tituloCreditosPrevistosV6'))e('tituloCreditosPrevistosV6').textContent='Meu extrato de ciclos — LOOP 3.0';
   const resumo=e('nomeLogadoParticipante')?.closest('section.cartao-participante');
   if(resumo){
    const links=resumo.querySelector('.area-indicacoes-participante');

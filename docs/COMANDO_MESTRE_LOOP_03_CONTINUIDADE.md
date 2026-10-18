@@ -1,3 +1,5 @@
+> **MARCA OFICIAL VISÍVEL (decisão de 18/10/2026):** **LOOP 3.0** em TODAS as telas do participante, do administrador e nas novas peças de apresentação. `LOOP 0.3` é somente designação técnica/histórica de versões anteriores; nunca reintroduzir esse número como marca exibida ao usuário. Preservar IDs, caminhos, nomes internos de arquivos, URLs e rotas preexistentes (inclusive legados de Vilela), pois renomeá-los pode quebrar links e integrações. Documentos históricos continuam íntegros e não são fonte para a marca vigente.
+
 # COMANDO-MESTRE VIGENTE — LOOP 0.3 / V6 — 18 OUT 2026
 
 > **LEITURA OBRIGATÓRIA AO RETOMAR:** este arquivo consolida o entendimento do produto e o estado de código verificado em 18/10/2026. No GitHub, confira novamente o HEAD antes de alterar qualquer arquivo. A seção 9 é uma fotografia de um commit, não um ponteiro eternamente atualizado. A cópia histórica anterior foi preservada separadamente, mas **não prevalece** sobre decisões aqui marcadas como vigentes. Para decisões posteriores, atualizar este arquivo e o espelho do repositório; somente o texto vigente rege novas mudanças.

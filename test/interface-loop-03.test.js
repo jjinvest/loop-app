@@ -20,7 +20,10 @@ test('LOOP 0.3 integra escritorio real e duas abas sem criar aplicativo paralelo
  for(const area of ['home','tabuleiro','posicoes','rede','financeiro']){
   assert.match(js,new RegExp('id="loop03-'+area+'"'));
  }
- assert.match(js,/LOOP <span>0\.3<\/span>/);
+ assert.match(js,/LOOP <span>3\.0<\/span>/);
+ assert.doesNotMatch(js,/LOOP (?:0\.3|<span>0\.3<\/span>|<em>0\.3<\/em>)/);
+ assert.match(ler('admin-loop03.html'),/LOOP <em>3\.0<\/em>/);
+ assert.match(ler('participante-demo.html'),/<title>LOOP 3\.0/);
  assert.match(js,/PLATAFORMA DE CICLOS INTELIGENTES/);
  assert.match(js,/ESTRATÉGIA · ORGANIZAÇÃO · RESULTADOS/);
  assert.match(js,/Giros/);
