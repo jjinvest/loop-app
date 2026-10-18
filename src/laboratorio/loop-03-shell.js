@@ -3,7 +3,7 @@
 // Os formularios, IDs, sessoes, motor de filas e a loja continuam os mesmos.
 (()=>{
  const e=id=>document.getElementById(id);
- let selecionada=null, visaoAtual=null, abaAtual='home';
+ let selecionada=null, visaoAtual=null, abaAtual='home', destinoInicialTratado=false;
  const paginas=['home','tabuleiro','ativacoes','posicoes','rede','financeiro','perfil'];
  function montar(){
   const root=e('conteudoParticipante');
@@ -258,9 +258,12 @@
    e('loop03SituacaoBaixo').textContent='Nenhuma ativação selecionada';
    e('loop03DetalhesPosicao').textContent='Selecione uma ativação acima.';
   }
-  const hash=location.hash.slice(1);
-  if(hash==='tituloMapaParticipante')abrir('tabuleiro');
-  if(hash==='tituloHistoricoLojaParticipante'||hash==='secaoAtivacaoParticipante')abrir('ativacoes');
+  if(!destinoInicialTratado){
+   destinoInicialTratado=true;
+   const hash=location.hash.slice(1);
+   if(hash==='tituloMapaParticipante')abrir('tabuleiro');
+   if(hash==='tituloHistoricoLojaParticipante'||hash==='secaoAtivacaoParticipante')abrir('ativacoes');
+  }
  }
  async function carregarPublicacoes(){
   const target=e('loop03Publicacoes');
@@ -291,7 +294,7 @@
    target.textContent='Não foi possível consultar os comunicados. Tente novamente mais tarde.';
   }
  }
- function encerrar(){document.body.classList.remove('loop03-logado');selecionada=null;visaoAtual=null;abrir('home');}
+ function encerrar(){document.body.classList.remove('loop03-logado');selecionada=null;visaoAtual=null;destinoInicialTratado=false;abrir('home');}
  window.Loop03Shell={montar,atualizar,encerrar,abrir,destacarPosicoes};
  montar();
 })();
