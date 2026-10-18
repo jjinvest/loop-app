@@ -164,6 +164,13 @@ class EscritorioIndividualDemo{
     return {...p,...referencia};
    }).sort((a,b)=>a.posicaoId-b.posicaoId),
    mapaCores,
+   // Eventos simulados do CENTRO ATUAL; nao comprovam credito financeiro.
+   progressoCiclo:{eventosValidos:simulador.tabuleiro.vendasDoCiclo.length,
+    totalEventos:6,modo:'LABORATORIO_SEM_PAGAMENTOS'},
+   girosUltimas24Horas:simulador.tabuleiro.ciclosConcluidos.filter(c=>{
+    const ms=Date.parse(c.concluidoEm),agora=Date.now();
+    return Number.isFinite(ms)&&ms<=agora&&ms>agora-86400000;
+   }).length,
    posicoesComPrazoEncerrado:encerradas,
    posicoesDesistidasAssumidasPeloLoop:desistidas,
    limitePosicoesAtivas:LIMITE_ATIVAS,
