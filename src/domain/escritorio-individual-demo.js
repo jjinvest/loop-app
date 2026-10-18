@@ -81,12 +81,17 @@ class EscritorioIndividualDemo{
   const posicoes=posicoesTitular(simulador,contaId);
   const mapaCores=mapaCoresDoEscritorio(simulador,contaId);
   // Apenas indicados DIRETOS do titular da sessao, nao a rede alheia.
+  const temTabelaAtivacao=!!this.banco.prepare(
+   "SELECT name FROM sqlite_master WHERE type='table' AND name='admin_loop_adesoes_posicoes_demo'"
+  ).get();
+  const posicaoAtivadaSQL=temTabelaAtivacao?
+   'EXISTS(SELECT 1 FROM admin_loop_adesoes_posicoes_demo a WHERE a.conta_id=c.id)':'0';
   const equipe=this.banco.prepare(`
    SELECT c.id AS convidadoId,c.nome,
     tel.telefone_normalizado AS telefone,
     v.confirmado_em AS compraConfirmadaEm,
     m.posicao_indicador_id AS posicaoAtribuidaId,
-    EXISTS(SELECT 1 FROM admin_loop_adesoes_posicoes_demo a WHERE a.conta_id=c.id) AS posicaoAtivada
+    ${posicaoAtivadaSQL} AS posicaoAtivada
    FROM admin_contas_participantes_demo c
    LEFT JOIN admin_contas_telefones_demo tel ON tel.conta_id=c.id
    LEFT JOIN admin_ponte_convites_validados_demo v
