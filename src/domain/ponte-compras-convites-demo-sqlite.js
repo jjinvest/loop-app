@@ -61,7 +61,7 @@ function posicoesAtivas(simulador,contaId){
     !['PRAZO_ENCERRADO','DESISTENTE'].includes(p.statusAdesao)).length;
 }
 class PonteComprasConvitesDemoSQLite{
- constructor({banco,contas,consultarPagamentoConfiavel,pedidosIdentificados=null,configuracaoValor=null,relogio=()=>new Date().toISOString()}={}){
+ constructor({banco,contas,consultarPagamentoConfiavel,pedidosIdentificados=null,configuracaoValor=null,relogio=()=>new Date().toISOString(),atribuicaoManualPorPosicao=false}={}){
   if(!banco||typeof banco.prepare!=='function'||!contas||
     typeof contas.buscar!=='function'){
    throw new TypeError('SQLite e cadastro de laboratorio sao obrigatorios');
@@ -78,6 +78,7 @@ class PonteComprasConvitesDemoSQLite{
   this.contas=contas;
   this.verificador=consultarPagamentoConfiavel;
   this.relogio=relogio;
+  this.atribuicaoManualPorPosicao=atribuicaoManualPorPosicao===true;
   this.pedidosIdentificados=pedidosIdentificados;
   this.configuracaoValor=configuracaoValor||new ConfiguracaoValorLoopDemoSQLite({banco});
   if(this.configuracaoValor.banco!==banco||
@@ -195,6 +196,20 @@ class PonteComprasConvitesDemoSQLite{
     convidado_id TEXT PRIMARY KEY NOT NULL REFERENCES admin_ponte_convites_validados_demo(convidado_id) ON DELETE RESTRICT,
     aplicado_em TEXT NOT NULL
    );
+   CREATE TABLE IF NOT EXISTS admin_loop_vinculos_indicacao_posicao_demo(
+    convidado_id TEXT PRIMARY KEY NOT NULL REFERENCES admin_ponte_convites_validados_demo(convidado_id) ON DELETE RESTRICT,
+    indicador_id TEXT NOT NULL REFERENCES admin_contas_participantes_demo(id) ON DELETE RESTRICT,
+    posicao_indicador_id INTEGER NOT NULL CHECK(posicao_indicador_id>0),
+    registrado_em TEXT NOT NULL
+   );
+   CREATE INDEX IF NOT EXISTS idx_loop_vinculos_posicao_demo
+    ON admin_loop_vinculos_indicacao_posicao_demo(indicador_id,posicao_indicador_id);
+   CREATE TRIGGER IF NOT EXISTS admin_loop_vinculos_indicacao_posicao_no_update
+    BEFORE UPDATE ON admin_loop_vinculos_indicacao_posicao_demo
+    BEGIN SELECT RAISE(ABORT,'vinculo de indicacao imutavel'); END;
+   CREATE TRIGGER IF NOT EXISTS admin_loop_vinculos_indicacao_posicao_no_delete
+    BEFORE DELETE ON admin_loop_vinculos_indicacao_posicao_demo
+    BEGIN SELECT RAISE(ABORT,'vinculo de indicacao imutavel'); END;
    CREATE TRIGGER IF NOT EXISTS admin_ponte_compras_sem_update
     BEFORE UPDATE ON admin_ponte_compras_demo
     BEGIN SELECT RAISE(ABORT,'compras demo imutaveis'); END;
@@ -275,16 +290,19 @@ class PonteComprasConvitesDemoSQLite{
  _aplicarConvites(simulador,indicadorId){
   if(!simulador.filas.participantesConhecidos.has(indicadorId))return 0;
   const disponiveis=this.banco.prepare(`
-   SELECT v.convidado_id,v.confirmado_em
+   SELECT v.convidado_id,v.confirmado_em,m.posicao_indicador_id AS posicaoIndicadorId
    FROM admin_ponte_convites_validados_demo v
    LEFT JOIN admin_ponte_convites_aplicados_demo a ON a.convidado_id=v.convidado_id
+   LEFT JOIN admin_loop_vinculos_indicacao_posicao_demo m ON m.convidado_id=v.convidado_id
    WHERE v.indicador_id=? AND a.convidado_id IS NULL
+    AND (?=0 OR m.posicao_indicador_id IS NOT NULL)
    ORDER BY v.confirmado_em,v.pedido_id
-  `).all(indicadorId);
+  `).all(indicadorId,this.atribuicaoManualPorPosicao?1:0);
   for(const v of disponiveis){
    const resposta=simulador.registrarIndicacaoSimulada({
     indicadorId,eventoId:'convite-demo-'+v.convidado_id,
-    convidouEm:v.confirmado_em
+    convidouEm:v.confirmado_em,
+    ...(this.atribuicaoManualPorPosicao?{posicaoAlvoId:v.posicaoIndicadorId}:{})
    });
    if(resposta.repetida)throw new Error('Convite aplicado sem registro consistente no ledger');
    this.banco.prepare(`
@@ -293,6 +311,52 @@ class PonteComprasConvitesDemoSQLite{
    `).run(v.convidado_id,this.relogio());
   }
   return disponiveis.length;
+ }
+
+ // Vínculo definitivo de um indicado confirmado com apenas uma posição ativa.
+ atribuirIndicacao({contaId,convidadoId,posicaoId}={}){
+  if(!this.atribuicaoManualPorPosicao)throw falha('ATRIBUICAO_MANUAL_INDISPONIVEL');
+  if(typeof contaId!=='string'||typeof convidadoId!=='string'||
+    !Number.isSafeInteger(posicaoId)||posicaoId<1)throw falha('DADOS_ATRIBUICAO_INVALIDOS');
+  this.banco.exec('BEGIN IMMEDIATE');
+  try{
+   const v=this.banco.prepare(`
+    SELECT v.indicador_id AS indicadorId,m.posicao_indicador_id AS atribuida
+    FROM admin_ponte_convites_validados_demo v
+    LEFT JOIN admin_loop_vinculos_indicacao_posicao_demo m ON m.convidado_id=v.convidado_id
+    WHERE v.convidado_id=?
+   `).get(convidadoId);
+   if(!v||v.indicadorId!==contaId)throw falha('INDICACAO_NAO_PERTENCE_A_CONTA');
+   if(v.atribuida!==null){
+    if(v.atribuida!==posicaoId)throw falha('INDICACAO_JA_VINCULADA');
+    this.banco.exec('COMMIT');
+    return {convidadoId,posicaoId,vinculada:true,repetida:true};
+   }
+   const sim=this._restaurar();
+   const alvo=[...sim.filas.filaA,...sim.filas.filaB].find(p=>
+    p.id===posicaoId&&p.participanteId===contaId&&p.empresa!==true);
+   if(!alvo)throw falha('POSICAO_NAO_ELEGIVEL');
+   if(alvo.statusAdesao==='PENDENTE')throw falha('POSICAO_NAO_ATIVA');
+   if(!this.banco.prepare(
+    'SELECT 1 FROM admin_loop_adesoes_posicoes_demo WHERE conta_id=? LIMIT 1'
+   ).get(convidadoId))throw falha('INDICADO_AGUARDANDO_ATIVACAO');
+   if(this.banco.prepare(
+    'SELECT 1 FROM admin_ponte_convites_aplicados_demo WHERE convidado_id=?'
+   ).get(convidadoId))throw falha('INDICACAO_LEGADA_JA_APLICADA');
+   this.banco.prepare(`
+    INSERT INTO admin_loop_vinculos_indicacao_posicao_demo
+    (convidado_id,indicador_id,posicao_indicador_id,registrado_em)
+    VALUES(?,?,?,?)
+   `).run(convidadoId,contaId,posicaoId,this.relogio());
+   if(this._aplicarConvites(sim,contaId)!==1)
+    throw new Error('Atribuicao deve gerar exatamente um evento');
+   this.banco.prepare(`
+    INSERT INTO admin_ponte_estado_demo(id,snapshot_json) VALUES(1,?)
+    ON CONFLICT(id) DO UPDATE SET snapshot_json=excluded.snapshot_json
+   `).run(JSON.stringify(sim.exportarSnapshot()));
+   this.banco.exec('COMMIT');
+   return {convidadoId,posicaoId,vinculada:true,repetida:false,semPagamentoReal:true};
+  }catch(e){this.banco.exec('ROLLBACK');throw e;}
  }
  async processar({pedidoId}={}){
   identificador(pedidoId,'pedidoId');
@@ -450,10 +514,10 @@ class PonteComprasConvitesDemoSQLite{
     const posicao=simulador.registrarPosicaoSimulada({
      nome:conta.nome,participanteId:conta.contaId,
      vendaId:'compra-demo-'+pedidoId+(ordem>1?'-'+ordem:''),
-     adesaoPendente:!aceiteAnterior
+     adesaoPendente:this.atribuicaoManualPorPosicao||!aceiteAnterior
     });
     if(posicao.repetida)throw new Error('Estado simulado e comprovantes divergentes');
-    if(aceiteAnterior){
+    if(aceiteAnterior&&!this.atribuicaoManualPorPosicao){
      const nova=simulador.filas.filaB.find(p=>p.id===posicao.posicao.id);
      nova.statusAdesao='ATIVA';nova.ativadaEm=comprovante.confirmadoEm;
      posicao.posicao.statusAdesao='ATIVA';posicao.posicao.ativadaEm=comprovante.confirmadoEm;
