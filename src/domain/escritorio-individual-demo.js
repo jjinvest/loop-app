@@ -120,7 +120,10 @@ class EscritorioIndividualDemo{
   const totalPosicoes=indicacoesValidas.length;
   const jaDistribuidas=indicacoesValidas.filter(p=>p.posicaoAtribuidaId!==null).length;
   const aDistribuir=totalPosicoes-jaDistribuidas;
-  const disponiveisParaVincular=equipe.filter(p=>p.estado==='ATIVO'&&p.posicaoAtribuidaId===null).length;
+  const legadasConsumidas=new Set(indicacoes.filter(p=>p.aplicadoId!==null).map(p=>p.convidadoId));
+  const disponiveisParaVincular=equipe.filter(p=>
+   p.estado==='ATIVO'&&p.posicaoAtribuidaId===null&&
+   !legadasConsumidas.has(p.convidadoId)).length;
   const aguardandoAtivacao=indicacoesValidas.filter(
    p=>p.situacao==='AGUARDANDO_CONFIRMACAO'&&p.posicaoAtribuidaId===null).length;
   const encerradas=[simulador.tabuleiro.centro,...simulador.tabuleiro.vagas]
