@@ -324,13 +324,66 @@ async function main(){
   assert.equal(await page.locator('#loop03RedeTotalPosicoes').innerText(),'1');
   assert.equal(await page.locator('#loop03RedeADistribuir').innerText(),'0');
   await page.screenshot({path:path.join(pasta,'rede-um-indicado-distribuido.png'),fullPage:true});
+  // Confere a nova distribuicao +1 sem nomes nos seis cartoes aprovados.
+  const novoIndicado=contas.cadastrar({
+   nome:'Segundo Indicado Mobile',email:'segundo-indicado@exemplo.invalid',
+   senha,codigoIndicador:titular.codigoConvite
+  });
+  const pedidoNovo=await fetch(base+'/api/admin/carrinho-loop-demo',{
+   method:'POST',headers:cabAdmin,
+   body:JSON.stringify({pedidoId:'segundo-indicado-mobile-mais-um',
+    contaId:novoIndicado.contaId,
+    itens:[{produtoId:'curso-mobile-100',quantidade:1},
+     {produtoId:'curso-mobile-150',quantidade:1}]})
+  });
+  assert.equal(pedidoNovo.status,201,await pedidoNovo.text());
+  const confirmNovo=await fetch(base+
+   '/api/admin/carrinho-loop-demo/segundo-indicado-mobile-mais-um/eventos',{
+   method:'POST',headers:cabAdmin,
+   body:JSON.stringify({eventoId:'evento-segundo-indicado-mobile',tipo:'CONFIRMAR_FICTICIO'})
+  });
+  assert.equal(confirmNovo.status,200,await confirmNovo.text());
+  const ctxNovo=await browser.newContext({viewport:{width:390,height:812},
+   deviceScaleFactor:1,isMobile:true,hasTouch:true});
+  const novaPagina=await ctxNovo.newPage();
+  novaPagina.on('pageerror',err=>erros.push('indicado +1: '+err.message));
+  await novaPagina.goto(base+'/laboratorio/participante',{waitUntil:'networkidle'});
+  await novaPagina.locator('#nomeParticipante').fill(novoIndicado.nome);
+  await novaPagina.locator('#senhaParticipante').fill(senha);
+  await novaPagina.locator('#botaoEntrarParticipante').click();
+  await novaPagina.locator('#conteudoParticipante').waitFor({state:'visible'});
+  await novaPagina.locator('#loop03Menu').click();
+  await novaPagina.locator('#loop03Sidebar [data-loop03-aba="posicoes"]').click();
+  await novaPagina.locator('#loop03OpcoesPosicoes [data-loop03-posicao]').first().click();
+  await novaPagina.locator('#cpfFicticioParticipante').fill('12345678909');
+  await novaPagina.locator('#aceiteTermosParticipante').check();
+  await novaPagina.locator('#confirmarAtivacaoParticipante').click();
+  await novaPagina.locator('#secaoAtivacaoParticipante').waitFor({state:'hidden'});
+  await ctxNovo.close();
+  await page.reload({waitUntil:'networkidle'});
+  await page.locator('#conteudoParticipante').waitFor({state:'visible'});
+  await page.locator('#loop03Menu').click();
+  await page.locator('#loop03Sidebar [data-loop03-aba="posicoes"]').click();
+  assert.equal(await page.locator('#loop03SaldoDisponivel').innerText(),'1');
+  assert.equal(await page.locator('#loop03OpcoesPosicoes .loop03-adicionar-indicado').count(),1);
+  page.once('dialog',dialog=>dialog.accept());
+  await page.locator('#loop03OpcoesPosicoes .loop03-adicionar-indicado').first().click();
+  await page.waitForFunction(()=>document.querySelector('#loop03SaldoDisponivel')?.textContent==='0');
+  assert.match(await page.locator('#loop03OpcoesPosicoes').innerText(),/2 indicação/);
+  await page.screenshot({path:path.join(pasta,'minhas-posicoes-botao-mais-um.png'),fullPage:true});
+  await page.locator('#loop03Menu').click();
+  await page.locator('#loop03Sidebar [data-loop03-aba="rede"]').click();
+  assert.match(await page.locator('#loop03ListaEquipe .loop03-equipe-linha')
+   .filter({hasText:novoIndicado.nome}).innerText(),/Vinculada à posição #1/);
+  await page.screenshot({path:path.join(pasta,'minha-equipe-duas-atribuicoes.png'),fullPage:true});
+
   await page.locator('#loop03Menu').click();
   await page.locator('#loop03Sidebar [data-loop03-aba="tabuleiro"]').click();
   await page.locator('#filtroTodasMapaParticipante').click();
   const promovida=page.locator('#mapaFilaAParticipante .loop03-linha-fila').filter({hasText:'#1'});
   assert.equal(await promovida.count(),1);
   assert.equal(await promovida.locator('.loop03-inicial-fila.loop03-a').innerText(),'A');
-  assert.equal(await promovida.locator('.loop03-quantidade-a-direita').innerText(),'1 indicação');
+  assert.equal(await promovida.locator('.loop03-quantidade-a-direita').innerText(),'2 indicações');
   assert.equal(await promovida.locator('.loop03-bonequinho-indicacoes').count(),1);
   assert.equal(await page.locator('#mapaFilaBParticipante .loop03-quantidade-a-direita').count(),0);
   await page.screenshot({path:path.join(pasta,'fila-a-contagem-posicao.png'),fullPage:true});
