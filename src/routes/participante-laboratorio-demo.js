@@ -109,12 +109,33 @@ function criarRouterParticipanteDemo({contas,ponte,sessoes=null,adesoes=null,car
    return next(e);
   }
  });
+ router.post('/atribuir-indicacao',(req,res,next)=>{
+  if(!ponte.atribuicaoManualPorPosicao)
+   return res.status(501).json({erro:'ATRIBUICAO_INDISPONIVEL'});
+  if(!req.is('application/json'))return res.status(415).json({erro:'USE_APPLICATION_JSON'});
+  const body=req.body;
+  if(!body||typeof body!=='object'||Array.isArray(body)||
+    Object.keys(body).sort().join(',')!=='convidadoId,posicaoId')
+   return res.status(400).json({erro:'CAMPOS_ATRIBUICAO_INVALIDOS'});
+  try{
+   const contaId=gerenciador.identificar(lerCookie(req));
+   if(!contaId)return res.status(401).json({erro:'SESSAO_AUSENTE_OU_EXPIRADA'});
+   return res.json(ponte.atribuirIndicacao({...body,contaId}));
+  }catch(e){
+   if(e.codigo)return res.status(
+    ['DADOS_ATRIBUICAO_INVALIDOS'].includes(e.codigo)?400:409
+   ).json({erro:e.codigo});
+   return next(e);
+  }
+ });
  router.post('/ativar-posicoes',(req,res,next)=>{
   if(!adesoes)return res.status(501).json({erro:'ATIVACAO_NAO_CONFIGURADA'});
   if(!req.is('application/json'))return res.status(415).json({erro:'USE_APPLICATION_JSON'});
   const body=req.body;
   if(!body||typeof body!=='object'||Array.isArray(body)||
-   Object.keys(body).sort().join(',')!=='aceitaTermos,cpfFicticio,versaoTermos'){
+   !(ponte.atribuicaoManualPorPosicao?
+     ['posicaoId','aceitaTermos,cpfFicticio,posicaoId,versaoTermos'].includes(Object.keys(body).sort().join(',')):
+     Object.keys(body).sort().join(',')==='aceitaTermos,cpfFicticio,versaoTermos')){
    return res.status(400).json({erro:'CAMPOS_ATIVACAO_INVALIDOS'});
   }
   try{
@@ -122,9 +143,9 @@ function criarRouterParticipanteDemo({contas,ponte,sessoes=null,adesoes=null,car
    if(!contaId)return res.status(401).json({erro:'SESSAO_AUSENTE_OU_EXPIRADA'});
    return res.json(adesoes.ativar({...body,contaId}));
   }catch(err){
-   if(['ACEITE_TERMOS_OBRIGATORIO','CPF_FICTICIO_INVALIDO','CONTA_INVALIDA'].includes(err.codigo))
+   if(['ACEITE_TERMOS_OBRIGATORIO','CPF_FICTICIO_INVALIDO','CONTA_INVALIDA','POSICAO_INVALIDA'].includes(err.codigo))
     return res.status(400).json({erro:err.codigo});
-   if(['CPF_JA_FIXADO_NA_CONTA','CPF_JA_ASSOCIADO','COMPRA_INICIAL_OBRIGATORIA','ADESAO_JA_REALIZADA'].includes(err.codigo))
+   if(['CPF_JA_FIXADO_NA_CONTA','CPF_JA_ASSOCIADO','COMPRA_INICIAL_OBRIGATORIA','ADESAO_JA_REALIZADA','POSICAO_NAO_PENDENTE'].includes(err.codigo))
     return res.status(409).json({erro:err.codigo});
    return next(err);
   }
