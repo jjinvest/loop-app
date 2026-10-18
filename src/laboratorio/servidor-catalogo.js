@@ -139,7 +139,7 @@ function criarAppAdminLaboratorio({ repositorio, segredo, webhookDemo } = {}) {
       banco:repositorio.banco,contas:contasDemo,
       pedidosIdentificados:pedidosIdentificadosDemo,
       configuracaoValor:configuracaoValorLoopDemo,
-       atribuicaoManualPorPosicao:true,
+       atribuicaoManualPorPosicao:process.env.LOOP_LAB_ATRIBUICAO_POR_POSICAO==='1',
       consultarPagamentoConfiavel:async pedidoId=>{
         if(carrinhosLojaLoopDemo?.buscar(pedidoId))
           return carrinhosLojaLoopDemo.comprovanteConfirmado(pedidoId);
