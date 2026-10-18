@@ -201,3 +201,18 @@ body.loop03-logado{
 @media(prefers-reduced-motion:reduce){
  .loop03-pagina::before,.loop03-pagina::after{animation:none!important;transform:none!important}
 }
+
+
+/* Posicoes selecionadas continuam claramente iluminadas sobre o brilho do cosmos. */
+#loop03-tabuleiro .loop03-roda .espaco-tabuleiro-demo:has(.loop03-destaque-posicao),
+#loop03-tabuleiro .loop03-mapa-grade .linha-fila-demo:has(.loop03-destaque-posicao){
+ outline:3px solid #fffcef!important;
+ outline-offset:2px;
+ box-shadow:0 0 0 2px #a876e0,0 0 20px #fff6c5a8,0 0 31px #55eeb8a3!important;
+}
+#loop03-tabuleiro .loop03-roda .espaco-tabuleiro-demo:has(.loop03-iluminada):not(:has(.loop03-destaque-posicao)),
+#loop03-tabuleiro .loop03-mapa-grade .linha-fila-demo:has(.loop03-iluminada):not(:has(.loop03-destaque-posicao)){
+ outline:2px solid #bfffe1;
+ outline-offset:2px;
+ box-shadow:0 0 15px #5ef8b77c,0 0 23px #78e7c55e!important;
+}
