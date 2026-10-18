@@ -129,8 +129,8 @@ test('produto especial cria seis posicoes atomicas, bloqueia sexta e libera uma 
  assert.equal(repo.banco.prepare('SELECT COUNT(*) AS n FROM admin_ponte_compras_demo').get().n,3);
  assert.equal(repo.banco.prepare('SELECT COUNT(*) AS n FROM admin_ponte_posicoes_adicionais_demo').get().n,5);
  assert.throws(()=>repo.banco.exec(
-  'UPDATE admin_produtos_pacote_posicoes_historico_demo SET novo=1'
- ),/historico de pacotes imutavel/);
+  "UPDATE loop_evento_especial_historico_demo SET acao='ENCERRADO'"
+ ),/historico imutavel/);
  assert.throws(()=>repo.banco.exec(
   'UPDATE admin_carrinho_item_pacote_posicoes_demo SET posicoes_por_pedido=1'
  ),/pacote congelado no pedido/);
