@@ -10,6 +10,7 @@
  let filtroMapa='resumo';
  let destinoInicialTratado=false;
  function encerrarTela(){
+  window.Loop03Shell?.encerrar();
   ++versao;conteudo.hidden=true;form.hidden=false;sair.hidden=true;
   e('senhaParticipante').value='';
   e('cpfFicticioParticipante').value='';
@@ -98,7 +99,8 @@
   const descricao=p.cor==='AZUL'?'aguardando ativação':
    p.cor==='VERMELHO'?'ativada':
    p.cor==='DOURADO'?'pertence ao LOOP':'ativada por outra pessoa';
-  item.textContent=rotulo+' #'+p.posicaoId+(p.minha?' · Minha':'');
+  item.dataset.posicaoId=String(p.posicaoId);
+   item.textContent=rotulo+' #'+p.posicaoId+(p.minha?' · Minha':'');
   item.setAttribute('aria-label',rotulo+' '+p.posicaoId+
    ', '+descricao+(p.minha?', minha posição':''));
   return item;
@@ -370,6 +372,7 @@
    ' (verificador interno de teste)');
   form.hidden=true;sair.hidden=false;conteudo.hidden=false;
   msg.textContent='Visão individual carregada. Nenhuma operação real executada.';
+  window.Loop03Shell?.atualizar(visao);
   // A loja pode retornar com #pedidos ou #filas ANTES do conteudo
   // assíncrono ficar visivel. Rolar apenas uma vez após carregar a sessão.
   if(!destinoInicialTratado){
