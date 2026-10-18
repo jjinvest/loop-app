@@ -58,14 +58,18 @@ class MotorFilas {
     this.filaA.sort((a, b) => {
       const na = this.informacoesParticipante(a.participanteId);
       const nb = this.informacoesParticipante(b.participanteId);
-      return (nb.quantidade - na.quantidade)
-        || String(na.ultimoConviteEm).localeCompare(String(nb.ultimoConviteEm))
-        || (na.ordemUltimoConvite - nb.ordemUltimoConvite)
+      const qa = a.indicacoesVinculadas ?? na.quantidade;
+      const qb = b.indicacoesVinculadas ?? nb.quantidade;
+      return (qb - qa)
+        || String(a.ultimoConvitePosicaoEm ?? na.ultimoConviteEm).localeCompare(
+          String(b.ultimoConvitePosicaoEm ?? nb.ultimoConviteEm))
+        || ((a.ordemUltimoConvitePosicao ?? na.ordemUltimoConvite) -
+            (b.ordemUltimoConvitePosicao ?? nb.ordemUltimoConvite))
         || (a.id - b.id);
     });
   }
 
-  registrarIndicacaoValidada({ indicadorId, eventoId, convidouEm } = {}) {
+  registrarIndicacaoValidada({ indicadorId, eventoId, convidouEm, posicaoAlvoId } = {}) {
     const chave = String(indicadorId ?? '').trim();
     if (chave==='LOOP_EMPRESA') {
       throw new Error('Bola dourada do LOOP nao participa de indicacoes');
@@ -80,6 +84,19 @@ class MotorFilas {
       return { repetida: true, promovidas: [], quantidade: this.informacoesParticipante(chave).quantidade };
     }
 
+    // Escolha individual: uma indicacao so pode promover a posicao escolhida.
+    // Chamadas antigas sem posicaoAlvoId seguem o comportamento legado.
+    const porPosicao = posicaoAlvoId !== undefined;
+    let alvo = null;
+    if (porPosicao) {
+      if(!Number.isSafeInteger(posicaoAlvoId) || posicaoAlvoId < 1)
+        throw new Error('POSICAO_ALVO_INVALIDA');
+      alvo = [...this.filaA,...this.filaB].find(p => p.id === posicaoAlvoId);
+      if(!alvo || alvo.participanteId !== chave || alvo.empresa === true)
+        throw new Error('POSICAO_ALVO_NAO_PERTENCE_A_CONTA');
+      if(alvo.statusAdesao === 'PENDENTE')
+        throw new Error('POSICAO_ALVO_PENDENTE');
+    }
     // Em empate no total de indicacoes, ganha quem fez PRIMEIRO o ultimo
     // convite desse total (ex.: o 3o convite, se ambos tiverem tres).
     // Horario deve ter origem confiavel, jamais arbitrado pelo navegador.
@@ -102,8 +119,16 @@ class MotorFilas {
     this.indicacoes.set(chave, novo);
     this.indicacoesProcessadas.add(eventoId);
 
-    const promovidas = this.filaB.filter(p => p.participanteId === chave);
-    this.filaB = this.filaB.filter(p => p.participanteId !== chave);
+    const promovidas = this.filaB.filter(p =>
+      p.participanteId === chave && (!porPosicao || p.id === posicaoAlvoId));
+    this.filaB = this.filaB.filter(p => !promovidas.includes(p));
+    if (porPosicao) {
+      alvo.indicacoesVinculadas = (alvo.indicacoesVinculadas || 0) + 1;
+      if (!alvo.ultimoConvitePosicaoEm || horario > alvo.ultimoConvitePosicaoEm) {
+        alvo.ultimoConvitePosicaoEm = horario;
+        alvo.ordemUltimoConvitePosicao = ordemEvento;
+      }
+    }
     for (const p of promovidas) {
       p.fila = 'A';
       p.promovidoEm = this.relogio();
