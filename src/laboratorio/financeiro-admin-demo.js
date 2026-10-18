@@ -20,6 +20,7 @@
   let versao=0;
   let versaoHistorico=0;
   let versaoConciliacao=0;
+  let versaoCaixa2=0;
   let versaoLivro=0;
   let versaoRecebimentos=0;
   let versaoPonte=0;
@@ -58,6 +59,12 @@
 
   function limpar(){
     ++versaoConciliacao;
+    ++versaoCaixa2;
+    for(const id of ['caixa2BrutoFinanceiroDemo','caixa2BonusFinanceiroDemo',
+     'caixa2DouradasFinanceiroDemo','caixa2GestaoFinanceiroDemo',
+     'caixa2LivreFinanceiroDemo','caixaCentralSeparadoFinanceiroDemo'])
+      el(id).textContent='—';
+    el('statusCaixa2FinanceiroDemo').textContent='';
     ++versaoLivro;
     ++versaoRecebimentos;
     ++versaoPonte;
@@ -1512,6 +1519,37 @@
     }
     return Math.round(n*100);
   }
+  async function carregarResumoCaixa2(){
+    const atual=++versaoCaixa2;
+    const aviso=el('statusCaixa2FinanceiroDemo');
+    if(!token){aviso.textContent='Autenticação administrativa necessária.';return;}
+    try{
+      const saldo=await requisitar('circuit-break-v6-demo/ponte/conciliacao');
+      if(atual!==versaoCaixa2||!token)return;
+      const ids=['caixa2BrutoFinanceiroDemo','caixa2BonusFinanceiroDemo',
+        'caixa2DouradasFinanceiroDemo','caixa2GestaoFinanceiroDemo',
+        'caixa2LivreFinanceiroDemo','caixaCentralSeparadoFinanceiroDemo'];
+      if(saldo.fase==='INATIVO'){
+        for(const id of ids)el(id).textContent='—';
+        aviso.textContent='Configure o pré-lançamento fictício para visualizar a simulação. Nenhum dinheiro bancário foi confirmado.';
+        return;
+      }
+      const valores=[
+        saldo.cofreDireitaSimuladoCentavos,
+        saldo.bonificacoesComprometidasCentavos,
+        saldo.reservaDouradasComprometidaCentavos,
+        saldo.gestaoPendenteComprometidaCentavos,
+        saldo.cofreDireitaDisponivelSimuladoCentavos,
+        saldo.cofreCentroRestanteSimuladoCentavos
+      ];
+      ids.forEach((id,i)=>el(id).textContent=Number.isSafeInteger(valores[i])?money(valores[i]):'—');
+      aviso.textContent=saldo.quantidadeDivergencias?
+        'DIVERGÊNCIA no caixa demonstrativo: novas operações devem ficar bloqueadas.':
+        'Saldo livre = bruto - bonificações - douradas - gestão pendente. Sem banco, PSP ou saque real.';
+    }catch(e){
+      if(atual===versaoCaixa2)aviso.textContent='Erro ao conferir caixa 2: '+e.message;
+    }
+  }
   async function carregarDouradasManuais(){
     const status=el('statusDouradasManuaisDemo'),lista=el('listaDouradasManuaisDemo');
     if(!token){status.textContent='Acesso administrativo requerido.';return;}
@@ -1543,7 +1581,7 @@
        ' criada na fila B. Reserva interna comprometida: '+
         money(r.resultado.valorReferenciaCentavos)+
         '. Não houve receita nova nem pagamento bancário.';
-      await carregarDouradasManuais();
+      await Promise.all([carregarDouradasManuais(),carregarResumoCaixa2()]);
     }catch(e){status.textContent='Não foi possível criar: '+e.message;}
     finally{b.disabled=false;}
   }
@@ -1680,7 +1718,7 @@
       if(atual!==versao)return;
       preencherConfiguracoes(config.cofres);
       mostrar(visao);
-      await Promise.all([carregarValorLoop(),carregarHistorico(),carregarConciliacao(),carregarLivro(),carregarDouradasManuais(),carregarRecebimentos(),carregarPontePedidoPagamento(),carregarPedidosComerciais(),carregarPedidosPDF(),carregarCarrinhosLoop(),carregarPlanejamentoFisico(),carregarPagamentosFisicos()]);
+      await Promise.all([carregarValorLoop(),carregarHistorico(),carregarConciliacao(),carregarLivro(),carregarDouradasManuais(),carregarResumoCaixa2(),carregarRecebimentos(),carregarPontePedidoPagamento(),carregarPedidosComerciais(),carregarPedidosPDF(),carregarCarrinhosLoop(),carregarPlanejamentoFisico(),carregarPagamentosFisicos()]);
     }catch(e){
       if(atual===versao){limpar();status.textContent=e.message;}
     }
@@ -1757,6 +1795,7 @@
   el('pagamentoSelecionadoPSPDemo').addEventListener('change',carregarHistoricoPSP);
   el('formEventoPSPDemo').addEventListener('submit',registrarEventoPSP);
   el('criarDouradaManualDemo').addEventListener('click',criarDouradaManual);
+  el('atualizarCaixa2FinanceiroDemo').addEventListener('click',carregarResumoCaixa2);
   el('conferirDouradasManuaisDemo').addEventListener('click',carregarDouradasManuais);
   el('conferirCicloDouradasDemo').addEventListener('click',conferirCicloDouradas);
   el('formCicloPersistenteDemo').addEventListener('submit',e=>registrarLivro(e,'ciclo'));
