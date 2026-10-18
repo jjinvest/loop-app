@@ -107,3 +107,7 @@ Registro consolidado da imagem desenhada pelo idealizador e dos esclarecimentos 
 - As cores `VERMELHO` (própria posição confirmada) e `DOURADO` (posição da empresa) seguem condicionais de visibilidade e operação do mapa do laboratório; design final deve ser comparado às artes aprovadas, sem presumir aceitação estética por testes automatizados.
 
 **Auditoria de comportamento:** testes devem cobrir compras fictícias, vínculo único, contadores 0/0 → 1/1 → 1/0 → 2/1 → 2/0, bloqueio de convite de indicado sem ativação, contagem A por posição e nenhuma promoção automática. Testes verdes são condição necessária, mas insuficiente, para aceitação de produção.
+
+## Scanner de integrações e jornada do participante — 18/10/2026
+
+**Relatório completo:** [AUDITORIA_PONTAS_LOOP_03_18OUT2026.md](./AUDITORIA_PONTAS_LOOP_03_18OUT2026.md). Revisão de laboratório com **424 testes unitários/integração aprovados e navegador celular/computador aprovado no commit `76f47a47`**. Inclui fluxo real de PDF fictício + convidado + distribuição manual, comportamento azul→dourada ao cruzar a vaga 6, testes 100 indicações/seis posições, rota legada sem alvo bloqueada no motor manual, contadores da Rede e auditoria de IDs não fixos. **Ponto comercial pendente:** exceção de pacote 5/6 posições por pedido; validar contra regra geral de uma posição por compra antes de homologar loja. **Sem alterações na branch principal nem dinheiro real.**
