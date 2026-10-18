@@ -472,3 +472,143 @@ body.loop03-logado .portal-participante{position:relative;z-index:1}
  #loop03-tabuleiro .loop03-roda .espaco-tabuleiro-demo:not(.tabuleiro-centro)::before{font-size:1.16rem}
  #loop03-tabuleiro .loop03-roda .espaco-tabuleiro-demo:not(.tabuleiro-centro)>.titulo-espaco-tabuleiro-demo{font-size:.43rem}
 }
+
+
+/* RETORNO ESTRUTURAL DAS ARTES APROVADAS: quadro das filas e minha equipe. */
+/* As filas têm painéis altos como a arte. Linhas vazias são apenas decoração:
+   não inventam participantes ou posição na contabilidade real. */
+#loop03-tabuleiro .loop03-mapa-grade{
+ align-items:stretch!important;
+ grid-template-columns:minmax(160px,1.08fr) minmax(360px,2.6fr) minmax(160px,1.08fr)!important;
+}
+#loop03-tabuleiro .loop03-mapa-grade>.bloco-fila-participante{
+ position:relative!important;overflow:hidden!important;
+ min-height:525px!important;padding:10px 8px 14px!important;
+ background:linear-gradient(155deg,#070e20f5,#07111bf3)!important;
+ border-radius:18px!important;
+ box-shadow:inset 0 0 0 1px #d1a6644d,0 0 14px #d3a05375!important;
+}
+#loop03-tabuleiro .loop03-mapa-grade>.bloco-fila-participante::after{
+ content:"";display:block;height:260px;min-height:0;pointer-events:none;
+ background:repeating-linear-gradient(180deg,
+  transparent 0 9px,#ffffff05 10px 36px,#3e4a6a3d 37px 38px,transparent 39px 49px);
+ border-radius:10px;margin-top:9px;opacity:.53;
+ mask-image:linear-gradient(180deg,#0007,transparent);
+}
+#loop03-tabuleiro .loop03-mapa-grade>.bloco-fila-participante>*{position:relative;z-index:1}
+#loop03-tabuleiro .loop03-mapa-grade>.bloco-fila-participante h3{
+ min-height:50px!important;display:flex;align-items:center;
+ justify-content:center;text-align:center;
+ padding:6px 2px!important;margin:0!important;
+ font-size:clamp(1.05rem,1.5vw,1.38rem)!important;
+ letter-spacing:.03em;
+}
+#loop03-tabuleiro .loop03-mapa-grade>.bloco-fila-participante:first-child h3{color:#ffda67!important}
+#loop03-tabuleiro .loop03-mapa-grade>.bloco-fila-participante:last-child h3{color:#fff!important}
+#loop03-tabuleiro .loop03-mapa-grade .loop03-linha-fila{
+ width:100%!important;min-height:51px!important;
+ margin:4px 0!important;padding:5px!important;
+ border-radius:13px!important;border:1px solid #a97c4169!important;
+ background:linear-gradient(145deg,#090e1f,#0c1527)!important;
+}
+#loop03-tabuleiro .loop03-roda{
+ align-self:stretch!important;justify-content:flex-start!important;
+ min-height:520px!important;
+}
+#loop03-tabuleiro .loop03-roda>.painel-tabuleiro-imersivo{margin-top:3px!important}
+#loop03-tabuleiro .loop03-roda>h3{display:none!important}
+#loop03-tabuleiro .loop03-roda .mapa-tabuleiro-posicoes-demo{
+ margin:4px auto 13px!important;
+}
+/* Minha Equipe como lista de pessoas, não quadrados de sistema:
+   avatar circular (iniciais verdadeiras), selo de confirmação, estado da fila. */
+#loop03-rede{background:
+ radial-gradient(ellipse at 51% 39%,#5d219eab,transparent 71%),
+ linear-gradient(140deg,#210956,#1d0743 74%,#100426)!important}
+#loop03-rede #loop03ListaEquipe{
+ display:grid!important;grid-template-columns:minmax(0,1fr)!important;
+ gap:9px!important;margin:0!important;
+}
+#loop03-rede .loop03-equipe-linha{
+ display:grid!important;
+ grid-template-columns:42px minmax(0,1fr) minmax(76px,auto) 39px!important;
+ grid-template-rows:minmax(19px,auto) minmax(21px,auto)!important;
+ align-items:center!important;gap:3px 13px!important;
+ padding:9px 12px!important;min-height:67px!important;
+ background:linear-gradient(100deg,#111529,#130c2b)!important;
+ border:1px solid #855ca9!important;border-radius:12px!important;
+ box-shadow:inset 0 1px #d4a5ff42,0 0 10px #b676ea53!important;
+}
+#loop03-rede .loop03-equipe-avatar{
+ grid-column:1!important;grid-row:1/3!important;
+ width:39px;height:39px;border:2px solid #e3c273;border-radius:50%;
+ display:grid;place-items:center;background:
+ radial-gradient(circle at 25% 16%,#9f78cc,#372453 60%,#1a1438);
+ color:#fff6d9;font-size:.79rem;font-weight:900;
+ text-shadow:0 1px 2px #000a;box-shadow:0 0 9px #ae82eb7a;
+}
+#loop03-rede .loop03-equipe-linha>strong{
+ grid-column:2!important;grid-row:1!important;align-self:end!important;
+ color:#fff4de!important;font-size:.96rem!important;
+ white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+}
+#loop03-rede .loop03-equipe-estado{
+ grid-column:3!important;grid-row:1!important;justify-self:center!important;
+ padding:3px 8px!important;border-radius:50px!important;
+ border:1px solid #7c73b4!important;white-space:nowrap!important;
+ font-size:.61rem!important;font-weight:850!important;
+ color:#dbc8f6;background:#33244b;
+}
+#loop03-rede .loop03-equipe-ativo{
+ background:#06482d!important;border-color:#10d788!important;color:#baffdc!important;
+}
+#loop03-rede .loop03-equipe-pendente{
+ background:#473005!important;border-color:#dfa535!important;color:#ffdf9b!important;
+}
+#loop03-rede .loop03-equipe-conferencia{
+ background:#3e1a5a!important;border-color:#b77af6!important;color:#e0baff!important;
+}
+#loop03-rede .loop03-equipe-linha>.loop03-equipe-informacoes{
+ grid-column:2/4!important;grid-row:2!important;
+ color:#d6c8e7!important;font-size:.73rem!important;
+ overflow-wrap:anywhere!important;line-height:1.25!important;
+}
+#loop03-rede .loop03-equipe-linha>button{
+ grid-column:4!important;grid-row:1/3!important;
+ width:34px!important;min-height:38px!important;
+ border:1px solid #caa15e!important;
+ background:linear-gradient(120deg,#302342,#161529)!important;
+ color:#ffe1a7!important;box-shadow:0 0 8px #d6a26c57!important;
+}
+#loop03-rede .loop03-equipe-linha>div,
+#loop03-rede .loop03-equipe-linha>small:not(.loop03-equipe-informacoes){
+ grid-column:1/-1!important;grid-row:auto!important;
+}
+#loop03-rede .loop03-cabecalho-equipe{
+ grid-template-columns:minmax(110px,1fr) minmax(170px,1.4fr) minmax(110px,1fr);
+ align-items:center!important;gap:13px!important;
+}
+#loop03-rede .loop03-contador-rede{min-height:95px!important;padding:8px!important}
+#loop03-rede .loop03-titulo-equipe h2{font-size:clamp(1.5rem,2.4vw,2.15rem)!important}
+@media(max-width:1200px){
+ #loop03-tabuleiro .loop03-mapa-grade{grid-template-columns:1fr 1fr!important}
+ #loop03-tabuleiro .loop03-roda{grid-column:1/-1!important;grid-row:1!important;min-height:0!important}
+ #loop03-tabuleiro .loop03-mapa-grade>.bloco-fila-participante{min-height:210px!important}
+ #loop03-tabuleiro .loop03-mapa-grade>.bloco-fila-participante::after{height:85px!important}
+}
+@media(min-width:1201px){
+ #loop03-tabuleiro .loop03-mapa-grade{grid-template-columns:minmax(145px,1.05fr) minmax(330px,2.55fr) minmax(145px,1.05fr)!important}
+}
+@media(max-width:590px){
+ #loop03-rede .loop03-cabecalho-equipe{grid-template-columns:repeat(2,minmax(0,1fr))!important}
+ #loop03-rede .loop03-titulo-equipe{grid-column:1/-1!important;grid-row:1!important}
+ #loop03-rede .loop03-equipe-linha{grid-template-columns:32px minmax(0,1fr) auto 28px!important;gap:3px 5px!important;padding:7px 5px!important}
+ #loop03-rede .loop03-equipe-avatar{width:29px;height:29px;font-size:.62rem}
+ #loop03-rede .loop03-equipe-linha>strong{font-size:.73rem!important}
+ #loop03-rede .loop03-equipe-estado{font-size:.45rem!important;padding:2px 4px!important}
+ #loop03-rede .loop03-equipe-linha>.loop03-equipe-informacoes{font-size:.57rem!important}
+ #loop03-rede .loop03-equipe-linha>button{width:26px!important;min-height:30px!important;font-size:.95rem!important}
+ #loop03-tabuleiro .loop03-mapa-grade>.bloco-fila-participante{min-height:160px!important}
+ #loop03-tabuleiro .loop03-mapa-grade>.bloco-fila-participante::after{height:45px!important}
+ #loop03-tabuleiro .loop03-mapa-grade>.bloco-fila-participante h3{font-size:.86rem!important}
+}
