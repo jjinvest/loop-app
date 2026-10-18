@@ -133,9 +133,10 @@ function criarRouterParticipanteDemo({contas,ponte,sessoes=null,adesoes=null,car
   if(!req.is('application/json'))return res.status(415).json({erro:'USE_APPLICATION_JSON'});
   const body=req.body;
   if(!body||typeof body!=='object'||Array.isArray(body)||
-   !(ponte.atribuicaoManualPorPosicao?
-     ['posicaoId','aceitaTermos,cpfFicticio,posicaoId,versaoTermos'].includes(Object.keys(body).sort().join(',')):
-     Object.keys(body).sort().join(',')==='aceitaTermos,cpfFicticio,versaoTermos')){
+   !(['aceitaTermos,cpfFicticio,versaoTermos',
+      'posicaoId','aceitaTermos,cpfFicticio,posicaoId,versaoTermos'].includes(
+       Object.keys(body).sort().join(',')))||
+   (ponte.atribuicaoManualPorPosicao&&!('posicaoId' in body))){
    return res.status(400).json({erro:'CAMPOS_ATIVACAO_INVALIDOS'});
   }
   try{
