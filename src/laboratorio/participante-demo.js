@@ -197,6 +197,7 @@
    }
    tabuleiro.append(bloco);
   }
+  window.Loop03Shell?.destacarPosicoes();
  }
  function dinheiro(centavos){
   return (centavos/100).toLocaleString('pt-BR',{
