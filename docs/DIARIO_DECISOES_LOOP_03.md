@@ -49,3 +49,20 @@ Acompanhar GitHub Actions na **revisão HEAD**, não confiar em sucesso de commi
 - Commit `f9e44ac1`: Minha Equipe com três pontinhos alinhados à direita em cada linha; somente indicado ativo oferece vínculo, pendente tem ação bloqueada, vinculado exibe consulta permanente. Diferencia estado PENDENTE, AGUARDANDO CONFIRMAÇÃO e ATIVO com derivação da visão autenticada, sem alterar antigo campo `estado`; etiqueta Fila A amarela e Fila B branca. Adicionou testes de projeção e interface.
 - **TESTADO:** GitHub Actions `Testes do LOOP` e `LOOP - Navegador celular e computador` aprovados no commit `fd374a2d`. Para `f9e44ac1`, conferir novamente os dois checks; não considerar teste aprovado até verificar o resultado.
 - **PENDENTE:** comparar a aparência final às artes aprovadas, fluxo de vinculação ponta a ponta no navegador com convidado ativo, auditoria/concorrrência/restart do ledger, histórico por posição e demais controles de fluxo. Loja AKITEMM tem apenas a alteração pontual de borda/selo nesta rodada; checkout real, operações admin, fornecedor/entrega, Financeiro, banners, vitrine e implantação continuam dependências separadas e NÃO devem ser declarados concluídos.
+
+## Referências de imagem recuperadas e correção do shell — 18/10/2026
+
+O idealizador rejeitou explicitamente a captura técnica do laboratório como apresentação do LOOP 0.3. **Não enviar essa captura como imagem do escritório aprovado.** O padrão de referência está nos arquivos originais da Biblioteca/ZIP:
+
+- `01_TABULEIRO_CLIENTE_APROVADO.png`
+- `02_ESCRITORIO_VIRTUAL_APROVADO.png`
+- `03_MINHAS_POSICOES_APROVADO.png`
+- `04_MINHA_EQUIPE_APROVADO.png`
+
+As quatro artes **são referências estáticas aprovadas**, não screenshots do app funcional. Precisam orientar cada aba e nenhum resultado técnico pode ser chamado de arte final. A ilustração mais antiga ainda inclui “Minhas Ativações” no menu, mas prevalece a decisão **posterior** de removê-la e integrar a confirmação individual à aba Minhas Posições. Os valores, usuários e números nessas imagens são exclusivamente ilustrativos e jamais devem ser transportados como dados reais de painel.
+
+- `2c4be1cc`: corrige ordem CSS para a identidade visual do shell ter prioridade sobre `loop-futurista-v6.css`, eliminando cartões ovais verdes impostos pela cascata antiga; reposiciona logomarca superior em largura total, aprofunda roxo/noturno, ouro e moldura metálica do escritório. Nenhuma operação do motor foi modificada.
+- `9f7760a4`: cartões de Minhas Posições reformulados em grade 3x2 (2 colunas em telas pequenas), identificação circular com estado C/A/B/pendente/vazio, número destacado e detalhes reais. Os seis espaços não representam seis posições compradas; nada é fabricado para preencher a arte.
+- `f4b0128a`: corrige teste antigo `programador-prelancamento-v6-http.test.js` que utilizava janela fixa vencida `2026-10-18T09:00:00-03:00`; usa data futura relativa. GitHub Actions `Testes do LOOP` e `LOOP - Navegador celular e computador` **aprovados no commit `f4b0128a`**.
+
+**PENDENTE:** homepage ainda usa publicações administradas e não tem o banner gráfico aprovado integralmente integrado; alinhar layout detalhado da aba Minha Equipe e Tabuleiro às quatro referências sem mexer na ordem do motor; revisar excesso de seções legadas visíveis abaixo dos cartões de Minhas Posições; AKITEMM, Financeiro e outros acabamentos permanecem em execução. **Não interpretar screenshot de laboratório que apenas passou nos testes como prova de fidelidade visual.**
