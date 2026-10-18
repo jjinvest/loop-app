@@ -34,6 +34,7 @@
   const destino=el('itensLojaLoop');
   destino.replaceChildren();
   let total=0,totalElegivel=0,valorPacoteEspecial=0;
+  let quantidadePosicoesEspecial=1;
   for(const [id,quantidade] of carrinho){
    const p=produto(id);
    if(!p){carrinho.delete(id);continue;}
@@ -62,13 +63,17 @@
    else if(quantidade<p.quantidadeMinimaLoop)
     regra.textContent='É necessário comprar '+p.quantidadeMinimaLoop+
      ' unidades deste produto no mesmo pedido para contar no LOOP.';
-   else regra.textContent=p.posicoesPorPedidoLoop===6?
-    'Produto especial: pode gerar 6 posições no mesmo pedido, se houver seis vagas livres e o valor mínimo for atingido.':
+   else regra.textContent=p.eventoId&&p.posicoesPorPedidoLoop>1?
+    'PROMOÇÃO ESPECIAL: '+p.posicoesPorPedidoLoop+
+     ' posições previstas no mesmo pedido, sujeitas ao valor e às vagas disponíveis.':
     'Quantidade suficiente: o subtotal deste item conta para o LOOP.';
    total+=p.precoCentavos*quantidade;
    if(p.elegivelLoop&&quantidade>=p.quantidadeMinimaLoop){
     totalElegivel+=p.precoCentavos*quantidade;
-    if(p.posicoesPorPedidoLoop===6)valorPacoteEspecial+=p.precoCentavos*quantidade;
+    if(p.eventoId&&p.posicoesPorPedidoLoop>1){
+     valorPacoteEspecial+=p.precoCentavos*quantidade;
+     quantidadePosicoesEspecial=Math.max(quantidadePosicoesEspecial,p.posicoesPorPedidoLoop);
+    }
    }
    const remover=document.createElement('button');
    remover.type='button';remover.className='botao-secundario-loja';
@@ -88,17 +93,19 @@
    ' · Produtos válidos para o LOOP: '+dinheiro(totalElegivel)+
    ' · Mínimo da posição: '+dinheiro(referenciaCentavos)+
    (valorPacoteEspecial>0?
-    (valorPacoteEspecial>=6*referenciaCentavos?
-      ' · Produto especial: 6 posições após confirmação, desde que existam 6 vagas livres.':
-      ' · Pacote de 6 exige produtos especiais no valor de pelo menos '+
-       dinheiro(6*referenciaCentavos)+'; sem isso, não haverá ativação do pacote.'):
+    (valorPacoteEspecial>=quantidadePosicoesEspecial*referenciaCentavos?
+      ' · Evento especial: até '+quantidadePosicoesEspecial+
+       ' posições após confirmação, respeitando o limite da conta.':
+      ' · Evento de '+quantidadePosicoesEspecial+' posições exige ao menos '+
+       dinheiro(quantidadePosicoesEspecial*referenciaCentavos)+' em itens da promoção.'):
     (totalElegivel>=referenciaCentavos?' · Pode gerar uma posição após confirmação':
      ' · Não atinge o mínimo da posição'));
   // A plataforma ensina a regra enquanto o cliente monta ESTE pedido.
   // Apenas preços e elegibilidade são públicos; custos e margens não saem do admin.
   const orientacao=window.EducacaoCarrinhoLoopV6.orientar({
    itens:carrinho.size,totalElegivelCentavos:totalElegivel,
-   referenciaCentavos,valorPacoteEspecialCentavos:valorPacoteEspecial
+   referenciaCentavos,valorPacoteEspecialCentavos:valorPacoteEspecial,
+   quantidadePosicoesPacote:Math.max(2,quantidadePosicoesEspecial)
   });
   el('orientacaoMinimoLoop').textContent=orientacao.mensagem;
   el('progressoMinimoLoop').max=orientacao.minimoCentavos;
@@ -131,21 +138,33 @@
   }
   for(const p of catalogo){
    const card=document.createElement('article');
-    card.className='produto-loja-loop '+(p.elegivelLoop?
-     'produto-loja-loop-elegivel':'produto-loja-loop-nao-elegivel');
+   const especial=!!p.eventoId&&p.posicoesPorPedidoLoop>1;
+   card.className='produto-loja-loop '+(especial?
+    'produto-loja-loop-especial':p.elegivelLoop?
+    'produto-loja-loop-elegivel':'produto-loja-loop-nao-elegivel');
    const tipo=document.createElement('span');tipo.className='tipo-loja-loop';
    tipo.textContent=p.tipo==='PDF'?'Curso PDF':'Produto físico';
    const titulo=document.createElement('h3');titulo.textContent=p.nome;
    const aviso=document.createElement('small');
    aviso.className='tipo-loja-loop';
-   aviso.textContent=p.elegivelLoop?
-    ('Pode gerar uma posição no LOOP'+
-     (p.quantidadeMinimaLoop>1?' · Mínimo de '+p.quantidadeMinimaLoop+
-      ' unidades no mesmo pedido':'')+
-     ' · conforme valor e quantidade exigidos'):
-    'Este produto não gera posição no LOOP';
-   if(p.elegivelLoop&&p.posicoesPorPedidoLoop===6){
-    aviso.textContent+=' · Produto especial de 6 posições (sujeito às regras e às vagas livres)';
+   aviso.textContent=especial?
+     'Evento ativo: '+p.posicoesPorPedidoLoop+' posições possíveis neste pedido':
+     p.elegivelLoop?
+      'Produto verde: soma com outros verdes deste mesmo pedido para gerar até uma posição no LOOP':
+      'Produto cinza: compra comum, não gera posição no LOOP';
+   if(!especial&&p.elegivelLoop&&p.quantidadeMinimaLoop>1)
+    aviso.textContent+=' · Quantidade mínima: '+p.quantidadeMinimaLoop;
+   if(especial){
+    const tarja=document.createElement('strong');
+    tarja.className='tarja-promocao-especial-loop';
+    tarja.textContent='PROMOÇÃO ESPECIAL';
+    const detalhes=document.createElement('small');
+    detalhes.className='datas-promocao-especial-loop';
+    detalhes.textContent=(p.eventoTitulo||'Evento AKITEMM')+
+     ' · De '+(p.dataInicio||'—')+' até '+(p.dataFim||'—')+
+     ' · '+p.quantidadeMinimaLoop+' unidade(s) para até '+
+     p.posicoesPorPedidoLoop+' posições';
+    card.append(tarja,detalhes);
    }
    const preco=document.createElement('p');preco.className='preco-loja-loop';
    preco.textContent=dinheiro(p.precoCentavos);

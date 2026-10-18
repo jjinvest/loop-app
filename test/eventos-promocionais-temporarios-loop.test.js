@@ -13,7 +13,7 @@ const item=(id,centavos)=>({
 test('promoção criada manualmente: cinza, 10/20/30 unidades, banners e fim',async t=>{
  const repo=new RepositorioCatalogoSQLite({caminho:':memory:'});
  t.after(()=>repo.fechar());
- for(const [id,v] of [['barato-30',3000],['caneta-50',5000],['produto-180',18000]])
+ for(const [id,v] of [['barato-30',3000],['caneta-50',5000],['produto-180',18000],['produto-300',30000],['cinza-70',7000]])
   repo.salvar({produto:item(id,v),revisaoEsperada:0});
  const contas=new ContasParticipantesDemoSQLite({banco:repo.banco});
  const conta=contas.cadastrar({nome:'Participante de eventos',email:'teste-evento@exemplo.invalid',
@@ -44,7 +44,26 @@ test('promoção criada manualmente: cinza, 10/20/30 unidades, banners e fim',as
    eventoId:'confirmacao-'+id,tipo:'CONFIRMAR_FICTICIO'
   });
  }
- // Produto de R$180 elegível exige dois no mesmo pedido para ultrapassar R$250.
+ // Dois produtos verdes diferentes somam R$180 + R$300 = R$480, uma posicao;
+ // produto CINZA de R$70 nao entra no minimo nem soma outra posicao.
+ const regraCinza=await api('POST',cart+'/elegibilidade',{
+  produtoId:'cinza-70',elegivelLoop:false,revisaoEsperada:1
+ });
+ assert.equal(regraCinza.status,200);
+ const mistura=await api('POST',cart,{
+  pedidoId:'carrinho-verdes-e-cinza',contaId:conta.contaId,
+  itens:[{produtoId:'produto-180',quantidade:1},
+   {produtoId:'produto-300',quantidade:1},
+   {produtoId:'cinza-70',quantidade:1}]
+ });
+ assert.equal(mistura.status,201);
+ assert.equal(mistura.data.pedido.totalCentavos,55000);
+ assert.equal(mistura.data.pedido.totalElegivelLoopCentavos,48000);
+ assert.equal(mistura.data.pedido.posicoesSolicitadas,1);
+ assert.equal(mistura.data.pedido.itens.find(p=>p.produtoId==='cinza-70').subtotalElegivelCentavos,0);
+ // Minimo POR PRODUTO pode ser definido pelo admin, diferentemente do
+ // minimo de R$250 do pedido. A segunda regra prevalece se for maior.
+ // Produto de R$180 elegível exige dois no mesmo pedido quando o admin assim configurar.
  const minAtual=await api('POST',cart+'/quantidade-minima',{
   produtoId:'produto-180',quantidadeMinimaLoop:2,revisaoEsperada:1
  });
