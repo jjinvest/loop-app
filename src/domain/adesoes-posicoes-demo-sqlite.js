@@ -47,6 +47,32 @@ class AdesoesPosicoesDemoSQLite{
     BEFORE DELETE ON admin_loop_adesoes_posicoes_demo
     BEGIN SELECT RAISE(ABORT,'ativacao de teste imutavel'); END;
   `);
+  // O gatilho so pode ser instalado apos criacao da tabela de adesoes.
+  // Instalacao tardia impede falhas de schema em migracoes de carrinho/loja.
+  banco.exec(`
+   CREATE TRIGGER IF NOT EXISTS admin_loop_vinculos_indicacao_posicao_validar_insert
+    BEFORE INSERT ON admin_loop_vinculos_indicacao_posicao_demo
+   BEGIN
+    SELECT CASE WHEN NEW.convidado_id=NEW.indicador_id OR NOT EXISTS(
+     SELECT 1 FROM admin_ponte_convites_validados_demo v
+     WHERE v.convidado_id=NEW.convidado_id
+       AND v.indicador_id=NEW.indicador_id
+    ) THEN RAISE(ABORT,'INDICACAO_TITULAR_DIVERGENTE') END;
+    SELECT CASE WHEN NOT EXISTS(
+     SELECT 1 FROM admin_loop_adesoes_posicoes_demo p
+     WHERE p.posicao_id=NEW.posicao_indicador_id
+       AND p.conta_id=NEW.indicador_id
+    ) THEN RAISE(ABORT,'INDICACAO_POSICAO_NAO_ATIVA') END;
+    SELECT CASE WHEN NOT EXISTS(
+     SELECT 1 FROM admin_loop_adesoes_posicoes_demo p
+     WHERE p.conta_id=NEW.convidado_id
+    ) THEN RAISE(ABORT,'INDICADO_NAO_ATIVO') END;
+    SELECT CASE WHEN EXISTS(
+     SELECT 1 FROM admin_ponte_convites_aplicados_demo a
+     WHERE a.convidado_id=NEW.convidado_id
+    ) THEN RAISE(ABORT,'INDICACAO_JA_APLICADA') END;
+   END;
+  `);
   banco.prepare('INSERT OR IGNORE INTO admin_loop_chave_cpf_demo(id,chave_hex) VALUES(1,?)')
    .run(randomBytes(32).toString('hex'));
  }

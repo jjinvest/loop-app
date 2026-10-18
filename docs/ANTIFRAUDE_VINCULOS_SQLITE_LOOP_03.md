@@ -1,6 +1,6 @@
 # Missão 3 — fronteira antifraude dos vínculos SQLite
 
-No laboratório LOOP 0.3 / motor V6, a confirmação explícita pela interface autenticada já era validada no servidor. Esta missão adiciona **defesa em profundidade no próprio SQLite**: o gatilho `admin_loop_vinculos_indicacao_posicao_validar_insert` impede gravar vínculo de convite com indicador diferente do original, autoindicação, posição ainda sem ativação individual, posição pertencente a outra conta, convidado sem ativação ou indicação já consumida no modo legado.
+No laboratório LOOP 0.3 / motor V6, a confirmação explícita pela interface autenticada já era validada no servidor. Esta missão adiciona **defesa em profundidade no próprio SQLite**: o gatilho `admin_loop_vinculos_indicacao_posicao_validar_insert`, instalado somente depois de criar as tabelas de adesão, impede gravar vínculo de convite com indicador diferente do original, autoindicação, posição ainda sem ativação individual, posição pertencente a outra conta, convidado sem ativação ou indicação já consumida no modo legado.
 
 A tabela mantém um convidado por chave primária, vínculo definitivo sem UPDATE/DELETE, `BEGIN IMMEDIATE` e repetição idempotente do fluxo autorizado. O teste `test/antifraude-vinculos-sqlite-demo.test.js` cobre gravação SQL forjada, posição alheia, status pendente, idempotência, imutabilidade, efeito restrito a uma posição e chamadas HTTP hostis sem sessão, com Origin/Fetch-Site externo e body com contaId fabricado.
 
