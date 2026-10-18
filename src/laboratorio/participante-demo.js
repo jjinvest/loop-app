@@ -179,7 +179,7 @@
     const quantidade=document.createElement('span');
     quantidade.className='loop03-quantidade-convites loop03-quantidade-a-direita';
     quantidade.textContent=Number.isSafeInteger(qt)?
-     qt+' indicação'+(qt===1?'':'ões'):'Indicações: —';
+     qt+(qt===1?' indicação':' indicações'):'Indicações: —';
     quantidade.setAttribute('aria-label',Number.isSafeInteger(qt)?
      qt+' indicações desta posição':'Contagem não disponível');
     // SVG com stroke CSS: o bonequinho permanece amarelo em Android/iOS.
