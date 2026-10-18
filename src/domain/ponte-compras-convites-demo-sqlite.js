@@ -10,6 +10,7 @@ const {cofreDoEvento,origemDoCentro,centroDoLoop}=require('./destino-financeiro-
 const {DESTINOS}=require('./tabuleiro-loop');
 const {PreLancamentoCofresV6DemoSQLite}=require('./prelancamento-cofres-v6-demo-sqlite');
 const {ConciliacaoCofresV6DemoSQLite}=require('./conciliacao-cofres-v6-demo-sqlite');
+const {disponibilidadeCofreDemo}=require('./disponibilidade-cofres-v6-demo-sqlite');
 const {ConfiguracaoTravaFilaADemoSQLite}=require('./configuracao-trava-fila-a-demo-sqlite');
 const {auditarIntegridadeOperacionalDemo}=require('./auditoria-integridade-operacional-demo');
 
@@ -679,11 +680,12 @@ class PonteComprasConvitesDemoSQLite{
    if(conciliado.quantidadeDivergencias||conciliado.fase==='INATIVO')
     throw falha('CONCILIACAO_COFRES_DIVERGENTE','Reserva demonstrativa inconsistente');
    const saldoBruto=conciliado.cofreDireitaSimuladoCentavos;
-   const comprometido=banco.prepare(`
-    SELECT COALESCE(SUM(valor_referencia_centavos),0) AS total
-    FROM admin_ponte_douradas_financiadas_demo
-   `).get().total;
-   const livre=saldoBruto-comprometido;
+   // A mesma reserva de seguranca sustenta bonus e douradas: calcular
+   // antes de liberar qualquer NOVA posicao, sem usar o caixa central.
+   const disponivel=disponibilidadeCofreDemo(banco,{
+    cofreId:'LOOP_DIREITA',saldoBrutoCentavos:saldoBruto
+   });
+   const livre=disponivel.saldoLivreDemonstrativoCentavos;
    if(!Number.isSafeInteger(livre)||livre<ref.valorCentavos)
     throw falha('SALDO_RESERVA_INSUFICIENTE','Saldo demonstrativo insuficiente');
    const sim=this._restaurar();

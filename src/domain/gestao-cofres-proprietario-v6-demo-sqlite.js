@@ -3,6 +3,7 @@
 // Solicita MOVIMENTACOES DE GESTAO, nao executa retirada bancaria.
 // Operacao do proprietario separada de giro, extrato e saque de cliente.
 // A origem deve ser rastreada; nunca debita caixa contabil nem liquida valor.
+const {disponibilidadeCofreDemo}=require('./disponibilidade-cofres-v6-demo-sqlite');
 const COFRES=Object.freeze([
  'LOOP_CENTRO','LOOP_ESQUERDA','LOOP_DIREITA','LOOP_DOURADAS'
 ]);
@@ -66,8 +67,14 @@ class GestaoCofresProprietarioV6DemoSQLite{
    const conf=this.conciliacao.conferir();
    if(conf.fase==='INATIVO')throw falha('COFRES_NAO_CONFIGURADOS');
    if(conf.quantidadeDivergencias>0)throw falha('CONCILIACAO_COFRES_DIVERGENTE');
-   const saldo=this._consultarCaixa(cofreOrigem,conf);
-   if(!Number.isSafeInteger(saldo)||saldo<valorCentavos)
+   // Nao reutilizar dinheiro reservado para comissoes, douradas ou
+   // outras solicitacoes. Mantem a operacao so como pedido de laboratorio.
+   const bruto=this._consultarCaixa(cofreOrigem,conf);
+   const caixa=disponibilidadeCofreDemo(b,{
+    cofreId:cofreOrigem,saldoBrutoCentavos:bruto
+   });
+   const saldo=caixa.saldoLivreDemonstrativoCentavos;
+   if(saldo<valorCentavos)
      throw falha('SALDO_DEMONSTRATIVO_INSUFICIENTE');
    // Solicitacao, nao transferencia ou estorno. Recursos simulados mantidos.
    const status='PENDENTE_CONCILIACAO_REAL';

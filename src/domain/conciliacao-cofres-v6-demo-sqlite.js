@@ -3,6 +3,7 @@
 // Auditoria de quatro cofres exclusivamente FICTICIOS.
 // O preco/custos da loja NAO sao recebimento do LOOP.
 // Um livro de aportes locais NAO e comprovacao do banco ou PSP.
+const {disponibilidadeCofreDemo}=require('./disponibilidade-cofres-v6-demo-sqlite');
 const DESTINOS=Object.freeze([
   'LOOP_CENTRO','LOOP_ESQUERDA','LOOP_DIREITA','LOOP_DOURADAS'
 ]);
@@ -138,15 +139,19 @@ class ConciliacaoCofresV6DemoSQLite{
        pre.douradasAcumuladoSimuladoCentavos!==enviadosDourado||
        pre.escritoriosPrevistosSimuladoCentavos!==enviadosEscritorio)
       alertar('SALDO_RESUMO_INCOMPATIVEL','Livro do pre-lancamento');
-    const tabela=b.prepare("SELECT 1 FROM sqlite_master WHERE type='table' AND name='admin_ponte_douradas_financiadas_demo'").get();
-    const comprometido=tabela?b.prepare(
-     'SELECT COALESCE(SUM(valor_referencia_centavos),0) AS total FROM admin_ponte_douradas_financiadas_demo'
-    ).get().total:0;
-    if(comprometido>saldoDireita)
-     alertar('RESERVA_COMPROMETIDA_ACIMA_DO_SALDO','Douradas manuais');
+    // O "disponivel" nunca e o BRUTO: inclui bonificacoes de
+    // indicacao e todos os compromissos administrativos do segundo caixa.
+    const reserva=disponibilidadeCofreDemo(b,{
+     cofreId:'LOOP_DIREITA',saldoBrutoCentavos:saldoDireita
+    });
+    if(reserva.saldoLivreDemonstrativoCentavos<0)
+     alertar('RESERVA_COMPROMETIDA_ACIMA_DO_SALDO','Segundo caixa');
     return {
-      reservaDouradasComprometidaCentavos:comprometido,
-      cofreDireitaDisponivelSimuladoCentavos:saldoDireita-comprometido,
+      reservaDouradasComprometidaCentavos:reserva.compromissoDouradasCentavos,
+      bonificacoesComprometidasCentavos:reserva.compromissoBonificacoesCentavos,
+      gestaoPendenteComprometidaCentavos:reserva.compromissoGestaoPendenteCentavos,
+      cofreDireitaDisponivelSimuladoCentavos:reserva.saldoLivreDemonstrativoCentavos,
+      detalhamentoSegundoCaixa:reserva,
       modo:'CONCILIACAO_COFRES_SOMENTE_LABORATORIO',
       fase:pre.fase,
       integridadeDemonstrativa:divergencias.length?'DIVERGENTE':'CONFERIDA_APENAS_EM_SIMULACAO',
