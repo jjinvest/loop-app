@@ -39,6 +39,8 @@ Cenário exercitado em testes: pessoa compra um PDF elegível, recebe posição 
 
 **P1 — Fidelidade visual.** As quatro imagens aprovadas não são screenshots do aplicativo pronto. As abas Escritório Virtual, Tabuleiro, Minhas Posições e Minha Equipe ainda precisam de comparação minuciosa de moldura, ícones, componentes e seções inferiores; o Financeiro e a loja AKITEMM não estão visualmente concluídos. Não apresentar imagem de laboratório como referência final.
 
+**P1 — Antimonopólio por conta não é identidade antifraude.** A trava de uma posição na A impede concentração **dentro da mesma conta**, mas não comprova que contas diferentes não são controladas pela mesma pessoa ou por automação. CPF fictício, telefone e testes locais não constituem verificação real de identidade nem prevenção de robôs, contas emprestadas, autoindicação ou pagamentos fraudulentos. Antes da operação pública, especificar KYC/validação documental conforme a lei aplicável, sinais antifraude, limites, conciliação e apelação auditável, preservando privacidade. Não declarar que o antimonopólio já está garantido em todos os cenários.
+
 **P1 — Regulação, sustentabilidade e transparência.** Os testes e projeções não comprovam ganhos, prazos de contemplação, viabilidade econômica, segurança do PSP real ou enquadramento legal. Revisões da trava administrativa exigirão aviso claro, transparência e eventual validação jurídica antes do sistema real.
 
 **P2 — Escala e higiene de repositório.** O GitHub contém diretório `node_modules` versionado, backups e rotas de protótipo. A suíte prova cenários e operações locais, não desempenho sob simultaneidade massiva nem um pentest. Planejar separação/migração após fechar decisões de menus e loja, sem apagar código histórico inadvertidamente.
