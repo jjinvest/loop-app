@@ -59,12 +59,16 @@ class AdesoesPosicoesDemoSQLite{
    aceiteRegistradoEm:linha?.aceito_em||null,
    termosReaisAprovados:false,cpfRealArmazenado:false};
  }
- ativar({contaId,cpfFicticio,aceitaTermos,versaoTermos}={}){
+ ativar({contaId,cpfFicticio,aceitaTermos,versaoTermos,posicaoId}={}){
   if(typeof contaId!=='string'||!/^[a-f0-9-]{36}$/.test(contaId))
    throw falhar('CONTA_INVALIDA');
-  if(aceitaTermos!==true||versaoTermos!==VERSAO_TERMOS_DEMO)
+  const individual=this.ponte.atribuicaoManualPorPosicao===true;
+  if(individual&&(!Number.isSafeInteger(posicaoId)||posicaoId<1))
+   throw falhar('POSICAO_INVALIDA');
+  if(!individual&&(aceitaTermos!==true||versaoTermos!==VERSAO_TERMOS_DEMO))
    throw falhar('ACEITE_TERMOS_OBRIGATORIO');
-  if(!cpfFicticioValido(cpfFicticio))throw falhar('CPF_FICTICIO_INVALIDO');
+  if(!individual&&!cpfFicticioValido(cpfFicticio))
+   throw falhar('CPF_FICTICIO_INVALIDO');
   this.banco.exec('BEGIN IMMEDIATE');
   try{
    const conf=this.banco.prepare(
@@ -75,14 +79,24 @@ class AdesoesPosicoesDemoSQLite{
    if(!this.ponte.linksComissoes.ativado(contaId))throw falhar('COMPRA_INICIAL_OBRIGATORIA');
    const sim=this.ponte._restaurar();
    const pendentes=[...sim.filas.filaA,...sim.filas.filaB].filter(p=>
-    p.participanteId===contaId&&p.statusAdesao==='PENDENTE'
+    p.participanteId===contaId&&p.statusAdesao==='PENDENTE'&&
+    (!individual||p.id===posicaoId)
    );
+   if(individual&&!pendentes.length)throw falhar('POSICAO_NAO_PENDENTE');
    // Uma adesao anterior permanece valida; nao registrar novo aceite duplicado.
    const chave=this.banco.prepare('SELECT chave_hex FROM admin_loop_chave_cpf_demo WHERE id=1').get().chave_hex;
-   const digest=createHmac('sha256',Buffer.from(chave,'hex')).update(cpfFicticio).digest('hex');
    const existente=this.banco.prepare(
     'SELECT cpf_digest FROM admin_loop_adesoes_contas_demo WHERE conta_id=?'
    ).get(contaId);
+   if(!existente){
+    if(aceitaTermos!==true||versaoTermos!==VERSAO_TERMOS_DEMO)
+     throw falhar('ACEITE_TERMOS_OBRIGATORIO');
+    if(!cpfFicticioValido(cpfFicticio))throw falhar('CPF_FICTICIO_INVALIDO');
+   }
+   if(existente&&!individual&&!cpfFicticioValido(cpfFicticio))
+    throw falhar('CPF_FICTICIO_INVALIDO');
+   const digest=existente&&individual?existente.cpf_digest:
+    createHmac('sha256',Buffer.from(chave,'hex')).update(cpfFicticio).digest('hex');
    if(existente&&existente.cpf_digest!==digest)throw falhar('CPF_JA_FIXADO_NA_CONTA');
    if(existente&&!pendentes.length)throw falhar('ADESAO_JA_REALIZADA');
    const conflito=this.banco.prepare(
@@ -92,7 +106,7 @@ class AdesoesPosicoesDemoSQLite{
    const data=this.relogio();
    if(!existente)this.banco.prepare(
     'INSERT INTO admin_loop_adesoes_contas_demo(conta_id,cpf_digest,termos_versao,aceito_em) VALUES(?,?,?,?)'
-   ).run(contaId,digest,versaoTermos,data);
+   ).run(contaId,digest,VERSAO_TERMOS_DEMO,data);
    const ids=[];
    for(const p of pendentes){
     p.statusAdesao='ATIVA';p.ativadaEm=data;
@@ -110,7 +124,7 @@ class AdesoesPosicoesDemoSQLite{
    `).run(JSON.stringify(sim.exportarSnapshot()));
    this.banco.exec('COMMIT');
    return {ativadas:ids.length,posicoesIds:ids,
-    adesaoComissoesAtivada:true,termosVersao:versaoTermos,cpfConfirmadoNoTeste:true,
+    adesaoComissoesAtivada:true,termosVersao:VERSAO_TERMOS_DEMO,cpfConfirmadoNoTeste:true,
     cpfRealArmazenado:false,semPagamentoReal:true};
   }catch(erro){this.banco.exec('ROLLBACK');throw erro;}
  }
