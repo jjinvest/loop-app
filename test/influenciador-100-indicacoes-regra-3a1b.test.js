@@ -110,7 +110,7 @@ test('a proporcao global continua superior a prioridade individual apos snapshot
   });
   return p.id;
  });
- sim.registrarPosicaoSimulada({participanteId:'branco',vendaId:'branco'});
+ const branco=sim.registrarPosicaoSimulada({participanteId:'branco',vendaId:'branco'}).posicao;
  assert.deepEqual([1,2].map(i=>movimento(sim,i).id),candidatos.slice(0,2));
  const estado=sim.exportarSnapshot();
  const restaurado=SimuladorLoop.restaurarSnapshot(estado);
@@ -119,7 +119,7 @@ test('a proporcao global continua superior a prioridade individual apos snapshot
  assert.equal(restaurado.filas.contadorA,2);
  assert.equal(movimento(restaurado,3).id,candidatos[2]);
  const quarta=movimento(restaurado,4);
- assert.equal(quarta.id,8);
+ assert.equal(quarta.id,branco.id);
  assert.equal(quarta.origemFila,'B','mesmo com amarelas aguardando, a quarta e branca');
  assert.equal(restaurado.filas.contadorA,0);
 });
