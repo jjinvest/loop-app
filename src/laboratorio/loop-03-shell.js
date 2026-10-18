@@ -63,6 +63,8 @@
      <section id="loop03-ativacoes" class="loop03-pagina" aria-label="Minhas Ativações">
       <header class="loop03-titulo-pagina"><div><small>COMPRAS E CADASTRO</small><h2>Minhas Ativações</h2></div><a class="loop03-link-compra" href="/loja">Comprar na AKITEMM ↗</a></header>
       <div id="loop03AtivacoesLista" class="loop03-opcoes"></div>
+      <h3>Escolher ativação para receber uma indicação</h3><p>Prévia de escolha: o encaminhamento somente ficará disponível depois da validação da indicação e integração ao motor.</p>
+      <div id="loop03DistribuirIndicacao" class="loop03-opcoes" role="radiogroup" aria-label="Ativação para indicação validada"></div><p id="loop03DistribuirAviso" role="status">Aguardando uma indicação validada para distribuir.</p>
       <div class="loop03-alerta-indicacoes"><span aria-hidden="true">♙</span><div><strong>Novas indicações recebidas</strong><p>Cadastros pelo seu link aguardando verificação; distribuição entre ativações será integrada ao motor.</p></div><strong id="loop03Pendentes">0</strong></div>
      </section>
      <section id="loop03-posicoes" class="loop03-pagina" aria-label="Minhas Posições">
@@ -182,6 +184,12 @@
   for(const no of document.querySelectorAll('[data-loop03-posicao]'))
    no.setAttribute('aria-pressed',no.dataset.loop03Posicao===String(selecionada)?'true':'false');
  }
+ function destacarPosicoes(){
+  for(const node of document.querySelectorAll('.mapa-fila-posicoes-demo .selo-posicao-demo, .mapa-tabuleiro-posicoes-demo .selo-posicao-demo')){
+   node.classList.toggle('loop03-iluminada',node.classList.contains('minha-posicao-demo'));
+   node.classList.toggle('loop03-destaque-posicao',node.dataset.posicaoId===String(selecionada));
+  }
+ }
  function atualizar(visao){
   if(!e('loop03Shell'))montar();
   visaoAtual=visao;
@@ -193,6 +201,7 @@
   const n=visao.posicoes.length;
   e('loop03TotalAtivacoes').textContent=n+'/'+visao.limitePosicoesAtivas;
   const bonus=visao.saquesSimulados?.bonusDisponivelSimuladoCentavos||0;
+  e('loop03Giros24').textContent=Number.isSafeInteger(visao.girosUltimas24Horas)?String(visao.girosUltimas24Horas):'—';
   e('loop03Saldo').textContent=(bonus/100).toLocaleString('pt-BR',{style:'currency',currency:'BRL'});
   // Cadastros pendentes de validacao; distribuicao de indicacoes ainda nao opera.
   e('loop03Pendentes').textContent=String(visao.indicacoes?.cadastrosPendentes||0);
@@ -202,6 +211,21 @@
    m.setAttribute('aria-label','Evento '+(i+1)+': '+
     (!Number.isSafeInteger(etapa)?'andamento ainda nao disponivel':i<etapa?'registrado':'aguardando'));
   }
+  const destino=e('loop03DistribuirIndicacao');destino.replaceChildren();
+  visao.posicoes.forEach((p,i)=>{
+   const rotulo=document.createElement('label');rotulo.className='loop03-opcao';
+   const escolha=document.createElement('input');escolha.type='radio';
+   escolha.name='loop03DistribuirRascunho';escolha.value=String(p.posicaoId);
+   escolha.addEventListener('change',()=>{
+    e('loop03DistribuirAviso').textContent='Ativação '+(i+1)+
+     ' · '+statusPosicao(p)+' · Nº '+p.posicaoId+
+     ' selecionada na prévia. Nenhuma indicação foi movimentada.';
+   });
+   const titulo=document.createElement('strong');titulo.textContent='Ativação '+(i+1);
+   const detalhes=document.createElement('small');detalhes.textContent=statusPosicao(p)+' · Nº '+p.posicaoId;
+   rotulo.append(escolha,titulo,detalhes);destino.append(rotulo);
+  });
+  if(!n)e('loop03DistribuirAviso').textContent='Não existem ativações elegíveis nesta conta.';
   for(const id of ['loop03AtivacoesLista','loop03AtivacoesTabuleiro','loop03OpcoesPosicoes']){
    const alvo=e(id);alvo.replaceChildren();
    if(!n){const p=document.createElement('p');p.textContent='Você ainda não possui ativações nesta conta.';alvo.append(p);}
@@ -222,9 +246,7 @@
     alvo.append(b);
    });
   }
-  for(const node of document.querySelectorAll('.mapa-fila-posicoes-demo .selo-posicao-demo, .mapa-tabuleiro-posicoes-demo .selo-posicao-demo')){
-   node.classList.toggle('loop03-iluminada',node.classList.contains('minha-posicao-demo'));
-  }
+  destacarPosicoes();
   const atual=visao.posicoes.find(p=>p.posicaoId===selecionada);
   if(atual)selecionar(atual);
   else{
@@ -269,6 +291,6 @@
   }
  }
  function encerrar(){document.body.classList.remove('loop03-logado');selecionada=null;visaoAtual=null;abrir('home');}
- window.Loop03Shell={montar,atualizar,encerrar,abrir};
+ window.Loop03Shell={montar,atualizar,encerrar,abrir,destacarPosicoes};
  montar();
 })();
