@@ -128,6 +128,22 @@ function criarRouterParticipanteDemo({contas,ponte,sessoes=null,adesoes=null,car
    return next(e);
   }
  });
+
+ router.post('/atribuir-proxima-indicacao',(req,res,next)=>{
+  if(!ponte.atribuicaoManualPorPosicao)return res.status(501).json({erro:'ATRIBUICAO_INDISPONIVEL'});
+  if(!req.is('application/json'))return res.status(415).json({erro:'USE_APPLICATION_JSON'});
+  if(!req.body||typeof req.body!=='object'||Array.isArray(req.body)||
+    Object.keys(req.body).join(',')!=='posicaoId')
+   return res.status(400).json({erro:'CAMPOS_ATRIBUICAO_INVALIDOS'});
+  try{
+   const contaId=gerenciador.identificar(lerCookie(req));
+   if(!contaId)return res.status(401).json({erro:'SESSAO_AUSENTE_OU_EXPIRADA'});
+   return res.json(ponte.atribuirProximaIndicacao({contaId,posicaoId:req.body.posicaoId}));
+  }catch(err){
+   if(err.codigo)return res.status(err.codigo==='DADOS_ATRIBUICAO_INVALIDOS'?400:409).json({erro:err.codigo});
+   return next(err);
+  }
+ });
  router.post('/ativar-posicoes',(req,res,next)=>{
   if(!adesoes)return res.status(501).json({erro:'ATIVACAO_NAO_CONFIGURADA'});
   if(!req.is('application/json'))return res.status(415).json({erro:'USE_APPLICATION_JSON'});
