@@ -46,7 +46,8 @@ function extrairVisaoDoMotor({ simulador, titularId, titulares=TITULARES_FICTICI
   const informacoes=simulador.filas.informacoesParticipante(titularId);
   // Projecao visual SOMENTE LEITURA, da mesma fonte do motor; nunca muda filas.
   const visualizar=p=>p?{
-    id:p.id,titularId:p.participanteId,
+    id:p.id,titularId:p.participanteId,nome:p.nome,
+    convitesValidados:simulador.filas.informacoesParticipante(p.participanteId).quantidade,
     minha:p.participanteId===titularId,
     dourada:p.empresa===true||p.titularOperacional==='LOOP_EMPRESA',
     pendente:p.statusAdesao==='PENDENTE'
