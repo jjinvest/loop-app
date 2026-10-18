@@ -248,3 +248,16 @@ body.loop03-logado{background:radial-gradient(ellipse at 5% 14%,#42167580,transp
 
 /* Nao rotular como Fila B uma posicao que ja esta no Tabuleiro. */
 .loop03-fila-equipe-tabuleiro{color:#81f0c8;font-weight:800}
+
+
+/* Missao 4: estrutura funcional discreta; artes aprovadas permanecem intactas. */
+.loop03-saldo-indicados{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:10px 0 15px;padding:13px 16px;border:1px solid #b49153;border-radius:14px;background:#16202dbb;color:#f9edcc}
+.loop03-saldo-indicados span{font-size:.92rem;font-weight:750}
+.loop03-saldo-indicados strong{color:#b8ffd1;font-size:1.75rem;font-variant-numeric:tabular-nums}
+.loop03-aviso-distribuicao{min-height:0;margin:4px 0;color:#d6e8d9;font-size:.82rem}
+.loop03-aviso-distribuicao:empty{display:none}
+.loop03-grade-posicoes .loop03-unidade-posicao{display:flex;flex-direction:column;gap:9px;min-width:0}
+.loop03-grade-posicoes .loop03-unidade-posicao>.loop03-opcao{flex:1;width:100%}
+.loop03-grade-posicoes .loop03-adicionar-indicado{width:100%;min-height:41px;border-radius:11px;border:1px solid #9ebc89;background:linear-gradient(120deg,#224d36,#102d29);color:#e7ffe9;font:700 .82rem system-ui;cursor:pointer}
+.loop03-grade-posicoes .loop03-adicionar-indicado:disabled{opacity:.45;cursor:not-allowed}
+@media(max-width:520px){.loop03-saldo-indicados{padding:10px}.loop03-grade-posicoes .loop03-adicionar-indicado{font-size:.74rem}}
