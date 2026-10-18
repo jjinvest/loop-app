@@ -40,3 +40,12 @@ Acompanhar GitHub Actions na **revisão HEAD**, não confiar em sucesso de commi
 5. Financeiro de produção, autenticação real, consentimento LGPD, PSP, entrega/fornecedor, sustentabilidade e enquadramento legal exigem etapas separadas, não habilitadas neste laboratório.
 
 **Disciplina:** alterar exclusivamente áreas pedidas, checar diff, usar branch/PR existentes, executar testes na revisão atual, registrar evidências, e nunca confundir aprovação visual com sistema pronto.
+
+## Continuidade — ajustes de posições e equipe (18/10/2026, sessão seguinte)
+
+**Usuário reafirmou:** continuar os ajustes das posições sem modificar os visuais aprovados; ainda faltam outras abas (inclusive AKITEMM). Quando a integração destas áreas estiver pronta para revisão, informar claramente e não presumir aprovação.
+
+- Commit `fd374a2d`: eliminou a seção interna legada `loop03-ativacoes` e o rascunho `loop03DistribuirIndicacao`; fez Minhas Posições renderizar sempre SEIS cartões, inclusive espaços vazios; colocou bolinha vermelha somente nos cartões de posições pendentes. Indicadores contextuais: sem seleção 6/6 + #0000, ao escolher uma posição índice correspondente/6 + #ID. Confirmação continua no cartão próprio; seleção do tabuleiro usa os mesmos IDs reais, sem movimentar a catraca.
+- Commit `f9e44ac1`: Minha Equipe com três pontinhos alinhados à direita em cada linha; somente indicado ativo oferece vínculo, pendente tem ação bloqueada, vinculado exibe consulta permanente. Diferencia estado PENDENTE, AGUARDANDO CONFIRMAÇÃO e ATIVO com derivação da visão autenticada, sem alterar antigo campo `estado`; etiqueta Fila A amarela e Fila B branca. Adicionou testes de projeção e interface.
+- **TESTADO:** GitHub Actions `Testes do LOOP` e `LOOP - Navegador celular e computador` aprovados no commit `fd374a2d`. Para `f9e44ac1`, conferir novamente os dois checks; não considerar teste aprovado até verificar o resultado.
+- **PENDENTE:** comparar a aparência final às artes aprovadas, fluxo de vinculação ponta a ponta no navegador com convidado ativo, auditoria/concorrrência/restart do ledger, histórico por posição e demais controles de fluxo. Loja AKITEMM tem apenas a alteração pontual de borda/selo nesta rodada; checkout real, operações admin, fornecedor/entrega, Financeiro, banners, vitrine e implantação continuam dependências separadas e NÃO devem ser declarados concluídos.
