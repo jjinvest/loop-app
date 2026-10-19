@@ -1449,3 +1449,35 @@ body.loop03-logado .portal-participante{position:relative;z-index:1}
  #loop03Shell #loop03-perfil .loop03-campos-senha{grid-template-columns:minmax(0,1fr)}
  #loop03Shell #loop03-perfil #loop03SalvarSenha{width:100%}
 }
+
+
+/* Acesso a configuracoes cabe em 320/360/390/412px sem scroll horizontal. */
+@media(max-width:520px){
+ #loop03Shell .loop03-boasvindas{
+  display:grid!important;
+  grid-template-columns:auto minmax(0,1fr) auto!important;
+  gap:5px!important;align-items:center!important;
+ }
+ #loop03Shell .loop03-boasvindas>div:nth-child(2){min-width:0!important}
+ #loop03Shell .loop03-boasvindas>div:nth-child(2) h2{
+  overflow:hidden!important;text-overflow:ellipsis!important;
+  white-space:nowrap!important;font-size:clamp(.88rem,3.4vw,1.12rem)!important;
+ }
+ #loop03Shell .loop03-boasvindas>div:nth-child(2) p{
+  font-size:.62rem!important;max-width:100%;overflow:hidden;
+  white-space:nowrap;text-overflow:ellipsis;
+ }
+ #loop03Shell .loop03-acoes-perfil{
+  min-width:0!important;max-width:133px!important;margin:0!important;gap:3px!important;
+ }
+ #loop03Shell .loop03-acoes-perfil>.loop03-sino{
+  flex:0 0 auto!important;padding:5px!important;
+ }
+ #loop03Shell #loop03PerfilTopo{
+  flex:0 1 auto!important;min-width:0!important;max-width:102px!important;
+  padding:3px 5px!important;gap:3px!important;
+ }
+ #loop03Shell #loop03PerfilTopo>span:nth-child(2){
+  display:block;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+ }
+}
