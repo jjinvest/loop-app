@@ -710,9 +710,12 @@ async function main(){
   assert.match(await desktop.locator('#statusRelogioAdminLoop03').innerText(),/nenhum giro/i);
   // O mesmo valor gravado no SQLite aparece na tela REAL do cliente.
   await desktop.goto(base+'/laboratorio/participante',{waitUntil:'networkidle'});
-  await desktop.locator('#nomeParticipante').fill(titular.nome);
-  await desktop.locator('#senhaParticipante').fill(senha);
-  await desktop.locator('#botaoEntrarParticipante').click();
+  // A sessao continua autenticada no mesmo contexto: login so se ainda visivel.
+  if(await desktop.locator('#formEntrarParticipante').isVisible()){
+   await desktop.locator('#nomeParticipante').fill(titular.nome);
+   await desktop.locator('#senhaParticipante').fill(senha);
+   await desktop.locator('#botaoEntrarParticipante').click();
+  }
   await desktop.locator('#conteudoParticipante').waitFor({state:'visible'});
   await desktop.locator('#loop03Sidebar [data-loop03-aba="tabuleiro"]').click();
   assert.equal(await desktop.locator('#loop03IntervaloMeta').innerText(),'Referência administrativa: 00:30:00');
