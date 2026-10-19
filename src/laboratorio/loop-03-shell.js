@@ -26,7 +26,11 @@
     <a href="/loja" class="loop03-vitrine-lateral" aria-label="Abrir vitrine AKITEMM">
      <span class="loop03-vitrine-marca">AKITEMM</span>
      <small>VITRINE ROTATIVA</small>
-     <span class="loop03-vitrine-ilustracao" id="loop03VitrineArea" aria-hidden="true"></span>
+     <span class="loop03-vitrine-ilustracao" id="loop03VitrineArea">
+      <img id="loop03VitrineFoto" alt="" hidden loading="lazy">
+      <span id="loop03VitrineEstado" class="loop03-vitrine-sem-produto" hidden></span>
+      <span id="loop03VitrineNome" class="loop03-vitrine-nome-produto" hidden></span>
+     </span>
      <strong>PRODUTOS E CURSOS</strong>
      <span class="loop03-vitrine-link">CONHECER A LOJA →</span>
     </a>
@@ -425,6 +429,7 @@
   });
   abrir('home');
   carregarPublicacoes();
+  carregarVitrineAKITEMM();
  }
  function abrir(aba){
   if(!paginas.includes(aba))return;
@@ -1005,10 +1010,52 @@
   }
  }
 
+ let vitrineLista=[];
+ let vitrineIndice=0;
+ let intervaloVitrine=null;
+ function pintarVitrineAKITEMM(){
+  const foto=e('loop03VitrineFoto'),nome=e('loop03VitrineNome'),
+   estado=e('loop03VitrineEstado'),link=e('loop03Sidebar')?.querySelector('.loop03-vitrine-lateral');
+  if(!foto||!link)return;
+  const produto=vitrineLista.length?vitrineLista[vitrineIndice%vitrineLista.length]:null;
+  if(!produto){
+   foto.hidden=true;foto.removeAttribute('src');foto.alt='';
+   nome.hidden=true;nome.textContent='';
+   // Nenhum produto ficticio, o banner fica vazio ate haver fotos reais.
+   estado.hidden=true;estado.textContent='';
+   link.setAttribute('aria-label','Conhecer a loja AKITEMM');return;
+  }
+  foto.src=produto.fotos[0];foto.alt=produto.nome;foto.hidden=false;
+  nome.textContent=produto.nome;nome.hidden=false;estado.hidden=true;
+  link.setAttribute('aria-label','Conhecer na AKITEMM: '+produto.nome);
+ }
+ async function carregarVitrineAKITEMM(){
+  try{
+   const resp=await fetch('/catalogo',{cache:'no-store',credentials:'same-origin'});
+   if(!resp.ok)throw Error('CATALOGO_INDISPONIVEL');
+   const dados=await resp.json();
+   // Um catalogo demonstrativo jamais pode ser anunciado como produto real.
+   vitrineLista=dados.modo==='CATALOGO_DEMONSTRATIVO_SEM_VENDAS'?[]:
+    (Array.isArray(dados.produtos)?dados.produtos:[]).filter(p=>
+     p&&p.estado==='PUBLICADO'&&p.compraDisponivel===true&&
+     typeof p.nome==='string'&&p.nome.trim()&&
+     Array.isArray(p.fotos)&&p.fotos.length&&
+     /^\/imagens\/catalogo\/[a-z0-9_-]+\.(?:png|jpe?g|webp)$/.test(p.fotos[0]));
+  }catch{vitrineLista=[];}
+  vitrineIndice=0;pintarVitrineAKITEMM();
+  if(intervaloVitrine!==null){clearInterval(intervaloVitrine);intervaloVitrine=null;}
+  if(vitrineLista.length>1)intervaloVitrine=setInterval(()=>{
+   if(document.visibilityState==='visible'&&e('loop03Shell')){
+    vitrineIndice=(vitrineIndice+1)%vitrineLista.length;pintarVitrineAKITEMM();
+   }
+  },6000);
+ }
  function encerrar(){
   fecharPerfilSobreposto();
   fecharDetalheIndicador();
   fecharNotificacoes();
+  if(intervaloVitrine!==null){clearInterval(intervaloVitrine);intervaloVitrine=null;}
+  vitrineLista=[];vitrineIndice=0;pintarVitrineAKITEMM();
   document.body.classList.remove('loop03-logado');
   selecionada=null;visaoAtual=null;destinoInicialTratado=false;fotoPerfilAcao='MANTER';
   fecharSeletorPosicao();identidadeDaPosicao(null);
