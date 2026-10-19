@@ -627,6 +627,21 @@ async function main(){
    await quatroAbas.locator('#loop03Sidebar [data-loop03-aba="'+aba+'"]').click();
    await quatroAbas.locator('#loop03-'+aba).waitFor({state:'visible'});
    await quatroAbas.waitForTimeout(170);
+   if(aba==='tabuleiro'){
+    // MESMO BANCO / MESMO MOTOR: captura de desktop com uma posição real
+    // da conta de teste, que foi promovida para A na jornada anterior.
+    // Não gerar nem editar uma imagem do visor fora do navegador.
+    await quatroAbas.locator('#loop03AbrirEscolhaPosicao').click();
+    await quatroAbas.locator('#loop03ListaEscolha button').first().click();
+    assert.equal(await quatroAbas.locator('#loop03Numero').innerText(),'#1');
+    assert.equal(await quatroAbas.locator('#loop03LetraFila').innerText(),'A');
+    assert.equal(await quatroAbas.locator('#loop03IndicePosicao').innerText(),'1/6');
+    assert.equal(await quatroAbas.locator('#loop03VisorNumero').evaluate(n=>n.tagName),'DIV');
+    await conferirLargura(quatroAbas,1254,'visor-posicao-A-desktop',{captura:false});
+    await quatroAbas.screenshot({
+     path:path.join(pasta,'TABULEIRO_REAL_COM_POSICAO_A_DESKTOP_1254.png'),fullPage:true
+    });
+   }
    await quatroAbas.screenshot({path:path.join(pasta,arquivo),fullPage:false});
    await quatroAbas.screenshot({path:path.join(pasta,arquivo.replace('.png','_COMPLETA.png')),fullPage:true});
   }
