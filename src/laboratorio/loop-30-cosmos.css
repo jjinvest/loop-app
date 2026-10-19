@@ -1259,3 +1259,15 @@ body.loop03-logado .portal-participante{position:relative;z-index:1}
   overflow-y:auto!important;
  }
 }
+
+
+/* Visor ligado ao intervalo auditado no admin; nao muda o motor. */
+#loop03-tabuleiro .loop03-intervalo-referencia{
+ margin:2px auto 8px!important;
+ max-width:100%;
+ color:#e7c98e!important;
+ text-align:center!important;
+ font:600 clamp(.69rem,1.55vw,.86rem)/1.35 system-ui,sans-serif!important;
+ letter-spacing:.01em!important;
+ overflow-wrap:anywhere;
+}

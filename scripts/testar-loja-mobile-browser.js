@@ -700,6 +700,22 @@ async function main(){
   await desktop.locator('#formAcessoAdminLoop03 button[type=submit]').click();
   await desktop.locator('#dadosAdminLoop03').waitFor({state:'visible'});
   assert.equal(await desktop.locator('#numeroVagaAdmin').innerText(),'4');
+  // Operador configura referencia visual via formulario autenticado; nunca gira.
+  assert.equal(await desktop.locator('#intervaloAtualRelogioAdmin').innerText(),'Não configurado');
+  await desktop.locator('#intervaloRelogioAdmin').fill('30');
+  await desktop.locator('#justificativaRelogioAdmin').fill('Referencia operacional de teste sem disparar giros');
+  desktop.once('dialog',dialog=>dialog.accept());
+  await desktop.locator('#formRelogioAdminLoop03 button[type="submit"]').click();
+  await desktop.waitForFunction(()=>document.querySelector('#intervaloAtualRelogioAdmin')?.textContent==='30 min');
+  assert.match(await desktop.locator('#statusRelogioAdminLoop03').innerText(),/nenhum giro/i);
+  // O mesmo valor gravado no SQLite aparece na tela REAL do cliente.
+  await desktop.goto(base+'/laboratorio/participante',{waitUntil:'networkidle'});
+  await desktop.locator('#nomeParticipante').fill(titular.nome);
+  await desktop.locator('#senhaParticipante').fill(senha);
+  await desktop.locator('#botaoEntrarParticipante').click();
+  await desktop.locator('#conteudoParticipante').waitFor({state:'visible'});
+  await desktop.locator('#loop03Sidebar [data-loop03-aba="tabuleiro"]').click();
+  assert.equal(await desktop.locator('#loop03IntervaloMeta').innerText(),'Referência administrativa: 00:30:00');
   for(const largura of [768,1024,1366])
    await conferirLargura(desktop,largura,'escritorio-administrador',{captura:largura===1366});
 
