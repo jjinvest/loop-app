@@ -143,7 +143,12 @@ test('marcos do ciclo usam contagem REAL do motor de laboratorio, sem registrar 
  assert.match(shell,/visao\.progressoCiclo\?\.eventosValidos/);
  assert.match(shell,/i<etapa/);
  assert.match(shell,/andamento ainda nao disponivel/);
- assert.doesNotMatch(shell,/setInterval\(/);
+ // Nenhum contador do motor deve ser simulado com temporizador.
+ // O UNICO setInterval permitido nesta tela troca FOTOS REAIS da AKITEMM,
+ // sem criar pedido, saldo, movimento do tabuleiro ou evento financeiro.
+ assert.match(shell,/if\(vitrineLista\.length>1\)intervaloVitrine=setInterval/);
+ const semRotacaoVitrine=shell.replace(/let vitrineLista=\[\];[\s\S]*?function encerrar\(\)/,'function encerrar()');
+ assert.doesNotMatch(semRotacaoVitrine,/setInterval\(/);
 });
 
 
