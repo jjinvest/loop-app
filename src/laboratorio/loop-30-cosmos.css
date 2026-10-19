@@ -819,3 +819,45 @@ body.loop03-logado .portal-participante{position:relative;z-index:1}
 #loop03-tabuleiro .loop03-roda .espaco-tabuleiro-demo:not(.tabuleiro-centro):before{
  font-size:clamp(1.2rem,2.2vw,2.25rem)!important;
 }
+
+
+/* Footer unico: perfil e saida na mesma faixa do original. */
+.loop03-sidebar .loop03-identidade{
+ margin-top:auto!important;
+ display:flex!important;align-items:center!important;gap:8px!important;
+ padding:8px 7px!important;min-height:56px!important;
+ border:1px solid #bf8849!important;border-radius:15px!important;
+ background:linear-gradient(105deg,#1d1c34,#0c1124)!important;
+ box-shadow:inset 0 1px #ffe4ae52,0 0 16px #e8a24e80!important;
+}
+.loop03-sidebar .loop03-avatar{
+ width:37px!important;height:37px!important;
+ border:2px solid #f6d78c!important;
+ background:radial-gradient(circle at 36% 20%,#ab89d9,#322451 73%,#111223);
+ color:#fff!important;
+ box-shadow:0 0 9px #d3a55b87!important;
+}
+.loop03-sidebar .loop03-identidade>div:nth-child(2){
+ flex:1;min-width:0;overflow:hidden;
+}
+.loop03-sidebar .loop03-identidade strong{
+ font-size:.72rem!important;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+}
+.loop03-sidebar .loop03-identidade small{font-size:.58rem!important;line-height:1.22!important}
+.loop03-sidebar .loop03-sair{
+ flex:0 0 auto!important;width:30px!important;height:30px!important;min-height:30px!important;
+ display:grid!important;place-items:center!important;padding:0!important;
+ border:1px solid #a9885a!important;border-radius:50%!important;
+ color:#ffdfa7!important;
+ background:linear-gradient(120deg,#2d2643,#101424)!important;
+ font-size:1rem!important;line-height:1!important;
+ cursor:pointer!important;
+}
+.loop03-sidebar .loop03-sair:focus-visible{
+ outline:2px solid #ffe7b7;outline-offset:2px;
+}
+@media(orientation:landscape) and (min-width:560px) and (max-width:950px){
+ .loop03-sidebar .loop03-identidade{padding:5px 2px!important;gap:3px!important}
+ .loop03-sidebar .loop03-avatar{width:25px!important;height:25px!important}
+ .loop03-sidebar .loop03-sair{width:24px!important;height:24px!important}
+}
