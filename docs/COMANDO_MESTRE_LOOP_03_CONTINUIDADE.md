@@ -210,3 +210,9 @@ O vínculo definitivo convidado -> UMA posição ativa do titular já era valida
 
 **ESTADO NESTE INSTANTE:** artes originais preservadas; quatro telas reais presentes com funções parciais; identidade exibida LOOP 3.0; PR #1 de desenvolvimento permanece em rascunho. **NENHUM NOVO AJUSTE VISUAL OU FUNCIONAL está aprovado por esta mensagem**, somente a estratégia incremental e o status acima. Esperar a próxima questão específica do usuário antes de novas mudanças na interface.
 
+## 20) REGRA VISUAL PERMANENTE — SEMPRE ORIGINAL + TELA REAL (19/10/2026)
+
+**PEDIDO EXPRESSO DO IDEALIZADOR:** em TODA revisão visual, SEMPRE mostrar as DUAS imagens lado a lado: a **arte original aprovada à esquerda** e a **captura atual da tela real no navegador à direita**, no mesmo tamanho/proporção, devidamente identificadas. Não apresentar só a captura atual, nem mockups que não são funcionais. Comparar e alterar apenas a parte autorizada em cada etapa, sem mexer no restante. Para cada nova mudança, gerar e mostrar nova captura do estado exato do código testado.
+
+**ETAPA PONTUAL CONCLUÍDA:** em `src/laboratorio/participante-demo.html`, legenda do Tabuleiro agora tem seis marcadores alternados roxo/preto e legenda inferior `Participante` / `Sustentabilidade`, sem `roxo metálico`, `preto metálico` ou `Empresa` nessa legenda. Não modificar motor financeiro ou regra interna de alternância por causa da palavra no desenho. Teste em `test/identidade-visual-futurista-loop-v6.test.js` foi atualizado para a nova semântica; workflow geral e de navegador passaram no commit `376f6fbed19abf36961066113a23776f48b98153`. Artefato comparativo real da etapa: `LOOP_TABULEIRO_ORIGINAL_E_REAL_LEGENDA_ATUAL.png`, gerado com o original oficial e screenshot de navegador CI.
+
