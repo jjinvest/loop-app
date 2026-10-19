@@ -876,7 +876,7 @@ async function main(){
   await paginaSenha.getByText(/Senha alterada/).waitFor();
   await paginaSenha.locator('#senhaParticipante').fill('senha-antiga-laboratorio-2026');
   await paginaSenha.locator('#botaoEntrarParticipante').click();
-  await paginaSenha.getByText(/Credenciais|invalid/i).waitFor();
+  await paginaSenha.getByText(/Credenciais|inválido|invalid/i).waitFor();
   await paginaSenha.locator('#senhaParticipante').fill('senha-nova-laboratorio-2026');
   await paginaSenha.locator('#botaoEntrarParticipante').click();
   await paginaSenha.locator('#conteudoParticipante').waitFor({state:'visible'});
