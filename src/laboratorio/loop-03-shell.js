@@ -18,15 +18,19 @@
     <nav aria-label="Áreas do escritório">
      <button data-loop03-aba="home" type="button"><span>⌂</span> Escritório Virtual</button>
      <button data-loop03-aba="tabuleiro" type="button"><span>◉</span> Tabuleiro</button>
-     <button data-loop03-aba="posicoes" type="button"><span>▤</span> Minhas Posições</button>
-     <button data-loop03-aba="rede" type="button"><span>♧</span> Rede e Equipe</button>
-     <button data-loop03-aba="financeiro" type="button"><span>▥</span> Financeiro</button>
-     <a href="/loja"><span>▦</span> AKITEMM</a>
+     <button data-loop03-aba="posicoes" type="button"><span class="loop03-menu-simbolo loop03-icone-posicoes" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="5" y="3" width="15" height="18" rx="2"/><path d="M8 8h9M8 12h9M8 16h6M3 6v12"/></svg></span> Minhas Posições</button>
+     <button data-loop03-aba="rede" type="button"><span class="loop03-menu-simbolo loop03-icone-rede" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="7" r="3"/><path d="M5 20v-2c0-3 2.4-5 7-5s7 2 7 5v2"/><circle cx="4" cy="10" r="2"/><path d="M1 19v-3c0-1.5 1-2.4 2-2.7"/><circle cx="20" cy="10" r="2"/><path d="M23 19v-3c0-1.5-1-2.4-2-2.7"/></svg></span> Rede e Equipe</button>
+     <button data-loop03-aba="financeiro" type="button"><span class="loop03-menu-simbolo loop03-icone-financeiro" aria-hidden="true">$</span> Financeiro</button>
+     <a href="/loja"><span class="loop03-menu-simbolo loop03-icone-akitemm" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9 3v18M15 3v18M3 9h18M3 15h18"/></svg></span> AKITEMM</a>
     </nav>
     <a href="/loja" class="loop03-vitrine-lateral" aria-label="Abrir vitrine AKITEMM">
      <span class="loop03-vitrine-marca">AKITEMM</span>
      <small>VITRINE ROTATIVA</small>
-     <span class="loop03-vitrine-ilustracao" aria-hidden="true"><span class="loop03-vitrine-caneta"></span></span>
+     <span class="loop03-vitrine-ilustracao" id="loop03VitrineArea">
+      <img id="loop03VitrineFoto" alt="" hidden loading="lazy">
+      <span id="loop03VitrineEstado" class="loop03-vitrine-sem-produto">Aguardando produtos reais da AKITEMM</span>
+      <span id="loop03VitrineNome" class="loop03-vitrine-nome-produto" hidden></span>
+     </span>
      <strong>PRODUTOS E CURSOS</strong>
      <span class="loop03-vitrine-link">CONHECER A LOJA →</span>
     </a>
@@ -34,11 +38,10 @@
      <span class="loop03-avatar" aria-hidden="true"><img class="loop03-foto-privada" alt="" hidden><span class="loop03-foto-padrao">👤</span></span>
      <span class="loop03-dados-perfil" id="loop03DadosPosicaoLateral" hidden>
       <strong id="loop03NomeBaixo"></strong>
-      <small id="loop03SituacaoBaixo"></small>
+      <small id="loop03SituacaoBaixo" hidden></small>
      </span>
      <span id="loop03CoroaTabuleiro" class="loop03-coroa-tabuleiro" title="Posição dentro da catraca" aria-label="Posição dentro da catraca" hidden>♛</span>
     </div>
-    <button id="loop03Sair" type="button" class="loop03-sair">Sair da conta de teste</button>
    </aside>
    <div class="loop03-corpo">
     <div class="loop03-banner-topo">
@@ -201,6 +204,7 @@
         </div>
         <p id="loop03StatusPerfil" role="status" aria-live="polite"></p>
        </form>
+       <button id="loop03Sair" type="button" class="loop03-sair-perfil">Sair da conta</button>
        <details id="loop03TrocarSenha" class="loop03-trocar-senha">
         <summary>Trocar minha senha <span aria-hidden="true">🔒</span></summary>
         <form id="loop03FormSenha" autocomplete="on">
@@ -231,14 +235,7 @@
     </div>
    </div>`;
   shell.prepend(shell.querySelector('.loop03-banner-topo'));
-  // A area inferior aprovada e uma unica faixa de identidade. O logout continua
-  // um botao REAL e acessivel, sem criar um painel/perfil duplicado na lateral.
-  const identidade=shell.querySelector('.loop03-identidade');
-  const sair=shell.querySelector('#loop03Sair');
-  sair.textContent='⏻';
-  sair.setAttribute('aria-label','Sair da conta de teste');
-  sair.title='Sair da conta de teste';
-  identidade.append(sair);
+  // Rodape somente identificacao; logout preservado no painel Meu Perfil.
   root.prepend(shell);
   // Reaproveita as telas e operacoes existentes, sem duplicar IDs ou formularios.
   const mover=(selector,pagina)=>{
@@ -432,6 +429,7 @@
   });
   abrir('home');
   carregarPublicacoes();
+  carregarVitrineAKITEMM();
  }
  function abrir(aba){
   if(!paginas.includes(aba))return;
@@ -668,9 +666,9 @@
    return;
   }
   dados.hidden=false;
-  e('loop03NomeBaixo').textContent=visaoAtual?.perfil?.nome||visaoAtual?.conta?.nome||'Participante';
-  e('loop03SituacaoBaixo').textContent=p.statusAdesao==='PENDENTE'?
-   'Aguardando confirmação':statusPosicao(p);
+  e('loop03NomeBaixo').textContent=visaoAtual?.perfil?.nome||visaoAtual?.conta?.nome||'';
+  e('loop03SituacaoBaixo').textContent='';
+  e('loop03SituacaoBaixo').hidden=true;
   // Coroa so em posicao REAL do tabuleiro (seis vagas e centro).
   e('loop03CoroaTabuleiro').hidden=!/^(?:VAGA_[1-6]|CENTRO)$/.test(p.local||'');
  }
@@ -1009,10 +1007,52 @@
    target.textContent='Não foi possível consultar os comunicados. Tente novamente mais tarde.';
   }
  }
+
+ let vitrineLista=[];
+ let vitrineIndice=0;
+ let intervaloVitrine=null;
+ function pintarVitrineAKITEMM(){
+  const foto=e('loop03VitrineFoto'),nome=e('loop03VitrineNome'),
+   estado=e('loop03VitrineEstado'),link=e('loop03Sidebar')?.querySelector('.loop03-vitrine-lateral');
+  if(!foto||!link)return;
+  const produto=vitrineLista.length?vitrineLista[vitrineIndice%vitrineLista.length]:null;
+  if(!produto){
+   foto.hidden=true;foto.removeAttribute('src');foto.alt='';
+   nome.hidden=true;nome.textContent='';
+   estado.hidden=false;estado.textContent='Aguardando produtos reais da AKITEMM';
+   link.setAttribute('aria-label','Conhecer a loja AKITEMM');return;
+  }
+  foto.src=produto.fotos[0];foto.alt=produto.nome;foto.hidden=false;
+  nome.textContent=produto.nome;nome.hidden=false;estado.hidden=true;
+  link.setAttribute('aria-label','Conhecer na AKITEMM: '+produto.nome);
+ }
+ async function carregarVitrineAKITEMM(){
+  try{
+   const resp=await fetch('/catalogo',{cache:'no-store',credentials:'same-origin'});
+   if(!resp.ok)throw Error('CATALOGO_INDISPONIVEL');
+   const dados=await resp.json();
+   // Um catalogo demonstrativo jamais pode ser anunciado como produto real.
+   vitrineLista=dados.modo==='CATALOGO_DEMONSTRATIVO_SEM_VENDAS'?[]:
+    (Array.isArray(dados.produtos)?dados.produtos:[]).filter(p=>
+     p&&p.estado==='PUBLICADO'&&p.compraDisponivel===true&&
+     typeof p.nome==='string'&&p.nome.trim()&&
+     Array.isArray(p.fotos)&&p.fotos.length&&
+     /^\/imagens\/catalogo\/[a-z0-9_-]+\.(?:png|jpe?g|webp)$/.test(p.fotos[0]));
+  }catch{vitrineLista=[];}
+  vitrineIndice=0;pintarVitrineAKITEMM();
+  if(intervaloVitrine!==null){clearInterval(intervaloVitrine);intervaloVitrine=null;}
+  if(vitrineLista.length>1)intervaloVitrine=setInterval(()=>{
+   if(document.visibilityState==='visible'&&e('loop03Shell')){
+    vitrineIndice=(vitrineIndice+1)%vitrineLista.length;pintarVitrineAKITEMM();
+   }
+  },6000);
+ }
  function encerrar(){
   fecharPerfilSobreposto();
   fecharDetalheIndicador();
   fecharNotificacoes();
+  if(intervaloVitrine!==null){clearInterval(intervaloVitrine);intervaloVitrine=null;}
+  vitrineLista=[];vitrineIndice=0;pintarVitrineAKITEMM();
   document.body.classList.remove('loop03-logado');
   selecionada=null;visaoAtual=null;destinoInicialTratado=false;fotoPerfilAcao='MANTER';
   fecharSeletorPosicao();identidadeDaPosicao(null);
