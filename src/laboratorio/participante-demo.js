@@ -617,6 +617,15 @@
  });
  e('atualizarParticipante').addEventListener('click',atualizar);
  window.LoopParticipanteAtualizar=atualizar;
+ // Leitura periodica do snapshot VERDADEIRO do motor, apenas com o Tabuleiro
+ // aberto e a sessao visivel. Nunca cria venda, posicao, fila nem giro.
+ const tabuleiroVisivel=()=>document.visibilityState==='visible'&&
+  !!e('conteudoParticipante')&&!e('conteudoParticipante').hidden&&
+  !!e('loop03-tabuleiro')&&!e('loop03-tabuleiro').hidden;
+ window.setInterval(()=>{if(tabuleiroVisivel())atualizar();},30000);
+ document.addEventListener('visibilitychange',()=>{
+  if(tabuleiroVisivel())atualizar();
+ });
  window.LoopParticipanteEncerrarAposSenha=()=>{
   encerrarTela();
   msg.textContent='Senha alterada. Entre novamente com sua nova senha.';
