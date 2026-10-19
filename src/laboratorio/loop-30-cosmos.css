@@ -1401,3 +1401,24 @@ body.loop03-logado .portal-participante{position:relative;z-index:1}
 @media(max-width:650px){
  #loop03Shell #loop03-perfil .loop03-perfil-validacoes{grid-template-columns:minmax(0,1fr)}
 }
+
+/* O novo perfil abre somente o painel de verificacao necessario. */
+#loop03Shell #loop03-perfil .loop03-verificacao{
+ display:block;align-self:start;min-width:0;
+}
+#loop03Shell #loop03-perfil .loop03-verificacao summary{
+ cursor:pointer;color:#f7d6a0;font-weight:800;font-size:.84rem;
+ padding:7px 2px;line-height:1.4;
+}
+#loop03Shell #loop03-perfil .loop03-verificacao summary:hover{color:#ffe7b2}
+#loop03Shell #loop03-perfil .loop03-verificacao-campos{
+ display:grid;gap:10px;margin-top:10px;
+}
+#loop03Shell #loop03-perfil .loop03-informacoes-tecnicas{
+ margin:18px 0;border:1px solid #786d62;border-radius:11px;
+ padding:11px;background:#171b27;
+}
+#loop03Shell #loop03-perfil .loop03-informacoes-tecnicas>summary{
+ cursor:pointer;color:#c6bdad;font-size:.76rem;
+}
+#loop03Shell #loop03-perfil .loop03-informacoes-tecnicas .cartao-participante{margin:14px 0 0}

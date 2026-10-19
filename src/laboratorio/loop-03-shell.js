@@ -124,20 +124,24 @@
          <label>Telefone de contato<input type="tel" id="loop03PerfilTelefone" maxlength="32" autocomplete="tel" placeholder="(21) 99999-9999"></label>
         </div>
         <div class="loop03-perfil-validacoes">
-         <div class="loop03-verificacao">
-          <strong>Verificar novo e-mail</strong>
-          <p>Ao trocar seu e-mail, confirme um código de 6 dígitos recebido no novo endereço.</p>
-          <button type="button" data-verificar-envio="EMAIL">Enviar código por e-mail</button>
-          <label>Código de e-mail<input id="loop03CodigoEMAIL" type="text" inputmode="numeric" maxlength="6" autocomplete="one-time-code" pattern="[0-9]{6}"></label>
-          <button type="button" data-verificar-confirmar="EMAIL">Confirmar e-mail</button>
-         </div>
-         <div class="loop03-verificacao">
-          <strong>Verificar novo telefone</strong>
-          <p>Ao trocar o telefone, confirme um código recebido por SMS no novo número.</p>
-          <button type="button" data-verificar-envio="TELEFONE">Enviar código por SMS</button>
-          <label>Código SMS<input id="loop03CodigoTELEFONE" type="text" inputmode="numeric" maxlength="6" autocomplete="one-time-code" pattern="[0-9]{6}"></label>
-          <button type="button" data-verificar-confirmar="TELEFONE">Confirmar telefone</button>
-         </div>
+         <details class="loop03-verificacao" id="loop03VerificacaoEMAIL">
+          <summary>Verificar alteração de e-mail</summary>
+          <div class="loop03-verificacao-campos">
+           <p>Ao trocar seu e-mail, confirme um código de 6 dígitos recebido no novo endereço.</p>
+           <button type="button" data-verificar-envio="EMAIL">Enviar código por e-mail</button>
+           <label>Código de e-mail<input id="loop03CodigoEMAIL" type="text" inputmode="numeric" maxlength="6" autocomplete="one-time-code" pattern="[0-9]{6}"></label>
+           <button type="button" data-verificar-confirmar="EMAIL">Confirmar e-mail</button>
+          </div>
+         </details>
+         <details class="loop03-verificacao" id="loop03VerificacaoTELEFONE">
+          <summary>Verificar alteração de telefone</summary>
+          <div class="loop03-verificacao-campos">
+           <p>Ao trocar o telefone, confirme um código recebido por SMS no novo número.</p>
+           <button type="button" data-verificar-envio="TELEFONE">Enviar código por SMS</button>
+           <label>Código SMS<input id="loop03CodigoTELEFONE" type="text" inputmode="numeric" maxlength="6" autocomplete="one-time-code" pattern="[0-9]{6}"></label>
+           <button type="button" data-verificar-confirmar="TELEFONE">Confirmar telefone</button>
+          </div>
+         </details>
         </div>
         <p id="loop03StatusVerificacao" role="status" aria-live="polite"></p>
         <label class="loop03-rotulo-foto" for="loop03PerfilFoto">Minha foto</label>
@@ -293,7 +297,14 @@
    e('loop03-posicoes').append(detalhes);
   }
   const limites=e('atualizarParticipante')?.closest('section.cartao-participante');
-  if(limites)e('loop03-perfil').append(limites);
+  if(limites){
+   const informacoes=document.createElement('details');
+   informacoes.className='loop03-informacoes-tecnicas';
+   const rotulo=document.createElement('summary');
+   rotulo.textContent='Informações e limites do ambiente de laboratório';
+   informacoes.append(rotulo,limites);
+   e('loop03-perfil').append(informacoes);
+  }
   // Cartao anterior de atalho à loja: preservar a mesma loja.
   const atalhoLoja=[...root.querySelectorAll('section.cartao-participante')]
    .find(n=>n.querySelector('h2')?.textContent==='Minha loja de testes');
@@ -325,6 +336,15 @@
    b.addEventListener('click',()=>verificacaoContato(b.dataset.verificarEnvio,'solicitar'));
   for(const b of shell.querySelectorAll('[data-verificar-confirmar]'))
    b.addEventListener('click',()=>verificacaoContato(b.dataset.verificarConfirmar,'confirmar'));
+  for(const tipo of ['EMAIL','TELEFONE']){
+   const campo=e(tipo==='EMAIL'?'loop03PerfilEmail':'loop03PerfilTelefone');
+   campo.addEventListener('input',()=>{
+    const anterior=tipo==='EMAIL'?visaoAtual?.perfil?.email:visaoAtual?.perfil?.telefone;
+    const atual=campo.value.trim();
+    if(atual!==String(anterior||''))
+     e('loop03Verificacao'+tipo).open=true;
+   });
+  }
   e('loop03FormPerfil').addEventListener('submit',salvarPerfil);
   abrir('home');
   carregarPublicacoes();
@@ -427,6 +447,8 @@
    e('loop03PerfilNome').value=nome;
    e('loop03PerfilEmail').value=p.email||'';
    e('loop03PerfilTelefone').value=p.telefone||'';
+   for(const tipo of ['EMAIL','TELEFONE'])
+    e('loop03Verificacao'+tipo).open=false;
   }
   const imagem=p.temFoto?'/api/laboratorio/participante/foto-perfil?rev='+p.revisao:null;
   for(const img of document.querySelectorAll('#loop03Shell .loop03-foto-privada')){
