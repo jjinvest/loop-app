@@ -430,6 +430,10 @@
     data.erro||'Não foi possível salvar seu perfil.');
    fotoPerfilAcao='MANTER';e('loop03PerfilFoto').value='';
    await window.LoopParticipanteAtualizar?.();
+   // Depois de salvar, recolher validacoes antigas: codigo de contato ja consumido
+   // e o teste anterior nao deve ficar aberto poluindo a area de configuracoes.
+   for(const tipo of ['EMAIL','TELEFONE'])e('loop03Verificacao'+tipo).open=false;
+   e('loop03StatusVerificacao').textContent='';
    status.textContent='Perfil atualizado e salvo com sucesso.';
   }catch(err){status.textContent='Não foi possível salvar: '+err.message;}
   finally{botao.disabled=false;}
