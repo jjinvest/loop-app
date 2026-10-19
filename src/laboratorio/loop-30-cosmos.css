@@ -1655,3 +1655,85 @@ body.loop03-logado .portal-participante{position:relative;z-index:1}
   padding:11px!important;
  }
 }
+
+/* Cabeçalho (referência: desenho aprovado de 19/10).
+   Logo metálico REAL em CSS, visor de número A / #ID / n/limite dinâmico. */
+#loop03Shell .loop03-banner-topo .loop03-logomarca{
+ font-family:Arial,Helvetica,system-ui,sans-serif!important;
+ font-weight:1000!important;letter-spacing:-.045em!important;
+ font-size:clamp(2.4rem,4.5vw,4.6rem)!important;
+ background:linear-gradient(180deg,#fffbdc 2%,#fce48b 24%,#b96e13 44%,
+  #74420c 49%,#ffe8a2 60%,#c58a21 84%,#fff0aa 100%)!important;
+ -webkit-background-clip:text!important;background-clip:text!important;
+ -webkit-text-fill-color:transparent!important;
+ filter:drop-shadow(0 2px 1px #4b2308) drop-shadow(0 0 9px #f2c16b90)!important;
+ white-space:nowrap!important;
+}
+#loop03Shell .loop03-banner-topo .loop03-logomarca span{
+ background:linear-gradient(180deg,#fff 5%,#dce2eb 28%,#666f7e 51%,#fff 64%,#8e99ad 90%)!important;
+ -webkit-background-clip:text!important;background-clip:text!important;
+ -webkit-text-fill-color:transparent!important;
+ filter:drop-shadow(0 2px 1px #192030)!important;
+}
+#loop03Shell .loop03-indicadores .loop03-visor-passivo{cursor:default!important}
+#loop03Shell .loop03-visor-numero{
+ display:grid!important;
+ grid-template-rows:minmax(17px,1fr) auto minmax(17px,1fr)!important;
+ grid-template-columns:minmax(0,1fr)!important;
+ justify-items:stretch!important;
+ align-content:stretch!important;
+ position:relative!important;
+ gap:0!important;
+}
+#loop03Shell .loop03-visor-numero #loop03Numero{
+ display:block!important;grid-row:2!important;
+ text-align:center!important;
+ font-size:clamp(1.4rem,2.8vw,2.45rem)!important;
+ line-height:1.06!important;
+ min-width:0;max-width:100%!important;
+ white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+ color:#ffedb7!important;
+}
+#loop03Shell .loop03-visor-numero .loop03-visor-letra{
+ position:relative;grid-row:1!important;justify-self:start!important;
+ align-self:start!important;
+ display:inline-flex!important;align-items:center;justify-content:center;
+ min-width:19px!important;min-height:19px!important;
+ padding:1px 4px!important;border-radius:6px!important;
+ font:900 .84rem/1 system-ui,sans-serif!important;
+ color:#1f1709!important;border:1px solid #ffec9c!important;
+ background:#eab953!important;
+}
+#loop03Shell .loop03-visor-numero .loop03-visor-letra[hidden]{visibility:hidden!important}
+#loop03Shell .loop03-visor-numero .loop03-visor-letra-b{
+ background:#e3e8f1!important;border-color:#fff!important;color:#181a22!important;
+}
+#loop03Shell .loop03-visor-numero .loop03-visor-fracao{
+ display:block!important;grid-row:3!important;justify-self:end!important;
+ align-self:end!important;
+ text-align:right!important;
+ color:#f7e7c0!important;font-weight:900!important;
+ font-size:clamp(.8rem,1.4vw,1.08rem)!important;
+ line-height:1.1!important;
+ white-space:nowrap!important;
+}
+#loop03Shell .loop03-visualmente-oculto{
+ position:absolute!important;width:1px!important;height:1px!important;
+ padding:0!important;margin:-1px!important;overflow:hidden!important;
+ clip:rect(0,0,0,0)!important;white-space:nowrap!important;border:0!important;
+}
+@media(max-width:520px){
+ #loop03Shell .loop03-banner-topo .loop03-logomarca{
+  font-size:clamp(1.9rem,7.5vw,3.0rem)!important;
+ }
+ #loop03Shell .loop03-visor-numero #loop03Numero{
+  font-size:clamp(.96rem,3.6vw,1.4rem)!important;
+ }
+ #loop03Shell .loop03-visor-numero .loop03-visor-letra{
+  font-size:.65rem!important;min-height:15px!important;min-width:15px!important;
+  border-radius:4px!important;padding:1px 2px!important;
+ }
+ #loop03Shell .loop03-visor-numero .loop03-visor-fracao{
+  font-size:clamp(.66rem,2.3vw,.83rem)!important;
+ }
+}

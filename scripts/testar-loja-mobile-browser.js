@@ -221,18 +221,18 @@ async function main(){
   assert.equal(await page.locator('#loop03ListaEscolha button').count(),0);
   await page.locator('#loop03ListaEscolha').getByText(/Você ainda não possui posições/).waitFor();
   await page.locator('#loop03FecharEscolha').click();
-  await page.locator('#loop03AbrirEscolhaNumero').click();
-  assert.equal(await page.locator('#loop03SeletorPosicao').isVisible(),true);
-  await page.locator('#loop03FecharEscolha').click();
+  // NÚMERO e GIROS sao visores, somente POSIÇÕES abre escolha na tela atual.
+  assert.equal(await page.locator('#loop03VisorNumero').evaluate(el=>el.tagName),'DIV');
+  assert.equal(await page.locator('#loop03IndicadorGiros').evaluate(el=>el.tagName),'DIV');
+  assert.equal(await page.locator('#loop03IndicePosicao').innerText(),'0/6');
+  assert.equal(await page.locator('#loop03LetraFila').isVisible(),false);
   await page.locator('#loop03IndicadorFinanceiro').click();
   assert.equal(await page.locator('#loop03DetalheIndicador').isVisible(),true);
   assert.match(await page.locator('#loop03DetalheValor').innerText(),/^R\$\s*0,00$/);
   assert.equal(await page.locator('#loop03-tabuleiro').isVisible(),true);
   await page.locator('#loop03FecharDetalhe').click();
-  await page.locator('#loop03IndicadorGiros').click();
-  assert.equal(await page.locator('#loop03DetalheIndicador').isVisible(),true);
-  assert.equal(await page.locator('#loop03DetalheValor').innerText(),'0');
-  await page.locator('#loop03FecharDetalhe').click();
+  assert.equal(await page.locator('#loop03IndicadorGiros').evaluate(el=>el.tagName),'DIV');
+  assert.equal(await page.locator('#loop03Giros24').innerText(),'0');
   assert.equal(await page.locator('#loop03-tabuleiro').isVisible(),true);
   await page.locator('.loop03-sino').click();
   assert.equal(await page.locator('#loop03PainelNotificacoes').isVisible(),true);
@@ -451,6 +451,7 @@ async function main(){
   assert.equal(await page.locator('#loop03NomeBaixo').innerText(),titular.nome);
   assert.equal(await page.locator('#loop03TotalAtivacoes').innerText(),'1/6');
   assert.equal(await page.locator('#loop03Numero').innerText(),'#1');
+  assert.equal(await page.locator('#loop03IndicePosicao').innerText(),'1/6');
   // Acompanhamento no tabuleiro: a selecao abre por cima e nao troca a aba.
   await page.locator('#loop03Menu').click();
   await page.locator('#loop03Sidebar [data-loop03-aba="tabuleiro"]').click();
@@ -458,6 +459,7 @@ async function main(){
   assert.equal(await page.locator('#loop03ListaEscolha button').count(),1);
   await page.locator('#loop03ListaEscolha button').click();
   assert.equal(await page.locator('#loop03-tabuleiro').isVisible(),true);
+  assert.equal(await page.locator('#loop03IndicePosicao').innerText(),'1/6');
   assert.equal(await page.locator('#loop03DadosPosicaoLateral').isVisible(),true);
   await page.locator('#loop03Menu').click();
   await page.locator('#loop03Sidebar [data-loop03-aba="posicoes"]').click();
@@ -595,6 +597,8 @@ async function main(){
   assert.equal(await promovida.locator('.loop03-inicial-fila.loop03-a').innerText(),'A');
   assert.equal(await promovida.locator('.loop03-quantidade-a-direita').innerText(),'2');
   assert.equal(await promovida.locator('.loop03-bonequinho-indicacoes').count(),1);
+  assert.equal(await page.locator('#loop03LetraFila').innerText(),'A');
+  assert.equal(await page.locator('#loop03IndicePosicao').innerText(),'1/6');
   assert.equal(await page.locator('#mapaFilaBParticipante .loop03-quantidade-a-direita').count(),0);
   await page.screenshot({path:path.join(pasta,'fila-a-contagem-posicao.png'),fullPage:true});
   // Quatro capturas REAIS da mesma conta ficticia e mesmo layout funcional.

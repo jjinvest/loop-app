@@ -74,8 +74,13 @@
     </div>
     <div class="loop03-indicadores" aria-label="Resumo da conta">
      <button id="loop03AbrirEscolhaPosicao" type="button" class="loop03-indicador" aria-haspopup="dialog" aria-controls="loop03SeletorPosicao" aria-expanded="false"><small>ϟ POSIÇÕES</small><strong id="loop03TotalAtivacoes">0/6</strong><span>Escolher minha posição</span></button>
-     <button id="loop03IndicadorGiros" type="button" class="loop03-indicador" aria-haspopup="dialog" aria-controls="loop03DetalheIndicador"><small>◷ GIROS</small><strong id="loop03Giros24">—</strong><span>Giros concluídos nas últimas 24 horas</span></button>
-     <button id="loop03AbrirEscolhaNumero" type="button" class="loop03-indicador" aria-haspopup="dialog" aria-controls="loop03SeletorPosicao" aria-expanded="false"><small>♙ NÚMERO</small><strong id="loop03Numero">#0000</strong><span id="loop03NumeroDetalhe">Escolha uma posição</span></button>
+     <div id="loop03IndicadorGiros" class="loop03-indicador loop03-visor-passivo" aria-label="Visor de giros concluídos nas últimas 24 horas"><small>◷ GIROS</small><strong id="loop03Giros24">—</strong><span>Giros concluídos nas últimas 24 horas</span></div>
+     <div id="loop03VisorNumero" class="loop03-indicador loop03-visor-passivo loop03-visor-numero" aria-label="Número da posição selecionada, somente leitura">
+       <span id="loop03LetraFila" class="loop03-visor-letra" hidden></span>
+       <strong id="loop03Numero">#0000</strong>
+       <span id="loop03IndicePosicao" class="loop03-visor-fracao">0/6</span>
+       <span id="loop03NumeroDetalhe" class="loop03-visualmente-oculto">Nenhuma posição selecionada</span>
+      </div>
      <button id="loop03IndicadorFinanceiro" type="button" class="loop03-indicador" aria-haspopup="dialog" aria-controls="loop03DetalheIndicador"><small>▥ FINANCEIRO</small><strong id="loop03Saldo">R$ 0,00</strong><span>Saldo disponível no laboratório</span></button>
     </div>
     <div id="loop03SeletorPosicao" class="loop03-seletor-fundo" hidden role="dialog" aria-modal="true" aria-labelledby="loop03EscolhaTitulo">
@@ -383,8 +388,7 @@
   e('loop03PerfilTopo').addEventListener('click',abrirPerfilSobreposto);
   e('loop03FecharPerfil').addEventListener('click',()=>fecharPerfilSobreposto(true));
   e('loop03FundoPerfil').addEventListener('click',()=>fecharPerfilSobreposto(true));
-  for(const [id,tipo] of [['loop03IndicadorGiros','GIROS'],['loop03IndicadorFinanceiro','FINANCEIRO']])
-   e(id).addEventListener('click',()=>abrirDetalheIndicador(tipo));
+  e('loop03IndicadorFinanceiro').addEventListener('click',()=>abrirDetalheIndicador('FINANCEIRO'));
   e('loop03FecharDetalhe').addEventListener('click',fecharDetalheIndicador);
   e('loop03DetalheIndicador').addEventListener('click',ev=>{
    if(ev.target===e('loop03DetalheIndicador'))fecharDetalheIndicador();
@@ -394,8 +398,7 @@
    if(!e('loop03FundoPerfil').hidden)fecharPerfilSobreposto(true);
    else fecharDetalheIndicador();
   });
-  for(const id of ['loop03AbrirEscolhaPosicao','loop03AbrirEscolhaNumero'])
-   e(id).addEventListener('click',abrirSeletorPosicao);
+  e('loop03AbrirEscolhaPosicao').addEventListener('click',abrirSeletorPosicao);
   e('loop03FecharEscolha').addEventListener('click',fecharSeletorPosicao);
   e('loop03SeletorPosicao').addEventListener('click',ev=>{
    if(ev.target===e('loop03SeletorPosicao'))fecharSeletorPosicao();
@@ -619,8 +622,7 @@
   const painel=e('loop03SeletorPosicao');
   if(!painel)return;
   painel.hidden=true;
-  for(const id of ['loop03AbrirEscolhaPosicao','loop03AbrirEscolhaNumero'])
-   e(id).setAttribute('aria-expanded','false');
+  e('loop03AbrirEscolhaPosicao').setAttribute('aria-expanded','false');
  }
  function abrirSeletorPosicao(ev){
   if(!visaoAtual)return;
@@ -647,8 +649,7 @@
    }
   }
   e('loop03SeletorPosicao').hidden=false;
-  for(const id of ['loop03AbrirEscolhaPosicao','loop03AbrirEscolhaNumero'])
-   e(id).setAttribute('aria-expanded','true');
+  e('loop03AbrirEscolhaPosicao').setAttribute('aria-expanded','true');
   const foco=area.querySelector('button')||e('loop03FecharEscolha');
   foco.focus();
  }
@@ -673,11 +674,34 @@
   return /^FILA_[AB]$/.test(l)?'Fila '+l.slice(-1):l==='FILA'?'Fila '+(p.fila||'—'):l==='CENTRO'?'Centro do giro':
     l.startsWith('VAGA_')?'Dentro do giro · Vaga '+l.slice(5):l||'Em acompanhamento';
  }
+ function atualizarVisorNumero(p){
+  // Numerador = qual posicao individual da conta esta selecionada;
+  // denominador vem do limite do servidor. Nunca interpretar como vaga da catraca.
+  const limite=visaoAtual?.limitePosicoesAtivas;
+  const valido=Number.isSafeInteger(limite)&&limite>0?limite:6;
+  const indice=p?(visaoAtual?.posicoes||[]).findIndex(x=>x.posicaoId===p.posicaoId):-1;
+  const numero=indice<0?0:indice+1;
+  const fracao=numero+'/'+valido;
+  e('loop03IndicePosicao').textContent=fracao;
+  const local=p?.local||'';
+  const letra=local==='FILA_A'?'A':local==='FILA_B'?'B':
+   local==='FILA'&&['A','B'].includes(p?.fila)?p.fila:null;
+  const selo=e('loop03LetraFila');
+  selo.textContent=letra||'';
+  selo.hidden=!letra;
+  selo.classList.toggle('loop03-visor-letra-a',letra==='A');
+  selo.classList.toggle('loop03-visor-letra-b',letra==='B');
+  e('loop03VisorNumero').setAttribute('aria-label',!p?
+   'Nenhuma posição escolhida, '+fracao+'; visor de somente leitura':
+   'Posição '+numero+' de '+valido+', número '+p.posicaoId+
+   (letra?', Fila '+letra:'')+'; visor de somente leitura');
+ }
  function selecionar(p,abrirTabuleiro=false){
   selecionada=p.posicaoId;
   if(abrirTabuleiro)abrir('tabuleiro');
   e('loop03Numero').textContent='#'+p.posicaoId;
   e('loop03NumeroDetalhe').textContent=statusPosicao(p);
+  atualizarVisorNumero(p);
   identidadeDaPosicao(p);
   const ordem=(visaoAtual?.posicoes||[]).findIndex(x=>x.posicaoId===p.posicaoId);
   if(ordem>=0)e('loop03TotalAtivacoes').textContent=visaoAtual.posicoes.length+'/'+visaoAtual.limitePosicoesAtivas;
@@ -901,7 +925,8 @@
   else{
    selecionada=null;
    e('loop03Numero').textContent='#0000';
-   e('loop03NumeroDetalhe').textContent='Escolha uma posição';
+   e('loop03NumeroDetalhe').textContent='Nenhuma posição selecionada';
+   atualizarVisorNumero(null);
    identidadeDaPosicao(null);
    e('loop03DetalhesPosicao').textContent='Selecione uma posição acima.';
    const caixa=e('secaoAtivacaoParticipante');if(caixa)caixa.hidden=true;
