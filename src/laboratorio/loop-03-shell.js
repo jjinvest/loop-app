@@ -66,6 +66,15 @@
          <div class="loop03-cenario-luz loop03-cenario-luz-a"></div>
          <div class="loop03-cenario-luz loop03-cenario-luz-b"></div>
          <div class="loop03-cenario-monitor"><div class="loop03-cenario-tela"><span>LOOP <em>3.0</em></span><small>ACOMPANHE SUAS POSIÇÕES</small></div><div class="loop03-cenario-base"></div></div>
+         <div class="loop03-cenario-plantas" aria-hidden="true">
+          <span class="loop03-planta-folha f1"></span><span class="loop03-planta-folha f2"></span>
+          <span class="loop03-planta-folha f3"></span><span class="loop03-planta-folha f4"></span>
+          <span class="loop03-planta-folha f5"></span><span class="loop03-planta-vaso"></span>
+         </div>
+         <div class="loop03-cenario-livros" aria-hidden="true"><span></span><span></span><span></span></div>
+         <div class="loop03-cenario-caneca" aria-hidden="true"><span>LOOP</span></div>
+         <div class="loop03-cenario-caderno" aria-hidden="true"><span>∞</span></div>
+         <div class="loop03-cenario-canetas" aria-hidden="true"><span></span><span></span><span></span></div>
          <div class="loop03-cenario-mesa"></div>
         </div>
         <button type="button" data-loop03-aba="posicoes" class="loop03-hero-botao">ACOMPANHAR MINHAS POSIÇÕES →</button>
