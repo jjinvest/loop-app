@@ -95,6 +95,21 @@ async function main(){
   await page.locator('#senhaParticipante').fill(senha);
   await page.locator('#botaoEntrarParticipante').click();
   await page.locator('#conteudoParticipante').waitFor({state:'visible'});
+  // Captura REAL de filas A e B vazias antes de qualquer compra, sem pessoas falsas.
+  const ctxFilasVazias=await browser.newContext({viewport:{width:1254,height:1254},deviceScaleFactor:1});
+  const telaFilasVazias=await ctxFilasVazias.newPage();
+  await telaFilasVazias.goto(base+'/laboratorio/participante',{waitUntil:'networkidle'});
+  await telaFilasVazias.locator('#nomeParticipante').fill(titular.nome);
+  await telaFilasVazias.locator('#senhaParticipante').fill(senha);
+  await telaFilasVazias.locator('#botaoEntrarParticipante').click();
+  await telaFilasVazias.locator('#conteudoParticipante').waitFor({state:'visible'});
+  await telaFilasVazias.locator('#loop03Sidebar [data-loop03-aba="tabuleiro"]').click();
+  await telaFilasVazias.locator('#loop03-tabuleiro').waitFor({state:'visible'});
+  assert.equal(await telaFilasVazias.locator('#mapaFilaAParticipante li').count(),0);
+  assert.equal(await telaFilasVazias.locator('#mapaFilaBParticipante li').count(),0);
+  await telaFilasVazias.screenshot({path:path.join(pasta,'TABULEIRO_FILAS_VAZIAS_SEM_PESSOAS.png'),fullPage:false});
+  await ctxFilasVazias.close();
+
   // As quatro telas de verdade compartilham a mesma atmosfera animada.
   // A preferencia de acessibilidade cancela o movimento, sem ocultar o painel.
   const cosmos=await page.evaluate(()=>['home','tabuleiro','posicoes','rede'].map(aba=>{
