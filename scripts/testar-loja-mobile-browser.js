@@ -765,6 +765,54 @@ async function main(){
   });
   await desktopCtx.close();
 
+  // Perfil real (campos e foto persistidos) no mesmo aplicativo de navegador.
+  await page.goto(base+'/laboratorio/participante',{waitUntil:'networkidle'});
+  if(await page.locator('#formEntrarParticipante').isVisible()){
+   await page.locator('#nomeParticipante').fill(titular.nome);
+   await page.locator('#senhaParticipante').fill(senha);
+   await page.locator('#botaoEntrarParticipante').click();
+  }
+  await page.locator('#conteudoParticipante').waitFor({state:'visible'});
+  const posicoesAntesDoPerfil=await page.locator('#loop03TotalAtivacoes').innerText();
+  await page.locator('#loop03PerfilTopo').click();
+  assert.equal(await page.locator('#loop03-perfil').isVisible(),true);
+  assert.match(await page.locator('#loop03SituacaoCPF').innerText(),/primeira posição/i);
+  assert.equal(await page.locator('#loop03PerfilEmail').inputValue(),'mobile@exemplo.invalid');
+  // Nao se pode salvar e-mail novo sem confirmar codigo recebido.
+  await page.locator('#loop03PerfilEmail').fill('emailnaoverificado@exemplo.invalid');
+  await page.locator('#loop03SalvarPerfil').click();
+  await page.getByText(/CONTATO_EXIGE_CODIGO/).waitFor();
+  await page.locator('[data-verificar-envio="EMAIL"]').click();
+  await page.getByText(/envio de código ainda não está conectado/i).waitFor();
+  await page.locator('#loop03PerfilEmail').fill('mobile@exemplo.invalid');
+  const imagemBase64=await page.evaluate(()=>{
+   const c=document.createElement('canvas');c.width=180;c.height=180;
+   const x=c.getContext('2d');x.fillStyle='#8e6596';x.fillRect(0,0,180,180);
+   x.fillStyle='#fce8c0';x.beginPath();x.arc(90,65,28,0,2*Math.PI);x.fill();
+   x.beginPath();x.ellipse(90,146,53,48,0,0,2*Math.PI);x.fill();
+   return c.toDataURL('image/png').split(',')[1];
+  });
+  await page.locator('#loop03PerfilFoto').setInputFiles({
+   name:'avatar-de-teste.png',mimeType:'image/png',buffer:Buffer.from(imagemBase64,'base64')
+  });
+  await page.locator('#loop03PerfilNome').fill('Meu Perfil Personalizado');
+  await page.locator('#loop03SalvarPerfil').click();
+  await page.getByText(/Perfil atualizado e salvo com sucesso/).waitFor();
+  assert.equal(await page.locator('#loop03NomeBaixo').innerText(),'Meu Perfil Personalizado');
+  assert.equal(await page.locator('#loop03-perfil .loop03-foto-grande img').isVisible(),true);
+  assert.equal(await page.locator('#loop03TotalAtivacoes').innerText(),posicoesAntesDoPerfil);
+  for(const width of [320,360,390,412]){
+   await conferirLargura(page,width,'perfil-cliente-mobile',{captura:width===390});
+  }
+  await page.screenshot({path:path.join(pasta,'PERFIL_CLIENTE_CELULAR_REAL.png'),fullPage:true});
+  await page.reload({waitUntil:'networkidle'});
+  await page.locator('#conteudoParticipante').waitFor({state:'visible'});
+  await page.locator('#loop03PerfilTopo').click();
+  assert.equal(await page.locator('#loop03PerfilNome').inputValue(),'Meu Perfil Personalizado');
+  assert.equal(await page.locator('#loop03-perfil .loop03-foto-grande img').isVisible(),true);
+  await page.locator('#loop03Sidebar [data-loop03-aba="tabuleiro"]').click();
+  assert.equal(await page.locator('#loop03TotalAtivacoes').innerText(),posicoesAntesDoPerfil);
+
   assert.deepEqual(erros,[], 'Erros de execucao no navegador');
   const relatorio={status:'APROVADO',
    tamanhosPx:[320,360,390,412,768,1024,1366],
