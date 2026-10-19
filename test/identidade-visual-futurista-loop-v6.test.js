@@ -33,7 +33,10 @@ test('tabuleiro público V6 exibe centro, seis vagas e três roxos/três pretos'
 });
 test('escritório renderiza seis marcadores sem fingir recebimento',()=>{
  const html=file('src/laboratorio/participante-demo.html');
- assert.equal((html.match(/<span title="[1-6]º: (?:participante|empresa)"><\/span>/g)||[]).length,6);
+ assert.equal((html.match(/<span title="[1-6]º: (?:participante|sustentabilidade)"><\/span>/g)||[]).length,6);
+ assert.match(html,/aria-label="Seis eventos alternados: participante, sustentabilidade/);
+ assert.match(html,/amostra-roxo" aria-hidden="true"><\/i> Participante<\/span>/);
+ assert.match(html,/amostra-preto" aria-hidden="true"><\/i> Sustentabilidade<\/span>/);
  assert.match(html,/marcos-v6/);
  assert.match(html,/Os marcadores não são pagamentos realizados/);
  assert.match(html,/mapaTabuleiroParticipante/);
