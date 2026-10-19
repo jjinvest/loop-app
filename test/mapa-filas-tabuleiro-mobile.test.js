@@ -74,6 +74,14 @@ test('layout da fila e tabuleiro no celular preserva centro, seis vagas e filas 
  }
  assert.doesNotMatch(html,/id="filtro(?:Resumo|Minhas|Todas)MapaParticipante"/);
  assert.match(js,/return posicoes\.map\(\(_,i\)=>i\)/);
+ // Regressao: na largura de celular, a roda vem na primeira linha e as duas filas na segunda.
+ const cosmos=arq('loop-30-cosmos.css');
+ const regraCelular=cosmos.split('/* TABULEIRO RESPONSIVO REAL: roda acima, A/B lado a lado ABAIXO no celular. */')[1]
+  ?.split('/* FILA REAL ABERTA: manter painel amplo mesmo quando a lista está vazia. */')[0];
+ assert.ok(regraCelular,'Bloco responsivo do Tabuleiro deve existir');
+ assert.match(regraCelular,/\.bloco-fila-participante:first-child\{\s*grid-column:1!important;grid-row:2!important;/);
+ assert.match(regraCelular,/\.bloco-fila-participante:last-child\{\s*grid-column:2!important;grid-row:2!important;/);
+ assert.match(regraCelular,/\.loop03-roda\{\s*grid-column:1\/-1!important;grid-row:1!important;/);
  const shell=arq('loop-03-shell.js');
  assert.match(shell,/loop03-abrir-fila/);
  assert.match(shell,/aria-expanded/);

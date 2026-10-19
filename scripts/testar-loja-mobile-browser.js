@@ -190,8 +190,8 @@ async function main(){
   assert.equal(await page.locator('.controle-mapa-participante').count(),0);
   assert.equal(await page.locator('#loop03EscolherNoTabuleiro').count(),0);
   assert.equal(await page.locator('#loop03EscolhaTexto').count(),0);
-  // Medição real do DOM no celular: A e B aparecem NA MESMA LINHA,
-  // não empilhadas; o Tabuleiro continua abaixo com 7 posições verdadeiras.
+  // Medição real do DOM no celular: roda PRIMEIRO, filas A/B ABAIXO,
+  // lado a lado. Centro e seis vagas continuam ligados aos dados reais.
   const medirFilas=async()=>page.evaluate(()=>{
    const box=selector=>{
     const r=document.querySelector(selector).getBoundingClientRect();
@@ -209,8 +209,8 @@ async function main(){
     'Fila A/B lado a lado '+largura+'px: '+JSON.stringify(dim));
    assert.ok(dim.a.x+dim.a.width<=dim.b.x+3,
     'Fila A deve ficar à esquerda da B '+largura+'px');
-   assert.ok(dim.roda.y>=Math.max(dim.a.bottom,dim.b.bottom)-3,
-    'Tabuleiro deve seguir abaixo das duas filas '+largura+'px');
+   assert.ok(dim.a.y>=dim.roda.bottom-3 && dim.b.y>=dim.roda.bottom-3,
+    'Fila A e Fila B devem ficar ABAIXO do Tabuleiro '+largura+'px: '+JSON.stringify(dim));
   };
   await confirmarLadoALado(390);
   await page.screenshot({

@@ -1189,7 +1189,7 @@ body.loop03-logado .portal-participante{position:relative;z-index:1}
  }
 }
 
-/* TABULEIRO RESPONSIVO DE VERDADE: A/B lado a lado no celular, anel abaixo. */
+/* TABULEIRO RESPONSIVO REAL: roda acima, A/B lado a lado ABAIXO no celular. */
 /* Aplica-se SOMENTE à aba Tabuleiro em retrato/telas estreitas.
  Os quadros mantêm os mesmos elementos e botões DOM ligados ao motor. */
 @media(max-width:590px){
@@ -1202,10 +1202,10 @@ body.loop03-logado .portal-participante{position:relative;z-index:1}
   width:100%!important;min-width:0!important;
  }
  #loop03-tabuleiro .loop03-mapa-grade>.bloco-fila-participante:first-child{
-  grid-column:1!important;grid-row:1!important;
+  grid-column:1!important;grid-row:2!important;
  }
  #loop03-tabuleiro .loop03-mapa-grade>.bloco-fila-participante:last-child{
-  grid-column:2!important;grid-row:1!important;
+  grid-column:2!important;grid-row:2!important;
  }
  #loop03-tabuleiro .loop03-mapa-grade>.bloco-fila-participante{
   min-width:0!important;
@@ -1216,7 +1216,7 @@ body.loop03-logado .portal-participante{position:relative;z-index:1}
   height:100px!important;
  }
  #loop03-tabuleiro .loop03-mapa-grade>.loop03-roda{
-  grid-column:1/-1!important;grid-row:2!important;
+  grid-column:1/-1!important;grid-row:1!important;
   min-width:0!important;
   margin:0!important;
   min-height:0!important;
