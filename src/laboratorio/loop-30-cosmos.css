@@ -1188,3 +1188,62 @@ body.loop03-logado .portal-participante{position:relative;z-index:1}
   min-height:52px!important;
  }
 }
+
+/* TABULEIRO RESPONSIVO DE VERDADE: A/B lado a lado no celular, anel abaixo. */
+/* Aplica-se SOMENTE à aba Tabuleiro em retrato/telas estreitas.
+ Os quadros mantêm os mesmos elementos e botões DOM ligados ao motor. */
+@media(max-width:590px){
+ #loop03-tabuleiro .loop03-mapa-grade{
+  display:grid!important;
+  grid-template-columns:repeat(2,minmax(0,1fr))!important;
+  grid-template-rows:auto auto!important;
+  align-items:stretch!important;
+  column-gap:7px!important;row-gap:13px!important;
+  width:100%!important;min-width:0!important;
+ }
+ #loop03-tabuleiro .loop03-mapa-grade>.bloco-fila-participante:first-child{
+  grid-column:1!important;grid-row:1!important;
+ }
+ #loop03-tabuleiro .loop03-mapa-grade>.bloco-fila-participante:last-child{
+  grid-column:2!important;grid-row:1!important;
+ }
+ #loop03-tabuleiro .loop03-mapa-grade>.bloco-fila-participante{
+  min-width:0!important;
+  min-height:218px!important;
+  padding:6px 4px 9px!important;
+ }
+ #loop03-tabuleiro .loop03-mapa-grade>.bloco-fila-participante::after{
+  height:100px!important;
+ }
+ #loop03-tabuleiro .loop03-mapa-grade>.loop03-roda{
+  grid-column:1/-1!important;grid-row:2!important;
+  min-width:0!important;
+  margin:0!important;
+  min-height:0!important;
+ }
+ #loop03-tabuleiro .loop03-mapa-grade .loop03-cabecalho-fila .loop03-texto-cabecalho{
+  font-size:clamp(.83rem,3.55vw,1.13rem)!important;
+  letter-spacing:-.04em!important;
+ }
+ #loop03-tabuleiro .loop03-mapa-grade .loop03-abrir-fila{
+  min-height:48px!important;padding:5px 1px 7px!important;
+  gap:4px!important;
+ }
+ #loop03-tabuleiro .loop03-mapa-grade .loop03-cabecalho-fila .loop03-icone-cabecalho{
+  width:clamp(21px,6vw,27px)!important;
+  height:clamp(24px,7vw,30px)!important;
+ }
+ /* A fila ampliada sobrepõe ambas, sem deslocar o tabuleiro ou quebrar
+ a disposição lado a lado quando voltar ao estado compacto. */
+ #loop03-tabuleiro .loop03-mapa-grade>.bloco-fila-participante.loop03-fila-expandida{
+  width:min(570px,94vw)!important;min-height:0!important;
+  max-height:88vh!important;
+  padding:16px 13px!important;
+ }
+ #loop03-tabuleiro .loop03-mapa-grade>.bloco-fila-participante.loop03-fila-expandida:after{
+  display:none!important;
+ }
+ #loop03-tabuleiro .loop03-mapa-grade .loop03-fila-expandida .loop03-cabecalho-fila .loop03-texto-cabecalho{
+  font-size:1.7rem!important;
+ }
+}
