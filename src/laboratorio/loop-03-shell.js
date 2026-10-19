@@ -30,11 +30,13 @@
      <strong>PRODUTOS E CURSOS</strong>
      <span class="loop03-vitrine-link">CONHECER A LOJA →</span>
     </a>
-    <div class="loop03-identidade" aria-label="Acesso ao perfil e saída">
-     <button type="button" class="loop03-abrir-perfil" data-loop03-aba="perfil" aria-label="Abrir configurações do meu perfil">
-      <span class="loop03-avatar" aria-hidden="true"><img class="loop03-foto-privada" alt="" hidden><span class="loop03-foto-padrao">👤</span></span>
-      <span class="loop03-dados-perfil"><strong id="loop03NomeBaixo">Meu perfil</strong><small id="loop03SituacaoBaixo">Configurações ⚙</small></span>
-     </button>
+    <div class="loop03-identidade loop03-identidade-selecionada" aria-label="Identidade da posição escolhida" aria-live="polite">
+     <span class="loop03-avatar" aria-hidden="true"><img class="loop03-foto-privada" alt="" hidden><span class="loop03-foto-padrao">👤</span></span>
+     <span class="loop03-dados-perfil" id="loop03DadosPosicaoLateral" hidden>
+      <strong id="loop03NomeBaixo"></strong>
+      <small id="loop03SituacaoBaixo"></small>
+     </span>
+     <span id="loop03CoroaTabuleiro" class="loop03-coroa-tabuleiro" title="Posição dentro da catraca" aria-label="Posição dentro da catraca" hidden>♛</span>
     </div>
     <button id="loop03Sair" type="button" class="loop03-sair">Sair da conta de teste</button>
    </aside>
@@ -65,17 +67,25 @@
        </div>
        <div id="loop03ItensNotificacoes" aria-live="polite">Nenhuma notificação por enquanto.</div>
       </div>
-      <button data-loop03-aba="perfil" type="button" id="loop03PerfilTopo" aria-label="Abrir configurações do meu perfil">
+      <button data-loop03-aba="perfil" type="button" id="loop03PerfilTopo" aria-label="Abrir configurações do meu perfil" title="Meu Perfil">
        <span class="loop03-foto-topo" aria-hidden="true"><img class="loop03-foto-privada" alt="" hidden><span class="loop03-foto-padrao">👤</span></span>
-       <span>Configurações</span><span aria-hidden="true">⚙</span>
       </button>
      </div>
     </div>
     <div class="loop03-indicadores" aria-label="Resumo da conta">
-     <button data-loop03-aba="posicoes" type="button" class="loop03-indicador"><small>ϟ POSIÇÕES</small><strong id="loop03TotalAtivacoes">0/6</strong><span>Minhas posições</span></button>
+     <button id="loop03AbrirEscolhaPosicao" type="button" class="loop03-indicador" aria-haspopup="dialog" aria-controls="loop03SeletorPosicao" aria-expanded="false"><small>ϟ POSIÇÕES</small><strong id="loop03TotalAtivacoes">0/6</strong><span>Escolher minha posição</span></button>
      <button data-loop03-aba="tabuleiro" type="button" class="loop03-indicador" title="Abrir Tabuleiro e acompanhar giros"><small>◷ GIROS</small><strong id="loop03Giros24">—</strong><span>Giros concluídos nas últimas 24 horas</span></button>
-     <button data-loop03-aba="posicoes" type="button" class="loop03-indicador"><small>♙ NÚMERO</small><strong id="loop03Numero">#0000</strong><span id="loop03NumeroDetalhe">Escolha uma posição</span></button>
+     <button id="loop03AbrirEscolhaNumero" type="button" class="loop03-indicador" aria-haspopup="dialog" aria-controls="loop03SeletorPosicao" aria-expanded="false"><small>♙ NÚMERO</small><strong id="loop03Numero">#0000</strong><span id="loop03NumeroDetalhe">Escolha uma posição</span></button>
      <button data-loop03-aba="financeiro" type="button" class="loop03-indicador"><small>▥ FINANCEIRO</small><strong id="loop03Saldo">R$ 0,00</strong><span>Saldo disponível no laboratório</span></button>
+    </div>
+    <div id="loop03SeletorPosicao" class="loop03-seletor-fundo" hidden role="dialog" aria-modal="true" aria-labelledby="loop03EscolhaTitulo">
+     <div class="loop03-seletor-janela">
+      <div class="loop03-seletor-topo"><h2 id="loop03EscolhaTitulo">Escolher posição para acompanhar</h2>
+       <button id="loop03FecharEscolha" type="button" aria-label="Fechar escolha de posição">×</button>
+      </div>
+      <p>Selecione uma posição da sua conta. A catraca e as filas continuam funcionando para todos.</p>
+      <div id="loop03ListaEscolha" class="loop03-lista-escolha" aria-live="polite"></div>
+     </div>
     </div>
     <div class="loop03-paginas">
      <section id="loop03-home" class="loop03-pagina" aria-label="Escritório Virtual">
@@ -381,6 +391,15 @@
   }
   e('loop03FormPerfil').addEventListener('submit',salvarPerfil);
   e('loop03FormSenha').addEventListener('submit',trocarSenha);
+  for(const id of ['loop03AbrirEscolhaPosicao','loop03AbrirEscolhaNumero'])
+   e(id).addEventListener('click',abrirSeletorPosicao);
+  e('loop03FecharEscolha').addEventListener('click',fecharSeletorPosicao);
+  e('loop03SeletorPosicao').addEventListener('click',ev=>{
+   if(ev.target===e('loop03SeletorPosicao'))fecharSeletorPosicao();
+  });
+  document.addEventListener('keydown',ev=>{
+   if(ev.key==='Escape'&&!e('loop03SeletorPosicao').hidden)fecharSeletorPosicao();
+  });
   e('loop03NotificacoesBotao').addEventListener('click',()=>{
    const abrirPainel=e('loop03PainelNotificacoes').hidden;
    fecharNotificacoes();
@@ -405,6 +424,7 @@
  }
  function abrir(aba){
   if(!paginas.includes(aba))return;
+  fecharSeletorPosicao();
   fecharNotificacoes();
   const anterior=abaAtual;
   abaAtual=aba;
@@ -528,9 +548,8 @@
  }
  function aplicarPerfil(visao){
   const p=visao.perfil||{},nome=p.nome||visao.conta.nome;
-  e('loop03NomeBaixo').textContent=nome;
   e('loop03NomePerfil').textContent=nome;
-  e('loop03BoasVindas').textContent='Bem-vindo, '+nome.split(/\s+/)[0]+'!';
+  e('loop03BoasVindas').textContent='Bem-vindo!';
   const form=e('loop03FormPerfil');
   e('loop03SituacaoCPF').textContent=visao.adesao?.cpfConfirmadoNoTeste?
    'CPF de teste confirmado e fixado. Cadastro e alterações indisponíveis aqui.':
@@ -553,6 +572,59 @@
    }
   }
  }
+ function fecharSeletorPosicao(){
+  const painel=e('loop03SeletorPosicao');
+  if(!painel)return;
+  painel.hidden=true;
+  for(const id of ['loop03AbrirEscolhaPosicao','loop03AbrirEscolhaNumero'])
+   e(id).setAttribute('aria-expanded','false');
+ }
+ function abrirSeletorPosicao(ev){
+  if(!visaoAtual)return;
+  const area=e('loop03ListaEscolha');area.replaceChildren();
+  const posicoes=visaoAtual.posicoes||[];
+  if(posicoes.length===0){
+   const vazia=document.createElement('p');
+   vazia.className='loop03-escolha-vazia';
+   vazia.textContent='Você ainda não possui posições. Elas serão criadas somente após uma compra elegível com pagamento confirmado.';
+   area.append(vazia);
+  }else{
+   for(const [i,p] of posicoes.entries()){
+    const botao=document.createElement('button');botao.type='button';
+    botao.className='loop03-escolha-item';
+    botao.dataset.posicaoId=String(p.posicaoId);
+    botao.textContent='Posição '+(i+1)+' · #'+p.posicaoId+' · '+
+     (p.statusAdesao==='PENDENTE'?'Aguardando confirmação':statusPosicao(p));
+    botao.setAttribute('aria-pressed',String(p.posicaoId===selecionada));
+    botao.addEventListener('click',()=>{
+     selecionar(p); // Somente estado de visualizacao; nao cria e nao altera posicoes.
+     fecharSeletorPosicao();
+    });
+    area.append(botao);
+   }
+  }
+  e('loop03SeletorPosicao').hidden=false;
+  for(const id of ['loop03AbrirEscolhaPosicao','loop03AbrirEscolhaNumero'])
+   e(id).setAttribute('aria-expanded','true');
+  const foco=area.querySelector('button')||e('loop03FecharEscolha');
+  foco.focus();
+ }
+ function identidadeDaPosicao(p){
+  const dados=e('loop03DadosPosicaoLateral');
+  if(!p){
+   dados.hidden=true;
+   e('loop03NomeBaixo').textContent='';
+   e('loop03SituacaoBaixo').textContent='';
+   e('loop03CoroaTabuleiro').hidden=true;
+   return;
+  }
+  dados.hidden=false;
+  e('loop03NomeBaixo').textContent=visaoAtual?.perfil?.nome||visaoAtual?.conta?.nome||'Participante';
+  e('loop03SituacaoBaixo').textContent=p.statusAdesao==='PENDENTE'?
+   'Aguardando confirmação':statusPosicao(p);
+  // Coroa so em posicao REAL do tabuleiro (seis vagas e centro).
+  e('loop03CoroaTabuleiro').hidden=!/^(?:VAGA_[1-6]|CENTRO)$/.test(p.local||'');
+ }
  function statusPosicao(p){
   const l=p.local||'';
   return /^FILA_[AB]$/.test(l)?'Fila '+l.slice(-1):l==='FILA'?'Fila '+(p.fila||'—'):l==='CENTRO'?'Centro do giro':
@@ -563,7 +635,7 @@
   if(abrirTabuleiro)abrir('tabuleiro');
   e('loop03Numero').textContent='#'+p.posicaoId;
   e('loop03NumeroDetalhe').textContent=statusPosicao(p);
-  // O atalho de perfil permanece um acesso à configuração, não ao motor.
+  identidadeDaPosicao(p);
   const ordem=(visaoAtual?.posicoes||[]).findIndex(x=>x.posicaoId===p.posicaoId);
   if(ordem>=0)e('loop03TotalAtivacoes').textContent=visaoAtual.posicoes.length+'/'+visaoAtual.limitePosicoesAtivas;
   const precisa=p.statusAdesao==='PENDENTE';
@@ -787,7 +859,7 @@
    selecionada=null;
    e('loop03Numero').textContent='#0000';
    e('loop03NumeroDetalhe').textContent='Escolha uma posição';
-   e('loop03SituacaoBaixo').textContent='Configurações ⚙';
+   identidadeDaPosicao(null);
    e('loop03DetalhesPosicao').textContent='Selecione uma posição acima.';
    const caixa=e('secaoAtivacaoParticipante');if(caixa)caixa.hidden=true;
   }
@@ -865,6 +937,7 @@
   fecharNotificacoes();
   document.body.classList.remove('loop03-logado');
   selecionada=null;visaoAtual=null;destinoInicialTratado=false;fotoPerfilAcao='MANTER';
+  fecharSeletorPosicao();identidadeDaPosicao(null);
   for(const img of document.querySelectorAll('#loop03Shell .loop03-foto-privada')){
    img.hidden=true;img.removeAttribute('src');
    img.parentElement.querySelector('.loop03-foto-padrao').hidden=false;

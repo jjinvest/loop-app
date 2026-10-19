@@ -1522,3 +1522,72 @@ body.loop03-logado .portal-participante{position:relative;z-index:1}
  #loop03Shell #loop03NotificacoesBotao svg{width:18px;height:18px}
  #loop03Shell .loop03-painel-notificacoes{right:-2px;top:calc(100% + 8px)}
 }
+
+
+/* O mesmo Tabuleiro em desktop e celular: avatar sozinho no topo,
+   identidade da posicao selecionada na lateral, seletor sobreposto somente para consulta. */
+#loop03Shell #loop03PerfilTopo{
+ display:grid!important;place-items:center!important;flex:0 0 auto!important;
+ width:46px!important;height:46px!important;padding:4px!important;
+ border-radius:50%!important;max-width:46px!important;
+}
+#loop03Shell #loop03PerfilTopo .loop03-foto-topo{width:34px;height:34px}
+#loop03Shell #loop03DadosPosicaoLateral[hidden],
+#loop03Shell #loop03CoroaTabuleiro[hidden],
+#loop03Shell #loop03SeletorPosicao[hidden]{display:none!important}
+#loop03Shell .loop03-identidade-selecionada{
+ display:flex;min-width:0;gap:7px;flex-wrap:nowrap;justify-content:flex-start;
+}
+#loop03Shell .loop03-identidade-selecionada .loop03-dados-perfil{
+ min-width:0;flex:1;
+}
+#loop03Shell .loop03-identidade-selecionada .loop03-dados-perfil strong{
+ display:block;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;
+ font-size:.77rem!important;color:#ffe2a6;
+}
+#loop03Shell .loop03-identidade-selecionada .loop03-dados-perfil small{
+ display:block;font-size:.68rem!important;color:#d5dbc8;
+ white-space:normal;overflow-wrap:anywhere;
+}
+#loop03Shell .loop03-coroa-tabuleiro{flex:0 0 auto;align-self:center;color:#ffd46d;font-size:1.4rem;
+ text-shadow:0 0 9px #f6b352;font-weight:900}
+#loop03Shell .loop03-seletor-fundo{
+ position:fixed;inset:0;z-index:1000;
+ display:grid;place-items:center;padding:16px;
+ background:#070813c9;
+}
+#loop03Shell .loop03-seletor-janela{
+ max-width:540px;width:100%;max-height:min(80vh,620px);overflow:auto;
+ border:2px solid #dcb36c;border-radius:20px;padding:clamp(16px,3vw,25px);
+ background:radial-gradient(circle at 90% 10%,#48215b,#12172a 75%);
+ box-shadow:0 20px 60px #000e,0 0 20px #d4a15a70;color:#f4e4d1;
+}
+#loop03Shell .loop03-seletor-topo{display:flex;align-items:start;gap:12px;justify-content:space-between}
+#loop03Shell .loop03-seletor-topo h2{
+ font-size:clamp(1.1rem,3.5vw,1.5rem);line-height:1.3;color:#ffe5ac;margin:0;
+}
+#loop03Shell .loop03-seletor-janela>p{font-size:.82rem;line-height:1.5;color:#e4d4be;margin:12px 0 16px}
+#loop03Shell #loop03FecharEscolha{
+ min-width:38px;min-height:38px;border-radius:10px;border:1px solid #b8935b;
+ color:#ffdb8b;background:#242132;cursor:pointer;font-size:1.5rem;
+}
+#loop03Shell .loop03-lista-escolha{display:grid;gap:9px}
+#loop03Shell .loop03-escolha-vazia{
+ padding:18px;border:1px dashed #9e875f;border-radius:12px;
+ color:#f1e8d7;font-size:.85rem;line-height:1.55;margin:0;
+}
+#loop03Shell .loop03-escolha-item{
+ display:block;width:100%;min-height:48px;text-align:left;
+ background:#1a2533;color:#f8e5bc;border:1px solid #ac8d5a;
+ border-radius:11px;padding:11px 13px;font-weight:700;cursor:pointer;
+}
+#loop03Shell .loop03-escolha-item:hover,#loop03Shell .loop03-escolha-item:focus-visible{
+ border-color:#ffe09b;outline:2px solid #cca859;
+}
+#loop03Shell .loop03-escolha-item[aria-pressed=true]{border-color:#65dcad}
+@media(max-width:520px){
+ #loop03Shell #loop03PerfilTopo{width:35px!important;height:35px!important;max-width:35px!important;padding:2px!important}
+ #loop03Shell #loop03PerfilTopo .loop03-foto-topo{width:29px;height:29px}
+ #loop03Shell .loop03-acoes-perfil{max-width:86px!important}
+ #loop03Shell .loop03-boasvindas>div:nth-child(2) h2{font-size:clamp(.95rem,3.8vw,1.15rem)!important}
+}

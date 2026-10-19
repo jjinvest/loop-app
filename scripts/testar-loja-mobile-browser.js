@@ -105,6 +105,10 @@ async function main(){
   await telaFilasVazias.locator('#conteudoParticipante').waitFor({state:'visible'});
   await telaFilasVazias.locator('#loop03Sidebar [data-loop03-aba="tabuleiro"]').click();
   await telaFilasVazias.locator('#loop03-tabuleiro').waitFor({state:'visible'});
+  assert.equal(await telaFilasVazias.locator('#loop03NomeBaixo').innerText(),'');
+  assert.equal(await telaFilasVazias.locator('#loop03DadosPosicaoLateral').isVisible(),false);
+  assert.equal(await telaFilasVazias.locator('#loop03BoasVindas').innerText(),'Bem-vindo!');
+  assert.equal(await telaFilasVazias.locator('#loop03PerfilTopo>span').count(),1);
   assert.equal(await telaFilasVazias.locator('#loop03NotificacoesBotao svg').count(),1);
   await telaFilasVazias.locator('#loop03NotificacoesBotao').click();
   await telaFilasVazias.locator('#loop03ItensNotificacoes').getByText(/Nenhuma notificação por enquanto/).waitFor();
@@ -208,10 +212,15 @@ async function main(){
   assert.equal(await page.locator('#loop03Giros24').innerText(),'0');
   assert.match(await page.locator('#loop03Saldo').innerText(),/^R\$\s*0,00$/);
   // Cada indicador/caminho executa uma navegacao real, sem ligacao apenas decorativa.
-  await page.locator('.loop03-indicadores [data-loop03-aba="posicoes"]').first().click();
-  assert.equal(await page.locator('#loop03-posicoes').isVisible(),true);
-  await page.locator('.loop03-indicadores [data-loop03-aba="posicoes"]').nth(1).click();
-  assert.equal(await page.locator('#loop03-posicoes').isVisible(),true);
+  await page.locator('#loop03AbrirEscolhaPosicao').click();
+  assert.equal(await page.locator('#loop03SeletorPosicao').isVisible(),true);
+  assert.equal(await page.locator('#loop03-tabuleiro').isVisible(),true);
+  assert.equal(await page.locator('#loop03ListaEscolha button').count(),0);
+  await page.locator('#loop03ListaEscolha').getByText(/Você ainda não possui posições/).waitFor();
+  await page.locator('#loop03FecharEscolha').click();
+  await page.locator('#loop03AbrirEscolhaNumero').click();
+  assert.equal(await page.locator('#loop03SeletorPosicao').isVisible(),true);
+  await page.locator('#loop03FecharEscolha').click();
   await page.locator('.loop03-indicadores [data-loop03-aba="financeiro"]').click();
   assert.equal(await page.locator('#loop03-financeiro').isVisible(),true);
   await page.locator('.loop03-indicadores [data-loop03-aba="tabuleiro"]').click();
@@ -415,6 +424,8 @@ async function main(){
   assert.equal(await page.locator('#loop03OpcoesPosicoes .loop03-posicao-vazia').count(),5);
   assert.equal(await page.locator('#loop03OpcoesPosicoes .loop03-pendencia-ponto').count(),1);
   await page.locator('#loop03OpcoesPosicoes [data-loop03-posicao]').first().click();
+  assert.equal(await page.locator('#loop03DadosPosicaoLateral').isVisible(),true);
+  assert.equal(await page.locator('#loop03NomeBaixo').innerText(),titular.nome);
   assert.equal(await page.locator('#loop03TotalAtivacoes').innerText(),'1/6');
   assert.equal(await page.locator('#loop03Numero').innerText(),'#1');
   await page.locator('#cpfFicticioParticipante').fill('11144477735');
