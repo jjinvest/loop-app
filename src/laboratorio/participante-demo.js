@@ -9,7 +9,7 @@
  let mapaAtual=null;
  let cpfConfirmadoAtual=false;
  let convitesValidadosFilaA=[];
- let filtroMapa='resumo';
+ let filtroMapa='todas';
  let destinoInicialTratado=false;
  function encerrarTela(){
   window.Loop03Shell?.encerrar();
@@ -64,7 +64,7 @@
   mapaAtual=null;
   instanteUltimoEventoValido=null;
   renderizarRelogioCiclo();
-  filtroMapa='resumo';
+  filtroMapa='todas';
   destinoInicialTratado=false;
   atualizarControlesMapa();
  }
@@ -112,24 +112,19 @@
  }
  function atualizarControlesMapa(){
   const controles=[
-   ['filtroResumoMapaParticipante','resumo'],
    ['filtroMinhasMapaParticipante','minhas'],
    ['filtroTodasMapaParticipante','todas']
   ];
   for(const [id,valor] of controles){
    e(id).setAttribute('aria-pressed',String(filtroMapa===valor));
   }
-  e('ajudaFiltroMapaParticipante').textContent=filtroMapa==='resumo'?
-   'Resumo: primeiras 12 posições de cada fila, mais todas as suas posições. Os números indicam a ordem original.':
-   filtroMapa==='minhas'?
+  e('ajudaFiltroMapaParticipante').textContent=filtroMapa==='minhas'?
    'Somente suas posições, com a ordem verdadeira dentro de A e B. Outras posições continuam na fila.':
    'Exibindo todas as posições em ordem. As cores não mudam a prioridade.';
  }
  function indicesDaFila(posicoes){
-  if(filtroMapa==='todas')return posicoes.map((_,i)=>i);
-  return posicoes.flatMap((p,i)=>
-   filtroMapa==='minhas'?(p.minha?[i]:[]):
-   (i<12||p.minha?[i]:[]));
+  if(filtroMapa==='minhas')return posicoes.flatMap((p,i)=>p.minha?[i]:[]);
+  return posicoes.map((_,i)=>i);
  }
  function renderizarFila(posicoes,idFila,idContador,nomeFila){
   const lista=e(idFila);lista.replaceChildren();
@@ -595,7 +590,6 @@
   catch(erro){msg.textContent=erro.message;}
  });
  for(const [id,modo] of [
-  ['filtroResumoMapaParticipante','resumo'],
   ['filtroMinhasMapaParticipante','minhas'],
   ['filtroTodasMapaParticipante','todas']
  ]){
