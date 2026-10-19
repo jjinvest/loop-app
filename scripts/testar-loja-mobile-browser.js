@@ -211,7 +211,10 @@ async function main(){
   assert.equal(await page.locator('#loop03TotalAtivacoes').innerText(),'0/6');
   assert.equal(await page.locator('#loop03Giros24').innerText(),'0');
   assert.match(await page.locator('#loop03Saldo').innerText(),/^R\$\s*0,00$/);
-  // Cada indicador/caminho executa uma navegacao real, sem ligacao apenas decorativa.
+  // O seletor abre SOBRE o Tabuleiro, sem navegar para Minhas Posições.
+  await page.locator('#loop03Menu').click();
+  await page.locator('#loop03Sidebar [data-loop03-aba="tabuleiro"]').click();
+  // Cada indicador/caminho executa uma acao real, sem ligacao decorativa.
   await page.locator('#loop03AbrirEscolhaPosicao').click();
   assert.equal(await page.locator('#loop03SeletorPosicao').isVisible(),true);
   assert.equal(await page.locator('#loop03-tabuleiro').isVisible(),true);
