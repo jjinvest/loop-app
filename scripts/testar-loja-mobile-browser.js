@@ -813,6 +813,25 @@ async function main(){
   await page.locator('.loop03-indicadores [data-loop03-aba="tabuleiro"]').click();
   assert.equal(await page.locator('#loop03TotalAtivacoes').innerText(),posicoesAntesDoPerfil);
 
+  // Prova adicional em navegador real DESKTOP com sessao propria e avatar persistido.
+  const contextoPerfilDesktop=await browser.newContext({
+   viewport:{width:1366,height:900},deviceScaleFactor:1,isMobile:false
+  });
+  const perfilDesktop=await contextoPerfilDesktop.newPage();
+  perfilDesktop.on('pageerror',erro=>erros.push('perfil-desktop: '+erro.message));
+  await perfilDesktop.goto(base+'/laboratorio/participante',{waitUntil:'networkidle'});
+  await perfilDesktop.locator('#nomeParticipante').fill(titular.nome);
+  await perfilDesktop.locator('#senhaParticipante').fill(senha);
+  await perfilDesktop.locator('#botaoEntrarParticipante').click();
+  await perfilDesktop.locator('#conteudoParticipante').waitFor({state:'visible'});
+  await perfilDesktop.locator('#loop03PerfilTopo').click();
+  assert.equal(await perfilDesktop.locator('#loop03PerfilNome').inputValue(),'Meu Perfil Personalizado');
+  assert.equal(await perfilDesktop.locator('#loop03-perfil .loop03-foto-grande img').isVisible(),true);
+  assert.equal(await perfilDesktop.locator('#loop03VerificacaoEMAIL').evaluate(e=>e.open),false);
+  await conferirLargura(perfilDesktop,1366,'perfil-cliente-desktop',{captura:true});
+  await perfilDesktop.screenshot({path:path.join(pasta,'PERFIL_CLIENTE_COMPUTADOR_REAL.png'),fullPage:true});
+  await contextoPerfilDesktop.close();
+
   assert.deepEqual(erros,[], 'Erros de execucao no navegador');
   const relatorio={status:'APROVADO',
    tamanhosPx:[320,360,390,412,768,1024,1366],
