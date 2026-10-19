@@ -670,8 +670,10 @@
   e('loop03NomeBaixo').textContent=nomeConta.replace(/^Participante\s+/i,'').trim()||nomeConta;
   const naCatraca=/^(?:VAGA_[1-6]|CENTRO)$/.test(p.local||'');
   const situacao=e('loop03SituacaoBaixo');
-  situacao.textContent=naCatraca?'':statusPosicao(p);
-  situacao.hidden=naCatraca||!situacao.textContent;
+  // Somente o nome e, dentro da catraca, a coroa no rodape.
+  // A fila continua disponivel nos dados contextuais, nunca nesta identidade.
+  situacao.textContent='';
+  situacao.hidden=true;
   e('loop03CoroaTabuleiro').hidden=!naCatraca;
  }
  function statusPosicao(p){

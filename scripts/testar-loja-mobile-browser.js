@@ -477,6 +477,8 @@ async function main(){
   await page.locator('#loop03OpcoesPosicoes [data-loop03-posicao]').first().click();
   assert.equal(await page.locator('#loop03DadosPosicaoLateral').isVisible(),true);
   assert.equal(await page.locator('#loop03NomeBaixo').innerText(),titular.nome);
+  assert.equal(await page.locator('#loop03SituacaoBaixo').isVisible(),false,
+   'Identidade inferior: so nome, sem status de fila');
   assert.equal(await page.locator('#loop03TotalAtivacoes').innerText(),'1/6');
   assert.equal(await page.locator('#loop03Numero').innerText(),'#1');
   assert.equal(await page.locator('#loop03IndicePosicao').innerText(),'1/6');
@@ -490,7 +492,14 @@ async function main(){
   assert.equal(await page.locator('#loop03-tabuleiro').isVisible(),true);
   assert.equal(await page.locator('#loop03IndicePosicao').innerText(),'1/6');
   assert.equal(await page.locator('#loop03DadosPosicaoLateral').isVisible(),true);
+  assert.equal(await page.locator('#loop03SituacaoBaixo').isVisible(),false);
   await page.locator('#loop03Menu').click();
+  assert.equal(await page.locator('.loop03-vitrine-lateral').getAttribute('href'),'/loja');
+  assert.equal(await page.locator('#loop03VitrineFoto').isVisible(),false,
+   'Sem oferta real aprovada, vitrine nao exibe produto demonstrativo');
+  assert.equal(await page.locator('#loop03Sidebar .loop03-identidade button').count(),0,
+   'Identidade inferior sem botao power');
+  await page.screenshot({path:path.join(pasta,'TABULEIRO_LATERAL_ABERTA_REAL_CELULAR_390.png'),fullPage:false});
   await page.locator('#loop03Sidebar [data-loop03-aba="posicoes"]').click();
   await page.locator('#cpfFicticioParticipante').fill('11144477735');
   await page.locator('#aceiteTermosParticipante').check();
