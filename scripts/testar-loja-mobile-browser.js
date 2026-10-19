@@ -493,7 +493,11 @@ async function main(){
   assert.equal(await page.locator('#loop03IndicePosicao').innerText(),'1/6');
   assert.equal(await page.locator('#loop03DadosPosicaoLateral').isVisible(),true);
   assert.equal(await page.locator('#loop03SituacaoBaixo').isVisible(),false);
-  await page.locator('#loop03Menu').click();
+  await page.setViewportSize({width:390,height:812});
+  if(!await page.locator('#loop03Sidebar').evaluate(el=>el.classList.contains('loop03-aberto')))
+   await page.locator('#loop03Menu').click();
+  assert.equal(await page.locator('#loop03Sidebar').evaluate(el=>el.classList.contains('loop03-aberto')),true,
+   'Captura deve mostrar menu lateral realmente aberto no celular');
   assert.equal(await page.locator('.loop03-vitrine-lateral').getAttribute('href'),'/loja');
   assert.equal(await page.locator('#loop03VitrineFoto').isVisible(),false,
    'Sem oferta real aprovada, vitrine nao exibe produto demonstrativo');
