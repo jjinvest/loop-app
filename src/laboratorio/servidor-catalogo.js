@@ -74,6 +74,8 @@ function criarAppAdminLaboratorio({ repositorio, segredo, webhookDemo } = {}) {
       ...(webhookDemo.agoraSegundos?{agoraSegundos:webhookDemo.agoraSegundos}:{})
     }));
   }
+  // Apenas a rota autenticada de perfil recebe JPEG comprimido (ate 180 KB).
+  app.use('/api/laboratorio/participante/perfil',express.json({limit:'260kb',strict:true}));
   app.use(express.json({limit:'16kb',strict:true}));
 
   function somenteLocal(req, res, next) {

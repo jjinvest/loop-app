@@ -7,6 +7,7 @@ const {randomUUID}=require('node:crypto');
 const {localSeguro}=require('./admin-catalogo-laboratorio');
 const {SessoesParticipanteDemo,DURACAO}=require('../domain/sessoes-participante-demo');
 const {EscritorioIndividualDemo}=require('../domain/escritorio-individual-demo');
+const {PerfilParticipanteDemoSQLite}=require('../domain/perfil-participante-demo-sqlite');
 const {montarHistoricoLojaDemo}=require('../domain/historico-loja-escritorio-demo');
 const {extratoCentrosPrevistosV6}=require('../domain/extrato-creditos-previstos-v6-demo');
 const COOKIE='loop_participante_demo';
@@ -29,6 +30,7 @@ function criarRouterParticipanteDemo({contas,ponte,sessoes=null,adesoes=null,car
  if(!contas||!ponte)throw new TypeError('Cadastro e ponte do laboratorio obrigatorios');
  const gerenciador=sessoes||new SessoesParticipanteDemo({contas});
  const escritorio=new EscritorioIndividualDemo({contas,ponte});
+ const perfis=new PerfilParticipanteDemoSQLite({banco:contas.banco});
  const router=express.Router();
  router.use((req,res,next)=>{
   if(process.env.NODE_ENV==='production'||!localSeguro(req)){
@@ -315,6 +317,33 @@ function criarRouterParticipanteDemo({contas,ponte,sessoes=null,adesoes=null,car
     return next(e);
    }
   });
+ // Foto individual da sessao: binario protegido por cookie, nunca URL publica.
+ router.get('/foto-perfil',(req,res,next)=>{
+  try{
+   const id=gerenciador.identificar(lerCookie(req));
+   if(!id)return res.status(401).json({erro:'SESSAO_AUSENTE_OU_EXPIRADA'});
+   const foto=perfis.foto(id);
+   if(!foto)return res.status(404).end();
+   res.type('image/jpeg');
+   return res.send(foto.bytes);
+  }catch(e){return next(e);}
+ });
+ router.post('/perfil',(req,res,next)=>{
+  if(!req.is('application/json'))return res.status(415).json({erro:'USE_APPLICATION_JSON'});
+  const p=req.body;
+  if(!p||typeof p!=='object'||Array.isArray(p)||
+   Object.keys(p).sort().join(',')!=='email,foto,nome,revisaoEsperada,telefone')
+   return res.status(400).json({erro:'CAMPOS_PERFIL_INVALIDOS'});
+  try{
+   const id=gerenciador.identificar(lerCookie(req));
+   if(!id)return res.status(401).json({erro:'SESSAO_AUSENTE_OU_EXPIRADA'});
+   return res.json({perfil:perfis.atualizar(id,p),semMudancaNaFila:true});
+  }catch(e){
+   if(e.codigo)return res.status(e.codigo==='CONFLITO_REVISAO'?409:
+    e.codigo==='CONTA_NAO_ENCONTRADA'?404:400).json({erro:e.codigo});
+   return next(e);
+  }
+ });
   router.get('/minha-conta',(req,res,next)=>{
   try{
    const contaId=gerenciador.identificar(lerCookie(req));
@@ -325,6 +354,7 @@ function criarRouterParticipanteDemo({contas,ponte,sessoes=null,adesoes=null,car
     visao,carrinhos:carrinhos.listarDaConta(contaId).pedidos
    }):null;
    return res.json({...visao,
+    perfil:perfis.consultar(contaId),
     historicoLoja,
     saquesSimulados:saques?saques.consultar(contaId):null,
     creditosPrevistosV6:extratoCentrosPrevistosV6({ponte,contas,contaId}),
