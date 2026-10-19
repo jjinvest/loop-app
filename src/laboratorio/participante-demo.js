@@ -617,5 +617,9 @@
  });
  e('atualizarParticipante').addEventListener('click',atualizar);
  window.LoopParticipanteAtualizar=atualizar;
+ window.LoopParticipanteEncerrarAposSenha=()=>{
+  encerrarTela();
+  msg.textContent='Senha alterada. Entre novamente com sua nova senha.';
+ };
  atualizar();
 })();

@@ -436,8 +436,7 @@
     dados.erro||'Não foi possível alterar a senha.');
    form.reset();
    // O servidor revogou todas as sessoes desta conta.
-   e('botaoSairParticipante').click();
-   e('estadoParticipante').textContent='Senha alterada. Entre novamente com a nova senha.';
+   window.LoopParticipanteEncerrarAposSenha?.();
   }catch(err){
    status.textContent=err.message;
    for(const id of ['loop03SenhaAtual','loop03SenhaNova','loop03SenhaConfirma'])e(id).value='';
