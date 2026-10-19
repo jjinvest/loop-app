@@ -188,7 +188,7 @@ async function main(){
   await page.locator('.loop03-sidebar [data-loop03-aba="tabuleiro"]').click();
   await page.locator('#filtroTodasMapaParticipante').click();
   assert.equal(await page.locator('#filtroTodasMapaParticipante').getAttribute('aria-pressed'),'true');
-  await page.locator('#filtroResumoMapaParticipante').click();
+  assert.equal(await page.locator('#filtroResumoMapaParticipante').count(),0);
   await page.locator('.painel-tabuleiro-imersivo').screenshot({
    path:path.join(pasta,'tabuleiro-escritorio-mobile.png')
   });
