@@ -110,7 +110,7 @@ async function main(){
   assert.equal(await telaFilasVazias.locator('#loop03TotalAtivacoes').innerText(),'0/6');
   assert.match(await telaFilasVazias.locator('#loop03Saldo').innerText(),/^R\$\s*0,00$/);
   assert.equal(await telaFilasVazias.locator('.loop03-roda .tabuleiro-vaga-6').count(),1);
-  await telaFilasVazias.screenshot({path:path.join(pasta,'TABULEIRO_REAL_ATUAL_DESKTOP_1366_ZERADO.png'),fullPage:true});
+  await telaFilasVazias.screenshot({path:path.join(pasta,'TABULEIRO_REAL_ATUAL_DESKTOP_1254_ZERADO.png'),fullPage:true});
   await telaFilasVazias.screenshot({path:path.join(pasta,'TABULEIRO_FILAS_VAZIAS_SEM_PESSOAS.png'),fullPage:false});
   await telaFilasVazias.setViewportSize({width:390,height:812});
   await telaFilasVazias.waitForTimeout(100);
@@ -843,6 +843,45 @@ async function main(){
   await conferirLargura(perfilDesktop,1366,'perfil-cliente-desktop',{captura:true});
   await perfilDesktop.screenshot({path:path.join(pasta,'PERFIL_CLIENTE_COMPUTADOR_REAL.png'),fullPage:true});
   await contextoPerfilDesktop.close();
+
+  // Troca de senha operativa: conta separada, sem compras, sem mexer na Fila.
+  const contaSenha=contas.cadastrar({
+   nome:'Titular Teste Troca Senha',email:'troca@exemplo.invalid',
+   senha:'senha-antiga-laboratorio-2026'
+  });
+  const contextoSenha=await browser.newContext({
+   viewport:{width:390,height:812},isMobile:true,hasTouch:true
+  });
+  const paginaSenha=await contextoSenha.newPage();
+  paginaSenha.on('pageerror',erro=>erros.push('trocar-senha: '+erro.message));
+  await paginaSenha.goto(base+'/laboratorio/participante',{waitUntil:'networkidle'});
+  await paginaSenha.locator('#nomeParticipante').fill(contaSenha.nome);
+  await paginaSenha.locator('#senhaParticipante').fill('senha-antiga-laboratorio-2026');
+  await paginaSenha.locator('#botaoEntrarParticipante').click();
+  await paginaSenha.locator('#conteudoParticipante').waitFor({state:'visible'});
+  await paginaSenha.locator('#loop03PerfilTopo').click();
+  await paginaSenha.locator('#loop03TrocarSenha>summary').click();
+  assert.equal(await paginaSenha.locator('#loop03FormSenha').isVisible(),true);
+  await paginaSenha.locator('#loop03SenhaAtual').fill('senha-incorreta-2026');
+  await paginaSenha.locator('#loop03SenhaNova').fill('senha-nova-laboratorio-2026');
+  await paginaSenha.locator('#loop03SenhaConfirma').fill('senha-nova-laboratorio-2026');
+  await paginaSenha.locator('#loop03SalvarSenha').click();
+  await paginaSenha.getByText('Senha atual incorreta. Tente novamente.').waitFor();
+  assert.equal(await paginaSenha.locator('#conteudoParticipante').isVisible(),true);
+  await paginaSenha.locator('#loop03SenhaAtual').fill('senha-antiga-laboratorio-2026');
+  await paginaSenha.locator('#loop03SenhaNova').fill('senha-nova-laboratorio-2026');
+  await paginaSenha.locator('#loop03SenhaConfirma').fill('senha-nova-laboratorio-2026');
+  await paginaSenha.locator('#loop03SalvarSenha').click();
+  await paginaSenha.locator('#formEntrarParticipante').waitFor({state:'visible'});
+  await paginaSenha.getByText(/Senha alterada/).waitFor();
+  await paginaSenha.locator('#senhaParticipante').fill('senha-antiga-laboratorio-2026');
+  await paginaSenha.locator('#botaoEntrarParticipante').click();
+  await paginaSenha.getByText(/Credenciais|invalid/i).waitFor();
+  await paginaSenha.locator('#senhaParticipante').fill('senha-nova-laboratorio-2026');
+  await paginaSenha.locator('#botaoEntrarParticipante').click();
+  await paginaSenha.locator('#conteudoParticipante').waitFor({state:'visible'});
+  assert.equal(await paginaSenha.locator('#loop03TotalAtivacoes').innerText(),'0/6');
+  await contextoSenha.close();
 
   assert.deepEqual(erros,[], 'Erros de execucao no navegador');
   const relatorio={status:'APROVADO',
