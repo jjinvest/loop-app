@@ -612,3 +612,46 @@ body.loop03-logado .portal-participante{position:relative;z-index:1}
  #loop03-tabuleiro .loop03-mapa-grade>.bloco-fila-participante::after{height:45px!important}
  #loop03-tabuleiro .loop03-mapa-grade>.bloco-fila-participante h3{font-size:.86rem!important}
 }
+
+
+/* COMPACTACAO VISUAL: alinhar cabecalho e vitrines a arte original */
+@media(min-width:861px){
+ .loop03-boasvindas{min-height:48px!important;margin:9px 0 10px!important}
+ .loop03-indicadores{align-items:stretch!important}
+ .loop03-indicadores .loop03-indicador{
+  height:111px!important;min-height:111px!important;max-height:111px!important;
+  gap:5px!important;padding:8px 10px!important;justify-content:flex-start!important;
+  overflow:hidden!important;
+ }
+ .loop03-indicadores .loop03-indicador small{
+  font-size:.69rem!important;line-height:1.1!important
+ }
+ .loop03-indicadores .loop03-indicador strong{
+  font-size:clamp(1.17rem,2.15vw,1.8rem)!important;line-height:1.12!important
+ }
+ .loop03-indicadores .loop03-indicador span{
+  line-height:1.12!important;font-size:.63rem!important
+ }
+ .loop03-paginas{margin:12px 0!important}
+}
+.loop03-sidebar nav button span,.loop03-sidebar nav a span{
+ font-size:1.28rem!important;min-width:21px!important;
+}
+.loop03-sidebar nav [data-loop03-aba="home"] span{color:#f2f6fd!important}
+.loop03-sidebar nav [data-loop03-aba="tabuleiro"] span{color:#ffcb4e!important}
+.loop03-sidebar nav [data-loop03-aba="posicoes"] span{color:#fbf6ff!important}
+.loop03-sidebar nav [data-loop03-aba="rede"] span{color:#dfd8fb!important}
+.loop03-sidebar nav [data-loop03-aba="financeiro"] span{color:#34ed9b!important}
+.loop03-sidebar nav a[href="/loja"] span{color:#ce78f5!important}
+/* Brilho estrutural em relevo, sem PNG de mockup aplicado na interface. */
+.loop03-banner-topo::before{
+ box-shadow:0 0 35px #ffbd507a,0 0 60px #dc8e4256!important;
+ border-color:#f3b75891!important;
+}
+#loop03-tabuleiro .loop03-roda .espaco-tabuleiro-demo:not(.tabuleiro-centro)::before{
+ color:#0c1428!important;font-size:clamp(1.15rem,2.1vw,1.95rem)!important;
+ text-shadow:0 1px 0 #fff,0 0 2px #d0cce6!important;
+}
+#loop03-tabuleiro .loop03-roda .espaco-tabuleiro-demo.tabuleiro-vaga-6::before{
+ color:white!important;text-shadow:0 1px 2px #660728!important;
+}
