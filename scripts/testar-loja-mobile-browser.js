@@ -186,9 +186,21 @@ async function main(){
   assert.equal(await page.locator('#loop03TotalAtivacoes').innerText(),'0/6');
   await page.locator('#loop03Menu').click();
   await page.locator('.loop03-sidebar [data-loop03-aba="tabuleiro"]').click();
-  await page.locator('#filtroTodasMapaParticipante').click();
-  assert.equal(await page.locator('#filtroTodasMapaParticipante').getAttribute('aria-pressed'),'true');
-  assert.equal(await page.locator('#filtroResumoMapaParticipante').count(),0);
+  // Três filtros e seletor verde foram removidos, sem alterar as outras abas.
+  assert.equal(await page.locator('.controle-mapa-participante').count(),0);
+  assert.equal(await page.locator('#loop03EscolherNoTabuleiro').count(),0);
+  assert.equal(await page.locator('#loop03EscolhaTexto').count(),0);
+  const botaoFilaA=page.locator('.loop03-cabecalho-fila-a .loop03-abrir-fila');
+  const botaoFilaB=page.locator('.loop03-cabecalho-fila-b .loop03-abrir-fila');
+  await botaoFilaA.click();
+  assert.equal(await botaoFilaA.getAttribute('aria-expanded'),'true');
+  assert.equal(await page.locator('.loop03-fila-expandida').count(),1);
+  await page.keyboard.press('Escape');
+  assert.equal(await botaoFilaA.getAttribute('aria-expanded'),'false');
+  await botaoFilaB.click();
+  assert.equal(await botaoFilaB.getAttribute('aria-expanded'),'true');
+  await botaoFilaB.click();
+  assert.equal(await botaoFilaB.getAttribute('aria-expanded'),'false');
   await page.locator('.painel-tabuleiro-imersivo').screenshot({
    path:path.join(pasta,'tabuleiro-escritorio-mobile.png')
   });
@@ -304,7 +316,8 @@ async function main(){
    waitUntil:'networkidle'
   });
   await page.locator('#conteudoParticipante').waitFor({state:'visible'});
-  await page.locator('#filtroMinhasMapaParticipante').click();
+  await page.locator('.loop03-cabecalho-fila-b .loop03-abrir-fila').click();
+  assert.equal(await page.locator('.loop03-cabecalho-fila-b .loop03-abrir-fila').getAttribute('aria-expanded'),'true');
   assert.equal(await page.locator('.linha-minha-demo').count(),1);
   assert.match(await page.locator('.linha-minha-demo .loop03-numero-titular')
    .innerText(),/^#\d+$/);
@@ -312,6 +325,7 @@ async function main(){
    .getAttribute('aria-label'),/minha posição/);
   assert.match(await page.locator('.linha-minha-demo').getAttribute('class'),/linha-minha-demo/);
   assert.equal(await page.locator('.linha-minha-demo .posicao-azul').count(),1);
+  await page.locator('.loop03-cabecalho-fila-b .loop03-abrir-fila').click();
   await page.screenshot({path:path.join(pasta,'escritorio-posicao-azul.png'),fullPage:true});
 
   await page.locator('#loop03Menu').click();
@@ -449,7 +463,8 @@ async function main(){
 
   await page.locator('#loop03Menu').click();
   await page.locator('#loop03Sidebar [data-loop03-aba="tabuleiro"]').click();
-  await page.locator('#filtroTodasMapaParticipante').click();
+  await page.locator('.loop03-cabecalho-fila-a .loop03-abrir-fila').click();
+  assert.equal(await page.locator('.loop03-cabecalho-fila-a .loop03-abrir-fila').getAttribute('aria-expanded'),'true');
   const promovida=page.locator('#mapaFilaAParticipante .loop03-linha-fila').filter({hasText:'#1'});
   assert.equal(await promovida.count(),1);
   assert.equal(await promovida.locator('.loop03-inicial-fila.loop03-a').innerText(),'A');
@@ -457,6 +472,7 @@ async function main(){
   assert.equal(await promovida.locator('.loop03-bonequinho-indicacoes').count(),1);
   assert.equal(await page.locator('#mapaFilaBParticipante .loop03-quantidade-a-direita').count(),0);
   await page.screenshot({path:path.join(pasta,'fila-a-contagem-posicao.png'),fullPage:true});
+  await page.locator('.loop03-cabecalho-fila-a .loop03-abrir-fila').click();
   // Quatro capturas REAIS da mesma conta ficticia e mesmo layout funcional.
   // Referencias PNG aprovadas sao arquivos separados, nao estas capturas.
   const ctxQuadros=await browser.newContext({
