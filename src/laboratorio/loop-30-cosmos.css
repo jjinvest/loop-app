@@ -1094,3 +1094,13 @@ body.loop03-logado .portal-participante{position:relative;z-index:1}
  #loop03-tabuleiro .loop03-mapa-grade .loop03-numero-titular{font-size:.59rem!important}
  #loop03-tabuleiro .loop03-mapa-grade .loop03-inicial-fila{width:25px!important;height:25px!important;min-width:25px!important}
 }
+
+/* O #numero da posicao A/B é texto simples, nunca uma caixa luminosa.
+ O destaque da posição continua no contorno da linha inteira. */
+#loop03-tabuleiro .loop03-mapa-grade .loop03-linha-fila .loop03-numero-titular,
+#loop03-tabuleiro .loop03-mapa-grade .loop03-linha-fila .loop03-numero-titular.loop03-destaque-posicao,
+#loop03-tabuleiro .loop03-mapa-grade .loop03-linha-fila .loop03-numero-titular.loop03-iluminada{
+ outline:none!important;box-shadow:none!important;
+ border:0!important;background:none!important;border-radius:0!important;
+ padding:0!important;
+}
