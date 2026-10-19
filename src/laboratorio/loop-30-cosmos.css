@@ -1104,3 +1104,87 @@ body.loop03-logado .portal-participante{position:relative;z-index:1}
  border:0!important;background:none!important;border-radius:0!important;
  padding:0!important;
 }
+
+
+/* FILAS CLICÁVEIS: cada cabeçalho abre sua própria lista completa e verdadeira. */
+/* Botão sem revestimento verde: mantém ícone, fonte e forma da arte aprovada. */
+#loop03-tabuleiro .loop03-mapa-grade>.bloco-fila-participante>.loop03-cabecalho-fila{
+ padding:0!important;
+}
+#loop03-tabuleiro .loop03-mapa-grade .loop03-abrir-fila{
+ display:flex!important;align-items:center!important;justify-content:flex-start!important;
+ gap:inherit!important;width:100%!important;min-height:62px!important;
+ padding:7px 4px 10px!important;
+ margin:0!important;
+ border:0!important;outline:0 solid transparent!important;
+ border-radius:10px!important;
+ background:transparent!important;color:inherit!important;
+ box-shadow:none!important;cursor:pointer!important;
+ text-align:left!important;font:inherit!important;
+ -webkit-tap-highlight-color:transparent;
+}
+#loop03-tabuleiro .loop03-mapa-grade .loop03-abrir-fila:hover{
+ background:#d09b3214!important;
+}
+#loop03-tabuleiro .loop03-mapa-grade .loop03-abrir-fila:focus-visible{
+ outline:3px solid #ffe69e!important;outline-offset:1px!important;
+}
+#loop03-tabuleiro .loop03-mapa-grade .loop03-fila-expandida{
+ position:fixed!important;top:50%!important;left:50%!important;
+ transform:translate(-50%,-50%)!important;
+ z-index:90!important;
+ width:min(570px,94vw)!important;
+ max-width:94vw!important;max-height:88vh!important;
+ min-height:0!important;
+ display:flex!important;flex-direction:column!important;overflow:hidden!important;
+ padding:18px clamp(12px,2vw,22px)!important;
+ background:linear-gradient(150deg,#080c20,#181038 60%,#060816)!important;
+ border:2px solid #e7bc65!important;
+ border-radius:20px!important;
+ box-shadow:0 0 0 100vmax #02020ac9,0 0 34px #e3bb67a8,inset 0 0 20px #f1d29829!important;
+}
+#loop03-tabuleiro .loop03-mapa-grade .loop03-fila-expandida:after{
+ display:none!important;
+}
+#loop03-tabuleiro .loop03-mapa-grade .loop03-fila-expandida>.loop03-cabecalho-fila{
+ flex:0 0 auto!important;margin:0 0 12px!important;
+}
+#loop03-tabuleiro .loop03-mapa-grade .loop03-fila-expandida>.mapa-fila-posicoes-demo{
+ flex:1 1 auto!important;min-height:0!important;
+ max-height:calc(88vh - 120px)!important;
+ overflow-y:auto!important;overscroll-behavior:contain!important;
+ padding:2px 5px!important;
+ scrollbar-color:#caa962 #161126;
+}
+#loop03-tabuleiro .loop03-mapa-grade .loop03-fila-expandida .loop03-linha-fila{
+ min-height:54px!important;padding:6px 10px!important;margin:7px 0!important;
+}
+#loop03-tabuleiro .loop03-mapa-grade .loop03-fila-expandida .loop03-inicial-fila{
+ width:38px!important;height:38px!important;min-width:38px!important;
+}
+#loop03-tabuleiro .loop03-mapa-grade .loop03-fila-expandida .loop03-numero-titular{
+ font-size:1rem!important;
+}
+#loop03-tabuleiro .loop03-mapa-grade .loop03-fila-expandida .loop03-quantidade-a-direita{
+ font-size:.96rem!important;
+}
+#loop03-tabuleiro .loop03-mapa-grade .loop03-fila-expandida .loop03-texto-cabecalho{
+ font-size:1.7rem!important;
+}
+#loop03-tabuleiro .loop03-mapa-grade .loop03-fila-expandida .loop03-seta-cabecalho{
+ font-size:1.8rem!important;
+}
+#loop03-tabuleiro .loop03-mapa-grade .loop03-fila-expandida .loop03-abrir-fila:after{
+ content:"×";margin-left:auto;font:bold 1.7rem/1 sans-serif;color:#fff7e1;
+}
+@media(max-width:590px){
+ #loop03-tabuleiro .loop03-mapa-grade .loop03-abrir-fila{
+  min-height:47px!important;padding:5px 1px 7px!important;
+ }
+ #loop03-tabuleiro .loop03-mapa-grade .loop03-fila-expandida>.loop03-cabecalho-fila{
+  min-height:54px!important;
+ }
+ #loop03-tabuleiro .loop03-mapa-grade .loop03-fila-expandida .loop03-abrir-fila{
+  min-height:52px!important;
+ }
+}
