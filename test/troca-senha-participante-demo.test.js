@@ -16,12 +16,12 @@ test('mudar senha exige senha atual, impede repeticao e nao altera posicoes/CPF/
  const s1=sessoes.entrar({nome:conta.nome,senha:'senha-antiga-segura-2026'});
  const s2=sessoes.entrar({nome:conta.nome,senha:'senha-antiga-segura-2026'});
  assert.throws(()=>contas.alterarSenha({contaId:conta.contaId,
-  senhaAtual:'errada-123456789',novaSenha:'senha-nova-segura-2026'}),/CREDENCIAIS_INVALIDAS/);
+  senhaAtual:'errada-123456789',novaSenha:'senha-nova-segura-2026'}),e=>e.codigo==='CREDENCIAIS_INVALIDAS');
  assert.throws(()=>contas.alterarSenha({contaId:conta.contaId,
-  senhaAtual:'senha-antiga-segura-2026',novaSenha:'senha-antiga-segura-2026'}),/SENHA_REPETIDA/);
+  senhaAtual:'senha-antiga-segura-2026',novaSenha:'senha-antiga-segura-2026'}),e=>e.codigo==='SENHA_REPETIDA');
  assert.equal(contas.alterarSenha({contaId:conta.contaId,
   senhaAtual:'senha-antiga-segura-2026',novaSenha:'senha-nova-segura-2026'}).senhaAlterada,true);
- assert.throws(()=>contas.autenticar({nome:conta.nome,senha:'senha-antiga-segura-2026'}),/CREDENCIAIS_INVALIDAS/);
+ assert.throws(()=>contas.autenticar({nome:conta.nome,senha:'senha-antiga-segura-2026'}),e=>e.codigo==='CREDENCIAIS_INVALIDAS');
  assert.equal(contas.autenticar({nome:conta.nome,senha:'senha-nova-segura-2026'}).conta.contaId,conta.contaId);
  assert.equal(sessoes.revogarTodasDaConta(conta.contaId),2);
  assert.equal(sessoes.identificar(s1.token),null);
