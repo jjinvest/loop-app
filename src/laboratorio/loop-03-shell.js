@@ -46,15 +46,15 @@
      <button class="loop03-hamburguer" id="loop03Menu" type="button" aria-expanded="false" aria-controls="loop03Sidebar" aria-label="Abrir menu">☰</button>
      <div><h2 id="loop03BoasVindas">Bem-vindo!</h2><p>Disciplina hoje, liberdade amanhã.</p></div>
      <div class="loop03-acoes-perfil">
-      <span class="loop03-sino" title="Notificações; integração pendente" aria-label="Notificações">♧</span>
+      <button class="loop03-sino" type="button" data-loop03-aba="home" title="Abrir comunicados do Escritório Virtual" aria-label="Abrir comunicados">♧</button>
       <button data-loop03-aba="perfil" type="button" id="loop03PerfilTopo">Meu perfil ⚙</button>
      </div>
     </div>
     <div class="loop03-indicadores" aria-label="Resumo da conta">
-     <button data-loop03-aba="posicoes" type="button" class="loop03-indicador"><small>ϟ POSIÇÕES</small><strong id="loop03TotalAtivacoes">6/6</strong><span>Minhas posições</span></button>
-     <div class="loop03-indicador"><small>◷ GIROS</small><strong id="loop03Giros24">—</strong><span>Últimas 24 horas · aguardando indicador</span></div>
+     <button data-loop03-aba="posicoes" type="button" class="loop03-indicador"><small>ϟ POSIÇÕES</small><strong id="loop03TotalAtivacoes">0/6</strong><span>Minhas posições</span></button>
+     <button data-loop03-aba="tabuleiro" type="button" class="loop03-indicador" title="Abrir Tabuleiro e acompanhar giros"><small>◷ GIROS</small><strong id="loop03Giros24">—</strong><span>Giros concluídos nas últimas 24 horas</span></button>
      <button data-loop03-aba="posicoes" type="button" class="loop03-indicador"><small>♙ NÚMERO</small><strong id="loop03Numero">#0000</strong><span id="loop03NumeroDetalhe">Escolha uma posição</span></button>
-     <button data-loop03-aba="financeiro" type="button" class="loop03-indicador"><small>▥ FINANCEIRO</small><strong id="loop03Saldo">R$ 0,00</strong><span>Saldo fictício disponível</span></button>
+     <button data-loop03-aba="financeiro" type="button" class="loop03-indicador"><small>▥ FINANCEIRO</small><strong id="loop03Saldo">R$ 0,00</strong><span>Saldo disponível no laboratório</span></button>
     </div>
     <div class="loop03-paginas">
      <section id="loop03-home" class="loop03-pagina" aria-label="Escritório Virtual">
@@ -329,9 +329,12 @@
   e('loop03PerfilTopo').textContent=nome+' ⚙';
   const n=visao.posicoes.length;
   e('loop03TotalAtivacoes').textContent=n+'/'+visao.limitePosicoesAtivas;
-  const bonus=visao.saquesSimulados?.bonusDisponivelSimuladoCentavos||0;
-  e('loop03Giros24').textContent=Number.isSafeInteger(visao.girosUltimas24Horas)?String(visao.girosUltimas24Horas):'—';
-  e('loop03Saldo').textContent=(bonus/100).toLocaleString('pt-BR',{style:'currency',currency:'BRL'});
+  const bonus=visao.saquesSimulados?.bonusDisponivelSimuladoCentavos;
+  e('loop03Giros24').textContent=Number.isSafeInteger(visao.girosUltimas24Horas)&&visao.girosUltimas24Horas>=0?
+   String(visao.girosUltimas24Horas):'—';
+  // Valor ausente nunca e convertido em dinheiro ficticio: 0 apenas se informado pelo servico.
+  e('loop03Saldo').textContent=Number.isSafeInteger(bonus)&&bonus>=0?
+   (bonus/100).toLocaleString('pt-BR',{style:'currency',currency:'BRL'}):'—';
   const etapa=visao.progressoCiclo?.eventosValidos;
   for(const [i,m] of [...document.querySelectorAll('.marcos-v6 > span')].entries()){
    m.classList.toggle('loop03-aceso',Number.isSafeInteger(etapa)&&i<etapa);

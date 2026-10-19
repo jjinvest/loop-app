@@ -182,8 +182,22 @@ async function main(){
   await page.setViewportSize({width:390,height:812});
   await page.waitForTimeout(260);
 
+  // Antes de compras e eventos: zero so com valor confirmado na fonte do laboratorio.
   assert.equal(await page.locator('#loop03Numero').innerText(),'#0000');
   assert.equal(await page.locator('#loop03TotalAtivacoes').innerText(),'0/6');
+  assert.equal(await page.locator('#loop03Giros24').innerText(),'0');
+  assert.match(await page.locator('#loop03Saldo').innerText(),/^R\$\s*0,00$/);
+  // Cada indicador/caminho executa uma navegacao real, sem ligacao apenas decorativa.
+  await page.locator('.loop03-indicadores [data-loop03-aba="posicoes"]').first().click();
+  assert.equal(await page.locator('#loop03-posicoes').isVisible(),true);
+  await page.locator('.loop03-indicadores [data-loop03-aba="posicoes"]').nth(1).click();
+  assert.equal(await page.locator('#loop03-posicoes').isVisible(),true);
+  await page.locator('.loop03-indicadores [data-loop03-aba="financeiro"]').click();
+  assert.equal(await page.locator('#loop03-financeiro').isVisible(),true);
+  await page.locator('.loop03-indicadores [data-loop03-aba="tabuleiro"]').click();
+  assert.equal(await page.locator('#loop03-tabuleiro').isVisible(),true);
+  await page.locator('.loop03-sino').click();
+  assert.equal(await page.locator('#loop03-home').isVisible(),true);
   await page.locator('#loop03Menu').click();
   await page.locator('.loop03-sidebar [data-loop03-aba="tabuleiro"]').click();
   // Três filtros e seletor verde foram removidos, sem alterar as outras abas.

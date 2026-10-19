@@ -39,6 +39,24 @@ function mapaCoresDoEscritorio(sim,contaId){
   tabuleiro:{centro:marcar(sim.tabuleiro.centro),vagas:sim.tabuleiro.vagas.map(marcar)}
  };
 }
+// Tempo desde o ultimo evento comprovado pelo simulador e gravado no snapshot.
+// Um horario futuro, impreciso ou sem registro nao pode acionar o relogio.
+function ultimoEventoValidoDoTabuleiro(tabuleiro,agora=Date.now()){
+ const eventos=[
+  ...(Array.isArray(tabuleiro?.vendasDoCiclo)?tabuleiro.vendasDoCiclo:[]),
+  ...(Array.isArray(tabuleiro?.ciclosConcluidos)?
+   tabuleiro.ciclosConcluidos.flatMap(c=>Array.isArray(c.vendas)?c.vendas:[]):[])
+ ];
+ let maisRecente=null;
+ for(const evento of eventos){
+  const data=evento?.registradaEm;
+  if(typeof data!=='string'||!/^\d{4}-\d{2}-\d{2}T.*(?:Z|[+-]\d{2}:\d{2})$/.test(data))continue;
+  const ms=Date.parse(data);
+  if(!Number.isFinite(ms)||ms<=0||ms>agora)continue;
+  if(maisRecente===null||ms>maisRecente)maisRecente=ms;
+ }
+ return maisRecente===null?null:new Date(maisRecente).toISOString();
+}
 class EscritorioIndividualDemo{
  constructor({ponte,contas}={}){
   if(!ponte||!ponte.banco||typeof ponte._restaurar!=='function'||
@@ -80,6 +98,8 @@ class EscritorioIndividualDemo{
   const simulador=this.ponte._restaurar();
   const posicoes=posicoesTitular(simulador,contaId);
   const mapaCores=mapaCoresDoEscritorio(simulador,contaId);
+  // Mesma restauracao SQL usada nas filas, sem registrar eventos ou movimentos.
+  mapaCores.ultimoEventoValidoEm=ultimoEventoValidoDoTabuleiro(simulador.tabuleiro);
   // Apenas indicados DIRETOS do titular da sessao, nao a rede alheia.
   const temTabelaAtivacao=!!this.banco.prepare(
    "SELECT name FROM sqlite_master WHERE type='table' AND name='admin_loop_adesoes_posicoes_demo'"
@@ -243,4 +263,4 @@ class EscritorioIndividualDemo{
   };
  }
 }
-module.exports={EscritorioIndividualDemo,posicoesTitular,mapaCoresDoEscritorio};
+module.exports={EscritorioIndividualDemo,posicoesTitular,mapaCoresDoEscritorio,ultimoEventoValidoDoTabuleiro};
