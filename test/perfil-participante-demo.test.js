@@ -31,7 +31,7 @@ test('perfil nao altera login, CPF, fila ou identidade protegida; foto persiste'
  assert.equal(p1.temFoto,true);
  assert.deepEqual(p.foto(conta.contaId).bytes,foto);
  assert.equal(contas.autenticar({nome:conta.nome,senha:'senha-inventada-2026'}).conta.contaId,conta.contaId);
- assert.equal(repo.banco.prepare('SELECT COUNT(*) AS n FROM admin_loop_adesoes_contas_demo').get().n,0);
+ assert.equal(repo.banco.prepare("SELECT COUNT(*) AS n FROM sqlite_master WHERE type='table' AND name='admin_loop_adesoes_contas_demo'").get().n,0);
  const p2=p.atualizar(conta.contaId,{nome:p1.nome,email:p1.email,telefone:p1.telefone,
   foto:'REMOVER',revisaoEsperada:1});
  assert.equal(p2.temFoto,false);
