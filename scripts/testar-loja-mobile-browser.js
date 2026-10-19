@@ -604,6 +604,37 @@ async function main(){
   assert.equal(await page.locator('#loop03LetraFila').innerText(),'A');
   assert.equal(await page.locator('#loop03IndicePosicao').innerText(),'1/6');
   assert.equal(await page.locator('#mapaFilaBParticipante .loop03-quantidade-a-direita').count(),0);
+  // Regressao visual: apos clicar na fila e escolher uma posicao, o container
+  // nao pode rolar por tras da UI e engolir a parte superior da catraca.
+  async function validarCatracaSemCorte(largura){
+   await conferirLargura(page,largura,'catraca-selecionada-sem-corte',{captura:false});
+   const geo=await page.evaluate(()=>{
+    const rect=selector=>{
+     const e=document.querySelector(selector),r=e.getBoundingClientRect();
+     return {top:r.top,bottom:r.bottom,left:r.left,right:r.right,height:r.height};
+    };
+    return {
+     scroll:document.querySelector('#loop03-tabuleiro').scrollTop,
+     overflow:getComputedStyle(document.querySelector('#loop03-tabuleiro')).overflowY,
+     roda:rect('#loop03-tabuleiro .loop03-roda'),
+     aro:rect('#loop03-tabuleiro .mapa-tabuleiro-posicoes-demo'),
+     filaA:rect('#loop03-tabuleiro .loop03-mapa-grade>.bloco-fila-participante:first-child'),
+     filaB:rect('#loop03-tabuleiro .loop03-mapa-grade>.bloco-fila-participante:last-child')
+    };
+   });
+   assert.equal(geo.scroll,0,'Painel Tabuleiro nao deve rolar internamente '+largura+': '+JSON.stringify(geo));
+   assert.equal(geo.overflow,'clip','Tabuleiro nao pode ser scroll container '+largura);
+   assert.ok(geo.aro.top>=geo.roda.top-2,'Topo da catraca nao pode ser cortado '+largura+': '+JSON.stringify(geo));
+   assert.ok(geo.aro.bottom<=geo.roda.bottom+2,'Catraca deve caber por inteiro '+largura+': '+JSON.stringify(geo));
+   assert.ok(geo.filaA.top>=geo.roda.bottom+4&&geo.filaB.top>=geo.roda.bottom+4,
+    'Fila A e B devem ficar abaixo da catraca '+largura+': '+JSON.stringify(geo));
+   assert.ok(Math.abs(geo.filaA.top-geo.filaB.top)<=2,
+    'Filas alinhadas horizontalmente '+largura+': '+JSON.stringify(geo));
+  }
+  for(const largura of [320,360,390,412])await validarCatracaSemCorte(largura);
+  await page.setViewportSize({width:390,height:812});
+  await page.waitForTimeout(120);
+  await page.screenshot({path:path.join(pasta,'TABULEIRO_REAL_POSICAO_A_CELULAR_390_SEM_CORTE.png'),fullPage:true});
   await page.screenshot({path:path.join(pasta,'fila-a-contagem-posicao.png'),fullPage:true});
   // Quatro capturas REAIS da mesma conta ficticia e mesmo layout funcional.
   // Referencias PNG aprovadas sao arquivos separados, nao estas capturas.

@@ -1737,3 +1737,27 @@ body.loop03-logado .portal-participante{position:relative;z-index:1}
   font-size:clamp(.66rem,2.3vw,.83rem)!important;
  }
 }
+
+
+/* Tabuleiro celular: estabilizar geometria da catraca e filas.
+   O container com overflow:hidden era rolado internamente pelo navegador
+   ao focar campos (inclusive selecionar posicao), cortando METADE DA CATraca
+   apesar da grande area vazia abaixo. overflow:clip nao e scroll container.
+   Mantem somente a lista de cada fila com sua propria rolagem vertical. */
+@media(max-width:590px){
+ #loop03Shell #loop03-tabuleiro{
+  overflow:clip!important;
+  padding-top:clamp(19px,5.5vw,30px)!important;
+ }
+ #loop03Shell #loop03-tabuleiro .loop03-mapa-grade{
+  row-gap:clamp(13px,3.4vw,18px)!important;
+  align-content:start!important;
+ }
+ #loop03Shell #loop03-tabuleiro .loop03-mapa-grade>.loop03-roda{
+  overflow:visible!important;min-width:0!important;
+ }
+ #loop03Shell #loop03-tabuleiro .loop03-roda .mapa-tabuleiro-posicoes-demo{
+  margin-top:clamp(11px,3.1vw,17px)!important;
+  max-width:100%!important;
+ }
+}
