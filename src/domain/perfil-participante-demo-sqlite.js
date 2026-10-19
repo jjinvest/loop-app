@@ -74,7 +74,7 @@ class PerfilParticipanteDemoSQLite {
  foto(contaId){
   const x=this._linha(contaId);
   if(!x||!x.foto_bytes)return null;
-  return {mime:x.foto_mime,bytes:x.foto_bytes};
+  return {mime:x.foto_mime,bytes:Buffer.from(x.foto_bytes)};
  }
  _normalizarTipoValor(tipo,valor){
   if(tipo==='EMAIL')return validarEmail(valor);
