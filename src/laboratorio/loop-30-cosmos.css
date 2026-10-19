@@ -1247,3 +1247,15 @@ body.loop03-logado .portal-participante{position:relative;z-index:1}
   font-size:1.7rem!important;
  }
 }
+
+/* FILA REAL ABERTA: manter painel amplo mesmo quando a lista está vazia. */
+@media(max-width:590px){
+ #loop03-tabuleiro .loop03-mapa-grade>.bloco-fila-participante.loop03-fila-expandida{
+  min-height:min(68vh,540px)!important;
+  max-height:88vh!important;
+ }
+ #loop03-tabuleiro .loop03-mapa-grade>.bloco-fila-participante.loop03-fila-expandida>.mapa-fila-posicoes-demo{
+  display:block!important;flex:1 1 auto!important;min-height:0!important;
+  overflow-y:auto!important;
+ }
+}
