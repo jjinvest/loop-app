@@ -962,3 +962,135 @@ body.loop03-logado .portal-participante{position:relative;z-index:1}
   font-size:1.35rem!important;
  }
 }
+
+
+/* ETAPA TABULEIRO: marcadores legíveis, relógio e filas sem textos artificiais. */
+/* Apenas aparência do Tabuleiro. Cabeçalho global e menu lateral intocados. */
+#loop03-tabuleiro .loop03-roda .marcos-v6{
+ display:flex!important;justify-content:center!important;
+ align-items:center!important;gap:clamp(10px,1.3vw,20px)!important;
+ margin:14px 0 10px!important;
+}
+#loop03-tabuleiro .loop03-roda .marcos-v6 span{
+ width:clamp(23px,2.7vw,34px)!important;height:clamp(23px,2.7vw,34px)!important;
+ flex:none!important;border:2px solid #e0b4fd!important;
+ background:radial-gradient(circle at 28% 22%,#fff0ff 0%,#c874ff 12%,#7018d3 48%,#340059 81%)!important;
+ box-shadow:inset 0 1px 4px #fff8,0 0 10px #bc57fdab,0 0 15px #6827d671!important;
+ filter:none!important;
+}
+#loop03-tabuleiro .loop03-roda .marcos-v6 span:nth-child(even){
+ background:radial-gradient(circle at 25% 19%,#7c8091 0%,#373a43 18%,#020309 75%)!important;
+ border-color:#bfc6cc!important;
+ box-shadow:inset 0 1px 4px #fff6,0 0 7px #dadeeb84,0 0 10px #000!important;
+}
+#loop03-tabuleiro .loop03-roda .marcos-v6 span.loop03-aceso{
+ outline:2px solid #fff4c2!important;outline-offset:1px!important;
+}
+#loop03-tabuleiro .loop03-roda .legenda-marcos-v6{
+ display:flex!important;justify-content:center!important;
+ align-items:center!important;gap:20px!important;
+ flex-wrap:wrap!important;
+ margin:8px 0 10px!important;
+ color:#fff9f2!important;font-weight:650!important;
+ font-size:clamp(.82rem,1.12vw,1rem)!important;
+ line-height:1.2!important;
+}
+#loop03-tabuleiro .loop03-roda .legenda-marcos-v6>span{
+ display:inline-flex!important;align-items:center!important;gap:7px!important;
+ white-space:nowrap!important;
+}
+#loop03-tabuleiro .loop03-roda .legenda-marcos-v6 i{
+ display:inline-block!important;flex:none!important;width:14px!important;height:14px!important;
+ border-radius:50%!important;
+}
+#loop03-tabuleiro .loop03-roda .legenda-marcos-v6 i.amostra-roxo{
+ background:radial-gradient(circle at 25% 20%,#e6b3ff,#8c33e8 56%,#460c86)!important;
+ border:1px solid #e0aaff!important;
+ box-shadow:0 0 8px #ba64ffad!important;
+}
+#loop03-tabuleiro .loop03-roda .legenda-marcos-v6 i.amostra-preto{
+ background:radial-gradient(circle at 26% 19%,#6c7180,#12131b 53%,#020307)!important;
+ border:1px solid #dddde5!important;
+ box-shadow:0 0 7px #d8d7e575!important;
+}
+#loop03-tabuleiro .loop03-relogio-ciclo{
+ display:block!important;width:max-content!important;
+ max-width:100%!important;margin:10px auto 6px!important;
+ padding:3px 25px!important;
+ border:2px solid #f6c255!important;border-radius:23px!important;
+ color:#ffe3a1!important;
+ font:900 clamp(1.15rem,2.2vw,1.9rem)/1.15 ui-monospace,SFMono-Regular,Consolas,monospace!important;
+ letter-spacing:.13em!important;font-variant-numeric:tabular-nums!important;
+ background:linear-gradient(100deg,#07070f,#151022 52%,#06070f)!important;
+ text-shadow:0 0 10px #ffb65e9d!important;
+ box-shadow:inset 0 0 10px #d89c3b38,0 0 15px #f8b74e71!important;
+}
+#loop03-tabuleiro .loop03-explicacao-catraca{
+ text-align:center!important;
+ margin:6px 0 12px!important;color:#f7f3f5!important;
+ font-size:clamp(.79rem,1.1vw,1rem)!important;
+ line-height:1.4!important;
+}
+#loop03-tabuleiro .loop03-explicacao-catraca p{margin:2px 0!important;color:inherit!important}
+/* Textos técnicos seguem acessíveis a leitores de tela, mas não poluem a arte. */
+#loop03-tabuleiro .texto-marcos-v6,
+#loop03-tabuleiro #resumoMapaParticipante,
+#loop03-tabuleiro #ajudaFiltroMapaParticipante,
+#loop03-tabuleiro .loop03-mapa-grade .loop03-contagem-rodape-fila,
+#loop03-tabuleiro .cartao-participante>p.ajuda-portal,
+#loop03-tabuleiro .loop03-roda>p.ajuda-portal{
+ position:absolute!important;width:1px!important;height:1px!important;
+ padding:0!important;margin:-1px!important;overflow:hidden!important;
+ clip:rect(0,0,0,0)!important;white-space:nowrap!important;border:0!important;
+}
+/* Não apresentar "Nenhuma posição" quando não há registros; as listas
+ são preenchidas somente pela API verdadeira. */
+#loop03-tabuleiro .loop03-mapa-grade .fila-vazia-demo{display:none!important}
+/* Fila A: bola A, #identificador, quantidade, pessoa. Fila B: B e #ID.
+ Sem texto "indicados", sem quebra de linha, sem dados de pessoas inventadas. */
+#loop03-tabuleiro .loop03-mapa-grade .loop03-linha-fila{
+ display:flex!important;align-items:center!important;
+ gap:clamp(3px,.6vw,8px)!important;
+ padding:5px 6px!important;
+}
+#loop03-tabuleiro .loop03-mapa-grade .loop03-fila-identificacao{
+ display:flex!important;align-items:center!important;
+ justify-content:flex-start!important;gap:clamp(3px,.5vw,8px)!important;
+ flex-wrap:nowrap!important;min-width:0!important;
+ white-space:nowrap!important;
+}
+#loop03-tabuleiro .loop03-mapa-grade .loop03-numero-titular{
+ font-weight:850!important;font-size:clamp(.62rem,.95vw,.91rem)!important;
+ min-width:0!important;flex:0 1 auto!important;overflow:visible!important;
+ background:none!important;border:0!important;outline-offset:1px!important;
+ box-shadow:none!important;color:#f5f5ff!important;
+ padding:0!important;white-space:nowrap!important;
+}
+#loop03-tabuleiro .loop03-mapa-grade .loop03-quantidade-a-direita{
+ display:inline!important;font-size:clamp(.68rem,1vw,.98rem)!important;
+ color:#ffdf70!important;font-weight:900!important;white-space:nowrap!important;
+}
+#loop03-tabuleiro .loop03-mapa-grade .loop03-bonequinho-indicacoes{
+ width:clamp(13px,1.5vw,19px)!important;
+ height:clamp(13px,1.5vw,19px)!important;flex:none!important;color:#ffcf45!important;
+}
+#loop03-tabuleiro .loop03-mapa-grade .loop03-inicial-fila.loop03-azul{
+ background:radial-gradient(circle at 28% 22%,#9ccbff,#3984eb 52%,#15458b)!important;
+ border:2px solid #cbe5ff!important;color:#fff!important;
+ box-shadow:0 0 11px #4ca6ff99!important;
+}
+/* O estado azul prevalece sobre o B branco, e o dourado do LOOP é preservado. */
+#loop03-tabuleiro .loop03-mapa-grade .loop03-inicial-fila.loop03-dourada{
+ background:radial-gradient(circle at 28% 20%,#fff8cc,#dfac2a 58%,#8c5a0c)!important;
+ color:transparent!important;border:2px solid #ffe39c!important;
+ box-shadow:0 0 12px #fbd05795!important;
+}
+@media(max-width:590px){
+ #loop03-tabuleiro .loop03-roda .marcos-v6{gap:7px!important}
+ #loop03-tabuleiro .loop03-roda .marcos-v6 span{width:22px!important;height:22px!important}
+ #loop03-tabuleiro .loop03-relogio-ciclo{font-size:1.13rem!important;padding:4px 13px!important}
+ #loop03-tabuleiro .loop03-mapa-grade .loop03-linha-fila{gap:2px!important;padding:4px 2px!important}
+ #loop03-tabuleiro .loop03-mapa-grade .loop03-fila-identificacao{gap:2px!important}
+ #loop03-tabuleiro .loop03-mapa-grade .loop03-numero-titular{font-size:.59rem!important}
+ #loop03-tabuleiro .loop03-mapa-grade .loop03-inicial-fila{width:25px!important;height:25px!important;min-width:25px!important}
+}
