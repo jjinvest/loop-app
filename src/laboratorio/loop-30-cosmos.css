@@ -707,3 +707,115 @@ body.loop03-logado .portal-participante{position:relative;z-index:1}
 #loop03-rede>.loop03-cabecalho-equipe>.loop03-titulo-equipe h2{
  text-shadow:0 0 13px #ffcb686e!important;
 }
+
+
+/* Objetos do estudio e leitura limpa das bolas: arte aprovada, DOM vivo. */
+#loop03-home .loop03-cenario-escritorio{overflow:hidden}
+#loop03-home .loop03-cenario-plantas,
+#loop03-home .loop03-cenario-livros,
+#loop03-home .loop03-cenario-caneca,
+#loop03-home .loop03-cenario-caderno,
+#loop03-home .loop03-cenario-canetas{position:absolute;pointer-events:none}
+#loop03-home .loop03-cenario-plantas{
+ left:3%;bottom:20px;width:17%;height:180px;z-index:4;
+ filter:drop-shadow(0 0 13px #ac7fe376);
+}
+#loop03-home .loop03-planta-vaso{
+ position:absolute;bottom:0;left:33%;width:40%;height:61px;
+ clip-path:polygon(0 0,100% 0,80% 100%,18% 100%);
+ border:2px solid #bd8842;
+ background:linear-gradient(90deg,#100a23,#4e2a54 38%,#9b5c52 60%,#1b122c 100%);
+ box-shadow:inset 0 4px 11px #e9ac647a;
+}
+#loop03-home .loop03-planta-folha{
+ position:absolute;bottom:42px;left:45%;width:27%;height:73px;
+ background:linear-gradient(90deg,#112d33,#3e9352 49%,#0d302c);
+ border:1px solid #80cf7b9a;border-radius:95% 3% 90% 4%;
+ transform-origin:bottom center;box-shadow:inset 1px 1px 6px #87c2676b;
+}
+#loop03-home .loop03-planta-folha.f1{transform:rotate(-54deg);left:9%;bottom:56px;height:79px}
+#loop03-home .loop03-planta-folha.f2{transform:rotate(-18deg);left:27%;bottom:67px;height:110px}
+#loop03-home .loop03-planta-folha.f3{transform:rotate(19deg);left:49%;bottom:57px;height:127px}
+#loop03-home .loop03-planta-folha.f4{transform:rotate(55deg);left:67%;bottom:54px;height:82px}
+#loop03-home .loop03-planta-folha.f5{transform:rotate(-2deg);left:44%;bottom:72px;height:136px}
+#loop03-home .loop03-cenario-livros{bottom:26px;left:5%;z-index:5;width:17%;height:37px}
+#loop03-home .loop03-cenario-livros>span{
+ display:block;height:9px;margin:3px 0;border:1px solid #f6c077b3;border-radius:3px;
+ background:linear-gradient(#c79350,#2b1533 40%,#4d204d 75%,#ce9251);
+ transform:skew(-14deg);box-shadow:0 2px 3px #0009;
+}
+#loop03-home .loop03-cenario-livros>span:nth-child(2){width:87%;background:linear-gradient(#e9c37a,#22203e 60%,#a67c4c)}
+#loop03-home .loop03-cenario-livros>span:nth-child(3){width:78%}
+#loop03-home .loop03-cenario-caneca{
+ width:10%;height:61px;bottom:28px;left:18%;z-index:5;
+ border:2px solid #d2a65c;border-radius:3px 3px 17px 17px;
+ background:linear-gradient(90deg,#030917,#111435 30%,#38306b 58%,#0a0a1c);
+ box-shadow:inset -5px -4px 10px #9b4f706e,0 0 12px #b46ed164;
+ display:grid;place-items:center;
+}
+#loop03-home .loop03-cenario-caneca:after{
+ content:"";position:absolute;right:-19px;top:11px;width:20px;height:30px;
+ border:5px solid #d2a766;border-left:0;border-radius:0 70% 70% 0;
+ box-shadow:3px 0 9px #ba8e4e6b;
+}
+#loop03-home .loop03-cenario-caneca span{color:#f0be53;font-size:clamp(.53rem,.88vw,.9rem);font-weight:950}
+#loop03-home .loop03-cenario-caderno{
+ z-index:5;right:5%;bottom:25px;width:11%;height:77px;
+ border:2px solid #c69a5d;border-radius:5px;
+ transform:perspective(240px) rotateY(-9deg) rotateZ(8deg);
+ background:linear-gradient(135deg,#180d2c,#3d224d 50%,#100c21);
+ box-shadow:inset 0 0 0 3px #131227,0 0 15px #bb6c997d;
+ display:grid;place-items:center;
+}
+#loop03-home .loop03-cenario-caderno span{font-size:clamp(1.6rem,3vw,2.8rem);font-weight:900;color:#ffcf55;text-shadow:0 0 12px #ffce739c}
+#loop03-home .loop03-cenario-canetas{
+ z-index:5;right:21%;bottom:26px;width:6%;height:62px;
+ border:1px solid #ce955c;border-radius:7px 7px 4px 4px;
+ background:linear-gradient(90deg,#110b27,#392353,#0c0c22);
+}
+#loop03-home .loop03-cenario-canetas span{
+ position:absolute;left:25%;bottom:10px;height:84px;width:3px;
+ transform:rotate(-14deg);border:1px solid #d7b07e;
+ background:linear-gradient(90deg,#de9852,#2e1740);
+}
+#loop03-home .loop03-cenario-canetas span:nth-child(2){left:45%;transform:rotate(7deg)}
+#loop03-home .loop03-cenario-canetas span:nth-child(3){left:65%;transform:rotate(17deg)}
+#loop03-home .loop03-cenario-mesa{z-index:3}
+#loop03-home .loop03-cenario-monitor{z-index:6}
+#loop03-home .loop03-cenario-monitor .loop03-cenario-tela>span{
+ font-size:clamp(2.4rem,5vw,5.2rem);
+ text-shadow:0 3px 0 #854e19,0 0 17px #ffb85284;
+}
+#loop03-home .loop03-cenario-escritorio:before,
+#loop03-home .loop03-cenario-escritorio:after{z-index:2}
+@media(max-width:520px){
+ #loop03-home .loop03-cenario-plantas{height:95px;bottom:18px}
+ #loop03-home .loop03-planta-folha{height:46px!important}
+ #loop03-home .loop03-planta-vaso{height:35px}
+ #loop03-home .loop03-cenario-caneca{height:36px;bottom:22px}
+ #loop03-home .loop03-cenario-caneca:after{width:9px;height:17px;right:-12px;border-width:3px}
+ #loop03-home .loop03-cenario-caderno{height:43px}
+ #loop03-home .loop03-cenario-canetas{height:39px}
+ #loop03-home .loop03-cenario-canetas span{height:48px}
+}
+/* No desenho aprovado as vagas sao esferas NUMERADAS.
+ O texto tecnico Livre/Vaga permanece acessivel sem poluir as bolas. */
+#loop03-tabuleiro .loop03-roda .espaco-tabuleiro-demo:not(.tabuleiro-centro)>.titulo-espaco-tabuleiro-demo,
+#loop03-tabuleiro .loop03-roda .espaco-tabuleiro-demo:not(.tabuleiro-centro)>.vazio-tabuleiro-demo{
+ position:absolute!important;width:1px!important;height:1px!important;
+ padding:0!important;margin:-1px!important;border:0!important;
+ overflow:hidden!important;clip:rect(0,0,0,0)!important;white-space:nowrap!important;
+}
+#loop03-tabuleiro .loop03-roda .espaco-tabuleiro-demo:not(.tabuleiro-centro):has(.selo-posicao-demo)::before{
+ content:none!important;
+}
+#loop03-tabuleiro .loop03-roda .espaco-tabuleiro-demo:not(.tabuleiro-centro)>.selo-posicao-demo{
+ color:#1b2030!important;font-size:clamp(.8rem,1.4vw,1.3rem)!important;
+ text-shadow:0 1px #ffffffad;font-weight:950!important;
+}
+#loop03-tabuleiro .loop03-roda .espaco-tabuleiro-demo.tabuleiro-vaga-6>.selo-posicao-demo{
+ color:white!important;text-shadow:0 1px 2px #611126;
+}
+#loop03-tabuleiro .loop03-roda .espaco-tabuleiro-demo:not(.tabuleiro-centro):before{
+ font-size:clamp(1.2rem,2.2vw,2.25rem)!important;
+}
