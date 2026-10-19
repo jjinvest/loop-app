@@ -271,26 +271,41 @@ async function main(){
   const botaoFilaA=page.locator('.loop03-cabecalho-fila-a .loop03-abrir-fila');
   const botaoFilaB=page.locator('.loop03-cabecalho-fila-b .loop03-abrir-fila');
   await botaoFilaA.click();
-  assert.equal(await botaoFilaA.getAttribute('aria-expanded'),'true');
-  assert.ok(await page.locator('.loop03-fila-expandida').evaluate(p=>p.getBoundingClientRect().height>=300),
-   'Fila A ampliada precisa ter altura suficiente mesmo sem pessoas');
-  await page.screenshot({
-   path:path.join(pasta,'TABULEIRO_CELULAR_FILA_A_ABERTA_REAL.png'),
-   fullPage:false
-  });
-  assert.equal(await page.locator('.loop03-fila-expandida').count(),1);
-  await page.keyboard.press('Escape');
-  assert.equal(await botaoFilaA.getAttribute('aria-expanded'),'false');
+  assert.equal(await page.locator('#mapaFilaAParticipante').evaluate(el=>document.activeElement===el),true);
   await botaoFilaB.click();
-  assert.equal(await botaoFilaB.getAttribute('aria-expanded'),'true');
-  assert.ok(await page.locator('.loop03-fila-expandida').evaluate(p=>p.getBoundingClientRect().height>=300),
-   'Fila B ampliada precisa ter altura suficiente mesmo sem pessoas');
-  await page.screenshot({
-   path:path.join(pasta,'TABULEIRO_CELULAR_FILA_B_ABERTA_REAL.png'),
-   fullPage:false
+  assert.equal(await page.locator('#mapaFilaBParticipante').evaluate(el=>document.activeElement===el),true);
+  assert.equal(await page.locator('.loop03-fila-expandida').count(),0);
+  // O CSS permite rolar dentro das duas listas sem tocar no motor.
+  for(const id of ['mapaFilaAParticipante','mapaFilaBParticipante']){
+   const st=await page.locator('#'+id).evaluate(el=>{
+    const css=getComputedStyle(el);
+    return {overflow:css.overflowY,touch:css.touchAction,tab:el.tabIndex};
+   });
+   assert.equal(st.overflow,'auto');
+   assert.equal(st.touch,'pan-y');
+   assert.equal(st.tab,0);
+  }
+  // Teste isolado de rolagem, sem captura e sem gravar nenhum participante:
+  // adicionar temporariamente itens SOMENTE no DOM do navegador de teste.
+  const testeRolagem=await page.evaluate(()=>{
+   const ids=['mapaFilaAParticipante','mapaFilaBParticipante'];
+   return ids.map(id=>{
+    const el=document.getElementById(id);
+    const exemplares=[];
+    for(let i=0;i<40;i++){
+     const li=document.createElement('li');
+     li.textContent='item tecnico transitorio';
+     li.style.height='43px';li.style.minHeight='43px';li.style.display='block';
+     el.append(li);exemplares.push(li);
+    }
+    el.scrollTop=el.scrollHeight;
+    const rolou=el.scrollTop>0;
+    for(const node of exemplares)node.remove();
+    el.scrollTop=0;
+    return rolou;
+   });
   });
-  await botaoFilaB.click();
-  assert.equal(await botaoFilaB.getAttribute('aria-expanded'),'false');
+  assert.deepEqual(testeRolagem,[true,true]);
   await page.locator('.painel-tabuleiro-imersivo').screenshot({
    path:path.join(pasta,'tabuleiro-escritorio-mobile.png')
   });
@@ -410,7 +425,7 @@ async function main(){
   });
   await page.locator('#conteudoParticipante').waitFor({state:'visible'});
   await page.locator('.loop03-cabecalho-fila-b .loop03-abrir-fila').click();
-  assert.equal(await page.locator('.loop03-cabecalho-fila-b .loop03-abrir-fila').getAttribute('aria-expanded'),'true');
+  assert.equal(await page.locator('#mapaFilaBParticipante').evaluate(el=>document.activeElement===el),true);
   assert.equal(await page.locator('.linha-minha-demo').count(),1);
   assert.match(await page.locator('.linha-minha-demo .loop03-numero-titular')
    .innerText(),/^#\d+$/);
@@ -418,7 +433,6 @@ async function main(){
    .getAttribute('aria-label'),/minha posição/);
   assert.match(await page.locator('.linha-minha-demo').getAttribute('class'),/linha-minha-demo/);
   assert.equal(await page.locator('.linha-minha-demo .posicao-azul').count(),1);
-  await page.locator('.loop03-cabecalho-fila-b .loop03-abrir-fila').click();
   await page.screenshot({path:path.join(pasta,'escritorio-posicao-azul.png'),fullPage:true});
 
   await page.locator('#loop03Menu').click();
@@ -559,7 +573,7 @@ async function main(){
   await page.locator('#loop03Menu').click();
   await page.locator('#loop03Sidebar [data-loop03-aba="tabuleiro"]').click();
   await page.locator('.loop03-cabecalho-fila-a .loop03-abrir-fila').click();
-  assert.equal(await page.locator('.loop03-cabecalho-fila-a .loop03-abrir-fila').getAttribute('aria-expanded'),'true');
+  assert.equal(await page.locator('#mapaFilaAParticipante').evaluate(el=>document.activeElement===el),true);
   const promovida=page.locator('#mapaFilaAParticipante .loop03-linha-fila').filter({hasText:'#1'});
   assert.equal(await promovida.count(),1);
   assert.equal(await promovida.locator('.loop03-inicial-fila.loop03-a').innerText(),'A');
@@ -567,7 +581,6 @@ async function main(){
   assert.equal(await promovida.locator('.loop03-bonequinho-indicacoes').count(),1);
   assert.equal(await page.locator('#mapaFilaBParticipante .loop03-quantidade-a-direita').count(),0);
   await page.screenshot({path:path.join(pasta,'fila-a-contagem-posicao.png'),fullPage:true});
-  await page.locator('.loop03-cabecalho-fila-a .loop03-abrir-fila').click();
   // Quatro capturas REAIS da mesma conta ficticia e mesmo layout funcional.
   // Referencias PNG aprovadas sao arquivos separados, nao estas capturas.
   const ctxQuadros=await browser.newContext({
@@ -836,7 +849,8 @@ async function main(){
   await page.locator('#loop03PerfilNome').fill('Meu Perfil Personalizado');
   await page.locator('#loop03SalvarPerfil').click();
   await page.getByText(/Perfil atualizado e salvo com sucesso/).waitFor();
-  assert.equal(await page.locator('#loop03NomeBaixo').innerText(),'Meu Perfil Personalizado');
+  assert.equal(await page.locator('#loop03NomeBaixo').innerText(),'');
+  assert.equal(await page.locator('#loop03DadosPosicaoLateral').isVisible(),false);
   assert.equal(await page.locator('#loop03-perfil .loop03-foto-grande img').isVisible(),true);
   assert.equal(await page.locator('#loop03TotalAtivacoes').innerText(),posicoesAntesDoPerfil);
   for(const width of [320,360,390,412]){

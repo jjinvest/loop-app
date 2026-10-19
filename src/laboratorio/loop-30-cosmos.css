@@ -1591,3 +1591,31 @@ body.loop03-logado .portal-participante{position:relative;z-index:1}
  #loop03Shell .loop03-acoes-perfil{max-width:86px!important}
  #loop03Shell .loop03-boasvindas>div:nth-child(2) h2{font-size:clamp(.95rem,3.8vw,1.15rem)!important}
 }
+
+/* Rolagem nativa das listas reais no proprio Tabuleiro, nao sao modais. */
+#loop03-tabuleiro .loop03-mapa-grade>.bloco-fila-participante{
+ height:525px!important;max-height:525px!important;
+ overflow:hidden!important;display:flex!important;flex-direction:column!important;
+}
+#loop03-tabuleiro .loop03-mapa-grade>.bloco-fila-participante>.mapa-fila-posicoes-demo{
+ display:block!important;flex:1 1 auto!important;min-height:0!important;
+ overflow-x:hidden!important;overflow-y:auto!important;
+ overscroll-behavior-y:contain!important;touch-action:pan-y!important;
+ -webkit-overflow-scrolling:touch;
+ scrollbar-width:thin;scrollbar-color:#d7ae65 #152038;
+ padding:3px 2px!important;
+}
+#loop03-tabuleiro .loop03-mapa-grade>.bloco-fila-participante>.mapa-fila-posicoes-demo:focus-visible{
+ outline:2px solid #f5d78e!important;outline-offset:-2px!important;
+}
+#loop03-tabuleiro .loop03-mapa-grade>.bloco-fila-participante::after{
+ flex:0 1 160px!important;min-height:0!important;pointer-events:none!important;
+}
+@media(max-width:590px){
+ #loop03-tabuleiro .loop03-mapa-grade>.bloco-fila-participante{
+  height:245px!important;max-height:245px!important;min-height:0!important;
+ }
+ #loop03-tabuleiro .loop03-mapa-grade>.bloco-fila-participante::after{
+  flex:0 1 55px!important;min-height:0!important;
+ }
+}

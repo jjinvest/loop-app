@@ -267,33 +267,20 @@
     seta.textContent=letra==='A'?'»':'';
     seta.setAttribute('aria-hidden','true');
     h.classList.add('loop03-cabecalho-fila','loop03-cabecalho-fila-'+letra.toLowerCase());
-    // Cabecalho vira botao real, abrindo apenas os registros desta fila.
+    // A lista REAL fica visivel e rolavel neste mesmo painel.
+    // Clicar no cabecalho so poe foco na lista: jamais abre outra tela.
+    const lista=coluna.querySelector('.mapa-fila-posicoes-demo');
+    lista?.setAttribute('tabindex','0');
+    lista?.setAttribute('aria-label','Fila '+letra+': deslize para cima ou para baixo para percorrer');
     const abrirFila=document.createElement('button');
     abrirFila.type='button';
     abrirFila.className='loop03-abrir-fila';
-    abrirFila.setAttribute('aria-label','Abrir Fila '+letra+' completa');
-    abrirFila.setAttribute('aria-expanded','false');
+    abrirFila.setAttribute('aria-label','Percorrer Fila '+letra+' aqui no Tabuleiro');
     abrirFila.setAttribute('aria-controls',letra==='A'?'mapaFilaAParticipante':'mapaFilaBParticipante');
-    abrirFila.title='Abrir Fila '+letra+' completa';
+    abrirFila.title='Toque na Fila '+letra+' e deslize para percorrer';
     abrirFila.append(icone,tituloFila,seta);
     h.replaceChildren(abrirFila);
-    abrirFila.addEventListener('click',()=>{
-     const estavaAberta=coluna.classList.contains('loop03-fila-expandida');
-     for(const outra of [filaA,filaB]){
-      if(!outra)continue;
-      outra.classList.remove('loop03-fila-expandida');
-      const botao=outra.querySelector('.loop03-abrir-fila');
-      if(botao){
-       botao.setAttribute('aria-expanded','false');
-       botao.setAttribute('aria-label','Abrir '+(outra===filaA?'Fila A':'Fila B')+' completa');
-      }
-     }
-     if(!estavaAberta){
-      coluna.classList.add('loop03-fila-expandida');
-      abrirFila.setAttribute('aria-expanded','true');
-      abrirFila.setAttribute('aria-label','Fechar Fila '+letra+' completa');
-     }
-    });
+    abrirFila.addEventListener('click',()=>lista?.focus({preventScroll:true}));
     if(contador){
      contador.classList.add('loop03-contagem-rodape-fila');
      coluna.append(contador);
@@ -315,16 +302,6 @@
    }
    const contaB=e('contadorFilaBParticipante');
    if(contaB)contaB.hidden=true;
-   // Escape devolve o Tabuleiro ao tamanho normal.
-   document.addEventListener('keydown',evento=>{
-    if(evento.key!=='Escape')return;
-    const aberta=mapa.querySelector('.bloco-fila-participante.loop03-fila-expandida');
-    if(!aberta)return;
-    evento.preventDefault();
-    const abrir=aberta.querySelector('.loop03-abrir-fila');
-    abrir?.click();
-    abrir?.focus();
-   });
   }
   const posicoes=e('posicoesParticipante')?.closest('section.cartao-participante');
   const compras=e('pedidosParticipante')?.closest('section.cartao-participante');
