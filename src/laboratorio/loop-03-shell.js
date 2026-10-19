@@ -49,7 +49,22 @@
      <button class="loop03-hamburguer" id="loop03Menu" type="button" aria-expanded="false" aria-controls="loop03Sidebar" aria-label="Abrir menu">☰</button>
      <div><h2 id="loop03BoasVindas">Bem-vindo!</h2><p>Disciplina hoje, liberdade amanhã.</p></div>
      <div class="loop03-acoes-perfil">
-      <button class="loop03-sino" type="button" data-loop03-aba="home" title="Abrir comunicados do Escritório Virtual" aria-label="Abrir comunicados">♧</button>
+      <button class="loop03-sino" id="loop03NotificacoesBotao" type="button"
+       aria-haspopup="true" aria-expanded="false" aria-controls="loop03PainelNotificacoes"
+       title="Notificações" aria-label="Abrir notificações">
+       <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8"
+        stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">
+        <path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9"/>
+        <path d="M10 21h4"/>
+       </svg>
+      </button>
+      <div id="loop03PainelNotificacoes" class="loop03-painel-notificacoes" hidden
+       role="region" aria-label="Minhas notificações">
+       <div class="loop03-notificacoes-titulo"><strong>Notificações</strong>
+        <button type="button" id="loop03FecharNotificacoes" aria-label="Fechar notificações">×</button>
+       </div>
+       <div id="loop03ItensNotificacoes" aria-live="polite">Nenhuma notificação por enquanto.</div>
+      </div>
       <button data-loop03-aba="perfil" type="button" id="loop03PerfilTopo" aria-label="Abrir configurações do meu perfil">
        <span class="loop03-foto-topo" aria-hidden="true"><img class="loop03-foto-privada" alt="" hidden><span class="loop03-foto-padrao">👤</span></span>
        <span>Configurações</span><span aria-hidden="true">⚙</span>
@@ -366,11 +381,31 @@
   }
   e('loop03FormPerfil').addEventListener('submit',salvarPerfil);
   e('loop03FormSenha').addEventListener('submit',trocarSenha);
+  e('loop03NotificacoesBotao').addEventListener('click',()=>{
+   const abrirPainel=e('loop03PainelNotificacoes').hidden;
+   fecharNotificacoes();
+   if(abrirPainel){
+    e('loop03PainelNotificacoes').hidden=false;
+    e('loop03NotificacoesBotao').setAttribute('aria-expanded','true');
+    carregarNotificacoes();
+   }
+  });
+  e('loop03FecharNotificacoes').addEventListener('click',()=>fecharNotificacoes());
+  document.addEventListener('keydown',ev=>{
+   if(ev.key==='Escape'&&!e('loop03PainelNotificacoes').hidden)
+    fecharNotificacoes({retornarFoco:true});
+  });
+  document.addEventListener('click',ev=>{
+   const area=e('loop03PainelNotificacoes');
+   if(!area.hidden&&!area.contains(ev.target)&&
+    !e('loop03NotificacoesBotao').contains(ev.target))fecharNotificacoes();
+  });
   abrir('home');
   carregarPublicacoes();
  }
  function abrir(aba){
   if(!paginas.includes(aba))return;
+  fecharNotificacoes();
   const anterior=abaAtual;
   abaAtual=aba;
   for(const item of paginas)e('loop03-'+item).hidden=item!==aba;
@@ -763,6 +798,40 @@
    if(hash==='tituloHistoricoLojaParticipante'||hash==='secaoAtivacaoParticipante')abrir('posicoes');
   }
  }
+ function fecharNotificacoes({retornarFoco=false}={}){
+  const painel=e('loop03PainelNotificacoes');
+  if(!painel)return;
+  painel.hidden=true;
+  e('loop03NotificacoesBotao').setAttribute('aria-expanded','false');
+  if(retornarFoco)e('loop03NotificacoesBotao').focus();
+ }
+ async function carregarNotificacoes(){
+  const alvo=e('loop03ItensNotificacoes');
+  alvo.textContent='Consultando comunicados…';
+  try{
+   // Fonte real de comunicados do administrador, sem mensagens ou clientes fabricados.
+   const resp=await fetch('/api/laboratorio/loop03/publicacoes',{credentials:'same-origin',cache:'no-store'});
+   if(!resp.ok)throw Error('INDISPONIVEL');
+   const dados=await resp.json();
+   const publicacoes=Array.isArray(dados.publicacoes)?dados.publicacoes:[];
+   // Evitar resultado atrasado de pesquisa aparecer depois do logout.
+   if(!visaoAtual)return;
+   alvo.replaceChildren();
+   if(publicacoes.length===0){
+    alvo.textContent='Nenhuma notificação por enquanto.';
+    return;
+   }
+   for(const pub of publicacoes){
+    const item=document.createElement('article');
+    item.className='loop03-notificacao-item';
+    const titulo=document.createElement('strong');titulo.textContent=pub.titulo||'Comunicado';
+    const descricao=document.createElement('p');descricao.textContent=pub.descricao||'';
+    item.append(titulo,descricao);alvo.append(item);
+   }
+  }catch{
+   alvo.textContent='Não foi possível consultar as notificações agora.';
+  }
+ }
  async function carregarPublicacoes(){
   const target=e('loop03Publicacoes');
   try{
@@ -793,6 +862,7 @@
   }
  }
  function encerrar(){
+  fecharNotificacoes();
   document.body.classList.remove('loop03-logado');
   selecionada=null;visaoAtual=null;destinoInicialTratado=false;fotoPerfilAcao='MANTER';
   for(const img of document.querySelectorAll('#loop03Shell .loop03-foto-privada')){

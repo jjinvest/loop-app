@@ -105,6 +105,10 @@ async function main(){
   await telaFilasVazias.locator('#conteudoParticipante').waitFor({state:'visible'});
   await telaFilasVazias.locator('#loop03Sidebar [data-loop03-aba="tabuleiro"]').click();
   await telaFilasVazias.locator('#loop03-tabuleiro').waitFor({state:'visible'});
+  assert.equal(await telaFilasVazias.locator('#loop03NotificacoesBotao svg').count(),1);
+  await telaFilasVazias.locator('#loop03NotificacoesBotao').click();
+  await telaFilasVazias.locator('#loop03ItensNotificacoes').getByText(/Nenhuma notificação por enquanto/).waitFor();
+  await telaFilasVazias.locator('#loop03FecharNotificacoes').click();
   assert.equal(await telaFilasVazias.locator('#mapaFilaAParticipante li').count(),0);
   assert.equal(await telaFilasVazias.locator('#mapaFilaBParticipante li').count(),0);
   assert.equal(await telaFilasVazias.locator('#loop03TotalAtivacoes').innerText(),'0/6');
@@ -114,6 +118,10 @@ async function main(){
   await telaFilasVazias.screenshot({path:path.join(pasta,'TABULEIRO_FILAS_VAZIAS_SEM_PESSOAS.png'),fullPage:false});
   await telaFilasVazias.setViewportSize({width:390,height:812});
   await telaFilasVazias.waitForTimeout(100);
+  await telaFilasVazias.locator('#loop03NotificacoesBotao').click();
+  await telaFilasVazias.locator('#loop03ItensNotificacoes').getByText(/Nenhuma notificação por enquanto/).waitFor();
+  assert.equal(await telaFilasVazias.locator('#loop03PainelNotificacoes').isVisible(),true);
+  await telaFilasVazias.locator('#loop03FecharNotificacoes').click();
   assert.equal(await telaFilasVazias.locator('#loop03TotalAtivacoes').innerText(),'0/6');
   assert.match(await telaFilasVazias.locator('#loop03Saldo').innerText(),/^R\$\s*0,00$/);
   assert.equal(await telaFilasVazias.locator('#mapaFilaAParticipante li').count(),0);
@@ -209,7 +217,11 @@ async function main(){
   await page.locator('.loop03-indicadores [data-loop03-aba="tabuleiro"]').click();
   assert.equal(await page.locator('#loop03-tabuleiro').isVisible(),true);
   await page.locator('.loop03-sino').click();
-  assert.equal(await page.locator('#loop03-home').isVisible(),true);
+  assert.equal(await page.locator('#loop03PainelNotificacoes').isVisible(),true);
+  assert.equal(await page.locator('#loop03NotificacoesBotao').getAttribute('aria-expanded'),'true');
+  await page.locator('#loop03ItensNotificacoes').getByText(/Nenhuma notificação por enquanto/).waitFor();
+  await page.locator('#loop03FecharNotificacoes').click();
+  assert.equal(await page.locator('#loop03PainelNotificacoes').isVisible(),false);
   assert.match(await page.locator('#loop03RelogioCiclo').getAttribute('aria-label'),/Aguardando evento válido/);
   await page.locator('#loop03Menu').click();
   await page.locator('.loop03-sidebar [data-loop03-aba="tabuleiro"]').click();

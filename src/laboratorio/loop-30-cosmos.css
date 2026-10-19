@@ -1481,3 +1481,44 @@ body.loop03-logado .portal-participante{position:relative;z-index:1}
   display:block;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
  }
 }
+
+/* Sininho e notificacoes verdadeiras - componente adaptavel ao desktop/celular. */
+#loop03Shell .loop03-acoes-perfil{position:relative}
+#loop03Shell #loop03NotificacoesBotao{
+ display:grid!important;place-items:center!important;flex:0 0 auto;
+ width:42px;height:42px;padding:8px!important;color:#f7dc99;
+}
+#loop03Shell #loop03NotificacoesBotao svg{display:block;width:21px;height:21px;pointer-events:none}
+#loop03Shell #loop03NotificacoesBotao:focus-visible,
+#loop03Shell #loop03FecharNotificacoes:focus-visible{
+ outline:2px solid #ffdc8b;outline-offset:3px;
+}
+#loop03Shell .loop03-painel-notificacoes{
+ position:absolute;right:0;top:calc(100% + 10px);
+ width:min(340px,calc(100vw - 25px));max-height:min(460px,62vh);overflow:auto;
+ padding:15px;background:#111725;border:1px solid #d4aa65;border-radius:15px;
+ box-shadow:0 12px 38px #000c,0 0 22px #d9b06633;
+ z-index:100;color:#f8e5c5;
+}
+#loop03Shell .loop03-painel-notificacoes[hidden]{display:none!important}
+#loop03Shell .loop03-notificacoes-titulo{
+ display:flex;align-items:center;justify-content:space-between;gap:12px;
+ padding-bottom:11px;border-bottom:1px solid #755e46;
+}
+#loop03Shell .loop03-notificacoes-titulo strong{font-size:1.02rem}
+#loop03Shell #loop03FecharNotificacoes{
+ background:#222a39;border:1px solid #b18e59;border-radius:9px;
+ color:#ffdfa0;font-size:1.25rem;line-height:1;min-width:34px;min-height:34px;
+ cursor:pointer;
+}
+#loop03Shell #loop03ItensNotificacoes{
+ margin-top:12px;color:#d3d4d9;font-size:.87rem;line-height:1.45;
+}
+#loop03Shell .loop03-notificacao-item{padding:11px 0;border-bottom:1px solid #5e5141}
+#loop03Shell .loop03-notificacao-item strong{display:block;color:#ffdf96}
+#loop03Shell .loop03-notificacao-item p{margin:5px 0 0}
+@media(max-width:520px){
+ #loop03Shell #loop03NotificacoesBotao{width:30px;height:34px;padding:4px!important}
+ #loop03Shell #loop03NotificacoesBotao svg{width:18px;height:18px}
+ #loop03Shell .loop03-painel-notificacoes{right:-2px;top:calc(100% + 8px)}
+}
