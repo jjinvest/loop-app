@@ -221,6 +221,8 @@ async function main(){
   const botaoFilaB=page.locator('.loop03-cabecalho-fila-b .loop03-abrir-fila');
   await botaoFilaA.click();
   assert.equal(await botaoFilaA.getAttribute('aria-expanded'),'true');
+  assert.ok(await page.locator('.loop03-fila-expandida').evaluate(p=>p.getBoundingClientRect().height>=300),
+   'Fila A ampliada precisa ter altura suficiente mesmo sem pessoas');
   await page.screenshot({
    path:path.join(pasta,'TABULEIRO_CELULAR_FILA_A_ABERTA_REAL.png'),
    fullPage:false
@@ -230,6 +232,8 @@ async function main(){
   assert.equal(await botaoFilaA.getAttribute('aria-expanded'),'false');
   await botaoFilaB.click();
   assert.equal(await botaoFilaB.getAttribute('aria-expanded'),'true');
+  assert.ok(await page.locator('.loop03-fila-expandida').evaluate(p=>p.getBoundingClientRect().height>=300),
+   'Fila B ampliada precisa ter altura suficiente mesmo sem pessoas');
   await page.screenshot({
    path:path.join(pasta,'TABULEIRO_CELULAR_FILA_B_ABERTA_REAL.png'),
    fullPage:false
