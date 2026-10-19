@@ -190,21 +190,59 @@ async function main(){
   assert.equal(await page.locator('.controle-mapa-participante').count(),0);
   assert.equal(await page.locator('#loop03EscolherNoTabuleiro').count(),0);
   assert.equal(await page.locator('#loop03EscolhaTexto').count(),0);
+  // Medição real do DOM no celular: A e B aparecem NA MESMA LINHA,
+  // não empilhadas; o Tabuleiro continua abaixo com 7 posições verdadeiras.
+  const medirFilas=async()=>page.evaluate(()=>{
+   const box=selector=>{
+    const r=document.querySelector(selector).getBoundingClientRect();
+    return {x:r.x,y:r.y,width:r.width,height:r.height,bottom:r.bottom};
+   };
+   return {
+    a:box('#loop03-tabuleiro .bloco-fila-participante:first-child'),
+    b:box('#loop03-tabuleiro .bloco-fila-participante:last-child'),
+    roda:box('#loop03-tabuleiro .loop03-roda')
+   };
+  });
+  const confirmarLadoALado=async largura=>{
+   const dim=await medirFilas();
+   assert.ok(Math.abs(dim.a.y-dim.b.y)<=3,
+    'Fila A/B lado a lado '+largura+'px: '+JSON.stringify(dim));
+   assert.ok(dim.a.x+dim.a.width<=dim.b.x+3,
+    'Fila A deve ficar à esquerda da B '+largura+'px');
+   assert.ok(dim.roda.y>=Math.max(dim.a.bottom,dim.b.bottom)-3,
+    'Tabuleiro deve seguir abaixo das duas filas '+largura+'px');
+  };
+  await confirmarLadoALado(390);
+  await page.screenshot({
+   path:path.join(pasta,'TABULEIRO_CELULAR_FILAS_LADO_A_LADO_REAL.png'),
+   fullPage:true
+  });
   const botaoFilaA=page.locator('.loop03-cabecalho-fila-a .loop03-abrir-fila');
   const botaoFilaB=page.locator('.loop03-cabecalho-fila-b .loop03-abrir-fila');
   await botaoFilaA.click();
   assert.equal(await botaoFilaA.getAttribute('aria-expanded'),'true');
+  await page.screenshot({
+   path:path.join(pasta,'TABULEIRO_CELULAR_FILA_A_ABERTA_REAL.png'),
+   fullPage:false
+  });
   assert.equal(await page.locator('.loop03-fila-expandida').count(),1);
   await page.keyboard.press('Escape');
   assert.equal(await botaoFilaA.getAttribute('aria-expanded'),'false');
   await botaoFilaB.click();
   assert.equal(await botaoFilaB.getAttribute('aria-expanded'),'true');
+  await page.screenshot({
+   path:path.join(pasta,'TABULEIRO_CELULAR_FILA_B_ABERTA_REAL.png'),
+   fullPage:false
+  });
   await botaoFilaB.click();
   assert.equal(await botaoFilaB.getAttribute('aria-expanded'),'false');
   await page.locator('.painel-tabuleiro-imersivo').screenshot({
    path:path.join(pasta,'tabuleiro-escritorio-mobile.png')
   });
-  for(const width of [320,360,390,412])await validarViewport(page,width,'escritorio');
+  for(const width of [320,360,390,412]){
+   await validarViewport(page,width,'escritorio');
+   await confirmarLadoALado(width);
+  }
 
   // O ADMIN escolhe explicitamente as tres categorias antes de abrir a vitrine.
   const cabShop={'Content-Type':'application/json',Authorization:'Bearer '+admin};
