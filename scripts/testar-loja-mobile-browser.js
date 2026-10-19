@@ -498,6 +498,12 @@ async function main(){
    await page.locator('#loop03Menu').click();
   assert.equal(await page.locator('#loop03Sidebar').evaluate(el=>el.classList.contains('loop03-aberto')),true,
    'Captura deve mostrar menu lateral realmente aberto no celular');
+  // Aguardar a transicao CSS: class aberta antes do fim do deslizamento.
+  await page.waitForFunction(()=>{
+   const sidebar=document.getElementById('loop03Sidebar');
+   const bounds=sidebar?.getBoundingClientRect();
+   return bounds&&bounds.left>=-2&&bounds.right>=180;
+  },null,{timeout:5000});
   assert.equal(await page.locator('.loop03-vitrine-lateral').getAttribute('href'),'/loja');
   assert.equal(await page.locator('#loop03VitrineFoto').isVisible(),false,
    'Sem oferta real aprovada, vitrine nao exibe produto demonstrativo');
