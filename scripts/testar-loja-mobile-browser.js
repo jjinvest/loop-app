@@ -1033,6 +1033,139 @@ async function main(){
   assert.equal(await paginaSenha.locator('#loop03TotalAtivacoes').innerText(),'0/6');
   await contextoSenha.close();
 
+
+  // Prova FINAL da catraca ocupada no MOTOR REAL do laboratorio:
+  // 7 pedidos confirmados e posicoes individuais ativadas em SQLite.
+  // Sem colocar numeros ou participantes artificiais no DOM/screenshot.
+  const {PonteComprasConvitesDemoSQLite}=require('../src/domain/ponte-compras-convites-demo-sqlite');
+  const {AdesoesPosicoesDemoSQLite}=require('../src/domain/adesoes-posicoes-demo-sqlite');
+  const ponteCaptura=new PonteComprasConvitesDemoSQLite({
+   banco:banco.banco,contas,atribuicaoManualPorPosicao:true,
+   consultarPagamentoConfiavel:async()=>null
+  });
+  const adesoesCaptura=new AdesoesPosicoesDemoSQLite({ponte:ponteCaptura});
+  const cpfDeTeste=base=>{
+   const dv=(valor,n)=>{
+    const soma=[...valor].slice(0,n).reduce((a,d,i)=>a+Number(d)*(n+1-i),0);
+    const mod=(soma*10)%11;return mod===10?0:mod;
+   };
+   const d1=dv(base,9),d2=dv(base+String(d1),10);
+   return base+String(d1)+String(d2);
+  };
+  const contasDaCatraca=[];
+  for(let i=0;i<4;i++){
+   const conta=contas.cadastrar({
+    nome:'Participante Ficticio Catraca '+(i+4),
+    email:'catraca-'+i+'@exemplo.invalid',senha
+   });
+   contasDaCatraca.push(conta);
+   const pedidoId='pedido-ocupacao-catraca-'+i;
+   const venda=await fetch(base+'/api/admin/carrinho-loop-demo',{
+    method:'POST',headers:cabAdmin,
+    body:JSON.stringify({pedidoId,contaId:conta.contaId,
+     itens:[{produtoId:'curso-mobile-100',quantidade:1},
+      {produtoId:'curso-mobile-150',quantidade:1}]})
+   });
+   assert.equal(venda.status,201,'Pedido de teste da catraca '+i+': '+await venda.text());
+   const confirmacao=await fetch(base+'/api/admin/carrinho-loop-demo/'+pedidoId+'/eventos',{
+    method:'POST',headers:cabAdmin,
+    body:JSON.stringify({eventoId:'confirmar-catraca-'+i,tipo:'CONFIRMAR_FICTICIO'})
+   });
+   assert.equal(confirmacao.status,200,'Confirmacao de teste '+i+': '+await confirmacao.text());
+   const sim=ponteCaptura._restaurar();
+   const posicao=sim.filas.filaB.find(p=>p.participanteId===conta.contaId);
+   assert.ok(posicao&&posicao.statusAdesao==='PENDENTE','Nova posicao azul antes do aceite');
+   const ativada=adesoesCaptura.ativar({
+    contaId:conta.contaId,posicaoId:posicao.id,
+    cpfFicticio:cpfDeTeste(String(260000000+i).padStart(9,'0')),
+    aceitaTermos:true,versaoTermos:'LOOP-DEMO-V1'
+   });
+   assert.deepEqual(ativada.posicoesIds,[posicao.id]);
+  }
+  const respostaTabuleiro=await fetch(base+
+   '/api/admin/ponte-compras-convites-demo/preparar-tabuleiro',{
+   method:'POST',headers:cabAdmin,body:'{}'
+  });
+  assert.equal(respostaTabuleiro.status,200,
+   'Preparar catraca usando o motor persistido: '+await respostaTabuleiro.text());
+  const estadoReal=ponteCaptura._restaurar();
+  assert.ok(estadoReal.tabuleiro.centro,'Motor criou o centro com posicao confirmada');
+  assert.equal(estadoReal.tabuleiro.vagas.length,6);
+  assert.ok(estadoReal.tabuleiro.vagas.every(p=>p&&p.statusAdesao==='ATIVA'&&p.empresa!==true),
+   'Seis esferas ocupadas, sem azuis/douradas forjadas');
+  const ocupacaoCores=async ({conta,largura,celular,nomeArquivo})=>{
+   const ctx=await browser.newContext({
+    viewport:{width:largura,height:celular?812:1254},deviceScaleFactor:1,
+    isMobile:celular,hasTouch:celular
+   });
+   const q=await ctx.newPage();
+   q.on('pageerror',err=>erros.push('catraca ocupada '+nomeArquivo+': '+err.message));
+   await q.goto(base+'/laboratorio/participante',{waitUntil:'networkidle'});
+   await q.locator('#nomeParticipante').fill(conta.nome);
+   await q.locator('#senhaParticipante').fill(senha);
+   await q.locator('#botaoEntrarParticipante').click();
+   await q.locator('#conteudoParticipante').waitFor({state:'visible'});
+   if(celular)await q.locator('#loop03Menu').click();
+   await q.locator('#loop03Sidebar [data-loop03-aba="tabuleiro"]').click();
+   await q.locator('#loop03-tabuleiro').waitFor({state:'visible'});
+   await q.locator('#loop03AbrirEscolhaPosicao').click();
+   await q.locator('#loop03ListaEscolha button').first().click();
+   const modelo=await q.evaluate(()=>{
+    const centro=document.querySelector('#loop03-tabuleiro .tabuleiro-centro');
+    const resultado={vagas:[],centro:{
+     id:centro.querySelector('.loop03-ocupante-identidade .selo-posicao-demo')?.textContent,
+     nome:centro.querySelector('.loop03-nome-na-bola')?.textContent||'',
+     cor:getComputedStyle(centro.querySelector('.loop03-ocupante-identidade')).color
+    }};
+    for(let i=1;i<=6;i++){
+     const esfera=document.querySelector('#loop03-tabuleiro .tabuleiro-vaga-'+i);
+     const ocupante=esfera.querySelector('.loop03-ocupante-identidade');
+     resultado.vagas.push({
+      indice:getComputedStyle(esfera,'::before').content,
+      id:ocupante?.querySelector('.selo-posicao-demo')?.textContent,
+      cor:ocupante?getComputedStyle(ocupante).color:null,
+      nome:ocupante?.querySelector('.loop03-nome-na-bola')?.textContent||''
+     });
+    }
+    return resultado;
+   });
+   assert.deepEqual(modelo.vagas.map(x=>x.indice),
+    ['"1"','"2"','"3"','"4"','"5"','"6"'],
+    'Os numeros fixos 1..6 devem continuar visiveis acima dos #IDs');
+   assert.ok(modelo.vagas.every(x=>/^#\d+$/.test(x.id||'')),
+    'Todas as vagas ocupadas por identificadores reais do motor');
+   assert.equal(modelo.vagas[5].cor,'rgb(255, 255, 255)',
+    'Vaga 6 vermelha com texto branco');
+   assert.ok(modelo.vagas.slice(0,5).every(x=>x.cor==='rgb(16, 23, 36)'),
+    'Vagas brancas com texto preto');
+   assert.equal(modelo.centro.cor,'rgb(255, 255, 255)',
+    'Centro verde com texto branco');
+   assert.equal(await q.locator('#loop03CoroaVisor').isVisible(),true);
+   assert.equal(await q.locator('#loop03CoroaTabuleiro').isVisible(),true);
+   assert.equal(await q.locator('#loop03LetraFila').isVisible(),false);
+   await conferirLargura(q,largura,'catraca-preenchida-'+nomeArquivo,{captura:false});
+   await q.screenshot({path:path.join(pasta,nomeArquivo),fullPage:true});
+   await ctx.close();
+   return modelo;
+  };
+  const fotoCentroPc=await ocupacaoCores({
+   conta:titular,largura:1254,celular:false,
+   nomeArquivo:'TABULEIRO_OCUPADO_MOTOR_REAL_COMPUTADOR_1254.png'
+  });
+  const fotoCentroCel=await ocupacaoCores({
+   conta:titular,largura:390,celular:true,
+   nomeArquivo:'TABULEIRO_OCUPADO_MOTOR_REAL_CELULAR_390.png'
+  });
+  assert.deepEqual(fotoCentroPc,fotoCentroCel,'Mesmos dados do motor no PC e celular');
+  // A mesma vaga vermelha com NOME DO TITULAR (somente ao proprio titular);
+  // nao se publica nome de outra pessoa sem politica e consentimento.
+  const fotoVermelha=await ocupacaoCores({
+   conta:contasDaCatraca[3],largura:1254,celular:false,
+   nomeArquivo:'TABULEIRO_VERMELHO_IDENTIFICADO_REAL_COMPUTADOR.png'
+  });
+  assert.ok(fotoVermelha.vagas[5].nome.startsWith('Participante Ficticio Catraca'),
+   'A pessoa ve seu proprio nome dentro da bolinha vermelha');
+
   assert.deepEqual(erros,[], 'Erros de execucao no navegador');
   const relatorio={status:'APROVADO',
    tamanhosPx:[320,360,390,412,768,1024,1366],

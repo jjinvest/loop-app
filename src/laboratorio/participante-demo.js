@@ -254,8 +254,12 @@
    titulo.textContent=rotulo;
    bloco.append(titulo);
    if(valor?.cor==='DOURADO'){
-    // Esfera dourada SEM NOME, #ID, foto, texto livre ou atribuicao visual.
-    // A titularidade ja foi transferida/assumida pelo LOOP nas regras do motor.
+    // A marca visual, SEM QUALQUER TEXTO pessoal, aciona o estilo dourado.
+    // Nao exibir identificador pessoal da posicao assumida pelo LOOP.
+    const dourada=document.createElement('span');
+    dourada.className='selo-posicao-demo posicao-dourado loop03-dourada-sem-identidade';
+    dourada.hidden=true;dourada.setAttribute('aria-hidden','true');
+    bloco.append(dourada);
    }else if(valor){
     const identificacao=document.createElement('span');
     identificacao.className='loop03-ocupante-identidade';
