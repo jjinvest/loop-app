@@ -110,6 +110,14 @@
     </div>
    </div>`;
   shell.prepend(shell.querySelector('.loop03-banner-topo'));
+  // A area inferior aprovada e uma unica faixa de identidade. O logout continua
+  // um botao REAL e acessivel, sem criar um painel/perfil duplicado na lateral.
+  const identidade=shell.querySelector('.loop03-identidade');
+  const sair=shell.querySelector('#loop03Sair');
+  sair.textContent='⏻';
+  sair.setAttribute('aria-label','Sair da conta de teste');
+  sair.title='Sair da conta de teste';
+  identidade.append(sair);
   root.prepend(shell);
   // Reaproveita as telas e operacoes existentes, sem duplicar IDs ou formularios.
   const mover=(selector,pagina)=>{
