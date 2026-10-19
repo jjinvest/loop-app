@@ -228,7 +228,7 @@
  }
  window.setInterval(renderizarRelogioCiclo,1000);
 
- function mostrarMapa(mapa){
+ function mostrarMapa(mapa,nomeTitular){
   mapaAtual=mapa;
   atualizarRelogioCiclo(mapa);
   renderizarFila(mapa.filaA,'mapaFilaAParticipante','contadorFilaAParticipante','Fila A');
@@ -247,11 +247,28 @@
    const bloco=document.createElement('div');
    bloco.className='espaco-tabuleiro-demo tabuleiro-'+classe+
     (valor?.minha?' espaco-meu-tabuleiro-demo':'');
+   // Os indices 1..6 designam VAGAS fixas; o #ID que gira e separado.
+   if(classe.startsWith('vaga-'))bloco.dataset.vagaNumero=classe.slice(5);
    const titulo=document.createElement('strong');
    titulo.className='titulo-espaco-tabuleiro-demo';
    titulo.textContent=rotulo;
    bloco.append(titulo);
-   if(valor)bloco.append(elementoPosicao(valor,'Número'));
+   if(valor){
+    const identificacao=document.createElement('span');
+    identificacao.className='loop03-ocupante-identidade';
+    const numero=elementoPosicao(valor,'Número');
+    numero.textContent='#'+valor.posicaoId;
+    identificacao.append(numero);
+    // O nome pessoal so aparece para o titular autenticado. Nomes de
+    // terceiros NAO sao fornecidos pelo snapshot publico do motor.
+    if(valor.minha&&typeof nomeTitular==='string'&&nomeTitular.trim()){
+     const nome=document.createElement('span');
+     nome.className='loop03-nome-na-bola';
+     nome.textContent=nomeTitular.trim();
+     identificacao.append(nome);
+    }
+    bloco.append(identificacao);
+   }
    // Visual do cliente: somente identificador; nomes de terceiros sao privados.
    else{
     const vazio=document.createElement('span');
@@ -419,7 +436,7 @@
   e('pendentesParticipante').textContent=visao.indicacoes.cadastrosPendentes;
   lista('posicoesParticipante',visao.posicoes,p=>'Posição '+p.posicaoId+' — '+
    p.local.replace('_',' ')+' — '+(p.statusAdesao==='PENDENTE'?'aguardando ativação':'ativada'));
-  if(visao.mapaCores)mostrarMapa(visao.mapaCores);
+  if(visao.mapaCores)mostrarMapa(visao.mapaCores,visao.perfil?.nome||visao.conta?.nome||'');
   const temAzul=visao.posicoes.some(p=>p.statusAdesao==='PENDENTE');
   const cpfTermosConfirmados=visao.adesao?.cpfConfirmadoNoTeste===true;
   cpfConfirmadoAtual=cpfTermosConfirmados;

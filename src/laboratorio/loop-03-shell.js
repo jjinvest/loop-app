@@ -77,6 +77,7 @@
      <div id="loop03IndicadorGiros" class="loop03-indicador loop03-visor-passivo" aria-label="Visor de giros concluídos nas últimas 24 horas"><small>◷ GIROS</small><strong id="loop03Giros24">—</strong><span>Giros concluídos nas últimas 24 horas</span></div>
      <div id="loop03VisorNumero" class="loop03-indicador loop03-visor-passivo loop03-visor-numero" aria-label="Número da posição selecionada, somente leitura">
        <span id="loop03LetraFila" class="loop03-visor-letra" hidden></span>
+       <span id="loop03CoroaVisor" class="loop03-visor-coroa" aria-label="Posição dentro da catraca" hidden>♛</span>
        <strong id="loop03Numero">#0000</strong>
        <span id="loop03IndicePosicao" class="loop03-visor-fracao">0/6</span>
        <span id="loop03NumeroDetalhe" class="loop03-visualmente-oculto">Nenhuma posição selecionada</span>
@@ -695,10 +696,13 @@
   selo.hidden=!letra;
   selo.classList.toggle('loop03-visor-letra-a',letra==='A');
   selo.classList.toggle('loop03-visor-letra-b',letra==='B');
+  const dentroDaCatraca=!!p&&/^(?:VAGA_[1-6]|CENTRO)$/.test(local);
+  e('loop03CoroaVisor').hidden=!dentroDaCatraca;
   e('loop03VisorNumero').setAttribute('aria-label',!p?
    'Nenhuma posição escolhida, '+fracao+'; visor de somente leitura':
    'Posição '+numero+' de '+valido+', número '+p.posicaoId+
-   (letra?', Fila '+letra:'')+'; visor de somente leitura');
+   (letra?', Fila '+letra:dentroDaCatraca?', dentro da catraca':'')+
+   '; visor de somente leitura');
  }
  function selecionar(p,abrirTabuleiro=false){
   selecionada=p.posicaoId;

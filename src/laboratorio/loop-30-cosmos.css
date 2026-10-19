@@ -1827,3 +1827,86 @@ body.loop03-logado .portal-participante{position:relative;z-index:1}
   margin-right:1px!important;
  }
 }
+
+
+/* V6 - Identidade do ocupante em cada esfera: nunca trocar a vaga fixa
+   pelo #ID, e nunca editar posicao/fila/motor para efeito de UI. */
+#loop03-tabuleiro .loop03-roda .mapa-tabuleiro-posicoes-demo>.espaco-tabuleiro-demo{
+ position:absolute!important;
+ padding:clamp(3px,.55vw,7px) 3px!important;
+}
+#loop03-tabuleiro .loop03-roda .espaco-tabuleiro-demo:not(.tabuleiro-centro)::before{
+ position:absolute!important;
+ top:clamp(4px,8%,12px)!important;
+ left:50%!important;transform:translateX(-50%)!important;
+ width:auto!important;height:auto!important;z-index:2!important;
+ line-height:1!important;
+}
+/* Regra antiga que apagava 1..6 ao inserir ocupante foi REVOGADA. */
+#loop03-tabuleiro .loop03-roda .espaco-tabuleiro-demo:not(.tabuleiro-centro):has(.loop03-ocupante-identidade)::before{
+ content:attr(data-vaga-numero)!important;
+}
+#loop03-tabuleiro .loop03-roda .loop03-ocupante-identidade{
+ display:flex!important;position:relative!important;
+ flex-direction:column!important;align-items:center!important;justify-content:center!important;
+ min-width:0!important;width:94%!important;max-width:94%!important;
+ gap:clamp(1px,.23vw,3px)!important;
+ margin-top:clamp(10px,2.0vw,22px)!important;
+ overflow:hidden!important;
+ color:#111827!important;text-shadow:none!important;
+}
+#loop03-tabuleiro .loop03-roda .loop03-ocupante-identidade>.selo-posicao-demo{
+ display:block!important;
+ width:100%!important;max-width:100%!important;
+ min-height:0!important;
+ color:inherit!important;text-shadow:none!important;
+ font-size:clamp(.48rem,1.1vw,.88rem)!important;
+ font-weight:900!important;line-height:1.04!important;
+ white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis!important;
+ text-align:center!important;
+}
+#loop03-tabuleiro .loop03-roda .loop03-nome-na-bola{
+ display:block!important;max-width:100%!important;width:100%!important;
+ min-width:0!important;overflow:hidden!important;
+ text-overflow:ellipsis!important;white-space:nowrap!important;
+ font-size:clamp(.34rem,.72vw,.62rem)!important;
+ font-weight:750!important;line-height:1.15!important;
+ text-align:center!important;color:inherit!important;
+}
+/* Esfera vermelha (vaga 6): branco. Esferas brancas: preto.
+   Centro verde: branco. Nao alterar a cor das superficies ou o indice da vaga. */
+#loop03-tabuleiro .loop03-roda .tabuleiro-vaga-6:not(:has(.posicao-dourado)) .loop03-ocupante-identidade,
+#loop03-tabuleiro .loop03-roda .tabuleiro-centro:not(:has(.posicao-dourado)) .loop03-ocupante-identidade{
+ color:#fff!important;
+ text-shadow:0 1px 2px #081516b8!important;
+}
+#loop03-tabuleiro .loop03-roda .espaco-tabuleiro-demo:not(.tabuleiro-vaga-6):not(.tabuleiro-centro):not(:has(.posicao-dourado)) .loop03-ocupante-identidade{
+ color:#101724!important;text-shadow:none!important;
+}
+/* O dourado pertence a outra regra, nunca eh convertido para red/green. */
+#loop03-tabuleiro .loop03-roda .espaco-tabuleiro-demo:has(.posicao-dourado) .loop03-ocupante-identidade{
+ color:#50300a!important;
+}
+/* Coroa no visor superior e no rodape dependem do mesmo status real. */
+#loop03Shell #loop03CoroaVisor[hidden]{display:none!important}
+#loop03Shell #loop03CoroaVisor{
+ display:inline-flex!important;align-items:center!important;justify-content:center!important;
+ grid-row:1!important;justify-self:start!important;align-self:start!important;
+ color:#ffe28d!important;font-size:clamp(1.05rem,1.7vw,1.42rem)!important;
+ line-height:1!important;text-shadow:0 0 8px #f5bc66bd!important;
+}
+@media(max-width:590px){
+ #loop03-tabuleiro .loop03-roda .loop03-ocupante-identidade{
+  margin-top:clamp(8px,2.1vw,11px)!important;gap:0!important;
+ }
+ #loop03-tabuleiro .loop03-roda .loop03-ocupante-identidade>.selo-posicao-demo{
+  font-size:clamp(.35rem,1.65vw,.6rem)!important;
+ }
+ #loop03-tabuleiro .loop03-roda .loop03-nome-na-bola{
+  font-size:clamp(.3rem,1.38vw,.46rem)!important;
+ }
+ #loop03-tabuleiro .loop03-roda .espaco-tabuleiro-demo:not(.tabuleiro-centro)::before{
+  top:clamp(2px,6%,6px)!important;
+ }
+ #loop03Shell #loop03CoroaVisor{font-size:.88rem!important}
+}

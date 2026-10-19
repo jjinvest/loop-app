@@ -228,6 +228,33 @@ async function main(){
   assert.equal(await page.locator('#loop03IndicadorGiros').evaluate(el=>el.tagName),'DIV');
   assert.equal(await page.locator('#loop03IndicePosicao').innerText(),'0/6');
   assert.equal(await page.locator('#loop03LetraFila').isVisible(),false);
+  assert.equal(await page.locator('#loop03CoroaVisor').isVisible(),false);
+  assert.equal(await page.locator('#loop03CoroaTabuleiro').isVisible(),false);
+  // O numero da vaga fixa nao pode desaparecer quando a posicao for ocupada.
+  // Somente no DOM de teste, sem fabricar clientes, pagamentos ou prints.
+  const cores=await page.evaluate(()=>{
+   const resultado={};
+   for(const [classe,local,nome] of [['vermelha','tabuleiro-vaga-6','6'],['branca','tabuleiro-vaga-1','1'],['verde','tabuleiro-centro',null]]){
+    const esfera=document.querySelector('#loop03-tabuleiro .'+local);
+    const wrap=document.createElement('span');
+    wrap.className='loop03-ocupante-identidade';
+    const num=document.createElement('span');
+    num.className='selo-posicao-demo';num.textContent='#TESTE';
+    wrap.append(num);
+    esfera.append(wrap);
+    const estilo=getComputedStyle(wrap);
+    const cor=estilo.color;
+    const numeroFixo=nome===null?null:getComputedStyle(esfera,'::before').content;
+    wrap.remove();
+    resultado[classe]={cor,numeroFixo};
+   }
+   return resultado;
+  });
+  assert.equal(cores.vermelha.cor,'rgb(255, 255, 255)');
+  assert.equal(cores.vermelha.numeroFixo,'"6"');
+  assert.equal(cores.branca.cor,'rgb(16, 23, 36)');
+  assert.equal(cores.branca.numeroFixo,'"1"');
+  assert.equal(cores.verde.cor,'rgb(255, 255, 255)');
   // FINANCEIRO do cabecalho e visor, nao e um botao.
   assert.equal(await page.locator('#loop03IndicadorFinanceiro').evaluate(el=>el.tagName),'DIV');
   assert.equal(await page.locator('#loop03DetalheIndicador').isVisible(),false);
@@ -453,6 +480,7 @@ async function main(){
   assert.equal(await page.locator('#loop03TotalAtivacoes').innerText(),'1/6');
   assert.equal(await page.locator('#loop03Numero').innerText(),'#1');
   assert.equal(await page.locator('#loop03IndicePosicao').innerText(),'1/6');
+  assert.equal(await page.locator('#loop03CoroaVisor').isVisible(),false);
   // Acompanhamento no tabuleiro: a selecao abre por cima e nao troca a aba.
   await page.locator('#loop03Menu').click();
   await page.locator('#loop03Sidebar [data-loop03-aba="tabuleiro"]').click();
@@ -610,6 +638,7 @@ async function main(){
   await page.locator('#loop03AbrirEscolhaPosicao').click();
   await page.locator('#loop03ListaEscolha button').first().click();
   assert.equal(await page.locator('#loop03LetraFila').innerText(),'A');
+  assert.equal(await page.locator('#loop03CoroaVisor').isVisible(),false);
   assert.equal(await page.locator('#loop03IndicePosicao').innerText(),'1/6');
   assert.equal(await page.locator('#mapaFilaBParticipante .loop03-quantidade-a-direita').count(),0);
   // Regressao visual: apos clicar na fila e escolher uma posicao, o container
