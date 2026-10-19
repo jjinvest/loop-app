@@ -114,7 +114,14 @@
   if(resumo){
    const links=resumo.querySelector('.area-indicacoes-participante');
    const bonus=resumo.querySelector('.area-bonus-participante');
-   if(links)e('loop03-rede').append(links);
+   if(links){
+    const util=document.createElement('details');
+    util.className='loop03-rede-ferramentas';
+    const sum=document.createElement('summary');
+    sum.textContent='Meus links e ferramentas de indicação';
+    util.append(sum,links);
+    e('loop03-rede').append(util);
+   }
    if(bonus)e('loop03-financeiro').append(bonus);
    e('loop03-posicoes').append(resumo);
   }
