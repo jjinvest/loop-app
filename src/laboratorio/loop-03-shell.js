@@ -265,12 +265,17 @@
  }
  function abrir(aba){
   if(!paginas.includes(aba))return;
+  const anterior=abaAtual;
   abaAtual=aba;
   for(const item of paginas)e('loop03-'+item).hidden=item!==aba;
   for(const b of document.querySelectorAll('[data-loop03-aba]'))
    b.setAttribute('aria-current',b.dataset.loop03Aba===aba?'page':'false');
   e('loop03Sidebar').classList.remove('loop03-aberto');
   e('loop03Menu').setAttribute('aria-expanded','false');
+  // Ao abrir o Tabuleiro, buscar o estado verdadeiro mais recente da sessao.
+  // Consulta nao dispara movimentos e nao comanda a catraca.
+  if(aba==='tabuleiro'&&anterior!==aba&&visaoAtual)
+   Promise.resolve().then(()=>window.LoopParticipanteAtualizar?.());
  }
  function statusPosicao(p){
   const l=p.local||'';
@@ -550,6 +555,13 @@
   }
  }
  function encerrar(){document.body.classList.remove('loop03-logado');selecionada=null;visaoAtual=null;destinoInicialTratado=false;abrir('home');}
+ // Se outra conta movimentar a catraca no servidor local, a tela aberta
+ // recebe novos IDs/vagas. A consulta nunca cria eventos ou saldo.
+ window.setInterval(()=>{
+  if(abaAtual==='tabuleiro'&&visaoAtual&&
+   !e('conteudoParticipante')?.hidden&&!document.hidden)
+   window.LoopParticipanteAtualizar?.();
+ },30000);
  window.Loop03Shell={montar,atualizar,encerrar,abrir,destacarPosicoes,
   posicaoSelecionada:()=>selecionada};
  montar();
