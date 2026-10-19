@@ -224,9 +224,15 @@ async function main(){
   await page.locator('#loop03AbrirEscolhaNumero').click();
   assert.equal(await page.locator('#loop03SeletorPosicao').isVisible(),true);
   await page.locator('#loop03FecharEscolha').click();
-  await page.locator('.loop03-indicadores [data-loop03-aba="financeiro"]').click();
-  assert.equal(await page.locator('#loop03-financeiro').isVisible(),true);
-  await page.locator('.loop03-indicadores [data-loop03-aba="tabuleiro"]').click();
+  await page.locator('#loop03IndicadorFinanceiro').click();
+  assert.equal(await page.locator('#loop03DetalheIndicador').isVisible(),true);
+  assert.equal(await page.locator('#loop03DetalheValor').innerText(),'R$ 0,00');
+  assert.equal(await page.locator('#loop03-tabuleiro').isVisible(),true);
+  await page.locator('#loop03FecharDetalhe').click();
+  await page.locator('#loop03IndicadorGiros').click();
+  assert.equal(await page.locator('#loop03DetalheIndicador').isVisible(),true);
+  assert.equal(await page.locator('#loop03DetalheValor').innerText(),'0');
+  await page.locator('#loop03FecharDetalhe').click();
   assert.equal(await page.locator('#loop03-tabuleiro').isVisible(),true);
   await page.locator('.loop03-sino').click();
   assert.equal(await page.locator('#loop03PainelNotificacoes').isVisible(),true);
@@ -827,6 +833,7 @@ async function main(){
   const posicoesAntesDoPerfil=await page.locator('#loop03TotalAtivacoes').innerText();
   await page.locator('#loop03PerfilTopo').click();
   assert.equal(await page.locator('#loop03-perfil').isVisible(),true);
+  assert.equal(await page.locator('#loop03FundoPerfil').isVisible(),true);
   assert.match(await page.locator('#loop03SituacaoCPF').innerText(),/primeira posição|CPF de teste confirmado/i);
   assert.equal(await page.locator('#loop03PerfilEmail').inputValue(),'mobile@exemplo.invalid');
   // Nao se pode salvar e-mail novo sem confirmar codigo recebido.
@@ -862,7 +869,7 @@ async function main(){
   await page.locator('#loop03PerfilTopo').click();
   assert.equal(await page.locator('#loop03PerfilNome').inputValue(),'Meu Perfil Personalizado');
   assert.equal(await page.locator('#loop03-perfil .loop03-foto-grande img').isVisible(),true);
-  await page.locator('.loop03-indicadores [data-loop03-aba="tabuleiro"]').click();
+  await page.locator('#loop03Sidebar [data-loop03-aba="tabuleiro"]').click();
   assert.equal(await page.locator('#loop03TotalAtivacoes').innerText(),posicoesAntesDoPerfil);
 
   // Prova adicional em navegador real DESKTOP com sessao propria e avatar persistido.

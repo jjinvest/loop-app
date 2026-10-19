@@ -67,16 +67,16 @@
        </div>
        <div id="loop03ItensNotificacoes" aria-live="polite">Nenhuma notificação por enquanto.</div>
       </div>
-      <button data-loop03-aba="perfil" type="button" id="loop03PerfilTopo" aria-label="Abrir configurações do meu perfil" title="Meu Perfil">
+      <button type="button" id="loop03PerfilTopo" aria-label="Abrir configurações do meu perfil" title="Meu Perfil">
        <span class="loop03-foto-topo" aria-hidden="true"><img class="loop03-foto-privada" alt="" hidden><span class="loop03-foto-padrao">👤</span></span>
       </button>
      </div>
     </div>
     <div class="loop03-indicadores" aria-label="Resumo da conta">
      <button id="loop03AbrirEscolhaPosicao" type="button" class="loop03-indicador" aria-haspopup="dialog" aria-controls="loop03SeletorPosicao" aria-expanded="false"><small>ϟ POSIÇÕES</small><strong id="loop03TotalAtivacoes">0/6</strong><span>Escolher minha posição</span></button>
-     <button data-loop03-aba="tabuleiro" type="button" class="loop03-indicador" title="Abrir Tabuleiro e acompanhar giros"><small>◷ GIROS</small><strong id="loop03Giros24">—</strong><span>Giros concluídos nas últimas 24 horas</span></button>
+     <button id="loop03IndicadorGiros" type="button" class="loop03-indicador" aria-haspopup="dialog" aria-controls="loop03DetalheIndicador"><small>◷ GIROS</small><strong id="loop03Giros24">—</strong><span>Giros concluídos nas últimas 24 horas</span></button>
      <button id="loop03AbrirEscolhaNumero" type="button" class="loop03-indicador" aria-haspopup="dialog" aria-controls="loop03SeletorPosicao" aria-expanded="false"><small>♙ NÚMERO</small><strong id="loop03Numero">#0000</strong><span id="loop03NumeroDetalhe">Escolha uma posição</span></button>
-     <button data-loop03-aba="financeiro" type="button" class="loop03-indicador"><small>▥ FINANCEIRO</small><strong id="loop03Saldo">R$ 0,00</strong><span>Saldo disponível no laboratório</span></button>
+     <button id="loop03IndicadorFinanceiro" type="button" class="loop03-indicador" aria-haspopup="dialog" aria-controls="loop03DetalheIndicador"><small>▥ FINANCEIRO</small><strong id="loop03Saldo">R$ 0,00</strong><span>Saldo disponível no laboratório</span></button>
     </div>
     <div id="loop03SeletorPosicao" class="loop03-seletor-fundo" hidden role="dialog" aria-modal="true" aria-labelledby="loop03EscolhaTitulo">
      <div class="loop03-seletor-janela">
@@ -87,6 +87,16 @@
       <div id="loop03ListaEscolha" class="loop03-lista-escolha" aria-live="polite"></div>
      </div>
     </div>
+    <div id="loop03DetalheIndicador" class="loop03-seletor-fundo" hidden role="dialog" aria-modal="true" aria-labelledby="loop03DetalheTitulo">
+     <div class="loop03-seletor-janela">
+      <div class="loop03-seletor-topo"><h2 id="loop03DetalheTitulo"></h2>
+       <button type="button" id="loop03FecharDetalhe" aria-label="Fechar informações">×</button>
+      </div>
+      <strong id="loop03DetalheValor" class="loop03-detalhe-valor"></strong>
+      <p id="loop03DetalheTexto"></p>
+     </div>
+    </div>
+    <div id="loop03FundoPerfil" class="loop03-fundo-perfil" hidden></div>
     <div class="loop03-paginas">
      <section id="loop03-home" class="loop03-pagina" aria-label="Escritório Virtual">
       <header class="loop03-titulo-pagina"><div><small>ESCRITÓRIO LOOP 3.0</small><h2>Novidades e eventos</h2></div><span class="loop03-luz">● Comunicados</span></header>
@@ -136,7 +146,9 @@
      </section>
      <section id="loop03-financeiro" class="loop03-pagina" aria-label="Financeiro"><header class="loop03-titulo-pagina"><div><small>EXTRATO E SAQUES</small><h2>Financeiro</h2></div></header></section>
      <section id="loop03-perfil" class="loop03-pagina" aria-label="Meu perfil">
-      <header class="loop03-titulo-pagina"><div><small>MINHA CONTA · CONFIGURAÇÕES</small><h2>Meu Perfil</h2><p>Seu espaço pessoal no LOOP 3.0.</p></div></header>
+      <header class="loop03-titulo-pagina"><div><small>MINHA CONTA · CONFIGURAÇÕES</small><h2>Meu Perfil</h2><p>Seu espaço pessoal no LOOP 3.0.</p></div>
+       <button id="loop03FecharPerfil" type="button" aria-label="Fechar configurações" hidden>×</button>
+      </header>
       <div class="loop03-painel-perfil">
        <div class="loop03-resumo-perfil">
         <span class="loop03-foto-grande" aria-hidden="true"><img class="loop03-foto-privada" alt="" hidden><span class="loop03-foto-padrao">👤</span></span>
@@ -368,6 +380,20 @@
   }
   e('loop03FormPerfil').addEventListener('submit',salvarPerfil);
   e('loop03FormSenha').addEventListener('submit',trocarSenha);
+  e('loop03PerfilTopo').addEventListener('click',abrirPerfilSobreposto);
+  e('loop03FecharPerfil').addEventListener('click',()=>fecharPerfilSobreposto(true));
+  e('loop03FundoPerfil').addEventListener('click',()=>fecharPerfilSobreposto(true));
+  for(const [id,tipo] of [['loop03IndicadorGiros','GIROS'],['loop03IndicadorFinanceiro','FINANCEIRO']])
+   e(id).addEventListener('click',()=>abrirDetalheIndicador(tipo));
+  e('loop03FecharDetalhe').addEventListener('click',fecharDetalheIndicador);
+  e('loop03DetalheIndicador').addEventListener('click',ev=>{
+   if(ev.target===e('loop03DetalheIndicador'))fecharDetalheIndicador();
+  });
+  document.addEventListener('keydown',ev=>{
+   if(ev.key!=='Escape')return;
+   if(!e('loop03FundoPerfil').hidden)fecharPerfilSobreposto(true);
+   else fecharDetalheIndicador();
+  });
   for(const id of ['loop03AbrirEscolhaPosicao','loop03AbrirEscolhaNumero'])
    e(id).addEventListener('click',abrirSeletorPosicao);
   e('loop03FecharEscolha').addEventListener('click',fecharSeletorPosicao);
@@ -401,6 +427,8 @@
  }
  function abrir(aba){
   if(!paginas.includes(aba))return;
+  fecharPerfilSobreposto();
+  fecharDetalheIndicador();
   fecharSeletorPosicao();
   fecharNotificacoes();
   const anterior=abaAtual;
@@ -548,6 +576,44 @@
     img.hidden=true;img.removeAttribute('src');fallback.hidden=false;
    }
   }
+ }
+ function fecharDetalheIndicador(){
+  const alvo=e('loop03DetalheIndicador');
+  if(alvo)alvo.hidden=true;
+ }
+ function abrirDetalheIndicador(tipo){
+  fecharSeletorPosicao();fecharDetalheIndicador();fecharNotificacoes();
+  const giro=tipo==='GIROS';
+  e('loop03DetalheTitulo').textContent=giro?'Giros do Tabuleiro':'Financeiro da conta';
+  e('loop03DetalheValor').textContent=giro?e('loop03Giros24').textContent:e('loop03Saldo').textContent;
+  e('loop03DetalheTexto').textContent=giro?
+   'Giros registrados nas últimas 24 horas. O motor permanece independente desta consulta.':
+   'Saldo individual conforme o estado consultado. No laboratório, valores simulados não representam dinheiro disponível para saque real.';
+  e('loop03DetalheIndicador').hidden=false;
+  e('loop03FecharDetalhe').focus();
+ }
+ function abrirPerfilSobreposto(){
+  fecharDetalheIndicador();fecharSeletorPosicao();fecharNotificacoes();
+  const secao=e('loop03-perfil');
+  secao.hidden=false;
+  secao.classList.add('loop03-perfil-sobreposto');
+  secao.setAttribute('role','dialog');
+  secao.setAttribute('aria-modal','true');
+  e('loop03FundoPerfil').hidden=false;
+  e('loop03FecharPerfil').hidden=false;
+  e('loop03FecharPerfil').focus();
+ }
+ function fecharPerfilSobreposto(retornarFoco=false){
+  const overlay=e('loop03FundoPerfil');
+  if(!overlay)return;
+  const estavaAberto=!overlay.hidden;
+  overlay.hidden=true;
+  const secao=e('loop03-perfil');
+  secao.classList.remove('loop03-perfil-sobreposto');
+  secao.removeAttribute('role');secao.removeAttribute('aria-modal');
+  e('loop03FecharPerfil').hidden=true;
+  if(abaAtual!=='perfil')secao.hidden=true;
+  if(estavaAberto&&retornarFoco)e('loop03PerfilTopo').focus();
  }
  function fecharSeletorPosicao(){
   const painel=e('loop03SeletorPosicao');
@@ -911,6 +977,8 @@
   }
  }
  function encerrar(){
+  fecharPerfilSobreposto();
+  fecharDetalheIndicador();
   fecharNotificacoes();
   document.body.classList.remove('loop03-logado');
   selecionada=null;visaoAtual=null;destinoInicialTratado=false;fotoPerfilAcao='MANTER';

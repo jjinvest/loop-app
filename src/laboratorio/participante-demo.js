@@ -621,7 +621,8 @@
  // aberto e a sessao visivel. Nunca cria venda, posicao, fila nem giro.
  const tabuleiroVisivel=()=>document.visibilityState==='visible'&&
   !!e('conteudoParticipante')&&!e('conteudoParticipante').hidden&&
-  !!e('loop03-tabuleiro')&&!e('loop03-tabuleiro').hidden;
+  !!e('loop03-tabuleiro')&&!e('loop03-tabuleiro').hidden&&
+  (!e('loop03FundoPerfil')||e('loop03FundoPerfil').hidden);
  window.setInterval(()=>{if(tabuleiroVisivel())atualizar();},30000);
  document.addEventListener('visibilitychange',()=>{
   if(tabuleiroVisivel())atualizar();

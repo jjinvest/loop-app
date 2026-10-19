@@ -1619,3 +1619,39 @@ body.loop03-logado .portal-participante{position:relative;z-index:1}
   flex:0 1 55px!important;min-height:0!important;
  }
 }
+
+/* Controles globais sao janelas de consulta, nao navegam entre as abas. */
+#loop03Shell #loop03DetalheIndicador[hidden],
+#loop03Shell #loop03FundoPerfil[hidden],
+#loop03Shell #loop03FecharPerfil[hidden]{display:none!important}
+#loop03Shell .loop03-detalhe-valor{
+ display:block;font-size:clamp(1.5rem,4vw,2.2rem);
+ color:#ffe09a;line-height:1.3;margin-top:18px;
+}
+#loop03Shell #loop03DetalheIndicador #loop03FecharDetalhe{
+ min-height:38px;min-width:38px;font-size:1.4rem;
+ color:#f8dfad;border-radius:9px;border:1px solid #b29259;
+ background:#282236;cursor:pointer;
+}
+#loop03Shell .loop03-fundo-perfil{
+ position:fixed;inset:0;z-index:980;background:#03030bcc;
+}
+#loop03Shell #loop03-perfil.loop03-perfil-sobreposto{
+ display:block!important;position:fixed!important;
+ inset:4vh auto auto 50%!important;transform:translateX(-50%)!important;
+ width:min(800px,95vw)!important;height:auto!important;
+ max-height:91vh!important;min-height:0!important;overflow:auto!important;
+ padding:clamp(12px,2.7vw,22px)!important;
+ z-index:981!important;
+}
+#loop03Shell #loop03FecharPerfil{
+ display:grid;place-items:center;width:38px;height:38px;
+ background:#23223b;color:#ffe4ab;font-size:1.45rem;
+ border:1px solid #bc9b61;border-radius:10px;cursor:pointer;
+}
+@media(max-width:520px){
+ #loop03Shell #loop03-perfil.loop03-perfil-sobreposto{
+  width:97vw!important;max-height:96vh!important;top:2vh!important;
+  padding:11px!important;
+ }
+}
