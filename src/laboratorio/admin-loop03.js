@@ -2,7 +2,7 @@
 // Central do proprietario: UI apenas sobre APIs autenticadas do LABORATORIO.
 (()=>{
  const $=id=>document.getElementById(id);
- let token='',config=null;
+ let token='',config=null,configRelogio=null;
  async function api(caminho){
   const r=await fetch('/api/admin/circuit-break-v6-demo'+caminho,{
    cache:'no-store',headers:{Authorization:'Bearer '+token}});
@@ -34,7 +34,16 @@
   }
  }
  async function carregar(){
-  const [controle,trava,ponte,indicacoes]=await Promise.all([api(''),api('/trava-fila-a'),api('/ponte'),api('/indicacoes')]);
+  const [controle,trava,ponte,indicacoes,relogio]=await Promise.all([api(''),api('/trava-fila-a'),api('/ponte'),api('/indicacoes'),api('/intervalo-relogio')]);
+  configRelogio=relogio.configuracao;
+  $('intervaloAtualRelogioAdmin').textContent=configRelogio.intervaloMinutos===null?'Não configurado':configRelogio.intervaloMinutos+' min';
+  $('intervaloRelogioAdmin').value=configRelogio.intervaloMinutos??'';
+  const registro=$('historicoRelogioAdminLoop03');registro.replaceChildren();
+  for(const h of relogio.historico){
+   const li=document.createElement('li');
+   li.textContent='Revisão '+h.revisao+' · '+(h.anterior??'sem intervalo')+' → '+h.novo+' min · '+h.justificativa;
+   registro.append(li);
+  }
   $('numeroFilaAAdmin').textContent=String(ponte.filaA);
   $('numeroFilaBAdmin').textContent=String(ponte.filaB);
   $('numeroGirosAdmin').textContent=String(ponte.girosConcluidos);
@@ -53,12 +62,12 @@
  $('formAcessoAdminLoop03').addEventListener('submit',async ev=>{
   ev.preventDefault();token=$('chaveAdminLoop03').value;$('chaveAdminLoop03').value='';
   try{await carregar();$('mensagemAcessoAdminLoop03').textContent='Acesso administrativo ao laboratório autorizado.';}
-  catch(err){token='';config=null;$('dadosAdminLoop03').hidden=true;
+  catch(err){token='';config=null;configRelogio=null;$('dadosAdminLoop03').hidden=true;
    $('situacaoPainel').textContent='SEM AUTENTICAÇÃO';
    $('mensagemAcessoAdminLoop03').textContent='Acesso recusado: '+err.message;}
  });
  $('sairAdminLoop03').addEventListener('click',()=>{
-  token='';config=null;$('chaveAdminLoop03').value='';
+  token='';config=null;configRelogio=null;$('chaveAdminLoop03').value='';
   $('dadosAdminLoop03').hidden=true;$('situacaoPainel').textContent='SEM AUTENTICAÇÃO';
   $('mensagemAcessoAdminLoop03').textContent='Chave descartada desta página.';
  });
@@ -78,6 +87,23 @@
    $('statusRegrasAdminLoop03').textContent='Alteração recusada: '+err.message;
    await carregar().catch(()=>{});
   }finally{b.disabled=false;}
+ });
+ $('formRelogioAdminLoop03').addEventListener('submit',async ev=>{
+  ev.preventDefault();
+  if(!token||!configRelogio)return;
+  const intervaloMinutos=Number($('intervaloRelogioAdmin').value);
+  const justificativa=$('justificativaRelogioAdmin').value.trim();
+  if(!window.confirm('Registrar '+intervaloMinutos+' minutos como referência do relógio? Nenhum giro será liberado.'))return;
+  const botao=ev.target.querySelector('button[type=submit]');botao.disabled=true;
+  try{
+   await post('/intervalo-relogio',{intervaloMinutos,revisaoEsperada:configRelogio.revisao,justificativa});
+   $('justificativaRelogioAdmin').value='';
+   await carregar();
+   $('statusRelogioAdminLoop03').textContent='Intervalo visual salvo; nenhum giro foi executado.';
+  }catch(err){
+   $('statusRelogioAdminLoop03').textContent='Alteração recusada: '+err.message;
+   await carregar().catch(()=>{});
+  }finally{botao.disabled=false;}
  });
  $('atualizarAdminLoop03').addEventListener('click',async()=>{
   try{await carregar();$('statusRegrasAdminLoop03').textContent='Painel atualizado.';}

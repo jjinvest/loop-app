@@ -62,6 +62,7 @@
   e('atalhoAtivarParticipante').hidden=true;
   mapaAtual=null;
   instanteUltimoEventoValido=null;
+  intervaloRelogioMinutos=null;
   renderizarRelogioCiclo();
   destinoInicialTratado=false;
  }
@@ -191,6 +192,7 @@
  // Tempo entre eventos: avança visualmente apenas com data real do motor.
  // Não fabrica eventos, vendas, pagamentos ou giros.
  let instanteUltimoEventoValido=null;
+ let intervaloRelogioMinutos=null;
  function atualizarRelogioCiclo(mapa){
   const relogio=e('loop03RelogioCiclo');
   if(!relogio)return;
@@ -198,6 +200,8 @@
   const ts=typeof carimbo==='string'&&/T/.test(carimbo)?Date.parse(carimbo):
    typeof carimbo==='number'&&Number.isFinite(carimbo)?carimbo:NaN;
   instanteUltimoEventoValido=Number.isFinite(ts)&&ts>0&&ts<=Date.now()?ts:null;
+  intervaloRelogioMinutos=Number.isSafeInteger(mapa?.intervaloReferenciaMinutos)&&mapa.intervaloReferenciaMinutos>=1?
+   mapa.intervaloReferenciaMinutos:null;
   renderizarRelogioCiclo();
  }
  function renderizarRelogioCiclo(){
@@ -205,14 +209,15 @@
   if(!relogio)return;
   if(instanteUltimoEventoValido===null){
    relogio.textContent='--:--:--';
-   relogio.setAttribute('aria-label','Tempo aguardando data de evento válido do motor');
+   relogio.setAttribute('aria-label','Aguardando evento válido do motor'+(intervaloRelogioMinutos===null?'':'; referência de '+intervaloRelogioMinutos+' minutos configurada pelo administrador'));
    return;
   }
   const segundos=Math.max(0,Math.floor((Date.now()-instanteUltimoEventoValido)/1000));
   const pad=n=>String(n).padStart(2,'0');
   relogio.textContent=pad(Math.floor(segundos/3600))+':'+
    pad(Math.floor(segundos/60)%60)+':'+pad(segundos%60);
-  relogio.setAttribute('aria-label','Tempo desde último evento válido: '+relogio.textContent);
+  relogio.setAttribute('aria-label','Tempo desde último evento válido: '+relogio.textContent+(intervaloRelogioMinutos===null?'; intervalo administrativo não configurado':'; intervalo de referência do administrador: '+intervaloRelogioMinutos+' minutos; não movimenta a catraca'));
+  relogio.title=intervaloRelogioMinutos===null?'Sem intervalo administrativo configurado':'Referência: '+intervaloRelogioMinutos+' min · A catraca avança somente mediante eventos e liberação.';
  }
  window.setInterval(renderizarRelogioCiclo,1000);
 

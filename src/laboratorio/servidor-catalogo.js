@@ -52,6 +52,7 @@ const { criarRouterWebhookPSPDemoLocal } = require('../routes/webhook-psp-demo-l
 const {CircuitBreakV6DemoSQLite}=require('../domain/circuit-break-v6-demo-sqlite');
 const {CircuitBreakPonteV6DemoSQLite}=require('../domain/circuit-break-ponte-v6-demo-sqlite');
 const {ProgramadorCatracaV6DemoSQLite}=require('../domain/programador-catraca-v6-demo-sqlite');
+const {ConfiguracaoRelogioTabuleiroDemoSQLite}=require('../domain/configuracao-relogio-tabuleiro-demo-sqlite');
 const {criarRouterCircuitBreakV6Demo}=require('../routes/admin-circuit-break-v6-demo');
 const {AsaasSandboxLojaV6}=require('../domain/asaas-sandbox-loja-v6');
 const {CobrancasAkitemmAsaasSandboxSQLite}=require('../domain/cobrancas-akitemm-asaas-sandbox-v6');
@@ -203,6 +204,8 @@ function criarAppAdminLaboratorio({ repositorio, segredo, webhookDemo } = {}) {
   retornoSaqueCentroDemo=circuitoPonteDemo&&contasParaRetornoSaqueCentro?
     new RetornoSaqueCentroV6DemoSQLite({banco:repositorio.banco,
       livro:circuitoPonteDemo.livro,contas:contasParaRetornoSaqueCentro}):null;
+  const configuracaoRelogio=ponteParaCircuito?
+    new ConfiguracaoRelogioTabuleiroDemoSQLite({banco:repositorio.banco}):null;
   const programadorCatracaDemo=circuitoPonteDemo?
     new ProgramadorCatracaV6DemoSQLite({banco:repositorio.banco,
       ponteControle:circuitoPonteDemo,controle:circuitoDemo}):null;
@@ -211,7 +214,7 @@ function criarAppAdminLaboratorio({ repositorio, segredo, webhookDemo } = {}) {
     segredo,controle:circuitoDemo,ponteControle:circuitoPonteDemo,
     programador:programadorCatracaDemo,retornoSaqueCentroDemo,
     travaFilaA:ponteParaCircuito?.configuracaoTravaFilaA||null,
-    ponteIndicacoes:ponteParaCircuito
+    ponteIndicacoes:ponteParaCircuito,configuracaoRelogio
   }));
   app.use('/api/admin', criarRouterFinanceiroAdminDemo({
     segredo, configuracao:configuracaoCofres, razaoPersistente,

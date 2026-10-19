@@ -198,6 +198,7 @@ async function main(){
   assert.equal(await page.locator('#loop03-tabuleiro').isVisible(),true);
   await page.locator('.loop03-sino').click();
   assert.equal(await page.locator('#loop03-home').isVisible(),true);
+  assert.match(await page.locator('#loop03RelogioCiclo').getAttribute('aria-label'),/Aguardando evento válido/);
   await page.locator('#loop03Menu').click();
   await page.locator('.loop03-sidebar [data-loop03-aba="tabuleiro"]').click();
   // Três filtros e seletor verde foram removidos, sem alterar as outras abas.

@@ -1,4 +1,5 @@
 'use strict';
+const {ConfiguracaoRelogioTabuleiroDemoSQLite}=require('./configuracao-relogio-tabuleiro-demo-sqlite');
 
 // Projecao individual do laboratorio; nunca retorna a lista geral do admin.
 // Sem consulta financeira real, CPF, entrega, saque ou autorizacao de pedido.
@@ -64,6 +65,7 @@ class EscritorioIndividualDemo{
    throw new TypeError('Ponte e contas devem compartilhar SQLite de laboratorio');
   }
   this.banco=ponte.banco;this.ponte=ponte;this.contas=contas;
+  this.configuracaoRelogio=new ConfiguracaoRelogioTabuleiroDemoSQLite({banco:this.banco});
  }
  consultar(contaId){
   const conta=this.contas.buscar(contaId);
@@ -100,6 +102,7 @@ class EscritorioIndividualDemo{
   const mapaCores=mapaCoresDoEscritorio(simulador,contaId);
   // Mesma restauracao SQL usada nas filas, sem registrar eventos ou movimentos.
   mapaCores.ultimoEventoValidoEm=ultimoEventoValidoDoTabuleiro(simulador.tabuleiro);
+  mapaCores.intervaloReferenciaMinutos=this.configuracaoRelogio.consultar().intervaloMinutos;
   // Apenas indicados DIRETOS do titular da sessao, nao a rede alheia.
   const temTabelaAtivacao=!!this.banco.prepare(
    "SELECT name FROM sqlite_master WHERE type='table' AND name='admin_loop_adesoes_posicoes_demo'"
