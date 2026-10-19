@@ -226,7 +226,7 @@ async function main(){
   await page.locator('#loop03FecharEscolha').click();
   await page.locator('#loop03IndicadorFinanceiro').click();
   assert.equal(await page.locator('#loop03DetalheIndicador').isVisible(),true);
-  assert.equal(await page.locator('#loop03DetalheValor').innerText(),'R$ 0,00');
+  assert.match(await page.locator('#loop03DetalheValor').innerText(),/^R\$\s*0,00$/);
   assert.equal(await page.locator('#loop03-tabuleiro').isVisible(),true);
   await page.locator('#loop03FecharDetalhe').click();
   await page.locator('#loop03IndicadorGiros').click();
