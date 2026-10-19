@@ -84,8 +84,6 @@
      </section>
      <section id="loop03-tabuleiro" class="loop03-pagina" aria-label="Tabuleiro">
       <header class="loop03-titulo-pagina"><div><small>LOOP · MOTOR DE FILAS</small><h2>Tabuleiro LOOP 3.0</h2></div><span class="loop03-luz">● Ciclo em andamento</span></header>
-      <div class="loop03-escolha"><span id="loop03EscolhaTexto">Visão geral, nenhuma posição escolhida</span><button id="loop03EscolherNoTabuleiro" type="button">Escolher minha posição</button></div>
-      <div id="loop03EscolhaPainel" class="loop03-escolha-painel" hidden><h3>Qual posição você quer acompanhar?</h3><div id="loop03AtivacoesTabuleiro" class="loop03-opcoes"></div></div>
      </section>
      <section id="loop03-posicoes" class="loop03-pagina" aria-label="Minhas Posições">
       <header class="loop03-titulo-pagina loop03-titulo-central"><div><h2>Minhas Posições</h2><p>Acompanhe suas posições e o andamento de cada uma no LOOP.</p></div></header>
@@ -169,7 +167,33 @@
     seta.textContent=letra==='A'?'»':'';
     seta.setAttribute('aria-hidden','true');
     h.classList.add('loop03-cabecalho-fila','loop03-cabecalho-fila-'+letra.toLowerCase());
-    h.replaceChildren(icone,tituloFila,seta);
+    // Cabecalho vira botao real, abrindo apenas os registros desta fila.
+    const abrirFila=document.createElement('button');
+    abrirFila.type='button';
+    abrirFila.className='loop03-abrir-fila';
+    abrirFila.setAttribute('aria-label','Abrir Fila '+letra+' completa');
+    abrirFila.setAttribute('aria-expanded','false');
+    abrirFila.setAttribute('aria-controls',letra==='A'?'mapaFilaAParticipante':'mapaFilaBParticipante');
+    abrirFila.title='Abrir Fila '+letra+' completa';
+    abrirFila.append(icone,tituloFila,seta);
+    h.replaceChildren(abrirFila);
+    abrirFila.addEventListener('click',()=>{
+     const estavaAberta=coluna.classList.contains('loop03-fila-expandida');
+     for(const outra of [filaA,filaB]){
+      if(!outra)continue;
+      outra.classList.remove('loop03-fila-expandida');
+      const botao=outra.querySelector('.loop03-abrir-fila');
+      if(botao){
+       botao.setAttribute('aria-expanded','false');
+       botao.setAttribute('aria-label','Abrir '+(outra===filaA?'Fila A':'Fila B')+' completa');
+      }
+     }
+     if(!estavaAberta){
+      coluna.classList.add('loop03-fila-expandida');
+      abrirFila.setAttribute('aria-expanded','true');
+      abrirFila.setAttribute('aria-label','Fechar Fila '+letra+' completa');
+     }
+    });
     if(contador){
      contador.classList.add('loop03-contagem-rodape-fila');
      coluna.append(contador);
@@ -191,6 +215,16 @@
    }
    const contaB=e('contadorFilaBParticipante');
    if(contaB)contaB.hidden=true;
+   // Escape devolve o Tabuleiro ao tamanho normal.
+   document.addEventListener('keydown',evento=>{
+    if(evento.key!=='Escape')return;
+    const aberta=mapa.querySelector('.bloco-fila-participante.loop03-fila-expandida');
+    if(!aberta)return;
+    evento.preventDefault();
+    const abrir=aberta.querySelector('.loop03-abrir-fila');
+    abrir?.click();
+    abrir?.focus();
+   });
   }
   const posicoes=e('posicoesParticipante')?.closest('section.cartao-participante');
   const compras=e('pedidosParticipante')?.closest('section.cartao-participante');
@@ -226,9 +260,6 @@
    e('loop03Menu').setAttribute('aria-expanded',String(aberto));
   });
   e('loop03Sair').addEventListener('click',()=>e('botaoSairParticipante').click());
-  e('loop03EscolherNoTabuleiro').addEventListener('click',()=>{
-   const painel=e('loop03EscolhaPainel');painel.hidden=!painel.hidden;
-  });
   abrir('home');
   carregarPublicacoes();
  }
@@ -251,7 +282,6 @@
   if(abrirTabuleiro)abrir('tabuleiro');
   e('loop03Numero').textContent='#'+p.posicaoId;
   e('loop03NumeroDetalhe').textContent=statusPosicao(p);
-  e('loop03EscolhaTexto').textContent='Posição #'+p.posicaoId+' · '+statusPosicao(p);
   e('loop03SituacaoBaixo').textContent=statusPosicao(p);
   const ordem=(visaoAtual?.posicoes||[]).findIndex(x=>x.posicaoId===p.posicaoId);
   if(ordem>=0)e('loop03TotalAtivacoes').textContent=visaoAtual.posicoes.length+'/'+visaoAtual.limitePosicoesAtivas;
@@ -308,19 +338,6 @@
    m.setAttribute('aria-label','Evento '+(i+1)+': '+
     (!Number.isSafeInteger(etapa)?'andamento ainda nao disponivel':i<etapa?'registrado':'aguardando'));
   }
-  // Opcoes existentes do titular para localizar a sua posicao no Tabuleiro.
-  const opcoesTabuleiro=e('loop03AtivacoesTabuleiro');
-  opcoesTabuleiro.replaceChildren();
-  for(const [indice,p] of visao.posicoes.entries()){
-   const botao=document.createElement('button');botao.type='button';
-   botao.className='loop03-opcao';botao.dataset.loop03Posicao=String(p.posicaoId);
-   const titulo=document.createElement('strong');titulo.textContent='Posição '+(indice+1)+' · #'+p.posicaoId;
-   const detalhe=document.createElement('small');detalhe.textContent=statusPosicao(p);
-   botao.append(titulo,detalhe);
-   botao.addEventListener('click',()=>{selecionar(p,true);e('loop03EscolhaPainel').hidden=true;});
-   opcoesTabuleiro.append(botao);
-  }
-
   // Seis espacos da grade aprovada. Apenas as posicoes compradas tem numero e acao.
   const cartoes=e('loop03OpcoesPosicoes');cartoes.replaceChildren();
   for(let indice=0;indice<6;indice++){
@@ -489,7 +506,6 @@
    selecionada=null;
    e('loop03Numero').textContent='#0000';
    e('loop03NumeroDetalhe').textContent='Escolha uma posição';
-   e('loop03EscolhaTexto').textContent='Visão geral, nenhuma posição escolhida';
    e('loop03SituacaoBaixo').textContent='Nenhuma posição selecionada';
    e('loop03DetalhesPosicao').textContent='Selecione uma posição acima.';
    const caixa=e('secaoAtivacaoParticipante');if(caixa)caixa.hidden=true;
