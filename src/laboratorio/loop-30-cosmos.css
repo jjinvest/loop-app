@@ -1422,3 +1422,30 @@ body.loop03-logado .portal-participante{position:relative;z-index:1}
  cursor:pointer;color:#c6bdad;font-size:.76rem;
 }
 #loop03Shell #loop03-perfil .loop03-informacoes-tecnicas .cartao-participante{margin:14px 0 0}
+
+/* Troca de senha nao interfere no layout aprovado do Tabuleiro. */
+#loop03Shell #loop03-perfil .loop03-trocar-senha{
+ margin-top:18px;border:1px solid #a38a60;border-radius:13px;
+ padding:13px;background:linear-gradient(115deg,#221e32,#141d2b);
+}
+#loop03Shell #loop03-perfil .loop03-trocar-senha>summary{
+ color:#f8dda5;font-weight:800;cursor:pointer;padding:6px 2px;
+}
+#loop03Shell #loop03-perfil .loop03-trocar-senha form{margin-top:13px}
+#loop03Shell #loop03-perfil .loop03-trocar-senha form>p{
+ color:#c5cdd0;font-size:.79rem;line-height:1.5;margin-bottom:13px;
+}
+#loop03Shell #loop03-perfil .loop03-campos-senha{
+ display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;
+}
+#loop03Shell #loop03-perfil #loop03SalvarSenha{
+ margin-top:16px;min-height:45px;padding:9px 18px;border:1px solid #d5ae72;
+ border-radius:11px;background:linear-gradient(130deg,#ffdf96,#c89551);
+ color:#191c22;font-weight:800;cursor:pointer;
+}
+#loop03Shell #loop03-perfil #loop03SalvarSenha:disabled{opacity:.55}
+#loop03Shell #loop03-perfil #loop03StatusSenha{color:#d9edcc;font-size:.85rem}
+@media(max-width:600px){
+ #loop03Shell #loop03-perfil .loop03-campos-senha{grid-template-columns:minmax(0,1fr)}
+ #loop03Shell #loop03-perfil #loop03SalvarSenha{width:100%}
+}

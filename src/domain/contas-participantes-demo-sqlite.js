@@ -169,6 +169,26 @@ class ContasParticipantesDemoSQLite{
   ).get(idSeguro(contaId));
   return contaExterna(linha);
  }
+ alterarSenha({contaId,senhaAtual,novaSenha}={}){
+  const id=idSeguro(contaId);
+  senhaValida(senhaAtual);senhaValida(novaSenha);
+  const linha=this.banco.prepare('SELECT salt_hex,senha_hash_hex FROM admin_contas_participantes_demo WHERE id=?').get(id);
+  if(!linha)throw falha('CREDENCIAIS_INVALIDAS','Senha atual incorreta');
+  const salAnterior=Buffer.from(linha.salt_hex,'hex');
+  const esperado=Buffer.from(linha.senha_hash_hex,'hex');
+  const recebido=scryptSync(senhaAtual,salAnterior,64);
+  if(esperado.length!==recebido.length||!timingSafeEqual(esperado,recebido))
+   throw falha('CREDENCIAIS_INVALIDAS','Senha atual incorreta');
+  if(timingSafeEqual(esperado,scryptSync(novaSenha,salAnterior,64)))
+   throw falha('SENHA_REPETIDA','Escolha uma senha diferente da atual');
+  const salNovo=randomBytes(16).toString('hex');
+  const hashNovo=scryptSync(novaSenha,Buffer.from(salNovo,'hex'),64).toString('hex');
+  const gravou=this.banco.prepare(
+   'UPDATE admin_contas_participantes_demo SET salt_hex=?,senha_hash_hex=? WHERE id=? AND senha_hash_hex=?'
+  ).run(salNovo,hashNovo,id,linha.senha_hash_hex);
+  if(gravou.changes!==1)throw falha('CONFLITO_SENHA','A senha foi alterada em outra sessão');
+  return {senhaAlterada:true};
+ }
  autenticar({nome,senha}={}){
   const dados=nomeLogin(nome);
   senhaValida(senha);

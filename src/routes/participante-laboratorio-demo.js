@@ -357,6 +357,25 @@ function criarRouterParticipanteDemo({contas,ponte,sessoes=null,adesoes=null,car
    return next(e);
   }
  });
+ // Troca de senha sem receber ID de conta do navegador; todas sessoes revogadas.
+ router.post('/alterar-senha',(req,res,next)=>{
+  if(!req.is('application/json'))return res.status(415).json({erro:'USE_APPLICATION_JSON'});
+  const p=req.body;
+  if(!p||typeof p!=='object'||Array.isArray(p)||
+   Object.keys(p).sort().join(',')!=='novaSenha,senhaAtual')
+   return res.status(400).json({erro:'CAMPOS_SENHA_INVALIDOS'});
+  try{
+   const contaId=gerenciador.identificar(lerCookie(req));
+   if(!contaId)return res.status(401).json({erro:'SESSAO_AUSENTE_OU_EXPIRADA'});
+   contas.alterarSenha({contaId,senhaAtual:p.senhaAtual,novaSenha:p.novaSenha});
+   gerenciador.revogarTodasDaConta(contaId);
+   setCookie(res,'',0);
+   return res.json({senhaAlterada:true,novaAutenticacaoObrigatoria:true});
+  }catch(err){
+   if(err.codigo)return res.status(err.codigo==='CONFLITO_SENHA'?409:400).json({erro:err.codigo});
+   return next(err);
+  }
+ });
  router.post('/perfil',(req,res,next)=>{
   if(!req.is('application/json'))return res.status(415).json({erro:'USE_APPLICATION_JSON'});
   const p=req.body;

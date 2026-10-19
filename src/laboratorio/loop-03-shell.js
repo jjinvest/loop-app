@@ -153,6 +153,25 @@
         </div>
         <p id="loop03StatusPerfil" role="status" aria-live="polite"></p>
        </form>
+       <details id="loop03TrocarSenha" class="loop03-trocar-senha">
+        <summary>Trocar minha senha <span aria-hidden="true">🔒</span></summary>
+        <form id="loop03FormSenha" autocomplete="on">
+         <p>Informe a senha atual, escolha uma nova e confirme. Após salvar, será necessário entrar novamente.</p>
+         <div class="loop03-campos-senha">
+          <label for="loop03SenhaAtual">Senha atual
+           <input id="loop03SenhaAtual" type="password" autocomplete="current-password" minlength="10" maxlength="128" required>
+          </label>
+          <label for="loop03SenhaNova">Nova senha
+           <input id="loop03SenhaNova" type="password" autocomplete="new-password" minlength="10" maxlength="128" required>
+          </label>
+          <label for="loop03SenhaConfirma">Confirmar nova senha
+           <input id="loop03SenhaConfirma" type="password" autocomplete="new-password" minlength="10" maxlength="128" required>
+          </label>
+         </div>
+         <button type="submit" id="loop03SalvarSenha">Confirmar troca de senha</button>
+         <p id="loop03StatusSenha" role="status" aria-live="polite"></p>
+        </form>
+       </details>
        <div class="loop03-cpf-travado" aria-label="Identificação legal protegida">
         <strong>CPF · protegido</strong>
         <span id="loop03SituacaoCPF">Será confirmado na primeira posição, em Minhas Posições.</span>
@@ -346,6 +365,7 @@
    });
   }
   e('loop03FormPerfil').addEventListener('submit',salvarPerfil);
+  e('loop03FormSenha').addEventListener('submit',trocarSenha);
   abrir('home');
   carregarPublicacoes();
  }
@@ -388,6 +408,40 @@
     'Código confirmado. Agora clique em Salvar alterações.';
   }catch(err){estado.textContent=err.message;}
   finally{botao.disabled=false;}
+ }
+ async function trocarSenha(ev){
+  ev.preventDefault();
+  const botao=e('loop03SalvarSenha'),form=e('loop03FormSenha'),status=e('loop03StatusSenha');
+  if(botao.disabled)return;
+  const senhaAtual=e('loop03SenhaAtual').value;
+  const novaSenha=e('loop03SenhaNova').value;
+  if(novaSenha!==e('loop03SenhaConfirma').value){
+   status.textContent='A confirmação não corresponde à nova senha.';
+   e('loop03SenhaConfirma').focus();return;
+  }
+  if(novaSenha===senhaAtual){
+   status.textContent='Escolha uma senha diferente da atual.';return;
+  }
+  botao.disabled=true;status.textContent='Verificando e atualizando a senha…';
+  try{
+   const resp=await fetch('/api/laboratorio/participante/alterar-senha',{
+    method:'POST',credentials:'same-origin',cache:'no-store',
+    headers:{'Content-Type':'application/json','X-LOOP-LAB':'participante'},
+    body:JSON.stringify({senhaAtual,novaSenha})
+   });
+   const dados=await resp.json();
+   if(!resp.ok)throw Error(dados.erro==='CREDENCIAIS_INVALIDAS'?
+    'Senha atual incorreta. Tente novamente.':
+    dados.erro==='SENHA_REPETIDA'?'Escolha uma senha diferente da atual.':
+    dados.erro||'Não foi possível alterar a senha.');
+   form.reset();
+   // O servidor revogou todas as sessoes desta conta.
+   e('botaoSairParticipante').click();
+   e('estadoParticipante').textContent='Senha alterada. Entre novamente com a nova senha.';
+  }catch(err){
+   status.textContent=err.message;
+   for(const id of ['loop03SenhaAtual','loop03SenhaNova','loop03SenhaConfirma'])e(id).value='';
+  }finally{botao.disabled=false;}
  }
  async function comprimirImagemPerfil(file){
   if(!['image/jpeg','image/png','image/webp'].includes(file.type)||file.size>8*1024*1024)
@@ -747,6 +801,9 @@
    img.parentElement.querySelector('.loop03-foto-padrao').hidden=false;
   }
   if(e('loop03StatusPerfil'))e('loop03StatusPerfil').textContent='';
+  if(e('loop03FormSenha'))e('loop03FormSenha').reset();
+  if(e('loop03StatusSenha'))e('loop03StatusSenha').textContent='';
+  if(e('loop03TrocarSenha'))e('loop03TrocarSenha').open=false;
   abrir('home');
  }
  window.Loop03Shell={montar,atualizar,encerrar,abrir,destacarPosicoes,

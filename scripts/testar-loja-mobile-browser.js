@@ -107,7 +107,19 @@ async function main(){
   await telaFilasVazias.locator('#loop03-tabuleiro').waitFor({state:'visible'});
   assert.equal(await telaFilasVazias.locator('#mapaFilaAParticipante li').count(),0);
   assert.equal(await telaFilasVazias.locator('#mapaFilaBParticipante li').count(),0);
+  assert.equal(await telaFilasVazias.locator('#loop03TotalAtivacoes').innerText(),'0/6');
+  assert.match(await telaFilasVazias.locator('#loop03Saldo').innerText(),/^R\$\s*0,00$/);
+  assert.equal(await telaFilasVazias.locator('.loop03-roda .tabuleiro-vaga-6').count(),1);
+  await telaFilasVazias.screenshot({path:path.join(pasta,'TABULEIRO_REAL_ATUAL_DESKTOP_1366_ZERADO.png'),fullPage:true});
   await telaFilasVazias.screenshot({path:path.join(pasta,'TABULEIRO_FILAS_VAZIAS_SEM_PESSOAS.png'),fullPage:false});
+  await telaFilasVazias.setViewportSize({width:390,height:812});
+  await telaFilasVazias.waitForTimeout(100);
+  assert.equal(await telaFilasVazias.locator('#loop03TotalAtivacoes').innerText(),'0/6');
+  assert.match(await telaFilasVazias.locator('#loop03Saldo').innerText(),/^R\$\s*0,00$/);
+  assert.equal(await telaFilasVazias.locator('#mapaFilaAParticipante li').count(),0);
+  assert.equal(await telaFilasVazias.locator('#mapaFilaBParticipante li').count(),0);
+  await conferirLargura(telaFilasVazias,390,'tabuleiro-real-zerado',{captura:false});
+  await telaFilasVazias.screenshot({path:path.join(pasta,'TABULEIRO_REAL_ATUAL_CELULAR_390_ZERADO.png'),fullPage:true});
   await ctxFilasVazias.close();
 
   // As quatro telas de verdade compartilham a mesma atmosfera animada.

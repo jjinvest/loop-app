@@ -90,6 +90,16 @@ class SessoesParticipanteDemo{
   if(!sessao||sessao.venceEm<=agora)return null;
   return this.contas.buscar(sessao.contaId)?.contaId||null;
  }
+ revogarTodasDaConta(contaId){
+  if(typeof contaId!=='string'||!contaId)return 0;
+  let total=0;
+  for(const [chave,s] of this.sessoes){
+   if(s.contaId!==contaId)continue;
+   this.sessoes.delete(chave);total++;
+  }
+  if(total)this._evento('SESSAO_REVOGADA',contaId);
+  return total;
+ }
  sair(token,{motivo='SESSAO_ENCERRADA'}={}){
   if(!tokenValido(token))return false;
   const chave=chaveToken(token);
