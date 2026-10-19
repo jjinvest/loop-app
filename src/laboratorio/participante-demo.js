@@ -62,6 +62,8 @@
   e('contadorFilaBParticipante').textContent='';
   e('atalhoAtivarParticipante').hidden=true;
   mapaAtual=null;
+  instanteUltimoEventoValido=null;
+  renderizarRelogioCiclo();
   filtroMapa='resumo';
   destinoInicialTratado=false;
   atualizarControlesMapa();
@@ -134,13 +136,8 @@
   const minhas=posicoes.filter(p=>p.minha).length;
   e(idContador).textContent=posicoes.length+' posições · '+minhas+' minhas';
   const indices=indicesDaFila(posicoes);
-  if(!indices.length){
-   const item=document.createElement('li');
-   item.className='fila-vazia-demo';
-   item.textContent=posicoes.length===0?'Nenhuma posição nesta fila.':
-    'Você não tem posições nesta fila.';
-   lista.append(item);return;
-  }
+  // Sem posições reais: quadro vazio, sem linhas ou identificadores fictícios.
+  if(!indices.length)return;
   let anterior=-1;
   for(const i of indices){
    const ocultas=i-anterior-1;
@@ -178,8 +175,8 @@
     const qt=convitesValidadosFilaA[i];
     const quantidade=document.createElement('span');
     quantidade.className='loop03-quantidade-convites loop03-quantidade-a-direita';
-    quantidade.textContent=Number.isSafeInteger(qt)?
-     qt+(qt===1?' indicação':' indicações'):'Indicações: —';
+    // Só o número e o bonequinho ficam visíveis. O aria-label explica.
+    quantidade.textContent=Number.isSafeInteger(qt)?String(qt):'—';
     quantidade.setAttribute('aria-label',Number.isSafeInteger(qt)?
      qt+' indicações desta posição':'Contagem não disponível');
     // SVG com stroke CSS: o bonequinho permanece amarelo em Android/iOS.
@@ -211,8 +208,37 @@
    lista.append(intervalo);
   }
  }
+ // Tempo entre eventos: avança visualmente apenas com data real do motor.
+ // Não fabrica eventos, vendas, pagamentos ou giros.
+ let instanteUltimoEventoValido=null;
+ function atualizarRelogioCiclo(mapa){
+  const relogio=e('loop03RelogioCiclo');
+  if(!relogio)return;
+  const carimbo=mapa?.ultimoEventoValidoEm??null;
+  const ts=typeof carimbo==='string'&&/T/.test(carimbo)?Date.parse(carimbo):
+   typeof carimbo==='number'&&Number.isFinite(carimbo)?carimbo:NaN;
+  instanteUltimoEventoValido=Number.isFinite(ts)&&ts>0&&ts<=Date.now()?ts:null;
+  renderizarRelogioCiclo();
+ }
+ function renderizarRelogioCiclo(){
+  const relogio=e('loop03RelogioCiclo');
+  if(!relogio)return;
+  if(instanteUltimoEventoValido===null){
+   relogio.textContent='--:--:--';
+   relogio.setAttribute('aria-label','Tempo aguardando data de evento válido do motor');
+   return;
+  }
+  const segundos=Math.max(0,Math.floor((Date.now()-instanteUltimoEventoValido)/1000));
+  const pad=n=>String(n).padStart(2,'0');
+  relogio.textContent=pad(Math.floor(segundos/3600))+':'+
+   pad(Math.floor(segundos/60)%60)+':'+pad(segundos%60);
+  relogio.setAttribute('aria-label','Tempo desde último evento válido: '+relogio.textContent);
+ }
+ window.setInterval(renderizarRelogioCiclo,1000);
+
  function mostrarMapa(mapa){
   mapaAtual=mapa;
+  atualizarRelogioCiclo(mapa);
   atualizarControlesMapa();
   renderizarFila(mapa.filaA,'mapaFilaAParticipante','contadorFilaAParticipante','Fila A');
   renderizarFila(mapa.filaB,'mapaFilaBParticipante','contadorFilaBParticipante','Fila B');
