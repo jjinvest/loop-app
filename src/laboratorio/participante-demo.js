@@ -253,6 +253,15 @@
    titulo.className='titulo-espaco-tabuleiro-demo';
    titulo.textContent=rotulo;
    bloco.append(titulo);
+   if(valor&&classe.startsWith('vaga-')){
+    // Numero FIXO da vaga deve ficar legivel mesmo com um ocupante.
+    // O ID pessoal abaixo continua movendo-se com o motor.
+    const indice=document.createElement('span');
+    indice.className='loop03-indice-vaga-visivel';
+    indice.textContent=classe.slice(5);
+    indice.setAttribute('aria-hidden','true');
+    bloco.append(indice);
+   }
    if(valor?.cor==='DOURADO'){
     // A marca visual, SEM QUALQUER TEXTO pessoal, aciona o estilo dourado.
     // Nao exibir identificador pessoal da posicao assumida pelo LOOP.

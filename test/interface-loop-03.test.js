@@ -82,6 +82,8 @@ test('LOOP 3.0 integra escritorio real e duas abas sem criar aplicativo paralelo
  assert.doesNotMatch(participante,/Minha: '\+nomeTitular/);
  assert.match(participante,/elementoPosicao\(valor,'Número'\)/);
  assert.match(participante,/bloco\.dataset\.vagaNumero=classe\.slice\(5\)/);
+ assert.match(participante,/indice\.className='loop03-indice-vaga-visivel'/);
+ assert.match(cosmos,/\.espaco-tabuleiro-demo>\.loop03-indice-vaga-visivel/);
  assert.match(participante,/numero\.textContent='#'\+valor\.posicaoId/);
  assert.match(participante,/valor\.minha&&typeof nomeTitular==='string'/);
  assert.match(participante,/nome\.textContent=nomeTitular\.trim\(\)/);

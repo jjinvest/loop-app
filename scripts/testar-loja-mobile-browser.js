@@ -1121,7 +1121,7 @@ async function main(){
      const esfera=document.querySelector('#loop03-tabuleiro .tabuleiro-vaga-'+i);
      const ocupante=esfera.querySelector('.loop03-ocupante-identidade');
      resultado.vagas.push({
-      indice:getComputedStyle(esfera,'::before').content,
+      indice:esfera.querySelector('.loop03-indice-vaga-visivel')?.textContent,
       id:ocupante?.querySelector('.selo-posicao-demo')?.textContent,
       cor:ocupante?getComputedStyle(ocupante).color:null,
       nome:ocupante?.querySelector('.loop03-nome-na-bola')?.textContent||''
@@ -1130,7 +1130,7 @@ async function main(){
     return resultado;
    });
    assert.deepEqual(modelo.vagas.map(x=>x.indice),
-    ['"1"','"2"','"3"','"4"','"5"','"6"'],
+    ['1','2','3','4','5','6'],
     'Os numeros fixos 1..6 devem continuar visiveis acima dos #IDs');
    assert.ok(modelo.vagas.every(x=>/^#\d+$/.test(x.id||'')),
     'Todas as vagas ocupadas por identificadores reais do motor');

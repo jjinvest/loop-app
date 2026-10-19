@@ -1910,3 +1910,43 @@ body.loop03-logado .portal-participante{position:relative;z-index:1}
  }
  #loop03Shell #loop03CoroaVisor{font-size:.88rem!important}
 }
+
+
+/* Numeracao fixa 1..6 nos lugares OCUPADOS: DOM em vez do pseudo
+   que ficava coberto especialmente no vermelho. Ocupante segue por #ID. */
+#loop03-tabuleiro .loop03-roda .espaco-tabuleiro-demo:has(>.loop03-indice-vaga-visivel)::before{
+ content:none!important;
+}
+#loop03-tabuleiro .loop03-roda .espaco-tabuleiro-demo>.loop03-indice-vaga-visivel{
+ display:block!important;position:absolute!important;
+ top:clamp(3px,7%,10px)!important;left:50%!important;
+ transform:translateX(-50%)!important;z-index:5!important;
+ width:auto!important;min-width:0!important;height:auto!important;
+ margin:0!important;padding:0!important;
+ color:#101724!important;text-shadow:0 1px 0 #ffffff8a!important;
+ font-size:clamp(.88rem,1.8vw,1.42rem)!important;
+ font-weight:950!important;line-height:1!important;
+ pointer-events:none!important;
+}
+#loop03-tabuleiro .loop03-roda .tabuleiro-vaga-6>.loop03-indice-vaga-visivel{
+ color:#fff!important;text-shadow:0 1px 3px #59091f!important;
+}
+#loop03-tabuleiro .loop03-roda .espaco-tabuleiro-demo:has(.posicao-dourado)>.loop03-indice-vaga-visivel{
+ color:#50300a!important;text-shadow:0 1px 0 #ffe3a1!important;
+}
+@media(max-width:590px){
+ #loop03-tabuleiro .loop03-roda .espaco-tabuleiro-demo>.loop03-indice-vaga-visivel{
+  top:clamp(2px,5%,5px)!important;
+  font-size:clamp(.6rem,2.4vw,.9rem)!important;
+ }
+ #loop03-tabuleiro .loop03-roda .loop03-ocupante-identidade{
+  margin-top:clamp(11px,3.2vw,16px)!important;
+ }
+}
+/* A identidade privada longa pode usar duas linhas ao inves de parecer nome falso. */
+#loop03-tabuleiro .loop03-roda .loop03-nome-na-bola{
+ white-space:normal!important;
+ overflow:hidden!important;display:-webkit-box!important;
+ -webkit-box-orient:vertical;-webkit-line-clamp:2;
+ overflow-wrap:anywhere;max-height:2.5em!important;
+}
