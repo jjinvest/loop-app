@@ -9,7 +9,6 @@
  let mapaAtual=null;
  let cpfConfirmadoAtual=false;
  let convitesValidadosFilaA=[];
- let filtroMapa='todas';
  let destinoInicialTratado=false;
  function encerrarTela(){
   window.Loop03Shell?.encerrar();
@@ -64,9 +63,7 @@
   mapaAtual=null;
   instanteUltimoEventoValido=null;
   renderizarRelogioCiclo();
-  filtroMapa='todas';
   destinoInicialTratado=false;
-  atualizarControlesMapa();
  }
  async function chamada(url,body){
   const r=await fetch('/api/laboratorio/participante/'+url,{
@@ -110,20 +107,8 @@
    ', '+descricao+(p.minha?', minha posição':''));
   return item;
  }
- function atualizarControlesMapa(){
-  const controles=[
-   ['filtroMinhasMapaParticipante','minhas'],
-   ['filtroTodasMapaParticipante','todas']
-  ];
-  for(const [id,valor] of controles){
-   e(id).setAttribute('aria-pressed',String(filtroMapa===valor));
-  }
-  e('ajudaFiltroMapaParticipante').textContent=filtroMapa==='minhas'?
-   'Somente suas posições, com a ordem verdadeira dentro de A e B. Outras posições continuam na fila.':
-   'Exibindo todas as posições em ordem. As cores não mudam a prioridade.';
- }
+ // Mostrar fila COMPLETA nos próprios painéis, sem filtros externos.
  function indicesDaFila(posicoes){
-  if(filtroMapa==='minhas')return posicoes.flatMap((p,i)=>p.minha?[i]:[]);
   return posicoes.map((_,i)=>i);
  }
  function renderizarFila(posicoes,idFila,idContador,nomeFila){
@@ -234,7 +219,6 @@
  function mostrarMapa(mapa){
   mapaAtual=mapa;
   atualizarRelogioCiclo(mapa);
-  atualizarControlesMapa();
   renderizarFila(mapa.filaA,'mapaFilaAParticipante','contadorFilaAParticipante','Fila A');
   renderizarFila(mapa.filaB,'mapaFilaBParticipante','contadorFilaBParticipante','Fila B');
   const todas=[...mapa.filaA,...mapa.filaB];
@@ -589,17 +573,6 @@
   try{await chamada('sair',{});msg.textContent='Sessão fictícia encerrada.';}
   catch(erro){msg.textContent=erro.message;}
  });
- for(const [id,modo] of [
-  ['filtroMinhasMapaParticipante','minhas'],
-  ['filtroTodasMapaParticipante','todas']
- ]){
-  e(id).addEventListener('click',()=>{
-   filtroMapa=modo;
-   if(mapaAtual)mostrarMapa(mapaAtual);
-   else atualizarControlesMapa();
-  });
- }
- atualizarControlesMapa();
  e('copiarLinkParticipante').addEventListener('click',async()=>{
   if(e('copiarLinkParticipante').disabled)return;
   try{
