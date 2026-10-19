@@ -115,6 +115,10 @@ async function main(){
   assert.equal(await page.locator('.marcos-v6 span').count(),6);
   assert.equal(await page.locator('.marcos-v6 span:nth-child(odd)').count(),3);
   assert.equal(await page.locator('.marcos-v6 span:nth-child(even)').count(),3);
+  assert.equal(await page.locator('#loop03RelogioCiclo').innerText(),'--:--:--');
+  assert.equal(await page.locator('#loop03-tabuleiro .loop03-explicacao-catraca p').count(),2);
+  assert.equal(await page.locator('#mapaFilaAParticipante .fila-vazia-demo').count(),0);
+  assert.equal(await page.locator('#mapaFilaBParticipante .fila-vazia-demo').count(),0);
   const destinos=['home','tabuleiro','posicoes','rede','financeiro','/loja'];
   assert.deepEqual(await page.locator('#loop03Sidebar nav > *').evaluateAll(nodes=>
    nodes.map(n=>n.dataset.loop03Aba||n.getAttribute('href'))),destinos);
@@ -434,7 +438,7 @@ async function main(){
   const promovida=page.locator('#mapaFilaAParticipante .loop03-linha-fila').filter({hasText:'#1'});
   assert.equal(await promovida.count(),1);
   assert.equal(await promovida.locator('.loop03-inicial-fila.loop03-a').innerText(),'A');
-  assert.equal(await promovida.locator('.loop03-quantidade-a-direita').innerText(),'2 indicações');
+  assert.equal(await promovida.locator('.loop03-quantidade-a-direita').innerText(),'2');
   assert.equal(await promovida.locator('.loop03-bonequinho-indicacoes').count(),1);
   assert.equal(await page.locator('#mapaFilaBParticipante .loop03-quantidade-a-direita').count(),0);
   await page.screenshot({path:path.join(pasta,'fila-a-contagem-posicao.png'),fullPage:true});
