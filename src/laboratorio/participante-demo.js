@@ -149,7 +149,7 @@
    referencia.setAttribute('aria-label','#'+p.posicaoId+' · '+nomeFila+
     (p.minha?' · minha posição':''));
    referencia.classList.add('loop03-numero-titular');
-   // Ordem da A: [bola amarela com A branco] [#ID] [N indicacao(oes)] [boneco amarelo].
+   // Ordem da A: [bola amarela com A branco] [#ID] [boneco amarelo] [N indicacao(oes)].
    // Na B: [bola branca com B preto] [#ID]. Nomes nunca entram na B.
    dados.append(referencia);
    if(filaA){
@@ -176,7 +176,7 @@
      for(const [key,value] of Object.entries(attrs))node.setAttribute(key,value);
      boneco.append(node);
     }
-    dados.append(quantidade,boneco);
+    dados.append(boneco,quantidade);
    }
    // O participante visualiza os proprios dados; outros: numero somente.
    linha.append(simbolo,dados);lista.append(linha);

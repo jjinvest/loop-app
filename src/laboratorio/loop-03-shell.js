@@ -81,7 +81,12 @@
        <span id="loop03IndicePosicao" class="loop03-visor-fracao">0/6</span>
        <span id="loop03NumeroDetalhe" class="loop03-visualmente-oculto">Nenhuma posição selecionada</span>
       </div>
-     <button id="loop03IndicadorFinanceiro" type="button" class="loop03-indicador" aria-haspopup="dialog" aria-controls="loop03DetalheIndicador"><small>▥ FINANCEIRO</small><strong id="loop03Saldo">R$ 0,00</strong><span>Saldo disponível no laboratório</span></button>
+     <div id="loop03IndicadorFinanceiro" class="loop03-indicador loop03-visor-passivo loop03-visor-financeiro" role="group" aria-label="Resumo financeiro da posição selecionada: somente leitura">
+       <small>▥ FINANCEIRO</small>
+       <span id="loop03BonusDez" class="loop03-bonus-superior">Bônus 10% · —</span>
+       <strong id="loop03Saldo">—</strong>
+       <span class="loop03-lucro-legenda">Participação de lucro</span>
+      </div>
     </div>
     <div id="loop03SeletorPosicao" class="loop03-seletor-fundo" hidden role="dialog" aria-modal="true" aria-labelledby="loop03EscolhaTitulo">
      <div class="loop03-seletor-janela">
@@ -388,7 +393,6 @@
   e('loop03PerfilTopo').addEventListener('click',abrirPerfilSobreposto);
   e('loop03FecharPerfil').addEventListener('click',()=>fecharPerfilSobreposto(true));
   e('loop03FundoPerfil').addEventListener('click',()=>fecharPerfilSobreposto(true));
-  e('loop03IndicadorFinanceiro').addEventListener('click',()=>abrirDetalheIndicador('FINANCEIRO'));
   e('loop03FecharDetalhe').addEventListener('click',fecharDetalheIndicador);
   e('loop03DetalheIndicador').addEventListener('click',ev=>{
    if(ev.target===e('loop03DetalheIndicador'))fecharDetalheIndicador();
@@ -746,12 +750,12 @@
   aplicarPerfil(visao);
   const n=visao.posicoes.length;
   e('loop03TotalAtivacoes').textContent=n+'/'+visao.limitePosicoesAtivas;
-  const bonus=visao.saquesSimulados?.bonusDisponivelSimuladoCentavos;
   e('loop03Giros24').textContent=Number.isSafeInteger(visao.girosUltimas24Horas)&&visao.girosUltimas24Horas>=0?
    String(visao.girosUltimas24Horas):'—';
-  // Valor ausente nunca e convertido em dinheiro ficticio: 0 apenas se informado pelo servico.
-  e('loop03Saldo').textContent=Number.isSafeInteger(bonus)&&bonus>=0?
-   (bonus/100).toLocaleString('pt-BR',{style:'currency',currency:'BRL'}):'—';
+  // O snapshot nao informa lucro nem bonus creditado POR POSICAO selecionada.
+  // Jamais usar bonusDisponivelSimuladoCentavos da CONTA como lucro da posicao.
+  e('loop03Saldo').textContent='—';
+  e('loop03BonusDez').textContent='Bônus 10% · —';
   const etapa=visao.progressoCiclo?.eventosValidos;
   for(const [i,m] of [...document.querySelectorAll('.marcos-v6 > span')].entries()){
    m.classList.toggle('loop03-aceso',Number.isSafeInteger(etapa)&&i<etapa);

@@ -116,7 +116,7 @@ async function main(){
   assert.equal(await telaFilasVazias.locator('#mapaFilaAParticipante li').count(),0);
   assert.equal(await telaFilasVazias.locator('#mapaFilaBParticipante li').count(),0);
   assert.equal(await telaFilasVazias.locator('#loop03TotalAtivacoes').innerText(),'0/6');
-  assert.match(await telaFilasVazias.locator('#loop03Saldo').innerText(),/^R\$\s*0,00$/);
+  assert.equal(await telaFilasVazias.locator('#loop03Saldo').innerText(),'—');
   assert.equal(await telaFilasVazias.locator('.loop03-roda .tabuleiro-vaga-6').count(),1);
   await telaFilasVazias.screenshot({path:path.join(pasta,'TABULEIRO_REAL_ATUAL_DESKTOP_1254_ZERADO.png'),fullPage:true});
   await telaFilasVazias.screenshot({path:path.join(pasta,'TABULEIRO_FILAS_VAZIAS_SEM_PESSOAS.png'),fullPage:false});
@@ -127,7 +127,7 @@ async function main(){
   assert.equal(await telaFilasVazias.locator('#loop03PainelNotificacoes').isVisible(),true);
   await telaFilasVazias.locator('#loop03FecharNotificacoes').click();
   assert.equal(await telaFilasVazias.locator('#loop03TotalAtivacoes').innerText(),'0/6');
-  assert.match(await telaFilasVazias.locator('#loop03Saldo').innerText(),/^R\$\s*0,00$/);
+  assert.equal(await telaFilasVazias.locator('#loop03Saldo').innerText(),'—');
   assert.equal(await telaFilasVazias.locator('#mapaFilaAParticipante li').count(),0);
   assert.equal(await telaFilasVazias.locator('#mapaFilaBParticipante li').count(),0);
   await conferirLargura(telaFilasVazias,390,'tabuleiro-real-zerado',{captura:false});
@@ -210,7 +210,9 @@ async function main(){
   assert.equal(await page.locator('#loop03Numero').innerText(),'#0000');
   assert.equal(await page.locator('#loop03TotalAtivacoes').innerText(),'0/6');
   assert.equal(await page.locator('#loop03Giros24').innerText(),'0');
-  assert.match(await page.locator('#loop03Saldo').innerText(),/^R\$\s*0,00$/);
+  assert.equal(await page.locator('#loop03Saldo').innerText(),'—');
+  assert.equal(await page.locator('#loop03IndicadorFinanceiro').evaluate(el=>el.tagName),'DIV');
+  assert.match(await page.locator('#loop03BonusDez').innerText(),/Bônus 10%/);
   // O seletor abre SOBRE o Tabuleiro, sem navegar para Minhas Posições.
   await page.locator('#loop03Menu').click();
   await page.locator('#loop03Sidebar [data-loop03-aba="tabuleiro"]').click();
@@ -226,11 +228,10 @@ async function main(){
   assert.equal(await page.locator('#loop03IndicadorGiros').evaluate(el=>el.tagName),'DIV');
   assert.equal(await page.locator('#loop03IndicePosicao').innerText(),'0/6');
   assert.equal(await page.locator('#loop03LetraFila').isVisible(),false);
-  await page.locator('#loop03IndicadorFinanceiro').click();
-  assert.equal(await page.locator('#loop03DetalheIndicador').isVisible(),true);
-  assert.match(await page.locator('#loop03DetalheValor').innerText(),/^R\$\s*0,00$/);
+  // FINANCEIRO do cabecalho e visor, nao e um botao.
+  assert.equal(await page.locator('#loop03IndicadorFinanceiro').evaluate(el=>el.tagName),'DIV');
+  assert.equal(await page.locator('#loop03DetalheIndicador').isVisible(),false);
   assert.equal(await page.locator('#loop03-tabuleiro').isVisible(),true);
-  await page.locator('#loop03FecharDetalhe').click();
   assert.equal(await page.locator('#loop03IndicadorGiros').evaluate(el=>el.tagName),'DIV');
   assert.equal(await page.locator('#loop03Giros24').innerText(),'0');
   assert.equal(await page.locator('#loop03-tabuleiro').isVisible(),true);
@@ -597,6 +598,13 @@ async function main(){
   assert.equal(await promovida.locator('.loop03-inicial-fila.loop03-a').innerText(),'A');
   assert.equal(await promovida.locator('.loop03-quantidade-a-direita').innerText(),'2');
   assert.equal(await promovida.locator('.loop03-bonequinho-indicacoes').count(),1);
+  assert.deepEqual(
+   await promovida.locator('.loop03-fila-identificacao').evaluate(el=>
+    [...el.children].slice(0,3).map(n=>
+     n.classList.contains('loop03-numero-titular')?'POSICAO':
+     n.classList.contains('loop03-bonequinho-indicacoes')?'BONECO':
+     n.classList.contains('loop03-quantidade-a-direita')?'INDICACOES':'OUTRO')),
+   ['POSICAO','BONECO','INDICACOES']);
   // Recarregar nao inventa selecao. O usuario escolhe a posicao 1 no proprio Tabuleiro.
   assert.equal(await page.locator('#loop03LetraFila').innerText(),'');
   await page.locator('#loop03AbrirEscolhaPosicao').click();

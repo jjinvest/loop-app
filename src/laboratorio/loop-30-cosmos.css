@@ -1761,3 +1761,69 @@ body.loop03-logado .portal-participante{position:relative;z-index:1}
   max-width:100%!important;
  }
 }
+
+/* Ajustes finos: cabeçalho em DOM real. Manter motor, esferas, catraca intactos. */
+#loop03Shell .loop03-banner-topo .loop03-logomarca{
+ letter-spacing:-.058em!important;
+ filter:drop-shadow(0 2px 0 #a5692b) drop-shadow(0 4px 1px #1c0d11)
+        drop-shadow(0 0 10px #ffc45a8c)!important;
+}
+#loop03Shell .loop03-banner-topo .loop03-logomarca span{
+ letter-spacing:-.055em!important;
+ filter:drop-shadow(0 1px 0 #e1ebff) drop-shadow(0 3px 1px #2d3548)
+        drop-shadow(0 0 8px #fff7)!important;
+}
+/* Distribuicao proporcional vertical de POSICOES e GIROS. */
+#loop03Shell .loop03-indicadores>#loop03AbrirEscolhaPosicao,
+#loop03Shell .loop03-indicadores>#loop03IndicadorGiros{
+ display:grid!important;grid-template-columns:minmax(0,1fr)!important;
+ grid-template-rows:auto minmax(0,1fr) auto!important;
+ align-content:stretch!important;align-items:stretch!important;gap:5px!important;
+}
+#loop03Shell .loop03-indicadores>#loop03AbrirEscolhaPosicao>small,
+#loop03Shell .loop03-indicadores>#loop03IndicadorGiros>small{align-self:start!important}
+#loop03Shell .loop03-indicadores>#loop03AbrirEscolhaPosicao>strong,
+#loop03Shell .loop03-indicadores>#loop03IndicadorGiros>strong{
+ align-self:center!important;line-height:1.12!important;
+ padding-top:clamp(3px,.6vw,8px)!important;
+}
+#loop03Shell .loop03-indicadores>#loop03AbrirEscolhaPosicao>span,
+#loop03Shell .loop03-indicadores>#loop03IndicadorGiros>span{
+ align-self:end!important;line-height:1.35!important;padding-bottom:1px!important;
+}
+/* Visor financeiro passivo: bonus superior, lucro no centro. Sem ledger individual, '—'. */
+#loop03Shell .loop03-indicadores>#loop03IndicadorFinanceiro{
+ cursor:default!important;display:flex!important;flex-direction:column!important;
+ align-items:flex-start!important;gap:clamp(5px,.6vw,9px)!important;
+}
+#loop03Shell #loop03IndicadorFinanceiro .loop03-bonus-superior{
+ display:block!important;line-height:1.15!important;
+ color:#dfc795!important;font-size:clamp(.66rem,.95vw,.85rem)!important;
+ overflow-wrap:anywhere;
+}
+#loop03Shell #loop03IndicadorFinanceiro #loop03Saldo{
+ margin-top:auto!important;margin-bottom:0!important;line-height:1.06!important;
+}
+#loop03Shell #loop03IndicadorFinanceiro .loop03-lucro-legenda{
+ font-size:clamp(.63rem,.82vw,.76rem)!important;line-height:1.2!important;
+}
+@media(max-width:520px){
+ #loop03Shell .loop03-indicadores>#loop03AbrirEscolhaPosicao,
+ #loop03Shell .loop03-indicadores>#loop03IndicadorGiros{gap:4px!important}
+ #loop03Shell #loop03IndicadorFinanceiro .loop03-bonus-superior{font-size:.63rem!important}
+}
+/* Ordem A | #numero | boneco | quantidade, com separacao dos dois numeros. */
+#loop03-tabuleiro .loop03-mapa-grade>.bloco-fila-participante:first-child .loop03-fila-identificacao{
+ gap:clamp(6px,1vw,13px)!important;
+}
+#loop03-tabuleiro .loop03-mapa-grade>.bloco-fila-participante:first-child .loop03-numero-titular{
+ margin-right:clamp(1px,.5vw,5px)!important;
+}
+@media(max-width:590px){
+ #loop03-tabuleiro .loop03-mapa-grade>.bloco-fila-participante:first-child .loop03-fila-identificacao{
+  gap:clamp(3px,.7vw,5px)!important;
+ }
+ #loop03-tabuleiro .loop03-mapa-grade>.bloco-fila-participante:first-child .loop03-numero-titular{
+  margin-right:1px!important;
+ }
+}
