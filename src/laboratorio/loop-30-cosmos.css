@@ -678,3 +678,32 @@ body.loop03-logado .portal-participante{position:relative;z-index:1}
 #loop03-rede .loop03-rede-ferramentas>summary:focus-visible{
  outline:2px solid #ffe8a5;outline-offset:-3px;
 }
+
+
+/* Cabecalhos integrados diretamente no cosmos, sem retangulo opaco */
+#loop03-posicoes>.loop03-titulo-pagina,
+#loop03-rede>.loop03-cabecalho-equipe,
+#loop03-posicoes>.loop03-titulo-pagina>div,
+#loop03-rede>.loop03-cabecalho-equipe>.loop03-titulo-equipe{
+ background:transparent!important;
+ background-image:none!important;
+ border:none!important;
+ box-shadow:none!important;
+}
+#loop03-posicoes>.loop03-titulo-pagina{
+ min-height:75px!important;
+ padding:0 4px 10px!important;
+ margin-bottom:7px!important;
+}
+#loop03-posicoes>.loop03-titulo-pagina h2{
+ text-shadow:0 0 12px #e6ac526b!important;
+}
+#loop03-rede>.loop03-cabecalho-equipe{
+ padding:5px 0!important;
+}
+#loop03-rede>.loop03-cabecalho-equipe>.loop03-titulo-equipe{
+ align-self:center!important;
+}
+#loop03-rede>.loop03-cabecalho-equipe>.loop03-titulo-equipe h2{
+ text-shadow:0 0 13px #ffcb686e!important;
+}
