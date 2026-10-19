@@ -555,13 +555,6 @@
   }
  }
  function encerrar(){document.body.classList.remove('loop03-logado');selecionada=null;visaoAtual=null;destinoInicialTratado=false;abrir('home');}
- // Se outra conta movimentar a catraca no servidor local, a tela aberta
- // recebe novos IDs/vagas. A consulta nunca cria eventos ou saldo.
- window.setInterval(()=>{
-  if(abaAtual==='tabuleiro'&&visaoAtual&&
-   !e('conteudoParticipante')?.hidden&&!document.hidden)
-   window.LoopParticipanteAtualizar?.();
- },30000);
  window.Loop03Shell={montar,atualizar,encerrar,abrir,destacarPosicoes,
   posicaoSelecionada:()=>selecionada};
  montar();
