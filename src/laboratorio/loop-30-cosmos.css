@@ -861,3 +861,104 @@ body.loop03-logado .portal-participante{position:relative;z-index:1}
  .loop03-sidebar .loop03-avatar{width:25px!important;height:25px!important}
  .loop03-sidebar .loop03-sair{width:24px!important;height:24px!important}
 }
+
+
+/* CABECALHOS ORIGINAIS A/B — ETAPA PONTUAL APROVADA, SOMENTE TABULEIRO. */
+/* Os ícones aqui são decorativos, não posições; as filas continuam sem pessoas
+ até a fonte única de dados devolver posições ativas. */
+#loop03-tabuleiro .loop03-mapa-grade>.bloco-fila-participante{
+ display:flex!important;flex-direction:column!important;
+}
+#loop03-tabuleiro .loop03-mapa-grade>.bloco-fila-participante>.loop03-cabecalho-fila{
+ display:flex!important;align-items:center!important;justify-content:flex-start!important;
+ gap:clamp(5px,.65vw,10px)!important;
+ width:100%!important;min-height:62px!important;
+ padding:7px 4px 10px!important;margin:0 0 4px!important;
+ background:transparent!important;border:0!important;box-shadow:none!important;
+ color:#ffde7f!important;text-align:left!important;
+ font-family:system-ui,sans-serif!important;
+}
+#loop03-tabuleiro .loop03-mapa-grade .loop03-cabecalho-fila .loop03-texto-cabecalho{
+ flex:0 1 auto;min-width:0;
+ font-size:clamp(1.12rem,1.65vw,1.85rem)!important;
+ font-weight:950!important;letter-spacing:-.035em!important;
+ line-height:1.06!important;white-space:nowrap!important;
+ color:#ffdd62!important;text-shadow:0 0 12px #ffca5078,0 2px 2px #28120b!important;
+}
+#loop03-tabuleiro .loop03-mapa-grade .loop03-cabecalho-fila-b .loop03-texto-cabecalho{
+ color:#f5f7fd!important;text-shadow:0 0 9px #ffffff75,0 2px 2px #080c16!important;
+}
+#loop03-tabuleiro .loop03-mapa-grade .loop03-cabecalho-fila .loop03-seta-cabecalho{
+ flex:0 0 auto!important;line-height:1!important;
+ font-size:clamp(1.5rem,2vw,2.4rem)!important;
+ font-weight:900;color:#ffda40!important;
+ text-shadow:0 0 9px #ffd044a2;
+ margin-left:-3px;
+}
+#loop03-tabuleiro .loop03-mapa-grade .loop03-cabecalho-fila .loop03-icone-cabecalho{
+ display:inline-block!important;position:relative!important;
+ width:clamp(27px,3vw,39px)!important;height:clamp(28px,3.2vw,41px)!important;
+ min-width:0!important;flex:none!important;margin:0!important;
+ background:none!important;border:0!important;
+ filter:drop-shadow(0 1px 2px #000a) drop-shadow(0 0 8px #ffcb6382)!important;
+}
+/* Moedas empilhadas como no cabeçalho original da Fila A. */
+#loop03-tabuleiro .loop03-icone-fila-a:before,
+#loop03-tabuleiro .loop03-icone-fila-a:after{
+ content:"";position:absolute;left:10%;width:80%;height:35%;
+ border:2px solid #e7ac15;border-radius:50%;
+ background:linear-gradient(180deg,#fff08c 0%,#ffd83c 32%,#be8112 100%);
+ box-shadow:inset 0 2px 2px #fff5a8bc,0 3px 0 #986408,0 5px 4px #05070d89;
+}
+#loop03-tabuleiro .loop03-icone-fila-a:before{
+ bottom:24%;transform:rotate(-8deg);
+ box-shadow:inset 0 2px 2px #fff5a8bc,0 5px 0 #96650a,0 8px 4px #05070d89;
+}
+#loop03-tabuleiro .loop03-icone-fila-a:after{top:12%;transform:rotate(-12deg)}
+/* Silhueta branca de participante no cabeçalho original da Fila B. */
+#loop03-tabuleiro .loop03-icone-fila-b{
+ filter:drop-shadow(0 0 7px #f9faff99)!important;
+}
+#loop03-tabuleiro .loop03-icone-fila-b:before{
+ content:"";position:absolute;left:30%;top:5%;width:40%;height:40%;
+ border-radius:50%;
+ background:radial-gradient(circle at 30% 25%,#fff,#cdd5e4 77%,#8693aa);
+ box-shadow:0 0 9px #e9f0ffa6;
+}
+#loop03-tabuleiro .loop03-icone-fila-b:after{
+ content:"";position:absolute;left:9%;bottom:4%;width:82%;height:47%;
+ border-radius:52% 52% 16% 16%;
+ background:linear-gradient(100deg,#bcc6d6,#fff 45%,#a3acc0);
+ box-shadow:0 0 8px #e9f0ff73;
+}
+/* O contador verdadeiro permanece no rodapé, nunca dentro do título. */
+#loop03-tabuleiro .loop03-mapa-grade>.bloco-fila-participante>.mapa-fila-posicoes-demo{
+ flex:1 1 auto!important;order:1!important;min-height:0;
+}
+#loop03-tabuleiro .loop03-mapa-grade>.bloco-fila-participante:after{
+ order:2!important;
+}
+#loop03-tabuleiro .loop03-mapa-grade .loop03-contagem-rodape-fila{
+ display:block!important;order:3!important;
+ margin:8px 0 0!important;align-self:center!important;
+ padding:8px 4px!important;border-top:1px solid #91734470!important;
+ color:#f0e2c3!important;text-align:center!important;
+ font-size:.7rem!important;letter-spacing:.01em!important;
+}
+#loop03-tabuleiro .loop03-mapa-grade .loop03-contagem-rodape-fila[hidden]{
+ display:none!important;
+}
+@media(max-width:590px){
+ #loop03-tabuleiro .loop03-mapa-grade>.bloco-fila-participante>.loop03-cabecalho-fila{
+  gap:4px!important;min-height:47px!important;padding:5px 1px 7px!important;
+ }
+ #loop03-tabuleiro .loop03-mapa-grade .loop03-cabecalho-fila .loop03-texto-cabecalho{
+  font-size:clamp(.82rem,3.4vw,1.14rem)!important;
+ }
+ #loop03-tabuleiro .loop03-mapa-grade .loop03-cabecalho-fila .loop03-icone-cabecalho{
+  width:24px!important;height:27px!important;
+ }
+ #loop03-tabuleiro .loop03-mapa-grade .loop03-cabecalho-fila .loop03-seta-cabecalho{
+  font-size:1.35rem!important;
+ }
+}
