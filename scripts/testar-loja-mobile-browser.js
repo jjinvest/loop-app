@@ -597,6 +597,10 @@ async function main(){
   assert.equal(await promovida.locator('.loop03-inicial-fila.loop03-a').innerText(),'A');
   assert.equal(await promovida.locator('.loop03-quantidade-a-direita').innerText(),'2');
   assert.equal(await promovida.locator('.loop03-bonequinho-indicacoes').count(),1);
+  // Recarregar nao inventa selecao. O usuario escolhe a posicao 1 no proprio Tabuleiro.
+  assert.equal(await page.locator('#loop03LetraFila').innerText(),'');
+  await page.locator('#loop03AbrirEscolhaPosicao').click();
+  await page.locator('#loop03ListaEscolha button').first().click();
   assert.equal(await page.locator('#loop03LetraFila').innerText(),'A');
   assert.equal(await page.locator('#loop03IndicePosicao').innerText(),'1/6');
   assert.equal(await page.locator('#mapaFilaBParticipante .loop03-quantidade-a-direita').count(),0);
