@@ -232,7 +232,7 @@ async function main(){
   assert.equal(await page.locator('#loop03CoroaTabuleiro').isVisible(),false);
   // O numero da vaga fixa nao pode desaparecer quando a posicao for ocupada.
   // Somente no DOM de teste, sem fabricar clientes, pagamentos ou prints.
-  const cores=await page.evaluate(()=>{
+  const coresTipografia=await page.evaluate(()=>{
    const resultado={};
    for(const [classe,local,nome] of [['vermelha','tabuleiro-vaga-6','6'],['branca','tabuleiro-vaga-1','1'],['verde','tabuleiro-centro',null]]){
     const esfera=document.querySelector('#loop03-tabuleiro .'+local);
@@ -250,11 +250,11 @@ async function main(){
    }
    return resultado;
   });
-  assert.equal(cores.vermelha.cor,'rgb(255, 255, 255)');
-  assert.equal(cores.vermelha.numeroFixo,'"6"');
-  assert.equal(cores.branca.cor,'rgb(16, 23, 36)');
-  assert.equal(cores.branca.numeroFixo,'"1"');
-  assert.equal(cores.verde.cor,'rgb(255, 255, 255)');
+  assert.equal(coresTipografia.vermelha.cor,'rgb(255, 255, 255)');
+  assert.equal(coresTipografia.vermelha.numeroFixo,'"6"');
+  assert.equal(coresTipografia.branca.cor,'rgb(16, 23, 36)');
+  assert.equal(coresTipografia.branca.numeroFixo,'"1"');
+  assert.equal(coresTipografia.verde.cor,'rgb(255, 255, 255)');
   // FINANCEIRO do cabecalho e visor, nao e um botao.
   assert.equal(await page.locator('#loop03IndicadorFinanceiro').evaluate(el=>el.tagName),'DIV');
   assert.equal(await page.locator('#loop03DetalheIndicador').isVisible(),false);

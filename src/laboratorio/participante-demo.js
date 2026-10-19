@@ -253,7 +253,10 @@
    titulo.className='titulo-espaco-tabuleiro-demo';
    titulo.textContent=rotulo;
    bloco.append(titulo);
-   if(valor){
+   if(valor?.cor==='DOURADO'){
+    // Esfera dourada SEM NOME, #ID, foto, texto livre ou atribuicao visual.
+    // A titularidade ja foi transferida/assumida pelo LOOP nas regras do motor.
+   }else if(valor){
     const identificacao=document.createElement('span');
     identificacao.className='loop03-ocupante-identidade';
     const numero=elementoPosicao(valor,'Número');
