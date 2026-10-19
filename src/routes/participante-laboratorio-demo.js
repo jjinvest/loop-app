@@ -26,11 +26,11 @@ function setCookie(res,token,maxAge){
  res.append('Set-Cookie',COOKIE+'='+token+'; HttpOnly; SameSite=Strict; Path='+CAMINHO+
   '; Max-Age='+maxAge);
 }
-function criarRouterParticipanteDemo({contas,ponte,sessoes=null,adesoes=null,carrinhos=null,saques=null,obterLivroProvisoesV6=null,obterRetornoSaqueCentroDemo=null}={}){
+function criarRouterParticipanteDemo({contas,ponte,sessoes=null,adesoes=null,carrinhos=null,saques=null,obterLivroProvisoesV6=null,obterRetornoSaqueCentroDemo=null,entregadoresPerfil={}}={}){
  if(!contas||!ponte)throw new TypeError('Cadastro e ponte do laboratorio obrigatorios');
  const gerenciador=sessoes||new SessoesParticipanteDemo({contas});
  const escritorio=new EscritorioIndividualDemo({contas,ponte});
- const perfis=new PerfilParticipanteDemoSQLite({banco:contas.banco});
+ const perfis=new PerfilParticipanteDemoSQLite({banco:contas.banco,entregadores:entregadoresPerfil});
  const router=express.Router();
  router.use((req,res,next)=>{
   if(process.env.NODE_ENV==='production'||!localSeguro(req)){
@@ -327,6 +327,35 @@ function criarRouterParticipanteDemo({contas,ponte,sessoes=null,adesoes=null,car
    res.type('image/jpeg');
    return res.send(foto.bytes);
   }catch(e){return next(e);}
+ });
+ router.post('/perfil/codigo/solicitar',async(req,res,next)=>{
+  if(!req.is('application/json'))return res.status(415).json({erro:'USE_APPLICATION_JSON'});
+  if(!req.body||typeof req.body!=='object'||Array.isArray(req.body)||
+   Object.keys(req.body).sort().join(',')!=='tipo,valor')
+   return res.status(400).json({erro:'CAMPOS_CODIGO_INVALIDOS'});
+  try{
+   const id=gerenciador.identificar(lerCookie(req));
+   if(!id)return res.status(401).json({erro:'SESSAO_AUSENTE_OU_EXPIRADA'});
+   return res.json(await perfis.solicitarCodigo(id,req.body));
+  }catch(e){
+   if(e.codigo)return res.status(e.codigo==='AGUARDE_NOVO_CODIGO'?429:
+    e.codigo==='ENVIO_NAO_CONFIGURADO'?503:400).json({erro:e.codigo});
+   return next(e);
+  }
+ });
+ router.post('/perfil/codigo/confirmar',(req,res,next)=>{
+  if(!req.is('application/json'))return res.status(415).json({erro:'USE_APPLICATION_JSON'});
+  if(!req.body||typeof req.body!=='object'||Array.isArray(req.body)||
+   Object.keys(req.body).sort().join(',')!=='codigo,tipo')
+   return res.status(400).json({erro:'CAMPOS_CODIGO_INVALIDOS'});
+  try{
+   const id=gerenciador.identificar(lerCookie(req));
+   if(!id)return res.status(401).json({erro:'SESSAO_AUSENTE_OU_EXPIRADA'});
+   return res.json(perfis.confirmarCodigo(id,req.body));
+  }catch(e){
+   if(e.codigo)return res.status(400).json({erro:e.codigo});
+   return next(e);
+  }
  });
  router.post('/perfil',(req,res,next)=>{
   if(!req.is('application/json'))return res.status(415).json({erro:'USE_APPLICATION_JSON'});
