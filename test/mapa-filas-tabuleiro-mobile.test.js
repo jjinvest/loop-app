@@ -63,19 +63,21 @@ test('cem entradas: mapa marca minhas posicoes corretamente sem alterar fila nem
  }
 });
 
-test('layout da fila e tabuleiro no celular preserva centro e seis vagas, filtros e acessibilidade',()=>{
+test('layout da fila e tabuleiro no celular preserva centro, seis vagas e filas acionáveis',()=>{
  const html=arq('participante-demo.html');
  const css=arq('participante-demo.css');
  const js=arq('participante-demo.js');
  for(const id of ['mapaFilaAParticipante','mapaFilaBParticipante',
-  'mapaTabuleiroParticipante','filtroResumoMapaParticipante',
-  'filtroMinhasMapaParticipante','filtroTodasMapaParticipante',
-  'contadorFilaAParticipante','contadorFilaBParticipante','resumoMapaParticipante',
+  'mapaTabuleiroParticipante','contadorFilaAParticipante','contadorFilaBParticipante','resumoMapaParticipante',
   'atalhoAtivarParticipante']){
   assert.match(html,new RegExp('id="'+id+'"'));
  }
- assert.match(html,/aria-pressed="true"/);
- assert.match(js,/filtroMapa==='minhas'/);
+ assert.doesNotMatch(html,/id="filtro(?:Resumo|Minhas|Todas)MapaParticipante"/);
+ assert.match(js,/return posicoes\.map\(\(_,i\)=>i\)/);
+ const shell=arq('loop-03-shell.js');
+ assert.match(shell,/loop03-abrir-fila/);
+ assert.match(shell,/aria-expanded/);
+ assert.doesNotMatch(shell,/loop03EscolherNoTabuleiro|loop03EscolhaTexto/);
  assert.match(js,/i\+1/);
  assert.match(js,/posicoes\.length-anterior-1/);
  assert.match(js,/p\.minha/);
