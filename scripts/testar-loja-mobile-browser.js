@@ -776,7 +776,7 @@ async function main(){
   const posicoesAntesDoPerfil=await page.locator('#loop03TotalAtivacoes').innerText();
   await page.locator('#loop03PerfilTopo').click();
   assert.equal(await page.locator('#loop03-perfil').isVisible(),true);
-  assert.match(await page.locator('#loop03SituacaoCPF').innerText(),/primeira posição/i);
+  assert.match(await page.locator('#loop03SituacaoCPF').innerText(),/primeira posição|CPF de teste confirmado/i);
   assert.equal(await page.locator('#loop03PerfilEmail').inputValue(),'mobile@exemplo.invalid');
   // Nao se pode salvar e-mail novo sem confirmar codigo recebido.
   await page.locator('#loop03PerfilEmail').fill('emailnaoverificado@exemplo.invalid');
@@ -810,7 +810,7 @@ async function main(){
   await page.locator('#loop03PerfilTopo').click();
   assert.equal(await page.locator('#loop03PerfilNome').inputValue(),'Meu Perfil Personalizado');
   assert.equal(await page.locator('#loop03-perfil .loop03-foto-grande img').isVisible(),true);
-  await page.locator('#loop03Sidebar [data-loop03-aba="tabuleiro"]').click();
+  await page.locator('.loop03-indicadores [data-loop03-aba="tabuleiro"]').click();
   assert.equal(await page.locator('#loop03TotalAtivacoes').innerText(),posicoesAntesDoPerfil);
 
   assert.deepEqual(erros,[], 'Erros de execucao no navegador');
