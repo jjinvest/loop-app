@@ -451,6 +451,16 @@ async function main(){
   assert.equal(await page.locator('#loop03NomeBaixo').innerText(),titular.nome);
   assert.equal(await page.locator('#loop03TotalAtivacoes').innerText(),'1/6');
   assert.equal(await page.locator('#loop03Numero').innerText(),'#1');
+  // Acompanhamento no tabuleiro: a selecao abre por cima e nao troca a aba.
+  await page.locator('#loop03Menu').click();
+  await page.locator('#loop03Sidebar [data-loop03-aba="tabuleiro"]').click();
+  await page.locator('#loop03AbrirEscolhaPosicao').click();
+  assert.equal(await page.locator('#loop03ListaEscolha button').count(),1);
+  await page.locator('#loop03ListaEscolha button').click();
+  assert.equal(await page.locator('#loop03-tabuleiro').isVisible(),true);
+  assert.equal(await page.locator('#loop03DadosPosicaoLateral').isVisible(),true);
+  await page.locator('#loop03Menu').click();
+  await page.locator('#loop03Sidebar [data-loop03-aba="posicoes"]').click();
   await page.locator('#cpfFicticioParticipante').fill('11144477735');
   await page.locator('#aceiteTermosParticipante').check();
   await page.locator('#confirmarAtivacaoParticipante').click();
@@ -869,6 +879,8 @@ async function main(){
   await page.locator('#loop03PerfilTopo').click();
   assert.equal(await page.locator('#loop03PerfilNome').inputValue(),'Meu Perfil Personalizado');
   assert.equal(await page.locator('#loop03-perfil .loop03-foto-grande img').isVisible(),true);
+  await page.locator('#loop03FecharPerfil').click();
+  await page.locator('#loop03Menu').click();
   await page.locator('#loop03Sidebar [data-loop03-aba="tabuleiro"]').click();
   assert.equal(await page.locator('#loop03TotalAtivacoes').innerText(),posicoesAntesDoPerfil);
 
