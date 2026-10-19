@@ -152,13 +152,28 @@
    e('loop03-tabuleiro').append(mapa);
    const filas=mapa.querySelector('.colunas-filas-participante');
    const filaA=filas?.children[0], filaB=filas?.children[1];
-   // Simbolos definidos no desenho: moedas amarelas na A, boneco branco na B.
-   for(const [coluna,icone] of [[filaA,'🪙'],[filaB,'♟']]){
+   // Cabecalhos espelhados da arte original; apenas formato, sem pessoas ficticias.
+   // IDs e conteudo dos contadores permanecem ligados aos dados reais.
+   for(const [coluna,letra] of [[filaA,'A'],[filaB,'B']]){
     const h=coluna?.querySelector('h3');
     if(!h)continue;
-    const tag=document.createElement('span');tag.className='loop03-icone-cabecalho';
-    tag.textContent=icone;tag.setAttribute('aria-hidden','true');
-    h.prepend(tag);
+    const contador=h.querySelector('small');
+    const icone=document.createElement('span');
+    icone.className='loop03-icone-cabecalho loop03-icone-fila-'+letra.toLowerCase();
+    icone.setAttribute('aria-hidden','true');
+    const tituloFila=document.createElement('span');
+    tituloFila.className='loop03-texto-cabecalho';
+    tituloFila.textContent='Fila '+letra;
+    const seta=document.createElement('span');
+    seta.className='loop03-seta-cabecalho';
+    seta.textContent=letra==='A'?'»':'';
+    seta.setAttribute('aria-hidden','true');
+    h.classList.add('loop03-cabecalho-fila','loop03-cabecalho-fila-'+letra.toLowerCase());
+    h.replaceChildren(icone,tituloFila,seta);
+    if(contador){
+     contador.classList.add('loop03-contagem-rodape-fila');
+     coluna.append(contador);
+    }
    }
    const painel=mapa.querySelector('.painel-tabuleiro-imersivo');
    const titulo=mapa.querySelector('.titulo-tabuleiro-participante');
