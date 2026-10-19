@@ -110,8 +110,7 @@ async function main(){
   assert.equal(await telaFilasVazias.locator('#loop03-perfil #loop03Sair').count(),1);
   assert.equal(await telaFilasVazias.locator('#loop03Sidebar .loop03-vitrine-caneta').count(),0);
   assert.equal(await telaFilasVazias.locator('#loop03Sidebar .loop03-vitrine-lateral').getAttribute('href'),'/loja');
-  await telaFilasVazias.locator('#loop03VitrineEstado').getByText(/Aguardando produtos reais/).waitFor();
-  assert.equal(await telaFilasVazias.locator('#loop03VitrineFoto').isVisible(),false);
+  assert.equal(await telaFilasVazias.locator('#loop03VitrineArea').evaluate(el=>el.children.length),0);
   assert.equal(await telaFilasVazias.locator('#loop03Sidebar nav .loop03-icone-financeiro').innerText(),'
   assert.equal(await telaFilasVazias.locator('#loop03DadosPosicaoLateral').isVisible(),false);
   assert.equal(await telaFilasVazias.locator('#loop03BoasVindas').innerText(),'Bem-vindo!');
@@ -484,7 +483,8 @@ async function main(){
   await page.locator('#loop03OpcoesPosicoes [data-loop03-posicao]').first().click();
   assert.equal(await page.locator('#loop03DadosPosicaoLateral').isVisible(),true);
   assert.equal(await page.locator('#loop03NomeBaixo').innerText(),titular.nome);
-  assert.equal(await page.locator('#loop03SituacaoBaixo').isVisible(),false);
+  assert.equal(await page.locator('#loop03SituacaoBaixo').isVisible(),true);
+  assert.match(await page.locator('#loop03SituacaoBaixo').innerText(),/Fila [AB]/);
   assert.equal(await page.locator('#loop03TotalAtivacoes').innerText(),'1/6');
   assert.equal(await page.locator('#loop03Numero').innerText(),'#1');
   assert.equal(await page.locator('#loop03IndicePosicao').innerText(),'1/6');
@@ -1142,6 +1142,13 @@ async function main(){
     'Os numeros fixos 1..6 devem continuar visiveis acima dos #IDs');
    assert.ok(modelo.vagas.every(x=>/^#\d+$/.test(x.id||'')),
     'Todas as vagas ocupadas por identificadores reais do motor');
+   const geom=await q.locator('#loop03-tabuleiro .tabuleiro-vaga-6').evaluate(esfera=>{
+    const i=esfera.querySelector('.loop03-indice-vaga-visivel').getBoundingClientRect();
+    const d=esfera.querySelector('.loop03-ocupante-identidade').getBoundingClientRect();
+    return {indiceInferior:i.bottom,nomeSuperior:d.top};
+   });
+   assert.ok(geom.indiceInferior<=geom.nomeSuperior+2,
+    'Indice fixo 6 nao deve se sobrepor ao ocupante: '+JSON.stringify(geom));
    assert.equal(modelo.vagas[5].cor,'rgb(255, 255, 255)',
     'Vaga 6 vermelha com texto branco');
    assert.ok(modelo.vagas.slice(0,5).every(x=>x.cor==='rgb(16, 23, 36)'),
@@ -1205,7 +1212,6 @@ main().catch(erro=>{
  process.stderr.write('FALHA_TESTE_BROWSER_MOBILE_LOOP: '+(erro.stack||erro)+'\n');
  process.exitCode=1;
 }););
-  assert.equal(await telaFilasVazias.locator('#loop03Sidebar nav .loop03-icone-rede svg').count(),1);
   assert.equal(await telaFilasVazias.locator('#loop03Sidebar nav .loop03-icone-akitemm svg').count(),1);
   assert.equal(await telaFilasVazias.locator('#loop03DadosPosicaoLateral').isVisible(),false);
   assert.equal(await telaFilasVazias.locator('#loop03BoasVindas').innerText(),'Bem-vindo!');

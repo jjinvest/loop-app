@@ -2007,3 +2007,22 @@ body.loop03-logado .portal-participante{position:relative;z-index:1}
  color:#ffdd9d!important;font-weight:800!important;
  font-size:.69rem!important;line-height:1.3!important;
 }
+
+/* Vaga vermelha com índice fixo 6 menor, mantendo #ID + nome sem sobreposição. */
+#loop03-tabuleiro .loop03-roda .espaco-tabuleiro-demo:not(.tabuleiro-centro):has(>.loop03-indice-vaga-visivel)>.loop03-ocupante-identidade{
+ position:absolute!important;top:32%!important;bottom:5%!important;
+ left:4%!important;right:4%!important;width:92%!important;max-width:92%!important;
+ height:63%!important;margin:0!important;z-index:3!important;
+ justify-content:center!important;
+}
+#loop03-tabuleiro .loop03-roda .tabuleiro-vaga-6>.loop03-indice-vaga-visivel{
+ top:clamp(2px,4%,7px)!important;font-size:clamp(.72rem,1.22vw,1.0rem)!important;line-height:1!important;
+}
+@media(max-width:590px){
+ #loop03-tabuleiro .loop03-roda .tabuleiro-vaga-6>.loop03-indice-vaga-visivel{
+  top:clamp(1px,4%,4px)!important;font-size:clamp(.56rem,2.1vw,.73rem)!important;
+ }
+ #loop03-tabuleiro .loop03-roda .espaco-tabuleiro-demo:not(.tabuleiro-centro):has(>.loop03-indice-vaga-visivel)>.loop03-ocupante-identidade{
+  top:33%!important;bottom:4%!important;height:63%!important;
+ }
+}

@@ -26,11 +26,7 @@
     <a href="/loja" class="loop03-vitrine-lateral" aria-label="Abrir vitrine AKITEMM">
      <span class="loop03-vitrine-marca">AKITEMM</span>
      <small>VITRINE ROTATIVA</small>
-     <span class="loop03-vitrine-ilustracao" id="loop03VitrineArea">
-      <img id="loop03VitrineFoto" alt="" hidden loading="lazy">
-      <span id="loop03VitrineEstado" class="loop03-vitrine-sem-produto">Aguardando produtos reais da AKITEMM</span>
-      <span id="loop03VitrineNome" class="loop03-vitrine-nome-produto" hidden></span>
-     </span>
+     <span class="loop03-vitrine-ilustracao" id="loop03VitrineArea" aria-hidden="true"></span>
      <strong>PRODUTOS E CURSOS</strong>
      <span class="loop03-vitrine-link">CONHECER A LOJA →</span>
     </a>
@@ -429,7 +425,6 @@
   });
   abrir('home');
   carregarPublicacoes();
-  carregarVitrineAKITEMM();
  }
  function abrir(aba){
   if(!paginas.includes(aba))return;
@@ -666,11 +661,13 @@
    return;
   }
   dados.hidden=false;
-  e('loop03NomeBaixo').textContent=visaoAtual?.perfil?.nome||visaoAtual?.conta?.nome||'';
-  e('loop03SituacaoBaixo').textContent='';
-  e('loop03SituacaoBaixo').hidden=true;
-  // Coroa so em posicao REAL do tabuleiro (seis vagas e centro).
-  e('loop03CoroaTabuleiro').hidden=!/^(?:VAGA_[1-6]|CENTRO)$/.test(p.local||'');
+  const nomeConta=(visaoAtual?.perfil?.nome||visaoAtual?.conta?.nome||'').trim();
+  e('loop03NomeBaixo').textContent=nomeConta.replace(/^Participante\s+/i,'').trim()||nomeConta;
+  const naCatraca=/^(?:VAGA_[1-6]|CENTRO)$/.test(p.local||'');
+  const situacao=e('loop03SituacaoBaixo');
+  situacao.textContent=naCatraca?'':statusPosicao(p);
+  situacao.hidden=naCatraca||!situacao.textContent;
+  e('loop03CoroaTabuleiro').hidden=!naCatraca;
  }
  function statusPosicao(p){
   const l=p.local||'';
@@ -1008,51 +1005,10 @@
   }
  }
 
- let vitrineLista=[];
- let vitrineIndice=0;
- let intervaloVitrine=null;
- function pintarVitrineAKITEMM(){
-  const foto=e('loop03VitrineFoto'),nome=e('loop03VitrineNome'),
-   estado=e('loop03VitrineEstado'),link=e('loop03Sidebar')?.querySelector('.loop03-vitrine-lateral');
-  if(!foto||!link)return;
-  const produto=vitrineLista.length?vitrineLista[vitrineIndice%vitrineLista.length]:null;
-  if(!produto){
-   foto.hidden=true;foto.removeAttribute('src');foto.alt='';
-   nome.hidden=true;nome.textContent='';
-   estado.hidden=false;estado.textContent='Aguardando produtos reais da AKITEMM';
-   link.setAttribute('aria-label','Conhecer a loja AKITEMM');return;
-  }
-  foto.src=produto.fotos[0];foto.alt=produto.nome;foto.hidden=false;
-  nome.textContent=produto.nome;nome.hidden=false;estado.hidden=true;
-  link.setAttribute('aria-label','Conhecer na AKITEMM: '+produto.nome);
- }
- async function carregarVitrineAKITEMM(){
-  try{
-   const resp=await fetch('/catalogo',{cache:'no-store',credentials:'same-origin'});
-   if(!resp.ok)throw Error('CATALOGO_INDISPONIVEL');
-   const dados=await resp.json();
-   // Um catalogo demonstrativo jamais pode ser anunciado como produto real.
-   vitrineLista=dados.modo==='CATALOGO_DEMONSTRATIVO_SEM_VENDAS'?[]:
-    (Array.isArray(dados.produtos)?dados.produtos:[]).filter(p=>
-     p&&p.estado==='PUBLICADO'&&p.compraDisponivel===true&&
-     typeof p.nome==='string'&&p.nome.trim()&&
-     Array.isArray(p.fotos)&&p.fotos.length&&
-     /^\/imagens\/catalogo\/[a-z0-9_-]+\.(?:png|jpe?g|webp)$/.test(p.fotos[0]));
-  }catch{vitrineLista=[];}
-  vitrineIndice=0;pintarVitrineAKITEMM();
-  if(intervaloVitrine!==null){clearInterval(intervaloVitrine);intervaloVitrine=null;}
-  if(vitrineLista.length>1)intervaloVitrine=setInterval(()=>{
-   if(document.visibilityState==='visible'&&e('loop03Shell')){
-    vitrineIndice=(vitrineIndice+1)%vitrineLista.length;pintarVitrineAKITEMM();
-   }
-  },6000);
- }
  function encerrar(){
   fecharPerfilSobreposto();
   fecharDetalheIndicador();
   fecharNotificacoes();
-  if(intervaloVitrine!==null){clearInterval(intervaloVitrine);intervaloVitrine=null;}
-  vitrineLista=[];vitrineIndice=0;pintarVitrineAKITEMM();
   document.body.classList.remove('loop03-logado');
   selecionada=null;visaoAtual=null;destinoInicialTratado=false;fotoPerfilAcao='MANTER';
   fecharSeletorPosicao();identidadeDaPosicao(null);
