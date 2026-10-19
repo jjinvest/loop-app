@@ -4,6 +4,7 @@
 (()=>{
  const e=id=>document.getElementById(id);
  let selecionada=null, visaoAtual=null, abaAtual='home', destinoInicialTratado=false;
+ let fotoPerfilAcao='MANTER';
  const paginas=['home','tabuleiro','posicoes','rede','financeiro','perfil'];
  function montar(){
   const root=e('conteudoParticipante');
@@ -29,9 +30,11 @@
      <strong>PRODUTOS E CURSOS</strong>
      <span class="loop03-vitrine-link">CONHECER A LOJA →</span>
     </a>
-    <div class="loop03-identidade" aria-label="Identificação visual, sem ação">
-     <div class="loop03-avatar" aria-hidden="true">◉</div>
-     <div><strong id="loop03NomeBaixo">Participante</strong><small id="loop03SituacaoBaixo">Selecione sua posição</small></div>
+    <div class="loop03-identidade" aria-label="Acesso ao perfil e saída">
+     <button type="button" class="loop03-abrir-perfil" data-loop03-aba="perfil" aria-label="Abrir configurações do meu perfil">
+      <span class="loop03-avatar" aria-hidden="true"><img class="loop03-foto-privada" alt="" hidden><span class="loop03-foto-padrao">👤</span></span>
+      <span class="loop03-dados-perfil"><strong id="loop03NomeBaixo">Meu perfil</strong><small id="loop03SituacaoBaixo">Configurações ⚙</small></span>
+     </button>
     </div>
     <button id="loop03Sair" type="button" class="loop03-sair">Sair da conta de teste</button>
    </aside>
@@ -47,7 +50,10 @@
      <div><h2 id="loop03BoasVindas">Bem-vindo!</h2><p>Disciplina hoje, liberdade amanhã.</p></div>
      <div class="loop03-acoes-perfil">
       <button class="loop03-sino" type="button" data-loop03-aba="home" title="Abrir comunicados do Escritório Virtual" aria-label="Abrir comunicados">♧</button>
-      <button data-loop03-aba="perfil" type="button" id="loop03PerfilTopo">Meu perfil ⚙</button>
+      <button data-loop03-aba="perfil" type="button" id="loop03PerfilTopo" aria-label="Abrir configurações do meu perfil">
+       <span class="loop03-foto-topo" aria-hidden="true"><img class="loop03-foto-privada" alt="" hidden><span class="loop03-foto-padrao">👤</span></span>
+       <span>Configurações</span><span aria-hidden="true">⚙</span>
+      </button>
      </div>
     </div>
     <div class="loop03-indicadores" aria-label="Resumo da conta">
@@ -104,7 +110,31 @@
       <div id="loop03ListaEquipe" class="loop03-opcoes" aria-live="polite"></div>
      </section>
      <section id="loop03-financeiro" class="loop03-pagina" aria-label="Financeiro"><header class="loop03-titulo-pagina"><div><small>EXTRATO E SAQUES</small><h2>Financeiro</h2></div></header></section>
-     <section id="loop03-perfil" class="loop03-pagina" aria-label="Meu perfil"><header class="loop03-titulo-pagina"><div><small>CADASTRO</small><h2>Meu perfil</h2></div></header><p>Atualização de foto, telefone e e-mail ainda será integrada. A confirmação individual e o CPF fictício ficam em Minhas Posições.</p></section>
+     <section id="loop03-perfil" class="loop03-pagina" aria-label="Meu perfil">
+      <header class="loop03-titulo-pagina"><div><small>MINHA CONTA · CONFIGURAÇÕES</small><h2>Meu Perfil</h2><p>Seu espaço pessoal no LOOP 3.0.</p></div></header>
+      <div class="loop03-painel-perfil">
+       <div class="loop03-resumo-perfil">
+        <span class="loop03-foto-grande" aria-hidden="true"><img class="loop03-foto-privada" alt="" hidden><span class="loop03-foto-padrao">👤</span></span>
+        <div><strong id="loop03NomePerfil">Meu perfil</strong><small>Personalize sua foto e seus dados de contato.</small></div>
+       </div>
+       <form id="loop03FormPerfil" autocomplete="on">
+        <div class="loop03-campos-perfil">
+         <label>Nome de exibição<input type="text" id="loop03PerfilNome" minlength="3" maxlength="60" autocomplete="name" required></label>
+         <label>E-mail de contato<input type="email" id="loop03PerfilEmail" maxlength="254" autocomplete="email" required></label>
+         <label>Telefone de contato<input type="tel" id="loop03PerfilTelefone" maxlength="32" autocomplete="tel" placeholder="(21) 99999-9999"></label>
+        </div>
+        <label class="loop03-rotulo-foto" for="loop03PerfilFoto">Minha foto</label>
+        <input type="file" id="loop03PerfilFoto" accept="image/jpeg,image/png,image/webp">
+        <small class="loop03-ajuda-perfil">Escolha uma foto JPG, PNG ou WebP de até 8 MB. O aplicativo adapta a imagem para o avatar.</small>
+        <div class="loop03-acoes-salvar-perfil">
+         <button type="button" id="loop03RemoverFoto" class="loop03-secundario-perfil">Remover foto</button>
+         <button type="submit" id="loop03SalvarPerfil">Salvar alterações</button>
+        </div>
+        <p id="loop03StatusPerfil" role="status" aria-live="polite"></p>
+       </form>
+       <p class="loop03-nota-perfil">No laboratório, estes são dados de contato exibidos no perfil, ainda sem verificação por SMS ou e-mail. Seu login e seus vínculos de indicações permanecem protegidos; CPF fictício e confirmação de posições continuam em Minhas Posições.</p>
+      </div>
+     </section>
     </div>
    </div>`;
   shell.prepend(shell.querySelector('.loop03-banner-topo'));
@@ -260,6 +290,16 @@
    e('loop03Menu').setAttribute('aria-expanded',String(aberto));
   });
   e('loop03Sair').addEventListener('click',()=>e('botaoSairParticipante').click());
+  e('loop03RemoverFoto').addEventListener('click',()=>{
+   fotoPerfilAcao='REMOVER';e('loop03PerfilFoto').value='';
+   e('loop03StatusPerfil').textContent='A foto será removida quando você salvar.';
+  });
+  e('loop03PerfilFoto').addEventListener('change',()=>{
+   fotoPerfilAcao='MANTER';
+   e('loop03StatusPerfil').textContent=e('loop03PerfilFoto').files.length?
+    'Foto selecionada. Clique em Salvar alterações para atualizar seu avatar.':'';
+  });
+  e('loop03FormPerfil').addEventListener('submit',salvarPerfil);
   abrir('home');
   carregarPublicacoes();
  }
@@ -277,6 +317,73 @@
   if(aba==='tabuleiro'&&anterior!==aba&&visaoAtual)
    Promise.resolve().then(()=>window.LoopParticipanteAtualizar?.());
  }
+ async function comprimirImagemPerfil(file){
+  if(!['image/jpeg','image/png','image/webp'].includes(file.type)||file.size>8*1024*1024)
+   throw Error('Use JPG, PNG ou WebP com no máximo 8 MB.');
+  const imagem=await createImageBitmap(file);
+  try{
+   const lado=Math.min(imagem.width,imagem.height);
+   if(!lado)throw Error('Imagem inválida.');
+   const canvas=document.createElement('canvas');
+   canvas.width=320;canvas.height=320;
+   const ctx=canvas.getContext('2d');
+   if(!ctx)throw Error('Não foi possível preparar a foto.');
+   ctx.drawImage(imagem,(imagem.width-lado)/2,(imagem.height-lado)/2,lado,lado,
+    0,0,320,320);
+   const base64=canvas.toDataURL('image/jpeg',.75).split(',')[1];
+   if(!base64||base64.length>245000)throw Error('A foto ficou grande demais. Escolha outra imagem.');
+   return {mime:'image/jpeg',base64};
+  }finally{imagem.close();}
+ }
+ async function salvarPerfil(ev){
+  ev.preventDefault();
+  const form=e('loop03FormPerfil'),botao=e('loop03SalvarPerfil'),status=e('loop03StatusPerfil');
+  if(botao.disabled||!visaoAtual?.perfil)return;
+  botao.disabled=true;status.textContent='Salvando seus dados…';
+  try{
+   const file=e('loop03PerfilFoto').files[0];
+   const foto=file?await comprimirImagemPerfil(file):fotoPerfilAcao;
+   const resp=await fetch('/api/laboratorio/participante/perfil',{
+    method:'POST',credentials:'same-origin',cache:'no-store',
+    headers:{'Content-Type':'application/json','X-LOOP-LAB':'participante'},
+    body:JSON.stringify({
+     nome:e('loop03PerfilNome').value,email:e('loop03PerfilEmail').value,
+     telefone:e('loop03PerfilTelefone').value,foto,
+     revisaoEsperada:visaoAtual.perfil.revisao
+    })
+   });
+   const data=await resp.json();
+   if(!resp.ok)throw Error(data.erro==='CONFLITO_REVISAO'?
+    'Seus dados foram alterados em outra sessão. Atualize e tente novamente.':
+    data.erro||'Não foi possível salvar seu perfil.');
+   fotoPerfilAcao='MANTER';e('loop03PerfilFoto').value='';
+   await window.LoopParticipanteAtualizar?.();
+   status.textContent='Perfil atualizado e salvo com sucesso.';
+  }catch(err){status.textContent='Não foi possível salvar: '+err.message;}
+  finally{botao.disabled=false;}
+ }
+ function aplicarPerfil(visao){
+  const p=visao.perfil||{},nome=p.nome||visao.conta.nome;
+  e('loop03NomeBaixo').textContent=nome;
+  e('loop03NomePerfil').textContent=nome;
+  e('loop03BoasVindas').textContent='Bem-vindo, '+nome.split(/\s+/)[0]+'!';
+  const form=e('loop03FormPerfil');
+  if(form&&!e('loop03SalvarPerfil').disabled){
+   e('loop03PerfilNome').value=nome;
+   e('loop03PerfilEmail').value=p.email||'';
+   e('loop03PerfilTelefone').value=p.telefone||'';
+  }
+  const imagem=p.temFoto?'/api/laboratorio/participante/foto-perfil?rev='+p.revisao:null;
+  for(const img of document.querySelectorAll('#loop03Shell .loop03-foto-privada')){
+   const fallback=img.parentElement.querySelector('.loop03-foto-padrao');
+   if(imagem){
+    if(img.getAttribute('src')!==imagem)img.src=imagem;
+    img.hidden=false;fallback.hidden=true;
+   }else{
+    img.hidden=true;img.removeAttribute('src');fallback.hidden=false;
+   }
+  }
+ }
  function statusPosicao(p){
   const l=p.local||'';
   return /^FILA_[AB]$/.test(l)?'Fila '+l.slice(-1):l==='FILA'?'Fila '+(p.fila||'—'):l==='CENTRO'?'Centro do giro':
@@ -287,7 +394,7 @@
   if(abrirTabuleiro)abrir('tabuleiro');
   e('loop03Numero').textContent='#'+p.posicaoId;
   e('loop03NumeroDetalhe').textContent=statusPosicao(p);
-  e('loop03SituacaoBaixo').textContent=statusPosicao(p);
+  // O atalho de perfil permanece um acesso à configuração, não ao motor.
   const ordem=(visaoAtual?.posicoes||[]).findIndex(x=>x.posicaoId===p.posicaoId);
   if(ordem>=0)e('loop03TotalAtivacoes').textContent=visaoAtual.posicoes.length+'/'+visaoAtual.limitePosicoesAtivas;
   const precisa=p.statusAdesao==='PENDENTE';
@@ -328,10 +435,7 @@
   if(!e('loop03Shell'))montar();
   visaoAtual=visao;
   document.body.classList.add('loop03-logado');
-  const nome=visao.conta.nome;
-  e('loop03NomeBaixo').textContent=nome;
-  e('loop03BoasVindas').textContent='Bem-vindo, '+nome.split(/\s+/)[0]+'!';
-  e('loop03PerfilTopo').textContent=nome+' ⚙';
+  aplicarPerfil(visao);
   const n=visao.posicoes.length;
   e('loop03TotalAtivacoes').textContent=n+'/'+visao.limitePosicoesAtivas;
   const bonus=visao.saquesSimulados?.bonusDisponivelSimuladoCentavos;
@@ -514,7 +618,7 @@
    selecionada=null;
    e('loop03Numero').textContent='#0000';
    e('loop03NumeroDetalhe').textContent='Escolha uma posição';
-   e('loop03SituacaoBaixo').textContent='Nenhuma posição selecionada';
+   e('loop03SituacaoBaixo').textContent='Configurações ⚙';
    e('loop03DetalhesPosicao').textContent='Selecione uma posição acima.';
    const caixa=e('secaoAtivacaoParticipante');if(caixa)caixa.hidden=true;
   }
@@ -554,7 +658,16 @@
    target.textContent='Não foi possível consultar os comunicados. Tente novamente mais tarde.';
   }
  }
- function encerrar(){document.body.classList.remove('loop03-logado');selecionada=null;visaoAtual=null;destinoInicialTratado=false;abrir('home');}
+ function encerrar(){
+  document.body.classList.remove('loop03-logado');
+  selecionada=null;visaoAtual=null;destinoInicialTratado=false;fotoPerfilAcao='MANTER';
+  for(const img of document.querySelectorAll('#loop03Shell .loop03-foto-privada')){
+   img.hidden=true;img.removeAttribute('src');
+   img.parentElement.querySelector('.loop03-foto-padrao').hidden=false;
+  }
+  if(e('loop03StatusPerfil'))e('loop03StatusPerfil').textContent='';
+  abrir('home');
+ }
  window.Loop03Shell={montar,atualizar,encerrar,abrir,destacarPosicoes,
   posicaoSelecionada:()=>selecionada};
  montar();
