@@ -1370,3 +1370,34 @@ body.loop03-logado .portal-participante{position:relative;z-index:1}
  #loop03Shell #loop03-perfil .loop03-resumo-perfil{gap:10px}
  #loop03Shell #loop03-perfil .loop03-acoes-salvar-perfil button{flex:1 1 120px}
 }
+
+
+/* Validacoes e CPF apenas como estado visual, sem campo de edicao de CPF. */
+#loop03Shell #loop03-perfil .loop03-perfil-validacoes{
+ display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin-top:18px;
+}
+#loop03Shell #loop03-perfil .loop03-verificacao{
+ min-width:0;background:#111b29;border:1px solid #8b7655;border-radius:12px;
+ padding:13px;display:grid;gap:10px;
+}
+#loop03Shell #loop03-perfil .loop03-verificacao strong{font-size:.87rem;color:#f7d6a0}
+#loop03Shell #loop03-perfil .loop03-verificacao p{
+ font-size:.75rem;color:#d0cfca;line-height:1.45;margin:0;
+}
+#loop03Shell #loop03-perfil .loop03-verificacao button{
+ min-height:42px;padding:10px 11px;border:1px solid #c1a277;
+ border-radius:10px;background:#2e2940;color:#ffe2aa;
+ font-weight:750;cursor:pointer;
+}
+#loop03Shell #loop03-perfil .loop03-verificacao button:disabled{opacity:.5;cursor:wait}
+#loop03Shell #loop03-perfil #loop03StatusVerificacao{font-size:.82rem;color:#f4dc9c}
+#loop03Shell #loop03-perfil .loop03-cpf-travado{
+ display:grid;gap:7px;background:#142224;border:1px solid #6d896c;
+ border-radius:12px;padding:15px;margin-top:18px;
+}
+#loop03Shell #loop03-perfil .loop03-cpf-travado strong{color:#d2edcd}
+#loop03Shell #loop03-perfil .loop03-cpf-travado span{color:#fff0ce;font-size:.82rem}
+#loop03Shell #loop03-perfil .loop03-cpf-travado small{color:#bac8bf;line-height:1.4}
+@media(max-width:650px){
+ #loop03Shell #loop03-perfil .loop03-perfil-validacoes{grid-template-columns:minmax(0,1fr)}
+}

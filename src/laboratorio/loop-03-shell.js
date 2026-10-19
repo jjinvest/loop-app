@@ -123,6 +123,23 @@
          <label>E-mail de contato<input type="email" id="loop03PerfilEmail" maxlength="254" autocomplete="email" required></label>
          <label>Telefone de contato<input type="tel" id="loop03PerfilTelefone" maxlength="32" autocomplete="tel" placeholder="(21) 99999-9999"></label>
         </div>
+        <div class="loop03-perfil-validacoes">
+         <div class="loop03-verificacao">
+          <strong>Verificar novo e-mail</strong>
+          <p>Ao trocar seu e-mail, confirme um código de 6 dígitos recebido no novo endereço.</p>
+          <button type="button" data-verificar-envio="EMAIL">Enviar código por e-mail</button>
+          <label>Código de e-mail<input id="loop03CodigoEMAIL" type="text" inputmode="numeric" maxlength="6" autocomplete="one-time-code" pattern="[0-9]{6}"></label>
+          <button type="button" data-verificar-confirmar="EMAIL">Confirmar e-mail</button>
+         </div>
+         <div class="loop03-verificacao">
+          <strong>Verificar novo telefone</strong>
+          <p>Ao trocar o telefone, confirme um código recebido por SMS no novo número.</p>
+          <button type="button" data-verificar-envio="TELEFONE">Enviar código por SMS</button>
+          <label>Código SMS<input id="loop03CodigoTELEFONE" type="text" inputmode="numeric" maxlength="6" autocomplete="one-time-code" pattern="[0-9]{6}"></label>
+          <button type="button" data-verificar-confirmar="TELEFONE">Confirmar telefone</button>
+         </div>
+        </div>
+        <p id="loop03StatusVerificacao" role="status" aria-live="polite"></p>
         <label class="loop03-rotulo-foto" for="loop03PerfilFoto">Minha foto</label>
         <input type="file" id="loop03PerfilFoto" accept="image/jpeg,image/png,image/webp">
         <small class="loop03-ajuda-perfil">Escolha uma foto JPG, PNG ou WebP de até 8 MB. O aplicativo adapta a imagem para o avatar.</small>
@@ -132,7 +149,12 @@
         </div>
         <p id="loop03StatusPerfil" role="status" aria-live="polite"></p>
        </form>
-       <p class="loop03-nota-perfil">No laboratório, estes são dados de contato exibidos no perfil, ainda sem verificação por SMS ou e-mail. Seu login e seus vínculos de indicações permanecem protegidos; CPF fictício e confirmação de posições continuam em Minhas Posições.</p>
+       <div class="loop03-cpf-travado" aria-label="Identificação legal protegida">
+        <strong>CPF · protegido</strong>
+        <span id="loop03SituacaoCPF">Será confirmado na primeira posição, em Minhas Posições.</span>
+        <small>Nesta configuração o CPF não pode ser cadastrado, visualizado integralmente nem alterado.</small>
+       </div>
+       <p class="loop03-nota-perfil">E-mail e telefone novos só são salvos após confirmação do código enviado ao novo contato. Sem integração de envio, a alteração fica bloqueada. O nome e a foto são editáveis nesta conta de laboratório. Seu login e vínculos de indicações permanecem protegidos; CPF e aceite individual continuam em Minhas Posições.</p>
       </div>
      </section>
     </div>
@@ -299,6 +321,10 @@
    e('loop03StatusPerfil').textContent=e('loop03PerfilFoto').files.length?
     'Foto selecionada. Clique em Salvar alterações para atualizar seu avatar.':'';
   });
+  for(const b of shell.querySelectorAll('[data-verificar-envio]'))
+   b.addEventListener('click',()=>verificacaoContato(b.dataset.verificarEnvio,'solicitar'));
+  for(const b of shell.querySelectorAll('[data-verificar-confirmar]'))
+   b.addEventListener('click',()=>verificacaoContato(b.dataset.verificarConfirmar,'confirmar'));
   e('loop03FormPerfil').addEventListener('submit',salvarPerfil);
   abrir('home');
   carregarPublicacoes();
@@ -316,6 +342,32 @@
   // Consulta nao dispara movimentos e nao comanda a catraca.
   if(aba==='tabuleiro'&&anterior!==aba&&visaoAtual)
    Promise.resolve().then(()=>window.LoopParticipanteAtualizar?.());
+ }
+ async function verificacaoContato(tipo,acao){
+  const nomeCampo=tipo==='EMAIL'?'loop03PerfilEmail':'loop03PerfilTelefone';
+  const valor=e(nomeCampo).value;
+  const rota=acao==='solicitar'?'solicitar':'confirmar';
+  const estado=e('loop03StatusVerificacao');
+  const botao=document.querySelector('#loop03-perfil [data-verificar-'+(acao==='solicitar'?'envio':'confirmar')+'="'+tipo+'"]');
+  botao.disabled=true;
+  estado.textContent=acao==='solicitar'?'Solicitando código para o novo contato…':'Conferindo código…';
+  try{
+   const body=acao==='solicitar'?{tipo,valor}:{tipo,codigo:e('loop03Codigo'+tipo).value.trim()};
+   const resp=await fetch('/api/laboratorio/participante/perfil/codigo/'+rota,{
+    method:'POST',cache:'no-store',credentials:'same-origin',
+    headers:{'Content-Type':'application/json','X-LOOP-LAB':'participante'},
+    body:JSON.stringify(body)
+   });
+   const resposta=await resp.json();
+   if(!resp.ok)throw Error(resposta.erro==='ENVIO_NAO_CONFIGURADO'?
+    'O envio de código ainda não está conectado neste laboratório. Este contato não será alterado.':
+    resposta.erro==='AGUARDE_NOVO_CODIGO'?'Aguarde um minuto para pedir outro código.':
+    resposta.erro||'Não foi possível confirmar o contato.');
+   estado.textContent=acao==='solicitar'?
+    'Código enviado ao novo contato informado. Válido por 10 minutos.':
+    'Código confirmado. Agora clique em Salvar alterações.';
+  }catch(err){estado.textContent=err.message;}
+  finally{botao.disabled=false;}
  }
  async function comprimirImagemPerfil(file){
   if(!['image/jpeg','image/png','image/webp'].includes(file.type)||file.size>8*1024*1024)
@@ -368,6 +420,9 @@
   e('loop03NomePerfil').textContent=nome;
   e('loop03BoasVindas').textContent='Bem-vindo, '+nome.split(/\s+/)[0]+'!';
   const form=e('loop03FormPerfil');
+  e('loop03SituacaoCPF').textContent=visao.adesao?.cpfConfirmadoNoTeste?
+   'CPF de teste confirmado e fixado. Cadastro e alterações indisponíveis aqui.':
+   'Aguardando sua primeira posição. Informe CPF fictício e aceite os termos em Minhas Posições.';
   if(form&&!e('loop03SalvarPerfil').disabled){
    e('loop03PerfilNome').value=nome;
    e('loop03PerfilEmail').value=p.email||'';
