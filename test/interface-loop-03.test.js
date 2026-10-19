@@ -72,7 +72,7 @@ test('LOOP 3.0 integra escritorio real e duas abas sem criar aplicativo paralelo
  assert.match(css,/loop03-bonequinho-indicacoes/);
  assert.match(participante,/convitesValidadosFilaA\[i\]/);
  assert.match(participante,/loop03-quantidade-a-direita/);
- assert.match(participante,/dados\.append\(quantidade,boneco\)/);
+ assert.match(participante,/dados\.append\(boneco,quantidade\)/);
  assert.match(participante,/dados\.append\(referencia\)/);
  assert.match(js,/id="loop03RedeTotalPosicoes">0/);
  assert.match(js,/id="loop03RedeADistribuir">0/);
