@@ -105,8 +105,10 @@ async function main(){
   await telaFilasVazias.locator('#conteudoParticipante').waitFor({state:'visible'});
   await telaFilasVazias.locator('#loop03Sidebar [data-loop03-aba="tabuleiro"]').click();
   await telaFilasVazias.locator('#loop03-tabuleiro').waitFor({state:'visible'});
-  assert.equal(await telaFilasVazias.locator('#loop03NomeBaixo').innerText(),'');
-  assert.equal(await telaFilasVazias.locator('#loop03DadosPosicaoLateral').isVisible(),false);
+  assert.equal(await telaFilasVazias.locator('#loop03NomeBaixo').innerText(),'TesteUser');
+  assert.equal(await telaFilasVazias.locator('#loop03DadosPosicaoLateral').isVisible(),true);
+  assert.equal(await telaFilasVazias.locator('#loop03LetraRodape').isVisible(),false);
+  assert.equal(await telaFilasVazias.locator('#loop03CoroaTabuleiro').isVisible(),false);
   assert.equal(await telaFilasVazias.locator('#loop03BoasVindas').innerText(),'Bem-vindo!');
   assert.equal(await telaFilasVazias.locator('#loop03PerfilTopo>span').count(),1);
   assert.equal(await telaFilasVazias.locator('#loop03NotificacoesBotao svg').count(),1);
@@ -1224,8 +1226,10 @@ async function main(){
   await page.locator('#loop03PerfilNome').fill('Meu Perfil Personalizado');
   await page.locator('#loop03SalvarPerfil').click();
   await page.getByText(/Perfil atualizado e salvo com sucesso/).waitFor();
-  assert.equal(await page.locator('#loop03NomeBaixo').innerText(),'');
-  assert.equal(await page.locator('#loop03DadosPosicaoLateral').isVisible(),false);
+  assert.equal(await page.locator('#loop03NomeBaixo').innerText(),'TesteUser');
+  assert.equal(await page.locator('#loop03DadosPosicaoLateral').isVisible(),true);
+  assert.equal(await page.locator('#loop03NickVisor').textContent(),'',
+   'Após atualizar o perfil privado, sem seleção o visor não inventa # ou nick');
   assert.equal(await page.locator('#loop03-perfil .loop03-foto-grande img').isVisible(),true);
   assert.equal(await page.locator('#loop03TotalAtivacoes').innerText(),posicoesAntesDoPerfil);
   for(const width of [320,360,390,412]){
