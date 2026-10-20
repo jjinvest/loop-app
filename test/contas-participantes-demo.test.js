@@ -219,26 +219,31 @@ test('tela e API existem so no laboratorio, nao no servidor publico',async t=>{
 });
 
 
-test('nick escolhido no cadastro persiste e compõe os dois links do mesmo identificador',t=>{
+test('nick único preserva maiúsculas e nove dígitos, persiste mesmo após reiniciar',t=>{
  const filename=db(t),m=ambiente(filename);
- const {IndicacoesLinksComissoesDemoSQLite,extrairLink}=require('../src/domain/indicacoes-links-comissoes-demo-sqlite');
- const nova=m.contas.cadastrar({nome:'Conta Com Nick',apelido:'meu-nick',
+ const {caminhoLinkCurto}=require('../src/domain/indicacoes-links-comissoes-demo-sqlite');
+ const nova=m.contas.cadastrar({nome:'Conta Com Nick',apelido:'Vilela123456',
   email:'nickname@exemplo.invalid',telefone:'(24) 99999-7755',
   senha:'senha-ficticia-forte-2026'});
- assert.equal(nova.apelido,'meu-nick');
- const links=new IndicacoesLinksComissoesDemoSQLite({banco:m.repo.banco,contas:m.contas});
- const primeiro=links.linkDaConta(nova.contaId);
- assert.match(primeiro.linkLoja,/\/loja\/convite\/lp-[a-f0-9]{20}\/meu-nick$/);
- assert.match(primeiro.linkEscritorio,/\/escritorio\/convite\/lp-[a-f0-9]{20}\/meu-nick$/);
- assert.equal(extrairLink(primeiro.linkLoja).token,extrairLink(primeiro.linkEscritorio).token);
- assert.equal(primeiro.ativo,false,'links surgem sem autorização para divulgação');
+ assert.equal(nova.apelido,'Vilela123456');
+ assert.equal(caminhoLinkCurto(nova.apelido,'loja'),'/loja/Vilela123456');
+ assert.equal(caminhoLinkCurto(nova.apelido,'escritorio'),'/escritorio/Vilela123456');
+ assert.throws(()=>m.contas.cadastrar({nome:'Nome Duplicado Nick',apelido:'vILELA123456',
+  email:'nick-duplicado@exemplo.invalid',senha:'senha-forte-exemplo-2026'}),
+  e=>e.codigo==='CONFLITO');
+ assert.throws(()=>m.contas.cadastrar({nome:'Dez Numeros',apelido:'Nick1234567890',
+  email:'dez-digitos@exemplo.invalid',senha:'senha-forte-exemplo-2026'}),
+  e=>e.codigo==='INVALIDO');
  m.repo.fechar();
  const b=ambiente(filename);
  try{
-  const novamente=new IndicacoesLinksComissoesDemoSQLite({banco:b.repo.banco,contas:b.contas});
-  assert.equal(b.contas.buscar(nova.contaId).apelido,'meu-nick');
-  assert.deepEqual(novamente.linkDaConta(nova.contaId),primeiro);
-  assert.throws(()=>b.contas.cadastrar({nome:'Nick Muito Curto',apelido:'x',
-   email:'nick-curto@exemplo.invalid',senha:'senha-forte-exemplo-2026'}),e=>e.codigo==='INVALIDO');
+  assert.equal(b.contas.buscar(nova.contaId).apelido,'Vilela123456');
+  const reserva=b.repo.banco.prepare(
+   'SELECT conta_id FROM admin_links_nicks_reservados_demo WHERE nick_chave=?'
+  ).get('vilela123456');
+  assert.equal(reserva.conta_id,nova.contaId);
+  assert.throws(()=>b.contas.cadastrar({nome:'Nova tentativa',apelido:'VILELA123456',
+   email:'nunca-reutilizar@exemplo.invalid',senha:'senha-forte-exemplo-2026'}),
+   e=>e.codigo==='CONFLITO');
  }finally{b.repo.fechar();}
-});
+})
