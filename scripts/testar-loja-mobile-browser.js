@@ -559,7 +559,8 @@ async function main(){
   assert.equal(await page.locator('#loop03TermosFundo').isVisible(),false);
   assert.equal(await page.locator('#loop03OpcoesPosicoes .loop03-check-cartao').first().isChecked(),true);
   assert.equal(await page.locator('#aceiteTermosParticipante').isChecked(),true);
-  assert.equal(await page.locator('#loop03DadosPosicaoLateral').isVisible(),true);
+  assert.equal(await page.locator('#loop03DadosPosicaoLateral').isVisible(),false,
+   'A identificação de comprador não aparece no rodapé lateral');
   assert.equal(await page.locator('#loop03NomeBaixo').innerText(),titular.nome);
   assert.equal(await page.locator('#loop03SituacaoBaixo').isVisible(),false,
    'Identidade inferior: so nome, sem status de fila');
@@ -575,7 +576,8 @@ async function main(){
   await page.locator('#loop03ListaEscolha button').click();
   assert.equal(await page.locator('#loop03-tabuleiro').isVisible(),true);
   assert.equal(await page.locator('#loop03IndicePosicao').innerText(),'1/6');
-  assert.equal(await page.locator('#loop03DadosPosicaoLateral').isVisible(),true);
+  assert.equal(await page.locator('#loop03DadosPosicaoLateral').isVisible(),false,
+   'A identificação de comprador não aparece no rodapé lateral');
   assert.equal(await page.locator('#loop03SituacaoBaixo').isVisible(),false);
   await page.setViewportSize({width:390,height:812});
   if(!await page.locator('#loop03Sidebar').evaluate(el=>el.classList.contains('loop03-aberto')))
