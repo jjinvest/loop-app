@@ -716,7 +716,7 @@ async function main(){
   assert.equal(await comNumero.count(),1);
   const nums=await comNumero.getAttribute('data-numeros-fila');
   const primeiroId=nums.split(',')[0];
-  assert.match(primeiroId,/^\\d+$/);
+  assert.match(primeiroId,/^\d+$/);
   assert.match(await comNumero.innerText(),new RegExp('#'+primeiroId));
   // Pesquisa por nome e por ID real, sem inventar sequência da rede.
   await page.locator('#loop03BuscarIndicado').fill('Segundo');
