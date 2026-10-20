@@ -9,6 +9,7 @@ const {RepositorioCatalogoSQLite}=require('../src/domain/repositorio-catalogo-sq
 const {ContasParticipantesDemoSQLite}=require('../src/domain/contas-participantes-demo-sqlite');
 const {PonteComprasConvitesDemoSQLite}=require('../src/domain/ponte-compras-convites-demo-sqlite');
 const {EscritorioIndividualDemo}=require('../src/domain/escritorio-individual-demo');
+const {AdesoesPosicoesDemoSQLite}=require('../src/domain/adesoes-posicoes-demo-sqlite');
 const {SessoesParticipanteDemo,DURACAO,MAX_FALHAS}=require('../src/domain/sessoes-participante-demo');
 const {criarAppAdminLaboratorio}=require('../src/laboratorio/servidor-catalogo');
 const {STATUS_CONFIRMADO}=require('../src/domain/processador-pedidos-simulados');
@@ -250,4 +251,51 @@ test('interface individual so existe no laboratorio; servidor publico e diferent
   method:'POST',headers:{'Content-Type':'application/json','X-LOOP-LAB':'participante'},
   body:'{}'
  })).status,404);
+});
+
+test('quatro cores na rede: cadastro vermelho, link amarelo, cadeira azul e CPF verde; contador somente verde',async t=>{
+ const m=ambiente(t);
+ const titular=cadastrar(m,'Titular de Cores','titular-cores@exemplo.invalid');
+ await confirmar(m,'pedido-titular-cores',titular.contaId);
+ const cadastrado=cadastrar(m,'Somente Cadastro','somente-cadastro@exemplo.invalid',titular.codigoConvite);
+ const divulgador=cadastrar(m,'Link de Divulgacao','link-divulgacao@exemplo.invalid',titular.codigoConvite);
+ const aguardando=cadastrar(m,'Cadeira Azul','cadeira-azul@exemplo.invalid',titular.codigoConvite);
+ const qualificado=cadastrar(m,'Cadeira Verde','cadeira-verde@exemplo.invalid',titular.codigoConvite);
+ const baixa=await confirmar(m,'pedido-link-cinquenta',divulgador.contaId,5000);
+ assert.equal(baixa.posicaoCriada,false);
+ assert.equal(m.ponte.linksComissoes.ativado(divulgador.contaId),true);
+ assert.equal(m.ponte.linksComissoes.ativado(cadastrado.contaId),false);
+ const posAzul=await confirmar(m,'pedido-cadeira-azul',aguardando.contaId);
+ const posVerde=await confirmar(m,'pedido-cadeira-verde',qualificado.contaId);
+ assert.equal(posAzul.posicaoCriada,true);
+ const adesoes=new AdesoesPosicoesDemoSQLite({ponte:m.ponte});
+ adesoes.ativar({contaId:qualificado.contaId,posicaoId:posVerde.posicaoId,
+  cpfFicticio:'12345678909',aceitaTermos:true,versaoTermos:'LOOP-DEMO-V1'});
+ const visao=m.visao.consultar(titular.contaId);
+ assert.deepEqual(visao.equipe.map(p=>p.numeroIndicacao),[1,2,3,4]);
+ assert.deepEqual(visao.equipe.map(p=>p.situacao),
+  ['PENDENTE','LINK_ATIVO_SEM_LOOP','AGUARDANDO_CONFIRMACAO','ATIVO']);
+ assert.deepEqual(visao.equipe.map(p=>p.linkDivulgacaoAtivo),[false,true,true,true]);
+ assert.deepEqual(visao.contadoresRede.totalIndicacoesConfirmadas,1);
+ assert.equal(visao.contadoresRede.totalPosicoes,1);
+ assert.equal(visao.contadoresRede.aDistribuir,1);
+ assert.equal(visao.contadoresRede.jaDistribuidas,0);
+ assert.equal(visao.contadoresRede.aguardandoAtivacao,1);
+ assert.equal(visao.contadoresRede.disponiveisParaVincular,1);
+ // Primeiro a cadeira azul vira verde, depois a compra simples de R$50
+ // pode ganhar cadeira LOOP; nenhum dos dois atualiza o contador antes do CPF.
+ adesoes.ativar({contaId:aguardando.contaId,posicaoId:posAzul.posicaoId,
+  cpfFicticio:'52998224725',aceitaTermos:true,versaoTermos:'LOOP-DEMO-V1'});
+ assert.equal(m.visao.consultar(titular.contaId).contadoresRede.totalIndicacoesConfirmadas,2);
+ const pedidoLoop=await confirmar(m,'pedido-link-agora-loop',divulgador.contaId,25000);
+ let r=m.visao.consultar(titular.contaId);
+ assert.equal(r.equipe[1].situacao,'AGUARDANDO_CONFIRMACAO');
+ assert.equal(r.contadoresRede.totalIndicacoesConfirmadas,2);
+ adesoes.ativar({contaId:divulgador.contaId,posicaoId:pedidoLoop.posicaoId,
+  cpfFicticio:'11144477735',aceitaTermos:true,versaoTermos:'LOOP-DEMO-V1'});
+ r=m.visao.consultar(titular.contaId);
+ assert.equal(r.equipe[1].situacao,'ATIVO');
+ assert.equal(r.contadoresRede.totalIndicacoesConfirmadas,3);
+ assert.equal(r.contadoresRede.aDistribuir,3);
+ assert.deepEqual(r.equipe.map(p=>p.numeroIndicacao),[1,2,3,4]);
 });
