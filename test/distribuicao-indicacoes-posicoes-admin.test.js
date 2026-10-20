@@ -100,7 +100,10 @@ test('botao +1 gasta indicacoes disponiveis reais com vinculos imutaveis e paine
  const shell=fs.readFileSync(path.join(__dirname,'../src/laboratorio/loop-03-shell.js'),'utf8');
  const adminHtml=fs.readFileSync(path.join(__dirname,'../src/laboratorio/admin-loop03.html'),'utf8');
  const adminJs=fs.readFileSync(path.join(__dirname,'../src/laboratorio/admin-loop03.js'),'utf8');
- assert.match(shell,/id="loop03SaldoDisponivel"/);
+ assert.match(shell,/id="loop03PosicoesRedeTotalIndicacoes"/);
+ assert.match(shell,/id="loop03PosicoesRedeADistribuir"/);
+ assert.match(shell,/id="loop03PosicoesRedeUtilizadas"/);
+ assert.doesNotMatch(shell,/id="loop03SaldoDisponivel"/);
  assert.match(shell,/loop03-adicionar-indicado/);
  assert.match(shell,/atribuir-proxima-indicacao/);
  assert.match(adminHtml,/indicacoesDisponiveisAdmin/);
