@@ -1260,8 +1260,9 @@
      for(const item of grade.querySelectorAll('button'))
       item.classList.remove('loop03-equipe-numero-escolhido');
      numero.classList.add('loop03-equipe-numero-escolhido');
-     pergunta.textContent='Confirmar posição '+(i+1)+' para '+pessoa.nome+
-      '? Essa escolha será definitiva.';
+     pergunta.textContent='Confirmar indicação '+(indice+1)+' para '+
+      ['primeira','segunda','terceira','quarta','quinta','sexta'][i]+
+      ' posição? Essa escolha será definitiva.';
      confirmacao.hidden=false;
      aviso.textContent='';
     });

@@ -652,6 +652,8 @@ async function main(){
   await linhaIndicado.getByRole('button',{name:'Escolher posição para '+convidado.nome}).click();
   assert.equal(await linhaIndicado.locator('.loop03-equipe-numeros>button').count(),1);
   await linhaIndicado.getByRole('button',{name:/Posição 1 · #/}).click();
+  assert.equal(await linhaIndicado.locator('.loop03-equipe-confirmacao>span').innerText(),
+   'Confirmar indicação 1 para primeira posição? Essa escolha será definitiva.');
   assert.equal(await linhaIndicado.getByRole('button',{name:'Confirmar vínculo definitivo'}).isVisible(),true);
   assert.equal(await page.locator('#loop03RedeADistribuir').innerText(),'1');
   await linhaIndicado.getByRole('button',{name:'Cancelar'}).click();
@@ -1653,6 +1655,8 @@ async function main(){
    await terceiraLinha.getByRole('button',{name:'Escolher posição para Terceira Indicacao Teste'}).click();
    assert.equal(await terceiraLinha.locator('.loop03-equipe-numeros>button').count(),1);
    await terceiraLinha.getByRole('button',{name:/Posição 1 · #/}).click();
+   assert.equal(await terceiraLinha.locator('.loop03-equipe-confirmacao>span').innerText(),
+    'Confirmar indicação 3 para primeira posição? Essa escolha será definitiva.');
    assert.equal(await terceiraLinha.getByRole('button',{name:'Confirmar vínculo definitivo'}).isVisible(),true);
    assert.equal(await terceiraLinha.getByRole('button',{name:'Cancelar'}).isVisible(),true);
    await conferirLargura(pag,width,'rede-quatro-'+width,{captura:false});
