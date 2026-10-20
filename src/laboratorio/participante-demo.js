@@ -670,8 +670,28 @@
   ev.preventDefault();const botao=e('salvarApelidoLinkParticipante');
   botao.disabled=true;
   try{
-   await chamada('meu-link',{apelido:e('apelidoLinkParticipante').value});
+   const salvo=await chamada('meu-link',{apelido:e('apelidoLinkParticipante').value});
    await atualizar();
+   // Confirmado pelo servidor: propagar o nick imediatamente às posições
+   // do PRÓPRIO titular, sem mexer nas posições de outras pessoas.
+   const nick=salvo?.apelido;
+   if(typeof nick==='string'&&/^[A-Za-z]{1,9}$/.test(nick)){
+    for(const row of document.querySelectorAll(
+     '#mapaFilaAParticipante .linha-minha-demo .loop03-fila-id-nick,'+
+     '#mapaFilaBParticipante .linha-minha-demo .loop03-fila-id-nick')){
+     let tag=row.querySelector('.loop03-fila-nick');
+     if(!tag){tag=document.createElement('small');tag.className='loop03-fila-nick';row.append(tag);}
+     tag.textContent=nick;
+    }
+    for(const row of document.querySelectorAll(
+     '#mapaTabuleiroParticipante .espaco-meu-tabuleiro-demo .loop03-ocupante-identidade')){
+     let tag=row.querySelector('.loop03-nome-na-bola');
+     if(!tag){tag=document.createElement('span');tag.className='loop03-nome-na-bola';row.append(tag);}
+     tag.textContent=nick;
+    }
+    for(const tag of document.querySelectorAll('#loop03OpcoesPosicoes .loop03-cartao-nick'))
+     tag.textContent=nick;
+   }
    e('avisoLinkParticipante').textContent='Nome do link atualizado; rastreamento preservado.';
   }catch(err){e('avisoLinkParticipante').textContent=err.message;}
   finally{botao.disabled=false;}
