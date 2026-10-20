@@ -31,8 +31,16 @@ test('API de saque exige sessao, valida origem, reserva uma vez e nao revela sal
  new AdesoesPosicoesDemoSQLite({ponte}).ativar({
   contaId:a.contaId,cpfFicticio:'11144477735',aceitaTermos:true,versaoTermos:'LOOP-DEMO-V1'
  });
- assert.equal((await compra('primeiro-indicado-250',b,25000,'02')).comissaoSimuladaCentavos,2500);
- assert.equal((await compra('segundo-indicado-250',c,25000,'03')).comissaoSimuladaCentavos,2500);
+ assert.equal((await compra('primeiro-indicado-250',b,25000,'02')).comissaoSimuladaCentavos,0);
+ assert.equal((await compra('segundo-indicado-250',c,25000,'03')).comissaoSimuladaCentavos,0);
+ const ativarVerde=new AdesoesPosicoesDemoSQLite({ponte,
+  relogio:()=> '2030-05-03T12:30:00.000Z'});
+ assert.equal(ativarVerde.ativar({contaId:b.contaId,
+  cpfFicticio:'12345678909',aceitaTermos:true,
+  versaoTermos:'LOOP-DEMO-V1'}).bonificacoes[0].valorComissaoCentavos,2500);
+ assert.equal(ativarVerde.ativar({contaId:c.contaId,
+  cpfFicticio:'52998224725',aceitaTermos:true,
+  versaoTermos:'LOOP-DEMO-V1'}).bonificacoes[0].valorComissaoCentavos,2500);
  const segredo='chave-testes-api-saques-2026-123456789';
  const servidor=criarAppAdminLaboratorio({repositorio:repo,segredo}).listen(0,'127.0.0.1');
  await once(servidor,'listening');
