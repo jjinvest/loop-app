@@ -2440,3 +2440,32 @@ body.loop03-logado .portal-participante{position:relative;z-index:1}
  cursor:pointer;color:#f2d899;font-size:.76rem;font-weight:750;
 }
 #loop03LinksRede .loop03-link-nick-opcional form{margin-top:11px}
+
+/* Meus Links — duas linhas curtas com marcador e estado vinculado ao link
+   verdadeiro; manter o restante do painel e os botões inalterados. */
+#loop03LinksRede #statusLinkIndicacaoParticipante{
+ display:flex!important;flex-direction:column;align-items:flex-start;
+ gap:8px!important;margin:7px 0 13px!important;
+ color:#f0e5f8!important;line-height:1.55!important;
+}
+#loop03LinksRede .loop03-link-status-linha{
+ display:block;position:relative;max-width:100%;
+ padding-left:16px;white-space:normal;
+ font-size:clamp(.76rem,1.25vw,.88rem);
+}
+#loop03LinksRede .loop03-link-status-linha::before{
+ content:'●';position:absolute;left:0;top:.07em;
+ font-size:.68em;color:#f9d083;
+}
+#loop03LinksRede .loop03-link-status-selo{
+ display:inline-block;vertical-align:baseline;white-space:nowrap;
+ padding:2px 9px;margin:0 3px;border-radius:999px;
+ border:1px solid #9d91ae;background:#29283f;
+ font-weight:800;font-size:.84em;letter-spacing:.02em;
+}
+#loop03LinksRede .loop03-link-status-ativo{
+ color:#b9ffe1;border-color:#20bf7c;background:#083928;
+}
+#loop03LinksRede .loop03-link-status-inativo{
+ color:#ffe5ba;border-color:#c8923d;background:#463017;
+}

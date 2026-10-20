@@ -737,6 +737,16 @@ async function main(){
   assert.equal(await page.locator('#enderecoLinkLojaParticipante').isVisible(),true);
   assert.equal(await page.locator('#copiarLinkParticipante').count(),1);
   assert.equal(await page.locator('#copiarLinkLojaParticipante').count(),1);
+  const statusCel=page.locator('#statusLinkIndicacaoParticipante');
+  assert.equal(await statusCel.locator('.loop03-link-status-linha').count(),2);
+  assert.equal(await statusCel.locator('.loop03-link-status-selo').innerText(),'ATIVO');
+  assert.equal(await statusCel.locator('.loop03-link-status-ativo').count(),1);
+  assert.equal((await statusCel.innerText()).replace(/\\s+/g,' ').trim(),
+   'Link ATIVO para divulgação. Bonificações somente após CPF e aceitação dos termos.');
+  assert.equal(await statusCel.locator('.loop03-link-status-linha').first()
+   .evaluate(x=>getComputedStyle(x,'::before').content),'"●"');
+  assert.equal(await statusCel.locator('.loop03-link-status-linha').last()
+   .evaluate(x=>getComputedStyle(x,'::before').content),'"●"');
   for(const frase of [
    'Meus dois links de indicação','Um único código de indicação, com dois destinos',
    'Meu link para apresentar o Escritório LOOP','Meu link para apresentar a AKITEMM'
@@ -764,6 +774,10 @@ async function main(){
   await redePC.locator('#loop03LinksRede summary').first().click();
   assert.equal(await redePC.locator('#enderecoLinkLojaParticipante').isVisible(),true);
   assert.equal(await redePC.locator('#enderecoLinkParticipante').isVisible(),true);
+  const statusPC=redePC.locator('#statusLinkIndicacaoParticipante');
+  assert.equal(await statusPC.locator('.loop03-link-status-linha').count(),2);
+  assert.equal(await statusPC.locator('.loop03-link-status-selo').innerText(),'ATIVO');
+  assert.equal(await statusPC.locator('.loop03-link-status-ativo').count(),1);
   for(const frase of [
    'Meus dois links de indicação','Um único código de indicação, com dois destinos',
    'Meu link para apresentar o Escritório LOOP','Meu link para apresentar a AKITEMM'

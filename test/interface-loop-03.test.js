@@ -77,6 +77,10 @@ test('LOOP 3.0 integra escritorio real e duas abas sem criar aplicativo paralelo
  assert.match(css,/loop03-mapa-grade/);
  assert.match(css,/loop03-iluminada/);
  const participante=ler('participante-demo.js');
+ assert.match(participante,/Bonificações somente após CPF e aceitação dos termos/);
+ assert.match(participante,/link\.ativo\?'ATIVO':'NÃO ATIVO'/);
+ assert.match(cosmos,/loop03-link-status-linha::before/);
+ assert.match(cosmos,/loop03-link-status-selo/);
  // Dourado nao tem letra; A e branco na bola amarela; B e preto na branca.
  assert.match(participante,/simbolo\.textContent=p\.cor==='DOURADO'\?'':filaA\?'A':'B'/);
  assert.match(participante,/POSICAO_AZUL_NAO_PODE_ENTRAR_NA_FILA_A/);

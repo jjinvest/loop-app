@@ -401,9 +401,20 @@
   e('apelidoLinkParticipante').value=link.linkEscritorioCurto?link.apelido:'';
   e('copiarLinkParticipante').disabled=!link.ativo||!link.linkEscritorioCurto;
   e('copiarLinkLojaParticipante').disabled=!link.ativo||!link.linkLojaCurto;
-  e('statusLinkIndicacaoParticipante').textContent=link.ativo?
-   'Link ATIVO para divulgação. Bonificações somente após CPF e aceite expresso dos termos.':
-   'Link INATIVO: faça uma compra confirmada de qualquer valor na loja. Não precisa ter posição no LOOP.';
+  // Duas linhas curtas: a condição do link é um estado real, não decorativo.
+  const statusLink=e('statusLinkIndicacaoParticipante');
+  const linhaLink=document.createElement('span');
+  linhaLink.className='loop03-link-status-linha';
+  const selo=document.createElement('span');
+  selo.className='loop03-link-status-selo '+(link.ativo?
+   'loop03-link-status-ativo':'loop03-link-status-inativo');
+  selo.textContent=link.ativo?'ATIVO':'NÃO ATIVO';
+  linhaLink.append(document.createTextNode('Link '),selo,
+   document.createTextNode(' para divulgação.'));
+  const linhaBonus=document.createElement('span');
+  linhaBonus.className='loop03-link-status-linha';
+  linhaBonus.textContent='Bonificações somente após CPF e aceitação dos termos.';
+  statusLink.replaceChildren(linhaLink,linhaBonus);
   const bonus=visao.bonusIndicacoes;
   e('bonusSaldoParticipante').textContent=dinheiro(bonus.totalSimuladoCentavos);
   e('bonusQuantidadeParticipante').textContent=String(bonus.quantidade);
