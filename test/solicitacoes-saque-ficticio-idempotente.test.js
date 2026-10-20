@@ -31,7 +31,13 @@ test('solicitacoes de bonus reais nunca acontecem, apenas reserva ficticia sem s
  const adesao=new AdesoesPosicoesDemoSQLite({ponte,relogio:()=> '2030-01-01T17:00:00.000Z'});
  assert.equal(adesao.ativar({contaId:a.contaId,cpfFicticio:'11144477735',
   aceitaTermos:true,versaoTermos:'LOOP-DEMO-V1'}).ativadas,0);
- assert.equal((await comprar('indicado-250',b,25000,'02')).comissaoSimuladaCentavos,2500);
+ assert.equal((await comprar('indicado-250',b,25000,'02')).comissaoSimuladaCentavos,0);
+ const confirmou=new AdesoesPosicoesDemoSQLite({ponte,
+  relogio:()=> '2030-01-02T13:00:00.000Z'}).ativar({
+   contaId:b.contaId,cpfFicticio:'12345678909',
+   aceitaTermos:true,versaoTermos:'LOOP-DEMO-V1'
+  });
+ assert.equal(confirmou.bonificacoes[0].valorComissaoCentavos,2500);
  const extrato=saques.consultar(a.contaId);
  assert.equal(extrato.bonusDisponivelSimuladoCentavos,2500);
  assert.equal(extrato.podeSolicitarBonus,true);
