@@ -1193,10 +1193,12 @@
    const nomeVisivel=typeof pessoa.nome==='string'&&pessoa.nome.trim()?pessoa.nome.trim():'...';
    const titulo=document.createElement('strong');titulo.textContent=nomeVisivel;
    const dados=document.createElement('small');dados.className='loop03-equipe-informacoes';
-   // ATIVO: compra + CPF/aceite confirmados; PENDENTE: compra sem aceite;
-   // NÃO ATIVO: convite cadastrado, mas ainda sem compra confirmada.
+   // VERDE: tem posicao LOOP e CPF; AZUL: posicao sem CPF;
+   // AMARELO: compra que liberou link, mas nao qualificou LOOP;
+   // VERMELHO: fez somente cadastro, sem compra.
    const situacao=pessoa.situacao==='ATIVO'?'ATIVO':
-    pessoa.situacao==='AGUARDANDO_CONFIRMACAO'?'PENDENTE':'NÃO ATIVO';
+    pessoa.situacao==='AGUARDANDO_CONFIRMACAO'?'PENDENTE':
+    pessoa.situacao==='LINK_ATIVO_SEM_LOOP'?'LINK ATIVO':'NÃO ATIVO';
    dados.textContent=pessoa.telefone||'Telefone não informado';
    if(pessoa.filaAtual==='A'||pessoa.filaAtual==='B'||pessoa.filaAtual==='TABULEIRO'){
     const fila=document.createElement('span');
@@ -1214,7 +1216,8 @@
    if(numeroIndicacao>=100000)avatar.classList.add('loop03-equipe-avatar-longo');
    const faixa=document.createElement('span');
    faixa.className='loop03-equipe-estado '+(situacao==='ATIVO'?'loop03-equipe-ativo':
-    situacao==='PENDENTE'?'loop03-equipe-pendente':'loop03-equipe-inativo');
+    situacao==='PENDENTE'?'loop03-equipe-pendente':
+    situacao==='LINK ATIVO'?'loop03-equipe-link-ativo':'loop03-equipe-inativo');
    faixa.textContent=situacao;
    cartao.append(avatar,titulo,faixa,dados);
    // Os mesmos tres pontos, em TODAS as pessoas. Painel dentro da lista,
@@ -1308,8 +1311,10 @@
     aviso.textContent='Vínculo definitivo. Não é possível desfazer.';
    }else if(pessoa.situacao==='AGUARDANDO_CONFIRMACAO'){
     aviso.textContent='Pendente: aguarde CPF e aceite do indicado.';
+   }else if(pessoa.situacao==='LINK_ATIVO_SEM_LOOP'){
+    aviso.textContent='Link de divulgação ativo; falta adquirir uma posição no LOOP.';
    }else if(pessoa.situacao!=='ATIVO'){
-    aviso.textContent='Não ativo: aguarde a compra do indicado.';
+    aviso.textContent='Não ativo: aguarde a primeira compra do indicado.';
    }else if(!visao.posicoes.length){
     aviso.textContent='Você ainda não possui posições para vincular.';
    }else if(![...grade.children].some(b=>!b.disabled)){

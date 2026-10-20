@@ -568,6 +568,9 @@ body.loop03-logado .portal-participante{position:relative;z-index:1}
 #loop03-rede .loop03-equipe-inativo{
  background:#671b26!important;border-color:#fd6671!important;color:#ffe2e3!important;
 }
+#loop03-rede .loop03-equipe-link-ativo{
+ background:#6a4709!important;border-color:#f6c34d!important;color:#fff0ac!important;
+}
 #loop03-rede .loop03-equipe-linha>.loop03-equipe-informacoes{
  grid-column:2/4!important;grid-row:2!important;
  color:#d6c8e7!important;font-size:.73rem!important;
