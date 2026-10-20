@@ -268,16 +268,19 @@
    const bonus=resumo.querySelector('.area-bonus-participante');
    if(links){
     // Reutiliza os dois links da conta, sem clonar dados.
-    // A alteração de nick segue disponível, recolhida separadamente
-    // para a abertura principal exibir só os links de cópia.
+    // Campo e botão ficam sempre visíveis no rodapé do painel Meus Links.
+    // Mantém o título "Alterar meu nick" e a mesma API de salvamento real.
     const formNick=links.querySelector('#formApelidoLinkParticipante');
     if(formNick){
-     const subpainel=document.createElement('details');
-     subpainel.className='loop03-link-nick-opcional';
-     const cabeca=document.createElement('summary');
-     cabeca.textContent='Alterar meu nick';
-     formNick.before(subpainel);
-     subpainel.append(cabeca,formNick);
+     const area=document.createElement('div');
+     area.className='loop03-link-nick-opcional';
+     const titulo=document.createElement('strong');
+     titulo.className='loop03-link-nick-cabecalho';
+     titulo.textContent='Alterar meu nick';
+     formNick.before(area);
+     area.append(titulo,formNick);
+     const legenda=formNick.querySelector('label[for="apelidoLinkParticipante"]');
+     if(legenda)legenda.classList.add('loop03-label-acessivel');
     }
     e('loop03LinksRede').append(links);
    }
@@ -1063,7 +1066,15 @@
    // A esfera e o #ID bastam: sem a palavra "Fila A" abaixo deles.
    situacao.textContent=p?'':'SEM POSIÇÃO';
    situacao.hidden=!!p;
-   identidade.append(numero,situacao);miolo.append(selo,identidade);
+   identidade.append(numero);
+   if(p&&typeof visao.linkIndicacao?.apelido==='string'&&
+    /^[A-Za-z]{1,9}$/.test(visao.linkIndicacao.apelido)){
+    const nick=document.createElement('small');
+    nick.className='loop03-cartao-nick';
+    nick.textContent=visao.linkIndicacao.apelido;
+    identidade.append(nick);
+   }
+   identidade.append(situacao);miolo.append(selo,identidade);
    if(p){
     cabecalho.append(rotulo,miolo);
     const detalhe=document.createElement('div');detalhe.className='loop03-compra-expandida';

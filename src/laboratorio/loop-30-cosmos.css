@@ -2471,3 +2471,50 @@ body.loop03-logado .portal-participante{position:relative;z-index:1}
 #loop03LinksRede .loop03-link-status-inativo{
  color:#ffe5ba;border-color:#c8923d;background:#463017;
 }
+
+/* 20/10: Nick editável com campo e SALVAR lado a lado. */
+#loop03LinksRede .loop03-link-nick-opcional{
+ display:block!important;margin:13px 0 0!important;
+ padding:12px 0 2px!important;border-top:1px solid #8c6db5;
+}
+#loop03LinksRede .loop03-link-nick-cabecalho{
+ display:block;color:#f2d899;font-size:.82rem;margin-bottom:8px;
+}
+#loop03LinksRede .loop03-link-nick-opcional form{
+ max-width:none!important;width:100%;margin:0;
+ display:grid!important;grid-template-columns:minmax(0,1fr) auto!important;
+ align-items:center;gap:7px!important;
+}
+#loop03LinksRede .loop03-label-acessivel{
+ position:absolute!important;width:1px!important;height:1px!important;
+ margin:-1px!important;overflow:hidden!important;clip-path:inset(50%)!important;
+ white-space:nowrap!important;
+}
+#loop03LinksRede #apelidoLinkParticipante{
+ min-width:0;width:100%;height:40px!important;box-sizing:border-box;
+ border-radius:11px!important;padding:7px 11px!important;
+ background:#17172d!important;border:1px solid #a88fd0!important;
+ color:#fff!important;font-size:.86rem!important;
+}
+#loop03LinksRede #salvarApelidoLinkParticipante{
+ width:auto!important;min-width:74px!important;max-width:none!important;
+ height:40px!important;min-height:40px!important;padding:6px 12px!important;
+ border-radius:10px!important;margin:0!important;
+}
+#loop03-tabuleiro .loop03-mapa-grade .loop03-fila-id-nick{
+ display:flex;flex:0 1 auto;min-width:0;flex-direction:column;align-items:center;
+ justify-content:center;gap:1px;line-height:1.1;
+}
+#loop03-tabuleiro .loop03-mapa-grade .loop03-fila-nick{
+ display:block;max-width:100%;font-size:clamp(.46rem,.75vw,.61rem);
+ color:#ead4fb;font-weight:730;overflow:hidden;text-overflow:ellipsis;
+ white-space:nowrap;text-align:center;
+}
+#loop03-tabuleiro .loop03-mapa-grade .loop03-fila-id-nick .loop03-numero-titular{
+ white-space:nowrap!important;
+}
+#loop03-posicoes .loop03-cartao-nick{
+ display:block;max-width:100%;font-size:clamp(.55rem,.8vw,.75rem);
+ color:#fae5b2;font-weight:750;text-align:center;overflow:hidden;
+ text-overflow:ellipsis;white-space:nowrap;
+}

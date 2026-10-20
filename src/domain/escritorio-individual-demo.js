@@ -21,7 +21,7 @@ function posicoesTitular(sim,contaId){
  return itens;
 }
 // Visao PUBLICAVEL por sessao: nunca expor nome, CPF, email ou ID de outras contas.
-function mapaCoresDoEscritorio(sim,contaId){
+function mapaCoresDoEscritorio(sim,contaId,nicksPorConta=new Map()){
  function marcar(p){
   if(!p)return null;
   let cor='CINZA';
@@ -32,7 +32,11 @@ function mapaCoresDoEscritorio(sim,contaId){
   // Azul continua azul para todos; o destaque nao interfere na fila.
   const minha=p.participanteId===contaId &&
    !['PRAZO_ENCERRADO','DESISTENTE'].includes(p.statusAdesao) && p.empresa!==true;
-  return {posicaoId:p.id,cor,minha};
+  // Nick é um identificador público opcional, escolhido pelo próprio usuário.
+  // Não expor nome civil, contaId, CPF, e-mail ou nick em vaga da empresa.
+  const nick=p.empresa===true||cor==='DOURADO'?null:
+   nicksPorConta.get(p.participanteId)||null;
+  return {posicaoId:p.id,cor,minha,...(nick?{nick}:{})};
  }
  return {
   filaA:sim.filas.filaA.map(marcar),
@@ -99,7 +103,13 @@ class EscritorioIndividualDemo{
   `).all(contaId,contaId);
   const simulador=this.ponte._restaurar();
   const posicoes=posicoesTitular(simulador,contaId);
-  const mapaCores=mapaCoresDoEscritorio(simulador,contaId);
+  // Projeta apenas apelidos autorizados por seus próprios titulares e somente
+  // nas posições efetivamente existentes no motor, inclusive de terceiros.
+  const nicksPorConta=new Map(this.banco.prepare(
+   'SELECT conta_id AS contaId,apelido FROM admin_links_apelidos_demo'
+  ).all().filter(r=>/^[A-Za-z]{1,9}$/.test(r.apelido))
+   .map(r=>[r.contaId,r.apelido]));
+  const mapaCores=mapaCoresDoEscritorio(simulador,contaId,nicksPorConta);
   // Mesma restauracao SQL usada nas filas, sem registrar eventos ou movimentos.
   mapaCores.ultimoEventoValidoEm=ultimoEventoValidoDoTabuleiro(simulador.tabuleiro);
   mapaCores.intervaloReferenciaMinutos=this.configuracaoRelogio.consultar().intervaloMinutos;

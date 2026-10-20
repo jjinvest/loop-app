@@ -151,7 +151,15 @@
    referencia.classList.add('loop03-numero-titular');
    // Ordem da A: [bola amarela com A branco] [#ID] [boneco amarelo] [N indicacao(oes)].
    // Na B: [bola branca com B preto] [#ID]. Nomes nunca entram na B.
-   dados.append(referencia);
+   const ident=document.createElement('span');
+   ident.className='loop03-fila-id-nick';
+   ident.append(referencia);
+   if(typeof p.nick==='string'&&/^[A-Za-z]{1,9}$/.test(p.nick)){
+    const nome=document.createElement('small');
+    nome.className='loop03-fila-nick';nome.textContent=p.nick;
+    ident.append(nome);
+   }
+   dados.append(ident);
    if(filaA){
     const qt=convitesValidadosFilaA[i];
     const quantidade=document.createElement('span');
@@ -275,12 +283,12 @@
     const numero=elementoPosicao(valor,'Número');
     numero.textContent='#'+valor.posicaoId;
     identificacao.append(numero);
-    // O nome pessoal so aparece para o titular autenticado. Nomes de
-    // terceiros NAO sao fornecidos pelo snapshot publico do motor.
-    if(valor.minha&&typeof nomeTitular==='string'&&nomeTitular.trim()){
+    // Mostrar o NICK cadastrado abaixo do #ID de cada participante;
+    // nunca o nome civil, mesmo na esfera de outra pessoa.
+    if(typeof valor.nick==='string'&&/^[A-Za-z]{1,9}$/.test(valor.nick)){
      const nome=document.createElement('span');
      nome.className='loop03-nome-na-bola';
-     nome.textContent=nomeTitular.trim();
+     nome.textContent=valor.nick;
      identificacao.append(nome);
     }
     bloco.append(identificacao);
@@ -463,10 +471,9 @@
   e('pendentesParticipante').textContent=visao.indicacoes.cadastrosPendentes;
   lista('posicoesParticipante',visao.posicoes,p=>'Posição '+p.posicaoId+' — '+
    p.local.replace('_',' ')+' — '+(p.statusAdesao==='PENDENTE'?'aguardando ativação':'ativada'));
-  // Só o titular vê seu nick embaixo do #ID na catraca.
-  const nick=visao.linkIndicacao?.linkEscritorioCurto?
-   visao.linkIndicacao.apelido:'';
-  if(visao.mapaCores)mostrarMapa(visao.mapaCores,nick);
+  // O backend já inclui o nick público de cada participante por posição.
+  // Salvar o apelido e atualizar a página reflete a mudança em filas e catraca.
+  if(visao.mapaCores)mostrarMapa(visao.mapaCores);
   const temAzul=visao.posicoes.some(p=>p.statusAdesao==='PENDENTE');
   const cpfTermosConfirmados=visao.adesao?.cpfConfirmadoNoTeste===true;
   cpfConfirmadoAtual=cpfTermosConfirmados;
