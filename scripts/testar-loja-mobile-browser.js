@@ -1775,6 +1775,17 @@ async function main(){
    assert.equal(await tela.locator('#loop03RedeUtilizadas').innerText(),'2');
    await conferirLargura(tela,largura,'rede-4-cores-'+largura,{captura:false});
    await tela.screenshot({path:path.join(pasta,foto),fullPage:true});
+   // Segunda captura REAL do mesmo painel, rolando apenas a lista interna,
+   // para mostrar também os selos AMARELO e AZUL não visíveis no topo.
+   await tela.locator('#loop03ListaEquipe').evaluate(el=>{el.scrollTop=el.scrollHeight;});
+   await tela.waitForTimeout(120);
+   assert.equal(await linhas.filter({hasText:clienteAmarelo.nome})
+    .locator('.loop03-equipe-link-ativo').count(),1);
+   assert.equal(await linhas.filter({hasText:clienteAzul.nome})
+    .locator('.loop03-equipe-pendente').count(),1);
+   await tela.screenshot({
+    path:path.join(pasta,foto.replace('.png','_PARTE_FINAL.png')),fullPage:true
+   });
    await ctx.close();
   }
 
