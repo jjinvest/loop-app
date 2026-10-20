@@ -801,7 +801,7 @@ async function main(){
   assert.deepEqual(
    await promovida.locator('.loop03-fila-identificacao').evaluate(el=>
     [...el.children].slice(0,3).map(n=>
-     n.classList.contains('loop03-numero-titular')?'POSICAO':
+     n.classList.contains('loop03-fila-id-nick')&&n.querySelector('.loop03-numero-titular')?'POSICAO':
      n.classList.contains('loop03-bonequinho-indicacoes')?'BONECO':
      n.classList.contains('loop03-quantidade-a-direita')?'INDICACOES':'OUTRO')),
    ['POSICAO','BONECO','INDICACOES']);
