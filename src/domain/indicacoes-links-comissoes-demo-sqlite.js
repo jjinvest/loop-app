@@ -6,9 +6,9 @@ const {randomUUID}=require('node:crypto');
 const {ConfiguracaoTaxaIndicacaoDemoSQLite}=require('./configuracao-taxa-indicacao-demo-sqlite');
 const {VERSAO_TERMOS_DEMO}=require('./adesoes-posicoes-demo-sqlite');
 const TOKEN=/^lp-[a-f0-9]{20}$/;
-const PATH=/^\/laboratorio\/convite\/(lp-[a-f0-9]{20})(?:\/([a-z0-9][a-z0-9-]{1,30}[a-z0-9]))?\/?$/;
+const PATH=/^\/laboratorio\/convite\/(lp-[a-f0-9]{20})(?:\/([A-Za-z0-9][A-Za-z0-9_-]{1,38}[A-Za-z0-9]))?\/?$/;
 // Os dois links publicaveis sao neutros; links Vilela antigos seguem validos.
-const PATH_VILELA=/^\/(escritorio-vilela|loja-vilela|escritorio|loja)\/convite\/(lp-[a-f0-9]{20})(?:\/([a-z0-9][a-z0-9-]{1,30}[a-z0-9]))?\/?$/;
+const PATH_VILELA=/^\/(escritorio-vilela|loja-vilela|escritorio|loja)\/convite\/(lp-[a-f0-9]{20})(?:\/([A-Za-z0-9][A-Za-z0-9_-]{1,38}[A-Za-z0-9]))?\/?$/;
 const PATH_CURTO=/^\/(escritorio|loja)\/([A-Za-z0-9][A-Za-z0-9_-]{1,38}[A-Za-z0-9])\/?$/;
 function falha(codigo){const e=new Error(codigo);e.codigo=codigo;return e;}
 function apelidoSeguro(s){
@@ -173,6 +173,11 @@ class IndicacoesLinksComissoesDemoSQLite{
     BEFORE DELETE ON admin_comissoes_indicacoes_demo
     BEGIN SELECT RAISE(ABORT,'comissao simulada imutavel'); END;
   `);
+  // Reservar nomes legados, nunca reatribuir códigos já usados.
+  this.banco.prepare(`
+   INSERT OR IGNORE INTO admin_links_nicks_reservados_demo(nick_chave,conta_id)
+   SELECT lower(apelido),conta_id FROM admin_links_apelidos_demo ORDER BY conta_id
+  `).run();
  }
  // A compra confirmada mais antiga libera o link para trabalhar com indicacoes.
  // Uma compra de qualquer valor serve; nao e necessario ter posicao LOOP.
