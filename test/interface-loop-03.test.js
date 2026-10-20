@@ -91,7 +91,7 @@ test('LOOP 3.0 integra escritorio real e duas abas sem criar aplicativo paralelo
  assert.match(participante,/convitesValidadosFilaA\[i\]/);
  assert.match(participante,/loop03-quantidade-a-direita/);
  assert.match(participante,/dados\.append\(boneco,quantidade\)/);
- assert.match(participante,/dados\.append\(referencia\)/);
+ assert.match(participante,/ident\.append\(referencia\)/);
  assert.match(js,/id="loop03RedeTotalIndicacoes">0/);
  assert.match(js,/TOTAL DE INDICAÇÕES/);
  assert.match(js,/id="loop03BuscarIndicado"/);
@@ -106,8 +106,8 @@ test('LOOP 3.0 integra escritorio real e duas abas sem criar aplicativo paralelo
  assert.match(participante,/indice\.className='loop03-indice-vaga-visivel'/);
  assert.match(cosmos,/\.espaco-tabuleiro-demo>\.loop03-indice-vaga-visivel/);
  assert.match(participante,/numero\.textContent='#'\+valor\.posicaoId/);
- assert.match(participante,/valor\.minha&&typeof nomeTitular==='string'/);
- assert.match(participante,/nome\.textContent=nomeTitular\.trim\(\)/);
+ assert.match(participante,/typeof valor\.nick==='string'/);
+ assert.match(participante,/nome\.textContent=valor\.nick/);
  assert.match(cosmos,/loop03-ocupante-identidade/);
  assert.match(cosmos,/content:attr\(data-vaga-numero\)!important/);
  assert.match(participante,/valor\?\.cor==='DOURADO'/);
