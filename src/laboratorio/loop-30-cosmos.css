@@ -563,10 +563,10 @@ body.loop03-logado .portal-participante{position:relative;z-index:1}
  background:#06482d!important;border-color:#10d788!important;color:#baffdc!important;
 }
 #loop03-rede .loop03-equipe-pendente{
- background:#473005!important;border-color:#dfa535!important;color:#ffdf9b!important;
+ background:#163d89!important;border-color:#63afff!important;color:#e0f1ff!important;
 }
-#loop03-rede .loop03-equipe-conferencia{
- background:#3e1a5a!important;border-color:#b77af6!important;color:#e0baff!important;
+#loop03-rede .loop03-equipe-inativo{
+ background:#671b26!important;border-color:#fd6671!important;color:#ffe2e3!important;
 }
 #loop03-rede .loop03-equipe-linha>.loop03-equipe-informacoes{
  grid-column:2/4!important;grid-row:2!important;
@@ -2557,3 +2557,42 @@ body.loop03-logado .portal-participante{position:relative;z-index:1}
 
 /* Mensagens de erro/cópia aparecem somente quando houver algo a comunicar. */
 #loop03LinksRede #avisoLinkParticipante:empty{display:none}
+
+
+/* Minha Rede: seletor numerado embutido nos tres pontos; nenhuma outra aba. */
+#loop03-rede .loop03-equipe-linha>.loop03-equipe-escolhas[hidden]{display:none!important}
+#loop03-rede .loop03-equipe-linha>.loop03-equipe-escolhas{
+ grid-column:1/-1!important;grid-row:auto!important;
+ box-sizing:border-box;min-width:0;width:100%;
+ display:flex!important;flex-direction:column;gap:9px;
+ padding:11px;border-radius:12px;
+ border:1px solid #d0a568;background:linear-gradient(130deg,#221434,#10182e);
+ box-shadow:inset 0 0 0 1px #936eb53f;
+}
+#loop03-rede .loop03-equipe-escolhas-titulo{
+ color:#ffe6ab;font-size:.8rem;font-weight:780;
+}
+#loop03-rede .loop03-equipe-numeros{
+ display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:6px;min-width:0;
+}
+#loop03-rede .loop03-equipe-numeros>.loop03-equipe-numero{
+ display:grid;place-items:center;box-sizing:border-box;min-width:0;
+ width:100%;height:38px;min-height:38px;padding:0;
+ border:1px solid #e4b96d;border-radius:9px;background:#332149;
+ color:#ffebc1;font-size:.94rem;font-weight:850;cursor:pointer;
+}
+#loop03-rede .loop03-equipe-numeros>.loop03-equipe-numero:disabled{
+ opacity:.55;cursor:not-allowed;
+}
+#loop03-rede .loop03-equipe-numeros>.loop03-equipe-numero-vinculado{
+ opacity:1;cursor:default;border-color:#6ce7ab;background:#12402f;color:#d0ffdf;
+}
+#loop03-rede .loop03-equipe-escolhas-aviso{
+ color:#dcc8eb;font-size:.72rem;line-height:1.35;
+}
+@media(max-width:590px){
+ #loop03-rede .loop03-equipe-numeros{gap:4px}
+ #loop03-rede .loop03-equipe-numeros>.loop03-equipe-numero{
+  height:34px;min-height:34px;font-size:.83rem;
+ }
+}
