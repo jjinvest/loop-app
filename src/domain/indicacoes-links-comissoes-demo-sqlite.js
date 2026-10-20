@@ -9,6 +9,7 @@ const TOKEN=/^lp-[a-f0-9]{20}$/;
 const PATH=/^\/laboratorio\/convite\/(lp-[a-f0-9]{20})(?:\/([a-z0-9][a-z0-9-]{1,30}[a-z0-9]))?\/?$/;
 // Os dois links publicaveis sao neutros; links Vilela antigos seguem validos.
 const PATH_VILELA=/^\/(escritorio-vilela|loja-vilela|escritorio|loja)\/convite\/(lp-[a-f0-9]{20})(?:\/([a-z0-9][a-z0-9-]{1,30}[a-z0-9]))?\/?$/;
+const PATH_CURTO=/^\/(escritorio|loja)\/([A-Za-z0-9][A-Za-z0-9_-]{1,38}[A-Za-z0-9])\/?$/;
 function falha(codigo){const e=new Error(codigo);e.codigo=codigo;return e;}
 function apelidoSeguro(s){
  if(typeof s!=='string'||s.length>80)throw falha('APELIDO_INVALIDO');
@@ -21,6 +22,14 @@ function apelidoSeguro(s){
 function caminhoLink(token,apelido){
  if(!TOKEN.test(token))throw falha('LINK_INVALIDO');
  return '/laboratorio/convite/'+token+'/'+(apelido||'meu-loop');
+}
+// Endereço público curto não expõe código de indicação. O identificador
+// continua associado ao nick no SQLite, sem depender do formato do domínio.
+function caminhoLinkCurto(apelido,destino){
+ if(!['escritorio','loja'].includes(destino)||typeof apelido!=='string'||
+    !/^[A-Za-z0-9][A-Za-z0-9_-]{1,38}[A-Za-z0-9]$/.test(apelido))
+  throw falha('LINK_INVALIDO');
+ return '/'+destino+'/'+apelido;
 }
 // Dois destinos de divulgacao, sempre com o MESMO identificador de indicador.
 function caminhoLinkDestino(token,apelido,destino){
@@ -42,7 +51,12 @@ function extrairLink(url){
   !u.searchParams.get('destino'))throw falha('LINK_INVALIDO');
  const antigo=PATH.exec(u.pathname);
  const branded=PATH_VILELA.exec(u.pathname);
- if(!antigo&&!branded)throw falha('LINK_INVALIDO');
+ const curto=PATH_CURTO.exec(u.pathname);
+ if(!antigo&&!branded&&!curto)throw falha('LINK_INVALIDO');
+ if(curto){
+  if(campos.length>0)throw falha('LINK_INVALIDO');
+  return {token:null,apelido:curto[2],destino:curto[1]};
+ }
  if(branded){
   const destinoDoCaminho=['loja','loja-vilela'].includes(branded[1])?'loja':'escritorio';
   if(campos.length>0)throw falha('LINK_INVALIDO');
@@ -59,6 +73,10 @@ class IndicacoesLinksComissoesDemoSQLite{
    CREATE TABLE IF NOT EXISTS admin_links_apelidos_demo(
     conta_id TEXT PRIMARY KEY REFERENCES admin_contas_participantes_demo(id) ON DELETE RESTRICT,
     apelido TEXT NOT NULL
+   );
+   CREATE TABLE IF NOT EXISTS admin_links_nicks_reservados_demo(
+    nick_chave TEXT PRIMARY KEY,
+    conta_id TEXT NOT NULL REFERENCES admin_contas_participantes_demo(id) ON DELETE RESTRICT
    );
    CREATE TABLE IF NOT EXISTS admin_links_historico_demo(
     evento_id TEXT PRIMARY KEY,
@@ -185,9 +203,16 @@ class IndicacoesLinksComissoesDemoSQLite{
   const apelido=this.banco.prepare(
    'SELECT apelido FROM admin_links_apelidos_demo WHERE conta_id=?'
   ).get(contaId)?.apelido||'meu-loop';
+  // Campos legados mantidos para links antigos/integrações já existentes.
+  // Campos curtos visíveis ao cliente ficam sem /convite/token.
+  const nickAtivo=this.banco.prepare(
+   'SELECT nick_chave FROM admin_links_nicks_reservados_demo WHERE nick_chave=? AND conta_id=?'
+  ).get(apelido.toLowerCase(),contaId);
   return {link:caminhoLink(conta.codigoConvite,apelido),
    linkEscritorio:caminhoLinkDestino(conta.codigoConvite,apelido,'escritorio'),
    linkLoja:caminhoLinkDestino(conta.codigoConvite,apelido,'loja'),
+   linkEscritorioCurto:nickAtivo?caminhoLinkCurto(apelido,'escritorio'):null,
+   linkLojaCurto:nickAtivo?caminhoLinkCurto(apelido,'loja'):null,
    mesmoCodigoIndicador:true,apelido,
    ativo:this.ativado(contaId),podeDivulgar:this.ativado(contaId),
    bonificacoesHabilitadas:this.habilitadoBonificacoes(contaId),
@@ -196,24 +221,45 @@ class IndicacoesLinksComissoesDemoSQLite{
  personalizar({contaId,apelido}={}){
   const normalizado=apelidoSeguro(apelido);
   if(!this.contas.buscar(contaId))throw falha('CONTA_INVALIDA');
-  this.banco.prepare(`
-   INSERT INTO admin_links_apelidos_demo(conta_id,apelido) VALUES(?,?)
-   ON CONFLICT(conta_id) DO UPDATE SET apelido=excluded.apelido
-  `).run(contaId,normalizado);
-  this.banco.prepare(`
-   INSERT INTO admin_links_historico_demo(evento_id,conta_id,apelido,criado_em)
-   VALUES (?,?,?,?)
-  `).run(randomUUID(),contaId,normalizado,new Date().toISOString());
+  this.banco.exec('BEGIN IMMEDIATE');
+  try{
+   const antigo=this.banco.prepare(
+    'SELECT conta_id AS id FROM admin_links_nicks_reservados_demo WHERE nick_chave=?'
+   ).get(normalizado.toLowerCase());
+   if(antigo&&antigo.id!==contaId)throw falha('APELIDO_DUPLICADO');
+   if(!antigo)this.banco.prepare(
+    'INSERT INTO admin_links_nicks_reservados_demo(nick_chave,conta_id) VALUES (?,?)'
+   ).run(normalizado.toLowerCase(),contaId);
+   this.banco.prepare(`
+    INSERT INTO admin_links_apelidos_demo(conta_id,apelido) VALUES(?,?)
+    ON CONFLICT(conta_id) DO UPDATE SET apelido=excluded.apelido
+   `).run(contaId,normalizado);
+   this.banco.prepare(`
+    INSERT INTO admin_links_historico_demo(evento_id,conta_id,apelido,criado_em)
+    VALUES (?,?,?,?)
+   `).run(randomUUID(),contaId,normalizado,new Date().toISOString());
+   this.banco.exec('COMMIT');
+  }catch(err){this.banco.exec('ROLLBACK');throw err;}
   return this.linkDaConta(contaId);
  }
  resolver(link){
-  const {token,destino}=extrairLink(link);
-  const row=this.banco.prepare(`
-   SELECT id,nome FROM admin_contas_participantes_demo WHERE codigo_convite=?
-  `).get(token);
+  const {token,apelido,destino}=extrairLink(link);
+  let row;
+  if(token){
+   row=this.banco.prepare(
+    'SELECT id,nome,codigo_convite FROM admin_contas_participantes_demo WHERE codigo_convite=?'
+   ).get(token);
+  }else{
+   const reserva=this.banco.prepare(
+    'SELECT conta_id AS id FROM admin_links_nicks_reservados_demo WHERE nick_chave=?'
+   ).get(apelido.toLowerCase());
+   if(reserva)row=this.banco.prepare(
+    'SELECT id,nome,codigo_convite FROM admin_contas_participantes_demo WHERE id=?'
+   ).get(reserva.id);
+  }
   if(!row)throw falha('LINK_INVALIDO');
   return {indicadorId:row.id,nomeIndicador:row.nome,
-   ativo:this.ativado(row.id),token,destino};
+   ativo:this.ativado(row.id),token:row.codigo_convite,destino};
  }
  comissaoDaPosicao({pedidoId,indicadorId,convidadoId,posicaoId,referencia,quando,
   posicaoAtivaIndicadorId=null}={}){
@@ -337,4 +383,4 @@ function simularElegibilidadeSaque({saldoSimuladoCentavos,valorSolicitadoCentavo
   valorLiquidoCentavos,origemExclusiva:tipo==='BONUS'?'LOOP_DIREITA':'LOOP_CENTRO',
   transferenciaExecutada:false,necessitaSaldoRealReserva:true};
 }
-module.exports={IndicacoesLinksComissoesDemoSQLite,caminhoLink,caminhoLinkDestino,extrairLink,apelidoSeguro,simularElegibilidadeSaque};
+module.exports={IndicacoesLinksComissoesDemoSQLite,caminhoLink,caminhoLinkDestino,caminhoLinkCurto,extrairLink,apelidoSeguro,simularElegibilidadeSaque};
