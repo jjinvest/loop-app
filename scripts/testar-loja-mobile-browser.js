@@ -1720,7 +1720,9 @@ async function main(){
    body:JSON.stringify({eventoId:'evento-link-liberado',tipo:'CONFIRMAR_FICTICIO'})
   });
   assert.equal(confirmouAmarelo.status,200,await confirmouAmarelo.text());
-  assert.equal(ponte.linksComissoes.ativado(clienteAmarelo.contaId),true);
+  assert.equal(!!banco.banco.prepare(
+   'SELECT 1 FROM admin_ponte_vendas_loja_sem_loop_demo WHERE conta_id=?'
+  ).get(clienteAmarelo.contaId),true,'Compra da loja registrada sem criar posição');
 
   // Compra qualificada gera cadeira AZUL, mas o convidado ainda não deu CPF.
   const clienteAzul=contas.cadastrar({
