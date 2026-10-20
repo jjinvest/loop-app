@@ -2099,3 +2099,45 @@ body.loop03-logado .portal-participante{position:relative;z-index:1}
  #loop03-posicoes .loop03-grade-posicoes .loop03-indicacoes-curtas{font-size:.59rem}
  #loop03Shell .loop03-termos-janela{padding:15px}
 }
+
+/* 20/out - Minhas Posições: CPF e quadradinho SOB a esfera, antes da
+   divisória preservada. Status verde/vermelho apenas nas posições existentes.
+   Vagas vazias mantém o roxo já aprovado e mostram "Indicações" sem número. */
+#loop03-posicoes .loop03-grade-posicoes .loop03-cartao-abrir{
+ flex:0 0 auto!important;
+}
+#loop03-posicoes .loop03-grade-posicoes .loop03-cartao-posicao{
+ gap:8px!important;
+}
+#loop03-posicoes .loop03-grade-posicoes .loop03-aceite-linha{
+ order:1;display:flex!important;align-items:center!important;
+ justify-content:space-between!important;gap:7px!important;
+ min-width:0;width:100%;margin:3px 0 0;
+}
+#loop03-posicoes .loop03-grade-posicoes .loop03-cpf-cartao{
+ flex:1 1 auto;min-width:0;max-width:none!important;width:100%;
+ border-radius:10px;
+}
+#loop03-posicoes .loop03-grade-posicoes .loop03-cpf-protegido{
+ color:#c7bdd8!important;background:#19162a!important;cursor:default;
+}
+#loop03-posicoes .loop03-grade-posicoes .loop03-check-cartao{
+ flex:0 0 23px;cursor:pointer;
+}
+#loop03-posicoes .loop03-grade-posicoes .loop03-cartao-resumo{
+ order:2;margin-top:auto!important;min-height:31px;
+ border-top:1px solid #736388!important;display:flex;align-items:center;
+}
+#loop03-posicoes .loop03-grade-posicoes .loop03-indicacoes-curtas{
+ text-align:left!important;
+}
+@media(max-width:590px){
+ #loop03-posicoes .loop03-grade-posicoes .loop03-cartao-posicao{gap:4px!important}
+ #loop03-posicoes .loop03-grade-posicoes .loop03-aceite-linha{gap:3px!important;margin-top:0}
+ #loop03-posicoes .loop03-grade-posicoes .loop03-check-cartao{flex-basis:16px}
+ #loop03-posicoes .loop03-grade-posicoes .loop03-cpf-cartao{
+  width:100%!important;min-width:0!important;max-width:none!important;
+  font-size:.52rem!important;
+ }
+ #loop03-posicoes .loop03-grade-posicoes .loop03-cartao-resumo{min-height:23px}
+}

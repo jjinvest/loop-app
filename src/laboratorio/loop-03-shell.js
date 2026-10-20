@@ -793,7 +793,9 @@
    aviso.textContent='Termos do laboratorio indisponiveis. Nao confirme antes de ler.';
    destino.append(aviso);e('loop03TermosAceitar').disabled=true;
   }else e('loop03TermosAceitar').disabled=false;
-  e('loop03TermosAceitar').checked=aceitesPosicao.get(p.posicaoId)===true;
+  // Mesmo se a posicao ja for verde, a pessoa pode abrir, ler e fechar
+  // o texto. A marcação de aceite desta janela encerra sua visualização.
+  e('loop03TermosAceitar').checked=false;
   e('loop03TermosTitulo').textContent='Termos da posição #'+p.posicaoId+' — laboratório';
   e('loop03TermosFundo').hidden=false;
   e('loop03TermosAceitar').focus();
@@ -837,16 +839,15 @@
     p?.local==='CENTRO'?'centro':p?.local==='FILA_A'?'a':
     p?.local==='FILA_B'?'b':p?'giro':'vazia';
    const pendente=estado==='pendente';
-   const cartao=document.createElement(p&&!pendente?'button':'div');
+   // Todos os cartoes ocupados sao containers: nao colocar CPF ou checkbox
+   // dentro de um <button>, pois controles aninhados perdem o clique no mobile.
+   const cartao=document.createElement('div');
    cartao.className='loop03-opcao loop03-cartao-posicao loop03-posicao-'+estado+
     (!p?' loop03-posicao-vazia':pendente?' loop03-status-confirmacao-pendente':' loop03-status-confirmacao-ok');
    let cabecalho=cartao;
    if(p){
-    if(pendente){
-     cabecalho=document.createElement('button');
-     cabecalho.className='loop03-cartao-abrir';
-     cabecalho.type='button';cartao.append(cabecalho);
-    }else cartao.type='button';
+    cabecalho=document.createElement('button');cabecalho.type='button';
+    cabecalho.className='loop03-cartao-abrir';cartao.append(cabecalho);
     cabecalho.dataset.loop03Posicao=String(p.posicaoId);
     cabecalho.setAttribute('aria-pressed',String(p.posicaoId===selecionada));
     cabecalho.addEventListener('click',()=>selecionar(p));
@@ -860,47 +861,52 @@
    const identidade=document.createElement('div');identidade.className='loop03-cartao-identidade';
    const numero=document.createElement('strong');numero.textContent=p?'#'+p.posicaoId:'—';
    const situacao=document.createElement('span');
-   situacao.textContent=!p?'SEM POSIÇÃO':estado==='pendente'?'AGUARDANDO CONFIRMAÇÃO':
-    statusPosicao(p).toUpperCase();
+   // A esfera e o #ID bastam: sem a palavra "Fila A" abaixo deles.
+   situacao.textContent=p?'':'SEM POSIÇÃO';
+   situacao.hidden=!!p;
    identidade.append(numero,situacao);miolo.append(selo,identidade);
    cabecalho.append(rotulo,miolo);
-   const resumo=document.createElement('div');resumo.className='loop03-cartao-resumo';
-   if(p&&pendente){
+   if(p){
+    // CPF e quadrado ficam DIRETAMENTE embaixo da esfera, ANTES da divisoria.
     const controles=document.createElement('div');controles.className='loop03-aceite-linha';
-    // CPF aparece somente na primeira posicao enquanto ainda nao houve cadastro.
-    if(indice===0&&!visao.adesao?.cpfConfirmadoNoTeste){
-     const cpf=document.createElement('input');cpf.type='text';cpf.inputMode='numeric';
-     cpf.maxLength=11;cpf.pattern='[0-9]{11}';cpf.autocomplete='off';
-     cpf.placeholder='CPF';cpf.setAttribute('aria-label','CPF de teste da primeira posição');
-     cpf.className='loop03-cpf-cartao';cpf.value=cpfRascunho;
+    const cpf=document.createElement('input');cpf.type='text';
+    cpf.className='loop03-cpf-cartao';cpf.autocomplete='off';
+    const precisaCpf=pendente&&!visao.adesao?.cpfConfirmadoNoTeste&&indice===0;
+    if(precisaCpf){
+     cpf.inputMode='numeric';cpf.maxLength=11;cpf.pattern='[0-9]{11}';
+     cpf.placeholder='CPF';cpf.value=cpfRascunho;
+     cpf.setAttribute('aria-label','CPF de teste da primeira posição');
      cpf.addEventListener('focus',()=>selecionar(p));
      cpf.addEventListener('input',()=>{
       cpfRascunho=cpf.value.replace(/\D/g,'').slice(0,11);
       cpf.value=cpfRascunho;e('cpfFicticioParticipante').value=cpfRascunho;
      });
-     controles.append(cpf);
+    }else{
+     cpf.readOnly=true;cpf.value=visao.adesao?.cpfConfirmadoNoTeste?'CPF ✓':'CPF 1ª';
+     cpf.title=visao.adesao?.cpfConfirmadoNoTeste?
+      'CPF protegido e confirmado nesta conta':'Informe o CPF na primeira posição';
+     cpf.setAttribute('aria-label',cpf.title);
+     cpf.classList.add('loop03-cpf-protegido');
     }
+    controles.append(cpf);
     const marcar=document.createElement('input');marcar.type='checkbox';
     marcar.className='loop03-check-cartao';marcar.dataset.termosPosicao=String(p.posicaoId);
-    marcar.setAttribute('aria-label','Aceitar termos da posição '+(indice+1));
-    marcar.checked=aceitesPosicao.get(p.posicaoId)===true;
-    marcar.addEventListener('change',()=>{
-     selecionar(p);aceitesPosicao.set(p.posicaoId,marcar.checked);
-     e('aceiteTermosParticipante').checked=marcar.checked;
+    marcar.setAttribute('aria-label','Abrir termos da posição '+(indice+1));
+    marcar.title='Ler os termos desta posição';
+    marcar.checked=!pendente||aceitesPosicao.get(p.posicaoId)===true;
+    // Tocar no quadrado ABRE os termos. So o aceite dentro do texto marca
+    // a posicao pendente; sair ou fechar sem aceitar nao concede consentimento.
+    marcar.addEventListener('click',ev=>{
+     ev.preventDefault();
+     abrirTermosPosicao(p);
     });
     controles.append(marcar);
-    const link=document.createElement('button');link.type='button';
-    link.className='loop03-link-termos';link.textContent='Ler termos';
-    link.addEventListener('click',()=>abrirTermosPosicao(p));
-    resumo.append(controles,link);
-   }else if(!p){
-    const vazio=document.createElement('strong');vazio.textContent='Espaço disponível';resumo.append(vazio);
+    cartao.append(controles);
    }
-   if(p){
-    const conta=document.createElement('small');conta.className='loop03-indicacoes-curtas';
-    conta.textContent='Indicações: '+(p.indicacoesRecebidas||0);
-    resumo.append(conta);
-   }
+   const resumo=document.createElement('div');resumo.className='loop03-cartao-resumo';
+   const conta=document.createElement('small');conta.className='loop03-indicacoes-curtas';
+   conta.textContent=p?'Indicações: '+(p.indicacoesRecebidas||0):'Indicações';
+   resumo.append(conta);
    cartao.append(resumo);
    if(estado==='pendente'){
     const ponto=document.createElement('span');ponto.className='loop03-pendencia-ponto';

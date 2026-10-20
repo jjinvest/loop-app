@@ -478,12 +478,25 @@ async function main(){
   assert.equal(await page.locator('#loop03OpcoesPosicoes .loop03-status-confirmacao-pendente').count(),1);
   assert.equal(await page.locator('#loop03OpcoesPosicoes .loop03-cpf-cartao').count(),1);
   assert.equal(await page.locator('#loop03OpcoesPosicoes .loop03-check-cartao').count(),1);
-  assert.equal(await page.locator('#loop03OpcoesPosicoes .loop03-link-termos').count(),1);
+  assert.equal(await page.locator('#loop03OpcoesPosicoes .loop03-link-termos').count(),0);
+  assert.equal(await page.locator('#loop03OpcoesPosicoes .loop03-indicacoes-curtas').count(),6);
+  assert.equal(await page.locator('#loop03OpcoesPosicoes .loop03-posicao-vazia .loop03-indicacoes-curtas').first().innerText(),'Indicações');
   await page.locator('#loop03OpcoesPosicoes [data-loop03-posicao]').first().click();
   await page.locator('#loop03OpcoesPosicoes .loop03-cpf-cartao').fill('11144477735');
   assert.equal(await page.locator('#cpfFicticioParticipante').inputValue(),'11144477735');
-  await page.locator('#loop03OpcoesPosicoes .loop03-link-termos').click();
+  const geometria=await page.locator('#loop03OpcoesPosicoes .loop03-status-confirmacao-pendente').evaluate(el=>{
+   const miolo=el.querySelector('.loop03-cartao-miolo').getBoundingClientRect();
+   const cpf=el.querySelector('.loop03-cpf-cartao').getBoundingClientRect();
+   const divisoria=el.querySelector('.loop03-cartao-resumo').getBoundingClientRect();
+   return {mioloFim:miolo.bottom,cpfTopo:cpf.top,cpfFim:cpf.bottom,divisoriaTopo:divisoria.top};
+  });
+  assert.ok(geometria.cpfTopo>=geometria.mioloFim-2&&geometria.divisoriaTopo>=geometria.cpfFim-2,
+   'CPF deve aparecer abaixo da esfera e ANTES da divisória '+JSON.stringify(geometria));
+  await page.screenshot({path:path.join(pasta,'MINHAS_POSICOES_PENDENTE_CPF_PC.png'),fullPage:true});
+  // Clicar quadradinho nao aceita silenciosamente: abre o texto sobre a aba.
+  await page.locator('#loop03OpcoesPosicoes .loop03-check-cartao').click();
   assert.equal(await page.locator('#loop03TermosFundo').isVisible(),true);
+  assert.equal(await page.locator('#loop03OpcoesPosicoes .loop03-check-cartao').isChecked(),false);
   assert.match(await page.locator('#loop03TermosTexto').innerText(),/LOOP|regras/i);
   await page.locator('#loop03TermosAceitar').check();
   assert.equal(await page.locator('#loop03TermosFundo').isVisible(),false);
@@ -531,7 +544,11 @@ async function main(){
   await page.locator('#secaoAtivacaoParticipante').waitFor({state:'hidden'});
   assert.equal(await page.locator('#loop03OpcoesPosicoes .loop03-pendencia-ponto').count(),0);
   assert.equal(await page.locator('#loop03OpcoesPosicoes .loop03-status-confirmacao-ok').count(),1);
-  assert.equal(await page.locator('#loop03OpcoesPosicoes .loop03-cpf-cartao').count(),0);
+  assert.equal(await page.locator('#loop03OpcoesPosicoes .loop03-cpf-cartao').count(),1);
+  assert.equal(await page.locator('#loop03OpcoesPosicoes .loop03-cpf-protegido').count(),1);
+  assert.equal(await page.locator('#loop03OpcoesPosicoes .loop03-check-cartao').isChecked(),true);
+  assert.equal(await page.locator('#loop03OpcoesPosicoes .loop03-status-confirmacao-ok .loop03-cartao-identidade span').isVisible(),false,
+   'Remover texto Fila A abaixo do #ID sem mudar a esfera A');
   assert.equal(await page.locator('.linha-minha-demo .posicao-vermelho').count(),1);
   await page.screenshot({path:path.join(pasta,'escritorio-posicao-ativada.png'),fullPage:true});
 
