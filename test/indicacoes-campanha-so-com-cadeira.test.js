@@ -45,9 +45,14 @@ test('tres anos depois: campanha 50% exige cadeira no minimo atual de R$500, sen
  assert.equal(taxas.alterar({percentual:50,revisaoEsperada:1}).percentual,50);
  const convidado1=await comprar('compra-convidado-500-1',comprador,50000,dia(2));
  assert.equal(convidado1.posicaoCriada,true);
- assert.equal(convidado1.comissaoSimuladaCentavos,5000);
- assert.equal(convidado1.percentualBonusAplicado,10);
- assert.equal(convidado1.indicadorElegivelBonusExtra,false);
+ assert.equal(convidado1.comissaoSimuladaCentavos,0,'AZUL não gera comissao');
+ const aceitouComprador=new AdesoesPosicoesDemoSQLite({ponte,
+  relogio:()=>dia(2).replace('T12:00','T12:30')}).ativar({
+   contaId:comprador.contaId,cpfFicticio:'12345678909',
+   aceitaTermos:true,versaoTermos:'LOOP-DEMO-V1'});
+ assert.equal(aceitouComprador.bonificacoes[0].valorComissaoCentavos,5000);
+ assert.equal(aceitouComprador.bonificacoes[0].taxaPercentual,10);
+ assert.equal(aceitouComprador.bonificacoes[0].elegivelBonusExtra,false);
  const escritorio=new EscritorioIndividualDemo({ponte,contas});
  let bonusEscritorio=escritorio.consultar(indicador.contaId).bonusIndicacoes;
  assert.equal(bonusEscritorio.ativoNoLoopAgora,false);
@@ -126,9 +131,14 @@ test('cadeira azul que virou ouro LOOP nao habilita bonificacao promocional do a
  ponte.linksComissoes.taxas.agora=()=>tempo(7);
  ponte.linksComissoes.taxas.alterar({percentual:30,revisaoEsperada:1});
  const bonificacao=await comprar('convidado-ouro-250',convidado,25000,8);
- assert.equal(bonificacao.indicadorElegivelBonusExtra,false);
- assert.equal(bonificacao.percentualBonusAplicado,10);
- assert.equal(bonificacao.comissaoSimuladaCentavos,2500);
+ assert.equal(bonificacao.comissaoSimuladaCentavos,0);
+ const confirmouComprador=new AdesoesPosicoesDemoSQLite({ponte,
+  relogio:()=>tempo(8).replace('T12:00','T12:30')}).ativar({
+   contaId:convidado.contaId,cpfFicticio:'12345678909',
+   aceitaTermos:true,versaoTermos:'LOOP-DEMO-V1'});
+ assert.equal(confirmouComprador.bonificacoes[0].elegivelBonusExtra,false);
+ assert.equal(confirmouComprador.bonificacoes[0].taxaPercentual,10);
+ assert.equal(confirmouComprador.bonificacoes[0].valorComissaoCentavos,2500);
  const extrato=ponte.linksComissoes.comissoesDaConta(indicar.contaId);
  assert.equal(extrato.registros[0].percentualCampanha,30);
  assert.equal(extrato.registros[0].percentual,10);
