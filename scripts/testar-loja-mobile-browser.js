@@ -1598,7 +1598,7 @@ async function main(){
    if(width===390)await pag.locator('#loop03Menu').click();
    await pag.locator('#loop03Sidebar [data-loop03-aba="rede"]').click();
    assert.equal(await pag.locator('#loop03RedeTotalIndicacoes').innerText(),'4');
-   assert.equal(await pag.locator('#loop03-rede .loop03-rede-subtotal span').innerText(),
+   assert.equal(await pag.locator('#loop03-rede .loop03-rede-subtotal:not(.loop03-rede-utilizadas) span').innerText(),
     'Indicações a distribuir');
    assert.equal(await pag.locator('#loop03ListaEquipe .loop03-equipe-linha').count(),4);
    assert.equal(await pag.locator('#loop03ListaEquipe .loop03-ordem-indicacao').count(),0);
