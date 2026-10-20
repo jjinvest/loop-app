@@ -2637,3 +2637,60 @@ body.loop03-logado .portal-participante{position:relative;z-index:1}
  #loop03-rede .loop03-equipe-avatar-mil{font-size:.45rem!important}
  #loop03-rede .loop03-equipe-avatar-longo{font-size:.35rem!important}
 }
+
+
+/* Minhas Posições: EXATAMENTE o quadro aprovado na Minha Rede,
+   com três valores da mesma fonte SQLite, sem a antiga faixa de saldo. */
+#loop03Shell #loop03-posicoes>.loop03-contador-posicoes{
+ width:min(100%,425px)!important;box-sizing:border-box!important;
+ min-height:112px!important;margin:10px 0 17px!important;
+ padding:11px 12px!important;display:flex!important;
+ flex-direction:column!important;align-items:center!important;
+ justify-content:center!important;gap:7px!important;
+}
+#loop03Shell #loop03-posicoes>.loop03-contador-posicoes>.loop03-rede-subtotal{
+ width:100%!important;padding-top:9px!important;margin-top:5px!important;
+ border-top:1px solid #d3a66460!important;
+ display:flex!important;align-items:center!important;
+ justify-content:center!important;gap:7px!important;flex-wrap:wrap!important;
+}
+#loop03Shell #loop03-posicoes>.loop03-contador-posicoes>.loop03-rede-subtotal span{
+ font-size:.66rem!important;color:#e9daee!important;
+}
+#loop03Shell #loop03-posicoes>.loop03-contador-posicoes>.loop03-rede-subtotal strong{
+ font-size:1.08rem!important;color:#fce6ae!important;
+}
+/* Mesmos dois links e botões, agora dentro de um details nativo acessível. */
+#loop03Shell #loop03-posicoes>.loop03-links-posicoes{
+ box-sizing:border-box;max-width:100%;margin:16px 0 4px!important;
+ border:1px solid #b17bdf!important;border-radius:13px!important;
+ background:linear-gradient(140deg,#1c0e3d,#120c25)!important;
+ overflow:hidden;
+}
+#loop03Shell #loop03-posicoes>.loop03-links-posicoes>summary{
+ display:list-item;padding:13px 16px;cursor:pointer;
+ background:linear-gradient(90deg,#25134e,#421666 70%,#1b1339);
+ color:#ffe3ab!important;font-weight:850!important;
+}
+#loop03Shell #loop03-posicoes>.loop03-links-posicoes[open]>summary{
+ border-bottom:1px solid #c391e9;
+}
+#loop03Shell #loop03-posicoes>.loop03-links-posicoes>summary:focus-visible{
+ outline:2px solid #ffe8a5;outline-offset:-3px;
+}
+#loop03Shell #loop03-posicoes>.loop03-links-posicoes>.loop03-painel-links{
+ margin:10px!important;width:calc(100% - 20px)!important;
+}
+/* Remover a faixa antiga com o nome de comprador de laboratorio do rodapé.
+   Identidade verdadeira continua no perfil/cartões e seletor aprovados. */
+#loop03Shell .loop03-sidebar>.loop03-identidade-selecionada{
+ display:none!important;
+}
+@media(max-width:590px){
+ #loop03Shell #loop03-posicoes>.loop03-contador-posicoes{
+  width:100%!important;min-height:103px!important;padding:9px!important;
+ }
+ #loop03Shell #loop03-posicoes>.loop03-contador-posicoes>.loop03-rede-subtotal span{
+  font-size:.58rem!important;
+ }
+}
