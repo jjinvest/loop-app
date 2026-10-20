@@ -142,9 +142,12 @@
      </section>
      <section id="loop03-posicoes" class="loop03-pagina" aria-label="Minhas Posições">
       <header class="loop03-titulo-pagina loop03-titulo-central"><div><h2>Minhas Posições</h2><p>Acompanhe suas posições e o andamento de cada uma no LOOP.</p></div></header>
-      <div class="loop03-saldo-indicados" aria-live="polite">
-       <span>Indicações disponíveis para distribuir</span>
-       <strong id="loop03SaldoDisponivel">0</strong>
+      <div class="loop03-contador-rede loop03-contador-total loop03-contador-posicoes" aria-label="Resumo das indicações confirmadas do LOOP" aria-live="polite">
+       <small>TOTAL DE INDICAÇÕES</small>
+       <strong id="loop03PosicoesRedeTotalIndicacoes">0</strong>
+       <span>Indicações confirmadas</span>
+       <div class="loop03-rede-subtotal"><span>Indicações a distribuir</span><strong id="loop03PosicoesRedeADistribuir">0</strong></div>
+       <div class="loop03-rede-subtotal loop03-rede-utilizadas"><span>Indicações utilizadas</span><strong id="loop03PosicoesRedeUtilizadas">0</strong></div>
       </div>
       <p id="loop03AvisoDistribuicao" class="loop03-aviso-distribuicao" role="status" aria-live="polite"></p>
       <div id="loop03OpcoesPosicoes" class="loop03-opcoes loop03-grade-posicoes"></div>
@@ -157,11 +160,14 @@
         <label class="loop03-termos-aceite"><input id="loop03TermosAceitar" type="checkbox"> Li e aceito os termos desta posição</label>
        </div>
       </div>
-      <div id="loop03DetalhesPosicao" class="loop03-detalhes loop03-painel-links" aria-label="Dois links personalizados">
+      <details id="loop03DetalhesPosicao" class="loop03-links-posicoes" aria-label="Meus links personalizados">
+       <summary>Meus Links</summary>
+       <div class="loop03-detalhes loop03-painel-links" aria-label="Dois links personalizados">
         <div class="loop03-link-compartilhar"><label for="loop03LinkEscritorio">Escritório Virtual</label><div class="loop03-campo-link"><input id="loop03LinkEscritorio" type="text" readonly spellcheck="false" aria-label="Link pessoal do Escritório Virtual"><button type="button" id="loop03CopiarEscritorio" class="loop03-botao-copiar" aria-label="Copiar link do Escritório Virtual" disabled>⧉</button></div></div>
         <div class="loop03-link-compartilhar"><label for="loop03LinkLoja">AKITEMM · Loja</label><div class="loop03-campo-link"><input id="loop03LinkLoja" type="text" readonly spellcheck="false" aria-label="Link pessoal da AKITEMM"><button type="button" id="loop03CopiarLoja" class="loop03-botao-copiar" aria-label="Copiar link da AKITEMM" disabled>⧉</button></div></div>
         <small id="loop03StatusCopiarLinks" role="status" aria-live="polite"></small>
        </div>
+      </details>
      </section>
      <section id="loop03-rede" class="loop03-pagina" aria-label="Minha Rede e Equipe">
       <header class="loop03-titulo-pagina loop03-cabecalho-equipe">
@@ -1175,11 +1181,17 @@
   }
   // A esquerda o total so aumenta; a direita somente os vinculos ainda nao
   // atribuidos manualmente (nunca auto-repassados pelo sistema).
-  e('loop03SaldoDisponivel').textContent=String(visao.contadoresRede?.disponiveisParaVincular??0);
-  e('loop03RedeTotalIndicacoes').textContent=String(
+  const totalConfirmadas=String(
    visao.contadoresRede?.totalIndicacoesConfirmadas??visao.contadoresRede?.totalPosicoes??0);
-  e('loop03RedeADistribuir').textContent=String(visao.contadoresRede?.aDistribuir??0);
-  e('loop03RedeUtilizadas').textContent=String(visao.contadoresRede?.jaDistribuidas??0);
+  const aDistribuir=String(visao.contadoresRede?.aDistribuir??0);
+  const utilizadas=String(visao.contadoresRede?.jaDistribuidas??0);
+  // Mesma fonte SQLite, duas visualizações; nenhum contador paralelo/mock.
+  for(const id of ['loop03RedeTotalIndicacoes','loop03PosicoesRedeTotalIndicacoes'])
+   e(id).textContent=totalConfirmadas;
+  for(const id of ['loop03RedeADistribuir','loop03PosicoesRedeADistribuir'])
+   e(id).textContent=aDistribuir;
+  for(const id of ['loop03RedeUtilizadas','loop03PosicoesRedeUtilizadas'])
+   e(id).textContent=utilizadas;
   const equipes=e('loop03ListaEquipe');equipes.replaceChildren();
   for(const [indice,pessoa] of (visao.equipe||[]).entries()){
    const numeroIndicacao=Number.isSafeInteger(pessoa.numeroIndicacao)&&pessoa.numeroIndicacao>0?
