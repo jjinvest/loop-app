@@ -52,7 +52,7 @@ test('LOOP 3.0 integra escritorio real e duas abas sem criar aplicativo paralelo
  assert.match(css,/\.loop03-atalhos-legados\{display:none!important\}/);
  assert.match(js,/loop03-grade-posicoes/);
  // Vagas vazias conservam a identidade visual e mostram apenas Indicações.
- assert.match(js,/?'Indicações'/);
+ assert.match(js,/'Indicações'/);
  assert.match(js,/Indicações: /);
  assert.match(js,/loop03-cpf-cartao/);
  assert.match(js,/loop03TermosFundo/);
