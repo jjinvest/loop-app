@@ -1374,6 +1374,22 @@ async function main(){
    await pagina.locator('#loop03OpcoesPosicoes .loop03-compra-gatilho').nth(1).click();
    assert.equal(await pagina.locator('#loop03OpcoesPosicoes .loop03-compra-expandida:not([hidden])').count(),1);
    assert.equal(await pagina.locator('#loop03SeletorPosicao').isVisible(),true);
+   if(largura<600){
+    const geometrias=await pagina.locator('#loop03OpcoesPosicoes .loop03-cartao-posicao').evaluateAll(els=>
+     els.slice(0,3).map((card,i)=>{
+      const rotulo=card.querySelector('.loop03-cartao-rotulo');
+      const cr=card.getBoundingClientRect(),rr=rotulo?.getBoundingClientRect();
+      const style=rotulo?getComputedStyle(rotulo):null;
+      const centro=rr?document.elementFromPoint(rr.x+rr.width/2,rr.y+Math.min(rr.height/2,10)):null;
+      return {posicao:i+1,rotulo:rotulo?.outerHTML,cartao:{x:cr.x,y:cr.y,w:cr.width,h:cr.height},
+       rect:rr?{x:rr.x,y:rr.y,w:rr.width,h:rr.height}:null,
+       style:style?{display:style.display,visibility:style.visibility,opacity:style.opacity,
+         order:style.order,color:style.color,background:style.backgroundImage,
+         height:style.height,flex:style.flex,position:style.position}:null,
+       elementoSobreposto:centro?.className||centro?.tagName};
+     }));
+    process.stdout.write('DEBUG_FAIXAS_MOBILE='+JSON.stringify(geometrias)+'\\n');
+   }
    await conferirLargura(pagina,largura,'aberturas-posicoes-'+largura,{captura:false});
    // Captura fullPage REAL COM DOIS PAINÉIS ABERTOS: seletor + detalhe da compra.
    await pagina.screenshot({path:path.join(pasta,arquivo),fullPage:true});
