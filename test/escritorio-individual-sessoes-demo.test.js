@@ -281,7 +281,9 @@ test('quatro cores na rede: cadastro vermelho, link amarelo, cadeira azul e CPF 
  assert.equal(visao.contadoresRede.aDistribuir,1);
  assert.equal(visao.contadoresRede.jaDistribuidas,0);
  assert.equal(visao.contadoresRede.aguardandoAtivacao,1);
- assert.equal(visao.contadoresRede.disponiveisParaVincular,1);
+ // Neste cenário o motor legado aplica a indicação automaticamente à fila,
+ // portanto não deixa saldo para atribuição manual; o contador verde é 1.
+ assert.equal(visao.contadoresRede.disponiveisParaVincular,0);
  // Primeiro a cadeira azul vira verde, depois a compra simples de R$50
  // pode ganhar cadeira LOOP; nenhum dos dois atualiza o contador antes do CPF.
  adesoes.ativar({contaId:aguardando.contaId,posicaoId:posAzul.posicaoId,
