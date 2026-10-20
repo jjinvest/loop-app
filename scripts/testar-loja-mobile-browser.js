@@ -765,7 +765,7 @@ async function main(){
   assert.match(primeiroId,/^\d+$/);
   assert.match(await comNumero.innerText(),new RegExp('#'+primeiroId));
   // Pesquisa por nome e por ID real, sem inventar sequência da rede.
-  await page.locator('#loop03BuscarIndicado').fill('Segundo');
+  await page.locator('#loop03BuscarIndicado').fill('Bruno');
   assert.equal(await page.locator('#loop03ListaEquipe .loop03-equipe-linha:visible').count(),1);
   assert.match(await page.locator('#loop03ListaEquipe .loop03-equipe-linha:visible').innerText(),/Bruno Santos/);
   await page.locator('#loop03BuscarIndicado').fill('#'+primeiroId);
@@ -814,7 +814,7 @@ async function main(){
   await redePC.locator('#loop03Sidebar [data-loop03-aba="rede"]').click();
   assert.equal(await redePC.locator('#loop03RedeTotalIndicacoes').innerText(),'2');
   assert.equal(await redePC.locator('#loop03ListaEquipe .loop03-equipe-linha').count(),2);
-  await redePC.locator('#loop03BuscarIndicado').fill('Segundo');
+  await redePC.locator('#loop03BuscarIndicado').fill('Bruno');
   assert.equal(await redePC.locator('#loop03ListaEquipe .loop03-equipe-linha:visible').count(),1);
   await redePC.locator('#loop03BuscarIndicado').fill('');
   await redePC.locator('#loop03LinksRede summary').first().click();
