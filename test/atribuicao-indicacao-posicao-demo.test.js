@@ -106,8 +106,10 @@ test('um convidado confirmado atribuido a uma posicao ativa promove somente ela 
   x=>x.convidadoId===convidado.contaId).filaAtual,'TABULEIRO');
  const compraProxima=await comprar(proximoConvidado,'c-2');
  visao=escritorio.consultar(raiz.contaId);
- assert.equal(visao.contadoresRede.totalPosicoes,2);
- assert.equal(visao.contadoresRede.aDistribuir,1);
+ // O segundo indicado ainda está AZUL: total verde permanece 1.
+ assert.equal(visao.contadoresRede.totalPosicoes,1);
+ assert.equal(visao.contadoresRede.aDistribuir,0);
+ assert.equal(visao.contadoresRede.aguardandoAtivacao,1);
  adesoes.ativar({contaId:proximoConvidado.contaId,posicaoId:compraProxima.posicaoId,
   cpfFicticio:'52998224725',aceitaTermos:true,versaoTermos:'LOOP-DEMO-V1'});
  const vinculoTabuleiro=ponte.atribuirIndicacao({contaId:raiz.contaId,
