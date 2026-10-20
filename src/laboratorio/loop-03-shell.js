@@ -82,8 +82,8 @@
      <div id="loop03VisorNumero" class="loop03-indicador loop03-visor-passivo loop03-visor-numero" aria-label="Número da posição selecionada, somente leitura">
        <span id="loop03LetraFila" class="loop03-visor-letra" hidden></span>
        <span id="loop03CoroaVisor" class="loop03-visor-coroa" aria-label="Posição dentro da catraca" hidden>♛</span>
-       <strong id="loop03Numero">#0000</strong>
-       <small id="loop03NickVisor" class="loop03-nick-visor"></small>
+       <span class="loop03-visor-numero-identidade"><strong id="loop03Numero">#0000</strong>
+        <small id="loop03NickVisor" class="loop03-nick-visor"></small></span>
        <span id="loop03IndicePosicao" class="loop03-visor-fracao">0/6</span>
        <span id="loop03NumeroDetalhe" class="loop03-visualmente-oculto">Nenhuma posição selecionada</span>
       </div>
@@ -745,8 +745,8 @@
  function identidadeDaPosicao(p){
   // O cadastro civil é PRIVADO: fora do cadastro, somente o nick público.
   const nick=nickPublico(),dados=e('loop03DadosPosicaoLateral');
-  dados.hidden=!nick;
-  e('loop03NomeBaixo').textContent=nick;
+  dados.hidden=!p||!nick;
+  e('loop03NomeBaixo').textContent=p?nick:'';
   e('loop03SituacaoBaixo').textContent='';
   e('loop03SituacaoBaixo').hidden=true;
   const local=p?.local||'';
@@ -757,6 +757,8 @@
   const rodape=e('loop03LetraRodape');
   rodape.textContent=letra;
   rodape.hidden=!letra;
+  rodape.classList.toggle('loop03-fila-rodape-a',letra==='A');
+  rodape.classList.toggle('loop03-fila-rodape-b',letra==='B');
   // O avatar mostra a foto real se cadastrada; sem foto fica vazio.
  }
  function statusPosicao(p){
