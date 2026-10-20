@@ -487,8 +487,12 @@ async function main(){
   assert.equal(await page.locator('#loop03DetalhesPosicao summary').innerText(),'Meus Links');
   assert.equal(await page.locator('#loop03LinkEscritorio').isVisible(),false);
   assert.equal(await page.locator('#loop03LinkLoja').isVisible(),false);
-  assert.equal(await page.locator('#loop03Sidebar .loop03-identidade-selecionada').isVisible(),false,
-   'Rodapé antigo de comprador não pode reaparecer na versão atual');
+  assert.equal(await page.locator('#loop03Sidebar .loop03-identidade-selecionada').isVisible(),true,
+   'Rodapé aprovado: foto opcional e nick público');
+  assert.equal(await page.locator('#loop03NomeBaixo').innerText(),'TesteUser');
+  assert.equal(await page.locator('#loop03Sidebar .loop03-identidade-selecionada .loop03-foto-padrao').isVisible(),false,
+   'Sem foto: não mostrar emoji fictício');
+  assert.equal(await page.locator('#loop03Sidebar .loop03-identidade-selecionada img').isVisible(),false);
   assert.equal(await page.locator('#loop03-posicoes>.loop03-contador-rede').count(),1,
    'Substituir faixa antiga pelo mesmo quadro de Minha Rede');
   assert.equal(await page.locator('#loop03-posicoes>.loop03-saldo-indicados').count(),0);
@@ -541,7 +545,9 @@ async function main(){
   assert.match(await posicoesPC.locator('#loop03LinkLoja').inputValue(),/\/loja\/TesteUser$/);
   assert.equal(await posicoesPC.locator('#loop03DetalhesPosicao').getAttribute('open'),null);
   assert.equal(await posicoesPC.locator('#loop03LinkEscritorio').isVisible(),false);
-  assert.equal(await posicoesPC.locator('#loop03Sidebar .loop03-identidade-selecionada').isVisible(),false);
+  assert.equal(await posicoesPC.locator('#loop03Sidebar .loop03-identidade-selecionada').isVisible(),true);
+  assert.equal(await posicoesPC.locator('#loop03NomeBaixo').innerText(),'TesteUser');
+  assert.equal(await posicoesPC.locator('#loop03NickVisor').textContent(),'');
   assert.equal(await posicoesPC.locator('#loop03-posicoes>.loop03-contador-rede').count(),1);
   await posicoesPC.screenshot({path:path.join(pasta,'MINHAS_POSICOES_ATUAL_MEUS_LINKS_FECHADOS_PC_1254.png'),fullPage:true});
   await posicoesPC.locator('#loop03DetalhesPosicao summary').click();
@@ -559,9 +565,12 @@ async function main(){
   assert.equal(await page.locator('#loop03TermosFundo').isVisible(),false);
   assert.equal(await page.locator('#loop03OpcoesPosicoes .loop03-check-cartao').first().isChecked(),true);
   assert.equal(await page.locator('#aceiteTermosParticipante').isChecked(),true);
-  assert.equal(await page.locator('#loop03DadosPosicaoLateral').isVisible(),false,
-   'A identificação de comprador não aparece no rodapé lateral');
-  assert.equal(await page.locator('#loop03NomeBaixo').innerText(),titular.nome);
+  assert.equal(await page.locator('#loop03DadosPosicaoLateral').isVisible(),true,
+   'Rodapé com nick e sem nome civil');
+  assert.equal(await page.locator('#loop03NomeBaixo').innerText(),'TesteUser');
+  assert.equal(await page.locator('#loop03NickVisor').innerText(),'TesteUser');
+  assert.notEqual(await page.locator('#loop03NomeBaixo').innerText(),titular.nome,
+   'Nome civil permanece somente no cadastro');
   assert.equal(await page.locator('#loop03SituacaoBaixo').isVisible(),false,
    'Identidade inferior: so nome, sem status de fila');
   assert.equal(await page.locator('#loop03TotalAtivacoes').innerText(),'1/6');
@@ -576,8 +585,8 @@ async function main(){
   await page.locator('#loop03ListaEscolha button').click();
   assert.equal(await page.locator('#loop03-tabuleiro').isVisible(),true);
   assert.equal(await page.locator('#loop03IndicePosicao').innerText(),'1/6');
-  assert.equal(await page.locator('#loop03DadosPosicaoLateral').isVisible(),false,
-   'A identificação de comprador não aparece no rodapé lateral');
+  assert.equal(await page.locator('#loop03DadosPosicaoLateral').isVisible(),true,
+   'Rodapé com nick e sem nome civil');
   assert.equal(await page.locator('#loop03SituacaoBaixo').isVisible(),false);
   await page.setViewportSize({width:390,height:812});
   if(!await page.locator('#loop03Sidebar').evaluate(el=>el.classList.contains('loop03-aberto')))
@@ -893,6 +902,9 @@ async function main(){
   await page.locator('#loop03AbrirEscolhaPosicao').click();
   await page.locator('#loop03ListaEscolha button').first().click();
   assert.equal(await page.locator('#loop03LetraFila').innerText(),'A');
+  assert.equal(await page.locator('#loop03LetraRodape').innerText(),'A');
+  assert.equal(await page.locator('#loop03LetraRodape').isVisible(),true);
+  assert.equal(await page.locator('#loop03NickVisor').innerText(),'TesteUser');
   assert.equal(await page.locator('#loop03CoroaVisor').isVisible(),false);
   assert.equal(await page.locator('#loop03IndicePosicao').innerText(),'1/6');
   assert.equal(await page.locator('#mapaFilaBParticipante .loop03-quantidade-a-direita').count(),0);
@@ -1399,10 +1411,15 @@ async function main(){
    assert.equal(await q.locator('#loop03CoroaTabuleiro').isVisible(),true,
     'A coroa aprovada continua no rodapé ao entrar na catraca');
    assert.equal(await q.locator('#loop03Sidebar .loop03-identidade-selecionada').isVisible(),true);
-   assert.equal(await q.locator('#loop03DadosPosicaoLateral').isVisible(),false,
-    'Não mostrar nome de comprador junto à coroa');
-   assert.equal(await q.locator('#loop03Sidebar .loop03-identidade-selecionada .loop03-avatar').isVisible(),false,
-    'Não ressuscitar avatar antigo no rodapé');
+   assert.equal(await q.locator('#loop03DadosPosicaoLateral').isVisible(),true,
+    'O nick permanece no rodapé ao lado da coroa');
+   assert.equal(await q.locator('#loop03NomeBaixo').innerText(),'TesteUser');
+   assert.equal(await q.locator('#loop03Sidebar .loop03-identidade-selecionada .loop03-avatar').isVisible(),true,
+    'O espaço da foto é preservado');
+   assert.equal(await q.locator('#loop03Sidebar .loop03-identidade-selecionada .loop03-foto-padrao').isVisible(),false,
+    'Sem foto: não mostrar emoji');
+   assert.equal(await q.locator('#loop03NickVisor').innerText(),'TesteUser');
+   assert.equal(await q.locator('#loop03LetraRodape').isVisible(),false);
    assert.equal(await q.locator('#loop03LetraFila').isVisible(),false);
    await conferirLargura(q,largura,'catraca-preenchida-'+nomeArquivo,{captura:false});
    await q.screenshot({path:path.join(pasta,nomeArquivo),fullPage:true});
