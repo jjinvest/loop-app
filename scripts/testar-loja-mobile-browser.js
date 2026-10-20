@@ -660,7 +660,8 @@ async function main(){
   await page.locator('#loop03Menu').click();
   await page.locator('#loop03Sidebar [data-loop03-aba="posicoes"]').click();
   assert.equal(await page.locator('#loop03SaldoDisponivel').innerText(),'1');
-  assert.equal(await page.locator('#loop03OpcoesPosicoes .loop03-adicionar-indicado').count(),1);
+  assert.equal(await page.locator('#loop03OpcoesPosicoes .loop03-adicionar-indicado').count(),6);
+  assert.equal(await page.locator('#loop03OpcoesPosicoes .loop03-adicionar-indicado:enabled').count(),1);
   page.once('dialog',dialog=>dialog.accept());
   await page.locator('#loop03OpcoesPosicoes .loop03-adicionar-indicado').first().click();
   await page.waitForFunction(()=>document.querySelector('#loop03SaldoDisponivel')?.textContent==='0');
