@@ -704,7 +704,59 @@ async function main(){
   await page.waitForFunction(()=>
    !document.querySelector('#loop03Sidebar')?.classList.contains('loop03-aberto'));
   await page.waitForTimeout(350);
-  await page.screenshot({path:path.join(pasta,'minha-equipe-duas-atribuicoes.png'),fullPage:true});
+  // Minha Rede: o quadro principal conta PESSOAS confirmadas, não posições.
+  assert.equal(await page.locator('#loop03RedeTotalIndicacoes').innerText(),'2');
+  assert.equal(await page.locator('#loop03RedeADistribuir').innerText(),'0');
+  assert.equal(await page.locator('#loop03-rede .loop03-contador-rede').count(),1);
+  assert.equal(await page.locator('#loop03BuscarIndicado').isVisible(),true);
+  assert.equal(await page.locator('#loop03ListaEquipe .loop03-equipe-linha').count(),2);
+  // O número da fila vem do estado persistido do motor e serve para buscar.
+  const comNumero=page.locator('#loop03ListaEquipe .loop03-equipe-linha[data-numeros-fila]')
+   .filter({has:page.locator('.loop03-fila-equipe-b,.loop03-fila-equipe-a')}).first();
+  assert.equal(await comNumero.count(),1);
+  const nums=await comNumero.getAttribute('data-numeros-fila');
+  const primeiroId=nums.split(',')[0];
+  assert.match(primeiroId,/^\\d+$/);
+  assert.match(await comNumero.innerText(),new RegExp('#'+primeiroId));
+  // Pesquisa por nome e por ID real, sem inventar sequência da rede.
+  await page.locator('#loop03BuscarIndicado').fill('Segundo');
+  assert.equal(await page.locator('#loop03ListaEquipe .loop03-equipe-linha:visible').count(),1);
+  assert.match(await page.locator('#loop03ListaEquipe .loop03-equipe-linha:visible').innerText(),/Segundo Indicado Mobile/);
+  await page.locator('#loop03BuscarIndicado').fill('#'+primeiroId);
+  assert.equal(await page.locator('#loop03ListaEquipe .loop03-equipe-linha:visible').count(),1);
+  await page.locator('#loop03BuscarIndicado').fill('nome que nao existe');
+  assert.equal(await page.locator('#loop03ListaEquipe .loop03-equipe-linha:visible').count(),0);
+  assert.equal(await page.locator('#loop03ResultadoBuscaEquipe').isVisible(),true);
+  await page.locator('#loop03BuscarIndicado').fill('');
+  assert.equal(await page.locator('#loop03ListaEquipe .loop03-equipe-linha:visible').count(),2);
+  assert.equal(await page.locator('#loop03ListaEquipe').evaluate(x=>getComputedStyle(x).overflowY),'auto');
+  assert.equal(await page.locator('#loop03LinksRede').evaluate(x=>!!x.closest('#loop03-rede')),false);
+  await page.locator('#loop03LinksRede summary').first().click();
+  assert.equal(await page.locator('#loop03LinksRede').getAttribute('open'),'');
+  assert.equal(await page.locator('#enderecoLinkParticipante').isVisible(),true);
+  assert.equal(await page.locator('#enderecoLinkLojaParticipante').isVisible(),true);
+  assert.equal(await page.locator('#loop03LinksRede .loop03-link-nick-opcional').getAttribute('open'),null);
+  await page.screenshot({path:path.join(pasta,'MINHA_REDE_ATUAL_CELULAR_390.png'),fullPage:true});
+  // Mesmo DOM e APIs em viewport desktop, sem dashboard fabricado.
+  const ctxRedePC=await browser.newContext({viewport:{width:1254,height:900},deviceScaleFactor:1});
+  const redePC=await ctxRedePC.newPage();
+  redePC.on('pageerror',err=>erros.push('rede PC: '+err.message));
+  await redePC.goto(base+'/laboratorio/participante',{waitUntil:'networkidle'});
+  await redePC.locator('#nomeParticipante').fill(titular.nome);
+  await redePC.locator('#senhaParticipante').fill(senha);
+  await redePC.locator('#botaoEntrarParticipante').click();
+  await redePC.locator('#conteudoParticipante').waitFor({state:'visible'});
+  await redePC.locator('#loop03Sidebar [data-loop03-aba="rede"]').click();
+  assert.equal(await redePC.locator('#loop03RedeTotalIndicacoes').innerText(),'2');
+  assert.equal(await redePC.locator('#loop03ListaEquipe .loop03-equipe-linha').count(),2);
+  await redePC.locator('#loop03BuscarIndicado').fill('Segundo');
+  assert.equal(await redePC.locator('#loop03ListaEquipe .loop03-equipe-linha:visible').count(),1);
+  await redePC.locator('#loop03BuscarIndicado').fill('');
+  await redePC.locator('#loop03LinksRede summary').first().click();
+  assert.equal(await redePC.locator('#enderecoLinkLojaParticipante').isVisible(),true);
+  await conferirLargura(redePC,1254,'minha-rede-computador',{captura:false});
+  await redePC.screenshot({path:path.join(pasta,'MINHA_REDE_ATUAL_COMPUTADOR_1254.png'),fullPage:true});
+  await ctxRedePC.close();
 
   await page.locator('#loop03Menu').click();
   await page.locator('#loop03Sidebar [data-loop03-aba="tabuleiro"]').click();

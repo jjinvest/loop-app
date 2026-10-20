@@ -268,7 +268,17 @@
    const bonus=resumo.querySelector('.area-bonus-participante');
    if(links){
     // Reutiliza os dois links da conta, sem clonar dados.
-    // O <details> "Meus Links" já está logo abaixo do quadro da equipe.
+    // A alteração de nick segue disponível, recolhida separadamente
+    // para a abertura principal exibir só os links de cópia.
+    const formNick=links.querySelector('#formApelidoLinkParticipante');
+    if(formNick){
+     const subpainel=document.createElement('details');
+     subpainel.className='loop03-link-nick-opcional';
+     const cabeca=document.createElement('summary');
+     cabeca.textContent='Alterar meu nick';
+     formNick.before(subpainel);
+     subpainel.append(cabeca,formNick);
+    }
     e('loop03LinksRede').append(links);
    }
    if(bonus)e('loop03-financeiro').append(bonus);

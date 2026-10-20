@@ -2430,3 +2430,13 @@ body.loop03-logado .portal-participante{position:relative;z-index:1}
  #loop03-rede .loop03-rede-subtotal span{font-size:.58rem!important}
  #loop03-rede #loop03ListaEquipe{max-height:310px!important}
 }
+
+/* A troca do nick é funcional, mas fica recolhida para "Meus Links"
+   abrir inicialmente somente o Escritório Virtual e a AKITEMM. */
+#loop03LinksRede .loop03-link-nick-opcional{
+ margin-top:12px;border-top:1px solid #8c6db5;padding-top:9px;
+}
+#loop03LinksRede .loop03-link-nick-opcional summary{
+ cursor:pointer;color:#f2d899;font-size:.76rem;font-weight:750;
+}
+#loop03LinksRede .loop03-link-nick-opcional form{margin-top:11px}
