@@ -27,7 +27,7 @@ test('link so ativa apos compra pequena, comissao por posicao e versoes 10%, 20%
  const a=contas.cadastrar({nome:'Indicador So Comissão',email:'indicador@exemplo.invalid',
   senha:'senha-ficticia-123456'});
  const alias=links.personalizar({contaId:a.contaId,apelido:'Vilela'});
- assert.equal(alias.apelido,'vilela');
+ assert.equal(alias.apelido,'Vilela');
  assert.equal(alias.ativo,false);
  assert.equal(extrairLink(alias.link).token,a.codigoConvite);
  assert.equal(links.resolver(alias.link).ativo,false);

@@ -774,8 +774,10 @@
  const aceitesPosicao=new Map();
  let cpfRascunho='';
  function atualizarLinksPosicao(link){
-  const valido=link&&typeof link.linkEscritorio==='string'&&typeof link.linkLoja==='string';
-  for(const [destino,caminho] of [['Escritorio',link?.linkEscritorioCurto||link?.linkEscritorio],['Loja',link?.linkLojaCurto||link?.linkLoja]]){
+  // Não inserir nome de teste nem link com token: o campo do cliente
+  // permanece vazio até que ele defina seu próprio nick no cadastro.
+  const valido=!!(link?.linkEscritorioCurto&&link?.linkLojaCurto);
+  for(const [destino,caminho] of [['Escritorio',link?.linkEscritorioCurto],['Loja',link?.linkLojaCurto]]){
    e('loop03Link'+destino).value=valido?location.origin+caminho:'';
    const botao=e('loop03Copiar'+destino);
    botao.disabled=!valido||!link.ativo;

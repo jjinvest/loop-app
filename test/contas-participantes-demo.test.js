@@ -219,30 +219,34 @@ test('tela e API existem so no laboratorio, nao no servidor publico',async t=>{
 });
 
 
-test('nick único preserva maiúsculas e nove dígitos, persiste mesmo após reiniciar',t=>{
+test('nick único de 1 a 9 caracteres soma letras e números e persiste em SQLite',t=>{
  const filename=db(t),m=ambiente(filename);
  const {caminhoLinkCurto}=require('../src/domain/indicacoes-links-comissoes-demo-sqlite');
- const nova=m.contas.cadastrar({nome:'Conta Com Nick',apelido:'Vilela123456',
+ const nova=m.contas.cadastrar({nome:'Conta Com Nick',apelido:'Vilela',
   email:'nickname@exemplo.invalid',telefone:'(24) 99999-7755',
   senha:'senha-ficticia-forte-2026'});
- assert.equal(nova.apelido,'Vilela123456');
- assert.equal(caminhoLinkCurto(nova.apelido,'loja'),'/loja/Vilela123456');
- assert.equal(caminhoLinkCurto(nova.apelido,'escritorio'),'/escritorio/Vilela123456');
- assert.throws(()=>m.contas.cadastrar({nome:'Nome Duplicado Nick',apelido:'vILELA123456',
+ assert.equal(nova.apelido,'Vilela');
+ assert.equal(caminhoLinkCurto(nova.apelido,'loja'),'/loja/Vilela');
+ assert.equal(caminhoLinkCurto(nova.apelido,'escritorio'),'/escritorio/Vilela');
+ const ateNove=m.contas.cadastrar({nome:'Conta Nove',apelido:'ABC123456',
+  email:'nove@exemplo.invalid',senha:'senha-forte-exemplo-2026'});
+ assert.equal(ateNove.apelido.length,9);
+ assert.throws(()=>m.contas.cadastrar({nome:'Nome Duplicado Nick',apelido:'vILELA',
   email:'nick-duplicado@exemplo.invalid',senha:'senha-forte-exemplo-2026'}),
   e=>e.codigo==='CONFLITO');
- assert.throws(()=>m.contas.cadastrar({nome:'Dez Numeros',apelido:'Nick1234567890',
-  email:'dez-digitos@exemplo.invalid',senha:'senha-forte-exemplo-2026'}),
-  e=>e.codigo==='INVALIDO');
+ for(const nick of ['Vilela1234','Vilela123456','1234567890']){
+  assert.throws(()=>m.contas.cadastrar({nome:'Mais que nove '+nick,
+   apelido:nick,email:nick+'@exemplo.invalid',senha:'senha-forte-exemplo-2026'}),
+   e=>e.codigo==='INVALIDO','limite é nove caracteres somados');
+ }
  m.repo.fechar();
  const b=ambiente(filename);
  try{
-  assert.equal(b.contas.buscar(nova.contaId).apelido,'Vilela123456');
-  const reserva=b.repo.banco.prepare(
+  assert.equal(b.contas.buscar(nova.contaId).apelido,'Vilela');
+  assert.equal(b.repo.banco.prepare(
    'SELECT conta_id FROM admin_links_nicks_reservados_demo WHERE nick_chave=?'
-  ).get('vilela123456');
-  assert.equal(reserva.conta_id,nova.contaId);
-  assert.throws(()=>b.contas.cadastrar({nome:'Nova tentativa',apelido:'VILELA123456',
+  ).get('vilela').conta_id,nova.contaId);
+  assert.throws(()=>b.contas.cadastrar({nome:'Nova tentativa',apelido:'VILELA',
    email:'nunca-reutilizar@exemplo.invalid',senha:'senha-forte-exemplo-2026'}),
    e=>e.codigo==='CONFLITO');
  }finally{b.repo.fechar();}

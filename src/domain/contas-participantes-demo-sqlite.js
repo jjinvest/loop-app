@@ -51,13 +51,10 @@ function apelidoCadastro(v){
  if(v===null||v===undefined)return null;
  if(typeof v!=='string'||v.length>80)throw falha('INVALIDO','Nick inválido');
  const s=v.trim();
- // Maiusculas e minusculas preservadas para exibição. Nove dígitos
- // máximos, não nove caracteres: "Vilela123456" é válido.
- if(s.length<3||s.length>40||
-    !/^[A-Za-z0-9][A-Za-z0-9_-]*[A-Za-z0-9]$/.test(s)||
-    (s.match(/[0-9]/g)||[]).length>9)
-  throw falha('INVALIDO','Nick: até 40 caracteres e no máximo nove números');
- return s;
+ // Até NOVE caracteres no total, somando letras, algarismos e -/_.
+ // Preservar a grafia escolhida; exclusividade ignora maiúsculas/minúsculas.
+ if(!/^[A-Za-z0-9](?:[A-Za-z0-9_-]{0,7}[A-Za-z0-9])?$/.test(s))
+  throw falha('INVALIDO','Nick: de 1 a 9 caracteres no total');
  return s;
 }
 function senhaValida(senha){

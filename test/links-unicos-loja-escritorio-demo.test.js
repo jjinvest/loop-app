@@ -110,7 +110,7 @@ test('mesma indicacao apresenta loja ou escritorio, com vitrine e precos livres'
 test('urls curtas Loja e Escritório preservam indicação e ocultam token',async t=>{
  const repo=new RepositorioCatalogoSQLite({caminho:':memory:'});t.after(()=>repo.fechar());
  const contas=new ContasParticipantesDemoSQLite({banco:repo.banco});
- const conta=contas.cadastrar({nome:'Titular Curto',apelido:'Vilela123456',
+ const conta=contas.cadastrar({nome:'Titular Curto',apelido:'Vilela',
   email:'curto@exemplo.invalid',senha:'senha-forte-exemplo-2026'});
  const srv=criarAppAdminLaboratorio({repositorio:repo,segredo:'admin-test-nick-curto-2026-segredo-alto'})
   .listen(0,'127.0.0.1');
@@ -118,11 +118,11 @@ test('urls curtas Loja e Escritório preservam indicação e ocultam token',asyn
  const base='http://127.0.0.1:'+srv.address().port;
  const links=new IndicacoesLinksComissoesDemoSQLite({banco:repo.banco,contas});
  const dados=links.linkDaConta(conta.contaId);
- assert.equal(dados.linkLojaCurto,'/loja/Vilela123456');
- assert.equal(dados.linkEscritorioCurto,'/escritorio/Vilela123456');
+ assert.equal(dados.linkLojaCurto,'/loja/Vilela');
+ assert.equal(dados.linkEscritorioCurto,'/escritorio/Vilela');
  assert.doesNotMatch(dados.linkLojaCurto,/convite|lp-/);
- assert.equal(links.resolver('/loja/vilela123456').indicadorId,conta.contaId);
- assert.equal(links.resolver('/escritorio/VILELA123456').indicadorId,conta.contaId);
+ assert.equal(links.resolver('/loja/vilela').indicadorId,conta.contaId);
+ assert.equal(links.resolver('/escritorio/VILELA').indicadorId,conta.contaId);
  assert.equal(links.resolver(dados.linkEscritorio).indicadorId,conta.contaId);
  assert.equal((await fetch(base+dados.linkLojaCurto)).status,200);
  assert.equal((await fetch(base+dados.linkEscritorioCurto)).status,200);

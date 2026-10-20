@@ -9,14 +9,14 @@ const TOKEN=/^lp-[a-f0-9]{20}$/;
 const PATH=/^\/laboratorio\/convite\/(lp-[a-f0-9]{20})(?:\/([A-Za-z0-9][A-Za-z0-9_-]{1,38}[A-Za-z0-9]))?\/?$/;
 // Os dois links publicaveis sao neutros; links Vilela antigos seguem validos.
 const PATH_VILELA=/^\/(escritorio-vilela|loja-vilela|escritorio|loja)\/convite\/(lp-[a-f0-9]{20})(?:\/([A-Za-z0-9][A-Za-z0-9_-]{1,38}[A-Za-z0-9]))?\/?$/;
-const PATH_CURTO=/^\/(escritorio|loja)\/([A-Za-z0-9][A-Za-z0-9_-]{1,38}[A-Za-z0-9])\/?$/;
+const PATH_CURTO=/^\/(escritorio|loja)\/([A-Za-z0-9](?:[A-Za-z0-9_-]{0,7}[A-Za-z0-9])?)\/?$/;
 function falha(codigo){const e=new Error(codigo);e.codigo=codigo;return e;}
 function apelidoSeguro(s){
- if(typeof s!=='string'||s.length>80)throw falha('APELIDO_INVALIDO');
- const a=s.normalize('NFD').replace(/[\u0300-\u036f]/g,'')
-  .trim().toLowerCase().replace(/\s+/g,'-');
- if(!/^[a-z0-9][a-z0-9-]{1,30}[a-z0-9]$/.test(a)||
-  a.includes('--'))throw falha('APELIDO_INVALIDO');
+ if(typeof s!=='string')throw falha('APELIDO_INVALIDO');
+ const a=s.trim();
+ // Igual ao cadastro: 1..9 caracteres totais, sem alterar a grafia.
+ if(!/^[A-Za-z0-9](?:[A-Za-z0-9_-]{0,7}[A-Za-z0-9])?$/.test(a))
+  throw falha('APELIDO_INVALIDO');
  return a;
 }
 function caminhoLink(token,apelido){
@@ -27,7 +27,7 @@ function caminhoLink(token,apelido){
 // continua associado ao nick no SQLite, sem depender do formato do domínio.
 function caminhoLinkCurto(apelido,destino){
  if(!['escritorio','loja'].includes(destino)||typeof apelido!=='string'||
-    !/^[A-Za-z0-9][A-Za-z0-9_-]{1,38}[A-Za-z0-9]$/.test(apelido))
+    !/^[A-Za-z0-9](?:[A-Za-z0-9_-]{0,7}[A-Za-z0-9])?$/.test(apelido))
   throw falha('LINK_INVALIDO');
  return '/'+destino+'/'+apelido;
 }
@@ -213,11 +213,12 @@ class IndicacoesLinksComissoesDemoSQLite{
   const nickAtivo=this.banco.prepare(
    'SELECT nick_chave FROM admin_links_nicks_reservados_demo WHERE nick_chave=? AND conta_id=?'
   ).get(apelido.toLowerCase(),contaId);
+  const exibirCurto=!!nickAtivo&&/^[A-Za-z0-9](?:[A-Za-z0-9_-]{0,7}[A-Za-z0-9])?$/.test(apelido);
   return {link:caminhoLink(conta.codigoConvite,apelido),
    linkEscritorio:caminhoLinkDestino(conta.codigoConvite,apelido,'escritorio'),
    linkLoja:caminhoLinkDestino(conta.codigoConvite,apelido,'loja'),
-   linkEscritorioCurto:nickAtivo?caminhoLinkCurto(apelido,'escritorio'):null,
-   linkLojaCurto:nickAtivo?caminhoLinkCurto(apelido,'loja'):null,
+   linkEscritorioCurto:exibirCurto?caminhoLinkCurto(apelido,'escritorio'):null,
+   linkLojaCurto:exibirCurto?caminhoLinkCurto(apelido,'loja'):null,
    mesmoCodigoIndicador:true,apelido,
    ativo:this.ativado(contaId),podeDivulgar:this.ativado(contaId),
    bonificacoesHabilitadas:this.habilitadoBonificacoes(contaId),

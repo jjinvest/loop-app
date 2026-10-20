@@ -72,7 +72,7 @@
      <button type="button" id="copiarLinkLojaParticipante" disabled>Copiar link AKITEMM</button>
      <form id="formApelidoLinkParticipante" autocomplete="off">
       <label for="apelidoLinkParticipante">Personalizar o final do link</label>
-      <input id="apelidoLinkParticipante" maxlength="80" placeholder="ex.: vilela" required>
+      <input id="apelidoLinkParticipante" minlength="1" maxlength="9" pattern="[A-Za-z0-9]([A-Za-z0-9_-]{0,7}[A-Za-z0-9])?" placeholder="Até 9 caracteres" required>
       <button type="submit" id="salvarApelidoLinkParticipante">Salvar nome do link</button>
      </form>
      <p id="avisoLinkParticipante" role="status" aria-live="polite"></p>

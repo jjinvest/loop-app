@@ -396,11 +396,11 @@
    ' · Não houve movimentação financeira real.');
 
   const link=visao.linkIndicacao;
-  e('enderecoLinkParticipante').value=location.origin+(link.linkEscritorioCurto||link.linkEscritorio||link.link);
-  e('enderecoLinkLojaParticipante').value=location.origin+(link.linkLojaCurto||link.linkLoja);
-  e('apelidoLinkParticipante').value=link.apelido==='meu-loop'?'':link.apelido;
-  e('copiarLinkParticipante').disabled=!link.ativo;
-  e('copiarLinkLojaParticipante').disabled=!link.ativo;
+  e('enderecoLinkParticipante').value=link.linkEscritorioCurto?location.origin+link.linkEscritorioCurto:'';
+  e('enderecoLinkLojaParticipante').value=link.linkLojaCurto?location.origin+link.linkLojaCurto:'';
+  e('apelidoLinkParticipante').value=link.linkEscritorioCurto?link.apelido:'';
+  e('copiarLinkParticipante').disabled=!link.ativo||!link.linkEscritorioCurto;
+  e('copiarLinkLojaParticipante').disabled=!link.ativo||!link.linkLojaCurto;
   e('statusLinkIndicacaoParticipante').textContent=link.ativo?
    'Link ATIVO para divulgação. Bonificações somente após CPF e aceite expresso dos termos.':
    'Link INATIVO: faça uma compra confirmada de qualquer valor na loja. Não precisa ter posição no LOOP.';
@@ -453,7 +453,7 @@
   lista('posicoesParticipante',visao.posicoes,p=>'Posição '+p.posicaoId+' — '+
    p.local.replace('_',' ')+' — '+(p.statusAdesao==='PENDENTE'?'aguardando ativação':'ativada'));
   // Só o titular vê seu nick embaixo do #ID na catraca.
-  const nick=visao.linkIndicacao?.apelido&&visao.linkIndicacao.apelido!=='meu-loop'?
+  const nick=visao.linkIndicacao?.linkEscritorioCurto?
    visao.linkIndicacao.apelido:visao.conta?.apelido||visao.perfil?.nome||visao.conta?.nome||'';
   if(visao.mapaCores)mostrarMapa(visao.mapaCores,nick);
   const temAzul=visao.posicoes.some(p=>p.statusAdesao==='PENDENTE');
