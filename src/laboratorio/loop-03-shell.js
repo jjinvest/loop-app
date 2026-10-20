@@ -165,7 +165,7 @@
      </section>
      <section id="loop03-rede" class="loop03-pagina" aria-label="Minha Rede e Equipe">
       <header class="loop03-titulo-pagina loop03-cabecalho-equipe">
-       <div class="loop03-contador-rede loop03-contador-total"><small>TOTAL DE INDICAÇÕES</small><strong id="loop03RedeTotalIndicacoes">0</strong><span>Indicações confirmadas</span><div class="loop03-rede-subtotal"><span>Indicações a distribuir</span><strong id="loop03RedeADistribuir">0</strong></div></div>
+       <div class="loop03-contador-rede loop03-contador-total"><small>TOTAL DE INDICAÇÕES</small><strong id="loop03RedeTotalIndicacoes">0</strong><span>Indicações confirmadas</span><div class="loop03-rede-subtotal"><span>Indicações a distribuir</span><strong id="loop03RedeADistribuir">0</strong></div><div class="loop03-rede-subtotal loop03-rede-utilizadas"><span>Indicações utilizadas</span><strong id="loop03RedeUtilizadas">0</strong></div></div>
        <div class="loop03-titulo-equipe"><small>INDICAÇÕES</small><h2>Minha Equipe</h2><p>Pessoas que entraram pelo seu link</p></div>
        <div class="loop03-busca-equipe"><label for="loop03BuscarIndicado">Encontrar indicado</label><input id="loop03BuscarIndicado" type="search" autocomplete="off" placeholder="Nome ou nº na fila" aria-controls="loop03ListaEquipe"></div>
       </header>
@@ -1179,6 +1179,7 @@
   e('loop03RedeTotalIndicacoes').textContent=String(
    visao.contadoresRede?.totalIndicacoesConfirmadas??visao.contadoresRede?.totalPosicoes??0);
   e('loop03RedeADistribuir').textContent=String(visao.contadoresRede?.aDistribuir??0);
+  e('loop03RedeUtilizadas').textContent=String(visao.contadoresRede?.jaDistribuidas??0);
   const equipes=e('loop03ListaEquipe');equipes.replaceChildren();
   for(const [indice,pessoa] of (visao.equipe||[]).entries()){
    const cartao=document.createElement('div');cartao.className='loop03-opcao loop03-equipe-linha';
@@ -1197,9 +1198,6 @@
     fila.textContent=(pessoa.filaAtual==='TABULEIRO'?' · Tabuleiro':' · Fila '+pessoa.filaAtual)+
      (Number.isSafeInteger(pessoa.numeroFila)?' · #'+pessoa.numeroFila:'');
     dados.append(fila);
-   }
-   if(pessoa.posicaoAtribuidaId!==null){
-    dados.append(document.createTextNode(' · Vinculada à posição #'+pessoa.posicaoAtribuidaId));
    }
    // Avatar tipografico: visual da equipe sem imagem ou identidade ficticia.
    const avatar=document.createElement('span');avatar.className='loop03-equipe-avatar';
@@ -1226,6 +1224,22 @@
    legenda.textContent='Escolha uma posição';
    const grade=document.createElement('div');grade.className='loop03-equipe-numeros';
    const disponivel=pessoa.situacao==='ATIVO'&&pessoa.posicaoAtribuidaId===null;
+   let posicaoEscolhida=null;
+   const confirmacao=document.createElement('div');
+   confirmacao.className='loop03-equipe-confirmacao';confirmacao.hidden=true;
+   const pergunta=document.createElement('span');
+   const confirmar=document.createElement('button');confirmar.type='button';
+   confirmar.className='loop03-equipe-confirmar';
+   confirmar.textContent='Confirmar';
+   confirmar.setAttribute('aria-label','Confirmar vínculo definitivo');
+   const cancelar=document.createElement('button');cancelar.type='button';
+   cancelar.className='loop03-equipe-cancelar';cancelar.textContent='Cancelar';
+   const desmarcar=()=>{
+    posicaoEscolhida=null;confirmacao.hidden=true;
+    for(const b of grade.querySelectorAll('button'))b.classList.remove('loop03-equipe-numero-escolhido');
+   };
+   cancelar.addEventListener('click',desmarcar);
+   confirmacao.append(pergunta,confirmar,cancelar);
    for(const [i,p] of visao.posicoes.entries()){
     const numero=document.createElement('button');numero.type='button';
     numero.className='loop03-equipe-numero';
@@ -1240,35 +1254,49 @@
      !confirmada?'Esta posição precisa de CPF e aceite':
      !disponivel?'Indicação não disponível para vínculo':'Vincular à posição #'+p.posicaoId;
     numero.disabled=!disponivel||!confirmada;
-    numero.addEventListener('click',async()=>{
-     if(numero.disabled||!window.confirm('Vincular '+pessoa.nome+' à posição #'+p.posicaoId+
-       '? Depois de confirmado, não será possível alterar.'))return;
-     for(const b of grade.querySelectorAll('button'))b.disabled=true;
-     aviso.textContent='Registrando vínculo…';
-     try{
-      const resposta=await fetch('/api/laboratorio/participante/atribuir-indicacao',{
-       method:'POST',headers:{'Content-Type':'application/json','X-LOOP-LAB':'participante'},
-       credentials:'same-origin',
-       body:JSON.stringify({convidadoId:pessoa.convidadoId,posicaoId:p.posicaoId})
-      });
-      const resultado=await resposta.json();
-      if(!resposta.ok)throw Error(resultado.erro||'Falha ao atribuir');
-      await window.LoopParticipanteAtualizar?.();
-     }catch(err){
-      aviso.textContent=err.message;
-      for(const [j,item] of [...grade.querySelectorAll('button')].entries()){
-       const posicao=visao.posicoes[j];
-       item.disabled=!disponivel||posicao.statusAdesao==='PENDENTE'||
-        !/^(FILA_[AB]|CENTRO|VAGA_[1-6])$/.test(posicao.local);
-      }
-     }
+    numero.addEventListener('click',()=>{
+     if(numero.disabled)return;
+     posicaoEscolhida=p;
+     for(const item of grade.querySelectorAll('button'))
+      item.classList.remove('loop03-equipe-numero-escolhido');
+     numero.classList.add('loop03-equipe-numero-escolhido');
+     pergunta.textContent='Confirmar posição '+(i+1)+' para '+pessoa.nome+
+      '? Essa escolha será definitiva.';
+     confirmacao.hidden=false;
+     aviso.textContent='';
     });
     grade.append(numero);
    }
    const aviso=document.createElement('small');
    aviso.className='loop03-equipe-escolhas-aviso';aviso.setAttribute('role','status');
+   confirmar.addEventListener('click',async()=>{
+    const p=posicaoEscolhida;
+    if(!p||!disponivel)return;
+    confirmar.disabled=true;cancelar.disabled=true;
+    for(const item of grade.querySelectorAll('button'))item.disabled=true;
+    aviso.textContent='Registrando vínculo…';
+    try{
+     const resposta=await fetch('/api/laboratorio/participante/atribuir-indicacao',{
+      method:'POST',headers:{'Content-Type':'application/json','X-LOOP-LAB':'participante'},
+      credentials:'same-origin',
+      body:JSON.stringify({convidadoId:pessoa.convidadoId,posicaoId:p.posicaoId})
+     });
+     const resultado=await resposta.json();
+     if(!resposta.ok)throw Error(resultado.erro||'Falha ao atribuir');
+     await window.LoopParticipanteAtualizar?.();
+    }catch(err){
+     aviso.textContent=err.message;
+     confirmar.disabled=false;cancelar.disabled=false;
+     for(const [j,item] of [...grade.querySelectorAll('button')].entries()){
+      const pos=visao.posicoes[j];
+      item.disabled=!disponivel||pos.statusAdesao==='PENDENTE'||
+       !/^(FILA_[AB]|CENTRO|VAGA_[1-6])$/.test(pos.local);
+     }
+    }
+   });
    if(pessoa.posicaoAtribuidaId!==null){
-    aviso.textContent='Vinculada definitivamente à posição #'+pessoa.posicaoAtribuidaId;
+    legenda.textContent='Posição confirmada';
+    aviso.textContent='Vínculo definitivo. Não é possível desfazer.';
    }else if(pessoa.situacao==='AGUARDANDO_CONFIRMACAO'){
     aviso.textContent='Pendente: aguarde CPF e aceite do indicado.';
    }else if(pessoa.situacao!=='ATIVO'){
@@ -1278,7 +1306,7 @@
    }else if(![...grade.children].some(b=>!b.disabled)){
     aviso.textContent='Confirme primeiro o CPF e aceite de uma posição sua.';
    }
-   escolhas.append(legenda,grade,aviso);
+   escolhas.append(legenda,grade,confirmacao,aviso);
    botao.addEventListener('click',()=>{
     const abrirPainel=escolhas.hidden;
     for(const outra of equipes.querySelectorAll('.loop03-equipe-escolhas'))
@@ -1286,6 +1314,7 @@
     for(const outro of equipes.querySelectorAll('.loop03-equipe-mais'))
      outro.setAttribute('aria-expanded','false');
     escolhas.hidden=!abrirPainel;
+    if(!abrirPainel)desmarcar();
     botao.setAttribute('aria-expanded',String(abrirPainel));
    });
    cartao.append(botao,escolhas);

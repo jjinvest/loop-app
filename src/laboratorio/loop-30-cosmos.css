@@ -2596,3 +2596,31 @@ body.loop03-logado .portal-participante{position:relative;z-index:1}
   height:34px;min-height:34px;font-size:.83rem;
  }
 }
+
+
+/* Escolha reversível até a confirmação explícita, sem diálogo do navegador. */
+#loop03-rede .loop03-equipe-confirmacao[hidden]{display:none!important}
+#loop03-rede .loop03-equipe-confirmacao{
+ display:flex!important;flex-wrap:wrap;align-items:center;gap:7px;
+ border-top:1px solid #9a7aab;padding-top:8px;min-width:0;
+}
+#loop03-rede .loop03-equipe-confirmacao>span{
+ width:100%;color:#fff0d1;font-size:.76rem;line-height:1.35;
+}
+#loop03-rede .loop03-equipe-confirmacao>button{
+ border-radius:8px;min-height:37px;padding:7px 14px;
+ font-size:.78rem;font-weight:800;cursor:pointer;
+}
+#loop03-rede .loop03-equipe-confirmacao>.loop03-equipe-confirmar{
+ color:#dcffeb;background:#086637;border:1px solid #3bf29a;
+}
+#loop03-rede .loop03-equipe-confirmacao>.loop03-equipe-cancelar{
+ color:#ffe4e6;background:#3c243c;border:1px solid #d49db0;
+}
+#loop03-rede .loop03-equipe-numeros>.loop03-equipe-numero-escolhido{
+ border-color:#5cf1a2!important;background:#16623a!important;color:#fff!important;
+ box-shadow:0 0 0 2px #5cf1a260;
+}
+#loop03-rede .loop03-rede-utilizadas{
+ margin-top:4px!important;
+}
