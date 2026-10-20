@@ -610,8 +610,9 @@ async function main(){
   await page.locator('#conteudoParticipante').waitFor({state:'visible'});
   await page.locator('#loop03Menu').click();
   await page.locator('#loop03Sidebar [data-loop03-aba="rede"]').click();
-  assert.equal(await page.locator('#loop03RedeTotalIndicacoes').innerText(),'1');
-  assert.equal(await page.locator('#loop03RedeADistribuir').innerText(),'1');
+  assert.equal(await page.locator('#loop03RedeTotalIndicacoes').innerText(),'0');
+  assert.equal(await page.locator('#loop03RedeADistribuir').innerText(),'0');
+  assert.equal(await page.locator('#loop03RedeUtilizadas').innerText(),'0');
   const pendenteCompra=page.locator('#loop03ListaEquipe .loop03-equipe-linha')
    .filter({hasText:convidado.nome});
   assert.equal(await pendenteCompra.locator('.loop03-equipe-estado').innerText(),'PENDENTE');

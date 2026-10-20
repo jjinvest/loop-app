@@ -56,8 +56,10 @@ test('um convidado confirmado atribuido a uma posicao ativa promove somente ela 
  assert.equal(ponte.consultar().filas.A.quantidade,0);
  assert.equal(escritorio.consultar(raiz.contaId).equipe[0].situacao,'AGUARDANDO_CONFIRMACAO');
  visao=escritorio.consultar(raiz.contaId);
- assert.equal(visao.contadoresRede.totalPosicoes,1);
- assert.equal(visao.contadoresRede.aDistribuir,1);
+ // A indicação AZUL possui cadeira, mas não entra no contador VERDE.
+ assert.equal(visao.contadoresRede.totalPosicoes,0);
+ assert.equal(visao.contadoresRede.totalIndicacoesConfirmadas,0);
+ assert.equal(visao.contadoresRede.aDistribuir,0);
  assert.equal(visao.contadoresRede.aguardandoAtivacao,1);
  // Mesmo que o PDF tenha sido comprado, nao ha promocao automatica.
  assert.throws(()=>ponte.atribuirIndicacao({contaId:raiz.contaId,

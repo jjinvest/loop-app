@@ -49,7 +49,9 @@ test('botao +1 gasta indicacoes disponiveis reais com vinculos imutaveis e paine
   aceitaTermos:true,versaoTermos:'LOOP-DEMO-V1'
  });
  const saldo=()=>escritorio.consultar(titular.contaId);
- assert.equal(saldo().contadoresRede.totalPosicoes,3);
+ assert.equal(saldo().contadoresRede.totalPosicoes,2);
+ assert.equal(saldo().contadoresRede.totalIndicacoesConfirmadas,2);
+ assert.equal(saldo().contadoresRede.aDistribuir,2);
  assert.equal(saldo().contadoresRede.disponiveisParaVincular,2);
  assert.equal(saldo().contadoresRede.aguardandoAtivacao,1);
  const app=criarAppAdminLaboratorio({repositorio:repo,segredo:'chave-admin-ciclo-loop-de-testes-2026'});
