@@ -108,7 +108,11 @@ test('estorno com convite e comissao alerta sem reversao automatica ou nova prov
  const ligado=await carrinhos.sincronizar(elegivel.pedidoId);
  assert.equal(ligado.posicaoCriada,true);
  assert.equal(ligado.indicacaoNova,true);
- assert.ok(ligado.comissaoSimuladaCentavos>0);
+ assert.equal(ligado.comissaoSimuladaCentavos,0,'Comprador AZUL não desconta reserva');
+ const confirmacao=adesoes.ativar({contaId:b.contaId,
+  cpfFicticio:'12345678909',aceitaTermos:true,versaoTermos:'LOOP-DEMO-V1'});
+ assert.equal(confirmacao.bonificacoes.length,1);
+ assert.ok(confirmacao.bonificacoes[0].valorComissaoCentavos>0);
  carrinhos.registrarEvento({pedidoId:elegivel.pedidoId,eventoId:'estorno-indicado-b',tipo:'ESTORNAR_FICTICIO'});
  const antes=ponte.consultar();
  const audit=diagnostico(carrinhos);
