@@ -361,6 +361,65 @@ class PonteComprasConvitesDemoSQLite{
   return disponiveis.length;
  }
 
+ // O comprador confirmou sua posicao LOOP com CPF e termos; somente AGORA
+ // a comissao pode ser provisionada, em SQLite, sem cobrar uma segunda compra.
+ // A chave imutavel do pedido impede duplicidade na renovacao da visao.
+ bonificarPosicaoConfirmada({contaId,posicaoId,quando,simulador=null}={}){
+  if(typeof contaId!=='string'||!Number.isSafeInteger(posicaoId)||posicaoId<=0)
+   throw falha('BONUS_POSICAO_INVALIDA');
+  const verde=this.banco.prepare(`
+   SELECT 1 FROM admin_loop_adesoes_posicoes_demo
+   WHERE conta_id=? AND posicao_id=? AND ativada_em<=?
+  `).get(contaId,posicaoId,quando);
+  if(!verde)return null;
+  // Em pacotes, bonificacao por pedido (cadeira primaria), nunca
+  // uma bonificacao duplicada para cada cadeira adicional.
+  const compra=this.banco.prepare(`
+   SELECT c.pedido_id AS pedidoId,c.confirmado_em AS confirmadoEm,
+    v.revisao_valor AS revisaoValor,v.valor_referencia_centavos AS valorReferencia
+   FROM admin_ponte_compras_demo c
+   JOIN admin_ponte_posicoes_valores_demo v ON v.pedido_id=c.pedido_id
+   WHERE c.conta_id=? AND c.posicao_id=?
+  `).get(contaId,posicaoId);
+  if(!compra||compra.confirmadoEm>quando)return null;
+  const conta=this.contas.buscar(contaId);
+  if(!conta?.indicadoPorId)return null;
+  if(this.banco.prepare(`
+   SELECT 1 FROM admin_comissoes_indicacoes_v2_demo WHERE pedido_id=?
+  `).get(compra.pedidoId)||
+   this.banco.prepare(`
+    SELECT 1 FROM admin_comissoes_indicacoes_demo WHERE pedido_id=?
+   `).get(compra.pedidoId))return null;
+  const posicaoAtivaIndicadorId=this._posicaoIndicadorVerde(
+   conta.indicadoPorId,quando,simulador||this._restaurar());
+  return this.linksComissoes.comissaoDaPosicao({
+   pedidoId:compra.pedidoId,indicadorId:conta.indicadoPorId,
+   convidadoId:contaId,posicaoId,
+   referencia:{valorCentavos:compra.valorReferencia,revisao:compra.revisaoValor},
+   quando,posicaoAtivaIndicadorId
+  });
+ }
+ _posicaoIndicadorVerde(contaId,quando,simulador){
+  if(!this.banco.prepare(
+   "SELECT 1 FROM sqlite_master WHERE type='table' AND name='admin_loop_adesoes_posicoes_demo'"
+  ).get())return null;
+  const candidatas=[...simulador.filas.filaA,...simulador.filas.filaB,
+   simulador.tabuleiro.centro,...simulador.tabuleiro.vagas]
+   .filter(p=>p&&p.participanteId===contaId&&p.empresa!==true&&
+    !['PENDENTE','PRAZO_ENCERRADO','DESISTENTE'].includes(p.statusAdesao));
+  for(const p of candidatas){
+   if(this.banco.prepare(`
+    SELECT 1 FROM admin_loop_adesoes_posicoes_demo a
+    JOIN admin_ponte_compras_demo c ON c.conta_id=a.conta_id
+    WHERE a.conta_id=? AND a.posicao_id=? AND a.ativada_em<=?
+      AND c.confirmado_em<=?
+      AND (c.posicao_id=a.posicao_id OR EXISTS(
+       SELECT 1 FROM admin_ponte_posicoes_adicionais_demo x
+       WHERE x.pedido_id=c.pedido_id AND x.posicao_id=a.posicao_id))
+   `).get(contaId,p.id,quando,quando))return p.id;
+  }
+  return null;
+ }
  // Vínculo definitivo de um indicado confirmado com apenas uma posição ativa.
  atribuirIndicacao({contaId,convidadoId,posicaoId}={}){
   if(!this.atribuicaoManualPorPosicao)throw falha('ATRIBUICAO_MANUAL_INDISPONIVEL');
@@ -555,28 +614,10 @@ class PonteComprasConvitesDemoSQLite{
    const simulador=this._restaurar();
    if(posicoesAtivas(simulador,conta.contaId)+quantidadePosicoes>6)
     throw falha('LIMITE_ATIVO','Limite de seis posicoes ativas no teste');
-   // A promocao exige uma posicao PRÓPRIA do indicador, ainda na fila
-   // ou no tabuleiro e comprada ate a confirmacao do indicado.
-   // CPF e aceite liberam bonus; cadeira propria determina percentual superior.
-   let posicaoAtivaIndicadorId=null;
-   if(conta.indicadoPorId){
-    const candidatas=[
-     ...simulador.filas.filaA,...simulador.filas.filaB,
-     simulador.tabuleiro.centro,...simulador.tabuleiro.vagas
-    ].filter(p=>p&&p.participanteId===conta.indicadoPorId&&
-     p.statusAdesao!=='PRAZO_ENCERRADO'&&p.empresa!==true);
-    for(const p of candidatas){
-     const adquirida=this.banco.prepare(`
-      SELECT 1 FROM admin_ponte_compras_demo c
-      WHERE c.conta_id=? AND c.confirmado_em<=? AND
-       (c.posicao_id=? OR EXISTS (
-        SELECT 1 FROM admin_ponte_posicoes_adicionais_demo a
-        WHERE a.pedido_id=c.pedido_id AND a.posicao_id=?
-       ))
-     `).get(conta.indicadoPorId,comprovante.confirmadoEm,p.id,p.id);
-     if(adquirida){posicaoAtivaIndicadorId=p.id;break;}
-    }
-   }
+   // Percentual superior ao basico exige posicao VERDE do indicador,
+   // nao somente compra/posicao AZUL ainda sem CPF.
+   const posicaoAtivaIndicadorId=conta.indicadoPorId?
+    this._posicaoIndicadorVerde(conta.indicadoPorId,comprovante.confirmadoEm,simulador):null;
    const aceiteAnterior=this.linksComissoes.adesaoVigente(conta.contaId,comprovante.confirmadoEm);
    const novasPosicoes=[];
    for(let ordem=1;ordem<=quantidadePosicoes;ordem++){

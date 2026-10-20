@@ -272,8 +272,19 @@ class IndicacoesLinksComissoesDemoSQLite{
   posicaoAtivaIndicadorId=null}={}){
   if(!referencia||!Number.isSafeInteger(referencia.valorCentavos)||
    !Number.isSafeInteger(referencia.revisao))throw falha('REFERENCIA_INVALIDA');
-  // Nao provisionar nem creditar bonus retroativos anteriores ao aceite.
-  if(!this.habilitadoBonificacoes(indicadorId,quando))return null;
+  // O indicador AMARELO ou AZUL pode receber: basta link de divulgacao ativo.
+  // O que AUTORIZA registrar a comissao e a posicao VERDE do comprador,
+  // apos confirmacao individual de CPF e aceite dessa mesma posicao.
+  if(!this.ativado(indicadorId,quando))return null;
+  const temTabela=this.banco.prepare(
+   "SELECT 1 FROM sqlite_master WHERE type='table' AND name='admin_loop_adesoes_posicoes_demo'"
+  ).get();
+  if(!temTabela)return null;
+  const verde=this.banco.prepare(`
+   SELECT 1 FROM admin_loop_adesoes_posicoes_demo
+   WHERE conta_id=? AND posicao_id=? AND ativada_em<=?
+  `).get(convidadoId,posicaoId,quando);
+  if(!verde)return null;
   const taxa=this.taxas.vigenteEm(quando);
   // A compra pequena libera somente o LINK. O bonus superior a 10%
   // depende de posicao propria ativa na fila ou no tabuleiro.

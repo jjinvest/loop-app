@@ -144,12 +144,21 @@ class AdesoesPosicoesDemoSQLite{
    for(const p of sim.filas.vendasRegistradas.values()){
     if(ids.includes(p.id)){p.statusAdesao='ATIVA';p.ativadaEm=data;}
    }
+   // Azul nao gera desconto/comissao. Somente o clique individual com CPF
+   // torna verde e libera a reserva ficticia, atomicamente e uma unica vez.
+   const bonificacoes=[];
+   for(const id of ids){
+    const gerada=this.ponte.bonificarPosicaoConfirmada({
+     contaId,posicaoId:id,quando:data,simulador:sim
+    });
+    if(gerada)bonificacoes.push({posicaoId:id,...gerada});
+   }
    this.banco.prepare(`
     INSERT INTO admin_ponte_estado_demo(id,snapshot_json) VALUES(1,?)
     ON CONFLICT(id) DO UPDATE SET snapshot_json=excluded.snapshot_json
    `).run(JSON.stringify(sim.exportarSnapshot()));
    this.banco.exec('COMMIT');
-   return {ativadas:ids.length,posicoesIds:ids,
+   return {ativadas:ids.length,posicoesIds:ids,bonificacoes,
     adesaoComissoesAtivada:true,termosVersao:VERSAO_TERMOS_DEMO,cpfConfirmadoNoTeste:true,
     cpfRealArmazenado:false,semPagamentoReal:true};
   }catch(erro){this.banco.exec('ROLLBACK');throw erro;}
