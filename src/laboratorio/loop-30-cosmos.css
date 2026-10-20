@@ -2026,3 +2026,76 @@ body.loop03-logado .portal-participante{position:relative;z-index:1}
   top:33%!important;bottom:4%!important;height:63%!important;
  }
 }
+
+/* Minhas Posições — estado de confirmação, SEM alterar o roxo original das vazias. */
+#loop03-posicoes .loop03-grade-posicoes .loop03-status-confirmacao-ok>.loop03-cartao-rotulo,
+#loop03-posicoes .loop03-grade-posicoes .loop03-status-confirmacao-ok>.loop03-cartao-abrir>.loop03-cartao-rotulo{
+ background:linear-gradient(120deg,#075d42,#149565)!important;color:#f5fff9!important;
+ box-shadow:0 0 10px #23d99b55!important;
+}
+#loop03-posicoes .loop03-grade-posicoes .loop03-status-confirmacao-pendente>.loop03-cartao-rotulo,
+#loop03-posicoes .loop03-grade-posicoes .loop03-status-confirmacao-pendente>.loop03-cartao-abrir>.loop03-cartao-rotulo{
+ background:linear-gradient(120deg,#7d1730,#c42c48)!important;color:#fff7f8!important;
+ box-shadow:0 0 10px #ed426459!important;
+}
+#loop03-posicoes .loop03-grade-posicoes .loop03-posicao-vazia>.loop03-cartao-rotulo{
+ background:#2a1847!important;color:#bd9ee6!important;
+}
+#loop03-posicoes .loop03-cartao-abrir{
+ display:flex;flex-direction:column;gap:13px;width:100%;background:transparent;
+ border:0;padding:0;color:inherit;text-align:left;cursor:pointer;font:inherit;
+}
+#loop03-posicoes .loop03-cartao-abrir:focus-visible,
+#loop03-posicoes .loop03-link-termos:focus-visible,
+#loop03-posicoes .loop03-check-cartao:focus-visible{outline:2px solid #fff3a5;outline-offset:3px}
+#loop03-posicoes .loop03-aceite-linha{
+ display:flex;align-items:center;justify-content:center;gap:8px;min-height:32px;
+}
+#loop03-posicoes .loop03-cpf-cartao{
+ min-width:0;width:100%;max-width:200px;padding:8px 10px;min-height:34px;
+ border:1px solid #aa92ca;border-radius:10px;background:#16112a;color:#fff;
+ font:600 .8rem system-ui;letter-spacing:.02em;
+}
+#loop03-posicoes .loop03-check-cartao{
+ flex:none;width:23px;height:23px;margin:0;accent-color:#39d69a;cursor:pointer;
+}
+#loop03-posicoes .loop03-link-termos{
+ background:none;border:0;padding:2px;color:#c7b4f8;text-decoration:underline;
+ cursor:pointer;font:650 .75rem system-ui;align-self:start;text-align:left;
+}
+#loop03-posicoes .loop03-indicacoes-curtas{
+ font-weight:700;font-size:.76rem;color:#f7edf9;
+}
+#loop03Shell .loop03-termos-fundo[hidden]{display:none!important}
+#loop03Shell .loop03-termos-fundo{
+ position:fixed;inset:0;z-index:9999;display:grid;place-items:center;
+ padding:16px;background:#050613dc;
+}
+#loop03Shell .loop03-termos-janela{
+ width:min(100%,560px);max-height:86dvh;overflow-y:auto;
+ background:linear-gradient(140deg,#18112f,#0c1329);
+ color:#f8f1ff;border:1px solid #c69fe5;border-radius:18px;
+ padding:20px;box-shadow:0 12px 45px #000c;position:relative;
+}
+#loop03Shell .loop03-termos-janela h3{margin:0 32px 15px 0;font-size:1.08rem;color:#ffdc9a}
+#loop03Shell .loop03-termos-texto{font-size:.88rem;line-height:1.6}
+#loop03Shell .loop03-termos-fechar{
+ position:absolute;right:12px;top:10px;color:#fff;background:transparent;
+ border:1px solid #79658e;border-radius:8px;font-size:1.5rem;cursor:pointer;
+}
+#loop03Shell .loop03-termos-aceite{
+ display:flex;align-items:center;gap:10px;margin-top:17px;cursor:pointer;
+ color:#fff0c9;font-weight:700;font-size:.88rem;
+}
+#loop03Shell .loop03-termos-aceite input{width:21px;height:21px;accent-color:#39d69a}
+@media(max-width:590px){
+ #loop03-posicoes .loop03-cartao-abrir{gap:5px!important}
+ #loop03-posicoes .loop03-grade-posicoes .loop03-cpf-cartao{
+  padding:5px 4px;min-height:27px;border-radius:7px;font-size:.57rem;
+ }
+ #loop03-posicoes .loop03-grade-posicoes .loop03-check-cartao{width:16px;height:16px}
+ #loop03-posicoes .loop03-grade-posicoes .loop03-aceite-linha{gap:3px;min-height:20px}
+ #loop03-posicoes .loop03-grade-posicoes .loop03-link-termos{font-size:.56rem}
+ #loop03-posicoes .loop03-grade-posicoes .loop03-indicacoes-curtas{font-size:.59rem}
+ #loop03Shell .loop03-termos-janela{padding:15px}
+}

@@ -474,7 +474,21 @@ async function main(){
   assert.equal(await page.locator('#loop03OpcoesPosicoes > *').count(),6);
   assert.equal(await page.locator('#loop03OpcoesPosicoes .loop03-posicao-vazia').count(),5);
   assert.equal(await page.locator('#loop03OpcoesPosicoes .loop03-pendencia-ponto').count(),1);
+  assert.equal(await page.locator('#loop03OpcoesPosicoes .loop03-posicao-vazia').count(),5);
+  assert.equal(await page.locator('#loop03OpcoesPosicoes .loop03-status-confirmacao-pendente').count(),1);
+  assert.equal(await page.locator('#loop03OpcoesPosicoes .loop03-cpf-cartao').count(),1);
+  assert.equal(await page.locator('#loop03OpcoesPosicoes .loop03-check-cartao').count(),1);
+  assert.equal(await page.locator('#loop03OpcoesPosicoes .loop03-link-termos').count(),1);
   await page.locator('#loop03OpcoesPosicoes [data-loop03-posicao]').first().click();
+  await page.locator('#loop03OpcoesPosicoes .loop03-cpf-cartao').fill('11144477735');
+  assert.equal(await page.locator('#cpfFicticioParticipante').inputValue(),'11144477735');
+  await page.locator('#loop03OpcoesPosicoes .loop03-link-termos').click();
+  assert.equal(await page.locator('#loop03TermosFundo').isVisible(),true);
+  assert.match(await page.locator('#loop03TermosTexto').innerText(),/LOOP|regras/i);
+  await page.locator('#loop03TermosAceitar').check();
+  assert.equal(await page.locator('#loop03TermosFundo').isVisible(),false);
+  assert.equal(await page.locator('#loop03OpcoesPosicoes .loop03-check-cartao').isChecked(),true);
+  assert.equal(await page.locator('#aceiteTermosParticipante').isChecked(),true);
   assert.equal(await page.locator('#loop03DadosPosicaoLateral').isVisible(),true);
   assert.equal(await page.locator('#loop03NomeBaixo').innerText(),titular.nome);
   assert.equal(await page.locator('#loop03SituacaoBaixo').isVisible(),false,
@@ -516,6 +530,8 @@ async function main(){
   await page.locator('#confirmarAtivacaoParticipante').click();
   await page.locator('#secaoAtivacaoParticipante').waitFor({state:'hidden'});
   assert.equal(await page.locator('#loop03OpcoesPosicoes .loop03-pendencia-ponto').count(),0);
+  assert.equal(await page.locator('#loop03OpcoesPosicoes .loop03-status-confirmacao-ok').count(),1);
+  assert.equal(await page.locator('#loop03OpcoesPosicoes .loop03-cpf-cartao').count(),0);
   assert.equal(await page.locator('.linha-minha-demo .posicao-vermelho').count(),1);
   await page.screenshot({path:path.join(pasta,'escritorio-posicao-ativada.png'),fullPage:true});
 

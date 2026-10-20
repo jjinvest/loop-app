@@ -148,6 +148,14 @@
       </div>
       <p id="loop03AvisoDistribuicao" class="loop03-aviso-distribuicao" role="status" aria-live="polite"></p>
       <div id="loop03OpcoesPosicoes" class="loop03-opcoes loop03-grade-posicoes"></div>
+      <div id="loop03TermosFundo" class="loop03-termos-fundo" role="dialog" aria-modal="true" aria-labelledby="loop03TermosTitulo" hidden>
+       <div class="loop03-termos-janela">
+        <button type="button" id="loop03TermosFechar" class="loop03-termos-fechar" aria-label="Fechar termos">×</button>
+        <h3 id="loop03TermosTitulo">Regras de participação — laboratório</h3>
+        <div id="loop03TermosTexto" class="loop03-termos-texto"></div>
+        <label class="loop03-termos-aceite"><input id="loop03TermosAceitar" type="checkbox"> Li e aceito os termos desta posição</label>
+       </div>
+      </div>
       <div id="loop03DetalhesPosicao" class="loop03-detalhes" aria-live="polite">Nenhuma posição selecionada.</div>
      </section>
      <section id="loop03-rede" class="loop03-pagina" aria-label="Rede e Equipe">
@@ -364,6 +372,23 @@
    e('loop03Menu').setAttribute('aria-expanded',String(aberto));
   });
   e('loop03Sair').addEventListener('click',()=>e('botaoSairParticipante').click());
+  e('loop03TermosFechar').addEventListener('click',fecharTermosPosicao);
+  e('loop03TermosFundo').addEventListener('click',ev=>{
+   if(ev.target===e('loop03TermosFundo'))fecharTermosPosicao();
+  });
+  e('loop03TermosAceitar').addEventListener('change',ev=>{
+   if(!ev.target.checked||termosPosicaoId===null)return;
+   aceitesPosicao.set(termosPosicaoId,true);
+   const p=visaoAtual?.posicoes.find(x=>x.posicaoId===termosPosicaoId);
+   if(p)selecionar(p);
+   const campo=document.querySelector('#loop03OpcoesPosicoes [data-termos-posicao="'+termosPosicaoId+'"]');
+   if(campo)campo.checked=true;
+   e('aceiteTermosParticipante').checked=true;
+   fecharTermosPosicao();
+  });
+  document.addEventListener('keydown',ev=>{
+   if(ev.key==='Escape'&&!e('loop03TermosFundo').hidden)fecharTermosPosicao();
+  });
   e('loop03RemoverFoto').addEventListener('click',()=>{
    fotoPerfilAcao='REMOVER';e('loop03PerfilFoto').value='';
    e('loop03StatusPerfil').textContent='A foto será removida quando você salvar.';
@@ -433,6 +458,7 @@
  }
  function abrir(aba){
   if(!paginas.includes(aba))return;
+  fecharTermosPosicao();
   fecharPerfilSobreposto();
   fecharDetalheIndicador();
   fecharSeletorPosicao();
@@ -719,10 +745,12 @@
   const caixa=e('secaoAtivacaoParticipante');
   if(caixa)caixa.hidden=!precisa;
   const primeiro=!visaoAtual?.adesao?.cpfConfirmadoNoTeste;
+  if(primeiro&&cpfRascunho)e('cpfFicticioParticipante').value=cpfRascunho;
+  e('aceiteTermosParticipante').checked=precisa&&aceitesPosicao.get(p.posicaoId)===true;
   for(const id of ['cpfFicticioParticipante','aceiteTermosParticipante']){
    const campo=e(id);if(!campo)continue;
-   campo.required=precisa&&primeiro;
-   campo.disabled=!primeiro;
+   campo.required=precisa&&(id==='aceiteTermosParticipante'||primeiro);
+   campo.disabled=!precisa||(id==='cpfFicticioParticipante'&&!primeiro);
    const rotulo=campo.id==='cpfFicticioParticipante'?document.querySelector('label[for="cpfFicticioParticipante"]'):campo.closest('label');
    if(rotulo)rotulo.hidden=!primeiro;
    if(campo.id==='cpfFicticioParticipante')campo.hidden=!primeiro;
@@ -742,6 +770,33 @@
    no.classList.toggle('loop03-destaque-posicao',no.dataset.posicaoId===String(selecionada));
   for(const no of document.querySelectorAll('[data-loop03-posicao]'))
    no.setAttribute('aria-pressed',no.dataset.loop03Posicao===String(selecionada)?'true':'false');
+ }
+ let termosPosicaoId=null;
+ const aceitesPosicao=new Map();
+ let cpfRascunho='';
+ function fecharTermosPosicao(){
+  const modal=e('loop03TermosFundo');
+  if(modal)modal.hidden=true;
+  termosPosicaoId=null;
+ }
+ function abrirTermosPosicao(p){
+  selecionar(p);
+  termosPosicaoId=p.posicaoId;
+  const fonte=e('regrasDemonstracaoParticipante');
+  const destino=e('loop03TermosTexto');destino.replaceChildren();
+  for(const paragrafo of fonte?.querySelectorAll('p')||[]){
+   const novo=document.createElement('p');novo.textContent=paragrafo.textContent;
+   destino.append(novo);
+  }
+  if(!destino.children.length){
+   const aviso=document.createElement('p');
+   aviso.textContent='Termos do laboratorio indisponiveis. Nao confirme antes de ler.';
+   destino.append(aviso);e('loop03TermosAceitar').disabled=true;
+  }else e('loop03TermosAceitar').disabled=false;
+  e('loop03TermosAceitar').checked=aceitesPosicao.get(p.posicaoId)===true;
+  e('loop03TermosTitulo').textContent='Termos da posição #'+p.posicaoId+' — laboratório';
+  e('loop03TermosFundo').hidden=false;
+  e('loop03TermosAceitar').focus();
  }
  function destacarPosicoes(){
   for(const node of document.querySelectorAll('.mapa-fila-posicoes-demo .selo-posicao-demo, .mapa-tabuleiro-posicoes-demo .selo-posicao-demo')){
@@ -768,19 +823,33 @@
    m.setAttribute('aria-label','Evento '+(i+1)+': '+
     (!Number.isSafeInteger(etapa)?'andamento ainda nao disponivel':i<etapa?'registrado':'aguardando'));
   }
-  // Seis espacos da grade aprovada. Apenas as posicoes compradas tem numero e acao.
+  // Seis espacos: vazias roxas originais; confirmado verde, pendente vermelho.
+  // Aceite do card espelha o formulario original; nao altera o motor sem envio.
   const cartoes=e('loop03OpcoesPosicoes');cartoes.replaceChildren();
+  for(const [id] of aceitesPosicao){
+   if(!visao.posicoes.some(p=>p.posicaoId===id&&p.statusAdesao==='PENDENTE'))
+    aceitesPosicao.delete(id);
+  }
+  if(visao.adesao?.cpfConfirmadoNoTeste)cpfRascunho='';
   for(let indice=0;indice<6;indice++){
    const p=visao.posicoes[indice];
    const estado=p?.statusAdesao==='PENDENTE'?'pendente':
     p?.local==='CENTRO'?'centro':p?.local==='FILA_A'?'a':
     p?.local==='FILA_B'?'b':p?'giro':'vazia';
-   const cartao=document.createElement(p?'button':'div');
+   const pendente=estado==='pendente';
+   const cartao=document.createElement(p&&!pendente?'button':'div');
    cartao.className='loop03-opcao loop03-cartao-posicao loop03-posicao-'+estado+
-    (p?'':' loop03-posicao-vazia');
+    (!p?' loop03-posicao-vazia':pendente?' loop03-status-confirmacao-pendente':' loop03-status-confirmacao-ok');
+   let cabecalho=cartao;
    if(p){
-    cartao.type='button';cartao.dataset.loop03Posicao=String(p.posicaoId);
-    cartao.setAttribute('aria-pressed',String(p.posicaoId===selecionada));
+    if(pendente){
+     cabecalho=document.createElement('button');
+     cabecalho.className='loop03-cartao-abrir';
+     cabecalho.type='button';cartao.append(cabecalho);
+    }else cartao.type='button';
+    cabecalho.dataset.loop03Posicao=String(p.posicaoId);
+    cabecalho.setAttribute('aria-pressed',String(p.posicaoId===selecionada));
+    cabecalho.addEventListener('click',()=>selecionar(p));
    }
    const rotulo=document.createElement('span');rotulo.className='loop03-cartao-rotulo';
    rotulo.textContent='POSIÇÃO '+(indice+1);
@@ -794,22 +863,51 @@
    situacao.textContent=!p?'SEM POSIÇÃO':estado==='pendente'?'AGUARDANDO CONFIRMAÇÃO':
     statusPosicao(p).toUpperCase();
    identidade.append(numero,situacao);miolo.append(selo,identidade);
+   cabecalho.append(rotulo,miolo);
    const resumo=document.createElement('div');resumo.className='loop03-cartao-resumo';
-   const resumoTitulo=document.createElement('strong');
-   resumoTitulo.textContent=!p?'Espaço disponível':estado==='pendente'?
-    'Confirmação individual necessária':estado==='centro'?'Ciclo em andamento':
-    (p.indicacoesRecebidas||0)+((p.indicacoesRecebidas||0)===1?' indicação válida':' indicações válidas');
-   const resumoTexto=document.createElement('small');
-   resumoTexto.textContent=!p?'Sem posição cadastrada':estado==='pendente'?
-    'Selecione para confirmar':estado==='centro'?'Acompanhamento ativo':'Aguardando avanço';
-   resumo.append(resumoTitulo,resumoTexto);cartao.append(rotulo,miolo,resumo);
+   if(p&&pendente){
+    const controles=document.createElement('div');controles.className='loop03-aceite-linha';
+    // CPF aparece somente na primeira posicao enquanto ainda nao houve cadastro.
+    if(indice===0&&!visao.adesao?.cpfConfirmadoNoTeste){
+     const cpf=document.createElement('input');cpf.type='text';cpf.inputMode='numeric';
+     cpf.maxLength=11;cpf.pattern='[0-9]{11}';cpf.autocomplete='off';
+     cpf.placeholder='CPF';cpf.setAttribute('aria-label','CPF de teste da primeira posição');
+     cpf.className='loop03-cpf-cartao';cpf.value=cpfRascunho;
+     cpf.addEventListener('focus',()=>selecionar(p));
+     cpf.addEventListener('input',()=>{
+      cpfRascunho=cpf.value.replace(/\\D/g,'').slice(0,11);
+      cpf.value=cpfRascunho;e('cpfFicticioParticipante').value=cpfRascunho;
+     });
+     controles.append(cpf);
+    }
+    const marcar=document.createElement('input');marcar.type='checkbox';
+    marcar.className='loop03-check-cartao';marcar.dataset.termosPosicao=String(p.posicaoId);
+    marcar.setAttribute('aria-label','Aceitar termos da posição '+(indice+1));
+    marcar.checked=aceitesPosicao.get(p.posicaoId)===true;
+    marcar.addEventListener('change',()=>{
+     selecionar(p);aceitesPosicao.set(p.posicaoId,marcar.checked);
+     e('aceiteTermosParticipante').checked=marcar.checked;
+    });
+    controles.append(marcar);
+    const link=document.createElement('button');link.type='button';
+    link.className='loop03-link-termos';link.textContent='Ler termos';
+    link.addEventListener('click',()=>abrirTermosPosicao(p));
+    resumo.append(controles,link);
+   }else if(!p){
+    const vazio=document.createElement('strong');vazio.textContent='Espaço disponível';resumo.append(vazio);
+   }
+   if(p){
+    const conta=document.createElement('small');conta.className='loop03-indicacoes-curtas';
+    conta.textContent='Indicações: '+(p.indicacoesRecebidas||0);
+    resumo.append(conta);
+   }
+   cartao.append(resumo);
    if(estado==='pendente'){
     const ponto=document.createElement('span');ponto.className='loop03-pendencia-ponto';
     ponto.title='Confirmação individual pendente';
     ponto.setAttribute('aria-label','Posição aguardando confirmação');
     cartao.append(ponto);
    }
-   if(p)cartao.addEventListener('click',()=>selecionar(p));
    const unidade=document.createElement('div');unidade.className='loop03-unidade-posicao';
    unidade.append(cartao);
    if(p){
@@ -1058,6 +1156,7 @@
   fecharNotificacoes();
   if(intervaloVitrine!==null){clearInterval(intervaloVitrine);intervaloVitrine=null;}
   vitrineLista=[];vitrineIndice=0;pintarVitrineAKITEMM();
+  fecharTermosPosicao();aceitesPosicao.clear();cpfRascunho='';
   document.body.classList.remove('loop03-logado');
   selecionada=null;visaoAtual=null;destinoInicialTratado=false;fotoPerfilAcao='MANTER';
   fecharSeletorPosicao();identidadeDaPosicao(null);
