@@ -1396,8 +1396,13 @@ async function main(){
    assert.equal(modelo.centro.cor,'rgb(255, 255, 255)',
     'Centro verde com texto branco');
    assert.equal(await q.locator('#loop03CoroaVisor').isVisible(),true);
-   assert.equal(await q.locator('#loop03CoroaTabuleiro').isVisible(),false,
-    'Rodapé removido; coroa real continua visível no visor superior');
+   assert.equal(await q.locator('#loop03CoroaTabuleiro').isVisible(),true,
+    'A coroa aprovada continua no rodapé ao entrar na catraca');
+   assert.equal(await q.locator('#loop03Sidebar .loop03-identidade-selecionada').isVisible(),true);
+   assert.equal(await q.locator('#loop03DadosPosicaoLateral').isVisible(),false,
+    'Não mostrar nome de comprador junto à coroa');
+   assert.equal(await q.locator('#loop03Sidebar .loop03-identidade-selecionada .loop03-avatar').isVisible(),false,
+    'Não ressuscitar avatar antigo no rodapé');
    assert.equal(await q.locator('#loop03LetraFila').isVisible(),false);
    await conferirLargura(q,largura,'catraca-preenchida-'+nomeArquivo,{captura:false});
    await q.screenshot({path:path.join(pasta,nomeArquivo),fullPage:true});
