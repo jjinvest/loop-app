@@ -1700,6 +1700,82 @@ async function main(){
   assert.equal(await naoAtiva.locator('.loop03-equipe-numeros>button:enabled').count(),0);
   await page.screenshot({path:path.join(pasta,'REDE_STATUS_NAO_ATIVO_CELULAR_390.png'),fullPage:true});
 
+
+  // Registros adicionais para a revisão dos QUATRO SELOS na mesma tela.
+  // A compra simples de R$100 só ativa o link AMARELO; não gera cadeira.
+  const clienteAmarelo=contas.cadastrar({
+   nome:'Cliente Link Liberado',apelido:'LinkLivre',
+   email:'link-livre@exemplo.invalid',senha,codigoIndicador:titular.codigoConvite
+  });
+  const pedidoAmarelo='pedido-link-liberado-sem-loop';
+  const respostaAmarela=await fetch(base+'/api/admin/carrinho-loop-demo',{
+   method:'POST',headers:cabAdmin,
+   body:JSON.stringify({pedidoId:pedidoAmarelo,contaId:clienteAmarelo.contaId,
+    itens:[{produtoId:'curso-mobile-100',quantidade:1}]})
+  });
+  assert.equal(respostaAmarela.status,201,await respostaAmarela.text());
+  const confirmouAmarelo=await fetch(base+
+   '/api/admin/carrinho-loop-demo/'+pedidoAmarelo+'/eventos',{
+   method:'POST',headers:cabAdmin,
+   body:JSON.stringify({eventoId:'evento-link-liberado',tipo:'CONFIRMAR_FICTICIO'})
+  });
+  assert.equal(confirmouAmarelo.status,200,await confirmouAmarelo.text());
+  assert.equal(ponte.linksComissoes.ativado(clienteAmarelo.contaId),true);
+
+  // Compra qualificada gera cadeira AZUL, mas o convidado ainda não deu CPF.
+  const clienteAzul=contas.cadastrar({
+   nome:'Cliente Aguardando CPF',apelido:'AguardCPF',
+   email:'aguardando-cpf@exemplo.invalid',senha,codigoIndicador:titular.codigoConvite
+  });
+  const pedidoAzul='pedido-posicao-azul-sem-cpf';
+  const respostaAzul=await fetch(base+'/api/admin/carrinho-loop-demo',{
+   method:'POST',headers:cabAdmin,
+   body:JSON.stringify({pedidoId:pedidoAzul,contaId:clienteAzul.contaId,
+    itens:[{produtoId:'curso-mobile-100',quantidade:1},
+     {produtoId:'curso-mobile-150',quantidade:1}]})
+  });
+  assert.equal(respostaAzul.status,201,await respostaAzul.text());
+  const confirmouAzul=await fetch(base+
+   '/api/admin/carrinho-loop-demo/'+pedidoAzul+'/eventos',{
+   method:'POST',headers:cabAdmin,
+   body:JSON.stringify({eventoId:'evento-posicao-azul',tipo:'CONFIRMAR_FICTICIO'})
+  });
+  assert.equal(confirmouAzul.status,200,await confirmouAzul.text());
+  for(const [largura,foto] of [
+   [390,'MINHA_REDE_QUATRO_STATUS_CELULAR_390.png'],
+   [1254,'MINHA_REDE_QUATRO_STATUS_COMPUTADOR_1254.png']
+  ]){
+   const ctx=await browser.newContext({viewport:{width:largura,height:900},
+    isMobile:largura===390,hasTouch:largura===390});
+   const tela=await ctx.newPage();
+   tela.on('pageerror',erro=>erros.push('cores '+largura+': '+erro.message));
+   await tela.goto(base+'/laboratorio/participante',{waitUntil:'networkidle'});
+   await tela.locator('#nomeParticipante').fill(titular.nome);
+   await tela.locator('#senhaParticipante').fill(senha);
+   await tela.locator('#botaoEntrarParticipante').click();
+   await tela.locator('#conteudoParticipante').waitFor({state:'visible'});
+   if(largura===390)await tela.locator('#loop03Menu').click();
+   await tela.locator('#loop03Sidebar [data-loop03-aba="rede"]').click();
+   const linhas=tela.locator('#loop03ListaEquipe .loop03-equipe-linha');
+   assert.equal(await linhas.count(),7);
+   assert.deepEqual(await tela.locator('#loop03ListaEquipe .loop03-equipe-avatar').allTextContents(),
+    ['1','2','3','4','5','6','7']);
+   assert.equal(await linhas.locator('.loop03-equipe-ativo').count(),4);
+   assert.equal(await linhas.locator('.loop03-equipe-inativo').count(),1);
+   assert.equal(await linhas.locator('.loop03-equipe-link-ativo').count(),1);
+   assert.equal(await linhas.locator('.loop03-equipe-pendente').count(),1);
+   assert.equal(await linhas.filter({hasText:clienteAmarelo.nome})
+    .locator('.loop03-equipe-estado').innerText(),'LINK ATIVO');
+   assert.equal(await linhas.filter({hasText:clienteAzul.nome})
+    .locator('.loop03-equipe-estado').innerText(),'PENDENTE');
+   assert.equal(await tela.locator('#loop03RedeTotalIndicacoes').innerText(),'4');
+   assert.equal(await tela.locator('#loop03RedeADistribuir').innerText(),'2');
+   assert.equal(await tela.locator('#loop03RedeUtilizadas').innerText(),'2');
+   await conferirLargura(tela,largura,'rede-4-cores-'+largura,{captura:false});
+   await tela.screenshot({path:path.join(pasta,foto),fullPage:true});
+   await ctx.close();
+  }
+
   assert.deepEqual(erros,[], 'Erros de execucao no navegador');
   const relatorio={status:'APROVADO',
    tamanhosPx:[320,360,390,412,768,1024,1366],
