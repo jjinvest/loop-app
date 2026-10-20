@@ -454,7 +454,7 @@
    p.local.replace('_',' ')+' — '+(p.statusAdesao==='PENDENTE'?'aguardando ativação':'ativada'));
   // Só o titular vê seu nick embaixo do #ID na catraca.
   const nick=visao.linkIndicacao?.linkEscritorioCurto?
-   visao.linkIndicacao.apelido:visao.conta?.apelido||visao.perfil?.nome||visao.conta?.nome||'';
+   visao.linkIndicacao.apelido:'';
   if(visao.mapaCores)mostrarMapa(visao.mapaCores,nick);
   const temAzul=visao.posicoes.some(p=>p.statusAdesao==='PENDENTE');
   const cpfTermosConfirmados=visao.adesao?.cpfConfirmadoNoTeste===true;
