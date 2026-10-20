@@ -4,7 +4,8 @@
  const path=location.pathname;
  const semIndicacao=path==='/laboratorio/cadastro';
  const linkConvite=path+location.search;
- const destino=(path.startsWith('/loja-vilela/convite/')||path.startsWith('/loja/convite/'))?'loja':
+ const destino=(path.startsWith('/loja-vilela/convite/')||path.startsWith('/loja/convite/')||
+  /^\/loja\/[A-Za-z0-9_-]+$/.test(path))?'loja':
   (path.startsWith('/escritorio-vilela/convite/')||path.startsWith('/escritorio/convite/'))?'escritorio':
   new URLSearchParams(location.search).get('destino')==='loja'?'loja':'escritorio';
  const prefixo=['/loja/convite/','/escritorio/convite/',
@@ -14,6 +15,8 @@
   if(semIndicacao)return path;
   if(prefixo)return '/'+(para==='loja'?'loja':'escritorio')+
    '/convite/'+path.slice(prefixo.length);
+  if(/^\/(loja|escritorio)\/[A-Za-z0-9_-]+$/.test(path))
+   return '/'+(para==='loja'?'loja':'escritorio')+'/'+path.split('/')[2];
   return path+'?destino='+para;
  };
  const titulo=e('tituloDestinoConvite'),descricao=e('descricaoDestinoConvite');
