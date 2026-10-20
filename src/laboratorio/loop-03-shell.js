@@ -1213,7 +1213,8 @@
    cartao.append(avatar,titulo,faixa,dados);
    const ordinal=document.createElement('small');
    ordinal.className='loop03-ordem-indicacao';
-   ordinal.textContent=(indice+1)+'ª indicação';
+   ordinal.textContent=['Primeira indicação','Segunda indicação',
+    'Terceira indicação','Quarta indicação'][indice]||((indice+1)+'ª indicação');
    cartao.append(ordinal);
    if(pessoa.posicaoAtribuidaId===null&&pessoa.estado==='ATIVO'){
     const botao=document.createElement('button');botao.type='button';

@@ -1557,7 +1557,8 @@ async function main(){
    assert.equal(await pag.locator('#loop03ListaEquipe .loop03-equipe-linha').count(),4);
    for(let i=0;i<4;i++)
     assert.equal(await pag.locator('#loop03ListaEquipe .loop03-equipe-linha').nth(i)
-     .locator('.loop03-ordem-indicacao').innerText(),(i+1)+'ª indicação');
+     .locator('.loop03-ordem-indicacao').innerText(),
+      ['Primeira indicação','Segunda indicação','Terceira indicação','Quarta indicação'][i]);
    await pag.locator('#loop03LinksRede summary').first().click();
    assert.equal(await pag.locator('#apelidoLinkParticipante').isVisible(),true);
    assert.equal(await pag.locator('#salvarApelidoLinkParticipante').innerText(),'Salvar');
