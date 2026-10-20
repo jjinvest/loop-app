@@ -1382,11 +1382,33 @@ async function main(){
      return {texto:x.textContent.trim(),largura:rect.width,altura:rect.height,
       verde:css.backgroundImage.includes('rgb(7, 93, 66)'),visivel:css.visibility};
     }));
+   assert.equal(faixas[0].texto,'POSIÇÃO 1');
    assert.equal(faixas[1].texto,'POSIÇÃO 2');
-   assert.ok(faixas[1].largura>50&&faixas[1].altura>=18&&faixas[1].verde,
-    'Faixa verde da posição 2 deve ser legível no celular: '+JSON.stringify(faixas));
-   assert.equal(await pagina.locator('#loop03OpcoesPosicoes .loop03-cartao-posicao')
-    .nth(1).locator('.loop03-cartao-abrir > .loop03-compra-gatilho').count(),1);
+   for(const n of [0,1]){
+    assert.ok(faixas[n].largura>50&&faixas[n].altura>=18&&faixas[n].verde&&
+     faixas[n].visivel==='visible',
+     'A faixa verde de cada posição precisa ser visível no computador E celular: '+JSON.stringify(faixas));
+    assert.equal(await pagina.locator('#loop03OpcoesPosicoes .loop03-cartao-posicao')
+     .nth(n).locator('.loop03-cartao-abrir > .loop03-compra-gatilho').count(),1,
+     'A faixa colorida deve estar DENTRO do botão funcional, sem sobreposição');
+   }
+   // Garantir que a faixa e sua escrita cabem inteiras no cartão e no viewport.
+   const pintura=await pagina.locator('#loop03OpcoesPosicoes .loop03-compra-gatilho').nth(1)
+    .evaluate(el=>{
+     const r=el.getBoundingClientRect();
+     const card=el.closest('.loop03-cartao-posicao').getBoundingClientRect();
+     const centro=document.elementFromPoint(r.left+r.width/2,r.top+r.height/2);
+     return {rotulo:el.textContent.trim(),fundo:getComputedStyle(el).backgroundImage,
+      area:{left:r.left,right:r.right,top:r.top,bottom:r.bottom},
+      card:{left:card.left,right:card.right,top:card.top,bottom:card.bottom},
+      alvos:(centro?.closest('.loop03-cartao-abrir')===el.closest('.loop03-cartao-abrir')),
+      viewport:document.documentElement.clientWidth};
+    });
+   assert.ok(pintura.alvos&&pintura.area.left>=pintura.card.left&&
+    pintura.area.right<=pintura.card.right+1&&pintura.area.right<=pintura.viewport,
+    'A faixa POSIÇÃO 2 deve estar pintada e clicável sem bordas cortadas: '+JSON.stringify(pintura));
+   assert.equal(await pagina.locator('#loop03OpcoesPosicoes .loop03-cartao-posicao').nth(1)
+    .locator('.loop03-cartao-abrir').getAttribute('aria-expanded'),'true');
    await conferirLargura(pagina,largura,'aberturas-posicoes-'+largura,{captura:false});
    // Captura fullPage REAL COM DOIS PAINÉIS ABERTOS: seletor + detalhe da compra.
    await pagina.screenshot({path:path.join(pasta,arquivo),fullPage:true});
