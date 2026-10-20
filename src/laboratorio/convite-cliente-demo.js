@@ -84,9 +84,13 @@
  form.addEventListener('submit',async ev=>{
   ev.preventDefault();
   const botao=e('criarConviteCliente');botao.disabled=true;
+  if(e('senhaConvite').value!==e('confirmarSenhaConvite').value){
+   estado.textContent='A confirmação da senha não corresponde.';
+   e('confirmarSenhaConvite').focus();botao.disabled=false;return;
+  }
   try{
    const criado=await api('cadastrar',{
-    nome:e('nomeConvite').value,email:e('emailConvite').value,
+    nome:e('nomeConvite').value,apelido:e('apelidoConvite').value,email:e('emailConvite').value,
     telefone:e('telefoneConvite').value,senha:e('senhaConvite').value,
     link:semIndicacao?null:linkConvite
    });
@@ -106,6 +110,6 @@
    }
    location.replace(destino==='loja'?'/loja':'/escritorio');
   }catch(err){estado.textContent=err.message;}
-  finally{botao.disabled=false;e('senhaConvite').value='';}
+  finally{botao.disabled=false;e('senhaConvite').value='';e('confirmarSenhaConvite').value='';}
  });
 })();

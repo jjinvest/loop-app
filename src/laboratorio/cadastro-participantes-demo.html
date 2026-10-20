@@ -47,11 +47,16 @@
       </section>
       <section class="painel">
         <h2>Criar conta fictícia</h2>
-        <p class="ajuda">Cadastro com nome, telefone, e-mail e senha. O nome cadastrado é o nome usado depois no login. O rastreio vem dentro do link de indicação, sem código separado na experiência do cliente.</p>
+        <p class="ajuda">Cadastro com nome, nick, e-mail, telefone, senha e confirmação. O nome cadastrado continua usado no login. O rastreio vem dentro do link de indicação, sem código separado na experiência do cliente.</p>
         <form id="formContaDemo" autocomplete="off">
           <div class="campo">
             <label for="nomeContaDemo">Nome de acesso (único)</label>
             <input id="nomeContaDemo" type="text" required maxlength="60" autocomplete="off" placeholder="Conta Exemplo Um">
+          </div>
+          <div class="campo">
+            <label for="apelidoContaDemo">Nick / apelido</label>
+            <input id="apelidoContaDemo" required minlength="3" maxlength="32" pattern="[A-Za-z0-9][A-Za-z0-9-]{1,30}[A-Za-z0-9]" autocomplete="off" placeholder="meu-nick">
+            <p class="ajuda">Seu nick aparecerá nos links personalizados da loja e do escritório.</p>
           </div>
           <div class="campo">
             <label for="emailContaDemo">E-mail fictício</label>
@@ -65,6 +70,10 @@
           <div class="campo">
             <label for="senhaContaDemo">Senha de demonstração (mínimo 10 caracteres)</label>
             <input id="senhaContaDemo" type="password" required minlength="10" maxlength="128" autocomplete="new-password">
+          </div>
+          <div class="campo">
+            <label for="confirmarSenhaContaDemo">Confirmar senha</label>
+            <input id="confirmarSenhaContaDemo" type="password" required minlength="10" maxlength="128" autocomplete="new-password">
           </div>
           <div class="campo">
             <label for="conviteContaDemo">Código de teste legado do indicador (opcional; o cliente usa apenas o link)</label>

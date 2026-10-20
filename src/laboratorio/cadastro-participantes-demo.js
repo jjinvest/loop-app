@@ -58,6 +58,7 @@
   area.hidden=true;
   lista.replaceChildren();
   el('senhaContaDemo').value='';
+  el('confirmarSenhaContaDemo').value='';
   el('senhaLoginContaDemo').value='';
   el('resultadoContaDemo').textContent='';
   el('resultadoLoginContaDemo').textContent='';
@@ -159,8 +160,14 @@
   botao.disabled=true;
   const aviso=el('resultadoContaDemo');
   const senha=el('senhaContaDemo').value;
+  if(senha!==el('confirmarSenhaContaDemo').value){
+   aviso.textContent='A confirmação da senha não corresponde.';
+   el('confirmarSenhaContaDemo').focus();
+   enviandoCadastro=false;botao.disabled=false;return;
+  }
   const body={
    nome:el('nomeContaDemo').value,
+   apelido:el('apelidoContaDemo').value,
    email:el('emailContaDemo').value,
    telefone:el('telefoneContaDemo').value.trim(),
    senha
@@ -172,11 +179,13 @@
    aviso.textContent='Conta '+r.conta.nome+' cadastrada no teste. Código individual: '+
     r.conta.codigoConvite+'. Convites pendentes; nenhuma posição criada.';
    el('emailContaDemo').value='';
+   el('apelidoContaDemo').value='';
    el('telefoneContaDemo').value='';
    await atualizar();
   }catch(err){aviso.textContent=err.message;}
   finally{
    el('senhaContaDemo').value='';
+   el('confirmarSenhaContaDemo').value='';
    enviandoCadastro=false;botao.disabled=false;
   }
  });
