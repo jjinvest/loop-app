@@ -1419,12 +1419,13 @@ async function main(){
    assert.equal(await q.locator('#loop03Sidebar .loop03-identidade-selecionada').isVisible(),true);
    assert.equal(await q.locator('#loop03DadosPosicaoLateral').isVisible(),true,
     'O nick permanece no rodapé ao lado da coroa');
-   assert.equal(await q.locator('#loop03NomeBaixo').innerText(),'TesteUser');
+   assert.equal(await q.locator('#loop03NomeBaixo').innerText(),conta.apelido,
+    'Rodapé mostra nick da conta atual, nunca o de outro participante');
    assert.equal(await q.locator('#loop03Sidebar .loop03-identidade-selecionada .loop03-avatar').isVisible(),true,
     'O espaço da foto é preservado');
    assert.equal(await q.locator('#loop03Sidebar .loop03-identidade-selecionada .loop03-foto-padrao').isVisible(),false,
     'Sem foto: não mostrar emoji');
-   assert.equal(await q.locator('#loop03NickVisor').innerText(),'TesteUser');
+   assert.equal(await q.locator('#loop03NickVisor').innerText(),conta.apelido);
    assert.equal(await q.locator('#loop03LetraRodape').isVisible(),false);
    assert.equal(await q.locator('#loop03LetraFila').isVisible(),false);
    await conferirLargura(q,largura,'catraca-preenchida-'+nomeArquivo,{captura:false});
