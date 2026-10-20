@@ -513,6 +513,10 @@ async function main(){
   await posicoesPC.locator('#loop03Sidebar [data-loop03-aba="posicoes"]').click();
   await posicoesPC.locator('#loop03-posicoes').waitFor({state:'visible'});
   assert.equal(await posicoesPC.locator('#loop03OpcoesPosicoes .loop03-cartao-posicao').count(),6);
+  assert.equal(await posicoesPC.locator('#loop03-posicoes .loop03-extras-posicoes').count(),0,
+   'Após os dois links, a aba não mostra mais histórico ou informações extras');
+  assert.equal(await posicoesPC.locator('#loop03DadosSecundariosPosicoes').isVisible(),false,
+   'Dados legados preservados, mas não expostos na aba');
   assert.equal(await posicoesPC.locator('#loop03OpcoesPosicoes .loop03-status-confirmacao-pendente').count(),1);
   assert.match(await posicoesPC.locator('#loop03LinkEscritorio').inputValue(),/\/escritorio\/TesteUser$/);
   assert.match(await posicoesPC.locator('#loop03LinkLoja').inputValue(),/\/loja\/TesteUser$/);

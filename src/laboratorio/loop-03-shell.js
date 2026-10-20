@@ -339,15 +339,17 @@
   const compras=e('pedidosParticipante')?.closest('section.cartao-participante');
   if(posicoes)e('loop03-posicoes').append(posicoes);
   if(compras)e('loop03-posicoes').append(compras);
-  // Seis cartoes e contador primeiro; nenhum formulario e removido.
+  // Os dois links encerram visualmente a aba Minhas Posições.
+  // Preservar registros e IDs das seções antigas para leituras internas,
+  // mas sem a faixa "Consultar histórico, pedidos e informações da conta".
+  // Informações por posição só serão exibidas quando o idealizador definir.
   const secundarios=[resumo,historico,posicoes,compras].filter(Boolean);
   if(secundarios.length){
-   const detalhes=document.createElement('details');
-   detalhes.className='loop03-extras-posicoes';
-   const cabeca=document.createElement('summary');
-   cabeca.textContent='Consultar histórico, pedidos e informações da conta';
-   detalhes.append(cabeca,...secundarios);
-   e('loop03-posicoes').append(detalhes);
+   const arquivo=document.createElement('div');
+   arquivo.id='loop03DadosSecundariosPosicoes';
+   arquivo.hidden=true;
+   arquivo.append(...secundarios);
+   e('loop03-posicoes').append(arquivo);
   }
   const limites=e('atualizarParticipante')?.closest('section.cartao-participante');
   if(limites){
