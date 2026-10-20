@@ -236,7 +236,15 @@
  }
  window.setInterval(renderizarRelogioCiclo,1000);
 
- function mostrarMapa(mapa,nomeTitular){
+ function mostrarMapa(mapa,nickDoTitular){
+  // O link salvo é a fonte do nick atual do próprio titular, inclusive
+  // imediatamente após a troca. Ajustar apenas a apresentação do snapshot.
+  if(typeof nickDoTitular==='string'&&/^[A-Za-z]{1,9}$/.test(nickDoTitular)){
+   for(const item of [...mapa.filaA,...mapa.filaB,mapa.tabuleiro.centro,
+    ...mapa.tabuleiro.vagas]){
+    if(item?.minha===true)item.nick=nickDoTitular;
+   }
+  }
   mapaAtual=mapa;
   atualizarRelogioCiclo(mapa);
   renderizarFila(mapa.filaA,'mapaFilaAParticipante','contadorFilaAParticipante','Fila A');
@@ -471,9 +479,8 @@
   e('pendentesParticipante').textContent=visao.indicacoes.cadastrosPendentes;
   lista('posicoesParticipante',visao.posicoes,p=>'Posição '+p.posicaoId+' — '+
    p.local.replace('_',' ')+' — '+(p.statusAdesao==='PENDENTE'?'aguardando ativação':'ativada'));
-  // O backend já inclui o nick público de cada participante por posição.
-  // Salvar o apelido e atualizar a página reflete a mudança em filas e catraca.
-  if(visao.mapaCores)mostrarMapa(visao.mapaCores);
+  // Nicks dos demais: backend por posição. Meu nick: link atual da conta.
+  if(visao.mapaCores)mostrarMapa(visao.mapaCores,visao.linkIndicacao?.apelido);
   const temAzul=visao.posicoes.some(p=>p.statusAdesao==='PENDENTE');
   const cpfTermosConfirmados=visao.adesao?.cpfConfirmadoNoTeste===true;
   cpfConfirmadoAtual=cpfTermosConfirmados;
