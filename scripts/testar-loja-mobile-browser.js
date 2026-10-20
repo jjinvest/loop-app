@@ -944,6 +944,12 @@ async function main(){
   await page.waitForTimeout(120);
   await page.screenshot({path:path.join(pasta,'TABULEIRO_REAL_POSICAO_A_CELULAR_390_SEM_CORTE.png'),fullPage:true});
   await page.screenshot({path:path.join(pasta,'fila-a-contagem-posicao.png'),fullPage:true});
+  // Fotografia REAL da aba Financeiro do participante, com mesma conta/posicao A.
+  await page.locator('#loop03Menu').click();
+  await page.locator('#loop03Sidebar [data-loop03-aba="financeiro"]').click();
+  await page.locator('#loop03-financeiro').waitFor({state:'visible'});
+  await conferirLargura(page,390,'financeiro-cliente-celular',{captura:false});
+  await page.screenshot({path:path.join(pasta,'FINANCEIRO_CLIENTE_ATUAL_CELULAR_390.png'),fullPage:true});
   // Quatro capturas REAIS da mesma conta ficticia e mesmo layout funcional.
   // Referencias PNG aprovadas sao arquivos separados, nao estas capturas.
   const ctxQuadros=await browser.newContext({
@@ -984,6 +990,11 @@ async function main(){
    await quatroAbas.screenshot({path:path.join(pasta,arquivo),fullPage:false});
    await quatroAbas.screenshot({path:path.join(pasta,arquivo.replace('.png','_COMPLETA.png')),fullPage:true});
   }
+  // Captura real do Financeiro do PARTICIPANTE, nao do financeiro administrativo.
+  await quatroAbas.locator('#loop03Sidebar [data-loop03-aba="financeiro"]').click();
+  await quatroAbas.locator('#loop03-financeiro').waitFor({state:'visible'});
+  await conferirLargura(quatroAbas,1254,'financeiro-cliente-computador',{captura:false});
+  await quatroAbas.screenshot({path:path.join(pasta,'FINANCEIRO_CLIENTE_ATUAL_COMPUTADOR_1254.png'),fullPage:true});
   await ctxQuadros.close();
 
 
