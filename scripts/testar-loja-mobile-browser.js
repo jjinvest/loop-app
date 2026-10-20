@@ -501,6 +501,23 @@ async function main(){
    'CPF deve aparecer abaixo da esfera e ANTES da divisória '+JSON.stringify(geometria));
   await page.screenshot({path:path.join(pasta,'MINHAS_POSICOES_PENDENTE_CPF_PC.png'),fullPage:true});
   await page.screenshot({path:path.join(pasta,'MINHAS_POSICOES_SEIS_CARDS_DOIS_LINKS_REAL.png'),fullPage:true});
+  // Prova adicional: captura de navegador REAL no COMPUTADOR (não mockup).
+  // Titular de laboratório "TesteUser"; nas contas sem nick ambos campos ficam vazios.
+  const ctxPosicoesPC=await browser.newContext({viewport:{width:1254,height:900},deviceScaleFactor:1});
+  const posicoesPC=await ctxPosicoesPC.newPage();
+  await posicoesPC.goto(base+'/laboratorio/participante',{waitUntil:'networkidle'});
+  await posicoesPC.locator('#nomeParticipante').fill(titular.nome);
+  await posicoesPC.locator('#senhaParticipante').fill(senha);
+  await posicoesPC.locator('#botaoEntrarParticipante').click();
+  await posicoesPC.locator('#conteudoParticipante').waitFor({state:'visible'});
+  await posicoesPC.locator('#loop03Sidebar [data-loop03-aba="posicoes"]').click();
+  await posicoesPC.locator('#loop03-posicoes').waitFor({state:'visible'});
+  assert.equal(await posicoesPC.locator('#loop03OpcoesPosicoes .loop03-cartao-posicao').count(),6);
+  assert.equal(await posicoesPC.locator('#loop03OpcoesPosicoes .loop03-status-confirmacao-pendente').count(),1);
+  assert.match(await posicoesPC.locator('#loop03LinkEscritorio').inputValue(),/\/escritorio\/TesteUser$/);
+  assert.match(await posicoesPC.locator('#loop03LinkLoja').inputValue(),/\/loja\/TesteUser$/);
+  await posicoesPC.screenshot({path:path.join(pasta,'MINHAS_POSICOES_ATUAL_PENDENTE_PC_1254.png'),fullPage:true});
+
   // Clicar quadradinho nao aceita silenciosamente: abre o texto sobre a aba.
   await page.locator('#loop03OpcoesPosicoes .loop03-check-cartao').first().click();
   assert.equal(await page.locator('#loop03TermosFundo').isVisible(),true);
@@ -552,6 +569,13 @@ async function main(){
   await page.locator('#secaoAtivacaoParticipante').waitFor({state:'hidden'});
   assert.equal(await page.locator('#loop03OpcoesPosicoes .loop03-pendencia-ponto').count(),0);
   assert.equal(await page.locator('#loop03OpcoesPosicoes .loop03-status-confirmacao-ok').count(),1);
+  await posicoesPC.reload({waitUntil:'networkidle'});
+  await posicoesPC.locator('#conteudoParticipante').waitFor({state:'visible'});
+  await posicoesPC.locator('#loop03Sidebar [data-loop03-aba="posicoes"]').click();
+  assert.equal(await posicoesPC.locator('#loop03OpcoesPosicoes .loop03-status-confirmacao-ok').count(),1);
+  await posicoesPC.screenshot({path:path.join(pasta,'MINHAS_POSICOES_ATUAL_CONFIRMADA_PC_1254.png'),fullPage:true});
+  await ctxPosicoesPC.close();
+
   assert.equal(await page.locator('#loop03OpcoesPosicoes .loop03-cpf-cartao').count(),1);
   assert.equal(await page.locator('#loop03OpcoesPosicoes .loop03-cpf-protegido').count(),1);
   assert.equal(await page.locator('#loop03OpcoesPosicoes .loop03-check-cartao').first().isChecked(),true);
