@@ -2339,3 +2339,33 @@ body.loop03-logado .portal-participante{position:relative;z-index:1}
   align-self:start!important;
  }
 }
+
+/* Correção do título verde/vermelho que ficava invisível em captura mobile:
+   faixa e esfera são partes do MESMO botão, sem camadas interativas sobrepostas.
+   O cartão selecionado mantém brilho e o título segue legível. */
+#loop03-posicoes .loop03-grade-posicoes .loop03-cartao-abrir{
+ gap:8px!important;min-width:0!important;
+}
+#loop03-posicoes .loop03-grade-posicoes .loop03-cartao-abrir>.loop03-compra-gatilho{
+ display:block!important;flex:0 0 auto!important;align-self:stretch!important;
+ min-height:0!important;position:relative!important;
+ opacity:1!important;visibility:visible!important;
+ border-radius:9px!important;
+}
+#loop03-posicoes .loop03-grade-posicoes .loop03-status-confirmacao-ok>
+ .loop03-cartao-abrir>.loop03-compra-gatilho{
+ background:linear-gradient(120deg,#075d42,#149565)!important;
+ color:#f5fff9!important;
+}
+#loop03-posicoes .loop03-grade-posicoes .loop03-status-confirmacao-pendente>
+ .loop03-cartao-abrir>.loop03-compra-gatilho{
+ background:linear-gradient(120deg,#7d1730,#c42c48)!important;
+ color:#fff7f8!important;
+}
+@media(max-width:590px){
+ #loop03-posicoes .loop03-grade-posicoes .loop03-cartao-abrir{gap:5px!important}
+ #loop03-posicoes .loop03-grade-posicoes .loop03-cartao-abrir>.loop03-compra-gatilho{
+  padding:5px 4px!important;font-size:.56rem!important;line-height:1.3!important;
+  min-height:19px!important;box-sizing:border-box!important;
+ }
+}

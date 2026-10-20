@@ -925,14 +925,20 @@
   for(const outro of e('loop03OpcoesPosicoes').querySelectorAll('.loop03-compra-expandida')){
    outro.hidden=true;
    const faixa=outro.closest('.loop03-cartao-posicao')?.querySelector('.loop03-compra-gatilho');
-   if(faixa)faixa.setAttribute('aria-expanded','false');
+   if(faixa){
+    faixa.setAttribute('aria-expanded','false');
+    faixa.closest('.loop03-cartao-abrir')?.setAttribute('aria-expanded','false');
+   }
   }
   const mobile=e('loop03CompraMobile');
   mobile.hidden=true;
   if(abrir){
    target.hidden=false;
    const faixa=target.closest('.loop03-cartao-posicao')?.querySelector('.loop03-compra-gatilho');
-   if(faixa)faixa.setAttribute('aria-expanded','true');
+   if(faixa){
+    faixa.setAttribute('aria-expanded','true');
+    faixa.closest('.loop03-cartao-abrir')?.setAttribute('aria-expanded','true');
+   }
    // No celular, a leitura é feita no quadrinho de largura total
    // abaixo da grade, evitando redução do tamanho dos seis cartões.
    if(visaoAtual){
@@ -993,16 +999,22 @@
     cabecalho.className='loop03-cartao-abrir';cartao.append(cabecalho);
     cabecalho.dataset.loop03Posicao=String(p.posicaoId);
     cabecalho.setAttribute('aria-pressed',String(p.posicaoId===selecionada));
-    cabecalho.addEventListener('click',()=>{
+    cabecalho.setAttribute('aria-controls','loop03CompraPosicao'+p.posicaoId);
+    cabecalho.setAttribute('aria-expanded','false');
+    cabecalho.addEventListener('click',ev=>{
      selecionar(p);
-     mostrarCompraPosicao(p);
+     // Faixa colorida alterna expandir/fechar; corpo seleciona/abre.
+     mostrarCompraPosicao(p,{
+      alternar:!!ev.target.closest('.loop03-compra-gatilho')
+     });
     });
    }
-   const rotulo=document.createElement(p?'button':'span');
+   // Faixa é parte do botão principal: evita dois botões sobrepostos
+   // na versão mobile e mantém o título sempre pintado no mesmo bloco.
+   const rotulo=document.createElement('span');
    rotulo.className='loop03-cartao-rotulo'+(p?' loop03-compra-gatilho':'');
    rotulo.textContent='POSIÇÃO '+(indice+1);
    if(p){
-    rotulo.type='button';
     rotulo.setAttribute('aria-expanded','false');
     rotulo.setAttribute('aria-controls','loop03CompraPosicao'+p.posicaoId);
     rotulo.setAttribute('aria-label','Mostrar produtos e valores pagos da posição '+(indice+1));
@@ -1019,16 +1031,11 @@
    situacao.hidden=!!p;
    identidade.append(numero,situacao);miolo.append(selo,identidade);
    if(p){
-    cartao.prepend(rotulo);
-    cabecalho.append(miolo);
+    cabecalho.append(rotulo,miolo);
     const detalhe=document.createElement('div');detalhe.className='loop03-compra-expandida';
     detalhe.id='loop03CompraPosicao'+p.posicaoId;
     detalhe.hidden=true;
     preencherCompraPosicao(detalhe,p,visao);
-    rotulo.addEventListener('click',()=>{
-     selecionar(p);
-     mostrarCompraPosicao(p,{alternar:true});
-    });
     cartao.insertBefore(detalhe,cabecalho.nextSibling);
    }else cabecalho.append(rotulo,miolo);
    {
