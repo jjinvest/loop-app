@@ -875,7 +875,7 @@
      cpf.className='loop03-cpf-cartao';cpf.value=cpfRascunho;
      cpf.addEventListener('focus',()=>selecionar(p));
      cpf.addEventListener('input',()=>{
-      cpfRascunho=cpf.value.replace(/\\D/g,'').slice(0,11);
+      cpfRascunho=cpf.value.replace(/\D/g,'').slice(0,11);
       cpf.value=cpfRascunho;e('cpfFicticioParticipante').value=cpfRascunho;
      });
      controles.append(cpf);
