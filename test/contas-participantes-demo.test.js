@@ -217,3 +217,28 @@ test('tela e API existem so no laboratorio, nao no servidor publico',async t=>{
  assert.equal((await fetch(pub+'/admin/cadastro-participantes-demo')).status,404);
  assert.equal((await fetch(pub+'/admin/cadastro-participantes-demo.js')).status,404);
 });
+
+
+test('nick escolhido no cadastro persiste e compõe os dois links do mesmo identificador',t=>{
+ const filename=db(t),m=ambiente(filename);
+ const {IndicacoesLinksComissoesDemoSQLite,extrairLink}=require('../src/domain/indicacoes-links-comissoes-demo-sqlite');
+ const nova=m.contas.cadastrar({nome:'Conta Com Nick',apelido:'meu-nick',
+  email:'nickname@exemplo.invalid',telefone:'(24) 99999-7755',
+  senha:'senha-ficticia-forte-2026'});
+ assert.equal(nova.apelido,'meu-nick');
+ const links=new IndicacoesLinksComissoesDemoSQLite({banco:m.repo.banco,contas:m.contas});
+ const primeiro=links.linkDaConta(nova.contaId);
+ assert.match(primeiro.linkLoja,/\/loja\/convite\/lp-[a-f0-9]{20}\/meu-nick$/);
+ assert.match(primeiro.linkEscritorio,/\/escritorio\/convite\/lp-[a-f0-9]{20}\/meu-nick$/);
+ assert.equal(extrairLink(primeiro.linkLoja).token,extrairLink(primeiro.linkEscritorio).token);
+ assert.equal(primeiro.ativo,false,'links surgem sem autorização para divulgação');
+ m.repo.fechar();
+ const b=ambiente(filename);
+ try{
+  const novamente=new IndicacoesLinksComissoesDemoSQLite({banco:b.repo.banco,contas:b.contas});
+  assert.equal(b.contas.buscar(nova.contaId).apelido,'meu-nick');
+  assert.deepEqual(novamente.linkDaConta(nova.contaId),primeiro);
+  assert.throws(()=>b.contas.cadastrar({nome:'Nick Muito Curto',apelido:'x',
+   email:'nick-curto@exemplo.invalid',senha:'senha-forte-exemplo-2026'}),e=>e.codigo==='INVALIDO');
+ }finally{b.repo.fechar();}
+});
