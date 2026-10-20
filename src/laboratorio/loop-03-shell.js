@@ -745,8 +745,10 @@
  function identidadeDaPosicao(p){
   // O cadastro civil é PRIVADO: fora do cadastro, somente o nick público.
   const nick=nickPublico(),dados=e('loop03DadosPosicaoLateral');
-  dados.hidden=!p||!nick;
-  e('loop03NomeBaixo').textContent=p?nick:'';
+  // Rodapé mostra o nick da conta mesmo sem uma posição escolhida.
+  // O símbolo A/B/coroa continua dependente da posição selecionada.
+  dados.hidden=!nick;
+  e('loop03NomeBaixo').textContent=nick;
   e('loop03SituacaoBaixo').textContent='';
   e('loop03SituacaoBaixo').hidden=true;
   const local=p?.local||'';
