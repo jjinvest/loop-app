@@ -124,7 +124,14 @@ class EscritorioIndividualDemo{
     tel.telefone_normalizado AS telefone,
     v.confirmado_em AS compraConfirmadaEm,
     m.posicao_indicador_id AS posicaoAtribuidaId,
-    ${posicaoAtivadaSQL} AS posicaoAtivada
+    ${posicaoAtivadaSQL} AS posicaoAtivada,
+    -- Exatamente as tres fontes da ativacao dos links de divulgacao.
+    -- Compra simples da loja ativa link, mas NAO cria indicacao LOOP.
+    (EXISTS(SELECT 1 FROM admin_ponte_compras_demo lp WHERE lp.conta_id=c.id)
+     OR EXISTS(SELECT 1 FROM admin_ponte_vendas_loja_sem_loop_demo ls
+       WHERE ls.conta_id=c.id)
+     OR EXISTS(SELECT 1 FROM admin_ponte_vendas_loja_apos_reajuste_demo lr
+       WHERE lr.conta_id=c.id)) AS linkDivulgacaoAtivo
    FROM admin_contas_participantes_demo c
    LEFT JOIN admin_contas_eventos_demo ev ON ev.conta_id=c.id
     AND ev.tipo='CADASTRO_FICTICIO'
@@ -156,22 +163,26 @@ class EscritorioIndividualDemo{
     nome:c.nome,telefone:c.telefone,
     numeroFila:numerosFila[0]??null,numerosFila,
     estado:c.compraConfirmadaEm&&c.posicaoAtivada?'ATIVO':'PENDENTE',
-     situacao:c.compraConfirmadaEm?(c.posicaoAtivada?'ATIVO':'AGUARDANDO_CONFIRMACAO'):'PENDENTE',
+    situacao:c.compraConfirmadaEm?
+     (c.posicaoAtivada?'ATIVO':'AGUARDANDO_CONFIRMACAO'):
+     (c.linkDivulgacaoAtivo?'LINK_ATIVO_SEM_LOOP':'PENDENTE'),
+    linkDivulgacaoAtivo:!!c.linkDivulgacaoAtivo,
     filaAtual:localAtual,posicaoAtribuidaId:c.posicaoAtribuidaId,
     atribuicaoPendente:!!c.compraConfirmadaEm&&!!c.posicaoAtivada&&
      c.posicaoAtribuidaId===null};
   });
-  // Um indicado com compra confirmada = uma indicacao disponivel,
-  // independentemente de quantas posicoes ele mesmo tenha comprado.
-  const indicacoesValidas=equipe.filter(p=>p.situacao!=='PENDENTE');
-  const totalPosicoes=indicacoesValidas.length;
-  const jaDistribuidas=indicacoesValidas.filter(p=>p.posicaoAtribuidaId!==null).length;
+  // TOTAL DE INDICACOES = apenas convidados com POSICAO LOOP e CPF/termos
+  // confirmados (selo VERDE). Cadastro vermelho, link amarelo e posicao azul
+  // nao entram sequer nos subtotais; todos seguem na lista historica.
+  const indicacoesConfirmadas=equipe.filter(p=>p.situacao==='ATIVO');
+  const totalPosicoes=indicacoesConfirmadas.length;
+  const jaDistribuidas=indicacoesConfirmadas.filter(p=>p.posicaoAtribuidaId!==null).length;
   const aDistribuir=totalPosicoes-jaDistribuidas;
   const legadasConsumidas=new Set(indicacoes.filter(p=>p.aplicadoId!==null).map(p=>p.convidadoId));
   const disponiveisParaVincular=equipe.filter(p=>
    p.estado==='ATIVO'&&p.posicaoAtribuidaId===null&&
    !legadasConsumidas.has(p.convidadoId)).length;
-  const aguardandoAtivacao=indicacoesValidas.filter(
+  const aguardandoAtivacao=equipe.filter(
    p=>p.situacao==='AGUARDANDO_CONFIRMACAO'&&p.posicaoAtribuidaId===null).length;
   const encerradas=[simulador.tabuleiro.centro,...simulador.tabuleiro.vagas]
    .filter(p=>p&&p.participanteId===contaId&&p.statusAdesao==='PRAZO_ENCERRADO').length;
@@ -264,7 +275,7 @@ class EscritorioIndividualDemo{
    contadoresRede:{
     // Cada convidado com compra confirmada conta UMA vez,
     // mesmo que tenha comprado várias posições. Nome legado mantido para APIs.
-    totalIndicacoesConfirmadas:indicacoesValidas.length,
+    totalIndicacoesConfirmadas:indicacoesConfirmadas.length,
     totalPosicoes,aDistribuir,jaDistribuidas,aguardandoAtivacao,disponiveisParaVincular
    },
    // No modo manual, contagem da A SEMPRE POR POSICAO; nunca total do link.
