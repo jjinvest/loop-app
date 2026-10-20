@@ -1117,7 +1117,7 @@ async function main(){
   for(let i=0;i<4;i++){
    const conta=contas.cadastrar({
     nome:'Participante Ficticio Catraca '+(i+4),
-    email:'catraca-'+i+'@exemplo.invalid',senha
+    apelido:'Cat'+(i+4),email:'catraca-'+i+'@exemplo.invalid',senha
    });
    contasDaCatraca.push(conta);
    const pedidoId='pedido-ocupacao-catraca-'+i;
@@ -1218,14 +1218,14 @@ async function main(){
    nomeArquivo:'TABULEIRO_OCUPADO_MOTOR_REAL_CELULAR_390.png'
   });
   assert.deepEqual(fotoCentroPc,fotoCentroCel,'Mesmos dados do motor no PC e celular');
-  // A mesma vaga vermelha com NOME DO TITULAR (somente ao proprio titular);
-  // nao se publica nome de outra pessoa sem politica e consentimento.
+  // A vaga vermelha mostra SOMENTE O NICK de quem está autenticado;
+  // nomes de cadastro e de terceiros não aparecem sob o #ID.
   const fotoVermelha=await ocupacaoCores({
    conta:contasDaCatraca[3],largura:1254,celular:false,
    nomeArquivo:'TABULEIRO_VERMELHO_IDENTIFICADO_REAL_COMPUTADOR.png'
   });
-  assert.ok(fotoVermelha.vagas[5].nome.startsWith('Participante Ficticio Catraca'),
-   'A pessoa ve seu proprio nome dentro da bolinha vermelha');
+  assert.equal(fotoVermelha.vagas[5].nome,'Cat7',
+   'A pessoa vê só o próprio nick dentro da bolinha vermelha');
 
   assert.deepEqual(erros,[], 'Erros de execucao no navegador');
   const relatorio={status:'APROVADO',
