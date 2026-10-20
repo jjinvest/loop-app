@@ -50,10 +50,14 @@ function telefoneNormalizado(telefone){
 function apelidoCadastro(v){
  if(v===null||v===undefined)return null;
  if(typeof v!=='string'||v.length>80)throw falha('INVALIDO','Nick inválido');
- const s=v.normalize('NFD').replace(/[\u0300-\u036f]/g,'')
-  .trim().toLowerCase().replace(/\s+/g,'-');
- if(!/^[a-z0-9][a-z0-9-]{1,30}[a-z0-9]$/.test(s)||s.includes('--'))
-  throw falha('INVALIDO','Nick precisa de 3 a 32 caracteres');
+ const s=v.trim();
+ // Maiusculas e minusculas preservadas para exibição. Nove dígitos
+ // máximos, não nove caracteres: "Vilela123456" é válido.
+ if(s.length<3||s.length>40||
+    !/^[A-Za-z0-9][A-Za-z0-9_-]*[A-Za-z0-9]$/.test(s)||
+    (s.match(/[0-9]/g)||[]).length>9)
+  throw falha('INVALIDO','Nick: até 40 caracteres e no máximo nove números');
+ return s;
  return s;
 }
 function senhaValida(senha){
@@ -101,6 +105,10 @@ class ContasParticipantesDemoSQLite{
    CREATE TABLE IF NOT EXISTS admin_links_apelidos_demo(
     conta_id TEXT PRIMARY KEY REFERENCES admin_contas_participantes_demo(id) ON DELETE RESTRICT,
     apelido TEXT NOT NULL
+   );
+   CREATE TABLE IF NOT EXISTS admin_links_nicks_reservados_demo(
+    nick_chave TEXT PRIMARY KEY,
+    conta_id TEXT NOT NULL REFERENCES admin_contas_participantes_demo(id) ON DELETE RESTRICT
    );
    CREATE TABLE IF NOT EXISTS admin_contas_telefones_demo(
     conta_id TEXT PRIMARY KEY NOT NULL REFERENCES admin_contas_participantes_demo(id) ON DELETE RESTRICT,
@@ -169,9 +177,18 @@ class ContasParticipantesDemoSQLite{
    if(telefoneLimpo)this.banco.prepare(
     'INSERT INTO admin_contas_telefones_demo(conta_id,telefone_normalizado) VALUES (?,?)'
    ).run(contaId,telefoneLimpo);
-   if(nick)this.banco.prepare(
-    'INSERT INTO admin_links_apelidos_demo(conta_id,apelido) VALUES (?,?)'
-   ).run(contaId,nick);
+   if(nick){
+    const reservado=this.banco.prepare(
+     'SELECT conta_id AS id FROM admin_links_nicks_reservados_demo WHERE nick_chave=?'
+    ).get(nick.toLowerCase());
+    if(reservado&&reservado.id!==contaId)throw falha('CONFLITO','Nick já escolhido por outra conta');
+    this.banco.prepare(
+     'INSERT INTO admin_links_nicks_reservados_demo(nick_chave,conta_id) VALUES (?,?)'
+    ).run(nick.toLowerCase(),contaId);
+    this.banco.prepare(
+     'INSERT INTO admin_links_apelidos_demo(conta_id,apelido) VALUES (?,?)'
+    ).run(contaId,nick);
+   }
    this.banco.prepare(`
     INSERT INTO admin_contas_eventos_demo(conta_id,tipo,registrado_em)
     VALUES (?,'CADASTRO_FICTICIO',?)
