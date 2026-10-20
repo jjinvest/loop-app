@@ -228,16 +228,16 @@ test('nick único de 1 a 9 caracteres soma letras e números e persiste em SQLit
  assert.equal(nova.apelido,'Vilela');
  assert.equal(caminhoLinkCurto(nova.apelido,'loja'),'/loja/Vilela');
  assert.equal(caminhoLinkCurto(nova.apelido,'escritorio'),'/escritorio/Vilela');
- const ateNove=m.contas.cadastrar({nome:'Conta Nove',apelido:'ABC123456',
+ const ateNove=m.contas.cadastrar({nome:'Conta Nove',apelido:'Abcdefghi',
   email:'nove@exemplo.invalid',senha:'senha-forte-exemplo-2026'});
  assert.equal(ateNove.apelido.length,9);
  assert.throws(()=>m.contas.cadastrar({nome:'Nome Duplicado Nick',apelido:'vILELA',
   email:'nick-duplicado@exemplo.invalid',senha:'senha-forte-exemplo-2026'}),
   e=>e.codigo==='CONFLITO');
- for(const nick of ['Vilela1234','Vilela123456','1234567890']){
+ for(const nick of ['Vilela1234','Vilela123456','1234567890','Joao_','Ana-M']){
   assert.throws(()=>m.contas.cadastrar({nome:'Mais que nove '+nick,
    apelido:nick,email:nick+'@exemplo.invalid',senha:'senha-forte-exemplo-2026'}),
-   e=>e.codigo==='INVALIDO','limite é nove caracteres somados');
+   e=>e.codigo==='INVALIDO','somente letras, no máximo nove');
  }
  m.repo.fechar();
  const b=ambiente(filename);

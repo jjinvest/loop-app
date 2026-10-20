@@ -136,3 +136,44 @@ test('urls curtas Loja e Escritório preservam indicação e ocultam token',asyn
  assert.equal(info.destino,'loja');
  assert.equal(info.ativo,false);
 });
+
+
+test('nick muda depois e ambos links novos aparecem; antigos continuam com o mesmo dono',async t=>{
+ const repo=new RepositorioCatalogoSQLite({caminho:':memory:'});t.after(()=>repo.fechar());
+ const contas=new ContasParticipantesDemoSQLite({banco:repo.banco});
+ const titular=contas.cadastrar({
+  nome:'Titular Troca Nick',apelido:'Primeiro',email:'troca@exemplo.invalid',
+  senha:'senha-forte-exemplo-2026'
+ });
+ const outro=contas.cadastrar({
+  nome:'Outro Titular',apelido:'Outro',email:'outro@exemplo.invalid',
+  senha:'senha-forte-exemplo-2026'
+ });
+ const links=new IndicacoesLinksComissoesDemoSQLite({banco:repo.banco,contas});
+ const antes=links.linkDaConta(titular.contaId);
+ assert.equal(antes.linkLojaCurto,'/loja/Primeiro');
+ assert.equal(antes.linkEscritorioCurto,'/escritorio/Primeiro');
+ const depois=links.personalizar({contaId:titular.contaId,apelido:'Segundo'});
+ assert.equal(depois.linkLojaCurto,'/loja/Segundo');
+ assert.equal(depois.linkEscritorioCurto,'/escritorio/Segundo');
+ assert.equal(links.resolver('/loja/Primeiro').indicadorId,titular.contaId);
+ assert.equal(links.resolver('/escritorio/Primeiro').indicadorId,titular.contaId);
+ assert.equal(links.resolver('/loja/Segundo').indicadorId,titular.contaId);
+ assert.equal(links.resolver('/escritorio/Segundo').indicadorId,titular.contaId);
+ assert.equal(links.resolver(antes.linkLoja).indicadorId,titular.contaId);
+ assert.throws(()=>links.personalizar({contaId:outro.contaId,apelido:'pRIMEIRO'}),
+  e=>e.codigo==='APELIDO_DUPLICADO');
+ assert.throws(()=>links.personalizar({contaId:outro.contaId,apelido:'segUNDO'}),
+  e=>e.codigo==='APELIDO_DUPLICADO');
+ for(const nick of ['Joao1','Joao_','NomeLongoX','Joao-Silva']){
+  assert.throws(()=>links.personalizar({contaId:titular.contaId,apelido:nick}),
+   e=>e.codigo==='APELIDO_INVALIDO');
+ }
+ const maiuscula=links.personalizar({contaId:titular.contaId,apelido:'SEGUNDO'});
+ assert.equal(maiuscula.linkLojaCurto,'/loja/SEGUNDO');
+ assert.equal(links.resolver('/loja/Segundo').indicadorId,titular.contaId);
+ const nomeAntigo=repo.banco.prepare(
+  'SELECT conta_id FROM admin_links_nicks_reservados_demo WHERE nick_chave=?'
+ ).get('primeiro');
+ assert.equal(nomeAntigo.conta_id,titular.contaId);
+});

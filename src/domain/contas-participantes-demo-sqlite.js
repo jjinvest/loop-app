@@ -51,10 +51,10 @@ function apelidoCadastro(v){
  if(v===null||v===undefined)return null;
  if(typeof v!=='string'||v.length>80)throw falha('INVALIDO','Nick inválido');
  const s=v.trim();
- // Até NOVE caracteres no total, somando letras, algarismos e -/_.
- // Preservar a grafia escolhida; exclusividade ignora maiúsculas/minúsculas.
- if(!/^[A-Za-z0-9](?:[A-Za-z0-9_-]{0,7}[A-Za-z0-9])?$/.test(s))
-  throw falha('INVALIDO','Nick: de 1 a 9 caracteres no total');
+ // Nick editável de 1 a 9 LETRAS A-Z, sem números, sinais ou espaços.
+ // Caixa preservada na exibição; a chave minúscula garante unicidade.
+ if(!/^[A-Za-z]{1,9}$/.test(s))
+  throw falha('INVALIDO','Nick: somente letras, de 1 a 9 caracteres');
  return s;
 }
 function senhaValida(senha){

@@ -1117,7 +1117,7 @@ async function main(){
   for(let i=0;i<4;i++){
    const conta=contas.cadastrar({
     nome:'Participante Ficticio Catraca '+(i+4),
-    apelido:'Cat'+(i+4),email:'catraca-'+i+'@exemplo.invalid',senha
+    apelido:['CatQuatro','CatCinco','CatSeis','CatSete'][i],email:'catraca-'+i+'@exemplo.invalid',senha
    });
    contasDaCatraca.push(conta);
    const pedidoId='pedido-ocupacao-catraca-'+i;
@@ -1224,7 +1224,7 @@ async function main(){
    conta:contasDaCatraca[3],largura:1254,celular:false,
    nomeArquivo:'TABULEIRO_VERMELHO_IDENTIFICADO_REAL_COMPUTADOR.png'
   });
-  assert.equal(fotoVermelha.vagas[5].nome,'Cat7',
+  assert.equal(fotoVermelha.vagas[5].nome,'CatSete',
    'A pessoa vê só o próprio nick dentro da bolinha vermelha');
 
   assert.deepEqual(erros,[], 'Erros de execucao no navegador');

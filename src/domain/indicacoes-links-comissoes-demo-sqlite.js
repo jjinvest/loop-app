@@ -14,8 +14,9 @@ function falha(codigo){const e=new Error(codigo);e.codigo=codigo;return e;}
 function apelidoSeguro(s){
  if(typeof s!=='string')throw falha('APELIDO_INVALIDO');
  const a=s.trim();
- // Igual ao cadastro: 1..9 caracteres totais, sem alterar a grafia.
- if(!/^[A-Za-z0-9](?:[A-Za-z0-9_-]{0,7}[A-Za-z0-9])?$/.test(a))
+ // Igual ao cadastro: exclusivamente letras, entre 1 e 9.
+ // A grafia original volta na URL e no nome sob o #ID.
+ if(!/^[A-Za-z]{1,9}$/.test(a))
   throw falha('APELIDO_INVALIDO');
  return a;
 }
@@ -27,7 +28,7 @@ function caminhoLink(token,apelido){
 // continua associado ao nick no SQLite, sem depender do formato do domínio.
 function caminhoLinkCurto(apelido,destino){
  if(!['escritorio','loja'].includes(destino)||typeof apelido!=='string'||
-    !/^[A-Za-z0-9](?:[A-Za-z0-9_-]{0,7}[A-Za-z0-9])?$/.test(apelido))
+    !/^[A-Za-z]{1,9}$/.test(apelido))
   throw falha('LINK_INVALIDO');
  return '/'+destino+'/'+apelido;
 }
@@ -213,7 +214,7 @@ class IndicacoesLinksComissoesDemoSQLite{
   const nickAtivo=this.banco.prepare(
    'SELECT nick_chave FROM admin_links_nicks_reservados_demo WHERE nick_chave=? AND conta_id=?'
   ).get(apelido.toLowerCase(),contaId);
-  const exibirCurto=!!nickAtivo&&/^[A-Za-z0-9](?:[A-Za-z0-9_-]{0,7}[A-Za-z0-9])?$/.test(apelido);
+  const exibirCurto=!!nickAtivo&&/^[A-Za-z]{1,9}$/.test(apelido);
   return {link:caminhoLink(conta.codigoConvite,apelido),
    linkEscritorio:caminhoLinkDestino(conta.codigoConvite,apelido,'escritorio'),
    linkLoja:caminhoLinkDestino(conta.codigoConvite,apelido,'loja'),
