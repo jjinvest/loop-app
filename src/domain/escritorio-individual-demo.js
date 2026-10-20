@@ -130,7 +130,16 @@ class EscritorioIndividualDemo{
     .some(p=>p&&p.participanteId===c.convidadoId&&p.empresa!==true);
    // Nao utilizar p.fila: sua origem A/B permanece depois da entrada no Tabuleiro.
    const localAtual=emA?'A':emB?'B':noTabuleiro?'TABULEIRO':null;
+   // Número da pessoa na fila = ID realmente emitido pelo motor.
+   // Não inventar contador nem usar o número da posição do indicador.
+   const itensFila=[...simulador.filas.filaA,...simulador.filas.filaB]
+    .filter(p=>p.participanteId===c.convidadoId&&p.empresa!==true);
+   const tabuleiroPessoa=[simulador.tabuleiro.centro,...simulador.tabuleiro.vagas]
+    .filter(p=>p&&p.participanteId===c.convidadoId&&p.empresa!==true);
+   const numerosFila=[...new Set([...itensFila,...tabuleiroPessoa].map(p=>p.id))]
+    .filter(Number.isSafeInteger).sort((a,b)=>a-b);
    return {convidadoId:c.convidadoId,nome:c.nome,telefone:c.telefone,
+    numeroFila:numerosFila[0]??null,numerosFila,
     estado:c.compraConfirmadaEm&&c.posicaoAtivada?'ATIVO':'PENDENTE',
      situacao:c.compraConfirmadaEm?(c.posicaoAtivada?'ATIVO':'AGUARDANDO_CONFIRMACAO'):'PENDENTE',
     filaAtual:localAtual,posicaoAtribuidaId:c.posicaoAtribuidaId,
@@ -237,7 +246,12 @@ class EscritorioIndividualDemo{
     return {...p,...referencia,indicacoesRecebidas:vinculos};
    }).sort((a,b)=>a.posicaoId-b.posicaoId),
    mapaCores,equipe,
-   contadoresRede:{totalPosicoes,aDistribuir,jaDistribuidas,aguardandoAtivacao,disponiveisParaVincular},
+   contadoresRede:{
+    // Cada convidado com compra confirmada conta UMA vez,
+    // mesmo que tenha comprado várias posições. Nome legado mantido para APIs.
+    totalIndicacoesConfirmadas:indicacoesValidas.length,
+    totalPosicoes,aDistribuir,jaDistribuidas,aguardandoAtivacao,disponiveisParaVincular
+   },
    // No modo manual, contagem da A SEMPRE POR POSICAO; nunca total do link.
    convitesValidosFilaA:simulador.filas.filaA.map(p=>
     p.indicacoesVinculadas ??

@@ -163,14 +163,18 @@
         <small id="loop03StatusCopiarLinks" role="status" aria-live="polite"></small>
        </div>
      </section>
-     <section id="loop03-rede" class="loop03-pagina" aria-label="Rede e Equipe">
+     <section id="loop03-rede" class="loop03-pagina" aria-label="Minha Rede e Equipe">
       <header class="loop03-titulo-pagina loop03-cabecalho-equipe">
-       <div class="loop03-contador-rede loop03-contador-total"><small>TOTAL DE POSIÇÕES</small><strong id="loop03RedeTotalPosicoes">0</strong><span>Indicações confirmadas</span></div>
+       <div class="loop03-contador-rede loop03-contador-total"><small>TOTAL DE INDICAÇÕES</small><strong id="loop03RedeTotalIndicacoes">0</strong><span>Indicações confirmadas</span><div class="loop03-rede-subtotal"><span>Posições · indicações a distribuir</span><strong id="loop03RedeADistribuir">0</strong></div></div>
        <div class="loop03-titulo-equipe"><small>INDICAÇÕES</small><h2>Minha Equipe</h2><p>Pessoas que entraram pelo seu link</p></div>
-       <div class="loop03-contador-rede loop03-contador-pendentes"><small>POSIÇÕES A DISTRIBUIR</small><strong id="loop03RedeADistribuir">0</strong><span>Aguardando sua escolha</span></div>
+       <div class="loop03-busca-equipe"><label for="loop03BuscarIndicado">Encontrar indicado</label><input id="loop03BuscarIndicado" type="search" autocomplete="off" placeholder="Nome ou nº na fila" aria-controls="loop03ListaEquipe"></div>
       </header>
-      <div id="loop03ListaEquipe" class="loop03-opcoes" aria-live="polite"></div>
+      <div id="loop03ListaEquipe" class="loop03-opcoes" aria-label="Indicações com rolagem vertical" aria-live="polite"></div>
+      <p id="loop03ResultadoBuscaEquipe" class="loop03-busca-vazia" role="status" hidden>Nenhum indicado encontrado.</p>
      </section>
+     <details id="loop03LinksRede" class="loop03-rede-ferramentas loop03-links-aba" hidden>
+      <summary>Meus Links</summary>
+     </details>
      <section id="loop03-financeiro" class="loop03-pagina" aria-label="Financeiro"><header class="loop03-titulo-pagina"><div><small>EXTRATO E SAQUES</small><h2>Financeiro</h2></div></header></section>
      <section id="loop03-perfil" class="loop03-pagina" aria-label="Meu perfil">
       <header class="loop03-titulo-pagina"><div><small>MINHA CONTA · CONFIGURAÇÕES</small><h2>Meu Perfil</h2><p>Seu espaço pessoal no LOOP 3.0.</p></div>
@@ -263,12 +267,9 @@
    const links=resumo.querySelector('.area-indicacoes-participante');
    const bonus=resumo.querySelector('.area-bonus-participante');
    if(links){
-    const util=document.createElement('details');
-    util.className='loop03-rede-ferramentas';
-    const sum=document.createElement('summary');
-    sum.textContent='Meus links e ferramentas de indicação';
-    util.append(sum,links);
-    e('loop03-rede').append(util);
+    // Reutiliza os dois links da conta, sem clonar dados.
+    // O <details> "Meus Links" já está logo abaixo do quadro da equipe.
+    e('loop03LinksRede').append(links);
    }
    if(bonus)e('loop03-financeiro').append(bonus);
    e('loop03-posicoes').append(resumo);
@@ -461,6 +462,7 @@
    if(!area.hidden&&!area.contains(ev.target)&&
     !e('loop03NotificacoesBotao').contains(ev.target))fecharNotificacoes();
   });
+  e('loop03BuscarIndicado').addEventListener('input',filtrarEquipe);
   abrir('home');
   carregarPublicacoes();
   carregarVitrineAKITEMM();
@@ -476,6 +478,7 @@
   const anterior=abaAtual;
   abaAtual=aba;
   for(const item of paginas)e('loop03-'+item).hidden=item!==aba;
+  e('loop03LinksRede').hidden=aba!=='rede';
   for(const b of document.querySelectorAll('[data-loop03-aba]'))
    b.setAttribute('aria-current',b.dataset.loop03Aba===aba?'page':'false');
   e('loop03Sidebar').classList.remove('loop03-aberto');
@@ -953,6 +956,27 @@
    node.classList.toggle('loop03-destaque-posicao',node.dataset.posicaoId===String(selecionada));
   }
  }
+ function filtrarEquipe(){
+  const entrada=e('loop03BuscarIndicado');
+  const consulta=(entrada?.value||'').trim();
+  const normalizar=t=>String(t||'').normalize('NFD')
+   .replace(/[\u0300-\u036f]/g,'').toLocaleLowerCase('pt-BR');
+  const termo=normalizar(consulta);
+  const porNumero=/^#?\d+$/.test(termo);
+  let encontrados=0;
+  for(const cartao of e('loop03ListaEquipe')?.querySelectorAll('.loop03-equipe-linha')||[]){
+   const porNome=!termo||(!porNumero&&normalizar(cartao.dataset.nomeIndicado).includes(termo));
+   const numeros=(cartao.dataset.numerosFila||'').split(',').filter(Boolean);
+   const idConsultado=porNumero?String(Number(termo.replace(/^#/,' '))).trim():'';
+   const porId=porNumero&&numeros.includes(idConsultado);
+   const visivel=porNome||porId;
+   cartao.hidden=!visivel;
+   if(visivel)encontrados++;
+  }
+  const vazio=e('loop03ResultadoBuscaEquipe');
+  vazio.hidden=!consulta||encontrados>0;
+  if(!vazio.hidden)vazio.textContent='Nenhum indicado encontrado para "'+consulta+'".';
+ }
  function atualizar(visao){
   if(!e('loop03Shell'))montar();
   visaoAtual=visao;
@@ -1131,11 +1155,14 @@
   // A esquerda o total so aumenta; a direita somente os vinculos ainda nao
   // atribuidos manualmente (nunca auto-repassados pelo sistema).
   e('loop03SaldoDisponivel').textContent=String(visao.contadoresRede?.disponiveisParaVincular??0);
-  e('loop03RedeTotalPosicoes').textContent=String(visao.contadoresRede?.totalPosicoes??0);
+  e('loop03RedeTotalIndicacoes').textContent=String(
+   visao.contadoresRede?.totalIndicacoesConfirmadas??visao.contadoresRede?.totalPosicoes??0);
   e('loop03RedeADistribuir').textContent=String(visao.contadoresRede?.aDistribuir??0);
   const equipes=e('loop03ListaEquipe');equipes.replaceChildren();
   for(const pessoa of visao.equipe||[]){
    const cartao=document.createElement('div');cartao.className='loop03-opcao loop03-equipe-linha';
+   cartao.dataset.nomeIndicado=pessoa.nome||'';
+   cartao.dataset.numerosFila=(pessoa.numerosFila||[]).join(',');
    const titulo=document.createElement('strong');titulo.textContent=pessoa.nome;
    const dados=document.createElement('small');dados.className='loop03-equipe-informacoes';
    const situacao=pessoa.situacao==='AGUARDANDO_CONFIRMACAO'?'AGUARDANDO CONFIRMAÇÃO':
@@ -1144,7 +1171,8 @@
    if(pessoa.filaAtual==='A'||pessoa.filaAtual==='B'||pessoa.filaAtual==='TABULEIRO'){
     const fila=document.createElement('span');
     fila.className='loop03-fila-equipe-'+pessoa.filaAtual.toLowerCase();
-    fila.textContent=pessoa.filaAtual==='TABULEIRO'?' · Tabuleiro':' · Fila '+pessoa.filaAtual;
+    fila.textContent=(pessoa.filaAtual==='TABULEIRO'?' · Tabuleiro':' · Fila '+pessoa.filaAtual)+
+     (Number.isSafeInteger(pessoa.numeroFila)?' · #'+pessoa.numeroFila:'');
     dados.append(fila);
    }
    if(pessoa.posicaoAtribuidaId!==null){
@@ -1213,6 +1241,7 @@
    equipes.append(cartao);
   }
   if(!visao.equipe?.length)equipes.textContent='Ainda não há pessoas cadastradas pelo seu link.';
+  filtrarEquipe();
   destacarPosicoes();
   const atual=visao.posicoes.find(p=>p.posicaoId===selecionada);
   if(atual)selecionar(atual);

@@ -610,7 +610,7 @@ async function main(){
   await page.locator('#conteudoParticipante').waitFor({state:'visible'});
   await page.locator('#loop03Menu').click();
   await page.locator('#loop03Sidebar [data-loop03-aba="rede"]').click();
-  assert.equal(await page.locator('#loop03RedeTotalPosicoes').innerText(),'1');
+  assert.equal(await page.locator('#loop03RedeTotalIndicacoes').innerText(),'1');
   assert.equal(await page.locator('#loop03RedeADistribuir').innerText(),'1');
   await page.screenshot({path:path.join(pasta,'rede-indicado-aguardando.png'),fullPage:true});
   // Outro navegador, outra conta. Ativar a posicao do indicado nao promove o titular.
@@ -635,7 +635,7 @@ async function main(){
   await page.locator('#conteudoParticipante').waitFor({state:'visible'});
   await page.locator('#loop03Menu').click();
   await page.locator('#loop03Sidebar [data-loop03-aba="rede"]').click();
-  assert.equal(await page.locator('#loop03RedeTotalPosicoes').innerText(),'1');
+  assert.equal(await page.locator('#loop03RedeTotalIndicacoes').innerText(),'1');
   assert.equal(await page.locator('#loop03RedeADistribuir').innerText(),'1');
   const linhaIndicado=page.locator('#loop03ListaEquipe .loop03-equipe-linha')
    .filter({hasText:convidado.nome});
@@ -644,7 +644,7 @@ async function main(){
   page.once('dialog',dialog=>dialog.accept());
   await linhaIndicado.getByRole('button',{name:'Confirmar vínculo definitivo'}).click();
   await page.waitForFunction(()=>document.querySelector('#loop03RedeADistribuir')?.textContent==='0');
-  assert.equal(await page.locator('#loop03RedeTotalPosicoes').innerText(),'1');
+  assert.equal(await page.locator('#loop03RedeTotalIndicacoes').innerText(),'1');
   assert.equal(await page.locator('#loop03RedeADistribuir').innerText(),'0');
   await page.screenshot({path:path.join(pasta,'rede-um-indicado-distribuido.png'),fullPage:true});
   // Confere a nova distribuicao +1 sem nomes nos seis cartoes aprovados.
