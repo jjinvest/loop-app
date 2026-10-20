@@ -2405,7 +2405,7 @@ body.loop03-logado .portal-participante{position:relative;z-index:1}
 #loop03-rede #loop03BuscarIndicado::placeholder{color:#bdafcf}
 #loop03-rede #loop03BuscarIndicado:focus-visible{outline:2px solid #ffd88f;outline-offset:2px}
 #loop03-rede #loop03ListaEquipe{
- max-height:355px!important;min-height:0!important;
+ max-height:420px!important;min-height:0!important;
  overflow-y:auto!important;overflow-x:hidden!important;
  padding:2px 6px 4px 1px!important;
  scrollbar-color:#ab7fdc #1b0d35;
@@ -2428,7 +2428,7 @@ body.loop03-logado .portal-participante{position:relative;z-index:1}
  #loop03-rede .loop03-busca-equipe label{font-size:.66rem}
  #loop03-rede #loop03BuscarIndicado{font-size:.69rem;padding:8px 6px}
  #loop03-rede .loop03-rede-subtotal span{font-size:.58rem!important}
- #loop03-rede #loop03ListaEquipe{max-height:310px!important}
+ #loop03-rede #loop03ListaEquipe{max-height:395px!important}
 }
 
 /* A troca do nick é funcional, mas fica recolhida para "Meus Links"
