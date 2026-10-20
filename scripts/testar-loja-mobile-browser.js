@@ -1396,7 +1396,8 @@ async function main(){
    assert.equal(modelo.centro.cor,'rgb(255, 255, 255)',
     'Centro verde com texto branco');
    assert.equal(await q.locator('#loop03CoroaVisor').isVisible(),true);
-   assert.equal(await q.locator('#loop03CoroaTabuleiro').isVisible(),true);
+   assert.equal(await q.locator('#loop03CoroaTabuleiro').isVisible(),false,
+    'Rodapé removido; coroa real continua visível no visor superior');
    assert.equal(await q.locator('#loop03LetraFila').isVisible(),false);
    await conferirLargura(q,largura,'catraca-preenchida-'+nomeArquivo,{captura:false});
    await q.screenshot({path:path.join(pasta,nomeArquivo),fullPage:true});
