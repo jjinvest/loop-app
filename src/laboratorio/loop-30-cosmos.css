@@ -2141,3 +2141,50 @@ body.loop03-logado .portal-participante{position:relative;z-index:1}
  }
  #loop03-posicoes .loop03-grade-posicoes .loop03-cartao-resumo{min-height:23px}
 }
+
+/* Links verdadeiros de Escritório e AKITEMM no lugar do painel preto anterior. */
+#loop03Shell #loop03-posicoes .loop03-painel-links{
+ display:grid;gap:12px;margin:16px 0!important;padding:15px 16px!important;
+ border:1px solid #b49153!important;border-radius:14px!important;
+ background:#16202dbb!important;box-shadow:none!important;color:#f9edcc!important;
+}
+#loop03Shell #loop03-posicoes .loop03-link-compartilhar{display:grid;gap:5px;min-width:0}
+#loop03Shell #loop03-posicoes .loop03-link-compartilhar>label{
+ color:#f9edcc;font-size:.85rem;font-weight:750;
+}
+#loop03Shell #loop03-posicoes .loop03-campo-link{
+ display:flex;gap:9px;min-width:0;align-items:center;
+}
+#loop03Shell #loop03-posicoes .loop03-campo-link input{
+ flex:1 1 auto;width:100%;min-width:0;padding:11px 12px;border-radius:11px;
+ background:#0d1729!important;color:#f5fcff;border:1px solid #9a8bae;
+ font:500 .79rem system-ui;text-overflow:ellipsis;
+}
+#loop03Shell #loop03-posicoes .loop03-botao-copiar{
+ flex:0 0 44px;width:44px;height:41px;padding:4px;display:grid;place-items:center;
+ border-radius:10px;border:1px solid #c9ab6b;background:#2c2541;color:#f2ddb1;
+ font-size:1.25rem;cursor:pointer;
+}
+#loop03Shell #loop03-posicoes .loop03-botao-copiar:disabled{opacity:.45;cursor:not-allowed}
+#loop03Shell #loop03-posicoes #loop03StatusCopiarLinks:empty{display:none}
+#loop03Shell #loop03-posicoes #loop03StatusCopiarLinks{color:#ccf6dd}
+#loop03-posicoes .loop03-grade-posicoes .loop03-link-termos{
+ flex:1 1 auto;min-width:0;max-width:none;display:flex;align-items:center;
+ min-height:34px;padding:7px 8px!important;border:1px solid #a28bbf!important;
+ border-radius:10px;background:#16112a!important;white-space:nowrap;overflow:hidden;
+ text-overflow:ellipsis;color:#e8d7fd!important;font-size:.77rem;
+}
+#loop03-posicoes .loop03-grade-posicoes .loop03-posicao-vazia .loop03-link-termos{
+ background:#211630!important;
+}
+#loop03-posicoes .loop03-grade-posicoes .loop03-posicao-vazia .loop03-check-cartao{
+ cursor:not-allowed;opacity:.6
+}
+@media(max-width:590px){
+ #loop03-posicoes .loop03-grade-posicoes .loop03-link-termos{
+  min-height:27px;padding:3px 4px!important;font-size:.51rem;
+ }
+ #loop03Shell #loop03-posicoes .loop03-painel-links{padding:10px!important}
+ #loop03Shell #loop03-posicoes .loop03-campo-link input{font-size:.72rem;padding:9px 7px}
+ #loop03Shell #loop03-posicoes .loop03-botao-copiar{flex-basis:37px;width:37px;height:38px}
+}
