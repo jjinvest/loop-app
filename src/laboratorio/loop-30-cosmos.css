@@ -2707,9 +2707,16 @@ body.loop03-logado .portal-participante{position:relative;z-index:1}
  display:inline-flex!important;align-items:center!important;justify-content:center!important;
  color:#ffd46d!important;font-size:1.9rem!important;text-shadow:0 0 11px #f6b352!important;
 }
+#loop03Shell .loop03-visor-numero .loop03-visor-numero-identidade{
+ display:flex!important;grid-row:2!important;flex-direction:column!important;
+ align-items:center!important;justify-content:center!important;
+ min-width:0!important;max-width:100%!important;
+}
+#loop03Shell .loop03-visor-numero .loop03-visor-numero-identidade #loop03Numero{
+ grid-row:auto!important;max-width:100%!important;
+}
 #loop03Shell #loop03NickVisor{
- display:block!important;grid-row:3!important;
- justify-self:center!important;align-self:center!important;
+ display:block!important;grid-row:auto!important;
  min-width:0!important;max-width:100%!important;
  text-align:center!important;overflow:hidden!important;text-overflow:ellipsis!important;
  white-space:nowrap!important;color:#ffeac2!important;
@@ -2718,6 +2725,9 @@ body.loop03-logado .portal-participante{position:relative;z-index:1}
 }
 #loop03Shell #loop03NickVisor:empty{display:none!important}
 #loop03Shell #loop03LetraRodape[hidden]{display:none!important}
+#loop03Shell #loop03LetraRodape.loop03-fila-rodape-b:not([hidden]){
+ background:#e3e8f1!important;color:#181a22!important;border-color:#fff!important;
+}
 @media(max-width:590px){
  #loop03Shell #loop03-posicoes>.loop03-contador-posicoes{
   width:100%!important;min-height:103px!important;padding:9px!important;
