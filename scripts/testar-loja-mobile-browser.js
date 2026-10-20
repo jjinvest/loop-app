@@ -612,6 +612,14 @@ async function main(){
   await page.locator('#loop03Sidebar [data-loop03-aba="rede"]').click();
   assert.equal(await page.locator('#loop03RedeTotalIndicacoes').innerText(),'1');
   assert.equal(await page.locator('#loop03RedeADistribuir').innerText(),'1');
+  const pendenteCompra=page.locator('#loop03ListaEquipe .loop03-equipe-linha')
+   .filter({hasText:convidado.nome});
+  assert.equal(await pendenteCompra.locator('.loop03-equipe-estado').innerText(),'PENDENTE');
+  assert.equal(await pendenteCompra.locator('.loop03-equipe-pendente').count(),1);
+  assert.doesNotMatch(await pendenteCompra.locator('.loop03-equipe-informacoes').innerText(),/AGUARDANDO|ATIVO|PENDENTE/);
+  await pendenteCompra.getByRole('button',{name:'Escolher posição para '+convidado.nome}).click();
+  assert.equal(await pendenteCompra.locator('.loop03-equipe-numeros>button').count(),1);
+  assert.equal(await pendenteCompra.locator('.loop03-equipe-numeros>button:enabled').count(),0);
   await page.screenshot({path:path.join(pasta,'rede-indicado-aguardando.png'),fullPage:true});
   // Outro navegador, outra conta. Ativar a posicao do indicado nao promove o titular.
   const ctxIndicado=await browser.newContext({viewport:{width:390,height:812},
@@ -639,13 +647,27 @@ async function main(){
   assert.equal(await page.locator('#loop03RedeADistribuir').innerText(),'1');
   const linhaIndicado=page.locator('#loop03ListaEquipe .loop03-equipe-linha')
    .filter({hasText:convidado.nome});
+  assert.equal(await linhaIndicado.locator('.loop03-equipe-estado').innerText(),'ATIVO');
+  assert.equal(await linhaIndicado.locator('.loop03-equipe-ativo').count(),1);
   await linhaIndicado.getByRole('button',{name:'Escolher posição para '+convidado.nome}).click();
-  await linhaIndicado.getByRole('combobox',{name:'Posição destinatária'}).selectOption('1');
-  page.once('dialog',dialog=>dialog.accept());
+  assert.equal(await linhaIndicado.locator('.loop03-equipe-numeros>button').count(),1);
+  await linhaIndicado.getByRole('button',{name:/Posição 1 · #/}).click();
+  assert.equal(await linhaIndicado.getByRole('button',{name:'Confirmar vínculo definitivo'}).isVisible(),true);
+  assert.equal(await page.locator('#loop03RedeADistribuir').innerText(),'1');
+  await linhaIndicado.getByRole('button',{name:'Cancelar'}).click();
+  assert.equal(await linhaIndicado.locator('.loop03-equipe-confirmacao').isVisible(),false);
+  assert.equal(await page.locator('#loop03RedeADistribuir').innerText(),'1');
+  await linhaIndicado.getByRole('button',{name:/Posição 1 · #/}).click();
   await linhaIndicado.getByRole('button',{name:'Confirmar vínculo definitivo'}).click();
   await page.waitForFunction(()=>document.querySelector('#loop03RedeADistribuir')?.textContent==='0');
   assert.equal(await page.locator('#loop03RedeTotalIndicacoes').innerText(),'1');
   assert.equal(await page.locator('#loop03RedeADistribuir').innerText(),'0');
+  assert.equal(await page.locator('#loop03RedeUtilizadas').innerText(),'1');
+  const linhaConfirmada=page.locator('#loop03ListaEquipe .loop03-equipe-linha').filter({hasText:convidado.nome});
+  assert.doesNotMatch(await linhaConfirmada.locator('.loop03-equipe-informacoes').innerText(),/Vinculad/);
+  await linhaConfirmada.getByRole('button',{name:'Escolher posição para '+convidado.nome}).click();
+  assert.equal(await linhaConfirmada.locator('.loop03-equipe-numero-vinculado').count(),1);
+  assert.equal(await linhaConfirmada.locator('.loop03-equipe-numeros>button:enabled').count(),0);
   await page.screenshot({path:path.join(pasta,'rede-um-indicado-distribuido.png'),fullPage:true});
   // Confere a nova distribuicao +1 sem nomes nos seis cartoes aprovados.
   const novoIndicado=contas.cadastrar({
@@ -690,15 +712,37 @@ async function main(){
   assert.equal(await page.locator('#loop03SaldoDisponivel').innerText(),'1');
   assert.equal(await page.locator('#loop03OpcoesPosicoes .loop03-adicionar-indicado').count(),6);
   assert.equal(await page.locator('#loop03OpcoesPosicoes .loop03-adicionar-indicado:enabled').count(),1);
-  page.once('dialog',dialog=>dialog.accept());
-  await page.locator('#loop03OpcoesPosicoes .loop03-adicionar-indicado').first().click();
-  await page.waitForFunction(()=>document.querySelector('#loop03SaldoDisponivel')?.textContent==='0');
-  assert.match(await page.locator('#loop03OpcoesPosicoes').innerText(),/Indicações: 2/);
+  // O mesmo botão ⋮ deixa atribuir uma SEGUNDA indicação à mesma posição 1;
+  // escolher não muda nada até o toque explícito no verde Confirmar.
   await page.screenshot({path:path.join(pasta,'minhas-posicoes-botao-mais-um.png'),fullPage:true});
   await page.locator('#loop03Menu').click();
   await page.locator('#loop03Sidebar [data-loop03-aba="rede"]').click();
-  assert.match(await page.locator('#loop03ListaEquipe .loop03-equipe-linha')
-   .filter({hasText:novoIndicado.nome}).innerText(),/Vinculada à posição #1/);
+  const segundaLinha=page.locator('#loop03ListaEquipe .loop03-equipe-linha')
+   .filter({hasText:novoIndicado.nome});
+  await segundaLinha.getByRole('button',{name:'Escolher posição para '+novoIndicado.nome}).click();
+  await segundaLinha.getByRole('button',{name:/Posição 1 · #/}).click();
+  assert.equal(await page.locator('#loop03RedeADistribuir').innerText(),'1');
+  assert.equal(await page.locator('#loop03RedeUtilizadas').innerText(),'1');
+  await segundaLinha.getByRole('button',{name:'Confirmar vínculo definitivo'}).click();
+  await page.waitForFunction(()=>document.querySelector('#loop03RedeADistribuir')?.textContent==='0');
+  assert.equal(await page.locator('#loop03RedeUtilizadas').innerText(),'2');
+  assert.match(await page.locator('#loop03OpcoesPosicoes').innerText(),/Indicações: 2/);
+  const linha2Confirmada=page.locator('#loop03ListaEquipe .loop03-equipe-linha')
+   .filter({hasText:novoIndicado.nome});
+  await linha2Confirmada.getByRole('button',{name:'Escolher posição para '+novoIndicado.nome}).click();
+  assert.equal(await linha2Confirmada.locator('.loop03-equipe-numero-vinculado').count(),1);
+  assert.equal(await linha2Confirmada.locator('.loop03-equipe-numeros>button:enabled').count(),0);
+  await page.reload({waitUntil:'networkidle'});
+  await page.locator('#conteudoParticipante').waitFor({state:'visible'});
+  await page.locator('#loop03Menu').click();
+  await page.locator('#loop03Sidebar [data-loop03-aba="rede"]').click();
+  assert.equal(await page.locator('#loop03RedeUtilizadas').innerText(),'2');
+  assert.equal(await page.locator('#loop03RedeADistribuir').innerText(),'0');
+  await page.locator('#loop03ListaEquipe .loop03-equipe-linha')
+   .filter({hasText:novoIndicado.nome})
+   .getByRole('button',{name:'Escolher posição para '+novoIndicado.nome}).click();
+  assert.equal(await page.locator('#loop03ListaEquipe .loop03-equipe-linha')
+   .filter({hasText:novoIndicado.nome}).locator('.loop03-equipe-numero-vinculado:disabled').count(),1);
   // A barra lateral possui animacao de 0,2 s no mobile: a captura deve
   // mostrar a aba Minha Equipe, nao uma sobreposicao transitoria do menu.
   await page.waitForFunction(()=>
@@ -1557,10 +1601,11 @@ async function main(){
    assert.equal(await pag.locator('#loop03-rede .loop03-rede-subtotal span').innerText(),
     'Indicações a distribuir');
    assert.equal(await pag.locator('#loop03ListaEquipe .loop03-equipe-linha').count(),4);
-   for(let i=0;i<4;i++)
-    assert.equal(await pag.locator('#loop03ListaEquipe .loop03-equipe-linha').nth(i)
-     .locator('.loop03-ordem-indicacao').innerText(),
-      ['Primeira indicação','Segunda indicação','Terceira indicação','Quarta indicação'][i]);
+   assert.equal(await pag.locator('#loop03ListaEquipe .loop03-ordem-indicacao').count(),0);
+   assert.equal(await pag.locator('#loop03RedeUtilizadas').innerText(),'2');
+   assert.equal(await pag.locator('#loop03RedeADistribuir').innerText(),'2');
+   assert.equal(await pag.locator('#loop03ListaEquipe .loop03-equipe-estado.loop03-equipe-ativo').count(),4);
+   assert.equal(await pag.locator('#loop03ListaEquipe .loop03-equipe-numeros').count(),4);
    await pag.locator('#loop03LinksRede summary').first().click();
    assert.equal(await pag.locator('#apelidoLinkParticipante').isVisible(),true);
    assert.equal(await pag.locator('#salvarApelidoLinkParticipante').innerText(),'Salvar');
@@ -1602,8 +1647,18 @@ async function main(){
     await pag.locator('#loop03Menu').click();
     await pag.locator('#loop03Sidebar [data-loop03-aba="rede"]').click();
    }
+   // Capturar no MESMO sistema verdadeiro a janelinha com escolha e a
+   // confirmação verde/cancelar, sem efetuar o vínculo do terceiro indicado.
+   const terceiraLinha=pag.locator('#loop03ListaEquipe .loop03-equipe-linha').nth(2);
+   await terceiraLinha.getByRole('button',{name:'Escolher posição para Terceira Indicacao Teste'}).click();
+   assert.equal(await terceiraLinha.locator('.loop03-equipe-numeros>button').count(),1);
+   await terceiraLinha.getByRole('button',{name:/Posição 1 · #/}).click();
+   assert.equal(await terceiraLinha.getByRole('button',{name:'Confirmar vínculo definitivo'}).isVisible(),true);
+   assert.equal(await terceiraLinha.getByRole('button',{name:'Cancelar'}).isVisible(),true);
    await conferirLargura(pag,width,'rede-quatro-'+width,{captura:false});
    await pag.screenshot({path:path.join(pasta,filename),fullPage:true});
+   await terceiraLinha.getByRole('button',{name:'Cancelar'}).click();
+   assert.equal(await pag.locator('#loop03RedeADistribuir').innerText(),'2');
    await cx.close();
   }
   assert.deepEqual(erros,[], 'Erros de execucao no navegador');
