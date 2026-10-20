@@ -36,8 +36,13 @@ test('segundo caixa deduz bonificacao confirmada, dourada e gestao sem utilizar 
   cpfFicticio:'11144477735',aceitaTermos:true,versaoTermos:'LOOP-DEMO-V1'});
  assert.equal(ativacao.adesaoComissoesAtivada,true);
  const bonus=await pagar(2,convidado,3);
- assert.equal(bonus.comissaoSimuladaCentavos,2500);
- assert.equal(bonus.percentualBonusAplicado,10);
+ assert.equal(bonus.comissaoSimuladaCentavos,0);
+ const confirmado=new AdesoesPosicoesDemoSQLite({ponte,
+  relogio:()=> '2037-06-03T12:30:00.000Z'}).ativar({
+   contaId:convidado.contaId,cpfFicticio:'12345678909',
+   aceitaTermos:true,versaoTermos:'LOOP-DEMO-V1'});
+ assert.equal(confirmado.bonificacoes[0].valorComissaoCentavos,2500);
+ assert.equal(confirmado.bonificacoes[0].taxaPercentual,10);
  // 10 outros pedidos para formar os saldos 12 x R$250 = R$3000.
  for(let i=3;i<=12;i++){
   const c=contas.cadastrar({nome:'Pessoa adicional '+i,
