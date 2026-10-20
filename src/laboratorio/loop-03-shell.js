@@ -466,6 +466,7 @@
  }
  function abrir(aba){
   if(!paginas.includes(aba))return;
+  if(aba!==abaAtual)fecharSeletorPosicao();
   fecharTermosPosicao();
   fecharPerfilSobreposto();
   fecharDetalheIndicador();
@@ -659,15 +660,40 @@
   const painel=e('loop03SeletorPosicao');
   if(!painel)return;
   painel.hidden=true;
+  painel.classList.remove('loop03-seletor-posicoes-inline');
+  painel.setAttribute('aria-modal','true');
   e('loop03AbrirEscolhaPosicao').setAttribute('aria-expanded','false');
  }
- function abrirSeletorPosicao(ev){
+ function abrirSeletorPosicao(){
   if(!visaoAtual)return;
+  const painel=e('loop03SeletorPosicao');
+  const inline=abaAtual==='posicoes';
   const area=e('loop03ListaEscolha');area.replaceChildren();
   const posicoes=visaoAtual.posicoes||[];
-  if(posicoes.length===0){
-   const vazia=document.createElement('p');
-   vazia.className='loop03-escolha-vazia';
+  painel.classList.toggle('loop03-seletor-posicoes-inline',inline);
+  painel.setAttribute('aria-modal',inline?'false':'true');
+  e('loop03EscolhaTitulo').textContent=inline?'Escolha uma das suas seis posições':'Escolher posição para acompanhar';
+  if(inline){
+   // Exibir os seis slots, mas jamais permitir selecionar uma vaga vazia.
+   for(let i=0;i<6;i++){
+    const p=posicoes[i];
+    const botao=document.createElement('button');botao.type='button';
+    botao.className='loop03-escolha-item';botao.textContent=String(i+1);
+    botao.dataset.indice=String(i+1);
+    botao.disabled=!p;
+    botao.title=p?'Posição '+(i+1)+' · #'+p.posicaoId:'Posição '+(i+1)+' ainda vazia';
+    botao.setAttribute('aria-label',botao.title);
+    botao.setAttribute('aria-pressed',String(!!p&&p.posicaoId===selecionada));
+    if(p)botao.addEventListener('click',()=>{
+     selecionar(p);
+     // Em Minhas Posições, deixar a régua aberta junto ao detalhe da compra.
+     for(const outro of area.querySelectorAll('button'))
+      outro.setAttribute('aria-pressed',String(outro===botao));
+    });
+    area.append(botao);
+   }
+  }else if(!posicoes.length){
+   const vazia=document.createElement('p');vazia.className='loop03-escolha-vazia';
    vazia.textContent='Você ainda não possui posições. Elas serão criadas somente após uma compra elegível com pagamento confirmado.';
    area.append(vazia);
   }else{
@@ -678,17 +704,13 @@
     botao.textContent='Posição '+(i+1)+' · #'+p.posicaoId+' · '+
      (p.statusAdesao==='PENDENTE'?'Aguardando confirmação':statusPosicao(p));
     botao.setAttribute('aria-pressed',String(p.posicaoId===selecionada));
-    botao.addEventListener('click',()=>{
-     selecionar(p); // Somente estado de visualizacao; nao cria e nao altera posicoes.
-     fecharSeletorPosicao();
-    });
+    botao.addEventListener('click',()=>{selecionar(p);fecharSeletorPosicao();});
     area.append(botao);
    }
   }
-  e('loop03SeletorPosicao').hidden=false;
+  painel.hidden=false;
   e('loop03AbrirEscolhaPosicao').setAttribute('aria-expanded','true');
-  const foco=area.querySelector('button')||e('loop03FecharEscolha');
-  foco.focus();
+  (area.querySelector('button:not(:disabled)')||e('loop03FecharEscolha')).focus();
  }
  function identidadeDaPosicao(p){
   const dados=e('loop03DadosPosicaoLateral');
@@ -769,8 +791,16 @@
   // O painel inferior é da conta: os links não mudam ao selecionar uma posição.
   for(const no of document.querySelectorAll('[data-posicao-id]'))
    no.classList.toggle('loop03-destaque-posicao',no.dataset.posicaoId===String(selecionada));
-  for(const no of document.querySelectorAll('[data-loop03-posicao]'))
-   no.setAttribute('aria-pressed',no.dataset.loop03Posicao===String(selecionada)?'true':'false');
+  for(const no of document.querySelectorAll('[data-loop03-posicao]')){
+   const ativo=no.dataset.loop03Posicao===String(selecionada);
+   no.setAttribute('aria-pressed',ativo?'true':'false');
+   no.closest('.loop03-cartao-posicao')?.classList.toggle('loop03-cartao-selecionado',ativo);
+  }
+  // A régua 1..6 fica sincronizada sem fechá-la.
+  for(const no of e('loop03ListaEscolha')?.querySelectorAll('[data-indice]')||[]){
+   const p=visaoAtual?.posicoes[Number(no.dataset.indice)-1];
+   no.setAttribute('aria-pressed',String(!!p&&p.posicaoId===selecionada));
+  }
  }
  let termosPosicaoId=null;
  const aceitesPosicao=new Map();
@@ -823,6 +853,66 @@
    'Termos da posição '+indice+' — espaço disponível';
   e('loop03TermosFundo').hidden=false;
   e('loop03TermosAceitar').focus();
+ }
+ function formatarPrecoCompra(centavos){
+  if(!Number.isSafeInteger(centavos)||centavos<0)return '—';
+  return new Intl.NumberFormat('pt-BR',{style:'currency',currency:'BRL'})
+   .format(centavos/100);
+ }
+ function preencherCompraPosicao(destino,p,visao){
+  destino.replaceChildren();
+  const compras=visao.historicoLoja?.pedidos||[];
+  // Fonte: pedido da conta autenticada + vínculo definitivo ao posicaoId.
+  const pedido=compras.find(c=>Array.isArray(c.posicaoIds)&&
+   c.posicaoIds.includes(p.posicaoId));
+  if(!pedido){
+   const sem=document.createElement('p');sem.className='loop03-compra-sem-registro';
+   sem.textContent='Os itens originais desta posição ainda não estão disponíveis no histórico.';
+   destino.append(sem);return;
+  }
+  const titulo=document.createElement('div');titulo.className='loop03-compra-titulo';
+  titulo.textContent='Produtos desta posição';destino.append(titulo);
+  if(!pedido.itens?.length){
+   const sem=document.createElement('p');sem.className='loop03-compra-sem-registro';
+   sem.textContent='Compra anterior registrada, sem lista detalhada de produtos.';
+   destino.append(sem);
+  }else{
+   for(const item of pedido.itens){
+    const linha=document.createElement('div');linha.className='loop03-produto-comprado';
+    const imagem=document.createElement('div');imagem.className='loop03-produto-imagem';
+    const fallback=document.createElement('span');
+    fallback.textContent=item.tipo==='PDF'?'PDF':'▣';
+    fallback.setAttribute('aria-label',item.tipo==='PDF'?'Ícone de PDF sem foto cadastrada':'Produto sem foto cadastrada');
+    imagem.append(fallback);
+    if(typeof item.imagemProduto==='string'&&
+      /^\/imagens\/catalogo\/[a-z0-9_-]+\.(?:png|jpe?g|webp)$/.test(item.imagemProduto)){
+     const foto=document.createElement('img');foto.src=item.imagemProduto;
+     foto.alt='Imagem cadastrada de '+item.nome;foto.loading='lazy';
+     foto.addEventListener('load',()=>{fallback.hidden=true;});
+     foto.addEventListener('error',()=>{foto.remove();fallback.hidden=false;});
+     imagem.prepend(foto);
+    }
+    const dados=document.createElement('div');dados.className='loop03-produto-dados';
+    const nome=document.createElement('strong');nome.textContent=item.nome;
+    const quantidade=document.createElement('small');
+    quantidade.textContent='Quantidade: '+item.quantidade;
+    dados.append(nome,quantidade);
+    const valor=document.createElement('span');valor.className='loop03-produto-preco';
+    valor.textContent=formatarPrecoCompra(item.subtotalCentavos);
+    linha.append(imagem,dados,valor);destino.append(linha);
+   }
+  }
+  const total=document.createElement('div');total.className='loop03-compra-total';
+  const legenda=document.createElement('span');
+  legenda.textContent='Valor pago no pedido'+
+   (pedido.posicaoIds?.length>1?' que gerou estas posições':'');
+  const valor=document.createElement('strong');valor.textContent=formatarPrecoCompra(pedido.valorCentavos);
+  total.append(legenda,valor);destino.append(total);
+  const observacao=document.createElement('small');
+  observacao.className='loop03-compra-historica';
+  observacao.textContent='Valores registrados na data da compra'+
+    (pedido.origem==='CARRINHO'?' · laboratório':' · compra anterior');
+  destino.append(observacao);
  }
  function destacarPosicoes(){
   for(const node of document.querySelectorAll('.mapa-fila-posicoes-demo .selo-posicao-demo, .mapa-tabuleiro-posicoes-demo .selo-posicao-demo')){
@@ -877,8 +967,15 @@
     cabecalho.setAttribute('aria-pressed',String(p.posicaoId===selecionada));
     cabecalho.addEventListener('click',()=>selecionar(p));
    }
-   const rotulo=document.createElement('span');rotulo.className='loop03-cartao-rotulo';
+   const rotulo=document.createElement(p?'button':'span');
+   rotulo.className='loop03-cartao-rotulo'+(p?' loop03-compra-gatilho':'');
    rotulo.textContent='POSIÇÃO '+(indice+1);
+   if(p){
+    rotulo.type='button';
+    rotulo.setAttribute('aria-expanded','false');
+    rotulo.setAttribute('aria-controls','loop03CompraPosicao'+p.posicaoId);
+    rotulo.setAttribute('aria-label','Mostrar produtos e valores pagos da posição '+(indice+1));
+   }
    const miolo=document.createElement('div');miolo.className='loop03-cartao-miolo';
    const selo=document.createElement('span');selo.className='loop03-cartao-selo';
    selo.textContent=estado==='centro'?'C':estado==='a'?'A':estado==='b'?'B':
@@ -890,7 +987,27 @@
    situacao.textContent=p?'':'SEM POSIÇÃO';
    situacao.hidden=!!p;
    identidade.append(numero,situacao);miolo.append(selo,identidade);
-   cabecalho.append(rotulo,miolo);
+   if(p){
+    cartao.prepend(rotulo);
+    cabecalho.append(miolo);
+    const detalhe=document.createElement('div');detalhe.className='loop03-compra-expandida';
+    detalhe.id='loop03CompraPosicao'+p.posicaoId;
+    detalhe.hidden=true;
+    preencherCompraPosicao(detalhe,p,visao);
+    rotulo.addEventListener('click',()=>{
+     selecionar(p);
+     const abrir=detalhe.hidden;
+     // Apenas um detalhamento de compra aberto por vez.
+     for(const outro of cartoes.querySelectorAll('.loop03-compra-expandida')){
+      outro.hidden=true;
+      const trigger=outro.closest('.loop03-cartao-posicao')?.querySelector('.loop03-compra-gatilho');
+      if(trigger)trigger.setAttribute('aria-expanded','false');
+     }
+     detalhe.hidden=!abrir;
+     rotulo.setAttribute('aria-expanded',String(abrir));
+    });
+    cartao.insertBefore(detalhe,cabecalho.nextSibling);
+   }else cabecalho.append(rotulo,miolo);
    {
     // Sempre o mesmo alinhamento: primeira posição mostra CPF,
     // demais posições mostram link para o texto, todas com quadradinho à direita.

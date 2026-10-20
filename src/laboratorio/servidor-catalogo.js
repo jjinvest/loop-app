@@ -185,7 +185,7 @@ function criarAppAdminLaboratorio({ repositorio, segredo, webhookDemo } = {}) {
     });
     app.use('/api/laboratorio/participante',criarRouterParticipanteDemo({
       contas:contasDemo,ponte:ponteDemo,sessoes:sessoesDemo,adesoes:adesoesDemo,
-      carrinhos:carrinhosLojaLoopDemo,saques:saquesDemo,
+      carrinhos:carrinhosLojaLoopDemo,catalogo:repositorio,saques:saquesDemo,
       obterLivroProvisoesV6:()=>circuitoPonteDemo?.livro||null,
       obterRetornoSaqueCentroDemo:()=>retornoSaqueCentroDemo,
       entregadoresPerfil:criarEntregadoresPerfilAmbiente()

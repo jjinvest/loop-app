@@ -11,7 +11,7 @@ const ESTADOS=Object.freeze({
  ESTORNO:'ESTORNO_EM_CONFERENCIA',
  CONFERIR:'SINCRONIZACAO_PENDENTE'
 });
-function montarHistoricoLojaDemo({visao,carrinhos}={}){
+function montarHistoricoLojaDemo({visao,carrinhos,catalogo=null}={}){
  if(!visao||!Array.isArray(visao.compras)||
    !Array.isArray(visao.comprasLojaSemLoop)||!Array.isArray(carrinhos))
   throw new TypeError('Historico pessoal e carrinhos validos obrigatorios');
@@ -69,9 +69,18 @@ function montarHistoricoLojaDemo({visao,carrinhos}={}){
   salvar({
    pedidoId:p.pedidoId,origem:'CARRINHO',
    valorCentavos:p.totalCentavos,
-   itens:p.itens.map(i=>({
-    nome:i.nome,quantidade:i.quantidade,subtotalCentavos:i.subtotalCentavos
-   })),
+   itens:p.itens.map(i=>{
+    // Histórico do catálogo na REVISÃO da compra, sem projetar preço atual.
+    // Uma foto ausente vira ícone PDF/produto no browser, jamais imagem fictícia.
+    const versoes=catalogo&&typeof catalogo.historico==='function'?
+     catalogo.historico(i.produtoId):[];
+    const foto=versoes.find(v=>v.revisao===i.revisao)?.depois?.fotos?.[0];
+    const imagem=(typeof foto==='string'&&
+     /^\/imagens\/catalogo\/[a-z0-9_-]+\.(?:png|jpe?g|webp)$/.test(foto))?foto:null;
+    return {produtoId:i.produtoId,nome:i.nome,tipo:i.tipo,
+     quantidade:i.quantidade,unitarioCentavos:i.unitarioCentavos,
+     subtotalCentavos:i.subtotalCentavos,imagemProduto:imagem};
+   }),
    estado,posicaoId:confirmacao?.posicaoId??null,
    posicaoIds:confirmacao?.posicaoIds??[],
    registradoEm:p.criadoEm

@@ -2188,3 +2188,98 @@ body.loop03-logado .portal-participante{position:relative;z-index:1}
  #loop03Shell #loop03-posicoes .loop03-campo-link input{font-size:.72rem;padding:9px 7px}
  #loop03Shell #loop03-posicoes .loop03-botao-copiar{flex-basis:37px;width:37px;height:38px}
 }
+
+/* Minhas Posições: régua horizontal 1–6 sem bloquear os cartões.
+   No Tabuleiro, o seletor modal previamente aprovado não muda. */
+#loop03Shell #loop03SeletorPosicao.loop03-seletor-posicoes-inline{
+ position:static!important;inset:auto!important;z-index:auto!important;
+ display:block!important;background:transparent!important;padding:0!important;
+ margin:13px 0 8px!important;
+}
+#loop03Shell #loop03SeletorPosicao.loop03-seletor-posicoes-inline .loop03-seletor-janela{
+ display:flex;flex-direction:column;gap:8px;box-sizing:border-box;
+ max-width:none!important;width:100%!important;max-height:none!important;
+ padding:12px 16px!important;overflow:visible!important;
+ background:linear-gradient(110deg,#20152f,#181e32)!important;
+ border:1px solid #caa05f!important;border-radius:14px!important;
+ box-shadow:0 7px 24px #0009!important;
+}
+#loop03Shell #loop03SeletorPosicao.loop03-seletor-posicoes-inline .loop03-seletor-topo h2{
+ font-size:.92rem!important;
+}
+#loop03Shell #loop03SeletorPosicao.loop03-seletor-posicoes-inline .loop03-seletor-janela>p{
+ display:none!important;
+}
+#loop03Shell #loop03SeletorPosicao.loop03-seletor-posicoes-inline .loop03-lista-escolha{
+ display:grid!important;grid-template-columns:repeat(6,minmax(0,1fr))!important;gap:9px!important;
+}
+#loop03Shell #loop03SeletorPosicao.loop03-seletor-posicoes-inline .loop03-escolha-item{
+ display:grid;place-items:center;min-width:0;min-height:39px;
+ text-align:center;padding:6px 2px;font-weight:800;font-size:1rem;
+ border-radius:10px;background:linear-gradient(135deg,#302345,#15172c);
+ color:#e8d9fc;border:1px solid #79628f;
+}
+#loop03Shell #loop03SeletorPosicao.loop03-seletor-posicoes-inline .loop03-escolha-item[aria-pressed=true]{
+ border-color:#ffe195!important;background:#795a32!important;color:#fff5cb!important;
+ box-shadow:0 0 13px #efbd5b91;outline:1px solid #fbe3a0;
+}
+#loop03Shell #loop03SeletorPosicao.loop03-seletor-posicoes-inline .loop03-escolha-item:disabled{
+ opacity:.47;cursor:default;
+}
+#loop03-posicoes .loop03-compra-gatilho{
+ display:block;width:100%;border:0;cursor:pointer;text-align:left;font:inherit;
+}
+#loop03-posicoes .loop03-compra-gatilho::after{
+ content:'⌄';float:right;font-size:1.1rem;line-height:.8;color:inherit;opacity:.9;
+}
+#loop03-posicoes .loop03-compra-gatilho[aria-expanded=true]::after{
+ content:'⌃';
+}
+#loop03-posicoes .loop03-cartao-posicao.loop03-cartao-selecionado{
+ border-color:#ffdc81!important;outline:2px solid #f5cb6a!important;outline-offset:1px;
+ box-shadow:inset 0 0 0 3px #72501f,0 0 20px #f7c36a9c!important;
+}
+#loop03-posicoes .loop03-compra-expandida[hidden]{display:none!important}
+#loop03-posicoes .loop03-compra-expandida{
+ display:grid;gap:9px;min-width:0;order:0;
+ border:1px solid #a98554;border-radius:12px;padding:10px;
+ background:linear-gradient(145deg,#231934,#101826);color:#f7eef8;
+}
+#loop03-posicoes .loop03-compra-titulo{font-weight:850;font-size:.78rem;color:#ffe6ad}
+#loop03-posicoes .loop03-produto-comprado{
+ display:grid;grid-template-columns:42px minmax(0,1fr) auto;gap:8px;align-items:center;
+ padding:5px 0;border-bottom:1px solid #ffffff1c;
+}
+#loop03-posicoes .loop03-produto-comprado:last-of-type{border-bottom:0}
+#loop03-posicoes .loop03-produto-imagem{
+ display:grid;place-items:center;position:relative;width:40px;height:44px;
+ border-radius:8px;background:linear-gradient(145deg,#a5394e,#571729);
+ color:#fff4e7;border:1px solid #e4bb93;overflow:hidden;
+}
+#loop03-posicoes .loop03-produto-imagem span{font-weight:950;font-size:.7rem;letter-spacing:.02em}
+#loop03-posicoes .loop03-produto-imagem img{
+ width:100%;height:100%;position:absolute;inset:0;object-fit:cover;
+}
+#loop03-posicoes .loop03-produto-dados{display:grid;gap:3px;min-width:0}
+#loop03-posicoes .loop03-produto-dados strong{font-size:.72rem;line-height:1.28;overflow-wrap:anywhere}
+#loop03-posicoes .loop03-produto-dados small{color:#cebcd9;font-size:.67rem}
+#loop03-posicoes .loop03-produto-preco{font-size:.74rem;font-weight:800;color:#fff0ba;white-space:nowrap}
+#loop03-posicoes .loop03-compra-total{display:flex;gap:6px;align-items:center;justify-content:space-between}
+#loop03-posicoes .loop03-compra-total span{font-size:.7rem;color:#d6c9e6}
+#loop03-posicoes .loop03-compra-total strong{font-size:.85rem;color:#ffe9a2}
+#loop03-posicoes .loop03-compra-historica{font-size:.58rem;color:#9d98b5}
+#loop03-posicoes .loop03-compra-sem-registro{font-size:.73rem;color:#e9dff2;line-height:1.45;margin:0}
+@media(max-width:590px){
+ #loop03Shell #loop03SeletorPosicao.loop03-seletor-posicoes-inline .loop03-seletor-janela{
+  padding:8px!important;
+ }
+ #loop03Shell #loop03SeletorPosicao.loop03-seletor-posicoes-inline .loop03-lista-escolha{gap:4px!important}
+ #loop03Shell #loop03SeletorPosicao.loop03-seletor-posicoes-inline .loop03-escolha-item{
+  min-height:31px;padding:3px 0!important;font-size:.77rem;
+ }
+ #loop03-posicoes .loop03-compra-expandida{padding:6px!important;gap:6px}
+ #loop03-posicoes .loop03-produto-comprado{grid-template-columns:1fr;gap:2px}
+ #loop03-posicoes .loop03-produto-imagem{width:29px;height:30px}
+ #loop03-posicoes .loop03-produto-preco{font-size:.64rem}
+ #loop03-posicoes .loop03-produto-dados strong{font-size:.62rem}
+}
