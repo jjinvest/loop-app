@@ -1300,7 +1300,7 @@ async function main(){
    assert.match(await pagina.locator('.loop03-compra-expandida:not([hidden])').innerText(),
     /Guia de Exercícios em PDF/);
    assert.match(await pagina.locator('.loop03-compra-expandida:not([hidden])').innerText(),
-    /R\\$\\s?250,00/);
+    /R\$\s?250,00/);
    // Abrir régua 1..6 no topo, selecionar o 2, preservar régua aberta.
    await pagina.locator('#loop03AbrirEscolhaPosicao').click();
    assert.equal(await pagina.locator('#loop03SeletorPosicao').isVisible(),true);
@@ -1319,9 +1319,9 @@ async function main(){
    assert.equal(await detalhes.locator('.loop03-produto-comprado').count(),2);
    assert.match(await detalhes.innerText(),/Curso Móvel Básico/);
    assert.match(await detalhes.innerText(),/Curso Móvel Completo/);
-   assert.match(await detalhes.innerText(),/R\\$\\s?100,00/);
-   assert.match(await detalhes.innerText(),/R\\$\\s?150,00/);
-   assert.match(await detalhes.innerText(),/R\\$\\s?250,00/);
+   assert.match(await detalhes.innerText(),/R\$\s?100,00/);
+   assert.match(await detalhes.innerText(),/R\$\s?150,00/);
+   assert.match(await detalhes.innerText(),/R\$\s?250,00/);
    await conferirLargura(pagina,largura,'aberturas-posicoes-'+largura,{captura:false});
    // Captura fullPage REAL COM DOIS PAINÉIS ABERTOS: seletor + detalhe da compra.
    await pagina.screenshot({path:path.join(pasta,arquivo),fullPage:true});
