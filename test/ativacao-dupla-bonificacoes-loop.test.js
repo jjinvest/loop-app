@@ -43,8 +43,14 @@ test('duas ativacoes: compra libera link, CPF e termos liberam bonus futuros, ca
  assert.equal(ponte.linksComissoes.habilitadoBonificacoes(titular.contaId,dia(4)),true);
  assert.throws(()=>adesoes.ativar(dados),e=>e.codigo==='ADESAO_JA_REALIZADA');
  const primeiro=await comprar('pedido-indicado-bonus-basico',indicado,25000,4);
- assert.equal(primeiro.comissaoSimuladaCentavos,2500);
- assert.equal(primeiro.percentualBonusAplicado,10);
+ assert.equal(primeiro.comissaoSimuladaCentavos,0,'AZUL não gera bonificação');
+ const adesoesComprador=new AdesoesPosicoesDemoSQLite({ponte,
+  relogio:()=>dia(4).replace('T12:00','T12:30')});
+ const aceiteComprador=adesoesComprador.ativar({contaId:indicado.contaId,
+  cpfFicticio:'12345678909',aceitaTermos:true,versaoTermos:'LOOP-DEMO-V1'});
+ assert.equal(aceiteComprador.ativadas,2);
+ assert.equal(aceiteComprador.bonificacoes.length,2);
+ assert.deepEqual(aceiteComprador.bonificacoes.map(x=>x.valorComissaoCentavos),[2500,2500]);
  const cadeira=await comprar('pedido-cadeira-indicador',titular,25000,5);
  assert.equal(cadeira.statusAdesao,'ATIVA');
  ponte.linksComissoes.taxas.agora=()=>dia(5).replace('T12:00','T13:00');
@@ -55,8 +61,8 @@ test('duas ativacoes: compra libera link, CPF e termos liberam bonus futuros, ca
  const retroativo=await comprar('pedido-indicado-retroativo',indicado,25000,2);
  assert.equal(retroativo.comissaoSimuladaCentavos,0);
  const bonus=ponte.linksComissoes.comissoesDaConta(titular.contaId);
- assert.equal(bonus.totalSimuladoCentavos,10000);
- assert.equal(bonus.quantidade,2);
+ assert.equal(bonus.totalSimuladoCentavos,12500);
+ assert.equal(bonus.quantidade,3);
  assert.equal(bonus.cpfTermosConfirmados,true);
  assert.equal(bonus.solicitarSaqueSimuladoHabilitado,true);
  assert.equal(bonus.saqueDisponivelReal,false);
