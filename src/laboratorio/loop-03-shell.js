@@ -1182,10 +1182,12 @@
   e('loop03RedeUtilizadas').textContent=String(visao.contadoresRede?.jaDistribuidas??0);
   const equipes=e('loop03ListaEquipe');equipes.replaceChildren();
   for(const [indice,pessoa] of (visao.equipe||[]).entries()){
+   const numeroIndicacao=Number.isSafeInteger(pessoa.numeroIndicacao)&&pessoa.numeroIndicacao>0?
+    pessoa.numeroIndicacao:indice+1;
    const cartao=document.createElement('div');cartao.className='loop03-opcao loop03-equipe-linha';
    // Ordem histórica de cadastro recebida do SQLite, inclusive indicados sem compra.
    // Não reiniciar a contagem com a fila, o tabuleiro ou vínculos já realizados.
-   cartao.dataset.numeroIndicacao=String(indice+1);
+   cartao.dataset.numeroIndicacao=String(numeroIndicacao);
    cartao.dataset.nomeIndicado=pessoa.nome||'';
    cartao.dataset.numerosFila=(pessoa.numerosFila||[]).join(',');
    const nomeVisivel=typeof pessoa.nome==='string'&&pessoa.nome.trim()?pessoa.nome.trim():'...';
@@ -1207,9 +1209,9 @@
    // nunca iniciais nem número da posição de cada cliente no motor.
    const avatar=document.createElement('span');avatar.className='loop03-equipe-avatar';
    avatar.setAttribute('aria-hidden','true');
-   avatar.textContent=String(indice+1);
-   if(indice+1>=1000)avatar.classList.add('loop03-equipe-avatar-mil');
-   if(indice+1>=100000)avatar.classList.add('loop03-equipe-avatar-longo');
+   avatar.textContent=String(numeroIndicacao);
+   if(numeroIndicacao>=1000)avatar.classList.add('loop03-equipe-avatar-mil');
+   if(numeroIndicacao>=100000)avatar.classList.add('loop03-equipe-avatar-longo');
    const faixa=document.createElement('span');
    faixa.className='loop03-equipe-estado '+(situacao==='ATIVO'?'loop03-equipe-ativo':
     situacao==='PENDENTE'?'loop03-equipe-pendente':'loop03-equipe-inativo');
@@ -1219,12 +1221,12 @@
    // com um numero por posicao real do titular, inclusive nao confirmada.
    const botao=document.createElement('button');botao.type='button';
    botao.textContent='⋮';botao.className='loop03-equipe-mais';
-   botao.setAttribute('aria-label','Escolher posição para '+(pessoa.nome||'indicação '+(indice+1)));
+   botao.setAttribute('aria-label','Escolher posição para '+(pessoa.nome||'indicação '+numeroIndicacao));
    botao.setAttribute('aria-expanded','false');
    const escolhas=document.createElement('div');
    escolhas.className='loop03-equipe-escolhas';escolhas.hidden=true;
    escolhas.setAttribute('role','group');
-   escolhas.setAttribute('aria-label','Posições do titular para '+(pessoa.nome||'indicação '+(indice+1)));
+   escolhas.setAttribute('aria-label','Posições do titular para '+(pessoa.nome||'indicação '+numeroIndicacao));
    const legenda=document.createElement('strong');
    legenda.className='loop03-equipe-escolhas-titulo';
    legenda.textContent='Escolha uma posição';
@@ -1266,7 +1268,7 @@
      for(const item of grade.querySelectorAll('button'))
       item.classList.remove('loop03-equipe-numero-escolhido');
      numero.classList.add('loop03-equipe-numero-escolhido');
-     pergunta.textContent='Confirmar indicação '+(indice+1)+' para '+
+     pergunta.textContent='Confirmar indicação '+numeroIndicacao+' para '+
       ['primeira','segunda','terceira','quarta','quinta','sexta'][i]+
       ' posição? Essa escolha será definitiva.';
      confirmacao.hidden=false;

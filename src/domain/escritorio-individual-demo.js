@@ -126,14 +126,18 @@ class EscritorioIndividualDemo{
     m.posicao_indicador_id AS posicaoAtribuidaId,
     ${posicaoAtivadaSQL} AS posicaoAtivada
    FROM admin_contas_participantes_demo c
+   LEFT JOIN admin_contas_eventos_demo ev ON ev.conta_id=c.id
+    AND ev.tipo='CADASTRO_FICTICIO'
    LEFT JOIN admin_contas_telefones_demo tel ON tel.conta_id=c.id
    LEFT JOIN admin_ponte_convites_validados_demo v
     ON v.convidado_id=c.id AND v.indicador_id=?
    LEFT JOIN admin_loop_vinculos_indicacao_posicao_demo m
     ON m.convidado_id=c.id AND m.indicador_id=?
    WHERE c.indicado_por_id=?
-   ORDER BY c.criado_em,c.id
-  `).all(contaId,contaId,contaId).map(c=>{
+   -- Evento AUTOINCREMENT imutável preserva a ordem entre sessões.
+   -- Contas legadas sem evento ficam no final em ordem de data+id.
+   ORDER BY (ev.sequencia IS NULL),ev.sequencia,c.criado_em,c.id
+  `).all(contaId,contaId,contaId).map((c,indice)=>{
    const emA=simulador.filas.filaA.some(p=>p.participanteId===c.convidadoId&&p.empresa!==true);
    const emB=simulador.filas.filaB.some(p=>p.participanteId===c.convidadoId&&p.empresa!==true);
    const noTabuleiro=[simulador.tabuleiro.centro,...simulador.tabuleiro.vagas]
@@ -148,7 +152,8 @@ class EscritorioIndividualDemo{
     .filter(p=>p&&p.participanteId===c.convidadoId&&p.empresa!==true);
    const numerosFila=[...new Set([...itensFila,...tabuleiroPessoa].map(p=>p.id))]
     .filter(Number.isSafeInteger).sort((a,b)=>a-b);
-   return {convidadoId:c.convidadoId,nome:c.nome,telefone:c.telefone,
+   return {convidadoId:c.convidadoId,numeroIndicacao:indice+1,
+    nome:c.nome,telefone:c.telefone,
     numeroFila:numerosFila[0]??null,numerosFila,
     estado:c.compraConfirmadaEm&&c.posicaoAtivada?'ATIVO':'PENDENTE',
      situacao:c.compraConfirmadaEm?(c.posicaoAtivada?'ATIVO':'AGUARDANDO_CONFIRMACAO'):'PENDENTE',
