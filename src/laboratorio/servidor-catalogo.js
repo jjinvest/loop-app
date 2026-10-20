@@ -362,6 +362,15 @@ function criarAppAdminLaboratorio({ repositorio, segredo, webhookDemo } = {}) {
       return res.status(404).end();
     res.sendFile(path.join(__dirname,'convite-cliente-demo.html'));
   });
+  // Endereços curtos /loja/Nick e /escritorio/Nick, sem token visível.
+  app.get(['/loja/:apelido','/escritorio/:apelido'],somenteLocal,(req,res)=>{
+   if(!/^[A-Za-z0-9][A-Za-z0-9_-]{1,38}[A-Za-z0-9]$/.test(req.params.apelido))
+    return res.status(404).end();
+   try{
+    ponteParaCircuito.linksComissoes.resolver(req.path);
+    return res.sendFile(path.join(__dirname,'convite-cliente-demo.html'));
+   }catch{return res.status(404).end();}
+  });
   app.get('/laboratorio/convite.js',somenteLocal,(_req,res)=>{
     res.type('application/javascript').sendFile(path.join(__dirname,'convite-cliente-demo.js'));
   });
