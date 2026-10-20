@@ -482,6 +482,19 @@ async function main(){
   assert.equal(await page.locator('#loop03OpcoesPosicoes .loop03-link-termos').count(),5);
   assert.equal(await page.locator('#loop03OpcoesPosicoes .loop03-adicionar-indicado').count(),6);
   assert.equal(await page.locator('#loop03OpcoesPosicoes .loop03-posicao-vazia + .loop03-adicionar-indicado:disabled').count(),5);
+  assert.equal(await page.locator('#loop03DetalhesPosicao').getAttribute('open'),null,
+   'Meus Links inicia fechado na tela real de Minhas Posições');
+  assert.equal(await page.locator('#loop03DetalhesPosicao summary').innerText(),'Meus Links');
+  assert.equal(await page.locator('#loop03LinkEscritorio').isVisible(),false);
+  assert.equal(await page.locator('#loop03LinkLoja').isVisible(),false);
+  assert.equal(await page.locator('#loop03Sidebar .loop03-identidade-selecionada').isVisible(),false,
+   'Rodapé antigo de comprador não pode reaparecer na versão atual');
+  assert.equal(await page.locator('#loop03-posicoes>.loop03-contador-rede').count(),1,
+   'Substituir faixa antiga pelo mesmo quadro de Minha Rede');
+  assert.equal(await page.locator('#loop03-posicoes>.loop03-saldo-indicados').count(),0);
+  assert.equal(await page.locator('#loop03PosicoesRedeTotalIndicacoes').innerText(),'0');
+  assert.equal(await page.locator('#loop03PosicoesRedeADistribuir').innerText(),'0');
+  assert.equal(await page.locator('#loop03PosicoesRedeUtilizadas').innerText(),'0');
   assert.match(await page.locator('#loop03LinkEscritorio').inputValue(),/\/escritorio\/TesteUser$/);
   assert.match(await page.locator('#loop03LinkLoja').inputValue(),/\/loja\/TesteUser$/);
   assert.equal(await page.locator('#loop03CopiarEscritorio').isDisabled(),false);
@@ -499,8 +512,14 @@ async function main(){
   });
   assert.ok(geometria.cpfTopo>=geometria.mioloFim-2&&geometria.divisoriaTopo>=geometria.cpfFim-2,
    'CPF deve aparecer abaixo da esfera e ANTES da divisória '+JSON.stringify(geometria));
-  await page.screenshot({path:path.join(pasta,'MINHAS_POSICOES_PENDENTE_CPF_PC.png'),fullPage:true});
-  await page.screenshot({path:path.join(pasta,'MINHAS_POSICOES_SEIS_CARDS_DOIS_LINKS_REAL.png'),fullPage:true});
+  await page.screenshot({path:path.join(pasta,'MINHAS_POSICOES_ATUAL_MEUS_LINKS_FECHADOS_CELULAR_390.png'),fullPage:true});
+  await page.locator('#loop03DetalhesPosicao summary').click();
+  assert.equal(await page.locator('#loop03DetalhesPosicao').getAttribute('open'),'');
+  assert.equal(await page.locator('#loop03LinkEscritorio').isVisible(),true);
+  assert.equal(await page.locator('#loop03LinkLoja').isVisible(),true);
+  await page.screenshot({path:path.join(pasta,'MINHAS_POSICOES_ATUAL_MEUS_LINKS_ABERTOS_CELULAR_390.png'),fullPage:true});
+  await page.locator('#loop03DetalhesPosicao summary').click();
+  assert.equal(await page.locator('#loop03LinkLoja').isVisible(),false);
   // Prova adicional: captura de navegador REAL no COMPUTADOR (não mockup).
   // Titular de laboratório "TesteUser"; nas contas sem nick ambos campos ficam vazios.
   const ctxPosicoesPC=await browser.newContext({viewport:{width:1254,height:900},deviceScaleFactor:1});
@@ -520,7 +539,16 @@ async function main(){
   assert.equal(await posicoesPC.locator('#loop03OpcoesPosicoes .loop03-status-confirmacao-pendente').count(),1);
   assert.match(await posicoesPC.locator('#loop03LinkEscritorio').inputValue(),/\/escritorio\/TesteUser$/);
   assert.match(await posicoesPC.locator('#loop03LinkLoja').inputValue(),/\/loja\/TesteUser$/);
-  await posicoesPC.screenshot({path:path.join(pasta,'MINHAS_POSICOES_ATUAL_PENDENTE_PC_1254.png'),fullPage:true});
+  assert.equal(await posicoesPC.locator('#loop03DetalhesPosicao').getAttribute('open'),null);
+  assert.equal(await posicoesPC.locator('#loop03LinkEscritorio').isVisible(),false);
+  assert.equal(await posicoesPC.locator('#loop03Sidebar .loop03-identidade-selecionada').isVisible(),false);
+  assert.equal(await posicoesPC.locator('#loop03-posicoes>.loop03-contador-rede').count(),1);
+  await posicoesPC.screenshot({path:path.join(pasta,'MINHAS_POSICOES_ATUAL_MEUS_LINKS_FECHADOS_PC_1254.png'),fullPage:true});
+  await posicoesPC.locator('#loop03DetalhesPosicao summary').click();
+  assert.equal(await posicoesPC.locator('#loop03DetalhesPosicao').getAttribute('open'),'');
+  assert.equal(await posicoesPC.locator('#loop03LinkEscritorio').isVisible(),true);
+  await posicoesPC.screenshot({path:path.join(pasta,'MINHAS_POSICOES_ATUAL_MEUS_LINKS_ABERTOS_PC_1254.png'),fullPage:true});
+  await posicoesPC.locator('#loop03DetalhesPosicao summary').click();
 
   // Clicar quadradinho nao aceita silenciosamente: abre o texto sobre a aba.
   await page.locator('#loop03OpcoesPosicoes .loop03-check-cartao').first().click();
@@ -712,7 +740,13 @@ async function main(){
   await page.locator('#conteudoParticipante').waitFor({state:'visible'});
   await page.locator('#loop03Menu').click();
   await page.locator('#loop03Sidebar [data-loop03-aba="posicoes"]').click();
-  assert.equal(await page.locator('#loop03SaldoDisponivel').innerText(),'1');
+  assert.equal(await page.locator('#loop03PosicoesRedeADistribuir').innerText(),'1');
+  assert.equal(await page.locator('#loop03PosicoesRedeTotalIndicacoes').innerText(),
+   await page.locator('#loop03RedeTotalIndicacoes').innerText());
+  assert.equal(await page.locator('#loop03PosicoesRedeADistribuir').innerText(),
+   await page.locator('#loop03RedeADistribuir').innerText());
+  assert.equal(await page.locator('#loop03PosicoesRedeUtilizadas').innerText(),
+   await page.locator('#loop03RedeUtilizadas').innerText());
   assert.equal(await page.locator('#loop03OpcoesPosicoes .loop03-adicionar-indicado').count(),6);
   assert.equal(await page.locator('#loop03OpcoesPosicoes .loop03-adicionar-indicado:enabled').count(),1);
   // O mesmo botão ⋮ deixa atribuir uma SEGUNDA indicação à mesma posição 1;
