@@ -50,7 +50,13 @@ test('link so ativa apos compra pequena, comissao por posicao e versoes 10%, 20%
  assert.equal(links.comissoesDaConta(a.contaId).quantidade,0);
  const primeira=await comprar('pedido-convidado-250',b,25000,3);
  assert.equal(primeira.posicaoCriada,true);
- assert.equal(primeira.comissaoSimuladaCentavos,2500);
+ assert.equal(primeira.comissaoSimuladaCentavos,0);
+ const aceiteComprador=new AdesoesPosicoesDemoSQLite({ponte,
+  relogio:()=>dia(3).replace('T12:00','T12:30')}).ativar({
+   contaId:b.contaId,cpfFicticio:'12345678909',
+   aceitaTermos:true,versaoTermos:'LOOP-DEMO-V1'});
+ assert.equal(aceiteComprador.bonificacoes.length,1);
+ assert.equal(aceiteComprador.bonificacoes[0].valorComissaoCentavos,2500);
  assert.equal(ponte.consultar().filas.A.quantidade,0,'indicador sem cadeira nao precisa estar na fila');
  assert.equal((await ponte.processar({pedidoId:'pedido-convidado-250'})).repetido,true);
  assert.equal(links.comissoesDaConta(a.contaId).quantidade,1);
