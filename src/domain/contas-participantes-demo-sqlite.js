@@ -47,6 +47,15 @@ function telefoneNormalizado(telefone){
  }
  return '+55'+digitos;
 }
+function apelidoCadastro(v){
+ if(v===null||v===undefined)return null;
+ if(typeof v!=='string'||v.length>80)throw falha('INVALIDO','Nick inválido');
+ const s=v.normalize('NFD').replace(/[\u0300-\u036f]/g,'')
+  .trim().toLowerCase().replace(/\s+/g,'-');
+ if(!/^[a-z0-9][a-z0-9-]{1,30}[a-z0-9]$/.test(s)||s.includes('--'))
+  throw falha('INVALIDO','Nick precisa de 3 a 32 caracteres');
+ return s;
+}
 function senhaValida(senha){
  if(typeof senha!=='string'||senha.length<10||senha.length>128||
     /[\u0000-\u001f\u007f]/.test(senha)){
@@ -61,7 +70,7 @@ function idSeguro(id){
 function contaExterna(linha){
  if(!linha)return null;
  return {
-  contaId:linha.id,nome:linha.nome,login:linha.login,
+  contaId:linha.id,nome:linha.nome,login:linha.login,apelido:linha.apelido||null,
   codigoConvite:linha.codigo_convite,
   indicadoPorId:linha.indicado_por_id,
   criadoEm:linha.criado_em,
@@ -88,6 +97,10 @@ class ContasParticipantesDemoSQLite{
     indicado_por_id TEXT REFERENCES admin_contas_participantes_demo(id) ON DELETE RESTRICT,
     criado_em TEXT NOT NULL,
     CHECK(id<>indicado_por_id)
+   );
+   CREATE TABLE IF NOT EXISTS admin_links_apelidos_demo(
+    conta_id TEXT PRIMARY KEY REFERENCES admin_contas_participantes_demo(id) ON DELETE RESTRICT,
+    apelido TEXT NOT NULL
    );
    CREATE TABLE IF NOT EXISTS admin_contas_telefones_demo(
     conta_id TEXT PRIMARY KEY NOT NULL REFERENCES admin_contas_participantes_demo(id) ON DELETE RESTRICT,
@@ -118,9 +131,10 @@ class ContasParticipantesDemoSQLite{
   this.hashFalso=scryptSync('senha-inexistente-no-laboratorio',
     Buffer.from('00000000000000000000000000000000','hex'),64);
  }
- cadastrar({nome,email,telefone,senha,codigoIndicador=null}={}){
+ cadastrar({nome,email,telefone,senha,apelido=null,codigoIndicador=null}={}){
   const dados=nomeLogin(nome),emailLimpo=emailNormalizado(email);
   const telefoneLimpo=telefoneNormalizado(telefone);
+  const nick=apelidoCadastro(apelido);
   senhaValida(senha);
   if(codigoIndicador!==null&&(typeof codigoIndicador!=='string'||!CODIGO.test(codigoIndicador))){
    throw falha('INVALIDO','Codigo de convite invalido');
@@ -155,6 +169,9 @@ class ContasParticipantesDemoSQLite{
    if(telefoneLimpo)this.banco.prepare(
     'INSERT INTO admin_contas_telefones_demo(conta_id,telefone_normalizado) VALUES (?,?)'
    ).run(contaId,telefoneLimpo);
+   if(nick)this.banco.prepare(
+    'INSERT INTO admin_links_apelidos_demo(conta_id,apelido) VALUES (?,?)'
+   ).run(contaId,nick);
    this.banco.prepare(`
     INSERT INTO admin_contas_eventos_demo(conta_id,tipo,registrado_em)
     VALUES (?,'CADASTRO_FICTICIO',?)
@@ -165,7 +182,7 @@ class ContasParticipantesDemoSQLite{
  }
  buscar(contaId){
   const linha=this.banco.prepare(
-   'SELECT c.*,CASE WHEN t.conta_id IS NULL THEN 0 ELSE 1 END AS tem_telefone FROM admin_contas_participantes_demo c LEFT JOIN admin_contas_telefones_demo t ON t.conta_id=c.id WHERE c.id=?'
+   'SELECT c.*,n.apelido,CASE WHEN t.conta_id IS NULL THEN 0 ELSE 1 END AS tem_telefone FROM admin_contas_participantes_demo c LEFT JOIN admin_contas_telefones_demo t ON t.conta_id=c.id LEFT JOIN admin_links_apelidos_demo n ON n.conta_id=c.id WHERE c.id=?'
   ).get(idSeguro(contaId));
   return contaExterna(linha);
  }
@@ -193,7 +210,7 @@ class ContasParticipantesDemoSQLite{
   const dados=nomeLogin(nome);
   senhaValida(senha);
   const linha=this.banco.prepare(
-   'SELECT c.*,CASE WHEN t.conta_id IS NULL THEN 0 ELSE 1 END AS tem_telefone FROM admin_contas_participantes_demo c LEFT JOIN admin_contas_telefones_demo t ON t.conta_id=c.id WHERE c.login=?'
+   'SELECT c.*,n.apelido,CASE WHEN t.conta_id IS NULL THEN 0 ELSE 1 END AS tem_telefone FROM admin_contas_participantes_demo c LEFT JOIN admin_contas_telefones_demo t ON t.conta_id=c.id LEFT JOIN admin_links_apelidos_demo n ON n.conta_id=c.id WHERE c.login=?'
   ).get(dados.login);
   const recebido=scryptSync(senha,linha?Buffer.from(linha.salt_hex,'hex'):
    Buffer.from('00000000000000000000000000000000','hex'),64);
@@ -214,7 +231,7 @@ class ContasParticipantesDemoSQLite{
  }
  listar(){
   const contas=this.banco.prepare(
-   'SELECT c.*,CASE WHEN t.conta_id IS NULL THEN 0 ELSE 1 END AS tem_telefone FROM admin_contas_participantes_demo c LEFT JOIN admin_contas_telefones_demo t ON t.conta_id=c.id ORDER BY c.criado_em,c.id'
+   'SELECT c.*,n.apelido,CASE WHEN t.conta_id IS NULL THEN 0 ELSE 1 END AS tem_telefone FROM admin_contas_participantes_demo c LEFT JOIN admin_contas_telefones_demo t ON t.conta_id=c.id LEFT JOIN admin_links_apelidos_demo n ON n.conta_id=c.id ORDER BY c.criado_em,c.id'
   ).all();
   const pendentes=new Map();
   for(const c of contas){

@@ -47,7 +47,7 @@ function criarRouterContasParticipantesDemo({segredo,contas}={}){
  });
  function cadastrarNoTeste(req,res,next,{exigirTelefone=false}={}){
   if(!corpoEstrito(req.body,exigirTelefone?['nome','email','senha','telefone']:['nome','email','senha'],
-    ['codigoIndicador',...(exigirTelefone?[]:['telefone'])]) ||
+    ['codigoIndicador','apelido',...(exigirTelefone?[]:['telefone'])]) ||
     (exigirTelefone&&(typeof req.body.telefone!=='string'||!req.body.telefone.trim()))){
    return res.status(400).json({erro:'CAMPOS_CADASTRO_DE_TESTE_INVALIDOS'});
   }

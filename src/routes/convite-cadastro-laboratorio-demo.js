@@ -46,7 +46,8 @@ function criarRouterConviteCadastroDemo({contas,links,carrinhos=null}={}){
   if(req.get('x-loop-lab')!=='convite'||(site&&!['none','same-origin'].includes(site)))
    return res.status(403).json({erro:'CADASTRO_LOCAL_INDEVIDO'});
   if(!req.body||typeof req.body!=='object'||Array.isArray(req.body)||
-   Object.keys(req.body).sort().join(',')!=='email,link,nome,senha,telefone'||
+   Object.keys(req.body).filter(k=>k!=='apelido').sort().join(',')!=='email,link,nome,senha,telefone'||
+   (Object.hasOwn(req.body,'apelido')&&typeof req.body.apelido!=='string')||
    typeof req.body.telefone!=='string'||!req.body.telefone.trim())
    return res.status(400).json({erro:'CADASTRO_INVALIDO'});
   let verificado=null;
@@ -59,7 +60,7 @@ function criarRouterConviteCadastroDemo({contas,links,carrinhos=null}={}){
   try{
    const conta=contas.cadastrar({
     nome:req.body.nome,email:req.body.email,telefone:req.body.telefone,
-    senha:req.body.senha,codigoIndicador:verificado?.token??null
+    apelido:req.body.apelido??null,senha:req.body.senha,codigoIndicador:verificado?.token??null
    });
    return res.status(201).json({
     cadastradoNoTeste:true,contaId:conta.contaId,
