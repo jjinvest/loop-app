@@ -1281,6 +1281,23 @@ async function main(){
    });
    assert.equal(confirmacao.status,200,'Compra '+indice[0]+': '+await confirmacao.text());
   }
+  // Confirmar as duas posições individualmente neste cenário controlado.
+  // A captura fica verde e sem o formulário extra de primeira ativação.
+  const estadoComprador=ponteCaptura._restaurar();
+  const idsComprador=[...estadoComprador.filas.filaA,...estadoComprador.filas.filaB]
+   .filter(p=>p.participanteId===compradorPosicoes.contaId&&p.statusAdesao==='PENDENTE')
+   .map(p=>p.id).sort((a,b)=>a-b);
+  assert.equal(idsComprador.length,2);
+  const primeira=adesoesCaptura.ativar({
+   contaId:compradorPosicoes.contaId,posicaoId:idsComprador[0],
+   cpfFicticio:cpfDeTeste('370000000'),aceitaTermos:true,versaoTermos:'LOOP-DEMO-V1'
+  });
+  assert.deepEqual(primeira.posicoesIds,[idsComprador[0]]);
+  const segunda=adesoesCaptura.ativar({
+   contaId:compradorPosicoes.contaId,posicaoId:idsComprador[1],
+   aceitaTermos:true,versaoTermos:'LOOP-DEMO-V1'
+  });
+  assert.deepEqual(segunda.posicoesIds,[idsComprador[1]]);
   const fotoComAberturas=async(largura,arquivo)=>{
    const ctx=await browser.newContext({viewport:{width:largura,height:900},deviceScaleFactor:1,
     isMobile:largura<600,hasTouch:largura<600});
@@ -1293,8 +1310,8 @@ async function main(){
    await pagina.locator('#conteudoParticipante').waitFor({state:'visible'});
    if(largura<600)await pagina.locator('#loop03Menu').click();
    await pagina.locator('#loop03Sidebar [data-loop03-aba="posicoes"]').click();
-   assert.equal(await pagina.locator('#loop03OpcoesPosicoes .loop03-status-confirmacao-pendente').count(),2,
-    'Dois pedidos distintos criaram duas posições pessoais pendentes');
+   assert.equal(await pagina.locator('#loop03OpcoesPosicoes .loop03-status-confirmacao-ok').count(),2,
+    'Dois pedidos e duas confirmações individuais no banco do laboratório');
    // Conferir ainda a posição 1: PDF individual, R$ 250 da compra histórica.
    await pagina.locator('#loop03OpcoesPosicoes .loop03-compra-gatilho').first().click();
    assert.match(await pagina.locator('.loop03-compra-expandida:not([hidden])').innerText(),
@@ -1312,7 +1329,7 @@ async function main(){
    assert.equal(await pagina.locator('#loop03OpcoesPosicoes .loop03-cartao-selecionado').count(),1);
    assert.equal(await pagina.locator('#loop03OpcoesPosicoes .loop03-unidade-posicao').nth(1)
     .locator('.loop03-cartao-selecionado').count(),1);
-   // Abrir faixa vermelha da segunda: os DOIS itens mostram valor de época.
+   // Abrir faixa VERDE da segunda: os DOIS itens mostram valor de época.
    await pagina.locator('#loop03OpcoesPosicoes .loop03-compra-gatilho').nth(1).click();
    const detalhes=pagina.locator('#loop03OpcoesPosicoes .loop03-compra-expandida:not([hidden])');
    assert.equal(await detalhes.count(),1);
