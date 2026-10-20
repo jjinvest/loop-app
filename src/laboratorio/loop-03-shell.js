@@ -775,7 +775,7 @@
  let cpfRascunho='';
  function atualizarLinksPosicao(link){
   const valido=link&&typeof link.linkEscritorio==='string'&&typeof link.linkLoja==='string';
-  for(const [destino,caminho] of [['Escritorio',link?.linkEscritorio],['Loja',link?.linkLoja]]){
+  for(const [destino,caminho] of [['Escritorio',link?.linkEscritorioCurto||link?.linkEscritorio],['Loja',link?.linkLojaCurto||link?.linkLoja]]){
    e('loop03Link'+destino).value=valido?location.origin+caminho:'';
    const botao=e('loop03Copiar'+destino);
    botao.disabled=!valido||!link.ativo;

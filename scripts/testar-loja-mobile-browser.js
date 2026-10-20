@@ -484,8 +484,8 @@ async function main(){
   assert.equal(await page.locator('#loop03OpcoesPosicoes .loop03-posicao-vazia + .loop03-adicionar-indicado:disabled').count(),5);
   assert.match(await page.locator('#loop03LinkEscritorio').inputValue(),/\/escritorio\/convite\/lp-/);
   assert.match(await page.locator('#loop03LinkLoja').inputValue(),/\/loja\/convite\/lp-/);
-  assert.equal(await page.locator('#loop03CopiarEscritorio').isDisabled(),true);
-  assert.equal(await page.locator('#loop03CopiarLoja').isDisabled(),true);
+  assert.equal(await page.locator('#loop03CopiarEscritorio').isDisabled(),false);
+  assert.equal(await page.locator('#loop03CopiarLoja').isDisabled(),false);
   assert.equal(await page.locator('#loop03OpcoesPosicoes .loop03-indicacoes-curtas').count(),6);
   assert.equal(await page.locator('#loop03OpcoesPosicoes .loop03-posicao-vazia .loop03-indicacoes-curtas').first().innerText(),'Indicações');
   await page.locator('#loop03OpcoesPosicoes [data-loop03-posicao]').first().click();

@@ -41,7 +41,7 @@ body{background:#0e1a15;color:#eef8ef}
 <p id="estadoConvite" role="status" aria-live="polite">Verificando o link...</p>
 <form id="formConviteCliente" hidden autocomplete="off">
 <label for="nomeConvite">Seu nome de acesso</label><input id="nomeConvite" required maxlength="60">
-<label for="apelidoConvite">Nick / apelido</label><input id="apelidoConvite" required minlength="3" maxlength="32" pattern="[A-Za-z0-9][A-Za-z0-9-]{1,30}[A-Za-z0-9]" autocomplete="off" placeholder="meu-nick">
+<label for="apelidoConvite">Nick / apelido</label><input id="apelidoConvite" required minlength="3" maxlength="40" pattern="[A-Za-z0-9][A-Za-z0-9_-]{1,38}[A-Za-z0-9]" autocomplete="off" placeholder="meu-nick">
 <label for="emailConvite">E-mail fictício</label><input id="emailConvite" type="email" required maxlength="254">
 <label for="telefoneConvite">Telefone brasileiro fictício com DDD</label><input id="telefoneConvite" type="tel" required maxlength="24">
 <label for="senhaConvite">Senha de teste (mínimo 10 caracteres)</label><input id="senhaConvite" type="password" required minlength="10" maxlength="128" autocomplete="new-password">

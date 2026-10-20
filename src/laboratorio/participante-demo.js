@@ -396,8 +396,8 @@
    ' · Não houve movimentação financeira real.');
 
   const link=visao.linkIndicacao;
-  e('enderecoLinkParticipante').value=location.origin+(link.linkEscritorio||link.link);
-  e('enderecoLinkLojaParticipante').value=location.origin+link.linkLoja;
+  e('enderecoLinkParticipante').value=location.origin+(link.linkEscritorioCurto||link.linkEscritorio||link.link);
+  e('enderecoLinkLojaParticipante').value=location.origin+(link.linkLojaCurto||link.linkLoja);
   e('apelidoLinkParticipante').value=link.apelido==='meu-loop'?'':link.apelido;
   e('copiarLinkParticipante').disabled=!link.ativo;
   e('copiarLinkLojaParticipante').disabled=!link.ativo;
@@ -452,7 +452,10 @@
   e('pendentesParticipante').textContent=visao.indicacoes.cadastrosPendentes;
   lista('posicoesParticipante',visao.posicoes,p=>'Posição '+p.posicaoId+' — '+
    p.local.replace('_',' ')+' — '+(p.statusAdesao==='PENDENTE'?'aguardando ativação':'ativada'));
-  if(visao.mapaCores)mostrarMapa(visao.mapaCores,visao.perfil?.nome||visao.conta?.nome||'');
+  // Só o titular vê seu nick embaixo do #ID na catraca.
+  const nick=visao.linkIndicacao?.apelido&&visao.linkIndicacao.apelido!=='meu-loop'?
+   visao.linkIndicacao.apelido:visao.conta?.apelido||visao.perfil?.nome||visao.conta?.nome||'';
+  if(visao.mapaCores)mostrarMapa(visao.mapaCores,nick);
   const temAzul=visao.posicoes.some(p=>p.statusAdesao==='PENDENTE');
   const cpfTermosConfirmados=visao.adesao?.cpfConfirmadoNoTeste===true;
   cpfConfirmadoAtual=cpfTermosConfirmados;
