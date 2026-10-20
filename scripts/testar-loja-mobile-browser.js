@@ -105,8 +105,9 @@ async function main(){
   await telaFilasVazias.locator('#conteudoParticipante').waitFor({state:'visible'});
   await telaFilasVazias.locator('#loop03Sidebar [data-loop03-aba="tabuleiro"]').click();
   await telaFilasVazias.locator('#loop03-tabuleiro').waitFor({state:'visible'});
-  assert.equal(await telaFilasVazias.locator('#loop03NomeBaixo').innerText(),'TesteUser');
-  assert.equal(await telaFilasVazias.locator('#loop03DadosPosicaoLateral').isVisible(),true);
+  assert.equal(await telaFilasVazias.locator('#loop03NomeBaixo').innerText(),'');
+  assert.equal(await telaFilasVazias.locator('#loop03DadosPosicaoLateral').isVisible(),false,
+   'Sem posição selecionada, não inventar nick no rodapé');
   assert.equal(await telaFilasVazias.locator('#loop03LetraRodape').isVisible(),false);
   assert.equal(await telaFilasVazias.locator('#loop03CoroaTabuleiro').isVisible(),false);
   assert.equal(await telaFilasVazias.locator('#loop03BoasVindas').innerText(),'Bem-vindo!');
@@ -491,7 +492,8 @@ async function main(){
   assert.equal(await page.locator('#loop03LinkLoja').isVisible(),false);
   assert.equal(await page.locator('#loop03Sidebar .loop03-identidade-selecionada').isVisible(),true,
    'Rodapé aprovado: foto opcional e nick público');
-  assert.equal(await page.locator('#loop03NomeBaixo').innerText(),'TesteUser');
+  assert.equal(await page.locator('#loop03NomeBaixo').innerText(),'');
+  assert.equal(await page.locator('#loop03DadosPosicaoLateral').isVisible(),false);
   assert.equal(await page.locator('#loop03Sidebar .loop03-identidade-selecionada .loop03-foto-padrao').isVisible(),false,
    'Sem foto: não mostrar emoji fictício');
   assert.equal(await page.locator('#loop03Sidebar .loop03-identidade-selecionada img').isVisible(),false);
@@ -548,7 +550,7 @@ async function main(){
   assert.equal(await posicoesPC.locator('#loop03DetalhesPosicao').getAttribute('open'),null);
   assert.equal(await posicoesPC.locator('#loop03LinkEscritorio').isVisible(),false);
   assert.equal(await posicoesPC.locator('#loop03Sidebar .loop03-identidade-selecionada').isVisible(),true);
-  assert.equal(await posicoesPC.locator('#loop03NomeBaixo').innerText(),'TesteUser');
+  assert.equal(await posicoesPC.locator('#loop03NomeBaixo').innerText(),'');
   assert.equal(await posicoesPC.locator('#loop03NickVisor').textContent(),'');
   assert.equal(await posicoesPC.locator('#loop03-posicoes>.loop03-contador-rede').count(),1);
   await posicoesPC.screenshot({path:path.join(pasta,'MINHAS_POSICOES_ATUAL_MEUS_LINKS_FECHADOS_PC_1254.png'),fullPage:true});
@@ -1226,8 +1228,8 @@ async function main(){
   await page.locator('#loop03PerfilNome').fill('Meu Perfil Personalizado');
   await page.locator('#loop03SalvarPerfil').click();
   await page.getByText(/Perfil atualizado e salvo com sucesso/).waitFor();
-  assert.equal(await page.locator('#loop03NomeBaixo').innerText(),'TesteUser');
-  assert.equal(await page.locator('#loop03DadosPosicaoLateral').isVisible(),true);
+  assert.equal(await page.locator('#loop03NomeBaixo').innerText(),'');
+  assert.equal(await page.locator('#loop03DadosPosicaoLateral').isVisible(),false);
   assert.equal(await page.locator('#loop03NickVisor').textContent(),'',
    'Após atualizar o perfil privado, sem seleção o visor não inventa # ou nick');
   assert.equal(await page.locator('#loop03-perfil .loop03-foto-grande img').isVisible(),true);
