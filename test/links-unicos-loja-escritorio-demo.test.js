@@ -149,6 +149,8 @@ test('nick muda depois e ambos links novos aparecem; antigos continuam com o mes
   nome:'Outro Titular',apelido:'Outro',email:'outro@exemplo.invalid',
   senha:'senha-forte-exemplo-2026'
  });
+ // Inicializar a ponte de compras antes de consultar o status dos links.
+ criarAppAdminLaboratorio({repositorio:repo,segredo:'chave-teste-troca-nick-2026-suficiente'});
  const links=new IndicacoesLinksComissoesDemoSQLite({banco:repo.banco,contas});
  const antes=links.linkDaConta(titular.contaId);
  assert.equal(antes.linkLojaCurto,'/loja/Primeiro');
