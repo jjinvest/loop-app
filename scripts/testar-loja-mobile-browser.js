@@ -502,13 +502,13 @@ async function main(){
   await page.screenshot({path:path.join(pasta,'MINHAS_POSICOES_PENDENTE_CPF_PC.png'),fullPage:true});
   await page.screenshot({path:path.join(pasta,'MINHAS_POSICOES_SEIS_CARDS_DOIS_LINKS_REAL.png'),fullPage:true});
   // Clicar quadradinho nao aceita silenciosamente: abre o texto sobre a aba.
-  await page.locator('#loop03OpcoesPosicoes .loop03-check-cartao').click();
+  await page.locator('#loop03OpcoesPosicoes .loop03-check-cartao').first().click();
   assert.equal(await page.locator('#loop03TermosFundo').isVisible(),true);
-  assert.equal(await page.locator('#loop03OpcoesPosicoes .loop03-check-cartao').isChecked(),false);
+  assert.equal(await page.locator('#loop03OpcoesPosicoes .loop03-check-cartao').first().isChecked(),false);
   assert.match(await page.locator('#loop03TermosTexto').innerText(),/LOOP|regras/i);
   await page.locator('#loop03TermosAceitar').check();
   assert.equal(await page.locator('#loop03TermosFundo').isVisible(),false);
-  assert.equal(await page.locator('#loop03OpcoesPosicoes .loop03-check-cartao').isChecked(),true);
+  assert.equal(await page.locator('#loop03OpcoesPosicoes .loop03-check-cartao').first().isChecked(),true);
   assert.equal(await page.locator('#aceiteTermosParticipante').isChecked(),true);
   assert.equal(await page.locator('#loop03DadosPosicaoLateral').isVisible(),true);
   assert.equal(await page.locator('#loop03NomeBaixo').innerText(),titular.nome);
@@ -554,7 +554,7 @@ async function main(){
   assert.equal(await page.locator('#loop03OpcoesPosicoes .loop03-status-confirmacao-ok').count(),1);
   assert.equal(await page.locator('#loop03OpcoesPosicoes .loop03-cpf-cartao').count(),1);
   assert.equal(await page.locator('#loop03OpcoesPosicoes .loop03-cpf-protegido').count(),1);
-  assert.equal(await page.locator('#loop03OpcoesPosicoes .loop03-check-cartao').isChecked(),true);
+  assert.equal(await page.locator('#loop03OpcoesPosicoes .loop03-check-cartao').first().isChecked(),true);
   assert.equal(await page.locator('#loop03OpcoesPosicoes .loop03-status-confirmacao-ok .loop03-cartao-identidade span').isVisible(),false,
    'Remover texto Fila A abaixo do #ID sem mudar a esfera A');
   assert.equal(await page.locator('.linha-minha-demo .posicao-vermelho').count(),1);
