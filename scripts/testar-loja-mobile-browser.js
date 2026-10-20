@@ -1661,6 +1661,26 @@ async function main(){
    assert.equal(await pag.locator('#loop03RedeADistribuir').innerText(),'2');
    await cx.close();
   }
+  // Estado vermelho exige cadastro SEM compra; não somar à contagem confirmada.
+  const semCompra=contas.cadastrar({
+   nome:'Cadastro Sem Compra Exemplo',apelido:'SemCompra',
+   email:'semcompra@exemplo.invalid',senha,codigoIndicador:titular.codigoConvite
+  });
+  await page.reload({waitUntil:'networkidle'});
+  await page.locator('#conteudoParticipante').waitFor({state:'visible'});
+  await page.locator('#loop03Menu').click();
+  await page.locator('#loop03Sidebar [data-loop03-aba="rede"]').click();
+  const naoAtiva=page.locator('#loop03ListaEquipe .loop03-equipe-linha')
+   .filter({hasText:semCompra.nome});
+  assert.equal(await naoAtiva.locator('.loop03-equipe-estado').innerText(),'NÃO ATIVO');
+  assert.equal(await naoAtiva.locator('.loop03-equipe-inativo').count(),1);
+  assert.equal(await page.locator('#loop03RedeTotalIndicacoes').innerText(),'4');
+  assert.equal(await page.locator('#loop03RedeUtilizadas').innerText(),'2');
+  assert.equal(await page.locator('#loop03RedeADistribuir').innerText(),'2');
+  await naoAtiva.getByRole('button',{name:'Escolher posição para '+semCompra.nome}).click();
+  assert.equal(await naoAtiva.locator('.loop03-equipe-numeros>button:enabled').count(),0);
+  await page.screenshot({path:path.join(pasta,'REDE_STATUS_NAO_ATIVO_CELULAR_390.png'),fullPage:true});
+
   assert.deepEqual(erros,[], 'Erros de execucao no navegador');
   const relatorio={status:'APROVADO',
    tamanhosPx:[320,360,390,412,768,1024,1366],
