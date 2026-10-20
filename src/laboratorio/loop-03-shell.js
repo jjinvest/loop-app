@@ -687,7 +687,8 @@
     botao.setAttribute('aria-pressed',String(!!p&&p.posicaoId===selecionada));
     if(p)botao.addEventListener('click',()=>{
      selecionar(p);
-     // Em Minhas Posições, deixar a régua aberta junto ao detalhe da compra.
+     mostrarCompraPosicao(p);
+     // A régua segue aberta, e somente a posição escolhida se expande.
      for(const outro of area.querySelectorAll('button'))
       outro.setAttribute('aria-pressed',String(outro===botao));
     });
@@ -915,6 +916,31 @@
     (pedido.origem==='CARRINHO'?' · laboratório':' · compra anterior');
   destino.append(observacao);
  }
+ // Um único detalhamento aberto. A grade 3x2 continua compacta
+ // nas posições não selecionadas e os produtos mudam com o seletor.
+ function mostrarCompraPosicao(p,{alternar=false}={}){
+  const target=e('loop03CompraPosicao'+p.posicaoId);
+  if(!target)return;
+  const abrir=!(alternar&&!target.hidden);
+  for(const outro of e('loop03OpcoesPosicoes').querySelectorAll('.loop03-compra-expandida')){
+   outro.hidden=true;
+   const faixa=outro.closest('.loop03-cartao-posicao')?.querySelector('.loop03-compra-gatilho');
+   if(faixa)faixa.setAttribute('aria-expanded','false');
+  }
+  const mobile=e('loop03CompraMobile');
+  mobile.hidden=true;
+  if(abrir){
+   target.hidden=false;
+   const faixa=target.closest('.loop03-cartao-posicao')?.querySelector('.loop03-compra-gatilho');
+   if(faixa)faixa.setAttribute('aria-expanded','true');
+   // No celular, a leitura é feita no quadrinho de largura total
+   // abaixo da grade, evitando redução do tamanho dos seis cartões.
+   if(visaoAtual){
+    preencherCompraPosicao(mobile,p,visaoAtual);
+    mobile.hidden=false;
+   }
+  }
+ }
  function destacarPosicoes(){
   for(const node of document.querySelectorAll('.mapa-fila-posicoes-demo .selo-posicao-demo, .mapa-tabuleiro-posicoes-demo .selo-posicao-demo')){
    node.classList.toggle('loop03-iluminada',node.classList.contains('minha-posicao-demo'));
@@ -967,7 +993,10 @@
     cabecalho.className='loop03-cartao-abrir';cartao.append(cabecalho);
     cabecalho.dataset.loop03Posicao=String(p.posicaoId);
     cabecalho.setAttribute('aria-pressed',String(p.posicaoId===selecionada));
-    cabecalho.addEventListener('click',()=>selecionar(p));
+    cabecalho.addEventListener('click',()=>{
+     selecionar(p);
+     mostrarCompraPosicao(p);
+    });
    }
    const rotulo=document.createElement(p?'button':'span');
    rotulo.className='loop03-cartao-rotulo'+(p?' loop03-compra-gatilho':'');
@@ -998,20 +1027,7 @@
     preencherCompraPosicao(detalhe,p,visao);
     rotulo.addEventListener('click',()=>{
      selecionar(p);
-     const abrir=detalhe.hidden;
-     // Apenas um detalhamento de compra aberto por vez.
-     for(const outro of cartoes.querySelectorAll('.loop03-compra-expandida')){
-      outro.hidden=true;
-      const trigger=outro.closest('.loop03-cartao-posicao')?.querySelector('.loop03-compra-gatilho');
-      if(trigger)trigger.setAttribute('aria-expanded','false');
-     }
-     detalhe.hidden=!abrir;
-     const painelMobile=e('loop03CompraMobile');
-     if(painelMobile){
-      painelMobile.hidden=!abrir;
-      if(abrir)preencherCompraPosicao(painelMobile,p,visao);
-     }
-     rotulo.setAttribute('aria-expanded',String(abrir));
+     mostrarCompraPosicao(p,{alternar:true});
     });
     cartao.insertBefore(detalhe,cabecalho.nextSibling);
    }else cabecalho.append(rotulo,miolo);

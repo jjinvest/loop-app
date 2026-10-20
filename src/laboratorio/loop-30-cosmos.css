@@ -2313,3 +2313,29 @@ body.loop03-logado .portal-participante{position:relative;z-index:1}
   font-size:1rem!important;
  }
 }
+
+/* 20/out — refinamento aprovado: somente a posição escolhida cresce.
+   Os cartões vizinhos mantêm altura própria, sem esticar com a linha do grid. */
+#loop03-posicoes #loop03OpcoesPosicoes.loop03-grade-posicoes{
+ align-items:start!important;
+}
+#loop03-posicoes #loop03OpcoesPosicoes.loop03-grade-posicoes>.loop03-unidade-posicao{
+ align-self:start!important;height:max-content!important;
+ min-width:0!important;max-width:100%!important;
+}
+#loop03-posicoes #loop03OpcoesPosicoes.loop03-grade-posicoes>.loop03-unidade-posicao>.loop03-cartao-posicao{
+ flex:0 0 auto!important;
+ box-sizing:border-box!important;
+ max-width:100%!important;
+}
+#loop03-posicoes #loop03OpcoesPosicoes .loop03-compra-expandida{
+ overflow-wrap:anywhere!important;
+}
+#loop03-posicoes #loop03OpcoesPosicoes .loop03-produto-comprado{
+ min-width:0!important;max-width:100%!important;
+}
+@media(max-width:590px){
+ #loop03-posicoes #loop03OpcoesPosicoes>.loop03-unidade-posicao{
+  align-self:start!important;
+ }
+}

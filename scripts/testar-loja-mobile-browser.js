@@ -1330,8 +1330,11 @@ async function main(){
    assert.equal(await pagina.locator('#loop03OpcoesPosicoes .loop03-cartao-selecionado').count(),1);
    assert.equal(await pagina.locator('#loop03OpcoesPosicoes .loop03-unidade-posicao').nth(1)
     .locator('.loop03-cartao-selecionado').count(),1);
-   // Abrir faixa VERDE da segunda: os DOIS itens mostram valor de época.
-   await pagina.locator('#loop03OpcoesPosicoes .loop03-compra-gatilho').nth(1).click();
+   // Selecionar o número 2 já abre a compra — não exige segundo clique.
+   assert.equal(await pagina.locator('#loop03OpcoesPosicoes .loop03-compra-gatilho').nth(0)
+    .getAttribute('aria-expanded'),'false');
+   assert.equal(await pagina.locator('#loop03OpcoesPosicoes .loop03-compra-gatilho').nth(1)
+    .getAttribute('aria-expanded'),'true');
    const detalhes=largura<600?
     pagina.locator('#loop03CompraMobile:not([hidden])'):
     pagina.locator('#loop03OpcoesPosicoes .loop03-compra-expandida:not([hidden])');
@@ -1342,6 +1345,35 @@ async function main(){
    assert.match(await detalhes.innerText(),/R\$\s?100,00/);
    assert.match(await detalhes.innerText(),/R\$\s?150,00/);
    assert.match(await detalhes.innerText(),/R\$\s?250,00/);
+   // Só um cartão com dados expandidos, e o brilho segue a seleção.
+   assert.equal(await pagina.locator('#loop03OpcoesPosicoes .loop03-compra-expandida:not([hidden])').count(),1);
+   assert.equal(await pagina.locator('#loop03OpcoesPosicoes .loop03-cartao-selecionado').count(),1);
+   // No computador, os vizinhos da mesma fileira não crescem junto.
+   if(largura>=600){
+    const alturas=await pagina.locator('#loop03OpcoesPosicoes .loop03-cartao-posicao').evaluateAll(els=>
+     els.map(el=>Math.round(el.getBoundingClientRect().height)));
+    assert.ok(alturas[1]>alturas[0]+35&&alturas[1]>alturas[2]+35,
+     'Somente a posição 2 deve crescer: '+JSON.stringify(alturas));
+   }
+   // Trocar para 1 fecha a 2 e expande automaticamente a compra 1.
+   await pagina.locator('#loop03ListaEscolha [data-indice="1"]').click();
+   assert.equal(await pagina.locator('#loop03IndicePosicao').innerText(),'1/6');
+   assert.equal(await pagina.locator('#loop03OpcoesPosicoes .loop03-compra-gatilho').nth(0)
+    .getAttribute('aria-expanded'),'true');
+   assert.equal(await pagina.locator('#loop03OpcoesPosicoes .loop03-compra-gatilho').nth(1)
+    .getAttribute('aria-expanded'),'false');
+   // Retornar à segunda posição: nunca duas compras simultaneamente.
+   await pagina.locator('#loop03ListaEscolha [data-indice="2"]').click();
+   assert.equal(await pagina.locator('#loop03IndicePosicao').innerText(),'2/6');
+   assert.equal(await pagina.locator('#loop03OpcoesPosicoes .loop03-compra-expandida:not([hidden])').count(),1);
+   assert.equal(await pagina.locator('#loop03OpcoesPosicoes .loop03-cartao-selecionado').count(),1);
+   // Faixa da posição escolhida é um acordeão: fechar e reabrir.
+   await pagina.locator('#loop03OpcoesPosicoes .loop03-compra-gatilho').nth(1).click();
+   assert.equal(await pagina.locator('#loop03OpcoesPosicoes .loop03-compra-expandida:not([hidden])').count(),0);
+   assert.equal(await pagina.locator('#loop03CompraMobile').isVisible(),false);
+   await pagina.locator('#loop03OpcoesPosicoes .loop03-compra-gatilho').nth(1).click();
+   assert.equal(await pagina.locator('#loop03OpcoesPosicoes .loop03-compra-expandida:not([hidden])').count(),1);
+   assert.equal(await pagina.locator('#loop03SeletorPosicao').isVisible(),true);
    await conferirLargura(pagina,largura,'aberturas-posicoes-'+largura,{captura:false});
    // Captura fullPage REAL COM DOIS PAINÉIS ABERTOS: seletor + detalhe da compra.
    await pagina.screenshot({path:path.join(pasta,arquivo),fullPage:true});
