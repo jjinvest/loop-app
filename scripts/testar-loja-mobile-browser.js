@@ -1314,10 +1314,11 @@ async function main(){
     'Dois pedidos e duas confirmações individuais no banco do laboratório');
    // Conferir ainda a posição 1: PDF individual, R$ 250 da compra histórica.
    await pagina.locator('#loop03OpcoesPosicoes .loop03-compra-gatilho').first().click();
-   assert.match(await pagina.locator('.loop03-compra-expandida:not([hidden])').innerText(),
-    /Guia de Exercícios em PDF/);
-   assert.match(await pagina.locator('.loop03-compra-expandida:not([hidden])').innerText(),
-    /R\$\s?250,00/);
+   const primeiroDetalhe=largura<600?
+    pagina.locator('#loop03CompraMobile:not([hidden])'):
+    pagina.locator('#loop03OpcoesPosicoes .loop03-compra-expandida:not([hidden])');
+   assert.match(await primeiroDetalhe.innerText(),/Guia de Exercícios em PDF/);
+   assert.match(await primeiroDetalhe.innerText(),/R\$\s?250,00/);
    // Abrir régua 1..6 no topo, selecionar o 2, preservar régua aberta.
    await pagina.locator('#loop03AbrirEscolhaPosicao').click();
    assert.equal(await pagina.locator('#loop03SeletorPosicao').isVisible(),true);
