@@ -1255,6 +1255,81 @@ async function main(){
   assert.equal(fotoVermelha.vagas[5].nome,'CatSete',
    'A pessoa vê só o próprio nick dentro da bolinha vermelha');
 
+
+  // Dois pedidos verdadeiros do carrinho de laboratório para a MESMA CONTA.
+  // Posição 1: UM PDF R$ 250; posição 2: DOIS itens R$ 100 + R$ 150.
+  // O HTML do screenshot não é alterado artificialmente com produtos/valores.
+  banco.salvar({produto:curso('guia-pdf-posicao','Guia de Exercícios em PDF',25000),revisaoEsperada:0});
+  const compradorPosicoes=contas.cadastrar({
+   nome:'Comprador Dois Pedidos Exemplo',apelido:'Exemplo',
+   email:'dois-pedidos@exemplo.invalid',senha
+  });
+  for(const [indice,itens] of [
+   [[1],[{produtoId:'guia-pdf-posicao',quantidade:1}]],
+   [[2],[{produtoId:'curso-mobile-100',quantidade:1},
+     {produtoId:'curso-mobile-150',quantidade:1}]]
+  ]){
+   const id='pedido-aberturas-posicao-'+indice[0];
+   const novo=await fetch(base+'/api/admin/carrinho-loop-demo',{
+    method:'POST',headers:cabAdmin,
+    body:JSON.stringify({pedidoId:id,contaId:compradorPosicoes.contaId,itens})
+   });
+   assert.equal(novo.status,201,'Carrinho '+indice[0]+': '+await novo.text());
+   const confirmacao=await fetch(base+'/api/admin/carrinho-loop-demo/'+id+'/eventos',{
+    method:'POST',headers:cabAdmin,
+    body:JSON.stringify({eventoId:'confirmar-aberturas-'+indice[0],tipo:'CONFIRMAR_FICTICIO'})
+   });
+   assert.equal(confirmacao.status,200,'Compra '+indice[0]+': '+await confirmacao.text());
+  }
+  const fotoComAberturas=async(largura,arquivo)=>{
+   const ctx=await browser.newContext({viewport:{width:largura,height:900},deviceScaleFactor:1,
+    isMobile:largura<600,hasTouch:largura<600});
+   const pagina=await ctx.newPage();
+   pagina.on('pageerror',err=>erros.push(err.message));
+   await pagina.goto(base+'/laboratorio/participante',{waitUntil:'networkidle'});
+   await pagina.locator('#nomeParticipante').fill(compradorPosicoes.nome);
+   await pagina.locator('#senhaParticipante').fill(senha);
+   await pagina.locator('#botaoEntrarParticipante').click();
+   await pagina.locator('#conteudoParticipante').waitFor({state:'visible'});
+   if(largura<600)await pagina.locator('#loop03Menu').click();
+   await pagina.locator('#loop03Sidebar [data-loop03-aba="posicoes"]').click();
+   assert.equal(await pagina.locator('#loop03OpcoesPosicoes .loop03-status-confirmacao-pendente').count(),2,
+    'Dois pedidos distintos criaram duas posições pessoais pendentes');
+   // Conferir ainda a posição 1: PDF individual, R$ 250 da compra histórica.
+   await pagina.locator('#loop03OpcoesPosicoes .loop03-compra-gatilho').first().click();
+   assert.match(await pagina.locator('.loop03-compra-expandida:not([hidden])').innerText(),
+    /Guia de Exercícios em PDF/);
+   assert.match(await pagina.locator('.loop03-compra-expandida:not([hidden])').innerText(),
+    /R\\$\\s?250,00/);
+   // Abrir régua 1..6 no topo, selecionar o 2, preservar régua aberta.
+   await pagina.locator('#loop03AbrirEscolhaPosicao').click();
+   assert.equal(await pagina.locator('#loop03SeletorPosicao').isVisible(),true);
+   assert.equal(await pagina.locator('#loop03ListaEscolha button').count(),6);
+   assert.equal(await pagina.locator('#loop03ListaEscolha button:disabled').count(),4);
+   await pagina.locator('#loop03ListaEscolha [data-indice="2"]').click();
+   assert.equal(await pagina.locator('#loop03IndicePosicao').innerText(),'2/6');
+   assert.equal(await pagina.locator('#loop03SeletorPosicao').isVisible(),true);
+   assert.equal(await pagina.locator('#loop03OpcoesPosicoes .loop03-cartao-selecionado').count(),1);
+   assert.equal(await pagina.locator('#loop03OpcoesPosicoes .loop03-unidade-posicao').nth(1)
+    .locator('.loop03-cartao-selecionado').count(),1);
+   // Abrir faixa vermelha da segunda: os DOIS itens mostram valor de época.
+   await pagina.locator('#loop03OpcoesPosicoes .loop03-compra-gatilho').nth(1).click();
+   const detalhes=pagina.locator('#loop03OpcoesPosicoes .loop03-compra-expandida:not([hidden])');
+   assert.equal(await detalhes.count(),1);
+   assert.equal(await detalhes.locator('.loop03-produto-comprado').count(),2);
+   assert.match(await detalhes.innerText(),/Curso Móvel Básico/);
+   assert.match(await detalhes.innerText(),/Curso Móvel Completo/);
+   assert.match(await detalhes.innerText(),/R\\$\\s?100,00/);
+   assert.match(await detalhes.innerText(),/R\\$\\s?150,00/);
+   assert.match(await detalhes.innerText(),/R\\$\\s?250,00/);
+   await conferirLargura(pagina,largura,'aberturas-posicoes-'+largura,{captura:false});
+   // Captura fullPage REAL COM DOIS PAINÉIS ABERTOS: seletor + detalhe da compra.
+   await pagina.screenshot({path:path.join(pasta,arquivo),fullPage:true});
+   await ctx.close();
+  };
+  await fotoComAberturas(1254,'MINHAS_POSICOES_SELETOR_1A6_E_COMPRA_2_ITENS_PC_1254.png');
+  await fotoComAberturas(390,'MINHAS_POSICOES_SELETOR_1A6_E_COMPRA_2_ITENS_CEL_390.png');
+
   assert.deepEqual(erros,[], 'Erros de execucao no navegador');
   const relatorio={status:'APROVADO',
    tamanhosPx:[320,360,390,412,768,1024,1366],
