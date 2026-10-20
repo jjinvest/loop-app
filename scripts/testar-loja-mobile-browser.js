@@ -741,7 +741,7 @@ async function main(){
   assert.equal(await statusCel.locator('.loop03-link-status-linha').count(),2);
   assert.equal(await statusCel.locator('.loop03-link-status-selo').innerText(),'ATIVO');
   assert.equal(await statusCel.locator('.loop03-link-status-ativo').count(),1);
-  assert.equal((await statusCel.innerText()).replace(/\\s+/g,' ').trim(),
+  assert.equal((await statusCel.innerText()).replace(/\s+/g,' ').trim(),
    'Link ATIVO para divulgação. Bonificações somente após CPF e aceitação dos termos.');
   assert.equal(await statusCel.locator('.loop03-link-status-linha').first()
    .evaluate(x=>getComputedStyle(x,'::before').content),'"●"');
