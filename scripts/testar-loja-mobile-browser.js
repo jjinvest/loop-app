@@ -1500,6 +1500,87 @@ async function main(){
   await fotoComAberturas(1254,'MINHAS_POSICOES_SELETOR_1A6_E_COMPRA_2_ITENS_PC_1254.png');
   await fotoComAberturas(390,'MINHAS_POSICOES_SELETOR_1A6_E_COMPRA_2_ITENS_CEL_390.png');
 
+
+  // Foto real de 4 indicações registradas no SQLite de teste, sem placeholders.
+  for(const [ordem,nome,nick,cpf] of [
+   ['terceira','Terceira Indicacao Teste','Terceiro','62531497846'],
+   ['quarta','Quarta Indicacao Teste','Quarto','86742519355']
+  ]){
+   const usuario=contas.cadastrar({nome,apelido:nick,email:ordem+'@exemplo.invalid',
+    senha,codigoIndicador:titular.codigoConvite});
+   const pedidoId='pedido-'+ordem+'-indicacao';
+   const resposta=await fetch(base+'/api/admin/carrinho-loop-demo',{
+    method:'POST',headers:cabAdmin,
+    body:JSON.stringify({pedidoId,contaId:usuario.contaId,
+     itens:[{produtoId:'curso-mobile-100',quantidade:1},
+      {produtoId:'curso-mobile-150',quantidade:1}]})
+   });
+   assert.equal(resposta.status,201,await resposta.text());
+   const confirmado=await fetch(base+'/api/admin/carrinho-loop-demo/'+pedidoId+'/eventos',{
+    method:'POST',headers:cabAdmin,
+    body:JSON.stringify({eventoId:'evento-'+ordem,tipo:'CONFIRMAR_FICTICIO'})
+   });
+   assert.equal(confirmado.status,200,await confirmado.text());
+   const cx=await browser.newContext({viewport:{width:390,height:812},isMobile:true,hasTouch:true});
+   const pag=await cx.newPage();
+   pag.on('pageerror',err=>erros.push(ordem+': '+err.message));
+   await pag.goto(base+'/laboratorio/participante',{waitUntil:'networkidle'});
+   await pag.locator('#nomeParticipante').fill(nome);
+   await pag.locator('#senhaParticipante').fill(senha);
+   await pag.locator('#botaoEntrarParticipante').click();
+   await pag.locator('#conteudoParticipante').waitFor({state:'visible'});
+   await pag.locator('#loop03Menu').click();
+   await pag.locator('#loop03Sidebar [data-loop03-aba="posicoes"]').click();
+   await pag.locator('#loop03OpcoesPosicoes [data-loop03-posicao]').first().click();
+   await pag.locator('#cpfFicticioParticipante').fill(cpf);
+   await pag.locator('#aceiteTermosParticipante').check();
+   await pag.locator('#confirmarAtivacaoParticipante').click();
+   await pag.locator('#secaoAtivacaoParticipante').waitFor({state:'hidden'});
+   await cx.close();
+  }
+  for(const [width,filename] of [
+   [390,'MINHA_REDE_QUATRO_INDICACOES_NICK_CELULAR.png'],
+   [1254,'MINHA_REDE_QUATRO_INDICACOES_NICK_COMPUTADOR.png']
+  ]){
+   const cx=await browser.newContext({viewport:{width,height:900},
+    isMobile:width===390,hasTouch:width===390});
+   const pag=await cx.newPage();
+   pag.on('pageerror',err=>erros.push('rede '+width+': '+err.message));
+   await pag.goto(base+'/laboratorio/participante',{waitUntil:'networkidle'});
+   await pag.locator('#nomeParticipante').fill(titular.nome);
+   await pag.locator('#senhaParticipante').fill(senha);
+   await pag.locator('#botaoEntrarParticipante').click();
+   await pag.locator('#conteudoParticipante').waitFor({state:'visible'});
+   if(width===390)await pag.locator('#loop03Menu').click();
+   await pag.locator('#loop03Sidebar [data-loop03-aba="rede"]').click();
+   assert.equal(await pag.locator('#loop03RedeTotalIndicacoes').innerText(),'4');
+   assert.equal(await pag.locator('#loop03ListaEquipe .loop03-equipe-linha').count(),4);
+   for(let i=0;i<4;i++)
+    assert.equal(await pag.locator('#loop03ListaEquipe .loop03-equipe-linha').nth(i)
+     .locator('.loop03-ordem-indicacao').innerText(),(i+1)+'ª indicação');
+   await pag.locator('#loop03LinksRede summary').first().click();
+   assert.equal(await pag.locator('#apelidoLinkParticipante').isVisible(),true);
+   assert.equal(await pag.locator('#salvarApelidoLinkParticipante').innerText(),'Salvar');
+   const campo=await pag.locator('#apelidoLinkParticipante').boundingBox(),
+    salvar=await pag.locator('#salvarApelidoLinkParticipante').boundingBox();
+   assert.ok(campo&&salvar&&salvar.x>=campo.x+campo.width-1&&
+    Math.abs(salvar.y-campo.y)<5,'Nick e Salvar lado a lado');
+   if(width===390){
+    await pag.locator('#apelidoLinkParticipante').fill('MeuNick');
+    await pag.locator('#salvarApelidoLinkParticipante').click();
+    await pag.waitForFunction(()=>document.querySelector('#enderecoLinkParticipante')?.value.endsWith('/MeuNick'));
+    assert.equal(await pag.locator('#loop03OpcoesPosicoes .loop03-cartao-nick').first().textContent(),'MeuNick');
+    await pag.locator('#loop03Menu').click();
+    await pag.locator('#loop03Sidebar [data-loop03-aba="tabuleiro"]').click();
+    assert.ok(await pag.locator('#mapaFilaAParticipante .loop03-fila-nick,#mapaFilaBParticipante .loop03-fila-nick')
+     .filter({hasText:'MeuNick'}).count()>0,'Nick atualizado embaixo do #ID da fila');
+    await pag.locator('#loop03Menu').click();
+    await pag.locator('#loop03Sidebar [data-loop03-aba="rede"]').click();
+   }
+   await conferirLargura(pag,width,'rede-quatro-'+width,{captura:false});
+   await pag.screenshot({path:path.join(pasta,filename),fullPage:true});
+   await cx.close();
+  }
   assert.deepEqual(erros,[], 'Erros de execucao no navegador');
   const relatorio={status:'APROVADO',
    tamanhosPx:[320,360,390,412,768,1024,1366],
