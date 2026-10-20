@@ -2554,3 +2554,6 @@ body.loop03-logado .portal-participante{position:relative;z-index:1}
  display:block!important;overflow:hidden!important;white-space:nowrap!important;
  text-overflow:ellipsis!important;
 }
+
+/* Mensagens de erro/cópia aparecem somente quando houver algo a comunicar. */
+#loop03LinksRede #avisoLinkParticipante:empty{display:none}

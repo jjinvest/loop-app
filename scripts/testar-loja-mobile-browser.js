@@ -1554,6 +1554,8 @@ async function main(){
    if(width===390)await pag.locator('#loop03Menu').click();
    await pag.locator('#loop03Sidebar [data-loop03-aba="rede"]').click();
    assert.equal(await pag.locator('#loop03RedeTotalIndicacoes').innerText(),'4');
+   assert.equal(await pag.locator('#loop03-rede .loop03-rede-subtotal span').innerText(),
+    'Indicações a distribuir');
    assert.equal(await pag.locator('#loop03ListaEquipe .loop03-equipe-linha').count(),4);
    for(let i=0;i<4;i++)
     assert.equal(await pag.locator('#loop03ListaEquipe .loop03-equipe-linha').nth(i)
@@ -1570,6 +1572,10 @@ async function main(){
     await pag.locator('#apelidoLinkParticipante').fill('MeuNick');
     await pag.locator('#salvarApelidoLinkParticipante').click();
     await pag.waitForFunction(()=>document.querySelector('#enderecoLinkParticipante')?.value.endsWith('/MeuNick'));
+    assert.equal(await pag.locator('#avisoLinkParticipante').textContent(),'',
+     'Não mostrar nota técnica de atualização/rastreamento no rodapé');
+    assert.equal(await pag.locator('#avisoLinkParticipante').isVisible(),false,
+     'Rodapé vazio deve desaparecer após salvar nick');
     assert.equal(await pag.locator('#loop03OpcoesPosicoes .loop03-cartao-nick').first().textContent(),'MeuNick');
     await pag.locator('#loop03Menu').click();
     await pag.locator('#loop03Sidebar [data-loop03-aba="tabuleiro"]').click();

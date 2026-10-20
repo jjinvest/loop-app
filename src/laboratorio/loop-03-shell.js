@@ -165,7 +165,7 @@
      </section>
      <section id="loop03-rede" class="loop03-pagina" aria-label="Minha Rede e Equipe">
       <header class="loop03-titulo-pagina loop03-cabecalho-equipe">
-       <div class="loop03-contador-rede loop03-contador-total"><small>TOTAL DE INDICAÇÕES</small><strong id="loop03RedeTotalIndicacoes">0</strong><span>Indicações confirmadas</span><div class="loop03-rede-subtotal"><span>Posições · indicações a distribuir</span><strong id="loop03RedeADistribuir">0</strong></div></div>
+       <div class="loop03-contador-rede loop03-contador-total"><small>TOTAL DE INDICAÇÕES</small><strong id="loop03RedeTotalIndicacoes">0</strong><span>Indicações confirmadas</span><div class="loop03-rede-subtotal"><span>Indicações a distribuir</span><strong id="loop03RedeADistribuir">0</strong></div></div>
        <div class="loop03-titulo-equipe"><small>INDICAÇÕES</small><h2>Minha Equipe</h2><p>Pessoas que entraram pelo seu link</p></div>
        <div class="loop03-busca-equipe"><label for="loop03BuscarIndicado">Encontrar indicado</label><input id="loop03BuscarIndicado" type="search" autocomplete="off" placeholder="Nome ou nº na fila" aria-controls="loop03ListaEquipe"></div>
       </header>

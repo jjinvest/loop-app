@@ -692,7 +692,7 @@
     for(const tag of document.querySelectorAll('#loop03OpcoesPosicoes .loop03-cartao-nick'))
      tag.textContent=nick;
    }
-   e('avisoLinkParticipante').textContent='Nome do link atualizado; rastreamento preservado.';
+   e('avisoLinkParticipante').textContent='';
   }catch(err){e('avisoLinkParticipante').textContent=err.message;}
   finally{botao.disabled=false;}
  });
