@@ -590,7 +590,7 @@ async function main(){
 
   // Percurso do cliente: convidado compra PDF; o titular precisa distribuir.
   const convidado=contas.cadastrar({
-   nome:'Indicado Teste Mobile',apelido:'Primeiro',email:'indicado-mobile@exemplo.invalid',
+   nome:'Ana Oliveira',apelido:'Primeiro',email:'indicado-mobile@exemplo.invalid',
    senha,codigoIndicador:titular.codigoConvite
   });
   const cabAdmin={'Content-Type':'application/json',Authorization:'Bearer '+admin};
@@ -673,7 +673,7 @@ async function main(){
   await page.screenshot({path:path.join(pasta,'rede-um-indicado-distribuido.png'),fullPage:true});
   // Confere a nova distribuicao +1 sem nomes nos seis cartoes aprovados.
   const novoIndicado=contas.cadastrar({
-   nome:'Segundo Indicado Mobile',apelido:'Segundo',email:'segundo-indicado@exemplo.invalid',
+   nome:'Bruno Santos',apelido:'Segundo',email:'segundo-indicado@exemplo.invalid',
    senha,codigoIndicador:titular.codigoConvite
   });
   const pedidoNovo=await fetch(base+'/api/admin/carrinho-loop-demo',{
@@ -767,7 +767,7 @@ async function main(){
   // Pesquisa por nome e por ID real, sem inventar sequência da rede.
   await page.locator('#loop03BuscarIndicado').fill('Segundo');
   assert.equal(await page.locator('#loop03ListaEquipe .loop03-equipe-linha:visible').count(),1);
-  assert.match(await page.locator('#loop03ListaEquipe .loop03-equipe-linha:visible').innerText(),/Segundo Indicado Mobile/);
+  assert.match(await page.locator('#loop03ListaEquipe .loop03-equipe-linha:visible').innerText(),/Bruno Santos/);
   await page.locator('#loop03BuscarIndicado').fill('#'+primeiroId);
   assert.equal(await page.locator('#loop03ListaEquipe .loop03-equipe-linha:visible').count(),1);
   await page.locator('#loop03BuscarIndicado').fill('nome que nao existe');
@@ -1549,8 +1549,8 @@ async function main(){
 
   // Foto real de 4 indicações registradas no SQLite de teste, sem placeholders.
   for(const [ordem,nome,nick,cpf] of [
-   ['terceira','Terceira Indicacao Teste','Terceiro','62531497846'],
-   ['quarta','Quarta Indicacao Teste','Quarto','86742519355']
+   ['terceira','Carla Pereira','Terceiro','62531497846'],
+   ['quarta','Lucas Almeida','Quarto','86742519355']
   ]){
    const usuario=contas.cadastrar({nome,apelido:nick,email:ordem+'@exemplo.invalid',
     senha,codigoIndicador:titular.codigoConvite});
@@ -1603,11 +1603,18 @@ async function main(){
    assert.equal(await pag.locator('#loop03-rede .loop03-rede-subtotal:not(.loop03-rede-utilizadas) span').innerText(),
     'Indicações a distribuir');
    assert.equal(await pag.locator('#loop03ListaEquipe .loop03-equipe-linha').count(),4);
+   assert.deepEqual(await pag.locator('#loop03ListaEquipe .loop03-equipe-avatar').allTextContents(),
+    ['1','2','3','4'],'Numerar esferas pela ordem dos cadastros do SQLite');
+   assert.deepEqual(await pag.locator('#loop03ListaEquipe .loop03-equipe-linha')
+    .evaluateAll(els=>els.map(el=>el.dataset.numeroIndicacao)),
+    ['1','2','3','4']);
    assert.equal(await pag.locator('#loop03ListaEquipe .loop03-ordem-indicacao').count(),0);
    assert.equal(await pag.locator('#loop03RedeUtilizadas').innerText(),'2');
    assert.equal(await pag.locator('#loop03RedeADistribuir').innerText(),'2');
    assert.equal(await pag.locator('#loop03ListaEquipe .loop03-equipe-estado.loop03-equipe-ativo').count(),4);
    assert.equal(await pag.locator('#loop03ListaEquipe .loop03-equipe-numeros').count(),4);
+   assert.deepEqual(await pag.locator('#loop03ListaEquipe .loop03-equipe-linha>strong').allTextContents(),
+    ['Ana Oliveira','Bruno Santos','Carla Pereira','Lucas Almeida']);
    await pag.locator('#loop03LinksRede summary').first().click();
    assert.equal(await pag.locator('#apelidoLinkParticipante').isVisible(),true);
    assert.equal(await pag.locator('#salvarApelidoLinkParticipante').innerText(),'Salvar');
@@ -1652,7 +1659,7 @@ async function main(){
    // Capturar no MESMO sistema verdadeiro a janelinha com escolha e a
    // confirmação verde/cancelar, sem efetuar o vínculo do terceiro indicado.
    const terceiraLinha=pag.locator('#loop03ListaEquipe .loop03-equipe-linha').nth(2);
-   await terceiraLinha.getByRole('button',{name:'Escolher posição para Terceira Indicacao Teste'}).click();
+   await terceiraLinha.getByRole('button',{name:'Escolher posição para Carla Pereira'}).click();
    assert.equal(await terceiraLinha.locator('.loop03-equipe-numeros>button').count(),1);
    await terceiraLinha.getByRole('button',{name:/Posição 1 · #/}).click();
    assert.equal(await terceiraLinha.locator('.loop03-equipe-confirmacao>span').innerText(),
@@ -1677,6 +1684,13 @@ async function main(){
   const naoAtiva=page.locator('#loop03ListaEquipe .loop03-equipe-linha')
    .filter({hasText:semCompra.nome});
   assert.equal(await naoAtiva.locator('.loop03-equipe-estado').innerText(),'NÃO ATIVO');
+  assert.equal(await naoAtiva.locator('.loop03-equipe-avatar').innerText(),'5');
+  await page.reload({waitUntil:'networkidle'});
+  await page.locator('#conteudoParticipante').waitFor({state:'visible'});
+  await page.locator('#loop03Menu').click();
+  await page.locator('#loop03Sidebar [data-loop03-aba="rede"]').click();
+  assert.deepEqual(await page.locator('#loop03ListaEquipe .loop03-equipe-avatar').allTextContents(),
+   ['1','2','3','4','5'],'A sequência histórica persiste após recarregar');
   assert.equal(await naoAtiva.locator('.loop03-equipe-inativo').count(),1);
   assert.equal(await page.locator('#loop03RedeTotalIndicacoes').innerText(),'4');
   assert.equal(await page.locator('#loop03RedeUtilizadas').innerText(),'2');

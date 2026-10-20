@@ -1183,9 +1183,13 @@
   const equipes=e('loop03ListaEquipe');equipes.replaceChildren();
   for(const [indice,pessoa] of (visao.equipe||[]).entries()){
    const cartao=document.createElement('div');cartao.className='loop03-opcao loop03-equipe-linha';
+   // Ordem histórica de cadastro recebida do SQLite, inclusive indicados sem compra.
+   // Não reiniciar a contagem com a fila, o tabuleiro ou vínculos já realizados.
+   cartao.dataset.numeroIndicacao=String(indice+1);
    cartao.dataset.nomeIndicado=pessoa.nome||'';
    cartao.dataset.numerosFila=(pessoa.numerosFila||[]).join(',');
-   const titulo=document.createElement('strong');titulo.textContent=pessoa.nome;
+   const nomeVisivel=typeof pessoa.nome==='string'&&pessoa.nome.trim()?pessoa.nome.trim():'...';
+   const titulo=document.createElement('strong');titulo.textContent=nomeVisivel;
    const dados=document.createElement('small');dados.className='loop03-equipe-informacoes';
    // ATIVO: compra + CPF/aceite confirmados; PENDENTE: compra sem aceite;
    // NÃO ATIVO: convite cadastrado, mas ainda sem compra confirmada.
@@ -1199,11 +1203,13 @@
      (Number.isSafeInteger(pessoa.numeroFila)?' · #'+pessoa.numeroFila:'');
     dados.append(fila);
    }
-   // Avatar tipografico: visual da equipe sem imagem ou identidade ficticia.
+   // A esfera mostra a sequência permanente das indicações (1, 2, 3...),
+   // nunca iniciais nem número da posição de cada cliente no motor.
    const avatar=document.createElement('span');avatar.className='loop03-equipe-avatar';
    avatar.setAttribute('aria-hidden','true');
-   avatar.textContent=String(pessoa.nome||'?').trim().split(/\s+/).slice(0,2)
-    .map(parte=>parte[0]||'').join('').toLocaleUpperCase('pt-BR');
+   avatar.textContent=String(indice+1);
+   if(indice+1>=1000)avatar.classList.add('loop03-equipe-avatar-mil');
+   if(indice+1>=100000)avatar.classList.add('loop03-equipe-avatar-longo');
    const faixa=document.createElement('span');
    faixa.className='loop03-equipe-estado '+(situacao==='ATIVO'?'loop03-equipe-ativo':
     situacao==='PENDENTE'?'loop03-equipe-pendente':'loop03-equipe-inativo');
@@ -1213,12 +1219,12 @@
    // com um numero por posicao real do titular, inclusive nao confirmada.
    const botao=document.createElement('button');botao.type='button';
    botao.textContent='⋮';botao.className='loop03-equipe-mais';
-   botao.setAttribute('aria-label','Escolher posição para '+pessoa.nome);
+   botao.setAttribute('aria-label','Escolher posição para '+(pessoa.nome||'indicação '+(indice+1)));
    botao.setAttribute('aria-expanded','false');
    const escolhas=document.createElement('div');
    escolhas.className='loop03-equipe-escolhas';escolhas.hidden=true;
    escolhas.setAttribute('role','group');
-   escolhas.setAttribute('aria-label','Posições do titular para '+pessoa.nome);
+   escolhas.setAttribute('aria-label','Posições do titular para '+(pessoa.nome||'indicação '+(indice+1)));
    const legenda=document.createElement('strong');
    legenda.className='loop03-equipe-escolhas-titulo';
    legenda.textContent='Escolha uma posição';

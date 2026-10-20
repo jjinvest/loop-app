@@ -2624,3 +2624,13 @@ body.loop03-logado .portal-participante{position:relative;z-index:1}
 #loop03-rede .loop03-rede-utilizadas{
  margin-top:4px!important;
 }
+
+
+/* Índice cronológico permanente no lugar das iniciais: também cabe 1000+. */
+#loop03-rede .loop03-equipe-avatar{font-variant-numeric:tabular-nums;white-space:nowrap;line-height:1}
+#loop03-rede .loop03-equipe-avatar-mil{font-size:.56rem!important;letter-spacing:-.045em}
+#loop03-rede .loop03-equipe-avatar-longo{font-size:.43rem!important;letter-spacing:-.07em}
+@media(max-width:590px){
+ #loop03-rede .loop03-equipe-avatar-mil{font-size:.45rem!important}
+ #loop03-rede .loop03-equipe-avatar-longo{font-size:.35rem!important}
+}
