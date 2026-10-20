@@ -583,14 +583,14 @@ async function main(){
   assert.equal(await page.locator('#loop03OpcoesPosicoes .loop03-cpf-cartao').count(),1);
   assert.equal(await page.locator('#loop03OpcoesPosicoes .loop03-cpf-protegido').count(),1);
   assert.equal(await page.locator('#loop03OpcoesPosicoes .loop03-check-cartao').first().isChecked(),true);
-  assert.equal(await page.locator('#loop03OpcoesPosicoes .loop03-status-confirmacao-ok .loop03-cartao-identidade span').isVisible(),false,
+  assert.equal(await page.locator('#loop03OpcoesPosicoes .loop03-status-confirmacao-ok .loop03-cartao-identidade span:not(.loop03-cartao-nick)').isVisible(),false,
    'Remover texto Fila A abaixo do #ID sem mudar a esfera A');
   assert.equal(await page.locator('.linha-minha-demo .posicao-vermelho').count(),1);
   await page.screenshot({path:path.join(pasta,'escritorio-posicao-ativada.png'),fullPage:true});
 
   // Percurso do cliente: convidado compra PDF; o titular precisa distribuir.
   const convidado=contas.cadastrar({
-   nome:'Indicado Teste Mobile',email:'indicado-mobile@exemplo.invalid',
+   nome:'Indicado Teste Mobile',apelido:'Primeiro',email:'indicado-mobile@exemplo.invalid',
    senha,codigoIndicador:titular.codigoConvite
   });
   const cabAdmin={'Content-Type':'application/json',Authorization:'Bearer '+admin};
@@ -649,7 +649,7 @@ async function main(){
   await page.screenshot({path:path.join(pasta,'rede-um-indicado-distribuido.png'),fullPage:true});
   // Confere a nova distribuicao +1 sem nomes nos seis cartoes aprovados.
   const novoIndicado=contas.cadastrar({
-   nome:'Segundo Indicado Mobile',email:'segundo-indicado@exemplo.invalid',
+   nome:'Segundo Indicado Mobile',apelido:'Segundo',email:'segundo-indicado@exemplo.invalid',
    senha,codigoIndicador:titular.codigoConvite
   });
   const pedidoNovo=await fetch(base+'/api/admin/carrinho-loop-demo',{

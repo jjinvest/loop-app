@@ -2518,3 +2518,10 @@ body.loop03-logado .portal-participante{position:relative;z-index:1}
  color:#fae5b2;font-weight:750;text-align:center;overflow:hidden;
  text-overflow:ellipsis;white-space:nowrap;
 }
+
+/* Indicações numeradas apenas quando existem pessoas cadastradas. */
+#loop03-rede .loop03-equipe-linha .loop03-ordem-indicacao{
+ grid-column:2/4!important;grid-row:auto!important;
+ display:block;font-size:clamp(.55rem,.79vw,.72rem);
+ color:#ffdf9b;font-weight:650;line-height:1.1;
+}

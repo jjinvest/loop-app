@@ -1180,7 +1180,7 @@
    visao.contadoresRede?.totalIndicacoesConfirmadas??visao.contadoresRede?.totalPosicoes??0);
   e('loop03RedeADistribuir').textContent=String(visao.contadoresRede?.aDistribuir??0);
   const equipes=e('loop03ListaEquipe');equipes.replaceChildren();
-  for(const pessoa of visao.equipe||[]){
+  for(const [indice,pessoa] of (visao.equipe||[]).entries()){
    const cartao=document.createElement('div');cartao.className='loop03-opcao loop03-equipe-linha';
    cartao.dataset.nomeIndicado=pessoa.nome||'';
    cartao.dataset.numerosFila=(pessoa.numerosFila||[]).join(',');
@@ -1211,6 +1211,10 @@
     situacao==='PENDENTE'?'loop03-equipe-pendente':'loop03-equipe-conferencia');
    faixa.textContent=situacao;
    cartao.append(avatar,titulo,faixa,dados);
+   const ordinal=document.createElement('small');
+   ordinal.className='loop03-ordem-indicacao';
+   ordinal.textContent=(indice+1)+'ª indicação';
+   cartao.append(ordinal);
    if(pessoa.posicaoAtribuidaId===null&&pessoa.estado==='ATIVO'){
     const botao=document.createElement('button');botao.type='button';
     botao.textContent='⋮';botao.setAttribute('aria-label','Escolher posição para '+pessoa.nome);
