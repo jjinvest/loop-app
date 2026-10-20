@@ -102,8 +102,8 @@ test('link so ativa apos compra pequena, comissao por posicao e versoes 10%, 20%
  assert.equal(links.comissoesDaConta(a.contaId).totalSimuladoCentavos,17500);
  // O apelido nao muda o rastreio, links antigos seguem funcionando.
  const antigo=alias.link;
- const novo=links.personalizar({contaId:a.contaId,apelido:'Minha Rede'});
- assert.match(novo.link,/minha-rede/);
+ const novo=links.personalizar({contaId:a.contaId,apelido:'MinhaRede'});
+ assert.match(novo.link,/MinhaRede/);
  assert.equal(links.resolver(antigo).indicadorId,a.contaId);
  assert.equal(links.resolver(novo.link).indicadorId,a.contaId);
  assert.equal(links.resolver(antigo).ativo,true);

@@ -76,7 +76,7 @@ async function main(){
   banco.salvar({produto:curso('curso-especial-600','Curso Evento Dourado Roxo',60000),revisaoEsperada:0});
   const contas=new ContasParticipantesDemoSQLite({banco:banco.banco});
   const titular=contas.cadastrar({
-   nome:'Comprador Mobile Ficticio',email:'mobile@exemplo.invalid',senha
+   nome:'Comprador Mobile Ficticio',apelido:'TesteUser',email:'mobile@exemplo.invalid',senha
   });
   servidor=criarAppAdminLaboratorio({repositorio:banco,segredo:admin})
    .listen(0,'127.0.0.1');
@@ -482,8 +482,8 @@ async function main(){
   assert.equal(await page.locator('#loop03OpcoesPosicoes .loop03-link-termos').count(),5);
   assert.equal(await page.locator('#loop03OpcoesPosicoes .loop03-adicionar-indicado').count(),6);
   assert.equal(await page.locator('#loop03OpcoesPosicoes .loop03-posicao-vazia + .loop03-adicionar-indicado:disabled').count(),5);
-  assert.match(await page.locator('#loop03LinkEscritorio').inputValue(),/\/escritorio\/convite\/lp-/);
-  assert.match(await page.locator('#loop03LinkLoja').inputValue(),/\/loja\/convite\/lp-/);
+  assert.match(await page.locator('#loop03LinkEscritorio').inputValue(),/\/escritorio\/TesteUser$/);
+  assert.match(await page.locator('#loop03LinkLoja').inputValue(),/\/loja\/TesteUser$/);
   assert.equal(await page.locator('#loop03CopiarEscritorio').isDisabled(),false);
   assert.equal(await page.locator('#loop03CopiarLoja').isDisabled(),false);
   assert.equal(await page.locator('#loop03OpcoesPosicoes .loop03-indicacoes-curtas').count(),6);

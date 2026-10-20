@@ -6,9 +6,9 @@ const {randomUUID}=require('node:crypto');
 const {ConfiguracaoTaxaIndicacaoDemoSQLite}=require('./configuracao-taxa-indicacao-demo-sqlite');
 const {VERSAO_TERMOS_DEMO}=require('./adesoes-posicoes-demo-sqlite');
 const TOKEN=/^lp-[a-f0-9]{20}$/;
-const PATH=/^\/laboratorio\/convite\/(lp-[a-f0-9]{20})(?:\/([A-Za-z0-9][A-Za-z0-9_-]{1,38}[A-Za-z0-9]))?\/?$/;
+const PATH=/^\/laboratorio\/convite\/(lp-[a-f0-9]{20})(?:\/([A-Za-z0-9](?:[A-Za-z0-9_-]{0,38}[A-Za-z0-9])?))?\/?$/;
 // Os dois links publicaveis sao neutros; links Vilela antigos seguem validos.
-const PATH_VILELA=/^\/(escritorio-vilela|loja-vilela|escritorio|loja)\/convite\/(lp-[a-f0-9]{20})(?:\/([A-Za-z0-9][A-Za-z0-9_-]{1,38}[A-Za-z0-9]))?\/?$/;
+const PATH_VILELA=/^\/(escritorio-vilela|loja-vilela|escritorio|loja)\/convite\/(lp-[a-f0-9]{20})(?:\/([A-Za-z0-9](?:[A-Za-z0-9_-]{0,38}[A-Za-z0-9])?))?\/?$/;
 const PATH_CURTO=/^\/(escritorio|loja)\/([A-Za-z0-9](?:[A-Za-z0-9_-]{0,7}[A-Za-z0-9])?)\/?$/;
 function falha(codigo){const e=new Error(codigo);e.codigo=codigo;return e;}
 function apelidoSeguro(s){

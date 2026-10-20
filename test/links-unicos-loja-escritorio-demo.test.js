@@ -27,6 +27,8 @@ test('mesma indicacao apresenta loja ou escritorio, com vitrine e precos livres'
  const links=new IndicacoesLinksComissoesDemoSQLite({banco:repo.banco,contas});
  const ini=links.linkDaConta(indicador.contaId);
  assert.equal(ini.ativo,false);
+ assert.equal(ini.linkEscritorioCurto,null,'sem nick, endereço curto fica em branco');
+ assert.equal(ini.linkLojaCurto,null,'não usar nome de exemplo como valor padrão');
  assert.equal(ini.mesmoCodigoIndicador,true);
  assert.notEqual(ini.linkLoja,ini.linkEscritorio);
  assert.equal(extrairLink(ini.linkLoja).token,extrairLink(ini.linkEscritorio).token);

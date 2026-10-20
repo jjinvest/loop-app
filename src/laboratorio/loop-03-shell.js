@@ -1194,6 +1194,7 @@
   if(intervaloVitrine!==null){clearInterval(intervaloVitrine);intervaloVitrine=null;}
   vitrineLista=[];vitrineIndice=0;pintarVitrineAKITEMM();
   fecharTermosPosicao();aceitesPosicao.clear();cpfRascunho='';
+  atualizarLinksPosicao(null);
   document.body.classList.remove('loop03-logado');
   selecionada=null;visaoAtual=null;destinoInicialTratado=false;fotoPerfilAcao='MANTER';
   fecharSeletorPosicao();identidadeDaPosicao(null);

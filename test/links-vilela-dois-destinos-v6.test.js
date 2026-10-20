@@ -42,8 +42,8 @@ test('dois enderecos AKITEMM e Escritorio LOOP preservam mesmo indicador e links
   assert.throws(()=>extrairLink(url),e=>e.codigo==='LINK_INVALIDO');
  }
  const alterado=links.personalizar({contaId:indicador.contaId,apelido:'Vilela'});
- assert.ok(alterado.linkLoja.endsWith('/vilela'));
- assert.ok(alterado.linkEscritorio.endsWith('/vilela'));
+ assert.ok(alterado.linkLoja.endsWith('/Vilela'));
+ assert.ok(alterado.linkEscritorio.endsWith('/Vilela'));
  assert.equal(extrairLink(alterado.linkLoja).token,loja.token);
  assert.equal(extrairLink(alterado.linkEscritorio).token,loja.token);
  assert.equal(links.resolver(dados.linkLoja).indicadorId,indicador.contaId);
