@@ -1572,8 +1572,26 @@ async function main(){
     assert.equal(await pag.locator('#loop03OpcoesPosicoes .loop03-cartao-nick').first().textContent(),'MeuNick');
     await pag.locator('#loop03Menu').click();
     await pag.locator('#loop03Sidebar [data-loop03-aba="tabuleiro"]').click();
-    assert.ok(await pag.locator('#mapaFilaAParticipante .loop03-fila-nick,#mapaFilaBParticipante .loop03-fila-nick')
-     .filter({hasText:'MeuNick'}).count()>0,'Nick atualizado embaixo do #ID da fila');
+    // A cadeira do titular pode estar no CENTRO ou em uma vaga, não na fila.
+    // Conferir a identificação onde o motor realmente a colocou.
+    await pag.waitForFunction(()=>[...document.querySelectorAll(
+     '#mapaFilaAParticipante .linha-minha-demo .loop03-fila-id-nick,'+
+     '#mapaFilaBParticipante .linha-minha-demo .loop03-fila-id-nick,'+
+     '#mapaTabuleiroParticipante .espaco-meu-tabuleiro-demo .loop03-ocupante-identidade'
+    )].some(el=>el.querySelector('.loop03-fila-nick,.loop03-nome-na-bola')?.textContent==='MeuNick'));
+    const identidades=await pag.evaluate(()=>[...document.querySelectorAll(
+     '#mapaFilaAParticipante .linha-minha-demo .loop03-fila-id-nick,'+
+     '#mapaFilaBParticipante .linha-minha-demo .loop03-fila-id-nick,'+
+     '#mapaTabuleiroParticipante .espaco-meu-tabuleiro-demo .loop03-ocupante-identidade'
+    )].map(el=>({id:el.querySelector('.selo-posicao-demo')?.textContent,
+     nick:el.querySelector('.loop03-fila-nick,.loop03-nome-na-bola')?.textContent})));
+    assert.ok(identidades.length>0,'Posição real do titular presente no motor');
+    assert.ok(identidades.every(x=>/^#\\d+$/.test(x.id)&&x.nick==='MeuNick'),
+     'Nick atualizado abaixo do #ID em toda posição própria: '+JSON.stringify(identidades));
+    // Outras pessoas têm nick público na fila B; nunca exibir nome civil.
+    const filaNick=pag.locator('#mapaFilaBParticipante .loop03-fila-id-nick');
+    assert.ok(await filaNick.filter({hasText:'Terceiro'}).count()>0,
+     'Nick de indicado ativo também deve aparecer abaixo do #ID da fila B');
     await pag.locator('#loop03Menu').click();
     await pag.locator('#loop03Sidebar [data-loop03-aba="rede"]').click();
    }
