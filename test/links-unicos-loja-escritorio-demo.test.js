@@ -112,7 +112,7 @@ test('urls curtas Loja e Escritório preservam indicação e ocultam token',asyn
  const contas=new ContasParticipantesDemoSQLite({banco:repo.banco});
  const conta=contas.cadastrar({nome:'Titular Curto',apelido:'Vilela123456',
   email:'curto@exemplo.invalid',senha:'senha-forte-exemplo-2026'});
- const srv=criarAppAdminLaboratorio({repositorio:repo,segredo:'admin-curto-2026'})
+ const srv=criarAppAdminLaboratorio({repositorio:repo,segredo:'admin-test-nick-curto-2026-segredo-alto'})
   .listen(0,'127.0.0.1');
  await once(srv,'listening');t.after(()=>new Promise(resolve=>srv.close(resolve)));
  const base='http://127.0.0.1:'+srv.address().port;
