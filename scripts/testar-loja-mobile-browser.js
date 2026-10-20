@@ -1587,7 +1587,7 @@ async function main(){
     )].map(el=>({id:el.querySelector('.selo-posicao-demo')?.textContent,
      nick:el.querySelector('.loop03-fila-nick,.loop03-nome-na-bola')?.textContent})));
     assert.ok(identidades.length>0,'Posição real do titular presente no motor');
-    assert.ok(identidades.every(x=>/^#\\d+$/.test(x.id)&&x.nick==='MeuNick'),
+    assert.ok(identidades.every(x=>/^#\d+$/.test(x.id)&&x.nick==='MeuNick'),
      'Nick atualizado abaixo do #ID em toda posição própria: '+JSON.stringify(identidades));
     // Outras pessoas têm nick público na fila B; nunca exibir nome civil.
     const filaNick=pag.locator('#mapaFilaBParticipante .loop03-fila-id-nick');
