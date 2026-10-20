@@ -735,6 +735,15 @@ async function main(){
   assert.equal(await page.locator('#loop03LinksRede').getAttribute('open'),'');
   assert.equal(await page.locator('#enderecoLinkParticipante').isVisible(),true);
   assert.equal(await page.locator('#enderecoLinkLojaParticipante').isVisible(),true);
+  assert.equal(await page.locator('#copiarLinkParticipante').count(),1);
+  assert.equal(await page.locator('#copiarLinkLojaParticipante').count(),1);
+  for(const frase of [
+   'Meus dois links de indicação','Um único código de indicação, com dois destinos',
+   'Meu link para apresentar o Escritório LOOP','Meu link para apresentar a AKITEMM'
+  ]){
+   assert.equal((await page.locator('#loop03LinksRede').innerText()).includes(frase),false,
+    'A frase excluída não deve reaparecer no celular: '+frase);
+  }
   assert.equal(await page.locator('#loop03LinksRede .loop03-link-nick-opcional').getAttribute('open'),null);
   await page.screenshot({path:path.join(pasta,'MINHA_REDE_ATUAL_CELULAR_390.png'),fullPage:true});
   // Mesmo DOM e APIs em viewport desktop, sem dashboard fabricado.
@@ -754,6 +763,14 @@ async function main(){
   await redePC.locator('#loop03BuscarIndicado').fill('');
   await redePC.locator('#loop03LinksRede summary').first().click();
   assert.equal(await redePC.locator('#enderecoLinkLojaParticipante').isVisible(),true);
+  assert.equal(await redePC.locator('#enderecoLinkParticipante').isVisible(),true);
+  for(const frase of [
+   'Meus dois links de indicação','Um único código de indicação, com dois destinos',
+   'Meu link para apresentar o Escritório LOOP','Meu link para apresentar a AKITEMM'
+  ]){
+   assert.equal((await redePC.locator('#loop03LinksRede').innerText()).includes(frase),false,
+    'A frase excluída não deve reaparecer no computador: '+frase);
+  }
   await conferirLargura(redePC,1254,'minha-rede-computador',{captura:false});
   await redePC.screenshot({path:path.join(pasta,'MINHA_REDE_ATUAL_COMPUTADOR_1254.png'),fullPage:true});
   await ctxRedePC.close();

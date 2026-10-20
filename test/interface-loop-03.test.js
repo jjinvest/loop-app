@@ -14,6 +14,15 @@ test('LOOP 3.0 integra escritorio real e duas abas sem criar aplicativo paralelo
  const js=ler('loop-03-shell.js');
  const css=ler('loop-03-shell.css');
  const cosmos=ler('loop-30-cosmos.css');
+ // Apenas os textos que o idealizador pediu são retirados. Campos e cópia continuam.
+ assert.doesNotMatch(html,/Meus dois links de indicação/);
+ assert.doesNotMatch(html,/Um único código de indicação, com dois destinos/);
+ assert.doesNotMatch(html,/Meu link para apresentar o Escritório LOOP/);
+ assert.doesNotMatch(html,/Meu link para apresentar a AKITEMM/);
+ assert.match(html,/id="enderecoLinkParticipante"/);
+ assert.match(html,/id="enderecoLinkLojaParticipante"/);
+ assert.match(html,/id="copiarLinkParticipante"/);
+ assert.match(html,/id="copiarLinkLojaParticipante"/);
  assert.match(html,/\/laboratorio\/loop-03-shell.js/);
  assert.match(html,/\/laboratorio\/loop-03-shell.css/);
  assert.match(html,/\/laboratorio\/loop-30-cosmos\.css/);
