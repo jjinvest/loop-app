@@ -148,6 +148,7 @@
       </div>
       <p id="loop03AvisoDistribuicao" class="loop03-aviso-distribuicao" role="status" aria-live="polite"></p>
       <div id="loop03OpcoesPosicoes" class="loop03-opcoes loop03-grade-posicoes"></div>
+      <div id="loop03CompraMobile" class="loop03-compra-expandida loop03-compra-mobile" aria-live="polite" hidden></div>
       <div id="loop03TermosFundo" class="loop03-termos-fundo" role="dialog" aria-modal="true" aria-labelledby="loop03TermosTitulo" hidden>
        <div class="loop03-termos-janela">
         <button type="button" id="loop03TermosFechar" class="loop03-termos-fechar" aria-label="Fechar termos">×</button>
@@ -942,6 +943,7 @@
   // Seis espacos: vazias roxas originais; confirmado verde, pendente vermelho.
   // Aceite do card espelha o formulario original; nao altera o motor sem envio.
   const cartoes=e('loop03OpcoesPosicoes');cartoes.replaceChildren();
+  e('loop03CompraMobile').hidden=true;
   for(const [id] of aceitesPosicao){
    if(!visao.posicoes.some(p=>p.posicaoId===id&&p.statusAdesao==='PENDENTE'))
     aceitesPosicao.delete(id);
@@ -1004,6 +1006,11 @@
       if(trigger)trigger.setAttribute('aria-expanded','false');
      }
      detalhe.hidden=!abrir;
+     const painelMobile=e('loop03CompraMobile');
+     if(painelMobile){
+      painelMobile.hidden=!abrir;
+      if(abrir)preencherCompraPosicao(painelMobile,p,visao);
+     }
      rotulo.setAttribute('aria-expanded',String(abrir));
     });
     cartao.insertBefore(detalhe,cabecalho.nextSibling);

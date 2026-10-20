@@ -2283,3 +2283,33 @@ body.loop03-logado .portal-participante{position:relative;z-index:1}
  #loop03-posicoes .loop03-produto-preco{font-size:.64rem}
  #loop03-posicoes .loop03-produto-dados strong{font-size:.62rem}
 }
+
+/* Telefone: seis cartões sempre 3x2. Detalhes da compra em uma área
+   legível de largura total, sem comprimir nome, foto e valor em 100px. */
+#loop03-posicoes #loop03CompraMobile{display:none!important}
+@media(max-width:590px){
+ #loop03-posicoes .loop03-grade-posicoes .loop03-compra-expandida{
+  display:none!important;
+ }
+ #loop03-posicoes #loop03CompraMobile:not([hidden]){
+  display:grid!important;width:100%;box-sizing:border-box;margin:12px 0 14px;
+  padding:13px!important;gap:10px!important;
+  border:1px solid #d9ad67!important;border-radius:14px!important;
+  background:linear-gradient(135deg,#20182f,#0c1b2c)!important;
+ }
+ #loop03-posicoes #loop03CompraMobile .loop03-produto-comprado{
+  grid-template-columns:43px minmax(0,1fr) auto!important;gap:9px!important;
+ }
+ #loop03-posicoes #loop03CompraMobile .loop03-produto-imagem{
+  width:40px!important;height:45px!important;
+ }
+ #loop03-posicoes #loop03CompraMobile .loop03-produto-dados strong{
+  font-size:.81rem!important;
+ }
+ #loop03-posicoes #loop03CompraMobile .loop03-produto-preco{
+  font-size:.82rem!important;
+ }
+ #loop03-posicoes #loop03CompraMobile .loop03-compra-total strong{
+  font-size:1rem!important;
+ }
+}

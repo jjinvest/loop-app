@@ -1331,7 +1331,9 @@ async function main(){
     .locator('.loop03-cartao-selecionado').count(),1);
    // Abrir faixa VERDE da segunda: os DOIS itens mostram valor de época.
    await pagina.locator('#loop03OpcoesPosicoes .loop03-compra-gatilho').nth(1).click();
-   const detalhes=pagina.locator('#loop03OpcoesPosicoes .loop03-compra-expandida:not([hidden])');
+   const detalhes=largura<600?
+    pagina.locator('#loop03CompraMobile:not([hidden])'):
+    pagina.locator('#loop03OpcoesPosicoes .loop03-compra-expandida:not([hidden])');
    assert.equal(await detalhes.count(),1);
    assert.equal(await detalhes.locator('.loop03-produto-comprado').count(),2);
    assert.match(await detalhes.innerText(),/Curso Móvel Básico/);
