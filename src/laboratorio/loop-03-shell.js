@@ -40,6 +40,7 @@
       <strong id="loop03NomeBaixo"></strong>
       <small id="loop03SituacaoBaixo" hidden></small>
      </span>
+     <span id="loop03LetraRodape" class="loop03-fila-rodape" aria-label="Fila da posição selecionada" hidden></span>
      <span id="loop03CoroaTabuleiro" class="loop03-coroa-tabuleiro" title="Posição dentro da catraca" aria-label="Posição dentro da catraca" hidden>♛</span>
     </div>
    </aside>
@@ -82,6 +83,7 @@
        <span id="loop03LetraFila" class="loop03-visor-letra" hidden></span>
        <span id="loop03CoroaVisor" class="loop03-visor-coroa" aria-label="Posição dentro da catraca" hidden>♛</span>
        <strong id="loop03Numero">#0000</strong>
+       <small id="loop03NickVisor" class="loop03-nick-visor"></small>
        <span id="loop03IndicePosicao" class="loop03-visor-fracao">0/6</span>
        <span id="loop03NumeroDetalhe" class="loop03-visualmente-oculto">Nenhuma posição selecionada</span>
       </div>
@@ -736,25 +738,26 @@
   e('loop03AbrirEscolhaPosicao').setAttribute('aria-expanded','true');
   (area.querySelector('button:not(:disabled)')||e('loop03FecharEscolha')).focus();
  }
+ function nickPublico(){
+  const nick=visaoAtual?.linkIndicacao?.apelido;
+  return typeof nick==='string'&&/^[A-Za-z]{1,9}$/.test(nick)?nick:'';
+ }
  function identidadeDaPosicao(p){
-  const dados=e('loop03DadosPosicaoLateral');
-  if(!p){
-   dados.hidden=true;
-   e('loop03NomeBaixo').textContent='';
-   e('loop03SituacaoBaixo').textContent='';
-   e('loop03CoroaTabuleiro').hidden=true;
-   return;
-  }
-  dados.hidden=false;
-  const nomeConta=(visaoAtual?.perfil?.nome||visaoAtual?.conta?.nome||'').trim();
-  e('loop03NomeBaixo').textContent=nomeConta.replace(/^Participante\s+/i,'').trim()||nomeConta;
-  const naCatraca=/^(?:VAGA_[1-6]|CENTRO)$/.test(p.local||'');
-  const situacao=e('loop03SituacaoBaixo');
-  // Somente o nome e, dentro da catraca, a coroa no rodape.
-  // A fila continua disponivel nos dados contextuais, nunca nesta identidade.
-  situacao.textContent='';
-  situacao.hidden=true;
+  // O cadastro civil é PRIVADO: fora do cadastro, somente o nick público.
+  const nick=nickPublico(),dados=e('loop03DadosPosicaoLateral');
+  dados.hidden=!nick;
+  e('loop03NomeBaixo').textContent=nick;
+  e('loop03SituacaoBaixo').textContent='';
+  e('loop03SituacaoBaixo').hidden=true;
+  const local=p?.local||'';
+  const naCatraca=/^(?:VAGA_[1-6]|CENTRO)$/.test(local);
+  const letra=local==='FILA_A'?'A':local==='FILA_B'?'B':
+   local==='FILA'&&['A','B'].includes(p?.fila)?p.fila:'';
   e('loop03CoroaTabuleiro').hidden=!naCatraca;
+  const rodape=e('loop03LetraRodape');
+  rodape.textContent=letra;
+  rodape.hidden=!letra;
+  // O avatar mostra a foto real se cadastrada; sem foto fica vazio.
  }
  function statusPosicao(p){
   const l=p.local||'';
@@ -770,6 +773,7 @@
   const numero=indice<0?0:indice+1;
   const fracao=numero+'/'+valido;
   e('loop03IndicePosicao').textContent=fracao;
+  e('loop03NickVisor').textContent=p?nickPublico():'';
   const local=p?.local||'';
   const letra=local==='FILA_A'?'A':local==='FILA_B'?'B':
    local==='FILA'&&['A','B'].includes(p?.fila)?p.fila:null;

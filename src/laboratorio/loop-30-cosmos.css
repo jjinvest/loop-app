@@ -1681,7 +1681,7 @@ body.loop03-logado .portal-participante{position:relative;z-index:1}
 #loop03Shell .loop03-indicadores .loop03-visor-passivo{cursor:default!important}
 #loop03Shell .loop03-visor-numero{
  display:grid!important;
- grid-template-rows:minmax(17px,1fr) auto minmax(17px,1fr)!important;
+ grid-template-rows:minmax(14px,1fr) auto auto minmax(14px,1fr)!important;
  grid-template-columns:minmax(0,1fr)!important;
  justify-items:stretch!important;
  align-content:stretch!important;
@@ -1712,7 +1712,7 @@ body.loop03-logado .portal-participante{position:relative;z-index:1}
  background:#e3e8f1!important;border-color:#fff!important;color:#181a22!important;
 }
 #loop03Shell .loop03-visor-numero .loop03-visor-fracao{
- display:block!important;grid-row:3!important;justify-self:end!important;
+ display:block!important;grid-row:4!important;justify-self:end!important;
  align-self:end!important;
  text-align:right!important;
  color:#f7e7c0!important;font-weight:900!important;
@@ -2681,24 +2681,43 @@ body.loop03-logado .portal-participante{position:relative;z-index:1}
 #loop03Shell #loop03-posicoes>.loop03-links-posicoes>.loop03-painel-links{
  margin:10px!important;width:calc(100% - 20px)!important;
 }
-/* Rodapé aprovado: SOMENTE a coroa da posição dentro do tabuleiro.
-   Nada de nome de comprador, rótulo ou avatar antigo. A própria posição real
-   governa o atributo hidden da coroa pelo mesmo motor do visor superior. */
+/* Identidade pública do rodapé APROVADA: foto opcional, nick e estado.
+   A/B durante fila; coroa na catraca. Nunca mostrar nome civil. */
 #loop03Shell .loop03-sidebar>.loop03-identidade-selecionada{
+ display:flex!important;align-items:center!important;justify-content:flex-start!important;
+ min-height:52px!important;gap:8px!important;
+}
+#loop03Shell .loop03-sidebar>.loop03-identidade-selecionada>.loop03-avatar{
+ display:grid!important;place-items:center!important;
+}
+#loop03Shell .loop03-sidebar>.loop03-identidade-selecionada>.loop03-avatar>.loop03-foto-padrao{
  display:none!important;
 }
-#loop03Shell .loop03-sidebar>.loop03-identidade-selecionada:has(#loop03CoroaTabuleiro:not([hidden])){
- display:flex!important;align-items:center!important;justify-content:center!important;
- min-height:52px!important;
+#loop03Shell .loop03-sidebar>.loop03-identidade-selecionada>.loop03-dados-perfil:not([hidden]){
+ display:block!important;min-width:0!important;flex:1 1 auto!important;
 }
-#loop03Shell .loop03-sidebar>.loop03-identidade-selecionada>.loop03-avatar,
-#loop03Shell .loop03-sidebar>.loop03-identidade-selecionada>.loop03-dados-perfil{
- display:none!important;
+#loop03Shell .loop03-sidebar>.loop03-identidade-selecionada>#loop03LetraRodape:not([hidden]){
+ display:inline-flex!important;align-items:center!important;justify-content:center!important;
+ min-width:25px!important;min-height:25px!important;
+ padding:3px 5px!important;border:1px solid #fce49f!important;border-radius:7px!important;
+ background:#eab953!important;color:#211a11!important;font-size:1.03rem!important;
+ font-weight:900!important;line-height:1!important;
 }
 #loop03Shell .loop03-sidebar>.loop03-identidade-selecionada>#loop03CoroaTabuleiro:not([hidden]){
- display:block!important;color:#ffd46d!important;font-size:1.9rem!important;
- text-shadow:0 0 11px #f6b352!important;
+ display:inline-flex!important;align-items:center!important;justify-content:center!important;
+ color:#ffd46d!important;font-size:1.9rem!important;text-shadow:0 0 11px #f6b352!important;
 }
+#loop03Shell #loop03NickVisor{
+ display:block!important;grid-row:3!important;
+ justify-self:center!important;align-self:center!important;
+ min-width:0!important;max-width:100%!important;
+ text-align:center!important;overflow:hidden!important;text-overflow:ellipsis!important;
+ white-space:nowrap!important;color:#ffeac2!important;
+ font-size:clamp(.55rem,.88vw,.78rem)!important;line-height:1.15!important;
+ font-weight:740!important;
+}
+#loop03Shell #loop03NickVisor:empty{display:none!important}
+#loop03Shell #loop03LetraRodape[hidden]{display:none!important}
 @media(max-width:590px){
  #loop03Shell #loop03-posicoes>.loop03-contador-posicoes{
   width:100%!important;min-height:103px!important;padding:9px!important;
