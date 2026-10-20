@@ -156,7 +156,11 @@
         <label class="loop03-termos-aceite"><input id="loop03TermosAceitar" type="checkbox"> Li e aceito os termos desta posição</label>
        </div>
       </div>
-      <div id="loop03DetalhesPosicao" class="loop03-detalhes" aria-live="polite">Nenhuma posição selecionada.</div>
+      <div id="loop03DetalhesPosicao" class="loop03-detalhes loop03-painel-links" aria-label="Dois links personalizados">
+        <div class="loop03-link-compartilhar"><label for="loop03LinkEscritorio">Escritório Virtual</label><div class="loop03-campo-link"><input id="loop03LinkEscritorio" type="text" readonly spellcheck="false" aria-label="Link pessoal do Escritório Virtual"><button type="button" id="loop03CopiarEscritorio" class="loop03-botao-copiar" aria-label="Copiar link do Escritório Virtual" disabled>⧉</button></div></div>
+        <div class="loop03-link-compartilhar"><label for="loop03LinkLoja">AKITEMM · Loja</label><div class="loop03-campo-link"><input id="loop03LinkLoja" type="text" readonly spellcheck="false" aria-label="Link pessoal da AKITEMM"><button type="button" id="loop03CopiarLoja" class="loop03-botao-copiar" aria-label="Copiar link da AKITEMM" disabled>⧉</button></div></div>
+        <small id="loop03StatusCopiarLinks" role="status" aria-live="polite"></small>
+       </div>
      </section>
      <section id="loop03-rede" class="loop03-pagina" aria-label="Rede e Equipe">
       <header class="loop03-titulo-pagina loop03-cabecalho-equipe">
@@ -372,6 +376,8 @@
    e('loop03Menu').setAttribute('aria-expanded',String(aberto));
   });
   e('loop03Sair').addEventListener('click',()=>e('botaoSairParticipante').click());
+  e('loop03CopiarEscritorio').addEventListener('click',()=>copiarLinkPosicao('Escritorio'));
+  e('loop03CopiarLoja').addEventListener('click',()=>copiarLinkPosicao('Loja'));
   e('loop03TermosFechar').addEventListener('click',fecharTermosPosicao);
   e('loop03TermosFundo').addEventListener('click',ev=>{
    if(ev.target===e('loop03TermosFundo'))fecharTermosPosicao();
@@ -758,14 +764,7 @@
   const btn=e('confirmarAtivacaoParticipante');
   if(btn)btn.textContent=primeiro?'Confirmar CPF fictício e esta posição':'Confirmar somente esta posição';
   const tit=caixa?.querySelector('h2');if(tit)tit.textContent='Confirmar posição #'+p.posicaoId;
-  const alvo=e('loop03DetalhesPosicao');
-  alvo.replaceChildren();
-  const titulo=document.createElement('h3');titulo.textContent='Posição nº '+p.posicaoId;
-  const info=document.createElement('p');
-  info.textContent=statusPosicao(p)+' · '+(p.statusAdesao==='PENDENTE'?'Aguardando confirmação individual':'Posição confirmada no laboratório');
-  const ir=document.createElement('button');ir.type='button';
-  ir.textContent='Localizar no tabuleiro';ir.addEventListener('click',()=>abrir('tabuleiro'));
-  alvo.append(titulo,info,ir);
+  // O painel inferior é da conta: os links não mudam ao selecionar uma posição.
   for(const no of document.querySelectorAll('[data-posicao-id]'))
    no.classList.toggle('loop03-destaque-posicao',no.dataset.posicaoId===String(selecionada));
   for(const no of document.querySelectorAll('[data-loop03-posicao]'))
@@ -774,14 +773,33 @@
  let termosPosicaoId=null;
  const aceitesPosicao=new Map();
  let cpfRascunho='';
+ function atualizarLinksPosicao(link){
+  const valido=link&&typeof link.linkEscritorio==='string'&&typeof link.linkLoja==='string';
+  for(const [destino,caminho] of [['Escritorio',link?.linkEscritorio],['Loja',link?.linkLoja]]){
+   e('loop03Link'+destino).value=valido?location.origin+caminho:'';
+   const botao=e('loop03Copiar'+destino);
+   botao.disabled=!valido||!link.ativo;
+   botao.title=!valido?'Link indisponível':!link.ativo?'Disponível após a primeira compra confirmada':'Copiar link';
+  }
+ }
+ async function copiarLinkPosicao(destino){
+  const campo=e('loop03Link'+destino),aviso=e('loop03StatusCopiarLinks');
+  if(!campo.value||e('loop03Copiar'+destino).disabled)return;
+  try{
+   await navigator.clipboard.writeText(campo.value);
+   aviso.textContent='Link '+(destino==='Loja'?'AKITEMM':'Escritório Virtual')+' copiado.';
+  }catch{
+   campo.focus();campo.select();aviso.textContent='Selecione e copie o link mostrado.';
+  }
+ }
  function fecharTermosPosicao(){
   const modal=e('loop03TermosFundo');
   if(modal)modal.hidden=true;
   termosPosicaoId=null;
  }
- function abrirTermosPosicao(p){
-  selecionar(p);
-  termosPosicaoId=p.posicaoId;
+ function abrirTermosPosicao(p,indice){
+  if(p)selecionar(p);
+  termosPosicaoId=p?.posicaoId??null;
   const fonte=e('regrasDemonstracaoParticipante');
   const destino=e('loop03TermosTexto');destino.replaceChildren();
   for(const paragrafo of fonte?.querySelectorAll('p')||[]){
@@ -796,7 +814,9 @@
   // Mesmo se a posicao ja for verde, a pessoa pode abrir, ler e fechar
   // o texto. A marcação de aceite desta janela encerra sua visualização.
   e('loop03TermosAceitar').checked=false;
-  e('loop03TermosTitulo').textContent='Termos da posição #'+p.posicaoId+' — laboratório';
+  e('loop03TermosAceitar').disabled=!p||!destino.children.length;
+  e('loop03TermosTitulo').textContent=p?'Termos da posição #'+p.posicaoId+' — laboratório':
+   'Termos da posição '+indice+' — espaço disponível';
   e('loop03TermosFundo').hidden=false;
   e('loop03TermosAceitar').focus();
  }
@@ -833,6 +853,7 @@
     aceitesPosicao.delete(id);
   }
   if(visao.adesao?.cpfConfirmadoNoTeste)cpfRascunho='';
+  atualizarLinksPosicao(visao.linkIndicacao);
   for(let indice=0;indice<6;indice++){
    const p=visao.posicoes[indice];
    const estado=p?.statusAdesao==='PENDENTE'?'pendente':
@@ -866,39 +887,46 @@
    situacao.hidden=!!p;
    identidade.append(numero,situacao);miolo.append(selo,identidade);
    cabecalho.append(rotulo,miolo);
-   if(p){
-    // CPF e quadrado ficam DIRETAMENTE embaixo da esfera, ANTES da divisoria.
+   {
+    // Sempre o mesmo alinhamento: primeira posição mostra CPF,
+    // demais posições mostram link para o texto, todas com quadradinho à direita.
     const controles=document.createElement('div');controles.className='loop03-aceite-linha';
-    const cpf=document.createElement('input');cpf.type='text';
-    cpf.className='loop03-cpf-cartao';cpf.autocomplete='off';
-    const precisaCpf=pendente&&!visao.adesao?.cpfConfirmadoNoTeste&&indice===0;
-    if(precisaCpf){
-     cpf.inputMode='numeric';cpf.maxLength=11;cpf.pattern='[0-9]{11}';
-     cpf.placeholder='CPF';cpf.value=cpfRascunho;
-     cpf.setAttribute('aria-label','CPF de teste da primeira posição');
-     cpf.addEventListener('focus',()=>selecionar(p));
-     cpf.addEventListener('input',()=>{
-      cpfRascunho=cpf.value.replace(/\D/g,'').slice(0,11);
-      cpf.value=cpfRascunho;e('cpfFicticioParticipante').value=cpfRascunho;
-     });
+    if(p&&indice===0){
+     const cpf=document.createElement('input');cpf.type='text';
+     cpf.className='loop03-cpf-cartao';cpf.autocomplete='off';
+     const precisaCpf=pendente&&!visao.adesao?.cpfConfirmadoNoTeste;
+     if(precisaCpf){
+      cpf.inputMode='numeric';cpf.maxLength=11;cpf.pattern='[0-9]{11}';
+      cpf.placeholder='CPF';cpf.value=cpfRascunho;
+      cpf.setAttribute('aria-label','CPF de teste da primeira posição');
+      cpf.addEventListener('focus',()=>selecionar(p));
+      cpf.addEventListener('input',()=>{
+       cpfRascunho=cpf.value.replace(/\D/g,'').slice(0,11);
+       cpf.value=cpfRascunho;e('cpfFicticioParticipante').value=cpfRascunho;
+      });
+     }else{
+      cpf.readOnly=true;cpf.value='CPF ✓';
+      cpf.title='CPF da conta protegido e fixado';cpf.setAttribute('aria-label',cpf.title);
+      cpf.classList.add('loop03-cpf-protegido');
+     }
+     controles.append(cpf);
     }else{
-     cpf.readOnly=true;cpf.value=visao.adesao?.cpfConfirmadoNoTeste?'CPF ✓':'CPF 1ª';
-     cpf.title=visao.adesao?.cpfConfirmadoNoTeste?
-      'CPF protegido e confirmado nesta conta':'Informe o CPF na primeira posição';
-     cpf.setAttribute('aria-label',cpf.title);
-     cpf.classList.add('loop03-cpf-protegido');
+     const abrirTexto=document.createElement('button');abrirTexto.type='button';
+     abrirTexto.className='loop03-link-termos';abrirTexto.textContent='Ler termos';
+     abrirTexto.setAttribute('aria-label','Ler termos da posição '+(indice+1));
+     abrirTexto.addEventListener('click',()=>abrirTermosPosicao(p,indice+1));
+     controles.append(abrirTexto);
     }
-    controles.append(cpf);
     const marcar=document.createElement('input');marcar.type='checkbox';
-    marcar.className='loop03-check-cartao';marcar.dataset.termosPosicao=String(p.posicaoId);
+    marcar.className='loop03-check-cartao';
+    if(p)marcar.dataset.termosPosicao=String(p.posicaoId);
     marcar.setAttribute('aria-label','Abrir termos da posição '+(indice+1));
-    marcar.title='Ler os termos desta posição';
-    marcar.checked=!pendente||aceitesPosicao.get(p.posicaoId)===true;
-    // Tocar no quadrado ABRE os termos. So o aceite dentro do texto marca
-    // a posicao pendente; sair ou fechar sem aceitar nao concede consentimento.
+    marcar.title=p?'Ler os termos desta posição':'Posição vazia: leia os termos, sem aceite possível';
+    marcar.checked=!!p&&(!pendente||aceitesPosicao.get(p.posicaoId)===true);
+    marcar.disabled=!p;
     marcar.addEventListener('click',ev=>{
      ev.preventDefault();
-     abrirTermosPosicao(p);
+     abrirTermosPosicao(p,indice+1);
     });
     controles.append(marcar);
     cartao.append(controles);
@@ -916,15 +944,16 @@
    }
    const unidade=document.createElement('div');unidade.className='loop03-unidade-posicao';
    unidade.append(cartao);
-   if(p){
+   {
     const adicionar=document.createElement('button');
     adicionar.type='button';adicionar.className='loop03-adicionar-indicado';
     adicionar.textContent='+ Adicionar indicado';
-    adicionar.setAttribute('aria-label','Adicionar um indicado à posição #'+p.posicaoId);
-    const ativa=p.statusAdesao!=='PENDENTE'&&
+    adicionar.setAttribute('aria-label',p?'Adicionar um indicado à posição #'+p.posicaoId:
+     'Adicionar indicado indisponível: posição '+(indice+1)+' vazia');
+    const ativa=!!p&&p.statusAdesao!=='PENDENTE'&&
      /^(FILA_[AB]|CENTRO|VAGA_[1-6])$/.test(p.local);
     adicionar.disabled=!ativa||!(visao.contadoresRede?.disponiveisParaVincular>0);
-    adicionar.title=!ativa?'Confirme esta posição primeiro':
+    adicionar.title=!p?'Disponível quando esta posição existir':!ativa?'Confirme esta posição primeiro':
      'Vincular definitivamente o próximo indicado ativo disponível';
     adicionar.addEventListener('click',async()=>{
      const aviso=e('loop03AvisoDistribuicao');
@@ -1042,7 +1071,7 @@
    e('loop03NumeroDetalhe').textContent='Nenhuma posição selecionada';
    atualizarVisorNumero(null);
    identidadeDaPosicao(null);
-   e('loop03DetalhesPosicao').textContent='Selecione uma posição acima.';
+   // Os links da conta seguem disponíveis sem posição selecionada.
    const caixa=e('secaoAtivacaoParticipante');if(caixa)caixa.hidden=true;
   }
   if(!destinoInicialTratado){
