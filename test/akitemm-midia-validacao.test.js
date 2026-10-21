@@ -2,6 +2,7 @@
 const {test}=require('node:test');
 const assert=require('node:assert/strict');
 const {validar,MAX_VIDEO}=require('../src/domain/akitemm-midia-avaliacoes-demo');
+const {gerarPngTeste}=require('../scripts/fixtures/gerar-png-teste');
 function box(tipo,dados){
  const r=Buffer.alloc(8);r.writeUInt32BE(dados.length+8,0);r.write(tipo,4,4,'ascii');
  return Buffer.concat([r,dados]);
@@ -43,9 +44,11 @@ test('AKITEMM: foto JPEG aceita e localização EXIF nunca é persistida',()=>{
   /TIPO_MIDIA_NAO_PERMITIDO/);
 });
 test('AKITEMM: imagem PNG mínima aceita; tipo declarado não engana assinatura do arquivo',()=>{
- const png=Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+j1ZsAAAAASUVORK5CYII=','base64');
+ const png=gerarPngTeste();
  const x=validar({tipo:'FOTO',mime:'image/png',dados:png});
  assert.ok(x.dados.length>50);
+ const corrompido=Buffer.from(png);corrompido[corrompido.length-20]^=1;
+ assert.throws(()=>validar({tipo:'FOTO',mime:'image/png',dados:corrompido}),/FOTO_INVALIDA/);
  assert.throws(()=>validar({tipo:'FOTO',mime:'image/png',dados:jpegComGps()}),
   /FOTO_INVALIDA/);
 });
