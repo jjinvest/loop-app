@@ -230,9 +230,8 @@
         </div>
         <p id="loop03StatusPerfil" role="status" aria-live="polite"></p>
        </form>
-       <button id="loop03Sair" type="button" class="loop03-sair-perfil">Sair da conta</button>
-       <details id="loop03TrocarSenha" class="loop03-trocar-senha">
-        <summary>Trocar minha senha <span aria-hidden="true">🔒</span></summary>
+       <details id="loop03TrocarSenha" class="loop03-trocar-senha" open>
+        <summary>Alterar senha <span aria-hidden="true">🔒</span></summary>
         <form id="loop03FormSenha" autocomplete="on">
          <p>Informe a senha atual, escolha uma nova e confirme. Após salvar, será necessário entrar novamente.</p>
          <div class="loop03-campos-senha">
@@ -250,6 +249,7 @@
          <p id="loop03StatusSenha" role="status" aria-live="polite"></p>
         </form>
        </details>
+       <button id="loop03Sair" type="button" class="loop03-sair-perfil">Sair da conta</button>
        <div class="loop03-cpf-travado" aria-label="Identificação legal protegida">
         <strong>CPF · protegido</strong>
         <span id="loop03SituacaoCPF">Será confirmado na primeira posição, em Minhas Posições.</span>
