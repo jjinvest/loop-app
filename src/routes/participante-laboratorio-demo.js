@@ -26,7 +26,7 @@ function setCookie(res,token,maxAge){
  res.append('Set-Cookie',COOKIE+'='+token+'; HttpOnly; SameSite=Strict; Path='+CAMINHO+
   '; Max-Age='+maxAge);
 }
-function criarRouterParticipanteDemo({contas,ponte,sessoes=null,adesoes=null,carrinhos=null,catalogo=null,saques=null,obterLivroProvisoesV6=null,obterRetornoSaqueCentroDemo=null,entregadoresPerfil={},configAkitemm=null}={}){
+function criarRouterParticipanteDemo({contas,ponte,sessoes=null,adesoes=null,carrinhos=null,catalogo=null,saques=null,obterLivroProvisoesV6=null,obterRetornoSaqueCentroDemo=null,entregadoresPerfil={},configAkitemm=null,avaliacoesAkitemm=null}={}){
  if(!contas||!ponte)throw new TypeError('Cadastro e ponte do laboratorio obrigatorios');
  const gerenciador=sessoes||new SessoesParticipanteDemo({contas});
  const escritorio=new EscritorioIndividualDemo({contas,ponte});
@@ -318,6 +318,43 @@ function criarRouterParticipanteDemo({contas,ponte,sessoes=null,adesoes=null,car
      .run(id,JSON.stringify(e),new Date().toISOString());
     return res.json({entrega:e,registrado:true,entregaReal:false});
    }catch(err){return next(err);}
+  });
+  router.get('/loja/avaliacoes/pendentes',(req,res,next)=>{
+   if(!avaliacoesAkitemm)return res.status(501).json({erro:'AVALIACOES_NAO_CONFIGURADAS'});
+   try{
+    const contaId=gerenciador.identificar(lerCookie(req));
+    if(!contaId)return res.status(401).json({erro:'SESSAO_AUSENTE_OU_EXPIRADA'});
+    return res.json({itens:avaliacoesAkitemm.itensAvaliaveis(contaId),laboratorio:true});
+   }catch(e){return next(e);}
+  });
+  router.get('/loja/avaliacoes/:produtoId',(req,res,next)=>{
+   if(!avaliacoesAkitemm)return res.status(501).json({erro:'AVALIACOES_NAO_CONFIGURADAS'});
+   try{
+    if(!gerenciador.identificar(lerCookie(req)))
+     return res.status(401).json({erro:'SESSAO_AUSENTE_OU_EXPIRADA'});
+    return res.json({avaliacoes:avaliacoesAkitemm.publicadas(req.params.produtoId),laboratorio:true});
+   }catch(e){
+    if(e.codigo==='PRODUTO_INVALIDO')return res.status(400).json({erro:e.codigo});
+    return next(e);
+   }
+  });
+  router.post('/loja/avaliacoes',(req,res,next)=>{
+   if(!avaliacoesAkitemm)return res.status(501).json({erro:'AVALIACOES_NAO_CONFIGURADAS'});
+   if(!req.is('application/json'))return res.status(415).json({erro:'USE_APPLICATION_JSON'});
+   const dados=req.body;
+   if(!dados||typeof dados!=='object'||Array.isArray(dados)||
+     Object.keys(dados).sort().join(',')!=='comentario,nota,pedidoId,produtoId')
+    return res.status(400).json({erro:'CAMPOS_AVALIACAO_INVALIDOS'});
+   try{
+    const contaId=gerenciador.identificar(lerCookie(req));
+    if(!contaId)return res.status(401).json({erro:'SESSAO_AUSENTE_OU_EXPIRADA'});
+    return res.status(201).json(avaliacoesAkitemm.criar({...dados,contaId}));
+   }catch(e){
+    if(e.codigo==='AVALIACAO_INVALIDA')return res.status(400).json({erro:e.codigo});
+    if(['AVALIACAO_SEM_ENTREGA_CONFIRMADA','AVALIACAO_JA_REGISTRADA'].includes(e.codigo))
+     return res.status(409).json({erro:e.codigo});
+    return next(e);
+   }
   });
   router.get('/loja/catalogo',(req,res,next)=>{
    if(!carrinhos)return res.status(501).json({erro:'LOJA_NAO_CONFIGURADA'});
