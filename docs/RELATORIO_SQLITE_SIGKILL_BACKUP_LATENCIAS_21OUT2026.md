@@ -52,7 +52,14 @@ O manifesto é apenas uma prova local da correspondência entre bytes observados
 
 O teste adicional executa seis Node.js com conexões próprias ao **mesmo arquivo SQLite WAL local** e mede latência individual das tentativas de gravação/deduplicação com `performance.now`, `p50/p95/p99`, máximos, duração do lote e ocorrência de `SQLITE_BUSY`. Os números **devem vir somente do log `LOOP_LATENCIAS_6_PROCESSOS` de uma execução verde**, não de estimativa nem de comparação informal. A medição não equivale a seis servidores ou muitos usuários por rede. O tempo total inclui o exercício real do CI e não estabelece SLA de produção.
 
-**Status desta seção: em validação na rodada do CI.** O valor final e o identificador da execução serão acrescentados após aprovação. Uma tentativa preliminar falhou porque o teste consultou tabela opcional de saques não criada no cenário restrito a compras; a expectativa foi retirada, sem mudar domínio ou regra vigente.
+**RESULTADO APROVADO:** GitHub Actions [Testes do LOOP run 39676869267](https://github.com/jjinvest/loop-app/actions/runs/39676869267) — **477/477 testes passaram, zero falhas**. Seis processos Node em um host disputaram **288 pedidos únicos de 144 contas fictícias** (144 PDFs elegíveis e 144 compras físicas sem posição), com **1.728 tentativas**, **288 gravações únicas**, **1.440 repetições idempotentes** e **144 posições únicas**; **nenhum erro SQLITE_BUSY** e integridade SQLite aprovada. Nas condições específicas do runner do CI: latência por tentativa `p50=0,07 ms`, `p95=1,93 ms`, `p99=19,09 ms`, máximo `1377,67 ms`, lote `1407 ms`, taxa bruta calculada de `1228,36 tentativas/s`. O máximo elevado em relação à mediana confirma que **há cauda de contenção**; não usar esses números como SLA, capacidade de produção, desempenho HTTP ou clientes simultâneos. Os percentis abrangem inclusive as notificações duplicadas rápidas, portanto **não** representam somente tempo de criação de posições.
+
+Uma tentativa preliminar falhou apenas porque o teste consultou tabela opcional de saques não criada no cenário restrito a compras; a expectativa foi retirada, sem mudar domínio ou regra vigente.
+
+Log `LOOP_LATENCIAS_6_PROCESSOS`:
+```json
+{"escritoresIndependentes":6,"clientesFicticios":144,"pedidosUnicos":288,"tentativas":1728,"comprasCriadas":288,"repeticoes":1440,"posicoesUnicas":144,"errosSQLITE_BUSY":0,"latenciaPorTentativaMs":{"p50":0.07,"p95":1.93,"p99":19.09,"max":1377.67},"decorridoLoteMs":1407,"taxaBrutaTentativasPorSegundo":1228.36,"medicaoCIInfraVariavel":true,"slaProducao":false,"distribuicaoEntreServidores":false,"integridade":"ok"}
+```
 
 ## Limites e próximos riscos
 
