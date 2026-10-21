@@ -15,7 +15,7 @@ Os R$190 de produtos físicos em testes passados eram **valores fictícios de re
 
 ### Resultado verificado
 
-**GitHub Actions [run 39690331754](https://github.com/jjinvest/loop-app/actions/runs/39690331754), SUCCESS: 500 testes aprovados, 0 falhas**, código testado em commit `6996ee3436cbbeb8a26990ed842f160a1b04c3c8`.
+**GitHub Actions [run 39690331754](https://github.com/jjinvest/loop-app/actions/runs/39690331754), SUCCESS: 500 testes aprovados, 0 falhas**. **[Navegador celular/tablet/computador run 39690331661](https://github.com/jjinvest/loop-app/actions/runs/39690331661): SUCCESS**, sobre o mesmo commit de código, código testado em commit `6996ee3436cbbeb8a26990ed842f160a1b04c3c8`.
 
 - **14 pedidos fictícios de PDF**, todos com compra confirmada apenas pelo verificador de laboratório.
 - **Dois giros persistidos**, seis pedidos distintos para cada um, 12 eventos documentados e **dois pedidos ainda não consumidos pelo ciclo**.
