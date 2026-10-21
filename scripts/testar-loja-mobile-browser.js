@@ -389,7 +389,7 @@ async function main(){
   assert.equal(await page.locator('.produto-loja-loop').count(),4);
   await page.locator('.produto-loja-loop').first().getByRole('button',{name:'Ver detalhes'}).click();
   assert.equal(await page.locator('#akitemmModalDetalhes').isVisible(),true);
-  assert.match(await page.locator('#akitemmDetalhesConteudo').innerText(),/R\$ [0-9]/);
+  assert.match(await page.locator('#akitemmDetalhesConteudo').innerText(),/R\$\s*[0-9]/);
   await page.locator('#akitemmModalDetalhes .akitemm-modal-fechar').click();
   assert.equal(await page.locator('#akitemmModalDetalhes').isVisible(),false);
   // Endereco individual editavel, salvo no SQLite, sem mudar perfil/cadastro.
