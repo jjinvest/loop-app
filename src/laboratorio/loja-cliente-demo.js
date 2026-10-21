@@ -196,7 +196,7 @@
    acoes.append(ver,adicionarBotao);dados.append(titulo,descricao,preco,acoes);
    if(especial){
     const adicional=document.createElement('small');adicional.className='datas-promocao-especial-loop';
-    adicional.textContent=(p.eventoTitulo||'Evento')+' · '+p.posicoesPorPedidoLoop+' posições elegíveis';
+    adicional.textContent=(p.eventoTitulo||'Evento')+' · De '+(p.dataInicio||'—')+' até '+(p.dataFim||'—')+' · '+p.posicoesPorPedidoLoop+' posições';
     dados.append(adicional);
    }
    card.append(imagem,dados);destino.append(card);
