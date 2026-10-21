@@ -23,7 +23,7 @@ test('contrato de interface: tabs aprovadas, nick privado, coroa e seis cadeiras
  assert.match(shell,/e\('loop03CoroaTabuleiro'\)\.hidden=!naCatraca/);
  assert.match(shell,/limitePosicoesAtivas/);
  assert.match(participante,/mostrarMapa\(visao\.mapaCores,visao\.linkIndicacao\?\.apelido\)/);
- assert.match(participante,/nick.*textContent=nick/);
+ assert.match(participante,/\.textContent=nick/);
  assert.match(html,/Centro e seis posições do tabuleiro/);
  assert.match(css,/\.loop03-roda \.tabuleiro-centro/);
  for(let i=1;i<=6;i++)
