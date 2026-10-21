@@ -374,7 +374,7 @@ async function main(){
   await page.locator('#conteudoLojaLoop').waitFor({state:'visible'});
   // AKITEMM: loja própria, não duplicar a sidebar do LOOP e não mostrar nick.
   assert.equal(await page.locator('.akitemm-voltar').getAttribute('href'),'/escritorio');
-  assert.equal(await page.locator('.akitemm-marca-loop').innerText(),'◎ LOOP 3.0');
+  assert.equal((await page.locator('.akitemm-marca-loop').innerText()).replace(/\s+/g,' ').trim(),'◎ LOOP 3.0');
   assert.equal(await page.locator('.loop03-sidebar').count(),0);
   assert.equal(await page.locator('#akitemmNomeTitular').getAttribute('title'),titular.nome);
   assert.equal(await page.locator('#akitemmFotoTitular').isVisible(),false);
