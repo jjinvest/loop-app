@@ -53,7 +53,7 @@ function contagens(b){
  };
 }
 
-test('integração SQLite: 480 pedidos, duplicatas cruzadas, falha de pagamento, reinício físico e painéis isolados',async t=>{
+test('integração SQLite: 1000 pedidos, duplicatas cruzadas, falha de pagamento, reinício físico e painéis isolados',async t=>{
  const pasta=mkdtempSync(path.join(os.tmpdir(),'loop-v6-sqlite-reinicio-'));
  t.after(()=>rmSync(pasta,{recursive:true,force:true}));
  const arquivo=path.join(pasta,'clientes.sqlite');
@@ -62,7 +62,7 @@ test('integração SQLite: 480 pedidos, duplicatas cruzadas, falha de pagamento,
  t.after(()=>{try{m.repositorio.fechar()}catch{}});
  const clientes=[];
  let processados=0,duplicados=0,reaberturas=0;
- for(let i=1;i<=240;i++){
+ for(let i=1;i<=500;i++){
   const conta=m.contas.cadastrar({nome:'Cliente Carga '+String(i).padStart(4,'0'),
    email:'carga-'+i+'@exemplo.invalid',senha:SEGREDO});
   clientes.push(conta);
@@ -83,15 +83,15 @@ test('integração SQLite: 480 pedidos, duplicatas cruzadas, falha de pagamento,
   assert.equal(respostas.filter(r=>r.compraElegivelLoop===false).length,2);
   assert.equal(respostas.filter(r=>r.posicaoCriada===false).length,2);
   processados+=2;duplicados+=2;
-  if(i===120){
+  if(i===250){
    const antes=contagens(m.banco);
-   assert.deepEqual([antes.vendasPDF,antes.vendasFisicas],[120,120]);
+   assert.deepEqual([antes.vendasPDF,antes.vendasFisicas],[250,250]);
    m.repositorio.fechar();
    m=prepararCenario(arquivo,provas);
    reaberturas++;
    assert.deepEqual(contagens(m.banco),antes);
    // Repita pedidos de ANTES do reinicio; nenhuma cadeira extra pode nascer.
-   for(const j of [1,30,60,90,120]){
+   for(const j of [1,30,60,90,120,150,200,250]){
     const id='sql-'+String(j).padStart(4,'0')+'-pdf';
     assert.equal((await m.ponte.processar({pedidoId:id})).repetido,true);
     duplicados++;
@@ -103,13 +103,13 @@ test('integração SQLite: 480 pedidos, duplicatas cruzadas, falha de pagamento,
   }
  }
  const final=contagens(m.banco);
- assert.deepEqual([final.vendasPDF,final.vendasFisicas,final.posicoes],[240,240,240]);
+ assert.deepEqual([final.vendasPDF,final.vendasFisicas,final.posicoes],[500,500,500]);
  assert.equal(final.bonus,0,'Compras azuis sem confirmação verde não reservam 10%');
  assert.equal(final.vinculos,0,'Não promover pessoas ou cadeiras sem aceite individual');
  assert.equal(final.saques,0);
  assert.equal(sqlN(m.banco,'SELECT COUNT(*) AS n FROM admin_ponte_posicoes_adicionais_demo'),0);
- assert.equal(sqlN(m.banco,'SELECT COUNT(DISTINCT conta_id) AS n FROM admin_ponte_compras_demo'),240);
- const perfilIds=[1,50,119,120,121,180,240];
+ assert.equal(sqlN(m.banco,'SELECT COUNT(DISTINCT conta_id) AS n FROM admin_ponte_compras_demo'),500);
+ const perfilIds=[1,50,119,120,121,180,240,300,400,500];
  for(const j of perfilIds){
   const perfil=m.escritorio.consultar(clientes[j-1].contaId);
   assert.equal(perfil.posicoes.length,1);
@@ -128,7 +128,7 @@ test('integração SQLite: 480 pedidos, duplicatas cruzadas, falha de pagamento,
  const recuperado=await m.ponte.processar({pedidoId:pendente});
  assert.equal(recuperado.posicaoCriada,true);
  assert.equal((await m.ponte.processar({pedidoId:pendente})).repetido,true);
- assert.equal(contagens(m.banco).vendasPDF,241);
+ assert.equal(contagens(m.banco).vendasPDF,501);
  // PSP adulterado: nao muda titular, preco ou valor persistido.
  const idOriginal='sql-0001-pdf',copia=provas.get(idOriginal);
  provas.set(idOriginal,{...copia,valorCentavos:19000});
@@ -136,23 +136,39 @@ test('integração SQLite: 480 pedidos, duplicatas cruzadas, falha de pagamento,
   e=>['VINCULO_DIVERGENTE','PEDIDO_DIVERGENTE'].includes(e.codigo));
  provas.set(idOriginal,copia);
  assert.equal((await m.ponte.processar({pedidoId:idOriginal})).repetido,true);
- assert.equal(contagens(m.banco).vendasPDF,241);
+ assert.equal(contagens(m.banco).vendasPDF,501);
+ // Duas conexões SQL independentes: o mesmo pedido chega a dois consumidores.
+ // O banco deve registrar uma única compra, mesmo com Promise.all entre instâncias.
+ const outra=prepararCenario(arquivo,provas);
+ try{
+  const idCompeticao=provar(m,provas,clientes[3],'sql-duas-conexoes-competem',25000);
+  const [x,y]=await Promise.all([
+   m.ponte.processar({pedidoId:idCompeticao}),
+   outra.ponte.processar({pedidoId:idCompeticao})
+  ]);
+  assert.deepEqual([x,y].map(r=>r.repetido).sort(),[false,true]);
+  assert.equal(contagens(m.banco).vendasPDF,502);
+  assert.equal(contagens(outra.banco).vendasPDF,502);
+  assert.equal(m.escritorio.consultar(clientes[3].contaId).posicoes.length,2);
+  assert.equal(outra.escritorio.consultar(clientes[3].contaId).posicoes.length,2);
+ }finally{outra.repositorio.fechar();}
  // Snapshot inválido dentro do teste: a transação falha e nunca deixa uma compra parcial.
  const snapshotAntes=m.banco.prepare('SELECT snapshot_json AS j FROM admin_ponte_estado_demo WHERE id=1').get().j;
  const quebra=provar(m,provas,clientes[1],'sql-quebra-snapshot',25000);
  m.banco.prepare("UPDATE admin_ponte_estado_demo SET snapshot_json='json-invalido' WHERE id=1").run();
  await assert.rejects(m.ponte.processar({pedidoId:quebra}),/Snapshot de laboratorio corrompido/);
- assert.equal(contagens(m.banco).vendasPDF,241);
+ assert.equal(contagens(m.banco).vendasPDF,501);
  m.banco.prepare('UPDATE admin_ponte_estado_demo SET snapshot_json=? WHERE id=1').run(snapshotAntes);
  assert.equal((await m.ponte.processar({pedidoId:quebra})).posicaoCriada,true);
- assert.equal(contagens(m.banco).vendasPDF,242);
+ assert.equal(contagens(m.banco).vendasPDF,503);
  const integridade=m.banco.prepare('PRAGMA integrity_check').get();
  assert.equal(Object.values(integridade)[0],'ok');
  const chaves=m.banco.prepare('PRAGMA foreign_key_check').all();
  assert.deepEqual(chaves,[]);
  console.log('LOOP_SQLITE_STRESS='+JSON.stringify({
-  compradores:240,pedidosAprovados:482,pedidosFisicos:240,pedidosPdf:242,
-  duplicatasIgnoradas:duplicados+2,reaberturasBanco:reaberturas,
+  compradores:500,pedidosAprovados:1003,pedidosFisicos:500,pedidosPdf:503,
+  escritoresSqliteIndependentes:2,
+  duplicatasIgnoradas:duplicados+3,reaberturasBanco:reaberturas,
   falhasDePagamentoSemPosicao:1,errosDeSnapshotSemVendaParcial:1,
   visoesIndividuaisConferidas:perfilIds.length+1,
   comprovacaoBancariaReal:false,sqliteIntegridade:'ok'
