@@ -18,7 +18,7 @@
     <span id="akitemmNomeTitular" class="akitemm-nome" title="">Conta</span>
    </div>
   </div>
-  <div id="akitemmNotificacoes" class="akitemm-menu-notificacoes" hidden><strong>Notificações</strong><p id="akitemmNotificacoesConteudo">Nenhuma notificação por enquanto.</p></div>
+  <div id="akitemmNotificacoes" class="akitemm-menu-notificacoes" hidden><strong>Notificações</strong><p id="akitemmNotificacoesConteudo">Nenhuma notificação por enquanto.</p><button id="akitemmAbrirAvaliacoes" type="button" hidden>Avaliar produtos entregues</button></div>
  </header>
  <main class="loja-loop">
   <p id="estadoLojaLoop" class="akitemm-estado" role="status" aria-live="polite">Consultando catálogo e sua conta…</p>
@@ -48,6 +48,7 @@
       <div class="cabecalho-secao-loja"><h2 id="tituloCatalogoLoja">Produtos em destaque</h2><button id="akitemmVerTodos" type="button">Ver todos →</button></div>
       <p id="akitemmResultadoProdutos" class="akitemm-resultado" role="status"></p>
       <div id="catalogoLojaLoop" class="produtos-loja-loop"></div>
+      <button id="akitemmCarregarMais" type="button" hidden>Mostrar mais produtos ↓</button>
       <p id="referenciaLojaLoop" class="akitemm-regra-referencia"></p>
       <button type="button" id="atualizarCatalogoLoja" class="akitemm-atualizar">Atualizar catálogo</button>
      </section>
@@ -109,6 +110,23 @@
   </div>
  </footer>
  <dialog id="akitemmModalDetalhes" class="akitemm-modal"><form method="dialog"><button aria-label="Fechar" class="akitemm-modal-fechar">×</button></form><div id="akitemmDetalhesConteudo"></div></dialog>
+ <dialog id="akitemmModalAvaliacao" class="akitemm-modal">
+  <form method="dialog"><button aria-label="Fechar" class="akitemm-modal-fechar">×</button></form>
+  <h2>Avalie sua compra</h2>
+  <p id="akitemmAvaliacaoProdutoNome"></p>
+  <form id="akitemmFormAvaliacao">
+   <label for="akitemmAvaliacaoNota">Sua nota</label>
+   <select id="akitemmAvaliacaoNota" required>
+    <option value="">Selecione</option><option value="5">★★★★★ — Excelente</option>
+    <option value="4">★★★★☆ — Muito bom</option><option value="3">★★★☆☆ — Bom</option>
+    <option value="2">★★☆☆☆ — Regular</option><option value="1">★☆☆☆☆ — Ruim</option>
+   </select>
+   <label for="akitemmAvaliacaoComentario">Como foi receber e usar o produto?</label>
+   <textarea id="akitemmAvaliacaoComentario" minlength="10" maxlength="1000" rows="5" required placeholder="Conte sua experiência real após a entrega."></textarea>
+   <button type="submit">Enviar minha avaliação</button>
+   <p id="akitemmStatusAvaliacao" role="status"></p>
+  </form>
+ </dialog>
  <dialog id="akitemmModalInformacao" class="akitemm-modal"><form method="dialog"><button aria-label="Fechar" class="akitemm-modal-fechar">×</button></form><h2 id="akitemmInformacaoTitulo"></h2><div id="akitemmInformacaoConteudo"></div></dialog>
  <script src="/laboratorio/educacao-carrinho.js" defer></script>
  <script src="/laboratorio/loja.js" defer></script>
