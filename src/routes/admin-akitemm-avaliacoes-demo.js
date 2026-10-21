@@ -7,6 +7,19 @@ function criarRouterAdminAkitemmAvaliacoesDemo({segredo,avaliacoes}={}){
  r.use(criarAutorizacao({segredo}));
  r.get('/akitemm-avaliacoes-demo',(_req,res)=>
   res.json({pendentes:avaliacoes.pendentesAdmin(),laboratorio:true}));
+ r.get('/akitemm-avaliacoes-demo/midias/:id',(req,res,next)=>{
+  try{
+   const media=avaliacoes.buscarMidia({id:Number(req.params.id),admin:true});
+   res.set('Cache-Control','private, no-store');
+   res.set('Content-Disposition','inline');
+   res.set('Cross-Origin-Resource-Policy','same-origin');
+   return res.type(media.mime).send(media.dados);
+  }catch(e){
+   if(['MIDIA_NAO_ENCONTRADA','MIDIA_INVALIDA'].includes(e.codigo))
+    return res.status(404).json({erro:'MIDIA_NAO_ENCONTRADA'});
+   return next(e);
+  }
+ });
  r.post('/akitemm-avaliacoes-demo/entregas',(req,res,next)=>{
   if(!req.body||Object.keys(req.body).sort().join(',')!=='pedidoId')
    return res.status(400).json({erro:'CAMPOS_INVALIDOS'});
