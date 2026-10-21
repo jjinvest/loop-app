@@ -1605,7 +1605,8 @@
   if(e('loop03StatusPerfil'))e('loop03StatusPerfil').textContent='';
   if(e('loop03FormSenha'))e('loop03FormSenha').reset();
   if(e('loop03StatusSenha'))e('loop03StatusSenha').textContent='';
-  if(e('loop03TrocarSenha'))e('loop03TrocarSenha').open=false;
+  // Ao trocar de conta, limpar as senhas, mas manter a seção acessível no Meu Perfil.
+  if(e('loop03TrocarSenha'))e('loop03TrocarSenha').open=true;
   abrir('home');
  }
  window.Loop03Shell={montar,atualizar,encerrar,abrir,destacarPosicoes,
