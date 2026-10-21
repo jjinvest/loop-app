@@ -17,7 +17,7 @@ const percentil=(a,p)=>{
 test('HTTP: 1536 leituras locais concorrencia 48; latencia, isolamento e integridade', {timeout:120000},async t=>{
  const repo=new RepositorioCatalogoSQLite({caminho:':memory:'});
  t.after(()=>repo.fechar());
- const app=criarAppAdminLaboratorio({repositorio:repo,segredo:'segredo-carga-http-local-2026'});
+ const app=criarAppAdminLaboratorio({repositorio:repo,segredo:'segredo-carga-http-local-2026-autorizacao-teste-longo'});
  const server=app.listen(0,'127.0.0.1');
  await once(server,'listening');
  t.after(()=>new Promise(ok=>server.close(ok)));
