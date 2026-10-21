@@ -2062,7 +2062,7 @@ async function main(){
    path:path.join(pasta,'AKITEMM_FORMULARIO_3_FOTOS_CLIENTE_CELULAR_REAL.png'),fullPage:true
   });
   await page.locator('#akitemmFormAvaliacao button[type="submit"]').click();
-  await page.locator('#akitemmStatusAvaliacao').getByText(/aguardando|analisada|recebida/i).waitFor();
+  await page.locator('#akitemmStatusAvaliacao').getByText(/aguardando|analisada|recebida|recebidos/i).waitFor();
   await page.locator('#akitemmModalAvaliacao .akitemm-modal-fechar').click();
   const regAvaliacao=banco.banco.prepare(
    "SELECT id FROM akitemm_avaliacoes_demo WHERE pedido_id=?"
