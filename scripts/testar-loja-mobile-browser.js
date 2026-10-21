@@ -2135,7 +2135,7 @@ async function main(){
    [2,'PDF Teste Geral R$ 250',true]
   ]){
    const contaGeral=contas.cadastrar({
-    nome:'Teste Geral Cliente '+indice,apelido:'Geral'+indice,
+    nome:'Teste Geral Cliente '+indice,apelido:indice===1?'Geralum':'Geraldois',
     email:'geral-'+indice+'@exemplo.invalid',senha
    });
    const ctxGeral=await browser.newContext({
