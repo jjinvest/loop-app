@@ -727,3 +727,15 @@ Fluxo real de laboratório: exige senha atual válida; nova senha com 10 a 128 c
 ## 65. Troca de senha somente em Meu Perfil (21/10/2026)
 
 Decisão reforçada: o **único formulário para trocar/alterar senha de uma conta já criada** fica dentro da aba **Meu Perfil**, seção **Alterar senha**, aberta por padrão. Não exibir ação de alterar senha no Escritório Virtual, Tabuleiro, Minhas Posições, Minha Equipe, Minha Rede, Financeiro, loja AKITEMM ou outros menus. **Manter** os campos de senha e confirmação no cadastro inicial e o campo de senha no login, pois não são troca de senha. Senha atual, nova senha e confirmar nova senha permanecem exclusivos do formulário `loop03FormSenha`; revogar sessões ao trocar, com novo login obrigatório. A seção continua aberta após sair da conta e retornar, sempre com os campos limpos. Teste automatizado `test/alterar-senha-meu-perfil-loop.test.js` verifica exclusividade no código de interface e regras de autenticação. PR #1 segue DRAFT, sem merge ou deploy.
+
+## 66. Revisão preventiva do Escritório Virtual — diagnóstico sem alteração visual (21/10/2026)
+
+Usuário observou que **o Escritório Virtual ainda não passou pela revisão de design** e contém muitos elementos fora do contexto atual. Regra: **não refazer nem substituir a tela por conta própria**; aguardar indicações e aprovações específicas, preservando os outros módulos. Auditoria preparatória encontrou:
+- Home cliente em `src/laboratorio/loop-03-shell.js`, seção `#loop03-home`: título "Novidades e eventos" / "Comunicados", hero ilustrado "ESCRITÓRIO VIRTUAL" com cenário de mesa e botão "ACOMPANHAR MINHAS POSIÇÕES"; o usuário ainda vai decidir o destino visual desse bloco.
+- A home ainda anexa um card legado identificado pelo título "Minha loja de testes" (busca por `atalhoLoja`), **potencial redundância** já que a AKITEMM tem entrada própria na sidebar. Não retirar unilateralmente antes de confirmar as mudanças da home.
+- Há `#loop03Publicacoes` para comunicados/banners administráveis, alimentados por `/api/laboratorio/loop03/publicacoes` e com link opcional para AKITEMM. Preservar a ligação a dados reais do laboratório, sem comunicados fabricados.
+- A página separada `src/laboratorio/escritorio-demo.html` é **prévia administrativa do laboratório**, com recursos fictícios e editor de publicações; NÃO confundi-la com o Escritório Virtual visual do cliente.
+- Sem mexer em Tabuleiro, Minhas Posições, Minha Rede, Minha Equipe, Financeiro, loja ou Meu Perfil. Alterar home apenas após usuário orientar os ajustes.
+- Revisão dos testes do formulário de senha aberto de fábrica: o teste de browser antigo clicava no `<summary>` e fechava a seção. Ajustado para **verificar a seção aberta sem clicar**, sem alterar nenhum comportamento real, commit `ca56e131f90941ba4a038e60f2228e9fa93619ff`.
+
+Próxima sessão: confirmar com o usuário quais elementos de home manter/tirar e somente então programar as mudanças com nova captura REAL em navegador PC/mobile. Regras de Cloudflare R2 permanecem aguardando conta R2 habilitada com pagamento/conta bancária ou decisão por alternativa; nunca pedir chaves pelo chat nem publicar.
