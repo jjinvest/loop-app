@@ -10,9 +10,11 @@ const {analisarCarrinhoSimulado}=require('../src/domain/valor-padrao-loop');
 const {centroDoLoop}=require('../src/domain/destino-financeiro-centro-loop');
 
 const LIMITE=5000,PRECO_PDF=25000,PRECO_FISICO=19000, META_OURO_RESERVA=100;
-function executarCenario5000({primeiraFila='A',intensidade='ALTA',usarCofreReserva=true}={}){
+function executarCenario5000({primeiraFila='A',intensidade='ALTA',usarCofreReserva=true,metaOuroReserva=META_OURO_RESERVA,quantidadeAzuis=100}={}){
  assert.ok(['A','B'].includes(primeiraFila));
  assert.ok(['ALTA','MODERADA'].includes(intensidade));
+ assert.ok(Number.isSafeInteger(metaOuroReserva)&&metaOuroReserva>=0&&metaOuroReserva<=500);
+ assert.ok(Number.isSafeInteger(quantidadeAzuis)&&quantidadeAzuis>=1&&quantidadeAzuis<=500);
  let tick=0;
  const relogio=()=>new Date(Date.UTC(2026,9,21)+(tick++)*1000).toISOString();
  const sim=new SimuladorLoop({relogio});
@@ -84,7 +86,7 @@ function executarCenario5000({primeiraFila='A',intensidade='ALTA',usarCofreReser
   // Nao somar a receita da loja R$190, nem fabricar aportes no cofre.
   const parcelaDireita=c.vendas.filter(v=>v.destinoCofre==='LOOP_DIREITA').length*PRECO_PDF;
   cofreReservaBrutoCentavos+=parcelaDireita;
-  if(usarCofreReserva&&reservasDouradas.length<META_OURO_RESERVA){
+  if(usarCofreReserva&&reservasDouradas.length<metaOuroReserva){
    const comprometidoBonificacoes=bonusReferenciaCentavos;
    const comprometidoDouradas=reservasDouradas.length*PRECO_PDF;
    const livre=cofreReservaBrutoCentavos-comprometidoBonificacoes-comprometidoDouradas;
@@ -148,7 +150,7 @@ function executarCenario5000({primeiraFila='A',intensidade='ALTA',usarCofreReser
   }
   assert.equal(auditoria.participaLoopSeConfirmado,true);
   numerosPDF++;
-  const azul=numerosPDF>=7&&numerosPDF<=106; // 100 azuis: 7 ... 106.
+  const azul=numerosPDF>=7&&numerosPDF<7+quantidadeAzuis; // Azuis compradas, nao financiadas novamente.
   const r=sim.registrarPosicaoSimulada({
    participanteId:'pessoa-'+n,nome:'Comprador simulado '+n,
    vendaId,adesaoPendente:azul
@@ -201,7 +203,7 @@ function executarCenario5000({primeiraFila='A',intensidade='ALTA',usarCofreReser
  assert.equal(sim.tabuleiro.ciclosConcluidos.length,416);
  const azuisRestantes=[...sim.filas.filaA,...sim.filas.filaB]
   .filter(x=>x.statusAdesao==='PENDENTE').length;
- assert.equal(convertidasDouradas.size+azuisRestantes,100,
+ assert.equal(convertidasDouradas.size+azuisRestantes,quantidadeAzuis,
   'Nenhuma azul pode virar dourada fora da vaga seis ou desaparecer no limite de 5000');
  assert.ok(entregasAzuis.some(e=>e.giro>=1&&e.douradaDepois));
  assert.equal(sim.filas.filaA.length+sim.filas.filaB.length+7+416,2501+reservasDouradas.length,
@@ -224,7 +226,7 @@ function executarCenario5000({primeiraFila='A',intensidade='ALTA',usarCofreReser
  const reservaDisponivelCentavos=cofreReservaBrutoCentavos-bonusReferenciaCentavos-reservaComprometidaDouradasCentavos;
  assert.equal(cofreReservaBrutoCentavos,eventosFinanceiros.LOOP_DIREITA);
  assert.ok(reservaDisponivelCentavos>=0,'Reserva compromissada sem cobertura no fim');
- assert.equal(reservasDouradas.length,usarCofreReserva?100:0,
+ assert.equal(reservasDouradas.length,usarCofreReserva?metaOuroReserva:0,
   'Douradas da reserva nao podem ser forçadas se a reserva nao suportar');
  assert.equal(ciclosDouradas,ciclosDouradasDeReserva+ciclosDouradasDeAzul);
  return {
@@ -235,6 +237,7 @@ function executarCenario5000({primeiraFila='A',intensidade='ALTA',usarCofreReser
   pessoasCompradoras:LIMITE,comprasPDF:numerosPDF,comprasFisicas190:numerosFisicos,
   posicoesCriadasPDF:2500,comprasFisicasSemPosicao:2500,
   posicoesDouradasFinanciadasPelaReserva:reservasDouradas.length,
+  metaOuroReserva,quantidadeAzuis,
   fundadorPosicaoExtra:1,
   quantidadeA:sim.filas.filaA.length,
   quantidadeB:sim.filas.filaB.length,
@@ -245,7 +248,7 @@ function executarCenario5000({primeiraFila='A',intensidade='ALTA',usarCofreReser
   contemplacoesPosicoesDouradas:ciclosDouradas,
   ciclosDouradasPorAzul:ciclosDouradasDeAzul,
   ciclosDouradasFinanciadasPelaReserva:ciclosDouradasDeReserva,
-  azuisInicialmenteCriadas:100,
+  azuisInicialmenteCriadas:quantidadeAzuis,
   azulPendente:azuisRestantes,
   conversoesAzulParaDourada:convertidasDouradas.size,
   douradasNoTabuleiroAgora:ouroNoTabuleiro,
