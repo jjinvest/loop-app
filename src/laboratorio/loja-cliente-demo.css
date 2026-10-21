@@ -421,3 +421,84 @@ body.akitemm-loja{background:#071018;color:#f0f2f6;font-family:system-ui,-apple-
   flex:1 1 100%;justify-content:center;order:3;
  }
 }
+
+/* Vitrine AKITEMM: quatro por fila no PC; carregamento inicial de três
+   fileiras quando o catálogo dispõe de 12 produtos REAIS cadastrados. */
+.akitemm-loja .produtos-loja-loop .produto-loja-loop{cursor:pointer}
+.akitemm-loja .produtos-loja-loop .produto-loja-loop:focus-visible{
+ outline:2px solid #f2c16d;outline-offset:3px;
+}
+.akitemm-loja .produtos-loja-loop .produto-loja-loop:nth-child(-n+4) .akitemm-imagem-produto{
+ height:98px;
+}
+.akitemm-loja #akitemmCarregarMais{
+ margin:18px auto 8px;padding:11px 25px;
+ display:block;min-width:200px;border:1px solid #bd9453;
+ border-radius:9px;background:linear-gradient(115deg,#2c241e,#191e22);
+ color:#ffdd9a;font-size:.82rem;cursor:pointer;
+}
+.akitemm-loja .akitemm-modal:has(.akitemm-detalhe-conteudo){
+ width:min(870px,calc(100vw - 20px));max-width:min(870px,calc(100vw - 20px));
+ max-height:90dvh;overflow-y:auto;overscroll-behavior:contain;
+ padding:22px;
+}
+.akitemm-detalhe-conteudo{display:grid;grid-template-columns:minmax(0,45%) minmax(0,55%);gap:20px;margin:12px 0 22px}
+.akitemm-detalhe-galeria{min-width:0}
+.akitemm-detalhe-foto-principal{
+ background:linear-gradient(140deg,#20313e,#0d151c);border:1px solid #364550;
+ border-radius:12px;height:275px;display:grid;place-items:center;
+ overflow:hidden;color:#aebbc7;font-size:12px;text-align:center;padding:12px;
+}
+.akitemm-detalhe-foto-principal img{width:100%;height:100%;object-fit:contain}
+.akitemm-detalhe-miniaturas{display:flex;gap:8px;overflow-x:auto;padding:10px 1px}
+.akitemm-detalhe-miniaturas button{
+ width:59px;min-width:59px;height:54px;padding:2px;
+ background:#14212b;border:1px solid #a18a62;border-radius:7px;cursor:pointer;
+}
+.akitemm-detalhe-miniaturas img{width:100%;height:100%;object-fit:contain}
+.akitemm-detalhe-informacoes{display:flex;flex-direction:column;gap:10px;min-width:0}
+.akitemm-detalhe-informacoes section{border-top:1px solid #37414c;padding-top:10px}
+.akitemm-detalhe-informacoes h3,.akitemm-detalhe-avaliacoes h3{
+ color:#ebc47e;font-size:15px;margin:0 0 6px;
+}
+.akitemm-detalhe-informacoes p,.akitemm-detalhe-informacoes li{
+ font-size:13px;color:#d7e0e8;line-height:1.6;white-space:pre-wrap;
+}
+.akitemm-detalhe-preco{font-size:25px;color:#f1c272}
+.akitemm-detalhe-informacoes .akitemm-adicionar,
+.akitemm-loja #akitemmFormAvaliacao button{
+ border:0;border-radius:8px;padding:11px 14px;
+ background:linear-gradient(#f8d997,#e3af5d);
+ color:#141c1f;font-weight:790;
+}
+.akitemm-detalhe-avaliacoes{border-top:1px solid #38434a;padding-top:15px}
+.akitemm-depoimento{
+ margin:10px 0;padding:14px;border-radius:10px;
+ border:1px solid #425560;background:#172532;overflow-wrap:anywhere;
+}
+.akitemm-depoimento strong{font-size:13px;color:#f4c76c}
+.akitemm-depoimento p{font-size:13px;color:#dce4e6;white-space:pre-wrap}
+.akitemm-depoimento img{max-width:min(230px,100%);max-height:185px;border-radius:9px;object-fit:contain}
+.akitemm-loja #akitemmFormAvaliacao{display:flex;flex-direction:column;gap:10px;margin:12px 0}
+.akitemm-loja #akitemmFormAvaliacao label{font-size:12px;color:#f1c77f}
+.akitemm-loja #akitemmFormAvaliacao select,
+.akitemm-loja #akitemmFormAvaliacao textarea{
+ background:#101a24;color:#f2f4f5;border:1px solid #526477;
+ padding:10px;border-radius:8px;width:100%;box-sizing:border-box;
+}
+.akitemm-avaliacao-pedido{margin:9px 0;color:#a6dfbc;font-size:12px}
+.akitemm-avaliacao-pedido button,
+.akitemm-loja #akitemmAbrirAvaliacoes{
+ padding:8px 12px;border-radius:8px;
+ border:1px solid #d2a55c;color:#f4daa7;background:#14222a;
+ cursor:pointer;font-weight:700;font-size:12px;
+}
+.akitemm-pedidos li{margin:12px 0}
+@media(max-width:800px){
+ .akitemm-loja .produtos-loja-loop .produto-loja-loop:nth-child(-n+4) .akitemm-imagem-produto{
+  height:95px;
+ }
+ .akitemm-detalhe-conteudo{grid-template-columns:1fr;gap:12px}
+ .akitemm-detalhe-foto-principal{height:210px}
+ .akitemm-loja .akitemm-modal:has(.akitemm-detalhe-conteudo){padding:15px}
+}
