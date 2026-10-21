@@ -1,5 +1,7 @@
 # LOOP 3.0 — Revisão integrada da jornada, interface, caixa e riscos de lançamento (21/10/2026)
 
+**CI de navegador:** [LOOP — celular e computador, execução 39687773947](https://github.com/jjinvest/loop-app/actions/runs/39687773947) — **SUCCESS**, no commit de código `b60b8eb4` (mesmo dos **499/499 testes**). O navegador validou a jornada nos fatores de forma previstos; não prova aceitação visual por humano nem teste de produção.
+
 **Escopo:** revisão técnica de laboratório, sem usuários, dinheiro ou PSP reais. Não equivale a auditoria financeira, certificação de segurança, parecer jurídico ou liberação comercial.
 
 ## 1. Jornada ponta a ponta
