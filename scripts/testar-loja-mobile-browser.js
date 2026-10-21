@@ -965,6 +965,14 @@ async function main(){
   assert.equal(await page.locator('#loop03HistoricoGanhosSaque').evaluate(n=>n.open),true);
   await page.locator('#loop03HistoricoGanhosSaque>summary').click();
   await conferirLargura(page,390,'financeiro-cliente-celular',{captura:false});
+  // Clicar nos cartoes pode rolar um ancestral; foto deve mostrar a pagina INTEIRA.
+  await page.evaluate(()=>{
+   for(let n=document.querySelector('#loop03-financeiro');n;n=n.parentElement){
+    n.scrollTop=0;n.scrollLeft=0;
+   }
+   window.scrollTo(0,0);
+  });
+  await page.waitForTimeout(90);
   await page.screenshot({path:path.join(pasta,'FINANCEIRO_CLIENTE_ATUAL_CELULAR_390.png'),fullPage:true});
   // Quatro capturas REAIS da mesma conta ficticia e mesmo layout funcional.
   // Referencias PNG aprovadas sao arquivos separados, nao estas capturas.
@@ -1015,6 +1023,13 @@ async function main(){
   await quatroAbas.locator('#loop03EscolherBonus').click();
   assert.equal(await quatroAbas.locator('#formSaqueTesteParticipante').isVisible(),true);
   await conferirLargura(quatroAbas,1254,'financeiro-cliente-computador',{captura:false});
+  await quatroAbas.evaluate(()=>{
+   for(let n=document.querySelector('#loop03-financeiro');n;n=n.parentElement){
+    n.scrollTop=0;n.scrollLeft=0;
+   }
+   window.scrollTo(0,0);
+  });
+  await quatroAbas.waitForTimeout(90);
   await quatroAbas.screenshot({path:path.join(pasta,'FINANCEIRO_CLIENTE_ATUAL_COMPUTADOR_1254.png'),fullPage:true});
   await ctxQuadros.close();
 
