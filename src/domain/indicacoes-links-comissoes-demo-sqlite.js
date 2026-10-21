@@ -394,7 +394,9 @@ function simularElegibilidadeSaque({saldoSimuladoCentavos,valorSolicitadoCentavo
  if(!['BONUS','PARTICIPACAO_LUCRO'].includes(tipo))throw falha('TIPO_SAQUE_INVALIDO');
  if(valorSolicitadoCentavos<2500)throw falha('MINIMO_SAQUE_25_REAIS');
  if(valorSolicitadoCentavos>saldoSimuladoCentavos)throw falha('SALDO_SIMULADO_INSUFICIENTE');
- const taxaSaqueCentavos=Math.round(valorSolicitadoCentavos*3/100);
+ // Politica vigente: nao descontar nenhuma tarifa do participante.
+ // Eventuais custos do provedor/banco serao suportados pela empresa.
+ const taxaSaqueCentavos=0;
  const valorLiquidoCentavos=valorSolicitadoCentavos-taxaSaqueCentavos;
  return {apenasSimulacao:true,atingiuMinimo:true,tipoSaque:tipo,
   valorSolicitadoCentavos,taxaPercentual:0,taxaSaqueCentavos,
