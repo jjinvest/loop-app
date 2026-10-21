@@ -372,6 +372,45 @@ async function main(){
   assert.equal(eventoLoja.status,201,await eventoLoja.text());
   await page.goto(base+'/laboratorio/loja',{waitUntil:'networkidle'});
   await page.locator('#conteudoLojaLoop').waitFor({state:'visible'});
+  // AKITEMM: loja própria, não duplicar a sidebar do LOOP e não mostrar nick.
+  assert.equal(await page.locator('.akitemm-voltar').getAttribute('href'),'/escritorio');
+  assert.equal(await page.locator('.akitemm-marca-loop').innerText(),'◎ LOOP 3.0');
+  assert.equal(await page.locator('.loop03-sidebar').count(),0);
+  assert.equal(await page.locator('#akitemmNomeTitular').getAttribute('title'),titular.nome);
+  assert.equal(await page.locator('#akitemmFotoTitular').isVisible(),false);
+  assert.equal(await page.locator('#akitemmBusca').count(),1);
+  await page.locator('#akitemmBusca').fill('Curso Cinza');
+  assert.equal(await page.locator('.produto-loja-loop').count(),1,'Busca por nome');
+  await page.locator('#akitemmBusca').fill('');
+  await page.locator('[data-akitemm-categoria="fisicos"]').click();
+  assert.equal(await page.locator('.produto-loja-loop').count(),0,
+   'Nenhum produto fisico ficticio deve ser fabricado na vitrine');
+  await page.locator('#akitemmFiltroTodos').click();
+  assert.equal(await page.locator('.produto-loja-loop').count(),4);
+  await page.locator('.produto-loja-loop').first().getByRole('button',{name:'Ver detalhes'}).click();
+  assert.equal(await page.locator('#akitemmModalDetalhes').isVisible(),true);
+  assert.match(await page.locator('#akitemmDetalhesConteudo').innerText(),/R\\$ [0-9]/);
+  await page.locator('#akitemmModalDetalhes .akitemm-modal-fechar').click();
+  assert.equal(await page.locator('#akitemmModalDetalhes').isVisible(),false);
+  // Endereco individual editavel, salvo no SQLite, sem mudar perfil/cadastro.
+  await page.locator('#akitemmEntrega summary').click();
+  const entrega=page.locator('#akitemmFormEntrega');
+  await entrega.locator('[name="destinatario"]').fill('Destinatário Fictício');
+  await entrega.locator('[name="cep"]').fill('27260000');
+  await entrega.locator('[name="logradouro"]').fill('Rua do Laboratório');
+  await entrega.locator('[name="numero"]').fill('15');
+  await entrega.locator('[name="bairro"]').fill('Centro de Testes');
+  await entrega.locator('[name="cidade"]').fill('Volta Redonda');
+  await entrega.locator('[name="uf"]').selectOption('RJ');
+  await entrega.locator('[name="telefone"]').fill('21999999999');
+  await entrega.getByRole('button',{name:'Salvar dados para este pedido'}).click();
+  await page.locator('#akitemmStatusEntrega').getByText(/Endereço salvo/).waitFor();
+  const consultaEntrega=await page.evaluate(async()=>{
+   const r=await fetch('/api/laboratorio/participante/loja/entrega',{credentials:'same-origin'});
+   return r.json();
+  });
+  assert.equal(consultaEntrega.entrega.cep,'27260000');
+  await page.locator('#akitemmEntrega summary').click();
   // CINZA sem posicoes; VERDE acumula ate 1; DOURADO+ROXO apenas no evento.
   const cinzaCard=page.locator('.produto-loja-loop').filter({hasText:'Curso Cinza Comum'});
   const verdeCard=page.locator('.produto-loja-loop').filter({hasText:'Curso Móvel Básico'});
