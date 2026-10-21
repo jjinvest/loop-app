@@ -5,6 +5,7 @@
  const e=id=>document.getElementById(id);
  let selecionada=null, visaoAtual=null, abaAtual='home', destinoInicialTratado=false;
  let fotoPerfilAcao='MANTER';
+ let fonteSaque=null; // Escolha visual, nunca comprova disponibilidade bancaria.
  const paginas=['home','tabuleiro','posicoes','rede','financeiro','perfil'];
  function montar(){
   const root=e('conteudoParticipante');
@@ -268,8 +269,13 @@
    if(node)e('loop03-'+pagina).append(node);
   };
   const extrato=e('tituloCreditosPrevistosV6')?.closest('section.cartao-participante');
-  if(extrato)e('loop03-financeiro').append(extrato);
-  if(e('tituloCreditosPrevistosV6'))e('tituloCreditosPrevistosV6').textContent='Meu extrato de ciclos — LOOP 3.0';
+  if(extrato){
+   // O livro V6 continua no DOM para a rotina legada do laboratorio,
+   // mas nao integra o visual Financeiro aprovado.
+   extrato.hidden=true;
+   extrato.classList.add('loop03-financeiro-legado-oculto');
+   e('loop03-financeiro').append(extrato);
+  }
   const resumo=e('nomeLogadoParticipante')?.closest('section.cartao-participante');
   if(resumo){
    const links=resumo.querySelector('.area-indicacoes-participante');
@@ -292,7 +298,84 @@
     }
     e('loop03LinksRede').append(links);
    }
-   if(bonus)e('loop03-financeiro').append(bonus);
+   if(bonus){
+    bonus.classList.add('loop03-financeiro-topo');
+    const titulo=bonus.querySelector('#tituloBonusParticipante');
+    if(titulo)titulo.textContent='Minhas bonificações por indicações / minhas posições na fila';
+    const cards=bonus.querySelector(':scope > .resumos-participante');
+    if(cards){
+     cards.classList.add('loop03-financeiro-resumos');
+     const itens=[...cards.children];
+     if(itens.length===4){
+      itens[0].querySelector('span').textContent='Indicados válidos';
+      itens[1].querySelector('span').textContent='Total ganho em bônus';
+      itens[2].querySelector('span').textContent='Total ganho com posições';
+      const percentual=e('bonusPercentualParticipante');
+      if(percentual)percentual.hidden=true; // A regra comercial continua calculada no servidor.
+      const totalPosicoes=document.createElement('strong');
+      totalPosicoes.id='loop03TotalHistoricoPosicoes';
+      totalPosicoes.textContent='—';totalPosicoes.title='Aguardando livro financeiro auditável por posição';
+      itens[2].append(totalPosicoes);
+     }
+    }
+    // Mensagens operacionais continuam na fonte, mas nao poluem a tela aprovada.
+    for(const filho of [...bonus.children]){
+     if(filho.matches('p:not(:first-of-type),ol'))filho.hidden=true;
+    }
+    const saque=bonus.querySelector('.saques-teste-participante');
+    e('loop03-financeiro').append(bonus);
+    if(saque){
+     saque.classList.add('loop03-financeiro-saque');
+     saque.querySelector('h3').textContent='Solicitações de saque';
+     for(const p of [...saque.querySelectorAll(':scope > p.ajuda-portal')])p.hidden=true;
+     const resumos=saque.querySelector(':scope > .resumos-participante');
+     if(resumos){
+      resumos.hidden=true;
+      resumos.classList.add('loop03-financeiro-legado-oculto');
+      const escolhas=document.createElement('div');
+      escolhas.id='loop03EscolhasSaque';
+      escolhas.className='loop03-escolhas-saque';
+      escolhas.innerHTML=String.raw`
+       <button type="button" id="loop03EscolherBonus" class="loop03-opcao-saque" aria-pressed="false">
+        <span>Bônus indicação</span><strong id="loop03BonusDisponivelVisivel">R$ 0,00</strong>
+        <small>Disponível agora</small>
+       </button>
+       <button type="button" id="loop03EscolherPosicoes" class="loop03-opcao-saque" aria-pressed="false">
+        <span>Saldo das minhas posições</span><strong id="loop03PosicoesDisponivelVisivel">—</strong>
+        <small>Disponível agora</small>
+       </button>`;
+      resumos.after(escolhas);
+      for(const [id,tipo] of [['loop03EscolherBonus','BONUS'],['loop03EscolherPosicoes','POSICOES']]){
+       escolhas.querySelector('#'+id).addEventListener('click',()=>{
+        fonteSaque=tipo;
+        const aviso=e('avisoSaqueTesteParticipante');if(aviso)aviso.textContent='';
+        atualizarEscolhaSaque();
+       });
+      }
+     }
+     const form=e('formSaqueTesteParticipante');
+     if(form){
+      form.classList.add('loop03-form-saque');
+      form.hidden=true;
+      const rotulo=form.querySelector('label');
+      if(rotulo)rotulo.classList.add('loop03-rotulo-visualmente-oculto');
+      const botao=e('enviarSaqueTesteParticipante');
+      if(botao)botao.textContent='Solicitar saque';
+      const entrada=e('valorSaqueTesteParticipante');
+      if(entrada)entrada.placeholder='0,00';
+     }
+     const historicoTitulo=saque.querySelector('h4');
+     if(historicoTitulo)historicoTitulo.hidden=true;
+     const legado=e('historicoSaqueTesteParticipante');
+     if(legado)legado.hidden=true;
+     const historia=document.createElement('details');
+     historia.id='loop03HistoricoGanhosSaque';
+     historia.className='loop03-historico-financeiro';
+     historia.innerHTML='<summary>◷ &nbsp; Histórico de ganhos / saque</summary><ol id="loop03ListaHistoricoFinanceiro" aria-live="polite"></ol>';
+     saque.append(historia);
+     e('loop03-financeiro').append(saque);
+    }
+   }
    e('loop03-posicoes').append(resumo);
   }
   const historico=e('tituloHistoricoLojaParticipante')?.closest('section.cartao-participante');
@@ -1004,9 +1087,33 @@
   vazio.hidden=!consulta||encontrados>0;
   if(!vazio.hidden)vazio.textContent='Nenhum indicado encontrado para "'+consulta+'".';
  }
+ function atualizarEscolhaSaque(){
+  const grupo=e('loop03EscolhasSaque');
+  if(!grupo)return;
+  for(const [id,tipo] of [['loop03EscolherBonus','BONUS'],['loop03EscolherPosicoes','POSICOES']]){
+   const el=e(id);
+   el?.setAttribute('aria-pressed',String(fonteSaque===tipo));
+   el?.classList.toggle('loop03-opcao-selecionada',fonteSaque===tipo);
+  }
+  const form=e('formSaqueTesteParticipante');
+  if(form)form.hidden=!fonteSaque;
+  const enviar=e('enviarSaqueTesteParticipante');
+  if(enviar)enviar.disabled=!(fonteSaque==='BONUS'&&
+   visaoAtual?.saquesSimulados?.podeSolicitarBonus);
+  const aviso=e('avisoSaqueTesteParticipante');
+  if(aviso&&fonteSaque==='POSICOES')
+   aviso.textContent='Saldo das posições ainda sem crédito liquidado e autorizado para saque.';
+ }
  function atualizar(visao){
   if(!e('loop03Shell'))montar();
   visaoAtual=visao;
+  const disponivel=e('loop03BonusDisponivelVisivel');
+  if(disponivel){
+   const centavos=visao.saquesSimulados?.bonusDisponivelSimuladoCentavos;
+   disponivel.textContent=Number.isSafeInteger(centavos)?
+    new Intl.NumberFormat('pt-BR',{style:'currency',currency:'BRL'}).format(centavos/100):'—';
+  }
+  atualizarEscolhaSaque();
   document.body.classList.add('loop03-logado');
   aplicarPerfil(visao);
   const n=visao.posicoes.length;
@@ -1488,7 +1595,8 @@
   fecharTermosPosicao();aceitesPosicao.clear();cpfRascunho='';
   atualizarLinksPosicao(null);
   document.body.classList.remove('loop03-logado');
-  selecionada=null;visaoAtual=null;destinoInicialTratado=false;fotoPerfilAcao='MANTER';
+  selecionada=null;visaoAtual=null;fonteSaque=null;destinoInicialTratado=false;fotoPerfilAcao='MANTER';
+  atualizarEscolhaSaque();
   fecharSeletorPosicao();identidadeDaPosicao(null);
   for(const img of document.querySelectorAll('#loop03Shell .loop03-foto-privada')){
    img.hidden=true;img.removeAttribute('src');
@@ -1501,6 +1609,6 @@
   abrir('home');
  }
  window.Loop03Shell={montar,atualizar,encerrar,abrir,destacarPosicoes,
-  posicaoSelecionada:()=>selecionada};
+  posicaoSelecionada:()=>selecionada,fonteSaqueSelecionada:()=>fonteSaque};
  montar();
 })();
