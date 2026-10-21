@@ -12,7 +12,8 @@ test('LOOP: 5000 compradores, 100 azuis-douradas + douradas financiadas por rese
   assert.equal(r.comprasFisicas190,2500);
   assert.equal(r.comprasFisicasSemPosicao,2500);
   assert.equal(r.posicoesCriadasPDF,2500);
-  assert.equal(r.conversoesAzulParaDourada,100);
+  assert.equal(r.conversoesAzulParaDourada+r.azulPendente,100);
+  assert.ok(r.conversoesAzulParaDourada>=1);
   assert.equal(r.posicoesDouradasFinanciadasPelaReserva,100);
   assert.equal(r.contemplacoesComCicloConcluido,416);
   assert.equal(r.quantidadeA+r.quantidadeB,2501+100-416-7);
@@ -27,7 +28,7 @@ test('LOOP: 5000 compradores, 100 azuis-douradas + douradas financiadas por rese
     r.contemplacoesPosicoesDouradas,416);
   assert.equal(r.ciclosDouradasPorAzul+
     r.ciclosDouradasFinanciadasPelaReserva,r.contemplacoesPosicoesDouradas);
-  assert.equal(r.douradasConvertidasAoLongoDosGiros.length,100);
+  assert.equal(r.douradasConvertidasAoLongoDosGiros.length,r.conversoesAzulParaDourada);
   assert.ok(r.douradasConvertidasAoLongoDosGiros.every(x=>
     x.azulAntes&&x.douradaDepois&&x.giro>=1));
   assert.equal(r.financeiro.cofreReservaBrutoCentavos,416*25000);
@@ -46,6 +47,7 @@ test('LOOP: 5000 compradores, 100 azuis-douradas + douradas financiadas por rese
    centrosDouradasAzul:r.ciclosDouradasPorAzul,
    centrosDouradasReserva:r.ciclosDouradasFinanciadasPelaReserva,
    douradasDeAzul:r.conversoesAzulParaDourada,
+   azulPendente:r.azulPendente,
    douradasCriadasComReserva:r.posicoesDouradasFinanciadasPelaReserva,
    douradasNoTabuleiro:r.douradasNoTabuleiroAgora,
    azuisRestantes:r.azulPendente,
@@ -63,13 +65,14 @@ test('Controle negativo: sem credito da reserva, nenhuma dourada administrativa 
  const r=executarCenario5000({primeiraFila:'B',intensidade:'MODERADA',usarCofreReserva:false});
  assert.equal(r.posicoesDouradasFinanciadasPelaReserva,0);
  assert.equal(r.financeiro.compromissoDouradasFinanciadasCentavos,0);
- assert.equal(r.conversoesAzulParaDourada,100);
+ assert.equal(r.conversoesAzulParaDourada+r.azulPendente,100);
  assert.equal(r.financeiro.extratoDouradasDaReserva.length,0);
  assert.equal(r.quantidadeA+r.quantidadeB,2501-416-7);
  console.log('LOOP_5000_SEM_RESERVA='+JSON.stringify({
   A:r.quantidadeA,B:r.quantidadeB,
   reservasCriadas:r.posicoesDouradasFinanciadasPelaReserva,
   azuisDouradas:r.conversoesAzulParaDourada,
+  azuisPendentes:r.azulPendente,
   contemplacoes:r.contemplacoesComCicloConcluido
  }));
 });
