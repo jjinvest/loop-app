@@ -186,6 +186,21 @@
     estrelas.textContent='★'.repeat(review.nota)+'☆'.repeat(5-review.nota)+' · Compra avaliada';
     const texto=document.createElement('p');texto.textContent=review.comentario;
     item.append(estrelas,texto);
+    const galeriaAvaliacao=document.createElement('div');
+    galeriaAvaliacao.className='akitemm-midia-depoimento';
+    for(const midia of review.midias||[]){
+     if(midia.tipo==='FOTO'){
+      const img=document.createElement('img');img.src=midia.url;img.loading='lazy';
+      img.alt='Fotografia enviada por comprador e aprovada pela AKITEMM';
+      galeriaAvaliacao.append(img);
+     }else if(midia.tipo==='VIDEO'){
+      const video=document.createElement('video');video.src=midia.url;video.controls=true;
+      video.preload='metadata';video.playsInline=true;
+      video.setAttribute('aria-label','Vídeo de até 30 segundos enviado por comprador e aprovado');
+      galeriaAvaliacao.append(video);
+     }
+    }
+    item.append(galeriaAvaliacao);
     if(fotoPermitida(review.imagemCaminho)){
      const img=document.createElement('img');img.src=review.imagemCaminho;img.loading='lazy';
      img.alt='Foto associada à avaliação publicada';item.append(img);
@@ -297,6 +312,15 @@
     if(aval.statusAvaliacao){
      estado.textContent=aval.statusAvaliacao==='PENDENTE'?'Avaliação enviada; aguardando moderação.':
       aval.statusAvaliacao==='APROVADA'?'Avaliação publicada.':'Avaliação analisada.';
+     const midias=aval.midias||[];
+     const fotos=midias.filter(x=>x.tipo==='FOTO').length;
+     const videos=midias.filter(x=>x.tipo==='VIDEO').length;
+     if(aval.statusAvaliacao==='PENDENTE'&&(fotos<3||videos<1)){
+      const acrescentar=document.createElement('button');acrescentar.type='button';
+      acrescentar.textContent='Adicionar fotos / vídeo ('+fotos+'/3 fotos; '+videos+'/1 vídeo)';
+      acrescentar.addEventListener('click',()=>abrirFormularioAvaliacao(aval,true));
+      estado.append(acrescentar);
+     }
     }else{
      const botao=document.createElement('button');botao.type='button';
      botao.textContent='Avaliar '+item.nome;
@@ -315,11 +339,21 @@
   avaliacoesDisponiveis=avaliacoes.itens||[];
   mostrarPedidos(pedidos.pedidos);atualizarSinoAvaliacoes();
  }
- function abrirFormularioAvaliacao(item){
+ function abrirFormularioAvaliacao(item,somenteMidias=false){
   const form=el('akitemmFormAvaliacao');form.reset();
   form.dataset.pedidoId=item.pedidoId;form.dataset.produtoId=item.produtoId;
+  form.dataset.somenteMidias=String(somenteMidias);
+  const nota=el('akitemmAvaliacaoNota'),comentario=el('akitemmAvaliacaoComentario');
+  nota.disabled=somenteMidias;nota.required=!somenteMidias;
+  comentario.disabled=somenteMidias;comentario.required=!somenteMidias;
+  const existentes=item.midias||[];
+  form.dataset.fotosExistentes=String(existentes.filter(x=>x.tipo==='FOTO').length);
+  form.dataset.videoExistente=String(existentes.filter(x=>x.tipo==='VIDEO').length);
+  el('akitemmEnviarAvaliacao').textContent=somenteMidias?'Enviar fotos / vídeo':'Enviar minha avaliação';
   el('akitemmAvaliacaoProdutoNome').textContent=item.nome;
-  el('akitemmStatusAvaliacao').textContent='';
+  el('akitemmStatusAvaliacao').textContent=somenteMidias?
+   'Sua avaliação já está salva. Você ainda pode anexar arquivos enquanto aguarda aprovação.':'';
+  atualizarPreviaMidias();
   el('akitemmModalAvaliacao').showModal();
  }
  function atualizarSinoAvaliacoes(){
@@ -470,22 +504,134 @@
   el('akitemmDetalhesPedidos').open=true;
   el('akitemmDetalhesPedidos').scrollIntoView({behavior:'smooth',block:'center'});
  });
+
+ let urlsPrevia=[];
+ function liberarPreviaMidias(){
+  for(const url of urlsPrevia)URL.revokeObjectURL(url);
+  urlsPrevia=[];
+ }
+ function atualizarPreviaMidias(){
+  const destino=el('akitemmPreviaMidias');if(!destino)return;
+  liberarPreviaMidias();destino.replaceChildren();
+  const imagens=[...el('akitemmFotosAvaliacao').files];
+  const videoArquivo=el('akitemmVideoAvaliacao').files[0];
+  for(const arquivo of imagens){
+   const img=document.createElement('img'),url=URL.createObjectURL(arquivo);
+   urlsPrevia.push(url);img.src=url;img.alt='Prévia da fotografia '+arquivo.name;
+   destino.append(img);
+  }
+  if(videoArquivo){
+   const video=document.createElement('video'),url=URL.createObjectURL(videoArquivo);
+   urlsPrevia.push(url);video.src=url;video.preload='metadata';video.controls=true;
+   video.playsInline=true;video.setAttribute('aria-label','Prévia do vídeo selecionado');
+   destino.append(video);
+  }
+ }
+ function duracaoVideoSelecionado(arquivo){
+  return new Promise((resolve,reject)=>{
+   const url=URL.createObjectURL(arquivo),video=document.createElement('video');
+   let encerrado=false;
+   const timer=setTimeout(()=>concluir(new Error('Não foi possível validar o vídeo. Selecione um MP4 curto.')),10000);
+   function concluir(err,segundos){
+    if(encerrado)return;
+    encerrado=true;clearTimeout(timer);URL.revokeObjectURL(url);
+    video.removeAttribute('src');video.load();
+    err?reject(err):resolve(segundos);
+   }
+   video.preload='metadata';
+   video.onloadedmetadata=()=>{
+    const segundos=video.duration;
+    if(!Number.isFinite(segundos)||segundos<=0||segundos>30)
+     concluir(new Error('O vídeo precisa ter até 30 segundos.'));
+    else concluir(null,segundos);
+   };
+   video.onerror=()=>concluir(new Error('Vídeo inválido. Use MP4 de até 30 segundos.'));
+   video.src=url;
+  });
+ }
+ async function enviarArquivoAvaliacao({pedidoId,produtoId,arquivo,tipo}){
+  const caminho='/api/laboratorio/participante/loja/avaliacoes/'+
+   encodeURIComponent(pedidoId)+'/'+encodeURIComponent(produtoId)+'/midias';
+  const resp=await fetch(caminho,{method:'POST',credentials:'same-origin',cache:'no-store',
+   headers:{'Content-Type':arquivo.type,'X-LOOP-LAB':'participante',
+    'X-AKITEMM-MIDIA-TIPO':tipo},body:arquivo});
+  const dados=await resp.json().catch(()=>({}));
+  if(!resp.ok)throw new Error('Falha no envio de '+arquivo.name+': '+(dados.erro||resp.status));
+  return dados;
+ }
+ el('akitemmFotosAvaliacao').addEventListener('change',atualizarPreviaMidias);
+ el('akitemmVideoAvaliacao').addEventListener('change',atualizarPreviaMidias);
+ el('akitemmModalAvaliacao').addEventListener('close',liberarPreviaMidias);
+
  el('akitemmFormAvaliacao').addEventListener('submit',async ev=>{
   ev.preventDefault();
   const form=ev.currentTarget;
   if(!form.reportValidity())return;
-  const botao=form.querySelector('button[type="submit"]');
+  const botao=el('akitemmEnviarAvaliacao');
+  const fotos=[...el('akitemmFotosAvaliacao').files];
+  const video=el('akitemmVideoAvaliacao').files[0]||null;
+  const pendente=el('akitemmStatusAvaliacao');
+  const soArquivos=form.dataset.somenteMidias==='true';
+  const fotosExistentes=Number(form.dataset.fotosExistentes||0);
+  const videoExistente=Number(form.dataset.videoExistente||0);
+  if(fotos.length+fotosExistentes>3){
+   pendente.textContent='Limite: até três fotos por avaliação.';return;
+  }
+  if(video&&videoExistente){
+   pendente.textContent='Só é permitido um vídeo por avaliação.';return;
+  }
+  if(soArquivos&&!fotos.length&&!video){
+   pendente.textContent='Escolha pelo menos uma foto ou um vídeo para enviar.';return;
+  }
+  for(const foto of fotos){
+   if(!['image/jpeg','image/png','image/webp'].includes(foto.type)||foto.size>3*1024*1024){
+    pendente.textContent='Cada foto deve ser JPEG, PNG ou WebP, até 3 MB.';return;
+   }
+  }
+  if(video){
+   if(video.type!=='video/mp4'||video.size>25*1024*1024){
+    pendente.textContent='Use um MP4 de até 25 MB e 30 segundos.';return;
+   }
+   try{await duracaoVideoSelecionado(video);}
+   catch(e){pendente.textContent=e.message;return;}
+  }
   botao.disabled=true;
   try{
-   const r=await api('loja/avaliacoes',{
-    pedidoId:form.dataset.pedidoId,produtoId:form.dataset.produtoId,
-    nota:Number(el('akitemmAvaliacaoNota').value),
-    comentario:el('akitemmAvaliacaoComentario').value
-   });
-   el('akitemmStatusAvaliacao').textContent=
-    r.aguardandoModeracao?'Avaliação recebida; será analisada antes de aparecer na loja.':'Avaliação enviada.';
+   if(!soArquivos){
+    await api('loja/avaliacoes',{
+     pedidoId:form.dataset.pedidoId,produtoId:form.dataset.produtoId,
+     nota:Number(el('akitemmAvaliacaoNota').value),
+     comentario:el('akitemmAvaliacaoComentario').value
+    });
+    form.dataset.somenteMidias='true';
+    el('akitemmAvaliacaoNota').disabled=true;
+    el('akitemmAvaliacaoComentario').disabled=true;
+    botao.textContent='Concluir anexos';
+   }
+   let i=0;
+   for(const foto of fotos){
+    pendente.textContent='Enviando foto '+(++i)+' de '+fotos.length+'…';
+    await enviarArquivoAvaliacao({
+     pedidoId:form.dataset.pedidoId,produtoId:form.dataset.produtoId,
+     arquivo:foto,tipo:'FOTO'
+    });
+   }
+   if(video){
+    pendente.textContent='Enviando vídeo de até 30 segundos…';
+    await enviarArquivoAvaliacao({
+     pedidoId:form.dataset.pedidoId,produtoId:form.dataset.produtoId,
+     arquivo:video,tipo:'VIDEO'
+    });
+   }
+   pendente.textContent='Avaliação e anexos recebidos. Tudo permanecerá privado até a moderação.';
+   el('akitemmFotosAvaliacao').value='';
+   el('akitemmVideoAvaliacao').value='';
+   atualizarPreviaMidias();
    await carregarPedidos();
-  }catch(e){el('akitemmStatusAvaliacao').textContent=e.message;}
+  }catch(e){
+   pendente.textContent=e.message+' A avaliação já salva não será duplicada; se necessário, reabra pelo histórico para completar os anexos.';
+   await carregarPedidos().catch(()=>{});
+  }
   finally{botao.disabled=false;}
  });
  el('akitemmVerTodos').addEventListener('click',()=>{
