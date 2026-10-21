@@ -77,7 +77,16 @@
    qtd.append(menos,numero,mais);
    info.append(title,preco,qtd);
    const remover=document.createElement('button');remover.type='button';remover.className='item-remover akitemm-item-remover';
-   remover.innerHTML='<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><path d="M3 6h18M8 6V4h8v2M6 6l1 14h10l1-14M10 10v7M14 10v7"/></svg>';
+   const svg=document.createElementNS('http://www.w3.org/2000/svg','svg');
+   svg.setAttribute('viewBox','0 0 24 24');svg.setAttribute('width','18');
+   svg.setAttribute('height','18');svg.setAttribute('fill','none');
+   svg.setAttribute('stroke','currentColor');svg.setAttribute('stroke-width','1.7');
+   svg.setAttribute('aria-hidden','true');
+   for(const caminho of ['M3 6h18M8 6V4h8v2M6 6l1 14h10l1-14','M10 10v7M14 10v7']){
+    const p=document.createElementNS('http://www.w3.org/2000/svg','path');
+    p.setAttribute('d',caminho);svg.append(p);
+   }
+   remover.append(svg);
    remover.setAttribute('aria-label','Remover '+p.nome);
    remover.addEventListener('click',()=>{carrinho.delete(id);atualizarCarrinho();});
    div.append(imagem,info,remover);destino.append(div);
