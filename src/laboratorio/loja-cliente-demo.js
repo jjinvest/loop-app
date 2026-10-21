@@ -299,9 +299,21 @@
  async function carregarConfig(){
   const r=await api('loja/config');configLoja=r.config||null;
   if(!configLoja)return;
-  for(const [rede,url] of Object.entries(configLoja.redes||{})){
+  // Os 4 ícones permanecem visíveis no rodapé. Sem URL oficial,
+  // não navegam e não fingem que a rede está cadastrada.
+  for(const rede of ['instagram','youtube','facebook','whatsapp']){
    const node=document.querySelector('[data-akitemm-rede="'+rede+'"]');
-   if(node&&url){node.href=url;node.target='_blank';node.rel='noopener noreferrer';node.hidden=false;}
+   if(!node)continue;
+   const url=configLoja.redes?.[rede]||'';
+   if(url){
+    node.href=url;node.target='_blank';node.rel='noopener noreferrer';
+    node.removeAttribute('aria-disabled');node.removeAttribute('tabindex');
+    node.title='Abrir '+node.getAttribute('aria-label');
+   }else{
+    node.removeAttribute('href');node.removeAttribute('target');node.removeAttribute('rel');
+    node.setAttribute('aria-disabled','true');node.setAttribute('tabindex','-1');
+    node.title='Link oficial ainda não cadastrado';
+   }
   }
   const banners=configLoja.banners||[];
   if(banners.length){
