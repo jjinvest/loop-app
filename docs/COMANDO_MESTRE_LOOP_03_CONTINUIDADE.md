@@ -762,3 +762,21 @@ Próxima sessão: confirmar com o usuário quais elementos de home manter/tirar 
 - O primeiro comprador de PDF da A requer indicação confirmada de outra compra válida antes de ingressar; a primeira entrada pela B não tem promoção artificial. Regra de 3A/1B só aplica havendo posições disponíveis das duas filas. A primeira entrada inicial e a ordem das indicações são hipóteses simuladas, não dados de clientes.
 
 Manter script de cenários reexecutável para análises seguintes, sem alterar layouts existentes nem publicação. O Escritório Virtual ainda aguarda aprovação visual específica do proprietário.
+
+## 68. Administrador como central de comando integral — AGUARDAR COMANDO DE CRIAÇÃO (21/10/2026)
+
+**Diretriz expressa do idealizador — preservar para a próxima etapa, NÃO implementar agora:**
+
+O cliente/proprietário projetou e escolheu pessoalmente as telas da plataforma LOOP e da loja AKITEMM. Para **o Escritório do Administrador**, entretanto, ele delega ao desenvolvimento a responsabilidade de **propor arquitetura profissional, informativa, intuitiva e poderosa**, embasada em soluções de gestão e logística do mercado quando chegar o momento da criação. A experiência deve refletir a estrutura REAL do LOOP 3.0 e da AKITEMM, sem copiar um sistema genérico ou incorporar funções incompatíveis com as regras. Ele quer sentir-se efetivamente o dono do ecossistema, com informações e ferramentas para controlar as áreas administrativas, verificar regras operacionais e inspecionar o funcionamento profundo do sistema.
+
+**Características exigidas:**
+- Várias abas/grupos com lógica operacional clara, **coisas certas nos lugares certos**, sem botões soltos, repetidos, redundâncias ou telas confusas.
+- Visão executiva sintetizada e **detalhamento progressivo** (do indicador ao evento auditável), painéis úteis para tomada de decisão e intervenções administrativas onde previstas pelas regras.
+- Visibilidade sobre filas A/B, motor V6, tabuleiro, catraca, posições, indicações/vínculos, clientes, AKITEMM/produtos/pedidos, eventos/promos, elegibilidade, estoque/fornecedores/logística conforme aplicável, aprovações, reservas/cofres/financeiro, balanço bruto x despesas x compromissos, douradas, segurança e histórico/auditoria — **organizar por funções, sem prometer operações que não existem**.
+- O relatório de **1.000 compradores (500 PDFs R$250, 500 físicos R$190)** e outros testes/simulações devem ter lugar adequado no módulo administrativo futuro, incluindo configuração de cenários, parâmetros, comparação A/B, total de posições/criações/contemplações, transições azuis→douradas, filas, financeiro hipotético, rastreabilidade e conservação. Distinguir sempre **simulação** de dados persistidos, saldos, pagamentos ou lucros reais.
+- Interface bonita, intuitiva, com hierarquia visual consistente e responsive para celular e computador, mas com foco em informação/controle e não apenas decoração.
+- Acesso administrativo seguro, verificações e trilha de auditoria para alterações sensíveis; nenhuma função direta de modificar filas/saldos contornando o motor, idempotência, exigências legais ou controles aprovados.
+- **Antes de criar**, pesquisar/comparar padrões contemporâneos de ERP, OMS, dashboards de operações/logística, administração de e-commerce e monitoramento de processos, adaptando-os ao LOOP/AKITEMM.
+- Não prejudicar nem redesenhar telas aprovadas do participante e da loja. Não criar merge, deploy ou lançamento sem autorização.
+
+**ORDEM ATUAL DO USUÁRIO: "Agora vamos focar nos testes primeiro, mas guarda isso em você; quando eu falar cria [o Escritório do Administrador], cria daquele jeito".** Portanto, nenhum novo painel administrativo deve ser implementado até novo comando explícito. A implementação administrativa que chegou a ser iniciada nesta conversa (um endpoint e HTML ainda sem JS) foi **revertida integralmente**, preservando o painel existente e o testador isolado de 1.000 compradores em \`scripts/simular-1000-compradores-loop-v6.js\` e seu teste automatizado. Diretriz aprovada = requisito de futuro, não aprovação da interface atual, nem autorização para publicação.
