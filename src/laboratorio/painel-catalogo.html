@@ -172,6 +172,18 @@
        <div class="acoes-admin"><button type="submit">Salvar vitrine</button><button id="akitemmRecarregarVitrine" type="button" class="secundario">Recarregar</button></div>
        <p id="akitemmStatusVitrine" role="status"></p>
       </form>
+      <section class="historico-admin" aria-labelledby="akitemmTituloAvaliacoesAdmin">
+       <h3 id="akitemmTituloAvaliacoesAdmin">Avaliações e depoimentos da AKITEMM</h3>
+       <p class="ajuda">Só após compra física confirmada e entrega registrada no laboratório. Nenhuma entrega aqui significa envio real. Os depoimentos passam por moderação; imagens devem usar caminho previamente autorizado.</p>
+       <div class="campo"><label for="akitemmIdPedidoEntrega">Pedido de laboratório com entrega simulada confirmada</label>
+        <input id="akitemmIdPedidoEntrega" maxlength="100" placeholder="ID do pedido já pago ficticiamente"></div>
+       <div class="acoes-admin">
+        <button id="akitemmRegistrarEntregaDemo" type="button">Registrar entrega fictícia</button>
+        <button id="akitemmAtualizarAvaliacoes" type="button" class="secundario">Atualizar avaliações</button>
+       </div>
+       <p id="akitemmStatusModeracao" role="status" class="ajuda"></p>
+       <div id="akitemmListaModeracao"></div>
+      </section>
     </section>
     <section id="areaImportacao" class="painel" hidden role="tabpanel" aria-labelledby="abaAdminImportacao">
       <h2 id="tituloImportacao">Importar produtos de distribuidores — demonstração</h2>
