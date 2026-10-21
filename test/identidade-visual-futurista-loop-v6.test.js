@@ -8,7 +8,6 @@ const file=p=>fs.readFileSync(path.join(root,p),'utf8');
 const pages=[
  'public/index.html','public/produto.html',
  'src/laboratorio/participante-demo.html',
- 'src/laboratorio/loja-cliente-demo.html',
  'src/laboratorio/financeiro-admin-demo.html',
  'src/laboratorio/escritorio-demo.html',
  'src/laboratorio/painel-catalogo.html',
