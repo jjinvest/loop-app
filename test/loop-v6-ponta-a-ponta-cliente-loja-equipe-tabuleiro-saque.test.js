@@ -23,7 +23,7 @@ const {disponibilidadeCofreDemo}=require('../src/domain/disponibilidade-cofres-v
 const {auditarEntregasEstornosCarrinhoDemo}=require('../src/domain/auditoria-entregas-estornos-carrinho-demo');
 const BASE='2036-09-20T12:00:00.000Z',SENHA='senha-longa-laboratorio-jornada-2026';
 const CPF=['11144477735','12345678909','52998224725','39053344705','86288366757',
- '16899535009','18412407861','58617453010','41876862085'];
+ '16899535009','18412407881','58617453079','41876862076'];
 const DESTINOS=['PARTICIPANTE','EMPRESA','PARTICIPANTE','EMPRESA','PARTICIPANTE','EMPRESA_INVESTIMENTO'];
 function produto(id,tipo,preco){
  return {id,nome:'Produto de laboratorio '+id,descricao:'Item ficticio',
