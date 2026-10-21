@@ -73,6 +73,62 @@ test('AKITEMM: só comprador de produto entregue ficticiamente avalia; moderaç�
  const publicado=await call(prefix+'/avaliacoes/kit-fisico-teste',{cookie:cookieB});
  assert.deepEqual(publicado.data.avaliacoes,[]);
  assert.equal((await call(prefix+'/avaliacoes',{method:'POST',cookie:cookieA,body:aval})).status,201);
+
+ // Upload real dos anexos da avaliação — os arquivos são privados até moderar.
+ function jpeg(){
+  const exif=Buffer.from('Exif GPS_SEGREDO_DA_FOTO');
+  const app=Buffer.alloc(4);app[0]=255;app[1]=225;app.writeUInt16BE(exif.length+2,2);
+  return Buffer.concat([Buffer.from([255,216]),app,exif,
+   Buffer.from([255,192,0,11,8,0,2,0,2,1,1,17,0]),
+   Buffer.from([255,218,0,8,1,1,0,0,63,0]),Buffer.alloc(200,0x71),
+   Buffer.from([255,217])]);
+ }
+ function box(t,b){const h=Buffer.alloc(8);h.writeUInt32BE(b.length+8,0);h.write(t,4);return Buffer.concat([h,b]);}
+ function mp4(seg){
+  const h=Buffer.alloc(12);h.write('vide',8);
+  const m=Buffer.alloc(20);m.writeUInt32BE(1000,12);m.writeUInt32BE(seg*1000,16);
+  return Buffer.concat([box('ftyp',Buffer.from('isom0000iso2')),
+   box('moov',Buffer.concat([box('mvhd',m),box('trak',box('mdia',box('hdlr',h)))])),
+   box('mdat',Buffer.alloc(2048,0x6b))]);
+ }
+ const upload=async(cookie,tipo,mime,bytes)=>{
+  const resp=await fetch(base+prefix+'/avaliacoes/'+pedidoId+'/kit-fisico-teste/midias',{
+   method:'POST',headers:{Cookie:cookie,'Content-Type':mime,'X-LOOP-LAB':'participante',
+    'X-AKITEMM-MIDIA-TIPO':tipo},body:bytes
+  });
+  return {status:resp.status,data:await resp.json()};
+ };
+ const arquivo=jpeg();
+ assert.equal((await upload(cookieB,'FOTO','image/jpeg',arquivo)).status,409,
+  'Outra conta nunca pode anexar à avaliação do titular');
+ const fotos=[];
+ for(let i=0;i<3;i++){
+  const r=await upload(cookieA,'FOTO','image/jpeg',arquivo);
+  assert.equal(r.status,201);fotos.push(r.data.id);
+ }
+ assert.equal((await upload(cookieA,'FOTO','image/jpeg',arquivo)).status,409,
+  'Uma quarta fotografia deve ser bloqueada no servidor');
+ const videoLongo=await upload(cookieA,'VIDEO','video/mp4',mp4(31));
+ assert.equal(videoLongo.status,400);assert.equal(videoLongo.data.erro,'VIDEO_DURACAO_INVALIDA');
+ const videoOk=await upload(cookieA,'VIDEO','video/mp4',mp4(30));
+ assert.equal(videoOk.status,201);
+ assert.equal((await upload(cookieA,'VIDEO','video/mp4',mp4(30))).status,409);
+ const urlMidia=prefix+'/avaliacoes/midias/'+fotos[0];
+ const getMidia=async cookie=>fetch(base+urlMidia,{headers:{Cookie:cookie}});
+ assert.equal((await getMidia(cookieB)).status,404,'Foto privada não é pública antes da moderação');
+ const fotoPrivada=await getMidia(cookieA);
+ assert.equal(fotoPrivada.status,200);
+ assert.equal(Buffer.from(await fotoPrivada.arrayBuffer()).includes(Buffer.from('GPS_SEGREDO')),false,
+  'EXIF removido antes de gravar no SQLite');
+ assert.equal((await fetch(base+urlMidia)).status,401);
+ const listaAdmin=await call(adm+'/akitemm-avaliacoes-demo',{admin:true});
+ assert.equal(listaAdmin.data.pendentes.length,1);
+ assert.equal(listaAdmin.data.pendentes[0].midias.length,4);
+ const v=await fetch(base+adm+'/akitemm-avaliacoes-demo/midias/'+videoOk.data.id,{
+  headers:{Authorization:'Bearer '+segredo}
+ });
+ assert.equal(v.status,200);
+
  assert.equal((await call(prefix+'/avaliacoes',{method:'POST',cookie:cookieA,body:aval})).status,409);
  assert.deepEqual((await call(prefix+'/avaliacoes/kit-fisico-teste',{cookie:cookieB})).data.avaliacoes,[]);
  const moderacao=await call(adm+'/akitemm-avaliacoes-demo',{admin:true});
@@ -90,6 +146,11 @@ test('AKITEMM: só comprador de produto entregue ficticiamente avalia; moderaç�
  assert.equal(publicas.data.avaliacoes.length,1);
  assert.equal(publicas.data.avaliacoes[0].nota,5);
  assert.equal(publicas.data.avaliacoes[0].imagemCaminho,'/imagens/catalogo/depoimento.webp');
+ assert.equal(publicas.data.avaliacoes[0].midias.length,4);
+ assert.equal(publicas.data.avaliacoes[0].midias.filter(m=>m.tipo==='FOTO').length,3);
+ assert.equal(publicas.data.avaliacoes[0].midias.filter(m=>m.tipo==='VIDEO').length,1);
+ assert.equal(publicas.data.avaliacoes[0].midias.find(m=>m.tipo==='VIDEO').duracaoSegundos,30);
+ assert.equal((await getMidia(cookieB)).status,200,'Mídia aprovada fica disponível aos compradores autenticados');
  assert.equal(JSON.stringify(publicas.data).includes(cookieA),false);
  assert.equal(JSON.stringify(publicas.data).includes(a.contaId),false);
  assert.equal(JSON.stringify(publicas.data).includes(pedidoId),false);
