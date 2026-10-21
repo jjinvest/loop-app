@@ -1717,6 +1717,9 @@ async function main(){
     'A faixa POSIÇÃO 2 deve estar pintada e clicável sem bordas cortadas: '+JSON.stringify(pintura));
    assert.equal(await pagina.locator('#loop03OpcoesPosicoes .loop03-cartao-posicao').nth(1)
     .locator('.loop03-cartao-abrir').getAttribute('aria-expanded'),'true');
+   // Aguardar a transição do seletor para medir caixas na posição FINAL.
+   // Não ignorar controles fora da tela: conferirLargura continua rigoroso.
+   await pagina.waitForTimeout(420);
    await conferirLargura(pagina,largura,'aberturas-posicoes-'+largura,{captura:false});
    // Captura fullPage REAL COM DOIS PAINÉIS ABERTOS: seletor + detalhe da compra.
    await pagina.screenshot({path:path.join(pasta,arquivo),fullPage:true});
