@@ -31,6 +31,12 @@ Atualizado em 21/10/2026. **Esta é a porta de entrada para retomar o projeto ra
 - Dos 498 eventos PDF dos 83 ciclos completos, alocação referencial: centro participante **R$47.250**, douradas **R$15.000**, esquerdo **R$41.500**, direito **R$20.750** (total R$124.500), mais 2 eventos/ **R$500** como referência pendente. Não representar como pagamento real; bônus de indicação também são hipotéticos.
 - **Prioridade imediata do projeto: continuar testes e provar robustez**, preservar logs/relatórios, corrigir falhas validadas antes de qualquer entrada de clientes reais.
 
+## [LABORATÓRIO] Teste geral com 5.000 compradores e jornada do cliente (21/10/2026)
+- **Relatório dedicado:** [RELATORIO_TESTE_GERAL_5000_21OUT2026.md](./RELATORIO_TESTE_GERAL_5000_21OUT2026.md). Contém premissas, comparação A/B, giros, 20 douradas surgidas pela vaga 6, conservação de 2.501 posições e distribuição financeira hipotética.
+- Teste do motor **PASSOU em 4 cenários**: 2.500 PDFs R$250, 2.500 físicos R$190, 416 ciclos concluídos, 2.078 posições nas filas, 7 no tabuleiro e 4/6 eventos do ciclo seguinte. Receita bruta simulada R$1.100.000, sem lucro apurado.
+- Teste de navegador Playwright/Chromium é **separado**, percorre abas, carrinho, perfil, seletor, indicações, financeiro e saques bloqueados quando não há saldo; amostras representativas, **não** 5.000 navegadores simultâneos. Acrescentado fluxo físico R$190 sem posição e PDF R$250 com posição; consultar estado do workflow antes de afirmar conclusão.
+- Em testes de navegador, nicks fictícios precisam obedecer à regra de **apenas letras, 1–9 caracteres**; não afrouxar validação para fazer teste passar. Não alterar visual aprovado por falhas transitórias sem investigação.
+
 ## [ADIADO] Escritório do Administrador — conceito aprovado, criação NÃO autorizada ainda
 - O proprietário **delegou** proposta arquitetural para sua central de comando; quer **várias abas bem organizadas**, funções certas nos lugares certos, sem atalhos/botões repetidos, design profissional e intuitivo. Consultar boas referências de ERP, logística, OMS, operações e e-commerce quando chegar a etapa.
 - **PRIORIDADE ABSOLUTA SERÁ DADOS REAIS**, não simulações: volumes de compradores, pagamentos efetivamente confirmados, posições por estado, filas A/B, indicações e vínculos, giro/catraca, centros/contemplações e seu status **previsto/autorizado/pago**, douradas, cofres/reservas e fluxo financeiro, pendências e alertas. **Resumo de operação no primeiro olhar**, com detalhe auditável nas abas, sem usuário ter de caçar informações.
