@@ -780,3 +780,14 @@ O cliente/proprietário projetou e escolheu pessoalmente as telas da plataforma 
 - Não prejudicar nem redesenhar telas aprovadas do participante e da loja. Não criar merge, deploy ou lançamento sem autorização.
 
 **ORDEM ATUAL DO USUÁRIO: "Agora vamos focar nos testes primeiro, mas guarda isso em você; quando eu falar cria [o Escritório do Administrador], cria daquele jeito".** Portanto, nenhum novo painel administrativo deve ser implementado até novo comando explícito. A implementação administrativa que chegou a ser iniciada nesta conversa (um endpoint e HTML ainda sem JS) foi **revertida integralmente**, preservando o painel existente e o testador isolado de 1.000 compradores em \`scripts/simular-1000-compradores-loop-v6.js\` e seu teste automatizado. Diretriz aprovada = requisito de futuro, não aprovação da interface atual, nem autorização para publicação.
+
+
+## 69. Administrador: prioridade absoluta aos dados operacionais reais (21/10/2026)
+
+Complemento explícito do proprietário à seção 68, para preservar em continuidade:
+
+- **O Escritório do Administrador é, antes de tudo, um painel dos resultados e eventos REAIS da operação** quando clientes começarem a entrar; testes e simulações são recursos opcionais e secundários, inequivocamente separados e identificados como simulados.
+- **Exatidão acima de estética**: fontes únicas confiáveis, registros persistentes, reconciliação, idempotência e auditoria para compras/pedidos, confirmação de pagamento, posições, indicações, ordem das filas A/B, transições de cor/adesão, vagas do tabuleiro, catraca, giros, contemplações e destinos financeiros. Não exibir estimativa como fato; em caso de ausência de confirmação, indicar «pendente», «não disponível» ou «em conferência». Não confundir contemplação planejada, obrigação, autorização ou pagamento efetivamente liquidado.
+- **Tudo o que é prioritário para o dono deve estar à vista**, na página principal com leitura imediata, sem procurar e sem clicar por muitos menus: entradas e compras, vendas da AKITEMM com e sem posição LOOP, quantidades e estados das filas, eventos e giros, resultados por centro, operação financeira com saldos discriminados e pendências/alertas. Indicadores resumidos conduzem ao detalhe, trilha de auditoria e ferramentas organizadas nas abas adequadas, evitando redundância.
+- Na implementação futura, propor primeiro uma arquitetura profissional, clara e bonita de central de comando, coerente com todo o ecossistema já desenvolvido; o proprietário revisará, aprovará e solicitará inclusões ou remoções depois de ver a primeira versão. Dar prioridade a controles úteis, acessibilidade e precisão, sem prometer poderes administrativos que burlam as regras.
+- **Não criar agora**: o proprietário mandou focar nos testes primeiro. Preservar o painel atual até a autorização explícita «cria o Escritório do Administrador». Não publicar, fazer merge ou deploy sem permissão.
