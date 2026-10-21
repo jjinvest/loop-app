@@ -1991,8 +1991,13 @@ async function main(){
   await page.screenshot({
    path:path.join(pasta,'AKITEMM_GRADE_3_FILEIRAS_X_4_PC_TESTE_REAL.png'),fullPage:true
   });
+  const totais=await page.evaluate(async()=>{
+   const r=await fetch('/api/laboratorio/participante/loja/catalogo',{credentials:'same-origin'});
+   return (await r.json()).produtos.length;
+  });
+  assert.ok(totais>=13,'Catálogo de laboratório preparado com ao menos 13 itens');
   await page.locator('#akitemmCarregarMais').click();
-  assert.equal(await page.locator('.produto-loja-loop').count(),13);
+  assert.equal(await page.locator('.produto-loja-loop').count(),totais);
   assert.equal(await page.locator('#akitemmCarregarMais').isVisible(),false);
   await page.setViewportSize({width:390,height:850});
   const larguraTeste=await page.evaluate(()=>({
