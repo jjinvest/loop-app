@@ -203,14 +203,14 @@ function executarCenario5000({primeiraFila='A',intensidade='ALTA',usarCofreReser
   'As 100 azuis devem virar douradas somente ao cruzar a vaga seis');
  assert.ok(entregasAzuis.some(e=>e.giro>=1&&e.douradaDepois));
  assert.equal(sim.filas.filaA.length+sim.filas.filaB.length+7+416,2501+reservasDouradas.length,
-  'Fundador + 500 posicoes: nenhuma se perde');
+  'Fundador + 2500 posicoes PDF + douradas financiadas: nenhuma se perde');
  assert.equal(entradasA+entradasB,416);
  assert.equal(ciclosClientes+ciclosDouradas+ciclosFundador,416);
  const todas=[...sim.filas.filaA,...sim.filas.filaB,sim.tabuleiro.centro,
   ...sim.tabuleiro.vagas,...sim.tabuleiro.ciclosConcluidos.map(c=>c.centro)]
   .filter(Boolean);
  assert.equal(todas.length,2501+reservasDouradas.length);
- assert.equal(new Set(todas.map(p=>p.id)).size,501);
+ assert.equal(new Set(todas.map(p=>p.id)).size,2501+reservasDouradas.length);
  assert.ok(sim.filas.filaA.every(x=>x.statusAdesao!=='PENDENTE'));
  const eventosFinanceirosRealizados=Object.values(eventosFinanceiros)
   .reduce((a,b)=>a+b,0);
