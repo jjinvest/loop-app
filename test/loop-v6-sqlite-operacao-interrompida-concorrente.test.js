@@ -266,7 +266,7 @@ test('SQLite: 2 cadeiras do titular, 2 verdes vinculados individualmente, bonus,
  console.log('LOOP_SQLITE_FINANCEIRO='+JSON.stringify({
   clientes:3,posicoes:4,verdesConfirmados:2,
   indicacoesVinculadas:2,bonusApenasVerdesCentavos:5000,
-  solicitacoesSaque:1,taxaSaqueCentavos:75,
+  solicitacoesSaque:1,taxaSaqueCentavos:0,
   reservaBrutaSimuladaCentavos:50000,compromissoBonusCentavos:5000,
   reservaLivreSimuladaCentavos:45000,
   reinicioConservouHistorico:true,pagamentoReal:false
