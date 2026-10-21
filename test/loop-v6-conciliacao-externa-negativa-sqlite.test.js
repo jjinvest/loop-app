@@ -130,9 +130,9 @@ test('estorno independente identifica posicao, bonus, saque simulado e preserva 
  let m=abrir(arquivo);
  t.after(()=>{try{m.repo.fechar()}catch{}});
  const a=cadastro(m,'indicador');
- criar(m,a,'pedido-indicador','pdf-100');
- await confirmar(m,'pedido-indicador','local-base');
- m.adesoes.ativar({contaId:a.contaId,
+ criar(m,a,'pedido-indicador','pdf-250');
+ const posicaoIndicador=(await confirmar(m,'pedido-indicador','local-base')).posicaoId;
+ m.adesoes.ativar({contaId:a.contaId,posicaoId:posicaoIndicador,
   cpfFicticio:'11144477735',aceitaTermos:true,versaoTermos:REF});
  const b=cadastro(m,'indicado',a.codigoConvite);
  criar(m,b,'pedido-indicado-estorno','pdf-250');
