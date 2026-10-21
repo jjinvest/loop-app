@@ -185,7 +185,22 @@ class CarrinhoLojaLoopDemoSQLite{
    Number.isSafeInteger(p.precoCentavos)&&p.precoCentavos>0).map(p=>{
     const padrao=this.elegibilidade.consultar(p.id);
     const ev=this.eventosEspeciais.consultarProduto(p.id);
+    // Apenas informacoes publicas: nada de margens ou custos do fornecedor.
+    const dataCriacao=this.banco.prepare(
+     'SELECT MIN(ocorrido_em) AS data FROM catalogo_historico WHERE produto_id=?'
+    ).get(p.id)?.data;
+    const confirmado=this.banco.prepare(`
+      SELECT COALESCE(SUM(i.quantidade),0) AS total
+      FROM admin_carrinho_loop_itens_demo i
+      JOIN admin_carrinho_loop_eventos_demo ev
+       ON ev.pedido_id=i.pedido_id AND ev.tipo='CONFIRMAR_FICTICIO'
+      WHERE i.produto_id=?`).get(p.id)?.total||0;
+    const novo=!!dataCriacao&&Number.isFinite(Date.parse(dataCriacao))&&
+      Date.now()-Date.parse(dataCriacao)<=30*86400*1000&&Date.now()>=Date.parse(dataCriacao);
     return {produtoId:p.id,nome:p.nome,tipo:p.tipo,precoCentavos:p.precoCentavos,
+     descricao:p.descricao||'',fotos:Array.isArray(p.fotos)?p.fotos:[],
+     detalhes:Array.isArray(p.detalhes)?p.detalhes:[],
+     novidade:novo,quantidadeVendida:confirmado,
      elegivelLoop:!!ev||padrao.elegivelLoop,
      quantidadeMinimaLoop:ev?.quantidadeMinimaLoop??padrao.quantidadeMinimaLoop,
      posicoesPorPedidoLoop:ev?.posicoesPorPedidoLoop??1,
