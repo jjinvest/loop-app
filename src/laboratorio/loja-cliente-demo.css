@@ -397,3 +397,27 @@ body.akitemm-loja{background:#071018;color:#f0f2f6;font-family:system-ui,-apple-
 .akitemm-apoio-icone svg{width:24px;height:24px}
 .akitemm-sino svg{width:23px;height:23px}
 .akitemm-redes svg{width:22px;height:22px}
+
+/* Rodapé AKITEMM aprovado: sempre presente, inclusive antes de configurar redes. */
+.akitemm-loja .akitemm-redes a{
+ display:inline-flex;align-items:center;justify-content:center;
+ width:32px;height:32px;border-radius:7px;
+}
+.akitemm-loja .akitemm-redes a:not([href]){
+ opacity:.55;cursor:default;
+}
+.akitemm-loja .akitemm-redes a[href]{
+ opacity:1;cursor:pointer;
+}
+@media(max-width:800px){
+ .akitemm-loja .akitemm-rodape{
+  display:flex;justify-content:center;text-align:center;
+  padding:18px 12px 24px;gap:13px;
+ }
+ .akitemm-loja .akitemm-rodape nav{
+  flex:1 1 100%;justify-content:center;order:2;
+ }
+ .akitemm-loja .akitemm-redes{
+  flex:1 1 100%;justify-content:center;order:3;
+ }
+}
