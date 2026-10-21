@@ -63,3 +63,18 @@ main,.admin-grid > *,.duas-colunas > *,.painel,.painel form{min-width:0;max-widt
 @media(max-width:800px){.resumo-admin-v6{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:600px){.mapa-admin-central{grid-template-columns:1fr}}
 @media(max-width:400px){.resumo-admin-v6{grid-template-columns:1fr}}
+
+/* Fotos e vídeos PRIVADOS de avaliações para moderação da AKITEMM */
+.akitemm-midias-moderacao{
+ display:grid;gap:8px;margin:10px 0 14px;
+ grid-template-columns:repeat(auto-fit,minmax(140px,1fr));
+}
+.akitemm-midias-moderacao button{
+ width:100%;max-width:100%;min-height:35px;white-space:normal;
+}
+.akitemm-midias-preview-privado img,
+.akitemm-midias-preview-privado video{
+ display:block;max-width:100%;width:100%;max-height:210px;
+ object-fit:contain;border:1px solid #b99263;border-radius:7px;
+ background:#12212b;
+}
