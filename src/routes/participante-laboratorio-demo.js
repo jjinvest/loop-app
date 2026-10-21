@@ -322,14 +322,14 @@ function criarRouterParticipanteDemo({contas,ponte,sessoes=null,adesoes=null,car
   // Upload BINÁRIO: req.body nunca recebe arquivo em JSON/base64.
   // Sessão da própria conta e confirmação de entrega continuam obrigatórias.
   router.post('/loja/avaliacoes/:pedidoId/:produtoId/midias',
-   express.raw({type:()=>true,limit:'26mb'}),(req,res,next)=>{
+   express.raw({type:()=>true,limit:'26mb'}),async(req,res,next)=>{
     if(!avaliacoesAkitemm)return res.status(501).json({erro:'AVALIACOES_NAO_CONFIGURADAS'});
     try{
      const contaId=gerenciador.identificar(lerCookie(req));
      if(!contaId)return res.status(401).json({erro:'SESSAO_AUSENTE_OU_EXPIRADA'});
      const tipo=req.get('x-akitemm-midia-tipo');
      const mime=req.get('content-type')?.split(';')[0]?.trim()?.toLowerCase();
-     const resultado=avaliacoesAkitemm.anexarMidia({
+     const resultado=await avaliacoesAkitemm.anexarMidiaConfigurada({
       contaId,pedidoId:req.params.pedidoId,produtoId:req.params.produtoId,
       tipo,mime,dados:req.body
      });
@@ -344,12 +344,12 @@ function criarRouterParticipanteDemo({contas,ponte,sessoes=null,adesoes=null,car
      return next(e);
     }
    });
-  router.get('/loja/avaliacoes/midias/:id',(req,res,next)=>{
+  router.get('/loja/avaliacoes/midias/:id',async(req,res,next)=>{
    if(!avaliacoesAkitemm)return res.status(501).json({erro:'AVALIACOES_NAO_CONFIGURADAS'});
    try{
     const contaId=gerenciador.identificar(lerCookie(req));
     if(!contaId)return res.status(401).json({erro:'SESSAO_AUSENTE_OU_EXPIRADA'});
-    const media=avaliacoesAkitemm.buscarMidia({id:Number(req.params.id),contaId});
+    const media=await avaliacoesAkitemm.buscarMidiaConfigurada({id:Number(req.params.id),contaId});
     res.set('Cache-Control','private, no-store');
     res.set('Content-Disposition','inline');
     res.set('Cross-Origin-Resource-Policy','same-origin');
