@@ -26,11 +26,50 @@ function setCookie(res,token,maxAge){
  res.append('Set-Cookie',COOKIE+'='+token+'; HttpOnly; SameSite=Strict; Path='+CAMINHO+
   '; Max-Age='+maxAge);
 }
-function criarRouterParticipanteDemo({contas,ponte,sessoes=null,adesoes=null,carrinhos=null,catalogo=null,saques=null,obterLivroProvisoesV6=null,obterRetornoSaqueCentroDemo=null,entregadoresPerfil={}}={}){
+function criarRouterParticipanteDemo({contas,ponte,sessoes=null,adesoes=null,carrinhos=null,catalogo=null,saques=null,obterLivroProvisoesV6=null,obterRetornoSaqueCentroDemo=null,entregadoresPerfil={},configAkitemm=null}={}){
  if(!contas||!ponte)throw new TypeError('Cadastro e ponte do laboratorio obrigatorios');
  const gerenciador=sessoes||new SessoesParticipanteDemo({contas});
  const escritorio=new EscritorioIndividualDemo({contas,ponte});
  const perfis=new PerfilParticipanteDemoSQLite({banco:contas.banco,entregadores:entregadoresPerfil});
+ // Endereco de entrega por pedido: separado do cadastro/nick LOOP, atualizado
+ // livremente pelo comprador antes de cada nova compra; nunca alterado em pedido.
+ if(carrinhos)contas.banco.exec(`
+ CREATE TABLE IF NOT EXISTS admin_akitemm_entrega_rascunho_demo(
+  conta_id TEXT PRIMARY KEY REFERENCES admin_contas_participantes_demo(id) ON DELETE RESTRICT,
+  dados_json TEXT NOT NULL,atualizado_em TEXT NOT NULL
+ );
+ CREATE TABLE IF NOT EXISTS admin_akitemm_entrega_pedido_demo(
+  pedido_id TEXT PRIMARY KEY REFERENCES admin_carrinho_loop_demo(pedido_id) ON DELETE RESTRICT,
+  conta_id TEXT NOT NULL REFERENCES admin_contas_participantes_demo(id) ON DELETE RESTRICT,
+  dados_json TEXT NOT NULL,gravado_em TEXT NOT NULL
+ );
+ CREATE TRIGGER IF NOT EXISTS admin_akitemm_entrega_pedido_no_update
+ BEFORE UPDATE ON admin_akitemm_entrega_pedido_demo
+ BEGIN SELECT RAISE(ABORT,'destinatario do pedido imutavel'); END;
+ CREATE TRIGGER IF NOT EXISTS admin_akitemm_entrega_pedido_no_delete
+ BEFORE DELETE ON admin_akitemm_entrega_pedido_demo
+ BEGIN SELECT RAISE(ABORT,'destinatario do pedido imutavel'); END;
+ `);
+ function validarEntrega(v){
+  const campos=['destinatario','cep','logradouro','numero','complemento',
+   'bairro','cidade','uf','telefone','referencia'];
+  if(!v||typeof v!=='object'||Array.isArray(v)||
+   Object.keys(v).sort().join(',')!==campos.slice().sort().join(','))
+   return null;
+  for(const c of campos)
+   if(typeof v[c]!=='string'||v[c].length>(c==='referencia'?150:c==='logradouro'?120:110)||
+      /[\\u0000-\\u001f]/.test(v[c]))return null;
+  if(!/^\\d{5}-?\\d{3}$/.test(v.cep)||!/^\\w{2}$/.test(v.uf)||
+   !'AC AL AP AM BA CE DF ES GO MA MT MS MG PA PB PR PE PI RJ RN RS RO RR SC SP SE TO'
+    .split(' ').includes(v.uf)||
+   !v.destinatario.trim()||!v.logradouro.trim()||!v.numero.trim()||
+   !v.bairro.trim()||!v.cidade.trim()||!v.telefone.trim())return null;
+  return Object.fromEntries(campos.map(c=>[c,v[c].trim()]));
+ }
+ function entregaDaConta(id){
+  const e=contas.banco.prepare('SELECT dados_json AS dados FROM admin_akitemm_entrega_rascunho_demo WHERE conta_id=?').get(id);
+  return e?JSON.parse(e.dados):null;
+ }
  const router=express.Router();
  router.use((req,res,next)=>{
   if(process.env.NODE_ENV==='production'||!localSeguro(req)){
@@ -252,6 +291,34 @@ function criarRouterParticipanteDemo({contas,ponte,sessoes=null,adesoes=null,car
     return next(e);
    }
   });
+  router.get('/loja/config',(req,res,next)=>{
+   try{
+    const id=gerenciador.identificar(lerCookie(req));
+    if(!id)return res.status(401).json({erro:'SESSAO_AUSENTE_OU_EXPIRADA'});
+    return res.json({config:configAkitemm?.consultar()||null,semPagamentoReal:true});
+   }catch(e){return next(e);}
+  });
+  router.get('/loja/entrega',(req,res,next)=>{
+   try{
+    const id=gerenciador.identificar(lerCookie(req));
+    if(!id)return res.status(401).json({erro:'SESSAO_AUSENTE_OU_EXPIRADA'});
+    return res.json({entrega:entregaDaConta(id),laboratorio:true});
+   }catch(e){return next(e);}
+  });
+  router.post('/loja/entrega',(req,res,next)=>{
+   if(!req.is('application/json'))return res.status(415).json({erro:'USE_APPLICATION_JSON'});
+   const e=validarEntrega(req.body);
+   if(!e)return res.status(400).json({erro:'ENDERECO_ENTREGA_INVALIDO'});
+   try{
+    const id=gerenciador.identificar(lerCookie(req));
+    if(!id)return res.status(401).json({erro:'SESSAO_AUSENTE_OU_EXPIRADA'});
+    contas.banco.prepare(`INSERT INTO admin_akitemm_entrega_rascunho_demo
+     (conta_id,dados_json,atualizado_em) VALUES(?,?,?)
+     ON CONFLICT(conta_id) DO UPDATE SET dados_json=excluded.dados_json,atualizado_em=excluded.atualizado_em`)
+     .run(id,JSON.stringify(e),new Date().toISOString());
+    return res.json({entrega:e,registrado:true,entregaReal:false});
+   }catch(err){return next(err);}
+  });
   router.get('/loja/catalogo',(req,res,next)=>{
    if(!carrinhos)return res.status(501).json({erro:'LOJA_NAO_CONFIGURADA'});
    try{
@@ -301,9 +368,22 @@ function criarRouterParticipanteDemo({contas,ponte,sessoes=null,adesoes=null,car
      )
     `).get(contaId).total;
     if(pendentes>=20)return res.status(409).json({erro:'LIMITE_PEDIDOS_PENDENTES_DE_TESTE'});
+    // Para produto fisico, exige endereço validado da mesma conta.
+    const contemFisico=req.body.itens?.some(i=>{
+     const p=catalogo?.buscarRegistro(i.produtoId);
+     return p?.produto?.tipo==='FISICO';
+    });
+    const endereco=entregaDaConta(contaId);
+    if(contemFisico&&!endereco)
+     return res.status(409).json({erro:'CADASTRE_ENTREGA_ANTES_DO_PEDIDO'});
     const pedido=carrinhos.criar({
      pedidoId:'carrinho-'+randomUUID(),contaId,itens:req.body.itens
     });
+    if(contemFisico){
+     contas.banco.prepare(`INSERT INTO admin_akitemm_entrega_pedido_demo
+       (pedido_id,conta_id,dados_json,gravado_em) VALUES(?,?,?,?)`)
+      .run(pedido.pedidoId,contaId,JSON.stringify(endereco),new Date().toISOString());
+    }
     return res.status(201).json({
      pedido,aguardandoPagamentoFicticio:true,
      posicaoCriada:false,pagamentoReal:false
