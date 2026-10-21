@@ -319,6 +319,47 @@ function criarRouterParticipanteDemo({contas,ponte,sessoes=null,adesoes=null,car
     return res.json({entrega:e,registrado:true,entregaReal:false});
    }catch(err){return next(err);}
   });
+  // Upload BINÁRIO: req.body nunca recebe arquivo em JSON/base64.
+  // Sessão da própria conta e confirmação de entrega continuam obrigatórias.
+  router.post('/loja/avaliacoes/:pedidoId/:produtoId/midias',
+   express.raw({type:()=>true,limit:'26mb'}),(req,res,next)=>{
+    if(!avaliacoesAkitemm)return res.status(501).json({erro:'AVALIACOES_NAO_CONFIGURADAS'});
+    try{
+     const contaId=gerenciador.identificar(lerCookie(req));
+     if(!contaId)return res.status(401).json({erro:'SESSAO_AUSENTE_OU_EXPIRADA'});
+     const tipo=req.get('x-akitemm-midia-tipo');
+     const mime=req.get('content-type')?.split(';')[0]?.trim()?.toLowerCase();
+     const resultado=avaliacoesAkitemm.anexarMidia({
+      contaId,pedidoId:req.params.pedidoId,produtoId:req.params.produtoId,
+      tipo,mime,dados:req.body
+     });
+     return res.status(201).json(resultado);
+    }catch(e){
+     if(['MIDIA_INVALIDA','TIPO_MIDIA_NAO_PERMITIDO','FOTO_INVALIDA',
+       'FOTO_DIMENSOES_INVALIDAS','FOTO_GRANDE_DEMAIS','VIDEO_INVALIDO',
+       'VIDEO_DURACAO_INVALIDA','VIDEO_GRANDE_DEMAIS'].includes(e.codigo))
+      return res.status(400).json({erro:e.codigo});
+     if(['AVALIACAO_NAO_ENCONTRADA','AVALIACAO_JA_MODERADA','LIMITE_MIDIAS_ATINGIDO'].includes(e.codigo))
+      return res.status(409).json({erro:e.codigo});
+     return next(e);
+    }
+   });
+  router.get('/loja/avaliacoes/midias/:id',(req,res,next)=>{
+   if(!avaliacoesAkitemm)return res.status(501).json({erro:'AVALIACOES_NAO_CONFIGURADAS'});
+   try{
+    const contaId=gerenciador.identificar(lerCookie(req));
+    if(!contaId)return res.status(401).json({erro:'SESSAO_AUSENTE_OU_EXPIRADA'});
+    const media=avaliacoesAkitemm.buscarMidia({id:Number(req.params.id),contaId});
+    res.set('Cache-Control','private, no-store');
+    res.set('Content-Disposition','inline');
+    res.set('Cross-Origin-Resource-Policy','same-origin');
+    return res.type(media.mime).send(media.dados);
+   }catch(e){
+    if(['MIDIA_NAO_ENCONTRADA','MIDIA_INVALIDA'].includes(e.codigo))
+     return res.status(404).json({erro:'MIDIA_NAO_ENCONTRADA'});
+    return next(e);
+   }
+  });
   router.get('/loja/avaliacoes/pendentes',(req,res,next)=>{
    if(!avaliacoesAkitemm)return res.status(501).json({erro:'AVALIACOES_NAO_CONFIGURADAS'});
    try{
