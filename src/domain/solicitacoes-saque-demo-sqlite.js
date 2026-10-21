@@ -82,7 +82,6 @@ class SolicitacoesSaqueDemoSQLite{
    CREATE TRIGGER IF NOT EXISTS admin_solicitacoes_saque_demo_no_delete
     BEFORE DELETE ON admin_solicitacoes_saque_demo
     BEGIN SELECT RAISE(ABORT,'solicitacao de teste imutavel'); END;`);
-  `);
  }
  consultar(contaId){
   if(!this.contas.buscar(contaId))throw erro('CONTA_INVALIDA');
