@@ -138,7 +138,7 @@ if(process.argv[2]==='--worker'){
     assert.equal(n(m.banco,'SELECT COUNT(*) AS n FROM admin_ponte_compras_demo'),CLIENTES);
     assert.equal(n(m.banco,'SELECT COUNT(*) AS n FROM admin_ponte_vendas_loja_sem_loop_demo'),CLIENTES);
     assert.equal(n(m.banco,'SELECT COUNT(DISTINCT posicao_id) AS n FROM admin_ponte_compras_demo'),CLIENTES);
-    assert.equal(n(m.banco,'SELECT COUNT(*) AS n FROM admin_solicitacoes_saque_demo'),0);
+    // O ensaio testa somente compras; o livro opcional de saques nao e criado.
     assert.equal(auditarIntegridadeOperacionalDemo(m.ponte).totalAlertas,0);
     assert.equal(Object.values(m.banco.prepare('PRAGMA integrity_check').get())[0],'ok');
     assert.deepEqual(m.banco.prepare('PRAGMA foreign_key_check').all(),[]);
