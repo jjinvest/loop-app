@@ -44,9 +44,9 @@ test('solicitacoes de bonus reais nunca acontecem, apenas reserva ficticia sem s
  const q=saques.registrar({contaId:a.contaId,solicitacaoId:id,
   tipo:'BONUS',valorSolicitadoCentavos:2500});
  assert.equal(q.repetida,false);
- assert.equal(q.taxaPercentual,3);
- assert.equal(q.taxaSaqueCentavos,75);
- assert.equal(q.valorLiquidoCentavos,2425);
+ assert.equal(q.taxaPercentual,0);
+ assert.equal(q.taxaSaqueCentavos,0);
+ assert.equal(q.valorLiquidoCentavos,2500);
  assert.equal(q.transferenciaExecutada,false);
  assert.equal(saques.registrar({contaId:a.contaId,solicitacaoId:id,
   tipo:'BONUS',valorSolicitadoCentavos:2500}).repetida,true);
@@ -65,7 +65,7 @@ test('solicitacoes de bonus reais nunca acontecem, apenas reserva ficticia sem s
   tipo:'PARTICIPACAO_LUCRO',valorSolicitadoCentavos:2500}),
   e=>e.codigo==='SALDO_PARTICIPACAO_INDISPONIVEL');
  assert.throws(()=>repo.banco.exec(
-  'UPDATE admin_solicitacoes_saque_demo SET taxa_centavos=0'),
+  'UPDATE admin_solicitacoes_saque_demo SET taxa_centavos=75'),
   /solicitacao de teste imutavel/);
  assert.equal(saques.consultar(b.contaId).historico.length,0);
 });
