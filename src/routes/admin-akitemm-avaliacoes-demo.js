@@ -7,9 +7,9 @@ function criarRouterAdminAkitemmAvaliacoesDemo({segredo,avaliacoes}={}){
  r.use(criarAutorizacao({segredo}));
  r.get('/akitemm-avaliacoes-demo',(_req,res)=>
   res.json({pendentes:avaliacoes.pendentesAdmin(),laboratorio:true}));
- r.get('/akitemm-avaliacoes-demo/midias/:id',(req,res,next)=>{
+ r.get('/akitemm-avaliacoes-demo/midias/:id',async(req,res,next)=>{
   try{
-   const media=avaliacoes.buscarMidia({id:Number(req.params.id),admin:true});
+   const media=await avaliacoes.buscarMidiaConfigurada({id:Number(req.params.id),admin:true});
    res.set('Cache-Control','private, no-store');
    res.set('Content-Disposition','inline');
    res.set('Cross-Origin-Resource-Policy','same-origin');
