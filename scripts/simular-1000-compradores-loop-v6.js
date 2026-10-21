@@ -178,7 +178,7 @@ function executarCenario1000({primeiraFila='A',intensidade='ALTA',totalComprador
   ...sim.tabuleiro.vagas,...sim.tabuleiro.ciclosConcluidos.map(c=>c.centro)]
   .filter(Boolean);
  assert.equal(todas.length,metade+1);
- assert.equal(new Set(todas.map(p=>p.id)).size,501);
+ assert.equal(new Set(todas.map(p=>p.id)).size,metade+1);
  assert.ok(sim.filas.filaA.every(x=>x.statusAdesao!=='PENDENTE'));
  const eventosFinanceirosRealizados=Object.values(eventosFinanceiros)
   .reduce((a,b)=>a+b,0);
