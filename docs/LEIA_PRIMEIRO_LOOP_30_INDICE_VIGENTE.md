@@ -1,3 +1,5 @@
+> **Saldo da reserva ≠ bruto:** o ensaio original de 5.000 reportava R$ 104.000 de entrada BRUTA no cofre direito, sem subtrair comissões nem novas douradas financiadas. Uma auditoria extra com 20 douradas **novas** (R$ 5.000 da reserva) e cinco azuis convertidas confirmou simulações de reserva livre entre R$ 68.050 e R$ 86.800 após bônus hipotéticos de 10% dos indicados considerados verdes. [Relatório de conciliação da reserva](./RELATORIO_RESERVA_5000_20_DOURADAS_21OUT2026.md). As posições azuis convertidas já provêm de compra e não geram segundo aporte de R$ 250. **Produção exige conciliação dos compromissos realmente persistidos em SQLite.**
+
 # LOOP 3.0 — LEIA PRIMEIRO: índice vigente e decisões operacionais
 Atualizado em 21/10/2026. **Esta é a porta de entrada para retomar o projeto rapidamente.** Complementa, não substitui nem apaga, o histórico integral.
 
