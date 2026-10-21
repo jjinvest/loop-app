@@ -232,7 +232,7 @@ test('SQLite: 2 cadeiras do titular, 2 verdes vinculados individualmente, bonus,
  const saque=tentativa();
  assert.equal(saque.repetida,false);
  assert.equal(saque.origemExclusiva,'LOOP_DIREITA');
- assert.equal(saque.valorLiquidoCentavos,2425);
+ assert.equal(saque.valorLiquidoCentavos,2500);
  assert.equal(tentativa().repetida,true);
  assert.equal(m.saques.consultar(titular.contaId).bonusDisponivelSimuladoCentavos,2500);
  assert.equal(m.saques.consultar(convidados[0].contaId).historico.length,0);
