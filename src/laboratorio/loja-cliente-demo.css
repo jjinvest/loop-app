@@ -354,3 +354,10 @@ body.akitemm-loja{background:#071018;color:#f0f2f6;font-family:system-ui,-apple-
  .akitemm-loja .produto-loja-loop .preco-loja-loop{font-size:14px}
  .akitemm-rodape nav button{margin:4px;padding:0 7px;font-size:10px}
 }
+
+/* Preservar as cores APROVADAS e as regresões do evento especial LOOP. */
+.akitemm-loja .produto-loja-loop-especial{
+ border-color:#e8bc58!important;
+ background:radial-gradient(circle at 85% 0%,#8e61bd3d,transparent 62%),
+  linear-gradient(145deg,#312050,#241737 52%,#121827)!important;
+}
