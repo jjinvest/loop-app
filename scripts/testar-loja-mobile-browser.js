@@ -2194,8 +2194,8 @@ async function main(){
     method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+admin},
     body:JSON.stringify({eventoId:'teste-geral-confirmar-'+indice,tipo:'CONFIRMAR_FICTICIO'})
    });
-   assert.equal(confirmar.status,200,await confirmar.text());
    const confirmacao=await confirmar.json();
+   assert.equal(confirmar.status,200,JSON.stringify(confirmacao));
    assert.equal(confirmacao.integracao.posicaoCriada,geraPosicao);
    // Compra comercial e estado pessoal devem vir da mesma fonte SQLite.
    await tela.goto(base+'/laboratorio/participante',{waitUntil:'networkidle'});
