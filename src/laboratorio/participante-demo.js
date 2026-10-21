@@ -39,6 +39,8 @@
   e('bonusMinimoParticipante').textContent='R$ 25,00';
   e('bonusSaqueStatusParticipante').textContent='';
   e('bonusHistoricoParticipante').replaceChildren();
+  e('loop03ListaHistoricoFinanceiro')?.replaceChildren();
+  if(e('loop03HistoricoGanhosSaque'))e('loop03HistoricoGanhosSaque').open=false;
    e('historicoSaqueTesteParticipante').replaceChildren();
    e('bonusDisponivelSaqueParticipante').textContent='R$ 0,00';
    e('bonusReservadoSaqueParticipante').textContent='R$ 0,00';
@@ -432,8 +434,11 @@
   linhaBonus.textContent='Bonificações somente após CPF e aceitação dos termos.';
   statusLink.replaceChildren(linhaLink,linhaBonus);
   const bonus=visao.bonusIndicacoes;
+  // Totais HISTÓRICOS: não diminuem quando se reserva um pedido fictício.
   e('bonusSaldoParticipante').textContent=dinheiro(bonus.totalSimuladoCentavos);
-  e('bonusQuantidadeParticipante').textContent=String(bonus.quantidade);
+  // Indicações válidas são apenas VERDES, não a quantidade de comissões.
+  e('bonusQuantidadeParticipante').textContent=String(
+   visao.contadoresRede?.totalIndicacoesConfirmadas ?? 0);
   e('bonusPercentualParticipante').textContent=bonus.porcentagemAplicavelHoje+'%';
   e('bonusCampanhaStatusParticipante').textContent=
    !bonus.bonificacoesHabilitadas?
@@ -457,6 +462,8 @@
   const extrato=visao.saquesSimulados;
    if(extrato){
     e('bonusDisponivelSaqueParticipante').textContent=dinheiro(extrato.bonusDisponivelSimuladoCentavos);
+    const visivel=e('loop03BonusDisponivelVisivel');
+    if(visivel)visivel.textContent=dinheiro(extrato.bonusDisponivelSimuladoCentavos);
     e('bonusReservadoSaqueParticipante').textContent=dinheiro(extrato.bonusSolicitadoSimuladoCentavos);
     e('enviarSaqueTesteParticipante').disabled=!extrato.podeSolicitarBonus;
     lista('historicoSaqueTesteParticipante',extrato.historico,r=>
@@ -469,6 +476,37 @@
      ' (24 horas corridas, incluindo sábados e domingos)'+
      (r.prazoUltrapassadoNoTeste?' · PRAZO DE ANÁLISE ULTRAPASSADO':'')+
      ' · NÃO transferido');
+   }
+   // Histórico único, derivado somente dos lançamentos SQLite do comprador.
+   // A ausência de livro liquidado das posições não vira saldo inventado.
+   const financeiro=e('loop03ListaHistoricoFinanceiro');
+   if(financeiro){
+    financeiro.replaceChildren();
+    const eventos=[];
+    for(const p of bonus.registros||[]){
+     eventos.push({data:p.registradoEm||p.criadoEm||'',
+      descricao:'Bônus por indicação · posição #'+p.posicaoId+
+       ' · +'+dinheiro(p.valorCentavos)});
+    }
+    for(const r of extrato?.historico||[]){
+     eventos.push({data:r.registradoEm||'',
+      descricao:'Solicitação de saque de bônus · '+dinheiro(r.valorSolicitadoCentavos)+
+       ' · '+r.status+' · taxa '+dinheiro(r.taxaSaqueCentavos)+
+       ' · nenhuma transferência real'});
+    }
+    eventos.sort((a,b)=>String(b.data).localeCompare(String(a.data)));
+    for(const evento of eventos){
+     const li=document.createElement('li');
+     li.textContent=(evento.data?
+      new Date(evento.data).toLocaleString('pt-BR',{timeZone:'America/Sao_Paulo'})+' · ':'')+
+      evento.descricao;
+     financeiro.append(li);
+    }
+    if(!eventos.length){
+     const li=document.createElement('li');
+     li.textContent='Nenhum ganho ou pedido de saque registrado nesta conta.';
+     financeiro.append(li);
+    }
    }
    const vagaDesistente=visao.posicoes.find(p=>p.local==='VAGA_6'&&p.statusAdesao!=='PENDENTE');
    e('secaoDesistenciaVaga6Participante').hidden=!vagaDesistente;
@@ -576,6 +614,13 @@
    ev.preventDefault();
    const botao=e('enviarSaqueTesteParticipante');
    if(botao.disabled)return;
+   const escolha=window.Loop03Shell?.fonteSaqueSelecionada?.();
+   if(escolha!=='BONUS'){
+    e('avisoSaqueTesteParticipante').textContent=
+     escolha==='POSICOES'?'Saldo das posições ainda indisponível para saque.':
+      'Selecione primeiro a origem do saque.';
+    return;
+   }
    const valor=e('valorSaqueTesteParticipante').value;
    if(!/^\d+(?:\.\d{1,2})?$/.test(valor)){
     e('avisoSaqueTesteParticipante').textContent='Informe reais e até dois centavos.';return;
@@ -595,7 +640,9 @@
      dinheiro(resultado.taxaSaqueCentavos)+' e líquido '+
      dinheiro(resultado.valorLiquidoCentavos)+'. Nenhum dinheiro transferido.';
    }catch(erro){e('avisoSaqueTesteParticipante').textContent=erro.message;}
-   finally{botao.disabled=false;}
+   finally{
+    botao.disabled=window.Loop03Shell?.fonteSaqueSelecionada?.()!=='BONUS';
+   }
   });
   e('formDesistenciaVaga6Participante').addEventListener('submit',async ev=>{
    ev.preventDefault();
