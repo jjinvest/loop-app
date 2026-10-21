@@ -2,11 +2,28 @@
 const express=require('express');
 const {criarAutorizacao}=require('./admin-catalogo-laboratorio');
 const {projetarCaixaPrelancamentoV6}=require('../domain/projetar-caixa-prelancamento-v6');
+const {executarComparacao1000}=require('../../scripts/simular-1000-compradores-loop-v6');
 
 function criarRouterCircuitBreakV6Demo({segredo,controle,ponteControle=null,programador=null,retornoSaqueCentroDemo=null,travaFilaA=null,ponteIndicacoes=null,configuracaoRelogio=null}={}){
   const router=express.Router();
   router.use(criarAutorizacao({segredo}));
   router.use((_req,res,next)=>{res.set('Cache-Control','no-store');next();});
+  // Relatorio reproduzivel de laboratorio: 1000 compradores, 4 variacoes.
+  // Leitura autenticada, sem banco, sem gravar clientes, vender ou girar catraca real.
+  router.get('/circuit-break-v6-demo/simulacao-1000',(req,res,next)=>{
+    if(Object.keys(req.query).length)return res.status(400).json({erro:'PARAMETROS_NAO_PERMITIDOS'});
+    try{
+      const cenarios=executarComparacao1000();
+      return res.json({
+        modo:'SIMULACAO_ISOLADA_SEM_PAGAMENTO',
+        regra:'3A/1B',resultadoNaoEhCaixaReal:true,
+        parametros:{compradores:1000,comprasPDF250:500,comprasProduto190:500,
+          quantidadePorCompra:1,fundadorNoCentro:true,
+          azuisPlanejadasParaConversao:20},
+        cenarios
+      });
+    }catch(e){return next(e);}
+  });
   // Configuracao meramente visual, sem atuar em giro nem em fila.
   router.get('/circuit-break-v6-demo/intervalo-relogio',(_req,res)=>{
     if(!configuracaoRelogio)return res.status(501).json({erro:'RELOGIO_INDISPONIVEL'});
