@@ -171,7 +171,7 @@ function executarCenario1000({primeiraFila='A',intensidade='ALTA',totalComprador
   'As 20 azuis devem virar douradas somente ao cruzar a vaga seis');
  assert.ok(entregasAzuis.some(e=>e.giro>=1&&e.douradaDepois));
  assert.equal(sim.filas.filaA.length+sim.filas.filaB.length+7+girosEsperados,metade+1,
-  'Fundador + 500 posicoes: nenhuma se perde');
+  'Fundador e PDFs qualificados: nenhuma posicao desaparece');
  assert.equal(entradasA+entradasB,girosEsperados);
  assert.equal(ciclosClientes+ciclosDouradas+ciclosFundador,girosEsperados);
  const todas=[...sim.filas.filaA,...sim.filas.filaB,sim.tabuleiro.centro,
@@ -196,7 +196,7 @@ function executarCenario1000({primeiraFila='A',intensidade='ALTA',totalComprador
   quantidadeA:sim.filas.filaA.length,
   quantidadeB:sim.filas.filaB.length,
   noTabuleiro:7,
-  contemplacoesComCicloConcluido:83,
+  contemplacoesComCicloConcluido:girosEsperados,
   contemplacoesFundador:ciclosFundador,
   contemplacoesOutrosClientes:ciclosClientes,
   contemplacoesPosicoesDouradas:ciclosDouradas,
