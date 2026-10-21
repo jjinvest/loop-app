@@ -5,12 +5,14 @@ let chaveTemporaria = '';
 let registroEditando = null;
 let revisaoFornecedor = 0;
 let fornecedorAtivo = false;
+let revisaoElegibilidadeAkitemm=1;
 let abaAtualAdmin = 'inicio';
 const ABAS_ADMIN={
   inicio:{secao:'areaVisaoAdmin',botao:'abaAdminInicio'},
   produtos:{secao:'areaPainel',botao:'abaAdminProdutos'},
   importacao:{secao:'areaImportacao',botao:'abaAdminImportacao'},
-  pedidos:{secao:'areaPedidosDemo',botao:'abaAdminPedidos'}
+  pedidos:{secao:'areaPedidosDemo',botao:'abaAdminPedidos'},
+  vitrine:{secao:'areaVitrineAkitemm',botao:'abaAdminVitrineAkitemm'}
 };
 function mostrarAbaAdmin(aba){
  if(!Object.hasOwn(ABAS_ADMIN,aba)||!chaveTemporaria)return;
@@ -183,6 +185,11 @@ function editarFormulario(registro) {
   $('videoProduto').value = p?.videoApresentacaoUrl || '';
   $('detalhesProduto').value = p?.detalhes?.join('\n') || '';
   atualizarCalculadoraAdmin();
+  $('akitemmSalvarElegibilidade').disabled=!p;
+  $('akitemmStatusElegibilidade').textContent=p?'Consultando autorização do LOOP…':'Salve o produto antes de autorizar.';
+  if(p)carregarElegibilidadeAkitemm(p.id).catch(e=>{
+   $('akitemmStatusElegibilidade').textContent=e.message;
+  });
 }
 
 function montarProduto() {
@@ -257,6 +264,7 @@ async function conectar() {
     $('areaPainel').hidden = true;
     $('areaImportacao').hidden = true;
     $('areaPedidosDemo').hidden = true;
+    $('areaVitrineAkitemm').hidden = true;
     limparPedidosDemo();
     limparPreviaImportacao();
     mensagem(erro.message);
@@ -361,6 +369,65 @@ async function desativarFornecedor() {
   }
 }
 
+
+async function carregarElegibilidadeAkitemm(id){
+ const x=await requisitar('/carrinho-loop-demo/elegibilidade');
+ const p=x.produtos.find(x=>x.produtoId===id);
+ if(!p)throw Error('Produto sem configuração disponível');
+ revisaoElegibilidadeAkitemm=p.revisaoElegibilidade;
+ $('akitemmElegivelLoop').checked=p.elegivelLoop;
+ $('akitemmSalvarElegibilidade').disabled=false;
+ $('akitemmStatusElegibilidade').textContent='Atual: '+(p.elegivelLoop?'Autoriza LOOP (borda verde)':'Compra comum (borda neutra)')+'. Revisão '+p.revisaoElegibilidade+'.';
+}
+async function salvarElegibilidadeAkitemm(){
+ if(!registroEditando)return;
+ const id=registroEditando.id;
+ try{
+  await requisitar('/carrinho-loop-demo/elegibilidade',{
+   method:'POST',body:JSON.stringify({produtoId:id,
+    elegivelLoop:$('akitemmElegivelLoop').checked,revisaoEsperada:revisaoElegibilidadeAkitemm})
+  });
+  await carregarElegibilidadeAkitemm(id);
+  mensagem('Autorização LOOP atualizada SOMENTE para pedidos futuros.');
+ }catch(e){$('akitemmStatusElegibilidade').textContent=e.message;}
+}
+const camposAkitemm={sobre:'akitemmTextoSobre',privacidade:'akitemmTextoPrivacidade',
+ trocas:'akitemmTextoTrocas',contato:'akitemmTextoContato',suporte:'akitemmTextoSuporte'};
+async function carregarVitrineAkitemm(){
+ const d=await requisitar('/akitemm-config-demo');const c=d.config;
+ $('akitemmBannerLinhas').value=c.banners.map(b=>
+  [b.titulo,b.descricao,b.imagemCaminho,b.produtoId].join(' | ')).join('\n');
+ $('akitemmOfertaIds').value=c.ofertas.join('\n');
+ for(const [nome,id] of Object.entries({
+  instagram:'akitemmLinkInstagram',youtube:'akitemmLinkYoutube',
+  facebook:'akitemmLinkFacebook',whatsapp:'akitemmLinkWhatsapp'
+ }))$(id).value=c.redes[nome]||'';
+ for(const [nome,id] of Object.entries(camposAkitemm))$(id).value=c.informacoes[nome]||'';
+ $('akitemmStatusVitrine').textContent='Configuração da vitrine carregada do SQLite.';
+}
+async function salvarVitrineAkitemm(ev){
+ ev.preventDefault();
+ try{
+  const linhas=linhasAkitemm($('akitemmBannerLinhas').value);
+  if(linhas.length>8)throw Error('No máximo 8 banners.');
+  const banners=linhas.map(l=>{
+   const parts=l.split('|').map(v=>v.trim());
+   if(parts.length!==4)throw Error('Cada banner exige: título | descrição | imagem | ID do produto (campos finais vazios permitidos).');
+   return {titulo:parts[0],descricao:parts[1],imagemCaminho:parts[2],produtoId:parts[3]};
+  });
+  const c={banners,ofertas:linhasAkitemm($('akitemmOfertaIds').value),
+   redes:{
+    instagram:$('akitemmLinkInstagram').value.trim(),
+    youtube:$('akitemmLinkYoutube').value.trim(),
+    facebook:$('akitemmLinkFacebook').value.trim(),
+    whatsapp:$('akitemmLinkWhatsapp').value.trim()
+   },informacoes:Object.fromEntries(Object.entries(camposAkitemm).map(([k,id])=>[k,$(id).value.trim()]))};
+  await requisitar('/akitemm-config-demo',{method:'POST',body:JSON.stringify(c)});
+  $('akitemmStatusVitrine').textContent='Vitrine salva e pronta para aparecer no próximo carregamento da loja.';
+ }catch(e){$('akitemmStatusVitrine').textContent=e.message;}
+}
+function linhasAkitemm(texto){return texto.split(/\r?\n/).map(l=>l.trim()).filter(Boolean);}
+
 $('formFornecedor').addEventListener('submit', salvarFornecedor);
 $('desativarFornecedor').addEventListener('click', desativarFornecedor);
 
@@ -387,6 +454,7 @@ $('sairAdmin').addEventListener('click', () => {
   $('areaPainel').hidden = true;
   $('areaImportacao').hidden = true;
   $('areaPedidosDemo').hidden = true;
+  $('areaVitrineAkitemm').hidden = true;
   limparPedidosDemo();
   limparPreviaImportacao();
   $('areaFornecedor').hidden = true;
@@ -400,6 +468,10 @@ $('atualizarLista').addEventListener('click', async () => {
   catch (erro) { mensagem(erro.message); }
 });
 $('formProduto').addEventListener('submit', salvar);
+$('akitemmSalvarElegibilidade').addEventListener('click',salvarElegibilidadeAkitemm);
+$('akitemmConfigAdminForm').addEventListener('submit',salvarVitrineAkitemm);
+$('akitemmRecarregarVitrine').addEventListener('click',()=>carregarVitrineAkitemm().catch(e=>{$('akitemmStatusVitrine').textContent=e.message;}));
+$('abaAdminVitrineAkitemm').addEventListener('click',()=>carregarVitrineAkitemm().catch(e=>{$('akitemmStatusVitrine').textContent=e.message;}));
 $('atualizarDiagnosticoAdmin').addEventListener('click',()=>{
  atualizarDiagnosticoAdmin().catch(e=>{
   $('mensagemDiagnosticoAdmin').textContent=e.message;
