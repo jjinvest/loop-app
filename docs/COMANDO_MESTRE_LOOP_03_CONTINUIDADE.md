@@ -1,3 +1,5 @@
+> **ÍNDICE VIGENTE — LEITURA RÁPIDA:** [LEIA_PRIMEIRO_LOOP_30_INDICE_VIGENTE.md](./LEIA_PRIMEIRO_LOOP_30_INDICE_VIGENTE.md). Ele resume decisões em vigor, adiadas, revogadas e testes, priorizando operação real. **Este documento continua integral como histórico; se uma seção antiga contrariar decisão posterior, prevalece a posterior.** Backup íntegro anterior à organização: [COMANDO_MESTRE_LOOP_03_INTEGRO_PRE_LIMPEZA_21OUT2026.md](./historico/COMANDO_MESTRE_LOOP_03_INTEGRO_PRE_LIMPEZA_21OUT2026.md). A documentação não substitui verificação do código e dos testes no HEAD.
+
 > **MARCA OFICIAL VISÍVEL (decisão de 18/10/2026):** **LOOP 3.0** em TODAS as telas do participante, do administrador e nas novas peças de apresentação. `LOOP 0.3` é somente designação técnica/histórica de versões anteriores; nunca reintroduzir esse número como marca exibida ao usuário. Preservar IDs, caminhos, nomes internos de arquivos, URLs e rotas preexistentes (inclusive legados de Vilela), pois renomeá-los pode quebrar links e integrações. Documentos históricos continuam íntegros e não são fonte para a marca vigente.
 
 # COMANDO-MESTRE VIGENTE — LOOP 0.3 / V6 — 18 OUT 2026
@@ -793,7 +795,7 @@ Complemento explícito do proprietário à seção 68, para preservar em continu
 - **Não criar agora**: o proprietário mandou focar nos testes primeiro. Preservar o painel atual até a autorização explícita «cria o Escritório do Administrador». Não publicar, fazer merge ou deploy sem permissão.
 
 
-## 68. Escritório do Administrador — diretriz de arquitetura e UX aprovada em conversa (21/10/2026)
+### Apêndice da seção 68 — reforço de arquitetura do Escritório do Administrador (21/10/2026)
 
 **Pedido explícito do proprietário (guardar para trabalho FUTURO, sem criar redesenho agora):** Ele aprovou diretamente os visuais do LOOP e da loja AKITEMM, mas ainda não definiu nem conhece a melhor disposição do **Escritório do Administrador**. Delegou à equipe a responsabilidade de estudar referências reais de painéis administrativos/logísticos na internet e desenhar, em proposta para sua aprovação, um **centro de comando integral do ecossistema** que seja informativo, profissional, intuitivo, visualmente claro e efetivamente utilizável como proprietário.
 
