@@ -2008,6 +2008,71 @@ async function main(){
    path:path.join(pasta,'AKITEMM_GRADE_13_PRODUTOS_CELULAR_TESTE_REAL.png'),fullPage:true
   });
 
+
+  // Jornada completa de avaliação: produto físico fictício, pedido, confirmação
+  // administrativa, entrega simulada, sininho, comentário e moderação.
+  banco.salvar({produto:{
+   id:'produto-fisico-avaliacao',nome:'Produto físico para avaliação de teste',
+   tipo:'FISICO',estado:'PUBLICADO',
+   descricao:'Produto para validar galeria e depoimentos no código real.',
+   precoCentavos:8500,entrega:'FORNECEDOR_INTEGRADO',
+   fotos:[],videoApresentacaoUrl:null,detalhes:['Dimensão: cadastrável','Peso: cadastrável']
+  },revisaoEsperada:0});
+  await page.goto(base+'/laboratorio/loja',{waitUntil:'networkidle'});
+  await page.locator('#conteudoLojaLoop').waitFor({state:'visible'});
+  await page.locator('#akitemmBusca').fill('Produto físico para avaliação de teste');
+  const avalCard=page.locator('.produto-loja-loop').filter({hasText:'Produto físico para avaliação de teste'});
+  assert.equal(await avalCard.count(),1);
+  await avalCard.getByRole('button',{name:'Adicionar ao carrinho'}).click();
+  await page.locator('#registrarPedidoLoja').click();
+  await page.locator('#statusPedidoLoja').getByText(/registrado/).waitFor();
+  const idAval=banco.banco.prepare(
+   "SELECT pedido_id AS pedidoId FROM admin_carrinho_loop_itens_demo WHERE produto_id='produto-fisico-avaliacao' ORDER BY rowid DESC LIMIT 1"
+  ).get().pedidoId;
+  let resposta=await fetch(base+'/api/admin/carrinho-loop-demo/'+idAval+'/eventos',{
+   method:'POST',headers:{Authorization:'Bearer '+admin,'Content-Type':'application/json'},
+   body:JSON.stringify({eventoId:'pagamento-avaliacao-browser',tipo:'CONFIRMAR_FICTICIO'})
+  });
+  assert.equal(resposta.status,200,await resposta.text());
+  resposta=await fetch(base+'/api/admin/akitemm-avaliacoes-demo/entregas',{
+   method:'POST',headers:{Authorization:'Bearer '+admin,'Content-Type':'application/json'},
+   body:JSON.stringify({pedidoId:idAval})
+  });
+  assert.equal(resposta.status,200,await resposta.text());
+  await page.reload({waitUntil:'networkidle'});
+  await page.locator('#conteudoLojaLoop').waitFor({state:'visible'});
+  await page.locator('#akitemmSino').click();
+  assert.equal(await page.locator('#akitemmAbrirAvaliacoes').isVisible(),true);
+  await page.locator('#akitemmAbrirAvaliacoes').click();
+  await page.locator('#pedidosLojaLoop').getByRole('button',{name:/Avaliar Produto físico para avaliação de teste/}).click();
+  assert.equal(await page.locator('#akitemmModalAvaliacao').isVisible(),true);
+  await page.locator('#akitemmAvaliacaoNota').selectOption('5');
+  await page.locator('#akitemmAvaliacaoComentario').fill(
+   'Entrega fictícia recebida em teste; achei a apresentação adequada.'
+  );
+  await page.locator('#akitemmFormAvaliacao button[type="submit"]').click();
+  await page.locator('#akitemmStatusAvaliacao').getByText(/aguardando|analisada|recebida/i).waitFor();
+  await page.locator('#akitemmModalAvaliacao .akitemm-modal-fechar').click();
+  const regAvaliacao=banco.banco.prepare(
+   "SELECT id FROM akitemm_avaliacoes_demo WHERE pedido_id=?"
+  ).get(idAval);
+  assert.ok(regAvaliacao);
+  resposta=await fetch(base+'/api/admin/akitemm-avaliacoes-demo/moderar',{
+   method:'POST',headers:{Authorization:'Bearer '+admin,'Content-Type':'application/json'},
+   body:JSON.stringify({id:regAvaliacao.id,status:'APROVADA',imagemCaminho:null})
+  });
+  assert.equal(resposta.status,200,await resposta.text());
+  await page.locator('#akitemmBusca').fill('Produto físico para avaliação de teste');
+  await page.locator('.produto-loja-loop').first().click({position:{x:32,y:28}});
+  await page.locator('#akitemmDetalhesConteudo').getByText(/Entrega fictícia recebida em teste/).waitFor();
+  assert.equal(await page.locator('#akitemmDetalhesConteudo .akitemm-detalhe-miniaturas').count(),0,
+   'Sem fotos cadastradas, não inventar imagens');
+  await page.setViewportSize({width:390,height:812});
+  await page.screenshot({
+   path:path.join(pasta,'AKITEMM_PRODUTO_AVALIACAO_APROVADA_CELULAR_REAL_DE_TESTE.png'),fullPage:true
+  });
+  await page.locator('#akitemmModalDetalhes .akitemm-modal-fechar').click();
+
   assert.deepEqual(erros,[], 'Erros de execucao no navegador');
   const relatorio={status:'APROVADO',
    tamanhosPx:[320,360,390,412,768,1024,1366],
