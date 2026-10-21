@@ -380,8 +380,8 @@ async function main(){
   assert.equal(await page.locator('#akitemmFotoTitular').isVisible(),false);
   assert.equal(await page.locator('#akitemmBusca').count(),1);
   assert.equal(await page.locator('.akitemm-rodape nav button').count(),4);
-  assert.equal(await page.locator('.akitemm-rodape nav').innerText(),
-   'Sobre a AKITEMM\nPolítica de Privacidade\nTrocas e Devoluções\nFale Conosco');
+  assert.deepEqual(await page.locator('.akitemm-rodape nav button').allInnerTexts(),
+   ['Sobre a AKITEMM','Política de Privacidade','Trocas e Devoluções','Fale Conosco']);
   assert.equal(await page.getByText('Termos de Uso').count(),0);
   for(const rede of ['instagram','youtube','facebook','whatsapp']){
    const a=page.locator('[data-akitemm-rede="'+rede+'"]');
