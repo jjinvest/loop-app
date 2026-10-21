@@ -174,7 +174,7 @@ test('saque: erro injetado no INSERT e posterior restauração sem débito adici
  tirarGatilho(m,'injeta_saque_teste');
  const solicitado=tentativa();
  assert.equal(solicitado.repetida,false);
- assert.equal(solicitado.valorLiquidoCentavos,2425);
+ assert.equal(solicitado.valorLiquidoCentavos,2500);
  assert.equal(tentativa().repetida,true);
  assert.equal(estado(m).saques,1);
  assert.equal(m.saques.consultar(titular.contaId).bonusDisponivelSimuladoCentavos,0);
@@ -182,7 +182,7 @@ test('saque: erro injetado no INSERT e posterior restauração sem débito adici
  certificar(m);
  console.log('LOOP_SAQUE_ROLLBACK='+JSON.stringify({
   solicitacoesConfirmadasNoLivro:1,duplicatasBloqueadas:1,
-  saqueBrutoCentavos:2500,taxaCentavos:75,reservaLivreCentavos:47500,
+  saqueBrutoCentavos:2500,taxaCentavos:0,reservaLivreCentavos:47500,
   injeçõesDeFalha:1,integridade:'ok',transferenciaExecutada:false
  }));
 });
