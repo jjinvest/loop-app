@@ -379,6 +379,19 @@ async function main(){
   assert.equal(await page.locator('#akitemmNomeTitular').getAttribute('title'),titular.nome);
   assert.equal(await page.locator('#akitemmFotoTitular').isVisible(),false);
   assert.equal(await page.locator('#akitemmBusca').count(),1);
+  assert.equal(await page.locator('.akitemm-rodape nav button').count(),4);
+  assert.equal(await page.locator('.akitemm-rodape nav').innerText(),
+   'Sobre a AKITEMM\nPolítica de Privacidade\nTrocas e Devoluções\nFale Conosco');
+  assert.equal(await page.getByText('Termos de Uso').count(),0);
+  for(const rede of ['instagram','youtube','facebook','whatsapp']){
+   const a=page.locator('[data-akitemm-rede="'+rede+'"]');
+   assert.equal(await a.isVisible(),true,'Ícone '+rede+' deve aparecer mesmo sem URL');
+   assert.equal(await a.getAttribute('href'),null,'Sem link real, ícone não navega');
+   assert.equal(await a.getAttribute('aria-disabled'),'true');
+  }
+  await page.locator('[data-akitemm-informacao="sobre"]').click();
+  assert.equal(await page.locator('#akitemmModalInformacao').isVisible(),true);
+  await page.locator('#akitemmModalInformacao .akitemm-modal-fechar').click();
   await page.locator('#akitemmBusca').fill('Curso Cinza');
   assert.equal(await page.locator('.produto-loja-loop').count(),1,'Busca por nome');
   await page.locator('#akitemmBusca').fill('');
@@ -1254,6 +1267,17 @@ async function main(){
   assert.equal(desktopBordas.cinza,'none');
   for(const width of [768,1024,1366])
    await conferirLargura(desktop,width,'loja-desktop',{captura:width===1366});
+  assert.equal(await desktop.locator('.akitemm-rodape').isVisible(),true);
+  assert.equal(await desktop.locator('.akitemm-rodape nav button').count(),4);
+  for(const tipo of ['sobre','privacidade','trocas','contato']){
+   await desktop.locator('[data-akitemm-informacao="'+tipo+'"]').click();
+   assert.equal(await desktop.locator('#akitemmModalInformacao').isVisible(),true);
+   await desktop.locator('#akitemmModalInformacao .akitemm-modal-fechar').click();
+  }
+  // Foto REAL integral, não só o primeiro viewport: o rodapé deve aparecer.
+  await desktop.screenshot({
+   path:path.join(pasta,'loja-desktop-1366px.png'),fullPage:true
+  });
   await desktop.goto(base+'/admin/financeiro-demo',{waitUntil:'networkidle'});
   await desktop.locator('#chaveFinanceiroDemo').fill(admin);
   await desktop.locator('#abrirFinanceiroDemo').click();
