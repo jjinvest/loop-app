@@ -166,3 +166,191 @@ button:disabled{opacity:.48;cursor:not-allowed}
 }
 /* Cinza e totalmente parado; botoes e textos nao sao animados.
    O brilho gira so ao longo do contorno e respeita o arredondamento. */
+
+/* AKITEMM independente do escritorio: visual preto e dourado, sem barra LOOP.
+   Todos os controles sao HTML e nao imagens de tela. */
+:root{--ak-gold:#ebbd68;--ak-black:#071016;--ak-panel:#111d26;--ak-line:#35434c}
+html{scroll-behavior:smooth}
+body.akitemm-loja{background:#071018;color:#f0f2f6;font-family:system-ui,-apple-system,Arial,sans-serif;overflow-x:hidden;font-size:14px;line-height:1.4}
+.akitemm-loja button{font:inherit}
+.akitemm-loja button:focus-visible,.akitemm-loja a:focus-visible,.akitemm-loja input:focus-visible,.akitemm-loja summary:focus-visible{outline:2px solid #ffe4ab;outline-offset:2px}
+.akitemm-loja [hidden]{display:none!important}
+.akitemm-loja .cabecalho-loja-loop{position:relative;display:flex;flex-direction:row;align-items:center;justify-content:space-between;min-height:58px;padding:8px max(18px,2.25vw);background:linear-gradient(100deg,#0c131a,#080f17);border-bottom:1px solid #26313b}
+.akitemm-voltar{display:inline-flex;align-items:center;gap:18px;text-decoration:none;color:var(--ak-gold);font-size:23px;font-weight:750;white-space:nowrap}
+.akitemm-seta{color:#d4dae5;font-size:28px;font-weight:400}
+.akitemm-marca-loop{display:inline-flex;align-items:center;gap:5px}
+.akitemm-marca-loop em{font-size:21px;font-style:normal;color:#e6e8f0}
+.akitemm-anel{font-size:29px;color:var(--ak-gold);line-height:1}
+.akitemm-topo-direito{display:flex;gap:18px;align-items:center}
+.akitemm-sino{position:relative;background:transparent!important;color:#ccd5e3!important;font-size:23px!important;padding:5px!important;border:0!important}
+#akitemmContagemSino{position:absolute;top:1px;right:-3px;border-radius:20px;padding:0 4px;background:#e6424b;font-size:10px;color:#fff}
+.akitemm-conta{display:flex;gap:9px;align-items:center;max-width:176px}
+.akitemm-avatar{display:grid;place-items:center;width:35px;height:35px;min-width:35px;border:1px solid #536170;border-radius:50%;background:#232e39;overflow:hidden}
+.akitemm-avatar img{width:100%;height:100%;object-fit:cover}
+.akitemm-nome{min-width:0;max-width:120px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:#ecedef;font-size:12px}
+.akitemm-menu-notificacoes{position:absolute;top:55px;right:22px;z-index:20;width:min(310px,95vw);border:1px solid #96764b;border-radius:12px;padding:15px;background:#17212b;box-shadow:0 12px 30px #000a}
+.akitemm-loja .loja-loop{max-width:none;margin:0;padding:10px 2.25vw 22px}
+.akitemm-estado{font-size:12px;color:#d5bc8d;margin:0 0 8px}
+.akitemm-estado:empty{display:none}
+.akitemm-grade-pagina{display:grid;grid-template-columns:minmax(0,1fr) minmax(250px,280px);align-items:start;gap:16px}
+.akitemm-vitrine-principal,.akitemm-coluna-direita{min-width:0}
+.akitemm-banner{position:relative;min-height:212px;overflow:hidden;border-radius:12px;border:1px solid #313439;background:radial-gradient(ellipse at 69% 38%,#7c5325a3 0%,#281c19aa 34%,transparent 65%),linear-gradient(109deg,#040505 16%,#1b1310 64%,#070807 100%)}
+.akitemm-banner-conteudo{height:100%;min-height:212px;display:grid;grid-template-columns:minmax(180px,1fr) 1fr auto;gap:8px;align-items:center;padding:23px 3.2%}
+.akitemm-banner-texto h1{font-size:clamp(2.1rem,4.4vw,3.2rem);font-weight:600;letter-spacing:.025em;line-height:1;margin:0 0 1px;color:#f2ca84}
+.akitemm-banner-texto strong{font-size:1.03rem;font-weight:450;color:#f8f6f1}
+.akitemm-banner-texto p{max-width:400px;margin:9px 0;color:#faf7f3;font-size:clamp(.85rem,1.1vw,1.05rem)}
+.akitemm-banner-arte{display:flex;align-items:center;justify-content:center;color:#e6b96b66;font-size:clamp(13px,2.5vw,27px);letter-spacing:.12em;transform:skewY(-3deg);text-shadow:0 0 24px #d8963266}
+.akitemm-arte-anel{font-size:5rem;line-height:1;color:#f3be5d55}
+.akitemm-banner-slogan{font-size:11px;line-height:1.9;letter-spacing:.1em;font-weight:700;color:#f1eff4;white-space:nowrap}
+.akitemm-banner-slogan span{display:block;width:33px;height:3px;margin-top:8px;background:var(--ak-gold);border-radius:4px}
+.akitemm-banner-rodizio{position:absolute;right:13px;bottom:8px;display:flex;gap:5px;align-items:center}
+.akitemm-banner-rodizio button{color:#f5e1aa;background:#16191b!important;padding:3px 9px;border:1px solid #8e764e;border-radius:7px}
+#akitemmBannerPontos{font-size:10px;color:#e6ceac}
+.akitemm-busca-filtros{display:flex;align-items:center;gap:12px;margin:17px 0 15px}
+.akitemm-loja .akitemm-chip{background:#0c1a26;color:#ebedf2;border:1px solid #283743;border-radius:30px;padding:9px 23px;white-space:nowrap;min-height:36px;line-height:1}
+.akitemm-loja .akitemm-chip.selecionado{background:linear-gradient(#ffe0a1,#e8af4a);color:#11161b;border-color:#d7a249}
+.akitemm-busca{flex:0 1 450px;min-width:0;height:40px;display:flex;align-items:center;gap:8px;padding:0 13px;border-radius:9px;background:linear-gradient(130deg,#17232e,#121d26);border:1px solid #34414c}
+.akitemm-busca span{font-size:25px;line-height:1;color:#d3d9e2}
+.akitemm-busca input{width:100%;min-width:0;border:0;outline:0;background:transparent;color:#fff;font:inherit;font-size:12px}
+.akitemm-busca input::placeholder{color:#bac5ce}
+.akitemm-categorias{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px;margin-bottom:17px}
+.akitemm-categorias button{display:grid;grid-template-columns:55px 1fr 12px;grid-template-rows:auto auto;gap:3px 8px;text-align:left;min-width:0;min-height:85px;padding:13px;background:linear-gradient(130deg,#1d2831,#1a2229)!important;color:#f2f3f3;border:1px solid #3c4143;border-radius:10px}
+.akitemm-categorias button:nth-child(even){background:linear-gradient(130deg,#272627,#24211d)!important}
+.akitemm-categorias button>span{grid-row:1/3;align-self:center;color:var(--ak-gold);font-size:37px;line-height:1}
+.akitemm-categorias button strong{font-size:13px;align-self:end;line-height:1.1}
+.akitemm-categorias button small{color:#c1c9d1;font-size:11px;line-height:1.3}
+.akitemm-categorias button b{grid-column:3;grid-row:1/3;align-self:center;color:#e9bd66;font-size:23px;font-weight:400}
+.akitemm-categorias button.ativo{border-color:#dfb764;box-shadow:0 0 0 1px #e6c87a,0 0 15px #f0bc4a55}
+.akitemm-loja .cabecalho-secao-loja{margin:0 0 12px;display:flex;align-items:center;gap:12px}
+.akitemm-loja .cabecalho-secao-loja h2{font-size:19px;margin:0;color:#f2f3f4}
+.akitemm-loja #akitemmVerTodos{margin-left:auto;color:#eabe6d;background:transparent;padding:5px 0;font-size:12px;font-weight:650;white-space:nowrap}
+.akitemm-resultado{color:#b6c0ce;font-size:12px;margin:0 0 5px}
+.akitemm-resultado:empty{display:none}
+.akitemm-loja .produtos-loja-loop{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:13px;margin:0}
+.akitemm-loja .produto-loja-loop{padding:0;gap:0;overflow:hidden;border-radius:10px;border:1px solid #303d47;background:linear-gradient(#14232e,#0b151e);box-shadow:none;min-width:0}
+.akitemm-imagem-produto{height:111px;overflow:hidden;background:linear-gradient(135deg,#182530,#27313b 55%,#121e27);border-bottom:1px solid #293843;display:grid;place-items:center}
+.akitemm-imagem-produto img{width:100%;height:100%;object-fit:cover}
+.akitemm-imagem-produto-vazia{color:#75818b;font-size:10px;letter-spacing:.02em;text-align:center}
+.akitemm-dados-produto{display:flex;flex:1;flex-direction:column;gap:3px;padding:7px 10px 8px;min-height:119px}
+.akitemm-loja .produto-loja-loop h3{font-size:12px;line-height:1.3;color:#f3f5f7;margin:0;min-height:16px}
+.akitemm-descricao{color:#bac8d4;font-size:11px;line-height:1.35;min-height:28px}
+.akitemm-loja .produto-loja-loop .preco-loja-loop{font-size:16px;font-weight:900;line-height:1.1;color:#f5bb58}
+.akitemm-acoes-produto{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:auto}
+.akitemm-loja .akitemm-acoes-produto>button{min-height:31px;padding:6px 3px;font-size:11px;font-weight:680;border-radius:7px;white-space:nowrap}
+.akitemm-loja .akitemm-ver-detalhes{background:#101c25!important;border:1px solid #697682!important;color:#e1e4e9!important}
+.akitemm-loja .akitemm-adicionar{background:linear-gradient(#f6d998,#e9b05b)!important;color:#181b1e!important}
+.akitemm-loja .tarja-promocao-especial-loop{font-size:9px}
+.akitemm-loja .produto-loja-loop-elegivel{border-color:#40d790;box-shadow:0 0 12px #20cc604a}
+.akitemm-loja .produto-loja-loop-especial{border-color:#dbad57}
+.akitemm-loja .tipo-loja-loop,.akitemm-loja .datas-promocao-especial-loop{font-size:10px}
+.akitemm-regra-referencia{color:#a6b9c5;font-size:11px;margin-top:12px}
+.akitemm-atualizar{font-size:11px!important;padding:5px!important;min-height:24px!important;color:#c5bbc1!important;background:transparent!important}
+.akitemm-loja .painel-loja-loop{min-width:0;margin:0;padding:16px;border-radius:10px;background:linear-gradient(145deg,#15212a,#10191f);border:1px solid #293641;box-shadow:none}
+.akitemm-linha-carrinho{display:flex;align-items:center;gap:7px;justify-content:space-between;margin-bottom:9px}
+.akitemm-loja .akitemm-linha-carrinho h2{margin:0;font-size:14px;white-space:nowrap}
+.akitemm-loja #akitemmLimparCarrinho{padding:3px;font-size:11px;font-weight:600;color:var(--ak-gold);text-decoration:underline;background:transparent!important;white-space:nowrap}
+.akitemm-loja .item-carrinho-loja{position:relative;display:grid;grid-template-columns:63px minmax(0,1fr) 24px;gap:8px;padding:10px 0;border-bottom:1px solid #2b3841}
+.akitemm-miniatura-carrinho{width:63px;height:70px;border-radius:7px;overflow:hidden;background:#222c34;display:grid;place-items:center}
+.akitemm-miniatura-carrinho img{width:100%;height:100%;object-fit:cover}
+.akitemm-item-dados{min-width:0;display:flex;flex-direction:column;gap:6px}
+.akitemm-item-dados>strong{font-size:12px;line-height:1.28;font-weight:600}
+.akitemm-item-dados>.akitemm-preco-linha{font-size:12px;font-weight:650}
+.akitemm-controle-quantidade{width:max-content;display:flex;align-items:center;border-radius:7px;background:#222e39;overflow:hidden;height:26px}
+.akitemm-controle-quantidade button{background:transparent!important;color:#e7eaf1!important;padding:3px 9px;font-weight:600;min-height:0}
+.akitemm-controle-quantidade span{font-size:12px;min-width:19px;text-align:center}
+.akitemm-item-remover{align-self:center;background:transparent!important;color:#cfd6e2!important;padding:4px!important;font-size:16px!important}
+.akitemm-loja .total-loja-loop{display:flex;align-items:center;justify-content:space-between;gap:8px;font-size:13px!important;color:#f0f3f5!important;margin:12px 0;font-weight:650}
+.akitemm-loja .total-loja-loop strong{font-size:16px;color:#fff}
+.akitemm-progresso{margin-bottom:10px}
+.akitemm-progresso label,.akitemm-progresso p{font-size:10px;color:#a3b3bf;line-height:1.3}
+.akitemm-progresso label{display:block;margin-bottom:5px}
+.akitemm-progresso progress{width:100%;height:5px;accent-color:#43c77d}
+.akitemm-progresso p{margin:3px 0}
+.akitemm-loja #registrarPedidoLoja{display:block;width:100%;background:linear-gradient(#f7dc9d,#dfa34d)!important;color:#17191b!important;border-radius:8px;padding:12px;font-weight:800;min-height:42px;font-size:12px}
+.akitemm-loja #registrarPedidoLoja:disabled{opacity:.46}
+#statusPedidoLoja{font-size:11px;color:#f6d69c}
+.akitemm-apoio{margin-top:12px;display:flex;flex-direction:column;gap:9px}
+.akitemm-painel-retratil{border-radius:9px;border:1px solid #2a3540;background:linear-gradient(135deg,#14222c,#0e1923)}
+.akitemm-painel-retratil>summary{display:flex;align-items:center;gap:9px;padding:11px 12px;cursor:pointer;list-style:none}
+.akitemm-painel-retratil>summary::-webkit-details-marker{display:none}
+.akitemm-painel-retratil>summary>span:nth-child(2){display:flex;flex:1;flex-direction:column;min-width:0}
+.akitemm-painel-retratil>summary strong{font-size:12px}
+.akitemm-painel-retratil>summary small{font-size:11px;color:#aebdc9}
+.akitemm-apoio-icone{font-size:23px;color:#e4b45e;background:#262a29;border-radius:9px;width:33px;height:36px;display:grid;place-items:center}
+.akitemm-painel-retratil>summary>span:last-child{font-size:19px;color:#abb6c1}
+.akitemm-form-entrega{padding:12px;border-top:1px solid #2e4246;display:grid;gap:9px}
+.akitemm-form-entrega p{font-size:11px;color:#bdcbd5;margin:0}
+.akitemm-form-entrega label{display:flex;flex-direction:column;gap:4px;font-size:11px;color:#f3e0bd}
+.akitemm-form-entrega input,.akitemm-form-entrega select{width:100%;min-width:0;padding:9px;background:#0b1823;color:white;border:1px solid #526170;border-radius:6px}
+.akitemm-dupla{display:grid;grid-template-columns:1fr 1fr;gap:9px}
+.akitemm-form-entrega button{background:#dcb066!important;color:#171819!important}
+#akitemmStatusEntrega{font-size:11px;color:#9de2b6}
+#akitemmTextoSuporte{font-size:12px;color:#bdc8cf;padding:0 12px 10px}
+.akitemm-pedidos{margin-top:15px}
+.akitemm-pedidos details,.akitemm-divulgacao details{border:1px solid #364450;border-radius:9px;padding:12px;color:#dfdfe6;font-size:12px}
+.akitemm-pedidos summary,.akitemm-divulgacao summary{cursor:pointer;font-size:12px;font-weight:740}
+.akitemm-pedidos button,.akitemm-divulgacao button{margin-top:9px;padding:6px 8px;background:#283946!important;color:#eee!important}
+.akitemm-loja .akitemm-divulgacao{margin-top:20px;background:transparent;padding:0;border:0}
+.akitemm-divulgacao input{width:100%;padding:10px;background:#14232a;color:white;border:1px solid #586573;border-radius:6px}
+.akitemm-rodape{display:flex;align-items:center;justify-content:space-between;gap:20px;padding:16px 2.25vw;border-top:1px solid #28343b;background:#0a1218}
+.akitemm-rodape>div:first-child{display:flex;flex-direction:column}
+.akitemm-rodape>div:first-child strong{font-size:18px;font-weight:550;color:var(--ak-gold)}
+.akitemm-rodape small{font-size:10px;color:#bcc4cf}
+.akitemm-rodape nav{display:flex;gap:0;flex-wrap:wrap}
+.akitemm-rodape nav button{background:transparent!important;color:#abb7c5!important;font-size:11px;font-weight:400;padding:0 14px;border-right:1px solid #48515a;border-radius:0}
+.akitemm-rodape nav button:last-child{border:0}
+.akitemm-redes{display:flex;gap:13px}
+.akitemm-redes a{display:inline-flex;color:#ccd4df;font-size:20px;font-weight:800;text-decoration:none}
+.akitemm-modal{position:fixed;max-width:min(520px,calc(100vw - 24px));max-height:90vh;overflow:auto;color:#f4f2ed;background:#121e28;border:1px solid #c59c5d;border-radius:14px;padding:20px}
+.akitemm-modal::backdrop{background:#000c}
+.akitemm-modal-fechar{float:right;background:transparent!important;color:#fff!important;font-size:28px;padding:0 4px}
+.akitemm-modal h2{color:var(--ak-gold)}
+.akitemm-modal-imagem{max-width:100%;max-height:230px;object-fit:contain}
+.akitemm-modal p,.akitemm-modal li{overflow-wrap:anywhere}
+@media(max-width:1100px){
+ .akitemm-loja .produtos-loja-loop{grid-template-columns:repeat(3,minmax(0,1fr))}
+ .akitemm-categorias button{grid-template-columns:34px 1fr 10px;padding:10px;gap:3px 6px}
+ .akitemm-categorias button>span{font-size:27px}
+}
+@media(max-width:800px){
+ .akitemm-grade-pagina{grid-template-columns:minmax(0,1fr)}
+ .akitemm-loja .loja-loop{padding:10px 3vw 20px}
+ .akitemm-loja .produtos-loja-loop{grid-template-columns:repeat(2,minmax(0,1fr))}
+ .akitemm-categorias{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+ .akitemm-coluna-direita{display:grid;grid-template-columns:1fr;gap:9px}
+ .akitemm-apoio{margin-top:0}
+ .akitemm-banner-conteudo{grid-template-columns:1fr 1fr}
+ .akitemm-banner-slogan{display:none}
+ .akitemm-rodape{flex-wrap:wrap;gap:10px;justify-content:center}
+ .akitemm-rodape nav{justify-content:center}
+}
+@media(max-width:450px){
+ .akitemm-loja .cabecalho-loja-loop{padding:9px 13px}
+ .akitemm-marca-loop{font-size:17px}
+ .akitemm-marca-loop em{font-size:16px}
+ .akitemm-anel{font-size:23px}
+ .akitemm-voltar{font-size:17px;gap:8px}
+ .akitemm-conta{max-width:110px}
+ .akitemm-nome{max-width:68px}
+ .akitemm-topo-direito{gap:6px}
+ .akitemm-banner,.akitemm-banner-conteudo{min-height:177px}
+ .akitemm-banner-conteudo{padding:14px;grid-template-columns:1fr}
+ .akitemm-banner-texto h1{font-size:2.05rem}
+ .akitemm-banner-arte{display:none}
+ .akitemm-busca-filtros{gap:6px;margin:10px 0}
+ .akitemm-loja .akitemm-chip{padding:8px 12px;font-size:12px}
+ .akitemm-busca{padding:0 8px;flex:1 1 auto}
+ .akitemm-busca input{font-size:11px}
+ .akitemm-categorias button{min-height:73px;grid-template-columns:25px 1fr 8px;gap:3px 4px;padding:7px}
+ .akitemm-categorias button>span{font-size:23px}
+ .akitemm-categorias button strong{font-size:11px}
+ .akitemm-categorias button small{font-size:10px}
+ .akitemm-loja .produtos-loja-loop{gap:8px}
+ .akitemm-imagem-produto{height:95px}
+ .akitemm-dados-produto{padding:7px;min-height:128px}
+ .akitemm-acoes-produto{gap:4px}
+ .akitemm-loja .akitemm-acoes-produto>button{font-size:10px;padding:5px 2px}
+ .akitemm-loja .produto-loja-loop h3{font-size:11px}
+ .akitemm-loja .produto-loja-loop .preco-loja-loop{font-size:14px}
+ .akitemm-rodape nav button{margin:4px;padding:0 7px;font-size:10px}
+}
