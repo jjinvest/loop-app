@@ -2058,6 +2058,14 @@ async function main(){
    {name:'recebi-produto-03.png',mimeType:'image/png',buffer:imagensTeste[2]}
   ]);
   assert.equal(await page.locator('#akitemmPreviaMidias img').count(),3);
+  await page.waitForFunction(()=>[...document.querySelectorAll('#akitemmPreviaMidias img')]
+   .length===3&&[...document.querySelectorAll('#akitemmPreviaMidias img')]
+   .every(img=>img.complete&&img.naturalWidth>0));
+  const cspLoja=await page.evaluate(async()=>(
+   await fetch('/laboratorio/loja',{credentials:'same-origin'})
+  ).headers.get('content-security-policy'));
+  assert.match(cspLoja,/img-src 'self' blob:/);
+  assert.match(cspLoja,/media-src 'self' blob:/);
   await page.screenshot({
    path:path.join(pasta,'AKITEMM_FORMULARIO_3_FOTOS_CLIENTE_CELULAR_REAL.png'),fullPage:true
   });
@@ -2082,6 +2090,9 @@ async function main(){
   await page.locator('.produto-loja-loop').first().click({position:{x:32,y:28}});
   await page.locator('#akitemmDetalhesConteudo').getByText(/Entrega fictícia recebida em teste/).waitFor();
   assert.equal(await page.locator('#akitemmDetalhesConteudo .akitemm-midia-depoimento img').count(),3);
+  await page.waitForFunction(()=>[...document.querySelectorAll(
+   '#akitemmDetalhesConteudo .akitemm-midia-depoimento img'
+  )].every(img=>img.complete&&img.naturalWidth>0));
   assert.equal(await page.locator('#akitemmDetalhesConteudo .akitemm-detalhe-miniaturas').count(),0,
    'Sem fotos cadastradas, não inventar imagens');
   await page.setViewportSize({width:390,height:812});
