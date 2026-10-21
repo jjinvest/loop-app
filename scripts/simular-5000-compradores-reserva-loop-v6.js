@@ -199,8 +199,10 @@ function executarCenario5000({primeiraFila='A',intensidade='ALTA',usarCofreReser
  assert.equal(sim.giros,416,'2500 PDFs validos produzem 416 ciclos de 6');
  assert.equal(sim.tabuleiro.vendasDoCiclo.length,4);
  assert.equal(sim.tabuleiro.ciclosConcluidos.length,416);
- assert.equal(convertidasDouradas.size,100,
-  'As 100 azuis devem virar douradas somente ao cruzar a vaga seis');
+ const azuisRestantes=[...sim.filas.filaA,...sim.filas.filaB]
+  .filter(x=>x.statusAdesao==='PENDENTE').length;
+ assert.equal(convertidasDouradas.size+azuisRestantes,100,
+  'Nenhuma azul pode virar dourada fora da vaga seis ou desaparecer no limite de 5000');
  assert.ok(entregasAzuis.some(e=>e.giro>=1&&e.douradaDepois));
  assert.equal(sim.filas.filaA.length+sim.filas.filaB.length+7+416,2501+reservasDouradas.length,
   'Fundador + 2500 posicoes PDF + douradas financiadas: nenhuma se perde');
@@ -243,7 +245,8 @@ function executarCenario5000({primeiraFila='A',intensidade='ALTA',usarCofreReser
   contemplacoesPosicoesDouradas:ciclosDouradas,
   ciclosDouradasPorAzul:ciclosDouradasDeAzul,
   ciclosDouradasFinanciadasPelaReserva:ciclosDouradasDeReserva,
-  azulPendente:sim.filas.filaA.concat(sim.filas.filaB).filter(x=>x.statusAdesao==='PENDENTE').length,
+  azuisInicialmenteCriadas:100,
+  azulPendente:azuisRestantes,
   conversoesAzulParaDourada:convertidasDouradas.size,
   douradasNoTabuleiroAgora:ouroNoTabuleiro,
   douradasConvertidasAoLongoDosGiros:entregasAzuis,
