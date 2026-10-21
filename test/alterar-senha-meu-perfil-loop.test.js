@@ -55,3 +55,24 @@ test('Senha atual é obrigatória, senha nova não pode ser igual e sessões ant
  assert.doesNotMatch(senhaBanco,/senha-nova-segura-2026/);
  assert.equal(senhaBanco.length,128);
 });
+
+
+test('Alterar senha é opção exclusiva de Meu Perfil, não da loja nem de outras abas',()=>{
+ const fs=require('node:fs');
+ const raiz=path.join(__dirname,'../src/laboratorio');
+ const arquivos=fs.readdirSync(raiz).filter(n=>/\.(html|js)$/.test(n));
+ const locais=[];
+ for(const arquivo of arquivos){
+  const texto=fs.readFileSync(path.join(raiz,arquivo),'utf8');
+  if(/(?:Alterar|Trocar|Redefinir|Recuperar)\s+(?:minha\s+)?senha/i.test(texto))
+   locais.push(arquivo);
+ }
+ assert.deepEqual(locais,['loop-03-shell.js']);
+ const js=fs.readFileSync(path.join(raiz,'loop-03-shell.js'),'utf8');
+ assert.equal((js.match(/<form id="loop03FormSenha"/g)||[]).length,1);
+ const perfil=js.slice(js.indexOf('<section id="loop03-perfil"'),
+  js.indexOf('// Rodape somente identificacao'));
+ assert.ok(perfil.includes('<details id="loop03TrocarSenha"'));
+ assert.ok(perfil.includes('<summary>Alterar senha'));
+ assert.match(js,/if\(e\('loop03TrocarSenha'\)\)e\('loop03TrocarSenha'\)\.open=true/);
+});
