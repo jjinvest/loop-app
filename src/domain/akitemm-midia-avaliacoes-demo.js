@@ -72,15 +72,28 @@ function limparJpeg(b){
  if(!encontrouSOS)throw erro('FOTO_INVALIDA');
  return Buffer.concat(p);
 }
+const TABELA_CRC32=Uint32Array.from({length:256},(_,i)=>{
+ let c=i;for(let j=0;j<8;j++)c=(c&1)?(0xedb88320^(c>>>1)):(c>>>1);
+ return c>>>0;
+});
+function crc32Png(b,inicio,fim){
+ let c=0xffffffff;
+ for(let i=inicio;i<fim;i++)c=TABELA_CRC32[(c^b[i])&255]^(c>>>8);
+ return (c^0xffffffff)>>>0;
+}
 function limparPng(b){
  const assinatura=Buffer.from([137,80,78,71,13,10,26,10]);
  if(b.length<57||!b.subarray(0,8).equals(assinatura))throw erro('FOTO_INVALIDA');
- let pos=8,temIHDR=false,temIDAT=false,temIEND=false;
+ let pos=8,temIHDR=false,temIDAT=false,temIEND=false,contagem=0;
  const blocos=[assinatura];
  while(pos+12<=b.length){
+  if(++contagem>128)throw erro('FOTO_INVALIDA');
   const n=b.readUInt32BE(pos),fim=pos+12+n;
   if(n>MAX_FOTO||fim>b.length)throw erro('FOTO_INVALIDA');
   const tipo=b.toString('ascii',pos+4,pos+8);
+  if(!temIHDR&&tipo!=='IHDR')throw erro('FOTO_INVALIDA');
+  if(b.readUInt32BE(pos+8+n)!==crc32Png(b,pos+4,pos+8+n))
+   throw erro('FOTO_INVALIDA');
   if(tipo==='IHDR'){
    if(temIHDR||n!==13)throw erro('FOTO_INVALIDA');
    const w=b.readUInt32BE(pos+8),h=b.readUInt32BE(pos+12);
@@ -88,7 +101,9 @@ function limparPng(b){
    temIHDR=true;
   }
   if(tipo==='IDAT')temIDAT=true;
-  if(tipo==='IEND'){temIEND=true;if(fim!==b.length)throw erro('FOTO_INVALIDA');}
+  if(tipo==='IEND'){
+   temIEND=true;if(fim!==b.length||n!==0)throw erro('FOTO_INVALIDA');
+  }
   // Mantém apenas pixels e as chunks de transparência/cor essenciais;
   // nunca armazena eXIf, tEXt, iTXt, zTXt, tIME, nem XMP embutido.
   if((tipo.charCodeAt(0)&32)===0||['tRNS','gAMA','sRGB'].includes(tipo))
