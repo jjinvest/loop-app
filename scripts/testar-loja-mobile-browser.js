@@ -2169,6 +2169,20 @@ async function main(){
    await p.getByRole('button',{name:'Adicionar ao carrinho'}).click();
    const subtotal=geraPosicao?25000:19000;
    assert.ok((await tela.locator('#totalLojaLoop').innerText()).includes(centavos(subtotal)));
+   if(!geraPosicao){
+    // Produto físico exige endereço salvo antes do checkout: não burlar validação.
+    await tela.locator('#registrarPedidoLoja').click();
+    await tela.locator('#akitemmStatusEntrega').getByText(/Cadastre e salve o endereço/).waitFor();
+    assert.equal(await tela.locator('#akitemmEntrega').evaluate(el=>el.open),true);
+    for(const [campo,valor] of Object.entries({
+     destinatario:'Cliente Geral de Teste',cep:'27260000',
+     logradouro:'Rua de Teste',numero:'100',bairro:'Centro',
+     cidade:'Volta Redonda',telefone:'21999999999'
+    }))await tela.locator('#akitemmFormEntrega [name="'+campo+'"]').fill(valor);
+    await tela.locator('#akitemmFormEntrega [name="uf"]').selectOption('RJ');
+    await tela.locator('#akitemmFormEntrega button[type=submit]').click();
+    await tela.locator('#akitemmStatusEntrega').getByText(/Endereço salvo/).waitFor();
+   }
    await tela.locator('#registrarPedidoLoja').click();
    await tela.locator('#statusPedidoLoja').getByText(/registrado/).waitFor();
    const idProduto=geraPosicao?'pdf-teste-geral-250':'fisico-teste-geral-190';
