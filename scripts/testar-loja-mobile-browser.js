@@ -2113,6 +2113,103 @@ async function main(){
   });
   await page.locator('#akitemmModalDetalhes .akitemm-modal-fechar').click();
 
+
+  // TESTE GERAL DE CLIENTE: exatamente os dois produtos de referência,
+  // 1 unidade por compra. Compra física de R$190 é loja, não posição;
+  // PDF de R$250 gera UMA posição azul. Percorrer abas, perfil, seletor,
+  // financeiro (saque bloqueado sem saldo) e loja em dois navegadores reais.
+  banco.salvar({produto:curso('pdf-teste-geral-250','PDF Teste Geral R$ 250',25000),
+   revisaoEsperada:0});
+  banco.salvar({produto:{
+   id:'fisico-teste-geral-190',nome:'Produto Teste Geral R$ 190',
+   tipo:'FISICO',estado:'PUBLICADO',descricao:'Produto fisico hipotetico para exercitar compra sem LOOP',
+   precoCentavos:19000,entrega:'FORNECEDOR_INTEGRADO',
+   fotos:[],videoApresentacaoUrl:null,detalhes:[]
+  },revisaoEsperada:0});
+  const jornadasGerais=[];
+  for(const [indice,nomeProduto,geraPosicao] of [
+   [1,'Produto Teste Geral R$ 190',false],
+   [2,'PDF Teste Geral R$ 250',true]
+  ]){
+   const contaGeral=contas.cadastrar({
+    nome:'Teste Geral Cliente '+indice,apelido:'Geral'+indice,
+    email:'geral-'+indice+'@exemplo.invalid',senha
+   });
+   const ctxGeral=await browser.newContext({
+    viewport:{width:390,height:812},deviceScaleFactor:1,isMobile:true,hasTouch:true
+   });
+   const tela=await ctxGeral.newPage();
+   const errosGerais=[];
+   tela.on('pageerror',e=>errosGerais.push(e.message));
+   await tela.goto(base+'/laboratorio/participante',{waitUntil:'networkidle'});
+   await tela.locator('#nomeParticipante').fill(contaGeral.nome);
+   await tela.locator('#senhaParticipante').fill(senha);
+   await tela.locator('#botaoEntrarParticipante').click();
+   await tela.locator('#conteudoParticipante').waitFor({state:'visible'});
+   assert.equal(await tela.locator('#loop03TotalAtivacoes').innerText(),'0/6');
+   // Repete a navegacao para encontrar vazamento entre abas e retornos.
+   for(let volta=0;volta<2;volta++)for(const aba of ['home','tabuleiro','posicoes','rede','financeiro']){
+    await tela.locator('#loop03Menu').click();
+    await tela.locator('#loop03Sidebar [data-loop03-aba="'+aba+'"]').click();
+    await tela.locator('#loop03-'+aba).waitFor({state:'visible'});
+    assert.equal(await tela.locator('.loop03-pagina:not([hidden])').count(),1);
+    assert.equal(await tela.locator('#loop03TotalAtivacoes').innerText(),'0/6');
+   }
+   await tela.locator('#loop03PerfilTopo').click();
+   assert.equal(await tela.locator('#loop03TrocarSenha').evaluate(e=>e.open),true);
+   await tela.locator('#loop03FecharPerfil').click();
+   await tela.goto(base+'/laboratorio/loja',{waitUntil:'networkidle'});
+   await tela.locator('#conteudoLojaLoop').waitFor({state:'visible'});
+   await tela.locator('#akitemmBusca').fill(nomeProduto);
+   const p=tela.locator('.produto-loja-loop').filter({hasText:nomeProduto});
+   assert.equal(await p.count(),1);
+   await p.getByRole('button',{name:'Adicionar ao carrinho'}).click();
+   const subtotal=geraPosicao?25000:19000;
+   assert.ok((await tela.locator('#totalLojaLoop').innerText()).includes(centavos(subtotal)));
+   await tela.locator('#registrarPedidoLoja').click();
+   await tela.locator('#statusPedidoLoja').getByText(/registrado/).waitFor();
+   const idProduto=geraPosicao?'pdf-teste-geral-250':'fisico-teste-geral-190';
+   const pedido=banco.banco.prepare(
+    'SELECT pedido_id AS id FROM admin_carrinho_loop_itens_demo WHERE produto_id=? ORDER BY rowid DESC LIMIT 1'
+   ).get(idProduto);
+   assert.ok(pedido?.id);
+   const confirmar=await fetch(base+'/api/admin/carrinho-loop-demo/'+pedido.id+'/eventos',{
+    method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+admin},
+    body:JSON.stringify({eventoId:'teste-geral-confirmar-'+indice,tipo:'CONFIRMAR_FICTICIO'})
+   });
+   assert.equal(confirmar.status,200,await confirmar.text());
+   const confirmacao=await confirmar.json();
+   assert.equal(confirmacao.integracao.posicaoCriada,geraPosicao);
+   // Compra comercial e estado pessoal devem vir da mesma fonte SQLite.
+   await tela.goto(base+'/laboratorio/participante',{waitUntil:'networkidle'});
+   await tela.locator('#conteudoParticipante').waitFor({state:'visible'});
+   assert.equal(await tela.locator('#loop03TotalAtivacoes').innerText(),geraPosicao?'1/6':'0/6');
+   await tela.locator('#loop03Menu').click();
+   await tela.locator('#loop03Sidebar [data-loop03-aba="posicoes"]').click();
+   assert.equal(await tela.locator('#loop03OpcoesPosicoes .loop03-status-confirmacao-pendente').count(),
+    geraPosicao?1:0);
+   if(geraPosicao){
+    await tela.locator('#loop03AbrirEscolhaPosicao').click();
+    assert.equal(await tela.locator('#loop03ListaEscolha button:disabled').count(),5);
+    await tela.locator('#loop03ListaEscolha [data-indice="1"]').click();
+    assert.equal(await tela.locator('#loop03IndicePosicao').innerText(),'1/6');
+   }
+   await tela.locator('#loop03Menu').click();
+   await tela.locator('#loop03Sidebar [data-loop03-aba="financeiro"]').click();
+   await tela.locator('#loop03EscolherPosicoes').click();
+   assert.equal(await tela.locator('#enviarSaqueTesteParticipante').isDisabled(),true,
+    'Nenhum cliente pode sacar posicao sem saldo liquidado');
+   await tela.locator('#loop03PerfilTopo').click();
+   assert.equal(await tela.locator('#loop03TrocarSenha').evaluate(x=>x.open),true);
+   assert.equal(await tela.locator('#loop03TotalAtivacoes').innerText(),geraPosicao?'1/6':'0/6');
+   assert.deepEqual(errosGerais,[]);
+   jornadasGerais.push({produto:geraPosicao?'PDF R$250':'FISICO R$190',
+    posicoes:geraPosicao?1:0,pedidoId:pedido.id,abasVisitadas:10,
+    trocarSenhaSomentePerfil:true,saqueSemSaldoBloqueado:true});
+   await ctxGeral.close();
+  }
+  console.log('LOOP_JORNADAS_CLIENTES='+JSON.stringify(jornadasGerais));
+
   assert.deepEqual(erros,[], 'Erros de execucao no navegador');
   const relatorio={status:'APROVADO',
    tamanhosPx:[320,360,390,412,768,1024,1366],
