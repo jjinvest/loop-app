@@ -19,6 +19,7 @@
     <a class="ativo" href="#visaoGeral">◈ <span>Visão geral</span></a>
     <a href="#regraTrava">◉ <span>Controle das filas</span></a>
     <a href="#painelIndicacoesAdmin">♧ <span>Distribuição de indicações</span></a>
+    <a href="#painelSimulacoesAdmin">▥ <span>Simulações e resultados</span></a>
     <a href="/admin/circuit-break-v6">⏱ <span>Catraca e giros</span></a>
     <a href="/admin/financeiro-demo">▤ <span>Financeiro</span></a>
     <a href="/admin">▦ <span>AKITEMM e produtos</span></a>
@@ -87,6 +88,58 @@
       <div><small>Aguardando ativação/conferência</small><strong id="indicacoesAguardandoAdmin">—</strong></div>
      </div>
      <p class="observacao">Regra do motor: três amarelas e uma branca (com ambas abastecidas). No máximo uma posição de cada titular na Fila A. As indicações somente entram em posições ativas mediante confirmação individual. Dados fictícios de laboratório: nenhum lançamento financeiro real.</p>
+    </section>
+    <section class="painel historico" id="painelSimulacoesAdmin" aria-label="Relatórios de simulações do LOOP">
+     <div class="historico-titulo"><div><small class="sobretitulo">ANÁLISE DE CENÁRIOS · SOMENTE LABORATÓRIO</small><h2>Simulações e resultados</h2></div></div>
+     <p>Relatório de <strong>1.000 compradores</strong>: 500 PDFs de R$ 250 com posição no LOOP e 500 produtos de R$ 190 sem posição. Uma unidade por compra, fundador no centro, 20 posições azuis convertidas em douradas <strong>pela vaga 6</strong>.</p>
+     <button type="button" id="executar1000Admin">Executar novamente o teste de 1.000 compradores</button>
+     <p id="status1000Admin" role="status" aria-live="polite">Aguardando a execução do teste. Nenhuma venda, pagamento, giro ou crédito real será registrado.</p>
+     <div id="resultado1000Admin" hidden>
+      <div class="loop03-simulacao-kpis" aria-label="Resumo do teste">
+       <div><small>Compradores</small><strong id="sim1000Compradores">—</strong></div>
+       <div><small>Posições criadas por PDF</small><strong id="sim1000Posicoes">—</strong></div>
+       <div><small>Ciclos concluídos</small><strong id="sim1000Ciclos">—</strong></div>
+       <div><small>Azuis → douradas</small><strong id="sim1000Douradas">—</strong></div>
+       <div><small>Receita bruta simulada</small><strong id="sim1000Receita">—</strong></div>
+      </div>
+      <h3>Comparação dos quatro cenários</h3>
+      <div class="loop03-simulacao-tabela-rolagem">
+       <table class="loop03-simulacao-tabela" aria-label="Comparação dos cenários de indicação e entrada">
+        <thead><tr><th scope="col">Cenário</th><th scope="col">Fila A</th><th scope="col">Fila B</th><th scope="col">Indicações</th><th scope="col">Vaga 6: A / B</th><th scope="col">Ciclos</th></tr></thead>
+        <tbody id="sim1000Comparativo"></tbody>
+       </table>
+      </div>
+      <label class="loop03-simulacao-escolha" for="sim1000Cenario">Detalhamento do cenário
+       <select id="sim1000Cenario"></select>
+      </label>
+      <div class="loop03-simulacao-kpis">
+       <div><small>Fila A</small><strong id="sim1000FilaA">—</strong></div>
+       <div><small>Fila B</small><strong id="sim1000FilaB">—</strong></div>
+       <div><small>Contemplações — fundador</small><strong id="sim1000Fundador">—</strong></div>
+       <div><small>Contemplações — clientes</small><strong id="sim1000Clientes">—</strong></div>
+       <div><small>Contemplações — douradas</small><strong id="sim1000Ouro">—</strong></div>
+       <div><small>Azuis ainda nas filas</small><strong id="sim1000Azuis">—</strong></div>
+       <div><small>Douradas agora no tabuleiro</small><strong id="sim1000DouradasAgora">—</strong></div>
+       <div><small>Eventos do próximo ciclo</small><strong id="sim1000Parcial">—</strong></div>
+      </div>
+      <h3>Financeiro — valores hipotéticos, não caixa</h3>
+      <div class="loop03-simulacao-financeiro">
+       <div><span>Receita PDF (500 × R$ 250)</span><strong id="sim1000FaturPDF">—</strong></div>
+       <div><span>Receita produto físico (500 × R$ 190)</span><strong id="sim1000FaturFisico">—</strong></div>
+       <div><span>Receita bruta total</span><strong id="sim1000Bruto">—</strong></div>
+       <div><span>Referência dos centros dos participantes</span><strong id="sim1000Centro">—</strong></div>
+       <div><span>Referência das posições douradas</span><strong id="sim1000CofreDouradas">—</strong></div>
+       <div><span>Referência do cofre esquerdo</span><strong id="sim1000Esquerda">—</strong></div>
+       <div><span>Referência do cofre direito</span><strong id="sim1000Direita">—</strong></div>
+       <div><span>Referência pendente no próximo ciclo</span><strong id="sim1000Pendente">—</strong></div>
+       <div><span>Bônus por indicação — hipótese de 10%</span><strong id="sim1000Bonus">—</strong></div>
+      </div>
+      <details class="loop03-simulacao-passagens">
+       <summary>Ver as 20 passagens de azul para dourada pela vaga 6</summary>
+       <ol id="sim1000HistoricoDouradas"></ol>
+      </details>
+      <p class="observacao">Conferência isolada e reproduzível, não os dados atuais do motor. As contemplações representam ciclos concluídos em simulação, <strong>não pagamentos</strong>. Não inclui custos do fornecedor, impostos, taxas, frete nem lucro. As 20 douradas surgem progressivamente, nunca 20 bolas simultâneas no tabuleiro.</p>
+     </div>
     </section>
     <section class="painel historico" id="controleRelogioAdminLoop03">
      <div class="historico-titulo"><div><small class="sobretitulo">TABULEIRO · REFERÊNCIA VISUAL</small><h2>Intervalo do relógio do cliente</h2></div></div>
