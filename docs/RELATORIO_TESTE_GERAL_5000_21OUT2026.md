@@ -1,3 +1,5 @@
+> **ATUALIZAÇÃO DE CONCILIAÇÃO:** os R$ 104.000 do cofre direito nesse relatório são **brutos, não livres**. O teste original tinha 20 azuis que viraram douradas, mas NÃO 20 novas douradas financiadas com R$ 250 da reserva; as bonificações também não foram abatidas. Para a correção com 5 azuis, 20 douradas novas e dedução hipotética de 10% das indicações verdes, consultar [RELATORIO_RESERVA_5000_20_DOURADAS_21OUT2026.md](./RELATORIO_RESERVA_5000_20_DOURADAS_21OUT2026.md).
+
 # LOOP 3.0 — Teste de 5.000 compradores e jornada do cliente
 Data: 21/10/2026 · Ambiente: laboratório, sem produção ou dinheiro real
 
