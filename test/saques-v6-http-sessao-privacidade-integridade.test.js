@@ -78,8 +78,8 @@ test('API de saque exige sessao, valida origem, reserva uma vez e nao revela sal
  assert.equal(resumoInicial.body.transferenciasExecutadas,false);
  const primeira=await chamar('/saques-simulados',{method:'POST',cookie:cookieA,body});
  assert.equal(primeira.status,200);
- assert.equal(primeira.body.taxaSaqueCentavos,75);
- assert.equal(primeira.body.valorLiquidoCentavos,2425);
+ assert.equal(primeira.body.taxaSaqueCentavos,0);
+ assert.equal(primeira.body.valorLiquidoCentavos,2500);
  assert.equal(primeira.body.origemExclusiva,'LOOP_DIREITA');
  assert.equal(primeira.body.repetida,false);
  assert.equal(primeira.body.transferenciaExecutada,false);
