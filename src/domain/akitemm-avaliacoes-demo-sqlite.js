@@ -6,9 +6,9 @@ const FOTO=/^\/imagens\/catalogo\/[a-zA-Z0-9_-]+\.(?:webp|png|jpe?g)$/;
 const {validar}=require('./akitemm-midia-avaliacoes-demo');
 function erro(codigo){const e=new Error(codigo);e.codigo=codigo;return e;}
 class AkitemmAvaliacoesDemoSQLite{
- constructor({banco,carrinhos,agora=()=>new Date().toISOString()}={}){
+ constructor({banco,carrinhos,agora=()=>new Date().toISOString(),armazenamentoR2=null}={}){
   if(!banco||!carrinhos||banco!==carrinhos.banco)throw new TypeError('Carrinhos e SQLite compartilhados obrigatorios');
-  this.banco=banco;this.carrinhos=carrinhos;this.agora=agora;
+  this.banco=banco;this.carrinhos=carrinhos;this.agora=agora;this.armazenamentoR2=armazenamentoR2;
   banco.exec(`
    CREATE TABLE IF NOT EXISTS akitemm_entregas_confirmadas_demo(
     pedido_id TEXT PRIMARY KEY NOT NULL REFERENCES admin_carrinho_loop_demo(pedido_id),
@@ -40,6 +40,11 @@ class AkitemmAvaliacoesDemoSQLite{
    );
    CREATE INDEX IF NOT EXISTS idx_akitemm_avaliacao_midias_relacao
     ON akitemm_avaliacao_midias_demo(avaliacao_id);
+   CREATE TABLE IF NOT EXISTS akitemm_avaliacao_r2_refs_demo(
+    midia_id INTEGER PRIMARY KEY NOT NULL REFERENCES akitemm_avaliacao_midias_demo(id),
+    chave TEXT NOT NULL UNIQUE,
+    criado_em TEXT NOT NULL
+   );
    CREATE TRIGGER IF NOT EXISTS akitemm_entregas_sem_update
     BEFORE UPDATE ON akitemm_entregas_confirmadas_demo
     BEGIN SELECT RAISE(ABORT,'entrega ficticia imutavel'); END;
@@ -128,7 +133,9 @@ class AkitemmAvaliacoesDemoSQLite{
     id,url:'/api/laboratorio/participante/loja/avaliacoes/midias/'+id
   }));
  }
- anexarMidia({contaId,pedidoId,produtoId,tipo,mime,dados}={}){
+
+ _inserirMidia({contaId,pedidoId,produtoId,tipo,mime,bytes,dados,
+  duracaoSegundos,chaveR2=null}={}){
   if(typeof contaId!=='string'||typeof pedidoId!=='string'||typeof produtoId!=='string')
    throw erro('MIDIA_INVALIDA');
   const registro=this.banco.prepare(`
@@ -137,8 +144,6 @@ class AkitemmAvaliacoesDemoSQLite{
   `).get(contaId,pedidoId,produtoId);
   if(!registro)throw erro('AVALIACAO_NAO_ENCONTRADA');
   if(registro.status!=='PENDENTE')throw erro('AVALIACAO_JA_MODERADA');
-  // Qualquer anexo passa por autenticação, vínculo de compra e moderação.
-  const {dados:limpos,mime:tipoMime,duracaoSegundos}=validar({tipo,mime,dados});
   const rows=this.banco.prepare(`
    SELECT tipo,ordem FROM akitemm_avaliacao_midias_demo
    WHERE avaliacao_id=? ORDER BY ordem
@@ -148,14 +153,75 @@ class AkitemmAvaliacoesDemoSQLite{
   if(!limite)throw erro('TIPO_MIDIA_NAO_PERMITIDO');
   if(existentes>=limite)throw erro('LIMITE_MIDIAS_ATINGIDO');
   const ordem=existentes+1;
-  const r=this.banco.prepare(`
-   INSERT INTO akitemm_avaliacao_midias_demo
-    (avaliacao_id,tipo,ordem,mime,dados,bytes,duracao_segundos,criada_em)
-   VALUES(?,?,?,?,?,?,?,?)
-  `).run(registro.id,tipo,ordem,tipoMime,limpos,limpos.length,duracaoSegundos,this.agora());
-  return {id:Number(r.lastInsertRowid),tipo,ordem,duracaoSegundos,pendente:true,
-   totalFotos:rows.filter(x=>x.tipo==='FOTO').length+(tipo==='FOTO'?1:0),
-   totalVideos:rows.filter(x=>x.tipo==='VIDEO').length+(tipo==='VIDEO'?1:0)};
+  // O objeto remoto fica privado; no SQLite armazenar SÓ metadados e
+  // referência, não uma cópia do vídeo. Para testes sem R2, usar BLOB.
+  if(chaveR2)this.banco.exec('BEGIN IMMEDIATE');
+  try{
+   const r=this.banco.prepare(`
+    INSERT INTO akitemm_avaliacao_midias_demo
+     (avaliacao_id,tipo,ordem,mime,dados,bytes,duracao_segundos,criada_em)
+    VALUES(?,?,?,?,?,?,?,?)
+   `).run(registro.id,tipo,ordem,mime,dados,bytes,duracaoSegundos,this.agora());
+   const id=Number(r.lastInsertRowid);
+   if(chaveR2){
+    this.banco.prepare(`INSERT INTO akitemm_avaliacao_r2_refs_demo
+     (midia_id,chave,criado_em) VALUES(?,?,?)`)
+     .run(id,chaveR2,this.agora());
+    this.banco.exec('COMMIT');
+   }
+   return {id,tipo,ordem,duracaoSegundos,pendente:true,
+    totalFotos:rows.filter(x=>x.tipo==='FOTO').length+(tipo==='FOTO'?1:0),
+    totalVideos:rows.filter(x=>x.tipo==='VIDEO').length+(tipo==='VIDEO'?1:0)};
+  }catch(e){
+   if(chaveR2)this.banco.exec('ROLLBACK');
+   throw e;
+  }
+ }
+ anexarMidia({contaId,pedidoId,produtoId,tipo,mime,dados}={}){
+  const {dados:limpos,mime:tipoMime,duracaoSegundos}=validar({tipo,mime,dados});
+  return this._inserirMidia({contaId,pedidoId,produtoId,tipo,mime:tipoMime,
+   bytes:limpos.length,dados:limpos,duracaoSegundos});
+ }
+ async anexarMidiaConfigurada(args={}){
+  if(!this.armazenamentoR2)return this.anexarMidia(args);
+  // Validação local e checagem do vínculo ANTES do envio. A inserção
+  // efetiva após upload revalida a autorização, impedindo corrida.
+  const {dados:limpos,mime,duracaoSegundos}=validar(args);
+  const {contaId,pedidoId,produtoId,tipo}=args;
+  if(typeof contaId!=='string'||typeof pedidoId!=='string'||typeof produtoId!=='string')
+   throw erro('MIDIA_INVALIDA');
+  const tem=this.banco.prepare(`
+   SELECT id FROM akitemm_avaliacoes_demo
+   WHERE conta_id=? AND pedido_id=? AND produto_id=? AND status='PENDENTE'
+  `).get(contaId,pedidoId,produtoId);
+  if(!tem)throw erro('AVALIACAO_NAO_ENCONTRADA');
+  const existentes=this.banco.prepare(`
+   SELECT COUNT(*) AS n FROM akitemm_avaliacao_midias_demo
+   WHERE avaliacao_id=? AND tipo=?
+  `).get(tem.id,tipo).n;
+  if(existentes>=(tipo==='FOTO'?3:1))throw erro('LIMITE_MIDIAS_ATINGIDO');
+  const chaveR2=this.armazenamentoR2.novaChave(tipo);
+  await this.armazenamentoR2.enviar(chaveR2,limpos,mime);
+  try{
+   return this._inserirMidia({
+    contaId,pedidoId,produtoId,tipo,mime,duracaoSegundos,
+    bytes:limpos.length,dados:Buffer.alloc(0),chaveR2
+   });
+  }catch(e){
+   // Melhor esforço: nenhuma chave órfã voluntária em falha de SQLite.
+   await this.armazenamentoR2.apagar(chaveR2).catch(()=>{});
+   throw e;
+  }
+ }
+ async buscarMidiaConfigurada(args={}){
+  const r=this.buscarMidia(args); // Autorização ocorre ANTES de qualquer GET R2.
+  const chave=this.banco.prepare(`SELECT chave FROM akitemm_avaliacao_r2_refs_demo
+   WHERE midia_id=?`).get(args.id)?.chave;
+  if(!chave)return r;
+  if(!this.armazenamentoR2)throw erro('ARMAZENAMENTO_REMOTO_INDISPONIVEL');
+  const dados=await this.armazenamentoR2.obter(chave);
+  if(dados.length>26*1024*1024)throw erro('MIDIA_INVALIDA');
+  return {...r,dados};
  }
  buscarMidia({id,contaId=null,admin=false}={}){
   if(!Number.isSafeInteger(id)||id<1)throw erro('MIDIA_INVALIDA');
