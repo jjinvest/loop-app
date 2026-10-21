@@ -1394,7 +1394,8 @@ async function main(){
   await paginaSenha.locator('#botaoEntrarParticipante').click();
   await paginaSenha.locator('#conteudoParticipante').waitFor({state:'visible'});
   await paginaSenha.locator('#loop03PerfilTopo').click();
-  await paginaSenha.locator('#loop03TrocarSenha>summary').click();
+  // Alterar senha deve ser visível de imediato APENAS dentro de Meu Perfil.
+  assert.equal(await paginaSenha.locator('#loop03TrocarSenha').evaluate(e=>e.open),true);
   assert.equal(await paginaSenha.locator('#loop03FormSenha').isVisible(),true);
   await paginaSenha.locator('#loop03SenhaAtual').fill('senha-incorreta-2026');
   await paginaSenha.locator('#loop03SenhaNova').fill('senha-nova-laboratorio-2026');
