@@ -9,10 +9,13 @@ const {SimuladorLoop}=require('../src/domain/simulador-loop');
 const {analisarCarrinhoSimulado}=require('../src/domain/valor-padrao-loop');
 const {centroDoLoop}=require('../src/domain/destino-financeiro-centro-loop');
 
-const LIMITE=1000,PRECO_PDF=25000,PRECO_FISICO=19000;
-function executarCenario1000({primeiraFila='A',intensidade='ALTA'}={}){
+const PRECO_PDF=25000,PRECO_FISICO=19000;
+function executarCenario1000({primeiraFila='A',intensidade='ALTA',totalCompradores=1000}={}){
  assert.ok(['A','B'].includes(primeiraFila));
  assert.ok(['ALTA','MODERADA'].includes(intensidade));
+ assert.ok(Number.isSafeInteger(totalCompradores)&&totalCompradores>=100&&totalCompradores<=10000&&totalCompradores%2===0);
+ const LIMITE=totalCompradores,metade=LIMITE/2;
+ const girosEsperados=Math.floor(metade/6),restantesEsperados=metade%6;
  let tick=0;
  const relogio=()=>new Date(Date.UTC(2026,9,21)+(tick++)*1000).toISOString();
  const sim=new SimuladorLoop({relogio});
@@ -154,33 +157,33 @@ function executarCenario1000({primeiraFila='A',intensidade='ALTA'}={}){
   assert.ok(posicaoNoSistema(posicao)||
    sim.tabuleiro.ciclosConcluidos.some(c=>c.centro.id===posicao.id));
  }
- assert.equal(numerosPDF,500);
- assert.equal(numerosFisicos,500);
+ assert.equal(numerosPDF,metade);
+ assert.equal(numerosFisicos,metade);
  assert.equal(compras.size,LIMITE);
- assert.equal(valorBrutoCentavos,22000000);
- assert.equal(sim.filas.vendasRegistradas.size,500);
- assert.equal(sim.tabuleiro.vendasProcessadas.size,500);
- assert.equal(comprasNoMotor,500);
- assert.equal(sim.giros,83,'500 PDFs validos produzem 83 ciclos de 6');
- assert.equal(sim.tabuleiro.vendasDoCiclo.length,2);
- assert.equal(sim.tabuleiro.ciclosConcluidos.length,83);
+ assert.equal(valorBrutoCentavos,metade*(PRECO_PDF+PRECO_FISICO));
+ assert.equal(sim.filas.vendasRegistradas.size,metade);
+ assert.equal(sim.tabuleiro.vendasProcessadas.size,metade);
+ assert.equal(comprasNoMotor,metade);
+ assert.equal(sim.giros,girosEsperados,'Compras PDF geram ciclos de seis eventos');
+ assert.equal(sim.tabuleiro.vendasDoCiclo.length,restantesEsperados);
+ assert.equal(sim.tabuleiro.ciclosConcluidos.length,girosEsperados);
  assert.equal(convertidasDouradas.size,20,
   'As 20 azuis devem virar douradas somente ao cruzar a vaga seis');
  assert.ok(entregasAzuis.some(e=>e.giro>=1&&e.douradaDepois));
- assert.equal(sim.filas.filaA.length+sim.filas.filaB.length+7+83,501,
+ assert.equal(sim.filas.filaA.length+sim.filas.filaB.length+7+girosEsperados,metade+1,
   'Fundador + 500 posicoes: nenhuma se perde');
- assert.equal(entradasA+entradasB,83);
- assert.equal(ciclosClientes+ciclosDouradas+ciclosFundador,83);
+ assert.equal(entradasA+entradasB,girosEsperados);
+ assert.equal(ciclosClientes+ciclosDouradas+ciclosFundador,girosEsperados);
  const todas=[...sim.filas.filaA,...sim.filas.filaB,sim.tabuleiro.centro,
   ...sim.tabuleiro.vagas,...sim.tabuleiro.ciclosConcluidos.map(c=>c.centro)]
   .filter(Boolean);
- assert.equal(todas.length,501);
+ assert.equal(todas.length,metade+1);
  assert.equal(new Set(todas.map(p=>p.id)).size,501);
  assert.ok(sim.filas.filaA.every(x=>x.statusAdesao!=='PENDENTE'));
  const eventosFinanceirosRealizados=Object.values(eventosFinanceiros)
   .reduce((a,b)=>a+b,0);
  const saldoPendenteReferencia=sim.tabuleiro.vendasDoCiclo.length*PRECO_PDF;
- assert.equal(eventosFinanceirosRealizados+saldoPendenteReferencia,500*PRECO_PDF);
+ assert.equal(eventosFinanceirosRealizados+saldoPendenteReferencia,metade*PRECO_PDF);
  const ouroNoTabuleiro=[sim.tabuleiro.centro,...sim.tabuleiro.vagas]
   .filter(centroDoLoop).length;
  return {
@@ -188,7 +191,7 @@ function executarCenario1000({primeiraFila='A',intensidade='ALTA'}={}){
   modalidade:'SIMULACAO_SEM_PAGAMENTOS',
   primeiraFila,primeiraEntradaVaga6:primeiraEntrada,intensidade,
   pessoasCompradoras:LIMITE,comprasPDF:numerosPDF,comprasFisicas190:numerosFisicos,
-  posicoesCriadasPDF:500,comprasFisicasSemPosicao:500,
+  posicoesCriadasPDF:metade,comprasFisicasSemPosicao:metade,
   fundadorPosicaoExtra:1,
   quantidadeA:sim.filas.filaA.length,
   quantidadeB:sim.filas.filaB.length,
@@ -203,12 +206,12 @@ function executarCenario1000({primeiraFila='A',intensidade='ALTA'}={}){
   douradasConvertidasAoLongoDosGiros:entregasAzuis,
   indicacoesValidadas:indicacoes,entradasFilaA:entradasA,
   entradasFilaB:entradasB,girosEfetuados:sim.giros,
-  vendasParaCicloCompletas:498,proximoCicloCom2De6:2,
+  vendasParaCicloCompletas:girosEsperados*6,proximoCicloCom2De6:restantesEsperados,
   precoPDFCentavos:PRECO_PDF,precoFisicoCentavos:PRECO_FISICO,
   financeiro:{
    faturamentoBrutoSimuladoCentavos:valorBrutoCentavos,
-   faturamentoPDFCentavos:500*PRECO_PDF,
-   faturamentoFisico190Centavos:500*PRECO_FISICO,
+   faturamentoPDFCentavos:metade*PRECO_PDF,
+   faturamentoFisico190Centavos:metade*PRECO_FISICO,
    alocacaoReferencialPorDestinoCentavos:eventosFinanceiros,
    valorAlocadoCiclosCompletosCentavos:eventosFinanceirosRealizados,
    valorPendenteProximoCicloReferencialCentavos:saldoPendenteReferencia,
@@ -216,7 +219,7 @@ function executarCenario1000({primeiraFila='A',intensidade='ALTA'}={}){
    custosDosProdutosImpostosPSPFreteLucro:'NAO_INFORMADOS_NAO_CALCULADOS',
    pagamentoRealCentavos:0,saquesReaisCentavos:0,contemplacoesPagasCentavos:0
   },
-  amostrasEvolucao:giros.filter(x=>[1,10,20,30,50,70,83].includes(x.giro))
+  amostrasEvolucao:giros.filter(x=>[1,10,20,30,50,70,83,100,200,300,400,416].includes(x.giro))
  };
 }
 function executarComparacao1000(){
