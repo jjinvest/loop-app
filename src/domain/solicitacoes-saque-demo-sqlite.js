@@ -6,7 +6,7 @@
 const {simularElegibilidadeSaque}=require('./indicacoes-links-comissoes-demo-sqlite');
 const ID=/^saque-[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$/;
 const MINIMO_SAQUE_CENTAVOS=2500;
-const TAXA_SAQUE_PERCENTUAL=3;
+const TAXA_SAQUE_PERCENTUAL=0;
 const PRAZO_SAQUE_CALENDARIO_MS=24*60*60*1000;
 function prazoDaSolicitacao(registradoEm,agora){
   const momento=Date.parse(registradoEm),atual=Date.parse(agora);
@@ -33,21 +33,47 @@ class SolicitacoesSaqueDemoSQLite{
    typeof links.comissoesDaConta!=='function')
    throw new TypeError('Contas, bonificacoes e SQLite compartilhados obrigatorios');
   this.banco=banco;this.contas=contas;this.links=links;this.relogio=relogio;
+  // Registros legados de 3% permanecem intactos e legiveis no histórico.
+  // A antiga CHECK(taxa_percentual=3) exige uma migração transacional.
+  const campos=` 
+     solicitacao_id TEXT PRIMARY KEY NOT NULL,
+     conta_id TEXT NOT NULL REFERENCES admin_contas_participantes_demo(id) ON DELETE RESTRICT,
+     tipo TEXT NOT NULL CHECK(tipo IN ('BONUS','PARTICIPACAO_LUCRO')),
+     valor_bruto_centavos INTEGER NOT NULL CHECK(valor_bruto_centavos>=2500),
+     taxa_percentual INTEGER NOT NULL CHECK(taxa_percentual IN (0,3)),
+     taxa_centavos INTEGER NOT NULL CHECK(taxa_centavos>=0),
+     valor_liquido_centavos INTEGER NOT NULL CHECK(valor_liquido_centavos>0),
+     cofre_origem TEXT NOT NULL CHECK(cofre_origem IN ('LOOP_DIREITA','LOOP_CENTRO')),
+     registrado_em TEXT NOT NULL,
+     CHECK(valor_bruto_centavos=taxa_centavos+valor_liquido_centavos),
+     CHECK(taxa_percentual<>0 OR taxa_centavos=0),
+     CHECK((tipo='BONUS' AND cofre_origem='LOOP_DIREITA') OR
+           (tipo='PARTICIPACAO_LUCRO' AND cofre_origem='LOOP_CENTRO'))`;
+  const tabela='admin_solicitacoes_saque_demo';
+  const colunas='solicitacao_id,conta_id,tipo,valor_bruto_centavos,'+
+   'taxa_percentual,taxa_centavos,valor_liquido_centavos,cofre_origem,registrado_em';
+  const esquema=()=>banco.prepare(
+   "SELECT sql FROM sqlite_master WHERE type='table' AND name=?").get(tabela)?.sql;
+  const legado=sql=>typeof sql==='string'&&/CHECK\s*\(\s*taxa_percentual\s*=\s*3\s*\)/i.test(sql);
+  if(legado(esquema())){
+   banco.exec('BEGIN IMMEDIATE');
+   try{
+    // Revalidar sob lock: dois processos podem inicializar simultaneamente.
+    if(legado(esquema())){
+     const nova='admin_solicitacoes_saque_demo_migrando_taxa_zero';
+     banco.exec('CREATE TABLE '+nova+'('+campos+')');
+     banco.exec('INSERT INTO '+nova+'('+colunas+') SELECT '+colunas+' FROM '+tabela);
+     const antes=banco.prepare('SELECT COUNT(*) AS n FROM '+tabela).get().n;
+     const depois=banco.prepare('SELECT COUNT(*) AS n FROM '+nova).get().n;
+     if(antes!==depois)throw new Error('Migracao de saques perdeu registros');
+     banco.exec('DROP TABLE '+tabela);
+     banco.exec('ALTER TABLE '+nova+' RENAME TO '+tabela);
+    }
+    banco.exec('COMMIT');
+   }catch(e){banco.exec('ROLLBACK');throw e;}
+  }
+  banco.exec('CREATE TABLE IF NOT EXISTS '+tabela+'('+campos+')');
   banco.exec(`
-   CREATE TABLE IF NOT EXISTS admin_solicitacoes_saque_demo(
-    solicitacao_id TEXT PRIMARY KEY NOT NULL,
-    conta_id TEXT NOT NULL REFERENCES admin_contas_participantes_demo(id) ON DELETE RESTRICT,
-    tipo TEXT NOT NULL CHECK(tipo IN ('BONUS','PARTICIPACAO_LUCRO')),
-    valor_bruto_centavos INTEGER NOT NULL CHECK(valor_bruto_centavos>=2500),
-    taxa_percentual INTEGER NOT NULL CHECK(taxa_percentual=3),
-    taxa_centavos INTEGER NOT NULL CHECK(taxa_centavos>=0),
-    valor_liquido_centavos INTEGER NOT NULL CHECK(valor_liquido_centavos>0),
-    cofre_origem TEXT NOT NULL CHECK(cofre_origem IN ('LOOP_DIREITA','LOOP_CENTRO')),
-    registrado_em TEXT NOT NULL,
-    CHECK(valor_bruto_centavos=taxa_centavos+valor_liquido_centavos),
-    CHECK((tipo='BONUS' AND cofre_origem='LOOP_DIREITA') OR
-          (tipo='PARTICIPACAO_LUCRO' AND cofre_origem='LOOP_CENTRO'))
-   );
    CREATE INDEX IF NOT EXISTS idx_solicitacoes_saque_demo_conta
     ON admin_solicitacoes_saque_demo(conta_id,registrado_em);
    CREATE TRIGGER IF NOT EXISTS admin_solicitacoes_saque_demo_no_update
@@ -55,7 +81,7 @@ class SolicitacoesSaqueDemoSQLite{
     BEGIN SELECT RAISE(ABORT,'solicitacao de teste imutavel'); END;
    CREATE TRIGGER IF NOT EXISTS admin_solicitacoes_saque_demo_no_delete
     BEFORE DELETE ON admin_solicitacoes_saque_demo
-    BEGIN SELECT RAISE(ABORT,'solicitacao de teste imutavel'); END;
+    BEGIN SELECT RAISE(ABORT,'solicitacao de teste imutavel'); END;`);
   `);
  }
  consultar(contaId){
