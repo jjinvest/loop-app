@@ -470,8 +470,21 @@ $('atualizarLista').addEventListener('click', async () => {
 $('formProduto').addEventListener('submit', salvar);
 $('akitemmSalvarElegibilidade').addEventListener('click',salvarElegibilidadeAkitemm);
 
+const urlsPrivadasModeracao=new Set();
+async function carregarMidiaModeracao(id){
+ if(!chaveTemporaria)throw new Error('Chave administrativa necessária.');
+ const r=await fetch('/api/admin/akitemm-avaliacoes-demo/midias/'+id,{
+  cache:'no-store',headers:{Authorization:'Bearer '+chaveTemporaria}
+ });
+ if(!r.ok)throw new Error('Arquivo privado indisponível: '+r.status);
+ const blob=await r.blob();
+ const uri=URL.createObjectURL(blob);urlsPrivadasModeracao.add(uri);
+ return uri;
+}
 async function atualizarAvaliacoesAdmin(){
  const r=await requisitar('/akitemm-avaliacoes-demo');
+ for(const uri of urlsPrivadasModeracao)URL.revokeObjectURL(uri);
+ urlsPrivadasModeracao.clear();
  const destino=$('akitemmListaModeracao');destino.replaceChildren();
  if(!r.pendentes.length){
   const aviso=document.createElement('p');aviso.textContent='Nenhuma avaliação pendente.';
@@ -485,6 +498,25 @@ async function atualizarAvaliacoesAdmin(){
   const label=document.createElement('label');label.textContent='Imagem autorizada opcional (caminho local):';
   const input=document.createElement('input');input.placeholder='/imagens/catalogo/depoimento.webp';input.maxLength=180;
   label.append(input);
+  const midias=document.createElement('div');midias.className='akitemm-midias-moderacao';
+  for(const media of av.midias||[]){
+   const abre=document.createElement('button');abre.type='button';
+   abre.textContent='Ver '+(media.tipo==='FOTO'?'foto '+media.ordem:'vídeo de '+Math.round(media.duracaoSegundos)+' segundos');
+   const local=document.createElement('div');local.className='akitemm-midias-preview-privado';
+   abre.addEventListener('click',async()=>{
+    abre.disabled=true;
+    try{
+     const uri=await carregarMidiaModeracao(media.id);
+     const elemento=document.createElement(media.tipo==='FOTO'?'img':'video');
+     elemento.src=uri;
+     if(media.tipo==='VIDEO'){elemento.controls=true;elemento.preload='metadata';}
+     elemento.setAttribute('aria-label','Mídia privada para conferência do administrador');
+     local.replaceChildren(elemento);
+    }catch(e){local.textContent=e.message;}
+    finally{abre.disabled=false;}
+   });
+   midias.append(abre,local);
+  }
   const aprovar=document.createElement('button');aprovar.type='button';aprovar.textContent='Aprovar';
   const rejeitar=document.createElement('button');rejeitar.type='button';rejeitar.textContent='Rejeitar';
   for(const [botao,status] of [[aprovar,'APROVADA'],[rejeitar,'REJEITADA']]){
@@ -498,7 +530,7 @@ async function atualizarAvaliacoesAdmin(){
     }catch(e){$('akitemmStatusModeracao').textContent=e.message;}
    });
   }
-  box.append(titulo,texto,label,aprovar,rejeitar);destino.append(box);
+  box.append(titulo,texto,midias,label,aprovar,rejeitar);destino.append(box);
  }
 }
 $('akitemmRegistrarEntregaDemo').addEventListener('click',async()=>{
