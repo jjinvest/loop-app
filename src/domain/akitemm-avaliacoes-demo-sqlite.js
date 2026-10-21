@@ -3,6 +3,7 @@
 // confirmado + entrega marcada pelo operador de laboratório.
 // Nenhum status é considerado comprovação de entrega real.
 const FOTO=/^\/imagens\/catalogo\/[a-zA-Z0-9_-]+\.(?:webp|png|jpe?g)$/;
+const {validar}=require('./akitemm-midia-avaliacoes-demo');
 function erro(codigo){const e=new Error(codigo);e.codigo=codigo;return e;}
 class AkitemmAvaliacoesDemoSQLite{
  constructor({banco,carrinhos,agora=()=>new Date().toISOString()}={}){
@@ -25,6 +26,20 @@ class AkitemmAvaliacoesDemoSQLite{
    );
    CREATE INDEX IF NOT EXISTS idx_akitemm_avaliacoes_produto
     ON akitemm_avaliacoes_demo(produto_id,status);
+   CREATE TABLE IF NOT EXISTS akitemm_avaliacao_midias_demo(
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    avaliacao_id INTEGER NOT NULL REFERENCES akitemm_avaliacoes_demo(id),
+    tipo TEXT NOT NULL CHECK(tipo IN ('FOTO','VIDEO')),
+    ordem INTEGER NOT NULL CHECK(ordem BETWEEN 1 AND 3),
+    mime TEXT NOT NULL,
+    dados BLOB NOT NULL,
+    bytes INTEGER NOT NULL,
+    duracao_segundos REAL,
+    criada_em TEXT NOT NULL,
+    UNIQUE(avaliacao_id,tipo,ordem)
+   );
+   CREATE INDEX IF NOT EXISTS idx_akitemm_avaliacao_midias_relacao
+    ON akitemm_avaliacao_midias_demo(avaliacao_id);
    CREATE TRIGGER IF NOT EXISTS akitemm_entregas_sem_update
     BEFORE UPDATE ON akitemm_entregas_confirmadas_demo
     BEGIN SELECT RAISE(ABORT,'entrega ficticia imutavel'); END;
@@ -82,11 +97,12 @@ class AkitemmAvaliacoesDemoSQLite{
   if(typeof produtoId!=='string'||!/^[a-z0-9-]{3,80}$/.test(produtoId))
    throw erro('PRODUTO_INVALIDO');
   return this.banco.prepare(`
-    SELECT nota,comentario,imagem_caminho AS imagemCaminho,criada_em AS criadaEm
+    SELECT id,nota,comentario,imagem_caminho AS imagemCaminho,criada_em AS criadaEm
     FROM akitemm_avaliacoes_demo
     WHERE produto_id=? AND status='APROVADA'
     ORDER BY id DESC LIMIT 50
-  `).all(produtoId);
+  `).all(produtoId).map(({id,...a})=>({...a,
+   midias:this.listarMidias(id)}));
  }
  moderar({id,status,imagemCaminho=null}={}){
   if(!Number.isSafeInteger(id)||id<1||
@@ -101,12 +117,66 @@ class AkitemmAvaliacoesDemoSQLite{
   if(!r.changes)throw erro('AVALIACAO_NAO_PENDENTE');
   return {id,status,moderada:true};
  }
+
+ listarMidias(avaliacaoId){
+  return this.banco.prepare(`
+   SELECT id,tipo,ordem,mime,bytes,duracao_segundos AS duracaoSegundos
+   FROM akitemm_avaliacao_midias_demo
+   WHERE avaliacao_id=? ORDER BY tipo,ordem
+  `).all(avaliacaoId).map(({id,...r})=>({...r,
+    id,url:'/api/laboratorio/participante/loja/avaliacoes/midias/'+id
+  }));
+ }
+ anexarMidia({contaId,pedidoId,produtoId,tipo,mime,dados}={}){
+  if(typeof contaId!=='string'||typeof pedidoId!=='string'||typeof produtoId!=='string')
+   throw erro('MIDIA_INVALIDA');
+  const registro=this.banco.prepare(`
+   SELECT id,status FROM akitemm_avaliacoes_demo
+   WHERE conta_id=? AND pedido_id=? AND produto_id=?
+  `).get(contaId,pedidoId,produtoId);
+  if(!registro)throw erro('AVALIACAO_NAO_ENCONTRADA');
+  if(registro.status!=='PENDENTE')throw erro('AVALIACAO_JA_MODERADA');
+  // Qualquer anexo passa por autenticação, vínculo de compra e moderação.
+  const {dados:limpos,mime:tipoMime,duracaoSegundos}=validar({tipo,mime,dados});
+  const rows=this.banco.prepare(`
+   SELECT tipo,ordem FROM akitemm_avaliacao_midias_demo
+   WHERE avaliacao_id=? ORDER BY ordem
+  `).all(registro.id);
+  const existentes=rows.filter(x=>x.tipo===tipo).length;
+  const limite=tipo==='FOTO'?3:tipo==='VIDEO'?1:0;
+  if(!limite)throw erro('TIPO_MIDIA_NAO_PERMITIDO');
+  if(existentes>=limite)throw erro('LIMITE_MIDIAS_ATINGIDO');
+  const ordem=existentes+1;
+  const r=this.banco.prepare(`
+   INSERT INTO akitemm_avaliacao_midias_demo
+    (avaliacao_id,tipo,ordem,mime,dados,bytes,duracao_segundos,criada_em)
+   VALUES(?,?,?,?,?,?,?,?)
+  `).run(registro.id,tipo,ordem,tipoMime,limpos,limpos.length,duracaoSegundos,this.agora());
+  return {id:Number(r.lastInsertRowid),tipo,ordem,duracaoSegundos,pendente:true,
+   totalFotos:rows.filter(x=>x.tipo==='FOTO').length+(tipo==='FOTO'?1:0),
+   totalVideos:rows.filter(x=>x.tipo==='VIDEO').length+(tipo==='VIDEO'?1:0)};
+ }
+ buscarMidia({id,contaId=null,admin=false}={}){
+  if(!Number.isSafeInteger(id)||id<1)throw erro('MIDIA_INVALIDA');
+  const r=this.banco.prepare(`
+   SELECT m.mime,m.dados,m.tipo,m.bytes,m.duracao_segundos AS duracaoSegundos,
+    a.status,a.conta_id AS contaId
+   FROM akitemm_avaliacao_midias_demo m
+   JOIN akitemm_avaliacoes_demo a ON a.id=m.avaliacao_id WHERE m.id=?
+  `).get(id);
+  if(!r)throw erro('MIDIA_NAO_ENCONTRADA');
+  if(!admin&&r.status!=='APROVADA'&&r.contaId!==contaId)
+   throw erro('MIDIA_NAO_ENCONTRADA');
+  return {mime:r.mime,dados:Buffer.from(r.dados),tipo:r.tipo,
+   duracaoSegundos:r.duracaoSegundos};
+ }
+
  pendentesAdmin(){
   return this.banco.prepare(`
    SELECT id,pedido_id AS pedidoId,produto_id AS produtoId,
     nota,comentario,criada_em AS criadaEm
    FROM akitemm_avaliacoes_demo WHERE status='PENDENTE' ORDER BY id
-  `).all();
+  `).all().map(a=>({...a,midias:this.listarMidias(a.id)}));
  }
 }
 module.exports={AkitemmAvaliacoesDemoSQLite};
