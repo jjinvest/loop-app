@@ -6,6 +6,8 @@ const express = require('express');
 const path = require('node:path');
 const { RepositorioCatalogoSQLite } = require('../domain/repositorio-catalogo-sqlite');
 const {AkitemmConfigLojaDemoSQLite}=require('../domain/akitemm-config-loja-demo-sqlite');
+const {AkitemmAvaliacoesDemoSQLite}=require('../domain/akitemm-avaliacoes-demo-sqlite');
+const {criarRouterAdminAkitemmAvaliacoesDemo}=require('../routes/admin-akitemm-avaliacoes-demo');
 const {criarRouterAdminAkitemmConfigDemo}=require('../routes/admin-akitemm-config-demo');
 const { criarRouterCatalogo } = require('../routes/catalogo');
 const { criarRouterAdminCatalogo, localSeguro } = require('../routes/admin-catalogo-laboratorio');
@@ -170,6 +172,12 @@ function criarAppAdminLaboratorio({ repositorio, segredo, webhookDemo } = {}) {
     app.use('/api/admin',criarRouterCarrinhoLoopDemo({
       segredo,carrinhos:carrinhosLojaLoopDemo
     }));
+    const avaliacoesAkitemm=new AkitemmAvaliacoesDemoSQLite({
+      banco:repositorio.banco,carrinhos:carrinhosLojaLoopDemo
+    });
+    app.use('/api/admin',criarRouterAdminAkitemmAvaliacoesDemo({
+      segredo,avaliacoes:avaliacoesAkitemm
+    }));
     app.use('/api/laboratorio/convite',criarRouterConviteCadastroDemo({
       contas:contasDemo,links:ponteDemo.linksComissoes,carrinhos:carrinhosLojaLoopDemo
     }));
@@ -191,7 +199,7 @@ function criarAppAdminLaboratorio({ repositorio, segredo, webhookDemo } = {}) {
     app.use('/api/laboratorio/participante',criarRouterParticipanteDemo({
       contas:contasDemo,ponte:ponteDemo,sessoes:sessoesDemo,adesoes:adesoesDemo,
       carrinhos:carrinhosLojaLoopDemo,catalogo:repositorio,saques:saquesDemo,
-      configAkitemm,
+      configAkitemm,avaliacoesAkitemm,
       obterLivroProvisoesV6:()=>circuitoPonteDemo?.livro||null,
       obterRetornoSaqueCentroDemo:()=>retornoSaqueCentroDemo,
       entregadoresPerfil:criarEntregadoresPerfilAmbiente()
