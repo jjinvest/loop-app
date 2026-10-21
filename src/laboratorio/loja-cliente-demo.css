@@ -361,3 +361,39 @@ body.akitemm-loja{background:#071018;color:#f0f2f6;font-family:system-ui,-apple-
  background:radial-gradient(circle at 85% 0%,#8e61bd3d,transparent 62%),
   linear-gradient(145deg,#312050,#241737 52%,#121827)!important;
 }
+
+/* Acabamento da captura real: botões dentro das colunas, sem texto cortado. */
+.akitemm-loja .cabecalho-loja-loop .akitemm-voltar{
+ border:0!important;background:transparent!important;
+ padding:0!important;min-height:35px!important;border-radius:0!important;
+ color:#ebbd68!important;
+}
+.akitemm-loja .akitemm-marca-loop{color:#ebbd68!important}
+.akitemm-loja .akitemm-marca-loop em{color:#f3f1f2!important}
+.akitemm-loja .produtos-loja-loop>.produto-loja-loop,
+.akitemm-loja .produto-loja-loop>.akitemm-dados-produto,
+.akitemm-loja .produto-loja-loop .akitemm-acoes-produto{
+ min-width:0!important;max-width:100%!important;
+}
+.akitemm-loja .produto-loja-loop .akitemm-acoes-produto{
+ grid-template-columns:repeat(2,minmax(0,1fr))!important;
+}
+.akitemm-loja .produto-loja-loop .akitemm-acoes-produto>button{
+ width:100%!important;min-width:0!important;max-width:100%!important;
+ box-sizing:border-box!important;overflow:hidden!important;
+ text-overflow:ellipsis!important;white-space:nowrap!important;
+}
+.akitemm-loja .produto-loja-loop .akitemm-descricao,
+.akitemm-loja .produto-loja-loop .datas-promocao-especial-loop{
+ display:-webkit-box!important;-webkit-box-orient:vertical!important;-webkit-line-clamp:2!important;
+ overflow:hidden!important;min-width:0!important;overflow-wrap:anywhere!important;
+}
+.akitemm-loja .cabecalho-secao-loja{
+ display:grid!important;grid-template-columns:minmax(0,1fr) auto!important;
+ align-items:center!important;gap:10px!important;
+}
+.akitemm-loja #akitemmVerTodos{margin-left:0!important}
+.akitemm-categorias svg{width:32px;height:32px;color:#ebbd68}
+.akitemm-apoio-icone svg{width:24px;height:24px}
+.akitemm-sino svg{width:23px;height:23px}
+.akitemm-redes svg{width:22px;height:22px}
