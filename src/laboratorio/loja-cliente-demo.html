@@ -123,7 +123,16 @@
    </select>
    <label for="akitemmAvaliacaoComentario">Como foi receber e usar o produto?</label>
    <textarea id="akitemmAvaliacaoComentario" minlength="10" maxlength="1000" rows="5" required placeholder="Conte sua experiência real após a entrega."></textarea>
-   <button type="submit">Enviar minha avaliação</button>
+   <section class="akitemm-arquivos-avaliacao" aria-labelledby="akitemmTituloAnexos">
+    <h3 id="akitemmTituloAnexos">Fotos e vídeo do produto recebido</h3>
+    <label for="akitemmFotosAvaliacao">Fotografias (até 3, JPEG, PNG ou WebP)</label>
+    <input id="akitemmFotosAvaliacao" type="file" accept="image/jpeg,image/png,image/webp" multiple>
+    <label for="akitemmVideoAvaliacao">Vídeo curto (opcional, MP4 até 30 segundos)</label>
+    <input id="akitemmVideoAvaliacao" type="file" accept="video/mp4">
+    <p>As fotos e o vídeo ficam privados até sua avaliação ser aprovada. Evite mostrar documentos, endereço, placas ou pessoas sem autorização.</p>
+    <div id="akitemmPreviaMidias" class="akitemm-previa-arquivos" aria-live="polite"></div>
+   </section>
+   <button id="akitemmEnviarAvaliacao" type="submit">Enviar minha avaliação</button>
    <p id="akitemmStatusAvaliacao" role="status"></p>
   </form>
  </dialog>
