@@ -66,7 +66,7 @@ class AkitemmAvaliacoesDemoSQLite{
   const rows=this.banco.prepare(`
     SELECT i.pedido_id AS pedidoId,i.produto_id AS produtoId,i.nome,
      e.confirmada_em AS entregueEm,
-     av.status AS statusAvaliacao
+     av.status AS statusAvaliacao,av.id AS avaliacaoId
     FROM akitemm_entregas_confirmadas_demo e
     JOIN admin_carrinho_loop_itens_demo i ON i.pedido_id=e.pedido_id
     LEFT JOIN akitemm_avaliacoes_demo av ON av.pedido_id=i.pedido_id AND av.produto_id=i.produto_id
@@ -74,7 +74,8 @@ class AkitemmAvaliacoesDemoSQLite{
     ORDER BY e.confirmada_em DESC,i.pedido_id DESC,i.ordem
     LIMIT 100
   `).all(contaId);
-  return rows.filter(x=>this.carrinhos.buscarDaConta(x.pedidoId,contaId)?.situacaoPagamentoFicticio==='CONFIRMADO_FICTICIO');
+  return rows.filter(x=>this.carrinhos.buscarDaConta(x.pedidoId,contaId)?.situacaoPagamentoFicticio==='CONFIRMADO_FICTICIO')
+   .map(({avaliacaoId,...r})=>({...r,midias:avaliacaoId?this.listarMidias(avaliacaoId):[]}));
  }
  criar({contaId,pedidoId,produtoId,nota,comentario}={}){
   if(typeof pedidoId!=='string'||typeof produtoId!=='string'||
