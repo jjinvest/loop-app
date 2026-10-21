@@ -397,7 +397,7 @@ function simularElegibilidadeSaque({saldoSimuladoCentavos,valorSolicitadoCentavo
  const taxaSaqueCentavos=Math.round(valorSolicitadoCentavos*3/100);
  const valorLiquidoCentavos=valorSolicitadoCentavos-taxaSaqueCentavos;
  return {apenasSimulacao:true,atingiuMinimo:true,tipoSaque:tipo,
-  valorSolicitadoCentavos,taxaPercentual:3,taxaSaqueCentavos,
+  valorSolicitadoCentavos,taxaPercentual:0,taxaSaqueCentavos,
   valorLiquidoCentavos,origemExclusiva:tipo==='BONUS'?'LOOP_DIREITA':'LOOP_CENTRO',
   transferenciaExecutada:false,necessitaSaldoRealReserva:true};
 }
