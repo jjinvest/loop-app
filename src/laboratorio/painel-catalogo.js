@@ -469,6 +469,52 @@ $('atualizarLista').addEventListener('click', async () => {
 });
 $('formProduto').addEventListener('submit', salvar);
 $('akitemmSalvarElegibilidade').addEventListener('click',salvarElegibilidadeAkitemm);
+
+async function atualizarAvaliacoesAdmin(){
+ const r=await requisitar('/akitemm-avaliacoes-demo');
+ const destino=$('akitemmListaModeracao');destino.replaceChildren();
+ if(!r.pendentes.length){
+  const aviso=document.createElement('p');aviso.textContent='Nenhuma avaliação pendente.';
+  aviso.className='ajuda';destino.append(aviso);return;
+ }
+ for(const av of r.pendentes){
+  const box=document.createElement('article');box.className='historico-admin';
+  const titulo=document.createElement('strong');
+  titulo.textContent='Avaliação #'+av.id+' · produto '+av.produtoId+' · '+av.nota+' estrela(s)';
+  const texto=document.createElement('p');texto.textContent=av.comentario;
+  const label=document.createElement('label');label.textContent='Imagem autorizada opcional (caminho local):';
+  const input=document.createElement('input');input.placeholder='/imagens/catalogo/depoimento.webp';input.maxLength=180;
+  label.append(input);
+  const aprovar=document.createElement('button');aprovar.type='button';aprovar.textContent='Aprovar';
+  const rejeitar=document.createElement('button');rejeitar.type='button';rejeitar.textContent='Rejeitar';
+  for(const [botao,status] of [[aprovar,'APROVADA'],[rejeitar,'REJEITADA']]){
+   botao.addEventListener('click',async()=>{
+    try{
+     await requisitar('/akitemm-avaliacoes-demo/moderar',{
+      method:'POST',body:JSON.stringify({id:av.id,status,imagemCaminho:input.value.trim()||null})
+     });
+     $('akitemmStatusModeracao').textContent='Avaliação #'+av.id+' analisada.';
+     await atualizarAvaliacoesAdmin();
+    }catch(e){$('akitemmStatusModeracao').textContent=e.message;}
+   });
+  }
+  box.append(titulo,texto,label,aprovar,rejeitar);destino.append(box);
+ }
+}
+$('akitemmRegistrarEntregaDemo').addEventListener('click',async()=>{
+ try{
+  const pedidoId=$('akitemmIdPedidoEntrega').value.trim();
+  const r=await requisitar('/akitemm-avaliacoes-demo/entregas',{
+   method:'POST',body:JSON.stringify({pedidoId})
+  });
+  $('akitemmStatusModeracao').textContent=r.repetido?
+   'Entrega fictícia já registrada.':'Entrega fictícia registrada. Não é entrega real.';
+ }catch(e){$('akitemmStatusModeracao').textContent=e.message;}
+});
+$('akitemmAtualizarAvaliacoes').addEventListener('click',()=>atualizarAvaliacoesAdmin().catch(e=>{
+ $('akitemmStatusModeracao').textContent=e.message;
+}));
+
 $('akitemmConfigAdminForm').addEventListener('submit',salvarVitrineAkitemm);
 $('akitemmRecarregarVitrine').addEventListener('click',()=>carregarVitrineAkitemm().catch(e=>{$('akitemmStatusVitrine').textContent=e.message;}));
 $('abaAdminVitrineAkitemm').addEventListener('click',()=>carregarVitrineAkitemm().catch(e=>{$('akitemmStatusVitrine').textContent=e.message;}));
