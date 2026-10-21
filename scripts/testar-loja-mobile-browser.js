@@ -948,6 +948,22 @@ async function main(){
   await page.locator('#loop03Menu').click();
   await page.locator('#loop03Sidebar [data-loop03-aba="financeiro"]').click();
   await page.locator('#loop03-financeiro').waitFor({state:'visible'});
+  assert.equal(await page.locator('#loop03-financeiro .loop03-financeiro-resumos>div').count(),4);
+  assert.equal(await page.locator('#bonusQuantidadeParticipante').innerText(),
+   await page.locator('#loop03RedeTotalIndicacoes').innerText(),
+   'Indicados validos devem usar os MESMOS verdes da Minha Rede');
+  assert.equal(await page.locator('#formSaqueTesteParticipante').isVisible(),false);
+  await page.locator('#loop03EscolherPosicoes').click();
+  assert.equal(await page.locator('#loop03EscolherPosicoes').getAttribute('aria-pressed'),'true');
+  assert.equal(await page.locator('#formSaqueTesteParticipante').isVisible(),true);
+  assert.equal(await page.locator('#enviarSaqueTesteParticipante').isDisabled(),true,
+   'Não habilitar saque de posições sem livro liquidado');
+  await page.locator('#loop03EscolherBonus').click();
+  assert.equal(await page.locator('#loop03EscolherBonus').getAttribute('aria-pressed'),'true');
+  assert.equal(await page.locator('#loop03EscolherPosicoes').getAttribute('aria-pressed'),'false');
+  await page.locator('#loop03HistoricoGanhosSaque>summary').click();
+  assert.equal(await page.locator('#loop03HistoricoGanhosSaque').evaluate(n=>n.open),true);
+  await page.locator('#loop03HistoricoGanhosSaque>summary').click();
   await conferirLargura(page,390,'financeiro-cliente-celular',{captura:false});
   await page.screenshot({path:path.join(pasta,'FINANCEIRO_CLIENTE_ATUAL_CELULAR_390.png'),fullPage:true});
   // Quatro capturas REAIS da mesma conta ficticia e mesmo layout funcional.
@@ -993,6 +1009,11 @@ async function main(){
   // Captura real do Financeiro do PARTICIPANTE, nao do financeiro administrativo.
   await quatroAbas.locator('#loop03Sidebar [data-loop03-aba="financeiro"]').click();
   await quatroAbas.locator('#loop03-financeiro').waitFor({state:'visible'});
+  assert.equal(await quatroAbas.locator('#loop03-financeiro .loop03-financeiro-resumos>div').count(),4);
+  assert.equal(await quatroAbas.locator('#loop03-financeiro .loop03-financeiro-saque').count(),1);
+  assert.equal(await quatroAbas.locator('#loop03-financeiro #tituloCreditosPrevistosV6').isVisible(),false);
+  await quatroAbas.locator('#loop03EscolherBonus').click();
+  assert.equal(await quatroAbas.locator('#formSaqueTesteParticipante').isVisible(),true);
   await conferirLargura(quatroAbas,1254,'financeiro-cliente-computador',{captura:false});
   await quatroAbas.screenshot({path:path.join(pasta,'FINANCEIRO_CLIENTE_ATUAL_COMPUTADOR_1254.png'),fullPage:true});
   await ctxQuadros.close();
