@@ -2062,6 +2062,8 @@ async function main(){
    body:JSON.stringify({id:regAvaliacao.id,status:'APROVADA',imagemCaminho:null})
   });
   assert.equal(resposta.status,200,await resposta.text());
+  await page.reload({waitUntil:'networkidle'});
+  await page.locator('#conteudoLojaLoop').waitFor({state:'visible'});
   await page.locator('#akitemmBusca').fill('Produto físico para avaliação de teste');
   await page.locator('.produto-loja-loop').first().click({position:{x:32,y:28}});
   await page.locator('#akitemmDetalhesConteudo').getByText(/Entrega fictícia recebida em teste/).waitFor();
@@ -2070,6 +2072,17 @@ async function main(){
   await page.setViewportSize({width:390,height:812});
   await page.screenshot({
    path:path.join(pasta,'AKITEMM_PRODUTO_AVALIACAO_APROVADA_CELULAR_REAL_DE_TESTE.png'),fullPage:true
+  });
+  const rolagemDetalhe=await page.locator('#akitemmModalDetalhes').evaluate(el=>{
+   const sobra=el.scrollHeight-el.clientHeight;
+   el.scrollTop=el.scrollHeight;
+   return {sobra,topo:el.scrollTop};
+  });
+  assert.ok(rolagemDetalhe.sobra>0&&rolagemDetalhe.topo>0,
+   'Janela do produto deve rolar para mostrar avaliações e fotos');
+  await page.screenshot({
+   path:path.join(pasta,'AKITEMM_DEPOIMENTO_APROVADO_JANELA_ROLADA_CELULAR_REAL.png'),
+   fullPage:false
   });
   await page.locator('#akitemmModalDetalhes .akitemm-modal-fechar').click();
 
