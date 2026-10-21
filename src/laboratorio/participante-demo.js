@@ -454,7 +454,7 @@
   e('bonusMinimoParticipante').textContent=dinheiro(bonus.minimoSaqueCentavos);
   e('bonusSaqueStatusParticipante').textContent=!bonus.bonificacoesHabilitadas?
    'Saques bloqueados até a segunda ativação: CPF e aceite dos termos. Não há saques reais neste teste.':bonus.atingiuMinimoSaque?
-   'Mínimo de R$ 25 alcançado. Taxa de 3% por saque simulado. Saque real ainda indisponível no laboratório.':
+   'Mínimo de R$ 25 alcançado. Taxa de saque 0%, sem desconto ao participante. Saque real ainda indisponível no laboratório.':
    'Faltam '+dinheiro(bonus.faltaParaMinimoCentavos)+' para alcançar o mínimo de saque.';
   lista('bonusHistoricoParticipante',bonus.registros,p=>
    'Posição #'+p.posicaoId+' · '+p.percentual+'% de '+
@@ -468,7 +468,7 @@
     e('enviarSaqueTesteParticipante').disabled=!extrato.podeSolicitarBonus;
     lista('historicoSaqueTesteParticipante',extrato.historico,r=>
      'Solicitação '+r.solicitacaoId+' · Bruto '+dinheiro(r.valorSolicitadoCentavos)+
-     ' · Taxa 3% '+dinheiro(r.taxaSaqueCentavos)+
+     ' · Taxa '+r.taxaPercentual+'% '+dinheiro(r.taxaSaqueCentavos)+
      ' · Líquido fictício '+dinheiro(r.valorLiquidoCentavos)+
      ' · Revisão até '+new Date(r.prazoMaximoAnaliseEm).toLocaleString('pt-BR',{
        timeZone:'America/Sao_Paulo',day:'2-digit',month:'2-digit',year:'numeric',
