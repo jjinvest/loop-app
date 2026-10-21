@@ -1965,6 +1965,44 @@ async function main(){
    await ctx.close();
   }
 
+
+  // Fotografia do layout 3x4 com DADOS FICTÍCIOS DO TESTE, sem produtos
+  // inventados no catálogo real da empresa. Evita confundir prévia e produção.
+  for(let i=1;i<=9;i++){
+   const n=String(i).padStart(2,'0');
+   banco.salvar({
+    produto:curso('amostra-vitrine-'+n,'Amostra fictícia da vitrine '+n,9900+i*100),
+    revisaoEsperada:0
+   });
+  }
+  await page.goto(base+'/laboratorio/loja',{waitUntil:'networkidle'});
+  await page.locator('#conteudoLojaLoop').waitFor({state:'visible'});
+  await page.setViewportSize({width:1366,height:850});
+  assert.equal(await page.locator('.produto-loja-loop').count(),12);
+  assert.equal(await page.locator('#akitemmCarregarMais').isVisible(),true);
+  const grade=await page.locator('#catalogoLojaLoop').evaluate(x=>{
+   const cs=getComputedStyle(x);
+   return {colunas:cs.gridTemplateColumns.split(' ').length,
+    primeiro:x.firstElementChild.querySelector('.akitemm-imagem-produto').offsetHeight,
+    ultimo:x.children[5].querySelector('.akitemm-imagem-produto').offsetHeight};
+  });
+  assert.equal(grade.colunas,4);
+  assert.ok(grade.primeiro<grade.ultimo,'Primeira fileira levemente mais compacta');
+  await page.screenshot({
+   path:path.join(pasta,'AKITEMM_GRADE_3_FILEIRAS_X_4_PC_TESTE_REAL.png'),fullPage:true
+  });
+  await page.locator('#akitemmCarregarMais').click();
+  assert.equal(await page.locator('.produto-loja-loop').count(),13);
+  assert.equal(await page.locator('#akitemmCarregarMais').isVisible(),false);
+  await page.setViewportSize({width:390,height:850});
+  const larguraTeste=await page.evaluate(()=>({
+   janela:innerWidth,conteudo:document.documentElement.scrollWidth
+  }));
+  assert.ok(larguraTeste.conteudo<=larguraTeste.janela+1);
+  await page.screenshot({
+   path:path.join(pasta,'AKITEMM_GRADE_13_PRODUTOS_CELULAR_TESTE_REAL.png'),fullPage:true
+  });
+
   assert.deepEqual(erros,[], 'Erros de execucao no navegador');
   const relatorio={status:'APROVADO',
    tamanhosPx:[320,360,390,412,768,1024,1366],
