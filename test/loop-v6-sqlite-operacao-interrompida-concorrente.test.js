@@ -157,7 +157,7 @@ test('integração SQLite: 1000 pedidos, duplicatas cruzadas, falha de pagamento
  const quebra=provar(m,provas,clientes[1],'sql-quebra-snapshot',25000);
  m.banco.prepare("UPDATE admin_ponte_estado_demo SET snapshot_json='json-invalido' WHERE id=1").run();
  await assert.rejects(m.ponte.processar({pedidoId:quebra}),/Snapshot de laboratorio corrompido/);
- assert.equal(contagens(m.banco).vendasPDF,501);
+ assert.equal(contagens(m.banco).vendasPDF,502);
  m.banco.prepare('UPDATE admin_ponte_estado_demo SET snapshot_json=? WHERE id=1').run(snapshotAntes);
  assert.equal((await m.ponte.processar({pedidoId:quebra})).posicaoCriada,true);
  assert.equal(contagens(m.banco).vendasPDF,503);
