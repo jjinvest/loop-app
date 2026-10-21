@@ -968,3 +968,18 @@ Complemento explícito do proprietário à seção 68, para preservar em continu
 - **Prosseguir autonomamente com testes de persistência dos seis eventos por ciclo e integridade operacional, apenas laboratório**, preservando a arquitetura, telas, PR rascunho e saque ao participante de 0%.
 
 Esta decisão é posterior à seção 84 e prevalece sobre qualquer interpretação de exemplos de preços hipotéticos como preços reais da loja.
+
+
+## 86. Auditoria de seis pedidos fictícios por ciclo persistido, sem alterar preços (21/10/2026)
+
+**CONCLUÍDO EM LABORATÓRIO.** Conforme a decisão comercial na seção **85**, **não foram alterados preços, margens, produtos, critérios de elegibilidade ou visuais**. Relatório: [AUDITORIA_SEIS_PEDIDOS_CICLO_PRECOS_VARIAVEIS_21OUT2026.md](./AUDITORIA_SEIS_PEDIDOS_CICLO_PRECOS_VARIAVEIS_21OUT2026.md).
+
+Foi reconhecido que o circuito **`CircuitBreakPonteV6DemoSQLite` já persiste**, em uma só transação, seis identificadores de pedidos fictícios por giro e suas provisões, mas **não existe liquidação PSP/bancária**. Em vez de reconstruir o motor ou adaptar preços à matemática, foi criado apenas o **auditor estritamente read-only** `src/domain/auditoria-seis-pedidos-ciclo-lab.js` e o teste `test/loop-v6-seis-pedidos-ciclo-persistencia-auditoria.test.js`.
+
+- **GitHub Actions Testes do LOOP run 39690331754: SUCCESS, 500/500 aprovados, 0 falhas**, commit de código `6996ee3436cbbeb8a26990ed842f160a1b04c3c8`.
+- **14 compras fictícias exclusivamente do PDF R$250**, **2 giros no SQLite**, **12 eventos/pedidos distintos** (seis por giro) e **2 compras aguardando giro**. O auditor conferiu os eventos, suas ordens, vínculo inequívoco a pedidos, existência de posições e aportes demonstrativos separados e consistência com o snapshot.
+- Com somente cinco aportes fictícios, o giro foi **recusado por falta de cobertura demonstrativa central**, sem livro ou snapshot parcial. Após completar aportes locais suficientes e autorizar o circuito do laboratório, os dois ciclos foram persistidos.
+- Histórico imutável em SQLite (tentativas de alterar/deletar recusadas), comando de giro **idempotente** e integridade consistente após fechar e reabrir o banco. Conciliação dos cofres **fictícios** apontou zero divergências.
+- **0 pagamentos reais comprovados, 0 saques ou transferências reais e nenhuma margem/lucro real presumido.** A referência R$250 do livro fictício **não é preço obrigatório de outros produtos**. O dono define preços variáveis com fornecedor e sua estratégia, sem imposição do assistente.
+
+**Próxima prioridade:** reforçar auditoria de estornos/divergências **relacionados a pedidos já integrantes de ciclos persistidos**, exclusivamente para alerta e análise humana, sem cancelamento/compensação automáticos e sem autorização financeira real. A análise jurídica e contábil do modelo permanece necessária antes de qualquer lançamento.
