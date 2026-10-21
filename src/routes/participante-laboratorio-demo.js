@@ -58,8 +58,8 @@ function criarRouterParticipanteDemo({contas,ponte,sessoes=null,adesoes=null,car
    return null;
   for(const c of campos)
    if(typeof v[c]!=='string'||v[c].length>(c==='referencia'?150:c==='logradouro'?120:110)||
-      /[\\u0000-\\u001f]/.test(v[c]))return null;
-  if(!/^\\d{5}-?\\d{3}$/.test(v.cep)||!/^\\w{2}$/.test(v.uf)||
+      /[\u0000-\u001f]/.test(v[c]))return null;
+  if(!/^\d{5}-?\d{3}$/.test(v.cep)||!/^[A-Z]{2}$/.test(v.uf)||
    !'AC AL AP AM BA CE DF ES GO MA MT MS MG PA PB PR PE PI RJ RN RS RO RR SC SP SE TO'
     .split(' ').includes(v.uf)||
    !v.destinatario.trim()||!v.logradouro.trim()||!v.numero.trim()||
