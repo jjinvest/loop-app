@@ -2050,6 +2050,17 @@ async function main(){
   await page.locator('#akitemmAvaliacaoComentario').fill(
    'Entrega fictícia recebida em teste; achei a apresentação adequada.'
   );
+  const imagemMinima=Buffer.from(
+   'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+j1ZsAAAAASUVORK5CYII=','base64');
+  await page.locator('#akitemmFotosAvaliacao').setInputFiles([
+   {name:'recebi-produto-01.png',mimeType:'image/png',buffer:imagemMinima},
+   {name:'recebi-produto-02.png',mimeType:'image/png',buffer:imagemMinima},
+   {name:'recebi-produto-03.png',mimeType:'image/png',buffer:imagemMinima}
+  ]);
+  assert.equal(await page.locator('#akitemmPreviaMidias img').count(),3);
+  await page.screenshot({
+   path:path.join(pasta,'AKITEMM_FORMULARIO_3_FOTOS_CLIENTE_CELULAR_REAL.png'),fullPage:true
+  });
   await page.locator('#akitemmFormAvaliacao button[type="submit"]').click();
   await page.locator('#akitemmStatusAvaliacao').getByText(/aguardando|analisada|recebida/i).waitFor();
   await page.locator('#akitemmModalAvaliacao .akitemm-modal-fechar').click();
@@ -2057,6 +2068,9 @@ async function main(){
    "SELECT id FROM akitemm_avaliacoes_demo WHERE pedido_id=?"
   ).get(idAval);
   assert.ok(regAvaliacao);
+  assert.equal(banco.banco.prepare(
+   "SELECT count(*) AS n FROM akitemm_avaliacao_midias_demo WHERE avaliacao_id=?"
+  ).get(regAvaliacao.id).n,3);
   resposta=await fetch(base+'/api/admin/akitemm-avaliacoes-demo/moderar',{
    method:'POST',headers:{Authorization:'Bearer '+admin,'Content-Type':'application/json'},
    body:JSON.stringify({id:regAvaliacao.id,status:'APROVADA',imagemCaminho:null})
@@ -2067,6 +2081,7 @@ async function main(){
   await page.locator('#akitemmBusca').fill('Produto físico para avaliação de teste');
   await page.locator('.produto-loja-loop').first().click({position:{x:32,y:28}});
   await page.locator('#akitemmDetalhesConteudo').getByText(/Entrega fictícia recebida em teste/).waitFor();
+  assert.equal(await page.locator('#akitemmDetalhesConteudo .akitemm-midia-depoimento img').count(),3);
   assert.equal(await page.locator('#akitemmDetalhesConteudo .akitemm-detalhe-miniaturas').count(),0,
    'Sem fotos cadastradas, não inventar imagens');
   await page.setViewportSize({width:390,height:812});
