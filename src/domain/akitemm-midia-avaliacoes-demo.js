@@ -26,7 +26,7 @@ function duracaoMp4(buf){
  if(!mvhd)throw erro('VIDEO_INVALIDO');
  const v=buf[mvhd.inicio];
  const off=v===0?12:v===1?20:-1;
- if(off<0||mvhd.inicio+off+ (v===1?8:4)>mvhd.fim)throw erro('VIDEO_INVALIDO');
+ if(off<0||mvhd.inicio+off+(v===1?12:8)>mvhd.fim)throw erro('VIDEO_INVALIDO');
  const vezes=buf.readUInt32BE(mvhd.inicio+off);
  const duracao=v===1?Number(buf.readBigUInt64BE(mvhd.inicio+off+4)):
   buf.readUInt32BE(mvhd.inicio+off+4);
@@ -74,7 +74,7 @@ function limparJpeg(b){
 }
 function limparPng(b){
  const assinatura=Buffer.from([137,80,78,71,13,10,26,10]);
- if(b.length<72||!b.subarray(0,8).equals(assinatura))throw erro('FOTO_INVALIDA');
+ if(b.length<57||!b.subarray(0,8).equals(assinatura))throw erro('FOTO_INVALIDA');
  let pos=8,temIHDR=false,temIDAT=false,temIEND=false;
  const blocos=[assinatura];
  while(pos+12<=b.length){
