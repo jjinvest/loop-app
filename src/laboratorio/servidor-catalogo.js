@@ -88,8 +88,17 @@ function criarAppAdminLaboratorio({ repositorio, segredo, webhookDemo } = {}) {
       return res.status(403).send('Painel disponivel apenas localmente');
     }
     res.set('Cache-Control', 'no-store');
+    // URLs blob: só para PRÉVIAS de fotos/vídeos na AKITEMM e na
+    // moderação. Nunca são permitidas em script-src ou nas páginas LOOP.
+    const comPreviaMidia=new Set(['/laboratorio/loja','/loja','/loja-vilela','/admin'])
+     .has(req.path);
+    const politicaMidia=comPreviaMidia?
+     "img-src 'self' blob:; media-src 'self' blob:;":
+     "img-src 'self';";
     res.set('Content-Security-Policy',
-      "default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self'; connect-src 'self'; base-uri 'none'; form-action 'self'; frame-ancestors 'none'");
+      "default-src 'none'; script-src 'self'; style-src 'self'; "+
+      politicaMidia+
+      " connect-src 'self'; base-uri 'none'; form-action 'self'; frame-ancestors 'none'");
     next();
   }
   if (repositorio instanceof RepositorioCatalogoSQLite) {
