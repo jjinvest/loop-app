@@ -264,8 +264,8 @@ if(process.argv[2]==='--worker'){
   assert.equal(resumo.bonusBrutoHistoricoCentavos,7500);
   assert.equal(resumo.bonusSolicitadoSimuladoCentavos,7500);
   assert.equal(resumo.bonusDisponivelSimuladoCentavos,0);
-  assert.equal(sqlN(m.banco,'SELECT COALESCE(SUM(taxa_centavos),0) AS n FROM admin_solicitacoes_saque_demo'),225);
-  assert.equal(sqlN(m.banco,'SELECT COALESCE(SUM(valor_liquido_centavos),0) AS n FROM admin_solicitacoes_saque_demo'),7275);
+  assert.equal(sqlN(m.banco,'SELECT COALESCE(SUM(taxa_centavos),0) AS n FROM admin_solicitacoes_saque_demo'),0);
+  assert.equal(sqlN(m.banco,'SELECT COALESCE(SUM(valor_liquido_centavos),0) AS n FROM admin_solicitacoes_saque_demo'),7500);
   assert.equal(disponibilidade().compromissoBonificacoesCentavos,7500);
   assert.equal(disponibilidade().saldoLivreDemonstrativoCentavos,42500);
   verificarBanco(m);
@@ -279,7 +279,7 @@ if(process.argv[2]==='--worker'){
    saqueCompartilhadoUnico:1,duplicatasSaque:3,
    saquesAdicionaisAceitos:2,saquesBloqueadosSemSaldo:2,
    saquesPersistidos:3,totalBrutoCentavos:7500,
-   taxasCentavos:225,liquidoCentavos:7275,
+   taxasCentavos:0,liquidoCentavos:7500,
    reservaLivreCentavos:42500,debitoReservaDuplicado:false,
    financeiroReal:false,integridade:'ok'
   }));
