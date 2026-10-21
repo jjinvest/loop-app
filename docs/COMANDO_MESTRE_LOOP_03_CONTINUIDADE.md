@@ -739,3 +739,26 @@ Usuário observou que **o Escritório Virtual ainda não passou pela revisão de
 - Revisão dos testes do formulário de senha aberto de fábrica: o teste de browser antigo clicava no `<summary>` e fechava a seção. Ajustado para **verificar a seção aberta sem clicar**, sem alterar nenhum comportamento real, commit `ca56e131f90941ba4a038e60f2228e9fa93619ff`.
 
 Próxima sessão: confirmar com o usuário quais elementos de home manter/tirar e somente então programar as mudanças com nova captura REAL em navegador PC/mobile. Regras de Cloudflare R2 permanecem aguardando conta R2 habilitada com pagamento/conta bancária ou decisão por alternativa; nunca pedir chaves pelo chat nem publicar.
+
+## 67. Stress test de 1000 compradores — PDF R$250 e físico R$190 (21/10/2026)
+
+**Solicitação:** simular do zero exatamente 1000 pessoas compradoras distintas, uma compra/unidade por pessoa, 500 PDF a R$250, 500 produtos físicos a R$190, fundador na posição central sem compra, cenário com a primeira vaga ocupada oriunda da A e cenário oriundo da B, sequência de indicações reais simuladas com vinculação individual da posição, prioridade 3A/1B e 20 posições pendentes/azuis que **só viram douradas AO CRUZAR a vaga 6**, não 20 bolas artificiais posicionadas no tabuleiro ao mesmo tempo. Parar exatamente no comprador 1000. Cores e proprietário operacional devem seguir o motor V6, não editar estado após giro. Valores apenas de laboratório.
+
+**Código de teste:** `scripts/simular-1000-compradores-loop-v6.js`; teste de regressão `test/loop-v6-mil-compradores.test.js`. SHA inicial validada `76536b6e6e7128a8f2f6fbc3af5d3a6212203f79`, workflow Testes do LOOP **39651856741 SUCCESS**. Motor `SimuladorLoop` real + `analisarCarrinhoSimulado`, `travaPromocaoAtiva`, convites individualizados com `posicaoAlvoId`, não mock de filas, sem gerar duas posições da mesma venda. Nenhum dinheiro movimentado, nem promessa de contemplação.
+
+**Resultado confirmado 4 cenários:**
+- Primeira A, convites frequentes: fila A 122, B 289; indicações válidas 238; chamadas na vaga 6 de A 60, B 23.
+- Primeira A, convites moderados: fila A 5, B 406; indicações válidas 89; chamadas A 55, B 28.
+- Primeira B, convites frequentes: fila A 122, B 289; indicações válidas 237; chamadas A 60, B 23.
+- Primeira B, convites moderados: fila A 5, B 406; indicações válidas 88; chamadas A 55, B 28.
+
+**Em todos:** 500 PDFs criam 500 posições; R$190 vendido uma unidade não alcança o valor de referência R$250 e portanto gera 0 posições (não somar suas 500 compras a eventos do motor). +1 fundador central sem compra = 501 posições contabilizadas; 83 ciclos de seis eventos PDF completos, 2/6 eventos PDF pendentes do próximo ciclo, 7 posições no tabuleiro, 411 posições nas filas (A+B), 83 saídas concluídas. Dos 83 centros concluídos: fundador 1, outros participantes 62, 20 bolas douradas do LOOP (antes azuis). Exatamente 20 passagens azul→dourada *progressivamente na vaga 6*, 0 azul pendente e 0 douradas atualmente no tabuleiro no instante final porque já concluíram; não confundir 20 conversões históricas com 20 posições simultâneas. Todas as posições preservadas sem duplicações.
+
+**Financeiro HIPOTÉTICO:**
+- Receita bruta de vendas de ensaio: PDF 500 × R$250 = R$125.000; físico 500 × R$190 = R$95.000; total R$220.000, **sem descontar fornecedores, impostos, taxas, frete, reembolsos e investimento**, portanto não significa lucro ou dinheiro em caixa.
+- Referência LOOP dos 498 eventos PDF em ciclos completos = R$124.500; os 2 eventos ainda no próximo ciclo representam R$500 de referência pendente. Direcionamentos matemáticos dos 498 eventos: LOOP_CENTRO R$47.250, LOOP_DOURADAS R$15.000, LOOP_ESQUERDA R$41.500 e LOOP_DIREITA R$20.750. Somam R$124.500. Não se confunde direcionamento referencial com dinheiro pago.
+- Comissão hipotética de indicação = 10% × R$250 por convite válido: A frequente R$5.950; B frequente R$5.925; A moderada R$2.225; B moderada R$2.200. Não assumir esses bônus pagos, nem subtrair automaticamente como receita do LOOP duas vezes; fonte e custos reais ainda pendentes de modelo comercial e auditoria.
+- O preço do produto físico **sozinho** não qualifica o LOOP; alternativas com múltiplas unidades ou produto diferente serão sempre cenários adicionais explicitamente separados, nunca inseridas escondidas neste teste de 1000 compras.
+- O primeiro comprador de PDF da A requer indicação confirmada de outra compra válida antes de ingressar; a primeira entrada pela B não tem promoção artificial. Regra de 3A/1B só aplica havendo posições disponíveis das duas filas. A primeira entrada inicial e a ordem das indicações são hipóteses simuladas, não dados de clientes.
+
+Manter script de cenários reexecutável para análises seguintes, sem alterar layouts existentes nem publicação. O Escritório Virtual ainda aguarda aprovação visual específica do proprietário.
