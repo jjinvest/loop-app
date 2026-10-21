@@ -10,6 +10,7 @@ const {chromium}=require('playwright');
 const {RepositorioCatalogoSQLite}=require('../src/domain/repositorio-catalogo-sqlite');
 const {ContasParticipantesDemoSQLite}=require('../src/domain/contas-participantes-demo-sqlite');
 const {criarAppAdminLaboratorio}=require('../src/laboratorio/servidor-catalogo');
+const {gerarPngTeste}=require('./fixtures/gerar-png-teste');
 
 const pasta=path.join(__dirname,'..','artifacts','mobile-loop');
 fs.mkdirSync(pasta,{recursive:true});
@@ -2050,12 +2051,11 @@ async function main(){
   await page.locator('#akitemmAvaliacaoComentario').fill(
    'Entrega fictícia recebida em teste; achei a apresentação adequada.'
   );
-  const imagemMinima=Buffer.from(
-   'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+j1ZsAAAAASUVORK5CYII=','base64');
+  const imagensTeste=[gerarPngTeste(36,87,133),gerarPngTeste(92,72,117),gerarPngTeste(41,114,83)];
   await page.locator('#akitemmFotosAvaliacao').setInputFiles([
-   {name:'recebi-produto-01.png',mimeType:'image/png',buffer:imagemMinima},
-   {name:'recebi-produto-02.png',mimeType:'image/png',buffer:imagemMinima},
-   {name:'recebi-produto-03.png',mimeType:'image/png',buffer:imagemMinima}
+   {name:'recebi-produto-01.png',mimeType:'image/png',buffer:imagensTeste[0]},
+   {name:'recebi-produto-02.png',mimeType:'image/png',buffer:imagensTeste[1]},
+   {name:'recebi-produto-03.png',mimeType:'image/png',buffer:imagensTeste[2]}
   ]);
   assert.equal(await page.locator('#akitemmPreviaMidias img').count(),3);
   await page.screenshot({
