@@ -77,7 +77,8 @@
    qtd.append(menos,numero,mais);
    info.append(title,preco,qtd);
    const remover=document.createElement('button');remover.type='button';remover.className='item-remover akitemm-item-remover';
-   remover.textContent='♲';remover.setAttribute('aria-label','Remover '+p.nome);
+   remover.innerHTML='<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><path d="M3 6h18M8 6V4h8v2M6 6l1 14h10l1-14M10 10v7M14 10v7"/></svg>';
+   remover.setAttribute('aria-label','Remover '+p.nome);
    remover.addEventListener('click',()=>{carrinho.delete(id);atualizarCarrinho();});
    div.append(imagem,info,remover);destino.append(div);
   }
@@ -191,7 +192,7 @@
    const ver=document.createElement('button');ver.type='button';ver.className='akitemm-ver-detalhes';ver.textContent='Ver detalhes';
    ver.addEventListener('click',()=>abrirDetalhes(p));
    const adicionarBotao=document.createElement('button');adicionarBotao.type='button';
-   adicionarBotao.className='akitemm-adicionar';adicionarBotao.textContent='Adicionar ao carrinho';
+   adicionarBotao.className='akitemm-adicionar';adicionarBotao.textContent='Adicionar';adicionarBotao.setAttribute('aria-label','Adicionar ao carrinho');
    adicionarBotao.addEventListener('click',()=>adicionar(p));
    acoes.append(ver,adicionarBotao);dados.append(titulo,descricao,preco,acoes);
    if(especial){
