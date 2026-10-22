@@ -707,12 +707,16 @@
   pedidoEmAndamento=true;atualizarCarrinho();
   try{
    const itens=[...carrinho].map(([produtoId,quantidade])=>({produtoId,quantidade}));
-   const r=await api('loja/pedidos',{itens,participarLoop});
+   // Convite oculto: requisicao original, sem mudar a regra automatica.
+   const r=await api('loja/pedidos',conviteLoopCheckoutAtivo?
+    {itens,participarLoop}:{itens});
    carrinho.clear();atualizarCarrinho();await carregarPedidos();
    el('akitemmDetalhesPedidos').open=true;
-   el('statusPedidoLoja').textContent='Pedido '+r.pedido.pedidoId+' registrado ('+
-    (r.pedido.participarLoop?'participação no LOOP escolhida':'compra somente AKITEMM')+
-    '). Pagamento de laboratório ainda pendente. Nenhum Pix ou código de pagamento real foi gerado.';
+   el('statusPedidoLoja').textContent='Pedido '+r.pedido.pedidoId+' registrado'+
+    (conviteLoopCheckoutAtivo?
+     ' ('+(r.pedido.participarLoop?'participação no LOOP escolhida':'compra somente AKITEMM')+')':
+     '')+
+    '. Pagamento de laboratório ainda pendente. Nenhum Pix ou código de pagamento real foi gerado.';
   }catch(e){el('statusPedidoLoja').textContent=e.message;}
   finally{pedidoEmAndamento=false;atualizarCarrinho();}
  });
