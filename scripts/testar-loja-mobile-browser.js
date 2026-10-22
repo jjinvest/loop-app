@@ -70,6 +70,7 @@ async function conferirLargura(page,largura,rotulo,{captura=false}={}){
 }
 async function main(){
  let banco,servidor,browser,page;
+ let arquivoBannerTeste=null;
  try{
   banco=new RepositorioCatalogoSQLite({caminho:':memory:'});
   banco.salvar({produto:curso('curso-mobile-100','Curso Móvel Básico',10000),revisaoEsperada:0});
@@ -2244,12 +2245,20 @@ async function main(){
   // Fotos reais do navegador do ESCRITÓRIO DO PARTICIPANTE, alimentadas por
   // quatro publicações de laboratório na MESMA fonte SQLite administrativa.
   // Não são banners comerciais publicados nem alteração no administrador.
+  // Validar também imagens que o administrador vincula ao banner, e não só texto.
+  // Fixture gerada no runner e removida ao final; jamais entra no catálogo real.
+  const urlBannerTeste='/imagens/catalogo/banner-inteiro-apenas-laboratorio.png';
+  arquivoBannerTeste=path.join(__dirname,'..','public','imagens','catalogo',
+   'banner-inteiro-apenas-laboratorio.png');
+  fs.mkdirSync(path.dirname(arquivoBannerTeste),{recursive:true});
+  fs.writeFileSync(arquivoBannerTeste,gerarPngTeste(47,85,140));
   const anunciosTeste=new PublicacoesHomeLoopV6DemoSQLite({banco:banco.banco});
   for(let i=1;i<=4;i++)anunciosTeste.publicar({
    tipo:i%2?'AKITEMM':'COMUNICADO',
    titulo:'Banner de laboratório '+i+' - versão responsiva',
    descricao:'Conteúdo fictício apenas para validar a exibição responsiva.',
-   linkDestino:i%2?'/loja':'/escritorio'
+   linkDestino:i%2?'/loja':'/escritorio',
+   imagemCaminho:i>=3?urlBannerTeste:null
   });
   const contextoBanner=await browser.newContext({
    viewport:{width:390,height:812},deviceScaleFactor:1,isMobile:true,hasTouch:true
@@ -2271,6 +2280,15 @@ async function main(){
   assert.ok(await paginaBanner.locator('#loop03BannersLoja .loop03-banners-loja-slide').count()>=2);
   assert.equal(await paginaBanner.locator('#loop03BannersLoja .loop03-banners-loja-slide:not([hidden])').count(),1);
   assert.equal(await paginaBanner.locator('#loop03BannersLoja .loop03-banners-loja-slide:not([hidden])').getAttribute('href'),'/loja');
+  const imagemInferior=paginaBanner.locator('#loop03BannersLoja .loop03-banners-loja-slide:not([hidden]) img');
+  await imagemInferior.waitFor();
+  await imagemInferior.evaluate(img=>img.decode());
+  assert.deepEqual(await imagemInferior.evaluate(img=>({
+   carregada:img.complete&&img.naturalWidth>0,
+   encaixe:getComputedStyle(img).objectFit,
+   origem:img.getAttribute('src')
+  })),{carregada:true,encaixe:'contain',origem:urlBannerTeste},
+   'Foto real do banner inferior deve carregar inteira, sem corte');
   assert.equal(await paginaBanner.locator('#loop03BannersLoja .loop03-banner-loja-texto').first()
    .evaluate(el=>getComputedStyle(el).flexDirection),'column',
    'Banner sem imagem deve separar titulo e descricao em linhas');
@@ -2281,6 +2299,15 @@ async function main(){
    'Banners incluem os 4 comunicados de laboratório, além de avisos já existentes');
   assert.equal(await paginaBanner.locator('#loop03BannersPista .loop03-banner-slide:not([hidden])').count(),1);
   assert.equal(await paginaBanner.locator('#loop03BannersPista .loop03-banner-1:not([hidden]) .loop03-banner-quadro').count(),1);
+  const imagemSuperior=paginaBanner.locator('#loop03BannersPista .loop03-banner-1:not([hidden]) .loop03-banner-quadro img');
+  await imagemSuperior.waitFor();
+  await imagemSuperior.evaluate(img=>img.decode());
+  assert.deepEqual(await imagemSuperior.evaluate(img=>({
+   carregada:img.complete&&img.naturalWidth>0,
+   encaixe:getComputedStyle(img).objectFit,
+   origem:img.getAttribute('src')
+  })),{carregada:true,encaixe:'contain',origem:urlBannerTeste},
+   'Foto real do banner superior inteiro deve carregar sem cortes');
   assert.equal(await paginaBanner.locator('#loop03LinksHome > summary').innerText(),'Meus Links');
   await paginaBanner.locator('#loop03LinksHome > summary').click();
   assert.equal(await paginaBanner.locator('#loop03HomeLinkEscritorio').inputValue(),
@@ -2371,6 +2398,7 @@ async function main(){
   if(browser)await browser.close();
   if(servidor)await new Promise(resolve=>servidor.close(resolve));
   if(banco)banco.fechar();
+  if(arquivoBannerTeste)fs.rmSync(arquivoBannerTeste,{force:true});
  }
 }
 main().catch(erro=>{
