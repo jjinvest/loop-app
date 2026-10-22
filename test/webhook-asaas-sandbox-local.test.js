@@ -41,7 +41,7 @@ test('webhook Asaas local autenticado persiste e retorna HTTP 200 sem autorizar 
  assert.equal(data.posicaoCriada,false);
  assert.equal(data.saqueAutorizado,false);
  assert.equal(db.prepare("SELECT COUNT(*) AS n FROM akitemm_asaas_sandbox_avisos").get().n,1);
- assert.equal(db.prepare("SELECT COUNT(*) AS n FROM sqlite_master WHERE name='admin_ponte_compras_demo'").get().n,0);
+ assert.equal(db.prepare('SELECT COUNT(*) AS n FROM admin_ponte_compras_demo').get().n,0);
 });
 test('webhook Asaas local entregue duas vezes responde 200 e registra so uma vez',async t=>{
  const {base,db}=await iniciar(t,{habilitado:true});
