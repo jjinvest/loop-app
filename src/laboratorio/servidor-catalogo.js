@@ -32,6 +32,7 @@ const { CarrinhoLojaLoopDemoSQLite } = require('../domain/carrinho-loja-loop-dem
 const { criarRouterCarrinhoLoopDemo } = require('../routes/admin-carrinho-loop-demo');
 const { criarRouterPedidosPDFDemo } = require('../routes/admin-pedidos-pdf-demo');
 const { criarRouterEscritorioDemo } = require('../routes/admin-escritorio-demo');
+const {criarRouterWebhookAsaasSandboxLocal}=require('../routes/webhook-asaas-sandbox-local');
 const {PublicacoesHomeLoopV6DemoSQLite}=require('../domain/publicacoes-home-loop-v6-demo-sqlite');
 const { ContasParticipantesDemoSQLite } = require('../domain/contas-participantes-demo-sqlite');
 const { criarRouterContasParticipantesDemo } = require('../routes/admin-contas-participantes-demo');
@@ -64,7 +65,7 @@ const {AsaasSandboxLojaV6}=require('../domain/asaas-sandbox-loja-v6');
 const {CobrancasAkitemmAsaasSandboxSQLite}=require('../domain/cobrancas-akitemm-asaas-sandbox-v6');
 const {criarRouterCobrancasAkitemmSandboxV6}=require('../routes/admin-cobrancas-akitemm-sandbox-v6');
 
-function criarAppAdminLaboratorio({ repositorio, segredo, webhookDemo, habilitarConviteLoopCheckout=false } = {}) {
+function criarAppAdminLaboratorio({ repositorio, segredo, webhookDemo, webhookAsaasSandbox, habilitarConviteLoopCheckout=false } = {}) {
   // Convite oculto por padrao. Ativar somente por decisao explicita do proprietario;
   // nenhuma alteracao do navegador pode ligar o recurso no servidor.
   if(typeof habilitarConviteLoopCheckout!=='boolean')
@@ -82,6 +83,14 @@ function criarAppAdminLaboratorio({ repositorio, segredo, webhookDemo, habilitar
       segredo:webhookDemo.segredo,
       obterRecebimentos:()=>recebimentosDemo,
       ...(webhookDemo.agoraSegundos?{agoraSegundos:webhookDemo.agoraSegundos}:{})
+    }));
+  }
+  // Webhook Asaas apenas de LABORATORIO, opt-in explicito. Sem endpoint publico.
+  // Corpo bruto deve ser capturado antes de qualquer parser JSON global.
+  if(webhookAsaasSandbox?.habilitado===true){
+    if(!repositorio?.banco)throw new TypeError('SQLite do laboratorio necessario');
+    app.use('/api/laboratorio',criarRouterWebhookAsaasSandboxLocal({
+      banco:repositorio.banco,token:webhookAsaasSandbox.token
     }));
   }
   // Apenas a rota autenticada de perfil recebe JPEG comprimido (ate 180 KB).
