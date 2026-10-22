@@ -2261,6 +2261,10 @@ async function main(){
   await paginaBanner.locator('#nomeParticipante').fill(titular.nome);
   await paginaBanner.locator('#senhaParticipante').fill(senha);
   await paginaBanner.locator('#botaoEntrarParticipante').click();
+  await paginaBanner.locator('#conteudoParticipante').waitFor({state:'visible'});
+  // A publicidade é pública, mas os links pessoais chegam depois do login.
+  await paginaBanner.waitForFunction(()=>
+   document.getElementById('loop03HomeLinkLoja')?.value.endsWith('/loja/TesteUser'));
   await paginaBanner.locator('#loop03BannersPista .loop03-banner-1:not([hidden])').waitFor();
   assert.ok((await paginaBanner.locator('#loop03BannersPista .loop03-banner-slide').count())>=4,
    'Banners incluem os 4 comunicados de laboratório, além de avisos já existentes');
