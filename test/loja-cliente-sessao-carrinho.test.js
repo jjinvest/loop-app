@@ -24,7 +24,7 @@ test('loja individual: cliente prepara pedido sem admin; so admin ficticio confi
  const b=contas.cadastrar({nome:'Comprador Sessao Dois',
   email:'sessao-dois@exemplo.invalid',senha});
  const segredo='admin-local-loja-cliente-2026-123456789';
- const app=criarAppAdminLaboratorio({repositorio:repo,segredo});
+ const app=criarAppAdminLaboratorio({repositorio:repo,segredo,habilitarConviteLoopCheckout:true});
  const srv=app.listen(0,'127.0.0.1');
  await once(srv,'listening');t.after(()=>new Promise(resolve=>srv.close(resolve)));
  const base='http://127.0.0.1:'+srv.address().port;
