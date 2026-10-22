@@ -19,7 +19,7 @@ test('escritorio reune pedidos pendentes, somente-loja, azul, vermelho e dourado
  const contaA=contas.cadastrar({nome:'Cliente Loja Principal',email:'principal@exemplo.invalid',senha});
  const contaB=contas.cadastrar({nome:'Cliente Loja Privado',email:'privado@exemplo.invalid',senha});
  const segredo='admin-privado-escritorio-loja-2026-123456';
- const server=criarAppAdminLaboratorio({repositorio:repo,segredo}).listen(0,'127.0.0.1');
+ const server=criarAppAdminLaboratorio({repositorio:repo,segredo,habilitarConviteLoopCheckout:true}).listen(0,'127.0.0.1');
  await once(server,'listening');
  t.after(()=>new Promise(resolve=>server.close(resolve)));
  const base='http://127.0.0.1:'+server.address().port;
