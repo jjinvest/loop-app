@@ -983,3 +983,26 @@ Foi reconhecido que o circuito **`CircuitBreakPonteV6DemoSQLite` já persiste**,
 - **0 pagamentos reais comprovados, 0 saques ou transferências reais e nenhuma margem/lucro real presumido.** A referência R$250 do livro fictício **não é preço obrigatório de outros produtos**. O dono define preços variáveis com fornecedor e sua estratégia, sem imposição do assistente.
 
 **Próxima prioridade:** reforçar auditoria de estornos/divergências **relacionados a pedidos já integrantes de ciclos persistidos**, exclusivamente para alerta e análise humana, sem cancelamento/compensação automáticos e sem autorização financeira real. A análise jurídica e contábil do modelo permanece necessária antes de qualquer lançamento.
+
+
+## 87. DECISÃO DO PROPRIETÁRIO — carrinho elegível ao LOOP, devolução voluntária do excedente e substituição de produtos (21/10/2026 Brasil; 22/10 UTC)
+
+**ATENÇÃO CRÍTICA — INSTRUÇÃO EXPRESSA E REPETIDA DO PROPRIETÁRIO, NÃO PERDER NO PRÓXIMO CHAT.** Minuta técnica detalhada: [POLITICA_COMERCIAL_REEMBOLSOS_LOOP_MINUTA_JURIDICA_22OUT2026.md](./POLITICA_COMERCIAL_REEMBOLSOS_LOOP_MINUTA_JURIDICA_22OUT2026.md). **Não é texto final aprovado para os Termos de Uso; exige advogado antes de publicar.**
+
+**INTENÇÃO COMERCIAL DO PROPRIETÁRIO, VIGENTE COMO DIRETRIZ DE NEGÓCIO:**
+1. A loja vende produtos **qualificados ou não para LOOP**. **Produto não qualificado: nada é atribuído ao LOOP**, ainda que custe R$500; não se cria posição LOOP por essa compra. Configuração de elegibilidade e quantidade mínima de cada item prevalecem.
+2. **Quando o subtotal de produtos qualificados do carrinho alcançar a referência vigente de R$250, ao concluir a compra e com o pagamento confirmado pelo servidor**, a compra deverá entrar no fluxo LOOP e criar a posição correspondente (sujeita a pacotes previamente configurados, limite de seis e confirmação individual). **Não basta o total do carrinho atingir R$250 se só houver itens inelegíveis.** Nem basta clicar “fechar carrinho” sem pagamento confirmado: sem dinheiro confirmado não se contabiliza entrada ou posição.
+3. **A intenção do proprietário é NÃO conceder estorno VOLUNTÁRIO da parcela já atribuída internamente ao LOOP.** Em concessões voluntárias da AKITEMM, o valor potencialmente reembolsável, quando cabível, deve ser **somente a parcela comercial que excede a referência LOOP**. Exemplo **produto qualificado de R$500: R$250 referência LOOP + R$250 excedente comercial**; PDF qualificado de R$250: excedente R$0. Esses exemplos são a intenção de política comercial, não direitos de retenção oponíveis à lei.
+4. **Produtos com avaria:** política operacional PREFERIDA do proprietário é **reparar/trocar/substituir o produto**, não oferecer devolução de dinheiro como primeira liberalidade. Cursos digitais terão regras específicas de oferta e entrega aprovadas depois. Nenhuma disposição pode suprimir garantias legais.
+5. **Preços finais/margens são decididos exclusivamente pelo proprietário**, conforme seção 85: PDF é o único produto comercial planejado a R$250; demais produtos terão preço acima disso e escolhido individualmente. Não fixar fórmulas ou inventar tabela de custo.
+
+**SALVAGUARDA LEGAL INEGOCIÁVEL — CONTRATO NÃO PODE EXCLUIR DIREITOS IMPERATIVOS:**
+- **Art. 49 do CDC:** em compras pela internet, aplica-se em regra direito de arrependimento em 7 dias, com devolução integral dos valores pagos a qualquer título, **inclusive quantia classificada internamente como LOOP** (ex.: R$500 integral, se legalmente devido).
+- **Art. 18 do CDC:** havendo vício, a solução por reparo/troca não pode impedir restituição ou outras opções do consumidor quando a lei as autoriza (em regra prazo de 30 dias para sanar e exceções de uso imediato).
+- **Art. 51, I, II e IV, do CDC:** cláusulas que eliminem responsabilidade/reembolso legal ou imponham desvantagem abusiva são nulas; o Decreto 7.962/2013 protege arrependimento no e-commerce.
+- PSP, chargeback, devolução compulsória ou determinação administrativa/judicial não se anulam pela separação interna de cofres.
+- Registrar essa preferência **sem dizer que retenção absoluta do dinheiro LOOP é legalmente válida**. Não inserir nos termos “jamais existe devolução” ou “consumidor não pode rejeitar reposição” como exclusões absolutas. Exigir revisão jurídica individualizada e considerar legalidade da própria vinculação compra ↔ posição ↔ benefício.
+
+**LÓGICA TÉCNICA ATUAL CONFIRMADA EM CÓDIGO:** `CarrinhoLojaLoopDemoSQLite.criar()` congela elegibilidade, quantidade mínima e subtotal elegível por item; `sincronizar()` só encaminha à ponte após evento confirmado **fictício**, não caixa bancário real. `PonteComprasConvitesDemoSQLite.processar()` exige subtotal elegível alcançar a referência e registra como venda só da loja quando a configuração não qualifica, preservando a fronteira entre fluxo AKITEMM e LOOP. Não modificar isso para permitir posição sem pagamento, nem introduzir estorno real automático.
+
+**CONTINUIDADE:** versão contratual de trabalho e referências legais no arquivo acima; PR #1 rascunho sem merge/deploy; nenhuma mudança em telas, catálogo, precificação, posições ou saque 0%; não criar Escritório do Administrador.
