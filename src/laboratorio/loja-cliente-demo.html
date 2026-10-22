@@ -64,6 +64,12 @@
       <div id="itensLojaLoop" aria-live="polite"></div>
       <p id="totalLojaLoop" class="total-loja-loop">Subtotal <strong>R$ 0,00</strong></p>
       <div class="akitemm-progresso"><label for="progressoMinimoLoop">Progresso para posição no LOOP</label><progress id="progressoMinimoLoop" value="0" max="25000"></progress><p id="orientacaoMinimoLoop" role="status"></p></div>
+      <fieldset id="akitemmEscolhaLoop" class="akitemm-escolha-loop" hidden aria-describedby="akitemmEscolhaLoopAviso">
+       <legend>Você gostaria de participar do LOOP?</legend>
+       <p id="akitemmEscolhaLoopAviso">Ao escolher sim, seu pedido qualificado poderá gerar posição no LOOP após a confirmação do pagamento. Esta escolha não altera seus direitos legais de compra e reembolso.</p>
+       <label><input type="radio" name="akitemmParticiparLoop" value="sim"> Sim, quero participar do LOOP.</label>
+       <label><input type="radio" name="akitemmParticiparLoop" value="nao"> Não, quero comprar somente na AKITEMM.</label>
+      </fieldset>
       <button type="button" id="registrarPedidoLoja" disabled>Finalizar pedido →</button>
       <p id="statusPedidoLoja" role="status" aria-live="polite"></p>
      </section>
