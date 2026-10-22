@@ -481,6 +481,9 @@
   e('loop03Sair').addEventListener('click',()=>e('botaoSairParticipante').click());
   e('loop03CopiarEscritorio').addEventListener('click',()=>copiarLinkPosicao('Escritorio'));
   e('loop03CopiarLoja').addEventListener('click',()=>copiarLinkPosicao('Loja'));
+  // A Home reutiliza a mesma rotina e as mesmas permissões de Minhas Posições.
+  e('loop03HomeCopiarEscritorio').addEventListener('click',()=>copiarLinkPosicao('Escritorio','loop03Home'));
+  e('loop03HomeCopiarLoja').addEventListener('click',()=>copiarLinkPosicao('Loja','loop03Home'));
   e('loop03TermosFechar').addEventListener('click',fecharTermosPosicao);
   e('loop03TermosFundo').addEventListener('click',ev=>{
    if(ev.target===e('loop03TermosFundo'))fecharTermosPosicao();
