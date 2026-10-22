@@ -24,7 +24,7 @@ test('opt-in no checkout exige sim ou nao e grava escolha imutavel ate depois do
  const pessoa=contas.cadastrar({nome:'Consumidor Optin',
   email:'consumidor-optin@exemplo.invalid',senha:'senha-optin-laboratorio-2026'});
  const segredo='segredo-para-checkout-optin-2026-123456789';
- const server=criarAppAdminLaboratorio({repositorio:repo,segredo})
+ const server=criarAppAdminLaboratorio({repositorio:repo,segredo,habilitarConviteLoopCheckout:true})
   .listen(0,'127.0.0.1');
  await once(server,'listening');t.after(()=>new Promise(ok=>server.close(ok)));
  const url='http://127.0.0.1:'+server.address().port;
