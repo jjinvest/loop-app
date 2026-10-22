@@ -47,7 +47,12 @@ test('LOOP 3.0 integra escritorio real e duas abas sem criar aplicativo paralelo
  assert.match(js,/ESTRATÉGIA · ORGANIZAÇÃO · RESULTADOS/);
  assert.match(js,/Giros/);
  assert.match(js,/loop03Giros24/);
- assert.match(js,/loop03Publicacoes/);
+ assert.match(js,/id="loop03BannersPista"/);
+ assert.match(js,/id="loop03LinksHome"/);
+ assert.match(js,/loop03-banner-1/);
+ assert.match(js,/loop03-banner-3/);
+ assert.match(js,/loop03-banner-4/);
+ assert.match(css,/loop03-banners-escritorio/);
  assert.doesNotMatch(js,/id="loop03-ativacoes"|loop03DistribuirIndicacao|loop03AtivacoesLista/);
  // Seis destinos exatos, uma unica lateral sem ativacoes.
  const indiceMenu=js.indexOf('<nav aria-label="Áreas do escritório">');
@@ -165,11 +170,14 @@ test('marcos do ciclo usam contagem REAL do motor de laboratorio, sem registrar 
  assert.match(shell,/i<etapa/);
  assert.match(shell,/andamento ainda nao disponivel/);
  // Nenhum contador do motor deve ser simulado com temporizador.
- // O UNICO setInterval permitido nesta tela troca FOTOS REAIS da AKITEMM,
- // sem criar pedido, saldo, movimento do tabuleiro ou evento financeiro.
+ // Os únicos temporizadores desta tela alternam banners publicados ou
+ // fotos reais da loja. Nunca simulam giros, saldo, posições ou pagamentos.
  assert.match(shell,/if\(vitrineLista\.length>1\)intervaloVitrine=setInterval/);
- const semRotacaoVitrine=shell.replace(/let vitrineLista=\[\];[\s\S]*?function encerrar\(\)/,'function encerrar()');
- assert.doesNotMatch(semRotacaoVitrine,/setInterval\(/);
+ assert.match(shell,/if\(bannersSlides\.length>1\)intervaloBanners=setInterval/);
+ const semRotacoes=shell
+  .replace(/let intervaloBanners=null,[\s\S]*?let vitrineLista=\[\];/,'let vitrineLista=[];')
+  .replace(/let vitrineLista=\[\];[\s\S]*?function encerrar\(\)/,'function encerrar()');
+ assert.doesNotMatch(semRotacoes,/setInterval\(/);
 });
 
 
