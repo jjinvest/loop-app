@@ -10,6 +10,7 @@ const {chromium}=require('playwright');
 const {RepositorioCatalogoSQLite}=require('../src/domain/repositorio-catalogo-sqlite');
 const {ContasParticipantesDemoSQLite}=require('../src/domain/contas-participantes-demo-sqlite');
 const {criarAppAdminLaboratorio}=require('../src/laboratorio/servidor-catalogo');
+const {PublicacoesHomeLoopV6DemoSQLite}=require('../src/domain/publicacoes-home-loop-v6-demo-sqlite');
 const {gerarPngTeste}=require('./fixtures/gerar-png-teste');
 
 const pasta=path.join(__dirname,'..','artifacts','mobile-loop');
@@ -2238,6 +2239,74 @@ async function main(){
    await ctxGeral.close();
   }
   console.log('LOOP_JORNADAS_CLIENTES='+JSON.stringify(jornadasGerais));
+
+
+  // Fotos reais do navegador do ESCRITÓRIO DO PARTICIPANTE, alimentadas por
+  // quatro publicações de laboratório na MESMA fonte SQLite administrativa.
+  // Não são banners comerciais publicados nem alteração no administrador.
+  const anunciosTeste=new PublicacoesHomeLoopV6DemoSQLite({banco:banco.banco});
+  for(let i=1;i<=4;i++)anunciosTeste.publicar({
+   tipo:i%2?'AKITEMM':'COMUNICADO',
+   titulo:'Banner de laboratório '+i+' - versão responsiva',
+   descricao:'Conteúdo fictício apenas para validar a exibição responsiva.',
+   linkDestino:i%2?'/loja':'/escritorio'
+  });
+  const contextoBanner=await browser.newContext({
+   viewport:{width:390,height:812},deviceScaleFactor:1,isMobile:true,hasTouch:true
+  });
+  const paginaBanner=await contextoBanner.newPage();
+  const errosBanner=[];
+  paginaBanner.on('pageerror',erro=>errosBanner.push(erro.message));
+  await paginaBanner.goto(base+'/laboratorio/participante',{waitUntil:'networkidle'});
+  await paginaBanner.locator('#nomeParticipante').fill(titular.nome);
+  await paginaBanner.locator('#senhaParticipante').fill(senha);
+  await paginaBanner.locator('#botaoEntrarParticipante').click();
+  await paginaBanner.locator('#loop03BannersPista .loop03-banner-1:not([hidden])').waitFor();
+  assert.equal(await paginaBanner.locator('#loop03BannersPista .loop03-banner-slide').count(),4);
+  assert.equal(await paginaBanner.locator('#loop03BannersPista .loop03-banner-slide:not([hidden])').count(),1);
+  assert.equal(await paginaBanner.locator('#loop03BannersPista .loop03-banner-1:not([hidden]) .loop03-banner-quadro').count(),1);
+  assert.equal(await paginaBanner.locator('#loop03LinksHome > summary').innerText(),'Meus Links');
+  await paginaBanner.locator('#loop03LinksHome > summary').click();
+  assert.equal(await paginaBanner.locator('#loop03HomeLinkEscritorio').inputValue(),
+   await paginaBanner.locator('#loop03LinkEscritorio').inputValue());
+  assert.equal(await paginaBanner.locator('#loop03HomeLinkLoja').inputValue(),
+   await paginaBanner.locator('#loop03LinkLoja').inputValue());
+  assert.match(await paginaBanner.locator('#loop03HomeLinkLoja').inputValue(),/\\/loja\\/TesteUser$/);
+  await conferirLargura(paginaBanner,390,'escritorio-home-banners-celular',{captura:false});
+  await paginaBanner.screenshot({
+   path:path.join(pasta,'ESCRITORIO_BANNER_INTEIRO_MEUS_LINKS_CELULAR_390.png'),fullPage:true
+  });
+  await paginaBanner.waitForTimeout(6700);
+  assert.equal(await paginaBanner.locator('.loop03-banner-3:not([hidden]) .loop03-banner-quadro').count(),3);
+  await paginaBanner.screenshot({
+   path:path.join(pasta,'ESCRITORIO_BANNER_TRES_CELULAR_390.png'),fullPage:true
+  });
+  await paginaBanner.waitForTimeout(6700);
+  assert.equal(await paginaBanner.locator('.loop03-banner-4:not([hidden]) .loop03-banner-quadro').count(),4);
+  await conferirLargura(paginaBanner,320,'escritorio-home-banners-celular-320',{captura:false});
+  await paginaBanner.screenshot({
+   path:path.join(pasta,'ESCRITORIO_BANNER_QUATRO_CELULAR_320.png'),fullPage:true
+  });
+  // Na mesma conta, conferir a versão larga e a rotação sem intervenção.
+  await paginaBanner.setViewportSize({width:1254,height:900});
+  await paginaBanner.reload({waitUntil:'networkidle'});
+  await paginaBanner.locator('#loop03BannersPista .loop03-banner-1:not([hidden])').waitFor();
+  await conferirLargura(paginaBanner,1254,'escritorio-home-banners-desktop',{captura:false});
+  await paginaBanner.screenshot({
+   path:path.join(pasta,'ESCRITORIO_BANNER_INTEIRO_DESKTOP_1254.png'),fullPage:true
+  });
+  await paginaBanner.waitForTimeout(6700);
+  assert.equal(await paginaBanner.locator('.loop03-banner-3:not([hidden]) .loop03-banner-quadro').count(),3);
+  await paginaBanner.screenshot({
+   path:path.join(pasta,'ESCRITORIO_BANNER_TRES_DESKTOP_1254.png'),fullPage:true
+  });
+  await paginaBanner.waitForTimeout(6700);
+  assert.equal(await paginaBanner.locator('.loop03-banner-4:not([hidden]) .loop03-banner-quadro').count(),4);
+  await paginaBanner.screenshot({
+   path:path.join(pasta,'ESCRITORIO_BANNER_QUATRO_DESKTOP_1254.png'),fullPage:true
+  });
+  assert.deepEqual(errosBanner,[],'Nenhum erro de script no carrossel do escritório');
+  await contextoBanner.close();
 
   assert.deepEqual(erros,[], 'Erros de execucao no navegador');
   const relatorio={status:'APROVADO',
