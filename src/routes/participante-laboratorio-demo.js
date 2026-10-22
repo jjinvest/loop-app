@@ -432,8 +432,9 @@ function criarRouterParticipanteDemo({contas,ponte,sessoes=null,adesoes=null,car
    if(!carrinhos)return res.status(501).json({erro:'LOJA_NAO_CONFIGURADA'});
    if(!req.is('application/json'))return res.status(415).json({erro:'USE_APPLICATION_JSON'});
    if(!req.body||typeof req.body!=='object'||Array.isArray(req.body)||
-    Object.keys(req.body).join(',')!=='itens'){
-    return res.status(400).json({erro:'SOMENTE_ITENS_PERMITIDOS'});
+    Object.keys(req.body).sort().join(',')!=='itens,participarLoop'||
+    typeof req.body.participarLoop!=='boolean'){
+    return res.status(400).json({erro:'ITENS_E_ESCOLHA_LOOP_OBRIGATORIOS'});
    }
    try{
     const contaId=gerenciador.identificar(lerCookie(req));
@@ -455,7 +456,8 @@ function criarRouterParticipanteDemo({contas,ponte,sessoes=null,adesoes=null,car
     if(contemFisico&&!endereco)
      return res.status(409).json({erro:'CADASTRE_ENTREGA_ANTES_DO_PEDIDO'});
     const pedido=carrinhos.criar({
-     pedidoId:'carrinho-'+randomUUID(),contaId,itens:req.body.itens
+     pedidoId:'carrinho-'+randomUUID(),contaId,itens:req.body.itens,
+     participarLoop:req.body.participarLoop
     });
     if(contemFisico){
      contas.banco.prepare(`INSERT INTO admin_akitemm_entrega_pedido_demo
@@ -467,7 +469,7 @@ function criarRouterParticipanteDemo({contas,ponte,sessoes=null,adesoes=null,car
      posicaoCriada:false,pagamentoReal:false
     });
    }catch(e){
-    if(['INVALIDO','VALOR_INVALIDO'].includes(e.codigo))
+    if(['INVALIDO','VALOR_INVALIDO','OPCAO_LOOP_INELEGIVEL','OPCAO_LOOP_INVALIDA'].includes(e.codigo))
      return res.status(400).json({erro:e.codigo});
     if(e.codigo==='PRODUTO_INVALIDO')return res.status(409).json({erro:e.codigo});
     if(['LIMITE_ATIVO','CONFLITO'].includes(e.codigo))
