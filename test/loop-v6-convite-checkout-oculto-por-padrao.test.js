@@ -1,14 +1,15 @@
 'use strict';
 // Novo requisito do dono: o convite para LOOP existe, porem OCULTO por padrao.
-// Na ausencia de liberacao expressa do operador, comprar fica so na AKITEMM.
-// POST forjado SIM nao pode ligar o recurso; nenhuma tela principal muda.
+// A pergunta fica invisivel; o pedido qualificado e confirmado continua
+// gerando a posicao automaticamente. A ativacao individual permanece pendente.
+// POST forjado SIM nao pode ativar a pergunta; nenhuma outra tela muda.
 const {test}=require('node:test');
 const assert=require('node:assert/strict');
 const {once}=require('node:events');
 const {RepositorioCatalogoSQLite}=require('../src/domain/repositorio-catalogo-sqlite');
 const {ContasParticipantesDemoSQLite}=require('../src/domain/contas-participantes-demo-sqlite');
 const {criarAppAdminLaboratorio}=require('../src/laboratorio/servidor-catalogo');
-test('convite LOOP fica oculto por padrao: checkout continua e SIM forjado nao cria vaga',async t=>{
+test('convite oculto preserva a criacao automatica de posicao ao pagar',async t=>{
  const repo=new RepositorioCatalogoSQLite({caminho:':memory:'});
  t.after(()=>repo.fechar());
  repo.salvar({produto:{id:'pdf-convite-oculto',nome:'PDF Teste Convite Oculto',
@@ -47,14 +48,15 @@ test('convite LOOP fica oculto por padrao: checkout continua e SIM forjado nao c
  assert.equal(forjado.status,409);
  assert.equal(forjado.json.erro,'CONVITE_LOOP_AINDA_OCULTO');
  assert.equal(repo.banco.prepare('SELECT COUNT(*) AS n FROM admin_carrinho_loop_demo').get().n,0);
- const comum=await criar(false);
+ const comum=await criar(undefined); // Mesmo payload original, somente itens.
  assert.equal(comum.status,201);
  assert.equal(comum.json.pedido.totalCentavos,25000);
- assert.equal(comum.json.pedido.participarLoop,false);
- assert.equal(comum.json.pedido.escolhaLoopExpressa,true);
- assert.equal(comum.json.pedido.totalElegivelLoopCentavos,0);
+ assert.equal(comum.json.pedido.participarLoop,null);
+ assert.equal(comum.json.pedido.escolhaLoopExpressa,false);
+ assert.equal(comum.json.pedido.totalElegivelLoopCentavos,25000);
  assert.equal(comum.json.pedido.subtotalQualificadoOriginalCentavos,25000);
- assert.equal(comum.json.pedido.posicoesSolicitadas,0);
+ assert.equal(comum.json.pedido.posicoesSolicitadas,1);
+ assert.equal(comum.json.pedido.posicaoCriada,false);
  const pedidoId=comum.json.pedido.pedidoId;
  const confirmado=await fetch(base+'/api/admin/carrinho-loop-demo/'+pedidoId+'/eventos',{
   method:'POST',
@@ -63,10 +65,25 @@ test('convite LOOP fica oculto por padrao: checkout continua e SIM forjado nao c
    tipo:'CONFIRMAR_FICTICIO'})});
  assert.equal(confirmado.status,200);
  const resultado=await confirmado.json();
- assert.equal(resultado.integracao.posicaoCriada,false);
- assert.equal(resultado.integracao.compraElegivelLoop,false);
+ assert.equal(resultado.integracao.posicaoCriada,true);
+ assert.equal(resultado.integracao.compraElegivelLoop,true);
+ assert.equal(resultado.integracao.statusAdesao,'PENDENTE');
  const minha=await fetch(api+'/minha-conta',{headers:{Cookie:cookie}});
- assert.equal((await minha.json()).posicoes.length,0);
+ assert.equal((await minha.json()).posicoes.length,1);
+ // Compativel com a API antiga que enviava false enquanto o campo nao aparecia:
+ // false invisivel nao pode cancelar a qualificacao original.
+ const antigo=await criar(false);
+ assert.equal(antigo.status,201);
+ assert.equal(antigo.json.pedido.participarLoop,null);
+ assert.equal(antigo.json.pedido.totalElegivelLoopCentavos,25000);
+ const confAntigo=await fetch(base+'/api/admin/carrinho-loop-demo/'+antigo.json.pedido.pedidoId+'/eventos',{
+  method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+adminToken},
+  body:JSON.stringify({eventoId:'pagamento-optin-oculto-demo-002',tipo:'CONFIRMAR_FICTICIO'})
+ });
+ assert.equal(confAntigo.status,200);
+ assert.equal((await confAntigo.json()).integracao.posicaoCriada,true);
+ const visao=await fetch(api+'/minha-conta',{headers:{Cookie:cookie}});
+ assert.equal((await visao.json()).posicoes.length,2);
  const html=await(await fetch(base+'/laboratorio/loja')).text();
  const js=await(await fetch(base+'/laboratorio/loja.js')).text();
  assert.match(html,/<fieldset id="akitemmEscolhaLoop"[^>]+ hidden\b/);
@@ -76,8 +93,10 @@ test('convite LOOP fica oculto por padrao: checkout continua e SIM forjado nao c
  assert.equal(Object.values(repo.banco.prepare('PRAGMA integrity_check').get())[0],'ok');
  console.log('LOOP_CONVITE_OCULTO='+JSON.stringify({
   defaultOculto:true,checkoutNormal:true,ligacaoFalsificadaRejeitada:true,
-  pagamentoFicticioSemVaga:true,
-  posicoes:0,tarifaOuCreditoReal:0,
-  habilitacaoExigeAcaoDoProprietario:true
+  compraQualificadaConfirmadaCriaPosicao:true,
+  ativacaoIndividualContinuaPendente:true,
+  semOptinAutomaticaComoBloqueio:true,
+  posicoes:2,pagamentoReal:false,
+  habilitacaoDaPerguntaDependeDoProprietario:true
  }));
 });
