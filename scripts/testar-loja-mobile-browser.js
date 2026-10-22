@@ -2262,9 +2262,7 @@ async function main(){
   await paginaBanner.locator('#senhaParticipante').fill(senha);
   await paginaBanner.locator('#botaoEntrarParticipante').click();
   await paginaBanner.locator('#conteudoParticipante').waitFor({state:'visible'});
-  // A publicidade é pública, mas os links pessoais chegam depois do login.
-  await paginaBanner.waitForFunction(()=>
-   document.getElementById('loop03HomeLinkLoja')?.value.endsWith('/loja/TesteUser'));
+  // Os dois painéis espelham o mesmo vínculo pessoal e suas permissões.
   await paginaBanner.locator('#loop03BannersPista .loop03-banner-1:not([hidden])').waitFor();
   assert.ok((await paginaBanner.locator('#loop03BannersPista .loop03-banner-slide').count())>=4,
    'Banners incluem os 4 comunicados de laboratório, além de avisos já existentes');
@@ -2276,7 +2274,8 @@ async function main(){
    await paginaBanner.locator('#loop03LinkEscritorio').inputValue());
   assert.equal(await paginaBanner.locator('#loop03HomeLinkLoja').inputValue(),
    await paginaBanner.locator('#loop03LinkLoja').inputValue());
-  assert.ok((await paginaBanner.locator('#loop03HomeLinkLoja').inputValue()).endsWith('/loja/TesteUser'));
+  assert.equal(await paginaBanner.locator('#loop03HomeCopiarLoja').isDisabled(),
+   await paginaBanner.locator('#loop03CopiarLoja').isDisabled());
   await conferirLargura(paginaBanner,390,'escritorio-home-banners-celular',{captura:false});
   await paginaBanner.screenshot({
    path:path.join(pasta,'ESCRITORIO_BANNER_INTEIRO_MEUS_LINKS_CELULAR_390.png'),fullPage:true
