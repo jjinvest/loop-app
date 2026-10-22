@@ -166,7 +166,7 @@ Atualizado em 22/10/2026. **Esta é a porta de entrada para retomar o projeto ra
 
 ## [VALIDADO EM LABORATÓRIO — FLUXO PIX E WEBHOOK ASAAS] (22/10/2026)
 - **Seção 98 do documento-mestre**: 16 testes novos, 9 de cobrança Pix via adaptador Asaas com respostas simuladas e 7 do webhook HTTP local. Correção de proteção contra status antigo `PENDING` sobrescrever recebimento já informado; estornos preservados; idempotência SQLite, token de webhook, HTTP 200 após persistência, rota desligada por padrão, ausente no app público.
-- **[GitHub Actions 39838716633: SUCCESS, 524/524 testes e zero falhas](https://github.com/jjinvest/loop-app/actions/runs/39838716633)**, código-base `b80b6fa4`. Navegador [39838716464](https://github.com/jjinvest/loop-app/actions/runs/39838716464) em verificação separada.
+- **[GitHub Actions 39838716633: SUCCESS, 524/524 testes e zero falhas](https://github.com/jjinvest/loop-app/actions/runs/39838716633)**, código-base `b80b6fa4`. **[Navegador 39838716464](https://github.com/jjinvest/loop-app/actions/runs/39838716464): SUCCESS**, celular, tablet e computador aprovados.
 - **NÃO É PIX REAL NEM HOMOLOGAÇÃO LIVE DE COBRANÇA**: até agora houve apenas GET de autenticação do Sandbox; criação de cliente/charge/confirmar pagamento diretamente no Asaas Sandbox e conciliar extrato ainda faltam, assim como aprovação PSP/jurídica/produção. Chave secreta do Asaas não deve transitar por PR não protegido. Sem deploy, merge ou mudanças no motor/telas.
 
 ## [ADIADO] Escritório do Administrador — conceito aprovado, criação NÃO autorizada ainda
