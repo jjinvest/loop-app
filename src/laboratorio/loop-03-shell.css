@@ -556,6 +556,15 @@ body.loop03-logado{
 #loop03-home .loop03-banner-quadro img{
  position:absolute;inset:0;width:100%;height:100%;object-fit:cover;
 }
+
+#loop03-home .loop03-banner-1 .loop03-banner-quadro:has(img){background:#090f25}
+#loop03-home .loop03-banner-1 .loop03-banner-quadro img{object-fit:contain}
+#loop03-home .loop03-banner-1 .loop03-banner-quadro:has(img)::after{display:none}
+/* Foto inteira livre de texto sobreposto; o titulo segue acessível. */
+#loop03-home .loop03-banner-1 .loop03-banner-quadro:has(img) .loop03-banner-conteudo{
+ position:absolute;width:1px;height:1px;padding:0;margin:-1px;
+ overflow:hidden;clip-path:inset(50%);white-space:nowrap;border:0;
+}
 #loop03-home .loop03-banner-quadro:has(img)::after{
  content:"";position:absolute;inset:25% 0 0;
  background:linear-gradient(transparent,#07071bea 90%);pointer-events:none;
