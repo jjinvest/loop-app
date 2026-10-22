@@ -120,25 +120,20 @@
       <div class="loop03-hero-escritorio" aria-label="Escritório Virtual LOOP 3.0">
         <div class="loop03-hero-titulo">ESCRITÓRIO <span>VIRTUAL</span></div>
         <p class="loop03-hero-subtitulo">GERENCIE <b>·</b> ACOMPANHE <b>·</b> EVOLUA</p>
-        <div class="loop03-cenario-escritorio" aria-hidden="true">
-         <div class="loop03-cenario-luz loop03-cenario-luz-a"></div>
-         <div class="loop03-cenario-luz loop03-cenario-luz-b"></div>
-         <div class="loop03-cenario-monitor"><div class="loop03-cenario-tela"><span>LOOP <em>3.0</em></span><small>ACOMPANHE SUAS POSIÇÕES</small></div><div class="loop03-cenario-base"></div></div>
-         <div class="loop03-cenario-plantas" aria-hidden="true">
-          <span class="loop03-planta-folha f1"></span><span class="loop03-planta-folha f2"></span>
-          <span class="loop03-planta-folha f3"></span><span class="loop03-planta-folha f4"></span>
-          <span class="loop03-planta-folha f5"></span><span class="loop03-planta-vaso"></span>
-         </div>
-         <div class="loop03-cenario-livros" aria-hidden="true"><span></span><span></span><span></span></div>
-         <div class="loop03-cenario-caneca" aria-hidden="true"><span>LOOP</span></div>
-         <div class="loop03-cenario-caderno" aria-hidden="true"><span>∞</span></div>
-         <div class="loop03-cenario-canetas" aria-hidden="true"><span></span><span></span><span></span></div>
-         <div class="loop03-cenario-mesa"></div>
+        <div id="loop03BannersEscritorio" class="loop03-banners-escritorio" role="region" aria-roledescription="carrossel" aria-label="Banners automáticos do Escritório Virtual">
+         <div id="loop03BannersPista" class="loop03-banners-pista"><p class="loop03-banners-vazio">Nenhum banner publicado no momento.</p></div>
+         <div id="loop03BannersMarcas" class="loop03-banners-marcas" aria-hidden="true"></div>
         </div>
         <button type="button" data-loop03-aba="posicoes" class="loop03-hero-botao">ACOMPANHAR MINHAS POSIÇÕES →</button>
        </div>
-       <div class="loop03-mural-titulo">COMUNICADOS DA ADMINISTRAÇÃO</div>
-       <div id="loop03Publicacoes" class="loop03-publicacoes" aria-live="polite"><p>Os banners selecionados pela administração aparecerão aqui.</p></div>
+       <details id="loop03LinksHome" class="loop03-links-posicoes loop03-links-home" aria-label="Meus links personalizados">
+        <summary>Meus Links</summary>
+        <div class="loop03-detalhes loop03-painel-links" aria-label="Dois links personalizados">
+         <div class="loop03-link-compartilhar"><label for="loop03HomeLinkEscritorio">Escritório Virtual</label><div class="loop03-campo-link"><input id="loop03HomeLinkEscritorio" type="text" readonly spellcheck="false" aria-label="Link pessoal do Escritório Virtual"><button type="button" id="loop03HomeCopiarEscritorio" class="loop03-botao-copiar" aria-label="Copiar link do Escritório Virtual" disabled>⧉</button></div></div>
+         <div class="loop03-link-compartilhar"><label for="loop03HomeLinkLoja">AKITEMM · Loja</label><div class="loop03-campo-link"><input id="loop03HomeLinkLoja" type="text" readonly spellcheck="false" aria-label="Link pessoal da AKITEMM"><button type="button" id="loop03HomeCopiarLoja" class="loop03-botao-copiar" aria-label="Copiar link da AKITEMM" disabled>⧉</button></div></div>
+         <small id="loop03HomeStatusCopiarLinks" role="status" aria-live="polite"></small>
+        </div>
+       </details>
      </section>
      <section id="loop03-tabuleiro" class="loop03-pagina" aria-label="Tabuleiro">
       <header class="loop03-titulo-pagina"><div><small>LOOP · MOTOR DE FILAS</small><h2>Tabuleiro LOOP 3.0</h2></div><span class="loop03-luz">● Ciclo em andamento</span></header>
@@ -921,19 +916,20 @@
  const aceitesPosicao=new Map();
  let cpfRascunho='';
  function atualizarLinksPosicao(link){
-  // Não inserir nome de teste nem link com token: o campo do cliente
-  // permanece vazio até que ele defina seu próprio nick no cadastro.
+  // Apenas as mesmas URLs da conta, apresentadas em duas abas.
   const valido=!!(link?.linkEscritorioCurto&&link?.linkLojaCurto);
   for(const [destino,caminho] of [['Escritorio',link?.linkEscritorioCurto],['Loja',link?.linkLojaCurto]]){
-   e('loop03Link'+destino).value=valido?location.origin+caminho:'';
-   const botao=e('loop03Copiar'+destino);
-   botao.disabled=!valido||!link.ativo;
-   botao.title=!valido?'Link indisponível':!link.ativo?'Disponível após a primeira compra confirmada':'Copiar link';
+   for(const prefixo of ['loop03','loop03Home']){
+    e(prefixo+'Link'+destino).value=valido?location.origin+caminho:'';
+    const botao=e(prefixo+'Copiar'+destino);
+    botao.disabled=!valido||!link.ativo;
+    botao.title=!valido?'Link indisponível':!link.ativo?'Disponível após a primeira compra confirmada':'Copiar link';
+   }
   }
  }
- async function copiarLinkPosicao(destino){
-  const campo=e('loop03Link'+destino),aviso=e('loop03StatusCopiarLinks');
-  if(!campo.value||e('loop03Copiar'+destino).disabled)return;
+ async function copiarLinkPosicao(destino,prefixo='loop03'){
+  const campo=e(prefixo+'Link'+destino),aviso=e(prefixo+'StatusCopiarLinks');
+  if(!campo.value||e(prefixo+'Copiar'+destino).disabled)return;
   try{
    await navigator.clipboard.writeText(campo.value);
    aviso.textContent='Link '+(destino==='Loja'?'AKITEMM':'Escritório Virtual')+' copiado.';
@@ -1516,33 +1512,79 @@
    alvo.textContent='Não foi possível consultar as notificações agora.';
   }
  }
+ // Somente as publicações reais da fonte administrativa existente.
+ let intervaloBanners=null,bannersSlides=[],bannerIndice=0;
+ function pararBanners(){
+  if(intervaloBanners!==null){clearInterval(intervaloBanners);intervaloBanners=null;}
+ }
+ function exibirBanner(indice){
+  if(!bannersSlides.length)return;
+  bannerIndice=indice%bannersSlides.length;
+  for(let i=0;i<bannersSlides.length;i++)bannersSlides[i].hidden=i!==bannerIndice;
+  const marcas=e('loop03BannersMarcas')?.children||[];
+  for(let i=0;i<marcas.length;i++)
+   marcas[i].classList.toggle('loop03-banner-marca-ativa',i===bannerIndice);
+ }
+ function montarBannersEscritorio(publicacoes){
+  pararBanners();
+  const pista=e('loop03BannersPista'),marcas=e('loop03BannersMarcas');
+  if(!pista||!marcas)return;
+  pista.replaceChildren();marcas.replaceChildren();bannersSlides=[];bannerIndice=0;
+  const publicadas=Array.isArray(publicacoes)?publicacoes.filter(pub=>
+   pub&&typeof pub.titulo==='string'&&pub.titulo.trim()):[];
+  if(!publicadas.length){
+   const vazio=document.createElement('p');vazio.className='loop03-banners-vazio';
+   vazio.textContent='Nenhum banner publicado no momento.';
+   pista.append(vazio);return;
+  }
+  // Varia o formato 1 / 3 / 4 conforme haja conteúdo, sem anúncios inventados.
+  const formatos=publicadas.length>=4?[1,3,4]:publicadas.length>=3?[1,3]:[1];
+  for(let i=0;i<publicadas.length;i++){
+   const quantidade=formatos[i%formatos.length];
+   const slide=document.createElement('div');
+   slide.className='loop03-banner-slide loop03-banner-'+quantidade;
+   slide.hidden=true;
+   slide.setAttribute('role','group');
+   slide.setAttribute('aria-label','Banner '+(i+1)+' de '+publicadas.length);
+   for(let j=0;j<quantidade;j++){
+    const pub=publicadas[(i+j)%publicadas.length];
+    const comLink=['/loja','/escritorio'].includes(pub.linkDestino);
+    const quadro=document.createElement(comLink?'a':'article');
+    quadro.className='loop03-banner-quadro';
+    if(comLink)quadro.href=pub.linkDestino;
+    if(typeof pub.imagemCaminho==='string'&&
+       /^\/imagens\/catalogo\/[a-zA-Z0-9_-]+\.(?:webp|png|jpe?g)$/.test(pub.imagemCaminho)){
+     const imagem=document.createElement('img');
+     imagem.src=pub.imagemCaminho;imagem.alt='';imagem.loading='lazy';quadro.append(imagem);
+    }
+    const dados=document.createElement('span');dados.className='loop03-banner-conteudo';
+    const categoria=document.createElement('small');categoria.textContent=pub.tipo||'COMUNICADO';
+    const titulo=document.createElement('strong');titulo.textContent=pub.titulo;
+    const descricao=document.createElement('span');descricao.className='loop03-banner-descricao';
+    descricao.textContent=pub.descricao||'';
+    dados.append(categoria,titulo,descricao);quadro.append(dados);slide.append(quadro);
+   }
+   pista.append(slide);bannersSlides.push(slide);
+   const marca=document.createElement('span');marcas.append(marca);
+  }
+  marcas.hidden=bannersSlides.length<2;
+  exibirBanner(0);
+  if(bannersSlides.length>1)intervaloBanners=setInterval(()=>{
+   if(document.visibilityState==='visible'&&abaAtual==='home'&&
+      !window.matchMedia('(prefers-reduced-motion: reduce)').matches)
+    exibirBanner(bannerIndice+1);
+  },6500);
+ }
  async function carregarPublicacoes(){
-  const target=e('loop03Publicacoes');
   try{
    const resp=await fetch('/api/laboratorio/loop03/publicacoes',{cache:'no-store'});
    if(!resp.ok)throw Error('Indisponível');
    const dados=await resp.json();
-   target.replaceChildren();
-   if(!dados.publicacoes.length){
-    const vazio=document.createElement('p');
-    vazio.textContent='Nenhum banner publicado pela administração por enquanto.';
-    target.append(vazio);return;
-   }
-   for(const pub of dados.publicacoes){
-    const card=document.createElement('article');card.className='loop03-publicacao';
-    if(pub.imagemCaminho){const img=document.createElement('img');img.src=pub.imagemCaminho;img.alt=pub.titulo;img.loading='lazy';card.append(img);}
-    const tipo=document.createElement('small');tipo.textContent=pub.tipo;
-    const title=document.createElement('h3');title.textContent=pub.titulo;
-    const descricao=document.createElement('p');descricao.textContent=pub.descricao;
-    card.append(tipo,title,descricao);
-    if(pub.linkDestino&&['/loja','/escritorio'].includes(pub.linkDestino)){
-     const a=document.createElement('a');a.href=pub.linkDestino;
-     a.textContent=pub.linkDestino==='/loja'?'Ver na AKITEMM':'Abrir conteúdo';card.append(a);
-    }
-    target.append(card);
-   }
+   montarBannersEscritorio(dados.publicacoes);
   }catch{
-   target.textContent='Não foi possível consultar os comunicados. Tente novamente mais tarde.';
+   montarBannersEscritorio([]);
+   const vazio=e('loop03BannersPista')?.querySelector('.loop03-banners-vazio');
+   if(vazio)vazio.textContent='Não foi possível consultar os banners agora.';
   }
  }
 
@@ -1587,6 +1629,7 @@
   },6000);
  }
  function encerrar(){
+  pararBanners();
   fecharPerfilSobreposto();
   fecharDetalheIndicador();
   fecharNotificacoes();
