@@ -37,7 +37,7 @@ test('regra irrevogavel: cada pedido pago isolado; R$180 ativa link sem posicao;
  const cookie=login.headers.get('set-cookie').split(';')[0];
  const pedido=async(itens)=>{
   const r=await fetch(participante+'/loja/pedidos',{method:'POST',
-   headers:{...hCliente,Cookie:cookie},body:JSON.stringify({itens})});
+   headers:{...hCliente,Cookie:cookie},body:JSON.stringify({itens,participarLoop:itens.some(i=>i.produtoId==='produto-akitemm-190'&&i.quantidade>=2)})});
   assert.equal(r.status,201);
   return (await r.json()).pedido;
  };
