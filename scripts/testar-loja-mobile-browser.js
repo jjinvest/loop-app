@@ -79,7 +79,7 @@ async function main(){
   const titular=contas.cadastrar({
    nome:'Comprador Mobile Ficticio',apelido:'TesteUser',email:'mobile@exemplo.invalid',senha
   });
-  servidor=criarAppAdminLaboratorio({repositorio:banco,segredo:admin})
+  servidor=criarAppAdminLaboratorio({repositorio:banco,segredo:admin,habilitarConviteLoopCheckout:true})
    .listen(0,'127.0.0.1');
   await once(servidor,'listening');
   const base='http://127.0.0.1:'+servidor.address().port;
