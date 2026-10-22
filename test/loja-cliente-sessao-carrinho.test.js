@@ -38,7 +38,7 @@ test('loja individual: cliente prepara pedido sem admin; so admin ficticio confi
  };
  assert.equal((await teste(loja+'/loja/catalogo')).status,401);
  assert.equal((await teste(loja+'/loja/pedidos','POST',null,
-  {itens:[{produtoId:'loja-produto-100',quantidade:1}]},frontHeader)).status,401);
+  {itens:[{produtoId:'loja-produto-100',quantidade:1}],participarLoop:false},frontHeader)).status,401);
  const logar=async nome=>{
   const resp=await teste(loja+'/entrar','POST',null,{nome,senha},frontHeader);
   assert.equal(resp.status,200);
@@ -55,7 +55,7 @@ test('loja individual: cliente prepara pedido sem admin; so admin ficticio confi
  assert.equal(JSON.stringify(catalogo.body).includes('sessao-um@'),false);
  const itens=[{produtoId:'loja-produto-100',quantidade:1},
   {produtoId:'loja-produto-150',quantidade:1}];
- const criacao=await teste(loja+'/loja/pedidos','POST',cookieA,{itens},frontHeader);
+ const criacao=await teste(loja+'/loja/pedidos','POST',cookieA,{itens,participarLoop:true},frontHeader);
  assert.equal(criacao.status,201);
  assert.equal(criacao.body.pedido.totalCentavos,25000);
  assert.equal(criacao.body.pedido.itens.length,2);
@@ -142,7 +142,7 @@ test('comprador nao acessa itens fora do catalogo e valores de pedidos sao conge
  const cookie=login.headers.get('set-cookie').split(';')[0];
  const enviar=async itens=>{
   const r=await fetch(url+'/api/laboratorio/participante/loja/pedidos',{
-   method:'POST',headers:{...front,Cookie:cookie},body:JSON.stringify({itens})});
+   method:'POST',headers:{...front,Cookie:cookie},body:JSON.stringify({itens,participarLoop:false})});
   return {status:r.status,data:await r.json()};
  };
  assert.equal((await enviar([{produtoId:'inventado',quantidade:1}])).status,409);
