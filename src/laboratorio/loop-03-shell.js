@@ -124,7 +124,6 @@
          <div id="loop03BannersPista" class="loop03-banners-pista"><p class="loop03-banners-vazio">Nenhum banner publicado no momento.</p></div>
          <div id="loop03BannersMarcas" class="loop03-banners-marcas" aria-hidden="true"></div>
         </div>
-        <button type="button" data-loop03-aba="posicoes" class="loop03-hero-botao">ACOMPANHAR MINHAS POSIÇÕES →</button>
        </div>
        <details id="loop03LinksHome" class="loop03-links-posicoes loop03-links-home" aria-label="Meus links personalizados">
         <summary>Meus Links</summary>
@@ -462,8 +461,7 @@
    e('loop03-perfil').append(informacoes);
   }
   // Cartao anterior de atalho à loja: preservar a mesma loja.
-  const atalhoLoja=[...root.querySelectorAll('section.cartao-participante')]
-   .find(n=>n.querySelector('h2')?.textContent==='Minha loja de testes');
+  const atalhoLoja=e('secaoAkitemmEscritorio');
   if(atalhoLoja)e('loop03-home').append(atalhoLoja);
   const antiga=root.querySelector('.atalhos-participante');
   if(antiga)antiga.classList.add('loop03-atalhos-legados');
@@ -1519,9 +1517,11 @@
  }
  // Somente as publicações reais da fonte administrativa existente.
  let intervaloBanners=null,bannersSlides=[],bannerIndice=0;
+ let intervaloBannersLoja=null,bannersLojaSlides=[],bannerLojaIndice=0;
  let bannersRecarregarNoLogin=false;
  function pararBanners(){
   if(intervaloBanners!==null){clearInterval(intervaloBanners);intervaloBanners=null;}
+  if(intervaloBannersLoja!==null){clearInterval(intervaloBannersLoja);intervaloBannersLoja=null;}
  }
  function exibirBanner(indice){
   if(!bannersSlides.length)return;
@@ -1581,16 +1581,69 @@
     exibirBanner(bannerIndice+1);
   },6500);
  }
+ // Segundo espaço do escritório: banners AKITEMM inteiriços, sem criar anúncios fictícios.
+ function montarBannersLoja(publicacoes){
+  const pista=e('loop03BannersLojaPista'),marcas=e('loop03BannersLojaMarcas');
+  if(!pista||!marcas)return;
+  pista.replaceChildren();marcas.replaceChildren();
+  bannersLojaSlides=[];bannerLojaIndice=0;
+  const publicadas=Array.isArray(publicacoes)?publicacoes.filter(pub=>
+   pub&&pub.tipo==='AKITEMM'&&typeof pub.titulo==='string'&&pub.titulo.trim()):[];
+  if(!publicadas.length){
+   const vazio=document.createElement('p');vazio.className='loop03-banners-loja-vazio';
+   vazio.textContent='Novidades da AKITEMM em breve.';
+   pista.append(vazio);marcas.hidden=true;return;
+  }
+  for(let i=0;i<publicadas.length;i++){
+   const pub=publicadas[i];
+   const link=document.createElement('a');
+   link.className='loop03-banners-loja-slide';link.href='/loja';link.hidden=true;
+   link.setAttribute('aria-label','Ver na AKITEMM: '+pub.titulo);
+   if(typeof pub.imagemCaminho==='string'&&
+      /^\/imagens\/catalogo\/[a-zA-Z0-9_-]+\.(?:webp|png|jpe?g)$/.test(pub.imagemCaminho)){
+    const img=document.createElement('img');
+    img.src=pub.imagemCaminho;img.alt=pub.titulo;img.loading='lazy';
+    link.classList.add('loop03-banner-loja-imagem');link.append(img);
+   }else{
+    const texto=document.createElement('span');texto.className='loop03-banner-loja-texto';
+    const titulo=document.createElement('strong');titulo.textContent=pub.titulo;
+    const descricao=document.createElement('span');descricao.textContent=pub.descricao||'';
+    texto.append(titulo,descricao);link.append(texto);
+   }
+   pista.append(link);bannersLojaSlides.push(link);
+   marcas.append(document.createElement('span'));
+  }
+  marcas.hidden=bannersLojaSlides.length<2;
+  exibirBannerLoja(0);
+  if(bannersLojaSlides.length>1)intervaloBannersLoja=setInterval(()=>{
+   if(document.visibilityState==='visible'&&abaAtual==='home'&&
+      !window.matchMedia('(prefers-reduced-motion: reduce)').matches)
+    exibirBannerLoja(bannerLojaIndice+1);
+  },6500);
+ }
+ function exibirBannerLoja(indice){
+  if(!bannersLojaSlides.length)return;
+  bannerLojaIndice=indice%bannersLojaSlides.length;
+  for(let i=0;i<bannersLojaSlides.length;i++)
+   bannersLojaSlides[i].hidden=i!==bannerLojaIndice;
+  const marcas=e('loop03BannersLojaMarcas')?.children||[];
+  for(let i=0;i<marcas.length;i++)
+   marcas[i].classList.toggle('loop03-banner-marca-ativa',i===bannerLojaIndice);
+ }
  async function carregarPublicacoes(){
   try{
    const resp=await fetch('/api/laboratorio/loop03/publicacoes',{cache:'no-store'});
    if(!resp.ok)throw Error('Indisponível');
    const dados=await resp.json();
    montarBannersEscritorio(dados.publicacoes);
+   montarBannersLoja(dados.publicacoes);
   }catch{
    montarBannersEscritorio([]);
+   montarBannersLoja([]);
    const vazio=e('loop03BannersPista')?.querySelector('.loop03-banners-vazio');
    if(vazio)vazio.textContent='Não foi possível consultar os banners agora.';
+   const vazioLoja=e('loop03BannersLojaPista')?.querySelector('.loop03-banners-loja-vazio');
+   if(vazioLoja)vazioLoja.textContent='Não foi possível consultar os banners da AKITEMM agora.';
   }
  }
 
