@@ -49,6 +49,9 @@ test('LOOP 3.0 integra escritorio real e duas abas sem criar aplicativo paralelo
  assert.match(js,/loop03Giros24/);
  assert.match(js,/id="loop03BannersPista"/);
  assert.match(js,/id="loop03LinksHome"/);
+ // Os dois botões da Home devem funcionar, não apenas aparecer habilitados.
+ assert.match(js,/e\('loop03HomeCopiarEscritorio'\)\.addEventListener\('click',\(\)=>copiarLinkPosicao\('Escritorio','loop03Home'\)\)/);
+ assert.match(js,/e\('loop03HomeCopiarLoja'\)\.addEventListener\('click',\(\)=>copiarLinkPosicao\('Loja','loop03Home'\)\)/);
  assert.match(css,/loop03-banner-1/);
  assert.match(css,/loop03-banner-3/);
  assert.match(css,/loop03-banner-4/);
