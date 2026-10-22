@@ -2262,6 +2262,16 @@ async function main(){
   await paginaBanner.locator('#senhaParticipante').fill(senha);
   await paginaBanner.locator('#botaoEntrarParticipante').click();
   await paginaBanner.locator('#conteudoParticipante').waitFor({state:'visible'});
+  // Escritório vigente: sem atalhos redundantes, vitrine inferior real e banners clicáveis.
+  assert.equal(await paginaBanner.locator('#loop03-home .loop03-hero-botao').count(),0);
+  assert.equal(await paginaBanner.locator('#secaoAkitemmEscritorio h2').count(),0);
+  assert.equal(await paginaBanner.locator('#secaoAkitemmEscritorio > p').count(),2);
+  assert.equal(await paginaBanner.locator('#secaoAkitemmEscritorio > a.loop03-loja-acesso').getAttribute('href'),'/loja');
+  await paginaBanner.locator('#loop03BannersLoja .loop03-banners-loja-slide:not([hidden])').waitFor();
+  assert.ok(await paginaBanner.locator('#loop03BannersLoja .loop03-banners-loja-slide').count()>=2);
+  assert.equal(await paginaBanner.locator('#loop03BannersLoja .loop03-banners-loja-slide:not([hidden])').count(),1);
+  assert.equal(await paginaBanner.locator('#loop03BannersLoja .loop03-banners-loja-slide:not([hidden])').getAttribute('href'),'/loja');
+  assert.ok(await paginaBanner.locator('#loop03BannersPista a.loop03-banner-quadro[href="/loja"]').count()>=1);
   // Os dois painéis espelham o mesmo vínculo pessoal e suas permissões.
   await paginaBanner.locator('#loop03BannersPista .loop03-banner-1:not([hidden])').waitFor();
   assert.ok((await paginaBanner.locator('#loop03BannersPista .loop03-banner-slide').count())>=4,
@@ -2291,6 +2301,9 @@ async function main(){
   await paginaBanner.screenshot({
    path:path.join(pasta,'ESCRITORIO_BANNER_INTEIRO_MEUS_LINKS_CELULAR_390.png'),fullPage:true
   });
+  await paginaBanner.locator('#secaoAkitemmEscritorio').screenshot({
+   path:path.join(pasta,'ESCRITORIO_BANNER_INFERIOR_AKITEMM_CELULAR_390.png')
+  });
   await paginaBanner.waitForTimeout(6700);
   assert.equal(await paginaBanner.locator('.loop03-banner-3:not([hidden]) .loop03-banner-quadro').count(),3);
   await paginaBanner.screenshot({
@@ -2309,6 +2322,9 @@ async function main(){
   await conferirLargura(paginaBanner,1254,'escritorio-home-banners-desktop',{captura:false});
   await paginaBanner.screenshot({
    path:path.join(pasta,'ESCRITORIO_BANNER_INTEIRO_DESKTOP_1254.png'),fullPage:true
+  });
+  await paginaBanner.locator('#secaoAkitemmEscritorio').screenshot({
+   path:path.join(pasta,'ESCRITORIO_BANNER_INFERIOR_AKITEMM_DESKTOP_1254.png')
   });
   await paginaBanner.waitForTimeout(6700);
   assert.equal(await paginaBanner.locator('.loop03-banner-3:not([hidden]) .loop03-banner-quadro').count(),3);
