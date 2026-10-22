@@ -27,11 +27,47 @@ jobs:
           npx playwright install --with-deps chromium
       - name: Validar jornada real celular, tablet e computador
         run: node scripts/testar-loja-mobile-browser.js
-      - name: Salvar capturas e diagnostico para revisao
+      # O navegador continua testando e capturando todas as telas localmente.
+      # So este conjunto enxuto vai para o GitHub; as referencias aprovadas
+      # permanecem na Biblioteca e nao sao modificadas por este workflow.
+      - name: Separar capturas reais relevantes e diagnosticos
+        if: always()
+        shell: bash
+        run: |
+          mkdir -p artifacts/capturas-selecionadas
+          capturas=(
+            ESCRITORIO_BANNER_INTEIRO_MEUS_LINKS_CELULAR_390.png
+            ESCRITORIO_BANNER_TRES_DESKTOP_1254.png
+            ESCRITORIO_BANNER_QUATRO_CELULAR_320.png
+            TABULEIRO_REAL_POSICAO_A_CELULAR_390_SEM_CORTE.png
+            MINHAS_POSICOES_ATUAL_MEUS_LINKS_ABERTOS_CELULAR_390.png
+            MINHA_REDE_QUATRO_STATUS_CELULAR_390.png
+            AKITEMM_GRADE_3_FILEIRAS_X_4_PC_TESTE_REAL.png
+          )
+          presentes=0
+          for arquivo in "${capturas[@]}"; do
+            if [ -f "artifacts/mobile-loop/$arquivo" ]; then
+              cp "artifacts/mobile-loop/$arquivo" "artifacts/capturas-selecionadas/$arquivo"
+              presentes=$((presentes+1))
+            else
+              echo "::warning::Captura selecionada indisponivel: $arquivo"
+            fi
+          done
+          for arquivo in resultado.json erro.txt erro-visual-mobile.png; do
+            if [ -f "artifacts/mobile-loop/$arquivo" ]; then
+              cp "artifacts/mobile-loop/$arquivo" "artifacts/capturas-selecionadas/$arquivo"
+            fi
+          done
+          echo "Capturas selecionadas para revisao: $presentes de ${#capturas[@]}"
+          if [ "${{ job.status }}" = "success" ] && [ "$presentes" -ne "${#capturas[@]}" ]; then
+            echo "::error::Teste aprovado, mas faltam capturas obrigatorias para revisao"
+            exit 1
+          fi
+      - name: Salvar somente capturas selecionadas
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: capturas-responsivas-loop
-          path: artifacts/mobile-loop/
-          retention-days: 14
+          name: capturas-reais-selecionadas-loop
+          path: artifacts/capturas-selecionadas/
+          retention-days: 7
           if-no-files-found: warn
