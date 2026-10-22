@@ -6,6 +6,7 @@
  const dinheiro=centavos=>new Intl.NumberFormat('pt-BR',{style:'currency',currency:'BRL'}).format(centavos/100);
  const catalogo=[],carrinho=new Map();
  let referenciaCentavos=25000,pedidoEmAndamento=false,filtro='todos',configLoja=null,bannerIndice=-1;
+ let conviteLoopCheckoutAtivo=false;
  let timerBanner=null,enderecoEntrega=null,quantidadeVitrine=12;
  let assinaturaCarrinhoAnterior='';
  let avaliacoesDisponiveis=[],avisosGerais=[];
@@ -110,7 +111,8 @@
   el('progressoMinimoLoop').max=orientacao.minimoCentavos;
   el('progressoMinimoLoop').value=orientacao.progressoCentavos;
   el('orientacaoMinimoLoop').textContent=orientacao.mensagem;
-  const qualificado=totalElegivel>=referenciaCentavos;
+  // O dono ainda nao liberou o convite: compra segue como AKITEMM.
+  const qualificado=conviteLoopCheckoutAtivo&&totalElegivel>=referenciaCentavos;
   const escolha=el('akitemmEscolhaLoop');
   // Alterou itens/quantidade: a escolha anterior nao vale para outro carrinho.
   const assinatura=JSON.stringify([...carrinho]);
@@ -384,6 +386,7 @@
   const dados=await api('loja/catalogo');
   catalogo.splice(0,catalogo.length,...dados.produtos);
   referenciaCentavos=dados.referenciaLoopCentavos;
+  conviteLoopCheckoutAtivo=dados.conviteLoopCheckoutAtivo===true;
   mostrarCatalogo();
  }
  async function carregarPerfil(){
