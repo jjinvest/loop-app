@@ -1072,3 +1072,21 @@ Foi reconhecido que o circuito **`CircuitBreakPonteV6DemoSQLite` já persiste**,
 **CI DA CORREÇÃO VERIFICADO:** `Testes do LOOP` [run 39710907404](https://github.com/jjinvest/loop-app/actions/runs/39710907404) **SUCCESS 502/502, 0 falhas** e `LOOP - Navegador celular e computador` [run 39710907397](https://github.com/jjinvest/loop-app/actions/runs/39710907397) **SUCCESS**; ambos sobre commit de código `88a672b1db83b13e1b469946a09dc6830c9be86c`. Teste confirmou pergunta oculta + compra R$250 qualificada + pagamento fictício confirmado = posição criada com adesão **PENDENTE**. Também confirmou que um `participarLoop:false` legado vindo da pergunta escondida não suprime a posição.
 
 **NUNCA repita o erro das seções 89/90:** convite oculto **NÃO** significa comprador optou por NÃO; o cliente não fez escolha. **NÃO** registrar `participarLoop:false` só porque a pergunta está escondida. A alteração feita foi estritamente corretiva no checkout; nenhuma mudança no motor V6, catraca, preço, catálogo, taxa de saque 0% ou telas aprovadas. PR #1 rascunho, sem merge/deploy.
+
+
+## 92. ENCERRAMENTO DO CHECKOUT ANTES DE REVISAR A ABA ESCRITÓRIO VIRTUAL (22/10/2026)
+
+**DEMANDA ATUAL:** o proprietário disse “continua fazendo o que você tem que fazer, vamos pegar daqui a pouco na aba escritório, acaba e me dá OK”. **NÃO foi autorizada modificação visual do Escritório Virtual ainda**, nem criação do Escritório do Administrador. O foco foi concluir a guarda de regressão do checkout preservado e preparar inventário para a próxima etapa.
+
+**Resultado CI tecnicamente comprovado:** [Testes do LOOP, run 39715135056](https://github.com/jjinvest/loop-app/actions/runs/39715135056) **SUCCESS 503/503 testes, zero falhas**, commit de código `b1035e675c8f6cea1cd01733262af8d7bfe94ee9`. Novo teste **somente de regressão** `test/loop-v6-regressao-checkout-original-convite-oculto.test.js`:
+
+- Pergunta opt-in **invisível por padrão e sem afetar a compra**.
+- Compras fictícias separadas de **R$150 não se acumulam** para posição (esse valor é unicamente fixture de teste, não oferta comercial).
+- Produto explicitamente **não qualificado R$500 não gera posição**.
+- Carrinho misto fictício R$500 excluídos + R$150 qualificados = total R$650, subtotal elegível R$150, **não gera posição**.
+- Carrinho misto fictício R$500 excluídos + PDF qualificado R$250 = total R$750, subtotal elegível R$250, **gera exatamente UMA posição após pagamento fictício confirmado**, com ativação individual `PENDENTE`. Reenvio idempotente não duplica posição.
+- SQLite integra; não há PSP, saque, depósito ou lucro real. **Não foram alterados precificação, domínio, telas ou serviços**, apenas o teste novo e a documentação da revisão.
+
+**Mapa preparatório SEM MODIFICAÇÃO DE UI:** [FECHAMENTO_CHECKOUT_PREPARO_ESCRITORIO_VIRTUAL_22OUT2026.md](./FECHAMENTO_CHECKOUT_PREPARO_ESCRITORIO_VIRTUAL_22OUT2026.md). A aba existente **“Escritório Virtual”** mora no `src/laboratorio/loop-03-shell.js`, `#loop03-home`, com hero aprovado, **Novidades e eventos**, mural `#loop03Publicacoes`, link ao acompanhamento das posições, sidebar com vitrine AKITEMM, nick/rodapé/coroa conforme contexto da posição. Visual em `loop-03-shell.css`. Fonte de dados pessoal `src/domain/escritorio-individual-demo.js` e `participante-demo.js`. É diferente do **Escritório do Administrador**, cuja criação continua proibida sem a frase explícita autorizadora. **Aguardar indicação específica do dono para mexer em qualquer elemento.**
+
+**REGRA VIGENTE E PREVALENTE:** seção 91, compra qualificada acima/igual referência de R$250 + confirmação de pagamento ⇒ cria automaticamente posição, depois titular confirma individualmente no LOOP; pergunta extra continua oculta e não exerce controle nenhum. As seções 89 e 90 são HISTÓRICO e não substituem esta decisão. PR #1 DRAFT, sem merge/deploy; respeitar UI, margem própria do dono e taxa de saque ao participante 0%.
