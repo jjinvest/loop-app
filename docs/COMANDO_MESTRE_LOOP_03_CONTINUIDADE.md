@@ -1039,3 +1039,21 @@ Foi reconhecido que o circuito **`CircuitBreakPonteV6DemoSQLite` já persiste**,
 **INTERPRETAÇÃO DE ESTORNO:** se a pessoa NÃO aderiu ao LOOP, não há “valor que foi para LOOP” para fins de intenção comercial da seção 88. Se SIM, o proprietário pretende não conceder estorno COMERCIAL VOLUNTÁRIO da parcela internamente destinada ao LOOP, oferecendo benefícios condicionais como mecanismo independente; **isso NÃO exclui restituição obrigatória por CDC arts. 18, 49 e 51, chargeback ou decisão judicial**, inclusive da quantia atribuída ao LOOP. Não usar a escolha como renúncia de direitos. A versão de termos continua **MINUTA**, para revisão jurídica antes de publicar.
 
 **Preservação:** o dono controla preços e margens (seção 85), o PDF é o único produto comercial planejado a R$250, taxa de saque ao participante **0%**, PR #1 DRAFT sem merge/deploy e Escritório do Administrador adiado.
+
+
+## 90. NOVA DECISÃO — CONVITE “VOCÊ GOSTARIA DE PARTICIPAR DO LOOP?” OCULTO ATÉ O DONO AUTORIZAR (22/10/2026)
+
+**DECISÃO EXPRESSA MAIS RECENTE, SUPERA EXIBIÇÃO IMEDIATA NA SEÇÃO 89.** O proprietário quer manter a função de opt-in **inteiramente implementada**, porém **NÃO EXIBIR ainda o bloco “Você gostaria de participar do LOOP?”** no checkout. A função será mostrada **somente quando ele pedir expressamente**. Não adicionar botão visível para administrador nem criar o Escritório do Administrador.
+
+**Implementado na branch de laboratório:** `criarAppAdminLaboratorio` recebe `habilitarConviteLoopCheckout=false` por padrão, repassado ao router da loja. `GET /api/laboratorio/participante/loja/catalogo` expõe somente flag de leitura `conviteLoopCheckoutAtivo:false` quando não habilitado. `src/laboratorio/loja-cliente-demo.js` só mostra o `fieldset#akitemmEscolhaLoop` quando **a flag do servidor estiver explicitamente verdadeira E o subtotal qualificado atingir a referência vigente**. A pergunta e o JS permanecem preservados no código/HTML, invisíveis para o comprador enquanto a flag estiver desligada.
+
+**Com convite OCULTO:**
+- O carrinho continua funcionando, sem exigir que o cliente responda a algo que não aparece.
+- Pedido do cliente é processado como **compra somente AKITEMM**, `participarLoop:false`, com **zero atribuição ao LOOP e zero posição**. **Não realizar inscrição automática sem opção visível.**
+- Mesmo enviar `participarLoop:true` diretamente à rota do comprador é **recusado pelo backend** com `409 CONVITE_LOOP_AINDA_OCULTO`. O navegador não pode mudar a autorização do servidor.
+- A alteração de preços, margem, elegibilidade de produtos ou fila NÃO é permitida por este ajuste. O registro do pedido e dos valores originais permanece intacto; apenas a escolha pública pelo LOOP está desligada.
+- Quando o DONO expressamente mandar exibir, a flag do servidor poderá ser habilitada por uma mudança controlada na configuração **com testes**; não habilitar por padrão ou antecipadamente. Em teste isolado, a flag é explicitamente `true` para continuar cobrindo a lógica SIM/NÃO. A opção desativada por padrão é uma salvaguarda de staging, não prontidão de checkout bancário real.
+
+**Arquivo novo de teste:** `test/loop-v6-convite-checkout-oculto-por-padrao.test.js` verifica flag desligada, ausência de pergunta ativa, compra normal sem posição, recusa de POST falso de adesão e integridade SQLite. Testes anteriores e script Playwright receberam a opção **`habilitarConviteLoopCheckout:true` apenas dentro da suíte**, garantindo que opt-in continua funcionando quando intencionalmente liberado.
+
+**IMPORTANTE:** contratos e opções legais de devolução na seção 88, preços variáveis na seção 85, voluntariedade original da seção 89 e demais telas e regras continuam preservados. PR #1 DRAFT, sem merge/deploy e sem pagamento real.
