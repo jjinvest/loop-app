@@ -42,4 +42,4 @@
 - Trabalhar na branch `fix/teste-escrita-catraca-20261014` e manter **PR #1 DRAFT**, sem merge/deploy.
 - Simulações são *somente laboratório* e não comprovam PSP, Pix ou benefício financeiro real.
 
-**Estado de CI desta etapa:** preencher no comando-mestre com IDs e resultados somente depois de confirmados.
+**CI HOMOLOGADO:** [Testes do LOOP, 39715135056](https://github.com/jjinvest/loop-app/actions/runs/39715135056) **SUCCESS, 503/503, zero falhas**; [Navegador celular/tablet/computador, 39715135015](https://github.com/jjinvest/loop-app/actions/runs/39715135015) **SUCCESS**, ambos no código `b1035e675c8f6cea1cd01733262af8d7bfe94ee9`.
