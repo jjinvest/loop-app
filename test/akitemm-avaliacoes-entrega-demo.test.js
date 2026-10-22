@@ -39,7 +39,7 @@ test('AKITEMM: só comprador de produto entregue ficticiamente avalia; moderaç�
  const cookieA=await login(a.nome),cookieB=await login(b.nome);
  const prefix='/api/laboratorio/participante/loja';
  const adm='/api/admin';
- const pedidoItens={itens:[{produtoId:'kit-fisico-teste',quantidade:1}]};
+ const pedidoItens={itens:[{produtoId:'kit-fisico-teste',quantidade:1}],participarLoop:false};
  assert.equal((await call(prefix+'/pedidos',{method:'POST',cookie:cookieA,body:pedidoItens})).status,409);
  const endereco={destinatario:'Pessoa destinatária fictícia',cep:'27260000',logradouro:'Rua Exemplo',
   numero:'12',complemento:'',bairro:'Centro',cidade:'Volta Redonda',uf:'RJ',
