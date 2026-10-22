@@ -126,6 +126,7 @@ Atualizado em 21/10/2026. **Esta é a porta de entrada para retomar o projeto ra
 ## [VIGENTE — CONVITE OCULTO] Opt-in LOOP preparado, porém NÃO exibir até ordem do dono (22/10/2026)
 - **Nova seção 90 do documento-mestre PREVALECE sobre exibição imediata da seção 89.** O campo **“Você gostaria de participar do LOOP?”** continua implementado na AKITEMM, mas **permanece oculto por padrão**. O proprietário decidirá quando mandar exibi-lo. Não inventar uma data, nem criar controle visível sem pedido.
 - **Flag interna do servidor `habilitarConviteLoopCheckout=false` por padrão**: navegador recebe `conviteLoopCheckoutAtivo:false` e esconde o campo; POST forjado `participarLoop:true` é recusado. Cliente compra normalmente na AKITEMM com `participarLoop:false`, sem nenhuma referência LOOP nem posições. Não exigir resposta à pergunta oculta e **não inscrever automaticamente sem escolha**.
+- **CI 39710034571: SUCCESS, 502/502 testes, 0 falhas; navegador celular/tablet/computador 39710034564: SUCCESS.** Ambos sobre o código `e1f7c8c2b45641b2b437981e40bab18bb341b4f8`.
 - Testes isolados explicitamente habilitam o recurso, preservando as provas SIM/NÃO, e novo teste valida o modo oculto. Não se alteram preços, margens, demais telas, saques 0%, termos públicos ou motor V6.
 - Para mostrar no futuro, somente após **ordem expressa do proprietário** mudar a flag do servidor e validar testes. PR #1 permanece DRAFT, sem merge/deploy e sem PSP real.
 
