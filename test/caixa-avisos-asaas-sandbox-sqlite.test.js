@@ -51,7 +51,9 @@ test('Asaas inbox sandbox rejeita corpos invalidos e nao contabiliza nada',t=>{
   {...dados,payment:{...dados.payment,externalReference:'EXTERNO-123'}},
   {...dados,payment:{...dados.payment,value:'250'}},
   {...dados,payment:{...dados.payment,value:250.001}},
-  {...dados,payment:{...dados.payment,value:-1}},[dados]]){
+  {...dados,payment:{...dados.payment,value:-1}},
+  {...dados,id:123456789},
+  {...dados,payment:{...dados.payment,id:123456789}},[dados]]){
   assert.throws(()=>send(p));
  }
  assert.throws(()=>caixa.registrar({cabecalhoToken:TOKEN,corpoBruto:Buffer.from('{')}),
