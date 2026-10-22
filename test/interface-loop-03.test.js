@@ -49,9 +49,9 @@ test('LOOP 3.0 integra escritorio real e duas abas sem criar aplicativo paralelo
  assert.match(js,/loop03Giros24/);
  assert.match(js,/id="loop03BannersPista"/);
  assert.match(js,/id="loop03LinksHome"/);
- assert.match(js,/loop03-banner-1/);
- assert.match(js,/loop03-banner-3/);
- assert.match(js,/loop03-banner-4/);
+ assert.match(css,/loop03-banner-1/);
+ assert.match(css,/loop03-banner-3/);
+ assert.match(css,/loop03-banner-4/);
  assert.match(css,/loop03-banners-escritorio/);
  assert.doesNotMatch(js,/id="loop03-ativacoes"|loop03DistribuirIndicacao|loop03AtivacoesLista/);
  // Seis destinos exatos, uma unica lateral sem ativacoes.
