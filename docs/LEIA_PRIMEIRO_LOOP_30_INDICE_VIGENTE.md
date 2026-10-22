@@ -130,6 +130,13 @@ Atualizado em 21/10/2026. **Esta é a porta de entrada para retomar o projeto ra
 - Testes isolados explicitamente habilitam o recurso, preservando as provas SIM/NÃO, e novo teste valida o modo oculto. Não se alteram preços, margens, demais telas, saques 0%, termos públicos ou motor V6.
 - Para mostrar no futuro, somente após **ordem expressa do proprietário** mudar a flag do servidor e validar testes. PR #1 permanece DRAFT, sem merge/deploy e sem PSP real.
 
+## [REGRA MAIS RECENTE — SEÇÃO 91] Pergunta LOOP oculta SEM mudar a compra automática
+
+- **CORREÇÃO EXPRESSA DO PROPRIETÁRIO; PREVALECE SOBRE AS INTERPRETAÇÕES ANTERIORES NAS SEÇÕES 89/90.** O extra “Você gostaria de participar do LOOP?” fica oculto em standby. Sua existência **não altera nenhuma regra**.
+- **Compra de itens qualificados a partir da referência R$250, com pagamento confirmado, CRIA AUTOMATICAMENTE UMA POSIÇÃO no LOOP**, conforme limites, regras de pacote e elegibilidade já aprovados. Depois o cliente **vai ao LOOP e CONFIRMA a ativação da posição INDIVIDUALMENTE**. Nada de autoativação.
+- Enquanto convite oculto, **não exigir opt-in, não interpretar ausência da pergunta como resposta NÃO, não zerar elegibilidade**, nem reduzir uma compra qualificada a “somente AKITEMM”. Itens não qualificados seguem sem posição, como sempre. Pergunta só pode ser exibida no futuro por ordem expressa.
+- Código de laboratório preserva pedido original sem `participarLoop` quando campo oculto; testes comprovam criação automática após confirmação fictícia. Nada publicado ou mesclado; taxa de saque 0%, preço e telas preservados.
+
 ## [ADIADO] Escritório do Administrador — conceito aprovado, criação NÃO autorizada ainda
 - O proprietário **delegou** proposta arquitetural para sua central de comando; quer **várias abas bem organizadas**, funções certas nos lugares certos, sem atalhos/botões repetidos, design profissional e intuitivo. Consultar boas referências de ERP, logística, OMS, operações e e-commerce quando chegar a etapa.
 - **PRIORIDADE ABSOLUTA SERÁ DADOS REAIS**, não simulações: volumes de compradores, pagamentos efetivamente confirmados, posições por estado, filas A/B, indicações e vínculos, giro/catraca, centros/contemplações e seu status **previsto/autorizado/pago**, douradas, cofres/reservas e fluxo financeiro, pendências e alertas. **Resumo de operação no primeiro olhar**, com detalhe auditável nas abas, sem usuário ter de caçar informações.
