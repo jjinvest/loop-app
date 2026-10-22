@@ -542,3 +542,17 @@ body.akitemm-loja{background:#071018;color:#f0f2f6;font-family:system-ui,-apple-
  display:block;width:min(280px,100%);max-height:230px;object-fit:contain;
  border:1px solid #d4b477;border-radius:8px;background:#14212a;
 }
+
+/* Escolha voluntaria e EXPLICITA: opt-in nunca preselecionado.
+   Preservar estetica original da AKITEMM, sem alterar o layout aprovado. */
+.akitemm-escolha-loop{margin:14px 0;padding:12px 14px;border:1px solid #608f85;
+ border-radius:10px;background:#142a2e;color:#eff9f4}
+.akitemm-escolha-loop[hidden]{display:none}
+.akitemm-escolha-loop legend{font-weight:800;color:#c7f5d1;padding:0 5px}
+.akitemm-escolha-loop p{margin:5px 0 12px;color:#d6e9e5;font-size:.9rem}
+.akitemm-escolha-loop label{display:flex;align-items:center;gap:9px;
+ padding:8px 0;line-height:1.45;cursor:pointer}
+.akitemm-escolha-loop input[type=radio]{accent-color:#87d9ac;
+ flex-shrink:0;width:19px;height:19px}
+.akitemm-escolha-loop input[type=radio]:focus-visible{outline:3px solid #f7df7b;
+ outline-offset:3px}
