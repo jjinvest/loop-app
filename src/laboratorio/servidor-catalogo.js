@@ -64,7 +64,11 @@ const {AsaasSandboxLojaV6}=require('../domain/asaas-sandbox-loja-v6');
 const {CobrancasAkitemmAsaasSandboxSQLite}=require('../domain/cobrancas-akitemm-asaas-sandbox-v6');
 const {criarRouterCobrancasAkitemmSandboxV6}=require('../routes/admin-cobrancas-akitemm-sandbox-v6');
 
-function criarAppAdminLaboratorio({ repositorio, segredo, webhookDemo } = {}) {
+function criarAppAdminLaboratorio({ repositorio, segredo, webhookDemo, habilitarConviteLoopCheckout=false } = {}) {
+  // Convite oculto por padrao. Ativar somente por decisao explicita do proprietario;
+  // nenhuma alteracao do navegador pode ligar o recurso no servidor.
+  if(typeof habilitarConviteLoopCheckout!=='boolean')
+    throw new TypeError('Controle do convite LOOP deve ser booleano');
   if (process.env.NODE_ENV === 'production') {
     throw new Error('O painel de laboratorio nao funciona em producao');
   }
@@ -212,6 +216,7 @@ function criarAppAdminLaboratorio({ repositorio, segredo, webhookDemo } = {}) {
       contas:contasDemo,ponte:ponteDemo,sessoes:sessoesDemo,adesoes:adesoesDemo,
       carrinhos:carrinhosLojaLoopDemo,catalogo:repositorio,saques:saquesDemo,
       configAkitemm,avaliacoesAkitemm,
+      habilitarConviteLoopCheckout,
       obterLivroProvisoesV6:()=>circuitoPonteDemo?.livro||null,
       obterRetornoSaqueCentroDemo:()=>retornoSaqueCentroDemo,
       entregadoresPerfil:criarEntregadoresPerfilAmbiente()
