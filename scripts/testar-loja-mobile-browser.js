@@ -2306,11 +2306,13 @@ async function main(){
   });
   await paginaBanner.waitForTimeout(6700);
   assert.equal(await paginaBanner.locator('.loop03-banner-3:not([hidden]) .loop03-banner-quadro').count(),3);
+  assert.equal(await paginaBanner.locator('.loop03-banner-3:not([hidden]) a.loop03-banner-quadro[href="/loja"]').count(),3);
   await paginaBanner.screenshot({
    path:path.join(pasta,'ESCRITORIO_BANNER_TRES_CELULAR_390.png'),fullPage:true
   });
   await paginaBanner.waitForTimeout(6700);
   assert.equal(await paginaBanner.locator('.loop03-banner-4:not([hidden]) .loop03-banner-quadro').count(),4);
+  assert.equal(await paginaBanner.locator('.loop03-banner-4:not([hidden]) a.loop03-banner-quadro[href="/loja"]').count(),4);
   await conferirLargura(paginaBanner,320,'escritorio-home-banners-celular-320',{captura:false});
   await paginaBanner.screenshot({
    path:path.join(pasta,'ESCRITORIO_BANNER_QUATRO_CELULAR_320.png'),fullPage:true
