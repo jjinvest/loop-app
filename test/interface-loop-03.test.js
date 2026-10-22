@@ -56,6 +56,18 @@ test('LOOP 3.0 integra escritorio real e duas abas sem criar aplicativo paralelo
  assert.match(css,/loop03-banner-3/);
  assert.match(css,/loop03-banner-4/);
  assert.match(css,/loop03-banners-escritorio/);
+ // Escritório: retirar botão redundante e habilitar banner inteiro da loja.
+ assert.doesNotMatch(js,/ACOMPANHAR MINHAS POSIÇÕES →|class="loop03-hero-botao"/);
+ assert.doesNotMatch(html,/Minha loja de testes/);
+ assert.match(html,/id="secaoAkitemmEscritorio"/);
+ assert.match(html,/id="loop03BannersLojaPista"/);
+ assert.match(html,/id="loop03BannersLojaMarcas"/);
+ assert.match(html,/class="link-loja-participante loop03-loja-acesso">Entrar na AKITEMM/);
+ assert.match(js,/montarBannersLoja\(dados\.publicacoes\)/);
+ assert.match(js,/pub\.tipo==='AKITEMM'/);
+ assert.match(js,/link\.href='\/loja'/);
+ assert.match(css,/#loop03-home \.loop03-banners-loja-pista/);
+ assert.match(css,/object-fit:contain/);
  assert.doesNotMatch(js,/id="loop03-ativacoes"|loop03DistribuirIndicacao|loop03AtivacoesLista/);
  // Seis destinos exatos, uma unica lateral sem ativacoes.
  const indiceMenu=js.indexOf('<nav aria-label="Áreas do escritório">');
