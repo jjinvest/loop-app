@@ -432,10 +432,19 @@ function criarRouterParticipanteDemo({contas,ponte,sessoes=null,adesoes=null,car
   router.post('/loja/pedidos',(req,res,next)=>{
    if(!carrinhos)return res.status(501).json({erro:'LOJA_NAO_CONFIGURADA'});
    if(!req.is('application/json'))return res.status(415).json({erro:'USE_APPLICATION_JSON'});
+   // Convite oculto nao muda o checkout original: pedido somente com itens
+   // usa a elegibilidade automatica antiga. Com convite habilitado, a escolha
+   // SIM/NAO e obrigatoria. Aceita formulario antigo com 'false' no modo oculto
+   // sem gravar opt-out que o comprador nunca teve oportunidade de responder.
+   const chaves=Object.keys(req.body||{}).sort().join(',');
+   const formatoComEscolha=chaves==='itens,participarLoop'&&
+    typeof req.body?.participarLoop==='boolean';
+   const formatoOriginal=chaves==='itens';
    if(!req.body||typeof req.body!=='object'||Array.isArray(req.body)||
-    Object.keys(req.body).sort().join(',')!=='itens,participarLoop'||
-    typeof req.body.participarLoop!=='boolean'){
-    return res.status(400).json({erro:'ITENS_E_ESCOLHA_LOOP_OBRIGATORIOS'});
+    (habilitarConviteLoopCheckout?!formatoComEscolha:
+     !formatoOriginal&&!formatoComEscolha)){
+    return res.status(400).json({erro:habilitarConviteLoopCheckout?
+     'ITENS_E_ESCOLHA_LOOP_OBRIGATORIOS':'ITENS_OBRIGATORIOS'});
    }
    try{
     const contaId=gerenciador.identificar(lerCookie(req));
@@ -461,7 +470,7 @@ function criarRouterParticipanteDemo({contas,ponte,sessoes=null,adesoes=null,car
      return res.status(409).json({erro:'CADASTRE_ENTREGA_ANTES_DO_PEDIDO'});
     const pedido=carrinhos.criar({
      pedidoId:'carrinho-'+randomUUID(),contaId,itens:req.body.itens,
-     participarLoop:req.body.participarLoop
+     ...(habilitarConviteLoopCheckout?{participarLoop:req.body.participarLoop}:{})
     });
     if(contemFisico){
      contas.banco.prepare(`INSERT INTO admin_akitemm_entrega_pedido_demo
