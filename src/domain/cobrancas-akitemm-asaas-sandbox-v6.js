@@ -121,8 +121,12 @@ class CobrancasAkitemmAsaasSandboxSQLite{
   try{
    const atual=this._registro(pedidoId);
    if(atual.pagamentoId!==remoto.pagamentoId)throw falha('CONFLITO_COBRANCA');
-   // Nao permitir que um status atrasado sobrescreva uma reversao.
-   const final=atual.status==='REVERSAO_INFORMADA_SANDBOX'?
+   // Nunca regredir recebimento informado para pendente/desconhecido:
+   // respostas remotas antigas nao podem apagar historico mais avancado.
+   // Reversao informada e terminal neste laboratorio e demanda conciliacao.
+   const final=atual.status==='REVERSAO_INFORMADA_SANDBOX' ||
+    (atual.status==='RECEBIMENTO_INFORMADO_SANDBOX'&&
+     ['PENDENTE_SANDBOX','STATUS_DESCONHECIDO_SANDBOX'].includes(estado))?
     atual.status:estado;
    b.prepare('UPDATE akitemm_sandbox_cobrancas SET status=?,atualizado_em=? WHERE pedido_id=?')
     .run(final,this.agora(),pedidoId);
