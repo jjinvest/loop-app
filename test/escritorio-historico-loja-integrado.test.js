@@ -40,7 +40,7 @@ test('escritorio reune pedidos pendentes, somente-loja, azul, vermelho e dourado
  const criar=async(cookie,produtoId)=>{
   const r=await fetch(local+'/loja/pedidos',{
    method:'POST',headers:{...cabe,Cookie:cookie},
-   body:JSON.stringify({itens:[{produtoId,quantidade:1}]})
+   body:JSON.stringify({itens:[{produtoId,quantidade:1}],participarLoop:produtoId==='pdf-250-loop'})
   });
   assert.equal(r.status,201);
   return (await r.json()).pedido.pedidoId;
