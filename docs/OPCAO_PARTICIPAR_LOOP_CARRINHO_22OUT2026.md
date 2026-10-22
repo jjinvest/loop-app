@@ -2,6 +2,8 @@
 
 **Decisão expressa do proprietário.** Implementação restrita ao laboratório; PR #1 DRAFT. Não há pagamento, checkout ou PSP reais.
 
+**VERIFICADO:** [Testes do LOOP #39707617445](https://github.com/jjinvest/loop-app/actions/runs/39707617445) **SUCCESS, 501/501, zero falhas**, e [Navegador celular, tablet e computador #39707617457](https://github.com/jjinvest/loop-app/actions/runs/39707617457) **SUCCESS**, ambos sobre o commit de código `533cf7567181ef6a0514a193febcd8939c9455b5`.
+
 ## Regra da compra
 
 No fechamento do carrinho, **se o subtotal de itens QUALIFICADOS para LOOP atingir pelo menos R$250** (ou a referência vigente configurada), perguntar sem nenhuma alternativa pré-marcada:
