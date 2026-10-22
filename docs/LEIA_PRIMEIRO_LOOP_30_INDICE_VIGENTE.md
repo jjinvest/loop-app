@@ -1,7 +1,10 @@
 > **Saldo da reserva ≠ bruto:** o ensaio original de 5.000 reportava R$ 104.000 de entrada BRUTA no cofre direito, sem subtrair comissões nem novas douradas financiadas. Uma auditoria extra com 20 douradas **novas** (R$ 5.000 da reserva) e cinco azuis convertidas confirmou simulações de reserva livre entre R$ 68.050 e R$ 86.800 após bônus hipotéticos de 10% dos indicados considerados verdes. [Relatório de conciliação da reserva](./RELATORIO_RESERVA_5000_20_DOURADAS_21OUT2026.md). As posições azuis convertidas já provêm de compra e não geram segundo aporte de R$ 250. **Produção exige conciliação dos compromissos realmente persistidos em SQLite.**
 
 # LOOP 3.0 — LEIA PRIMEIRO: índice vigente e decisões operacionais
-Atualizado em 21/10/2026. **Esta é a porta de entrada para retomar o projeto rapidamente.** Complementa, não substitui nem apaga, o histórico integral.
+
+**Marco de continuidade 22/10/2026:** ajustes autorizados na Home do Escritório Virtual do PARTICIPANTE **concluídos**, conforme seção **93** do [documento-mestre](./COMANDO_MESTRE_LOOP_03_CONTINUIDADE.md). [Código testado 503/503](https://github.com/jjinvest/loop-app/actions/runs/39768370566), [navegador SUCCESS](https://github.com/jjinvest/loop-app/actions/runs/39768370510), [capturas reais](https://github.com/jjinvest/loop-app/actions/runs/39768370510/artifacts/12420609387). Menções históricas abaixo a “apenas inventariado/aguardar autorização” referem-se **ao estado anterior à seção 93**; não revogam as duas alterações concluídas. PR #1 continua DRAFT, sem merge/deploy.
+
+Atualizado em 22/10/2026. **Esta é a porta de entrada para retomar o projeto rapidamente.** Complementa, não substitui nem apaga, o histórico integral.
 
 ## Fonte, segurança e precedência
 - Repositório: `jjinvest/loop-app`. Desenvolvimento: branch `fix/teste-escrita-catraca-20261014`, PR #1 em **DRAFT**. **Proibido merge, deploy, divulgação de produção ou alteração da branch principal sem autorização explícita do proprietário.**
@@ -20,7 +23,7 @@ Atualizado em 21/10/2026. **Esta é a porta de entrada para retomar o projeto ra
 ## [VIGENTE] Telas preservadas
 - Participante: Tabuleiro, Minhas Posições, Minha Rede/Equipe, Financeiro, Perfil e navegação atual; **preservar visual aprovado** e alterar somente o que for solicitado. O rodapé do Tabuleiro exibe foto opcional + **nick**, estado A/B/coroa conforme regras.
 - **Meu Perfil**: é o **único lugar para *alterar* senha** de conta existente: senha atual, nova senha e confirmação, com confirmação no servidor; revogar sessões e exigir novo login. Cadastro e login mantêm campos normais de senha, que não são mudança de senha.
-- **Escritório Virtual do participante**: revisão geral de visual/conteúdo **[ADIADA]** até instruções do usuário. Já há componentes legados a analisar; não fazer mudanças autônomas.
+- **Escritório Virtual do participante [VIGENTE 22/10/2026, seção 93]**: o proprietário autorizou e foram **implementadas** duas mudanças pontuais: “Meus Links” inferior com os dois links pessoais existentes (Escritório + AKITEMM) e banners superiores automáticos de 1, 3 e 4 quadros, responsivos. CI código `f479332...`: **503/503 testes e navegador responsivo SUCCESS**; seis capturas reais no artifact da run `39768370510`. Revisão geral adicional continua **[ADIADA]**; nenhuma modificação autônoma autorizada.
 - **AKITEMM**: loja com identidade visual preto/ouro, separada do motor mas integrada por critérios de elegibilidade. Catálogo, pedidos, produtos, avaliações moderadas pós-entrega, fotos e vídeo, carrinho, lateral e links existentes têm regras específicas nas seções 61–63 do histórico. Não recolocar botões ou textos expressamente removidos.
 - Cloudflare R2 para mídia privada **[PENDENTE]**: o usuário iniciou ativação, mas exigência de pagamento ficou pendente. **Bucket/credenciais não confirmados**; não afirmar integração remota ativada, não pedir segredos no chat, não colocá-los em GitHub.
 
