@@ -703,14 +703,14 @@ body.loop03-logado{
 #loop03-home .loop03-banners-loja-slide img{
  display:block;width:100%;height:100%;object-fit:contain;
 }
-#loop03-home .loop03-banners-loja-texto{
+#loop03-home .loop03-banner-loja-texto{
  display:flex;flex-direction:column;gap:9px;align-items:center;justify-content:center;
  padding:20px;max-width:85%;overflow-wrap:anywhere;
 }
-#loop03-home .loop03-banners-loja-texto strong{
+#loop03-home .loop03-banner-loja-texto strong{
  font-size:clamp(1.25rem,3vw,2.3rem);line-height:1.15;color:#ffe5b0;
 }
-#loop03-home .loop03-banners-loja-texto span{
+#loop03-home .loop03-banner-loja-texto span{
  font-size:clamp(.77rem,1.35vw,.99rem);color:#e6deef;line-height:1.5;
 }
 #loop03-home .loop03-banners-loja-vazio{
@@ -754,7 +754,7 @@ body.loop03-logado{
  #loop03-home .loop03-banners-loja{padding:5px;border-radius:11px}
  #loop03-home .loop03-banners-loja-pista{aspect-ratio:16 / 9;min-height:165px;max-height:290px}
  #loop03-home .loop03-banners-loja-slide{border-radius:7px}
- #loop03-home .loop03-banners-loja-texto{padding:10px;max-width:95%}
- #loop03-home .loop03-banners-loja-texto strong{font-size:1.18rem}
+ #loop03-home .loop03-banner-loja-texto{padding:10px;max-width:95%}
+ #loop03-home .loop03-banner-loja-texto strong{font-size:1.18rem}
  #loop03-home #secaoAkitemmEscritorio .loop03-loja-acesso{width:100%;margin-top:10px}
 }
