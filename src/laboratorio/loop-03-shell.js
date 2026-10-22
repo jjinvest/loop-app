@@ -1554,10 +1554,13 @@
    slide.setAttribute('aria-label','Banner '+(i+1)+' de '+publicadas.length);
    for(let j=0;j<quantidade;j++){
     const pub=publicadas[(i+j)%publicadas.length];
-    const comLink=['/loja','/escritorio'].includes(pub.linkDestino);
-    const quadro=document.createElement(comLink?'a':'article');
+    // Em grades de 3 ou 4, cada quadrinho abre a loja AKITEMM.
+    // Apenas o banner inteiro pode preservar o destino específico do comunicado.
+    const destino=quantidade>1?'/loja':
+     (['/loja','/escritorio'].includes(pub.linkDestino)?pub.linkDestino:null);
+    const quadro=document.createElement(destino?'a':'article');
     quadro.className='loop03-banner-quadro';
-    if(comLink)quadro.href=pub.linkDestino;
+    if(destino)quadro.href=destino;
     if(typeof pub.imagemCaminho==='string'&&
        /^\/imagens\/catalogo\/[a-zA-Z0-9_-]+\.(?:webp|png|jpe?g)$/.test(pub.imagemCaminho)){
      const imagem=document.createElement('img');
