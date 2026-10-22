@@ -3,6 +3,20 @@
 **Registro em 21/10/2026 (Brasil) — atualização do proprietário em 22/10/2026 UTC.**
 **CLASSIFICAÇÃO:** decisão de negócio do proprietário + MINUTA DE CONTRATO SUJEITA A REVISÃO JURÍDICA. **Não publicar/ativar** esta minuta como termo vigente até aprovação jurídica, contábil e da operação comercial. Não presume recebimento bancário real.
 
+## PRINCÍPIO CENTRAL EXIGIDO PELO PROPRIETÁRIO — NÃO PERDER
+
+**“O LOOP não dá estorno. Dinheiro que foi para o LOOP não volta como estorno; volta como prêmio, bonificações, mas estorno não.”**
+
+**Tradução jurídica a submeter a advogado:** a referência LOOP já atribuída internamente a pedido qualificado e pago **não integra estornos comerciais VOLUNTÁRIOS** que a empresa decida oferecer como liberalidade. Benefícios condicionais do LOOP e eventuais bonificações não constituem devolução do preço de compra. Exemplo: para produto qualificado de R$500, o proprietário quer que somente os R$250 excedentes à referência LOOP sejam analisados em devolução discricionária — **não há renúncia aos direitos de restituição previstos em lei**.
+
+**LIMITE LEGAL OBRIGATÓRIO:** arrependimento válido de compra online (CDC, art. 49), restituição por vício/descumprimento e outras devoluções legalmente devidas prevalecem sobre a divisão contábil, podendo atingir inclusive a parcela internamente destinada ao LOOP. Os termos não podem obrigar o consumidor a aceitar prêmio/bonificação como substituto de reembolso obrigatório. **Esta minuta não pode ser publicada sem avaliação jurídica.**
+
+### Nova escolha voluntária no fechamento do carrinho — 22/10/2026 UTC
+
+**Antes de registrar o pedido, quando o subtotal dos produtos qualificados atingir R$250**, perguntar literalmente **“Você gostaria de participar do LOOP?”**, oferecendo **Sim, quero participar** e **Não, quero comprar somente na AKITEMM**, sem qualquer alternativa pré-selecionada.
+
+A escolha é **separada do consentimento para os Termos** e **não pode ser usada como renúncia a reembolso legal**. O comprador que disser NÃO continua comprando normalmente, sem separar a referência LOOP nem receber posição. O comprador que disser SIM terá a decisão registrada em pedido imutável e sua participação ficará condicionada à confirmação real do pagamento, à qualificação dos produtos e às regras de ativação de posição. Produtos não qualificados e carrinhos abaixo do subtotal elegível mínimo não apresentam a pergunta e não geram posição. Uma compra de R$500 em itens não qualificados continua com R$0 de referência LOOP. Não apresentar o valor do carrinho total como se tudo fosse qualificado.
+
 ## A. Decisão do proprietário — preservar fielmente
 
 1. A AKITEMM comercializa produtos e cursos. Cada item terá configuração **qualificado para o LOOP** ou **não qualificado**, com eventuais requisitos de quantidade. Produtos não qualificados são tratados como venda da loja, **sem qualquer destinação interna para o LOOP**.
