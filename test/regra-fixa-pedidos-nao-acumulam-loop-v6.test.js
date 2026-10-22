@@ -22,7 +22,7 @@ test('regra irrevogavel: cada pedido pago isolado; R$180 ativa link sem posicao;
   email:'comprador-pedidos-separados@exemplo.invalid',
   telefone:'(21) 98888-4455',senha:'senha-forte-compra-2026'});
  const segredo='segredo-demo-pedidos-r250-2026-seguro';
- const app=criarAppAdminLaboratorio({repositorio:repo,segredo});
+ const app=criarAppAdminLaboratorio({repositorio:repo,segredo,habilitarConviteLoopCheckout:true});
  const server=app.listen(0,'127.0.0.1');
  await once(server,'listening');
  t.after(()=>new Promise(resolve=>server.close(resolve)));
