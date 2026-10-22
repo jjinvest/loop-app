@@ -97,7 +97,8 @@ async function homologar({
   simulacaoSolicitada:confirmarSimulacao===true,
   movimentosReais:0,liberacaoPosicoes:0,saques:0,
   consultaIndependenteRealizada:true,
-  chamadasExecutadas:chamadas.map(x=>x.metodo+' '+x.rota)});
+  operacoes:{consultas:chamadas.filter(x=>x.metodo==='GET').length,
+   gravacoesSandbox:chamadas.filter(x=>x.metodo==='POST').length}});
 }
 if(require.main===module){
  const confirm=process.env.ASAAS_SANDBOX_SIMULAR_PAGAMENTO==='SIM';
