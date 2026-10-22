@@ -2271,7 +2271,7 @@ async function main(){
    await paginaBanner.locator('#loop03LinkEscritorio').inputValue());
   assert.equal(await paginaBanner.locator('#loop03HomeLinkLoja').inputValue(),
    await paginaBanner.locator('#loop03LinkLoja').inputValue());
-  assert.match(await paginaBanner.locator('#loop03HomeLinkLoja').inputValue(),/\\/loja\\/TesteUser$/);
+  assert.ok((await paginaBanner.locator('#loop03HomeLinkLoja').inputValue()).endsWith('/loja/TesteUser'));
   await conferirLargura(paginaBanner,390,'escritorio-home-banners-celular',{captura:false});
   await paginaBanner.screenshot({
    path:path.join(pasta,'ESCRITORIO_BANNER_INTEIRO_MEUS_LINKS_CELULAR_390.png'),fullPage:true
