@@ -2271,6 +2271,9 @@ async function main(){
   assert.ok(await paginaBanner.locator('#loop03BannersLoja .loop03-banners-loja-slide').count()>=2);
   assert.equal(await paginaBanner.locator('#loop03BannersLoja .loop03-banners-loja-slide:not([hidden])').count(),1);
   assert.equal(await paginaBanner.locator('#loop03BannersLoja .loop03-banners-loja-slide:not([hidden])').getAttribute('href'),'/loja');
+  assert.equal(await paginaBanner.locator('#loop03BannersLoja .loop03-banner-loja-texto').first()
+   .evaluate(el=>getComputedStyle(el).flexDirection),'column',
+   'Banner sem imagem deve separar titulo e descricao em linhas');
   assert.ok(await paginaBanner.locator('#loop03BannersPista a.loop03-banner-quadro[href="/loja"]').count()>=1);
   // Os dois painéis espelham o mesmo vínculo pessoal e suas permissões.
   await paginaBanner.locator('#loop03BannersPista .loop03-banner-1:not([hidden])').waitFor();
