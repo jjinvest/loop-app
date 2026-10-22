@@ -109,6 +109,13 @@
   el('progressoMinimoLoop').max=orientacao.minimoCentavos;
   el('progressoMinimoLoop').value=orientacao.progressoCentavos;
   el('orientacaoMinimoLoop').textContent=orientacao.mensagem;
+  const qualificado=totalElegivel>=referenciaCentavos;
+  const escolha=el('akitemmEscolhaLoop');
+  if(!qualificado){
+   for(const opcao of escolha.querySelectorAll('input[name="akitemmParticiparLoop"]'))
+    opcao.checked=false;
+  }
+  escolha.hidden=!qualificado;
   el('registrarPedidoLoja').disabled=!carrinho.size||pedidoEmAndamento;
  }
  function adicionar(p){
@@ -671,6 +678,14 @@
  });
  el('registrarPedidoLoja').addEventListener('click',async()=>{
   if(!carrinho.size||pedidoEmAndamento)return;
+  const escolha=el('akitemmEscolhaLoop');
+  const opcao=escolha.querySelector('input[name="akitemmParticiparLoop"]:checked');
+  if(!escolha.hidden&&!opcao){
+   el('statusPedidoLoja').textContent='Escolha sim ou não: você gostaria de participar do LOOP?';
+   escolha.querySelector('input[name="akitemmParticiparLoop"]').focus();
+   return;
+  }
+  const participarLoop=!escolha.hidden&&opcao?.value==='sim';
   const fisicos=[...carrinho.keys()].some(id=>produto(id)?.tipo==='FISICO');
   if(fisicos&&!enderecoEntrega){
    el('akitemmEntrega').open=true;
@@ -681,10 +696,12 @@
   pedidoEmAndamento=true;atualizarCarrinho();
   try{
    const itens=[...carrinho].map(([produtoId,quantidade])=>({produtoId,quantidade}));
-   const r=await api('loja/pedidos',{itens});
+   const r=await api('loja/pedidos',{itens,participarLoop});
    carrinho.clear();atualizarCarrinho();await carregarPedidos();
    el('akitemmDetalhesPedidos').open=true;
-   el('statusPedidoLoja').textContent='Pedido '+r.pedido.pedidoId+' registrado. Pagamento de laboratório ainda pendente. Nenhum Pix ou código de pagamento real foi gerado.';
+   el('statusPedidoLoja').textContent='Pedido '+r.pedido.pedidoId+' registrado ('+
+    (r.pedido.participarLoop?'participação no LOOP escolhida':'compra somente AKITEMM')+
+    '). Pagamento de laboratório ainda pendente. Nenhum Pix ou código de pagamento real foi gerado.';
   }catch(e){el('statusPedidoLoja').textContent=e.message;}
   finally{pedidoEmAndamento=false;atualizarCarrinho();}
  });
