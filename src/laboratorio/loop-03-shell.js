@@ -1103,6 +1103,8 @@
  function atualizar(visao){
   if(!e('loop03Shell'))montar();
   visaoAtual=visao;
+  // Reabrir a mesma vitrine após logout/login, sem duplicar intervalos.
+  if(bannersRecarregarNoLogin){bannersRecarregarNoLogin=false;carregarPublicacoes();}
   const disponivel=e('loop03BonusDisponivelVisivel');
   if(disponivel){
    const centavos=visao.saquesSimulados?.bonusDisponivelSimuladoCentavos;
@@ -1514,6 +1516,7 @@
  }
  // Somente as publicações reais da fonte administrativa existente.
  let intervaloBanners=null,bannersSlides=[],bannerIndice=0;
+ let bannersRecarregarNoLogin=false;
  function pararBanners(){
   if(intervaloBanners!==null){clearInterval(intervaloBanners);intervaloBanners=null;}
  }
@@ -1629,7 +1632,7 @@
   },6000);
  }
  function encerrar(){
-  pararBanners();
+  pararBanners();bannersRecarregarNoLogin=true;
   fecharPerfilSobreposto();
   fecharDetalheIndicador();
   fecharNotificacoes();
