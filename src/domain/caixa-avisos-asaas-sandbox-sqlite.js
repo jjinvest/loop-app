@@ -25,8 +25,8 @@ function lerEvento(corpoBruto){
  catch{throw falha('CORPO_WEBHOOK_INVALIDO');}
  const p=obj?.payment;
  if(!obj||typeof obj!=='object'||Array.isArray(obj)||
-    !ID.test(obj.id)||!TIPOS.has(obj.event)||!p||
-    typeof p!=='object'||Array.isArray(p)||!ID.test(p.id)||
+    typeof obj.id!=='string'||!ID.test(obj.id)||!TIPOS.has(obj.event)||!p||
+    typeof p!=='object'||Array.isArray(p)||typeof p.id!=='string'||!ID.test(p.id)||
     p.billingType!=='PIX'||!REF.test(p.externalReference)||
     typeof p.status!=='string'||!/^[A-Z_]{2,40}$/.test(p.status)||
     typeof p.value!=='number'||!Number.isFinite(p.value)||
