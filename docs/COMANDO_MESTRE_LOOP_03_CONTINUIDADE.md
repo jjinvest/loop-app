@@ -1078,7 +1078,7 @@ Foi reconhecido que o circuito **`CircuitBreakPonteV6DemoSQLite` já persiste**,
 
 **DEMANDA ATUAL:** o proprietário disse “continua fazendo o que você tem que fazer, vamos pegar daqui a pouco na aba escritório, acaba e me dá OK”. **NÃO foi autorizada modificação visual do Escritório Virtual ainda**, nem criação do Escritório do Administrador. O foco foi concluir a guarda de regressão do checkout preservado e preparar inventário para a próxima etapa.
 
-**Resultado CI tecnicamente comprovado:** [Testes do LOOP, run 39715135056](https://github.com/jjinvest/loop-app/actions/runs/39715135056) **SUCCESS 503/503 testes, zero falhas**, commit de código `b1035e675c8f6cea1cd01733262af8d7bfe94ee9`. Novo teste **somente de regressão** `test/loop-v6-regressao-checkout-original-convite-oculto.test.js`:
+**Resultado CI tecnicamente comprovado:** [Testes do LOOP, run 39715135056](https://github.com/jjinvest/loop-app/actions/runs/39715135056) **SUCCESS 503/503 testes, zero falhas**; [Navegador celular/tablet/computador, run 39715135015](https://github.com/jjinvest/loop-app/actions/runs/39715135015) **SUCCESS**, commit de código `b1035e675c8f6cea1cd01733262af8d7bfe94ee9`. Novo teste **somente de regressão** `test/loop-v6-regressao-checkout-original-convite-oculto.test.js`:
 
 - Pergunta opt-in **invisível por padrão e sem afetar a compra**.
 - Compras fictícias separadas de **R$150 não se acumulam** para posição (esse valor é unicamente fixture de teste, não oferta comercial).
