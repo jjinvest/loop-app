@@ -491,6 +491,12 @@ async function main(){
     'loja '+width+'px: rolagem horizontal '+JSON.stringify(tamanho));
    await page.screenshot({path:path.join(pasta,'loja-'+width+'px.png'),fullPage:true});
   }
+  // Regra comercial nova: a escolha LOOP nao pode vir marcada por padrao.
+  assert.equal(await page.locator('#akitemmEscolhaLoop').isVisible(),true);
+  assert.equal(await page.locator('input[name="akitemmParticiparLoop"]:checked').count(),0);
+  await page.locator('#registrarPedidoLoja').click();
+  await page.locator('#statusPedidoLoja').getByText(/Escolha sim ou não/).waitFor();
+  await page.locator('input[name="akitemmParticiparLoop"][value="sim"]').check();
   await page.locator('#registrarPedidoLoja').click();
   // A lista inclui um texto vazio inicial; aguardar especificamente
   // o pedido criado evita a condicao de corrida da atualizacao da tela.
@@ -2182,6 +2188,12 @@ async function main(){
     await tela.locator('#akitemmFormEntrega [name="uf"]').selectOption('RJ');
     await tela.locator('#akitemmFormEntrega button[type=submit]').click();
     await tela.locator('#akitemmStatusEntrega').getByText(/Endereço salvo/).waitFor();
+   }
+   if(geraPosicao){
+    assert.equal(await tela.locator('#akitemmEscolhaLoop').isVisible(),true);
+    await tela.locator('input[name="akitemmParticiparLoop"][value="sim"]').check();
+   }else{
+    assert.equal(await tela.locator('#akitemmEscolhaLoop').isVisible(),false);
    }
    await tela.locator('#registrarPedidoLoja').click();
    await tela.locator('#statusPedidoLoja').getByText(/registrado/).waitFor();
