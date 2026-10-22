@@ -1160,3 +1160,17 @@ Foi reconhecido que o circuito **`CircuitBreakPonteV6DemoSQLite` já persiste**,
 - **PRESERVAÇÃO:** PR #1 DRAFT sem merge/deploy; não mexer em Tabuleiro, Escritório Virtual, Minhas Posições, Minha Equipe, loja, motor V6, regras de posições nem saque 0%. Checkout mantém pergunta opcional OCULTA até comando expresso; compra qualificada após pagamento confirmado gera posição pendente para ativação individual (seção 91).
 
 **Código de base desta etapa:** `1d2959fbb250a1a8fe2368d968c790c7ae6db928`. **CI desta revisão**: consultar resultado dos runs do GitHub Actions antes de declarar aprovado; scripts podem disparar novas execuções após commits de documentação.
+
+
+## 97. ASAAS SANDBOX — PRIMEIRA CONEXÃO REAL DE API, SOMENTE LEITURA (22/10/2026)
+
+**NOVO MARCO DE LABORATÓRIO:** o proprietário criou conta Asaas SANDBOX, revogou uma primeira credencial exposta acidentalmente em conversa e armazenou uma chave substituta em **GitHub Actions Repository Secret** com nome `ASAAS_SANDBOX_API_KEY`. **Não** colocar chave em conversas, imagens, código, documentação ou logs. O token não está nos arquivos do repositório.
+
+Foi acrescentado **um job isolado** `verificar-conexao-asaas-sandbox` em `.github/workflows/testes-loop.yml`, commit `fd0ed53622d8342a152cda44a435e2d791383aff`. Este job:
+- Só executa no evento `pull_request` do PR de desenvolvimento **do próprio repositório**, verificando nome exato da branch e repositório de origem; não utiliza secrets de forks.
+- Não faz checkout do código do PR, não instala dependências nem concede permissões GitHub Token; a chave criptografada é injetada apenas como variável de ambiente no passo dedicado.
+- Rejeita prefixo de chave diferente de Sandbox `$aact_hmlg_` e exige HTTPS fixo para `GET https://api-sandbox.asaas.com/v3/myAccount/status/` com header `access_token`, User-Agent, sem body, sem seguir redirects e com timeout. **A única operação externa é CONSULTAR estado da conta**, sem criar ou alterar entidade no PSP.
+- Log só contém códigos técnicos e **não imprime API key nem JSON da conta**. NÃO executa Pix, cobrança, estorno, saque, transferência, split, confirmação de pedido ou movimentação do motor.
+- **PROVA DE CONEXÃO:** [GitHub Actions run 39836845742](https://github.com/jjinvest/loop-app/actions/runs/39836845742), job **`verificar-conexao-asaas-sandbox` SUCCESS** com marcador `ASAAS_SANDBOX_CONEXAO_AUTENTICADA_LEITURA_OK`. Isso prova que a chave salva permite autenticar **uma leitura no Asaas Sandbox**, NÃO que dinheiro possa ser recebido. A suíte geral e browser são independentes e têm seus resultados próprios.
+
+**Travas vigentes:** PSP de produção não contratado/homologado, nenhum recebimento real, saque 0% ao participante, cobrança real, transferência, webhook público, segurança/reconciliação fiscal/jurídica/comercial ainda pendentes. PR #1 permanece DRAFT, sem merge/deploy. As telas aprovadas e motor V6 não foram alterados. Não perguntar novamente ao proprietário se criou conta Sandbox ou se guardou a chave; **esses dois passos já foram concluídos**.
