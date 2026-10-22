@@ -131,7 +131,8 @@ test('opt-in no checkout exige sim ou nao e grava escolha imutavel ate depois do
  assert.doesNotMatch(pagina,/name="akitemmParticiparLoop"[^>]+checked/);
  assert.match(script,/totalElegivel>=referenciaCentavos/);
  assert.match(script,/const participarLoop=!escolha.hidden/);
- assert.match(script,/loja\/pedidos',\{itens,participarLoop\}/);
+ assert.match(script,/loja\/pedidos',conviteLoopCheckoutAtivo\?/);
+ assert.match(script,/\{itens,participarLoop\}:\{itens\}/);
  console.log('LOOP_CHECKOUT_OPTIN='+JSON.stringify({
   escolhaObrigatoria:true,simGravado:true,naoGravado:true,
   pedidoNaoParticipante500SemPosicao:true,
