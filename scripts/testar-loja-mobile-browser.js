@@ -2276,6 +2276,17 @@ async function main(){
    await paginaBanner.locator('#loop03LinkLoja').inputValue());
   assert.equal(await paginaBanner.locator('#loop03HomeCopiarLoja').isDisabled(),
    await paginaBanner.locator('#loop03CopiarLoja').isDisabled());
+  // Se os links já estão ativos para esta conta, testar o clique real dos botões.
+  for(const destino of ['Escritorio','Loja']){
+   const botao=paginaBanner.locator('#loop03HomeCopiar'+destino);
+   assert.equal(await botao.isDisabled(),await paginaBanner.locator('#loop03Copiar'+destino).isDisabled());
+   if(!(await botao.isDisabled())){
+    await botao.click();
+    await paginaBanner.locator('#loop03HomeStatusCopiarLinks:not(:empty)').waitFor();
+    assert.match(await paginaBanner.locator('#loop03HomeStatusCopiarLinks').innerText(),
+     /copiado|Selecione e copie o link mostrado/);
+   }
+  }
   await conferirLargura(paginaBanner,390,'escritorio-home-banners-celular',{captura:false});
   await paginaBanner.screenshot({
    path:path.join(pasta,'ESCRITORIO_BANNER_INTEIRO_MEUS_LINKS_CELULAR_390.png'),fullPage:true
