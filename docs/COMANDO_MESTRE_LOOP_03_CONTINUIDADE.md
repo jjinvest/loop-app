@@ -1054,6 +1054,8 @@ Foi reconhecido que o circuito **`CircuitBreakPonteV6DemoSQLite` já persiste**,
 - A alteração de preços, margem, elegibilidade de produtos ou fila NÃO é permitida por este ajuste. O registro do pedido e dos valores originais permanece intacto; apenas a escolha pública pelo LOOP está desligada.
 - Quando o DONO expressamente mandar exibir, a flag do servidor poderá ser habilitada por uma mudança controlada na configuração **com testes**; não habilitar por padrão ou antecipadamente. Em teste isolado, a flag é explicitamente `true` para continuar cobrindo a lógica SIM/NÃO. A opção desativada por padrão é uma salvaguarda de staging, não prontidão de checkout bancário real.
 
+**CI VERIFICADO:** `Testes do LOOP 39710034571` — **SUCCESS, 502/502 aprovados, 0 falhas**; `Navegador celular/tablet/computador 39710034564` — **SUCCESS**, ambos sobre código `e1f7c8c2b45641b2b437981e40bab18bb341b4f8`.
+
 **Arquivo novo de teste:** `test/loop-v6-convite-checkout-oculto-por-padrao.test.js` verifica flag desligada, ausência de pergunta ativa, compra normal sem posição, recusa de POST falso de adesão e integridade SQLite. Testes anteriores e script Playwright receberam a opção **`habilitarConviteLoopCheckout:true` apenas dentro da suíte**, garantindo que opt-in continua funcionando quando intencionalmente liberado.
 
 **IMPORTANTE:** contratos e opções legais de devolução na seção 88, preços variáveis na seção 85, voluntariedade original da seção 89 e demais telas e regras continuam preservados. PR #1 DRAFT, sem merge/deploy e sem pagamento real.
