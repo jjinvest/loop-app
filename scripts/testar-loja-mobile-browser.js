@@ -2262,7 +2262,8 @@ async function main(){
   await paginaBanner.locator('#senhaParticipante').fill(senha);
   await paginaBanner.locator('#botaoEntrarParticipante').click();
   await paginaBanner.locator('#loop03BannersPista .loop03-banner-1:not([hidden])').waitFor();
-  assert.equal(await paginaBanner.locator('#loop03BannersPista .loop03-banner-slide').count(),4);
+  assert.ok((await paginaBanner.locator('#loop03BannersPista .loop03-banner-slide').count())>=4,
+   'Banners incluem os 4 comunicados de laboratório, além de avisos já existentes');
   assert.equal(await paginaBanner.locator('#loop03BannersPista .loop03-banner-slide:not([hidden])').count(),1);
   assert.equal(await paginaBanner.locator('#loop03BannersPista .loop03-banner-1:not([hidden]) .loop03-banner-quadro').count(),1);
   assert.equal(await paginaBanner.locator('#loop03LinksHome > summary').innerText(),'Meus Links');
