@@ -521,3 +521,92 @@ body.loop03-logado{
  .loop03-grade-posicoes .loop03-cartao-selo{width:32px!important;height:32px!important}
  .loop03-grade-posicoes .loop03-adicionar-indicado{font-size:.62rem!important}
 }
+
+
+/* Escritório Virtual do participante: cartazes automáticos no lugar do
+   cenário do monitor, com os demais elementos da tela preservados. */
+#loop03-home .loop03-banners-escritorio{
+ position:relative;width:100%;max-width:960px;height:clamp(240px,34vw,355px);
+ margin:16px auto 15px;padding:9px;min-width:0;
+ border:2px solid #cf9c54;border-radius:20px;
+ background:linear-gradient(145deg,#0a142c,#1b1641 65%,#1c102a);
+ box-shadow:inset 0 0 0 2px #8856a85c,0 12px 26px #0008;
+}
+#loop03-home .loop03-banners-pista{width:100%;height:calc(100% - 14px);min-width:0}
+#loop03-home .loop03-banner-slide{
+ display:grid;grid-template-columns:repeat(var(--banner-colunas),minmax(0,1fr));
+ gap:clamp(4px,1vw,10px);height:100%;min-width:0;
+}
+#loop03-home .loop03-banner-slide[hidden]{display:none!important}
+#loop03-home .loop03-banner-1{--banner-colunas:1}
+#loop03-home .loop03-banner-3{--banner-colunas:3}
+#loop03-home .loop03-banner-4{--banner-colunas:4}
+#loop03-home .loop03-banner-quadro{
+ position:relative;display:flex;align-items:flex-end;justify-content:flex-start;
+ min-width:0;height:100%;padding:clamp(7px,1.7vw,17px);overflow:hidden;
+ color:#fff4e0;text-decoration:none;text-align:left;
+ border:1px solid #a9895d;border-radius:13px;
+ background:radial-gradient(ellipse at 75% 10%,#7a4ca583,transparent 67%),
+  linear-gradient(145deg,#1b264d,#18142d);
+}
+#loop03-home a.loop03-banner-quadro:hover,
+#loop03-home a.loop03-banner-quadro:focus-visible{
+ outline:2px solid #ffd47e;outline-offset:-3px;border-color:#ffd47e;
+}
+#loop03-home .loop03-banner-quadro img{
+ position:absolute;inset:0;width:100%;height:100%;object-fit:cover;
+}
+#loop03-home .loop03-banner-quadro:has(img)::after{
+ content:"";position:absolute;inset:25% 0 0;
+ background:linear-gradient(transparent,#07071bea 90%);pointer-events:none;
+}
+#loop03-home .loop03-banner-conteudo{
+ position:relative;z-index:1;display:flex;flex-direction:column;align-items:flex-start;
+ gap:5px;min-width:0;width:100%;overflow-wrap:anywhere;
+}
+#loop03-home .loop03-banner-conteudo small{
+ font-weight:850;color:#ffcf81;letter-spacing:.06em;font-size:clamp(.5rem,.85vw,.8rem);
+}
+#loop03-home .loop03-banner-conteudo strong{
+ display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:3;
+ overflow:hidden;line-height:1.13;font-size:clamp(.73rem,1.6vw,1.6rem);
+}
+#loop03-home .loop03-banner-1 .loop03-banner-conteudo strong{
+ font-size:clamp(1.35rem,3vw,2.6rem);-webkit-line-clamp:2;
+}
+#loop03-home .loop03-banner-descricao{
+ display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;
+ overflow:hidden;line-height:1.3;font-size:clamp(.6rem,1vw,.9rem);color:#e0dfec;
+}
+#loop03-home .loop03-banners-vazio{
+ display:grid;place-items:center;width:100%;height:100%;
+ margin:0;padding:16px;color:#e6dcf0;font-size:.88rem;text-align:center;
+}
+#loop03-home .loop03-banners-marcas{
+ display:flex;justify-content:center;align-items:center;gap:6px;height:14px;
+}
+#loop03-home .loop03-banners-marcas[hidden]{display:none!important}
+#loop03-home .loop03-banners-marcas>span{
+ display:block;width:14px;height:3px;border-radius:3px;background:#7d6a8e;
+}
+#loop03-home .loop03-banners-marcas>.loop03-banner-marca-ativa{background:#ffce78}
+#loop03-home .loop03-links-home{margin-top:17px}
+#loop03-home .loop03-links-home>summary:focus-visible{outline:3px solid #ffd483;outline-offset:3px}
+@media(max-width:520px){
+ #loop03-home .loop03-banners-escritorio{
+  height:clamp(205px,66vw,285px);margin:13px auto 12px;padding:5px;
+  border-radius:13px;
+ }
+ #loop03-home .loop03-banner-slide{gap:3px}
+ #loop03-home .loop03-banner-quadro{padding:5px;border-radius:8px}
+ #loop03-home .loop03-banner-conteudo{gap:3px}
+ #loop03-home .loop03-banner-3 .loop03-banner-conteudo strong,
+ #loop03-home .loop03-banner-4 .loop03-banner-conteudo strong{font-size:clamp(.54rem,2.25vw,.72rem)}
+ #loop03-home .loop03-banner-3 .loop03-banner-descricao,
+ #loop03-home .loop03-banner-4 .loop03-banner-descricao{display:none}
+ #loop03-home .loop03-banner-3 .loop03-banner-conteudo small,
+ #loop03-home .loop03-banner-4 .loop03-banner-conteudo small{
+  font-size:.46rem;letter-spacing:0;
+ }
+ #loop03-home .loop03-banner-1 .loop03-banner-conteudo strong{font-size:1.4rem}
+}
