@@ -129,6 +129,23 @@ class CarrinhoLojaLoopDemoSQLite{
    );
    CREATE INDEX IF NOT EXISTS idx_carrinho_eventos_pedido
     ON admin_carrinho_loop_eventos_demo(pedido_id,registrado_em);
+   -- Nova decisao do proprio COMPRADOR do laboratorio, opcao SIM ou NAO.
+   -- Legados de testes/admin sem linha mantem historico; compras publicas
+   -- futuras precisam de escolha explicita. Nao confundir opt-in com
+   -- renuncia aos direitos de reembolso previstos no CDC.
+   CREATE TABLE IF NOT EXISTS admin_carrinho_escolha_loop_demo(
+    pedido_id TEXT PRIMARY KEY REFERENCES admin_carrinho_loop_demo(pedido_id) ON DELETE RESTRICT,
+    participar_loop INTEGER NOT NULL CHECK(participar_loop IN (0,1)),
+    subtotal_qualificado_centavos INTEGER NOT NULL CHECK(subtotal_qualificado_centavos>=0),
+    referencia_centavos INTEGER NOT NULL CHECK(referencia_centavos>0),
+    registrado_em TEXT NOT NULL
+   );
+   CREATE TRIGGER IF NOT EXISTS admin_carrinho_escolha_no_update
+    BEFORE UPDATE ON admin_carrinho_escolha_loop_demo
+    BEGIN SELECT RAISE(ABORT,'escolha LOOP imutavel'); END;
+   CREATE TRIGGER IF NOT EXISTS admin_carrinho_escolha_no_delete
+    BEFORE DELETE ON admin_carrinho_escolha_loop_demo
+    BEGIN SELECT RAISE(ABORT,'escolha LOOP imutavel'); END;
    CREATE TRIGGER IF NOT EXISTS admin_carrinho_no_update
     BEFORE UPDATE ON admin_carrinho_loop_demo
     BEGIN SELECT RAISE(ABORT,'carrinho imutavel'); END;
@@ -253,6 +270,9 @@ class CarrinhoLojaLoopDemoSQLite{
     UNION ALL SELECT pedido_id FROM admin_ponte_vendas_loja_apos_reajuste_demo WHERE pedido_id=?
    `
   ).get(pedidoId,pedidoId);
+  const escolha=this.banco.prepare(
+   'SELECT participar_loop AS participarLoop,subtotal_qualificado_centavos AS subtotalQualificadoCentavos,referencia_centavos AS referenciaCentavos,registrado_em AS registradoEm FROM admin_carrinho_escolha_loop_demo WHERE pedido_id=?'
+  ).get(pedidoId);
   const totalElegivelLoopCentavos=itens.reduce((n,i)=>n+i.subtotalElegivelCentavos,0);
   if(!Number.isSafeInteger(totalElegivelLoopCentavos)||totalElegivelLoopCentavos>row.totalCentavos)
    throw new Error('Integridade de elegibilidade do carrinho comprometida');
@@ -261,7 +281,12 @@ class CarrinhoLojaLoopDemoSQLite{
   const posicaoIds=posicao?[posicao.id,...this.banco.prepare(
    'SELECT posicao_id AS id FROM admin_ponte_posicoes_adicionais_demo WHERE pedido_id=? ORDER BY ordem'
   ).all(pedidoId).map(p=>p.id)]:[];
-  return {...row,itens,totalElegivelLoopCentavos,posicoesSolicitadas,
+  return {...row,itens,totalElegivelLoopCentavos,
+   participarLoop:escolha?escolha.participarLoop===1:null,
+   escolhaLoopExpressa:!!escolha,
+   subtotalQualificadoOriginalCentavos:escolha?.subtotalQualificadoCentavos??totalElegivelLoopCentavos,
+   referenciaNaEscolhaCentavos:escolha?.referenciaCentavos??null,
+   posicoesSolicitadas,
    situacaoPagamentoFicticio:!evento?'AGUARDANDO_FICTICIO':
     evento.tipo==='CONFIRMAR_FICTICIO'?'CONFIRMADO_FICTICIO':'ESTORNADO_FICTICIO',
    posicaoCriada:!!posicao,posicaoId:posicao?.id??null,posicaoIds,
@@ -289,8 +314,10 @@ class CarrinhoLojaLoopDemoSQLite{
   ).get(pedidoId,contaId);
   return dono?this.buscar(pedidoId):null;
  }
- criar({pedidoId,contaId,itens}={}){
+ criar({pedidoId,contaId,itens,participarLoop}={}){
   idValido(pedidoId);
+  if(participarLoop!==undefined&&typeof participarLoop!=='boolean')
+   throw falha('OPCAO_LOOP_INVALIDA','Informe sim ou nao explicitamente');
   const lista=validarLista(itens);
   this.banco.exec('BEGIN IMMEDIATE');
   try{
@@ -303,7 +330,9 @@ class CarrinhoLojaLoopDemoSQLite{
      existente.itens.length===lista.length&&
      existente.itens.every((p,i)=>p.produtoId===lista[i].produtoId&&
       p.quantidade===lista[i].quantidade);
-    if(!equivalentes)throw falha('CONFLITO','Pedido ja usado para outro carrinho');
+    if(!equivalentes||participarLoop!==undefined&&
+      existente.participarLoop!==participarLoop)
+     throw falha('CONFLITO','Pedido ja usado para outro carrinho ou escolha diferente');
     this.banco.exec('COMMIT');
     return {...existente,repetido:true};
    }
@@ -337,6 +366,11 @@ class CarrinhoLojaLoopDemoSQLite{
    const totalCentavos=fotografias.reduce((n,i)=>n+i.subtotalCentavos,0);
    if(!Number.isSafeInteger(totalCentavos)||totalCentavos<=0||totalCentavos>1000000000)
     throw falha('VALOR_INVALIDO','Total de carrinho invalido');
+   const subtotalQualificadoCentavos=fotografias.reduce((v,i)=>v+i.subtotalElegivelCentavos,0);
+   const referenciaVigente=this.ponte.configuracaoValor.atual().valorCentavos;
+   if(participarLoop===true&&subtotalQualificadoCentavos<referenciaVigente)
+    throw falha('OPCAO_LOOP_INELEGIVEL',
+     'Nao ha produtos qualificados suficientes para entrar no LOOP');
    if(!this.contas.buscar(contaId))throw falha('TITULAR_INVALIDO','Comprador ficticio inexistente');
    const criadoEm=this.relogio();
    // SAVEPOINT protege o vinculo mesmo dentro desta transacao externa.
@@ -346,6 +380,9 @@ class CarrinhoLojaLoopDemoSQLite{
    this.banco.prepare(
     'INSERT INTO admin_carrinho_loop_demo(pedido_id,conta_id,total_centavos,criado_em) VALUES (?,?,?,?)'
    ).run(pedidoId,contaId,totalCentavos,criadoEm);
+   if(participarLoop!==undefined)this.banco.prepare(
+    'INSERT INTO admin_carrinho_escolha_loop_demo(pedido_id,participar_loop,subtotal_qualificado_centavos,referencia_centavos,registrado_em) VALUES(?,?,?,?,?)'
+   ).run(pedidoId,participarLoop?1:0,subtotalQualificadoCentavos,referenciaVigente,criadoEm);
    const inserir=this.banco.prepare(`
     INSERT INTO admin_carrinho_loop_itens_demo(pedido_id,ordem,produto_id,tipo,nome,revisao,quantidade,unitario_centavos,subtotal_centavos)
     VALUES (?,?,?,?,?,?,?,?,?)
@@ -372,7 +409,7 @@ class CarrinhoLojaLoopDemoSQLite{
     inserir.run(pedidoId,i.ordem,i.produtoId,
      i.tipo,i.nome,i.revisao,i.quantidade,i.unitarioCentavos,i.subtotalCentavos);
     inserirRegra.run(pedidoId,i.ordem,i.elegivelLoop?1:0,
-     i.revisaoElegibilidade,i.subtotalElegivelCentavos);
+     i.revisaoElegibilidade,participarLoop===false?0:i.subtotalElegivelCentavos);
     inserirQuantidade.run(pedidoId,i.ordem,i.quantidadeMinimaLoop,
      i.revisaoQuantidadeMinima);
     inserirPacote.run(pedidoId,i.ordem,i.posicoesPorPedidoLoop,i.revisaoPacotePosicoes);
