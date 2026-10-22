@@ -26,7 +26,7 @@ function setCookie(res,token,maxAge){
  res.append('Set-Cookie',COOKIE+'='+token+'; HttpOnly; SameSite=Strict; Path='+CAMINHO+
   '; Max-Age='+maxAge);
 }
-function criarRouterParticipanteDemo({contas,ponte,sessoes=null,adesoes=null,carrinhos=null,catalogo=null,saques=null,obterLivroProvisoesV6=null,obterRetornoSaqueCentroDemo=null,entregadoresPerfil={},configAkitemm=null,avaliacoesAkitemm=null}={}){
+function criarRouterParticipanteDemo({contas,ponte,sessoes=null,adesoes=null,carrinhos=null,catalogo=null,saques=null,obterLivroProvisoesV6=null,obterRetornoSaqueCentroDemo=null,entregadoresPerfil={},configAkitemm=null,avaliacoesAkitemm=null,habilitarConviteLoopCheckout=false}={}){
  if(!contas||!ponte)throw new TypeError('Cadastro e ponte do laboratorio obrigatorios');
  const gerenciador=sessoes||new SessoesParticipanteDemo({contas});
  const escritorio=new EscritorioIndividualDemo({contas,ponte});
@@ -403,6 +403,7 @@ function criarRouterParticipanteDemo({contas,ponte,sessoes=null,adesoes=null,car
     if(!gerenciador.identificar(lerCookie(req)))
      return res.status(401).json({erro:'SESSAO_AUSENTE_OU_EXPIRADA'});
     return res.json({...carrinhos.opcoes(),
+     conviteLoopCheckoutAtivo:habilitarConviteLoopCheckout===true,
      referenciaLoopCentavos:ponte.configuracaoValor.atual().valorCentavos,
      pedidoFicticio:true,pagamentoReal:false});
    }catch(e){return next(e);}
@@ -439,6 +440,9 @@ function criarRouterParticipanteDemo({contas,ponte,sessoes=null,adesoes=null,car
    try{
     const contaId=gerenciador.identificar(lerCookie(req));
     if(!contaId)return res.status(401).json({erro:'SESSAO_AUSENTE_OU_EXPIRADA'});
+    // Mesmo um POST forjado nao habilita adesao enquanto convite oculto.
+    if(!habilitarConviteLoopCheckout&&req.body.participarLoop===true)
+     return res.status(409).json({erro:'CONVITE_LOOP_AINDA_OCULTO'});
     const pendentes=carrinhos.banco.prepare(`
      SELECT COUNT(*) AS total FROM admin_carrinho_loop_demo c
      WHERE c.conta_id=? AND NOT EXISTS (
