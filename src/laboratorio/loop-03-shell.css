@@ -659,3 +659,93 @@ body.loop03-logado{
  #loop03Shell #loop03-home .loop03-campo-link input{font-size:.72rem;padding:9px 7px}
  #loop03Shell #loop03-home .loop03-botao-copiar{flex-basis:37px;width:37px;height:38px}
 }
+
+/* Vitrine inferior do Escritório: foto inteira em formato paisagem.
+   As outras abas, o banner superior e os controles comerciais não mudam. */
+#loop03-home #secaoAkitemmEscritorio{
+ display:flex;flex-direction:column;align-items:stretch;min-width:0;
+ margin:19px 0 5px;padding:clamp(15px,2.5vw,25px);
+ border:1px solid #a57bcd;border-radius:18px;
+ background:linear-gradient(155deg,#12132d 0%,#191038 57%,#11172e 100%);
+ box-shadow:inset 0 0 0 1px #5e4b7455,0 10px 25px #0005;
+}
+#loop03-home #secaoAkitemmEscritorio .loop03-loja-convite{
+ max-width:780px;margin:0 auto 17px;text-align:center;
+ font-size:clamp(.84rem,1.5vw,1.04rem);line-height:1.65;
+ color:#f6e7ff;font-weight:650;letter-spacing:.015em;
+}
+#loop03-home .loop03-banners-loja{
+ width:100%;max-width:960px;min-width:0;margin:0 auto 16px;
+ padding:7px;border:1px solid #e6b76e;border-radius:15px;
+ background:linear-gradient(145deg,#080b20,#1d1440);
+ box-shadow:0 7px 24px #0007;
+}
+#loop03-home .loop03-banners-loja-pista{
+ width:100%;min-width:0;aspect-ratio:3.2 / 1;
+ min-height:150px;max-height:350px;
+}
+#loop03-home .loop03-banners-loja-slide{
+ display:flex;align-items:center;justify-content:center;
+ width:100%;height:100%;min-width:0;overflow:hidden;position:relative;
+ border-radius:11px;color:#ffe2ac;text-decoration:none;text-align:center;
+ background:radial-gradient(ellipse at 35% 45%,#543679,#101431 70%);
+}
+#loop03-home .loop03-banners-loja-slide[hidden]{display:none!important}
+#loop03-home .loop03-banners-loja-slide img{
+ display:block;width:100%;height:100%;object-fit:contain;
+}
+#loop03-home .loop03-banners-loja-texto{
+ display:flex;flex-direction:column;gap:9px;align-items:center;justify-content:center;
+ padding:20px;max-width:85%;overflow-wrap:anywhere;
+}
+#loop03-home .loop03-banners-loja-texto strong{
+ font-size:clamp(1.25rem,3vw,2.3rem);line-height:1.15;color:#ffe5b0;
+}
+#loop03-home .loop03-banners-loja-texto span{
+ font-size:clamp(.77rem,1.35vw,.99rem);color:#e6deef;line-height:1.5;
+}
+#loop03-home .loop03-banners-loja-vazio{
+ display:grid;place-items:center;width:100%;height:100%;
+ margin:0;padding:14px;text-align:center;color:#d9cce7;font-size:.89rem;
+}
+#loop03-home .loop03-banners-loja-marcas{
+ display:flex;align-items:center;justify-content:center;gap:7px;
+ min-height:16px;padding-top:6px;
+}
+#loop03-home .loop03-banners-loja-marcas[hidden]{display:none!important}
+#loop03-home .loop03-banners-loja-marcas>span{
+ width:16px;height:4px;background:#80708d;border-radius:7px;
+}
+#loop03-home .loop03-banners-loja-marcas>.loop03-banner-marca-ativa{background:#ffcb77}
+#loop03-home .loop03-banners-loja-slide:hover,
+#loop03-home .loop03-banners-loja-slide:focus-visible{
+ outline:2px solid #ffd88d;outline-offset:-3px;
+}
+#loop03-home #secaoAkitemmEscritorio .loop03-loja-aviso{
+ max-width:790px;margin:2px auto 18px;text-align:center;
+ color:#d5cadf;font-size:clamp(.77rem,1.1vw,.9rem);
+ line-height:1.55;letter-spacing:.01em;
+}
+#loop03-home #secaoAkitemmEscritorio .loop03-loja-acesso{
+ display:inline-flex;align-items:center;justify-content:center;align-self:center;
+ min-width:210px;min-height:45px;max-width:100%;margin-top:10px;padding:12px 24px;
+ border:1px solid #ecc579;border-radius:26px;
+ background:linear-gradient(110deg,#402568,#623d7e,#3d224e);
+ color:#fff1cc;font-size:.92rem;font-weight:850;
+ box-shadow:0 4px 12px #0006;
+}
+#loop03-home #secaoAkitemmEscritorio .loop03-loja-acesso:hover{
+ text-decoration:none;border-color:#ffe8b1;box-shadow:0 0 17px #d6a9f266;
+}
+#loop03-home #secaoAkitemmEscritorio .loop03-loja-acesso:focus-visible{
+ outline:3px solid #ffe09a;outline-offset:3px;
+}
+@media(max-width:520px){
+ #loop03-home #secaoAkitemmEscritorio{padding:12px;border-radius:14px}
+ #loop03-home .loop03-banners-loja{padding:5px;border-radius:11px}
+ #loop03-home .loop03-banners-loja-pista{aspect-ratio:16 / 9;min-height:165px;max-height:290px}
+ #loop03-home .loop03-banners-loja-slide{border-radius:7px}
+ #loop03-home .loop03-banners-loja-texto{padding:10px;max-width:95%}
+ #loop03-home .loop03-banners-loja-texto strong{font-size:1.18rem}
+ #loop03-home #secaoAkitemmEscritorio .loop03-loja-acesso{width:100%;margin-top:10px}
+}
