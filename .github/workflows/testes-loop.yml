@@ -19,3 +19,55 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npm test
+
+  verificar-conexao-asaas-sandbox:
+    # Executar apenas no PR confiavel do proprio repositorio; nao usa fork.
+    if: >-
+      github.event_name == 'pull_request' &&
+      github.head_ref == 'fix/teste-escrita-catraca-20261014' &&
+      github.event.pull_request.head.repo.full_name == 'jjinvest/loop-app'
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    permissions: {}
+    steps:
+      # Sem checkout: codigo e dependencias do PR nao recebem segredo.
+      - name: Conexao somente leitura Asaas Sandbox
+        shell: bash
+        env:
+          ASAAS_SANDBOX_API_KEY: ${{ secrets.ASAAS_SANDBOX_API_KEY }}
+        run: |
+          node <<'NODE'
+          'use strict';
+          (async()=>{
+            const chave=process.env.ASAAS_SANDBOX_API_KEY;
+            if(typeof chave!=='string'||!chave.startsWith('$aact_hmlg_')||
+               chave.length<25||/[\s\r\n]/.test(chave)){
+              console.error('ASAAS_SANDBOX_CHAVE_AUSENTE_OU_AMBIENTE_ERRADO');
+              process.exitCode=1;return;
+            }
+            let resposta;
+            try{
+              resposta=await fetch('https://api-sandbox.asaas.com/v3/myAccount/status/',{
+                method:'GET',redirect:'error',
+                headers:{
+                  'access_token':chave,
+                  'User-Agent':'AKITEMM-LOOP-Sandbox-Preflight/1.0',
+                  'Accept':'application/json'
+                },
+                signal:AbortSignal.timeout(8000)
+              });
+            }catch{
+              console.error('ASAAS_SANDBOX_CONEXAO_INDISPONIVEL');
+              process.exitCode=1;return;
+            }
+            if(resposta.status!==200){
+              console.error('ASAAS_SANDBOX_STATUS_HTTP_'+resposta.status);
+              process.exitCode=1;return;
+            }
+            console.log('ASAAS_SANDBOX_CONEXAO_AUTENTICADA_LEITURA_OK');
+            console.log('COBRANCAS_CRIADAS=0; PIX_REAIS=0; SAQUES=0');
+          })().catch(()=>{
+            console.error('ASAAS_SANDBOX_VALIDACAO_INCONCLUSIVA');
+            process.exitCode=1;
+          });
+          NODE
