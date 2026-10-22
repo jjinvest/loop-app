@@ -7,6 +7,7 @@
  const catalogo=[],carrinho=new Map();
  let referenciaCentavos=25000,pedidoEmAndamento=false,filtro='todos',configLoja=null,bannerIndice=-1;
  let timerBanner=null,enderecoEntrega=null,quantidadeVitrine=12;
+ let assinaturaCarrinhoAnterior='';
  let avaliacoesDisponiveis=[],avisosGerais=[];
  const vazio=document.createElement.bind(document);
  const inform=msg=>{el('estadoLojaLoop').textContent=msg;};
@@ -111,6 +112,13 @@
   el('orientacaoMinimoLoop').textContent=orientacao.mensagem;
   const qualificado=totalElegivel>=referenciaCentavos;
   const escolha=el('akitemmEscolhaLoop');
+  // Alterou itens/quantidade: a escolha anterior nao vale para outro carrinho.
+  const assinatura=JSON.stringify([...carrinho]);
+  if(assinatura!==assinaturaCarrinhoAnterior){
+   assinaturaCarrinhoAnterior=assinatura;
+   for(const opcao of escolha.querySelectorAll('input[name="akitemmParticiparLoop"]'))
+    opcao.checked=false;
+  }
   if(!qualificado){
    for(const opcao of escolha.querySelectorAll('input[name="akitemmParticiparLoop"]'))
     opcao.checked=false;
