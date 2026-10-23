@@ -3,6 +3,7 @@
 // Ponte EXCLUSIVA de laboratorio: a resposta de compra vem de um
 // verificador INJETADO NO SERVIDOR, nunca de um corpo HTTP. Nao e PSP.
 const { SimuladorLoop }=require('./simulador-loop');
+const {LIMITE_POSICOES_ATIVAS}=require('./capacidade-posicoes-loop');
 const { STATUS_CONFIRMADO }=require('./processador-pedidos-simulados');
 const {ConfiguracaoValorLoopDemoSQLite}=require('./configuracao-valor-loop-demo-sqlite');
 const {IndicacoesLinksComissoesDemoSQLite}=require('./indicacoes-links-comissoes-demo-sqlite');
@@ -612,8 +613,8 @@ class PonteComprasConvitesDemoSQLite{
      motivoSemPosicao:'COMPRA_NAO_QUALIFICADA'};
    }
    const simulador=this._restaurar();
-   if(posicoesAtivas(simulador,conta.contaId)+quantidadePosicoes>10)
-    throw falha('LIMITE_ATIVO','Limite de dez posicoes ativas no teste');
+   if(posicoesAtivas(simulador,conta.contaId)+quantidadePosicoes>LIMITE_POSICOES_ATIVAS)
+    throw falha('LIMITE_ATIVO','Limite de '+LIMITE_POSICOES_ATIVAS+' posicoes ativas no teste');
    // Percentual superior ao basico exige posicao VERDE do indicador,
    // nao somente compra/posicao AZUL ainda sem CPF.
    const posicaoAtivaIndicadorId=conta.indicadoPorId?
