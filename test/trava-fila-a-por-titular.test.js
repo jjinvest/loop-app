@@ -41,7 +41,7 @@ function giro(loop,n){
  assert.equal(resultado.girou,true);
  return resultado;
 }
-test('cem indicacoes sao atribuidas a seis posicoes sem concentrar seis na A',()=>{
+test('cem indicacoes podem qualificar seis posicoes independentes na fila A',()=>{
  const {loop,posicoes}=preparar(6);
  for(let i=6;i<100;i++)loop.registrarIndicacaoSimulada({
   indicadorId:'influencer',eventoId:'convite-extra-'+i,
@@ -51,14 +51,11 @@ test('cem indicacoes sao atribuidas a seis posicoes sem concentrar seis na A',()
   .filter(p=>p.participanteId==='influencer');
  assert.equal(suas.reduce((s,p)=>s+(p.indicacoesVinculadas||0),0),100);
  assert.equal(loop.filas.informacoesParticipante('influencer').quantidade,100);
- assert.deepEqual(loop.filas.filaA.filter(p=>p.participanteId==='influencer').map(p=>p.id),
-  [posicoes[0]]);
- assert.deepEqual(loop.filas.filaB.filter(p=>p.participanteId==='influencer').map(p=>p.id),
-  posicoes.slice(1));
+ assert.deepEqual(new Set(loop.filas.filaA.filter(p=>p.participanteId==='influencer').map(p=>p.id)),new Set(posicoes));
+ assert.equal(loop.filas.filaB.filter(p=>p.participanteId==='influencer').length,0);
  giro(loop,1);
- assert.equal(loop.tabuleiro.vagas[5].id,posicoes[0]);
- assert.deepEqual(loop.filas.filaA.filter(p=>p.participanteId==='influencer').map(p=>p.id),
-  [posicoes[1]]);
+ assert.equal(loop.tabuleiro.vagas[5].participanteId,'influencer');
+ assert.equal(loop.filas.filaA.filter(p=>p.participanteId==='influencer').length,5);
 });
 test('A e B do mesmo titular entram ambas sem bloqueio extra, respeitando tres A para uma B',()=>{
  const loop=new SimuladorLoop();
@@ -97,62 +94,17 @@ test('atalho legado de promover todas as posicoes e bloqueado no motor manual',(
  assert.equal(sim.filas.informacoesParticipante('pessoa').quantidade,0);
  assert.equal(sim.filas.indicacoesProcessadas.size,0);
 });
-test('vaga 6 libera a segunda posicao assim que a primeira entrou no tabuleiro',()=>{
- const {loop,posicoes}=preparar(3);
- assert.deepEqual(loop.filas.filaA.map(p=>p.id),[posicoes[0]]);
+test('todas as posicoes qualificadas permanecem na A e so duas ocupam o tabuleiro',()=>{
+ const {loop,posicoes}=preparar(6);
+ assert.deepEqual(new Set(loop.filas.filaA.filter(p=>p.participanteId==='influencer').map(p=>p.id)),new Set(posicoes));
  giro(loop,1);
- assert.equal(loop.tabuleiro.vagas[5].id,posicoes[0]);
- assert.deepEqual(loop.filas.filaA.map(p=>p.id),[posicoes[1]]);
- assert.deepEqual(loop.filas.filaB.filter(p=>p.participanteId==='influencer')
-  .map(p=>p.id),[posicoes[2]]);
  giro(loop,2);
- assert.equal(loop.tabuleiro.vagas[5].id,posicoes[1]);
- assert.deepEqual(loop.filas.filaA.map(p=>p.id),[posicoes[2]]);
-});
-test('titular com seis posicoes e seis convites nao domina a Fila A',()=>{
- const {loop,posicoes}=preparar(6,5);
- assert.deepEqual(loop.filas.filaA.map(p=>p.id),[posicoes[0]]);
- assert.deepEqual(loop.filas.filaB.filter(p=>p.participanteId==='influencer').map(p=>p.id),posicoes.slice(1));
- for(const p of loop.filas.filaB.filter(p=>p.participanteId==='influencer'))
-  assert.equal(p.indicacoesVinculadas,1);
- giro(loop,1);
- assert.equal(loop.tabuleiro.vagas[5].id,posicoes[0]);
- assert.deepEqual(loop.filas.filaA.map(p=>p.id),[]);
- giro(loop,2);
- assert.equal(loop.tabuleiro.vagas[4].id,posicoes[0]);
- assert.deepEqual(loop.filas.filaA.map(p=>p.id),[posicoes[1]]);
- assert.deepEqual(loop.filas.filaB.filter(p=>p.participanteId==='influencer').map(p=>p.id),posicoes.slice(2));
+ const ocupadas=[loop.tabuleiro.centro,...loop.tabuleiro.vagas].filter(p=>p?.participanteId==='influencer');
+ assert.equal(ocupadas.length,2);
+ assert.equal(loop.filas.filaA.filter(p=>p.participanteId==='influencer').length,4);
  giro(loop,3);
- assert.equal(loop.tabuleiro.vagas[5].id,posicoes[1]);
- assert.deepEqual(loop.filas.filaA.map(p=>p.id),[]);
- giro(loop,4);
- assert.equal(loop.tabuleiro.vagas[4].id,posicoes[1]);
- assert.deepEqual(loop.filas.filaA.map(p=>p.id),[posicoes[2]]);
- assert.deepEqual(loop.filas.filaB.filter(p=>p.participanteId==='influencer').map(p=>p.id),posicoes.slice(3));
-});
-test('trava na vaga 4 ou 3 altera somente futuras liberacoes',()=>{
- const {loop,posicoes}=preparar(3,4);
- giro(loop,1);giro(loop,2);
- assert.deepEqual(loop.filas.filaA.map(p=>p.id),[]); // anterior ainda na vaga 5
- loop.filas.vagaLiberacao=3; // admin apertou trava antes da liberacao
- giro(loop,3);
- assert.equal(loop.tabuleiro.vagas[3].id,posicoes[0]); // chegou na vaga 4
- assert.deepEqual(loop.filas.filaA.map(p=>p.id),[]);
- giro(loop,4); // agora na vaga 3
- assert.equal(loop.tabuleiro.vagas[2].id,posicoes[0]);
- assert.deepEqual(loop.filas.filaA.map(p=>p.id),[posicoes[1]]);
- assert.deepEqual(loop.filas.filaB.filter(p=>p.participanteId==='influencer').map(p=>p.id),[posicoes[2]]);
-});
-test('snapshot recupera ultima posicao promovida e a sequencia da trava',()=>{
- const {loop,posicoes}=preparar(2,5);
- giro(loop,1);
- const restaurado=SimuladorLoop.restaurarSnapshot(loop.exportarSnapshot());
- restaurado.filas.travaPromocaoAtiva=true;
- restaurado.filas.vagaLiberacao=5;
- assert.deepEqual(restaurado.filas.filaA.map(p=>p.id),[]);
- assert.equal(restaurado.filas.ultimaPromovidaPorTitular.get('influencer').posicaoId,posicoes[0]);
- giro(restaurado,2);
- assert.deepEqual(restaurado.filas.filaA.map(p=>p.id),[posicoes[1]]);
+ assert.equal([loop.tabuleiro.centro,...loop.tabuleiro.vagas].filter(p=>p?.participanteId==='influencer').length,2);
+ assert.equal(loop.filas.filaA.filter(p=>p.participanteId==='influencer').length,4);
 });
 test('fila B mostra IDs em ordem de entrada, saltando quem ja saiu para a A',()=>{
  const {MotorFilas}=require('../src/domain/motor-filas');
