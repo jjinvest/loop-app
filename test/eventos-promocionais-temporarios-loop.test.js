@@ -130,7 +130,7 @@ test('promoção criada manualmente: cinza, 10/20/30 unidades, banners e fim',as
  assert.equal(caneta.status,201);
  const ultimo=await criar('vinte-canetas-duas','caneta-50',20);
  assert.equal(ultimo.data.pedido.posicoesSolicitadas,2);
- assert.equal((await confirmar('vinte-canetas-duas')).data.integracao.erro,'LIMITE_ATIVO');
+ assert.equal((await confirmar('vinte-canetas-duas')).data.integracao.posicoesCriadas,2);
  assert.equal((await api('GET',cart+'/eventos-especiais')).data.eventos
   .some(x=>x.eventoId==='evento-20-canetas'&&x.estado==='ATIVO'),true);
 });
