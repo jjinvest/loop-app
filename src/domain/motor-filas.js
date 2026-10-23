@@ -170,9 +170,11 @@ class MotorFilas {
     });
   }
 
-  proximoDaFila({titularesBloqueados=[]}={}) {
+  proximoDaFila(opcoes={}) {
+    const titularesBloqueados=typeof opcoes==='function'?[]:(opcoes.titularesBloqueados||[]);
     const bloqueados=new Set(titularesBloqueados);
-    const elegivel=p=>!bloqueados.has(p.participanteId);
+    const elegivel=p=>!bloqueados.has(p.participanteId)&&
+      (typeof opcoes!=='function'||opcoes(p));
     const indiceA=this.filaA.findIndex(elegivel);
     const indiceB=this.filaB.findIndex(elegivel);
     let posicao,origem;
