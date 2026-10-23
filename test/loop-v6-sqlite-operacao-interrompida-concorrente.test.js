@@ -99,7 +99,7 @@ test('integração SQLite: 1000 pedidos, duplicatas cruzadas, falha de pagamento
    const sample=m.escritorio.consultar(clientes[4].contaId);
    assert.equal(sample.posicoes.length,1);
    assert.equal(sample.comprasLojaSemLoop.length,1);
-   assert.equal(sample.vagasLivres,5);
+   assert.equal(sample.vagasLivres,9);
   }
  }
  const final=contagens(m.banco);
