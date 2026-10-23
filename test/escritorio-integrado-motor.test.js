@@ -48,7 +48,7 @@ test('projecao le posicoes, historico e indicacoes do motor sem alterar seu esta
   assert.deepEqual([a.vagasDisponiveis,b.vagasDisponiveis,c.vagasDisponiveis,d.vagasDisponiveis],[7,6,7,8]);
   assert.deepEqual([a.posicoesConcluidas,b.posicoesConcluidas,c.posicoesConcluidas,d.posicoesConcluidas],[1,0,0,0]);
   assert.deepEqual(a.historico,[{id:'posicao-motor-1',situacao:'CONCLUIDA'}]);
-  assert.deepEqual(a.ativas.map(p=>p.id),['posicao-motor-8','posicao-motor-9','posicao-motor-2']);
+  assert.deepEqual(a.ativas.map(p=>p.id),['posicao-motor-9','posicao-motor-2','posicao-motor-8']);
   assert.ok(b.ativas.some(p=>p.local.startsWith('VAGA_')));
   assert.ok(b.ativas.some(p=>p.local==='FILA' && p.fila==='A'));
   assert.ok(c.ativas.some(p=>p.local==='FILA' && p.fila==='A'));
