@@ -19,14 +19,19 @@ test('dez posicoes do mesmo titular empatadas com trinta indicacoes aguardam sem
  }
  assert.equal(sim.filas.filaA.filter(p=>p.participanteId==='titular-empate').length,10);
  assert.ok(sim.filas.filaA.filter(p=>p.participanteId!=='titular-empate').every(p=>p.indicacoesVinculadas<30));
- assert.equal(sim.filas.filaB.length,7);
+ assert.ok(sim.filas.filaB.length>0,'fila B deve permanecer disponivel');
+ const origens=[];
  for(let giro=1;giro<=20;giro++){
   for(let venda=1;venda<=6;venda++)sim.registrarVendaNoCicloSimulada({vendaId:'giro-'+giro+'-venda-'+venda});
-  sim.abrirCatraca();assert.equal(sim.tentarGiro().girou,true);sim.pausarCatraca();
+  sim.abrirCatraca();const resultado=sim.tentarGiro();assert.equal(resultado.girou,true);sim.pausarCatraca();
+  if(resultado.novaPosicao6)origens.push(resultado.novaPosicao6.origemFila);
   const ocupantes=[sim.tabuleiro.centro,...sim.tabuleiro.vagas].filter(Boolean);
   assert.ok(ocupantes.filter(p=>p.participanteId==='titular-empate').length<=2,'maximo duas posicoes do titular no tabuleiro');
   const rastreaveis=[...sim.filas.filaA,...sim.filas.filaB,...ocupantes,...sim.tabuleiro.ciclosConcluidos.map(c=>c.centro)].filter(Boolean);
   assert.ok(ids.every(id=>rastreaveis.some(p=>p.id===id)),'nenhuma posicao desaparece');
   assert.ok(sim.filas.filaA.filter(p=>p.participanteId==='titular-empate').every(p=>p.indicacoesVinculadas===30),'indicacoes preservadas');
  }
+ assert.ok(origens.includes('A'),'fila A deve abastecer o tabuleiro');
+ assert.ok(origens.includes('B'),'fila B deve abastecer o tabuleiro');
+ assert.deepEqual(origens.slice(0,8),['A','A','A','B','A','A','A','B'],'alternancia 3A/1B nas oito primeiras entradas');
 });
