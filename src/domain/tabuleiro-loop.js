@@ -149,7 +149,7 @@ class TabuleiroLoop {
     // Giro fixo: Centro sai; 1 -> Centro; 2 -> 1 ... 6 -> 5.
     // Somente uma nova selecao da fila abastece a posicao 6.
     this.centro = vagasAnteriores[0];
-    this.vagas = [...vagasAnteriores.slice(1),this.selecionar()];
+    this.vagas = [...vagasAnteriores.slice(1),this.selecionar({saindo:[centroAnterior?.id]})];
     this.ciclosConcluidos.push(concluido);
     this.vendasDoCiclo = [];
     return {
