@@ -174,24 +174,17 @@ class MotorFilas {
   proximoDaFila({titularesBloqueados=[]}={}) {
     const bloqueados=new Set(titularesBloqueados);
     const elegivel=p=>!bloqueados.has(p.participanteId);
-    let posicao;
-    let origem;
-    if (this.filaA.length && (this.contadorA < 3 || !this.filaB.length)) {
-      posicao = this.filaA.shift();
-      origem = 'A';
-      this.contadorA += 1;
-    } else if (this.filaB.length) {
-      posicao = this.filaB.shift();
-      origem = 'B';
-      this.contadorA = 0;
-    } else if (this.filaA.length) {
-      posicao = this.filaA.shift();
-      origem = 'A';
-      this.contadorA += 1;
-    } else {
-      return null;
-    }
-    return { pessoa: this.copiar(posicao), origem };
+    const indiceA=this.filaA.findIndex(elegivel);
+    const indiceB=this.filaB.findIndex(elegivel);
+    let posicao,origem;
+    if(indiceA>=0&&(this.contadorA<3||indiceB<0)){
+      posicao=this.filaA.splice(indiceA,1)[0];origem='A';this.contadorA++;
+    }else if(indiceB>=0){
+      posicao=this.filaB.splice(indiceB,1)[0];origem='B';this.contadorA=0;
+    }else if(indiceA>=0){
+      posicao=this.filaA.splice(indiceA,1)[0];origem='A';this.contadorA++;
+    }else return null;
+    return {pessoa:this.copiar(posicao),origem};
   }
 
   resumo() {
