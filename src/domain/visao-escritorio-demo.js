@@ -2,7 +2,7 @@
 
 // Projecao SOMENTE para leitura em laboratorio. Nao recebe CPF e nao
 // registra compra, credito, contemplacao, saque ou qualquer pagamento.
-const LIMITE_POSICOES_ATIVAS = 6;
+const LIMITE_POSICOES_ATIVAS = 10;
 const ESTADOS_VALIDOS = new Set(['ATIVA','CONCLUIDA']);
 const FILAS_VALIDAS = new Set(['A','B']);
 const LOCAIS_VALIDOS = new Set(['FILA','CENTRO','VAGA_1','VAGA_2','VAGA_3','VAGA_4','VAGA_5','VAGA_6']);
@@ -64,7 +64,7 @@ function criarVisaoEscritorioDemo({titularId, titulares=TITULARES_FICTICIOS, pos
     }
   }
   if(ativas.length>LIMITE_POSICOES_ATIVAS) {
-    throw new Error('Limite de seis posicoes ativas por titular excedido');
+    throw new Error('Limite de posicoes ativas por titular excedido');
   }
   return {
     modo:'ESCRITORIO_APENAS_DEMONSTRACAO',
