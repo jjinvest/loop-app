@@ -146,9 +146,8 @@ class MotorFilas {
     return { repetida: false, promovidas: promovidas.map(p => this.copiar(p)), quantidade: novo.quantidade };
   }
 
-  // Permite no maximo uma posicao na Fila A por titular. A proxima
-  // aguarda na B, contando indicacoes, ate a anterior chegar na vaga
-  // configurada. A B preserva integralmente a ordem de chegada.
+  // Posicoes com indicacao vinculada podem entrar juntas na fila A.
+  // A restricao de duas posicoes por titular aplica-se apenas ao tabuleiro.
   liberarEscalonadas(tabuleiro){
     const movidas=[];
     for(const p of [...this.filaB]){
