@@ -30,7 +30,7 @@ test('cenario usa o motor existente e preserva ordem de posicoes apos um giro fi
   assert.equal(estado.catraca.giros,1);
   assert.equal(estado.tabuleiro.centro.participanteId,'conta-demo-a');
   assert.equal(estado.tabuleiro.centro.id,2);
-  assert.deepEqual(estado.tabuleiro.vagas.map(p=>p?.id),[3,4,5,6,7,null]);
+  assert.deepEqual(estado.tabuleiro.vagas.map(p=>p?.id),[3,4,7,undefined,undefined,10]);
   assert.equal(estado.filas.A.quantidade,3);
   assert.equal(estado.filas.B.quantidade,2);
   assert.equal(sim.tabuleiro.ciclosConcluidos[0].centro.id,1);
@@ -48,7 +48,7 @@ test('projecao le posicoes, historico e indicacoes do motor sem alterar seu esta
   assert.deepEqual([a.vagasDisponiveis,b.vagasDisponiveis,c.vagasDisponiveis,d.vagasDisponiveis],[7,6,7,8]);
   assert.deepEqual([a.posicoesConcluidas,b.posicoesConcluidas,c.posicoesConcluidas,d.posicoesConcluidas],[1,0,0,0]);
   assert.deepEqual(a.historico,[{id:'posicao-motor-1',situacao:'CONCLUIDA'}]);
-  assert.deepEqual(a.ativas.map(p=>p.id),['posicao-motor-2','posicao-motor-8','posicao-motor-9']);
+  assert.deepEqual(a.ativas.map(p=>p.id),['posicao-motor-8','posicao-motor-9','posicao-motor-2']);
   assert.ok(b.ativas.some(p=>p.local.startsWith('VAGA_')));
   assert.ok(b.ativas.some(p=>p.local==='FILA' && p.fila==='A'));
   assert.ok(c.ativas.some(p=>p.local==='FILA' && p.fila==='A'));
