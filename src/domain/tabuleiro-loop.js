@@ -36,11 +36,13 @@ class TabuleiroLoop {
   // definitivos, mas cada posicao cruza esta mesma fronteira antes de ocupar
   // qualquer vaga interna ou o centro. Nao ha conversao na fila A ou B.
   selecionar() {
-    // Centro e vagas contam juntos. A terceira posicao do mesmo titular
-    // permanece na fila, preservada para um giro futuro.
-    const ocupadas=[this.centro,...this.vagas].filter(Boolean);
-    const selecionado = this.proximoDaFila(candidata =>
-      ocupadas.filter(p=>p.participanteId===candidata.participanteId).length<2);
+    const contagem=new Map();
+    for(const p of [this.centro,...this.vagas]){
+      if(!p||p.empresa===true)continue;
+      contagem.set(p.participanteId,(contagem.get(p.participanteId)||0)+1);
+    }
+    const titularesBloqueados=[...contagem].filter(([,n])=>n>=2).map(([id])=>id);
+    const selecionado=this.proximoDaFila({titularesBloqueados});
     if (!selecionado) return null;
     if (!selecionado.pessoa || selecionado.pessoa.id === undefined) {
       throw new Error('Selecao de fila retornou posicao invalida');
@@ -149,7 +151,7 @@ class TabuleiroLoop {
     // Giro fixo: Centro sai; 1 -> Centro; 2 -> 1 ... 6 -> 5.
     // Somente uma nova selecao da fila abastece a posicao 6.
     this.centro = vagasAnteriores[0];
-    this.vagas = [...vagasAnteriores.slice(1),this.selecionar({saindo:[centroAnterior?.id]})];
+    this.vagas = [...vagasAnteriores.slice(1),this.selecionar()];
     this.ciclosConcluidos.push(concluido);
     this.vendasDoCiclo = [];
     return {
