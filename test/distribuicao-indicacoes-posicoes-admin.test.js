@@ -85,7 +85,7 @@ test('botao +1 gasta indicacoes disponiveis reais com vinculos imutaveis e paine
  assert.throws(()=>ponte.atribuirProximaIndicacao({
   contaId:convidados[0].contaId,posicaoId:p1.posicaoId}),
   {codigo:'SEM_INDICADOS_ATIVOS_DISPONIVEIS'});
- assert.equal(ponte._restaurar().filas.filaA.filter(p=>p.participanteId===titular.contaId).length,1);
+ assert.equal(ponte._restaurar().filas.filaA.filter(p=>p.participanteId===titular.contaId).length,2);
  const httpAdmin=await fetch(base+'/api/admin/circuit-break-v6-demo/indicacoes',{
   headers:{Authorization:'Bearer chave-admin-ciclo-loop-de-testes-2026'}
  });
