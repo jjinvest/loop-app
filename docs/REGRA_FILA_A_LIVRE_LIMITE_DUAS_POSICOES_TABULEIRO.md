@@ -1,0 +1,9 @@
+# DECISAO VIGENTE — FILA A LIVRE E LIMITE POR TITULAR NO TABULEIRO (23/10/2026)
+
+Substitui expressamente a regra anterior de escalonamento que impedia múltiplas posições simultâneas do mesmo titular na Fila A. **As seis posições ativas e individualmente qualificadas do mesmo titular podem permanecer juntas na Fila A.** Cada promoção exige indicação válida vinculada à posição específica, confirmação individual, persistência e idempotência; não promover posições em massa, não alterar 3A/1B.
+
+**Nova trava de ocupação:** cada tabuleiro pode conter **no máximo DUAS posições do mesmo titular/nick simultaneamente**, contando o centro e as seis vagas periféricas em conjunto. São válidos centro + qualquer vaga, vagas 5+6, vagas 4+6 etc. Não é limite de dois participantes distintos por tabuleiro nem limite global na Fila A. A terceira posição do mesmo titular deve aguardar na sua fila sem ser descartada, despromovida, pulada permanentemente ou consumida; preservar prioridade relativa, integridade do 3A/1B e determinismo ao buscar outro titular elegível. Contar por identidade estável do titular (participanteId), e não apenas texto visual do nick; considerar as posições da empresa conforme identidade operacional e regras existentes, sem confundir participantes diferentes com mesmo nome.
+
+A validação deve ocorrer **em toda entrada**: preenchimento inicial, giro/catraca, restauração e demais caminhos de inserção. Testar centro+vaga, duas vagas quaisquer, bloqueio de terceira, liberação após saída de posição, concorrência, fila A com seis posições, preservação de ordem e proporção, SQLite/snapshots e zero efeito financeiro. Não modificar telas aprovadas, pagamentos, seis eventos do ciclo, saques ou produção. PR #1 continua DRAFT, sem merge/deploy.
+
+**STATUS:** decisão de negócio registrada; implementação do motor e testes ainda pendentes, não declarar a regra ativa até CI.
