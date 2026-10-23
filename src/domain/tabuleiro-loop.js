@@ -36,7 +36,11 @@ class TabuleiroLoop {
   // definitivos, mas cada posicao cruza esta mesma fronteira antes de ocupar
   // qualquer vaga interna ou o centro. Nao ha conversao na fila A ou B.
   selecionar() {
-    const selecionado = this.proximoDaFila();
+    // Centro e vagas contam juntos. A terceira posicao do mesmo titular
+    // permanece na fila, preservada para um giro futuro.
+    const ocupadas=[this.centro,...this.vagas].filter(Boolean);
+    const selecionado = this.proximoDaFila(candidata =>
+      ocupadas.filter(p=>p.participanteId===candidata.participanteId).length<2);
     if (!selecionado) return null;
     if (!selecionado.pessoa || selecionado.pessoa.id === undefined) {
       throw new Error('Selecao de fila retornou posicao invalida');
