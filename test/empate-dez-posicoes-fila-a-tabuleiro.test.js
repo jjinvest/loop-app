@@ -11,7 +11,15 @@ test('dez posicoes do mesmo titular empatadas com trinta indicacoes aguardam sem
  for(let i=0;i<10;i++)for(let j=0;j<30;j++)sim.registrarIndicacaoSimulada({indicadorId:'titular-empate',posicaoAlvoId:ids[i],eventoId:'convite-'+i+'-'+j,convidouEm:'2026-10-23T12:00:00.000Z'});
  assert.equal(sim.filas.filaA.filter(p=>p.participanteId==='titular-empate').length,10);
  assert.deepEqual(sim.filas.filaA.filter(p=>p.participanteId==='titular-empate').map(p=>p.id),ids);
- for(let i=0;i<24;i++)sim.registrarPosicaoSimulada({participanteId:'concorrente-'+i,vendaId:'concorrente-'+i});
+ // Cem concorrentes, cada um com 0 a 29 indicacoes: nenhum supera as dez posicoes empatadas em 30.
+ for(let i=0;i<100;i++){
+  const id='concorrente-'+i;
+  const p=sim.registrarPosicaoSimulada({participanteId:id,vendaId:id}).posicao;
+  for(let n=0;n<i%30;n++)sim.registrarIndicacaoSimulada({indicadorId:id,posicaoAlvoId:p.id,eventoId:'concorrente-convite-'+i+'-'+n,convidouEm:'2026-10-23T12:00:00.000Z'});
+ }
+ assert.equal(sim.filas.filaA.filter(p=>p.participanteId==='titular-empate').length,10);
+ assert.ok(sim.filas.filaA.filter(p=>p.participanteId!=='titular-empate').every(p=>p.indicacoesVinculadas<30));
+ assert.equal(sim.filas.filaB.length,7);
  for(let giro=1;giro<=20;giro++){
   for(let venda=1;venda<=6;venda++)sim.registrarVendaNoCicloSimulada({vendaId:'giro-'+giro+'-venda-'+venda});
   sim.abrirCatraca();assert.equal(sim.tentarGiro().girou,true);sim.pausarCatraca();
