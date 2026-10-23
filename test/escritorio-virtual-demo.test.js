@@ -27,14 +27,14 @@ async function pedir(base,resource,headers={}){
 }
 
 test('cada conta ficticia mantem contagem separada de posicoes e historico',()=>{
-  assert.equal(LIMITE_POSICOES_ATIVAS,6);
+  assert.equal(LIMITE_POSICOES_ATIVAS,10);
   assert.equal(TITULARES_FICTICIOS.length,4);
   const a=criarVisaoEscritorioDemo({titularId:'conta-demo-a'});
   const b=criarVisaoEscritorioDemo({titularId:'conta-demo-b'});
   const c=criarVisaoEscritorioDemo({titularId:'conta-demo-c'});
   const d=criarVisaoEscritorioDemo({titularId:'conta-demo-d'});
   assert.deepEqual([a.posicoesAtivas,b.posicoesAtivas,c.posicoesAtivas,d.posicoesAtivas],[5,4,1,0]);
-  assert.deepEqual([a.vagasDisponiveis,b.vagasDisponiveis,c.vagasDisponiveis,d.vagasDisponiveis],[1,2,5,6]);
+  assert.deepEqual([a.vagasDisponiveis,b.vagasDisponiveis,c.vagasDisponiveis,d.vagasDisponiveis],[5,6,9,10]);
   assert.deepEqual([a.posicoesConcluidas,b.posicoesConcluidas,c.posicoesConcluidas,d.posicoesConcluidas],[1,1,0,1]);
   assert.equal(a.historico.length,1);
   assert.equal(a.ativas.length,5);
@@ -52,15 +52,15 @@ test('uma posicao concluida libera vaga sem apagar historico de titular',()=>{
   ];
   const s=criarVisaoEscritorioDemo({titularId:'demo',titulares:[{id:'demo',nome:'Titular ficticio'}],posicoes});
   assert.equal(s.posicoesAtivas,4);
-  assert.equal(s.vagasDisponiveis,2);
+  assert.equal(s.vagasDisponiveis,6);
   assert.equal(s.posicoesConcluidas,2);
   assert.equal(s.ativas.length+s.historico.length,6);
 });
 
-test('rejeita setima posicao ativa, duplicatas e situacoes incorretas',()=>{
+test('rejeita decima primeira posicao ativa, duplicatas e situacoes incorretas',()=>{
   const titulares=[{id:'ficticio',nome:'Ficticio'}];
   const posicao=(id)=>({id,titularId:'ficticio',situacao:'ATIVA',local:'FILA',fila:'B'});
-  assert.throws(()=>criarVisaoEscritorioDemo({titularId:'ficticio',titulares,posicoes:Array.from({length:7},(_,i)=>posicao(String(i)))}),/Limite de seis/);
+  assert.throws(()=>criarVisaoEscritorioDemo({titularId:'ficticio',titulares,posicoes:Array.from({length:11},(_,i)=>posicao(String(i)))}),/Limite de posicoes/);
   assert.throws(()=>criarVisaoEscritorioDemo({titularId:'ficticio',titulares,posicoes:[posicao('1'),posicao('1')]}),/duplicada/);
   assert.throws(()=>criarVisaoEscritorioDemo({titularId:'ficticio',titulares,posicoes:[{...posicao('1'),situacao:'CREDITO_REAL'}]}),/Situacao/);
   assert.throws(()=>criarVisaoEscritorioDemo({titularId:'ficticio',titulares,posicoes:[{...posicao('1'),fila:'Z'}]}),/Local/);
@@ -86,7 +86,7 @@ test('api so mostra contas ficticias com token local e Cache-Control no-store',a
   assert.equal(detalhes.status,200);
   const visao=await detalhes.json();
   assert.equal(visao.posicoesAtivas,4);
-  assert.equal(visao.vagasDisponiveis,2);
+  assert.equal(visao.vagasDisponiveis,6);
   assert.equal(visao.posicoesConcluidas,1);
   assert.equal(visao.valores.status,'NAO_EXISTEM_SALDOS_NEM_CREDITOS_REAIS');
   assert.equal((await pedir(base,'/api/admin/escritorio-demo/inexistente',auth)).status,404);
