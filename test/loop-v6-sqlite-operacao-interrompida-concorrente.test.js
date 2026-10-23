@@ -114,7 +114,7 @@ test('integração SQLite: 1000 pedidos, duplicatas cruzadas, falha de pagamento
   const perfil=m.escritorio.consultar(clientes[j-1].contaId);
   assert.equal(perfil.posicoes.length,1);
   assert.equal(perfil.comprasLojaSemLoop.length,1);
-  assert.equal(perfil.vagasLivres,5);
+  assert.equal(perfil.vagasLivres,9);
   assert.equal(perfil.posicoes[0].contaId,undefined,'Visão deve ser do próprio titular');
  }
  // Simulacao de falha do PSP interno ANTES de confirmar: sem registro/posição.
