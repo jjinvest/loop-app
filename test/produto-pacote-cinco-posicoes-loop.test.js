@@ -13,7 +13,7 @@ function produto(id,valor){
   descricao:'Produto apenas demonstrativo',precoCentavos:valor,
   entrega:'FORNECEDOR_INTEGRADO',fotos:[],videoApresentacaoUrl:null,detalhes:[]};
 }
-test('produto especial cria seis posicoes atomicas, bloqueia sexta e libera uma apos ciclo concluido',async t=>{
+test('produto especial cria dez posicoes atomicas, bloqueia excedente e libera vaga apos ciclo',async t=>{
  const repo=new RepositorioCatalogoSQLite({caminho:':memory:'});t.after(()=>repo.fechar());
  repo.salvar({produto:produto('pacote-cinco',150000),revisaoEsperada:0});
  repo.salvar({produto:produto('produto-comum',25000),revisaoEsperada:0});
@@ -36,26 +36,26 @@ test('produto especial cria seis posicoes atomicas, bloqueia sexta e libera uma 
  const inicial=(await req('GET',caminho+'/elegibilidade')).data.produtos;
  assert.equal(inicial.find(p=>p.produtoId==='pacote-cinco').posicoesPorPedidoLoop,1);
  const evento={
-  eventoId:'evento-pacote-6',produtoId:'pacote-cinco',
-  titulo:'Evento Especial de Seis Posições',
-  descricao:'Compre o produto especial e obtenha seis posições de teste',
-  quantidadeMinimaLoop:1,posicoesPorPedidoLoop:6,
+  eventoId:'evento-pacote-10',produtoId:'pacote-cinco',
+  titulo:'Evento Especial de Dez Posições',
+  descricao:'Compre o produto especial e obtenha dez posições de teste',
+  quantidadeMinimaLoop:1,posicoesPorPedidoLoop:10,
   dataInicio:new Date().toISOString().slice(0,10),
   dataFim:new Date(Date.now()+7*86400000).toISOString().slice(0,10)
  };
  assert.equal((await req('POST',caminho+'/pacote-posicoes',{
-  produtoId:'pacote-cinco',posicoesPorPedidoLoop:6,revisaoEsperada:1
+  produtoId:'pacote-cinco',posicoesPorPedidoLoop:10,revisaoEsperada:1
  })).status,409); // pacote permanente nao pode mais ser configurado
  assert.equal((await req('POST',caminho+'/eventos-especiais',{
-  ...evento,posicoesPorPedidoLoop:7
+  ...evento,posicoesPorPedidoLoop:11
  })).status,400);
  assert.equal((await req('POST',caminho+'/eventos-especiais',evento,
   {'Content-Type':'application/json'})).status,401);
  const configurado=await req('POST',caminho+'/eventos-especiais',evento);
  assert.equal(configurado.status,201,JSON.stringify(configurado.data));
- assert.equal(configurado.data.evento.posicoesPorPedidoLoop,6);
+ assert.equal(configurado.data.evento.posicoesPorPedidoLoop,10);
  assert.equal((await req('GET',caminho+'/opcoes')).data.produtos
-  .find(p=>p.produtoId==='pacote-cinco').eventoId,'evento-pacote-6');
+  .find(p=>p.produtoId==='pacote-cinco').eventoId,'evento-pacote-10');
  assert.equal((await req('POST',caminho+'/eventos-especiais',evento)).status,409);
  assert.equal((await req('GET','escritorio-demo/publicacoes')).data.publicacoes
   .some(p=>p.tipo==='EVENTO'),true);
@@ -72,42 +72,42 @@ test('produto especial cria seis posicoes atomicas, bloqueia sexta e libera uma 
   return r.data.integracao;
  }
  const pedido=await criar('compra-pacote',usuario.contaId,'pacote-cinco');
- assert.equal(pedido.posicoesSolicitadas,6);
- assert.equal(pedido.itens[0].posicoesPorPedidoLoop,6);
+ assert.equal(pedido.posicoesSolicitadas,10);
+ assert.equal(pedido.itens[0].posicoesPorPedidoLoop,10);
  const pagamento=await pagar('compra-pacote');
- assert.equal(pagamento.posicoesCriadas,6,JSON.stringify(pagamento));
- assert.equal(pagamento.posicaoIds.length,6);
- assert.equal(new Set(pagamento.posicaoIds).size,6);
- assert.equal((await req('GET','ponte-compras-convites-demo')).data.filas.B.quantidade,6);
+ assert.equal(pagamento.posicoesCriadas,10,JSON.stringify(pagamento));
+ assert.equal(pagamento.posicaoIds.length,10);
+ assert.equal(new Set(pagamento.posicaoIds).size,10);
+ assert.equal((await req('GET','ponte-compras-convites-demo')).data.filas.B.quantidade,10);
  assert.equal((await req('POST',caminho+'/compra-pacote/sincronizar',{})).data.repetido,true);
  assert.equal(repo.banco.prepare(
   "SELECT COUNT(*) AS n FROM admin_ponte_posicoes_adicionais_demo WHERE pedido_id='compra-pacote'"
- ).get().n,5);
+ ).get().n,9);
  const ponte=new PonteComprasConvitesDemoSQLite({banco:repo.banco,contas,
   consultarPagamentoConfiavel:async()=>null});
  const escritorio=new EscritorioIndividualDemo({ponte,contas});
- assert.equal(escritorio.consultar(usuario.contaId).posicoes.length,6);
- assert.equal(escritorio.consultar(usuario.contaId).vagasLivres,4);
- assert.equal(escritorio.consultar(usuario.contaId).compras[0].posicaoIds.length,6);
+ assert.equal(escritorio.consultar(usuario.contaId).posicoes.length,10);
+ assert.equal(escritorio.consultar(usuario.contaId).vagasLivres,0);
+ assert.equal(escritorio.consultar(usuario.contaId).compras[0].posicaoIds.length,10);
  const rejeitado=await criar('sexta-vaga-bloqueada',usuario.contaId,'produto-comum');
  const integracao=await pagar('sexta-vaga-bloqueada');
- assert.equal(integracao.posicoesCriadas,1);
- assert.equal(escritorio.consultar(usuario.contaId).vagasLivres,3);
- // Um segundo titular continua tendo direito a suas proprias seis vagas.
+ assert.equal(integracao.posicoesCriadas,0);
+ assert.equal(escritorio.consultar(usuario.contaId).vagasLivres,0);
+ // Um segundo titular continua tendo direito a suas proprias dez vagas.
  const normal=await criar('pedido-comum-outro',segundo.contaId,'produto-comum');
  assert.equal(normal.posicoesSolicitadas,1);
  assert.equal((await pagar('pedido-comum-outro')).posicoesCriadas,1);
  const pacoteParcial=await criar('pacote-sem-cinco-vagas',segundo.contaId,'pacote-cinco');
- assert.equal(pacoteParcial.posicoesSolicitadas,6);
+ assert.equal(pacoteParcial.posicoesSolicitadas,10);
  const naoParcial=await pagar('pacote-sem-cinco-vagas');
- assert.equal(naoParcial.posicoesCriadas,6);
+ assert.equal(naoParcial.posicoesCriadas,0);
  assert.equal(repo.banco.prepare(
   "SELECT COUNT(*) AS n FROM admin_ponte_posicoes_adicionais_demo WHERE pedido_id='pacote-sem-cinco-vagas'"
- ).get().n,5);
+ ).get().n,9);
  // O CPF ficticio e termos continuam independentes do produto comprado.
  const adesoes=new AdesoesPosicoesDemoSQLite({ponte,relogio:()=>new Date().toISOString()});
  assert.equal(adesoes.ativar({contaId:usuario.contaId,
-  cpfFicticio:'11144477735',aceitaTermos:true,versaoTermos:'LOOP-DEMO-V1'}).ativadas,6);
+  cpfFicticio:'11144477735',aceitaTermos:true,versaoTermos:'LOOP-DEMO-V1'}).ativadas,10);
  const preparado=ponte.prepararTabuleiroDemo();
  assert.ok(preparado.tabuleiro.centro);
  assert.equal(preparado.tabuleiro.centro.participanteId,usuario.contaId);
@@ -125,9 +125,9 @@ test('produto especial cria seis posicoes atomicas, bloqueia sexta e libera uma 
  assert.equal(retomado.status,200,JSON.stringify(retomado.data));
  assert.equal(retomado.data.posicoesCriadas,1);
  assert.equal(escritorio.consultar(usuario.contaId).vagasLivres,0);
- assert.equal(escritorio.consultar(usuario.contaId).posicoes.length,6);
+ assert.equal(escritorio.consultar(usuario.contaId).posicoes.length,10);
  assert.equal(repo.banco.prepare('SELECT COUNT(*) AS n FROM admin_ponte_compras_demo').get().n,3);
- assert.equal(repo.banco.prepare('SELECT COUNT(*) AS n FROM admin_ponte_posicoes_adicionais_demo').get().n,5);
+ assert.equal(repo.banco.prepare('SELECT COUNT(*) AS n FROM admin_ponte_posicoes_adicionais_demo').get().n,9);
  assert.throws(()=>repo.banco.exec(
   "UPDATE loop_evento_especial_historico_demo SET acao='ENCERRADO'"
  ),/historico imutavel/);
