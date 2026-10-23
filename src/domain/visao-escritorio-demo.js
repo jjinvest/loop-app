@@ -2,7 +2,7 @@
 
 // Projecao SOMENTE para leitura em laboratorio. Nao recebe CPF e nao
 // registra compra, credito, contemplacao, saque ou qualquer pagamento.
-const LIMITE_POSICOES_ATIVAS = 10;
+const {LIMITE_POSICOES_ATIVAS}=require('./capacidade-posicoes-loop');
 const ESTADOS_VALIDOS = new Set(['ATIVA','CONCLUIDA']);
 const FILAS_VALIDAS = new Set(['A','B']);
 const LOCAIS_VALIDOS = new Set(['FILA','CENTRO','VAGA_1','VAGA_2','VAGA_3','VAGA_4','VAGA_5','VAGA_6']);
