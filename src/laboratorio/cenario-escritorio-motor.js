@@ -91,12 +91,13 @@ function criarCenarioEscritorioMotor() {
     return vendaId;
   };
   for (let i=1;i<=2;i++) compra('a',i);
-  for (let i=1;i<=4;i++) compra('b',i);
-  compra('c',0);
+  for (let i=1;i<=2;i++) compra('b',i);
+  for (let i=1;i<=2;i++) compra('c',i);
+  compra('d',1);
   simulador.prepararTabuleiro();
 
   for (const [titular,sufixo] of [
-    ['a',3],['a',4],['c',1],['c',2],['d',1],['d',2]
+    ['a',3],['a',4],['b',3],['b',4],['c',3],['d',2]
   ]) {
     const vendaId=compra(titular,sufixo);
     simulador.registrarVendaNoCicloSimulada({vendaId});
