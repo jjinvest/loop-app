@@ -30,7 +30,7 @@ test('cenario usa o motor existente e preserva ordem de posicoes apos um giro fi
   assert.equal(estado.catraca.giros,1);
   assert.equal(estado.tabuleiro.centro.participanteId,'conta-demo-a');
   assert.equal(estado.tabuleiro.centro.id,2);
-  assert.deepEqual(estado.tabuleiro.vagas.map(p=>p?.id),[3,4,7,undefined,undefined,10]);
+  assert.deepEqual(estado.tabuleiro.vagas.map(p=>p?.id),[3,4,5,6,7,8]);
   assert.equal(estado.filas.A.quantidade,3);
   assert.equal(estado.filas.B.quantidade,2);
   assert.equal(sim.tabuleiro.ciclosConcluidos[0].centro.id,1);
