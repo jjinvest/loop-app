@@ -146,27 +146,18 @@ class MotorFilas {
     return { repetida: false, promovidas: promovidas.map(p => this.copiar(p)), quantidade: novo.quantidade };
   }
 
-  // Permite no maximo uma posicao na Fila A por titular. A proxima
-  // aguarda na B, contando indicacoes, ate a anterior chegar na vaga
-  // configurada. A B preserva integralmente a ordem de chegada.
+  // Cada posicao qualificada entra independentemente na A. A antiga trava
+  // de escalonamento por titular foi revogada; o limite de duas vale apenas
+  // para a ocupacao simultanea do tabuleiro.
   liberarEscalonadas(tabuleiro){
     if(!this.travaPromocaoAtiva)return [];
     if(!tabuleiro||!Array.isArray(tabuleiro.vagas)||tabuleiro.vagas.length!==6)
       throw Error('TABULEIRO_INVALIDO');
-    const lugares=[tabuleiro.centro,...tabuleiro.vagas];
-    for(const marco of this.ultimaPromovidaPorTitular.values()){
-      const indice=lugares.findIndex(p=>p?.id===marco.posicaoId);
-      if(indice>=0)marco.menorVaga=Math.min(marco.menorVaga,indice);
-    }
     const movidas=[];
     for(const p of [...this.filaB]){
       if(!(p.indicacoesVinculadas>0)||p.statusAdesao==='PENDENTE'||p.empresa===true)continue;
-      if(this.filaA.some(a=>a.participanteId===p.participanteId))continue;
-      const anterior=this.ultimaPromovidaPorTitular.get(p.participanteId);
-      if(anterior&&anterior.menorVaga>this.vagaLiberacao)continue;
       this.filaB.splice(this.filaB.indexOf(p),1);
       p.fila='A';p.promovidoEm=this.relogio();this.filaA.push(p);
-      this.ultimaPromovidaPorTitular.set(p.participanteId,{posicaoId:p.id,menorVaga:7});
       movidas.push(this.copiar(p));
     }
     if(movidas.length)this.ordenarFilaA();
@@ -183,19 +174,21 @@ class MotorFilas {
     });
   }
 
-  proximoDaFila() {
+  proximoDaFila(elegivel = () => true) {
     let posicao;
     let origem;
-    if (this.filaA.length && (this.contadorA < 3 || !this.filaB.length)) {
-      posicao = this.filaA.shift();
+    const indiceA=this.filaA.findIndex(elegivel);
+    const indiceB=this.filaB.findIndex(elegivel);
+    if (indiceA>=0 && (this.contadorA < 3 || indiceB<0)) {
+      posicao = this.filaA.splice(indiceA,1)[0];
       origem = 'A';
       this.contadorA += 1;
-    } else if (this.filaB.length) {
-      posicao = this.filaB.shift();
+    } else if (indiceB>=0) {
+      posicao = this.filaB.splice(indiceB,1)[0];
       origem = 'B';
       this.contadorA = 0;
-    } else if (this.filaA.length) {
-      posicao = this.filaA.shift();
+    } else if (indiceA>=0) {
+      posicao = this.filaA.splice(indiceA,1)[0];
       origem = 'A';
       this.contadorA += 1;
     } else {
