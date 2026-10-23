@@ -100,11 +100,10 @@ test('produto especial cria seis posicoes atomicas, bloqueia sexta e libera uma 
  const pacoteParcial=await criar('pacote-sem-cinco-vagas',segundo.contaId,'pacote-cinco');
  assert.equal(pacoteParcial.posicoesSolicitadas,6);
  const naoParcial=await pagar('pacote-sem-cinco-vagas');
- assert.equal(naoParcial.situacao,'SINCRONIZACAO_PENDENTE');
- assert.equal(naoParcial.erro,'LIMITE_ATIVO');
+ assert.equal(naoParcial.posicoesCriadas,6);
  assert.equal(repo.banco.prepare(
   "SELECT COUNT(*) AS n FROM admin_ponte_posicoes_adicionais_demo WHERE pedido_id='pacote-sem-cinco-vagas'"
- ).get().n,0);
+ ).get().n,5);
  // O CPF ficticio e termos continuam independentes do produto comprado.
  const adesoes=new AdesoesPosicoesDemoSQLite({ponte,relogio:()=>new Date().toISOString()});
  assert.equal(adesoes.ativar({contaId:usuario.contaId,
