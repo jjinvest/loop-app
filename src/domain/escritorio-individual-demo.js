@@ -3,7 +3,8 @@ const {ConfiguracaoRelogioTabuleiroDemoSQLite}=require('./configuracao-relogio-t
 
 // Projecao individual do laboratorio; nunca retorna a lista geral do admin.
 // Sem consulta financeira real, CPF, entrega, saque ou autorizacao de pedido.
-const LIMITE_ATIVAS=6;
+// Limite inicial configuravel; demais camadas devem usar a mesma fonte antes do rollout.
+const LIMITE_ATIVAS=10;
 
 function posicoesTitular(sim,contaId){
  const f=sim.filas,t=sim.tabuleiro;
