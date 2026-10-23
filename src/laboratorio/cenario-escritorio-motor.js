@@ -90,12 +90,13 @@ function criarCenarioEscritorioMotor() {
     if (nova.repetida) throw new Error('Venda de teste duplicada');
     return vendaId;
   };
-  for (let i=1;i<=6;i++) compra('a',i);
-  compra('b',1);
+  for (let i=1;i<=2;i++) compra('a',i);
+  for (let i=1;i<=4;i++) compra('b',i);
+  compra('c',0);
   simulador.prepararTabuleiro();
 
   for (const [titular,sufixo] of [
-    ['b',2],['b',3],['c',1],['c',2],['d',1],['d',2]
+    ['a',3],['a',4],['c',1],['c',2],['d',1],['d',2]
   ]) {
     const vendaId=compra(titular,sufixo);
     simulador.registrarVendaNoCicloSimulada({vendaId});
