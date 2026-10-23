@@ -612,8 +612,8 @@ class PonteComprasConvitesDemoSQLite{
      motivoSemPosicao:'COMPRA_NAO_QUALIFICADA'};
    }
    const simulador=this._restaurar();
-   if(posicoesAtivas(simulador,conta.contaId)+quantidadePosicoes>6)
-    throw falha('LIMITE_ATIVO','Limite de seis posicoes ativas no teste');
+   if(posicoesAtivas(simulador,conta.contaId)+quantidadePosicoes>10)
+    throw falha('LIMITE_ATIVO','Limite de dez posicoes ativas no teste');
    // Percentual superior ao basico exige posicao VERDE do indicador,
    // nao somente compra/posicao AZUL ainda sem CPF.
    const posicaoAtivaIndicadorId=conta.indicadoPorId?
