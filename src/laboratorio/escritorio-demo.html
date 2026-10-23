@@ -8,6 +8,12 @@
   <link rel="stylesheet" href="/admin/painel.css">
   <link rel="stylesheet" href="/admin/escritorio-demo.css">
   <link rel="stylesheet" href="/css/loop-futurista-v6.css">
+  <style>
+    /* Os quadrados seguem a capacidade retornada pelo servidor. */
+    #listaAtivasDemo {display:grid;grid-template-columns:repeat(auto-fit,minmax(125px,1fr));gap:12px;list-style:none;padding:0;margin:16px 0}
+    #listaAtivasDemo li {display:flex;align-items:center;justify-content:center;text-align:center;min-height:110px;aspect-ratio:1/1;border:1px solid var(--borda,#777);border-radius:12px;padding:10px;overflow-wrap:anywhere}
+    @media(max-width:480px){#listaAtivasDemo{grid-template-columns:repeat(2,minmax(0,1fr))}}
+  </style>
 </head>
 <body>
   <header>
