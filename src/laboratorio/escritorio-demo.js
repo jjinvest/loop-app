@@ -240,9 +240,14 @@
       texto('etapaMotorDemo','Exemplo estático preservado, sem leitura do motor.');
       texto('indicacoesMotorDemo','Indicações: não integradas neste exemplo.');
     }
-    preencherLista('listaAtivasDemo',visao.ativas,p=>
-      p.id+' — '+(p.local==='FILA'?'Fila '+p.fila:
-        p.local==='CENTRO'?'Centro':p.local.replace('_',' ')));
+    // Renderizacao dinamica: capacidade vem da visao, sem dez cards fixos no HTML.
+    const slots=Array.from({length:visao.limitePosicoesAtivas},(_,i)=>
+      visao.ativas[i]||null);
+    preencherLista('listaAtivasDemo',slots.map((p,i)=>({p,numero:i+1})),slot=>
+      slot.p ? 'Posição '+slot.numero+' · #'+slot.p.id+' — '+
+        (slot.p.local==='FILA'?'Fila '+slot.p.fila:
+         slot.p.local==='CENTRO'?'Centro':slot.p.local.replace('_',' ')) :
+        'Posição '+slot.numero+' · Disponível');
     preencherLista('listaConcluidasDemo',visao.historico,p=>
       p.id+' — participação concluída (fictícia)');
     mostrarMapa(visao);
