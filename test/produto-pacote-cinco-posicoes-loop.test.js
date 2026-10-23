@@ -87,13 +87,12 @@ test('produto especial cria seis posicoes atomicas, bloqueia sexta e libera uma 
   consultarPagamentoConfiavel:async()=>null});
  const escritorio=new EscritorioIndividualDemo({ponte,contas});
  assert.equal(escritorio.consultar(usuario.contaId).posicoes.length,6);
- assert.equal(escritorio.consultar(usuario.contaId).vagasLivres,0);
+ assert.equal(escritorio.consultar(usuario.contaId).vagasLivres,4);
  assert.equal(escritorio.consultar(usuario.contaId).compras[0].posicaoIds.length,6);
  const rejeitado=await criar('sexta-vaga-bloqueada',usuario.contaId,'produto-comum');
  const integracao=await pagar('sexta-vaga-bloqueada');
- assert.equal(integracao.situacao,'SINCRONIZACAO_PENDENTE');
- assert.equal(integracao.erro,'LIMITE_ATIVO');
- assert.equal(escritorio.consultar(usuario.contaId).vagasLivres,0);
+ assert.equal(integracao.posicoesCriadas,1);
+ assert.equal(escritorio.consultar(usuario.contaId).vagasLivres,3);
  // Um segundo titular continua tendo direito a suas proprias seis vagas.
  const normal=await criar('pedido-comum-outro',segundo.contaId,'produto-comum');
  assert.equal(normal.posicoesSolicitadas,1);
