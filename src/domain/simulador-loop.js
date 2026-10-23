@@ -9,7 +9,7 @@ class SimuladorLoop {
   constructor({ relogio = () => new Date().toISOString() } = {}) {
     this.filas = new MotorFilas({ relogio });
     this.tabuleiro = new TabuleiroLoop({
-      proximoDaFila: () => this.filas.proximoDaFila(),
+      proximoDaFila: (elegivel) => this.filas.proximoDaFila(elegivel),
       relogio
     });
     this.catracaAberta = false;
