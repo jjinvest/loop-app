@@ -262,4 +262,86 @@ module.exports = { MotorFilas };    const movidas=[];
   }
 }
 
+module.exports = { MotorFilas };  proximoDaFila({titularesBloqueados=[]}={}) {
+    const bloqueados=new Set(titularesBloqueados);
+    const indiceA=this.filaA.findIndex(p=>!bloqueados.has(p.participanteId));
+    const indiceB=this.filaB.findIndex(p=>!bloqueados.has(p.participanteId));
+    if(indiceA<0&&indiceB<0)return null;
+    let posicao,origem;
+    if(indiceA>=0&&(this.contadorA<3||indiceB<0)){
+      posicao=this.filaA.splice(indiceA,1)[0];origem='A';this.contadorA+=1;
+    }else if(indiceB>=0){
+      posicao=this.filaB.splice(indiceB,1)[0];origem='B';this.contadorA=0;
+    }else{
+      posicao=this.filaA.splice(indiceA,1)[0];origem='A';this.contadorA+=1;
+    }
+    return {pessoa:this.copiar(posicao),origem};
+  }
+
+  resumo() {
+    return {
+      regra: '3A/1B',
+      modo: 'SIMULACAO_SEM_PAGAMENTOS',
+      A: { nome: 'AMARELA', quantidade: this.filaA.length, pessoas: this.filaA.map(p => this.copiar(p)) },
+      B: { nome: 'BRANCA', quantidade: this.filaB.length, pessoas: this.filaB.map(p => this.copiar(p)) },
+      contadorA: this.contadorA
+    };
+  }
+}
+
+module.exports = { MotorFilas };    const movidas=[];
+    for(const p of [...this.filaB]){
+      if(!(p.indicacoesVinculadas>0)||p.statusAdesao==='PENDENTE'||p.empresa===true)continue;
+      this.filaB.splice(this.filaB.indexOf(p),1);
+      p.fila='A';p.promovidoEm=this.relogio();this.filaA.push(p);
+      movidas.push(this.copiar(p));
+    }
+    if(movidas.length)this.ordenarFilaA();
+    return movidas;
+  }
+
+  // Compatibilidade com a rota de testes /filas/promover/:id.
+  promoverPosicaoSimulada(id) {
+    const posicao = this.filaB.find(p => String(p.id) === String(id));
+    if (!posicao) return null;
+    return this.registrarIndicacaoValidada({
+      indicadorId: posicao.participanteId,
+      eventoId: 'simulacao-promocao-' + (++this.evento)
+    });
+  }
+
+  proximoDaFila(elegivel = () => true) {
+    let posicao;
+    let origem;
+    const indiceA=this.filaA.findIndex(elegivel);
+    const indiceB=this.filaB.findIndex(elegivel);
+    if (indiceA>=0 && (this.contadorA < 3 || indiceB<0)) {
+      posicao = this.filaA.splice(indiceA,1)[0];
+      origem = 'A';
+      this.contadorA += 1;
+    } else if (indiceB>=0) {
+      posicao = this.filaB.splice(indiceB,1)[0];
+      origem = 'B';
+      this.contadorA = 0;
+    } else if (indiceA>=0) {
+      posicao = this.filaA.splice(indiceA,1)[0];
+      origem = 'A';
+      this.contadorA += 1;
+    } else {
+      return null;
+    }
+    return { pessoa: this.copiar(posicao), origem };
+  }
+
+  resumo() {
+    return {
+      regra: '3A/1B',
+      modo: 'SIMULACAO_SEM_PAGAMENTOS',
+      A: { nome: 'AMARELA', quantidade: this.filaA.length, pessoas: this.filaA.map(p => this.copiar(p)) },
+      B: { nome: 'BRANCA', quantidade: this.filaB.length, pessoas: this.filaB.map(p => this.copiar(p)) },
+      contadorA: this.contadorA
+    };
+  }
+}
+
 module.exports = { MotorFilas };
