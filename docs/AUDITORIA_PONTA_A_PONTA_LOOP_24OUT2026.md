@@ -41,6 +41,12 @@ Manter o histórico original imutável por auditoria; registrar regra vigente V6
 6. **Interface:** percursos reais em desktop/celular, vazios, falhas, latência, privacidade e acessibilidade.
 7. **Operação:** segurança de sessões, limites, auditoria, observabilidade, carga e portão pré-lançamento.
 
+## Evidência adicional de testes comportamentais existentes
+
+- `test/circuit-break-ponte-v6-demo.test.js`: 12 compras simuladas, dois giros de seis eventos, idempotência por `comandoId`, limite diário, crédito somente previsto e livro imutável.
+- `test/loop-v6-seis-pedidos-ciclo-persistencia-auditoria.test.js`: 14 pedidos distintos, dois giros persistidos com 12 eventos, dois pendentes, rollback quando lastro fictício insuficiente, rejeição de adulteração do livro, reinicialização do SQLite, `PRAGMA integrity_check` e `foreign_key_check`.
+- Esses cenários já existiam no repositório; não foram criados nesta atualização. O CI verde de `54727eb` inclui sua execução. Não equivalem a testes de liquidação bancária real nem comprovam todas as interleavings de concorrência.
+
 ## Restrições
 
 Branch `fix/teste-escrita-catraca-20261014`; PR #1 DRAFT. **Não** mergear, publicar, processar pagamentos reais ou modificar telas aprovadas sem autorização. O resultado deve distinguir “aprovado no laboratório”, “não testado” e “bloqueado para produção”.
