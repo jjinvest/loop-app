@@ -120,12 +120,12 @@ class PonteComprasConvitesDemoSQLite{
     confirmado_em TEXT NOT NULL,
     posicao_id INTEGER NOT NULL UNIQUE CHECK(posicao_id>0)
    );
-   -- Um unico pedido qualificado pode ter ate seis posicoes se o produto
+   -- Um unico pedido qualificado pode ter ate dez posicoes se o produto
    -- de pacote foi explicitamente configurado antes do pedido. A posicao 1
    -- permanece no esquema anterior para nao quebrar o historico legado.
    CREATE TABLE IF NOT EXISTS admin_ponte_posicoes_adicionais_demo(
     pedido_id TEXT NOT NULL REFERENCES admin_ponte_compras_demo(pedido_id) ON DELETE RESTRICT,
-    ordem INTEGER NOT NULL CHECK(ordem BETWEEN 2 AND 6),
+    ordem INTEGER NOT NULL CHECK(ordem BETWEEN 2 AND 10),
     posicao_id INTEGER NOT NULL UNIQUE CHECK(posicao_id>0),
     PRIMARY KEY(pedido_id,ordem)
    );
@@ -562,7 +562,7 @@ class PonteComprasConvitesDemoSQLite{
    }
    const referenciaVigente=this.configuracaoValor.vigenteEm(comprovante.confirmadoEm);
    // Somente um pedido do carrinho, com regras congeladas no SQLite,
-   // pode solicitar seis posicoes. Um campo externo nao pode forcar pacote.
+   // pode solicitar dez posicoes. Um campo externo nao pode forcar pacote.
    const pacoteTabela=comprovante.produtoId==='carrinho-loop-demo'&&
     !!this.banco.prepare("SELECT 1 FROM sqlite_master WHERE type='table' AND name='admin_carrinho_item_pacote_posicoes_demo'").get();
    const pacote=pacoteTabela?this.banco.prepare(`
@@ -580,7 +580,7 @@ class PonteComprasConvitesDemoSQLite{
      AND e.elegivel_loop=1 AND i.quantidade>=q.quantidade_minima
    `).all(pedidoId):[];
    const quantidadePosicoes=pacote.length?Math.max(...pacote.map(p=>p.quantidade)):1;
-   // Uma cadeira do pacote gera seu proprio ciclo; exigir ao menos seis
+   // Uma cadeira do pacote gera seu proprio ciclo; exigir ao menos dez
    // referencias no subtotal do(s) produto(s) ESPECIAIS, antes de custos.
    if(quantidadePosicoes>1&&
     pacote.reduce((v,p)=>v+p.elegivel,0)<quantidadePosicoes*referenciaVigente.valorCentavos)
@@ -589,7 +589,7 @@ class PonteComprasConvitesDemoSQLite{
    if(!conta)throw falha('CONTA_DESCONHECIDA','Conta ficticia nao cadastrada');
    if(comprovante.valorElegivelLoopCentavos<referenciaVigente.valorCentavos){
     // Compra valida da LOJA, sem mexer no snapshot, nas filas ou em convites.
-    // A regra de seis posicoes so se aplica a pedidos elegiveis ao LOOP.
+    // A regra de dez posicoes so se aplica a pedidos elegiveis ao LOOP.
     // As tabelas legadas separam pelo valor TOTAL efetivamente comprado,
     // nao pelo subtotal elegivel. A decisao de criar cadeira acima ja
     // usou somente valorElegivelLoopCentavos.
