@@ -42,6 +42,31 @@ function criarRouterEscritorioDemo({segredo,publicacoes=null}={}) {
     try{return res.json(publicacoes.arquivar(req.params.id));}
     catch(e){if(e.codigo)return res.status(409).json({erro:e.codigo});throw e;}
   });
+  // Painel de auditoria: somente dados persistidos no banco local, sem inventar
+  // receita, contemplacoes, cofres ou pagamentos nao conciliados.
+  router.get('/escritorio-demo/auditoria-operacional',(_req,res)=>{
+    if(!publicacoes?.banco)return res.status(501).json({
+      erro:'FONTE_SQLITE_INDISPONIVEL',modo:'LABORATORIO_LOCAL'
+    });
+    const banco=publicacoes.banco;
+    const existe=t=>!!banco.prepare(
+      "SELECT 1 FROM sqlite_master WHERE type='table' AND name=?").get(t);
+    const contar=t=>existe(t)?banco.prepare('SELECT COUNT(*) AS n FROM '+t).get().n:null;
+    return res.json({
+      modo:'LABORATORIO_LOCAL',fonte:'SQLITE_LOCAL',
+      clientes:contar('admin_contas_participantes_demo'),
+      pedidosCarrinho:contar('admin_carrinho_loop_demo'),
+      posicoesOriginadasDeCompras:contar('admin_ponte_compras_demo'),
+      posicoesAdicionais:contar('admin_ponte_posicoes_adicionais_demo'),
+      comprasSomenteLoja:contar('admin_ponte_vendas_loja_sem_loop_demo'),
+      eventosDePagamentoFicticio:contar('admin_carrinho_loop_eventos_demo'),
+      cofres:null,ciclosConcluidos:null,bolasDouradas:null,
+      faturamentoReal:null,pagamentosEfetivados:null,
+      pendencias:['COFRES_SEM_FONTE_CONCILIADA_NESTA_ROTA',
+       'CICLOS_E_DOURADAS_SEM_LIVRO_CONCILIADO_NESTA_ROTA'],
+      semPagamentoReal:true
+    });
+  });
   router.get('/escritorio-demo',(_req,res)=>{
     res.json({
       modo:'ESCRITORIO_APENAS_DEMONSTRACAO',
