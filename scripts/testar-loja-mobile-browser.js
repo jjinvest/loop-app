@@ -1244,7 +1244,7 @@ async function main(){
   desktop.once('dialog',dialog=>dialog.accept());
   await desktop.locator('#formRelogioAdminLoop03 button[type="submit"]').click();
   await desktop.waitForFunction(()=>document.querySelector('#intervaloAtualRelogioAdmin')?.textContent==='30 min');
-  assert.match(await desktop.locator('#statusRelogioAdminLoop03').innerText(),/nenhum giro/i);
+  await desktop.waitForFunction(()=>/nenhum giro/i.test(document.querySelector('#statusRelogioAdminLoop03')?.textContent||''));
   // O mesmo valor gravado no SQLite aparece na tela REAL do cliente.
   await desktop.goto(base+'/laboratorio/participante',{waitUntil:'networkidle'});
   // A sessao continua autenticada no mesmo contexto: login so se ainda visivel.
