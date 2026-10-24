@@ -98,7 +98,7 @@ function criarRouterEscritorioDemo({segredo,publicacoes=null}={}) {
     `).all();
     return res.json({modo:'LABORATORIO_LOCAL',total,clientes,
       limite:100,semPagamentosReais:true,
-      comprasIndividuais:'NAO_CONCILIADAS',posicoesIndividuais:'NAO_CONCILIADAS',
+      comprasIndividuais:'CONSULTA_SQLITE_POR_CLIENTE_DISPONIVEL',posicoesIndividuais:'PARCIALMENTE_CONCILIADAS_POR_COMPRA',
       contemplacoesIndividuais:'NAO_CONCILIADAS'});
   });
   // Relacao administrativa REAL do laboratorio: apenas compras documentadas
