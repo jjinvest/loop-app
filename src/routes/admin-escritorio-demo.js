@@ -44,6 +44,26 @@ function criarRouterEscritorioDemo({segredo,publicacoes=null}={}) {
   });
   // Painel de auditoria: somente dados persistidos no banco local, sem inventar
   // receita, contemplacoes, cofres ou pagamentos nao conciliados.
+  // Diretório administrativo: dados cadastrais mínimos; jamais expor email,
+  // telefone, senha ou credenciais. Não atribuir compras sem vínculo verificado.
+  router.get('/escritorio-demo/clientes',(_req,res)=>{
+    if(!publicacoes?.banco)return res.status(501).json({erro:'FONTE_SQLITE_INDISPONIVEL'});
+    const banco=publicacoes.banco;
+    const existe=!!banco.prepare("SELECT 1 FROM sqlite_master WHERE type='table' AND name='admin_contas_participantes_demo'").get();
+    if(!existe)return res.json({modo:'LABORATORIO_LOCAL',clientes:[],total:0});
+    const total=banco.prepare('SELECT COUNT(*) AS n FROM admin_contas_participantes_demo').get().n;
+    const clientes=banco.prepare(`
+      SELECT c.id AS id,c.nome AS nome,c.criado_em AS criadoEm,
+       n.apelido AS nick
+      FROM admin_contas_participantes_demo c
+      LEFT JOIN admin_links_apelidos_demo n ON n.conta_id=c.id
+      ORDER BY c.criado_em DESC,c.id DESC LIMIT 100
+    `).all();
+    return res.json({modo:'LABORATORIO_LOCAL',total,clientes,
+      limite:100,semPagamentosReais:true,
+      comprasIndividuais:'NAO_CONCILIADAS',posicoesIndividuais:'NAO_CONCILIADAS',
+      contemplacoesIndividuais:'NAO_CONCILIADAS'});
+  });
   router.get('/escritorio-demo/auditoria-operacional',(_req,res)=>{
     if(!publicacoes?.banco)return res.status(501).json({
       erro:'FONTE_SQLITE_INDISPONIVEL',modo:'LABORATORIO_LOCAL'
