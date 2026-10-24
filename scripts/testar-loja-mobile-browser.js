@@ -132,7 +132,7 @@ async function main(){
   await telaFilasVazias.locator('#loop03ItensNotificacoes').getByText(/Nenhuma notificação por enquanto/).waitFor();
   assert.equal(await telaFilasVazias.locator('#loop03PainelNotificacoes').isVisible(),true);
   await telaFilasVazias.locator('#loop03FecharNotificacoes').click();
-  assert.equal(await telaFilasVazias.locator('#loop03TotalAtivacoes').innerText(),'0/6');
+  assert.equal(await telaFilasVazias.locator('#loop03TotalAtivacoes').innerText(),'0/10');
   assert.equal(await telaFilasVazias.locator('#loop03Saldo').innerText(),'—');
   assert.equal(await telaFilasVazias.locator('#mapaFilaAParticipante li').count(),0);
   assert.equal(await telaFilasVazias.locator('#mapaFilaBParticipante li').count(),0);
@@ -214,7 +214,7 @@ async function main(){
 
   // Antes de compras e eventos: zero so com valor confirmado na fonte do laboratorio.
   assert.equal(await page.locator('#loop03Numero').innerText(),'#0000');
-  assert.equal(await page.locator('#loop03TotalAtivacoes').innerText(),'0/6');
+  assert.equal(await page.locator('#loop03TotalAtivacoes').innerText(),'0/10');
   assert.equal(await page.locator('#loop03Giros24').innerText(),'0');
   assert.equal(await page.locator('#loop03Saldo').innerText(),'—');
   assert.equal(await page.locator('#loop03IndicadorFinanceiro').evaluate(el=>el.tagName),'DIV');
@@ -232,7 +232,7 @@ async function main(){
   // NÚMERO e GIROS sao visores, somente POSIÇÕES abre escolha na tela atual.
   assert.equal(await page.locator('#loop03VisorNumero').evaluate(el=>el.tagName),'DIV');
   assert.equal(await page.locator('#loop03IndicadorGiros').evaluate(el=>el.tagName),'DIV');
-  assert.equal(await page.locator('#loop03IndicePosicao').innerText(),'0/6');
+  assert.equal(await page.locator('#loop03IndicePosicao').innerText(),'0/10');
   assert.equal(await page.locator('#loop03LetraFila').isVisible(),false);
   assert.equal(await page.locator('#loop03CoroaVisor').isVisible(),false);
   assert.equal(await page.locator('#loop03CoroaTabuleiro').isVisible(),false);
@@ -1423,7 +1423,7 @@ async function main(){
   await paginaSenha.locator('#senhaParticipante').fill('senha-nova-laboratorio-2026');
   await paginaSenha.locator('#botaoEntrarParticipante').click();
   await paginaSenha.locator('#conteudoParticipante').waitFor({state:'visible'});
-  assert.equal(await paginaSenha.locator('#loop03TotalAtivacoes').innerText(),'0/6');
+  assert.equal(await paginaSenha.locator('#loop03TotalAtivacoes').innerText(),'0/10');
   await contextoSenha.close();
 
 
@@ -2157,14 +2157,14 @@ async function main(){
    await tela.locator('#senhaParticipante').fill(senha);
    await tela.locator('#botaoEntrarParticipante').click();
    await tela.locator('#conteudoParticipante').waitFor({state:'visible'});
-   assert.equal(await tela.locator('#loop03TotalAtivacoes').innerText(),'0/6');
+   assert.equal(await tela.locator('#loop03TotalAtivacoes').innerText(),'0/10');
    // Repete a navegacao para encontrar vazamento entre abas e retornos.
    for(let volta=0;volta<2;volta++)for(const aba of ['home','tabuleiro','posicoes','rede','financeiro']){
     await tela.locator('#loop03Menu').click();
     await tela.locator('#loop03Sidebar [data-loop03-aba="'+aba+'"]').click();
     await tela.locator('#loop03-'+aba).waitFor({state:'visible'});
     assert.equal(await tela.locator('.loop03-pagina:not([hidden])').count(),1);
-    assert.equal(await tela.locator('#loop03TotalAtivacoes').innerText(),'0/6');
+    assert.equal(await tela.locator('#loop03TotalAtivacoes').innerText(),'0/10');
    }
    await tela.locator('#loop03PerfilTopo').click();
    assert.equal(await tela.locator('#loop03TrocarSenha').evaluate(e=>e.open),true);
@@ -2214,7 +2214,7 @@ async function main(){
    // Compra comercial e estado pessoal devem vir da mesma fonte SQLite.
    await tela.goto(base+'/laboratorio/participante',{waitUntil:'networkidle'});
    await tela.locator('#conteudoParticipante').waitFor({state:'visible'});
-   assert.equal(await tela.locator('#loop03TotalAtivacoes').innerText(),geraPosicao?'1/6':'0/6');
+   assert.equal(await tela.locator('#loop03TotalAtivacoes').innerText(),geraPosicao?'1/6':'0/10');
    await tela.locator('#loop03Menu').click();
    await tela.locator('#loop03Sidebar [data-loop03-aba="posicoes"]').click();
    assert.equal(await tela.locator('#loop03OpcoesPosicoes .loop03-status-confirmacao-pendente').count(),
@@ -2232,7 +2232,7 @@ async function main(){
     'Nenhum cliente pode sacar posicao sem saldo liquidado');
    await tela.locator('#loop03PerfilTopo').click();
    assert.equal(await tela.locator('#loop03TrocarSenha').evaluate(x=>x.open),true);
-   assert.equal(await tela.locator('#loop03TotalAtivacoes').innerText(),geraPosicao?'1/6':'0/6');
+   assert.equal(await tela.locator('#loop03TotalAtivacoes').innerText(),geraPosicao?'1/6':'0/10');
    assert.deepEqual(errosGerais,[]);
    jornadasGerais.push({produto:geraPosicao?'PDF R$250':'FISICO R$190',
     posicoes:geraPosicao?1:0,pedidoId:pedido.id,abasVisitadas:10,
