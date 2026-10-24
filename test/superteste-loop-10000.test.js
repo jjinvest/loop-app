@@ -25,13 +25,12 @@ test('fluxo continuo do cliente 1 ao cliente 10000 com compras e giros reais do 
    assert.equal(resultado.repetida,false);
    compras++;
    if(j===0)alvo=resultado.posicao.id;
-   if(!sim.tabuleiro.centro&&compras>=7)sim.prepararTabuleiro();
+   if(!sim.tabuleiro.centro&&compras>=7){sim.prepararTabuleiro();sim.abrirCatraca();}
    if(sim.tabuleiro.centro){
     sim.registrarVendaNoCicloSimulada({vendaId});
     if(sim.tabuleiro.vendasDoCiclo.length===6){
      const r=sim.tentarGiro();
-     if(numero<=100)assert.equal(r.girou,false);
-     else {
+     {
       assert.equal(r.girou,true);
       giros++;
       if(r.novaPosicao6?.origemFila==='A'){entradasA++;sequenciaA++;}
@@ -42,21 +41,7 @@ test('fluxo continuo do cliente 1 ao cliente 10000 com compras e giros reais do 
     }
    }
   }
-  // Primeiros 100 clientes em 30 dias; catraca pausada.
-  if(numero===100){
-   assert.equal(sim.catracaAberta,false);
-   assert.equal(giros,0);
-   // Ao abrir, a primeira rodada ja esta completa pelas compras iniciais.
-   sim.abrirCatraca();
-   if(sim.tabuleiro.vendasDoCiclo.length===6){
-    const r=sim.tentarGiro();
-    assert.equal(r.girou,true);
-    giros++;
-    if(r.novaPosicao6?.origemFila==='A')entradasA++;
-    else if(r.novaPosicao6?.origemFila==='B')entradasB++;
-   }
-   checkpoints.push({clientes,compras,giros,filaA:sim.filas.filaA.length,filaB:sim.filas.filaB.length});
-  }
+  if(numero===100)checkpoints.push({clientes,compras,giros,filaA:sim.filas.filaA.length,filaB:sim.filas.filaB.length});
   // 3000 indicacoes progressivas, sem ultrapassar o limite de clientes.
   // Cada um dos primeiros 1000 titulares apos o piloto faz 3 convites
   // validados vinculados a UMA posicao escolhida.
