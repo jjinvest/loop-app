@@ -33,6 +33,20 @@
      ' · '+h.motivo+' · '+h.registradoEm;lista.append(li);
   }
  }
+ async function carregarAuditoria(){
+  const r=await fetch('/api/admin/escritorio-demo/auditoria-operacional',{
+   cache:'no-store',headers:{Authorization:'Bearer '+token}});
+  const d=await r.json();
+  if(!r.ok)throw Error(d.erro||'Auditoria indisponível');
+  const campo=(id,valor)=>{$(id).textContent=valor===null?'Indisponível':String(valor);};
+  campo('auditoriaClientesAdmin',d.clientes);
+  campo('auditoriaPedidosAdmin',d.pedidosCarrinho);
+  campo('auditoriaPosicoesAdmin',d.posicoesOriginadasDeCompras);
+  campo('auditoriaSemLoopAdmin',d.comprasSomenteLoja);
+  campo('auditoriaAdicionaisAdmin',d.posicoesAdicionais);
+  campo('auditoriaEventosAdmin',d.eventosDePagamentoFicticio);
+  $('auditoriaStatusAdmin').textContent='Fonte: '+d.fonte+' · '+d.modo+' · Nenhum pagamento real.';
+ }
  async function carregar(){
   const [controle,trava,ponte,indicacoes,relogio]=await Promise.all([api(''),api('/trava-fila-a'),api('/ponte'),api('/indicacoes'),api('/intervalo-relogio')]);
   configRelogio=relogio.configuracao;
@@ -56,6 +70,8 @@
   $('indicacoesVinculadasAdmin').textContent=String(indicacoes.vinculadas);
   $('indicacoesAguardandoAdmin').textContent=String(indicacoes.aguardandoAtivacao);
   renderizarTrava(trava);
+  try{await carregarAuditoria();}
+  catch(err){$('auditoriaStatusAdmin').textContent='Consulta indisponível: '+err.message;}
   $('dadosAdminLoop03').hidden=false;
   $('situacaoPainel').textContent='CONTROLE AUTENTICADO';
  }
