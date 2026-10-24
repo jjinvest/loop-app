@@ -121,7 +121,7 @@ async function main(){
   await telaFilasVazias.locator('#loop03FecharNotificacoes').click();
   assert.equal(await telaFilasVazias.locator('#mapaFilaAParticipante li').count(),0);
   assert.equal(await telaFilasVazias.locator('#mapaFilaBParticipante li').count(),0);
-  assert.equal(await telaFilasVazias.locator('#loop03TotalAtivacoes').innerText(),'0/6');
+  assert.equal(await telaFilasVazias.locator('#loop03TotalAtivacoes').innerText(),'0/10');
   assert.equal(await telaFilasVazias.locator('#loop03Saldo').innerText(),'—');
   assert.equal(await telaFilasVazias.locator('.loop03-roda .tabuleiro-vaga-6').count(),1);
   await telaFilasVazias.screenshot({path:path.join(pasta,'TABULEIRO_REAL_ATUAL_DESKTOP_1254_ZERADO.png'),fullPage:true});
