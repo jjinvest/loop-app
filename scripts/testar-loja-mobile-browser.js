@@ -638,9 +638,9 @@ async function main(){
    'Nome civil permanece somente no cadastro');
   assert.equal(await page.locator('#loop03SituacaoBaixo').isVisible(),false,
    'Identidade inferior: so nome, sem status de fila');
-  assert.equal(await page.locator('#loop03TotalAtivacoes').innerText(),'1/6');
+  assert.equal(await page.locator('#loop03TotalAtivacoes').innerText(),'1/10');
   assert.equal(await page.locator('#loop03Numero').innerText(),'#1');
-  assert.equal(await page.locator('#loop03IndicePosicao').innerText(),'1/6');
+  assert.equal(await page.locator('#loop03IndicePosicao').innerText(),'1/10');
   assert.equal(await page.locator('#loop03CoroaVisor').isVisible(),false);
   // Acompanhamento no tabuleiro: a selecao abre por cima e nao troca a aba.
   await page.locator('#loop03Menu').click();
@@ -649,7 +649,7 @@ async function main(){
   assert.equal(await page.locator('#loop03ListaEscolha button').count(),1);
   await page.locator('#loop03ListaEscolha button').click();
   assert.equal(await page.locator('#loop03-tabuleiro').isVisible(),true);
-  assert.equal(await page.locator('#loop03IndicePosicao').innerText(),'1/6');
+  assert.equal(await page.locator('#loop03IndicePosicao').innerText(),'1/10');
   assert.equal(await page.locator('#loop03DadosPosicaoLateral').isVisible(),true,
    'Rodapé com nick e sem nome civil');
   assert.equal(await page.locator('#loop03SituacaoBaixo').isVisible(),false);
@@ -971,7 +971,7 @@ async function main(){
   assert.equal(await page.locator('#loop03LetraRodape').isVisible(),true);
   assert.equal(await page.locator('#loop03NickVisor').innerText(),'TesteUser');
   assert.equal(await page.locator('#loop03CoroaVisor').isVisible(),false);
-  assert.equal(await page.locator('#loop03IndicePosicao').innerText(),'1/6');
+  assert.equal(await page.locator('#loop03IndicePosicao').innerText(),'1/10');
   assert.equal(await page.locator('#mapaFilaBParticipante .loop03-quantidade-a-direita').count(),0);
   // Regressao visual: apos clicar na fila e escolher uma posicao, o container
   // nao pode rolar por tras da UI e engolir a parte superior da catraca.
@@ -1065,7 +1065,7 @@ async function main(){
     await quatroAbas.locator('#loop03ListaEscolha button').first().click();
     assert.equal(await quatroAbas.locator('#loop03Numero').innerText(),'#1');
     assert.equal(await quatroAbas.locator('#loop03LetraFila').innerText(),'A');
-    assert.equal(await quatroAbas.locator('#loop03IndicePosicao').innerText(),'1/6');
+    assert.equal(await quatroAbas.locator('#loop03IndicePosicao').innerText(),'1/10');
     assert.equal(await quatroAbas.locator('#loop03VisorNumero').evaluate(n=>n.tagName),'DIV');
     await conferirLargura(quatroAbas,1254,'visor-posicao-A-desktop',{captura:false});
     await quatroAbas.screenshot({
@@ -1641,7 +1641,7 @@ async function main(){
    assert.equal(await pagina.locator('#loop03ListaEscolha button').count(),6);
    assert.equal(await pagina.locator('#loop03ListaEscolha button:disabled').count(),4);
    await pagina.locator('#loop03ListaEscolha [data-indice="2"]').click();
-   assert.equal(await pagina.locator('#loop03IndicePosicao').innerText(),'2/6');
+   assert.equal(await pagina.locator('#loop03IndicePosicao').innerText(),'2/10');
    assert.equal(await pagina.locator('#loop03SeletorPosicao').isVisible(),true);
    assert.equal(await pagina.locator('#loop03OpcoesPosicoes .loop03-cartao-selecionado').count(),1);
    assert.equal(await pagina.locator('#loop03OpcoesPosicoes .loop03-unidade-posicao').nth(1)
@@ -1673,14 +1673,14 @@ async function main(){
    }
    // Trocar para 1 fecha a 2 e expande automaticamente a compra 1.
    await pagina.locator('#loop03ListaEscolha [data-indice="1"]').click();
-   assert.equal(await pagina.locator('#loop03IndicePosicao').innerText(),'1/6');
+   assert.equal(await pagina.locator('#loop03IndicePosicao').innerText(),'1/10');
    assert.equal(await pagina.locator('#loop03OpcoesPosicoes .loop03-compra-gatilho').nth(0)
     .getAttribute('aria-expanded'),'true');
    assert.equal(await pagina.locator('#loop03OpcoesPosicoes .loop03-compra-gatilho').nth(1)
     .getAttribute('aria-expanded'),'false');
    // Retornar à segunda posição: nunca duas compras simultaneamente.
    await pagina.locator('#loop03ListaEscolha [data-indice="2"]').click();
-   assert.equal(await pagina.locator('#loop03IndicePosicao').innerText(),'2/6');
+   assert.equal(await pagina.locator('#loop03IndicePosicao').innerText(),'2/10');
    assert.equal(await pagina.locator('#loop03OpcoesPosicoes .loop03-compra-expandida:not([hidden])').count(),1);
    assert.equal(await pagina.locator('#loop03OpcoesPosicoes .loop03-cartao-selecionado').count(),1);
    // Faixa da posição escolhida é um acordeão: fechar e reabrir.
@@ -2214,7 +2214,7 @@ async function main(){
    // Compra comercial e estado pessoal devem vir da mesma fonte SQLite.
    await tela.goto(base+'/laboratorio/participante',{waitUntil:'networkidle'});
    await tela.locator('#conteudoParticipante').waitFor({state:'visible'});
-   assert.equal(await tela.locator('#loop03TotalAtivacoes').innerText(),geraPosicao?'1/6':'0/10');
+   assert.equal(await tela.locator('#loop03TotalAtivacoes').innerText(),geraPosicao?'1/10':'0/10');
    await tela.locator('#loop03Menu').click();
    await tela.locator('#loop03Sidebar [data-loop03-aba="posicoes"]').click();
    assert.equal(await tela.locator('#loop03OpcoesPosicoes .loop03-status-confirmacao-pendente').count(),
@@ -2223,7 +2223,7 @@ async function main(){
     await tela.locator('#loop03AbrirEscolhaPosicao').click();
     assert.equal(await tela.locator('#loop03ListaEscolha button:disabled').count(),5);
     await tela.locator('#loop03ListaEscolha [data-indice="1"]').click();
-    assert.equal(await tela.locator('#loop03IndicePosicao').innerText(),'1/6');
+    assert.equal(await tela.locator('#loop03IndicePosicao').innerText(),'1/10');
    }
    await tela.locator('#loop03Menu').click();
    await tela.locator('#loop03Sidebar [data-loop03-aba="financeiro"]').click();
@@ -2232,7 +2232,7 @@ async function main(){
     'Nenhum cliente pode sacar posicao sem saldo liquidado');
    await tela.locator('#loop03PerfilTopo').click();
    assert.equal(await tela.locator('#loop03TrocarSenha').evaluate(x=>x.open),true);
-   assert.equal(await tela.locator('#loop03TotalAtivacoes').innerText(),geraPosicao?'1/6':'0/10');
+   assert.equal(await tela.locator('#loop03TotalAtivacoes').innerText(),geraPosicao?'1/10':'0/10');
    assert.deepEqual(errosGerais,[]);
    jornadasGerais.push({produto:geraPosicao?'PDF R$250':'FISICO R$190',
     posicoes:geraPosicao?1:0,pedidoId:pedido.id,abasVisitadas:10,
