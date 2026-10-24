@@ -104,7 +104,14 @@ test('fluxo continuo do cliente 1 ao cliente 10000 com compras e giros reais do 
  cofres.LOOP_DOURADAS+=transferenciaDouradas;
  assert.equal(cofres.LOOP_CENTRO,giros*750);
  assert.equal(Object.values(cofres).reduce((a,b)=>a+b,0),sim.tabuleiro.vendasProcessadas.size*250);
- const relatorio={clientes,compras,posicoesCriadas:compras,unidadesVendidas:unidades,comprasDe190IsoladasNaoQualificadas:comprasInsuficientes,excedenteProdutosForaDoMotor:excedenteProdutos,bolasDouradasEmpresa:douradas,transferenciaCofreDireitoParaDouradas:transferenciaDouradas,perfis,indicacoes,giros,
+ const receitaBruta=produtos.produto190.receita+produtos.pdf.receita;
+ const capitalMotor=sim.tabuleiro.vendasProcessadas.size*250;
+ const reservaPiloto=100*250;
+ const conciliacao=capitalMotor+reservaPiloto+excedenteProdutos;
+ assert.equal(receitaBruta,conciliacao,'receita precisa fechar sem perda ou duplicacao');
+ const relatorio={clientes,compras,posicoesCriadas:compras,unidadesVendidas:unidades,
+  capitalRoteadoMotor:capitalMotor,reservaPilotoNaoRoteada:reservaPiloto,
+  conciliacaoReceita:conciliacao,comprasDe190IsoladasNaoQualificadas:comprasInsuficientes,excedenteProdutosForaDoMotor:excedenteProdutos,bolasDouradasEmpresa:douradas,transferenciaCofreDireitoParaDouradas:transferenciaDouradas,perfis,indicacoes,giros,
   produtos,receitaBrutaTotal:produtos.produto190.receita+produtos.pdf.receita,
   cofres,
   pagamentoPrevistoContemplacoes:giros*750,
