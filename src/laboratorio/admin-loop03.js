@@ -107,6 +107,19 @@
   $('dadosAdminLoop03').hidden=false;
   $('situacaoPainel').textContent='CONTROLE AUTENTICADO';
  }
+ const buscaComandos=$('buscarComandoAdmin');
+ buscaComandos.addEventListener('input',()=>{
+  const termo=buscaComandos.value.trim().toLocaleLowerCase('pt-BR');
+  let visiveis=0;
+  for(const item of $('listaComandosAdmin').children){
+   const nome=item.textContent.toLocaleLowerCase('pt-BR');
+   item.hidden=Boolean(termo)&&!nome.includes(termo);
+   if(!item.hidden)visiveis++;
+  }
+  $('resultadoBuscaComandoAdmin').textContent=visiveis===0
+   ?'Nenhuma função encontrada. Tente outro termo.'
+   :visiveis+' função(ões) disponível(is).';
+ });
  $('formAcessoAdminLoop03').addEventListener('submit',async ev=>{
   ev.preventDefault();token=$('chaveAdminLoop03').value;$('chaveAdminLoop03').value='';
   try{await carregar();$('mensagemAcessoAdminLoop03').textContent='Acesso administrativo ao laboratório autorizado.';}
