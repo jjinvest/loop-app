@@ -86,3 +86,18 @@ test('auditoria detecta extrato ausente e pendencia humana aberta sem fazer comp
  assert.equal(comExtrato.prontoParaProducao,false);
  assert.equal(m.banco.prepare('SELECT COUNT(*) AS n FROM admin_ponte_compras_demo').get().n,1);
 });
+
+test('portao permanece bloqueado mesmo se as evidencias locais forem repetidas',async t=>{
+ const m=contexto();t.after(()=>m.repo.fechar());
+ const evento=await criar(m);
+ const a=conferir(m,[evento]);
+ const b=conferir(m,[evento]);
+ assert.deepEqual(b,a,'Auditoria somente leitura deve ser deterministica');
+ assert.equal(b.prontoParaProducao,false);
+ assert.equal(b.autorizacaoFinanceira,false);
+ assert.equal(b.publicacaoAutorizada,false);
+ assert.equal(b.bloqueiosExternosObrigatorios.length>0,true);
+ const pendentes=b.bloqueiosExternosObrigatorios;
+ assert.equal(new Set(pendentes).size,pendentes.length);
+ assert.equal(m.banco.prepare('SELECT COUNT(*) AS n FROM admin_ponte_compras_demo').get().n,1);
+});
