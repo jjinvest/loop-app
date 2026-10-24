@@ -576,7 +576,7 @@ class PonteComprasConvitesDemoSQLite{
      ON e.pedido_id=k.pedido_id AND e.ordem=k.ordem
     JOIN admin_carrinho_item_quantidade_minima_demo q
      ON q.pedido_id=k.pedido_id AND q.ordem=k.ordem
-    WHERE k.pedido_id=? AND k.posicoes_por_pedido BETWEEN 2 AND 6
+    WHERE k.pedido_id=? AND k.posicoes_por_pedido BETWEEN 2 AND 10
      AND e.elegivel_loop=1 AND i.quantidade>=q.quantidade_minima
    `).all(pedidoId):[];
    const quantidadePosicoes=pacote.length?Math.max(...pacote.map(p=>p.quantidade)):1;
