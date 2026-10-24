@@ -129,11 +129,32 @@ function criarRouterEscritorioDemo({segredo,publicacoes=null}={}) {
     const total=banco.prepare(
       'SELECT COUNT(*) AS n FROM admin_ponte_compras_demo WHERE conta_id=?'
     ).get(cliente.id).n;
+    const possuiPosicoesAdicionais=tem('admin_ponte_posicoes_adicionais_demo');
+    const adicionaisPorPedido=new Map();
+    if(possuiPosicoesAdicionais&&compras.length){
+      const ids=compras.map(c=>c.pedidoId);
+      const marcadores=ids.map(()=>'?').join(',');
+      const linhas=banco.prepare(
+        'SELECT pedido_id AS pedidoId,ordem,posicao_id AS posicaoId'+
+        ' FROM admin_ponte_posicoes_adicionais_demo'+
+        ' WHERE pedido_id IN ('+marcadores+') ORDER BY pedido_id,ordem'
+      ).all(...ids);
+      for(const linha of linhas){
+        if(!adicionaisPorPedido.has(linha.pedidoId))
+          adicionaisPorPedido.set(linha.pedidoId,[]);
+        adicionaisPorPedido.get(linha.pedidoId).push({
+          ordem:linha.ordem,posicaoId:linha.posicaoId
+        });
+      }
+    }
+    const comprasComPosicoes=compras.map(compra=>({
+      ...compra,posicoesAdicionais:adicionaisPorPedido.get(compra.pedidoId)||[]
+    }));
     return res.json({modo:'LABORATORIO_LOCAL',fonte:'SQLITE_LOCAL',
-      cliente,compras,totalComprasDocumentadas:total,limite:100,
+      cliente,compras:comprasComPosicoes,totalComprasDocumentadas:total,limite:100,
       confirmacao:'PAGAMENTO_SIMULADO_VERIFICADO_INTERNAMENTE',
       semPagamentosReais:true,
-      posicoesAdicionais:'NAO_INCLUIDAS_NESTA_CONSULTA',
+      posicoesAdicionais:possuiPosicoesAdicionais?'CONCILIADAS_SQLITE':'TABELA_AUSENTE',
       ciclos:'NAO_CONCILIADOS_NESTA_CONSULTA'});
   });
   router.get('/escritorio-demo/auditoria-operacional',(_req,res)=>{
