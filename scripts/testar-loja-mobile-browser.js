@@ -58,7 +58,7 @@ async function conferirLargura(page,largura,rotulo,{captura=false}={}){
       window.matchMedia('(max-width:860px)').matches)return false;
    const r=e.getBoundingClientRect();
    return r.left < -2||r.right>window.innerWidth+2;
-  }).slice(0,4).map(e=>({tag:e.tagName,id:e.id||null,classe:e.className||null}))
+  }).slice(0,4).map(e=>{const r=e.getBoundingClientRect();const pai=e.closest('.loop03-cartao-posicao, .loop03-unidade-posicao, .loop03-sidebar');const p=pai?.getBoundingClientRect();return {tag:e.tagName,id:e.id||null,classe:e.className||null,rect:{left:Math.round(r.left),right:Math.round(r.right),width:Math.round(r.width)},pai:pai?.className||null,paiRect:p?{left:Math.round(p.left),right:Math.round(p.right)}:null};})
  }));
  assert.ok(tamanho.html<=tamanho.viewport+1&&tamanho.body<=tamanho.viewport+1,
   rotulo+' '+largura+'px: rolagem horizontal '+JSON.stringify(tamanho));
