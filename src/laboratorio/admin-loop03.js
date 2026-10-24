@@ -47,6 +47,36 @@
   campo('auditoriaEventosAdmin',d.eventosDePagamentoFicticio);
   $('auditoriaStatusAdmin').textContent='Fonte: '+d.fonte+' · '+d.modo+' · Nenhum pagamento real.';
  }
+ async function carregarFinanceiro(){
+  const r=await fetch('/api/admin/livro-financeiro-demo',{
+   cache:'no-store',headers:{Authorization:'Bearer '+token}});
+  const d=await r.json();
+  if(!r.ok)throw Error(d.erro||'Livro financeiro indisponível');
+  if(d.pagamentosReais!==false||d.saldosReais!==false||!Array.isArray(d.caixas))
+   throw Error('Fonte não identificada como simulação');
+  const moeda=centavos=>(centavos/100).toLocaleString('pt-BR',{
+   style:'currency',currency:'BRL'});
+  const soma=d.caixas.reduce((total,c)=>{
+   if(!Number.isSafeInteger(c.saldoProjetadoCentavos))
+    throw Error('Saldo inválido na fonte');
+   return total+c.saldoProjetadoCentavos;
+  },0);
+  if(!Number.isSafeInteger(soma))throw Error('Soma fora do limite seguro');
+  $('finLotesAdmin').textContent=String(d.lotesRegistrados);
+  $('finLancamentosAdmin').textContent=String(d.lancamentosRegistrados);
+  $('finSaldoAdmin').textContent=moeda(soma);
+  $('finConciliacaoAdmin').textContent='Não conciliada';
+  const lista=$('finCofresAdmin');lista.replaceChildren();
+  for(const cofre of d.caixas){
+   const linha=document.createElement('div');linha.className='status-linha';
+   const nome=document.createElement('span');nome.textContent=cofre.id;
+   const valor=document.createElement('strong');
+   valor.textContent=moeda(cofre.saldoProjetadoCentavos);
+   linha.append(nome,valor);lista.append(linha);
+  }
+  $('finStatusAdmin').textContent='Fonte: '+d.modo+
+   ' · Sem integração bancária · Nenhum pagamento real.';
+ }
  async function carregar(){
   const [controle,trava,ponte,indicacoes,relogio]=await Promise.all([api(''),api('/trava-fila-a'),api('/ponte'),api('/indicacoes'),api('/intervalo-relogio')]);
   configRelogio=relogio.configuracao;
@@ -72,6 +102,8 @@
   renderizarTrava(trava);
   try{await carregarAuditoria();}
   catch(err){$('auditoriaStatusAdmin').textContent='Consulta indisponível: '+err.message;}
+  try{await carregarFinanceiro();}
+  catch(err){$('finStatusAdmin').textContent='Consulta indisponível: '+err.message;}
   $('dadosAdminLoop03').hidden=false;
   $('situacaoPainel').textContent='CONTROLE AUTENTICADO';
  }
