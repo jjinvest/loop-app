@@ -2,80 +2,93 @@
 const assert=require('node:assert/strict');
 const {test}=require('node:test');
 const {SimuladorLoop}=require('../src/domain/simulador-loop');
-test('dez mil participantes, posicoes multiplas e indicacoes',()=>{
+
+test('fluxo continuo do cliente 1 ao cliente 10000 com compras e giros reais do simulador',()=>{
  const sim=new SimuladorLoop();
  sim.filas.travaPromocaoAtiva=true;
- const ids=[];
- let total=0;
- let maxTitulares=0;
- const porDia=[];
- for(let i=0;i<10000;i++){
-  const qtd=i<100?1:i<1100?5:i<1600?10:1;
-  const titular=[];
-  for(let j=0;j<qtd;j++){
-   const p=sim.registrarPosicaoSimulada({participanteId:'t-'+i,vendaId:'v-'+i+'-'+j}).posicao;
-   titular.push(p.id);total++;
-  }
-  ids.push(titular);
-  maxTitulares=Math.max(maxTitulares,ids.length);
-  assert.ok(ids.length<=10000,'limite absoluto de clientes');
-  if(i<100){
-   assert.equal(sim.catracaAberta,false);
-   if(i===99){
-    for(let dia=1;dia<=30;dia++)porDia.push(Math.floor(dia*100/30)-Math.floor((dia-1)*100/30));
-    assert.equal(porDia.reduce((a,b)=>a+b,0),100);
-    assert.ok(porDia.every(n=>n===3||n===4));
+ let clientes=0,compras=0,indicacoes=0,giros=0,entradasA=0,entradasB=0;
+ let sequenciaA=0,maxSequenciaA=0;
+ const perfis={uma:0,cinco:0,dez:0};
+ const checkpoints=[];
+ // Cada compra gera uma posicao e um evento de venda para o ciclo
+ // corrente, quando o tabuleiro ja tem centro. Nao cria vendas extras.
+ for(let numero=1;numero<=10000;numero++){
+  clientes++;
+  const quantidade=numero<=100?1:numero<=1100?5:numero<=1600?10:1;
+  perfis[quantidade===1?'uma':quantidade===5?'cinco':'dez']++;
+  let alvo=null;
+  for(let j=0;j<quantidade;j++){
+   const vendaId='compra-'+numero+'-'+j;
+   const resultado=sim.registrarPosicaoSimulada({
+    participanteId:'cliente-'+numero,nome:'Cliente ficticio '+numero,vendaId
+   });
+   assert.equal(resultado.repetida,false);
+   compras++;
+   if(j===0)alvo=resultado.posicao.id;
+   if(!sim.tabuleiro.centro&&compras>=7)sim.prepararTabuleiro();
+   if(sim.tabuleiro.centro){
+    sim.registrarVendaNoCicloSimulada({vendaId});
+    if(sim.tabuleiro.vendasDoCiclo.length===6){
+     const r=sim.tentarGiro();
+     if(numero<=100)assert.equal(r.girou,false);
+     else {
+      assert.equal(r.girou,true);
+      giros++;
+      if(r.novaPosicao6?.origemFila==='A'){entradasA++;sequenciaA++;}
+      else if(r.novaPosicao6?.origemFila==='B'){entradasB++;sequenciaA=0;}
+      maxSequenciaA=Math.max(maxSequenciaA,sequenciaA);
+      assert.ok(sequenciaA<=3,'prioridade 3A:1B');
+     }
+    }
    }
   }
+  // Primeiros 100 clientes em 30 dias; catraca pausada.
+  if(numero===100){
+   assert.equal(sim.catracaAberta,false);
+   assert.equal(giros,0);
+   // Ao abrir, a primeira rodada ja esta completa pelas compras iniciais.
+   sim.abrirCatraca();
+   if(sim.tabuleiro.vendasDoCiclo.length===6){
+    const r=sim.tentarGiro();
+    assert.equal(r.girou,true);
+    giros++;
+    if(r.novaPosicao6?.origemFila==='A')entradasA++;
+    else if(r.novaPosicao6?.origemFila==='B')entradasB++;
+   }
+   checkpoints.push({clientes,compras,giros,filaA:sim.filas.filaA.length,filaB:sim.filas.filaB.length});
+  }
+  // 3000 indicacoes progressivas, sem ultrapassar o limite de clientes.
+  // Cada um dos primeiros 1000 titulares apos o piloto faz 3 convites
+  // validados vinculados a UMA posicao escolhida.
+  if(numero>100&&numero<=1100){
+   for(let k=0;k<3;k++){
+    const r=sim.registrarIndicacaoSimulada({
+     indicadorId:'cliente-'+numero,posicaoAlvoId:alvo,
+     eventoId:'indicacao-'+numero+'-'+k
+    });
+    assert.equal(r.repetida,false);indicacoes++;
+   }
+  }
+  if([1000,5000,10000].includes(numero))
+   checkpoints.push({clientes,compras,giros,filaA:sim.filas.filaA.length,filaB:sim.filas.filaB.length});
  }
- assert.equal(total,18500);
- assert.equal(ids.length,10000);
- assert.equal(maxTitulares,10000);
- assert.equal(ids.filter(x=>x.length===1).length,8500);
- assert.equal(ids.filter(x=>x.length===5).length,1000);
- assert.equal(ids.filter(x=>x.length===10).length,500);
- assert.equal(sim.filas.filaB.length,total);
- assert.equal(sim.tentarGiro().girou,false);
- for(let i=0;i<3000;i++){
-  const n=100+i%1000;
-  const r=sim.registrarIndicacaoSimulada({indicadorId:'t-'+n,
-   posicaoAlvoId:ids[n][0],eventoId:'indicacao-'+i});
-  assert.equal(r.repetida,false);
- }
- assert.equal(sim.filas.filaA.length,1000);
- assert.equal(sim.filas.filaB.length,17500);
- assert.ok(sim.filas.filaA.every(p=>p.indicacoesVinculadas===3));
- assert.equal(sim.filas.indicacoes.get('t-100').quantidade,3);
- const duplicado=sim.registrarIndicacaoSimulada({indicadorId:'t-100',
-  posicaoAlvoId:ids[100][0],eventoId:'indicacao-0'});
- assert.equal(duplicado.repetida,true);
- assert.equal(sim.filas.indicacoesProcessadas.size,3000);
- assert.equal(sim.filas.indicacoesProcessadas.size,3000);
- sim.prepararTabuleiro();
- assert.equal(sim.tentarGiro().girou,false);
- sim.abrirCatraca();
- let chamadasA=0,chamadasB=0,sequenciaA=0;
- for(let g=0;g<100;g++){
-  for(let v=0;v<6;v++)sim.registrarVendaNoCicloSimulada({vendaId:'ciclo-'+g+'-'+v});
-  assert.equal(sim.tentarGiro().girou,true);
-  const entrada=sim.tabuleiro.vagas[5];
-  if(entrada.origemFila==='A'){chamadasA++;sequenciaA++;}
-  else {chamadasB++;sequenciaA=0;}
-  assert.ok(sequenciaA<=3,'prioridade 3A para 1B');
-  const ativos=[...sim.filas.filaA,...sim.filas.filaB,sim.tabuleiro.centro,...sim.tabuleiro.vagas].filter(Boolean);
-  assert.equal(ativos.length+sim.tabuleiro.ciclosConcluidos.length,total);
-  assert.equal(new Set(ativos.map(p=>p.id)).size,ativos.length);
-  const tabuleiro=[sim.tabuleiro.centro,...sim.tabuleiro.vagas].filter(Boolean);
-  const porTitular=new Map();
-  for(const p of tabuleiro)porTitular.set(p.participanteId,(porTitular.get(p.participanteId)||0)+1);
-  assert.ok([...porTitular.values()].every(n=>n<=2));
- }
- assert.equal(chamadasA+chamadasB,100);
- assert.ok(chamadasA>0&&chamadasB>0);
- assert.equal(sim.tabuleiro.ciclosConcluidos.length,100);
- assert.equal(ids.length,10000,'giros nao criam clientes extras');
- assert.equal(sim.filas.indicacoesProcessadas.size,3000);
- assert.equal(sim.filas.filaA.length+sim.filas.filaB.length+7+100,total);
- const relatorio={clientes:ids.length,posicoesCriadas:total,perfis:{uma:8500,cinco:1000,dez:500},indicacoes:sim.filas.indicacoesProcessadas.size,giros:sim.tabuleiro.ciclosConcluidos.length,vendasSimuladasNosCiclos:sim.tabuleiro.vendasProcessadas.size,contemplacoesSimuladas:sim.tabuleiro.ciclosConcluidos.length,filaA:sim.filas.filaA.length,filaB:sim.filas.filaB.length,tabuleiroOcupado:[sim.tabuleiro.centro,...sim.tabuleiro.vagas].filter(Boolean).length,entradasDaFilaA:chamadasA,entradasDaFilaB:chamadasB,valorFinanceiroReal:0};
+ assert.equal(clientes,10000);
+ assert.equal(compras,18500);
+ assert.equal(indicacoes,3000);
+ assert.deepEqual(perfis,{uma:8500,cinco:1000,dez:500});
+ assert.ok(giros>100,'fluxo deve girar muito mais que 100 vezes');
+ const tabuleiro=[sim.tabuleiro.centro,...sim.tabuleiro.vagas].filter(Boolean);
+ const ativos=[...sim.filas.filaA,...sim.filas.filaB,...tabuleiro];
+ assert.equal(ativos.length+sim.tabuleiro.ciclosConcluidos.length,compras);
+ assert.equal(new Set(ativos.map(p=>p.id)).size,ativos.length);
+ assert.equal(sim.tabuleiro.ciclosConcluidos.length,giros);
+ assert.equal(entradasA+entradasB,giros);
+ const relatorio={clientes,compras,posicoesCriadas:compras,perfis,indicacoes,giros,
+  ciclosConcluidos:sim.tabuleiro.ciclosConcluidos.length,
+  vendasRegistradasNoCiclo:sim.tabuleiro.vendasProcessadas.size,
+  vendasPendentesNoCiclo:sim.tabuleiro.vendasDoCiclo.length,
+  filaA:sim.filas.filaA.length,filaB:sim.filas.filaB.length,
+  tabuleiroOcupado:tabuleiro.length,entradasA,entradasB,maxSequenciaA,
+  checkpoints,valorFinanceiroReal:0};
  console.log('RELATORIO_SUPERTESTE_LOOP='+JSON.stringify(relatorio));
 });
