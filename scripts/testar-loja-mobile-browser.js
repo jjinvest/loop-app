@@ -1326,7 +1326,7 @@ async function main(){
   assert.equal(await page.locator('#loop03-perfil').isVisible(),true);
   assert.equal(await page.locator('#loop03FundoPerfil').isVisible(),true);
   assert.match(await page.locator('#loop03SituacaoCPF').innerText(),/primeira posição|CPF de teste confirmado/i);
-  assert.equal(await page.locator('#loop03PerfilEmail').inputValue(),'mobile@exemplo.invalid');
+  await page.waitForFunction(()=>document.querySelector('#loop03PerfilEmail')?.value==='mobile@exemplo.invalid');
   // Nao se pode salvar e-mail novo sem confirmar codigo recebido.
   await page.locator('#loop03PerfilEmail').fill('emailnaoverificado@exemplo.invalid');
   await page.locator('#loop03SalvarPerfil').click();
