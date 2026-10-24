@@ -65,3 +65,9 @@ button{cursor:pointer;padding:11px 15px;border-radius:11px;border:1px solid #ffd
 .pular-conteudo-admin:focus{top:12px}
 #conteudoPrincipalAdmin:focus{outline:none}
 @media(prefers-reduced-motion:reduce){#atalhosDirecaoAdmin .acesso-link{transition:none}}
+
+#resumoDirecaoAdmin{margin-bottom:18px}
+#resumoDirecaoAdmin .historico-titulo{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px}
+#resumoDirecaoAdmin .comando-resumo-acoes{display:flex;flex-wrap:wrap;gap:12px;margin-top:14px}
+#resumoDirecaoAdmin .comando-resumo-acoes a{display:inline-flex;align-items:center;min-height:44px;color:#ffe1a0;font-weight:750}
+#resumoDirecaoAdmin button:disabled{opacity:.55;cursor:wait}
