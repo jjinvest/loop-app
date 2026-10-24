@@ -11,5 +11,7 @@ test('Compras individuais do escritorio consultam SQLite sem simular vinculacoes
  assert.match(src,/SELECT COUNT\(\*\) AS n FROM admin_ponte_compras_demo/);
  assert.match(src,/semPagamentosReais:true/);
  assert.match(src,/ciclos:'NAO_CONCILIADOS_NESTA_CONSULTA'/);
- assert.match(src,/posicoesAdicionais:'NAO_INCLUIDAS_NESTA_CONSULTA'/);
+ assert.match(src,/FROM admin_ponte_posicoes_adicionais_demo/);
+ assert.match(src,/posicoesAdicionais:possuiPosicoesAdicionais\?'CONCILIADAS_SQLITE':'TABELA_AUSENTE'/);
+ assert.match(src,/compras:comprasComPosicoes/);
 });
