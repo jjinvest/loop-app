@@ -82,11 +82,11 @@ class CarrinhoLojaLoopDemoSQLite{
     PRIMARY KEY(pedido_id,ordem),
     FOREIGN KEY(pedido_id,ordem) REFERENCES admin_carrinho_loop_itens_demo(pedido_id,ordem) ON DELETE RESTRICT
    );
-   -- Fotografia da modalidade de 1 ou 6 posicoes: compras antigas nao mudam.
+   -- Fotografia da modalidade de 1 a 10 posicoes: compras antigas nao mudam.
    CREATE TABLE IF NOT EXISTS admin_carrinho_item_pacote_posicoes_demo(
     pedido_id TEXT NOT NULL REFERENCES admin_carrinho_loop_demo(pedido_id) ON DELETE RESTRICT,
     ordem INTEGER NOT NULL CHECK(ordem>=1),
-    posicoes_por_pedido INTEGER NOT NULL CHECK(posicoes_por_pedido BETWEEN 1 AND 6),
+    posicoes_por_pedido INTEGER NOT NULL CHECK(posicoes_por_pedido BETWEEN 1 AND 10),
     revisao_pacote INTEGER NOT NULL CHECK(revisao_pacote>=1),
     PRIMARY KEY(pedido_id,ordem),
     FOREIGN KEY(pedido_id,ordem) REFERENCES admin_carrinho_loop_itens_demo(pedido_id,ordem) ON DELETE RESTRICT
@@ -165,25 +165,25 @@ class CarrinhoLojaLoopDemoSQLite{
     BEFORE DELETE ON admin_carrinho_loop_eventos_demo
     BEGIN SELECT RAISE(ABORT,'eventos imutaveis'); END;
   `);
-  // Migracao SQLite dos carrinhos anteriores ao pacote de 6: conservar
-  // cada fotografia 1/5 imutavel, mas permitir novas fotografias de 6.
+  // Migracao SQLite dos carrinhos anteriores ao pacote de 10: conservar
+  // cada fotografia historica imutavel, mas permitir novas fotografias de 10.
   const tabela='admin_carrinho_item_pacote_posicoes_demo';
   const ddl=this.banco.prepare("SELECT sql FROM sqlite_master WHERE type='table' AND name=?").get(tabela)?.sql||'';
-  if(!ddl.includes('BETWEEN 1 AND 6')){
+  if(!ddl.includes('BETWEEN 1 AND 10')){
    this.banco.exec('BEGIN IMMEDIATE');
    try{
-    this.banco.exec(`CREATE TABLE admin_carrinho_item_pacote_posicoes_demo_v6(
+    this.banco.exec(`CREATE TABLE admin_carrinho_item_pacote_posicoes_demo_v10(
      pedido_id TEXT NOT NULL REFERENCES admin_carrinho_loop_demo(pedido_id) ON DELETE RESTRICT,
      ordem INTEGER NOT NULL CHECK(ordem>=1),
-     posicoes_por_pedido INTEGER NOT NULL CHECK(posicoes_por_pedido BETWEEN 1 AND 6),
+     posicoes_por_pedido INTEGER NOT NULL CHECK(posicoes_por_pedido BETWEEN 1 AND 10),
      revisao_pacote INTEGER NOT NULL CHECK(revisao_pacote>=1),
      PRIMARY KEY(pedido_id,ordem),
      FOREIGN KEY(pedido_id,ordem)
       REFERENCES admin_carrinho_loop_itens_demo(pedido_id,ordem) ON DELETE RESTRICT)`);
-    this.banco.exec(`INSERT INTO admin_carrinho_item_pacote_posicoes_demo_v6
+    this.banco.exec(`INSERT INTO admin_carrinho_item_pacote_posicoes_demo_v10
      SELECT * FROM admin_carrinho_item_pacote_posicoes_demo`);
     this.banco.exec('DROP TABLE admin_carrinho_item_pacote_posicoes_demo');
-    this.banco.exec('ALTER TABLE admin_carrinho_item_pacote_posicoes_demo_v6 RENAME TO admin_carrinho_item_pacote_posicoes_demo');
+    this.banco.exec('ALTER TABLE admin_carrinho_item_pacote_posicoes_demo_v10 RENAME TO admin_carrinho_item_pacote_posicoes_demo');
     this.banco.exec('COMMIT');
    }catch(e){this.banco.exec('ROLLBACK');throw e;}
   }
