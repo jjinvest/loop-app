@@ -7,6 +7,7 @@ test('dez mil participantes, posicoes multiplas e indicacoes',()=>{
  sim.filas.travaPromocaoAtiva=true;
  const ids=[];
  let total=0;
+ let maxTitulares=0;
  const porDia=[];
  for(let i=0;i<10000;i++){
   const qtd=i<100?1:i<1100?5:i<1600?10:1;
@@ -16,6 +17,8 @@ test('dez mil participantes, posicoes multiplas e indicacoes',()=>{
    titular.push(p.id);total++;
   }
   ids.push(titular);
+  maxTitulares=Math.max(maxTitulares,ids.length);
+  assert.ok(ids.length<=10000,'limite absoluto de clientes');
   if(i<100){
    assert.equal(sim.catracaAberta,false);
    if(i===99){
@@ -26,6 +29,11 @@ test('dez mil participantes, posicoes multiplas e indicacoes',()=>{
   }
  }
  assert.equal(total,18500);
+ assert.equal(ids.length,10000);
+ assert.equal(maxTitulares,10000);
+ assert.equal(ids.filter(x=>x.length===1).length,8500);
+ assert.equal(ids.filter(x=>x.length===5).length,1000);
+ assert.equal(ids.filter(x=>x.length===10).length,500);
  assert.equal(sim.filas.filaB.length,total);
  assert.equal(sim.tentarGiro().girou,false);
  for(let i=0;i<3000;i++){
@@ -65,5 +73,7 @@ test('dez mil participantes, posicoes multiplas e indicacoes',()=>{
  assert.equal(chamadasA+chamadasB,100);
  assert.ok(chamadasA>0&&chamadasB>0);
  assert.equal(sim.tabuleiro.ciclosConcluidos.length,100);
+ assert.equal(ids.length,10000,'giros nao criam clientes extras');
+ assert.equal(sim.filas.indicacoesProcessadas.size,3000);
  assert.equal(sim.filas.filaA.length+sim.filas.filaB.length+7+100,total);
 });
