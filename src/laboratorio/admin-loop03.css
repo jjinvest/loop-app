@@ -59,3 +59,9 @@ button{cursor:pointer;padding:11px 15px;border-radius:11px;border:1px solid #ffd
 .comando-busca input{flex:1 1 210px;max-width:440px}
 .comando-busca span{font-size:.77rem;color:#c9bfd5}
 #listaComandosAdmin>div[hidden]{display:none}
+
+/* Acessibilidade: atalho visivel apenas com foco de teclado. */
+.pular-conteudo-admin{position:absolute;z-index:50;left:12px;top:-120px;padding:12px 18px;border-radius:10px;background:#ffe1a0;color:#171225;font-weight:800}
+.pular-conteudo-admin:focus{top:12px}
+#conteudoPrincipalAdmin:focus{outline:none}
+@media(prefers-reduced-motion:reduce){#atalhosDirecaoAdmin .acesso-link{transition:none}}
