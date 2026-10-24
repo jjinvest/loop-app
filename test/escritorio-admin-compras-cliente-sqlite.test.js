@@ -57,6 +57,14 @@ test('API SQLite devolve apenas compras do cliente correto e suas posicoes adici
  assert.deepEqual(data.compras[0].posicoesAdicionais,[{ordem:2,posicaoId:102}]);
  assert.equal(JSON.stringify(data).includes('pedido-b'),false);
  assert.equal(data.semPagamentosReais,true);
+ assert.equal(data.ciclos,'NAO_CONCILIADOS_NESTA_CONSULTA');
+ assert.equal(data.posicoesAdicionais,'CONCILIADAS_SQLITE');
+ const diretorio=await fetch(base+'/api/admin/escritorio-demo/clientes',{headers});
+ assert.equal(diretorio.status,200);
+ const lista=await diretorio.json();
+ assert.equal(lista.comprasIndividuais,'CONSULTA_SQLITE_POR_CLIENTE_DISPONIVEL');
+ assert.equal(lista.posicoesIndividuais,'PARCIALMENTE_CONCILIADAS_POR_COMPRA');
+ assert.equal(lista.contemplacoesIndividuais,'NAO_CONCILIADAS');
  assert.equal((await fetch(base+'/api/admin/escritorio-demo/clientes/'+b+'/compras',{headers})).status,200);
  assert.equal((await fetch(base+'/api/admin/escritorio-demo/clientes/invalido/compras',{headers})).status,400);
  assert.equal((await fetch(base+'/api/admin/escritorio-demo/clientes/33333333-3333-3333-3333-333333333333/compras',{headers})).status,404);
