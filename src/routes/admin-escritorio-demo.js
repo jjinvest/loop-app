@@ -71,13 +71,13 @@ function criarRouterEscritorioDemo({segredo,publicacoes=null}={}) {
         posicaoAtivavel:totalCentavos>=valorMinimoCentavos&&p.termosAceitos&&p.ativacaoIndividual};
     });
     const posicoes=[
-      {id:'demo-pos1',clienteId:'demo-c1',pedidoId:'demo-v1',fila:'B',cicloId:'demo-ciclo1'},
-      {id:'demo-pos3',clienteId:'demo-c2',pedidoId:'demo-v3',fila:'B',cicloId:null}
-    ];
-    if(posicoes.some(p=>!pedidos.find(v=>v.id===p.pedidoId&&v.posicaoAtivavel)))
+      {id:'demo-pos1',pedidoId:'demo-v1',fila:'B',cicloId:'demo-ciclo1'},
+      {id:'demo-pos3',pedidoId:'demo-v3',fila:'B',cicloId:null}
+    ].map(p=>({...p,clienteId:pedidos.find(v=>v.id===p.pedidoId).clienteId}));
+    if(posicoes.some(p=>!pedidos.find(v=>v.id===p.pedidoId&&v.posicaoAtivavel&&v.clienteId===p.clienteId)))
       throw Error('Cenario invalido: posicao sem compra qualificada e ativacao');
-    const ciclos=[{id:'demo-ciclo1',clienteId:'demo-c1',posicaoId:'demo-pos1',
-      estado:'CONCLUIDO_FICTICIO',contemplacoesSimuladas:1}];
+    const ciclos=[{id:'demo-ciclo1',posicaoId:'demo-pos1',
+      estado:'CONCLUIDO_FICTICIO',contemplacoesSimuladas:1}].map(x=>({...x,clienteId:posicoes.find(p=>p.id===x.posicaoId).clienteId}));
     return res.json({modo:'SIMULACAO_ISOLADA',semPagamentosReais:true,
       descricao:'Dados exclusivamente demonstrativos, sem lançamento financeiro nem ativação de posições',
       valorMinimoCentavos,clientes,produtos,pedidos,posicoes,ciclos});
