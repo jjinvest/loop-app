@@ -44,6 +44,18 @@
    </form>
    <p id="mensagemAcessoAdminLoop03" role="status" aria-live="polite">Informe sua chave para consultar dados reais do laboratório.</p>
    <div id="dadosAdminLoop03" hidden>
+    <section class="painel" id="resumoDirecaoAdmin" aria-label="Resumo executivo da operacao">
+     <div class="historico-titulo"><div><small class="sobretitulo">VISÃO EXECUTIVA · FONTE AUTENTICADA</small><h2>Resumo da operação</h2></div>
+      <button type="button" id="atualizarResumoDirecaoAdmin" class="secundario">Atualizar dados</button></div>
+     <div class="loop03-resumo-indicacoes-admin">
+      <div><small>Clientes cadastrados no laboratório</small><strong id="resumoClientesDirecaoAdmin">—</strong></div>
+      <div><small>Pedidos registrados no laboratório</small><strong id="resumoPedidosDirecaoAdmin">—</strong></div>
+      <div><small>Posições por compra</small><strong id="resumoPosicoesDirecaoAdmin">—</strong></div>
+      <div><small>Posições aguardando nas filas</small><strong id="resumoFilasDirecaoAdmin">—</strong></div>
+     </div>
+     <p id="statusResumoDirecaoAdmin" role="status" aria-live="polite" class="observacao">Dados de teste, sem vendas ou pagamentos bancários confirmados.</p>
+     <div class="comando-resumo-acoes"><a href="#auditoriaOperacionalAdmin">Detalhar registros ↓</a><a href="#relatorioFinanceiroAdmin">Consultar cofres simulados ↓</a></div>
+    </section>
     <section id="visaoGeral" class="indicadores" aria-label="Estado do motor">
      <article><small>FILA A</small><strong id="numeroFilaAAdmin">—</strong><span>Posições prioritárias</span></article>
      <article><small>FILA B</small><strong id="numeroFilaBAdmin">—</strong><span>Ordem de entrada</span></article>
