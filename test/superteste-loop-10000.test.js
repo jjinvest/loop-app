@@ -2,6 +2,7 @@
 const assert=require('node:assert/strict');
 const {test}=require('node:test');
 const {SimuladorLoop}=require('../src/domain/simulador-loop');
+const {cofreDoEvento}=require('../src/domain/destino-financeiro-centro-loop');
 
 test('fluxo continuo do cliente 1 ao cliente 10000 com compras e giros reais do simulador',()=>{
  const sim=new SimuladorLoop();
@@ -10,7 +11,7 @@ test('fluxo continuo do cliente 1 ao cliente 10000 com compras e giros reais do 
  let sequenciaA=0,maxSequenciaA=0;
  let vendasAguardando=0;
  const produtos={pdf:{quantidade:0,receita:0},produto190:{quantidade:0,receita:0}};
- let ciclosCompletos=0;
+ const cofres={LOOP_CENTRO:0,LOOP_ESQUERDA:0,LOOP_DIREITA:0,LOOP_DOURADAS:0};
  const perfis={uma:0,cinco:0,dez:0};
  const checkpoints=[];
  // Cada compra gera uma posicao e um evento de venda para o ciclo
@@ -35,12 +36,15 @@ test('fluxo continuo do cliente 1 ao cliente 10000 com compras e giros reais do 
    if(!sim.tabuleiro.centro&&compras>=7)sim.prepararTabuleiro();
    if(sim.tabuleiro.centro){
     if(numero<=100){vendasAguardando++;continue;}
+    const ordem=sim.tabuleiro.vendasDoCiclo.length+1;
+    const destino=cofreDoEvento({posicaoCentro:sim.tabuleiro.centro,ordem});
+    cofres[destino]+=preco;
     sim.registrarVendaNoCicloSimulada({vendaId});
     if(sim.tabuleiro.vendasDoCiclo.length===6){
      const r=sim.tentarGiro();
      {
       assert.equal(r.girou,true);
-      giros++;ciclosCompletos++;
+      giros++;
       if(r.novaPosicao6?.origemFila==='A'){entradasA++;sequenciaA++;}
       else if(r.novaPosicao6?.origemFila==='B'){entradasB++;sequenciaA=0;}
       maxSequenciaA=Math.max(maxSequenciaA,sequenciaA);
@@ -83,6 +87,7 @@ test('fluxo continuo do cliente 1 ao cliente 10000 com compras e giros reais do 
  assert.equal(entradasA+entradasB,giros);
  const relatorio={clientes,compras,posicoesCriadas:compras,perfis,indicacoes,giros,
   produtos,receitaBrutaTotal:produtos.produto190.receita+produtos.pdf.receita,
+  cofres,
   entradasEmpresaPorCiclos:giros*3,
   eventosParticipantePorCiclos:giros*3,
   caixaLiquidoNaoCalculado:true,
