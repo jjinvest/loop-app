@@ -2887,3 +2887,27 @@ body.loop03-logado .portal-participante{position:relative;z-index:1}
   font-size:.72rem!important;padding:10px 8px!important;
  }
 }
+
+/* Correcao responsiva localizada: seis cartoes de Minhas Posicoes.
+   Nao altera o tabuleiro, a logica de ativacao ou os dados. */
+@media(max-width:590px){
+ #loop03-posicoes #loop03OpcoesPosicoes,
+ #loop03-posicoes #loop03OpcoesPosicoes>.loop03-unidade-posicao,
+ #loop03-posicoes #loop03OpcoesPosicoes .loop03-cartao-posicao{
+  min-width:0!important;max-width:100%!important;
+ }
+ #loop03-posicoes #loop03OpcoesPosicoes .loop03-cartao-abrir,
+ #loop03-posicoes #loop03OpcoesPosicoes .loop03-cpf-cartao,
+ #loop03-posicoes #loop03OpcoesPosicoes .loop03-adicionar-indicado,
+ #loop03-posicoes #loop03OpcoesPosicoes .loop03-link-termos{
+  box-sizing:border-box!important;min-width:0!important;
+  max-width:100%!important;width:100%!important;
+ }
+ #loop03-posicoes #loop03OpcoesPosicoes .loop03-aceite-linha,
+ #loop03-posicoes #loop03OpcoesPosicoes .loop03-cartao-miolo{
+  min-width:0!important;max-width:100%!important;
+ }
+ #loop03-posicoes #loop03OpcoesPosicoes input{
+  min-width:0!important;max-width:100%!important;
+ }
+}
