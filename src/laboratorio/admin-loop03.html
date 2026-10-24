@@ -78,6 +78,20 @@
       <p class="observacao">A alteração não retira posições que já estão na Fila A ou no Tabuleiro.</p>
      </section>
     </div>
+    <section class="painel historico" id="auditoriaOperacionalAdmin" aria-label="Auditoria operacional do laboratorio">
+      <div class="historico-titulo"><div><small class="sobretitulo">AUDITORIA · FONTE SQLITE</small><h2>Resultados operacionais do laboratório</h2></div></div>
+      <p class="observacao">Somente registros locais persistidos. Valores reais, cofres e bolas douradas aparecem como indisponíveis até existir fonte conciliada; testes automatizados não são dinheiro recebido.</p>
+      <div class="loop03-resumo-indicacoes-admin">
+       <div><small>Clientes fictícios</small><strong id="auditoriaClientesAdmin">—</strong></div>
+       <div><small>Pedidos no carrinho</small><strong id="auditoriaPedidosAdmin">—</strong></div>
+       <div><small>Posições por compra</small><strong id="auditoriaPosicoesAdmin">—</strong></div>
+       <div><small>Compras somente loja</small><strong id="auditoriaSemLoopAdmin">—</strong></div>
+      </div>
+      <div class="status-linha"><span>Posições adicionais</span><strong id="auditoriaAdicionaisAdmin">—</strong></div>
+      <div class="status-linha"><span>Eventos de pagamento fictício</span><strong id="auditoriaEventosAdmin">—</strong></div>
+      <div class="status-linha"><span>Cofres, ciclos, douradas e pagamentos reais</span><strong>Indisponível nesta fonte</strong></div>
+      <p id="auditoriaStatusAdmin" class="observacao" role="status"></p>
+    </section>
     <section class="painel historico" id="painelIndicacoesAdmin" aria-label="Auditoria de indicações">
      <div class="historico-titulo"><div><small class="sobretitulo">DISTRIBUIÇÃO · CONTROLE ADMINISTRATIVO</small><h2>Indicações e prioridade global</h2></div></div>
      <div class="loop03-resumo-indicacoes-admin">
