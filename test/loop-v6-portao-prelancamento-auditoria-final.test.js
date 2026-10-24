@@ -123,3 +123,15 @@ test('extrato divergente jamais habilita liberacao financeira',async t=>{
  assert.equal(r.dinheiroRealComprovado,false);
  assert.equal(r.prontoParaProducao,false);
 });
+
+test('portao recusa extrato com valor divergente sem criar compensacao',async t=>{
+ const m=contexto();t.after(()=>m.repo.fechar());
+ const evento=await criar(m);
+ const antes=m.banco.prepare('SELECT COUNT(*) AS n FROM admin_ponte_compras_demo').get().n;
+ const divergente={...evento,valorCentavos:evento.valorCentavos+1};
+ const r=conferir(m,[divergente]);
+ assert.equal(r.consistenciaLocalDaAmostra,false);
+ assert.ok(r.riscosLocais.includes('DIVERGENCIA_DE_CONCILIACAO_FICTICIA'));
+ assert.equal(r.prontoParaProducao,false);
+ assert.equal(m.banco.prepare('SELECT COUNT(*) AS n FROM admin_ponte_compras_demo').get().n,antes);
+});
