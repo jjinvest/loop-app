@@ -101,3 +101,13 @@ test('portao permanece bloqueado mesmo se as evidencias locais forem repetidas',
  assert.equal(new Set(pendentes).size,pendentes.length);
  assert.equal(m.banco.prepare('SELECT COUNT(*) AS n FROM admin_ponte_compras_demo').get().n,1);
 });
+
+test('portao nao aceita extrato artificial omitido como conciliado',async t=>{
+ const m=contexto();t.after(()=>m.repo.fechar());
+ await criar(m);
+ const r=auditarPortaoPrelancamentoLoopLab({ponte:m.ponte,carrinhos:m.carrinhos});
+ assert.equal(r.conciliacaoFicticia,'NAO_EXECUTADA');
+ assert.ok(r.riscosLocais.includes('EXTRATO_ARTIFICIAL_NAO_CONFERIDO'));
+ assert.equal(r.consistenciaLocalDaAmostra,false);
+ assert.equal(r.prontoParaProducao,false);
+});
