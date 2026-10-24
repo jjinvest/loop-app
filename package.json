@@ -4,8 +4,12 @@
   "description": "loop",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "node src/server.js"
+    "test": "node --test",
+    "start": "node src/server.js",
+    "start:admin-demo": "node src/laboratorio/servidor-catalogo.js",
+    "simular:sustentabilidade": "node scripts/simular-sustentabilidade.js",
+    "simular:50-giros": "node scripts/simular-50-giros-loop-v6.js",
+    "demo:convites": "node scripts/gerar-cenario-convites-demo.js"
   },
   "repository": {
     "type": "git",

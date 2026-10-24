@@ -1,0 +1,80 @@
+main{max-width:1000px}
+.admin-grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,2fr);gap:16px}
+.campo{display:flex;flex-direction:column;gap:6px;margin-bottom:12px}
+.campo label{font-size:.88rem;color:#d2dbe8;font-weight:700}
+.campo input,.campo select,.campo textarea{background:#101827;color:#fff;border:1px solid #475569;border-radius:10px;font:inherit;padding:12px;width:100%}
+.campo textarea{min-height:80px;resize:vertical}
+.duas-colunas{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.lista-produtos{display:flex;flex-direction:column;gap:9px}
+.lista-produtos button{background:#273446;color:#fff;text-align:left;border:1px solid #45546b;width:100%;cursor:pointer}
+.lista-produtos button:hover{border-color:#ffd400}
+.ajuda{color:#b6c3d5;font-size:.87rem;line-height:1.5}
+.estado-admin{color:#f8e1a1;min-height:30px;line-height:1.5}
+.acoes-admin{display:flex;gap:9px;flex-wrap:wrap}
+.acoes-admin button{cursor:pointer}
+.acoes-admin .secundario{background:#35445b;color:#fff}
+#formProduto[hidden],#areaPainel[hidden]{display:none}
+@media(max-width:660px){.admin-grid,.duas-colunas{grid-template-columns:1fr}}
+
+#areaImportacao{margin-top:18px}
+#areaImportacao .campo label:has(#aceitarImportacao){display:flex;gap:10px;align-items:flex-start;line-height:1.5;cursor:pointer}
+#aceitarImportacao{width:18px;height:18px;min-width:18px;padding:0;margin:3px 0 0;accent-color:#ffd400}
+#listaPreviaImportacao ol{padding-left:24px}
+#listaPreviaImportacao li{line-height:1.45;margin:8px 0;overflow-wrap:anywhere}
+#confirmarImportacao:disabled{opacity:.6;cursor:not-allowed}
+
+/* Formularios administrativos responsivos em todos os dispositivos. */
+main,.admin-grid > *,.duas-colunas > *,.painel,.painel form{min-width:0;max-width:100%}
+.campo input,.campo select,.campo textarea{box-sizing:border-box;min-width:0}
+.acoes-admin button{min-height:44px;max-width:100%;white-space:normal}
+.painel li,.painel p{overflow-wrap:anywhere}
+@media(max-width:420px){
+ .painel{padding:12px}
+ .acoes-admin button{flex:1 1 100%}
+ .admin-grid,.duas-colunas{grid-template-columns:minmax(0,1fr)}
+}
+
+
+/* Navegacao central: somente a aba ativa aparece. Funciona sem tela duplicada. */
+#navAdminCentral[hidden],#areaVisaoAdmin[hidden],
+#areaPainel[hidden],#areaImportacao[hidden],#areaPedidosDemo[hidden]{
+ display:none!important
+}
+.abas-admin-central{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}
+.abas-admin-central button{background:#23354b;color:#edf6ff;border:1px solid #5a738c;
+ border-radius:12px;min-height:46px;padding:10px 15px;cursor:pointer}
+.abas-admin-central button[aria-selected="true"]{border-color:#ffdf54;
+ background:#3d4b25;color:#fff}
+.abas-admin-central button:focus-visible{outline:3px solid #ffdf54;outline-offset:3px}
+.resumo-admin-v6{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));
+ gap:12px;margin:16px 0}
+.resumo-admin-v6>div{border:1px solid #536e81;border-radius:12px;
+ padding:15px;background:#1a2a38;display:flex;flex-direction:column;gap:7px}
+.resumo-admin-v6 strong{font-size:1.15rem;color:#ffdf54;overflow-wrap:anywhere}
+.resumo-admin-v6 span{font-size:.85rem;color:#e3ebf6}
+.mapa-admin-central{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.mapa-admin-central a{padding:15px;border:1px solid #51697e;border-radius:12px;
+ display:flex;flex-direction:column;gap:7px;background:#192b3d;color:#fff;text-decoration:none}
+.mapa-admin-central a:hover,.mapa-admin-central a:focus-visible{border-color:#ffdf54}
+.mapa-admin-central a span{font-size:.84rem;color:#d1ddec;line-height:1.45}
+.calculadora-admin-v6{border:1px solid #63788c;border-radius:12px;
+ padding:14px;margin-bottom:16px;background:#172c3d}
+.calculadora-admin-v6 h3{margin:0 0 10px}
+@media(max-width:800px){.resumo-admin-v6{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:600px){.mapa-admin-central{grid-template-columns:1fr}}
+@media(max-width:400px){.resumo-admin-v6{grid-template-columns:1fr}}
+
+/* Fotos e vídeos PRIVADOS de avaliações para moderação da AKITEMM */
+.akitemm-midias-moderacao{
+ display:grid;gap:8px;margin:10px 0 14px;
+ grid-template-columns:repeat(auto-fit,minmax(140px,1fr));
+}
+.akitemm-midias-moderacao button{
+ width:100%;max-width:100%;min-height:35px;white-space:normal;
+}
+.akitemm-midias-preview-privado img,
+.akitemm-midias-preview-privado video{
+ display:block;max-width:100%;width:100%;max-height:210px;
+ object-fit:contain;border:1px solid #b99263;border-radius:7px;
+ background:#12212b;
+}

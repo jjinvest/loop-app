@@ -1,0 +1,65 @@
+# Auditoria técnica ponta a ponta — LOOP 3.0 / AKITEMM — 24/10/2026
+
+**Estado:** EM ANDAMENTO. Este documento não é um certificado de ausência de falhas nem autorização de produção.
+
+## Inventário e evidências
+
+- Árvore do commit c48367d3bc1048a979ce4cb0eee4a1fd5ae7d97f: 1.195 entradas, 1.039 arquivos, sem truncamento. Inclui dependências e histórico; não confundir inventário com revisão semântica concluída.
+- CI do commit c48367d: testes gerais e navegador aprovados. O teste `test/auditoria-integral-regra-seis-vendas.test.js` percorre o repositório e bloqueia padrões específicos de regra antiga executável; **não** detecta todas as formas de expressar a regra.
+- Circuito `src/domain/circuit-break-ponte-v6-demo-sqlite.js`: seis compras por giro, seis vendas distintas, commit transacional com livro de provisões, estado e auditoria.
+- Auditor `src/domain/auditoria-seis-pedidos-ciclo-lab.js`: verifica seis eventos por ciclo, ordens 1–6, unicidade dos pedidos, correspondência com livro e snapshot.
+- Portão `src/domain/auditoria-portao-prelancamento-loop-lab.js`: valida integridade SQLite, foreign keys, motor e extrato fictício; retorna `prontoParaProducao:false` e bloqueios externos explícitos.
+
+## Achados e lacunas — não esconder com testes verdes
+
+**A1 — ALTA — Escritório Virtual não integrado definitivamente.**
+A rota `src/routes/admin-escritorio-demo.js` expõe cenário de departamentos conectado por IDs **em memória e fictício**, separado da consulta SQLite real. Diretório operacional ainda declara compras, posições e contemplações individuais como `NAO_CONCILIADAS`. Não apresentar essas relações fictícias como dados reais nem considerar o requisito empresarial concluído.
+
+**A2 — ALTA — Produção financeira não homologada.**
+O próprio portão de pré-lançamento lista PSP/banco, liquidação e extrato real, validação jurídica, política de estornos/tributos, LGPD/segurança, infraestrutura e autorização de publicação como pendências. CI verde não elimina esses bloqueios.
+
+**A3 — MÉDIA — Teste de regra antiga é uma proteção parcial.**
+A busca de texto identifica algumas expressões explícitas de cinco vendas por ciclo, mas não alcança constantes indiretas, configuração dinâmica, SQL, semântica de cálculos nem equivalências de negócio. Necessário teste de propriedade comportamental: com 0–5 vendas elegíveis, nenhum giro; com 6, exatamente um; 7–11, um e saldo pendente; 12, dois, com idempotência e concorrência.
+
+**A4 — MÉDIA — Histórico e regra vigente precisam de versionamento explícito.**
+Manter o histórico original imutável por auditoria; registrar regra vigente V6 como única autoridade de execução. Não reescrever retrospectivamente registros de ciclos nem remover provas de migração.
+
+## Atualização verificada — 24/10/2026
+
+- **CI comprovado no commit `54727eb7b1e4f0301a47c827ccaee90c6e618561`:** workflows `Testes do LOOP` e `LOOP - Navegador celular e computador` concluídos com sucesso. É validação da branch, não homologação de produção.
+- **A1 parcialmente mitigado:** rota administrativa autenticada `GET /escritorio-demo/clientes/:id/compras` lê `admin_ponte_compras_demo` do SQLite, isolando pelo identificador do cliente, com total e limite de 100 pedidos. A consulta busca posições adicionais em lote na tabela `admin_ponte_posicoes_adicionais_demo`. Não expõe saldo real, não atribui ciclos e declara explicitamente `ciclos: NAO_CONCILIADOS_NESTA_CONSULTA`.
+- **Teste funcional introduzido:** `test/escritorio-admin-compras-cliente-sqlite.test.js` inicializa servidor local e SQLite, cria dois clientes e pedidos distintos, verifica autenticação, isolamento de compras, vínculo de posição adicional, cliente inexistente e identificador inválido. Após correções do esquema de teste, o CI ficou verde.
+- **Permanecem pendentes:** conciliação de ciclos e financeiro, controles completos de acesso por departamento, paginação além de 100, testes comportamentais do giro com 0–12 eventos, carga/concorrência e homologação externa.
+
+## Matriz de trabalho restante
+
+1. **Motor/filas/tabuleiro:** cenários de 0–12 vendas, prioridade 3A:1B, centro e vaga 6, posição dourada, ordem determinística, concorrência, recuperação após interrupção.
+2. **Comércio:** elegibilidade configurável, subtotal qualificado R$250, pagamento confirmado, 1 venda qualificada = 1 posição, limite por titular, aceite individual, devolução/estorno, idempotência.
+3. **Banco:** integridade referencial e unicidade de pedidos, posições, vínculos, eventos, provisões, snapshots, backup/restauração e migração.
+4. **Financeiro:** distinguir simulação, saldo previsto, provisão, dinheiro conciliado e crédito disponível; testar reprocessamento de webhooks, estorno e reconciliação.
+5. **Escritório Virtual:** substituir junções fictícias por consultas SQLite reais e paginadas, com autorização por departamento, proteção de dados, totais reconciliados e navegação cliente↔pedido↔produto↔posição↔ciclo.
+6. **Interface:** percursos reais em desktop/celular, vazios, falhas, latência, privacidade e acessibilidade.
+7. **Operação:** segurança de sessões, limites, auditoria, observabilidade, carga e portão pré-lançamento.
+
+## Evidência adicional de testes comportamentais existentes
+
+- `test/circuit-break-ponte-v6-demo.test.js`: 12 compras simuladas, dois giros de seis eventos, idempotência por `comandoId`, limite diário, crédito somente previsto e livro imutável.
+- `test/loop-v6-seis-pedidos-ciclo-persistencia-auditoria.test.js`: 14 pedidos distintos, dois giros persistidos com 12 eventos, dois pendentes, rollback quando lastro fictício insuficiente, rejeição de adulteração do livro, reinicialização do SQLite, `PRAGMA integrity_check` e `foreign_key_check`.
+- Esses cenários já existiam no repositório; não foram criados nesta atualização. O CI verde de `54727eb` inclui sua execução. Não equivalem a testes de liquidação bancária real nem comprovam todas as interleavings de concorrência.
+
+## Plano de fechamento sem dinheiro real — execução autorizada
+
+Prosseguir autonomamente na branch DRAFT com as verificações e correções locais, sem exigir autorização repetida para cada teste. Critério de saída por frente:
+
+1. **Compras e adesões:** confirmar com testes executáveis pedido elegível, pedido inelegível, duplicação, compra sem posição automática, aceite individual e limites de posições; registrar exceções reais.
+2. **Ciclo e fila:** confirmar seis eventos distintos por giro, limite diário, prioridade A/B, concorrência, rollback, reinício e consistência entre livro e tabuleiro.
+3. **Escritório:** consultar cliente, pedido, posições, ciclo e estado financeiro a partir de fontes SQLite comprovadas; não inferir vínculo ausente, evitar dados fictícios misturados e testar autorização/privacidade.
+4. **Dinheiro fictício:** reconciliar extrato de sandbox e livros locais, simular estorno, falhas de webhook e reprocessamento; distinguir previsto, provisão, liquidado e sacável.
+5. **Operação:** auditar backup/restauração, migrações, erros HTTP, segurança, limites e navegação mobile/desktop.
+6. **Evidência:** manter CI e relatório atualizados, com provas e bloqueios remanescentes, sem classificar teste textual como integração.
+
+**Fronteira externa:** integração bancária real, liquidação, comprovação de dinheiro, contratos, validação jurídica, LGPD/infraestrutura homologadas e autorização de lançamento não podem ser declaradas concluídas a partir do laboratório. Não fazer merge/deploy nem iniciar transações reais sem confirmação expressa.
+
+## Restrições
+
+Branch `fix/teste-escrita-catraca-20261014`; PR #1 DRAFT. **Não** mergear, publicar, processar pagamentos reais ou modificar telas aprovadas sem autorização. O resultado deve distinguir “aprovado no laboratório”, “não testado” e “bloqueado para produção”.

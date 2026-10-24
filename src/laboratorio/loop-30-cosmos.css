@@ -1,0 +1,2913 @@
+/* LOOP 3.0 — Atmosfera cósmica viva das quatro abas.
+ * Sobreposição visual sobre componentes funcionais existentes.
+ * Sem imagens de tela, sem elementos clicáveis fictícios e sem alteração de dados.
+ * Preferências de movimento reduzido são respeitadas.
+ */
+body.loop03-logado{
+  background:
+   radial-gradient(ellipse at 8% 4%,#71338d72,transparent 35%),
+   radial-gradient(ellipse at 96% 88%,#e3a64038,transparent 43%),
+   radial-gradient(ellipse at 67% 64%,#22115b9c,transparent 58%),
+   #050715!important;
+}
+.loop03-shell{
+  isolation:isolate;
+  border:3px solid transparent!important;
+  background:
+   radial-gradient(ellipse at 72% 93%,#671f924d,transparent 60%),
+   linear-gradient(140deg,#090b1a,#13102c 50%,#060c1b) padding-box,
+   linear-gradient(112deg,#fff7cd,#d89232 10%,#ffce61 19%,#fff7df 28%,#9d4d1f 46%,#f8c059 60%,#fff3c4 74%,#aa5419 87%,#f5c377) border-box!important;
+  box-shadow:inset 0 0 0 2px #ffda8a80,inset 0 0 22px #f4a73d4a,0 0 19px #ffbd4e7a,0 14px 60px #000c!important;
+}
+.loop03-shell:before{
+  border-color:#ffe6a499!important;
+  box-shadow:inset 0 0 18px #ffc65c52,0 0 12px #f1b54a72!important;
+}
+.loop03-banner-topo{
+  background:
+   radial-gradient(ellipse at 0% 0%,#873cba42,transparent 46%),
+   radial-gradient(ellipse at 94% 16%,#fcb94942,transparent 37%),
+   linear-gradient(110deg,#070916,#0d0c24 65%,#070e21)!important;
+  border-bottom:1px solid #d18d4f55!important;
+}
+.loop03-logomarca,.loop03-marca{
+  color:#f7c158!important;
+  text-shadow:0 1px 0 #fff1b4,0 4px 2px #713b11,0 0 20px #e8a5329c!important;
+}
+.loop03-logomarca span,.loop03-marca span{
+  color:#e8e9f2!important;
+  text-shadow:0 2px 1px #697187,0 0 16px #fff9d480!important;
+}
+.loop03-sidebar{
+  background:
+   radial-gradient(ellipse at 4% 96%,#5f237557,transparent 38%),
+   linear-gradient(154deg,#101728,#070b19 72%,#100c21)!important;
+  border:1px solid #d0a05c!important;
+  box-shadow:inset 0 0 0 1px #ffdc9050,0 0 21px #c27f3f58!important;
+}
+.loop03-sidebar nav button,.loop03-sidebar nav a{border-radius:12px}
+.loop03-sidebar nav button[aria-current=page]{
+  background:linear-gradient(99deg,#a76c35,#3a2b30 72%,#221a2e)!important;
+  border-color:#f4c474!important;
+  box-shadow:inset 0 1px #fff5c16e,0 0 14px #d89b5c4d!important;
+}
+.loop03-vitrine-lateral{
+  background:
+   radial-gradient(ellipse at 50% 54%,#673ba25e,transparent 55%),
+   linear-gradient(156deg,#11152a,#060c1a)!important;
+  border-color:#eab253!important;
+  box-shadow:inset 0 0 0 1px #ffe4ab38,0 0 18px #ba713f70!important;
+}
+.loop03-indicador{
+  background:linear-gradient(135deg,#1c1b30,#080e1d 81%)!important;
+  border-color:#cb9250!important;
+  box-shadow:inset 0 1px #fff2bb4d,0 0 12px #b7793d55,0 5px 18px #0009!important;
+}
+.loop03-indicador strong{text-shadow:0 0 12px #f8e5ae32}
+.loop03-pagina{
+  position:relative;
+  isolation:isolate;
+  overflow:hidden;
+  border:2px solid #edb758!important;
+  background:
+   radial-gradient(ellipse at 50% 43%,#3f137bb0,transparent 75%),
+   radial-gradient(ellipse at 0% 100%,#261466c4,transparent 72%),
+   #13082d!important;
+  box-shadow:inset 0 0 0 2px #30205c,inset 0 0 25px #311079b8,0 0 18px #dc974945!important;
+}
+.loop03-pagina>*{position:relative;z-index:1}
+.loop03-pagina::before,.loop03-pagina::after{
+  content:"";
+  position:absolute;
+  pointer-events:none;
+  z-index:0;
+  inset:-15%;
+}
+.loop03-pagina::before{
+  background:
+   radial-gradient(ellipse at 20% 36%,#753ddd82,transparent 32%),
+   radial-gradient(ellipse at 85% 17%,#9843e36e,transparent 35%),
+   radial-gradient(ellipse at 72% 92%,#da8a2452,transparent 24%),
+   conic-gradient(from 235deg at 78% 68%,transparent 0deg,#e9a03f2f 8deg,transparent 18deg,transparent 290deg,#b166f83c 312deg,transparent 331deg);
+  opacity:.83;
+  transform:translate3d(0,0,0) scale(1);
+  animation:loop30Nebulosa 31s ease-in-out infinite alternate;
+}
+.loop03-pagina::after{
+  background-image:
+   radial-gradient(circle,#fff7d9 1.1px,transparent 1.7px),
+   radial-gradient(circle,#e7bbff 1px,transparent 1.55px),
+   radial-gradient(circle,#ffe19d .85px,transparent 1.5px),
+   radial-gradient(circle,#b9d7ff .65px,transparent 1.3px);
+  background-size:109px 113px,71px 89px,147px 131px,55px 69px;
+  background-position:8px 21px,32px 5px,55px 63px,7px 37px;
+  opacity:.57;
+  transform:translate3d(0,0,0);
+  animation:loop30Estrelas 43s linear infinite alternate;
+}
+@keyframes loop30Nebulosa{
+  0%{transform:translate3d(-2%,1%,0) scale(1.04);opacity:.78}
+  45%{opacity:1}
+  100%{transform:translate3d(3%,-2%,0) scale(1.11);opacity:.93}
+}
+@keyframes loop30Estrelas{
+  0%{transform:translate3d(-1%,0,0);opacity:.52}
+  55%{opacity:.8}
+  100%{transform:translate3d(2%,-3%,0);opacity:.64}
+}
+.loop03-pagina .loop03-cartao-posicao{
+  box-shadow:inset 0 0 0 3px #271340,0 0 12px #8e52c54d,0 4px 16px #0008!important;
+}
+.loop03-pagina .loop03-cartao-posicao.loop03-posicao-a{
+  box-shadow:inset 0 0 0 3px #533513,0 0 15px #f9c24e82,0 4px 16px #0009!important;
+}
+.loop03-pagina .loop03-cartao-posicao.loop03-posicao-centro{
+  box-shadow:inset 0 0 0 3px #133c35,0 0 15px #4ce6a17a!important;
+}
+.loop03-pagina .loop03-adicionar-indicado:not(:disabled){
+  border:1px solid #ffcf74;
+  background:linear-gradient(110deg,#2f1749,#53266a 48%,#1c1c38);
+  box-shadow:inset 0 1px #ffe8c254,0 0 10px #b77bec3a;
+}
+.loop03-pagina .loop03-saldo-indicados{
+  border-color:#d7a866;
+  background:linear-gradient(103deg,#120f2fdd,#21123ce0 65%,#141331de);
+  box-shadow:inset 0 1px #ffe6ae52,0 0 12px #d0955542;
+}
+#loop03-tabuleiro .loop03-mapa-grade>.bloco-fila-participante{
+  background:linear-gradient(150deg,#101525e8,#070e1dee)!important;
+  border:2px solid #c88b3f!important;
+  border-radius:20px!important;
+  box-shadow:inset 0 0 0 1px #f8cd7455,0 0 16px #d58c3657!important;
+}
+#loop03-tabuleiro .loop03-mapa-grade>.bloco-fila-participante:last-child{
+  border-color:#ccd2e0!important;
+  box-shadow:inset 0 0 0 1px #a6b4c957,0 0 13px #8b9bc34a!important;
+}
+#loop03-tabuleiro .loop03-mapa-grade .loop03-linha-fila{
+  background:linear-gradient(100deg,#10182a,#080d1a)!important;
+  border:1px solid #b482454b!important;
+  box-shadow:inset 0 1px #f6d7951e!important;
+}
+#loop03-tabuleiro .loop03-roda{
+  position:relative;
+  overflow:visible;
+  background:
+   radial-gradient(ellipse at 50% 55%,#2a186b8a,transparent 76%),
+   linear-gradient(155deg,#0b0c1d,#080e20)!important;
+  border:2px solid #e9b15e!important;
+  box-shadow:inset 0 0 0 1px #ffeac15c,0 0 22px #d69e5878,inset 0 0 24px #27177494!important;
+}
+#loop03-tabuleiro .loop03-roda .mapa-tabuleiro-posicoes-demo{
+  border:5px solid #eab45a!important;
+  background:radial-gradient(circle at 50% 50%,#164c41 0,#12172f 48%,#080d1a 61%,#19112d 76%)!important;
+  box-shadow:0 0 0 2px #51311f,0 0 20px #e9af5788,inset 0 0 24px #eebd493e!important;
+}
+#loop03-tabuleiro .loop03-roda .espaco-tabuleiro-demo{
+  box-shadow:inset -7px -7px 14px #252e45a0,inset 3px 3px 8px #ffffffb0,0 3px 15px #000a,0 0 8px #e3e4ff55!important;
+}
+#loop03-tabuleiro .loop03-roda .espaco-tabuleiro-demo.tabuleiro-vaga-6:not(:has(.posicao-dourado)){
+  box-shadow:inset 1px 2px 7px #ffe1df80,0 0 12px #fb4345b5!important;
+}
+#loop03-tabuleiro .loop03-roda .espaco-tabuleiro-demo.tabuleiro-centro:not(:has(.posicao-dourado)){
+  box-shadow:inset 1px 2px 7px #fff9c180,0 0 17px #42f0abbb!important;
+}
+#loop03-rede .loop03-equipe-linha{
+  border-color:#a682d0!important;
+  box-shadow:inset 0 1px #d8b3f64b,0 0 10px #9556db3c!important;
+}
+#loop03-home .loop03-hero-escritorio{
+  background:
+   radial-gradient(ellipse at 55% 94%,#e8a4484d,transparent 46%),
+   radial-gradient(ellipse at 8% 40%,#295ae072,transparent 40%),
+   radial-gradient(ellipse at 90% 40%,#9528df8c,transparent 42%),
+   linear-gradient(150deg,#070a25,#1c0d51 53%,#0d1636)!important;
+  box-shadow:inset 0 0 0 3px #482276,0 0 22px #d59b5d8a!important;
+}
+#loop03-home .loop03-cenario-tela{
+  background:
+   radial-gradient(ellipse at 53% 53%,#3b2b9d8a,transparent 69%),
+   linear-gradient(125deg,#102456,#090c27 53%,#301a63);
+}
+#loop03-home .loop03-cenario-monitor{
+  border-color:#080a22;
+  box-shadow:0 0 0 2px #edbe78,0 0 22px #ac66e9a8,0 17px 33px #000b;
+}
+@media(max-width:520px){
+ .loop03-pagina::after{opacity:.44}
+ #loop03-tabuleiro .loop03-roda{border-width:1px!important}
+ #loop03-tabuleiro .loop03-roda .mapa-tabuleiro-posicoes-demo{border-width:3px!important}
+}
+@media(prefers-reduced-motion:reduce){
+ .loop03-pagina::before,.loop03-pagina::after{animation:none!important;transform:none!important}
+}
+
+
+/* Posicoes selecionadas continuam claramente iluminadas sobre o brilho do cosmos. */
+#loop03-tabuleiro .loop03-roda .espaco-tabuleiro-demo:has(.loop03-destaque-posicao),
+#loop03-tabuleiro .loop03-mapa-grade .linha-fila-demo:has(.loop03-destaque-posicao){
+ outline:3px solid #fffcef!important;
+ outline-offset:2px;
+ box-shadow:0 0 0 2px #a876e0,0 0 20px #fff6c5a8,0 0 31px #55eeb8a3!important;
+}
+#loop03-tabuleiro .loop03-roda .espaco-tabuleiro-demo:has(.loop03-iluminada):not(:has(.loop03-destaque-posicao)),
+#loop03-tabuleiro .loop03-mapa-grade .linha-fila-demo:has(.loop03-iluminada):not(:has(.loop03-destaque-posicao)){
+ outline:2px solid #bfffe1;
+ outline-offset:2px;
+ box-shadow:0 0 15px #5ef8b77c,0 0 23px #78e7c55e!important;
+}
+
+
+/* Tabuleiro central em evidencia: nota explicativa embaixo do circulo,
+   mantendo a explicacao verdadeira e os controles originais acessiveis. */
+#loop03-tabuleiro .loop03-roda{display:flex;flex-direction:column}
+#loop03-tabuleiro .loop03-roda>.painel-tabuleiro-imersivo{order:1}
+#loop03-tabuleiro .loop03-roda>p{order:2;color:#d6c6eb;font-size:.78rem;margin:6px 0 0}
+
+
+/* Refinamento de proporcoes e luz com base no confronto das quatro artes oficiais com as capturas reais. Sem imagem de tela ou controles sobrepostos. */
+body.loop03-logado{position:relative;isolation:isolate;overflow-x:clip}
+body.loop03-logado::before{
+ content:"";position:fixed;inset:-15%;z-index:0;pointer-events:none;
+ background:
+  radial-gradient(ellipse at 3% 17%,#e7a23b90,transparent 17%),
+  radial-gradient(ellipse at 92% 77%,#eac55b7a,transparent 18%),
+  radial-gradient(ellipse at 12% 78%,#8339dc85,transparent 28%),
+  radial-gradient(ellipse at 81% 18%,#4d32a76b,transparent 32%),
+  conic-gradient(from 124deg at 86% 85%,transparent 0deg,#f2af5038 10deg,transparent 23deg,transparent 315deg,#f4c16d36 334deg,transparent 355deg);
+ opacity:.76;filter:blur(12px);animation:loop30Nebulosa 31s ease-in-out infinite alternate;
+}
+body.loop03-logado .portal-participante{position:relative;z-index:1}
+.loop03-shell{box-shadow:
+ inset 0 0 0 2px #ffffed88,inset 0 0 25px #f5c76b65,
+ 0 0 0 1px #914e23,0 0 23px 4px #ffb94a91,
+ 0 0 64px #f9b04a65,0 16px 70px #000e!important}
+.loop03-shell::after{
+ content:"";position:absolute;inset:-7px;z-index:4;pointer-events:none;border-radius:30px;
+ border:2px solid #f9c66a9e;
+ box-shadow:inset 0 0 16px #ffb96561,0 0 16px #ffd788af,0 0 38px #c8802f87;
+ opacity:.82;
+}
+.loop03-banner-topo{
+ min-height:137px;
+ background:
+  radial-gradient(ellipse at 9% 5%,#50295c94,transparent 42%),
+  radial-gradient(ellipse at 95% 97%,#ed9c4964,transparent 45%),
+  linear-gradient(120deg,#070814 8%,#141026 65%,#040b1b)!important;
+ box-shadow:inset 0 1px #ffefb179,0 0 19px #c78b455a!important;
+}
+.loop03-banner-topo::after{
+ content:"";position:absolute;pointer-events:none;left:-7%;top:-55%;width:39%;height:145%;
+ border:3px solid #e5a64f6b;border-radius:50%;transform:rotate(-23deg);
+ box-shadow:0 0 25px #f4a44982,inset 0 0 14px #ffca779a;
+}
+.loop03-banner-topo .loop03-logomarca{
+ font-size:clamp(2.5rem,5vw,4.25rem)!important;font-weight:1000;letter-spacing:.01em;
+ color:#ffca52!important;
+ background:linear-gradient(180deg,#fffad9 0%,#ffeab0 18%,#d38217 42%,#ffec9d 64%,#aa5b12 81%,#ffd273 100%);
+ -webkit-background-clip:text;background-clip:text;
+ -webkit-text-fill-color:transparent;
+ filter:drop-shadow(0 2px 2px #431807) drop-shadow(0 0 10px #ffc15b6b);
+}
+.loop03-banner-topo .loop03-logomarca span{
+ background:linear-gradient(180deg,#fff 0%,#d3ddec 25%,#657084 55%,#f9faff 76%,#8191a8 100%);
+ -webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;
+ filter:drop-shadow(0 2px 2px #1a1c2b);
+}
+.loop03-banner-topo p{color:#fff0d8!important;letter-spacing:.16em}
+.loop03-banner-topo small{color:#d7bbf5!important;letter-spacing:.17em}
+.loop03-sidebar{
+ border:2px solid #d49c58!important;
+ box-shadow:inset 0 0 0 1px #ffe3a860,inset 0 0 27px #b15c2565,0 0 15px #ffb76570!important;
+}
+.loop03-sidebar nav button span,.loop03-sidebar nav a span{
+ color:#ffd889;filter:drop-shadow(0 0 6px #e5a64e75)
+}
+.loop03-sidebar nav button[aria-current="page"]{
+ background:linear-gradient(100deg,#c18b35,#855323 45%,#221625 92%)!important;
+ box-shadow:inset 0 1px #fff1aa9c,0 0 18px #ffbd5778!important;
+}
+.loop03-vitrine-lateral{box-shadow:0 0 17px #f1ae5799,inset 0 0 10px #9a4e4470!important}
+.loop03-indicadores{gap:11px}
+.loop03-indicador{
+ border:1px solid #d39648!important;
+ background:linear-gradient(138deg,#111a2d,#080c1c 80%)!important;
+ box-shadow:inset 0 1px #fff1ba73,0 0 11px #f4b2556c,0 7px 19px #000b!important
+}
+.loop03-indicador strong{color:#fff0bf;text-shadow:0 0 9px #f5bd5091}
+.loop03-pagina{
+ box-shadow:inset 0 0 0 2px #ffdf9a67,inset 0 0 33px #8529bf60,0 0 18px #ffb94b95!important;
+ background:
+  radial-gradient(ellipse at 35% 40%,#4d179ca3,transparent 60%),
+  radial-gradient(ellipse at 82% 81%,#6c25b2a5,transparent 58%),
+  linear-gradient(148deg,#09091d,#170c43 60%,#080c1e)!important;
+}
+.loop03-pagina::before{
+ background:
+  radial-gradient(ellipse at 15% 35%,#934ced90,transparent 31%),
+  radial-gradient(ellipse at 88% 25%,#b36dfb8a,transparent 33%),
+  radial-gradient(ellipse at 70% 91%,#e2a04673,transparent 26%),
+  conic-gradient(from 237deg at 70% 57%,transparent 0deg,#ffab4d47 8deg,transparent 23deg,transparent 285deg,#c38aff6b 309deg,transparent 330deg)!important;
+}
+/* Distribuicao circular fiel: 1 no topo, 2/3 a direita,
+   4/5 embaixo, 6 (vermelha) a esquerda, centro verde. */
+#loop03-tabuleiro .loop03-mapa-grade{
+ grid-template-columns:minmax(145px,1.05fr) minmax(365px,2.55fr) minmax(145px,1.05fr);
+ gap:10px;
+}
+#loop03-tabuleiro .loop03-roda{border:0!important;background:transparent!important;box-shadow:none!important;padding:6px!important}
+#loop03-tabuleiro .loop03-roda .mapa-tabuleiro-posicoes-demo{
+ position:relative!important;display:block!important;
+ width:min(100%,530px)!important;aspect-ratio:1/1;
+ padding:0!important;gap:0!important;margin:9px auto 13px!important;
+ border:8px ridge #e8a447!important;border-radius:50%!important;
+ background:
+  radial-gradient(circle at 51% 50%,#0f3d33 0%,#0e1d33 28%,#050c19 53%,#25103f 71%,#070916 89%)!important;
+ box-shadow:
+  0 0 0 2px #a96c28,0 0 0 7px #ffd67640,
+  0 0 25px #f8b540ad,0 0 50px #f3a13d76,
+  inset 0 0 32px #ffb94a56!important;
+}
+#loop03-tabuleiro .loop03-roda .mapa-tabuleiro-posicoes-demo::before{
+ content:"";position:absolute;pointer-events:none;inset:6%;border-radius:50%;
+ border:2px dotted #eec56c99;box-shadow:0 0 18px #f8b86169;
+}
+#loop03-tabuleiro .loop03-roda .mapa-tabuleiro-posicoes-demo>.espaco-tabuleiro-demo{
+ position:absolute!important;display:flex!important;
+ flex-direction:column;align-items:center;justify-content:center;
+ margin:0!important;min-width:0!important;min-height:0!important;
+ width:23%!important;height:23%!important;
+ aspect-ratio:1;border-width:3px!important;transform:translate(-50%,-50%);
+ box-shadow:inset 2px 3px 12px #fff8,inset -7px -7px 17px #202c3bb3,0 4px 13px #0009,0 0 14px #fff8!important;
+}
+#loop03-tabuleiro .loop03-roda .tabuleiro-vaga-1{top:21%;left:50%}
+#loop03-tabuleiro .loop03-roda .tabuleiro-vaga-2{top:31%;left:78%}
+#loop03-tabuleiro .loop03-roda .tabuleiro-vaga-3{top:59%;left:81%}
+#loop03-tabuleiro .loop03-roda .tabuleiro-vaga-4{top:81%;left:63%}
+#loop03-tabuleiro .loop03-roda .tabuleiro-vaga-5{top:79%;left:34%}
+#loop03-tabuleiro .loop03-roda .tabuleiro-vaga-6{top:51%;left:20%}
+#loop03-tabuleiro .loop03-roda .tabuleiro-centro{
+ top:50%;left:50%;width:29%!important;height:29%!important;
+ border:4px solid #ffe28d!important;
+ box-shadow:inset 0 0 18px #88ffccba,0 0 17px #35ffb6c4,0 0 36px #36dfa6b3!important;
+}
+#loop03-tabuleiro .loop03-roda .espaco-tabuleiro-demo .titulo-espaco-tabuleiro-demo{
+ font-size:clamp(.52rem,.79vw,.7rem);font-weight:850;line-height:1.2;
+}
+#loop03-tabuleiro .loop03-roda .espaco-tabuleiro-demo .selo-posicao-demo{
+ font-size:clamp(.58rem,.85vw,.85rem);font-weight:800;line-height:1.13;
+}
+#loop03-tabuleiro .loop03-mapa-grade>.bloco-fila-participante:first-child{
+ border-color:#f8b74c!important;box-shadow:inset 0 0 0 1px #ffe19a65,0 0 18px #eea73793!important;
+}
+#loop03-tabuleiro .loop03-mapa-grade>.bloco-fila-participante:last-child{
+ border-color:#e6e7f4!important;box-shadow:inset 0 0 0 1px #b6bed959,0 0 18px #cbc7f077!important;
+}
+#loop03-tabuleiro .loop03-linha-fila{
+ background:linear-gradient(97deg,#0e1727,#090b1b)!important;
+ border-color:#be8d503f!important;border-radius:13px!important;
+}
+#loop03-tabuleiro .loop03-inicial-fila.loop03-a:not(.loop03-dourada){
+ color:#fff!important;
+ border:2px solid #ffe79c!important;
+ background:radial-gradient(circle at 28% 22%,#fff5b5,#edb62e 58%,#a75d07 100%)!important;
+ text-shadow:0 1px 2px #513004!important;
+ box-shadow:0 0 12px #fcc857c2,inset 2px 2px 7px #fff7a470!important;
+}
+#loop03-tabuleiro .loop03-inicial-fila.loop03-b:not(.loop03-dourada):not(.loop03-azul){
+ color:#192036!important;
+ border:2px solid #ecf1ff!important;
+ background:radial-gradient(circle at 26% 20%,#fff,#bec8d8 62%,#78889c)!important;
+ box-shadow:0 0 9px #f8fbff91!important;
+}
+#loop03-posicoes .loop03-cartao-rotulo,
+#loop03-rede .loop03-titulo-equipe h2{
+ text-shadow:0 0 10px #f7c76c53;
+}
+#loop03-posicoes .loop03-cartao-posicao{
+ border:1px solid #b989f3!important;
+ box-shadow:inset 0 0 0 2px #4a2161,0 0 11px #c978e05b!important;
+}
+#loop03-posicoes .loop03-posicao-a{
+ border-color:#ffcf6b!important;
+ box-shadow:inset 0 0 0 2px #714b13,0 0 17px #ffc2559c!important;
+}
+#loop03-rede .loop03-equipe-linha{
+ border:1px solid #b484e1!important;border-radius:15px!important;
+ box-shadow:inset 0 1px #ebd1ff55,0 0 13px #a95adf72!important;
+}
+@media(max-width:1200px){
+ #loop03-tabuleiro .loop03-mapa-grade{grid-template-columns:1fr 1fr}
+ #loop03-tabuleiro .loop03-roda{grid-column:1/-1;grid-row:1}
+}
+@media(max-width:520px){
+ #loop03-tabuleiro .loop03-roda .mapa-tabuleiro-posicoes-demo{border-width:4px!important}
+ #loop03-tabuleiro .loop03-roda .mapa-tabuleiro-posicoes-demo>.espaco-tabuleiro-demo{border-width:2px!important}
+ #loop03-tabuleiro .loop03-roda .espaco-tabuleiro-demo .titulo-espaco-tabuleiro-demo{font-size:.51rem}
+ #loop03-tabuleiro .loop03-roda .espaco-tabuleiro-demo .selo-posicao-demo{font-size:.54rem}
+ .loop03-banner-topo .loop03-logomarca{font-size:clamp(2rem,8vw,3.3rem)!important}
+}
+@media(prefers-reduced-motion:reduce){
+ body.loop03-logado::before{animation:none!important;transform:none!important}
+}
+
+
+/* Estudio do escritorio e numeracao radial: decoracao de CSS, DOM real intocado. */
+#loop03-home .loop03-cenario-escritorio{
+ isolation:isolate;
+ background:
+  radial-gradient(ellipse at 50% 95%,#b87b4947,transparent 45%),
+  radial-gradient(ellipse at 12% 35%,#3862b875,transparent 31%),
+  radial-gradient(ellipse at 90% 29%,#943dea83,transparent 28%);
+}
+#loop03-home .loop03-cenario-escritorio::before,
+#loop03-home .loop03-cenario-escritorio::after{
+ content:"";position:absolute;top:8%;bottom:13%;width:23%;z-index:1;pointer-events:none;
+ border:2px solid #6561a16b;
+ background:
+  repeating-linear-gradient(0deg,transparent 0 26px,#dfb36437 27px 29px,transparent 30px 64px),
+  repeating-linear-gradient(90deg,#060c1b97 0 18px,#35327081 20px 23px,#07071b6e 24px 46px);
+ box-shadow:inset 0 0 17px #b079ea8c,0 0 25px #d0959f52;
+}
+#loop03-home .loop03-cenario-escritorio::before{
+ left:-3%;transform:perspective(380px) rotateY(-24deg) skewY(1deg);
+ border-left:7px solid #d4b76c7a;
+}
+#loop03-home .loop03-cenario-escritorio::after{
+ right:-3%;transform:perspective(380px) rotateY(24deg) skewY(-1deg);
+ border-right:7px solid #e6bd7e8a;
+}
+#loop03-home .loop03-cenario-monitor{z-index:3}
+#loop03-home .loop03-cenario-base{z-index:4}
+#loop03-home .loop03-cenario-mesa{z-index:5}
+#loop03-home .loop03-cenario-luz{z-index:0}
+#loop03-home .loop03-hero-escritorio{
+ border:2px solid #ffc45d!important;
+ box-shadow:inset 0 0 0 2px #7340b47a,0 0 22px #d59b5d8a,0 0 35px #b16ffc65!important;
+}
+#loop03-tabuleiro .loop03-roda .tabuleiro-vaga-1::before{content:"1"}
+#loop03-tabuleiro .loop03-roda .tabuleiro-vaga-2::before{content:"2"}
+#loop03-tabuleiro .loop03-roda .tabuleiro-vaga-3::before{content:"3"}
+#loop03-tabuleiro .loop03-roda .tabuleiro-vaga-4::before{content:"4"}
+#loop03-tabuleiro .loop03-roda .tabuleiro-vaga-5::before{content:"5"}
+#loop03-tabuleiro .loop03-roda .tabuleiro-vaga-6::before{content:"6"}
+#loop03-tabuleiro .loop03-roda .espaco-tabuleiro-demo:not(.tabuleiro-centro)::before{
+ display:block;flex:0 0 auto;
+ color:#141923;font-weight:950;font-size:clamp(1.1rem,2.2vw,2.1rem);line-height:1.05;
+ text-shadow:0 1px #ffffff80;
+}
+#loop03-tabuleiro .loop03-roda .espaco-tabuleiro-demo.tabuleiro-vaga-6::before{
+ color:#fff;font-size:clamp(1.2rem,2.4vw,2.3rem);
+ text-shadow:0 1px 3px #72102b;
+}
+#loop03-tabuleiro .loop03-roda .espaco-tabuleiro-demo:not(.tabuleiro-centro)>.titulo-espaco-tabuleiro-demo{
+ font-size:.48rem;line-height:1.1;max-height:1.1em;overflow:hidden;
+}
+#loop03-tabuleiro .loop03-roda .espaco-tabuleiro-demo:not(.tabuleiro-centro)>.selo-posicao-demo{
+ font-size:clamp(.49rem,.8vw,.77rem);line-height:1.15;
+}
+@media(max-width:520px){
+ #loop03-home .loop03-cenario-escritorio::before,
+ #loop03-home .loop03-cenario-escritorio::after{width:15%;opacity:.8}
+ #loop03-tabuleiro .loop03-roda .espaco-tabuleiro-demo:not(.tabuleiro-centro)::before{font-size:1.16rem}
+ #loop03-tabuleiro .loop03-roda .espaco-tabuleiro-demo:not(.tabuleiro-centro)>.titulo-espaco-tabuleiro-demo{font-size:.43rem}
+}
+
+
+/* RETORNO ESTRUTURAL DAS ARTES APROVADAS: quadro das filas e minha equipe. */
+/* As filas têm painéis altos como a arte. Linhas vazias são apenas decoração:
+   não inventam participantes ou posição na contabilidade real. */
+#loop03-tabuleiro .loop03-mapa-grade{
+ align-items:stretch!important;
+ grid-template-columns:minmax(160px,1.08fr) minmax(360px,2.6fr) minmax(160px,1.08fr)!important;
+}
+#loop03-tabuleiro .loop03-mapa-grade>.bloco-fila-participante{
+ position:relative!important;overflow:hidden!important;
+ min-height:525px!important;padding:10px 8px 14px!important;
+ background:linear-gradient(155deg,#070e20f5,#07111bf3)!important;
+ border-radius:18px!important;
+ box-shadow:inset 0 0 0 1px #d1a6644d,0 0 14px #d3a05375!important;
+}
+#loop03-tabuleiro .loop03-mapa-grade>.bloco-fila-participante::after{
+ content:"";display:block;height:260px;min-height:0;pointer-events:none;
+ background:repeating-linear-gradient(180deg,
+  transparent 0 9px,#ffffff05 10px 36px,#3e4a6a3d 37px 38px,transparent 39px 49px);
+ border-radius:10px;margin-top:9px;opacity:.53;
+ mask-image:linear-gradient(180deg,#0007,transparent);
+}
+#loop03-tabuleiro .loop03-mapa-grade>.bloco-fila-participante>*{position:relative;z-index:1}
+#loop03-tabuleiro .loop03-mapa-grade>.bloco-fila-participante h3{
+ min-height:50px!important;display:flex;align-items:center;
+ justify-content:center;text-align:center;
+ padding:6px 2px!important;margin:0!important;
+ font-size:clamp(1.05rem,1.5vw,1.38rem)!important;
+ letter-spacing:.03em;
+}
+#loop03-tabuleiro .loop03-mapa-grade>.bloco-fila-participante:first-child h3{color:#ffda67!important}
+#loop03-tabuleiro .loop03-mapa-grade>.bloco-fila-participante:last-child h3{color:#fff!important}
+#loop03-tabuleiro .loop03-mapa-grade .loop03-linha-fila{
+ width:100%!important;min-height:51px!important;
+ margin:4px 0!important;padding:5px!important;
+ border-radius:13px!important;border:1px solid #a97c4169!important;
+ background:linear-gradient(145deg,#090e1f,#0c1527)!important;
+}
+#loop03-tabuleiro .loop03-roda{
+ align-self:stretch!important;justify-content:flex-start!important;
+ min-height:520px!important;
+}
+#loop03-tabuleiro .loop03-roda>.painel-tabuleiro-imersivo{margin-top:3px!important}
+#loop03-tabuleiro .loop03-roda>h3{display:none!important}
+#loop03-tabuleiro .loop03-roda .mapa-tabuleiro-posicoes-demo{
+ margin:4px auto 13px!important;
+}
+/* Minha Equipe como lista de pessoas, não quadrados de sistema:
+   avatar circular (iniciais verdadeiras), selo de confirmação, estado da fila. */
+#loop03-rede{background:
+ radial-gradient(ellipse at 51% 39%,#5d219eab,transparent 71%),
+ linear-gradient(140deg,#210956,#1d0743 74%,#100426)!important}
+#loop03-rede #loop03ListaEquipe{
+ display:grid!important;grid-template-columns:minmax(0,1fr)!important;
+ gap:9px!important;margin:0!important;
+}
+#loop03-rede .loop03-equipe-linha{
+ display:grid!important;
+ grid-template-columns:42px minmax(0,1fr) minmax(76px,auto) 39px!important;
+ grid-template-rows:minmax(19px,auto) minmax(21px,auto)!important;
+ align-items:center!important;gap:3px 13px!important;
+ padding:9px 12px!important;min-height:67px!important;
+ background:linear-gradient(100deg,#111529,#130c2b)!important;
+ border:1px solid #855ca9!important;border-radius:12px!important;
+ box-shadow:inset 0 1px #d4a5ff42,0 0 10px #b676ea53!important;
+}
+#loop03-rede .loop03-equipe-avatar{
+ grid-column:1!important;grid-row:1/3!important;
+ width:39px;height:39px;border:2px solid #e3c273;border-radius:50%;
+ display:grid;place-items:center;background:
+ radial-gradient(circle at 25% 16%,#9f78cc,#372453 60%,#1a1438);
+ color:#fff6d9;font-size:.79rem;font-weight:900;
+ text-shadow:0 1px 2px #000a;box-shadow:0 0 9px #ae82eb7a;
+}
+#loop03-rede .loop03-equipe-linha>strong{
+ grid-column:2!important;grid-row:1!important;align-self:end!important;
+ color:#fff4de!important;font-size:.96rem!important;
+ white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+}
+#loop03-rede .loop03-equipe-estado{
+ grid-column:3!important;grid-row:1!important;justify-self:center!important;
+ padding:3px 8px!important;border-radius:50px!important;
+ border:1px solid #7c73b4!important;white-space:nowrap!important;
+ font-size:.61rem!important;font-weight:850!important;
+ color:#dbc8f6;background:#33244b;
+}
+#loop03-rede .loop03-equipe-ativo{
+ background:#06482d!important;border-color:#10d788!important;color:#baffdc!important;
+}
+#loop03-rede .loop03-equipe-pendente{
+ background:#163d89!important;border-color:#63afff!important;color:#e0f1ff!important;
+}
+#loop03-rede .loop03-equipe-inativo{
+ background:#671b26!important;border-color:#fd6671!important;color:#ffe2e3!important;
+}
+#loop03-rede .loop03-equipe-link-ativo{
+ background:#6a4709!important;border-color:#f6c34d!important;color:#fff0ac!important;
+}
+#loop03-rede .loop03-equipe-linha>.loop03-equipe-informacoes{
+ grid-column:2/4!important;grid-row:2!important;
+ color:#d6c8e7!important;font-size:.73rem!important;
+ overflow-wrap:anywhere!important;line-height:1.25!important;
+}
+#loop03-rede .loop03-equipe-linha>button{
+ grid-column:4!important;grid-row:1/3!important;
+ width:34px!important;min-height:38px!important;
+ border:1px solid #caa15e!important;
+ background:linear-gradient(120deg,#302342,#161529)!important;
+ color:#ffe1a7!important;box-shadow:0 0 8px #d6a26c57!important;
+}
+#loop03-rede .loop03-equipe-linha>div,
+#loop03-rede .loop03-equipe-linha>small:not(.loop03-equipe-informacoes){
+ grid-column:1/-1!important;grid-row:auto!important;
+}
+#loop03-rede .loop03-cabecalho-equipe{
+ grid-template-columns:minmax(110px,1fr) minmax(170px,1.4fr) minmax(110px,1fr);
+ align-items:center!important;gap:13px!important;
+}
+#loop03-rede .loop03-contador-rede{min-height:95px!important;padding:8px!important}
+#loop03-rede .loop03-titulo-equipe h2{font-size:clamp(1.5rem,2.4vw,2.15rem)!important}
+@media(max-width:1200px){
+ #loop03-tabuleiro .loop03-mapa-grade{grid-template-columns:1fr 1fr!important}
+ #loop03-tabuleiro .loop03-roda{grid-column:1/-1!important;grid-row:1!important;min-height:0!important}
+ #loop03-tabuleiro .loop03-mapa-grade>.bloco-fila-participante{min-height:210px!important}
+ #loop03-tabuleiro .loop03-mapa-grade>.bloco-fila-participante::after{height:85px!important}
+}
+@media(min-width:1201px){
+ #loop03-tabuleiro .loop03-mapa-grade{grid-template-columns:minmax(145px,1.05fr) minmax(330px,2.55fr) minmax(145px,1.05fr)!important}
+}
+@media(max-width:590px){
+ #loop03-rede .loop03-cabecalho-equipe{grid-template-columns:repeat(2,minmax(0,1fr))!important}
+ #loop03-rede .loop03-titulo-equipe{grid-column:1/-1!important;grid-row:1!important}
+ #loop03-rede .loop03-equipe-linha{grid-template-columns:32px minmax(0,1fr) auto 28px!important;gap:3px 5px!important;padding:7px 5px!important}
+ #loop03-rede .loop03-equipe-avatar{width:29px;height:29px;font-size:.62rem}
+ #loop03-rede .loop03-equipe-linha>strong{font-size:.73rem!important}
+ #loop03-rede .loop03-equipe-estado{font-size:.45rem!important;padding:2px 4px!important}
+ #loop03-rede .loop03-equipe-linha>.loop03-equipe-informacoes{font-size:.57rem!important}
+ #loop03-rede .loop03-equipe-linha>button{width:26px!important;min-height:30px!important;font-size:.95rem!important}
+ #loop03-tabuleiro .loop03-mapa-grade>.bloco-fila-participante{min-height:160px!important}
+ #loop03-tabuleiro .loop03-mapa-grade>.bloco-fila-participante::after{height:45px!important}
+ #loop03-tabuleiro .loop03-mapa-grade>.bloco-fila-participante h3{font-size:.86rem!important}
+}
+
+
+/* COMPACTACAO VISUAL: alinhar cabecalho e vitrines a arte original */
+@media(min-width:861px){
+ .loop03-boasvindas{min-height:48px!important;margin:9px 0 10px!important}
+ .loop03-indicadores{align-items:stretch!important}
+ .loop03-indicadores .loop03-indicador{
+  height:111px!important;min-height:111px!important;max-height:111px!important;
+  gap:5px!important;padding:8px 10px!important;justify-content:flex-start!important;
+  overflow:hidden!important;
+ }
+ .loop03-indicadores .loop03-indicador small{
+  font-size:.69rem!important;line-height:1.1!important
+ }
+ .loop03-indicadores .loop03-indicador strong{
+  font-size:clamp(1.17rem,2.15vw,1.8rem)!important;line-height:1.12!important
+ }
+ .loop03-indicadores .loop03-indicador span{
+  line-height:1.12!important;font-size:.63rem!important
+ }
+ .loop03-paginas{margin:12px 0!important}
+}
+.loop03-sidebar nav button span,.loop03-sidebar nav a span{
+ font-size:1.28rem!important;min-width:21px!important;
+}
+.loop03-sidebar nav [data-loop03-aba="home"] span{color:#f2f6fd!important}
+.loop03-sidebar nav [data-loop03-aba="tabuleiro"] span{color:#ffcb4e!important}
+.loop03-sidebar nav [data-loop03-aba="posicoes"] span{color:#fbf6ff!important}
+.loop03-sidebar nav [data-loop03-aba="rede"] span{color:#dfd8fb!important}
+.loop03-sidebar nav [data-loop03-aba="financeiro"] span{color:#34ed9b!important}
+.loop03-sidebar nav a[href="/loja"] span{color:#ce78f5!important}
+/* Brilho estrutural em relevo, sem PNG de mockup aplicado na interface. */
+.loop03-banner-topo::before{
+ box-shadow:0 0 35px #ffbd507a,0 0 60px #dc8e4256!important;
+ border-color:#f3b75891!important;
+}
+#loop03-tabuleiro .loop03-roda .espaco-tabuleiro-demo:not(.tabuleiro-centro)::before{
+ color:#0c1428!important;font-size:clamp(1.15rem,2.1vw,1.95rem)!important;
+ text-shadow:0 1px 0 #fff,0 0 2px #d0cce6!important;
+}
+#loop03-tabuleiro .loop03-roda .espaco-tabuleiro-demo.tabuleiro-vaga-6::before{
+ color:white!important;text-shadow:0 1px 2px #660728!important;
+}
+
+
+/* Painel de utilitarios da equipe, recolhivel e funcional */
+#loop03LinksRede{
+ position:relative;z-index:1;
+ border:1px solid #b17bdf!important;border-radius:13px!important;
+ background:linear-gradient(140deg,#1c0e3d,#120c25)!important;
+ margin:16px 0 3px!important;overflow:hidden;
+}
+#loop03LinksRede>summary{
+ display:list-item;padding:13px 16px;cursor:pointer;
+ background:linear-gradient(90deg,#25134e,#421666 70%,#1b1339);
+ color:#ffe3ab!important;font-weight:850!important;
+}
+#loop03LinksRede[open]>summary{
+ border-bottom:1px solid #c391e9;
+}
+#loop03LinksRede>div{
+ margin:12px!important;border-color:#8d66b5!important;
+}
+#loop03LinksRede>summary:focus-visible{
+ outline:2px solid #ffe8a5;outline-offset:-3px;
+}
+
+
+/* Cabecalhos integrados diretamente no cosmos, sem retangulo opaco */
+#loop03-posicoes>.loop03-titulo-pagina,
+#loop03-rede>.loop03-cabecalho-equipe,
+#loop03-posicoes>.loop03-titulo-pagina>div,
+#loop03-rede>.loop03-cabecalho-equipe>.loop03-titulo-equipe{
+ background:transparent!important;
+ background-image:none!important;
+ border:none!important;
+ box-shadow:none!important;
+}
+#loop03-posicoes>.loop03-titulo-pagina{
+ min-height:75px!important;
+ padding:0 4px 10px!important;
+ margin-bottom:7px!important;
+}
+#loop03-posicoes>.loop03-titulo-pagina h2{
+ text-shadow:0 0 12px #e6ac526b!important;
+}
+#loop03-rede>.loop03-cabecalho-equipe{
+ padding:5px 0!important;
+}
+#loop03-rede>.loop03-cabecalho-equipe>.loop03-titulo-equipe{
+ align-self:center!important;
+}
+#loop03-rede>.loop03-cabecalho-equipe>.loop03-titulo-equipe h2{
+ text-shadow:0 0 13px #ffcb686e!important;
+}
+
+
+/* Objetos do estudio e leitura limpa das bolas: arte aprovada, DOM vivo. */
+#loop03-home .loop03-cenario-escritorio{overflow:hidden}
+#loop03-home .loop03-cenario-plantas,
+#loop03-home .loop03-cenario-livros,
+#loop03-home .loop03-cenario-caneca,
+#loop03-home .loop03-cenario-caderno,
+#loop03-home .loop03-cenario-canetas{position:absolute;pointer-events:none}
+#loop03-home .loop03-cenario-plantas{
+ left:3%;bottom:20px;width:17%;height:180px;z-index:4;
+ filter:drop-shadow(0 0 13px #ac7fe376);
+}
+#loop03-home .loop03-planta-vaso{
+ position:absolute;bottom:0;left:33%;width:40%;height:61px;
+ clip-path:polygon(0 0,100% 0,80% 100%,18% 100%);
+ border:2px solid #bd8842;
+ background:linear-gradient(90deg,#100a23,#4e2a54 38%,#9b5c52 60%,#1b122c 100%);
+ box-shadow:inset 0 4px 11px #e9ac647a;
+}
+#loop03-home .loop03-planta-folha{
+ position:absolute;bottom:42px;left:45%;width:27%;height:73px;
+ background:linear-gradient(90deg,#112d33,#3e9352 49%,#0d302c);
+ border:1px solid #80cf7b9a;border-radius:95% 3% 90% 4%;
+ transform-origin:bottom center;box-shadow:inset 1px 1px 6px #87c2676b;
+}
+#loop03-home .loop03-planta-folha.f1{transform:rotate(-54deg);left:9%;bottom:56px;height:79px}
+#loop03-home .loop03-planta-folha.f2{transform:rotate(-18deg);left:27%;bottom:67px;height:110px}
+#loop03-home .loop03-planta-folha.f3{transform:rotate(19deg);left:49%;bottom:57px;height:127px}
+#loop03-home .loop03-planta-folha.f4{transform:rotate(55deg);left:67%;bottom:54px;height:82px}
+#loop03-home .loop03-planta-folha.f5{transform:rotate(-2deg);left:44%;bottom:72px;height:136px}
+#loop03-home .loop03-cenario-livros{bottom:26px;left:5%;z-index:5;width:17%;height:37px}
+#loop03-home .loop03-cenario-livros>span{
+ display:block;height:9px;margin:3px 0;border:1px solid #f6c077b3;border-radius:3px;
+ background:linear-gradient(#c79350,#2b1533 40%,#4d204d 75%,#ce9251);
+ transform:skew(-14deg);box-shadow:0 2px 3px #0009;
+}
+#loop03-home .loop03-cenario-livros>span:nth-child(2){width:87%;background:linear-gradient(#e9c37a,#22203e 60%,#a67c4c)}
+#loop03-home .loop03-cenario-livros>span:nth-child(3){width:78%}
+#loop03-home .loop03-cenario-caneca{
+ width:10%;height:61px;bottom:28px;left:18%;z-index:5;
+ border:2px solid #d2a65c;border-radius:3px 3px 17px 17px;
+ background:linear-gradient(90deg,#030917,#111435 30%,#38306b 58%,#0a0a1c);
+ box-shadow:inset -5px -4px 10px #9b4f706e,0 0 12px #b46ed164;
+ display:grid;place-items:center;
+}
+#loop03-home .loop03-cenario-caneca:after{
+ content:"";position:absolute;right:-19px;top:11px;width:20px;height:30px;
+ border:5px solid #d2a766;border-left:0;border-radius:0 70% 70% 0;
+ box-shadow:3px 0 9px #ba8e4e6b;
+}
+#loop03-home .loop03-cenario-caneca span{color:#f0be53;font-size:clamp(.53rem,.88vw,.9rem);font-weight:950}
+#loop03-home .loop03-cenario-caderno{
+ z-index:5;right:5%;bottom:25px;width:11%;height:77px;
+ border:2px solid #c69a5d;border-radius:5px;
+ transform:perspective(240px) rotateY(-9deg) rotateZ(8deg);
+ background:linear-gradient(135deg,#180d2c,#3d224d 50%,#100c21);
+ box-shadow:inset 0 0 0 3px #131227,0 0 15px #bb6c997d;
+ display:grid;place-items:center;
+}
+#loop03-home .loop03-cenario-caderno span{font-size:clamp(1.6rem,3vw,2.8rem);font-weight:900;color:#ffcf55;text-shadow:0 0 12px #ffce739c}
+#loop03-home .loop03-cenario-canetas{
+ z-index:5;right:21%;bottom:26px;width:6%;height:62px;
+ border:1px solid #ce955c;border-radius:7px 7px 4px 4px;
+ background:linear-gradient(90deg,#110b27,#392353,#0c0c22);
+}
+#loop03-home .loop03-cenario-canetas span{
+ position:absolute;left:25%;bottom:10px;height:84px;width:3px;
+ transform:rotate(-14deg);border:1px solid #d7b07e;
+ background:linear-gradient(90deg,#de9852,#2e1740);
+}
+#loop03-home .loop03-cenario-canetas span:nth-child(2){left:45%;transform:rotate(7deg)}
+#loop03-home .loop03-cenario-canetas span:nth-child(3){left:65%;transform:rotate(17deg)}
+#loop03-home .loop03-cenario-mesa{z-index:3}
+#loop03-home .loop03-cenario-monitor{z-index:6}
+#loop03-home .loop03-cenario-monitor .loop03-cenario-tela>span{
+ font-size:clamp(2.4rem,5vw,5.2rem);
+ text-shadow:0 3px 0 #854e19,0 0 17px #ffb85284;
+}
+#loop03-home .loop03-cenario-escritorio:before,
+#loop03-home .loop03-cenario-escritorio:after{z-index:2}
+@media(max-width:520px){
+ #loop03-home .loop03-cenario-plantas{height:95px;bottom:18px}
+ #loop03-home .loop03-planta-folha{height:46px!important}
+ #loop03-home .loop03-planta-vaso{height:35px}
+ #loop03-home .loop03-cenario-caneca{height:36px;bottom:22px}
+ #loop03-home .loop03-cenario-caneca:after{width:9px;height:17px;right:-12px;border-width:3px}
+ #loop03-home .loop03-cenario-caderno{height:43px}
+ #loop03-home .loop03-cenario-canetas{height:39px}
+ #loop03-home .loop03-cenario-canetas span{height:48px}
+}
+/* No desenho aprovado as vagas sao esferas NUMERADAS.
+ O texto tecnico Livre/Vaga permanece acessivel sem poluir as bolas. */
+#loop03-tabuleiro .loop03-roda .espaco-tabuleiro-demo:not(.tabuleiro-centro)>.titulo-espaco-tabuleiro-demo,
+#loop03-tabuleiro .loop03-roda .espaco-tabuleiro-demo:not(.tabuleiro-centro)>.vazio-tabuleiro-demo{
+ position:absolute!important;width:1px!important;height:1px!important;
+ padding:0!important;margin:-1px!important;border:0!important;
+ overflow:hidden!important;clip:rect(0,0,0,0)!important;white-space:nowrap!important;
+}
+#loop03-tabuleiro .loop03-roda .espaco-tabuleiro-demo:not(.tabuleiro-centro):has(.selo-posicao-demo)::before{
+ content:none!important;
+}
+#loop03-tabuleiro .loop03-roda .espaco-tabuleiro-demo:not(.tabuleiro-centro)>.selo-posicao-demo{
+ color:#1b2030!important;font-size:clamp(.8rem,1.4vw,1.3rem)!important;
+ text-shadow:0 1px #ffffffad;font-weight:950!important;
+}
+#loop03-tabuleiro .loop03-roda .espaco-tabuleiro-demo.tabuleiro-vaga-6>.selo-posicao-demo{
+ color:white!important;text-shadow:0 1px 2px #611126;
+}
+#loop03-tabuleiro .loop03-roda .espaco-tabuleiro-demo:not(.tabuleiro-centro):before{
+ font-size:clamp(1.2rem,2.2vw,2.25rem)!important;
+}
+
+
+/* Footer unico: perfil e saida na mesma faixa do original. */
+.loop03-sidebar .loop03-identidade{
+ margin-top:auto!important;
+ display:flex!important;align-items:center!important;gap:8px!important;
+ padding:8px 7px!important;min-height:56px!important;
+ border:1px solid #bf8849!important;border-radius:15px!important;
+ background:linear-gradient(105deg,#1d1c34,#0c1124)!important;
+ box-shadow:inset 0 1px #ffe4ae52,0 0 16px #e8a24e80!important;
+}
+.loop03-sidebar .loop03-avatar{
+ width:37px!important;height:37px!important;
+ border:2px solid #f6d78c!important;
+ background:radial-gradient(circle at 36% 20%,#ab89d9,#322451 73%,#111223);
+ color:#fff!important;
+ box-shadow:0 0 9px #d3a55b87!important;
+}
+.loop03-sidebar .loop03-identidade>div:nth-child(2){
+ flex:1;min-width:0;overflow:hidden;
+}
+.loop03-sidebar .loop03-identidade strong{
+ font-size:.72rem!important;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+}
+.loop03-sidebar .loop03-identidade small{font-size:.58rem!important;line-height:1.22!important}
+.loop03-sidebar .loop03-sair{
+ flex:0 0 auto!important;width:30px!important;height:30px!important;min-height:30px!important;
+ display:grid!important;place-items:center!important;padding:0!important;
+ border:1px solid #a9885a!important;border-radius:50%!important;
+ color:#ffdfa7!important;
+ background:linear-gradient(120deg,#2d2643,#101424)!important;
+ font-size:1rem!important;line-height:1!important;
+ cursor:pointer!important;
+}
+.loop03-sidebar .loop03-sair:focus-visible{
+ outline:2px solid #ffe7b7;outline-offset:2px;
+}
+@media(orientation:landscape) and (min-width:560px) and (max-width:950px){
+ .loop03-sidebar .loop03-identidade{padding:5px 2px!important;gap:3px!important}
+ .loop03-sidebar .loop03-avatar{width:25px!important;height:25px!important}
+ .loop03-sidebar .loop03-sair{width:24px!important;height:24px!important}
+}
+
+
+/* CABECALHOS ORIGINAIS A/B — ETAPA PONTUAL APROVADA, SOMENTE TABULEIRO. */
+/* Os ícones aqui são decorativos, não posições; as filas continuam sem pessoas
+ até a fonte única de dados devolver posições ativas. */
+#loop03-tabuleiro .loop03-mapa-grade>.bloco-fila-participante{
+ display:flex!important;flex-direction:column!important;
+}
+#loop03-tabuleiro .loop03-mapa-grade>.bloco-fila-participante>.loop03-cabecalho-fila{
+ display:flex!important;align-items:center!important;justify-content:flex-start!important;
+ gap:clamp(5px,.65vw,10px)!important;
+ width:100%!important;min-height:62px!important;
+ padding:7px 4px 10px!important;margin:0 0 4px!important;
+ background:transparent!important;border:0!important;box-shadow:none!important;
+ color:#ffde7f!important;text-align:left!important;
+ font-family:system-ui,sans-serif!important;
+}
+#loop03-tabuleiro .loop03-mapa-grade .loop03-cabecalho-fila .loop03-texto-cabecalho{
+ flex:0 1 auto;min-width:0;
+ font-size:clamp(1.12rem,1.65vw,1.85rem)!important;
+ font-weight:950!important;letter-spacing:-.035em!important;
+ line-height:1.06!important;white-space:nowrap!important;
+ color:#ffdd62!important;text-shadow:0 0 12px #ffca5078,0 2px 2px #28120b!important;
+}
+#loop03-tabuleiro .loop03-mapa-grade .loop03-cabecalho-fila-b .loop03-texto-cabecalho{
+ color:#f5f7fd!important;text-shadow:0 0 9px #ffffff75,0 2px 2px #080c16!important;
+}
+#loop03-tabuleiro .loop03-mapa-grade .loop03-cabecalho-fila .loop03-seta-cabecalho{
+ flex:0 0 auto!important;line-height:1!important;
+ font-size:clamp(1.5rem,2vw,2.4rem)!important;
+ font-weight:900;color:#ffda40!important;
+ text-shadow:0 0 9px #ffd044a2;
+ margin-left:-3px;
+}
+#loop03-tabuleiro .loop03-mapa-grade .loop03-cabecalho-fila .loop03-icone-cabecalho{
+ display:inline-block!important;position:relative!important;
+ width:clamp(27px,3vw,39px)!important;height:clamp(28px,3.2vw,41px)!important;
+ min-width:0!important;flex:none!important;margin:0!important;
+ background:none!important;border:0!important;
+ filter:drop-shadow(0 1px 2px #000a) drop-shadow(0 0 8px #ffcb6382)!important;
+}
+/* Moedas empilhadas como no cabeçalho original da Fila A. */
+#loop03-tabuleiro .loop03-icone-fila-a:before,
+#loop03-tabuleiro .loop03-icone-fila-a:after{
+ content:"";position:absolute;left:10%;width:80%;height:35%;
+ border:2px solid #e7ac15;border-radius:50%;
+ background:linear-gradient(180deg,#fff08c 0%,#ffd83c 32%,#be8112 100%);
+ box-shadow:inset 0 2px 2px #fff5a8bc,0 3px 0 #986408,0 5px 4px #05070d89;
+}
+#loop03-tabuleiro .loop03-icone-fila-a:before{
+ bottom:24%;transform:rotate(-8deg);
+ box-shadow:inset 0 2px 2px #fff5a8bc,0 5px 0 #96650a,0 8px 4px #05070d89;
+}
+#loop03-tabuleiro .loop03-icone-fila-a:after{top:12%;transform:rotate(-12deg)}
+/* Silhueta branca de participante no cabeçalho original da Fila B. */
+#loop03-tabuleiro .loop03-icone-fila-b{
+ filter:drop-shadow(0 0 7px #f9faff99)!important;
+}
+#loop03-tabuleiro .loop03-icone-fila-b:before{
+ content:"";position:absolute;left:30%;top:5%;width:40%;height:40%;
+ border-radius:50%;
+ background:radial-gradient(circle at 30% 25%,#fff,#cdd5e4 77%,#8693aa);
+ box-shadow:0 0 9px #e9f0ffa6;
+}
+#loop03-tabuleiro .loop03-icone-fila-b:after{
+ content:"";position:absolute;left:9%;bottom:4%;width:82%;height:47%;
+ border-radius:52% 52% 16% 16%;
+ background:linear-gradient(100deg,#bcc6d6,#fff 45%,#a3acc0);
+ box-shadow:0 0 8px #e9f0ff73;
+}
+/* O contador verdadeiro permanece no rodapé, nunca dentro do título. */
+#loop03-tabuleiro .loop03-mapa-grade>.bloco-fila-participante>.mapa-fila-posicoes-demo{
+ flex:1 1 auto!important;order:1!important;min-height:0;
+}
+#loop03-tabuleiro .loop03-mapa-grade>.bloco-fila-participante:after{
+ order:2!important;
+}
+#loop03-tabuleiro .loop03-mapa-grade .loop03-contagem-rodape-fila{
+ display:block!important;order:3!important;
+ margin:8px 0 0!important;align-self:center!important;
+ padding:8px 4px!important;border-top:1px solid #91734470!important;
+ color:#f0e2c3!important;text-align:center!important;
+ font-size:.7rem!important;letter-spacing:.01em!important;
+}
+#loop03-tabuleiro .loop03-mapa-grade .loop03-contagem-rodape-fila[hidden]{
+ display:none!important;
+}
+@media(max-width:590px){
+ #loop03-tabuleiro .loop03-mapa-grade>.bloco-fila-participante>.loop03-cabecalho-fila{
+  gap:4px!important;min-height:47px!important;padding:5px 1px 7px!important;
+ }
+ #loop03-tabuleiro .loop03-mapa-grade .loop03-cabecalho-fila .loop03-texto-cabecalho{
+  font-size:clamp(.82rem,3.4vw,1.14rem)!important;
+ }
+ #loop03-tabuleiro .loop03-mapa-grade .loop03-cabecalho-fila .loop03-icone-cabecalho{
+  width:24px!important;height:27px!important;
+ }
+ #loop03-tabuleiro .loop03-mapa-grade .loop03-cabecalho-fila .loop03-seta-cabecalho{
+  font-size:1.35rem!important;
+ }
+}
+
+
+/* ETAPA TABULEIRO: marcadores legíveis, relógio e filas sem textos artificiais. */
+/* Apenas aparência do Tabuleiro. Cabeçalho global e menu lateral intocados. */
+#loop03-tabuleiro .loop03-roda .marcos-v6{
+ display:flex!important;justify-content:center!important;
+ align-items:center!important;gap:clamp(10px,1.3vw,20px)!important;
+ margin:14px 0 10px!important;
+}
+#loop03-tabuleiro .loop03-roda .marcos-v6 span{
+ width:clamp(23px,2.7vw,34px)!important;height:clamp(23px,2.7vw,34px)!important;
+ flex:none!important;border:2px solid #e0b4fd!important;
+ background:radial-gradient(circle at 28% 22%,#fff0ff 0%,#c874ff 12%,#7018d3 48%,#340059 81%)!important;
+ box-shadow:inset 0 1px 4px #fff8,0 0 10px #bc57fdab,0 0 15px #6827d671!important;
+ filter:none!important;
+}
+#loop03-tabuleiro .loop03-roda .marcos-v6 span:nth-child(even){
+ background:radial-gradient(circle at 25% 19%,#7c8091 0%,#373a43 18%,#020309 75%)!important;
+ border-color:#bfc6cc!important;
+ box-shadow:inset 0 1px 4px #fff6,0 0 7px #dadeeb84,0 0 10px #000!important;
+}
+#loop03-tabuleiro .loop03-roda .marcos-v6 span.loop03-aceso{
+ outline:2px solid #fff4c2!important;outline-offset:1px!important;
+}
+#loop03-tabuleiro .loop03-roda .legenda-marcos-v6{
+ display:flex!important;justify-content:center!important;
+ align-items:center!important;gap:20px!important;
+ flex-wrap:wrap!important;
+ margin:8px 0 10px!important;
+ color:#fff9f2!important;font-weight:650!important;
+ font-size:clamp(.82rem,1.12vw,1rem)!important;
+ line-height:1.2!important;
+}
+#loop03-tabuleiro .loop03-roda .legenda-marcos-v6>span{
+ display:inline-flex!important;align-items:center!important;gap:7px!important;
+ white-space:nowrap!important;
+}
+#loop03-tabuleiro .loop03-roda .legenda-marcos-v6 i{
+ display:inline-block!important;flex:none!important;width:14px!important;height:14px!important;
+ border-radius:50%!important;
+}
+#loop03-tabuleiro .loop03-roda .legenda-marcos-v6 i.amostra-roxo{
+ background:radial-gradient(circle at 25% 20%,#e6b3ff,#8c33e8 56%,#460c86)!important;
+ border:1px solid #e0aaff!important;
+ box-shadow:0 0 8px #ba64ffad!important;
+}
+#loop03-tabuleiro .loop03-roda .legenda-marcos-v6 i.amostra-preto{
+ background:radial-gradient(circle at 26% 19%,#6c7180,#12131b 53%,#020307)!important;
+ border:1px solid #dddde5!important;
+ box-shadow:0 0 7px #d8d7e575!important;
+}
+#loop03-tabuleiro .loop03-relogio-ciclo{
+ display:block!important;width:max-content!important;
+ max-width:100%!important;margin:10px auto 6px!important;
+ padding:3px 25px!important;
+ border:2px solid #f6c255!important;border-radius:23px!important;
+ color:#ffe3a1!important;
+ font:900 clamp(1.15rem,2.2vw,1.9rem)/1.15 ui-monospace,SFMono-Regular,Consolas,monospace!important;
+ letter-spacing:.13em!important;font-variant-numeric:tabular-nums!important;
+ background:linear-gradient(100deg,#07070f,#151022 52%,#06070f)!important;
+ text-shadow:0 0 10px #ffb65e9d!important;
+ box-shadow:inset 0 0 10px #d89c3b38,0 0 15px #f8b74e71!important;
+}
+#loop03-tabuleiro .loop03-explicacao-catraca{
+ text-align:center!important;
+ margin:6px 0 12px!important;color:#f7f3f5!important;
+ font-size:clamp(.79rem,1.1vw,1rem)!important;
+ line-height:1.4!important;
+}
+#loop03-tabuleiro .loop03-explicacao-catraca p{margin:2px 0!important;color:inherit!important}
+/* Textos técnicos seguem acessíveis a leitores de tela, mas não poluem a arte. */
+#loop03-tabuleiro .texto-marcos-v6,
+#loop03-tabuleiro #resumoMapaParticipante,
+#loop03-tabuleiro #ajudaFiltroMapaParticipante,
+#loop03-tabuleiro .loop03-mapa-grade .loop03-contagem-rodape-fila,
+#loop03-tabuleiro .cartao-participante>p.ajuda-portal,
+#loop03-tabuleiro .loop03-roda>p.ajuda-portal{
+ position:absolute!important;width:1px!important;height:1px!important;
+ padding:0!important;margin:-1px!important;overflow:hidden!important;
+ clip:rect(0,0,0,0)!important;white-space:nowrap!important;border:0!important;
+}
+/* Não apresentar "Nenhuma posição" quando não há registros; as listas
+ são preenchidas somente pela API verdadeira. */
+#loop03-tabuleiro .loop03-mapa-grade .fila-vazia-demo{display:none!important}
+/* Fila A: bola A, #identificador, quantidade, pessoa. Fila B: B e #ID.
+ Sem texto "indicados", sem quebra de linha, sem dados de pessoas inventadas. */
+#loop03-tabuleiro .loop03-mapa-grade .loop03-linha-fila{
+ display:flex!important;align-items:center!important;
+ gap:clamp(3px,.6vw,8px)!important;
+ padding:5px 6px!important;
+}
+#loop03-tabuleiro .loop03-mapa-grade .loop03-fila-identificacao{
+ display:flex!important;align-items:center!important;
+ justify-content:flex-start!important;gap:clamp(3px,.5vw,8px)!important;
+ flex-wrap:nowrap!important;min-width:0!important;
+ white-space:nowrap!important;
+}
+#loop03-tabuleiro .loop03-mapa-grade .loop03-numero-titular{
+ font-weight:850!important;font-size:clamp(.62rem,.95vw,.91rem)!important;
+ min-width:0!important;flex:0 1 auto!important;overflow:visible!important;
+ background:none!important;border:0!important;outline-offset:1px!important;
+ box-shadow:none!important;color:#f5f5ff!important;
+ padding:0!important;white-space:nowrap!important;
+}
+#loop03-tabuleiro .loop03-mapa-grade .loop03-quantidade-a-direita{
+ display:inline!important;font-size:clamp(.68rem,1vw,.98rem)!important;
+ color:#ffdf70!important;font-weight:900!important;white-space:nowrap!important;
+}
+#loop03-tabuleiro .loop03-mapa-grade .loop03-bonequinho-indicacoes{
+ width:clamp(13px,1.5vw,19px)!important;
+ height:clamp(13px,1.5vw,19px)!important;flex:none!important;color:#ffcf45!important;
+}
+#loop03-tabuleiro .loop03-mapa-grade .loop03-inicial-fila.loop03-azul{
+ background:radial-gradient(circle at 28% 22%,#9ccbff,#3984eb 52%,#15458b)!important;
+ border:2px solid #cbe5ff!important;color:#fff!important;
+ box-shadow:0 0 11px #4ca6ff99!important;
+}
+/* O estado azul prevalece sobre o B branco, e o dourado do LOOP é preservado. */
+#loop03-tabuleiro .loop03-mapa-grade .loop03-inicial-fila.loop03-dourada{
+ background:radial-gradient(circle at 28% 20%,#fff8cc,#dfac2a 58%,#8c5a0c)!important;
+ color:transparent!important;border:2px solid #ffe39c!important;
+ box-shadow:0 0 12px #fbd05795!important;
+}
+@media(max-width:590px){
+ #loop03-tabuleiro .loop03-roda .marcos-v6{gap:7px!important}
+ #loop03-tabuleiro .loop03-roda .marcos-v6 span{width:22px!important;height:22px!important}
+ #loop03-tabuleiro .loop03-relogio-ciclo{font-size:1.13rem!important;padding:4px 13px!important}
+ #loop03-tabuleiro .loop03-mapa-grade .loop03-linha-fila{gap:2px!important;padding:4px 2px!important}
+ #loop03-tabuleiro .loop03-mapa-grade .loop03-fila-identificacao{gap:2px!important}
+ #loop03-tabuleiro .loop03-mapa-grade .loop03-numero-titular{font-size:.59rem!important}
+ #loop03-tabuleiro .loop03-mapa-grade .loop03-inicial-fila{width:25px!important;height:25px!important;min-width:25px!important}
+}
+
+/* O #numero da posicao A/B é texto simples, nunca uma caixa luminosa.
+ O destaque da posição continua no contorno da linha inteira. */
+#loop03-tabuleiro .loop03-mapa-grade .loop03-linha-fila .loop03-numero-titular,
+#loop03-tabuleiro .loop03-mapa-grade .loop03-linha-fila .loop03-numero-titular.loop03-destaque-posicao,
+#loop03-tabuleiro .loop03-mapa-grade .loop03-linha-fila .loop03-numero-titular.loop03-iluminada{
+ outline:none!important;box-shadow:none!important;
+ border:0!important;background:none!important;border-radius:0!important;
+ padding:0!important;
+}
+
+
+/* FILAS CLICÁVEIS: cada cabeçalho abre sua própria lista completa e verdadeira. */
+/* Botão sem revestimento verde: mantém ícone, fonte e forma da arte aprovada. */
+#loop03-tabuleiro .loop03-mapa-grade>.bloco-fila-participante>.loop03-cabecalho-fila{
+ padding:0!important;
+}
+#loop03-tabuleiro .loop03-mapa-grade .loop03-abrir-fila{
+ display:flex!important;align-items:center!important;justify-content:flex-start!important;
+ gap:inherit!important;width:100%!important;min-height:62px!important;
+ padding:7px 4px 10px!important;
+ margin:0!important;
+ border:0!important;outline:0 solid transparent!important;
+ border-radius:10px!important;
+ background:transparent!important;color:inherit!important;
+ box-shadow:none!important;cursor:pointer!important;
+ text-align:left!important;font:inherit!important;
+ -webkit-tap-highlight-color:transparent;
+}
+#loop03-tabuleiro .loop03-mapa-grade .loop03-abrir-fila:hover{
+ background:#d09b3214!important;
+}
+#loop03-tabuleiro .loop03-mapa-grade .loop03-abrir-fila:focus-visible{
+ outline:3px solid #ffe69e!important;outline-offset:1px!important;
+}
+#loop03-tabuleiro .loop03-mapa-grade .loop03-fila-expandida{
+ position:fixed!important;top:50%!important;left:50%!important;
+ transform:translate(-50%,-50%)!important;
+ z-index:90!important;
+ width:min(570px,94vw)!important;
+ max-width:94vw!important;max-height:88vh!important;
+ min-height:0!important;
+ display:flex!important;flex-direction:column!important;overflow:hidden!important;
+ padding:18px clamp(12px,2vw,22px)!important;
+ background:linear-gradient(150deg,#080c20,#181038 60%,#060816)!important;
+ border:2px solid #e7bc65!important;
+ border-radius:20px!important;
+ box-shadow:0 0 0 100vmax #02020ac9,0 0 34px #e3bb67a8,inset 0 0 20px #f1d29829!important;
+}
+#loop03-tabuleiro .loop03-mapa-grade .loop03-fila-expandida:after{
+ display:none!important;
+}
+#loop03-tabuleiro .loop03-mapa-grade .loop03-fila-expandida>.loop03-cabecalho-fila{
+ flex:0 0 auto!important;margin:0 0 12px!important;
+}
+#loop03-tabuleiro .loop03-mapa-grade .loop03-fila-expandida>.mapa-fila-posicoes-demo{
+ flex:1 1 auto!important;min-height:0!important;
+ max-height:calc(88vh - 120px)!important;
+ overflow-y:auto!important;overscroll-behavior:contain!important;
+ padding:2px 5px!important;
+ scrollbar-color:#caa962 #161126;
+}
+#loop03-tabuleiro .loop03-mapa-grade .loop03-fila-expandida .loop03-linha-fila{
+ min-height:54px!important;padding:6px 10px!important;margin:7px 0!important;
+}
+#loop03-tabuleiro .loop03-mapa-grade .loop03-fila-expandida .loop03-inicial-fila{
+ width:38px!important;height:38px!important;min-width:38px!important;
+}
+#loop03-tabuleiro .loop03-mapa-grade .loop03-fila-expandida .loop03-numero-titular{
+ font-size:1rem!important;
+}
+#loop03-tabuleiro .loop03-mapa-grade .loop03-fila-expandida .loop03-quantidade-a-direita{
+ font-size:.96rem!important;
+}
+#loop03-tabuleiro .loop03-mapa-grade .loop03-fila-expandida .loop03-texto-cabecalho{
+ font-size:1.7rem!important;
+}
+#loop03-tabuleiro .loop03-mapa-grade .loop03-fila-expandida .loop03-seta-cabecalho{
+ font-size:1.8rem!important;
+}
+#loop03-tabuleiro .loop03-mapa-grade .loop03-fila-expandida .loop03-abrir-fila:after{
+ content:"×";margin-left:auto;font:bold 1.7rem/1 sans-serif;color:#fff7e1;
+}
+@media(max-width:590px){
+ #loop03-tabuleiro .loop03-mapa-grade .loop03-abrir-fila{
+  min-height:47px!important;padding:5px 1px 7px!important;
+ }
+ #loop03-tabuleiro .loop03-mapa-grade .loop03-fila-expandida>.loop03-cabecalho-fila{
+  min-height:54px!important;
+ }
+ #loop03-tabuleiro .loop03-mapa-grade .loop03-fila-expandida .loop03-abrir-fila{
+  min-height:52px!important;
+ }
+}
+
+/* TABULEIRO RESPONSIVO REAL: roda acima, A/B lado a lado ABAIXO no celular. */
+/* Aplica-se SOMENTE à aba Tabuleiro em retrato/telas estreitas.
+ Os quadros mantêm os mesmos elementos e botões DOM ligados ao motor. */
+@media(max-width:590px){
+ #loop03-tabuleiro .loop03-mapa-grade{
+  display:grid!important;
+  grid-template-columns:repeat(2,minmax(0,1fr))!important;
+  grid-template-rows:auto auto!important;
+  align-items:stretch!important;
+  column-gap:7px!important;row-gap:13px!important;
+  width:100%!important;min-width:0!important;
+ }
+ #loop03-tabuleiro .loop03-mapa-grade>.bloco-fila-participante:first-child{
+  grid-column:1!important;grid-row:2!important;
+ }
+ #loop03-tabuleiro .loop03-mapa-grade>.bloco-fila-participante:last-child{
+  grid-column:2!important;grid-row:2!important;
+ }
+ #loop03-tabuleiro .loop03-mapa-grade>.bloco-fila-participante{
+  min-width:0!important;
+  min-height:218px!important;
+  padding:6px 4px 9px!important;
+ }
+ #loop03-tabuleiro .loop03-mapa-grade>.bloco-fila-participante::after{
+  height:100px!important;
+ }
+ #loop03-tabuleiro .loop03-mapa-grade>.loop03-roda{
+  grid-column:1/-1!important;grid-row:1!important;
+  min-width:0!important;
+  margin:0!important;
+  min-height:0!important;
+ }
+ #loop03-tabuleiro .loop03-mapa-grade .loop03-cabecalho-fila .loop03-texto-cabecalho{
+  font-size:clamp(.83rem,3.55vw,1.13rem)!important;
+  letter-spacing:-.04em!important;
+ }
+ #loop03-tabuleiro .loop03-mapa-grade .loop03-abrir-fila{
+  min-height:48px!important;padding:5px 1px 7px!important;
+  gap:4px!important;
+ }
+ #loop03-tabuleiro .loop03-mapa-grade .loop03-cabecalho-fila .loop03-icone-cabecalho{
+  width:clamp(21px,6vw,27px)!important;
+  height:clamp(24px,7vw,30px)!important;
+ }
+ /* A fila ampliada sobrepõe ambas, sem deslocar o tabuleiro ou quebrar
+ a disposição lado a lado quando voltar ao estado compacto. */
+ #loop03-tabuleiro .loop03-mapa-grade>.bloco-fila-participante.loop03-fila-expandida{
+  width:min(570px,94vw)!important;min-height:0!important;
+  max-height:88vh!important;
+  padding:16px 13px!important;
+ }
+ #loop03-tabuleiro .loop03-mapa-grade>.bloco-fila-participante.loop03-fila-expandida:after{
+  display:none!important;
+ }
+ #loop03-tabuleiro .loop03-mapa-grade .loop03-fila-expandida .loop03-cabecalho-fila .loop03-texto-cabecalho{
+  font-size:1.7rem!important;
+ }
+}
+
+/* FILA REAL ABERTA: manter painel amplo mesmo quando a lista está vazia. */
+@media(max-width:590px){
+ #loop03-tabuleiro .loop03-mapa-grade>.bloco-fila-participante.loop03-fila-expandida{
+  min-height:min(68vh,540px)!important;
+  max-height:88vh!important;
+ }
+ #loop03-tabuleiro .loop03-mapa-grade>.bloco-fila-participante.loop03-fila-expandida>.mapa-fila-posicoes-demo{
+  display:block!important;flex:1 1 auto!important;min-height:0!important;
+  overflow-y:auto!important;
+ }
+}
+
+
+/* Visor ligado ao intervalo auditado no admin; nao muda o motor. */
+#loop03-tabuleiro .loop03-intervalo-referencia{
+ margin:2px auto 8px!important;
+ max-width:100%;
+ color:#e7c98e!important;
+ text-align:center!important;
+ font:600 clamp(.69rem,1.55vw,.86rem)/1.35 system-ui,sans-serif!important;
+ letter-spacing:.01em!important;
+ overflow-wrap:anywhere;
+}
+
+
+/* PERFIL - aperfeiçoamento pontual; fila, tabuleiro e indicadores intocados. */
+#loop03Shell .loop03-abrir-perfil{
+ display:flex;align-items:center;gap:8px;min-width:0;flex:1;
+ background:none;border:0;color:#f8e6bd;cursor:pointer;padding:0;text-align:left;
+ font:inherit;
+}
+#loop03Shell .loop03-abrir-perfil:focus-visible,
+#loop03Shell #loop03PerfilTopo:focus-visible{
+ outline:2px solid #ffe4a5;outline-offset:3px;
+}
+#loop03Shell .loop03-abrir-perfil .loop03-dados-perfil{min-width:0;flex:1}
+#loop03Shell .loop03-abrir-perfil .loop03-dados-perfil strong{
+ display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+}
+#loop03Shell .loop03-identidade .loop03-avatar,
+#loop03Shell .loop03-foto-topo,
+#loop03Shell .loop03-foto-grande{
+ display:grid;place-items:center;position:relative;overflow:hidden;border-radius:50%;flex:none;
+ border:2px solid #eed198;
+ background:radial-gradient(circle at 30% 18%,#9d6abe,#2d224a 74%,#121622);
+ color:#ffdfaa;box-shadow:0 0 14px #eac16e88,inset 0 1px #fff6;
+}
+#loop03Shell .loop03-avatar .loop03-foto-padrao{font-size:1.22rem}
+#loop03Shell .loop03-foto-privada{width:100%;height:100%;object-fit:cover;display:block}
+#loop03Shell .loop03-foto-privada[hidden],
+#loop03Shell .loop03-foto-padrao[hidden]{display:none!important}
+#loop03Shell #loop03PerfilTopo{
+ display:flex;align-items:center;gap:7px;min-width:0;
+ padding:5px 9px;border-radius:27px;max-width:none;
+}
+#loop03Shell .loop03-foto-topo{width:34px;height:34px}
+#loop03Shell .loop03-foto-topo .loop03-foto-padrao{font-size:1.05rem}
+#loop03Shell #loop03-perfil .loop03-painel-perfil{
+ width:100%;max-width:780px;margin:0 auto;padding:clamp(15px,3vw,28px);
+ background:linear-gradient(135deg,#202334,#111d24);
+ border:1px solid #b48f56;border-radius:20px;box-shadow:0 12px 30px #0004;
+}
+#loop03Shell #loop03-perfil .loop03-resumo-perfil{
+ display:flex;align-items:center;gap:16px;padding-bottom:20px;
+ border-bottom:1px solid #ae87565c;margin-bottom:18px;min-width:0;
+}
+#loop03Shell #loop03-perfil .loop03-foto-grande{width:85px;height:85px}
+#loop03Shell #loop03-perfil .loop03-foto-grande .loop03-foto-padrao{font-size:2.4rem}
+#loop03Shell #loop03-perfil .loop03-resumo-perfil>div{min-width:0}
+#loop03Shell #loop03-perfil .loop03-resumo-perfil strong{
+ display:block;font-size:clamp(1.15rem,2.2vw,1.55rem);
+ color:#ffe1a0;overflow-wrap:anywhere;
+}
+#loop03Shell #loop03-perfil .loop03-resumo-perfil small{
+ display:block;color:#c5cdd4;font-size:.83rem;margin-top:7px;
+}
+#loop03Shell #loop03-perfil .loop03-campos-perfil{
+ display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;
+}
+#loop03Shell #loop03-perfil label{display:grid;gap:7px;color:#f7d9a2;font-size:.86rem;font-weight:750}
+#loop03Shell #loop03-perfil input:not([type=file]){
+ width:100%;min-width:0;min-height:46px;padding:11px 12px;
+ background:#0b1424;color:#f7f4e9;border:1px solid #a68752;border-radius:11px;
+ font:500 1rem system-ui,sans-serif;
+}
+#loop03Shell #loop03-perfil .loop03-rotulo-foto{margin-top:20px}
+#loop03Shell #loop03-perfil input[type=file]{
+ display:block;width:100%;max-width:100%;color:#e9e4dd;
+ background:#0d1923;border:1px dashed #a48a62;border-radius:12px;
+ padding:12px;margin:9px 0;
+}
+#loop03Shell #loop03-perfil input[type=file]::file-selector-button{
+ background:#4a3750;border:1px solid #c19c65;border-radius:9px;
+ color:#ffedc5;padding:9px;margin-right:12px;cursor:pointer;
+}
+#loop03Shell #loop03-perfil .loop03-ajuda-perfil{display:block;color:#c2cdd0;font-size:.76rem;line-height:1.5}
+#loop03Shell #loop03-perfil .loop03-acoes-salvar-perfil{
+ display:flex;gap:12px;flex-wrap:wrap;justify-content:flex-end;margin-top:18px;
+}
+#loop03Shell #loop03-perfil .loop03-acoes-salvar-perfil button{
+ min-height:45px;border:1px solid #d1a960;border-radius:12px;
+ color:#151b21;background:linear-gradient(130deg,#ffdf91,#c2944e);
+ padding:10px 16px;font-weight:850;cursor:pointer;
+}
+#loop03Shell #loop03-perfil .loop03-acoes-salvar-perfil .loop03-secundario-perfil{
+ color:#e8d5bd;background:#252739;border-color:#947753;
+}
+#loop03Shell #loop03-perfil .loop03-acoes-salvar-perfil button:disabled{opacity:.56;cursor:wait}
+#loop03Shell #loop03-perfil #loop03StatusPerfil{
+ color:#d5f9e0;min-height:20px;font-size:.84rem;margin:12px 0 0;
+}
+#loop03Shell #loop03-perfil .loop03-nota-perfil{
+ color:#c9c5ba;font-size:.76rem;line-height:1.6;margin-top:18px;
+}
+@media(max-width:520px){
+ #loop03Shell #loop03PerfilTopo{padding:4px 6px;font-size:.75rem;gap:5px}
+ #loop03Shell .loop03-foto-topo{width:29px;height:29px}
+ #loop03Shell #loop03-perfil .loop03-campos-perfil{grid-template-columns:minmax(0,1fr)}
+ #loop03Shell #loop03-perfil .loop03-foto-grande{width:65px;height:65px}
+ #loop03Shell #loop03-perfil .loop03-resumo-perfil{gap:10px}
+ #loop03Shell #loop03-perfil .loop03-acoes-salvar-perfil button{flex:1 1 120px}
+}
+
+
+/* Validacoes e CPF apenas como estado visual, sem campo de edicao de CPF. */
+#loop03Shell #loop03-perfil .loop03-perfil-validacoes{
+ display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin-top:18px;
+}
+#loop03Shell #loop03-perfil .loop03-verificacao{
+ min-width:0;background:#111b29;border:1px solid #8b7655;border-radius:12px;
+ padding:13px;display:grid;gap:10px;
+}
+#loop03Shell #loop03-perfil .loop03-verificacao strong{font-size:.87rem;color:#f7d6a0}
+#loop03Shell #loop03-perfil .loop03-verificacao p{
+ font-size:.75rem;color:#d0cfca;line-height:1.45;margin:0;
+}
+#loop03Shell #loop03-perfil .loop03-verificacao button{
+ min-height:42px;padding:10px 11px;border:1px solid #c1a277;
+ border-radius:10px;background:#2e2940;color:#ffe2aa;
+ font-weight:750;cursor:pointer;
+}
+#loop03Shell #loop03-perfil .loop03-verificacao button:disabled{opacity:.5;cursor:wait}
+#loop03Shell #loop03-perfil #loop03StatusVerificacao{font-size:.82rem;color:#f4dc9c}
+#loop03Shell #loop03-perfil .loop03-cpf-travado{
+ display:grid;gap:7px;background:#142224;border:1px solid #6d896c;
+ border-radius:12px;padding:15px;margin-top:18px;
+}
+#loop03Shell #loop03-perfil .loop03-cpf-travado strong{color:#d2edcd}
+#loop03Shell #loop03-perfil .loop03-cpf-travado span{color:#fff0ce;font-size:.82rem}
+#loop03Shell #loop03-perfil .loop03-cpf-travado small{color:#bac8bf;line-height:1.4}
+@media(max-width:650px){
+ #loop03Shell #loop03-perfil .loop03-perfil-validacoes{grid-template-columns:minmax(0,1fr)}
+}
+
+/* O novo perfil abre somente o painel de verificacao necessario. */
+#loop03Shell #loop03-perfil .loop03-verificacao{
+ display:block;align-self:start;min-width:0;
+}
+#loop03Shell #loop03-perfil .loop03-verificacao summary{
+ cursor:pointer;color:#f7d6a0;font-weight:800;font-size:.84rem;
+ padding:7px 2px;line-height:1.4;
+}
+#loop03Shell #loop03-perfil .loop03-verificacao summary:hover{color:#ffe7b2}
+#loop03Shell #loop03-perfil .loop03-verificacao-campos{
+ display:grid;gap:10px;margin-top:10px;
+}
+#loop03Shell #loop03-perfil .loop03-informacoes-tecnicas{
+ margin:18px 0;border:1px solid #786d62;border-radius:11px;
+ padding:11px;background:#171b27;
+}
+#loop03Shell #loop03-perfil .loop03-informacoes-tecnicas>summary{
+ cursor:pointer;color:#c6bdad;font-size:.76rem;
+}
+#loop03Shell #loop03-perfil .loop03-informacoes-tecnicas .cartao-participante{margin:14px 0 0}
+
+/* Troca de senha nao interfere no layout aprovado do Tabuleiro. */
+#loop03Shell #loop03-perfil .loop03-trocar-senha{
+ margin-top:18px;border:1px solid #a38a60;border-radius:13px;
+ padding:13px;background:linear-gradient(115deg,#221e32,#141d2b);
+}
+#loop03Shell #loop03-perfil .loop03-trocar-senha>summary{
+ color:#f8dda5;font-weight:800;cursor:pointer;padding:6px 2px;
+}
+#loop03Shell #loop03-perfil .loop03-trocar-senha form{margin-top:13px}
+#loop03Shell #loop03-perfil .loop03-trocar-senha form>p{
+ color:#c5cdd0;font-size:.79rem;line-height:1.5;margin-bottom:13px;
+}
+#loop03Shell #loop03-perfil .loop03-campos-senha{
+ display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;
+}
+#loop03Shell #loop03-perfil #loop03SalvarSenha{
+ margin-top:16px;min-height:45px;padding:9px 18px;border:1px solid #d5ae72;
+ border-radius:11px;background:linear-gradient(130deg,#ffdf96,#c89551);
+ color:#191c22;font-weight:800;cursor:pointer;
+}
+#loop03Shell #loop03-perfil #loop03SalvarSenha:disabled{opacity:.55}
+#loop03Shell #loop03-perfil #loop03StatusSenha{color:#d9edcc;font-size:.85rem}
+@media(max-width:600px){
+ #loop03Shell #loop03-perfil .loop03-campos-senha{grid-template-columns:minmax(0,1fr)}
+ #loop03Shell #loop03-perfil #loop03SalvarSenha{width:100%}
+}
+
+
+/* Acesso a configuracoes cabe em 320/360/390/412px sem scroll horizontal. */
+@media(max-width:520px){
+ #loop03Shell .loop03-boasvindas{
+  display:grid!important;
+  grid-template-columns:auto minmax(0,1fr) auto!important;
+  gap:5px!important;align-items:center!important;
+ }
+ #loop03Shell .loop03-boasvindas>div:nth-child(2){min-width:0!important}
+ #loop03Shell .loop03-boasvindas>div:nth-child(2) h2{
+  overflow:hidden!important;text-overflow:ellipsis!important;
+  white-space:nowrap!important;font-size:clamp(.88rem,3.4vw,1.12rem)!important;
+ }
+ #loop03Shell .loop03-boasvindas>div:nth-child(2) p{
+  font-size:.62rem!important;max-width:100%;overflow:hidden;
+  white-space:nowrap;text-overflow:ellipsis;
+ }
+ #loop03Shell .loop03-acoes-perfil{
+  min-width:0!important;max-width:133px!important;margin:0!important;gap:3px!important;
+ }
+ #loop03Shell .loop03-acoes-perfil>.loop03-sino{
+  flex:0 0 auto!important;padding:5px!important;
+ }
+ #loop03Shell #loop03PerfilTopo{
+  flex:0 1 auto!important;min-width:0!important;max-width:102px!important;
+  padding:3px 5px!important;gap:3px!important;
+ }
+ #loop03Shell #loop03PerfilTopo>span:nth-child(2){
+  display:block;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+ }
+}
+
+/* Sininho e notificacoes verdadeiras - componente adaptavel ao desktop/celular. */
+#loop03Shell .loop03-acoes-perfil{position:relative}
+#loop03Shell #loop03NotificacoesBotao{
+ display:grid!important;place-items:center!important;flex:0 0 auto;
+ width:42px;height:42px;padding:8px!important;color:#f7dc99;
+}
+#loop03Shell #loop03NotificacoesBotao svg{display:block;width:21px;height:21px;pointer-events:none}
+#loop03Shell #loop03NotificacoesBotao:focus-visible,
+#loop03Shell #loop03FecharNotificacoes:focus-visible{
+ outline:2px solid #ffdc8b;outline-offset:3px;
+}
+#loop03Shell .loop03-painel-notificacoes{
+ position:absolute;right:0;top:calc(100% + 10px);
+ width:min(340px,calc(100vw - 25px));max-height:min(460px,62vh);overflow:auto;
+ padding:15px;background:#111725;border:1px solid #d4aa65;border-radius:15px;
+ box-shadow:0 12px 38px #000c,0 0 22px #d9b06633;
+ z-index:100;color:#f8e5c5;
+}
+#loop03Shell .loop03-painel-notificacoes[hidden]{display:none!important}
+#loop03Shell .loop03-notificacoes-titulo{
+ display:flex;align-items:center;justify-content:space-between;gap:12px;
+ padding-bottom:11px;border-bottom:1px solid #755e46;
+}
+#loop03Shell .loop03-notificacoes-titulo strong{font-size:1.02rem}
+#loop03Shell #loop03FecharNotificacoes{
+ background:#222a39;border:1px solid #b18e59;border-radius:9px;
+ color:#ffdfa0;font-size:1.25rem;line-height:1;min-width:34px;min-height:34px;
+ cursor:pointer;
+}
+#loop03Shell #loop03ItensNotificacoes{
+ margin-top:12px;color:#d3d4d9;font-size:.87rem;line-height:1.45;
+}
+#loop03Shell .loop03-notificacao-item{padding:11px 0;border-bottom:1px solid #5e5141}
+#loop03Shell .loop03-notificacao-item strong{display:block;color:#ffdf96}
+#loop03Shell .loop03-notificacao-item p{margin:5px 0 0}
+@media(max-width:520px){
+ #loop03Shell #loop03NotificacoesBotao{width:30px;height:34px;padding:4px!important}
+ #loop03Shell #loop03NotificacoesBotao svg{width:18px;height:18px}
+ #loop03Shell .loop03-painel-notificacoes{right:-2px;top:calc(100% + 8px)}
+}
+
+
+/* O mesmo Tabuleiro em desktop e celular: avatar sozinho no topo,
+   identidade da posicao selecionada na lateral, seletor sobreposto somente para consulta. */
+#loop03Shell #loop03PerfilTopo{
+ display:grid!important;place-items:center!important;flex:0 0 auto!important;
+ width:46px!important;height:46px!important;padding:4px!important;
+ border-radius:50%!important;max-width:46px!important;
+}
+#loop03Shell #loop03PerfilTopo .loop03-foto-topo{width:34px;height:34px}
+#loop03Shell #loop03DadosPosicaoLateral[hidden],
+#loop03Shell #loop03CoroaTabuleiro[hidden],
+#loop03Shell #loop03SeletorPosicao[hidden]{display:none!important}
+#loop03Shell .loop03-identidade-selecionada{
+ display:flex;min-width:0;gap:7px;flex-wrap:nowrap;justify-content:flex-start;
+}
+#loop03Shell .loop03-identidade-selecionada .loop03-dados-perfil{
+ min-width:0;flex:1;
+}
+#loop03Shell .loop03-identidade-selecionada .loop03-dados-perfil strong{
+ display:block;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;
+ font-size:.77rem!important;color:#ffe2a6;
+}
+#loop03Shell .loop03-identidade-selecionada .loop03-dados-perfil small{
+ display:block;font-size:.68rem!important;color:#d5dbc8;
+ white-space:normal;overflow-wrap:anywhere;
+}
+#loop03Shell .loop03-coroa-tabuleiro{flex:0 0 auto;align-self:center;color:#ffd46d;font-size:1.4rem;
+ text-shadow:0 0 9px #f6b352;font-weight:900}
+#loop03Shell .loop03-seletor-fundo{
+ position:fixed;inset:0;z-index:1000;
+ display:grid;place-items:center;padding:16px;
+ background:#070813c9;
+}
+#loop03Shell .loop03-seletor-janela{
+ max-width:540px;width:100%;max-height:min(80vh,620px);overflow:auto;
+ border:2px solid #dcb36c;border-radius:20px;padding:clamp(16px,3vw,25px);
+ background:radial-gradient(circle at 90% 10%,#48215b,#12172a 75%);
+ box-shadow:0 20px 60px #000e,0 0 20px #d4a15a70;color:#f4e4d1;
+}
+#loop03Shell .loop03-seletor-topo{display:flex;align-items:start;gap:12px;justify-content:space-between}
+#loop03Shell .loop03-seletor-topo h2{
+ font-size:clamp(1.1rem,3.5vw,1.5rem);line-height:1.3;color:#ffe5ac;margin:0;
+}
+#loop03Shell .loop03-seletor-janela>p{font-size:.82rem;line-height:1.5;color:#e4d4be;margin:12px 0 16px}
+#loop03Shell #loop03FecharEscolha{
+ min-width:38px;min-height:38px;border-radius:10px;border:1px solid #b8935b;
+ color:#ffdb8b;background:#242132;cursor:pointer;font-size:1.5rem;
+}
+#loop03Shell .loop03-lista-escolha{display:grid;gap:9px}
+#loop03Shell .loop03-escolha-vazia{
+ padding:18px;border:1px dashed #9e875f;border-radius:12px;
+ color:#f1e8d7;font-size:.85rem;line-height:1.55;margin:0;
+}
+#loop03Shell .loop03-escolha-item{
+ display:block;width:100%;min-height:48px;text-align:left;
+ background:#1a2533;color:#f8e5bc;border:1px solid #ac8d5a;
+ border-radius:11px;padding:11px 13px;font-weight:700;cursor:pointer;
+}
+#loop03Shell .loop03-escolha-item:hover,#loop03Shell .loop03-escolha-item:focus-visible{
+ border-color:#ffe09b;outline:2px solid #cca859;
+}
+#loop03Shell .loop03-escolha-item[aria-pressed=true]{border-color:#65dcad}
+@media(max-width:520px){
+ #loop03Shell #loop03PerfilTopo{width:35px!important;height:35px!important;max-width:35px!important;padding:2px!important}
+ #loop03Shell #loop03PerfilTopo .loop03-foto-topo{width:29px;height:29px}
+ #loop03Shell .loop03-acoes-perfil{max-width:86px!important}
+ #loop03Shell .loop03-boasvindas>div:nth-child(2) h2{font-size:clamp(.95rem,3.8vw,1.15rem)!important}
+}
+
+/* Rolagem nativa das listas reais no proprio Tabuleiro, nao sao modais. */
+#loop03-tabuleiro .loop03-mapa-grade>.bloco-fila-participante{
+ height:525px!important;max-height:525px!important;
+ overflow:hidden!important;display:flex!important;flex-direction:column!important;
+}
+#loop03-tabuleiro .loop03-mapa-grade>.bloco-fila-participante>.mapa-fila-posicoes-demo{
+ display:block!important;flex:1 1 auto!important;min-height:0!important;
+ overflow-x:hidden!important;overflow-y:auto!important;
+ overscroll-behavior-y:contain!important;touch-action:pan-y!important;
+ -webkit-overflow-scrolling:touch;
+ scrollbar-width:thin;scrollbar-color:#d7ae65 #152038;
+ padding:3px 2px!important;
+}
+#loop03-tabuleiro .loop03-mapa-grade>.bloco-fila-participante>.mapa-fila-posicoes-demo:focus-visible{
+ outline:2px solid #f5d78e!important;outline-offset:-2px!important;
+}
+#loop03-tabuleiro .loop03-mapa-grade>.bloco-fila-participante::after{
+ flex:0 1 160px!important;min-height:0!important;pointer-events:none!important;
+}
+@media(max-width:590px){
+ #loop03-tabuleiro .loop03-mapa-grade>.bloco-fila-participante{
+  height:245px!important;max-height:245px!important;min-height:0!important;
+ }
+ #loop03-tabuleiro .loop03-mapa-grade>.bloco-fila-participante::after{
+  flex:0 1 55px!important;min-height:0!important;
+ }
+}
+
+/* Controles globais sao janelas de consulta, nao navegam entre as abas. */
+#loop03Shell #loop03DetalheIndicador[hidden],
+#loop03Shell #loop03FundoPerfil[hidden],
+#loop03Shell #loop03FecharPerfil[hidden]{display:none!important}
+#loop03Shell .loop03-detalhe-valor{
+ display:block;font-size:clamp(1.5rem,4vw,2.2rem);
+ color:#ffe09a;line-height:1.3;margin-top:18px;
+}
+#loop03Shell #loop03DetalheIndicador #loop03FecharDetalhe{
+ min-height:38px;min-width:38px;font-size:1.4rem;
+ color:#f8dfad;border-radius:9px;border:1px solid #b29259;
+ background:#282236;cursor:pointer;
+}
+#loop03Shell .loop03-fundo-perfil{
+ position:fixed;inset:0;z-index:980;background:#03030bcc;
+}
+#loop03Shell #loop03-perfil.loop03-perfil-sobreposto{
+ display:block!important;position:fixed!important;
+ inset:4vh auto auto 50%!important;transform:translateX(-50%)!important;
+ width:min(800px,95vw)!important;height:auto!important;
+ max-height:91vh!important;min-height:0!important;overflow:auto!important;
+ padding:clamp(12px,2.7vw,22px)!important;
+ z-index:981!important;
+}
+#loop03Shell #loop03FecharPerfil{
+ display:grid;place-items:center;width:38px;height:38px;
+ background:#23223b;color:#ffe4ab;font-size:1.45rem;
+ border:1px solid #bc9b61;border-radius:10px;cursor:pointer;
+}
+@media(max-width:520px){
+ #loop03Shell #loop03-perfil.loop03-perfil-sobreposto{
+  width:97vw!important;max-height:96vh!important;top:2vh!important;
+  padding:11px!important;
+ }
+}
+
+/* Cabeçalho (referência: desenho aprovado de 19/10).
+   Logo metálico REAL em CSS, visor de número A / #ID / n/limite dinâmico. */
+#loop03Shell .loop03-banner-topo .loop03-logomarca{
+ font-family:Arial,Helvetica,system-ui,sans-serif!important;
+ font-weight:1000!important;letter-spacing:-.045em!important;
+ font-size:clamp(2.4rem,4.5vw,4.6rem)!important;
+ background:linear-gradient(180deg,#fffbdc 2%,#fce48b 24%,#b96e13 44%,
+  #74420c 49%,#ffe8a2 60%,#c58a21 84%,#fff0aa 100%)!important;
+ -webkit-background-clip:text!important;background-clip:text!important;
+ -webkit-text-fill-color:transparent!important;
+ filter:drop-shadow(0 2px 1px #4b2308) drop-shadow(0 0 9px #f2c16b90)!important;
+ white-space:nowrap!important;
+}
+#loop03Shell .loop03-banner-topo .loop03-logomarca span{
+ background:linear-gradient(180deg,#fff 5%,#dce2eb 28%,#666f7e 51%,#fff 64%,#8e99ad 90%)!important;
+ -webkit-background-clip:text!important;background-clip:text!important;
+ -webkit-text-fill-color:transparent!important;
+ filter:drop-shadow(0 2px 1px #192030)!important;
+}
+#loop03Shell .loop03-indicadores .loop03-visor-passivo{cursor:default!important}
+#loop03Shell .loop03-visor-numero{
+ display:grid!important;
+ grid-template-rows:minmax(14px,1fr) auto auto minmax(14px,1fr)!important;
+ grid-template-columns:minmax(0,1fr)!important;
+ justify-items:stretch!important;
+ align-content:stretch!important;
+ position:relative!important;
+ gap:0!important;
+}
+#loop03Shell .loop03-visor-numero #loop03Numero{
+ display:block!important;grid-row:2!important;
+ text-align:center!important;
+ font-size:clamp(1.4rem,2.8vw,2.45rem)!important;
+ line-height:1.06!important;
+ min-width:0;max-width:100%!important;
+ white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+ color:#ffedb7!important;
+}
+#loop03Shell .loop03-visor-numero .loop03-visor-letra{
+ position:relative;grid-row:1!important;justify-self:start!important;
+ align-self:start!important;
+ display:inline-flex!important;align-items:center;justify-content:center;
+ min-width:19px!important;min-height:19px!important;
+ padding:1px 4px!important;border-radius:6px!important;
+ font:900 .84rem/1 system-ui,sans-serif!important;
+ color:#1f1709!important;border:1px solid #ffec9c!important;
+ background:#eab953!important;
+}
+#loop03Shell .loop03-visor-numero .loop03-visor-letra[hidden]{visibility:hidden!important}
+#loop03Shell .loop03-visor-numero .loop03-visor-letra-b{
+ background:#e3e8f1!important;border-color:#fff!important;color:#181a22!important;
+}
+#loop03Shell .loop03-visor-numero .loop03-visor-fracao{
+ display:block!important;grid-row:4!important;justify-self:end!important;
+ align-self:end!important;
+ text-align:right!important;
+ color:#f7e7c0!important;font-weight:900!important;
+ font-size:clamp(.8rem,1.4vw,1.08rem)!important;
+ line-height:1.1!important;
+ white-space:nowrap!important;
+}
+#loop03Shell .loop03-visualmente-oculto{
+ position:absolute!important;width:1px!important;height:1px!important;
+ padding:0!important;margin:-1px!important;overflow:hidden!important;
+ clip:rect(0,0,0,0)!important;white-space:nowrap!important;border:0!important;
+}
+@media(max-width:520px){
+ #loop03Shell .loop03-banner-topo .loop03-logomarca{
+  font-size:clamp(1.9rem,7.5vw,3.0rem)!important;
+ }
+ #loop03Shell .loop03-visor-numero #loop03Numero{
+  font-size:clamp(.96rem,3.6vw,1.4rem)!important;
+ }
+ #loop03Shell .loop03-visor-numero .loop03-visor-letra{
+  font-size:.65rem!important;min-height:15px!important;min-width:15px!important;
+  border-radius:4px!important;padding:1px 2px!important;
+ }
+ #loop03Shell .loop03-visor-numero .loop03-visor-fracao{
+  font-size:clamp(.66rem,2.3vw,.83rem)!important;
+ }
+}
+
+
+/* Tabuleiro celular: estabilizar geometria da catraca e filas.
+   O container com overflow:hidden era rolado internamente pelo navegador
+   ao focar campos (inclusive selecionar posicao), cortando METADE DA CATraca
+   apesar da grande area vazia abaixo. overflow:clip nao e scroll container.
+   Mantem somente a lista de cada fila com sua propria rolagem vertical. */
+@media(max-width:590px){
+ #loop03Shell #loop03-tabuleiro{
+  overflow:clip!important;
+  padding-top:clamp(19px,5.5vw,30px)!important;
+ }
+ #loop03Shell #loop03-tabuleiro .loop03-mapa-grade{
+  row-gap:clamp(13px,3.4vw,18px)!important;
+  align-content:start!important;
+ }
+ #loop03Shell #loop03-tabuleiro .loop03-mapa-grade>.loop03-roda{
+  overflow:visible!important;min-width:0!important;
+ }
+ #loop03Shell #loop03-tabuleiro .loop03-roda .mapa-tabuleiro-posicoes-demo{
+  margin-top:clamp(11px,3.1vw,17px)!important;
+  max-width:100%!important;
+ }
+}
+
+/* Ajustes finos: cabeçalho em DOM real. Manter motor, esferas, catraca intactos. */
+#loop03Shell .loop03-banner-topo .loop03-logomarca{
+ letter-spacing:-.058em!important;
+ filter:drop-shadow(0 2px 0 #a5692b) drop-shadow(0 4px 1px #1c0d11)
+        drop-shadow(0 0 10px #ffc45a8c)!important;
+}
+#loop03Shell .loop03-banner-topo .loop03-logomarca span{
+ letter-spacing:-.055em!important;
+ filter:drop-shadow(0 1px 0 #e1ebff) drop-shadow(0 3px 1px #2d3548)
+        drop-shadow(0 0 8px #fff7)!important;
+}
+/* Distribuicao proporcional vertical de POSICOES e GIROS. */
+#loop03Shell .loop03-indicadores>#loop03AbrirEscolhaPosicao,
+#loop03Shell .loop03-indicadores>#loop03IndicadorGiros{
+ display:grid!important;grid-template-columns:minmax(0,1fr)!important;
+ grid-template-rows:auto minmax(0,1fr) auto!important;
+ align-content:stretch!important;align-items:stretch!important;gap:5px!important;
+}
+#loop03Shell .loop03-indicadores>#loop03AbrirEscolhaPosicao>small,
+#loop03Shell .loop03-indicadores>#loop03IndicadorGiros>small{align-self:start!important}
+#loop03Shell .loop03-indicadores>#loop03AbrirEscolhaPosicao>strong,
+#loop03Shell .loop03-indicadores>#loop03IndicadorGiros>strong{
+ align-self:center!important;line-height:1.12!important;
+ padding-top:clamp(3px,.6vw,8px)!important;
+}
+#loop03Shell .loop03-indicadores>#loop03AbrirEscolhaPosicao>span,
+#loop03Shell .loop03-indicadores>#loop03IndicadorGiros>span{
+ align-self:end!important;line-height:1.35!important;padding-bottom:1px!important;
+}
+/* Visor financeiro passivo: bonus superior, lucro no centro. Sem ledger individual, '—'. */
+#loop03Shell .loop03-indicadores>#loop03IndicadorFinanceiro{
+ cursor:default!important;display:flex!important;flex-direction:column!important;
+ align-items:flex-start!important;gap:clamp(5px,.6vw,9px)!important;
+}
+#loop03Shell #loop03IndicadorFinanceiro .loop03-bonus-superior{
+ display:block!important;line-height:1.15!important;
+ color:#dfc795!important;font-size:clamp(.66rem,.95vw,.85rem)!important;
+ overflow-wrap:anywhere;
+}
+#loop03Shell #loop03IndicadorFinanceiro #loop03Saldo{
+ margin-top:auto!important;margin-bottom:0!important;line-height:1.06!important;
+}
+#loop03Shell #loop03IndicadorFinanceiro .loop03-lucro-legenda{
+ font-size:clamp(.63rem,.82vw,.76rem)!important;line-height:1.2!important;
+}
+@media(max-width:520px){
+ #loop03Shell .loop03-indicadores>#loop03AbrirEscolhaPosicao,
+ #loop03Shell .loop03-indicadores>#loop03IndicadorGiros{gap:4px!important}
+ #loop03Shell #loop03IndicadorFinanceiro .loop03-bonus-superior{font-size:.63rem!important}
+}
+/* Ordem A | #numero | boneco | quantidade, com separacao dos dois numeros. */
+#loop03-tabuleiro .loop03-mapa-grade>.bloco-fila-participante:first-child .loop03-fila-identificacao{
+ gap:clamp(6px,1vw,13px)!important;
+}
+#loop03-tabuleiro .loop03-mapa-grade>.bloco-fila-participante:first-child .loop03-numero-titular{
+ margin-right:clamp(1px,.5vw,5px)!important;
+}
+@media(max-width:590px){
+ #loop03-tabuleiro .loop03-mapa-grade>.bloco-fila-participante:first-child .loop03-fila-identificacao{
+  gap:clamp(3px,.7vw,5px)!important;
+ }
+ #loop03-tabuleiro .loop03-mapa-grade>.bloco-fila-participante:first-child .loop03-numero-titular{
+  margin-right:1px!important;
+ }
+}
+
+
+/* V6 - Identidade do ocupante em cada esfera: nunca trocar a vaga fixa
+   pelo #ID, e nunca editar posicao/fila/motor para efeito de UI. */
+#loop03-tabuleiro .loop03-roda .mapa-tabuleiro-posicoes-demo>.espaco-tabuleiro-demo{
+ position:absolute!important;
+ padding:clamp(3px,.55vw,7px) 3px!important;
+}
+#loop03-tabuleiro .loop03-roda .espaco-tabuleiro-demo:not(.tabuleiro-centro)::before{
+ position:absolute!important;
+ top:clamp(4px,8%,12px)!important;
+ left:50%!important;transform:translateX(-50%)!important;
+ width:auto!important;height:auto!important;z-index:2!important;
+ line-height:1!important;
+}
+/* Regra antiga que apagava 1..6 ao inserir ocupante foi REVOGADA. */
+#loop03-tabuleiro .loop03-roda .espaco-tabuleiro-demo:not(.tabuleiro-centro):has(.loop03-ocupante-identidade)::before{
+ content:attr(data-vaga-numero)!important;
+}
+#loop03-tabuleiro .loop03-roda .loop03-ocupante-identidade{
+ display:flex!important;position:relative!important;
+ flex-direction:column!important;align-items:center!important;justify-content:center!important;
+ min-width:0!important;width:94%!important;max-width:94%!important;
+ gap:clamp(1px,.23vw,3px)!important;
+ margin-top:clamp(10px,2.0vw,22px)!important;
+ overflow:hidden!important;
+ color:#111827!important;text-shadow:none!important;
+}
+#loop03-tabuleiro .loop03-roda .loop03-ocupante-identidade>.selo-posicao-demo{
+ display:block!important;
+ width:100%!important;max-width:100%!important;
+ min-height:0!important;
+ color:inherit!important;text-shadow:none!important;
+ font-size:clamp(.48rem,1.1vw,.88rem)!important;
+ font-weight:900!important;line-height:1.04!important;
+ white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis!important;
+ text-align:center!important;
+}
+#loop03-tabuleiro .loop03-roda .loop03-nome-na-bola{
+ display:block!important;max-width:100%!important;width:100%!important;
+ min-width:0!important;overflow:hidden!important;
+ text-overflow:ellipsis!important;white-space:nowrap!important;
+ font-size:clamp(.34rem,.72vw,.62rem)!important;
+ font-weight:750!important;line-height:1.15!important;
+ text-align:center!important;color:inherit!important;
+}
+/* Esfera vermelha (vaga 6): branco. Esferas brancas: preto.
+   Centro verde: branco. Nao alterar a cor das superficies ou o indice da vaga. */
+#loop03-tabuleiro .loop03-roda .tabuleiro-vaga-6:not(:has(.posicao-dourado)) .loop03-ocupante-identidade,
+#loop03-tabuleiro .loop03-roda .tabuleiro-centro:not(:has(.posicao-dourado)) .loop03-ocupante-identidade{
+ color:#fff!important;
+ text-shadow:0 1px 2px #081516b8!important;
+}
+#loop03-tabuleiro .loop03-roda .espaco-tabuleiro-demo:not(.tabuleiro-vaga-6):not(.tabuleiro-centro):not(:has(.posicao-dourado)) .loop03-ocupante-identidade{
+ color:#101724!important;text-shadow:none!important;
+}
+/* O dourado pertence a outra regra, nunca eh convertido para red/green. */
+#loop03-tabuleiro .loop03-roda .espaco-tabuleiro-demo:has(.posicao-dourado) .loop03-ocupante-identidade{
+ color:#50300a!important;
+}
+/* Coroa no visor superior e no rodape dependem do mesmo status real. */
+#loop03Shell #loop03CoroaVisor[hidden]{display:none!important}
+#loop03Shell #loop03CoroaVisor{
+ display:inline-flex!important;align-items:center!important;justify-content:center!important;
+ grid-row:1!important;justify-self:start!important;align-self:start!important;
+ color:#ffe28d!important;font-size:clamp(1.05rem,1.7vw,1.42rem)!important;
+ line-height:1!important;text-shadow:0 0 8px #f5bc66bd!important;
+}
+@media(max-width:590px){
+ #loop03-tabuleiro .loop03-roda .loop03-ocupante-identidade{
+  margin-top:clamp(8px,2.1vw,11px)!important;gap:0!important;
+ }
+ #loop03-tabuleiro .loop03-roda .loop03-ocupante-identidade>.selo-posicao-demo{
+  font-size:clamp(.35rem,1.65vw,.6rem)!important;
+ }
+ #loop03-tabuleiro .loop03-roda .loop03-nome-na-bola{
+  font-size:clamp(.3rem,1.38vw,.46rem)!important;
+ }
+ #loop03-tabuleiro .loop03-roda .espaco-tabuleiro-demo:not(.tabuleiro-centro)::before{
+  top:clamp(2px,6%,6px)!important;
+ }
+ #loop03Shell #loop03CoroaVisor{font-size:.88rem!important}
+}
+
+
+/* Numeracao fixa 1..6 nos lugares OCUPADOS: DOM em vez do pseudo
+   que ficava coberto especialmente no vermelho. Ocupante segue por #ID. */
+#loop03-tabuleiro .loop03-roda .espaco-tabuleiro-demo:has(>.loop03-indice-vaga-visivel)::before{
+ content:none!important;
+}
+#loop03-tabuleiro .loop03-roda .espaco-tabuleiro-demo>.loop03-indice-vaga-visivel{
+ display:block!important;position:absolute!important;
+ top:clamp(3px,7%,10px)!important;left:50%!important;
+ transform:translateX(-50%)!important;z-index:5!important;
+ width:auto!important;min-width:0!important;height:auto!important;
+ margin:0!important;padding:0!important;
+ color:#101724!important;text-shadow:0 1px 0 #ffffff8a!important;
+ font-size:clamp(.88rem,1.8vw,1.42rem)!important;
+ font-weight:950!important;line-height:1!important;
+ pointer-events:none!important;
+}
+#loop03-tabuleiro .loop03-roda .tabuleiro-vaga-6>.loop03-indice-vaga-visivel{
+ color:#fff!important;text-shadow:0 1px 3px #59091f!important;
+}
+#loop03-tabuleiro .loop03-roda .espaco-tabuleiro-demo:has(.posicao-dourado)>.loop03-indice-vaga-visivel{
+ color:#50300a!important;text-shadow:0 1px 0 #ffe3a1!important;
+}
+@media(max-width:590px){
+ #loop03-tabuleiro .loop03-roda .espaco-tabuleiro-demo>.loop03-indice-vaga-visivel{
+  top:clamp(2px,5%,5px)!important;
+  font-size:clamp(.6rem,2.4vw,.9rem)!important;
+ }
+ #loop03-tabuleiro .loop03-roda .loop03-ocupante-identidade{
+  margin-top:clamp(11px,3.2vw,16px)!important;
+ }
+}
+/* A identidade privada longa pode usar duas linhas ao inves de parecer nome falso. */
+#loop03-tabuleiro .loop03-roda .loop03-nome-na-bola{
+ white-space:normal!important;
+ overflow:hidden!important;display:-webkit-box!important;
+ -webkit-box-orient:vertical;-webkit-line-clamp:2;
+ overflow-wrap:anywhere;max-height:2.5em!important;
+}
+
+
+/* 19/out – barra lateral LOOP 3.0: ícones aprovados, sem power no rodapé. */
+#loop03Shell .loop03-sidebar nav .loop03-menu-simbolo{
+ display:inline-grid!important;place-items:center!important;
+ width:23px!important;height:25px!important;flex:0 0 23px!important;
+ font-weight:900!important;line-height:1!important;
+}
+#loop03Shell .loop03-sidebar nav .loop03-menu-simbolo svg{
+ width:22px!important;height:22px!important;display:block!important;
+}
+#loop03Shell .loop03-sidebar nav .loop03-icone-posicoes{color:#e8ebf3!important}
+#loop03Shell .loop03-sidebar nav .loop03-icone-rede{color:#d9c5ef!important}
+#loop03Shell .loop03-sidebar nav .loop03-icone-financeiro{
+ color:#2cf1a4!important;font:bold 1.65rem/1 system-ui,sans-serif!important;
+ text-shadow:0 0 8px #21c886aa!important;
+}
+#loop03Shell .loop03-sidebar nav .loop03-icone-akitemm{
+ color:#c969f7!important;filter:drop-shadow(0 0 5px #be57f2a5)!important;
+}
+#loop03Shell .loop03-sidebar .loop03-identidade .loop03-dados-perfil strong{
+ font-size:.83rem!important;line-height:1.3!important;
+}
+#loop03Shell #loop03SituacaoBaixo[hidden]{display:none!important}
+#loop03Shell #loop03Sair{
+ display:block!important;max-width:230px;margin:15px 0 4px auto!important;
+ padding:9px 15px!important;border-radius:12px!important;border:1px solid #b7935d!important;
+ background:#202031!important;color:#ffe0b3!important;font-weight:750!important;cursor:pointer;
+}
+#loop03Shell #loop03Sair:hover,#loop03Shell #loop03Sair:focus-visible{
+ background:#352c42!important;outline:2px solid #f4cf91;outline-offset:2px;
+}
+/* Vitrine comercial: espaço vazio até catálogo REAL, sem caneta fictícia. */
+#loop03Shell .loop03-vitrine-ilustracao{
+ display:grid!important;place-items:center!important;
+ min-height:116px!important;width:100%!important;overflow:hidden!important;
+ background:linear-gradient(125deg,#100e25,#1d163b 60%,#0d1024)!important;
+}
+#loop03Shell .loop03-vitrine-caneta{display:none!important}
+#loop03Shell .loop03-vitrine-ilustracao img{
+ width:100%!important;max-height:158px!important;object-fit:contain!important;
+ border-radius:9px!important;
+}
+#loop03Shell .loop03-vitrine-ilustracao img[hidden],
+#loop03Shell .loop03-vitrine-nome-produto[hidden]{display:none!important}
+#loop03Shell .loop03-vitrine-sem-produto{
+ display:block!important;text-align:center!important;
+ padding:8px!important;color:#c7bacb!important;font-size:.63rem!important;
+ line-height:1.55!important;
+}
+#loop03Shell .loop03-vitrine-sem-produto[hidden]{display:none!important}
+#loop03Shell .loop03-vitrine-nome-produto{
+ display:block!important;padding:5px 7px!important;
+ max-width:100%!important;text-align:center!important;
+ color:#ffdd9d!important;font-weight:800!important;
+ font-size:.69rem!important;line-height:1.3!important;
+}
+
+/* Vaga vermelha com índice fixo 6 menor, mantendo #ID + nome sem sobreposição. */
+#loop03-tabuleiro .loop03-roda .espaco-tabuleiro-demo:not(.tabuleiro-centro):has(>.loop03-indice-vaga-visivel)>.loop03-ocupante-identidade{
+ position:absolute!important;top:32%!important;bottom:5%!important;
+ left:4%!important;right:4%!important;width:92%!important;max-width:92%!important;
+ height:63%!important;margin:0!important;z-index:3!important;
+ justify-content:center!important;
+}
+#loop03-tabuleiro .loop03-roda .tabuleiro-vaga-6>.loop03-indice-vaga-visivel{
+ top:clamp(2px,4%,7px)!important;font-size:clamp(.72rem,1.22vw,1.0rem)!important;line-height:1!important;
+}
+@media(max-width:590px){
+ #loop03-tabuleiro .loop03-roda .tabuleiro-vaga-6>.loop03-indice-vaga-visivel{
+  top:clamp(1px,4%,4px)!important;font-size:clamp(.56rem,2.1vw,.73rem)!important;
+ }
+ #loop03-tabuleiro .loop03-roda .espaco-tabuleiro-demo:not(.tabuleiro-centro):has(>.loop03-indice-vaga-visivel)>.loop03-ocupante-identidade{
+  top:33%!important;bottom:4%!important;height:63%!important;
+ }
+}
+
+/* Minhas Posições — estado de confirmação, SEM alterar o roxo original das vazias. */
+#loop03-posicoes .loop03-grade-posicoes .loop03-status-confirmacao-ok>.loop03-cartao-rotulo,
+#loop03-posicoes .loop03-grade-posicoes .loop03-status-confirmacao-ok>.loop03-cartao-abrir>.loop03-cartao-rotulo{
+ background:linear-gradient(120deg,#075d42,#149565)!important;color:#f5fff9!important;
+ box-shadow:0 0 10px #23d99b55!important;
+}
+#loop03-posicoes .loop03-grade-posicoes .loop03-status-confirmacao-pendente>.loop03-cartao-rotulo,
+#loop03-posicoes .loop03-grade-posicoes .loop03-status-confirmacao-pendente>.loop03-cartao-abrir>.loop03-cartao-rotulo{
+ background:linear-gradient(120deg,#7d1730,#c42c48)!important;color:#fff7f8!important;
+ box-shadow:0 0 10px #ed426459!important;
+}
+#loop03-posicoes .loop03-grade-posicoes .loop03-posicao-vazia>.loop03-cartao-rotulo{
+ background:#2a1847!important;color:#bd9ee6!important;
+}
+#loop03-posicoes .loop03-cartao-abrir{
+ display:flex;flex-direction:column;gap:13px;width:100%;background:transparent;
+ border:0;padding:0;color:inherit;text-align:left;cursor:pointer;font:inherit;
+}
+#loop03-posicoes .loop03-cartao-abrir:focus-visible,
+#loop03-posicoes .loop03-link-termos:focus-visible,
+#loop03-posicoes .loop03-check-cartao:focus-visible{outline:2px solid #fff3a5;outline-offset:3px}
+#loop03-posicoes .loop03-aceite-linha{
+ display:flex;align-items:center;justify-content:center;gap:8px;min-height:32px;
+}
+#loop03-posicoes .loop03-cpf-cartao{
+ min-width:0;width:100%;max-width:200px;padding:8px 10px;min-height:34px;
+ border:1px solid #aa92ca;border-radius:10px;background:#16112a;color:#fff;
+ font:600 .8rem system-ui;letter-spacing:.02em;
+}
+#loop03-posicoes .loop03-check-cartao{
+ flex:none;width:23px;height:23px;margin:0;accent-color:#39d69a;cursor:pointer;
+}
+#loop03-posicoes .loop03-link-termos{
+ background:none;border:0;padding:2px;color:#c7b4f8;text-decoration:underline;
+ cursor:pointer;font:650 .75rem system-ui;align-self:start;text-align:left;
+}
+#loop03-posicoes .loop03-indicacoes-curtas{
+ font-weight:700;font-size:.76rem;color:#f7edf9;
+}
+#loop03Shell .loop03-termos-fundo[hidden]{display:none!important}
+#loop03Shell .loop03-termos-fundo{
+ position:fixed;inset:0;z-index:9999;display:grid;place-items:center;
+ padding:16px;background:#050613dc;
+}
+#loop03Shell .loop03-termos-janela{
+ width:min(100%,560px);max-height:86dvh;overflow-y:auto;
+ background:linear-gradient(140deg,#18112f,#0c1329);
+ color:#f8f1ff;border:1px solid #c69fe5;border-radius:18px;
+ padding:20px;box-shadow:0 12px 45px #000c;position:relative;
+}
+#loop03Shell .loop03-termos-janela h3{margin:0 32px 15px 0;font-size:1.08rem;color:#ffdc9a}
+#loop03Shell .loop03-termos-texto{font-size:.88rem;line-height:1.6}
+#loop03Shell .loop03-termos-fechar{
+ position:absolute;right:12px;top:10px;color:#fff;background:transparent;
+ border:1px solid #79658e;border-radius:8px;font-size:1.5rem;cursor:pointer;
+}
+#loop03Shell .loop03-termos-aceite{
+ display:flex;align-items:center;gap:10px;margin-top:17px;cursor:pointer;
+ color:#fff0c9;font-weight:700;font-size:.88rem;
+}
+#loop03Shell .loop03-termos-aceite input{width:21px;height:21px;accent-color:#39d69a}
+@media(max-width:590px){
+ #loop03-posicoes .loop03-cartao-abrir{gap:5px!important}
+ #loop03-posicoes .loop03-grade-posicoes .loop03-cpf-cartao{
+  padding:5px 4px;min-height:27px;border-radius:7px;font-size:.57rem;
+ }
+ #loop03-posicoes .loop03-grade-posicoes .loop03-check-cartao{width:16px;height:16px}
+ #loop03-posicoes .loop03-grade-posicoes .loop03-aceite-linha{gap:3px;min-height:20px}
+ #loop03-posicoes .loop03-grade-posicoes .loop03-link-termos{font-size:.56rem}
+ #loop03-posicoes .loop03-grade-posicoes .loop03-indicacoes-curtas{font-size:.59rem}
+ #loop03Shell .loop03-termos-janela{padding:15px}
+}
+
+/* 20/out - Minhas Posições: CPF e quadradinho SOB a esfera, antes da
+   divisória preservada. Status verde/vermelho apenas nas posições existentes.
+   Vagas vazias mantém o roxo já aprovado e mostram "Indicações" sem número. */
+#loop03-posicoes .loop03-grade-posicoes .loop03-cartao-abrir{
+ flex:0 0 auto!important;
+}
+#loop03-posicoes .loop03-grade-posicoes .loop03-cartao-posicao{
+ gap:8px!important;
+}
+#loop03-posicoes .loop03-grade-posicoes .loop03-aceite-linha{
+ order:1;display:flex!important;align-items:center!important;
+ justify-content:space-between!important;gap:7px!important;
+ min-width:0;width:100%;margin:3px 0 0;
+}
+#loop03-posicoes .loop03-grade-posicoes .loop03-cpf-cartao{
+ flex:1 1 auto;min-width:0;max-width:none!important;width:100%;
+ border-radius:10px;
+}
+#loop03-posicoes .loop03-grade-posicoes .loop03-cpf-protegido{
+ color:#c7bdd8!important;background:#19162a!important;cursor:default;
+}
+#loop03-posicoes .loop03-grade-posicoes .loop03-check-cartao{
+ flex:0 0 23px;cursor:pointer;
+}
+#loop03-posicoes .loop03-grade-posicoes .loop03-cartao-resumo{
+ order:2;margin-top:auto!important;min-height:31px;
+ border-top:1px solid #736388!important;display:flex;align-items:center;
+}
+#loop03-posicoes .loop03-grade-posicoes .loop03-indicacoes-curtas{
+ text-align:left!important;
+}
+@media(max-width:590px){
+ #loop03-posicoes .loop03-grade-posicoes .loop03-cartao-posicao{gap:4px!important}
+ #loop03-posicoes .loop03-grade-posicoes .loop03-aceite-linha{gap:3px!important;margin-top:0}
+ #loop03-posicoes .loop03-grade-posicoes .loop03-check-cartao{flex-basis:16px}
+ #loop03-posicoes .loop03-grade-posicoes .loop03-cpf-cartao{
+  width:100%!important;min-width:0!important;max-width:none!important;
+  font-size:.52rem!important;
+ }
+ #loop03-posicoes .loop03-grade-posicoes .loop03-cartao-resumo{min-height:23px}
+}
+
+/* Links verdadeiros de Escritório e AKITEMM no lugar do painel preto anterior. */
+#loop03Shell #loop03-posicoes .loop03-painel-links{
+ display:grid;gap:12px;margin:16px 0!important;padding:15px 16px!important;
+ border:1px solid #b49153!important;border-radius:14px!important;
+ background:#16202dbb!important;box-shadow:none!important;color:#f9edcc!important;
+}
+#loop03Shell #loop03-posicoes .loop03-link-compartilhar{display:grid;gap:5px;min-width:0}
+#loop03Shell #loop03-posicoes .loop03-link-compartilhar>label{
+ color:#f9edcc;font-size:.85rem;font-weight:750;
+}
+#loop03Shell #loop03-posicoes .loop03-campo-link{
+ display:flex;gap:9px;min-width:0;align-items:center;
+}
+#loop03Shell #loop03-posicoes .loop03-campo-link input{
+ flex:1 1 auto;width:100%;min-width:0;padding:11px 12px;border-radius:11px;
+ background:#0d1729!important;color:#f5fcff;border:1px solid #9a8bae;
+ font:500 .79rem system-ui;text-overflow:ellipsis;
+}
+#loop03Shell #loop03-posicoes .loop03-botao-copiar{
+ flex:0 0 44px;width:44px;height:41px;padding:4px;display:grid;place-items:center;
+ border-radius:10px;border:1px solid #c9ab6b;background:#2c2541;color:#f2ddb1;
+ font-size:1.25rem;cursor:pointer;
+}
+#loop03Shell #loop03-posicoes .loop03-botao-copiar:disabled{opacity:.45;cursor:not-allowed}
+#loop03Shell #loop03-posicoes #loop03StatusCopiarLinks:empty{display:none}
+#loop03Shell #loop03-posicoes #loop03StatusCopiarLinks{color:#ccf6dd}
+#loop03-posicoes .loop03-grade-posicoes .loop03-link-termos{
+ flex:1 1 auto;min-width:0;max-width:none;display:flex;align-items:center;
+ min-height:34px;padding:7px 8px!important;border:1px solid #a28bbf!important;
+ border-radius:10px;background:#16112a!important;white-space:nowrap;overflow:hidden;
+ text-overflow:ellipsis;color:#e8d7fd!important;font-size:.77rem;
+}
+#loop03-posicoes .loop03-grade-posicoes .loop03-posicao-vazia .loop03-link-termos{
+ background:#211630!important;
+}
+#loop03-posicoes .loop03-grade-posicoes .loop03-posicao-vazia .loop03-check-cartao{
+ cursor:not-allowed;opacity:.6
+}
+@media(max-width:590px){
+ #loop03-posicoes .loop03-grade-posicoes .loop03-link-termos{
+  min-height:27px;padding:3px 4px!important;font-size:.51rem;
+ }
+ #loop03Shell #loop03-posicoes .loop03-painel-links{padding:10px!important}
+ #loop03Shell #loop03-posicoes .loop03-campo-link input{font-size:.72rem;padding:9px 7px}
+ #loop03Shell #loop03-posicoes .loop03-botao-copiar{flex-basis:37px;width:37px;height:38px}
+}
+
+/* Minhas Posições: régua horizontal 1–6 sem bloquear os cartões.
+   No Tabuleiro, o seletor modal previamente aprovado não muda. */
+#loop03Shell #loop03SeletorPosicao.loop03-seletor-posicoes-inline{
+ position:static!important;inset:auto!important;z-index:auto!important;
+ display:block!important;background:transparent!important;padding:0!important;
+ margin:13px 0 8px!important;
+}
+#loop03Shell #loop03SeletorPosicao.loop03-seletor-posicoes-inline .loop03-seletor-janela{
+ display:flex;flex-direction:column;gap:8px;box-sizing:border-box;
+ max-width:none!important;width:100%!important;max-height:none!important;
+ padding:12px 16px!important;overflow:visible!important;
+ background:linear-gradient(110deg,#20152f,#181e32)!important;
+ border:1px solid #caa05f!important;border-radius:14px!important;
+ box-shadow:0 7px 24px #0009!important;
+}
+#loop03Shell #loop03SeletorPosicao.loop03-seletor-posicoes-inline .loop03-seletor-topo h2{
+ font-size:.92rem!important;
+}
+#loop03Shell #loop03SeletorPosicao.loop03-seletor-posicoes-inline .loop03-seletor-janela>p{
+ display:none!important;
+}
+#loop03Shell #loop03SeletorPosicao.loop03-seletor-posicoes-inline .loop03-lista-escolha{
+ display:grid!important;grid-template-columns:repeat(6,minmax(0,1fr))!important;gap:9px!important;
+}
+#loop03Shell #loop03SeletorPosicao.loop03-seletor-posicoes-inline .loop03-escolha-item{
+ display:grid;place-items:center;min-width:0;min-height:39px;
+ text-align:center;padding:6px 2px;font-weight:800;font-size:1rem;
+ border-radius:10px;background:linear-gradient(135deg,#302345,#15172c);
+ color:#e8d9fc;border:1px solid #79628f;
+}
+#loop03Shell #loop03SeletorPosicao.loop03-seletor-posicoes-inline .loop03-escolha-item[aria-pressed=true]{
+ border-color:#ffe195!important;background:#795a32!important;color:#fff5cb!important;
+ box-shadow:0 0 13px #efbd5b91;outline:1px solid #fbe3a0;
+}
+#loop03Shell #loop03SeletorPosicao.loop03-seletor-posicoes-inline .loop03-escolha-item:disabled{
+ opacity:.47;cursor:default;
+}
+#loop03-posicoes .loop03-compra-gatilho{
+ display:block;width:100%;border:0;cursor:pointer;text-align:left;font:inherit;
+}
+#loop03-posicoes .loop03-compra-gatilho::after{
+ content:'⌄';float:right;font-size:1.1rem;line-height:.8;color:inherit;opacity:.9;
+}
+#loop03-posicoes .loop03-compra-gatilho[aria-expanded=true]::after{
+ content:'⌃';
+}
+#loop03-posicoes .loop03-cartao-posicao.loop03-cartao-selecionado{
+ border-color:#ffdc81!important;outline:2px solid #f5cb6a!important;outline-offset:1px;
+ box-shadow:inset 0 0 0 3px #72501f,0 0 20px #f7c36a9c!important;
+}
+#loop03-posicoes .loop03-compra-expandida[hidden]{display:none!important}
+#loop03-posicoes .loop03-compra-expandida{
+ display:grid;gap:9px;min-width:0;order:0;
+ border:1px solid #a98554;border-radius:12px;padding:10px;
+ background:linear-gradient(145deg,#231934,#101826);color:#f7eef8;
+}
+#loop03-posicoes .loop03-compra-titulo{font-weight:850;font-size:.78rem;color:#ffe6ad}
+#loop03-posicoes .loop03-produto-comprado{
+ display:grid;grid-template-columns:42px minmax(0,1fr) auto;gap:8px;align-items:center;
+ padding:5px 0;border-bottom:1px solid #ffffff1c;
+}
+#loop03-posicoes .loop03-produto-comprado:last-of-type{border-bottom:0}
+#loop03-posicoes .loop03-produto-imagem{
+ display:grid;place-items:center;position:relative;width:40px;height:44px;
+ border-radius:8px;background:linear-gradient(145deg,#a5394e,#571729);
+ color:#fff4e7;border:1px solid #e4bb93;overflow:hidden;
+}
+#loop03-posicoes .loop03-produto-imagem span{font-weight:950;font-size:.7rem;letter-spacing:.02em}
+#loop03-posicoes .loop03-produto-imagem img{
+ width:100%;height:100%;position:absolute;inset:0;object-fit:cover;
+}
+#loop03-posicoes .loop03-produto-dados{display:grid;gap:3px;min-width:0}
+#loop03-posicoes .loop03-produto-dados strong{font-size:.72rem;line-height:1.28;overflow-wrap:anywhere}
+#loop03-posicoes .loop03-produto-dados small{color:#cebcd9;font-size:.67rem}
+#loop03-posicoes .loop03-produto-preco{font-size:.74rem;font-weight:800;color:#fff0ba;white-space:nowrap}
+#loop03-posicoes .loop03-compra-total{display:flex;gap:6px;align-items:center;justify-content:space-between}
+#loop03-posicoes .loop03-compra-total span{font-size:.7rem;color:#d6c9e6}
+#loop03-posicoes .loop03-compra-total strong{font-size:.85rem;color:#ffe9a2}
+#loop03-posicoes .loop03-compra-historica{font-size:.58rem;color:#9d98b5}
+#loop03-posicoes .loop03-compra-sem-registro{font-size:.73rem;color:#e9dff2;line-height:1.45;margin:0}
+@media(max-width:590px){
+ #loop03Shell #loop03SeletorPosicao.loop03-seletor-posicoes-inline .loop03-seletor-janela{
+  padding:8px!important;
+ }
+ #loop03Shell #loop03SeletorPosicao.loop03-seletor-posicoes-inline .loop03-lista-escolha{gap:4px!important}
+ #loop03Shell #loop03SeletorPosicao.loop03-seletor-posicoes-inline .loop03-escolha-item{
+  min-height:31px;padding:3px 0!important;font-size:.77rem;
+ }
+ #loop03-posicoes .loop03-compra-expandida{padding:6px!important;gap:6px}
+ #loop03-posicoes .loop03-produto-comprado{grid-template-columns:1fr;gap:2px}
+ #loop03-posicoes .loop03-produto-imagem{width:29px;height:30px}
+ #loop03-posicoes .loop03-produto-preco{font-size:.64rem}
+ #loop03-posicoes .loop03-produto-dados strong{font-size:.62rem}
+}
+
+/* Telefone: seis cartões sempre 3x2. Detalhes da compra em uma área
+   legível de largura total, sem comprimir nome, foto e valor em 100px. */
+#loop03-posicoes #loop03CompraMobile{display:none!important}
+@media(max-width:590px){
+ #loop03-posicoes .loop03-grade-posicoes .loop03-compra-expandida{
+  display:none!important;
+ }
+ #loop03-posicoes #loop03CompraMobile:not([hidden]){
+  display:grid!important;width:100%;box-sizing:border-box;margin:12px 0 14px;
+  padding:13px!important;gap:10px!important;
+  border:1px solid #d9ad67!important;border-radius:14px!important;
+  background:linear-gradient(135deg,#20182f,#0c1b2c)!important;
+ }
+ #loop03-posicoes #loop03CompraMobile .loop03-produto-comprado{
+  grid-template-columns:43px minmax(0,1fr) auto!important;gap:9px!important;
+ }
+ #loop03-posicoes #loop03CompraMobile .loop03-produto-imagem{
+  width:40px!important;height:45px!important;
+ }
+ #loop03-posicoes #loop03CompraMobile .loop03-produto-dados strong{
+  font-size:.81rem!important;
+ }
+ #loop03-posicoes #loop03CompraMobile .loop03-produto-preco{
+  font-size:.82rem!important;
+ }
+ #loop03-posicoes #loop03CompraMobile .loop03-compra-total strong{
+  font-size:1rem!important;
+ }
+}
+
+/* 20/out — refinamento aprovado: somente a posição escolhida cresce.
+   Os cartões vizinhos mantêm altura própria, sem esticar com a linha do grid. */
+#loop03-posicoes #loop03OpcoesPosicoes.loop03-grade-posicoes{
+ align-items:start!important;
+}
+#loop03-posicoes #loop03OpcoesPosicoes.loop03-grade-posicoes>.loop03-unidade-posicao{
+ align-self:start!important;height:max-content!important;
+ min-width:0!important;max-width:100%!important;
+}
+#loop03-posicoes #loop03OpcoesPosicoes.loop03-grade-posicoes>.loop03-unidade-posicao>.loop03-cartao-posicao{
+ flex:0 0 auto!important;
+ box-sizing:border-box!important;
+ max-width:100%!important;
+}
+#loop03-posicoes #loop03OpcoesPosicoes .loop03-compra-expandida{
+ overflow-wrap:anywhere!important;
+}
+#loop03-posicoes #loop03OpcoesPosicoes .loop03-produto-comprado{
+ min-width:0!important;max-width:100%!important;
+}
+@media(max-width:590px){
+ #loop03-posicoes #loop03OpcoesPosicoes>.loop03-unidade-posicao{
+  align-self:start!important;
+ }
+}
+
+/* Correção do título verde/vermelho que ficava invisível em captura mobile:
+   faixa e esfera são partes do MESMO botão, sem camadas interativas sobrepostas.
+   O cartão selecionado mantém brilho e o título segue legível. */
+#loop03-posicoes .loop03-grade-posicoes .loop03-cartao-abrir{
+ gap:8px!important;min-width:0!important;
+}
+#loop03-posicoes .loop03-grade-posicoes .loop03-cartao-abrir>.loop03-compra-gatilho{
+ display:block!important;flex:0 0 auto!important;align-self:stretch!important;
+ min-height:0!important;position:relative!important;
+ opacity:1!important;visibility:visible!important;
+ border-radius:9px!important;
+}
+#loop03-posicoes .loop03-grade-posicoes .loop03-status-confirmacao-ok>
+ .loop03-cartao-abrir>.loop03-compra-gatilho{
+ background:linear-gradient(120deg,#075d42,#149565)!important;
+ color:#f5fff9!important;
+}
+#loop03-posicoes .loop03-grade-posicoes .loop03-status-confirmacao-pendente>
+ .loop03-cartao-abrir>.loop03-compra-gatilho{
+ background:linear-gradient(120deg,#7d1730,#c42c48)!important;
+ color:#fff7f8!important;
+}
+@media(max-width:590px){
+ #loop03-posicoes .loop03-grade-posicoes .loop03-cartao-abrir{gap:5px!important}
+ #loop03-posicoes .loop03-grade-posicoes .loop03-cartao-abrir>.loop03-compra-gatilho{
+  padding:5px 4px!important;font-size:.56rem!important;line-height:1.3!important;
+  min-height:19px!important;box-sizing:border-box!important;
+ }
+}
+
+/* Minha Rede: um único contador de indicações, busca real e links fora
+   da mesa roxa. Lista limitada a aproximadamente quatro pessoas visíveis. */
+#loop03-rede .loop03-contador-total{
+ justify-content:center!important;
+}
+#loop03-rede .loop03-rede-subtotal{
+ width:100%;padding-top:9px;margin-top:5px;
+ border-top:1px solid #d3a66460;
+ display:flex;align-items:center;justify-content:center;gap:7px;flex-wrap:wrap;
+}
+#loop03-rede .loop03-rede-subtotal span{
+ font-size:.66rem!important;color:#e9daee!important;
+}
+#loop03-rede .loop03-rede-subtotal strong{
+ font-size:1.08rem!important;color:#fce6ae!important;
+}
+#loop03-rede .loop03-busca-equipe{
+ min-width:0;align-self:center;
+ padding:12px 10px;border:1px solid #ae7ee0;border-radius:14px;
+ background:linear-gradient(150deg,#20133c,#0f1329);
+ box-sizing:border-box;
+}
+#loop03-rede .loop03-busca-equipe label{
+ display:block;margin-bottom:9px;color:#ffe2a8;
+ font-size:.75rem;font-weight:850;
+}
+#loop03-rede #loop03BuscarIndicado{
+ box-sizing:border-box;display:block;min-width:0;width:100%;
+ border:1px solid #c5a0e7;border-radius:10px;
+ background:#0d1022;color:#fff;padding:10px 9px;
+ font:600 .84rem system-ui;
+}
+#loop03-rede #loop03BuscarIndicado::placeholder{color:#bdafcf}
+#loop03-rede #loop03BuscarIndicado:focus-visible{outline:2px solid #ffd88f;outline-offset:2px}
+#loop03-rede #loop03ListaEquipe{
+ max-height:420px!important;min-height:0!important;
+ overflow-y:auto!important;overflow-x:hidden!important;
+ padding:2px 6px 4px 1px!important;
+ scrollbar-color:#ab7fdc #1b0d35;
+ overscroll-behavior:contain;
+}
+#loop03-rede #loop03ListaEquipe .loop03-equipe-linha[hidden]{display:none!important}
+#loop03-rede .loop03-busca-vazia{
+ font-size:.8rem;color:#f7e5ce;text-align:center;
+}
+#loop03-rede .loop03-busca-vazia[hidden]{display:none!important}
+#loop03LinksRede[hidden]{display:none!important}
+#loop03LinksRede{
+ box-sizing:border-box;margin:14px 0 4px!important;
+ position:relative;max-width:100%;overflow:hidden;
+}
+#loop03LinksRede>summary{cursor:pointer}
+#loop03LinksRede:focus-within{border-color:#e7bf71!important}
+@media(max-width:590px){
+ #loop03-rede .loop03-busca-equipe{padding:9px 7px}
+ #loop03-rede .loop03-busca-equipe label{font-size:.66rem}
+ #loop03-rede #loop03BuscarIndicado{font-size:.69rem;padding:8px 6px}
+ #loop03-rede .loop03-rede-subtotal span{font-size:.58rem!important}
+ #loop03-rede #loop03ListaEquipe{max-height:395px!important}
+}
+
+/* A troca do nick é funcional, mas fica recolhida para "Meus Links"
+   abrir inicialmente somente o Escritório Virtual e a AKITEMM. */
+#loop03LinksRede .loop03-link-nick-opcional{
+ margin-top:12px;border-top:1px solid #8c6db5;padding-top:9px;
+}
+#loop03LinksRede .loop03-link-nick-opcional summary{
+ cursor:pointer;color:#f2d899;font-size:.76rem;font-weight:750;
+}
+#loop03LinksRede .loop03-link-nick-opcional form{margin-top:11px}
+
+/* Meus Links — duas linhas curtas com marcador e estado vinculado ao link
+   verdadeiro; manter o restante do painel e os botões inalterados. */
+#loop03LinksRede #statusLinkIndicacaoParticipante{
+ display:flex!important;flex-direction:column;align-items:flex-start;
+ gap:8px!important;margin:7px 0 13px!important;
+ color:#f0e5f8!important;line-height:1.55!important;
+}
+#loop03LinksRede .loop03-link-status-linha{
+ display:block;position:relative;max-width:100%;
+ padding-left:16px;white-space:normal;
+ font-size:clamp(.76rem,1.25vw,.88rem);
+}
+#loop03LinksRede .loop03-link-status-linha::before{
+ content:'●';position:absolute;left:0;top:.07em;
+ font-size:.68em;color:#f9d083;
+}
+#loop03LinksRede .loop03-link-status-selo{
+ display:inline-block;vertical-align:baseline;white-space:nowrap;
+ min-width:78px;min-height:25px;box-sizing:border-box;
+ padding:3px 10px;margin:0 4px;border-radius:9px;
+ border:1px solid #9d91ae;background:#29283f;text-align:center;
+ box-shadow:inset 0 1px 0 #ffffff30,0 2px 8px #0005;
+ font-weight:800;font-size:.84em;letter-spacing:.02em;
+}
+#loop03LinksRede .loop03-link-status-ativo{
+ color:#b9ffe1;border-color:#20bf7c;background:#083928;
+}
+#loop03LinksRede .loop03-link-status-inativo{
+ color:#ffe5ba;border-color:#c8923d;background:#463017;
+}
+
+/* 20/10: Nick editável com campo e SALVAR lado a lado. */
+#loop03LinksRede .loop03-link-nick-opcional{
+ display:block!important;margin:13px 0 0!important;
+ padding:12px 0 2px!important;border-top:1px solid #8c6db5;
+}
+#loop03LinksRede .loop03-link-nick-cabecalho{
+ display:block;color:#f2d899;font-size:.82rem;margin-bottom:8px;
+}
+#loop03LinksRede .loop03-link-nick-opcional form{
+ max-width:none!important;width:100%;margin:0;
+ display:grid!important;grid-template-columns:minmax(0,1fr) auto!important;
+ align-items:center;gap:7px!important;
+}
+#loop03LinksRede .loop03-label-acessivel{
+ position:absolute!important;width:1px!important;height:1px!important;
+ margin:-1px!important;overflow:hidden!important;clip-path:inset(50%)!important;
+ white-space:nowrap!important;
+}
+#loop03LinksRede #apelidoLinkParticipante{
+ min-width:0;width:100%;height:40px!important;box-sizing:border-box;
+ border-radius:11px!important;padding:7px 11px!important;
+ background:#17172d!important;border:1px solid #a88fd0!important;
+ color:#fff!important;font-size:.86rem!important;
+}
+#loop03LinksRede #salvarApelidoLinkParticipante{
+ width:auto!important;min-width:74px!important;max-width:none!important;
+ height:40px!important;min-height:40px!important;padding:6px 12px!important;
+ border-radius:10px!important;margin:0!important;
+}
+#loop03-tabuleiro .loop03-mapa-grade .loop03-fila-id-nick{
+ display:flex;flex:0 1 auto;min-width:0;flex-direction:column;align-items:center;
+ justify-content:center;gap:1px;line-height:1.1;
+}
+#loop03-tabuleiro .loop03-mapa-grade .loop03-fila-nick{
+ display:block;max-width:100%;font-size:clamp(.46rem,.75vw,.61rem);
+ color:#ead4fb;font-weight:730;overflow:hidden;text-overflow:ellipsis;
+ white-space:nowrap;text-align:center;
+}
+#loop03-tabuleiro .loop03-mapa-grade .loop03-fila-id-nick .loop03-numero-titular{
+ white-space:nowrap!important;
+}
+#loop03-posicoes .loop03-cartao-nick{
+ display:block;max-width:100%;font-size:clamp(.55rem,.8vw,.75rem);
+ color:#fae5b2;font-weight:750;text-align:center;overflow:hidden;
+ text-overflow:ellipsis;white-space:nowrap;
+}
+
+/* Indicações numeradas apenas quando existem pessoas cadastradas. */
+#loop03-rede .loop03-equipe-linha .loop03-ordem-indicacao{
+ grid-column:2/4!important;grid-row:auto!important;
+ display:block;font-size:clamp(.55rem,.79vw,.72rem);
+ color:#ffdf9b;font-weight:650;line-height:1.1;
+}
+
+/* #ID + nick não podem aumentar largura dos cartões 3x2 no celular. */
+#loop03-posicoes #loop03OpcoesPosicoes.loop03-grade-posicoes{
+ display:grid!important;grid-template-columns:repeat(3,minmax(0,1fr))!important;
+ width:100%!important;min-width:0!important;max-width:100%!important;
+}
+#loop03-posicoes #loop03OpcoesPosicoes>.loop03-unidade-posicao,
+#loop03-posicoes #loop03OpcoesPosicoes .loop03-cartao-posicao,
+#loop03-posicoes #loop03OpcoesPosicoes .loop03-cartao-abrir,
+#loop03-posicoes #loop03OpcoesPosicoes .loop03-aceite-linha,
+#loop03-posicoes #loop03OpcoesPosicoes .loop03-cartao-miolo{
+ min-width:0!important;max-width:100%!important;box-sizing:border-box!important;
+}
+#loop03-posicoes #loop03OpcoesPosicoes .loop03-cartao-posicao,
+#loop03-posicoes #loop03OpcoesPosicoes .loop03-cartao-abrir{
+ width:100%!important;
+}
+#loop03-posicoes #loop03OpcoesPosicoes .loop03-cartao-miolo{
+ width:100%!important;overflow:hidden!important;
+}
+#loop03-posicoes #loop03OpcoesPosicoes .loop03-cartao-identidade{
+ min-width:0!important;flex:1 1 0!important;width:0!important;
+ max-width:100%!important;grid-template-columns:minmax(0,1fr)!important;
+}
+#loop03-posicoes #loop03OpcoesPosicoes .loop03-cartao-nick{
+ min-width:0!important;width:100%!important;max-width:100%!important;
+ display:block!important;overflow:hidden!important;white-space:nowrap!important;
+ text-overflow:ellipsis!important;
+}
+
+/* Mensagens de erro/cópia aparecem somente quando houver algo a comunicar. */
+#loop03LinksRede #avisoLinkParticipante:empty{display:none}
+
+
+/* Minha Rede: seletor numerado embutido nos tres pontos; nenhuma outra aba. */
+#loop03-rede .loop03-equipe-linha>.loop03-equipe-escolhas[hidden]{display:none!important}
+#loop03-rede .loop03-equipe-linha>.loop03-equipe-escolhas{
+ grid-column:1/-1!important;grid-row:auto!important;
+ box-sizing:border-box;min-width:0;width:100%;
+ display:flex!important;flex-direction:column;gap:9px;
+ padding:11px;border-radius:12px;
+ border:1px solid #d0a568;background:linear-gradient(130deg,#221434,#10182e);
+ box-shadow:inset 0 0 0 1px #936eb53f;
+}
+#loop03-rede .loop03-equipe-escolhas-titulo{
+ color:#ffe6ab;font-size:.8rem;font-weight:780;
+}
+#loop03-rede .loop03-equipe-numeros{
+ display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:6px;min-width:0;
+}
+#loop03-rede .loop03-equipe-numeros>.loop03-equipe-numero{
+ display:grid;place-items:center;box-sizing:border-box;min-width:0;
+ width:100%;height:38px;min-height:38px;padding:0;
+ border:1px solid #e4b96d;border-radius:9px;background:#332149;
+ color:#ffebc1;font-size:.94rem;font-weight:850;cursor:pointer;
+}
+#loop03-rede .loop03-equipe-numeros>.loop03-equipe-numero:disabled{
+ opacity:.55;cursor:not-allowed;
+}
+#loop03-rede .loop03-equipe-numeros>.loop03-equipe-numero-vinculado{
+ opacity:1;cursor:default;border-color:#6ce7ab;background:#12402f;color:#d0ffdf;
+}
+#loop03-rede .loop03-equipe-escolhas-aviso{
+ color:#dcc8eb;font-size:.72rem;line-height:1.35;
+}
+@media(max-width:590px){
+ #loop03-rede .loop03-equipe-numeros{gap:4px}
+ #loop03-rede .loop03-equipe-numeros>.loop03-equipe-numero{
+  height:34px;min-height:34px;font-size:.83rem;
+ }
+}
+
+
+/* Escolha reversível até a confirmação explícita, sem diálogo do navegador. */
+#loop03-rede .loop03-equipe-confirmacao[hidden]{display:none!important}
+#loop03-rede .loop03-equipe-confirmacao{
+ display:flex!important;flex-wrap:wrap;align-items:center;gap:7px;
+ border-top:1px solid #9a7aab;padding-top:8px;min-width:0;
+}
+#loop03-rede .loop03-equipe-confirmacao>span{
+ width:100%;color:#fff0d1;font-size:.76rem;line-height:1.35;
+}
+#loop03-rede .loop03-equipe-confirmacao>button{
+ border-radius:8px;min-height:37px;padding:7px 14px;
+ font-size:.78rem;font-weight:800;cursor:pointer;
+}
+#loop03-rede .loop03-equipe-confirmacao>.loop03-equipe-confirmar{
+ color:#dcffeb;background:#086637;border:1px solid #3bf29a;
+}
+#loop03-rede .loop03-equipe-confirmacao>.loop03-equipe-cancelar{
+ color:#ffe4e6;background:#3c243c;border:1px solid #d49db0;
+}
+#loop03-rede .loop03-equipe-numeros>.loop03-equipe-numero-escolhido{
+ border-color:#5cf1a2!important;background:#16623a!important;color:#fff!important;
+ box-shadow:0 0 0 2px #5cf1a260;
+}
+#loop03-rede .loop03-rede-utilizadas{
+ margin-top:4px!important;
+}
+
+
+/* Índice cronológico permanente no lugar das iniciais: também cabe 1000+. */
+#loop03-rede .loop03-equipe-avatar{font-variant-numeric:tabular-nums;white-space:nowrap;line-height:1}
+#loop03-rede .loop03-equipe-avatar-mil{font-size:.56rem!important;letter-spacing:-.045em}
+#loop03-rede .loop03-equipe-avatar-longo{font-size:.43rem!important;letter-spacing:-.07em}
+@media(max-width:590px){
+ #loop03-rede .loop03-equipe-avatar-mil{font-size:.45rem!important}
+ #loop03-rede .loop03-equipe-avatar-longo{font-size:.35rem!important}
+}
+
+
+/* Minhas Posições: EXATAMENTE o quadro aprovado na Minha Rede,
+   com três valores da mesma fonte SQLite, sem a antiga faixa de saldo. */
+#loop03Shell #loop03-posicoes>.loop03-contador-posicoes{
+ width:min(100%,425px)!important;box-sizing:border-box!important;
+ min-height:112px!important;margin:10px 0 17px!important;
+ padding:11px 12px!important;display:flex!important;
+ flex-direction:column!important;align-items:center!important;
+ justify-content:center!important;gap:7px!important;
+}
+#loop03Shell #loop03-posicoes>.loop03-contador-posicoes>.loop03-rede-subtotal{
+ width:100%!important;padding-top:9px!important;margin-top:5px!important;
+ border-top:1px solid #d3a66460!important;
+ display:flex!important;align-items:center!important;
+ justify-content:center!important;gap:7px!important;flex-wrap:wrap!important;
+}
+#loop03Shell #loop03-posicoes>.loop03-contador-posicoes>.loop03-rede-subtotal span{
+ font-size:.66rem!important;color:#e9daee!important;
+}
+#loop03Shell #loop03-posicoes>.loop03-contador-posicoes>.loop03-rede-subtotal strong{
+ font-size:1.08rem!important;color:#fce6ae!important;
+}
+/* Mesmos dois links e botões, agora dentro de um details nativo acessível. */
+#loop03Shell #loop03-posicoes>.loop03-links-posicoes{
+ box-sizing:border-box;max-width:100%;margin:16px 0 4px!important;
+ border:1px solid #b17bdf!important;border-radius:13px!important;
+ background:linear-gradient(140deg,#1c0e3d,#120c25)!important;
+ overflow:hidden;
+}
+#loop03Shell #loop03-posicoes>.loop03-links-posicoes>summary{
+ display:list-item;padding:13px 16px;cursor:pointer;
+ background:linear-gradient(90deg,#25134e,#421666 70%,#1b1339);
+ color:#ffe3ab!important;font-weight:850!important;
+}
+#loop03Shell #loop03-posicoes>.loop03-links-posicoes[open]>summary{
+ border-bottom:1px solid #c391e9;
+}
+#loop03Shell #loop03-posicoes>.loop03-links-posicoes>summary:focus-visible{
+ outline:2px solid #ffe8a5;outline-offset:-3px;
+}
+#loop03Shell #loop03-posicoes>.loop03-links-posicoes>.loop03-painel-links{
+ margin:10px!important;width:calc(100% - 20px)!important;
+}
+/* Identidade pública do rodapé APROVADA: foto opcional, nick e estado.
+   A/B durante fila; coroa na catraca. Nunca mostrar nome civil. */
+#loop03Shell .loop03-sidebar>.loop03-identidade-selecionada{
+ display:flex!important;align-items:center!important;justify-content:flex-start!important;
+ min-height:52px!important;gap:8px!important;
+}
+#loop03Shell .loop03-sidebar>.loop03-identidade-selecionada>.loop03-avatar{
+ display:grid!important;place-items:center!important;
+}
+#loop03Shell .loop03-sidebar>.loop03-identidade-selecionada>.loop03-avatar>.loop03-foto-padrao{
+ display:none!important;
+}
+#loop03Shell .loop03-sidebar>.loop03-identidade-selecionada>.loop03-dados-perfil:not([hidden]){
+ display:block!important;min-width:0!important;flex:1 1 auto!important;
+}
+#loop03Shell .loop03-sidebar>.loop03-identidade-selecionada>#loop03LetraRodape:not([hidden]){
+ display:inline-flex!important;align-items:center!important;justify-content:center!important;
+ min-width:25px!important;min-height:25px!important;
+ padding:3px 5px!important;border:1px solid #fce49f!important;border-radius:7px!important;
+ background:#eab953!important;color:#211a11!important;font-size:1.03rem!important;
+ font-weight:900!important;line-height:1!important;
+}
+#loop03Shell .loop03-sidebar>.loop03-identidade-selecionada>#loop03CoroaTabuleiro:not([hidden]){
+ display:inline-flex!important;align-items:center!important;justify-content:center!important;
+ color:#ffd46d!important;font-size:1.9rem!important;text-shadow:0 0 11px #f6b352!important;
+}
+#loop03Shell .loop03-visor-numero .loop03-visor-numero-identidade{
+ display:flex!important;grid-row:2!important;flex-direction:column!important;
+ align-items:center!important;justify-content:center!important;
+ min-width:0!important;max-width:100%!important;
+}
+#loop03Shell .loop03-visor-numero .loop03-visor-numero-identidade #loop03Numero{
+ grid-row:auto!important;max-width:100%!important;
+}
+#loop03Shell #loop03NickVisor{
+ display:block!important;grid-row:auto!important;
+ min-width:0!important;max-width:100%!important;
+ text-align:center!important;overflow:hidden!important;text-overflow:ellipsis!important;
+ white-space:nowrap!important;color:#ffeac2!important;
+ font-size:clamp(.55rem,.88vw,.78rem)!important;line-height:1.15!important;
+ font-weight:740!important;
+}
+#loop03Shell #loop03NickVisor:empty{display:none!important}
+#loop03Shell #loop03LetraRodape[hidden]{display:none!important}
+#loop03Shell #loop03LetraRodape.loop03-fila-rodape-b:not([hidden]){
+ background:#e3e8f1!important;color:#181a22!important;border-color:#fff!important;
+}
+@media(max-width:590px){
+ #loop03Shell #loop03-posicoes>.loop03-contador-posicoes{
+  width:100%!important;min-height:103px!important;padding:9px!important;
+ }
+ #loop03Shell #loop03-posicoes>.loop03-contador-posicoes>.loop03-rede-subtotal span{
+  font-size:.58rem!important;
+ }
+}
+
+
+/* FINANCEIRO — visual aprovado em 20/10; apenas esta aba.
+   Os valores vêm do SQLite e "—" significa fonte financeira indisponível. */
+#loop03-financeiro .loop03-financeiro-legado-oculto,
+#loop03-financeiro [hidden]{display:none!important}
+#loop03-financeiro .loop03-financeiro-topo{
+ margin:10px 0 12px!important;padding:14px!important;min-width:0!important;
+ border:1.5px solid #d6a45b!important;border-radius:15px!important;
+ background:linear-gradient(128deg,#38156a,#51178a 55%,#231044)!important;
+ box-shadow:inset 0 0 0 1px #eac07942,0 5px 18px #0008!important;
+}
+#loop03-financeiro .loop03-financeiro-topo>h3{
+ color:#ffedba!important;font-weight:850!important;margin:0 0 7px!important;
+ font-size:clamp(.92rem,1.6vw,1.22rem)!important;
+}
+#loop03-financeiro .loop03-financeiro-topo>p:first-of-type{
+ color:#e9d6ff!important;font-size:.78rem!important;margin:0 0 13px!important;
+ line-height:1.4!important;
+}
+#loop03-financeiro .loop03-financeiro-resumos{
+ display:grid!important;grid-template-columns:repeat(4,minmax(0,1fr))!important;
+ gap:9px!important;width:100%!important;min-width:0!important;
+ margin:0!important;padding:0!important;
+}
+#loop03-financeiro .loop03-financeiro-resumos>div{
+ box-sizing:border-box!important;min-width:0!important;display:flex!important;
+ flex-direction:column!important;justify-content:center!important;
+ align-items:flex-start!important;gap:8px!important;padding:12px!important;
+ border:1px solid #9369b3!important;border-radius:14px!important;
+ background:linear-gradient(150deg,#102832,#091b25)!important;
+ box-shadow:inset 0 1px #e6c0f02e!important;min-height:104px!important;
+}
+#loop03-financeiro .loop03-financeiro-resumos>div>span{
+ color:#f3e8fa!important;font-size:clamp(.61rem,.9vw,.8rem)!important;
+ line-height:1.28!important;font-weight:700!important;
+}
+#loop03-financeiro .loop03-financeiro-resumos>div>strong:not([hidden]){
+ font-size:clamp(1.04rem,1.9vw,1.53rem)!important;color:#8ff3c3!important;
+ line-height:1.13!important;font-weight:880!important;white-space:nowrap!important;
+ font-variant-numeric:tabular-nums!important;
+}
+#loop03-financeiro .loop03-financeiro-saque{
+ display:block!important;margin:0!important;padding:20px 17px!important;
+ width:100%!important;min-width:0!important;box-sizing:border-box!important;
+ border:2px solid #bda05e!important;border-radius:19px!important;
+ background:linear-gradient(140deg,#112924,#112122 55%,#0e2224)!important;
+ box-shadow:0 4px 18px #0009,inset 0 0 0 1px #91a97332!important;
+}
+#loop03-financeiro .loop03-financeiro-saque>h3{
+ color:#ffe17f!important;font-size:clamp(1.14rem,2.1vw,1.6rem)!important;
+ margin:0 0 17px!important;font-weight:850!important;
+}
+#loop03-financeiro .loop03-escolhas-saque{
+ display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;
+ gap:12px!important;margin:0 0 13px!important;min-width:0!important;
+}
+#loop03-financeiro .loop03-opcao-saque{
+ min-width:0!important;box-sizing:border-box!important;min-height:105px!important;
+ display:flex!important;flex-direction:column!important;
+ align-items:flex-start!important;gap:7px!important;
+ padding:15px 17px!important;text-align:left!important;cursor:pointer!important;
+ border:1.5px solid #8c7b9d!important;border-radius:16px!important;
+ background:linear-gradient(135deg,#152b35,#10212b)!important;
+ box-shadow:inset 0 1px 0 #ffffff25!important;
+ color:#fff1dd!important;
+}
+#loop03-financeiro .loop03-opcao-saque>span{
+ font-size:clamp(.76rem,1.14vw,.99rem)!important;font-weight:720!important;
+ line-height:1.2!important;color:#f4edf8!important;
+}
+#loop03-financeiro .loop03-opcao-saque>strong{
+ font-size:clamp(1.22rem,2.55vw,1.82rem)!important;
+ font-weight:900!important;line-height:1.1!important;color:#80f1b4!important;
+ font-variant-numeric:tabular-nums!important;white-space:nowrap!important;
+}
+#loop03-financeiro .loop03-opcao-saque>small{
+ font-size:.69rem!important;color:#d6ecdc!important;
+}
+#loop03-financeiro .loop03-opcao-saque[aria-pressed="true"]{
+ border:2px solid #f6cf72!important;background:linear-gradient(135deg,#20392d,#123528)!important;
+ box-shadow:0 0 0 2px #ffdb7960,0 0 20px #ffd26780,inset 0 0 12px #f1c45640!important;
+}
+#loop03-financeiro .loop03-opcao-saque:focus-visible,
+#loop03-financeiro .loop03-historico-financeiro>summary:focus-visible{
+ outline:3px solid #ffd884!important;outline-offset:3px!important;
+}
+#loop03-financeiro .loop03-form-saque:not([hidden]){
+ display:grid!important;grid-template-columns:minmax(0,1fr) auto!important;
+ align-items:center!important;gap:10px!important;min-width:0!important;margin:14px 0!important;
+}
+#loop03-financeiro .loop03-rotulo-visualmente-oculto{
+ position:absolute!important;clip-path:inset(50%)!important;width:1px!important;
+ height:1px!important;overflow:hidden!important;white-space:nowrap!important;
+}
+#loop03-financeiro #valorSaqueTesteParticipante{
+ box-sizing:border-box!important;width:100%!important;min-width:0!important;
+ min-height:48px!important;border-radius:13px!important;padding:10px 14px!important;
+ background:#111d2b!important;border:1px solid #9c73b5!important;
+ color:#fff!important;font-size:1.08rem!important;
+}
+#loop03-financeiro #enviarSaqueTesteParticipante{
+ box-sizing:border-box!important;min-height:48px!important;border-radius:12px!important;
+ background:linear-gradient(180deg,#a5ffd4,#32c888)!important;
+ color:#102419!important;font-weight:850!important;font-size:.92rem!important;
+ padding:10px 17px!important;border:1px solid #65f3a9!important;
+}
+#loop03-financeiro #enviarSaqueTesteParticipante:disabled{
+ opacity:.52!important;cursor:not-allowed!important;
+}
+#loop03-financeiro #avisoSaqueTesteParticipante:not(:empty){
+ color:#ffddaa!important;font-size:.8rem!important;line-height:1.4!important;
+}
+#loop03-financeiro .loop03-historico-financeiro{
+ margin-top:15px!important;border-radius:13px!important;
+ border:1.5px solid #e3ac5c!important;background:#10172a!important;
+ color:#fff!important;overflow:hidden!important;
+}
+#loop03-financeiro .loop03-historico-financeiro>summary{
+ display:list-item!important;padding:14px 15px!important;
+ cursor:pointer!important;color:#ffe6a6!important;font-weight:760!important;
+}
+#loop03-financeiro .loop03-historico-financeiro[open]>summary{
+ border-bottom:1px solid #a5876e!important;
+}
+#loop03-financeiro #loop03ListaHistoricoFinanceiro{
+ margin:0!important;padding:14px 18px 14px 37px!important;
+ color:#eadddf!important;font-size:.82rem!important;line-height:1.7!important;
+}
+@media(max-width:590px){
+ #loop03-financeiro .loop03-financeiro-resumos{
+  grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:8px!important;
+ }
+ #loop03-financeiro .loop03-financeiro-resumos>div{
+  min-height:88px!important;padding:9px!important;
+ }
+ #loop03-financeiro .loop03-financeiro-saque{
+  padding:14px 10px!important;
+ }
+ #loop03-financeiro .loop03-escolhas-saque{gap:8px!important}
+ #loop03-financeiro .loop03-opcao-saque{
+  padding:11px 10px!important;min-height:102px!important;
+ }
+ #loop03-financeiro .loop03-opcao-saque>strong{font-size:clamp(1rem,4vw,1.25rem)!important}
+ #loop03-financeiro .loop03-form-saque:not([hidden]){
+  grid-template-columns:minmax(0,1fr) auto!important;gap:7px!important;
+ }
+ #loop03-financeiro #enviarSaqueTesteParticipante{
+  font-size:.72rem!important;padding:10px 8px!important;
+ }
+}
+
+/* Correcao responsiva localizada: seis cartoes de Minhas Posicoes.
+   Nao altera o tabuleiro, a logica de ativacao ou os dados. */
+@media(max-width:590px){
+ #loop03-posicoes #loop03OpcoesPosicoes,
+ #loop03-posicoes #loop03OpcoesPosicoes>.loop03-unidade-posicao,
+ #loop03-posicoes #loop03OpcoesPosicoes .loop03-cartao-posicao{
+  min-width:0!important;max-width:100%!important;
+ }
+ #loop03-posicoes #loop03OpcoesPosicoes .loop03-cartao-abrir,
+ #loop03-posicoes #loop03OpcoesPosicoes .loop03-cpf-cartao,
+ #loop03-posicoes #loop03OpcoesPosicoes .loop03-adicionar-indicado,
+ #loop03-posicoes #loop03OpcoesPosicoes .loop03-link-termos{
+  box-sizing:border-box!important;min-width:0!important;
+  max-width:100%!important;width:100%!important;
+ }
+ #loop03-posicoes #loop03OpcoesPosicoes .loop03-aceite-linha,
+ #loop03-posicoes #loop03OpcoesPosicoes .loop03-cartao-miolo{
+  min-width:0!important;max-width:100%!important;
+ }
+ #loop03-posicoes #loop03OpcoesPosicoes input{
+  min-width:0!important;max-width:100%!important;
+ }
+}

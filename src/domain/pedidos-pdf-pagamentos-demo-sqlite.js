@@ -1,0 +1,262 @@
+'use strict';
+
+// Pedidos de CURSOS PDF e faturas de valores VARIAVEIS, somente laboratorio.
+// Sem arquivos reais, dados de clientes, checkout, PSP externo, carteira,
+// alocacao de R$100, indicacoes, criacao de posicao ou giro de catraca.
+// A confirmacao abaixo apenas simula a elegibilidade futura de um download.
+const {ElegibilidadeProdutosLoopDemoSQLite}=require('./elegibilidade-produtos-loop-demo-sqlite');
+const ID_PEDIDO=/^[a-z0-9][a-z0-9-]{2,54}$/;
+const ID_EVENTO=/^[a-z0-9][a-z0-9-]{2,62}$/;
+const TIPOS=Object.freeze({CONFIRMAR:'CONFIRMAR_FICTICIO',ESTORNAR:'ESTORNAR_FICTICIO'});
+function falha(codigo,mensagem){
+ const e=new Error(mensagem);e.codigo=codigo;return e;
+}
+function idOk(id,padrao,campo){
+ if(typeof id!=='string'||!padrao.test(id))throw falha('INVALIDO',campo+' invalido');
+}
+class PedidosPDFPagamentosDemoSQLite{
+ constructor({repositorioCatalogo}={}){
+  const banco=repositorioCatalogo?.banco;
+  if(!banco||typeof banco.prepare!=='function')throw new TypeError('Catalogo local SQLite obrigatorio');
+  this.banco=banco;
+  this.catalogo=repositorioCatalogo;
+  this.elegibilidade=new ElegibilidadeProdutosLoopDemoSQLite({catalogo:repositorioCatalogo});
+  banco.exec(`
+   CREATE TABLE IF NOT EXISTS admin_pdf_demo_pedidos (
+    pedido_id TEXT PRIMARY KEY NOT NULL,
+    pagamento_id TEXT NOT NULL UNIQUE,
+    produto_id TEXT NOT NULL REFERENCES catalogo_produtos(id) ON DELETE RESTRICT,
+    nome_produto TEXT NOT NULL,
+    revisao_produto INTEGER NOT NULL CHECK(revisao_produto>0),
+    preco_centavos INTEGER NOT NULL CHECK(preco_centavos>0),
+    criado_em TEXT NOT NULL
+   );
+   CREATE TABLE IF NOT EXISTS admin_pdf_demo_elegibilidade_loop(
+    pedido_id TEXT PRIMARY KEY REFERENCES admin_pdf_demo_pedidos(pedido_id) ON DELETE RESTRICT,
+    elegivel_loop INTEGER NOT NULL CHECK(elegivel_loop IN (0,1)),
+    revisao_elegibilidade INTEGER NOT NULL CHECK(revisao_elegibilidade>=1)
+   );
+   CREATE TABLE IF NOT EXISTS admin_pdf_demo_quantidade_minima_loop(
+    pedido_id TEXT PRIMARY KEY REFERENCES admin_pdf_demo_pedidos(pedido_id) ON DELETE RESTRICT,
+    quantidade_minima INTEGER NOT NULL CHECK(quantidade_minima BETWEEN 1 AND 100),
+    revisao_minima INTEGER NOT NULL CHECK(revisao_minima>=1)
+   );
+   CREATE TRIGGER IF NOT EXISTS admin_pdf_minimo_no_update
+    BEFORE UPDATE ON admin_pdf_demo_quantidade_minima_loop
+    BEGIN SELECT RAISE(ABORT,'quantidade minima PDF congelada'); END;
+   CREATE TRIGGER IF NOT EXISTS admin_pdf_minimo_no_delete
+    BEFORE DELETE ON admin_pdf_demo_quantidade_minima_loop
+    BEGIN SELECT RAISE(ABORT,'quantidade minima PDF congelada'); END;
+   CREATE TRIGGER IF NOT EXISTS admin_pdf_elegibilidade_no_update
+    BEFORE UPDATE ON admin_pdf_demo_elegibilidade_loop
+    BEGIN SELECT RAISE(ABORT,'regra de elegibilidade do PDF imutavel'); END;
+   CREATE TRIGGER IF NOT EXISTS admin_pdf_elegibilidade_no_delete
+    BEFORE DELETE ON admin_pdf_demo_elegibilidade_loop
+    BEGIN SELECT RAISE(ABORT,'regra de elegibilidade do PDF imutavel'); END;
+   CREATE TABLE IF NOT EXISTS admin_pdf_demo_eventos (
+    sequencia INTEGER PRIMARY KEY AUTOINCREMENT,
+    evento_id TEXT NOT NULL UNIQUE,
+    pedido_id TEXT NOT NULL REFERENCES admin_pdf_demo_pedidos(pedido_id) ON DELETE RESTRICT,
+    tipo TEXT NOT NULL CHECK(tipo IN ('CONFIRMAR_FICTICIO','ESTORNAR_FICTICIO')),
+    registrado_em TEXT NOT NULL
+   );
+   CREATE INDEX IF NOT EXISTS idx_admin_pdf_demo_eventos_pedido
+    ON admin_pdf_demo_eventos(pedido_id,sequencia);
+   CREATE TRIGGER IF NOT EXISTS admin_pdf_demo_pedidos_no_update
+    BEFORE UPDATE ON admin_pdf_demo_pedidos
+    BEGIN SELECT RAISE(ABORT,'pedido PDF demo imutavel'); END;
+   CREATE TRIGGER IF NOT EXISTS admin_pdf_demo_pedidos_no_delete
+    BEFORE DELETE ON admin_pdf_demo_pedidos
+    BEGIN SELECT RAISE(ABORT,'pedido PDF demo imutavel'); END;
+   CREATE TRIGGER IF NOT EXISTS admin_pdf_demo_eventos_no_update
+    BEFORE UPDATE ON admin_pdf_demo_eventos
+    BEGIN SELECT RAISE(ABORT,'historico PDF demo imutavel'); END;
+   CREATE TRIGGER IF NOT EXISTS admin_pdf_demo_eventos_no_delete
+    BEFORE DELETE ON admin_pdf_demo_eventos
+    BEGIN SELECT RAISE(ABORT,'historico PDF demo imutavel'); END;
+   CREATE TABLE IF NOT EXISTS admin_pdf_demo_solicitacoes (
+    sequencia INTEGER PRIMARY KEY AUTOINCREMENT,
+    pedido_id TEXT NOT NULL REFERENCES admin_pdf_demo_pedidos(pedido_id) ON DELETE RESTRICT,
+    material TEXT NOT NULL CHECK(material='FIXTURE_PDF'),
+    solicitado_em TEXT NOT NULL
+   );
+   CREATE INDEX IF NOT EXISTS idx_pdf_demo_solicitacoes_pedido
+    ON admin_pdf_demo_solicitacoes(pedido_id,sequencia);
+   CREATE TRIGGER IF NOT EXISTS admin_pdf_demo_solicitacoes_no_update
+    BEFORE UPDATE ON admin_pdf_demo_solicitacoes
+    BEGIN SELECT RAISE(ABORT,'auditoria PDF demo imutavel'); END;
+   CREATE TRIGGER IF NOT EXISTS admin_pdf_demo_solicitacoes_no_delete
+    BEFORE DELETE ON admin_pdf_demo_solicitacoes
+    BEGIN SELECT RAISE(ABORT,'auditoria PDF demo imutavel'); END;
+  `);
+ }
+ status(pedidoId){
+  const eventos=this.historico(pedidoId);
+  const ultimo=eventos.at(-1);
+  return {
+   situacaoPagamentoFicticio:!ultimo?'AGUARDANDO_FICTICIO':
+    ultimo.tipo===TIPOS.CONFIRMAR?'CONFIRMADO_FICTICIO':'ESTORNADO_FICTICIO',
+   eventosPagamentoFicticio:eventos.length,
+   habilitacaoDownloadFicticia:Boolean(ultimo&&ultimo.tipo===TIPOS.CONFIRMAR)
+  };
+ }
+ historico(pedidoId){
+  idOk(pedidoId,ID_PEDIDO,'pedidoId');
+  return this.banco.prepare(
+   'SELECT sequencia,evento_id AS eventoId, tipo, registrado_em AS registradoEm FROM admin_pdf_demo_eventos WHERE pedido_id=? ORDER BY sequencia'
+  ).all(pedidoId);
+ }
+ saida(row){
+  if(!row)return null;
+  const eleg=this.banco.prepare(
+   'SELECT elegivel_loop AS elegivel,revisao_elegibilidade AS revisao FROM admin_pdf_demo_elegibilidade_loop WHERE pedido_id=?'
+  ).get(row.pedido_id);
+  const regraQuantidade=this.banco.prepare(
+   'SELECT quantidade_minima AS minima,revisao_minima AS revisao FROM admin_pdf_demo_quantidade_minima_loop WHERE pedido_id=?'
+  ).get(row.pedido_id);
+  const minimo=regraQuantidade?.minima??1;
+  const contaLoop=(!eleg||Boolean(eleg.elegivel))&&minimo<=1;
+  return {
+   elegivelLoop:eleg?Boolean(eleg.elegivel):true,
+   quantidadeMinimaLoop:minimo,revisaoQuantidadeMinima:regraQuantidade?.revisao??1,
+   revisaoElegibilidade:eleg?.revisao??1,
+   valorElegivelLoopCentavos:contaLoop?row.preco_centavos:0,
+   pedidoId:row.pedido_id,pagamentoId:row.pagamento_id,
+   produtoId:row.produto_id,nomeProduto:row.nome_produto,
+   revisaoProduto:row.revisao_produto,precoBrutoCentavos:row.preco_centavos,
+   tipoProduto:'PDF',entrega:'DOWNLOAD_APOS_CONFIRMACAO',
+   criadoEm:row.criado_em,...this.status(row.pedido_id),
+   downloadRealDisponivel:false,arquivoPDFRealDisponivel:false,
+   materialTesteBaixavel:Boolean(this.status(row.pedido_id).habilitacaoDownloadFicticia),
+   meioPagamentoRealConectado:false,parcelaLOOPCalculada:false,
+   posicaoCriada:false,catracaMovimentada:false,snapshotImutavel:true
+  };
+ }
+ buscar(pedidoId){
+  idOk(pedidoId,ID_PEDIDO,'pedidoId');
+  return this.saida(this.banco.prepare(
+   'SELECT * FROM admin_pdf_demo_pedidos WHERE pedido_id=?'
+  ).get(pedidoId));
+ }
+ // A rota protegida serve uma fixture gerada em memoria, nunca o curso real.
+ // O historico abaixo registra SOLICITACAO AUTORIZADA, nao prova de recebimento.
+ registrarSolicitacaoMaterialTeste(pedidoId){
+  idOk(pedidoId,ID_PEDIDO,'pedidoId');
+  this.banco.exec('BEGIN IMMEDIATE');
+  try{
+   const existe=this.banco.prepare(
+    'SELECT pedido_id FROM admin_pdf_demo_pedidos WHERE pedido_id=?'
+   ).get(pedidoId);
+   if(!existe)throw falha('NAO_ENCONTRADO','Pedido PDF ficticio nao encontrado');
+   if(this.status(pedidoId).situacaoPagamentoFicticio!=='CONFIRMADO_FICTICIO'){
+    throw falha('SEM_DIREITO','Pagamento ficticio nao confirmado ou ja estornado');
+   }
+   const data=new Date().toISOString();
+   this.banco.prepare(
+    "INSERT INTO admin_pdf_demo_solicitacoes(pedido_id,material,solicitado_em) VALUES (?,'FIXTURE_PDF',?)"
+   ).run(pedidoId,data);
+   this.banco.exec('COMMIT');
+   return {pedidoId,material:'FIXTURE_PDF',solicitadoEm:data};
+  }catch(e){this.banco.exec('ROLLBACK');throw e;}
+ }
+ historicoSolicitacoesMaterialTeste(pedidoId){
+  idOk(pedidoId,ID_PEDIDO,'pedidoId');
+  if(!this.banco.prepare('SELECT 1 FROM admin_pdf_demo_pedidos WHERE pedido_id=?').get(pedidoId)){
+   throw falha('NAO_ENCONTRADO','Pedido PDF ficticio nao encontrado');
+  }
+  return this.banco.prepare(
+   'SELECT sequencia,material,solicitado_em AS solicitadoEm FROM admin_pdf_demo_solicitacoes WHERE pedido_id=? ORDER BY sequencia'
+  ).all(pedidoId);
+ }
+ listar(){
+  return {
+   modo:'PEDIDOS_PDF_COM_VALORES_VARIAVEIS_APENAS_FICTICIOS',
+   semCheckout:true,pagamentosReais:false,arquivosReais:false,
+   alocacaoDeCofres:false,nenhumaPosicaoCriada:true,
+   pedidos:this.banco.prepare(
+    'SELECT * FROM admin_pdf_demo_pedidos ORDER BY criado_em,pedido_id'
+   ).all().map(p=>this.saida(p))
+  };
+ }
+ opcoes(){
+  return {
+   modo:'CURSOS_PDF_PUBLICADOS_APENAS_LABORATORIO',
+   produtos:this.catalogo.listar().filter(p=>
+    p.tipo==='PDF'&&p.estado==='PUBLICADO'&&
+    Number.isSafeInteger(p.precoCentavos)&&p.precoCentavos>0
+   ).map(p=>({produtoId:p.id,nome:p.nome,precoCentavos:p.precoCentavos,
+    elegivelLoop:this.elegibilidade.consultar(p.id).elegivelLoop,
+    quantidadeMinimaLoop:this.elegibilidade.consultar(p.id).quantidadeMinimaLoop})),
+   pagamentoReal:false,entregaReal:false
+  };
+ }
+ criar({pedidoId,produtoId}={}){
+  idOk(pedidoId,ID_PEDIDO,'pedidoId');idOk(produtoId,/^[a-z0-9-]{3,80}$/,'produtoId');
+  const pagamentoId='pdf-'+pedidoId;
+  this.banco.exec('BEGIN IMMEDIATE');
+  try{
+   const existente=this.banco.prepare(
+    'SELECT * FROM admin_pdf_demo_pedidos WHERE pedido_id=?'
+   ).get(pedidoId);
+   if(existente){
+    if(existente.produto_id!==produtoId)throw falha('CONFLITO','ID do pedido PDF atribuido a outro produto');
+    this.banco.exec('COMMIT');
+    return {repetido:true,pedido:this.saida(existente)};
+   }
+   const registro=this.catalogo.buscarRegistro(produtoId);
+   if(!registro)throw falha('NAO_ENCONTRADO','Curso PDF nao encontrado no catalogo');
+   const item=registro.produto;
+   if(item.tipo!=='PDF'||item.estado!=='PUBLICADO'||
+      !Number.isSafeInteger(item.precoCentavos)||item.precoCentavos<1){
+    throw falha('INVALIDO','Somente PDF publicado com preco valido');
+   }
+   const agora=new Date().toISOString();
+   this.banco.prepare(
+    'INSERT INTO admin_pdf_demo_pedidos(pedido_id,pagamento_id,produto_id,nome_produto,revisao_produto,preco_centavos,criado_em) VALUES (?,?,?,?,?,?,?)'
+   ).run(pedidoId,pagamentoId,produtoId,item.nome,registro.revisao,item.precoCentavos,agora);
+   const politica=this.elegibilidade.consultar(produtoId);
+   this.banco.prepare(`
+    INSERT INTO admin_pdf_demo_elegibilidade_loop(
+     pedido_id,elegivel_loop,revisao_elegibilidade) VALUES (?,?,?)
+   `).run(pedidoId,politica.elegivelLoop?1:0,politica.revisaoElegibilidade);
+   this.banco.prepare(`
+    INSERT INTO admin_pdf_demo_quantidade_minima_loop
+     (pedido_id,quantidade_minima,revisao_minima) VALUES (?,?,?)
+   `).run(pedidoId,politica.quantidadeMinimaLoop,politica.revisaoQuantidadeMinima);
+   this.banco.exec('COMMIT');
+   return {repetido:false,pedido:this.buscar(pedidoId)};
+  }catch(e){this.banco.exec('ROLLBACK');throw e;}
+ }
+ registrarEvento({pedidoId,eventoId,tipo}={}){
+  idOk(pedidoId,ID_PEDIDO,'pedidoId');idOk(eventoId,ID_EVENTO,'eventoId');
+  if(!Object.values(TIPOS).includes(tipo))throw falha('INVALIDO','Tipo de evento PDF invalido');
+  this.banco.exec('BEGIN IMMEDIATE');
+  try{
+   const pedido=this.banco.prepare(
+    'SELECT pedido_id FROM admin_pdf_demo_pedidos WHERE pedido_id=?'
+   ).get(pedidoId);
+   if(!pedido)throw falha('NAO_ENCONTRADO','Pedido PDF ficticio inexistente');
+   const anterior=this.banco.prepare(
+    'SELECT pedido_id,tipo FROM admin_pdf_demo_eventos WHERE evento_id=?'
+   ).get(eventoId);
+   if(anterior){
+    if(anterior.pedido_id!==pedidoId||anterior.tipo!==tipo){
+     throw falha('CONFLITO','Identificador de evento reutilizado com dados diferentes');
+    }
+    this.banco.exec('COMMIT');
+    return {repetido:true,pedido:this.buscar(pedidoId)};
+   }
+   const eventos=this.historico(pedidoId);
+   if((tipo===TIPOS.CONFIRMAR&&eventos.length!==0)||
+      (tipo===TIPOS.ESTORNAR&&(eventos.length!==1||eventos[0].tipo!==TIPOS.CONFIRMAR))){
+    throw falha('CONFLITO','Transicao de pagamento PDF ficticio indevida');
+   }
+   this.banco.prepare(
+    'INSERT INTO admin_pdf_demo_eventos(evento_id,pedido_id,tipo,registrado_em) VALUES (?,?,?,?)'
+   ).run(eventoId,pedidoId,tipo,new Date().toISOString());
+   this.banco.exec('COMMIT');
+   return {repetido:false,pedido:this.buscar(pedidoId)};
+  }catch(e){this.banco.exec('ROLLBACK');throw e;}
+ }
+}
+module.exports={PedidosPDFPagamentosDemoSQLite,TIPOS};

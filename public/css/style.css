@@ -7,16 +7,42 @@ header small{color:#aaa}
 main{max-width:900px;margin:auto;padding:14px}
 .painel,.loja{background:#151b25;border:1px solid #293244;border-radius:18px;padding:16px;margin-bottom:14px}
 h2{margin:0 0 15px;color:#fff}
-.tabuleiro{position:relative;width:340px;height:340px;margin:10px auto 18px;border-radius:50%;background:#0d131d;border:2px solid #273244}
-.centro,.vaga{position:absolute;border-radius:50%;display:flex;align-items:center;justify-content:center;text-align:center;font-weight:bold}
-.centro{width:115px;height:115px;left:112px;top:112px;background:#d92525;color:#fff;border:5px solid #fff}
-.centro span{font-size:12px}
-.vaga{width:68px;height:68px;background:#ffd400;color:#fff;border:3px solid #fff;font-size:22px}
-.v1{top:5px;left:136px}
-.v2{top:78px;right:14px}
-.v3{bottom:28px;right:48px}
-.v4{bottom:28px;left:48px}
-.v5{top:78px;left:14px}
+.tabuleiro{
+  display:grid;
+  grid-template-columns:repeat(3,minmax(0,1fr));
+  grid-template-rows:repeat(3,minmax(0,1fr));
+  width:min(360px,100%);
+  aspect-ratio:1;
+  height:auto;
+  gap:clamp(4px,1.8vw,12px);
+  padding:clamp(7px,2.4vw,15px);
+  margin:10px auto 18px;
+  border-radius:50%;
+  background:#0d131d;
+  border:2px solid #273244;
+}
+.centro,.vaga{
+  position:static;
+  border-radius:50%;
+  display:flex;flex-direction:column;align-items:center;
+  justify-content:center;text-align:center;font-weight:bold;
+  min-width:0;min-height:0;width:100%;height:100%;
+  overflow-wrap:anywhere;
+}
+.centro{
+  grid-column:2;grid-row:2;background:#176c39;color:#fff;
+  border:3px solid #b5eca7;font-size:clamp(8px,1.9vw,13px);
+}
+.centro span{font-size:clamp(8px,1.8vw,12px)}
+.centro strong{font-size:clamp(9px,2vw,14px)}
+.vaga{max-width:78px;max-height:78px;align-self:center;justify-self:center;
+  background:#dbb751;color:#171100;border:2px solid #fff;font-size:clamp(13px,3vw,21px)}
+.v1{grid-column:2;grid-row:1}
+.v2{grid-column:3;grid-row:1}
+.v3{grid-column:3;grid-row:2}
+.v4{grid-column:2;grid-row:3}
+.v5{grid-column:1;grid-row:3}
+.v6{grid-column:1;grid-row:2;border:3px solid #9defaf}
 .marcos{display:flex;justify-content:center;gap:9px;margin:10px}
 .marcos span{width:16px;height:16px;border-radius:50%;background:#6f2dbd;border:2px solid #fff}
 .filas{display:grid;grid-template-columns:1fr 1fr;gap:12px}
@@ -30,9 +56,62 @@ h2{margin:0 0 15px;color:#fff}
 .produto h3{margin-top:0;color:#ffd400}
 @media(max-width:600px){
  main{padding:10px}
- .tabuleiro{width:310px;height:310px}
- .centro{left:97px;top:97px}
- .v1{left:121px}
+ .tabuleiro{width:min(360px,100%)}
  .filas,.produtos{grid-template-columns:1fr 1fr}
  header{padding:13px}
+}
+
+/* Vitrine e pagina individual de produto (sem checkout nesta versao). */
+.loja-intro{color:#ced7e5;line-height:1.5}
+.aviso-demo{background:#263244;border-left:4px solid #ffd400;border-radius:6px;padding:12px;color:#f6e7aa;font-size:.9rem;line-height:1.5}
+.produtos{margin-top:15px}
+.produto-card{background:#202938;border:1px solid #344459;border-radius:14px;padding:14px;display:flex;flex-direction:column;gap:11px;min-width:0}
+.produto-card h3{color:#fff;margin:0;font-size:1.05rem;line-height:1.35}
+.produto-card p{margin:0;color:#c4d0dd;line-height:1.45;flex:1;font-size:.93rem}
+.produto-imagem,.produto-foto-grande{background:#101826;display:flex;align-items:center;justify-content:center;color:#bec9d4;border:1px dashed #5b6c81;overflow:hidden;text-align:center}
+.produto-imagem{height:145px;border-radius:11px;font-size:1.1rem}
+.produto-imagem img,.produto-foto-grande img{width:100%;height:100%;object-fit:contain}
+.produto-tipo{font-size:.78rem;color:#ffd400;text-transform:uppercase;letter-spacing:.05em;font-weight:bold}
+.produto-preco{font-size:1.1rem;color:#fff}
+.produto-link,.voltar-loja{color:#121212;background:#ffd400;text-align:center;border-radius:9px;padding:11px;text-decoration:none;font-weight:bold;display:inline-block}
+.produto-link:focus-visible,.voltar-loja:focus-visible,.produto-miniatura:focus-visible{outline:3px solid #fff;outline-offset:3px}
+.detalhe-produto{margin-top:16px}
+.detalhe-grid{display:grid;grid-template-columns:1fr 1fr;gap:24px}
+.produto-foto-grande{min-height:310px;border-radius:15px;font-size:1.2rem}
+.produto-miniaturas{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
+.produto-miniatura{font-weight:normal;padding:8px}
+.detalhe-informacoes{min-width:0}
+.detalhe-informacoes h2{margin-top:10px}
+.detalhe-informacoes p,.detalhe-informacoes li{line-height:1.5;color:#cbd5e1}
+.detalhe-informacoes .detalhe-preco{font-size:1.4rem;color:#fff;font-weight:bold}
+.detalhe-informacoes ul{padding-left:20px}
+.detalhe-informacoes #produtoVideo a{color:#ffd400;display:inline-block;margin-bottom:12px}
+.botao-inativo{width:100%;background:#5e6877;color:#f8fafc;cursor:not-allowed}
+[hidden]{display:none!important}
+@media(max-width:600px){
+ .detalhe-grid{grid-template-columns:1fr;gap:18px}
+ .produto-foto-grande{min-height:250px}
+ .produto-imagem{height:125px}
+ .produto-card{padding:11px;gap:9px}
+ .produto-link{padding:10px 7px;font-size:.86rem}
+}
+@media(max-width:340px){
+ .produtos{grid-template-columns:1fr}
+}
+
+/* LOOP V6: a mesma prévia fluida deve caber em celular ou computador. */
+body{min-width:0}
+header{gap:12px;flex-wrap:wrap}
+main,.painel,.loja,.produto-card,.detalhe-informacoes{min-width:0}
+.produto-card,.produto-card p,.produto-card h3,.loja-intro{overflow-wrap:anywhere}
+.filas,.produtos,.detalhe-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+.perfil{display:inline-flex;align-items:center;justify-content:center;font-size:.9rem;line-height:1.3}
+.produto-link{min-height:44px;display:inline-flex;align-items:center;justify-content:center}
+@media(max-width:600px){
+ .filas,.detalhe-grid{grid-template-columns:1fr}
+ .produtos{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+@media(max-width:340px){
+ .produtos{grid-template-columns:1fr}
+ .marcos{flex-wrap:wrap}
 }

@@ -1,0 +1,7 @@
+# DECISAO VIGENTE — 10 POSICOES CONFIGURAVEIS POR TITULAR (23/10/2026)
+
+**Novo limite inicial: 10 posições ativas por titular**, substituindo 6. Em **Minhas Posições**, renderizar automaticamente um quadradinho por capacidade configurada, inclusive vagas ainda não ocupadas, com exatamente o padrão visual aprovado. A quantidade de cartões NÃO pode ficar codificada como 6 nem 10: deve derivar da mesma configuração validada e persistida usada na aplicação do limite; permitir aumento futuro sem redesenho. Não alterar as **seis vagas periféricas + centro** do tabuleiro, nem os **seis eventos financeiros por ciclo**: são conceitos distintos.
+
+Cada posição exige compra elegível, confirmação individual, e sua própria indicação válida para entrar na fila A. Até 10 posições do mesmo titular podem estar simultaneamente na A. **Máximo de duas posições do mesmo titular ocupando o mesmo tabuleiro, contando centro e periferia**; a terceira aguarda, sem perda da prioridade. Usar ID estável do titular, não nick textual.
+
+**Implementação pendente:** localizar todos os limites em ponte de pedidos, SQLite, domínio, projeções e interface; fazer migração segura, impedir bypass/concorrência e garantir cartões responsivos. Criar testes de 10 posições, 11ª recusada, cartões dinâmicos após reconfiguração, posições A independentes, duas por tabuleiro, giro, recuperação e compatibilidade. Não declarar testado ou implantado até evidências de CI. Não fazer merge/deploy ou pagamentos reais. PR #1 permanece DRAFT.

@@ -1,0 +1,115 @@
+body{background:#090b0b;color:#f0f0e8}
+.cabecalho-participante{background:#080808;border-bottom:1px solid #b38a30;padding:16px max(18px,5vw);display:flex;justify-content:space-between;gap:16px;align-items:center;flex-wrap:wrap}
+.cabecalho-participante h1{color:#f3c956;margin:0}
+.cabecalho-participante a{color:#b9f5a5}
+.portal-participante{max-width:1020px;margin:24px auto;padding:0 15px 50px}
+.cartao-participante{padding:22px;border:1px solid #8c702e;background:#141715;border-radius:14px;margin-bottom:16px}
+.cartao-participante h2{color:#f3c956;margin:0 0 14px}
+.cartao-participante form{display:grid;gap:10px;max-width:470px}
+.cartao-participante label{color:#e7dab8;font-weight:650}
+.cartao-participante input{color:#fff;background:#202722;border:1px solid #8c702e;border-radius:8px;padding:12px}
+.cartao-participante button{border:1px solid #37923d;border-radius:8px;padding:11px 16px;background:#9ff482;color:#08120a;font-weight:750;cursor:pointer;width:fit-content}
+.cartao-participante .botao-sair{background:#151d16;color:#b9f5a5;margin-top:13px}
+.cartao-participante button:disabled{opacity:.5;cursor:wait}
+.aviso-portal{background:#252016;border-left:3px solid #f3c956;padding:12px}
+.ajuda-portal{color:#bcc9b9;line-height:1.5}
+.codigo-indicacao{overflow-wrap:anywhere;color:#a7f5a1}
+.resumos-participante{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin-top:18px}
+.resumos-participante>div{background:#202820;padding:16px;border-radius:9px;display:grid;gap:8px}
+.resumos-participante strong{font-size:1.6rem;color:#a7f5a1}
+.resumos-participante span{color:#d4d4c9;font-size:.85rem}
+.duas-colunas-participante{display:grid;grid-template-columns:1fr 1fr;gap:15px}
+.cartao-participante li{overflow-wrap:anywhere;padding:9px 0;border-bottom:1px solid #445044}
+[hidden]{display:none!important}
+@media(max-width:680px){.resumos-participante{grid-template-columns:repeat(2,minmax(0,1fr))}.duas-colunas-participante{grid-template-columns:1fr}.cartao-participante{padding:16px}}
+
+.legenda-posicoes-demo{display:flex;gap:10px;flex-wrap:wrap;margin:12px 0}
+.selo-posicao-demo{display:inline-block;padding:7px 11px;border-radius:8px;border:1px solid currentColor;font-weight:750;font-size:.86rem}
+.posicao-vermelho{color:#fff;background:#ae2433;border-color:#f66}
+.posicao-cinza{color:#fff;background:#535c61;border-color:#a0a8ad}
+.posicao-azul{color:#fff;background:#164faa;border-color:#70afff}
+.posicao-dourado{color:#171100;background:#e2b548;border-color:#f9e9ab}
+.bloco-fila-participante{min-width:0;background:#1a241d;border:1px solid #526047;border-radius:12px;padding:12px}
+.bloco-fila-participante h3{display:flex;align-items:baseline;gap:8px;flex-wrap:wrap;margin:0 0 12px}
+.bloco-fila-participante small,.titulo-tabuleiro-participante small{color:#b3c2b0;font-size:.8rem;font-weight:500}
+.controle-mapa-participante{display:flex;flex-wrap:wrap;gap:8px;margin:16px 0}
+.cartao-participante .controle-mapa-participante button{border:1px solid #647c67;background:#1b2d22;color:#d1f0d3;padding:10px 13px;min-height:44px}
+.cartao-participante .controle-mapa-participante button[aria-pressed="true"]{background:#a9f3a0;color:#172017;border-color:#b6feb4}
+.mapa-fila-posicoes-demo{list-style:none;padding:0;margin:0;max-height:440px;overflow-y:auto;overscroll-behavior:contain}
+.cartao-participante .mapa-fila-posicoes-demo li{padding:7px 4px;border-bottom:1px solid #3b533e}
+.linha-fila-demo{display:flex;align-items:center;gap:9px;min-width:0}
+.linha-minha-demo{background:#263e28;border-radius:9px;box-shadow:inset 4px 0 0 #9af1ac}
+.ordem-fila-demo{font-variant-numeric:tabular-nums;min-width:38px;color:#f1dfa0;font-size:.89rem;font-weight:800}
+.cartao-participante .mapa-fila-posicoes-demo .intervalo-fila-demo{text-align:center;color:#afc3b3;font-size:.83rem;font-style:italic;padding:11px 4px}
+.fila-vazia-demo{color:#b5c2b7}
+.minha-posicao-demo{outline:3px solid #c6f5b9;outline-offset:2px;box-shadow:0 0 0 5px #294b34}
+.mapa-tabuleiro-posicoes-demo{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));grid-template-rows:repeat(3,minmax(74px,auto));gap:9px;max-width:560px;margin:16px auto}
+.espaco-tabuleiro-demo{border:1px solid #8d7334;background:#22271f;padding:10px 5px;border-radius:12px;display:flex;flex-direction:column;align-items:center;gap:6px;justify-content:center;text-align:center;font-size:.85rem;min-width:0;overflow-wrap:anywhere}
+.espaco-tabuleiro-demo .selo-posicao-demo{white-space:normal;font-size:.76rem;line-height:1.3}
+.titulo-espaco-tabuleiro-demo{font-size:.78rem;color:#e6d7a9}
+.vazio-tabuleiro-demo{font-size:.83rem;color:#b6c2b5}
+.tabuleiro-centro{grid-column:2;grid-row:2;border:2px solid #bce69f;background:#203524}
+.tabuleiro-vaga-1{grid-column:2;grid-row:1}
+.tabuleiro-vaga-2{grid-column:3;grid-row:1}
+.tabuleiro-vaga-3{grid-column:3;grid-row:2}
+.tabuleiro-vaga-4{grid-column:2;grid-row:3}
+.tabuleiro-vaga-5{grid-column:1;grid-row:2}
+.tabuleiro-vaga-6{grid-column:1;grid-row:3}
+.espaco-meu-tabuleiro-demo{box-shadow:0 0 0 2px #bce69f}
+.atalhos-participante{position:sticky;top:5px;z-index:4;display:flex;flex-wrap:wrap;gap:8px;margin-bottom:18px;padding:10px;border-radius:12px;border:1px solid #6e7247;background:#182017}
+.atalhos-participante a{display:inline-flex;align-items:center;justify-content:center;padding:10px;border-radius:8px;min-height:44px;text-align:center;text-decoration:none;color:#d9fbd8;border:1px solid #466949;font-weight:700}
+.atalhos-participante a:focus-visible,.link-loja-participante:focus-visible,.acao-ativar-pedido-participante:focus-visible,.cartao-participante button:focus-visible{outline:3px solid #f7df7b;outline-offset:2px}
+#tituloMapaParticipante,#tituloHistoricoLojaParticipante,#secaoAtivacaoParticipante{scroll-margin-top:105px}
+.checkbox-adesao-demo{display:flex;align-items:center;gap:10px;line-height:1.5;font-size:.95rem}
+.cartao-participante input[type=checkbox]{width:20px;height:20px;flex:none}
+@media(max-width:480px){
+ .portal-participante{padding:0 10px 50px}
+ .cartao-participante{padding:13px}
+ .atalhos-participante{position:static;padding:7px;gap:6px}
+ .atalhos-participante a{flex:1 1 calc(50% - 6px);padding:9px 5px;font-size:.86rem}
+ .cartao-participante .controle-mapa-participante button{flex:1 1 auto;padding:9px 7px;font-size:.84rem}
+ .mapa-tabuleiro-posicoes-demo{grid-template-columns:repeat(3,minmax(0,1fr));gap:5px}
+ .espaco-tabuleiro-demo{padding:8px 3px;min-height:75px}
+ .espaco-tabuleiro-demo .selo-posicao-demo{font-size:.67rem;padding:6px 2px;max-width:100%}
+ .ordem-fila-demo{min-width:33px}
+}
+
+/* Historico pessoal da loja; cores descrevem estados, nao valores financeiros. */
+.cabecalho-historico-loja-participante{display:flex;justify-content:space-between;gap:14px;align-items:center;flex-wrap:wrap}
+.link-loja-participante,.acao-ativar-pedido-participante{display:inline-block;padding:10px 13px;border:1px solid #63b18b;border-radius:9px;color:#b5f6ce;text-decoration:none;font-weight:700}
+.link-loja-participante:hover,.acao-ativar-pedido-participante:hover{text-decoration:underline}
+.historico-loja-participante{list-style:none;padding:0;display:grid;gap:12px}
+.pedido-historico-participante{padding:15px;background:#13252a;border:1px solid #467077;border-radius:11px;display:flex;flex-direction:column;gap:7px;overflow-wrap:anywhere}
+.pedido-historico-participante small{color:#bacbd1;font-size:.87rem}
+.estado-pedido-participante{font-size:.88rem;font-weight:700;border-radius:7px;padding:6px 9px;background:#304b58;color:#edf8fc;align-self:flex-start}
+.estado-pedido-aguardando-ativacao{background:#1c519c;color:#fff}
+.estado-pedido-posicao-ativada{background:#a62735;color:#fff}
+.estado-pedido-posicao-dourada-loop{background:#e5b545;color:#231a00}
+.estado-pedido-compra-sem-posicao{background:#3b525b;color:#f0f5f5}
+.estado-pedido-estorno-em-conferencia{background:#805c25;color:#fff}
+
+/* Layout único responsivo: cards, links e mapa sempre dentro da viewport. */
+.portal-participante,
+.portal-participante > *,
+.cartao-participante,
+.cartao-participante > *,
+.duas-colunas-participante > *,
+.area-indicacoes-participante{min-width:0;max-width:100%}
+.cartao-participante input:not([type=checkbox]),
+.cartao-participante select,
+.cartao-participante textarea{box-sizing:border-box;max-width:100%;min-width:0;width:100%}
+.cartao-participante button{max-width:100%;min-height:44px;white-space:normal;text-align:center}
+.area-indicacoes-participante{display:grid;gap:10px}
+.area-indicacoes-participante > form{min-width:0}
+#enderecoLinkParticipante,#enderecoLinkLojaParticipante{font-size:.88rem;overflow:hidden;text-overflow:ellipsis}
+.cabecalho-participante > div,.cabecalho-participante small{min-width:0;overflow-wrap:anywhere}
+.resumos-participante > div{min-width:0}
+.resumos-participante strong{font-size:clamp(1.12rem,3.2vw,1.6rem);overflow-wrap:anywhere}
+@media(max-width:360px){
+ .resumos-participante{gap:8px}
+ .resumos-participante > div{padding:10px}
+ .cabecalho-participante{padding:12px}
+ .mapa-tabuleiro-posicoes-demo{gap:4px}
+ .espaco-tabuleiro-demo{font-size:.72rem}
+}
+

@@ -1,0 +1,26 @@
+'use strict';
+const {test}=require('node:test');
+const assert=require('node:assert/strict');
+const fs=require('node:fs');
+const os=require('node:os');
+const path=require('node:path');
+const {RepositorioCatalogoSQLite}=require('../src/domain/repositorio-catalogo-sqlite');
+const {ConfiguracaoRelogioTabuleiroDemoSQLite}=require('../src/domain/configuracao-relogio-tabuleiro-demo-sqlite');
+test('relógio: referencia não inventada, gravação e concorrência seguras',t=>{
+ const pasta=fs.mkdtempSync(path.join(os.tmpdir(),'loop-relogio-demo-'));
+ const repo=new RepositorioCatalogoSQLite({caminho:path.join(pasta,'db.sqlite')});
+ t.after(()=>{repo.fechar();fs.rmSync(pasta,{recursive:true,force:true});});
+ const a=new ConfiguracaoRelogioTabuleiroDemoSQLite({banco:repo.banco,agora:()=> '2026-10-19T12:00:00.000Z'});
+ assert.equal(a.consultar().intervaloMinutos,null);
+ assert.equal(a.consultar().revisao,0);
+ assert.deepEqual(a.historico(),[]);
+ assert.equal(a.alterar({intervaloMinutos:30,revisaoEsperada:0,justificativa:'Intervalo para conferencia no cliente'}).intervaloMinutos,30);
+ const b=new ConfiguracaoRelogioTabuleiroDemoSQLite({banco:repo.banco});
+ assert.equal(b.consultar().intervaloMinutos,30);
+ assert.equal(b.historico().length,1);
+ assert.throws(()=>b.alterar({intervaloMinutos:40,revisaoEsperada:0,justificativa:'Mudança concorrente rejeitada'}),/CONFLITO_REVISAO/);
+ assert.equal(b.alterar({intervaloMinutos:40,revisaoEsperada:1,justificativa:'Ajuste do intervalo visual'}).intervaloMinutos,40);
+ assert.throws(()=>repo.banco.exec('UPDATE loop03_intervalo_relogio_historico_demo SET novo=50'),/historico imutavel/);
+ assert.throws(()=>b.alterar({intervaloMinutos:0,revisaoEsperada:2,justificativa:'Valor fora da faixa permitida'}),/DADOS_INVALIDOS/);
+ assert.equal(b.consultar().intervaloMinutos,40);
+});

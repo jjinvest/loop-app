@@ -1,0 +1,81 @@
+:root{color-scheme:dark;--ouro:#edbb60;--ouro2:#9c6731;--texto:#f8f2ff;--muted:#c8bada;--green:#47e0a4;--azul:#6fb1ec}
+*{box-sizing:border-box}body{margin:0;background:radial-gradient(ellipse at 90% 6%,#44127c8c,transparent 40%),radial-gradient(ellipse at 8% 92%,#331358,transparent 48%),#040715;color:var(--texto);font-family:system-ui,-apple-system,"Segoe UI",sans-serif}
+button,input,select{font:inherit}button,a{touch-action:manipulation}
+.escritorio-admin{max-width:1510px;margin:20px auto;padding:15px;border:2px solid #c58d42;border-radius:30px;background:radial-gradient(ellipse at 60% 80%,#32115e99,transparent 67%),#080c1d;box-shadow:0 0 34px #ba722e62,inset 0 0 0 1px #ffe0a06a,0 18px 55px #000b}
+.marca-topo{display:flex;align-items:center;gap:30px;min-height:112px;padding:7px 24px;border-bottom:1px solid #d6a04a55}
+.marca{font-size:clamp(2.4rem,5vw,4.6rem);font-weight:950;color:var(--ouro);letter-spacing:-.045em;text-shadow:0 2px 1px #fff8c7a0,0 4px 3px #422910,0 0 23px #edb4515c}
+.marca em{font-style:normal;color:#d9deef;font-size:.62em}.slogan{font-size:clamp(.8rem,1.4vw,1.12rem);letter-spacing:.19em;font-weight:800}.slogan small{display:block;color:#d0bd9b;font-size:.68em;margin-top:10px;letter-spacing:.14em}
+.painel-etiqueta{margin-left:auto;max-width:160px;text-align:center;border:1px solid #dba35d;border-radius:30px;padding:11px;color:#f3db9f;font-size:.71rem;font-weight:750;letter-spacing:.07em}
+.estrutura{display:grid;grid-template-columns:225px minmax(0,1fr);gap:14px;padding-top:15px}.barra{background:linear-gradient(155deg,#0e1729,#070b18 82%);border:1px solid #634e3c;border-radius:18px;padding:23px 12px;display:flex;flex-direction:column;gap:17px}
+.grupo,.sobretitulo{font-size:.7rem;letter-spacing:.18em;color:var(--ouro);font-weight:800}.grupo{padding:8px}.barra nav{display:grid;gap:7px}.barra nav a{min-height:47px;display:flex;gap:11px;align-items:center;text-decoration:none;padding:9px 10px;background:#0e1a2a88;border:1px solid transparent;border-radius:11px;color:#eee8f5;font-size:.9rem;font-weight:650}
+.barra nav a.ativo{border-color:#a97943;border-left:4px solid #ffc15e;background:linear-gradient(110deg,#5b3b26,#272039 85%)}.barra nav a:hover{border-color:#b68a4e}.barra-final{margin-top:auto;border-top:1px solid #6a4e33;padding:18px 6px 10px;font-size:.8rem;color:#d7cbd8}.barra-final small{color:#a6a0b9;display:block;margin-top:6px}.sinal{display:inline-block;border-radius:50%;height:9px;width:9px;background:var(--green);box-shadow:0 0 9px var(--green)}
+.conteudo{min-width:0}.boas-vindas{display:flex;align-items:center;justify-content:space-between;gap:16px;margin:0 0 20px}.boas-vindas h1{color:#ffda92;margin:7px 0;font-size:clamp(1.5rem,2.5vw,2.3rem)}.boas-vindas p{color:var(--muted);margin:3px 0;font-size:.94rem}
+.estado{border:1px solid #b08a51;border-radius:40px;color:#f5c56c;background:#182330;padding:10px;font-size:.68rem;font-weight:800;white-space:nowrap}
+.acesso{display:flex;align-items:center;flex-wrap:wrap;gap:9px;background:#101b30;border:1px solid #765b40;border-radius:15px;padding:13px}.acesso label{font-size:.86rem;color:#ece1f0}.acesso input{flex:1 1 190px;max-width:410px}
+input,select{background:#080f22;border:1px solid #986e3e;border-radius:11px;padding:12px;color:#fff;min-height:44px;min-width:0}
+button{cursor:pointer;padding:11px 15px;border-radius:11px;border:1px solid #ffd27b;color:#1b1621;font-weight:800;background:linear-gradient(#ffe2a3,#d7a34a);min-height:44px}button:hover{filter:brightness(1.08)}button.secundario{color:#f0e7f3;border-color:#77728d;background:#22203b}
+#mensagemAcessoAdminLoop03,#statusRegrasAdminLoop03{color:#decfe6;font-size:.84rem;line-height:1.5}
+.indicadores{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin:16px 0}.indicadores article{padding:17px 15px;border:1px solid #b38448;border-radius:17px;background:linear-gradient(145deg,#1b2338,#0a111f);box-shadow:inset 0 1px #ffdfa52d;min-width:0}.indicadores small,.indicadores span{display:block;color:#d9c4a4;font-size:.73rem;letter-spacing:.06em}.indicadores strong{display:block;margin:9px 0;font-size:clamp(1.6rem,3vw,2.6rem);color:#fff}.indicadores span{color:#b6abc7;letter-spacing:0}
+.paineis{display:grid;grid-template-columns:1fr 1.35fr;gap:16px}.painel{border:1px solid #c28f41;border-radius:22px;padding:clamp(16px,2.3vw,27px);background:radial-gradient(ellipse at 90% 0,#3f277177,transparent 52%),linear-gradient(155deg,#160e32,#0a1025);min-width:0}
+.painel h2{font-size:clamp(1.24rem,2vw,1.6rem);color:#ffd783;margin:10px 0 18px}.painel p{font-size:.87rem;color:#e1d2ef;line-height:1.65}.status-linha{display:flex;justify-content:space-between;gap:8px;border-bottom:1px solid #8e6c5d6a;padding:14px 0;color:#cfc7d6}.status-linha strong{color:#fff}.acesso-link{display:inline-block;border:1px solid #d4a95c;border-radius:11px;color:#fff0c7;text-decoration:none;padding:12px;margin:19px 0 8px;font-size:.86rem}
+.regra form{display:grid;gap:11px}.regra label{color:#f5da96;font-size:.84rem;font-weight:700}.regra button{margin-top:6px}.observacao{font-size:.78rem!important;color:#bfb2d0!important}.historico{margin:16px 0}.historico-titulo{display:flex;justify-content:space-between;align-items:center;gap:12px}.historico-titulo h2{margin-bottom:8px}.historico ol{color:#d4c6e5;font-size:.86rem;padding-left:20px;line-height:1.7}footer{font-size:.75rem;text-align:center;color:#bba9c8;padding:20px 10px}
+[hidden]{display:none!important}:focus-visible{outline:3px solid #d2ffdb;outline-offset:3px}
+@media(max-width:1080px){.estrutura{grid-template-columns:185px minmax(0,1fr)}.paineis{grid-template-columns:1fr}}
+@media(max-width:750px){.escritorio-admin{margin:7px;padding:8px;border-radius:16px}.marca-topo{gap:12px;padding:9px;flex-wrap:wrap}.painel-etiqueta{margin-left:0}.estrutura{grid-template-columns:minmax(0,1fr)}.barra{padding:10px}.barra nav{grid-template-columns:repeat(2,minmax(0,1fr))}.barra nav a{font-size:.78rem}.barra-final{display:none}.indicadores{grid-template-columns:repeat(2,minmax(0,1fr))}.boas-vindas{flex-wrap:wrap}.paineis{grid-template-columns:1fr}.acesso label{width:100%}}
+@media(max-width:360px){.barra nav{grid-template-columns:1fr}.slogan{font-size:.76rem}.acesso button{flex:1}.painel-etiqueta{font-size:.6rem}}
+
+/* Missao 4: leitura operacional do proprietario, sem expor dados individuais ao cliente. */
+.loop03-resumo-indicacoes-admin{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin:16px 0}
+.loop03-resumo-indicacoes-admin>div{min-width:0;min-height:98px;padding:15px;border:1px solid #9f7848;border-radius:15px;background:linear-gradient(135deg,#101c36,#24163c)}
+.loop03-resumo-indicacoes-admin small{display:block;color:#ddd2e5;font-size:.78rem;line-height:1.35}
+.loop03-resumo-indicacoes-admin strong{display:block;font-size:clamp(1.7rem,3vw,2.5rem);color:#f8e0aa;margin-top:9px;font-variant-numeric:tabular-nums}
+@media(max-width:880px){.loop03-resumo-indicacoes-admin{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:360px){.loop03-resumo-indicacoes-admin{grid-template-columns:1fr}}
+
+/* Central de comando: atalhos de navegacao com area clicavel inteira. */
+#atalhosDirecaoAdmin .loop03-resumo-indicacoes-admin{grid-template-columns:repeat(3,minmax(0,1fr))}
+#atalhosDirecaoAdmin .loop03-resumo-indicacoes-admin>div{min-height:76px;padding:0;display:flex;overflow:hidden}
+#atalhosDirecaoAdmin .acesso-link{display:flex;align-items:center;justify-content:space-between;gap:12px;width:100%;min-height:76px;margin:0;padding:15px 18px;border:0;border-radius:14px;background:linear-gradient(130deg,#1a2945,#241738);font-size:.94rem;font-weight:750;line-height:1.4;transition:background .15s ease,box-shadow .15s ease}
+#atalhosDirecaoAdmin .acesso-link:hover{background:linear-gradient(130deg,#2b426b,#35204f);box-shadow:inset 0 0 0 1px #ffd17b}
+#atalhosDirecaoAdmin .acesso-link:focus-visible{outline:3px solid #d2ffdb;outline-offset:-4px}
+#finCofresAdmin .status-linha{align-items:center;flex-wrap:wrap}
+#finCofresAdmin .status-linha strong{font-variant-numeric:tabular-nums}
+@media(max-width:1100px){#atalhosDirecaoAdmin .loop03-resumo-indicacoes-admin{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:520px){#atalhosDirecaoAdmin .loop03-resumo-indicacoes-admin{grid-template-columns:1fr}#atalhosDirecaoAdmin .acesso-link{min-height:64px}}
+
+/* Guia de departamentos: campos explicativos e caminhos de navegacao. */
+.comando-guia{margin-top:18px;border-top:1px solid #846746;padding-top:14px}
+.comando-guia h3{color:#ffdb9b;font-size:1.05rem;margin:4px 0 13px}
+.comando-guia-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+.comando-guia-grid article{min-width:0;background:#101a30;border:1px solid #65567c;border-radius:13px;padding:15px;display:flex;flex-direction:column}
+.comando-guia-grid h4{color:#f9d69b;margin:0 0 6px}
+.comando-guia-grid p{margin:0 0 12px;flex:1}
+.comando-guia-grid a{color:#ffe1a0;font-weight:750;min-height:44px;display:inline-flex;align-items:center}
+@media(max-width:1100px){.comando-guia-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:520px){.comando-guia-grid{grid-template-columns:1fr}}
+
+.comando-busca{display:flex;align-items:center;flex-wrap:wrap;gap:9px;margin:17px 0 6px}
+.comando-busca label{font-weight:700;font-size:.86rem;color:#f9dca4}
+.comando-busca input{flex:1 1 210px;max-width:440px}
+.comando-busca span{font-size:.77rem;color:#c9bfd5}
+#listaComandosAdmin>div[hidden]{display:none}
+
+/* Acessibilidade: atalho visivel apenas com foco de teclado. */
+.pular-conteudo-admin{position:absolute;z-index:50;left:12px;top:-120px;padding:12px 18px;border-radius:10px;background:#ffe1a0;color:#171225;font-weight:800}
+.pular-conteudo-admin:focus{top:12px}
+#conteudoPrincipalAdmin:focus{outline:none}
+@media(prefers-reduced-motion:reduce){#atalhosDirecaoAdmin .acesso-link{transition:none}}
+
+#resumoDirecaoAdmin{margin-bottom:18px}
+#resumoDirecaoAdmin .historico-titulo{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px}
+#resumoDirecaoAdmin .comando-resumo-acoes{display:flex;flex-wrap:wrap;gap:12px;margin-top:14px}
+#resumoDirecaoAdmin .comando-resumo-acoes a{display:inline-flex;align-items:center;min-height:44px;color:#ffe1a0;font-weight:750}
+#resumoDirecaoAdmin button:disabled{opacity:.55;cursor:wait}
+
+#departamentoClientesAdmin{margin-bottom:18px}
+#departamentoClientesAdmin #filtrarClientesAdmin{display:block;width:100%;max-width:480px;margin:9px 0 12px}
+.clientes-diretorio-admin{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:14px;margin-bottom:16px}
+.clientes-diretorio-admin>div,.clientes-diretorio-admin>article{min-width:0;max-height:340px;overflow:auto;border:1px solid #65567c;border-radius:13px;padding:12px;background:#101a30}
+.clientes-diretorio-admin .cliente-item-admin{display:block;width:100%;min-height:44px;text-align:left;margin:0 0 7px;overflow-wrap:anywhere}
+.clientes-diretorio-admin article p{overflow-wrap:anywhere}
+@media(max-width:650px){.clientes-diretorio-admin{grid-template-columns:minmax(0,1fr)}}

@@ -1,0 +1,309 @@
+# LOOP — visao economica e fronteiras operacionais (premissas de projeto)
+
+> Documento de alinhamento das explicacoes do idealizador em 14/10/2026.
+> NAO e parecer juridico, prova de lucro, autorizacao de pagamento, regra
+> financeira aprovada ou promessa comercial validada. Nenhum dinheiro real
+> deve ser movimentado por este documento.
+
+## 1. Complexo na logica, leve na operacao
+
+O LOOP concentra vitrine, cadastro comercial, integracoes, exibicao do
+andamento de pedidos, filas/tabuleiro e registro financeiro. A maior
+parte da operacao fisica de mercadorias e delegada a distribuidores e
+plataformas conveniadas, via integracoes autorizadas.
+
+- LOOP: vitrine, experiencia do cliente, fluxo comercial autorizado,
+  historico e exibicao dos status recebidos; atendimento e obrigacoes
+  legais decorrentes da venda quando cabiveis.
+- Parceiros: estoque, separacao, embalagem, frete, transportadora,
+  despacho e entrega. O LOOP nao administra essas tarefas fisicas.
+- A divisao operacional reduz atividades internas, mas NAO elimina
+  responsabilidades contratuais, de consumidor, LGPD, contabeis,
+  tributarias nem custo de suporte e integracoes.
+
+## Definicao reforcada: LOOP e vendedor em dropshipping, sem estoque
+
+O idealizador explicou que a loja LOOP **e a vendedora
+perante o cliente**: realiza o checkout, recebe os valores,
+responde pelo atendimento e paga ao distribuidor o preco
+de fornecimento contratado para cada mercadoria.
+O distribuidor executa estoque, separacao, expedicao
+e entrega direto ao consumidor, sem estoque proprio LOOP.
+
+Dizer que o LOOP nao compra produtos significa que
+**nao compra estoque antes das vendas**, mas ha custo
+de mercadoria vinculado a venda que deve ser calculado.
+Nao e um caso de apenas levar o cliente a um link
+de parceiro e receber pequena comissao.
+
+Exemplo fornecido: mercadoria custa R$300 ao LOOP,
+loja vende por R$600 e destina R$100 como parcela
+referencial da fila. A sobra BRUTA hipotetica para
+o caixa e R$200 ANTES de impostos devidos, meio de
+pagamento, estornos, garantias, custos fixos e outras
+obrigacoes. O preco de venda ser o dobro do custo
+indica markup de 100% sobre o custo, nao margem
+liquida de 100%.
+
+## Outros esclarecimentos de negocio preservados
+
+- Exemplo anterior: produto anunciado por R$250,
+  custo de fornecedor R$50, parcela de referencia
+  de fila R$100 e **diferenca BRUTA** de R$100
+  antes de custos adicionais efetivos.
+- O idealizador pretende precos de venda de
+  **R$100 para cima**, com o curso PDF citado
+  como o produto de referencia de R$100.
+  Se uma venda custar R$100 e destinar R$100
+  a fila, **nao sobra margem comercial
+  adicional** antes de custos eventuais.
+- Um cliente pode efetuar varias compras,
+  adquirir varias posicoes e retornar ao
+  LOOP mesmo apos ter concluido seu ciclo:
+  **recompra nao significa cliente novo**.
+- A operacao pretende diferenciar o momento
+  em que cadastros e recebimentos sao feitos
+  do horario das liberacoes de valores.
+  Pausar pagamento nao altera direitos
+  legais nem torna caixa comprometido livre.
+- Uma estimativa pessoal de R$500 por mes
+  para manter a plataforma aberta,
+  possiveis reservas e investimentos
+  inclusive criptoativos sao hipoteses
+  a validar. Investimentos podem perder
+  valor; caixa de reembolso/obrigacoes
+  nao deve financiar apostas de risco.
+- Foi proposta uma fase promocional de
+  **aproximadamente 30 dias antes de iniciar
+  a catraca**, com cadastros e indicacoes.
+  O idealizador deseja ocupar o primeiro
+  centro do tabuleiro sem pagamento proprio.
+  Ha ambiguidades relevantes e risco
+  juridico/equidade a analisar; **nao
+  implementar essa excecao automaticamente**.
+  Consultar `docs/PRE_LANCAMENTO_30_DIAS.md`.
+
+## 2. Venda, fila e ciclo — modelo informado
+
+- Cada venda valida e confirmada de produto gera exatamente uma
+  posicao na fila, independentemente do preco comercial. Nenhum clique,
+  evento logistico ou mera reserva de produto cria posicao.
+- O idealizador descreve uma parcela interna de R$ 100 associada a
+  cada venda, destinada ao funcionamento da dinamica de filas.
+  Esta alocacao e interna ao preco da compra, NAO constitui
+  automaticamente um produto ou taxa independente e nao afasta
+  direitos de cancelamento, reembolso e devolucao integral.
+- O tabuleiro possui um centro e cinco vagas. Um participante ocupa
+  o centro de cada vez; seu ciclo e contabilizado em cinco eventos
+  de vendas, com a seguinte ordem PRETENDIDA para os R$ 100 de
+  referencia de cada evento:
+    1. R$ 100 — participante do centro
+    2. R$ 100 — empresa
+    3. R$ 100 — participante do centro
+    4. R$ 100 — empresa
+    5. R$ 100 — participante do centro
+- A distribuicao teorica dos cinco eventos e:
+  R$ 500 em parcelas internas = R$ 300 ao participante do centro
+  e R$ 200 alocados a empresa/caixa. **R$ 200 nao e lucro liquido
+  nem saldo livre comprovado.** A divisao de valores nao esta
+  implementada em pagamentos reais e depende de validacao juridica.
+- A proposta de exibir cada recebimento ao participante no escritorio
+  virtual e permitir saque esta sujeita a validacao de efetiva
+  disponibilidade, liquidacao do pagamento, direitos de consumidores,
+  encargos e garantias; eventos em simulacao nao criam credito real.
+
+## 3. Duas linhas economicas separadas
+
+A. **Dinamica das posicoes**: a proposta usa parcela de R$ 100
+por venda e cinco eventos por ciclo. O usuario descreve duas parcelas
+por ciclo destinadas a empresa/reserva e tres destinadas ao centro.
+
+B. **Margem comercial sobre mercadorias**: precos de produtos podem
+ser diferentes (ex.: R$ 250, R$ 300, R$ 500). Depois de contabilizar
+a parcela interna de referencia, os custos do distribuidor,
+tributos, intermediacao, frete quando aplicavel, devolucoes e
+demais despesas, PODERA existir margem economica adicional.
+
+Nao presumir que toda diferenca de preco e lucro, que toda venda esta
+liquidada ou que valores sujeitos a estorno podem financiar saques
+irrevogaveis. Uma eventual parte da margem para reserva ou apoio a
+obrigacoes precisa de regras, conciliacao e demonstracao contabil.
+
+## 4. Travas mencionadas pelo idealizador (hipoteses, NAO aprovadas)
+
+- Utilizar uma das parcelas da empresa como caixa/reserva para
+  proteger a liquidez e avaliar investimentos e outras destinacoes.
+- Manter a segunda parcela em planejamento separado ate definir
+  reserva, remuneracao da empresa e respectivas condicoes.
+- Ajustar regras operacionais progressivamente, com versoes
+  e trilha de auditoria sem mudar direitos ja constituidos.
+- Considerar posicoes da propria empresa para ajustes no fluxo.
+  ATENCAO: posicao criada sem venda efetiva NAO traz caixa novo e
+  pode consumir capacidade de giro, gerar obrigacoes ficticias,
+  distorcer filas e contrariar expectativas/contratos.
+  Nao implementar automaticamente sem simulacoes, transparencia
+  e parecer juridico especifico.
+- Considerar margem comercial liquida complementar se demonstrada.
+- Objetivo declarado: administrar filas grandes (5 mil, 10 mil
+  ou mais posicoes) sem interromper a atividade e preservando
+  os compromissos comerciais LICITOS.
+
+## 5. Indicacoes: 10% fixos e minimo de saque esclarecido
+
+Em 15/10/2026, o idealizador **confirmou expressamente** a
+regra pretendida de remuneracao por indicacao: **10% sobre a
+base de referencia de R$ 100 = R$ 10 por indicacao elegivel**.
+Isso NAO significa 10% sobre o valor comercial total de
+qualquer produto. Exemplos: dez creditos de R$ 10 somam
+R$ 100, que e o **minimo de saque do saldo de indicacoes**.
+Os creditos individuais aparecerao na area propria do
+participante no Escritorio Virtual.
+
+O idealizador tambem explicou que **bonus de eventos**
+podem ser exibidos/registrados nessa area e somados
+aos resultados individuais quando acontecerem eventos
+aprovados. **Nao ha valor ou gatilho automatico definido
+para bonus de eventos**.
+
+A regra ja registrada de **indicacao valida** pressupoe
+convidado que se cadastra pelo vinculo unico e paga,
+enquanto a frase recente sobre convidar familiar pode
+gerar ambiguidade sobre o instante exato de lancamento.
+**Antes de codificar, confirmar se o credito de R$ 10
+so ocorre apos uma compra validada do convidado.**
+Tambem nao assumir repeticao de credito para cada
+compra futura do mesmo indicado sem autorizacao.
+
+**Distincao de saldos:** a fixacao de R$ 100 como minimo
+deste saldo de indicacoes nao define o minimo de
+outras modalidades de credito ou contemplacao.
+
+**Seguranca financeira:** esse incentivo deve ser
+contabilmente conciliado com a parcela de R$ 100
+associada a cada venda, incluindo origem dos
+recursos, custos e reserva para estornos. Beneficios
+associados a compras de convidados exigem
+avaliacao juridica/regulatoria antes de ativar
+saldos, promessas publicas, saque ou pagamento.
+
+## 5. Saques e taxas — pontos mencionados, ainda ambiguos
+
+Foram mencionados um desconto de 3% no saque e possiveis minimos
+diferentes por tipo de saldo. A explicacao mais recente faz
+referencia a um minimo de R$ 100 para um saldo ligado a
+"porcentagem" e a outro saldo com saque de pequenos valores
+(ex.: R$ 6), sem minimo. O idealizador tambem cogitou e retirou
+a ideia de um minimo de R$ 300.
+
+**Nao transformar em configuracao fixa sem esclarecer**:
+- Quantos saldos/carteiras existem e seus nomes exatos.
+- O minimo de R$ 100 para o saldo de indicacoes esta CONFIRMADO;
+  falta definir o minimo de outros saldos, se existirem.
+- Se a taxa de 3% incidira em ambos os saques, apenas um,
+  ou se e apenas proposta; quem a cobra e se ha custos adicionais.
+- Se valores do centro podem ser liberados por parcelas de
+  R$ 100 ou somente apos conclusao das cinco vendas.
+- Disponibilidade efetiva, processamento, estornos, tributacao,
+  antifraude, compliance e autorizacao legal para guardar,
+  repassar ou custodiar valores.
+Nenhum saque real deve ser ativado antes dessas definicoes
+e de avaliacao juridica/regulatoria.
+
+## 6. Testes criticos de sustentabilidade e legalidade
+
+**Alocacao contabil nao prova lucro nem sustentabilidade.**
+
+Se cada venda gera UMA nova posicao e CINCO vendas sao exigidas
+para concluir UM ciclo no centro, um conjunto de cinco vendas
+pode criar cinco novos candidatos enquanto apenas um ciclo e
+concluido. Sem mecanismo demonstrado para eliminar essa
+diferenca, o numero de posicoes pendentes tende a crescer
+mesmo quando a empresa mantem reserva em dinheiro.
+
+Exemplo exclusivamente aritmetico: para concluir 10.000 ciclos,
+a regra de cinco vendas por ciclo exigiria 50.000 eventos de venda
+associados a ciclos, os quais tambem poderiam gerar 50.000
+novas posicoes. Isso nao significa que os ciclos possam ser
+prometidos a todos em prazo previsivel.
+
+Obrigatorio ANTES de afirmar lucro garantido ou contemplacao
+garantida:
+- Projecoes e simulacoes com entradas em queda, constantes
+  e crescentes; tempo de espera e backlog por coortes.
+- Fluxo de caixa temporal: valor bruto, custos de fornecedor,
+  impostos, taxas de pagamento, comissoes, reservas,
+  recebiveis nao liquidados, perdas e reembolsos.
+- Cenarios com 5 mil/10 mil posicoes, paralisacao de novas
+  vendas, chargebacks, insolvencia de parceiro, entregas
+  atrasadas e cancelamentos.
+- Separacao entre passivos com clientes, caixa da empresa,
+  receita comercial, reservas e eventuais creditos
+  condicionais ou disputados.
+- Parecer juridico brasileiro sobre direitos do consumidor,
+  atividades financeiras e risco de piramide/esquema de
+  remuneracao dependente de novas entradas, inclusive
+  quando ha venda de produtos reais.
+
+O sistema nao deve anunciar lucro garantido, prazo certo ou
+saque incondicional com base nessas premissas.
+
+## Observacao adicional sobre a contagem de filas
+
+A conta `10.000 + 100 - 20 = 10.080` era **um teste de estresse
+com 10 mil posicoes ja ativas, nao a origem da empresa**.
+Para chegar a 10 mil posicoes, o sistema ja teria processado
+muitas vendas, varios tabuleiros e saídas; esse historico
+nao era representado no teste. O parametro `posicoesIniciais`
+inclui as posicoes no centro e nas cinco vagas, nao apenas
+pessoas aguardando fora do tabuleiro.
+
+No modelo agregado (sem pausas) com lancamento do ZERO e
+100 vendas validas, as seis primeiras posicoes preenchem
+o tabuleiro, as outras 94 geram eventos: 18 ciclos concluidos,
+82 posicoes ainda ativas no total, 76 delas aguardando na
+fila e seis dentro do tabuleiro. Se o cenario ja partir de
+10 posicoes ativas e acrescentar 100 vendas, registra
+20 ciclos e 90 posicoes ativas, sendo 84 aguardando.
+O resultado e de contagem de **posicoes**, nao pessoas
+distintas, tempos de espera ou pagamentos liquidados.
+
+Variaveis de comportamento e preco nao impedem estudar
+contagens matematicas condicionais: tornam incerta a
+previsao de vendas, de liquidez, de ritmo dos ciclos e da
+capacidade de honrar compromissos. A ferramenta nao
+substitui dados reais nem revisao regulatoria.
+
+## Primeira ferramenta de simulacao matematica
+
+Foi criado um modulo offline de laboratorio em
+`src/domain/projecao-sustentabilidade-loop.js`, testado em
+`test/projecao-sustentabilidade-loop.test.js`, com relatorio
+`npm run simular:sustentabilidade`.
+
+Ele separa contribuicao comercial apos custos e parcela de
+referencia das filas, eventos do centro/empresa e crescimento
+das posicoes pendentes. Simula vendas constantes, decrescentes,
+paradas, precos e custos variados, e estornos ocorridos antes
+da geracao de posicao. **Nao** simula estorno tardio, receita
+efetivamente liquidada, taxa/minimo de saque, custos fixos,
+indicacoes e criterios juridicos de distribuicao.
+
+O teste evidencia que, numa fila com 10 mil posicoes
+preexistentes, 100 vendas adicionais gerariam 100 posicoes
+novas e 20 ciclos concluidos, mantendo 10.080 pendentes
+sob essas premissas. Este resultado nao representa a
+ordem real de atendimento nem torna qualquer beneficio
+prometido seguro. Ver `docs/SIMULADOR_SUSTENTABILIDADE.md`.
+
+## 7. Regra de engenharia
+
+Manter modulos separados para produtos e integracoes,
+pedidos/logistica, motor de filas/tabuleiro e EVENTUAL
+razao financeiro auditavel. Nenhuma integracao de frete
+realiza creditos financeiros so porque um status chegou;
+nenhum pagamento ou saque deve ser acionado por uma tela
+de simulacao.
+
+Este documento registra o modelo PRETENDIDO, seus pressupostos,
+ambiguidades e testes pendentes para que nao sejam esquecidos
+enquanto a plataforma segue em desenvolvimento experimental.
