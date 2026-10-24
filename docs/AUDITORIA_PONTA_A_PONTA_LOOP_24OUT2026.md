@@ -24,6 +24,13 @@ A busca de texto identifica algumas expressões explícitas de cinco vendas por 
 **A4 — MÉDIA — Histórico e regra vigente precisam de versionamento explícito.**
 Manter o histórico original imutável por auditoria; registrar regra vigente V6 como única autoridade de execução. Não reescrever retrospectivamente registros de ciclos nem remover provas de migração.
 
+## Atualização verificada — 24/10/2026
+
+- **CI comprovado no commit `54727eb7b1e4f0301a47c827ccaee90c6e618561`:** workflows `Testes do LOOP` e `LOOP - Navegador celular e computador` concluídos com sucesso. É validação da branch, não homologação de produção.
+- **A1 parcialmente mitigado:** rota administrativa autenticada `GET /escritorio-demo/clientes/:id/compras` lê `admin_ponte_compras_demo` do SQLite, isolando pelo identificador do cliente, com total e limite de 100 pedidos. A consulta busca posições adicionais em lote na tabela `admin_ponte_posicoes_adicionais_demo`. Não expõe saldo real, não atribui ciclos e declara explicitamente `ciclos: NAO_CONCILIADOS_NESTA_CONSULTA`.
+- **Teste funcional introduzido:** `test/escritorio-admin-compras-cliente-sqlite.test.js` inicializa servidor local e SQLite, cria dois clientes e pedidos distintos, verifica autenticação, isolamento de compras, vínculo de posição adicional, cliente inexistente e identificador inválido. Após correções do esquema de teste, o CI ficou verde.
+- **Permanecem pendentes:** conciliação de ciclos e financeiro, controles completos de acesso por departamento, paginação além de 100, testes comportamentais do giro com 0–12 eventos, carga/concorrência e homologação externa.
+
 ## Matriz de trabalho restante
 
 1. **Motor/filas/tabuleiro:** cenários de 0–12 vendas, prioridade 3A:1B, centro e vaga 6, posição dourada, ordem determinística, concorrência, recuperação após interrupção.
