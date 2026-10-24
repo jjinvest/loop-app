@@ -11,6 +11,7 @@ test('fluxo continuo do cliente 1 ao cliente 10000 com compras e giros reais do 
  let sequenciaA=0,maxSequenciaA=0;
  let vendasAguardando=0;
  const produtos={pdf:{quantidade:0,receita:0},produto190:{quantidade:0,receita:0}};
+ let unidades=0,comprasInsuficientes=0,excedenteProdutos=0;
  const cofres={LOOP_CENTRO:0,LOOP_ESQUERDA:0,LOOP_DIREITA:0,LOOP_DOURADAS:0};
  const perfis={uma:0,cinco:0,dez:0};
  const checkpoints=[];
@@ -24,9 +25,17 @@ test('fluxo continuo do cliente 1 ao cliente 10000 com compras e giros reais do 
   for(let j=0;j<quantidade;j++){
    const vendaId='compra-'+numero+'-'+j;
    const tipo=(numero+j)%2===0?'produto190':'pdf';
-   const preco=tipo==='produto190'?190:250;
-   produtos[tipo].quantidade++;
+   const unidadesDaCompra=tipo==='produto190'?2:1;
+   const preco=tipo==='produto190'?380:250;
+   produtos[tipo].quantidade+=unidadesDaCompra;
    produtos[tipo].receita+=preco;
+   unidades+=unidadesDaCompra;
+   if(tipo==='produto190'){
+    comprasInsuficientes++;
+    assert.ok(190<250);
+    assert.ok(380>=250);
+    excedenteProdutos+=130;
+   }
    const resultado=sim.registrarPosicaoSimulada({
     participanteId:'cliente-'+numero,nome:'Cliente ficticio '+numero,vendaId
    });
@@ -38,7 +47,7 @@ test('fluxo continuo do cliente 1 ao cliente 10000 com compras e giros reais do 
     if(numero<=100){vendasAguardando++;continue;}
     const ordem=sim.tabuleiro.vendasDoCiclo.length+1;
     const destino=cofreDoEvento({posicaoCentro:sim.tabuleiro.centro,ordem});
-    cofres[destino]+=preco;
+    cofres[destino]+=250;
     sim.registrarVendaNoCicloSimulada({vendaId});
     if(sim.tabuleiro.vendasDoCiclo.length===6){
      const r=sim.tentarGiro();
@@ -76,6 +85,9 @@ test('fluxo continuo do cliente 1 ao cliente 10000 com compras e giros reais do 
  }
  assert.equal(clientes,10000);
  assert.equal(compras,10000);
+ assert.equal(unidades,15000);
+ assert.equal(produtos.produto190.quantidade,10000);
+ assert.equal(produtos.pdf.quantidade,5000);
  assert.equal(indicacoes,3000);
  assert.deepEqual(perfis,{uma:10000,cinco:0,dez:0});
  assert.ok(giros>100,'fluxo deve girar muito mais que 100 vezes');
@@ -85,7 +97,14 @@ test('fluxo continuo do cliente 1 ao cliente 10000 com compras e giros reais do 
  assert.equal(new Set(ativos.map(p=>p.id)).size,ativos.length);
  assert.equal(sim.tabuleiro.ciclosConcluidos.length,giros);
  assert.equal(entradasA+entradasB,giros);
- const relatorio={clientes,compras,posicoesCriadas:compras,perfis,indicacoes,giros,
+ const douradas=1000;
+ const transferenciaDouradas=douradas*250;
+ assert.ok(cofres.LOOP_DIREITA>=transferenciaDouradas,'cofre direito cobre as 1000 douradas');
+ cofres.LOOP_DIREITA-=transferenciaDouradas;
+ cofres.LOOP_DOURADAS+=transferenciaDouradas;
+ assert.equal(cofres.LOOP_CENTRO,giros*750);
+ assert.equal(Object.values(cofres).reduce((a,b)=>a+b,0),sim.tabuleiro.vendasProcessadas.size*250);
+ const relatorio={clientes,compras,posicoesCriadas:compras,unidadesVendidas:unidades,comprasDe190IsoladasNaoQualificadas:comprasInsuficientes,excedenteProdutosForaDoMotor:excedenteProdutos,bolasDouradasEmpresa:douradas,transferenciaCofreDireitoParaDouradas:transferenciaDouradas,perfis,indicacoes,giros,
   produtos,receitaBrutaTotal:produtos.produto190.receita+produtos.pdf.receita,
   cofres,
   pagamentoPrevistoContemplacoes:giros*750,
