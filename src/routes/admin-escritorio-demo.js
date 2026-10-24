@@ -101,6 +101,41 @@ function criarRouterEscritorioDemo({segredo,publicacoes=null}={}) {
       comprasIndividuais:'NAO_CONCILIADAS',posicoesIndividuais:'NAO_CONCILIADAS',
       contemplacoesIndividuais:'NAO_CONCILIADAS'});
   });
+  // Relacao administrativa REAL do laboratorio: apenas compras documentadas
+  // na ponte SQLite, nunca o cenario demonstrativo isolado.
+  router.get('/escritorio-demo/clientes/:id/compras',(req,res)=>{
+    if(!publicacoes?.banco)return res.status(501).json({erro:'FONTE_SQLITE_INDISPONIVEL'});
+    const banco=publicacoes.banco;
+    if(typeof req.params.id!=='string'||!(/^[a-f0-9-]{36}$/).test(req.params.id))
+      return res.status(400).json({erro:'CLIENTE_ID_INVALIDO'});
+    const tem=t=>!!banco.prepare(
+      "SELECT 1 FROM sqlite_master WHERE type='table' AND name=?").get(t);
+    if(!tem('admin_contas_participantes_demo'))
+      return res.status(501).json({erro:'CADASTRO_SQLITE_INDISPONIVEL'});
+    const cliente=banco.prepare(
+      'SELECT id,nome FROM admin_contas_participantes_demo WHERE id=?'
+    ).get(req.params.id);
+    if(!cliente)return res.status(404).json({erro:'CLIENTE_NAO_ENCONTRADO'});
+    if(!tem('admin_ponte_compras_demo'))
+      return res.json({modo:'LABORATORIO_LOCAL',fonte:'SQLITE_LOCAL',
+        cliente,compras:[],totalComprasDocumentadas:0,
+        aviso:'LIVRO_DE_COMPRAS_AUSENTE',semPagamentosReais:true});
+    const compras=banco.prepare(
+      'SELECT pedido_id AS pedidoId,produto_id AS produtoId,'+
+      ' valor_centavos AS valorCentavos,confirmado_em AS confirmadoEm,'+
+      ' posicao_id AS posicaoId FROM admin_ponte_compras_demo'+
+      ' WHERE conta_id=? ORDER BY confirmado_em DESC,pedido_id DESC LIMIT 100'
+    ).all(cliente.id);
+    const total=banco.prepare(
+      'SELECT COUNT(*) AS n FROM admin_ponte_compras_demo WHERE conta_id=?'
+    ).get(cliente.id).n;
+    return res.json({modo:'LABORATORIO_LOCAL',fonte:'SQLITE_LOCAL',
+      cliente,compras,totalComprasDocumentadas:total,limite:100,
+      confirmacao:'PAGAMENTO_SIMULADO_VERIFICADO_INTERNAMENTE',
+      semPagamentosReais:true,
+      posicoesAdicionais:'NAO_INCLUIDAS_NESTA_CONSULTA',
+      ciclos:'NAO_CONCILIADOS_NESTA_CONSULTA'});
+  });
   router.get('/escritorio-demo/auditoria-operacional',(_req,res)=>{
     if(!publicacoes?.banco)return res.status(501).json({
       erro:'FONTE_SQLITE_INDISPONIVEL',modo:'LABORATORIO_LOCAL'
