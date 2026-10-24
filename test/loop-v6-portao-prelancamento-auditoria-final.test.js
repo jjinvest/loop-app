@@ -111,3 +111,15 @@ test('portao nao aceita extrato artificial omitido como conciliado',async t=>{
  assert.equal(r.consistenciaLocalDaAmostra,false);
  assert.equal(r.prontoParaProducao,false);
 });
+
+test('extrato divergente jamais habilita liberacao financeira',async t=>{
+ const m=contexto();t.after(()=>m.repo.fechar());
+ const evento=await criar(m);
+ const alterado={...evento,valorCentavos:evento.valorCentavos+100};
+ const r=conferir(m,[alterado]);
+ assert.equal(r.consistenciaLocalDaAmostra,false);
+ assert.ok(r.riscosLocais.includes('DIVERGENCIA_DE_CONCILIACAO_FICTICIA'));
+ assert.equal(r.autorizacaoFinanceira,false);
+ assert.equal(r.dinheiroRealComprovado,false);
+ assert.equal(r.prontoParaProducao,false);
+});
