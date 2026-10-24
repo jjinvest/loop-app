@@ -88,6 +88,8 @@ test('fluxo continuo do cliente 1 ao cliente 10000 com compras e giros reais do 
  const relatorio={clientes,compras,posicoesCriadas:compras,perfis,indicacoes,giros,
   produtos,receitaBrutaTotal:produtos.produto190.receita+produtos.pdf.receita,
   cofres,
+  pagamentoPrevistoContemplacoes:giros*750,
+  valorPorContemplacao:750,
   entradasEmpresaPorCiclos:giros*3,
   eventosParticipantePorCiclos:giros*3,
   caixaLiquidoNaoCalculado:true,
