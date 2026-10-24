@@ -195,3 +195,9 @@ Atualizado em 22/10/2026. **Esta é a porta de entrada para retomar o projeto ra
 - Escrever primeiro a decisão objetiva atual e referenciar seu detalhe no documento longo. Marcar alterações futuras como **VIGENTE/ADIADO/REVOGADO/TESTE** e datar.
 - **Não apagar nem reescrever histórico sem backup íntegro**. Códigos, tabelas, dados, branches, arquivos de UI e capturas aprovadas não são lixo.
 - Se uma hipótese não estiver confirmada no código ou em fala explícita do proprietário, marcar **“a confirmar”**, não fixá-la como decisão. Fazer verificação específica quando for implementar.
+
+## [VIGENTE — 24/10/2026] Relatorios no Escritorio Virtual do Administrador
+- O administrador deve visualizar resultados das simulacoes e da operacao real, separados e rotulados: clientes, unidades, pedidos, posicoes qualificadas/pendentes/ativas, fila A/B, tabuleiro, ciclos concluidos, contemplacoes de R$ 750, receita bruta, capital do motor, excedente comercial, reserva do piloto, saldos de cada cofre, 1000 douradas criadas por eventos de conversao e transferencias da reserva direita, divergencias e conciliacao sem dupla contagem.
+- Dados de simulacao nao podem aparecer como saldo bancario, lucro, pagamento efetivado ou receita real. Exibir origem, data, versao do teste e situacao da verificacao. Nao alterar visual aprovado sem autorizacao; evoluir funcionalidade com fonte verificavel.
+- Nao confundir o teste hipotetico de 1000 transferencias de R$ 250 com a regra operacional: douradas surgem individualmente por conversao azul na vaga 6; sua contagem, ciclo e roteamento precisam de historico real.
+- Regra comercial: PDF R$ 250 × 1 qualifica uma posicao; produto R$ 190 × 1 nao qualifica; produto R$ 190 × 2 qualifica uma posicao por pedido conforme configuracao. Excedente de R$ 130 nao se torna automaticamente evento de R$ 250.
