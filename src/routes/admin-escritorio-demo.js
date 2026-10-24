@@ -54,26 +54,33 @@ function criarRouterEscritorioDemo({segredo,publicacoes=null}={}) {
       {id:'demo-c2',nick:'Ana',nome:'Ana (fictícia)'},
       {id:'demo-c3',nick:'Bia',nome:'Bia (fictícia)'}
     ];
+    const valorMinimoCentavos=25000;
     const produtos=[
-      {id:'demo-pdf',nome:'Curso PDF demonstrativo',tipo:'PDF'},
-      {id:'demo-fisico',nome:'Produto físico demonstrativo',tipo:'FISICO'}
+      {id:'demo-pdf',nome:'Curso PDF demonstrativo',tipo:'PDF',precoUnitarioCentavos:25000},
+      {id:'demo-fisico',nome:'Produto físico demonstrativo',tipo:'FISICO',precoUnitarioCentavos:19000}
     ];
     const pedidos=[
-      {id:'demo-v1',clienteId:'demo-c1',produtoId:'demo-pdf',quantidade:2,data:'2026-10-20'},
-      {id:'demo-v2',clienteId:'demo-c1',produtoId:'demo-fisico',quantidade:1,data:'2026-10-21'},
-      {id:'demo-v3',clienteId:'demo-c2',produtoId:'demo-pdf',quantidade:1,data:'2026-10-22'},
-      {id:'demo-v4',clienteId:'demo-c3',produtoId:'demo-fisico',quantidade:1,data:'2026-10-23'}
-    ];
+      {id:'demo-v1',clienteId:'demo-c1',produtoId:'demo-pdf',quantidade:2,data:'2026-10-20',termosAceitos:true,ativacaoIndividual:true},
+      {id:'demo-v2',clienteId:'demo-c1',produtoId:'demo-fisico',quantidade:1,data:'2026-10-21',termosAceitos:false,ativacaoIndividual:false},
+      {id:'demo-v3',clienteId:'demo-c2',produtoId:'demo-pdf',quantidade:1,data:'2026-10-22',termosAceitos:true,ativacaoIndividual:true},
+      {id:'demo-v4',clienteId:'demo-c3',produtoId:'demo-fisico',quantidade:2,data:'2026-10-23',termosAceitos:false,ativacaoIndividual:false}
+    ].map(p=>{
+      const produto=produtos.find(x=>x.id===p.produtoId);
+      const totalCentavos=produto.precoUnitarioCentavos*p.quantidade;
+      return {...p,totalCentavos,valorQualificado:totalCentavos>=valorMinimoCentavos,
+        posicaoAtivavel:totalCentavos>=valorMinimoCentavos&&p.termosAceitos&&p.ativacaoIndividual};
+    });
     const posicoes=[
       {id:'demo-pos1',clienteId:'demo-c1',pedidoId:'demo-v1',fila:'B',cicloId:'demo-ciclo1'},
-      {id:'demo-pos2',clienteId:'demo-c1',pedidoId:'demo-v2',fila:'A',cicloId:null},
       {id:'demo-pos3',clienteId:'demo-c2',pedidoId:'demo-v3',fila:'B',cicloId:null}
     ];
+    if(posicoes.some(p=>!pedidos.find(v=>v.id===p.pedidoId&&v.posicaoAtivavel)))
+      throw Error('Cenario invalido: posicao sem compra qualificada e ativacao');
     const ciclos=[{id:'demo-ciclo1',clienteId:'demo-c1',posicaoId:'demo-pos1',
       estado:'CONCLUIDO_FICTICIO',contemplacoesSimuladas:1}];
     return res.json({modo:'SIMULACAO_ISOLADA',semPagamentosReais:true,
       descricao:'Dados exclusivamente demonstrativos, sem lançamento financeiro nem ativação de posições',
-      clientes,produtos,pedidos,posicoes,ciclos});
+      valorMinimoCentavos,clientes,produtos,pedidos,posicoes,ciclos});
   });
   router.get('/escritorio-demo/clientes',(_req,res)=>{
     if(!publicacoes?.banco)return res.status(501).json({erro:'FONTE_SQLITE_INDISPONIVEL'});
