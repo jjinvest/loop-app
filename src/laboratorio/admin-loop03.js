@@ -33,6 +33,52 @@
      ' · '+h.motivo+' · '+h.registradoEm;lista.append(li);
   }
  }
+ let cenarioConectado=null,abaConectada='clientes';
+ function renderizarConexoes(){
+  if(!cenarioConectado)return;
+  const d=cenarioConectado,lista=$('listaConexoesDemoAdmin');lista.replaceChildren();
+  const detalhes=$('detalheConexoesDemoAdmin');
+  const texto=(pai,tag,valor)=>{const el=document.createElement(tag);el.textContent=valor;pai.append(el);};
+  const cliente=id=>d.clientes.find(c=>c.id===id);
+  const produto=id=>d.produtos.find(p=>p.id===id);
+  function abrir(tipo,id){
+   detalhes.replaceChildren();
+   if(tipo==='clientes'){
+    const c=cliente(id),pedidos=d.pedidos.filter(p=>p.clienteId===id);
+    const posicoes=d.posicoes.filter(p=>p.clienteId===id);
+    const ciclos=d.ciclos.filter(x=>x.clienteId===id);
+    texto(detalhes,'h3',c.nick+' · '+c.nome);
+    texto(detalhes,'p','Pedidos fictícios: '+pedidos.length+' · Posições fictícias: '+posicoes.length+' · Ciclos fictícios: '+ciclos.length);
+    for(const p of pedidos)texto(detalhes,'p',p.id+' · '+produto(p.produtoId).nome+' · quantidade '+p.quantidade+' · '+p.data);
+    for(const p of posicoes)texto(detalhes,'p','Posição '+p.id+' · fila '+p.fila+' · pedido '+p.pedidoId);
+    for(const x of ciclos)texto(detalhes,'p','Ciclo '+x.id+' · '+x.estado+' · contemplações SIMULADAS: '+x.contemplacoesSimuladas);
+   }else{
+    const p=produto(id),pedidos=d.pedidos.filter(v=>v.produtoId===id);
+    texto(detalhes,'h3',p.nome+' · '+p.tipo);
+    texto(detalhes,'p','Pedidos fictícios: '+pedidos.length+' · unidades: '+pedidos.reduce((n,v)=>n+v.quantidade,0));
+    for(const v of pedidos)texto(detalhes,'p',v.data+' · '+v.quantidade+' unidade(s) · cliente '+cliente(v.clienteId).nick+' · '+v.id);
+   }
+  }
+  const itens=d[abaConectada];
+  for(const item of itens){
+   const b=document.createElement('button');b.type='button';b.className='cliente-item-admin';
+   b.textContent=abaConectada==='clientes'?item.nick+' · '+item.nome:item.nome+' · '+item.tipo;
+   b.addEventListener('click',()=>abrir(abaConectada,item.id));lista.append(b);
+  }
+  $('abaClientesDemoAdmin').setAttribute('aria-pressed',String(abaConectada==='clientes'));
+  $('abaProdutosDemoAdmin').setAttribute('aria-pressed',String(abaConectada==='produtos'));
+  detalhes.replaceChildren();texto(detalhes,'p','Selecione um registro para consultar as relações simuladas.');
+ }
+ async function carregarConexoes(){
+  const r=await fetch('/api/admin/escritorio-demo/cenario-conectado',{
+   cache:'no-store',headers:{Authorization:'Bearer '+token}});
+  const d=await r.json();
+  if(!r.ok||d.modo!=='SIMULACAO_ISOLADA')throw Error(d.erro||'Cenário indisponível');
+  cenarioConectado=d;renderizarConexoes();
+  $('statusConexoesDemoAdmin').textContent='SIMULAÇÃO: '+d.clientes.length+' clientes · '+d.pedidos.length+' pedidos · '+d.produtos.length+' produtos · '+d.posicoes.length+' posições · '+d.ciclos.length+' ciclos. Nenhum pagamento real.';
+ }
+ $('abaClientesDemoAdmin').addEventListener('click',()=>{abaConectada='clientes';renderizarConexoes();});
+ $('abaProdutosDemoAdmin').addEventListener('click',()=>{abaConectada='produtos';renderizarConexoes();});
  let clientesDiretorio=[];
  function fichaCliente(c){
   const detalhe=$('detalheClienteAdmin');detalhe.replaceChildren();
@@ -136,6 +182,8 @@
   $('indicacoesVinculadasAdmin').textContent=String(indicacoes.vinculadas);
   $('indicacoesAguardandoAdmin').textContent=String(indicacoes.aguardandoAtivacao);
   renderizarTrava(trava);
+  try{await carregarConexoes();}
+  catch(err){$('statusConexoesDemoAdmin').textContent='Cenário indisponível: '+err.message;}
   try{await carregarClientes();}
   catch(err){$('statusClientesAdmin').textContent='Consulta indisponível: '+err.message;}
   try{await carregarAuditoria();}
