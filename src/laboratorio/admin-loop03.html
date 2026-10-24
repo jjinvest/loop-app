@@ -6,6 +6,7 @@
 <link rel="stylesheet" href="/admin/loop03.css">
 </head>
 <body>
+<a class="pular-conteudo-admin" href="#conteudoPrincipalAdmin">Pular para o conteúdo do escritório</a>
 <main class="escritorio-admin">
  <header class="marca-topo">
   <div class="marca">LOOP <em>3.0</em></div>
@@ -15,8 +16,8 @@
  <div class="estrutura">
   <aside class="barra" aria-label="Áreas administrativas">
    <strong class="grupo">DIREÇÃO E OPERAÇÃO</strong>
-   <nav>
-    <a class="ativo" href="#visaoGeral">◈ <span>Visão geral</span></a>
+   <nav aria-label="Navegação administrativa">
+    <a class="ativo" aria-current="location" href="#visaoGeral">◈ <span>Visão geral</span></a>
     <a href="#atalhosDirecaoAdmin">▦ <span>Central de comando</span></a>
     <a href="#regraTrava">◉ <span>Controle das filas</span></a>
     <a href="#painelIndicacoesAdmin">♧ <span>Distribuição de indicações</span></a>
@@ -30,7 +31,7 @@
    </nav>
    <div class="barra-final"><span class="sinal"></span> Painel reservado ao operador<br><small>Somente dados fictícios de laboratório</small></div>
   </aside>
-  <section class="conteudo">
+  <section class="conteudo" id="conteudoPrincipalAdmin" tabindex="-1">
    <div class="boas-vindas">
     <div><span class="sobretitulo">PAINEL DE CONTROLE</span><h1>Escritório do Administrador</h1><p>Acompanhe as filas, ajuste regras e consulte os controles do LOOP.</p></div>
     <span class="estado" id="situacaoPainel">SEM AUTENTICAÇÃO</span>
