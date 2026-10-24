@@ -32,7 +32,7 @@ test('API SQLite devolve apenas compras do cliente correto e suas posicoes adici
  const a='11111111-1111-1111-1111-111111111111';
  const b='22222222-2222-2222-2222-222222222222';
  db.prepare('INSERT INTO admin_contas_participantes_demo(id,nome) VALUES (?,?)').run(a,'Cliente A');
- db.prepare('INSERT INTO admin_contas_participantes_demo VALUES (?,?)').run(b,'Cliente B');
+ db.prepare('INSERT INTO admin_contas_participantes_demo(id,nome) VALUES (?,?)').run(b,'Cliente B');
  const add=db.prepare('INSERT INTO admin_ponte_compras_demo VALUES (?,?,?,?,?,?)');
  add.run('pedido-a',a,'curso',25000,'2026-10-24T10:00:00Z',101);
  add.run('pedido-b',b,'curso',25000,'2026-10-24T11:00:00Z',201);
