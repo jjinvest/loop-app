@@ -26,12 +26,12 @@ test('API SQLite devolve apenas compras do cliente correto e suas posicoes adici
  const repo=new RepositorioCatalogoSQLite({caminho:path.join(dir,'db.sqlite')});
  t.after(()=>repo.fechar());
  const db=repo.banco;
- db.exec(`CREATE TABLE admin_contas_participantes_demo(id TEXT PRIMARY KEY,nome TEXT);
+ db.exec(`CREATE TABLE admin_contas_participantes_demo(id TEXT PRIMARY KEY,nome TEXT,indicado_por_id TEXT);
  CREATE TABLE admin_ponte_compras_demo(pedido_id TEXT PRIMARY KEY,conta_id TEXT,produto_id TEXT,valor_centavos INTEGER,confirmado_em TEXT,posicao_id INTEGER);
  CREATE TABLE admin_ponte_posicoes_adicionais_demo(pedido_id TEXT,ordem INTEGER,posicao_id INTEGER);`);
  const a='11111111-1111-1111-1111-111111111111';
  const b='22222222-2222-2222-2222-222222222222';
- db.prepare('INSERT INTO admin_contas_participantes_demo VALUES (?,?)').run(a,'Cliente A');
+ db.prepare('INSERT INTO admin_contas_participantes_demo(id,nome) VALUES (?,?)').run(a,'Cliente A');
  db.prepare('INSERT INTO admin_contas_participantes_demo VALUES (?,?)').run(b,'Cliente B');
  const add=db.prepare('INSERT INTO admin_ponte_compras_demo VALUES (?,?,?,?,?,?)');
  add.run('pedido-a',a,'curso',25000,'2026-10-24T10:00:00Z',101);
