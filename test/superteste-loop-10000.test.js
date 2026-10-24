@@ -8,6 +8,7 @@ test('fluxo continuo do cliente 1 ao cliente 10000 com compras e giros reais do 
  sim.filas.travaPromocaoAtiva=true;
  let clientes=0,compras=0,indicacoes=0,giros=0,entradasA=0,entradasB=0;
  let sequenciaA=0,maxSequenciaA=0;
+ let vendasAguardando=0;
  const perfis={uma:0,cinco:0,dez:0};
  const checkpoints=[];
  // Cada compra gera uma posicao e um evento de venda para o ciclo
@@ -25,8 +26,9 @@ test('fluxo continuo do cliente 1 ao cliente 10000 com compras e giros reais do 
    assert.equal(resultado.repetida,false);
    compras++;
    if(j===0)alvo=resultado.posicao.id;
-   if(!sim.tabuleiro.centro&&compras>=7){sim.prepararTabuleiro();sim.abrirCatraca();}
+   if(!sim.tabuleiro.centro&&compras>=7)sim.prepararTabuleiro();
    if(sim.tabuleiro.centro){
+    if(numero<=100){vendasAguardando++;continue;}
     sim.registrarVendaNoCicloSimulada({vendaId});
     if(sim.tabuleiro.vendasDoCiclo.length===6){
      const r=sim.tentarGiro();
@@ -41,7 +43,12 @@ test('fluxo continuo do cliente 1 ao cliente 10000 com compras e giros reais do 
     }
    }
   }
-  if(numero===100)checkpoints.push({clientes,compras,giros,filaA:sim.filas.filaA.length,filaB:sim.filas.filaB.length});
+  if(numero===100){
+   assert.equal(giros,0);
+   assert.equal(sim.catracaAberta,false);
+   sim.abrirCatraca();
+   checkpoints.push({clientes,compras,giros,filaA:sim.filas.filaA.length,filaB:sim.filas.filaB.length});
+  }
   // 3000 indicacoes progressivas, sem ultrapassar o limite de clientes.
   // Cada um dos primeiros 1000 titulares apos o piloto faz 3 convites
   // validados vinculados a UMA posicao escolhida.
@@ -72,6 +79,7 @@ test('fluxo continuo do cliente 1 ao cliente 10000 com compras e giros reais do 
   ciclosConcluidos:sim.tabuleiro.ciclosConcluidos.length,
   vendasRegistradasNoCiclo:sim.tabuleiro.vendasProcessadas.size,
   vendasPendentesNoCiclo:sim.tabuleiro.vendasDoCiclo.length,
+  vendasNoPilotoComCatracaFechada:vendasAguardando,
   filaA:sim.filas.filaA.length,filaB:sim.filas.filaB.length,
   tabuleiroOcupado:tabuleiro.length,entradasA,entradasB,maxSequenciaA,
   checkpoints,valorFinanceiroReal:0};
