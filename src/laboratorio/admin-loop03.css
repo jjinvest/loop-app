@@ -42,3 +42,14 @@ button{cursor:pointer;padding:11px 15px;border-radius:11px;border:1px solid #ffd
 #finCofresAdmin .status-linha strong{font-variant-numeric:tabular-nums}
 @media(max-width:1100px){#atalhosDirecaoAdmin .loop03-resumo-indicacoes-admin{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:520px){#atalhosDirecaoAdmin .loop03-resumo-indicacoes-admin{grid-template-columns:1fr}#atalhosDirecaoAdmin .acesso-link{min-height:64px}}
+
+/* Guia de departamentos: campos explicativos e caminhos de navegacao. */
+.comando-guia{margin-top:18px;border-top:1px solid #846746;padding-top:14px}
+.comando-guia h3{color:#ffdb9b;font-size:1.05rem;margin:4px 0 13px}
+.comando-guia-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+.comando-guia-grid article{min-width:0;background:#101a30;border:1px solid #65567c;border-radius:13px;padding:15px;display:flex;flex-direction:column}
+.comando-guia-grid h4{color:#f9d69b;margin:0 0 6px}
+.comando-guia-grid p{margin:0 0 12px;flex:1}
+.comando-guia-grid a{color:#ffe1a0;font-weight:750;min-height:44px;display:inline-flex;align-items:center}
+@media(max-width:1100px){.comando-guia-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:520px){.comando-guia-grid{grid-template-columns:1fr}}
