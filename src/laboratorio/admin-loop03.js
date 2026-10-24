@@ -107,6 +107,19 @@
   $('dadosAdminLoop03').hidden=false;
   $('situacaoPainel').textContent='CONTROLE AUTENTICADO';
  }
+ // Destaca o departamento aberto sem alterar as rotas ou os dados.
+ const linksMenu=[...document.querySelectorAll('.barra nav a')];
+ function atualizarMenuAtivo(){
+  const hash=window.location.hash||'#visaoGeral';
+  for(const link of linksMenu){
+   const ativo=link.getAttribute('href')===hash;
+   link.classList.toggle('ativo',ativo);
+   if(ativo)link.setAttribute('aria-current','location');
+   else link.removeAttribute('aria-current');
+  }
+ }
+ window.addEventListener('hashchange',atualizarMenuAtivo);
+ atualizarMenuAtivo();
  const buscaComandos=$('buscarComandoAdmin');
  buscaComandos.addEventListener('input',()=>{
   const termo=buscaComandos.value.trim().toLocaleLowerCase('pt-BR');
