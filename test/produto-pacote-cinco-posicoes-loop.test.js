@@ -15,7 +15,7 @@ function produto(id,valor){
 }
 test('produto especial cria dez posicoes atomicas, bloqueia excedente e libera vaga apos ciclo',async t=>{
  const repo=new RepositorioCatalogoSQLite({caminho:':memory:'});t.after(()=>repo.fechar());
- repo.salvar({produto:produto('pacote-cinco',150000),revisaoEsperada:0});
+ repo.salvar({produto:produto('pacote-cinco',300000),revisaoEsperada:0});
  repo.salvar({produto:produto('produto-comum',25000),revisaoEsperada:0});
  const contas=new ContasParticipantesDemoSQLite({banco:repo.banco});
  const usuario=contas.cadastrar({nome:'Cliente Pacote Cinco',
