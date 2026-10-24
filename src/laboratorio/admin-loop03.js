@@ -74,6 +74,15 @@
    cache:'no-store',headers:{Authorization:'Bearer '+token}});
   const d=await r.json();
   if(!r.ok||d.modo!=='SIMULACAO_ISOLADA')throw Error(d.erro||'Cenário indisponível');
+  const clientes=new Set(d.clientes.map(x=>x.id));
+  const produtos=new Set(d.produtos.map(x=>x.id));
+  const pedidos=new Map(d.pedidos.map(x=>[x.id,x]));
+  const posicoes=new Map(d.posicoes.map(x=>[x.id,x]));
+  if(d.pedidos.some(p=>!clientes.has(p.clienteId)||!produtos.has(p.produtoId))||
+     d.posicoes.some(p=>!pedidos.has(p.pedidoId)||pedidos.get(p.pedidoId).clienteId!==p.clienteId||
+       !pedidos.get(p.pedidoId).posicaoAtivavel)||
+     d.ciclos.some(x=>!posicoes.has(x.posicaoId)||posicoes.get(x.posicaoId).clienteId!==x.clienteId))
+   throw Error('Inconsistência entre clientes, pedidos, posições e ciclos');
   cenarioConectado=d;renderizarConexoes();
   $('statusConexoesDemoAdmin').textContent='SIMULAÇÃO: '+d.clientes.length+' clientes · '+d.pedidos.length+' pedidos · '+d.produtos.length+' produtos · '+d.posicoes.length+' posições · '+d.ciclos.length+' ciclos. Nenhum pagamento real.';
  }
