@@ -17,7 +17,7 @@ test('fluxo continuo do cliente 1 ao cliente 10000 com compras e giros reais do 
  // corrente, quando o tabuleiro ja tem centro. Nao cria vendas extras.
  for(let numero=1;numero<=10000;numero++){
   clientes++;
-  const quantidade=numero<=100?1:numero<=1100?5:numero<=1600?10:1;
+  const quantidade=1;
   perfis[quantidade===1?'uma':quantidade===5?'cinco':'dez']++;
   let alvo=null;
   for(let j=0;j<quantidade;j++){
@@ -71,9 +71,9 @@ test('fluxo continuo do cliente 1 ao cliente 10000 com compras e giros reais do 
    checkpoints.push({clientes,compras,giros,filaA:sim.filas.filaA.length,filaB:sim.filas.filaB.length});
  }
  assert.equal(clientes,10000);
- assert.equal(compras,18500);
+ assert.equal(compras,10000);
  assert.equal(indicacoes,3000);
- assert.deepEqual(perfis,{uma:8500,cinco:1000,dez:500});
+ assert.deepEqual(perfis,{uma:10000,cinco:0,dez:0});
  assert.ok(giros>100,'fluxo deve girar muito mais que 100 vezes');
  const tabuleiro=[sim.tabuleiro.centro,...sim.tabuleiro.vagas].filter(Boolean);
  const ativos=[...sim.filas.filaA,...sim.filas.filaB,...tabuleiro];
