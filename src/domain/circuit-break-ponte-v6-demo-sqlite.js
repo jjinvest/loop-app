@@ -5,6 +5,7 @@
 // O mesmo status PAUSA/ABERTA e limite diario valem para ambas as origens.
 // Nunca processa Pix, dinheiro real, PSP ou saldo sacavel.
 const {LOTES}=require('./circuit-break-v6-demo-sqlite');
+const VENDAS_POR_GIRO=6; // Regra vigente V6: unica referencia operacional deste circuito.
 const {centroDoLoop}=require('./destino-financeiro-centro-loop');
 const {LivroProvisoesV6DemoSQLite}=require('./livro-provisoes-v6-demo-sqlite');
 const {PreLancamentoCofresV6DemoSQLite}=require('./prelancamento-cofres-v6-demo-sqlite');
@@ -50,7 +51,7 @@ class CircuitBreakPonteV6DemoSQLite{
     const livres=sim.filas.filaA.length+sim.filas.filaB.length;
     const ocupados=[tab.centro,...tab.vagas].filter(Boolean).length;
     return {comprasElegiveis:compras.length,comprasConsumidas:usadas.size,
-      comprasPendentes:pendentes.length,girosProntosPorCompras:Math.floor(pendentes.length/6),
+      comprasPendentes:pendentes.length,girosProntosPorCompras:Math.floor(pendentes.length/VENDAS_POR_GIRO),
       posicoesAguardandoCentro:tab.vagas.filter(Boolean).length+livres,
       creditoDoCicloParaPosicoesAguardandoCentavos:0,
       centroAtualTemCreditoAutomatico:false,
@@ -122,7 +123,7 @@ class CircuitBreakPonteV6DemoSQLite{
       const compras=this.comprasConfirmadas();
       const elegiveis=compras.filter(c=>
         !sim.tabuleiro.vendasProcessadas.has('compra-demo-'+c.pedidoId));
-      if(elegiveis.length<quantidade*6)
+      if(elegiveis.length<quantidade*VENDAS_POR_GIRO)
         throw falha('COMPRAS_CONFIRMADAS_INSUFICIENTES');
       if(!sim.tabuleiro.iniciado){
         sim.prepararTabuleiro();
@@ -135,7 +136,7 @@ class CircuitBreakPonteV6DemoSQLite{
       const giros=[];
       let centrosParticipantes=0;
       for(let i=0;i<quantidade;i++){
-        const vendas=elegiveis.slice(i*6,(i+1)*6);
+        const vendas=elegiveis.slice(i*VENDAS_POR_GIRO,(i+1)*VENDAS_POR_GIRO);
         const eventos=[];
         for(const compra of vendas){
           const registro=sim.registrarVendaNoCicloSimulada({
@@ -144,7 +145,7 @@ class CircuitBreakPonteV6DemoSQLite{
           if(registro.repetida)throw falha('VENDA_DUPLICADA');
           eventos.push(registro.venda);
         }
-        if(new Set(eventos.map(v=>v.vendaId)).size!==6)
+        if(new Set(eventos.map(v=>v.vendaId)).size!==VENDAS_POR_GIRO)
           throw falha('EVENTOS_DUPLICADOS');
         sim.abrirCatraca();
         const giro=sim.tentarGiro();
