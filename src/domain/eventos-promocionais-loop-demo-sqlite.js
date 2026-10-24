@@ -16,7 +16,7 @@ class EventosPromocionaisLoopDemoSQLite {
       produto_id TEXT NOT NULL REFERENCES catalogo_produtos(id) ON DELETE RESTRICT,
       titulo TEXT NOT NULL,descricao TEXT NOT NULL,
       quantidade_minima INTEGER NOT NULL CHECK(quantidade_minima BETWEEN 1 AND 100),
-      posicoes INTEGER NOT NULL CHECK(posicoes BETWEEN 1 AND 6),
+      posicoes INTEGER NOT NULL CHECK(posicoes BETWEEN 1 AND 10),
       referencia_no_inicio INTEGER NOT NULL CHECK(referencia_no_inicio>0),
       data_inicio TEXT,data_fim TEXT CHECK(data_inicio<=data_fim),
       estado TEXT NOT NULL CHECK(estado IN ('ATIVO','ENCERRADO')),
@@ -77,7 +77,7 @@ class EventosPromocionaisLoopDemoSQLite {
      typeof descricao!=='string'||descricao.trim().length<8||descricao.length>450||
      !dataValida(dataInicio)||!dataValida(dataFim)||dataInicio>dataFim||dataFim<this.relogio().slice(0,10)||
      !Number.isSafeInteger(quantidadeMinimaLoop)||quantidadeMinimaLoop<1||quantidadeMinimaLoop>100||
-     !Number.isSafeInteger(posicoesPorPedidoLoop)||posicoesPorPedidoLoop<1||posicoesPorPedidoLoop>6)
+     !Number.isSafeInteger(posicoesPorPedidoLoop)||posicoesPorPedidoLoop<1||posicoesPorPedidoLoop>10)
     throw erro('EVENTO_INVALIDO');
   const produto=this.catalogo.buscarRegistro(produtoId)?.produto;
   if(!produto||produto.estado!=='PUBLICADO'||!['FISICO','PDF'].includes(produto.tipo))
