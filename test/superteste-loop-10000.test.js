@@ -23,7 +23,7 @@ test('fluxo continuo do cliente 1 ao cliente 10000 com compras e giros reais do 
   for(let j=0;j<quantidade;j++){
    const vendaId='compra-'+numero+'-'+j;
    const tipo=(numero+j)%2===0?'produto190':'pdf';
-   const preco=tipo==='produto190'?190:0;
+   const preco=tipo==='produto190'?190:250;
    produtos[tipo].quantidade++;
    produtos[tipo].receita+=preco;
    const resultado=sim.registrarPosicaoSimulada({
@@ -82,7 +82,9 @@ test('fluxo continuo do cliente 1 ao cliente 10000 com compras e giros reais do 
  assert.equal(sim.tabuleiro.ciclosConcluidos.length,giros);
  assert.equal(entradasA+entradasB,giros);
  const relatorio={clientes,compras,posicoesCriadas:compras,perfis,indicacoes,giros,
-  produtos,receitaBrutaProdutosComPrecoConhecido:produtos.produto190.receita,
+  produtos,receitaBrutaTotal:produtos.produto190.receita+produtos.pdf.receita,
+  entradasEmpresaPorCiclos:giros*3,
+  eventosParticipantePorCiclos:giros*3,
   caixaLiquidoNaoCalculado:true,
   ciclosConcluidos:sim.tabuleiro.ciclosConcluidos.length,
   vendasRegistradasNoCiclo:sim.tabuleiro.vendasProcessadas.size,
