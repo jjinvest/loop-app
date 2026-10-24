@@ -40,6 +40,10 @@
   if(!r.ok)throw Error(d.erro||'Auditoria indisponível');
   const campo=(id,valor)=>{$(id).textContent=valor===null?'Indisponível':String(valor);};
   campo('auditoriaClientesAdmin',d.clientes);
+  campo('resumoClientesDirecaoAdmin',d.clientes);
+  campo('resumoPedidosDirecaoAdmin',d.pedidosCarrinho);
+  campo('resumoPosicoesDirecaoAdmin',d.posicoesOriginadasDeCompras);
+  $('statusResumoDirecaoAdmin').textContent='Fonte: '+d.fonte+' · Registros fictícios persistidos; sem conciliação bancária.';
   campo('auditoriaPedidosAdmin',d.pedidosCarrinho);
   campo('auditoriaPosicoesAdmin',d.posicoesOriginadasDeCompras);
   campo('auditoriaSemLoopAdmin',d.comprasSomenteLoja);
@@ -95,13 +99,16 @@
   $('girosHojeAdmin').textContent=String(controle.girosHoje);
   $('limiteAdmin').textContent=String(controle.limiteDiario);
   $('filaTotalAdmin').textContent=String(ponte.filaA+ponte.filaB);
+  $('resumoFilasDirecaoAdmin').textContent=String(ponte.filaA+ponte.filaB);
   $('indicacoesConfirmadasAdmin').textContent=String(indicacoes.confirmadas);
   $('indicacoesDisponiveisAdmin').textContent=String(indicacoes.disponiveis);
   $('indicacoesVinculadasAdmin').textContent=String(indicacoes.vinculadas);
   $('indicacoesAguardandoAdmin').textContent=String(indicacoes.aguardandoAtivacao);
   renderizarTrava(trava);
   try{await carregarAuditoria();}
-  catch(err){$('auditoriaStatusAdmin').textContent='Consulta indisponível: '+err.message;}
+  catch(err){$('auditoriaStatusAdmin').textContent='Consulta indisponível: '+err.message;
+   for(const id of ['resumoClientesDirecaoAdmin','resumoPedidosDirecaoAdmin','resumoPosicoesDirecaoAdmin'])$(id).textContent='Indisponível';
+   $('statusResumoDirecaoAdmin').textContent='Não foi possível consultar os registros: '+err.message;}
   try{await carregarFinanceiro();}
   catch(err){$('finStatusAdmin').textContent='Consulta indisponível: '+err.message;}
   $('dadosAdminLoop03').hidden=false;
@@ -178,6 +185,12 @@
    $('statusRelogioAdminLoop03').textContent='Alteração recusada: '+err.message;
    await carregar().catch(()=>{});
   }finally{botao.disabled=false;}
+ });
+ $('atualizarResumoDirecaoAdmin').addEventListener('click',async ev=>{
+  const botao=ev.currentTarget;botao.disabled=true;
+  $('statusResumoDirecaoAdmin').textContent='Atualizando dados autenticados…';
+  try{await carregar();}catch(err){$('statusResumoDirecaoAdmin').textContent='Atualização indisponível: '+err.message;}
+  finally{botao.disabled=false;}
  });
  $('atualizarAdminLoop03').addEventListener('click',async()=>{
   try{await carregar();$('statusRegrasAdminLoop03').textContent='Painel atualizado.';}
