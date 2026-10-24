@@ -46,6 +46,35 @@ function criarRouterEscritorioDemo({segredo,publicacoes=null}={}) {
   // receita, contemplacoes, cofres ou pagamentos nao conciliados.
   // Diretório administrativo: dados cadastrais mínimos; jamais expor email,
   // telefone, senha ou credenciais. Não atribuir compras sem vínculo verificado.
+  // Cenário demonstrativo independente do SQLite operacional.
+  // As mesmas chaves conectam departamentos sem inventar vendas reais.
+  router.get('/escritorio-demo/cenario-conectado',(_req,res)=>{
+    const clientes=[
+      {id:'demo-c1',nick:'Joao',nome:'João (fictício)'},
+      {id:'demo-c2',nick:'Ana',nome:'Ana (fictícia)'},
+      {id:'demo-c3',nick:'Bia',nome:'Bia (fictícia)'}
+    ];
+    const produtos=[
+      {id:'demo-pdf',nome:'Curso PDF demonstrativo',tipo:'PDF'},
+      {id:'demo-fisico',nome:'Produto físico demonstrativo',tipo:'FISICO'}
+    ];
+    const pedidos=[
+      {id:'demo-v1',clienteId:'demo-c1',produtoId:'demo-pdf',quantidade:2,data:'2026-10-20'},
+      {id:'demo-v2',clienteId:'demo-c1',produtoId:'demo-fisico',quantidade:1,data:'2026-10-21'},
+      {id:'demo-v3',clienteId:'demo-c2',produtoId:'demo-pdf',quantidade:1,data:'2026-10-22'},
+      {id:'demo-v4',clienteId:'demo-c3',produtoId:'demo-fisico',quantidade:1,data:'2026-10-23'}
+    ];
+    const posicoes=[
+      {id:'demo-pos1',clienteId:'demo-c1',pedidoId:'demo-v1',fila:'B',cicloId:'demo-ciclo1'},
+      {id:'demo-pos2',clienteId:'demo-c1',pedidoId:'demo-v2',fila:'A',cicloId:null},
+      {id:'demo-pos3',clienteId:'demo-c2',pedidoId:'demo-v3',fila:'B',cicloId:null}
+    ];
+    const ciclos=[{id:'demo-ciclo1',clienteId:'demo-c1',posicaoId:'demo-pos1',
+      estado:'CONCLUIDO_FICTICIO',contemplacoesSimuladas:1}];
+    return res.json({modo:'SIMULACAO_ISOLADA',semPagamentosReais:true,
+      descricao:'Dados exclusivamente demonstrativos, sem lançamento financeiro nem ativação de posições',
+      clientes,produtos,pedidos,posicoes,ciclos});
+  });
   router.get('/escritorio-demo/clientes',(_req,res)=>{
     if(!publicacoes?.banco)return res.status(501).json({erro:'FONTE_SQLITE_INDISPONIVEL'});
     const banco=publicacoes.banco;
