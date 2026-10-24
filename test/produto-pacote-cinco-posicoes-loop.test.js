@@ -74,6 +74,8 @@ test('produto especial cria dez posicoes atomicas, bloqueia excedente e libera v
  const pedido=await criar('compra-pacote',usuario.contaId,'pacote-cinco');
  assert.equal(pedido.posicoesSolicitadas,10);
  assert.equal(pedido.itens[0].posicoesPorPedidoLoop,10);
+ const pacoteCongelado=repo.banco.prepare("SELECT * FROM admin_carrinho_item_pacote_posicoes_demo WHERE pedido_id='compra-pacote'").all();
+ assert.equal(pacoteCongelado[0]?.posicoes_por_pedido,10);
  const pagamento=await pagar('compra-pacote');
  assert.equal(pagamento.posicoesCriadas,10,JSON.stringify(pagamento));
  assert.equal(pagamento.posicaoIds.length,10);
