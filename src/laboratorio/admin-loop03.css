@@ -71,3 +71,11 @@ button{cursor:pointer;padding:11px 15px;border-radius:11px;border:1px solid #ffd
 #resumoDirecaoAdmin .comando-resumo-acoes{display:flex;flex-wrap:wrap;gap:12px;margin-top:14px}
 #resumoDirecaoAdmin .comando-resumo-acoes a{display:inline-flex;align-items:center;min-height:44px;color:#ffe1a0;font-weight:750}
 #resumoDirecaoAdmin button:disabled{opacity:.55;cursor:wait}
+
+#departamentoClientesAdmin{margin-bottom:18px}
+#departamentoClientesAdmin #filtrarClientesAdmin{display:block;width:100%;max-width:480px;margin:9px 0 12px}
+.clientes-diretorio-admin{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:14px;margin-bottom:16px}
+.clientes-diretorio-admin>div,.clientes-diretorio-admin>article{min-width:0;max-height:340px;overflow:auto;border:1px solid #65567c;border-radius:13px;padding:12px;background:#101a30}
+.clientes-diretorio-admin .cliente-item-admin{display:block;width:100%;min-height:44px;text-align:left;margin:0 0 7px;overflow-wrap:anywhere}
+.clientes-diretorio-admin article p{overflow-wrap:anywhere}
+@media(max-width:650px){.clientes-diretorio-admin{grid-template-columns:minmax(0,1fr)}}
