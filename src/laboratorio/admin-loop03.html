@@ -19,6 +19,7 @@
    <nav aria-label="Navegação administrativa">
     <a class="ativo" aria-current="location" href="#visaoGeral">◈ <span>Visão geral</span></a>
     <a href="#atalhosDirecaoAdmin">▦ <span>Central de comando</span></a>
+    <a href="#departamentoClientesAdmin">♧ <span>Clientes · Visão completa</span></a>
     <a href="#regraTrava">◉ <span>Controle das filas</span></a>
     <a href="#painelIndicacoesAdmin">♧ <span>Distribuição de indicações</span></a>
     <a href="/admin/circuit-break-v6">⏱ <span>Catraca e giros</span></a>
@@ -61,6 +62,24 @@
      <article><small>FILA B</small><strong id="numeroFilaBAdmin">—</strong><span>Ordem de entrada</span></article>
      <article><small>GIROS CONCLUÍDOS</small><strong id="numeroGirosAdmin">—</strong><span>Movimentos registrados</span></article>
      <article><small>TRAVA POR TITULAR</small><strong id="numeroVagaAdmin">—</strong><span>Vaga de liberação</span></article>
+    </section>
+    <section class="painel historico" id="departamentoClientesAdmin" aria-label="Departamento de clientes">
+      <div class="historico-titulo"><div><small class="sobretitulo">DEPARTAMENTO · CLIENTES</small><h2>Clientes e histórico individual</h2></div></div>
+      <p class="observacao">Uma área para acompanhar cadastros e vínculos. Registros do laboratório; compras, produtos, posições e contemplações individuais só serão apresentados após conciliação por identificador.</p>
+      <div class="loop03-resumo-indicacoes-admin">
+       <div><small>Clientes cadastrados</small><strong id="clientesTotalDepartamento">—</strong></div>
+       <div><small>Clientes com participação LOOP</small><strong id="clientesLoopDepartamento">Não conciliado</strong></div>
+       <div><small>Clientes somente AKITEMM</small><strong id="clientesLojaDepartamento">Não conciliado</strong></div>
+       <div><small>Clientes PDF / produtos físicos</small><strong id="clientesTiposDepartamento">Não conciliado</strong></div>
+      </div>
+      <label for="filtrarClientesAdmin">Pesquisar cliente por nome ou nick</label>
+      <input type="search" id="filtrarClientesAdmin" placeholder="Pesquisar cadastro fictício" autocomplete="off">
+      <p id="statusClientesAdmin" role="status" aria-live="polite" class="observacao">Entre com a chave administrativa para consultar.</p>
+      <div class="clientes-diretorio-admin">
+       <div id="listaClientesAdmin" aria-label="Clientes cadastrados"></div>
+       <article id="detalheClienteAdmin" aria-live="polite"><h3>Ficha individual</h3><p>Selecione um cliente para consultar o cadastro.</p></article>
+      </div>
+      <a class="acesso-link" href="/admin/cadastro-participantes-demo">Abrir gestão de cadastros ↗</a>
     </section>
     <section class="painel historico" id="atalhosDirecaoAdmin" aria-label="Central de comando administrativa">
      <div class="historico-titulo"><div><small class="sobretitulo">DIREÇÃO · ACESSOS OPERACIONAIS</small><h2>Central de comando</h2></div></div>
