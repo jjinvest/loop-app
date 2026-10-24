@@ -47,6 +47,19 @@ Manter o histórico original imutável por auditoria; registrar regra vigente V6
 - `test/loop-v6-seis-pedidos-ciclo-persistencia-auditoria.test.js`: 14 pedidos distintos, dois giros persistidos com 12 eventos, dois pendentes, rollback quando lastro fictício insuficiente, rejeição de adulteração do livro, reinicialização do SQLite, `PRAGMA integrity_check` e `foreign_key_check`.
 - Esses cenários já existiam no repositório; não foram criados nesta atualização. O CI verde de `54727eb` inclui sua execução. Não equivalem a testes de liquidação bancária real nem comprovam todas as interleavings de concorrência.
 
+## Plano de fechamento sem dinheiro real — execução autorizada
+
+Prosseguir autonomamente na branch DRAFT com as verificações e correções locais, sem exigir autorização repetida para cada teste. Critério de saída por frente:
+
+1. **Compras e adesões:** confirmar com testes executáveis pedido elegível, pedido inelegível, duplicação, compra sem posição automática, aceite individual e limites de posições; registrar exceções reais.
+2. **Ciclo e fila:** confirmar seis eventos distintos por giro, limite diário, prioridade A/B, concorrência, rollback, reinício e consistência entre livro e tabuleiro.
+3. **Escritório:** consultar cliente, pedido, posições, ciclo e estado financeiro a partir de fontes SQLite comprovadas; não inferir vínculo ausente, evitar dados fictícios misturados e testar autorização/privacidade.
+4. **Dinheiro fictício:** reconciliar extrato de sandbox e livros locais, simular estorno, falhas de webhook e reprocessamento; distinguir previsto, provisão, liquidado e sacável.
+5. **Operação:** auditar backup/restauração, migrações, erros HTTP, segurança, limites e navegação mobile/desktop.
+6. **Evidência:** manter CI e relatório atualizados, com provas e bloqueios remanescentes, sem classificar teste textual como integração.
+
+**Fronteira externa:** integração bancária real, liquidação, comprovação de dinheiro, contratos, validação jurídica, LGPD/infraestrutura homologadas e autorização de lançamento não podem ser declaradas concluídas a partir do laboratório. Não fazer merge/deploy nem iniciar transações reais sem confirmação expressa.
+
 ## Restrições
 
 Branch `fix/teste-escrita-catraca-20261014`; PR #1 DRAFT. **Não** mergear, publicar, processar pagamentos reais ou modificar telas aprovadas sem autorização. O resultado deve distinguir “aprovado no laboratório”, “não testado” e “bloqueado para produção”.
