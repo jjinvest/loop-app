@@ -33,12 +33,16 @@ function auditarSeisPedidosDoCicloLab({banco,ponte}={}){
   const avisos=[];
   if(grupo.length!==6)avisos.push('QUANTIDADE_EVENTOS_DIFERENTE_DE_SEIS');
   const ordens=new Set();
+  const pedidosNoGiro=new Set();
   for(const e of grupo){
    if(!Number.isInteger(e.ordem)||e.ordem<1||e.ordem>6||
     ordens.has(e.ordem))avisos.push('ORDEM_INVALIDA');
    ordens.add(e.ordem);
    if(e.vendaId!=='compra-demo-'+e.pedidoId)
     avisos.push('PEDIDO_E_VENDA_NAO_CORRESPONDEM');
+   if(e.pedidoId==null||e.pedidoId==='')avisos.push('PEDIDO_ID_AUSENTE');
+   if(pedidosNoGiro.has(e.pedidoId))avisos.push('PEDIDO_REPETIDO_NO_MESMO_GIRO');
+   pedidosNoGiro.add(e.pedidoId);
    if(todos.has(e.pedidoId))avisos.push('PEDIDO_CONSUMIDO_DUAS_VEZES');
    todos.add(e.pedidoId);
    if(e.posicaoId==null)avisos.push('COMPRA_FICTICIA_INEXISTENTE');
