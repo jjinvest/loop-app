@@ -76,4 +76,6 @@ test('dez mil participantes, posicoes multiplas e indicacoes',()=>{
  assert.equal(ids.length,10000,'giros nao criam clientes extras');
  assert.equal(sim.filas.indicacoesProcessadas.size,3000);
  assert.equal(sim.filas.filaA.length+sim.filas.filaB.length+7+100,total);
+ const relatorio={clientes:ids.length,posicoesCriadas:total,perfis:{uma:8500,cinco:1000,dez:500},indicacoes:sim.filas.indicacoesProcessadas.size,giros:sim.tabuleiro.ciclosConcluidos.length,vendasSimuladasNosCiclos:sim.tabuleiro.vendasProcessadas.size,contemplacoesSimuladas:sim.tabuleiro.ciclosConcluidos.length,filaA:sim.filas.filaA.length,filaB:sim.filas.filaB.length,tabuleiroOcupado:[sim.tabuleiro.centro,...sim.tabuleiro.vagas].filter(Boolean).length,entradasDaFilaA:chamadasA,entradasDaFilaB:chamadasB,valorFinanceiroReal:0};
+ console.log('RELATORIO_SUPERTESTE_LOOP='+JSON.stringify(relatorio));
 });
