@@ -15,5 +15,5 @@ test('central de comando possui caminhos existentes e relatorios rotulados',()=>
  for(const id of ['atalhosDirecaoAdmin','regraTrava','relatorioFinanceiroAdmin','auditoriaOperacionalAdmin','painelIndicacoesAdmin','controleRelogioAdminLoop03'])
   assert.ok(html.includes('id="'+id+'"'),id);
  assert.match(html,/Bolas douradas e contemplações: relatório detalhado ainda em desenvolvimento/);
- assert.match(html,/Operações financeiras reais permanecem desativadas/);
+ assert.match(html,/Nenhum giro, pagamento real, saque ou publicação é autorizado/);
 });
