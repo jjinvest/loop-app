@@ -33,6 +33,37 @@
      ' · '+h.motivo+' · '+h.registradoEm;lista.append(li);
   }
  }
+ let clientesDiretorio=[];
+ function fichaCliente(c){
+  const detalhe=$('detalheClienteAdmin');detalhe.replaceChildren();
+  const titulo=document.createElement('h3');titulo.textContent=c.nick||c.nome;
+  const linha=document.createElement('p');linha.textContent='Nome cadastral: '+c.nome;
+  const registro=document.createElement('p');registro.textContent='Cadastro: '+c.criadoEm;
+  const aviso=document.createElement('p');aviso.textContent='Compras, produtos, posições e contemplações: vínculos individuais ainda não conciliados nesta fonte. Nenhum valor foi presumido.';
+  detalhe.append(titulo,linha,registro,aviso);
+ }
+ function renderizarClientes(){
+  const termo=$('filtrarClientesAdmin').value.trim().toLocaleLowerCase('pt-BR');
+  const lista=$('listaClientesAdmin');lista.replaceChildren();
+  const filtrados=clientesDiretorio.filter(c=>(c.nome+' '+(c.nick||'')).toLocaleLowerCase('pt-BR').includes(termo));
+  for(const c of filtrados){
+   const b=document.createElement('button');b.type='button';
+   b.className='cliente-item-admin';b.textContent=(c.nick||c.nome)+' · '+c.nome;
+   b.addEventListener('click',()=>fichaCliente(c));lista.append(b);
+  }
+  if(!filtrados.length){const p=document.createElement('p');p.textContent='Nenhum cliente encontrado nesta página.';lista.append(p);}
+ }
+ async function carregarClientes(){
+  const r=await fetch('/api/admin/escritorio-demo/clientes',{cache:'no-store',
+   headers:{Authorization:'Bearer '+token}});
+  const d=await r.json();
+  if(!r.ok||!Array.isArray(d.clientes))throw Error(d.erro||'Diretório indisponível');
+  clientesDiretorio=d.clientes;
+  $('clientesTotalDepartamento').textContent=String(d.total);
+  $('statusClientesAdmin').textContent='Exibindo até '+d.limite+' cadastros recentes de '+d.total+'. Dados fictícios do SQLite.';
+  renderizarClientes();
+ }
+ $('filtrarClientesAdmin').addEventListener('input',renderizarClientes);
  async function carregarAuditoria(){
   const r=await fetch('/api/admin/escritorio-demo/auditoria-operacional',{
    cache:'no-store',headers:{Authorization:'Bearer '+token}});
@@ -105,6 +136,8 @@
   $('indicacoesVinculadasAdmin').textContent=String(indicacoes.vinculadas);
   $('indicacoesAguardandoAdmin').textContent=String(indicacoes.aguardandoAtivacao);
   renderizarTrava(trava);
+  try{await carregarClientes();}
+  catch(err){$('statusClientesAdmin').textContent='Consulta indisponível: '+err.message;}
   try{await carregarAuditoria();}
   catch(err){$('auditoriaStatusAdmin').textContent='Consulta indisponível: '+err.message;
    for(const id of ['resumoClientesDirecaoAdmin','resumoPedidosDirecaoAdmin','resumoPosicoesDirecaoAdmin'])$(id).textContent='Indisponível';
@@ -149,6 +182,7 @@
  });
  $('sairAdminLoop03').addEventListener('click',()=>{
   token='';config=null;configRelogio=null;$('chaveAdminLoop03').value='';
+  clientesDiretorio=[];$('listaClientesAdmin').replaceChildren();
   $('dadosAdminLoop03').hidden=true;$('situacaoPainel').textContent='SEM AUTENTICAÇÃO';
   $('mensagemAcessoAdminLoop03').textContent='Chave descartada desta página.';
  });
