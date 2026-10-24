@@ -77,7 +77,7 @@ function criarRouterEscritorioDemo({segredo,publicacoes=null}={}) {
     if(posicoes.some(p=>!pedidos.find(v=>v.id===p.pedidoId&&v.posicaoAtivavel&&v.clienteId===p.clienteId)))
       throw Error('Cenario invalido: posicao sem compra qualificada e ativacao');
     const ciclos=[{id:'demo-ciclo1',posicaoId:'demo-pos1',
-      estado:'CONCLUIDO_FICTICIO',contemplacoesSimuladas:1}].map(x=>({...x,clienteId:posicoes.find(p=>p.id===x.posicaoId).clienteId}));
+      estado:'EM_ANDAMENTO_FICTICIO',contemplacoesSimuladas:0}].map(x=>({...x,clienteId:posicoes.find(p=>p.id===x.posicaoId).clienteId}));
     return res.json({modo:'SIMULACAO_ISOLADA',semPagamentosReais:true,
       descricao:'Dados exclusivamente demonstrativos, sem lançamento financeiro nem ativação de posições',
       valorMinimoCentavos,clientes,produtos,pedidos,posicoes,ciclos});
@@ -88,11 +88,12 @@ function criarRouterEscritorioDemo({segredo,publicacoes=null}={}) {
     const existe=!!banco.prepare("SELECT 1 FROM sqlite_master WHERE type='table' AND name='admin_contas_participantes_demo'").get();
     if(!existe)return res.json({modo:'LABORATORIO_LOCAL',clientes:[],total:0});
     const total=banco.prepare('SELECT COUNT(*) AS n FROM admin_contas_participantes_demo').get().n;
+    const apelidos=!!banco.prepare("SELECT 1 FROM sqlite_master WHERE type='table' AND name='admin_links_apelidos_demo'").get();
     const clientes=banco.prepare(`
       SELECT c.id AS id,c.nome AS nome,c.criado_em AS criadoEm,
-       n.apelido AS nick
+       ${apelidos?'n.apelido':'NULL'} AS nick
       FROM admin_contas_participantes_demo c
-      LEFT JOIN admin_links_apelidos_demo n ON n.conta_id=c.id
+      ${apelidos?'LEFT JOIN admin_links_apelidos_demo n ON n.conta_id=c.id':''}
       ORDER BY c.criado_em DESC,c.id DESC LIMIT 100
     `).all();
     return res.json({modo:'LABORATORIO_LOCAL',total,clientes,
