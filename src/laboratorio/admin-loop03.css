@@ -31,3 +31,14 @@ button{cursor:pointer;padding:11px 15px;border-radius:11px;border:1px solid #ffd
 .loop03-resumo-indicacoes-admin strong{display:block;font-size:clamp(1.7rem,3vw,2.5rem);color:#f8e0aa;margin-top:9px;font-variant-numeric:tabular-nums}
 @media(max-width:880px){.loop03-resumo-indicacoes-admin{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:360px){.loop03-resumo-indicacoes-admin{grid-template-columns:1fr}}
+
+/* Central de comando: atalhos de navegacao com area clicavel inteira. */
+#atalhosDirecaoAdmin .loop03-resumo-indicacoes-admin{grid-template-columns:repeat(3,minmax(0,1fr))}
+#atalhosDirecaoAdmin .loop03-resumo-indicacoes-admin>div{min-height:76px;padding:0;display:flex;overflow:hidden}
+#atalhosDirecaoAdmin .acesso-link{display:flex;align-items:center;justify-content:space-between;gap:12px;width:100%;min-height:76px;margin:0;padding:15px 18px;border:0;border-radius:14px;background:linear-gradient(130deg,#1a2945,#241738);font-size:.94rem;font-weight:750;line-height:1.4;transition:background .15s ease,box-shadow .15s ease}
+#atalhosDirecaoAdmin .acesso-link:hover{background:linear-gradient(130deg,#2b426b,#35204f);box-shadow:inset 0 0 0 1px #ffd17b}
+#atalhosDirecaoAdmin .acesso-link:focus-visible{outline:3px solid #d2ffdb;outline-offset:-4px}
+#finCofresAdmin .status-linha{align-items:center;flex-wrap:wrap}
+#finCofresAdmin .status-linha strong{font-variant-numeric:tabular-nums}
+@media(max-width:1100px){#atalhosDirecaoAdmin .loop03-resumo-indicacoes-admin{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:520px){#atalhosDirecaoAdmin .loop03-resumo-indicacoes-admin{grid-template-columns:1fr}#atalhosDirecaoAdmin .acesso-link{min-height:64px}}
