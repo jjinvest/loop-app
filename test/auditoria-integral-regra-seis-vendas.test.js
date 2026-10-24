@@ -31,7 +31,8 @@ test('Auditoria integral: seis eventos por giro e ausencia de regras antigas exe
  const ponte=fs.readFileSync(path.join(raiz,'src/domain/circuit-break-ponte-v6-demo-sqlite.js'),'utf8');
  assert.match(ponte,/Math\.floor\(pendentes\.length\/6\)/);
  assert.match(ponte,/elegiveis\.slice\(i\*6,\(i\+1\)\*6\)/);
- assert.match(ponte,/size!==6/);
+ assert.match(ponte,/size!==VENDAS_POR_GIRO/);
+ assert.match(ponte,/const VENDAS_POR_GIRO=6;/);
  console.log('AUDITORIA_INTEGRAL arquivos='+arquivos.length+
   ' referencias_historicas_5='+referencias.length+
   ' regras_antigas_executaveis='+executaveis.length);
