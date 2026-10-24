@@ -93,7 +93,8 @@ test('produto especial cria dez posicoes atomicas, bloqueia excedente e libera v
  assert.equal(escritorio.consultar(usuario.contaId).compras[0].posicaoIds.length,10);
  const rejeitado=await criar('sexta-vaga-bloqueada',usuario.contaId,'produto-comum');
  const integracao=await pagar('sexta-vaga-bloqueada');
- assert.equal(integracao.posicoesCriadas,0);
+ assert.equal(integracao.situacao,'SINCRONIZACAO_PENDENTE');
+ assert.equal(integracao.erro,'LIMITE_ATIVO');
  assert.equal(escritorio.consultar(usuario.contaId).vagasLivres,0);
  // Um segundo titular continua tendo direito a suas proprias dez vagas.
  const normal=await criar('pedido-comum-outro',segundo.contaId,'produto-comum');
@@ -102,10 +103,11 @@ test('produto especial cria dez posicoes atomicas, bloqueia excedente e libera v
  const pacoteParcial=await criar('pacote-sem-cinco-vagas',segundo.contaId,'pacote-cinco');
  assert.equal(pacoteParcial.posicoesSolicitadas,10);
  const naoParcial=await pagar('pacote-sem-cinco-vagas');
- assert.equal(naoParcial.posicoesCriadas,0);
+ assert.equal(naoParcial.situacao,'SINCRONIZACAO_PENDENTE');
+ assert.equal(naoParcial.erro,'LIMITE_ATIVO');
  assert.equal(repo.banco.prepare(
   "SELECT COUNT(*) AS n FROM admin_ponte_posicoes_adicionais_demo WHERE pedido_id='pacote-sem-cinco-vagas'"
- ).get().n,9);
+ ).get().n,0);
  // O CPF ficticio e termos continuam independentes do produto comprado.
  const adesoes=new AdesoesPosicoesDemoSQLite({ponte,relogio:()=>new Date().toISOString()});
  assert.equal(adesoes.ativar({contaId:usuario.contaId,
