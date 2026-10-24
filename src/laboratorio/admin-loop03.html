@@ -92,6 +92,18 @@
       <div class="status-linha"><span>Cofres, ciclos, douradas e pagamentos reais</span><strong>Indisponível nesta fonte</strong></div>
       <p id="auditoriaStatusAdmin" class="observacao" role="status"></p>
     </section>
+    <section class="painel historico" id="relatorioFinanceiroAdmin" aria-label="Relatorio financeiro de simulacao">
+      <div class="historico-titulo"><div><small class="sobretitulo">FINANCEIRO · LIVRO SQLITE FICTÍCIO</small><h2>Relatório dos cofres simulados</h2></div></div>
+      <p class="observacao">Fonte: livro financeiro persistente do laboratório. Saldos projetados, não bancários. Não somar com pedidos AKITEMM: são registros independentes e ainda não conciliados.</p>
+      <div class="loop03-resumo-indicacoes-admin">
+        <div><small>Lotes simulados</small><strong id="finLotesAdmin">—</strong></div>
+        <div><small>Lançamentos simulados</small><strong id="finLancamentosAdmin">—</strong></div>
+        <div><small>Saldo projetado agregado</small><strong id="finSaldoAdmin">—</strong></div>
+        <div><small>Conciliação com pedidos</small><strong id="finConciliacaoAdmin">Não conciliada</strong></div>
+      </div>
+      <div id="finCofresAdmin" aria-label="Saldos individuais dos cofres"></div>
+      <p id="finStatusAdmin" class="observacao" role="status"></p>
+    </section>
     <section class="painel historico" id="painelIndicacoesAdmin" aria-label="Auditoria de indicações">
      <div class="historico-titulo"><div><small class="sobretitulo">DISTRIBUIÇÃO · CONTROLE ADMINISTRATIVO</small><h2>Indicações e prioridade global</h2></div></div>
      <div class="loop03-resumo-indicacoes-admin">
