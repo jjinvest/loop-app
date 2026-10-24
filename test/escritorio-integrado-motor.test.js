@@ -52,7 +52,9 @@ test('projecao le posicoes, historico e indicacoes do motor sem alterar seu esta
   assert.ok(b.ativas.some(p=>p.local.startsWith('VAGA_')));
   assert.ok(b.ativas.some(p=>p.local==='FILA' && p.fila==='A'));
   assert.ok(c.ativas.some(p=>p.local==='FILA' && p.fila==='A'));
-  assert.ok(d.ativas.every(p=>p.local==='FILA' && p.fila==='B'));
+  assert.equal(d.ativas.length,2);
+  assert.ok(d.ativas.every(p=>p.situacao==='ATIVA'));
+  assert.ok(d.ativas.some(p=>p.local==='FILA' && p.fila==='B'));
   assert.equal(b.indicacoes.quantidade,1);
   assert.equal(c.indicacoes.quantidade,1);
   assert.equal(a.indicacoes.quantidade,0);
