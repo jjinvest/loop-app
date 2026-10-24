@@ -9,6 +9,8 @@ test('fluxo continuo do cliente 1 ao cliente 10000 com compras e giros reais do 
  let clientes=0,compras=0,indicacoes=0,giros=0,entradasA=0,entradasB=0;
  let sequenciaA=0,maxSequenciaA=0;
  let vendasAguardando=0;
+ const produtos={pdf:{quantidade:0,receita:0},produto190:{quantidade:0,receita:0}};
+ let ciclosCompletos=0;
  const perfis={uma:0,cinco:0,dez:0};
  const checkpoints=[];
  // Cada compra gera uma posicao e um evento de venda para o ciclo
@@ -20,6 +22,10 @@ test('fluxo continuo do cliente 1 ao cliente 10000 com compras e giros reais do 
   let alvo=null;
   for(let j=0;j<quantidade;j++){
    const vendaId='compra-'+numero+'-'+j;
+   const tipo=(numero+j)%2===0?'produto190':'pdf';
+   const preco=tipo==='produto190'?190:0;
+   produtos[tipo].quantidade++;
+   produtos[tipo].receita+=preco;
    const resultado=sim.registrarPosicaoSimulada({
     participanteId:'cliente-'+numero,nome:'Cliente ficticio '+numero,vendaId
    });
@@ -34,7 +40,7 @@ test('fluxo continuo do cliente 1 ao cliente 10000 com compras e giros reais do 
      const r=sim.tentarGiro();
      {
       assert.equal(r.girou,true);
-      giros++;
+      giros++;ciclosCompletos++;
       if(r.novaPosicao6?.origemFila==='A'){entradasA++;sequenciaA++;}
       else if(r.novaPosicao6?.origemFila==='B'){entradasB++;sequenciaA=0;}
       maxSequenciaA=Math.max(maxSequenciaA,sequenciaA);
@@ -76,6 +82,8 @@ test('fluxo continuo do cliente 1 ao cliente 10000 com compras e giros reais do 
  assert.equal(sim.tabuleiro.ciclosConcluidos.length,giros);
  assert.equal(entradasA+entradasB,giros);
  const relatorio={clientes,compras,posicoesCriadas:compras,perfis,indicacoes,giros,
+  produtos,receitaBrutaProdutosComPrecoConhecido:produtos.produto190.receita,
+  caixaLiquidoNaoCalculado:true,
   ciclosConcluidos:sim.tabuleiro.ciclosConcluidos.length,
   vendasRegistradasNoCiclo:sim.tabuleiro.vendasProcessadas.size,
   vendasPendentesNoCiclo:sim.tabuleiro.vendasDoCiclo.length,
