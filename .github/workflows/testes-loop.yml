@@ -131,3 +131,55 @@ jobs:
             process.exitCode=1;
           });
           NODE
+
+  conferir-pix-asaas-sandbox:
+    # Descoberta segura somente leitura da cobranca PIX de homologacao.
+    if: >-
+      github.event_name == 'pull_request' &&
+      github.head_ref == 'fix/teste-escrita-catraca-20261014' &&
+      github.event.pull_request.head.repo.full_name == 'jjinvest/loop-app'
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    permissions: {}
+    steps:
+      - name: Conferir referencia PIX exclusiva do LOOP
+        shell: bash
+        env:
+          ASAAS_SANDBOX_API_KEY: ${{ secrets.ASAAS_SANDBOX_API_KEY }}
+        run: |
+          node <<'NODE'
+          'use strict';
+          (async()=>{
+            const key=process.env.ASAAS_SANDBOX_API_KEY;
+            if(typeof key!=='string'||!key.startsWith('$aact_hmlg_')||
+              key.length<25||/[\\s\\r\\n]/.test(key))throw Error('CHAVE_SANDBOX_INDISPONIVEL');
+            const referencia='LOOPLAB-akitemm-pix-teste-001';
+            const url='https://api-sandbox.asaas.com/v3/payments?externalReference='+referencia+'&limit=10';
+            const res=await fetch(url,{method:'GET',redirect:'error',
+              headers:{access_token:key,Accept:'application/json',
+                'User-Agent':'AKITEMM-LOOP-PixReadOnly/1.0'},
+              signal:AbortSignal.timeout(10000)});
+            if(!res.ok)throw Error('HTTP_'+res.status);
+            const d=await res.json();
+            if(!Array.isArray(d?.data))throw Error('LISTAGEM_INVALIDA');
+            const p=d.data;
+            console.log('PIX_REFERENCIA_ENCONTRADA='+p.length);
+            if(p.length===0){
+              console.log('PROXIMO_PASSO=HOMOLOGACAO_MANUAL_PIX_AINDA_NAO_EXECUTADA');
+              return;
+            }
+            if(p.length!==1)throw Error('COBRANCAS_DUPLICADAS');
+            const v=p[0];
+            const correto=v.externalReference===referencia&&v.billingType==='PIX'&&
+              Math.round(Number(v.value)*100)===25000&&
+              typeof v.id==='string'&&/^pay_[A-Za-z0-9_-]{5,90}$/.test(v.id);
+            console.log('PIX_DADOS_VALIDOS='+correto);
+            console.log('PIX_STATUS='+String(v.status||'DESCONHECIDO').replace(/[^A-Z_]/g,''));
+            console.log('PIX_RECEBIDO_SANDBOX='+['RECEIVED','RECEIVED_IN_CASH'].includes(v.status));
+            console.log('LOOP_CREDITOS_CRIADOS=0');
+            if(!correto)process.exitCode=1;
+          })().catch(e=>{
+            console.error('PIX_SANDBOX_CONSULTA_FALHOU='+String(e.message).replace(/[^A-Z0-9_]/g,''));
+            process.exitCode=1;
+          });
+          NODE
