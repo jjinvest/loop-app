@@ -71,3 +71,63 @@ jobs:
             process.exitCode=1;
           });
           NODE
+
+  conferir-fatura-asaas-sandbox:
+    # Consulta somente leitura; nunca cria cobranca ou simula pagamento.
+    if: >-
+      github.event_name == 'pull_request' &&
+      github.head_ref == 'fix/teste-escrita-catraca-20261014' &&
+      github.event.pull_request.head.repo.full_name == 'jjinvest/loop-app'
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    permissions: {}
+    steps:
+      - name: Conferir fatura 19275637 no Asaas Sandbox
+        shell: bash
+        env:
+          ASAAS_SANDBOX_API_KEY: ${{ secrets.ASAAS_SANDBOX_API_KEY }}
+        run: |
+          node <<'NODE'
+          'use strict';
+          (async()=>{
+            const key=process.env.ASAAS_SANDBOX_API_KEY;
+            if(typeof key!=='string'||!key.startsWith('$aact_hmlg_')||
+              key.length<25||/[\\s\\r\\n]/.test(key))
+              throw Error('CREDENCIAL_SANDBOX_INDISPONIVEL');
+            const alvo='19275637';
+            let encontrados=[];
+            for(let offset=0;offset<500;offset+=100){
+              const url='https://api-sandbox.asaas.com/v3/payments?limit=100&offset='+offset;
+              const res=await fetch(url,{method:'GET',redirect:'error',
+                headers:{access_token:key,Accept:'application/json',
+                  'User-Agent':'AKITEMM-LOOP-ConsultaReadOnly/1.0'},
+                signal:AbortSignal.timeout(10000)});
+              if(!res.ok)throw Error('CONSULTA_HTTP_'+res.status);
+              const dados=await res.json();
+              if(!Array.isArray(dados?.data))throw Error('RESPOSTA_INVALIDA');
+              encontrados.push(...dados.data.filter(p=>String(p.invoiceNumber)===alvo));
+              if(!dados.hasMore)break;
+            }
+            if(encontrados.length!==1){
+              console.log('FATURA_ENCONTRADA='+encontrados.length);
+              console.log('RESULTADO=NAO_CONCILIADO_REVISAR_PAGINACAO');
+              return;
+            }
+            const p=encontrados[0];
+            const valorOk=Number.isFinite(Number(p.value))&&
+              Math.round(Number(p.value)*100)===25000;
+            const recebido=['RECEIVED','RECEIVED_IN_CASH'].includes(p.status);
+            const idOk=typeof p.id==='string'&&/^pay_[A-Za-z0-9_-]{5,90}$/.test(p.id);
+            console.log('FATURA_ENCONTRADA=1');
+            console.log('ID_API_FORMATO_VALIDO='+idOk);
+            console.log('VALOR_250_CONFIRMADO='+valorOk);
+            console.log('STATUS_RECEBIDO_SANDBOX='+recebido);
+            console.log('FORMA_PAGAMENTO='+String(p.billingType||'DESCONHECIDA').replace(/[^A-Z_]/g,''));
+            console.log('CONCILIACAO_LOOP_REAL=NAO_EXECUTADA');
+            console.log('MOVIMENTACAO_REAL=0');
+            if(!valorOk||!recebido||!idOk)process.exitCode=1;
+          })().catch(e=>{
+            console.error('FATURA_SANDBOX_CONSULTA_FALHOU='+String(e.message).replace(/[^A-Z0-9_]/g,''));
+            process.exitCode=1;
+          });
+          NODE
