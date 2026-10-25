@@ -1,0 +1,34 @@
+name: Homologar Pix Asaas Sandbox
+
+on:
+  workflow_dispatch:
+    inputs:
+      confirmar:
+        description: 'Digite SIM para executar o Pix de teste'
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  homologar-pix:
+    if: ${{ inputs.confirmar == 'SIM' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          repository: jjinvest/loop-app
+          ref: b0827574348261c47351d10412c2e79caf29ec8c
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Executar Pix no Sandbox
+        env:
+          ASAAS_SANDBOX_API_KEY: ${{ secrets.ASAAS_SANDBOX_API_KEY }}
+          ASAAS_SANDBOX_CPF_FICTICIO: '24971563792'
+          ASAAS_SANDBOX_HOMOLOGACAO_MANUAL: 'SIM'
+          ASAAS_SANDBOX_SIMULAR_PAGAMENTO: 'SIM'
+        run: node scripts/homologar-pix-asaas-sandbox-manual.js
