@@ -85,6 +85,9 @@ test('6 pedidos distintos por giro: lastro ficticio, rollback, replays e reabert
  assert.equal(rastreio.girosDocumentados,2);
  assert.equal(rastreio.eventosDocumentados,12);
  assert.equal(rastreio.pedidosFicticiosDistintos,12);
+ assert.deepEqual(rastreio.alertas,[]);
+ assert.equal(rastreio.somenteLeitura,true);
+ assert.equal(rastreio.liquidacaoPspComprovada,false);
  assert.deepEqual(rastreio.itens.map(x=>x.eventos),[6,6]);
  assert.deepEqual(rastreio.itens.map(x=>x.pedidosDistintos),[6,6]);
  assert.equal(m.circuito.resumo().comprasPendentes,2);
@@ -107,6 +110,8 @@ test('6 pedidos distintos por giro: lastro ficticio, rollback, replays e reabert
  const pos=auditarSeisPedidosDoCicloLab({banco:m.banco,ponte:m.ponte});
  assert.equal(pos.situacao,'CONSISTENTE_APENAS_NO_LABORATORIO');
  assert.equal(pos.eventosDocumentados,12);
+ assert.deepEqual(pos.alertas,[]);
+ assert.deepEqual(pos.itens.map(x=>x.pedidosDistintos),[6,6]);
  assert.equal(m.circuito.resumo().girosConcluidos,2);
  assert.equal(m.circuito.conciliacao.conferir().quantidadeDivergencias,0);
  assert.equal(Object.values(m.banco.prepare('PRAGMA integrity_check').get())[0],'ok');
