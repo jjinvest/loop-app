@@ -61,6 +61,8 @@ function auditarSeisPedidosDoCicloLab({banco,ponte}={}){
   itens.push({giro,eventos:grupo.length,pedidosDistintos:new Set(grupo.map(e=>e.pedidoId)).size,
    alertas:unicos});
  }
+ if(new Set(ciclos.map(c=>c.giro)).size!==ciclos.length)
+  alertas.push({codigo:'GIRO_DUPLICADO_NO_LIVRO'});
  if(ciclos.length!==historico.length)
   alertas.push({codigo:'CICLOS_DO_LIVRO_DIVERGEM_DO_MOTOR'});
  if(eventos.some(e=>!ciclos.some(c=>c.giro===e.giro)))
