@@ -146,3 +146,32 @@ test('API AKITEMM sandbox desativada por padrao e protegida por admin da platafo
    origem:'PDF',pedidoId:'pedido-inventado'})});
  assert.equal(attempted.status,501);
 });
+
+test('boleto recebido no Asaas Sandbox nao pode ser conciliado como PIX nem liberar LOOP',async t=>{
+ const db=preparar();t.after(()=>db.close());
+ let consultas=0;
+ const provedor=new AsaasSandboxLojaV6({
+  apiKey:'CHAVE_SANDBOX_DE_TESTE_123456',
+  fetchImpl:async(_url,opts)=>{
+   if(opts.method==='POST')return {ok:true,json:async()=>({
+    id:'pay_SANDBOX_BOLETO01',billingType:'PIX',value:250,
+    externalReference:'LOOPLAB-carrinho-livro-teste',status:'PENDING'
+   })};
+   consultas++;
+   return {ok:true,json:async()=>({
+    id:'pay_SANDBOX_BOLETO01',billingType:'BOLETO',value:250,
+    externalReference:'LOOPLAB-carrinho-livro-teste',status:'RECEIVED'
+   })};
+  }
+ });
+ const servico=new CobrancasAkitemmAsaasSandboxSQLite({banco:db,provedor});
+ await servico.criar({pedidoId:'carrinho-livro-teste',origem:'CARRINHO',
+  clienteAsaasId:'cus_CarrinhoTeste12'});
+ await assert.rejects(()=>servico.conferir('carrinho-livro-teste'),
+  {codigo:'DADOS_PAGAMENTO_SANDBOX_DIVERGENTES'});
+ assert.equal(consultas,1);
+ assert.equal(servico.consultar('carrinho-livro-teste').status,'PENDENTE_SANDBOX');
+ assert.equal(servico.consultar('carrinho-livro-teste').creditoFilaCriado,0);
+ assert.equal(servico.consultar('carrinho-livro-teste').valorTransferidoParaLoopCentavos,0);
+ assert.equal(servico.historico('carrinho-livro-teste').conferencias.length,0);
+});
