@@ -31,7 +31,7 @@ class CatracaAsaasSandboxLab{
   // A ponte consulta SEPARADAMENTE seu verificador confiavel de pagamentos.
   // Ela valida titularidade previamente fixada e grava a posicao em SQLite
   // sob BEGIN IMMEDIATE; esta auditoria nao substitui essas garantias.
-  const resultado=await this.ponte.processar({pedidoId});
+  const resultado=await this.ponte.processar({pedidoId,quantidadeEsperada:1});
   if(resultado.contaId!==parecer.titularId)
    throw erro('TITULAR_DIVERGENTE_APOS_PROCESSAMENTO');
   if(resultado.compraElegivelLoop!==true||
