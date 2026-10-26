@@ -86,7 +86,7 @@ test('Pix recebido no sandbox nao permite segundo pedido reaproveitar mesmo paga
  await servico.criar({pedidoId:'pedido-pix-primeiro',origem:'CARRINHO',
   clienteAsaasId:'cus_TesteIntegracao001'});
  await assert.rejects(()=>servico.criar({pedidoId:'pedido-pix-segundo',origem:'CARRINHO',
-  clienteAsaasId:'cus_TesteIntegracao001'}),e=>e?.code==='SQLITE_CONSTRAINT_UNIQUE');
+  clienteAsaasId:'cus_TesteIntegracao001'}),e=>e?.code==='ERR_SQLITE_ERROR' && /UNIQUE constraint failed/.test(e.message));
  assert.equal(servico.consultar('pedido-pix-primeiro').pagamentoId,'pay_SANDBOX_MESMO_PAGAMENTO001');
  assert.equal(servico.consultar('pedido-pix-segundo').pagamentoId,null);
  assert.equal(servico.consultar('pedido-pix-segundo').creditoFilaCriado,0);
