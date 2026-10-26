@@ -57,3 +57,25 @@ test('ponte rejeita titularidade fixada depois da criacao da cobranca',()=>{
  });
  assert.equal(ponte.conferir(pedidoId).elegivelParaTesteDeCatraca,true);
 });
+
+test('ponte bloqueia datas ausentes, invalidas e referencia a outro pedido',()=>{
+ const cobranca={pedidoId,origem:'CARRINHO',criadoEm:'2026-10-26T10:00:00.000Z'};
+ const titular={contaId:'titular-lab-001',valorCentavos:25000,criadoEm:'2026-10-26T09:59:00.000Z'};
+ const ponte=new PonteElegibilidadeAsaasTitularidadeLab({
+  cobrancas:{
+   auditarElegibilidadeLoop:()=>({valorCentavos:25000,motivos:[]}),
+   consultar:()=>cobranca
+  },
+  titularidade:{buscar:()=>titular}
+ });
+ assert.equal(ponte.conferir(pedidoId).elegivelParaTesteDeCatraca,true);
+ cobranca.criadoEm=null;
+ assert(ponte.conferir(pedidoId).motivos.includes('DATAS_TITULARIDADE_NAO_AUDITAVEIS'));
+ cobranca.criadoEm='2026-10-26T10:00:00.000Z';
+ titular.criadoEm='data-invalida';
+ assert.equal(ponte.conferir(pedidoId).elegivelParaTesteDeCatraca,false);
+ titular.criadoEm='2026-10-26T09:59:00.000Z';
+ cobranca.pedidoId='pedido-de-outra-pessoa';
+ assert(ponte.conferir(pedidoId).motivos.includes('COBRANCA_DE_OUTRO_PEDIDO'));
+ assert.equal(ponte.conferir(pedidoId).posicoesCriadas,0);
+});
