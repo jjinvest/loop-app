@@ -487,7 +487,9 @@ class PonteComprasConvitesDemoSQLite{
   if(vinculo.repetida)throw falha('CONCORRENCIA_NA_DISTRIBUICAO');
   return {posicaoId,vinculada:true,repetida:false,semPagamentoReal:true};
  }
- async processar({pedidoId}={}){
+ async processar({pedidoId,quantidadeEsperada=null}={}){
+  if(quantidadeEsperada!==null&&(!Number.isSafeInteger(quantidadeEsperada)||quantidadeEsperada<1||quantidadeEsperada>10))
+   throw falha('QUANTIDADE_ESPERADA_INVALIDA');
   identificador(pedidoId,'pedidoId');
   // Consulta a fonte interna antes da transacao. Usuario nao injeta
   // status, preco, titular ou horario em nenhuma rota publica.
@@ -505,6 +507,10 @@ class PonteComprasConvitesDemoSQLite{
     FROM admin_ponte_compras_demo WHERE pedido_id=?
    `).get(pedidoId);
    if(anterior){
+    if(quantidadeEsperada!==null){
+     const adicionais=this.banco.prepare('SELECT COUNT(*) AS n FROM admin_ponte_posicoes_adicionais_demo WHERE pedido_id=?').get(pedidoId).n;
+     if(1+adicionais!==quantidadeEsperada)throw falha('QUANTIDADE_POSICOES_INESPERADA');
+    }
     if(anterior.conta_id!==comprovante.contaId||
       anterior.produto_id!==comprovante.produtoId||
       anterior.valor_centavos!==comprovante.valorCentavos||
@@ -580,6 +586,8 @@ class PonteComprasConvitesDemoSQLite{
      AND e.elegivel_loop=1 AND i.quantidade>=q.quantidade_minima
    `).all(pedidoId):[];
    const quantidadePosicoes=pacote.length?Math.max(...pacote.map(p=>p.quantidade)):1;
+   if(quantidadeEsperada!==null&&quantidadePosicoes!==quantidadeEsperada)
+    throw falha('QUANTIDADE_POSICOES_INESPERADA');
    // Uma cadeira do pacote gera seu proprio ciclo; exigir ao menos dez
    // referencias no subtotal do(s) produto(s) ESPECIAIS, antes de custos.
    if(quantidadePosicoes>1&&
