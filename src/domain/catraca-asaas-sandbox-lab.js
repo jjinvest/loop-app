@@ -19,6 +19,15 @@ class CatracaAsaasSandboxLab{
      !parecer.titularId||parecer.valorCentavos<25000||
      parecer.catracaAutorizada!==false||parecer.posicoesCriadas!==0)
    throw erro('PAGAMENTO_SANDBOX_NAO_ELEGIVEL');
+  // Bloquear divergencia ANTES da escrita: nao basta comparar apos processar.
+  // O verificador interno deve expor o mesmo comprovante que a ponte consumira.
+  if(typeof this.ponte.verificador!=='function')
+   throw erro('VERIFICADOR_INTERNO_INDISPONIVEL');
+  const comprovante=await this.ponte.verificador(pedidoId);
+  if(!comprovante||comprovante.pedidoId!==pedidoId||
+     comprovante.contaId!==parecer.titularId||
+     comprovante.valorCentavos!==parecer.valorCentavos)
+   throw erro('COMPROVANTE_TITULAR_OU_VALOR_DIVERGENTE');
   // A ponte consulta SEPARADAMENTE seu verificador confiavel de pagamentos.
   // Ela valida titularidade previamente fixada e grava a posicao em SQLite
   // sob BEGIN IMMEDIATE; esta auditoria nao substitui essas garantias.
