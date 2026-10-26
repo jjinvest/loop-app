@@ -115,3 +115,35 @@ test('estorno sandbox apos Pix recebido fica bloqueado mesmo com resposta poster
   ['RECEIVED','REFUNDED','RECEIVED']);
  assert.equal(servico.consultar('pedido-pix-estornado').creditoFilaCriado,0);
 });
+
+test('parecer de elegibilidade do LOOP: R$250 recebido apto somente a simulacao; R$190 nao',async t=>{
+ const db=new DatabaseSync(':memory:');t.after(()=>db.close());
+ db.exec('CREATE TABLE admin_carrinho_loop_demo (pedido_id TEXT PRIMARY KEY,total_centavos INTEGER)');
+ for(const [id,valor] of [['pedido-elegivel-250',25000],['pedido-inferior-190',19000]])
+  db.prepare('INSERT INTO admin_carrinho_loop_demo VALUES(?,?)').run(id,valor);
+ let pedido='',status='PENDING';
+ const provedor=new AsaasSandboxLojaV6({apiKey:'CHAVE_SANDBOX_DE_TESTE_123456',
+  fetchImpl:async(_url,opts)=>{
+   if(opts.method==='POST')pedido=JSON.parse(opts.body).externalReference.slice(8);
+   const valor=pedido==='pedido-elegivel-250'?250:190;
+   return {ok:true,json:async()=>({
+    id:pedido==='pedido-elegivel-250'?'pay_SANDBOX_ELEGIVEL250':'pay_SANDBOX_INFERIOR190',
+    billingType:'PIX',value:valor,externalReference:'LOOPLAB-'+pedido,status
+   })};
+  }});
+ const servico=new CobrancasAkitemmAsaasSandboxSQLite({banco:db,provedor});
+ for(const id of ['pedido-elegivel-250','pedido-inferior-190']){
+  await servico.criar({pedidoId:id,origem:'CARRINHO',clienteAsaasId:'cus_TesteIntegracao001'});
+  status='RECEIVED';
+  await servico.conferir(id);
+  status='PENDING';
+ }
+ const elegivel=servico.auditarElegibilidadeLoop('pedido-elegivel-250');
+ assert.equal(elegivel.elegivelParaSimulacao,true);
+ assert.equal(elegivel.posicoesCriadas,0);
+ assert.equal(elegivel.ativacaoAutomatica,false);
+ const barato=servico.auditarElegibilidadeLoop('pedido-inferior-190');
+ assert.equal(barato.elegivelParaSimulacao,false);
+ assert(barato.motivos.includes('VALOR_INFERIOR_A_250_REAIS'));
+ assert.equal(barato.posicoesCriadas,0);
+});
