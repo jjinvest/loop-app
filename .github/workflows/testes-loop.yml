@@ -92,7 +92,7 @@ jobs:
           (async()=>{
             const key=process.env.ASAAS_SANDBOX_API_KEY;
             if(typeof key!=='string'||!key.startsWith('$aact_hmlg_')||
-              key.length<25||/[\\s\\r\\n]/.test(key))
+              key.length<25||/[\s\r\n]/.test(key))
               throw Error('CREDENCIAL_SANDBOX_INDISPONIVEL');
             const alvo='19275637';
             let encontrados=[];
@@ -152,7 +152,7 @@ jobs:
           (async()=>{
             const key=process.env.ASAAS_SANDBOX_API_KEY;
             if(typeof key!=='string'||!key.startsWith('$aact_hmlg_')||
-              key.length<25||/[\\s\\r\\n]/.test(key))throw Error('CHAVE_SANDBOX_INDISPONIVEL');
+              key.length<25||/[\s\r\n]/.test(key))throw Error('CHAVE_SANDBOX_INDISPONIVEL');
             const referencia='LOOPLAB-akitemm-pix-teste-001';
             const url='https://api-sandbox.asaas.com/v3/payments?externalReference='+referencia+'&limit=10';
             const res=await fetch(url,{method:'GET',redirect:'error',
