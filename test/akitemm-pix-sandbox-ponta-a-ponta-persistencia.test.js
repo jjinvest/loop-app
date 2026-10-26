@@ -68,3 +68,26 @@ test('pagamento Pix sandbox com referencia de outro pedido e bloqueado mesmo com
  assert.equal(servico.historico('pedido-pix-original').conferencias.length,0);
  assert.equal(servico.consultar('pedido-pix-original').creditoFilaCriado,0);
 });
+
+test('Pix recebido no sandbox nao permite segundo pedido reaproveitar mesmo pagamento',async t=>{
+ const db=new DatabaseSync(':memory:');t.after(()=>db.close());
+ db.exec('CREATE TABLE admin_carrinho_loop_demo (pedido_id TEXT PRIMARY KEY,total_centavos INTEGER)');
+ for(const id of ['pedido-pix-primeiro','pedido-pix-segundo'])
+  db.prepare('INSERT INTO admin_carrinho_loop_demo VALUES(?,?)').run(id,25000);
+ let pagamentoCriado=0;
+ const provedor=new AsaasSandboxLojaV6({apiKey:'CHAVE_SANDBOX_DE_TESTE_123456',
+  fetchImpl:async(_url,opts)=>({ok:true,json:async()=>{
+   if(opts.method==='POST')pagamentoCriado++;
+   return {id:'pay_SANDBOX_MESMO_PAGAMENTO001',billingType:'PIX',value:250,
+    externalReference:'LOOPLAB-'+(pagamentoCriado===1?'pedido-pix-primeiro':'pedido-pix-segundo'),
+    status:'PENDING'};
+  }})});
+ const servico=new CobrancasAkitemmAsaasSandboxSQLite({banco:db,provedor});
+ await servico.criar({pedidoId:'pedido-pix-primeiro',origem:'CARRINHO',
+  clienteAsaasId:'cus_TesteIntegracao001'});
+ await assert.rejects(()=>servico.criar({pedidoId:'pedido-pix-segundo',origem:'CARRINHO',
+  clienteAsaasId:'cus_TesteIntegracao001'}),e=>e?.code==='SQLITE_CONSTRAINT_UNIQUE');
+ assert.equal(servico.consultar('pedido-pix-primeiro').pagamentoId,'pay_SANDBOX_MESMO_PAGAMENTO001');
+ assert.equal(servico.consultar('pedido-pix-segundo').pagamentoId,null);
+ assert.equal(servico.consultar('pedido-pix-segundo').creditoFilaCriado,0);
+});
