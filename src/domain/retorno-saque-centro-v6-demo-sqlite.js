@@ -106,11 +106,14 @@ class RetornoSaqueCentroV6DemoSQLite{
  }
  solicitar({contaId,solicitacaoId,valorCentavos}={}){
   if(!ID.test(solicitacaoId||''))throw falha('SOLICITACAO_ID_INVALIDO');
-  if(!Number.isSafeInteger(valorCentavos)||valorCentavos<=0)
-    throw falha('VALOR_INVALIDO');
+  if(!Number.isSafeInteger(valorCentavos)||valorCentavos<2500)
+    throw falha('MINIMO_SAQUE_25_REAIS');
   if(!this.contas.buscar(contaId))throw falha('CONTA_INVALIDA');
   const b=this.banco;b.exec('BEGIN IMMEDIATE');
   try{
+   const adesao=b.prepare("SELECT 1 FROM sqlite_master WHERE type='table' AND name='admin_loop_adesoes_contas_demo'").get();
+   const confirmada=adesao&&b.prepare('SELECT 1 FROM admin_loop_adesoes_contas_demo WHERE conta_id=?').get(contaId);
+   if(!confirmada)throw falha('CPF_E_TERMOS_OBRIGATORIOS');
    const anterior=this._existente(solicitacaoId);
    if(anterior){
     if(anterior.contaId!==contaId||anterior.valorCentavos!==valorCentavos)
