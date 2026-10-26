@@ -172,3 +172,45 @@ test('parecer de elegibilidade nao promove pagamento pendente nem estornado',asy
  status='RECEIVED';await servico.conferir('pedido-parecer-estorno');
  assert.equal(servico.auditarElegibilidadeLoop('pedido-parecer-estorno').elegivelParaSimulacao,false);
 });
+
+test('auditoria em lote consolida R$250 pago, R$190 pago, pendencia e estorno sem gerar posicoes',async t=>{
+ const db=new DatabaseSync(':memory:');t.after(()=>db.close());
+ db.exec('CREATE TABLE admin_carrinho_loop_demo (pedido_id TEXT PRIMARY KEY,total_centavos INTEGER)');
+ const casos=[
+  ['pedido-lote-250',25000,'RECEIVED'],
+  ['pedido-lote-190',19000,'RECEIVED'],
+  ['pedido-lote-pendente',25000,'PENDING'],
+  ['pedido-lote-estorno',25000,'REFUNDED']
+ ];
+ for(const [id,valor] of casos)
+  db.prepare('INSERT INTO admin_carrinho_loop_demo VALUES(?,?)').run(id,valor);
+ let idAtual='',statusAtual='PENDING';
+ const provedor=new AsaasSandboxLojaV6({apiKey:'CHAVE_SANDBOX_DE_TESTE_123456',
+  fetchImpl:async(_url,opts)=>{
+   if(opts.method==='POST')idAtual=JSON.parse(opts.body).externalReference.slice(8);
+   const valor=casos.find(x=>x[0]===idAtual)[1]/100;
+   return {ok:true,json:async()=>({
+    id:'pay_'+idAtual,billingType:'PIX',value:valor,
+    externalReference:'LOOPLAB-'+idAtual,status:statusAtual
+   })};
+  }});
+ const servico=new CobrancasAkitemmAsaasSandboxSQLite({banco:db,provedor});
+ for(const [id,,status] of casos){
+  await servico.criar({pedidoId:id,origem:'CARRINHO',clienteAsaasId:'cus_TesteIntegracao001'});
+  statusAtual=status;
+  await servico.conferir(id);
+  statusAtual='PENDING';
+ }
+ const ids=casos.map(x=>x[0]);
+ const rel=servico.auditarLoteLoop(ids);
+ assert.equal(rel.pedidos,4);
+ assert.equal(rel.aptosSomenteParaSimulacao,1);
+ assert.equal(rel.bloqueados,3);
+ assert.equal(rel.valorAptoCentavos,25000);
+ assert.equal(rel.posicoesCriadas,0);
+ assert.equal(rel.dinheiroRealMovimentadoCentavos,0);
+ assert.equal(rel.itens.find(x=>x.pedidoId==='pedido-lote-estorno').elegivelParaSimulacao,false);
+ assert.throws(()=>servico.auditarLoteLoop([...ids,ids[0]]),{codigo:'LOTE_AUDITORIA_INVALIDO'});
+ assert.throws(()=>servico.auditarLoteLoop(Array(1001).fill(ids[0])),{codigo:'LOTE_AUDITORIA_INVALIDO'});
+ assert.equal(servico.historico('pedido-lote-250').conferencias.length,1);
+});
