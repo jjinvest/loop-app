@@ -9,11 +9,17 @@ class PonteElegibilidadeAsaasTitularidadeLab{
  }
  conferir(pedidoId){
   const pix=this.cobrancas.auditarElegibilidadeLoop(pedidoId);
+  const cobranca=this.cobrancas.consultar?.(pedidoId);
   const titular=this.titularidade.buscar(pedidoId);
   const motivos=[...pix.motivos];
   if(!titular)motivos.push('TITULAR_NAO_FIXADO_ANTES_DO_PAGAMENTO');
   else if(titular.valorCentavos!==pix.valorCentavos)
    motivos.push('VALOR_PEDIDO_TITULAR_DIVERGENTE');
+  if(cobranca?.criadoEm&&titular?.criadoEm&&
+     Date.parse(titular.criadoEm)>Date.parse(cobranca.criadoEm))
+   motivos.push('TITULAR_FIXADO_APOS_COBRANCA');
+  if(cobranca?.origem&&cobranca.origem!=='CARRINHO'&&cobranca.origem!=='PDF')
+   motivos.push('ORIGEM_COBRANCA_INVALIDA');
   const apto=motivos.length===0;
   return {pedidoId,ambiente:'LABORATORIO_ASAAS_SANDBOX',
    titularId:titular?.contaId||null,
