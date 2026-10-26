@@ -10,7 +10,7 @@ test('conecta parecer elegivel a ponte confiavel e preserva repeticao',async()=>
  let chamadas=0;
  const adaptador=new CatracaAsaasSandboxLab({
   elegibilidade:{conferir:id=>{assert.equal(id,pedidoId);return parecer;}},
-  ponte:{atribuicaoManualPorPosicao:true,processar:async({pedidoId:id})=>{
+  ponte:{atribuicaoManualPorPosicao:true,verificador:async()=>({pedidoId,contaId:'conta-a',valorCentavos:25000}),processar:async({pedidoId:id})=>{
    assert.equal(id,pedidoId);chamadas++;
    return {contaId:'conta-a',posicaoId:7,posicaoIds:[7],
     compraElegivelLoop:true,posicaoCriada:true,
@@ -31,7 +31,7 @@ test('bloqueia parecer sem pagamento elegivel antes da ponte',async()=>{
   let chamadas=0;
   const adaptador=new CatracaAsaasSandboxLab({
    elegibilidade:{conferir:()=>({...parecer,...alteracao})},
-   ponte:{atribuicaoManualPorPosicao:true,processar:async()=>{chamadas++;}}
+   ponte:{atribuicaoManualPorPosicao:true,verificador:async()=>({pedidoId,contaId:'conta-a',valorCentavos:25000}),processar:async()=>{chamadas++;}}
   });
   await assert.rejects(adaptador.processar(pedidoId),{codigo:'PAGAMENTO_SANDBOX_NAO_ELEGIVEL'});
   assert.equal(chamadas,0);
@@ -44,10 +44,23 @@ test('detecta divergencia de titular e pacote inesperado',async()=>{
  ]){
   const adaptador=new CatracaAsaasSandboxLab({
    elegibilidade:{conferir:()=>parecer},
-   ponte:{atribuicaoManualPorPosicao:true,processar:async()=>({
+   ponte:{atribuicaoManualPorPosicao:true,verificador:async()=>({pedidoId,contaId:'conta-a',valorCentavos:25000}),processar:async()=>({
     compraElegivelLoop:true,posicaoCriada:true,...resposta
    })}
   });
   await assert.rejects(adaptador.processar(pedidoId));
  }
+});
+
+test('divergencia antes da gravacao nao invoca a ponte',async()=>{
+ let gravacoes=0;
+ const adaptador=new CatracaAsaasSandboxLab({
+  elegibilidade:{conferir:()=>parecer},
+  ponte:{atribuicaoManualPorPosicao:true,
+   verificador:async()=>({pedidoId,contaId:'outra-conta',valorCentavos:25000}),
+   processar:async()=>{gravacoes++;}}
+ });
+ await assert.rejects(adaptador.processar(pedidoId),
+  {codigo:'COMPROVANTE_TITULAR_OU_VALOR_DIVERGENTE'});
+ assert.equal(gravacoes,0);
 });
