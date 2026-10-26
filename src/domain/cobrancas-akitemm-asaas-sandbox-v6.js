@@ -82,6 +82,26 @@ class CobrancasAkitemmAsaasSandboxSQLite{
    proximaEtapa:'VINCULAR_TITULAR_E_VALIDAR_CATRACA_EM_TESTE_ISOLADO',
    aviso:'Parecer de laboratorio; falta vinculo seguro ao titular e autorizacao da catraca.'};
  }
+ // Auditoria consolidada por pedidos distintos, sem mutar o motor ou autorizar pagamentos.
+ auditarLoteLoop(pedidoIds){
+  if(!Array.isArray(pedidoIds)||pedidoIds.length>1000)
+   throw falha('LOTE_AUDITORIA_INVALIDO');
+  const ids=new Set();
+  const itens=[];
+  for(const pedidoId of pedidoIds){
+   if(typeof pedidoId!=='string'||!PEDIDO.test(pedidoId)||ids.has(pedidoId))
+    throw falha('LOTE_AUDITORIA_INVALIDO');
+   ids.add(pedidoId);
+   itens.push(this.auditarElegibilidadeLoop(pedidoId));
+  }
+  return {ambiente:'ASAAS_SANDBOX_EXCLUSIVO',pedidos:itens.length,
+   aptosSomenteParaSimulacao:itens.filter(x=>x.elegivelParaSimulacao).length,
+   bloqueados:itens.filter(x=>!x.elegivelParaSimulacao).length,
+   valorAptoCentavos:itens.filter(x=>x.elegivelParaSimulacao)
+    .reduce((s,x)=>s+x.valorCentavos,0),
+   posicoesCriadas:0,dinheiroRealMovimentadoCentavos:0,
+   itens};
+ }
  async criar({pedidoId,origem,clienteAsaasId}={}){
   const valorCentavos=this._valorPedido(origem,pedidoId);
   if(typeof clienteAsaasId!=='string'||!CLIENTE.test(clienteAsaasId))
