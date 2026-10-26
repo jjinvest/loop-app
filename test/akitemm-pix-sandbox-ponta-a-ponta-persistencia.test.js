@@ -91,3 +91,27 @@ test('Pix recebido no sandbox nao permite segundo pedido reaproveitar mesmo paga
  assert.equal(servico.consultar('pedido-pix-segundo').pagamentoId,null);
  assert.equal(servico.consultar('pedido-pix-segundo').creditoFilaCriado,0);
 });
+
+test('estorno sandbox apos Pix recebido fica bloqueado mesmo com resposta posterior atrasada',async t=>{
+ const db=new DatabaseSync(':memory:');t.after(()=>db.close());
+ db.exec('CREATE TABLE admin_carrinho_loop_demo (pedido_id TEXT PRIMARY KEY,total_centavos INTEGER)');
+ db.prepare('INSERT INTO admin_carrinho_loop_demo VALUES(?,?)').run('pedido-pix-estornado',25000);
+ let status='PENDING';
+ const provedor=new AsaasSandboxLojaV6({apiKey:'CHAVE_SANDBOX_DE_TESTE_123456',
+  fetchImpl:async()=>({ok:true,json:async()=>({
+   id:'pay_SANDBOX_ESTORNO001',billingType:'PIX',value:250,
+   externalReference:'LOOPLAB-pedido-pix-estornado',status
+  })})});
+ const servico=new CobrancasAkitemmAsaasSandboxSQLite({banco:db,provedor});
+ await servico.criar({pedidoId:'pedido-pix-estornado',origem:'CARRINHO',
+  clienteAsaasId:'cus_TesteIntegracao001'});
+ status='RECEIVED';
+ assert.equal((await servico.conferir('pedido-pix-estornado')).status,'RECEBIMENTO_INFORMADO_SANDBOX');
+ status='REFUNDED';
+ assert.equal((await servico.conferir('pedido-pix-estornado')).status,'REVERSAO_INFORMADA_SANDBOX');
+ status='RECEIVED';
+ assert.equal((await servico.conferir('pedido-pix-estornado')).status,'REVERSAO_INFORMADA_SANDBOX');
+ assert.deepEqual(servico.historico('pedido-pix-estornado').conferencias.map(x=>x.statusAsaas),
+  ['RECEIVED','REFUNDED','RECEIVED']);
+ assert.equal(servico.consultar('pedido-pix-estornado').creditoFilaCriado,0);
+});
