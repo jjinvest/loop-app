@@ -147,3 +147,28 @@ test('parecer de elegibilidade do LOOP: R$250 recebido apto somente a simulacao;
  assert(barato.motivos.includes('VALOR_INFERIOR_A_250_REAIS'));
  assert.equal(barato.posicoesCriadas,0);
 });
+
+test('parecer de elegibilidade nao promove pagamento pendente nem estornado',async t=>{
+ const db=new DatabaseSync(':memory:');t.after(()=>db.close());
+ db.exec('CREATE TABLE admin_carrinho_loop_demo (pedido_id TEXT PRIMARY KEY,total_centavos INTEGER)');
+ db.prepare('INSERT INTO admin_carrinho_loop_demo VALUES(?,?)').run('pedido-parecer-estorno',25000);
+ let status='PENDING';
+ const provedor=new AsaasSandboxLojaV6({apiKey:'CHAVE_SANDBOX_DE_TESTE_123456',
+  fetchImpl:async()=>({ok:true,json:async()=>({
+   id:'pay_SANDBOX_PARECER001',billingType:'PIX',value:250,
+   externalReference:'LOOPLAB-pedido-parecer-estorno',status
+  })})});
+ const servico=new CobrancasAkitemmAsaasSandboxSQLite({banco:db,provedor});
+ await servico.criar({pedidoId:'pedido-parecer-estorno',origem:'CARRINHO',
+  clienteAsaasId:'cus_TesteIntegracao001'});
+ assert.equal(servico.auditarElegibilidadeLoop('pedido-parecer-estorno').elegivelParaSimulacao,false);
+ status='RECEIVED';await servico.conferir('pedido-parecer-estorno');
+ assert.equal(servico.auditarElegibilidadeLoop('pedido-parecer-estorno').elegivelParaSimulacao,true);
+ status='REFUNDED';await servico.conferir('pedido-parecer-estorno');
+ const parecer=servico.auditarElegibilidadeLoop('pedido-parecer-estorno');
+ assert.equal(parecer.elegivelParaSimulacao,false);
+ assert(parecer.motivos.includes('PAGAMENTO_NAO_CONFIRMADO_OU_REVERSAO'));
+ assert.equal(parecer.posicoesCriadas,0);
+ status='RECEIVED';await servico.conferir('pedido-parecer-estorno');
+ assert.equal(servico.auditarElegibilidadeLoop('pedido-parecer-estorno').elegivelParaSimulacao,false);
+});
