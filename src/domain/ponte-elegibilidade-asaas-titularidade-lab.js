@@ -15,9 +15,16 @@ class PonteElegibilidadeAsaasTitularidadeLab{
   if(!titular)motivos.push('TITULAR_NAO_FIXADO_ANTES_DO_PAGAMENTO');
   else if(titular.valorCentavos!==pix.valorCentavos)
    motivos.push('VALOR_PEDIDO_TITULAR_DIVERGENTE');
-  if(cobranca?.criadoEm&&titular?.criadoEm&&
-     Date.parse(titular.criadoEm)>Date.parse(cobranca.criadoEm))
-   motivos.push('TITULAR_FIXADO_APOS_COBRANCA');
+  if(cobranca){
+   const dataCobranca=Date.parse(cobranca.criadoEm);
+   const dataTitular=Date.parse(titular?.criadoEm);
+   if(!Number.isFinite(dataCobranca)||!Number.isFinite(dataTitular))
+    motivos.push('DATAS_TITULARIDADE_NAO_AUDITAVEIS');
+   else if(dataTitular>dataCobranca)
+    motivos.push('TITULAR_FIXADO_APOS_COBRANCA');
+   if(cobranca.pedidoId&&cobranca.pedidoId!==pedidoId)
+    motivos.push('COBRANCA_DE_OUTRO_PEDIDO');
+  }
   if(cobranca?.origem&&cobranca.origem!=='CARRINHO'&&cobranca.origem!=='PDF')
    motivos.push('ORIGEM_COBRANCA_INVALIDA');
   const apto=motivos.length===0;
