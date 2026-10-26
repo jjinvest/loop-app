@@ -78,6 +78,8 @@ class CobrancasAkitemmAsaasSandboxSQLite{
    motivos,valorCentavos:registro.valorCentavos,
    confirmacaoSandbox:registro.status==='RECEBIMENTO_INFORMADO_SANDBOX',
    posicoesCriadas:0,ativacaoAutomatica:false,
+   titularValidado:false,catracaAutorizada:false,
+   proximaEtapa:'VINCULAR_TITULAR_E_VALIDAR_CATRACA_EM_TESTE_ISOLADO',
    aviso:'Parecer de laboratorio; falta vinculo seguro ao titular e autorizacao da catraca.'};
  }
  async criar({pedidoId,origem,clienteAsaasId}={}){
