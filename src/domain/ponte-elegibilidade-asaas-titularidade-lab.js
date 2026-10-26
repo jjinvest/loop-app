@@ -1,6 +1,5 @@
 'use strict';
 // Ponte de auditoria somente leitura. Nao confirma CPF, nao aciona catraca.
-function erro(codigo){const e=new Error(codigo);e.codigo=codigo;return e;}
 class PonteElegibilidadeAsaasTitularidadeLab{
  constructor({cobrancas,titularidade}={}){
   if(typeof cobrancas?.auditarElegibilidadeLoop!=='function'||
@@ -10,8 +9,9 @@ class PonteElegibilidadeAsaasTitularidadeLab{
  conferir(pedidoId){
   const pix=this.cobrancas.auditarElegibilidadeLoop(pedidoId);
   const cobranca=this.cobrancas.consultar?.(pedidoId);
-  const titular=this.titularidade.buscar(pedidoId);
   const motivos=[...pix.motivos];
+  if(!cobranca?.encontrado)motivos.push('COBRANCA_LOCAL_NAO_AUDITAVEL');
+  const titular=this.titularidade.buscar(pedidoId);
   if(!titular)motivos.push('TITULAR_NAO_FIXADO_ANTES_DO_PAGAMENTO');
   else if(titular.valorCentavos!==pix.valorCentavos)
    motivos.push('VALOR_PEDIDO_TITULAR_DIVERGENTE');
