@@ -232,7 +232,7 @@ function criarRouterParticipanteDemo({contas,ponte,sessoes=null,adesoes=null,car
     return res.status(201).json(servico.solicitar({...body,contaId}));
    }catch(e){
     if(e.codigo)return res.status(['CONFLITO_IDEMPOTENCIA',
-     'REFERENCIA_CENTRO_TESTE_INSUFICIENTE'].includes(e.codigo)?409:400)
+     'REFERENCIA_CENTRO_TESTE_INSUFICIENTE','CPF_E_TERMOS_OBRIGATORIOS'].includes(e.codigo)?409:400)
       .json({erro:e.codigo});
     return next(e);
    }
