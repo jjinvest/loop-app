@@ -111,9 +111,6 @@ class RetornoSaqueCentroV6DemoSQLite{
   if(!this.contas.buscar(contaId))throw falha('CONTA_INVALIDA');
   const b=this.banco;b.exec('BEGIN IMMEDIATE');
   try{
-   const adesao=b.prepare("SELECT 1 FROM sqlite_master WHERE type='table' AND name='admin_loop_adesoes_contas_demo'").get();
-   const confirmada=adesao&&b.prepare('SELECT 1 FROM admin_loop_adesoes_contas_demo WHERE conta_id=?').get(contaId);
-   if(!confirmada)throw falha('CPF_E_TERMOS_OBRIGATORIOS');
    const anterior=this._existente(solicitacaoId);
    if(anterior){
     if(anterior.contaId!==contaId||anterior.valorCentavos!==valorCentavos)
@@ -121,6 +118,9 @@ class RetornoSaqueCentroV6DemoSQLite{
     b.exec('COMMIT');
     return {...this._detalhe(anterior),repetida:true};
    }
+   const adesao=b.prepare("SELECT 1 FROM sqlite_master WHERE type='table' AND name='admin_loop_adesoes_contas_demo'").get();
+   const confirmada=adesao&&b.prepare('SELECT 1 FROM admin_loop_adesoes_contas_demo WHERE conta_id=?').get(contaId);
+   if(!confirmada)throw falha('CPF_E_TERMOS_OBRIGATORIOS');
    const saldo=this.consultar(contaId);
    if(valorCentavos>saldo.referenciaParaNovoPedidoFicticioCentavos)
      throw falha('REFERENCIA_CENTRO_TESTE_INSUFICIENTE');
