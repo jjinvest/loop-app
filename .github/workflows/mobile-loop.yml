@@ -36,6 +36,8 @@ jobs:
         run: |
           mkdir -p artifacts/capturas-selecionadas
           capturas=(
+            escritorio-administrador-mobile.png
+            admin-loop03-390px.png
             ESCRITORIO_BANNER_INTEIRO_MEUS_LINKS_CELULAR_390.png
             ESCRITORIO_BANNER_TRES_DESKTOP_1254.png
             ESCRITORIO_BANNER_QUATRO_CELULAR_320.png
