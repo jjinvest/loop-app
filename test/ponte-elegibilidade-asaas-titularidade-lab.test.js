@@ -5,7 +5,7 @@ const {PonteElegibilidadeAsaasTitularidadeLab}=require('../src/domain/ponte-eleg
 const pedidoId='pedido-lab-250';
 function montar({status='RECEBIMENTO_INFORMADO_SANDBOX',valor=25000,
  titular=true,valorTitular=valor}={}){
- const cobrancas={auditarElegibilidadeLoop:id=>{
+ const cobrancas={consultar:()=>({encontrado:true,origem:'CARRINHO',criadoEm:'2026-10-26T10:00:00.000Z'}),auditarElegibilidadeLoop:id=>{
   assert.equal(id,pedidoId);
   return {valorCentavos:valor,elegivelParaSimulacao:status==='RECEBIMENTO_INFORMADO_SANDBOX'&&valor>=25000,
    motivos:[...(status==='RECEBIMENTO_INFORMADO_SANDBOX'?[]:['PAGAMENTO_NAO_CONFIRMADO_OU_REVERSAO']),
@@ -13,7 +13,7 @@ function montar({status='RECEBIMENTO_INFORMADO_SANDBOX',valor=25000,
  }};
  const titularidade={buscar:id=>{
   assert.equal(id,pedidoId);
-  return titular?{contaId:'titular-lab-001',valorCentavos:valorTitular}:null;
+  return titular?{contaId:'titular-lab-001',valorCentavos:valorTitular,criadoEm:'2026-10-26T09:59:00.000Z'}:null;
  }};
  return new PonteElegibilidadeAsaasTitularidadeLab({cobrancas,titularidade});
 }
@@ -41,6 +41,7 @@ test('ponte somente leitura exige Pix recebido, R$250 e titular previamente fixa
 
 test('ponte rejeita titularidade fixada depois da criacao da cobranca',()=>{
  const cobrancas={
+  consultar:()=>({encontrado:true,origem:'CARRINHO',criadoEm:'2026-10-26T10:00:00.000Z'}),
   auditarElegibilidadeLoop:()=>({valorCentavos:25000,motivos:[]}),
   consultar:()=>({origem:'CARRINHO',criadoEm:'2026-10-26T10:00:00.000Z'})
  };
@@ -59,7 +60,7 @@ test('ponte rejeita titularidade fixada depois da criacao da cobranca',()=>{
 });
 
 test('ponte bloqueia datas ausentes, invalidas e referencia a outro pedido',()=>{
- const cobranca={pedidoId,origem:'CARRINHO',criadoEm:'2026-10-26T10:00:00.000Z'};
+ const cobranca={encontrado:true,pedidoId,origem:'CARRINHO',criadoEm:'2026-10-26T10:00:00.000Z'};
  const titular={contaId:'titular-lab-001',valorCentavos:25000,criadoEm:'2026-10-26T09:59:00.000Z'};
  const ponte=new PonteElegibilidadeAsaasTitularidadeLab({
   cobrancas:{
@@ -77,5 +78,15 @@ test('ponte bloqueia datas ausentes, invalidas e referencia a outro pedido',()=>
  titular.criadoEm='2026-10-26T09:59:00.000Z';
  cobranca.pedidoId='pedido-de-outra-pessoa';
  assert(ponte.conferir(pedidoId).motivos.includes('COBRANCA_DE_OUTRO_PEDIDO'));
+ assert.equal(ponte.conferir(pedidoId).posicoesCriadas,0);
+});
+
+test('ponte falha fechada sem registro local verificavel da cobranca',()=>{
+ const titularidade={buscar:()=>({contaId:'titular-lab-001',valorCentavos:25000,
+  criadoEm:'2026-10-26T09:59:00.000Z'})};
+ const cobrancas={auditarElegibilidadeLoop:()=>({valorCentavos:25000,motivos:[]})};
+ const ponte=new PonteElegibilidadeAsaasTitularidadeLab({cobrancas,titularidade});
+ assert(ponte.conferir(pedidoId).motivos.includes('COBRANCA_LOCAL_NAO_AUDITAVEL'));
+ assert.equal(ponte.conferir(pedidoId).elegivelParaTesteDeCatraca,false);
  assert.equal(ponte.conferir(pedidoId).posicoesCriadas,0);
 });
