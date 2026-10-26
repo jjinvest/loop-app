@@ -43,7 +43,7 @@ test('ponte rejeita titularidade fixada depois da criacao da cobranca',()=>{
  const cobrancas={
   consultar:()=>({encontrado:true,origem:'CARRINHO',criadoEm:'2026-10-26T10:00:00.000Z'}),
   auditarElegibilidadeLoop:()=>({valorCentavos:25000,motivos:[]}),
-  consultar:()=>({origem:'CARRINHO',criadoEm:'2026-10-26T10:00:00.000Z'})
+  consultar:()=>({encontrado:true,origem:'CARRINHO',criadoEm:'2026-10-26T10:00:00.000Z'})
  };
  const titularidade={buscar:()=>({
   contaId:'titular-lab-001',valorCentavos:25000,criadoEm:'2026-10-26T10:01:00.000Z'
