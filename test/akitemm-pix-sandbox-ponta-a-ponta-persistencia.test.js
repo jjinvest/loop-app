@@ -46,3 +46,25 @@ test('compra AKITEMM R$250 -> Pix sandbox recebido -> registro persistente sem l
  assert.equal(servico.historico(params.pedidoId).conferencias.length,2);
  assert.equal(posts,1);
 });
+
+test('pagamento Pix sandbox com referencia de outro pedido e bloqueado mesmo com R$250 recebido',async t=>{
+ const db=new DatabaseSync(':memory:');t.after(()=>db.close());
+ db.exec('CREATE TABLE admin_carrinho_loop_demo (pedido_id TEXT PRIMARY KEY,total_centavos INTEGER)');
+ db.prepare('INSERT INTO admin_carrinho_loop_demo VALUES(?,?)').run('pedido-pix-original',25000);
+ let status='PENDING';
+ const provedor=new AsaasSandboxLojaV6({apiKey:'CHAVE_SANDBOX_DE_TESTE_123456',
+  fetchImpl:async(_url,opts)=>({ok:true,json:async()=>({
+   id:'pay_SANDBOX_ORIGINAL001',billingType:'PIX',value:250,
+   externalReference:opts.method==='POST'?'LOOPLAB-pedido-pix-original':
+    'LOOPLAB-pedido-pix-de-outra-pessoa',status
+  })})});
+ const servico=new CobrancasAkitemmAsaasSandboxSQLite({banco:db,provedor});
+ await servico.criar({pedidoId:'pedido-pix-original',origem:'CARRINHO',
+  clienteAsaasId:'cus_TesteIntegracao001'});
+ status='RECEIVED';
+ await assert.rejects(()=>servico.conferir('pedido-pix-original'),
+  {codigo:'DADOS_PAGAMENTO_SANDBOX_DIVERGENTES'});
+ assert.equal(servico.consultar('pedido-pix-original').status,'PENDENTE_SANDBOX');
+ assert.equal(servico.historico('pedido-pix-original').conferencias.length,0);
+ assert.equal(servico.consultar('pedido-pix-original').creditoFilaCriado,0);
+});
