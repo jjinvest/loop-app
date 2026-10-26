@@ -38,3 +38,22 @@ test('ponte somente leitura exige Pix recebido, R$250 e titular previamente fixa
   assert.equal(parecer.dinheiroRealMovimentadoCentavos,0);
  }
 });
+
+test('ponte rejeita titularidade fixada depois da criacao da cobranca',()=>{
+ const cobrancas={
+  auditarElegibilidadeLoop:()=>({valorCentavos:25000,motivos:[]}),
+  consultar:()=>({origem:'CARRINHO',criadoEm:'2026-10-26T10:00:00.000Z'})
+ };
+ const titularidade={buscar:()=>({
+  contaId:'titular-lab-001',valorCentavos:25000,criadoEm:'2026-10-26T10:01:00.000Z'
+ })};
+ const ponte=new PonteElegibilidadeAsaasTitularidadeLab({cobrancas,titularidade});
+ const resultado=ponte.conferir(pedidoId);
+ assert.equal(resultado.elegivelParaTesteDeCatraca,false);
+ assert(resultado.motivos.includes('TITULAR_FIXADO_APOS_COBRANCA'));
+ assert.equal(resultado.posicoesCriadas,0);
+ titularidade.buscar=()=>({
+  contaId:'titular-lab-001',valorCentavos:25000,criadoEm:'2026-10-26T09:59:00.000Z'
+ });
+ assert.equal(ponte.conferir(pedidoId).elegivelParaTesteDeCatraca,true);
+});
