@@ -62,6 +62,24 @@ class CobrancasAkitemmAsaasSandboxSQLite{
    valorTransferidoParaLoopCentavos:0,creditoFilaCriado:0,
    pixRealExecutado:false,saqueRealDisponivelCentavos:0};
  }
+ // Parecer de elegibilidade somente leitura. Nao ativa posicoes nem libera dinheiro.
+ auditarElegibilidadeLoop(pedidoId){
+  const registro=this.consultar(pedidoId);
+  if(!registro.encontrado)throw falha('COBRANCA_NAO_ENCONTRADA');
+  const motivos=[];
+  if(registro.status!=='RECEBIMENTO_INFORMADO_SANDBOX')
+   motivos.push('PAGAMENTO_NAO_CONFIRMADO_OU_REVERSAO');
+  if(registro.valorCentavos<25000)
+   motivos.push('VALOR_INFERIOR_A_250_REAIS');
+  if(registro.status==='CRIACAO_INDETERMINADA_SANDBOX')
+   motivos.push('CRIACAO_REMOTA_INDETERMINADA');
+  return {pedidoId,ambiente:'ASAAS_SANDBOX_EXCLUSIVO',
+   elegivelParaSimulacao:motivos.length===0,
+   motivos,valorCentavos:registro.valorCentavos,
+   confirmacaoSandbox:registro.status==='RECEBIMENTO_INFORMADO_SANDBOX',
+   posicoesCriadas:0,ativacaoAutomatica:false,
+   aviso:'Parecer de laboratorio; falta vinculo seguro ao titular e autorizacao da catraca.'};
+ }
  async criar({pedidoId,origem,clienteAsaasId}={}){
   const valorCentavos=this._valorPedido(origem,pedidoId);
   if(typeof clienteAsaasId!=='string'||!CLIENTE.test(clienteAsaasId))
