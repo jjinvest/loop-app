@@ -561,6 +561,7 @@ class PonteComprasConvitesDemoSQLite{
     ) WHERE pedido_id=?
    `).get(pedidoId);
    if(lojaAnterior){
+    if(quantidadeEsperada!==null)throw falha('QUANTIDADE_POSICOES_INESPERADA');
     if(lojaAnterior.conta_id!==comprovante.contaId||
       lojaAnterior.produto_id!==comprovante.produtoId||
       lojaAnterior.valor_centavos!==comprovante.valorCentavos||
@@ -603,6 +604,7 @@ class PonteComprasConvitesDemoSQLite{
    const conta=this.contas.buscar(comprovante.contaId);
    if(!conta)throw falha('CONTA_DESCONHECIDA','Conta ficticia nao cadastrada');
    if(comprovante.valorElegivelLoopCentavos<referenciaVigente.valorCentavos){
+    if(quantidadeEsperada!==null)throw falha('COMPRA_NAO_QUALIFICADA');
     // Compra valida da LOJA, sem mexer no snapshot, nas filas ou em convites.
     // A regra de dez posicoes so se aplica a pedidos elegiveis ao LOOP.
     // As tabelas legadas separam pelo valor TOTAL efetivamente comprado,
