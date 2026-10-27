@@ -7,7 +7,7 @@ const {PonteElegibilidadeAsaasTitularidadeLab}=require('./ponte-elegibilidade-as
 const {PonteComprasConvitesDemoSQLite}=require('./ponte-compras-convites-demo-sqlite');
 const {CatracaAsaasSandboxLab}=require('./catraca-asaas-sandbox-lab');
 const {ConciliadorPosicaoAsaasSandboxLab}=require('./conciliador-posicao-asaas-sandbox-lab');
-function montarIntegracaoAsaasSandboxLoopLab({banco,contas,titularidade,apiKey,fetchImpl,provedor}={}){
+function montarIntegracaoAsaasSandboxLoopLab({banco,contas,titularidade,apiKey,fetchImpl,provedor,agora}={}){
  if(!banco||!contas||contas.banco!==banco||
     !titularidade||titularidade.banco!==banco||
     typeof titularidade.conferir!=='function')
@@ -15,7 +15,7 @@ function montarIntegracaoAsaasSandboxLoopLab({banco,contas,titularidade,apiKey,f
  const externo=provedor||new AsaasSandboxLojaV6({apiKey,fetchImpl});
  if(externo.ambiente!=='ASAAS_SANDBOX_EXCLUSIVO')
   throw new TypeError('Somente provedor Asaas Sandbox permitido');
- const cobrancas=new CobrancasAkitemmAsaasSandboxSQLite({banco,provedor:externo});
+ const cobrancas=new CobrancasAkitemmAsaasSandboxSQLite({banco,provedor:externo,...(agora?{agora}:{})});
  const comprovantes=new ComprovanteAsaasSandboxPonteLab({cobrancas,titularidade});
  const elegibilidade=new PonteElegibilidadeAsaasTitularidadeLab({cobrancas,titularidade});
  const ponte=new PonteComprasConvitesDemoSQLite({
