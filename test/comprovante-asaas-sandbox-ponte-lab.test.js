@@ -26,7 +26,8 @@ test('bloqueia status pendente, valor divergente e titular posterior',async()=>{
   montar(cobranca,{...titular,valorCentavos:26000}),
   montar(cobranca,{...titular,criadoEm:'2026-10-26T12:00:00.000Z'}),
   montar({...cobranca,valorCentavos:24999}),
-  montar({...cobranca,pedidoId:'outro-pedido'})
+  montar({...cobranca,pedidoId:'outro-pedido'}),
+  montar({...cobranca,atualizadoEm:'2026-10-26T08:00:00.000Z'})
  ]){
   await assert.rejects(fonte.consultar(pedidoId));
  }
