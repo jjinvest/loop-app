@@ -48,3 +48,13 @@ test('montagem: API Sandbox -> cobranca -> titular -> ponte -> uma posicao SQLit
  assert.equal(posts,1);
  assert.equal(banco.prepare('SELECT COUNT(*) AS n FROM admin_ponte_compras_demo').get().n,1);
 });
+
+test('montagem recusa provedor falso ou ambiente de producao',t=>{
+ const repo=new RepositorioCatalogoSQLite({caminho:':memory:'});t.after(()=>repo.fechar());
+ const banco=repo.banco;
+ const contas=new ContasParticipantesDemoSQLite({banco});
+ const titularidade=new PedidosTitularidadeDemoSQLite({banco,contas});
+ assert.throws(()=>montarIntegracaoAsaasSandboxLoopLab({banco,contas,titularidade,
+  provedor:{ambiente:'ASAAS_SANDBOX_EXCLUSIVO',criarCobrancaPix:()=>{},consultarCobranca:()=>{}}}),
+  /Somente provedor Asaas Sandbox/);
+});
