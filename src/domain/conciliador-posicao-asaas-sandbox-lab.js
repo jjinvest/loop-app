@@ -23,6 +23,13 @@ class ConciliadorPosicaoAsaasSandboxLab{
      !Number.isSafeInteger(local.valorCentavos)||
      local.valorCentavos<25000)
    throw falha('COBRANCA_SANDBOX_NAO_CONFIRMADA');
+  // A consulta atual deve ter retornado RECEIVED, nao apenas um estado antigo em cache.
+  if(typeof this.cobrancas.historico==='function'){
+   const historico=this.cobrancas.historico(pedidoId)?.conferencias;
+   const ultima=Array.isArray(historico)?historico[historico.length-1]:null;
+   if(!ultima||!['RECEIVED','RECEIVED_IN_CASH'].includes(ultima.statusAsaas))
+    throw falha('ULTIMA_RECONSULTA_NAO_CONFIRMOU_RECEBIMENTO');
+  }
   if(typeof this.cobrancas.auditarElegibilidadeLoop==='function'){
    const auditoria=this.cobrancas.auditarElegibilidadeLoop(pedidoId);
    if(auditoria?.elegivelParaSimulacao!==true)
