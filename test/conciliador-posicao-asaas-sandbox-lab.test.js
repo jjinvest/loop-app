@@ -39,3 +39,36 @@ test('nao aciona catraca se a reconsulta falhar',async()=>{
  await assert.rejects(conciliador.processar(pedidoId),/Asaas indisponivel/);
  assert.equal(acionou,false);
 });
+
+test('integracao: reconsulta confirmada cria uma posicao SQLite e repeticao nao duplica',async t=>{
+ const {RepositorioCatalogoSQLite}=require('../src/domain/repositorio-catalogo-sqlite');
+ const {ContasParticipantesDemoSQLite}=require('../src/domain/contas-participantes-demo-sqlite');
+ const {PonteComprasConvitesDemoSQLite}=require('../src/domain/ponte-compras-convites-demo-sqlite');
+ const {CatracaAsaasSandboxLab}=require('../src/domain/catraca-asaas-sandbox-lab');
+ const {STATUS_CONFIRMADO}=require('../src/domain/processador-pedidos-simulados');
+ const repo=new RepositorioCatalogoSQLite({caminho:':memory:'});
+ t.after(()=>repo.fechar());
+ const contas=new ContasParticipantesDemoSQLite({banco:repo.banco});
+ const conta=contas.cadastrar({nome:'Titular Conciliacao',email:'titular-conciliacao@exemplo.invalid',senha:'senha-sandbox-lab-2026'});
+ const ponte=new PonteComprasConvitesDemoSQLite({banco:repo.banco,contas,
+  consultarPagamentoConfiavel:async()=>({pedidoId,contaId:conta.contaId,
+   produtoId:'pdf-laboratorio',valorCentavos:25000,status:STATUS_CONFIRMADO,
+   confirmadoEm:'2026-10-26T10:00:00.000Z'}),atribuicaoManualPorPosicao:true});
+ const catraca=new CatracaAsaasSandboxLab({
+  elegibilidade:{conferir:()=>({pedidoId,ambiente:'LABORATORIO_ASAAS_SANDBOX',
+   titularId:conta.contaId,valorCentavos:25000,elegivelParaTesteDeCatraca:true,
+   catracaAutorizada:false,posicoesCriadas:0})},ponte});
+ let consultas=0;
+ const cobrancas={conferir:async()=>{consultas++;return {status:'RECEBIMENTO_INFORMADO_SANDBOX'};},
+  consultar:()=>({encontrado:true,pedidoId,pagamentoId:'pay_sandbox_123',
+   status:'RECEBIMENTO_INFORMADO_SANDBOX',valorCentavos:25000})};
+ const conciliador=new ConciliadorPosicaoAsaasSandboxLab({cobrancas,catraca});
+ const a=await conciliador.processar(pedidoId);
+ const b=await conciliador.processar(pedidoId);
+ assert.equal(a.criada,true);
+ assert.equal(b.repetida,true);
+ assert.equal(a.posicaoId,b.posicaoId);
+ assert.equal(a.contaId,conta.contaId);
+ assert.equal(consultas,2);
+ assert.equal(repo.banco.prepare('SELECT COUNT(*) AS n FROM admin_ponte_compras_demo WHERE pedido_id=?').get(pedidoId).n,1);
+});
