@@ -25,6 +25,7 @@ test('montagem: API Sandbox -> cobranca -> titular -> ponte -> uma posicao SQLit
    externalReference:'LOOPLAB-'+PEDIDO,status:estado})};
  };
  const m=montarIntegracaoAsaasSandboxLoopLab({banco,contas,titularidade,
+  agora:()=> '2026-10-26T09:10:00.000Z',
   apiKey:'CHAVE_FICTICIA_APENAS_TESTES_123',fetchImpl});
  await m.cobrancas.criar({pedidoId:PEDIDO,origem:'CARRINHO',clienteAsaasId:'cus_SandboxMontagem1'});
  await assert.rejects(m.conciliador.processar(PEDIDO));
