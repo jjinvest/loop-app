@@ -31,14 +31,15 @@ test('montagem: API Sandbox -> cobranca -> titular -> ponte -> uma posicao SQLit
  await assert.rejects(m.conciliador.processar(PEDIDO));
  assert.equal(banco.prepare('SELECT COUNT(*) AS n FROM admin_ponte_compras_demo').get().n,0);
  estado='RECEIVED';
- const a=await m.conciliador.processar(PEDIDO);
- const b=await m.conciliador.processar(PEDIDO);
+ const [a,b]=await Promise.all([m.conciliador.processar(PEDIDO),m.conciliador.processar(PEDIDO)]);
  assert.equal(a.criada,true);
  assert.equal(b.repetida,true);
  assert.equal(a.posicaoId,b.posicaoId);
  assert.equal(a.contaId,titular.contaId);
  assert.equal(posts,1);
  assert.equal(gets,3);
+ assert.equal(a.confirmacaoIndividualObrigatoria,true);
+ assert.equal(a.cpfConfirmadoAutomaticamente,false);
  estado='REFUNDED';
  await assert.rejects(m.conciliador.processar(PEDIDO));
  assert.equal(banco.prepare('SELECT COUNT(*) AS n FROM admin_ponte_compras_demo').get().n,1);
