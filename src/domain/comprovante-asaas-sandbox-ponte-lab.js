@@ -21,10 +21,12 @@ class ComprovanteAsaasSandboxPonteLab{
   const criado=Date.parse(cobranca.criadoEm),fixado=Date.parse(titular.criadoEm);
   if(!Number.isFinite(criado)||!Number.isFinite(fixado)||fixado>criado)
    throw falha('TITULAR_NAO_FIXADO_ANTES_COBRANCA');
-  const produtoId=cobranca.origem==='PDF'?'pdf-asaas-sandbox':'carrinho-asaas-sandbox';
+  if(typeof titular.produtoId!=='string'||!titular.produtoId||!titular.intentoPagamentoId)
+   throw falha('PEDIDO_IDENTIFICADO_INCOMPLETO');
+  const produtoId=titular.produtoId;
   return Object.freeze({pedidoId,contaId:titular.contaId,produtoId,
    valorCentavos:cobranca.valorCentavos,status:STATUS_CONFIRMADO,
-   confirmadoEm:cobranca.atualizadoEm,intentoPagamentoId:cobranca.pagamentoId});
+   confirmadoEm:cobranca.atualizadoEm,intentoPagamentoId:titular.intentoPagamentoId});
  }
 }
 module.exports={ComprovanteAsaasSandboxPonteLab};
