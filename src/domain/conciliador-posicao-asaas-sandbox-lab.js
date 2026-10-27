@@ -23,7 +23,7 @@ class ConciliadorPosicaoAsaasSandboxLab{
      !Number.isSafeInteger(local.valorCentavos)||
      local.valorCentavos<25000)
    throw falha('COBRANCA_SANDBOX_NAO_CONFIRMADA');
-  // A catraca verifica separadamente titularidade predefinida, valor,
+  if(typeof this.cobrancas.auditarElegibilidadeLoop==='function'){\n   const auditoria=this.cobrancas.auditarElegibilidadeLoop(pedidoId);\n   if(auditoria?.elegivelParaSimulacao!==true)\n    throw falha('AUDITORIA_SANDBOX_REPROVADA');\n  }\n  // A catraca verifica separadamente titularidade predefinida, valor,
   // elegibilidade e comprovante interno; nao confiar em webhook.
   const resultado=await this.catraca.processar(pedidoId);
   if(resultado?.pedidoId!==pedidoId||
