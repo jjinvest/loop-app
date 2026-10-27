@@ -487,7 +487,9 @@ class PonteComprasConvitesDemoSQLite{
   if(vinculo.repetida)throw falha('CONCORRENCIA_NA_DISTRIBUICAO');
   return {posicaoId,vinculada:true,repetida:false,semPagamentoReal:true};
  }
- async processar({pedidoId,quantidadeEsperada=null,titularEsperado=null}={}){
+ async processar({pedidoId,quantidadeEsperada=null,titularEsperado=null,valorEsperadoCentavos=null}={}){
+  if(valorEsperadoCentavos!==null&&(!Number.isSafeInteger(valorEsperadoCentavos)||valorEsperadoCentavos<=0))
+   throw falha('VALOR_ESPERADO_INVALIDO');
   if(titularEsperado!==null)uuid(titularEsperado,'titularEsperado');
   if(quantidadeEsperada!==null&&(!Number.isSafeInteger(quantidadeEsperada)||quantidadeEsperada<1||quantidadeEsperada>10))
    throw falha('QUANTIDADE_ESPERADA_INVALIDA');
@@ -499,6 +501,8 @@ class PonteComprasConvitesDemoSQLite{
   );
   if(titularEsperado!==null&&comprovante.contaId!==titularEsperado)
    throw falha('TITULAR_DIVERGENTE');
+  if(valorEsperadoCentavos!==null&&comprovante.valorCentavos!==valorEsperadoCentavos)
+   throw falha('VALOR_DIVERGENTE');
   this.banco.exec('BEGIN IMMEDIATE');
   try{
    // A identidade do pedido precisa existir ANTES da compra. O
