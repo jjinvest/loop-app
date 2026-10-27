@@ -13,8 +13,7 @@ function montarIntegracaoAsaasSandboxLoopLab({banco,contas,titularidade,apiKey,f
     typeof titularidade.conferir!=='function')
   throw new TypeError('SQLite, contas e pedidos identificados do mesmo laboratorio obrigatorios');
  const externo=provedor||new AsaasSandboxLojaV6({apiKey,fetchImpl});
- if(!externo||typeof externo.criarCobrancaPix!=='function'||typeof externo.consultarCobranca!=='function'||
-    externo.ambiente!=='ASAAS_SANDBOX_EXCLUSIVO')
+ if(!(externo instanceof AsaasSandboxLojaV6)||externo.ambiente!=='ASAAS_SANDBOX_EXCLUSIVO')
   throw new TypeError('Somente provedor Asaas Sandbox permitido');
  const cobrancas=new CobrancasAkitemmAsaasSandboxSQLite({banco,provedor:externo,...(agora?{agora}:{})});
  const comprovantes=new ComprovanteAsaasSandboxPonteLab({cobrancas,titularidade});
