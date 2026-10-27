@@ -26,6 +26,9 @@ class ComprovanteAsaasSandboxPonteLab{
   if(cobranca.pedidoId!==pedidoId||cobranca.valorCentavos<25000)
    throw falha('COBRANCA_SANDBOX_INELEGIVEL');
   const produtoId=titular.produtoId;
+  if(typeof cobranca.atualizadoEm!=='string'||!Number.isFinite(Date.parse(cobranca.atualizadoEm))||
+     Date.parse(cobranca.atualizadoEm)<criado)
+   throw falha('CONFIRMACAO_SEM_HORARIO_CONFIAVEL');
   return Object.freeze({pedidoId,contaId:titular.contaId,produtoId,
    valorCentavos:cobranca.valorCentavos,status:STATUS_CONFIRMADO,
    confirmadoEm:cobranca.atualizadoEm,intentoPagamentoId:titular.intentoPagamentoId});
