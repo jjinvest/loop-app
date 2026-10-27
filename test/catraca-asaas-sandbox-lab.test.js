@@ -148,3 +148,24 @@ test('nao grava venda avulsa quando laboratorio exige uma posicao',async t=>{
  assert.equal(repo.banco.prepare('SELECT COUNT(*) AS n FROM admin_ponte_compras_demo WHERE pedido_id=?').get(pedidoId).n,0);
  assert.equal(repo.banco.prepare('SELECT COUNT(*) AS n FROM admin_ponte_vendas_loja_apos_reajuste_demo WHERE pedido_id=?').get(pedidoId).n,0);
 });
+
+test('concorrencia: duas tentativas do mesmo pedido nao criam duas posicoes',async t=>{
+ const {RepositorioCatalogoSQLite}=require('../src/domain/repositorio-catalogo-sqlite');
+ const {ContasParticipantesDemoSQLite}=require('../src/domain/contas-participantes-demo-sqlite');
+ const {PonteComprasConvitesDemoSQLite}=require('../src/domain/ponte-compras-convites-demo-sqlite');
+ const repo=new RepositorioCatalogoSQLite({caminho:':memory:'});
+ t.after(()=>repo.fechar());
+ const contas=new ContasParticipantesDemoSQLite({banco:repo.banco});
+ const conta=contas.cadastrar({nome:'Conta Concorrencia',email:'concorrencia-lab@exemplo.invalid',senha:'senha-sandbox-lab-2026'});
+ const ponte=new PonteComprasConvitesDemoSQLite({banco:repo.banco,contas,
+  consultarPagamentoConfiavel:async()=>({pedidoId,contaId:conta.contaId,
+   produtoId:'pdf-laboratorio',valorCentavos:25000,status:'CONFIRMADO_SIMULADO',
+   confirmadoEm:'2026-10-26T10:00:00.000Z'}),atribuicaoManualPorPosicao:true});
+ const catraca=new CatracaAsaasSandboxLab({
+  elegibilidade:{conferir:()=>({...parecer,titularId:conta.contaId})},ponte});
+ const resultados=await Promise.all([catraca.processar(pedidoId),catraca.processar(pedidoId)]);
+ assert.equal(resultados.filter(x=>x.criada).length,1);
+ assert.equal(resultados.filter(x=>x.repetida).length,1);
+ assert.equal(resultados[0].posicaoId,resultados[1].posicaoId);
+ assert.equal(repo.banco.prepare('SELECT COUNT(*) AS n FROM admin_ponte_compras_demo WHERE pedido_id=?').get(pedidoId).n,1);
+});
