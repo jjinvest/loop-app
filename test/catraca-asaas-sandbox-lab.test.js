@@ -64,3 +64,27 @@ test('divergencia antes da gravacao nao invoca a ponte',async()=>{
   {codigo:'COMPROVANTE_TITULAR_OU_VALOR_DIVERGENTE'});
  assert.equal(gravacoes,0);
 });
+
+test('integracao SQLite: uma posicao pendente, repeticao sem duplicar e titular preservado',async t=>{
+ const {RepositorioCatalogoSQLite}=require('../src/domain/repositorio-catalogo-sqlite');
+ const {ContasParticipantesDemoSQLite}=require('../src/domain/contas-participantes-demo-sqlite');
+ const {PonteComprasConvitesDemoSQLite}=require('../src/domain/ponte-compras-convites-demo-sqlite');
+ const {STATUS_CONFIRMADO}=require('../src/domain/processador-pedidos-simulados');
+ const repo=new RepositorioCatalogoSQLite({caminho:':memory:'});
+ t.after(()=>repo.fechar());
+ const contas=new ContasParticipantesDemoSQLite({banco:repo.banco});
+ const conta=contas.cadastrar({nome:'Titular Sandbox Lab',email:'titular-sandbox-lab@exemplo.invalid',senha:'senha-sandbox-lab-2026'});
+ const comprovante={pedidoId,contaId:conta.contaId,produtoId:'pdf-laboratorio',
+  valorCentavos:25000,status:STATUS_CONFIRMADO,confirmadoEm:'2026-10-26T10:00:00.000Z'};
+ const ponte=new PonteComprasConvitesDemoSQLite({banco:repo.banco,contas,
+  consultarPagamentoConfiavel:async()=>comprovante,atribuicaoManualPorPosicao:true});
+ const elegibilidade={conferir:()=>({...parecer,titularId:conta.contaId})};
+ const catraca=new CatracaAsaasSandboxLab({elegibilidade,ponte});
+ const a=await catraca.processar(pedidoId);
+ assert.equal(a.criada,true);
+ assert.equal(a.confirmacaoIndividualObrigatoria,true);
+ const b=await catraca.processar(pedidoId);
+ assert.equal(b.repetida,true);
+ assert.equal(b.posicaoId,a.posicaoId);
+ assert.equal(ponte.consultarPosicoes(conta.contaId).length,1);
+});
