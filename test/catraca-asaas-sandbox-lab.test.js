@@ -86,5 +86,5 @@ test('integracao SQLite: uma posicao pendente, repeticao sem duplicar e titular 
  const b=await catraca.processar(pedidoId);
  assert.equal(b.repetida,true);
  assert.equal(b.posicaoId,a.posicaoId);
- assert.equal(ponte.consultarPosicoes(conta.contaId).length,1);
+ assert.equal(repo.banco.prepare('SELECT COUNT(*) AS n FROM admin_ponte_compras_demo WHERE pedido_id=?').get(pedidoId).n,1);
 });
