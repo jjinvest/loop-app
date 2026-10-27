@@ -88,3 +88,23 @@ test('integracao SQLite: uma posicao pendente, repeticao sem duplicar e titular 
  assert.equal(b.posicaoId,a.posicaoId);
  assert.equal(repo.banco.prepare('SELECT COUNT(*) AS n FROM admin_ponte_compras_demo WHERE pedido_id=?').get(pedidoId).n,1);
 });
+
+test('bloqueia troca do titular entre auditoria e consulta interna sem gravar',async t=>{
+ const {RepositorioCatalogoSQLite}=require('../src/domain/repositorio-catalogo-sqlite');
+ const {ContasParticipantesDemoSQLite}=require('../src/domain/contas-participantes-demo-sqlite');
+ const {PonteComprasConvitesDemoSQLite}=require('../src/domain/ponte-compras-convites-demo-sqlite');
+ const repo=new RepositorioCatalogoSQLite({caminho:':memory:'});
+ t.after(()=>repo.fechar());
+ const contas=new ContasParticipantesDemoSQLite({banco:repo.banco});
+ const a=contas.cadastrar({nome:'Conta A',email:'conta-a-lab@exemplo.invalid',senha:'senha-sandbox-lab-2026'});
+ const b=contas.cadastrar({nome:'Conta B',email:'conta-b-lab@exemplo.invalid',senha:'senha-sandbox-lab-2026'});
+ let chamadas=0;
+ const ponte=new PonteComprasConvitesDemoSQLite({banco:repo.banco,contas,
+  consultarPagamentoConfiavel:async()=>({pedidoId,contaId:++chamadas===1?a.contaId:b.contaId,
+   produtoId:'pdf-laboratorio',valorCentavos:25000,status:'CONFIRMADO',
+   confirmadoEm:'2026-10-26T10:00:00.000Z'}),atribuicaoManualPorPosicao:true});
+ const catraca=new CatracaAsaasSandboxLab({
+  elegibilidade:{conferir:()=>({...parecer,titularId:a.contaId})},ponte});
+ await assert.rejects(catraca.processar(pedidoId),{codigo:'TITULAR_DIVERGENTE'});
+ assert.equal(repo.banco.prepare('SELECT COUNT(*) AS n FROM admin_ponte_compras_demo WHERE pedido_id=?').get(pedidoId).n,0);
+});
