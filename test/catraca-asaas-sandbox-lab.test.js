@@ -101,7 +101,7 @@ test('bloqueia troca do titular entre auditoria e consulta interna sem gravar',a
  let chamadas=0;
  const ponte=new PonteComprasConvitesDemoSQLite({banco:repo.banco,contas,
   consultarPagamentoConfiavel:async()=>({pedidoId,contaId:++chamadas===1?a.contaId:b.contaId,
-   produtoId:'pdf-laboratorio',valorCentavos:25000,status:'CONFIRMADO',
+   produtoId:'pdf-laboratorio',valorCentavos:25000,status:'CONFIRMADO_SIMULADO',
    confirmadoEm:'2026-10-26T10:00:00.000Z'}),atribuicaoManualPorPosicao:true});
  const catraca=new CatracaAsaasSandboxLab({
   elegibilidade:{conferir:()=>({...parecer,titularId:a.contaId})},ponte});
