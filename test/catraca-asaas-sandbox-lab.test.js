@@ -169,3 +169,14 @@ test('concorrencia: duas tentativas do mesmo pedido nao criam duas posicoes',asy
  assert.equal(resultados[0].posicaoId,resultados[1].posicaoId);
  assert.equal(repo.banco.prepare('SELECT COUNT(*) AS n FROM admin_ponte_compras_demo WHERE pedido_id=?').get(pedidoId).n,1);
 });
+
+test('nao aceita ponte sem verificador interno confiavel',async()=>{
+ let gravacoes=0;
+ const catraca=new CatracaAsaasSandboxLab({
+  elegibilidade:{conferir:()=>parecer},
+  ponte:{atribuicaoManualPorPosicao:true,processar:async()=>{gravacoes++;}}
+ });
+ await assert.rejects(catraca.processar(pedidoId),
+  {codigo:'VERIFICADOR_INTERNO_INDISPONIVEL'});
+ assert.equal(gravacoes,0);
+});
