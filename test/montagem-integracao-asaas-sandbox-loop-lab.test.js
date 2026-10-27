@@ -38,5 +38,11 @@ test('montagem: API Sandbox -> cobranca -> titular -> ponte -> uma posicao SQLit
  assert.equal(a.contaId,titular.contaId);
  assert.equal(posts,1);
  assert.equal(gets,3);
+ estado='REFUNDED';
+ await assert.rejects(m.conciliador.processar(PEDIDO));
+ assert.equal(banco.prepare('SELECT COUNT(*) AS n FROM admin_ponte_compras_demo').get().n,1);
+ estado='RECEIVED';
+ await assert.rejects(m.conciliador.processar(PEDIDO));
+ assert.equal(posts,1);
  assert.equal(banco.prepare('SELECT COUNT(*) AS n FROM admin_ponte_compras_demo').get().n,1);
 });
