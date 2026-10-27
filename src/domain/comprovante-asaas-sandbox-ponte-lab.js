@@ -26,12 +26,19 @@ class ComprovanteAsaasSandboxPonteLab{
   if(cobranca.pedidoId!==pedidoId||cobranca.valorCentavos<25000)
    throw falha('COBRANCA_SANDBOX_INELEGIVEL');
   const produtoId=titular.produtoId;
+  const consultas=typeof this.cobrancas.historico==='function'?
+   this.cobrancas.historico(pedidoId).conferencias:null;
+  const primeiroRecebimento=Array.isArray(consultas)?
+   consultas.find(x=>x.estadoLoja==='RECEBIMENTO_INFORMADO_SANDBOX'&&x.statusAsaas==='RECEIVED'):null;
+  const confirmadoEm=primeiroRecebimento?.consultadoEm||cobranca.atualizadoEm;
   if(typeof cobranca.atualizadoEm!=='string'||!Number.isFinite(Date.parse(cobranca.atualizadoEm))||
      Date.parse(cobranca.atualizadoEm)<criado)
    throw falha('CONFIRMACAO_SEM_HORARIO_CONFIAVEL');
+  if(!Number.isFinite(Date.parse(confirmadoEm))||Date.parse(confirmadoEm)<criado)
+   throw falha('CONFIRMACAO_SEM_HORARIO_CONFIAVEL');
   return Object.freeze({pedidoId,contaId:titular.contaId,produtoId,
    valorCentavos:cobranca.valorCentavos,status:STATUS_CONFIRMADO,
-   confirmadoEm:cobranca.atualizadoEm,intentoPagamentoId:titular.intentoPagamentoId});
+   confirmadoEm,intentoPagamentoId:titular.intentoPagamentoId});
  }
 }
 module.exports={ComprovanteAsaasSandboxPonteLab};
