@@ -6,8 +6,8 @@ function erro(codigo){const e=new Error(codigo);e.codigo=codigo;return e;}
 class CatracaAsaasSandboxLab{
  constructor({elegibilidade,ponte}={}){
   if(typeof elegibilidade?.conferir!=='function'||typeof ponte?.processar!=='function'||
-     ponte.atribuicaoManualPorPosicao!==true)
-   throw new TypeError('Auditoria e ponte com adesao individual obrigatorias');
+     ponte.atribuicaoManualPorPosicao!==true||!ponte.pedidosIdentificados)
+   throw new TypeError('Auditoria, titularidade congelada e adesao individual obrigatorias');
   this.elegibilidade=elegibilidade;
   this.ponte=ponte;
  }
