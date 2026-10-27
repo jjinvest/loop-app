@@ -23,6 +23,8 @@ class ComprovanteAsaasSandboxPonteLab{
    throw falha('TITULAR_NAO_FIXADO_ANTES_COBRANCA');
   if(typeof titular.produtoId!=='string'||!titular.produtoId||!titular.intentoPagamentoId)
    throw falha('PEDIDO_IDENTIFICADO_INCOMPLETO');
+  if(cobranca.pedidoId!==pedidoId||cobranca.valorCentavos<25000)
+   throw falha('COBRANCA_SANDBOX_INELEGIVEL');
   const produtoId=titular.produtoId;
   return Object.freeze({pedidoId,contaId:titular.contaId,produtoId,
    valorCentavos:cobranca.valorCentavos,status:STATUS_CONFIRMADO,
