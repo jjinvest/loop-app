@@ -1,0 +1,220 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>LOOP 3.0 | Escritório do Administrador</title>
+<link rel="stylesheet" href="/admin/loop03.css">
+</head>
+<body>
+<a class="pular-conteudo-admin" href="#conteudoPrincipalAdmin">Pular para o conteúdo do escritório</a>
+<main class="escritorio-admin">
+ <header class="marca-topo">
+  <div class="marca">LOOP <em>3.0</em></div>
+  <div class="slogan">CENTRAL DE COMANDO <small>ESCRITÓRIO VIRTUAL DO ADMINISTRADOR</small></div>
+  <div class="painel-etiqueta">AMBIENTE DE LABORATÓRIO</div>
+ </header>
+ <div class="estrutura">
+  <aside class="barra" aria-label="Áreas administrativas">
+   <strong class="grupo">DIREÇÃO E OPERAÇÃO</strong>
+   <nav aria-label="Navegação administrativa">
+    <a class="ativo" aria-current="location" href="#visaoGeral">◈ <span>Visão geral</span></a>
+    <a href="#atalhosDirecaoAdmin">▦ <span>Central de comando</span></a>
+    <a href="#departamentoClientesAdmin">♧ <span>Clientes · Visão completa</span></a>
+    <a href="#regraTrava">◉ <span>Controle das filas</span></a>
+    <a href="#painelIndicacoesAdmin">♧ <span>Distribuição de indicações</span></a>
+    <a href="/admin/circuit-break-v6">⏱ <span>Catraca e giros</span></a>
+    <a href="#relatorioFinanceiroAdmin">▤ <span>Relatórios financeiros</span></a>
+    <a href="#auditoriaOperacionalAdmin">◎ <span>Auditoria operacional</span></a>
+    <a href="/admin/financeiro-demo">▤ <span>Financeiro</span></a>
+    <a href="/admin">▦ <span>AKITEMM e produtos</span></a>
+    <a href="/admin/escritorio-demo">✦ <span>Publicações</span></a>
+    <a href="/admin/cadastro-participantes-demo">♧ <span>Contas e cadastros</span></a>
+   </nav>
+   <div class="barra-final"><span class="sinal"></span> Painel reservado ao operador<br><small>Somente dados fictícios de laboratório</small></div>
+  </aside>
+  <section class="conteudo" id="conteudoPrincipalAdmin" tabindex="-1">
+   <div class="boas-vindas">
+    <div><span class="sobretitulo">PAINEL DE CONTROLE</span><h1>Escritório do Administrador</h1><p>Acompanhe as filas, ajuste regras e consulte os controles do LOOP.</p></div>
+    <span class="estado" id="situacaoPainel">SEM AUTENTICAÇÃO</span>
+   </div>
+   <form id="formAcessoAdminLoop03" class="acesso">
+    <label for="chaveAdminLoop03">Chave administrativa do laboratório</label>
+    <input id="chaveAdminLoop03" type="password" autocomplete="off" required placeholder="Chave privada do servidor">
+    <button type="submit">Acessar painel</button>
+    <button type="button" id="sairAdminLoop03" class="secundario">Encerrar acesso</button>
+   </form>
+   <p id="mensagemAcessoAdminLoop03" role="status" aria-live="polite">Informe sua chave para consultar dados reais do laboratório.</p>
+   <div id="dadosAdminLoop03" hidden>
+    <section class="painel" id="resumoDirecaoAdmin" aria-label="Resumo executivo da operacao">
+     <div class="historico-titulo"><div><small class="sobretitulo">VISÃO EXECUTIVA · FONTE AUTENTICADA</small><h2>Resumo da operação</h2></div>
+      <button type="button" id="atualizarResumoDirecaoAdmin" class="secundario">Atualizar dados</button></div>
+     <div class="loop03-resumo-indicacoes-admin">
+      <div><small>Clientes cadastrados no laboratório</small><strong id="resumoClientesDirecaoAdmin">—</strong></div>
+      <div><small>Pedidos registrados no laboratório</small><strong id="resumoPedidosDirecaoAdmin">—</strong></div>
+      <div><small>Posições por compra</small><strong id="resumoPosicoesDirecaoAdmin">—</strong></div>
+      <div><small>Posições aguardando nas filas</small><strong id="resumoFilasDirecaoAdmin">—</strong></div>
+     </div>
+     <p id="statusResumoDirecaoAdmin" role="status" aria-live="polite" class="observacao">Dados de teste, sem vendas ou pagamentos bancários confirmados.</p>
+     <div class="comando-resumo-acoes"><a href="#auditoriaOperacionalAdmin">Detalhar registros ↓</a><a href="#relatorioFinanceiroAdmin">Consultar cofres simulados ↓</a></div>
+    </section>
+    <section id="visaoGeral" class="indicadores" aria-label="Estado do motor">
+     <article><small>FILA A</small><strong id="numeroFilaAAdmin">—</strong><span>Posições prioritárias</span></article>
+     <article><small>FILA B</small><strong id="numeroFilaBAdmin">—</strong><span>Ordem de entrada</span></article>
+     <article><small>GIROS CONCLUÍDOS</small><strong id="numeroGirosAdmin">—</strong><span>Movimentos registrados</span></article>
+     <article><small>TRAVA POR TITULAR</small><strong id="numeroVagaAdmin">—</strong><span>Vaga de liberação</span></article>
+    </section>
+    <section class="painel historico" id="departamentoClientesAdmin" aria-label="Departamento de clientes">
+      <div class="historico-titulo"><div><small class="sobretitulo">DEPARTAMENTO · CLIENTES</small><h2>Clientes e histórico individual</h2></div></div>
+      <p class="observacao">Uma área para acompanhar cadastros e vínculos. Registros do laboratório; compras, produtos, posições e contemplações individuais só serão apresentados após conciliação por identificador.</p>
+      <div class="loop03-resumo-indicacoes-admin">
+       <div><small>Clientes cadastrados</small><strong id="clientesTotalDepartamento">—</strong></div>
+       <div><small>Clientes com participação LOOP</small><strong id="clientesLoopDepartamento">Não conciliado</strong></div>
+       <div><small>Clientes somente AKITEMM</small><strong id="clientesLojaDepartamento">Não conciliado</strong></div>
+       <div><small>Clientes PDF / produtos físicos</small><strong id="clientesTiposDepartamento">Não conciliado</strong></div>
+      </div>
+      <label for="filtrarClientesAdmin">Pesquisar cliente por nome ou nick</label>
+      <input type="search" id="filtrarClientesAdmin" placeholder="Pesquisar cadastro fictício" autocomplete="off">
+      <p id="statusClientesAdmin" role="status" aria-live="polite" class="observacao">Entre com a chave administrativa para consultar.</p>
+      <div class="clientes-diretorio-admin">
+       <div id="listaClientesAdmin" aria-label="Clientes cadastrados"></div>
+       <article id="detalheClienteAdmin" aria-live="polite"><h3>Ficha individual</h3><p>Selecione um cliente para consultar o cadastro.</p></article>
+      </div>
+      <a class="acesso-link" href="/admin/cadastro-participantes-demo">Abrir gestão de cadastros ↗</a>
+    </section>
+    <section class="painel historico" id="departamentosConectadosAdmin" aria-label="Simulação de departamentos conectados">
+      <div class="historico-titulo"><div><small class="sobretitulo">SIMULAÇÃO ISOLADA · NÃO SÃO OPERAÇÕES REAIS</small><h2>Departamentos conectados</h2></div></div>
+      <p class="observacao">Teste de navegação entre cliente, pedido, produto, posição e ciclo. Os registros abaixo são fictícios e não alteram o motor, o catálogo ou o financeiro.</p>
+      <div class="comando-resumo-acoes">
+       <button type="button" id="abaClientesDemoAdmin" aria-pressed="true">Clientes</button>
+       <button type="button" id="abaProdutosDemoAdmin" aria-pressed="false">Produtos</button>
+      </div>
+      <p id="statusConexoesDemoAdmin" role="status" aria-live="polite">Aguardando consulta autenticada.</p>
+      <div class="clientes-diretorio-admin">
+       <div id="listaConexoesDemoAdmin"></div>
+       <article id="detalheConexoesDemoAdmin"><h3>Ficha conectada</h3><p>Selecione um registro para ver as relações.</p></article>
+      </div>
+    </section>
+    <section class="painel historico" id="atalhosDirecaoAdmin" aria-label="Central de comando administrativa">
+     <div class="historico-titulo"><div><small class="sobretitulo">DIREÇÃO · ACESSOS OPERACIONAIS</small><h2>Central de comando</h2></div></div>
+     <p class="observacao">Acessos às funções já existentes do laboratório. Nenhum giro, pagamento real, saque ou publicação é autorizado por estes botões.</p>
+     <div class="comando-busca"><label for="buscarComandoAdmin">Localizar departamento ou função</label><input id="buscarComandoAdmin" type="search" placeholder="Ex.: clientes, cofres, auditoria" autocomplete="off"><span id="resultadoBuscaComandoAdmin" role="status" aria-live="polite"></span></div>
+     <div class="loop03-resumo-indicacoes-admin" id="listaComandosAdmin">
+      <div><a class="acesso-link" href="/admin">AKITEMM · Produtos e pedidos ↗</a></div>
+      <div><a class="acesso-link" href="/admin/cadastro-participantes-demo">Clientes · Cadastros ↗</a></div>
+      <div><a class="acesso-link" href="#regraTrava">Filas · Configurações ↓</a></div>
+      <div><a class="acesso-link" href="/admin/circuit-break-v6">Tabuleiro · Catraca e giros ↗</a></div>
+      <div><a class="acesso-link" href="/admin/financeiro-demo">Financeiro · Cofres ↗</a></div>
+      <div><a class="acesso-link" href="#relatorioFinanceiroAdmin">Relatórios · Saldos simulados ↓</a></div>
+      <div><a class="acesso-link" href="#auditoriaOperacionalAdmin">Auditoria · Compras e posições ↓</a></div>
+      <div><a class="acesso-link" href="#painelIndicacoesAdmin">Indicações · Prioridades ↓</a></div>
+      <div><a class="acesso-link" href="/admin/escritorio-demo">Publicações · Banners ↗</a></div>
+      <div><a class="acesso-link" href="#controleRelogioAdminLoop03">Configurações · Relógio ↓</a></div>
+     </div>
+     <p class="observacao">Bolas douradas e contemplações: relatório detalhado ainda em desenvolvimento. Conciliação pendente; não são exibidas como valores reais.</p>
+     <div class="comando-guia" aria-label="Guia das áreas e informações">
+      <h3>Mapa de informações do escritório</h3>
+      <div class="comando-guia-grid">
+       <article><h4>AKITEMM</h4><p>Catálogo, configuração comercial e pedidos no painel da loja.</p><a href="/admin">Abrir operação ↗</a></article>
+       <article><h4>Clientes</h4><p>Cadastro e contas fictícias, com acesso administrativo.</p><a href="/admin/cadastro-participantes-demo">Abrir cadastros ↗</a></article>
+       <article><h4>Filas e tabuleiro</h4><p>Prioridades, trava por titular, estado da catraca e giros.</p><a href="#regraTrava">Ver regras ↓</a></article>
+       <article><h4>Financeiro</h4><p>Lotes, lançamentos e saldos projetados por cofre; sem conciliação bancária.</p><a href="#relatorioFinanceiroAdmin">Ver saldos ↓</a></article>
+       <article><h4>Auditoria</h4><p>Contadores persistidos de clientes, pedidos e posições, com fonte identificada.</p><a href="#auditoriaOperacionalAdmin">Ver auditoria ↓</a></article>
+       <article><h4>Configurações</h4><p>Parâmetros de liberação, justificativa obrigatória e relógio do laboratório.</p><a href="#controleRelogioAdminLoop03">Ver relógio ↓</a></article>
+      </div>
+     </div>
+    </section>
+    <div class="paineis">
+     <section class="painel vidro">
+      <small class="sobretitulo">CONTROLE OPERACIONAL</small>
+      <h2>Motor e catraca</h2>
+      <div class="status-linha"><span>Estado atual</span><strong id="catracaAdmin">—</strong></div>
+      <div class="status-linha"><span>Giros de hoje</span><strong id="girosHojeAdmin">—</strong></div>
+      <div class="status-linha"><span>Limite diário</span><strong id="limiteAdmin">—</strong></div>
+      <div class="status-linha"><span>Vagas disponíveis na fila</span><strong id="filaTotalAdmin">—</strong></div>
+      <a class="acesso-link" href="/admin/circuit-break-v6">Abrir controles da catraca ↗</a>
+      <p class="observacao">Sem pagamentos reais, autorização de saque ou transferência.</p>
+     </section>
+     <section class="painel regra" id="regraTrava">
+      <small class="sobretitulo">REGRAS DE PRIORIDADE</small>
+      <h2>Alternância da Fila A</h2>
+      <p>Um titular pode atribuir indicações a várias posições, mas apenas uma por vez ocupa a Fila A. A próxima é liberada depois que a anterior alcança a vaga indicada.</p>
+      <form id="formRegraAdminLoop03">
+       <label for="vagaAdminLoop03">Liberar próxima posição na vaga:</label>
+       <select id="vagaAdminLoop03" required>
+        <option value="6" selected>6 · Liberação inicial</option>
+        <option value="5">5 · Espaçamento maior</option>
+        <option value="4">4 · Espaçamento maior</option>
+        <option value="3">3 · Espaçamento reforçado</option>
+        <option value="2">2 · Espaçamento intenso</option>
+        <option value="1">1 · Espaçamento máximo</option>
+       </select>
+       <label for="motivoAdminLoop03">Justificativa da alteração</label>
+       <input id="motivoAdminLoop03" minlength="8" maxlength="250" required placeholder="Explique a necessidade da mudança">
+       <button type="submit">Salvar regra e registrar histórico</button>
+      </form>
+      <p class="observacao">A alteração não retira posições que já estão na Fila A ou no Tabuleiro.</p>
+     </section>
+    </div>
+    <section class="painel historico" id="auditoriaOperacionalAdmin" aria-label="Auditoria operacional do laboratorio">
+      <div class="historico-titulo"><div><small class="sobretitulo">AUDITORIA · FONTE SQLITE</small><h2>Resultados operacionais do laboratório</h2></div></div>
+      <p class="observacao">Somente registros locais persistidos. Valores reais, cofres e bolas douradas aparecem como indisponíveis até existir fonte conciliada; testes automatizados não são dinheiro recebido.</p>
+      <div class="loop03-resumo-indicacoes-admin">
+       <div><small>Clientes fictícios</small><strong id="auditoriaClientesAdmin">—</strong></div>
+       <div><small>Pedidos no carrinho</small><strong id="auditoriaPedidosAdmin">—</strong></div>
+       <div><small>Posições por compra</small><strong id="auditoriaPosicoesAdmin">—</strong></div>
+       <div><small>Compras somente loja</small><strong id="auditoriaSemLoopAdmin">—</strong></div>
+      </div>
+      <div class="status-linha"><span>Posições adicionais</span><strong id="auditoriaAdicionaisAdmin">—</strong></div>
+      <div class="status-linha"><span>Eventos de pagamento fictício</span><strong id="auditoriaEventosAdmin">—</strong></div>
+      <div class="status-linha"><span>Cofres, ciclos, douradas e pagamentos reais</span><strong>Indisponível nesta fonte</strong></div>
+      <p id="auditoriaStatusAdmin" class="observacao" role="status"></p>
+    </section>
+    <section class="painel historico" id="relatorioFinanceiroAdmin" aria-label="Relatorio financeiro de simulacao">
+      <div class="historico-titulo"><div><small class="sobretitulo">FINANCEIRO · LIVRO SQLITE FICTÍCIO</small><h2>Relatório dos cofres simulados</h2></div></div>
+      <p class="observacao">Fonte: livro financeiro persistente do laboratório. Saldos projetados, não bancários. Não somar com pedidos AKITEMM: são registros independentes e ainda não conciliados.</p>
+      <div class="loop03-resumo-indicacoes-admin">
+        <div><small>Lotes simulados</small><strong id="finLotesAdmin">—</strong></div>
+        <div><small>Lançamentos simulados</small><strong id="finLancamentosAdmin">—</strong></div>
+        <div><small>Saldo projetado agregado</small><strong id="finSaldoAdmin">—</strong></div>
+        <div><small>Conciliação com pedidos</small><strong id="finConciliacaoAdmin">Não conciliada</strong></div>
+      </div>
+      <div id="finCofresAdmin" aria-label="Saldos individuais dos cofres"></div>
+      <p id="finStatusAdmin" class="observacao" role="status"></p>
+    </section>
+    <section class="painel historico" id="painelIndicacoesAdmin" aria-label="Auditoria de indicações">
+     <div class="historico-titulo"><div><small class="sobretitulo">DISTRIBUIÇÃO · CONTROLE ADMINISTRATIVO</small><h2>Indicações e prioridade global</h2></div></div>
+     <div class="loop03-resumo-indicacoes-admin">
+      <div><small>Indicações confirmadas</small><strong id="indicacoesConfirmadasAdmin">—</strong></div>
+      <div><small>Disponíveis para distribuir</small><strong id="indicacoesDisponiveisAdmin">—</strong></div>
+      <div><small>Vinculadas definitivamente</small><strong id="indicacoesVinculadasAdmin">—</strong></div>
+      <div><small>Aguardando ativação/conferência</small><strong id="indicacoesAguardandoAdmin">—</strong></div>
+     </div>
+     <p class="observacao">Regra do motor: três amarelas e uma branca (com ambas abastecidas). No máximo uma posição de cada titular na Fila A. As indicações somente entram em posições ativas mediante confirmação individual. Dados fictícios de laboratório: nenhum lançamento financeiro real.</p>
+    </section>
+    <section class="painel historico" id="controleRelogioAdminLoop03">
+     <div class="historico-titulo"><div><small class="sobretitulo">TABULEIRO · REFERÊNCIA VISUAL</small><h2>Intervalo do relógio do cliente</h2></div></div>
+     <p class="observacao">O cronômetro conta desde o último evento válido e reinicia após cada novo evento. O intervalo é uma referência configurável; não é uma autorização de giro ou pagamento.</p>
+     <div class="status-linha"><span>Intervalo vigente</span><strong id="intervaloAtualRelogioAdmin">Não configurado</strong></div>
+     <form id="formRelogioAdminLoop03">
+      <label for="intervaloRelogioAdmin">Intervalo de referência (minutos, de 1 a 1440)</label>
+      <input type="number" id="intervaloRelogioAdmin" min="1" max="1440" step="1" required>
+      <label for="justificativaRelogioAdmin">Justificativa da alteração</label>
+      <input id="justificativaRelogioAdmin" minlength="8" maxlength="250" required placeholder="Motivo do intervalo escolhido">
+      <button type="submit">Salvar intervalo visual</button>
+     </form>
+     <p id="statusRelogioAdminLoop03" role="status" aria-live="polite"></p>
+     <ol id="historicoRelogioAdminLoop03" aria-label="Histórico do intervalo"></ol>
+    </section>
+    <section class="painel historico">
+      <div class="historico-titulo"><div><small class="sobretitulo">AUDITORIA</small><h2>Histórico das regras</h2></div><button type="button" id="atualizarAdminLoop03" class="secundario">Atualizar quadro</button></div>
+      <ol id="listaHistoricoAdminLoop03"><li>Nenhuma alteração registrada.</li></ol>
+    </section>
+   </div>
+   <p id="statusRegrasAdminLoop03" role="status" aria-live="polite"></p>
+  </section>
+ </div>
+ <footer>LOOP 3.0 · ESCRITÓRIO DA DIREÇÃO · Protótipo com dados fictícios · Sem movimentação financeira real</footer>
+</main>
+<script src="/admin/loop03.js"></script>
+</body>
+</html>

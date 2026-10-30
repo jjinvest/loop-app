@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>LOOP | Painel central administrativo (laboratório)</title>
+  <link rel="stylesheet" href="/css/style.css">
+  <link rel="stylesheet" href="/admin/painel.css">
+  <link rel="stylesheet" href="/css/loop-futurista-v6.css">
+</head>
+<body>
+  <header>
+    <div><h1>LOOP</h1><small>Administração — laboratório local</small></div>
+    <p class="ajuda">Central de administração do LOOP · AKITEMM integrada</p>
+  </header>
+  <main>
+    <section class="painel">
+      <h2>Acesso ao painel de administração</h2>
+      <p class="aviso-demo">Ambiente de testes locais. Nenhum produto cadastrado aqui pode ser comprado. Não utilize dados reais de clientes nem segredos de fornecedores.</p>
+      <div class="campo">
+        <label for="adminToken">Chave temporária do laboratório</label>
+        <input type="password" id="adminToken" autocomplete="off" placeholder="Cole a chave configurada no servidor" spellcheck="false">
+      </div>
+      <div class="acoes-admin">
+        <button type="button" id="conectarAdmin">Abrir painel</button>
+        <button type="button" class="secundario" id="sairAdmin">Limpar chave</button>
+      </div>
+      <p id="mensagemAdmin" class="estado-admin" role="status" aria-live="polite"></p>
+      <p class="ajuda">A chave fica somente na memória desta página. Ela não é salva no navegador nem incluída no código.</p>
+    </section>
+
+    <section id="navAdminCentral" class="painel" hidden aria-label="Abas do painel administrativo">
+      <h2>Painel central do LOOP</h2>
+      <p class="ajuda">Organize primeiro a operação administrativa. A AKITEMM é a aba comercial da mesma plataforma; a catraca e os cofres pertencem ao LOOP. Somente demonstração local.</p>
+      <div class="abas-admin-central" role="tablist" aria-label="Áreas do painel">
+        <button id="abaAdminInicio" type="button" role="tab" aria-controls="areaVisaoAdmin" aria-selected="true" data-aba-admin="inicio">Visão geral</button>
+        <button id="abaAdminProdutos" type="button" role="tab" aria-controls="areaPainel" aria-selected="false" data-aba-admin="produtos">Catálogo e preços</button>
+        <button id="abaAdminImportacao" type="button" role="tab" aria-controls="areaImportacao" aria-selected="false" data-aba-admin="importacao">Importação</button>
+        <button id="abaAdminPedidos" type="button" role="tab" aria-controls="areaPedidosDemo" aria-selected="false" data-aba-admin="pedidos">Pedidos</button>
+        <button id="abaAdminVitrineAkitemm" type="button" role="tab" aria-controls="areaVitrineAkitemm" aria-selected="false" data-aba-admin="vitrine">Vitrine AKITEMM</button>
+      </div>
+    </section>
+    <section id="areaVisaoAdmin" hidden class="painel" role="tabpanel" aria-labelledby="abaAdminInicio">
+      <h2>Central administrativa</h2>
+      <p class="ajuda">Primeiro a administração, depois os ajustes visuais do cliente. Selecione uma aba acima ou abra os controles especializados abaixo.</p>
+      <div class="acoes-admin"><button type="button" id="atualizarDiagnosticoAdmin">Atualizar diagnóstico do LOOP</button></div>
+      <div class="resumo-admin-v6" aria-label="Situação da plataforma" aria-live="polite">
+        <div><strong id="resumoProdutosAdmin">—</strong><span>Produtos cadastrados</span></div>
+        <div><strong id="resumoPublicadosAdmin">—</strong><span>Produtos publicados</span></div>
+        <div><strong id="resumoCofresAdmin">—</strong><span>Conciliação dos cofres</span></div>
+        <div><strong id="resumoPixAdmin">—</strong><span>Pix em testes</span></div>
+      </div>
+      <p id="mensagemDiagnosticoAdmin" role="status" class="ajuda">Abra o painel para consultar o diagnóstico.</p>
+      <div class="mapa-admin-central">
+        <a href="/admin/circuit-break-v6"><strong>Operação LOOP</strong><span>Catraca, START, giros, agendas e pré-lançamento</span></a>
+        <a href="/admin/financeiro-demo"><strong>Cofres e financeiro</strong><span>Quatro cofres, simulações e conferências</span></a>
+        <a href="/admin/cadastro-participantes-demo"><strong>Participantes</strong><span>Contas, vínculos de indicação e cadastro</span></a>
+        <a href="/admin/escritorio-demo"><strong>Escritório LOOP</strong><span>Prévia administrativa do escritório principal</span></a>
+        <a href="/laboratorio/loja"><strong>AKITEMM</strong><span>Prévia da loja na plataforma integrada</span></a>
+      </div>
+      <p class="ajuda">Os atalhos abrem áreas já existentes no laboratório; não habilitam pagamentos, entregas ou saques reais. Estratégias de preço e custo pertencem exclusivamente à administração.</p>
+    </section>
+    <section id="areaPainel" hidden class="admin-grid" role="tabpanel" aria-labelledby="abaAdminProdutos">
+      <div class="painel">
+        <h2>Cadastro de produtos</h2>
+        <div class="acoes-admin"><button type="button" id="novoProduto">Novo produto</button>
+          <button type="button" id="atualizarLista" class="secundario">Atualizar lista</button></div>
+        <p class="ajuda">Rascunho: invisível na loja. Demonstração e publicado: visíveis, mas sem compra habilitada.</p>
+        <div id="listaAdmin" class="lista-produtos" aria-live="polite"></div>
+      </div>
+      <div class="painel">
+        <h2 id="tituloFormulario">Novo produto</h2>
+        <form id="formProduto" autocomplete="off">
+          <div class="campo"><label for="idProduto">Identificador (sem espaços)</label>
+            <input id="idProduto" name="id" required maxlength="80" pattern="[a-z0-9-]{3,80}" placeholder="ex: curso-iniciante"></div>
+          <div class="campo"><label for="nomeProduto">Nome</label>
+            <input id="nomeProduto" name="nome" required maxlength="150"></div>
+          <div class="duas-colunas">
+            <div class="campo"><label for="tipoProduto">Tipo</label><select id="tipoProduto" name="tipo">
+              <option value="FISICO">Produto físico — fornecedor integrado</option>
+              <option value="PDF">Curso PDF — download</option>
+            </select></div>
+            <div class="campo"><label for="estadoProduto">Visibilidade</label><select id="estadoProduto" name="estado">
+              <option value="RASCUNHO">Rascunho (oculto)</option>
+              <option value="DEMONSTRACAO">Demonstração</option>
+              <option value="PUBLICADO">Publicado (sem checkout)</option>
+            </select></div>
+          </div>
+          <div class="campo"><label for="precoProduto">Preço de exibição em R$ (pode ficar vazio em rascunhos)</label>
+            <input id="precoProduto" name="preco" type="number" step="0.01" min="0.01" placeholder="Ex: 99.90"></div>
+          <section class="calculadora-admin-v6" aria-labelledby="tituloCalcAdmin">
+            <h3 id="tituloCalcAdmin">Conferência comercial interna — AKITEMM</h3>
+            <p class="ajuda">Calcule com o preço que VOCÊ escolheu. Não altera o preço do produto, não grava custo negociado, não cria cobrança e não deposita no LOOP. É apenas uma conferência deste item e de sua quantidade no mesmo carrinho.</p>
+            <div class="duas-colunas">
+              <div class="campo"><label for="quantidadeCalcAdmin">Unidades deste produto no pedido</label>
+                <input id="quantidadeCalcAdmin" type="number" min="1" max="100" step="1" value="1"></div>
+              <div class="campo"><label for="custoUnitarioCalcAdmin">Custo combinado por unidade (R$)</label>
+                <input id="custoUnitarioCalcAdmin" type="number" min="0" max="1000000" step="0.01" placeholder="Informe apenas para calcular" autocomplete="off"></div>
+            </div>
+            <p id="resultadoCalcAdmin" role="status" class="estado-admin">Digite preço, custo e quantidade para conferir o resultado deste pedido.</p>
+            <p class="ajuda">A qualificação final da posição depende dos produtos elegíveis, do pedido fechado e do pagamento confirmado. Compras separadas não se acumulam. Nenhum custo preenchido aqui é enviado ao servidor.</p>
+          </section>
+          <div class="campo"><label for="descricaoProduto">Descrição</label>
+            <textarea id="descricaoProduto" name="descricao" required maxlength="2000"></textarea></div>
+          <div class="campo"><label for="fotosProduto">Caminhos das fotos (um por linha)</label>
+            <textarea id="fotosProduto" name="fotos" placeholder="/imagens/catalogo/foto-1.webp"></textarea>
+            <span class="ajuda">Até 10 imagens autorizadas, previamente colocadas na pasta local do catálogo. Upload ainda não disponível.</span></div>
+          <div class="campo"><label for="videoProduto">Link de vídeo opcional (YouTube ou Vimeo)</label>
+            <input id="videoProduto" name="video" type="url" placeholder="https://www.youtube.com/watch?v=..."></div>
+          <div class="campo"><label for="detalhesProduto">Características (uma por linha)</label>
+            <textarea id="detalhesProduto" name="detalhes" placeholder="Material, conteúdo, dimensões..."></textarea></div>
+          <div class="acoes-admin"><button type="submit" id="salvarProduto">Salvar produto</button>
+            <button type="button" class="secundario" id="cancelarEdicao">Limpar formulário</button></div>
+        </form>
+        <section class="historico-admin" aria-label="Elegibilidade do produto para o LOOP">
+         <h3>Autorização individual para o LOOP</h3>
+         <p class="ajuda">Salve o produto primeiro. Alterações valem apenas para compras FUTURAS. Produtos comuns continuam à venda.</p>
+         <label><input id="akitemmElegivelLoop" type="checkbox" checked> Autorizar produto para gerar posições no LOOP</label>
+         <div class="acoes-admin"><button id="akitemmSalvarElegibilidade" type="button" disabled>Salvar autorização LOOP</button></div>
+         <p id="akitemmStatusElegibilidade" role="status" class="ajuda"></p>
+        </section>
+        <section id="areaFornecedor" hidden aria-labelledby="tituloFornecedor" class="historico-admin">
+          <h3 id="tituloFornecedor">Fornecedor associado (laboratório)</h3>
+          <p class="ajuda">Somente para produto físico já cadastrado. O fornecedor pode mudar sem alterar o produto LOOP. Não faz pedidos nem consulta estoque real.</p>
+          <p id="statusFornecedor" class="estado-admin" aria-live="polite"></p>
+          <form id="formFornecedor">
+            <div class="duas-colunas">
+              <div class="campo">
+                <label for="codigoFornecedor">Código interno do fornecedor</label>
+                <input id="codigoFornecedor" required maxlength="80" pattern="[a-zA-Z0-9_-]{1,80}" placeholder="ex: franquia-teste">
+              </div>
+              <div class="campo">
+                <label for="codigoSKU">SKU do produto no fornecedor</label>
+                <input id="codigoSKU" required maxlength="80" pattern="[a-zA-Z0-9_-]{1,80}" placeholder="ex: ITEM_001">
+              </div>
+            </div>
+            <div class="acoes-admin">
+              <button type="submit" id="salvarFornecedor">Salvar vínculo</button>
+              <button type="button" id="desativarFornecedor" class="secundario">Desativar vínculo</button>
+            </div>
+          </form>
+          <h3>Histórico de fornecedores</h3>
+          <ol id="historicoFornecedor" aria-live="polite"></ol>
+        </section>
+        <section aria-labelledby="tituloHistorico" class="historico-admin">
+          <h3 id="tituloHistorico">Histórico de alterações</h3>
+          <p class="ajuda">Registros de laboratório: revisões, data e campos editados. Só aparecem após selecionar um produto.</p>
+          <ol id="historicoProduto" aria-live="polite"></ol>
+        </section>
+      </div>
+    </section>
+    <section id="areaVitrineAkitemm" class="painel" hidden role="tabpanel" aria-labelledby="abaAdminVitrineAkitemm">
+      <h2>Vitrine, banners e redes sociais da AKITEMM</h2>
+      <p class="ajuda">Configurações reais no SQLite local. As fotografias devem ser cadastradas com o caminho já autorizado em /imagens/catalogo. Não publique links inventados.</p>
+      <form id="akitemmConfigAdminForm">
+       <div class="campo"><label for="akitemmBannerLinhas">Banners rotativos (uma linha para cada banner)</label>
+        <textarea id="akitemmBannerLinhas" rows="5" placeholder="Título | Descrição | /imagens/catalogo/foto.webp | id-do-produto"></textarea>
+        <span class="ajuda">Deixe o ID do produto vazio quando o banner for apenas institucional; o botão Explorar produto só aparece quando houver um produto publicado correspondente. Até 8 banners.</span>
+       </div>
+       <div class="campo"><label for="akitemmOfertaIds">IDs dos produtos em Oferta (um por linha)</label><textarea id="akitemmOfertaIds" rows="3"></textarea></div>
+       <div class="duas-colunas">
+        <div class="campo"><label for="akitemmLinkInstagram">Instagram</label><input id="akitemmLinkInstagram" type="url" placeholder="https://www.instagram.com/..."></div>
+        <div class="campo"><label for="akitemmLinkYoutube">YouTube</label><input id="akitemmLinkYoutube" type="url" placeholder="https://www.youtube.com/..."></div>
+        <div class="campo"><label for="akitemmLinkFacebook">Facebook</label><input id="akitemmLinkFacebook" type="url" placeholder="https://www.facebook.com/..."></div>
+        <div class="campo"><label for="akitemmLinkWhatsapp">WhatsApp</label><input id="akitemmLinkWhatsapp" type="url" placeholder="https://wa.me/5521..."></div>
+       </div>
+       <div class="campo"><label for="akitemmTextoSobre">Sobre a AKITEMM</label><textarea id="akitemmTextoSobre" rows="3"></textarea></div>
+       <div class="campo"><label for="akitemmTextoPrivacidade">Política de Privacidade</label><textarea id="akitemmTextoPrivacidade" rows="3"></textarea></div>
+       <div class="campo"><label for="akitemmTextoTrocas">Trocas e Devoluções</label><textarea id="akitemmTextoTrocas" rows="3"></textarea></div>
+       <div class="campo"><label for="akitemmTextoContato">Fale Conosco</label><textarea id="akitemmTextoContato" rows="3"></textarea></div>
+       <div class="campo"><label for="akitemmTextoSuporte">Suporte</label><textarea id="akitemmTextoSuporte" rows="3"></textarea></div>
+       <div class="acoes-admin"><button type="submit">Salvar vitrine</button><button id="akitemmRecarregarVitrine" type="button" class="secundario">Recarregar</button></div>
+       <p id="akitemmStatusVitrine" role="status"></p>
+      </form>
+      <section class="historico-admin" aria-labelledby="akitemmTituloAvaliacoesAdmin">
+       <h3 id="akitemmTituloAvaliacoesAdmin">Avaliações e depoimentos da AKITEMM</h3>
+       <p class="ajuda">Só após compra física confirmada e entrega registrada no laboratório. Nenhuma entrega aqui significa envio real. Os depoimentos passam por moderação; imagens devem usar caminho previamente autorizado.</p>
+       <div class="campo"><label for="akitemmIdPedidoEntrega">Pedido de laboratório com entrega simulada confirmada</label>
+        <input id="akitemmIdPedidoEntrega" maxlength="100" placeholder="ID do pedido já pago ficticiamente"></div>
+       <div class="acoes-admin">
+        <button id="akitemmRegistrarEntregaDemo" type="button">Registrar entrega fictícia</button>
+        <button id="akitemmAtualizarAvaliacoes" type="button" class="secundario">Atualizar avaliações</button>
+       </div>
+       <p id="akitemmStatusModeracao" role="status" class="ajuda"></p>
+       <div id="akitemmListaModeracao"></div>
+      </section>
+    </section>
+    <section id="areaImportacao" class="painel" hidden role="tabpanel" aria-labelledby="abaAdminImportacao">
+      <h2 id="tituloImportacao">Importar produtos de distribuidores — demonstração</h2>
+      <p class="aviso-demo">Somente fornecedores fictícios. Esta operação cria rascunhos sem preço, sem checkout e sem conexão com Shopee ou sua franquia.</p>
+      <div class="campo">
+        <label for="fornecedorImportacao">Escolha o distribuidor fictício</label>
+        <select id="fornecedorImportacao"></select>
+      </div>
+      <div class="acoes-admin">
+        <button type="button" id="verPreviaImportacao">Conferir produtos</button>
+        <button type="button" id="limparPreviaImportacao" class="secundario">Limpar prévia</button>
+      </div>
+      <p id="statusImportacao" class="estado-admin" role="status" aria-live="polite"></p>
+      <div id="listaPreviaImportacao" aria-live="polite"></div>
+      <div class="campo">
+        <label>
+          <input type="checkbox" id="aceitarImportacao" disabled>
+          Conferi a prévia. Autorizo importar somente os novos rascunhos fictícios.
+        </label>
+      </div>
+      <button type="button" id="confirmarImportacao" disabled>Importar rascunhos da prévia</button>
+    </section>
+    <section id="areaPedidosDemo" class="painel" hidden role="tabpanel" aria-labelledby="abaAdminPedidos">
+      <h2 id="tituloPedidosDemo">Acompanhar pedidos — demonstração</h2>
+      <p class="aviso-demo">Pedidos e pagamentos fictícios. Não há clientes, endereços, transportadoras conectadas, movimentação de dinheiro ou filas.</p>
+      <div class="acoes-admin">
+        <button type="button" id="atualizarPedidosDemo" class="secundario">Atualizar pedidos</button>
+      </div>
+      <div class="admin-grid">
+        <div>
+          <h3>Pedidos de teste</h3>
+          <div id="listaPedidosDemo" class="lista-produtos" aria-live="polite"></div>
+        </div>
+        <div>
+          <h3>Andamento do pedido</h3>
+          <p id="detalhePedidoDemo" class="ajuda">Selecione um pedido fictício.</p>
+          <div class="campo">
+            <label for="eventoPedidoDemo">Simular próxima ocorrência</label>
+            <select id="eventoPedidoDemo" disabled></select>
+          </div>
+          <button type="button" id="aplicarEventoDemo" disabled>Registrar evento fictício</button>
+          <h3>Histórico</h3>
+          <ol id="historicoPedidoDemo" aria-live="polite"></ol>
+        </div>
+      </div>
+      <p id="mensagemPedidosDemo" class="estado-admin" role="status" aria-live="polite"></p>
+    </section>
+  </main>
+  <script src="/admin/precificacao.js"></script>
+  <script src="/admin/painel.js"></script>
+  <script src="/admin/importacao.js"></script>
+  <script src="/admin/pedidos-demo.js"></script>
+</body>
+</html>

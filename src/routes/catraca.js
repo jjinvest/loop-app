@@ -56,8 +56,8 @@ router.post('/liberar', (req, res) => {
 
 
 router.post('/retomar', (req, res) => {
-  catraca.status = 'ATIVA';
-  res.json({ status: 'ok', message: 'Catraca retomada', catraca: estado });
+  catraca.status = 'ABERTA';
+  res.json({ status: 'ok', message: 'Catraca retomada', catraca });
 });
 
 module.exports = router;

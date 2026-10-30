@@ -1,0 +1,36 @@
+name: LOOP - Homologacao Asaas Sandbox na branch de desenvolvimento
+
+on:
+  workflow_dispatch:
+    inputs:
+      autorizar:
+        description: 'Digite SIM para consultar e homologar exclusivamente o Asaas Sandbox'
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  homologacao-sandbox:
+    if: ${{ inputs.autorizar == 'SIM' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Obter codigo auditado da branch de desenvolvimento
+        uses: actions/checkout@v4
+        with:
+          repository: jjinvest/loop-app
+          ref: 3135db5c53633a2890aa7d7e2a179040a3b1bad3
+          persist-credentials: false
+      - name: Preparar Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Conferir pagamento PIX real no Sandbox, sem dinheiro real
+        env:
+          ASAAS_SANDBOX_API_KEY: ${{ secrets.ASAAS_SANDBOX_API_KEY }}
+          ASAAS_SANDBOX_CPF_FICTICIO: '24971563792'
+          ASAAS_SANDBOX_HOMOLOGACAO_MANUAL: 'SIM'
+          ASAAS_SANDBOX_SIMULAR_PAGAMENTO: 'NAO'
+        run: node scripts/homologar-pix-asaas-sandbox-manual.js

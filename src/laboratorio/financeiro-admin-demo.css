@@ -1,0 +1,39 @@
+#dadosFinanceiroDemo[hidden]{display:none}
+.financeiro-indicadores{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin:12px 0}
+.financeiro-indicadores>div,.financeiro-caixa{display:flex;flex-direction:column;gap:10px;background:#142339;border:1px solid #46576e;border-radius:12px;padding:14px;min-width:0}
+.financeiro-indicadores span,.financeiro-caixa small{font-size:.8rem;color:#bfcce0;line-height:1.4}
+.financeiro-indicadores strong,.financeiro-caixa>span{font-size:1.35rem;color:#ffd400;overflow-wrap:anywhere}
+.financeiro-cofres{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin:14px 0}
+.financeiro-caixa strong{color:#f5f6fb}
+.financeiro-historico{padding-left:22px}
+.financeiro-historico li{line-height:1.5;border-bottom:1px solid #46576e;padding:10px 0;overflow-wrap:anywhere}
+@media(max-width:750px){.financeiro-indicadores{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:540px){.financeiro-cofres{grid-template-columns:1fr}}
+
+.financeiro-conciliacao{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin:16px 0}
+.financeiro-linha-saldos{font-size:1rem!important;line-height:1.5}
+@media(max-width:660px){.financeiro-conciliacao{grid-template-columns:1fr}}
+
+/* Admin V6: ações e campos financeiros legíveis nas duas plataformas. */
+#dadosFinanceiroDemo,.financeiro-cofres,.financeiro-conciliacao,
+.financeiro-indicadores,.painel,.painel form,.painel .campo{min-width:0;max-width:100%}
+.painel input,.painel select,.painel textarea{
+ box-sizing:border-box;min-width:0;max-width:100%;
+}
+.painel button{min-height:44px;max-width:100%;white-space:normal;overflow-wrap:anywhere}
+#criarDouradaManualDemo{background:#dfb94e;color:#171201;border:2px solid #f8e6a9}
+#conferirDouradasManuaisDemo,#conferirCicloDouradasDemo{margin-top:8px}
+#listaDouradasManuaisDemo,#listaCicloDouradasDemo{overflow-wrap:anywhere}
+.financeiro-caixa{overflow-wrap:anywhere}
+.financeiro-caixa strong,.financeiro-caixa span{max-width:100%;overflow-wrap:anywhere}
+@media(max-width:420px){
+ .financeiro-indicadores,.financeiro-cofres,.financeiro-conciliacao{grid-template-columns:1fr}
+ .financeiro-indicadores strong{font-size:1.18rem}
+ .painel .acoes-admin button{flex:1 1 100%}
+ #criarDouradaManualDemo,#conferirDouradasManuaisDemo,
+ #conferirCicloDouradasDemo{width:100%}
+}
+@media(min-width:760px){
+ .financeiro-cofres{grid-template-columns:repeat(3,minmax(0,1fr))}
+}
+

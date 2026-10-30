@@ -1,0 +1,182 @@
+'use strict';
+const {test}=require('node:test');
+const assert=require('node:assert/strict');
+const {CatracaAsaasSandboxLab}=require('../src/domain/catraca-asaas-sandbox-lab');
+const pedidoId='pedido-lab-250';
+const parecer={pedidoId,ambiente:'LABORATORIO_ASAAS_SANDBOX',
+ titularId:'conta-a',valorCentavos:25000,elegivelParaTesteDeCatraca:true,
+ catracaAutorizada:false,posicoesCriadas:0};
+test('conecta parecer elegivel a ponte confiavel e preserva repeticao',async()=>{
+ let chamadas=0;
+ const adaptador=new CatracaAsaasSandboxLab({
+  elegibilidade:{conferir:id=>{assert.equal(id,pedidoId);return parecer;}},
+  ponte:{atribuicaoManualPorPosicao:true,verificador:async()=>({pedidoId,contaId:'conta-a',valorCentavos:25000}),processar:async({pedidoId:id})=>{
+   assert.equal(id,pedidoId);chamadas++;
+   return {contaId:'conta-a',posicaoId:7,posicaoIds:[7],
+    compraElegivelLoop:true,posicaoCriada:true,
+    criado:chamadas===1,repetido:chamadas>1};
+  }}
+ });
+ const primeira=await adaptador.processar(pedidoId);
+ const segunda=await adaptador.processar(pedidoId);
+ assert.equal(primeira.criada,true);
+ assert.equal(segunda.repetida,true);
+ assert.equal(primeira.posicoesNoPedido,1);
+ assert.equal(primeira.cpfConfirmadoAutomaticamente,false);
+ assert.equal(chamadas,2);
+});
+test('bloqueia parecer sem pagamento elegivel antes da ponte',async()=>{
+ for(const alteracao of [{valorCentavos:19000},{elegivelParaTesteDeCatraca:false},
+  {titularId:null},{ambiente:'PRODUCAO'}]){
+  let chamadas=0;
+  const adaptador=new CatracaAsaasSandboxLab({
+   elegibilidade:{conferir:()=>({...parecer,...alteracao})},
+   ponte:{atribuicaoManualPorPosicao:true,verificador:async()=>({pedidoId,contaId:'conta-a',valorCentavos:25000}),processar:async()=>{chamadas++;}}
+  });
+  await assert.rejects(adaptador.processar(pedidoId),{codigo:'PAGAMENTO_SANDBOX_NAO_ELEGIVEL'});
+  assert.equal(chamadas,0);
+ }
+});
+test('detecta divergencia de titular e pacote inesperado',async()=>{
+ for(const resposta of [
+  {contaId:'conta-b',posicaoIds:[7]},
+  {contaId:'conta-a',posicaoIds:[7,8]}
+ ]){
+  const adaptador=new CatracaAsaasSandboxLab({
+   elegibilidade:{conferir:()=>parecer},
+   ponte:{atribuicaoManualPorPosicao:true,verificador:async()=>({pedidoId,contaId:'conta-a',valorCentavos:25000}),processar:async()=>({
+    compraElegivelLoop:true,posicaoCriada:true,...resposta
+   })}
+  });
+  await assert.rejects(adaptador.processar(pedidoId));
+ }
+});
+
+test('divergencia antes da gravacao nao invoca a ponte',async()=>{
+ let gravacoes=0;
+ const adaptador=new CatracaAsaasSandboxLab({
+  elegibilidade:{conferir:()=>parecer},
+  ponte:{atribuicaoManualPorPosicao:true,
+   verificador:async()=>({pedidoId,contaId:'outra-conta',valorCentavos:25000}),
+   processar:async()=>{gravacoes++;}}
+ });
+ await assert.rejects(adaptador.processar(pedidoId),
+  {codigo:'COMPROVANTE_TITULAR_OU_VALOR_DIVERGENTE'});
+ assert.equal(gravacoes,0);
+});
+
+test('integracao SQLite: uma posicao pendente, repeticao sem duplicar e titular preservado',async t=>{
+ const {RepositorioCatalogoSQLite}=require('../src/domain/repositorio-catalogo-sqlite');
+ const {ContasParticipantesDemoSQLite}=require('../src/domain/contas-participantes-demo-sqlite');
+ const {PonteComprasConvitesDemoSQLite}=require('../src/domain/ponte-compras-convites-demo-sqlite');
+ const {STATUS_CONFIRMADO}=require('../src/domain/processador-pedidos-simulados');
+ const repo=new RepositorioCatalogoSQLite({caminho:':memory:'});
+ t.after(()=>repo.fechar());
+ const contas=new ContasParticipantesDemoSQLite({banco:repo.banco});
+ const conta=contas.cadastrar({nome:'Titular Sandbox Lab',email:'titular-sandbox-lab@exemplo.invalid',senha:'senha-sandbox-lab-2026'});
+ const comprovante={pedidoId,contaId:conta.contaId,produtoId:'pdf-laboratorio',
+  valorCentavos:25000,status:STATUS_CONFIRMADO,confirmadoEm:'2026-10-26T10:00:00.000Z'};
+ const ponte=new PonteComprasConvitesDemoSQLite({banco:repo.banco,contas,
+  consultarPagamentoConfiavel:async()=>comprovante,atribuicaoManualPorPosicao:true});
+ const elegibilidade={conferir:()=>({...parecer,titularId:conta.contaId})};
+ const catraca=new CatracaAsaasSandboxLab({elegibilidade,ponte});
+ const a=await catraca.processar(pedidoId);
+ assert.equal(a.criada,true);
+ assert.equal(a.confirmacaoIndividualObrigatoria,true);
+ const b=await catraca.processar(pedidoId);
+ assert.equal(b.repetida,true);
+ assert.equal(b.posicaoId,a.posicaoId);
+ assert.equal(repo.banco.prepare('SELECT COUNT(*) AS n FROM admin_ponte_compras_demo WHERE pedido_id=?').get(pedidoId).n,1);
+});
+
+test('bloqueia troca do titular entre auditoria e consulta interna sem gravar',async t=>{
+ const {RepositorioCatalogoSQLite}=require('../src/domain/repositorio-catalogo-sqlite');
+ const {ContasParticipantesDemoSQLite}=require('../src/domain/contas-participantes-demo-sqlite');
+ const {PonteComprasConvitesDemoSQLite}=require('../src/domain/ponte-compras-convites-demo-sqlite');
+ const repo=new RepositorioCatalogoSQLite({caminho:':memory:'});
+ t.after(()=>repo.fechar());
+ const contas=new ContasParticipantesDemoSQLite({banco:repo.banco});
+ const a=contas.cadastrar({nome:'Conta A',email:'conta-a-lab@exemplo.invalid',senha:'senha-sandbox-lab-2026'});
+ const b=contas.cadastrar({nome:'Conta B',email:'conta-b-lab@exemplo.invalid',senha:'senha-sandbox-lab-2026'});
+ let chamadas=0;
+ const ponte=new PonteComprasConvitesDemoSQLite({banco:repo.banco,contas,
+  consultarPagamentoConfiavel:async()=>({pedidoId,contaId:++chamadas===1?a.contaId:b.contaId,
+   produtoId:'pdf-laboratorio',valorCentavos:25000,status:'CONFIRMADO_SIMULADO',
+   confirmadoEm:'2026-10-26T10:00:00.000Z'}),atribuicaoManualPorPosicao:true});
+ const catraca=new CatracaAsaasSandboxLab({
+  elegibilidade:{conferir:()=>({...parecer,titularId:a.contaId})},ponte});
+ await assert.rejects(catraca.processar(pedidoId),{codigo:'TITULAR_DIVERGENTE'});
+ assert.equal(repo.banco.prepare('SELECT COUNT(*) AS n FROM admin_ponte_compras_demo WHERE pedido_id=?').get(pedidoId).n,0);
+});
+
+test('bloqueia alteracao de valor entre duas consultas antes de criar posicao',async t=>{
+ const {RepositorioCatalogoSQLite}=require('../src/domain/repositorio-catalogo-sqlite');
+ const {ContasParticipantesDemoSQLite}=require('../src/domain/contas-participantes-demo-sqlite');
+ const {PonteComprasConvitesDemoSQLite}=require('../src/domain/ponte-compras-convites-demo-sqlite');
+ const repo=new RepositorioCatalogoSQLite({caminho:':memory:'});
+ t.after(()=>repo.fechar());
+ const contas=new ContasParticipantesDemoSQLite({banco:repo.banco});
+ const conta=contas.cadastrar({nome:'Conta Valor',email:'conta-valor-lab@exemplo.invalid',senha:'senha-sandbox-lab-2026'});
+ let chamadas=0;
+ const ponte=new PonteComprasConvitesDemoSQLite({banco:repo.banco,contas,
+  consultarPagamentoConfiavel:async()=>({pedidoId,contaId:conta.contaId,
+   produtoId:'pdf-laboratorio',valorCentavos:++chamadas===1?25000:26000,
+   status:'CONFIRMADO_SIMULADO',confirmadoEm:'2026-10-26T10:00:00.000Z'}),
+  atribuicaoManualPorPosicao:true});
+ const catraca=new CatracaAsaasSandboxLab({
+  elegibilidade:{conferir:()=>({...parecer,titularId:conta.contaId})},ponte});
+ await assert.rejects(catraca.processar(pedidoId),{codigo:'VALOR_DIVERGENTE'});
+ assert.equal(repo.banco.prepare('SELECT COUNT(*) AS n FROM admin_ponte_compras_demo WHERE pedido_id=?').get(pedidoId).n,0);
+});
+
+test('nao grava venda avulsa quando laboratorio exige uma posicao',async t=>{
+ const {RepositorioCatalogoSQLite}=require('../src/domain/repositorio-catalogo-sqlite');
+ const {ContasParticipantesDemoSQLite}=require('../src/domain/contas-participantes-demo-sqlite');
+ const {PonteComprasConvitesDemoSQLite}=require('../src/domain/ponte-compras-convites-demo-sqlite');
+ const repo=new RepositorioCatalogoSQLite({caminho:':memory:'});
+ t.after(()=>repo.fechar());
+ const contas=new ContasParticipantesDemoSQLite({banco:repo.banco});
+ const conta=contas.cadastrar({nome:'Conta Avulsa',email:'avulsa-lab@exemplo.invalid',senha:'senha-sandbox-lab-2026'});
+ const ponte=new PonteComprasConvitesDemoSQLite({banco:repo.banco,contas,
+  consultarPagamentoConfiavel:async()=>({pedidoId,contaId:conta.contaId,
+   produtoId:'produto-nao-elegivel',valorCentavos:25000,valorElegivelLoopCentavos:0,
+   status:'CONFIRMADO_SIMULADO',confirmadoEm:'2026-10-26T10:00:00.000Z'}),
+  atribuicaoManualPorPosicao:true});
+ const catraca=new CatracaAsaasSandboxLab({
+  elegibilidade:{conferir:()=>({...parecer,titularId:conta.contaId})},ponte});
+ await assert.rejects(catraca.processar(pedidoId),{codigo:'COMPRA_NAO_QUALIFICADA'});
+ assert.equal(repo.banco.prepare('SELECT COUNT(*) AS n FROM admin_ponte_compras_demo WHERE pedido_id=?').get(pedidoId).n,0);
+ assert.equal(repo.banco.prepare('SELECT COUNT(*) AS n FROM admin_ponte_vendas_loja_apos_reajuste_demo WHERE pedido_id=?').get(pedidoId).n,0);
+});
+
+test('concorrencia: duas tentativas do mesmo pedido nao criam duas posicoes',async t=>{
+ const {RepositorioCatalogoSQLite}=require('../src/domain/repositorio-catalogo-sqlite');
+ const {ContasParticipantesDemoSQLite}=require('../src/domain/contas-participantes-demo-sqlite');
+ const {PonteComprasConvitesDemoSQLite}=require('../src/domain/ponte-compras-convites-demo-sqlite');
+ const repo=new RepositorioCatalogoSQLite({caminho:':memory:'});
+ t.after(()=>repo.fechar());
+ const contas=new ContasParticipantesDemoSQLite({banco:repo.banco});
+ const conta=contas.cadastrar({nome:'Conta Concorrencia',email:'concorrencia-lab@exemplo.invalid',senha:'senha-sandbox-lab-2026'});
+ const ponte=new PonteComprasConvitesDemoSQLite({banco:repo.banco,contas,
+  consultarPagamentoConfiavel:async()=>({pedidoId,contaId:conta.contaId,
+   produtoId:'pdf-laboratorio',valorCentavos:25000,status:'CONFIRMADO_SIMULADO',
+   confirmadoEm:'2026-10-26T10:00:00.000Z'}),atribuicaoManualPorPosicao:true});
+ const catraca=new CatracaAsaasSandboxLab({
+  elegibilidade:{conferir:()=>({...parecer,titularId:conta.contaId})},ponte});
+ const resultados=await Promise.all([catraca.processar(pedidoId),catraca.processar(pedidoId)]);
+ assert.equal(resultados.filter(x=>x.criada).length,1);
+ assert.equal(resultados.filter(x=>x.repetida).length,1);
+ assert.equal(resultados[0].posicaoId,resultados[1].posicaoId);
+ assert.equal(repo.banco.prepare('SELECT COUNT(*) AS n FROM admin_ponte_compras_demo WHERE pedido_id=?').get(pedidoId).n,1);
+});
+
+test('nao aceita ponte sem verificador interno confiavel',async()=>{
+ let gravacoes=0;
+ const catraca=new CatracaAsaasSandboxLab({
+  elegibilidade:{conferir:()=>parecer},
+  ponte:{atribuicaoManualPorPosicao:true,processar:async()=>{gravacoes++;}}
+ });
+ await assert.rejects(catraca.processar(pedidoId),
+  {codigo:'VERIFICADOR_INTERNO_INDISPONIVEL'});
+ assert.equal(gravacoes,0);
+});

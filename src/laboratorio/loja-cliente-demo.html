@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+ <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+ <title>AKITEMM · Loja Oficial | LOOP 3.0</title>
+ <link rel="stylesheet" href="/laboratorio/loja.css">
+</head>
+<body class="akitemm-loja">
+ <header class="cabecalho-loja-loop">
+  <a href="/escritorio" class="akitemm-voltar" aria-label="Voltar ao Escritório Virtual do LOOP 3.0">
+   <span aria-hidden="true" class="akitemm-seta">←</span>
+   <span aria-hidden="true" class="akitemm-marca-loop"><span class="akitemm-anel">◎</span> LOOP <em>3.0</em></span>
+  </a>
+  <div class="akitemm-topo-direito">
+   <button id="akitemmSino" class="akitemm-sino" type="button" aria-expanded="false" aria-controls="akitemmNotificacoes" aria-label="Notificações"><svg viewBox="0 0 24 24" width="25" height="25" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" ><path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9"/><path d="M10 21h4"/></svg><span id="akitemmContagemSino" hidden></span></button>
+   <div class="akitemm-conta" aria-label="Identidade da conta, alterável somente no Escritório Virtual">
+    <span class="akitemm-avatar" aria-hidden="true"><img id="akitemmFotoTitular" alt="" hidden></span>
+    <span id="akitemmNomeTitular" class="akitemm-nome" title="">Conta</span>
+   </div>
+  </div>
+  <div id="akitemmNotificacoes" class="akitemm-menu-notificacoes" hidden><strong>Notificações</strong><p id="akitemmNotificacoesConteudo">Nenhuma notificação por enquanto.</p><button id="akitemmAbrirAvaliacoes" type="button" hidden>Avaliar produtos entregues</button></div>
+ </header>
+ <main class="loja-loop">
+  <p id="estadoLojaLoop" class="akitemm-estado" role="status" aria-live="polite">Consultando catálogo e sua conta…</p>
+  <div id="conteudoLojaLoop" hidden>
+   <div class="akitemm-grade-pagina">
+    <div class="akitemm-vitrine-principal">
+     <section class="akitemm-banner" aria-label="Banner rotativo AKITEMM">
+      <div id="akitemmBannerConteudo" class="akitemm-banner-conteudo">
+       <div class="akitemm-banner-texto"><h1>AKITEMM</h1><strong>Loja Oficial</strong><p>Produtos, cursos e ferramentas para o seu desenvolvimento pessoal e financeiro.</p></div>
+       <div class="akitemm-banner-arte" aria-hidden="true"><span class="akitemm-arte-anel">◈</span> AKITEMM</div>
+       <div class="akitemm-banner-slogan">CONHECIMENTO<br>PRODUTOS<br>RESULTADOS<br>EM UM SÓ LUGAR.<span></span></div>
+      </div>
+      <div class="akitemm-banner-rodizio"><button id="akitemmBannerAnterior" type="button" aria-label="Banner anterior" hidden>‹</button><span id="akitemmBannerPontos" aria-label="Banner atual"></span><button id="akitemmBannerProximo" type="button" aria-label="Próximo banner" hidden>›</button></div>
+     </section>
+     <div class="akitemm-busca-filtros" role="search">
+      <button type="button" id="akitemmFiltroTodos" class="akitemm-chip selecionado" aria-pressed="true">Todos</button>
+      <label class="akitemm-busca" for="akitemmBusca"><span aria-hidden="true">⌕</span><input id="akitemmBusca" type="search" placeholder="Buscar produtos, cursos ou assuntos…" autocomplete="off"></label>
+      <button type="button" id="akitemmFiltroOfertas" class="akitemm-chip" aria-pressed="false">Ofertas</button>
+     </div>
+     <nav class="akitemm-categorias" aria-label="Categorias de produtos">
+      <button type="button" data-akitemm-categoria="cursos"><span aria-hidden="true"><svg viewBox="0 0 24 24" width="25" height="25" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" ><path d="M2 10 12 4l10 6-10 6L2 10Z"/><path d="M6 12v6c3 2 9 2 12 0v-6M22 10v7"/></svg></span><strong>Cursos</strong><small>Desenvolva novas habilidades</small><b aria-hidden="true">›</b></button>
+      <button type="button" data-akitemm-categoria="fisicos"><span aria-hidden="true"><svg viewBox="0 0 24 24" width="25" height="25" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" ><path d="m3 7 9-5 9 5v10l-9 5-9-5V7Z"/><path d="m3 7 9 5 9-5M12 12v10"/></svg></span><strong>Produtos físicos</strong><small>Itens para o seu dia a dia</small><b aria-hidden="true">›</b></button>
+      <button type="button" data-akitemm-categoria="novidades"><span aria-hidden="true"><svg viewBox="0 0 24 24" width="25" height="25" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" ><path d="m12 2 3 7 7 .6-5.5 5 1.7 7.4L12 18l-6.2 4 1.7-7.4L2 9.6 9 9l3-7Z"/></svg></span><strong>Novidades</strong><small>Lançamentos exclusivos</small><b aria-hidden="true">›</b></button>
+      <button type="button" data-akitemm-categoria="mais-vendidos"><span aria-hidden="true"><svg viewBox="0 0 24 24" width="25" height="25" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" ><path d="M4 20V13M10 20V8M16 20V11M22 20V3"/></svg></span><strong>Mais vendidos</strong><small>Os preferidos da comunidade</small><b aria-hidden="true">›</b></button>
+     </nav>
+     <section aria-labelledby="tituloCatalogoLoja" class="akitemm-area-produtos">
+      <div class="cabecalho-secao-loja"><h2 id="tituloCatalogoLoja">Produtos em destaque</h2><button id="akitemmVerTodos" type="button">Ver todos →</button></div>
+      <p id="akitemmResultadoProdutos" class="akitemm-resultado" role="status"></p>
+      <div id="catalogoLojaLoop" class="produtos-loja-loop"></div>
+      <button id="akitemmCarregarMais" type="button" hidden>Mostrar mais produtos ↓</button>
+      <p id="referenciaLojaLoop" class="akitemm-regra-referencia"></p>
+      <button type="button" id="atualizarCatalogoLoja" class="akitemm-atualizar">Atualizar catálogo</button>
+     </section>
+     <section class="akitemm-pedidos" aria-label="Pedidos em acompanhamento">
+      <details id="akitemmDetalhesPedidos"><summary>Meus pedidos <span aria-hidden="true">⌄</span></summary>
+       <button id="atualizarPedidosLoja" type="button">Atualizar pedidos</button><ol id="pedidosLojaLoop" class="pedidos-loja-loop"></ol>
+      </details>
+     </section>
+    </div>
+    <aside class="akitemm-coluna-direita">
+     <section class="painel-loja-loop akitemm-carrinho" aria-labelledby="tituloCarrinhoLoja">
+      <div class="akitemm-linha-carrinho"><h2 id="tituloCarrinhoLoja">Meu carrinho (<span id="akitemmTotalItens">0</span>)</h2><button type="button" id="akitemmLimparCarrinho">Limpar tudo</button></div>
+      <div id="itensLojaLoop" aria-live="polite"></div>
+      <p id="totalLojaLoop" class="total-loja-loop">Subtotal <strong>R$ 0,00</strong></p>
+      <div class="akitemm-progresso"><label for="progressoMinimoLoop">Progresso para posição no LOOP</label><progress id="progressoMinimoLoop" value="0" max="25000"></progress><p id="orientacaoMinimoLoop" role="status"></p></div>
+      <fieldset id="akitemmEscolhaLoop" class="akitemm-escolha-loop" hidden aria-describedby="akitemmEscolhaLoopAviso">
+       <legend>Você gostaria de participar do LOOP?</legend>
+       <p id="akitemmEscolhaLoopAviso">Ao escolher sim, seu pedido qualificado poderá gerar posição no LOOP após a confirmação do pagamento. Esta escolha não altera seus direitos legais de compra e reembolso.</p>
+       <label><input type="radio" name="akitemmParticiparLoop" value="sim"> Sim, quero participar do LOOP.</label>
+       <label><input type="radio" name="akitemmParticiparLoop" value="nao"> Não, quero comprar somente na AKITEMM.</label>
+      </fieldset>
+      <button type="button" id="registrarPedidoLoja" disabled>Finalizar pedido →</button>
+      <p id="statusPedidoLoja" role="status" aria-live="polite"></p>
+     </section>
+     <section class="akitemm-apoio">
+      <details id="akitemmEntrega" class="akitemm-painel-retratil">
+       <summary><span class="akitemm-apoio-icone" aria-hidden="true"><svg viewBox="0 0 24 24" width="25" height="25" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" ><path d="M3 5h12v12H3zM15 9h4l3 4v4h-7"/><circle cx="7" cy="19" r="2"/><circle cx="19" cy="19" r="2"/></svg></span><span><strong>Cadastro e frete</strong><small>Dados para entrega do pedido</small></span><span aria-hidden="true">›</span></summary>
+       <form id="akitemmFormEntrega" class="akitemm-form-entrega" autocomplete="on">
+        <p>Você pode indicar outro destinatário e mudar o endereço para cada entrega. Nenhuma entrega real ocorre no laboratório.</p>
+        <label>Nome do destinatário<input name="destinatario" autocomplete="shipping name" required maxlength="100"></label>
+        <label>CEP<input name="cep" inputmode="numeric" autocomplete="shipping postal-code" placeholder="00000-000" pattern="[0-9]{5}-?[0-9]{3}" required></label>
+        <label>Rua / avenida<input name="logradouro" autocomplete="shipping address-line1" required maxlength="120"></label>
+        <div class="akitemm-dupla"><label>Número<input name="numero" required maxlength="20"></label><label>Complemento<input name="complemento" maxlength="100"></label></div>
+        <label>Bairro<input name="bairro" required maxlength="80"></label>
+        <div class="akitemm-dupla"><label>Cidade<input name="cidade" autocomplete="shipping address-level2" required maxlength="90"></label><label>UF<select name="uf" required><option value="">UF</option><option>AC</option><option>AL</option><option>AP</option><option>AM</option><option>BA</option><option>CE</option><option>DF</option><option>ES</option><option>GO</option><option>MA</option><option>MT</option><option>MS</option><option>MG</option><option>PA</option><option>PB</option><option>PR</option><option>PE</option><option>PI</option><option>RJ</option><option>RN</option><option>RS</option><option>RO</option><option>RR</option><option>SC</option><option>SP</option><option>SE</option><option>TO</option></select></label></div>
+        <label>Telefone para contato na entrega<input name="telefone" type="tel" autocomplete="shipping tel" required maxlength="24"></label>
+        <label>Referência para entrega (opcional)<input name="referencia" maxlength="150"></label>
+        <button type="submit">Salvar dados para este pedido</button><p id="akitemmStatusEntrega" role="status"></p>
+       </form>
+      </details>
+      <details id="akitemmSuporte" class="akitemm-painel-retratil"><summary><span class="akitemm-apoio-icone" aria-hidden="true"><svg viewBox="0 0 24 24" width="25" height="25" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" ><path d="M3 13v-2a9 9 0 0 1 18 0v2M3 13h4v6H5a2 2 0 0 1-2-2v-4ZM17 13h4v4a2 2 0 0 1-2 2h-2v-6ZM17 19c0 2-2 3-5 3h-2"/></svg></span><span><strong>Suporte</strong><small>Atendimento e dúvidas</small></span><span aria-hidden="true">›</span></summary><p id="akitemmTextoSuporte">Os canais de atendimento serão publicados pela administração.</p></details>
+     </section>
+    </aside>
+   </div>
+   <section class="painel-loja-loop akitemm-divulgacao" aria-labelledby="tituloDivulgarLojaLoop">
+    <details><summary id="tituloDivulgarLojaLoop">Compartilhar minha loja AKITEMM</summary><p>Link pessoal disponível conforme sua ativação no LOOP.</p>
+    <label for="enderecoDivulgarLojaLoop">Meu link da AKITEMM</label><input type="text" id="enderecoDivulgarLojaLoop" readonly autocomplete="off">
+    <button type="button" id="copiarDivulgarLojaLoop" disabled>Copiar link</button><p id="statusDivulgarLojaLoop" role="status"></p></details>
+   </section>
+  </div>
+ </main>
+ <footer class="akitemm-rodape">
+  <div><strong>AKITEMM</strong><small>Loja Oficial</small></div>
+  <nav aria-label="Informações da loja">
+   <button type="button" data-akitemm-informacao="sobre">Sobre a AKITEMM</button>
+   <button type="button" data-akitemm-informacao="privacidade">Política de Privacidade</button>
+   <button type="button" data-akitemm-informacao="trocas">Trocas e Devoluções</button>
+   <button type="button" data-akitemm-informacao="contato">Fale Conosco</button>
+  </nav>
+  <div class="akitemm-redes" aria-label="Redes sociais">
+   <a data-akitemm-rede="instagram" aria-label="Instagram" title="Link oficial ainda não cadastrado" aria-disabled="true" tabindex="-1"><svg viewBox="0 0 24 24" width="25" height="25" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" ><rect x="2" y="2" width="20" height="20" rx="6"/><circle cx="12" cy="12" r="4"/><circle cx="18" cy="6" r="1"/></svg></a>
+   <a data-akitemm-rede="youtube" aria-label="YouTube" title="Link oficial ainda não cadastrado" aria-disabled="true" tabindex="-1"><svg viewBox="0 0 24 24" width="25" height="25" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" ><rect x="2" y="5" width="20" height="14" rx="4"/><path d="m10 9 6 3-6 3z"/></svg></a>
+   <a data-akitemm-rede="facebook" aria-label="Facebook" title="Link oficial ainda não cadastrado" aria-disabled="true" tabindex="-1"><svg viewBox="0 0 24 24" width="25" height="25" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" ><path d="M17 3h-3a5 5 0 0 0-5 5v13M6 12h12M9 12v9"/></svg></a>
+   <a data-akitemm-rede="whatsapp" aria-label="WhatsApp" title="Link oficial ainda não cadastrado" aria-disabled="true" tabindex="-1"><svg viewBox="0 0 24 24" width="25" height="25" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" ><path d="M21 11.5a9 9 0 0 1-13.2 8L3 21l1.5-5A9 9 0 1 1 21 11.5Z"/><path d="M9 8c0 4 3 7 7 7l1-2-2-1-1 1c-2-1-3-2-4-4l1-1-1-2z"/></svg></a>
+  </div>
+ </footer>
+ <dialog id="akitemmModalDetalhes" class="akitemm-modal"><form method="dialog"><button aria-label="Fechar" class="akitemm-modal-fechar">×</button></form><div id="akitemmDetalhesConteudo"></div></dialog>
+ <dialog id="akitemmModalAvaliacao" class="akitemm-modal">
+  <form method="dialog"><button aria-label="Fechar" class="akitemm-modal-fechar">×</button></form>
+  <h2>Avalie sua compra</h2>
+  <p id="akitemmAvaliacaoProdutoNome"></p>
+  <form id="akitemmFormAvaliacao">
+   <label for="akitemmAvaliacaoNota">Sua nota</label>
+   <select id="akitemmAvaliacaoNota" required>
+    <option value="">Selecione</option><option value="5">★★★★★ — Excelente</option>
+    <option value="4">★★★★☆ — Muito bom</option><option value="3">★★★☆☆ — Bom</option>
+    <option value="2">★★☆☆☆ — Regular</option><option value="1">★☆☆☆☆ — Ruim</option>
+   </select>
+   <label for="akitemmAvaliacaoComentario">Como foi receber e usar o produto?</label>
+   <textarea id="akitemmAvaliacaoComentario" minlength="10" maxlength="1000" rows="5" required placeholder="Conte sua experiência real após a entrega."></textarea>
+   <section class="akitemm-arquivos-avaliacao" aria-labelledby="akitemmTituloAnexos">
+    <h3 id="akitemmTituloAnexos">Fotos e vídeo do produto recebido</h3>
+    <label for="akitemmFotosAvaliacao">Fotografias (até 3, JPEG, PNG ou WebP)</label>
+    <input id="akitemmFotosAvaliacao" type="file" accept="image/jpeg,image/png,image/webp" multiple>
+    <label for="akitemmVideoAvaliacao">Vídeo curto (opcional, MP4 até 30 segundos)</label>
+    <input id="akitemmVideoAvaliacao" type="file" accept="video/mp4">
+    <p>As fotos e o vídeo ficam privados até sua avaliação ser aprovada. Evite mostrar documentos, endereço, placas ou pessoas sem autorização.</p>
+    <div id="akitemmPreviaMidias" class="akitemm-previa-arquivos" aria-live="polite"></div>
+   </section>
+   <button id="akitemmEnviarAvaliacao" type="submit">Enviar minha avaliação</button>
+   <p id="akitemmStatusAvaliacao" role="status"></p>
+  </form>
+ </dialog>
+ <dialog id="akitemmModalInformacao" class="akitemm-modal"><form method="dialog"><button aria-label="Fechar" class="akitemm-modal-fechar">×</button></form><h2 id="akitemmInformacaoTitulo"></h2><div id="akitemmInformacaoConteudo"></div></dialog>
+ <script src="/laboratorio/educacao-carrinho.js" defer></script>
+ <script src="/laboratorio/loja.js" defer></script>
+</body>
+</html>
