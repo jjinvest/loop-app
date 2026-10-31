@@ -45,7 +45,8 @@ class AsaasSandboxLojaV6{
   });
   if(!data||!ID.test(data.id||'')||data.billingType!=='PIX'||
      Math.round(Number(data.value)*100)!==valorCentavos||
-     data.externalReference!=='LOOPLAB-'+pedidoId)
+     data.externalReference!=='LOOPLAB-'+pedidoId||
+     (data.customer!==undefined&&data.customer!==clienteAsaasId))
     throw falha('ASAAS_SANDBOX_COBRANCA_DIVERGENTE');
   return {pagamentoId:data.id,status:data.status||'PENDING',
    valorCentavos,ambiente:this.ambiente};
@@ -59,7 +60,8 @@ class AsaasSandboxLojaV6{
     throw falha('ASAAS_SANDBOX_CONSULTA_DIVERGENTE');
   return {pagamentoId:p.id,status:p.status,
    valorCentavos:Math.round(Number(p.value)*100),
-   externalReference:p.externalReference,billingType:p.billingType};
+   externalReference:p.externalReference,billingType:p.billingType,
+   clienteAsaasId:p.customer||null};
  }
  async obterPix(pagamentoId){
   if(typeof pagamentoId!=='string'||!ID.test(pagamentoId))
