@@ -1,6 +1,9 @@
 'use strict';
 const {randomUUID}=require('node:crypto');
 const {DatabaseSync}=require('node:sqlite');
+const fs=require('node:fs');
+const os=require('node:os');
+const path=require('node:path');
 const {ContasParticipantesDemoSQLite}=require('../src/domain/contas-participantes-demo-sqlite');
 const {PedidosTitularidadeDemoSQLite}=require('../src/domain/pedidos-titularidade-demo-sqlite');
 const {montarIntegracaoAsaasSandboxLoopLab}=require('../src/domain/montagem-integracao-asaas-sandbox-loop-lab');
@@ -20,7 +23,9 @@ async function main(){
  if(!/^cus_[A-Za-z0-9_-]+$/.test(data.id||'')||data.externalReference!==ref)
   throw Error('SANDBOX_CUSTOMER_INVALID');
  const customer=data.id;
- const db=new DatabaseSync(':memory:');
+ const pasta=fs.mkdtempSync(path.join(os.tmpdir(),'loop-asaas-'));
+ const arquivo=path.join(pasta,'teste.sqlite');
+ let db=new DatabaseSync(arquivo);
  try{
   const contas=new ContasParticipantesDemoSQLite({banco:db});
   const titularidade=new PedidosTitularidadeDemoSQLite({banco:db,contas});
@@ -46,8 +51,17 @@ async function main(){
   const a=await m.conciliador.processar(pedidoId);
   const b=await m.conciliador.processar(pedidoId);
   if(a.contaId!==conta.contaId||a.posicaoId!==b.posicaoId||!b.repetida)throw Error('INTEGRATION_MISMATCH');
+  db.close();
+  db=new DatabaseSync(arquivo);
+  const contasReabertas=new ContasParticipantesDemoSQLite({banco:db});
+  const titularidadeReaberta=new PedidosTitularidadeDemoSQLite({banco:db,contas:contasReabertas});
+  const integracaoReaberta=montarIntegracaoAsaasSandboxLoopLab({banco:db,contas:contasReabertas,titularidade:titularidadeReaberta,apiKey:key});
+  const repetida=await integracaoReaberta.conciliador.processar(pedidoId);
+  if(repetida.posicaoId!==a.posicaoId||!repetida.repetida||repetida.contaId!==conta.contaId)
+   throw Error('SQLITE_RESTART_IDEMPOTENCY_FAILED');
   console.log('SANDBOX_LINKED_POSITION_OK');
- }finally{db.close();}
+  console.log('SANDBOX_SQLITE_RESTART_IDEMPOTENT_OK');
+ }finally{db.close();fs.rmSync(pasta,{recursive:true,force:true});}
 }
 if(require.main===module)main().catch(e=>{console.error(e.code||e.message);process.exitCode=1;});
 module.exports={main};
