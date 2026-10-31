@@ -48,6 +48,27 @@ function criarRouterClientePedidosLab({contas,pedidos}={}){
    return res.json({token,expiraEmSegundos:1800,conta:{nome:resultado.conta.nome,apelido:resultado.conta.apelido},laboratorio:true});
   }catch(e){tentativas.get(origem).total++;return res.status(401).json({erro:'CREDENCIAIS_INVALIDAS'});}
  });
+ router.post('/pedidos',sessao,(req,res)=>{
+  if(!req.is('application/json'))return res.sendStatus(415);
+  const dados=req.body;
+  if(!dados||typeof dados!=='object'||Array.isArray(dados)||
+     Object.keys(dados).sort().join(',')!=='pedidoId,produtoId,valorCentavos')
+   return res.status(400).json({erro:'CAMPOS_INVALIDOS'});
+  if(dados.valorCentavos!==25000)
+   return res.status(400).json({erro:'VALOR_NAO_QUALIFICADO'});
+  try{
+   const pedido=pedidos.preparar({...dados,contaId:req.contaId});
+   return res.status(pedido.repetido?200:201).json({
+    pedidoId:pedido.pedidoId,produtoId:pedido.produtoId,
+    valorCentavos:pedido.valorCentavos,repetido:pedido.repetido,
+    estado:'AGUARDANDO_PAGAMENTO_SIMULADO',posicaoCriada:false,
+    cobrancaReal:false,laboratorio:true
+   });
+  }catch(e){
+   return res.status(e.codigo==='PEDIDO_IMUTAVEL'?409:400)
+    .json({erro:e.codigo||'PEDIDO_INVALIDO'});
+  }
+ });
  router.get('/meus-pedidos',sessao,(req,res)=>{
   try{return res.json({pedidos:pedidos.listarPorTitular(req.contaId),laboratorio:true});}
   catch(e){return res.status(500).json({erro:'CONSULTA_INDISPONIVEL'});}
