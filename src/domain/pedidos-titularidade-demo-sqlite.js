@@ -133,6 +133,16 @@ class PedidosTitularidadeDemoSQLite{
   }
   return pedido;
  }
+ listarPorTitular(contaId){
+  contaIdOk(contaId);
+  if(!this.contas.buscar(contaId))return [];
+  return this.banco.prepare(`
+   SELECT pedido_id AS pedidoId,produto_id AS produtoId,
+    valor_centavos AS valorCentavos,criado_em AS criadoEm
+   FROM admin_pedidos_titularidade_demo
+   WHERE conta_id=? ORDER BY criado_em DESC,pedido_id DESC
+  `).all(contaId);
+ }
  listarResumo(){
   const linhas=this.banco.prepare(`
    SELECT pedido_id AS pedidoId,conta_id AS contaId,
