@@ -19,8 +19,44 @@ small,.nota{opacity:.8} dialog{width:min(92vw,580px);border:1px solid #88723d;bo
 <section class="passo"><h3>3. Meus Pedidos</h3><p>Acompanhe o histórico de compras e abra os detalhes de cada pedido em uma janela, sem sair do escritório.</p><button class="acao" type="button" id="abrirPedidos">Meus Pedidos</button></section>
 <section class="passo"><h3>4. Acompanhar o LOOP</h3><p>Veja o tabuleiro e as filas A e B na prévia do Escritório Virtual.</p><a class="acao" href="/#totalA">Ver tabuleiro e filas</a></section>
 <p class="nota">Ambiente de demonstração, sem pagamentos reais e sem promessa de retorno financeiro.</p>
-<dialog id="modalPedidos" aria-labelledby="tituloPedidos"><h2 id="tituloPedidos">Meus Pedidos</h2><p class="nota">Histórico pessoal de compras. Disponível após login seguro.</p><p class="nota">Cada pedido exibirá número, data, produtos, valor, pagamento e entrega. Ao selecionar um pedido, os detalhes serão abertos nesta janela.</p><div class="filtros" role="group" aria-label="Filtrar pedidos"><button type="button" data-filtro="todos" aria-pressed="true">Todos</button><button type="button" data-filtro="pendentes" aria-pressed="false">Pendentes</button><button type="button" data-filtro="pagos" aria-pressed="false">Pagos</button><button type="button" data-filtro="entregues" aria-pressed="false">Entregues</button></div><div id="listaPedidos" role="status" aria-live="polite"><p>Entre na sua conta para consultar seus pedidos.</p></div><button type="button" id="fecharPedidos">Fechar</button></dialog>
+<dialog id="modalPedidos" aria-labelledby="tituloPedidos"><h2 id="tituloPedidos">Meus Pedidos</h2><p class="nota">Histórico pessoal de compras. Disponível após login seguro.</p><p class="nota">Cada pedido exibirá número, data, produtos, valor, pagamento e entrega. Ao selecionar um pedido, os detalhes serão abertos nesta janela.</p><div class="filtros" role="group" aria-label="Filtrar pedidos"><button type="button" data-filtro="todos" aria-pressed="true">Todos</button><button type="button" data-filtro="pendentes" aria-pressed="false">Pendentes</button><button type="button" data-filtro="pagos" aria-pressed="false">Pagos</button><button type="button" data-filtro="entregues" aria-pressed="false">Entregues</button></div><form id="loginClienteLab"><label>Nome de login <input name="nome" required autocomplete="username"></label><label>Senha <input name="senha" type="password" required autocomplete="current-password"></label><button type="submit">Entrar no laboratório local</button></form><p id="estadoLogin" role="status"></p><div id="listaPedidos" role="status" aria-live="polite"><p>Entre na sua conta para consultar seus pedidos.</p></div><button type="button" id="fecharPedidos">Fechar</button></dialog>
 </main>
-<script>const d=document.getElementById('modalPedidos');document.getElementById('abrirPedidos').addEventListener('click',()=>d.showModal());document.getElementById('fecharPedidos').addEventListener('click',()=>d.close());document.querySelectorAll('[data-filtro]').forEach(b=>b.addEventListener('click',()=>{document.querySelectorAll('[data-filtro]').forEach(x=>x.setAttribute('aria-pressed',String(x===b)));document.getElementById('listaPedidos').textContent='Entre na sua conta para consultar seus pedidos '+(b.dataset.filtro==='todos'?'':'('+b.textContent.toLowerCase()+')')+'.';}));</script>
+<script>
+const formulario=document.getElementById('loginClienteLab');
+const lista=document.getElementById('listaPedidos');
+const estado=document.getElementById('estadoLogin');
+let token=null,pedidos=[];
+const moeda=n=>new Intl.NumberFormat('pt-BR',{style:'currency',currency:'BRL'}).format(n/100);
+function mostrar(){
+ const ativo=document.querySelector('[data-filtro][aria-pressed=true]').dataset.filtro;
+ lista.replaceChildren();
+ const itens=ativo==='todos'?pedidos:pedidos.filter(p=>p.status===ativo);
+ if(!itens.length){const p=document.createElement('p');p.textContent=token?'Nenhum pedido nesta categoria.':'Entre na sua conta para consultar seus pedidos.';lista.append(p);return;}
+ for(const pedido of itens){
+  const b=document.createElement('button');b.type='button';
+  b.textContent=pedido.pedidoId+' · '+moeda(pedido.valorCentavos);
+  b.addEventListener('click',()=>{estado.textContent='Pedido '+pedido.pedidoId+' · Produto '+pedido.produtoId+' · '+moeda(pedido.valorCentavos)+' · '+new Date(pedido.criadoEm).toLocaleDateString('pt-BR')+' · Pagamento não consultado';});
+  lista.append(b);
+ }
+}
+formulario.addEventListener('submit',async e=>{
+ e.preventDefault();estado.textContent='Conferindo login...';
+ try{
+  const dados=Object.fromEntries(new FormData(formulario));
+  const r=await fetch('/api/cliente-lab/entrar',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(dados)});
+  if(!r.ok)throw Error('Login indisponível ou inválido');
+  const sessao=await r.json();token=sessao.token;
+  const resposta=await fetch('/api/cliente-lab/meus-pedidos',{headers:{Authorization:'Bearer '+token}});
+  if(!resposta.ok)throw Error('Consulta de pedidos indisponível');
+  pedidos=(await resposta.json()).pedidos;
+  formulario.hidden=true;estado.textContent='Laboratório local · '+sessao.conta.nome;
+  mostrar();
+ }catch(erro){token=null;pedidos=[];estado.textContent=erro.message;mostrar();}
+});
+document.querySelectorAll('[data-filtro]').forEach(b=>b.addEventListener('click',()=>{document.querySelectorAll('[data-filtro]').forEach(x=>x.setAttribute('aria-pressed',String(x===b)));mostrar();}));
+const dialogo=document.getElementById('modalPedidos');
+document.getElementById('abrirPedidos').addEventListener('click',()=>dialogo.showModal());
+document.getElementById('fecharPedidos').addEventListener('click',()=>dialogo.close());
+</script>
 </body>
 </html>
