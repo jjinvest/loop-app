@@ -6,7 +6,7 @@
 <link rel="stylesheet" href="/css/style.css">
 <style>
 main{max-width:760px;margin:1.5rem auto;padding:1rem} .passo{border:1px solid #88723d;border-radius:12px;padding:1.2rem;margin:1rem 0}
-small,.nota{opacity:.8} .acao{display:inline-block;background:#174d37;color:white;padding:.75rem 1rem;border-radius:8px;text-decoration:none}
+small,.nota{opacity:.8} dialog{width:min(92vw,580px);border:1px solid #88723d;border-radius:12px;padding:1.4rem}dialog::backdrop{background:rgba(0,0,0,.7)} .filtros{display:flex;flex-wrap:wrap;gap:.5rem;margin:1rem 0}.filtros button[aria-pressed=true]{font-weight:bold;text-decoration:underline} .acao{display:inline-block;background:#174d37;color:white;padding:.75rem 1rem;border-radius:8px;text-decoration:none}
 </style>
 </head>
 <body>
@@ -19,8 +19,8 @@ small,.nota{opacity:.8} .acao{display:inline-block;background:#174d37;color:whit
 <section class="passo"><h3>3. Meus Pedidos</h3><p>Acompanhe o histórico de compras e abra os detalhes de cada pedido em uma janela, sem sair do escritório.</p><button class="acao" type="button" id="abrirPedidos">Meus Pedidos</button></section>
 <section class="passo"><h3>4. Acompanhar o LOOP</h3><p>Veja o tabuleiro e as filas A e B na prévia do Escritório Virtual.</p><a class="acao" href="/#totalA">Ver tabuleiro e filas</a></section>
 <p class="nota">Ambiente de demonstração, sem pagamentos reais e sem promessa de retorno financeiro.</p>
-<dialog id="modalPedidos" aria-labelledby="tituloPedidos"><h2 id="tituloPedidos">Meus Pedidos</h2><p>Seu histórico aparecerá aqui após o login do cliente e a integração segura com os pedidos. Nenhuma compra fictícia será apresentada como real.</p><button type="button" id="fecharPedidos">Fechar</button></dialog>
+<dialog id="modalPedidos" aria-labelledby="tituloPedidos"><h2 id="tituloPedidos">Meus Pedidos</h2><p class="nota">Histórico pessoal de compras. Disponível após login seguro.</p><div class="filtros" role="group" aria-label="Filtrar pedidos"><button type="button" data-filtro="todos" aria-pressed="true">Todos</button><button type="button" data-filtro="pendentes" aria-pressed="false">Pendentes</button><button type="button" data-filtro="pagos" aria-pressed="false">Pagos</button><button type="button" data-filtro="entregues" aria-pressed="false">Entregues</button></div><div id="listaPedidos" role="status" aria-live="polite"><p>Entre na sua conta para consultar seus pedidos.</p></div><button type="button" id="fecharPedidos">Fechar</button></dialog>
 </main>
-<script>const d=document.getElementById('modalPedidos');document.getElementById('abrirPedidos').addEventListener('click',()=>d.showModal());document.getElementById('fecharPedidos').addEventListener('click',()=>d.close());</script>
+<script>const d=document.getElementById('modalPedidos');document.getElementById('abrirPedidos').addEventListener('click',()=>d.showModal());document.getElementById('fecharPedidos').addEventListener('click',()=>d.close());document.querySelectorAll('[data-filtro]').forEach(b=>b.addEventListener('click',()=>{document.querySelectorAll('[data-filtro]').forEach(x=>x.setAttribute('aria-pressed',String(x===b)));document.getElementById('listaPedidos').textContent='Entre na sua conta para consultar seus pedidos '+(b.dataset.filtro==='todos'?'':'('+b.textContent.toLowerCase()+')')+'.';}));</script>
 </body>
 </html>
