@@ -19,13 +19,13 @@ test('montagem: API Sandbox -> cobranca -> titular -> ponte -> uma posicao SQLit
  const titular=contas.cadastrar({nome:'Comprador Integracao',email:'comprador-integracao@exemplo.invalid',senha:'senha-ficticia-2026'});
  const titularidade=new PedidosTitularidadeDemoSQLite({banco,contas,relogio:()=> '2026-10-26T09:00:00.000Z'});
  titularidade.preparar({pedidoId:PEDIDO,contaId:titular.contaId,produtoId:'curso-identificado',valorCentavos:25000});
- let estado='PENDING',posts=0,gets=0;
+ let estado='PENDING',posts=0,gets=0,clienteRemoto='cus_SandboxMontagem1';
  const fetchImpl=async(url,opts)=>{
   assert.ok(url.startsWith(ASAAS_SANDBOX_BASE+'/payments'));
   if(opts.method==='POST'){posts++;assert.equal(JSON.parse(opts.body).value,250);}
   else gets++;
   return {ok:true,json:async()=>({id:'pay_SandboxMontagem1',billingType:'PIX',value:250,
-   externalReference:'LOOPLAB-'+PEDIDO,status:estado})};
+   externalReference:'LOOPLAB-'+PEDIDO,status:estado,customer:clienteRemoto})};
  };
  const m=montarIntegracaoAsaasSandboxLoopLab({banco,contas,titularidade,
   agora:()=> '2026-10-26T09:10:00.000Z',
@@ -34,13 +34,17 @@ test('montagem: API Sandbox -> cobranca -> titular -> ponte -> uma posicao SQLit
  await assert.rejects(m.conciliador.processar(PEDIDO));
  assert.equal(banco.prepare('SELECT COUNT(*) AS n FROM admin_ponte_compras_demo').get().n,0);
  estado='RECEIVED';
+ clienteRemoto='cus_ClienteDiferente';
+ await assert.rejects(m.conciliador.processar(PEDIDO),e=>e.codigo==='DADOS_PAGAMENTO_SANDBOX_DIVERGENTES');
+ assert.equal(banco.prepare('SELECT COUNT(*) AS n FROM admin_ponte_compras_demo').get().n,0);
+ clienteRemoto='cus_SandboxMontagem1';
  const [a,b]=await Promise.all([m.conciliador.processar(PEDIDO),m.conciliador.processar(PEDIDO)]);
  assert.equal(a.criada,true);
  assert.equal(b.repetida,true);
  assert.equal(a.posicaoId,b.posicaoId);
  assert.equal(a.contaId,titular.contaId);
  assert.equal(posts,1);
- assert.equal(gets,3);
+ assert.equal(gets,4);
  assert.equal(a.confirmacaoIndividualObrigatoria,true);
  assert.equal(a.cpfConfirmadoAutomaticamente,false);
  estado='REFUNDED';
