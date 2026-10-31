@@ -17,6 +17,8 @@ test('Meus Pedidos lista apenas pedidos do titular autenticado no laboratorio',(
   assert.deepEqual(pedidos.listarPorTitular(a.contaId).map(p=>p.pedidoId),['pedido-um']);
   assert.deepEqual(pedidos.listarPorTitular(b.contaId).map(p=>p.pedidoId),['pedido-dois']);
   assert.equal(pedidos.listarPorTitular(a.contaId)[0].valorCentavos,25000);
+  assert.equal(pedidos.listarPorTitular(a.contaId)[0].contaId,undefined);
+  assert.equal(pedidos.listarPorTitular(b.contaId)[0].produtoId,'curso');
   assert.throws(()=>pedidos.listarPorTitular('invalido'),{codigo:'PEDIDO_INVALIDO'});
  }finally{banco.close();}
 });
