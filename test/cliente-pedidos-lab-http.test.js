@@ -19,6 +19,15 @@ test('login e Meus Pedidos isolam contas via HTTP',async()=>{
  try{
   await new Promise(resolve=>servidor.once('listening',resolve));
   const base='http://127.0.0.1:'+servidor.address().port+'/api/cliente-lab';
+  const cadastro=await fetch(base+'/cadastrar',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({nome:'Cliente Novo Laboratorio',email:'novo@example.invalid',senha:'SenhaNova12345'})});
+  assert.equal(cadastro.status,201);
+  const repetido=await fetch(base+'/cadastrar',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({nome:'Cliente Novo Laboratorio',email:'novo@example.invalid',senha:'SenhaNova12345'})});
+  assert.equal(repetido.status,409);
+  const novoLogin=await fetch(base+'/entrar',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({nome:'Cliente Novo Laboratorio',senha:'SenhaNova12345'})});
+  assert.equal(novoLogin.status,200);
+  const novoToken=(await novoLogin.json()).token;
+  const novosPedidos=await fetch(base+'/meus-pedidos',{headers:{Authorization:'Bearer '+novoToken}});
+  assert.deepEqual((await novosPedidos.json()).pedidos,[]);
   assert.equal((await fetch(base+'/meus-pedidos')).status,401);
   const login=await fetch(base+'/entrar',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({nome:'Cliente Um Teste',senha:'senha-segura-123'})});
   assert.equal(login.status,200);
