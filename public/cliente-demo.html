@@ -13,13 +13,13 @@ small,.nota{opacity:.8} dialog{width:min(92vw,580px);border:1px solid #88723d;bo
 <header><div><h1>AKITEMM</h1><small>Jornada do cliente · prévia controlada</small></div></header>
 <main>
 <h2>Conheça a plataforma LOOP</h2>
-<p class="nota">Esta página é uma prévia de navegação. Não cria contas, pedidos, posições nem pagamentos. Cadastro e compras só serão liberados após autenticação e integração pública segura.</p>
+<p class="nota">Prévia de navegação. O histórico de pedidos pode ser consultado apenas no laboratório local, com login de teste e banco SQLite preparado. Não cria compras nem pagamentos.</p>
 <section class="passo"><h3>1. Conhecer os produtos</h3><p>Explore os cursos e produtos da vitrine AKITEMM.</p><a class="acao" href="/#tituloCatalogo">Ver vitrine</a></section>
 <section class="passo"><h3>2. Entender a participação</h3><p>Uma compra qualificada de R$ 250,00 em um único pedido poderá gerar uma posição, depois da confirmação do pagamento e das condições aplicáveis.</p><a class="acao" href="/#tituloCatalogo">Conhecer a loja</a></section>
 <section class="passo"><h3>3. Meus Pedidos</h3><p>Acompanhe o histórico de compras e abra os detalhes de cada pedido em uma janela, sem sair do escritório.</p><button class="acao" type="button" id="abrirPedidos">Meus Pedidos</button></section>
 <section class="passo"><h3>4. Acompanhar o LOOP</h3><p>Veja o tabuleiro e as filas A e B na prévia do Escritório Virtual.</p><a class="acao" href="/#totalA">Ver tabuleiro e filas</a></section>
 <p class="nota">Ambiente de demonstração, sem pagamentos reais e sem promessa de retorno financeiro.</p>
-<dialog id="modalPedidos" aria-labelledby="tituloPedidos"><h2 id="tituloPedidos">Meus Pedidos</h2><p class="nota">Histórico pessoal de compras. Disponível após login seguro.</p><p class="nota">Cada pedido exibirá número, data, produtos, valor, pagamento e entrega. Ao selecionar um pedido, os detalhes serão abertos nesta janela.</p><div class="filtros" role="group" aria-label="Filtrar pedidos"><button type="button" data-filtro="todos" aria-pressed="true">Todos</button><button type="button" data-filtro="pendentes" aria-pressed="false">Pendentes</button><button type="button" data-filtro="pagos" aria-pressed="false">Pagos</button><button type="button" data-filtro="entregues" aria-pressed="false">Entregues</button></div><form id="loginClienteLab"><label>Nome de login <input name="nome" required autocomplete="username"></label><label>Senha <input name="senha" type="password" required autocomplete="current-password"></label><button type="submit">Entrar no laboratório local</button></form><p id="estadoLogin" role="status"></p><div id="listaPedidos" role="status" aria-live="polite"><p>Entre na sua conta para consultar seus pedidos.</p></div><button type="button" id="fecharPedidos">Fechar</button></dialog>
+<dialog id="modalPedidos" aria-labelledby="tituloPedidos"><h2 id="tituloPedidos">Meus Pedidos</h2><p class="nota">Histórico pessoal de compras. Disponível após login seguro.</p><p class="nota">O laboratório exibe número, data, produto e valor registrados no SQLite. Situação de pagamento e entrega ainda não está integrada.</p><form id="loginClienteLab"><label>Nome de login <input name="nome" required autocomplete="username"></label><label>Senha <input name="senha" type="password" required autocomplete="current-password"></label><button type="submit">Entrar no laboratório local</button></form><p id="estadoLogin" role="status"></p><div id="listaPedidos" role="status" aria-live="polite"><p>Entre na sua conta para consultar seus pedidos.</p></div><button type="button" id="fecharPedidos">Fechar</button></dialog>
 </main>
 <script>
 const formulario=document.getElementById('loginClienteLab');
@@ -28,9 +28,9 @@ const estado=document.getElementById('estadoLogin');
 let token=null,pedidos=[];
 const moeda=n=>new Intl.NumberFormat('pt-BR',{style:'currency',currency:'BRL'}).format(n/100);
 function mostrar(){
- const ativo=document.querySelector('[data-filtro][aria-pressed=true]').dataset.filtro;
+
  lista.replaceChildren();
- const itens=ativo==='todos'?pedidos:pedidos.filter(p=>p.status===ativo);
+ const itens=pedidos;
  if(!itens.length){const p=document.createElement('p');p.textContent=token?'Nenhum pedido nesta categoria.':'Entre na sua conta para consultar seus pedidos.';lista.append(p);return;}
  for(const pedido of itens){
   const b=document.createElement('button');b.type='button';
@@ -53,7 +53,7 @@ formulario.addEventListener('submit',async e=>{
   mostrar();
  }catch(erro){token=null;pedidos=[];estado.textContent=erro.message;mostrar();}
 });
-document.querySelectorAll('[data-filtro]').forEach(b=>b.addEventListener('click',()=>{document.querySelectorAll('[data-filtro]').forEach(x=>x.setAttribute('aria-pressed',String(x===b)));mostrar();}));
+
 const dialogo=document.getElementById('modalPedidos');
 document.getElementById('abrirPedidos').addEventListener('click',()=>dialogo.showModal());
 document.getElementById('fecharPedidos').addEventListener('click',()=>dialogo.close());
