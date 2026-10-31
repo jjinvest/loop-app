@@ -5,7 +5,7 @@ function criarRouterClientePedidosLab({contas,pedidos}={}){
  if(!contas||!pedidos||contas.banco!==pedidos.banco||
     typeof contas.autenticar!=='function'||typeof pedidos.listarPorTitular!=='function')
   throw new TypeError('Dependencias de laboratorio invalidas');
- const router=express.Router(),sessoes=new Map();
+ const router=express.Router(),sessoes=new Map(),tentativas=new Map();
  router.use((_q,res,next)=>{res.set('Cache-Control','no-store');next();});
  const chave=t=>createHash('sha256').update(t).digest('hex');
  function sessao(req,res,next){
@@ -16,14 +16,20 @@ function criarRouterClientePedidosLab({contas,pedidos}={}){
  }
  router.post('/entrar',(req,res)=>{
   if(!req.is('application/json'))return res.sendStatus(415);
+  const origem=req.socket.remoteAddress||'local';
+  const agora=Date.now();
+  const anterior=tentativas.get(origem);
+  if(anterior&&anterior.ate>agora&&anterior.total>=5)return res.status(429).json({erro:'AGUARDE_PARA_TENTAR_NOVAMENTE'});
+  if(!anterior||anterior.ate<=agora)tentativas.set(origem,{total:0,ate:agora+60000});
   const {nome,senha}=req.body||{};
   if(typeof nome!=='string'||typeof senha!=='string')return res.sendStatus(400);
   try{
    const resultado=contas.autenticar({nome,senha});
+   tentativas.delete(origem);
    const token=randomBytes(32).toString('hex');
    sessoes.set(chave(token),{contaId:resultado.conta.contaId,expira:Date.now()+1800000});
    return res.json({token,expiraEmSegundos:1800,conta:{nome:resultado.conta.nome,apelido:resultado.conta.apelido},laboratorio:true});
-  }catch(e){return res.status(401).json({erro:'CREDENCIAIS_INVALIDAS'});}
+  }catch(e){tentativas.get(origem).total++;return res.status(401).json({erro:'CREDENCIAIS_INVALIDAS'});}
  });
  router.get('/meus-pedidos',sessao,(req,res)=>{
   try{return res.json({pedidos:pedidos.listarPorTitular(req.contaId),laboratorio:true});}
