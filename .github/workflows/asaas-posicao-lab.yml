@@ -17,7 +17,7 @@ jobs:
       - uses: actions/checkout@v4
         with:
           repository: jjinvest/loop-app
-          ref: 5c4d5cc478b462dd787d0be62574f453d5c386fa
+          ref: 10fd71c1e6aac36bc1bf742a04dc3119c7aa6573
           persist-credentials: false
       - uses: actions/setup-node@v4
         with:
