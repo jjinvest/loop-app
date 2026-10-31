@@ -64,7 +64,7 @@ formulario.addEventListener('submit',async e=>{
   const resposta=await fetch('/api/cliente-lab/meus-pedidos',{headers:{Authorization:'Bearer '+token}});
   if(!resposta.ok)throw Error('Consulta de pedidos indisponível');
   pedidos=(await resposta.json()).pedidos;
-  formulario.hidden=true;estado.textContent='Laboratório local · '+sessao.conta.nome;
+  formulario.hidden=true;cadastro.hidden=true;estado.textContent='Laboratório local · '+sessao.conta.nome;
   mostrar();
  }catch(erro){token=null;pedidos=[];estado.textContent=erro.message;mostrar();}
 });
