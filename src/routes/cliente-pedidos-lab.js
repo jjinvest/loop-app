@@ -21,12 +21,15 @@ function criarRouterClientePedidosLab({contas,pedidos}={}){
   const anterior=tentativas.get(origem);
   if(anterior&&anterior.ate>agora&&anterior.total>=5)return res.status(429).json({erro:'AGUARDE_PARA_TENTAR_NOVAMENTE'});
   if(!anterior||anterior.ate<=agora)tentativas.set(origem,{total:0,ate:agora+60000});
-  const {nome,senha}=req.body||{};
+  if(!req.body||typeof req.body!=='object'||Array.isArray(req.body)||
+     Object.keys(req.body).sort().join(',')!=='nome,senha')return res.sendStatus(400);
+  const {nome,senha}=req.body;
   if(typeof nome!=='string'||typeof senha!=='string')return res.sendStatus(400);
   try{
    const resultado=contas.autenticar({nome,senha});
    tentativas.delete(origem);
    const token=randomBytes(32).toString('hex');
+   for(const [id,s] of sessoes)if(s.expira<=Date.now())sessoes.delete(id);
    sessoes.set(chave(token),{contaId:resultado.conta.contaId,expira:Date.now()+1800000});
    return res.json({token,expiraEmSegundos:1800,conta:{nome:resultado.conta.nome,apelido:resultado.conta.apelido},laboratorio:true});
   }catch(e){tentativas.get(origem).total++;return res.status(401).json({erro:'CREDENCIAIS_INVALIDAS'});}
