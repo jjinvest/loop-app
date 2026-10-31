@@ -11,7 +11,14 @@ const catalogoRouter = require('./routes/catalogo');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-app.use(express.json());
+app.disable('x-powered-by');
+app.use((req,res,next)=>{
+  res.set('X-Content-Type-Options','nosniff');
+  res.set('Referrer-Policy','strict-origin-when-cross-origin');
+  res.set('X-Frame-Options','DENY');
+  next();
+});
+app.use(express.json({limit:'32kb'}));
 
 app.use('/health', healthRouter);
 app.use('/catraca', bloquearMutacoesSimuladas, catracaRouter);
