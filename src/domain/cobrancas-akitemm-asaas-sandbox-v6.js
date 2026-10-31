@@ -152,7 +152,9 @@ class CobrancasAkitemmAsaasSandboxSQLite{
   if(remoto.pagamentoId!==antes.pagamentoId||
      remoto.valorCentavos!==antes.valorCentavos||
      remoto.externalReference!=='LOOPLAB-'+pedidoId||
-     remoto.billingType!=='PIX')
+     remoto.billingType!=='PIX'||
+     (remoto.clienteAsaasId!==null&&remoto.clienteAsaasId!==undefined&&
+      remoto.clienteAsaasId!==antes.clienteAsaasId))
    throw falha('DADOS_PAGAMENTO_SANDBOX_DIVERGENTES');
   const estado=REVERTIDOS.has(remoto.status)?'REVERSAO_INFORMADA_SANDBOX':
    CONFIRMADOS.has(remoto.status)?'RECEBIMENTO_INFORMADO_SANDBOX':
