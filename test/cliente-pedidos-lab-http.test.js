@@ -28,6 +28,22 @@ test('login e Meus Pedidos isolam contas via HTTP',async()=>{
   const novoToken=(await novoLogin.json()).token;
   const novosPedidos=await fetch(base+'/meus-pedidos',{headers:{Authorization:'Bearer '+novoToken}});
   assert.deepEqual((await novosPedidos.json()).pedidos,[]);
+  const enviarPedido=(token,corpo)=>fetch(base+'/pedidos',{method:'POST',
+   headers:{'Content-Type':'application/json',Authorization:'Bearer '+token},
+   body:JSON.stringify(corpo)});
+  const compra={pedidoId:'novo-pedido-250',produtoId:'curso-pdf',valorCentavos:25000};
+  assert.equal((await enviarPedido(novoToken,{...compra,contaId:a.contaId})).status,400);
+  assert.equal((await enviarPedido(novoToken,{...compra,valorCentavos:24999})).status,400);
+  const criado=await enviarPedido(novoToken,compra);
+  assert.equal(criado.status,201);
+  const detalhe=await criado.json();
+  assert.equal(detalhe.posicaoCriada,false);
+  assert.equal(detalhe.cobrancaReal,false);
+  assert.equal((await enviarPedido(novoToken,compra)).status,200);
+  assert.equal((await enviarPedido(novoToken,{...compra,produtoId:'outro'})).status,409);
+  const pedidosNovo=await fetch(base+'/meus-pedidos',{headers:{Authorization:'Bearer '+novoToken}});
+  assert.deepEqual((await pedidosNovo.json()).pedidos.map(p=>p.pedidoId),['novo-pedido-250']);
+  assert.equal((await enviarPedido('',compra)).status,401);
   assert.equal((await fetch(base+'/meus-pedidos')).status,401);
   const login=await fetch(base+'/entrar',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({nome:'Cliente Um Teste',senha:'senha-segura-123'})});
   assert.equal(login.status,200);
