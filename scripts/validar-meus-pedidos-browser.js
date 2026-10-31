@@ -32,6 +32,13 @@ async function executar(){
   const page=await browser.newPage({viewport:{width:1280,height:900},deviceScaleFactor:1});
   await page.goto('http://127.0.0.1:'+porta+'/cliente-demo.html');
   await page.locator('#abrirPedidos').click();
+  await page.locator('#cadastroClienteLab [name=nome]').fill('Cliente Novo Navegador');
+  await page.locator('#cadastroClienteLab [name=email]').fill('navegador@example.invalid');
+  await page.locator('#cadastroClienteLab [name=senha]').fill('SenhaNovaNavegador123');
+  await page.locator('#cadastroClienteLab button[type=submit]').click();
+  await page.getByText('Conta de laboratorio cadastrada.').waitFor({timeout:10000});
+  if(await page.locator('#loginClienteLab [name=nome]').inputValue()!=='Cliente Novo Navegador')
+    throw Error('Cadastro nao preencheu o nome no login');
   await page.locator('#loginClienteLab [name=nome]').fill('Cliente de Homologacao');
   await page.locator('#loginClienteLab [name=senha]').fill('SenhaLaboratorio123');
   await page.locator('#loginClienteLab button[type=submit]').click();
