@@ -1,0 +1,28 @@
+name: LOOP - Pedido e posicao Asaas Sandbox
+on:
+  workflow_dispatch:
+    inputs:
+      autorizar:
+        description: 'Digite SIM para criar cobranca ficticia no Asaas Sandbox'
+        required: true
+        type: string
+permissions:
+  contents: read
+jobs:
+  conferir:
+    if: ${{ inputs.autorizar == 'SIM' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          repository: jjinvest/loop-app
+          ref: 5c4d5cc478b462dd787d0be62574f453d5c386fa
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Executar verificacao isolada no Asaas Sandbox
+        env:
+          ASAAS_SANDBOX_API_KEY: ${{ secrets.ASAAS_SANDBOX_API_KEY }}
+        run: node scripts/asaas-posicao-lab-check.js
