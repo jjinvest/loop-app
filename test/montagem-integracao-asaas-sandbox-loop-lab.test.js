@@ -1,5 +1,8 @@
 'use strict';
 const {test}=require('node:test');
+const fs=require('node:fs');
+const os=require('node:os');
+const path=require('node:path');
 const assert=require('node:assert/strict');
 const {RepositorioCatalogoSQLite}=require('../src/domain/repositorio-catalogo-sqlite');
 const {ContasParticipantesDemoSQLite}=require('../src/domain/contas-participantes-demo-sqlite');
@@ -57,4 +60,53 @@ test('montagem recusa provedor falso ou ambiente de producao',t=>{
  assert.throws(()=>montarIntegracaoAsaasSandboxLoopLab({banco,contas,titularidade,
   provedor:{ambiente:'ASAAS_SANDBOX_EXCLUSIVO',criarCobrancaPix:()=>{},consultarCobranca:()=>{}}}),
   /Somente provedor Asaas Sandbox/);
+});
+
+test('reabertura SQLite preserva posicao unica e titular no replay Asaas',async t=>{
+ const pasta=fs.mkdtempSync(path.join(os.tmpdir(),'loop-asaas-'));
+ t.after(()=>fs.rmSync(pasta,{recursive:true,force:true}));
+ const caminho=path.join(pasta,'loop.sqlite');
+ const pedidoId='pedido-reinicio-asaas';
+ let posts=0,gets=0,estado='PENDING';
+ const fetchImpl=async(url,opts)=>{
+  assert.ok(url.startsWith(ASAAS_SANDBOX_BASE+'/payments'));
+  if(opts.method==='POST')posts++;else gets++;
+  return {ok:true,json:async()=>({
+   id:'pay_ReinicioSandbox01',billingType:'PIX',value:250,
+   externalReference:'LOOPLAB-'+pedidoId,status:estado
+  })};
+ };
+ const abrir=()=>{
+  const repo=new RepositorioCatalogoSQLite({caminho});
+  const banco=repo.banco;
+  const contas=new ContasParticipantesDemoSQLite({banco});
+  const titularidade=new PedidosTitularidadeDemoSQLite({banco,contas});
+  const m=montarIntegracaoAsaasSandboxLoopLab({banco,contas,titularidade,
+   apiKey:'CHAVE_FICTICIA_APENAS_TESTES_123',fetchImpl});
+  return {repo,banco,contas,titularidade,m};
+ };
+ let s=abrir();
+ s.banco.exec('CREATE TABLE admin_carrinho_loop_demo(pedido_id TEXT PRIMARY KEY,total_centavos INTEGER)');
+ s.banco.prepare('INSERT INTO admin_carrinho_loop_demo VALUES(?,?)').run(pedidoId,25000);
+ const titular=s.contas.cadastrar({nome:'Titular Reinicio',email:'titular-reinicio@exemplo.invalid',senha:'senha-ficticia-2026'});
+ s.titularidade.preparar({pedidoId,contaId:titular.contaId,produtoId:'curso-reinicio',valorCentavos:25000});
+ await s.m.cobrancas.criar({pedidoId,origem:'CARRINHO',clienteAsaasId:'cus_ReinicioSandbox01'});
+ await assert.rejects(s.m.conciliador.processar(pedidoId));
+ estado='RECEIVED';
+ const primeira=await s.m.conciliador.processar(pedidoId);
+ assert.equal(primeira.criada,true);
+ assert.equal(primeira.contaId,titular.contaId);
+ assert.equal(s.banco.prepare('SELECT COUNT(*) AS n FROM admin_ponte_compras_demo').get().n,1);
+ s.repo.fechar();
+ s=abrir();
+ const repetida=await s.m.conciliador.processar(pedidoId);
+ assert.equal(repetida.repetida,true);
+ assert.equal(repetida.posicaoId,primeira.posicaoId);
+ assert.equal(repetida.contaId,titular.contaId);
+ assert.equal(repetida.confirmacaoIndividualObrigatoria,true);
+ assert.equal(repetida.cpfConfirmadoAutomaticamente,false);
+ assert.equal(s.banco.prepare('SELECT COUNT(*) AS n FROM admin_ponte_compras_demo').get().n,1);
+ assert.equal(posts,1);
+ assert.ok(gets>=3);
+ s.repo.fechar();
 });
