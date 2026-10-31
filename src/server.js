@@ -26,6 +26,26 @@ app.use('/filas', bloquearMutacoesSimuladas, filasRouter);
 app.use('/participants', participantsRouter);
 app.use('/catalogo', catalogoRouter);
 
+// Laboratorio de clientes: opt-in e apenas requisicoes locais.
+if(process.env.LOOP_CLIENTES_LAB==='SIM'){
+  const {DatabaseSync}=require('node:sqlite');
+  const {ContasParticipantesDemoSQLite}=require('./domain/contas-participantes-demo-sqlite');
+  const {PedidosTitularidadeDemoSQLite}=require('./domain/pedidos-titularidade-demo-sqlite');
+  const {criarRouterClientePedidosLab}=require('./routes/cliente-pedidos-lab');
+  const arquivo=process.env.LOOP_CLIENTES_LAB_SQLITE;
+  if(!arquivo)throw new Error('LOOP_CLIENTES_LAB_SQLITE obrigatorio');
+  const banco=new DatabaseSync(arquivo);
+  const contas=new ContasParticipantesDemoSQLite({banco});
+  const pedidos=new PedidosTitularidadeDemoSQLite({banco,contas});
+  const router=criarRouterClientePedidosLab({contas,pedidos});
+  app.use('/api/cliente-lab',(req,res,next)=>{
+    const endereco=req.socket.remoteAddress;
+    if(!['127.0.0.1','::1','::ffff:127.0.0.1'].includes(endereco))
+      return res.sendStatus(403);
+    next();
+  },router);
+}
+
 // Serve a interface web existente do LOOP.
 app.use(express.static(path.join(__dirname, '..', 'public')));
 
