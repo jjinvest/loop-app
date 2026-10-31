@@ -7,13 +7,19 @@ const {montarIntegracaoAsaasSandboxLoopLab}=require('../src/domain/montagem-inte
 async function main(){
  const key=process.env.ASAAS_SANDBOX_API_KEY;
  if(typeof key!=='string'||!key.startsWith('$aact_hmlg_'))throw Error('SANDBOX_KEY_MISSING');
- const res=await fetch('https://api-sandbox.asaas.com/v3/customers?externalReference=AKITEMM-LOOP-SANDBOX-TESTE-01&limit=10',{
-  headers:{access_token:key,Accept:'application/json'},redirect:'error',signal:AbortSignal.timeout(10000)
+ const ref='AKITEMM-LOOP-LAB-'+randomUUID().replace(/-/g,'');
+ const res=await fetch('https://api-sandbox.asaas.com/v3/customers',{
+  method:'POST',redirect:'error',
+  headers:{access_token:key,Accept:'application/json','Content-Type':'application/json'},
+  body:JSON.stringify({name:'Comprador Teste LOOP',cpfCnpj:'24971563792',
+   externalReference:ref,notificationDisabled:true}),
+  signal:AbortSignal.timeout(10000)
  });
  if(!res.ok)throw Error('SANDBOX_CUSTOMER_HTTP_'+res.status);
  const data=await res.json();
- if(!Array.isArray(data.data)||data.data.length!==1||!/^cus_[\\w-]+$/.test(data.data[0].id))throw Error('SANDBOX_CUSTOMER_NOT_UNIQUE');
- const customer=data.data[0].id;
+ if(!/^cus_[\\w-]+$/.test(data.id||'')||data.externalReference!==ref)
+  throw Error('SANDBOX_CUSTOMER_INVALID');
+ const customer=data.id;
  const db=new DatabaseSync(':memory:');
  try{
   const contas=new ContasParticipantesDemoSQLite({banco:db});
@@ -27,8 +33,15 @@ async function main(){
   await m.cobrancas.criar({pedidoId,origem:'CARRINHO',clienteAsaasId:customer});
   const status=await m.cobrancas.conferir(pedidoId);
   if(status.status!=='RECEBIMENTO_INFORMADO_SANDBOX'){
-   console.log('SANDBOX_PENDING: payment must be confirmed by authorized sandbox operator');
-   return;
+   const pagamento=m.cobrancas.consultar(pedidoId).pagamentoId;
+   if(!/^pay_[A-Za-z0-9_-]{5,90}$/.test(pagamento||''))throw Error('SANDBOX_PAYMENT_INVALID');
+   const confirm=await fetch('https://api-sandbox.asaas.com/v3/sandbox/payment/'+pagamento+'/confirm',{
+    method:'POST',redirect:'error',headers:{access_token:key,Accept:'application/json'},
+    signal:AbortSignal.timeout(10000)
+   });
+   if(!confirm.ok)throw Error('SANDBOX_CONFIRM_HTTP_'+confirm.status);
+   const atualizado=await m.cobrancas.conferir(pedidoId);
+   if(atualizado.status!=='RECEBIMENTO_INFORMADO_SANDBOX')throw Error('SANDBOX_NOT_RECEIVED');
   }
   const a=await m.conciliador.processar(pedidoId);
   const b=await m.conciliador.processar(pedidoId);
