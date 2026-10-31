@@ -17,7 +17,7 @@ async function main(){
  });
  if(!res.ok)throw Error('SANDBOX_CUSTOMER_HTTP_'+res.status);
  const data=await res.json();
- if(!/^cus_[\\w-]+$/.test(data.id||'')||data.externalReference!==ref)
+ if(!/^cus_[A-Za-z0-9_-]+$/.test(data.id||'')||data.externalReference!==ref)
   throw Error('SANDBOX_CUSTOMER_INVALID');
  const customer=data.id;
  const db=new DatabaseSync(':memory:');
