@@ -6,8 +6,14 @@ const {PedidosTitularidadeDemoSQLite}=require('../src/domain/pedidos-titularidad
 const {montarIntegracaoAsaasSandboxLoopLab}=require('../src/domain/montagem-integracao-asaas-sandbox-loop-lab');
 async function main(){
  const key=process.env.ASAAS_SANDBOX_API_KEY;
- const customer=process.env.ASAAS_SANDBOX_CUSTOMER_ID;
- if(!key||!/^cus_[\w-]+$/.test(customer||''))throw Error('SANDBOX_CONFIG_MISSING');
+ if(typeof key!=='string'||!key.startsWith('$aact_hmlg_'))throw Error('SANDBOX_KEY_MISSING');
+ const res=await fetch('https://api-sandbox.asaas.com/v3/customers?externalReference=AKITEMM-LOOP-SANDBOX-TESTE-01&limit=10',{
+  headers:{access_token:key,Accept:'application/json'},redirect:'error',signal:AbortSignal.timeout(10000)
+ });
+ if(!res.ok)throw Error('SANDBOX_CUSTOMER_HTTP_'+res.status);
+ const data=await res.json();
+ if(!Array.isArray(data.data)||data.data.length!==1||!/^cus_[\\w-]+$/.test(data.data[0].id))throw Error('SANDBOX_CUSTOMER_NOT_UNIQUE');
+ const customer=data.data[0].id;
  const db=new DatabaseSync(':memory:');
  try{
   const contas=new ContasParticipantesDemoSQLite({banco:db});
