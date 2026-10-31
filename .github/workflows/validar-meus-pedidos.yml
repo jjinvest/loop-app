@@ -24,7 +24,8 @@ jobs:
           cache: npm
       - run: npm ci
       - run: node --test test/cliente-pedidos-lab-http.test.js test/pedidos-titularidade-por-titular.test.js
-      - run: npx --yes playwright@1.56.1 install --with-deps chromium
+      - run: npm install --no-save playwright@1.56.1
+      - run: npx playwright install --with-deps chromium
       - run: node scripts/validar-meus-pedidos-browser.js
       - uses: actions/upload-artifact@v4
         if: always()
