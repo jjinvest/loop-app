@@ -23,6 +23,21 @@ small,.nota{opacity:.8} dialog{width:min(92vw,580px);border:1px solid #88723d;bo
 </main>
 <script>
 const formulario=document.getElementById('loginClienteLab');
+const cadastro=document.getElementById('cadastroClienteLab');
+cadastro.addEventListener('submit',async e=>{
+ e.preventDefault();
+ const estado=document.getElementById('estadoCadastro');
+ estado.textContent='Conferindo cadastro...';
+ try{
+  const dados=Object.fromEntries(new FormData(cadastro));
+  const resposta=await fetch('/api/cliente-lab/cadastrar',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(dados)});
+  if(!resposta.ok)throw Error('Cadastro indisponivel ou ja existente');
+  document.querySelector('#loginClienteLab [name=nome]').value=dados.nome;
+  cadastro.reset();
+  estado.textContent='Conta de laboratorio cadastrada. Entre para consultar seus pedidos.';
+ }catch(erro){estado.textContent=erro.message;}
+});
+
 const lista=document.getElementById('listaPedidos');
 const estado=document.getElementById('estadoLogin');
 let token=null,pedidos=[];
