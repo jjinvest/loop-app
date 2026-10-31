@@ -14,6 +14,20 @@ function criarRouterClientePedidosLab({contas,pedidos}={}){
   if(!registro||registro.expira<=Date.now())return res.status(401).json({erro:'LOGIN_NECESSARIO'});
   req.contaId=registro.contaId;req.token=token;next();
  }
+ router.post('/cadastrar',(req,res)=>{
+  if(!req.is('application/json'))return res.sendStatus(415);
+  const corpo=req.body;
+  if(!corpo||typeof corpo!=='object'||Array.isArray(corpo)||
+     Object.keys(corpo).sort().join(',')!=='email,nome,senha')
+    return res.status(400).json({erro:'CAMPOS_INVALIDOS'});
+  try{
+   const conta=contas.cadastrar({nome:corpo.nome,email:corpo.email,senha:corpo.senha});
+   return res.status(201).json({conta:{nome:conta.nome,apelido:conta.apelido},
+     laboratorio:true,comprasReais:false});
+  }catch(e){
+   return res.status(e.codigo==='CONFLITO'?409:400).json({erro:e.codigo||'CADASTRO_INVALIDO'});
+  }
+ });
  router.post('/entrar',(req,res)=>{
   if(!req.is('application/json'))return res.sendStatus(415);
   const origem=req.socket.remoteAddress||'local';
