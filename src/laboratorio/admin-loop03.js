@@ -396,6 +396,57 @@
    'Fontes ausentes: '+d.fontesAusentes.length+
    '. Dados de laboratório em livros separados; nenhum saldo ou saque real habilitado.';
  }
+ async function carregarMarcoZero(){
+  // O gate e informativo, NAO possui acao de aprovacao ou publicacao.
+  $('marcoZeroEstadoAdmin').textContent='NÃO LIBERADO';
+  $('marcoZeroExternosAdmin').textContent='—';
+  $('marcoZeroAlertasAdmin').textContent='—';
+  $('marcoZeroTecnicosAdmin').replaceChildren();
+  $('marcoZeroGatesExternosAdmin').replaceChildren();
+  const response=await fetch('/api/admin/escritorio-demo/marco-zero',{
+    cache:'no-store',credentials:'omit',
+    headers:{Authorization:'Bearer '+token}
+  });
+  if(response.status===501){
+    $('marcoZeroStatusAdmin').textContent=
+      'SQLite não disponível; o Marco Zero continua bloqueado.';
+    return;
+  }
+  if(!response.ok)throw Error('Consulta de prontidão recusada ('+response.status+').');
+  const d=await response.json();
+  if(d.modo!=='MARCO_ZERO_GATE_SQLITE_LAB'||
+     d.estado!=='NAO_LIBERADO_PARA_DIVULGACAO'||
+     d.marcoZeroLiberado!==false||d.aptoParaReceberClientesReais!==false||
+     d.aptoParaPagamentosReais!==false||d.somenteLeitura!==true||
+     d.percentualAutomatico!==null||
+     !Array.isArray(d.tecnicos)||!Array.isArray(d.externos)||
+     !Number.isSafeInteger(d.resumo?.bloqueiosExternosNaoComprovados)||
+     d.externos.some(x=>x.estado!=='NAO_COMPROVADO_NESTA_FONTE'))
+    throw Error('Gate não comprovadamente fechado');
+  const alerta=d.resumo.alertasLocaisPorCriterio;
+  if(alerta!==null&&(!Number.isSafeInteger(alerta)||alerta<0))
+    throw Error('Contador de anomalias inválido');
+  $('marcoZeroExternosAdmin').textContent=
+    String(d.resumo.bloqueiosExternosNaoComprovados);
+  $('marcoZeroAlertasAdmin').textContent=
+    alerta===null?'Fonte indisponível':String(alerta);
+  function preencher(id,lista){
+    const pai=$(id);
+    for(const item of lista){
+      if(typeof item.descricao!=='string'||typeof item.estado!=='string')
+        throw Error('Gate incompleto');
+      const linha=document.createElement('div');
+      linha.className='status-linha';
+      const nome=document.createElement('span');nome.textContent=item.descricao;
+      const estado=document.createElement('strong');estado.textContent=item.estado;
+      linha.append(nome,estado);pai.append(linha);
+    }
+  }
+  preencher('marcoZeroTecnicosAdmin',d.tecnicos);
+  preencher('marcoZeroGatesExternosAdmin',d.externos);
+  $('marcoZeroStatusAdmin').textContent=
+    'Dados locais conferidos apenas em laboratório. Lançamento e divulgação NÃO autorizados.';
+ }
  async function carregar(){
   const [controle,trava,ponte,indicacoes,relogio]=await Promise.all([api(''),api('/trava-fila-a'),api('/ponte'),api('/indicacoes'),api('/intervalo-relogio')]);
   configRelogio=relogio.configuracao;
@@ -426,6 +477,9 @@
   catch(err){$('statusClientesAdmin').textContent='Consulta indisponível: '+err.message;}
   try{await carregarConvergenciaAsaas();}
   catch(err){$('asaasStatusConvergenciaAdmin').textContent='Conciliação indisponível: '+err.message;}
+  try{await carregarMarcoZero();}
+  catch(err){$('marcoZeroEstadoAdmin').textContent='NÃO LIBERADO';
+   $('marcoZeroStatusAdmin').textContent='Gate indisponível: '+err.message;}
   try{await carregarAuditoria();}
   catch(err){$('auditoriaStatusAdmin').textContent='Consulta indisponível: '+err.message;
    for(const id of ['resumoClientesDirecaoAdmin','resumoPedidosDirecaoAdmin','resumoPosicoesDirecaoAdmin'])$(id).textContent='Indisponível';
