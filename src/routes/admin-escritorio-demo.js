@@ -89,6 +89,23 @@ function criarRouterEscritorioDemo({segredo,publicacoes=null}={}) {
     const existe=!!banco.prepare("SELECT 1 FROM sqlite_master WHERE type='table' AND name='admin_contas_participantes_demo'").get();
     if(!existe)return res.json({modo:'LABORATORIO_LOCAL',clientes:[],total:0});
     const total=banco.prepare('SELECT COUNT(*) AS n FROM admin_contas_participantes_demo').get().n;
+    // Contagens operacionais por titular, sem classificar pedidos pendentes
+    // como vendas nem pressupor ativacao individual da posicao criada.
+    const tem=t=>!!banco.prepare(
+      "SELECT 1 FROM sqlite_master WHERE type='table' AND name=?").get(t);
+    const comprasDisponiveis=tem('admin_ponte_compras_demo');
+    const pequenas=tem('admin_ponte_vendas_loja_sem_loop_demo');
+    const reajustadas=tem('admin_ponte_vendas_loja_apos_reajuste_demo');
+    const clientesComPosicoesCriadas=comprasDisponiveis?banco.prepare(
+      'SELECT COUNT(DISTINCT conta_id) AS n FROM admin_ponte_compras_demo').get().n:null;
+    // Somente loja: venda internamente documentada E ausencia de
+    // qualquer compra qualificada do mesmo titular. Exclui pedidos sem
+    // confirmacao de pagamento e evita dupla contagem de vendas.
+    const clientesSomenteLoja=comprasDisponiveis&&(pequenas||reajustadas)?
+      banco.prepare(`SELECT COUNT(*) AS n FROM admin_contas_participantes_demo c
+       WHERE NOT EXISTS(SELECT 1 FROM admin_ponte_compras_demo p WHERE p.conta_id=c.id)
+         AND (${pequenas?'EXISTS(SELECT 1 FROM admin_ponte_vendas_loja_sem_loop_demo v WHERE v.conta_id=c.id)':'0'}
+              OR ${reajustadas?'EXISTS(SELECT 1 FROM admin_ponte_vendas_loja_apos_reajuste_demo v WHERE v.conta_id=c.id)':'0'})`).get().n:null;
     const apelidos=!!banco.prepare("SELECT 1 FROM sqlite_master WHERE type='table' AND name='admin_links_apelidos_demo'").get();
     const clientes=banco.prepare(`
       SELECT c.id AS id,c.nome AS nome,c.criado_em AS criadoEm,
@@ -98,6 +115,9 @@ function criarRouterEscritorioDemo({segredo,publicacoes=null}={}) {
       ORDER BY c.criado_em DESC,c.id DESC LIMIT 100
     `).all();
     return res.json({modo:'LABORATORIO_LOCAL',total,clientes,
+      clientesComPosicoesCriadas,clientesSomenteLoja,
+      fonteIndicadores:'COMPRAS_E_VENDAS_CONFIRMADAS_SQLITE',
+      clientesPorTipoProduto:null,
       limite:100,semPagamentosReais:true,
       comprasIndividuais:'CONSULTA_SQLITE_POR_CLIENTE_DISPONIVEL',posicoesIndividuais:'PARCIALMENTE_CONCILIADAS_POR_COMPRA',
       contemplacoesIndividuais:'NAO_CONCILIADAS'});
