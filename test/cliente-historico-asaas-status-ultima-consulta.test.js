@@ -53,6 +53,17 @@ test('cliente e Escritorio convergem entre recebido, reconsulta pendente/manual 
   assert.equal(divergente.pedido.revisaoPagamentoSandbox,true);
   assert.equal(divergente.pedido.ultimaReconsultaStatusAsaas,estadoInseguro);
   assert.deepEqual(divergente.pedido.posicaoIds,integrado.posicaoIds);
+  // A consulta direta da loja e o monitor do Escritorio leem a mesma
+  // ultima resposta do PSP; nenhuma delas reconsulta rede ou altera SQLite.
+  const antesLeitura=m.banco.prepare('SELECT total_changes() n').get().n;
+  const lista=(await m.http('/loja/pedidos',{cookie:cookieA})).data;
+  const naLoja=lista.pedidos.find(p=>p.pedidoId===id);
+  assert.equal(naLoja.ultimaConsultaSandbox.statusAsaas,estadoInseguro);
+  assert.equal(naLoja.situacaoPagamentoSandbox,'RECEBIMENTO_INFORMADO_SANDBOX');
+  const admin=m.integracao.resumoConvergencia();
+  assert.equal(admin.reconsultasSemRecebimento,1);
+  assert.equal(admin.revisaoManualIndicada,true);
+  assert.equal(m.banco.prepare('SELECT total_changes() n').get().n,antesLeitura);
   await assert.rejects(m.integracao.conciliador.processar(id),
    {codigo:'ULTIMA_RECONSULTA_NAO_CONFIRMOU_RECEBIMENTO'});
   assert.equal(m.banco.prepare('SELECT COUNT(*) n FROM admin_ponte_compras_demo').get().n,totalAntes);
