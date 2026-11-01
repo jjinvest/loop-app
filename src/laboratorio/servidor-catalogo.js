@@ -66,7 +66,7 @@ const {CobrancasAkitemmAsaasSandboxSQLite}=require('../domain/cobrancas-akitemm-
 const {criarRouterCobrancasAkitemmSandboxV6}=require('../routes/admin-cobrancas-akitemm-sandbox-v6');
 const {montarIntegracaoAsaasSandboxLoopLab}=require('../domain/montagem-integracao-asaas-sandbox-loop-lab');
 
-function criarAppAdminLaboratorio({ repositorio, segredo, webhookDemo, webhookAsaasSandbox, habilitarConviteLoopCheckout=false } = {}) {
+function criarAppAdminLaboratorio({ repositorio, segredo, webhookDemo, webhookAsaasSandbox, habilitarConviteLoopCheckout=false,criarCobrancaSandboxTeste=null } = {}) {
   // Convite oculto por padrao. Ativar somente por decisao explicita do proprietario;
   // nenhuma alteracao do navegador pode ligar o recurso no servidor.
   if(typeof habilitarConviteLoopCheckout!=='boolean')
@@ -228,7 +228,8 @@ function criarAppAdminLaboratorio({ repositorio, segredo, webhookDemo, webhookAs
       configAkitemm,avaliacoesAkitemm,
       habilitarConviteLoopCheckout,
       // Cliente ficticio fixo APENAS no sandbox; pedido/titular sao imutaveis no SQLite.
-      criarCobrancaSandbox:process.env.LOOP_ASAAS_SANDBOX_CHECKOUT==='1'&&
+      criarCobrancaSandbox:criarCobrancaSandboxTeste||(
+       process.env.LOOP_ASAAS_SANDBOX_CHECKOUT==='1'&&
        process.env.ASAAS_SANDBOX_API_KEY&&process.env.ASAAS_SANDBOX_CLIENTE_TESTE_ID?
        async({pedidoId})=>{
         const servico=new CobrancasAkitemmAsaasSandboxSQLite({
@@ -239,7 +240,7 @@ function criarAppAdminLaboratorio({ repositorio, segredo, webhookDemo, webhookAs
          clienteAsaasId:process.env.ASAAS_SANDBOX_CLIENTE_TESTE_ID});
         return {pedidoId:r.pedidoId,status:r.status,ambiente:'ASAAS_SANDBOX_EXCLUSIVO',
          pagamentoReal:false};
-       }:null,
+       }:null),
       obterLivroProvisoesV6:()=>circuitoPonteDemo?.livro||null,
       obterRetornoSaqueCentroDemo:()=>retornoSaqueCentroDemo,
       entregadoresPerfil:criarEntregadoresPerfilAmbiente()
