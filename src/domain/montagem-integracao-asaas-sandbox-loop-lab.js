@@ -26,7 +26,13 @@ function montarIntegracaoAsaasSandboxLoopLab({banco,contas,titularidade,apiKey,f
  });
  const catraca=new CatracaAsaasSandboxLab({elegibilidade,ponte});
  const conciliador=new ConciliadorPosicaoAsaasSandboxLab({cobrancas,catraca});
- const automatico=new ConciliacaoAutomaticaAsaasSandboxLab({conciliador});
+ const automatico=new ConciliacaoAutomaticaAsaasSandboxLab({conciliador,
+  listarPendentes:()=>banco.prepare(`SELECT c.pedido_id AS pedidoId
+   FROM akitemm_sandbox_cobrancas c
+   WHERE c.status <> 'REVERSAO_INFORMADA_SANDBOX'
+   AND NOT EXISTS(SELECT 1 FROM admin_ponte_compras_demo p WHERE p.pedido_id=c.pedido_id)`)
+   .all().map(r=>r.pedidoId)
+ });
  return Object.freeze({provedor:externo,cobrancas,comprovantes,elegibilidade,ponte,catraca,conciliador,automatico});
 }
 module.exports={montarIntegracaoAsaasSandboxLoopLab};
