@@ -29,7 +29,7 @@ test('Escritorio mede compradores com posicoes e somente loja sem contar pendent
  assert.equal(d.total,3);
  assert.equal(d.clientesComPosicoesCriadas,1);
  assert.equal(d.clientesSomenteLoja,1);
- assert.equal(d.clientesPorTipoProduto,null);
+ assert.deepEqual(d.clientesPorTipoProduto,{PDF:2,FISICO:0});
  assert.equal(d.fonteIndicadores,'COMPRAS_E_VENDAS_CONFIRMADAS_SQLITE');
  assert.equal(d.semPagamentosReais,true);
  assert.equal(m.banco.prepare('SELECT COUNT(*) n FROM admin_ponte_compras_demo').get().n,1);
