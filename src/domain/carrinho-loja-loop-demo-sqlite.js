@@ -288,8 +288,19 @@ class CarrinhoLojaLoopDemoSQLite{
   const sandbox=temSandbox?this.banco.prepare(
    'SELECT status FROM akitemm_sandbox_cobrancas WHERE pedido_id=?'
   ).get(pedidoId):null;
+  const temConsultas=temSandbox&&this.banco.prepare(
+   "SELECT 1 FROM sqlite_master WHERE type='table' AND name='akitemm_sandbox_consultas'"
+  ).get();
+  // A situacao local pode permanecer RECEBIDA enquanto a ultima consulta
+  // externa volta PENDING ou status desconhecido. Nunca inventar credito.
+  const ultimaConsultaSandbox=sandbox&&temConsultas?this.banco.prepare(
+   'SELECT status_asaas AS statusAsaas,status_local AS estadoLocal,'+
+   ' consultado_em AS consultadoEm FROM akitemm_sandbox_consultas'+
+   ' WHERE pedido_id=? ORDER BY id DESC LIMIT 1'
+  ).get(pedidoId)||null:null;
   return {...row,itens,totalElegivelLoopCentavos,
    situacaoPagamentoSandbox:sandbox?.status??null,
+   ultimaConsultaSandbox,
    participarLoop:escolha?escolha.participarLoop===1:null,
    escolhaLoopExpressa:!!escolha,
    subtotalQualificadoOriginalCentavos:escolha?.subtotalQualificadoCentavos??totalElegivelLoopCentavos,
