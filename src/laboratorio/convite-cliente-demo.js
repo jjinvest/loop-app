@@ -44,6 +44,27 @@
   if(!resp.ok)throw new Error(data.erro||'Falha ao validar convite');
   return data;
  }
+ async function mostrarCatalogoPublico(){
+  const secao=e('vitrineConviteLoop');
+  if(!secao)return;
+  secao.hidden=false;
+  const lista=e('produtosVitrineConvite');
+  lista.replaceChildren();
+  e('statusVitrineConvite').textContent='Carregando vitrine pública...';
+  try{
+   const data=await api('catalogo-publico');
+   for(const p of data.produtos){
+    const item=document.createElement('li'),nome=document.createElement('strong');
+    nome.textContent=p.nome+' — '+(p.precoCentavos/100).toLocaleString('pt-BR',{
+     style:'currency',currency:'BRL'});
+    item.append(nome);
+    lista.append(item);
+   }
+   e('statusVitrineConvite').textContent=data.produtos.length?
+    'Produtos disponíveis para consulta. Cadastro ou login obrigatório para comprar.':
+    'Nenhum produto publicado neste momento.';
+  }catch(err){e('statusVitrineConvite').textContent=err.message;}
+ }
  async function mostrarVitrine(){
   if(semIndicacao||destino!=='loja')return;
   const secao=e('vitrineConviteLoop');
@@ -76,6 +97,10 @@
    const info=await api('estado?link='+encodeURIComponent(linkConvite));
    if(!info.ativo){
     estado.textContent='Este link ainda não está ativo. O indicador precisa primeiro comprar um produto na loja.';
+    if(destino==='loja'){
+     // Sem vincular convite inativo, a vitrine geral segue publica.
+     await mostrarCatalogoPublico();
+    }
     return;
    }
    estado.textContent='Convite de '+info.nomeIndicador+
