@@ -66,7 +66,10 @@ class ProcessadorCallbacksAsaasSandboxLab{
       (estado='PROCESSANDO' AND lease_ate<=?))${filtro}
     ORDER BY proxima_em,evento_id LIMIT 1`);
    let job=selecionar.get(agora,agora,...excluir);
-   if(!job){
+   // Em cada novo lote, descobre avisos recentes mesmo se uma retentativa
+   // antiga ja esta disponivel. Preserva prioridade temporal entre os dois.
+   // Nas demais reservas do MESMO lote, so busca mais inbox se faltar job.
+   if(!job||excluir.length===0){
     // Um ACK pode ter sido gravado imediatamente antes de uma queda.
     // Descobrir em lotes limitados, sem perder avisos e sem reconsiderar
     // eventos que ja chegaram ao historico persistido da fila.
