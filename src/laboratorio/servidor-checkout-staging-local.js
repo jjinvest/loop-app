@@ -63,15 +63,6 @@ function criarAppCheckoutStagingLocal({
   next();
  });
  app.use(express.json({limit:'32kb',strict:true}));
- // Interfaces HTTP de teste usam mesmas rotas ja validadas isoladamente.
- app.use('/staging',criarRouterAutenticacaoCheckoutStaging({autenticacao:auth}));
- app.use('/staging',criarRouterRascunhosCheckoutStaging({
-  repositorioCatalogo,intencoes,identificarTitular,autorizarMutacao
- }));
- app.use('/staging',criarRouterPrePedidosCheckoutStaging({
-  repositorioCatalogo,prePedidos,identificarTitular,autorizarMutacao,
-  ponteAsaasSandbox:ponte
- }));
  app.get('/staging/estado',(req,res)=>{
   if(!localSeguro(req)||process.env.NODE_ENV==='production')
    return res.status(403).json({erro:'SOMENTE_TESTE_LOCAL'});
@@ -97,6 +88,16 @@ function criarAppCheckoutStagingLocal({
    next(e);
   }
  });
+ // Montar rotas que exigem sessao SOMENTE apos estado e cotacao:
+ // o middleware de identidade de rascunhos intercepta rotas nao casadas.
+ app.use('/staging',criarRouterAutenticacaoCheckoutStaging({autenticacao:auth}));
+ app.use('/staging',criarRouterRascunhosCheckoutStaging({
+  repositorioCatalogo,intencoes,identificarTitular,autorizarMutacao
+ }));
+ app.use('/staging',criarRouterPrePedidosCheckoutStaging({
+  repositorioCatalogo,prePedidos,identificarTitular,autorizarMutacao,
+  ponteAsaasSandbox:ponte
+ }));
  app.use((_req,res)=>res.status(404).json({erro:'ROTA_STAGING_INEXISTENTE'}));
  app.use((_err,_req,res,_next)=>res.status(503).json({
   erro:'OPERACAO_STAGING_INDISPONIVEL',checkoutPublico:false
