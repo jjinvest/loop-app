@@ -65,6 +65,7 @@ const {AsaasSandboxLojaV6}=require('../domain/asaas-sandbox-loja-v6');
 const {CobrancasAkitemmAsaasSandboxSQLite}=require('../domain/cobrancas-akitemm-asaas-sandbox-v6');
 const {criarRouterCobrancasAkitemmSandboxV6}=require('../routes/admin-cobrancas-akitemm-sandbox-v6');
 const {montarIntegracaoAsaasSandboxLoopLab}=require('../domain/montagem-integracao-asaas-sandbox-loop-lab');
+const {criarRouterMonitorCallbacksAsaasLab}=require('../routes/admin-callbacks-asaas-sandbox-lab');
 
 function criarAppAdminLaboratorio({ repositorio, segredo, webhookDemo, webhookAsaasSandbox, habilitarConviteLoopCheckout=false,criarCobrancaSandboxTeste=null,ambienteSandbox=process.env } = {}) {
   // Convite oculto por padrao. Ativar somente por decisao explicita do proprietario;
@@ -88,11 +89,17 @@ function criarAppAdminLaboratorio({ repositorio, segredo, webhookDemo, webhookAs
   }
   // Webhook Asaas apenas de LABORATORIO, opt-in explicito. Sem endpoint publico.
   // Corpo bruto deve ser capturado antes de qualquer parser JSON global.
+  app.locals.caixaAvisosAsaasSandbox=null;
   if(webhookAsaasSandbox?.habilitado===true){
     if(!repositorio?.banco)throw new TypeError('SQLite do laboratorio necessario');
-    app.use('/api/laboratorio',criarRouterWebhookAsaasSandboxLocal({
+    if(typeof ambienteSandbox.ASAAS_SANDBOX_API_KEY==='string'&&
+       webhookAsaasSandbox.token===ambienteSandbox.ASAAS_SANDBOX_API_KEY)
+      throw new TypeError('Token do webhook deve ser distinto da chave API');
+    const routerAvisos=criarRouterWebhookAsaasSandboxLocal({
       banco:repositorio.banco,token:webhookAsaasSandbox.token
-    }));
+    });
+    app.locals.caixaAvisosAsaasSandbox=routerAvisos.caixaAvisosAsaasSandbox;
+    app.use('/api/laboratorio',routerAvisos);
   }
   // Apenas a rota autenticada de perfil recebe JPEG comprimido (ate 180 KB).
   app.use('/api/laboratorio/participante/perfil',express.json({limit:'260kb',strict:true}));
@@ -192,10 +199,13 @@ function criarAppAdminLaboratorio({ repositorio, segredo, webhookDemo, webhookAs
       app.locals.integracaoAsaasCompartilhada=montarIntegracaoAsaasSandboxLoopLab({
        banco:repositorio.banco,contas:contasDemo,
        titularidade:pedidosIdentificadosDemo,
-       apiKey:ambienteSandbox.ASAAS_SANDBOX_API_KEY,ponte:ponteDemo
+       apiKey:ambienteSandbox.ASAAS_SANDBOX_API_KEY,ponte:ponteDemo,
+       caixaAvisos:app.locals.caixaAvisosAsaasSandbox
       });
     }
     ponteParaCircuito=ponteDemo;
+    app.use('/api/admin',criarRouterMonitorCallbacksAsaasLab({segredo,
+      obterWorker:()=>app.locals.integracaoAsaasCompartilhada?.callbacks}));
     app.use('/api/admin',criarRouterIndicacoesAdminDemo({
       segredo,links:ponteDemo.linksComissoes
     }));
@@ -522,7 +532,9 @@ function iniciarLaboratorio({ ambiente = process.env } = {}) {
       webhookDemo:{
         habilitado:ambiente.LOOP_WEBHOOK_DEMO_LOCAL==='1',
         segredo:ambiente.LOOP_WEBHOOK_DEMO_SECRET
-      }
+      },
+      webhookAsaasSandbox:{habilitado:ambiente.LOOP_WEBHOOK_ASAAS_SANDBOX_LOCAL==='1',
+        token:ambiente.ASAAS_SANDBOX_WEBHOOK_TOKEN}
     });
     const porta = ambiente.PORT ? Number(ambiente.PORT) : 3001;
     if (!Number.isSafeInteger(porta) || porta < 1 || porta > 65535) {
@@ -546,6 +558,7 @@ function iniciarLaboratorio({ ambiente = process.env } = {}) {
       if(!integracao)throw new Error('Conciliacao Sandbox exige ponte compartilhada e checkout habilitado');
       conciliacaoSandbox=integracao.automatico;
       conciliacaoSandbox.iniciar();
+      integracao.callbacks?.iniciar();
     }
     // Agenda automatica SOMENTE no processo de laboratorio LOCAL em execucao.
     // Em testes HTTP com app factory nao criamos timers externos.
@@ -558,6 +571,7 @@ function iniciarLaboratorio({ ambiente = process.env } = {}) {
     servidor.on('close',()=>{
       if(timer)clearInterval(timer);
       conciliacaoSandbox?.parar();
+      app.locals.integracaoAsaasCompartilhada?.callbacks?.parar();
       banco.fechar();
     });
     return { servidor, banco };

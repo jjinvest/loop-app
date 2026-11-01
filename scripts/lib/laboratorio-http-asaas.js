@@ -6,7 +6,7 @@ const {RepositorioCatalogoSQLite}=require('../../src/domain/repositorio-catalogo
 const {criarAppAdminLaboratorio}=require('../../src/laboratorio/servidor-catalogo');
 const {montarIntegracaoAsaasSandboxLoopLab}=require('../../src/domain/montagem-integracao-asaas-sandbox-loop-lab');
 const {ASAAS_SANDBOX_BASE}=require('../../src/domain/asaas-sandbox-loja-v6');
-async function abrirLaboratorio(caminho,{agora,habilitarConviteLoopCheckout=false}={}){
+async function abrirLaboratorio(caminho,{agora,habilitarConviteLoopCheckout=false,webhookAsaasSandbox}={}){
  const repo=new RepositorioCatalogoSQLite({caminho});
  const banco=repo.banco;
  banco.exec(`CREATE TABLE IF NOT EXISTS lab_psp_http_fixture(
@@ -19,6 +19,7 @@ async function abrirLaboratorio(caminho,{agora,habilitarConviteLoopCheckout=fals
  }
  let integracao;
  const app=criarAppAdminLaboratorio({repositorio:repo,ambienteSandbox:{},habilitarConviteLoopCheckout,
+  webhookAsaasSandbox,
   segredo:'administrador-local-ficticio-2026-123456789',
   criarCobrancaSandboxTeste:async({pedidoId})=>integracao.cobrancas.criar({
    pedidoId,origem:'CARRINHO',clienteAsaasId:'cus_FixtureHTTP'}),
@@ -40,7 +41,9 @@ async function abrirLaboratorio(caminho,{agora,habilitarConviteLoopCheckout=fals
  integracao=montarIntegracaoAsaasSandboxLoopLab({banco,
   contas:app.locals.contasCompartilhadasLoop,titularidade:app.locals.titularidadeCompartilhadaLoop,
   ponte:app.locals.ponteCompartilhadaLoop,apiKey:'CHAVE_FICTICIA_APENAS_TESTES_123',fetchImpl,
+  caixaAvisos:app.locals.caixaAvisosAsaasSandbox,
   ...(agora?{agora}:{})});
+ app.locals.integracaoAsaasCompartilhada=integracao;
  const servidor=app.listen(0,'127.0.0.1');await once(servidor,'listening');
  const base='http://127.0.0.1:'+servidor.address().port;
  async function http(rota,{cookie,body,status=200}={}){
@@ -55,6 +58,6 @@ async function abrirLaboratorio(caminho,{agora,habilitarConviteLoopCheckout=fals
   contas:app.locals.contasCompartilhadasLoop,ponte:app.locals.ponteCompartilhadaLoop,
   confirmar:pedidoId=>banco.prepare("UPDATE lab_psp_http_fixture SET status='RECEIVED' WHERE pedido=?")
    .run('LOOPLAB-'+pedidoId),
-  fechar:async()=>{await new Promise(r=>servidor.close(r));repo.fechar();}};
+  fechar:async()=>{integracao.callbacks?.parar();await new Promise(r=>servidor.close(r));repo.fechar();}};
 }
 module.exports={abrirLaboratorio};

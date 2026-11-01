@@ -3,7 +3,7 @@
 // Compra pelo HTTP local real; nenhuma transferencia, saque ou dinheiro real.
 const assert=require('node:assert/strict');const fs=require('node:fs');
 const os=require('node:os');const path=require('node:path');
-const {randomUUID}=require('node:crypto');const {once}=require('node:events');
+const {randomUUID,randomBytes}=require('node:crypto');const {once}=require('node:events');
 const {RepositorioCatalogoSQLite}=require('../src/domain/repositorio-catalogo-sqlite');
 const {criarAppAdminLaboratorio}=require('../src/laboratorio/servidor-catalogo');
 const {montarIntegracaoAsaasSandboxLoopLab}=require('../src/domain/montagem-integracao-asaas-sandbox-loop-lab');
@@ -16,6 +16,7 @@ async function homologarHttpSandbox({ambiente=process.env,fetchImpl=globalThis.f
   throw Error('CHAVE_EXCLUSIVAMENTE_SANDBOX_OBRIGATORIA');
  if(typeof cpf!=='string'||!/^\d{11}$/.test(cpf))throw Error('CPF_FICTICIO_AUTORIZADO_OBRIGATORIO');
  const referencia='LOOPLAB-HTTP-'+randomUUID().replace(/-/g,'');
+ const tokenCallback=randomBytes(32).toString('hex');
  const pasta=fs.mkdtempSync(path.join(os.tmpdir(),'loop-http-asaas-remoto-'));
  const arquivo=path.join(pasta,'laboratorio.sqlite');
  let m=null;
@@ -42,22 +43,25 @@ async function homologarHttpSandbox({ambiente=process.env,fetchImpl=globalThis.f
     entrega:'DOWNLOAD_APOS_CONFIRMACAO',fotos:[],videoApresentacaoUrl:null,detalhes:[]}});
    let integracao;
    const app=criarAppAdminLaboratorio({repositorio:repo,ambienteSandbox:{},
+    webhookAsaasSandbox:{habilitado:true,token:tokenCallback},
     segredo:'administrador-homologacao-sandbox-http-2026-123456789',
     criarCobrancaSandboxTeste:({pedidoId})=>integracao.cobrancas.criar({
      pedidoId,origem:'CARRINHO',clienteAsaasId:cliente.id})});
    integracao=montarIntegracaoAsaasSandboxLoopLab({banco:repo.banco,
     contas:app.locals.contasCompartilhadasLoop,titularidade:app.locals.titularidadeCompartilhadaLoop,
-    ponte:app.locals.ponteCompartilhadaLoop,apiKey:key,fetchImpl});
+    ponte:app.locals.ponteCompartilhadaLoop,apiKey:key,fetchImpl,
+    caixaAvisos:app.locals.caixaAvisosAsaasSandbox});
    const servidor=app.listen(0,'127.0.0.1');await once(servidor,'listening');
    const base='http://127.0.0.1:'+servidor.address().port+'/api/laboratorio/participante';
    return {repo,banco:repo.banco,integracao,contas:app.locals.contasCompartilhadasLoop,
+    urlCallback:'http://127.0.0.1:'+servidor.address().port+'/api/laboratorio/webhook-asaas-sandbox',
     async http(rota,{cookie,body,status=200}={}){
      const r=await fetch(base+rota,{method:body===undefined?'GET':'POST',
       headers:{'Content-Type':'application/json','X-LOOP-LAB':'participante',...(cookie?{Cookie:cookie}:{})},
       ...(body===undefined?{}:{body:JSON.stringify(body)})});
      assert.equal(r.status,status,'HTTP_LOCAL_STATUS_DIVERGENTE');
      return {dados:await r.json(),cookie:r.headers.get('set-cookie')?.split(';')[0]};
-    },async fechar(){await new Promise(r=>servidor.close(r));repo.fechar();}};
+    },async fechar(){integracao.callbacks?.parar();await new Promise(r=>servidor.close(r));repo.fechar();}};
   }
   m=await abrir();
   const senha='senha-ficticia-homologacao-http-2026';
@@ -69,20 +73,33 @@ async function homologarHttpSandbox({ambiente=process.env,fetchImpl=globalThis.f
   const cobranca=m.integracao.cobrancas.consultar(pedido.pedidoId);
   if(!/^pay_[A-Za-z0-9_-]{5,90}$/.test(cobranca.pagamentoId||''))throw Error('COBRANCA_SANDBOX_INVALIDA');
   await remoto('/sandbox/payment/'+cobranca.pagamentoId+'/confirm',{method:'POST'});
-  let conciliada;
-  for(let tentativa=0;tentativa<10;tentativa++){
-   try{conciliada=await m.integracao.conciliador.processar(pedido.pedidoId);break;}
-   catch(e){if(e.codigo!=='COBRANCA_SANDBOX_NAO_CONFIRMADA')throw e;
-    await new Promise(r=>setTimeout(r,500));}
+  // A entrega HTTP abaixo e simulada localmente; NAO afirmar que o Asaas
+  // chamou um endpoint remoto. O worker, por sua vez, reconsulta a API real.
+  const eventoId='evt_CallbackHttp'+randomUUID().replace(/-/g,'');
+  const ack=await fetch(m.urlCallback,{method:'POST',headers:{'Content-Type':'application/json',
+   'asaas-access-token':tokenCallback},body:JSON.stringify({id:eventoId,event:'PAYMENT_RECEIVED',
+   payment:{id:cobranca.pagamentoId,billingType:'PIX',status:'RECEIVED',
+    externalReference:'LOOPLAB-'+pedido.pedidoId,value:250}})});
+  assert.equal(ack.status,200);assert.equal((await ack.json()).posicaoCriada,false);
+  assert.equal(m.banco.prepare('SELECT COUNT(*) n FROM admin_ponte_compras_demo').get().n,0);
+  for(let tentativa=0;tentativa<20;tentativa++){
+   await m.integracao.callbacks.processarLote();
+   if(m.integracao.callbacks.consultar(eventoId)?.estado==='CONCLUIDO')break;
+   await new Promise(r=>setTimeout(r,1000));
   }
-  if(!conciliada)throw Error('SANDBOX_NAO_CONFIRMOU_RECEBIMENTO');
+  if(m.integracao.callbacks.consultar(eventoId)?.estado!=='CONCLUIDO')
+   throw Error('SANDBOX_CALLBACK_NAO_CONCILIADO');
   const visao=(await m.http('/minha-conta',{cookie})).dados;
   assert.equal(visao.posicoes.length,1);assert.equal(visao.posicoes[0].statusAdesao,'PENDENTE');
+  const conciliada=m.banco.prepare('SELECT posicao_id AS posicaoId,conta_id AS contaId FROM admin_ponte_compras_demo WHERE pedido_id=?').get(pedido.pedidoId);
+  assert.equal(conciliada.contaId,conta.contaId);
   assert.equal(visao.posicoes[0].posicaoId,conciliada.posicaoId);
   const replay=await m.integracao.conciliador.processar(pedido.pedidoId);
   assert.equal(replay.repetida,true);assert.equal(replay.contaId,conta.contaId);
   await m.fechar();m=null;m=await abrir();
   ({cookie}=await m.http('/entrar',{body:{nome:conta.nome,senha}}));
+  await m.integracao.callbacks.processarLote();
+  assert.equal(m.integracao.callbacks.consultar(eventoId).estado,'CONCLUIDO');
   const repetida=await m.integracao.conciliador.processar(pedido.pedidoId);
   assert.equal(repetida.repetida,true);assert.equal(repetida.posicaoId,conciliada.posicaoId);
   assert.equal((await m.http('/minha-conta',{cookie})).dados.posicoes.length,1);
@@ -95,7 +112,8 @@ async function homologarHttpSandbox({ambiente=process.env,fetchImpl=globalThis.f
    cobrancasSandbox:1,valorCentavos:25000,confirmacaoNaApiSandbox:true,
    posicoes:1,statusAdesao:'PENDENTE',replaySemDuplicacao:true,
    titularidadePreservada:true,sqliteReaberto:true,integridadeSqlite:'ok',
-   ativacaoAutomatica:false,saquesExecutados:0,pagamentosReais:0,callbackRemotoTestado:false};
+   ativacaoAutomatica:false,saquesExecutados:0,pagamentosReais:0,
+   callbackHttpLocalAutenticado:true,callbackEnviadoPeloAsaas:false,callbackRemotoTestado:false};
  }finally{if(m)await m.fechar();fs.rmSync(pasta,{recursive:true,force:true});}
 }
 if(require.main===module)homologarHttpSandbox().then(r=>console.log('ASAAS_HTTP_SANDBOX_RESULTADO='+JSON.stringify(r)))

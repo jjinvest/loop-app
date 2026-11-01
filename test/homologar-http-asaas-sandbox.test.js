@@ -30,4 +30,6 @@ test('roteiro HTTP Sandbox inteiro com dublê remoto: compra, recebimento, clien
  assert.equal(r.posicoes,1);assert.equal(r.sqliteReaberto,true);
  assert.equal(clientes,1);assert.equal(postPagamentos,1);assert.equal(confirmacoes,1);
  assert.equal(r.pagamentosReais,0);
+ assert.equal(r.callbackHttpLocalAutenticado,true);
+ assert.equal(r.callbackEnviadoPeloAsaas,false);
 });

@@ -8,7 +8,9 @@ const {PonteComprasConvitesDemoSQLite}=require('./ponte-compras-convites-demo-sq
 const {CatracaAsaasSandboxLab}=require('./catraca-asaas-sandbox-lab');
 const {ConciliadorPosicaoAsaasSandboxLab}=require('./conciliador-posicao-asaas-sandbox-lab');
 const {ConciliacaoAutomaticaAsaasSandboxLab}=require('./conciliacao-automatica-asaas-sandbox-lab');
-function montarIntegracaoAsaasSandboxLoopLab({banco,contas,titularidade,apiKey,fetchImpl,provedor,agora,ponte=null}={}){
+const {ConferidorAvisosAsaasSandboxSQLite}=require('./conferidor-avisos-asaas-sandbox-sqlite');
+const {ProcessadorCallbacksAsaasSandboxLab}=require('./processador-callbacks-asaas-sandbox-lab');
+function montarIntegracaoAsaasSandboxLoopLab({banco,contas,titularidade,apiKey,fetchImpl,provedor,agora,ponte=null,caixaAvisos=null}={}){
  if(!banco||!contas||contas.banco!==banco||
     !titularidade||titularidade.banco!==banco||
     typeof titularidade.conferir!=='function')
@@ -50,6 +52,10 @@ function montarIntegracaoAsaasSandboxLoopLab({banco,contas,titularidade,apiKey,f
    return [...new Set([...pendentes,...antigos])];
   }
  });
- return Object.freeze({provedor:externo,cobrancas,comprovantes,elegibilidade,ponte:ponteIntegrada,catraca,conciliador,automatico});
+ const conferidorAvisos=caixaAvisos?new ConferidorAvisosAsaasSandboxSQLite({banco,caixaAvisos,cobrancas}):null;
+ const callbacks=caixaAvisos?new ProcessadorCallbacksAsaasSandboxLab({banco,caixaAvisos,
+  conferidor:conferidorAvisos,conciliador}):null;
+ return Object.freeze({provedor:externo,cobrancas,comprovantes,elegibilidade,ponte:ponteIntegrada,
+  catraca,conciliador,automatico,conferidorAvisos,callbacks});
 }
 module.exports={montarIntegracaoAsaasSandboxLoopLab};

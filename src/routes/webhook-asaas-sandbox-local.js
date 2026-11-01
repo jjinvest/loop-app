@@ -7,6 +7,7 @@ const {CaixaAvisosAsaasSandboxSQLite}=
 function criarRouterWebhookAsaasSandboxLocal({banco,token}={}){
  const inbox=new CaixaAvisosAsaasSandboxSQLite({banco,authToken:token});
  const r=express.Router();
+ r.caixaAvisosAsaasSandbox=inbox;
  r.post('/webhook-asaas-sandbox',
   (req,res,next)=>{
    if(process.env.NODE_ENV==='production'||!localSeguro(req))

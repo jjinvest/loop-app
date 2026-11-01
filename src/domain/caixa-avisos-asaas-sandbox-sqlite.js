@@ -85,6 +85,13 @@ class CaixaAvisosAsaasSandboxSQLite{
     autorizacaoDeSaque:false,pixRealHabilitado:false});
   }catch(e){this.banco.exec('ROLLBACK');throw e;}
  }
+ buscar(eventoId){
+  if(typeof eventoId!=='string'||!ID.test(eventoId))throw falha('EVENTO_ID_INVALIDO');
+  return this.banco.prepare(`SELECT evento_id AS eventoId,tipo,pagamento_id AS pagamentoId,
+   pedido_referencia AS pedidoReferencia,status_informado AS statusInformado,
+   valor_informado_centavos AS valorInformadoCentavos,recebido_em AS recebidoEm
+   FROM akitemm_asaas_sandbox_avisos WHERE evento_id=?`).get(eventoId)||null;
+ }
  listar(){
   return this.banco.prepare([
    'SELECT evento_id AS eventoId,tipo,pagamento_id AS pagamentoId,',

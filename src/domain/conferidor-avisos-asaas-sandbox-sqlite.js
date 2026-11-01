@@ -56,7 +56,8 @@ class ConferidorAvisosAsaasSandboxSQLite{
   const registrado=this._registro(eventoId);
   if(registrado)return this._resposta(registrado,true);
   // Caixa interna ja validou token; nunca aceitar payload vindo do caller.
-  const aviso=this.caixaAvisos.listar().find(x=>x.eventoId===eventoId);
+  const aviso=typeof this.caixaAvisos.buscar==='function'?this.caixaAvisos.buscar(eventoId):
+   this.caixaAvisos.listar().find(x=>x.eventoId===eventoId);
   if(!aviso)throw falha('AVISO_NAO_ENCONTRADO');
   if(!aviso.pedidoReferencia.startsWith('LOOPLAB-'))
    throw falha('REFERENCIA_AVISO_INVALIDA');
