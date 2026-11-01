@@ -453,3 +453,66 @@ test('fila com mais de 50 avisos mostra volume total sem perder a revisao',async
  assert.equal(s.banco.prepare('PRAGMA integrity_check').get().integrity_check,'ok');
  assert.deepEqual(s.banco.prepare('PRAGMA foreign_key_check').all(),[]);
 });
+
+test('receptor isolado de webhook via tunel exige host/HTTPS declarado e token, sem executar PSP',async t=>{
+ const s=await cenario(t);
+ const {criarRouterWebhookAsaasSandboxTunelStaging}=
+  require('../src/routes/webhook-prepedido-asaas-tunel-staging');
+ const {iniciarReceptorTunelStaging}=
+  require('../src/laboratorio/servidor-webhook-asaas-tunel-staging');
+ assert.throws(()=>iniciarReceptorTunelStaging({
+  ambiente:{NODE_ENV:'staging',LOOP_WEBHOOK_TUNEL_SANDBOX_AUTORIZADO:'NAO'}
+ }),/RECEPTOR_STAGING_NAO_AUTORIZADO/);
+ assert.throws(()=>criarRouterWebhookAsaasSandboxTunelStaging({
+  inbox:s.inbox,urlPublica:'http://homologacao.example.invalid/webhooks/asaas-sandbox',
+  habilitarTunel:true
+ }),/URL publica HTTPS/);
+ const app=express();
+ app.use('/webhooks',criarRouterWebhookAsaasSandboxTunelStaging({
+  inbox:s.inbox,
+  urlPublica:'https://homologacao.example.invalid/webhooks/asaas-sandbox',
+  habilitarTunel:true
+ }));
+ const servidor=app.listen(0,'127.0.0.1');await once(servidor,'listening');
+ t.after(()=>new Promise(resolve=>servidor.close(resolve)));
+ const http=require('node:http');
+ const evento=s.evento('evt_WebhookTunelExterno0001');
+ async function enviar({host='homologacao.example.invalid',proto='https',
+  token=TOKEN,origin=null,body=JSON.stringify(evento)}={}){
+  return new Promise((resolve,reject)=>{
+   const req=http.request({
+    host:'127.0.0.1',port:servidor.address().port,
+    path:'/webhooks/asaas-sandbox',method:'POST',
+    headers:{
+     Host:host,'X-Forwarded-Proto':proto,
+     'Content-Type':'application/json',
+     ...(token?{'asaas-access-token':token}:{}),
+     ...(origin?{Origin:origin}:{})
+    }
+   },res=>{
+    const partes=[];res.on('data',b=>partes.push(b));
+    res.on('end',()=>resolve({status:res.statusCode,
+     body:JSON.parse(Buffer.concat(partes).toString('utf8'))}));
+   });
+   req.on('error',reject);req.end(body);
+  });
+ }
+ assert.equal((await enviar({host:'outro.example.invalid'})).status,403);
+ assert.equal((await enviar({proto:'http'})).status,403);
+ assert.equal((await enviar({origin:'https://site-externo.invalid'})).status,403);
+ assert.equal((await enviar({token:'SEGREDO_INVALIDO'})).status,401);
+ assert.equal(s.banco.prepare(
+  'SELECT COUNT(*) AS n FROM akitemm_prepedido_webhook_inbox_staging'
+ ).get().n,0);
+ const chamadasAntes=s.chamadas.length;
+ const aceite=await enviar();
+ assert.equal(aceite.status,200,JSON.stringify(aceite.body));
+ assert.equal(aceite.body.registrado,true);
+ assert.equal(aceite.body.pagamentoReal,false);
+ assert.equal(aceite.body.posicoesCriadas,0);
+ assert.equal(s.chamadas.length,chamadasAntes,'webhook nao consulta nem cria Pix');
+ assert.equal(s.worker.resumoPendencias().total,1);
+ assert.equal(s.banco.prepare('PRAGMA integrity_check').get().integrity_check,'ok');
+ assert.equal(JSON.stringify(s.inbox.consultarEvento(evento.id)).includes('NAO_PERSISTIR'),false);
+ // Este ensaio usa HTTP local e headers simulados: nao e callback entregue pelo Asaas.
+});
