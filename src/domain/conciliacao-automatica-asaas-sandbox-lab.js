@@ -3,7 +3,7 @@
 // A reconsulta remota e validacao de titularidade permanecem no conciliador.
 class ConciliacaoAutomaticaAsaasSandboxLab{
  constructor({conciliador,intervaloMs=1000,aoErro=()=>{},listarPendentes=null,
-  listarRecebimentos=null,maxPorVerificacao=20,maxRecebimentosPorVerificacao=5}={}){
+  listarRecebimentos=null,maxPorVerificacao=20,maxRecebimentosPorVerificacao=null}={}){
   if(typeof conciliador?.processar!=='function')throw new TypeError('Conciliador obrigatorio');
   if(!Number.isSafeInteger(intervaloMs)||intervaloMs<100)throw new RangeError('Intervalo invalido');
   if(listarPendentes!==null&&typeof listarPendentes!=='function')
@@ -12,6 +12,8 @@ class ConciliacaoAutomaticaAsaasSandboxLab{
    throw new RangeError('Limite de pedidos por rodada invalido');
   if(listarRecebimentos!==null&&typeof listarRecebimentos!=='function')
    throw new TypeError('Consulta de recebimentos invalida');
+  if(maxRecebimentosPorVerificacao===null)
+   maxRecebimentosPorVerificacao=Math.min(5,maxPorVerificacao);
   if(!Number.isSafeInteger(maxRecebimentosPorVerificacao)||
      maxRecebimentosPorVerificacao<1||maxRecebimentosPorVerificacao>maxPorVerificacao)
    throw new RangeError('Cota de reconsultas de recebimentos invalida');
