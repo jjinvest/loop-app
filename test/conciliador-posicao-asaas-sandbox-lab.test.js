@@ -72,3 +72,23 @@ test('integracao: reconsulta confirmada cria uma posicao SQLite e repeticao nao 
  assert.equal(consultas,2);
  assert.equal(repo.banco.prepare('SELECT COUNT(*) AS n FROM admin_ponte_compras_demo WHERE pedido_id=?').get(pedidoId).n,1);
 });
+
+test('ultima reconsulta manual RECEIVED_IN_CASH nao libera a catraca',async()=>{
+ for(const status of ['RECEIVED_IN_CASH','PENDING','REFUNDED']){
+  let giros=0,chamadas=0;
+  const c=new ConciliadorPosicaoAsaasSandboxLab({
+   cobrancas:{
+    conferir:async()=>{chamadas++;return {status:'RECEBIMENTO_INFORMADO_SANDBOX'};},
+    consultar:()=>({encontrado:true,pedidoId,pagamentoId:'pay_teste_asaas',
+     valorCentavos:25000,status:'RECEBIMENTO_INFORMADO_SANDBOX'}),
+    historico:()=>({conferencias:[{
+     statusAsaas:status,estadoLoja:'RECEBIMENTO_INFORMADO_SANDBOX'
+    }]})
+   },
+   catraca:{processar:async()=>{giros++;return {};}}
+  });
+  await assert.rejects(c.processar(pedidoId),
+   {codigo:'ULTIMA_RECONSULTA_NAO_CONFIRMOU_RECEBIMENTO'});
+  assert.equal(chamadas,1);assert.equal(giros,0);
+ }
+});
