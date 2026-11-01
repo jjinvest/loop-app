@@ -1240,3 +1240,14 @@ Ensaio concluído: 10.000 clientes fictícios sequenciais, 10.000 pedidos/posiç
 Amostra SEPARADA na API remota do Asaas Sandbox: compra HTTP de R$250, confirmação pelo endpoint de simulação, uma posição PENDENTE no cliente, replay e reabertura sem duplicação. [Prova externa](https://github.com/jjinvest/loop-app/actions/runs/41273684000). [CI geral, auditoria de dependências e navegador aprovados](https://github.com/jjinvest/loop-app/actions/runs/41274139117).
 
 Resultado operacional/financeiro e provas agregadas estão no relatório referido acima. O bruto de R$2.500.000 da carga é fictício; aportes do livro não são segunda receita nem liquidação. Restam callback remoto autenticado, conciliação bancária independente e demais requisitos externos de produção. Não afirmar que o projeto inteiro está homologado: o estado global da auditoria permanece EM ANDAMENTO, PR #1 DRAFT, sem merge/deploy ou dinheiro real.
+
+
+## 101. MONITOR DE CALLBACKS E SEGREDOS — CONTINUIDADE DE 01/11/2026
+
+
+Sem repetir a carga de 10.000 clientes e sem mudar interface, regras ou pagamentos:
+- O monitor administrativo existente `GET /api/admin/asaas-callbacks-lab` agora devolve `pendentesProntos`, `leasesExpirados` e `referenciaFilaEmMs` no resumo, com SQL somente leitura. São sinais operacionais extraidos da fila SQLite; consultar o monitor nao reserva job, nao cria posicao e nao executa webhook.
+- A persistencia de `e.codigo` passou a aceitar somente uma lista explicita de codigos internos esperados, em vez de confiar em um padrao de caracteres. Erros arbitrarios de adaptadores/PSP sao salvos como `FALHA_TECNICA_RECONSULTA`, sem mensagem/segredo.
+- Novo `test/asaas-monitor-callback-leases-lab.test.js` valida aviso sem job, lease expirado e recuperado, retentativa pronta, monitor autenticado sem escrita, nenhuma posicao duplicada, integridade SQLite, CPF/adesao nao autoativados e erro com codigo privado ocultado.
+- Evidencia do ultimo commit de codigo `1dcc978e7e36ab20f004e2661c94f77d6e26710b`: [GitHub Actions CI e navegador](https://github.com/jjinvest/loop-app/actions/runs/41278214311) — **SUCCESS, 630/630 testes, 0 falhas**, `npm ci`, `npm audit --omit=dev` e Playwright/Chromium aprovados. Falha temporaria em CI de commit anterior `bcf44c2` era exclusivamente um nome incorreto de instancia no novo teste; corrigida e validada neste commit.
+- Permanecem limites de laboratorio: sem callback emitido pelo Asaas remoto, sem conciliacao bancaria independente, sem dinheiro real ou autorizacao de producao. PR #1 DRAFT, sem merge/deploy.
