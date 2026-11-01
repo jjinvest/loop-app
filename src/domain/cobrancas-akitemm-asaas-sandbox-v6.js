@@ -120,6 +120,16 @@ class CobrancasAkitemmAsaasSandboxSQLite{
     b.exec('COMMIT');
     return {...this.consultar(pedidoId),repetida:true};
    }
+   // Exclusividade por pedido: nao iniciar Pix Sandbox sobre pedido que
+   // ja tem confirmacao/estorno do simulador administrativo. A reserva e
+   // atomica no mesmo SQLite e ocorre ANTES do POST para o Asaas.
+   const tabelaEventos=origem==='PDF'?'admin_pdf_demo_eventos':
+    'admin_carrinho_loop_eventos_demo';
+   if(b.prepare("SELECT 1 FROM sqlite_master WHERE type='table' AND name=?")
+      .get(tabelaEventos)&&
+      b.prepare('SELECT 1 FROM '+tabelaEventos+' WHERE pedido_id=? LIMIT 1')
+       .get(pedidoId))
+    throw falha('FONTE_PAGAMENTO_FICTICIA_JA_INICIADA');
    const data=this.agora();
    b.prepare([
     'INSERT INTO akitemm_sandbox_cobrancas',
