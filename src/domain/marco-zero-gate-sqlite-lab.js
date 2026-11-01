@@ -1,6 +1,7 @@
 'use strict';
 // GATE MARCO ZERO: observabilidade local + bloqueios explicitos de lancamento.
 // Nunca assumir sucesso de CI, homologacao remota, infra ou parecer juridico.
+const {consultarIntegridadeProvisoesLab}=require('./integridade-provisoes-marco-zero-lab');
 const TABLES=['akitemm_sandbox_cobrancas','akitemm_sandbox_consultas',
  'admin_ponte_compras_demo','admin_contas_participantes_demo'];
 // A fila de callbacks é opcional no laboratório, porém sua ausência não é sucesso.
@@ -62,9 +63,16 @@ function consultarMarcoZeroLab({banco}={}){
  const criticosCobrancas=cobrancas===null||reconsultasNaoConfirmadas===null?null:
   cobrancas.criacoesIndeterminadas+cobrancas.reversoes+
   cobrancas.estadosDesconhecidos+reconsultasNaoConfirmadas;
+ const provisoes=consultarIntegridadeProvisoesLab({banco});
  const criticos=criticosCobrancas===null?null:
-  criticosCobrancas+(alertasCallbacks??0);
+  criticosCobrancas+(alertasCallbacks??0)+(provisoes.alertasPorCriterio??0);
  const tecnicos=[
+  {id:'PROVISOES_FINANCEIRAS',descricao:'Coerencia local de ciclos, eventos e parcelas previstas',
+   estado:provisoes.estado,
+   detalhe:provisoes.contagens===null?'Livros de provisoes ausentes: '+provisoes.fontesAusentes.length:
+    'Ciclos inconsistentes: '+provisoes.contagens.ciclosInconsistentes+
+    '; registros orfaos: '+(provisoes.contagens.eventosOrfaos+provisoes.contagens.parcelasOrfas)+
+    '; alertas por criterio: '+provisoes.alertasPorCriterio},
   {id:'INTEGRIDADE_SQLITE',descricao:'Integridade SQLite e chaves estrangeiras',
    estado:sqliteOk&&referenciasQuebradas===0?'OK_LABORATORIO':'ALERTA',
    detalhe:sqliteOk?'Chaves estrangeiras invalidas: '+referenciasQuebradas:'PRAGMA quick_check nao aprovado'},
@@ -96,6 +104,8 @@ function consultarMarcoZeroLab({banco}={}){
   somenteLeitura:true,percentualAutomatico:null,
   tecnicos,externos,resumo:{
    alertasLocaisPorCriterio:criticos,referenciasQuebradas,
+   alertasProvisoes:provisoes.alertasPorCriterio,
+   provisoes:provisoes.contagens,
    alertasCallbacks,callbacksSemJob:filaCallbacks?.avisosSemJob??null,
    callbacksPendentes:filaCallbacks?.pendentes??null,
    callbacksLeasesExpirados:filaCallbacks?.leasesExpirados??null,

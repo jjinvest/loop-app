@@ -121,6 +121,10 @@ async function validarEscritorio(browser,pasta){
     assert.equal((await pagina.locator('#marcoZeroExternosAdmin').innerText()).trim(),'6');
     assert.equal((await pagina.locator('#marcoZeroAlertasAdmin').innerText()).trim(),'1');
     assert.equal(await pagina.locator('#marcoZeroGatesExternosAdmin .status-linha').count(),6);
+    const provisoes=pagina.locator('#marcoZeroTecnicosAdmin .status-linha')
+      .filter({hasText:'Coerencia local de ciclos, eventos e parcelas previstas'});
+    assert.equal(await provisoes.count(),1);
+    assert.equal((await provisoes.locator('strong').innerText()).trim(),'SEM_OPERACOES');
     assert.match(await pagina.locator('#marcoZeroStatusAdmin').innerText(),/NÃO autorizados/);
     assert.equal((await pagina.locator('#clientesLoopDepartamento').innerText()).trim(),'1');
     assert.equal((await pagina.locator('#finOpCiclosAdmin').innerText()).trim(),'0');
