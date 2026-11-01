@@ -61,3 +61,11 @@ A decisão **GO** só pode ser tomada com documentação e validação independe
 
 **Próximo caminho técnico:** modelar sessão de cliente e pedido durável na arquitetura pública **sem copiar as rotas fictícias**, criar integração Asaas exclusivamente Sandbox sob credencial controlada em staging externo, validar webhook remoto e cancelamentos com revisão; só depois desenhar o caminho de pagamento real, sujeito às autorizações e ao jurídico. Este avanço **não** libera checkout ou anúncios de venda.
 
+
+## Rascunhos duráveis de staging — 01/11/2026
+
+Preparação feita em `src/domain/intencoes-checkout-sqlite.js` e `src/routes/rascunhos-checkout-staging.js`: snapshots imutáveis com preço calculado no servidor, idempotência atômica por titular em SQLite, listagem isolada, simulação de duas contas, proteção de origem local, hooks obrigatórios de autenticação e antifalsificação (CSRF), replay após mudança de catálogo, persistência depois de reiniciar o SQLite e teste simultâneo de 12 requisições com a mesma chave. **O adapter de staging não é montado no servidor público; ele recusa uso em NODE_ENV=production.** Nem o rascunho nem a cotação conferem direito a posição, pagamento ou reserva de preço.
+
+**O que realmente falta na parte pública:** substituir os adaptadores de identidade e CSRF fictícios por autenticação e gestão de sessões de produção auditadas; atribuir vínculo durável a titular verificado e cadastro/termos; modelar a transição de rascunho para pedido comercial real, com preço e entrega reconfirmados; prover checkout Asaas Sandbox em staging com webhook autêntico, antes de qualquer cobrança real. O código de staging é preparação de testes, não substituto de checkout de produção, e não deve ser habilitado por flag.
+
+**CI e critérios finais:** registrar separadamente o run do código validado, o SHA exato e as evidências de navegador no documento-mestre. O Marco Zero continua NÃO LIBERADO para vendas até cumprimento verificável dos seis gates externos; 01/12 permanece data-alvo condicional.
