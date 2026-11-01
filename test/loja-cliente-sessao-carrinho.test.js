@@ -159,3 +159,41 @@ test('comprador nao acessa itens fora do catalogo e valores de pedidos sao conge
  const novo=await enviar([{produtoId:'produto-catalogo',quantidade:1}]);
  assert.equal(novo.data.pedido.totalCentavos,29900);
 });
+
+test('checkout sandbox opt-in cria cobranca vinculada ao titular sem criar posicao antes do recebimento',async t=>{
+ const repo=new RepositorioCatalogoSQLite({caminho:':memory:'});
+ t.after(()=>repo.fechar());
+ repo.salvar({produto:produto('loja-sandbox-250',25000),revisaoEsperada:0});
+ const contas=new ContasParticipantesDemoSQLite({banco:repo.banco});
+ const senha='senha-sandbox-2026-segura';
+ const titular=contas.cadastrar({nome:'Titular Sandbox Local',
+  email:'sandbox-local@exemplo.invalid',senha});
+ const chamadas=[];
+ const app=criarAppAdminLaboratorio({
+  repositorio:repo,segredo:'segredo-admin-sandbox-123456789',
+  criarCobrancaSandboxTeste:async({pedidoId,contaId})=>{
+   chamadas.push({pedidoId,contaId});
+   return {pedidoId,status:'PENDENTE_SANDBOX',ambiente:'ASAAS_SANDBOX_EXCLUSIVO'};
+  }
+ });
+ const srv=app.listen(0,'127.0.0.1');
+ await once(srv,'listening');
+ t.after(()=>new Promise(resolve=>srv.close(resolve)));
+ const base='http://127.0.0.1:'+srv.address().port+'/api/laboratorio/participante';
+ const headers={'Content-Type':'application/json','X-LOOP-LAB':'participante'};
+ const login=await fetch(base+'/entrar',{method:'POST',headers,
+  body:JSON.stringify({nome:titular.nome,senha})});
+ assert.equal(login.status,200);
+ const cookie=login.headers.get('set-cookie').split(';')[0];
+ const pedido=await fetch(base+'/loja/pedidos',{method:'POST',
+  headers:{...headers,Cookie:cookie},
+  body:JSON.stringify({itens:[{produtoId:'loja-sandbox-250',quantidade:1}]})});
+ assert.equal(pedido.status,201);
+ const resposta=await pedido.json();
+ assert.equal(resposta.cobrancaSandbox.status,'PENDENTE_SANDBOX');
+ assert.equal(resposta.posicaoCriada,false);
+ assert.deepEqual(chamadas,[{pedidoId:resposta.pedido.pedidoId,contaId:titular.contaId}]);
+ const escritorio=await fetch(base+'/minha-conta',{headers:{Cookie:cookie}});
+ assert.equal(escritorio.status,200);
+ assert.equal((await escritorio.json()).posicoes.length,0);
+});
