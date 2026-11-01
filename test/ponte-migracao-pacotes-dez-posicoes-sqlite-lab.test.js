@@ -66,7 +66,7 @@ for(const limite of [5,6]){
   assert.ok(novo.includes('BETWEEN 2 AND 10'));
   assert.deepEqual(m.banco.prepare(
    'SELECT ordem,posicao_id AS id FROM admin_ponte_posicoes_adicionais_demo WHERE pedido_id=? ORDER BY ordem'
-  ).all(pedido),[{ordem:2,id:extra}]);
+  ).all(pedido).map(x=>({ordem:x.ordem,id:x.id})),[{ordem:2,id:extra}]);
   // O pedido antigo continua intacto; passa a aceitar ordem 10.
   m.banco.prepare(`INSERT INTO admin_ponte_posicoes_adicionais_demo
    (pedido_id,ordem,posicao_id) VALUES(?,10,?)`).run(pedido,extra+1);
@@ -118,7 +118,7 @@ for(const limite of [5,6]){
   ).get().sql.includes('BETWEEN 2 AND 10'));
   assert.deepEqual(banco.prepare(
    'SELECT ordem,posicao_id AS id FROM admin_ponte_posicoes_adicionais_demo WHERE pedido_id=?'
-  ).all(pedido),[{ordem:2,id:extra}]);
+  ).all(pedido).map(x=>({ordem:x.ordem,id:x.id})),[{ordem:2,id:extra}]);
   assert.equal(banco.prepare(
    'SELECT posicao_id AS id FROM admin_ponte_compras_demo WHERE pedido_id=?'
   ).get(pedido).id,primaria);
