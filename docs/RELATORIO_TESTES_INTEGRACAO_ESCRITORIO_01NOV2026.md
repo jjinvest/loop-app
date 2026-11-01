@@ -2,6 +2,17 @@
 
 **Escopo:** backend SQLite, ponte, financeiro, clientes e monitor do Escritório Virtual no laboratório. Não houve merge, deploy, cobrança bancária, saque real ou alteração de tela já aprovada.
 
+## Atualização confirmada no GitHub Actions — testes integrados e navegador
+
+**VERDE — 686 testes aprovados, 0 falhas, 0 ignorados.** Execução: [run 41316716980](https://github.com/jjinvest/loop-app/actions/runs/41316716980), commit de código `b310bc92a5fe7421b2cc9cdfa615c20de6108cbe`, workflow de push `LOOP - Validar Meus Pedidos no navegador`. Etapas bem-sucedidas: `npm ci`, `npm audit --omit=dev`, `npm test`, instalação Playwright/Chromium e `node scripts/validar-meus-pedidos-browser.js`. Duração da suite reportada no log ~70 s, resultado TAP `tests 686`, `pass 686`, `fail 0`, `skipped 0`.
+
+Evidências de browser no log: `MEUS_PEDIDOS_BROWSER_SQLITE_OK`, `COMPRA_HTTP_ASAAS_SIMULADO_POSICAO_NAVEGADOR_PC_CELULAR_OK`, `DEZ_POSICOES_DO_TITULAR_VISIVEIS_NAVEGADOR_OK`. Artefato de capturas `meus-pedidos-captura-real`, ID `13087802621`, ~3,7 MB. O teste integrado entre departamentos, incluindo SQLite reaberto, faz parte da suíte aprovada.
+
+A execução anterior [run 41315954518](https://github.com/jjinvest/loop-app/actions/runs/41315954518) apresentou **6 falhas** de teste, corrigidas em commits consecutivos: `f50cd24` (asserção de ficha administrativa verificava literal errado), `d891943` (o pedido físico agora registra o endereço de entrega obrigatório antes do HTTP de compra), `b310bc9` (quatro comparações de SQLite normalizam protótipos nulos das linhas sem alterar a persistência). São correções de testes/fixture, não afrouxamento do controle de entrega e não mudanças das regras do motor.
+
+**Escopo e limite:** CI verde comprova a suíte automatizada e testes de navegador **deste código de laboratório no commit citado**. Ainda **não** comprova liquidação bancária, callbacks reais do Asaas em endpoint remoto de homologação, estabilidade operacional em ambiente público, conformidade jurídica ou autorização para deploy. A PR #1 segue DRAFT e não foi publicada.
+
+
 ## Evidência efetivamente executada — ambiente local Node.js 22.16.0
 
 Com o acesso direto a GitHub bloqueado para clone no ambiente executor (DNS não resolvia github.com), foi montado um **harness local isolado** em Node `node:sqlite`: reprodução do módulo `src/domain/resumo-financeiro-operacional-lab.js` obtido da branch e execução das consultas SQL de migração e classificação por categoria. Execução: `node --test resumo.test.js integridade.test.js`. Resultado observado:
@@ -23,4 +34,4 @@ Novo teste `test/escritorio-convergencia-todos-departamentos-sqlite-lab.test.js`
 
 Exigir conclusão **verde** da suíte integral e dos testes de navegador no HEAD final, integridade SQLite em banco reaberto e conferência da telemetria dos módulos, sem divergências. Somente depois disso marcar a validação técnica como concluída. A homologação remota Asaas e a conciliação bancária real são gates separados; o parecer jurídico segue obrigatório antes do público, conforme documento-mestre.
 
-**Estado atual:** 6 testes locais isolados PASS; suíte completa/CI/browser do novo HEAD A CONFIRMAR; PR #1 DRAFT; zero deploy.
+**Estado atual (após correções):** 686/686 testes da suíte do laboratório PASS no commit `b310bc9`; navegador Chromium PC/celular aprovado; capturas disponíveis no Actions. PR #1 DRAFT, zero deploy e nenhuma movimentação financeira real.
