@@ -1,0 +1,30 @@
+# LOOP 3.0 / AKITEMM — Protocolo para fechar a homologação externa do webhook Asaas
+
+**Estado em 01/11/2026:** preparação interna adicionada, **evento remoto real ainda NÃO recebido nem homologado**. Apenas ambiente Asaas **Sandbox**, com autorização explícita, sem venda real, sem merge e sem deploy comercial.
+
+## O que foi resolvido no código
+
+O script `scripts/preparar-e-enviar-webhook-asaas-sandbox-staging.js` usa os componentes de pré-pedido já existentes e um SQLite **novo**, persistente e separado do laboratório comercial. O modo `PREPARAR` não usa rede, não cria Pix, não gera posições, não altera saldos e não precisa da chave da API. Ele gera uma cotação fictícia R$ 250, rascunho, pré-pedido imutável, reserva de cobrança e devolve IDs de teste para o ensaio.
+
+O modo `ENVIAR_SANDBOX` exige uma autorização distinta, chave `$aact_hmlg_` exclusiva do Sandbox guardada em variável de ambiente segura e um cliente Sandbox de teste previamente identificado. O envio acontece **no máximo uma vez por pré-pedido**: em erro de rede, NÃO repetir `POST` para evitar cobranças indeterminadas; use a recuperação por referência já implementada e revisão independente. Não habilitar em produção.
+
+Há também um receptor opt-in isolado em `src/laboratorio/servidor-webhook-asaas-tunel-staging.js`, que recebe notificações através de túnel HTTPS externo controlado, autentica `asaas-access-token`, confere o vínculo ao pagamento conhecido e grava em SQLite antes de responder 200. O receptor não consulta PSP por conta própria, não movimenta o LOOP e não deve ser colocado em `src/server.js`.
+
+## Procedimento quando a infraestrutura estiver disponível
+
+1. Provisionar uma **pasta isolada** para o SQLite e um **ambiente HTTPS temporário** com túnel confiável, acesso apenas ao receptor local e armazenamento seguro de segredos. Não enviar senhas, CPFs ou tokens ao ChatGPT/GitHub. O processo precisa receber corretamente `Host` público e `X-Forwarded-Proto: https` enviados pelo túnel controlado; não confiar nesses cabeçalhos vindos da internet diretamente.
+2. Cadastrar ou identificar um cliente **fictício** no Asaas Sandbox, com `cus_...` (sem dados pessoais reais).
+3. Executar somente a preparação, sem rede, com as variáveis `LOOP_HOMOLOGACAO_ACAO=PREPARAR`, `LOOP_HOMOLOGACAO_SQLITE=/caminho/privado/staging.sqlite` (arquivo novo), `ASAAS_SANDBOX_CLIENTE_TESTE_ID=cus_...` e `LOOP_HOMOLOGACAO_PREPARAR=SIM`. Rodar `node scripts/preparar-e-enviar-webhook-asaas-sandbox-staging.js` em ambiente não produtivo. Guardar `prepedidoId` e `titularId` retornados.
+4. Configurar o receptor com `LOOP_WEBHOOK_TUNEL_SANDBOX_AUTORIZADO=SIM`, `LOOP_WEBHOOK_TUNEL_SQLITE` apontando para **o mesmo arquivo**, `LOOP_WEBHOOK_TUNEL_URL_PUBLICA=https://DOMINIO/webhooks/asaas-sandbox`, `LOOP_WEBHOOK_TUNEL_TOKEN` secreto e exclusivo de 32–255 caracteres, e `LOOP_WEBHOOK_TUNEL_PORTA` opcional. Executar `node src/laboratorio/servidor-webhook-asaas-tunel-staging.js` em servidor de homologação local. O processo escuta apenas em 127.0.0.1; configurar o túnel HTTPS e testar a saúde da rota por canal autorizado antes do evento.
+5. Na conta do **Asaas Sandbox**, criar o webhook `https://DOMINIO/webhooks/asaas-sandbox` com **o mesmo authToken dedicado**, usando `Menu do usuário > Integrações > Webhooks`; selecionar eventos de pagamento necessários e habilitar. Jamais reutilizar API Key como token de webhook. Conferir no painel que o webhook está habilitado, não interrompido, e URL é final (sem redirecionamentos).
+6. Somente após a etapa anterior, executar manualmente `ENVIAR_SANDBOX` com `LOOP_HOMOLOGACAO_ENVIAR_SANDBOX=SIM`, `LOOP_HOMOLOGACAO_PREPEDIDO_ID`, `LOOP_HOMOLOGACAO_TITULAR_ID`, `LOOP_HOMOLOGACAO_SQLITE` e `ASAAS_SANDBOX_API_KEY` exclusiva do Sandbox. Esta execução cria uma cobrança **somente Sandbox**; caso falhe, **não reenviar cegamente**.
+7. Simular o evento adequado exclusivamente no Sandbox, confirmar no **Log de Webhooks do Asaas** o `POST` enviado à URL HTTPS, horário, código HTTP 200 e ID de evento; no SQLite, conferir exatamente o mesmo ID persistido. Depois acionar **separadamente** a reconsulta autenticada do PSP e verificar id, tipo Pix, valor R$ 250, referência, cliente e status. `RECEIVED_IN_CASH` ou estado contraditório **não** comprova Pix. Não converter este teste em posição real.
+8. Guardar evidências sanitizadas (sem tokens, CPF, QR, chaves) do log de entrega, histórico do receptor, reconsulta independente e recuperação após reinício. Só então considerar encerrado o requisito **ASAAS_REMOTO** para a versão e ambiente homologados; financeiro/banco, produção, jurídico, visual e autorização final continuam gates separados.
+
+## Segurança e limitação conhecida
+
+O envio é um protocolo de ensaio, **não** um checkout comercial. Se o webhook chegar antes da gravação do ID da cobrança pelo envio, o receptor poderá responder 409 e o evento exigirá reentrega/revisão; monitorar os Logs do Asaas e não tratar falha como pagamento confirmado. Não iniciar produção por simples mudança de `NODE_ENV` ou variável.
+
+**Evidência do CI do código e teste de preparação:** preencher com o workflow e SHA exato somente após confirmação. **O recebimento remoto ainda exige infraestrutura e autorização do titular**.
+
+Fontes: https://docs.asaas.com/docs/receba-eventos-do-asaas-no-seu-endpoint-de-webhook e https://docs.asaas.com/docs/criar-novo-webhook-pela-aplicacao-web
