@@ -88,7 +88,7 @@ async function cenario(t){
   return {status:resposta.status,data:await resposta.json()};
  }
  return {banco,ponte,inbox,worker,provedor,estado,chamadas,evento,enviar,
-  base,pedidoId};
+  base,pedidoId,arquivo};
 }
 test('webhook de prepedido autenticado grava sinal, idempotente e nao reconsulta PSP sozinho',async t=>{
  const s=await cenario(t);
@@ -218,5 +218,111 @@ test('webhook nao esta no app publico nem existe fallback remoto em producao',as
  })).status,503);
  assert.equal((await fetch(base+'/staging/webhook-prepedido-asaas',{method:'POST'})).status,404);
  assert.equal((await fetch(base+'/health/ready')).status,503);
+ assert.equal(s.chamadas.filter(x=>x==='GET').length,0);
+});
+
+test('apos interrupcao worker novo encontra evento travado, exige revisao e nao refaz Pix',async t=>{
+ const s=await cenario(t),aviso=s.evento('evt_QuedaRecuperacaoLocal01');
+ assert.equal((await s.enviar(aviso)).status,200);
+ const inicio='2026-10-31T20:00:00.000Z';
+ s.banco.prepare([
+  'INSERT INTO akitemm_prepedido_webhook_reconsulta_staging',
+  "(evento_id,estado,codigo,iniciado_em) VALUES(?,'PROCESSANDO','RECONSULTA',?)"
+ ].join(' ')).run(aviso.id,inicio);
+ const outroBanco=new DatabaseSync(s.arquivo);
+ outroBanco.exec('PRAGMA foreign_keys=ON;PRAGMA busy_timeout=5000;');
+ t.after(()=>outroBanco.close());
+ const novaPonte=new PontePrepedidoAsaasSandboxStaging({banco:outroBanco});
+ const novaInbox=new InboxWebhookPrepedidoAsaasStaging({banco:outroBanco,token:TOKEN});
+ const novoWorker=new ReconsultaWebhookPrepedidoAsaasStaging({
+  banco:outroBanco,ponte:novaPonte,inbox:novaInbox,
+  agoraMs:()=>Date.parse('2026-11-01T20:00:00.000Z')
+ });
+ assert.deepEqual(novoWorker.pendencias(),[{
+  eventoId:aviso.id,estado:'PROCESSANDO',codigo:'RECONSULTA'
+ }]);
+ assert.throws(()=>novoWorker.recuperarTravados(),{codigo:'RECUPERACAO_NAO_AUTORIZADA'});
+ assert.throws(()=>novoWorker.recuperarTravados({
+  execucaoLiberada:true,idadeMinimaMs:0
+ }),{codigo:'LIMITE_RECUPERACAO_INVALIDO'});
+ assert.equal(novoWorker.recuperarTravados({
+  execucaoLiberada:true,idadeMinimaMs:7*86400000
+ }).recuperados,0,'evento recente demais para limite de 7 dias');
+ const primeiro=novoWorker.recuperarTravados({execucaoLiberada:true});
+ assert.equal(primeiro.recuperados,1);
+ assert.deepEqual(primeiro.eventos,[aviso.id]);
+ assert.equal(primeiro.novaCobranca,false);
+ assert.equal(primeiro.reconsultaRemotaExecutada,false);
+ assert.equal(novoWorker.recuperarTravados({execucaoLiberada:true}).recuperados,0);
+ assert.equal(novoWorker.consultar(aviso.id).estado,'EXIGE_REVISAO');
+ assert.equal(novoWorker.consultar(aviso.id).codigo,'PROCESSAMENTO_INTERROMPIDO_REVISAR');
+ assert.equal(s.chamadas.filter(v=>v==='POST').length,1);
+ assert.equal(s.chamadas.filter(v=>v==='GET').length,0);
+ assert.equal(outroBanco.prepare(
+  'SELECT COUNT(*) n FROM akitemm_prepedido_webhook_recuperacoes_staging'
+ ).get().n,1);
+ assert.deepEqual(novoWorker.pendencias(),[{
+  eventoId:aviso.id,estado:'EXIGE_REVISAO',
+  codigo:'PROCESSAMENTO_INTERROMPIDO_REVISAR'
+ }]);
+ assert.throws(()=>outroBanco.prepare(
+  'DELETE FROM akitemm_prepedido_webhook_recuperacoes_staging').run(),
+ /auditoria recuperacao imutavel/);
+ assert.throws(()=>outroBanco.prepare(
+  "UPDATE akitemm_prepedido_webhook_recuperacoes_staging SET codigo='INVENTADO'").run(),
+ /auditoria recuperacao imutavel/);
+ assert.equal(outroBanco.prepare('PRAGMA integrity_check').get().integrity_check,'ok');
+ assert.deepEqual(outroBanco.prepare('PRAGMA foreign_key_check').all(),[]);
+});
+test('worker antigo que retorna depois de recuperacao nao sobrepoe a revisao manual',async t=>{
+ const s=await cenario(t),aviso=s.evento('evt_ConcorrenciaQuedaLocal01');
+ assert.equal((await s.enviar(aviso)).status,200);
+ let liberar,avisarInicio;
+ const iniciou=new Promise(resolve=>{avisarInicio=resolve;});
+ const trava=new Promise(resolve=>{liberar=resolve;});
+ const provedor={ambiente:'ASAAS_SANDBOX_EXCLUSIVO',
+  consultarCobranca:async id=>{
+   assert.equal(id,PAY);
+   avisarInicio();
+   await trava;
+   return {pagamentoId:PAY,externalReference:'LOOPLAB-'+s.pedidoId,
+    clienteAsaasId:CLIENTE,billingType:'PIX',valorCentavos:25000,status:'RECEIVED'};
+  }};
+ const emCurso=s.worker.processar({
+  eventoId:aviso.id,provedor,execucaoLiberada:true
+ });
+ await iniciou;
+ assert.equal(s.worker.consultar(aviso.id).estado,'PROCESSANDO');
+ const novoWorker=new ReconsultaWebhookPrepedidoAsaasStaging({
+  banco:s.banco,inbox:s.inbox,ponte:s.ponte,
+  agoraMs:()=>Date.now()+120000
+ });
+ const recuperado=novoWorker.recuperarTravados({execucaoLiberada:true});
+ assert.equal(recuperado.recuperados,1);
+ liberar();
+ const antigo=await emCurso;
+ assert.equal(antigo.repetido,true);
+ assert.equal(antigo.revisaoManualObrigatoria,true);
+ assert.equal(antigo.estado,'EXIGE_REVISAO');
+ assert.equal(novoWorker.consultar(aviso.id).estado,'EXIGE_REVISAO');
+ assert.equal(novoWorker.consultar(aviso.id).codigo,
+  'PROCESSAMENTO_INTERROMPIDO_REVISAR');
+ assert.equal(s.banco.prepare(
+  'SELECT COUNT(*) n FROM akitemm_prepedido_webhook_recuperacoes_staging'
+ ).get().n,1);
+ assert.equal(s.banco.prepare('PRAGMA integrity_check').get().integrity_check,'ok');
+});
+test('pendencias lista eventos nao processados sem divulgar dados pessoais',async t=>{
+ const s=await cenario(t);
+ const a=s.evento('evt_PendenteSemWorkerLocal01');
+ assert.equal((await s.enviar(a)).status,200);
+ assert.deepEqual(s.worker.pendencias(),[{
+  eventoId:a.id,estado:'PENDENTE',codigo:'SEM_RECONSULTA'
+ }]);
+ assert.throws(()=>s.worker.pendencias({limite:101}),
+  {codigo:'LIMITE_RECUPERACAO_INVALIDO'});
+ const n=s.worker.recuperarTravados({execucaoLiberada:true});
+ assert.equal(n.recuperados,0,'nao transformar evento ainda nao iniciado em processando');
+ assert.equal(JSON.stringify(s.worker.pendencias()).includes('CPF'),false);
  assert.equal(s.chamadas.filter(x=>x==='GET').length,0);
 });
