@@ -16,6 +16,8 @@ const {reconsultarEvento,inspecionarEvento}=
  require('../scripts/conferir-webhook-asaas-sandbox-staging');
 const {InboxWebhookPrepedidoAsaasStaging}=
  require('../src/domain/inbox-webhook-prepedido-asaas-staging');
+const {projetarPosicaoPendenteSandbox}=
+ require('../scripts/projetar-posicao-pendente-sandbox-staging');
 const SENHA='TesteJornadaConectadaSandbox2026Valida!';
 const TOKEN='TokenWebhookUnicoJornadaConectada2026__';
 const CLIENTE='cus_HomologacaoJornadaStaging00001';
@@ -129,6 +131,26 @@ test('cliente prepara pedido -> operador associa Sandbox -> Meus Pedidos mostra 
  assert.equal(conferido.posicoesCriadas,0);
  assert.equal(criado,1);
  assert.equal(consultado,1);
+ const pendenciaArgs={arquivo,titularId:a.id,prepedidoId,eventoId};
+ await assert.rejects(Promise.resolve().then(()=>projetarPosicaoPendenteSandbox({
+  ...pendenciaArgs
+ })),{codigo:'POSICAO_FICTICIA_NAO_AUTORIZADA'});
+ assert.throws(()=>projetarPosicaoPendenteSandbox({
+  ...pendenciaArgs,titularId:b.id,execucaoLiberada:true
+ }),{codigo:'RECEBIMENTO_SANDBOX_NAO_VERIFICADO'});
+ const primeiro=projetarPosicaoPendenteSandbox({
+  ...pendenciaArgs,execucaoLiberada:true
+ });
+ assert.equal(primeiro.repetido,false);
+ assert.equal(primeiro.pendente.quantidadePosicoesPendentesSimuladas,1);
+ assert.equal(primeiro.pendente.posicoesReaisCriadas,0);
+ assert.equal(primeiro.pendente.filasMovimentadas,0);
+ assert.equal(primeiro.pendente.permissaoConfirmarCPF,false);
+ const segundo=projetarPosicaoPendenteSandbox({
+  ...pendenciaArgs,execucaoLiberada:true
+ });
+ assert.equal(segundo.repetido,true);
+ assert.equal(segundo.pendente.id,primeiro.pendente.id);
  const final=await http('/prepedidos/'+prepedidoId+'/sandbox',{cookie:a.cookie});
  assert.equal(final.status,200);
  assert.equal(final.data.estado,'RECEBIMENTO_INFORMADO_SANDBOX');
@@ -141,6 +163,10 @@ test('cliente prepara pedido -> operador associa Sandbox -> Meus Pedidos mostra 
  assert.equal(meusPedidos.data.pedidos[0].statusHomologacao,'RECEBIMENTO_INFORMADO_SANDBOX');
  assert.equal(meusPedidos.data.pedidos[0].statusInformadoPeloPSP,'RECEIVED');
  assert.equal(meusPedidos.data.pedidos[0].posicoesCriadas,0);
+ assert.equal(meusPedidos.data.pedidos[0].posicaoPendenteLaboratorio.id,primeiro.pendente.id);
+ assert.equal(meusPedidos.data.pedidos[0].posicaoPendenteLaboratorio.estado,
+  'PENDENTE_DE_CONFIRMACAO_CLIENTE_SANDBOX');
+ assert.equal(meusPedidos.data.pedidos[0].posicaoPendenteLaboratorio.posicoesReaisCriadas,0);
  assert.equal(meusPedidos.data.pedidos[0].compraReal,false);
  assert.equal(meusPedidos.data.consultaPSPRealizadaNestaLeitura,false);
  assert.equal(consultado,1,'abrir Meus Pedidos nao faz GET no PSP');
@@ -170,6 +196,7 @@ test('cliente prepara pedido -> operador associa Sandbox -> Meus Pedidos mostra 
  assert.equal(estadoReaberto.pedidos[0].prepedidoId,prepedidoId);
  assert.equal(estadoReaberto.pedidos[0].statusHomologacao,'RECEBIMENTO_INFORMADO_SANDBOX');
  assert.equal(estadoReaberto.pedidos[0].statusInformadoPeloPSP,'RECEIVED');
+ assert.equal(estadoReaberto.pedidos[0].posicaoPendenteLaboratorio.id,primeiro.pendente.id);
  assert.equal(consultado,1,'leitura apos reinicio nao deve reconsultar PSP');
  const publico=require('../src/server');
  const serverPublico=publico.listen(0,'127.0.0.1');
