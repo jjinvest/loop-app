@@ -31,7 +31,7 @@ class AsaasSandboxLojaV6{
  }
  async _requisitar(metodo,caminho,corpo){
   // URL sempre fixa; nenhum endereco controlado por consumidor/operador.
-  if(!/^\/(payments|payments\/[a-zA-Z0-9_-]{5,90}(?:\/pixQrCode)?)$/.test(caminho))
+  if(!/^\/(?:payments(?:\?externalReference=LOOPLAB-[a-z0-9-]{3,70}&limit=10)?|payments\/[a-zA-Z0-9_-]{5,90}(?:\/pixQrCode)?)$/.test(caminho))
    throw falha('CAMINHO_ASAAS_INVALIDO');
   let resposta;
   try{
@@ -78,6 +78,29 @@ class AsaasSandboxLojaV6{
    valorCentavos:centavosExatos(p.value),
    externalReference:p.externalReference,billingType:p.billingType,
    clienteAsaasId:p.customer||null};
+ }
+ async localizarCobrancaPorReferencia({pedidoId,clienteAsaasId,valorCentavos}={}){
+  // APENAS GET de pesquisa depois de timeout/queda; nenhuma recriacao.
+  if(typeof pedidoId!=='string'||!/^[a-z0-9-]{3,70}$/.test(pedidoId)||
+     typeof clienteAsaasId!=='string'||!ID.test(clienteAsaasId)||
+     !Number.isSafeInteger(valorCentavos)||valorCentavos<1||valorCentavos>100000000)
+   throw falha('REFERENCIA_SANDBOX_INVALIDA');
+  const dados=await this._requisitar('GET',
+   '/payments?externalReference=LOOPLAB-'+pedidoId+'&limit=10');
+  if(!Array.isArray(dados?.data))
+   throw falha('BUSCA_SANDBOX_RESPOSTA_INVALIDA');
+  if(dados.hasMore===true||dados.data.length>1)
+   throw falha('COBRANCAS_SANDBOX_DUPLICADAS_REVISAR');
+  if(dados.data.length===0)return null;
+  const p=dados.data[0];
+  if(!p||typeof p.id!=='string'||!ID.test(p.id)||
+     p.externalReference!=='LOOPLAB-'+pedidoId||
+     p.billingType!=='PIX'||p.customer!==clienteAsaasId||
+     centavosExatos(p.value)!==valorCentavos||
+     typeof p.status!=='string')
+   throw falha('BUSCA_SANDBOX_DIVERGENTE');
+  return {pagamentoId:p.id,status:p.status,valorCentavos,
+   ambiente:this.ambiente};
  }
  async obterPix(pagamentoId){
   if(typeof pagamentoId!=='string'||!ID.test(pagamentoId))
