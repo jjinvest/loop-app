@@ -61,6 +61,30 @@ function criarRouterPrePedidosCheckoutStaging({
    return res.status(resultado.repetido?200:201).json(resultado);
   }catch(e){erro(e,res,next);}
  });
+ // Projecao agregada "Meus Pedidos" do laboratorio:
+ // nunca executa GET PSP ao abrir a lista e nao expõe credenciais de cobranca.
+ r.get('/meus-pedidos',(req,res,next)=>{
+  try{
+   const titularId=req.titularPrePedido;
+   const pedidos=prePedidos.listar({titularId}).map(p=>{
+    const andamento=ponteAsaasSandbox?.consultar({
+     titularId,prepedidoId:p.prepedidoId
+    })||null;
+    return {
+     prepedidoId:p.prepedidoId,criadoEm:p.criadoEm,
+     moeda:p.moeda,totalCentavos:p.totalCentavos,itens:p.itens,
+     statusHomologacao:andamento?.estado??'SEM_COBRANCA_SANDBOX',
+     statusInformadoPeloPSP:andamento?.ultimaConsultaSandbox?.statusAsaas??null,
+     consultaPSPRealizadaNestaLeitura:false,
+     revisaoManualObrigatoria:andamento?.revisaoManualObrigatoria===true,
+     compraReal:false,comprovanteFinanceiro:false,
+     posicoesCriadas:0,bonificacaoLiberada:false
+    };
+   });
+   return res.json({pedidos,ambiente:'STAGING_LOCAL',
+    checkoutPublico:false,consultaPSPRealizadaNestaLeitura:false});
+  }catch(e){erro(e,res,next);}
+ });
  r.get('/prepedidos',(req,res,next)=>{
   try{return res.json({
    prepedidos:prePedidos.listar({titularId:req.titularPrePedido}),
