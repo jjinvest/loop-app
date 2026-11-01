@@ -17,6 +17,7 @@ on:
       - 'src/laboratorio/servidor-catalogo.js'
       - 'src/routes/participante-laboratorio-demo.js'
       - 'test/montagem-integracao-asaas-sandbox-loop-lab.test.js'
+      - 'test/loja-cliente-sessao-carrinho.test.js'
   workflow_dispatch:
 permissions:
   contents: read
