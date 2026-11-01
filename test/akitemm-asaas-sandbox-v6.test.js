@@ -175,3 +175,18 @@ test('boleto recebido no Asaas Sandbox nao pode ser conciliado como PIX nem libe
  assert.equal(servico.consultar('carrinho-livro-teste').valorTransferidoParaLoopCentavos,0);
  assert.equal(servico.historico('carrinho-livro-teste').conferencias.length,0);
 });
+
+test('Adaptador rejeita chave com formato de producao antes de qualquer chamada remota',()=>{
+ let chamadas=0;
+ const fakeFetch=async()=>{chamadas++;throw Error('nao deve ser chamado');};
+ const chaveProducaoFicticia='$aact_prod_'+'x'.repeat(40);
+ assert.throws(()=>new AsaasSandboxLojaV6({apiKey:chaveProducaoFicticia,fetchImpl:fakeFetch}),
+  {codigo:'ASAAS_SANDBOX_CREDENCIAL_AMBIENTE_INCOMPATIVEL'});
+ assert.throws(()=>new AsaasSandboxLojaV6({apiKey:'$aact_hmlg_abc',fetchImpl:fakeFetch}),
+  {codigo:'ASAAS_SANDBOX_CREDENCIAL_AUSENTE'});
+ const provedor=new AsaasSandboxLojaV6({apiKey:'$aact_hmlg_'+'x'.repeat(40),
+  fetchImpl:fakeFetch});
+ assert.equal(provedor.ambiente,'ASAAS_SANDBOX_EXCLUSIVO');
+ assert.equal(chamadas,0);
+ assert.equal(ASAAS_SANDBOX_BASE,'https://api-sandbox.asaas.com/v3');
+});
