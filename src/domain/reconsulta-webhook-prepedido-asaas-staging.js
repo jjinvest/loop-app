@@ -111,7 +111,7 @@ class ReconsultaWebhookPrepedidoAsaasStaging{
    'ON r.evento_id=a.evento_id',
    "WHERE r.estado IS NULL OR r.estado IN ('PROCESSANDO','EXIGE_REVISAO')",
    'ORDER BY a.recebido_em,a.evento_id LIMIT ?'
-  ].join(' ')).all(limite);
+  ].join(' ')).all(limite).map(row=>({...row}));
  }
  async processar({eventoId,provedor,execucaoLiberada=false}={}){
   if(process.env.NODE_ENV==='production')
