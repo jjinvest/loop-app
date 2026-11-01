@@ -1,0 +1,41 @@
+name: LOOP - HTTP com Asaas Sandbox remoto
+on:
+  push:
+    branches: [fix/teste-escrita-catraca-20261014]
+    paths: ['.github/workflows/homologar-http-asaas-sandbox.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  homologar-http-sandbox:
+    if: github.repository == 'jjinvest/loop-app' && github.ref == 'refs/heads/fix/teste-escrita-catraca-20261014'
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      # Codigo imutavel revisado; o secret nao e entregue ao HEAD de um PR.
+      - uses: actions/checkout@v4
+        with:
+          ref: cbbbed7166a221ef10e8489f815e76881ff974b5
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+      - name: Comprar por HTTP e confirmar exclusivamente no Sandbox
+        shell: bash
+        env:
+          LOOP_ASAAS_SANDBOX_HTTP_HOMOLOGAR: 'SIM'
+          ASAAS_SANDBOX_API_KEY: ${{ secrets.ASAAS_SANDBOX_API_KEY }}
+          ASAAS_SANDBOX_CPF_FICTICIO: '24971563792'
+        run: |
+          set -o pipefail
+          mkdir -p artifacts
+          node scripts/homologar-http-asaas-sandbox.js 2>&1 | tee artifacts/asaas-http-remoto.log
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: asaas-http-sandbox-remoto
+          path: artifacts/asaas-http-remoto.log
+          if-no-files-found: warn
+          retention-days: 7
