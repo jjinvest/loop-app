@@ -121,7 +121,7 @@ test('codigo de erro desconhecido nunca vaza segredo no estado ou historico da f
   method:'POST',headers:{'Content-Type':'application/json','asaas-access-token':TOKEN},
   body:JSON.stringify(evento)});
  assert.equal(ack.status,200);
- m.integracao.conferidor.conferirEvento=async()=>{
+ m.integracao.conferidorAvisos.conferirEvento=async()=>{
   const erro=new Error('Mensagem privada');
   erro.codigo='TOKEN_PRIVADO_INJETADO_123456';
   throw erro;
