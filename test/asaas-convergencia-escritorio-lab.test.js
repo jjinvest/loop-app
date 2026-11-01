@@ -141,3 +141,59 @@ test('Monitor do escritorio torna visiveis estorno com posicao e status desconhe
  assert.match(script,/reversoesComPosicaoPreservada/);
  assert.match(html,/Reversões com posição preservada/);
 });
+
+test('Ultima reconsulta pendente nao pode ficar invisivel no Escritorio nem habilitar nova posicao',async t=>{
+ const m=await abrirLaboratorio(':memory:');t.after(()=>m.fechar());
+ const nome='Cliente Reconsulta Divergente',senha='senha-ficticia-reconsulta-2026';
+ const conta=m.contas.cadastrar({nome,email:'reconsulta-pendente@example.invalid',senha});
+ const {cookie}=await m.http('/entrar',{body:{nome,senha}});
+ const pedido=(await m.http('/loja/pedidos',{cookie,status:201,
+  body:{itens:[{produtoId:'curso-lab-250',quantidade:1}]}})).data.pedido.pedidoId;
+ m.confirmar(pedido);
+ const primeiro=await m.integracao.conciliador.processar(pedido);
+ assert.equal(primeiro.posicoesNoPedido,1);
+ m.banco.prepare("UPDATE lab_psp_http_fixture SET status='PENDING' WHERE pedido=?")
+  .run('LOOPLAB-'+pedido);
+ const antiga=await m.integracao.cobrancas.conferir(pedido);
+ assert.equal(antiga.status,'RECEBIMENTO_INFORMADO_SANDBOX');
+ const before=m.banco.prepare('SELECT total_changes() AS n').get().n;
+ const alerta=await resumo(m);
+ assert.equal(m.banco.prepare('SELECT total_changes() AS n').get().n,before);
+ assert.equal(alerta.reconsultasSemRecebimento,1);
+ assert.equal(alerta.anomaliasContadasPorCriterio,1);
+ assert.equal(alerta.revisaoManualIndicada,true);
+ assert.equal(alerta.pedidosComPosicao,1);
+ await assert.rejects(()=>m.integracao.conciliador.processar(pedido),
+  {codigo:'ULTIMA_RECONSULTA_NAO_CONFIRMOU_RECEBIMENTO'});
+ assert.equal(m.banco.prepare('SELECT COUNT(*) AS n FROM admin_ponte_compras_demo').get().n,1);
+ m.confirmar(pedido);
+ const repetida=await m.integracao.conciliador.processar(pedido);
+ assert.equal(repetida.repetida,true);
+ const final=await resumo(m);
+ assert.equal(final.reconsultasSemRecebimento,0);
+ assert.equal(final.revisaoManualIndicada,false);
+ assert.equal(final.pedidosComPosicao,1);
+ assert.equal(m.ponte._restaurar().giros,0);
+ assert.deepEqual(m.banco.prepare('PRAGMA foreign_key_check').all(),[]);
+});
+test('Baixa manual RECEIVED_IN_CASH nao qualifica pagamento PIX nem gera posicao',async t=>{
+ const m=await abrirLaboratorio(':memory:');t.after(()=>m.fechar());
+ const nome='Cliente Caixa Manual',senha='senha-ficticia-caixa-manual-2026';
+ m.contas.cadastrar({nome,email:'caixa-manual@example.invalid',senha});
+ const {cookie}=await m.http('/entrar',{body:{nome,senha}});
+ const pedido=(await m.http('/loja/pedidos',{cookie,status:201,
+  body:{itens:[{produtoId:'curso-lab-250',quantidade:1}]}})).data.pedido.pedidoId;
+ m.banco.prepare("UPDATE lab_psp_http_fixture SET status='RECEIVED_IN_CASH' WHERE pedido=?")
+  .run('LOOPLAB-'+pedido);
+ const resultado=await m.integracao.cobrancas.conferir(pedido);
+ assert.equal(resultado.status,'STATUS_DESCONHECIDO_SANDBOX');
+ await assert.rejects(()=>m.integracao.conciliador.processar(pedido));
+ const monitor=await resumo(m);
+ assert.equal(monitor.recebimentosInformados,0);
+ assert.equal(monitor.estadosAsaasDesconhecidos,1);
+ assert.equal(monitor.revisaoManualIndicada,true);
+ assert.equal(monitor.pedidosComPosicao,0);
+ assert.equal(monitor.pagamentosReais,false);
+ assert.equal(m.banco.prepare('SELECT COUNT(*) AS n FROM admin_ponte_compras_demo').get().n,0);
+ assert.equal(m.ponte._restaurar().giros,0);
+});
