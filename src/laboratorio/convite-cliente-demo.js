@@ -81,7 +81,7 @@
    estado.textContent='Convite de '+info.nomeIndicador+
     '. Cadastre-se para receber seu próprio link, inicialmente inativo.';
    form.hidden=false;
-   // A vitrine completa abre somente depois do cadastro e do login.
+   // A vitrine publica pode ser consultada antes do cadastro.\n   // O cadastro permanece exigido para finalizar qualquer pedido.\n   if(destino==='loja')await mostrarVitrine();
   }catch(err){estado.textContent=err.message;}
  })();
  form.addEventListener('submit',async ev=>{
