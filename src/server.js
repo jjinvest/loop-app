@@ -1,3 +1,11 @@
+'use strict';
+// Nunca permitir inicializar laboratorio ou modo de simulacao num servidor publico.
+// As rotas comerciais reais ainda nao foram homologadas para uso em producao.
+if(process.env.NODE_ENV==='production'&&
+  (process.env.LOOP_CLIENTES_LAB==='SIM'||process.env.LOOP_MODO_SIMULACAO==='1')){
+  throw new Error('LOOP_LABORATORIO_INCOMPATIVEL_COM_PRODUCAO');
+}
+
 const express = require('express');
 const path = require('path');
 const { bloquearMutacoesSimuladas } = require('./middleware/proteger-simulacao');
