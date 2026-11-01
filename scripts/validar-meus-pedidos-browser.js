@@ -114,6 +114,7 @@ async function validarEscritorio(browser,pasta){
     assert.equal((await pagina.locator('#asaasRecebimentosAdmin').innerText()).trim(),'1');
     assert.equal((await pagina.locator('#asaasPedidosComPosicaoAdmin').innerText()).trim(),'1');
     assert.equal((await pagina.locator('#asaasStatusDesconhecidoAdmin').innerText()).trim(),'1');
+    assert.equal((await pagina.locator('#asaasReconsultasDivergentesAdmin').innerText()).trim(),'0');
     assert.match(await pagina.locator('#asaasRevisaoGeralAdmin').innerText(),/SIM/);
     assert.equal((await pagina.locator('#clientesTotalDepartamento').innerText()).trim(),'2');
     assert.equal((await pagina.locator('#clientesLoopDepartamento').innerText()).trim(),'1');
