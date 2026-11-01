@@ -6,7 +6,7 @@ const express=require('express');
 const {localSeguro}=require('./admin-catalogo-laboratorio');
 function criarRouterPrePedidosCheckoutStaging({
  prePedidos,repositorioCatalogo,identificarTitular,autorizarMutacao,
- ponteAsaasSandbox=null
+ ponteAsaasSandbox=null,consultarPosicaoPendente=null
 }={}){
  if(typeof prePedidos?.preparar!=='function'||
   typeof prePedidos?.consultar!=='function'||
@@ -15,6 +15,8 @@ function criarRouterPrePedidosCheckoutStaging({
   typeof identificarTitular!=='function'||
   typeof autorizarMutacao!=='function')
   throw new TypeError('Prepedidos, catalogo, autenticacao e CSRF obrigatorios');
+ if(consultarPosicaoPendente!==null&&typeof consultarPosicaoPendente!=='function')
+  throw new TypeError('Leitura de posicao pendente invalida');
  if(ponteAsaasSandbox!==null&&typeof ponteAsaasSandbox.consultar!=='function')
   throw new TypeError('Ponte Asaas Sandbox de somente leitura invalida');
  const r=express.Router();
@@ -78,6 +80,9 @@ function criarRouterPrePedidosCheckoutStaging({
      consultaPSPRealizadaNestaLeitura:false,
      revisaoManualObrigatoria:andamento?.revisaoManualObrigatoria===true,
      compraReal:false,comprovanteFinanceiro:false,
+     posicaoPendenteLaboratorio:consultarPosicaoPendente?.({
+      titularId,prepedidoId:p.prepedidoId
+     })??null,
      posicoesCriadas:0,bonificacaoLiberada:false
     };
    });
