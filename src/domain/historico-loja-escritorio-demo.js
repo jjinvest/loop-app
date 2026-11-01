@@ -61,9 +61,20 @@ function montarHistoricoLojaDemo({visao,carrinhos,catalogo=null}={}){
   const confirmacao=legados.get(p.pedidoId);
   if(confirmacao&&confirmacao.valorCentavos!==p.totalCentavos)
    throw new Error('Total de loja e ponte divergente');
+  // Unificar a decisao visual com a ultima consulta Asaas persistida.
+  // O local pode continuar RECEBIDO depois de PENDING; nao ocultar esse
+  // conflito no Escritório nem invalidar automaticamente posicoes antigas.
+  const revisaoPagamentoSandbox=Boolean(p.situacaoPagamentoSandbox)&&(
+   ['CRIACAO_INDETERMINADA_SANDBOX','STATUS_DESCONHECIDO_SANDBOX']
+    .includes(p.situacaoPagamentoSandbox)||
+   (p.situacaoPagamentoSandbox==='RECEBIMENTO_INFORMADO_SANDBOX'&&
+    (p.ultimaConsultaSandbox?.statusAsaas!=='RECEIVED'||
+     p.ultimaConsultaSandbox?.estadoLocal!=='RECEBIMENTO_INFORMADO_SANDBOX'))
+  );
   let estado=ESTADOS.AGUARDANDO;
   if(p.situacaoPagamentoFicticio==='ESTORNADO_FICTICIO'||
      p.situacaoPagamentoSandbox==='REVERSAO_INFORMADA_SANDBOX')estado=ESTADOS.ESTORNO;
+  else if(revisaoPagamentoSandbox)estado=ESTADOS.CONFERIR;
   else if(confirmacao)estado=confirmacao.estado;
   else if(p.situacaoPagamentoFicticio==='CONFIRMADO_FICTICIO'||
           p.situacaoPagamentoSandbox==='RECEBIMENTO_INFORMADO_SANDBOX')
@@ -85,6 +96,8 @@ function montarHistoricoLojaDemo({visao,carrinhos,catalogo=null}={}){
    }),
    estado,posicaoId:confirmacao?.posicaoId??null,
    posicaoIds:confirmacao?.posicaoIds??[],
+   revisaoPagamentoSandbox,
+   ultimaReconsultaStatusAsaas:p.ultimaConsultaSandbox?.statusAsaas??null,
    registradoEm:p.criadoEm
   });
   legados.delete(p.pedidoId);
