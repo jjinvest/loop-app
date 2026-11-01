@@ -173,3 +173,16 @@ test('cotacao forjada e negada no dominio antes de inserir rascunho',async t=>{
  }),{codigo:'COTACAO_NAO_CONFIAVEL'});
  assert.equal(s.banco.prepare('SELECT COUNT(*) n FROM akitemm_checkout_intencoes_preparacao').get().n,0);
 });
+
+test('concorrencia HTTP de 12 tentativas da mesma chave gera um unico rascunho',async t=>{
+ const s=await abrir(t);
+ const entrada={itens:[{produtoId:'curso-lab-250',quantidade:1}]};
+ const respostas=await Promise.all(Array.from({length:12},()=>s.request('/rascunhos',{
+  method:'POST',body:entrada
+ })));
+ assert.equal(respostas.filter(r=>r.status===201).length,1);
+ assert.equal(respostas.filter(r=>r.status===200).length,11);
+ assert.equal(new Set(respostas.map(r=>r.data.intencao.pedidoId)).size,1);
+ assert.equal(s.banco.prepare('SELECT COUNT(*) n FROM akitemm_checkout_intencoes_preparacao').get().n,1);
+ assert.equal(s.banco.prepare('PRAGMA integrity_check').get().integrity_check,'ok');
+});
