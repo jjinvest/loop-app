@@ -113,3 +113,23 @@ test('sandbox detecta duas cobrancas com mesma referencia e nao duplica',async()
   {codigo:'COBRANCAS_SANDBOX_DUPLICADAS_REVISAR'});
  assert.equal(c.chamadas.filter(x=>x.url.includes('/confirm')).length,0);
 });
+
+test('baixa manual em dinheiro nao prova Pix mesmo com aviso recebido',async()=>{
+ const c=cenario();
+ c.adulterar({status:'RECEIVED_IN_CASH',billingType:'RECEIVED_IN_CASH'});
+ await assert.rejects(()=>homologar(opts(c,{confirmarSimulacao:false})),
+  {codigo:'BAIXA_MANUAL_NAO_COMPROVA_PIX'});
+ assert.equal(c.chamadas.filter(x=>x.url.includes('/confirm')).length,0);
+});
+test('status RECEIVED_IN_CASH mesmo com billingType PIX e bloqueado',async()=>{
+ const c=cenario();c.adulterar({status:'RECEIVED_IN_CASH',billingType:'PIX'});
+ await assert.rejects(()=>homologar(opts(c)),
+  {codigo:'BAIXA_MANUAL_NAO_COMPROVA_PIX'});
+ assert.equal(c.chamadas.filter(x=>x.url.includes('/confirm')).length,0);
+});
+test('tipo RECEIVED_IN_CASH com status RECEIVED e bloqueado',async()=>{
+ const c=cenario();c.adulterar({status:'RECEIVED',billingType:'RECEIVED_IN_CASH'});
+ await assert.rejects(()=>homologar(opts(c)),
+  {codigo:'BAIXA_MANUAL_NAO_COMPROVA_PIX'});
+ assert.equal(c.chamadas.filter(x=>x.url.includes('/confirm')).length,0);
+});
