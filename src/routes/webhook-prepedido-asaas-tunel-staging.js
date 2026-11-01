@@ -5,7 +5,6 @@
 // O tunel deve terminar HTTPS e encaminhar apenas para 127.0.0.1.
 // Nunca montar em src/server.js nem habilitar em NODE_ENV=production.
 const express=require('express');
-const {localSeguro}=require('./admin-catalogo-laboratorio');
 
 function criarRouterWebhookAsaasSandboxTunelStaging({
  inbox,urlPublica,habilitarTunel=false
