@@ -63,6 +63,12 @@ class IntegracaoLojaPDFLoopDemo{
     pdf.precoBrutoCentavos!==vinculo.valorCentavos){
    throw falha('PEDIDO_DIVERGENTE','Produto ou valor nao confere');
   }
+  // Defender tambem snapshots antigos com fontes misturadas.
+  if(this.ponte.banco.prepare(
+     "SELECT 1 FROM sqlite_master WHERE type='table' AND name='akitemm_sandbox_cobrancas'"
+    ).get()&&
+    this.ponte.banco.prepare('SELECT 1 FROM akitemm_sandbox_cobrancas WHERE pedido_id=?').get(pedidoId))
+   throw falha('FONTE_PAGAMENTO_DUPLA','Pedido PDF possui cobranca Asaas Sandbox');
   if(pdf.situacaoPagamentoFicticio!=='CONFIRMADO_FICTICIO'){
    throw falha('PAGAMENTO_NAO_CONFIRMADO','Confirmacao PDF ausente ou estornada');
   }
