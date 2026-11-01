@@ -52,3 +52,12 @@ A decisão **GO** só pode ser tomada com documentação e validação independe
 | JURIDICO | **NÃO COMPROVADO** | É necessária análise independente do modelo e das vendas |
 
 **Próximo passo técnico do bloco:** reforçar a proteção de bootstrap público para impedir que flags de clientes de laboratório ou modo de simulação sejam usadas em `NODE_ENV=production`, com testes negativos, preservando a separação atual do checkout. Não confundir o bloqueio com a criação do backend de vendas real.
+
+## Implementação pública incremental de 01/11/2026
+
+**Contrato de orçamento implementado:** `POST /api/checkout/cotacao` consulta os mesmos produtos de `/catalogo`, recalcula quantidades e preços no servidor, rejeita parâmetros de cliente e produtos demonstrativos/ocultos, e devolve **somente estimativa informativa**, sem registro de pedido ou preço reservado. `GET /api/checkout/estado` informa o bloqueio. Todo endpoint para finalizar, criar pedido, pagar ou webhook permanece com **503**. `GET /health` mede vida do processo; `GET /health/ready` fica em **503** enquanto o Marco Zero não estiver homologado. Os seis gates externos são mantidos em `src/domain/marco-zero-gates.js` e reutilizados tanto pelo público quanto pelo monitor do laboratório.
+
+**Evidência até aqui:** [CI da versão de orçamento](https://github.com/jjinvest/loop-app/actions/runs/41340343800): **731 testes aprovados, zero falhas**, Chromium PC/celular aprovado. O CI do refinamento de fonte única dos gates será registrado no documento-mestre após conclusão.
+
+**Próximo caminho técnico:** modelar sessão de cliente e pedido durável na arquitetura pública **sem copiar as rotas fictícias**, criar integração Asaas exclusivamente Sandbox sob credencial controlada em staging externo, validar webhook remoto e cancelamentos com revisão; só depois desenhar o caminho de pagamento real, sujeito às autorizações e ao jurídico. Este avanço **não** libera checkout ou anúncios de venda.
+
