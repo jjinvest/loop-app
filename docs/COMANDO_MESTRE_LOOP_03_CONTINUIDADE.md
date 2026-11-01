@@ -1387,3 +1387,13 @@ Aprovar testes tecnicos de laboratorio NAO autoriza receber consumidores ou anun
 5. **Liberacao:** autorizacao formal do proprietario apos apresentacao das evidencias, seguranca, termos e supervisao operacional; nenhuma alteracao em producao por inferencia de aprovacao.
 
 Este registro e um controle de prontidao e nao representa conclusao de auditoria legal nem julgamento definitivo de licitude. Permanece permitido evoluir testes e seguranca **em laboratorio** sem publico e sem movimentacao de dinheiro real.
+
+## 116. ALERTAS CALLBACK INTEGRADOS AO MONITOR DE CONVERGENCIA — 01/11/2026
+
+A rota de monitoramento read-only `GET /api/admin/asaas-conciliacao-lab` passa a incorporar, com a mesma fonte SQLite do worker, contadores agregados de callbacks: `callbacksExigemRevisao`, `callbacksConcluidos`, `callbacksPendentesProntos`, `callbacksLeasesExpirados`, `callbacksSemJob` e `callbacksHabilitados`. O campo `revisaoManualIndicada` agora considera tentativas de callbacks esgotadas (`EXIGE_REVISAO`), evitando que a tela central informe ausencia de alerta enquanto a fila persistente tem um evento que requer acao humana. Nenhum evento ID, token, CPF ou dado individual e exportado nesses campos. A leitura nao reserva jobs, nao reconcilia, nao cria posicoes e nao libera saques.
+
+A contagem de anomalias passa a incluir callbacks com revisao exigida. `callbacksPendentesProntos` e `callbacksLeasesExpirados` sao sinais operacionais, mas nao sao automaticamente classificados como fraude ou falha terminal, pois o worker de laboratorio pode recupera-los. Sem webhook opt-in, os indicadores sao neutros e `callbacksHabilitados=false`.
+
+Regressao em `test/asaas-convergencia-callbacks-alertas-lab.test.js`: callback de recebimento informado enquanto PSP permanece pendente esgota tentativas e exige revisao sem gerar posicao; callback confirmado cria exatamente uma posicao ficticia e nao gera alerta falso; sem webhook, monitor continua com contadores neutros; sem gravacoes do GET, saques, giros ou caixa real. Nao repetir carga de 10.000 compras. CI deve ser confirmado no HEAD antes de informar aprovacao.
+
+Tudo exclusivamente Sandbox e laboratorio; sem webhook publico, sem pagamento real, merge ou deploy. O parecer juridico especifico segue obrigatorio antes de captar consumidores.
