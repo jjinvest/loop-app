@@ -32,6 +32,12 @@ function iniciarReceptorTunelStaging({ambiente=process.env}={}){
  const banco=new DatabaseSync(arquivo);
  try{
   banco.exec('PRAGMA foreign_keys=ON;PRAGMA busy_timeout=5000;PRAGMA journal_mode=WAL;');
+  // Nao iniciar em arquivo novo/vazio e dar falsa impressao de homologacao.
+  const preexistente=banco.prepare([
+   "SELECT 1 AS ok FROM sqlite_master WHERE type='table'",
+   "AND name='akitemm_checkout_prepedidos_staging'"
+  ].join(' ')).get();
+  if(!preexistente)throw new Error('BASE_DE_PREPEDIDOS_STAGING_NAO_PREPARADA');
   new IntencoesCheckoutSQLite({banco});
   new PrePedidosCheckoutStagingSQLite({banco});
   new PontePrepedidoAsaasSandboxStaging({banco});
