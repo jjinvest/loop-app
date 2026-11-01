@@ -5,6 +5,17 @@ const {randomUUID}=require('node:crypto');
 const REVERSOES=new Set(['PAYMENT_DELETED','PAYMENT_REFUNDED','PAYMENT_PARTIALLY_REFUNDED',
  'PAYMENT_REFUND_IN_PROGRESS','PAYMENT_CHARGEBACK_REQUESTED','PAYMENT_CHARGEBACK_DISPUTE']);
 const RECEBIMENTOS=new Set(['PAYMENT_RECEIVED','PAYMENT_CONFIRMED']);
+// Nao confiar em e.codigo vindo de provedor/adaptador: pode conter segredo
+// com formato aparentemente valido. Apenas codigos internos conhecidos.
+const CODIGOS_ERRO_PUBLICAVEIS=new Set([
+ 'PEDIDO_INVALIDO','PEDIDO_AKITEMM_INEXISTENTE','COBRANCA_NAO_ENCONTRADA',
+ 'CLIENTE_ASAAS_SANDBOX_INVALIDO','CONFLITO_COBRANCA',
+ 'RESPOSTA_SANDBOX_DIVERGENTE','COBRANCA_REMOTA_DUPLICADA',
+ 'CRIACAO_INDETERMINADA_VERIFICAR_ASAAS','DADOS_PAGAMENTO_SANDBOX_DIVERGENTES',
+ 'COBRANCA_SANDBOX_NAO_CONFIRMADA','ULTIMA_RECONSULTA_NAO_CONFIRMOU_RECEBIMENTO',
+ 'AUDITORIA_SANDBOX_REPROVADA','RESULTADO_CATRACA_INVALIDO',
+ 'VENDA_SOMENTE_LOJA_INVALIDA','VINCULO_OU_VALOR_DIVERGENTE'
+]);
 class ProcessadorCallbacksAsaasSandboxLab{
  constructor({banco,caixaAvisos,conferidor,conciliador,agoraMs=()=>Date.now(),
   leaseMs=30000,maxTentativas=8,intervaloMs=1000}={}){
@@ -118,7 +129,8 @@ class ProcessadorCallbacksAsaasSandboxLab{
    if(job.esgotado){resultados.push(job);continue;}
    try{resultados.push(await this._executar(job));}
    catch(e){
-    const codigo=typeof e.codigo==='string'&&/^[A-Z0-9_]{1,100}$/.test(e.codigo)?e.codigo:'FALHA_TECNICA_RECONSULTA';
+    const codigo=CODIGOS_ERRO_PUBLICAVEIS.has(e?.codigo)?
+     e.codigo:'FALHA_TECNICA_RECONSULTA';
     resultados.push(this._finalizar(job,'PENDENTE',codigo));
    }
   }
