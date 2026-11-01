@@ -6,6 +6,14 @@ const ADMIN={Authorization:'Bearer administrador-local-ficticio-2026-123456789'}
 async function comprar(m,nome,email,produtoId,confirmar){
  const c=m.contas.cadastrar({nome,email,senha:'senha-ficticia-indicadores-2026'});
  const {cookie}=await m.http('/entrar',{body:{nome,senha:'senha-ficticia-indicadores-2026'}});
+ if(produtoId==='produto-fisico-lab'){
+  const entrega=await m.http('/loja/entrega',{cookie,body:{
+   destinatario:nome,cep:'27200-000',logradouro:'Rua Laboratorio',
+   numero:'10',complemento:'',bairro:'Centro',cidade:'Volta Redonda',
+   uf:'RJ',telefone:'24999999999',referencia:''
+  }});
+  assert.equal(entrega.data.registrado,true);
+ }
  const pedido=(await m.http('/loja/pedidos',{cookie,status:201,
   body:{itens:[{produtoId,quantidade:1}]}})).data.pedido.pedidoId;
  if(confirmar){m.confirmar(pedido);await m.integracao.conciliador.processar(pedido);}
