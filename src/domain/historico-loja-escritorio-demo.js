@@ -62,9 +62,11 @@ function montarHistoricoLojaDemo({visao,carrinhos,catalogo=null}={}){
   if(confirmacao&&confirmacao.valorCentavos!==p.totalCentavos)
    throw new Error('Total de loja e ponte divergente');
   let estado=ESTADOS.AGUARDANDO;
-  if(p.situacaoPagamentoFicticio==='ESTORNADO_FICTICIO')estado=ESTADOS.ESTORNO;
+  if(p.situacaoPagamentoFicticio==='ESTORNADO_FICTICIO'||
+     p.situacaoPagamentoSandbox==='REVERSAO_INFORMADA_SANDBOX')estado=ESTADOS.ESTORNO;
   else if(confirmacao)estado=confirmacao.estado;
-  else if(p.situacaoPagamentoFicticio==='CONFIRMADO_FICTICIO')
+  else if(p.situacaoPagamentoFicticio==='CONFIRMADO_FICTICIO'||
+          p.situacaoPagamentoSandbox==='RECEBIMENTO_INFORMADO_SANDBOX')
    estado=ESTADOS.CONFERIR;
   salvar({
    pedidoId:p.pedidoId,origem:'CARRINHO',

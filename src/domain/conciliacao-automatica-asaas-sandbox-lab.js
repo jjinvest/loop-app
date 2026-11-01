@@ -33,9 +33,16 @@ class ConciliacaoAutomaticaAsaasSandboxLab{
    this.emAndamento.add(pedidoId);
    try{
     const r=await this.conciliador.processar(pedidoId);
-    if(r?.posicoesNoPedido===1&&r?.confirmacaoIndividualObrigatoria===true)
+    if((r?.posicoesNoPedido===1&&r?.confirmacaoIndividualObrigatoria===true)||
+       (r?.posicoesNoPedido===0&&r?.vendaSomenteLoja===true))
      this.pendentes.delete(pedidoId);
-   }catch(e){this.aoErro(e,pedidoId);}
+   }catch(e){
+    // Reversao e terminal neste laboratorio. Conservar posicao e trilha,
+    // notificar a revisao e nao repetir eternamente a mesma tentativa.
+    if(this.conciliador.cobrancas?.consultar(pedidoId)?.status==='REVERSAO_INFORMADA_SANDBOX')
+     this.pendentes.delete(pedidoId);
+    this.aoErro(e,pedidoId);
+   }
    finally{this.emAndamento.delete(pedidoId);}
   }
  }

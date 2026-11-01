@@ -20,6 +20,20 @@ test('comprovante preserva produto e intento identificados antes da cobranca',as
  assert.equal(r.valorCentavos,25000);
  assert.equal(r.status,'CONFIRMADO_SIMULADO');
 });
+test('reconsultas RECEIVED_IN_CASH mantem o primeiro horario confirmado no replay',async()=>{
+ let atualizadoEm='2026-10-26T11:00:00.000Z';
+ const fonte=new ComprovanteAsaasSandboxPonteLab({
+  titularidade:{buscar:()=>titular},cobrancas:{
+   consultar:()=>({...cobranca,atualizadoEm}),
+   historico:()=>({conferencias:[{estadoLoja:'RECEBIMENTO_INFORMADO_SANDBOX',
+    statusAsaas:'RECEIVED_IN_CASH',consultadoEm:'2026-10-26T10:30:00.000Z'}]})
+  }});
+ const primeira=await fonte.consultar(pedidoId);
+ atualizadoEm='2026-10-27T12:00:00.000Z';
+ const repetida=await fonte.consultar(pedidoId);
+ assert.equal(primeira.confirmadoEm,'2026-10-26T10:30:00.000Z');
+ assert.equal(repetida.confirmadoEm,primeira.confirmadoEm);
+});
 test('bloqueia status pendente, valor divergente e titular posterior',async()=>{
  for(const fonte of [
   montar({...cobranca,status:'PENDENTE_SANDBOX'}),

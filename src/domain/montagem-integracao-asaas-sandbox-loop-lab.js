@@ -33,11 +33,22 @@ function montarIntegracaoAsaasSandboxLoopLab({banco,contas,titularidade,apiKey,f
  const catraca=new CatracaAsaasSandboxLab({elegibilidade,ponte:ponteIntegrada});
  const conciliador=new ConciliadorPosicaoAsaasSandboxLab({cobrancas,catraca});
  const automatico=new ConciliacaoAutomaticaAsaasSandboxLab({conciliador,
-  listarPendentes:()=>banco.prepare(`SELECT c.pedido_id AS pedidoId
+  listarPendentes:()=>{
+   const pendentes=banco.prepare(`SELECT c.pedido_id AS pedidoId
    FROM akitemm_sandbox_cobrancas c
    WHERE c.status <> 'REVERSAO_INFORMADA_SANDBOX'
-   AND NOT EXISTS(SELECT 1 FROM admin_ponte_compras_demo p WHERE p.pedido_id=c.pedido_id)`)
-   .all().map(r=>r.pedidoId)
+   AND NOT EXISTS(SELECT 1 FROM admin_ponte_compras_demo p WHERE p.pedido_id=c.pedido_id)
+   AND NOT EXISTS(SELECT 1 FROM admin_ponte_vendas_loja_sem_loop_demo p WHERE p.pedido_id=c.pedido_id)
+   AND NOT EXISTS(SELECT 1 FROM admin_ponte_vendas_loja_apos_reajuste_demo p WHERE p.pedido_id=c.pedido_id)`)
+    .all().map(r=>r.pedidoId);
+   // Reconsultar tambem recebimentos ja integrados: um estorno posterior
+   // nao pode ficar invisivel. Lote limitado e intervalo minimo por pedido.
+   const corte=new Date(Date.parse(agora?agora():new Date().toISOString())-60000).toISOString();
+   const antigos=banco.prepare(`SELECT pedido_id AS pedidoId FROM akitemm_sandbox_cobrancas
+    WHERE status='RECEBIMENTO_INFORMADO_SANDBOX' AND atualizado_em<=?
+    ORDER BY atualizado_em,pedido_id LIMIT 20`).all(corte).map(r=>r.pedidoId);
+   return [...new Set([...pendentes,...antigos])];
+  }
  });
  return Object.freeze({provedor:externo,cobrancas,comprovantes,elegibilidade,ponte:ponteIntegrada,catraca,conciliador,automatico});
 }

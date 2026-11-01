@@ -27,6 +27,7 @@ class CobrancasAkitemmAsaasSandboxSQLite{
    'pedido_id TEXT NOT NULL REFERENCES akitemm_sandbox_cobrancas(pedido_id),',
    'pagamento_id TEXT NOT NULL,status_asaas TEXT NOT NULL,',
    'status_local TEXT NOT NULL,consultado_em TEXT NOT NULL);',
+   'CREATE INDEX IF NOT EXISTS idx_akitemm_sandbox_consultas_pedido ON akitemm_sandbox_consultas(pedido_id,id);',
    'CREATE TRIGGER IF NOT EXISTS akitemm_sandbox_consultas_immut_u',
    "BEFORE UPDATE ON akitemm_sandbox_consultas BEGIN SELECT RAISE(ABORT,'consulta imutavel'); END;",
    'CREATE TRIGGER IF NOT EXISTS akitemm_sandbox_consultas_immut_d',

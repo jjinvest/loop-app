@@ -282,7 +282,14 @@ class CarrinhoLojaLoopDemoSQLite{
   const posicaoIds=posicao?[posicao.id,...this.banco.prepare(
    'SELECT posicao_id AS id FROM admin_ponte_posicoes_adicionais_demo WHERE pedido_id=? ORDER BY ordem'
   ).all(pedidoId).map(p=>p.id)]:[];
+  // Projecao independente: nao fabricar eventos de confirmacao FICTICIA
+  // para um recebimento informado pelo adaptador Sandbox.
+  const temSandbox=this.banco.prepare("SELECT 1 FROM sqlite_master WHERE type='table' AND name='akitemm_sandbox_cobrancas'").get();
+  const sandbox=temSandbox?this.banco.prepare(
+   'SELECT status FROM akitemm_sandbox_cobrancas WHERE pedido_id=?'
+  ).get(pedidoId):null;
   return {...row,itens,totalElegivelLoopCentavos,
+   situacaoPagamentoSandbox:sandbox?.status??null,
    participarLoop:escolha?escolha.participarLoop===1:null,
    escolhaLoopExpressa:!!escolha,
    subtotalQualificadoOriginalCentavos:escolha?.subtotalQualificadoCentavos??totalElegivelLoopCentavos,
