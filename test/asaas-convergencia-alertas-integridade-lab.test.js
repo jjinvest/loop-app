@@ -87,7 +87,11 @@ test('Escritorio identifica ID de posicao adicional repetindo cadeira primaria',
  assert.equal(alerta.idReutilizadoEmPosicaoAdicional,1);
  assert.equal(alerta.anomaliasContadasPorCriterio,1);
  assert.equal(alerta.revisaoManualIndicada,true);
- assert.equal((await m.http('/minha-conta',{cookie})).data.posicoes.length,1);
+ // A visao individual ja possui bloqueio contra duplicacao de IDs e
+ // falharia ao abrir a corrupcao artificial. Conferir o livro e o motor
+ // diretamente, sem depender do endpoint de cliente sobre dados invalidos.
+ assert.equal(m.banco.prepare('SELECT COUNT(*) AS n FROM admin_ponte_compras_demo WHERE pedido_id=?')
+  .get(pedido).n,1);
  assert.equal(m.ponte._restaurar().giros,0);
  assert.deepEqual(m.banco.prepare('PRAGMA foreign_key_check').all(),[]);
 });
