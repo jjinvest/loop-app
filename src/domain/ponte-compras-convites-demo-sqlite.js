@@ -281,19 +281,20 @@ class PonteComprasConvitesDemoSQLite{
     BEFORE DELETE ON admin_ponte_douradas_financiadas_demo
     BEGIN SELECT RAISE(ABORT,'aporte dourada imutavel'); END;
   `);
-  // Livro das posicoes adicionais: ampliar CHECK sem tocar os pedidos antigos.
+  // Migracao de bancos antigos (ordens 2..5 ou 2..6) para o limite
+  // vigente de 10 posicoes por compra, sem apagar ou renumerar historico.
   const antiga=this.banco.prepare("SELECT sql FROM sqlite_master WHERE type='table' AND name='admin_ponte_posicoes_adicionais_demo'").get()?.sql||'';
-  if(antiga.includes('BETWEEN 2 AND 5')){
+  if(antiga.includes('BETWEEN 2 AND 5')||antiga.includes('BETWEEN 2 AND 6')){
    this.banco.exec('BEGIN IMMEDIATE');
    try{
-    this.banco.exec(`CREATE TABLE admin_ponte_posicoes_adicionais_demo_v6(
+    this.banco.exec(`CREATE TABLE admin_ponte_posicoes_adicionais_demo_v10(
      pedido_id TEXT NOT NULL REFERENCES admin_ponte_compras_demo(pedido_id) ON DELETE RESTRICT,
-     ordem INTEGER NOT NULL CHECK(ordem BETWEEN 2 AND 6),
+     ordem INTEGER NOT NULL CHECK(ordem BETWEEN 2 AND 10),
      posicao_id INTEGER NOT NULL UNIQUE CHECK(posicao_id>0),
      PRIMARY KEY(pedido_id,ordem))`);
-    this.banco.exec('INSERT INTO admin_ponte_posicoes_adicionais_demo_v6 SELECT * FROM admin_ponte_posicoes_adicionais_demo');
+    this.banco.exec('INSERT INTO admin_ponte_posicoes_adicionais_demo_v10 SELECT * FROM admin_ponte_posicoes_adicionais_demo');
     this.banco.exec('DROP TABLE admin_ponte_posicoes_adicionais_demo');
-    this.banco.exec('ALTER TABLE admin_ponte_posicoes_adicionais_demo_v6 RENAME TO admin_ponte_posicoes_adicionais_demo');
+    this.banco.exec('ALTER TABLE admin_ponte_posicoes_adicionais_demo_v10 RENAME TO admin_ponte_posicoes_adicionais_demo');
     this.banco.exec('COMMIT');
    }catch(e){this.banco.exec('ROLLBACK');throw e;}
   }
