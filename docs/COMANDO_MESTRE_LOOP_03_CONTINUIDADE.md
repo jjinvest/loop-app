@@ -1280,3 +1280,12 @@ Sem repetir a carga de 10.000 clientes, foi eliminada a consulta SQL sem limite 
 Testes: 53 cobrancas em pagina 20/20/13, retorno do cursor e insercao anterior ao cursor, sem escritas durante listagem; fila de 5.000 IDs em duas rodadas de 20. Nenhuma mudanca em posicoes, 3A:1B, seis eventos, cofres, bonus, saques ou telas. Prova do CI e navegador: [GitHub Actions 41279279477](https://github.com/jjinvest/loop-app/actions/runs/41279279477), commit `1d03da8e32658d91b1098c39743344be03fbe527`: **SUCCESS, 640/640, zero falhas**. Detalhes em [CONTINUIDADE_CALLBACK_ASAAS_01NOV2026.md](./CONTINUIDADE_CALLBACK_ASAAS_01NOV2026.md).
 
 Permanecem: limite global de pendencias em memoria e cadencia de reconsultas por pedido para grandes atrasos, homologacao de webhook remoto autorizado do Asaas, liquidacao bancária independente e parecer juridico/regulatorio. PR #1 DRAFT, sem merge/deploy nem dinheiro real.
+
+
+## 105. PRIORIDADE DE REVISOES DE RECEBIMENTOS SOB CARGA — 01/11/2026
+
+Preservada a funcao original da AKITEMM (loja com produtos e criterios configurados) e do LOOP 3.0 (posicoes individuais e regras de fila, motor e cofres), sem mudar economia, taxas, minimo de saque, telas ou direitos. Foi corrigido o risco de os pagamentos ainda pendentes monopolizarem a conciliacao automatica e atrasarem a identificacao de reversoes de recebimentos ja integrados. O agendador reserva **ate 5 dos 20 slots por rodada** para revisao de recebimentos antigos com reconsulta do Sandbox, sem deixar de processar pedidos novos; IDs coincidentes nao sao consultados duas vezes. Fonte prioritaria com erro nao impede a fonte normal.
+
+Testes: lote de prioridade e normal, duplicata entre as duas fontes, observador com erro sanitizado, limites de configuracao e fluxo HTTP/SQLite com 41 pendencias concorrendo com a deteccao de reversao de compra previamente integrada, preservando a unica posicao e integridade do banco. [GitHub Actions 41279751984](https://github.com/jjinvest/loop-app/actions/runs/41279751984): **SUCCESS — 645/645 testes e navegador aprovados**, commit de codigo `6dd395f42afaa01286c6b5c690f6da850a3c4808`. Registro incremental em [CONTINUIDADE_CALLBACK_ASAAS_01NOV2026.md](./CONTINUIDADE_CALLBACK_ASAAS_01NOV2026.md).
+
+Proibido inferir a partir desta regressao liquidez, lucro real, callback remoto entregue pelo Asaas, liberacao de saque, prontidao juridica ou autorizacao de lancamento. Auditoria de producao continua em andamento; PR #1 DRAFT, sem merge/deploy.
