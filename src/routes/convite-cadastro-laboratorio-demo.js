@@ -24,6 +24,18 @@ function criarRouterConviteCadastroDemo({contas,links,carrinhos=null}={}){
  });
  // Vitrine visivel para convidados, sem permitir compras anonimas,
  // divulgacao de dados de titulares ou operacoes financeiras.
+ // Catalogo publico: visitante pode olhar produtos sem conta nem convite.
+ // Pedidos e acesso ao escritorio continuam protegidos por sessao.
+ r.get('/catalogo-publico',(req,res)=>{
+  if(!carrinhos)return res.status(501).json({erro:'VITRINE_INDISPONIVEL'});
+  const produtos=carrinhos.opcoes().produtos.map(p=>({
+   produtoId:p.produtoId,nome:p.nome,tipo:p.tipo,precoCentavos:p.precoCentavos,
+   elegivelLoop:p.elegivelLoop,quantidadeMinimaLoop:p.quantidadeMinimaLoop,
+   posicoesPorPedidoLoop:p.posicoesPorPedidoLoop
+  }));
+  return res.json({produtos,necessarioCadastroParaComprar:true,
+   pagamentoReal:false,ambienteFicticio:true});
+ });
  r.get('/vitrine',(req,res)=>{
   if(!carrinhos)return res.status(501).json({erro:'VITRINE_INDISPONIVEL'});
   if(typeof req.query.link!=='string')
