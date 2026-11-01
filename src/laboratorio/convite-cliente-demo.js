@@ -81,7 +81,9 @@
    estado.textContent='Convite de '+info.nomeIndicador+
     '. Cadastre-se para receber seu próprio link, inicialmente inativo.';
    form.hidden=false;
-   // A vitrine publica pode ser consultada antes do cadastro.\n   // O cadastro permanece exigido para finalizar qualquer pedido.\n   if(destino==='loja')await mostrarVitrine();
+   // A vitrine publica pode ser consultada antes do cadastro.
+   // O cadastro permanece exigido para finalizar qualquer pedido.
+   if(destino==='loja')await mostrarVitrine();
   }catch(err){estado.textContent=err.message;}
  })();
  form.addEventListener('submit',async ev=>{
