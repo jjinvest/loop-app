@@ -61,3 +61,24 @@ test('parametro de lote rejeita zero, nao inteiro ou excesso',()=>{
   }),{name:'RangeError'});
  }
 });
+
+test('fila grande mantem limite e percorre grupos distintos sem duplicar cobranca',async()=>{
+ const visitados=[];
+ const agenda=new ConciliacaoAutomaticaAsaasSandboxLab({
+  maxPorVerificacao:20,
+  conciliador:{processar:async id=>{
+   visitados.push(id);
+   return {posicoesNoPedido:1,confirmacaoIndividualObrigatoria:true};
+  }}
+ });
+ for(let i=0;i<5000;i++)
+  agenda.acompanhar('pedido-lote-'+String(i).padStart(5,'0'));
+ await agenda.verificar();
+ assert.equal(visitados.length,20);
+ assert.equal(agenda.pendentes.size,4980);
+ await agenda.verificar();
+ assert.equal(visitados.length,40);
+ assert.equal(new Set(visitados).size,40);
+ assert.equal(agenda.pendentes.size,4960);
+ assert.equal(agenda.verificacaoEmCurso,null);
+});
