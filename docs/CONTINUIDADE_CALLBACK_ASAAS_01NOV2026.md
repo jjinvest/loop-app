@@ -69,3 +69,17 @@ O índice vigente `LEIA_PRIMEIRO_LOOP_30_INDICE_VIGENTE.md` recebeu a
 correção documental de regras mais recentes (até dez posições ativas por
 titular, até dez na Fila A com indicações específicas e no máximo duas
 simultâneas no tabuleiro), preservando o histórico anterior.
+
+
+## Resultado CI verificado — 01/11/2026
+[GitHub Actions — versão de código com teste de concorrência](https://github.com/jjinvest/loop-app/actions/runs/41277297416):
+**SUCCESS — 627 testes aprovados, zero falhas**, segundo o sumário do
+`npm test` na execução. Também passaram `npm ci`, auditoria de dependências
+de runtime e o roteiro Playwright/Chromium de Meus Pedidos no navegador.
+As correções, o monitor read-only e a regressão de concorrência foram
+executados nesse mesmo código. Os commits posteriores a essa execução
+foram **apenas de documentação**, não de código-fonte.
+
+Isto valida este bloco técnico na branch de laboratório; **não valida
+callback realmente transmitido pelo Asaas ao endpoint do LOOP**, entrega
+pública, liquidação bancária real ou prontidão jurídica de produção.
