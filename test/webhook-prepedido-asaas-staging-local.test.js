@@ -402,6 +402,41 @@ test('fila com mais de 50 avisos mostra volume total sem perder a revisao',async
   assert.equal(recebido.status,200);
  }
  assert.equal(s.worker.pendencias().length,50,'pagina de operador limitada');
+ const primeira=s.worker.paginarPendencias();
+ assert.equal(primeira.pendencias.length,50);
+ assert.equal(primeira.haMais,true);
+ assert.equal(primeira.proximoCursor,primeira.pendencias[49].eventoId);
+ const segunda=s.worker.paginarPendencias({apos:primeira.proximoCursor});
+ assert.equal(segunda.pendencias.length,3);
+ assert.equal(segunda.haMais,false);
+ assert.equal(segunda.proximoCursor,null);
+ assert.equal(new Set([...primeira.pendencias,...segunda.pendencias]
+  .map(item=>item.eventoId)).size,53,'nenhum item pulado ou duplicado');
+ assert.throws(()=>s.worker.paginarPendencias({apos:'evt_NaoExiste0001'}),
+  {codigo:'CURSOR_PENDENCIAS_INVALIDO'});
+ assert.throws(()=>s.worker.paginarPendencias({apos:123}),
+  {codigo:'CURSOR_PENDENCIAS_INVALIDO'});
+ const {criarRouterOperacoesWebhookPrepedidoStagingLocal}=
+  require('../src/routes/operacoes-webhook-prepedido-staging-local');
+ const app=express();
+ app.use('/operador',criarRouterOperacoesWebhookPrepedidoStagingLocal({
+  worker:s.worker,autorizarOperador:()=>true,autorizarMutacao:()=>false
+ }));
+ const servidor=app.listen(0,'127.0.0.1');await once(servidor,'listening');
+ t.after(()=>new Promise(resolve=>servidor.close(resolve)));
+ const url='http://127.0.0.1:'+servidor.address().port+'/operador/webhooks/pendencias';
+ const primeiraHttp=await (await fetch(url)).json();
+ assert.equal(primeiraHttp.pendencias.length,50);
+ assert.equal(primeiraHttp.haMais,true);
+ assert.equal(primeiraHttp.resumo.total,53);
+ const segundaHttp=await (await fetch(url+'?apos='+
+  encodeURIComponent(primeiraHttp.proximoCursor))).json();
+ assert.equal(segundaHttp.pendencias.length,3);
+ assert.equal(segundaHttp.haMais,false);
+ assert.equal(segundaHttp.exibidos,3);
+ assert.equal((await fetch(url+'?apos=evt_NaoExiste0001')).status,400);
+ assert.equal((await fetch(url+'?apos=evt_A&apos=evt_B')).status,400);
+ assert.equal((await fetch(url+'?campo=indevido')).status,400);
  assert.deepEqual(s.worker.resumoPendencias(),{
   pendentes:53,processando:0,exigeRevisao:0,total:53
  });
