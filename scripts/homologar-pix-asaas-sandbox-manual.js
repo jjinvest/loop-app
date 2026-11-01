@@ -74,21 +74,25 @@ async function homologar({
  // Exigir consulta independente apos a criacao e sempre na repeticao.
  async function consultar(){
   const d=await pedir('GET','/payments/'+p.id);
-  if(d?.id!==p.id||d.customer!==cliente.id||d.billingType!=='PIX'||
+  if(d?.id!==p.id||d.customer!==cliente.id||
      d.externalReference!==PAYMENT_REF||typeof d.value!=='number'||
      Math.abs(d.value*100-VALOR)>.000001)
    throw erro('CONCILIACAO_SANDBOX_DIVERGENTE');
+  // Baixa manual pode gerar PAYMENT_RECEIVED, mas nao credita saldo Pix.
+  if(d.status==='RECEIVED_IN_CASH'||d.billingType==='RECEIVED_IN_CASH')
+   throw erro('BAIXA_MANUAL_NAO_COMPROVA_PIX');
+  if(d.billingType!=='PIX')throw erro('CONCILIACAO_SANDBOX_DIVERGENTE');
   return d;
  }
  let remoto=await consultar();
  const antes=remoto.status;
- if(confirmarSimulacao===true&&!['RECEIVED','RECEIVED_IN_CASH'].includes(remoto.status)){
+ if(confirmarSimulacao===true&&remoto.status!=='RECEIVED'){
   if(!['PENDING','CONFIRMED','OVERDUE'].includes(remoto.status))
    throw erro('ESTADO_NAO_CONFIRMAVEL_NO_SANDBOX');
   await pedir('POST','/sandbox/payment/'+p.id+'/confirm',{});
   remoto=await consultar();
  }
- const confirmado=['RECEIVED','RECEIVED_IN_CASH'].includes(remoto.status);
+ const confirmado=remoto.status==='RECEIVED'&&remoto.billingType==='PIX';
  return Object.freeze({ambiente:'ASAAS_SANDBOX_EXCLUSIVO',
   clienteIdentificado:true,pedidoReferencia:PAYMENT_REF,
   cobrancaExistente:true,valorCentavos:VALOR,
