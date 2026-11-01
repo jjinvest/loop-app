@@ -539,9 +539,10 @@ function iniciarLaboratorio({ ambiente = process.env } = {}) {
        throw new Error('Chave do Asaas Sandbox obrigatoria para conciliacao');
       const contas=new ContasParticipantesDemoSQLite({banco:banco.banco});
       const titularidade=new PedidosTitularidadeDemoSQLite({banco:banco.banco,contas});
-      conciliacaoSandbox=montarIntegracaoAsaasSandboxLoopLab({
-       banco:banco.banco,contas,titularidade,apiKey:ambiente.ASAAS_SANDBOX_API_KEY
-      }).automatico;
+      conciliacaoSandbox=app.locals.integracaoAsaasCompartilhada?.automatico||
+       montarIntegracaoAsaasSandboxLoopLab({
+        banco:banco.banco,contas,titularidade,apiKey:ambiente.ASAAS_SANDBOX_API_KEY
+       }).automatico;
       conciliacaoSandbox.iniciar();
     }
     // Agenda automatica SOMENTE no processo de laboratorio LOCAL em execucao.
