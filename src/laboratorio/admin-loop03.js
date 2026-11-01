@@ -219,7 +219,12 @@
     throw Error('Indicador de cliente inválido');
    $(id).textContent=d[chave]===null?'Sem fonte conciliada':String(d[chave]);
   }
-  $('clientesTiposDepartamento').textContent='Por categoria: ainda não conciliado';
+  const categorias=d.clientesPorTipoProduto;
+  if(categorias&&Number.isSafeInteger(categorias.PDF)&&categorias.PDF>=0&&
+     Number.isSafeInteger(categorias.FISICO)&&categorias.FISICO>=0)
+   $('clientesTiposDepartamento').textContent='PDF: '+categorias.PDF+
+    ' · Físicos: '+categorias.FISICO;
+  else $('clientesTiposDepartamento').textContent='Por categoria: ainda não conciliado';
   $('statusClientesAdmin').textContent='Exibindo até '+d.limite+
    ' cadastros recentes de '+d.total+
    '. Participação e vendas: somente registros documentados do SQLite.';
