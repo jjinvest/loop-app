@@ -90,6 +90,10 @@ function montarIntegracaoAsaasSandboxLoopLab({banco,contas,titularidade,apiKey,f
    COALESCE(SUM(CASE WHEN c.status='REVERSAO_INFORMADA_SANDBOX' THEN 1 ELSE 0 END),0) AS reversoesInformadas,
    COALESCE(SUM(CASE WHEN c.status='PENDENTE_SANDBOX' THEN 1 ELSE 0 END),0) AS pendentes,
    COALESCE(SUM(CASE WHEN c.status='CRIACAO_INDETERMINADA_SANDBOX' THEN 1 ELSE 0 END),0) AS criacoesIndeterminadas,
+   COALESCE(SUM(CASE WHEN c.status NOT IN
+    ('RECEBIMENTO_INFORMADO_SANDBOX','REVERSAO_INFORMADA_SANDBOX',
+     'PENDENTE_SANDBOX','CRIACAO_INDETERMINADA_SANDBOX')
+    THEN 1 ELSE 0 END),0) AS estadosAsaasDesconhecidos,
    COALESCE(SUM(CASE WHEN p.pedido_id IS NOT NULL THEN 1 ELSE 0 END),0) AS pedidosComPosicao,
    COALESCE(SUM(CASE WHEN s.pedido_id IS NOT NULL OR r.pedido_id IS NOT NULL THEN 1 ELSE 0 END),0) AS pedidosSomenteLoja,
    COALESCE(SUM(CASE WHEN t.pedido_id IS NULL THEN 1 ELSE 0 END),0) AS semTitularidade,
@@ -145,7 +149,7 @@ function montarIntegracaoAsaasSandboxLoopLab({banco,contas,titularidade,apiKey,f
   const anomalias=dados.semTitularidade+dados.valoresDivergentes+
    dados.titularesDivergentes+dados.multiplosLivros+
    dados.integracoesSemRecebimento+idReutilizadoEmPosicaoAdicional+
-   callbacksExigemRevisao;
+   callbacksExigemRevisao+dados.estadosAsaasDesconhecidos;
   return Object.freeze({ambiente:'ASAAS_SANDBOX_EXCLUSIVO',
    modo:'CONVERGENCIA_SQLITE_SOMENTE_LEITURA',...dados,
    posicoesAdicionais:adicionais,
