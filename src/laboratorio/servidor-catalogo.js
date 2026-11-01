@@ -185,6 +185,7 @@ function criarAppAdminLaboratorio({ repositorio, segredo, webhookDemo, webhookAs
     app.locals.ponteCompartilhadaLoop=ponteDemo;
     app.locals.contasCompartilhadasLoop=contasDemo;
     app.locals.titularidadeCompartilhadaLoop=pedidosIdentificadosDemo;
+    app.locals.integracaoAsaasCompartilhada=null;
     ponteParaCircuito=ponteDemo;
     app.use('/api/admin',criarRouterIndicacoesAdminDemo({
       segredo,links:ponteDemo.linksComissoes
