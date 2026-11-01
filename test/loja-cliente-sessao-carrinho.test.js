@@ -170,7 +170,7 @@ test('checkout sandbox opt-in cria cobranca vinculada ao titular sem criar posic
   email:'sandbox-local@exemplo.invalid',senha});
  const chamadas=[];
  const app=criarAppAdminLaboratorio({
-  repositorio:repo,segredo:'segredo-admin-sandbox-123456789',
+  repositorio:repo,segredo:'segredo-admin-sandbox-local-1234567890',
   criarCobrancaSandboxTeste:async({pedidoId,contaId})=>{
    chamadas.push({pedidoId,contaId});
    return {pedidoId,status:'PENDENTE_SANDBOX',ambiente:'ASAAS_SANDBOX_EXCLUSIVO'};
