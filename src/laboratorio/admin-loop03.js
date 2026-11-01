@@ -235,7 +235,8 @@
   const ids=['asaasCobrancasAdmin','asaasRecebimentosAdmin','asaasPedidosComPosicaoAdmin',
    'asaasSomenteLojaAdmin','asaasAguardandoPonteAdmin','asaasReversoesAdmin',
    'asaasCallbacksRevisaoAdmin','asaasAnomaliasAdmin','asaasIndeterminadasAdmin',
-   'asaasIdsReutilizadosAdmin','asaasFilaCallbacksAdmin','asaasRevisaoGeralAdmin'];
+   'asaasIdsReutilizadosAdmin','asaasFilaCallbacksAdmin','asaasRevisaoGeralAdmin',
+   'asaasStatusDesconhecidoAdmin','asaasReversoesComPosicaoAdmin'];
   const limpar=()=>{for(const id of ids)$(id).textContent='—';};
   limpar();
   $('asaasBancoRealAdmin').textContent='Não homologada';
@@ -261,6 +262,8 @@
    asaasCallbacksRevisaoAdmin:'callbacksExigemRevisao',
    asaasAnomaliasAdmin:'anomaliasContadasPorCriterio',
    asaasIndeterminadasAdmin:'criacoesIndeterminadas',
+   asaasStatusDesconhecidoAdmin:'estadosAsaasDesconhecidos',
+   asaasReversoesComPosicaoAdmin:'reversoesComPosicaoPreservada',
    asaasIdsReutilizadosAdmin:'idReutilizadoEmPosicaoAdicional'
   };
   for(const [id,campo] of Object.entries(campos)){
