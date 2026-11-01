@@ -151,6 +151,26 @@ test('cliente prepara pedido -> operador associa Sandbox -> Meus Pedidos mostra 
  assert.equal((await http('/prepedidos',{cookie:b.cookie})).data.prepedidos.length,0);
  assert.equal(banco.prepare('PRAGMA integrity_check').get().integrity_check,'ok');
  assert.deepEqual(banco.prepare('PRAGMA foreign_key_check').all(),[]);
+ // Nova conexao e novo processo HTTP logico leem o estado do pagamento:
+ // o usuario nao perde o acompanhamento apos reiniciar o servico.
+ const reaberto=new DatabaseSync(arquivo);
+ reaberto.exec('PRAGMA foreign_keys=ON;PRAGMA busy_timeout=5000;');
+ const segundaApp=criarAppCheckoutStagingLocal({banco:reaberto});
+ const outroServidor=segundaApp.app.listen(0,'127.0.0.1');
+ await once(outroServidor,'listening');
+ t.after(async()=>{await new Promise(done=>outroServidor.close(done));
+  reaberto.close();});
+ const origemReaberta='http://127.0.0.1:'+outroServidor.address().port;
+ const novamente=await fetch(origemReaberta+'/staging/meus-pedidos',{
+  headers:{Cookie:a.cookie}
+ });
+ assert.equal(novamente.status,200);
+ const estadoReaberto=await novamente.json();
+ assert.equal(estadoReaberto.pedidos.length,1);
+ assert.equal(estadoReaberto.pedidos[0].prepedidoId,prepedidoId);
+ assert.equal(estadoReaberto.pedidos[0].statusHomologacao,'RECEBIMENTO_INFORMADO_SANDBOX');
+ assert.equal(estadoReaberto.pedidos[0].statusInformadoPeloPSP,'RECEIVED');
+ assert.equal(consultado,1,'leitura apos reinicio nao deve reconsultar PSP');
  const publico=require('../src/server');
  const serverPublico=publico.listen(0,'127.0.0.1');
  await once(serverPublico,'listening');
