@@ -11,6 +11,7 @@ class ConciliacaoAutomaticaAsaasSandboxLab{
   this.listarPendentes=listarPendentes;
   this.pendentes=new Set();this.emAndamento=new Set();this.timer=null;
   this.verificacaoEmCurso=null;
+  this.falhasAgendador=0;this.ultimaFalhaAgendador=null;
  }
  acompanhar(pedidoId){
   if(typeof pedidoId!=='string'||!/^[a-z0-9][a-z0-9-]{2,69}$/.test(pedidoId))
@@ -49,7 +50,14 @@ class ConciliacaoAutomaticaAsaasSandboxLab{
  }
  iniciar(){
   if(this.timer)return;
-  this.timer=setInterval(()=>{void this.verificar();},this.intervaloMs);
+  this.timer=setInterval(()=>{
+   void this.verificar().catch(()=>{
+    // Rejeicoes do timer nao podem interromper a aplicacao de laboratorio.
+    // Nunca gravar erros brutos ou credenciais do PSP na telemetria.
+    this.falhasAgendador++;
+    this.ultimaFalhaAgendador={codigo:'FALHA_INTERNA_AGENDADOR',registradoEm:new Date().toISOString()};
+   });
+  },this.intervaloMs);
   this.timer.unref?.();
  }
  parar(){if(this.timer){clearInterval(this.timer);this.timer=null;}}
