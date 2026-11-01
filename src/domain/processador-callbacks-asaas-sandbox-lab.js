@@ -17,6 +17,8 @@ class ProcessadorCallbacksAsaasSandboxLab{
      !Number.isSafeInteger(intervaloMs)||intervaloMs<100)throw new TypeError('Configuracao do worker invalida');
   Object.assign(this,{banco,caixaAvisos,conferidor,conciliador,agoraMs,leaseMs,maxTentativas,intervaloMs});
   this.timer=null;this.emCurso=null;
+  // Telemetria local sem mensagens de excecao, tokens ou dados do comprador.
+  this.falhasAgendador=0;this.ultimaFalhaAgendador=null;
   banco.exec(`CREATE TABLE IF NOT EXISTS akitemm_asaas_callback_fila_lab(
    evento_id TEXT PRIMARY KEY REFERENCES akitemm_asaas_sandbox_avisos(evento_id),
    estado TEXT NOT NULL CHECK(estado IN ('PENDENTE','PROCESSANDO','CONCLUIDO','EXIGE_REVISAO')),
@@ -142,6 +144,8 @@ class ProcessadorCallbacksAsaasSandboxLab{
   const avisosSemJob=this.banco.prepare(`SELECT COUNT(*) n FROM akitemm_asaas_sandbox_avisos a
    WHERE NOT EXISTS(SELECT 1 FROM akitemm_asaas_callback_fila_lab f WHERE f.evento_id=a.evento_id)`).get().n;
   return {modo:'CALLBACK_SANDBOX_LOCAL',estados,avisosSemJob,somenteLeitura:true,
+   falhasAgendador:this.falhasAgendador,ultimaFalhaAgendador:this.ultimaFalhaAgendador,
+   telemetriaSomenteMemoria:true,
    pagamentoRealAutorizado:false,callbackRemotoHomologado:false};
  }
  historico(eventoId){
@@ -152,7 +156,12 @@ class ProcessadorCallbacksAsaasSandboxLab{
   if(this.timer)return;
   this.timer=setInterval(()=>{
    if(this.emCurso)return;
-   this.emCurso=this.processarLote().catch(()=>{}).finally(()=>{this.emCurso=null;});
+   this.emCurso=this.processarLote().catch(()=>{
+    // Falhas inesperadas nao devem encerrar o processo nem vazar segredos.
+    // A fila persistida continua elegivel para recuperacao no proximo ciclo.
+    this.falhasAgendador++;
+    this.ultimaFalhaAgendador={codigo:'FALHA_INTERNA_LOTE',registradoEm:new Date().toISOString()};
+   }).finally(()=>{this.emCurso=null;});
   },this.intervaloMs);this.timer.unref?.();
  }
  parar(){if(this.timer){clearInterval(this.timer);this.timer=null;}}
