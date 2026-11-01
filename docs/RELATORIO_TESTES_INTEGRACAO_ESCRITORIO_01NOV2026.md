@@ -43,3 +43,9 @@ O run do GitHub Actions [41317847384](https://github.com/jjinvest/loop-app/actio
 Os testes exercitaram cliente/compra/posições, comparação das fontes financeira e de cobrança, alerta de status PSP desconhecido, bloqueio de crédito sem recebimento, administrador autenticado, chave não retida no input, encerramento da sessão na tela e ausência de gravação ao navegar. Segurança adicional impede que chave com formato de produção seja enviada pelo adaptador de Sandbox.
 
 O alcance é **exclusivamente laboratório** com transporte simulado; nenhum webhook remoto, banco real, pagamento/PIX real, saque bancário ou deploy foi executado. O próximo gate é homologação externa de forma controlada, sem segredo entregue ao HEAD de PR, seguida de parecer jurídico pré-lançamento.
+
+## Resultado final deste bloco — 691 testes e navegador aprovados
+
+Correção dos asserts de cobrança órfã sem histórico de reconsulta (antes: duas anomalias; agora: três pela detecção adicional do recebimento sem reconsulta). Na branch de código, SHA `d8f3d83ae85945c5b4a5b8b212859bee98bc9705`, [GitHub Actions run 41318597084](https://github.com/jjinvest/loop-app/actions/runs/41318597084) terminou **SUCCESS**: 691 testes, 691 PASS, 0 falhas e 0 ignorados. Chromium PC e celular aprovou cliente, pedido, Asaas simulado, dez posições por titular e painel autenticado de Clientes/Financeiro/Pagamentos. Capturas no artifact `meus-pedidos-captura-real`, ID `13088427109`.
+
+Controles novos testados: uma resposta de cobrança PENDING posterior a RECEIVED gera alerta na API e no Escritório sem apagar historico nem duplicar posição; reconsulta RECEIVED posterior limpa o alerta sem duplicar; baixa manual RECEIVED_IN_CASH não comprova PIX. O teste de 691 casos continua **somente em laboratório**; homologação atual com Asaas remoto não foi executada.
