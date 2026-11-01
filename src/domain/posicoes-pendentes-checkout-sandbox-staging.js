@@ -136,4 +136,35 @@ class PosicoesPendentesCheckoutSandboxStaging{
   }catch(e){b.exec('ROLLBACK');throw e;}
  }
 }
-module.exports={PosicoesPendentesCheckoutSandboxStaging};
+// Leitura sem mutacao da superficie Meus Pedidos. A tabela pode ainda
+// nao existir antes da primeira homologacao; nesse caso nao inventar lugar.
+function consultarPosicaoPendenteSimulada({banco,ponte,titularId,prepedidoId}={}){
+ if(process.env.NODE_ENV==='production')return null;
+ if(typeof banco?.prepare!=='function'||ponte?.banco!==banco||
+    typeof titularId!=='string'||!TITULAR.test(titularId)||
+    typeof prepedidoId!=='string'||!PREPEDIDO.test(prepedidoId))
+  return null;
+ const existe=banco.prepare([
+  "SELECT 1 FROM sqlite_master WHERE type='table'",
+  "AND name='akitemm_prepedido_posicoes_pendentes_sandbox_staging'"
+ ].join(' ')).get();
+ if(!existe)return null;
+ const row=banco.prepare([
+  'SELECT id,prepedido_id,titular_id,valor_centavos,estado,criado_em',
+  'FROM akitemm_prepedido_posicoes_pendentes_sandbox_staging',
+  'WHERE titular_id=? AND prepedido_id=?'
+ ].join(' ')).get(titularId,prepedidoId);
+ if(!row)return null;
+ const status=ponte.consultar({titularId,prepedidoId});
+ const revisao=status?.estado!=='RECEBIMENTO_INFORMADO_SANDBOX'||
+  status?.ultimaConsultaSandbox?.statusAsaas!=='RECEIVED'||
+  status?.revisaoManualObrigatoria===true;
+ return {id:row.id,prepedidoId,criadoEm:row.criado_em,
+  estado:revisao?'EXIGE_REVISAO_SANDBOX':row.estado,
+  valorCentavos:row.valor_centavos,
+  quantidadePosicoesPendentesSimuladas:1,
+  fonte:'ASAAS_SANDBOX_RECONSULTADO',permissaoConfirmarCPF:false,
+  posicoesReaisCriadas:0,filasMovimentadas:0,
+  bonusGerados:0,saquesLiberados:0,dinheiroReal:false};
+}
+module.exports={PosicoesPendentesCheckoutSandboxStaging,consultarPosicaoPendenteSimulada};
