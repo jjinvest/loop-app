@@ -22,6 +22,8 @@ const {criarRouterRascunhosCheckoutStaging}=
  require('../routes/rascunhos-checkout-staging');
 const {criarRouterPrePedidosCheckoutStaging}=
  require('../routes/prepedidos-checkout-staging');
+const {consultarPosicaoPendenteSimulada}=
+ require('../domain/posicoes-pendentes-checkout-sandbox-staging');
 const {localSeguro}=require('../routes/admin-catalogo-laboratorio');
 const {validarProduto}=require('../domain/catalogo');
 
@@ -96,7 +98,10 @@ function criarAppCheckoutStagingLocal({
  }));
  app.use('/staging',criarRouterPrePedidosCheckoutStaging({
   repositorioCatalogo,prePedidos,identificarTitular,autorizarMutacao,
-  ponteAsaasSandbox:ponte
+  ponteAsaasSandbox:ponte,
+  consultarPosicaoPendente:args=>consultarPosicaoPendenteSimulada({
+   banco,ponte,...args
+  })
  }));
  app.use((_req,res)=>res.status(404).json({erro:'ROTA_STAGING_INEXISTENTE'}));
  app.use((_err,_req,res,_next)=>res.status(503).json({
