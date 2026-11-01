@@ -4,6 +4,7 @@
 // protegido pelo mesmo segredo de laboratorio do painel administrativo.
 const express = require('express');
 const {consultarOperacaoClienteLab}=require('../domain/operacao-cliente-sqlite-lab');
+const {consultarMarcoZeroLab}=require('../domain/marco-zero-gate-sqlite-lab');
 const { criarAutorizacao } = require('./admin-catalogo-laboratorio');
 const { criarVisaoEscritorioDemo, TITULARES_FICTICIOS } =
   require('../domain/visao-escritorio-demo');
@@ -16,6 +17,15 @@ function criarRouterEscritorioDemo({segredo,publicacoes=null}={}) {
   router.use((_req,res,next)=>{
     res.set('Cache-Control','no-store');
     next();
+  });
+  // Gate de divulgacao comercial: somente leitura, falha sempre fechada.
+  // Evidencias externas NAO podem ser aprovadas via API ou SQL de laboratorio.
+  router.get('/escritorio-demo/marco-zero', (req,res)=>{
+    if(Object.keys(req.query).length)
+      return res.status(400).json({erro:'FILTRO_MARCO_ZERO_INVALIDO'});
+    if(!publicacoes?.banco)
+      return res.status(501).json({erro:'FONTE_SQLITE_INDISPONIVEL'});
+    return res.json(consultarMarcoZeroLab({banco:publicacoes.banco}));
   });
   router.get('/escritorio-demo/publicacoes',(_req,res)=>{
     if(!publicacoes)return res.status(501).json({erro:'PUBLICACOES_INDISPONIVEIS'});
