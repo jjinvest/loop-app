@@ -50,3 +50,22 @@ test('conciliador automatico: callback de erro defeituoso nao cria rejeicao nao 
  assert.equal(JSON.stringify(agenda.ultimaFalhaAgendador).includes('SEGREDO'),false);
  assert.equal(m.banco.prepare('SELECT COUNT(*) n FROM admin_ponte_compras_demo').get().n,0);
 });
+test('monitor administrativo reutilizado mostra diagnostico read-only e exige token',async t=>{
+ const m=await abrirLaboratorio(':memory:',opcoes);
+ t.after(()=>m.fechar());
+ m.integracao.automatico.falhasAgendador=1;
+ m.integracao.automatico.ultimaFalhaAgendador={
+  codigo:'FALHA_INTERNA_AGENDADOR',registradoEm:'2026-11-01T00:00:00.000Z'
+ };
+ const url=m.base+'/api/admin/asaas-callbacks-lab';
+ assert.equal((await fetch(url)).status,401);
+ const antes=m.banco.prepare('SELECT total_changes() n').get().n;
+ const resp=await fetch(url,{headers:{Authorization:'Bearer administrador-local-ficticio-2026-123456789'}});
+ assert.equal(resp.status,200);
+ const dados=await resp.json();
+ assert.equal(dados.conciliacaoAutomatica.falhasAgendador,1);
+ assert.equal(dados.conciliacaoAutomatica.telemetriaSomenteMemoria,true);
+ assert.equal(dados.conciliacaoAutomatica.movimentacaoFinanceiraReal,false);
+ assert.equal(dados.resumo.pagamentoRealAutorizado,false);
+ assert.equal(m.banco.prepare('SELECT total_changes() n').get().n,antes);
+});
