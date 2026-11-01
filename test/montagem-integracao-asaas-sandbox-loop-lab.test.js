@@ -33,6 +33,10 @@ test('montagem: API Sandbox -> cobranca -> titular -> ponte -> uma posicao SQLit
  await m.cobrancas.criar({pedidoId:PEDIDO,origem:'CARRINHO',clienteAsaasId:'cus_SandboxMontagem1'});
  await assert.rejects(m.conciliador.processar(PEDIDO));
  assert.equal(banco.prepare('SELECT COUNT(*) AS n FROM admin_ponte_compras_demo').get().n,0);
+ // O agendador encontra o pedido no banco, mas nao libera posicao antes de RECEIVED.
+ await m.automatico.verificar();
+ assert.equal(m.automatico.pendentes.has(PEDIDO),true);
+ assert.equal(banco.prepare('SELECT COUNT(*) AS n FROM admin_ponte_compras_demo').get().n,0);
  estado='RECEIVED';
  clienteRemoto='cus_ClienteDiferente';
  await assert.rejects(m.conciliador.processar(PEDIDO),e=>e.codigo==='DADOS_PAGAMENTO_SANDBOX_DIVERGENTES');
