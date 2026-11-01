@@ -14,6 +14,7 @@ on:
       - 'src/laboratorio/convite-cliente-demo.js'
       - 'src/domain/conciliacao-automatica-asaas-sandbox-lab.js'
       - 'src/domain/montagem-integracao-asaas-sandbox-loop-lab.js'
+      - 'src/laboratorio/servidor-catalogo.js'
       - 'test/montagem-integracao-asaas-sandbox-loop-lab.test.js'
   workflow_dispatch:
 permissions:
