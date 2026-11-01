@@ -65,6 +65,26 @@ function criarAppCheckoutStagingLocal({
   next();
  });
  app.use(express.json({limit:'32kb',strict:true}));
+ // UI local autenticada de ensaio: pagina/ativos nao sao servidos pelo
+ // src/server.js, nao usam cadastro publico nem endpoint de venda.
+ const ativos=new Map([
+  ['/staging/cliente','checkout-staging-ui.html'],
+  ['/staging/assets/cliente.css','checkout-staging-ui.css'],
+  ['/staging/assets/cliente.js','checkout-staging-ui.js']
+ ]);
+ for(const [rota,arquivo] of ativos)app.get(rota,(req,res)=>{
+  res.set('Cache-Control','no-store');
+  res.set('X-Robots-Tag','noindex, nofollow');
+  res.set('Content-Security-Policy',[
+   "default-src 'none'","script-src 'self'","style-src 'self'",
+   "connect-src 'self'","img-src 'self'","base-uri 'none'",
+   "form-action 'self'","frame-ancestors 'none'"
+  ].join('; '));
+  if(!localSeguro(req)||process.env.NODE_ENV==='production')
+   return res.status(403).json({erro:'UI_STAGING_APENAS_LOCAL'});
+  return res.sendFile(path.join(__dirname,arquivo));
+ });
+
  app.get('/staging/estado',(req,res)=>{
   if(!localSeguro(req)||process.env.NODE_ENV==='production')
    return res.status(403).json({erro:'SOMENTE_TESTE_LOCAL'});
