@@ -117,6 +117,11 @@ async function validarEscritorio(browser,pasta){
     assert.equal((await pagina.locator('#asaasReconsultasDivergentesAdmin').innerText()).trim(),'0');
     assert.match(await pagina.locator('#asaasRevisaoGeralAdmin').innerText(),/SIM/);
     assert.equal((await pagina.locator('#clientesTotalDepartamento').innerText()).trim(),'2');
+    assert.equal((await pagina.locator('#marcoZeroEstadoAdmin').innerText()).trim(),'NÃO LIBERADO');
+    assert.equal((await pagina.locator('#marcoZeroExternosAdmin').innerText()).trim(),'6');
+    assert.equal((await pagina.locator('#marcoZeroAlertasAdmin').innerText()).trim(),'1');
+    assert.equal(await pagina.locator('#marcoZeroGatesExternosAdmin .status-linha').count(),6);
+    assert.match(await pagina.locator('#marcoZeroStatusAdmin').innerText(),/NÃO autorizados/);
     assert.equal((await pagina.locator('#clientesLoopDepartamento').innerText()).trim(),'1');
     assert.equal((await pagina.locator('#finOpCiclosAdmin').innerText()).trim(),'0');
     assert.match(await pagina.locator('#asaasBancoRealAdmin').innerText(),/Não homologada/);
