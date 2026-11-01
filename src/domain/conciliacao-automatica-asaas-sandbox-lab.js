@@ -3,7 +3,8 @@
 // A reconsulta remota e validacao de titularidade permanecem no conciliador.
 class ConciliacaoAutomaticaAsaasSandboxLab{
  constructor({conciliador,intervaloMs=1000,aoErro=()=>{},listarPendentes=null,
-  listarRecebimentos=null,maxPorVerificacao=20,maxRecebimentosPorVerificacao=null}={}){
+  listarRecebimentos=null,maxPorVerificacao=20,maxRecebimentosPorVerificacao=null,
+  maxDescobertosEmMemoria=200}={}){
   if(typeof conciliador?.processar!=='function')throw new TypeError('Conciliador obrigatorio');
   if(!Number.isSafeInteger(intervaloMs)||intervaloMs<100)throw new RangeError('Intervalo invalido');
   if(listarPendentes!==null&&typeof listarPendentes!=='function')
@@ -17,11 +18,18 @@ class ConciliacaoAutomaticaAsaasSandboxLab{
   if(!Number.isSafeInteger(maxRecebimentosPorVerificacao)||
      maxRecebimentosPorVerificacao<1||maxRecebimentosPorVerificacao>maxPorVerificacao)
    throw new RangeError('Cota de reconsultas de recebimentos invalida');
+  if(!Number.isSafeInteger(maxDescobertosEmMemoria)||
+     maxDescobertosEmMemoria<maxPorVerificacao||maxDescobertosEmMemoria>10000)
+   throw new RangeError('Limite de descobertos em memoria invalido');
   this.conciliador=conciliador;this.intervaloMs=intervaloMs;this.aoErro=aoErro;
   this.listarPendentes=listarPendentes;this.listarRecebimentos=listarRecebimentos;
   this.maxPorVerificacao=maxPorVerificacao;
   this.maxRecebimentosPorVerificacao=maxRecebimentosPorVerificacao;
+  this.maxDescobertosEmMemoria=maxDescobertosEmMemoria;
   this.pendentes=new Set();this.emAndamento=new Set();this.timer=null;
+  // Apenas os IDs de cobrancas com fonte persistente sao elegiveis ao
+  // descarte do cache. Registros explicitos de acompanhar() sao mantidos.
+  this.descobertosEmMemoria=new Set();this.acompanhadosExplicitos=new Set();
   this.verificacaoEmCurso=null;
   this.falhasAgendador=0;this.ultimaFalhaAgendador=null;
  }
@@ -35,10 +43,34 @@ class ConciliacaoAutomaticaAsaasSandboxLab{
   try{await this.aoErro(erro,pedidoId);}
   catch{this._registrarFalhaAgendador();}
  }
- acompanhar(pedidoId){
+ _validarPedido(pedidoId){
   if(typeof pedidoId!=='string'||!/^[a-z0-9][a-z0-9-]{2,69}$/.test(pedidoId))
    throw new TypeError('Pedido invalido');
+ }
+ acompanhar(pedidoId){
+  this._validarPedido(pedidoId);
+  this.descobertosEmMemoria.delete(pedidoId);
+  this.acompanhadosExplicitos.add(pedidoId);
   this.pendentes.add(pedidoId);
+ }
+ _descobrirPersistido(pedidoId){
+  this._validarPedido(pedidoId);
+  if(this.acompanhadosExplicitos.has(pedidoId))return;
+  if(this.descobertosEmMemoria.has(pedidoId))return;
+  this.descobertosEmMemoria.add(pedidoId);
+  this.pendentes.add(pedidoId);
+  // FIFO limitado: pedidos descartados continuam no SQLite e serao
+  // redescobertos pelo cursor circular, nao cancelados ou quitados.
+  while(this.descobertosEmMemoria.size>this.maxDescobertosEmMemoria){
+   const antigo=this.descobertosEmMemoria.values().next().value;
+   this.descobertosEmMemoria.delete(antigo);
+   this.pendentes.delete(antigo);
+  }
+ }
+ _retirar(pedidoId){
+  this.pendentes.delete(pedidoId);
+  this.descobertosEmMemoria.delete(pedidoId);
+  this.acompanhadosExplicitos.delete(pedidoId);
  }
  async verificar(){
   if(this.verificacaoEmCurso)return this.verificacaoEmCurso;
@@ -48,7 +80,7 @@ class ConciliacaoAutomaticaAsaasSandboxLab{
  }
  async _verificarInterno(){
   if(this.listarPendentes){
-   try{for(const id of await this.listarPendentes())this.acompanhar(id);}
+   try{for(const id of await this.listarPendentes())this._descobrirPersistido(id);}
    catch(e){await this._notificarErro(e,null);}
   }
   // Reserva pequena cota para cobrancas JA integradas: sem isso, uma
@@ -61,7 +93,7 @@ class ConciliacaoAutomaticaAsaasSandboxLab{
     if(!Array.isArray(recebimentos))throw new TypeError('Lista de recebimentos invalida');
     for(const id of recebimentos){
      if(candidatos.length>=this.maxRecebimentosPorVerificacao)break;
-     this.acompanhar(id);
+     this._descobrirPersistido(id);
      if(!vistos.has(id)){candidatos.push(id);vistos.add(id);}
     }
    }catch(e){await this._notificarErro(e,null);}
@@ -83,13 +115,13 @@ class ConciliacaoAutomaticaAsaasSandboxLab{
     if((Number.isSafeInteger(r?.posicoesNoPedido)&&r.posicoesNoPedido>=1&&
         r.posicoesNoPedido<=10&&r?.confirmacaoIndividualObrigatoria===true)||
        (r?.posicoesNoPedido===0&&r?.vendaSomenteLoja===true))
-     this.pendentes.delete(pedidoId);
+     this._retirar(pedidoId);
    }catch(e){
     // Reversao e terminal neste laboratorio. Conservar posicao e trilha,
     // notificar a revisao e nao repetir eternamente a mesma tentativa.
     try{
      if(this.conciliador.cobrancas?.consultar(pedidoId)?.status==='REVERSAO_INFORMADA_SANDBOX')
-      this.pendentes.delete(pedidoId);
+      this._retirar(pedidoId);
     }catch{
      // Falha no status nao deve impedir a verificacao dos demais pedidos.
      this._registrarFalhaAgendador();
