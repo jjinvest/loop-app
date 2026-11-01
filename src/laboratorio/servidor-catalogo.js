@@ -205,7 +205,8 @@ function criarAppAdminLaboratorio({ repositorio, segredo, webhookDemo, webhookAs
     }
     ponteParaCircuito=ponteDemo;
     app.use('/api/admin',criarRouterMonitorCallbacksAsaasLab({segredo,
-      obterWorker:()=>app.locals.integracaoAsaasCompartilhada?.callbacks}));
+      obterWorker:()=>app.locals.integracaoAsaasCompartilhada?.callbacks,
+      obterConciliacaoAutomatica:()=>app.locals.integracaoAsaasCompartilhada?.automatico}));
     app.use('/api/admin',criarRouterIndicacoesAdminDemo({
       segredo,links:ponteDemo.linksComissoes
     }));
