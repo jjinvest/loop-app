@@ -5,6 +5,7 @@ const {test}=require('node:test');
 const assert=require('node:assert/strict');
 const {DatabaseSync}=require('node:sqlite');
 const {once}=require('node:events');
+const {request}=require('node:http');
 const express=require('express');
 const {ContasParticipantesDemoSQLite}=require('../src/domain/contas-participantes-demo-sqlite');
 const {PedidosTitularidadeDemoSQLite}=require('../src/domain/pedidos-titularidade-demo-sqlite');
@@ -26,11 +27,22 @@ test('LAB valida Host, Origin e socket local, sem gravar ou emitir sessao em ace
  assert.equal(legitimo.status,401);
  assert.equal(legitimo.headers.get('cache-control'),'no-store');
  assert.equal(legitimo.headers.get('referrer-policy'),'no-referrer');
+ // Node fetch reescreve Host silenciosamente. Usar http.request para
+ // testar Host indevido realmente enviado no socket ao servidor.
+ const hostFalso=await new Promise((resolve,reject)=>{
+  const req=request({hostname:'127.0.0.1',port:servidor.address().port,
+   method:'GET',path:'/api/cliente-lab'+rota,
+   headers:{Host:'dominio-de-terceiros.invalid'}},res=>{
+    let body='';res.on('data',chunk=>{body+=chunk;});
+    res.on('end',()=>resolve({status:res.statusCode,body}));
+   });
+  req.once('error',reject);req.end();
+ });
+ assert.equal(hostFalso.status,403);
+ assert.equal(JSON.parse(hostFalso.body).erro,'LABORATORIO_LOCAL_APENAS');
  for(const cabecalhos of [
-  {Host:'dominio-de-terceiros.invalid'},
   {Origin:'https://dominio-de-terceiros.invalid'},
-  {Origin:'http://127.0.0.1:11111'},
-  {Host:'localhost:12345',Origin:'http://127.0.0.1:11111'}
+  {Origin:'http://127.0.0.1:11111'}
  ]){
   const resposta=await fetch(base+rota,{headers:cabecalhos});
   assert.equal(resposta.status,403);
