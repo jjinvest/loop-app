@@ -3,16 +3,22 @@
 // A reconsulta remota e validacao de titularidade permanecem no conciliador.
 class ConciliacaoAutomaticaAsaasSandboxLab{
  constructor({conciliador,intervaloMs=1000,aoErro=()=>{},listarPendentes=null,
-  maxPorVerificacao=20}={}){
+  listarRecebimentos=null,maxPorVerificacao=20,maxRecebimentosPorVerificacao=5}={}){
   if(typeof conciliador?.processar!=='function')throw new TypeError('Conciliador obrigatorio');
   if(!Number.isSafeInteger(intervaloMs)||intervaloMs<100)throw new RangeError('Intervalo invalido');
   if(listarPendentes!==null&&typeof listarPendentes!=='function')
    throw new TypeError('Consulta de pendentes invalida');
   if(!Number.isSafeInteger(maxPorVerificacao)||maxPorVerificacao<1||maxPorVerificacao>100)
    throw new RangeError('Limite de pedidos por rodada invalido');
+  if(listarRecebimentos!==null&&typeof listarRecebimentos!=='function')
+   throw new TypeError('Consulta de recebimentos invalida');
+  if(!Number.isSafeInteger(maxRecebimentosPorVerificacao)||
+     maxRecebimentosPorVerificacao<1||maxRecebimentosPorVerificacao>maxPorVerificacao)
+   throw new RangeError('Cota de reconsultas de recebimentos invalida');
   this.conciliador=conciliador;this.intervaloMs=intervaloMs;this.aoErro=aoErro;
-  this.listarPendentes=listarPendentes;
+  this.listarPendentes=listarPendentes;this.listarRecebimentos=listarRecebimentos;
   this.maxPorVerificacao=maxPorVerificacao;
+  this.maxRecebimentosPorVerificacao=maxRecebimentosPorVerificacao;
   this.pendentes=new Set();this.emAndamento=new Set();this.timer=null;
   this.verificacaoEmCurso=null;
   this.falhasAgendador=0;this.ultimaFalhaAgendador=null;
@@ -43,12 +49,26 @@ class ConciliacaoAutomaticaAsaasSandboxLab{
    try{for(const id of await this.listarPendentes())this.acompanhar(id);}
    catch(e){await this._notificarErro(e,null);}
   }
-  // Copiar apenas os proximos IDs: jamais materializar a fila inteira
-  // quando milhares de cobrancas aguardam confirmacao no SQLite.
-  const candidatos=[];
+  // Reserva pequena cota para cobrancas JA integradas: sem isso, uma
+  // fila continua de pagamentos pendentes pode atrasar revisoes de estorno.
+  // O candidato continua exigindo reconsulta do PSP antes de qualquer acao.
+  const candidatos=[],vistos=new Set();
+  if(this.listarRecebimentos){
+   try{
+    const recebimentos=await this.listarRecebimentos();
+    if(!Array.isArray(recebimentos))throw new TypeError('Lista de recebimentos invalida');
+    for(const id of recebimentos){
+     if(candidatos.length>=this.maxRecebimentosPorVerificacao)break;
+     this.acompanhar(id);
+     if(!vistos.has(id)){candidatos.push(id);vistos.add(id);}
+    }
+   }catch(e){await this._notificarErro(e,null);}
+  }
+  // Nao copiar toda a fila. A cota normal fica disponivel mesmo quando
+  // o PSP de recebimentos antigos esta indisponivel.
   for(const id of this.pendentes){
-   candidatos.push(id);
    if(candidatos.length>=this.maxPorVerificacao)break;
+   if(!vistos.has(id)){candidatos.push(id);vistos.add(id);}
   }
   let verificados=0;
   for(const pedidoId of candidatos){
