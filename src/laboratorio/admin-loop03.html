@@ -18,6 +18,7 @@
    <strong class="grupo">DIREÇÃO E OPERAÇÃO</strong>
    <nav aria-label="Navegação administrativa">
     <a class="ativo" aria-current="location" href="#visaoGeral">◈ <span>Visão geral</span></a>
+    <a href="#marcoZeroAdmin">◉ <span>Marco Zero · Preparação</span></a>
     <a href="#atalhosDirecaoAdmin">▦ <span>Central de comando</span></a>
     <a href="#departamentoClientesAdmin">♧ <span>Clientes · Visão completa</span></a>
     <a href="#regraTrava">◉ <span>Controle das filas</span></a>
@@ -57,6 +58,19 @@
      </div>
      <p id="statusResumoDirecaoAdmin" role="status" aria-live="polite" class="observacao">Dados de teste, sem vendas ou pagamentos bancários confirmados.</p>
      <div class="comando-resumo-acoes"><a href="#auditoriaOperacionalAdmin">Detalhar registros ↓</a><a href="#relatorioFinanceiroAdmin">Consultar cofres simulados ↓</a></div>
+    </section>
+    <section class="painel historico" id="marcoZeroAdmin" aria-label="Preparação para o Marco Zero">
+      <div class="historico-titulo"><div><small class="sobretitulo">PRÉ-LANÇAMENTO · GATE SEM LIBERAÇÃO AUTOMÁTICA</small><h2>Marco Zero · Prontidão para divulgação</h2></div></div>
+      <p class="observacao">O Marco Zero será o início autorizado da divulgação comercial. Teste de laboratório aprovado não equivale à liberação de clientes, PIX ou saque reais.</p>
+      <div class="status-linha"><span>Autorização atual de divulgação</span><strong id="marcoZeroEstadoAdmin">NÃO LIBERADO</strong></div>
+      <div class="status-linha"><span>Bloqueios de validação externa</span><strong id="marcoZeroExternosAdmin">—</strong></div>
+      <div class="status-linha"><span>Alertas locais de pagamentos (critérios)</span><strong id="marcoZeroAlertasAdmin">—</strong></div>
+      <h3>Controles verificáveis no SQLite</h3>
+      <div id="marcoZeroTecnicosAdmin" aria-label="Integridade e fontes locais"></div>
+      <h3>Etapas que precisam de comprovação independente</h3>
+      <div id="marcoZeroGatesExternosAdmin" aria-label="Liberações externas pendentes"></div>
+      <p class="observacao">Nenhum botão deste quadro libera produção, inicia publicidade ou atesta análise jurídica. As aprovações externas deverão ter evidências próprias.</p>
+      <p id="marcoZeroStatusAdmin" class="observacao" role="status" aria-live="polite">Faça login para consultar a preparação.</p>
     </section>
     <section id="visaoGeral" class="indicadores" aria-label="Estado do motor">
      <article><small>FILA A</small><strong id="numeroFilaAAdmin">—</strong><span>Posições prioritárias</span></article>
