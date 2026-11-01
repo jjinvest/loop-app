@@ -7,6 +7,7 @@ const {PonteElegibilidadeAsaasTitularidadeLab}=require('./ponte-elegibilidade-as
 const {PonteComprasConvitesDemoSQLite}=require('./ponte-compras-convites-demo-sqlite');
 const {CatracaAsaasSandboxLab}=require('./catraca-asaas-sandbox-lab');
 const {ConciliadorPosicaoAsaasSandboxLab}=require('./conciliador-posicao-asaas-sandbox-lab');
+const {ConciliacaoAutomaticaAsaasSandboxLab}=require('./conciliacao-automatica-asaas-sandbox-lab');
 function montarIntegracaoAsaasSandboxLoopLab({banco,contas,titularidade,apiKey,fetchImpl,provedor,agora}={}){
  if(!banco||!contas||contas.banco!==banco||
     !titularidade||titularidade.banco!==banco||
@@ -25,6 +26,7 @@ function montarIntegracaoAsaasSandboxLoopLab({banco,contas,titularidade,apiKey,f
  });
  const catraca=new CatracaAsaasSandboxLab({elegibilidade,ponte});
  const conciliador=new ConciliadorPosicaoAsaasSandboxLab({cobrancas,catraca});
- return Object.freeze({provedor:externo,cobrancas,comprovantes,elegibilidade,ponte,catraca,conciliador});
+ const automatico=new ConciliacaoAutomaticaAsaasSandboxLab({conciliador});
+ return Object.freeze({provedor:externo,cobrancas,comprovantes,elegibilidade,ponte,catraca,conciliador,automatico});
 }
 module.exports={montarIntegracaoAsaasSandboxLoopLab};
