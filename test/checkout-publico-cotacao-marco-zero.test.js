@@ -100,6 +100,10 @@ test('publico principal permanece nao pronto sem qualquer override ou checkout a
  assert.equal(r.marcoZeroLiberado,false);
  assert.equal(r.pagamentosReais,false);
  assert.ok(r.bloqueios.includes('JURIDICO'));
+ const {IDS_GATE_EXTERNO}=require('../src/domain/marco-zero-gates');
+ assert.deepEqual(r.bloqueios,['CHECKOUT_PUBLICO',...IDS_GATE_EXTERNO],
+  'Os mesmos seis gates devem valer no lab e no servidor publico');
+ assert.equal(new Set(r.bloqueios).size,7);
  assert.equal((await fetch(base+'/api/checkout/pedidos',{method:'POST'})).status,503);
  const demo=await post(base,'/api/checkout/cotacao',{
   itens:[{produtoId:listarCatalogo()[0].id,quantidade:1}]});
