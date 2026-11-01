@@ -1372,6 +1372,8 @@ Regressao focal nova `test/ponte-migracao-pacotes-dez-posicoes-sqlite-lab.test.j
 
 Ambiente exclusivo de laboratorio Asaas Sandbox, nenhuma movimentacao financeira real, merge ou deploy. Regras e telas aprovadas mantidas. Lancamento publico depende ainda de webhook remoto homologado, conciliacao bancaria independente, protecao de operacoes reais, revisao juridico-regulatoria, solvencia e autorizacao formal.
 
+**Regressao incremental de persistencia em arquivo (01/11/2026):** o mesmo teste de migracao ganhou mais duas variacoes com SQLite em arquivo, servidor HTTP encerrado e reaberto, migracao 2..5/2..6 executada no segundo processo de montagem, preservacao do pedido original, da cadeira principal e da extra, aceite de ordem 10, bloqueio de reuso de ID e verificacao de `integrity_check` e `foreign_key_check`. O exercicio isolado da DDL equivalente em Node 22/SQLite passou nos dois limites antigos; isso NAO substitui a suite do CI do codigo completo. Commit de regressao `3ee61a9e7a0bd41bf2198341093a9e12207d2065`; aguardar evidencia do workflow de branch antes de declarar teste integrado aprovado.
+
 ## 115. CRITERIOS DE LIBERACAO PUBLICA — GATES INDEPENDENTES (01/11/2026)
 
 Aprovar testes tecnicos de laboratorio NAO autoriza receber consumidores ou anunciar remuneracao. O codigo integrado do LOOP 3.0 e da AKITEMM permanece em PR #1 DRAFT, sem merge, deploy, Pix real ou disponibilidade publica.
