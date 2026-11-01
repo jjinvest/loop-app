@@ -368,6 +368,11 @@ test('operador local ve callbacks pendentes e libera revisao de travados sem exp
  assert.deepEqual(pendentes.body.pendencias,[{
   eventoId:aviso.id,estado:'PROCESSANDO',codigo:'RECONSULTA'
  }]);
+ assert.deepEqual(pendentes.body.resumo,{
+  pendentes:0,processando:1,exigeRevisao:0,total:1
+ });
+ assert.equal(pendentes.body.exibidos,1);
+ assert.equal(pendentes.body.haMais,false);
  assert.equal(pendentes.body.consultaRemotaExecutada,false);
  assert.equal((await pedido('/webhooks/recuperar',{method:'POST',
   csrf:null,body:{}})).status,403);
@@ -387,4 +392,29 @@ test('operador local ve callbacks pendentes e libera revisao de travados sem exp
  assert.equal((await pedido('/webhooks/pendencias')).body.pendencias[0].estado,
   'EXIGE_REVISAO');
  assert.equal(s.banco.prepare('SELECT COUNT(*) n FROM akitemm_prepedido_webhook_recuperacoes_staging').get().n,1);
+});
+
+test('fila com mais de 50 avisos mostra volume total sem perder a revisao',async t=>{
+ const s=await cenario(t);
+ for(let i=0;i<53;i++){
+  const id='evt_AvisoLote_'+String(i).padStart(4,'0');
+  const recebido=await s.enviar(s.evento(id));
+  assert.equal(recebido.status,200);
+ }
+ assert.equal(s.worker.pendencias().length,50,'pagina de operador limitada');
+ assert.deepEqual(s.worker.resumoPendencias(),{
+  pendentes:53,processando:0,exigeRevisao:0,total:53
+ });
+ const resposta=await s.worker.processar({
+  eventoId:'evt_AvisoLote_0000',provedor:s.provedor,execucaoLiberada:true
+ });
+ assert.equal(resposta.estado,'EXIGE_REVISAO');
+ assert.deepEqual(s.worker.resumoPendencias(),{
+  pendentes:52,processando:0,exigeRevisao:1,total:53
+ });
+ assert.equal(s.chamadas.filter(x=>x==='GET').length,1,
+  'contar e listar nao devem consultar PSP');
+ assert.equal(JSON.stringify(s.worker.resumoPendencias()).includes('CPF'),false);
+ assert.equal(s.banco.prepare('PRAGMA integrity_check').get().integrity_check,'ok');
+ assert.deepEqual(s.banco.prepare('PRAGMA foreign_key_check').all(),[]);
 });
