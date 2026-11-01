@@ -5,6 +5,15 @@
 const BASE='https://api-sandbox.asaas.com/v3';
 function falha(codigo){const e=new Error(codigo);e.codigo=codigo;return e;}
 const ID=/^[a-zA-Z0-9_-]{5,90}$/;
+// O JSON do PSP deve representar moeda em numero finito com centavos exatos.
+// Nao aceitar strings coergidas por Number(), nem truncar fracoes de centavo.
+function centavosExatos(valor){
+ if(typeof valor!=='number'||!Number.isFinite(valor)||valor<=0)return null;
+ const multiplicado=valor*100,centavos=Math.round(multiplicado);
+ if(!Number.isSafeInteger(centavos)||centavos<1||centavos>100000000||
+    Math.abs(multiplicado-centavos)>0.000001)return null;
+ return centavos;
+}
 class AsaasSandboxLojaV6{
  constructor({apiKey,fetchImpl=globalThis.fetch}={}){
   if(typeof apiKey!=='string'||apiKey.length<12||/[\s\r\n]/.test(apiKey))
@@ -44,7 +53,7 @@ class AsaasSandboxLojaV6{
    description:'AKITEMM - cobranca EXCLUSIVAMENTE SANDBOX'
   });
   if(!data||!ID.test(data.id||'')||data.billingType!=='PIX'||
-     Math.round(Number(data.value)*100)!==valorCentavos||
+     centavosExatos(data.value)!==valorCentavos||
      data.externalReference!=='LOOPLAB-'+pedidoId||
      (data.customer!==undefined&&data.customer!==clienteAsaasId))
     throw falha('ASAAS_SANDBOX_COBRANCA_DIVERGENTE');
@@ -56,10 +65,10 @@ class AsaasSandboxLojaV6{
    throw falha('PAGAMENTO_SANDBOX_ID_INVALIDO');
   const p=await this._requisitar('GET','/payments/'+pagamentoId);
   if(!p||p.id!==pagamentoId||typeof p.status!=='string'||
-    !Number.isFinite(Number(p.value)))
+    centavosExatos(p.value)===null)
     throw falha('ASAAS_SANDBOX_CONSULTA_DIVERGENTE');
   return {pagamentoId:p.id,status:p.status,
-   valorCentavos:Math.round(Number(p.value)*100),
+   valorCentavos:centavosExatos(p.value),
    externalReference:p.externalReference,billingType:p.billingType,
    clienteAsaasId:p.customer||null};
  }
