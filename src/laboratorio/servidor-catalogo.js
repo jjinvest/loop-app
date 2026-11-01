@@ -66,7 +66,7 @@ const {CobrancasAkitemmAsaasSandboxSQLite}=require('../domain/cobrancas-akitemm-
 const {criarRouterCobrancasAkitemmSandboxV6}=require('../routes/admin-cobrancas-akitemm-sandbox-v6');
 const {montarIntegracaoAsaasSandboxLoopLab}=require('../domain/montagem-integracao-asaas-sandbox-loop-lab');
 
-function criarAppAdminLaboratorio({ repositorio, segredo, webhookDemo, webhookAsaasSandbox, habilitarConviteLoopCheckout=false,criarCobrancaSandboxTeste=null } = {}) {
+function criarAppAdminLaboratorio({ repositorio, segredo, webhookDemo, webhookAsaasSandbox, habilitarConviteLoopCheckout=false,criarCobrancaSandboxTeste=null,ambienteSandbox=process.env } = {}) {
   // Convite oculto por padrao. Ativar somente por decisao explicita do proprietario;
   // nenhuma alteracao do navegador pode ligar o recurso no servidor.
   if(typeof habilitarConviteLoopCheckout!=='boolean')
@@ -186,13 +186,13 @@ function criarAppAdminLaboratorio({ repositorio, segredo, webhookDemo, webhookAs
     app.locals.contasCompartilhadasLoop=contasDemo;
     app.locals.titularidadeCompartilhadaLoop=pedidosIdentificadosDemo;
     app.locals.integracaoAsaasCompartilhada=null;
-    if(process.env.LOOP_ASAAS_SANDBOX_AUTO_CONCILIAR==='1' &&
-       process.env.LOOP_ASAAS_SANDBOX_CHECKOUT==='1' &&
-       process.env.ASAAS_SANDBOX_API_KEY){
+    if(ambienteSandbox.LOOP_ASAAS_SANDBOX_AUTO_CONCILIAR==='1' &&
+       ambienteSandbox.LOOP_ASAAS_SANDBOX_CHECKOUT==='1' &&
+       ambienteSandbox.ASAAS_SANDBOX_API_KEY){
       app.locals.integracaoAsaasCompartilhada=montarIntegracaoAsaasSandboxLoopLab({
        banco:repositorio.banco,contas:contasDemo,
        titularidade:pedidosIdentificadosDemo,
-       apiKey:process.env.ASAAS_SANDBOX_API_KEY,ponte:ponteDemo
+       apiKey:ambienteSandbox.ASAAS_SANDBOX_API_KEY,ponte:ponteDemo
       });
     }
     ponteParaCircuito=ponteDemo;
@@ -516,6 +516,7 @@ function iniciarLaboratorio({ ambiente = process.env } = {}) {
     const app = criarAppAdminLaboratorio({
       repositorio:banco,
       segredo:ambiente.LOOP_ADMIN_TEST_TOKEN,
+      ambienteSandbox:ambiente,
       // Explicito, opcional e exclusivamente para testes locais.
       webhookDemo:{
         habilitado:ambiente.LOOP_WEBHOOK_DEMO_LOCAL==='1',
