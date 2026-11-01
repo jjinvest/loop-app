@@ -5,6 +5,10 @@ on:
     paths:
       - '.github/workflows/validar-meus-pedidos.yml'
       - 'scripts/validar-meus-pedidos-browser.js'
+      - 'scripts/homologar-http-asaas-sandbox.js'
+      - 'scripts/lib/laboratorio-http-asaas.js'
+      - 'scripts/validar-saques-ensaio-http.js'
+      - 'test/homologar-http-asaas-sandbox.test.js'
       - 'src/routes/cliente-pedidos-lab.js'
       - 'src/domain/pedidos-titularidade-demo-sqlite.js'
       - 'public/cliente-demo.html'
