@@ -83,3 +83,51 @@ for(const limite of [5,6]){
   assert.deepEqual(m.banco.prepare('PRAGMA foreign_key_check').all(),[]);
  });
 }
+
+const fs=require('node:fs');
+const os=require('node:os');
+const path=require('node:path');
+
+for(const limite of [5,6]){
+ test('Persistencia real: migracao '+limite+' para 10 sobre banco reaberto',async t=>{
+  const pasta=fs.mkdtempSync(path.join(os.tmpdir(),'loop-migracao-posicoes-'));
+  const arquivo=path.join(pasta,'loja.sqlite');
+  let primeira=null,segunda=null;
+  t.after(async()=>{
+   if(segunda)await segunda.fechar();
+   if(primeira)await primeira.fechar();
+   fs.rmSync(pasta,{recursive:true,force:true});
+  });
+  primeira=await abrirLaboratorio(arquivo);
+  const pedido=await compraConfirmada(primeira,
+   'Cliente Persistencia '+limite,'persistencia-'+limite+'@example.invalid');
+  const primaria=primeira.banco.prepare(
+   'SELECT posicao_id AS id FROM admin_ponte_compras_demo WHERE pedido_id=?'
+  ).get(pedido).id;
+  const extra=primaria+2000000;
+  primeira.banco.prepare(`INSERT INTO admin_ponte_posicoes_adicionais_demo
+   (pedido_id,ordem,posicao_id) VALUES(?,2,?)`).run(pedido,extra);
+  reduzirEsquemaParaVersaoLegada(primeira.banco,limite);
+  await primeira.fechar();
+  primeira=null;
+  // O segundo servidor abre o MESMO ARQUIVO, reconstroi a ponte e migra.
+  segunda=await abrirLaboratorio(arquivo);
+  const banco=segunda.banco;
+  assert.ok(banco.prepare(
+   "SELECT sql FROM sqlite_master WHERE type='table' AND name='admin_ponte_posicoes_adicionais_demo'"
+  ).get().sql.includes('BETWEEN 2 AND 10'));
+  assert.deepEqual(banco.prepare(
+   'SELECT ordem,posicao_id AS id FROM admin_ponte_posicoes_adicionais_demo WHERE pedido_id=?'
+  ).all(pedido),[{ordem:2,id:extra}]);
+  assert.equal(banco.prepare(
+   'SELECT posicao_id AS id FROM admin_ponte_compras_demo WHERE pedido_id=?'
+  ).get(pedido).id,primaria);
+  banco.prepare(`INSERT INTO admin_ponte_posicoes_adicionais_demo
+   (pedido_id,ordem,posicao_id) VALUES(?,?,?)`).run(pedido,10,extra+1);
+  assert.throws(()=>banco.prepare(`INSERT INTO admin_ponte_posicoes_adicionais_demo
+   (pedido_id,ordem,posicao_id) VALUES(?,?,?)`).run(pedido,3,primaria),
+   /posicao ja usada em compra/);
+  assert.equal(banco.prepare('PRAGMA integrity_check').get().integrity_check,'ok');
+  assert.deepEqual(banco.prepare('PRAGMA foreign_key_check').all(),[]);
+ });
+}
