@@ -83,3 +83,11 @@ foram **apenas de documentação**, não de código-fonte.
 Isto valida este bloco técnico na branch de laboratório; **não valida
 callback realmente transmitido pelo Asaas ao endpoint do LOOP**, entrega
 pública, liquidação bancária real ou prontidão jurídica de produção.
+
+## Bloco incremental: fila vencida, lease e codigos de erro seguros (01/11/2026)
+Sem repetir a carga de 10.000 clientes e sem mudar interface, regras ou pagamentos:
+- O monitor administrativo existente `GET /api/admin/asaas-callbacks-lab` agora devolve `pendentesProntos`, `leasesExpirados` e `referenciaFilaEmMs` no resumo, com SQL somente leitura. São sinais operacionais extraidos da fila SQLite; consultar o monitor nao reserva job, nao cria posicao e nao executa webhook.
+- A persistencia de `e.codigo` passou a aceitar somente uma lista explicita de codigos internos esperados, em vez de confiar em um padrao de caracteres. Erros arbitrarios de adaptadores/PSP sao salvos como `FALHA_TECNICA_RECONSULTA`, sem mensagem/segredo.
+- Novo `test/asaas-monitor-callback-leases-lab.test.js` valida aviso sem job, lease expirado e recuperado, retentativa pronta, monitor autenticado sem escrita, nenhuma posicao duplicada, integridade SQLite, CPF/adesao nao autoativados e erro com codigo privado ocultado.
+- Evidencia do ultimo commit de codigo `1dcc978e7e36ab20f004e2661c94f77d6e26710b`: [GitHub Actions CI e navegador](https://github.com/jjinvest/loop-app/actions/runs/41278214311) — **SUCCESS, 630/630 testes, 0 falhas**, `npm ci`, `npm audit --omit=dev` e Playwright/Chromium aprovados. Falha temporaria em CI de commit anterior `bcf44c2` era exclusivamente um nome incorreto de instancia no novo teste; corrigida e validada neste commit.
+- Permanecem limites de laboratorio: sem callback emitido pelo Asaas remoto, sem conciliacao bancaria independente, sem dinheiro real ou autorizacao de producao. PR #1 DRAFT, sem merge/deploy.
