@@ -157,15 +157,27 @@ function montarIntegracaoAsaasSandboxLoopLab({banco,contas,titularidade,apiKey,f
     AND COALESCE((SELECT h.status_asaas
       FROM akitemm_sandbox_consultas h WHERE h.pedido_id=c.pedido_id
       ORDER BY h.id DESC LIMIT 1),'')<>'RECEIVED'`).get().n;
+  // Sentinela de legado: uma unica compra NAO pode ter cobranca Asaas
+  // e evento de confirmacao/estorno do simulador. Somente leitura; nao
+  // exclui o evento, nao mexe em titularidade e nao cancela posicoes.
+  const tabelasPagamentoFicticio=['admin_carrinho_loop_eventos_demo',
+   'admin_pdf_demo_eventos'].filter(t=>banco.prepare(
+    "SELECT 1 FROM sqlite_master WHERE type='table' AND name=?").get(t));
+  const origemDupla=tabelasPagamentoFicticio.map(t=>
+   'EXISTS(SELECT 1 FROM '+t+' e WHERE e.pedido_id=c.pedido_id)').join(' OR ');
+  const fontesPagamentoDuplicadas=origemDupla?banco.prepare(
+   'SELECT COUNT(*) AS n FROM akitemm_sandbox_cobrancas c WHERE '+origemDupla
+  ).get().n:0;
   const anomalias=dados.semTitularidade+dados.valoresDivergentes+
    dados.titularesDivergentes+dados.multiplosLivros+
    dados.integracoesSemRecebimento+idReutilizadoEmPosicaoAdicional+
    callbacksExigemRevisao+dados.estadosAsaasDesconhecidos+
-   reconsultasSemRecebimento;
+   reconsultasSemRecebimento+fontesPagamentoDuplicadas;
   return Object.freeze({ambiente:'ASAAS_SANDBOX_EXCLUSIVO',
    modo:'CONVERGENCIA_SQLITE_SOMENTE_LEITURA',...dados,
    posicoesAdicionais:adicionais,
    idReutilizadoEmPosicaoAdicional,reconsultasSemRecebimento,
+   fontesPagamentoDuplicadas,
    callbacksExigemRevisao,callbacksConcluidos,callbacksPendentesProntos,
    callbacksLeasesExpirados,callbacksSemJob,
    callbacksHabilitados:Boolean(filaCallbacks),
