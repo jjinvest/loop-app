@@ -40,6 +40,7 @@ test('carrinho: Pix reservado impede baixa ficticia e sincronizacao administrati
  assert.equal(total(m,'admin_ponte_compras_demo'),1);
  assert.equal(total(m,'lab_psp_http_fixture'),1);
  assert.equal(total(m,'admin_carrinho_loop_eventos_demo'),0);
+ assert.equal(m.integracao.resumoConvergencia().fontesPagamentoDuplicadas,0);
  assert.deepEqual(m.banco.prepare('PRAGMA foreign_key_check').all(),[]);
 });
 test('carrinho: evento ficticio reservado primeiro impede criar segunda cobranca e POST remoto',async t=>{
@@ -91,6 +92,10 @@ test('PDF: reserva ficticia ou Sandbox impede outra fonte, inclusive em repetica
  m.app.locals.titularidadeCompartilhadaLoop.preparar({pedidoId:'pdf-primeiro-asaas',
   contaId:conta.contaId,produtoId:'curso-lab-250',valorCentavos:25000});
  assert.throws(()=>verificador.comprovanteConfirmado('pdf-primeiro-asaas'),{codigo:'FONTE_PAGAMENTO_DUPLA'});
+ const revisao=m.integracao.resumoConvergencia();
+ assert.equal(revisao.fontesPagamentoDuplicadas,1);
+ assert.equal(revisao.revisaoManualIndicada,true);
+ assert.equal(revisao.pagamentosReais,false);
  assert.equal(total(m,'admin_ponte_compras_demo'),0);
  assert.deepEqual(m.banco.prepare('PRAGMA foreign_key_check').all(),[]);
 });
