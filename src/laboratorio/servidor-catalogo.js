@@ -182,6 +182,9 @@ function criarAppAdminLaboratorio({ repositorio, segredo, webhookDemo, webhookAs
         return integracaoPDFLoopDemo.comprovanteConfirmado(pedidoId);
       }
     });
+    app.locals.ponteCompartilhadaLoop=ponteDemo;
+    app.locals.contasCompartilhadasLoop=contasDemo;
+    app.locals.titularidadeCompartilhadaLoop=pedidosIdentificadosDemo;
     ponteParaCircuito=ponteDemo;
     app.use('/api/admin',criarRouterIndicacoesAdminDemo({
       segredo,links:ponteDemo.linksComissoes
