@@ -82,6 +82,16 @@ class PonteComprasConvitesDemoSQLite{
   this.banco=banco;
   this.contas=contas;
   this.verificador=consultarPagamentoConfiavel;
+  this.fonteComprovante='LABORATORIO_FICTICIO';
+  this.configurarFonteAsaasSandbox=function(comprovantes){
+   if(this.fonteComprovante!=='LABORATORIO_FICTICIO'||
+      typeof comprovantes?.consultar!=='function'||
+      comprovantes.titularidade!==this.pedidosIdentificados||
+      comprovantes.cobrancas?.banco!==this.banco)
+    throw new TypeError('Fonte Asaas Sandbox incompatível com a ponte');
+   this.verificador=pedidoId=>comprovantes.consultar(pedidoId);
+   this.fonteComprovante='ASAAS_SANDBOX_EXCLUSIVO';
+  };
   this.relogio=relogio;
   // Recupera snapshot de banco experimental criado antes da ativacao:
   // trigger antigo referenciava tabela ainda nao criada e bloqueava migracoes.
