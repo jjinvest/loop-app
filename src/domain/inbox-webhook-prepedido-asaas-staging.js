@@ -19,9 +19,10 @@ function lerSinalWebhook(corpoBruto){
  catch{throw falha('CORPO_WEBHOOK_INVALIDO');}
  const pagamento=obj?.payment;
  if(!obj||typeof obj!=='object'||Array.isArray(obj)||
-    !ID.test(obj.id||'')||!TIPOS.has(obj.event)||
+    typeof obj.id!=='string'||!ID.test(obj.id)||
+    !TIPOS.has(obj.event)||
     !pagamento||typeof pagamento!=='object'||Array.isArray(pagamento)||
-    !ID.test(pagamento.id||'')||
+    typeof pagamento.id!=='string'||!ID.test(pagamento.id)||
     (pagamento.billingType!==undefined&&pagamento.billingType!=='PIX')||
     (pagamento.externalReference!==undefined&&
       !REF.test(pagamento.externalReference))||
