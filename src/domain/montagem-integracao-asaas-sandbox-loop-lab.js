@@ -131,16 +131,32 @@ function montarIntegracaoAsaasSandboxLoopLab({banco,contas,titularidade,apiKey,f
    JOIN akitemm_sandbox_cobrancas c ON c.pedido_id=x.pedido_id
    WHERE EXISTS(SELECT 1 FROM admin_ponte_compras_demo p
     WHERE p.posicao_id=x.posicao_id)`).get().quantidade;
+  // Consolidar alertas do worker de callbacks no mesmo monitor da loja.
+  // O worker devolve contadores persistidos; nenhum job e reservado,
+  // nenhum token, CPF ou ID de cliente e exposto por este endpoint.
+  const filaCallbacks=callbacks?.resumo()||null;
+  const callbacksExigemRevisao=filaCallbacks?.estados
+   ?.find(x=>x.estado==='EXIGE_REVISAO')?.quantidade||0;
+  const callbacksConcluidos=filaCallbacks?.estados
+   ?.find(x=>x.estado==='CONCLUIDO')?.quantidade||0;
+  const callbacksPendentesProntos=filaCallbacks?.pendentesProntos||0;
+  const callbacksLeasesExpirados=filaCallbacks?.leasesExpirados||0;
+  const callbacksSemJob=filaCallbacks?.avisosSemJob||0;
   const anomalias=dados.semTitularidade+dados.valoresDivergentes+
    dados.titularesDivergentes+dados.multiplosLivros+
-   dados.integracoesSemRecebimento+idReutilizadoEmPosicaoAdicional;
+   dados.integracoesSemRecebimento+idReutilizadoEmPosicaoAdicional+
+   callbacksExigemRevisao;
   return Object.freeze({ambiente:'ASAAS_SANDBOX_EXCLUSIVO',
    modo:'CONVERGENCIA_SQLITE_SOMENTE_LEITURA',...dados,
    posicoesAdicionais:adicionais,
-   idReutilizadoEmPosicaoAdicional,anomaliasContadasPorCriterio:anomalias,
+   idReutilizadoEmPosicaoAdicional,
+   callbacksExigemRevisao,callbacksConcluidos,callbacksPendentesProntos,
+   callbacksLeasesExpirados,callbacksSemJob,
+   callbacksHabilitados:Boolean(filaCallbacks),
+   anomaliasContadasPorCriterio:anomalias,
    // Criacao indeterminada nao pode disparar outro POST automaticamente.
-   // Recebido sem ponte requer acompanhamento; toda reversao exige revisao
-   // mesmo se ainda nao havia posicao. Este sinal NAO executa mutacoes.
+   // Recebido sem ponte, reversoes e callbacks esgotados exigem revisao.
+   // Retries prontos e leases expirados sao recuperaveis pelo worker.
    revisaoManualIndicada:anomalias>0||dados.criacoesIndeterminadas>0||
     dados.recebidosAguardandoPonte>0||dados.reversoesInformadas>0,
    pagamentosReais:false,caixaBancarioConciliado:false,
