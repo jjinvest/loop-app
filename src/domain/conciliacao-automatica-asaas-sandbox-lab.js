@@ -10,6 +10,7 @@ class ConciliacaoAutomaticaAsaasSandboxLab{
   this.conciliador=conciliador;this.intervaloMs=intervaloMs;this.aoErro=aoErro;
   this.listarPendentes=listarPendentes;
   this.pendentes=new Set();this.emAndamento=new Set();this.timer=null;
+  this.verificacaoEmCurso=null;
  }
  acompanhar(pedidoId){
   if(typeof pedidoId!=='string'||!/^[a-z0-9][a-z0-9-]{2,69}$/.test(pedidoId))
@@ -17,6 +18,12 @@ class ConciliacaoAutomaticaAsaasSandboxLab{
   this.pendentes.add(pedidoId);
  }
  async verificar(){
+  if(this.verificacaoEmCurso)return this.verificacaoEmCurso;
+  this.verificacaoEmCurso=this._verificarInterno();
+  try{return await this.verificacaoEmCurso;}
+  finally{this.verificacaoEmCurso=null;}
+ }
+ async _verificarInterno(){
   if(this.listarPendentes){
    try{for(const id of await this.listarPendentes())this.acompanhar(id);}
    catch(e){this.aoErro(e,null);}
