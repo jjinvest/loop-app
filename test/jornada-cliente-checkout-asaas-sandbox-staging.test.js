@@ -63,6 +63,14 @@ test('cliente prepara pedido -> operador associa Sandbox -> Meus Pedidos mostra 
  const prepedidoId=prepared.data.prepedido.prepedidoId;
  assert.equal((await http('/prepedidos/'+prepedidoId+'/sandbox',{cookie:a.cookie})).data.estado,
   'SEM_COBRANCA_SANDBOX');
+ assert.equal((await http('/meus-pedidos',{cookie:b.cookie})).data.pedidos.length,0);
+ assert.equal((await http('/meus-pedidos')).status,401);
+ const minhaListaInicial=await http('/meus-pedidos',{cookie:a.cookie});
+ assert.equal(minhaListaInicial.status,200);
+ assert.equal(minhaListaInicial.data.pedidos.length,1);
+ assert.equal(minhaListaInicial.data.pedidos[0].statusHomologacao,'SEM_COBRANCA_SANDBOX');
+ assert.equal(minhaListaInicial.data.pedidos[0].compraReal,false);
+ assert.equal(minhaListaInicial.data.consultaPSPRealizadaNestaLeitura,false);
  assert.equal((await http('/prepedidos/'+prepedidoId+'/sandbox',{cookie:b.cookie})).status,404);
  const opts={arquivo,titularId:a.id,prepedidoId,clienteAsaasId:CLIENTE};
  await assert.rejects(vincularPrepedidoExistente(opts),{codigo:'VINCULO_SANDBOX_NAO_AUTORIZADO'});
@@ -102,6 +110,9 @@ test('cliente prepara pedido -> operador associa Sandbox -> Meus Pedidos mostra 
  assert.equal(statusPendente.data.estado,'PENDENTE_SANDBOX');
  assert.equal(statusPendente.data.posicoesCriadas,0);
  assert.equal(statusPendente.data.consultaRemotaExecutada,false);
+ const minhaListaPendente=await http('/meus-pedidos',{cookie:a.cookie});
+ assert.equal(minhaListaPendente.data.pedidos[0].statusHomologacao,'PENDENTE_SANDBOX');
+ assert.equal(minhaListaPendente.data.pedidos[0].statusInformadoPeloPSP,null);
  assert.equal(consultado,0);
  const inbox=new InboxWebhookPrepedidoAsaasStaging({banco,token:TOKEN});
  const eventoId='evt_JornadaAsaasCheckoutStaging001';
@@ -125,6 +136,14 @@ test('cliente prepara pedido -> operador associa Sandbox -> Meus Pedidos mostra 
  assert.equal(final.data.posicoesCriadas,0);
  assert.equal(final.data.pagamentoReal,false);
  assert.equal(final.data.consultaRemotaExecutada,false);
+ const meusPedidos=await http('/meus-pedidos',{cookie:a.cookie});
+ assert.equal(meusPedidos.status,200);
+ assert.equal(meusPedidos.data.pedidos[0].statusHomologacao,'RECEBIMENTO_INFORMADO_SANDBOX');
+ assert.equal(meusPedidos.data.pedidos[0].statusInformadoPeloPSP,'RECEIVED');
+ assert.equal(meusPedidos.data.pedidos[0].posicoesCriadas,0);
+ assert.equal(meusPedidos.data.pedidos[0].compraReal,false);
+ assert.equal(meusPedidos.data.consultaPSPRealizadaNestaLeitura,false);
+ assert.equal(consultado,1,'abrir Meus Pedidos nao faz GET no PSP');
  assert.equal((await http('/prepedidos/'+prepedidoId+'/sandbox',{cookie:b.cookie})).status,404);
  const lista=await http('/prepedidos',{cookie:a.cookie});
  assert.equal(lista.data.prepedidos.length,1);
