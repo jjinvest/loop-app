@@ -29,12 +29,15 @@ jobs:
       - run: npm install --no-save playwright@1.56.1
       - run: npx playwright install --with-deps chromium
       - run: node scripts/validar-meus-pedidos-browser.js
+      - run: node scripts/validar-checkout-staging-browser.js
       - uses: actions/upload-artifact@v4
         if: always()
         with:
           name: meus-pedidos-captura-real
           path: |
             artifacts/meus-pedidos-real.png
+            artifacts/checkout-staging-meus-pedidos-pc.png
+            artifacts/checkout-staging-meus-pedidos-celular.png
             artifacts/posicao-asaas-integrada-pc.png
             artifacts/posicao-asaas-integrada-celular.png
             artifacts/posicoes-dez-integradas-pc.png
