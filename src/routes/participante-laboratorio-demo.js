@@ -26,7 +26,7 @@ function setCookie(res,token,maxAge){
  res.append('Set-Cookie',COOKIE+'='+token+'; HttpOnly; SameSite=Strict; Path='+CAMINHO+
   '; Max-Age='+maxAge);
 }
-function criarRouterParticipanteDemo({contas,ponte,sessoes=null,adesoes=null,carrinhos=null,catalogo=null,saques=null,obterLivroProvisoesV6=null,obterRetornoSaqueCentroDemo=null,entregadoresPerfil={},configAkitemm=null,avaliacoesAkitemm=null,habilitarConviteLoopCheckout=false}={}){
+function criarRouterParticipanteDemo({contas,ponte,sessoes=null,adesoes=null,carrinhos=null,catalogo=null,saques=null,obterLivroProvisoesV6=null,obterRetornoSaqueCentroDemo=null,entregadoresPerfil={},configAkitemm=null,avaliacoesAkitemm=null,habilitarConviteLoopCheckout=false,criarCobrancaSandbox=null}={}){
  if(!contas||!ponte)throw new TypeError('Cadastro e ponte do laboratorio obrigatorios');
  const gerenciador=sessoes||new SessoesParticipanteDemo({contas});
  const escritorio=new EscritorioIndividualDemo({contas,ponte});
@@ -429,7 +429,7 @@ function criarRouterParticipanteDemo({contas,ponte,sessoes=null,adesoes=null,car
     return next(e);
    }
   });
-  router.post('/loja/pedidos',(req,res,next)=>{
+  router.post('/loja/pedidos',async(req,res,next)=>{
    if(!carrinhos)return res.status(501).json({erro:'LOJA_NAO_CONFIGURADA'});
    if(!req.is('application/json'))return res.status(415).json({erro:'USE_APPLICATION_JSON'});
    // Convite oculto nao muda o checkout original: pedido somente com itens
@@ -477,8 +477,17 @@ function criarRouterParticipanteDemo({contas,ponte,sessoes=null,adesoes=null,car
        (pedido_id,conta_id,dados_json,gravado_em) VALUES(?,?,?,?)`)
       .run(pedido.pedidoId,contaId,JSON.stringify(endereco),new Date().toISOString());
     }
+    // Exclusivamente sandbox e opt-in: falha remota nao apaga pedido local.
+    let cobrancaSandbox=null;
+    if(criarCobrancaSandbox){
+     try{cobrancaSandbox=await criarCobrancaSandbox({pedidoId:pedido.pedidoId,contaId});}
+     catch(e){return res.status(202).json({pedido,
+      cobrancaSandboxPendente:true,erroSandbox:e.codigo||'COBRANCA_SANDBOX_INDISPONIVEL',
+      posicaoCriada:false,pagamentoReal:false});}
+    }
     return res.status(201).json({
-     pedido,aguardandoPagamentoFicticio:true,
+     pedido,aguardandoPagamentoFicticio:!cobrancaSandbox,
+     ...(cobrancaSandbox?{cobrancaSandbox}:{}),
      posicaoCriada:false,pagamentoReal:false
     });
    }catch(e){
