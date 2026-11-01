@@ -202,6 +202,26 @@
       </div>
       <div id="finCofresAdmin" aria-label="Saldos individuais dos cofres"></div>
       <p id="finStatusAdmin" class="observacao" role="status"></p>
+      <section class="comando-guia" id="finLivroOperacionalAdmin" aria-label="Provisões e solicitações operacionais do LOOP">
+       <h3>Provisões do LOOP e solicitações de saque · fonte operacional</h3>
+       <p class="observacao">Este quadro não é o livro fictício acima: são registros operacionais separados do SQLite. Projeções e solicitações NÃO são saldos sacáveis ou liquidações.</p>
+       <div class="loop03-resumo-indicacoes-admin">
+        <div><small>Ciclos registrados</small><strong id="finOpCiclosAdmin">—</strong></div>
+        <div><small>Eventos dos ciclos</small><strong id="finOpEventosAdmin">—</strong></div>
+        <div><small>Parcelas previstas ao centro</small><strong id="finOpParcelasAdmin">—</strong></div>
+        <div><small>Previsão para titulares</small><strong id="finOpPrevistoAdmin">—</strong></div>
+        <div><small>Solicitações de bônus</small><strong id="finOpBonusAdmin">—</strong></div>
+        <div><small>Solicitações de saque do centro</small><strong id="finOpSaquesCentroAdmin">—</strong></div>
+        <div><small>Solicitações de gestão de cofres</small><strong id="finOpGestaoAdmin">—</strong></div>
+        <div><small>Saídas previstas para douradas</small><strong id="finOpDouradasAdmin">—</strong></div>
+       </div>
+       <h4>Referências matemáticas dos quatro cofres · sem liquidação</h4>
+       <div id="finOpCofresAdmin" aria-label="Referências por cofre do livro de provisões"></div>
+       <div class="status-linha"><span>Falhas bancárias simuladas em saques do centro</span><strong id="finOpFalhasSaqueAdmin">—</strong></div>
+       <div class="status-linha"><span>Solicitações de bônus com taxa histórica de 3%</span><strong id="finOpTaxasHistoricasAdmin">—</strong></div>
+       <div class="status-linha"><span>Saldo bancário conciliado para saque real</span><strong id="finOpBancarioAdmin">Não homologado · R$ 0,00 liberado</strong></div>
+       <p id="finOpStatusAdmin" class="observacao" role="status" aria-live="polite">Aguardando consulta autenticada.</p>
+      </section>
     </section>
     <section class="painel historico" id="painelIndicacoesAdmin" aria-label="Auditoria de indicações">
      <div class="historico-titulo"><div><small class="sobretitulo">DISTRIBUIÇÃO · CONTROLE ADMINISTRATIVO</small><h2>Indicações e prioridade global</h2></div></div>
