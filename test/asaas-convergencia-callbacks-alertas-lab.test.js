@@ -89,3 +89,33 @@ test('Monitor sem webhook continua somente leitura e com contadores neutros',asy
  assert.equal(monitor.callbacksSemJob,0);
  assert.equal(monitor.revisaoManualIndicada,false);
 });
+
+test('Monitor exibe callback sem job, lease expirado e recuperacao sem duplicar',async t=>{
+ const m=await abrirLaboratorio(':memory:',OPCOES);
+ t.after(()=>m.fechar());
+ const comprador=await preparar(m,'cb-lease-convergencia@example.invalid');
+ await enviar(m,comprador,'evt_ConvergenciaLease003');
+ const w=m.integracao.callbacks;let now=Date.now();
+ w.agoraMs=()=>now;
+ const aguardando=await resumo(m);
+ assert.equal(aguardando.callbacksSemJob,1);
+ assert.equal(aguardando.callbacksLeasesExpirados,0);
+ assert.equal(aguardando.revisaoManualIndicada,false);
+ const reservado=w._reservar();
+ assert.equal(reservado.eventoId,'evt_ConvergenciaLease003');
+ assert.equal((await resumo(m)).callbacksSemJob,0);
+ now+=w.leaseMs+1;
+ assert.equal((await resumo(m)).callbacksLeasesExpirados,1);
+ m.confirmar(comprador.pedidoId);
+ const retomada=await w.processarLote();
+ assert.equal(retomada.length,1);
+ const final=await resumo(m);
+ assert.equal(final.callbacksLeasesExpirados,0);
+ assert.equal(final.callbacksConcluidos,1);
+ assert.equal(final.callbacksExigemRevisao,0);
+ assert.equal(final.pedidosComPosicao,1);
+ assert.equal(final.revisaoManualIndicada,false);
+ assert.equal(m.banco.prepare('SELECT COUNT(*) AS n FROM admin_ponte_compras_demo').get().n,1);
+ assert.equal(m.ponte._restaurar().giros,0);
+ assert.deepEqual(m.banco.prepare('PRAGMA foreign_key_check').all(),[]);
+});
