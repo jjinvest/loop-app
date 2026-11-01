@@ -186,6 +186,15 @@ function criarAppAdminLaboratorio({ repositorio, segredo, webhookDemo, webhookAs
     app.locals.contasCompartilhadasLoop=contasDemo;
     app.locals.titularidadeCompartilhadaLoop=pedidosIdentificadosDemo;
     app.locals.integracaoAsaasCompartilhada=null;
+    if(process.env.LOOP_ASAAS_SANDBOX_AUTO_CONCILIAR==='1' &&
+       process.env.LOOP_ASAAS_SANDBOX_CHECKOUT==='1' &&
+       process.env.ASAAS_SANDBOX_API_KEY){
+      app.locals.integracaoAsaasCompartilhada=montarIntegracaoAsaasSandboxLoopLab({
+       banco:repositorio.banco,contas:contasDemo,
+       titularidade:pedidosIdentificadosDemo,
+       apiKey:process.env.ASAAS_SANDBOX_API_KEY,ponte:ponteDemo
+      });
+    }
     ponteParaCircuito=ponteDemo;
     app.use('/api/admin',criarRouterIndicacoesAdminDemo({
       segredo,links:ponteDemo.linksComissoes
