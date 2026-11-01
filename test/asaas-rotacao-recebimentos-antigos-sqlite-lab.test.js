@@ -40,8 +40,10 @@ test('HTTP/SQLite: sete revisoes com PSP indisponivel nao escondem estorno da oi
  m.banco.prepare("UPDATE lab_psp_http_fixture SET status='REFUNDED' WHERE pedido=?")
   .run('LOOPLAB-'+pedido);
  const agenda=m.integracao.automatico;
- assert.equal(agenda.listarRecebimentos().length,5);
- // A primeira busca acima apenas avanca o cursor, sem rede nem escrita.
+ // A primeira rodada falha na API ficticia dos sete registros antigos.
+ // A segunda deve alcancar o recebimento real de laboratorio sem starvation.
+ await agenda.verificar();
+ assert.equal(m.integracao.cobrancas.consultar(pedido).status,'RECEBIMENTO_INFORMADO_SANDBOX');
  await agenda.verificar();
  assert.equal(m.integracao.cobrancas.consultar(pedido).status,'REVERSAO_INFORMADA_SANDBOX');
  const posicoes=(await m.http('/minha-conta',{cookie})).data.posicoes;
