@@ -18,6 +18,13 @@ class AsaasSandboxLojaV6{
  constructor({apiKey,fetchImpl=globalThis.fetch}={}){
   if(typeof apiKey!=='string'||apiKey.length<12||/[\s\r\n]/.test(apiKey))
    throw falha('ASAAS_SANDBOX_CREDENCIAL_AUSENTE');
+  // NUNCA enviar chave de producao para o endpoint de Sandbox.
+  // As fixtures dos testes historicos usam identificadores ficticios; chaves
+  // com formato autentico precisam obrigatoriamente ser de homologacao.
+  if(apiKey.startsWith('$aact_')&&!apiKey.startsWith('$aact_hmlg_'))
+   throw falha('ASAAS_SANDBOX_CREDENCIAL_AMBIENTE_INCOMPATIVEL');
+  if(apiKey.startsWith('$aact_hmlg_')&&apiKey.length<25)
+   throw falha('ASAAS_SANDBOX_CREDENCIAL_AUSENTE');
   if(typeof fetchImpl!=='function')throw new TypeError('fetch obrigatorio');
   this.apiKey=apiKey;this.fetchImpl=fetchImpl;
   this.ambiente='ASAAS_SANDBOX_EXCLUSIVO';
