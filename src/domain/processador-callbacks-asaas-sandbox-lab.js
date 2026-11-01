@@ -50,16 +50,22 @@ class ProcessadorCallbacksAsaasSandboxLab{
     BEGIN SELECT RAISE(ABORT,'historico callback imutavel'); END;`);
  }
  _agora(){const n=this.agoraMs();if(!Number.isSafeInteger(n)||n<0)throw Error('RELOGIO_CALLBACK_INVALIDO');return n;}
- _reservar(){
+ _reservar(excluir=[]){
+  if(!Array.isArray(excluir)||excluir.length>100)throw Error('EXCLUSOES_CALLBACK_INVALIDAS');
   const b=this.banco,agora=this._agora();b.exec('BEGIN IMMEDIATE');
   try{
    // Primeiro consome jobs duraveis ja aptos. A implementacao antiga
    // fazia INSERT OR IGNORE de TODA a inbox a cada job reservado: custo
    // quadratico quando milhares de avisos chegam ao SQLite.
+   // O mesmo evento nunca pode consumir duas tentativas num unico lote,
+   // mesmo quando a reconsulta leva mais tempo que o backoff de 1 segundo.
+   const filtro=excluir.length?' AND evento_id NOT IN ('+
+    excluir.map(()=>'?').join(',')+')':'';
    const selecionar=b.prepare(`SELECT * FROM akitemm_asaas_callback_fila_lab
-    WHERE (estado='PENDENTE' AND proxima_em<=?) OR (estado='PROCESSANDO' AND lease_ate<=?)
+    WHERE ((estado='PENDENTE' AND proxima_em<=?) OR
+      (estado='PROCESSANDO' AND lease_ate<=?))${filtro}
     ORDER BY proxima_em,evento_id LIMIT 1`);
-   let job=selecionar.get(agora,agora);
+   let job=selecionar.get(agora,agora,...excluir);
    if(!job){
     // Um ACK pode ter sido gravado imediatamente antes de uma queda.
     // Descobrir em lotes limitados, sem perder avisos e sem reconsiderar
@@ -69,7 +75,7 @@ class ProcessadorCallbacksAsaasSandboxLab{
      WHERE NOT EXISTS(SELECT 1 FROM akitemm_asaas_callback_fila_lab f
        WHERE f.evento_id=a.evento_id)
      ORDER BY a.evento_id LIMIT 50`).run(agora);
-    job=selecionar.get(agora,agora);
+    job=selecionar.get(agora,agora,...excluir);
    }
    if(!job){b.exec('COMMIT');return null;}
    if(job.tentativas>=this.maxTentativas){
@@ -134,9 +140,10 @@ class ProcessadorCallbacksAsaasSandboxLab{
  }
  async processarLote({limite=20}={}){
   if(!Number.isSafeInteger(limite)||limite<1||limite>100)throw Error('LIMITE_CALLBACK_INVALIDO');
-  const resultados=[];
+  const resultados=[],vistos=[];
   for(let i=0;i<limite;i++){
-   const job=this._reservar();if(!job)break;
+   const job=this._reservar(vistos);if(!job)break;
+   vistos.push(job.eventoId);
    if(job.esgotado){resultados.push(job);continue;}
    try{resultados.push(await this._executar(job));}
    catch(e){
