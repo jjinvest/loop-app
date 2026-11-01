@@ -19,6 +19,10 @@ function montarIntegracaoAsaasSandboxLoopLab({banco,contas,titularidade,apiKey,f
  const cobrancas=new CobrancasAkitemmAsaasSandboxSQLite({banco,provedor:externo,...(agora?{agora}:{})});
  const comprovantes=new ComprovanteAsaasSandboxPonteLab({cobrancas,titularidade});
  const elegibilidade=new PonteElegibilidadeAsaasTitularidadeLab({cobrancas,titularidade});
+ if(ponte&&(ponte.banco!==banco||ponte.contas!==contas||
+    ponte.pedidosIdentificados!==titularidade||
+    ponte.atribuicaoManualPorPosicao!==true))
+  throw new TypeError('Ponte compartilhada deve usar o mesmo banco, titularidade e adesao individual');
  const ponteIntegrada=ponte||new PonteComprasConvitesDemoSQLite({
   banco,contas,pedidosIdentificados:titularidade,
   consultarPagamentoConfiavel:pedidoId=>comprovantes.consultar(pedidoId),
