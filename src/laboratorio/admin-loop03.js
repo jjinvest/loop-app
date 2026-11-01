@@ -328,6 +328,69 @@
   $('finStatusAdmin').textContent='Fonte: '+d.modo+
    ' · Sem integração bancária · Nenhum pagamento real.';
  }
+ async function carregarFinanceiroOperacional(){
+  const ids=['finOpCiclosAdmin','finOpEventosAdmin','finOpParcelasAdmin',
+   'finOpPrevistoAdmin','finOpBonusAdmin','finOpSaquesCentroAdmin',
+   'finOpGestaoAdmin','finOpDouradasAdmin','finOpFalhasSaqueAdmin',
+   'finOpTaxasHistoricasAdmin'];
+  for(const id of ids)$(id).textContent='—';
+  $('finOpCofresAdmin').replaceChildren();
+  $('finOpBancarioAdmin').textContent='Não homologado · R$ 0,00 liberado';
+  const r=await fetch('/api/admin/financeiro-operacional-lab',{
+   cache:'no-store',credentials:'omit',headers:{Authorization:'Bearer '+token}
+  });
+  if(r.status===501){
+   $('finOpStatusAdmin').textContent='Fonte SQLite operacional indisponível neste laboratório.';
+   return;
+  }
+  if(!r.ok)throw Error('Resumo operacional indisponível ('+r.status+').');
+  const d=await r.json();
+  if(d.modo!=='FINANCEIRO_OPERACIONAL_SQLITE_SOMENTE_LEITURA'||
+     d.somenteLeitura!==true||d.provisoesNaoLiquidadas!==true||
+     d.livrosFinanceirosSeparados!==true||d.bancoConciliado!==false||
+     d.pagamentosReais!==false||d.saquesReais!==false||
+     d.saldosSacaveisReaisCentavos!==0||d.movimentosExecutados!==0)
+   throw Error('Fonte financeira não comprovadamente simulada');
+  const inteiro=n=>Number.isSafeInteger(n)&&n>=0;
+  const moeda=n=>inteiro(n)?(n/100).toLocaleString('pt-BR',{
+   style:'currency',currency:'BRL'}):'Dado inválido';
+  const quant=(nome,valor)=>{
+   if(valor!==null&&!inteiro(valor))throw Error('Contador operacional inválido');
+   $(nome).textContent=valor===null?'Fonte indisponível':String(valor);
+  };
+  const valor=(nome,centavos)=>{
+   if(centavos!==null&&!inteiro(centavos))throw Error('Valor operacional inválido');
+   $(nome).textContent=centavos===null?'Fonte indisponível':moeda(centavos);
+  };
+  quant('finOpCiclosAdmin',d.ciclos?.quantidade??null);
+  quant('finOpEventosAdmin',d.eventos?.quantidade??null);
+  quant('finOpParcelasAdmin',d.parcelas?.quantidade??null);
+  valor('finOpPrevistoAdmin',d.ciclos?.previstoCentavos??null);
+  quant('finOpBonusAdmin',d.bonus?.quantidade??null);
+  quant('finOpSaquesCentroAdmin',d.centro?.quantidade??null);
+  quant('finOpGestaoAdmin',d.gestao?.quantidade??null);
+  quant('finOpDouradasAdmin',d.douradas?.quantidade??null);
+  quant('finOpFalhasSaqueAdmin',d.falhasCentro?.quantidade??null);
+  quant('finOpTaxasHistoricasAdmin',d.bonus?.historicosTaxaTres??null);
+  const lista=$('finOpCofresAdmin');
+  const nomes={LOOP_CENTRO:'Centro',LOOP_ESQUERDA:'Investimento',
+   LOOP_DIREITA:'Reserva / bonificações',LOOP_DOURADAS:'Douradas'};
+  for(const [id,nome] of Object.entries(nomes)){
+   const linha=document.createElement('div');linha.className='status-linha';
+   const titulo=document.createElement('span');titulo.textContent=nome+' · '+id;
+   const total=document.createElement('strong');
+   const centavos=d.destinosPrevistosPorCofre?.[id]??null;
+   if(centavos!==null&&!inteiro(centavos))throw Error('Cofre operacional inválido');
+   total.textContent=centavos===null?'Fonte indisponível':moeda(centavos);
+   linha.append(titulo,total);lista.append(linha);
+  }
+  if(!Array.isArray(d.fontesAusentes)||!inteiro(d.destinosDesconhecidos))
+   throw Error('Fontes financeiras incompletas ou inválidas');
+  $('finOpStatusAdmin').textContent=
+   (d.alertasOperacionais?'ALERTA: destino de cofre desconhecido. · ':'')+
+   'Fontes ausentes: '+d.fontesAusentes.length+
+   '. Dados de laboratório em livros separados; nenhum saldo ou saque real habilitado.';
+ }
  async function carregar(){
   const [controle,trava,ponte,indicacoes,relogio]=await Promise.all([api(''),api('/trava-fila-a'),api('/ponte'),api('/indicacoes'),api('/intervalo-relogio')]);
   configRelogio=relogio.configuracao;
@@ -364,6 +427,8 @@
    $('statusResumoDirecaoAdmin').textContent='Não foi possível consultar os registros: '+err.message;}
   try{await carregarFinanceiro();}
   catch(err){$('finStatusAdmin').textContent='Consulta indisponível: '+err.message;}
+  try{await carregarFinanceiroOperacional();}
+  catch(err){$('finOpStatusAdmin').textContent='Consulta operacional indisponível: '+err.message;}
   $('dadosAdminLoop03').hidden=false;
   $('situacaoPainel').textContent='CONTROLE AUTENTICADO';
  }
