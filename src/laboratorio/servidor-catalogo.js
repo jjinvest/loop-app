@@ -245,10 +245,11 @@ function criarAppAdminLaboratorio({ repositorio, segredo, webhookDemo, webhookAs
        ambienteSandbox.LOOP_ASAAS_SANDBOX_CHECKOUT==='1'&&
        ambienteSandbox.ASAAS_SANDBOX_API_KEY&&ambienteSandbox.ASAAS_SANDBOX_CLIENTE_TESTE_ID?
        async({pedidoId})=>{
-        const servico=new CobrancasAkitemmAsaasSandboxSQLite({
-         banco:repositorio.banco,
-         provedor:new AsaasSandboxLojaV6({apiKey:ambienteSandbox.ASAAS_SANDBOX_API_KEY})
-        });
+        const servico=app.locals.integracaoAsaasCompartilhada?.cobrancas||
+         new CobrancasAkitemmAsaasSandboxSQLite({
+          banco:repositorio.banco,
+          provedor:new AsaasSandboxLojaV6({apiKey:ambienteSandbox.ASAAS_SANDBOX_API_KEY})
+         });
         const r=await servico.criar({pedidoId,origem:'CARRINHO',
          clienteAsaasId:ambienteSandbox.ASAAS_SANDBOX_CLIENTE_TESTE_ID});
         return {pedidoId:r.pedidoId,status:r.status,ambiente:'ASAAS_SANDBOX_EXCLUSIVO',
