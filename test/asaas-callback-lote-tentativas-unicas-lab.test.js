@@ -54,3 +54,22 @@ test('cinco eventos distintos nao repetem tentativa na mesma rodada longa',async
  assert.equal(Object.values(m.banco.prepare('PRAGMA integrity_check').get())[0],'ok');
  assert.deepEqual(m.banco.prepare('PRAGMA foreign_key_check').all(),[]);
 });
+
+test('novo ACK e descoberto mesmo quando existe retentativa antiga pronta',async t=>{
+ const m=await abrirLaboratorio(':memory:',opcoes);t.after(()=>m.fechar());
+ const primeiro=aviso(m,80),w=m.integracao.callbacks;
+ let agora=100000;w.agoraMs=()=>agora;
+ const anterior=await w.processarLote({limite:1});
+ assert.equal(anterior.length,1);
+ assert.equal(w.consultar(primeiro).tentativas,1);
+ agora+=1001;
+ const recente=aviso(m,81);
+ await w.processarLote({limite:1});
+ assert.equal(w.consultar(primeiro).tentativas,2);
+ assert.equal(w.consultar(recente).estado,'PENDENTE');
+ assert.equal(w.consultar(recente).tentativas,0);
+ assert.equal(w.resumo().avisosSemJob,0);
+ await w.processarLote({limite:1});
+ assert.equal(w.consultar(recente).tentativas,1);
+ assert.equal(m.banco.prepare('SELECT COUNT(*) n FROM admin_ponte_compras_demo').get().n,0);
+});
