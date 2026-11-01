@@ -47,4 +47,5 @@ jobs:
             artifacts/meus-pedidos-real.png
             artifacts/posicao-asaas-integrada-pc.png
             artifacts/posicao-asaas-integrada-celular.png
+            artifacts/posicoes-dez-integradas-pc.png
           if-no-files-found: warn

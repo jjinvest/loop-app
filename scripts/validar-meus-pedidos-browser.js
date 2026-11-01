@@ -48,6 +48,29 @@ async function validarPosicaoIntegrada(browser,pasta){
   }
   assert.equal(m.banco.prepare('SELECT COUNT(*) n FROM admin_ponte_compras_demo').get().n,1);
   console.log('COMPRA_HTTP_ASAAS_SIMULADO_POSICAO_NAVEGADOR_PC_CELULAR_OK');
+  // Limite vigente: todas as dez posicoes do titular precisam ser acessiveis.
+  const contexto=await browser.newContext({viewport:{width:1280,height:1000}});
+  try{
+   const pagina=await contexto.newPage();
+   await pagina.goto(m.base+'/laboratorio/participante');
+   await pagina.locator('#nomeParticipante').fill(conta.nome);
+   await pagina.locator('#senhaParticipante').fill(senha);
+   await pagina.locator('#botaoEntrarParticipante').click();
+   await pagina.locator('#conteudoParticipante').waitFor({state:'visible'});
+   for(let n=2;n<=10;n++){
+    const r=await contexto.request.post(m.base+'/api/laboratorio/participante/loja/pedidos',{
+     headers:{'X-LOOP-LAB':'participante'},data:{itens:[{produtoId:'curso-lab-250',quantidade:1}]}});
+    assert.equal(r.status(),201);m.confirmar((await r.json()).pedido.pedidoId);
+    await m.integracao.automatico.verificar();
+   }
+   await pagina.reload();await pagina.locator('#conteudoParticipante').waitFor({state:'visible'});
+   await pagina.locator('[data-loop03-aba="posicoes"]').click();
+   await pagina.locator('#loop03OpcoesPosicoes .loop03-cartao-posicao').nth(9).waitFor({state:'visible'});
+   assert.equal(await pagina.locator('#loop03OpcoesPosicoes .loop03-cartao-posicao').count(),10);
+   assert.equal(await pagina.locator('#loop03OpcoesPosicoes .loop03-status-confirmacao-pendente').count(),10);
+   await pagina.screenshot({path:'artifacts/posicoes-dez-integradas-pc.png',fullPage:true});
+   console.log('DEZ_POSICOES_DO_TITULAR_VISIVEIS_NAVEGADOR_OK');
+  }finally{await contexto.close();}
  }finally{await m.fechar();}
 }
 

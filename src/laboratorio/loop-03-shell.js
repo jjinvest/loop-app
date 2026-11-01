@@ -776,10 +776,10 @@
   const posicoes=visaoAtual.posicoes||[];
   painel.classList.toggle('loop03-seletor-posicoes-inline',inline);
   painel.setAttribute('aria-modal',inline?'false':'true');
-  e('loop03EscolhaTitulo').textContent=inline?'Escolha uma das suas seis posições':'Escolher posição para acompanhar';
+  e('loop03EscolhaTitulo').textContent=inline?'Escolha uma das suas posições':'Escolher posição para acompanhar';
   if(inline){
    // Exibir os seis slots, mas jamais permitir selecionar uma vaga vazia.
-   for(let i=0;i<6;i++){
+   for(let i=0;i<Math.max(6,posicoes.length);i++){
     const p=posicoes[i];
     const botao=document.createElement('button');botao.type='button';
     botao.className='loop03-escolha-item';botao.textContent=String(i+1);
@@ -1139,7 +1139,7 @@
   }
   if(visao.adesao?.cpfConfirmadoNoTeste)cpfRascunho='';
   atualizarLinksPosicao(visao.linkIndicacao);
-  for(let indice=0;indice<6;indice++){
+  for(let indice=0;indice<Math.max(6,visao.posicoes.length);indice++){
    const p=visao.posicoes[indice];
    const estado=p?.statusAdesao==='PENDENTE'?'pendente':
     p?.local==='CENTRO'?'centro':p?.local==='FILA_A'?'a':
