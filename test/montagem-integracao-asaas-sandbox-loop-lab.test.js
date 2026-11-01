@@ -45,6 +45,14 @@ test('montagem: API Sandbox -> cobranca -> titular -> ponte -> uma posicao SQLit
  const b=await m.conciliador.processar(PEDIDO);
  assert.equal(b.repetida,true);
  assert.equal(banco.prepare('SELECT COUNT(*) AS n FROM admin_ponte_compras_demo').get().n,1);
+ // O Escritorio consulta a mesma base SQLite da posicao criada automaticamente.
+ const {EscritorioIndividualDemo}=require('../src/domain/escritorio-individual-demo');
+ const escritorio=new EscritorioIndividualDemo({contas,ponte:m.ponte});
+ const visao=escritorio.consultar(titular.contaId);
+ assert.ok(visao,'titular autenticavel possui visao de escritorio');
+ assert.ok(JSON.stringify(visao).includes(b.posicaoId),
+  'posicao da conciliacao automatica deve aparecer no escritorio do titular');
+
  assert.equal(b.contaId,titular.contaId);
  assert.equal(posts,1);
  assert.ok(gets>=4);
