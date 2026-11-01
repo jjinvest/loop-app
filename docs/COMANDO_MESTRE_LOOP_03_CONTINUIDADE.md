@@ -1351,3 +1351,13 @@ Ajuste: o alerta passa a sinalizar `criacoesIndeterminadas`, `recebidosAguardand
 Novo arquivo `test/asaas-convergencia-alertas-integridade-lab.test.js` cobre 3 riscos nao cobertos pelo bloco 111: criacao PIX indeterminada sem reemitir POST; recebimento sem ponte seguido de estorno sem posicao; e duplicacao cruzada de ID em posicao adicional. Cada chamada HTTP do monitor verifica zero escrita no SQLite. Os testes incluem ausencia de posicoes/ciclos novos e integridade referencial onde cabivel. O CI desta alteracao deve ser conferido apos a publicacao; nao declarar testes adicionais aprovados antes da execucao.
 
 Todas as regras de LOOP 3.0 e AKITEMM permanecem inalteradas, inclusive R$250 por compra elegivel, ativacao individual CPF/termos, 3A:1B, seis eventos, cofres, limite 10/2, saque ficticio minimo R$25 taxa 0% e telas aprovadas. Laboratorio sem movimentacao financeira real. Webhook Asaas remoto, extrato bancario independente, avaliacao juridico-regulatoria e autorizacao de producao seguem pendentes. PR #1 DRAFT, sem merge/deploy.
+
+## 113. INTEGRIDADE CRUZADA DOS IDS DAS POSICOES PRIMARIAS E ADICIONAIS — 01/11/2026
+
+A secao 112 identificou inconsistencia: `UNIQUE` isolado em `admin_ponte_compras_demo.posicao_id` e `admin_ponte_posicoes_adicionais_demo.posicao_id` nao impede atribuir a mesma cadeira nos dois livros. O diagnostico somente leitura ja alertava, mas nao bloqueava novas gravacoes.
+
+Dois triggers SQLite `BEFORE INSERT`, criados **apos a migracao da tabela legada**, abortam insercoes que reutilizem a mesma cadeira entre primaria e adicional em ambos os sentidos. A checagem ocorre na propria transacao de gravacao. Nao remove, renumera ou modifica posicoes historicas; o monitor `idReutilizadoEmPosicaoAdicional` continua detectando inconsistencias legadas. Compras elegiveis e pacotes com IDs distintos preservam seu funcionamento.
+
+Regressao focal em `test/asaas-convergencia-alertas-integridade-lab.test.js`: impede extra reutilizando primaria; simula dado legado corrompido em ambiente isolado para preservar a deteccao; impede primaria reutilizando ID de extra, com integridade SQLite e chaves estrangeiras. Nao repetir carga de 10.000 compradores. CI e navegador do commit final devem ser conferidos antes de declarar validacao aprovada.
+
+Mantidas regras do LOOP 3.0 e telas aprovadas, R$250, 3A:1B, seis eventos, 10 ativas / 2 no tabuleiro, CPF/termos individuais, cofres, saque ficticio minimo R$25 e taxa 0%. Sandbox sem dinheiro real. PR #1 DRAFT, sem merge/deploy. Webhook Asaas remoto, conciliacao bancaria independente, avaliacao juridico-regulatoria e autorizacao de operacao seguem pendentes.
