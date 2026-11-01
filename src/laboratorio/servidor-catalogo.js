@@ -499,6 +499,8 @@ function iniciarLaboratorio({ ambiente = process.env } = {}) {
     if (!Number.isSafeInteger(porta) || porta < 1 || porta > 65535) {
       throw new Error('Porta invalida');
     }
+    if(ambiente.LOOP_ASAAS_SANDBOX_AUTO_CONCILIAR==='1'&&!ambiente.ASAAS_SANDBOX_API_KEY)
+      throw new Error('Chave do Asaas Sandbox obrigatoria para conciliacao');
     const servidor = app.listen(porta,'127.0.0.1', () => {
       process.stdout.write('Catalogo LOOP em teste local: http://127.0.0.1:' + porta + '/admin\n');
     });
