@@ -8,6 +8,7 @@ function criarRouterOperacoesWebhookPrepedidoStagingLocal({
  worker,autorizarOperador,autorizarMutacao
 }={}){
  if(typeof worker?.pendencias!=='function'||
+    typeof worker?.resumoPendencias!=='function'||
     typeof worker?.recuperarTravados!=='function'||
     typeof autorizarOperador!=='function'||
     typeof autorizarMutacao!=='function')
@@ -27,9 +28,13 @@ function criarRouterOperacoesWebhookPrepedidoStagingLocal({
    next();
   }catch(_e){return res.status(403).json({erro:'OPERADOR_NAO_AUTORIZADO'});}
  });
- r.get('/webhooks/pendencias',(req,res)=>{
-  // Parametros de limites somente no backend; nao aceitar injecao SQL.
-  return res.json({pendencias:worker.pendencias(),
+ r.get('/webhooks/pendencias',(_req,res)=>{
+  // A listagem e limitada, mas a contagem consulta a fila inteira.
+  // Sem parametros do cliente, sem rede e sem informacoes pessoais.
+  const pendencias=worker.pendencias();
+  const resumo=worker.resumoPendencias();
+  return res.json({pendencias,resumo,exibidos:pendencias.length,
+   haMais:resumo.total>pendencias.length,
    consultaRemotaExecutada:false,pagamentoReal:false,posicoesCriadas:0});
  });
  r.post('/webhooks/recuperar',async(req,res)=>{
