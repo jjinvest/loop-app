@@ -4,7 +4,8 @@
 // Nao altera a fila, os cofres, os saques, as entregas nem o pagamento real.
 const PEDIDO=/^[a-z0-9][a-z0-9-]{2,69}$/;
 const CLIENTE=/^[A-Za-z0-9_-]{5,90}$/;
-const CONFIRMADOS=new Set(['RECEIVED','RECEIVED_IN_CASH']);
+// RECEIVED_IN_CASH e baixa manual fora do Asaas e nao prova lastro Pix.
+const CONFIRMADOS=new Set(['RECEIVED']);
 const REVERTIDOS=new Set(['REFUNDED','PARTIALLY_REFUNDED','CHARGEBACK_REQUESTED',
  'CHARGEBACK_DISPUTE','REFUND_IN_PROGRESS','DELETED']);
 const PENDENTES=new Set(['PENDING','CONFIRMED','OVERDUE']);
