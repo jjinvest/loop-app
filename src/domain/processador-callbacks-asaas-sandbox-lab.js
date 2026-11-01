@@ -53,13 +53,24 @@ class ProcessadorCallbacksAsaasSandboxLab{
  _reservar(){
   const b=this.banco,agora=this._agora();b.exec('BEGIN IMMEDIATE');
   try{
-   // Descoberta duravel: mesmo uma queda imediatamente apos o ACK HTTP
-   // nao perde o aviso, ainda que nenhum job tivesse sido criado antes.
-   b.prepare(`INSERT OR IGNORE INTO akitemm_asaas_callback_fila_lab(evento_id,estado,proxima_em)
-    SELECT evento_id,'PENDENTE',? FROM akitemm_asaas_sandbox_avisos`).run(agora);
-   const job=b.prepare(`SELECT * FROM akitemm_asaas_callback_fila_lab
+   // Primeiro consome jobs duraveis ja aptos. A implementacao antiga
+   // fazia INSERT OR IGNORE de TODA a inbox a cada job reservado: custo
+   // quadratico quando milhares de avisos chegam ao SQLite.
+   const selecionar=b.prepare(`SELECT * FROM akitemm_asaas_callback_fila_lab
     WHERE (estado='PENDENTE' AND proxima_em<=?) OR (estado='PROCESSANDO' AND lease_ate<=?)
-    ORDER BY proxima_em,evento_id LIMIT 1`).get(agora,agora);
+    ORDER BY proxima_em,evento_id LIMIT 1`);
+   let job=selecionar.get(agora,agora);
+   if(!job){
+    // Um ACK pode ter sido gravado imediatamente antes de uma queda.
+    // Descobrir em lotes limitados, sem perder avisos e sem reconsiderar
+    // eventos que ja chegaram ao historico persistido da fila.
+    b.prepare(`INSERT OR IGNORE INTO akitemm_asaas_callback_fila_lab(evento_id,estado,proxima_em)
+     SELECT a.evento_id,'PENDENTE',? FROM akitemm_asaas_sandbox_avisos a
+     WHERE NOT EXISTS(SELECT 1 FROM akitemm_asaas_callback_fila_lab f
+       WHERE f.evento_id=a.evento_id)
+     ORDER BY a.evento_id LIMIT 50`).run(agora);
+    job=selecionar.get(agora,agora);
+   }
    if(!job){b.exec('COMMIT');return null;}
    if(job.tentativas>=this.maxTentativas){
     b.prepare("UPDATE akitemm_asaas_callback_fila_lab SET estado='EXIGE_REVISAO',codigo='TENTATIVAS_ESGOTADAS',lease_token=NULL,lease_ate=NULL WHERE evento_id=?")
