@@ -1,14 +1,17 @@
 name: LOOP - HTTP com Asaas Sandbox remoto
+# Credencial Sandbox somente em disparo manual autorizado; nunca via push/PR.
 on:
-  push:
-    branches: [fix/teste-escrita-catraca-20261014]
-    paths: ['.github/workflows/homologar-http-asaas-sandbox.yml']
   workflow_dispatch:
+    inputs:
+      autorizar:
+        description: 'Digite SIM para homologacao externa controlada exclusivamente no Sandbox'
+        required: true
+        type: string
 permissions:
   contents: read
 jobs:
   homologar-http-sandbox:
-    if: github.repository == 'jjinvest/loop-app' && github.ref == 'refs/heads/fix/teste-escrita-catraca-20261014'
+    if: ${{ github.repository == 'jjinvest/loop-app' && github.ref == 'refs/heads/fix/teste-escrita-catraca-20261014' && inputs.autorizar == 'SIM' }}
     runs-on: ubuntu-latest
     timeout-minutes: 8
     steps:
