@@ -80,10 +80,63 @@ function montarIntegracaoAsaasSandboxLoopLab({banco,contas,titularidade,apiKey,f
    };
   })()
  });
+ // Comparacao independente, EXCLUSIVAMENTE LEITURA, entre cobrancas,
+ // titularidade e os tres livros de pedidos da ponte. Nao decide saques
+ // nem altera posicoes; reversoes exigem revisao, nunca exclusao automatica.
+ function resumoConvergencia(){
+  const dados=banco.prepare(`SELECT
+   COUNT(*) AS cobrancas,
+   COALESCE(SUM(CASE WHEN c.status='RECEBIMENTO_INFORMADO_SANDBOX' THEN 1 ELSE 0 END),0) AS recebimentosInformados,
+   COALESCE(SUM(CASE WHEN c.status='REVERSAO_INFORMADA_SANDBOX' THEN 1 ELSE 0 END),0) AS reversoesInformadas,
+   COALESCE(SUM(CASE WHEN c.status='PENDENTE_SANDBOX' THEN 1 ELSE 0 END),0) AS pendentes,
+   COALESCE(SUM(CASE WHEN c.status='CRIACAO_INDETERMINADA_SANDBOX' THEN 1 ELSE 0 END),0) AS criacoesIndeterminadas,
+   COALESCE(SUM(CASE WHEN p.pedido_id IS NOT NULL THEN 1 ELSE 0 END),0) AS pedidosComPosicao,
+   COALESCE(SUM(CASE WHEN s.pedido_id IS NOT NULL OR r.pedido_id IS NOT NULL THEN 1 ELSE 0 END),0) AS pedidosSomenteLoja,
+   COALESCE(SUM(CASE WHEN t.pedido_id IS NULL THEN 1 ELSE 0 END),0) AS semTitularidade,
+   COALESCE(SUM(CASE WHEN t.pedido_id IS NOT NULL AND t.valor_centavos<>c.valor_centavos
+     OR p.pedido_id IS NOT NULL AND p.valor_centavos<>c.valor_centavos
+     OR s.pedido_id IS NOT NULL AND s.valor_centavos<>c.valor_centavos
+     OR r.pedido_id IS NOT NULL AND r.valor_centavos<>c.valor_centavos
+    THEN 1 ELSE 0 END),0) AS valoresDivergentes,
+   COALESCE(SUM(CASE WHEN t.pedido_id IS NOT NULL AND (
+       p.pedido_id IS NOT NULL AND p.conta_id<>t.conta_id
+       OR s.pedido_id IS NOT NULL AND s.conta_id<>t.conta_id
+       OR r.pedido_id IS NOT NULL AND r.conta_id<>t.conta_id)
+    THEN 1 ELSE 0 END),0) AS titularesDivergentes,
+   COALESCE(SUM(CASE WHEN (CASE WHEN p.pedido_id IS NULL THEN 0 ELSE 1 END+
+     CASE WHEN s.pedido_id IS NULL THEN 0 ELSE 1 END+
+     CASE WHEN r.pedido_id IS NULL THEN 0 ELSE 1 END)>1
+    THEN 1 ELSE 0 END),0) AS multiplosLivros,
+   COALESCE(SUM(CASE WHEN c.status='RECEBIMENTO_INFORMADO_SANDBOX'
+    AND p.pedido_id IS NULL AND s.pedido_id IS NULL AND r.pedido_id IS NULL
+    THEN 1 ELSE 0 END),0) AS recebidosAguardandoPonte,
+   COALESCE(SUM(CASE WHEN c.status='REVERSAO_INFORMADA_SANDBOX'
+    AND p.pedido_id IS NOT NULL THEN 1 ELSE 0 END),0) AS reversoesComPosicaoPreservada,
+   COALESCE(SUM(CASE WHEN c.status NOT IN ('RECEBIMENTO_INFORMADO_SANDBOX','REVERSAO_INFORMADA_SANDBOX')
+    AND (p.pedido_id IS NOT NULL OR s.pedido_id IS NOT NULL OR r.pedido_id IS NOT NULL)
+    THEN 1 ELSE 0 END),0) AS integracoesSemRecebimento
+   FROM akitemm_sandbox_cobrancas c
+   LEFT JOIN admin_pedidos_titularidade_demo t ON t.pedido_id=c.pedido_id
+   LEFT JOIN admin_ponte_compras_demo p ON p.pedido_id=c.pedido_id
+   LEFT JOIN admin_ponte_vendas_loja_sem_loop_demo s ON s.pedido_id=c.pedido_id
+   LEFT JOIN admin_ponte_vendas_loja_apos_reajuste_demo r ON r.pedido_id=c.pedido_id`).get();
+  const adicionais=banco.prepare(`SELECT COUNT(*) AS quantidade
+   FROM admin_ponte_posicoes_adicionais_demo x
+   JOIN akitemm_sandbox_cobrancas c ON c.pedido_id=x.pedido_id`).get().quantidade;
+  const anomalias=dados.semTitularidade+dados.valoresDivergentes+
+   dados.titularesDivergentes+dados.multiplosLivros+
+   dados.integracoesSemRecebimento;
+  return Object.freeze({ambiente:'ASAAS_SANDBOX_EXCLUSIVO',
+   modo:'CONVERGENCIA_SQLITE_SOMENTE_LEITURA',...dados,
+   posicoesAdicionais:adicionais,anomaliasContadasPorCriterio:anomalias,
+   revisaoManualIndicada:anomalias>0||dados.reversoesComPosicaoPreservada>0,
+   pagamentosReais:false,caixaBancarioConciliado:false,
+   posicoesAlteradas:0,saquesLiberados:0,somenteLeitura:true});
+ }
  const conferidorAvisos=caixaAvisos?new ConferidorAvisosAsaasSandboxSQLite({banco,caixaAvisos,cobrancas}):null;
  const callbacks=caixaAvisos?new ProcessadorCallbacksAsaasSandboxLab({banco,caixaAvisos,
   conferidor:conferidorAvisos,conciliador}):null;
  return Object.freeze({provedor:externo,cobrancas,comprovantes,elegibilidade,ponte:ponteIntegrada,
-  catraca,conciliador,automatico,conferidorAvisos,callbacks});
+  catraca,conciliador,automatico,conferidorAvisos,callbacks,resumoConvergencia});
 }
 module.exports={montarIntegracaoAsaasSandboxLoopLab};

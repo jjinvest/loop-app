@@ -1,9 +1,18 @@
 'use strict';
 const express=require('express');
 const {criarAutorizacao}=require('./admin-catalogo-laboratorio');
-function criarRouterMonitorCallbacksAsaasLab({segredo,obterWorker,obterConciliacaoAutomatica}={}){
+function criarRouterMonitorCallbacksAsaasLab({segredo,obterWorker,obterConciliacaoAutomatica,obterIntegracao}={}){
  const r=express.Router();r.use(criarAutorizacao({segredo}));
  r.use((_req,res,next)=>{res.set('Cache-Control','no-store');next();});
+ // Relatorio agregado para o Escritorio, sem IDs, valores pessoais nem mutacoes.
+ r.get('/asaas-conciliacao-lab',(req,res)=>{
+  if(Object.keys(req.query).length)
+   return res.status(400).json({erro:'FILTRO_CONCILIACAO_INVALIDO'});
+  const integracao=typeof obterIntegracao==='function'?obterIntegracao():null;
+  if(!integracao?.resumoConvergencia)
+   return res.status(501).json({erro:'CONCILIACAO_SANDBOX_NAO_CONFIGURADA'});
+  return res.json(integracao.resumoConvergencia());
+ });
  r.get('/asaas-callbacks-lab',(req,res)=>{
   const w=obterWorker();if(!w)return res.status(501).json({erro:'CALLBACK_SANDBOX_NAO_CONFIGURADO'});
   if(Object.keys(req.query).some(k=>!['limite','offset','estado'].includes(k))||
