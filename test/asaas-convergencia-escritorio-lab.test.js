@@ -91,7 +91,10 @@ test('monitor identifica recebimento orfao e valor divergente sem reconciliar au
  assert.equal(r.recebidosAguardandoPonte,1);
  assert.equal(r.pedidosComPosicao,0);
  assert.equal(r.revisaoManualIndicada,true);
- assert.equal(r.anomaliasContadasPorCriterio,2);
+ // A cobranca orfa marcada como recebida tambem carece de qualquer
+ // reconsulta imutavel, portanto agora produz terceira anomalia.
+ assert.equal(r.reconsultasSemRecebimento,1);
+ assert.equal(r.anomaliasContadasPorCriterio,3);
  assert.equal(m.banco.prepare('SELECT total_changes() n').get().n,antes);
  assert.equal(m.ponte._restaurar().giros,0);
  assert.equal(m.banco.prepare('SELECT COUNT(*) n FROM admin_ponte_compras_demo').get().n,0);
