@@ -119,6 +119,55 @@
   renderizarClientes();
  }
  $('filtrarClientesAdmin').addEventListener('input',renderizarClientes);
+ async function carregarConvergenciaAsaas(){
+  const ids=['asaasCobrancasAdmin','asaasRecebimentosAdmin','asaasPedidosComPosicaoAdmin',
+   'asaasSomenteLojaAdmin','asaasAguardandoPonteAdmin','asaasReversoesAdmin',
+   'asaasCallbacksRevisaoAdmin','asaasAnomaliasAdmin','asaasIndeterminadasAdmin',
+   'asaasIdsReutilizadosAdmin','asaasFilaCallbacksAdmin','asaasRevisaoGeralAdmin'];
+  const limpar=()=>{for(const id of ids)$(id).textContent='—';};
+  limpar();
+  $('asaasBancoRealAdmin').textContent='Não homologada';
+  const resposta=await fetch('/api/admin/asaas-conciliacao-lab',{
+   cache:'no-store',credentials:'omit',headers:{Authorization:'Bearer '+token}
+  });
+  if(resposta.status===501){
+   $('asaasStatusConvergenciaAdmin').textContent=
+    'Asaas Sandbox não configurado neste laboratório. Não há conciliação a apresentar.';
+   return;
+  }
+  if(!resposta.ok)throw Error('Monitor de pagamentos indisponível ('+resposta.status+').');
+  const d=await resposta.json();
+  if(d.modo!=='CONVERGENCIA_SQLITE_SOMENTE_LEITURA'||
+     d.ambiente!=='ASAAS_SANDBOX_EXCLUSIVO'||d.somenteLeitura!==true||
+     d.pagamentosReais!==false||d.caixaBancarioConciliado!==false||
+     d.saquesLiberados!==0)throw Error('Fonte de conciliação não é laboratório seguro');
+  const campos={
+   asaasCobrancasAdmin:'cobrancas',asaasRecebimentosAdmin:'recebimentosInformados',
+   asaasPedidosComPosicaoAdmin:'pedidosComPosicao',asaasSomenteLojaAdmin:'pedidosSomenteLoja',
+   asaasAguardandoPonteAdmin:'recebidosAguardandoPonte',
+   asaasReversoesAdmin:'reversoesInformadas',
+   asaasCallbacksRevisaoAdmin:'callbacksExigemRevisao',
+   asaasAnomaliasAdmin:'anomaliasContadasPorCriterio',
+   asaasIndeterminadasAdmin:'criacoesIndeterminadas',
+   asaasIdsReutilizadosAdmin:'idReutilizadoEmPosicaoAdicional'
+  };
+  for(const [id,campo] of Object.entries(campos)){
+   if(!Number.isSafeInteger(d[campo])||d[campo]<0)
+    throw Error('Contador de conciliação inválido');
+   $(id).textContent=String(d[campo]);
+  }
+  for(const campo of ['callbacksSemJob','callbacksPendentesProntos','callbacksLeasesExpirados']){
+   if(!Number.isSafeInteger(d[campo])||d[campo]<0)
+    throw Error('Fila de callbacks inválida');
+  }
+  $('asaasFilaCallbacksAdmin').textContent=d.callbacksHabilitados===true?
+   d.callbacksSemJob+' / '+d.callbacksPendentesProntos+' / '+d.callbacksLeasesExpirados:
+   'Não habilitada';
+  $('asaasRevisaoGeralAdmin').textContent=d.revisaoManualIndicada===true?
+   'SIM · verificar pendências':'Não indicada neste registro';
+  $('asaasStatusConvergenciaAdmin').textContent=
+   'Fonte: SQLite local + Asaas Sandbox · Somente leitura · Sem dinheiro real, PIX liquidado ou saques habilitados.';
+ }
  async function carregarAuditoria(){
   const r=await fetch('/api/admin/escritorio-demo/auditoria-operacional',{
    cache:'no-store',headers:{Authorization:'Bearer '+token}});
@@ -195,6 +244,8 @@
   catch(err){$('statusConexoesDemoAdmin').textContent='Cenário indisponível: '+err.message;}
   try{await carregarClientes();}
   catch(err){$('statusClientesAdmin').textContent='Consulta indisponível: '+err.message;}
+  try{await carregarConvergenciaAsaas();}
+  catch(err){$('asaasStatusConvergenciaAdmin').textContent='Conciliação indisponível: '+err.message;}
   try{await carregarAuditoria();}
   catch(err){$('auditoriaStatusAdmin').textContent='Consulta indisponível: '+err.message;
    for(const id of ['resumoClientesDirecaoAdmin','resumoPedidosDirecaoAdmin','resumoPosicoesDirecaoAdmin'])$(id).textContent='Indisponível';
