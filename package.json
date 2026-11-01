@@ -9,7 +9,8 @@
     "start:admin-demo": "node src/laboratorio/servidor-catalogo.js",
     "simular:sustentabilidade": "node scripts/simular-sustentabilidade.js",
     "simular:50-giros": "node scripts/simular-50-giros-loop-v6.js",
-    "demo:convites": "node scripts/gerar-cenario-convites-demo.js"
+    "demo:convites": "node scripts/gerar-cenario-convites-demo.js",
+    "start:checkout-staging": "node src/laboratorio/servidor-checkout-staging-local.js"
   },
   "repository": {
     "type": "git",
