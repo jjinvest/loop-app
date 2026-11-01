@@ -113,6 +113,45 @@ class ReconsultaWebhookPrepedidoAsaasStaging{
    'ORDER BY a.recebido_em,a.evento_id LIMIT ?'
   ].join(' ')).all(limite).map(row=>({...row}));
  }
+ // Paginacao por cursor estável de recebimento/ID, não por OFFSET.
+ // O cursor identifica um evento da inbox, sem revelar dados do PSP;
+ // itens já concluídos não reaparecem mesmo quando a fila muda.
+ paginarPendencias({limite=50,apos=null}={}){
+  if(process.env.NODE_ENV==='production')
+   throw falha('RECONSULTA_STAGING_PROIBIDA_EM_PRODUCAO');
+  if(!Number.isSafeInteger(limite)||limite<1||limite>100||
+     (apos!==null&&(typeof apos!=='string'||!EVENTO.test(apos))))
+   throw falha('CURSOR_PENDENCIAS_INVALIDO');
+  let cursor=null;
+  if(apos!==null){
+   cursor=this.banco.prepare([
+    'SELECT recebido_em AS recebidoEm FROM',
+    'akitemm_prepedido_webhook_inbox_staging WHERE evento_id=?'
+   ].join(' ')).get(apos);
+   if(!cursor)throw falha('CURSOR_PENDENCIAS_INVALIDO');
+  }
+  const filtroCursor=cursor
+   ?'AND (a.recebido_em>? OR (a.recebido_em=? AND a.evento_id>?))'
+   :'';
+  const argumentos=cursor
+   ?[cursor.recebidoEm,cursor.recebidoEm,apos,limite+1]
+   :[limite+1];
+  const linhas=this.banco.prepare([
+   'SELECT a.evento_id AS eventoId,',
+   "COALESCE(r.estado,'PENDENTE') AS estado,",
+   "COALESCE(r.codigo,'SEM_RECONSULTA') AS codigo",
+   'FROM akitemm_prepedido_webhook_inbox_staging a',
+   'LEFT JOIN akitemm_prepedido_webhook_reconsulta_staging r',
+   'ON r.evento_id=a.evento_id',
+   "WHERE (r.estado IS NULL OR r.estado IN ('PROCESSANDO','EXIGE_REVISAO'))",
+   filtroCursor,
+   'ORDER BY a.recebido_em,a.evento_id LIMIT ?'
+  ].filter(Boolean).join(' ')).all(...argumentos).map(item=>({...item}));
+  const haMais=linhas.length>limite;
+  const pendencias=linhas.slice(0,limite);
+  return {pendencias,haMais,
+   proximoCursor:haMais?pendencias[pendencias.length-1].eventoId:null};
+ }
  // Contagem completa, independente do limite de 50 itens da lista. Evita
  // ocultar um acúmulo de callbacks em caso de incidente operacional.
  // Apenas estados e contagens: nenhum dado do comprador ou do PSP.
