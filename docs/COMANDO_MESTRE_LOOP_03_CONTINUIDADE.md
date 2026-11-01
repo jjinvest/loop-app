@@ -1289,3 +1289,12 @@ Preservada a funcao original da AKITEMM (loja com produtos e criterios configura
 Testes: lote de prioridade e normal, duplicata entre as duas fontes, observador com erro sanitizado, limites de configuracao e fluxo HTTP/SQLite com 41 pendencias concorrendo com a deteccao de reversao de compra previamente integrada, preservando a unica posicao e integridade do banco. [GitHub Actions 41279751984](https://github.com/jjinvest/loop-app/actions/runs/41279751984): **SUCCESS — 645/645 testes e navegador aprovados**, commit de codigo `6dd395f42afaa01286c6b5c690f6da850a3c4808`. Registro incremental em [CONTINUIDADE_CALLBACK_ASAAS_01NOV2026.md](./CONTINUIDADE_CALLBACK_ASAAS_01NOV2026.md).
 
 Proibido inferir a partir desta regressao liquidez, lucro real, callback remoto entregue pelo Asaas, liberacao de saque, prontidao juridica ou autorizacao de lancamento. Auditoria de producao continua em andamento; PR #1 DRAFT, sem merge/deploy.
+
+
+## 106. RODIZIO DAS REVISOES DE RECEBIMENTOS DO ASAAS SANDBOX — 01/11/2026
+
+O LOOP 3.0 depende da mesma fonte conciliada de pedidos AKITEMM e pagamentos, com titularidade, posicoes/filas/ciclos, cofres e saques sem creditos indevidos. Para proteger essa trilha, corrigimos a busca de revisao de recebimentos antigos: cinco registros mais velhos com falha recorrente de API podiam monopolizar a consulta, ocultando novos estornos. A revisao agora usa paginacao circular por data e pedido, com teto de cinco por rodada. O cursor e apenas uma otimizacao de memoria; o historico e os estados reais de laboratorio permanecem no SQLite. Nenhuma tela, regra de prioridade 3A:1B, seis eventos, valor de referencia R$250, bonus, taxa 0% ou minimo R$25 foram alterados.
+
+Regressao: 12 recibos com igual data revisados em 5/5/2 e retorno; jornada HTTP/SQLite com sete recebimentos de API ficticia indisponivel, seguida de estorno de pedido ja integrado e detectado na segunda rodada, sem duplicacao de posicao, giro ou reembolso real. [CI e navegador 41280122886](https://github.com/jjinvest/loop-app/actions/runs/41280122886): **SUCCESS — 647/647 testes, zero falhas**, commit de codigo `1d7b99f78949c54f78a820f6697a0e07771c597c`. Relatorio de continuidade: [CONTINUIDADE_CALLBACK_ASAAS_01NOV2026.md](./CONTINUIDADE_CALLBACK_ASAAS_01NOV2026.md).
+
+**Limites:** teste em laboratorio, sem webhook remoto real do provedor, conciliacao externa de caixa, liberacao de Pix ou homologacao juridico-operacional. PR #1 DRAFT; sem merge/deploy.
