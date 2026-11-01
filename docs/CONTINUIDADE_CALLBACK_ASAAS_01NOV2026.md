@@ -50,3 +50,22 @@ de participação nem as telas aprovadas.
 ## Próximo critério objetivo
 Confirmar sucesso da suíte e navegador sobre estas correções; manter
 monitoramento de exceções e filas `EXIGE_REVISAO` sem movimentação de saldo real.
+
+
+## Monitoramento no Escritório e disputa entre fluxos
+O monitor administrativo já existente `GET /api/admin/asaas-callbacks-lab`
+passa a informar também `conciliacaoAutomatica` (último código de falha,
+quantidade de falhas no agendador e aviso de telemetria em memória). Mantém
+autenticação administrativa, somente leitura, `Cache-Control: no-store`,
+sem alterações de interface ou saldo e sem novo endpoint público.
+
+A regressão acrescentada ainda disputa o **mesmo** pedido entre a fila do
+callback e a varredura automática concorrente; exige uma posição pendente
+para o titular, integridade SQLite, chave estrangeira íntegra e nenhum giro.
+Os testes injetam exceções deliberadamente para confirmar continuidade e
+sanitização, sem credenciais de produção.
+
+O índice vigente `LEIA_PRIMEIRO_LOOP_30_INDICE_VIGENTE.md` recebeu a
+correção documental de regras mais recentes (até dez posições ativas por
+titular, até dez na Fila A com indicações específicas e no máximo duas
+simultâneas no tabuleiro), preservando o histórico anterior.
