@@ -76,3 +76,29 @@ test('63 ACKs armazenados antes da queda reaparecem apos reabrir SQLite',async t
  assert.equal(Object.values(m.banco.prepare('PRAGMA integrity_check').get())[0],'ok');
  assert.deepEqual(m.banco.prepare('PRAGMA foreign_key_check').all(),[]);
 });
+
+test('duas conexoes SQLite distribuem 66 avisos com uma reserva por evento',async t=>{
+ const dir=fs.mkdtempSync(path.join(os.tmpdir(),'loop-asaas-multiworker-'));
+ t.after(()=>fs.rmSync(dir,{recursive:true,force:true}));
+ const arquivo=path.join(dir,'multi.sqlite');
+ const a=await abrirLaboratorio(arquivo,opcoes);
+ const b=await abrirLaboratorio(arquivo,opcoes);
+ t.after(async()=>{await a.fechar();await b.fechar();});
+ for(let i=100;i<166;i++)registrar(a,i);
+ const [r1,r2]=await Promise.all([
+  a.integracao.callbacks.processarLote({limite:100}),
+  b.integracao.callbacks.processarLote({limite:100})
+ ]);
+ assert.equal(r1.length+r2.length,66);
+ assert.equal(new Set([...r1,...r2].map(r=>r.eventoId)).size,66);
+ assert.equal(contar(a,'akitemm_asaas_callback_fila_lab'),66);
+ const contadores=a.banco.prepare(
+  'SELECT MIN(tentativas) menor,MAX(tentativas) maior FROM akitemm_asaas_callback_fila_lab'
+ ).get();
+ assert.equal(contadores.menor,1);assert.equal(contadores.maior,1);
+ assert.equal(contar(a,'akitemm_asaas_callback_historico_lab'),132);
+ assert.equal(contar(a,'admin_ponte_compras_demo'),0);
+ assert.equal(a.integracao.callbacks.resumo().avisosSemJob,0);
+ assert.equal(Object.values(a.banco.prepare('PRAGMA integrity_check').get())[0],'ok');
+ assert.deepEqual(a.banco.prepare('PRAGMA foreign_key_check').all(),[]);
+});
