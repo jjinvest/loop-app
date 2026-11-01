@@ -9,6 +9,9 @@ on:
       - 'src/domain/pedidos-titularidade-demo-sqlite.js'
       - 'public/cliente-demo.html'
       - 'test/cliente-pedidos-lab-http.test.js'
+      - 'test/links-unicos-loja-escritorio-demo.test.js'
+      - 'src/routes/convite-cadastro-laboratorio-demo.js'
+      - 'src/laboratorio/convite-cliente-demo.js'
   workflow_dispatch:
 permissions:
   contents: read
@@ -23,7 +26,7 @@ jobs:
           node-version: '22'
           cache: npm
       - run: npm ci
-      - run: node --test test/cliente-pedidos-lab-http.test.js test/pedidos-titularidade-por-titular.test.js
+      - run: node --test test/cliente-pedidos-lab-http.test.js test/pedidos-titularidade-por-titular.test.js test/links-unicos-loja-escritorio-demo.test.js test/loja-cliente-sessao-carrinho.test.js
       - run: npm install --no-save playwright@1.56.1
       - run: npx playwright install --with-deps chromium
       - run: node scripts/validar-meus-pedidos-browser.js
