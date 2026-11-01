@@ -86,8 +86,9 @@ async function cenario(t){
   prepedidos=new PrePedidosCheckoutStagingSQLite({banco});
   ponte=new PontePrepedidoAsaasSandboxStaging({banco});
  }
- return {gerar,provedor,remoto,chamadas,reabrir,
-  get banco(){return banco;},get ponte(){return ponte;}};
+ return {gerar,provedor,remoto,chamadas,reabrir,catalogo,
+  get banco(){return banco;},get prepedidos(){return prepedidos;},
+  get ponte(){return ponte;}};
 }
 test('prepedido R$250 chega a Asaas Sandbox falso uma vez; 16 replays nao fazem segunda POST',async t=>{
  const s=await cenario(t),id=await s.gerar();
@@ -277,4 +278,49 @@ test('busca vazia, duplicada ou divergente nunca libera reenvio nem posicao',asy
  assert.equal(s.chamadas.filter(x=>x.method==='POST').length,1);
  assert.equal(s.banco.prepare('SELECT COUNT(*) n FROM akitemm_prepedido_asaas_consultas_staging').get().n,0);
  assert.equal(s.banco.prepare('PRAGMA integrity_check').get().integrity_check,'ok');
+});
+
+test('Meus prepedidos do titular exibe estado Sandbox somente leitura e sem vazamento',async t=>{
+ const s=await cenario(t),id=await s.gerar();
+ const express=require('express');
+ const {criarRouterPrePedidosCheckoutStaging}=
+  require('../src/routes/prepedidos-checkout-staging');
+ const app=express();app.use(express.json({limit:'32kb'}));
+ app.use('/staging',criarRouterPrePedidosCheckoutStaging({
+  prePedidos:s.prepedidos,repositorioCatalogo:s.catalogo,
+  identificarTitular:req=>req.get('X-Sessao-Fixture')==='A'?TITULAR:
+   req.get('X-Sessao-Fixture')==='B'?OUTRO:null,
+  autorizarMutacao:()=>false,ponteAsaasSandbox:s.ponte
+ }));
+ const srv=app.listen(0,'127.0.0.1');
+ const {once}=require('node:events');await once(srv,'listening');
+ t.after(()=>new Promise(resolve=>srv.close(resolve)));
+ const base='http://127.0.0.1:'+srv.address().port+
+  '/staging/prepedidos/'+id+'/sandbox';
+ const get=async(session='A',headers={})=>fetch(base,{headers:{
+  'X-Sessao-Fixture':session,...headers}});
+ assert.equal((await get('B')).status,404);
+ assert.equal((await get('X')).status,401);
+ assert.equal((await get('A',{Origin:'https://externo.invalid'})).status,403);
+ const antes=await(await get()).json();
+ assert.equal(antes.estado,'SEM_COBRANCA_SANDBOX');
+ assert.equal(antes.consultaRemotaExecutada,false);
+ s.ponte.preparar({titularId:TITULAR,prepedidoId:id,clienteAsaasId:CLIENTE});
+ await s.ponte.enviarUmaVez({titularId:TITULAR,prepedidoId:id,
+  provedor:s.provedor,execucaoLiberada:true});
+ s.remoto.status='RECEIVED';
+ await s.ponte.conferir({titularId:TITULAR,prepedidoId:id,
+  provedor:s.provedor});
+ const chamadasAntes=s.chamadas.length;
+ const totalAntes=s.banco.prepare('SELECT total_changes() n').get().n;
+ const status=await(await get()).json();
+ assert.equal(status.estado,'RECEBIMENTO_INFORMADO_SANDBOX');
+ assert.equal(status.cobrancaSandbox.ultimaConsultaSandbox.statusAsaas,'RECEIVED');
+ assert.equal(status.consultaRemotaExecutada,false);
+ assert.equal(status.pagamentoReal,false);
+ assert.equal(status.posicoesCriadas,0);
+ assert.equal(status.comprovanteFinanceiro,false);
+ assert.equal(JSON.stringify(status).includes('cus_StagingTeste'),false);
+ assert.equal(s.chamadas.length,chamadasAntes);
+ assert.equal(s.banco.prepare('SELECT total_changes() n').get().n,totalAntes);
 });
