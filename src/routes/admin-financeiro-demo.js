@@ -7,6 +7,8 @@ const {criarAutorizacao}=require('./admin-catalogo-laboratorio');
 const {criarVisaoFinanceiraAdminDemo,MODOS}=require('../domain/financeiro-admin-demo');
 const {criarConciliacaoAdministrativaDemo}=require('../domain/conciliacao-cofres-demo');
 const {compararParcelaAntigaComNova}=require('../domain/configuracao-valor-loop-demo-sqlite');
+const {consultarResumoFinanceiroOperacionalLab}=
+ require('../domain/resumo-financeiro-operacional-lab');
 
 function criarRouterFinanceiroAdminDemo({segredo,configuracao,razaoPersistente,configuracaoValorLoop=null}={}){
   const router=express.Router();
@@ -125,6 +127,14 @@ function criarRouterFinanceiroAdminDemo({segredo,configuracao,razaoPersistente,c
 
   // Livro financeiro PERSISTENTE apenas no laboratorio. Toda entrada POST
   // representa uma simulacao explicitamente identificada, nunca dinheiro real.
+  // Fonte operacional agregada: independente do razao ficticio de exemplos.
+  // Somente leitura do SQLite em uso no Escritorio do Administrador.
+  router.get('/financeiro-operacional-lab',(req,res)=>{
+    if(Object.keys(req.query).length)return res.status(400).json({erro:'FILTRO_FINANCEIRO_INVALIDO'});
+    if(!razaoPersistente?.banco)
+      return res.status(501).json({erro:'SQLITE_FINANCEIRO_INDISPONIVEL'});
+    return res.json(consultarResumoFinanceiroOperacionalLab({banco:razaoPersistente.banco}));
+  });
   router.get('/livro-financeiro-demo',(_req,res)=>{
     if(!razaoPersistente)return res.status(501).json({erro:'LIVRO_DEMO_INDISPONIVEL'});
     res.json(razaoPersistente.consultar());
