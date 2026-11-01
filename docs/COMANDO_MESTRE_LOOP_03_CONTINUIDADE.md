@@ -1371,3 +1371,17 @@ A migracao da tabela `admin_ponte_posicoes_adicionais_demo` agora converte ambos
 Regressao focal nova `test/ponte-migracao-pacotes-dez-posicoes-sqlite-lab.test.js`: para cada esquema legado, exercita compra HTTP/SQLite do laboratorio, pagamento ficticio confirmado, posicao primaria e adicional preexistentes, reconstrucao de esquema antigo, reinicializacao da ponte, preservacao de registros e aceite de ordem 10, rejeicao de ID duplicado e integridade referencial. Nao repetir carga de 10.000 pedidos. CI e navegador precisam ser confirmados na branch para declarar sucesso; testes cadastrados nao sao prova de execucao.
 
 Ambiente exclusivo de laboratorio Asaas Sandbox, nenhuma movimentacao financeira real, merge ou deploy. Regras e telas aprovadas mantidas. Lancamento publico depende ainda de webhook remoto homologado, conciliacao bancaria independente, protecao de operacoes reais, revisao juridico-regulatoria, solvencia e autorizacao formal.
+
+## 115. CRITERIOS DE LIBERACAO PUBLICA — GATES INDEPENDENTES (01/11/2026)
+
+Aprovar testes tecnicos de laboratorio NAO autoriza receber consumidores ou anunciar remuneracao. O codigo integrado do LOOP 3.0 e da AKITEMM permanece em PR #1 DRAFT, sem merge, deploy, Pix real ou disponibilidade publica.
+
+**Gates que precisam de evidencias antes de abrir a plataforma ao publico:**
+
+1. **Tecnologia:** CI no HEAD efetivo aprovado, testes HTTP/SQLite e navegador responsivo, integridade de titularidade/posicoes/filas/cofres, persistencia, recuperacao e concorrencia; plano de backup/restauracao e operacao de incidentes no ambiente de hospedagem final.
+2. **Pagamentos:** webhook emitido de fato pelo Asaas remoto e recebido num endpoint autenticado e seguro, idempotencia e falhas testadas, mais conciliacao independente com extratos de recebimentos, estornos, liquidacao, saldo bancario e custos reais. Sandbox com webhook injetado localmente nao e homologacao deste gate.
+3. **Sustentabilidade:** demonstrativo independente de fluxo de caixa/liquidez e obrigacoes dos participantes, custos dos produtos, fornecedores, fretes, tributos, tarifas, bonus, incentivos, saques e cenarios de vendas sem recrutamento. Projecoes com R$250 e pagamentos de R$750 nao sao receitas nem garantias de solvencia.
+4. **Juridico e defesa do consumidor:** parecer especifico de profissionais brasileiros sobre legalidade do modelo de recompensa por fila e indicacoes, possivel caracterizacao como piramide/contrato de investimento, CDC, publicidade, tributacao, LGPD, politica comercial e contratos. A existencia de um produto na AKITEMM NAO comprova por si a licitude da remuneracao. A CVM distingue comercializacao real de produtos de modelos cuja remuneracao depende de aportes de participantes novos: https://www.gov.br/cvm/pt-br/assuntos/protecao/alertas/ofertas-atuacoes-irregulares e https://www.gov.br/cvm/pt-br/assuntos/noticias/2013/distincao-entre-marketing-multinivel-e-piramides-financeiras-e-tema-do-6-boletim-de-protecao-do-consumidor-investidor-00d2f80d3c9d4a41860a973cf591a4d2
+5. **Liberacao:** autorizacao formal do proprietario apos apresentacao das evidencias, seguranca, termos e supervisao operacional; nenhuma alteracao em producao por inferencia de aprovacao.
+
+Este registro e um controle de prontidao e nao representa conclusao de auditoria legal nem julgamento definitivo de licitude. Permanece permitido evoluir testes e seguranca **em laboratorio** sem publico e sem movimentacao de dinheiro real.
