@@ -69,3 +69,34 @@ test('monitor administrativo reutilizado mostra diagnostico read-only e exige to
  assert.equal(dados.resumo.pagamentoRealAutorizado,false);
  assert.equal(m.banco.prepare('SELECT total_changes() n').get().n,antes);
 });
+
+test('callback e conciliacao automatica concorrentes geram uma unica posicao',async t=>{
+ const m=await abrirLaboratorio(':memory:',opcoes);t.after(()=>m.fechar());
+ const conta=m.contas.cadastrar({
+  nome:'Cliente Fluxos Concorrentes',email:'fluxos-concorrentes@example.invalid',
+  senha:'senha-interna-fluxos-2026'
+ });
+ const {cookie}=await m.http('/entrar',{body:{nome:conta.nome,senha:'senha-interna-fluxos-2026'}});
+ const pedido=(await m.http('/loja/pedidos',{cookie,status:201,
+  body:{itens:[{produtoId:'curso-lab-250',quantidade:1}]}})).data.pedido.pedidoId;
+ const cobranca=m.integracao.cobrancas.consultar(pedido);
+ m.confirmar(pedido);
+ const aviso={id:'evt_ConcorrenciaCallbackAuto001',event:'PAYMENT_RECEIVED',
+  payment:{id:cobranca.pagamentoId,billingType:'PIX',status:'RECEIVED',
+   externalReference:'LOOPLAB-'+pedido,value:250}};
+ const ack=await fetch(m.base+'/api/laboratorio/webhook-asaas-sandbox',{method:'POST',
+  headers:{'Content-Type':'application/json',
+   'asaas-access-token':opcoes.webhookAsaasSandbox.token},body:JSON.stringify(aviso)});
+ assert.equal(ack.status,200);assert.equal((await ack.json()).posicaoCriada,false);
+ await Promise.all([m.integracao.callbacks.processarLote(),m.integracao.automatico.verificar()]);
+ assert.equal(m.integracao.callbacks.consultar(aviso.id).estado,'CONCLUIDO');
+ const compras=m.banco.prepare(
+  'SELECT COUNT(*) n,COUNT(DISTINCT posicao_id) distintas FROM admin_ponte_compras_demo').get();
+ assert.equal(compras.n,1);assert.equal(compras.distintas,1);
+ const minhaConta=(await m.http('/minha-conta',{cookie})).data;
+ assert.equal(minhaConta.posicoes.length,1);
+ assert.equal(minhaConta.posicoes[0].statusAdesao,'PENDENTE');
+ assert.equal(m.ponte._restaurar().giros,0);
+ assert.equal(Object.values(m.banco.prepare('PRAGMA integrity_check').get())[0],'ok');
+ assert.deepEqual(m.banco.prepare('PRAGMA foreign_key_check').all(),[]);
+});
