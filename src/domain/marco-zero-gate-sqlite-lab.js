@@ -6,14 +6,7 @@ const TABLES=['akitemm_sandbox_cobrancas','akitemm_sandbox_consultas',
  'admin_ponte_compras_demo','admin_contas_participantes_demo'];
 // A fila de callbacks é opcional no laboratório, porém sua ausência não é sucesso.
 const CALLBACK_TABLES=['akitemm_asaas_sandbox_avisos','akitemm_asaas_callback_fila_lab'];
-const EXTERNOS=Object.freeze([
- {id:'CI_HEAD_ATUAL',descricao:'CI integral e navegador no codigo que sera publicado'},
- {id:'ASAAS_REMOTO',descricao:'Checkout e callbacks recebidos do Asaas em ambiente remoto homologado'},
- {id:'BANCO_E_SAQUES',descricao:'Conferência independente de recebimentos, cofres e saques bancarios'},
- {id:'PRODUCAO_E_SEGURANCA',descricao:'Servidor publico, backups testados, monitoramento e revisao de seguranca'},
- {id:'ESCRITORIO_VISUAL',descricao:'Checkout visual final do proprietario em celular e computador'},
- {id:'JURIDICO',descricao:'Parecer juridico independente sobre modelo, contratos, publicidade e dados pessoais'}
-]);
+const {GATES_EXTERNOS:EXTERNOS}=require('./marco-zero-gates');
 function consultarMarcoZeroLab({banco}={}){
  if(!banco||typeof banco.prepare!=='function')
   throw new TypeError('SQLite do laboratorio obrigatorio');
