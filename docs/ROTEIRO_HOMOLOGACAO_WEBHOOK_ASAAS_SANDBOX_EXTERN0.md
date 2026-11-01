@@ -23,6 +23,12 @@ Há também um receptor opt-in isolado em `src/laboratorio/servidor-webhook-asaa
 9. Guardar evidências sanitizadas (sem tokens, CPF, QR, chaves) do log de entrega, histórico do receptor, reconsulta independente e recuperação após reinício. Só então considerar encerrado o requisito **ASAAS_REMOTO** para a versão e ambiente homologados; financeiro/banco, produção, jurídico, visual e autorização final continuam gates separados.
 8. Guardar evidências sanitizadas (sem tokens, CPF, QR, chaves) do log de entrega, histórico do receptor, reconsulta independente e recuperação após reinício. Só então considerar encerrado o requisito **ASAAS_REMOTO** para a versão e ambiente homologados; financeiro/banco, produção, jurídico, visual e autorização final continuam gates separados.
 
+## Ponto de recuperacao antes do teste externo (staging, nao producao)
+
+Antes de iniciar o tunel ou a simulacao de pagamento, gerar um **backup local criptografado** do SQLite de homologacao, usando `node scripts/backup-criptografado-checkout-staging.js`. Exige `LOOP_BACKUP_STAGING_ACAO=CRIAR`, `LOOP_BACKUP_STAGING_AUTORIZADO=SIM`, `LOOP_BACKUP_STAGING_ORIGEM` (arquivo absoluto .sqlite), `LOOP_BACKUP_STAGING_DESTINO` (novo arquivo absoluto .loopbak) e `LOOP_BACKUP_STAGING_SEGREDO` (senha forte por mecanismo seguro, **nao** colar no chat/GitHub). Nao copiar ingenuamente SQLite+WAL durante escrita: a rotina cria imagem consistente pelo `VACUUM INTO` e autentica a copia com AES-256-GCM.
+
+Em caso de incidente, **nao sobrescrever a base original**. Usar `LOOP_BACKUP_STAGING_ACAO=RESTAURAR` apontando `ORIGEM` para a copia .loopbak e `DESTINO` para outro arquivo .sqlite **inexistente**, com a mesma senha autorizada. A rotina recusa backup adulterado, verifica estrutura, integridade e chaves estrangeiras antes de tornar a copia disponivel. O arquivo temporario SQLite em claro exige disco local privado; apagar o temporario nao garante apagamento fisico seguro. O backup fica local ate um operador realizar **transferencia e restauracao offsite aprovadas**; sem essa evidencia, `PRODUCAO_E_SEGURANCA` permanece bloqueado. Nunca usar esta rotina em `NODE_ENV=production`.
+
 ## Segurança e limitação conhecida
 
 O envio é um protocolo de ensaio, **não** um checkout comercial. Se o webhook chegar antes da gravação do ID da cobrança pelo envio, o receptor poderá responder 409 e o evento exigirá reentrega/revisão; monitorar os Logs do Asaas e não tratar falha como pagamento confirmado. Não iniciar produção por simples mudança de `NODE_ENV` ou variável.
