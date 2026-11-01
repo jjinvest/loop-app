@@ -26,11 +26,17 @@ class ComprovanteAsaasSandboxPonteLab{
   if(cobranca.pedidoId!==pedidoId||cobranca.valorCentavos<1)
    throw falha('COBRANCA_SANDBOX_INELEGIVEL');
   const produtoId=titular.produtoId;
-  const consultas=typeof this.cobrancas.historico==='function'?
-   this.cobrancas.historico(pedidoId).conferencias:null;
+  const temHistorico=typeof this.cobrancas.historico==='function';
+  const consultas=temHistorico?this.cobrancas.historico(pedidoId)?.conferencias:null;
+  // O registro historico e fonte independente da ultima reconsulta do PSP.
+  // Recebimento manual ou resposta antiga nao pode criar posicao no LOOP.
+  if(temHistorico&&(!Array.isArray(consultas)||!consultas.length||
+      consultas[consultas.length-1]?.statusAsaas!=='RECEIVED'||
+      consultas[consultas.length-1]?.estadoLoja!=='RECEBIMENTO_INFORMADO_SANDBOX'))
+   throw falha('ULTIMA_RECONSULTA_NAO_CONFIRMOU_PIX');
   const primeiroRecebimento=Array.isArray(consultas)?
    consultas.find(x=>x.estadoLoja==='RECEBIMENTO_INFORMADO_SANDBOX'&&
-    ['RECEIVED','RECEIVED_IN_CASH'].includes(x.statusAsaas)):null;
+    x.statusAsaas==='RECEIVED'):null;
   const confirmadoEm=primeiroRecebimento?.consultadoEm||cobranca.atualizadoEm;
   if(typeof cobranca.atualizadoEm!=='string'||!Number.isFinite(Date.parse(cobranca.atualizadoEm))||
      Date.parse(cobranca.atualizadoEm)<criado)
