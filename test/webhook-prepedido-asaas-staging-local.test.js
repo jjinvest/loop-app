@@ -111,6 +111,45 @@ test('webhook de prepedido autenticado grava sinal, idempotente e nao reconsulta
  assert.equal(s.banco.prepare('PRAGMA integrity_check').get().integrity_check,'ok');
  assert.deepEqual(s.banco.prepare('PRAGMA foreign_key_check').all(),[]);
 });
+test('Asaas pode notificar apenas id do pagamento: persiste sinal e exige GET PSP',async t=>{
+ const s=await cenario(t);
+ const parcial={id:'evt_AvisoParcialSandbox01',event:'PAYMENT_RECEIVED',
+  payment:{id:PAY}};
+ const antes=s.chamadas.length;
+ const resposta=await s.enviar(parcial);
+ assert.equal(resposta.status,200,JSON.stringify(resposta));
+ assert.equal(resposta.data.registrado,true);
+ assert.equal(resposta.data.posicoesCriadas,0);
+ assert.equal(s.chamadas.length,antes,'callback nunca consulta PSP sozinho');
+ const registro=s.inbox.consultarEvento(parcial.id);
+ assert.equal(registro.pagamentoId,PAY);
+ assert.equal(registro.statusAvisado,'NAO_INFORMADO');
+ assert.equal(registro.valorAvisadoCentavos,0);
+ assert.equal((await s.enviar(parcial)).data.repetido,true);
+ s.estado.status='RECEIVED';
+ const confirmado=await s.worker.processar({eventoId:parcial.id,
+  provedor:s.provedor,execucaoLiberada:true});
+ assert.equal(confirmado.estado,'CONCLUIDO');
+ assert.equal(confirmado.posicoesCriadas,0);
+ assert.equal(s.chamadas.filter(x=>x==='GET').length,1,
+  'somente reconsulta PSP independente valida status e valor');
+ assert.equal(s.banco.prepare('PRAGMA integrity_check').get().integrity_check,'ok');
+});
+test('aviso parcial nao vincula pagamento desconhecido e campos declarados divergentes',async t=>{
+ const s=await cenario(t);
+ const base={id:'evt_AvisoInvalidoMinimo01',event:'PAYMENT_RECEIVED',
+  payment:{id:'pay_OutroNaoVinculado00001'}};
+ assert.equal((await s.enviar(base)).status,409);
+ const parc={...base,payment:{id:PAY}};
+ assert.equal((await s.enviar({...parc,payment:{
+  id:PAY,externalReference:'LOOPLAB-hom-00000000-0000-0000-0000-000000000000'
+ }})).status,409);
+ assert.equal((await s.enviar({...parc,payment:{id:PAY,value:249.99}})).status,409);
+ assert.equal((await s.enviar({...parc,payment:{id:PAY,billingType:'BOLETO'}})).status,400);
+ assert.equal((await s.enviar({...parc,payment:{id:PAY,value:250.001}})).status,400);
+ assert.equal(s.banco.prepare('SELECT COUNT(*) AS n FROM akitemm_prepedido_webhook_inbox_staging').get().n,0);
+ assert.equal(s.chamadas.filter(x=>x==='GET').length,0);
+});
 test('rejeita token errado, evento alheio, valor e pagamento divergentes e IDs reutilizados',async t=>{
  const s=await cenario(t);
  for(const token of [null,'SENHA_ERRADA',TOKEN+'errado']){
