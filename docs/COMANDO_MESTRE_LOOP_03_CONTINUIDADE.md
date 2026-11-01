@@ -1271,3 +1271,12 @@ A conciliação periódica agora processa até 20 pedidos por rodada por padrão
 Regressão: 3 testes novos de lote máximo, justiça de ordem frente a falha persistente e configuração inválida. [CI e navegador SUCCESS — 637/637, zero falhas](https://github.com/jjinvest/loop-app/actions/runs/41278944517), commit de código `fb3b2762d62e315b0874c6b3d335232a4acb1442`. Registro complementar em [CONTINUIDADE_CALLBACK_ASAAS_01NOV2026.md](./CONTINUIDADE_CALLBACK_ASAAS_01NOV2026.md).
 
 **PENDENTE EXTERNO:** webhook remoto real do Asaas, infraestrutura autorizada para receber notificações, liquidação/tarifas bancárias independentes e parecer jurídico-operacional. Não confundir teste com prontidão de produção. PR #1 DRAFT, sem merge ou deploy.
+
+
+## 104. PAGINACAO DA DESCOBERTA SQLITE E REDUCAO DE COPIA DE FILA — 01/11/2026
+
+Sem repetir a carga de 10.000 clientes, foi eliminada a consulta SQL sem limite que redescobria todos os pedidos ainda nao integrados a cada pulso do agendador. A montagem da conciliacao Asaas Sandbox percorre `pedido_id` com chave de pagina, 20 pendencias por consulta, cursor circular em memoria e volta ao inicio; o SQLite segue como fonte persistente apos reinicio. O agendador copia para a rodada somente o numero de IDs que pretende consultar (limite 20), sem clonar toda a fila em memoria. Rechecagem de cobrancas antigas confirmadas continua separada e limitada.
+
+Testes: 53 cobrancas em pagina 20/20/13, retorno do cursor e insercao anterior ao cursor, sem escritas durante listagem; fila de 5.000 IDs em duas rodadas de 20. Nenhuma mudanca em posicoes, 3A:1B, seis eventos, cofres, bonus, saques ou telas. Prova do CI e navegador: [GitHub Actions 41279279477](https://github.com/jjinvest/loop-app/actions/runs/41279279477), commit `1d03da8e32658d91b1098c39743344be03fbe527`: **SUCCESS, 640/640, zero falhas**. Detalhes em [CONTINUIDADE_CALLBACK_ASAAS_01NOV2026.md](./CONTINUIDADE_CALLBACK_ASAAS_01NOV2026.md).
+
+Permanecem: limite global de pendencias em memoria e cadencia de reconsultas por pedido para grandes atrasos, homologacao de webhook remoto autorizado do Asaas, liquidacao bancária independente e parecer juridico/regulatorio. PR #1 DRAFT, sem merge/deploy nem dinheiro real.
