@@ -1,3 +1,5 @@
+> **FINANCEIRO OPERACIONAL NO ESCRITORIO — 01/11/2026:** novo quadro read-only de ciclos, eventos, cofres, saques, douradas e solicitacoes do proprio SQLite, separado do razao ficticio e sem confundir projecoes com dinheiro liquidado. [Documento-mestre secao 121](./COMANDO_MESTRE_LOOP_03_CONTINUIDADE.md). CI e navegador pendentes de confirmacao; PR DRAFT, sem deploy.
+
 > **CLIENTES PDF / FISICOS — 01/11/2026:** departamento Clientes conta titulares distintos por categoria do produto conforme fotografia da venda confirmada no SQLite, sem usar catalogo alteravel nem pedidos ainda nao pagos. Em falta de fonte, mostra 'nao conciliado'. [Documento-mestre secao 120](./COMANDO_MESTRE_LOOP_03_CONTINUIDADE.md). PR DRAFT, CI pendente.
 
 > **INDICADORES CLIENTES SQLITE — 01/11/2026:** departamento Clientes agora conta titulares com posicoes criadas e titulares com vendas confirmadas somente AKITEMM, sem duplicar ou contar pedidos nao pagos. Categorias PDF/fisico permanecem explicitamente 'nao conciliadas' ate haver fonte por item. [Documento-mestre secao 119](./COMANDO_MESTRE_LOOP_03_CONTINUIDADE.md). CI pendente; PR DRAFT.
