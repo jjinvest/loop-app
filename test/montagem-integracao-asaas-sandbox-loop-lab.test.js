@@ -70,6 +70,43 @@ test('montagem: API Sandbox -> cobranca -> titular -> ponte -> uma posicao SQLit
  assert.equal(banco.prepare('SELECT COUNT(*) AS n FROM admin_ponte_compras_demo').get().n,1);
 });
 
+test('ponte compartilhada do escritorio usa comprovante sandbox e impede posicao antecipada',async t=>{
+ const repo=new RepositorioCatalogoSQLite({caminho:':memory:'});t.after(()=>repo.fechar());
+ const banco=repo.banco;
+ banco.exec('CREATE TABLE admin_carrinho_loop_demo (pedido_id TEXT PRIMARY KEY,total_centavos INTEGER)');
+ const pedidoId='pedido-ponte-compartilhada';
+ banco.prepare('INSERT INTO admin_carrinho_loop_demo VALUES(?,?)').run(pedidoId,25000);
+ const contas=new ContasParticipantesDemoSQLite({banco});
+ const titular=contas.cadastrar({nome:'Comprador Ponte',email:'ponte-compartilhada@exemplo.invalid',senha:'senha-ficticia-2026'});
+ const titularidade=new PedidosTitularidadeDemoSQLite({banco,contas,relogio:()=> '2026-10-26T09:00:00.000Z'});
+ titularidade.preparar({pedidoId,contaId:titular.contaId,produtoId:'curso-ponte',valorCentavos:25000});
+ const {PonteComprasConvitesDemoSQLite}=require('../src/domain/ponte-compras-convites-demo-sqlite');
+ const ponte=new PonteComprasConvitesDemoSQLite({banco,contas,pedidosIdentificados:titularidade,
+  consultarPagamentoConfiavel:async()=>{throw Error('Nao usar comprovante ficticio');},
+  atribuicaoManualPorPosicao:true});
+ let estado='PENDING';
+ const fetchImpl=async()=>({ok:true,json:async()=>({
+  id:'pay_PonteCompartilhada',billingType:'PIX',value:250,
+  externalReference:'LOOPLAB-'+pedidoId,status:estado,customer:'cus_PonteCompartilhada'
+ })});
+ const m=montarIntegracaoAsaasSandboxLoopLab({banco,contas,titularidade,ponte,
+  agora:()=> '2026-10-26T09:10:00.000Z',apiKey:'CHAVE_FICTICIA_APENAS_TESTES_123',fetchImpl});
+ assert.equal(m.ponte,ponte);
+ assert.equal(ponte.fonteComprovante,'ASAAS_SANDBOX_EXCLUSIVO');
+ await m.cobrancas.criar({pedidoId,origem:'CARRINHO',clienteAsaasId:'cus_PonteCompartilhada'});
+ await m.automatico.verificar();
+ assert.equal(banco.prepare('SELECT COUNT(*) AS n FROM admin_ponte_compras_demo').get().n,0);
+ estado='RECEIVED';
+ await m.automatico.verificar();
+ const posicoes=banco.prepare('SELECT COUNT(*) AS n FROM admin_ponte_compras_demo').get().n;
+ assert.equal(posicoes,1);
+ const {EscritorioIndividualDemo}=require('../src/domain/escritorio-individual-demo');
+ const escritorio=new EscritorioIndividualDemo({contas,ponte});
+ assert.ok(escritorio.consultar(titular.contaId));
+ await m.automatico.verificar();
+ assert.equal(banco.prepare('SELECT COUNT(*) AS n FROM admin_ponte_compras_demo').get().n,1);
+});
+
 test('montagem recusa provedor falso ou ambiente de producao',t=>{
  const repo=new RepositorioCatalogoSQLite({caminho:':memory:'});t.after(()=>repo.fechar());
  const banco=repo.banco;
