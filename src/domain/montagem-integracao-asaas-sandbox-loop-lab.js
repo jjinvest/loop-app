@@ -56,14 +56,29 @@ function montarIntegracaoAsaasSandboxLoopLab({banco,contas,titularidade,apiKey,f
    if(linhas.length<limiteDescoberta)ultimoPedidoExaminado='';
    return pendentes;
   },
-  // Cota dedicada: pagamentos antigos ja integrados devem ser revisitados,
-  // mesmo durante uma chegada continua de novos pedidos ainda pendentes.
-  listarRecebimentos:()=>{
-   const corte=new Date(Date.parse(agora?agora():new Date().toISOString())-60000).toISOString();
-   return banco.prepare(`SELECT pedido_id AS pedidoId FROM akitemm_sandbox_cobrancas
+  // Cota dedicada e cursor circular para recebimentos antigos:
+  // cinco cobrancas que repetidamente falham na API nao podem impedir
+  // revisao de estornos das demais. Cursor nao altera o livro financeiro.
+  listarRecebimentos:(()=>{
+   let cursor=null;
+   const pagina=banco.prepare(`SELECT pedido_id AS pedidoId,
+     atualizado_em AS atualizadoEm FROM akitemm_sandbox_cobrancas
     WHERE status='RECEBIMENTO_INFORMADO_SANDBOX' AND atualizado_em<=?
-    ORDER BY atualizado_em,pedido_id LIMIT 5`).all(corte).map(r=>r.pedidoId);
-  }
+      AND (atualizado_em>? OR (atualizado_em=? AND pedido_id>?))
+    ORDER BY atualizado_em,pedido_id LIMIT 5`);
+   const inicio=banco.prepare(`SELECT pedido_id AS pedidoId,
+     atualizado_em AS atualizadoEm FROM akitemm_sandbox_cobrancas
+    WHERE status='RECEBIMENTO_INFORMADO_SANDBOX' AND atualizado_em<=?
+    ORDER BY atualizado_em,pedido_id LIMIT 5`);
+   return ()=>{
+    const corte=new Date(Date.parse(agora?agora():new Date().toISOString())-60000).toISOString();
+    let linhas=cursor?pagina.all(corte,cursor.atualizadoEm,
+      cursor.atualizadoEm,cursor.pedidoId):inicio.all(corte);
+    if(linhas.length===0&&cursor)linhas=inicio.all(corte);
+    cursor=linhas.length===5?linhas[linhas.length-1]:null;
+    return linhas.map(r=>r.pedidoId);
+   };
+  })()
  });
  const conferidorAvisos=caixaAvisos?new ConferidorAvisosAsaasSandboxSQLite({banco,caixaAvisos,cobrancas}):null;
  const callbacks=caixaAvisos?new ProcessadorCallbacksAsaasSandboxLab({banco,caixaAvisos,
