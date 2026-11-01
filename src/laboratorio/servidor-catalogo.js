@@ -528,6 +528,9 @@ function iniciarLaboratorio({ ambiente = process.env } = {}) {
     }
     if(ambiente.LOOP_ASAAS_SANDBOX_AUTO_CONCILIAR==='1'&&!ambiente.ASAAS_SANDBOX_API_KEY)
       throw new Error('Chave do Asaas Sandbox obrigatoria para conciliacao');
+    if(ambiente.LOOP_ASAAS_SANDBOX_AUTO_CONCILIAR==='1' &&
+       !app.locals.integracaoAsaasCompartilhada)
+      throw new Error('Conciliacao Sandbox exige ponte compartilhada e checkout habilitado');
     const servidor = app.listen(porta,'127.0.0.1', () => {
       process.stdout.write('Catalogo LOOP em teste local: http://127.0.0.1:' + porta + '/admin\n');
     });
