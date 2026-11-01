@@ -326,3 +326,65 @@ test('pendencias lista eventos nao processados sem divulgar dados pessoais',asyn
  assert.equal(JSON.stringify(s.worker.pendencias()).includes('CPF'),false);
  assert.equal(s.chamadas.filter(x=>x==='GET').length,0);
 });
+
+test('operador local ve callbacks pendentes e libera revisao de travados sem expor dados ou enviar Pix',async t=>{
+ const s=await cenario(t),aviso=s.evento('evt_OperacaoLocalTravada01');
+ const {criarRouterOperacoesWebhookPrepedidoStagingLocal}=
+  require('../src/routes/operacoes-webhook-prepedido-staging-local');
+ assert.equal((await s.enviar(aviso)).status,200);
+ s.banco.prepare([
+  'INSERT INTO akitemm_prepedido_webhook_reconsulta_staging',
+  "(evento_id,estado,codigo,iniciado_em) VALUES(?,'PROCESSANDO','RECONSULTA',?)"
+ ].join(' ')).run(aviso.id,'2026-10-31T20:00:00.000Z');
+ const worker=new ReconsultaWebhookPrepedidoAsaasStaging({
+  banco:s.banco,inbox:s.inbox,ponte:s.ponte,
+  agoraMs:()=>Date.parse('2026-11-01T20:00:00.000Z')
+ });
+ const app=express();app.use(express.json({limit:'4kb'}));
+ app.use('/operador',criarRouterOperacoesWebhookPrepedidoStagingLocal({
+  worker,autorizarOperador:req=>req.get('X-Fixture-Operador')==='sim',
+  autorizarMutacao:req=>req.get('X-Fixture-Csrf')==='segredo-ensaio'
+ }));
+ const srv=app.listen(0,'127.0.0.1');await once(srv,'listening');
+ t.after(()=>new Promise(resolve=>srv.close(resolve)));
+ const base='http://127.0.0.1:'+srv.address().port+'/operador';
+ async function pedido(rota,{method='GET',operador='sim',csrf='segredo-ensaio',
+  body,origin}={}){
+  const res=await fetch(base+rota,{method,headers:{
+   'Content-Type':'application/json',
+   ...(operador?{'X-Fixture-Operador':operador}:{}),
+   ...(csrf?{'X-Fixture-Csrf':csrf}:{}),
+   ...(origin?{Origin:origin}:{})
+  },...(body===undefined?{}:{body:JSON.stringify(body)})});
+  return {status:res.status,body:await res.json(),
+   cache:res.headers.get('cache-control')};
+ }
+ assert.equal((await pedido('/webhooks/pendencias',{operador:null})).status,403);
+ assert.equal((await pedido('/webhooks/pendencias',{
+  origin:'https://origem-externa.invalid'})).status,403);
+ const pendentes=await pedido('/webhooks/pendencias');
+ assert.equal(pendentes.status,200);
+ assert.equal(pendentes.cache,'no-store');
+ assert.deepEqual(pendentes.body.pendencias,[{
+  eventoId:aviso.id,estado:'PROCESSANDO',codigo:'RECONSULTA'
+ }]);
+ assert.equal(pendentes.body.consultaRemotaExecutada,false);
+ assert.equal((await pedido('/webhooks/recuperar',{method:'POST',
+  csrf:null,body:{}})).status,403);
+ assert.equal((await pedido('/webhooks/recuperar',{method:'POST',
+  body:{valorCentavos:25000}})).status,400);
+ const antes=s.chamadas.length;
+ const feito=await pedido('/webhooks/recuperar',{method:'POST',body:{}});
+ assert.equal(feito.status,200);
+ assert.equal(feito.body.recuperados,1);
+ assert.equal(feito.body.reconsultaRemotaExecutada,false);
+ assert.equal(feito.body.novaCobranca,false);
+ assert.equal(feito.body.posicoesCriadas,0);
+ const refeito=await pedido('/webhooks/recuperar',{method:'POST',body:{}});
+ assert.equal(refeito.status,200);
+ assert.equal(refeito.body.recuperados,0);
+ assert.equal(s.chamadas.length,antes);
+ assert.equal((await pedido('/webhooks/pendencias')).body.pendencias[0].estado,
+  'EXIGE_REVISAO');
+ assert.equal(s.banco.prepare('SELECT COUNT(*) n FROM akitemm_prepedido_webhook_recuperacoes_staging').get().n,1);
+});
