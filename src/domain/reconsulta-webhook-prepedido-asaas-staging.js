@@ -113,6 +113,31 @@ class ReconsultaWebhookPrepedidoAsaasStaging{
    'ORDER BY a.recebido_em,a.evento_id LIMIT ?'
   ].join(' ')).all(limite).map(row=>({...row}));
  }
+ // Contagem completa, independente do limite de 50 itens da lista. Evita
+ // ocultar um acúmulo de callbacks em caso de incidente operacional.
+ // Apenas estados e contagens: nenhum dado do comprador ou do PSP.
+ resumoPendencias(){
+  if(process.env.NODE_ENV==='production')
+   throw falha('RECONSULTA_STAGING_PROIBIDA_EM_PRODUCAO');
+  const linhas=this.banco.prepare([
+   "SELECT COALESCE(r.estado,'PENDENTE') AS estado,COUNT(*) AS n",
+   'FROM akitemm_prepedido_webhook_inbox_staging a',
+   'LEFT JOIN akitemm_prepedido_webhook_reconsulta_staging r',
+   'ON r.evento_id=a.evento_id',
+   "WHERE r.estado IS NULL OR r.estado IN ('PROCESSANDO','EXIGE_REVISAO')",
+   "GROUP BY COALESCE(r.estado,'PENDENTE')"
+  ].join(' ')).all();
+  const resumo={pendentes:0,processando:0,exigeRevisao:0,total:0};
+  for(const linha of linhas){
+   const n=Number(linha.n);
+   if(linha.estado==='PENDENTE')resumo.pendentes=n;
+   else if(linha.estado==='PROCESSANDO')resumo.processando=n;
+   else if(linha.estado==='EXIGE_REVISAO')resumo.exigeRevisao=n;
+   resumo.total+=n;
+  }
+  return resumo;
+ }
+
  async processar({eventoId,provedor,execucaoLiberada=false}={}){
   if(process.env.NODE_ENV==='production')
    throw falha('RECONSULTA_STAGING_PROIBIDA_EM_PRODUCAO');
