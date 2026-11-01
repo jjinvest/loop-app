@@ -13,6 +13,7 @@ const {PrePedidosCheckoutStagingSQLite}=require('../src/domain/prepedidos-checko
 const {PontePrepedidoAsaasSandboxStaging}=require('../src/domain/ponte-prepedido-asaas-sandbox-staging');
 const {AsaasSandboxLojaV6}=require('../src/domain/asaas-sandbox-loja-v6');
 const PREPEDIDO=/^hom-[a-f0-9-]{36}$/;
+const TITULAR_ENSAIO=/^titular-(?:hom-)?[a-f0-9-]{36}$/;
 const CLIENTE=/^cus_[A-Za-z0-9_-]{5,90}$/;
 function falha(codigo){const e=new Error(codigo);e.codigo=codigo;return e;}
 function validarAmbiente(){
@@ -71,6 +72,47 @@ async function preparar({arquivo,clienteAsaasId,execucaoLiberada=false}={}){
    pagamentosReais:0,posicoesCriadas:0};
  }finally{banco.close();}
 }
+// Conecta um PREPEDIDO EXISTENTE da sessao de comprador ficticio a
+// um cliente da API Asaas Sandbox. Sem rede: operador responsavel pela
+// identidade de teste deve fazer esse vinculo de maneira consciente.
+async function vincularPrepedidoExistente({
+ arquivo,titularId,prepedidoId,clienteAsaasId,execucaoLiberada=false
+}={}){
+ validarAmbiente();
+ if(execucaoLiberada!==true)throw falha('VINCULO_SANDBOX_NAO_AUTORIZADO');
+ validarArquivo(arquivo);
+ if(!existsSync(arquivo)||!PREPEDIDO.test(prepedidoId||'')||
+    !TITULAR_ENSAIO.test(titularId||'')||
+    typeof clienteAsaasId!=='string'||!CLIENTE.test(clienteAsaasId))
+  throw falha('VINCULO_PREPEDIDO_SANDBOX_INVALIDO');
+ const banco=new DatabaseSync(arquivo);
+ try{
+  banco.exec('PRAGMA foreign_keys=ON;PRAGMA journal_mode=WAL;PRAGMA busy_timeout=5000;');
+  const temConta=banco.prepare([
+   "SELECT 1 AS ok FROM sqlite_master WHERE type='table'",
+   "AND name='akitemm_checkout_staging_contas'"
+  ].join(' ')).get();
+  if(!temConta)throw falha('CONTA_CLIENTE_STAGING_INEXISTENTE');
+  const titular=banco.prepare(
+   'SELECT id FROM akitemm_checkout_staging_contas WHERE id=?'
+  ).get(titularId);
+  if(!titular)throw falha('CONTA_CLIENTE_STAGING_INEXISTENTE');
+  new IntencoesCheckoutSQLite({banco});
+  const prePedidos=new PrePedidosCheckoutStagingSQLite({banco});
+  const pedido=prePedidos.consultar({titularId,prepedidoId});
+  if(!pedido)throw falha('PREPEDIDO_DO_TITULAR_NAO_ENCONTRADO');
+  if(pedido.totalCentavos!==25000||
+     pedido.estado!=='AGUARDANDO_HOMOLOGACAO_EXTERNA')
+   throw falha('PREPEDIDO_INELEGIVEL_PARA_HOMOLOGACAO');
+  const ponte=new PontePrepedidoAsaasSandboxStaging({banco});
+  const resultado=ponte.preparar({titularId,prepedidoId,clienteAsaasId});
+  return {estado:resultado.registro.estado,
+   prepedidoId,valorCentavos:resultado.registro.valorCentavos,
+   repetido:resultado.repetido,
+   somenteSandbox:true,pagamentoReal:false,checkoutPublico:false,
+   posicoesCriadas:0};
+ }finally{banco.close();}
+}
 async function enviarSandbox({
  arquivo,titularId,prepedidoId,execucaoLiberada=false,
  apiKey,provedor=null
@@ -80,7 +122,7 @@ async function enviarSandbox({
  validarArquivo(arquivo);
  if(!existsSync(arquivo)||!PREPEDIDO.test(prepedidoId||''))
   throw falha('PREPEDIDO_SANDBOX_INEXISTENTE');
- if(typeof titularId!=='string'||!/^titular-hom-[a-f0-9-]{36}$/.test(titularId))
+ if(typeof titularId!=='string'||!TITULAR_ENSAIO.test(titularId))
   throw falha('TITULAR_HOMOLOGACAO_INVALIDO');
  // Injeção de provedor somente para testes locais. CLI não injeta.
  if(provedor===null){
@@ -111,6 +153,12 @@ if(require.main===module){
   trabalho=preparar({...comum,
    clienteAsaasId:process.env.ASAAS_SANDBOX_CLIENTE_TESTE_ID,
    execucaoLiberada:process.env.LOOP_HOMOLOGACAO_PREPARAR==='SIM'});
+ }else if(acao==='VINCULAR_PREPEDIDO'){
+  trabalho=vincularPrepedidoExistente({...comum,
+   titularId:process.env.LOOP_HOMOLOGACAO_TITULAR_ID,
+   prepedidoId:process.env.LOOP_HOMOLOGACAO_PREPEDIDO_ID,
+   clienteAsaasId:process.env.ASAAS_SANDBOX_CLIENTE_TESTE_ID,
+   execucaoLiberada:process.env.LOOP_HOMOLOGACAO_VINCULAR==='SIM'});
  }else if(acao==='ENVIAR_SANDBOX'){
   trabalho=enviarSandbox({...comum,
    titularId:process.env.LOOP_HOMOLOGACAO_TITULAR_ID,
@@ -125,4 +173,4 @@ if(require.main===module){
   process.exitCode=1;
  });
 }
-module.exports={preparar,enviarSandbox};
+module.exports={preparar,enviarSandbox,vincularPrepedidoExistente};
