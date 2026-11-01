@@ -36,10 +36,6 @@ jobs:
         with:
           node-version: '22'
           cache: npm
-      - name: Preparar correcoes pontuais das dependencias identificadas
-        run: |
-          npm update body-parser qs --package-lock-only --ignore-scripts
-          node -e "console.log('LOCKFILE_BASE64='+require('node:fs').readFileSync('package-lock.json').toString('base64'))"
       - run: npm ci
       - name: Inventariar vulnerabilidades das dependencias de execucao
         run: npm audit --omit=dev
