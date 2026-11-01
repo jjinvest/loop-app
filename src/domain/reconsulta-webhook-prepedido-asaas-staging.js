@@ -202,8 +202,11 @@ class ReconsultaWebhookPrepedidoAsaasStaging{
     'SELECT titular_id,pagamento_id,valor_centavos FROM',
     'akitemm_prepedido_asaas_sandbox_staging WHERE prepedido_id=?'
    ].join(' ')).get(aviso.prepedidoId);
+   // Valor 0 indica que o webhook nao informou centavos. O vinculo
+   // foi conferido pelo pagamento_id no recebimento; PSP reconsulta valor.
    if(!fonte||fonte.pagamento_id!==aviso.pagamentoId||
-     fonte.valor_centavos!==aviso.valorAvisadoCentavos)
+     (aviso.valorAvisadoCentavos!==0&&
+      fonte.valor_centavos!==aviso.valorAvisadoCentavos))
     throw falha('VINCULO_SANDBOX_DIVERGENTE');
    titularId=fonte.titular_id;
    b.prepare([
