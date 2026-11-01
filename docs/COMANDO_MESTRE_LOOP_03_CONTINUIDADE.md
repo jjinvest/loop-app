@@ -1262,3 +1262,12 @@ Foram adicionados três testes unitários e uma regressão real HTTP/SQLite com 
 **CI e navegador aprovados:** [GitHub Actions 41278676000](https://github.com/jjinvest/loop-app/actions/runs/41278676000), commit de código `787eb152c1589b7f31152c59856c9644f09b4908`: **634/634 testes, zero falhas**, auditoria runtime e navegador SUCCESS. Relatório técnico incremental em [CONTINUIDADE_CALLBACK_ASAAS_01NOV2026.md](./CONTINUIDADE_CALLBACK_ASAAS_01NOV2026.md).
 
 Restam pendentes webhook REMOTO autenticado emitido pelo Asaas, conciliação bancária externa e homologação jurídica/operacional. Tudo restrito ao laboratório, sem Pix real, merge/deploy ou autorização de lançamento. PR #1 continua DRAFT.
+
+
+## 103. EQUIDADE E COTA DE RECONSULTAS NA CONCILIAÇÃO AUTOMÁTICA ASAAS SANDBOX — 01/11/2026
+
+A conciliação periódica agora processa até 20 pedidos por rodada por padrão (1–100 configurável somente no laboratório), sem perder pedidos pendentes. Um pedido não confirmado retorna ao fim da ordem de tentativas para não bloquear indefinidamente outros pedidos elegíveis; a reconsulta ao Asaas e a confirmação individual da posição continuam obrigatórias. Não foi criado pagamento, crédito, evento válido, saque ou Pix real.
+
+Regressão: 3 testes novos de lote máximo, justiça de ordem frente a falha persistente e configuração inválida. [CI e navegador SUCCESS — 637/637, zero falhas](https://github.com/jjinvest/loop-app/actions/runs/41278944517), commit de código `fb3b2762d62e315b0874c6b3d335232a4acb1442`. Registro complementar em [CONTINUIDADE_CALLBACK_ASAAS_01NOV2026.md](./CONTINUIDADE_CALLBACK_ASAAS_01NOV2026.md).
+
+**PENDENTE EXTERNO:** webhook remoto real do Asaas, infraestrutura autorizada para receber notificações, liquidação/tarifas bancárias independentes e parecer jurídico-operacional. Não confundir teste com prontidão de produção. PR #1 DRAFT, sem merge ou deploy.
