@@ -8,7 +8,7 @@ const {PonteComprasConvitesDemoSQLite}=require('./ponte-compras-convites-demo-sq
 const {CatracaAsaasSandboxLab}=require('./catraca-asaas-sandbox-lab');
 const {ConciliadorPosicaoAsaasSandboxLab}=require('./conciliador-posicao-asaas-sandbox-lab');
 const {ConciliacaoAutomaticaAsaasSandboxLab}=require('./conciliacao-automatica-asaas-sandbox-lab');
-function montarIntegracaoAsaasSandboxLoopLab({banco,contas,titularidade,apiKey,fetchImpl,provedor,agora}={}){
+function montarIntegracaoAsaasSandboxLoopLab({banco,contas,titularidade,apiKey,fetchImpl,provedor,agora,ponte=null}={}){
  if(!banco||!contas||contas.banco!==banco||
     !titularidade||titularidade.banco!==banco||
     typeof titularidade.conferir!=='function')
@@ -19,12 +19,12 @@ function montarIntegracaoAsaasSandboxLoopLab({banco,contas,titularidade,apiKey,f
  const cobrancas=new CobrancasAkitemmAsaasSandboxSQLite({banco,provedor:externo,...(agora?{agora}:{})});
  const comprovantes=new ComprovanteAsaasSandboxPonteLab({cobrancas,titularidade});
  const elegibilidade=new PonteElegibilidadeAsaasTitularidadeLab({cobrancas,titularidade});
- const ponte=new PonteComprasConvitesDemoSQLite({
+ const ponteIntegrada=ponte||new PonteComprasConvitesDemoSQLite({
   banco,contas,pedidosIdentificados:titularidade,
   consultarPagamentoConfiavel:pedidoId=>comprovantes.consultar(pedidoId),
   atribuicaoManualPorPosicao:true
  });
- const catraca=new CatracaAsaasSandboxLab({elegibilidade,ponte});
+ const catraca=new CatracaAsaasSandboxLab({elegibilidade,ponte:ponteIntegrada});
  const conciliador=new ConciliadorPosicaoAsaasSandboxLab({cobrancas,catraca});
  const automatico=new ConciliacaoAutomaticaAsaasSandboxLab({conciliador,
   listarPendentes:()=>banco.prepare(`SELECT c.pedido_id AS pedidoId
@@ -33,6 +33,6 @@ function montarIntegracaoAsaasSandboxLoopLab({banco,contas,titularidade,apiKey,f
    AND NOT EXISTS(SELECT 1 FROM admin_ponte_compras_demo p WHERE p.pedido_id=c.pedido_id)`)
    .all().map(r=>r.pedidoId)
  });
- return Object.freeze({provedor:externo,cobrancas,comprovantes,elegibilidade,ponte,catraca,conciliador,automatico});
+ return Object.freeze({provedor:externo,cobrancas,comprovantes,elegibilidade,ponte:ponteIntegrada,catraca,conciliador,automatico});
 }
 module.exports={montarIntegracaoAsaasSandboxLoopLab};
