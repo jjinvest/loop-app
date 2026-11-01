@@ -27,7 +27,7 @@ class ConciliadorPosicaoAsaasSandboxLab{
   if(typeof this.cobrancas.historico==='function'){
    const historico=this.cobrancas.historico(pedidoId)?.conferencias;
    const ultima=Array.isArray(historico)?historico[historico.length-1]:null;
-   if(!ultima||!['RECEIVED','RECEIVED_IN_CASH'].includes(ultima.statusAsaas))
+   if(!ultima||ultima.statusAsaas!=='RECEIVED')
     throw falha('ULTIMA_RECONSULTA_NAO_CONFIRMOU_RECEBIMENTO');
   }
   // Uma venda somente AKITEMM tambem precisa ser conciliada. Nao passar
