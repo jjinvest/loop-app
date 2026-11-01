@@ -123,13 +123,26 @@ function montarIntegracaoAsaasSandboxLoopLab({banco,contas,titularidade,apiKey,f
   const adicionais=banco.prepare(`SELECT COUNT(*) AS quantidade
    FROM admin_ponte_posicoes_adicionais_demo x
    JOIN akitemm_sandbox_cobrancas c ON c.pedido_id=x.pedido_id`).get().quantidade;
+  // Posicoes extras possuem UNIQUE em sua propria tabela, mas nao ha
+  // UNIQUE cruzado com a cadeira primaria de OUTROS pedidos (ou do mesmo).
+  // Um ID reutilizado significa duas atribuicoes logicas para uma cadeira.
+  const idReutilizadoEmPosicaoAdicional=banco.prepare(`SELECT COUNT(*) AS quantidade
+   FROM admin_ponte_posicoes_adicionais_demo x
+   JOIN akitemm_sandbox_cobrancas c ON c.pedido_id=x.pedido_id
+   WHERE EXISTS(SELECT 1 FROM admin_ponte_compras_demo p
+    WHERE p.posicao_id=x.posicao_id)`).get().quantidade;
   const anomalias=dados.semTitularidade+dados.valoresDivergentes+
    dados.titularesDivergentes+dados.multiplosLivros+
-   dados.integracoesSemRecebimento;
+   dados.integracoesSemRecebimento+idReutilizadoEmPosicaoAdicional;
   return Object.freeze({ambiente:'ASAAS_SANDBOX_EXCLUSIVO',
    modo:'CONVERGENCIA_SQLITE_SOMENTE_LEITURA',...dados,
-   posicoesAdicionais:adicionais,anomaliasContadasPorCriterio:anomalias,
-   revisaoManualIndicada:anomalias>0||dados.reversoesComPosicaoPreservada>0,
+   posicoesAdicionais:adicionais,
+   idReutilizadoEmPosicaoAdicional,anomaliasContadasPorCriterio:anomalias,
+   // Criacao indeterminada nao pode disparar outro POST automaticamente.
+   // Recebido sem ponte requer acompanhamento; toda reversao exige revisao
+   // mesmo se ainda nao havia posicao. Este sinal NAO executa mutacoes.
+   revisaoManualIndicada:anomalias>0||dados.criacoesIndeterminadas>0||
+    dados.recebidosAguardandoPonte>0||dados.reversoesInformadas>0,
    pagamentosReais:false,caixaBancarioConciliado:false,
    posicoesAlteradas:0,saquesLiberados:0,somenteLeitura:true});
  }
