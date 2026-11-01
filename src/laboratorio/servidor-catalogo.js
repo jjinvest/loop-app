@@ -227,6 +227,19 @@ function criarAppAdminLaboratorio({ repositorio, segredo, webhookDemo, webhookAs
       carrinhos:carrinhosLojaLoopDemo,catalogo:repositorio,saques:saquesDemo,
       configAkitemm,avaliacoesAkitemm,
       habilitarConviteLoopCheckout,
+      // Cliente ficticio fixo APENAS no sandbox; pedido/titular sao imutaveis no SQLite.
+      criarCobrancaSandbox:process.env.LOOP_ASAAS_SANDBOX_CHECKOUT==='1'&&
+       process.env.ASAAS_SANDBOX_API_KEY&&process.env.ASAAS_SANDBOX_CLIENTE_TESTE_ID?
+       async({pedidoId})=>{
+        const servico=new CobrancasAkitemmAsaasSandboxSQLite({
+         banco:repositorio.banco,
+         provedor:new AsaasSandboxLojaV6({apiKey:process.env.ASAAS_SANDBOX_API_KEY})
+        });
+        const r=await servico.criar({pedidoId,origem:'CARRINHO',
+         clienteAsaasId:process.env.ASAAS_SANDBOX_CLIENTE_TESTE_ID});
+        return {pedidoId:r.pedidoId,status:r.status,ambiente:'ASAAS_SANDBOX_EXCLUSIVO',
+         pagamentoReal:false};
+       }:null,
       obterLivroProvisoesV6:()=>circuitoPonteDemo?.livro||null,
       obterRetornoSaqueCentroDemo:()=>retornoSaqueCentroDemo,
       entregadoresPerfil:criarEntregadoresPerfilAmbiente()
