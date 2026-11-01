@@ -1251,3 +1251,14 @@ Sem repetir a carga de 10.000 clientes e sem mudar interface, regras ou pagament
 - Novo `test/asaas-monitor-callback-leases-lab.test.js` valida aviso sem job, lease expirado e recuperado, retentativa pronta, monitor autenticado sem escrita, nenhuma posicao duplicada, integridade SQLite, CPF/adesao nao autoativados e erro com codigo privado ocultado.
 - Evidencia do ultimo commit de codigo `1dcc978e7e36ab20f004e2661c94f77d6e26710b`: [GitHub Actions CI e navegador](https://github.com/jjinvest/loop-app/actions/runs/41278214311) — **SUCCESS, 630/630 testes, 0 falhas**, `npm ci`, `npm audit --omit=dev` e Playwright/Chromium aprovados. Falha temporaria em CI de commit anterior `bcf44c2` era exclusivamente um nome incorreto de instancia no novo teste; corrigida e validada neste commit.
 - Permanecem limites de laboratorio: sem callback emitido pelo Asaas remoto, sem conciliacao bancaria independente, sem dinheiro real ou autorizacao de producao. PR #1 DRAFT, sem merge/deploy.
+
+
+## 102. ISOLAMENTO DE FALHAS NA CONCILIAÇÃO AUTOMÁTICA ASAAS SANDBOX — 01/11/2026
+
+Continuação pontual do bloco 101, sem repetir a carga de 10.000. O agendador automático foi corrigido para que exceções síncronas/assíncronas do observador de falhas `aoErro` e falhas secundárias na consulta de status não interrompam os demais pedidos da mesma rodada. A telemetria é sanitizada (código fixo e horário, apenas em memória), sem segredos ou mensagem bruta. O pagamento segue dependendo de reconsulta ao Sandbox; nenhuma regra do motor, posição, reserva ou saque foi relaxada.
+
+Foram adicionados três testes unitários e uma regressão real HTTP/SQLite com dois titulares: um pagamento não confirmado não bloqueia a posição PENDENTE do titular com pagamento simulado confirmado, nem duplica posições; a reconciliação posterior recupera o pedido antes pendente. Conservação, titularidade, integridade do banco e ausência de giro automático verificadas.
+
+**CI e navegador aprovados:** [GitHub Actions 41278676000](https://github.com/jjinvest/loop-app/actions/runs/41278676000), commit de código `787eb152c1589b7f31152c59856c9644f09b4908`: **634/634 testes, zero falhas**, auditoria runtime e navegador SUCCESS. Relatório técnico incremental em [CONTINUIDADE_CALLBACK_ASAAS_01NOV2026.md](./CONTINUIDADE_CALLBACK_ASAAS_01NOV2026.md).
+
+Restam pendentes webhook REMOTO autenticado emitido pelo Asaas, conciliação bancária externa e homologação jurídica/operacional. Tudo restrito ao laboratório, sem Pix real, merge/deploy ou autorização de lançamento. PR #1 continua DRAFT.
