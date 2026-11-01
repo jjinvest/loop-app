@@ -184,6 +184,49 @@ class PontePrepedidoAsaasSandboxStaging{
   }catch(e){b.exec('ROLLBACK');throw e;}
   return {repetido:false,registro:this.consultar({titularId,prepedidoId})};
  }
+ async recuperarCriacao({titularId,prepedidoId,provedor,consultaLiberada=false}={}){
+  apenasStaging();this._validar(titularId,prepedidoId);
+  if(consultaLiberada!==true)throw falha('RECUPERACAO_SANDBOX_NAO_AUTORIZADA');
+  if(provedor?.ambiente!=='ASAAS_SANDBOX_EXCLUSIVO'||
+     typeof provedor.localizarCobrancaPorReferencia!=='function')
+   throw falha('PROVEDOR_SANDBOX_OBRIGATORIO');
+  const anterior=this._linha(titularId,prepedidoId);
+  if(!anterior)throw falha('VINCULO_NAO_ENCONTRADO');
+  if(anterior.estado==='PREPARADA')throw falha('ENVIO_SANDBOX_NAO_INICIADO');
+  if(anterior.estado!=='CRIACAO_INDETERMINADA')
+   return {repetido:true,registro:this._publica(anterior)};
+  // A busca por externalReference é exclusivamente leitura do PSP.
+  // Se nenhum pagamento for encontrado, NAO desbloquear novo POST.
+  const remoto=await provedor.localizarCobrancaPorReferencia({
+   pedidoId:prepedidoId,clienteAsaasId:anterior.cliente_asaas_id,
+   valorCentavos:anterior.valor_centavos
+  });
+  if(remoto===null)return {encontrado:false,
+   exigeRevisaoManual:true,registro:this.consultar({titularId,prepedidoId})};
+  if(remoto?.ambiente!=='ASAAS_SANDBOX_EXCLUSIVO'||
+     typeof remoto.pagamentoId!=='string'||!PAGAMENTO.test(remoto.pagamentoId)||
+     remoto.valorCentavos!==anterior.valor_centavos)
+   throw falha('BUSCA_SANDBOX_DIVERGENTE');
+  const b=this.banco;b.exec('BEGIN IMMEDIATE');
+  try{
+   const atual=this._linha(titularId,prepedidoId);
+   if(!atual||atual.valor_centavos!==anterior.valor_centavos||
+      atual.cliente_asaas_id!==anterior.cliente_asaas_id)
+    throw falha('ESTADO_SANDBOX_CONCORRENTE_REVISAR');
+   if(atual.estado!=='CRIACAO_INDETERMINADA'){
+    b.exec('COMMIT');
+    return {repetido:true,registro:this._publica(atual)};
+   }
+   b.prepare([
+    'UPDATE akitemm_prepedido_asaas_sandbox_staging',
+    "SET pagamento_id=?,estado='PENDENTE_SANDBOX',atualizado_em=?",
+    "WHERE prepedido_id=? AND titular_id=? AND estado='CRIACAO_INDETERMINADA'"
+   ].join(' ')).run(remoto.pagamentoId,this._data(),prepedidoId,titularId);
+   b.exec('COMMIT');
+  }catch(e){b.exec('ROLLBACK');throw e;}
+  return {encontrado:true,recuperado:true,registro:this.consultar({titularId,prepedidoId}),
+   precisaReconsultaIndependente:true};
+ }
  async conferir({titularId,prepedidoId,provedor}={}){
   apenasStaging();this._validar(titularId,prepedidoId);
   if(provedor?.ambiente!=='ASAAS_SANDBOX_EXCLUSIVO'||
