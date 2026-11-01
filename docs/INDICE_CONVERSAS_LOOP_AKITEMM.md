@@ -50,3 +50,14 @@ Estes são **marcos de assunto** encontrados em registros de continuidade, não 
 ## Como registrar uma nova conversa sem repetir auditorias
 
 Adicionar uma linha na tabela contemporânea, incrementar o número da mesma série e referenciar o assunto e a seção do documento-mestre. O Work deve usar `W`, o chat comum deve usar `C`. Se a numeração real do Work ainda não estiver confirmada, manter `RESERVADO`, sem marcar como concluído. Nunca transformar estimativa de progresso em “pronto para inaugurar”. Os seis gates externos do Marco Zero ainda dependem de provas e decisões independentes.
+
+## Plano de migracao de aparelho, conta ou assistente
+
+1. **Celular novo ou computador:** acessar o ChatGPT com **a mesma conta**; chats sincronizados permanecem na nuvem do ChatGPT. O GitHub fica separado.
+2. **Outra conta do ChatGPT:** nao presumir transferencia de historico, memorias, arquivos nem plugins. A pessoa deve autenticar a nova conta e reconectar o GitHub com suas permissoes; se desejar referencia historica, pode exportar conversas na conta anterior e enviar o `conversations.json` para uma nova conversa, **sem recriar historico ou memoria**.
+3. **Outra IA:** abrir o repositorio no GitHub, conferir a branch `fix/teste-escrita-catraca-20261014`, o HEAD, este indice, o documento-mestre, as capturas e os testes. A outra IA precisara de credenciais/permissoes proprias para o GitHub; nao transferir API keys nem segredos em chat.
+4. **Perda de acesso ao ChatGPT:** o repositorio GitHub **nao e removido** por isso. Recuperar a propria conta GitHub; conferir que o repositorio e a branch ainda existem e que PR #1 segue rascunho.
+5. **Rastreabilidade:** textos no indice e resumos tecnicos sao referencia, nao copia integral de todas as mensagens. Quando a evidencia estiver num chat antigo, buscar pelo assunto/data no historico da conta original ou usar a exportacao autorizada.
+
+Ajuda oficial: https://help.openai.com/en/articles/8142208-chatgpt-ios-and-android-app-faq e https://help.openai.com/pt-br/articles/9106926-transfer-exported-conversations-between-chatgpt-accounts.
+
