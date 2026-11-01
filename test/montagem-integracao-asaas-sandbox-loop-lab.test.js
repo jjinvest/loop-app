@@ -39,7 +39,6 @@ test('montagem: API Sandbox -> cobranca -> titular -> ponte -> uma posicao SQLit
  assert.equal(banco.prepare('SELECT COUNT(*) AS n FROM admin_ponte_compras_demo').get().n,0);
  clienteRemoto='cus_SandboxMontagem1';
  // Acompanhamento automatico: o cliente nao precisa confirmar pagamento manualmente.
- m.automatico.acompanhar(PEDIDO);
  await m.automatico.verificar();
  assert.equal(m.automatico.pendentes.size,0);
  const b=await m.conciliador.processar(PEDIDO);
