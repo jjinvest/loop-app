@@ -4,6 +4,7 @@
 // Montantes sao referencias de ciclos ja concluidos, NAO saldo liquidado real.
 // Nunca converte provisoes em disponibilidades reais.
 const {prazoDaSolicitacao}=require('./solicitacoes-saque-demo-sqlite');
+const {VERSAO_TERMOS_DEMO}=require('./adesoes-posicoes-demo-sqlite');
 const ID=/^saque-centro-[a-z0-9-]{8,76}$/;
 const EVENTO_ID=/^evt-saque-[a-z0-9-]{8,76}$/;
 const FASES={
@@ -119,8 +120,15 @@ class RetornoSaqueCentroV6DemoSQLite{
     return {...this._detalhe(anterior),repetida:true};
    }
    const adesao=b.prepare("SELECT 1 FROM sqlite_master WHERE type='table' AND name='admin_loop_adesoes_contas_demo'").get();
-   const confirmada=adesao&&b.prepare('SELECT 1 FROM admin_loop_adesoes_contas_demo WHERE conta_id=?').get(contaId);
-   if(!confirmada)throw falha('CPF_E_TERMOS_OBRIGATORIOS');
+   const confirmada=adesao&&b.prepare(
+    'SELECT termos_versao AS termosVersao,aceito_em AS aceitoEm '+
+    'FROM admin_loop_adesoes_contas_demo WHERE conta_id=?').get(contaId);
+   // Existencia do registro antigo nao substitui aceite da versao vigente.
+   // E a mesma regra aplicada aos bonus: CPF ficticio e termos validos.
+   if(!confirmada||confirmada.termosVersao!==VERSAO_TERMOS_DEMO||
+      typeof confirmada.aceitoEm!=='string'||
+      !Number.isFinite(Date.parse(confirmada.aceitoEm)))
+    throw falha('CPF_E_TERMOS_OBRIGATORIOS');
    const saldo=this.consultar(contaId);
    if(valorCentavos>saldo.referenciaParaNovoPedidoFicticioCentavos)
      throw falha('REFERENCIA_CENTRO_TESTE_INSUFICIENTE');
