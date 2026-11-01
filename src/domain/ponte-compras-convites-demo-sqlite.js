@@ -305,6 +305,22 @@ class PonteComprasConvitesDemoSQLite{
     BEFORE DELETE ON admin_ponte_posicoes_adicionais_demo
     BEGIN SELECT RAISE(ABORT,'pacote de posicoes imutavel'); END;
   `);
+  // UNIQUE isolado nas tabelas nao impede reutilizar uma cadeira nos
+  // livros de compra primaria e de posicoes extras. Impedir ambos sentidos
+  // no proprio SQLite, na transacao que grava a compra, sem mudar historico.
+  // Criar DEPOIS da migracao da tabela antiga de posicoes adicionais.
+  this.banco.exec(`
+   CREATE TRIGGER IF NOT EXISTS admin_ponte_posicao_primaria_sem_reuso_extra
+    BEFORE INSERT ON admin_ponte_compras_demo
+    WHEN EXISTS(SELECT 1 FROM admin_ponte_posicoes_adicionais_demo x
+     WHERE x.posicao_id=NEW.posicao_id)
+    BEGIN SELECT RAISE(ABORT,'posicao ja usada em pacote'); END;
+   CREATE TRIGGER IF NOT EXISTS admin_ponte_posicao_extra_sem_reuso_primaria
+    BEFORE INSERT ON admin_ponte_posicoes_adicionais_demo
+    WHEN EXISTS(SELECT 1 FROM admin_ponte_compras_demo p
+     WHERE p.posicao_id=NEW.posicao_id)
+    BEGIN SELECT RAISE(ABORT,'posicao ja usada em compra'); END;
+  `);
   // Para bancos do laboratorio criados antes desta atualizacao:
   // atribui a referencia historica unica R$250, sem alterar pedidos.
   banco.prepare(`
