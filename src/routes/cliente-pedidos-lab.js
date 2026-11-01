@@ -1,12 +1,22 @@
 'use strict';
 const express=require('express');
 const {randomBytes,createHash}=require('node:crypto');
+const {localSeguro}=require('./admin-catalogo-laboratorio');
 function criarRouterClientePedidosLab({contas,pedidos,carrinho=null}={}){
  if(!contas||!pedidos||contas.banco!==pedidos.banco||
     typeof contas.autenticar!=='function'||typeof pedidos.listarPorTitular!=='function')
   throw new TypeError('Dependencias de laboratorio invalidas');
  const router=express.Router(),sessoes=new Map(),tentativas=new Map();
- router.use((_q,res,next)=>{res.set('Cache-Control','no-store');next();});
+ // Defesa interna: socket local, Host/Origin confiaveis e ambiente nao produtivo.
+ // Mesmo montado por engano em outro servidor, o LAB nao aceita rede publica
+ // ou DNS rebinding com host de um dominio externo.
+ router.use((req,res,next)=>{
+  if(process.env.NODE_ENV==='production'||!localSeguro(req))
+   return res.status(403).json({erro:'LABORATORIO_LOCAL_APENAS'});
+  res.set('Cache-Control','no-store');
+  res.set('Referrer-Policy','no-referrer');
+  next();
+ });
  const chave=t=>createHash('sha256').update(t).digest('hex');
  function sessao(req,res,next){
   const token=req.get('authorization')?.match(/^Bearer ([a-f0-9]{64})$/)?.[1];
