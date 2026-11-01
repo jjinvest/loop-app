@@ -5,14 +5,14 @@
 
 ## Padrão de identificação a partir de agora
 
-- **LOOP-C001, LOOP-C002...** = conversas comuns do ChatGPT. Atribuir **um número novo por conversa**, nunca reaproveitar.
+- **LOOP-C001, LOOP-C002...** = identificadores de conversas importantes quando fizer sentido registrá-las, **sem obrigar número para cada chat curto, bloqueado ou somente leitura**. Números já atribuídos não são reutilizados.
 - **LOOP-W001, LOOP-W002...** = sessões do **Work**, em sequência independente.
 - **LOOP-H001, LOOP-H002...** = **marcos históricos** reconstruídos de registros anteriores. Não são IDs originais de chats nem significam necessariamente uma conversa para cada marco.
-- Usar o número no título do chat quando o usuário puder renomeá-lo: `LOOP-C001 — Índice e Marco Zero`. A alteração do título no aplicativo não pode ser feita por este arquivo.
+- Preferência atual do proprietário: concentrar as conversas no **Projeto do ChatGPT `LOOP 3.0 / AKITEMM`**, reduzindo a proliferação de chats numerados. A criação do Projeto e a ação `Mover para projeto` devem ser feitas pelo proprietário na interface; uma edição do GitHub não consegue organizar a barra lateral do aplicativo.
 - Em cada novo chat: primeiro ler [índice técnico vigente](./LEIA_PRIMEIRO_LOOP_30_INDICE_VIGENTE.md), [documento-mestre](./COMANDO_MESTRE_LOOP_03_CONTINUIDADE.md) e **HEAD real do GitHub**. Este índice é **navegação**, não substitui o código nem as evidências.
 - Registrar decisões novas com **aprovado / implementado / testado / pendente**, links de documento e commit quando conhecidos. Não colocar credenciais, CPF, informações particulares nem transcrição integral das conversas.
 - **Concorrência:** ChatGPT e Work podem consultar o mesmo repositório, mas antes de gravar cada um deve reler o HEAD; evitar editar os mesmos arquivos em paralelo. Sem merge, deploy, ativação comercial ou pagamentos reais sem autorização.
-- Quem abrir um novo chat pode dizer: **“01, continue pelo LOOP-C002 e pelo índice numerado no GitHub.”** O novo ID deve ser a próxima posição realmente usada.
+- Quem abrir um novo chat pode dizer apenas: **“01, continue pelo índice vigente do GitHub e pelo HEAD da branch do LOOP.”** O número de conversa é opcional, usado somente quando houver valor histórico.
 
 ## Conversas contemporâneas
 
@@ -49,7 +49,7 @@ Estes são **marcos de assunto** encontrados em registros de continuidade, não 
 
 ## Como registrar uma nova conversa sem repetir auditorias
 
-Adicionar uma linha na tabela contemporânea, incrementar o número da mesma série e referenciar o assunto e a seção do documento-mestre. O Work deve usar `W`, o chat comum deve usar `C`. Se a numeração real do Work ainda não estiver confirmada, manter `RESERVADO`, sem marcar como concluído. Nunca transformar estimativa de progresso em “pronto para inaugurar”. Os seis gates externos do Marco Zero ainda dependem de provas e decisões independentes.
+Somente quando um chat trouxer decisão ou marco relevante, adicionar uma linha na tabela contemporânea, atribuir o próximo número livre e referenciar o assunto e a seção do documento-mestre. Chats curtos, bloqueados ou repetidos não exigem entrada. O Work deve usar `W`, o chat comum deve usar `C`. Se a numeração real do Work ainda não estiver confirmada, manter `RESERVADO`, sem marcar como concluído. Nunca transformar estimativa de progresso em “pronto para inaugurar”. Os seis gates externos do Marco Zero ainda dependem de provas e decisões independentes.
 
 ## Plano de migracao de aparelho, conta ou assistente
 
@@ -61,3 +61,7 @@ Adicionar uma linha na tabela contemporânea, incrementar o número da mesma sé
 
 Ajuda oficial: https://help.openai.com/en/articles/8142208-chatgpt-ios-and-android-app-faq e https://help.openai.com/pt-br/articles/9106926-transfer-exported-conversations-between-chatgpt-accounts.
 
+
+## Organização preferencial da barra lateral — 01/11/2026
+
+O proprietário relatou duas conversas recentes em estado 'somente leitura' e quer evitar multiplicação de números/fragmentos. **Diretriz aprovada: um único Projeto do ChatGPT chamado `LOOP 3.0 / AKITEMM`, quando criado pelo proprietário, agrupando chats relevantes e mantendo o GitHub como fonte de verdade.** A interface de Projetos é separada do GitHub: **criação e migração não foram executadas por esta integração**. Não apagar chats bloqueados para supostamente ganhar espaço nem tratar o Projeto como substituto do documento-mestre. Continuar trabalho na branch já existente, sem merge ou deploy.
