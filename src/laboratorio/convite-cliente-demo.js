@@ -63,7 +63,7 @@
     lista.append(item);
    }
    e('statusVitrineConvite').textContent=data.produtos.length?
-    'Para comprar, cadastre-se e entre no Escritório Virtual.':
+    'Para finalizar a compra, cadastre-se ou entre na sua conta.':
     'Nenhum produto publicado neste momento.';
   }catch(err){e('statusVitrineConvite').textContent=err.message;}
  }
@@ -79,7 +79,8 @@
     return;
    }
    estado.textContent='Convite de '+info.nomeIndicador+
-    '. Cadastre-se para receber seu próprio link, inicialmente inativo.';
+    (destino==='loja'?'. Você pode ver os produtos sem cadastro; identifique-se para comprar.':
+     '. Cadastre-se ou entre na sua conta para acessar o Escritório Virtual.');
    form.hidden=false;
    // A vitrine publica pode ser consultada antes do cadastro.
    // O cadastro permanece exigido para finalizar qualquer pedido.
@@ -110,7 +111,7 @@
    });
    e('senhaConvite').value='';
    if(!resposta.ok){
-    estado.textContent='Cadastro concluído. Faça login pelo Escritório LOOP para acessar sua conta.';
+    estado.textContent='Cadastro concluído. Entre na sua conta para continuar.';
     return;
    }
    location.replace(destino==='loja'?'/loja':'/escritorio');
