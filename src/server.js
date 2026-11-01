@@ -14,7 +14,10 @@ const healthRouter = require('./routes/health');
 const catracaRouter = require('./routes/catraca');
 const filasRouter = require('./routes/filas');
 const participantsRouter = require('./routes/participants');
-const catalogoRouter = require('./routes/catalogo');
+const { criarRouterCatalogo } = require('./routes/catalogo');
+const { RepositorioCatalogoMemoria } = require('./domain/repositorio-catalogo-memoria');
+const { listarCatalogo } = require('./domain/catalogo');
+const { criarRouterCheckoutPublico } = require('./routes/checkout-publico');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -32,7 +35,21 @@ app.use('/health', healthRouter);
 app.use('/catraca', bloquearMutacoesSimuladas, catracaRouter);
 app.use('/filas', bloquearMutacoesSimuladas, filasRouter);
 app.use('/participants', participantsRouter);
-app.use('/catalogo', catalogoRouter);
+// Mesmo catalogo para vitrine e cotacao, sem habilitar pedidos reais.
+const repositorioCatalogoPublico=new RepositorioCatalogoMemoria({
+  produtos:listarCatalogo()
+});
+app.use('/catalogo',criarRouterCatalogo({repositorio:repositorioCatalogoPublico}));
+app.use('/api/checkout',criarRouterCheckoutPublico({repositorio:repositorioCatalogoPublico}));
+// Liveness /health permanece independente. Readiness comercial nunca
+// devolve OK sem evidencias homologadas; nao existe override por env.
+app.get('/health/ready',(_req,res)=>res.status(503)
+ .set('Cache-Control','no-store')
+ .set('Retry-After','86400')
+ .json({estado:'NAO_PRONTO_PARA_VENDAS',checkoutPublico:false,
+  pagamentosReais:false,marcoZeroLiberado:false,
+  bloqueios:['CHECKOUT_PUBLICO','ASAAS_REMOTO','BANCO_E_SAQUES',
+   'PRODUCAO_E_SEGURANCA','ESCRITORIO_VISUAL','JURIDICO']}));
 
 // Laboratorio de clientes: opt-in e apenas requisicoes locais.
 if(process.env.LOOP_CLIENTES_LAB==='SIM'){
