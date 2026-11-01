@@ -5,7 +5,8 @@
 const express=require('express');
 const {localSeguro}=require('./admin-catalogo-laboratorio');
 function criarRouterPrePedidosCheckoutStaging({
- prePedidos,repositorioCatalogo,identificarTitular,autorizarMutacao
+ prePedidos,repositorioCatalogo,identificarTitular,autorizarMutacao,
+ ponteAsaasSandbox=null
 }={}){
  if(typeof prePedidos?.preparar!=='function'||
   typeof prePedidos?.consultar!=='function'||
@@ -14,6 +15,8 @@ function criarRouterPrePedidosCheckoutStaging({
   typeof identificarTitular!=='function'||
   typeof autorizarMutacao!=='function')
   throw new TypeError('Prepedidos, catalogo, autenticacao e CSRF obrigatorios');
+ if(ponteAsaasSandbox!==null&&typeof ponteAsaasSandbox.consultar!=='function')
+  throw new TypeError('Ponte Asaas Sandbox de somente leitura invalida');
  const r=express.Router();
  r.use(async(req,res,next)=>{
   res.set('Cache-Control','no-store');
@@ -71,6 +74,26 @@ function criarRouterPrePedidosCheckoutStaging({
    });
    return p?res.json({prepedido:p}):
     res.status(404).json({erro:'PREPEDIDO_NAO_ENCONTRADO'});
+  }catch(e){erro(e,res,next);}
+ });
+ // Projecao somente leitura de status PSP persistido. Nao confere na
+ // rede nem cria Pix ao abrir Meus Pedidos. Sem expor cliente PSP ou chave.
+ r.get('/prepedidos/:prepedidoId/sandbox',(req,res,next)=>{
+  try{
+   const titularId=req.titularPrePedido,prepedidoId=req.params.prepedidoId;
+   const pedido=prePedidos.consultar({titularId,prepedidoId});
+   if(!pedido)return res.status(404).json({erro:'PREPEDIDO_NAO_ENCONTRADO'});
+   if(!ponteAsaasSandbox)return res.status(503).json({
+    erro:'PONTE_SANDBOX_STAGING_NAO_CONFIGURADA'
+   });
+   const consulta=ponteAsaasSandbox.consultar({titularId,prepedidoId});
+   return res.json({
+    prepedidoId,estado:consulta?.estado??'SEM_COBRANCA_SANDBOX',
+    cobrancaSandbox:consulta,
+    ambiente:'LABORATORIO_LOCAL_SOMENTE_LEITURA',
+    consultaRemotaExecutada:false,comprovanteFinanceiro:false,
+    pagamentoReal:false,posicoesCriadas:0
+   });
   }catch(e){erro(e,res,next);}
  });
  return r;
