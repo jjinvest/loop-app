@@ -24,7 +24,7 @@ function montarIntegracaoAsaasSandboxLoopLab({banco,contas,titularidade,apiKey,f
     ponte.atribuicaoManualPorPosicao!==true))
   throw new TypeError('Ponte compartilhada deve usar o mesmo banco, titularidade e adesao individual');
  // Ponte externa pode consultar PSP ficticio: proibido compartilhar ate validar a fonte.
- if(ponte)throw new TypeError('Ponte externa requer comprovante Asaas verificado; compartilhamento bloqueado');
+ if(ponte)ponte.configurarFonteAsaasSandbox(comprovantes);
  const ponteIntegrada=new PonteComprasConvitesDemoSQLite({
   banco,contas,pedidosIdentificados:titularidade,
   consultarPagamentoConfiavel:pedidoId=>comprovantes.consultar(pedidoId),
