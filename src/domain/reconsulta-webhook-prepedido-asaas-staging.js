@@ -6,7 +6,9 @@ const {PontePrepedidoAsaasSandboxStaging}=
  require('./ponte-prepedido-asaas-sandbox-staging');
 const EVENTO=/^[A-Za-z0-9_&-]{5,150}$/;
 function falha(codigo){const e=new Error(codigo);e.codigo=codigo;return e;}
-const REVERSO=/^PAYMENT_(REFUND|CHARGEBACK|DELETED)/;
+const REVERSO=new Set(['PAYMENT_REFUNDED','PAYMENT_PARTIALLY_REFUNDED',
+ 'PAYMENT_REFUND_IN_PROGRESS','PAYMENT_CHARGEBACK_REQUESTED',
+ 'PAYMENT_CHARGEBACK_DISPUTE','PAYMENT_DELETED']);
 class ReconsultaWebhookPrepedidoAsaasStaging{
  constructor({banco,inbox,ponte,agora=()=>new Date().toISOString()}={}){
   if(process.env.NODE_ENV==='production')
@@ -78,7 +80,7 @@ class ReconsultaWebhookPrepedidoAsaasStaging{
     titularId,prepedidoId:aviso.prepedidoId,provedor
    });
    const status=estado.ultimaConsultaSandbox?.statusAsaas;
-   const reversaoAvisada=REVERSO.test(aviso.tipo);
+   const reversaoAvisada=REVERSO.has(aviso.tipo);
    const reversaoRemota=estado.estado==='REVERSAO_INFORMADA_SANDBOX';
    const recebidoAvisado=aviso.tipo==='PAYMENT_RECEIVED';
    const recebidoRemoto=status==='RECEIVED'&&
