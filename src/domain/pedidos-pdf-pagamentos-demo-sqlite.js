@@ -93,11 +93,19 @@ class PedidosPDFPagamentosDemoSQLite{
  status(pedidoId){
   const eventos=this.historico(pedidoId);
   const ultimo=eventos.at(-1);
+  // A fixture de PDF nunca deve ser liberada por pagamento ficticio
+  // se tambem existir cobranca de outro provedor para o mesmo pedido.
+  const temSandbox=this.banco.prepare(
+   "SELECT 1 FROM sqlite_master WHERE type='table' AND name='akitemm_sandbox_cobrancas'"
+  ).get();
+  const cobrancaSandbox=temSandbox&&this.banco.prepare(
+   'SELECT 1 FROM akitemm_sandbox_cobrancas WHERE pedido_id=?'
+  ).get(pedidoId);
   return {
    situacaoPagamentoFicticio:!ultimo?'AGUARDANDO_FICTICIO':
     ultimo.tipo===TIPOS.CONFIRMAR?'CONFIRMADO_FICTICIO':'ESTORNADO_FICTICIO',
    eventosPagamentoFicticio:eventos.length,
-   habilitacaoDownloadFicticia:Boolean(ultimo&&ultimo.tipo===TIPOS.CONFIRMAR)
+   habilitacaoDownloadFicticia:Boolean(ultimo&&ultimo.tipo===TIPOS.CONFIRMAR&&!cobrancaSandbox)
   };
  }
  historico(pedidoId){
@@ -148,8 +156,8 @@ class PedidosPDFPagamentosDemoSQLite{
     'SELECT pedido_id FROM admin_pdf_demo_pedidos WHERE pedido_id=?'
    ).get(pedidoId);
    if(!existe)throw falha('NAO_ENCONTRADO','Pedido PDF ficticio nao encontrado');
-   if(this.status(pedidoId).situacaoPagamentoFicticio!=='CONFIRMADO_FICTICIO'){
-    throw falha('SEM_DIREITO','Pagamento ficticio nao confirmado ou ja estornado');
+   if(!this.status(pedidoId).habilitacaoDownloadFicticia){
+    throw falha('SEM_DIREITO','Pagamento ficticio nao confirmado, estornado ou outra fonte de cobranca');
    }
    const data=new Date().toISOString();
    this.banco.prepare(
