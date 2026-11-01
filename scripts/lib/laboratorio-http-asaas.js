@@ -6,7 +6,7 @@ const {RepositorioCatalogoSQLite}=require('../../src/domain/repositorio-catalogo
 const {criarAppAdminLaboratorio}=require('../../src/laboratorio/servidor-catalogo');
 const {montarIntegracaoAsaasSandboxLoopLab}=require('../../src/domain/montagem-integracao-asaas-sandbox-loop-lab');
 const {ASAAS_SANDBOX_BASE}=require('../../src/domain/asaas-sandbox-loja-v6');
-async function abrirLaboratorio(caminho,{agora}={}){
+async function abrirLaboratorio(caminho,{agora,habilitarConviteLoopCheckout=false}={}){
  const repo=new RepositorioCatalogoSQLite({caminho});
  const banco=repo.banco;
  banco.exec(`CREATE TABLE IF NOT EXISTS lab_psp_http_fixture(
@@ -18,7 +18,7 @@ async function abrirLaboratorio(caminho,{agora}={}){
    entrega:'DOWNLOAD_APOS_CONFIRMACAO',fotos:[],videoApresentacaoUrl:null,detalhes:[]}});
  }
  let integracao;
- const app=criarAppAdminLaboratorio({repositorio:repo,ambienteSandbox:{},
+ const app=criarAppAdminLaboratorio({repositorio:repo,ambienteSandbox:{},habilitarConviteLoopCheckout,
   segredo:'administrador-local-ficticio-2026-123456789',
   criarCobrancaSandboxTeste:async({pedidoId})=>integracao.cobrancas.criar({
    pedidoId,origem:'CARRINHO',clienteAsaasId:'cus_FixtureHTTP'}),

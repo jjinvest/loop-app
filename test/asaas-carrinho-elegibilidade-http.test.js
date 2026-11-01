@@ -4,7 +4,7 @@ const assert=require('node:assert/strict');
 const {abrirLaboratorio}=require('../scripts/lib/laboratorio-http-asaas');
 const {ElegibilidadeProdutosLoopDemoSQLite}=require('../src/domain/elegibilidade-produtos-loop-demo-sqlite');
 for(const quantidade of [5,10])test('Sandbox respeita pacote congelado de '+quantidade+' posicoes, com ativacao individual',async t=>{
- const m=await abrirLaboratorio(':memory:');t.after(()=>m.fechar());
+ const m=await abrirLaboratorio(':memory:',{habilitarConviteLoopCheckout:true});t.after(()=>m.fechar());
  m.repo.salvar({revisaoEsperada:0,produto:{id:'pacote-ficticio-1500',nome:'Pacote ficticio de laboratorio',
   descricao:'Fixture da modalidade ja configuravel, sem oferta real',tipo:'PDF',estado:'PUBLICADO',
   precoCentavos:250000,entrega:'DOWNLOAD_APOS_CONFIRMACAO',fotos:[],videoApresentacaoUrl:null,detalhes:[]}});
@@ -19,10 +19,14 @@ for(const quantidade of [5,10])test('Sandbox respeita pacote congelado de '+quan
  const a=m.contas.cadastrar({nome:'Comprador Pacote',email:'pacote@example.invalid',senha});
  const {cookie}=await m.http('/entrar',{body:{nome:a.nome,senha}});
  const {data}=await m.http('/loja/pedidos',{cookie,status:201,
-  body:{itens:[{produtoId:'pacote-ficticio-1500',quantidade:1}]}});
+  body:{itens:[{produtoId:'pacote-ficticio-1500',quantidade:1}],participarLoop:true}});
  const id=data.pedido.pedidoId;
+ const somenteLoja=(await m.http('/loja/pedidos',{cookie,status:201,
+  body:{itens:[{produtoId:'pacote-ficticio-1500',quantidade:1}],participarLoop:false}})).data.pedido.pedidoId;
  // Mudanca posterior nao reescreve a modalidade fotografada.
  assert.equal((await fetch(evento+'/evento-pacote-sandbox/encerrar',{method:'POST',headers,body:'{}'})).status,200);
+ m.confirmar(somenteLoja);
+ assert.equal((await m.integracao.conciliador.processar(somenteLoja)).posicoesNoPedido,0);
  m.confirmar(id);await m.integracao.automatico.verificar();
  assert.equal(m.integracao.automatico.pendentes.size,0);
  const replay=await m.integracao.conciliador.processar(id);
@@ -39,7 +43,7 @@ for(const quantidade of [5,10])test('Sandbox respeita pacote congelado de '+quan
  assert.equal(m.banco.prepare('SELECT COUNT(*) n FROM admin_ponte_posicoes_adicionais_demo').get().n,quantidade-1);
  if(quantidade===10){
   const extra=(await m.http('/loja/pedidos',{cookie,status:201,
-   body:{itens:[{produtoId:'curso-lab-250',quantidade:1}]}})).data.pedido.pedidoId;
+   body:{itens:[{produtoId:'curso-lab-250',quantidade:1}],participarLoop:true}})).data.pedido.pedidoId;
   m.confirmar(extra);
   await assert.rejects(m.integracao.conciliador.processar(extra),{codigo:'LIMITE_ATIVO'});
   assert.equal(m.banco.prepare('SELECT COUNT(*) n FROM admin_ponte_compras_demo').get().n,1);
