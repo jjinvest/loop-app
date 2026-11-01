@@ -16,6 +16,9 @@ on:
       - 'src/domain/montagem-integracao-asaas-sandbox-loop-lab.js'
       - 'src/laboratorio/servidor-catalogo.js'
       - 'src/routes/participante-laboratorio-demo.js'
+      - 'src/routes/admin-escritorio-demo.js'
+      - 'src/domain/operacao-cliente-sqlite-lab.js'
+      - 'test/operacao-cliente-sqlite-lab.test.js'
       - 'test/montagem-integracao-asaas-sandbox-loop-lab.test.js'
       - 'test/loja-cliente-sessao-carrinho.test.js'
   workflow_dispatch:

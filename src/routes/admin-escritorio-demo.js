@@ -3,6 +3,7 @@
 // Painel de participantes FICTICIOS; rota exclusiva do servidor local
 // protegido pelo mesmo segredo de laboratorio do painel administrativo.
 const express = require('express');
+const {consultarOperacaoClienteLab}=require('../domain/operacao-cliente-sqlite-lab');
 const { criarAutorizacao } = require('./admin-catalogo-laboratorio');
 const { criarVisaoEscritorioDemo, TITULARES_FICTICIOS } =
   require('../domain/visao-escritorio-demo');
@@ -103,6 +104,19 @@ function criarRouterEscritorioDemo({segredo,publicacoes=null}={}) {
   });
   // Relacao administrativa REAL do laboratorio: apenas compras documentadas
   // na ponte SQLite, nunca o cenario demonstrativo isolado.
+  router.get('/escritorio-demo/clientes/:id/operacao',(req,res,next)=>{
+    if(!publicacoes?.banco)return res.status(501).json({erro:'FONTE_SQLITE_INDISPONIVEL'});
+    if(Object.keys(req.query).some(k=>!['limite','offset'].includes(k))||
+       Object.values(req.query).some(v=>typeof v!=='string'||!/^\d{1,9}$/.test(v)))
+      return res.status(400).json({erro:'PAGINACAO_INVALIDA'});
+    try{return res.json(consultarOperacaoClienteLab({banco:publicacoes.banco,
+      contaId:req.params.id,limite:Number(req.query.limite??50),offset:Number(req.query.offset??0)}));}
+    catch(e){
+      if(e.codigo)return res.status(e.codigo==='CLIENTE_NAO_ENCONTRADO'?404:
+        e.codigo==='CADASTRO_SQLITE_INDISPONIVEL'?501:400).json({erro:e.codigo});
+      return next(e);
+    }
+  });
   router.get('/escritorio-demo/clientes/:id/compras',(req,res)=>{
     if(!publicacoes?.banco)return res.status(501).json({erro:'FONTE_SQLITE_INDISPONIVEL'});
     const banco=publicacoes.banco;
