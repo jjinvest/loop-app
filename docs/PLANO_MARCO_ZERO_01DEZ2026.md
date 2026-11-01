@@ -69,3 +69,9 @@ Preparação feita em `src/domain/intencoes-checkout-sqlite.js` e `src/routes/ra
 **O que realmente falta na parte pública:** substituir os adaptadores de identidade e CSRF fictícios por autenticação e gestão de sessões de produção auditadas; atribuir vínculo durável a titular verificado e cadastro/termos; modelar a transição de rascunho para pedido comercial real, com preço e entrega reconfirmados; prover checkout Asaas Sandbox em staging com webhook autêntico, antes de qualquer cobrança real. O código de staging é preparação de testes, não substituto de checkout de produção, e não deve ser habilitado por flag.
 
 **CI e critérios finais:** registrar separadamente o run do código validado, o SHA exato e as evidências de navegador no documento-mestre. O Marco Zero continua NÃO LIBERADO para vendas até cumprimento verificável dos seis gates externos; 01/12 permanece data-alvo condicional.
+
+## Sessao staging integrada ao pedido — 01/11/2026
+
+A camada local de rascunhos agora possui ensaio HTTP com identidade derivada por scrypt, sessão SQLite persistida com hash do token, CSRF, isolamento dos rascunhos por titular, logout, expiração e bloqueio temporário de tentativas incorretas. [CI 741/741 PASS + navegador](https://github.com/jjinvest/loop-app/actions/runs/41342261523). O módulo é intencionalmente **não montado em `src/server.js`** e o cookie local não utiliza `Secure` por funcionar apenas em HTTP loopback; não habilitar em domínio público.
+
+**Caminho crítico seguinte, sem atalhos:** definir provedor/infra de autenticação e HTTPS, dados e consentimentos mínimos, política de senha e recuperação, cookies `Secure`, limites de rate distribuídos, gestão de segredos e auditoria; depois transição transacional de rascunho para pedido comercial e integração autorizada Asaas Sandbox **remota** em staging. Sem esses pontos e sem gates financeiros/jurídicos, não há GO para compras reais em 01/12.
