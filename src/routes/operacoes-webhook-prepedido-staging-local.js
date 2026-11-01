@@ -9,6 +9,7 @@ function criarRouterOperacoesWebhookPrepedidoStagingLocal({
 }={}){
  if(typeof worker?.pendencias!=='function'||
     typeof worker?.resumoPendencias!=='function'||
+    typeof worker?.paginarPendencias!=='function'||
     typeof worker?.recuperarTravados!=='function'||
     typeof autorizarOperador!=='function'||
     typeof autorizarMutacao!=='function')
@@ -28,14 +29,20 @@ function criarRouterOperacoesWebhookPrepedidoStagingLocal({
    next();
   }catch(_e){return res.status(403).json({erro:'OPERADOR_NAO_AUTORIZADO'});}
  });
- r.get('/webhooks/pendencias',(_req,res)=>{
-  // A listagem e limitada, mas a contagem consulta a fila inteira.
-  // Sem parametros do cliente, sem rede e sem informacoes pessoais.
-  const pendencias=worker.pendencias();
-  const resumo=worker.resumoPendencias();
-  return res.json({pendencias,resumo,exibidos:pendencias.length,
-   haMais:resumo.total>pendencias.length,
-   consultaRemotaExecutada:false,pagamentoReal:false,posicoesCriadas:0});
+ r.get('/webhooks/pendencias',(req,res)=>{
+  // Cursor apenas por ID de evento, sem OFFSET ou leitura do PSP.
+  // Recusa parametros extras e valores repetidos/objetos.
+  if(Object.keys(req.query).some(chave=>chave!=='apos')||
+     (Object.hasOwn(req.query,'apos')&&typeof req.query.apos!=='string'))
+   return res.status(400).json({erro:'CURSOR_PENDENCIAS_INVALIDO'});
+  try{
+   const pagina=worker.paginarPendencias({apos:req.query.apos??null});
+   const resumo=worker.resumoPendencias();
+   return res.json({...pagina,resumo,exibidos:pagina.pendencias.length,
+    consultaRemotaExecutada:false,pagamentoReal:false,posicoesCriadas:0});
+  }catch(_e){
+   return res.status(400).json({erro:'CURSOR_PENDENCIAS_INVALIDO'});
+  }
  });
  r.post('/webhooks/recuperar',async(req,res)=>{
   try{
