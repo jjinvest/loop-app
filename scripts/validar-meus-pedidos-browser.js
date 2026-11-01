@@ -7,6 +7,48 @@ const {DatabaseSync}=require('node:sqlite');
 const {chromium}=require('playwright');
 const {ContasParticipantesDemoSQLite}=require('../src/domain/contas-participantes-demo-sqlite');
 const {PedidosTitularidadeDemoSQLite}=require('../src/domain/pedidos-titularidade-demo-sqlite');
+const assert=require('node:assert/strict');
+const {abrirLaboratorio}=require('./lib/laboratorio-http-asaas');
+
+async function validarPosicaoIntegrada(browser,pasta){
+ const m=await abrirLaboratorio(path.join(pasta,'posicao-http.sqlite'));
+ try{
+  const senha='senha-posicao-navegador-2026';
+  const conta=m.contas.cadastrar({nome:'Cliente Posicao Integrada',
+   email:'posicao-navegador@example.invalid',senha});
+  let pedidoId;
+  for(const [nome,viewport] of [['pc',{width:1280,height:900}],['celular',{width:390,height:844}]]){
+   const contexto=await browser.newContext({viewport});
+   try{
+    const pagina=await contexto.newPage();
+    await pagina.goto(m.base+'/laboratorio/participante');
+    await pagina.locator('#nomeParticipante').fill(conta.nome);
+    await pagina.locator('#senhaParticipante').fill(senha);
+    await pagina.locator('#botaoEntrarParticipante').click();
+    await pagina.locator('#conteudoParticipante').waitFor({state:'visible'});
+    if(!pedidoId){
+     const r=await contexto.request.post(m.base+'/api/laboratorio/participante/loja/pedidos',{
+      headers:{'X-LOOP-LAB':'participante'},
+      data:{itens:[{produtoId:'curso-lab-250',quantidade:1}]}});
+     assert.equal(r.status(),201);pedidoId=(await r.json()).pedido.pedidoId;
+     m.confirmar(pedidoId);await m.integracao.automatico.verificar();
+    }
+    await pagina.reload();
+    await pagina.locator('#conteudoParticipante').waitFor({state:'visible'});
+    await pagina.locator('[data-loop03-aba="posicoes"]').click();
+    const pendente=pagina.locator('#loop03OpcoesPosicoes .loop03-status-confirmacao-pendente');
+    await pendente.waitFor({state:'visible'});assert.equal(await pendente.count(),1);
+    const resposta=await contexto.request.get(m.base+'/api/laboratorio/participante/minha-conta');
+    assert.equal(resposta.status(),200);
+    const visao=await resposta.json();
+    assert.equal(visao.posicoes.length,1);assert.equal(visao.posicoes[0].statusAdesao,'PENDENTE');
+    await pagina.screenshot({path:'artifacts/posicao-asaas-integrada-'+nome+'.png',fullPage:true});
+   }finally{await contexto.close();}
+  }
+  assert.equal(m.banco.prepare('SELECT COUNT(*) n FROM admin_ponte_compras_demo').get().n,1);
+  console.log('COMPRA_HTTP_ASAAS_SIMULADO_POSICAO_NAVEGADOR_PC_CELULAR_OK');
+ }finally{await m.fechar();}
+}
 
 async function executar(){
  const pasta=fs.mkdtempSync(path.join(os.tmpdir(),'loop-pedidos-browser-'));
@@ -48,6 +90,7 @@ async function executar(){
   fs.mkdirSync('artifacts',{recursive:true});
   await page.screenshot({path:'artifacts/meus-pedidos-real.png',fullPage:true});
   console.log('MEUS_PEDIDOS_BROWSER_SQLITE_OK');
+  await validarPosicaoIntegrada(browser,pasta);
  }finally{
   if(browser)await browser.close();
   servidor.kill('SIGTERM');

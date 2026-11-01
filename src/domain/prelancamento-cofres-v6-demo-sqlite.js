@@ -113,11 +113,11 @@ class PreLancamentoCofresV6DemoSQLite{
    ].join(' '));
    let novas=0;
    let numeroAportes=b.prepare('SELECT COUNT(*) AS n FROM loop_v6_pre_receitas').get().n;
+   const consultarReceita=b.prepare('SELECT * FROM loop_v6_pre_receitas WHERE pedido_id=?');
    for(const compra of compras){
     // Aporte foi confirmado somente no LIVRO FICTICIO SEPARADO, nao pela venda.
     // Nao comparar bruto da loja com aporte distinto: fluxo comercial independente.
-    const atual=b.prepare('SELECT * FROM loop_v6_pre_receitas WHERE pedido_id=?')
-      .get(compra.pedidoId);
+    const atual=consultarReceita.get(compra.pedidoId);
     if(atual){
      if(atual.conta_id!==compra.contaId||atual.bruto_centavos!==compra.brutoCentavos||
         atual.liquido_centavos!==l.liquido_por_compra)

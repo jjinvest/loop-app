@@ -186,21 +186,24 @@ function restaurarSnapshot(snapshot, criarLoop) {
 
   // A instancia original nao e tocada. Uma falha de validacao cancela tudo.
   const loop = criarLoop();
-  loop.filas.filaA = copiar(f.filaA);
-  loop.filas.filaB = copiar(f.filaB);
+  // s ja e uma copia profunda exclusiva desta restauracao. Reutilizar
+  // suas estruturas validadas evita copiar todo o historico outra vez,
+  // sem reter referencias do snapshot fornecido pelo chamador.
+  loop.filas.filaA = f.filaA;
+  loop.filas.filaB = f.filaB;
   loop.filas.sequencia = f.sequencia;
   loop.filas.contadorA = f.contadorA;
   loop.filas.evento = f.evento;
-  loop.filas.indicacoes = new Map(copiar(indicacoes));
+  loop.filas.indicacoes = new Map(indicacoes);
   loop.filas.indicacoesProcessadas = new Set(eventos);
-  loop.filas.vendasRegistradas = new Map(copiar(indiceVendas));
+  loop.filas.vendasRegistradas = new Map(indiceVendas);
   loop.filas.participantesConhecidos = new Set(conhecidos);
-  loop.filas.ultimaPromovidaPorTitular = new Map(copiar(marcos));
-  loop.tabuleiro.centro = copiar(t.centro);
-  loop.tabuleiro.vagas = copiar(t.vagas);
-  loop.tabuleiro.vendasDoCiclo = copiar(vendas);
+  loop.filas.ultimaPromovidaPorTitular = new Map(marcos);
+  loop.tabuleiro.centro = t.centro;
+  loop.tabuleiro.vagas = t.vagas;
+  loop.tabuleiro.vendasDoCiclo = vendas;
   loop.tabuleiro.vendasProcessadas = new Set(processadas);
-  loop.tabuleiro.ciclosConcluidos = copiar(concluidos);
+  loop.tabuleiro.ciclosConcluidos = concluidos;
   loop.tabuleiro.iniciado = t.iniciado;
   loop.catracaAberta = c.aberta;
   loop.giros = c.giros;

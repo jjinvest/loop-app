@@ -59,6 +59,18 @@ test('snapshot apos giro restaura historico e permite iniciar proximo ciclo', ()
   assert.equal(recuperado.estado().catraca.giros,2);
   assert.equal(recuperado.registrarVendaNoCicloSimulada({vendaId:'c1-1'}).repetida,true);
 });
+test('duas restauracoes nao compartilham posicoes, indicacoes ou referencias com a entrada',()=>{
+ const snapshot=criarCenario().exportarSnapshot();
+ const original=JSON.parse(JSON.stringify(snapshot));
+ const a=SimuladorLoop.restaurarSnapshot(snapshot);
+ const b=SimuladorLoop.restaurarSnapshot(snapshot);
+ a.filas.filaB[0].nome='Alterado somente A';
+ a.filas.vendasRegistradas.get('pedido-1').nome='Indice alterado A';
+ a.filas.indicacoes.get('cliente-9').quantidade=999;
+ a.tabuleiro.centro.nome='Centro alterado A';
+ assert.deepEqual(snapshot,original);
+ assert.deepEqual(b.exportarSnapshot(),original);
+});
 
 test('snapshot tem representacao JSON transferivel entre processos (arquivo temporario)', (t) => {
   const loop=criarCenario();
