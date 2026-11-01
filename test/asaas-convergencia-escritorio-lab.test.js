@@ -97,3 +97,47 @@ test('monitor identifica recebimento orfao e valor divergente sem reconciliar au
  assert.equal(m.banco.prepare('SELECT COUNT(*) n FROM admin_ponte_compras_demo').get().n,0);
  assert.equal(Object.values(m.banco.prepare('PRAGMA integrity_check').get())[0],'ok');
 });
+
+test('Escritorio sinaliza status futuro desconhecido do PSP e nunca cria posicao sem reconsulta valida',async t=>{
+ const m=await abrirLaboratorio(':memory:');t.after(()=>m.fechar());
+ const cliente=m.contas.cadastrar({nome:'Cliente Estado PSP',
+  email:'psp-estado-futuro@example.invalid',senha:'senha-ficticia-psp-estado'});
+ const {cookie}=await m.http('/entrar',{body:{nome:cliente.nome,senha:'senha-ficticia-psp-estado'}});
+ const pedido=(await m.http('/loja/pedidos',{cookie,status:201,body:{
+  itens:[{produtoId:'curso-lab-250',quantidade:1}]}})).data.pedido.pedidoId;
+ m.banco.prepare("UPDATE lab_psp_http_fixture SET status='NEW_FUTURE_STATUS' WHERE pedido=?")
+  .run('LOOPLAB-'+pedido);
+ const consulta=await m.integracao.cobrancas.conferir(pedido);
+ assert.equal(consulta.status,'STATUS_DESCONHECIDO_SANDBOX');
+ const antes=m.banco.prepare('SELECT total_changes() AS n').get().n;
+ const alerta=await resumo(m);
+ assert.equal(m.banco.prepare('SELECT total_changes() AS n').get().n,antes);
+ assert.equal(alerta.cobrancas,1);
+ assert.equal(alerta.estadosAsaasDesconhecidos,1);
+ assert.equal(alerta.anomaliasContadasPorCriterio,1);
+ assert.equal(alerta.revisaoManualIndicada,true);
+ assert.equal(alerta.pedidosComPosicao,0);
+ assert.equal(alerta.pagamentosReais,false);
+ await assert.rejects(()=>m.integracao.conciliador.processar(pedido));
+ assert.equal(m.banco.prepare('SELECT COUNT(*) AS n FROM admin_ponte_compras_demo').get().n,0);
+ m.confirmar(pedido);
+ await m.integracao.conciliador.processar(pedido);
+ const recuperado=await resumo(m);
+ assert.equal(recuperado.estadosAsaasDesconhecidos,0);
+ assert.equal(recuperado.revisaoManualIndicada,false);
+ assert.equal(recuperado.pedidosComPosicao,1);
+ assert.equal((await m.http('/minha-conta',{cookie})).data.posicoes.length,1);
+ assert.equal(m.ponte._restaurar().giros,0);
+ assert.equal(Object.values(m.banco.prepare('PRAGMA integrity_check').get())[0],'ok');
+ assert.deepEqual(m.banco.prepare('PRAGMA foreign_key_check').all(),[]);
+});
+test('Monitor do escritorio torna visiveis estorno com posicao e status desconhecido',async t=>{
+ const m=await abrirLaboratorio(':memory:');t.after(()=>m.fechar());
+ const html=await(await fetch(m.base+'/admin/loop03')).text();
+ const script=await(await fetch(m.base+'/admin/loop03.js')).text();
+ for(const id of ['asaasStatusDesconhecidoAdmin','asaasReversoesComPosicaoAdmin'])
+  assert.ok(html.includes('id="'+id+'"'),id);
+ assert.match(script,/estadosAsaasDesconhecidos/);
+ assert.match(script,/reversoesComPosicaoPreservada/);
+ assert.match(html,/Reversões com posição preservada/);
+});
