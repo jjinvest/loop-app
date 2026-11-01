@@ -12,6 +12,9 @@ on:
       - 'test/links-unicos-loja-escritorio-demo.test.js'
       - 'src/routes/convite-cadastro-laboratorio-demo.js'
       - 'src/laboratorio/convite-cliente-demo.js'
+      - 'src/domain/conciliacao-automatica-asaas-sandbox-lab.js'
+      - 'src/domain/montagem-integracao-asaas-sandbox-loop-lab.js'
+      - 'test/montagem-integracao-asaas-sandbox-loop-lab.test.js'
   workflow_dispatch:
 permissions:
   contents: read
