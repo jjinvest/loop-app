@@ -463,6 +463,11 @@ class CarrinhoLojaLoopDemoSQLite{
     this.banco.exec('COMMIT');
     return {repetido:true,pedido:this.buscar(pedidoId)};
    }
+   // A cobranca Sandbox reserva a fonte de pagamento para este pedido
+   // ANTES da rede. Nao aceitar segunda fonte ficticia, nem para estorno.
+   if(this.banco.prepare("SELECT 1 FROM sqlite_master WHERE type='table' AND name='akitemm_sandbox_cobrancas'").get()&&
+      this.banco.prepare('SELECT 1 FROM akitemm_sandbox_cobrancas WHERE pedido_id=?').get(pedidoId))
+    throw falha('CONFLITO','FONTE_PAGAMENTO_SANDBOX_JA_INICIADA');
    const numero=this.eventos(pedidoId).length;
    if((tipo==='CONFIRMAR_FICTICIO'&&numero!==0)||
     (tipo==='ESTORNAR_FICTICIO'&&
@@ -478,6 +483,8 @@ class CarrinhoLojaLoopDemoSQLite{
  comprovanteConfirmado(pedidoId){
   const carrinho=this.buscar(pedidoId);
   if(!carrinho)throw falha('NAO_ENCONTRADO','Carrinho inexistente');
+  if(carrinho.situacaoPagamentoSandbox!==null)
+   throw falha('CONFLITO','FONTE_PAGAMENTO_SANDBOX_JA_INICIADA');
   if(carrinho.situacaoPagamentoFicticio!=='CONFIRMADO_FICTICIO')
    throw falha('NAO_CONFIRMADO','Pagamento nao confirmado ou estornado');
   const pedido=this.pedidosIdentificados.buscar(pedidoId);
@@ -496,6 +503,8 @@ class CarrinhoLojaLoopDemoSQLite{
  async sincronizar(pedidoId){
   const c=this.buscar(pedidoId);
   if(!c)throw falha('NAO_ENCONTRADO','Carrinho nao existe');
+  if(c.situacaoPagamentoSandbox!==null)
+   throw falha('CONFLITO','PEDIDO_RESERVADO_PARA_CONCILIACAO_ASAAS');
   if(c.situacaoPagamentoFicticio==='AGUARDANDO_FICTICIO')
    return {situacao:'AGUARDANDO_PAGAMENTO',posicaoCriada:false};
   if(c.situacaoPagamentoFicticio==='ESTORNADO_FICTICIO')
