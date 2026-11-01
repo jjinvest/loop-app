@@ -25,6 +25,7 @@
     <a href="/admin/circuit-break-v6">⏱ <span>Catraca e giros</span></a>
     <a href="#relatorioFinanceiroAdmin">▤ <span>Relatórios financeiros</span></a>
     <a href="#auditoriaOperacionalAdmin">◎ <span>Auditoria operacional</span></a>
+    <a href="#monitorConvergenciaAsaasAdmin">◎ <span>Pagamentos e conciliação</span></a>
     <a href="/admin/financeiro-demo">▤ <span>Financeiro</span></a>
     <a href="/admin">▦ <span>AKITEMM e produtos</span></a>
     <a href="/admin/escritorio-demo">✦ <span>Publicações</span></a>
@@ -106,6 +107,7 @@
       <div><a class="acesso-link" href="/admin/financeiro-demo">Financeiro · Cofres ↗</a></div>
       <div><a class="acesso-link" href="#relatorioFinanceiroAdmin">Relatórios · Saldos simulados ↓</a></div>
       <div><a class="acesso-link" href="#auditoriaOperacionalAdmin">Auditoria · Compras e posições ↓</a></div>
+      <div><a class="acesso-link" href="#monitorConvergenciaAsaasAdmin">Asaas Sandbox · Conciliação e callbacks ↓</a></div>
       <div><a class="acesso-link" href="#painelIndicacoesAdmin">Indicações · Prioridades ↓</a></div>
       <div><a class="acesso-link" href="/admin/escritorio-demo">Publicações · Banners ↗</a></div>
       <div><a class="acesso-link" href="#controleRelogioAdminLoop03">Configurações · Relógio ↓</a></div>
@@ -137,7 +139,7 @@
      <section class="painel regra" id="regraTrava">
       <small class="sobretitulo">REGRAS DE PRIORIDADE</small>
       <h2>Alternância da Fila A</h2>
-      <p>Um titular pode atribuir indicações a várias posições, mas apenas uma por vez ocupa a Fila A. A próxima é liberada depois que a anterior alcança a vaga indicada.</p>
+      <p>Indicações válidas são vinculadas individualmente a posições ativas. Um titular pode ter até dez posições na Fila A e no máximo duas no tabuleiro. O ajuste de liberação abaixo controla a transição configurada no laboratório.</p>
       <form id="formRegraAdminLoop03">
        <label for="vagaAdminLoop03">Liberar próxima posição na vaga:</label>
        <select id="vagaAdminLoop03" required>
@@ -155,6 +157,26 @@
       <p class="observacao">A alteração não retira posições que já estão na Fila A ou no Tabuleiro.</p>
      </section>
     </div>
+    <section class="painel historico" id="monitorConvergenciaAsaasAdmin" aria-label="Monitor operacional de pagamentos e conciliação Sandbox">
+      <div class="historico-titulo"><div><small class="sobretitulo">ASAAS SANDBOX · SQLITE AUTENTICADO</small><h2>Pagamentos, posições e callbacks</h2></div></div>
+      <p class="observacao">Monitor único do laboratório: cobranças, titularidade, posições criadas e alertas de callbacks. Dados somente leitura; não comprova liquidação bancária nem autoriza saque ou giro.</p>
+      <div class="loop03-resumo-indicacoes-admin" aria-label="Indicadores de conciliação">
+       <div><small>Cobranças Sandbox</small><strong id="asaasCobrancasAdmin">—</strong></div>
+       <div><small>Recebimentos informados pelo Sandbox</small><strong id="asaasRecebimentosAdmin">—</strong></div>
+       <div><small>Pedidos com posição vinculada</small><strong id="asaasPedidosComPosicaoAdmin">—</strong></div>
+       <div><small>Vendas somente AKITEMM</small><strong id="asaasSomenteLojaAdmin">—</strong></div>
+       <div><small>Recebidos aguardando ponte</small><strong id="asaasAguardandoPonteAdmin">—</strong></div>
+       <div><small>Reversões informadas</small><strong id="asaasReversoesAdmin">—</strong></div>
+       <div><small>Callbacks exigindo revisão</small><strong id="asaasCallbacksRevisaoAdmin">—</strong></div>
+       <div><small>Anomalias de integridade</small><strong id="asaasAnomaliasAdmin">—</strong></div>
+      </div>
+      <div class="status-linha"><span>Cobranças com criação indeterminada</span><strong id="asaasIndeterminadasAdmin">—</strong></div>
+      <div class="status-linha"><span>IDs reutilizados entre posições principais e extras</span><strong id="asaasIdsReutilizadosAdmin">—</strong></div>
+      <div class="status-linha"><span>Callbacks sem job / prontos / leases expirados</span><strong id="asaasFilaCallbacksAdmin">—</strong></div>
+      <div class="status-linha"><span>Conciliação bancária real</span><strong id="asaasBancoRealAdmin">Não homologada</strong></div>
+      <div class="status-linha"><span>Revisão manual indicada</span><strong id="asaasRevisaoGeralAdmin">—</strong></div>
+      <p id="asaasStatusConvergenciaAdmin" role="status" aria-live="polite" class="observacao">Autentique-se para consultar o monitor.</p>
+    </section>
     <section class="painel historico" id="auditoriaOperacionalAdmin" aria-label="Auditoria operacional do laboratorio">
       <div class="historico-titulo"><div><small class="sobretitulo">AUDITORIA · FONTE SQLITE</small><h2>Resultados operacionais do laboratório</h2></div></div>
       <p class="observacao">Somente registros locais persistidos. Valores reais, cofres e bolas douradas aparecem como indisponíveis até existir fonte conciliada; testes automatizados não são dinheiro recebido.</p>
@@ -189,7 +211,7 @@
       <div><small>Vinculadas definitivamente</small><strong id="indicacoesVinculadasAdmin">—</strong></div>
       <div><small>Aguardando ativação/conferência</small><strong id="indicacoesAguardandoAdmin">—</strong></div>
      </div>
-     <p class="observacao">Regra do motor: três amarelas e uma branca (com ambas abastecidas). No máximo uma posição de cada titular na Fila A. As indicações somente entram em posições ativas mediante confirmação individual. Dados fictícios de laboratório: nenhum lançamento financeiro real.</p>
+     <p class="observacao">Regra do motor: três amarelas e uma branca (com ambas abastecidas). Até dez posições ativas por titular podem estar na Fila A; no máximo duas no tabuleiro. As indicações somente entram em posições ativas mediante confirmação individual. Dados fictícios de laboratório: nenhum lançamento financeiro real.</p>
     </section>
     <section class="painel historico" id="controleRelogioAdminLoop03">
      <div class="historico-titulo"><div><small class="sobretitulo">TABULEIRO · REFERÊNCIA VISUAL</small><h2>Intervalo do relógio do cliente</h2></div></div>
