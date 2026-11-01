@@ -174,7 +174,7 @@ function criarAppAdminLaboratorio({ repositorio, segredo, webhookDemo, webhookAs
       banco:repositorio.banco,contas:contasDemo,
       pedidosIdentificados:pedidosIdentificadosDemo,
       configuracaoValor:configuracaoValorLoopDemo,
-       atribuicaoManualPorPosicao:process.env.LOOP_LAB_ATRIBUICAO_POR_POSICAO!=='0',
+       atribuicaoManualPorPosicao:ambienteSandbox.LOOP_LAB_ATRIBUICAO_POR_POSICAO!=='0',
       consultarPagamentoConfiavel:async pedidoId=>{
         if(carrinhosLojaLoopDemo?.buscar(pedidoId))
           return carrinhosLojaLoopDemo.comprovanteConfirmado(pedidoId);
@@ -242,15 +242,15 @@ function criarAppAdminLaboratorio({ repositorio, segredo, webhookDemo, webhookAs
       habilitarConviteLoopCheckout,
       // Cliente ficticio fixo APENAS no sandbox; pedido/titular sao imutaveis no SQLite.
       criarCobrancaSandbox:criarCobrancaSandboxTeste||(
-       process.env.LOOP_ASAAS_SANDBOX_CHECKOUT==='1'&&
-       process.env.ASAAS_SANDBOX_API_KEY&&process.env.ASAAS_SANDBOX_CLIENTE_TESTE_ID?
+       ambienteSandbox.LOOP_ASAAS_SANDBOX_CHECKOUT==='1'&&
+       ambienteSandbox.ASAAS_SANDBOX_API_KEY&&ambienteSandbox.ASAAS_SANDBOX_CLIENTE_TESTE_ID?
        async({pedidoId})=>{
         const servico=new CobrancasAkitemmAsaasSandboxSQLite({
          banco:repositorio.banco,
-         provedor:new AsaasSandboxLojaV6({apiKey:process.env.ASAAS_SANDBOX_API_KEY})
+         provedor:new AsaasSandboxLojaV6({apiKey:ambienteSandbox.ASAAS_SANDBOX_API_KEY})
         });
         const r=await servico.criar({pedidoId,origem:'CARRINHO',
-         clienteAsaasId:process.env.ASAAS_SANDBOX_CLIENTE_TESTE_ID});
+         clienteAsaasId:ambienteSandbox.ASAAS_SANDBOX_CLIENTE_TESTE_ID});
         return {pedidoId:r.pedidoId,status:r.status,ambiente:'ASAAS_SANDBOX_EXCLUSIVO',
          pagamentoReal:false};
        }:null),
