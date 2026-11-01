@@ -1465,3 +1465,11 @@ O acesso ao endpoint autenticado do GitHub Actions permitiu localizar, finalment
 **Limite de liberação:** este gate cobre os testes locais integrados e o navegador do LABORATÓRIO. Não valida callback real Asaas remoto, liquidação bancária, conciliação de contas externas, capacidade do ambiente público, LGPD/segurança integral e parecer jurídico. Nenhuma mudança em produção ou saque real foi autorizada. O proprietário revisará posteriormente a composição das abas do Escritório. PR #1 permanece DRAFT, sem merge e sem deploy.
 
 Detalhamento e links em `docs/RELATORIO_TESTES_INTEGRACAO_ESCRITORIO_01NOV2026.md`.
+
+## 124. ESTADOS DESCONHECIDOS ASAAS E REVERSÕES NO ESCRITÓRIO — 01/11/2026
+
+Reforçado o monitor operacional read-only `GET /api/admin/asaas-conciliacao-lab`. `estadosAsaasDesconhecidos` conta qualquer estado local de cobrança fora dos quatro estados esperados (`RECEBIMENTO_INFORMADO_SANDBOX`, `REVERSAO_INFORMADA_SANDBOX`, `PENDENTE_SANDBOX` e `CRIACAO_INDETERMINADA_SANDBOX`). Qualquer valor estranho ou `STATUS_DESCONHECIDO_SANDBOX` eleva `anomaliasContadasPorCriterio` e `revisaoManualIndicada`. A atualização não cria posições, não reclassifica pagamentos nem aciona transferências: as operações só prosseguem após nova consulta confiável ao provedor.
+
+A tela `/admin/loop03` exibe dois indicadores separados, `asaasStatusDesconhecidoAdmin` e `asaasReversoesComPosicaoAdmin`, permitindo enxergar estados novos do PSP e reversões cujo histórico de posição é preservado, sem redesenho. O teste `test/asaas-convergencia-escritorio-lab.test.js` inclui regressão com resposta futura desconhecida, conferência sem posição, alerta de revisão manual e recuperação após confirmação no Sandbox fictício. Não há webhook remoto homologado nem saldo bancário conciliado.
+
+A suíte deve ser conferida no HEAD novo, pois a validação anterior de **686/686** corresponde ao commit `b310bc9`, anterior a esta alteração. PR #1 continua DRAFT; sem merge ou deploy. Parecer jurídico e controles reais do PSP seguem condicionantes antes do lançamento.
