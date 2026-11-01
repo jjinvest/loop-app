@@ -18,6 +18,7 @@ const { criarRouterCatalogo } = require('./routes/catalogo');
 const { RepositorioCatalogoMemoria } = require('./domain/repositorio-catalogo-memoria');
 const { listarCatalogo } = require('./domain/catalogo');
 const { criarRouterCheckoutPublico } = require('./routes/checkout-publico');
+const {IDS_GATE_EXTERNO}=require('./domain/marco-zero-gates');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -48,8 +49,7 @@ app.get('/health/ready',(_req,res)=>res.status(503)
  .set('Retry-After','86400')
  .json({estado:'NAO_PRONTO_PARA_VENDAS',checkoutPublico:false,
   pagamentosReais:false,marcoZeroLiberado:false,
-  bloqueios:['CHECKOUT_PUBLICO','ASAAS_REMOTO','BANCO_E_SAQUES',
-   'PRODUCAO_E_SEGURANCA','ESCRITORIO_VISUAL','JURIDICO']}));
+  bloqueios:['CHECKOUT_PUBLICO',...IDS_GATE_EXTERNO]}));
 
 // Laboratorio de clientes: opt-in e apenas requisicoes locais.
 if(process.env.LOOP_CLIENTES_LAB==='SIM'){
