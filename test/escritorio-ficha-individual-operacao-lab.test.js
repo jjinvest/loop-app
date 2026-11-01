@@ -52,7 +52,7 @@ test('HTML e JS do Escritorio conectam ficha por titular sem redesenho',async t=
  assert.match(js,/previsoesNaoLiquidadas!==true/);
  assert.match(js,/disponivelParaSaqueRealCentavos!==0/);
  assert.match(js,/versaoFichaCliente\+\+/);
- assert.match(js,/cliente\.id!==c\.id/);
+ assert.match(js,/d\.cliente\?\.id!==c\.id/);
  assert.match(js,/eventoQueFinanciouCiclo/);
  assert.match(js,/não é a contemplação deste pedido/);
  assert.equal(js.includes('innerHTML'),false);
