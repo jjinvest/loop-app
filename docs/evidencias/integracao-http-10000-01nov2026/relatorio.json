@@ -1,0 +1,182 @@
+{
+  "estado": "APROVADO_NO_LABORATORIO",
+  "clientesSequenciais": 10000,
+  "transporteHttpLocalReal": true,
+  "transporteAsaas": "SIMULADO_SEM_API_REMOTA",
+  "pedidos": 10000,
+  "posicoes": 10000,
+  "ativacoesIndividuais": 10000,
+  "indicacoes": 1000,
+  "giros": 1666,
+  "eventosDocumentados": 9996,
+  "pedidosNaoConsumidos": 4,
+  "filaA": 0,
+  "filaB": 8327,
+  "posicoesAtivas": 8334,
+  "faturamentoBrutoFicticioCentavos": 250000000,
+  "conciliacaoCofres": {
+    "reservaDouradasComprometidaCentavos": 0,
+    "bonificacoesComprometidasCentavos": 2500000,
+    "gestaoPendenteComprometidaCentavos": 0,
+    "cofreDireitaDisponivelSimuladoCentavos": 39166667,
+    "detalhamentoSegundoCaixa": {
+      "cofreId": "LOOP_DIREITA",
+      "segundoCaixa": true,
+      "centralReservadoParaParticipantes": false,
+      "saldoBrutoCentavos": 41666667,
+      "compromissoDouradasCentavos": 0,
+      "compromissoBonificacoesCentavos": 2500000,
+      "compromissoGestaoPendenteCentavos": 0,
+      "totalComprometidoCentavos": 2500000,
+      "saldoLivreDemonstrativoCentavos": 39166667,
+      "pagamentoRealExecutado": false
+    },
+    "modo": "CONCILIACAO_COFRES_SOMENTE_LABORATORIO",
+    "fase": "EM_OPERACAO",
+    "integridadeDemonstrativa": "CONFERIDA_APENAS_EM_SIMULACAO",
+    "quantidadeDivergencias": 0,
+    "divergencias": [],
+    "comprasComerciaisSemCreditoAutomatico": 10000,
+    "quantidadeAportesSeparados": 10000,
+    "pedidosComerciaisSemAporte": 0,
+    "entradasAportesSimuladosCentavos": 250000000,
+    "cofreCentroRecebidoSimuladoCentavos": 125000000,
+    "cofreCentroRestanteSimuladoCentavos": 50000,
+    "cofreEsquerdaSimuladoCentavos": 83333333,
+    "cofreDireitaSimuladoCentavos": 41666667,
+    "cofreDouradasSimuladoCentavos": 0,
+    "valoresApenasPrevistosNosEscritoriosCentavos": 124950000,
+    "somaDestinacoesConservadasCentavos": 250000000,
+    "girosComDestinoDocumentado": 1666,
+    "cofresDoLoop": [
+      "LOOP_CENTRO",
+      "LOOP_ESQUERDA",
+      "LOOP_DIREITA",
+      "LOOP_DOURADAS"
+    ],
+    "lojaComRazaoSeparado": true,
+    "dinheiroBancarioComprovadoCentavos": 0,
+    "disponivelParaSaqueCentavos": 0,
+    "pagamentosReaisAutorizados": false,
+    "aptoParaOperacaoFinanceiraReal": false
+  },
+  "persistenciaReaberta": true,
+  "replaysConcorrentesSemDuplicacao": true,
+  "tempoSegundos": 2950.69,
+  "latenciaJornadaMs": {
+    "escopo": "SEGMENTO_APOS_RETOMADA",
+    "p50": 324.21,
+    "p95": 483.59,
+    "p99": 697.25
+  },
+  "consultasCompletasEscritorio": "AMOSTRAS_500_CLIENTES_E_REINICIO",
+  "comprasEAtivacoesHttpPorCliente": true,
+  "retomadaDeProcesso": true,
+  "checkpoints": [
+    {
+      "clientes": 500,
+      "giros": 80,
+      "segundos": 57.35
+    },
+    {
+      "clientes": 1000,
+      "giros": 160,
+      "segundos": 137.92
+    },
+    {
+      "clientes": 1500,
+      "giros": 250,
+      "segundos": 250.26
+    },
+    {
+      "clientes": 2000,
+      "giros": 330,
+      "segundos": 383.27
+    },
+    {
+      "clientes": 2500,
+      "giros": 410,
+      "segundos": 496.05
+    },
+    {
+      "clientes": 3000,
+      "giros": 500,
+      "segundos": 610.03
+    },
+    {
+      "clientes": 3500,
+      "giros": 580,
+      "segundos": 715.39
+    },
+    {
+      "clientes": 4000,
+      "giros": 660,
+      "segundos": 824.01
+    },
+    {
+      "clientes": 4500,
+      "giros": 750,
+      "segundos": 944.79
+    },
+    {
+      "clientes": 5000,
+      "giros": 830,
+      "segundos": 1075.13
+    },
+    {
+      "clientes": 5500,
+      "giros": 910,
+      "segundos": 1218.42
+    },
+    {
+      "clientes": 6000,
+      "giros": 1000,
+      "segundos": 1373.25
+    },
+    {
+      "clientes": 6500,
+      "giros": 1080,
+      "segundos": 1536.69
+    },
+    {
+      "clientes": 7000,
+      "giros": 1160,
+      "segundos": 1704.46
+    },
+    {
+      "clientes": 7500,
+      "giros": 1250,
+      "segundos": 1880.87
+    },
+    {
+      "clientes": 8000,
+      "giros": 1330,
+      "segundos": 2068
+    },
+    {
+      "clientes": 8500,
+      "giros": 1410,
+      "segundos": 2267.85
+    },
+    {
+      "clientes": 9000,
+      "giros": 1500,
+      "segundos": 2477.62
+    },
+    {
+      "clientes": 9500,
+      "giros": 1580,
+      "segundos": 2705.25
+    },
+    {
+      "clientes": 10000,
+      "giros": 1660,
+      "segundos": 2947.5
+    }
+  ],
+  "clientesSimultaneos": 1,
+  "pagamentosReais": 0,
+  "saquesReais": 0,
+  "lucroLiquidoCalculado": false,
+  "producaoHomologada": false
+}

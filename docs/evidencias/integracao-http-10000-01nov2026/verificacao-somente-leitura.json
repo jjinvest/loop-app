@@ -1,0 +1,31 @@
+{
+  "estado": "CONFERIDO_SOMENTE_LEITURA",
+  "contas": 10000,
+  "pedidos": 10000,
+  "posicoes": 10000,
+  "ativacoes": 10000,
+  "indicacoes": 1000,
+  "titularesDistintos": 10000,
+  "posicoesDistintas": 10000,
+  "cobrancasFixtureRecebidas": 10000,
+  "brutoFicticioCentavos": 250000000,
+  "giros": 1666,
+  "eventos": 9996,
+  "integridadeSqlite": "ok",
+  "violacoesForeignKeys": 0,
+  "alertasRastreio": 0,
+  "financeiro": {
+    "entradasAportesSimuladosCentavos": 250000000,
+    "cofreCentroRestanteSimuladoCentavos": 50000,
+    "cofreEsquerdaSimuladoCentavos": 83333333,
+    "cofreDireitaSimuladoCentavos": 41666667,
+    "valoresApenasPrevistosNosEscritoriosCentavos": 124950000,
+    "cofreDouradasSimuladoCentavos": 0
+  },
+  "reservaLivreFicticiaCentavos": 39166667,
+  "consultaAdminPrimeiroUltimoConferida": true,
+  "sha256Banco": "4d3ba84b666bb9fa71154ae176a8d391776d80c34f5b82235c07a77d28b01f9a",
+  "sha256Relatorio": "19dc0b56345aabc2b17aa1064fe916dbbbf30171f9025954974d0810be3cdf4e",
+  "bancoRealConciliado": false,
+  "pagamentosReais": 0
+}

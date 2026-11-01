@@ -74,3 +74,6 @@ O [relatório operacional deste bloco](./RELATORIO_INTEGRACAO_HTTP_10000_01NOV20
 - Bateria geral aprovada, incluindo testes existentes de concorrência, interrupção, backup, titularidade e saques. Dependências de execução corrigidas e auditoria automática incorporada ao CI.
 - O ensaio de 10.000 usa HTTP local, SQLite persistente e PSP simulado; seus resultados finais devem ser lidos no relatório, sem extrapolar para usuários simultâneos ou liquidação real.
 - A2 e bloqueios externos permanecem: não houve publicação, merge, movimentação financeira real ou homologação de produção. O estado global desta auditoria continua EM ANDAMENTO.
+
+
+**Fechamento local conferido em 01/11/2026:** carga de 10.000 concluída, com 1.666 giros, 9.996 pedidos consumidos, quatro aguardando, integridade SQLite ok, zero violações de chaves e zero alertas de rastreio. Saques fictícios foram conferidos depois da carga, e houve amostra HTTP aprovada na API remota Asaas Sandbox, com uma posição pendente e reabertura sem duplicar. O relatório vinculado acima e seus JSONs contêm os totais financeiros e as limitações. Isso encerra o ensaio deste bloco, não os bloqueios externos nem a auditoria global de pré-lançamento.

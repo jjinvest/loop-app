@@ -1,0 +1,11 @@
+{
+  "runId": 41274139117,
+  "url": "https://github.com/jjinvest/loop-app/actions/runs/41274139117",
+  "sha": "cc94f113e9aa9b059da91fb5d332f2dcc331fd34",
+  "conclusion": "success",
+  "auditZero": true,
+  "tests": 612,
+  "failed": 0,
+  "pcCelular": true,
+  "dezPosicoes": true
+}

@@ -1,0 +1,14 @@
+{
+  "estado": "APROVADO_APENAS_LABORATORIO",
+  "bonusSolicitadoCentavos": 2500,
+  "bonusLiquidoCentavos": 2500,
+  "taxaParticipantePercentual": 0,
+  "centroReservadoFicticioCentavos": 2500,
+  "minimo25VerificadoNosDoisFluxos": true,
+  "replaySemDuplicacao": true,
+  "trocaTitularRecusada": true,
+  "persistenciaReaberta": true,
+  "consultasAdminMesmoSQLite": true,
+  "transferenciasReais": 0,
+  "saldoRealLiberadoCentavos": 0
+}

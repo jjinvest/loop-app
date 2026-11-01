@@ -1,0 +1,13 @@
+{
+  "estado": "LEITURA_CONCORRENTE_CONSISTENTE",
+  "posicoesNaTransacaoDeLeitura": 8461,
+  "posicoesConfirmadasEnquantoLeitorAberto": 6,
+  "girosAuditados": 1410,
+  "eventosAuditados": 8460,
+  "alertas": 0,
+  "integridadeSqlite": "ok",
+  "foreignKeyViolacoes": 0,
+  "transacaoLeituraIsolada": true,
+  "escritorContinuou": true,
+  "alteracoesDoLeitor": 0
+}

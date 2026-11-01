@@ -1,0 +1,22 @@
+{
+  "runId": 41273684000,
+  "url": "https://github.com/jjinvest/loop-app/actions/runs/41273684000",
+  "conclusion": "success",
+  "result": {
+    "estado": "APROVADO_HTTP_E_ASAAS_SANDBOX_REMOTO",
+    "compraHttpLocal": true,
+    "cobrancasSandbox": 1,
+    "valorCentavos": 25000,
+    "confirmacaoNaApiSandbox": true,
+    "posicoes": 1,
+    "statusAdesao": "PENDENTE",
+    "replaySemDuplicacao": true,
+    "titularidadePreservada": true,
+    "sqliteReaberto": true,
+    "integridadeSqlite": "ok",
+    "ativacaoAutomatica": false,
+    "saquesExecutados": 0,
+    "pagamentosReais": 0,
+    "callbackRemotoTestado": false
+  }
+}

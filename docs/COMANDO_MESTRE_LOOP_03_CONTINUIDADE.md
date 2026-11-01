@@ -1231,3 +1231,12 @@ Foram corrigidos o subtotal elegível congelado da compra, vendas sem posição,
 Scripts reproduzíveis: `scripts/simular-10000-clientes-http-asaas-sqlite.js`, `scripts/validar-saques-ensaio-http.js`, `scripts/verificar-ensaio-http-sqlite.js`. A carga usa HTTP local real, PSP simulado e banco em arquivo; não confundir com cobrança remota ou 10.000 navegadores simultâneos.
 
 Regras preservadas: centro + seis vagas, seis eventos por giro, prioridade 3A:1B, dez posições ativas por titular, indicações individuais e imutáveis, confirmação individual de posições, taxa de saque 0% e mínimo R$25. Pergunta adicional continua oculta. Sem merge/deploy ou dinheiro real. PR #1 DRAFT.
+
+
+### Fechamento verificado do bloco de 01/11/2026
+
+Ensaio concluído: 10.000 clientes fictícios sequenciais, 10.000 pedidos/posições/ativações individuais, 1.000 indicações, 1.666 giros e 9.996 eventos de pedidos distintos, com quatro pedidos aguardando. Conferência independente em conexão SQLite somente leitura: integridade ok, zero violações de chaves estrangeiras e zero alertas de rastreio. Leituras concorrentes preservaram snapshot enquanto o escritor avançava. Saques fictícios de bônus e centro, mínimo R$25, taxa 0%, titularidade, replay e reabertura foram conferidos também na base completa.
+
+Amostra SEPARADA na API remota do Asaas Sandbox: compra HTTP de R$250, confirmação pelo endpoint de simulação, uma posição PENDENTE no cliente, replay e reabertura sem duplicação. [Prova externa](https://github.com/jjinvest/loop-app/actions/runs/41273684000). [CI geral, auditoria de dependências e navegador aprovados](https://github.com/jjinvest/loop-app/actions/runs/41274139117).
+
+Resultado operacional/financeiro e provas agregadas estão no relatório referido acima. O bruto de R$2.500.000 da carga é fictício; aportes do livro não são segunda receita nem liquidação. Restam callback remoto autenticado, conciliação bancária independente e demais requisitos externos de produção. Não afirmar que o projeto inteiro está homologado: o estado global da auditoria permanece EM ANDAMENTO, PR #1 DRAFT, sem merge/deploy ou dinheiro real.
