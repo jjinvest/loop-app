@@ -1,0 +1,20 @@
+:root{color-scheme:dark;font-family:system-ui,-apple-system,Segoe UI,sans-serif;color:#f3ead5;background:#101010}
+*{box-sizing:border-box}body{margin:0;min-height:100vh;background:radial-gradient(circle at 85% 0,#252012 0,transparent 33%),#101010}
+.cabecalho{display:flex;align-items:center;justify-content:space-between;gap:1rem;border-bottom:1px solid #55492a;padding:1.1rem max(1rem,calc((100vw - 900px)/2))}
+.marca{font-size:1.5rem;color:#e5c574;font-weight:800;letter-spacing:.1em}.submarca{display:block;color:#c9ba91;font-size:.75rem}
+.ambiente{color:#e6c56e;border:1px solid #786333;border-radius:999px;padding:.4rem .65rem;font-size:.7rem;font-weight:bold;white-space:nowrap}
+main{width:min(900px,100%);padding:1.4rem 1rem 3rem;margin:auto}h1{font-size:clamp(1.5rem,4vw,2rem);margin:0 0 .5rem}h2{font-size:1.15rem;margin:0 0 .8rem;color:#e9cb7d}
+p{line-height:1.55}.explicacao,.subtexto,.rodape{color:#beb8aa}.subtexto{font-size:.9rem}.rodape{font-size:.82rem;margin-top:2rem}
+.painel{padding:1.3rem;margin:1.2rem 0;border:1px solid #66542d;border-radius:14px;background:#191919}
+label{display:block;margin:.9rem 0 .3rem;font-weight:600}input{width:100%;padding:.8rem;color:#fff;background:#282828;border:1px solid #766b4e;border-radius:8px;font-size:1rem}
+button{border:1px solid #8e7847;border-radius:9px;padding:.7rem .95rem;color:#eee2c5;background:#27231b;font:inherit;cursor:pointer;min-height:44px}
+button:hover:not(:disabled),button:focus-visible{border-color:#d6b66a;outline:2px solid #947b37;outline-offset:1px}
+button:disabled{opacity:.5;cursor:not-allowed}.primario{background:linear-gradient(110deg,#0f583e,#268660);color:#fff;border-color:#41856d;font-weight:bold}
+#formLogin button{margin-top:1.2rem;width:100%}.barra-conta,.linha{display:flex;align-items:center;justify-content:space-between;gap:.75rem;flex-wrap:wrap}
+.barra-conta{color:#c8c0ac;font-size:.86rem}.abas{display:flex;gap:.5rem;margin:1.2rem 0 0;border-bottom:1px solid #5a4e32}
+.abas button{border-radius:9px 9px 0 0;border-bottom:0;flex:1}.abas button[aria-selected="true"]{background:#4c3d1d;color:#ffdf85}
+.pedido{padding:1rem 0;border-bottom:1px solid #403a2c}.pedido:last-child{border-bottom:0}.pedido h3{font-size:1rem;margin:.1rem 0 .5rem;overflow-wrap:anywhere}
+.pedido p{margin:.35rem 0}.estado{display:inline-block;font-size:.84rem;padding:.35rem .55rem;border-radius:6px;background:#373024;color:#ead49b}
+.aviso{font-size:.88rem;color:#b8a989}#mensagem{min-height:1.5em;color:#f1d895}
+[hidden]{display:none!important}
+@media(max-width:520px){.cabecalho{padding:1rem}.marca{font-size:1.15rem}.ambiente{font-size:.61rem;padding:.35rem}.painel{padding:1rem}.abas button{padding:.75rem .4rem;font-size:.89rem}.linha button{width:100%}}
