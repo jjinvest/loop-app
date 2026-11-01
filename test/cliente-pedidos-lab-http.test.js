@@ -56,3 +56,62 @@ test('login e Meus Pedidos isolam contas via HTTP',async()=>{
   assert.equal((await fetch(base+'/meus-pedidos',{headers:{Authorization:'Bearer '+token}})).status,401);
  }finally{await new Promise(resolve=>servidor.close(resolve));banco.close();}
 });
+
+test('carrinho HTTP opcional exige sessao, ignora preco enviado e isola titular',async()=>{
+ const banco=new DatabaseSync(':memory:');
+ const contas=new ContasParticipantesDemoSQLite({banco});
+ const pedidos=new PedidosTitularidadeDemoSQLite({banco,contas});
+ const registros=new Map();
+ const carrinho={
+  banco,
+  criar({pedidoId,contaId,itens,participarLoop}){
+   if(!Array.isArray(itens)||itens.length!==1||itens[0].produtoId!=='curso-teste'||
+      itens[0].quantidade!==1||participarLoop!==true) {
+    const e=new Error('INVALIDO');e.codigo='INVALIDO';throw e;
+   }
+   const anterior=registros.get(pedidoId);
+   if(anterior){
+    if(anterior.contaId!==contaId){const e=new Error('CONFLITO');e.codigo='CONFLITO';throw e;}
+    return {...anterior,repetido:true};
+   }
+   const pedido={pedidoId,contaId,totalCentavos:25000,participarLoop};
+   registros.set(pedidoId,pedido);
+   return {...pedido,repetido:false};
+  },
+  buscarDaConta(id,contaId){
+   const p=registros.get(id);return p?.contaId===contaId?p:null;
+  }
+ };
+ const app=express();app.use(express.json());
+ app.use('/api/cliente-lab',criarRouterClientePedidosLab({contas,pedidos,carrinho}));
+ const server=app.listen(0,'127.0.0.1');
+ try{
+  await new Promise(resolve=>server.once('listening',resolve));
+  const base='http://127.0.0.1:'+server.address().port+'/api/cliente-lab';
+  const login=async(nome,email)=>{
+   await fetch(base+'/cadastrar',{method:'POST',headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({nome,email,senha:'senha-segura-123'})});
+   const r=await fetch(base+'/entrar',{method:'POST',headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({nome,senha:'senha-segura-123'})});
+   return (await r.json()).token;
+  };
+  const a=await login('Comprador A Teste','a-carrinho@example.invalid');
+  const b=await login('Comprador B Teste','b-carrinho@example.invalid');
+  const enviar=(token,body)=>fetch(base+'/carrinhos',{method:'POST',
+   headers:{'Content-Type':'application/json',Authorization:'Bearer '+token},
+   body:JSON.stringify(body)});
+  const corpo={pedidoId:'pedido-carrinho-http',participarLoop:true,
+   itens:[{produtoId:'curso-teste',quantidade:1}]};
+  assert.equal((await enviar('',corpo)).status,401);
+  assert.equal((await enviar(a,{...corpo,totalCentavos:1})).status,400);
+  const criado=await enviar(a,corpo);
+  assert.equal(criado.status,201);
+  assert.equal((await criado.json()).totalCentavos,25000);
+  assert.equal((await enviar(a,corpo)).status,200);
+  assert.equal((await enviar(b,corpo)).status,409);
+  const consultar=token=>fetch(base+'/carrinhos/'+corpo.pedidoId,
+   {headers:{Authorization:'Bearer '+token}});
+  assert.equal((await consultar(a)).status,200);
+  assert.equal((await consultar(b)).status,404);
+ }finally{await new Promise(resolve=>server.close(resolve));banco.close();}
+});
