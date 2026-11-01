@@ -43,8 +43,15 @@ class ConciliacaoAutomaticaAsaasSandboxLab{
    try{for(const id of await this.listarPendentes())this.acompanhar(id);}
    catch(e){await this._notificarErro(e,null);}
   }
+  // Copiar apenas os proximos IDs: jamais materializar a fila inteira
+  // quando milhares de cobrancas aguardam confirmacao no SQLite.
+  const candidatos=[];
+  for(const id of this.pendentes){
+   candidatos.push(id);
+   if(candidatos.length>=this.maxPorVerificacao)break;
+  }
   let verificados=0;
-  for(const pedidoId of [...this.pendentes]){
+  for(const pedidoId of candidatos){
    if(verificados>=this.maxPorVerificacao)break;
    if(this.emAndamento.has(pedidoId))continue;
    verificados++;
