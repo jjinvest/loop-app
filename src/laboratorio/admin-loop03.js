@@ -205,9 +205,24 @@
    headers:{Authorization:'Bearer '+token}});
   const d=await r.json();
   if(!r.ok||!Array.isArray(d.clientes))throw Error(d.erro||'Diretório indisponível');
+  if(d.modo!=='LABORATORIO_LOCAL'||d.semPagamentosReais!==true||
+     d.fonteIndicadores!=='COMPRAS_E_VENDAS_CONFIRMADAS_SQLITE'||
+     !Number.isSafeInteger(d.total)||d.total<0)
+   throw Error('Fonte de clientes não conciliada');
   clientesDiretorio=d.clientes;
   $('clientesTotalDepartamento').textContent=String(d.total);
-  $('statusClientesAdmin').textContent='Exibindo até '+d.limite+' cadastros recentes de '+d.total+'. Dados fictícios do SQLite.';
+  for(const [id,chave] of [
+   ['clientesLoopDepartamento','clientesComPosicoesCriadas'],
+   ['clientesLojaDepartamento','clientesSomenteLoja']
+  ]){
+   if(d[chave]!==null&&(!Number.isSafeInteger(d[chave])||d[chave]<0))
+    throw Error('Indicador de cliente inválido');
+   $(id).textContent=d[chave]===null?'Sem fonte conciliada':String(d[chave]);
+  }
+  $('clientesTiposDepartamento').textContent='Por categoria: ainda não conciliado';
+  $('statusClientesAdmin').textContent='Exibindo até '+d.limite+
+   ' cadastros recentes de '+d.total+
+   '. Participação e vendas: somente registros documentados do SQLite.';
   renderizarClientes();
  }
  $('filtrarClientesAdmin').addEventListener('input',renderizarClientes);
