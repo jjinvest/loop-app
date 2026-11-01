@@ -49,3 +49,23 @@ test('Tela do escritorio exibe indicadores por titular com fonte documentada',as
  assert.match(js,/COMPRAS_E_VENDAS_CONFIRMADAS_SQLITE/);
  assert.match(js,/Por categoria: ainda não conciliado/);
 });
+
+test('Escritorio conta produto FISICO de pedido confirmado, nao de catalogo reclassificado',async t=>{
+ const m=await abrirLaboratorio(':memory:');t.after(()=>m.fechar());
+ m.repo.salvar({revisaoEsperada:0,produto:{
+  id:'produto-fisico-lab',nome:'Produto fisico de laboratorio',
+  descricao:'Produto demonstrativo sem venda real',tipo:'FISICO',
+  estado:'PUBLICADO',precoCentavos:25000,entrega:'FORNECEDOR_INTEGRADO',
+  fotos:[],videoApresentacaoUrl:null,detalhes:[]
+ }});
+ await comprar(m,'Cliente Produto Fisico','cliente-fisico@example.invalid',
+  'produto-fisico-lab',true);
+ const resposta=await fetch(m.base+'/api/admin/escritorio-demo/clientes',{headers:ADMIN});
+ assert.equal(resposta.status,200);
+ const d=await resposta.json();
+ assert.deepEqual(d.clientesPorTipoProduto,{PDF:0,FISICO:1});
+ assert.equal(d.clientesComPosicoesCriadas,1);
+ assert.equal(d.clientesSomenteLoja,0);
+ assert.equal(d.semPagamentosReais,true);
+ assert.equal(Object.values(m.banco.prepare('PRAGMA integrity_check').get())[0],'ok');
+});
