@@ -104,3 +104,34 @@ test('monitor apresenta somente retries vencidos sem enfileirar trabalho durante
  assert.equal(worker.resumo().pendentesProntos,0);
  assert.equal(m.banco.prepare('SELECT COUNT(*) n FROM admin_ponte_compras_demo').get().n,1);
 });
+
+test('codigo de erro desconhecido nunca vaza segredo no estado ou historico da fila',async t=>{
+ const m=await abrirLaboratorio(':memory:',opcoes);
+ t.after(()=>m.fechar());
+ const conta=m.contas.cadastrar({nome:'Cliente Falha Codificada',
+  email:'codigo-falha@example.invalid',senha:'senha-ficticia-codigo-2026'});
+ const {cookie}=await m.http('/entrar',{body:{nome:conta.nome,senha:'senha-ficticia-codigo-2026'}});
+ const pedidoId=(await m.http('/loja/pedidos',{cookie,status:201,
+  body:{itens:[{produtoId:'curso-lab-250',quantidade:1}]}})).data.pedido.pedidoId;
+ const cobranca=m.integracao.cobrancas.consultar(pedidoId);
+ const evento={id:'evt_CodigoErrorPrivado001',event:'PAYMENT_RECEIVED',
+  payment:{id:cobranca.pagamentoId,billingType:'PIX',status:'RECEIVED',
+   externalReference:'LOOPLAB-'+pedidoId,value:250}};
+ const ack=await fetch(m.base+'/api/laboratorio/webhook-asaas-sandbox',{
+  method:'POST',headers:{'Content-Type':'application/json','asaas-access-token':TOKEN},
+  body:JSON.stringify(evento)});
+ assert.equal(ack.status,200);
+ m.integracao.conferidor.conferirEvento=async()=>{
+  const erro=new Error('Mensagem privada');
+  erro.codigo='TOKEN_PRIVADO_INJETADO_123456';
+  throw erro;
+ };
+ await m.integracao.callbacks.processarLote();
+ const worker=m.integracao.callbacks;
+ assert.equal(worker.consultar(evento.id).estado,'PENDENTE');
+ assert.equal(worker.consultar(evento.id).codigo,'FALHA_TECNICA_RECONSULTA');
+ const livro=JSON.stringify(worker.historico(evento.id));
+ assert.equal(livro.includes('TOKEN_PRIVADO_INJETADO'),false);
+ assert.equal(livro.includes('Mensagem privada'),false);
+ assert.equal(m.banco.prepare('SELECT COUNT(*) n FROM admin_ponte_compras_demo').get().n,0);
+});
