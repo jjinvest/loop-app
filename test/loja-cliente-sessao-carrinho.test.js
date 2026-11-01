@@ -197,3 +197,66 @@ test('checkout sandbox opt-in cria cobranca vinculada ao titular sem criar posic
  assert.equal(escritorio.status,200);
  assert.equal((await escritorio.json()).posicoes.length,0);
 });
+
+test('HTTP: cobranca sandbox conciliada aparece no escritorio do comprador, sem duplicacao',async t=>{
+ const {montarIntegracaoAsaasSandboxLoopLab}=require('../src/domain/montagem-integracao-asaas-sandbox-loop-lab');
+ const repo=new RepositorioCatalogoSQLite({caminho:':memory:'});
+ t.after(()=>repo.fechar());
+ repo.salvar({produto:produto('curso-http-sandbox-250',25000),revisaoEsperada:0});
+ const contas=new ContasParticipantesDemoSQLite({banco:repo.banco});
+ const senha='senha-para-http-sandbox-2026';
+ const a=contas.cadastrar({nome:'Cliente HTTP Sandbox A',email:'http-sandbox-a@exemplo.invalid',senha});
+ const b=contas.cadastrar({nome:'Cliente HTTP Sandbox B',email:'http-sandbox-b@exemplo.invalid',senha});
+ let estado='PENDING',pedidoId=null;
+ const fetchImpl=async(url,opts)=>({ok:true,json:async()=>({
+  id:'pay_HttpSandbox001',billingType:'PIX',value:250,
+  externalReference:'LOOPLAB-'+pedidoId,status:estado,customer:'cus_HttpSandbox001'
+ })});
+ let integracao=null;
+ const app=criarAppAdminLaboratorio({repositorio:repo,
+  segredo:'segredo-admin-http-sandbox-123456789',
+  criarCobrancaSandboxTeste:async({pedidoId:id,contaId})=>{
+   assert.equal(contaId,a.contaId);pedidoId=id;
+   await integracao.cobrancas.criar({pedidoId,origem:'CARRINHO',clienteAsaasId:'cus_HttpSandbox001'});
+   return {pedidoId,status:'PENDENTE_SANDBOX',ambiente:'ASAAS_SANDBOX_EXCLUSIVO'};
+  }
+ });
+ integracao=montarIntegracaoAsaasSandboxLoopLab({
+  banco:repo.banco,contas:app.locals.contasCompartilhadasLoop,
+  titularidade:app.locals.titularidadeCompartilhadaLoop,
+  ponte:app.locals.ponteCompartilhadaLoop,
+  apiKey:'CHAVE_FICTICIA_APENAS_TESTES_123',fetchImpl
+ });
+ const srv=app.listen(0,'127.0.0.1');
+ await once(srv,'listening');t.after(()=>new Promise(resolve=>srv.close(resolve)));
+ const base='http://127.0.0.1:'+srv.address().port+'/api/laboratorio/participante';
+ const headers={'Content-Type':'application/json','X-LOOP-LAB':'participante'};
+ const login=async nome=>{
+  const r=await fetch(base+'/entrar',{method:'POST',headers,
+   body:JSON.stringify({nome,senha})});
+  assert.equal(r.status,200);return r.headers.get('set-cookie').split(';')[0];
+ };
+ const cookieA=await login(a.nome),cookieB=await login(b.nome);
+ const pedido=await fetch(base+'/loja/pedidos',{method:'POST',
+  headers:{...headers,Cookie:cookieA},
+  body:JSON.stringify({itens:[{produtoId:'curso-http-sandbox-250',quantidade:1}]})});
+ assert.equal(pedido.status,201);
+ const resposta=await pedido.json();
+ assert.equal(resposta.pedido.pedidoId,pedidoId);
+ const escritorio=async cookie=>{
+  const r=await fetch(base+'/minha-conta',{headers:{Cookie:cookie}});
+  assert.equal(r.status,200);return r.json();
+ };
+ assert.equal((await escritorio(cookieA)).posicoes.length,0);
+ await integracao.automatico.verificar();
+ assert.equal((await escritorio(cookieA)).posicoes.length,0);
+ estado='RECEIVED';
+ await integracao.automatico.verificar();
+ const visao=await escritorio(cookieA);
+ assert.equal(visao.posicoes.length,1);
+ assert.equal(visao.posicoes[0].statusAdesao,'PENDENTE');
+ assert.equal((await escritorio(cookieB)).posicoes.length,0);
+ await integracao.automatico.verificar();
+ assert.equal((await escritorio(cookieA)).posicoes.length,1);
+ assert.equal(repo.banco.prepare('SELECT COUNT(*) AS n FROM admin_ponte_compras_demo').get().n,1);
+});
