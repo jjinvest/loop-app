@@ -236,7 +236,8 @@
    'asaasSomenteLojaAdmin','asaasAguardandoPonteAdmin','asaasReversoesAdmin',
    'asaasCallbacksRevisaoAdmin','asaasAnomaliasAdmin','asaasIndeterminadasAdmin',
    'asaasIdsReutilizadosAdmin','asaasFilaCallbacksAdmin','asaasRevisaoGeralAdmin',
-   'asaasStatusDesconhecidoAdmin','asaasReversoesComPosicaoAdmin'];
+   'asaasStatusDesconhecidoAdmin','asaasReversoesComPosicaoAdmin',
+   'asaasReconsultasDivergentesAdmin'];
   const limpar=()=>{for(const id of ids)$(id).textContent='—';};
   limpar();
   $('asaasBancoRealAdmin').textContent='Não homologada';
@@ -263,6 +264,7 @@
    asaasAnomaliasAdmin:'anomaliasContadasPorCriterio',
    asaasIndeterminadasAdmin:'criacoesIndeterminadas',
    asaasStatusDesconhecidoAdmin:'estadosAsaasDesconhecidos',
+   asaasReconsultasDivergentesAdmin:'reconsultasSemRecebimento',
    asaasReversoesComPosicaoAdmin:'reversoesComPosicaoPreservada',
    asaasIdsReutilizadosAdmin:'idReutilizadoEmPosicaoAdicional'
   };
