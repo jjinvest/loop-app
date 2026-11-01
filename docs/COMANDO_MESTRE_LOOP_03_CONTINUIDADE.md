@@ -1220,3 +1220,14 @@ Foi acrescentado **um job isolado** `verificar-conexao-asaas-sandbox` em `.githu
 
 **TRAVA E STATUS:** etapa de **preparação e testes de código concluída**; homologação financeira externa com a conta Sandbox permanece PENDENTE, não afirmar aptidão a dinheiro real. Não alterar filas, seis eventos do motor, conferências individuais, bônus, saques 0%, checkout, telas oficiais ou comissões. PR #1 continua DRAFT sem merge/deploy. Antes de produção, revisar legalidade do modelo de remuneração por compras e indicações, aceitação de risco pelo PSP, integridade bancária, LGPD, CDC, impostos, infraestrutura, antifraude, reserva e liquidez.
 
+
+
+## 100. INTEGRAÇÃO HTTP, ASAAS SIMULADO E SQLITE — CONTINUIDADE DE 01/11/2026
+
+A fonte operacional atual deste bloco é [RELATORIO_INTEGRACAO_HTTP_10000_01NOV2026.md](./RELATORIO_INTEGRACAO_HTTP_10000_01NOV2026.md). Ler o ESTADO desse relatório antes de afirmar conclusão da carga; resultados parciais não equivalem ao ensaio de 10.000 terminado.
+
+Foram corrigidos o subtotal elegível congelado da compra, vendas sem posição, pacotes promocionais 5/10 com ativação individual, reconsulta de reversões, horário estável de comprovantes e exibição das posições 7–10 sem redesenhar a grade aprovada. Nova consulta administrativa autenticada integra pedido, pagamento Sandbox, posições, ciclos e saques diretamente no SQLite, com paginação e sem escrita. Melhorias de desempenho preservam validação e isolamento dos snapshots. Dependências vulneráveis de execução foram corrigidas e passaram a ter auditoria obrigatória no CI.
+
+Scripts reproduzíveis: `scripts/simular-10000-clientes-http-asaas-sqlite.js`, `scripts/validar-saques-ensaio-http.js`, `scripts/verificar-ensaio-http-sqlite.js`. A carga usa HTTP local real, PSP simulado e banco em arquivo; não confundir com cobrança remota ou 10.000 navegadores simultâneos.
+
+Regras preservadas: centro + seis vagas, seis eventos por giro, prioridade 3A:1B, dez posições ativas por titular, indicações individuais e imutáveis, confirmação individual de posições, taxa de saque 0% e mínimo R$25. Pergunta adicional continua oculta. Sem merge/deploy ou dinheiro real. PR #1 DRAFT.

@@ -63,3 +63,14 @@ Prosseguir autonomamente na branch DRAFT com as verificações e correções loc
 ## Restrições
 
 Branch `fix/teste-escrita-catraca-20261014`; PR #1 DRAFT. **Não** mergear, publicar, processar pagamentos reais ou modificar telas aprovadas sem autorização. O resultado deve distinguir “aprovado no laboratório”, “não testado” e “bloqueado para produção”.
+
+
+## Atualização de integração — 01/11/2026
+
+O [relatório operacional deste bloco](./RELATORIO_INTEGRACAO_HTTP_10000_01NOV2026.md) passa a concentrar o estado atual e as evidências; conferir seu cabeçalho antes de interpretar a carga como concluída.
+
+- A1: nova consulta administrativa autenticada `/api/admin/escritorio-demo/clientes/:id/operacao`, paginada, lê pedidos, pagamento Sandbox, posições, vínculos de eventos/ciclos e saques no mesmo SQLite; testada também com conexão somente leitura. Distingue ciclo financiado por uma venda do ciclo concluído pela posição do titular. Cenários demonstrativos antigos permanecem explicitamente separados.
+- Corrigidos subtotal elegível congelado, vendas somente AKITEMM, pacotes 5/10, reconsulta de reversões e estabilidade do horário do comprovante. Cliente vê a posição após compra HTTP e confirmação Asaas simulada, com provas de navegador em computador/celular; posições 7–10 deixam de ser omitidas.
+- Bateria geral aprovada, incluindo testes existentes de concorrência, interrupção, backup, titularidade e saques. Dependências de execução corrigidas e auditoria automática incorporada ao CI.
+- O ensaio de 10.000 usa HTTP local, SQLite persistente e PSP simulado; seus resultados finais devem ser lidos no relatório, sem extrapolar para usuários simultâneos ou liquidação real.
+- A2 e bloqueios externos permanecem: não houve publicação, merge, movimentação financeira real ou homologação de produção. O estado global desta auditoria continua EM ANDAMENTO.
