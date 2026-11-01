@@ -88,14 +88,106 @@
  }
  $('abaClientesDemoAdmin').addEventListener('click',()=>{abaConectada='clientes';renderizarConexoes();});
  $('abaProdutosDemoAdmin').addEventListener('click',()=>{abaConectada='produtos';renderizarConexoes();});
- let clientesDiretorio=[];
- function fichaCliente(c){
+ let clientesDiretorio=[],versaoFichaCliente=0;
+ // A ficha do administrador usa SOMENTE a operacao persistida por titular.
+ // Nao cruzar pedidos de clientes diferentes nem confundir venda com ciclo.
+ function linhaFicha(pai,tag,valor){
+  const el=document.createElement(tag);
+  el.textContent=String(valor);
+  pai.append(el);
+  return el;
+ }
+ function dinheiroSimulado(centavos){
+  if(!Number.isSafeInteger(centavos)||centavos<0)return 'não informado';
+  return (centavos/100).toLocaleString('pt-BR',{style:'currency',currency:'BRL'});
+ }
+ function secoesFicha(detalhe,titulo,pagina,descrever){
+  const secao=document.createElement('section');
+  linhaFicha(secao,'h4',titulo);
+  if(pagina.total===null)linhaFicha(secao,'p','Fonte SQLite indisponível nesta categoria.');
+  else{
+   linhaFicha(secao,'p','Registros documentados: '+pagina.total+
+    ' · exibindo '+pagina.itens.length+' nesta página.');
+   if(!pagina.itens.length)linhaFicha(secao,'p','Nenhum registro nesta página.');
+   for(const registro of pagina.itens)linhaFicha(secao,'p',descrever(registro));
+  }
+  detalhe.append(secao);
+ }
+ async function fichaCliente(c,offset=0){
+  const versao=++versaoFichaCliente,credencial=token;
   const detalhe=$('detalheClienteAdmin');detalhe.replaceChildren();
-  const titulo=document.createElement('h3');titulo.textContent=c.nick||c.nome;
-  const linha=document.createElement('p');linha.textContent='Nome cadastral: '+c.nome;
-  const registro=document.createElement('p');registro.textContent='Cadastro: '+c.criadoEm;
-  const aviso=document.createElement('p');aviso.textContent='Compras, produtos, posições e contemplações: vínculos individuais ainda não conciliados nesta fonte. Nenhum valor foi presumido.';
-  detalhe.append(titulo,linha,registro,aviso);
+  linhaFicha(detalhe,'h3',c.nick||c.nome);
+  linhaFicha(detalhe,'p','Nome cadastral: '+c.nome+' · Cadastro: '+c.criadoEm);
+  linhaFicha(detalhe,'p','Carregando histórico individual do SQLite…');
+  try{
+   const resposta=await fetch('/api/admin/escritorio-demo/clientes/'+encodeURIComponent(c.id)+
+    '/operacao?limite=20&offset='+offset,{
+    cache:'no-store',credentials:'omit',headers:{Authorization:'Bearer '+credencial}
+   });
+   if(versao!==versaoFichaCliente||token!==credencial)return;
+   if(!resposta.ok)throw Error('Operação individual indisponível ('+resposta.status+').');
+   const d=await resposta.json();
+   if(versao!==versaoFichaCliente||token!==credencial)return;
+   if(d.modo!=='OPERACAO_CLIENTE_SQLITE_LAB'||d.somenteLeitura!==true||
+      d.previsoesNaoLiquidadas!==true||d.disponivelParaSaqueRealCentavos!==0||
+      d.cliente?.id!==c.id)throw Error('Fonte individual não verificada');
+   for(const categoria of ['pedidos','ciclosCentro','saquesBonus','saquesCentro']){
+    const p=d[categoria];
+    if(!p||!Array.isArray(p.itens)||
+       (p.total!==null&&(!Number.isSafeInteger(p.total)||p.total<0))||
+       p.limite!==20||p.offset!==offset)throw Error('Paginação individual inválida');
+   }
+   detalhe.replaceChildren();
+   linhaFicha(detalhe,'h3',(c.nick||d.cliente.nome)+' · Histórico individual');
+   linhaFicha(detalhe,'p','Cadastro: '+d.cliente.nome+
+    ' · Consulta autenticada · Somente registros de laboratório.');
+   secoesFicha(detalhe,'Compras AKITEMM e posições vinculadas',d.pedidos,p=>{
+    const ids=Array.isArray(p.posicoes)&&p.posicoes.length?
+     p.posicoes.join(', '):'nenhuma posição comprovada';
+    const pagamento=p.pagamentoSandbox?.status||'sem confirmação Sandbox';
+    const evento=p.eventoQueFinanciouCiclo;
+    return 'Pedido '+p.pedidoId+' · Valor fictício '+dinheiroSimulado(p.valorCentavos)+
+     ' · Asaas: '+pagamento+' · Posições: '+ids+
+     (evento?' · Evento que financiou giro '+evento.giro+
+      ' / ordem '+evento.ordem+' (não é a contemplação deste pedido)':'');
+   });
+   secoesFicha(detalhe,'Ciclos do centro (valores previstos)',d.ciclosCentro,ciclo=>
+    'Giro '+ciclo.giro+' · Posição '+ciclo.posicaoId+
+    ' · Projeção '+dinheiroSimulado(ciclo.previstoCentavos)+
+    ' · Não representa valor liquidado.');
+   secoesFicha(detalhe,'Solicitações de bônus (laboratório)',d.saquesBonus,saque=>
+    'Solicitação '+saque.solicitacaoId+' · Tipo '+saque.tipo+
+    ' · Bruto '+dinheiroSimulado(saque.brutoCentavos)+
+    ' · Taxa '+dinheiroSimulado(saque.taxaCentavos)+
+    ' · Líquido fictício '+dinheiroSimulado(saque.liquidoCentavos));
+   secoesFicha(detalhe,'Solicitações do centro (laboratório)',d.saquesCentro,saque=>
+    'Solicitação '+saque.solicitacaoId+' · Valor fictício '+
+    dinheiroSimulado(saque.valorCentavos)+' · Evento mais recente: '+
+    (saque.ultimoEvento?.tipo||'não disponível'));
+   if(d.fontesAusentes?.length)
+    linhaFicha(detalhe,'p','Fontes ainda não disponíveis: '+d.fontesAusentes.join(', '));
+   linhaFicha(detalhe,'p','Nenhuma liquidação bancária nem saque real comprovado nesta consulta.');
+   if(Object.values({pedidos:d.pedidos,ciclos:d.ciclosCentro,
+     bonus:d.saquesBonus,centro:d.saquesCentro}).some(p=>p.total>offset+20)){
+    const proximo=document.createElement('button');
+    proximo.type='button';proximo.className='secundario';
+    proximo.textContent='Próximos registros';
+    proximo.addEventListener('click',()=>fichaCliente(c,offset+20));
+    detalhe.append(proximo);
+   }
+   if(offset>0){
+    const anterior=document.createElement('button');
+    anterior.type='button';anterior.className='secundario';
+    anterior.textContent='Registros anteriores';
+    anterior.addEventListener('click',()=>fichaCliente(c,Math.max(0,offset-20)));
+    detalhe.append(anterior);
+   }
+  }catch(err){
+   if(versao!==versaoFichaCliente||token!==credencial)return;
+   detalhe.replaceChildren();
+   linhaFicha(detalhe,'h3',c.nick||c.nome);
+   linhaFicha(detalhe,'p','Não foi possível carregar a operação deste cliente: '+err.message);
+  }
  }
  function renderizarClientes(){
   const termo=$('filtrarClientesAdmin').value.trim().toLocaleLowerCase('pt-BR');
@@ -284,13 +376,14 @@
  $('formAcessoAdminLoop03').addEventListener('submit',async ev=>{
   ev.preventDefault();token=$('chaveAdminLoop03').value;$('chaveAdminLoop03').value='';
   try{await carregar();$('mensagemAcessoAdminLoop03').textContent='Acesso administrativo ao laboratório autorizado.';}
-  catch(err){token='';config=null;configRelogio=null;$('dadosAdminLoop03').hidden=true;
+  catch(err){versaoFichaCliente++;token='';config=null;configRelogio=null;$('dadosAdminLoop03').hidden=true;
    $('situacaoPainel').textContent='SEM AUTENTICAÇÃO';
    $('mensagemAcessoAdminLoop03').textContent='Acesso recusado: '+err.message;}
  });
  $('sairAdminLoop03').addEventListener('click',()=>{
   token='';config=null;configRelogio=null;$('chaveAdminLoop03').value='';
-  clientesDiretorio=[];$('listaClientesAdmin').replaceChildren();
+  versaoFichaCliente++;clientesDiretorio=[];$('listaClientesAdmin').replaceChildren();
+  $('detalheClienteAdmin').replaceChildren();
   $('dadosAdminLoop03').hidden=true;$('situacaoPainel').textContent='SEM AUTENTICAÇÃO';
   $('mensagemAcessoAdminLoop03').textContent='Chave descartada desta página.';
  });
