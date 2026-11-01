@@ -50,6 +50,19 @@ test('mesma indicacao apresenta loja ou escritorio, com vitrine e precos livres'
  assert.equal(before.data.destino,'loja');
  assert.equal(before.data.ativo,false);
  assert.equal((await ler(convite+'vitrine?link='+encodeURIComponent(ini.linkLoja))).status,403);
+ const publico=await ler(convite+'catalogo-publico');
+ assert.equal(publico.status,200,'catalogo aberto sem login nem convite ativo');
+ assert.equal(publico.data.produtos[0].precoCentavos,60000);
+ assert.equal(publico.data.necessarioCadastroParaComprar,true);
+ assert.equal(publico.data.pagamentoReal,false);
+ assert.equal((await ler('api/laboratorio/participante/loja/catalogo')).status,401,
+  'catalogo privado do titular permanece protegido');
+ const semSessao=await fetch(base+'/api/laboratorio/participante/loja/pedidos',{
+  method:'POST',headers:{'Content-Type':'application/json','X-LOOP-LAB':'participante'},
+  body:JSON.stringify({itens:[{produtoId:produto.id,quantidade:1}]})
+ });
+ assert.equal(semSessao.status,401,'checkout exige autenticacao');
+
  repo.banco.prepare(`INSERT INTO admin_ponte_vendas_loja_sem_loop_demo
   (pedido_id,conta_id,produto_id,valor_centavos,confirmado_em)
   VALUES (?,?,?,?,?)`).run('primeira-compra-liberar-link',indicador.contaId,
