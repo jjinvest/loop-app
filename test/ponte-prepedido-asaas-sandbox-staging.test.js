@@ -43,7 +43,8 @@ async function cenario(t){
  const chamadas=[];
  const remoto={status:'PENDING',valor:250,billingType:'PIX',
   cliente:CLIENTE,referencia:null,id:'pay_StagingTeste000001',
-  falharPost:false,adulterarCriacao:false};
+  falharPost:false,adulterarCriacao:false,semResultadoBusca:false,
+  resultadosDuplicados:false,hasMore:false};
  const fetchImpl=async(url,options)=>{
   assert.ok(url.startsWith(ASAAS_SANDBOX_BASE+'/payments'));
   assert.equal(options.redirect,'error');
@@ -61,12 +62,19 @@ async function cenario(t){
     customer:CLIENTE,billingType:'PIX',externalReference:corpo.externalReference
    })};
   }
-  assert.equal(url,ASAAS_SANDBOX_BASE+'/payments/'+remoto.id);
-  return {ok:true,json:async()=>({
-   id:remoto.id,status:remoto.status,value:remoto.valor,
+  const registro={id:remoto.id,status:remoto.status,value:remoto.valor,
    customer:remoto.cliente,billingType:remoto.billingType,
-   externalReference:remoto.referencia
-  })};
+   externalReference:remoto.referencia};
+  if(url.startsWith(ASAAS_SANDBOX_BASE+'/payments?')){
+   const u=new URL(url);
+   assert.equal(u.searchParams.get('externalReference'),remoto.referencia);
+   assert.equal(u.searchParams.get('limit'),'10');
+   const itens=remoto.semResultadoBusca?[]:[registro];
+   if(remoto.resultadosDuplicados)itens.push({...registro,id:'pay_DuplicadoStaging00002'});
+   return {ok:true,json:async()=>({data:itens,hasMore:remoto.hasMore})};
+  }
+  assert.equal(url,ASAAS_SANDBOX_BASE+'/payments/'+remoto.id);
+  return {ok:true,json:async()=>registro};
  };
  const provedor=new AsaasSandboxLojaV6({
   apiKey:'CHAVE_FICTICIA_APENAS_TESTE_123',fetchImpl
@@ -210,4 +218,63 @@ test('pontes locais nao sao montadas no servidor publico e producao sempre bloqu
  ].join('')],{cwd:path.join(__dirname,'..'),encoding:'utf8'});
  assert.equal(run.status,0,run.stderr);
  assert.equal(s.chamadas.length,0);
+});
+
+test('timeout: recuperar por GET de externalReference, validar valor e reconsultar sem refazer POST',async t=>{
+ const s=await cenario(t),id=await s.gerar();
+ s.ponte.preparar({titularId:TITULAR,prepedidoId:id,clienteAsaasId:CLIENTE});
+ s.remoto.falharPost=true;
+ await assert.rejects(s.ponte.enviarUmaVez({titularId:TITULAR,prepedidoId:id,
+  provedor:s.provedor,execucaoLiberada:true}),{codigo:'ASAAS_SANDBOX_REDE_INCONCLUSIVA'});
+ s.reabrir();s.remoto.falharPost=false;
+ await assert.rejects(s.ponte.recuperarCriacao({titularId:TITULAR,prepedidoId:id,
+  provedor:s.provedor}),{codigo:'RECUPERACAO_SANDBOX_NAO_AUTORIZADA'});
+ const vinculo=await s.ponte.recuperarCriacao({titularId:TITULAR,prepedidoId:id,
+  provedor:s.provedor,consultaLiberada:true});
+ assert.equal(vinculo.encontrado,true);
+ assert.equal(vinculo.precisaReconsultaIndependente,true);
+ assert.equal(vinculo.registro.estado,'PENDENTE_SANDBOX');
+ assert.equal(vinculo.registro.pagamentoSandboxId,s.remoto.id);
+ assert.equal(s.chamadas.filter(x=>x.method==='POST').length,1);
+ const repetido=await s.ponte.recuperarCriacao({titularId:TITULAR,prepedidoId:id,
+  provedor:s.provedor,consultaLiberada:true});
+ assert.equal(repetido.repetido,true);
+ assert.equal(s.chamadas.filter(x=>x.url.includes('?')).length,1);
+ s.remoto.status='RECEIVED';
+ const confirmado=await s.ponte.conferir({titularId:TITULAR,prepedidoId:id,
+  provedor:s.provedor});
+ assert.equal(confirmado.estado,'RECEBIMENTO_INFORMADO_SANDBOX');
+ assert.equal(confirmado.ultimaConsultaSandbox.statusAsaas,'RECEIVED');
+ assert.equal(confirmado.posicoesCriadas,0);
+ assert.equal(s.chamadas.filter(x=>x.method==='POST').length,1);
+});
+test('busca vazia, duplicada ou divergente nunca libera reenvio nem posicao',async t=>{
+ const s=await cenario(t),id=await s.gerar();
+ s.ponte.preparar({titularId:TITULAR,prepedidoId:id,clienteAsaasId:CLIENTE});
+ s.remoto.falharPost=true;
+ await assert.rejects(s.ponte.enviarUmaVez({titularId:TITULAR,prepedidoId:id,
+  provedor:s.provedor,execucaoLiberada:true}));
+ s.remoto.semResultadoBusca=true;
+ const nada=await s.ponte.recuperarCriacao({titularId:TITULAR,prepedidoId:id,
+  provedor:s.provedor,consultaLiberada:true});
+ assert.equal(nada.encontrado,false);
+ assert.equal(nada.exigeRevisaoManual,true);
+ assert.equal(nada.registro.estado,'CRIACAO_INDETERMINADA');
+ s.remoto.semResultadoBusca=false;s.remoto.resultadosDuplicados=true;
+ await assert.rejects(s.ponte.recuperarCriacao({titularId:TITULAR,prepedidoId:id,
+  provedor:s.provedor,consultaLiberada:true}),
+  {codigo:'COBRANCAS_SANDBOX_DUPLICADAS_REVISAR'});
+ s.remoto.resultadosDuplicados=false;s.remoto.hasMore=true;
+ await assert.rejects(s.ponte.recuperarCriacao({titularId:TITULAR,prepedidoId:id,
+  provedor:s.provedor,consultaLiberada:true}),
+  {codigo:'COBRANCAS_SANDBOX_DUPLICADAS_REVISAR'});
+ s.remoto.hasMore=false;s.remoto.valor=249.99;
+ await assert.rejects(s.ponte.recuperarCriacao({titularId:TITULAR,prepedidoId:id,
+  provedor:s.provedor,consultaLiberada:true}),
+  {codigo:'BUSCA_SANDBOX_DIVERGENTE'});
+ assert.equal(s.ponte.consultar({titularId:TITULAR,prepedidoId:id}).estado,
+  'CRIACAO_INDETERMINADA');
+ assert.equal(s.chamadas.filter(x=>x.method==='POST').length,1);
+ assert.equal(s.banco.prepare('SELECT COUNT(*) n FROM akitemm_prepedido_asaas_consultas_staging').get().n,0);
+ assert.equal(s.banco.prepare('PRAGMA integrity_check').get().integrity_check,'ok');
 });
