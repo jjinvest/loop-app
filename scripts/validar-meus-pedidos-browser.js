@@ -35,6 +35,7 @@ async function validarPosicaoIntegrada(browser,pasta){
     }
     await pagina.reload();
     await pagina.locator('#conteudoParticipante').waitFor({state:'visible'});
+    if(viewport.width<600)await pagina.locator('#loop03Menu').click();
     await pagina.locator('[data-loop03-aba="posicoes"]').click();
     const pendente=pagina.locator('#loop03OpcoesPosicoes .loop03-status-confirmacao-pendente');
     await pendente.waitFor({state:'visible'});assert.equal(await pendente.count(),1);

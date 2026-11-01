@@ -32,7 +32,7 @@ jobs:
           node-version: '22'
           cache: npm
       - run: npm ci
-      - run: node --test test/cliente-pedidos-lab-http.test.js test/pedidos-titularidade-por-titular.test.js test/links-unicos-loja-escritorio-demo.test.js test/loja-cliente-sessao-carrinho.test.js test/loop-v6-ponta-a-ponta-cliente-loja-equipe-tabuleiro-saque.test.js test/montagem-integracao-asaas-sandbox-loop-lab.test.js
+      - run: npm test
       - run: npm install --no-save playwright@1.56.1
       - run: npx playwright install --with-deps chromium
       - run: node scripts/validar-meus-pedidos-browser.js
