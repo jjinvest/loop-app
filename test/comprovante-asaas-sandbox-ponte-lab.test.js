@@ -20,13 +20,13 @@ test('comprovante preserva produto e intento identificados antes da cobranca',as
  assert.equal(r.valorCentavos,25000);
  assert.equal(r.status,'CONFIRMADO_SIMULADO');
 });
-test('reconsultas RECEIVED_IN_CASH mantem o primeiro horario confirmado no replay',async()=>{
+test('reconsultas RECEIVED preservam o primeiro horario no replay',async()=>{
  let atualizadoEm='2026-10-26T11:00:00.000Z';
  const fonte=new ComprovanteAsaasSandboxPonteLab({
   titularidade:{buscar:()=>titular},cobrancas:{
    consultar:()=>({...cobranca,atualizadoEm}),
    historico:()=>({conferencias:[{estadoLoja:'RECEBIMENTO_INFORMADO_SANDBOX',
-    statusAsaas:'RECEIVED_IN_CASH',consultadoEm:'2026-10-26T10:30:00.000Z'}]})
+    statusAsaas:'RECEIVED',consultadoEm:'2026-10-26T10:30:00.000Z'}]})
   }});
  const primeira=await fonte.consultar(pedidoId);
  atualizadoEm='2026-10-27T12:00:00.000Z';
@@ -44,5 +44,22 @@ test('bloqueia status pendente, valor divergente e titular posterior',async()=>{
   montar({...cobranca,atualizadoEm:'2026-10-26T08:00:00.000Z'})
  ]){
   await assert.rejects(fonte.consultar(pedidoId));
+ }
+});
+
+test('baixa manual historica nunca prova Pix na ponte mesmo com status local recebido',async()=>{
+ for(const historico of [
+  [{estadoLoja:'RECEBIMENTO_INFORMADO_SANDBOX',statusAsaas:'RECEIVED_IN_CASH',consultadoEm:'2026-10-26T10:30:00.000Z'}],
+  [{estadoLoja:'RECEBIMENTO_INFORMADO_SANDBOX',statusAsaas:'RECEIVED',consultadoEm:'2026-10-26T10:30:00.000Z'},
+   {estadoLoja:'RECEBIMENTO_INFORMADO_SANDBOX',statusAsaas:'RECEIVED_IN_CASH',consultadoEm:'2026-10-26T12:00:00.000Z'}],
+  [{estadoLoja:'RECEBIMENTO_INFORMADO_SANDBOX',statusAsaas:'RECEIVED',consultadoEm:'2026-10-26T10:30:00.000Z'},
+   {estadoLoja:'RECEBIMENTO_INFORMADO_SANDBOX',statusAsaas:'PENDING',consultadoEm:'2026-10-26T12:00:00.000Z'}],
+  []
+ ]){
+  const fonte=new ComprovanteAsaasSandboxPonteLab({
+   titularidade:{buscar:()=>titular},
+   cobrancas:{consultar:()=>cobranca,historico:()=>({conferencias:historico})}
+  });
+  await assert.rejects(fonte.consultar(pedidoId),{codigo:'ULTIMA_RECONSULTA_NAO_CONFIRMOU_PIX'});
  }
 });
