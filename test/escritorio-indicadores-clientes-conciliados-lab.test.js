@@ -50,7 +50,7 @@ test('Tela do escritorio exibe indicadores por titular com fonte documentada',as
  assert.match(js,/Por categoria: ainda não conciliado/);
 });
 
-test('Escritorio conta produto FISICO de pedido confirmado, nao de catalogo reclassificado',async t=>{
+test('Escritorio conta produto FISICO em venda HTTP confirmada',async t=>{
  const m=await abrirLaboratorio(':memory:');t.after(()=>m.fechar());
  m.repo.salvar({revisaoEsperada:0,produto:{
   id:'produto-fisico-lab',nome:'Produto fisico de laboratorio',
