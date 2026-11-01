@@ -15,7 +15,7 @@ jobs:
       # Codigo imutavel revisado; o secret nao e entregue ao HEAD de um PR.
       - uses: actions/checkout@v4
         with:
-          ref: cbbbed7166a221ef10e8489f815e76881ff974b5
+          ref: 975e5d680a40f7a6314607a18ce2f2c3b57fa9b8
           persist-credentials: false
       - uses: actions/setup-node@v4
         with:
