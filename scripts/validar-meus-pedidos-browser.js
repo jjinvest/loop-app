@@ -74,6 +74,67 @@ async function validarPosicaoIntegrada(browser,pasta){
  }finally{await m.fechar();}
 }
 
+
+async function validarEscritorio(browser,pasta){
+ // Admin verdadeiro em Chromium sobre SQLite compartilhado e duas compras HTTP.
+ // Um PSP desconhecido exige alerta, enquanto outra compra gera uma posicao.
+ const m=await abrirLaboratorio(path.join(pasta,'escritorio-integrado.sqlite'));
+ try{
+  const senha='senha-escritorio-visual-laboratorio';
+  const idPedidos=[];
+  for(const [nome,email] of [
+   ['Cliente Escritorio Confirmado','escritorio-confirmado@example.invalid'],
+   ['Cliente Escritorio Revisao','escritorio-revisao@example.invalid']
+  ]){
+   const usuario=m.contas.cadastrar({nome,email,senha});
+   const {cookie}=await m.http('/entrar',{body:{nome,senha}});
+   const pedido=(await m.http('/loja/pedidos',{cookie,status:201,
+    body:{itens:[{produtoId:'curso-lab-250',quantidade:1}]}})).data.pedido.pedidoId;
+   idPedidos.push(pedido);
+  }
+  m.confirmar(idPedidos[0]);
+  await m.integracao.conciliador.processar(idPedidos[0]);
+  m.banco.prepare("UPDATE lab_psp_http_fixture SET status='FUTURE_PSP_STATUS' WHERE pedido=?")
+   .run('LOOPLAB-'+idPedidos[1]);
+  await m.integracao.cobrancas.conferir(idPedidos[1]);
+  const antes=m.banco.prepare('SELECT total_changes() n').get().n;
+  for(const [nome,viewport] of [
+   ['pc',{width:1280,height:900}],['celular',{width:390,height:844}]
+  ]){
+   const contexto=await browser.newContext({viewport});
+   try{
+    const pagina=await contexto.newPage();
+    await pagina.goto(m.base+'/admin/loop03');
+    assert.equal(await pagina.locator('#dadosAdminLoop03').isHidden(),true);
+    await pagina.locator('#chaveAdminLoop03').fill('administrador-local-ficticio-2026-123456789');
+    await pagina.locator('#formAcessoAdminLoop03 button[type=submit]').click();
+    await pagina.locator('#dadosAdminLoop03').waitFor({state:'visible',timeout:15000});
+    assert.equal(await pagina.locator('#chaveAdminLoop03').inputValue(),'');
+    assert.equal((await pagina.locator('#asaasCobrancasAdmin').innerText()).trim(),'2');
+    assert.equal((await pagina.locator('#asaasRecebimentosAdmin').innerText()).trim(),'1');
+    assert.equal((await pagina.locator('#asaasPedidosComPosicaoAdmin').innerText()).trim(),'1');
+    assert.equal((await pagina.locator('#asaasStatusDesconhecidoAdmin').innerText()).trim(),'1');
+    assert.match(await pagina.locator('#asaasRevisaoGeralAdmin').innerText(),/SIM/);
+    assert.equal((await pagina.locator('#clientesTotalDepartamento').innerText()).trim(),'2');
+    assert.equal((await pagina.locator('#clientesLoopDepartamento').innerText()).trim(),'1');
+    assert.equal((await pagina.locator('#finOpCiclosAdmin').innerText()).trim(),'0');
+    assert.match(await pagina.locator('#asaasBancoRealAdmin').innerText(),/Não homologada/);
+    assert.match(await pagina.locator('#finOpBancarioAdmin').innerText(),/R\$ 0,00/);
+    await pagina.screenshot({path:'artifacts/escritorio-integrado-'+nome+'.png',fullPage:true});
+    await pagina.locator('#sairAdminLoop03').click();
+    assert.equal(await pagina.locator('#dadosAdminLoop03').isHidden(),true);
+    assert.equal(await pagina.locator('#situacaoPainel').innerText(),'SEM AUTENTICAÇÃO');
+   }finally{await contexto.close();}
+  }
+  assert.equal(m.banco.prepare('SELECT total_changes() n').get().n,antes,
+   'Navegar no Escritorio nao pode gravar operacoes');
+  assert.equal(m.banco.prepare('SELECT COUNT(*) n FROM admin_ponte_compras_demo').get().n,1);
+  assert.equal(m.ponte._restaurar().giros,0);
+  assert.deepEqual(m.banco.prepare('PRAGMA foreign_key_check').all(),[]);
+  console.log('ESCRITORIO_PAGAMENTOS_CLIENTES_FINANCEIRO_CHROMIUM_PC_CELULAR_OK');
+ }finally{await m.fechar();}
+}
+
 async function executar(){
  const pasta=fs.mkdtempSync(path.join(os.tmpdir(),'loop-pedidos-browser-'));
  const arquivo=path.join(pasta,'clientes.sqlite');
@@ -115,6 +176,7 @@ async function executar(){
   await page.screenshot({path:'artifacts/meus-pedidos-real.png',fullPage:true});
   console.log('MEUS_PEDIDOS_BROWSER_SQLITE_OK');
   await validarPosicaoIntegrada(browser,pasta);
+  await validarEscritorio(browser,pasta);
  }finally{
   if(browser)await browser.close();
   servidor.kill('SIGTERM');
