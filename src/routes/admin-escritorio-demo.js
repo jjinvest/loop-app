@@ -106,6 +106,29 @@ function criarRouterEscritorioDemo({segredo,publicacoes=null}={}) {
        WHERE NOT EXISTS(SELECT 1 FROM admin_ponte_compras_demo p WHERE p.conta_id=c.id)
          AND (${pequenas?'EXISTS(SELECT 1 FROM admin_ponte_vendas_loja_sem_loop_demo v WHERE v.conta_id=c.id)':'0'}
               OR ${reajustadas?'EXISTS(SELECT 1 FROM admin_ponte_vendas_loja_apos_reajuste_demo v WHERE v.conta_id=c.id)':'0'})`).get().n:null;
+    // Contagem por categoria usa o TIPO GRAVADO no item ao vender.
+    // Catalogo atual nao altera a categoria historica. Considerar apenas
+    // pedidos com pagamento confirmado em livro da ponte ou venda da loja.
+    let clientesPorTipoProduto=null;
+    if(tem('admin_carrinho_loop_demo')&&tem('admin_carrinho_loop_itens_demo')&&
+       comprasDisponiveis&&(pequenas||reajustadas)){
+      const criterio=[`EXISTS(SELECT 1 FROM admin_ponte_compras_demo p
+        WHERE p.pedido_id=c.pedido_id AND p.conta_id=c.conta_id)`];
+      if(pequenas)criterio.push(`EXISTS(SELECT 1 FROM admin_ponte_vendas_loja_sem_loop_demo v
+        WHERE v.pedido_id=c.pedido_id AND v.conta_id=c.conta_id)`);
+      if(reajustadas)criterio.push(`EXISTS(SELECT 1 FROM admin_ponte_vendas_loja_apos_reajuste_demo v
+        WHERE v.pedido_id=c.pedido_id AND v.conta_id=c.conta_id)`);
+      const linhas=banco.prepare(`SELECT i.tipo AS tipo,COUNT(DISTINCT c.conta_id) AS quantidade
+        FROM admin_carrinho_loop_itens_demo i
+        JOIN admin_carrinho_loop_demo c ON c.pedido_id=i.pedido_id
+        WHERE (${criterio.join(' OR ')})
+        GROUP BY i.tipo`).all();
+      clientesPorTipoProduto={PDF:0,FISICO:0};
+      for(const l of linhas){
+       if(l.tipo==='PDF'||l.tipo==='FISICO')
+        clientesPorTipoProduto[l.tipo]=l.quantidade;
+      }
+    }
     const apelidos=!!banco.prepare("SELECT 1 FROM sqlite_master WHERE type='table' AND name='admin_links_apelidos_demo'").get();
     const clientes=banco.prepare(`
       SELECT c.id AS id,c.nome AS nome,c.criado_em AS criadoEm,
@@ -117,7 +140,7 @@ function criarRouterEscritorioDemo({segredo,publicacoes=null}={}) {
     return res.json({modo:'LABORATORIO_LOCAL',total,clientes,
       clientesComPosicoesCriadas,clientesSomenteLoja,
       fonteIndicadores:'COMPRAS_E_VENDAS_CONFIRMADAS_SQLITE',
-      clientesPorTipoProduto:null,
+      clientesPorTipoProduto,
       limite:100,semPagamentosReais:true,
       comprasIndividuais:'CONSULTA_SQLITE_POR_CLIENTE_DISPONIVEL',posicoesIndividuais:'PARCIALMENTE_CONCILIADAS_POR_COMPRA',
       contemplacoesIndividuais:'NAO_CONCILIADAS'});
