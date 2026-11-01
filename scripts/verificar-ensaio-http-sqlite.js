@@ -6,6 +6,8 @@ const {createHash}=require('node:crypto');
 const {DatabaseSync}=require('node:sqlite');
 const {SimuladorLoop}=require('../src/domain/simulador-loop');
 const {auditarSeisPedidosDoCicloLab}=require('../src/domain/auditoria-seis-pedidos-ciclo-lab');
+const {disponibilidadeCofreDemo}=require('../src/domain/disponibilidade-cofres-v6-demo-sqlite');
+const {consultarOperacaoClienteLab}=require('../src/domain/operacao-cliente-sqlite-lab');
 function verificar(pasta){
  const arquivo=path.join(pasta,'laboratorio.sqlite');
  const relatorio=JSON.parse(fs.readFileSync(path.join(pasta,'relatorio.json'),'utf8'));
@@ -27,6 +29,9 @@ function verificar(pasta){
   assert.equal(psp.n,pedidos);assert.equal(psp.bruto,relatorio.faturamentoBrutoFicticioCentavos);
   const snapshot=JSON.parse(b.prepare('SELECT snapshot_json FROM admin_ponte_estado_demo WHERE id=1').get().snapshot_json);
   const motor=SimuladorLoop.restaurarSnapshot(snapshot);
+  const ativas=motor.filas.filaA.length+motor.filas.filaB.length+
+   [motor.tabuleiro.centro,...motor.tabuleiro.vagas].filter(Boolean).length;
+  assert.equal(ativas,relatorio.posicoesAtivas);
   const rastreio=auditarSeisPedidosDoCicloLab({banco:b,ponte:{banco:b,_restaurar:()=>motor}});
   assert.deepEqual(rastreio.alertas,[]);
   assert.equal(rastreio.eventosDocumentados,relatorio.eventosDocumentados);
@@ -35,11 +40,35 @@ function verificar(pasta){
   assert.equal(relatorio.conciliacaoCofres.quantidadeDivergencias,0);
   assert.equal(relatorio.conciliacaoCofres.somaDestinacoesConservadasCentavos,
    relatorio.conciliacaoCofres.entradasAportesSimuladosCentavos);
+  const receitas=b.prepare(`SELECT SUM(liquido_centavos) total,SUM(centro_centavos) centro,
+   SUM(esquerda_centavos) esquerda,SUM(direita_centavos) direita FROM loop_v6_pre_receitas`).get();
+  const saidas=b.prepare(`SELECT COALESCE(SUM(valor_centavos),0) total,
+   COALESCE(SUM(CASE WHEN destino='ESCRITORIO_PREVISTO' THEN valor_centavos ELSE 0 END),0) escritorios,
+   COALESCE(SUM(CASE WHEN destino='LOOP_DOURADAS' THEN valor_centavos ELSE 0 END),0) douradas FROM loop_v6_pre_saidas`).get();
+  const financeiro={entradasAportesSimuladosCentavos:receitas.total,
+   cofreCentroRestanteSimuladoCentavos:receitas.centro-saidas.total,
+   cofreEsquerdaSimuladoCentavos:receitas.esquerda,cofreDireitaSimuladoCentavos:receitas.direita,
+   valoresApenasPrevistosNosEscritoriosCentavos:saidas.escritorios,
+   cofreDouradasSimuladoCentavos:saidas.douradas};
+  for(const [campo,valor] of Object.entries(financeiro))assert.equal(relatorio.conciliacaoCofres[campo],valor,campo);
+  const reserva=disponibilidadeCofreDemo(b,{cofreId:'LOOP_DIREITA',saldoBrutoCentavos:receitas.direita});
+  assert.equal(reserva.saldoLivreDemonstrativoCentavos,relatorio.conciliacaoCofres.cofreDireitaDisponivelSimuladoCentavos);
+  assert.equal(reserva.compromissoBonificacoesCentavos,relatorio.conciliacaoCofres.bonificacoesComprometidasCentavos);
+  const primeiro=b.prepare('SELECT id FROM admin_contas_participantes_demo ORDER BY criado_em,id LIMIT 1').get().id;
+  const ultimo=b.prepare('SELECT id FROM admin_contas_participantes_demo ORDER BY criado_em DESC,id DESC LIMIT 1').get().id;
+  for(const contaId of [primeiro,ultimo]){
+   const operacao=consultarOperacaoClienteLab({banco:b,contaId});
+   assert.equal(operacao.pedidos.total,1);
+   assert.equal(operacao.pedidos.itens[0].pagamentoSandbox.status,'RECEBIMENTO_INFORMADO_SANDBOX');
+   assert.equal(operacao.pedidos.itens[0].posicoes.length,1);
+  }
   return {estado:'CONFERIDO_SOMENTE_LEITURA',contas,pedidos,posicoes,ativacoes,indicacoes,
    titularesDistintos:unicas.titulares,posicoesDistintas:unicas.posicoes,
    cobrancasFixtureRecebidas:psp.n,brutoFicticioCentavos:psp.bruto,
    giros:rastreio.girosDocumentados,eventos:rastreio.eventosDocumentados,
-   integridadeSqlite:'ok',violacoesForeignKeys:0,alertasRastreio:0,
+   integridadeSqlite:'ok',violacoesForeignKeys:0,alertasRastreio:0,financeiro,
+   reservaLivreFicticiaCentavos:reserva.saldoLivreDemonstrativoCentavos,
+   consultaAdminPrimeiroUltimoConferida:true,
    sha256Banco:createHash('sha256').update(fs.readFileSync(arquivo)).digest('hex'),
    sha256Relatorio:createHash('sha256').update(fs.readFileSync(path.join(pasta,'relatorio.json'))).digest('hex'),
    bancoRealConciliado:false,pagamentosReais:0};

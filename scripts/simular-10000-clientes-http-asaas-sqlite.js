@@ -33,12 +33,14 @@ async function executar({total=10000,pasta=path.resolve('artifacts/ensaio-10000-
   circuito=new CircuitBreakPonteV6DemoSQLite({banco:m.banco,ponte:m.ponte,controle,agora});
  };
  montarCircuito();
- if(!retomar){
+ if(!circuito.preLancamento.resumo().configurado){
   circuito.preLancamento.habilitar({valorFixoLoopCentavos:25000});
-  controle.executar({tipo:'LIMITE_DIARIO',valor:300,comandoId:'cb-carga-limite-001',revisaoEsperada:controle.resumo().revisao});
-  controle.executar({tipo:'ABRIR',comandoId:'cb-carga-abrir-001',revisaoEsperada:controle.resumo().revisao});
  }
- let iniciou=retomar;
+ // Os comandos sao idempotentes inclusive se a interrupcao ocorreu
+ // durante a preparacao, antes das primeiras doze compras.
+ controle.executar({tipo:'LIMITE_DIARIO',valor:300,comandoId:'cb-carga-limite-001',revisaoEsperada:controle.resumo().revisao});
+ controle.executar({tipo:'ABRIR',comandoId:'cb-carga-abrir-001',revisaoEsperada:controle.resumo().revisao});
+ let iniciou=circuito.preLancamento.resumo().fase==='EM_OPERACAO';
  const contasExistentes=m.banco.prepare('SELECT COUNT(*) n FROM admin_contas_participantes_demo').get().n;
  const primeiro=retomar?Math.max(1,contasExistentes):1;
  const inicioCivil=m.banco.prepare('SELECT MIN(criado_em) data FROM admin_contas_participantes_demo').get().data;
