@@ -64,6 +64,7 @@ const {criarRouterCircuitBreakV6Demo}=require('../routes/admin-circuit-break-v6-
 const {AsaasSandboxLojaV6}=require('../domain/asaas-sandbox-loja-v6');
 const {CobrancasAkitemmAsaasSandboxSQLite}=require('../domain/cobrancas-akitemm-asaas-sandbox-v6');
 const {criarRouterCobrancasAkitemmSandboxV6}=require('../routes/admin-cobrancas-akitemm-sandbox-v6');
+const {montarIntegracaoAsaasSandboxLoopLab}=require('../domain/montagem-integracao-asaas-sandbox-loop-lab');
 
 function criarAppAdminLaboratorio({ repositorio, segredo, webhookDemo, webhookAsaasSandbox, habilitarConviteLoopCheckout=false } = {}) {
   // Convite oculto por padrao. Ativar somente por decisao explicita do proprietario;
@@ -501,6 +502,19 @@ function iniciarLaboratorio({ ambiente = process.env } = {}) {
     const servidor = app.listen(porta,'127.0.0.1', () => {
       process.stdout.write('Catalogo LOOP em teste local: http://127.0.0.1:' + porta + '/admin\n');
     });
+    // Conciliacao opt-in de cobrancas ja criadas no Asaas Sandbox.
+    // Nao cria cobrancas por conta propria nem aceita comprovantes do navegador.
+    let conciliacaoSandbox=null;
+    if(ambiente.LOOP_ASAAS_SANDBOX_AUTO_CONCILIAR==='1'){
+      if(!ambiente.ASAAS_SANDBOX_API_KEY)
+       throw new Error('Chave do Asaas Sandbox obrigatoria para conciliacao');
+      const contas=new ContasParticipantesDemoSQLite({banco:banco.banco});
+      const titularidade=new PedidosTitularidadeDemoSQLite({banco:banco.banco,contas});
+      conciliacaoSandbox=montarIntegracaoAsaasSandboxLoopLab({
+       banco:banco.banco,contas,titularidade,apiKey:ambiente.ASAAS_SANDBOX_API_KEY
+      }).automatico;
+      conciliacaoSandbox.iniciar();
+    }
     // Agenda automatica SOMENTE no processo de laboratorio LOCAL em execucao.
     // Em testes HTTP com app factory nao criamos timers externos.
     const programa=app.locals.programadorCatracaDemo;
@@ -511,6 +525,7 @@ function iniciarLaboratorio({ ambiente = process.env } = {}) {
     if(timer)timer.unref();
     servidor.on('close',()=>{
       if(timer)clearInterval(timer);
+      conciliacaoSandbox?.parar();
       banco.fechar();
     });
     return { servidor, banco };
