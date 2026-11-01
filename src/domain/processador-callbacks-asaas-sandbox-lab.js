@@ -143,7 +143,16 @@ class ProcessadorCallbacksAsaasSandboxLab{
   const estados=this.banco.prepare('SELECT estado,COUNT(*) quantidade FROM akitemm_asaas_callback_fila_lab GROUP BY estado').all();
   const avisosSemJob=this.banco.prepare(`SELECT COUNT(*) n FROM akitemm_asaas_sandbox_avisos a
    WHERE NOT EXISTS(SELECT 1 FROM akitemm_asaas_callback_fila_lab f WHERE f.evento_id=a.evento_id)`).get().n;
-  return {modo:'CALLBACK_SANDBOX_LOCAL',estados,avisosSemJob,somenteLeitura:true,
+  // Contadores persistidos em SQLite ajudam a identificar callback abandonado
+  // apos queda do processo sem reiniciar nem reprocessar pagamentos no monitor.
+  const agora=this._agora();
+  const fila=this.banco.prepare(`SELECT
+   COUNT(CASE WHEN estado='PENDENTE' AND proxima_em<=? THEN 1 END) AS pendentesProntos,
+   COUNT(CASE WHEN estado='PROCESSANDO' AND lease_ate<=? THEN 1 END) AS leasesExpirados
+   FROM akitemm_asaas_callback_fila_lab`).get(agora,agora);
+  return {modo:'CALLBACK_SANDBOX_LOCAL',estados,avisosSemJob,
+   pendentesProntos:fila.pendentesProntos,leasesExpirados:fila.leasesExpirados,
+   referenciaFilaEmMs:agora,somenteLeitura:true,
    falhasAgendador:this.falhasAgendador,ultimaFalhaAgendador:this.ultimaFalhaAgendador,
    telemetriaSomenteMemoria:true,
    pagamentoRealAutorizado:false,callbackRemotoHomologado:false};
