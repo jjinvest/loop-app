@@ -146,14 +146,26 @@ function montarIntegracaoAsaasSandboxLoopLab({banco,contas,titularidade,apiKey,f
   const callbacksPendentesProntos=filaCallbacks?.pendentesProntos||0;
   const callbacksLeasesExpirados=filaCallbacks?.leasesExpirados||0;
   const callbacksSemJob=filaCallbacks?.avisosSemJob||0;
+  // Uma cobranca local continua RECEBIDA quando uma reconsulta posterior
+  // retorna PENDING/CONFIRMED ou estado futuro (historico imutavel), mas
+  // isso NAO equivale a ultima confirmacao remota. Exigir revisao humana.
+  // Somente PIX com status RECEIVED comprova este tipo de recebimento; o
+  // recebimento manual em dinheiro nao credita saldo na conta Asaas.
+  const reconsultasSemRecebimento=banco.prepare(`SELECT COUNT(*) AS n
+   FROM akitemm_sandbox_cobrancas c
+   WHERE c.status='RECEBIMENTO_INFORMADO_SANDBOX'
+    AND COALESCE((SELECT h.status_asaas
+      FROM akitemm_sandbox_consultas h WHERE h.pedido_id=c.pedido_id
+      ORDER BY h.id DESC LIMIT 1),'')<>'RECEIVED'`).get().n;
   const anomalias=dados.semTitularidade+dados.valoresDivergentes+
    dados.titularesDivergentes+dados.multiplosLivros+
    dados.integracoesSemRecebimento+idReutilizadoEmPosicaoAdicional+
-   callbacksExigemRevisao+dados.estadosAsaasDesconhecidos;
+   callbacksExigemRevisao+dados.estadosAsaasDesconhecidos+
+   reconsultasSemRecebimento;
   return Object.freeze({ambiente:'ASAAS_SANDBOX_EXCLUSIVO',
    modo:'CONVERGENCIA_SQLITE_SOMENTE_LEITURA',...dados,
    posicoesAdicionais:adicionais,
-   idReutilizadoEmPosicaoAdicional,
+   idReutilizadoEmPosicaoAdicional,reconsultasSemRecebimento,
    callbacksExigemRevisao,callbacksConcluidos,callbacksPendentesProntos,
    callbacksLeasesExpirados,callbacksSemJob,
    callbacksHabilitados:Boolean(filaCallbacks),
