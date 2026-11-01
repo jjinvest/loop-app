@@ -246,6 +246,11 @@ class PedidosPDFPagamentosDemoSQLite{
     this.banco.exec('COMMIT');
     return {repetido:true,pedido:this.buscar(pedidoId)};
    }
+   // Mesmo contrato do carrinho: a reserva de cobranca Asaas impede
+   // qualquer segunda fonte de pagamento ficticia para o pedido PDF.
+   if(this.banco.prepare("SELECT 1 FROM sqlite_master WHERE type='table' AND name='akitemm_sandbox_cobrancas'").get()&&
+      this.banco.prepare('SELECT 1 FROM akitemm_sandbox_cobrancas WHERE pedido_id=?').get(pedidoId))
+    throw falha('CONFLITO','FONTE_PAGAMENTO_SANDBOX_JA_INICIADA');
    const eventos=this.historico(pedidoId);
    if((tipo===TIPOS.CONFIRMAR&&eventos.length!==0)||
       (tipo===TIPOS.ESTORNAR&&(eventos.length!==1||eventos[0].tipo!==TIPOS.CONFIRMAR))){
