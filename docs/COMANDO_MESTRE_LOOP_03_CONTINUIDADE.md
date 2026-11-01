@@ -1361,3 +1361,13 @@ Dois triggers SQLite `BEFORE INSERT`, criados **apos a migracao da tabela legada
 Regressao focal em `test/asaas-convergencia-alertas-integridade-lab.test.js`: impede extra reutilizando primaria; simula dado legado corrompido em ambiente isolado para preservar a deteccao; impede primaria reutilizando ID de extra, com integridade SQLite e chaves estrangeiras. Nao repetir carga de 10.000 compradores. CI e navegador do commit final devem ser conferidos antes de declarar validacao aprovada.
 
 Mantidas regras do LOOP 3.0 e telas aprovadas, R$250, 3A:1B, seis eventos, 10 ativas / 2 no tabuleiro, CPF/termos individuais, cofres, saque ficticio minimo R$25 e taxa 0%. Sandbox sem dinheiro real. PR #1 DRAFT, sem merge/deploy. Webhook Asaas remoto, conciliacao bancaria independente, avaliacao juridico-regulatoria e autorizacao de operacao seguem pendentes.
+
+## 114. MIGRACAO SQLITE DE PACOTES LEGADOS PARA ATE DEZ POSICOES — 01/11/2026
+
+Identificada incompatibilidade concreta de migracao: a ponte permitia ate dez posicoes por pedido, mas bancos legados com `CHECK(ordem BETWEEN 2 AND 5)` eram migrados apenas para `BETWEEN 2 AND 6`, e os que ja tinham o esquema 2..6 nem sequer eram migrados. Um pacote especial valido com ordens 7..10 podia falhar no SQLite antigo, apesar da regra vigente.
+
+A migracao da tabela `admin_ponte_posicoes_adicionais_demo` agora converte ambos os esquemas antigos (2..5 e 2..6) para `CHECK(ordem BETWEEN 2 AND 10)`, em transacao, conservando pedido, ordem e IDs historicos sem recriar compra ou posicao. Os triggers de integridade cruzada da secao 113 continuam sendo instalados apos a migracao.
+
+Regressao focal nova `test/ponte-migracao-pacotes-dez-posicoes-sqlite-lab.test.js`: para cada esquema legado, exercita compra HTTP/SQLite do laboratorio, pagamento ficticio confirmado, posicao primaria e adicional preexistentes, reconstrucao de esquema antigo, reinicializacao da ponte, preservacao de registros e aceite de ordem 10, rejeicao de ID duplicado e integridade referencial. Nao repetir carga de 10.000 pedidos. CI e navegador precisam ser confirmados na branch para declarar sucesso; testes cadastrados nao sao prova de execucao.
+
+Ambiente exclusivo de laboratorio Asaas Sandbox, nenhuma movimentacao financeira real, merge ou deploy. Regras e telas aprovadas mantidas. Lancamento publico depende ainda de webhook remoto homologado, conciliacao bancaria independente, protecao de operacoes reais, revisao juridico-regulatoria, solvencia e autorizacao formal.
