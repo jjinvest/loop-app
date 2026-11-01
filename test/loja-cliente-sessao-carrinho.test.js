@@ -260,3 +260,36 @@ test('HTTP: cobranca sandbox conciliada aparece no escritorio do comprador, sem 
  assert.equal((await escritorio(cookieA)).posicoes.length,1);
  assert.equal(repo.banco.prepare('SELECT COUNT(*) AS n FROM admin_ponte_compras_demo').get().n,1);
 });
+
+test('sandbox integrado: servidor compartilha banco, contas, titularidade e cobrancas',t=>{
+ const repo=new RepositorioCatalogoSQLite({caminho:':memory:'});
+ t.after(()=>repo.fechar());
+ const ambienteSandbox={
+  LOOP_ASAAS_SANDBOX_AUTO_CONCILIAR:'1',
+  LOOP_ASAAS_SANDBOX_CHECKOUT:'1',
+  ASAAS_SANDBOX_API_KEY:'CHAVE_FICTICIA_APENAS_TESTES_123',
+  ASAAS_SANDBOX_CLIENTE_TESTE_ID:'cus_TesteCompartilhado'
+ };
+ const app=criarAppAdminLaboratorio({repositorio:repo,
+  segredo:'segredo-admin-sandbox-integrado-123456789',ambienteSandbox});
+ const m=app.locals.integracaoAsaasCompartilhada;
+ assert.ok(m);
+ assert.equal(m.ponte,app.locals.ponteCompartilhadaLoop);
+ assert.equal(m.ponte.fonteComprovante,'ASAAS_SANDBOX_EXCLUSIVO');
+ assert.equal(m.ponte.contas,app.locals.contasCompartilhadasLoop);
+ assert.equal(m.ponte.pedidosIdentificados,app.locals.titularidadeCompartilhadaLoop);
+ assert.equal(m.cobrancas.banco,repo.banco);
+ assert.equal(m.automatico.conciliador.cobrancas,m.cobrancas);
+});
+test('sandbox integrado: nao compartilha ponte com atribuicao individual desabilitada',t=>{
+ const repo=new RepositorioCatalogoSQLite({caminho:':memory:'});
+ t.after(()=>repo.fechar());
+ assert.throws(()=>criarAppAdminLaboratorio({repositorio:repo,
+  segredo:'segredo-admin-sandbox-bloqueado-123456789',
+  ambienteSandbox:{
+   LOOP_ASAAS_SANDBOX_AUTO_CONCILIAR:'1',
+   LOOP_ASAAS_SANDBOX_CHECKOUT:'1',
+   LOOP_LAB_ATRIBUICAO_POR_POSICAO:'0',
+   ASAAS_SANDBOX_API_KEY:'CHAVE_FICTICIA_APENAS_TESTES_123'
+  }}),/Ponte compartilhada deve usar/);
+});
