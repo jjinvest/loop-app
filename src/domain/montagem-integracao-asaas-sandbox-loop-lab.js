@@ -54,13 +54,15 @@ function montarIntegracaoAsaasSandboxLoopLab({banco,contas,titularidade,apiKey,f
    const pendentes=linhas.map(r=>r.pedidoId);
    if(linhas.length>0)ultimoPedidoExaminado=linhas[linhas.length-1].pedidoId;
    if(linhas.length<limiteDescoberta)ultimoPedidoExaminado='';
-   // Reconsultar tambem recebimentos ja integrados: um estorno posterior
-   // nao pode ficar invisivel. Lote limitado e intervalo minimo por pedido.
+   return pendentes;
+  },
+  // Cota dedicada: pagamentos antigos ja integrados devem ser revisitados,
+  // mesmo durante uma chegada continua de novos pedidos ainda pendentes.
+  listarRecebimentos:()=>{
    const corte=new Date(Date.parse(agora?agora():new Date().toISOString())-60000).toISOString();
-   const antigos=banco.prepare(`SELECT pedido_id AS pedidoId FROM akitemm_sandbox_cobrancas
+   return banco.prepare(`SELECT pedido_id AS pedidoId FROM akitemm_sandbox_cobrancas
     WHERE status='RECEBIMENTO_INFORMADO_SANDBOX' AND atualizado_em<=?
-    ORDER BY atualizado_em,pedido_id LIMIT 20`).all(corte).map(r=>r.pedidoId);
-   return [...new Set([...pendentes,...antigos])];
+    ORDER BY atualizado_em,pedido_id LIMIT 5`).all(corte).map(r=>r.pedidoId);
   }
  });
  const conferidorAvisos=caixaAvisos?new ConferidorAvisosAsaasSandboxSQLite({banco,caixaAvisos,cobrancas}):null;
