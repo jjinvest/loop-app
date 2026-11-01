@@ -3,6 +3,49 @@ const {test}=require('node:test');
 const assert=require('node:assert/strict');
 const {abrirLaboratorio}=require('../scripts/lib/laboratorio-http-asaas');
 const {ElegibilidadeProdutosLoopDemoSQLite}=require('../src/domain/elegibilidade-produtos-loop-demo-sqlite');
+for(const quantidade of [5,10])test('Sandbox respeita pacote congelado de '+quantidade+' posicoes, com ativacao individual',async t=>{
+ const m=await abrirLaboratorio(':memory:');t.after(()=>m.fechar());
+ m.repo.salvar({revisaoEsperada:0,produto:{id:'pacote-ficticio-1500',nome:'Pacote ficticio de laboratorio',
+  descricao:'Fixture da modalidade ja configuravel, sem oferta real',tipo:'PDF',estado:'PUBLICADO',
+  precoCentavos:250000,entrega:'DOWNLOAD_APOS_CONFIRMACAO',fotos:[],videoApresentacaoUrl:null,detalhes:[]}});
+ const headers={'Content-Type':'application/json',Authorization:'Bearer administrador-local-ficticio-2026-123456789'};
+ const evento=m.base+'/api/admin/carrinho-loop-demo/eventos-especiais';
+ const criacao=await fetch(evento,{method:'POST',headers,body:JSON.stringify({
+  eventoId:'evento-pacote-sandbox',produtoId:'pacote-ficticio-1500',titulo:'Pacote FICTICIO',
+  descricao:'Fixture isolada, sem publicacao real',quantidadeMinimaLoop:1,posicoesPorPedidoLoop:quantidade,
+  dataInicio:new Date().toISOString().slice(0,10),dataFim:new Date(Date.now()+86400000).toISOString().slice(0,10)})});
+ assert.equal(criacao.status,201);
+ const senha='senha-pacote-http-laboratorio-2026';
+ const a=m.contas.cadastrar({nome:'Comprador Pacote',email:'pacote@example.invalid',senha});
+ const {cookie}=await m.http('/entrar',{body:{nome:a.nome,senha}});
+ const {data}=await m.http('/loja/pedidos',{cookie,status:201,
+  body:{itens:[{produtoId:'pacote-ficticio-1500',quantidade:1}]}});
+ const id=data.pedido.pedidoId;
+ // Mudanca posterior nao reescreve a modalidade fotografada.
+ assert.equal((await fetch(evento+'/evento-pacote-sandbox/encerrar',{method:'POST',headers,body:'{}'})).status,200);
+ m.confirmar(id);await m.integracao.automatico.verificar();
+ assert.equal(m.integracao.automatico.pendentes.size,0);
+ const replay=await m.integracao.conciliador.processar(id);
+ assert.equal(replay.repetida,true);assert.equal(replay.posicoesNoPedido,quantidade);
+ assert.equal(new Set(replay.posicaoIds).size,quantidade);
+ let visao=(await m.http('/minha-conta',{cookie})).data;
+ assert.equal(visao.posicoes.length,quantidade);
+ assert.ok(visao.posicoes.every(p=>p.statusAdesao==='PENDENTE'));
+ await m.http('/ativar-posicoes',{cookie,body:{posicaoId:replay.posicaoIds[0],
+  cpfFicticio:'11144477735',aceitaTermos:true,versaoTermos:'LOOP-DEMO-V1'}});
+ visao=(await m.http('/minha-conta',{cookie})).data;
+ assert.equal(visao.posicoes.filter(p=>p.statusAdesao==='ATIVA').length,1);
+ assert.equal(visao.posicoes.filter(p=>p.statusAdesao==='PENDENTE').length,quantidade-1);
+ assert.equal(m.banco.prepare('SELECT COUNT(*) n FROM admin_ponte_posicoes_adicionais_demo').get().n,quantidade-1);
+ if(quantidade===10){
+  const extra=(await m.http('/loja/pedidos',{cookie,status:201,
+   body:{itens:[{produtoId:'curso-lab-250',quantidade:1}]}})).data.pedido.pedidoId;
+  m.confirmar(extra);
+  await assert.rejects(m.integracao.conciliador.processar(extra),{codigo:'LIMITE_ATIVO'});
+  assert.equal(m.banco.prepare('SELECT COUNT(*) n FROM admin_ponte_compras_demo').get().n,1);
+  assert.equal((await m.http('/minha-conta',{cookie})).data.posicoes.length,10);
+ }
+});
 test('conciliacao automatica reencontra recebimento antigo e detecta reversao posterior sem apagar posicao',async t=>{
  let tempo=Date.now()+5000;
  const m=await abrirLaboratorio(':memory:',{agora:()=>new Date(tempo).toISOString()});

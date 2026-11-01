@@ -38,6 +38,7 @@ class ComprovanteAsaasSandboxPonteLab{
   if(!Number.isFinite(Date.parse(confirmadoEm))||Date.parse(confirmadoEm)<criado)
    throw falha('CONFIRMACAO_SEM_HORARIO_CONFIAVEL');
   let valorElegivelLoopCentavos=cobranca.valorCentavos;
+  let quantidadePosicoesEsperada=1;
   // O PSP confirma o TOTAL; somente a fotografia comercial determina
   // quanto e elegivel. Nunca consultar a regra atual do catalogo.
   if(cobranca.origem==='CARRINHO'&&produtoId==='carrinho-loop-demo'){
@@ -52,9 +53,17 @@ class ComprovanteAsaasSandboxPonteLab{
       itens.reduce((s,i)=>s+i.total,0)!==cobranca.valorCentavos)
     throw falha('SNAPSHOT_ELEGIBILIDADE_CARRINHO_INVALIDO');
    valorElegivelLoopCentavos=itens.reduce((s,i)=>s+i.elegivel,0);
+   const pacote=banco.prepare(`SELECT MAX(k.posicoes_por_pedido) quantidade
+    FROM admin_carrinho_item_pacote_posicoes_demo k
+    JOIN admin_carrinho_loop_itens_demo i ON i.pedido_id=k.pedido_id AND i.ordem=k.ordem
+    JOIN admin_carrinho_item_elegibilidade_demo e ON e.pedido_id=i.pedido_id AND e.ordem=i.ordem
+    JOIN admin_carrinho_item_quantidade_minima_demo q ON q.pedido_id=i.pedido_id AND q.ordem=i.ordem
+    WHERE k.pedido_id=? AND e.elegivel_loop=1 AND e.subtotal_elegivel_centavos>0
+     AND i.quantidade>=q.quantidade_minima`).get(pedidoId);
+   quantidadePosicoesEsperada=pacote.quantidade??1;
   }
   return Object.freeze({pedidoId,contaId:titular.contaId,produtoId,
-   valorElegivelLoopCentavos,
+   valorElegivelLoopCentavos,quantidadePosicoesEsperada,
    valorCentavos:cobranca.valorCentavos,status:STATUS_CONFIRMADO,
    confirmadoEm,intentoPagamentoId:titular.intentoPagamentoId});
  }

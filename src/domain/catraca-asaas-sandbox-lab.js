@@ -31,17 +31,20 @@ class CatracaAsaasSandboxLab{
   // A ponte consulta SEPARADAMENTE seu verificador confiavel de pagamentos.
   // Ela valida titularidade previamente fixada e grava a posicao em SQLite
   // sob BEGIN IMMEDIATE; esta auditoria nao substitui essas garantias.
-  const resultado=await this.ponte.processar({pedidoId,quantidadeEsperada:1,titularEsperado:parecer.titularId,valorEsperadoCentavos:parecer.valorCentavos});
+  const quantidade=comprovante.quantidadePosicoesEsperada??1;
+  if(!Number.isSafeInteger(quantidade)||quantidade<1||quantidade>10)
+   throw erro('QUANTIDADE_POSICOES_INESPERADA');
+  const resultado=await this.ponte.processar({pedidoId,quantidadeEsperada:quantidade,titularEsperado:parecer.titularId,valorEsperadoCentavos:parecer.valorCentavos});
   if(resultado.contaId!==parecer.titularId)
    throw erro('TITULAR_DIVERGENTE_APOS_PROCESSAMENTO');
   if(resultado.compraElegivelLoop!==true||
      resultado.posicaoCriada!==true||
-     !Array.isArray(resultado.posicaoIds)||resultado.posicaoIds.length!==1)
+     !Array.isArray(resultado.posicaoIds)||resultado.posicaoIds.length!==quantidade)
    throw erro('QUANTIDADE_POSICOES_INESPERADA');
   return Object.freeze({
    pedidoId,contaId:resultado.contaId,posicaoId:resultado.posicaoId,
    criada:resultado.criado===true,repetida:resultado.repetido===true,
-   posicoesNoPedido:1,confirmacaoIndividualObrigatoria:true,
+   posicaoIds:resultado.posicaoIds,posicoesNoPedido:quantidade,confirmacaoIndividualObrigatoria:true,
    cpfConfirmadoAutomaticamente:false,semMovimentacaoFinanceiraReal:true,
    ambiente:'LABORATORIO_ASAAS_SANDBOX'
   });

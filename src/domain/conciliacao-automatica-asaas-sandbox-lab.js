@@ -33,7 +33,8 @@ class ConciliacaoAutomaticaAsaasSandboxLab{
    this.emAndamento.add(pedidoId);
    try{
     const r=await this.conciliador.processar(pedidoId);
-    if((r?.posicoesNoPedido===1&&r?.confirmacaoIndividualObrigatoria===true)||
+    if((Number.isSafeInteger(r?.posicoesNoPedido)&&r.posicoesNoPedido>=1&&
+        r.posicoesNoPedido<=10&&r?.confirmacaoIndividualObrigatoria===true)||
        (r?.posicoesNoPedido===0&&r?.vendaSomenteLoja===true))
      this.pendentes.delete(pedidoId);
    }catch(e){

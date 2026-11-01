@@ -57,7 +57,8 @@ class ConciliadorPosicaoAsaasSandboxLab{
   // elegibilidade e comprovante interno; nao confiar em webhook.
   const resultado=await this.catraca.processar(pedidoId);
   if(resultado?.pedidoId!==pedidoId||
-     resultado?.posicoesNoPedido!==1||
+     !Number.isSafeInteger(resultado?.posicoesNoPedido)||
+     resultado.posicoesNoPedido<1||resultado.posicoesNoPedido>10||
      resultado?.confirmacaoIndividualObrigatoria!==true)
    throw falha('RESULTADO_CATRACA_INVALIDO');
   return Object.freeze({...resultado,reconsultaAsaasAntesDaCatraca:true});
