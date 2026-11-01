@@ -2,13 +2,17 @@
 // Processador local de laboratorio: sem webhook publico, sem credenciais reais.
 // A reconsulta remota e validacao de titularidade permanecem no conciliador.
 class ConciliacaoAutomaticaAsaasSandboxLab{
- constructor({conciliador,intervaloMs=1000,aoErro=()=>{},listarPendentes=null}={}){
+ constructor({conciliador,intervaloMs=1000,aoErro=()=>{},listarPendentes=null,
+  maxPorVerificacao=20}={}){
   if(typeof conciliador?.processar!=='function')throw new TypeError('Conciliador obrigatorio');
   if(!Number.isSafeInteger(intervaloMs)||intervaloMs<100)throw new RangeError('Intervalo invalido');
   if(listarPendentes!==null&&typeof listarPendentes!=='function')
    throw new TypeError('Consulta de pendentes invalida');
+  if(!Number.isSafeInteger(maxPorVerificacao)||maxPorVerificacao<1||maxPorVerificacao>100)
+   throw new RangeError('Limite de pedidos por rodada invalido');
   this.conciliador=conciliador;this.intervaloMs=intervaloMs;this.aoErro=aoErro;
   this.listarPendentes=listarPendentes;
+  this.maxPorVerificacao=maxPorVerificacao;
   this.pendentes=new Set();this.emAndamento=new Set();this.timer=null;
   this.verificacaoEmCurso=null;
   this.falhasAgendador=0;this.ultimaFalhaAgendador=null;
@@ -39,8 +43,11 @@ class ConciliacaoAutomaticaAsaasSandboxLab{
    try{for(const id of await this.listarPendentes())this.acompanhar(id);}
    catch(e){await this._notificarErro(e,null);}
   }
+  let verificados=0;
   for(const pedidoId of [...this.pendentes]){
+   if(verificados>=this.maxPorVerificacao)break;
    if(this.emAndamento.has(pedidoId))continue;
+   verificados++;
    this.emAndamento.add(pedidoId);
    try{
     const r=await this.conciliador.processar(pedidoId);
@@ -60,7 +67,15 @@ class ConciliacaoAutomaticaAsaasSandboxLab{
     }
     await this._notificarErro(e,pedidoId);
    }
-   finally{this.emAndamento.delete(pedidoId);}
+   finally{
+    this.emAndamento.delete(pedidoId);
+    // Rodizio: pedido que falhou vai ao fim da fila e nao impede outros
+    // de serem conferidos nas proximas rodadas. Sem gravar pagamento aqui.
+    if(this.pendentes.has(pedidoId)){
+     this.pendentes.delete(pedidoId);
+     this.pendentes.add(pedidoId);
+    }
+   }
   }
  }
  iniciar(){
