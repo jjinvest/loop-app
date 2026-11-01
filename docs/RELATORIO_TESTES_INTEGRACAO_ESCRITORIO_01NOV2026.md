@@ -35,3 +35,11 @@ Novo teste `test/escritorio-convergencia-todos-departamentos-sqlite-lab.test.js`
 Exigir conclusão **verde** da suíte integral e dos testes de navegador no HEAD final, integridade SQLite em banco reaberto e conferência da telemetria dos módulos, sem divergências. Somente depois disso marcar a validação técnica como concluída. A homologação remota Asaas e a conciliação bancária real são gates separados; o parecer jurídico segue obrigatório antes do público, conforme documento-mestre.
 
 **Estado atual (após correções):** 686/686 testes da suíte do laboratório PASS no commit `b310bc9`; navegador Chromium PC/celular aprovado; capturas disponíveis no Actions. PR #1 DRAFT, zero deploy e nenhuma movimentação financeira real.
+
+## Adendo — validação ampliada do Escritório e segurança do Sandbox
+
+O run do GitHub Actions [41317847384](https://github.com/jjinvest/loop-app/actions/runs/41317847384) no commit `42d653bfa8672fa272d3503e1b6f0dcd6c228188` terminou com status **SUCCESS**. Log TAP: **689 testes; 689 aprovados; 0 falhas; 0 ignorados**. Navegador Chromium aprovou também o Escritório real em 1280x900 (PC) e 390x844 (celular): `ESCRITORIO_PAGAMENTOS_CLIENTES_FINANCEIRO_CHROMIUM_PC_CELULAR_OK`. Artefato GitHub Actions `meus-pedidos-captura-real` (ID `13088231838`) guarda telas cliente e administrador.
+
+Os testes exercitaram cliente/compra/posições, comparação das fontes financeira e de cobrança, alerta de status PSP desconhecido, bloqueio de crédito sem recebimento, administrador autenticado, chave não retida no input, encerramento da sessão na tela e ausência de gravação ao navegar. Segurança adicional impede que chave com formato de produção seja enviada pelo adaptador de Sandbox.
+
+O alcance é **exclusivamente laboratório** com transporte simulado; nenhum webhook remoto, banco real, pagamento/PIX real, saque bancário ou deploy foi executado. O próximo gate é homologação externa de forma controlada, sem segredo entregue ao HEAD de PR, seguida de parecer jurídico pré-lançamento.
