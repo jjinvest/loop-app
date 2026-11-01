@@ -38,4 +38,6 @@ jobs:
             artifacts/posicao-asaas-integrada-pc.png
             artifacts/posicao-asaas-integrada-celular.png
             artifacts/posicoes-dez-integradas-pc.png
+            artifacts/escritorio-integrado-pc.png
+            artifacts/escritorio-integrado-celular.png
           if-no-files-found: warn
