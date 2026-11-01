@@ -1,7 +1,7 @@
 'use strict';
 const express=require('express');
 const {randomBytes,createHash}=require('node:crypto');
-function criarRouterClientePedidosLab({contas,pedidos}={}){
+function criarRouterClientePedidosLab({contas,pedidos,carrinho=null}={}){
  if(!contas||!pedidos||contas.banco!==pedidos.banco||
     typeof contas.autenticar!=='function'||typeof pedidos.listarPorTitular!=='function')
   throw new TypeError('Dependencias de laboratorio invalidas');
@@ -69,6 +69,40 @@ function criarRouterClientePedidosLab({contas,pedidos}={}){
     .json({erro:e.codigo||'PEDIDO_INVALIDO'});
   }
  });
+ // Carrinho opcional de laboratorio: precos e elegibilidade calculados no SQLite.
+ // Nunca aceitar total ou contaId do navegador.
+ if(carrinho){
+  if(carrinho.banco!==contas.banco||
+     typeof carrinho.criar!=='function'||typeof carrinho.buscarDaConta!=='function')
+   throw new TypeError('Carrinho de laboratorio invalido');
+  router.post('/carrinhos',sessao,(req,res)=>{
+   if(!req.is('application/json'))return res.sendStatus(415);
+   const dados=req.body;
+   if(!dados||typeof dados!=='object'||Array.isArray(dados)||
+      Object.keys(dados).sort().join(',')!=='itens,participarLoop,pedidoId')
+    return res.status(400).json({erro:'CAMPOS_INVALIDOS'});
+   try{
+    const pedido=carrinho.criar({pedidoId:dados.pedidoId,contaId:req.contaId,
+      itens:dados.itens,participarLoop:dados.participarLoop});
+    return res.status(pedido.repetido?200:201).json({
+     pedidoId:pedido.pedidoId,totalCentavos:pedido.totalCentavos,
+     repetido:pedido.repetido,participarLoop:pedido.participarLoop,
+     estado:'AGUARDANDO_PAGAMENTO_SIMULADO',posicaoCriada:false,
+     cobrancaReal:false,laboratorio:true
+    });
+   }catch(e){
+    return res.status(e.codigo==='CONFLITO'?409:400)
+     .json({erro:e.codigo||'CARRINHO_INVALIDO'});
+   }
+  });
+  router.get('/carrinhos/:pedidoId',sessao,(req,res)=>{
+   try{
+    const pedido=carrinho.buscarDaConta(req.params.pedidoId,req.contaId);
+    if(!pedido)return res.status(404).json({erro:'PEDIDO_NAO_ENCONTRADO'});
+    return res.json({pedido,laboratorio:true,cobrancaReal:false});
+   }catch(e){return res.status(400).json({erro:e.codigo||'PEDIDO_INVALIDO'});}
+  });
+ }
  router.get('/meus-pedidos',sessao,(req,res)=>{
   try{return res.json({pedidos:pedidos.listarPorTitular(req.contaId),laboratorio:true});}
   catch(e){return res.status(500).json({erro:'CONSULTA_INDISPONIVEL'});}
