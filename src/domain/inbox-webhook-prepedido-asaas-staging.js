@@ -3,7 +3,48 @@
 // Webhook = SINAL nao prova de pagamento. Nao aplica creditos ao LOOP.
 // O endpoint HTTP de ensaio roda apenas em loopback, NAO na aplicacao publica.
 const {createHash,timingSafeEqual}=require('node:crypto');
-const {lerEvento}=require('./caixa-avisos-asaas-sandbox-sqlite');
+// Asaas pode enviar apenas ID do pagamento e tipo do evento. Campos
+// adicionais sao validos somente se presentes: a verdade financeira sera
+// obtida depois por GET autenticado ao PSP, nunca por este aviso.
+const TIPOS=new Set(['PAYMENT_CREATED','PAYMENT_UPDATED','PAYMENT_CONFIRMED',
+ 'PAYMENT_RECEIVED','PAYMENT_OVERDUE','PAYMENT_DELETED','PAYMENT_RESTORED',
+ 'PAYMENT_REFUNDED','PAYMENT_PARTIALLY_REFUNDED','PAYMENT_REFUND_IN_PROGRESS',
+ 'PAYMENT_CHARGEBACK_REQUESTED','PAYMENT_CHARGEBACK_DISPUTE']);
+const REF=/^LOOPLAB-[a-z0-9-]{3,70}$/;
+function lerSinalWebhook(corpoBruto){
+ if(!Buffer.isBuffer(corpoBruto)||corpoBruto.length<2||
+    corpoBruto.length>16384)throw falha('CORPO_WEBHOOK_INVALIDO');
+ let obj;
+ try{obj=JSON.parse(corpoBruto.toString('utf8'));}
+ catch{throw falha('CORPO_WEBHOOK_INVALIDO');}
+ const pagamento=obj?.payment;
+ if(!obj||typeof obj!=='object'||Array.isArray(obj)||
+    !ID.test(obj.id||'')||!TIPOS.has(obj.event)||
+    !pagamento||typeof pagamento!=='object'||Array.isArray(pagamento)||
+    !ID.test(pagamento.id||'')||
+    (pagamento.billingType!==undefined&&pagamento.billingType!=='PIX')||
+    (pagamento.externalReference!==undefined&&
+      !REF.test(pagamento.externalReference))||
+    (pagamento.status!==undefined&&
+      (typeof pagamento.status!=='string'||!/^[A-Z_]{2,40}$/.test(pagamento.status))))
+  throw falha('EVENTO_ASAAS_SANDBOX_NAO_VALIDO');
+ let valorInformadoCentavos=null;
+ if(pagamento.value!==undefined){
+  const n=pagamento.value;
+  if(typeof n!=='number'||!Number.isFinite(n)||n<=0||n>1000000000)
+   throw falha('EVENTO_ASAAS_SANDBOX_NAO_VALIDO');
+  const centavos=Math.round(n*100);
+  if(!Number.isSafeInteger(centavos)||
+     Math.abs(n*100-centavos)>0.000001)
+   throw falha('VALOR_WEBHOOK_INVALIDO');
+  valorInformadoCentavos=centavos;
+ }
+ return {eventoId:obj.id,tipo:obj.event,pagamentoId:pagamento.id,
+  pedidoReferencia:pagamento.externalReference??null,
+  statusInformado:pagamento.status??null,
+  valorInformadoCentavos};
+}
+
 const ID=/^[A-Za-z0-9_&-]{5,150}$/;
 function falha(codigo){const e=new Error(codigo);e.codigo=codigo;return e;}
 function conferirToken(esperado,recebido){
@@ -48,7 +89,7 @@ class InboxWebhookPrepedidoAsaasStaging{
    throw falha('WEBHOOK_STAGING_PROIBIDO_EM_PRODUCAO');
   // Conferir segredo ANTES de analisar ou armazenar payload de terceiros.
   conferirToken(this.token,cabecalhoToken);
-  const aviso=lerEvento(corpoBruto);
+  const aviso=lerSinalWebhook(corpoBruto);
   const hash=createHash('sha256').update(JSON.stringify(aviso)).digest('hex');
   const b=this.banco;b.exec('BEGIN IMMEDIATE');
   try{
@@ -64,13 +105,18 @@ class InboxWebhookPrepedidoAsaasStaging{
    }
    // Nunca gravar evento de pagamento de outro pedido, nem aceitar
    // ID de pagamento, referencia e valor afirmados so no corpo.
+   // Vincular um aviso parcial SOMENTE por pagamento Asaas ja associado
+   // a um prepedido. Se referencia/valor vierem, comparar obrigatoriamente.
    const cobranca=b.prepare([
-    'SELECT prepedido_id,valor_centavos,pagamento_id FROM',
-    'akitemm_prepedido_asaas_sandbox_staging WHERE external_ref=?'
-   ].join(' ')).get(aviso.pedidoReferencia);
+    'SELECT prepedido_id,valor_centavos,pagamento_id,external_ref FROM',
+    'akitemm_prepedido_asaas_sandbox_staging WHERE pagamento_id=?'
+   ].join(' ')).get(aviso.pagamentoId);
    if(!cobranca)throw falha('REFERENCIA_DESCONHECIDA');
    if(!cobranca.pagamento_id||cobranca.pagamento_id!==aviso.pagamentoId||
-      cobranca.valor_centavos!==aviso.valorInformadoCentavos)
+      (aviso.pedidoReferencia!==null&&
+       cobranca.external_ref!==aviso.pedidoReferencia)||
+      (aviso.valorInformadoCentavos!==null&&
+       cobranca.valor_centavos!==aviso.valorInformadoCentavos))
     throw falha('WEBHOOK_PAGAMENTO_DIVERGENTE');
    const data=this.agora();
    if(typeof data!=='string'||!Number.isFinite(Date.parse(data)))
@@ -81,7 +127,8 @@ class InboxWebhookPrepedidoAsaasStaging{
     'valor_avisado_centavos,hash_semantico,recebido_em)',
     'VALUES(?,?,?,?,?,?,?,?)'
    ].join(' ')).run(aviso.eventoId,cobranca.prepedido_id,aviso.pagamentoId,
-    aviso.tipo,aviso.statusInformado,aviso.valorInformadoCentavos,hash,data);
+    aviso.tipo,aviso.statusInformado??'NAO_INFORMADO',
+    aviso.valorInformadoCentavos??0,hash,data);
    b.exec('COMMIT');
    return {registrado:true,repetido:false,pendenteReconsulta:true,
     posicoesCriadas:0,pagamentoReal:false};
