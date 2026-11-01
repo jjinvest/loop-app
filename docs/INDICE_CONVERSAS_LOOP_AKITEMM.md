@@ -42,10 +42,10 @@ Estes são **marcos de assunto** encontrados em registros de continuidade, não 
 ## Onde ficam os registros técnicos confiáveis
 
 1. [Índice técnico vigente](./LEIA_PRIMEIRO_LOOP_30_INDICE_VIGENTE.md).
-2. [Documento-mestre (seções mais recentes 132–133 neste momento)](./COMANDO_MESTRE_LOOP_03_CONTINUIDADE.md).
+2. [Documento-mestre (seções mais recentes 136–137 neste momento)](./COMANDO_MESTRE_LOOP_03_CONTINUIDADE.md).
 3. [Relatório da auditoria ponta a ponta](./AUDITORIA_PONTA_A_PONTA_LOOP_24OUT2026.md).
 4. [Continuidade de callbacks Asaas](./CONTINUIDADE_CALLBACK_ASAAS_01NOV2026.md).
-5. [CI 702 testes e navegador](https://github.com/jjinvest/loop-app/actions/runs/41321822454).
+5. [CI 713 testes e navegador](https://github.com/jjinvest/loop-app/actions/runs/41334971242).
 
 ## Como registrar uma nova conversa sem repetir auditorias
 
