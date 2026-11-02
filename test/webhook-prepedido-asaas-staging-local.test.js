@@ -131,7 +131,13 @@ test('webhook antecipado autenticado fica em quarentena ate vinculo e GET PSP',a
   "SET pagamento_id=?,estado='PENDENTE_SANDBOX'",
   'WHERE prepedido_id=?'
  ].join(' ')).run(PAY,s.pedidoId);
- const ligado=s.inbox.reconciliarAntecipados({execucaoLiberada:true});
+ const {reconciliarAntecipados}=require('../scripts/conferir-webhook-asaas-sandbox-staging');
+ assert.throws(()=>reconciliarAntecipados({
+  arquivo:s.arquivo,tokenWebhook:TOKEN
+ }),{codigo:'RECONCILIACAO_STAGING_NAO_AUTORIZADA'});
+ const ligado=reconciliarAntecipados({
+  arquivo:s.arquivo,tokenWebhook:TOKEN,execucaoLiberada:true
+ });
  assert.equal(ligado.vinculados,1);
  assert.equal(ligado.aguardandoVinculo,0);
  assert.equal(s.inbox.consultarEvento(id).pagamentoId,PAY);
