@@ -157,8 +157,12 @@ class InboxWebhookPrepedidoAsaasStaging{
     if(aviso.valorInformadoCentavos!==null&&
        possivel.valor_centavos!==aviso.valorInformadoCentavos)
      throw falha('WEBHOOK_PAGAMENTO_DIVERGENTE');
+    // Limitar avisos ainda nao conciliados, nao todo o historico
+    // imutavel de um ensaio que ja foi processado com seguranca.
     const total=b.prepare([
-     'SELECT COUNT(*) AS n FROM akitemm_prepedido_webhook_antecipados_staging'
+     'SELECT COUNT(*) AS n FROM akitemm_prepedido_webhook_antecipados_staging a',
+     'LEFT JOIN akitemm_prepedido_webhook_inbox_staging i',
+     'ON i.evento_id=a.evento_id WHERE i.evento_id IS NULL'
     ].join(' ')).get().n;
     if(total>=1000)throw falha('QUARENTENA_WEBHOOK_LOTADA');
     const instante=this.agora();
@@ -218,17 +222,28 @@ class InboxWebhookPrepedidoAsaasStaging{
     'ON p.prepedido_id=a.prepedido_id',
     'LEFT JOIN akitemm_prepedido_webhook_inbox_staging i',
     'ON i.evento_id=a.evento_id',
-    'WHERE i.evento_id IS NULL ORDER BY a.recebido_em,a.evento_id LIMIT ?'
+    'WHERE i.evento_id IS NULL AND p.pagamento_id=a.pagamento_id',
+    'AND p.external_ref=a.referencia_informada',
+    'AND (a.valor_avisado_centavos=0 OR',
+    'a.valor_avisado_centavos=p.valor_centavos)',
+    'ORDER BY a.recebido_em,a.evento_id LIMIT ?'
    ].join(' ')).all(limite);
-   let vinculados=0,divergentes=0;
+   // Divergencias sao alertas manuais; nao deixar centenas de
+   // casos incompletos impedirem a reconciliacao dos ja vinculados.
+   const divergentes=b.prepare([
+    'SELECT COUNT(*) AS n FROM akitemm_prepedido_webhook_antecipados_staging a',
+    'JOIN akitemm_prepedido_asaas_sandbox_staging p',
+    'ON p.prepedido_id=a.prepedido_id',
+    'LEFT JOIN akitemm_prepedido_webhook_inbox_staging i',
+    'ON i.evento_id=a.evento_id',
+    'WHERE i.evento_id IS NULL AND p.pagamento_id IS NOT NULL AND',
+    '(p.pagamento_id<>a.pagamento_id OR',
+    'p.external_ref<>a.referencia_informada OR',
+    '(a.valor_avisado_centavos<>0 AND',
+    'a.valor_avisado_centavos<>p.valor_centavos))'
+   ].join(' ')).get().n;
+   let vinculados=0;
    for(const q of pendentes){
-    if(!q.pagamento_vinculado)continue;
-    if(q.pagamento_vinculado!==q.pagamento_id||
-       q.referencia_informada!==q.external_ref||
-       (q.valor_avisado_centavos!==0&&
-        q.valor_avisado_centavos!==q.valor_centavos)){
-     divergentes++;continue;
-    }
     b.prepare([
      'INSERT INTO akitemm_prepedido_webhook_inbox_staging',
      '(evento_id,prepedido_id,pagamento_id,tipo,status_avisado,',
