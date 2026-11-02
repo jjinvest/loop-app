@@ -104,6 +104,30 @@ async function reconsultarEvento({
   return resposta;
  }finally{banco.close();}
 }
+// Manual: mover sinais ANTICIPADOS para inbox apenas depois de o ID
+// do Pix ser vinculado ao prepedido em staging. Sem rede, sem credito.
+function reconciliarAntecipados({
+ arquivo,tokenWebhook,execucaoLiberada=false
+}={}){
+ if(process.env.NODE_ENV==='production'||execucaoLiberada!==true)
+  throw erro('RECONCILIACAO_STAGING_NAO_AUTORIZADA');
+ if(typeof arquivo!=='string'||!path.isAbsolute(arquivo)||
+    !arquivo.endsWith('.sqlite')||!existsSync(arquivo)||
+    !statSync(arquivo).isFile())
+  throw erro('SQLITE_STAGING_EXISTENTE_OBRIGATORIO');
+ if(typeof tokenWebhook!=='string'||tokenWebhook.length<32||
+    tokenWebhook.length>255||/\s/.test(tokenWebhook))
+  throw erro('TOKEN_WEBHOOK_SANDBOX_SEPARADO_OBRIGATORIO');
+ const banco=new DatabaseSync(arquivo);
+ try{
+  banco.exec('PRAGMA foreign_keys=ON;PRAGMA journal_mode=WAL;PRAGMA busy_timeout=5000;');
+  new IntencoesCheckoutSQLite({banco});
+  new PrePedidosCheckoutStagingSQLite({banco});
+  new PontePrepedidoAsaasSandboxStaging({banco});
+  const inbox=new InboxWebhookPrepedidoAsaasStaging({banco,token:tokenWebhook});
+  return inbox.reconciliarAntecipados({execucaoLiberada:true});
+ }finally{banco.close();}
+}
 if(require.main===module){
  const arquivo=process.env.LOOP_HOMOLOGACAO_SQLITE;
  const eventoId=process.env.LOOP_HOMOLOGACAO_EVENTO_ID;
@@ -111,6 +135,11 @@ if(require.main===module){
  let tarefa;
  if(acao==='INSPECIONAR_WEBHOOK')
   tarefa=Promise.resolve().then(()=>inspecionarEvento({arquivo,eventoId}));
+ else if(acao==='RECONCILIAR_ANTECIPADOS')
+  tarefa=Promise.resolve().then(()=>reconciliarAntecipados({
+   arquivo,tokenWebhook:process.env.LOOP_WEBHOOK_TUNEL_TOKEN,
+   execucaoLiberada:process.env.LOOP_HOMOLOGACAO_RECONCILIAR_ANTECIPADOS==='SIM'
+  }));
  else if(acao==='RECONSULTAR_WEBHOOK')
   tarefa=reconsultarEvento({arquivo,eventoId,
    tokenWebhook:process.env.LOOP_WEBHOOK_TUNEL_TOKEN,
@@ -125,4 +154,4 @@ if(require.main===module){
   process.exitCode=1;
  });
 }
-module.exports={inspecionarEvento,reconsultarEvento};
+module.exports={inspecionarEvento,reconsultarEvento,reconciliarAntecipados};
