@@ -5,14 +5,29 @@
 // O tunel deve terminar HTTPS e encaminhar apenas para 127.0.0.1.
 // Nunca montar em src/server.js nem habilitar em NODE_ENV=production.
 const express=require('express');
+const {timingSafeEqual}=require('node:crypto');
+function segredoValido(valor){
+ return typeof valor==='string'&&valor.length>=32&&valor.length<=255&&
+  !/\\s/.test(valor);
+}
+function conferirSegredoProxy(esperado,recebido){
+ if(!segredoValido(recebido))return false;
+ const a=Buffer.from(esperado),b=Buffer.from(recebido);
+ return a.length===b.length&&timingSafeEqual(a,b);
+}
 
 function criarRouterWebhookAsaasSandboxTunelStaging({
- inbox,urlPublica,habilitarTunel=false
+ inbox,urlPublica,segredoProxy,habilitarTunel=false
 }={}){
  if(habilitarTunel!==true||
     typeof inbox?.registrar!=='function'||
     typeof inbox?.consultarEvento!=='function')
   throw new TypeError('Homologacao exige habilitacao explicita e inbox SQLite');
+ // Host e X-Forwarded-Proto podem ser forjados por clientes HTTP.
+ // Um proxy HTTPS confiavel remove o header publico e injeta um segredo
+ // PROPRIO no salto final para loopback. Nao substituir pelo authToken Asaas.
+ if(!segredoValido(segredoProxy)||segredoProxy===inbox.token)
+  throw new TypeError('Segredo exclusivo do proxy HTTPS obrigatorio');
  let url;
  try{url=new URL(urlPublica);}
  catch{throw new TypeError('URL HTTPS de homologacao obrigatoria');}
@@ -36,7 +51,8 @@ function criarRouterWebhookAsaasSandboxTunelStaging({
   const ip=req.socket?.remoteAddress;
   if(!['127.0.0.1','::1','::ffff:127.0.0.1'].includes(ip)||
      (req.get('host')||'').toLowerCase()!==hostExterno||
-     req.get('x-forwarded-proto')!=='https'||req.get('origin'))
+     req.get('x-forwarded-proto')!=='https'||req.get('origin')||
+     !conferirSegredoProxy(segredoProxy,req.get('x-loop-tunel-secret')))
    return res.status(403).json({erro:'ORIGEM_HOMOLOGACAO_INVALIDA'});
   if(!req.is('application/json'))
    return res.status(415).json({erro:'JSON_OBRIGATORIO'});
