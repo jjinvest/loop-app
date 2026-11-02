@@ -64,7 +64,9 @@ function criarRouterWebhookAsaasSandboxTunelStaging({
    });
    return res.status(200).json({
     registrado:resultado.registrado,repetido:resultado.repetido,
-    pendenteReconsulta:true,pagamentoReal:false,posicoesCriadas:0
+    emQuarentena:resultado.emQuarentena===true,
+    pendenteReconsulta:resultado.pendenteReconsulta===true,
+    pagamentoReal:false,posicoesCriadas:0
    });
   }catch(e){
    if(['TOKEN_SANDBOX_NAO_CONFIGURADO','TOKEN_WEBHOOK_INVALIDO'].includes(e?.codigo))
