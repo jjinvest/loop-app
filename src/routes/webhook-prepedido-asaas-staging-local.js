@@ -28,7 +28,9 @@ function criarRouterWebhookPrepedidoAsaasStagingLocal({inbox}={}){
     });
     return res.status(200).json({
      registrado:x.registrado,repetido:x.repetido,
-     pendenteReconsulta:true,pagamentoReal:false,posicoesCriadas:0,
+     emQuarentena:x.emQuarentena===true,
+    pendenteReconsulta:x.pendenteReconsulta===true,
+    pagamentoReal:false,posicoesCriadas:0,
      saqueAutorizado:false
     });
    }catch(e){
