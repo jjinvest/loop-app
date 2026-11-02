@@ -59,6 +59,8 @@ class RetornoSaqueCentroV6DemoSQLite{
   const status=evento?FASES[evento.tipo][1]:'SOLICITADO';
   return {solicitacaoId:reg.solicitacaoId,
    valorSimuladoCentavos:reg.valorCentavos,
+   taxaPercentual:0,taxaSaqueCentavos:0,
+   valorLiquidoSimuladoCentavos:reg.valorCentavos,
    criadoEm:reg.criadoEm,status,
    motivoDeFalha:status==='FALHOU_AGUARDANDO_RETORNO'||
      status==='DEVOLVIDO_AO_ESCRITORIO_SIMULADO'?this._motivoFalha(reg.solicitacaoId):null,
@@ -120,14 +122,25 @@ class RetornoSaqueCentroV6DemoSQLite{
     return {...this._detalhe(anterior),repetida:true};
    }
    const adesao=b.prepare("SELECT 1 FROM sqlite_master WHERE type='table' AND name='admin_loop_adesoes_contas_demo'").get();
-   const confirmada=adesao&&b.prepare(
-    'SELECT termos_versao AS termosVersao,aceito_em AS aceitoEm '+
-    'FROM admin_loop_adesoes_contas_demo WHERE conta_id=?').get(contaId);
-   // Existencia do registro antigo nao substitui aceite da versao vigente.
-   // E a mesma regra aplicada aos bonus: CPF ficticio e termos validos.
+   // Aceite isolado sem CPF validado nao e prova de titularidade.
+   // Verificar a estrutura esperada do livro (pode existir uma tabela
+   // incompleta/importada); a falta da coluna CPF bloqueia, nao libera.
+   const campos=adesao?b.prepare(
+    'PRAGMA table_info(admin_loop_adesoes_contas_demo)').all():[];
+   const temCpf=campos.some(c=>c.name==='cpf_digest');
+   const confirmada=temCpf&&b.prepare([
+    'SELECT cpf_digest AS cpfDigest,termos_versao AS termosVersao,',
+    'aceito_em AS aceitoEm FROM admin_loop_adesoes_contas_demo',
+    'WHERE conta_id=?'
+   ].join(' ')).get(contaId);
+   const momento=Date.parse(this.agora());
+   const aceite=Date.parse(confirmada?.aceitoEm);
    if(!confirmada||confirmada.termosVersao!==VERSAO_TERMOS_DEMO||
+      typeof confirmada.cpfDigest!=='string'||
+      !/^[a-f0-9]{64}$/.test(confirmada.cpfDigest)||
       typeof confirmada.aceitoEm!=='string'||
-      !Number.isFinite(Date.parse(confirmada.aceitoEm)))
+      !Number.isFinite(aceite)||!Number.isFinite(momento)||
+      aceite>momento)
     throw falha('CPF_E_TERMOS_OBRIGATORIOS');
    const saldo=this.consultar(contaId);
    if(valorCentavos>saldo.referenciaParaNovoPedidoFicticioCentavos)
