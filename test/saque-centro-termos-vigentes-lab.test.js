@@ -13,15 +13,15 @@ function cenario(t){
  const banco=new DatabaseSync(':memory:');
  t.after(()=>banco.close());
  banco.exec('CREATE TABLE admin_loop_adesoes_contas_demo('+
-  'conta_id TEXT PRIMARY KEY,termos_versao TEXT,aceito_em TEXT)');
+  'conta_id TEXT PRIMARY KEY,cpf_digest TEXT,termos_versao TEXT,aceito_em TEXT)');
  const contas={banco,buscar:id=>['titular-a','titular-b'].includes(id)?{contaId:id}:null};
  const livro={banco,extrato:()=>({totalPrevistoCentavos:75000})};
  const servico=new RetornoSaqueCentroV6DemoSQLite({banco,contas,livro,
   agora:()=> '2026-11-01T12:00:00.000Z'});
- const aceitar=(contaId,versao,aceitoEm)=>{
+ const aceitar=(contaId,versao,aceitoEm,cpfDigest='a'.repeat(64))=>{
   banco.prepare('INSERT OR REPLACE INTO admin_loop_adesoes_contas_demo '+
-   '(conta_id,termos_versao,aceito_em) VALUES(?,?,?)')
-   .run(contaId,versao,aceitoEm);
+   '(conta_id,cpf_digest,termos_versao,aceito_em) VALUES(?,?,?,?)')
+   .run(contaId,cpfDigest,versao,aceitoEm);
  };
  const solicitar=(contaId,id,valor=2500)=>servico.solicitar({
   contaId,solicitacaoId:id,valorCentavos:valor});
@@ -57,4 +57,22 @@ test('aceite com data ausente nao substitui confirmacao valida e idempotente',t=
  assert.equal(s.quantidade(),1);
  assert.equal(s.servico.consultar('titular-a').disponivelParaSaqueRealCentavos,0);
  assert.deepEqual(s.banco.prepare('PRAGMA foreign_key_check').all(),[]);
+});
+
+test('aceite apenas textual, digest falso e aceite futuro nunca habilitam saque central',t=>{
+ const s=cenario(t);
+ const id='saque-centro-comprovacao-invalida-0003';
+ s.aceitar('titular-a',VERSAO_TERMOS_DEMO,'2026-10-20T00:00:00.000Z','');
+ assert.throws(()=>s.solicitar('titular-a',id),{codigo:'CPF_E_TERMOS_OBRIGATORIOS'});
+ s.aceitar('titular-a',VERSAO_TERMOS_DEMO,'2026-10-20T00:00:00.000Z','cpf-nao-validado');
+ assert.throws(()=>s.solicitar('titular-a',id),{codigo:'CPF_E_TERMOS_OBRIGATORIOS'});
+ s.aceitar('titular-a',VERSAO_TERMOS_DEMO,'2026-12-01T00:00:00.000Z');
+ assert.throws(()=>s.solicitar('titular-a',id),{codigo:'CPF_E_TERMOS_OBRIGATORIOS'});
+ s.aceitar('titular-a',VERSAO_TERMOS_DEMO,'2026-10-20T00:00:00.000Z');
+ const result=s.solicitar('titular-a',id);
+ assert.equal(result.taxaPercentual,0);
+ assert.equal(result.taxaSaqueCentavos,0);
+ assert.equal(result.valorLiquidoSimuladoCentavos,2500);
+ assert.equal(result.transferenciaReal,false);
+ assert.equal(s.quantidade(),1);
 });
