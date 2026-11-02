@@ -90,6 +90,83 @@ async function cenario(t){
  return {banco,ponte,inbox,worker,provedor,estado,chamadas,evento,enviar,
   base,pedidoId,arquivo};
 }
+test('webhook antecipado autenticado fica em quarentena ate vinculo e GET PSP',async t=>{
+ const s=await cenario(t);
+ const id='evt_WebhookAntesDeGravarPix001';
+ const referencia='LOOPLAB-'+s.pedidoId;
+ // Simular janela real entre a reserva transacional e a resposta do POST.
+ s.banco.prepare([
+  'UPDATE akitemm_prepedido_asaas_sandbox_staging',
+  "SET pagamento_id=NULL,estado='CRIACAO_INDETERMINADA'",
+  'WHERE prepedido_id=?'
+ ].join(' ')).run(s.pedidoId);
+ const aviso=s.evento(id);
+ const inicio=s.chamadas.length;
+ const recebido=await s.enviar(aviso);
+ assert.equal(recebido.status,200,'persistir sinal antes de responder ao PSP');
+ assert.equal(recebido.data.registrado,true);
+ assert.equal(recebido.data.emQuarentena,true);
+ assert.equal(recebido.data.pendenteReconsulta,false);
+ assert.equal(s.inbox.consultarEvento(id),null,'sem vinculo nao entra na inbox conciliada');
+ const q=s.banco.prepare([
+  'SELECT * FROM akitemm_prepedido_webhook_antecipados_staging',
+  'WHERE evento_id=?'
+ ].join(' ')).get(id);
+ assert.equal(q.prepedido_id,s.pedidoId);
+ assert.equal(q.pagamento_id,PAY);
+ assert.equal(q.referencia_informada,referencia);
+ assert.equal(q.valor_avisado_centavos,25000);
+ assert.equal(JSON.stringify(q).includes('NAO_PERSISTIR_CPF'),false);
+ assert.equal((await s.enviar(aviso)).data.repetido,true);
+ assert.equal((await s.enviar({...aviso,payment:{
+  ...aviso.payment,value:249.99
+ }})).status,409,'mesmo evento divergente nunca e aceito');
+ assert.throws(()=>s.inbox.reconciliarAntecipados(),{codigo:'RECONCILIACAO_NAO_AUTORIZADA'});
+ const primeiro=s.inbox.reconciliarAntecipados({execucaoLiberada:true});
+ assert.equal(primeiro.vinculados,0);
+ assert.equal(primeiro.aguardandoVinculo,1);
+ assert.equal(s.chamadas.length,inicio);
+ s.banco.prepare([
+  'UPDATE akitemm_prepedido_asaas_sandbox_staging',
+  "SET pagamento_id=?,estado='PENDENTE_SANDBOX'",
+  'WHERE prepedido_id=?'
+ ].join(' ')).run(PAY,s.pedidoId);
+ const ligado=s.inbox.reconciliarAntecipados({execucaoLiberada:true});
+ assert.equal(ligado.vinculados,1);
+ assert.equal(ligado.aguardandoVinculo,0);
+ assert.equal(s.inbox.consultarEvento(id).pagamentoId,PAY);
+ assert.equal(s.inbox.reconciliarAntecipados({execucaoLiberada:true}).vinculados,0);
+ s.estado.status='RECEIVED';
+ const conferido=await s.worker.processar({eventoId:id,
+  provedor:s.provedor,execucaoLiberada:true});
+ assert.equal(conferido.estado,'CONCLUIDO');
+ assert.equal(conferido.posicoesCriadas,0);
+ assert.equal(s.chamadas.filter(x=>x==='GET').length,1);
+ assert.equal(s.banco.prepare('PRAGMA integrity_check').get().integrity_check,'ok');
+ assert.deepEqual(s.banco.prepare('PRAGMA foreign_key_check').all(),[]);
+});
+test('quarentena rejeita referencia estranha ou valor falso e nao libera webhook parcial',async t=>{
+ const s=await cenario(t);
+ s.banco.prepare([
+  'UPDATE akitemm_prepedido_asaas_sandbox_staging',
+  "SET pagamento_id=NULL,estado='CRIACAO_INDETERMINADA'",
+  'WHERE prepedido_id=?'
+ ].join(' ')).run(s.pedidoId);
+ const base=s.evento('evt_AvisoAntecipadoRejeitado001');
+ assert.equal((await s.enviar({...base,payment:{
+  ...base.payment,externalReference:'LOOPLAB-hom-00000000-0000-0000-0000-000000000000'
+ }})).status,409);
+ assert.equal((await s.enviar({...base,payment:{
+  ...base.payment,value:249.99
+ }})).status,409);
+ assert.equal((await s.enviar({...base,payment:{
+  id:base.payment.id
+ }})).status,409,'sem referencia comprovavel nao associar');
+ assert.equal(s.inbox.consultarEvento(base.id),null);
+ assert.equal(s.banco.prepare(
+  'SELECT COUNT(*) AS n FROM akitemm_prepedido_webhook_antecipados_staging'
+ ).get().n,0);
+});
 test('webhook de prepedido autenticado grava sinal, idempotente e nao reconsulta PSP sozinho',async t=>{
  const s=await cenario(t);
  const antes=s.chamadas.length;
