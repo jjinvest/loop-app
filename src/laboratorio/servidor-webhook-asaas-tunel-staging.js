@@ -19,6 +19,7 @@ function iniciarReceptorTunelStaging({ambiente=process.env}={}){
   throw new Error('RECEPTOR_STAGING_NAO_AUTORIZADO');
  const arquivo=ambiente.LOOP_WEBHOOK_TUNEL_SQLITE;
  const token=ambiente.LOOP_WEBHOOK_TUNEL_TOKEN;
+ const segredoProxy=ambiente.LOOP_WEBHOOK_TUNEL_PROXY_SECRET;
  const urlPublica=ambiente.LOOP_WEBHOOK_TUNEL_URL_PUBLICA;
  const porta=Number(ambiente.LOOP_WEBHOOK_TUNEL_PORTA||3107);
  if(typeof arquivo!=='string'||!arquivo.trim()||arquivo===':memory:'||
@@ -27,6 +28,10 @@ function iniciarReceptorTunelStaging({ambiente=process.env}={}){
  if(typeof token!=='string'||token.length<32||token.length>255||
     /\s/.test(token)||token===ambiente.ASAAS_SANDBOX_API_KEY)
   throw new Error('TOKEN_WEBHOOK_SANDBOX_SEGREGADO_OBRIGATORIO');
+ if(typeof segredoProxy!=='string'||segredoProxy.length<32||
+    segredoProxy.length>255||/\s/.test(segredoProxy)||
+    segredoProxy===token||segredoProxy===ambiente.ASAAS_SANDBOX_API_KEY)
+  throw new Error('SEGREDO_EXCLUSIVO_PROXY_HTTPS_OBRIGATORIO');
  if(!Number.isSafeInteger(porta)||porta<1024||porta>65535)
   throw new Error('PORTA_TUNEL_STAGING_INVALIDA');
  const banco=new DatabaseSync(arquivo);
@@ -45,7 +50,7 @@ function iniciarReceptorTunelStaging({ambiente=process.env}={}){
   const app=express();
   app.disable('x-powered-by');
   app.use('/webhooks',criarRouterWebhookAsaasSandboxTunelStaging({
-   inbox,urlPublica,habilitarTunel:true
+   inbox,urlPublica,segredoProxy,habilitarTunel:true
   }));
   app.use((_req,res)=>res.status(404).json({erro:'ROTA_INEXISTENTE'}));
   const servidor=app.listen(porta,'127.0.0.1');
