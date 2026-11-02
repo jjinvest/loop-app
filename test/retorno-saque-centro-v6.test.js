@@ -60,7 +60,8 @@ test('saque central errado somente restaura referencia apos comprovacao ficticia
     confirmadoEm:'2026-10-17T10:00:00.000Z'});
   await ponte.processar({pedidoId});
  }
- new AdesoesPosicoesDemoSQLite({ponte}).ativar({
+ new AdesoesPosicoesDemoSQLite({ponte,
+  relogio:()=> '2026-10-17T16:00:00.000Z'}).ativar({
   contaId:pessoas[0].contaId,cpfFicticio:'11144477735',aceitaTermos:true,
   versaoTermos:'LOOP-DEMO-V1'
  });
