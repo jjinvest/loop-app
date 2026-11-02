@@ -8,7 +8,7 @@ const express=require('express');
 const {timingSafeEqual}=require('node:crypto');
 function segredoValido(valor){
  return typeof valor==='string'&&valor.length>=32&&valor.length<=255&&
-  !/\\s/.test(valor);
+  !/\s/.test(valor);
 }
 function conferirSegredoProxy(esperado,recebido){
  if(!segredoValido(recebido))return false;
