@@ -499,25 +499,34 @@ test('receptor isolado de webhook via tunel exige host/HTTPS declarado e token, 
   require('../src/routes/webhook-prepedido-asaas-tunel-staging');
  const {iniciarReceptorTunelStaging}=
   require('../src/laboratorio/servidor-webhook-asaas-tunel-staging');
+ const SEGREDO_PROXY='Tunel_HTTPS_Protegido_Local_Segredo_Injetado_2026_abcdef';
  assert.throws(()=>iniciarReceptorTunelStaging({
   ambiente:{NODE_ENV:'staging',LOOP_WEBHOOK_TUNEL_SANDBOX_AUTORIZADO:'NAO'}
  }),/RECEPTOR_STAGING_NAO_AUTORIZADO/);
  assert.throws(()=>criarRouterWebhookAsaasSandboxTunelStaging({
   inbox:s.inbox,urlPublica:'http://homologacao.example.invalid/webhooks/asaas-sandbox',
-  habilitarTunel:true
+  segredoProxy:SEGREDO_PROXY,habilitarTunel:true
  }),/URL publica HTTPS/);
+ assert.throws(()=>criarRouterWebhookAsaasSandboxTunelStaging({
+  inbox:s.inbox,urlPublica:'https://homologacao.example.invalid/webhooks/asaas-sandbox',
+  habilitarTunel:true
+ }),/Segredo exclusivo do proxy/);
+ assert.throws(()=>criarRouterWebhookAsaasSandboxTunelStaging({
+  inbox:s.inbox,urlPublica:'https://homologacao.example.invalid/webhooks/asaas-sandbox',
+  segredoProxy:TOKEN,habilitarTunel:true
+ }),/Segredo exclusivo do proxy/);
  const app=express();
  app.use('/webhooks',criarRouterWebhookAsaasSandboxTunelStaging({
   inbox:s.inbox,
   urlPublica:'https://homologacao.example.invalid/webhooks/asaas-sandbox',
-  habilitarTunel:true
+  segredoProxy:SEGREDO_PROXY,habilitarTunel:true
  }));
  const servidor=app.listen(0,'127.0.0.1');await once(servidor,'listening');
  t.after(()=>new Promise(resolve=>servidor.close(resolve)));
  const http=require('node:http');
  const evento=s.evento('evt_WebhookTunelExterno0001');
  async function enviar({host='homologacao.example.invalid',proto='https',
-  token=TOKEN,origin=null,body=JSON.stringify(evento)}={}){
+  token=TOKEN,proxy=SEGREDO_PROXY,origin=null,body=JSON.stringify(evento)}={}){
   return new Promise((resolve,reject)=>{
    const req=http.request({
     host:'127.0.0.1',port:servidor.address().port,
@@ -525,6 +534,7 @@ test('receptor isolado de webhook via tunel exige host/HTTPS declarado e token, 
     headers:{
      Host:host,'X-Forwarded-Proto':proto,
      'Content-Type':'application/json',
+     ...(proxy?{'X-Loop-Tunel-Secret':proxy}:{}),
      ...(token?{'asaas-access-token':token}:{}),
      ...(origin?{Origin:origin}:{})
     }
@@ -539,6 +549,12 @@ test('receptor isolado de webhook via tunel exige host/HTTPS declarado e token, 
  assert.equal((await enviar({host:'outro.example.invalid'})).status,403);
  assert.equal((await enviar({proto:'http'})).status,403);
  assert.equal((await enviar({origin:'https://site-externo.invalid'})).status,403);
+ assert.equal((await enviar({proxy:null})).status,403,
+  'so Host e X-Forwarded-Proto forjados nao autorizam acesso');
+ assert.equal((await enviar({proxy:'PROXY_INCORRETO'})).status,403);
+ assert.equal((await enviar({proxy:TOKEN})).status,403,
+  'segredo do proxy separado do token Asaas');
+ assert.equal((await enviar({proxy:SEGREDO_PROXY+'x'})).status,403);
  assert.equal((await enviar({token:'SEGREDO_INVALIDO'})).status,401);
  assert.equal(s.banco.prepare(
   'SELECT COUNT(*) AS n FROM akitemm_prepedido_webhook_inbox_staging'
