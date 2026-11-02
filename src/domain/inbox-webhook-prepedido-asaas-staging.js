@@ -82,7 +82,26 @@ class InboxWebhookPrepedidoAsaasStaging{
    "BEGIN SELECT RAISE(ABORT,'webhook imutavel'); END;",
    'CREATE TRIGGER IF NOT EXISTS prepedido_webhook_no_delete',
    'BEFORE DELETE ON akitemm_prepedido_webhook_inbox_staging',
-   "BEGIN SELECT RAISE(ABORT,'webhook imutavel'); END;"
+   "BEGIN SELECT RAISE(ABORT,'webhook imutavel'); END;",
+   // Evento autenticado que chegou DURANTE a criacao do Pix:
+   // somente para referencia de prepedido PREEXISTENTE e nao vinculado.
+   // Sem payload cru nem dado pessoal; nunca e prova de recebimento.
+   'CREATE TABLE IF NOT EXISTS akitemm_prepedido_webhook_antecipados_staging(',
+   'evento_id TEXT PRIMARY KEY NOT NULL,',
+   'prepedido_id TEXT NOT NULL REFERENCES',
+   'akitemm_prepedido_asaas_sandbox_staging(prepedido_id) ON DELETE RESTRICT,',
+   'pagamento_id TEXT NOT NULL,tipo TEXT NOT NULL,',
+   'status_avisado TEXT NOT NULL,valor_avisado_centavos INTEGER NOT NULL,',
+   'referencia_informada TEXT NOT NULL,hash_semantico TEXT NOT NULL,',
+   'recebido_em TEXT NOT NULL);',
+   'CREATE INDEX IF NOT EXISTS idx_webhook_antecipados_pre',
+   'ON akitemm_prepedido_webhook_antecipados_staging(prepedido_id,recebido_em);',
+   'CREATE TRIGGER IF NOT EXISTS webhook_antecipado_no_update',
+   'BEFORE UPDATE ON akitemm_prepedido_webhook_antecipados_staging',
+   "BEGIN SELECT RAISE(ABORT,'aviso antecipado imutavel'); END;",
+   'CREATE TRIGGER IF NOT EXISTS webhook_antecipado_no_delete',
+   'BEFORE DELETE ON akitemm_prepedido_webhook_antecipados_staging',
+   "BEGIN SELECT RAISE(ABORT,'aviso antecipado imutavel'); END;"
   ].join(' '));
  }
  registrar({cabecalhoToken,corpoBruto}={}){
@@ -104,6 +123,19 @@ class InboxWebhookPrepedidoAsaasStaging{
     return {registrado:false,repetido:true,pendenteReconsulta:true,
      posicoesCriadas:0,pagamentoReal:false};
    }
+   // Um aviso antecipado tem ID imutavel e hash semantico, mesmo que
+   // outra tentativa chegue depois do ID de cobranca ter sido gravado.
+   const antecipado=b.prepare([
+    'SELECT hash_semantico FROM akitemm_prepedido_webhook_antecipados_staging',
+    'WHERE evento_id=?'
+   ].join(' ')).get(aviso.eventoId);
+   if(antecipado){
+    if(antecipado.hash_semantico!==hash)
+     throw falha('EVENTO_REUTILIZADO_DIVERGENTE');
+    b.exec('COMMIT');
+    return {registrado:false,repetido:true,emQuarentena:true,
+     pendenteReconsulta:false,posicoesCriadas:0,pagamentoReal:false};
+   }
    // Nunca gravar evento de pagamento de outro pedido, nem aceitar
    // ID de pagamento, referencia e valor afirmados so no corpo.
    // Vincular um aviso parcial SOMENTE por pagamento Asaas ja associado
@@ -112,7 +144,38 @@ class InboxWebhookPrepedidoAsaasStaging{
     'SELECT prepedido_id,valor_centavos,pagamento_id,external_ref FROM',
     'akitemm_prepedido_asaas_sandbox_staging WHERE pagamento_id=?'
    ].join(' ')).get(aviso.pagamentoId);
-   if(!cobranca)throw falha('REFERENCIA_DESCONHECIDA');
+   if(!cobranca){
+    // Caso estrito: POST de criacao do Pix esta em andamento; o Asaas
+    // respondeu primeiro ao webhook. Referencia assinada pelo token do
+    // webhook so permite GUARDAR o sinal; ela nao prova titularidade.
+    const possivel=aviso.pedidoReferencia?b.prepare([
+     'SELECT prepedido_id,valor_centavos FROM',
+     'akitemm_prepedido_asaas_sandbox_staging',
+     "WHERE external_ref=? AND pagamento_id IS NULL AND estado='CRIACAO_INDETERMINADA'"
+    ].join(' ')).get(aviso.pedidoReferencia):null;
+    if(!possivel)throw falha('REFERENCIA_DESCONHECIDA');
+    if(aviso.valorInformadoCentavos!==null&&
+       possivel.valor_centavos!==aviso.valorInformadoCentavos)
+     throw falha('WEBHOOK_PAGAMENTO_DIVERGENTE');
+    const total=b.prepare([
+     'SELECT COUNT(*) AS n FROM akitemm_prepedido_webhook_antecipados_staging'
+    ].join(' ')).get().n;
+    if(total>=1000)throw falha('QUARENTENA_WEBHOOK_LOTADA');
+    const instante=this.agora();
+    if(typeof instante!=='string'||!Number.isFinite(Date.parse(instante)))
+     throw falha('RELOGIO_INVALIDO');
+    b.prepare([
+     'INSERT INTO akitemm_prepedido_webhook_antecipados_staging',
+     '(evento_id,prepedido_id,pagamento_id,tipo,status_avisado,',
+     'valor_avisado_centavos,referencia_informada,hash_semantico,recebido_em)',
+     'VALUES(?,?,?,?,?,?,?,?,?)'
+    ].join(' ')).run(aviso.eventoId,possivel.prepedido_id,
+     aviso.pagamentoId,aviso.tipo,aviso.statusInformado??'NAO_INFORMADO',
+     aviso.valorInformadoCentavos??0,aviso.pedidoReferencia,hash,instante);
+    b.exec('COMMIT');
+    return {registrado:true,repetido:false,emQuarentena:true,
+     pendenteReconsulta:false,posicoesCriadas:0,pagamentoReal:false};
+   }
    if(!cobranca.pagamento_id||cobranca.pagamento_id!==aviso.pagamentoId||
       (aviso.pedidoReferencia!==null&&
        cobranca.external_ref!==aviso.pedidoReferencia)||
@@ -133,6 +196,57 @@ class InboxWebhookPrepedidoAsaasStaging{
    b.exec('COMMIT');
    return {registrado:true,repetido:false,pendenteReconsulta:true,
     posicoesCriadas:0,pagamentoReal:false};
+  }catch(e){b.exec('ROLLBACK');throw e;}
+ }
+ // Conciliacao MANUAL do sinal antecipado com pagamento_id
+ // adquirido por GET ao PSP ou confirmado pela resposta original.
+ // Nao chama PSP, nao confirma valor financeiro nem cria posicao real.
+ reconciliarAntecipados({execucaoLiberada=false,limite=50}={}){
+  if(process.env.NODE_ENV==='production')
+   throw falha('WEBHOOK_STAGING_PROIBIDO_EM_PRODUCAO');
+  if(execucaoLiberada!==true)throw falha('RECONCILIACAO_NAO_AUTORIZADA');
+  if(!Number.isSafeInteger(limite)||limite<1||limite>100)
+   throw falha('LIMITE_RECONCILIACAO_INVALIDO');
+  const b=this.banco;
+  b.exec('BEGIN IMMEDIATE');
+  try{
+   const pendentes=b.prepare([
+    'SELECT a.*,p.pagamento_id AS pagamento_vinculado,',
+    'p.external_ref,p.valor_centavos',
+    'FROM akitemm_prepedido_webhook_antecipados_staging a',
+    'JOIN akitemm_prepedido_asaas_sandbox_staging p',
+    'ON p.prepedido_id=a.prepedido_id',
+    'LEFT JOIN akitemm_prepedido_webhook_inbox_staging i',
+    'ON i.evento_id=a.evento_id',
+    'WHERE i.evento_id IS NULL ORDER BY a.recebido_em,a.evento_id LIMIT ?'
+   ].join(' ')).all(limite);
+   let vinculados=0,divergentes=0;
+   for(const q of pendentes){
+    if(!q.pagamento_vinculado)continue;
+    if(q.pagamento_vinculado!==q.pagamento_id||
+       q.referencia_informada!==q.external_ref||
+       (q.valor_avisado_centavos!==0&&
+        q.valor_avisado_centavos!==q.valor_centavos)){
+     divergentes++;continue;
+    }
+    b.prepare([
+     'INSERT INTO akitemm_prepedido_webhook_inbox_staging',
+     '(evento_id,prepedido_id,pagamento_id,tipo,status_avisado,',
+     'valor_avisado_centavos,hash_semantico,recebido_em)',
+     'VALUES(?,?,?,?,?,?,?,?)'
+    ].join(' ')).run(q.evento_id,q.prepedido_id,q.pagamento_id,q.tipo,
+     q.status_avisado,q.valor_avisado_centavos,q.hash_semantico,q.recebido_em);
+    vinculados++;
+   }
+   const aguardando=b.prepare([
+    'SELECT COUNT(*) AS n FROM akitemm_prepedido_webhook_antecipados_staging a',
+    'LEFT JOIN akitemm_prepedido_webhook_inbox_staging i',
+    'ON i.evento_id=a.evento_id WHERE i.evento_id IS NULL'
+   ].join(' ')).get().n;
+   b.exec('COMMIT');
+   return {vinculados,divergentes,aguardandoVinculo:aguardando,
+    reconsultaPSPExecutada:false,pagamentoReal:false,
+    posicoesCriadas:0,bonusGerados:0,saquesLiberados:0};
   }catch(e){b.exec('ROLLBACK');throw e;}
  }
  consultarEvento(eventoId){
