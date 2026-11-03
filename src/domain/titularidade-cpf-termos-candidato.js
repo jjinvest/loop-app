@@ -127,7 +127,7 @@ class TitularidadeCpfTermosCandidato{
   ].join(' ')).get(titularId);
   if(!r)return null;
   let cpf;
-  try{cpf=decifrar(r,this.cifra);}
+  try{cpf=decifrar({iv:r.cpf_iv,ciphertext:r.cpf_ciphertext,tag:r.cpf_tag},this.cifra);}
   catch{falha('INTEGRIDADE_DADOS_PESSOAIS_INVALIDA');}
   if(digestCpf(cpf,this.hmac)!==r.cpf_hmac)
    falha('INTEGRIDADE_DADOS_PESSOAIS_INVALIDA');
