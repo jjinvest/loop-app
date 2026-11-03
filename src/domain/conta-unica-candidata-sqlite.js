@@ -14,7 +14,7 @@ const VERSAO=/^LAB-[A-Za-z0-9._-]{3,64}$/;
 const COOKIE='loop_candidato_s';
 const DURACAO_MS=60*60*1000;
 const BLOQUEIO_MS=15*60*1000;
-function falha(codigo){const e=new Error(codigo);e.codigo=codigo;return e;}
+function falha(codigo){const e=new Error(codigo);e.codigo=codigo;throw e;}
 function hmac(key,value){
  return createHmac('sha256',key).update('AKITEMM-CONTA-CANDIDATA-EMAIL-1:')
   .update(value).digest('hex');
