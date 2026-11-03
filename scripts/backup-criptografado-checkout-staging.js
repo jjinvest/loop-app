@@ -39,6 +39,73 @@ function conferirSenha(senha){
     Buffer.byteLength(senha,'utf8')>512||senha.trim().length<32)
   throw falha('SEGREDO_BACKUP_NAO_CONFIGURADO');
 }
+// O checkout candidato tem UMA identidade para todas as fases da compra.
+// Conferir também a relação semântica: alguns vínculos legados não têm FK.
+function validarTitularCandidato(banco,tabelas){
+ if(!tabelas.has('akitemm_conta_unica_candidata'))return false;
+ const necessarias=[
+  'akitemm_sessoes_candidatas',
+  'akitemm_checkout_intencoes_preparacao',
+  'akitemm_checkout_prepedidos_staging',
+  'akitemm_prepedido_asaas_sandbox_staging'
+ ];
+ if(necessarias.some(x=>!tabelas.has(x)))
+  throw falha('BACKUP_CANDIDATO_TABELAS_INCOMPLETAS');
+ const q=sql=>banco.prepare(sql).get().n;
+ const orfaos=q([
+  'SELECT COUNT(*) AS n FROM akitemm_checkout_intencoes_preparacao i',
+  'LEFT JOIN akitemm_conta_unica_candidata c ON c.id=i.titular_id',
+  'WHERE c.id IS NULL'
+ ].join(' '));
+ const divergentes=q([
+  'SELECT COUNT(*) AS n FROM akitemm_checkout_prepedidos_staging p',
+  'LEFT JOIN akitemm_checkout_intencoes_preparacao i',
+  'ON i.pedido_id=p.rascunho_id',
+  'LEFT JOIN akitemm_conta_unica_candidata c ON c.id=p.titular_id',
+  'WHERE i.pedido_id IS NULL OR c.id IS NULL',
+  'OR i.titular_id<>p.titular_id OR i.total_centavos<>p.total_centavos'
+ ].join(' '));
+ const cobrancas=q([
+  'SELECT COUNT(*) AS n FROM akitemm_prepedido_asaas_sandbox_staging a',
+  'LEFT JOIN akitemm_checkout_prepedidos_staging p',
+  'ON p.prepedido_id=a.prepedido_id',
+  'LEFT JOIN akitemm_conta_unica_candidata c ON c.id=a.titular_id',
+  'WHERE p.prepedido_id IS NULL OR c.id IS NULL',
+  'OR p.titular_id<>a.titular_id OR p.total_centavos<>a.valor_centavos',
+  "OR a.external_ref<>'LOOPLAB-' || a.prepedido_id"
+ ].join(' '));
+ if(orfaos||divergentes||cobrancas)
+  throw falha('BACKUP_CANDIDATO_TITULAR_DIVERGENTE');
+ return true;
+}
+function endurecerAcessoRestaurado(arquivo){
+ const banco=new DatabaseSync(arquivo);
+ let sessoesRevogadas=0,desafiosInvalidos=0;
+ try{
+  const tabelas=new Set(banco.prepare(
+   "SELECT name FROM sqlite_master WHERE type='table'"
+  ).all().map(x=>x.name));
+  banco.exec('PRAGMA foreign_keys=ON; BEGIN IMMEDIATE;');
+  try{
+   // Jamais ressuscitar sessões de navegador que já haviam sido
+   // encerradas depois do momento da foto de backup.
+   if(tabelas.has('akitemm_sessoes_candidatas'))
+    sessoesRevogadas=banco.prepare(
+     'DELETE FROM akitemm_sessoes_candidatas'
+    ).run().changes;
+   // Uma prova de posse anterior à restauração não pode ser concluída
+   // após desastre: solicita-se novo código ao provedor de e-mail.
+   if(tabelas.has('akitemm_candidato_email_desafios'))
+    desafiosInvalidos=banco.prepare([
+     'UPDATE akitemm_candidato_email_desafios',
+     "SET estado='BLOQUEADO'",
+     "WHERE estado IN ('ENVIADO','RESERVADO')"
+    ].join(' ')).run().changes;
+   banco.exec('COMMIT');
+  }catch(e){banco.exec('ROLLBACK');throw e;}
+ }finally{banco.close();}
+ return {sessoesRevogadas,desafiosInvalidos};
+}
 function validarBanco(arquivo){
  const banco=new DatabaseSync(arquivo,{readOnly:true});
  try{
@@ -51,7 +118,8 @@ function validarBanco(arquivo){
    throw falha('SQLITE_CORROMPIDO');
   if(banco.prepare('PRAGMA foreign_key_check').all().length)
    throw falha('SQLITE_REFERENCIAS_INVALIDAS');
-  return {tabelas:tabelas.size,integro:true};
+  const contaUnicaValidada=validarTitularCandidato(banco,tabelas);
+  return {tabelas:tabelas.size,integro:true,contaUnicaValidada};
  }finally{banco.close();}
 }
 async function sha256(arquivo){
@@ -134,12 +202,19 @@ async function restaurarBackupCriptografado({
    start:HEADER_SIZE,end:stat.size-TAG_SIZE-1
   }),decipher,fs.createWriteStream(restaure,{flags:'wx',mode:0o600}));
   const integridade=validarBanco(restaure);
+  // Recuperação de conta exige reautenticação. A cópia criptografada
+  // original permanece intocada; somente o banco recuperado muda.
+  const acesso=endurecerAcessoRestaurado(restaure);
+  validarBanco(restaure);
   // Hardlink atomico, SEM permitir troca do arquivo de destino existente.
   // Temporario e destino ficam no mesmo filesystem.
   fs.linkSync(restaure,saida);
   fs.chmodSync(saida,0o600);
   return {estado:'STAGING_RESTAURADO_EM_ARQUIVO_NOVO',
    integridadeSQLite:'ok',tabelasVerificadas:integridade.tabelas,
+   identidadeCandidataAuditada:integridade.contaUnicaValidada,
+   sessoesCandidatasRevogadas:acesso.sessoesRevogadas,
+   provasEmailPendentesInvalidadas:acesso.desafiosInvalidos,
    origemCriptografada:true,destinoNaoSobrescrito:true,
    permissao:'0600',recuperacaoOffsiteComprovada:false,
    recuperacaoEmProducao:false,pagamentosReais:0,posicoesCriadas:0};
