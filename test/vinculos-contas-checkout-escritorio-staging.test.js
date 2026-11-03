@@ -82,6 +82,34 @@ test('identidade comprovada une 1 conta checkout a 1 conta escritorio demo, sem 
   'conta do escritorio nao pode pertencer a outro titular checkout');
  assert.equal((await link(login1.token,login1.csrf,'Bia Exemplo',SENHA_B)).status,409,
   'conta checkout nao pode assumir outro cadastro demo');
+ // O Escritório demonstrativo consulta a mesma transação por identidade
+ // vinculada, sem assumir que nome/nick semelhante equivale a titular.
+ const express=require('express');
+ const {criarRouterEscritorioDemo}=require('../src/routes/admin-escritorio-demo');
+ const adminApp=express();
+ adminApp.use('/admin',criarRouterEscritorioDemo({segredo:ADMIN,publicacoes:{banco}}));
+ const adminServer=adminApp.listen(0,'127.0.0.1');
+ await once(adminServer,'listening');
+ t.after(()=>new Promise(done=>adminServer.close(done)));
+ const adminBase='http://127.0.0.1:'+adminServer.address().port+'/admin';
+ const caminho=id=>'/escritorio-demo/clientes/'+id+'/checkout-homologacao';
+ const semSegredo=await fetch(adminBase+caminho(ana.contaId));
+ assert.equal(semSegredo.status,401);
+ const comSegredo=await fetch(adminBase+caminho(ana.contaId),{
+  headers:{Authorization:'Bearer '+ADMIN}
+ });
+ assert.equal(comSegredo.status,200);
+ const visto=await comSegredo.json();
+ assert.equal(visto.contaVinculada,true);
+ assert.equal(visto.total,1);
+ assert.equal(visto.pedidos[0].prepedidoId,pedido.prepedido.prepedidoId);
+ assert.equal(visto.pedidos[0].titularId,titular1.titularId);
+ assert.equal(visto.pedidos[0].pagamentoReal,false);
+ const outro=await fetch(adminBase+caminho(bia.contaId),{
+  headers:{Authorization:'Bearer '+ADMIN}
+ });
+ assert.equal(outro.status,200);
+ assert.equal((await outro.json()).total,0);
  const r1=await request('/staging/meu-vinculo-escritorio',{token:login1.token});
  assert.equal(r1.status,200);
  assert.equal(r1.data.contaEscritorioVinculada,true);
