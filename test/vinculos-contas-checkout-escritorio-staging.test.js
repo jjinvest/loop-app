@@ -3,7 +3,8 @@ const {test}=require('node:test');
 const assert=require('node:assert/strict');
 const {once}=require('node:events');
 const {DatabaseSync}=require('node:sqlite');
-const {criarAppCheckoutStagingLocal}=require('../src/laboratorio/servidor-checkout-staging-local');
+const {criarAppCheckoutStagingLocal,catalogoFicticioCheckout}=require('../src/laboratorio/servidor-checkout-staging-local');
+const {cotarCheckoutPublico}=require('../src/domain/cotacao-checkout-publico');
 const {COOKIE}=require('../src/domain/autenticacao-checkout-staging-sqlite');
 const ADMIN='operador-somente-laboratorio-'+('A'.repeat(48));
 const SENHA_A='SenhaFicticiaAna2026MuitoForte!';
@@ -11,8 +12,9 @@ const SENHA_B='SenhaFicticiaBia2026MuitoForte!';
 test('identidade comprovada une 1 conta checkout a 1 conta escritorio demo, sem trocar titular do pedido',async t=>{
  const banco=new DatabaseSync(':memory:');
  banco.exec('PRAGMA foreign_keys=ON');
- const {app,auth,contasDemo,vinculos}=criarAppCheckoutStagingLocal({
-  banco,segredoOperador:ADMIN,vincularContaDemo:true
+ const catalogo=catalogoFicticioCheckout();
+ const {app,auth,contasDemo,vinculos,intencoes,prePedidos}=criarAppCheckoutStagingLocal({
+  banco,segredoOperador:ADMIN,vincularContaDemo:true,repositorioCatalogo:catalogo
  });
  const ana=contasDemo.cadastrar({nome:'Ana Exemplo',email:'ana@example.invalid',
   senha:SENHA_A,apelido:'Ana'});
@@ -54,6 +56,26 @@ test('identidade comprovada une 1 conta checkout a 1 conta escritorio demo, sem 
  assert.equal(vinculou.status,201,JSON.stringify(vinculou.data));
  assert.equal(vinculou.data.repetido,false);
  assert.equal(vinculou.data.posicoesReais,0);
+ // O pedido da conta autenticada deve permanecer somente dela, e o operador
+ // deve ver a MESMA identidade verificada, sem atribuir compra por nick/email.
+ const entrada={itens:[{produtoId:'curso-homologacao-250',quantidade:1}]};
+ const cotacao=await cotarCheckoutPublico({repositorio:catalogo,entrada});
+ const rascunho=intencoes.criar({
+  titularId:titular1.titularId,chaveIdempotencia:'id-vinculada-2026-01',
+  entrada,cotacao
+ });
+ const pedido=await prePedidos.preparar({
+  titularId:titular1.titularId,rascunhoId:rascunho.intencao.pedidoId,
+  repositorioCatalogo:catalogo
+ });
+ const meus=await request('/staging/meus-pedidos',{token:login1.token});
+ assert.equal(meus.status,200);
+ assert.equal(meus.data.pedidos.length,1);
+ assert.equal(meus.data.pedidos[0].prepedidoId,pedido.prepedido.prepedidoId);
+ assert.equal(meus.data.pedidos[0].contaEscritorioVinculada,true);
+ assert.equal(meus.data.pedidos[0].compraReal,false);
+ assert.equal((await request('/staging/meus-pedidos',{
+  token:login2.token})).data.pedidos.length,0);
  assert.equal((await link(login1.token,login1.csrf,'Ana Exemplo',SENHA_A)).status,200,
   'repetir requisicao nao cria nova identidade');
  assert.equal((await link(login2.token,login2.csrf,'Ana Exemplo',SENHA_A)).status,409,
