@@ -4,6 +4,7 @@
 // NAO montar em src/server.js.
 const express=require('express');
 const {localSeguro}=require('./admin-catalogo-laboratorio');
+const {consultarPedido}=require('../domain/relatorio-homologacao-checkout-staging');
 function criarRouterPrePedidosCheckoutStaging({
  prePedidos,repositorioCatalogo,identificarTitular,autorizarMutacao,
  ponteAsaasSandbox=null,consultarPosicaoPendente=null
@@ -72,13 +73,21 @@ function criarRouterPrePedidosCheckoutStaging({
     const andamento=ponteAsaasSandbox?.consultar({
      titularId,prepedidoId:p.prepedidoId
     })||null;
+    // Mesma fonte SQLite auditada do Escritório, filtrada pelo titular.
+    const auditoria=ponteAsaasSandbox?
+     consultarPedido({banco:ponteAsaasSandbox.banco,
+      titularId,prepedidoId:p.prepedidoId}):null;
     return {
      prepedidoId:p.prepedidoId,criadoEm:p.criadoEm,
      moeda:p.moeda,totalCentavos:p.totalCentavos,itens:p.itens,
      statusHomologacao:andamento?.estado??'SEM_COBRANCA_SANDBOX',
      statusInformadoPeloPSP:andamento?.ultimaConsultaSandbox?.statusAsaas??null,
      consultaPSPRealizadaNestaLeitura:false,
-     revisaoManualObrigatoria:andamento?.revisaoManualObrigatoria===true,
+     conferenciaPSPConcluida:auditoria?.conferenciaPSPConcluida===true,
+     situacaoOperacional:auditoria?.estadoOperacional??'SEM_COBRANCA_SANDBOX',
+     posicoesFicticiasConferidas:auditoria?.posicoesPendentesFicticias??0,
+     revisaoManualObrigatoria:andamento?.revisaoManualObrigatoria===true||
+       auditoria?.exigeRevisaoManual===true,
      compraReal:false,comprovanteFinanceiro:false,
      posicaoPendenteLaboratorio:consultarPosicaoPendente?.({
       titularId,prepedidoId:p.prepedidoId
