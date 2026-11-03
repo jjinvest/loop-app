@@ -38,6 +38,7 @@ jobs:
           node --test test/reconsultar-asaas-railway-psp-staging.test.js
           node --test test/projetar-posicao-railway-staging.test.js
           node --test test/loja-escritorio-conta-unica-candidata.test.js
+          node --test test/verificacao-email-conta-unica-candidata.test.js
           node --test test/backup-offsite-checkout-staging.test.js
       - name: Checkout público deve falhar fechado mesmo em produção
         env:
@@ -68,7 +69,8 @@ jobs:
               '/staging/escritorio-homologacao','/staging/vincular-escritorio',
               '/staging/identidade-candidata',
               '/staging/contas/cadastrar','/staging/contas/entrar',
-              '/staging/contas/identidade','/staging/escritorio-unificado'
+              '/staging/contas/identidade','/staging/escritorio-unificado',
+              '/staging/contas/email/enviar','/staging/contas/email/confirmar'
             ]){
              const r=await fetch(base+endpoint);
              assert.equal(r.status,404,endpoint);
