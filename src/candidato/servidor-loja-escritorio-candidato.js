@@ -107,6 +107,7 @@ function criarAppLojaEscritorioCandidato({banco,repositorioCatalogo,
  app.get('/readyz',(_req,res)=>{
   try{
    const check=banco.prepare('PRAGMA quick_check').get();
+   contas.verificarCustodia();
    const fks=banco.prepare('PRAGMA foreign_key_check').all().length;
    const titulares=integridade.auditar();
    if(check?.quick_check!=='ok'||fks>0||
