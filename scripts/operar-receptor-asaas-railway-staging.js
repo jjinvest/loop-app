@@ -32,7 +32,7 @@ function decifrarChaveSandbox(privadaB64,cifraB64){
  }catch{erro('NAO_FOI_POSSIVEL_DECIFRAR');}
  const texto=bytes.toString('utf8');bytes.fill(0);
  if(!texto.startsWith('$aact_hmlg_')||texto.length<25||texto.length>200||
-    /\\s/.test(texto))erro('CHAVE_NAO_E_SOMENTE_SANDBOX');
+    /\s/.test(texto))erro('CHAVE_NAO_E_SOMENTE_SANDBOX');
  return texto;
 }
 async function executar({ambiente=process.env}={}){
