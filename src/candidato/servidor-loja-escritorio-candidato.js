@@ -6,6 +6,8 @@ const express=require('express');
 const path=require('node:path');
 const {ContaUnicaCandidataSQLite,COOKIE,DURACAO_MS}=
  require('../domain/conta-unica-candidata-sqlite');
+const {TitularidadeCpfTermosCandidato}=
+ require('../domain/titularidade-cpf-termos-candidato');
 const {IntencoesCheckoutSQLite}=require('../domain/intencoes-checkout-sqlite');
 const {PrePedidosCheckoutStagingSQLite}=require('../domain/prepedidos-checkout-staging-sqlite');
 const {PontePrepedidoAsaasSandboxStaging}=require('../domain/ponte-prepedido-asaas-sandbox-staging');
@@ -16,7 +18,8 @@ const {criarAutorizacao,localSeguro}=require('../routes/admin-catalogo-laborator
 const {cotarCheckoutPublico}=require('../domain/cotacao-checkout-publico');
 function erro(codigo){const e=new Error(codigo);e.codigo=codigo;throw e;}
 function criarAppLojaEscritorioCandidato({banco,repositorioCatalogo,
- chaveEmail,chaveCifra,segredoOperador,termosVersao,termosTexto}={}){
+ chaveEmail,chaveCifra,chaveCpfHmac=null,chaveCpfCifra=null,
+ segredoOperador,termosVersao,termosTexto}={}){
  if(process.env.NODE_ENV==='production')erro('CANDIDATO_NAO_HOMOLOGADO');
  if(typeof repositorioCatalogo?.buscar!=='function')
   throw new TypeError('Catalogo obrigatorio');
@@ -26,6 +29,11 @@ function criarAppLojaEscritorioCandidato({banco,repositorioCatalogo,
     typeof termosTexto!=='string'||termosTexto.length<40)
   erro('TERMOS_LAB_INVALIDOS');
  const contas=new ContaUnicaCandidataSQLite({banco,chaveEmail,chaveCifra});
+ if((chaveCpfHmac===null)!==(chaveCpfCifra===null))
+  erro('CPF_CUSTODIA_INCOMPLETA');
+ const cpf=chaveCpfHmac===null?null:new TitularidadeCpfTermosCandidato({
+  banco,chaveHmac:chaveCpfHmac,chaveCifra:chaveCpfCifra,perfil:'unificada'
+ });
  const intencoes=new IntencoesCheckoutSQLite({banco});
  const prePedidos=new PrePedidosCheckoutStagingSQLite({banco});
  const ponte=new PontePrepedidoAsaasSandboxStaging({banco});
@@ -115,6 +123,47 @@ function criarAppLojaEscritorioCandidato({banco,repositorioCatalogo,
   contas.sair(req);res.set('Set-Cookie',cookie('',true));
   return res.json({sessaoEncerrada:true,pagamentosReais:false});
  });
+ // CPF de ensaio criptografado, mas sempre sem verificaçao externa.
+ // Nunca usar este aceite isolado para habilitar posicoes ou saques.
+ if(cpf){
+  app.post('/staging/contas/identidade',(req,res)=>{
+   const sessao=contas.sessao(req);
+   if(!sessao)return res.status(401).json({erro:'SESSAO_AUSENTE'});
+   if(!contas.autorizarMutacao(req))
+    return res.status(403).json({erro:'CSRF_INVALIDO'});
+   if(!req.is('application/json'))
+    return res.status(415).json({erro:'JSON_OBRIGATORIO'});
+   if(!req.body||Array.isArray(req.body)||
+      Object.keys(req.body).sort().join(',')!=='aceiteExplicito,cpf')
+    return res.status(400).json({erro:'CAMPOS_INVALIDOS'});
+   try{
+    const r=cpf.registrar({titularId:sessao.titularId,
+     cpf:req.body.cpf,termosVersao,termosTexto,
+     aceiteExplicito:req.body.aceiteExplicito,autorizado:true});
+    return res.status(r.repetido?200:201).json({
+     ...r,identidadeExternaVerificada:false,pagamentosReais:false
+    });
+   }catch(e){
+    if(e.codigo==='CPF_OU_TITULAR_JA_VINCULADO')
+     return res.status(409).json({erro:e.codigo});
+    if(['CPF_INVALIDO','TERMOS_NAO_ACEITOS_NO_ENSAIO'].includes(e.codigo))
+     return res.status(400).json({erro:e.codigo});
+    return res.status(503).json({erro:'IDENTIDADE_STAGING_INDISPONIVEL'});
+   }
+  });
+  app.get('/staging/contas/identidade',(req,res)=>{
+   const s=contas.sessao(req);
+   if(!s)return res.status(401).json({erro:'SESSAO_AUSENTE'});
+   try{
+    const x=cpf.consultar({titularId:s.titularId});
+    return res.json({
+     registrado:Boolean(x),cpfFinal:x?.cpfFinal||null,
+     identidadeExternaVerificada:false,permitidoSacar:false,
+     permitidoCriarPosicoes:false
+    });
+   }catch{return res.status(503).json({erro:'IDENTIDADE_INDISPONIVEL'});}
+  });
+ }
  app.post('/staging/cotacao',async(req,res)=>{
   if(!req.is('application/json'))
    return res.status(415).json({erro:'JSON_OBRIGATORIO'});
@@ -131,7 +180,8 @@ function criarAppLojaEscritorioCandidato({banco,repositorioCatalogo,
    const rel=consultarEscritorioHomologacao({banco});
    const pedidos=rel.pedidos.map(p=>({
     ...p,nick:contas.perfil(p.titularId)?.nick||null,
-    contaUnica:true
+    contaUnica:true,identidadeExternaVerificada:false,
+    cpfDeclaradoNoEnsaio:cpf?Boolean(cpf.consultar({titularId:p.titularId})):false
    }));
    return res.json({...rel,pedidos,
     escritorioFonteUnica:true,
@@ -156,6 +206,6 @@ function criarAppLojaEscritorioCandidato({banco,repositorioCatalogo,
  app.use((_err,_req,res,_next)=>res.status(503).json({
   erro:'CANDIDATO_INDISPONIVEL',financeiroReal:false
  }));
- return {app,contas,intencoes,prePedidos,ponte,banco};
+ return {app,contas,cpf,intencoes,prePedidos,ponte,banco};
 }
 module.exports={criarAppLojaEscritorioCandidato};
