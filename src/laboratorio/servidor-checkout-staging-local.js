@@ -30,6 +30,7 @@ const {ContasParticipantesDemoSQLite}=require('../domain/contas-participantes-de
 const {VinculosContasEscritorioCheckoutStagingSQLite}=
  require('../domain/vinculos-contas-escritorio-checkout-staging-sqlite');
 const {validarProduto}=require('../domain/catalogo');
+const {TitularidadeCpfTermosCandidato}=require('../domain/titularidade-cpf-termos-candidato');
 
 function falha(codigo){const e=new Error(codigo);e.codigo=codigo;return e;}
 function somenteEnsaio(){
@@ -48,7 +49,7 @@ function catalogoFicticioCheckout(){
 }
 function criarAppCheckoutStagingLocal({
  banco,repositorioCatalogo=catalogoFicticioCheckout(),
- segredoOperador=null,vincularContaDemo=false
+ segredoOperador=null,vincularContaDemo=false,identidadeCandidata=null
 }={}){
  somenteEnsaio();
  if(typeof banco?.prepare!=='function'||typeof banco?.exec!=='function'||
@@ -68,6 +69,13 @@ function criarAppCheckoutStagingLocal({
   new VinculosContasEscritorioCheckoutStagingSQLite({
    banco,autenticacao:auth,contasDemo
   }):null;
+ if(identidadeCandidata!==null&&segredoOperador===null)
+  throw falha('OPERADOR_OBRIGATORIO_PARA_IDENTIDADE_CANDIDATA');
+ const titularidade=identidadeCandidata===null?null:
+  new TitularidadeCpfTermosCandidato({
+   banco,chaveHmac:identidadeCandidata.hmacKey,
+   chaveCifra:identidadeCandidata.cipherKey
+  });
  const identificarTitular=req=>auth.identificarTitular(req);
  const autorizarMutacao=req=>auth.autorizarMutacao(req);
  const app=express();
@@ -172,6 +180,54 @@ function criarAppCheckoutStagingLocal({
     ambiente:'STAGING_LOCAL',pagamentosReais:0,posicoesReais:0});
   });
  }
+ // CPF e aceite de termos sao preparação offline, sem verificação externa.
+ // Somente operador pode instanciar esta variante e ela jamais é pública.
+ if(titularidade){
+  app.post('/staging/identidade-candidata',(req,res)=>{
+   if(!localSeguro(req)||process.env.NODE_ENV==='production')
+    return res.status(403).json({erro:'IDENTIDADE_APENAS_LOCAL'});
+   const sessao=auth.sessao(req);
+   if(!sessao)return res.status(401).json({erro:'SESSAO_AUSENTE'});
+   if(!auth.autorizarMutacao(req))
+    return res.status(403).json({erro:'MUTACAO_NAO_AUTORIZADA'});
+   if(!req.is('application/json'))
+    return res.status(415).json({erro:'JSON_OBRIGATORIO'});
+   if(!req.body||Array.isArray(req.body)||typeof req.body!=='object'||
+      Object.keys(req.body).sort().join(',')!=='aceiteExplicito,cpf')
+    return res.status(400).json({erro:'CAMPOS_INVALIDOS'});
+   try{
+    const feito=titularidade.registrar({
+     titularId:sessao.titularId,cpf:req.body.cpf,
+     termosVersao:identidadeCandidata.termosVersao,
+     termosTexto:identidadeCandidata.termosTexto,
+     aceiteExplicito:req.body.aceiteExplicito,autorizado:true
+    });
+    return res.status(feito.repetido?200:201).json({
+     ...feito,identidadeExternaVerificada:false,
+     naoHabilitaComprasReais:true
+    });
+   }catch(e){
+    if(e?.codigo==='CPF_OU_TITULAR_JA_VINCULADO')
+     return res.status(409).json({erro:e.codigo});
+    if(['CPF_INVALIDO','TERMOS_NAO_ACEITOS_NO_ENSAIO'].includes(e?.codigo))
+     return res.status(400).json({erro:e.codigo});
+    return res.status(503).json({erro:'IDENTIDADE_CANDIDATA_INDISPONIVEL'});
+   }
+  });
+  app.get('/staging/identidade-candidata',(req,res)=>{
+   if(!localSeguro(req)||process.env.NODE_ENV==='production')
+    return res.status(403).json({erro:'IDENTIDADE_APENAS_LOCAL'});
+   const sessao=auth.sessao(req);
+   if(!sessao)return res.status(401).json({erro:'SESSAO_AUSENTE'});
+   try{
+    const r=titularidade.consultar({titularId:sessao.titularId});
+    return res.json({registradoNoEnsaio:Boolean(r),
+     estado:r?.estado||'SEM_REGISTRO',termosVersao:r?.termosVersao||null,
+     identidadeExternaVerificada:false,comprasReaisPermitidas:false,
+     saquesReaisPermitidos:false});
+   }catch{return res.status(503).json({erro:'CONSULTA_STAGING_INDISPONIVEL'});}
+  });
+ }
  // Montar rotas que exigem sessao SOMENTE apos estado e cotacao:
  // o middleware de identidade de rascunhos intercepta rotas nao casadas.
  app.use('/staging',criarRouterAutenticacaoCheckoutStaging({autenticacao:auth}));
@@ -189,7 +245,7 @@ function criarAppCheckoutStagingLocal({
  app.use((_err,_req,res,_next)=>res.status(503).json({
   erro:'OPERACAO_STAGING_INDISPONIVEL',checkoutPublico:false
  }));
- return {app,auth,intencoes,prePedidos,ponte,contasDemo,vinculos};
+ return {app,auth,intencoes,prePedidos,ponte,contasDemo,vinculos,titularidade};
 }
 function abrirBanco(arquivo){
  somenteEnsaio();
