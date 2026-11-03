@@ -40,5 +40,10 @@ jobs:
               console.error('SANDBOX_CLIENTE_ID_INCONSISTENTE');process.exit(1);
             }
             console.log('SANDBOX_CLIENTE_CANDIDATO='+id);
+            const registro=v.data[0];
+            const nomeTeste=/teste|sandbox|loop|demo|fictici|homolog/i.test(registro?.name||'');
+            const notificacoesDesativadas=registro?.notificationDisabled===true;
+            console.log('SANDBOX_CLIENTE_IDENTIFICADO_COMO_TESTE='+nomeTeste);
+            console.log('SANDBOX_CLIENTE_NOTIFICACOES_DESATIVADAS='+notificacoesDesativadas);
           }
           NODE
