@@ -206,6 +206,52 @@ class ContaUnicaCandidataSQLite{
   const s=this.sessao(req),x=req.get('x-checkout-csrf');
   return Boolean(s&&typeof x==='string'&&x.length===64&&comparar(s.csrf,x));
  }
+ async trocarSenha({req,senhaAtual,novaSenha}={}){
+  if(process.env.NODE_ENV==='production')falha('CANDIDATO_NAO_HOMOLOGADO');
+  const sessao=this.sessao(req);
+  if(!sessao||!this.autorizarMutacao(req))
+   falha('SESSAO_OU_CSRF_INVALIDO');
+  if(typeof senhaAtual!=='string'||senhaAtual.length<1||
+     senhaAtual.length>256||!senhaValida(novaSenha))
+   falha('SENHA_INVALIDA');
+  const conta=this.banco.prepare([
+   'SELECT senha_salt,senha_hash,bloqueado_ate,tentativas',
+   'FROM akitemm_conta_unica_candidata WHERE id=?'
+  ].join(' ')).get(sessao.titularId);
+  if(!conta)falha('SESSAO_OU_CSRF_INVALIDO');
+  const agora=this._agora();
+  if(conta.bloqueado_ate>agora)
+   falha('CONTA_TEMPORARIAMENTE_BLOQUEADA');
+  const hashAntigo=await hashSenha(senhaAtual,conta.senha_salt);
+  if(!comparar(hashAntigo,conta.senha_hash)){
+   const erros=conta.tentativas+1;
+   this.banco.prepare([
+    'UPDATE akitemm_conta_unica_candidata',
+    'SET tentativas=?,bloqueado_ate=? WHERE id=?'
+   ].join(' ')).run(Math.min(erros,5),
+    erros>=5?agora+BLOQUEIO_MS:conta.bloqueado_ate,
+    sessao.titularId);
+   falha('SENHA_ATUAL_INCORRETA');
+  }
+  if(senhaAtual===novaSenha)falha('NOVA_SENHA_DEVE_SER_DIFERENTE');
+  const salt=randomBytes(16).toString('hex');
+  const hashNovo=await hashSenha(novaSenha,salt);
+  this.banco.exec('BEGIN IMMEDIATE');
+  try{
+   const ok=this.banco.prepare([
+    'UPDATE akitemm_conta_unica_candidata',
+    'SET senha_salt=?,senha_hash=?,tentativas=0,bloqueado_ate=0',
+    'WHERE id=? AND senha_hash=?'
+   ].join(' ')).run(salt,hashNovo,sessao.titularId,conta.senha_hash);
+   if(ok.changes!==1)falha('CONCORRENCIA_CREDENCIAL');
+   this.banco.prepare([
+    'DELETE FROM akitemm_sessoes_candidatas WHERE titular_id=?'
+   ].join(' ')).run(sessao.titularId);
+   this.banco.exec('COMMIT');
+   return {senhaAlterada:true,todasSessoesRevogadas:true,
+    nenhumaOperacaoFinanceira:true};
+  }catch(e){this.banco.exec('ROLLBACK');throw e;}
+ }
  sair(req){
   const token=tokenCookie(req);if(!token)return false;
   return this.banco.prepare(
