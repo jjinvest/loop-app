@@ -22,7 +22,7 @@ test('operacao Railway prepara uma unica reserva ficticia e vincula pagamento se
  assert.equal((await executar({ambiente:{...env,LOOP_RAILWAY_OPERACAO_ACAO:'INSPECIONAR'}})).pedidos,1);
  const a=await executar({ambiente:{...env,LOOP_RAILWAY_OPERACAO_ACAO:'MARCAR_ENVIO'}});
  assert.equal(a.estado,'CRIACAO_INDETERMINADA');
- assert.match((await executar({ambiente:{...env,LOOP_RAILWAY_OPERACAO_ACAO:'MARCAR_ENVIO'})).feito,/NAO_REPETIR_POST/);
+ assert.match((await executar({ambiente:{...env,LOOP_RAILWAY_OPERACAO_ACAO:'MARCAR_ENVIO'}})).feito,/NAO_REPETIR_POST/);
  const b=await executar({ambiente:{...env,LOOP_RAILWAY_OPERACAO_ACAO:'VINCULAR',
   LOOP_RAILWAY_PAGAMENTO_SANDBOX_ID:'pay_SANDBOX00001'}});
  assert.equal(b.estado,'PENDENTE_SANDBOX');
