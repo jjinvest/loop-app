@@ -7,7 +7,8 @@ const {localSeguro}=require('./admin-catalogo-laboratorio');
 const {consultarPedido}=require('../domain/relatorio-homologacao-checkout-staging');
 function criarRouterPrePedidosCheckoutStaging({
  prePedidos,repositorioCatalogo,identificarTitular,autorizarMutacao,
- ponteAsaasSandbox=null,consultarPosicaoPendente=null
+ ponteAsaasSandbox=null,consultarPosicaoPendente=null,
+ consultarEntregaSimulada=null
 }={}){
  if(typeof prePedidos?.preparar!=='function'||
   typeof prePedidos?.consultar!=='function'||
@@ -18,6 +19,8 @@ function criarRouterPrePedidosCheckoutStaging({
   throw new TypeError('Prepedidos, catalogo, autenticacao e CSRF obrigatorios');
  if(consultarPosicaoPendente!==null&&typeof consultarPosicaoPendente!=='function')
   throw new TypeError('Leitura de posicao pendente invalida');
+ if(consultarEntregaSimulada!==null&&typeof consultarEntregaSimulada!=='function')
+  throw new TypeError('Leitura de entrega simulada invalida');
  if(ponteAsaasSandbox!==null&&typeof ponteAsaasSandbox.consultar!=='function')
   throw new TypeError('Ponte Asaas Sandbox de somente leitura invalida');
  const r=express.Router();
@@ -91,6 +94,9 @@ function criarRouterPrePedidosCheckoutStaging({
        auditoria?.exigeRevisaoManual===true,
      compraReal:false,comprovanteFinanceiro:false,
      posicaoPendenteLaboratorio:consultarPosicaoPendente?.({
+      titularId,prepedidoId:p.prepedidoId
+     })??null,
+     entregaFicticia:consultarEntregaSimulada?.({
       titularId,prepedidoId:p.prepedidoId
      })??null,
      posicoesCriadas:0,bonificacaoLiberada:false
