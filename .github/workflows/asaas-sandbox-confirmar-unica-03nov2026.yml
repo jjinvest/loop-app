@@ -1,0 +1,68 @@
+name: LOOP - Confirmar uma unica cobranca no Asaas Sandbox (simulado)
+on:
+  push:
+    branches: [fix/teste-escrita-catraca-20261014]
+    paths: [.github/workflows/asaas-sandbox-confirmar-unica-03nov2026.yml]
+permissions:
+  contents: read
+jobs:
+  confirmar:
+    if: github.repository == 'jjinvest/loop-app' && github.ref == 'refs/heads/fix/teste-escrita-catraca-20261014' && github.run_number == 1 && github.run_attempt == 1
+    runs-on: ubuntu-latest
+    timeout-minutes: 4
+    steps:
+      - name: Confirmacao exclusiva de Sandbox, com uma tentativa e sem dinheiro real
+        env:
+          ASAAS_SANDBOX_API_KEY: ${{ secrets.ASAAS_SANDBOX_API_KEY }}
+        shell: bash
+        run: |
+          node --input-type=module <<'NODE'
+          const key=process.env.ASAAS_SANDBOX_API_KEY;
+          if(!key?.startsWith('$aact_hmlg_')||/\s/.test(key))throw Error('CHAVE_SANDBOX_INVALIDA');
+          const id='pay_xhhv07y98d5pqvp8';
+          const customer='cus_000009780085';
+          const ref='LOOPLAB-hom-defb7f9c-db20-478c-86da-58e58c8f015b';
+          const base='https://api-sandbox.asaas.com/v3';
+          const headers={access_token:key,Accept:'application/json',
+            'User-Agent':'LOOP-3.0-Simulacao-Pix-Sandbox/1.0'};
+          async function conferir(){
+            const r=await fetch(base+'/payments/'+id,{method:'GET',
+              redirect:'error',headers,signal:AbortSignal.timeout(13000)});
+            if(r.status!==200)throw Error('GET_SANDBOX_HTTP_'+r.status);
+            const p=await r.json().catch(()=>null);
+            if(p?.id!==id||p?.customer!==customer||p?.externalReference!==ref||
+              p?.billingType!=='PIX'||p?.value!==250)
+              throw Error('COBRANCA_DIVERGENTE_NAO_CONFIRMAR');
+            return p;
+          }
+          const c=await fetch(base+'/customers/'+customer,{method:'GET',
+            headers,redirect:'error',signal:AbortSignal.timeout(13000)});
+          if(c.status!==200)throw Error('CLIENTE_SANDBOX_NAO_VALIDADO');
+          const cliente=await c.json();
+          if(cliente?.notificationDisabled!==true||
+             !/teste|sandbox|loop|demo|fictici|homolog/i.test(cliente?.name||''))
+             throw Error('CLIENTE_DE_TESTE_EXCLUSIVO_OBRIGATORIO');
+          const antes=await conferir();
+          if(antes.status==='RECEIVED'){
+            console.log('LOOP_SANDBOX_CONFIRMAR=JA_RECEBIDO_SEM_POST');
+            process.exit(0);
+          }
+          if(antes.status!=='PENDING'&&antes.status!=='CONFIRMED')
+            throw Error('STATUS_SANDBOX_NAO_CONFIRMAVEL');
+          // Confirmar uma vez: SIMULACAO na API Sandbox, sem movimento financeiro real.
+          let r;
+          try{
+            r=await fetch(base+'/sandbox/payment/'+id+'/confirm',{
+              method:'POST',redirect:'error',headers:{
+                ...headers,'Content-Type':'application/json'},
+              body:'{}',signal:AbortSignal.timeout(15000)
+            });
+          }catch{throw Error('CONFIRMACAO_INDETERMINADA_NAO_REPETIR_POST');}
+          if(r.status!==200&&r.status!==201)
+            throw Error('CONFIRMACAO_HTTP_'+r.status+'_NAO_REPETIR_POST');
+          const depois=await conferir();
+          console.log('LOOP_SANDBOX_CONFIRMACAO=POST_UNICO_EXECUTADO');
+          console.log('LOOP_SANDBOX_STATUS_PSP='+depois.status);
+          console.log('LOOP_SANDBOX_DINHEIRO_REAL=false');
+          console.log('LOOP_SANDBOX_POSICOES_COMERCIAIS=0');
+          NODE
