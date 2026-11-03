@@ -55,6 +55,33 @@ jobs:
                   process.stdout.write(
                     'LOOP_SANDBOX_READONLY=AUTENTICACAO_REMOTA_VALIDADA_GET_SEM_COBRANCA\n'
                   );
+                  // Inventario remoto independente, somente GET. Não imprimir
+                  // URLs, tokens, e-mails, IDs ou payloads do provedor.
+                  const webhooks=await fetch('https://api-sandbox.asaas.com/v3/webhooks?limit=100',{
+                    method:'GET',redirect:'error',
+                    headers:{access_token:key,Accept:'application/json',
+                      'User-Agent':'LOOP-3.0-Integracao-Sandbox/1.0'},
+                    signal:AbortSignal.timeout(12000)
+                  });
+                  if(webhooks.status!==200){
+                    process.stdout.write('LOOP_SANDBOX_WEBHOOKS=CONSULTA_HTTP_'+
+                      webhooks.status+'_NAO_COMPROVADA\n');
+                    process.exitCode=1;
+                  }else{
+                    const v=await webhooks.json().catch(()=>null);
+                    if(!v||!Array.isArray(v.data)){
+                      fail('WEBHOOKS_ESTRUTURA_INESPERADA');
+                    }else{
+                      const ativos=v.data.filter(x=>x?.enabled===true&&
+                        x?.interrupted!==true);
+                      const pagamento=ativos.filter(x=>Array.isArray(x?.events)&&
+                        x.events.includes('PAYMENT_RECEIVED'));
+                      process.stdout.write('LOOP_SANDBOX_WEBHOOKS=GET_REAL_VALIDADO'+
+                        ';CONFIGURADOS='+v.data.length+
+                        ';ATIVOS='+ativos.length+
+                        ';COM_PAYMENT_RECEIVED='+pagamento.length+'\n');
+                    }
+                  }
                 }
               }
             }catch{
