@@ -86,6 +86,7 @@ function criarRouterPrePedidosCheckoutStaging({
      conferenciaPSPConcluida:auditoria?.conferenciaPSPConcluida===true,
      situacaoOperacional:auditoria?.estadoOperacional??'SEM_COBRANCA_SANDBOX',
      posicoesFicticiasConferidas:auditoria?.posicoesPendentesFicticias??0,
+     contaEscritorioVinculada:auditoria?.contaEscritorioVinculada===true,
      revisaoManualObrigatoria:andamento?.revisaoManualObrigatoria===true||
        auditoria?.exigeRevisaoManual===true,
      compraReal:false,comprovanteFinanceiro:false,
