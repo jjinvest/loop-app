@@ -135,6 +135,27 @@ async function prepararVolumeInicial({ambiente=process.env}={}){
  if(rel==='..'||rel.startsWith('..'+path.sep)||path.isAbsolute(rel))
   throw falha('SQLITE_FORA_DE_VOLUME_PERSISTENTE');
  if(fs.existsSync(arquivo))return {preparado:false,jaExistia:true};
+ // Primeira inicializacao do ingresso HTTPS SEM cliente Asaas ainda
+ // cadastrado. Criar somente schema, nao gerar pedido ou pagamento.
+ // O bootstrap ficara impossibilitado de criar pedidos por esse flag
+ // apos o volume possuir o arquivo. Fica sob controle operacional.
+ if(ambiente.LOOP_RAILWAY_INICIALIZAR_BANCO_VAZIO==='SIM'&&
+    ambiente.LOOP_RAILWAY_PREPARAR_UMA_VEZ!=='SIM'){
+  const token=ambiente.LOOP_RAILWAY_WEBHOOK_TOKEN;
+  if(typeof token!=='string'||token.length<32||token.length>255||
+     /\s/.test(token))throw falha('TOKEN_STAGING_NAO_CONFIGURADO');
+  const fd=fs.openSync(arquivo,'wx',0o600);fs.closeSync(fd);
+  const banco=new DatabaseSync(arquivo);
+  try{
+   banco.exec('PRAGMA foreign_keys=ON;PRAGMA journal_mode=WAL;PRAGMA busy_timeout=5000;');
+   new IntencoesCheckoutSQLite({banco});
+   new PrePedidosCheckoutStagingSQLite({banco});
+   new PontePrepedidoAsaasSandboxStaging({banco});
+   new InboxWebhookPrepedidoAsaasStaging({banco,token});
+  }finally{banco.close();}
+  return {preparado:true,bancoVazio:true,prepedidosCriados:0,
+   pagamentosReais:0,posicoesReais:0};
+ }
  if(ambiente.LOOP_RAILWAY_PREPARAR_UMA_VEZ!=='SIM')
   throw falha('VOLUME_SEM_SQLITE_REQUER_PREPARACAO_AUTORIZADA');
  if(typeof ambiente.ASAAS_SANDBOX_CLIENTE_TESTE_ID!=='string'||
