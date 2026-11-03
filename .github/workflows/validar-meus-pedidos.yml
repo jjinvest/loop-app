@@ -30,6 +30,7 @@ jobs:
       - run: npx playwright install --with-deps chromium
       - run: node scripts/validar-meus-pedidos-browser.js
       - run: node scripts/validar-checkout-staging-browser.js
+      - run: node scripts/validar-conta-unica-candidato-browser.js
       - uses: actions/upload-artifact@v4
         if: always()
         with:
@@ -43,4 +44,6 @@ jobs:
             artifacts/posicoes-dez-integradas-pc.png
             artifacts/escritorio-integrado-pc.png
             artifacts/escritorio-integrado-celular.png
+            artifacts/conta-unica-candidato-pc.png
+            artifacts/conta-unica-candidato-celular.png
           if-no-files-found: warn
