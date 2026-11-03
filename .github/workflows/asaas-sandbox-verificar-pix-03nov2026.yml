@@ -1,0 +1,40 @@
+name: LOOP - Conferir Pix Sandbox por GET independente
+on:
+  push:
+    branches: [fix/teste-escrita-catraca-20261014]
+    paths: [.github/workflows/asaas-sandbox-verificar-pix-03nov2026.yml]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  conferir:
+    if: github.repository == 'jjinvest/loop-app' && github.ref == 'refs/heads/fix/teste-escrita-catraca-20261014'
+    runs-on: ubuntu-latest
+    timeout-minutes: 4
+    steps:
+      - name: GET do pagamento de homologacao sem exibir PII
+        env:
+          ASAAS_SANDBOX_API_KEY: ${{ secrets.ASAAS_SANDBOX_API_KEY }}
+        shell: bash
+        run: |
+          node --input-type=module <<'NODE'
+          const key=process.env.ASAAS_SANDBOX_API_KEY;
+          if(!key?.startsWith('$aact_hmlg_')||/\s/.test(key))throw Error('CHAVE_SANDBOX_INVALIDA');
+          const id='pay_xhhv07y98d5pqvp8';
+          const customer='cus_000009780085';
+          const ref='LOOPLAB-hom-defb7f9c-db20-478c-86da-58e58c8f015b';
+          const r=await fetch('https://api-sandbox.asaas.com/v3/payments/'+id,{
+            method:'GET',redirect:'error',
+            headers:{access_token:key,Accept:'application/json',
+              'User-Agent':'LOOP-3.0-Conferencia-PSP-Sandbox/1.0'},
+            signal:AbortSignal.timeout(15000)
+          });
+          if(r.status!==200)throw Error('CONSULTA_PSP_HTTP_'+r.status);
+          const p=await r.json().catch(()=>null);
+          if(p?.id!==id||p?.customer!==customer||p?.externalReference!==ref||
+            p?.billingType!=='PIX'||p?.value!==250)
+            throw Error('PSP_PAGAMENTO_DIVERGENTE');
+          console.log('LOOP_PSP_SANDBOX_GET_INDEPENDENTE=OK_ID_CLIENTE_REFERENCIA_PIX_250');
+          console.log('LOOP_PSP_SANDBOX_STATUS='+p.status);
+          console.log('LOOP_PSP_SANDBOX_PAGAMENTO_REAL=false');
+          NODE
