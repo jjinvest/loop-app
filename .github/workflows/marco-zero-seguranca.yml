@@ -1,0 +1,87 @@
+name: LOOP - Marco Zero segurança e bloqueio financeiro público
+on:
+  push:
+    branches: [fix/teste-escrita-catraca-20261014]
+    paths:
+      - 'src/**'
+      - 'test/**'
+      - 'package*.json'
+      - '.github/workflows/marco-zero-seguranca.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: marco-zero-seguranca-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  seguranca:
+    if: github.repository == 'jjinvest/loop-app' && github.ref == 'refs/heads/fix/teste-escrita-catraca-20261014'
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+      - name: Instalação imutável
+        run: npm ci --ignore-scripts --no-fund
+      - name: Dependências de produção sem vulnerabilidades altas conhecidas
+        run: npm audit --omit=dev --audit-level=high
+      - name: Integridade de identidade, PSP, titularidade e permissões
+        run: |
+          node --test test/titularidade-cpf-termos-candidato.test.js
+          node --test test/vinculos-contas-checkout-escritorio-staging.test.js
+          node --test test/escritorio-homologacao-checkout-mesmo-sqlite.test.js
+          node --test test/reconsultar-asaas-railway-psp-staging.test.js
+          node --test test/projetar-posicao-railway-staging.test.js
+      - name: Checkout público deve falhar fechado mesmo em produção
+        env:
+          NODE_ENV: production
+          LOOP_CLIENTES_LAB: 'NAO'
+          LOOP_MODO_SIMULACAO: '0'
+        run: |
+          node <<'NODE'
+          const assert=require('node:assert/strict');
+          const {once}=require('node:events');
+          const app=require('./src/server');
+          (async()=>{
+           const server=app.listen(0,'127.0.0.1');
+           try{
+            await once(server,'listening');
+            const base='http://127.0.0.1:'+server.address().port;
+            for(const [method,endpoint] of [
+              ['POST','/api/checkout/finalizar'],
+              ['POST','/api/checkout/pagar'],
+              ['GET','/api/checkout/pedidos'],
+              ['GET','/health/ready']
+            ]){
+             const r=await fetch(base+endpoint,{method});
+             assert.equal(r.status,503,method+' '+endpoint);
+            }
+            for(const endpoint of [
+              '/staging/cliente','/staging/meus-pedidos',
+              '/staging/escritorio-homologacao','/staging/vincular-escritorio'
+            ]){
+             const r=await fetch(base+endpoint);
+             assert.equal(r.status,404,endpoint);
+            }
+            console.log('LOOP_PRODUCAO_NEGATIVA=SEM_VENDAS_SEM_CADASTRO_FICTICIO');
+           }finally{await new Promise(resolve=>server.close(resolve));}
+          })().catch(e=>{console.error(e);process.exitCode=1;});
+          NODE
+      - name: Flags de laboratório não podem iniciar servidor público em produção
+        env:
+          NODE_ENV: production
+        run: |
+          node <<'NODE'
+          const assert=require('node:assert/strict');
+          for(const flag of ['LOOP_CLIENTES_LAB','LOOP_MODO_SIMULACAO']){
+           process.env[flag]=flag==='LOOP_CLIENTES_LAB'?'SIM':'1';
+           assert.throws(()=>require('./src/server'),/LABORATORIO_INCOMPATIVEL_COM_PRODUCAO/);
+           delete process.env[flag];
+          }
+          console.log('LOOP_FLAG_LAB_EM_PRODUCAO=BLOQUEADA');
+          NODE
