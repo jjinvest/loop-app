@@ -3,7 +3,7 @@
 // Nunca criar dinheiro real, usar Asaas API ou alterar o motor comercial.
 const fs=require('node:fs');
 const path=require('node:path');
-const {randomUUID}=require('node:crypto');
+const {randomUUID,privateDecrypt,createPrivateKey,constants}=require('node:crypto');
 const {DatabaseSync}=require('node:sqlite');
 const {RepositorioCatalogoMemoria}=require('../src/domain/repositorio-catalogo-memoria');
 const {cotarCheckoutPublico}=require('../src/domain/cotacao-checkout-publico');
@@ -11,9 +11,30 @@ const {IntencoesCheckoutSQLite}=require('../src/domain/intencoes-checkout-sqlite
 const {PrePedidosCheckoutStagingSQLite}=require('../src/domain/prepedidos-checkout-staging-sqlite');
 const {PontePrepedidoAsaasSandboxStaging}=require('../src/domain/ponte-prepedido-asaas-sandbox-staging');
 const {InboxWebhookPrepedidoAsaasStaging}=require('../src/domain/inbox-webhook-prepedido-asaas-staging');
+const {AsaasSandboxLojaV6}=require('../src/domain/asaas-sandbox-loja-v6');
+const {ReconsultaWebhookPrepedidoAsaasStaging}=require('../src/domain/reconsulta-webhook-prepedido-asaas-staging');
 function erro(m){throw Error('RAILWAY_SANDBOX_OPERACAO_'+m);}
 const GET={INSPECIONAR:true};
-const WRITE={PREPARAR:true,MARCAR_ENVIO:true,VINCULAR:true,RECONCILIAR:true};
+const WRITE={PREPARAR:true,MARCAR_ENVIO:true,VINCULAR:true,RECONCILIAR:true,RECONSULTAR:true};
+function decifrarChaveSandbox(privadaB64,cifraB64){
+ if(typeof privadaB64!=='string'||typeof cifraB64!=='string'||
+    privadaB64.length<1500||privadaB64.length>5000||
+    !/^[A-Za-z0-9+/]+={0,2}$/.test(privadaB64)||
+    !/^[A-Za-z0-9+/]+={0,2}$/.test(cifraB64)||
+    cifraB64.length<300||cifraB64.length>1500)
+  erro('CREDENCIAL_CIFRADA_INVALIDA');
+ let bytes;
+ try{
+  const chave=createPrivateKey({key:Buffer.from(privadaB64,'base64'),
+    format:'der',type:'pkcs8'});
+  bytes=privateDecrypt({key:chave,padding:constants.RSA_PKCS1_OAEP_PADDING,
+    oaepHash:'sha256'},Buffer.from(cifraB64,'base64'));
+ }catch{erro('NAO_FOI_POSSIVEL_DECIFRAR');}
+ const texto=bytes.toString('utf8');bytes.fill(0);
+ if(!texto.startsWith('$aact_hmlg_')||texto.length<25||texto.length>200||
+    /\\s/.test(texto))erro('CHAVE_NAO_E_SOMENTE_SANDBOX');
+ return texto;
+}
 async function executar({ambiente=process.env}={}){
  const acao=ambiente.LOOP_RAILWAY_OPERACAO_ACAO||'INSPECIONAR';
  if(ambiente.NODE_ENV!=='staging'||process.env.NODE_ENV==='production'||
@@ -107,6 +128,29 @@ async function executar({ambiente=process.env}={}){
      feito='PAGAMENTO_PENDENTE_VINCULADO_SEM_CREDITO';
     }else erro('PAGAMENTO_VINCULO_DIVERGENTE');
   }
+  if(acao==='RECONSULTAR'){
+   if(row.pagamento_id===null||row.estado!=='PENDENTE_SANDBOX')
+    erro('PAGAMENTO_NAO_VINCULADO');
+   const evento=banco.prepare([
+     'SELECT evento_id FROM akitemm_prepedido_webhook_inbox_staging',
+     "WHERE prepedido_id=? AND pagamento_id=? AND tipo='PAYMENT_RECEIVED'",
+     'ORDER BY recebido_em,evento_id LIMIT 2'
+   ].join(' ')).all(row.prepedido_id,row.pagamento_id);
+   if(evento.length!==1)erro('EVENTO_RECEIVED_INEXISTENTE_OU_DUPLICADO');
+   const apiKey=decifrarChaveSandbox(ambiente.LOOP_RAILWAY_PSP_PRIVATE_KEY_B64,
+     ambiente.LOOP_RAILWAY_PSP_CIPHERTEXT_B64);
+   const worker=new ReconsultaWebhookPrepedidoAsaasStaging({banco,inbox,ponte});
+   const provedor=new AsaasSandboxLojaV6({apiKey});
+   const resultado=await worker.processar({eventoId:evento[0].evento_id,
+     provedor,execucaoLiberada:true});
+   const situacao=ponte.consultar({titularId:row.titular_id,
+     prepedidoId:row.prepedido_id});
+   if(resultado.estado!=='CONCLUIDO'||resultado.codigo!=='PSP_RECONSULTADO'||
+      situacao?.ultimaConsultaSandbox?.statusAsaas!=='RECEIVED'||
+      situacao.estado!=='RECEBIMENTO_INFORMADO_SANDBOX')
+    erro('PSP_DIVERGENTE_REVISAR');
+   feito='PSP_GET_SANDBOX_REAL_OK_RECEIVED_EVENTO_CONCLUIDO_SEM_CREDITO';
+  }
   if(acao==='RECONCILIAR'||acao==='VINCULAR'){
     const r=inbox.reconciliarAntecipados({execucaoLiberada:true,limite:50});
     feito+=';ANTECIPADOS_VINCULADOS='+r.vinculados+
@@ -115,11 +159,14 @@ async function executar({ambiente=process.env}={}){
   const a=q()[0]||null;
   const tipos=banco.prepare('SELECT tipo,COUNT(*) total FROM akitemm_prepedido_webhook_inbox_staging GROUP BY tipo').all();
   const antecipados=banco.prepare('SELECT COUNT(*) n FROM akitemm_prepedido_webhook_antecipados_staging').get().n;
+  const consultas=banco.prepare('SELECT status_asaas,estado_local FROM akitemm_prepedido_asaas_consultas_staging ORDER BY id DESC LIMIT 1').get()||null;
+  const houveWorker=banco.prepare("SELECT 1 FROM sqlite_master WHERE type='table' AND name='akitemm_prepedido_webhook_reconsulta_staging'").get();
+  const processados=houveWorker?banco.prepare('SELECT estado,COUNT(*) n FROM akitemm_prepedido_webhook_reconsulta_staging GROUP BY estado').all():[];
   const out={acao,feito,pedidos:q().length,
    prepedidoId:a?.prepedido_id||null,titularId:a?.titular_id||null,
    clienteAsaasId:a?.cliente_asaas_id||null,externalReference:a?.external_ref||null,
    valorCentavos:a?.valor_centavos||null,pagamentoSandboxId:a?.pagamento_id||null,
-   estado:a?.estado||null,tipos,antecipados,
+   estado:a?.estado||null,tipos,antecipados,ultimaConsultaPSP:consultas?.status_asaas||null,processados,
    pagamentosReais:0,posicoesReaisCriadas:0,saquesReais:0};
   return out;
  }finally{banco.close();}
@@ -129,4 +176,4 @@ if(require.main===module){
  e=>{process.stderr.write('LOOP_RAILWAY_OPERACAO_BLOQUEADA='+
    String(e.message||'FALHA')+'\n');process.exitCode=1;});
 }
-module.exports={executar};
+module.exports={executar,decifrarChaveSandbox};
