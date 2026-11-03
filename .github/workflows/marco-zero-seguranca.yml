@@ -43,6 +43,7 @@ jobs:
           node --test test/candidato-psp-posicao-entrega-escritorio-unificados.test.js
           node --test test/integridade-titular-candidato-sqlite.test.js
           node --test test/backup-conta-unica-restauracao-segura.test.js
+          node --test test/readiness-candidato-integridade-sqlite.test.js
           node --test test/backup-offsite-checkout-staging.test.js
       - name: Checkout público deve falhar fechado mesmo em produção
         env:
