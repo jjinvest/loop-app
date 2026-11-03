@@ -65,6 +65,15 @@ function exibirPedidos(pedidos){
   const status=document.createElement('p');status.className='estado';
   status.textContent=estados[pedido.statusHomologacao]||'Status em verificação (laboratório)';
   artigo.append(titulo,resumo,data,status);
+  if(pedido.conferenciaPSPConcluida===true){
+   const selo=document.createElement('p');selo.className='subtexto';
+   selo.textContent='Pagamento fictício conferido por consulta independente ao Asaas Sandbox.';
+   artigo.append(selo);
+  }else if(pedido.situacaoOperacional==='WEBHOOK_RECEBIDO_AGUARDANDO_RECONSULTA'){
+   const aviso=document.createElement('p');aviso.className='aviso';
+   aviso.textContent='Aviso do Asaas recebido. A confirmação por consulta independente ainda está pendente.';
+   artigo.append(aviso);
+  }
   if(pedido.revisaoManualObrigatoria){
    const aviso=document.createElement('p');aviso.className='aviso';
    aviso.textContent='Revisão manual obrigatória. Nenhum benefício será liberado.';
