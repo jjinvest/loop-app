@@ -48,15 +48,15 @@ const {once}=require('node:events');
    await page.locator('#cadastroSenha').fill('SenhaFicticiaIsolada2026!');
    await page.locator('#cadastroTermos').check();
    await page.locator('#formCadastro button[type=submit]').click();
-   await page.getByRole('status').getByText(/Conta fictícia criada/).waitFor();
+   await page.locator('#mensagem').filter({hasText:/Conta fictícia criada/}).waitFor();
    await page.locator('#login').fill(item.nick);
    await page.locator('#senha').fill('SenhaFicticiaIsolada2026!');
    await page.locator('#formLogin button[type=submit]').click();
    await page.locator('#painelConta').waitFor({state:'visible'});
    await page.locator('#calcularCotacao').click();
-   await page.getByRole('status').getByText(/Cotação conferida/).waitFor();
+   await page.locator('#mensagem').filter({hasText:/Cotação conferida/}).waitFor();
    await page.locator('#prepararPedido').click();
-   await page.getByRole('status').getByText(/Histórico atualizado/).waitFor();
+   await page.locator('#mensagem').filter({hasText:/Histórico atualizado/}).waitFor();
    assert.equal(await page.locator('#listaPedidos article.pedido').count(),1);
    assert.match(await page.locator('#listaPedidos').innerText(),/R\$\s?250,00/);
    const screenshot=path.join(__dirname,'../artifacts',
