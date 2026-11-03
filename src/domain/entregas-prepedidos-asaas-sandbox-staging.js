@@ -88,8 +88,11 @@ class EntregasPrePedidosAsaasSandboxStaging{
     confirma.ultimoStatusPSP==='RECEIVED'&&
     confirma.estadoSandbox==='RECEBIMENTO_INFORMADO_SANDBOX';
   return {prepedidoId,preparacaoSimulada:itens.length>0,
-   status:!liberado?'BLOQUEADA_PARA_REVISAO_SANDBOX':
-    itens.length?'APTA_SIMULADA_SEM_ENTREGA':'AINDA_NAO_PREPARADA',
+   status:!liberado?(
+      confirma?.exigeRevisaoManual===true||itens.length>0
+       ?'BLOQUEADA_PARA_REVISAO_SANDBOX'
+       :'AGUARDANDO_RECONSULTA_PSP_SANDBOX'
+    ):itens.length?'APTA_SIMULADA_SEM_ENTREGA':'AINDA_NAO_PREPARADA',
    quantidadeLinhas:itens.length,itens,
    habilitadaParaEntregaReal:false,downloadRealHabilitado:false,
    pedidoComercial:false,produtoFisicoExpedido:false,
