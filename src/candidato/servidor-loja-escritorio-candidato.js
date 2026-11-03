@@ -116,6 +116,32 @@ function criarAppLojaEscritorioCandidato({banco,repositorioCatalogo,
   const profile=contas.perfil(s.titularId);
   return res.json({...profile,csrf:s.csrf,expiraEm:s.expiraEm});
  });
+ app.post('/staging/contas/senha',async(req,res)=>{
+  if(!contas.sessao(req))
+   return res.status(401).json({erro:'SESSAO_AUSENTE'});
+  if(!contas.autorizarMutacao(req))
+   return res.status(403).json({erro:'CSRF_INVALIDO'});
+  if(!req.is('application/json'))
+   return res.status(415).json({erro:'JSON_OBRIGATORIO'});
+  if(!req.body||Array.isArray(req.body)||
+     Object.keys(req.body).sort().join(',')!=='novaSenha,senhaAtual')
+   return res.status(400).json({erro:'CAMPOS_INVALIDOS'});
+  try{
+   const r=await contas.trocarSenha({
+    req,senhaAtual:req.body.senhaAtual,novaSenha:req.body.novaSenha
+   });
+   res.set('Set-Cookie',cookie('',true));
+   return res.json(r);
+  }catch(e){
+   if(e.codigo==='SENHA_ATUAL_INCORRETA')
+    return res.status(401).json({erro:'SENHA_ATUAL_INCORRETA'});
+   if(e.codigo==='CONTA_TEMPORARIAMENTE_BLOQUEADA')
+    return res.status(429).json({erro:e.codigo});
+   if(['SENHA_INVALIDA','NOVA_SENHA_DEVE_SER_DIFERENTE'].includes(e.codigo))
+    return res.status(400).json({erro:e.codigo});
+   return res.status(503).json({erro:'TROCA_SENHA_INDISPONIVEL'});
+  }
+ });
  app.post('/staging/contas/sair',(req,res)=>{
   if(!sessao(req))return res.status(401).json({erro:'SESSAO_AUSENTE'});
   if(!autorizacao(req))
