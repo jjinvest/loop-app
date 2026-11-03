@@ -117,17 +117,51 @@ function iniciarWebhookRailwayStaging({ambiente=process.env}={}){
   })};
  }catch(e){banco.close();throw e;}
 }
+// Na primeira inicializacao do volume, preparar UM prepedido ficticio
+// sob opt-in explicito. Sem chamada de rede ou operacao financeira.
+async function prepararVolumeInicial({ambiente=process.env}={}){
+ if(process.env.NODE_ENV==='production'||ambiente.NODE_ENV==='production'||
+    ambiente.LOOP_RAILWAY_STAGING_AUTORIZADO!=='SIM')
+  throw falha('STAGING_NAO_AUTORIZADO');
+ const volume=ambiente.RAILWAY_VOLUME_MOUNT_PATH;
+ const arquivo=ambiente.LOOP_RAILWAY_STAGING_SQLITE;
+ if(typeof volume!=='string'||typeof arquivo!=='string'||
+    !path.isAbsolute(volume)||!path.isAbsolute(arquivo)||
+    !arquivo.endsWith('.sqlite')||!fs.existsSync(volume)||
+    !fs.statSync(volume).isDirectory())
+  throw falha('VOLUME_STAGING_INVALIDO');
+ const rel=path.relative(fs.realpathSync(volume),
+  fs.realpathSync(path.dirname(arquivo)));
+ if(rel==='..'||rel.startsWith('..'+path.sep)||path.isAbsolute(rel))
+  throw falha('SQLITE_FORA_DE_VOLUME_PERSISTENTE');
+ if(fs.existsSync(arquivo))return {preparado:false,jaExistia:true};
+ if(ambiente.LOOP_RAILWAY_PREPARAR_UMA_VEZ!=='SIM')
+  throw falha('VOLUME_SEM_SQLITE_REQUER_PREPARACAO_AUTORIZADA');
+ if(typeof ambiente.ASAAS_SANDBOX_CLIENTE_TESTE_ID!=='string'||
+    !/^cus_[A-Za-z0-9_-]{5,90}$/.test(ambiente.ASAAS_SANDBOX_CLIENTE_TESTE_ID))
+  throw falha('CLIENTE_FICTICIO_SANDBOX_OBRIGATORIO');
+ const {preparar}=require('../../scripts/preparar-e-enviar-webhook-asaas-sandbox-staging');
+ const r=await preparar({
+  arquivo,clienteAsaasId:ambiente.ASAAS_SANDBOX_CLIENTE_TESTE_ID,
+  execucaoLiberada:true
+ });
+ return {preparado:true,jaExistia:false,
+  titularId:r.titularId,prepedidoId:r.prepedidoId,
+  pagamentosReais:0,posicoesReais:0};
+}
 if(require.main===module){
- try{
+ prepararVolumeInicial().then(preparo=>{
+  if(preparo.preparado)process.stdout.write(
+   'LOOP_RAILWAY_PREPEDIDO_FICTICIO='+JSON.stringify(preparo)+'\n');
   const r=iniciarWebhookRailwayStaging();
   r.servidor.on('listening',()=>process.stdout.write(
    'LOOP_HOMOLOGACAO_RAILWAY_RECEPCAO_PRONTA_SEM_FINANCEIRO_REAL\n'));
   process.once('SIGINT',()=>r.fechar());
   process.once('SIGTERM',()=>r.fechar());
- }catch(e){
+ },e=>{
   process.stderr.write('LOOP_RAILWAY_STAGING_BLOQUEADO='+
    (e.codigo||'FALHA_DE_CONFIGURACAO')+'\n');
   process.exitCode=1;
- }
+ });
 }
-module.exports={criarAppWebhookRailwayStaging,iniciarWebhookRailwayStaging};
+module.exports={criarAppWebhookRailwayStaging,iniciarWebhookRailwayStaging,prepararVolumeInicial};
