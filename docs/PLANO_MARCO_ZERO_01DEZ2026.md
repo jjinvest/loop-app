@@ -93,3 +93,16 @@ O fluxo `login de ensaio → rascunho SQLite → prepedido rastreável` agora es
 A caixa local de callbacks de pré-pedido agora distingue avisos pendentes, em processamento e em revisão, e permite identificar eventos deixados em `PROCESSANDO` após reinício. A operação de recuperação é **manual e autorizada**, exige idade mínima configurada (padrão de 60 segundos) e fica auditada em tabela imutável; move a notificação para `EXIGE_REVISAO`, sem gerar nova cobrança, criar posição ou chamar o PSP. Foi acrescentada uma superfície local de operação com autenticação/CSRF injetadas, fora do servidor público e recusada em produção. Um worker que retorna tardiamente não pode substituir o estado de revisão.
 
 **Próximo bloqueio de homologação remota:** configurar um ambiente de staging HTTPS realmente acessível por callbacks do Asaas Sandbox, sob controle do proprietário, com segredos armazenados fora do GitHub e política de reconsulta/reentrega supervisionada. Este código apenas viabiliza revisão e auditoria no laboratório; não homologa callback externo nem libera o Marco Zero.
+
+
+## Atualizacao de execucao — 03/11/2026
+
+A trilha **Asaas Sandbox remoto → webhook HTTPS genuino → GET independente no mesmo SQLite Railway → uma posicao pendente ficticia** foi comprovada para **uma unica cobranca de R$ 250**, sem dinheiro real ou direito financeiro. Um subteste remoto de homologacao deixa de ser o bloqueio principal; **nao** basta para abrir vendas.
+
+A preparacao de contas agora inclui cadastro de candidato a titular com CPF cifrado/HMAC, aceite explicito de versao de termos **ficticios de laboratorio**, sessao e CSRF, bem como vinculo 1:1 de conta de checkout ao Escritorio demonstrativo e leitura de prepedidos por titular na mesma base. Os testes nao significam que identidade/CPF foram validados externamente, que os termos sao legais ou que estas rotas estejam em producao.
+
+Foi adicionado CI independente de seguranca, com `npm ci`, `npm audit`, testes de identidade/conciliacao e verificacoes negativas de `NODE_ENV=production`: pagamento publico permanece com HTTP 503. A infraestrutura Railway disponivel tem um unico receptor, uma replica, um volume SQLite de 1024 MB, sem bucket/offsite; restauracao independente e recuperacao operacional de producao seguem **nao demonstradas**.
+
+**Risco juridico crucial:** o modelo comercial em que participantes recebem beneficios financeiros condicionados a novas compras ou entrantes requer analise independente de possivel enquadramento como esquema piramidal, mesmo com PDF ou produto. A politica generica 'sem devolucao' nao elimina direitos legais do consumidor (CDC). Ver `docs/ANALISE_JURIDICA_PRE_LANCAMENTO_MODELO_LOOP_03NOV2026.md`.
+
+**Lista curta de gates impeditivos ainda nao homologados:** servidor de contas e checkout comercial sob HTTPS e custodia de credenciais de producao; confirmacao de identidade legal/CPF/termos; entrega fisica/digital e reembolso/chargeback; reconciliacao bancaria, provisoes e saques sob aprovacao; backup offsite restaurado/monitoramento/recuperacao; validacao visual do dono; parecer juridico/contabil independente e decisao GO escrita. A **data de 01/12 continua condicional**, sem prometer a clientes o funcionamento do modelo antes de todos os gates. PR #1 segue DRAFT.
