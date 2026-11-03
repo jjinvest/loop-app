@@ -13,6 +13,8 @@ const {VerificacaoEmailContaUnicaCandidata}=
 const {IntencoesCheckoutSQLite}=require('../domain/intencoes-checkout-sqlite');
 const {PrePedidosCheckoutStagingSQLite}=require('../domain/prepedidos-checkout-staging-sqlite');
 const {PontePrepedidoAsaasSandboxStaging}=require('../domain/ponte-prepedido-asaas-sandbox-staging');
+const {EntregasPrePedidosAsaasSandboxStaging}=
+ require('../domain/entregas-prepedidos-asaas-sandbox-staging');
 const {consultarEscritorioHomologacao}=require('../domain/relatorio-homologacao-checkout-staging');
 const {criarRouterRascunhosCheckoutStaging}=require('../routes/rascunhos-checkout-staging');
 const {criarRouterPrePedidosCheckoutStaging}=require('../routes/prepedidos-checkout-staging');
@@ -46,6 +48,7 @@ function criarAppLojaEscritorioCandidato({banco,repositorioCatalogo,
  const intencoes=new IntencoesCheckoutSQLite({banco});
  const prePedidos=new PrePedidosCheckoutStagingSQLite({banco});
  const ponte=new PontePrepedidoAsaasSandboxStaging({banco});
+ const entregas=new EntregasPrePedidosAsaasSandboxStaging({banco});
  const app=express();
  app.disable('x-powered-by');app.disable('etag');app.set('trust proxy',false);
  app.use((req,res,next)=>{
@@ -259,16 +262,60 @@ function criarAppLojaEscritorioCandidato({banco,repositorioCatalogo,
   }catch(e){return res.status(400).json({erro:e.codigo||'COTACAO_INVALIDA'});}
  });
  const autorizarOperador=criarAutorizacao({segredo:segredoOperador});
+ // Somente operador do laboratório pode preparar espelho de entrega
+ // após reconsulta independente ao PSP no mesmo SQLite. Sem arquivo/frete.
+ app.post('/staging/escritorio-unificado/preparar-entrega',autorizarOperador,
+  (req,res)=>{
+   if(!req.is('application/json')||!req.body||
+      Array.isArray(req.body)||Object.keys(req.body).join(',')!=='prepedidoId')
+    return res.status(400).json({erro:'REQUISICAO_INVALIDA'});
+   const id=req.body.prepedidoId;
+   if(typeof id!=='string'||!/^hom-[a-f0-9-]{36}$/.test(id))
+    return res.status(400).json({erro:'PREPEDIDO_INVALIDO'});
+   const row=banco.prepare([
+    'SELECT titular_id AS titularId FROM akitemm_checkout_prepedidos_staging',
+    'WHERE prepedido_id=?'
+   ].join(' ')).get(id);
+   if(!row)return res.status(404).json({erro:'PREPEDIDO_NAO_ENCONTRADO'});
+   try{
+    const r=entregas.preparar({
+     titularId:row.titularId,prepedidoId:id,autorizado:true
+    });
+    return res.status(r.repetido?200:201).json(r);
+   }catch(e){
+    if(e.codigo==='RECEBIMENTO_PSP_NAO_COMPROVADO')
+     return res.status(409).json({erro:e.codigo});
+    return res.status(503).json({erro:'ENTREGA_FICTICIA_INDISPONIVEL'});
+   }
+  });
+ app.get('/staging/prepedidos/:id/entrega',(req,res)=>{
+  const s=contas.sessao(req);
+  if(!s)return res.status(401).json({erro:'SESSAO_AUSENTE'});
+  try{
+   const x=entregas.consultar({
+    titularId:s.titularId,prepedidoId:req.params.id
+   });
+   return x?res.json(x):res.status(404).json({
+    erro:'PREPEDIDO_NAO_ENCONTRADO'
+   });
+  }catch{return res.status(404).json({erro:'PREPEDIDO_NAO_ENCONTRADO'});}
+ });
  app.get('/staging/escritorio-unificado',autorizarOperador,(_req,res)=>{
   try{
    const rel=consultarEscritorioHomologacao({banco});
    const pedidos=rel.pedidos.map(p=>({
     ...p,nick:contas.perfil(p.titularId)?.nick||null,
+    entregaFicticia:entregas.consultar({
+     titularId:p.titularId,prepedidoId:p.prepedidoId
+    }),
     contaUnica:true,emailVerificadoNoEnsaio:contas.perfil(p.titularId)?.emailVerificado===true,
     identidadeExternaVerificada:false,
     cpfDeclaradoNoEnsaio:cpf?Boolean(cpf.consultar({titularId:p.titularId})):false
    }));
    return res.json({...rel,pedidos,
+    entregasFicticias:banco.prepare([
+     'SELECT COUNT(*) AS n FROM akitemm_prepedido_entregas_sandbox_staging'
+    ].join(' ')).get().n,
     escritorioFonteUnica:true,
     contasCandidatas:banco.prepare(
      'SELECT COUNT(*) AS n FROM akitemm_conta_unica_candidata'
@@ -285,12 +332,13 @@ function criarAppLojaEscritorioCandidato({banco,repositorioCatalogo,
  }));
  app.use('/staging',criarRouterPrePedidosCheckoutStaging({
   repositorioCatalogo,prePedidos,identificarTitular:titular,
-  autorizarMutacao:autorizacao,ponteAsaasSandbox:ponte
+  autorizarMutacao:autorizacao,ponteAsaasSandbox:ponte,
+  consultarEntregaSimulada:args=>entregas.consultar(args)
  }));
  app.use((_req,res)=>res.status(404).json({erro:'ROTA_INEXISTENTE'}));
  app.use((_err,_req,res,_next)=>res.status(503).json({
   erro:'CANDIDATO_INDISPONIVEL',financeiroReal:false
  }));
- return {app,contas,cpf,provasEmail,intencoes,prePedidos,ponte,banco};
+ return {app,contas,cpf,provasEmail,intencoes,prePedidos,ponte,entregas,banco};
 }
 module.exports={criarAppLojaEscritorioCandidato};
