@@ -10,7 +10,8 @@
     "simular:sustentabilidade": "node scripts/simular-sustentabilidade.js",
     "simular:50-giros": "node scripts/simular-50-giros-loop-v6.js",
     "demo:convites": "node scripts/gerar-cenario-convites-demo.js",
-    "start:checkout-staging": "node src/laboratorio/servidor-checkout-staging-local.js"
+    "start:checkout-staging": "node src/laboratorio/servidor-checkout-staging-local.js",
+    "start:asaas-railway-staging": "node src/laboratorio/receptor-webhook-asaas-railway-staging.js"
   },
   "repository": {
     "type": "git",
