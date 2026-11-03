@@ -1,0 +1,89 @@
+name: LOOP - Criar cobranca unica R$250 no Asaas Sandbox (sem valor real)
+on:
+  push:
+    branches: [fix/teste-escrita-catraca-20261014]
+    paths: [.github/workflows/asaas-sandbox-cobranca-unica-03nov2026.yml]
+permissions:
+  contents: read
+jobs:
+  criar:
+    if: github.repository == 'jjinvest/loop-app' && github.ref == 'refs/heads/fix/teste-escrita-catraca-20261014' && github.run_number == 1 && github.run_attempt == 1
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Criar uma unica cobranca PIX apenas Sandbox, sem notificar cliente
+        env:
+          ASAAS_SANDBOX_API_KEY: ${{ secrets.ASAAS_SANDBOX_API_KEY }}
+        shell: bash
+        run: |
+          node --input-type=module <<'NODE'
+          const key=process.env.ASAAS_SANDBOX_API_KEY;
+          if(!key?.startsWith('$aact_hmlg_')||/\s/.test(key))
+            throw Error('SOMENTE_CHAVE_SANDBOX_PERMITIDA');
+          const id='hom-defb7f9c-db20-478c-86da-58e58c8f015b';
+          const cliente='cus_000009780085';
+          const ref='LOOPLAB-'+id;
+          const base='https://api-sandbox.asaas.com/v3';
+          const headers={access_token:key,Accept:'application/json',
+            'User-Agent':'LOOP-3.0-Ensaio-Sandbox-Isolado/1.0'};
+          async function get(path){
+            const r=await fetch(base+path,{method:'GET',headers,redirect:'error',
+              signal:AbortSignal.timeout(15000)});
+            if(r.status!==200)throw Error('GET_SANDBOX_HTTP_'+r.status);
+            return r.json();
+          }
+          const c=await get('/customers/'+encodeURIComponent(cliente));
+          if(c?.id!==cliente||c?.notificationDisabled!==true||
+            !/teste|sandbox|loop|demo|fictici|homolog/i.test(c?.name||''))
+            throw Error('CLIENTE_FICTICIO_SEM_NOTIFICACOES_NAO_COMPROVADO');
+          const v=await get('/webhooks?limit=100');
+          const url='https://asaas-webhook-staging-homologacao.up.railway.app/webhooks/asaas-sandbox';
+          if(!Array.isArray(v?.data)||v.data.filter(x=>x?.url===url&&
+            x?.enabled===true&&x?.interrupted!==true&&
+            Array.isArray(x?.events)&&
+            ['PAYMENT_CREATED','PAYMENT_UPDATED','PAYMENT_RECEIVED'].every(
+              e=>x.events.includes(e))).length!==1)
+            throw Error('WEBHOOK_NAO_CONFERE_RECEPTOR_RAILWAY');
+          const anterior=await get('/payments?externalReference='+
+            encodeURIComponent(ref)+'&limit=100');
+          if(!Array.isArray(anterior?.data))
+            throw Error('CONSULTA_REFERENCIA_INCONSISTENTE');
+          if(anterior.data.length>0){
+            const encontrados=anterior.data.filter(x=>x?.externalReference===ref);
+            if(encontrados.length!==1||anterior.data.length!==1)
+              throw Error('PAGAMENTO_DUPLICADO_OU_DIVERGENTE');
+            const p=encontrados[0];
+            if(p.customer!==cliente||p.billingType!=='PIX'||p.value!==250)
+              throw Error('PAGAMENTO_ANTIGO_DIVERGENTE');
+            console.log('LOOP_SANDBOX_COBRANCA=JA_EXISTIA_SEM_NOVO_POST');
+            console.log('LOOP_SANDBOX_PAGAMENTO_ID='+p.id);
+            console.log('LOOP_SANDBOX_PAGAMENTO_STATUS='+p.status);
+            process.exit(0);
+          }
+          const dueDate=new Date(Date.now()+86400000).toISOString().slice(0,10);
+          const body={customer:cliente,billingType:'PIX',value:250,dueDate,
+            externalReference:ref,
+            description:'Ensaio isolado LOOP 3.0 / AKITEMM, sem pagamento real'};
+          // UMA tentativa de POST. Em timeout, nao repetir: revisar pelo PSP.
+          let response;
+          try{
+            response=await fetch(base+'/payments',{method:'POST',
+              headers:{...headers,'Content-Type':'application/json'},
+              redirect:'error',body:JSON.stringify(body),
+              signal:AbortSignal.timeout(18000)});
+          }catch{
+            throw Error('POST_INDETERMINADO_NAO_REPETIR_CONSULTAR_REFERENCIA');
+          }
+          if(response.status!==200&&response.status!==201)
+            throw Error('POST_SANDBOX_HTTP_'+response.status+'_SEM_RETRY');
+          const p=await response.json().catch(()=>null);
+          if(!p||typeof p.id!=='string'||!/^pay_[A-Za-z0-9_-]{5,90}$/.test(p.id)||
+            p.customer!==cliente||p.value!==250||p.billingType!=='PIX'||
+            p.externalReference!==ref)
+            throw Error('POST_CRIADO_MAS_RESPOSTA_DIVERGENTE_NAO_REPETIR');
+          console.log('LOOP_SANDBOX_COBRANCA=UMA_COBRANCA_FICTICIA_CRIADA');
+          console.log('LOOP_SANDBOX_PAGAMENTO_ID='+p.id);
+          console.log('LOOP_SANDBOX_PAGAMENTO_STATUS='+p.status);
+          console.log('LOOP_SANDBOX_PAGAMENTO_REAL=false');
+          console.log('LOOP_SANDBOX_POSICOES_REAIS=0');
+          NODE
