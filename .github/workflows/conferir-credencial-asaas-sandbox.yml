@@ -80,6 +80,19 @@ jobs:
                         ';CONFIGURADOS='+v.data.length+
                         ';ATIVOS='+ativos.length+
                         ';COM_PAYMENT_RECEIVED='+pagamento.length+'\n');
+                      // Comparar a configuracao remota com o receptor realmente
+                      // implantado, sem revelar token, URL de outros webhooks ou PII.
+                      const destino='https://asaas-webhook-staging-homologacao.up.railway.app/webhooks/asaas-sandbox';
+                      const correspondentes=v.data.filter(x=>x?.url===destino);
+                      const requerido=['PAYMENT_CREATED','PAYMENT_UPDATED','PAYMENT_RECEIVED'];
+                      const correto=correspondentes.length===1&&
+                        correspondentes[0].enabled===true&&
+                        correspondentes[0].interrupted!==true&&
+                        Array.isArray(correspondentes[0].events)&&
+                        requerido.every(e=>correspondentes[0].events.includes(e));
+                      process.stdout.write('LOOP_SANDBOX_WEBHOOK_DESTINO='+
+                        (correto?'URL_E_EVENTOS_CONFIRMANDO_RECEPTOR':'DIVERGENCIA_EXIGE_REVISAO')+'\n');
+                      if(!correto)process.exitCode=1;
                     }
                   }
                 }
