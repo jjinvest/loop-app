@@ -12,8 +12,7 @@ function criarTransporteEmailVerificacaoResend({
     apiKey.length>300)
   falha('EMAIL_PROVEDOR_CHAVE_INVALIDA');
  if(typeof remetente!=='string'||!EMAIL.test(remetente)||
-    remetente.length>254||!remetente.toLowerCase().endsWith('.resend.dev')&&
-    remetente.toLowerCase().endsWith('@resend.dev'))
+    remetente.length>254)
   falha('EMAIL_REMETENTE_NAO_CONFIGURADO');
  if(typeof fetchImpl!=='function'||!Number.isSafeInteger(timeoutMs)||
     timeoutMs<1000||timeoutMs>30000)
