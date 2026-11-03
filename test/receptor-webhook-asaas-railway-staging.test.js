@@ -181,3 +181,30 @@ test('Railway staging: prepara somente uma vez prepedido ficticio no volume e na
  assert.equal(db.prepare('PRAGMA integrity_check').get().integrity_check,'ok');
  db.close();
 });
+
+
+test('Railway: inicializa somente schema vazio no volume, seguro sem Pix nem cliente',async t=>{
+ const volume=fs.mkdtempSync(path.join(os.tmpdir(),'loop-railway-schema-'));
+ t.after(()=>fs.rmSync(volume,{recursive:true,force:true}));
+ const arquivo=path.join(volume,'webhook.sqlite');
+ const ambiente={
+  NODE_ENV:'staging',LOOP_RAILWAY_STAGING_AUTORIZADO:'SIM',
+  RAILWAY_VOLUME_MOUNT_PATH:volume,LOOP_RAILWAY_STAGING_SQLITE:arquivo,
+  LOOP_RAILWAY_WEBHOOK_TOKEN:TOKEN,
+  LOOP_RAILWAY_PREPARAR_UMA_VEZ:'NAO',
+  LOOP_RAILWAY_INICIALIZAR_BANCO_VAZIO:'SIM'
+ };
+ const inicio=await prepararVolumeInicial({ambiente});
+ assert.equal(inicio.preparado,true);
+ assert.equal(inicio.bancoVazio,true);
+ assert.equal(inicio.prepedidosCriados,0);
+ const repetido=await prepararVolumeInicial({ambiente});
+ assert.equal(repetido.jaExistia,true);
+ const db=new DatabaseSync(arquivo,{readOnly:true});
+ for(const tabela of ['akitemm_prepedido_webhook_inbox_staging',
+  'akitemm_checkout_prepedidos_staging']){
+  assert.equal(db.prepare("SELECT COUNT(*) AS n FROM "+tabela).get().n,0);
+ }
+ assert.equal(db.prepare('PRAGMA integrity_check').get().integrity_check,'ok');
+ db.close();
+});
