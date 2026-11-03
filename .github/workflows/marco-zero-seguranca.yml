@@ -63,7 +63,8 @@ jobs:
             }
             for(const endpoint of [
               '/staging/cliente','/staging/meus-pedidos',
-              '/staging/escritorio-homologacao','/staging/vincular-escritorio'
+              '/staging/escritorio-homologacao','/staging/vincular-escritorio',
+              '/staging/identidade-candidata'
             ]){
              const r=await fetch(base+endpoint);
              assert.equal(r.status,404,endpoint);
