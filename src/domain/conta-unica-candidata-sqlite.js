@@ -74,7 +74,8 @@ class ContaUnicaCandidataSQLite{
      timingSafeEqual(chaveEmail,chaveCifra))
    falha('CUSTODIA_INDEPENDENTE_OBRIGATORIA');
   if(typeof agora!=='function')falha('RELOGIO_INVALIDO');
-  this.banco=banco;this.emailKey=chaveEmail;this.cipherKey=chaveCifra;
+  this.banco=banco;this.emailKey=Buffer.from(chaveEmail);
+  this.cipherKey=Buffer.from(chaveCifra);
   this.agora=agora;
   banco.exec([
    'CREATE TABLE IF NOT EXISTS akitemm_conta_unica_candidata(',
@@ -100,8 +101,75 @@ class ContaUnicaCandidataSQLite{
    'BEFORE UPDATE OF id,nick,email_hmac,nome_iv,nome_cifra,nome_tag,',
    'email_iv,email_cifra,email_tag,termos_versao,termos_hash',
    'ON akitemm_conta_unica_candidata',
-   "BEGIN SELECT RAISE(ABORT,'identidade candidata imutavel'); END;"
+   "BEGIN SELECT RAISE(ABORT,'identidade candidata imutavel'); END;",
+   'CREATE TABLE IF NOT EXISTS akitemm_candidato_custodia_chaves(',
+   'id INTEGER PRIMARY KEY CHECK(id=1),',
+   'email_prova TEXT NOT NULL,cifra_prova TEXT NOT NULL);',
+   'CREATE TRIGGER IF NOT EXISTS candidato_custodia_no_update',
+   'BEFORE UPDATE ON akitemm_candidato_custodia_chaves',
+   "BEGIN SELECT RAISE(ABORT,'custodia imutavel'); END;",
+   'CREATE TRIGGER IF NOT EXISTS candidato_custodia_no_delete',
+   'BEFORE DELETE ON akitemm_candidato_custodia_chaves',
+   "BEGIN SELECT RAISE(ABORT,'custodia imutavel'); END;"
   ].join(' '));
+  this._iniciarCustodia();
+ }
+ _provaCustodia(key,dominio){
+  return createHmac('sha256',key)
+   .update('AKITEMM-CUSTODIA-CONTA-UNICA-V1|')
+   .update(dominio).digest('hex');
+ }
+ verificarCustodia(){
+  const row=this.banco.prepare([
+   'SELECT email_prova,cifra_prova',
+   'FROM akitemm_candidato_custodia_chaves WHERE id=1'
+  ].join(' ')).get();
+  if(!row||
+     !comparar(row.email_prova,this._provaCustodia(this.emailKey,'EMAIL'))||
+     !comparar(row.cifra_prova,this._provaCustodia(this.cipherKey,'CIFRA')))
+   falha('CHAVES_CONTA_INCOMPATIVEIS_COM_SQLITE');
+  return true;
+ }
+ _iniciarCustodia(){
+  // Um SQLite restaurado sem as DUAS chaves originais pode parecer íntegro,
+  // mas seus dados pessoais seriam irrecuperáveis. Bloquear já no boot.
+  const emailProva=this._provaCustodia(this.emailKey,'EMAIL');
+  const cifraProva=this._provaCustodia(this.cipherKey,'CIFRA');
+  this.banco.exec('BEGIN IMMEDIATE');
+  try{
+   const atual=this.banco.prepare([
+    'SELECT email_prova,cifra_prova FROM akitemm_candidato_custodia_chaves',
+    'WHERE id=1'
+   ].join(' ')).get();
+   if(atual){
+    if(!comparar(atual.email_prova,emailProva)||
+       !comparar(atual.cifra_prova,cifraProva))
+     falha('CHAVES_CONTA_INCOMPATIVEIS_COM_SQLITE');
+   }else{
+    // Migração segura de SQLite anterior à sentinela: nunca registrar
+    // chaves novas como válidas se já houver contas cifradas e ilegíveis.
+    const conta=this.banco.prepare([
+     'SELECT email_iv,email_cifra,email_tag,email_hmac',
+     'FROM akitemm_conta_unica_candidata LIMIT 1'
+    ].join(' ')).get();
+    if(conta){
+     let endereco;
+     try{
+      endereco=decifrar(this.cipherKey,conta.email_iv,
+       conta.email_cifra,conta.email_tag);
+     }catch{falha('CHAVES_CONTA_INCOMPATIVEIS_COM_SQLITE');}
+     if(!comparar(hmac(this.emailKey,endereco),conta.email_hmac))
+      falha('CHAVES_CONTA_INCOMPATIVEIS_COM_SQLITE');
+    }
+    this.banco.prepare([
+     'INSERT INTO akitemm_candidato_custodia_chaves',
+     '(id,email_prova,cifra_prova) VALUES(1,?,?)'
+    ].join(' ')).run(emailProva,cifraProva);
+   }
+   this.banco.exec('COMMIT');
+  }catch(e){
+   this.banco.exec('ROLLBACK');throw e;
+  }
  }
  _agora(){
   const t=this.agora();
