@@ -81,6 +81,11 @@ function consultarPedido({banco,prepedidoId,titularId=null}={}){
   'SELECT COUNT(*) AS n FROM akitemm_prepedido_posicoes_pendentes_sandbox_staging',
   'WHERE prepedido_id=? AND titular_id=?'
  ].join(' ')).get(prepedidoId,pedido.titularId).n:0;
+ const temVinculos=tabela(banco,'akitemm_checkout_escritorio_vinculos_staging');
+ const contaEscritorioVinculada=temVinculos&&!!banco.prepare([
+  'SELECT 1 FROM akitemm_checkout_escritorio_vinculos_staging',
+  'WHERE titular_checkout_id=?'
+ ].join(' ')).get(pedido.titularId);
  const comprovado=pedido.estadoSandbox==='RECEBIMENTO_INFORMADO_SANDBOX'&&
   ultima?.statusAsaas==='RECEIVED'&&h.eventosRecebidosReconsultados===1&&
   h.eventosExigemRevisao===0;
@@ -102,6 +107,7 @@ function consultarPedido({banco,prepedidoId,titularId=null}={}){
   ultimoGETPSPPersistidoEm:ultima?.consultadoEm||null,
   eventos:h,conferenciaPSPConcluida:comprovado,
   posicoesPendentesFicticias:pos,
+  contaEscritorioVinculada,
   exigeRevisaoManual:exigeRevisao,
   posicoesReaisCriadas:0,pagamentoReal:false,
   pedidoComercial:false,bonusLiberados:0,saquesReais:0,
@@ -146,6 +152,8 @@ function consultarEscritorioHomologacao({banco,limite=30}={}){
   posicoesPendentesSimuladas:tabela(banco,T.posicoes)?banco.prepare(
    'SELECT COUNT(*) AS n FROM akitemm_prepedido_posicoes_pendentes_sandbox_staging'
   ).get().n:0,
+  contasVinculadasEscritorioDemo:tabela(banco,'akitemm_checkout_escritorio_vinculos_staging')?
+   banco.prepare('SELECT COUNT(*) AS n FROM akitemm_checkout_escritorio_vinculos_staging').get().n:0,
   posicoesReais:0,saquesReais:0,bonusReais:0,pagamentosReais:0
  };
  return {modo:'ESCRITORIO_HOMOLOGACAO_SQLITE_SOMENTE_LEITURA',
