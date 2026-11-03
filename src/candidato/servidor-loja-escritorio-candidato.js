@@ -8,6 +8,8 @@ const {ContaUnicaCandidataSQLite,COOKIE,DURACAO_MS}=
  require('../domain/conta-unica-candidata-sqlite');
 const {TitularidadeCpfTermosCandidato}=
  require('../domain/titularidade-cpf-termos-candidato');
+const {VerificacaoEmailContaUnicaCandidata}=
+ require('../domain/verificacao-email-conta-unica-candidata');
 const {IntencoesCheckoutSQLite}=require('../domain/intencoes-checkout-sqlite');
 const {PrePedidosCheckoutStagingSQLite}=require('../domain/prepedidos-checkout-staging-sqlite');
 const {PontePrepedidoAsaasSandboxStaging}=require('../domain/ponte-prepedido-asaas-sandbox-staging');
@@ -19,6 +21,7 @@ const {cotarCheckoutPublico}=require('../domain/cotacao-checkout-publico');
 function erro(codigo){const e=new Error(codigo);e.codigo=codigo;throw e;}
 function criarAppLojaEscritorioCandidato({banco,repositorioCatalogo,
  chaveEmail,chaveCifra,chaveCpfHmac=null,chaveCpfCifra=null,
+ chaveProvaEmail=null,enviarEmailDeVerificacao=null,
  segredoOperador,termosVersao,termosTexto}={}){
  if(process.env.NODE_ENV==='production')erro('CANDIDATO_NAO_HOMOLOGADO');
  if(typeof repositorioCatalogo?.buscar!=='function')
@@ -34,6 +37,12 @@ function criarAppLojaEscritorioCandidato({banco,repositorioCatalogo,
  const cpf=chaveCpfHmac===null?null:new TitularidadeCpfTermosCandidato({
   banco,chaveHmac:chaveCpfHmac,chaveCifra:chaveCpfCifra,perfil:'unificada'
  });
+ if((chaveProvaEmail===null)!==(enviarEmailDeVerificacao===null))
+  erro('EMAIL_PROVEDOR_E_CUSTODIA_INCOMPLETOS');
+ const provasEmail=chaveProvaEmail===null?null:
+  new VerificacaoEmailContaUnicaCandidata({
+   banco,contas,segredo:chaveProvaEmail,enviar:enviarEmailDeVerificacao
+  });
  const intencoes=new IntencoesCheckoutSQLite({banco});
  const prePedidos=new PrePedidosCheckoutStagingSQLite({banco});
  const ponte=new PontePrepedidoAsaasSandboxStaging({banco});
@@ -114,8 +123,57 @@ function criarAppLojaEscritorioCandidato({banco,repositorioCatalogo,
   const s=sessao(req);
   if(!s)return res.status(401).json({erro:'SESSAO_AUSENTE'});
   const profile=contas.perfil(s.titularId);
-  return res.json({...profile,csrf:s.csrf,expiraEm:s.expiraEm});
+  return res.json({...profile,csrf:s.csrf,expiraEm:s.expiraEm,
+   confirmacaoEmailDisponivel:provasEmail!==null});
  });
+ // A entrega de e-mail é opcional e só funciona com transportador real
+ // injetado pelo operador. Sem ele estas rotas NEM são montadas.
+ if(provasEmail){
+  app.post('/staging/contas/email/enviar',async(req,res)=>{
+   const s=contas.sessao(req);
+   if(!s)return res.status(401).json({erro:'SESSAO_AUSENTE'});
+   if(!contas.autorizarMutacao(req))
+    return res.status(403).json({erro:'CSRF_INVALIDO'});
+   if(!req.is('application/json')||!req.body||
+     Array.isArray(req.body)||Object.keys(req.body).length!==0)
+    return res.status(400).json({erro:'REQUISICAO_INVALIDA'});
+   try{
+    const r=await provasEmail.solicitar({
+     titularId:s.titularId,autorizado:true
+    });
+    return res.json(r);
+   }catch(e){
+    if(e.codigo==='REENVIO_EMAIL_AGUARDAR')
+     return res.status(429).json({erro:e.codigo});
+    return res.status(503).json({erro:'VERIFICACAO_EMAIL_INDISPONIVEL'});
+   }
+  });
+  app.post('/staging/contas/email/confirmar',(req,res)=>{
+   const s=contas.sessao(req);
+   if(!s)return res.status(401).json({erro:'SESSAO_AUSENTE'});
+   if(!contas.autorizarMutacao(req))
+    return res.status(403).json({erro:'CSRF_INVALIDO'});
+   if(!req.is('application/json')||!req.body||
+      Array.isArray(req.body)||
+      Object.keys(req.body).join(',')!=='codigo')
+    return res.status(400).json({erro:'REQUISICAO_INVALIDA'});
+   try{
+    const r=provasEmail.confirmar({
+     titularId:s.titularId,codigo:req.body.codigo,autorizado:true
+    });
+    if(r.codigoIncorreto)return res.status(400).json({
+     erro:'CODIGO_INCORRETO',tentativasRestantes:r.tentativasRestantes
+    });
+    return res.json(r);
+   }catch(e){
+    if(e.codigo==='CODIGO_EMAIL_INVALIDO')
+     return res.status(400).json({erro:e.codigo});
+    if(e.codigo==='PROVA_EMAIL_EXPIRADA_OU_INVALIDA')
+     return res.status(409).json({erro:e.codigo});
+    return res.status(503).json({erro:'VERIFICACAO_EMAIL_INDISPONIVEL'});
+   }
+  });
+ }
  app.post('/staging/contas/senha',async(req,res)=>{
   if(!contas.sessao(req))
    return res.status(401).json({erro:'SESSAO_AUSENTE'});
@@ -232,6 +290,6 @@ function criarAppLojaEscritorioCandidato({banco,repositorioCatalogo,
  app.use((_err,_req,res,_next)=>res.status(503).json({
   erro:'CANDIDATO_INDISPONIVEL',financeiroReal:false
  }));
- return {app,contas,cpf,intencoes,prePedidos,ponte,banco};
+ return {app,contas,cpf,provasEmail,intencoes,prePedidos,ponte,banco};
 }
 module.exports={criarAppLojaEscritorioCandidato};
