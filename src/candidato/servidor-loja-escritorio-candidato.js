@@ -15,6 +15,12 @@ const {PrePedidosCheckoutStagingSQLite}=require('../domain/prepedidos-checkout-s
 const {PontePrepedidoAsaasSandboxStaging}=require('../domain/ponte-prepedido-asaas-sandbox-staging');
 const {EntregasPrePedidosAsaasSandboxStaging}=
  require('../domain/entregas-prepedidos-asaas-sandbox-staging');
+const {InboxWebhookPrepedidoAsaasStaging}=
+ require('../domain/inbox-webhook-prepedido-asaas-staging');
+const {ReconsultaWebhookPrepedidoAsaasStaging}=
+ require('../domain/reconsulta-webhook-prepedido-asaas-staging');
+const {PosicoesPendentesCheckoutSandboxStaging}=
+ require('../domain/posicoes-pendentes-checkout-sandbox-staging');
 const {consultarEscritorioHomologacao}=require('../domain/relatorio-homologacao-checkout-staging');
 const {criarRouterRascunhosCheckoutStaging}=require('../routes/rascunhos-checkout-staging');
 const {criarRouterPrePedidosCheckoutStaging}=require('../routes/prepedidos-checkout-staging');
@@ -24,6 +30,8 @@ function erro(codigo){const e=new Error(codigo);e.codigo=codigo;throw e;}
 function criarAppLojaEscritorioCandidato({banco,repositorioCatalogo,
  chaveEmail,chaveCifra,chaveCpfHmac=null,chaveCpfCifra=null,
  chaveProvaEmail=null,enviarEmailDeVerificacao=null,
+ webhookHomologacaoToken=null,provedorReconsultaSandbox=null,
+ operacoesSandboxAutorizadas=false,
  segredoOperador,termosVersao,termosTexto}={}){
  if(process.env.NODE_ENV==='production')erro('CANDIDATO_NAO_HOMOLOGADO');
  if(typeof repositorioCatalogo?.buscar!=='function')
@@ -49,6 +57,23 @@ function criarAppLojaEscritorioCandidato({banco,repositorioCatalogo,
  const prePedidos=new PrePedidosCheckoutStagingSQLite({banco});
  const ponte=new PontePrepedidoAsaasSandboxStaging({banco});
  const entregas=new EntregasPrePedidosAsaasSandboxStaging({banco});
+ // Operador usa o MESMO SQLite que o checkout e o Escritório: webhook
+ // isolado jamais e prova de recebimento sem GET PSP autenticado.
+ if((webhookHomologacaoToken===null)!==(provedorReconsultaSandbox===null))
+  erro('RECONSULTA_SANDBOX_CONFIGURACAO_INCOMPLETA');
+ if(operacoesSandboxAutorizadas===true&&
+    (webhookHomologacaoToken===null||
+     provedorReconsultaSandbox?.ambiente!=='ASAAS_SANDBOX_EXCLUSIVO'||
+     typeof provedorReconsultaSandbox.consultarCobranca!=='function'))
+  erro('RECONSULTA_SANDBOX_NAO_CONFIGURADA');
+ const inbox=webhookHomologacaoToken===null?null:
+  new InboxWebhookPrepedidoAsaasStaging({
+   banco,token:webhookHomologacaoToken
+  });
+ const worker=inbox===null?null:
+  new ReconsultaWebhookPrepedidoAsaasStaging({banco,inbox,ponte});
+ const posicoes=worker===null?null:
+  new PosicoesPendentesCheckoutSandboxStaging({banco,ponte});
  const app=express();
  app.disable('x-powered-by');app.disable('etag');app.set('trust proxy',false);
  app.use((req,res,next)=>{
@@ -262,6 +287,76 @@ function criarAppLojaEscritorioCandidato({banco,repositorioCatalogo,
   }catch(e){return res.status(400).json({erro:e.codigo||'COTACAO_INVALIDA'});}
  });
  const autorizarOperador=criarAutorizacao({segredo:segredoOperador});
+ // Quadro de acompanhamento do PSP, habilitado apenas em homologação.
+ // Apenas contagens e códigos operacionais, sem credenciais, CPF ou payload.
+ if(worker){
+  app.get('/staging/escritorio-unificado/monitor-psp',autorizarOperador,
+   (_req,res)=>{
+    if(!operacoesSandboxAutorizadas)return res.status(403)
+     .json({erro:'OPERACAO_SANDBOX_DESATIVADA'});
+    const resumo=worker.resumoPendencias();
+    const fila=worker.pendencias({limite:30});
+    return res.json({
+     ambiente:'ASAAS_SANDBOX_EXCLUSIVO',somenteLaboratorio:true,
+     resumo,fila,posicoesReais:0,pagamentosReais:0,
+     saquesReais:0,consultaPSPExecutadaNestaLeitura:false
+    });
+   });
+  app.post('/staging/escritorio-unificado/reconsultar-psp',autorizarOperador,
+   async(req,res)=>{
+    if(!operacoesSandboxAutorizadas)return res.status(403)
+     .json({erro:'OPERACAO_SANDBOX_DESATIVADA'});
+    if(!req.is('application/json')||!req.body||
+       Array.isArray(req.body)||
+       Object.keys(req.body).join(',')!=='eventoId'||
+       typeof req.body.eventoId!=='string'||
+       !/^[A-Za-z0-9_&-]{5,150}$/.test(req.body.eventoId))
+     return res.status(400).json({erro:'EVENTO_INVALIDO'});
+    try{
+     const r=await worker.processar({
+      eventoId:req.body.eventoId,provedor:provedorReconsultaSandbox,
+      execucaoLiberada:true
+     });
+     return res.json(r);
+    }catch(e){
+     if(e.codigo==='EVENTO_NAO_ENCONTRADO')
+      return res.status(404).json({erro:e.codigo});
+     if(e.codigo==='VINCULO_SANDBOX_DIVERGENTE')
+      return res.status(409).json({erro:e.codigo});
+     return res.status(503).json({erro:'RECONSULTA_PSP_NAO_CONCLUIDA'});
+    }
+   });
+  app.post('/staging/escritorio-unificado/projetar-posicao-ficticia',
+   autorizarOperador,(req,res)=>{
+    if(!operacoesSandboxAutorizadas)return res.status(403)
+     .json({erro:'OPERACAO_SANDBOX_DESATIVADA'});
+    if(!req.is('application/json')||!req.body||
+       Array.isArray(req.body)||
+       Object.keys(req.body).sort().join(',')!=='eventoId,prepedidoId'||
+       typeof req.body.prepedidoId!=='string'||
+       !/^hom-[a-f0-9-]{36}$/.test(req.body.prepedidoId)||
+       typeof req.body.eventoId!=='string'||
+       !/^[A-Za-z0-9_&-]{5,150}$/.test(req.body.eventoId))
+     return res.status(400).json({erro:'PARAMETROS_INVALIDOS'});
+    const row=banco.prepare([
+     'SELECT titular_id AS titularId',
+     'FROM akitemm_checkout_prepedidos_staging WHERE prepedido_id=?'
+    ].join(' ')).get(req.body.prepedidoId);
+    if(!row)return res.status(404).json({erro:'PREPEDIDO_NAO_ENCONTRADO'});
+    try{
+     const r=posicoes.projetar({
+      titularId:row.titularId,prepedidoId:req.body.prepedidoId,
+      eventoId:req.body.eventoId,execucaoLiberada:true
+     });
+     return res.status(r.repetido?200:201).json(r);
+    }catch(e){
+     if(['RECEBIMENTO_SANDBOX_NAO_VERIFICADO',
+          'PSP_SANDBOX_NAO_CONCILIADO'].includes(e.codigo))
+      return res.status(409).json({erro:e.codigo});
+     return res.status(503).json({erro:'POSICAO_FICTICIA_INDISPONIVEL'});
+    }
+   });
+ }
  // Somente operador do laboratório pode preparar espelho de entrega
  // após reconsulta independente ao PSP no mesmo SQLite. Sem arquivo/frete.
  app.post('/staging/escritorio-unificado/preparar-entrega',autorizarOperador,
@@ -316,6 +411,11 @@ function criarAppLojaEscritorioCandidato({banco,repositorioCatalogo,
     entregasFicticias:banco.prepare([
      'SELECT COUNT(*) AS n FROM akitemm_prepedido_entregas_sandbox_staging'
     ].join(' ')).get().n,
+    conciliacaoSandboxDisponivel:Boolean(worker&&operacoesSandboxAutorizadas),
+    posicoesPendentesFicticias:posicoes?banco.prepare([
+     'SELECT COUNT(*) AS n FROM',
+     'akitemm_prepedido_posicoes_pendentes_sandbox_staging'
+    ].join(' ')).get().n:0,
     escritorioFonteUnica:true,
     contasCandidatas:banco.prepare(
      'SELECT COUNT(*) AS n FROM akitemm_conta_unica_candidata'
@@ -333,12 +433,14 @@ function criarAppLojaEscritorioCandidato({banco,repositorioCatalogo,
  app.use('/staging',criarRouterPrePedidosCheckoutStaging({
   repositorioCatalogo,prePedidos,identificarTitular:titular,
   autorizarMutacao:autorizacao,ponteAsaasSandbox:ponte,
-  consultarEntregaSimulada:args=>entregas.consultar(args)
+  consultarEntregaSimulada:args=>entregas.consultar(args),
+  consultarPosicaoPendente:posicoes?args=>posicoes.consultar(args):null
  }));
  app.use((_req,res)=>res.status(404).json({erro:'ROTA_INEXISTENTE'}));
  app.use((_err,_req,res,_next)=>res.status(503).json({
   erro:'CANDIDATO_INDISPONIVEL',financeiroReal:false
  }));
- return {app,contas,cpf,provasEmail,intencoes,prePedidos,ponte,entregas,banco};
+ return {app,contas,cpf,provasEmail,intencoes,prePedidos,ponte,
+  inbox,worker,posicoes,entregas,banco};
 }
 module.exports={criarAppLojaEscritorioCandidato};
