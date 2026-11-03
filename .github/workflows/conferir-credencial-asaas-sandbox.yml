@@ -1,0 +1,64 @@
+name: LOOP - Conferir acesso Asaas Sandbox (somente leitura)
+on:
+  push:
+    branches:
+      - fix/teste-escrita-catraca-20261014
+    paths:
+      - .github/workflows/conferir-credencial-asaas-sandbox.yml
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: asaas-sandbox-credential-readonly-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  conferir:
+    if: github.repository == 'jjinvest/loop-app' && github.ref == 'refs/heads/fix/teste-escrita-catraca-20261014'
+    runs-on: ubuntu-latest
+    timeout-minutes: 4
+    steps:
+      - name: Verificar autenticacao no Asaas Sandbox com GET somente leitura
+        env:
+          ASAAS_SANDBOX_API_KEY: ${{ secrets.ASAAS_SANDBOX_API_KEY }}
+        shell: bash
+        run: |
+          node --input-type=module <<'NODE'
+          // Nenhum checkout do codigo do PR e executado com acesso ao segredo.
+          // Nenhum POST, nenhum dado pessoal, nenhum ID ou resposta do PSP no log.
+          const key=process.env.ASAAS_SANDBOX_API_KEY;
+          const fail=reason=>{
+            process.stdout.write('LOOP_SANDBOX_READONLY='+reason+'\n');
+            process.exitCode=1;
+          };
+          if(!key){fail('SEGREDO_NAO_ENCONTRADO');}
+          else if(!key.startsWith('$aact_hmlg_')||key.length<25||/\s/.test(key)){
+            fail('CHAVE_NAO_E_EXCLUSIVA_DO_SANDBOX');
+          }else{
+            try{
+              const resp=await fetch('https://api-sandbox.asaas.com/v3/payments?limit=1',{
+                method:'GET',redirect:'error',
+                headers:{
+                  access_token:key,
+                  Accept:'application/json',
+                  'User-Agent':'LOOP-3.0-Integracao-Sandbox/1.0'
+                },
+                signal:AbortSignal.timeout(12000)
+              });
+              if(resp.status!==200){
+                fail('HTTP_'+resp.status+'_SEM_EXPOR_CORPO');
+              }else{
+                // Validar contrato da resposta SEM exibir dados de pagamentos.
+                const data=await resp.json().catch(()=>null);
+                if(!data||!Array.isArray(data.data)){
+                  fail('ESTRUTURA_RESPOSTA_INESPERADA');
+                }else{
+                  process.stdout.write(
+                    'LOOP_SANDBOX_READONLY=AUTENTICACAO_REMOTA_VALIDADA_GET_SEM_COBRANCA\n'
+                  );
+                }
+              }
+            }catch{
+              fail('CONEXAO_SANDBOX_INCONCLUSIVA_SEM_COBRANCA');
+            }
+          }
+          NODE
