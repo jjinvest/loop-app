@@ -5,6 +5,7 @@
 const express = require('express');
 const {consultarOperacaoClienteLab}=require('../domain/operacao-cliente-sqlite-lab');
 const {consultarMarcoZeroLab}=require('../domain/marco-zero-gate-sqlite-lab');
+const {consultarPedido}=require('../domain/relatorio-homologacao-checkout-staging');
 const { criarAutorizacao } = require('./admin-catalogo-laboratorio');
 const { criarVisaoEscritorioDemo, TITULARES_FICTICIOS } =
   require('../domain/visao-escritorio-demo');
@@ -157,6 +158,52 @@ function criarRouterEscritorioDemo({segredo,publicacoes=null}={}) {
   });
   // Relacao administrativa REAL do laboratorio: apenas compras documentadas
   // na ponte SQLite, nunca o cenario demonstrativo isolado.
+  // Consulta do proprio Escritório demonstrativo ao MESMO pedido do Checkout
+  // staging autenticado, se ambos estiverem montados no mesmo SQLite.
+  // Nunca atribuir compra por email, nick ou nome do cliente.
+  router.get('/escritorio-demo/clientes/:id/checkout-homologacao',(req,res)=>{
+    if(typeof req.params.id!=='string'||!/^[a-f0-9-]{36}$/.test(req.params.id))
+      return res.status(400).json({erro:'CLIENTE_ID_INVALIDO'});
+    if(Object.keys(req.query).length)
+      return res.status(400).json({erro:'FILTRO_NAO_SUPORTADO'});
+    const banco=publicacoes?.banco;
+    if(!banco)return res.status(501).json({erro:'FONTE_SQLITE_INDISPONIVEL'});
+    const existe=t=>Boolean(banco.prepare(
+      "SELECT 1 FROM sqlite_master WHERE type='table' AND name=?").get(t));
+    if(!existe('admin_contas_participantes_demo')||
+       !existe('akitemm_checkout_escritorio_vinculos_staging')||
+       !existe('akitemm_checkout_prepedidos_staging')||
+       !existe('akitemm_prepedido_asaas_sandbox_staging'))
+      return res.status(501).json({erro:'VINCULO_CHECKOUT_NAO_PROVISIONADO'});
+    if(!banco.prepare('SELECT id FROM admin_contas_participantes_demo WHERE id=?')
+      .get(req.params.id))
+      return res.status(404).json({erro:'CLIENTE_NAO_ENCONTRADO'});
+    const v=banco.prepare([
+      'SELECT titular_checkout_id AS titularId',
+      'FROM akitemm_checkout_escritorio_vinculos_staging',
+      'WHERE conta_escritorio_demo_id=?'
+    ].join(' ')).get(req.params.id);
+    if(!v)return res.json({modo:'ESCRITORIO_CHECKOUT_SOMENTE_LEITURA',
+      contaVinculada:false,pedidos:[],total:0,semPagamentosReais:true});
+    try{
+      const ids=banco.prepare([
+        'SELECT prepedido_id AS id FROM akitemm_checkout_prepedidos_staging',
+        'WHERE titular_id=? ORDER BY criado_em DESC,prepedido_id DESC LIMIT 50'
+      ].join(' ')).all(v.titularId);
+      const pedidos=ids.map(({id})=>consultarPedido({
+        banco,prepedidoId:id,titularId:v.titularId
+      }));
+      return res.json({
+        modo:'ESCRITORIO_CHECKOUT_SOMENTE_LEITURA',
+        fonte:'SQLITE_MESMO_TITULAR_CONFIRMADO_COM_DUPLA_AUTENTICACAO',
+        contaVinculada:true,pedidos,total:pedidos.length,
+        pagamentosReais:0,posicoesReais:0,saquesReais:0,
+        checkoutPublicoHabilitado:false
+      });
+    }catch(_e){return res.status(503).json({
+      erro:'HISTORICO_HOMOLOGACAO_INDISPONIVEL'
+    });}
+  });
   router.get('/escritorio-demo/clientes/:id/operacao',(req,res,next)=>{
     if(!publicacoes?.banco)return res.status(501).json({erro:'FONTE_SQLITE_INDISPONIVEL'});
     if(Object.keys(req.query).some(k=>!['limite','offset'].includes(k))||
