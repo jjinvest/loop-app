@@ -106,7 +106,10 @@ function consultarPedido({banco,prepedidoId,titularId=null}={}){
   ultimoStatusPSP:ultima?.statusAsaas||null,
   ultimoGETPSPPersistidoEm:ultima?.consultadoEm||null,
   eventos:h,conferenciaPSPConcluida:comprovado,
+  // Historico nunca é apagado. A posição fictícia só é "apta agora"
+  // enquanto o último GET PSP continuar RECEIVED e sem revisão.
   posicoesPendentesFicticias:pos,
+  posicoesFicticiasAptasAgora:comprovado&&!exigeRevisao?pos:0,
   contaEscritorioVinculada,
   exigeRevisaoManual:exigeRevisao,
   posicoesReaisCriadas:0,pagamentoReal:false,
