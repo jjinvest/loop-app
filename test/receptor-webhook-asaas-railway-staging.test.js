@@ -12,7 +12,7 @@ const {IntencoesCheckoutSQLite}=require('../src/domain/intencoes-checkout-sqlite
 const {PrePedidosCheckoutStagingSQLite}=require('../src/domain/prepedidos-checkout-staging-sqlite');
 const {PontePrepedidoAsaasSandboxStaging}=
  require('../src/domain/ponte-prepedido-asaas-sandbox-staging');
-const {criarAppWebhookRailwayStaging,iniciarWebhookRailwayStaging}=
+const {criarAppWebhookRailwayStaging,iniciarWebhookRailwayStaging,prepararVolumeInicial}=
  require('../src/laboratorio/receptor-webhook-asaas-railway-staging');
 const TOKEN='TokenExclusivoWebhookSandboxRailwayTeste_2026_012345';
 const DOMINIO='https://staging-loop-demo.up.railway.app/webhooks/asaas-sandbox';
@@ -149,4 +149,35 @@ test('Railway staging: proibido iniciar sem autorizacao explicita e volume com b
  assert.throws(()=>criarAppWebhookRailwayStaging({
   banco:{prepare(){},exec(){}},token:TOKEN,urlPublica:'http://localhost/webhooks/asaas-sandbox'
  }),{codigo:'URL_HTTPS_SANDBOX_INVALIDA'});
+});
+
+
+test('Railway staging: prepara somente uma vez prepedido ficticio no volume e nao cobra Pix',async t=>{
+ const volume=fs.mkdtempSync(path.join(os.tmpdir(),'loop-railway-bootstrap-'));
+ t.after(()=>fs.rmSync(volume,{recursive:true,force:true}));
+ const arquivo=path.join(volume,'staging.sqlite');
+ const ambiente={
+  NODE_ENV:'staging',LOOP_RAILWAY_STAGING_AUTORIZADO:'SIM',
+  RAILWAY_VOLUME_MOUNT_PATH:volume,
+  LOOP_RAILWAY_STAGING_SQLITE:arquivo,
+  ASAAS_SANDBOX_CLIENTE_TESTE_ID:'cus_ClienteFicticioBootstrap001',
+  LOOP_RAILWAY_PREPARAR_UMA_VEZ:'SIM'
+ };
+ await assert.rejects(prepararVolumeInicial({ambiente:{
+  ...ambiente,LOOP_RAILWAY_PREPARAR_UMA_VEZ:'NAO'
+ }}),{codigo:'VOLUME_SEM_SQLITE_REQUER_PREPARACAO_AUTORIZADA'});
+ assert.equal(fs.existsSync(arquivo),false);
+ const novo=await prepararVolumeInicial({ambiente});
+ assert.equal(novo.preparado,true);
+ assert.equal(novo.pagamentosReais,0);
+ assert.equal(novo.posicoesReais,0);
+ assert.match(novo.prepedidoId,/^hom-/);
+ const segundo=await prepararVolumeInicial({ambiente});
+ assert.equal(segundo.preparado,false);
+ assert.equal(segundo.jaExistia,true);
+ const db=new DatabaseSync(arquivo,{readOnly:true});
+ assert.equal(db.prepare('SELECT COUNT(*) AS n FROM akitemm_checkout_prepedidos_staging').get().n,1);
+ assert.equal(db.prepare('SELECT COUNT(*) AS n FROM akitemm_prepedido_asaas_sandbox_staging').get().n,1);
+ assert.equal(db.prepare('PRAGMA integrity_check').get().integrity_check,'ok');
+ db.close();
 });
