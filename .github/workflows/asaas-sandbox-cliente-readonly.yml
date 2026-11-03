@@ -1,0 +1,44 @@
+name: LOOP - Localizar cliente ficticio Asaas Sandbox (somente leitura)
+on:
+  push:
+    branches: [fix/teste-escrita-catraca-20261014]
+    paths: [.github/workflows/asaas-sandbox-cliente-readonly.yml]
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: asaas-sandbox-cliente-readonly-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  conferir:
+    if: github.repository == 'jjinvest/loop-app' && github.ref == 'refs/heads/fix/teste-escrita-catraca-20261014'
+    runs-on: ubuntu-latest
+    timeout-minutes: 4
+    steps:
+      - name: Consultar apenas identificadores do cadastro Sandbox sem PII
+        env:
+          ASAAS_SANDBOX_API_KEY: ${{ secrets.ASAAS_SANDBOX_API_KEY }}
+        shell: bash
+        run: |
+          node --input-type=module <<'NODE'
+          const key=process.env.ASAAS_SANDBOX_API_KEY;
+          if(!key?.startsWith('$aact_hmlg_')||/\s/.test(key)){console.error('SANDBOX_KEY_INVALIDA');process.exit(1);}
+          const r=await fetch('https://api-sandbox.asaas.com/v3/customers?limit=1',{
+            method:'GET',redirect:'error',
+            headers:{access_token:key,Accept:'application/json',
+              'User-Agent':'LOOP-3.0-Leitura-Clientes-Sandbox/1.0'},
+            signal:AbortSignal.timeout(12000)
+          });
+          if(r.status!==200){console.error('SANDBOX_CLIENTES_HTTP_'+r.status);process.exit(1);}
+          const v=await r.json();
+          if(!Array.isArray(v?.data)){console.error('SANDBOX_CLIENTES_FORMATO');process.exit(1);}
+          console.log('SANDBOX_CLIENTES_DISPONIVEIS='+v.data.length);
+          // Identificador tecnico do cliente nao inclui CPF/nome/email/telefone.
+          const id=v.data[0]?.id;
+          if(id!==undefined){
+            if(typeof id!=='string'||!/^cus_[a-zA-Z0-9_-]{5,90}$/.test(id)){
+              console.error('SANDBOX_CLIENTE_ID_INCONSISTENTE');process.exit(1);
+            }
+            console.log('SANDBOX_CLIENTE_CANDIDATO='+id);
+          }
+          NODE
