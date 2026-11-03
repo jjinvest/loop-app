@@ -10,6 +10,8 @@ const {TitularidadeCpfTermosCandidato}=
  require('../domain/titularidade-cpf-termos-candidato');
 const {VerificacaoEmailContaUnicaCandidata}=
  require('../domain/verificacao-email-conta-unica-candidata');
+const {criarTransporteEmailVerificacaoResend}=
+ require('../adapters/email-verificacao-resend');
 const {IntencoesCheckoutSQLite}=require('../domain/intencoes-checkout-sqlite');
 const {PrePedidosCheckoutStagingSQLite}=require('../domain/prepedidos-checkout-staging-sqlite');
 const {PontePrepedidoAsaasSandboxStaging}=require('../domain/ponte-prepedido-asaas-sandbox-staging');
@@ -34,6 +36,7 @@ function erro(codigo){const e=new Error(codigo);e.codigo=codigo;throw e;}
 function criarAppLojaEscritorioCandidato({banco,repositorioCatalogo,
  chaveEmail,chaveCifra,chaveCpfHmac=null,chaveCpfCifra=null,
  chaveProvaEmail=null,enviarEmailDeVerificacao=null,
+ transporteResend=null,
  webhookHomologacaoToken=null,provedorReconsultaSandbox=null,
  operacoesSandboxAutorizadas=false,
  segredoOperador,termosVersao,termosTexto}={}){
@@ -51,11 +54,18 @@ function criarAppLojaEscritorioCandidato({banco,repositorioCatalogo,
  const cpf=chaveCpfHmac===null?null:new TitularidadeCpfTermosCandidato({
   banco,chaveHmac:chaveCpfHmac,chaveCifra:chaveCpfCifra,perfil:'unificada'
  });
- if((chaveProvaEmail===null)!==(enviarEmailDeVerificacao===null))
+ // A conta candidata jamais envia e-mails sem credenciais e domínio
+ // explícitos, e não aceita dois transportadores concorrentes.
+ if(transporteResend!==null&&enviarEmailDeVerificacao!==null)
+  erro('EMAIL_TRANSPORTADORES_DUPLICADOS');
+ const enviarEmail=transporteResend!==null?
+  criarTransporteEmailVerificacaoResend(transporteResend):
+  enviarEmailDeVerificacao;
+ if((chaveProvaEmail===null)!==(enviarEmail===null))
   erro('EMAIL_PROVEDOR_E_CUSTODIA_INCOMPLETOS');
  const provasEmail=chaveProvaEmail===null?null:
   new VerificacaoEmailContaUnicaCandidata({
-   banco,contas,segredo:chaveProvaEmail,enviar:enviarEmailDeVerificacao
+   banco,contas,segredo:chaveProvaEmail,enviar:enviarEmail
   });
  const intencoes=new IntencoesCheckoutSQLite({banco});
  const prePedidos=new PrePedidosCheckoutStagingSQLite({banco});
