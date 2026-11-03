@@ -6,6 +6,7 @@ const fs=require('node:fs');
 const os=require('node:os');
 const path=require('node:path');
 const {DatabaseSync}=require('node:sqlite');
+const http=require('node:http');
 const {preparar}=require('../scripts/preparar-e-enviar-webhook-asaas-sandbox-staging');
 const {IntencoesCheckoutSQLite}=require('../src/domain/intencoes-checkout-sqlite');
 const {PrePedidosCheckoutStagingSQLite}=require('../src/domain/prepedidos-checkout-staging-sqlite');
@@ -62,11 +63,27 @@ async function cenario(t){
   }
  };
  async function chamar({body=evento,headersExtra={}}={}){
-  const r=await fetch(base+'/webhooks/asaas-sandbox',{
-   method:'POST',headers:{...headers,...headersExtra},
-   body:JSON.stringify(body)
+  // fetch pode reescrever Host; http.request simula corretamente o
+  // cabeçalho que o proxy HTTPS controlado encaminha ao container.
+  const dados=JSON.stringify(body);
+  return await new Promise((resolve,reject)=>{
+   const req=http.request(base+'/webhooks/asaas-sandbox',{
+    method:'POST',headers:{
+     ...headers,...headersExtra,
+     'Content-Length':Buffer.byteLength(dados)
+    }
+   },res=>{
+    const partes=[];
+    res.on('data',c=>partes.push(c));
+    res.on('end',()=>{
+     try{resolve({status:res.statusCode,
+      data:JSON.parse(Buffer.concat(partes).toString('utf8'))});
+     }catch(e){reject(e);}
+    });
+   });
+   req.on('error',reject);
+   req.end(dados);
   });
-  return {status:r.status,data:await r.json()};
  }
  return {banco,arquivo,seed,base,chamar,evento};
 }
