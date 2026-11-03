@@ -264,7 +264,8 @@ function criarAppLojaEscritorioCandidato({banco,repositorioCatalogo,
    const rel=consultarEscritorioHomologacao({banco});
    const pedidos=rel.pedidos.map(p=>({
     ...p,nick:contas.perfil(p.titularId)?.nick||null,
-    contaUnica:true,identidadeExternaVerificada:false,
+    contaUnica:true,emailVerificadoNoEnsaio:contas.perfil(p.titularId)?.emailVerificado===true,
+    identidadeExternaVerificada:false,
     cpfDeclaradoNoEnsaio:cpf?Boolean(cpf.consultar({titularId:p.titularId})):false
    }));
    return res.json({...rel,pedidos,
