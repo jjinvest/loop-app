@@ -102,6 +102,34 @@ function criarAppLojaEscritorioCandidato({banco,repositorioCatalogo,
   ambiente:'CANDIDATO_LOCAL',checkoutReal:false,
   identidadesCompartilhadas:true,servicoRealNaoImplantado:true
  }));
+ // Readiness separada de liveness. Nenhum healthcheck deve declarar
+ // prontidão comercial por um SQLite apenas estruturalmente íntegro.
+ app.get('/readyz',(_req,res)=>{
+  try{
+   const check=banco.prepare('PRAGMA quick_check').get();
+   const fks=banco.prepare('PRAGMA foreign_key_check').all().length;
+   const titulares=integridade.auditar();
+   if(check?.quick_check!=='ok'||fks>0||
+      titulares.totalInconsistencias!==0)
+    return res.status(503).json({
+     estado:'BANCO_LABORATORIO_INCONSISTENTE',
+     laboratorioPronto:false,checkoutReal:false,marcoZeroLiberado:false
+    });
+   return res.json({
+    estado:'APTO_SOMENTE_ENSAIO_LOCAL',
+    laboratorioPronto:true,integridadeTitular:true,
+    sqliteIntegro:true,segregacaoDeTitulares:true,
+    checkoutReal:false,pagamentosReais:false,
+    infraProducaoComprovada:false,marcoZeroLiberado:false
+   });
+  }catch(_e){
+   return res.status(503).json({
+    estado:'BANCO_LABORATORIO_INDISPONIVEL',
+    laboratorioPronto:false,checkoutReal:false,
+    marcoZeroLiberado:false
+   });
+  }
+ });
  // Mesmas abas e paleta aprovadas no staging, com campo de cadastro
  // específico para identidade unificada, sem abrir checkout comercial.
  app.get('/staging/cliente',(_req,res)=>res.sendFile(
