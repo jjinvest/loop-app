@@ -41,7 +41,10 @@ test('conta única prepara checkout e Escritório com o MESMO titular, sem Pix',
  const keyA=randomBytes(32),keyB=randomBytes(32);
  const db=new DatabaseSync(dbFile);
  db.exec('PRAGMA foreign_keys=ON;PRAGMA journal_mode=WAL;PRAGMA busy_timeout=5000;');
- const impl=criarAppLojaEscritorioCandidato(config(db,keyA,keyB));
+ const keysCpf={chaveCpfHmac:randomBytes(32),chaveCpfCifra:randomBytes(32)};
+ const impl=criarAppLojaEscritorioCandidato({
+  ...config(db,keyA,keyB),...keysCpf
+ });
  const {server,base}=await iniciar(impl.app);
  t.after(async()=>{await new Promise(done=>server.close(done));db.close();});
  const form=(nick,email)=>({nome:nick+' Exemplo',nick,
@@ -86,6 +89,33 @@ test('conta única prepara checkout e Escritório com o MESMO titular, sem Pix',
  assert.equal((await enviar(base,'/staging/contas/me')).status,401);
  const me=await enviar(base,'/staging/contas/me',{cookie:cookieA});
  assert.equal(me.status,200);
+ assert.equal((await enviar(base,'/staging/contas/identidade',{
+  method:'POST',cookie:cookieA,data:{
+   cpf:'529.982.247-25',aceiteExplicito:true
+  }
+ })).status,403,'CSRF obrigatorio para CPF');
+ const cpfCadastrado=await enviar(base,'/staging/contas/identidade',{
+  method:'POST',cookie:cookieA,csrf:csrfA,
+  data:{cpf:'529.982.247-25',aceiteExplicito:true}
+ });
+ assert.equal(cpfCadastrado.status,201,JSON.stringify(cpfCadastrado.body));
+ assert.equal(cpfCadastrado.body.identidadeExternaVerificada,false);
+ assert.equal(cpfCadastrado.body.permitidoCriarPosicoes,false);
+ assert.equal((await enviar(base,'/staging/contas/identidade',{
+  method:'POST',cookie:cookieA,csrf:csrfA,
+  data:{cpf:'529.982.247-25',aceiteExplicito:true}
+ })).status,200);
+ assert.equal((await enviar(base,'/staging/contas/identidade',{
+  method:'POST',cookie:cookieB,csrf:lb.body.csrf,
+  data:{cpf:'529.982.247-25',aceiteExplicito:true}
+ })).status,409);
+ const cpfA=await enviar(base,'/staging/contas/identidade',{cookie:cookieA});
+ const cpfB=await enviar(base,'/staging/contas/identidade',{cookie:cookieB});
+ assert.equal(cpfA.body.registrado,true);
+ assert.equal(cpfB.body.registrado,false);
+ assert.equal(cpfA.body.cpfFinal,'25');
+ assert.equal(JSON.stringify(cpfA.body).includes('52998224725'),false);
+
  assert.equal(me.body.nick,'alice');
  assert.equal(me.body.emailVerificado,false);
  assert.equal((await enviar(base,'/staging/checkout/finalizar',{
@@ -136,6 +166,8 @@ test('conta única prepara checkout e Escritório com o MESMO titular, sem Pix',
  assert.equal(office.body.contasCandidatas,2);
  assert.equal(office.body.resumo.prepedidosStaging,1);
  assert.equal(office.body.pedidos[0].nick,'alice');
+ assert.equal(office.body.pedidos[0].cpfDeclaradoNoEnsaio,true);
+ assert.equal(office.body.pedidos[0].identidadeExternaVerificada,false);
  assert.equal(office.body.pedidos[0].titularId,alice.body.titularId);
  assert.equal(office.body.pedidos[0].pagamentoReal,false);
  assert.equal(office.body.resumo.posicoesReais,0);
