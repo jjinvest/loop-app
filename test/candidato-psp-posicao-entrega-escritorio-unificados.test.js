@@ -176,6 +176,32 @@ test('uma conta -> PSP reconsultado -> 1 posicao e entrega ficticias -> Escritor
  assert.equal(reversao.body.pedidos[0].situacaoOperacional,
   'EXIGE_REVISAO_SANDBOX');
  assert.equal(reversao.body.pedidos[0].posicoesCriadas,0);
+ // Estorno é evento financeiro legítimo para revisão, não corrupção
+ // relacional. Preservar o histórico sem liberar nova posição ou entrega.
+ const revisao=await c.request(root,{admin:true});
+ assert.equal(revisao.body.integridadePagamentosEntregas.totalInconsistencias,0);
+ assert.equal(revisao.body.integridadePagamentosEntregas.posicoesEmRevisao,1);
+ assert.equal(revisao.body.integridadePagamentosEntregas.entregasEmRevisao,1);
+ assert.equal((await c.request('/readyz')).status,200);
+ // Corrupção por SQL direto que não gera erro de FK: detectar antes de
+ // qualquer utilização de pagamento, posição ou entrega pelo operador.
+ c.banco.exec('DROP TRIGGER posicao_pendente_sandbox_no_update');
+ c.banco.prepare([
+  'UPDATE akitemm_prepedido_posicoes_pendentes_sandbox_staging',
+  'SET pagamento_id=? WHERE prepedido_id=?'
+ ].join(' ')).run('pay_CORROMPIDO_1234',c.prepedidoId);
+ const integridade=await c.request(root,{admin:true});
+ assert.equal(integridade.body.integridadePagamentosEntregas.posicoesDivergentes,1);
+ assert.equal(integridade.body.integridadePagamentosEntregas.prontoParaLaboratorio,false);
+ assert.equal((await c.request('/readyz')).status,503);
+ c.banco.exec('DROP TRIGGER entregas_sandbox_no_update');
+ c.banco.prepare([
+  'UPDATE akitemm_prepedido_entregas_sandbox_staging',
+  'SET quantidade=quantidade+1 WHERE prepedido_id=?'
+ ].join(' ')).run(c.prepedidoId);
+ const divergente=await c.request(root,{admin:true});
+ assert.ok(divergente.body.integridadePagamentosEntregas.entregasDivergentes>=1);
+ assert.ok(divergente.body.integridadePagamentosEntregas.totalInconsistencias>=2);
  assert.equal(reversao.body.pedidos[0].posicoesFicticiasConferidas,0,
   'estorno jamais deixa posicao simulada parecer apta');
  assert.equal(reversao.body.pedidos[0].posicoesFicticiasHistoricas,1,
