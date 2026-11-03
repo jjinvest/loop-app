@@ -38,11 +38,15 @@ test('PSP reconsultado -> uma posicao ficticia no mesmo SQLite Railway; replay n
   const inbox=new InboxWebhookPrepedidoAsaasStaging({
    banco,token:config.LOOP_RAILWAY_WEBHOOK_TOKEN
   });
-  const evento={id:'evt_RECEIVED_SANDBOX01',event:'PAYMENT_RECEIVED',
-   payment:{id:pay,billingType:'PIX',externalReference:pedido.externalReference,
-    value:250,status:'RECEIVED'}};
-  inbox.registrar({cabecalhoToken:config.LOOP_RAILWAY_WEBHOOK_TOKEN,
-   corpoBruto:Buffer.from(JSON.stringify(evento))});
+  for(const [event,uid] of [
+   ['PAYMENT_CREATED','evt_CREATED_SANDBOX01'],
+   ['PAYMENT_RECEIVED','evt_RECEIVED_SANDBOX01']
+  ]){
+   inbox.registrar({cabecalhoToken:config.LOOP_RAILWAY_WEBHOOK_TOKEN,
+    corpoBruto:Buffer.from(JSON.stringify({id:uid,event,
+     payment:{id:pay,billingType:'PIX',externalReference:pedido.externalReference,
+      value:250,status:event==='PAYMENT_RECEIVED'?'RECEIVED':'PENDING'}}))});
+  }
  }finally{banco.close();}
  let get=0;
  await reconsultar({ambiente:config,provedor:{ambiente:'ASAAS_SANDBOX_EXCLUSIVO',
