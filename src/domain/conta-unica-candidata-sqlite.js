@@ -125,6 +125,13 @@ class ContaUnicaCandidataSQLite{
   const nomeEnc=cifrar(this.cipherKey,nome.trim());
   const emailEnc=cifrar(this.cipherKey,emailMin);
   const titularId='titular-'+randomUUID(),ts=this._agora();
+  // Checagem previa so melhora a mensagem. UNIQUE no SQLite e a trava
+  // definitiva contra cadastros concorrentes com o mesmo nick ou e-mail.
+  if(this.banco.prepare([
+    'SELECT 1 FROM akitemm_conta_unica_candidata',
+    'WHERE nick=? COLLATE NOCASE OR email_hmac=? LIMIT 1'
+   ].join(' ')).get(nickMin,emailHmac))
+   falha('CADASTRO_JA_EXISTENTE');
   try{
    this.banco.prepare([
     'INSERT INTO akitemm_conta_unica_candidata',
@@ -135,7 +142,8 @@ class ContaUnicaCandidataSQLite{
    ].join(' ')).run(titularId,nickMin,emailHmac,...nomeEnc,...emailEnc,
     salt,senhaHash,termosVersao,sha256(termosTexto),ts);
   }catch(e){
-   if(String(e.code||'').startsWith('ERR_SQLITE_CONSTRAINT'))
+   if(/UNIQUE constraint failed|PRIMARY KEY constraint failed|SQLITE_CONSTRAINT/i
+     .test(String(e.code||'')+' '+String(e.message||'')))
     falha('CADASTRO_JA_EXISTENTE');
    throw e;
   }
