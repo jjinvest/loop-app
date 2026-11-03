@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow,noarchive">
+<title>AKITEMM · Cadastro e Meus Pedidos (prévia)</title>
+<link rel="stylesheet" href="/staging/assets/cliente.css">
+<script src="/staging/assets/cliente.js" defer></script>
+</head>
+<body>
+<header class="cabecalho">
+ <div><span class="marca">AKITEMM</span><span class="submarca">LOOP 3.0 · Contas unificadas de laboratório</span></div>
+ <span class="ambiente">SEM VENDAS REAIS</span>
+</header>
+<main>
+ <h1>Escritório do cliente</h1>
+ <p class="explicacao">Prévia funcional de laboratório: pedidos de teste, sem pagamentos reais, posições comerciais, saques ou bônus.</p>
+ <section class="painel" id="painelLogin" aria-labelledby="tituloLogin">
+  <h2 id="tituloLogin">Entrar com meu nick</h2>
+  <p class="subtexto">Prévia de cadastro: a conta é somente fictícia, sem verificação externa nem compras reais.</p>
+  <form id="formLogin">
+   <label for="login">Nick</label>
+   <input id="login" name="nick" autocomplete="username" minlength="1" maxlength="9" pattern="[A-Za-z]{1,9}" required>
+   <label for="senha">Senha</label>
+   <input id="senha" name="senha" type="password" autocomplete="current-password" required>
+   <button type="submit" class="primario">Entrar</button>
+  </form>
+ </section>
+ <section class="painel" id="painelCadastro" aria-labelledby="tituloCadastro">
+  <h2 id="tituloCadastro">Criar conta de homologação</h2>
+  <p class="subtexto">Dados exclusivamente fictícios. Não utilize CPF, senha ou e-mail pessoal nesta prévia.</p>
+  <form id="formCadastro">
+   <label for="cadastroNome">Nome fictício</label>
+   <input id="cadastroNome" name="nome" maxlength="90" autocomplete="off" required>
+   <label for="cadastroNick">Nick (1 a 9 letras)</label>
+   <input id="cadastroNick" name="nick" minlength="1" maxlength="9" pattern="[A-Za-z]{1,9}" required>
+   <label for="cadastroEmail">E-mail fictício</label>
+   <input id="cadastroEmail" name="email" type="email" maxlength="254" autocomplete="off" required>
+   <label for="cadastroSenha">Senha exclusiva do laboratório (mínimo 12 caracteres)</label>
+   <input id="cadastroSenha" name="senha" type="password" minlength="12" maxlength="256" autocomplete="new-password" required>
+   <label><input id="cadastroTermos" type="checkbox" required> Confirmo o aceite dos termos de demonstração, sem transações ou benefícios reais.</label>
+   <button type="submit" class="primario">Criar conta de teste</button>
+  </form>
+ </section>
+ <section id="painelConta" hidden aria-label="Conta de homologação">
+  <div class="barra-conta"><span>Conta de laboratório autenticada</span><button type="button" id="sair">Sair</button></div>
+  <div role="tablist" aria-label="Áreas do cliente" class="abas">
+   <button type="button" role="tab" id="abaPreparar" aria-controls="conteudoPreparar" aria-selected="true" tabindex="0">Preparar pedido</button>
+   <button type="button" role="tab" id="abaMeusPedidos" aria-controls="conteudoMeusPedidos" aria-selected="false" tabindex="-1">Meus Pedidos</button>
+  </div>
+  <section class="painel" id="conteudoPreparar" role="tabpanel" aria-labelledby="abaPreparar">
+   <h2>Curso de teste — R$ 250,00</h2>
+   <p>PDF fictício usado apenas para conferir o fluxo da loja. Nenhum produto será entregue.</p>
+   <p id="cotacao">Cotação ainda não solicitada.</p>
+   <button type="button" id="calcularCotacao">Conferir cotação</button>
+   <button type="button" id="prepararPedido" class="primario" disabled>Preparar pré-pedido de teste</button>
+   <p class="subtexto">Preparar um pré-pedido não cobra Pix nem cria posição real.</p>
+  </section>
+  <section class="painel" id="conteudoMeusPedidos" role="tabpanel" aria-labelledby="abaMeusPedidos" hidden>
+   <div class="linha"><h2>Meus Pedidos</h2><button type="button" id="atualizarPedidos">Atualizar</button></div>
+   <p class="subtexto">Histórico exclusivo desta conta. Situações do Asaas são apenas registros de homologação.</p>
+   <div id="listaPedidos" aria-live="polite"><p>Nenhum pedido consultado.</p></div>
+  </section>
+ </section>
+ <p id="mensagem" role="status" aria-live="polite"></p>
+ <p class="rodape">Para uma venda real ainda são necessárias homologação externa do Asaas, segurança de produção e validação jurídica independente.</p>
+</main>
+</body>
+</html>
