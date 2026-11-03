@@ -39,6 +39,7 @@ jobs:
           node --test test/projetar-posicao-railway-staging.test.js
           node --test test/loja-escritorio-conta-unica-candidata.test.js
           node --test test/verificacao-email-conta-unica-candidata.test.js
+          node --test test/transporte-email-resend-candidato.test.js
           node --test test/entregas-prepedidos-asaas-sandbox-staging.test.js
           node --test test/candidato-psp-posicao-entrega-escritorio-unificados.test.js
           node --test test/integridade-titular-candidato-sqlite.test.js
