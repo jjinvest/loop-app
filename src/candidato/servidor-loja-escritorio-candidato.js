@@ -3,6 +3,7 @@
 // no SQLite, cadastro/login, rascunho e Meus Pedidos. Nada financeiro real.
 // NUNCA montar em src/server.js; nao expor em Railway publico.
 const express=require('express');
+const path=require('node:path');
 const {ContaUnicaCandidataSQLite,COOKIE,DURACAO_MS}=
  require('../domain/conta-unica-candidata-sqlite');
 const {IntencoesCheckoutSQLite}=require('../domain/intencoes-checkout-sqlite');
@@ -34,7 +35,7 @@ function criarAppLojaEscritorioCandidato({banco,repositorioCatalogo,
   res.set({
    'Cache-Control':'no-store','X-Content-Type-Options':'nosniff',
    'Referrer-Policy':'no-referrer','X-Frame-Options':'DENY',
-   'Content-Security-Policy':"default-src 'none'; frame-ancestors 'none'; base-uri 'none'"
+   'Content-Security-Policy':"default-src 'none'; script-src 'self'; style-src 'self'; connect-src 'self'; img-src 'self'; form-action 'self'; frame-ancestors 'none'; base-uri 'none'"
   });
   if(process.env.NODE_ENV==='production')
    return res.status(503).json({erro:'CANDIDATO_NAO_HOMOLOGADO'});
@@ -53,6 +54,17 @@ function criarAppLojaEscritorioCandidato({banco,repositorioCatalogo,
   ambiente:'CANDIDATO_LOCAL',checkoutReal:false,
   identidadesCompartilhadas:true,servicoRealNaoImplantado:true
  }));
+ // Mesmas abas e paleta aprovadas no staging, com campo de cadastro
+ // específico para identidade unificada, sem abrir checkout comercial.
+ app.get('/staging/cliente',(_req,res)=>res.sendFile(
+  path.join(__dirname,'checkout-candidato-ui.html')
+ ));
+ app.get('/staging/assets/cliente.js',(_req,res)=>res.type('js').sendFile(
+  path.join(__dirname,'checkout-candidato-ui.js')
+ ));
+ app.get('/staging/assets/cliente.css',(_req,res)=>res.type('css').sendFile(
+  path.join(__dirname,'../laboratorio/checkout-staging-ui.css')
+ ));
  app.post('/staging/contas/cadastrar',async(req,res)=>{
   if(!req.is('application/json'))
    return res.status(415).json({erro:'JSON_OBRIGATORIO'});
