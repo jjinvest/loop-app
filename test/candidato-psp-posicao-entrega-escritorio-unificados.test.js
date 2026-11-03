@@ -176,6 +176,13 @@ test('uma conta -> PSP reconsultado -> 1 posicao e entrega ficticias -> Escritor
  assert.equal(reversao.body.pedidos[0].situacaoOperacional,
   'EXIGE_REVISAO_SANDBOX');
  assert.equal(reversao.body.pedidos[0].posicoesCriadas,0);
+ assert.equal(reversao.body.pedidos[0].posicoesFicticiasConferidas,0,
+  'estorno jamais deixa posicao simulada parecer apta');
+ assert.equal(reversao.body.pedidos[0].posicoesFicticiasHistoricas,1,
+  'trilha de auditoria permanece sem apagar registros');
+ const escritorioReversao=await c.request(root,{admin:true});
+ assert.equal(escritorioReversao.body.pedidos[0].posicoesFicticiasAptasAgora,0);
+ assert.equal(escritorioReversao.body.pedidos[0].posicoesPendentesFicticias,1);
  assert.equal(c.banco.prepare('PRAGMA integrity_check').get().integrity_check,'ok');
  assert.deepEqual(c.banco.prepare('PRAGMA foreign_key_check').all(),[]);
 });
