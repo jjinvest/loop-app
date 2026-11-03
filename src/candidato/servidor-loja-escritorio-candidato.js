@@ -23,6 +23,8 @@ const {PosicoesPendentesCheckoutSandboxStaging}=
  require('../domain/posicoes-pendentes-checkout-sandbox-staging');
 const {IntegridadeTitularCandidatoSQLite}=
  require('../domain/integridade-titular-candidato-sqlite');
+const {auditarRelacoesPspCandidato}=
+ require('../domain/auditoria-relacional-psp-candidato-sqlite');
 const {consultarEscritorioHomologacao}=require('../domain/relatorio-homologacao-checkout-staging');
 const {criarRouterRascunhosCheckoutStaging}=require('../routes/rascunhos-checkout-staging');
 const {criarRouterPrePedidosCheckoutStaging}=require('../routes/prepedidos-checkout-staging');
@@ -110,8 +112,9 @@ function criarAppLojaEscritorioCandidato({banco,repositorioCatalogo,
    contas.verificarCustodia();
    const fks=banco.prepare('PRAGMA foreign_key_check').all().length;
    const titulares=integridade.auditar();
+   const cadeia=auditarRelacoesPspCandidato({banco});
    if(check?.quick_check!=='ok'||fks>0||
-      titulares.totalInconsistencias!==0)
+      titulares.totalInconsistencias!==0||cadeia.totalInconsistencias!==0)
     return res.status(503).json({
      estado:'BANCO_LABORATORIO_INCONSISTENTE',
      laboratorioPronto:false,checkoutReal:false,marcoZeroLiberado:false
@@ -449,6 +452,7 @@ function criarAppLojaEscritorioCandidato({banco,repositorioCatalogo,
      'akitemm_prepedido_posicoes_pendentes_sandbox_staging'
     ].join(' ')).get().n:0,
     integridadeTitular:integridade.auditar(),
+    integridadePagamentosEntregas:auditarRelacoesPspCandidato({banco}),
     escritorioFonteUnica:true,
     contasCandidatas:banco.prepare(
      'SELECT COUNT(*) AS n FROM akitemm_conta_unica_candidata'
