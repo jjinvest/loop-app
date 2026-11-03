@@ -41,29 +41,42 @@ function digestCpf(cpf,chave){
  return createHmac('sha256',chave).update('AKITEMM-CANDIDATO-CPF-1:')
   .update(cpf).digest('hex');
 }
+const PERFIS=Object.freeze({
+ checkout:Object.freeze({contas:'akitemm_checkout_staging_contas',
+  registro:'akitemm_candidato_titularidade_laboratorio',
+  trigger:'candidato_titularidade'}),
+ unificada:Object.freeze({contas:'akitemm_conta_unica_candidata',
+  registro:'akitemm_candidato_titularidade_unificada',
+  trigger:'candidato_unificada_titularidade'})
+});
 class TitularidadeCpfTermosCandidato{
- constructor({banco,chaveHmac,chaveCifra,relogio=()=>new Date().toISOString()}={}){
+ constructor({banco,chaveHmac,chaveCifra,perfil='checkout',
+  relogio=()=>new Date().toISOString()}={}){
   if(process.env.NODE_ENV==='production')falha('CANDIDATO_NAO_HOMOLOGADO');
   if(typeof banco?.prepare!=='function'||typeof banco?.exec!=='function')
    throw new TypeError('SQLite obrigatorio');
   exigirSegredo(chaveHmac,32);exigirSegredo(chaveCifra,32);
   if(timingSafeEqual(chaveHmac,chaveCifra))falha('CHAVES_DE_CUSTODIA_REUTILIZADAS');
   if(typeof relogio!=='function')falha('RELOGIO_INVALIDO');
-  this.banco=banco;this.hmac=chaveHmac;this.cifra=chaveCifra;this.relogio=relogio;
+  if(!Object.hasOwn(PERFIS,perfil))falha('PERFIL_TITULARIDADE_INVALIDO');
+  const tables=PERFIS[perfil];
+  this.banco=banco;this.hmac=chaveHmac;this.cifra=chaveCifra;
+  this.relogio=relogio;this.tabelaRegistro=tables.registro;
+  this.tabelaConta=tables.contas;
   banco.exec([
-   'CREATE TABLE IF NOT EXISTS akitemm_candidato_titularidade_laboratorio(',
+   'CREATE TABLE IF NOT EXISTS '+tables.registro+'(',
    'id TEXT PRIMARY KEY, titular_id TEXT NOT NULL UNIQUE',
-   'REFERENCES akitemm_checkout_staging_contas(id) ON DELETE RESTRICT,',
+   'REFERENCES '+tables.contas+'(id) ON DELETE RESTRICT,',
    'cpf_hmac TEXT NOT NULL UNIQUE, cpf_iv TEXT NOT NULL,',
    'cpf_ciphertext TEXT NOT NULL,cpf_tag TEXT NOT NULL,',
    'termos_versao TEXT NOT NULL,termos_sha256 TEXT NOT NULL,',
    "estado TEXT NOT NULL CHECK(estado='NAO_VERIFICADA_EXTERNAMENTE'),",
    'criado_em TEXT NOT NULL);',
-   'CREATE TRIGGER IF NOT EXISTS candidato_titularidade_no_update',
-   'BEFORE UPDATE ON akitemm_candidato_titularidade_laboratorio',
+   'CREATE TRIGGER IF NOT EXISTS '+tables.trigger+'_no_update',
+   'BEFORE UPDATE ON '+tables.registro,
    "BEGIN SELECT RAISE(ABORT,'titularidade candidata imutavel'); END;",
-   'CREATE TRIGGER IF NOT EXISTS candidato_titularidade_no_delete',
-   'BEFORE DELETE ON akitemm_candidato_titularidade_laboratorio',
+   'CREATE TRIGGER IF NOT EXISTS '+tables.trigger+'_no_delete',
+   'BEFORE DELETE ON '+tables.registro,
    "BEGIN SELECT RAISE(ABORT,'titularidade candidata imutavel'); END;"
   ].join(' '));
  }
@@ -86,7 +99,7 @@ class TitularidadeCpfTermosCandidato{
   try{
    const old=this.banco.prepare([
     'SELECT titular_id,cpf_hmac,termos_versao,termos_sha256',
-    'FROM akitemm_candidato_titularidade_laboratorio',
+    'FROM '+this.tabelaRegistro,
     'WHERE titular_id=? OR cpf_hmac=?'
    ].join(' ')).all(titularId,hash);
    if(old.length){
@@ -99,11 +112,11 @@ class TitularidadeCpfTermosCandidato{
      permitidoCriarPosicoes:false,permitidoSacar:false,
      termosVersao,termosSha256:termosSha};
    }
-   if(!this.banco.prepare('SELECT id FROM akitemm_checkout_staging_contas WHERE id=?')
+   if(!this.banco.prepare('SELECT id FROM '+this.tabelaConta+' WHERE id=?')
      .get(titularId))falha('CONTA_INEXISTENTE');
    const encrypted=cifrar(normalized,this.cifra);
    this.banco.prepare([
-    'INSERT INTO akitemm_candidato_titularidade_laboratorio',
+    'INSERT INTO '+this.tabelaRegistro,
     '(id,titular_id,cpf_hmac,cpf_iv,cpf_ciphertext,cpf_tag,',
     'termos_versao,termos_sha256,estado,criado_em)',
     "VALUES(?,?,?,?,?,?,?,?,'NAO_VERIFICADA_EXTERNAMENTE',?)"
@@ -122,7 +135,7 @@ class TitularidadeCpfTermosCandidato{
   const r=this.banco.prepare([
    'SELECT cpf_iv,cpf_ciphertext,cpf_tag,cpf_hmac,',
    'termos_versao,termos_sha256,estado,criado_em',
-   'FROM akitemm_candidato_titularidade_laboratorio',
+   'FROM '+this.tabelaRegistro,
    'WHERE titular_id=?'
   ].join(' ')).get(titularId);
   if(!r)return null;
