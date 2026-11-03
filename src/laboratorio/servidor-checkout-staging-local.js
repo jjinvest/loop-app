@@ -24,7 +24,8 @@ const {criarRouterPrePedidosCheckoutStaging}=
  require('../routes/prepedidos-checkout-staging');
 const {consultarPosicaoPendenteSimulada}=
  require('../domain/posicoes-pendentes-checkout-sandbox-staging');
-const {localSeguro}=require('../routes/admin-catalogo-laboratorio');
+const {localSeguro,criarAutorizacao}=require('../routes/admin-catalogo-laboratorio');
+const {consultarEscritorioHomologacao}=require('../domain/relatorio-homologacao-checkout-staging');
 const {validarProduto}=require('../domain/catalogo');
 
 function falha(codigo){const e=new Error(codigo);e.codigo=codigo;return e;}
@@ -43,7 +44,8 @@ function catalogoFicticioCheckout(){
  return new RepositorioCatalogoMemoria({produtos:[produto]});
 }
 function criarAppCheckoutStagingLocal({
- banco,repositorioCatalogo=catalogoFicticioCheckout()
+ banco,repositorioCatalogo=catalogoFicticioCheckout(),
+ segredoOperador=null
 }={}){
  somenteEnsaio();
  if(typeof banco?.prepare!=='function'||typeof banco?.exec!=='function'||
@@ -110,6 +112,17 @@ function criarAppCheckoutStagingLocal({
    next(e);
   }
  });
+ // Escritório operacional de homologacao: mesma base SQLite do cliente,
+ // segregado da sessão do comprador. Por padrao NAO existe nem no servidor
+ // local, e nunca e montado no aplicativo comercial ou receptor Railway.
+ if(segredoOperador!==null){
+  const autorizar=criarAutorizacao({segredo:segredoOperador});
+  app.get('/staging/escritorio-homologacao',autorizar,(req,res)=>{
+   if(Object.keys(req.query).length)
+    return res.status(400).json({erro:'FILTRO_OPERACIONAL_INVALIDO'});
+   return res.json(consultarEscritorioHomologacao({banco,limite:30}));
+  });
+ }
  // Montar rotas que exigem sessao SOMENTE apos estado e cotacao:
  // o middleware de identidade de rascunhos intercepta rotas nao casadas.
  app.use('/staging',criarRouterAutenticacaoCheckoutStaging({autenticacao:auth}));
