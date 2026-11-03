@@ -26,6 +26,9 @@ const {consultarPosicaoPendenteSimulada}=
  require('../domain/posicoes-pendentes-checkout-sandbox-staging');
 const {localSeguro,criarAutorizacao}=require('../routes/admin-catalogo-laboratorio');
 const {consultarEscritorioHomologacao}=require('../domain/relatorio-homologacao-checkout-staging');
+const {ContasParticipantesDemoSQLite}=require('../domain/contas-participantes-demo-sqlite');
+const {VinculosContasEscritorioCheckoutStagingSQLite}=
+ require('../domain/vinculos-contas-escritorio-checkout-staging-sqlite');
 const {validarProduto}=require('../domain/catalogo');
 
 function falha(codigo){const e=new Error(codigo);e.codigo=codigo;return e;}
@@ -45,7 +48,7 @@ function catalogoFicticioCheckout(){
 }
 function criarAppCheckoutStagingLocal({
  banco,repositorioCatalogo=catalogoFicticioCheckout(),
- segredoOperador=null
+ segredoOperador=null,vincularContaDemo=false
 }={}){
  somenteEnsaio();
  if(typeof banco?.prepare!=='function'||typeof banco?.exec!=='function'||
@@ -55,6 +58,16 @@ function criarAppCheckoutStagingLocal({
  const intencoes=new IntencoesCheckoutSQLite({banco});
  const prePedidos=new PrePedidosCheckoutStagingSQLite({banco});
  const ponte=new PontePrepedidoAsaasSandboxStaging({banco});
+ // Vinculo somente sob opt-in, e com autenticação independente do cliente e
+ // da conta ficticia do Escritório. Nao habilitar em servidor publico.
+ if(vincularContaDemo===true&&segredoOperador===null)
+  throw falha('OPERADOR_OBRIGATORIO_PARA_VINCULAR_CONTAS');
+ const contasDemo=vincularContaDemo===true?
+  new ContasParticipantesDemoSQLite({banco}):null;
+ const vinculos=vincularContaDemo===true?
+  new VinculosContasEscritorioCheckoutStagingSQLite({
+   banco,autenticacao:auth,contasDemo
+  }):null;
  const identificarTitular=req=>auth.identificarTitular(req);
  const autorizarMutacao=req=>auth.autorizarMutacao(req);
  const app=express();
@@ -123,6 +136,42 @@ function criarAppCheckoutStagingLocal({
    return res.json(consultarEscritorioHomologacao({banco,limite:30}));
   });
  }
+ // A conta de homologacao prova sua propria sessao/CSRF e a senha
+ // da conta demo do Escritorio. A API nao cria conta, pedido, credito ou Pix.
+ if(vinculos){
+  app.post('/staging/vincular-escritorio',(req,res)=>{
+   if(!localSeguro(req)||process.env.NODE_ENV==='production')
+    return res.status(403).json({erro:'STAGING_SOMENTE_LOCAL'});
+   if(!req.is('application/json'))
+    return res.status(415).json({erro:'JSON_OBRIGATORIO'});
+   if(!req.body||Array.isArray(req.body)||typeof req.body!=='object'||
+      Object.keys(req.body).sort().join(',')!=='nome,senha')
+    return res.status(400).json({erro:'CAMPOS_INVALIDOS'});
+   try{
+    const result=vinculos.vincularPorDuplaAutenticacao({
+     req,nomeContaDemo:req.body.nome,senhaContaDemo:req.body.senha
+    });
+    return res.status(result.repetido?200:201).json(result);
+   }catch(e){
+    if(e?.codigo==='SESSAO_OU_CSRF_INVALIDO')
+     return res.status(403).json({erro:'SESSAO_OU_CSRF_INVALIDO'});
+    if(e?.codigo==='CREDENCIAIS_INVALIDAS')
+     return res.status(401).json({erro:'CREDENCIAIS_INVALIDAS'});
+    if(e?.codigo==='VINCULO_JA_PERTENCE_A_OUTRA_CONTA')
+     return res.status(409).json({erro:e.codigo});
+    return res.status(503).json({erro:'VINCULO_STAGING_INDISPONIVEL'});
+   }
+  });
+  app.get('/staging/meu-vinculo-escritorio',(req,res)=>{
+   if(!localSeguro(req)||process.env.NODE_ENV==='production')
+    return res.status(403).json({erro:'STAGING_SOMENTE_LOCAL'});
+   const titularId=auth.identificarTitular(req);
+   if(!titularId)return res.status(401).json({erro:'SESSAO_AUSENTE'});
+   const vinculo=vinculos.consultar({titularCheckoutId:titularId});
+   return res.json({contaEscritorioVinculada:vinculo!==null,
+    ambiente:'STAGING_LOCAL',pagamentosReais:0,posicoesReais:0});
+  });
+ }
  // Montar rotas que exigem sessao SOMENTE apos estado e cotacao:
  // o middleware de identidade de rascunhos intercepta rotas nao casadas.
  app.use('/staging',criarRouterAutenticacaoCheckoutStaging({autenticacao:auth}));
@@ -140,7 +189,7 @@ function criarAppCheckoutStagingLocal({
  app.use((_err,_req,res,_next)=>res.status(503).json({
   erro:'OPERACAO_STAGING_INDISPONIVEL',checkoutPublico:false
  }));
- return {app,auth,intencoes,prePedidos,ponte};
+ return {app,auth,intencoes,prePedidos,ponte,contasDemo,vinculos};
 }
 function abrirBanco(arquivo){
  somenteEnsaio();
