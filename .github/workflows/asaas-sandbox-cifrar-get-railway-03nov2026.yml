@@ -1,0 +1,48 @@
+name: LOOP - Cifrar chave de leitura Asaas Sandbox para reconsulta Railway
+on:
+  push:
+    branches: [fix/teste-escrita-catraca-20261014]
+    paths: [.github/workflows/asaas-sandbox-cifrar-get-railway-03nov2026.yml]
+permissions:
+  contents: read
+jobs:
+  preparar:
+    if: github.repository == 'jjinvest/loop-app' && github.ref == 'refs/heads/fix/teste-escrita-catraca-20261014' && github.run_number == 1 && github.run_attempt == 1
+    runs-on: ubuntu-latest
+    timeout-minutes: 4
+    steps:
+      - name: Conferir Pix e cifrar credencial apenas para destino RSA isolado
+        env:
+          ASAAS_SANDBOX_API_KEY: ${{ secrets.ASAAS_SANDBOX_API_KEY }}
+        shell: bash
+        run: |
+          node --input-type=module <<'NODE'
+          import {publicEncrypt,createPublicKey,constants} from 'node:crypto';
+          const chave=process.env.ASAAS_SANDBOX_API_KEY;
+          if(typeof chave!=='string'||!chave.startsWith('$aact_hmlg_')||
+             chave.length<25||chave.length>300||/\s/.test(chave))
+            throw Error('CHAVE_SOMENTE_SANDBOX_INVALIDA');
+          const r=await fetch('https://api-sandbox.asaas.com/v3/payments/pay_xhhv07y98d5pqvp8',{
+            method:'GET',redirect:'error',headers:{
+              access_token:chave,Accept:'application/json',
+              'User-Agent':'LOOP-3.0-Consulta-Sandbox-Cifrada/1.0'},
+            signal:AbortSignal.timeout(12000)
+          });
+          if(r.status!==200)throw Error('PSP_HTTP_'+r.status);
+          const p=await r.json();
+          if(p?.id!=='pay_xhhv07y98d5pqvp8'||
+             p?.customer!=='cus_000009780085'||
+             p?.externalReference!=='LOOPLAB-hom-defb7f9c-db20-478c-86da-58e58c8f015b'||
+             p?.value!==250||p?.billingType!=='PIX'||p?.status!=='RECEIVED')
+            throw Error('PSP_NAO_ELEGIVEL_PARA_CONCILIACAO');
+          const publicB64='MIIBojANBgkqhkiG9w0BAQEFAAOCAY8AMIIBigKCAYEAvO2XDL+p1M5xFi1ofcUySmVlba24I9pHmvMNv1NUijSKxDBqL4vgHqpAPnRcVDpz0xI2JtI+JotjTGKftViNY1g/oI3ay1AunHW5jSb25YuEusfpFR878vUVT+aQga5AafGfRWkGZTgePP7R00wEw91Hqcykex9JdX9ovP0p3CRFpo++aSrZuoNGeUYLZqZz5KSd5hJXK69egee4d4zu+yPlxKxguSvQ58HFPf8tB9isBAIAmhnIPpUjcYj7ahfYNqOBoDhq//F/JS5Hq4WHVuOisel23RHKWOkw7aa80JOMFBhq6nUjN+lQIDujVX+NfgNS4JPLrAq+8QwS32EAclCHH8sogmNlMvikPviXDf0jUXSNoWMf6LssvaKvJp+Rmaw10xP/dC3lb9wr4kdnlFsrgpPvcViDXY/L5XbCAHSYPpX5XNnuB+hE+5C+stAFgm9smwyjxrzlVbdiR+EFcMiSiVuXZGVmt7kWUrfnSGYGFufqrDXKSe7HabGffWJbAgMBAAE=';
+          const publicKey=createPublicKey({key:Buffer.from(publicB64,'base64'),
+            format:'der',type:'spki'});
+          // Nao imprimir chave de API. Somente RSA-OAEP cifrado a chave
+          // privada do Railway consegue recuperar. Nenhum POST no Asaas.
+          const encrypted=publicEncrypt({key:publicKey,
+            padding:constants.RSA_PKCS1_OAEP_PADDING,oaepHash:'sha256'},
+            Buffer.from(chave,'utf8'));
+          console.log('LOOP_SBX_VERIFICACAO=RECEIVED_PIX_250');
+          console.log('LOOP_SBX_CHAVE_CIFRADA_RSA_OAEP_SHA256='+encrypted.toString('base64'));
+          NODE
