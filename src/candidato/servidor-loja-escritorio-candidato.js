@@ -21,6 +21,8 @@ const {ReconsultaWebhookPrepedidoAsaasStaging}=
  require('../domain/reconsulta-webhook-prepedido-asaas-staging');
 const {PosicoesPendentesCheckoutSandboxStaging}=
  require('../domain/posicoes-pendentes-checkout-sandbox-staging');
+const {IntegridadeTitularCandidatoSQLite}=
+ require('../domain/integridade-titular-candidato-sqlite');
 const {consultarEscritorioHomologacao}=require('../domain/relatorio-homologacao-checkout-staging');
 const {criarRouterRascunhosCheckoutStaging}=require('../routes/rascunhos-checkout-staging');
 const {criarRouterPrePedidosCheckoutStaging}=require('../routes/prepedidos-checkout-staging');
@@ -56,6 +58,7 @@ function criarAppLojaEscritorioCandidato({banco,repositorioCatalogo,
  const intencoes=new IntencoesCheckoutSQLite({banco});
  const prePedidos=new PrePedidosCheckoutStagingSQLite({banco});
  const ponte=new PontePrepedidoAsaasSandboxStaging({banco});
+ const integridade=new IntegridadeTitularCandidatoSQLite({banco});
  const entregas=new EntregasPrePedidosAsaasSandboxStaging({banco});
  // Operador usa o MESMO SQLite que o checkout e o Escritório: webhook
  // isolado jamais e prova de recebimento sem GET PSP autenticado.
@@ -416,6 +419,7 @@ function criarAppLojaEscritorioCandidato({banco,repositorioCatalogo,
      'SELECT COUNT(*) AS n FROM',
      'akitemm_prepedido_posicoes_pendentes_sandbox_staging'
     ].join(' ')).get().n:0,
+    integridadeTitular:integridade.auditar(),
     escritorioFonteUnica:true,
     contasCandidatas:banco.prepare(
      'SELECT COUNT(*) AS n FROM akitemm_conta_unica_candidata'
@@ -441,6 +445,6 @@ function criarAppLojaEscritorioCandidato({banco,repositorioCatalogo,
   erro:'CANDIDATO_INDISPONIVEL',financeiroReal:false
  }));
  return {app,contas,cpf,provasEmail,intencoes,prePedidos,ponte,
-  inbox,worker,posicoes,entregas,banco};
+  inbox,worker,posicoes,entregas,integridade,banco};
 }
 module.exports={criarAppLojaEscritorioCandidato};
