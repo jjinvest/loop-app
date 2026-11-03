@@ -45,6 +45,16 @@
  </section>
  <section id="painelConta" hidden aria-label="Conta de homologação">
   <div class="barra-conta"><span>Conta de laboratório autenticada</span><button type="button" id="sair">Sair</button></div>
+  <section class="painel" id="painelVerificarEmail" hidden aria-label="Confirmar e-mail de ensaio">
+   <h2>Confirmar e-mail de teste</h2>
+   <p class="subtexto">A confirmação só funciona com um provedor de e-mail de laboratório configurado. Não substitui a verificação de identidade.</p>
+   <button type="button" id="solicitarCodigoEmail">Solicitar código</button>
+   <form id="formConfirmarEmail">
+    <label for="codigoEmail">Código de oito dígitos</label>
+    <input id="codigoEmail" type="text" inputmode="numeric" pattern="[0-9]{8}" minlength="8" maxlength="8" autocomplete="one-time-code" required>
+    <button type="submit">Confirmar código</button>
+   </form>
+  </section>
   <div role="tablist" aria-label="Áreas do cliente" class="abas">
    <button type="button" role="tab" id="abaPreparar" aria-controls="conteudoPreparar" aria-selected="true" tabindex="0">Preparar pedido</button>
    <button type="button" role="tab" id="abaMeusPedidos" aria-controls="conteudoMeusPedidos" aria-selected="false" tabindex="-1">Meus Pedidos</button>

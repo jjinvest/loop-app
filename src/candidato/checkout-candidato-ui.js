@@ -24,6 +24,7 @@ async function requisitar(rota,{method='GET',body,chave,mutacao=false}={}){
  return dados;
 }
 function mostrarSessao(ativa){
+ if(!ativa)$('painelVerificarEmail').hidden=true;
  $('painelLogin').hidden=ativa;
  $('painelCadastro').hidden=ativa;
  $('painelConta').hidden=!ativa;
@@ -95,6 +96,36 @@ async function atualizarPedidos(){
   dizer('Histórico atualizado. Nenhuma compra ou pagamento real.');
  }catch(e){dizer('Não foi possível consultar os pedidos: '+e.message);}
 }
+async function atualizarVerificacaoEmail(){
+ const res=await requisitar('/contas/me');
+ $('painelVerificarEmail').hidden=res.confirmacaoEmailDisponivel!==true||
+  res.emailVerificado===true;
+}
+async function solicitarCodigoEmail(){
+ try{
+  const r=await requisitar('/contas/email/enviar',{
+   method:'POST',body:{},mutacao:true
+  });
+  if(r.envioDeclaradoPeloProvedor!==true)
+   throw Error('ENVIO_NAO_CONFIRMADO');
+  dizer('Código enviado pelo provedor de laboratório; confirme-o nesta conta.');
+ }catch(e){dizer('Não foi possível enviar o código: '+e.message);}
+}
+async function confirmarCodigoEmail(e){
+ e.preventDefault();
+ const botao=$('formConfirmarEmail').querySelector('button');
+ botao.disabled=true;
+ try{
+  const r=await requisitar('/contas/email/confirmar',{
+   method:'POST',body:{codigo:$('codigoEmail').value},mutacao:true
+  });
+  if(r.emailVerificado!==true)throw Error('CODIGO_NAO_CONFIRMADO');
+  $('codigoEmail').value='';
+  await atualizarVerificacaoEmail();
+  dizer('E-mail de laboratório confirmado. CPF e identidade externa continuam pendentes.');
+ }catch(e){dizer('Falha ao conferir código: '+e.message);}
+ finally{botao.disabled=false;}
+}
 async function entrar(e){
  e.preventDefault();
  const botao=$('formLogin').querySelector('button');
@@ -103,6 +134,7 @@ async function entrar(e){
   const dados=await requisitar('/contas/entrar',{method:'POST',
    body:{nick:$('login').value,senha:$('senha').value}});
   csrf=dados.csrf;mostrarSessao(true);$('senha').value='';
+  await atualizarVerificacaoEmail();
   dizer('Sessão local iniciada. Nenhuma cobrança habilitada.');
   mostrarAba('conteudoPreparar');
  }catch(err){dizer('Não foi possível entrar: '+err.message);}
@@ -145,6 +177,7 @@ async function restaurarSessao(){
  try{
   const s=await requisitar('/contas/me');csrf=s.csrf;
   mostrarSessao(true);
+  await atualizarVerificacaoEmail();
   dizer('Sessão de laboratório restaurada.');
   mostrarAba('conteudoMeusPedidos');
  }catch(e){mostrarSessao(false);dizer('Entre com seu nick de teste ou crie uma conta fictícia.');}
@@ -171,6 +204,8 @@ async function cadastrar(e){
  finally{botao.disabled=false;}
 }
 $('formCadastro').addEventListener('submit',cadastrar);
+$('solicitarCodigoEmail').addEventListener('click',solicitarCodigoEmail);
+$('formConfirmarEmail').addEventListener('submit',confirmarCodigoEmail);
 $('formLogin').addEventListener('submit',entrar);
 $('calcularCotacao').addEventListener('click',cotar);
 $('prepararPedido').addEventListener('click',preparar);
