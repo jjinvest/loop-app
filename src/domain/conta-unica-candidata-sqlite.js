@@ -258,6 +258,20 @@ class ContaUnicaCandidataSQLite{
    'DELETE FROM akitemm_sessoes_candidatas WHERE token_hash=?'
   ).run(digest(token)).changes===1;
  }
+ emailParaEntrega(titularId){
+  if(process.env.NODE_ENV==='production')falha('EMAIL_LAB_NAO_HOMOLOGADO');
+  const a=this.banco.prepare([
+   'SELECT email_iv,email_cifra,email_tag,email_hmac',
+   'FROM akitemm_conta_unica_candidata WHERE id=?'
+  ].join(' ')).get(titularId);
+  if(!a)return null;
+  let email;
+  try{email=decifrar(this.cipherKey,a.email_iv,a.email_cifra,a.email_tag);}
+  catch{falha('INTEGRIDADE_CONTA_INVALIDA');}
+  if(hmac(this.emailKey,email)!==a.email_hmac)
+   falha('INTEGRIDADE_CONTA_INVALIDA');
+  return email;
+ }
  perfil(titularId){
   const a=this.banco.prepare(
    'SELECT * FROM akitemm_conta_unica_candidata WHERE id=?'
@@ -266,8 +280,16 @@ class ContaUnicaCandidataSQLite{
   let nome;
   try{nome=decifrar(this.cipherKey,a.nome_iv,a.nome_cifra,a.nome_tag);}
   catch{falha('INTEGRIDADE_CONTA_INVALIDA');}
+  const temProva=Boolean(this.banco.prepare([
+   "SELECT 1 FROM sqlite_master WHERE type='table'",
+   "AND name='akitemm_candidato_email_validado'"
+  ].join(' ')).get());
+  const emailVerificado=temProva&&Boolean(this.banco.prepare([
+   'SELECT 1 FROM akitemm_candidato_email_validado',
+   'WHERE titular_id=?'
+  ].join(' ')).get(titularId));
   return {titularId:a.id,nick:a.nick,nome,
-   emailVerificado:false,identidadeValidadaExternamente:false,
+   emailVerificado,identidadeValidadaExternamente:false,
    termosVersao:a.termos_versao,termosHash:a.termos_hash,
    pagamentosReaisPermitidos:false};
  }
