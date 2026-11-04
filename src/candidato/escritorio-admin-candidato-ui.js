@@ -16,6 +16,24 @@ async function api(path,{method='GET',body,idempotencia}={}){
 }
 function linha(rotulo,valor){const a=elem('div');a.className='indicador';a.append(elem('strong',String(valor)),elem('span',rotulo));return a;}
 
+function renderizarPreviaFilas(p){
+ const root=$('resumoPreviaFilas');root.replaceChildren();
+ const resumo=elem('div');resumo.className='indicadores';
+ resumo.append(linha('Fictícias históricas',p.totalHistorico||0),
+  linha('Hipótese B sem ativação',p.pendentesConferidas||0),
+  linha('Em revisão PSP',p.pendentesExigemRevisao||0),
+  linha('Acima do teto de simulação',p.pendentesAcimaCapacidade||0));
+ root.append(resumo,elem('p',p.motivo));
+ const area=$('posicoesPreviaFilas');area.replaceChildren();
+ for(const item of p.hipoteseFilaB||[]){
+  const row=elem('div');row.className='produto-admin-item';
+  row.append(elem('strong',item.estado),
+   elem('small','Pedido '+item.prepedidoId+' · Titular '+item.titularId));
+  area.append(row);
+ }
+}
+
+
 function limparProduto(){
  edicaoProduto=null;chaveProduto=null;$('formProduto').reset();
  $('produtoIdAdmin').readOnly=false;$('produtoTipoAdmin').disabled=false;
@@ -134,9 +152,10 @@ async function atualizar(){
  const q=new URLSearchParams({pagina:String(paginaMissoes)});
  if($('filtrarDepartamento').value)q.set('departamento',$('filtrarDepartamento').value);
  if($('filtrarSituacao').value)q.set('situacao',$('filtrarSituacao').value);
- const [e,m,d,alertas,produtos]=await Promise.all([
+ const [e,m,d,alertas,produtos,previa]=await Promise.all([
   api(''),api('/missoes?'+q.toString()),api('/departamentos'),
-  api('/alertas?pagina='+paginaAlertas),api('/produtos?pagina='+paginaProdutos)
+  api('/alertas?pagina='+paginaAlertas),api('/produtos?pagina='+paginaProdutos),
+  api('/projecao-filas')
  ]);
  $('indicadores').replaceChildren(
   linha('Contas',e.contasCandidatas),
@@ -148,6 +167,7 @@ async function atualizar(){
  atualizarDepartamentos(d.departamentos);
  atualizarAlertas(alertas);
  renderizarProdutos(produtos);
+ renderizarPreviaFilas(previa);
  $('resumoMissoes').textContent='Página '+(m.pagina+1)+' · '+m.total+' missão(ões) neste filtro.';
  $('missoesAnterior').disabled=paginaMissoes===0;
  $('missoesProximo').disabled=!m.haMais;
@@ -208,6 +228,7 @@ $('sair').addEventListener('click',()=>{
  $('listaMissoes').replaceChildren();dizer('Acesso encerrado.');
 });
 $('atualizar').addEventListener('click',()=>atualizar().catch(e=>dizer(e.message)));
+$('recarregarPreviaFilas').addEventListener('click',()=>atualizar().catch(e=>dizer(e.message)));
 
 $('recarregarProdutos').addEventListener('click',()=>atualizarProdutos().catch(e=>dizer(e.message)));
 $('sinalizacaoClasse').addEventListener('change',()=>{

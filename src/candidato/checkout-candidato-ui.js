@@ -93,6 +93,13 @@ async function atualizarPedidos(){
  try{
   const dados=await requisitar('/meus-pedidos');
   exibirPedidos(dados.pedidos);
+  const previa=await requisitar('/minha-previa-filas');
+  const resumo=$('minhaPreviaFilas');resumo.replaceChildren();
+  const info=document.createElement('p');
+  info.textContent='Posições fictícias anteriores: '+(previa.meusPendentesHistoricos||0)+
+   ' · Hipótese na Fila B: '+(previa.meusSimuladosNaFilaB||0)+
+   ' · Posições reais: 0. '+previa.motivo;
+  resumo.append(info);
   const recados=await requisitar('/meus-comunicados');
   const area=$('comunicadosCliente');area.replaceChildren();
   if(!recados.comunicados.length){
@@ -221,7 +228,7 @@ async function preparar(){
 async function sair(){
  try{await requisitar('/contas/sair',{method:'POST',mutacao:true});}
  catch(e){dizer('Falha ao encerrar: '+e.message);return;}
- mostrarSessao(false);$('listaPedidos').replaceChildren();$('comunicadosCliente').replaceChildren();
+ mostrarSessao(false);$('listaPedidos').replaceChildren();$('comunicadosCliente').replaceChildren();$('minhaPreviaFilas').replaceChildren();
  dizer('Sessão de homologação encerrada.');
 }
 async function restaurarSessao(){
