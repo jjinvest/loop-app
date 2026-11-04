@@ -261,6 +261,17 @@ $('conferirPreAdesao').addEventListener('click',async e=>{
  }catch(err){$('preAdesaoStatus').textContent='Consulta bloqueada: '+err.message;}
  finally{btn.disabled=false;}
 });
+$('conferirGateAtivacao').addEventListener('click',async e=>{
+ const botao=e.currentTarget;botao.disabled=true;
+ try{
+  const id=$('preAdesaoId').value;
+  if(!/^hom-[a-f0-9-]{36}$/.test(id))throw Error('PREPEDIDO_INVALIDO');
+  const d=await api('/diagnostico-ativacao/'+encodeURIComponent(id));
+  $('resultadoGateAtivacao').textContent='Estado: '+d.estado+
+   '. Pendências: '+d.bloqueios.join(', ')+'.';
+ }catch(err){$('resultadoGateAtivacao').textContent='Consulta indisponível: '+err.message;}
+ finally{botao.disabled=false;}
+});
 $('formPreAdesao').addEventListener('submit',async e=>{
  e.preventDefault();
  const btn=e.submitter;btn.disabled=true;
