@@ -2295,3 +2295,5 @@ O Escritório do Administrador ganhou ação direta **Conferir pré-adesão** em
 Testes de API: autenticação obrigatória dos termos, CSRF, recusa de aceite falso, vinculação única de CPF, idempotência, resposta mascarada e conexão com pré-adesão já persistida. Navegador PC/celular: CPF fictício diferente por titular, texto exato de termos carregado, registro e limpeza do campo, botão do Admin selecionando pedido. Conferir o CI do último SHA para declarar validação.
 
 Nenhuma alteração em regras financeiras, limites, tabuleiro, fila ou cotação. PR #1 permanece DRAFT, sem merge. Complemento da seção 199.
+
+**Evidências finais:** integração/segurança [aprovadas](https://github.com/jjinvest/loop-app/actions/runs/41851292786); navegador PC/celular com identidade fictícia, aceite da versão vigente e consulta direta no Admin [aprovado](https://github.com/jjinvest/loop-app/actions/runs/41851408417); [capturas reais](https://github.com/jjinvest/loop-app/actions/runs/41851408417/artifacts/13335656866). Estas provas não substituem validação de identidade externa nem alteram o status do Marco Zero.
