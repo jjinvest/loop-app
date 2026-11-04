@@ -93,6 +93,8 @@ const {once}=require('node:events');
    await admin.locator('#preAdesaoStatus')
     .filter({hasText:/Revisão pendente/}).waitFor();
    assert.match(await admin.locator('#preAdesaoId').inputValue(),/^hom-/);
+   await admin.locator('#conferirGateAtivacao').click();
+   await admin.locator('#resultadoGateAtivacao').filter({hasText:/BLOQUEADA_PARA_ATIVACAO_DEFINITIVA/}).waitFor();
    await admin.locator('#titulo').fill('Revisar pedido do cliente');
    await admin.locator('#descricao').fill('Registrar o atendimento manual deste pré-pedido fictício.');
    await admin.locator('#pedido').selectOption({index:1});
