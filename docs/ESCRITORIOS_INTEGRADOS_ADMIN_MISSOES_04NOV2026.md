@@ -46,3 +46,19 @@ A nova central operacional de homologação possui **12 departamentos**: CLIENTE
 - [Navegador PC/celular com novos departamentos — SUCCESS](https://github.com/jjinvest/loop-app/actions/runs/41788809779)
 - [Capturas do navegador](https://github.com/jjinvest/loop-app/actions/runs/41788809779/artifacts/13301439658)
 - PR #1 DRAFT, ambiente local de homologação, sem vendas/saques/giro reais.
+
+
+## 5. Integração funcional do catálogo de produtos (04/11/2026)
+
+A evolução anterior de departamentos foi mantida. O departamento PRODUTOS agora apresenta a contagem do catálogo **publicado na mesma fonte usada pelo checkout de laboratório**, em vez de se declarar desconectado.
+
+**Implementação no mesmo SQLite de laboratório:**
+- Novo modelo src/domain/catalogo-admin-candidato-sqlite.js sobre o catálogo base de ensaio, com persistência de produtos adicionais e alterações de produtos existentes, validação dos campos pelo mesmo validador, controle de revisões, idempotência da criação e histórico protegido contra UPDATE/DELETE.
+- Rotas exclusivas do operador: GET/POST /staging/escritorio-unificado/produtos; GET/PATCH /staging/escritorio-unificado/produtos/:id; GET /staging/escritorio-unificado/produtos/:id/historico. Campos editáveis: nome, descrição, preço de teste e estado de publicação. Tipo e entrega não são trocados após criação.
+- Tela Administrador possui formulário com ID, tipo, nome, descrição, preço e estado; lista editável com revisão. Só o operador local autorizado pode gravar.
+- GET /staging/catalogo fornece à loja apenas produtos PUBLICADOS, com dados públicos e sem segredos, CPF ou histórico interno. A aba de preparo do cliente foi conectada a esse catálogo: seleção de produto, quantidade, cotação e pré-pedido. A interface mantém o padrão visual aprovado.
+- O adaptador compartilhado é o mesmo argumento passado à cotação do servidor candidato, aos rascunhos e ao preparo de pré-pedidos. Alterações de preço/estado refletem novas cotações. A fotografia do pedido já preparado permanece com o valor original; rascunho antigo **não pode virar pré-pedido** se o catálogo mudar, exigindo nova cotação. O laboratório continua sem Pix, vendas, giro ou direitos comerciais.
+- As alterações são locais ao **candidato de homologação** e não atingem automaticamente a outra vitrine demonstrativa, a base comercial definitiva ou o servidor público. É necessário consolidar os módulos no futuro sem romper a segurança.
+- Testes novos incluem persistência após reinício, controle de autorização, idempotência, conflito de revisão, bloqueio de alterações inválidas, histórico imutável, preservação de pedido anterior, recalculo da cotação e proibição de publicação comercial. O fluxo de navegador PC/celular também passa a criar um produto fictício no Administrador e preparar novo pré-pedido pelo cliente.
+
+**Gate comercial:** nenhuma operação é de produção; o administrador local e o cliente são candidatos de homologação. O novo controle não ativa Asaas de produção, cadastro público, saques, posições ou benefícios. PR #1 permanece DRAFT, sem merge nem deploy comercial.
