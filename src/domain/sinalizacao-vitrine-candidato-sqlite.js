@@ -108,7 +108,7 @@ class SinalizacaoVitrineCandidatoSQLite{
   return {produtoId:p.id,nome:p.nome,descricao:p.descricao,
    precoCentavos:p.precoCentavos,tipo:p.tipo,fotos:p.fotos,
    detalhes:p.detalhes,novidade:false,quantidadeVendida:0,
-   elegivelLoop:classe==='VERDE'||classe==='EVENTO',
+   elegivelLoop:classe==='VERDE',
    quantidadeMinimaLoop:s.quantidadeMinimaLoop,
    // EVENTO é apenas decoração local até regras, datas e autorização formal.
    // Não inventar quantidade de posições nem evento no motor.
