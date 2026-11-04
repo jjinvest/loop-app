@@ -87,6 +87,21 @@ function exibirPedidos(pedidos){
    posicao.textContent='1 posição pendente fictícia de homologação · nenhuma posição real criada.';
    artigo.append(posicao);
   }
+  const diagnosticar=document.createElement('button');
+  diagnosticar.type='button';diagnosticar.textContent='Ver requisitos de ativação';
+  const detalhe=document.createElement('p');detalhe.className='subtexto';
+  detalhe.setAttribute('role','status');
+  diagnosticar.addEventListener('click',async()=>{
+   diagnosticar.disabled=true;
+   try{
+    const d=await requisitar('/meu-diagnostico-ativacao/'+
+     encodeURIComponent(pedido.prepedidoId));
+    detalhe.textContent='Situação: '+d.estado+
+     '. Pendências: '+d.bloqueios.join(', ')+'.';
+   }catch(e){detalhe.textContent='Consulta indisponível: '+e.message;}
+   finally{diagnosticar.disabled=false;}
+  });
+  artigo.append(diagnosticar,detalhe);
   area.append(artigo);
  }
 }
