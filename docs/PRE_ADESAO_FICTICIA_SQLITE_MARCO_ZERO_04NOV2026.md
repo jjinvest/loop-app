@@ -20,3 +20,5 @@ Os testes automatizados cobrem ausência de CPF/termos, sessão e operador, PSP 
 O **motor real** permanece bloqueado: somente após homologação externa de identidade e pagamento, regras jurídicas da oferta e eventos, antifraude, infraestrutura, backups, conciliação, auditorias e autorização explícita de produção poderá existir uma transição de adesão válida. Não confundir este checkpoint com inscrição no tabuleiro.
 
 Aguardar a conclusão dos workflows de CI do SHA final antes de declarar sucesso.
+
+**Validação concluída em 04/11/2026:** [segurança, PSP, CPF e persistência SQLite — SUCCESS](https://github.com/jjinvest/loop-app/actions/runs/41819509799); [navegador PC/celular, cliente e administrador — SUCCESS](https://github.com/jjinvest/loop-app/actions/runs/41819509768); [capturas reais](https://github.com/jjinvest/loop-app/actions/runs/41819509768/artifacts/13317035416). Nenhuma dessas provas autoriza o Marco Zero ou movimentação financeira real.
