@@ -62,3 +62,6 @@ A evolução anterior de departamentos foi mantida. O departamento PRODUTOS agor
 - Testes novos incluem persistência após reinício, controle de autorização, idempotência, conflito de revisão, bloqueio de alterações inválidas, histórico imutável, preservação de pedido anterior, recalculo da cotação e proibição de publicação comercial. O fluxo de navegador PC/celular também passa a criar um produto fictício no Administrador e preparar novo pré-pedido pelo cliente.
 
 **Gate comercial:** nenhuma operação é de produção; o administrador local e o cliente são candidatos de homologação. O novo controle não ativa Asaas de produção, cadastro público, saques, posições ou benefícios. PR #1 permanece DRAFT, sem merge nem deploy comercial.
+
+
+**Validação do bloco 195 concluída em 04/11/2026:** [segurança/integração — SUCCESS](https://github.com/jjinvest/loop-app/actions/runs/41790335702) e [navegador real PC/celular — SUCCESS](https://github.com/jjinvest/loop-app/actions/runs/41790719157). [Capturas reais da loja/cliente e do painel administrativo](https://github.com/jjinvest/loop-app/actions/runs/41790719157/artifacts/13303710930). O ajuste visual do teste de moeda aceita o espaço de formatação local do padrão pt-BR, sem tocar nos valores reais de simulação. Nenhum checkout comercial foi habilitado.
