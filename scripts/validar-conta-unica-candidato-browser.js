@@ -95,6 +95,13 @@ const {once}=require('node:events');
    await admin.locator('#sinalizacaoMinimo').fill('1');
    await admin.locator('#formSinalizacaoAdmin button[type=submit]').click();
    await admin.locator('#resultadoSinalizacaoAdmin').filter({hasText:/Cor salva/}).waitFor();
+   assert.equal(await admin.locator('#sinalizacaoProdutoId').inputValue(),'curso-homologacao-250');
+   const confAdmin=await admin.request.get(
+    base+'/staging/escritorio-unificado/sinalizacao/curso-homologacao-250',
+    {headers:{Authorization:'Bearer '+'somente-teste-do-navegador-'+('x'.repeat(40))}}
+   );
+   assert.equal(confAdmin.status(),200);
+   assert.equal((await confAdmin.json()).classificacao,'VERDE','Admin deveria persistir a cor');
    await admin.screenshot({path:path.join(__dirname,'../artifacts',
     'escritorio-admin-candidato-'+item.nome+'.png'),fullPage:true});
    await page.locator('#atualizarPedidos').click();
