@@ -134,7 +134,18 @@ const {once}=require('node:events');
     throw Error('VITRINE_NAO_INICIALIZOU: '+estado+'; ERROS='+JSON.stringify(failures)+'; '+err.message);
    }
    assert.ok(await loja.locator('#catalogoLojaLoop article.produto-loja-loop').count()>=2);
-   assert.ok(await loja.locator('#catalogoLojaLoop article.produto-loja-loop-elegivel').count()>=1);
+   const estadoVitrine=await loja.evaluate(async()=>{
+    const r=await fetch('/staging/vitrine/loja/catalogo',{credentials:'same-origin'});
+    return {status:r.status,body:await r.json()};
+   });
+   assert.equal(estadoVitrine.status,200,JSON.stringify(estadoVitrine));
+   const seed=estadoVitrine.body.produtos.find(p=>p.produtoId==='curso-homologacao-250');
+   assert.equal(seed?.classeVisual,'VERDE',JSON.stringify(estadoVitrine.body.produtos));
+   const classes=await loja.locator('#catalogoLojaLoop article').evaluateAll(
+    els=>els.map(e=>({classe:e.className,texto:e.textContent.slice(0,100)}))
+   );
+   assert.ok(classes.some(x=>x.classe.includes('produto-loja-loop-elegivel')),
+    JSON.stringify(classes));
    assert.ok(await loja.locator('#catalogoLojaLoop article.produto-loja-loop-nao-elegivel').count()>=1);
    await loja.locator('#catalogoLojaLoop article.produto-loja-loop')
     .filter({hasText:'Curso adicional fictício'})
