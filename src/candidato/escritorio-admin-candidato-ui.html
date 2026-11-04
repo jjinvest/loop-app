@@ -12,7 +12,18 @@
 <section id="administracao" hidden>
 <div class="barra-conta"><span>Operador autenticado · apenas acesso local</span><button type="button" id="sair">Encerrar acesso</button></div>
 <section class="painel"><div class="linha"><h2>Visão geral</h2><button type="button" id="atualizar">Atualizar</button></div><div id="indicadores" class="indicadores"></div></section>
+<section class="painel" aria-labelledby="departamentosTitulo">
+<h2 id="departamentosTitulo">Departamentos e controles</h2>
+<p class="subtexto">Selecione um departamento para acompanhar suas missões. Números marcados como laboratório não correspondem a operações comerciais.</p>
+<div id="quadroDepartamentos" class="grade-departamentos" aria-label="Departamentos do Escritório"></div>
+</section>
 <section class="painel"><h2>Pedidos no Escritório</h2><div id="pedidos"></div></section>
+<section class="painel" aria-labelledby="alertasTitulo">
+<div class="linha"><h2 id="alertasTitulo">Revisões de pagamentos de teste</h2><span id="resumoAlertas" class="subtexto"></span></div>
+<p class="subtexto">Alertas são encontrados a partir dos registros do próprio Asaas Sandbox no SQLite. Abrir missão não confirma pagamento nem concede benefícios.</p>
+<div id="alertasOperacionais"></div>
+<div class="linha"><button id="alertasAnterior" type="button">Anterior</button><button id="alertasProximo" type="button">Próximos pedidos</button></div>
+</section>
 <section class="painel"><h2>Registrar missão / ação manual</h2><p class="subtexto">Ações registradas com histórico. Não inclua CPF, senhas ou dados pessoais nas notas.</p>
 <form id="criarMissao"><div class="duas-colunas"><div><label for="departamento">Departamento</label><select id="departamento"><option>CLIENTES</option><option>PEDIDOS</option><option>PRODUTOS</option><option>ENTREGAS</option><option>INDICACOES</option><option>POSICOES</option><option>FILAS</option><option>TABULEIRO</option><option>COFRES</option><option>SAQUES</option><option>SEGURANCA</option><option>OUTROS</option></select></div>
 <div><label for="prioridade">Prioridade</label><select id="prioridade"><option>NORMAL</option><option>ALTA</option><option>CRITICA</option></select></div></div>
@@ -21,7 +32,15 @@
 <label for="pedido">Pedido vinculado (opcional)</label><select id="pedido"><option value="">Sem pedido</option></select>
 <label for="mensagem">Comunicado ao cliente (opcional, requer pedido)</label><textarea id="mensagem" rows="2" maxlength="320"></textarea>
 <button type="submit" class="primario">Criar missão</button></form></section>
-<section class="painel"><h2>Missões / andamento</h2><div id="listaMissoes"></div></section>
+<section class="painel"><h2>Missões / andamento</h2>
+<div class="duas-colunas">
+<div><label for="filtrarDepartamento">Departamento</label><select id="filtrarDepartamento"><option value="">Todos os departamentos</option><option>CLIENTES</option><option>PEDIDOS</option><option>PRODUTOS</option><option>ENTREGAS</option><option>INDICACOES</option><option>POSICOES</option><option>FILAS</option><option>TABULEIRO</option><option>COFRES</option><option>SAQUES</option><option>SEGURANCA</option><option>OUTROS</option></select></div>
+<div><label for="filtrarSituacao">Situação</label><select id="filtrarSituacao"><option value="">Todas</option><option>ABERTA</option><option>EM_ANDAMENTO</option><option>CONCLUIDA</option><option>CANCELADA</option></select></div>
+</div>
+<p id="resumoMissoes" class="subtexto"></p>
+<div id="listaMissoes"></div>
+<div class="linha"><button id="missoesAnterior" type="button">Anterior</button><button id="missoesProximo" type="button">Próximas missões</button></div>
+</section>
 <section class="painel"><h2>Operações Sandbox controladas</h2>
 <p class="subtexto">Somente quando habilitadas no servidor. Reconsulta e entrega fictícia não movimentam dinheiro real.</p>
 <form id="reconsultar"><label for="eventoId">Evento Asaas Sandbox</label><input id="eventoId" pattern="[A-Za-z0-9_&-]{5,150}" required><button>Reconsultar pagamento de teste</button></form>

@@ -1,7 +1,7 @@
 'use strict';
 // Somente laboratório; credencial do operador mantida apenas em memória.
 const $=id=>document.getElementById(id),elem=(tag,value)=>{const x=document.createElement(tag);if(value!==undefined)x.textContent=value;return x;};
-let auth=null,chave=null;
+let auth=null,chave=null,paginaMissoes=0,paginaAlertas=0;
 const dizer=x=>$('estado').textContent=x;
 async function api(path,{method='GET',body,idempotencia}={}){
  const r=await fetch('/staging/escritorio-unificado'+path,{
@@ -15,15 +15,75 @@ async function api(path,{method='GET',body,idempotencia}={}){
  return out;
 }
 function linha(rotulo,valor){const a=elem('div');a.className='indicador';a.append(elem('strong',String(valor)),elem('span',rotulo));return a;}
+
+function atualizarDepartamentos(departamentos){
+ const area=$('quadroDepartamentos');area.replaceChildren();
+ const ativo=$('filtrarDepartamento').value;
+ for(const d of departamentos){
+  const button=elem('button');button.type='button';button.className='departamento-card';
+  button.setAttribute('aria-pressed',String(ativo===d.codigo));
+  button.append(elem('strong',d.nome),
+   elem('span',d.missoesPendentes+' missão(ões) em aberto'),
+   elem('small',d.quantidadeDadosLaboratorio===null?
+    'Operações comerciais não conectadas':
+    d.quantidadeDadosLaboratorio+' · '+d.descricao));
+  button.addEventListener('click',()=>{
+   const atual=$('filtrarDepartamento').value;
+   $('filtrarDepartamento').value=atual===d.codigo?'':d.codigo;
+   $('departamento').value=d.codigo;paginaMissoes=0;
+   atualizar().catch(e=>dizer(e.message));
+  });
+  area.append(button);
+ }
+}
+function atualizarAlertas(painel){
+ const area=$('alertasOperacionais');area.replaceChildren();
+ $('resumoAlertas').textContent='Página '+(painel.pagina+1)+
+  ' · '+painel.pedidosExaminados+' pedidos examinados';
+ $('alertasAnterior').disabled=paginaAlertas===0;
+ $('alertasProximo').disabled=!painel.haMais;
+ if(!painel.alertas.length)area.append(elem('p','Nenhuma revisão identificada nesta página.'));
+ for(const a of painel.alertas){
+  const item=elem('article');item.className='alerta-operacional';
+  item.append(elem('strong',a.motivo.replaceAll('_',' ')),
+   elem('p','Pedido '+a.prepedidoId+' · '+a.estadoOperacional));
+  const botao=elem('button','Abrir missão de revisão');botao.type='button';
+  botao.addEventListener('click',async()=>{
+   botao.disabled=true;
+   try{
+    const m=await api('/alertas/'+encodeURIComponent(a.prepedidoId)+'/abrir-missao',
+     {method:'POST',body:{}});
+    $('filtrarDepartamento').value='PEDIDOS';paginaMissoes=0;
+    await atualizar();
+    dizer(m.repetida?'Missão de revisão já estava registrada.':
+     'Missão de revisão registrada, sem alterar pagamento.');
+   }catch(e){dizer('Revisão não aberta: '+e.message);}
+   finally{botao.disabled=false;}
+  });
+  item.append(botao);area.append(item);
+ }
+}
+
 async function atualizar(){
- const [e,m]=await Promise.all([api(''),api('/missoes')]);
+ const q=new URLSearchParams({pagina:String(paginaMissoes)});
+ if($('filtrarDepartamento').value)q.set('departamento',$('filtrarDepartamento').value);
+ if($('filtrarSituacao').value)q.set('situacao',$('filtrarSituacao').value);
+ const [e,m,d,alertas]=await Promise.all([
+  api(''),api('/missoes?'+q.toString()),api('/departamentos'),
+  api('/alertas?pagina='+paginaAlertas)
+ ]);
  $('indicadores').replaceChildren(
   linha('Contas',e.contasCandidatas),
   linha('Pré-pedidos',e.resumo.prepedidosStaging),
   linha('PSP conciliados',e.resumo.recebimentosPSPConciliados),
   linha('Posições fictícias',e.posicoesPendentesFicticias),
-  linha('Missões',m.total)
+  linha('Missões no filtro',m.total)
  );
+ atualizarDepartamentos(d.departamentos);
+ atualizarAlertas(alertas);
+ $('resumoMissoes').textContent='Página '+(m.pagina+1)+' · '+m.total+' missão(ões) neste filtro.';
+ $('missoesAnterior').disabled=paginaMissoes===0;
+ $('missoesProximo').disabled=!m.haMais;
  const pedidos=$('pedidos'),escolha=$('pedido'),original=escolha.value;
  pedidos.replaceChildren();escolha.replaceChildren(new Option('Sem pedido',''));
  for(const p of e.pedidos){
@@ -81,6 +141,23 @@ $('sair').addEventListener('click',()=>{
  $('listaMissoes').replaceChildren();dizer('Acesso encerrado.');
 });
 $('atualizar').addEventListener('click',()=>atualizar().catch(e=>dizer(e.message)));
+for(const id of ['filtrarDepartamento','filtrarSituacao']){
+ $(id).addEventListener('change',()=>{
+  paginaMissoes=0;atualizar().catch(e=>dizer(e.message));
+ });
+}
+$('missoesAnterior').addEventListener('click',()=>{
+ paginaMissoes=Math.max(0,paginaMissoes-1);atualizar().catch(e=>dizer(e.message));
+});
+$('missoesProximo').addEventListener('click',()=>{
+ paginaMissoes++;atualizar().catch(e=>dizer(e.message));
+});
+$('alertasAnterior').addEventListener('click',()=>{
+ paginaAlertas=Math.max(0,paginaAlertas-1);atualizar().catch(e=>dizer(e.message));
+});
+$('alertasProximo').addEventListener('click',()=>{
+ paginaAlertas++;atualizar().catch(e=>dizer(e.message));
+});
 $('criarMissao').addEventListener('input',()=>{chave=null;});
 $('criarMissao').addEventListener('submit',async e=>{
  e.preventDefault();if(!chave)chave='ui-'+crypto.randomUUID();
