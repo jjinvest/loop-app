@@ -40,6 +40,7 @@ jobs:
           node --test test/loja-escritorio-conta-unica-candidata.test.js
           node --test test/missoes-operacionais-candidato.test.js
           node --test test/escritorio-admin-departamentos-candidato.test.js
+          node --test test/catalogo-admin-candidato-unificado.test.js
           node --test test/verificacao-email-conta-unica-candidata.test.js
           node --test test/transporte-email-resend-candidato.test.js
           node --test test/entregas-prepedidos-asaas-sandbox-staging.test.js
@@ -82,6 +83,8 @@ jobs:
               '/staging/escritorio-admin','/staging/escritorio-unificado/missoes',
               '/staging/escritorio-unificado/departamentos',
               '/staging/escritorio-unificado/alertas',
+              '/staging/escritorio-unificado/produtos',
+              '/staging/catalogo',
               '/staging/meus-comunicados',
               '/staging/contas/email/enviar','/staging/contas/email/confirmar'
             ]){

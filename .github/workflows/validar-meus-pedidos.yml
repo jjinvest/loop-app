@@ -48,4 +48,6 @@ jobs:
             artifacts/conta-unica-candidato-celular.png
             artifacts/escritorio-admin-candidato-pc.png
             artifacts/escritorio-admin-candidato-celular.png
+            artifacts/cliente-catalogo-editavel-pc.png
+            artifacts/cliente-catalogo-editavel-celular.png
           if-no-files-found: warn

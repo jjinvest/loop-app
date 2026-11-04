@@ -18,3 +18,9 @@ button:disabled{opacity:.5;cursor:not-allowed}.primario{background:linear-gradie
 .aviso{font-size:.88rem;color:#b8a989}#mensagem{min-height:1.5em;color:#f1d895}
 [hidden]{display:none!important}
 @media(max-width:520px){.cabecalho{padding:1rem}.marca{font-size:1.15rem}.ambiente{font-size:.61rem;padding:.35rem}.painel{padding:1rem}.abas button{padding:.75rem .4rem;font-size:.89rem}.linha button{width:100%}}
+
+/* Catálogo compartilhado do candidato local, preservando a paleta do cliente. */
+#conteudoPreparar select{display:block;width:100%;min-width:0;padding:.8rem;
+ color:#fff;background:#282828;border:1px solid #766b4e;border-radius:8px;
+ font:inherit}
+#conteudoPreparar #atualizarCatalogo{margin:10px 0}
