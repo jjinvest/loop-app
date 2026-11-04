@@ -97,6 +97,12 @@ const {once}=require('node:events');
    await admin.locator('#sinalizacaoMinimo').fill('1');
    await admin.locator('#formSinalizacaoAdmin button[type=submit]').click();
    await admin.locator('#resultadoSinalizacaoAdmin').filter({hasText:/Cor salva/}).waitFor();
+   await admin.locator('#quantidadeSimulada').fill('1');
+   await admin.locator('#formSimularQualificacao button[type=submit]').click();
+   await admin.locator('#resultadoSimulacao')
+    .filter({hasText:/Posições criadas: 0/}).waitFor();
+   assert.match(await admin.locator('#resultadoSimulacao').innerText(),
+    /referência com produtos verdes em simulação/);
    assert.equal(await admin.locator('#sinalizacaoProdutoId').inputValue(),'curso-homologacao-250');
    const confAdmin=await admin.request.get(
     base+'/staging/escritorio-unificado/sinalizacao/curso-homologacao-250',
@@ -160,6 +166,8 @@ const {once}=require('node:events');
     .filter({hasText:'Curso adicional fictício '+item.nick})
     .locator('button.akitemm-adicionar').click();
    assert.equal(await loja.locator('#akitemmTotalItens').innerText(),'1');
+   await loja.locator('#akitemmAnaliseQualificacao')
+    .filter({hasText:/não atinge a referência/}).waitFor();
    await loja.locator('#registrarPedidoLoja').click();
    await loja.locator('#statusPedidoLoja').filter({hasText:/Pedido hom-/}).waitFor();
    await loja.screenshot({path:path.join(__dirname,'../artifacts',
