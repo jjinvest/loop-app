@@ -21,3 +21,8 @@ No Escritório do Cliente, cada pedido agora tem **Ver requisitos de ativação*
 
 ## Testes e evidências
 Novos testes de domínio e integração verificam bloqueios com ou sem pré-adesão, reversão de PSP, impossibilidade de ampliar permissões, separação de titulares, resposta de Admin/Cliente, missão operacional idempotente e ausência dessas rotas no servidor público. O roteiro de navegador PC/celular verifica botões em ambos os escritórios. Conferir o CI do SHA correspondente; não declarar aprovado enquanto estiver pendente.
+
+### Execuções de CI associadas ao código
+- [Segurança, integração e bloqueio de produção](https://github.com/jjinvest/loop-app/actions/runs/41862522755) — status **queued** consultado em 04/11/2026, ainda sem conclusão.
+- [Navegador PC/celular e missão idempotente no Admin](https://github.com/jjinvest/loop-app/actions/runs/41862598132) — status **queued** consultado em 04/11/2026, ainda sem conclusão.
+- Verificação sintática de todos os arquivos JS alterados realizada; não substitui execução de testes Node/Playwright.
