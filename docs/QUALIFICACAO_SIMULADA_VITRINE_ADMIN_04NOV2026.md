@@ -27,3 +27,5 @@ Atingir o valor de referência **não comprova compra nem qualifica automaticame
 O workflow de segurança e integração com novos cenários de referência, quantidade, mistos, eventos, isolamento e bloqueios concluiu com sucesso: https://github.com/jjinvest/loop-app/actions/runs/41814727301
 
 O teste adicional em navegador PC/celular verifica o formulário do Administrador e o texto de simulação exibido no carrinho; conferir seu resultado no SHA correspondente antes de declarar aprovação visual. PR #1 permanece DRAFT, sem merge e sem deploy.
+
+**Evidências concluídas em 04/11/2026:** [segurança e cenários de regra — SUCCESS](https://github.com/jjinvest/loop-app/actions/runs/41814727301); [navegador real PC e celular, simulador do Administrador e retorno no carrinho — SUCCESS](https://github.com/jjinvest/loop-app/actions/runs/41814788237); [capturas reais de navegador](https://github.com/jjinvest/loop-app/actions/runs/41814788237/artifacts/13314690186). A execução do navegador validou o código anterior ao registro documental, sem merge/deploy e sem posições financeiras reais.
