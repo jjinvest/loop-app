@@ -27,7 +27,7 @@ class PrePedidosCheckoutStagingSQLite{
  constructor({banco,agora=()=>new Date().toISOString()}={}){
   if(typeof banco?.prepare!=='function'||typeof banco.exec!=='function')
    throw new TypeError('SQLite obrigatorio');
-  this.banco=banco;this.agora=agora;
+  this.banco=banco;this.agora=agora;this.fotografiaClassificacao=null;
   const existem=banco.prepare(
    "SELECT 1 FROM sqlite_master WHERE type='table' AND name='akitemm_checkout_intencoes_preparacao'"
   ).get();
@@ -51,6 +51,11 @@ class PrePedidosCheckoutStagingSQLite{
    'BEFORE DELETE ON akitemm_checkout_prepedidos_staging',
    "BEGIN SELECT RAISE(ABORT,'prepedido imutavel'); END;"
   ].join(' '));
+ }
+ definirFotografiaClassificacao(fn){
+  if(typeof fn!=='function'||this.fotografiaClassificacao)
+   throw falha('FOTOGRAFIA_CLASSIFICACAO_INVALIDA');
+  this.fotografiaClassificacao=fn;
  }
  _validarTitular(titularId){
   if(typeof titularId!=='string'||!TITULAR.test(titularId))
@@ -154,6 +159,15 @@ class PrePedidosCheckoutStagingSQLite{
     "VALUES(?,?,?,?,?,'AGUARDANDO_HOMOLOGACAO_EXTERNA',?)"
    ].join(' ')).run(id,rascunhoId,titularId,
     JSON.stringify(cotacaoAtual.itens),cotacaoAtual.totalCentavos,data);
+   // Fotografia das classes é gravada na MESMA transação do pré-pedido.
+   // Qualquer falha cancela a criação, sem pré-pedido órfão de evidência.
+   if(this.fotografiaClassificacao){
+    const foto=this.fotografiaClassificacao({prepedidoId:id,titularId,
+     itens:cotacaoAtual.itens,totalCentavos:cotacaoAtual.totalCentavos,
+     criadoEm:data});
+    if(!foto||typeof foto.then==='function')
+     throw falha('FOTOGRAFIA_CLASSIFICACAO_NAO_GRAVADA');
+   }
    this.banco.exec('COMMIT');
    return {repetido:false,prepedido:this.consultar({titularId,prepedidoId:id})};
   }catch(e){this.banco.exec('ROLLBACK');throw e;}
