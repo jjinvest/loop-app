@@ -100,6 +100,17 @@ test('uma conta -> PSP reconsultado -> 1 posicao e entrega ficticias -> Escritor
  assert.ok(gateInicial.body.bloqueios.includes('PRE_ADESAO_AINDA_NAO_PERSISTIDA'));
  assert.ok(gateInicial.body.bloqueios.includes('IDENTIDADE_EXTERNA_NAO_HOMOLOGADA'));
  assert.equal((await c.request(meuDiag,{token:c.a.token})).status,200);
+ const tarefa={
+  departamento:'SEGURANCA',prioridade:'ALTA',
+  titulo:'Regularizar requisitos de ativação',
+  descricao:'Conferir identidade externa, pagamento comercial, titularidade, limite de 10 posições ativas, limite de 2 no tabuleiro, conciliação e autorização operacional. Consultar diagnóstico atualizado antes de concluir.',
+  prepedidoId:c.prepedidoId,mensagemCliente:null
+ };
+ const cadastrarMissao=()=>c.request(root+'/missoes',{
+  method:'POST',admin:true,data:tarefa,
+  idempotencia:'regularizacao-ativacao-'+c.prepedidoId
+ });
+
  const eventoId='evt_CANDIDATORECEIVED01';
  const primeiro=await c.request(root+'/projetar-posicao-ficticia',{
   method:'POST',admin:true,data:{eventoId,prepedidoId:c.prepedidoId}
@@ -114,6 +125,12 @@ test('uma conta -> PSP reconsultado -> 1 posicao e entrega ficticias -> Escritor
  assert.equal(antesFila.body.pendentesConferidas,0);
  assert.equal((await c.request(root+'/projecao-filas')).status,401);
  assert.equal((await c.request('/staging/minha-previa-filas')).status,401);
+ const missao1=await cadastrarMissao();
+ assert.equal(missao1.status,201,JSON.stringify(missao1.body));
+ const missao2=await cadastrarMissao();
+ assert.equal(missao2.status,200);
+ assert.equal(missao2.body.id,missao1.body.id);
+ assert.equal(c.banco.prepare('SELECT COUNT(*) AS n FROM akitemm_admin_missoes_staging').get().n,1);
  const noPsp=await c.request('/staging/meus-pedidos',{token:c.a.token});
  assert.equal(noPsp.status,200);
  assert.equal(noPsp.body.pedidos[0].conferenciaPSPConcluida,false);
