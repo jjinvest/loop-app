@@ -70,6 +70,7 @@ async function editarCor(id){
   if(chamada!==ultimaLeituraCor)return;
   sinalizacaoAtual=r;
   $('sinalizacaoProdutoId').value=id;
+  $('produtoSimulado').value=id;
   $('sinalizacaoClasse').value=r.classificacao;
   $('sinalizacaoMinimo').value=String(r.quantidadeMinimaLoop);
   $('tituloSinalizacaoAdmin').scrollIntoView({behavior:'smooth',block:'start'});
@@ -231,6 +232,22 @@ $('formSinalizacaoAdmin').addEventListener('submit',async e=>{
  finally{botao.disabled=false;}
 });
 
+$('formSimularQualificacao').addEventListener('submit',async e=>{
+ e.preventDefault();
+ const button=e.submitter;button.disabled=true;
+ try{
+  const dados=await api('/simular-qualificacao',{method:'POST',body:{
+   itens:[{produtoId:$('produtoSimulado').value,
+    quantidade:Number($('quantidadeSimulada').value)}]
+  }});
+  const moeda=n=>new Intl.NumberFormat('pt-BR',{style:'currency',currency:'BRL'}).format(n/100);
+  $('resultadoSimulacao').textContent=dados.mensagem+
+   ' Valor verde considerado: '+moeda(dados.valorVerdeConsideradoCentavos)+
+   '. Faltam: '+moeda(dados.faltamCentavos)+
+   '. Posições criadas: '+dados.posicoesCriadas+'.';
+ }catch(err){$('resultadoSimulacao').textContent='Simulação não realizada: '+err.message;}
+ finally{button.disabled=false;}
+});
 $('cancelarEdicaoProduto').addEventListener('click',limparProduto);
 $('produtosAnterior').addEventListener('click',()=>{
  paginaProdutos=Math.max(0,paginaProdutos-1);atualizarProdutos().catch(e=>dizer(e.message));
