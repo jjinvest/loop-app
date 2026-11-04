@@ -1,7 +1,7 @@
 'use strict';
 // Somente laboratório; credencial do operador mantida apenas em memória.
 const $=id=>document.getElementById(id),elem=(tag,value)=>{const x=document.createElement(tag);if(value!==undefined)x.textContent=value;return x;};
-let auth=null,chave=null,paginaMissoes=0,paginaAlertas=0,paginaProdutos=0,edicaoProduto=null,chaveProduto=null;
+let auth=null,chave=null,paginaMissoes=0,paginaAlertas=0,paginaProdutos=0,edicaoProduto=null,chaveProduto=null,sinalizacaoAtual=null;
 const dizer=x=>$('estado').textContent=x;
 async function api(path,{method='GET',body,idempotencia}={}){
  const r=await fetch('/staging/escritorio-unificado'+path,{
@@ -48,12 +48,27 @@ function renderizarProdutos(r){
       item.produto.precoCentavos/100))+' · revisão '+item.revisao));
   const editar=elem('button','Editar');editar.type='button';
   editar.addEventListener('click',()=>preencherProduto(item));
-  card.append(info,editar);area.append(card);
+  const cor=elem('button','Cor na loja');cor.type='button';
+  cor.addEventListener('click',()=>editarCor(item.produto.id).catch(e=>{
+   $('resultadoSinalizacaoAdmin').textContent='Sinalização indisponível: '+e.message;
+  }));
+  const botoes=elem('div');botoes.append(editar,cor);
+  card.append(info,botoes);area.append(card);
  }
  $('produtosAnterior').disabled=paginaProdutos===0;
  $('produtosProximo').disabled=!r.haMais;
 }
 async function atualizarProdutos(){renderizarProdutos(await api('/produtos?pagina='+paginaProdutos));}
+async function editarCor(id){
+ const r=await api('/sinalizacao/'+encodeURIComponent(id));
+ sinalizacaoAtual=r;
+ $('sinalizacaoProdutoId').value=id;
+ $('sinalizacaoClasse').value=r.classificacao;
+ $('sinalizacaoMinimo').value=String(r.quantidadeMinimaLoop);
+ $('tituloSinalizacaoAdmin').scrollIntoView({behavior:'smooth',block:'start'});
+ $('resultadoSinalizacaoAdmin').textContent='Configuração visual carregada; revisão '+r.revisao+'.';
+}
+
 
 
 function atualizarDepartamentos(departamentos){
@@ -184,6 +199,28 @@ $('sair').addEventListener('click',()=>{
 $('atualizar').addEventListener('click',()=>atualizar().catch(e=>dizer(e.message)));
 
 $('recarregarProdutos').addEventListener('click',()=>atualizarProdutos().catch(e=>dizer(e.message)));
+$('sinalizacaoClasse').addEventListener('change',()=>{
+ if($('sinalizacaoClasse').value==='CINZA')$('sinalizacaoMinimo').value='1';
+});
+$('formSinalizacaoAdmin').addEventListener('submit',async e=>{
+ e.preventDefault();
+ const botao=e.submitter;botao.disabled=true;
+ try{
+  if(!sinalizacaoAtual||sinalizacaoAtual.produtoId!==$('sinalizacaoProdutoId').value)
+   throw Error('SELECIONE_PRODUTO');
+  const data={
+   classificacao:$('sinalizacaoClasse').value,
+   quantidadeMinimaLoop:Number($('sinalizacaoMinimo').value),
+   revisaoEsperada:sinalizacaoAtual.revisao
+  };
+  sinalizacaoAtual=await api('/sinalizacao/'+encodeURIComponent(sinalizacaoAtual.produtoId),{
+   method:'PATCH',body:data
+  });
+  $('resultadoSinalizacaoAdmin').textContent='Cor salva no catálogo compartilhado. Atualize a vitrine para conferir.';
+ }catch(err){$('resultadoSinalizacaoAdmin').textContent='Não foi possível salvar a cor: '+err.message;}
+ finally{botao.disabled=false;}
+});
+
 $('cancelarEdicaoProduto').addEventListener('click',limparProduto);
 $('produtosAnterior').addEventListener('click',()=>{
  paginaProdutos=Math.max(0,paginaProdutos-1);atualizarProdutos().catch(e=>dizer(e.message));
