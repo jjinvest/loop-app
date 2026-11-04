@@ -4,6 +4,7 @@ const assert=require('node:assert/strict');
 const {once}=require('node:events');
 const {DatabaseSync}=require('node:sqlite');
 const {randomBytes}=require('node:crypto');
+const fs=require('node:fs'),os=require('node:os'),path=require('node:path');
 const {criarAppLojaEscritorioCandidato}=
  require('../src/candidato/servidor-loja-escritorio-candidato');
 const {catalogoFicticioCheckout}=
@@ -178,6 +179,26 @@ test('uma conta -> PSP reconsultado -> 1 posicao e entrega ficticias -> Escritor
  const replay=await c.request(cp+'/preparar-pre-adesao',params);
  assert.equal(replay.status,200);
  assert.equal(replay.body.repetido,true);
+ // Persistência real em arquivo SQLite após fechamento/reabertura do backup.
+ const pasta=fs.mkdtempSync(path.join(os.tmpdir(),'loop-pre-adesao-'));
+ t.after(()=>fs.rmSync(pasta,{recursive:true,force:true}));
+ const destino=path.join(pasta,'restauracao.sqlite');
+ c.banco.exec("VACUUM INTO '"+destino.replaceAll("'","''")+"'");
+ const reaberto=new DatabaseSync(destino);reaberto.exec('PRAGMA foreign_keys=ON');
+ try{
+  const reg=reaberto.prepare([
+   'SELECT estado,prepedido_id AS prepedidoId,hash_fotografia AS hashFoto',
+   'FROM akitemm_pre_adesao_sandbox_candidato'
+  ].join(' ')).get();
+  assert.equal(reg.estado,'PRE_ADESAO_FICTICIA_NAO_ATIVADA');
+  assert.equal(reg.prepedidoId,c.prepedidoId);
+  assert.equal(reg.hashFoto.length,64);
+  assert.throws(()=>reaberto.prepare([
+   "UPDATE akitemm_pre_adesao_sandbox_candidato SET estado='ALTERADO'"
+  ].join(' ')).run(),/pre adesao historica imutavel/);
+  assert.deepEqual(reaberto.prepare('PRAGMA foreign_key_check').all(),[]);
+ }finally{reaberto.close();}
+
  const soTitular=await c.request('/staging/minhas-pre-adesoes',{token:c.a.token});
  const outraConta=await c.request('/staging/minhas-pre-adesoes',{token:c.b.token});
  assert.equal(soTitular.status,200);
