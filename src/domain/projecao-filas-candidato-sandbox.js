@@ -50,16 +50,16 @@ class ProjecaoFilasCandidatoSandbox{
   // o limite nem derrubar a consulta de uma sessao com poucos registros.
   const filtro=titularId===null?'':' WHERE titular_id=?';
   const parametros=titularId===null?[]:[titularId];
-  const n=this.banco.prepare(
-   'SELECT COUNT(*) AS n FROM akitemm_prepedido_posicoes_pendentes_sandbox_staging'+filtro
-  ).get(...parametros).n;
-  if(n>MAX_LEITURA)erro('MAXIMO_ANALISE_SEGURA_EXCEDIDO');
   const linhas=this.banco.prepare([
    'SELECT prepedido_id AS prepedidoId,titular_id AS titularId,',
    'id AS id,criado_em AS criadoEm',
    'FROM akitemm_prepedido_posicoes_pendentes_sandbox_staging'+filtro,
-   'ORDER BY criado_em ASC,prepedido_id ASC'
-  ].join(' ')).all(...parametros);
+   'ORDER BY criado_em ASC,prepedido_id ASC LIMIT ?'
+  ].join(' ')).all(...parametros,MAX_LEITURA+1);
+  // Uma leitura limitada elimina a janela COUNT -> SELECT para outro
+  // escritor e nunca materializa toda a tabela antes de aplicar o teto.
+  const n=linhas.length;
+  if(n>MAX_LEITURA)erro('MAXIMO_ANALISE_SEGURA_EXCEDIDO');
   const motor=new MotorFilas({relogio:()=>'2026-11-04T00:00:00.000Z'});
   const contagem=new Map(),pendencias=[];
   let emRevisao=0,acima=0,naHipotese=0,semFoto=0,semOferta=0;
