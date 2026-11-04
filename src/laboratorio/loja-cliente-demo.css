@@ -556,3 +556,15 @@ body.akitemm-loja{background:#071018;color:#f0f2f6;font-family:system-ui,-apple-
  flex-shrink:0;width:19px;height:19px}
 .akitemm-escolha-loop input[type=radio]:focus-visible{outline:3px solid #f7df7b;
  outline-offset:3px}
+
+
+/* Legenda das três classificações existentes: cinza, verde, dourado+roxo. */
+.akitemm-busca-filtros{flex-wrap:wrap}
+.akitemm-legenda-cores{display:flex;align-items:center;flex-wrap:wrap;gap:9px 13px;margin-left:auto;font-size:11px;color:#dce0e2}
+.akitemm-legenda-cores span{display:inline-flex;align-items:center;gap:6px;white-space:nowrap}
+.akitemm-legenda-cores i{display:inline-block;flex:none;width:13px;height:13px;border:1.5px solid;border-radius:3px}
+.akitemm-legenda-cores .akitemm-cor-cinza{border-color:#6b757a;background:#41484d}
+.akitemm-legenda-cores .akitemm-cor-verde{border-color:#5da97c;background:#257449}
+.akitemm-legenda-cores .akitemm-cor-evento{border-color:#e8bc58;background:linear-gradient(135deg,#e8bc58,#ab75e8)}
+.akitemm-legenda-ressalva{color:#aab2ba;font-size:11px;margin:-7px 0 12px;line-height:1.35}
+@media(max-width:900px){.akitemm-legenda-cores{width:100%;margin-left:0}.akitemm-legenda-cores span{white-space:normal}}
