@@ -1,3 +1,5 @@
+> **SEÇÃO 198 — 04/11/2026:** ponte de **Asaas Sandbox reconsultado → posição pendente fictícia → prévia hipotética da Fila B**, limitada a 10 por titular; foto imutável das cores e preços no pré-pedido impede alteração retroativa de elegibilidade. Sem foto, com evento/cinza ou pagamento revertido, não entra na hipótese. Cliente vê somente seus registros, Admin vê bloqueios. Não ativa motor real, giros ou pagamentos. [Documento](./PROJECAO_FILA_B_FOTOGRAFIA_OFERTA_CANDIDATO_04NOV2026.md). PR #1 DRAFT.
+
 
 **Evidências concluídas em 04/11/2026:** [segurança e cenários de regra — SUCCESS](https://github.com/jjinvest/loop-app/actions/runs/41814727301); [navegador real PC e celular, simulador do Administrador e retorno no carrinho — SUCCESS](https://github.com/jjinvest/loop-app/actions/runs/41814788237); [capturas reais de navegador](https://github.com/jjinvest/loop-app/actions/runs/41814788237/artifacts/13314690186). A execução do navegador validou o código anterior ao registro documental, sem merge/deploy e sem posições financeiras reais.
 
