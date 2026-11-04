@@ -1,3 +1,5 @@
+> **SEÇÃO 197 — 04/11/2026:** qualificação **simulada e sem direitos** conectada ao mesmo SQLite da vitrine, do cliente e do Admin: CINZA não conta; VERDE exige quantidade mínima por produto e R$ 250 somados no mesmo pedido; EVENTO especial aguarda regras e autorização. Novo formulário de simulação no Administrador e prévia calculada no servidor para o carrinho, sem atribuir posições, saques, bônus ou pagamento. [Detalhes](./QUALIFICACAO_SIMULADA_VITRINE_ADMIN_04NOV2026.md). Produção bloqueada, PR #1 DRAFT.
+
 
 **Evidências finais da seção 196, 04/11/2026:**
 - [Segurança, integração e bloqueio financeiro — SUCCESS](https://github.com/jjinvest/loop-app/actions/runs/41811514601).
