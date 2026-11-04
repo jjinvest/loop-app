@@ -45,7 +45,7 @@ function createVitrineCandidata({app,banco,catalogo,contas,intencoes,prePedidos,
     !origemJs.includes('const especial=!!p.eventoId&&p.posicoesPorPedidoLoop>1;'))
   fail('CONTRATO_JS_VITRINE_MUDOU_REVISAR_ADAPTADOR');
  const js=origemJs
-  .replace("fetch('/staging/vitrine/'+caminho,{",
+  .replace("fetch('/api/laboratorio/participante/'+caminho,{",
    "fetch('/staging/vitrine/'+caminho,{")
   .replace('const catalogo=[],carrinho=new Map();',
    'const catalogo=[],carrinho=new Map();let csrfCandidato=null,chavePedidoCandidato=null;')
