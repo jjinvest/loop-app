@@ -23,3 +23,6 @@ Novo painel de homologação local em /staging/escritorio-admin e API protegida 
 Missões nos departamentos POSICOES, FILAS, TABULEIRO, COFRES, SAQUES e outros são tarefas de operador, **não ordens que alteram automaticamente o motor**. O sistema não deve declarar ações humanas executadas até o operador registrar o andamento. Nenhuma missão pode confirmar pagamento ou movimentar dinheiro. O servidor candidato recusa ambiente production e não é montado no serviço público.
 
 A operação definitiva exige autenticação de produção, perfis de permissão, proteção de dados, segundo fator, logs e backup offsite, infraestrutura HTTPS e validação jurídica independente. Os gates do Marco Zero continuam fechados.
+
+
+**Validação concluída em 04/11/2026:** [navegador real PC/celular, loja + Escritório do Cliente + Escritório Administrador, criação de missão e comunicado sincronizado — SUCCESS](https://github.com/jjinvest/loop-app/actions/runs/41787540197). Capturas no [artefato de homologação](https://github.com/jjinvest/loop-app/actions/runs/41787540197/artifacts/13302031290). [Segurança e bloqueio financeiro — SUCCESS](https://github.com/jjinvest/loop-app/actions/runs/41786995505). O sucesso do ensaio local não autoriza lançamento comercial.
