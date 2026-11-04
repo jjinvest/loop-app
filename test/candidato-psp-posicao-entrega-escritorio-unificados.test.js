@@ -226,8 +226,6 @@ test('uma conta -> PSP reconsultado -> 1 posicao e entrega ficticias -> Escritor
  assert.equal(filaBia.body.meusSimuladosNaFilaB,0);
  assert.equal(JSON.stringify(filaBia.body).includes(c.prepedidoId),false);
  assert.equal(c.getGets(),1,'previa nunca faz GET PSP');
- assert.equal((await c.request(root+'/preparar-pre-adesao',{method:'POST',admin:true,
-  data:{prepedidoId:c.prepedidoId}})).status,403);
  assert.equal((await c.request(root+'/projetar-posicao-ficticia',{
   method:'POST',admin:true,data:{eventoId,prepedidoId:c.prepedidoId}
  })).status,200,'replay nao duplica');
@@ -316,6 +314,8 @@ test('operacao PSP desligada por padrao e sem credencial nao expõe nem reconsul
  const c=await criarContexto(t,{ativo:false});
  const root='/staging/escritorio-unificado';
  assert.equal((await c.request(root+'/monitor-psp',{admin:true})).status,403);
+ assert.equal((await c.request(root+'/preparar-pre-adesao',{method:'POST',admin:true,
+  data:{prepedidoId:c.prepedidoId}})).status,403);
  assert.equal((await c.request(root+'/reconsultar-psp',{
   method:'POST',admin:true,data:{eventoId:'evt_FAKE123'}
  })).status,403);
