@@ -30,7 +30,8 @@ function renderizarPreviaFilas(p){
  for(const item of p.hipoteseFilaB||[]){
   const row=elem('div');row.className='produto-admin-item';
   row.append(elem('strong',item.estado),
-   elem('small','Pedido '+item.prepedidoId+' · Titular '+item.titularId));
+   elem('small','Pedido '+item.prepedidoId+' · Titular '+item.titularId+
+    ' · Pré-adesão fictícia: '+(item.preAdesaoFicticiaRegistrada?'registrada':'não registrada')));
   area.append(row);
  }
 }

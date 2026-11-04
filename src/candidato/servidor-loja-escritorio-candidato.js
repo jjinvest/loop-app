@@ -356,9 +356,11 @@ function criarAppLojaEscritorioCandidato({banco,repositorioCatalogo,
   catch(e){return res.status(503).json({erro:e.codigo||'PROJECAO_INDISPONIVEL'});}
  });
  const sinalizacaoVitrine=createVitrineCandidata({app,banco,catalogo,contas,intencoes,prePedidos,autorizarOperador});
- const projecaoFilas=new ProjecaoFilasCandidatoSandbox({banco,posicoes,sinalizacao:sinalizacaoVitrine});
  const preAdesao=new PreAdesaoSandboxCandidatoSQLite({
   banco,posicoes,sinalizacao:sinalizacaoVitrine,cpf,termosVersao
+ });
+ const projecaoFilas=new ProjecaoFilasCandidatoSandbox({
+  banco,posicoes,sinalizacao:sinalizacaoVitrine,preAdesao
  });
  // Pré-adesão de ensaio NÃO ativa posições, apenas registra um checkpoint
  // persistido, verificando de novo PSP, oferta histórica, CPF e termos LAB.

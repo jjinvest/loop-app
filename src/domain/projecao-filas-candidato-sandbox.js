@@ -10,7 +10,7 @@ const MAX_LEITURA=1000;
 const TITULAR=/^[A-Za-z0-9_-]{6,80}$/;
 function erro(codigo){const e=new Error(codigo);e.codigo=codigo;throw e;}
 class ProjecaoFilasCandidatoSandbox{
- constructor({banco,posicoes,sinalizacao=null}={}){
+ constructor({banco,posicoes,sinalizacao=null,preAdesao=null}={}){
   if(process.env.NODE_ENV==='production')erro('PROJECAO_FILAS_PROIBIDA_PRODUCAO');
   if(typeof banco?.prepare!=='function'||typeof banco?.exec!=='function')
    erro('BANCO_SQLITE_OBRIGATORIO');
@@ -21,7 +21,11 @@ class ProjecaoFilasCandidatoSandbox{
     (sinalizacao?.db!==banco||
      typeof sinalizacao?.consultarFotografiaPrepedido!=='function'))
    erro('FOTOGRAFIA_HISTORICA_OBRIGATORIA');
-  this.banco=banco;this.posicoes=posicoes||null;this.sinalizacao=sinalizacao;
+  if(preAdesao!==null&&
+     (preAdesao.db!==banco||typeof preAdesao.buscarLinha!=='function'))
+   erro('PRE_ADESAO_FONTE_DIVERGENTE');
+  this.banco=banco;this.posicoes=posicoes||null;
+  this.sinalizacao=sinalizacao;this.preAdesao=preAdesao;
  }
  consultar({titularId=null}={}){
   if(process.env.NODE_ENV==='production')erro('PROJECAO_FILAS_PROIBIDA_PRODUCAO');
@@ -70,6 +74,7 @@ class ProjecaoFilasCandidatoSandbox{
     registro.conferenciaPSPConcluida===true&&
     registro.exigeRevisaoManual!==true&&
     pendente?.estado==='PENDENTE_DE_CONFIRMACAO_CLIENTE_SANDBOX');
+   const preAdesaoRegistrada=!!this.preAdesao?.buscarLinha(linha.prepedidoId,linha.titularId);
    const foto=this.sinalizacao.consultarFotografiaPrepedido({
     prepedidoId:linha.prepedidoId,titularId:linha.titularId});
    let estado,ordemHipotetica=null;
@@ -98,7 +103,8 @@ class ProjecaoFilasCandidatoSandbox{
      id:linha.id,prepedidoId:linha.prepedidoId,
      ...(titularId===null?{titularId:linha.titularId}:{}),
      estado,ordemHipotetica,cpfETermosHomologados:false,
-     historicoDaClassificacaoComprovado:Boolean(foto)
+     historicoDaClassificacaoComprovado:Boolean(foto),
+     preAdesaoFicticiaRegistrada:preAdesaoRegistrada
     });
   }
   if(titularId!==null){
