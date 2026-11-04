@@ -106,7 +106,7 @@ const {once}=require('node:events');
    await page.locator('#produtoDoCatalogo').selectOption('curso-extra-'+item.nick.toLowerCase());
    await page.locator('#quantidadeDoCatalogo').fill('2');
    await page.locator('#calcularCotacao').click();
-   await page.locator('#cotacao').filter({hasText:/R\$ 198,00/}).waitFor();
+   await page.locator('#cotacao').filter({hasText:/R\$\s?198,00/}).waitFor();
    await page.locator('#prepararPedido').click();
    await page.locator('#listaPedidos article.pedido').nth(1).waitFor();
    assert.equal(await page.locator('#listaPedidos article.pedido').count(),2);
