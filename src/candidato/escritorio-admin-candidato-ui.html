@@ -76,6 +76,17 @@
 <p class="subtexto">Somente posições fictícias com recebimento confirmado por reconsulta independente entram nesta hipótese. A classificação histórica da oferta ainda não foi homologada; nenhum participante entra no motor real.</p>
 <div id="resumoPreviaFilas" aria-live="polite"></div>
 <div id="posicoesPreviaFilas"></div>
+<h3>Pré-adesão fictícia · checkpoint persistente de laboratório</h3>
+<p class="subtexto">Digite o ID de um pré-pedido de teste já conciliado no Asaas Sandbox. O registro exige também CPF e termos de demonstração previamente aceitos pelo titular, além de oferta histórica verde qualificada. Não gera posição ativa, crédito, bônus nem libera catraca.</p>
+<form id="formPreAdesao">
+<label for="preAdesaoId">ID do pré-pedido</label>
+<input id="preAdesaoId" placeholder="hom-..." pattern="hom-[a-f0-9-]{36}" required maxlength="40">
+<div class="linha">
+<button id="conferirPreAdesao" type="button">Conferir requisitos</button>
+<button id="registrarPreAdesao" type="submit" class="primario">Registrar pré-adesão fictícia</button>
+</div>
+</form>
+<p id="preAdesaoStatus" class="subtexto" role="status" aria-live="polite"></p>
 </section>
 <section class="painel" aria-labelledby="alertasTitulo">
 <div class="linha"><h2 id="alertasTitulo">Revisões de pagamentos de teste</h2><span id="resumoAlertas" class="subtexto"></span></div>
