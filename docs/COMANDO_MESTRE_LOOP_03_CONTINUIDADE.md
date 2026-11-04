@@ -2260,3 +2260,14 @@ Regras do calculo: CINZA e compra comum sem progresso LOOP; VERDE conta somente 
 Evidencia de seguranca/integracao: https://github.com/jjinvest/loop-app/actions/runs/41814727301 . Teste de navegador PC/celular deve ser conferido na execucao mais recente antes de declarar aceite visual. Documento: docs/QUALIFICACAO_SIMULADA_VITRINE_ADMIN_04NOV2026.md.
 
 **Evidências concluídas em 04/11/2026:** [segurança e cenários de regra — SUCCESS](https://github.com/jjinvest/loop-app/actions/runs/41814727301); [navegador real PC e celular, simulador do Administrador e retorno no carrinho — SUCCESS](https://github.com/jjinvest/loop-app/actions/runs/41814788237); [capturas reais de navegador](https://github.com/jjinvest/loop-app/actions/runs/41814788237/artifacts/13314690186). A execução do navegador validou o código anterior ao registro documental, sem merge/deploy e sem posições financeiras reais.
+
+
+### 198 — Fotografia histórica e ponte de prévia da Fila B (04/11/2026)
+
+O candidato local foi conectado ao motor **apenas para uma projeção hipotética em memória**, sem ativação de fila, tabuleiro ou financiamento. Um registro fictício de posição do Asaas Sandbox só pode aparecer na hipótese da Fila B após conferência independente de pagamento, titular e valor R$ 250, e após verificar **fotografia da oferta** do momento do pré-pedido.
+
+O método de preparo do pré-pedido grava as classificações por produto na **mesma transação SQLite** que congela preço e itens. A fotografia é imutável e inclui cor, quantidade, mínimo configurado e revisão. **Não reclassificar compras antigas** quando o administrador mudar as cores. Compras sem essa fotografia antiga, cinzas ou com evento especial pendente não são simuladas como qualificadas. Pagamento revertido retira a posição da prévia imediatamente e conserva o histórico.
+
+O Escritório do Administrador mostra contadores e bloqueios de PSP, oferta e limite de 10; o Escritório do Cliente mostra só registros do próprio titular. A projeção chama `MotorFilas` **em memória**, com adesão pendente; não movimenta motor persistido, contabilidade, catraca, bônus, cofre, saque ou posição real. Nenhum HTTP GET consulta o PSP externo. Produção continua bloqueada; PR #1 DRAFT, sem merge/deploy ou GO do Marco Zero.
+
+Detalhes: docs/PROJECAO_FILA_B_FOTOGRAFIA_OFERTA_CANDIDATO_04NOV2026.md
