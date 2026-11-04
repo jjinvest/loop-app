@@ -33,7 +33,9 @@ function createVitrineCandidata({app,banco,catalogo,contas,intencoes,prePedidos,
    'src="/staging/assets/educacao-carrinho.js"')
   .replace('src="/laboratorio/loja.js"','src="/staging/assets/loja-aprovada.js"')
   .replace('<main class="loja-loop">',
-   '<main class="loja-loop"><p class="akitemm-estado">PRÉVIA LOCAL: sem pagamentos, posições, bônus, entregas ou giros reais. As cores são demonstrativas.</p>');
+   '<main class="loja-loop"><p class="akitemm-estado">PRÉVIA LOCAL: sem pagamentos, posições, bônus, entregas ou giros reais. As cores são demonstrativas.</p>')
+  .replace('<p id="orientacaoMinimoLoop" role="status"></p>',
+   '<p id="orientacaoMinimoLoop" role="status"></p><p id="akitemmAnaliseQualificacao" role="status" class="akitemm-regra-referencia">Simulação sem benefícios financeiros; adicione itens para conferir.</p>');
  if(original===html||html.includes('src="/laboratorio/loja.js"'))
   fail('MARCADOR_HTML_VITRINE_DESATUALIZADO');
  const origemJs=fs.readFileSync(path.join(DIR,'loja-cliente-demo.js'),'utf8');
@@ -52,7 +54,11 @@ function createVitrineCandidata({app,banco,catalogo,contas,intencoes,prePedidos,
    'const catalogo=[],carrinho=new Map();let csrfCandidato=null,chavePedidoCandidato=null;')
   .replace(ant,novo)
   .replace('const data=await response.json();',
-   "const data=await response.json();\n  if(caminho==='minha-conta'&&response.ok)csrfCandidato=data.csrf||null;\n  if(caminho==='loja/pedidos'&&(response.ok||[400,409].includes(response.status)))chavePedidoCandidato=null;")
+   "const data=await response.json();\n  if(caminho==='minha-conta'&&response.ok){csrfCandidato=data.csrf||null;atualizarPreviaQualificacao();}\n  if(caminho==='loja/pedidos'&&(response.ok||[400,409].includes(response.status)))chavePedidoCandidato=null;")
+  .replace('function atualizarCarrinho(){',"let seqPrevia=0;\n async function atualizarPreviaQualificacao(){\n  const id=++seqPrevia;\n  const campo=el('akitemmAnaliseQualificacao');\n  if(!campo)return;\n  if(!carrinho.size){campo.textContent='Prévia de laboratório. Adicione produtos; nenhuma posição será criada.';return;}\n  if(!csrfCandidato){campo.textContent='Conferindo sessão para simulação...';return;}\n  try{\n   const response=await fetch('/staging/vitrine/simular-qualificacao',{\n    method:'POST',credentials:'same-origin',cache:'no-store',\n    headers:{'Content-Type':'application/json','X-LOOP-LAB':'participante',\n     'X-Checkout-Csrf':csrfCandidato},\n    body:JSON.stringify({itens:[...carrinho].map(([produtoId,quantidade])=>({produtoId,quantidade}))})\n   });\n   const dados=await response.json();\n   if(id!==seqPrevia)return;\n   campo.textContent=response.ok?dados.mensagem:\n    'Prévia não disponível: '+(dados.erro||response.status)+'. Nenhum benefício foi criado.';\n  }catch{if(id===seqPrevia)campo.textContent='Prévia temporariamente indisponível. Nenhum benefício foi criado.';}\n }\n function atualizarCarrinho(){atualizarPreviaQualificacao();")
+  .replace('if(quantidade<100)','if(quantidade<50)')
+  .replace('if(qtd>=100)','if(qtd>=50)')
+  .replace('Máximo de 100 unidades por produto.','Máximo de 50 unidades por produto neste laboratório.')
   .replace('const especial=!!p.eventoId&&p.posicoesPorPedidoLoop>1;',
    "const especial=p.classeVisual==='EVENTO';")
   .replace(marcador,
