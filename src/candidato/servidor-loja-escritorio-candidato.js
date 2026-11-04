@@ -33,6 +33,7 @@ const {DepartamentosAdministradorCandidato}=require('../domain/escritorio-admin-
 const {CatalogoAdminCandidatoSQLite}=require('../domain/catalogo-admin-candidato-sqlite');
 const {createVitrineCandidata}=require('./vitrine-aprovada-candidato');
 const {ProjecaoFilasCandidatoSandbox}=require('../domain/projecao-filas-candidato-sandbox');
+const {PreAdesaoSandboxCandidatoSQLite}=require('../domain/pre-adesao-sandbox-candidato-sqlite');
 const {criarRouterRascunhosCheckoutStaging}=require('../routes/rascunhos-checkout-staging');
 const {criarRouterPrePedidosCheckoutStaging}=require('../routes/prepedidos-checkout-staging');
 const {criarAutorizacao,localSeguro}=require('../routes/admin-catalogo-laboratorio');
@@ -356,6 +357,47 @@ function criarAppLojaEscritorioCandidato({banco,repositorioCatalogo,
  });
  const sinalizacaoVitrine=createVitrineCandidata({app,banco,catalogo,contas,intencoes,prePedidos,autorizarOperador});
  const projecaoFilas=new ProjecaoFilasCandidatoSandbox({banco,posicoes,sinalizacao:sinalizacaoVitrine});
+ const preAdesao=new PreAdesaoSandboxCandidatoSQLite({
+  banco,posicoes,sinalizacao:sinalizacaoVitrine,cpf,termosVersao
+ });
+ // Pré-adesão de ensaio NÃO ativa posições, apenas registra um checkpoint
+ // persistido, verificando de novo PSP, oferta histórica, CPF e termos LAB.
+ app.get('/staging/escritorio-unificado/pre-adesao/:id',
+  autorizarOperador,(req,res)=>{
+   if(!operacoesSandboxAutorizadas)
+    return res.status(403).json({erro:'OPERACAO_SANDBOX_DESATIVADA'});
+   try{
+    const r=preAdesao.avaliar({prepedidoId:req.params.id});
+    return r?res.json(r):res.status(404).json({erro:'PREPEDIDO_NAO_ENCONTRADO'});
+   }catch(e){
+    return res.status(400).json({erro:e.codigo||'PRE_ADESAO_INDISPONIVEL'});
+   }
+  });
+ app.post('/staging/escritorio-unificado/preparar-pre-adesao',
+  autorizarOperador,(req,res)=>{
+   if(!operacoesSandboxAutorizadas)
+    return res.status(403).json({erro:'OPERACAO_SANDBOX_DESATIVADA'});
+   if(!req.is('application/json')||!req.body||Array.isArray(req.body)||
+      Object.keys(req.body).join(',')!=='prepedidoId')
+    return res.status(400).json({erro:'PREPEDIDO_INVALIDO'});
+   try{
+    const r=preAdesao.registrar({prepedidoId:req.body.prepedidoId,
+     autorizado:true});
+    return res.status(r.repetido?200:201).json(r);
+   }catch(e){
+    if(e.codigo==='PREPEDIDO_NAO_ENCONTRADO')return res.status(404)
+     .json({erro:e.codigo});
+    if(e.codigo?.startsWith('PRE_ADESAO_BLOQUEADA_'))
+     return res.status(409).json({erro:e.codigo});
+    return res.status(400).json({erro:e.codigo||'PRE_ADESAO_INDISPONIVEL'});
+   }
+  });
+ app.get('/staging/minhas-pre-adesoes',(req,res)=>{
+  const s=contas.sessao(req);
+  if(!s)return res.status(401).json({erro:'SESSAO_AUSENTE'});
+  try{return res.json(preAdesao.listarTitular(s.titularId));}
+  catch(e){return res.status(503).json({erro:e.codigo||'CONSULTA_INDISPONIVEL'});}
+ });
  // O catálogo do cliente usa EXATAMENTE a mesma fonte da cotação.
  app.get('/staging/catalogo',async(_req,res)=>{
   try{return res.json(await catalogo.publicos());}
@@ -629,6 +671,6 @@ function criarAppLojaEscritorioCandidato({banco,repositorioCatalogo,
   erro:'CANDIDATO_INDISPONIVEL',financeiroReal:false
  }));
  return {app,contas,cpf,provasEmail,intencoes,prePedidos,ponte,
-  inbox,worker,posicoes,projecaoFilas,entregas,integridade,missoes,catalogo,sinalizacaoVitrine,departamentosAdmin,banco};
+  inbox,worker,posicoes,projecaoFilas,preAdesao,entregas,integridade,missoes,catalogo,sinalizacaoVitrine,departamentosAdmin,banco};
 }
 module.exports={criarAppLojaEscritorioCandidato};
