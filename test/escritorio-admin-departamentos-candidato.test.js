@@ -30,6 +30,12 @@ test('departamentos, filtros, paginação, triagem idempotente e bloqueio financ
   return {status:r.status,payload:await r.json().catch(()=>({}))};
  };
  const root='/staging/escritorio-unificado';
+ assert.equal((await request(root+'/posicoes-historico',{token:null})).status,401);
+ assert.equal((await request(root+'/posicoes-historico?cursor=invalido')).status,400);
+ assert.equal((await request(root+'/posicoes-historico?cursor=a&cursor=b')).status,400);
+ const historico=await request(root+'/posicoes-historico');
+ assert.equal(historico.status,200);assert.deepEqual(historico.payload.itens,[]);
+ assert.equal(historico.payload.posicoesReaisCriadas,0);
  assert.equal((await request(root+'/departamentos',{token:null})).status,401);
  assert.equal((await request(root+'/alertas',{token:null})).status,401);
  assert.equal((await request(root+'/alertas/qualquer/abrir-missao',{method:'POST',body:{},token:null})).status,401);

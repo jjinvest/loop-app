@@ -26,6 +26,46 @@ class ProjecaoFilasCandidatoSandbox{
   this.banco=banco;this.posicoes=posicoes||null;
   this.sinalizacao=sinalizacao;this.preAdesao=preAdesao;
  }
+ consultarPagina({cursor=null}={}){
+  if(process.env.NODE_ENV==='production')erro('PROJECAO_FILAS_PROIBIDA_PRODUCAO');
+  let apos=0,ate=0;
+  if(cursor!==null){
+   if(typeof cursor!=='string'||cursor.length>180||!/^[A-Za-z0-9_-]+$/.test(cursor))
+    erro('CURSOR_POSICOES_INVALIDO');
+   try{
+    const c=JSON.parse(Buffer.from(cursor,'base64url').toString('utf8'));
+    if(!Number.isSafeInteger(c.apos)||!Number.isSafeInteger(c.ate)||
+       c.apos<0||c.ate<c.apos)erro('CURSOR_POSICOES_INVALIDO');
+    ({apos,ate}=c);
+   }catch{erro('CURSOR_POSICOES_INVALIDO');}
+  }else if(this.posicoes){
+   ate=this.banco.prepare('SELECT COALESCE(MAX(rowid),0) n FROM akitemm_prepedido_posicoes_pendentes_sandbox_staging').get().n;
+  }
+  const linhas=this.posicoes?this.banco.prepare(
+   'SELECT rowid AS sequencia,id,prepedido_id AS prepedidoId,titular_id AS titularId '+
+   'FROM akitemm_prepedido_posicoes_pendentes_sandbox_staging WHERE rowid>? AND rowid<=? ORDER BY rowid LIMIT 26'
+  ).all(apos,ate):[];
+  const pagina=linhas.slice(0,25);
+  const itens=pagina.map(linha=>{
+   const pedido=consultarPedido({banco:this.banco,prepedidoId:linha.prepedidoId,titularId:linha.titularId});
+   const pendente=this.posicoes.consultar({titularId:linha.titularId,prepedidoId:linha.prepedidoId});
+   const foto=this.sinalizacao.consultarFotografiaPrepedido({prepedidoId:linha.prepedidoId,titularId:linha.titularId});
+   const psp=Boolean(pedido?.valorCentavos===25000&&pedido.posicoesFicticiasAptasAgora===1&&
+    pedido.conferenciaPSPConcluida===true&&pedido.exigeRevisaoManual!==true&&
+    pendente?.estado==='PENDENTE_DE_CONFIRMACAO_CLIENTE_SANDBOX');
+   return {id:linha.id,prepedidoId:linha.prepedidoId,titularId:linha.titularId,
+    estado:!psp?'EXIGE_REVISAO_PSP':!foto?'SEM_FOTOGRAFIA_HISTORICA':
+     foto.totalCentavos!==25000||!foto.podeSimularFilaBAzul?'OFERTA_HISTORICA_NAO_QUALIFICADA':
+      'PSP_E_OFERTA_CONFERIDOS_SEM_ATIVACAO',
+    preAdesaoFicticiaRegistrada:!!this.preAdesao?.buscarLinha(linha.prepedidoId,linha.titularId)};
+  });
+  const haMais=linhas.length>25;
+  return {itens,limite:25,haMais,
+   proximoCursor:haMais?Buffer.from(JSON.stringify({apos:pagina.at(-1).sequencia,ate})).toString('base64url'):null,
+   escopo:'HISTORICO_PAGINADO_SEM_ORDEM_DE_FILA',estadosPSPVigentesNestaLeitura:true,
+   posicoesReaisCriadas:0,consultaPSPExecutada:false,filaRealAlterada:false,
+   motivo:'Histórico fictício por ordem de registro. Não calcula capacidade nem ordem global da fila. Novos registros aparecem ao atualizar.'};
+ }
  consultar({titularId=null}={}){
   if(process.env.NODE_ENV==='production')erro('PROJECAO_FILAS_PROIBIDA_PRODUCAO');
   if(titularId!==null&&(typeof titularId!=='string'||!TITULAR.test(titularId)))

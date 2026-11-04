@@ -38,6 +38,37 @@ function seed(b,n,titular='titular_laboratorio'){
   .run('pos-'+n,id,titular,data);
  return {id,pay,evt,titular};
 }
+test('historico paginado cruza 1000, fixa fronteira de insercao e reavalia PSP sem escrever',()=>{
+ const b=new DatabaseSync(':memory:');schema(b);
+ try{
+  const xs=Array.from({length:1003},(_,i)=>seed(b,i+1));
+  const fonte=new ProjecaoFilasCandidatoSandbox({banco:b,
+   posicoes:{banco:b,consultar:()=>({estado:'PENDENTE_DE_CONFIRMACAO_CLIENTE_SANDBOX'})},
+   sinalizacao:{db:b,consultarFotografiaPrepedido:()=>({totalCentavos:25000,podeSimularFilaBAzul:true})}});
+  const inicial=fonte.consultarPagina();
+  assert.equal(inicial.itens.length,25);assert.equal(inicial.haMais,true);
+  seed(b,1004);
+  b.prepare("UPDATE akitemm_prepedido_asaas_consultas_staging SET status_asaas='REFUNDED' WHERE prepedido_id=?").run(xs[25].id);
+  const antes=b.prepare('SELECT total_changes() n').get().n;
+  b.exec('PRAGMA query_only=ON');
+  let pagina=inicial,ids=[];
+  do{
+   ids.push(...pagina.itens.map(x=>x.id));
+   assert.ok(pagina.itens.length<=25);
+   assert.equal(pagina.posicoesReaisCriadas,0);assert.equal(pagina.consultaPSPExecutada,false);
+   if(!pagina.haMais)break;
+   pagina=fonte.consultarPagina({cursor:pagina.proximoCursor});
+   if(ids.length===25)assert.equal(pagina.itens[0].estado,'EXIGE_REVISAO_PSP');
+  }while(true);
+  assert.equal(ids.length,1003);assert.equal(new Set(ids).size,1003);
+  assert.equal(ids.includes('pos-1004'),false);
+  assert.equal(pagina.proximoCursor,null);
+  assert.deepEqual(fonte.consultarPagina().itens.map(x=>x.id),inicial.itens.map(x=>x.id));
+  assert.equal(b.prepare('SELECT total_changes() n').get().n,antes);
+  for(const cursor of ['',[],{},'***',Buffer.from('{"apos":-1,"ate":2}').toString('base64url')])
+   assert.throws(()=>fonte.consultarPagina({cursor}),/CURSOR_POSICOES_INVALIDO/);
+ }finally{b.close();}
+});
 test('resumo global coincide com o diagnostico individual fora da amostra e apos reabrir SQLite',t=>{
  const pasta=fs.mkdtempSync(path.join(os.tmpdir(),'loop-resumo-psp-'));
  t.after(()=>fs.rmSync(pasta,{recursive:true,force:true}));

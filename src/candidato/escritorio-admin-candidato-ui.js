@@ -3,6 +3,42 @@
 const $=id=>document.getElementById(id),elem=(tag,value)=>{const x=document.createElement(tag);if(value!==undefined)x.textContent=value;return x;};
 let auth=null,chave=null,paginaMissoes=0,paginaAlertas=0,paginaProdutos=0,edicaoProduto=null,chaveProduto=null,sinalizacaoAtual=null;
 const dizer=x=>$('estado').textContent=x;
+let cursoresPosicoes=[null],indicePosicoes=0,proximoCursorPosicoes=null;
+async function carregarHistoricoPosicoes(){
+ const cursor=cursoresPosicoes[indicePosicoes];
+ const p=await api('/posicoes-historico'+(cursor?'?cursor='+encodeURIComponent(cursor):''));
+ const area=$('historicoPosicoes');area.replaceChildren();
+ $('resumoHistoricoPosicoes').textContent='Página '+(indicePosicoes+1)+' · '+p.itens.length+' registro(s). '+p.motivo;
+ for(const item of p.itens){
+  const row=elem('div');row.className='produto-admin-item';
+  row.append(elem('strong',item.estado),elem('small','Pedido '+item.prepedidoId+' · Titular '+item.titularId));
+  area.append(row);
+ }
+ proximoCursorPosicoes=p.proximoCursor;
+ $('historicoPosicoesAnterior').disabled=indicePosicoes===0;
+ $('historicoPosicoesProximo').disabled=!p.haMais;
+}
+async function navegarHistoricoPosicoes(destino){
+ const botoes=['historicoPosicoesAnterior','historicoPosicoesProximo','historicoPosicoesAtualizar'];
+ botoes.forEach(id=>$(id).disabled=true);
+ const anterior={indice:indicePosicoes,cursores:[...cursoresPosicoes]};
+ try{
+  if(destino==='atualizar'){cursoresPosicoes=[null];indicePosicoes=0;}
+  else if(destino==='proximo'&&proximoCursorPosicoes){
+   cursoresPosicoes[++indicePosicoes]=proximoCursorPosicoes;
+  }else if(destino==='anterior')indicePosicoes=Math.max(0,indicePosicoes-1);
+  await carregarHistoricoPosicoes();
+ }catch(e){
+  indicePosicoes=anterior.indice;cursoresPosicoes=anterior.cursores;
+  proximoCursorPosicoes=null;
+  $('historicoPosicoes').replaceChildren();
+  $('resumoHistoricoPosicoes').textContent='Histórico indisponível: '+e.message;
+ }finally{
+  $('historicoPosicoesAtualizar').disabled=false;
+  $('historicoPosicoesAnterior').disabled=indicePosicoes===0;
+  $('historicoPosicoesProximo').disabled=!proximoCursorPosicoes;
+ }
+}
 async function api(path,{method='GET',body,idempotencia}={}){
  const r=await fetch('/staging/escritorio-unificado'+path,{
   method,cache:'no-store',credentials:'omit',
@@ -161,7 +197,7 @@ async function carregarPreviaFilas(){
   // nem transformar uma leitura indisponivel em zero posicoes.
   if(e.message!=='MAXIMO_ANALISE_SEGURA_EXCEDIDO')throw e;
   return {leituraLimitada:true,
-   motivo:'Prévia de posições indisponível acima de 1.000 registros. A consulta completa exige paginação.'};
+   motivo:'Prévia global indisponível acima de 1.000 registros. Consulte o histórico paginado abaixo; ele não representa ordem de fila.'};
  }
 }
 async function atualizar(){
@@ -171,7 +207,7 @@ async function atualizar(){
  const [e,m,d,alertas,produtos,previa]=await Promise.all([
   api(''),api('/missoes?'+q.toString()),api('/departamentos'),
   api('/alertas?pagina='+paginaAlertas),api('/produtos?pagina='+paginaProdutos),
-  carregarPreviaFilas()
+  carregarPreviaFilas(),carregarHistoricoPosicoes()
  ]);
  $('indicadores').replaceChildren(
   linha('Contas',e.contasCandidatas),
@@ -252,10 +288,15 @@ $('formAcesso').addEventListener('submit',async e=>{
 });
 $('sair').addEventListener('click',()=>{
  auth=null;$('acesso').hidden=false;$('administracao').hidden=true;
+ cursoresPosicoes=[null];indicePosicoes=0;proximoCursorPosicoes=null;
+ $('historicoPosicoes').replaceChildren();$('resumoHistoricoPosicoes').textContent='';
  $('listaMissoes').replaceChildren();dizer('Acesso encerrado.');
 });
 $('atualizar').addEventListener('click',()=>atualizar().catch(e=>dizer(e.message)));
 $('recarregarPreviaFilas').addEventListener('click',()=>atualizar().catch(e=>dizer(e.message)));
+for(const [id,destino] of [['historicoPosicoesAtualizar','atualizar'],['historicoPosicoesAnterior','anterior'],['historicoPosicoesProximo','proximo']]){
+ $(id).addEventListener('click',()=>navegarHistoricoPosicoes(destino));
+}
 
 function mostrarPreAdesao(dados){
  const x=$('preAdesaoStatus');

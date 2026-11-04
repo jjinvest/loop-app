@@ -57,4 +57,7 @@ jobs:
             artifacts/convergencia-psp-cliente-celular.png
             artifacts/convergencia-psp-admin-pc.png
             artifacts/convergencia-psp-admin-celular.png
+            artifacts/historico-posicoes-paginado-pc.png
+            artifacts/historico-posicoes-paginado-celular.png
           if-no-files-found: warn
+

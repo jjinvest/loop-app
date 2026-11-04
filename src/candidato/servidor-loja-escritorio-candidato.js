@@ -350,6 +350,12 @@ function criarAppLojaEscritorioCandidato({banco,repositorioCatalogo,
   }catch(e){return res.status(400).json({erro:e.codigo||'COTACAO_INVALIDA'});}
  });
  const autorizarOperador=criarAutorizacao({segredo:segredoOperador});
+ app.get('/staging/escritorio-unificado/posicoes-historico',autorizarOperador,(req,res)=>{
+  res.set('Cache-Control','no-store');
+  try{return res.json(projecaoFilas.consultarPagina({cursor:req.query.cursor??null}));}
+  catch(e){return res.status(e.codigo==='CURSOR_POSICOES_INVALIDO'?400:503)
+   .json({erro:e.codigo||'HISTORICO_POSICOES_INDISPONIVEL'});}
+ });
  // Consulta isolada, sem novo evento PSP nem movimento de motor.
  app.get('/staging/escritorio-unificado/projecao-filas',autorizarOperador,(_req,res)=>{
   try{return res.json(projecaoFilas.consultar());}

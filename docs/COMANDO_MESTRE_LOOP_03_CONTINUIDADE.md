@@ -2328,3 +2328,14 @@ Complemento da seção 204: a consulta de posições usa um único SELECT com li
 **Prova visual e funcional:** PC/celular do Cliente e Admin convergem ao perder a confirmação vigente do PSP, mantendo histórico e sem rede ou gravações nas leituras. A massa artificial de 1.001 registros foi descartada por rollback; o Cliente não lê outros titulares e os 12 departamentos do Admin permanecem acessíveis quando a prévia global está indisponível. [Capturas reais, artifact 13366885800](https://github.com/jjinvest/loop-app/actions/runs/41917950570/artifacts/13366885800). [Relatório completo](./CONVERGENCIA_PSP_E_ISOLAMENTO_ESCRITORIOS_04NOV2026.md).
 
 Nenhuma simulação de 10.000 foi repetida, nenhum e-mail/PSP externo foi acionado por esses testes e nenhuma implantação comercial foi feita. Permanecem integração definitiva ao motor, identidade/e-mail/pagamento comerciais e demais homologações externas. PR #1 DRAFT e Marco Zero bloqueado. O commit posterior de registro documental não modifica o código comprovado acima.
+
+
+### 206 — Histórico administrativo paginado de posições fictícias (04/11/2026)
+
+Continuidade conferida no HEAD 2be9f487dc40bea022697a93da86cfe36ecfbb84, preservando as seções 204–205. Adicionada consulta autenticada de operador `GET /staging/escritorio-unificado/posicoes-historico`, com 25 registros por página e leitura SQL limitada a 26. Cursor por sequência SQLite fixa a fronteira inicial: novas inserções aparecem em nova navegação iniciada por Atualizar, sem deslocar páginas em andamento. Cada página reavalia PSP vigente e fotografia histórica pelo mesmo relatório usado no Cliente. Não consulta rede nem grava no banco. Cursor inválido responde 400; ausência de autenticação continua 401.
+
+O painel aprovado ganhou Anterior, Próxima e Atualizar histórico dentro do quadro de posições. O histórico paginado é consulta de registros, NÃO simulação global da Fila B: não informa ordem de fila ou capacidade por amostra. A prévia global anterior mantém o teto de 1.000; sua indisponibilidade não impede a leitura paginada nem os 12 departamentos. A consulta individual do Cliente permanece isolada por titular.
+
+Validação local: 23 cenários focados aprovados, incluindo percurso de 1.003 registros sem repetição/omissão, exclusão de inserção posterior à fronteira, reversão PSP entre páginas, SQLite query_only sem gravação, autenticação e cursores inválidos. Roteiro Playwright ampliado para navegar Próxima/Anterior no Admin em PC/celular com massa acima do teto; CI remoto e capturas desta alteração ainda devem ser conferidos antes de declarar validação visual.
+
+Pendências: prévia global completa com contagem de capacidade/ordem, integração definitiva ao motor persistente, identidade/e-mail/pagamentos comerciais e homologações externas. Consulta paginada não ativa posições, não cria direitos, não dispara giro, cofre, bônus ou saque. PR #1 DRAFT; Marco Zero continua fechado.

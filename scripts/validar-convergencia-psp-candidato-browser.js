@@ -105,6 +105,17 @@ const {COOKIE}=require('../src/domain/conta-unica-candidata-sqlite');
      assert.equal(await admin.locator('#quadroDepartamentos button').count(),12);
      assert.equal((await conciliados.innerText()).trim(),'0');
      assert.equal(await admin.locator('#administracao').isVisible(),true);
+     await admin.locator('#historicoPosicoesAtualizar').click();
+     await admin.locator('#resumoHistoricoPosicoes').filter({hasText:/Página 1 · 25 registro/}).waitFor();
+     const primeiro=await admin.locator('#historicoPosicoes').innerText();
+     await admin.locator('#historicoPosicoesProximo').click();
+     await admin.locator('#resumoHistoricoPosicoes').filter({hasText:/Página 2 · 25 registro/}).waitFor();
+     assert.notEqual(await admin.locator('#historicoPosicoes').innerText(),primeiro);
+     await admin.locator('#historicoPosicoesAnterior').click();
+     await admin.locator('#resumoHistoricoPosicoes').filter({hasText:/Página 1 · 25 registro/}).waitFor();
+     assert.equal(await admin.locator('#historicoPosicoes').innerText(),primeiro);
+     await admin.locator('#historicoPosicoes').scrollIntoViewIfNeeded();
+     await admin.screenshot({path:'artifacts/historico-posicoes-paginado-'+nome+'.png',fullPage:true});
      const respostaCliente=cliente.waitForResponse(r=>
       r.url().endsWith('/staging/minha-previa-filas')&&r.status()===200);
      await cliente.locator('#atualizarPedidos').click();
