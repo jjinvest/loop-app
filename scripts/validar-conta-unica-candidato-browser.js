@@ -91,6 +91,8 @@ const {once}=require('node:events');
    await admin.locator('#listaProdutosAdmin .produto-admin-item')
     .filter({hasText:'curso-homologacao-250'})
     .getByRole('button',{name:'Cor na loja'}).click();
+   await admin.locator('#resultadoSinalizacaoAdmin')
+    .filter({hasText:/Configuração visual carregada/}).waitFor();
    await admin.locator('#sinalizacaoClasse').selectOption('VERDE');
    await admin.locator('#sinalizacaoMinimo').fill('1');
    await admin.locator('#formSinalizacaoAdmin button[type=submit]').click();
