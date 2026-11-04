@@ -232,6 +232,37 @@ $('sair').addEventListener('click',()=>{
 $('atualizar').addEventListener('click',()=>atualizar().catch(e=>dizer(e.message)));
 $('recarregarPreviaFilas').addEventListener('click',()=>atualizar().catch(e=>dizer(e.message)));
 
+function mostrarPreAdesao(dados){
+ const x=$('preAdesaoStatus');
+ const resumo=dados.motivos?.length?
+  'Bloqueios: '+dados.motivos.join(', '):
+  'Requisitos de ensaio conferidos, sem ativação real';
+ x.textContent='Estado: '+dados.estado+' · '+resumo+
+  '. CPF verificado externamente: não. Posições reais criadas: 0.';
+}
+$('conferirPreAdesao').addEventListener('click',async e=>{
+ const btn=e.currentTarget;btn.disabled=true;
+ try{
+  const id=$('preAdesaoId').value;
+  if(!/^hom-[a-f0-9-]{36}$/.test(id))throw Error('PREPEDIDO_INVALIDO');
+  mostrarPreAdesao(await api('/pre-adesao/'+encodeURIComponent(id)));
+ }catch(err){$('preAdesaoStatus').textContent='Consulta bloqueada: '+err.message;}
+ finally{btn.disabled=false;}
+});
+$('formPreAdesao').addEventListener('submit',async e=>{
+ e.preventDefault();
+ const btn=e.submitter;btn.disabled=true;
+ try{
+  const r=await api('/preparar-pre-adesao',{
+   method:'POST',body:{prepedidoId:$('preAdesaoId').value}
+  });
+  mostrarPreAdesao(r);
+  await atualizar();
+ }catch(err){$('preAdesaoStatus').textContent='Registro bloqueado: '+err.message;}
+ finally{btn.disabled=false;}
+});
+
+
 $('recarregarProdutos').addEventListener('click',()=>atualizarProdutos().catch(e=>dizer(e.message)));
 $('sinalizacaoClasse').addEventListener('change',()=>{
  if($('sinalizacaoClasse').value==='CINZA')$('sinalizacaoMinimo').value='1';
