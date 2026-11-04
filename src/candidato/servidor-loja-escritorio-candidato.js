@@ -28,6 +28,7 @@ const {IntegridadeTitularCandidatoSQLite}=
 const {auditarRelacoesPspCandidato}=
  require('../domain/auditoria-relacional-psp-candidato-sqlite');
 const {consultarEscritorioHomologacao}=require('../domain/relatorio-homologacao-checkout-staging');
+const {MissoesOperacionaisCandidatoSQLite}=require('../domain/missoes-operacionais-candidato-sqlite');
 const {criarRouterRascunhosCheckoutStaging}=require('../routes/rascunhos-checkout-staging');
 const {criarRouterPrePedidosCheckoutStaging}=require('../routes/prepedidos-checkout-staging');
 const {criarAutorizacao,localSeguro}=require('../routes/admin-catalogo-laboratorio');
@@ -71,6 +72,7 @@ function criarAppLojaEscritorioCandidato({banco,repositorioCatalogo,
  const prePedidos=new PrePedidosCheckoutStagingSQLite({banco});
  const ponte=new PontePrepedidoAsaasSandboxStaging({banco});
  const integridade=new IntegridadeTitularCandidatoSQLite({banco});
+ const missoes=new MissoesOperacionaisCandidatoSQLite({banco});
  const entregas=new EntregasPrePedidosAsaasSandboxStaging({banco});
  // Operador usa o MESMO SQLite que o checkout e o Escritório: webhook
  // isolado jamais e prova de recebimento sem GET PSP autenticado.
@@ -155,6 +157,9 @@ function criarAppLojaEscritorioCandidato({banco,repositorioCatalogo,
  app.get('/staging/assets/cliente.css',(_req,res)=>res.type('css').sendFile(
   path.join(__dirname,'../laboratorio/checkout-staging-ui.css')
  ));
+ app.get('/staging/escritorio-admin',(_req,res)=>res.sendFile(path.join(__dirname,'escritorio-admin-candidato-ui.html')));
+ app.get('/staging/assets/admin.js',(_req,res)=>res.type('js').sendFile(path.join(__dirname,'escritorio-admin-candidato-ui.js')));
+ app.get('/staging/assets/admin.css',(_req,res)=>res.type('css').sendFile(path.join(__dirname,'escritorio-admin-candidato-ui.css')));
  app.post('/staging/contas/cadastrar',async(req,res)=>{
   if(!req.is('application/json'))
    return res.status(415).json({erro:'JSON_OBRIGATORIO'});
@@ -332,6 +337,33 @@ function criarAppLojaEscritorioCandidato({banco,repositorioCatalogo,
   }catch(e){return res.status(400).json({erro:e.codigo||'COTACAO_INVALIDA'});}
  });
  const autorizarOperador=criarAutorizacao({segredo:segredoOperador});
+ // Missões manuais nunca alteram pagamentos, saldos ou tabuleiros.
+ app.get('/staging/escritorio-unificado/missoes',autorizarOperador,(_req,res)=>
+  res.json(missoes.listar()));
+ app.post('/staging/escritorio-unificado/missoes',autorizarOperador,(req,res)=>{
+  try{const m=missoes.criar(req.body,req.get('idempotency-key'));
+   return res.status(m.repetida?200:201).json(m);
+  }catch(e){return res.status(e.codigo==='CONFLITO_IDEMPOTENCIA'?409:
+   e.codigo==='PEDIDO_INEXISTENTE'?404:400).json({erro:e.codigo||'MISSAO_INVALIDA'});}
+ });
+ app.patch('/staging/escritorio-unificado/missoes/:id',autorizarOperador,(req,res)=>{
+  try{return res.json(missoes.atualizar(req.params.id,req.body));}
+  catch(e){return res.status(e.codigo==='MISSAO_INEXISTENTE'?404:
+    ['CONFLITO_REVISAO','TRANSICAO_PROIBIDA'].includes(e.codigo)?409:400)
+    .json({erro:e.codigo||'MISSAO_INVALIDA'});}
+ });
+ app.get('/staging/escritorio-unificado/missoes/:id/historico',autorizarOperador,(req,res)=>{
+  try{return res.json({historico:missoes.historico(req.params.id)});}
+  catch(e){return res.status(e.codigo==='MISSAO_INEXISTENTE'?404:400)
+   .json({erro:e.codigo||'MISSAO_INVALIDA'});}
+ });
+ app.get('/staging/meus-comunicados',(req,res)=>{
+  const s=sessao(req);
+  if(!s)return res.status(401).json({erro:'SESSAO_AUSENTE'});
+  try{return res.json({comunicados:missoes.comunicados(s.titularId),
+   laboratorio:true,pagamentosReais:false});}
+  catch{return res.status(503).json({erro:'COMUNICADOS_INDISPONIVEIS'});}
+ });
  // Quadro de acompanhamento do PSP, habilitado apenas em homologação.
  // Apenas contagens e códigos operacionais, sem credenciais, CPF ou payload.
  if(worker){
@@ -488,6 +520,6 @@ function criarAppLojaEscritorioCandidato({banco,repositorioCatalogo,
   erro:'CANDIDATO_INDISPONIVEL',financeiroReal:false
  }));
  return {app,contas,cpf,provasEmail,intencoes,prePedidos,ponte,
-  inbox,worker,posicoes,entregas,integridade,banco};
+  inbox,worker,posicoes,entregas,integridade,missoes,banco};
 }
 module.exports={criarAppLojaEscritorioCandidato};
