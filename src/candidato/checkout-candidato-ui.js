@@ -93,7 +93,19 @@ async function atualizarPedidos(){
  try{
   const dados=await requisitar('/meus-pedidos');
   exibirPedidos(dados.pedidos);
-  dizer('Histórico atualizado. Nenhuma compra ou pagamento real.');
+  const recados=await requisitar('/meus-comunicados');
+  const area=$('comunicadosCliente');area.replaceChildren();
+  if(!recados.comunicados.length){
+   const vazio=document.createElement('p');
+   vazio.textContent='Nenhum comunicado recebido.';area.append(vazio);
+  }
+  for(const c of recados.comunicados){
+   const item=document.createElement('article');item.className='pedido';
+   const id=document.createElement('strong');id.textContent=c.prepedidoId;
+   const mensagem=document.createElement('p');mensagem.textContent=c.mensagem;
+   item.append(id,mensagem);area.append(item);
+  }
+  dizer('Pedidos e comunicados atualizados. Nenhuma compra ou pagamento real.');
  }catch(e){dizer('Não foi possível consultar os pedidos: '+e.message);}
 }
 async function atualizarVerificacaoEmail(){
@@ -170,7 +182,7 @@ async function preparar(){
 async function sair(){
  try{await requisitar('/contas/sair',{method:'POST',mutacao:true});}
  catch(e){dizer('Falha ao encerrar: '+e.message);return;}
- mostrarSessao(false);$('listaPedidos').replaceChildren();
+ mostrarSessao(false);$('listaPedidos').replaceChildren();$('comunicadosCliente').replaceChildren();
  dizer('Sessão de homologação encerrada.');
 }
 async function restaurarSessao(){
