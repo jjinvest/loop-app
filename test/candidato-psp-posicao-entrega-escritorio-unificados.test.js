@@ -161,10 +161,36 @@ test('uma conta -> PSP reconsultado -> 1 posicao e entrega ficticias -> Escritor
  assert.equal(c.banco.prepare(
   'SELECT COUNT(*) AS n FROM akitemm_pre_adesao_sandbox_candidato'
  ).get().n,0);
- c.cpf.registrar({titularId:c.registro.titularId,
-  cpf:'529.982.247-25',
-  termosVersao:'LAB-candidato-psp-2026',termosTexto:TERMOS,
-  aceiteExplicito:true,autorizado:true});
+ // Titular aceita a versão exata dos termos via sua sessão e CSRF.
+ const urlTermos='/staging/contas/termos-identidade';
+ assert.equal((await c.request(urlTermos)).status,401);
+ const termos=await c.request(urlTermos,{token:c.a.token});
+ assert.equal(termos.status,200);
+ assert.equal(termos.body.termosVersao,'LAB-candidato-psp-2026');
+ assert.equal(termos.body.termosTexto,TERMOS);
+ const identidade='/staging/contas/identidade';
+ assert.equal((await c.request(identidade,{method:'POST',token:c.a.token,
+  data:{cpf:'529.982.247-25',aceiteExplicito:true}})).status,403);
+ assert.equal((await c.request(identidade,{method:'POST',
+  token:c.a.token,csrf:c.a.csrf,
+  data:{cpf:'529.982.247-25',aceiteExplicito:false}})).status,400);
+ const registrado=await c.request(identidade,{method:'POST',
+  token:c.a.token,csrf:c.a.csrf,
+  data:{cpf:'529.982.247-25',aceiteExplicito:true}});
+ assert.equal(registrado.status,201,JSON.stringify(registrado.body));
+ assert.equal(registrado.body.identidadeExternaVerificada,false);
+ const novamente=await c.request(identidade,{method:'POST',
+  token:c.a.token,csrf:c.a.csrf,
+  data:{cpf:'529.982.247-25',aceiteExplicito:true}});
+ assert.equal(novamente.status,200);
+ const resposta=await c.request(identidade,{token:c.a.token});
+ assert.equal(resposta.body.registrado,true);
+ assert.equal(resposta.body.cpfFinal,'25');
+ assert.equal(JSON.stringify(resposta.body).includes('52998224725'),false);
+ const conflitante=await c.request(identidade,{method:'POST',
+  token:c.b.token,csrf:c.b.csrf,
+  data:{cpf:'529.982.247-25',aceiteExplicito:true}});
+ assert.equal(conflitante.status,409);
  const apta=await c.request(cp+'/pre-adesao/'+c.prepedidoId,{admin:true});
  assert.equal(apta.status,200);
  assert.equal(apta.body.estado,'APTA_APENAS_PARA_PREPARAR_ENSAIO');
