@@ -24,7 +24,8 @@ async function requisitar(rota,{method='GET',body,chave,mutacao=false}={}){
  return dados;
 }
 function mostrarSessao(ativa){
- if(!ativa)$('painelVerificarEmail').hidden=true;
+ if(!ativa){$('painelVerificarEmail').hidden=true;$('painelIdentidadeTeste').hidden=true;
+   $('cpfTeste').value='';$('aceiteCpfTeste').checked=false;}
  $('painelLogin').hidden=ativa;
  $('painelCadastro').hidden=ativa;
  $('painelConta').hidden=!ativa;
@@ -132,6 +133,46 @@ async function atualizarPedidos(){
   dizer('Pedidos e comunicados atualizados. Nenhuma compra ou pagamento real.');
  }catch(e){dizer('Não foi possível consultar os pedidos: '+e.message);}
 }
+async function atualizarIdentidadeTeste(){
+ const area=$('painelIdentidadeTeste'),form=$('formCpfTeste');
+ try{
+  const [termos,identidade]=await Promise.all([
+   requisitar('/contas/termos-identidade'),
+   requisitar('/contas/identidade')
+  ]);
+  if(!termos.disponivel||!termos.termosTexto||!termos.termosVersao)
+   throw Error('TERMOS_NAO_CONFIGURADOS');
+  area.hidden=false;
+  $('termosCpfTexto').textContent='Versão '+termos.termosVersao+': '+termos.termosTexto;
+  form.hidden=identidade.registrado===true;
+  $('situacaoCpfTeste').textContent=identidade.registrado?
+   'CPF fictício registrado (final '+identidade.cpfFinal+'). Aceite armazenado.':
+   'Identificação fictícia ainda não registrada.';
+  if(identidade.registrado){$('cpfTeste').value='';$('aceiteCpfTeste').checked=false;}
+ }catch(e){
+  if(e.status===404){area.hidden=true;return;}
+  area.hidden=false;form.hidden=true;
+  $('situacaoCpfTeste').textContent='Identificação indisponível: '+e.message;
+ }
+}
+async function registrarIdentidadeTeste(ev){
+ ev.preventDefault();
+ const botao=ev.submitter;botao.disabled=true;
+ try{
+  if(!$('aceiteCpfTeste').checked)throw Error('ACEITE_TERMOS_OBRIGATORIO');
+  await requisitar('/contas/identidade',{
+   method:'POST',body:{cpf:$('cpfTeste').value,
+    aceiteExplicito:$('aceiteCpfTeste').checked},mutacao:true
+  });
+  $('cpfTeste').value='';$('aceiteCpfTeste').checked=false;
+  await atualizarIdentidadeTeste();
+  dizer('Identificação de ensaio vinculada à sua conta.');
+ }catch(e){
+  $('cpfTeste').value='';
+  $('situacaoCpfTeste').textContent='Identificação não registrada: '+e.message;
+ }finally{botao.disabled=false;}
+}
+
 async function atualizarVerificacaoEmail(){
  const res=await requisitar('/contas/me');
  $('painelVerificarEmail').hidden=res.confirmacaoEmailDisponivel!==true||
@@ -171,6 +212,7 @@ async function entrar(e){
    body:{nick:$('login').value,senha:$('senha').value}});
   csrf=dados.csrf;mostrarSessao(true);$('senha').value='';
   await atualizarVerificacaoEmail();
+  await atualizarIdentidadeTeste();
   await carregarCatalogo();
   dizer('Sessão local iniciada. Nenhuma cobrança habilitada.');
   mostrarAba('conteudoPreparar');
@@ -253,6 +295,7 @@ async function restaurarSessao(){
   const s=await requisitar('/contas/me');csrf=s.csrf;
   mostrarSessao(true);
   await atualizarVerificacaoEmail();
+  await atualizarIdentidadeTeste();
   await carregarCatalogo();
   dizer('Sessão de laboratório restaurada.');
   mostrarAba('conteudoMeusPedidos');
@@ -283,6 +326,7 @@ $('formCadastro').addEventListener('submit',cadastrar);
 $('solicitarCodigoEmail').addEventListener('click',solicitarCodigoEmail);
 $('formConfirmarEmail').addEventListener('submit',confirmarCodigoEmail);
 $('formLogin').addEventListener('submit',entrar);
+$('formCpfTeste').addEventListener('submit',registrarIdentidadeTeste);
 $('calcularCotacao').addEventListener('click',cotar);
 $('produtoDoCatalogo').addEventListener('change',invalidarCotacao);
 $('quantidadeDoCatalogo').addEventListener('input',invalidarCotacao);
