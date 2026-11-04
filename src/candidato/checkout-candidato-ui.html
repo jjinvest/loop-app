@@ -60,8 +60,12 @@
    <button type="button" role="tab" id="abaMeusPedidos" aria-controls="conteudoMeusPedidos" aria-selected="false" tabindex="-1">Meus Pedidos</button>
   </div>
   <section class="painel" id="conteudoPreparar" role="tabpanel" aria-labelledby="abaPreparar">
-   <h2>Curso de teste — R$ 250,00</h2>
-   <p>PDF fictício usado apenas para conferir o fluxo da loja. Nenhum produto será entregue.</p>
+   <h2>Loja AKITEMM · produtos de laboratório</h2>
+   <p class="subtexto">Catálogo sincronizado com o Escritório do Administrador. Nenhum produto será entregue ou cobrado.</p>
+   <label for="produtoDoCatalogo">Produto</label><select id="produtoDoCatalogo" required></select>
+   <label for="quantidadeDoCatalogo">Quantidade</label>
+   <input id="quantidadeDoCatalogo" type="number" min="1" max="50" step="1" value="1" required>
+   <button type="button" id="atualizarCatalogo">Atualizar catálogo</button>
    <p id="cotacao">Cotação ainda não solicitada.</p>
    <button type="button" id="calcularCotacao">Conferir cotação</button>
    <button type="button" id="prepararPedido" class="primario" disabled>Preparar pré-pedido de teste</button>

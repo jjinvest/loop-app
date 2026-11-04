@@ -17,6 +17,31 @@
 <p class="subtexto">Selecione um departamento para acompanhar suas missões. Números marcados como laboratório não correspondem a operações comerciais.</p>
 <div id="quadroDepartamentos" class="grade-departamentos" aria-label="Departamentos do Escritório"></div>
 </section>
+<section class="painel" aria-labelledby="tituloProdutosAdmin">
+<div class="linha"><h2 id="tituloProdutosAdmin">Produtos · edição de laboratório</h2>
+<button id="recarregarProdutos" type="button">Atualizar catálogo</button></div>
+<p class="subtexto">Campos efetivos na loja e nas novas cotações. Pedidos já preparados preservam seus preços; nenhum produto é vendido de verdade.</p>
+<div id="listaProdutosAdmin" aria-live="polite"></div>
+<div class="linha"><button id="produtosAnterior" type="button">Anterior</button>
+<button id="produtosProximo" type="button">Próximos produtos</button></div>
+<h3 id="tituloFormularioProduto">Cadastrar produto fictício</h3>
+<form id="formProduto">
+<label for="produtoIdAdmin">Identificador (3 a 80 caracteres: letras minúsculas, números e hífen)</label>
+<input id="produtoIdAdmin" pattern="[a-z0-9-]{3,80}" maxlength="80" required>
+<div class="duas-colunas">
+<div><label for="produtoTipoAdmin">Tipo</label><select id="produtoTipoAdmin"><option value="PDF">Curso PDF</option><option value="FISICO">Produto físico</option></select></div>
+<div><label for="produtoEstadoAdmin">Situação</label><select id="produtoEstadoAdmin"><option value="RASCUNHO">Rascunho</option><option value="PUBLICADO">Publicado no laboratório</option><option value="DEMONSTRACAO">Demonstração</option></select></div>
+</div>
+<label for="produtoNomeAdmin">Nome do produto</label><input id="produtoNomeAdmin" maxlength="150" required>
+<label for="produtoDescricaoAdmin">Descrição do produto</label>
+<textarea id="produtoDescricaoAdmin" maxlength="2000" rows="3" required></textarea>
+<label for="produtoPrecoAdmin">Preço da simulação (R$)</label>
+<input id="produtoPrecoAdmin" type="number" inputmode="decimal" min="0.01" max="1000000" step="0.01" required>
+<div class="linha"><button id="salvarProdutoAdmin" type="submit" class="primario">Salvar produto</button>
+<button id="cancelarEdicaoProduto" type="button">Novo produto</button></div>
+</form>
+<p id="resultadoProdutoAdmin" class="subtexto" role="status"></p>
+</section>
 <section class="painel"><h2>Pedidos no Escritório</h2><div id="pedidos"></div></section>
 <section class="painel" aria-labelledby="alertasTitulo">
 <div class="linha"><h2 id="alertasTitulo">Revisões de pagamentos de teste</h2><span id="resumoAlertas" class="subtexto"></span></div>

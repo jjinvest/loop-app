@@ -2,7 +2,7 @@
 // Interface de HOMOLOGACAO LOCAL. Nao existe pagamento, cadastro, CPF ou
 // posicao verdadeira. Nunca inserir valores da API via innerHTML.
 const API='/staging';
-const produtoId='curso-homologacao-250';
+let cotacaoEscolhida=null;
 const $=id=>document.getElementById(id);
 let csrf=null,aprovada=false,aba='conteudoPreparar';
 const moeda=v=>new Intl.NumberFormat('pt-BR',{style:'currency',currency:'BRL'}).format(v/100);
@@ -147,33 +147,72 @@ async function entrar(e){
    body:{nick:$('login').value,senha:$('senha').value}});
   csrf=dados.csrf;mostrarSessao(true);$('senha').value='';
   await atualizarVerificacaoEmail();
+  await carregarCatalogo();
   dizer('Sessão local iniciada. Nenhuma cobrança habilitada.');
   mostrarAba('conteudoPreparar');
  }catch(err){dizer('Não foi possível entrar: '+err.message);}
  finally{botao.disabled=false;}
 }
+
+function invalidarCotacao(){
+ aprovada=false;cotacaoEscolhida=null;
+ $('prepararPedido').disabled=true;
+ $('cotacao').textContent='Cotação ainda não solicitada.';
+}
+async function carregarCatalogo(){
+ invalidarCotacao();
+ const dados=await requisitar('/catalogo');
+ const select=$('produtoDoCatalogo'),antes=select.value;
+ select.replaceChildren();
+ for(const p of dados.produtos){
+  const x=document.createElement('option');x.value=p.id;
+  x.textContent=p.nome+' · '+moeda(p.precoCentavos)+' ('+
+   (p.tipo==='PDF'?'Curso PDF':'Produto físico')+')';
+  select.append(x);
+ }
+ if([...select.options].some(x=>x.value===antes))select.value=antes;
+ else if([...select.options].some(x=>x.value==='curso-homologacao-250'))
+  select.value='curso-homologacao-250';
+ $('calcularCotacao').disabled=dados.produtos.length===0;
+ if(!dados.produtos.length)$('cotacao').textContent='Nenhum produto publicado no laboratório.';
+ return dados;
+}
+function entradaSelecionada(){
+ const produtoId=$('produtoDoCatalogo').value,quantidade=Number($('quantidadeDoCatalogo').value);
+ if(!/^[a-z0-9-]{3,80}$/.test(produtoId)||
+    !Number.isSafeInteger(quantidade)||quantidade<1||quantidade>50)
+  throw Error('PRODUTO_OU_QUANTIDADE_INVALIDA');
+ return {itens:[{produtoId,quantidade}]};
+}
+
 async function cotar(){
- aprovada=false;$('prepararPedido').disabled=true;
+ invalidarCotacao();
  try{
-  const res=await requisitar('/cotacao',{method:'POST',
-   body:{itens:[{produtoId,quantidade:1}]}});
-  if(res.totalCentavos!==25000||res.compraDisponivel!==false)
+  const entrada=entradaSelecionada();
+  const res=await requisitar('/cotacao',{method:'POST',body:entrada});
+  if(!Number.isSafeInteger(res.totalCentavos)||res.totalCentavos<=0||
+     res.compraDisponivel!==false)
    throw Error('COTACAO_INCOMPATIVEL');
+  cotacaoEscolhida={entrada,totalCentavos:res.totalCentavos};
   $('cotacao').textContent='Total da cotação fictícia: '+moeda(res.totalCentavos);
   aprovada=true;$('prepararPedido').disabled=false;
   dizer('Cotação conferida; ainda não há pedido ou pagamento.');
  }catch(e){dizer('Cotação indisponível: '+e.message);}
 }
 async function preparar(){
- if(!csrf||!aprovada)return;
- const botao=$('prepararPedido');botao.disabled=true;aprovada=false;
+ if(!csrf||!aprovada||!cotacaoEscolhida)return;
+ const botao=$('prepararPedido'),salva=cotacaoEscolhida;
+ botao.disabled=true;aprovada=false;cotacaoEscolhida=null;
  try{
+  const nova=await requisitar('/cotacao',{method:'POST',body:salva.entrada});
+  if(nova.totalCentavos!==salva.totalCentavos)
+   throw Error('CATALOGO_ALTERADO_REFAZER_COTACAO');
   const r=await requisitar('/rascunhos',{method:'POST',
-   body:{itens:[{produtoId,quantidade:1}]},
+   body:salva.entrada,
    chave:'ui-hom-'+crypto.randomUUID(),mutacao:true});
   const p=await requisitar('/prepedidos',{method:'POST',
    body:{rascunhoId:r.intencao.pedidoId},mutacao:true});
-  if(!p.prepedido||p.prepedido.totalCentavos!==25000)
+  if(!p.prepedido||p.prepedido.totalCentavos!==salva.totalCentavos)
    throw Error('PREPEDIDO_INCONSISTENTE');
   dizer('Pré-pedido salvo. Sem Pix, cobrança real ou posição criada.');
   mostrarAba('conteudoMeusPedidos');
@@ -190,6 +229,7 @@ async function restaurarSessao(){
   const s=await requisitar('/contas/me');csrf=s.csrf;
   mostrarSessao(true);
   await atualizarVerificacaoEmail();
+  await carregarCatalogo();
   dizer('Sessão de laboratório restaurada.');
   mostrarAba('conteudoMeusPedidos');
  }catch(e){mostrarSessao(false);dizer('Entre com seu nick de teste ou crie uma conta fictícia.');}
@@ -220,6 +260,12 @@ $('solicitarCodigoEmail').addEventListener('click',solicitarCodigoEmail);
 $('formConfirmarEmail').addEventListener('submit',confirmarCodigoEmail);
 $('formLogin').addEventListener('submit',entrar);
 $('calcularCotacao').addEventListener('click',cotar);
+$('produtoDoCatalogo').addEventListener('change',invalidarCotacao);
+$('quantidadeDoCatalogo').addEventListener('input',invalidarCotacao);
+$('atualizarCatalogo').addEventListener('click',async()=>{
+ try{await carregarCatalogo();dizer('Catálogo de laboratório atualizado.');}
+ catch(e){dizer('Catálogo indisponível: '+e.message);}
+});
 $('prepararPedido').addEventListener('click',preparar);
 $('atualizarPedidos').addEventListener('click',atualizarPedidos);
 $('sair').addEventListener('click',sair);

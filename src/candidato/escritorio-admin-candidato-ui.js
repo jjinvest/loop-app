@@ -1,7 +1,7 @@
 'use strict';
 // Somente laboratório; credencial do operador mantida apenas em memória.
 const $=id=>document.getElementById(id),elem=(tag,value)=>{const x=document.createElement(tag);if(value!==undefined)x.textContent=value;return x;};
-let auth=null,chave=null,paginaMissoes=0,paginaAlertas=0;
+let auth=null,chave=null,paginaMissoes=0,paginaAlertas=0,paginaProdutos=0,edicaoProduto=null,chaveProduto=null;
 const dizer=x=>$('estado').textContent=x;
 async function api(path,{method='GET',body,idempotencia}={}){
  const r=await fetch('/staging/escritorio-unificado'+path,{
@@ -15,6 +15,46 @@ async function api(path,{method='GET',body,idempotencia}={}){
  return out;
 }
 function linha(rotulo,valor){const a=elem('div');a.className='indicador';a.append(elem('strong',String(valor)),elem('span',rotulo));return a;}
+
+function limparProduto(){
+ edicaoProduto=null;chaveProduto=null;$('formProduto').reset();
+ $('produtoIdAdmin').readOnly=false;$('produtoTipoAdmin').disabled=false;
+ $('tituloFormularioProduto').textContent='Cadastrar produto fictício';
+ $('salvarProdutoAdmin').textContent='Salvar produto';
+}
+function preencherProduto(item){
+ edicaoProduto={id:item.produto.id,revisao:item.revisao};
+ $('produtoIdAdmin').value=item.produto.id;$('produtoIdAdmin').readOnly=true;
+ $('produtoTipoAdmin').value=item.produto.tipo;$('produtoTipoAdmin').disabled=true;
+ $('produtoEstadoAdmin').value=item.produto.estado;
+ $('produtoNomeAdmin').value=item.produto.nome;
+ $('produtoDescricaoAdmin').value=item.produto.descricao;
+ $('produtoPrecoAdmin').value=item.produto.precoCentavos===null?'':String(
+  (item.produto.precoCentavos/100).toFixed(2)
+ );
+ $('tituloFormularioProduto').textContent='Editar produto · revisão '+item.revisao;
+ $('salvarProdutoAdmin').textContent='Atualizar catálogo do laboratório';
+ $('formProduto').scrollIntoView({behavior:'smooth',block:'start'});
+}
+function renderizarProdutos(r){
+ const area=$('listaProdutosAdmin');area.replaceChildren();
+ if(!r.registros.length)area.append(elem('p','Nenhum produto nesta página.'));
+ for(const item of r.registros){
+  const card=elem('article');card.className='produto-admin-item';
+  const info=elem('div');info.append(elem('strong',item.produto.nome),
+   elem('small',item.produto.id+' · '+item.produto.tipo+' · '+item.produto.estado+
+    ' · '+(item.produto.precoCentavos===null?'Sem preço':
+     new Intl.NumberFormat('pt-BR',{style:'currency',currency:'BRL'}).format(
+      item.produto.precoCentavos/100))+' · revisão '+item.revisao));
+  const editar=elem('button','Editar');editar.type='button';
+  editar.addEventListener('click',()=>preencherProduto(item));
+  card.append(info,editar);area.append(card);
+ }
+ $('produtosAnterior').disabled=paginaProdutos===0;
+ $('produtosProximo').disabled=!r.haMais;
+}
+async function atualizarProdutos(){renderizarProdutos(await api('/produtos?pagina='+paginaProdutos));}
+
 
 function atualizarDepartamentos(departamentos){
  const area=$('quadroDepartamentos');area.replaceChildren();
@@ -68,9 +108,9 @@ async function atualizar(){
  const q=new URLSearchParams({pagina:String(paginaMissoes)});
  if($('filtrarDepartamento').value)q.set('departamento',$('filtrarDepartamento').value);
  if($('filtrarSituacao').value)q.set('situacao',$('filtrarSituacao').value);
- const [e,m,d,alertas]=await Promise.all([
+ const [e,m,d,alertas,produtos]=await Promise.all([
   api(''),api('/missoes?'+q.toString()),api('/departamentos'),
-  api('/alertas?pagina='+paginaAlertas)
+  api('/alertas?pagina='+paginaAlertas),api('/produtos?pagina='+paginaProdutos)
  ]);
  $('indicadores').replaceChildren(
   linha('Contas',e.contasCandidatas),
@@ -81,6 +121,7 @@ async function atualizar(){
  );
  atualizarDepartamentos(d.departamentos);
  atualizarAlertas(alertas);
+ renderizarProdutos(produtos);
  $('resumoMissoes').textContent='Página '+(m.pagina+1)+' · '+m.total+' missão(ões) neste filtro.';
  $('missoesAnterior').disabled=paginaMissoes===0;
  $('missoesProximo').disabled=!m.haMais;
@@ -141,6 +182,47 @@ $('sair').addEventListener('click',()=>{
  $('listaMissoes').replaceChildren();dizer('Acesso encerrado.');
 });
 $('atualizar').addEventListener('click',()=>atualizar().catch(e=>dizer(e.message)));
+
+$('recarregarProdutos').addEventListener('click',()=>atualizarProdutos().catch(e=>dizer(e.message)));
+$('cancelarEdicaoProduto').addEventListener('click',limparProduto);
+$('produtosAnterior').addEventListener('click',()=>{
+ paginaProdutos=Math.max(0,paginaProdutos-1);atualizarProdutos().catch(e=>dizer(e.message));
+});
+$('produtosProximo').addEventListener('click',()=>{
+ paginaProdutos++;atualizarProdutos().catch(e=>dizer(e.message));
+});
+$('formProduto').addEventListener('input',()=>{chaveProduto=null;});
+$('formProduto').addEventListener('submit',async event=>{
+ event.preventDefault();
+ const botao=event.submitter;botao.disabled=true;
+ const preco=Number($('produtoPrecoAdmin').value);
+ const centavos=Math.round(preco*100);
+ if(!Number.isFinite(preco)||centavos<=0||Math.abs(preco*100-centavos)>0.000001){
+  $('resultadoProdutoAdmin').textContent='Preço inválido. Use duas casas decimais.';
+  botao.disabled=false;return;
+ }
+ try{
+  const id=$('produtoIdAdmin').value,nome=$('produtoNomeAdmin').value;
+  const descricao=$('produtoDescricaoAdmin').value,estado=$('produtoEstadoAdmin').value;
+  if(edicaoProduto){
+   await api('/produtos/'+encodeURIComponent(edicaoProduto.id),{
+    method:'PATCH',body:{revisaoEsperada:edicaoProduto.revisao,
+     alteracoes:{nome,descricao,estado,precoCentavos:centavos}}
+   });
+  }else{
+   if(!chaveProduto)chaveProduto='produto-ui-'+crypto.randomUUID();
+   const tipo=$('produtoTipoAdmin').value;
+   await api('/produtos',{method:'POST',idempotencia:chaveProduto,
+    body:{produto:{id,nome,descricao,tipo,estado,precoCentavos:centavos,
+     entrega:tipo==='PDF'?'DOWNLOAD_APOS_CONFIRMACAO':'FORNECEDOR_INTEGRADO',
+     fotos:[],detalhes:[],videoApresentacaoUrl:null}}});
+  }
+  limparProduto();await atualizar();
+  $('resultadoProdutoAdmin').textContent='Produto salvo no mesmo catálogo das novas cotações de teste.';
+ }catch(e){$('resultadoProdutoAdmin').textContent='Produto não salvo: '+e.message;}
+ finally{botao.disabled=false;}
+});
+
 for(const id of ['filtrarDepartamento','filtrarSituacao']){
  $(id).addEventListener('change',()=>{
   paginaMissoes=0;atualizar().catch(e=>dizer(e.message));

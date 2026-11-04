@@ -11,3 +11,12 @@
 .alerta-operacional button{margin-top:8px}
 .linha button:disabled{opacity:.4}
 #alertasOperacionais,#listaMissoes{overflow-wrap:anywhere}
+
+#listaProdutosAdmin{display:grid;gap:8px;padding:10px 0}
+.produto-admin-item{display:flex;gap:12px;align-items:center;justify-content:space-between;
+ border:1px solid #514632;border-radius:10px;padding:10px 12px}
+.produto-admin-item strong{display:block;color:#e9cf91}
+.produto-admin-item small{display:block;color:#c3c0b8}
+#formProduto{border-top:1px solid #514632;margin-top:12px;padding-top:10px}
+#formProduto input[readonly],#formProduto select:disabled{opacity:.8}
+@media(max-width:650px){.produto-admin-item{flex-direction:column;align-items:stretch}}
