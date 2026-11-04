@@ -90,6 +90,11 @@ test('uma conta -> PSP reconsultado -> 1 posicao e entrega ficticias -> Escritor
   method:'POST',data:{eventoId}
  })).status,401);
  assert.equal((await c.request(root+'/monitor-psp')).status,401);
+ const antesFila=await c.request(root+'/projecao-filas',{admin:true});
+ assert.equal(antesFila.status,200);
+ assert.equal(antesFila.body.pendentesConferidas,0);
+ assert.equal((await c.request(root+'/projecao-filas')).status,401);
+ assert.equal((await c.request('/staging/minha-previa-filas')).status,401);
  const noPsp=await c.request('/staging/meus-pedidos',{token:c.a.token});
  assert.equal(noPsp.status,200);
  assert.equal(noPsp.body.pedidos[0].conferenciaPSPConcluida,false);
@@ -140,6 +145,26 @@ test('uma conta -> PSP reconsultado -> 1 posicao e entrega ficticias -> Escritor
  assert.equal(p.status,201,JSON.stringify(p.body));
  assert.equal(p.body.pendente.quantidadePosicoesPendentesSimuladas,1);
  assert.equal(p.body.pendente.posicoesReaisCriadas,0);
+ const hipotese=await c.request(root+'/projecao-filas',{admin:true});
+ assert.equal(hipotese.status,200,JSON.stringify(hipotese.body));
+ assert.equal(hipotese.body.totalHistorico,1);
+ assert.equal(hipotese.body.pendentesConferidas,1);
+ assert.equal(hipotese.body.quantidadeSimuladaFilaA,0);
+ assert.equal(hipotese.body.quantidadeSimuladaFilaB,1);
+ assert.equal(hipotese.body.hipoteseFilaB[0].estado,'APENAS_PREVIA_FILA_B_AZUL');
+ assert.equal(hipotese.body.habilitacaoMotorReal,false);
+ assert.equal(hipotese.body.classificacaoHistoricaComprovada,false);
+ assert.equal(hipotese.body.posicoesReaisCriadas,0);
+ assert.equal(hipotese.body.filaRealAlterada,false);
+ assert.equal(hipotese.body.tabuleiroRealAlterado,false);
+ const minhaFila=await c.request('/staging/minha-previa-filas',{token:c.a.token});
+ const filaBia=await c.request('/staging/minha-previa-filas',{token:c.b.token});
+ assert.equal(minhaFila.status,200);
+ assert.equal(minhaFila.body.meusSimuladosNaFilaB,1);
+ assert.equal(minhaFila.body.hipoteseFilaB[0].titularId,undefined);
+ assert.equal(filaBia.body.meusSimuladosNaFilaB,0);
+ assert.equal(JSON.stringify(filaBia.body).includes(c.prepedidoId),false);
+ assert.equal(c.getGets(),1,'previa nunca faz GET PSP');
  assert.equal((await c.request(root+'/projetar-posicao-ficticia',{
   method:'POST',admin:true,data:{eventoId,prepedidoId:c.prepedidoId}
  })).status,200,'replay nao duplica');
@@ -170,6 +195,11 @@ test('uma conta -> PSP reconsultado -> 1 posicao e entrega ficticias -> Escritor
   titularId:c.registro.titularId,prepedidoId:c.prepedidoId,
   provedor:c.provedor
  });
+ const filaReversa=await c.request(root+'/projecao-filas',{admin:true});
+ assert.equal(filaReversa.status,200);
+ assert.equal(filaReversa.body.pendentesConferidas,0);
+ assert.equal(filaReversa.body.pendentesExigemRevisao,1);
+ assert.equal(filaReversa.body.hipoteseFilaB[0].estado,'EXIGE_REVISAO_PSP');
  const reversao=await c.request('/staging/meus-pedidos',{token:c.a.token});
  assert.equal(reversao.body.pedidos[0].entregaFicticia.status,
   'BLOQUEADA_PARA_REVISAO_SANDBOX');
@@ -224,6 +254,10 @@ test('operacao PSP desligada por padrao e sem credencial nao expõe nem reconsul
   data:{prepedidoId:c.prepedidoId,eventoId:'evt_FAKE123'}
  })).status,403);
  assert.equal(c.getGets(),0);
+ const semPsp=await c.request(root+'/projecao-filas',{admin:true});
+ assert.equal(semPsp.status,200);
+ assert.equal(semPsp.body.estado,'SOMENTE_CENARIO_NAO_ATIVADO');
+ assert.equal(semPsp.body.pendentesConferidas,0);
  assert.equal((await c.request(root,{admin:true})).body.conciliacaoSandboxDisponivel,false);
  assert.equal((await c.request('/staging/meus-pedidos',{token:c.b.token})).body.pedidos.length,0);
 });
