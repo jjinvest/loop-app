@@ -127,3 +127,43 @@ test('backup recusa corrupção semântica do titular que SQLite FK isolada não
  assert.equal(fs.existsSync(a.backup),false);
  db.close();
 });
+
+test('backup rejeita entrega PSP forjada mesmo com SQLite e titular coerentes',async t=>{
+ const a=paths(t);
+ const keys={email:randomBytes(32),cifra:randomBytes(32),provaEmail:randomBytes(32)};
+ const db=new DatabaseSync(a.origem);
+ db.exec('PRAGMA foreign_keys=ON;PRAGMA journal_mode=WAL');
+ try{
+  const app=criarAppLojaEscritorioCandidato(config(db,keys));
+  const pessoa=await cadastrar(app.contas,'Julia');
+  const entrada={itens:[{produtoId:'curso-homologacao-250',quantidade:1}]};
+  const catalogo=catalogoFicticioCheckout();
+  const cotacao=await cotarCheckoutPublico({repositorio:catalogo,entrada});
+  const rascunho=app.intencoes.criar({titularId:pessoa.titularId,
+   chaveIdempotencia:'backup-forja-entrega-2026',entrada,cotacao});
+  const preparado=await app.prePedidos.preparar({titularId:pessoa.titularId,
+   rascunhoId:rascunho.intencao.pedidoId,repositorioCatalogo:catalogo});
+  const id=preparado.prepedido.prepedidoId;
+  const foto=JSON.parse(db.prepare(
+   'SELECT fotografia_json FROM akitemm_checkout_prepedidos_staging WHERE prepedido_id=?'
+  ).get(id).fotografia_json);
+  const item=foto[0];
+  // FK integro: a entrega existe para um pre-pedido real do mesmo titular.
+  // O elo PSP, porem, foi inventado e nenhuma cobranca foi conciliada.
+  db.prepare([
+   'INSERT INTO akitemm_prepedido_entregas_sandbox_staging',
+   '(prepedido_id,produto_id,titular_id,tipo,quantidade,valor_centavos,',
+   'pagamento_id,estado,criado_em)',
+   "VALUES(?,?,?,?,?,?,?,'APTA_SIMULADA_SEM_ENTREGA',?)"
+  ].join(' ')).run(id,item.produtoId,pessoa.titularId,item.tipo,item.quantidade,
+   item.subtotalCentavos,'pay_SEM_CONCILIACAO',new Date().toISOString());
+  assert.equal(db.prepare('PRAGMA integrity_check').get().integrity_check,'ok');
+  assert.deepEqual(db.prepare('PRAGMA foreign_key_check').all(),[]);
+  assert.equal(app.integridade.auditar().totalInconsistencias,0,
+   'titularidade isolada nao percebe entrega sem lastro PSP');
+  await assert.rejects(criarBackupCriptografado({
+   origem:a.origem,destino:a.backup,senha:SENHA_BACKUP,autorizado:true
+  }),{codigo:'BACKUP_CANDIDATO_RELACOES_PSP_DIVERGENTES'});
+  assert.equal(fs.existsSync(a.backup),false);
+ }finally{db.close();}
+});
