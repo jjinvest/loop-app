@@ -127,6 +127,10 @@ const {once}=require('node:events');
    const loja=await context.newPage();
    loja.on('pageerror',e=>failures.push(e.message));
    await loja.goto(base+'/staging/loja',{waitUntil:'networkidle'});
+   if(await loja.locator('#conteudoLojaLoop').isHidden()){
+    const estado=await loja.locator('#estadoLojaLoop').innerText();
+    throw Error('VITRINE_NAO_INICIALIZOU: '+estado+'; ERROS='+JSON.stringify(failures));
+   }
    await loja.locator('#conteudoLojaLoop').waitFor({state:'visible'});
    assert.ok(await loja.locator('#catalogoLojaLoop article.produto-loja-loop').count()>=2);
    assert.ok(await loja.locator('#catalogoLojaLoop article.produto-loja-loop-elegivel').count()>=1);
