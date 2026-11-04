@@ -15,6 +15,9 @@ function createVitrineCandidata({app,banco,catalogo,contas,intencoes,prePedidos,
     typeof intencoes?.criar!=='function'||typeof autorizarOperador!=='function')
   fail('INTEGRACAO_VITRINE_INCOMPLETA');
  const sinalizacao=new SinalizacaoVitrineCandidatoSQLite({banco,catalogo});
+ // Todas as novas rotas de pré-pedido usam o mesmo registro transacional.
+ prePedidos.definirFotografiaClassificacao(
+  args=>sinalizacao.gravarFotografiaPrepedido(args));
  const sessao=req=>contas.sessao(req);
  const csrf=req=>contas.autorizarMutacao(req);
  const autorizarCliente=(req,res,next)=>{
