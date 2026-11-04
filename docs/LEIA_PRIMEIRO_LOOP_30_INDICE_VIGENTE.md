@@ -1,3 +1,5 @@
+> **SEÇÃO 196 — 04/11/2026:** reutilização do HTML/CSS da **vitrine AKITEMM aprovada** em rota local, com catálogo, cotação e pré-pedidos na mesma sessão e SQLite da loja/Escritório do Cliente e Administrador. Cores CINZA/VERDE/EVENTO editáveis e auditáveis por produto no Administrador são **apenas sinalização visual de laboratório** — sem ligar o motor ou prometer posições. A rota pública, pagamentos e saques reais continuam bloqueados. PR #1 DRAFT. [Detalhes](./VITRINE_APROVADA_CANDIDATO_UNIFICADA_04NOV2026.md).
+
 
 **Validação do bloco 195 concluída em 04/11/2026:** [segurança/integração — SUCCESS](https://github.com/jjinvest/loop-app/actions/runs/41790335702) e [navegador real PC/celular — SUCCESS](https://github.com/jjinvest/loop-app/actions/runs/41790719157). [Capturas reais da loja/cliente e do painel administrativo](https://github.com/jjinvest/loop-app/actions/runs/41790719157/artifacts/13303710930). O ajuste visual do teste de moeda aceita o espaço de formatação local do padrão pt-BR, sem tocar nos valores reais de simulação. Nenhum checkout comercial foi habilitado.
 
