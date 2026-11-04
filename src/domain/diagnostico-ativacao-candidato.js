@@ -34,6 +34,13 @@ class DiagnosticoAtivacaoCandidato{
    erro('IDENTIFICACAO_PEDIDO_INVALIDA');
   const pre=this.preAdesao.avaliar({prepedidoId,titularId});
   if(!pre)return null;
+  // Defesa em profundidade: nunca aceitar um diagnóstico para pedido/titular
+  // distinto do consultado, mesmo que uma futura fonte SQLite falhe no filtro.
+  if(pre.prepedidoId!==prepedidoId||
+    (titularId!==null&&pre.titularId!==titularId)||
+    !Array.isArray(pre.motivos)||
+    pre.motivos.some(m=>typeof m!=='string'||!m||m.length>128))
+   erro('FONTE_DIAGNOSTICO_INCONSISTENTE');
   const bloqueios=new Set(pre.motivos);
   if(!pre.ensaioRegistrado)bloqueios.add('PRE_ADESAO_AINDA_NAO_PERSISTIDA');
   else if(pre.estado!=='PRE_ADESAO_FICTICIA_PERSISTIDA')

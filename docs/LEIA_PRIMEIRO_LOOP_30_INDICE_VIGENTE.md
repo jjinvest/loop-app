@@ -1,3 +1,5 @@
+> **SEÇÃO 202 — 04/11/2026:** endurecimento da proveniência do diagnóstico: bloqueio imediato se a fonte retornar pré-pedido/titular diferentes do consultado ou motivos inválidos; teste específico de KYC Sandbox positivo sem conceder ativação, pagamento ou direitos reais. [Registro](./BLINDAGEM_FONTE_GATE_ATIVACAO_04NOV2026.md). CI do novo SHA a confirmar após a execução.
+
 > **SEÇÃO 201 — 04/11/2026:** diagnóstico único da transição pré-adesão→ativação, exibido em Cliente e Administrador; Admin abre missão de regularização **idempotente** por pedido. Sem KYC externo, pagamento comercial, auditorias de capacidade 10/2 e autorização operacional, o gate permanece fechado. [Documento](./DIAGNOSTICO_GATE_ATIVACAO_04NOV2026.md).
 
 

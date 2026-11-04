@@ -23,6 +23,9 @@ No Escritório do Cliente, cada pedido agora tem **Ver requisitos de ativação*
 Novos testes de domínio e integração verificam bloqueios com ou sem pré-adesão, reversão de PSP, impossibilidade de ampliar permissões, separação de titulares, resposta de Admin/Cliente, missão operacional idempotente e ausência dessas rotas no servidor público. O roteiro de navegador PC/celular verifica botões em ambos os escritórios. Conferir o CI do SHA correspondente; não declarar aprovado enquanto estiver pendente.
 
 ### Execuções de CI associadas ao código
-- [Segurança, integração e bloqueio de produção](https://github.com/jjinvest/loop-app/actions/runs/41862522755) — status **queued** consultado em 04/11/2026, ainda sem conclusão.
-- [Navegador PC/celular e missão idempotente no Admin](https://github.com/jjinvest/loop-app/actions/runs/41862598132) — status **queued** consultado em 04/11/2026, ainda sem conclusão.
+- [Segurança, integração e bloqueio de produção](https://github.com/jjinvest/loop-app/actions/runs/41862522755) — **SUCCESS** confirmado em 04/11/2026 (SHA `507be314dd1f23158054c61003d1c2c49d05a962`).
+- [Navegador PC/celular e missão idempotente no Admin](https://github.com/jjinvest/loop-app/actions/runs/41862598132) — **SUCCESS** confirmado em 04/11/2026 (SHA `81cacd1761ab612f854c6ee3b69bca0cce126a54`).
 - Verificação sintática de todos os arquivos JS alterados realizada; não substitui execução de testes Node/Playwright.
+
+### Endurecimento posterior — seção 202
+O diagnóstico agora rejeita como `FONTE_DIAGNOSTICO_INCONSISTENTE` qualquer resposta da fonte com pedido ou titular divergentes do filtro da requisição, ou vetor de motivos inválido. Uma fonte adulterada não pode resultar em indicadores de aptidão de outro comprador. Novo teste negativo também demonstra que até um provedor KYC **Sandbox** que devolvesse "aprovado" não libera motor, pagamento ou direitos reais. A verificação independente de KYC externo comercial permanece inexistente. Ver [registro 202](./BLINDAGEM_FONTE_GATE_ATIVACAO_04NOV2026.md).

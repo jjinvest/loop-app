@@ -12,7 +12,7 @@ const criar=estado=>{
 };
 test('gate de ativacao nunca habilita motor mesmo com pre-adesao completa',()=>{
  const {banco,diag}=criar({
-  prepedidoId:ID,ensaioRegistrado:true,estado:'PRE_ADESAO_FICTICIA_PERSISTIDA',
+  prepedidoId:ID,titularId:TIT,ensaioRegistrado:true,estado:'PRE_ADESAO_FICTICIA_PERSISTIDA',
   motivos:[],cpfDeclaradoNoEnsaio:true,fotografiaHistoricaConferida:true
  });
  try{
@@ -76,4 +76,47 @@ test('gate rejeita uso em producao',()=>{
   else process.env.NODE_ENV=old;
   x.banco.close();
  }
+});
+
+test('diagnostico recusa fonte de pedido/titular divergente ou motivos invalidos',()=>{
+ const estado={prepedidoId:ID,titularId:TIT,ensaioRegistrado:true,
+  estado:'PRE_ADESAO_FICTICIA_PERSISTIDA',motivos:[],
+  cpfDeclaradoNoEnsaio:true,fotografiaHistoricaConferida:true};
+ const x=criar(estado);
+ try{
+  x.preAdesao.avaliar=()=>({...estado,prepedidoId:'hom-22222222-2222-2222-2222-222222222222'});
+  assert.throws(()=>x.diag.avaliar({prepedidoId:ID}),
+   /FONTE_DIAGNOSTICO_INCONSISTENTE/);
+  x.preAdesao.avaliar=()=>({...estado,titularId:'titular-22222222-2222-2222-2222-222222222222'});
+  assert.throws(()=>x.diag.avaliar({prepedidoId:ID,titularId:TIT}),
+   /FONTE_DIAGNOSTICO_INCONSISTENTE/);
+  x.preAdesao.avaliar=()=>({...estado,motivos:'PAGAMENTO_RECEBIDO'});
+  assert.throws(()=>x.diag.avaliar({prepedidoId:ID,titularId:TIT}),
+   /FONTE_DIAGNOSTICO_INCONSISTENTE/);
+  x.preAdesao.avaliar=()=>({...estado,motivos:['']});
+  assert.throws(()=>x.diag.avaliar({prepedidoId:ID,titularId:TIT}),
+   /FONTE_DIAGNOSTICO_INCONSISTENTE/);
+  assert.equal(x.banco.prepare("SELECT COUNT(*) AS n FROM sqlite_master WHERE type='table'").get().n,0);
+ }finally{x.banco.close();}
+});
+test('retorno positivo de provedor KYC Sandbox nao abre nenhum gate definitivo',()=>{
+ const estado={prepedidoId:ID,titularId:TIT,ensaioRegistrado:true,
+  estado:'PRE_ADESAO_FICTICIA_PERSISTIDA',motivos:[],
+  cpfDeclaradoNoEnsaio:true,fotografiaHistoricaConferida:true};
+ const x=criar(estado);
+ try{
+  const outro=new DiagnosticoAtivacaoCandidato({
+   banco:x.banco,preAdesao:x.preAdesao,provedorIdentidade:{
+    ambiente:'VERIFICACAO_IDENTIDADE_SANDBOX',
+    consultarStatus:()=>({identidadeConfirmada:true,aprovada:true})
+   }
+  });
+  const r=outro.avaliar({prepedidoId:ID,titularId:TIT});
+  assert.equal(r.resumo.provedorKycTesteConfigurado,true);
+  assert.equal(r.resumo.identidadeExternaRealConfirmada,false);
+  assert.equal(r.resumo.pagamentoComercialConfirmado,false);
+  assert.equal(r.permitidoAtivar,false);
+  assert.equal(r.permitidoPagar,false);
+  assert.ok(r.bloqueios.includes('IDENTIDADE_EXTERNA_NAO_HOMOLOGADA'));
+ }finally{x.banco.close();}
 });
