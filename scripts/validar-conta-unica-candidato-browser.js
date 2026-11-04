@@ -66,6 +66,10 @@ const {once}=require('node:events');
    await admin.locator('#token').fill('somente-teste-do-navegador-'+('x'.repeat(40)));
    await admin.locator('#formAcesso button').click();
    await admin.locator('#administracao').waitFor({state:'visible'});
+   await admin.locator('#resumoPreviaFilas')
+    .filter({hasText:/Fictícias históricas/}).waitFor();
+   assert.match(await admin.locator('#resumoPreviaFilas').innerText(),
+    /Projeção de posições fictícias indisponível/);
    assert.equal(await admin.locator('#quadroDepartamentos button').count(),12);
    await admin.locator('#quadroDepartamentos button').filter({hasText:'Pedidos'}).click();
    assert.equal(await admin.locator('#filtrarDepartamento').inputValue(),'PEDIDOS');
@@ -113,6 +117,8 @@ const {once}=require('node:events');
    await admin.screenshot({path:path.join(__dirname,'../artifacts',
     'escritorio-admin-candidato-'+item.nome+'.png'),fullPage:true});
    await page.locator('#atualizarPedidos').click();
+   await page.locator('#minhaPreviaFilas')
+    .filter({hasText:/Posições reais: 0/}).waitFor();
    await page.locator('#comunicadosCliente').filter({
     hasText:/Registro de acompanhamento de laboratório/
    }).waitFor();

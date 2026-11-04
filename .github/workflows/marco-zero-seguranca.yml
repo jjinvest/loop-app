@@ -42,6 +42,7 @@ jobs:
           node --test test/escritorio-admin-departamentos-candidato.test.js
           node --test test/catalogo-admin-candidato-unificado.test.js
           node --test test/vitrine-aprovada-candidato.test.js
+          node --test test/projecao-filas-candidato-sandbox.test.js
           node --test test/simulador-qualificacao-candidato.test.js
           node --test test/verificacao-email-conta-unica-candidata.test.js
           node --test test/transporte-email-resend-candidato.test.js
@@ -89,6 +90,8 @@ jobs:
               '/staging/catalogo','/staging/loja',
               '/staging/vitrine/simular-qualificacao',
               '/staging/escritorio-unificado/simular-qualificacao',
+              '/staging/escritorio-unificado/projecao-filas',
+              '/staging/minha-previa-filas',
               '/staging/escritorio-unificado/sinalizacao/curso-homologacao-250',
               '/staging/meus-comunicados',
               '/staging/contas/email/enviar','/staging/contas/email/confirmar'
