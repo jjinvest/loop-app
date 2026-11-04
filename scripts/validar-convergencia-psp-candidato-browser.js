@@ -88,6 +88,32 @@ const {COOKIE}=require('../src/domain/conta-unica-candidata-sqlite');
     assert.deepEqual(erros,[]);
     await cliente.screenshot({path:'artifacts/convergencia-psp-cliente-'+nome+'.png',fullPage:true});
     await admin.screenshot({path:'artifacts/convergencia-psp-admin-'+nome+'.png',fullPage:true});
+    // O teto da previa global nao pode derrubar o resto do Escritorio.
+    // A massa artificial e descartada; nao representa compras homologadas.
+    banco.exec('PRAGMA foreign_keys=OFF; BEGIN IMMEDIATE');
+    try{
+     const inserir=banco.prepare(`INSERT INTO akitemm_prepedido_posicoes_pendentes_sandbox_staging
+      (id,prepedido_id,titular_id,pagamento_id,evento_id,valor_centavos,estado,criado_em)
+      VALUES(?,?,?,?,?,25000,'PENDENTE_DE_CONFIRMACAO_CLIENTE_SANDBOX',?)`);
+     for(let i=0;i<1001;i++)inserir.run('pos-volume-'+i,
+      'hom-'+String(i).padStart(36,'0'),'titular_volume_alheio',
+      'pay_VOLUME'+i,'evt_VOLUME'+i,'2026-11-04T00:00:00.000Z');
+     const antes=banco.prepare('SELECT total_changes() n').get().n;
+     await admin.locator('#atualizar').click();
+     await admin.locator('#resumoPreviaFilas').filter({hasText:/indisponível acima de 1.000/}).waitFor();
+     assert.equal(await admin.locator('#posicoesPreviaFilas').locator(':scope > *').count(),0);
+     assert.equal(await admin.locator('#quadroDepartamentos button').count(),12);
+     assert.equal((await conciliados.innerText()).trim(),'0');
+     assert.equal(await admin.locator('#administracao').isVisible(),true);
+     const respostaCliente=cliente.waitForResponse(r=>
+      r.url().endsWith('/staging/minha-previa-filas')&&r.status()===200);
+     await cliente.locator('#atualizarPedidos').click();
+     await respostaCliente;
+     await cliente.locator('#mensagem').filter({hasText:/Pedidos e comunicados atualizados/}).waitFor();
+     assert.equal(await cliente.locator('#listaPedidos article.pedido').count(),1);
+     assert.equal(banco.prepare('SELECT total_changes() n').get().n,antes);
+     assert.equal(gets,consultasAntes);assert.deepEqual(erros,[]);
+    }finally{banco.exec('ROLLBACK; PRAGMA foreign_keys=ON');}
    }finally{await contexto.close();}
   }
   assert.deepEqual(banco.prepare('PRAGMA foreign_key_check').all(),[]);

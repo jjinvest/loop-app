@@ -18,6 +18,10 @@ function linha(rotulo,valor){const a=elem('div');a.className='indicador';a.appen
 
 function renderizarPreviaFilas(p){
  const root=$('resumoPreviaFilas');root.replaceChildren();
+ const area=$('posicoesPreviaFilas');area.replaceChildren();
+ if(p.leituraLimitada===true){
+  root.append(elem('p',p.motivo));return;
+ }
  const resumo=elem('div');resumo.className='indicadores';
  resumo.append(linha('Fictícias históricas',p.totalHistorico||0),
   linha('Hipótese B sem ativação',p.pendentesConferidas||0),
@@ -26,7 +30,6 @@ function renderizarPreviaFilas(p){
   linha('Sem fotografia histórica',p.pendentesSemFotografia||0),
   linha('Oferta histórica não qualificada',p.pendentesSemOfertaQualificada||0));
  root.append(resumo,elem('p',p.motivo));
- const area=$('posicoesPreviaFilas');area.replaceChildren();
  for(const item of p.hipoteseFilaB||[]){
   const row=elem('div');row.className='produto-admin-item';
   row.append(elem('strong',item.estado),
@@ -151,6 +154,16 @@ function atualizarAlertas(painel){
  }
 }
 
+async function carregarPreviaFilas(){
+ try{return await api('/projecao-filas');}
+ catch(e){
+  // O teto permanece fechado no backend, sem derrubar os outros departamentos
+  // nem transformar uma leitura indisponivel em zero posicoes.
+  if(e.message!=='MAXIMO_ANALISE_SEGURA_EXCEDIDO')throw e;
+  return {leituraLimitada:true,
+   motivo:'Prévia de posições indisponível acima de 1.000 registros. A consulta completa exige paginação.'};
+ }
+}
 async function atualizar(){
  const q=new URLSearchParams({pagina:String(paginaMissoes)});
  if($('filtrarDepartamento').value)q.set('departamento',$('filtrarDepartamento').value);
@@ -158,7 +171,7 @@ async function atualizar(){
  const [e,m,d,alertas,produtos,previa]=await Promise.all([
   api(''),api('/missoes?'+q.toString()),api('/departamentos'),
   api('/alertas?pagina='+paginaAlertas),api('/produtos?pagina='+paginaProdutos),
-  api('/projecao-filas')
+  carregarPreviaFilas()
  ]);
  $('indicadores').replaceChildren(
   linha('Contas',e.contasCandidatas),
