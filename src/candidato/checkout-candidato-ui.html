@@ -55,6 +55,18 @@
     <button type="submit">Confirmar código</button>
    </form>
   </section>
+  <section class="painel" id="painelIdentidadeTeste" hidden aria-labelledby="tituloIdentidadeTeste">
+   <h2 id="tituloIdentidadeTeste">Identificação dos pedidos</h2>
+   <p class="subtexto">Use exclusivamente CPF fictício nesta prévia.</p>
+   <p id="situacaoCpfTeste" role="status" aria-live="polite"></p>
+   <form id="formCpfTeste">
+    <label for="cpfTeste">CPF fictício (somente dígitos, pontos e hífen)</label>
+    <input id="cpfTeste" name="cpf" autocomplete="off" inputmode="numeric" maxlength="14" pattern="[0-9.\-]{11,14}" required>
+    <p id="termosCpfTexto" class="subtexto"></p>
+    <label><input type="checkbox" id="aceiteCpfTeste" required> Li e aceito os termos de ensaio apresentados acima.</label>
+    <button type="submit" class="primario">Registrar identificação de teste</button>
+   </form>
+  </section>
   <div role="tablist" aria-label="Áreas do cliente" class="abas">
    <button type="button" role="tab" id="abaPreparar" aria-controls="conteudoPreparar" aria-selected="true" tabindex="0">Preparar pedido</button>
    <button type="button" role="tab" id="abaMeusPedidos" aria-controls="conteudoMeusPedidos" aria-selected="false" tabindex="-1">Meus Pedidos</button>

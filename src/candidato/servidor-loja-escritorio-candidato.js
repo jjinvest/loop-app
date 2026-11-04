@@ -295,6 +295,11 @@ function criarAppLojaEscritorioCandidato({banco,repositorioCatalogo,
  // CPF de ensaio criptografado, mas sempre sem verificaçao externa.
  // Nunca usar este aceite isolado para habilitar posicoes ou saques.
  if(cpf){
+  app.get('/staging/contas/termos-identidade',(req,res)=>{
+   if(!contas.sessao(req))return res.status(401).json({erro:'SESSAO_AUSENTE'});
+   res.set('Cache-Control','no-store');
+   return res.json({disponivel:true,termosVersao,termosTexto});
+  });
   app.post('/staging/contas/identidade',(req,res)=>{
    const sessao=contas.sessao(req);
    if(!sessao)return res.status(401).json({erro:'SESSAO_AUSENTE'});
