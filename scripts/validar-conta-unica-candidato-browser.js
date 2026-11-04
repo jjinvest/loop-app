@@ -88,6 +88,13 @@ const {once}=require('node:events');
    await admin.locator('#formProduto button[type=submit]').click();
    await admin.locator('#resultadoProdutoAdmin').filter({hasText:/Produto salvo/}).waitFor();
    assert.match(await admin.locator('#listaProdutosAdmin').innerText(),/Curso adicional fictício/);
+   await admin.locator('#listaProdutosAdmin .produto-admin-item')
+    .filter({hasText:'curso-homologacao-250'})
+    .getByRole('button',{name:'Cor na loja'}).click();
+   await admin.locator('#sinalizacaoClasse').selectOption('VERDE');
+   await admin.locator('#sinalizacaoMinimo').fill('1');
+   await admin.locator('#formSinalizacaoAdmin button[type=submit]').click();
+   await admin.locator('#resultadoSinalizacaoAdmin').filter({hasText:/Cor salva/}).waitFor();
    await admin.screenshot({path:path.join(__dirname,'../artifacts',
     'escritorio-admin-candidato-'+item.nome+'.png'),fullPage:true});
    await page.locator('#atualizarPedidos').click();
@@ -116,6 +123,27 @@ const {once}=require('node:events');
    await page.reload({waitUntil:'networkidle'});
    await page.locator('#listaPedidos article.pedido').nth(1).waitFor();
    assert.equal(await page.locator('#listaPedidos article.pedido').count(),2);
+   // A própria vitrine AKITEMM aprovada: mesmo titular, catálogo, carrinho e pré-pedidos.
+   const loja=await context.newPage();
+   loja.on('pageerror',e=>failures.push(e.message));
+   await loja.goto(base+'/staging/loja',{waitUntil:'networkidle'});
+   await loja.locator('#conteudoLojaLoop').waitFor({state:'visible'});
+   assert.ok(await loja.locator('#catalogoLojaLoop article.produto-loja-loop').count()>=2);
+   assert.ok(await loja.locator('#catalogoLojaLoop article.produto-loja-loop-elegivel').count()>=1);
+   assert.ok(await loja.locator('#catalogoLojaLoop article.produto-loja-loop-nao-elegivel').count()>=1);
+   await loja.locator('#catalogoLojaLoop article.produto-loja-loop')
+    .filter({hasText:'Curso adicional fictício'})
+    .locator('button.akitemm-adicionar').click();
+   assert.equal(await loja.locator('#akitemmTotalItens').innerText(),'1');
+   await loja.locator('#registrarPedidoLoja').click();
+   await loja.locator('#statusPedidoLoja').filter({hasText:/Pedido hom-/}).waitFor();
+   await loja.screenshot({path:path.join(__dirname,'../artifacts',
+    'vitrine-aprovada-candidato-'+item.nome+'.png'),fullPage:true});
+   await loja.close();
+   await page.locator('#abaMeusPedidos').click();
+   await page.locator('#atualizarPedidos').click();
+   await page.locator('#listaPedidos article.pedido').nth(2).waitFor();
+   assert.equal(await page.locator('#listaPedidos article.pedido').count(),3);
    assert.deepEqual(failures,[]);
    console.log('LOOP_CANDIDATO_BROWSER_'+item.nome.toUpperCase()+
     '=CADASTRO_LOGIN_PEDIDO_ESCRITORIO_COMPARTILHADO_SEM_FINANCEIRO_REAL');
