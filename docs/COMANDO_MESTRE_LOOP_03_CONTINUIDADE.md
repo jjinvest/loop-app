@@ -2317,3 +2317,14 @@ Corrigidas duas falhas novas no candidato de conta única: a prévia de posiçõ
 Regressões HTTP reproduziram as falhas antes da correção; testes passaram sobre isolamento, dez hipóteses válidas por titular, totais fora da amostra, eventos duplicados, revisão e reabertura SQLite somente leitura. Roteiro de navegador específico PC/celular adicionado aos checks existentes; CI do código novo ainda deve ser confirmado. A consulta administrativa global mantém seu teto de segurança de 1.000 registros, sem alegar paginação resolvida. Nenhuma tela aprovada foi redesenhada.
 
 Detalhes, evidências e limites: [Convergência PSP e isolamento](./CONVERGENCIA_PSP_E_ISOLAMENTO_ESCRITORIOS_04NOV2026.md). Permanecem e-mail externo, identidade/pagamento comercial e ativação definitiva no motor persistente; Marco Zero fechado e PR #1 DRAFT.
+
+
+### 205 — Prova final dos Escritórios e leitura limitada sob concorrência (04/11/2026)
+
+Complemento da seção 204: a consulta de posições usa um único SELECT com limite de 1.001 linhas no próprio SQLite, filtrado pelo titular quando individual. Assim o teto não depende de uma contagem anterior sujeita a gravação concorrente. O Admin trata especificamente a indisponibilidade da prévia acima de 1.000 registros, limpa os dados anteriores desse quadro e mantém os demais departamentos e indicadores; não apresenta zero como substituto de leitura ausente. A paginação global completa continua pendente, sem remover o teto de segurança ou ativar o motor comercial.
+
+**Código comprovado:** `9d52e5559b4cc628eefa77b265df6695f160f52e`. [Segurança e bloqueio financeiro aprovados](https://github.com/jjinvest/loop-app/actions/runs/41917950638). [Suite completa e navegador aprovados](https://github.com/jjinvest/loop-app/actions/runs/41917950570): 851 testes, 851 PASS, zero FAIL e zero skipped, npm ci e auditoria de dependências aprovados. Todos os roteiros de navegador existentes passaram, incluindo o novo `LOOP_CONVERGENCIA_PSP_BROWSER_PC_CELULAR_OK`.
+
+**Prova visual e funcional:** PC/celular do Cliente e Admin convergem ao perder a confirmação vigente do PSP, mantendo histórico e sem rede ou gravações nas leituras. A massa artificial de 1.001 registros foi descartada por rollback; o Cliente não lê outros titulares e os 12 departamentos do Admin permanecem acessíveis quando a prévia global está indisponível. [Capturas reais, artifact 13366885800](https://github.com/jjinvest/loop-app/actions/runs/41917950570/artifacts/13366885800). [Relatório completo](./CONVERGENCIA_PSP_E_ISOLAMENTO_ESCRITORIOS_04NOV2026.md).
+
+Nenhuma simulação de 10.000 foi repetida, nenhum e-mail/PSP externo foi acionado por esses testes e nenhuma implantação comercial foi feita. Permanecem integração definitiva ao motor, identidade/e-mail/pagamento comerciais e demais homologações externas. PR #1 DRAFT e Marco Zero bloqueado. O commit posterior de registro documental não modifica o código comprovado acima.
