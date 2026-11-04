@@ -2229,3 +2229,14 @@ Documento complementar: docs/ESCRITORIOS_INTEGRADOS_ADMIN_MISSOES_04NOV2026.md
 
 
 **Validação do bloco 195 concluída em 04/11/2026:** [segurança/integração — SUCCESS](https://github.com/jjinvest/loop-app/actions/runs/41790335702) e [navegador real PC/celular — SUCCESS](https://github.com/jjinvest/loop-app/actions/runs/41790719157). [Capturas reais da loja/cliente e do painel administrativo](https://github.com/jjinvest/loop-app/actions/runs/41790719157/artifacts/13303710930). O ajuste visual do teste de moeda aceita o espaço de formatação local do padrão pt-BR, sem tocar nos valores reais de simulação. Nenhum checkout comercial foi habilitado.
+
+
+### 196 — Vitrine AKITEMM aprovada integrada ao candidato local (04/11/2026)
+
+A estrutura HTML/CSS da vitrine AKITEMM já aprovada agora é reaproveitada na rota autenticada do candidato local /staging/loja. Ela usa a mesma conta, sessão, catálogo SQLite, carrinho, cotação de ensaio e pré-pedidos do Escritório do Cliente e do Administrador, sem alterar a vitrine original do aplicativo. O HTML original e o estilo foram preservados; somente a cópia JS de homologação entregue por este servidor recebe CSRF/idempotência e mensagens de proteção.
+
+O operador passou a classificar visualmente cada produto da vitrine por CINZA (compra comum), VERDE (produto sinalizado para LOOP) e EVENTO (dourado/roxo), com mínimo de unidades e revisão/histórico no SQLite. Essa classificação **não liga o motor e não concede posição ou prêmio**, não representa homologação jurídica da oferta e não publica evento real. O botão de pedido na vitrine integrada só cria pré-pedido de laboratório via backend autenticado. Repetições idempotentes preservam o mesmo pedido e os valores congelados; alterações de preço exigem nova cotação.
+
+O Escritório do Cliente oferece link para a vitrine aprovada e exibe seus pré-pedidos no mesmo Meus Pedidos; outros titulares permanecem isolados. Sem CEP/endereços reais, Pix, saques, bônus, giros, entregas ou avaliações de produção. Próxima etapa: unir a fonte comercial de ofertas e o motor definitivo com autorização operacional, adequação jurídica e homologação externa. PR #1 permanece DRAFT, sem merge, deploy, movimento financeiro ou liberação do Marco Zero.
+
+Documento: docs/VITRINE_APROVADA_CANDIDATO_UNIFICADA_04NOV2026.md.
