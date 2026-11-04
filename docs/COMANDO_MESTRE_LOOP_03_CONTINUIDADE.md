@@ -2273,3 +2273,14 @@ O Escritório do Administrador mostra contadores e bloqueios de PSP, oferta e li
 Detalhes: docs/PROJECAO_FILA_B_FOTOGRAFIA_OFERTA_CANDIDATO_04NOV2026.md
 
 **Provas finais do bloco 198 (04/11/2026):** [Segurança, fluxo PSP e fotografia histórica — aprovado](https://github.com/jjinvest/loop-app/actions/runs/41817681348); [navegador real PC/celular com prévia no Admin e no Cliente — aprovado](https://github.com/jjinvest/loop-app/actions/runs/41817681338); [capturas reais](https://github.com/jjinvest/loop-app/actions/runs/41817681338/artifacts/13315886479). Todos esses ensaios permanecem sem movimentação de dinheiro, posição real ou giro; PR #1 DRAFT, Marco Zero não liberado.
+
+
+### 199 — Pré-adesão fictícia persistida com CPF/termos e PSP (04/11/2026)
+
+O candidato de homologação local passa a manter um **checkpoint durável e idempotente no SQLite** antes da eventual integração de adesão ao motor real, com chave única por pré-pedido e posição fictícia e histórico imutável. O checkpoint **não ativa posição**, não coloca o titular em fila comercial nem aciona giro, saque, bônus ou cofre.
+
+O Administrador ganhou campos de consulta e registro de pré-adesão fictícia por pré-pedido; exigem credencial do operador, operações Sandbox explicitamente autorizadas e comprovação prévia de recebimento no PSP reconsultado, posição pendente no mesmo SQLite, fotografia VERDE histórica qualificada, CPF de laboratório cifrado e termos expressamente aceitos para a versão vigente. Nenhum desses elementos substitui homologação externa. A janela de revisão de PSP é reavaliada a cada leitura; histórico permanece se houver reversão. O Cliente acompanha somente seus próprios checkpoints, e a prévia da Fila B mostra o indicador de pré-adesão fictícia persistida.
+
+Incluídos testes de bloqueio, idempotência, separação por titular, revisão de pagamento, imutabilidade, persistência por backup e reabertura SQLite, além de PC/celular. As respostas e telas mantêm **posições reais = 0**; ambiente production permanece proibido. PR #1 continua DRAFT, sem merge/deploy, Marco Zero não liberado.
+
+Documento: docs/PRE_ADESAO_FICTICIA_SQLITE_MARCO_ZERO_04NOV2026.md
