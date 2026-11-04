@@ -50,4 +50,6 @@ jobs:
             artifacts/escritorio-admin-candidato-celular.png
             artifacts/cliente-catalogo-editavel-pc.png
             artifacts/cliente-catalogo-editavel-celular.png
+            artifacts/vitrine-aprovada-candidato-pc.png
+            artifacts/vitrine-aprovada-candidato-celular.png
           if-no-files-found: warn
