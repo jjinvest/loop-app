@@ -37,8 +37,14 @@
       <button type="button" id="akitemmFiltroTodos" class="akitemm-chip selecionado" aria-pressed="true">Todos</button>
       <label class="akitemm-busca" for="akitemmBusca"><span aria-hidden="true">⌕</span><input id="akitemmBusca" type="search" placeholder="Buscar produtos, cursos ou assuntos…" autocomplete="off"></label>
       <button type="button" id="akitemmFiltroOfertas" class="akitemm-chip" aria-pressed="false">Ofertas</button>
+       <div class="akitemm-legenda-cores" aria-label="Legenda das cores dos produtos">
+        <span><i class="akitemm-cor-cinza" aria-hidden="true"></i>Compra comum (sem LOOP)</span>
+        <span><i class="akitemm-cor-verde" aria-hidden="true"></i>Qualifica para o LOOP*</span>
+        <span><i class="akitemm-cor-evento" aria-hidden="true"></i>Evento especial*</span>
+       </div>
      </div>
-     <nav class="akitemm-categorias" aria-label="Categorias de produtos">
+     <p class="akitemm-legenda-ressalva">* Conforme as regras da oferta e confirmação da compra. Cor não garante contemplação.</p>
+      <nav class="akitemm-categorias" aria-label="Categorias de produtos">
       <button type="button" data-akitemm-categoria="cursos"><span aria-hidden="true"><svg viewBox="0 0 24 24" width="25" height="25" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" ><path d="M2 10 12 4l10 6-10 6L2 10Z"/><path d="M6 12v6c3 2 9 2 12 0v-6M22 10v7"/></svg></span><strong>Cursos</strong><small>Desenvolva novas habilidades</small><b aria-hidden="true">›</b></button>
       <button type="button" data-akitemm-categoria="fisicos"><span aria-hidden="true"><svg viewBox="0 0 24 24" width="25" height="25" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" ><path d="m3 7 9-5 9 5v10l-9 5-9-5V7Z"/><path d="m3 7 9 5 9-5M12 12v10"/></svg></span><strong>Produtos físicos</strong><small>Itens para o seu dia a dia</small><b aria-hidden="true">›</b></button>
       <button type="button" data-akitemm-categoria="novidades"><span aria-hidden="true"><svg viewBox="0 0 24 24" width="25" height="25" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" ><path d="m12 2 3 7 7 .6-5.5 5 1.7 7.4L12 18l-6.2 4 1.7-7.4L2 9.6 9 9l3-7Z"/></svg></span><strong>Novidades</strong><small>Lançamentos exclusivos</small><b aria-hidden="true">›</b></button>
