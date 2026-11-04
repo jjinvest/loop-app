@@ -2248,3 +2248,13 @@ Documento: docs/VITRINE_APROVADA_CANDIDATO_UNIFICADA_04NOV2026.md.
 - [Artefatos das capturas reais PC/celular (vitrine, cliente e administrador)](https://github.com/jjinvest/loop-app/actions/runs/41811862493/artifacts/13311999734).
 - Evidência do fluxo em banco SQLite e do teste automatizado: sucesso, sem falhas.
 - Prova permanece **somente de homologação local**, NÃO representa GO do Marco Zero, deploy comercial ou movimentação financeira real.
+
+### 197 — Simulacao compartilhada das classificacoes da vitrine (04/11/2026)
+
+Implementado no **candidato de homologacao local** o motor informativo `src/domain/simulador-qualificacao-carrinho-candidato.js`, que compartilha o mesmo catalogo e a mesma sinalizacao de cor SQLite entre a vitrine aprovada, o Escritório do Cliente e o Administrador. O Admin possui formulario com produto, quantidade e resultado; a copia da vitrine aprovada mostra a simulacao dinamica do carrinho. Os arquivos originais da vitrine publica nao foram redesenhados. Limite maximo de 50 unidades por item e validacao pelo servidor.
+
+Regras do calculo: CINZA e compra comum sem progresso LOOP; VERDE conta somente se a quantidade minima configurada for cumprida e a soma de produtos verdes aptos do mesmo pedido atingir a referencia de **R$ 250**; EVENTO dourado/roxo fica aguardando regulamento especial e aprovacao, sem considerar ou inventar quantidade de posicoes. Itens cinza, evento ou verde abaixo do minimo nao entram no subtotal de referencia. O calculo informa status, falta e por que ainda nao qualificaria. Nao agrega pedidos antigos nem declara elegibilidade conclusiva.
+
+**Regra de seguranca obrigatoria:** a simulacao nao concede direitos, nao valida CPF/termos, nao prova pagamento, nao cria credito, posicao, fila, giro, cofre, saque ou repasse. As rotas `POST /staging/vitrine/simular-qualificacao` e `POST /staging/escritorio-unificado/simular-qualificacao` exigem respectivamente sessao com CSRF e segredo de operador. Producao continua desabilitada e PR #1 DRAFT. Integracao definitiva no motor e homologacao externa seguem pendentes.
+
+Evidencia de seguranca/integracao: https://github.com/jjinvest/loop-app/actions/runs/41814727301 . Teste de navegador PC/celular deve ser conferido na execucao mais recente antes de declarar aceite visual. Documento: docs/QUALIFICACAO_SIMULADA_VITRINE_ADMIN_04NOV2026.md.
