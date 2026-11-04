@@ -56,7 +56,8 @@ test('vitrine aprovada usa mesmo catálogo SQLite e Meus Pedidos, sem financeiro
  assert.equal(s.status,200);assert.doesNotThrow(()=>new Function(s.body));
  assert.ok(s.body.includes("p.classeVisual==='EVENTO'"));
  assert.ok(s.body.includes("X-Checkout-Csrf"));
- const catalog='/api/laboratorio/participante/loja/catalogo';
+ assert.ok(s.body.includes("fetch('/staging/vitrine/'+caminho"));
+ const catalog='/staging/vitrine/loja/catalogo';
  assert.equal((await json(catalog)).status,401);
  const inicial=await json(catalog,{cookie:ana.cookie});
  assert.equal(inicial.status,200);
@@ -91,8 +92,8 @@ test('vitrine aprovada usa mesmo catálogo SQLite e Meus Pedidos, sem financeiro
  assert.equal(eventoLoja.json.produtos[0].eventoId,null);
  assert.equal(eventoLoja.json.produtos[0].posicoesPorPedidoLoop,0);
  assert.equal((await json(admin+'/historico',{admin:true})).json.historico.length,2);
- assert.equal((await json('/api/laboratorio/participante/minha-conta',{cookie:ana.cookie})).json.csrf,ana.csrf);
- const rota='/api/laboratorio/participante/loja/pedidos';
+ assert.equal((await json('/staging/vitrine/minha-conta',{cookie:ana.cookie})).json.csrf,ana.csrf);
+ const rota='/staging/vitrine/loja/pedidos';
  const pedido={itens:[{produtoId:'curso-homologacao-250',quantidade:2}]};
  const options={cookie:ana.cookie,csrf:ana.csrf,headerLab:true,
   method:'POST',key:'vitrine-prepedido-idempotente-001',body:pedido};
@@ -130,7 +131,7 @@ test('vitrine aprovada usa mesmo catálogo SQLite e Meus Pedidos, sem financeiro
  assert.equal((await json(rota,{...options,key:'vitrine-prepedido-idempotente-002',
   body:{itens:[{produtoId:'curso-homologacao-250',quantidade:1}]}})).status,409);
  assert.equal((await json('/staging/checkout/finalizar',{method:'POST',body:{}})).status,503);
- assert.equal((await json('/api/laboratorio/participante/loja/entrega',
+ assert.equal((await json('/staging/vitrine/loja/entrega',
   {method:'POST',cookie:ana.cookie,body:{}})).status,409);
  assert.equal(db.prepare('PRAGMA integrity_check').get().integrity_check,'ok');
  assert.deepEqual(db.prepare('PRAGMA foreign_key_check').all(),[]);
