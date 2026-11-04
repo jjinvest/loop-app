@@ -2226,3 +2226,6 @@ Entregue no servidor candidato LOCAL o catálogo editável pelo Administrador, c
 A alteração é **apenas do candidato local**, não da loja comercial de produção nem da vitrine demonstrativa separada. Não há venda, cobrança real, crédito, posição, saque, cofre ou giro automático; os limites de homologação externa e as permissões comerciais permanecem. Testes automáticos e de navegador PC/celular foram configurados; verificar o run específico antes de declarar a validação. PR #1 DRAFT, sem merge/deploy. MARCO_ZERO=NAO_LIBERADO.
 
 Documento complementar: docs/ESCRITORIOS_INTEGRADOS_ADMIN_MISSOES_04NOV2026.md
+
+
+**Validação do bloco 195 concluída em 04/11/2026:** [segurança/integração — SUCCESS](https://github.com/jjinvest/loop-app/actions/runs/41790335702) e [navegador real PC/celular — SUCCESS](https://github.com/jjinvest/loop-app/actions/runs/41790719157). [Capturas reais da loja/cliente e do painel administrativo](https://github.com/jjinvest/loop-app/actions/runs/41790719157/artifacts/13303710930). O ajuste visual do teste de moeda aceita o espaço de formatação local do padrão pt-BR, sem tocar nos valores reais de simulação. Nenhum checkout comercial foi habilitado.
