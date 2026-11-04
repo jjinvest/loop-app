@@ -2210,3 +2210,10 @@ Criada triagem de avisos de **Asaas Sandbox** por página de 25 pré-pedidos. So
 Interfaces e rotas sob /staging/escritorio-unificado e /staging/escritorio-admin seguem proibidas em NODE_ENV=production e não montadas em src/server.js comercial. Departamentos ainda sem fonte real são exibidos como NÃO CONECTADOS, sem fabricar valores. CI e navegador devem ser verificados na versão exata. PR #1 em DRAFT, sem merge, deploy ou dinheiro real. MARCO_ZERO=NAO_LIBERADO.
 
 Complemento em docs/ESCRITORIOS_INTEGRADOS_ADMIN_MISSOES_04NOV2026.md.
+
+
+**Evidências do bloco 194, código a36db50b2e091a7eb7b9fcc72b48ce9f95b7421a (04/11/2026):**
+- [Segurança e testes de departamentos — SUCCESS](https://github.com/jjinvest/loop-app/actions/runs/41788809596)
+- [Navegador PC/celular com novos departamentos — SUCCESS](https://github.com/jjinvest/loop-app/actions/runs/41788809779)
+- [Capturas do navegador](https://github.com/jjinvest/loop-app/actions/runs/41788809779/artifacts/13301439658)
+- PR #1 DRAFT, ambiente local de homologação, sem vendas/saques/giro reais.
