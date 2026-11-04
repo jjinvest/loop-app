@@ -2297,3 +2297,12 @@ Testes de API: autenticação obrigatória dos termos, CSRF, recusa de aceite fa
 Nenhuma alteração em regras financeiras, limites, tabuleiro, fila ou cotação. PR #1 permanece DRAFT, sem merge. Complemento da seção 199.
 
 **Evidências finais:** integração/segurança [aprovadas](https://github.com/jjinvest/loop-app/actions/runs/41851292786); navegador PC/celular com identidade fictícia, aceite da versão vigente e consulta direta no Admin [aprovado](https://github.com/jjinvest/loop-app/actions/runs/41851408417); [capturas reais](https://github.com/jjinvest/loop-app/actions/runs/41851408417/artifacts/13335656866). Estas provas não substituem validação de identidade externa nem alteram o status do Marco Zero.
+
+
+### 201 — Gate de ativação unificado e missão de regularização (04/11/2026)
+
+Implementado `src/domain/diagnostico-ativacao-candidato.js` para **consolidar, sem mutação**, os requisitos da passagem da pré-adesão para o motor definitivo. Fonte: mesmo SQLite de pré-pedido, fotografia da oferta, Asaas Sandbox, CPF/termos e pré-adesão. O checklist separa provas de laboratório de verificações externas, bloqueando ativação se faltarem KYC independente, pagamento comercial conciliado, contagem persistida das 10 posições por titular, máximo 2 no tabuleiro, homologação do motor financeiro e autorização operacional. Não libera posições, fila, tabuleiro, giro ou repasses.
+
+O Cliente possui **Ver requisitos de ativação** dentro de cada pedido; o Administrador utiliza o ID já escolhido na pré-adesão para **Conferir requisitos de ativação**. Novo botão **Abrir missão de regularização** usa o sistema de missões do Administrador existente, no departamento Segurança, vinculando o pré-pedido com chave idempotente; clicar repetidamente não abre duplicatas. Leituras autenticadas isolam os titulares; nenhum CPF integral ou segredo é exibido.
+
+Restam escolher e integrar serviço externo de identidade, confirmação comercial, validar controles no motor persistente definitivo e aprovações externas. A implementação não presume que CPF preenchido ou Pix de ensaio seja suficiente. Detalhes e gates: docs/DIAGNOSTICO_GATE_ATIVACAO_04NOV2026.md.
