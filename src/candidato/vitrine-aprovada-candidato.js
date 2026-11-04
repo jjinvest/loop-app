@@ -45,6 +45,8 @@ function createVitrineCandidata({app,banco,catalogo,contas,intencoes,prePedidos,
     !origemJs.includes('const especial=!!p.eventoId&&p.posicoesPorPedidoLoop>1;'))
   fail('CONTRATO_JS_VITRINE_MUDOU_REVISAR_ADAPTADOR');
  const js=origemJs
+  .replace("fetch('/staging/vitrine/'+caminho,{",
+   "fetch('/staging/vitrine/'+caminho,{")
   .replace('const catalogo=[],carrinho=new Map();',
    'const catalogo=[],carrinho=new Map();let csrfCandidato=null,chavePedidoCandidato=null;')
   .replace(ant,novo)
@@ -64,12 +66,12 @@ function createVitrineCandidata({app,banco,catalogo,contas,intencoes,prePedidos,
   res.type('js').sendFile(path.join(DIR,'educacao-carrinho-loop-v6.js')));
  app.get('/staging/assets/loja-aprovada.js',(_req,res)=>
   res.type('js').send(js));
- app.get('/api/laboratorio/participante/minha-conta',autorizarCliente,(req,res)=>{
+ app.get('/staging/vitrine/minha-conta',autorizarCliente,(req,res)=>{
   const p=contas.perfil(req.titularVitrine);
   return res.json({perfil:{nome:p.nome,temFoto:false},
    conta:{nick:p.nick},csrf:sessao(req).csrf,laboratorio:true});
  });
- app.get('/api/laboratorio/participante/loja/catalogo',autorizarCliente,
+ app.get('/staging/vitrine/loja/catalogo',autorizarCliente,
   async(req,res)=>{
    try{
     const lista=(await catalogo.listar()).filter(p=>p.estado==='PUBLICADO');
@@ -78,7 +80,7 @@ function createVitrineCandidata({app,banco,catalogo,contas,intencoes,prePedidos,
      laboratorio:true,posicoesReais:0});
    }catch{return res.status(503).json({erro:'VITRINE_INDISPONIVEL'});}
   });
- app.get('/api/laboratorio/participante/loja/pedidos',autorizarCliente,(req,res)=>{
+ app.get('/staging/vitrine/loja/pedidos',autorizarCliente,(req,res)=>{
   try{
    return res.json({pedidos:prePedidos.listar({
     titularId:req.titularVitrine
@@ -90,7 +92,7 @@ function createVitrineCandidata({app,banco,catalogo,contas,intencoes,prePedidos,
    })),laboratorio:true,pagamentoReal:false});
   }catch{return res.status(503).json({erro:'PEDIDOS_INDISPONIVEIS'});}
  });
- app.post('/api/laboratorio/participante/loja/pedidos',autorizarCliente,
+ app.post('/staging/vitrine/loja/pedidos',autorizarCliente,
   async(req,res)=>{
    if(req.get('x-loop-lab')!=='participante'||!csrf(req))
     return res.status(403).json({erro:'MUTACAO_NAO_AUTORIZADA'});
@@ -128,19 +130,19 @@ function createVitrineCandidata({app,banco,catalogo,contas,intencoes,prePedidos,
      .json({erro:e.codigo||'PEDIDO_INVALIDO',pagamentoReal:false});
    }
   });
- app.get('/api/laboratorio/participante/loja/avaliacoes/pendentes',
+ app.get('/staging/vitrine/loja/avaliacoes/pendentes',
   autorizarCliente,(_req,res)=>res.json({itens:[]}));
- app.get('/api/laboratorio/participante/loja/entrega',
+ app.get('/staging/vitrine/loja/entrega',
   autorizarCliente,(_req,res)=>res.json({entrega:null,semEntregaReal:true}));
- app.post('/api/laboratorio/participante/loja/entrega',
+ app.post('/staging/vitrine/loja/entrega',
   autorizarCliente,(_req,res)=>res.status(409).json({erro:'ENTREGA_NAO_HOMOLOGADA'}));
- app.get('/api/laboratorio/participante/meus-links',autorizarCliente,
+ app.get('/staging/vitrine/meus-links',autorizarCliente,
   (_req,res)=>res.json({ativo:false,linkLoja:null,apelido:null}));
- app.get('/api/laboratorio/participante/loja/config',autorizarCliente,
+ app.get('/staging/vitrine/loja/config',autorizarCliente,
   (_req,res)=>res.json({config:{banners:[],redes:{},informacoes:{
    suporte:'Apenas prévia de laboratório; atendimento comercial indisponível.'
   }}}));
- app.post('/api/laboratorio/participante/loja/avaliacoes',
+ app.post('/staging/vitrine/loja/avaliacoes',
   autorizarCliente,(_req,res)=>res.status(403).json({erro:'AVALIACOES_NAO_HOMOLOGADAS'}));
  app.get('/staging/escritorio-unificado/sinalizacao/:id',
   autorizarOperador,(req,res)=>{
