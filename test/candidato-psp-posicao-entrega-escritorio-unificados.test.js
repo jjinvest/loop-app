@@ -179,6 +179,11 @@ test('uma conta -> PSP reconsultado -> 1 posicao e entrega ficticias -> Escritor
  const replay=await c.request(cp+'/preparar-pre-adesao',params);
  assert.equal(replay.status,200);
  assert.equal(replay.body.repetido,true);
+ const filaComPre=await c.request(root+'/projecao-filas',{admin:true});
+ assert.equal(filaComPre.body.hipoteseFilaB.length,1);
+ assert.equal(filaComPre.body.hipoteseFilaB[0].preAdesaoFicticiaRegistrada,true);
+ const filaClienteComPre=await c.request('/staging/minha-previa-filas',{token:c.a.token});
+ assert.equal(filaClienteComPre.body.hipoteseFilaB[0].preAdesaoFicticiaRegistrada,true);
  // Persistência real em arquivo SQLite após fechamento/reabertura do backup.
  const pasta=fs.mkdtempSync(path.join(os.tmpdir(),'loop-pre-adesao-'));
  t.after(()=>fs.rmSync(pasta,{recursive:true,force:true}));
