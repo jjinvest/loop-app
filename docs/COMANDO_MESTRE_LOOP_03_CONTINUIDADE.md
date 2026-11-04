@@ -2271,3 +2271,5 @@ O método de preparo do pré-pedido grava as classificações por produto na **m
 O Escritório do Administrador mostra contadores e bloqueios de PSP, oferta e limite de 10; o Escritório do Cliente mostra só registros do próprio titular. A projeção chama `MotorFilas` **em memória**, com adesão pendente; não movimenta motor persistido, contabilidade, catraca, bônus, cofre, saque ou posição real. Nenhum HTTP GET consulta o PSP externo. Produção continua bloqueada; PR #1 DRAFT, sem merge/deploy ou GO do Marco Zero.
 
 Detalhes: docs/PROJECAO_FILA_B_FOTOGRAFIA_OFERTA_CANDIDATO_04NOV2026.md
+
+**Provas finais do bloco 198 (04/11/2026):** [Segurança, fluxo PSP e fotografia histórica — aprovado](https://github.com/jjinvest/loop-app/actions/runs/41817681348); [navegador real PC/celular com prévia no Admin e no Cliente — aprovado](https://github.com/jjinvest/loop-app/actions/runs/41817681338); [capturas reais](https://github.com/jjinvest/loop-app/actions/runs/41817681338/artifacts/13315886479). Todos esses ensaios permanecem sem movimentação de dinheiro, posição real ou giro; PR #1 DRAFT, Marco Zero não liberado.
