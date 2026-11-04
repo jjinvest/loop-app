@@ -103,6 +103,12 @@ test('vitrine aprovada usa mesmo catálogo SQLite e Meus Pedidos, sem financeiro
  assert.equal((await json(rota,{...options,body:{...pedido,participarLoop:true}})).status,400);
  const primeiro=await json(rota,options);
  assert.equal(primeiro.status,201,JSON.stringify(primeiro.json));
+ const fotoHistorica=sinalizacaoVitrine.consultarFotografiaPrepedido({
+  prepedidoId:primeiro.json.pedido.pedidoId});
+ assert.equal(fotoHistorica.totalCentavos,50000);
+ assert.equal(fotoHistorica.eventoPendente,true);
+ assert.equal(fotoHistorica.podeSimularFilaBAzul,false);
+ assert.equal(fotoHistorica.itens[0].classificacao,'EVENTO');
  const duplicado=await json(rota,options);
  assert.equal(duplicado.status,200);
  assert.equal(duplicado.json.pedido.pedidoId,primeiro.json.pedido.pedidoId);
@@ -123,6 +129,9 @@ test('vitrine aprovada usa mesmo catálogo SQLite e Meus Pedidos, sem financeiro
  assert.equal(atualizar.status,200);
  const novaLoja=await json(catalog,{cookie:ana.cookie});
  assert.equal(novaLoja.json.produtos[0].precoCentavos,30000);
+ assert.equal(sinalizacaoVitrine.consultarFotografiaPrepedido({
+  prepedidoId:primeiro.json.pedido.pedidoId}).itens[0].precoUnitarioCentavos,25000,
+ 'historico não deve usar preços nem cores atuais');
  const depois=await json(rota,{cookie:ana.cookie});
  assert.equal(depois.json.pedidos[0].totalCentavos,50000);
  const novo=await json(rota,{...options,key:'vitrine-prepedido-idempotente-002'});
