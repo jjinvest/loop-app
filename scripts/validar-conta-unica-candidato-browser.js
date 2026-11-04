@@ -66,6 +66,8 @@ const {once}=require('node:events');
    await admin.locator('#token').fill('somente-teste-do-navegador-'+('x'.repeat(40)));
    await admin.locator('#formAcesso button').click();
    await admin.locator('#administracao').waitFor({state:'visible'});
+   assert.equal(await admin.locator('#formPreAdesao').count(),1);
+   assert.equal(await admin.locator('#conferirPreAdesao').count(),1);
    await admin.locator('#resumoPreviaFilas')
     .filter({hasText:/Fictícias históricas/}).waitFor();
    assert.match(await admin.locator('#resumoPreviaFilas').innerText(),
@@ -119,6 +121,8 @@ const {once}=require('node:events');
    await page.locator('#atualizarPedidos').click();
    await page.locator('#minhaPreviaFilas')
     .filter({hasText:/Posições reais: 0/}).waitFor();
+   await page.locator('#minhasPreAdesoes')
+    .filter({hasText:/Nenhuma pré-adesão fictícia registrada/}).waitFor();
    await page.locator('#comunicadosCliente').filter({
     hasText:/Registro de acompanhamento de laboratório/
    }).waitFor();

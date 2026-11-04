@@ -48,6 +48,7 @@ jobs:
           node --test test/transporte-email-resend-candidato.test.js
           node --test test/entregas-prepedidos-asaas-sandbox-staging.test.js
           node --test test/candidato-psp-posicao-entrega-escritorio-unificados.test.js
+          node --test test/pre-adesao-sandbox-candidato.test.js
           node --test test/integridade-titular-candidato-sqlite.test.js
           node --test test/backup-conta-unica-restauracao-segura.test.js
           node --test test/custodia-chaves-conta-unica-recuperacao.test.js
@@ -92,6 +93,9 @@ jobs:
               '/staging/escritorio-unificado/simular-qualificacao',
               '/staging/escritorio-unificado/projecao-filas',
               '/staging/minha-previa-filas',
+              '/staging/escritorio-unificado/pre-adesao/hom-11111111-1111-1111-1111-111111111111',
+              '/staging/escritorio-unificado/preparar-pre-adesao',
+              '/staging/minhas-pre-adesoes',
               '/staging/escritorio-unificado/sinalizacao/curso-homologacao-250',
               '/staging/meus-comunicados',
               '/staging/contas/email/enviar','/staging/contas/email/confirmar'
