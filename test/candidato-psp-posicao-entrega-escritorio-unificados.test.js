@@ -86,6 +86,20 @@ async function criarContexto(t,{ativo=true,comCpf=false}={}){
 test('uma conta -> PSP reconsultado -> 1 posicao e entrega ficticias -> Escritorio',async t=>{
  const c=await criarContexto(t,{comCpf:true});
  const root='/staging/escritorio-unificado';
+
+ const diagUrl=root+'/diagnostico-ativacao/'+c.prepedidoId;
+ const meuDiag='/staging/meu-diagnostico-ativacao/'+c.prepedidoId;
+ assert.equal((await c.request(diagUrl)).status,401);
+ assert.equal((await c.request(meuDiag)).status,401);
+ assert.equal((await c.request(meuDiag,{token:c.b.token})).status,404);
+ const gateInicial=await c.request(diagUrl,{admin:true});
+ assert.equal(gateInicial.status,200,JSON.stringify(gateInicial.body));
+ assert.equal(gateInicial.body.permitidoAtivar,false);
+ assert.equal(gateInicial.body.resumo.limitePorTitular,10);
+ assert.equal(gateInicial.body.resumo.limiteTabuleiroPorTitular,2);
+ assert.ok(gateInicial.body.bloqueios.includes('PRE_ADESAO_AINDA_NAO_PERSISTIDA'));
+ assert.ok(gateInicial.body.bloqueios.includes('IDENTIDADE_EXTERNA_NAO_HOMOLOGADA'));
+ assert.equal((await c.request(meuDiag,{token:c.a.token})).status,200);
  const eventoId='evt_CANDIDATORECEIVED01';
  const primeiro=await c.request(root+'/projetar-posicao-ficticia',{
   method:'POST',admin:true,data:{eventoId,prepedidoId:c.prepedidoId}
@@ -205,6 +219,16 @@ test('uma conta -> PSP reconsultado -> 1 posicao e entrega ficticias -> Escritor
  const replay=await c.request(cp+'/preparar-pre-adesao',params);
  assert.equal(replay.status,200);
  assert.equal(replay.body.repetido,true);
+
+ const gateDepois=await c.request(meuDiag,{token:c.a.token});
+ assert.equal(gateDepois.status,200);
+ assert.equal(gateDepois.body.resumo.preAdesaoDeEnsaioPersistida,true);
+ assert.equal(gateDepois.body.resumo.preAdesaoDeEnsaioSemRevisao,true);
+ assert.equal(gateDepois.body.resumo.cpfFicticioDeclarado,true);
+ assert.equal(gateDepois.body.permitidoAtivar,false);
+ assert.equal(gateDepois.body.permitidoPagar,false);
+ assert.equal(gateDepois.body.bloqueios.includes('PRE_ADESAO_AINDA_NAO_PERSISTIDA'),false);
+ assert.ok(gateDepois.body.bloqueios.includes('IDENTIDADE_EXTERNA_NAO_HOMOLOGADA'));
  const filaComPre=await c.request(root+'/projecao-filas',{admin:true});
  assert.equal(filaComPre.body.hipoteseFilaB.length,1);
  assert.equal(filaComPre.body.hipoteseFilaB[0].preAdesaoFicticiaRegistrada,true);
@@ -311,6 +335,12 @@ test('uma conta -> PSP reconsultado -> 1 posicao e entrega ficticias -> Escritor
  const preReversao=await c.request(root+'/pre-adesao/'+c.prepedidoId,{admin:true});
  assert.equal(preReversao.status,200);
  assert.equal(preReversao.body.estado,'ENSAIO_HISTORICO_EM_REVISAO');
+
+ const gateReverso=await c.request(diagUrl,{admin:true});
+ assert.equal(gateReverso.status,200);
+ assert.equal(gateReverso.body.resumo.preAdesaoDeEnsaioSemRevisao,false);
+ assert.ok(gateReverso.body.bloqueios.includes('PRE_ADESAO_HISTORICA_EXIGE_REVISAO'));
+ assert.equal(gateReverso.body.permitidoAtivar,false);
  assert.ok(preReversao.body.motivos.includes('RECEBIMENTO_PSP_INDEPENDENTE_NAO_VIGENTE'));
  assert.equal(preReversao.body.posicoesReaisCriadas,0);
  const preCliente=await c.request('/staging/minhas-pre-adesoes',{token:c.a.token});
