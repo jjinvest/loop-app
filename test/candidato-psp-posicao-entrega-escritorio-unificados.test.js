@@ -48,11 +48,12 @@ async function criarContexto(t,{ativo=true,comCpf=false}={}){
  const server=app.listen(0,'127.0.0.1');await once(server,'listening');
  t.after(async()=>{await new Promise(done=>server.close(done));banco.close();});
  const base='http://127.0.0.1:'+server.address().port;
- const request=async(uri,{method='GET',token,csrf,admin=false,data}={})=>{
+ const request=async(uri,{method='GET',token,csrf,admin=false,data,idempotencia}={})=>{
   const r=await fetch(base+uri,{method,headers:{
    ...(token?{Cookie:COOKIE+'='+token}:{}),
    ...(csrf?{'X-Checkout-Csrf':csrf}:{}),
    ...(admin?{Authorization:'Bearer '+ADMIN}:{}),
+   ...(idempotencia?{'Idempotency-Key':idempotencia}:{}),
    ...(data?{'Content-Type':'application/json'}:{})
   },...(data?{body:JSON.stringify(data)}:{})});
   return {status:r.status,body:await r.json()};
