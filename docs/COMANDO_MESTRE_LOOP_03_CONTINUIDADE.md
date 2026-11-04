@@ -2240,3 +2240,11 @@ O operador passou a classificar visualmente cada produto da vitrine por CINZA (c
 O Escritório do Cliente oferece link para a vitrine aprovada e exibe seus pré-pedidos no mesmo Meus Pedidos; outros titulares permanecem isolados. Sem CEP/endereços reais, Pix, saques, bônus, giros, entregas ou avaliações de produção. Próxima etapa: unir a fonte comercial de ofertas e o motor definitivo com autorização operacional, adequação jurídica e homologação externa. PR #1 permanece DRAFT, sem merge, deploy, movimento financeiro ou liberação do Marco Zero.
 
 Documento: docs/VITRINE_APROVADA_CANDIDATO_UNIFICADA_04NOV2026.md.
+
+
+**Evidências finais da seção 196, 04/11/2026:**
+- [Segurança, integração e bloqueio financeiro — SUCCESS](https://github.com/jjinvest/loop-app/actions/runs/41811514601).
+- [Navegador real PC + celular, loja visual aprovada, cores, produtos administrados e pré-pedidos sincronizados ao Escritório do Cliente — SUCCESS](https://github.com/jjinvest/loop-app/actions/runs/41811862493).
+- [Artefatos das capturas reais PC/celular (vitrine, cliente e administrador)](https://github.com/jjinvest/loop-app/actions/runs/41811862493/artifacts/13311999734).
+- Evidência do fluxo em banco SQLite e do teste automatizado: sucesso, sem falhas.
+- Prova permanece **somente de homologação local**, NÃO representa GO do Marco Zero, deploy comercial ou movimentação financeira real.
