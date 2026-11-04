@@ -2199,3 +2199,14 @@ Depois da prova real de `PAYMENT_CREATED` e `PAYMENT_RECEIVED`, desabilitamos as
 **Limites remanescentes:** produção HTTPS com login robusto e RBAC, MFA, operações de tabuleiro/financeiro com aprovações, backups offsite reais e restauração, homologação de entrega/PSP, conformidade do modelo e análise jurídica independente. PR #1 segue DRAFT sem merge, deploy comercial, dinheiro real ou GO do Marco Zero.
 
 Detalhes em docs/ESCRITORIOS_INTEGRADOS_ADMIN_MISSOES_04NOV2026.md.
+
+
+### 194 — Escritório Administrador: central departamental e triagem protegida (04/11/2026)
+
+Adicionados ao candidato local **12 departamentos**, cartões de situação com indicação explícita de quais contagens são de laboratório e quais módulos comerciais continuam desconectados, filtro de missão por departamento/situação, paginação de 25 e navegabilidade no painel. A leitura aproveita a mesma fonte SQLite da Loja e do Escritório do Cliente, sem nova conta fictícia ou estrutura financeira paralela.
+
+Criada triagem de avisos de **Asaas Sandbox** por página de 25 pré-pedidos. Somente operador local autenticado pode abrir missão para caso com revisão PSP obrigatória ou webhook pendente de reconsulta, mantendo idempotência por pré-pedido. A ação cria **tarefa humana**, não dispara cobrança, GET ao PSP, crédito, posição, saque ou giro. Pedidos sem alerta são recusados; o histórico preserva revisões.
+
+Interfaces e rotas sob /staging/escritorio-unificado e /staging/escritorio-admin seguem proibidas em NODE_ENV=production e não montadas em src/server.js comercial. Departamentos ainda sem fonte real são exibidos como NÃO CONECTADOS, sem fabricar valores. CI e navegador devem ser verificados na versão exata. PR #1 em DRAFT, sem merge, deploy ou dinheiro real. MARCO_ZERO=NAO_LIBERADO.
+
+Complemento em docs/ESCRITORIOS_INTEGRADOS_ADMIN_MISSOES_04NOV2026.md.
