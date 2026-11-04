@@ -126,12 +126,13 @@ const {once}=require('node:events');
    // A própria vitrine AKITEMM aprovada: mesmo titular, catálogo, carrinho e pré-pedidos.
    const loja=await context.newPage();
    loja.on('pageerror',e=>failures.push(e.message));
-   await loja.goto(base+'/staging/loja',{waitUntil:'networkidle'});
-   if(await loja.locator('#conteudoLojaLoop').isHidden()){
+   await loja.goto(base+'/staging/loja',{waitUntil:'domcontentloaded'});
+   try{
+    await loja.locator('#conteudoLojaLoop').waitFor({state:'visible',timeout:15000});
+   }catch(err){
     const estado=await loja.locator('#estadoLojaLoop').innerText();
-    throw Error('VITRINE_NAO_INICIALIZOU: '+estado+'; ERROS='+JSON.stringify(failures));
+    throw Error('VITRINE_NAO_INICIALIZOU: '+estado+'; ERROS='+JSON.stringify(failures)+'; '+err.message);
    }
-   await loja.locator('#conteudoLojaLoop').waitFor({state:'visible'});
    assert.ok(await loja.locator('#catalogoLojaLoop article.produto-loja-loop').count()>=2);
    assert.ok(await loja.locator('#catalogoLojaLoop article.produto-loja-loop-elegivel').count()>=1);
    assert.ok(await loja.locator('#catalogoLojaLoop article.produto-loja-loop-nao-elegivel').count()>=1);
