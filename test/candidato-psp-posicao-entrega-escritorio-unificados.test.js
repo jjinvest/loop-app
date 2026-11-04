@@ -14,7 +14,7 @@ const ADMIN='operador-catraca-unificada-'+('Q'.repeat(50));
 const TOKEN='TokenMockSomenteLaboratorio'+('T'.repeat(50));
 const SENHA='SenhaFicticiaSomenteLaboratorio2026!';
 const TERMOS='Registro puramente de laboratorio sem pagamentos, posicoes, saques ou beneficios reais.';
-async function criarContexto(t,{ativo=true}={}){
+async function criarContexto(t,{ativo=true,comCpf=false}={}){
  const banco=new DatabaseSync(':memory:');
  banco.exec('PRAGMA foreign_keys=ON;PRAGMA busy_timeout=5000');
  let gets=0;
@@ -34,10 +34,11 @@ async function criarContexto(t,{ativo=true}={}){
     externalReference:'LOOPLAB-'+ctx.prepedidoId};
   }
  };
- const {app,contas,intencoes,prePedidos,ponte,inbox,worker,posicoes,entregas,sinalizacaoVitrine}=
+ const {app,contas,intencoes,prePedidos,ponte,inbox,worker,posicoes,entregas,sinalizacaoVitrine,preAdesao,cpf}=
   criarAppLojaEscritorioCandidato({
    banco,repositorioCatalogo:catalogoFicticioCheckout(),
    chaveEmail:randomBytes(32),chaveCifra:randomBytes(32),
+   ...(comCpf?{chaveCpfHmac:randomBytes(32),chaveCpfCifra:randomBytes(32)}:{}),
    segredoOperador:ADMIN,webhookHomologacaoToken:TOKEN,
    provedorReconsultaSandbox:provedor,
    operacoesSandboxAutorizadas:ativo,
@@ -77,12 +78,12 @@ async function criarContexto(t,{ativo=true}={}){
   rascunhoId:draft.intencao.pedidoId,repositorioCatalogo:catalogo});
  const prepedidoId=pedido.prepedido.prepedidoId;
  const ctx={banco,request,contas,intencoes,prePedidos,ponte,inbox,worker,
-  posicoes,entregas,sinalizacaoVitrine,prepedidoId,registro,a,b,provedor,pagamentoId,
+  posicoes,entregas,sinalizacaoVitrine,preAdesao,cpf,prepedidoId,registro,a,b,provedor,pagamentoId,
   getGets:()=>gets,setStatus:v=>{status=v;}};
  return ctx;
 }
 test('uma conta -> PSP reconsultado -> 1 posicao e entrega ficticias -> Escritorio',async t=>{
- const c=await criarContexto(t);
+ const c=await criarContexto(t,{comCpf:true});
  const root='/staging/escritorio-unificado';
  const eventoId='evt_CANDIDATORECEIVED01';
  const primeiro=await c.request(root+'/projetar-posicao-ficticia',{
@@ -148,6 +149,47 @@ test('uma conta -> PSP reconsultado -> 1 posicao e entrega ficticias -> Escritor
  assert.equal(p.status,201,JSON.stringify(p.body));
  assert.equal(p.body.pendente.quantidadePosicoesPendentesSimuladas,1);
  assert.equal(p.body.pendente.posicoesReaisCriadas,0);
+ const cp='/staging/escritorio-unificado';
+ const params={method:'POST',admin:true,data:{prepedidoId:c.prepedidoId}};
+ assert.equal((await c.request(cp+'/preparar-pre-adesao',{...params,admin:false})).status,401);
+ assert.equal((await c.request(cp+'/preparar-pre-adesao',{method:'POST',admin:true,
+  data:{prepedidoId:c.prepedidoId,liberarMotor:true}})).status,400);
+ const semCpf=await c.request(cp+'/preparar-pre-adesao',params);
+ assert.equal(semCpf.status,409);
+ assert.match(semCpf.body.erro,/CPF_E_TERMOS_DE_ENSAIO_AUSENTES/);
+ assert.equal(c.banco.prepare(
+  'SELECT COUNT(*) AS n FROM akitemm_pre_adesao_sandbox_candidato'
+ ).get().n,0);
+ c.cpf.registrar({titularId:c.registro.titularId,
+  cpf:'529.982.247-25',
+  termosVersao:'LAB-candidato-psp-2026',termosTexto:TERMOS,
+  aceiteExplicito:true,autorizado:true});
+ const apta=await c.request(cp+'/pre-adesao/'+c.prepedidoId,{admin:true});
+ assert.equal(apta.status,200);
+ assert.equal(apta.body.estado,'APTA_APENAS_PARA_PREPARAR_ENSAIO');
+ assert.equal(apta.body.cpfExternamenteVerificado,false);
+ const salva=await c.request(cp+'/preparar-pre-adesao',params);
+ assert.equal(salva.status,201,JSON.stringify(salva.body));
+ assert.equal(salva.body.estado,'PRE_ADESAO_FICTICIA_PERSISTIDA');
+ assert.equal(salva.body.preAdesaoReal,false);
+ assert.equal(salva.body.posicoesReaisCriadas,0);
+ assert.equal(salva.body.autorizacaoMotorReal,false);
+ assert.equal(salva.body.filaRealAlterada,false);
+ const replay=await c.request(cp+'/preparar-pre-adesao',params);
+ assert.equal(replay.status,200);
+ assert.equal(replay.body.repetido,true);
+ const soTitular=await c.request('/staging/minhas-pre-adesoes',{token:c.a.token});
+ const outraConta=await c.request('/staging/minhas-pre-adesoes',{token:c.b.token});
+ assert.equal(soTitular.status,200);
+ assert.equal(soTitular.body.registros.length,1);
+ assert.equal(outraConta.body.registros.length,0);
+ assert.equal(JSON.stringify(outraConta.body).includes(c.prepedidoId),false);
+ assert.equal(c.banco.prepare(
+  'SELECT COUNT(*) AS n FROM akitemm_pre_adesao_sandbox_candidato'
+ ).get().n,1);
+ assert.throws(()=>c.banco.prepare(
+  "UPDATE akitemm_pre_adesao_sandbox_candidato SET estado='QUALQUER'"
+ ).run(),/pre adesao historica imutavel/);
  const hipotese=await c.request(root+'/projecao-filas',{admin:true});
  assert.equal(hipotese.status,200,JSON.stringify(hipotese.body));
  assert.equal(hipotese.body.totalHistorico,1);
@@ -184,6 +226,8 @@ test('uma conta -> PSP reconsultado -> 1 posicao e entrega ficticias -> Escritor
  assert.equal(filaBia.body.meusSimuladosNaFilaB,0);
  assert.equal(JSON.stringify(filaBia.body).includes(c.prepedidoId),false);
  assert.equal(c.getGets(),1,'previa nunca faz GET PSP');
+ assert.equal((await c.request(root+'/preparar-pre-adesao',{method:'POST',admin:true,
+  data:{prepedidoId:c.prepedidoId}})).status,403);
  assert.equal((await c.request(root+'/projetar-posicao-ficticia',{
   method:'POST',admin:true,data:{eventoId,prepedidoId:c.prepedidoId}
  })).status,200,'replay nao duplica');
@@ -214,6 +258,13 @@ test('uma conta -> PSP reconsultado -> 1 posicao e entrega ficticias -> Escritor
   titularId:c.registro.titularId,prepedidoId:c.prepedidoId,
   provedor:c.provedor
  });
+ const preReversao=await c.request(root+'/pre-adesao/'+c.prepedidoId,{admin:true});
+ assert.equal(preReversao.status,200);
+ assert.equal(preReversao.body.estado,'ENSAIO_HISTORICO_EM_REVISAO');
+ assert.ok(preReversao.body.motivos.includes('RECEBIMENTO_PSP_INDEPENDENTE_NAO_VIGENTE'));
+ assert.equal(preReversao.body.posicoesReaisCriadas,0);
+ const preCliente=await c.request('/staging/minhas-pre-adesoes',{token:c.a.token});
+ assert.equal(preCliente.body.registros[0].estado,'ENSAIO_HISTORICO_EM_REVISAO');
  const filaReversa=await c.request(root+'/projecao-filas',{admin:true});
  assert.equal(filaReversa.status,200);
  assert.equal(filaReversa.body.pendentesConferidas,0);
