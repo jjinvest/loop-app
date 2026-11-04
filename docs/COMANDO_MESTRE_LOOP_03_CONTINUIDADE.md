@@ -2284,3 +2284,14 @@ O Administrador ganhou campos de consulta e registro de pré-adesão fictícia p
 Incluídos testes de bloqueio, idempotência, separação por titular, revisão de pagamento, imutabilidade, persistência por backup e reabertura SQLite, além de PC/celular. As respostas e telas mantêm **posições reais = 0**; ambiente production permanece proibido. PR #1 continua DRAFT, sem merge/deploy, Marco Zero não liberado.
 
 Documento: docs/PRE_ADESAO_FICTICIA_SQLITE_MARCO_ZERO_04NOV2026.md
+
+
+### 200 — Identidade do cliente conectada à pré-adesão do Administrador (04/11/2026)
+
+Foi conectada a etapa de identificação que faltava entre o Escritório do Cliente e a conferência de pré-adesão: a rota autenticada `GET /staging/contas/termos-identidade` mostra o **texto e a versão dos termos vigentes**, retornados pelo servidor. Se a custódia de CPF de teste estiver configurada, o Escritório do Cliente acrescenta formulário de CPF fictício e aceite explícito, com envio via sessão + CSRF para `POST /staging/contas/identidade`, já existente. Após registrar, o navegador apaga o campo, oculta o formulário e exibe somente os dois últimos dígitos informados pelo servidor, sem CPF completo. Se a custódia não existir, o formulário permanece oculto, sem criar fluxo duplicado.
+
+O Escritório do Administrador ganhou ação direta **Conferir pré-adesão** em cada pedido da lista, preenchendo automaticamente o identificador no controle já existente e lendo a avaliação de requisitos. Isso elimina a necessidade de copiar manualmente IDs entre departamentos e preserva as verificações de autorização do backend. O cliente não pode se identificar por outra conta; termos e CPF são associados à própria sessão.
+
+Testes de API: autenticação obrigatória dos termos, CSRF, recusa de aceite falso, vinculação única de CPF, idempotência, resposta mascarada e conexão com pré-adesão já persistida. Navegador PC/celular: CPF fictício diferente por titular, texto exato de termos carregado, registro e limpeza do campo, botão do Admin selecionando pedido. Conferir o CI do último SHA para declarar validação.
+
+Nenhuma alteração em regras financeiras, limites, tabuleiro, fila ou cotação. PR #1 permanece DRAFT, sem merge. Complemento da seção 199.
