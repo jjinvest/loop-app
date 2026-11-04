@@ -59,14 +59,24 @@ function renderizarProdutos(r){
  $('produtosProximo').disabled=!r.haMais;
 }
 async function atualizarProdutos(){renderizarProdutos(await api('/produtos?pagina='+paginaProdutos));}
+let ultimaLeituraCor=0;
 async function editarCor(id){
- const r=await api('/sinalizacao/'+encodeURIComponent(id));
- sinalizacaoAtual=r;
- $('sinalizacaoProdutoId').value=id;
- $('sinalizacaoClasse').value=r.classificacao;
- $('sinalizacaoMinimo').value=String(r.quantidadeMinimaLoop);
- $('tituloSinalizacaoAdmin').scrollIntoView({behavior:'smooth',block:'start'});
- $('resultadoSinalizacaoAdmin').textContent='Configuração visual carregada; revisão '+r.revisao+'.';
+ const chamada=++ultimaLeituraCor;
+ const controles=[...$('formSinalizacaoAdmin').querySelectorAll('input,select,button')];
+ for(const el of controles)el.disabled=true;
+ $('resultadoSinalizacaoAdmin').textContent='Carregando classificação do produto...';
+ try{
+  const r=await api('/sinalizacao/'+encodeURIComponent(id));
+  if(chamada!==ultimaLeituraCor)return;
+  sinalizacaoAtual=r;
+  $('sinalizacaoProdutoId').value=id;
+  $('sinalizacaoClasse').value=r.classificacao;
+  $('sinalizacaoMinimo').value=String(r.quantidadeMinimaLoop);
+  $('tituloSinalizacaoAdmin').scrollIntoView({behavior:'smooth',block:'start'});
+  $('resultadoSinalizacaoAdmin').textContent='Configuração visual carregada; revisão '+r.revisao+'.';
+ }finally{
+  if(chamada===ultimaLeituraCor)for(const el of controles)el.disabled=false;
+ }
 }
 
 
