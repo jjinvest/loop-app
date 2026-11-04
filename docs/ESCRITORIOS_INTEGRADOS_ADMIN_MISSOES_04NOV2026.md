@@ -39,3 +39,10 @@ A nova central operacional de homologação possui **12 departamentos**: CLIENTE
 **Provas:** teste de integração cobre bloqueio de rotas sem autorização, relatório dos 12 departamentos, cenário de cobrança Sandbox indeterminada por falha de rede simulada, criação de missão sem duplicação, filtros/limites de paginação e SQL/foreign keys íntegros, além da proibição de operações reais. Teste de navegador PC/celular cobre seleção de departamento, missões e comunicados sem redesenho aprovado.
 
 **Ainda pendente:** controles concretos dos motores/caixas de produção, aprovação de operador segregada, catálogo de produção, conciliação externa, suporte real, execução automática autorizada e recuperação em infraestrutura externa. Nome de departamento e registro de missão não equivalem à integração do motor. PR #1 permanece DRAFT, sem merge, deploy comercial ou dinheiro real.
+
+
+**Evidências do bloco 194, código a36db50b2e091a7eb7b9fcc72b48ce9f95b7421a (04/11/2026):**
+- [Segurança e testes de departamentos — SUCCESS](https://github.com/jjinvest/loop-app/actions/runs/41788809596)
+- [Navegador PC/celular com novos departamentos — SUCCESS](https://github.com/jjinvest/loop-app/actions/runs/41788809779)
+- [Capturas do navegador](https://github.com/jjinvest/loop-app/actions/runs/41788809779/artifacts/13301439658)
+- PR #1 DRAFT, ambiente local de homologação, sem vendas/saques/giro reais.
