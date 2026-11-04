@@ -177,8 +177,19 @@ async function atualizar(){
  const pedidos=$('pedidos'),escolha=$('pedido'),original=escolha.value;
  pedidos.replaceChildren();escolha.replaceChildren(new Option('Sem pedido',''));
  for(const p of e.pedidos){
-  pedidos.append(elem('p',(p.nick||'Cliente')+' · '+p.prepedidoId+
+  const card=elem('article');card.className='produto-admin-item';
+  card.append(elem('p',(p.nick||'Cliente')+' · '+p.prepedidoId+
    ' · '+(p.estadoOperacional||'Pré-pedido de laboratório')));
+  const btn=elem('button','Conferir pré-adesão');btn.type='button';
+  btn.addEventListener('click',async()=>{
+   $('preAdesaoId').value=p.prepedidoId;
+   $('formPreAdesao').scrollIntoView({behavior:'smooth',block:'center'});
+   btn.disabled=true;
+   try{mostrarPreAdesao(await api('/pre-adesao/'+encodeURIComponent(p.prepedidoId)));}
+   catch(e){$('preAdesaoStatus').textContent='Revisão pendente: '+e.message;}
+   finally{btn.disabled=false;}
+  });
+  card.append(btn);pedidos.append(card);
   escolha.append(new Option((p.nick||'Cliente')+' · '+p.prepedidoId,p.prepedidoId));
  }
  if(e.pedidos.length===0)pedidos.append(elem('p','Nenhum pré-pedido.'));
