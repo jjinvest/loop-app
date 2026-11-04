@@ -1,3 +1,5 @@
+> **SEÇÃO 201 — 04/11/2026:** diagnóstico único da transição pré-adesão→ativação, exibido em Cliente e Administrador; Admin abre missão de regularização **idempotente** por pedido. Sem KYC externo, pagamento comercial, auditorias de capacidade 10/2 e autorização operacional, o gate permanece fechado. [Documento](./DIAGNOSTICO_GATE_ATIVACAO_04NOV2026.md).
+
 
 **Evidências finais:** integração/segurança [aprovadas](https://github.com/jjinvest/loop-app/actions/runs/41851292786); navegador PC/celular com identidade fictícia, aceite da versão vigente e consulta direta no Admin [aprovado](https://github.com/jjinvest/loop-app/actions/runs/41851408417); [capturas reais](https://github.com/jjinvest/loop-app/actions/runs/41851408417/artifacts/13335656866). Estas provas não substituem validação de identidade externa nem alteram o status do Marco Zero.
 
