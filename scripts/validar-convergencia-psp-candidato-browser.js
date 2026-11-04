@@ -96,7 +96,7 @@ const {COOKIE}=require('../src/domain/conta-unica-candidata-sqlite');
       (id,prepedido_id,titular_id,pagamento_id,evento_id,valor_centavos,estado,criado_em)
       VALUES(?,?,?,?,?,25000,'PENDENTE_DE_CONFIRMACAO_CLIENTE_SANDBOX',?)`);
      for(let i=0;i<1001;i++)inserir.run('pos-volume-'+i,
-      'hom-'+String(i).padStart(36,'0'),'titular_volume_alheio',
+      'hom-'+String(i).padStart(36,'0'),'titular-00000000-0000-0000-0000-000000000001',
       'pay_VOLUME'+i,'evt_VOLUME'+i,'2026-11-04T00:00:00.000Z');
      const antes=banco.prepare('SELECT total_changes() n').get().n;
      await admin.locator('#atualizar').click();
