@@ -31,6 +31,7 @@ const {consultarEscritorioHomologacao}=require('../domain/relatorio-homologacao-
 const {MissoesOperacionaisCandidatoSQLite}=require('../domain/missoes-operacionais-candidato-sqlite');
 const {DepartamentosAdministradorCandidato}=require('../domain/escritorio-admin-departamentos-candidato');
 const {CatalogoAdminCandidatoSQLite}=require('../domain/catalogo-admin-candidato-sqlite');
+const {createVitrineCandidata}=require('./vitrine-aprovada-candidato');
 const {criarRouterRascunhosCheckoutStaging}=require('../routes/rascunhos-checkout-staging');
 const {criarRouterPrePedidosCheckoutStaging}=require('../routes/prepedidos-checkout-staging');
 const {criarAutorizacao,localSeguro}=require('../routes/admin-catalogo-laboratorio');
@@ -341,6 +342,7 @@ function criarAppLojaEscritorioCandidato({banco,repositorioCatalogo,
   }catch(e){return res.status(400).json({erro:e.codigo||'COTACAO_INVALIDA'});}
  });
  const autorizarOperador=criarAutorizacao({segredo:segredoOperador});
+ const sinalizacaoVitrine=createVitrineCandidata({app,banco,catalogo,contas,intencoes,prePedidos,autorizarOperador});
  // O catálogo do cliente usa EXATAMENTE a mesma fonte da cotação.
  app.get('/staging/catalogo',async(_req,res)=>{
   try{return res.json(await catalogo.publicos());}
@@ -614,6 +616,6 @@ function criarAppLojaEscritorioCandidato({banco,repositorioCatalogo,
   erro:'CANDIDATO_INDISPONIVEL',financeiroReal:false
  }));
  return {app,contas,cpf,provasEmail,intencoes,prePedidos,ponte,
-  inbox,worker,posicoes,entregas,integridade,missoes,catalogo,departamentosAdmin,banco};
+  inbox,worker,posicoes,entregas,integridade,missoes,catalogo,sinalizacaoVitrine,departamentosAdmin,banco};
 }
 module.exports={criarAppLojaEscritorioCandidato};
