@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow,noarchive">
+<title>AKITEMM · Escritório do Administrador (laboratório)</title>
+<link rel="stylesheet" href="/staging/assets/cliente.css">
+<link rel="stylesheet" href="/staging/assets/admin.css">
+<script src="/staging/assets/admin.js" defer></script></head><body>
+<header class="cabecalho"><div><span class="marca">AKITEMM</span><span class="submarca">LOOP 3.0 · Escritório Administrador</span></div><span class="ambiente">LABORATÓRIO · SEM VENDAS REAIS</span></header>
+<main><h1>Escritório do Administrador</h1>
+<p class="explicacao">Painel operacional conectado ao mesmo banco da loja e do cliente. Missões não criam pagamento, posição, giro nem benefício.</p>
+<section class="painel" id="acesso"><h2>Acesso do operador</h2><form id="formAcesso"><label for="token">Credencial de laboratório</label><input type="password" id="token" required minlength="32" autocomplete="off"><p class="subtexto">A credencial é mantida só nesta aba e nunca salva no navegador.</p><button class="primario">Acessar</button></form></section>
+<section id="administracao" hidden>
+<div class="barra-conta"><span>Operador autenticado · apenas acesso local</span><button type="button" id="sair">Encerrar acesso</button></div>
+<section class="painel"><div class="linha"><h2>Visão geral</h2><button type="button" id="atualizar">Atualizar</button></div><div id="indicadores" class="indicadores"></div></section>
+<section class="painel"><h2>Pedidos no Escritório</h2><div id="pedidos"></div></section>
+<section class="painel"><h2>Registrar missão / ação manual</h2><p class="subtexto">Ações registradas com histórico. Não inclua CPF, senhas ou dados pessoais nas notas.</p>
+<form id="criarMissao"><div class="duas-colunas"><div><label for="departamento">Departamento</label><select id="departamento"><option>CLIENTES</option><option>PEDIDOS</option><option>PRODUTOS</option><option>ENTREGAS</option><option>INDICACOES</option><option>POSICOES</option><option>FILAS</option><option>TABULEIRO</option><option>COFRES</option><option>SAQUES</option><option>SEGURANCA</option><option>OUTROS</option></select></div>
+<div><label for="prioridade">Prioridade</label><select id="prioridade"><option>NORMAL</option><option>ALTA</option><option>CRITICA</option></select></div></div>
+<label for="titulo">Título</label><input id="titulo" minlength="5" maxlength="100" required>
+<label for="descricao">Instruções / ação</label><textarea id="descricao" minlength="10" maxlength="1200" required rows="3"></textarea>
+<label for="pedido">Pedido vinculado (opcional)</label><select id="pedido"><option value="">Sem pedido</option></select>
+<label for="mensagem">Comunicado ao cliente (opcional, requer pedido)</label><textarea id="mensagem" rows="2" maxlength="320"></textarea>
+<button type="submit" class="primario">Criar missão</button></form></section>
+<section class="painel"><h2>Missões / andamento</h2><div id="listaMissoes"></div></section>
+<section class="painel"><h2>Operações Sandbox controladas</h2>
+<p class="subtexto">Somente quando habilitadas no servidor. Reconsulta e entrega fictícia não movimentam dinheiro real.</p>
+<form id="reconsultar"><label for="eventoId">Evento Asaas Sandbox</label><input id="eventoId" pattern="[A-Za-z0-9_&-]{5,150}" required><button>Reconsultar pagamento de teste</button></form>
+<form id="prepararEntrega"><label for="prepedidoId">Pré-pedido de teste</label><input id="prepedidoId" pattern="hom-[a-f0-9-]{36}" required><button>Preparar entrega fictícia</button></form></section>
+</section><p id="estado" role="status" aria-live="polite"></p><p class="rodape">Prévia local; nunca publicar este servidor como checkout.</p></main></body></html>

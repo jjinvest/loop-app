@@ -1,0 +1,110 @@
+'use strict';
+// Somente laboratório; credencial do operador mantida apenas em memória.
+const $=id=>document.getElementById(id),elem=(tag,value)=>{const x=document.createElement(tag);if(value!==undefined)x.textContent=value;return x;};
+let auth=null,chave=null;
+const dizer=x=>$('estado').textContent=x;
+async function api(path,{method='GET',body,idempotencia}={}){
+ const r=await fetch('/staging/escritorio-unificado'+path,{
+  method,cache:'no-store',credentials:'omit',
+  headers:{Authorization:'Bearer '+auth,...(body?{'Content-Type':'application/json'}:{}),
+   ...(idempotencia?{'Idempotency-Key':idempotencia}:{})},
+  ...(body?{body:JSON.stringify(body)}:{})
+ });
+ const out=await r.json().catch(()=>({}));
+ if(!r.ok)throw Error(out.erro||'SERVICO_INDISPONIVEL');
+ return out;
+}
+function linha(rotulo,valor){const a=elem('div');a.className='indicador';a.append(elem('strong',String(valor)),elem('span',rotulo));return a;}
+async function atualizar(){
+ const [e,m]=await Promise.all([api(''),api('/missoes')]);
+ $('indicadores').replaceChildren(
+  linha('Contas',e.contasCandidatas),
+  linha('Pré-pedidos',e.resumo.prepedidosStaging),
+  linha('PSP conciliados',e.resumo.recebimentosPSPConciliados),
+  linha('Posições fictícias',e.posicoesPendentesFicticias),
+  linha('Missões',m.total)
+ );
+ const pedidos=$('pedidos'),escolha=$('pedido'),original=escolha.value;
+ pedidos.replaceChildren();escolha.replaceChildren(new Option('Sem pedido',''));
+ for(const p of e.pedidos){
+  pedidos.append(elem('p',(p.nick||'Cliente')+' · '+p.prepedidoId+
+   ' · '+(p.estadoOperacional||'Pré-pedido de laboratório')));
+  escolha.append(new Option((p.nick||'Cliente')+' · '+p.prepedidoId,p.prepedidoId));
+ }
+ if(e.pedidos.length===0)pedidos.append(elem('p','Nenhum pré-pedido.'));
+ if([...escolha.options].some(x=>x.value===original))escolha.value=original;
+ const lista=$('listaMissoes');lista.replaceChildren();
+ if(m.missoes.length===0)lista.append(elem('p','Nenhuma missão registrada.'));
+ for(const item of m.missoes){
+  const card=elem('article');card.className='pedido';
+  card.append(elem('h3',item.titulo),elem('p',item.departamento+' · '+item.prioridade+' · '+item.situacao),elem('p',item.descricao));
+  if(item.prepedidoId)card.append(elem('p','Pedido: '+item.prepedidoId));
+  const proximas=item.situacao==='ABERTA'?['EM_ANDAMENTO','CANCELADA']:
+   item.situacao==='EM_ANDAMENTO'?['CONCLUIDA','CANCELADA']:[];
+  if(proximas.length){
+   const form=elem('form'),situacao=elem('select'),nota=elem('textarea'),msg=elem('textarea');
+   nota.required=true;nota.minLength=8;nota.maxLength=400;nota.placeholder='Nota da ação realizada';
+   msg.maxLength=320;msg.value=item.mensagemCliente||'';msg.placeholder='Comunicado ao cliente';msg.disabled=!item.prepedidoId;
+   for(const status of proximas)situacao.append(new Option(status.replaceAll('_',' '),status));
+   const botao=elem('button','Registrar andamento');botao.type='submit';
+   form.append(situacao,nota,msg,botao);
+   form.addEventListener('submit',async ev=>{
+    ev.preventDefault();botao.disabled=true;
+    try{
+     await api('/missoes/'+encodeURIComponent(item.id),{method:'PATCH',
+      body:{revisaoEsperada:item.revisao,situacao:situacao.value,nota:nota.value,mensagemCliente:msg.value}});
+     await atualizar();dizer('Andamento salvo no histórico da missão.');
+    }catch(err){dizer('Falha: '+err.message);}finally{botao.disabled=false;}
+   });
+   card.append(form);
+  }
+  const historico=elem('button','Ver histórico');historico.type='button';
+  historico.addEventListener('click',async()=>{
+   try{
+    const h=await api('/missoes/'+encodeURIComponent(item.id)+'/historico');
+    const ol=elem('ol');
+    for(const row of h.historico)ol.append(elem('li',row.acao+' · '+row.nota));
+    historico.replaceWith(ol);
+   }catch(err){dizer('Falha: '+err.message);}
+  });
+  card.append(historico);lista.append(card);
+ }
+ dizer('Escritório atualizado a partir do mesmo SQLite dos clientes.');
+}
+$('formAcesso').addEventListener('submit',async e=>{
+ e.preventDefault();auth=$('token').value;$('token').value='';
+ try{await atualizar();$('acesso').hidden=true;$('administracao').hidden=false;}
+ catch(err){auth=null;dizer('Acesso não autorizado: '+err.message);}
+});
+$('sair').addEventListener('click',()=>{
+ auth=null;$('acesso').hidden=false;$('administracao').hidden=true;
+ $('listaMissoes').replaceChildren();dizer('Acesso encerrado.');
+});
+$('atualizar').addEventListener('click',()=>atualizar().catch(e=>dizer(e.message)));
+$('criarMissao').addEventListener('input',()=>{chave=null;});
+$('criarMissao').addEventListener('submit',async e=>{
+ e.preventDefault();if(!chave)chave='ui-'+crypto.randomUUID();
+ const botao=e.submitter;botao.disabled=true;
+ try{
+  await api('/missoes',{method:'POST',idempotencia:chave,body:{
+   departamento:$('departamento').value,prioridade:$('prioridade').value,
+   titulo:$('titulo').value,descricao:$('descricao').value,
+   prepedidoId:$('pedido').value||null,mensagemCliente:$('mensagem').value
+  }});
+  chave=null;$('criarMissao').reset();await atualizar();
+  dizer('Missão criada e auditada, aguardando trabalho humano.');
+ }catch(err){dizer('Missão não registrada: '+err.message);}
+ finally{botao.disabled=false;}
+});
+$('reconsultar').addEventListener('submit',async e=>{
+ e.preventDefault();const b=e.submitter;b.disabled=true;
+ try{await api('/reconsultar-psp',{method:'POST',body:{eventoId:$('eventoId').value}});
+  await atualizar();dizer('Reconsulta Sandbox concluída. Confira o estado no painel.');
+ }catch(err){dizer('Reconsulta bloqueada: '+err.message);}finally{b.disabled=false;}
+});
+$('prepararEntrega').addEventListener('submit',async e=>{
+ e.preventDefault();const b=e.submitter;b.disabled=true;
+ try{await api('/preparar-entrega',{method:'POST',body:{prepedidoId:$('prepedidoId').value}});
+  await atualizar();dizer('Entrega de teste registrada; não houve entrega comercial.');
+ }catch(err){dizer('Operação bloqueada: '+err.message);}finally{b.disabled=false;}
+});
