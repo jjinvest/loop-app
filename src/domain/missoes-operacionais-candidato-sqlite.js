@@ -4,6 +4,7 @@ const {randomUUID,createHash}=require('node:crypto');
 const dept=new Set(['CLIENTES','PEDIDOS','PRODUTOS','ENTREGAS','INDICACOES','POSICOES','FILAS','TABULEIRO','COFRES','SAQUES','SEGURANCA','OUTROS']);
 const prioridade=new Set(['NORMAL','ALTA','CRITICA']);
 const situacao=new Set(['ABERTA','EM_ANDAMENTO','CONCLUIDA','CANCELADA']);
+const situacaoValida=x=>situacao.has(x);
 function fail(code){const e=new Error(code);e.codigo=code;throw e;}
 function fields(x,allowed){if(!x||typeof x!=='object'||Array.isArray(x)||Object.keys(x).some(k=>!allowed.includes(k)))fail('CAMPOS_INVALIDOS');}
 function str(x,min,max){if(typeof x!=='string'||x.trim().length<min||x.trim().length>max||/[\u0000-\u001f]/.test(x))fail('TEXTO_INVALIDO');return x.trim();}
@@ -95,10 +96,22 @@ class MissoesOperacionaisCandidatoSQLite{
    return this.get(id);
   });
  }
- listar(){
-  const ids=this.db.prepare('SELECT id FROM akitemm_admin_missoes_staging ORDER BY atualizado_em DESC,id DESC LIMIT 50').all();
-  const total=this.db.prepare('SELECT COUNT(*) AS n FROM akitemm_admin_missoes_staging').get().n;
-  return {missoes:ids.map(x=>this.get(x.id)),total,paginacaoNecessaria:total>50,laboratorio:true,financeiroReal:false};
+ listar({departamento=null,situacao=null,pagina=0}={}){
+  if(departamento!==null&&!dept.has(departamento))fail('DEPARTAMENTO_INVALIDO');
+  if(situacao!==null&&!situacaoValida(situacao))fail('SITUACAO_INVALIDA');
+  if(!Number.isSafeInteger(pagina)||pagina<0||pagina>10000)fail('PAGINA_INVALIDA');
+  const where=[],params=[];
+  if(departamento){where.push('departamento=?');params.push(departamento);}
+  if(situacao){where.push('situacao=?');params.push(situacao);}
+  const filtro=where.length?' WHERE '+where.join(' AND '):'';
+  const total=this.db.prepare('SELECT COUNT(*) AS n FROM akitemm_admin_missoes_staging'+filtro).get(...params).n;
+  const ids=this.db.prepare(
+   'SELECT id FROM akitemm_admin_missoes_staging'+filtro+
+   ' ORDER BY atualizado_em DESC,id DESC LIMIT 25 OFFSET ?'
+  ).all(...params,pagina*25);
+  return {missoes:ids.map(x=>this.get(x.id)),total,pagina,porPagina:25,
+   haMais:(pagina+1)*25<total,paginacaoNecessaria:total>25,
+   laboratorio:true,financeiroReal:false};
  }
  historico(id){
   if(!/^missao-[a-f0-9-]{36}$/.test(id))fail('MISSAO_INVALIDA');

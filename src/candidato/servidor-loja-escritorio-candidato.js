@@ -29,6 +29,7 @@ const {auditarRelacoesPspCandidato}=
  require('../domain/auditoria-relacional-psp-candidato-sqlite');
 const {consultarEscritorioHomologacao}=require('../domain/relatorio-homologacao-checkout-staging');
 const {MissoesOperacionaisCandidatoSQLite}=require('../domain/missoes-operacionais-candidato-sqlite');
+const {DepartamentosAdministradorCandidato}=require('../domain/escritorio-admin-departamentos-candidato');
 const {criarRouterRascunhosCheckoutStaging}=require('../routes/rascunhos-checkout-staging');
 const {criarRouterPrePedidosCheckoutStaging}=require('../routes/prepedidos-checkout-staging');
 const {criarAutorizacao,localSeguro}=require('../routes/admin-catalogo-laboratorio');
@@ -73,6 +74,7 @@ function criarAppLojaEscritorioCandidato({banco,repositorioCatalogo,
  const ponte=new PontePrepedidoAsaasSandboxStaging({banco});
  const integridade=new IntegridadeTitularCandidatoSQLite({banco});
  const missoes=new MissoesOperacionaisCandidatoSQLite({banco});
+ const departamentosAdmin=new DepartamentosAdministradorCandidato({banco,missoes});
  const entregas=new EntregasPrePedidosAsaasSandboxStaging({banco});
  // Operador usa o MESMO SQLite que o checkout e o Escritório: webhook
  // isolado jamais e prova de recebimento sem GET PSP autenticado.
@@ -338,8 +340,45 @@ function criarAppLojaEscritorioCandidato({banco,repositorioCatalogo,
  });
  const autorizarOperador=criarAutorizacao({segredo:segredoOperador});
  // Missões manuais nunca alteram pagamentos, saldos ou tabuleiros.
- app.get('/staging/escritorio-unificado/missoes',autorizarOperador,(_req,res)=>
-  res.json(missoes.listar()));
+ app.get('/staging/escritorio-unificado/missoes',autorizarOperador,(req,res)=>{
+  try{
+   const q=req.query;
+   if(Object.keys(q).some(k=>!['departamento','situacao','pagina'].includes(k))||
+      Object.values(q).some(v=>typeof v!=='string'))
+    return res.status(400).json({erro:'FILTRO_INVALIDO'});
+   return res.json(missoes.listar({departamento:q.departamento||null,
+    situacao:q.situacao||null,pagina:q.pagina===undefined?0:Number(q.pagina)}));
+  }catch(e){return res.status(400).json({erro:e.codigo||'FILTRO_INVALIDO'});}
+ });
+ app.get('/staging/escritorio-unificado/departamentos',autorizarOperador,(_req,res)=>{
+  try{return res.json(departamentosAdmin.painel());}
+  catch{return res.status(503).json({erro:'PAINEL_DEPARTAMENTOS_INDISPONIVEL'});}
+ });
+ app.get('/staging/escritorio-unificado/alertas',autorizarOperador,(req,res)=>{
+  try{
+   const q=req.query;
+   if(Object.keys(q).some(k=>k!=='pagina')||
+      Object.values(q).some(v=>typeof v!=='string'))
+    return res.status(400).json({erro:'PAGINACAO_INVALIDA'});
+   return res.json(departamentosAdmin.revisar({
+    pagina:q.pagina===undefined?0:Number(q.pagina)}));
+  }catch(e){return res.status(400).json({erro:e.codigo||'PAGINACAO_INVALIDA'});}
+ });
+ app.post('/staging/escritorio-unificado/alertas/:prepedidoId/abrir-missao',
+  autorizarOperador,(req,res)=>{
+   if(!req.body||Array.isArray(req.body)||
+      Object.keys(req.body).length!==0)
+    return res.status(400).json({erro:'CORPO_INVALIDO'});
+   try{
+    const m=departamentosAdmin.abrirRevisao({
+     prepedidoId:req.params.prepedidoId});
+    return res.status(m.repetida?200:201).json(m);
+   }catch(e){
+    return res.status(e.codigo==='PEDIDO_INEXISTENTE'?404:
+     e.codigo==='SEM_ALERTA_PSP'||e.codigo==='CONFLITO_IDEMPOTENCIA'?409:400)
+     .json({erro:e.codigo||'MISSAO_ALERTA_INVALIDA'});
+   }
+  });
  app.post('/staging/escritorio-unificado/missoes',autorizarOperador,(req,res)=>{
   try{const m=missoes.criar(req.body,req.get('idempotency-key'));
    return res.status(m.repetida?200:201).json(m);
@@ -520,6 +559,6 @@ function criarAppLojaEscritorioCandidato({banco,repositorioCatalogo,
   erro:'CANDIDATO_INDISPONIVEL',financeiroReal:false
  }));
  return {app,contas,cpf,provasEmail,intencoes,prePedidos,ponte,
-  inbox,worker,posicoes,entregas,integridade,missoes,banco};
+  inbox,worker,posicoes,entregas,integridade,missoes,departamentosAdmin,banco};
 }
 module.exports={criarAppLojaEscritorioCandidato};
