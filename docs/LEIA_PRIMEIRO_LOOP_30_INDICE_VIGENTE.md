@@ -1,3 +1,6 @@
+
+**Evidências concluídas em 04/11/2026:** [segurança e cenários de regra — SUCCESS](https://github.com/jjinvest/loop-app/actions/runs/41814727301); [navegador real PC e celular, simulador do Administrador e retorno no carrinho — SUCCESS](https://github.com/jjinvest/loop-app/actions/runs/41814788237); [capturas reais de navegador](https://github.com/jjinvest/loop-app/actions/runs/41814788237/artifacts/13314690186). A execução do navegador validou o código anterior ao registro documental, sem merge/deploy e sem posições financeiras reais.
+
 > **SEÇÃO 197 — 04/11/2026:** qualificação **simulada e sem direitos** conectada ao mesmo SQLite da vitrine, do cliente e do Admin: CINZA não conta; VERDE exige quantidade mínima por produto e R$ 250 somados no mesmo pedido; EVENTO especial aguarda regras e autorização. Novo formulário de simulação no Administrador e prévia calculada no servidor para o carrinho, sem atribuir posições, saques, bônus ou pagamento. [Detalhes](./QUALIFICACAO_SIMULADA_VITRINE_ADMIN_04NOV2026.md). Produção bloqueada, PR #1 DRAFT.
 
 
