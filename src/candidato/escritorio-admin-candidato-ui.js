@@ -7,6 +7,7 @@ let cursoresPosicoes=[null],indicePosicoes=0,proximoCursorPosicoes=null;
 async function carregarHistoricoPosicoes(){
  const cursor=cursoresPosicoes[indicePosicoes];
  const p=await api('/posicoes-historico'+(cursor?'?cursor='+encodeURIComponent(cursor):''));
+ cursoresPosicoes[indicePosicoes]=p.cursorAtual;
  const area=$('historicoPosicoes');area.replaceChildren();
  $('resumoHistoricoPosicoes').textContent='Página '+(indicePosicoes+1)+' · '+p.itens.length+' registro(s). '+p.motivo;
  for(const item of p.itens){

@@ -48,6 +48,8 @@ test('historico paginado cruza 1000, fixa fronteira de insercao e reavalia PSP s
   const inicial=fonte.consultarPagina();
   assert.equal(inicial.itens.length,25);assert.equal(inicial.haMais,true);
   seed(b,1004);
+  assert.equal(fonte.consultarPagina({cursor:inicial.cursorAtual}).proximoCursor,inicial.proximoCursor,
+   'retorno a primeira pagina preserva a fronteira; so Atualizar inicia outra');
   b.prepare("UPDATE akitemm_prepedido_asaas_consultas_staging SET status_asaas='REFUNDED' WHERE prepedido_id=?").run(xs[25].id);
   const antes=b.prepare('SELECT total_changes() n').get().n;
   b.exec('PRAGMA query_only=ON');

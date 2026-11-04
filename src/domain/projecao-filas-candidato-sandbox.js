@@ -61,6 +61,7 @@ class ProjecaoFilasCandidatoSandbox{
   });
   const haMais=linhas.length>25;
   return {itens,limite:25,haMais,
+   cursorAtual:Buffer.from(JSON.stringify({apos,ate})).toString('base64url'),
    proximoCursor:haMais?Buffer.from(JSON.stringify({apos:pagina.at(-1).sequencia,ate})).toString('base64url'):null,
    escopo:'HISTORICO_PAGINADO_SEM_ORDEM_DE_FILA',estadosPSPVigentesNestaLeitura:true,
    posicoesReaisCriadas:0,consultaPSPExecutada:false,filaRealAlterada:false,
