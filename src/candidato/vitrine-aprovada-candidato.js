@@ -5,6 +5,7 @@
 const fs=require('node:fs'),path=require('node:path');
 const {entradaValida,cotarCheckoutPublico}=require('../domain/cotacao-checkout-publico');
 const {SinalizacaoVitrineCandidatoSQLite}=require('../domain/sinalizacao-vitrine-candidato-sqlite');
+const {simularQualificacaoCandidato}=require('../domain/simulador-qualificacao-carrinho-candidato');
 const DIR=path.join(__dirname,'../laboratorio');
 function fail(codigo){const e=new Error(codigo);e.codigo=codigo;throw e;}
 function createVitrineCandidata({app,banco,catalogo,contas,intencoes,prePedidos,autorizarOperador}={}){
@@ -80,6 +81,21 @@ function createVitrineCandidata({app,banco,catalogo,contas,intencoes,prePedidos,
      laboratorio:true,posicoesReais:0});
    }catch{return res.status(503).json({erro:'VITRINE_INDISPONIVEL'});}
   });
+ const simular=async(req,res)=>{
+  if(!req.is('application/json')||!req.body||Array.isArray(req.body))
+   return res.status(415).json({erro:'JSON_OBRIGATORIO'});
+  try{return res.json(await simularQualificacaoCandidato({
+   entrada:req.body,catalogo,sinalizacao}));
+  }catch(e){return res.status(e.codigo==='PRODUTO_INDISPONIVEL_PARA_COTACAO'?404:400)
+   .json({erro:e.codigo||'SIMULACAO_INVALIDA'});}
+ };
+ app.post('/staging/vitrine/simular-qualificacao',autorizarCliente,(req,res,next)=>{
+  if(req.get('x-loop-lab')!=='participante'||!csrf(req))
+   return res.status(403).json({erro:'MUTACAO_NAO_AUTORIZADA'});
+  next();
+ },simular);
+ app.post('/staging/escritorio-unificado/simular-qualificacao',
+  autorizarOperador,simular);
  app.get('/staging/vitrine/loja/pedidos',autorizarCliente,(req,res)=>{
   try{
    return res.json({pedidos:prePedidos.listar({
