@@ -2352,6 +2352,6 @@ Pendências: prévia global completa com contagem de capacidade/ordem, integraç
 
 **Regressão adicionada:** `test/backup-conta-unica-restauracao-segura.test.js` cria pré-pedido de laboratório legítimo e uma entrega fictícia com referência PSP inventada, mantendo `integrity_check=ok`, `foreign_key_check=[]` e auditoria isolada do titular sem divergências. O backup deve falhar fechado antes de criar cópia cifrada. Nenhum pagamento, movimentação do motor ou entrega real é executado.
 
-**Evidência:** [CI de segurança no código testado, SUCCESS](https://github.com/jjinvest/loop-app/actions/runs/41926465170). [Suíte geral e navegador do mesmo código](https://github.com/jjinvest/loop-app/actions/runs/41926465274) — conferir conclusão antes de declarar aprovado.
+**Evidência:** [CI de segurança no código testado, SUCCESS](https://github.com/jjinvest/loop-app/actions/runs/41926465170). [Suíte geral, auditoria de dependências e navegador PC/celular do mesmo código — SUCCESS](https://github.com/jjinvest/loop-app/actions/runs/41926465274).
 
 **Gate externo ainda aberto:** teste simulado ou cópia cifrada local não prova backup offsite independente; não há bucket de destino no ambiente Railway de homologação, ver [issue #2](https://github.com/jjinvest/loop-app/issues/2). Antes do Marco Zero ainda faltam armazenamento externo autorizado, recuperação isolada comprovada, RPO/RTO, identidade comercial e aprovação jurídica/operacional. PR #1 DRAFT, sem implantação comercial nem dinheiro real.
