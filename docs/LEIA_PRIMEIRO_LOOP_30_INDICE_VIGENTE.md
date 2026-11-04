@@ -1,3 +1,6 @@
+
+**Evidências finais:** integração/segurança [aprovadas](https://github.com/jjinvest/loop-app/actions/runs/41851292786); navegador PC/celular com identidade fictícia, aceite da versão vigente e consulta direta no Admin [aprovado](https://github.com/jjinvest/loop-app/actions/runs/41851408417); [capturas reais](https://github.com/jjinvest/loop-app/actions/runs/41851408417/artifacts/13335656866). Estas provas não substituem validação de identidade externa nem alteram o status do Marco Zero.
+
 > **SEÇÃO 200 — 04/11/2026:** Escritório do Cliente apresenta os termos vigentes e registra CPF **fictício** com aceite por sessão e CSRF; Admin tem botão **Conferir pré-adesão** diretamente em cada pedido, sem copiar ID. Reaproveita a custódia e os gates da seção 199. Validações de integração e navegador anexadas após conclusão do CI.
 
 > **SEÇÃO 199 — 04/11/2026:** pré-adesão **fictícia e persistida** em SQLite, exigindo conciliação PSP Sandbox, fotografia histórica VERDE, CPF/termos de laboratório, controle de operador e proteção contra duplicação. Admin ganhou campos para conferir e registrar; Cliente vê somente seus checkpoints; Fila B aponta pré-adesão sem ativar posições reais. Backup/reabertura, reversão e segurança testados. [Documento técnico](./PRE_ADESAO_FICTICIA_SQLITE_MARCO_ZERO_04NOV2026.md). PR #1 DRAFT; Marco Zero bloqueado.
