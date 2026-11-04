@@ -22,7 +22,9 @@ function renderizarPreviaFilas(p){
  resumo.append(linha('Fictícias históricas',p.totalHistorico||0),
   linha('Hipótese B sem ativação',p.pendentesConferidas||0),
   linha('Em revisão PSP',p.pendentesExigemRevisao||0),
-  linha('Acima do teto de simulação',p.pendentesAcimaCapacidade||0));
+  linha('Acima do teto de simulação',p.pendentesAcimaCapacidade||0),
+  linha('Sem fotografia histórica',p.pendentesSemFotografia||0),
+  linha('Oferta histórica não qualificada',p.pendentesSemOfertaQualificada||0));
  root.append(resumo,elem('p',p.motivo));
  const area=$('posicoesPreviaFilas');area.replaceChildren();
  for(const item of p.hipoteseFilaB||[]){
