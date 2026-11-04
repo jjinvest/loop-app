@@ -23,13 +23,14 @@ function tabela(banco,nome){
  return !!banco.prepare("SELECT 1 FROM sqlite_master WHERE type='table' AND name=?").get(nome);
 }
 class DepartamentosAdministradorCandidato{
- constructor({banco,missoes}={}){
+ constructor({banco,missoes,catalogo}={}){
   if(process.env.NODE_ENV==='production')erro('ADMIN_DEPARTAMENTOS_NAO_HOMOLOGADO');
-  if(typeof banco?.prepare!=='function'||missoes?.db!==banco)
+  if(typeof banco?.prepare!=='function'||missoes?.db!==banco||
+     catalogo?.db!==banco||typeof catalogo?.listar!=='function')
    erro('BANCO_UNICO_OBRIGATORIO');
-  this.banco=banco;this.missoes=missoes;
+  this.banco=banco;this.missoes=missoes;this.catalogo=catalogo;
  }
- painel(){
+ async painel(){
   const b=this.banco;
   const contagens=b.prepare([
    'SELECT departamento,COUNT(*) AS total,',
@@ -47,6 +48,11 @@ class DepartamentosAdministradorCandidato{
     dadosComerciaisConectados:false,
     tipo:totalDados===null?'CONTROLE_MANUAL':'DADOS_LOCAIS_LABORATORIO'};
   });
+  const ativos=(await this.catalogo.listar()).filter(x=>x.estado==='PUBLICADO');
+  const produtos=departamentos.find(x=>x.codigo==='PRODUTOS');
+  produtos.quantidadeDadosLaboratorio=ativos.length;
+  produtos.descricao='Produtos publicados no catálogo compartilhado de laboratório';
+  produtos.tipo='CATALOGO_INTEGRADO_LABORATORIO';
   const seg=departamentos.find(x=>x.codigo==='SEGURANCA');
   seg.quantidadeDadosLaboratorio=estrutural.totalInconsistencias;
   seg.descricao='Inconsistências estruturais do laboratório';

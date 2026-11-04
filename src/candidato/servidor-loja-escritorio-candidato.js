@@ -30,6 +30,7 @@ const {auditarRelacoesPspCandidato}=
 const {consultarEscritorioHomologacao}=require('../domain/relatorio-homologacao-checkout-staging');
 const {MissoesOperacionaisCandidatoSQLite}=require('../domain/missoes-operacionais-candidato-sqlite');
 const {DepartamentosAdministradorCandidato}=require('../domain/escritorio-admin-departamentos-candidato');
+const {CatalogoAdminCandidatoSQLite}=require('../domain/catalogo-admin-candidato-sqlite');
 const {criarRouterRascunhosCheckoutStaging}=require('../routes/rascunhos-checkout-staging');
 const {criarRouterPrePedidosCheckoutStaging}=require('../routes/prepedidos-checkout-staging');
 const {criarAutorizacao,localSeguro}=require('../routes/admin-catalogo-laboratorio');
@@ -74,7 +75,8 @@ function criarAppLojaEscritorioCandidato({banco,repositorioCatalogo,
  const ponte=new PontePrepedidoAsaasSandboxStaging({banco});
  const integridade=new IntegridadeTitularCandidatoSQLite({banco});
  const missoes=new MissoesOperacionaisCandidatoSQLite({banco});
- const departamentosAdmin=new DepartamentosAdministradorCandidato({banco,missoes});
+ const catalogo=new CatalogoAdminCandidatoSQLite({banco,repositorioBase:repositorioCatalogo});
+ const departamentosAdmin=new DepartamentosAdministradorCandidato({banco,missoes,catalogo});
  const entregas=new EntregasPrePedidosAsaasSandboxStaging({banco});
  // Operador usa o MESMO SQLite que o checkout e o Escritório: webhook
  // isolado jamais e prova de recebimento sem GET PSP autenticado.
@@ -333,12 +335,65 @@ function criarAppLojaEscritorioCandidato({banco,repositorioCatalogo,
    return res.status(415).json({erro:'JSON_OBRIGATORIO'});
   try{
    const x=await cotarCheckoutPublico({
-    repositorio:repositorioCatalogo,entrada:req.body
+    repositorio:catalogo,entrada:req.body
    });
    return res.json({...x,apenasEstimativa:true});
   }catch(e){return res.status(400).json({erro:e.codigo||'COTACAO_INVALIDA'});}
  });
  const autorizarOperador=criarAutorizacao({segredo:segredoOperador});
+ // O catálogo do cliente usa EXATAMENTE a mesma fonte da cotação.
+ app.get('/staging/catalogo',async(_req,res)=>{
+  try{return res.json(await catalogo.publicos());}
+  catch{return res.status(503).json({erro:'CATALOGO_INDISPONIVEL'});}
+ });
+ // Campos de catálogo aplicam-se apenas às próximas cotações e rascunhos.
+ // Pedidos anteriores preservam a fotografia; produção não é montada.
+ app.get('/staging/escritorio-unificado/produtos',autorizarOperador,async(req,res)=>{
+  try{
+   if(Object.keys(req.query).some(k=>k!=='pagina')||
+      Object.values(req.query).some(v=>typeof v!=='string'))
+    return res.status(400).json({erro:'PAGINACAO_INVALIDA'});
+   const pagina=req.query.pagina===undefined?0:Number(req.query.pagina);
+   return res.json(await catalogo.listarRegistros({pagina}));
+  }catch(e){return res.status(400).json({erro:e.codigo||'CONSULTA_CATALOGO_INVALIDA'});}
+ });
+ app.get('/staging/escritorio-unificado/produtos/:id',autorizarOperador,async(req,res)=>{
+  try{
+   const p=await catalogo.buscarRegistro(req.params.id);
+   return p?res.json(p):res.status(404).json({erro:'PRODUTO_NAO_ENCONTRADO'});
+  }catch(e){return res.status(400).json({erro:e.codigo||'ID_PRODUTO_INVALIDO'});}
+ });
+ app.post('/staging/escritorio-unificado/produtos',autorizarOperador,async(req,res)=>{
+  if(!req.body||Array.isArray(req.body)||
+     Object.keys(req.body).join(',')!=='produto')
+   return res.status(400).json({erro:'PRODUTO_INVALIDO'});
+  try{
+   const p=await catalogo.criar({
+    produto:req.body.produto,chaveIdempotencia:req.get('idempotency-key')
+   });
+   return res.status(p.repetida?200:201).json(p);
+  }catch(e){
+   return res.status(['PRODUTO_JA_EXISTE','CONFLITO_IDEMPOTENCIA'].includes(e.codigo)?409:400)
+    .json({erro:e.codigo||'PRODUTO_INVALIDO'});
+  }
+ });
+ app.patch('/staging/escritorio-unificado/produtos/:id',autorizarOperador,async(req,res)=>{
+  if(!req.body||typeof req.body!=='object'||Array.isArray(req.body)||
+     Object.keys(req.body).sort().join(',')!=='alteracoes,revisaoEsperada')
+   return res.status(400).json({erro:'CAMPOS_PRODUTO_INVALIDOS'});
+  try{
+   const p=await catalogo.alterar({id:req.params.id,...req.body});
+   return res.json(p);
+  }catch(e){
+   return res.status(e.codigo==='CONFLITO_REVISAO'?409:
+    e.codigo==='PRODUTO_NAO_ENCONTRADO'?404:400)
+    .json({erro:e.codigo||'PRODUTO_INVALIDO'});
+  }
+ });
+ app.get('/staging/escritorio-unificado/produtos/:id/historico',autorizarOperador,(req,res)=>{
+  try{return res.json({historico:catalogo.historico(req.params.id)});}
+  catch(e){return res.status(400).json({erro:e.codigo||'HISTORICO_INVALIDO'});}
+ });
  // Missões manuais nunca alteram pagamentos, saldos ou tabuleiros.
  app.get('/staging/escritorio-unificado/missoes',autorizarOperador,(req,res)=>{
   try{
@@ -350,8 +405,8 @@ function criarAppLojaEscritorioCandidato({banco,repositorioCatalogo,
     situacao:q.situacao||null,pagina:q.pagina===undefined?0:Number(q.pagina)}));
   }catch(e){return res.status(400).json({erro:e.codigo||'FILTRO_INVALIDO'});}
  });
- app.get('/staging/escritorio-unificado/departamentos',autorizarOperador,(_req,res)=>{
-  try{return res.json(departamentosAdmin.painel());}
+ app.get('/staging/escritorio-unificado/departamentos',autorizarOperador,async(_req,res)=>{
+  try{return res.json(await departamentosAdmin.painel());}
   catch{return res.status(503).json({erro:'PAINEL_DEPARTAMENTOS_INDISPONIVEL'});}
  });
  app.get('/staging/escritorio-unificado/alertas',autorizarOperador,(req,res)=>{
@@ -545,11 +600,11 @@ function criarAppLojaEscritorioCandidato({banco,repositorioCatalogo,
   '/staging/saques','/staging/ativar-posicao'],(_req,res)=>
   res.status(503).json({erro:'FINANCEIRO_REAL_NAO_HOMOLOGADO'}));
  app.use('/staging',criarRouterRascunhosCheckoutStaging({
-  repositorioCatalogo,intencoes,identificarTitular:titular,
+  repositorioCatalogo:catalogo,intencoes,identificarTitular:titular,
   autorizarMutacao:autorizacao
  }));
  app.use('/staging',criarRouterPrePedidosCheckoutStaging({
-  repositorioCatalogo,prePedidos,identificarTitular:titular,
+  repositorioCatalogo:catalogo,prePedidos,identificarTitular:titular,
   autorizarMutacao:autorizacao,ponteAsaasSandbox:ponte,
   consultarEntregaSimulada:args=>entregas.consultar(args),
   consultarPosicaoPendente:posicoes?args=>posicoes.consultar(args):null
@@ -559,6 +614,6 @@ function criarAppLojaEscritorioCandidato({banco,repositorioCatalogo,
   erro:'CANDIDATO_INDISPONIVEL',financeiroReal:false
  }));
  return {app,contas,cpf,provasEmail,intencoes,prePedidos,ponte,
-  inbox,worker,posicoes,entregas,integridade,missoes,departamentosAdmin,banco};
+  inbox,worker,posicoes,entregas,integridade,missoes,catalogo,departamentosAdmin,banco};
 }
 module.exports={criarAppLojaEscritorioCandidato};
