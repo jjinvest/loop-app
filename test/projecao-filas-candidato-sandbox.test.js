@@ -37,7 +37,8 @@ test('fonte desconectada do SQLite é recusada e projeção excessiva falha fech
    'hom-'+String(i).padStart(36,'0'),'titular_01',
    'pos-'+i,'2026-11-04T00:00:00Z');
   const p=new ProjecaoFilasCandidatoSandbox({
-   banco:db,posicoes:{banco:db,consultar:()=>{throw Error('NÃO DEVE CONSULTAR POSIÇÃO');}}
+   banco:db,posicoes:{banco:db,consultar:()=>{throw Error('NÃO DEVE CONSULTAR POSIÇÃO');}},
+   sinalizacao:{db,consultarFotografiaPrepedido:()=>null}
   });
   assert.throws(()=>p.consultar(),/MAXIMO_ANALISE_SEGURA_EXCEDIDO/);
  }finally{db.close();outro.close();}
