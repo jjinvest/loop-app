@@ -46,7 +46,7 @@ async function envio({fonteSqlite,senha,uploadUrl,downloadUrl,host,
  const cifrado=path.join(dir,'origem.loopbak');
  const remoto=path.join(dir,'recuperado.loopbak');
  const restaurado=path.join(dir,'isolado.sqlite');
- let enviados=0,recebidos=0;
+ let enviados=0,recebidos=0,envioStream=null;
  try{
   const bkp=await criarBackupCriptografado({
    origem:fonteSqlite,destino:cifrado,senha,autorizado:true
@@ -55,13 +55,17 @@ async function envio({fonteSqlite,senha,uploadUrl,downloadUrl,host,
   // Sem retry para upload indeterminado. Nunca expor o signed URL.
   let resposta;
   try{
+   envioStream=fs.createReadStream(cifrado);
+   // O provedor pode negar o PUT sem consumir o body. Sempre fechar
+   // o descritor antes de descartar o arquivo temporario.
+   envioStream.on('error',()=>{});
    resposta=await fetchImpl(put,{method:'PUT',redirect:'error',
     headers:{'Content-Type':'application/octet-stream',
      'Content-Length':String(bkp.tamanhoBytes),
      // A URL assinada deve permitir escrita condicional S3. Nunca
      // substituir uma fotografia antiga por uma nova tentativa.
      'If-None-Match':'*'},
-    body:fs.createReadStream(cifrado),duplex:'half',
+    body:envioStream,duplex:'half',
     signal:AbortSignal.timeout(120000)});
   }catch{falha('ENVIO_INDETERMINADO_NAO_REENVIAR');}
   if(resposta?.status===412)falha('BACKUP_OFFSITE_OBJETO_JA_EXISTE');
@@ -113,6 +117,12 @@ async function envio({fonteSqlite,senha,uploadUrl,downloadUrl,host,
    posicoesReaisCriadas:0,pagamentosReais:0,saquesReais:0
   };
  }finally{
+  if(envioStream&&!envioStream.closed){
+   await new Promise(resolve=>{
+    envioStream.once('close',resolve);
+    envioStream.destroy();
+   });
+  }
   fs.rmSync(dir,{recursive:true,force:true});
  }
 }
