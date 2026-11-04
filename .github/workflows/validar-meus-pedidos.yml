@@ -31,6 +31,7 @@ jobs:
       - run: node scripts/validar-meus-pedidos-browser.js
       - run: node scripts/validar-checkout-staging-browser.js
       - run: node scripts/validar-conta-unica-candidato-browser.js
+      - run: node scripts/validar-convergencia-psp-candidato-browser.js
       - uses: actions/upload-artifact@v4
         if: always()
         with:
@@ -52,4 +53,8 @@ jobs:
             artifacts/cliente-catalogo-editavel-celular.png
             artifacts/vitrine-aprovada-candidato-pc.png
             artifacts/vitrine-aprovada-candidato-celular.png
+            artifacts/convergencia-psp-cliente-pc.png
+            artifacts/convergencia-psp-cliente-celular.png
+            artifacts/convergencia-psp-admin-pc.png
+            artifacts/convergencia-psp-admin-celular.png
           if-no-files-found: warn

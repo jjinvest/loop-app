@@ -320,6 +320,27 @@ test('uma conta -> PSP reconsultado -> 1 posicao e entrega ficticias -> Escritor
  assert.equal(filaBia.body.meusSimuladosNaFilaB,0);
  assert.equal(JSON.stringify(filaBia.body).includes(c.prepedidoId),false);
  assert.equal(c.getGets(),1,'previa nunca faz GET PSP');
+ // Outra conta com muitos registros nao pode derrubar a leitura desta sessao.
+ // Registros artificiais sem pais existem SOMENTE nesta transacao descartada.
+ c.banco.exec('PRAGMA foreign_keys=OFF; BEGIN IMMEDIATE');
+ try{
+  const inserir=c.banco.prepare(`INSERT INTO akitemm_prepedido_posicoes_pendentes_sandbox_staging
+   (id,prepedido_id,titular_id,pagamento_id,evento_id,valor_centavos,estado,criado_em)
+   VALUES(?,?,?,?,?,25000,'PENDENTE_DE_CONFIRMACAO_CLIENTE_SANDBOX',?)`);
+  for(let i=0;i<1001;i++)inserir.run('pos-sbx-volume-'+i,
+   'hom-'+String(i).padStart(36,'0'),'titular_volume_alheio',
+   'pay_VOLUMEALHEIO'+i,'evt_VOLUMEALHEIO'+i,'2026-11-04T00:00:00.000Z');
+  const totalAntes=c.banco.prepare('SELECT total_changes() n').get().n;
+  const isolada=await c.request('/staging/minha-previa-filas',{token:c.a.token});
+  const vazia=await c.request('/staging/minha-previa-filas',{token:c.b.token});
+  assert.equal(isolada.status,200,JSON.stringify(isolada.body));
+  assert.equal(isolada.body.meusPendentesHistoricos,1);
+  assert.equal(isolada.body.meusSimuladosNaFilaB,1);
+  assert.equal(vazia.status,200);assert.equal(vazia.body.meusPendentesHistoricos,0);
+  assert.equal(JSON.stringify(isolada.body).includes('VOLUMEALHEIO'),false);
+  assert.equal(c.banco.prepare('SELECT total_changes() n').get().n,totalAntes);
+  assert.equal(c.getGets(),1);
+ }finally{c.banco.exec('ROLLBACK; PRAGMA foreign_keys=ON');}
  assert.equal((await c.request(root+'/projetar-posicao-ficticia',{
   method:'POST',admin:true,data:{eventoId,prepedidoId:c.prepedidoId}
  })).status,200,'replay nao duplica');
@@ -345,6 +366,26 @@ test('uma conta -> PSP reconsultado -> 1 posicao e entrega ficticias -> Escritor
  assert.equal(escritorio.body.posicoesPendentesFicticias,1);
  assert.equal(escritorio.body.resumo.posicoesReais,0);
  assert.equal(c.getGets(),1,'nenhuma leitura do cliente ou escritorio chama PSP');
+ assert.equal(escritorio.body.resumo.recebimentosPSPConciliados,1);
+ // RECEIVED antigo nao vale como prova atual se a ultima consulta mudou.
+ for(const estado of ['PENDING','FUTURE_PSP_STATUS','RECEIVED']){
+  c.setStatus(estado);
+  await c.ponte.conferir({titularId:c.registro.titularId,
+   prepedidoId:c.prepedidoId,provedor:c.provedor});
+  const getsAntes=c.getGets();
+  const mudancasAntes=c.banco.prepare('SELECT total_changes() n').get().n;
+  const cliente=await c.request('/staging/meus-pedidos',{token:c.a.token});
+  const admin=await c.request(root,{admin:true});
+  assert.equal(admin.status,200,JSON.stringify(admin.body));
+  const vigente=estado==='RECEIVED';
+  assert.equal(cliente.body.pedidos[0].conferenciaPSPConcluida,vigente);
+  assert.equal(admin.body.pedidos[0].conferenciaPSPConcluida,vigente);
+  assert.equal(admin.body.resumo.recebimentosPSPConciliados,vigente?1:0);
+  assert.equal(admin.body.resumo.posicoesPendentesSimuladas,1,'historico preservado');
+  assert.equal(admin.body.resumo.posicoesReais,0);
+  assert.equal(c.getGets(),getsAntes,'leituras nao consultam PSP');
+  assert.equal(c.banco.prepare('SELECT total_changes() n').get().n,mudancasAntes);
+ }
  c.setStatus('REFUNDED');
  await c.ponte.conferir({
   titularId:c.registro.titularId,prepedidoId:c.prepedidoId,

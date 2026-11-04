@@ -1,8 +1,7 @@
 'use strict';
 // Ponte SOMENTE LEITURA entre posições fictícias oriundas de PSP reconsultado
 // e o simulador de filas. Nunca registra evento no motor comercial.
-// Não possui fotografia histórica de elegibilidade verde: a fila simulada
-// é hipotética e NÃO representa participação válida do LOOP.
+// Usa a fotografia histórica, mas a fila continua hipotética e não ativa direitos.
 const {MotorFilas}=require('./motor-filas');
 const {LIMITE_POSICOES_ATIVAS}=require('./capacidade-posicoes-loop');
 const {consultarPedido}=require('./relatorio-homologacao-checkout-staging');
@@ -47,16 +46,20 @@ class ProjecaoFilasCandidatoSandbox{
    hipoteseFilaB:[],pendentesExigemRevisao:0,
    pendentesAcimaCapacidade:0,prontasParaMotorReal:0,
    motivo:'Projeção de posições fictícias indisponível; nenhum PSP foi consultado.'};
+  // Isolar ANTES de contar/ler: dados de outras contas nao podem consumir
+  // o limite nem derrubar a consulta de uma sessao com poucos registros.
+  const filtro=titularId===null?'':' WHERE titular_id=?';
+  const parametros=titularId===null?[]:[titularId];
   const n=this.banco.prepare(
-   'SELECT COUNT(*) AS n FROM akitemm_prepedido_posicoes_pendentes_sandbox_staging'
-  ).get().n;
+   'SELECT COUNT(*) AS n FROM akitemm_prepedido_posicoes_pendentes_sandbox_staging'+filtro
+  ).get(...parametros).n;
   if(n>MAX_LEITURA)erro('MAXIMO_ANALISE_SEGURA_EXCEDIDO');
   const linhas=this.banco.prepare([
    'SELECT prepedido_id AS prepedidoId,titular_id AS titularId,',
    'id AS id,criado_em AS criadoEm',
-   'FROM akitemm_prepedido_posicoes_pendentes_sandbox_staging',
+   'FROM akitemm_prepedido_posicoes_pendentes_sandbox_staging'+filtro,
    'ORDER BY criado_em ASC,prepedido_id ASC'
-  ].join(' ')).all();
+  ].join(' ')).all(...parametros);
   const motor=new MotorFilas({relogio:()=>'2026-11-04T00:00:00.000Z'});
   const contagem=new Map(),pendencias=[];
   let emRevisao=0,acima=0,naHipotese=0,semFoto=0,semOferta=0;
@@ -110,6 +113,7 @@ class ProjecaoFilasCandidatoSandbox{
   if(titularId!==null){
    const minhas=pendencias.filter(p=>p.estado==='APENAS_PREVIA_FILA_B_AZUL');
    return {...padrao,estado:'PREVIA_DO_TITULAR_SEM_DIREITOS',
+    escopoOrdemHipotetica:'SOMENTE_TITULAR_NAO_E_ORDEM_GLOBAL',
     pendencias,meusPendentesHistoricos:pendencias.length,
     hipoteseFilaB:minhas,meusSimuladosNaFilaB:minhas.length,
     prontasParaMotorReal:0,outrasContasOmitidas:true,

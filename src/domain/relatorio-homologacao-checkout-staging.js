@@ -129,6 +129,30 @@ function consultarEscritorioHomologacao({banco,limite=30}={}){
   'ORDER BY criado_em DESC,prepedido_id DESC LIMIT ?'
  ].join(' ')).all(limite);
  const pedidos=ids.map(x=>consultarPedido({banco,prepedidoId:x.prepedido_id}));
+ // Mesmos criterios atuais de consultarPedido, sobre TODA a base, nao apenas
+ // a amostra visual. Um RECEIVED historico nao substitui o ultimo GET PSP.
+ const recebimentosPSPConciliados=[T.eventos,T.consultas,T.reconsultas]
+  .every(nome=>tabela(banco,nome))?banco.prepare(`
+   WITH historico AS (
+    SELECT a.prepedido_id,a.pagamento_id,
+     SUM(CASE WHEN a.tipo='PAYMENT_RECEIVED' AND r.estado='CONCLUIDO'
+      AND r.codigo='PSP_RECONSULTADO' THEN 1 ELSE 0 END) recebidos,
+     SUM(CASE WHEN r.estado='EXIGE_REVISAO' THEN 1 ELSE 0 END) revisoes
+    FROM akitemm_prepedido_webhook_inbox_staging a
+    LEFT JOIN akitemm_prepedido_webhook_reconsulta_staging r ON r.evento_id=a.evento_id
+    GROUP BY a.prepedido_id,a.pagamento_id
+   ) SELECT COUNT(*) AS n FROM akitemm_prepedido_asaas_sandbox_staging p
+   JOIN akitemm_checkout_prepedidos_staging c
+    ON c.prepedido_id=p.prepedido_id AND c.titular_id=p.titular_id
+   JOIN historico h ON h.prepedido_id=p.prepedido_id AND h.pagamento_id=p.pagamento_id
+   WHERE p.estado='RECEBIMENTO_INFORMADO_SANDBOX' AND h.recebidos=1 AND h.revisoes=0
+   AND (SELECT status_asaas FROM akitemm_prepedido_asaas_consultas_staging u
+    WHERE u.prepedido_id=p.prepedido_id AND u.pagamento_id=p.pagamento_id
+    ORDER BY u.id DESC LIMIT 1)='RECEIVED'
+   ${tabela(banco,T.posicoes)?`AND (SELECT COUNT(*) FROM
+    akitemm_prepedido_posicoes_pendentes_sandbox_staging s
+    WHERE s.prepedido_id=p.prepedido_id AND s.titular_id=p.titular_id)<=1`:''}
+  `).get().n:0;
  const resumo={
   prepedidosStaging:contagem,
   cobrancasSandbox:tabela(banco,T.cobrancas)?banco.prepare(
@@ -137,21 +161,7 @@ function consultarEscritorioHomologacao({banco,limite=30}={}){
   eventosPersistidos:tabela(banco,T.eventos)?banco.prepare(
    'SELECT COUNT(*) AS n FROM akitemm_prepedido_webhook_inbox_staging'
   ).get().n:0,
-  recebimentosPSPConciliados:tabela(banco,T.consultas)&&
-   tabela(banco,T.reconsultas)?banco.prepare([
-    'SELECT COUNT(DISTINCT a.prepedido_id) AS n',
-    'FROM akitemm_prepedido_webhook_inbox_staging a',
-    'JOIN akitemm_prepedido_webhook_reconsulta_staging r',
-    'ON r.evento_id=a.evento_id',
-    'JOIN akitemm_prepedido_asaas_sandbox_staging p',
-    'ON p.prepedido_id=a.prepedido_id AND p.pagamento_id=a.pagamento_id',
-    'WHERE a.tipo=? AND r.estado=? AND r.codigo=?',
-    'AND p.estado=?',
-    'AND EXISTS(SELECT 1 FROM akitemm_prepedido_asaas_consultas_staging c',
-    'WHERE c.prepedido_id=p.prepedido_id AND c.pagamento_id=p.pagamento_id',
-    "AND c.status_asaas='RECEIVED')"
-   ].join(' ')).get('PAYMENT_RECEIVED','CONCLUIDO','PSP_RECONSULTADO',
-    'RECEBIMENTO_INFORMADO_SANDBOX').n:0,
+  recebimentosPSPConciliados,
   posicoesPendentesSimuladas:tabela(banco,T.posicoes)?banco.prepare(
    'SELECT COUNT(*) AS n FROM akitemm_prepedido_posicoes_pendentes_sandbox_staging'
   ).get().n:0,

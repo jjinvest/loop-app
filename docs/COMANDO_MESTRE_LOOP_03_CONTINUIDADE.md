@@ -2306,3 +2306,14 @@ Implementado `src/domain/diagnostico-ativacao-candidato.js` para **consolidar, s
 O Cliente possui **Ver requisitos de ativação** dentro de cada pedido; o Administrador utiliza o ID já escolhido na pré-adesão para **Conferir requisitos de ativação**. Novo botão **Abrir missão de regularização** usa o sistema de missões do Administrador existente, no departamento Segurança, vinculando o pré-pedido com chave idempotente; clicar repetidamente não abre duplicatas. Leituras autenticadas isolam os titulares; nenhum CPF integral ou segredo é exibido.
 
 Restam escolher e integrar serviço externo de identidade, confirmação comercial, validar controles no motor persistente definitivo e aprovações externas. A implementação não presume que CPF preenchido ou Pix de ensaio seja suficiente. Detalhes e gates: docs/DIAGNOSTICO_GATE_ATIVACAO_04NOV2026.md.
+
+
+### 204 — Recebimentos atuais e isolamento de leitura entre titulares (04/11/2026)
+
+**Base de continuidade:** índice vigente já na seção 203, incluindo [e-mail no gate](./EMAIL_COMPROVADO_NO_GATE_ATIVACAO_04NOV2026.md) e [blindagem da fonte](./BLINDAGEM_FONTE_GATE_ATIVACAO_04NOV2026.md). Conferidos os dois CIs aprovados do HEAD de entrada (`7a4cf16afecaed996028f42da5c13ce9d3630d7f`); nenhuma etapa de DNS, e-mail externo ou Asaas foi repetida.
+
+Corrigidas duas falhas novas no candidato de conta única: a prévia de posições do Cliente agora filtra o titular no SQL antes do limite de leitura, impedindo que 1.001 registros de terceiros derrubem uma sessão com poucos pedidos; o contador administrativo de recebimentos passa a exigir a última consulta PSP vigente, evento recebido único reconsultado, ausência de revisão e vínculo correto. `RECEIVED` antigo não sustenta contador positivo quando o detalhe atual já perdeu a confirmação. O histórico permanece; nenhuma leitura executa pagamento, nova reconsulta ou mudança de posição.
+
+Regressões HTTP reproduziram as falhas antes da correção; testes passaram sobre isolamento, dez hipóteses válidas por titular, totais fora da amostra, eventos duplicados, revisão e reabertura SQLite somente leitura. Roteiro de navegador específico PC/celular adicionado aos checks existentes; CI do código novo ainda deve ser confirmado. A consulta administrativa global mantém seu teto de segurança de 1.000 registros, sem alegar paginação resolvida. Nenhuma tela aprovada foi redesenhada.
+
+Detalhes, evidências e limites: [Convergência PSP e isolamento](./CONVERGENCIA_PSP_E_ISOLAMENTO_ESCRITORIOS_04NOV2026.md). Permanecem e-mail externo, identidade/pagamento comercial e ativação definitiva no motor persistente; Marco Zero fechado e PR #1 DRAFT.

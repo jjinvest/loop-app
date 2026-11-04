@@ -49,3 +49,26 @@ test('projeção rejeita execução em produção',()=>{
  try{assert.throws(()=>new ProjecaoFilasCandidatoSandbox({banco:db}),/PROJECAO_FILAS_PROIBIDA_PRODUCAO/);}
  finally{db.close();if(old===undefined)delete process.env.NODE_ENV;else process.env.NODE_ENV=old;}
 });
+test('volume de outro titular nao bloqueia nem faz ler suas posicoes na consulta individual',()=>{
+ const db=new DatabaseSync(':memory:');
+ try{
+  db.exec('CREATE TABLE akitemm_prepedido_posicoes_pendentes_sandbox_staging ('+
+   'prepedido_id TEXT PRIMARY KEY,titular_id TEXT,id TEXT,criado_em TEXT)');
+  const insert=db.prepare('INSERT INTO akitemm_prepedido_posicoes_pendentes_sandbox_staging VALUES(?,?,?,?)');
+  for(let i=0;i<=MAX_LEITURA;i++)insert.run('hom-'+String(i).padStart(36,'0'),
+   'titular_volume_alheio','pos-'+i,'2026-11-04T00:00:00Z');
+  let leituras=0;
+  const p=new ProjecaoFilasCandidatoSandbox({banco:db,
+   posicoes:{banco:db,consultar:()=>{leituras++;throw Error('LEITURA_ALHEIA');}},
+   sinalizacao:{db,consultarFotografiaPrepedido:()=>{throw Error('FOTOGRAFIA_ALHEIA');}}
+  });
+  const antes=db.prepare('SELECT total_changes() n').get().n;
+  const d=p.consultar({titularId:'titular_sem_pedidos'});
+  assert.equal(d.meusPendentesHistoricos,0);assert.deepEqual(d.pendencias,[]);
+  assert.equal(d.meusSimuladosNaFilaB,0);assert.equal(leituras,0);
+  assert.equal(d.outrasContasOmitidas,true);
+  assert.equal(db.prepare('SELECT total_changes() n').get().n,antes);
+  assert.throws(()=>p.consultar({titularId:'titular_volume_alheio'}),/MAXIMO_ANALISE_SEGURA_EXCEDIDO/);
+  assert.throws(()=>p.consultar(),/MAXIMO_ANALISE_SEGURA_EXCEDIDO/);
+ }finally{db.close();}
+});

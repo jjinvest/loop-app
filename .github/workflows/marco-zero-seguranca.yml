@@ -43,6 +43,7 @@ jobs:
           node --test test/catalogo-admin-candidato-unificado.test.js
           node --test test/vitrine-aprovada-candidato.test.js
           node --test test/projecao-filas-candidato-sandbox.test.js
+          node --test test/relatorio-psp-vigente-e-isolamento-candidato.test.js
           node --test test/simulador-qualificacao-candidato.test.js
           node --test test/verificacao-email-conta-unica-candidata.test.js
           node --test test/transporte-email-resend-candidato.test.js
