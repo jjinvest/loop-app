@@ -272,6 +272,29 @@ $('conferirGateAtivacao').addEventListener('click',async e=>{
  }catch(err){$('resultadoGateAtivacao').textContent='Consulta indisponível: '+err.message;}
  finally{botao.disabled=false;}
 });
+$('criarMissaoGateAtivacao').addEventListener('click',async e=>{
+ const botao=e.currentTarget;botao.disabled=true;
+ try{
+  const id=$('preAdesaoId').value;
+  if(!/^hom-[a-f0-9-]{36}$/.test(id))throw Error('PREPEDIDO_INVALIDO');
+  const gate=await api('/diagnostico-ativacao/'+encodeURIComponent(id));
+  if(gate.permitidoAtivar!==false)throw Error('GATE_INCOMPATIVEL');
+  const r=await api('/missoes',{method:'POST',
+   idempotencia:'regularizacao-ativacao-'+id,
+   body:{
+    departamento:'SEGURANCA',prioridade:'ALTA',
+    titulo:'Regularizar requisitos de ativação',
+    descricao:'Conferir identidade externa, pagamento comercial, titularidade, limite de 10 posições ativas, limite de 2 no tabuleiro, conciliação e autorização operacional. Consultar diagnóstico atualizado antes de concluir.',
+    prepedidoId:id,mensagemCliente:null
+   }});
+  $('resultadoGateAtivacao').textContent=r.repetida?
+   'Missão de regularização já registrada no departamento Segurança.':
+   'Missão de regularização criada no departamento Segurança.';
+  paginaMissoes=0;$('filtrarDepartamento').value='SEGURANCA';
+  await atualizar();
+ }catch(err){$('resultadoGateAtivacao').textContent='Missão não criada: '+err.message;}
+ finally{botao.disabled=false;}
+});
 $('formPreAdesao').addEventListener('submit',async e=>{
  e.preventDefault();
  const btn=e.submitter;btn.disabled=true;
