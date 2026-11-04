@@ -57,10 +57,16 @@ async function envio({fonteSqlite,senha,uploadUrl,downloadUrl,host,
   try{
    resposta=await fetchImpl(put,{method:'PUT',redirect:'error',
     headers:{'Content-Type':'application/octet-stream',
-     'Content-Length':String(bkp.tamanhoBytes)},
+     'Content-Length':String(bkp.tamanhoBytes),
+     // A URL assinada deve permitir escrita condicional S3. Nunca
+     // substituir uma fotografia antiga por uma nova tentativa.
+     'If-None-Match':'*'},
     body:fs.createReadStream(cifrado),duplex:'half',
     signal:AbortSignal.timeout(120000)});
   }catch{falha('ENVIO_INDETERMINADO_NAO_REENVIAR');}
+  if(resposta?.status===412)falha('BACKUP_OFFSITE_OBJETO_JA_EXISTE');
+  // Sob corrida (409), nao fazer retry sobre o mesmo nome.
+  if(resposta?.status===409)falha('BACKUP_OFFSITE_CONCORRENCIA');
   if(!resposta||resposta.status<200||resposta.status>=300)
    falha('ENVIO_OFFSITE_NAO_CONFIRMADO');
   enviados=bkp.tamanhoBytes;

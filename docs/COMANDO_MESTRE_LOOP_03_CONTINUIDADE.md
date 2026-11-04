@@ -2355,3 +2355,10 @@ Pendências: prévia global completa com contagem de capacidade/ordem, integraç
 **Evidência:** [CI de segurança no código testado, SUCCESS](https://github.com/jjinvest/loop-app/actions/runs/41926465170). [Suíte geral, auditoria de dependências e navegador PC/celular do mesmo código — SUCCESS](https://github.com/jjinvest/loop-app/actions/runs/41926465274).
 
 **Gate externo ainda aberto:** teste simulado ou cópia cifrada local não prova backup offsite independente; não há bucket de destino no ambiente Railway de homologação, ver [issue #2](https://github.com/jjinvest/loop-app/issues/2). Antes do Marco Zero ainda faltam armazenamento externo autorizado, recuperação isolada comprovada, RPO/RTO, identidade comercial e aprovação jurídica/operacional. PR #1 DRAFT, sem implantação comercial nem dinheiro real.
+
+
+### 208 — Cópia offsite não pode sobrescrever backups anteriores (04/11/2026)
+
+No envio de backup criptografado em `scripts/validar-backup-offsite-checkout-staging.js`, o PUT para objeto S3 compatível exige `If-None-Match: *`: não substituir fotografias anteriores com o mesmo nome. `412 Precondition Failed` bloqueia como `BACKUP_OFFSITE_OBJETO_JA_EXISTE` e `409 Conflict` bloqueia como `BACKUP_OFFSITE_CONCORRENCIA`, sem reenvio automático nem GET de um objeto preexistente. O contrato exige URL assinada compatível com cabeçalho condicional; se o provedor não aceitar, a operação falha fechada e o provedor/configuração devem ser homologados. Teste de regressão valida sucesso com cabeçalho e as duas negativas com exatamente um PUT e zero GET.
+
+Este ajuste é **somente de código e simulação local**. Ainda não foi contratado/provisionado armazenamento externo, nem medidos RPO/RTO ou restauração fora do volume primário Railway. A [issue #2](https://github.com/jjinvest/loop-app/issues/2) continua aberta para o gate real de backup offsite, com custo e destino sujeitos à autorização do proprietário. Não houve dinheiro real, merge ou deploy comercial. CI do código novo deve ser conferido antes de declarar aprovado.

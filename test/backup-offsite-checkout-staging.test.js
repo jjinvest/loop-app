@@ -47,6 +47,7 @@ test('HTTPS PUT assinado + GET de objeto cifrado + restauração separada com ha
    for await(const chunk of req.body)parts.push(chunk);
    uploaded=Buffer.concat(parts);
    assert.equal(uploaded.length,Number(req.headers['Content-Length']));
+   assert.equal(req.headers['If-None-Match'],'*','recusar sobrescrita da mesma chave');
    assert.equal(uploaded.subarray(0,8).toString(),'LOOPBKP1');
    assert.equal(uploaded.includes(Buffer.from('curso')),false);
    return new Response(null,{status:200});
@@ -87,4 +88,22 @@ test('offsite adulterado ou URL fora do host nao e aceito',async t=>{
   /DESTINO_OFFSITE_INVALIDO/);
  await assert.rejects(()=>envio({...params(file,fake),autorizado:false}),
   /OFFSITE_STAGING_NAO_AUTORIZADO/);
+});
+test('objeto ja presente (412) ou escrita concorrente (409) bloqueiam PUT sem GET nem repeticao',async t=>{
+ const {file}=preparar(t);
+ for(const [status,codigo] of [[412,'BACKUP_OFFSITE_OBJETO_JA_EXISTE'],
+  [409,'BACKUP_OFFSITE_CONCORRENCIA']]){
+  let puts=0,gets=0;
+  const fake=async(_u,req)=>{
+   if(req.method==='PUT'){
+    puts++;
+    assert.equal(req.headers['If-None-Match'],'*');
+    return new Response(null,{status});
+   }
+   gets++;throw Error('GET NAO AUTORIZADO APOS FALHA');
+  };
+  await assert.rejects(envio(params(file,fake)),{codigo});
+  assert.equal(puts,1,'nao repetir upload de resultado conflitante');
+  assert.equal(gets,0,'nao restaurar objeto antigo como se fosse backup novo');
+ }
 });
