@@ -2217,3 +2217,12 @@ Complemento em docs/ESCRITORIOS_INTEGRADOS_ADMIN_MISSOES_04NOV2026.md.
 - [Navegador PC/celular com novos departamentos — SUCCESS](https://github.com/jjinvest/loop-app/actions/runs/41788809779)
 - [Capturas do navegador](https://github.com/jjinvest/loop-app/actions/runs/41788809779/artifacts/13301439658)
 - PR #1 DRAFT, ambiente local de homologação, sem vendas/saques/giro reais.
+
+
+### 195 — Catálogo operacional unificado entre loja, cliente e administrador (04/11/2026)
+
+Entregue no servidor candidato LOCAL o catálogo editável pelo Administrador, com criação de produtos de teste, edição de nome/descrição/preço/estado, histórico SQLite imutável, revisão otimista e criação idempotente. O mesmo objeto de catálogo passa a alimentar cotação, rascunhos e pré-pedidos de laboratório e a nova seleção de produto/quantidade no Escritório do Cliente; o departamento PRODUTOS mostra a contagem de produtos publicados. A loja só lê produtos PUBLICADOS. Históricos de pedidos preservam fotografia e preço; se o catálogo mudar entre rascunho e pré-pedido, exige nova cotação. Ações administrativas exigem segredo do operador e não usam CPF ou chaves PSP.
+
+A alteração é **apenas do candidato local**, não da loja comercial de produção nem da vitrine demonstrativa separada. Não há venda, cobrança real, crédito, posição, saque, cofre ou giro automático; os limites de homologação externa e as permissões comerciais permanecem. Testes automáticos e de navegador PC/celular foram configurados; verificar o run específico antes de declarar a validação. PR #1 DRAFT, sem merge/deploy. MARCO_ZERO=NAO_LIBERADO.
+
+Documento complementar: docs/ESCRITORIOS_INTEGRADOS_ADMIN_MISSOES_04NOV2026.md
