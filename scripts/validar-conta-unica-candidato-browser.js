@@ -56,7 +56,7 @@ const {once}=require('node:events');
    await page.locator('#calcularCotacao').click();
    await page.locator('#mensagem').filter({hasText:/Cotação conferida/}).waitFor();
    await page.locator('#prepararPedido').click();
-   await page.locator('#mensagem').filter({hasText:/Histórico atualizado/}).waitFor();
+   await page.locator('#mensagem').filter({hasText:/Pedidos e comunicados atualizados/}).waitFor();
    assert.equal(await page.locator('#listaPedidos article.pedido').count(),1);
    assert.match(await page.locator('#listaPedidos').innerText(),/R\$\s?250,00/);
    const screenshot=path.join(__dirname,'../artifacts',
