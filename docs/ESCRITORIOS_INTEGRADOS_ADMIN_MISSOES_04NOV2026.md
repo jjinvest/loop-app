@@ -26,3 +26,16 @@ A operação definitiva exige autenticação de produção, perfis de permissão
 
 
 **Validação concluída em 04/11/2026:** [navegador real PC/celular, loja + Escritório do Cliente + Escritório Administrador, criação de missão e comunicado sincronizado — SUCCESS](https://github.com/jjinvest/loop-app/actions/runs/41787540197). Capturas no [artefato de homologação](https://github.com/jjinvest/loop-app/actions/runs/41787540197/artifacts/13302031290). [Segurança e bloqueio financeiro — SUCCESS](https://github.com/jjinvest/loop-app/actions/runs/41786995505). O sucesso do ensaio local não autoriza lançamento comercial.
+
+
+## 4. Evolução do Escritório do Administrador — departamentos e alertas PSP (04/11/2026)
+
+A nova central operacional de homologação possui **12 departamentos**: CLIENTES, PEDIDOS, PRODUTOS, ENTREGAS, INDICACOES, POSICOES, FILAS, TABULEIRO, COFRES, SAQUES, SEGURANCA e OUTROS. Cada um exibe suas missões abertas e uma indicação explícita da cobertura atual. Para departamentos cujos dados comerciais ainda não estão conectados, o painel mostra **CONTROLE_MANUAL**, não saldo financeiro zero nem uma falsa conclusão operacional.
+
+**Consultas e filtros de missão:** GET /staging/escritorio-unificado/departamentos mostra contagens reais do SQLite local de ensaio e pendências por departamento; GET /staging/escritorio-unificado/missoes recebe filtros validados de departamento/situação, página de 25 registros e navegação, evitando limitar silenciosamente o operador aos 50 primeiros. Todos exigem o segredo do operador, mesmo em loopback; nenhum desses caminhos foi montado no servidor público.
+
+**Triagem de PSP:** GET /staging/escritorio-unificado/alertas examina páginas de 25 pré-pedidos e apresenta apenas aqueles com exigência de revisão ou webhook recebido sem reconsulta independente concluída. O painel indica explicitamente quantos pedidos foram examinados, não declara varredura global a partir de uma página. O botão POST /staging/escritorio-unificado/alertas/:prepedidoId/abrir-missao abre uma missão operacional PEDIDOS, com chave idempotente derivada do próprio pré-pedido. Pedidos sem alerta são recusados. A ação **não consulta PSP, não confirma pagamento, não cria posição, não altera saldo e não executa giro**. O operador precisa seguir a cadeia de comprovação já homologada antes de quaisquer benefícios comerciais.
+
+**Provas:** teste de integração cobre bloqueio de rotas sem autorização, relatório dos 12 departamentos, cenário de cobrança Sandbox indeterminada por falha de rede simulada, criação de missão sem duplicação, filtros/limites de paginação e SQL/foreign keys íntegros, além da proibição de operações reais. Teste de navegador PC/celular cobre seleção de departamento, missões e comunicados sem redesenho aprovado.
+
+**Ainda pendente:** controles concretos dos motores/caixas de produção, aprovação de operador segregada, catálogo de produção, conciliação externa, suporte real, execução automática autorizada e recuperação em infraestrutura externa. Nome de departamento e registro de missão não equivalem à integração do motor. PR #1 permanece DRAFT, sem merge, deploy comercial ou dinheiro real.
