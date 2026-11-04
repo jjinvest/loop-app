@@ -34,6 +34,7 @@ const {CatalogoAdminCandidatoSQLite}=require('../domain/catalogo-admin-candidato
 const {createVitrineCandidata}=require('./vitrine-aprovada-candidato');
 const {ProjecaoFilasCandidatoSandbox}=require('../domain/projecao-filas-candidato-sandbox');
 const {PreAdesaoSandboxCandidatoSQLite}=require('../domain/pre-adesao-sandbox-candidato-sqlite');
+const {DiagnosticoAtivacaoCandidato}=require('../domain/diagnostico-ativacao-candidato');
 const {criarRouterRascunhosCheckoutStaging}=require('../routes/rascunhos-checkout-staging');
 const {criarRouterPrePedidosCheckoutStaging}=require('../routes/prepedidos-checkout-staging');
 const {criarAutorizacao,localSeguro}=require('../routes/admin-catalogo-laboratorio');
@@ -364,8 +365,30 @@ function criarAppLojaEscritorioCandidato({banco,repositorioCatalogo,
  const preAdesao=new PreAdesaoSandboxCandidatoSQLite({
   banco,posicoes,sinalizacao:sinalizacaoVitrine,cpf,termosVersao
  });
+ const diagnosticoAtivacao=new DiagnosticoAtivacaoCandidato({banco,preAdesao,cpf});
  const projecaoFilas=new ProjecaoFilasCandidatoSandbox({
   banco,posicoes,sinalizacao:sinalizacaoVitrine,preAdesao
+ });
+ // Porta única de leitura para o check-list de ativação definitiva.
+ // Nenhum dos dois endpoints chama um motor de escrita.
+ app.get('/staging/escritorio-unificado/diagnostico-ativacao/:id',
+  autorizarOperador,(req,res)=>{
+   try{
+    const d=diagnosticoAtivacao.avaliar({prepedidoId:req.params.id});
+    res.set('Cache-Control','no-store');
+    return d?res.json(d):res.status(404).json({erro:'PREPEDIDO_NAO_ENCONTRADO'});
+   }catch(e){return res.status(400).json({erro:e.codigo||'DIAGNOSTICO_INVALIDO'});}
+  });
+ app.get('/staging/meu-diagnostico-ativacao/:id',(req,res)=>{
+  const s=contas.sessao(req);
+  if(!s)return res.status(401).json({erro:'SESSAO_AUSENTE'});
+  try{
+   const d=diagnosticoAtivacao.avaliar({
+    prepedidoId:req.params.id,titularId:s.titularId
+   });
+   res.set('Cache-Control','no-store');
+   return d?res.json(d):res.status(404).json({erro:'PREPEDIDO_NAO_ENCONTRADO'});
+  }catch(e){return res.status(400).json({erro:e.codigo||'DIAGNOSTICO_INVALIDO'});}
  });
  // Pré-adesão de ensaio NÃO ativa posições, apenas registra um checkpoint
  // persistido, verificando de novo PSP, oferta histórica, CPF e termos LAB.
@@ -678,6 +701,6 @@ function criarAppLojaEscritorioCandidato({banco,repositorioCatalogo,
   erro:'CANDIDATO_INDISPONIVEL',financeiroReal:false
  }));
  return {app,contas,cpf,provasEmail,intencoes,prePedidos,ponte,
-  inbox,worker,posicoes,projecaoFilas,preAdesao,entregas,integridade,missoes,catalogo,sinalizacaoVitrine,departamentosAdmin,banco};
+  inbox,worker,posicoes,projecaoFilas,preAdesao,diagnosticoAtivacao,entregas,integridade,missoes,catalogo,sinalizacaoVitrine,departamentosAdmin,banco};
 }
 module.exports={criarAppLojaEscritorioCandidato};
