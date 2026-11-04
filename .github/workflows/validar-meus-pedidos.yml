@@ -46,4 +46,6 @@ jobs:
             artifacts/escritorio-integrado-celular.png
             artifacts/conta-unica-candidato-pc.png
             artifacts/conta-unica-candidato-celular.png
+            artifacts/escritorio-admin-candidato-pc.png
+            artifacts/escritorio-admin-candidato-celular.png
           if-no-files-found: warn
