@@ -2182,3 +2182,20 @@ Depois da prova real de `PAYMENT_CREATED` e `PAYMENT_RECEIVED`, desabilitamos as
 - `test/transporte-email-resend-candidato.test.js` exercita com `fetchImpl` falso a formação de requisição HTTPS, ausência de chaves no corpo, sucesso explícito, erro HTTP, resposta inválida, falha de rede e integração com pedido/conta candidatos sem marcar email verificado antes da digitação do código. Nenhum email real foi enviado. A verificação de posse só ficará operacional quando o proprietário conectar conta/provedor, criar remetente e domínio autenticados, gerir chaves pelo serviço e configurar infraestrutura externa; o assistente **não criou** essas credenciais nem acessou mensagens de usuários. O CI `marco-zero-seguranca.yml` passou a testar esta nova etapa. Consultar conclusão do run do SHA `163672bc60d8e6990f644fb9f984de97b46390ed` antes de declaratório `100%`.
 
 **Pendências comerciais ainda abertas:** checkout HTTPS definitivo e sessão segura, identidade/CPF externos reais, domínios/chaves de email autenticados, razão financeira definitiva e integração real do Escritório/fila/tabuleiro/cofres/saques, backup offsite real com recuperação demonstrada, monitoração e homologação operacional sob provedor e aprovações externas do proprietário. O Railway do Sandbox continua sendo apenas receptor de webhook isolado, não implantação comercial; PR #1 DRAFT sem merge, deploy público ou operações financeiras reais. `MARCO_ZERO=NAO_LIBERADO`.
+
+
+### 193 — Escritórios integrados e legenda da loja (04/11/2026)
+
+**Decisão:** trabalhar Loja AKITEMM, Escritório do Cliente e Escritório do Administrador conjuntamente, preservando telas aprovadas e habilitando campos para procedimentos manuais quando o motor não decidir por conta própria.
+
+**Código de homologação, não produção:**
+- Loja: faixa de busca recebe três quadradinhos de legenda: CINZA (compra comum sem LOOP), VERDE (qualifica para o LOOP conforme regras de compra/adesão), DOURADO+ROXO (evento especial). O dourado/roxo representa uma única categoria, não uma quarta. Sem alterar cartões, classes, preços, motor ou regras.
+- Escritório do Cliente: Meus Pedidos recebeu comunicados operacionais vinculados exclusivamente ao titular autenticado e seu pedido. A mensagem não prova pagamento.
+- Escritório do Administrador: nova tela local /staging/escritorio-admin, com leitura do mesmo SQLite do cliente, indicadores e pedidos, e formulário para departamento, prioridade, título, instrução, vínculo opcional a pedido e comunicado opcional ao comprador. Autenticação pelo segredo independente do operador já existente, sem salvar segredo no navegador.
+- Missões manuais criadas com idempotência e histórico, revisão para impedir gravação concorrente e progressão ABERTA, EM_ANDAMENTO, CONCLUIDA ou CANCELADA. Concluir missão não executa automaticamente giro, saques, cofres, posições, bônus ou crédito.
+- A UI reaproveita as rotas existentes para reconsultar evento Asaas Sandbox e preparar entrega fictícia, com controles de operador e gates de laboratório. Nenhuma venda, cobrança ou entrega comercial é liberada.
+- Testes HTTP e verificação no CI cobrem permissão do operador, isolamento entre compradores, idempotência, progressão, auditoria, bloqueio financeiro e presença da legenda. Validar o CI antes de declarar sucesso dos testes.
+
+**Limites remanescentes:** produção HTTPS com login robusto e RBAC, MFA, operações de tabuleiro/financeiro com aprovações, backups offsite reais e restauração, homologação de entrega/PSP, conformidade do modelo e análise jurídica independente. PR #1 segue DRAFT sem merge, deploy comercial, dinheiro real ou GO do Marco Zero.
+
+Detalhes em docs/ESCRITORIOS_INTEGRADOS_ADMIN_MISSOES_04NOV2026.md.
