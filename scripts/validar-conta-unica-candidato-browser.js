@@ -78,6 +78,16 @@ const {once}=require('node:events');
    await admin.locator('#criarMissao button').click();
    await admin.locator('#estado').filter({hasText:/Missão criada/}).waitFor();
    assert.ok(await admin.locator('#listaMissoes article.pedido').count()>0);
+   const novoProdutoId='curso-extra-'+item.nick.toLowerCase();
+   await admin.locator('#produtoIdAdmin').fill(novoProdutoId);
+   await admin.locator('#produtoNomeAdmin').fill('Curso adicional fictício '+item.nick);
+   await admin.locator('#produtoDescricaoAdmin').fill(
+    'Material digital de laboratório, sem compra ou pagamento real.');
+   await admin.locator('#produtoEstadoAdmin').selectOption('PUBLICADO');
+   await admin.locator('#produtoPrecoAdmin').fill('99.00');
+   await admin.locator('#formProduto button[type=submit]').click();
+   await admin.locator('#resultadoProdutoAdmin').filter({hasText:/Produto salvo/}).waitFor();
+   assert.match(await admin.locator('#listaProdutosAdmin').innerText(),/Curso adicional fictício/);
    await admin.screenshot({path:path.join(__dirname,'../artifacts',
     'escritorio-admin-candidato-'+item.nome+'.png'),fullPage:true});
    await page.locator('#atualizarPedidos').click();
@@ -91,6 +101,21 @@ const {once}=require('node:events');
    await page.reload({waitUntil:'networkidle'});
    await page.locator('#painelConta').waitFor({state:'visible'});
    assert.equal(await page.locator('#listaPedidos article.pedido').count(),1);
+   await page.locator('#abaPreparar').click();
+   await page.locator('#atualizarCatalogo').click();
+   await page.locator('#produtoDoCatalogo').selectOption('curso-extra-'+item.nick.toLowerCase());
+   await page.locator('#quantidadeDoCatalogo').fill('2');
+   await page.locator('#calcularCotacao').click();
+   await page.locator('#cotacao').filter({hasText:/R\$ 198,00/}).waitFor();
+   await page.locator('#prepararPedido').click();
+   await page.locator('#listaPedidos article.pedido').nth(1).waitFor();
+   assert.equal(await page.locator('#listaPedidos article.pedido').count(),2);
+   assert.match(await page.locator('#listaPedidos').innerText(),/R\$\s?198,00/);
+   await page.screenshot({path:path.join(__dirname,'../artifacts',
+    'cliente-catalogo-editavel-'+item.nome+'.png'),fullPage:true});
+   await page.reload({waitUntil:'networkidle'});
+   await page.locator('#listaPedidos article.pedido').nth(1).waitFor();
+   assert.equal(await page.locator('#listaPedidos article.pedido').count(),2);
    assert.deepEqual(failures,[]);
    console.log('LOOP_CANDIDATO_BROWSER_'+item.nome.toUpperCase()+
     '=CADASTRO_LOGIN_PEDIDO_ESCRITORIO_COMPARTILHADO_SEM_FINANCEIRO_REAL');
