@@ -20,6 +20,7 @@ const {once}=require('node:events');
  const {app}=criarAppLojaEscritorioCandidato({
   banco:db,repositorioCatalogo:catalogoFicticioCheckout(),
   chaveEmail:randomBytes(32),chaveCifra:randomBytes(32),
+  chaveCpfHmac:randomBytes(32),chaveCpfCifra:randomBytes(32),
   segredoOperador:'somente-teste-do-navegador-'+('x'.repeat(40)),
   termosVersao:'LAB-navegador-2026',
   termosTexto:'Prévia apenas para teste de acesso e pedido, sem pagamento ou posição real.'
@@ -53,6 +54,16 @@ const {once}=require('node:events');
    await page.locator('#senha').fill('SenhaFicticiaIsolada2026!');
    await page.locator('#formLogin button[type=submit]').click();
    await page.locator('#painelConta').waitFor({state:'visible'});
+   await page.locator('#painelIdentidadeTeste').waitFor({state:'visible'});
+   assert.match(await page.locator('#termosCpfTexto').innerText(),/LAB-navegador-2026/);
+   await page.locator('#cpfTeste').fill(
+    item.nome==='pc'?'529.982.247-25':'111.444.777-35');
+   await page.locator('#aceiteCpfTeste').check();
+   await page.locator('#formCpfTeste button[type=submit]').click();
+   await page.locator('#situacaoCpfTeste')
+    .filter({hasText:/CPF fictício registrado/}).waitFor();
+   assert.equal(await page.locator('#formCpfTeste').isHidden(),true);
+   assert.equal(await page.locator('#cpfTeste').inputValue(),'');
    await page.locator('#calcularCotacao').click();
    await page.locator('#mensagem').filter({hasText:/Cotação conferida/}).waitFor();
    await page.locator('#prepararPedido').click();
@@ -77,6 +88,11 @@ const {once}=require('node:events');
    assert.equal(await admin.locator('#filtrarDepartamento').inputValue(),'PEDIDOS');
    assert.equal(await admin.locator('#alertasOperacionais article.alerta-operacional').count(),0);
    assert.match(await admin.locator('#pedidos').innerText(),/hom-/);
+   await admin.locator('#pedidos')
+    .getByRole('button',{name:'Conferir pré-adesão'}).first().click();
+   await admin.locator('#preAdesaoStatus')
+    .filter({hasText:/Revisão pendente/}).waitFor();
+   assert.match(await admin.locator('#preAdesaoId').inputValue(),/^hom-/);
    await admin.locator('#titulo').fill('Revisar pedido do cliente');
    await admin.locator('#descricao').fill('Registrar o atendimento manual deste pré-pedido fictício.');
    await admin.locator('#pedido').selectOption({index:1});
