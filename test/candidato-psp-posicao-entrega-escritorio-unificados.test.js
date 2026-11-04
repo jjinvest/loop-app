@@ -34,7 +34,7 @@ async function criarContexto(t,{ativo=true}={}){
     externalReference:'LOOPLAB-'+ctx.prepedidoId};
   }
  };
- const {app,contas,intencoes,prePedidos,ponte,inbox,worker,posicoes,entregas}=
+ const {app,contas,intencoes,prePedidos,ponte,inbox,worker,posicoes,entregas,sinalizacaoVitrine}=
   criarAppLojaEscritorioCandidato({
    banco,repositorioCatalogo:catalogoFicticioCheckout(),
    chaveEmail:randomBytes(32),chaveCifra:randomBytes(32),
@@ -65,6 +65,9 @@ async function criarContexto(t,{ativo=true}={}){
   aceiteExplicito:true});
  const a=await contas.entrar({nick:'Ana',senha:SENHA});
  const b=await contas.entrar({nick:'Bia',senha:SENHA});
+ // Oferta VERDE é definida ANTES do pré-pedido: fica imutável na fotografia.
+ await sinalizacaoVitrine.atualizar('curso-homologacao-250',{
+  classificacao:'VERDE',quantidadeMinimaLoop:1,revisaoEsperada:0});
  const catalogo=catalogoFicticioCheckout();
  const entrada={itens:[{produtoId:'curso-homologacao-250',quantidade:1}]};
  const cotacao=await cotarCheckoutPublico({repositorio:catalogo,entrada});
@@ -74,7 +77,7 @@ async function criarContexto(t,{ativo=true}={}){
   rascunhoId:draft.intencao.pedidoId,repositorioCatalogo:catalogo});
  const prepedidoId=pedido.prepedido.prepedidoId;
  const ctx={banco,request,contas,intencoes,prePedidos,ponte,inbox,worker,
-  posicoes,entregas,prepedidoId,registro,a,b,provedor,pagamentoId,
+  posicoes,entregas,sinalizacaoVitrine,prepedidoId,registro,a,b,provedor,pagamentoId,
   getGets:()=>gets,setStatus:v=>{status=v;}};
  return ctx;
 }
@@ -154,6 +157,22 @@ test('uma conta -> PSP reconsultado -> 1 posicao e entrega ficticias -> Escritor
  assert.equal(hipotese.body.hipoteseFilaB[0].estado,'APENAS_PREVIA_FILA_B_AZUL');
  assert.equal(hipotese.body.habilitacaoMotorReal,false);
  assert.equal(hipotese.body.classificacaoHistoricaComprovada,false);
+ const foto=c.sinalizacaoVitrine.consultarFotografiaPrepedido({
+  prepedidoId:c.prepedidoId,titularId:c.registro.titularId});
+ assert.equal(foto.valorVerdeConsideradoCentavos,25000);
+ assert.equal(foto.podeSimularFilaBAzul,true);
+ assert.equal(foto.itens[0].classificacao,'VERDE');
+ await c.sinalizacaoVitrine.atualizar('curso-homologacao-250',{
+  classificacao:'CINZA',quantidadeMinimaLoop:1,revisaoEsperada:1});
+ const aindaHistorico=await c.request(root+'/projecao-filas',{admin:true});
+ assert.equal(aindaHistorico.body.pendentesConferidas,1,
+  'mudar a cor na vitrine não reescreve a classificação da compra anterior');
+ assert.equal(c.sinalizacaoVitrine.consultarFotografiaPrepedido({
+  prepedidoId:c.prepedidoId}).itens[0].classificacao,'VERDE');
+ assert.throws(()=>c.banco.prepare([
+  'UPDATE akitemm_vitrine_fotografia_classificacao_prepedido',
+  "SET fotografia_json='{}'"
+ ].join(' ')).run(),/fotografia historica imutavel/);
  assert.equal(hipotese.body.posicoesReaisCriadas,0);
  assert.equal(hipotese.body.filaRealAlterada,false);
  assert.equal(hipotese.body.tabuleiroRealAlterado,false);
