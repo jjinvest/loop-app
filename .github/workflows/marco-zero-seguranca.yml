@@ -38,6 +38,7 @@ jobs:
           node --test test/reconsultar-asaas-railway-psp-staging.test.js
           node --test test/projetar-posicao-railway-staging.test.js
           node --test test/loja-escritorio-conta-unica-candidata.test.js
+          node --test test/missoes-operacionais-candidato.test.js
           node --test test/verificacao-email-conta-unica-candidata.test.js
           node --test test/transporte-email-resend-candidato.test.js
           node --test test/entregas-prepedidos-asaas-sandbox-staging.test.js
@@ -77,6 +78,8 @@ jobs:
               '/staging/identidade-candidata',
               '/staging/contas/cadastrar','/staging/contas/entrar',
               '/staging/contas/identidade','/staging/escritorio-unificado',
+              '/staging/escritorio-admin','/staging/escritorio-unificado/missoes',
+              '/staging/meus-comunicados',
               '/staging/contas/email/enviar','/staging/contas/email/confirmar'
             ]){
              const r=await fetch(base+endpoint);
