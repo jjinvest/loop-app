@@ -9,6 +9,8 @@ const {pipeline}=require('node:stream/promises');
 const {createHash,randomBytes,scryptSync,createCipheriv,createDecipheriv}=
  require('node:crypto');
 const {DatabaseSync}=require('node:sqlite');
+const {auditarRelacoesPspCandidato}=
+ require('../src/domain/auditoria-relacional-psp-candidato-sqlite');
 const MAGIC=Buffer.from('LOOPBKP1','ascii');
 const HEADER_SIZE=36;
 const TAG_SIZE=16;
@@ -119,6 +121,14 @@ function validarBanco(arquivo){
   if(banco.prepare('PRAGMA foreign_key_check').all().length)
    throw falha('SQLITE_REFERENCIAS_INVALIDAS');
   const contaUnicaValidada=validarTitularCandidato(banco,tabelas);
+  // A consistencia do titular nao basta: uma entrega/posicao ficticia
+  // vinculada a PSP ou evento errado invalida a recuperacao segura.
+  // Checkout legado sem conta unica continua aceito no ensaio antigo.
+  if(contaUnicaValidada){
+   const psp=auditarRelacoesPspCandidato({banco});
+   if(psp.totalInconsistencias!==0)
+    throw falha('BACKUP_CANDIDATO_RELACOES_PSP_DIVERGENTES');
+  }
   return {tabelas:tabelas.size,integro:true,contaUnicaValidada};
  }finally{banco.close();}
 }
