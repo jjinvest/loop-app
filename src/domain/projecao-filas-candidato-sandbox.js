@@ -10,14 +10,18 @@ const MAX_LEITURA=1000;
 const TITULAR=/^[A-Za-z0-9_-]{6,80}$/;
 function erro(codigo){const e=new Error(codigo);e.codigo=codigo;throw e;}
 class ProjecaoFilasCandidatoSandbox{
- constructor({banco,posicoes}={}){
+ constructor({banco,posicoes,sinalizacao=null}={}){
   if(process.env.NODE_ENV==='production')erro('PROJECAO_FILAS_PROIBIDA_PRODUCAO');
   if(typeof banco?.prepare!=='function'||typeof banco?.exec!=='function')
    erro('BANCO_SQLITE_OBRIGATORIO');
   if(posicoes!==null&&posicoes!==undefined&&
      (posicoes.banco!==banco||typeof posicoes.consultar!=='function'))
    erro('PONTE_SANDBOX_INCOMPATIVEL');
-  this.banco=banco;this.posicoes=posicoes||null;
+  if(posicoes&&
+    (sinalizacao?.db!==banco||
+     typeof sinalizacao?.consultarFotografiaPrepedido!=='function'))
+   erro('FOTOGRAFIA_HISTORICA_OBRIGATORIA');
+  this.banco=banco;this.posicoes=posicoes||null;this.sinalizacao=sinalizacao;
  }
  consultar({titularId=null}={}){
   if(process.env.NODE_ENV==='production')erro('PROJECAO_FILAS_PROIBIDA_PRODUCAO');
@@ -51,7 +55,7 @@ class ProjecaoFilasCandidatoSandbox{
   ].join(' ')).all();
   const motor=new MotorFilas({relogio:()=>'2026-11-04T00:00:00.000Z'});
   const contagem=new Map(),pendencias=[];
-  let emRevisao=0,acima=0,naHipotese=0;
+  let emRevisao=0,acima=0,naHipotese=0,semFoto=0,semOferta=0;
   for(const linha of linhas){
    // Exige identidade, valor integral e GET PSP independentemente conferido.
    // Nunca toma um webhook bruto como evidência.
@@ -66,9 +70,14 @@ class ProjecaoFilasCandidatoSandbox{
     registro.conferenciaPSPConcluida===true&&
     registro.exigeRevisaoManual!==true&&
     pendente?.estado==='PENDENTE_DE_CONFIRMACAO_CLIENTE_SANDBOX');
+   const foto=this.sinalizacao.consultarFotografiaPrepedido({
+    prepedidoId:linha.prepedidoId,titularId:linha.titularId});
    let estado,ordemHipotetica=null;
    if(!valido){estado='EXIGE_REVISAO_PSP';emRevisao++;}
-   else{
+   else if(!foto){estado='SEM_FOTOGRAFIA_HISTORICA';semFoto++;}
+   else if(foto.totalCentavos!==25000||!foto.podeSimularFilaBAzul){
+    estado='OFERTA_HISTORICA_NAO_QUALIFICADA';semOferta++;
+   }else{
     const contador=contagem.get(linha.titularId)||0;
     if(contador>=LIMITE_POSICOES_ATIVAS){
      estado='ACIMA_DEZ_APENAS_PARA_PLANEJAMENTO';acima++;
@@ -89,7 +98,7 @@ class ProjecaoFilasCandidatoSandbox{
      id:linha.id,prepedidoId:linha.prepedidoId,
      ...(titularId===null?{titularId:linha.titularId}:{}),
      estado,ordemHipotetica,cpfETermosHomologados:false,
-     historicoDaClassificacaoComprovado:false
+     historicoDaClassificacaoComprovado:Boolean(foto)
     });
   }
   if(titularId!==null){
@@ -106,11 +115,12 @@ class ProjecaoFilasCandidatoSandbox{
   return {...padrao,estado:'SOMENTE_CENARIO_NAO_ATIVADO',
    totalHistorico:n,pendentesConferidas:naHipotese,
    pendentesExigemRevisao:emRevisao,pendentesAcimaCapacidade:acima,
+   pendentesSemFotografia:semFoto,pendentesSemOfertaQualificada:semOferta,
    quantidadeSimuladaFilaA:resumo.A.quantidade,
    quantidadeSimuladaFilaB:resumo.B.quantidade,
    hipoteseFilaB:pendencias,prontasParaMotorReal:0,
    movimentoCatracaExecutado:false,
-   motivo:'Cenário hipotético montado em memória. Sem snapshot histórico verde, CPF/termos homologados nem lançamento real.'};
+   motivo:'Cenário hipotético montado em memória com conferência da classificação histórica. Ainda sem CPF/termos homologados, lançamento real ou giro.'};
  }
 }
 module.exports={ProjecaoFilasCandidatoSandbox,MAX_LEITURA};

@@ -97,7 +97,6 @@ function criarAppLojaEscritorioCandidato({banco,repositorioCatalogo,
   new ReconsultaWebhookPrepedidoAsaasStaging({banco,inbox,ponte});
  const posicoes=worker===null?null:
   new PosicoesPendentesCheckoutSandboxStaging({banco,ponte});
- const projecaoFilas=new ProjecaoFilasCandidatoSandbox({banco,posicoes});
  const app=express();
  app.disable('x-powered-by');app.disable('etag');app.set('trust proxy',false);
  app.use((req,res,next)=>{
@@ -356,6 +355,7 @@ function criarAppLojaEscritorioCandidato({banco,repositorioCatalogo,
   catch(e){return res.status(503).json({erro:e.codigo||'PROJECAO_INDISPONIVEL'});}
  });
  const sinalizacaoVitrine=createVitrineCandidata({app,banco,catalogo,contas,intencoes,prePedidos,autorizarOperador});
+ const projecaoFilas=new ProjecaoFilasCandidatoSandbox({banco,posicoes,sinalizacao:sinalizacaoVitrine});
  // O catálogo do cliente usa EXATAMENTE a mesma fonte da cotação.
  app.get('/staging/catalogo',async(_req,res)=>{
   try{return res.json(await catalogo.publicos());}
