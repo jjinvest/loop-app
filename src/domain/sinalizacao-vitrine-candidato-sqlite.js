@@ -43,7 +43,16 @@ class SinalizacaoVitrineCandidatoSQLite{
    "BEGIN SELECT RAISE(ABORT,'historico vitrine imutavel'); END;",
    'CREATE TRIGGER IF NOT EXISTS vitrine_sinal_hist_no_delete',
    'BEFORE DELETE ON akitemm_vitrine_sinalizacao_historico_staging',
-   "BEGIN SELECT RAISE(ABORT,'historico vitrine imutavel'); END;"
+   "BEGIN SELECT RAISE(ABORT,'historico vitrine imutavel'); END;",
+   'CREATE TABLE IF NOT EXISTS akitemm_vitrine_fotografia_classificacao_prepedido(',
+   'prepedido_id TEXT PRIMARY KEY REFERENCES akitemm_checkout_prepedidos_staging(prepedido_id)',
+   'ON DELETE RESTRICT,titular_id TEXT NOT NULL,fotografia_json TEXT NOT NULL);',
+   'CREATE TRIGGER IF NOT EXISTS akitemm_foto_class_no_update BEFORE UPDATE',
+   'ON akitemm_vitrine_fotografia_classificacao_prepedido',
+   "BEGIN SELECT RAISE(ABORT,'fotografia historica imutavel'); END;",
+   'CREATE TRIGGER IF NOT EXISTS akitemm_foto_class_no_delete BEFORE DELETE',
+   'ON akitemm_vitrine_fotografia_classificacao_prepedido',
+   "BEGIN SELECT RAISE(ABORT,'fotografia historica imutavel'); END;"
   ].join(' '));
  }
  consultar(id){
@@ -101,6 +110,55 @@ class SinalizacaoVitrineCandidatoSQLite{
    'WHERE produto_id=? ORDER BY revisao DESC LIMIT 100'
   ].join(' ')).all(id).map(r=>({revisao:r.revisao,criadoEm:r.criadoEm,
    antes:JSON.parse(r.antesJson),depois:JSON.parse(r.depoisJson)}));
+ }
+ gravarFotografiaPrepedido({prepedidoId,titularId,itens,totalCentavos,criadoEm}={}){
+  if(process.env.NODE_ENV==='production')fail('FOTOGRAFIA_NAO_HOMOLOGADA');
+  if(typeof prepedidoId!=='string'||!/^hom-[a-f0-9-]{36}$/.test(prepedidoId)||
+     typeof titularId!=='string'||!/^[A-Za-z0-9_-]{6,80}$/.test(titularId)||
+     !Number.isSafeInteger(totalCentavos)||totalCentavos<=0||
+     !Array.isArray(itens)||itens.length===0||itens.length>20||
+     typeof criadoEm!=='string'||!Number.isFinite(Date.parse(criadoEm)))
+   fail('FOTOGRAFIA_INVALIDA');
+  let total=0,verde=0,evento=false;
+  const fotografiaItens=[];
+  for(const p of itens){
+   if(!p||typeof p.produtoId!=='string'||!ID.test(p.produtoId)||
+      !Number.isSafeInteger(p.quantidade)||p.quantidade<1||p.quantidade>50||
+      !Number.isSafeInteger(p.precoUnitarioCentavos)||p.precoUnitarioCentavos<=0||
+      !Number.isSafeInteger(p.subtotalCentavos)||
+      p.subtotalCentavos!==p.quantidade*p.precoUnitarioCentavos)
+    fail('FOTOGRAFIA_ITEM_INVALIDO');
+   const s=this.consultar(p.produtoId);
+   const apto=s.classificacao==='VERDE'&&p.quantidade>=s.quantidadeMinimaLoop;
+   total+=p.subtotalCentavos;
+   if(apto)verde+=p.subtotalCentavos;
+   if(s.classificacao==='EVENTO')evento=true;
+   fotografiaItens.push({produtoId:p.produtoId,quantidade:p.quantidade,
+    precoUnitarioCentavos:p.precoUnitarioCentavos,
+    subtotalCentavos:p.subtotalCentavos,classificacao:s.classificacao,
+    minimo:s.quantidadeMinimaLoop,revisao:s.revisao,verdeApto:apto});
+  }
+  if(total!==totalCentavos)fail('FOTOGRAFIA_TOTAL_DIVERGENTE');
+  const snap={prepedidoId,titularId,criadoEm,totalCentavos,
+   valorVerdeConsideradoCentavos:verde,referenciaVerdeAtingida:verde>=25000,
+   eventoPendente:evento,podeSimularFilaBAzul:verde>=25000&&!evento,
+   itens:fotografiaItens,somenteLaboratorio:true,direitosCriados:0};
+  this.db.prepare([
+   'INSERT INTO akitemm_vitrine_fotografia_classificacao_prepedido',
+   '(prepedido_id,titular_id,fotografia_json) VALUES(?,?,?)'
+  ].join(' ')).run(prepedidoId,titularId,JSON.stringify(snap));
+  return snap;
+ }
+ consultarFotografiaPrepedido({prepedidoId,titularId=null}={}){
+  if(typeof prepedidoId!=='string'||!/^hom-[a-f0-9-]{36}$/.test(prepedidoId))
+   fail('PREPEDIDO_INVALIDO');
+  if(titularId!==null&&(typeof titularId!=='string'||
+     !/^[A-Za-z0-9_-]{6,80}$/.test(titularId)))fail('TITULAR_INVALIDO');
+  const row=this.db.prepare([
+   'SELECT fotografia_json FROM akitemm_vitrine_fotografia_classificacao_prepedido',
+   'WHERE prepedido_id=?',...(titularId!==null?['AND titular_id=?']:[])
+  ].join(' ')).get(...(titularId===null?[prepedidoId]:[prepedidoId,titularId]));
+  return row?JSON.parse(row.fotografia_json):null;
  }
  decorar(p){
   const s=this.consultar(p.id);
