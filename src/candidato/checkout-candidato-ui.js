@@ -100,6 +100,23 @@ async function atualizarPedidos(){
    ' · Hipótese na Fila B: '+(previa.meusSimuladosNaFilaB||0)+
    ' · Posições reais: 0. '+previa.motivo;
   resumo.append(info);
+  const pre=await requisitar('/minhas-pre-adesoes');
+  const historico=$('minhasPreAdesoes');historico.replaceChildren();
+  if(!pre.registros.length){
+   const aviso=document.createElement('p');
+   aviso.textContent='Nenhuma pré-adesão fictícia registrada.';
+   historico.append(aviso);
+  }
+  for(const registro of pre.registros){
+   const artigo=document.createElement('article');artigo.className='pedido';
+   const nome=document.createElement('strong'),descricao=document.createElement('p');
+   nome.textContent=registro.prepedidoId;
+   descricao.textContent='Pré-adesão de laboratório: '+registro.estado+
+    '. Posições reais: 0. '+(registro.motivos.length?
+     'Exige revisão: '+registro.motivos.join(', '):'Nenhuma revisão de ensaio pendente.');
+   artigo.append(nome,descricao);historico.append(artigo);
+  }
+
   const recados=await requisitar('/meus-comunicados');
   const area=$('comunicadosCliente');area.replaceChildren();
   if(!recados.comunicados.length){
@@ -228,7 +245,7 @@ async function preparar(){
 async function sair(){
  try{await requisitar('/contas/sair',{method:'POST',mutacao:true});}
  catch(e){dizer('Falha ao encerrar: '+e.message);return;}
- mostrarSessao(false);$('listaPedidos').replaceChildren();$('comunicadosCliente').replaceChildren();$('minhaPreviaFilas').replaceChildren();
+ mostrarSessao(false);$('listaPedidos').replaceChildren();$('comunicadosCliente').replaceChildren();$('minhaPreviaFilas').replaceChildren();$('minhasPreAdesoes').replaceChildren();
  dizer('Sessão de homologação encerrada.');
 }
 async function restaurarSessao(){
