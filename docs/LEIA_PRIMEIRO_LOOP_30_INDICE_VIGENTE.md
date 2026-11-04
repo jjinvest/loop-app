@@ -1,3 +1,5 @@
+> **SEÇÃO 199 — 04/11/2026:** pré-adesão **fictícia e persistida** em SQLite, exigindo conciliação PSP Sandbox, fotografia histórica VERDE, CPF/termos de laboratório, controle de operador e proteção contra duplicação. Admin ganhou campos para conferir e registrar; Cliente vê somente seus checkpoints; Fila B aponta pré-adesão sem ativar posições reais. Backup/reabertura, reversão e segurança testados. [Documento técnico](./PRE_ADESAO_FICTICIA_SQLITE_MARCO_ZERO_04NOV2026.md). PR #1 DRAFT; Marco Zero bloqueado.
+
 > **SEÇÃO 198 — 04/11/2026:** ponte de **Asaas Sandbox reconsultado → posição pendente fictícia → prévia hipotética da Fila B**, limitada a 10 por titular; foto imutável das cores e preços no pré-pedido impede alteração retroativa de elegibilidade. Sem foto, com evento/cinza ou pagamento revertido, não entra na hipótese. Cliente vê somente seus registros, Admin vê bloqueios. Não ativa motor real, giros ou pagamentos. [Documento](./PROJECAO_FILA_B_FOTOGRAFIA_OFERTA_CANDIDATO_04NOV2026.md). PR #1 DRAFT.
 
 
