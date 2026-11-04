@@ -14,17 +14,18 @@ const BLOQUEIOS_FINAIS=Object.freeze([
 ]);
 function erro(codigo){const e=new Error(codigo);e.codigo=codigo;throw e;}
 class DiagnosticoAtivacaoCandidato{
- constructor({banco,preAdesao,cpf=null,provedorIdentidade=null}={}){
+ constructor({banco,preAdesao,cpf=null,contas=null,provedorIdentidade=null}={}){
   if(process.env.NODE_ENV==='production')erro('DIAGNOSTICO_NAO_HOMOLOGADO');
   if(typeof banco?.prepare!=='function'||
     preAdesao?.db!==banco||typeof preAdesao?.avaliar!=='function'||
-    (cpf!==null&&(cpf?.banco!==banco||typeof cpf.consultar!=='function')))
+    (cpf!==null&&(cpf?.banco!==banco||typeof cpf.consultar!=='function'))||
+    (contas!==null&&(contas?.banco!==banco||typeof contas.perfil!=='function')))
    erro('FONTES_DIAGNOSTICO_INCOMPATIVEIS');
   if(provedorIdentidade!==null&&(
     provedorIdentidade?.ambiente!=='VERIFICACAO_IDENTIDADE_SANDBOX'||
     typeof provedorIdentidade?.consultarStatus!=='function'))
    erro('PROVEDOR_IDENTIDADE_NAO_HOMOLOGADO');
-  this.banco=banco;this.preAdesao=preAdesao;this.cpf=cpf;
+  this.banco=banco;this.preAdesao=preAdesao;this.cpf=cpf;this.contas=contas;
   this.provedorIdentidade=provedorIdentidade;
  }
  avaliar({prepedidoId,titularId=null}={}){
@@ -37,11 +38,21 @@ class DiagnosticoAtivacaoCandidato{
   // Defesa em profundidade: nunca aceitar um diagnóstico para pedido/titular
   // distinto do consultado, mesmo que uma futura fonte SQLite falhe no filtro.
   if(pre.prepedidoId!==prepedidoId||
+    typeof pre.titularId!=='string'||!TITULAR.test(pre.titularId)||
     (titularId!==null&&pre.titularId!==titularId)||
     !Array.isArray(pre.motivos)||
     pre.motivos.some(m=>typeof m!=='string'||!m||m.length>128))
    erro('FONTE_DIAGNOSTICO_INCONSISTENTE');
+  // Usa a MESMA conta persistida do checkout e do Escritório; nunca
+  // considera "email enviado" equivalente a posse efetivamente provada.
+  const perfil=this.contas?this.contas.perfil(pre.titularId):null;
+  if(this.contas&&(!perfil||perfil.titularId!==pre.titularId||
+    typeof perfil.emailVerificado!=='boolean'))
+   erro('FONTE_DIAGNOSTICO_INCONSISTENTE');
+  const emailConfirmado=perfil?.emailVerificado===true;
   const bloqueios=new Set(pre.motivos);
+  if(this.contas&&!emailConfirmado)
+   bloqueios.add('EMAIL_DA_CONTA_NAO_VERIFICADO');
   if(!pre.ensaioRegistrado)bloqueios.add('PRE_ADESAO_AINDA_NAO_PERSISTIDA');
   else if(pre.estado!=='PRE_ADESAO_FICTICIA_PERSISTIDA')
    bloqueios.add('PRE_ADESAO_HISTORICA_EXIGE_REVISAO');
@@ -56,6 +67,8 @@ class DiagnosticoAtivacaoCandidato{
    estado:'BLOQUEADA_PARA_ATIVACAO_DEFINITIVA',
    resumo:{
     preAdesaoDeEnsaioPersistida:pre.ensaioRegistrado,
+    emailDaContaVerificadoNoEnsaio:emailConfirmado,
+    emailDaContaConferidoNoSQLite:Boolean(this.contas),
     preAdesaoDeEnsaioSemRevisao:confirmadoEnsaio,
     cpfFicticioDeclarado:pre.cpfDeclaradoNoEnsaio===true,
     termosEnsaioConferidos:pre.cpfDeclaradoNoEnsaio===true&&

@@ -365,7 +365,7 @@ function criarAppLojaEscritorioCandidato({banco,repositorioCatalogo,
  const preAdesao=new PreAdesaoSandboxCandidatoSQLite({
   banco,posicoes,sinalizacao:sinalizacaoVitrine,cpf,termosVersao
  });
- const diagnosticoAtivacao=new DiagnosticoAtivacaoCandidato({banco,preAdesao,cpf});
+ const diagnosticoAtivacao=new DiagnosticoAtivacaoCandidato({banco,preAdesao,cpf,contas});
  const projecaoFilas=new ProjecaoFilasCandidatoSandbox({
   banco,posicoes,sinalizacao:sinalizacaoVitrine,preAdesao
  });
