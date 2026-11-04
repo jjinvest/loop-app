@@ -157,7 +157,7 @@ const {once}=require('node:events');
     JSON.stringify(classes));
    assert.ok(await loja.locator('#catalogoLojaLoop article.produto-loja-loop-nao-elegivel').count()>=1);
    await loja.locator('#catalogoLojaLoop article.produto-loja-loop')
-    .filter({hasText:'Curso adicional fictício'})
+    .filter({hasText:'Curso adicional fictício '+item.nick})
     .locator('button.akitemm-adicionar').click();
    assert.equal(await loja.locator('#akitemmTotalItens').innerText(),'1');
    await loja.locator('#registrarPedidoLoja').click();
