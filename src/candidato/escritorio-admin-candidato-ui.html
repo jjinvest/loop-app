@@ -57,6 +57,17 @@
 <button type="submit" class="primario">Salvar cor da vitrine</button>
 </form>
 <p id="resultadoSinalizacaoAdmin" class="subtexto" role="status"></p>
+<h3>Simular a qualificação da compra</h3>
+<p class="subtexto">Verifica apenas cor verde, quantidade mínima e referência de R$ 250 no carrinho. Não confirma pagamento ou CPF, não cria posição e não libera evento especial.</p>
+<form id="formSimularQualificacao">
+<label for="produtoSimulado">Produto</label>
+<input id="produtoSimulado" readonly required placeholder="Selecione Cor na loja no produto acima">
+<label for="quantidadeSimulada">Quantidade para simulação</label>
+<input id="quantidadeSimulada" type="number" min="1" max="50" value="1" step="1" required>
+<button type="submit">Simular sem executar</button>
+</form>
+<p id="resultadoSimulacao" role="status" class="subtexto" aria-live="polite"></p>
+
 
 </section>
 <section class="painel"><h2>Pedidos no Escritório</h2><div id="pedidos"></div></section>
