@@ -24,3 +24,11 @@ Data: 04/11/2026. Escopo: **homologação LOCAL somente**, PR #1 DRAFT. Não foi
 ## Evidências e pendências
 Foram configurados testes de integração (autenticação, sessão, catálogo, classificação, histórico, idempotência, ausência de pagamento real, separação entre clientes, snapshots imutáveis) e navegador com capturas PC/celular da vitrine, cliente e administrador. **Consultar a execução do CI do SHA efetivamente modificado antes de declarar sucesso**.
 Pendentes para o Marco Zero: integração única com o motor comercial de ofertas, habilitação de pagamento com Asaas homologado, controle de posições e saques, transições de filas/catraca com limites, segurança e recuperação de infraestrutura, validações externas e análise jurídica independente.
+
+
+**Evidências finais da seção 196, 04/11/2026:**
+- [Segurança, integração e bloqueio financeiro — SUCCESS](https://github.com/jjinvest/loop-app/actions/runs/41811514601).
+- [Navegador real PC + celular, loja visual aprovada, cores, produtos administrados e pré-pedidos sincronizados ao Escritório do Cliente — SUCCESS](https://github.com/jjinvest/loop-app/actions/runs/41811862493).
+- [Artefatos das capturas reais PC/celular (vitrine, cliente e administrador)](https://github.com/jjinvest/loop-app/actions/runs/41811862493/artifacts/13311999734).
+- Evidência do fluxo em banco SQLite e do teste automatizado: sucesso, sem falhas.
+- Prova permanece **somente de homologação local**, NÃO representa GO do Marco Zero, deploy comercial ou movimentação financeira real.
