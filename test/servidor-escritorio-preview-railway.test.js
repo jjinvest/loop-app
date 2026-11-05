@@ -70,6 +70,16 @@ test('gateway exige acesso antes de HTML e rotas administrativas',async t=>{
  const dados=await administrativo.json();
  assert.equal(dados.administracaoRealNaoHabilitada,true);
  assert.equal(dados.escritorioFonteUnica,true);
+ const statusPSP=await x.consultar('/staging/escritorio-unificado/sandbox-pix/estado');
+ assert.equal(statusPSP.status,200);
+ const psp=await statusPSP.json();
+ assert.equal(psp.status,'AGUARDANDO_CREDENCIAIS_SANDBOX_NA_PREVIA');
+ assert.equal(psp.usaSQLiteDaLoja,true);
+ assert.equal(psp.consultarPSPDisponivel,false);
+ assert.equal((await fetch(x.base+'/webhooks/asaas-sandbox-unificado',{
+  method:'POST',headers:{'Content-Type':'application/json'},
+  body:'{}'
+ })).status,404);
  assert.equal((await x.consultar('/api/checkout/finalizar')).status,404);
  assert.equal((await x.consultar('/')).status,302);
  assert.equal((await x.consultar('/minha-conta')).status,200);
