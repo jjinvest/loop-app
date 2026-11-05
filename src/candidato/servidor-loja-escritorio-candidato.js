@@ -37,6 +37,7 @@ const {PreAdesaoSandboxCandidatoSQLite}=require('../domain/pre-adesao-sandbox-ca
 const {DiagnosticoAtivacaoCandidato}=require('../domain/diagnostico-ativacao-candidato');
 const {EquipeCandidataSQLite}=require('../domain/equipe-candidata-sqlite');
 const {MotorContaUnicaEnsaioSQLite}=require('../domain/motor-conta-unica-ensaio-sqlite');
+const {auditarCarteiraDePedidosAkitemmLab}=require('../domain/auditoria-cobertura-lotes-akitemm');
 const {criarRouterRascunhosCheckoutStaging}=require('../routes/rascunhos-checkout-staging');
 const {criarRouterPrePedidosCheckoutStaging}=require('../routes/prepedidos-checkout-staging');
 const {criarAutorizacao,localSeguro}=require('../routes/admin-catalogo-laboratorio');
@@ -475,6 +476,22 @@ function criarAppLojaEscritorioCandidato({banco,repositorioCatalogo,
     codigo==='ACEITE_POSICAO_DADOS_INVALIDOS'?400:409).json({erro:codigo});
   }
  });
+ // Evidencia objetiva de cobertura BRUTA por lote, sem jamais declarar
+ // custos como conferidos ou dinheiro de Sandbox como banco liquidado.
+ app.get('/staging/escritorio-unificado/auditoria-cobertura',
+  autorizarOperador,(req,res)=>{
+   if(Object.keys(req.query).some(k=>k!=='limite'))
+    return res.status(400).json({erro:'FILTRO_AUDITORIA_INVALIDO'});
+   const limite=req.query.limite===undefined?50:Number(req.query.limite);
+   try{
+    return res.json(auditarCarteiraDePedidosAkitemmLab({
+     banco,sinalizacao:sinalizacaoVitrine,limite
+    }));
+   }catch(e){
+    return res.status(e.codigo==='LIMITE_AUDITORIA_INVALIDO'?400:503)
+     .json({erro:e.codigo||'AUDITORIA_INDISPONIVEL'});
+   }
+  });
  app.get('/staging/escritorio-unificado/motor/estado',autorizarOperador,(_req,res)=>{
   try{return res.json(motorConta.consultar());}
   catch(e){return res.status(503).json({erro:e.codigo||'MOTOR_ENSAIO_INDISPONIVEL'});}
