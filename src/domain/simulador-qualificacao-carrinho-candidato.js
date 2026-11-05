@@ -26,10 +26,10 @@ async function simularQualificacaoCandidato({entrada,catalogo,sinalizacao}={}){
   total+=subtotal;
   let situacao;
   if(s.classificacao==='CINZA')situacao='COMPRA_COMUM_NAO_CONTA';
-  else if(s.classificacao==='EVENTO'){
+  else if(s.classificacao==='ROXO'){
    eventoPendente=true;situacao='EVENTO_EXIGE_REGRAS_E_APROVACAO';
-  }else if(s.classificacao==='VERDE'){
-   if(quantidade<s.quantidadeMinimaLoop){
+  }else if(s.classificacao==='VERDE'||s.classificacao==='DOURADO'){
+   if(quantidade<s.quantidadeMinimaLoop||(s.classificacao==='DOURADO'&&p.precoCentavos<REFERENCIA_CENTAVOS)){
     limiarPendente=true;situacao='QUANTIDADE_MINIMA_NAO_ATINGIDA';
    }else{
     valorVerde+=subtotal;quantidadeProdutosVerdes++;
@@ -51,12 +51,12 @@ async function simularQualificacaoCandidato({entrada,catalogo,sinalizacao}={}){
   quantidadeProdutosVerdes?'VALOR_VERDE_INSUFICIENTE':
   'SEM_PRODUTO_VERDE_APTO';
  const mensagem=referenciaAtingida?
-  'O carrinho atinge a referência com produtos verdes em simulação. Nenhuma posição foi criada. Ainda seriam necessárias compra confirmada, CPF, termos e todas as demais verificações.':
+  'O carrinho atinge a referência com produtos elegíveis em simulação. Nenhuma posição foi criada. Ainda seriam necessárias compra confirmada, CPF, termos e todas as demais verificações.':
   eventoPendente?
    'Produtos de evento não entram na qualificação comum. O administrador ainda deve homologar regras, quantidade de posições e autorizações do evento.':
   limiarPendente?
-   'Há produto verde abaixo da quantidade mínima configurada. Só a quantidade qualificada poderá ser considerada.':
-  'A compra ainda não atinge a referência de R$ 250 em produtos verdes qualificados neste pedido.';
+   'Há produto elegível abaixo da quantidade mínima ou dourado com valor insuficiente. Só a quantidade qualificada poderá ser considerada.':
+  'A compra ainda não atinge a referência de R$ 250 em produtos elegíveis neste pedido.';
  return {modo:'SIMULACAO_QUALIFICACAO_SEM_DIREITOS',status,
   referenciaLoopCentavos:REFERENCIA_CENTAVOS,
   totalPedidoCentavos:total,valorVerdeConsideradoCentavos:valorVerde,
