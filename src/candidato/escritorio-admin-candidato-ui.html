@@ -75,6 +75,21 @@
 
 </section>
 <section class="painel"><h2>Pedidos no Escritório</h2><div id="pedidos"></div></section>
+<section class="painel" aria-labelledby="tituloPixUnificado">
+<h2 id="tituloPixUnificado">Asaas Sandbox · loja e motor no mesmo banco</h2>
+<p class="subtexto">Exclusivo de homologação. Credenciais Sandbox específicas deste serviço são necessárias; o receptor antigo permanece isolado.</p>
+<button type="button" id="consultarPixUnificado">Conferir ligação do Sandbox</button>
+<p id="estadoPixUnificado" role="status" aria-live="polite">Integração ainda não conferida.</p>
+<form id="formPixUnificado">
+<label for="pixUnificadoPedido">Pré-pedido qualificado</label>
+<input id="pixUnificadoPedido" placeholder="hom-..." pattern="hom-[a-f0-9-]{36}" required>
+<label for="pixUnificadoCliente">Cliente de teste no Asaas Sandbox</label>
+<input id="pixUnificadoCliente" placeholder="cus_..." pattern="cus_[A-Za-z0-9_-]{5,80}" required>
+<label><input type="checkbox" id="pixUnificadoCiencia" required>
+ Operação exclusivamente de teste, sem pagamento comercial.</label>
+<button type="submit" id="pixUnificadoEnviar" disabled>Preparar Pix Sandbox</button>
+</form>
+</section>
 <section class="painel" aria-labelledby="tituloAuditoriaCobertura">
  <div class="linha"><h2 id="tituloAuditoriaCobertura">Cobertura financeira das compras · ensaio</h2>
  <button type="button" id="consultarCoberturaAkitemm">Conferir referência e custos</button></div>
