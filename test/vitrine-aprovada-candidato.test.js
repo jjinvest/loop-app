@@ -54,7 +54,7 @@ test('vitrine aprovada usa mesmo catálogo SQLite e Meus Pedidos, sem financeiro
  assert.ok(!html.body.includes('src="/laboratorio/loja.js"'));
  const s=await get('/staging/assets/loja-aprovada.js');
  assert.equal(s.status,200);assert.doesNotThrow(()=>new Function(s.body));
- assert.ok(s.body.includes("p.classeVisual==='EVENTO'"));
+ assert.ok(s.body.includes("especial=classe==='ROXO'"));
  assert.ok(s.body.includes("X-Checkout-Csrf"));
  assert.ok(s.body.includes("fetch('/staging/vitrine/'+caminho"));
  const catalog='/staging/vitrine/loja/catalogo';
@@ -88,10 +88,14 @@ test('vitrine aprovada usa mesmo catálogo SQLite e Meus Pedidos, sem financeiro
   classificacao:'EVENTO',quantidadeMinimaLoop:1,revisaoEsperada:1}});
  assert.equal(evento.status,200);
  const eventoLoja=await json(catalog,{cookie:ana.cookie});
- assert.equal(eventoLoja.json.produtos[0].classeVisual,'EVENTO');
+ assert.equal(eventoLoja.json.produtos[0].classeVisual,'ROXO');
  assert.equal(eventoLoja.json.produtos[0].eventoId,null);
  assert.equal(eventoLoja.json.produtos[0].posicoesPorPedidoLoop,0);
  assert.equal((await json(admin+'/historico',{admin:true})).json.historico.length,2);
+ assert.equal(db.prepare('SELECT classificacao FROM akitemm_vitrine_sinalizacao_staging WHERE produto_id=?')
+  .get('curso-homologacao-250').classificacao,'EVENTO');
+ assert.equal(db.prepare('SELECT classificacao FROM akitemm_vitrine_cores_v2_staging WHERE produto_id=?')
+  .get('curso-homologacao-250').classificacao,'ROXO');
  assert.equal((await json('/staging/vitrine/minha-conta',{cookie:ana.cookie})).json.csrf,ana.csrf);
  const rota='/staging/vitrine/loja/pedidos';
  const pedido={itens:[{produtoId:'curso-homologacao-250',quantidade:2}]};
@@ -108,7 +112,7 @@ test('vitrine aprovada usa mesmo catálogo SQLite e Meus Pedidos, sem financeiro
  assert.equal(fotoHistorica.totalCentavos,50000);
  assert.equal(fotoHistorica.eventoPendente,true);
  assert.equal(fotoHistorica.podeSimularFilaBAzul,false);
- assert.equal(fotoHistorica.itens[0].classificacao,'EVENTO');
+ assert.equal(fotoHistorica.itens[0].classificacao,'ROXO');
  const duplicado=await json(rota,options);
  assert.equal(duplicado.status,200);
  assert.equal(duplicado.json.pedido.pedidoId,primeiro.json.pedido.pedidoId);
@@ -129,6 +133,12 @@ test('vitrine aprovada usa mesmo catálogo SQLite e Meus Pedidos, sem financeiro
  assert.equal(atualizar.status,200);
  const novaLoja=await json(catalog,{cookie:ana.cookie});
  assert.equal(novaLoja.json.produtos[0].precoCentavos,30000);
+ const dourado=await json(admin,{method:'PATCH',admin:true,body:{
+  classificacao:'DOURADO',quantidadeMinimaLoop:1,revisaoEsperada:2}});
+ assert.equal(dourado.status,200,JSON.stringify(dourado.json));
+ assert.equal(dourado.json.classificacao,'DOURADO');
+ assert.equal((await json(catalog,{cookie:ana.cookie})).json.produtos[0].classeVisual,'DOURADO');
+ assert.equal((await json(catalog,{cookie:ana.cookie})).json.produtos[0].elegivelLoop,true);
  assert.equal(sinalizacaoVitrine.consultarFotografiaPrepedido({
   prepedidoId:primeiro.json.pedido.pedidoId}).itens[0].precoUnitarioCentavos,25000,
  'historico não deve usar preços nem cores atuais');
