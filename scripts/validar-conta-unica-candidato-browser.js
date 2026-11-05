@@ -106,11 +106,22 @@ const {once}=require('node:events');
     .filter({hasText:/CPF fictício registrado/}).waitFor();
    assert.equal(await page.locator('#formCpfTeste').isHidden(),true);
    assert.equal(await page.locator('#cpfTeste').inputValue(),'');
-   await abrirAba('#abaPreparar');
-   await page.locator('#calcularCotacao').click();
-   await page.locator('#mensagem').filter({hasText:/Cotação conferida/}).waitFor();
-   await page.locator('#prepararPedido').click();
-   await page.locator('#mensagem').filter({hasText:/Pedidos e comunicados atualizados/}).waitFor();
+   // Compras sao testadas SOMENTE na loja AKITEMM, nao em aba duplicada do LOOP.
+   assert.equal(await page.locator('#abaPreparar').count(),0);
+   const lojaPrimeiro=await context.newPage();
+   lojaPrimeiro.on('pageerror',e=>failures.push(e.message));
+   await lojaPrimeiro.goto(base+'/staging/loja',{waitUntil:'domcontentloaded'});
+   await lojaPrimeiro.locator('#conteudoLojaLoop').waitFor({state:'visible'});
+   await lojaPrimeiro.locator('#catalogoLojaLoop article.produto-loja-loop')
+    .filter({hasText:'Curso ficticio para homologacao - R$ 250'})
+    .locator('button.akitemm-adicionar').click();
+   assert.equal(await lojaPrimeiro.locator('#akitemmTotalItens').innerText(),'1');
+   await lojaPrimeiro.locator('#registrarPedidoLoja').click();
+   await lojaPrimeiro.locator('#statusPedidoLoja').filter({hasText:/Pedido hom-/}).waitFor();
+   await lojaPrimeiro.close();
+   await abrirAba('#abaMeusPedidos');
+   await page.locator('#atualizarPedidos').click();
+   await page.locator('#listaPedidos article.pedido').first().waitFor();
    assert.equal(await page.locator('#listaPedidos article.pedido').count(),1);
    await page.locator('#listaPedidos').getByRole('button',{name:'Ver requisitos de ativação'}).click();
    await page.locator('#listaPedidos').filter({hasText:/BLOQUEADA_PARA_ATIVACAO_DEFINITIVA/}).waitFor();
@@ -242,18 +253,25 @@ const {once}=require('node:events');
    await abrirAba('#abaMeusPedidos');
    await page.locator('#listaPedidos article.pedido').first().waitFor();
    assert.equal(await page.locator('#listaPedidos article.pedido').count(),1);
-   await abrirAba('#abaPreparar');
-   await page.locator('#atualizarCatalogo').click();
-   await page.locator('#produtoDoCatalogo').selectOption('curso-extra-'+item.nick.toLowerCase());
-   await page.locator('#quantidadeDoCatalogo').fill('2');
-   await page.locator('#calcularCotacao').click();
-   await page.locator('#cotacao').filter({hasText:/R\$\s?198,00/}).waitFor();
-   await page.locator('#prepararPedido').click();
+   // Pre-pedido com quantidade 2: a prova da loja substitui a antiga aba.
+   const lojaCotacao=await context.newPage();
+   lojaCotacao.on('pageerror',e=>failures.push(e.message));
+   await lojaCotacao.goto(base+'/staging/loja',{waitUntil:'domcontentloaded'});
+   await lojaCotacao.locator('#conteudoLojaLoop').waitFor({state:'visible'});
+   const produtoExtra=lojaCotacao.locator('#catalogoLojaLoop article.produto-loja-loop')
+    .filter({hasText:'Curso adicional fictício '+item.nick});
+   await produtoExtra.locator('button.akitemm-adicionar').click();
+   await produtoExtra.locator('button.akitemm-adicionar').click();
+   await lojaCotacao.locator('#totalLojaLoop').filter({hasText:/R\$\s?198,00/}).waitFor();
+   await lojaCotacao.locator('#registrarPedidoLoja').click();
+   await lojaCotacao.locator('#statusPedidoLoja').filter({hasText:/Pedido hom-/}).waitFor();
+   await lojaCotacao.close();
+   await page.locator('#atualizarPedidos').click();
    await page.locator('#listaPedidos article.pedido').nth(1).waitFor();
    assert.equal(await page.locator('#listaPedidos article.pedido').count(),2);
    assert.match(await page.locator('#listaPedidos').innerText(),/R\$\s?198,00/);
    await page.screenshot({path:path.join(__dirname,'../artifacts',
-    'cliente-catalogo-editavel-'+item.nome+'.png'),fullPage:true});
+    'cliente-pedidos-da-loja-'+item.nome+'.png'),fullPage:true});
    await page.reload({waitUntil:'networkidle'});
    await abrirAba('#abaMeusPedidos');
    await page.locator('#listaPedidos article.pedido').nth(1).waitFor();
