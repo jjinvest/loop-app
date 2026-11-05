@@ -10,6 +10,8 @@ const {criarAppLojaEscritorioCandidato}=
  require('../src/candidato/servidor-loja-escritorio-candidato');
 const {catalogoFicticioCheckout}=
  require('../src/laboratorio/servidor-checkout-staging-local');
+const {criarTransporteRecuperacaoResend}=
+ require('../src/adapters/email-recuperacao-resend');
 
 function falha(codigo){const e=new Error(codigo);e.codigo=codigo;throw e;}
 function digerir(s){return createHash('sha256').update(s,'utf8').digest();}
@@ -203,9 +205,19 @@ async function iniciar({env=process.env}={}){
  const db=new DatabaseSync(dbPath);
  db.exec('PRAGMA foreign_keys=ON;PRAGMA journal_mode=WAL;PRAGMA busy_timeout=5000;');
  const tokenOperador=derivar(segredoRaiz,'operador').toString('hex');
+ // Sem as duas credenciais, nenhuma mensagem de recuperação é enviada.
+ // Segredos nunca são adicionados ao HTML, logs ou GitHub.
+ const temEnvio=Boolean(env.RESEND_API_KEY||env.RESEND_FROM_EMAIL);
+ if(temEnvio&&(!env.RESEND_API_KEY||!env.RESEND_FROM_EMAIL))
+  falha('RECUPERACAO_EMAIL_CONFIG_INCOMPLETA');
+ const enviarRecuperacao=temEnvio?criarTransporteRecuperacaoResend({
+  apiKey:env.RESEND_API_KEY,remetente:env.RESEND_FROM_EMAIL
+ }):null;
  const c=criarAppLojaEscritorioCandidato({
   banco:db,repositorioCatalogo:catalogoFicticioCheckout(),
   chaveEmail:derivar(segredoRaiz,'email'),chaveCifra:derivar(segredoRaiz,'cifra'),
+  chaveRecuperacao:temEnvio?derivar(segredoRaiz,'senha-recuperacao'):null,
+  enviarRecuperacao,
   // CPF de ensaio desabilitado para não incentivar dados pessoais em prévia.
   segredoOperador:tokenOperador,termosVersao:'LAB-escritorio-preview-2026',
   termosTexto:'Este cadastro e apenas para experimentar as telas da AKITEMM. Use nome e email ficticios, sem CPF ou dados reais. Nenhuma compra ou participacao e ativada.'
