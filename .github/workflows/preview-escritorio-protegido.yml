@@ -6,6 +6,10 @@ on:
     paths:
       - 'scripts/servidor-escritorio-preview-railway.js'
       - 'test/servidor-escritorio-preview-railway.test.js'
+      - 'src/candidato/checkout-candidato-ui.html'
+      - 'src/candidato/checkout-candidato-ui.js'
+      - 'src/laboratorio/checkout-staging-ui.css'
+      - 'scripts/validar-conta-unica-candidato-browser.js'
       - '.github/workflows/preview-escritorio-protegido.yml'
   workflow_dispatch:
 permissions:
@@ -13,7 +17,7 @@ permissions:
 jobs:
   homologacao:
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 18
     steps:
       - uses: actions/checkout@v4
         with:
@@ -26,3 +30,7 @@ jobs:
       - run: node --check scripts/servidor-escritorio-preview-railway.js
       - run: node --check test/servidor-escritorio-preview-railway.test.js
       - run: node --test test/servidor-escritorio-preview-railway.test.js
+      - run: npm test
+      - run: npm install --no-save playwright@1.56.1
+      - run: npx playwright install --with-deps chromium
+      - run: node scripts/validar-conta-unica-candidato-browser.js
