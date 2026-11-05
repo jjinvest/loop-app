@@ -16,9 +16,11 @@
 <main>
  <h1>Meu Escritório AKITEMM</h1>
  <p class="explicacao">Acompanhe sua conta, pedidos e posições. Neste ambiente, as operações são de teste e não movimentam dinheiro.</p>
- <section class="painel" id="painelLogin" aria-labelledby="tituloLogin">
+ <p id="mensagem" role="status" aria-live="polite" class="mensagem-pagina"></p>
+ <section class="painel" id="painelLogin" aria-labelledby="tituloLogin" hidden>
   <h2 id="tituloLogin">Entrar com meu nick</h2>
-  <p class="subtexto">Prévia de cadastro: a conta é somente fictícia, sem verificação externa nem compras reais.</p>
+  <p class="subtexto">Entre com o nick e a senha escolhidos no cadastro.</p>
+  <p id="erroLogin" class="erro-formulario" role="alert" tabindex="-1" hidden></p>
   <form id="formLogin">
    <label for="login">Nick</label>
    <input id="login" name="nick" autocomplete="username" minlength="1" maxlength="9" pattern="[A-Za-z]{1,9}" required>
@@ -26,10 +28,13 @@
    <input id="senha" name="senha" type="password" autocomplete="current-password" required>
    <button type="submit" class="primario">Entrar</button>
   </form>
+  <button type="button" class="alternar-acesso" id="mudarParaCadastro">Primeiro acesso? Criar cadastro</button>
  </section>
  <section class="painel" id="painelCadastro" aria-labelledby="tituloCadastro">
   <h2 id="tituloCadastro">Criar conta de homologação</h2>
-  <p class="subtexto">Dados exclusivamente fictícios. Não utilize CPF, senha ou e-mail pessoal nesta prévia.</p>
+  <p class="subtexto">Preencha seus dados para criar uma conta. Depois, entre apenas com seu nick e senha.</p>
+  <p class="subtexto">Nesta homologação, use dados fictícios. Não informe CPF nem senha pessoal.</p>
+  <p id="erroCadastro" class="erro-formulario" role="alert" tabindex="-1" hidden></p>
   <form id="formCadastro">
    <label for="cadastroNome">Nome fictício</label>
    <input id="cadastroNome" name="nome" maxlength="90" autocomplete="off" required>
@@ -40,8 +45,9 @@
    <label for="cadastroSenha">Senha exclusiva do laboratório (mínimo 12 caracteres)</label>
    <input id="cadastroSenha" name="senha" type="password" minlength="12" maxlength="256" autocomplete="new-password" required>
    <label><input id="cadastroTermos" type="checkbox" required> Confirmo o aceite dos termos de demonstração, sem transações ou benefícios reais.</label>
-   <button type="submit" class="primario">Criar conta de teste</button>
+   <button type="submit" class="primario">Concluir meu cadastro</button>
   </form>
+  <button type="button" class="alternar-acesso" id="mudarParaLogin">Já tenho cadastro · Entrar</button>
  </section>
  <section id="painelConta" hidden aria-label="Conta de homologação">
   <div class="barra-conta"><span>Meu Escritório · acesso autenticado</span><a href="/staging/loja" class="primario">Abrir loja AKITEMM</a><button type="button" id="sair">Sair</button></div>
@@ -163,7 +169,6 @@
    <p class="subtexto">Ao trocar sua senha, todas as sessões anteriores serão encerradas. Entre novamente com a nova senha.</p>
   </section>
  </section>
- <p id="mensagem" role="status" aria-live="polite"></p>
  <p class="rodape">Para uma venda real ainda são necessárias homologação externa do Asaas, segurança de produção e validação jurídica independente.</p>
 </main>
 </body>

@@ -5,12 +5,42 @@ const API='/staging';
 let cotacaoEscolhida=null;
 const $=id=>document.getElementById(id);
 let csrf=null,aprovada=false,aba='conteudoResumo',proximaPaginaEquipe=null;
+let telaAcesso='cadastro';
 const ABAS=[['abaResumo','conteudoResumo'],['abaPreparar','conteudoPreparar'],
  ['abaMeusPedidos','conteudoMeusPedidos'],['abaPosicoes','conteudoPosicoes'],
  ['abaEquipe','conteudoEquipe'],['abaLinks','conteudoLinks'],['abaFinanceiro','conteudoFinanceiro'],
  ['abaConta','conteudoConta']];
 const moeda=v=>new Intl.NumberFormat('pt-BR',{style:'currency',currency:'BRL'}).format(v/100);
 const dizer=msg=>{$('mensagem').textContent=msg;};
+const errosTraduzidos={
+ CREDENCIAIS_INVALIDAS:'Nick ou senha incorretos. Confira os dados e tente novamente.',
+ CONTA_TEMPORARIAMENTE_BLOQUEADA:'Muitas tentativas incorretas. Aguarde 15 minutos e tente novamente.',
+ NICK_INVALIDO:'Seu nick deve ter apenas letras, com até 9 caracteres.',
+ NOME_INVALIDO:'Confira o nome informado.',
+ EMAIL_INVALIDO:'Confira o e-mail informado.',
+ SENHA_INVALIDA:'A senha deve ter pelo menos 12 caracteres.',
+ CADASTRO_JA_EXISTENTE:'Este nick ou e-mail já está cadastrado. Use a opção Já tenho cadastro.',
+ TERMOS_LAB_NAO_ACEITOS:'Marque a confirmação dos termos para continuar.',
+ CADASTRO_INDISPONIVEL:'O cadastro está indisponível. Tente novamente.'
+};
+function explicarErro(erro){
+ return errosTraduzidos[erro.message]||'Não foi possível concluir. Verifique os dados e tente novamente.';
+}
+function mostrarErroAcesso(tipo,msg){
+ const id=tipo==='login'?'erroLogin':'erroCadastro';
+ const aviso=$(id);aviso.textContent=msg;aviso.hidden=!msg;
+ if(msg)aviso.focus();
+}
+function selecionarTelaAcesso(tela){
+ telaAcesso=tela;
+ $('painelLogin').hidden=tela!=='login';
+ $('painelCadastro').hidden=tela!=='cadastro';
+ mostrarErroAcesso('login','');
+ mostrarErroAcesso('cadastro','');
+ dizer('');
+ if(tela==='login')$('login').focus();
+ else $('cadastroNome').focus();
+}
 async function requisitar(rota,{method='GET',body,chave,mutacao=false}={}){
  const resposta=await fetch(API+rota,{method,credentials:'same-origin',
   cache:'no-store',headers:{
@@ -21,7 +51,8 @@ async function requisitar(rota,{method='GET',body,chave,mutacao=false}={}){
  });
  const dados=await resposta.json().catch(()=>({}));
  if(!resposta.ok){
-  if(resposta.status===401)mostrarSessao(false);
+  if(resposta.status===401&&rota!=='/contas/entrar'&&rota!=='/contas/me')
+   mostrarSessao(false);
   const erro=new Error(dados.erro||'SOLICITACAO_INDISPONIVEL');
   erro.status=resposta.status;throw erro;
  }
@@ -30,8 +61,8 @@ async function requisitar(rota,{method='GET',body,chave,mutacao=false}={}){
 function mostrarSessao(ativa){
  if(!ativa){$('painelVerificarEmail').hidden=true;$('painelIdentidadeTeste').hidden=true;
    $('cpfTeste').value='';$('aceiteCpfTeste').checked=false;}
- $('painelLogin').hidden=ativa;
- $('painelCadastro').hidden=ativa;
+ $('painelLogin').hidden=ativa||telaAcesso!=='login';
+ $('painelCadastro').hidden=ativa||telaAcesso!=='cadastro';
  $('painelConta').hidden=!ativa;
  if(!ativa){csrf=null;aprovada=false;$('prepararPedido').disabled=true;
   $('senha').value='';proximaPaginaEquipe=null;}
@@ -339,8 +370,9 @@ async function entrar(e){
  botao.disabled=true;dizer('Validando conta de homologação...');
  try{
   await autenticarConta($('login').value,$('senha').value);
+  mostrarErroAcesso('login','');
   dizer('Bem-vindo ao seu Escritório. Seus dados estão disponíveis nas abas.');
- }catch(err){dizer('Não foi possível entrar: '+err.message);}
+ }catch(err){mostrarErroAcesso('login',explicarErro(err));}
  finally{botao.disabled=false;}
 }
 
@@ -423,14 +455,14 @@ async function restaurarSessao(){
   await carregarCatalogo();
   dizer('Sua sessão foi restaurada.');
   mostrarAba('conteudoResumo');
- }catch(e){mostrarSessao(false);dizer('Entre com seu nick de teste ou crie uma conta fictícia.');}
+ }catch(e){mostrarSessao(false);dizer('');}
 }
 async function cadastrar(e){
  e.preventDefault();
  const botao=$('formCadastro').querySelector('button');
  botao.disabled=true;
  try{
-  const nick=$('cadastroNick').value,senha=$('cadastroSenha').value;
+  const nick=$('cadastroNick').value;
   const r=await requisitar('/contas/cadastrar',{method:'POST',
    body:{
     nome:$('cadastroNome').value,
@@ -442,11 +474,15 @@ async function cadastrar(e){
    throw Error('CADASTRO_INCOMPATIVEL');
   $('login').value=nick;
   $('cadastroSenha').value='';
-  await autenticarConta(nick,senha);
-  dizer('Conta criada! Você já está dentro do seu Escritório.');
- }catch(e){dizer('Não foi possível cadastrar: '+e.message);}
+  selecionarTelaAcesso('login');
+  dizer('Cadastro concluído. Agora entre com seu nick e a senha que você escolheu.');
+ }catch(e){mostrarErroAcesso('cadastro',explicarErro(e));}
  finally{botao.disabled=false;}
 }
+$('mudarParaLogin').addEventListener('click',()=>selecionarTelaAcesso('login'));
+$('mudarParaCadastro').addEventListener('click',()=>selecionarTelaAcesso('cadastro'));
+$('formLogin').addEventListener('input',()=>mostrarErroAcesso('login',''));
+$('formCadastro').addEventListener('input',()=>mostrarErroAcesso('cadastro',''));
 $('formCadastro').addEventListener('submit',cadastrar);
 $('solicitarCodigoEmail').addEventListener('click',solicitarCodigoEmail);
 $('formConfirmarEmail').addEventListener('submit',confirmarCodigoEmail);
