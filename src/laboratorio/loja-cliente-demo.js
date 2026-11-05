@@ -5,7 +5,7 @@
  const el=id=>document.getElementById(id);
  const dinheiro=centavos=>new Intl.NumberFormat('pt-BR',{style:'currency',currency:'BRL'}).format(centavos/100);
  const catalogo=[],carrinho=new Map();
- let referenciaCentavos=25000,pedidoEmAndamento=false,filtro='todos',configLoja=null,bannerIndice=-1;
+ let referenciaCentavos=25000,pedidoEmAndamento=false,filtro='todos',corFiltro=null,configLoja=null,bannerIndice=-1;
  let conviteLoopCheckoutAtivo=false;
  let timerBanner=null,enderecoEntrega=null,quantidadeVitrine=12;
  let assinaturaCarrinhoAnterior='';
@@ -30,6 +30,24 @@
   return data;
  }
  function produto(id){return catalogo.find(p=>p.produtoId===id);}
+ function corDoProduto(p){
+  if(p.classeVisual==='EVENTO'||(!p.classeVisual&&p.eventoId&&p.posicoesPorPedidoLoop>1))return 'EVENTO';
+  if(p.classeVisual==='VERDE'||(!p.classeVisual&&p.elegivelLoop))return 'VERDE';
+  return 'CINZA';
+ }
+ function atualizarFiltroCor(){
+  for(const botao of document.querySelectorAll('[data-akitemm-cor]')){
+   const ativo=botao.dataset.akitemmCor===corFiltro;
+   botao.classList.toggle('selecionado',ativo);
+   botao.setAttribute('aria-pressed',String(ativo));
+  }
+ }
+ function escolherCor(cor){
+  if(!['CINZA','VERDE','EVENTO'].includes(cor))return;
+  corFiltro=corFiltro===cor?null:cor;
+  quantidadeVitrine=12;
+  atualizarFiltroCor();mostrarCatalogo();
+ }
  function fotoDo(p){
   const src=p?.fotos?.find(fotoPermitida);
   return src||null;
@@ -230,6 +248,7 @@
   const termo=el('akitemmBusca').value.trim().normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLocaleLowerCase('pt-BR');
   const cfg=configLoja||{};
   return catalogo.filter(p=>{
+   if(corFiltro&&corDoProduto(p)!==corFiltro)return false;
    if(filtro==='ofertas'&&!(cfg.ofertas||[]).includes(p.produtoId))return false;
    if(filtro==='cursos'&&p.tipo!=='PDF')return false;
    if(filtro==='fisicos'&&p.tipo!=='FISICO')return false;
@@ -242,6 +261,7 @@
  }
  function escolherFiltro(novo){
   filtro=novo;quantidadeVitrine=12;
+  if(novo==='todos'){corFiltro=null;atualizarFiltroCor();}
   el('akitemmFiltroTodos').classList.toggle('selecionado',novo==='todos');
   el('akitemmFiltroTodos').setAttribute('aria-pressed',String(novo==='todos'));
   el('akitemmFiltroOfertas').classList.toggle('selecionado',novo==='ofertas');
@@ -510,6 +530,8 @@
    el('conteudoLojaLoop').hidden=true;inform(e.message);
   }
  }
+ for(const botao of document.querySelectorAll('[data-akitemm-cor]'))
+  botao.addEventListener('click',()=>escolherCor(botao.dataset.akitemmCor));
  el('akitemmFiltroTodos').addEventListener('click',()=>escolherFiltro('todos'));
  el('akitemmFiltroOfertas').addEventListener('click',()=>escolherFiltro('ofertas'));
  el('akitemmBusca').addEventListener('input',mostrarCatalogo);
