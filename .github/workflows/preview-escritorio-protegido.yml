@@ -13,6 +13,8 @@ on:
       - 'test/recuperacao-senha-candidata.test.js'
       - 'src/candidato/servidor-loja-escritorio-candidato.js'
       - 'src/domain/motor-conta-unica-ensaio-sqlite.js'
+      - 'src/domain/plano-posicoes-compra-akitemm.js'
+      - 'test/plano-posicoes-compra-akitemm.test.js'
       - 'src/candidato/escritorio-admin-candidato-ui.html'
       - 'src/candidato/escritorio-admin-candidato-ui.js'
       - 'test/motor-conta-unica-ensaio-sqlite.test.js'
@@ -58,6 +60,7 @@ jobs:
       - run: node --check src/candidato/servidor-loja-escritorio-candidato.js
       - run: node --check src/candidato/checkout-candidato-ui.js
       - run: node --check src/domain/motor-conta-unica-ensaio-sqlite.js
+      - run: node --check src/domain/plano-posicoes-compra-akitemm.js
       - run: node --check src/candidato/escritorio-admin-candidato-ui.js
       - run: node --test test/servidor-escritorio-preview-railway.test.js
       - run: node --check src/adapters/email-recuperacao-resend.js
