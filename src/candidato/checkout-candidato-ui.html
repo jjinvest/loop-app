@@ -6,6 +6,8 @@
 <meta name="robots" content="noindex,nofollow,noarchive">
 <title>AKITEMM · Cadastro e Meus Pedidos (prévia)</title>
 <link rel="stylesheet" href="/staging/assets/cliente.css">
+<link rel="stylesheet" href="/staging/assets/loop03-aprovado.css">
+<link rel="stylesheet" href="/staging/assets/cliente-integrado.css">
 <script src="/staging/assets/cliente.js" defer></script>
 </head>
 <body>
@@ -69,8 +71,44 @@
   </form>
   <button type="button" class="alternar-acesso" id="voltarLogin">Voltar para o login</button>
  </section>
- <section id="painelConta" hidden aria-label="Conta de homologação">
-  <div class="barra-conta"><span>Meu Escritório · acesso autenticado</span><a href="/staging/loja" class="primario">Abrir loja AKITEMM</a><button type="button" id="sair">Sair</button></div>
+ <section id="painelConta" class="cliente-integrado" hidden aria-label="Meu Escritório Virtual">
+  <div class="loop03-shell" id="loop03ShellIntegrado">
+   <div class="loop03-banner-topo">
+    <div><div class="loop03-logomarca">LOOP <span>3.0</span></div><p>PLATAFORMA DE CICLOS INTELIGENTES</p><small>ESTRATÉGIA · ORGANIZAÇÃO · RESULTADOS</small></div>
+    <span class="ambiente">HOMOLOGAÇÃO · SEM PAGAMENTOS REAIS</span>
+   </div>
+   <aside class="loop03-sidebar" id="loop03SidebarIntegrado" aria-label="Menu do Escritório Virtual">
+    <div class="loop03-marca">LOOP <span>3.0</span></div>
+    <nav role="tablist" aria-label="Áreas do cliente" class="abas loop03-menu-integrado">
+<button type="button" role="tab" id="abaResumo" aria-controls="conteudoResumo" aria-selected="true" tabindex="0">⌂ Escritório Virtual</button>
+<button type="button" role="tab" id="abaTabuleiro" aria-controls="conteudoTabuleiro" aria-selected="false" tabindex="-1">◉ Tabuleiro</button>
+<button type="button" role="tab" id="abaPosicoes" aria-controls="conteudoPosicoes" aria-selected="false" tabindex="-1"># Minhas Posições</button>
+<button type="button" role="tab" id="abaEquipe" aria-controls="conteudoEquipe" aria-selected="false" tabindex="-1">♙ Minha Equipe</button>
+<button type="button" role="tab" id="abaFinanceiro" aria-controls="conteudoFinanceiro" aria-selected="false" tabindex="-1">$ Financeiro</button>
+<a href="/staging/loja" class="loop03-atalho-loja">▣ AKITEMM</a>
+<button type="button" role="tab" id="abaMeusPedidos" aria-controls="conteudoMeusPedidos" aria-selected="false" tabindex="-1">Meus Pedidos</button>
+<button type="button" role="tab" id="abaLinks" aria-controls="conteudoLinks" aria-selected="false" tabindex="-1">Meus Links</button>
+<button type="button" role="tab" id="abaPreparar" aria-controls="conteudoPreparar" aria-selected="false" tabindex="-1">Preparar pedido</button>
+<button type="button" role="tab" id="abaConta" aria-controls="conteudoConta" aria-selected="false" tabindex="-1">Minha Conta</button>
+</nav>
+    <div class="loop03-identidade" aria-live="polite">
+     <span class="loop03-avatar" aria-hidden="true">👤</span>
+     <span><strong>Minha conta</strong><small id="loop03NickIntegrado">Conta autenticada</small></span>
+    </div>
+    <button type="button" id="sair" class="loop03-sair">Encerrar sessão</button>
+   </aside>
+   <div class="loop03-corpo">
+    <div class="loop03-boasvindas">
+     <button type="button" id="loop03MenuIntegrado" class="loop03-hamburguer" aria-controls="loop03SidebarIntegrado" aria-expanded="false" aria-label="Abrir menu do Escritório">☰</button>
+     <div><h2>Escritório Virtual</h2><p>Seus dados e seus pedidos no mesmo cadastro.</p></div>
+    </div>
+    <div class="loop03-indicadores" aria-label="Resumo operacional da conta">
+     <button type="button" id="loop03IrPosicoesIntegrado" class="loop03-indicador"><small>POSIÇÕES · ENSAIO</small><strong id="loop03TotalIntegrado">—</strong><span>Ver minhas posições</span></button>
+     <div class="loop03-indicador"><small>GIROS · 24H</small><strong>—</strong><span>Motor não integrado nesta prévia</span></div>
+     <div class="loop03-indicador"><small>NÚMERO</small><strong>#0000</strong><span>Nenhuma posição comercial selecionada</span></div>
+     <div class="loop03-indicador"><small>FINANCEIRO</small><strong>—</strong><span>Sem saldo financeiro real nesta prévia</span></div>
+    </div>
+    <div class="barra-conta"><span>Dados exclusivos da sua conta</span><a href="/staging/loja" class="primario">Abrir loja AKITEMM</a></div>
   <section class="painel" id="painelVerificarEmail" hidden aria-label="Confirmar e-mail de ensaio">
    <h2>Confirmar e-mail de teste</h2>
    <p class="subtexto">A confirmação só funciona com um provedor de e-mail de laboratório configurado. Não substitui a verificação de identidade.</p>
@@ -93,17 +131,13 @@
     <button type="submit" class="primario">Registrar identificação de teste</button>
    </form>
   </section>
-  <div role="tablist" aria-label="Áreas do cliente" class="abas">
-   <button type="button" role="tab" id="abaResumo" aria-controls="conteudoResumo" aria-selected="true" tabindex="0">Início</button>
-   <button type="button" role="tab" id="abaPreparar" aria-controls="conteudoPreparar" aria-selected="false" tabindex="-1">Comprar</button>
-   <button type="button" role="tab" id="abaMeusPedidos" aria-controls="conteudoMeusPedidos" aria-selected="false" tabindex="-1">Meus Pedidos</button>
-   <button type="button" role="tab" id="abaPosicoes" aria-controls="conteudoPosicoes" aria-selected="false" tabindex="-1">Minhas Posições</button>
-   <button type="button" role="tab" id="abaEquipe" aria-controls="conteudoEquipe" aria-selected="false" tabindex="-1">Minha Equipe</button>
-   <button type="button" role="tab" id="abaLinks" aria-controls="conteudoLinks" aria-selected="false" tabindex="-1">Meus Links</button>
-   <button type="button" role="tab" id="abaFinanceiro" aria-controls="conteudoFinanceiro" aria-selected="false" tabindex="-1">Financeiro</button>
-   <button type="button" role="tab" id="abaConta" aria-controls="conteudoConta" aria-selected="false" tabindex="-1">Minha Conta</button>
-  </div>
+
   <section class="painel" id="conteudoResumo" role="tabpanel" aria-labelledby="abaResumo">
+   <div class="loop03-hero-escritorio">
+    <div class="loop03-hero-titulo">ESCRITÓRIO <span>VIRTUAL</span></div>
+    <p class="loop03-hero-subtitulo">GERENCIE <b>·</b> ACOMPANHE <b>·</b> EVOLUA</p>
+    <div class="loop03-hero-conteudo"><p>Seja bem-vindo ao seu Escritório LOOP 3.0.</p><p>Os dados abaixo vêm da sua conta autenticada.</p></div>
+   </div>
    <h2>Visão geral</h2>
    <p id="boasVindas" role="status">Consultando sua conta…</p>
    <div class="indicadores-cliente" aria-label="Dados atualizados da minha conta">
@@ -145,6 +179,12 @@
     <h3>Comunicados sobre meus pedidos</h3>
     <p class="subtexto">Avisos de homologação, não comprovantes de pagamento.</p>
     <div id="comunicadosCliente" aria-live="polite"></div>
+  </section>
+  <section class="painel" id="conteudoTabuleiro" role="tabpanel" aria-labelledby="abaTabuleiro" hidden>
+   <div class="linha"><h2>Tabuleiro LOOP 3.0</h2><button type="button" id="atualizarTabuleiroIntegrado">Atualizar</button></div>
+   <p class="subtexto">O tabuleiro do motor já existe em laboratório. A ligação segura do motor à conta online ainda não foi habilitada; por isso não exibimos ocupantes ou giros inventados.</p>
+   <p id="estadoTabuleiroIntegrado" role="status" aria-live="polite">Consultando o estado das suas posições de homologação.</p>
+   <button type="button" id="tabuleiroVerPosicoesIntegrado">Ver minhas posições</button>
   </section>
   <section class="painel" id="conteudoPosicoes" role="tabpanel" aria-labelledby="abaPosicoes" hidden>
    <div class="linha"><h2>Minhas Posições</h2><button type="button" id="atualizarPosicoes">Atualizar</button></div>
@@ -188,6 +228,8 @@
    </form>
    <p class="subtexto">Ao trocar sua senha, todas as sessões anteriores serão encerradas. Entre novamente com a nova senha.</p>
   </section>
+   </div>
+  </div>
  </section>
  <p class="rodape">Para uma venda real ainda são necessárias homologação externa do Asaas, segurança de produção e validação jurídica independente.</p>
 </main>
