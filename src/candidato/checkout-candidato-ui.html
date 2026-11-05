@@ -25,9 +25,10 @@
    <label for="login">Nick</label>
    <input id="login" name="nick" autocomplete="username" minlength="1" maxlength="9" pattern="[A-Za-z]{1,9}" required>
    <label for="senha">Senha</label>
-   <input id="senha" name="senha" type="password" autocomplete="current-password" required>
+   <div class="envoltorio-senha"><input id="senha" name="senha" type="password" autocomplete="current-password" required><button type="button" class="alternar-visibilidade" data-senha="senha" aria-label="Mostrar senha" aria-pressed="false" title="Mostrar senha">👁</button></div>
    <button type="submit" class="primario">Entrar</button>
   </form>
+  <button type="button" class="alternar-acesso" id="abrirRecuperacao">Esqueci minha senha</button>
   <button type="button" class="alternar-acesso" id="mudarParaCadastro">Primeiro acesso? Criar cadastro</button>
  </section>
  <section class="painel" id="painelCadastro" aria-labelledby="tituloCadastro">
@@ -44,11 +45,29 @@
    <label for="cadastroEmail">E-mail fictício</label>
    <input id="cadastroEmail" name="email" type="email" maxlength="254" autocomplete="off" required>
    <label for="cadastroSenha">Senha de teste (8 a 12 caracteres)</label>
-   <input id="cadastroSenha" name="senha" type="password" minlength="8" maxlength="12" autocomplete="new-password" required>
+   <div class="envoltorio-senha"><input id="cadastroSenha" name="senha" type="password" minlength="8" maxlength="12" autocomplete="new-password" required><button type="button" class="alternar-visibilidade" data-senha="cadastroSenha" aria-label="Mostrar senha" aria-pressed="false" title="Mostrar senha">👁</button></div>
    <label><input id="cadastroTermos" type="checkbox" required> Confirmo o aceite dos termos de demonstração, sem transações ou benefícios reais.</label>
    <button type="submit" class="primario">Concluir meu cadastro</button>
   </form>
   <button type="button" class="alternar-acesso" id="mudarParaLogin">Já tenho cadastro · Entrar</button>
+ </section>
+ <section class="painel" id="painelRecuperacao" aria-labelledby="tituloRecuperacao" hidden>
+  <h2 id="tituloRecuperacao">Recuperar senha por e-mail</h2>
+  <p class="subtexto">Informe o e-mail usado no cadastro. Se existir uma conta e o envio estiver configurado, chegará um código de 8 dígitos válido por 15 minutos.</p>
+  <p id="estadoRecuperacao" role="status" aria-live="polite" tabindex="-1"></p>
+  <form id="formSolicitarRecuperacao">
+   <label for="emailRecuperacao">E-mail do cadastro</label>
+   <input id="emailRecuperacao" type="email" maxlength="254" autocomplete="email" required>
+   <button type="submit" class="primario">Enviar código por e-mail</button>
+  </form>
+  <form id="formConcluirRecuperacao" hidden>
+   <label for="codigoRecuperacao">Código recebido por e-mail</label>
+   <input id="codigoRecuperacao" type="text" inputmode="numeric" pattern="[0-9]{8}" minlength="8" maxlength="8" autocomplete="one-time-code" required>
+   <label for="senhaRecuperacao">Nova senha (8 a 12 caracteres)</label>
+   <div class="envoltorio-senha"><input id="senhaRecuperacao" type="password" minlength="8" maxlength="12" autocomplete="new-password" required><button type="button" class="alternar-visibilidade" data-senha="senhaRecuperacao" aria-label="Mostrar senha" aria-pressed="false" title="Mostrar senha">👁</button></div>
+   <button type="submit" class="primario">Salvar nova senha</button>
+  </form>
+  <button type="button" class="alternar-acesso" id="voltarLogin">Voltar para o login</button>
  </section>
  <section id="painelConta" hidden aria-label="Conta de homologação">
   <div class="barra-conta"><span>Meu Escritório · acesso autenticado</span><a href="/staging/loja" class="primario">Abrir loja AKITEMM</a><button type="button" id="sair">Sair</button></div>
@@ -162,9 +181,9 @@
    <h3>Trocar minha senha</h3>
    <form id="formTrocarSenha">
     <label for="senhaAtual">Senha atual</label>
-    <input id="senhaAtual" type="password" autocomplete="current-password" required>
+    <div class="envoltorio-senha"><input id="senhaAtual" type="password" autocomplete="current-password" required><button type="button" class="alternar-visibilidade" data-senha="senhaAtual" aria-label="Mostrar senha" aria-pressed="false" title="Mostrar senha">👁</button></div>
     <label for="novaSenha">Nova senha (8 a 12 caracteres)</label>
-    <input id="novaSenha" type="password" minlength="8" maxlength="12" autocomplete="new-password" required>
+    <div class="envoltorio-senha"><input id="novaSenha" type="password" minlength="8" maxlength="12" autocomplete="new-password" required><button type="button" class="alternar-visibilidade" data-senha="novaSenha" aria-label="Mostrar senha" aria-pressed="false" title="Mostrar senha">👁</button></div>
     <button class="primario" type="submit">Alterar senha</button>
    </form>
    <p class="subtexto">Ao trocar sua senha, todas as sessões anteriores serão encerradas. Entre novamente com a nova senha.</p>
