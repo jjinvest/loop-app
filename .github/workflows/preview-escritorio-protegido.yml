@@ -25,6 +25,7 @@ on:
       - 'src/laboratorio/loja-cliente-demo.js'
       - 'src/laboratorio/loja-cliente-demo.css'
       - 'test/filtros-cor-loja-candidato.test.js'
+      - 'test/tabuleiro-circular-cliente-ui.test.js'
       - 'test/vitrine-aprovada-candidato.test.js'
       - 'test/simulador-qualificacao-candidato.test.js'
       - 'test/missoes-operacionais-candidato.test.js'
