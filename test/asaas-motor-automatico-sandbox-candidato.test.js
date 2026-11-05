@@ -231,6 +231,33 @@ test('webhook bruto nao gera posicoes; PSP reconsultado cria lote ROXO pendente 
   'reversao nao apaga aceite historico');
  assert.throws(()=>r.motorConta.vincularPedidoConferidoSandbox({prepedidoId:pedidoId}),
   /PSP_SANDBOX_NAO_CONCILIADO_PARA_LOTE/);
+ // Mesmo se um lote ou aceite estranho ficar FORA da pagina atual,
+ // a auditoria deve detectar a inconsistencia globalmente e sem PII.
+ db.exec('SAVEPOINT teste_integridade_auditoria');
+ try{
+  db.prepare([
+   'INSERT INTO akitemm_motor_ensaio_lotes_pedido',
+   '(prepedido_id,ordinal,titular_id,numero_posicao) VALUES(?,?,?,?)'
+  ].join(' ')).run('hom-00000000-0000-4000-8000-000000000000',1,
+   'titular-forjado-lab',999999);
+  db.prepare([
+   'INSERT INTO akitemm_motor_ensaio_aceites_posicao',
+   '(numero_posicao,prepedido_id,titular_id,cpf_hmac,versao_termos,hash_termos,criado_em)',
+   'VALUES(?,?,?,?,?,?,?)'
+  ].join(' ')).run(999999,'hom-00000000-0000-4000-8000-000000000000',
+   'outro-titular-forjado','hash-fixture','LAB-fixture','sha-fixture',new Date().toISOString());
+  const suspeita=await call('/staging/escritorio-unificado/auditoria-cobertura',
+   {admin:true});
+  assert.equal(suspeita.status,200,JSON.stringify(suspeita.json));
+  assert.equal(suspeita.json.resumo.lotesSemPedidoValidoNoBanco,1);
+  assert.equal(suspeita.json.resumo.aceitesSemVinculoConsistenteNoBanco,1);
+  assert.ok(suspeita.json.alertasGlobais.includes('LOTES_COM_TITULAR_OU_PEDIDO_INEXISTENTE'));
+  assert.ok(suspeita.json.alertasGlobais.includes('ACEITES_SEM_LOTE_CONSISTENTE'));
+  assert.equal(JSON.stringify(suspeita.json).includes('titular-forjado-lab'),false);
+ }finally{
+  db.exec('ROLLBACK TO teste_integridade_auditoria');
+  db.exec('RELEASE teste_integridade_auditoria');
+ }
  assert.deepEqual(db.prepare('PRAGMA foreign_key_check').all(),[]);
  assert.equal(db.prepare('PRAGMA integrity_check').get().integrity_check,'ok');
 });
