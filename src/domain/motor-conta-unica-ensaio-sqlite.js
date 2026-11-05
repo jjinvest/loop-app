@@ -184,6 +184,46 @@ class MotorContaUnicaEnsaioSQLite{
   return this.vincularPedido({prepedidoId,aceiteEnsaio:true,
    exigirPSPSandbox:true});
  }
+ // Um estorno/chargeback comprovado pelo GET PSP coloca o lote em
+ // REVISAO, conserva seu historico e impede alimentacao e giro indevidos.
+ // Nunca ressuscitar automaticamente posicoes apos reembolso.
+ suspenderLoteRevertidoSandbox({prepedidoId}={}){
+  if(!this.ponte||typeof prepedidoId!=='string'||!PEDIDO.test(prepedidoId))
+   falha('REVERSAO_SANDBOX_INVALIDA');
+  return this._transacao(sim=>{
+   const pedido=this.banco.prepare([
+    'SELECT titular_id AS titularId FROM akitemm_checkout_prepedidos_staging',
+    'WHERE prepedido_id=?'
+   ].join(' ')).get(prepedidoId);
+   if(!pedido)falha('PREPEDIDO_SEM_TITULAR_VALIDO');
+   const ponte=this.ponte.consultar({
+    titularId:pedido.titularId,prepedidoId
+   });
+   if(ponte?.estado!=='REVERSAO_INFORMADA_SANDBOX')
+    falha('REVERSAO_PSP_NAO_CONCILIADA');
+   const posicoes=this.banco.prepare([
+    'SELECT numero_posicao AS id FROM akitemm_motor_ensaio_lotes_pedido',
+    'WHERE prepedido_id=?'
+   ].join(' ')).all(prepedidoId);
+   const ids=new Set(posicoes.map(p=>p.id));
+   if(!ids.size)return {suspensas:0,semLote:true,somenteEnsaio:true};
+   const presentes=[...sim.filas.filaA,...sim.filas.filaB,
+    sim.tabuleiro.centro,...sim.tabuleiro.vagas].filter(Boolean);
+   let alteradas=0;
+   for(const p of presentes){
+    if(ids.has(p.id)&&p.participanteId===pedido.titularId&&
+       p.statusAdesao!=='REVISAR_PSP'){
+     p.statusAdesao='REVISAR_PSP';alteradas++;
+    }
+   }
+   if(alteradas){
+    sim.pausarCatraca();
+    this._evento('REVERSAO_PSP',{prepedidoId,titularId:pedido.titularId});
+   }
+   return {suspensas:alteradas,semLote:false,somenteEnsaio:true,
+    catracaPausada:alteradas>0,financeiroReal:false};
+  });
+ }
  prepararTabuleiro(){
   return this._transacao(sim=>{
    if(sim.tabuleiro.iniciado)falha('CICLO_MOTOR_ENSAIO_JA_INICIADO');
@@ -202,6 +242,9 @@ class MotorContaUnicaEnsaioSQLite{
     "WHERE prepedido_id=? AND tipo='VINCULAR_PEDIDO'"
    ].join(' ')).get(prepedidoId);
    if(!origem)falha('PEDIDO_FORA_DO_MOTOR_ENSAIO');
+   if(this.ponte&&this.banco.prepare([
+    "SELECT 1 FROM akitemm_motor_conta_ensaio_operacoes WHERE prepedido_id=? AND tipo='REVERSAO_PSP'"
+   ].join(' ')).get(prepedidoId))falha('PEDIDO_EM_REVISAO_PSP');
    const resultado=sim.registrarVendaNoCicloSimulada({vendaId:'ensaio:'+prepedidoId});
    if(!resultado.repetida)this._evento('EVENTO_CICLO',{titularId:origem.titular_id});
    return {repetido:resultado.repetida,eventosNoCiclo:resultado.estado.vendasNoCiclo,
@@ -215,6 +258,8 @@ class MotorContaUnicaEnsaioSQLite{
    let r;
    if(acao==='ABRIR')r=sim.abrirCatraca();
    if(acao==='PAUSAR')r=sim.pausarCatraca();
+   if(acao==='GIRAR'&&[sim.tabuleiro.centro,...sim.tabuleiro.vagas].some(p=>
+     p?.statusAdesao==='REVISAR_PSP'))falha('CATRACA_BLOQUEADA_PSP_EM_REVISAO');
    if(acao==='GIRAR')r=sim.tentarGiro();
    if(acao==='GIRAR'&&!r.girou)
     return {girou:false,motivo:r.motivo,somenteEnsaio:true,
@@ -240,7 +285,7 @@ class MotorContaUnicaEnsaioSQLite{
    pendente:p.statusAdesao==='PENDENTE'&&p.empresa!==true,
    dourada:p.empresa===true,
    // Nao enviar nome, UUID, nick nem CPF de outros participantes.
-   status:p.empresa===true?'EMPRESA':p.statusAdesao==='PENDENTE'?'PENDENTE':'ENSAIO'
+   status:p.empresa===true?'EMPRESA':p.statusAdesao==='REVISAR_PSP'?'REVISAO_PSP':p.statusAdesao==='PENDENTE'?'PENDENTE':'ENSAIO'
   }:null;
   const ativas=[
    ...estado.filas.A.pessoas.map(p=>({...p,local:'FILA',fila:'A'})),
@@ -252,7 +297,7 @@ class MotorContaUnicaEnsaioSQLite{
    .filter(p=>p.participanteId===titularId&&p.empresa!==true)
    .map(p=>({numero:p.id,local:p.local,
     fila:p.fila||null,pendente:p.statusAdesao==='PENDENTE',
-    estado:'ENSAIO_SEM_DIREITO'}));
+    estado:p.statusAdesao==='REVISAR_PSP'?'ENSAIO_EM_REVISAO_PSP':'ENSAIO_SEM_DIREITO'}));
   const giros24h=this.banco.prepare([
    'SELECT COUNT(*) AS n FROM akitemm_motor_conta_ensaio_operacoes',
    "WHERE tipo='GIRO' AND criado_em>=?"
