@@ -102,6 +102,24 @@ test('webhook bruto nao gera posicoes; PSP reconsultado cria lote ROXO pendente 
  assert.equal(gets,1);
  assert.equal(r.motorConta.consultar({titularId}).posicoesAtivasDoTitular,5);
  assert.equal(r.motorConta.consultar({titularId}).pendentesDeEnsaio,5);
+ // Auditoria do mesmo pedido: ROXO a R$ 250 com 5 posicoes eh
+ // aritmeticamente inviavel antes de pagar fornecedor ou PSP.
+ const auditoria=await call('/staging/escritorio-unificado/auditoria-cobertura',
+  {admin:true});
+ assert.equal(auditoria.status,200,JSON.stringify(auditoria.json));
+ assert.equal(auditoria.json.resumo.brutoInsuficiente,1);
+ assert.equal(auditoria.json.resumo.referenciaTotalCalculadaCentavos,125000);
+ assert.equal(auditoria.json.pedidos[0].posicoesPlanejadas,5);
+ assert.equal(auditoria.json.pedidos[0].saldoBrutoAposReservaCentavos,-100000);
+ assert.equal(auditoria.json.pedidos[0].aptoParaLiberarReal,false);
+ assert.equal(auditoria.json.marcoZeroFinanceiroAprovado,false);
+ assert.equal(auditoria.json.somenteLeitura,true);
+ assert.equal(JSON.stringify(auditoria.json).includes(titularId),false);
+ assert.equal((await call('/staging/escritorio-unificado/auditoria-cobertura'))
+  .status,401);
+ assert.equal((await call('/staging/escritorio-unificado/auditoria-cobertura?limite=1000',
+  {admin:true})).status,400);
+ assert.equal(r.motorConta.consultar({titularId}).posicoesAtivasDoTitular,5);
  const primeiraPosicao=r.motorConta.consultar({titularId}).minhasPosicoes[0].numero;
  const versaoTermos='LAB-auto-conciliacao-2026';
  const bodyAceite={posicaoId:primeiraPosicao,versaoTermos,aceiteExplicito:true};
