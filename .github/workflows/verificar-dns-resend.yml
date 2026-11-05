@@ -1,0 +1,47 @@
+name: AKITEMM - Conferir DNS publico do Resend
+on:
+  push:
+    branches:
+      - feature/escritorio-preview-protegido-20261105
+    paths:
+      - '.github/workflows/verificar-dns-resend.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  verificar-dns:
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - name: Consultar DKIM e CNAMEs publicos sem alterar DNS
+        shell: bash
+        run: |
+          node <<'NODE'
+          const dns = require('node:dns').promises;
+          const domain='akitemmloop.com.br';
+          const checks=[
+            ['DKIM-TXT','resend._domainkey.'+domain,'TXT'],
+            ['SPF-CNAME-RSEND','rsend.'+domain,'CNAME'],
+            ['SPF-CNAME-SEND','send.'+domain,'CNAME'],
+            ['DNS-NS',domain,'NS']
+          ];
+          async function query(host,type){
+            const fn=type==='TXT'?'resolveTxt':type==='CNAME'?'resolveCname':'resolveNs';
+            try {return {entries:await dns[fn](host)};}
+            catch(e){return {error:e.code||e.message};}
+          }
+          (async()=>{
+            for(const [label,host,type] of checks){
+              const r=await query(host,type);
+              if(r.error){console.log(label+': NAO_CONFIRMADO ('+r.error+')');continue;}
+              const answers=type==='TXT'?r.entries.map(parts=>parts.join('')):r.entries;
+              if(label==='DKIM-TXT'){
+                const dkim=answers.find(x=>x.startsWith('p='))||'';
+                console.log('DKIM-TXT: '+(dkim.length>=160?'PUBLICADO_CHAVE_EXTENSA':'NÃO_CONFIRMADO_CHAVE_CURTA_OU_AUSENTE')+
+                  ', comprimento='+dkim.length+', respostas='+answers.length);
+              }else{
+                console.log(label+': '+(answers.length?'PUBLICADO '+answers.join(', '):'NAO_CONFIRMADO'));
+              }
+            }
+          })().catch(e=>{console.log('FALHA_CONSULTA: '+e.message);process.exitCode=1;});
+          NODE
