@@ -176,7 +176,7 @@ const {once}=require('node:events');
    await admin.locator('#resultadoGateAtivacao').filter({hasText:/BLOQUEADA_PARA_ATIVACAO_DEFINITIVA/}).waitFor();
    await admin.locator('#criarMissaoGateAtivacao').click();
    await admin.locator('#resultadoGateAtivacao').filter({hasText:/Missão de regularização criada/}).waitFor();
-   assert.match(await admin.locator('#listaMissoes').innerText(),/Regularizar requisitos de ativação/);
+   await admin.locator('#listaMissoes').filter({hasText:/Regularizar requisitos de ativação/}).waitFor();
    await admin.locator('#criarMissaoGateAtivacao').click();
    await admin.locator('#resultadoGateAtivacao').filter({hasText:/já registrada/}).waitFor();
    await admin.locator('#titulo').fill('Revisar pedido do cliente');
