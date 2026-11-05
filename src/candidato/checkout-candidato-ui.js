@@ -21,7 +21,9 @@ const errosTraduzidos={
  SENHA_INVALIDA:'Confira a senha informada.',
  CADASTRO_JA_EXISTENTE:'Este nick ou e-mail já está cadastrado. Use a opção Já tenho cadastro.',
  TERMOS_LAB_NAO_ACEITOS:'Marque a confirmação dos termos para continuar.',
- CADASTRO_INDISPONIVEL:'O cadastro está indisponível. Tente novamente.'
+ CADASTRO_INDISPONIVEL:'O cadastro está indisponível. Tente novamente.',
+ RECUPERACAO_EMAIL_INDISPONIVEL:'A recuperação por e-mail ainda não está configurada neste ambiente. Nenhuma senha foi alterada.',
+ RECUPERACAO_CODIGO_OU_SENHA_INVALIDOS:'Código incorreto, expirado ou senha inválida. Confira os dados.'
 };
 function explicarErro(erro){
  return errosTraduzidos[erro.message]||'Não foi possível concluir. Verifique os dados e tente novamente.';
@@ -35,11 +37,13 @@ function selecionarTelaAcesso(tela){
  telaAcesso=tela;
  $('painelLogin').hidden=tela!=='login';
  $('painelCadastro').hidden=tela!=='cadastro';
+ $('painelRecuperacao').hidden=tela!=='recuperacao';
  mostrarErroAcesso('login','');
  mostrarErroAcesso('cadastro','');
  dizer('');
  if(tela==='login')$('login').focus();
- else $('cadastroNome').focus();
+ else if(tela==='cadastro')$('cadastroNome').focus();
+ else $('emailRecuperacao').focus();
 }
 async function requisitar(rota,{method='GET',body,chave,mutacao=false}={}){
  const resposta=await fetch(API+rota,{method,credentials:'same-origin',
@@ -63,6 +67,7 @@ function mostrarSessao(ativa){
    $('cpfTeste').value='';$('aceiteCpfTeste').checked=false;}
  $('painelLogin').hidden=ativa||telaAcesso!=='login';
  $('painelCadastro').hidden=ativa||telaAcesso!=='cadastro';
+ $('painelRecuperacao').hidden=ativa||telaAcesso!=='recuperacao';
  $('painelConta').hidden=!ativa;
  if(!ativa){csrf=null;aprovada=false;$('prepararPedido').disabled=true;
   $('senha').value='';proximaPaginaEquipe=null;}
@@ -479,7 +484,67 @@ async function cadastrar(e){
  }catch(e){mostrarErroAcesso('cadastro',explicarErro(e));}
  finally{botao.disabled=false;}
 }
+
+function alternarVisibilidade(botao){
+ const campo=$(botao.dataset.senha);
+ if(!campo)return;
+ const visivel=campo.type==='password';
+ campo.type=visivel?'text':'password';
+ botao.setAttribute('aria-pressed',String(visivel));
+ botao.setAttribute('aria-label',visivel?'Ocultar senha':'Mostrar senha');
+ botao.title=visivel?'Ocultar senha':'Mostrar senha';
+ campo.focus({preventScroll:true});
+}
+async function solicitarRecuperacao(e){
+ e.preventDefault();
+ const botao=$('formSolicitarRecuperacao').querySelector('button[type=submit]');
+ botao.disabled=true;
+ const estado=$('estadoRecuperacao');
+ estado.textContent='Solicitando envio de código...';
+ try{
+  await requisitar('/contas/recuperar-senha',{method:'POST',
+   body:{email:$('emailRecuperacao').value}});
+  estado.textContent='Se o e-mail estiver cadastrado, você receberá um código. Confira também a caixa de spam.';
+  $('formConcluirRecuperacao').hidden=false;
+ }catch(err){
+  estado.textContent=explicarErro(err);
+  $('formConcluirRecuperacao').hidden=true;
+ }finally{botao.disabled=false;estado.focus();}
+}
+async function confirmarRecuperacao(e){
+ e.preventDefault();
+ const botao=$('formConcluirRecuperacao').querySelector('button[type=submit]');
+ botao.disabled=true;
+ const estado=$('estadoRecuperacao');
+ try{
+  const resultado=await requisitar('/contas/redefinir-senha',{method:'POST',
+   body:{email:$('emailRecuperacao').value,codigo:$('codigoRecuperacao').value,
+    novaSenha:$('senhaRecuperacao').value}});
+  if(resultado.senhaRedefinida!==true||resultado.todasSessoesRevogadas!==true)
+   throw Error('RECUPERACAO_CODIGO_OU_SENHA_INVALIDOS');
+  $('codigoRecuperacao').value='';$('senhaRecuperacao').value='';
+  $('formConcluirRecuperacao').hidden=true;
+  selecionarTelaAcesso('login');
+  dizer('Senha redefinida. Entre com seu nick e sua nova senha.');
+ }catch(err){
+  $('codigoRecuperacao').value='';
+  $('senhaRecuperacao').value='';
+  estado.textContent=explicarErro(err);
+  estado.focus();
+ }finally{botao.disabled=false;}
+}
+
 $('mudarParaLogin').addEventListener('click',()=>selecionarTelaAcesso('login'));
+$('abrirRecuperacao').addEventListener('click',()=>{
+ $('formConcluirRecuperacao').hidden=true;
+ $('estadoRecuperacao').textContent='';
+ selecionarTelaAcesso('recuperacao');
+});
+$('voltarLogin').addEventListener('click',()=>selecionarTelaAcesso('login'));
+$('formSolicitarRecuperacao').addEventListener('submit',solicitarRecuperacao);
+$('formConcluirRecuperacao').addEventListener('submit',confirmarRecuperacao);
+for(const botao of document.querySelectorAll('[data-senha]'))
+ botao.addEventListener('click',()=>alternarVisibilidade(botao));
 $('mudarParaCadastro').addEventListener('click',()=>selecionarTelaAcesso('cadastro'));
 $('formLogin').addEventListener('input',()=>mostrarErroAcesso('login',''));
 $('formCadastro').addEventListener('input',()=>mostrarErroAcesso('cadastro',''));
