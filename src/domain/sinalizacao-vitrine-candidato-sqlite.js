@@ -2,7 +2,7 @@
 // Sinalização VISUAL da vitrine aprovada, apenas para homologação local.
 // NÃO é fonte de elegibilidade financeira, direito a posição ou evento real.
 const ID=/^[a-z0-9-]{3,80}$/;
-const CLASSES=new Set(['CINZA','VERDE','EVENTO']);
+const CLASSES=new Set(['CINZA','VERDE','DOURADO','ROXO','EVENTO']); // EVENTO legado = ROXO
 function fail(codigo){const e=new Error(codigo);e.codigo=codigo;throw e;}
 function validar(x){
  if(!x||typeof x!=='object'||Array.isArray(x)||
@@ -17,6 +17,8 @@ function validar(x){
   fail('REVISAO_INVALIDA');
  if(x.classificacao==='CINZA'&&x.quantidadeMinimaLoop!==1)
   fail('COR_NEUTRA_SEM_REGRAS_LOOP');
+ if(['DOURADO','ROXO','EVENTO'].includes(x.classificacao)&&x.quantidadeMinimaLoop!==1)
+  fail('PRODUTO_ESPECIAL_QUANTIDADE_MINIMA_UM');
  return x;
 }
 class SinalizacaoVitrineCandidatoSQLite{
@@ -32,6 +34,12 @@ class SinalizacaoVitrineCandidatoSQLite{
    "CHECK(classificacao IN ('CINZA','VERDE','EVENTO')),",
    'quantidade_minima INTEGER NOT NULL CHECK(quantidade_minima BETWEEN 1 AND 50),',
    'revisao INTEGER NOT NULL CHECK(revisao>=1),atualizado_em INTEGER NOT NULL);',
+   // A tabela original tem CHECK de tres cores; sobrepor uma V2 transacional
+   // preserva as versoes/historicos/volumes SQLite existentes sem rebuild.
+   'CREATE TABLE IF NOT EXISTS akitemm_vitrine_cores_v2_staging(',
+   'produto_id TEXT PRIMARY KEY REFERENCES akitemm_vitrine_sinalizacao_staging(produto_id)',
+   "ON DELETE RESTRICT,classificacao TEXT NOT NULL CHECK(classificacao IN ('CINZA','VERDE','DOURADO','ROXO')) ,",
+   'revisao INTEGER NOT NULL CHECK(revisao>=1));',
    'CREATE TABLE IF NOT EXISTS akitemm_vitrine_sinalizacao_historico_staging(',
    'id INTEGER PRIMARY KEY AUTOINCREMENT,produto_id TEXT NOT NULL',
    'REFERENCES akitemm_vitrine_sinalizacao_staging(produto_id),',
@@ -61,7 +69,10 @@ class SinalizacaoVitrineCandidatoSQLite{
    'SELECT classificacao,quantidade_minima AS quantidadeMinimaLoop,'+
    ' revisao,atualizado_em AS atualizadoEm FROM akitemm_vitrine_sinalizacao_staging WHERE produto_id=?'
   ).get(id);
-  return {produtoId:id,classificacao:row?.classificacao||'CINZA',
+  const nova=row?this.db.prepare('SELECT classificacao,revisao FROM akitemm_vitrine_cores_v2_staging WHERE produto_id=?').get(id):null;
+  if(nova&&nova.revisao!==row.revisao)fail('REVISAO_COR_V2_INCONSISTENTE');
+  const classe=nova?.classificacao||(row?.classificacao==='EVENTO'?'ROXO':row?.classificacao)||'CINZA';
+  return {produtoId:id,classificacao:classe,
    quantidadeMinimaLoop:row?.quantidadeMinimaLoop||1,
    revisao:row?.revisao||0,atualizadoEm:row?.atualizadoEm||null,
    apenasSinalizacao:true,beneficioRealHabilitado:false};
@@ -71,10 +82,13 @@ class SinalizacaoVitrineCandidatoSQLite{
   validar(entrada);
   const p=await this.catalogo.buscar(id);
   if(!p)fail('PRODUTO_NAO_ENCONTRADO');
+  const classe=entrada.classificacao==='EVENTO'?'ROXO':entrada.classificacao;
+  if(classe==='DOURADO'&&p.precoCentavos<25000)fail('DOURADO_EXIGE_VALOR_MINIMO_DO_PRODUTO');
   const antigo=this.consultar(id);
   if(antigo.revisao!==entrada.revisaoEsperada)fail('CONFLITO_REVISAO');
-  const novo={produtoId:id,classificacao:entrada.classificacao,
+  const novo={produtoId:id,classificacao:classe,
    quantidadeMinimaLoop:entrada.quantidadeMinimaLoop};
+  const legado=classe==='ROXO'?'EVENTO':classe==='DOURADO'?'VERDE':classe;
   const now=Date.now(),db=this.db;
   db.exec('BEGIN IMMEDIATE');
   try{
@@ -86,13 +100,18 @@ class SinalizacaoVitrineCandidatoSQLite{
      'INSERT INTO akitemm_vitrine_sinalizacao_staging',
      '(produto_id,classificacao,quantidade_minima,revisao,atualizado_em)',
      'VALUES(?,?,?,?,?)'
-    ].join(' ')).run(id,novo.classificacao,novo.quantidadeMinimaLoop,1,now);
+    ].join(' ')).run(id,legado,novo.quantidadeMinimaLoop,1,now);
    }else{
     db.prepare([
      'UPDATE akitemm_vitrine_sinalizacao_staging',
      'SET classificacao=?,quantidade_minima=?,revisao=?,atualizado_em=? WHERE produto_id=?'
-    ].join(' ')).run(novo.classificacao,novo.quantidadeMinimaLoop,rev,now,id);
+    ].join(' ')).run(legado,novo.quantidadeMinimaLoop,rev,now,id);
    }
+   db.prepare([
+    'INSERT INTO akitemm_vitrine_cores_v2_staging',
+    '(produto_id,classificacao,revisao) VALUES(?,?,?)',
+    'ON CONFLICT(produto_id) DO UPDATE SET classificacao=excluded.classificacao,revisao=excluded.revisao'
+   ].join(' ')).run(id,classe,rev);
    db.prepare([
     'INSERT INTO akitemm_vitrine_sinalizacao_historico_staging',
     '(produto_id,revisao,antes_json,depois_json,criado_em)',
@@ -129,10 +148,12 @@ class SinalizacaoVitrineCandidatoSQLite{
       p.subtotalCentavos!==p.quantidade*p.precoUnitarioCentavos)
     fail('FOTOGRAFIA_ITEM_INVALIDO');
    const s=this.consultar(p.produtoId);
-   const apto=s.classificacao==='VERDE'&&p.quantidade>=s.quantidadeMinimaLoop;
+   const apto=(s.classificacao==='VERDE'||
+    (s.classificacao==='DOURADO'&&p.precoUnitarioCentavos>=25000))&&
+    p.quantidade>=s.quantidadeMinimaLoop;
    total+=p.subtotalCentavos;
    if(apto)verde+=p.subtotalCentavos;
-   if(s.classificacao==='EVENTO')evento=true;
+   if(s.classificacao==='ROXO')evento=true;
    fotografiaItens.push({produtoId:p.produtoId,quantidade:p.quantidade,
     precoUnitarioCentavos:p.precoUnitarioCentavos,
     subtotalCentavos:p.subtotalCentavos,classificacao:s.classificacao,
@@ -166,9 +187,9 @@ class SinalizacaoVitrineCandidatoSQLite{
   return {produtoId:p.id,nome:p.nome,descricao:p.descricao,
    precoCentavos:p.precoCentavos,tipo:p.tipo,fotos:p.fotos,
    detalhes:p.detalhes,novidade:false,quantidadeVendida:0,
-   elegivelLoop:classe==='VERDE',
+   elegivelLoop:classe==='VERDE'||classe==='DOURADO',
    quantidadeMinimaLoop:s.quantidadeMinimaLoop,
-   // EVENTO é apenas decoração local até regras, datas e autorização formal.
+   // ROXO é apenas decoração local até regras, datas e autorização formal.
    // Não inventar quantidade de posições nem evento no motor.
    eventoId:null,posicoesPorPedidoLoop:0,
    classeVisual:classe,
