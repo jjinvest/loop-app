@@ -160,3 +160,24 @@ test('convite por link registra cadastro correto, rejeita fraude e nao libera co
  assert.equal(loja.headers.get('location'),'/loja');
  assert.deepEqual(x.db.prepare('PRAGMA foreign_key_check').all(),[]);
 });
+
+test('escritorio com interface aprovada compartilha a mesma sessao e APIs',async t=>{
+ const x=await preparar(t);
+ const page=await x.consultar('/minha-conta');
+ assert.equal(page.status,200);
+ const html=await page.text();
+ for(const marcador of ['id="loop03ShellIntegrado"','id="loop03SidebarIntegrado"',
+  'id="abaTabuleiro"','id="conteudoPosicoes"','id="conteudoEquipe"',
+  'id="conteudoFinanceiro"','id="formLogin"','id="formCadastro"',
+  'id="formSolicitarRecuperacao"']){
+  assert.ok(html.includes(marcador),'Faltou o contrato unico: '+marcador);
+ }
+ const estilo=await x.consultar('/staging/assets/loop03-aprovado.css');
+ assert.equal(estilo.status,200);
+ assert.match(await estilo.text(),/\.loop03-shell\{/);
+ assert.equal((await x.consultar('/laboratorio/participante')).status,404,
+  'Nao criar rota de laboratorio paralela nesta previa');
+ const compatibilidade=await x.consultar('/staging/assets/cliente-integrado.css');
+ assert.equal(compatibilidade.status,200);
+ assert.match(await compatibilidade.text(),/cliente-integrado/);
+});
