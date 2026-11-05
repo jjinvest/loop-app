@@ -207,6 +207,20 @@ const {once}=require('node:events');
     hasText:/Registro de acompanhamento de laboratório/
    }).waitFor();
    await admin.close();
+   // Mesma identidade visual aprovada, uma sessao e uma navegacao, PC/celular.
+   await page.locator('#loop03ShellIntegrado').waitFor({state:'visible'});
+   assert.equal(await page.locator('#loop03SidebarIntegrado').count(),1);
+   if(item.nome==='celular'){
+    await page.locator('#loop03MenuIntegrado').click();
+    assert.equal(await page.locator('#loop03MenuIntegrado').getAttribute('aria-expanded'),'true');
+   }
+   await page.locator('#abaTabuleiro').click();
+   await page.locator('#estadoTabuleiroIntegrado').filter({hasText:/não representa ocupação real/}).waitFor();
+   await page.locator('#tabuleiroVerPosicoesIntegrado').click();
+   await page.locator('#conteudoPosicoes').waitFor({state:'visible'});
+   if(item.nome==='celular')await page.locator('#loop03MenuIntegrado').click();
+   await page.locator('#abaResumo').click();
+   await page.locator('#conteudoResumo').waitFor({state:'visible'});
    const screenshot=path.join(__dirname,'../artifacts',
     'conta-unica-candidato-'+item.nome+'.png');
    await page.screenshot({path:screenshot,fullPage:true});
