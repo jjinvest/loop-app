@@ -7,6 +7,9 @@ on:
       - 'scripts/servidor-escritorio-preview-railway.js'
       - 'test/servidor-escritorio-preview-railway.test.js'
       - 'src/domain/equipe-candidata-sqlite.js'
+      - 'src/domain/conta-unica-candidata-sqlite.js'
+      - 'src/adapters/email-recuperacao-resend.js'
+      - 'test/recuperacao-senha-candidata.test.js'
       - 'src/candidato/servidor-loja-escritorio-candidato.js'
       - 'src/candidato/checkout-candidato-ui.html'
       - 'src/candidato/checkout-candidato-ui.js'
@@ -35,6 +38,9 @@ jobs:
       - run: node --check src/candidato/servidor-loja-escritorio-candidato.js
       - run: node --check src/candidato/checkout-candidato-ui.js
       - run: node --test test/servidor-escritorio-preview-railway.test.js
+      - run: node --check src/adapters/email-recuperacao-resend.js
+      - run: node --check src/domain/conta-unica-candidata-sqlite.js
+      - run: node --test test/recuperacao-senha-candidata.test.js
       - run: npm test
       - run: npm install --no-save playwright@1.56.1
       - run: npx playwright install --with-deps chromium
