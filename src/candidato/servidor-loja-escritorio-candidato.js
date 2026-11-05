@@ -712,30 +712,10 @@ function criarAppLojaEscritorioCandidato({banco,repositorioCatalogo,
       eventoId:req.body.eventoId,provedor:provedorReconsultaSandbox,
       execucaoLiberada:true
      });
-     // NUNCA gerar posição a partir de webhook bruto. Apenas depois de
-     // GET PSP independente, evento recebido e integridade no MESMO SQLite.
-     // Posições são PENDENTES EM ENSAIO, não confirmadas por CPF/termos.
-     if(r.estado==='CONCLUIDO'&&r.codigo==='PSP_RECONSULTADO'){
-      const aviso=inbox.consultarEvento(req.body.eventoId);
-      if(aviso?.tipo==='PAYMENT_RECEIVED'){
-       try{
-        const m=motorConta.vincularPedidoConferidoSandbox({
-         prepedidoId:aviso.prepedidoId
-        });
-        return res.json({...r,vinculoMotorEnsaio:{
-         estado:m.repetido?'JA_VINCULADO':'PENDENTES_GERADAS',
-         quantidade:m.quantidadePosicoes,apenasEnsaio:true,
-         posicoesComerciais:0,cpfETermosConfirmados:false
-        }});
-       }catch(e){
-        // Falha de posição não reverte a prova PSP, não gera lote parcial e
-        // não repete cobrança. Deixa a pendência auditável para o operador.
-        return res.json({...r,vinculoMotorEnsaio:{
-         estado:'BLOQUEADO',codigo:e.codigo||'LOTE_REQUER_REVISAO',
-         apenasEnsaio:true,posicoesComerciais:0
-        }});
-       }
-      }
+     // O PSP pode comprovar a REVERSAO e, corretamente, classificar
+     // a reconsulta como EXIGE_REVISAO. Mesmo assim, suspender o lote
+     // confirmado, sem criar benefício ou descartar prova histórica.
+     const aviso=inbox.consultarEvento(req.body.eventoId);
       if(['PAYMENT_REFUNDED','PAYMENT_PARTIALLY_REFUNDED',
        'PAYMENT_REFUND_IN_PROGRESS','PAYMENT_CHARGEBACK_REQUESTED',
        'PAYMENT_CHARGEBACK_DISPUTE','PAYMENT_DELETED'].includes(aviso?.tipo)){
@@ -752,6 +732,29 @@ function criarAppLojaEscritorioCandidato({banco,repositorioCatalogo,
         return res.json({...r,vinculoMotorEnsaio:{
          estado:'REVERSAO_EXIGE_REVISAO',codigo:e.codigo||'REVISAO_MANUAL',
          apenasEnsaio:true
+        }});
+       }
+      }
+     // NUNCA gerar posição a partir de webhook bruto. Apenas depois de
+     // GET PSP independente, evento recebido e integridade no MESMO SQLite.
+     // Posições são PENDENTES EM ENSAIO, não confirmadas por CPF/termos.
+     if(r.estado==='CONCLUIDO'&&r.codigo==='PSP_RECONSULTADO'){
+      if(aviso?.tipo==='PAYMENT_RECEIVED'){
+       try{
+        const m=motorConta.vincularPedidoConferidoSandbox({
+         prepedidoId:aviso.prepedidoId
+        });
+        return res.json({...r,vinculoMotorEnsaio:{
+         estado:m.repetido?'JA_VINCULADO':'PENDENTES_GERADAS',
+         quantidade:m.quantidadePosicoes,apenasEnsaio:true,
+         posicoesComerciais:0,cpfETermosConfirmados:false
+        }});
+       }catch(e){
+        // Falha de posição não reverte a prova PSP, não gera lote parcial e
+        // não repete cobrança. Deixa a pendência auditável para o operador.
+        return res.json({...r,vinculoMotorEnsaio:{
+         estado:'BLOQUEADO',codigo:e.codigo||'LOTE_REQUER_REVISAO',
+         apenasEnsaio:true,posicoesComerciais:0
         }});
        }
       }
