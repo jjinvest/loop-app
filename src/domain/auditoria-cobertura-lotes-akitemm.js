@@ -109,13 +109,15 @@ function auditarCoberturaDePedido({fotografia,valorPedidoCentavos,
   dinheiroRealComprovadoCentavos:0,validacaoBancariaExecutada:false
  };
 }
-function auditarCarteiraDePedidosAkitemmLab({banco,sinalizacao,limite=50}={}){
+function auditarCarteiraDePedidosAkitemmLab({banco,sinalizacao,limite=50,offset=0}={}){
  if(process.env.NODE_ENV==='production')falha('AUDITORIA_STAGING_PROIBIDA_PRODUCAO');
  if(typeof banco?.prepare!=='function'||sinalizacao?.db!==banco||
     typeof sinalizacao?.consultarFotografiaPrepedido!=='function')
   falha('FONTES_SQLITE_DO_PEDIDO_OBRIGATORIAS');
  if(!Number.isSafeInteger(limite)||limite<1||limite>100)
   falha('LIMITE_AUDITORIA_INVALIDO');
+ if(!Number.isSafeInteger(offset)||offset<0||offset>1000000000)
+  falha('PAGINA_AUDITORIA_INVALIDA');
  const livros=consultarResumoFinanceiroOperacionalLab({banco});
  const total=banco.prepare('SELECT COUNT(*) AS n FROM akitemm_checkout_prepedidos_staging').get().n;
  const existeLote=!!banco.prepare("SELECT 1 FROM sqlite_master WHERE type='table' AND name='akitemm_motor_ensaio_lotes_pedido'").get();
@@ -149,8 +151,8 @@ function auditarCarteiraDePedidosAkitemmLab({banco,sinalizacao,limite=50}={}){
   'SELECT prepedido_id AS prepedidoId,titular_id AS titularId,',
   'total_centavos AS valorCentavos',
   'FROM akitemm_checkout_prepedidos_staging',
-  'ORDER BY criado_em DESC,prepedido_id DESC LIMIT ?'
- ].join(' ')).all(limite);
+  'ORDER BY criado_em DESC,prepedido_id DESC LIMIT ? OFFSET ?'
+ ].join(' ')).all(limite,offset);
  const resumo={pedidosNaAmostra:rows.length,pedidosTotal:total,
   brutoInsuficiente:0,segmentosInsuficientes:0,
   semComprovacaoDeCustos:0,
@@ -239,7 +241,17 @@ function auditarCarteiraDePedidosAkitemmLab({banco,sinalizacao,limite=50}={}){
    alertas:[...new Set(flags)],aptoParaLiberarReal:false});
  }
  return {modo:'AUDITORIA_COBERTURA_AKITEMM_SOMENTE_ENSAIO',
-  amostraParcial:rows.length<total,temCustosFornecedorComprovados:false,
+  amostraParcial:offset>0||offset+rows.length<total,
+  escopoDosContadores:'PAGINA_ATUAL_NAO_TOTAL_GLOBAL',
+  paginacao:{
+   offset,limite,totalDePedidos:total,
+   quantidadeNaPagina:rows.length,
+   paginaAnteriorOffset:offset>0?Math.max(0,offset-limite):null,
+   proximaPaginaOffset:offset+rows.length<total?offset+rows.length:null,
+   paginaVazia:rows.length===0,
+   ordem:'criado_em_DESC_prepedido_id_DESC'
+  },
+  temCustosFornecedorComprovados:false,
   posicoesReaisCriadas:0,saquesReaisAutorizados:false,
   estoqueOuFreteContratualConfirmado:false,bancoConciliado:false,
   marcoZeroFinanceiroAprovado:false,
