@@ -480,15 +480,19 @@ function criarAppLojaEscritorioCandidato({banco,repositorioCatalogo,
  // custos como conferidos ou dinheiro de Sandbox como banco liquidado.
  app.get('/staging/escritorio-unificado/auditoria-cobertura',
   autorizarOperador,(req,res)=>{
-   if(Object.keys(req.query).some(k=>k!=='limite'))
+   if(Object.keys(req.query).some(k=>!['limite','offset'].includes(k))||
+      ['limite','offset'].some(k=>
+       req.query[k]!==undefined&&
+       (typeof req.query[k]!=='string'||!/^(0|[1-9][0-9]*)$/.test(req.query[k]))))
     return res.status(400).json({erro:'FILTRO_AUDITORIA_INVALIDO'});
    const limite=req.query.limite===undefined?50:Number(req.query.limite);
+   const offset=req.query.offset===undefined?0:Number(req.query.offset);
    try{
     return res.json(auditarCarteiraDePedidosAkitemmLab({
-     banco,sinalizacao:sinalizacaoVitrine,limite
+     banco,sinalizacao:sinalizacaoVitrine,limite,offset
     }));
    }catch(e){
-    return res.status(e.codigo==='LIMITE_AUDITORIA_INVALIDO'?400:503)
+    return res.status(['LIMITE_AUDITORIA_INVALIDO','PAGINA_AUDITORIA_INVALIDA'].includes(e.codigo)?400:503)
      .json({erro:e.codigo||'AUDITORIA_INDISPONIVEL'});
    }
   });
