@@ -311,6 +311,7 @@ async function conferirCoberturaAkitemm(){
    ' · Posições no motor: '+r.resumo.posicoesNoMotorEnsaio+
    ' · Aceites individuais históricos: '+r.resumo.aceitesHistoricosIndividuais+
    ' · Aceites com PSP revertido ou não vigente: '+r.resumo.aceitesSemPSPVigente+
+   ' · Fontes financeiras de ensaio ausentes: '+r.livrosFinanceirosLab.fontesAusentes.length+
    ' · Exposição condicional dos lotes (cenário máximo): '+
     new Intl.NumberFormat('pt-BR',{style:'currency',currency:'BRL'})
      .format(r.resumo.valorCondicionalDosLotesCentavos/100)+
