@@ -443,12 +443,37 @@ function criarAppLojaEscritorioCandidato({banco,repositorioCatalogo,
  // A sessao autentica so pode ler sua parte do tabuleiro.
  // Escritas manuais de ENSAIO exigem operador: webhook bruto ou pre-pedido
  // nao constituem evento ou ativacao comercial.
- const motorConta=new MotorContaUnicaEnsaioSQLite({banco,sinalizacao:sinalizacaoVitrine,ponte});
+ const motorConta=new MotorContaUnicaEnsaioSQLite({
+  banco,sinalizacao:sinalizacaoVitrine,ponte,cpf,termosVersao
+ });
  app.get('/staging/motor/estado',(req,res)=>{
   const s=contas.sessao(req);
   if(!s)return res.status(401).json({erro:'SESSAO_AUSENTE'});
   try{return res.json(motorConta.consultar({titularId:s.titularId}));}
   catch(e){return res.status(503).json({erro:e.codigo||'MOTOR_ENSAIO_INDISPONIVEL'});}
+ });
+ // Aceite explícito, INDIVIDUAL e autenticado do próprio titular.
+ // Nunca há CPF no corpo/retorno: o cadastro cifrado da conta é reutilizado.
+ app.post('/staging/motor/posicoes/confirmar-ensaio',(req,res)=>{
+  const s=contas.sessao(req);
+  if(!s)return res.status(401).json({erro:'SESSAO_AUSENTE'});
+  if(!contas.autorizarMutacao(req))
+   return res.status(403).json({erro:'CSRF_INVALIDO'});
+  if(!req.is('application/json')||!req.body||Array.isArray(req.body)||
+     Object.keys(req.body).sort().join(',')!=='aceiteExplicito,posicaoId,versaoTermos')
+   return res.status(400).json({erro:'CAMPOS_INVALIDOS'});
+  try{
+   const resultado=motorConta.registrarAceitePosicaoEnsaio({
+    titularId:s.titularId,posicaoId:req.body.posicaoId,
+    aceiteExplicito:req.body.aceiteExplicito,
+    versaoTermos:req.body.versaoTermos
+   });
+   return res.status(resultado.repetido?200:201).json(resultado);
+  }catch(e){
+   const codigo=e.codigo||'ACEITE_POSICAO_ENSAIO_INDISPONIVEL';
+   return res.status(codigo==='POSICAO_NAO_PERTENCE_A_CONTA'?404:
+    codigo==='ACEITE_POSICAO_DADOS_INVALIDOS'?400:409).json({erro:codigo});
+  }
  });
  app.get('/staging/escritorio-unificado/motor/estado',autorizarOperador,(_req,res)=>{
   try{return res.json(motorConta.consultar());}
