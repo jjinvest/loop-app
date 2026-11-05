@@ -31,7 +31,8 @@
  }
  function produto(id){return catalogo.find(p=>p.produtoId===id);}
  function corDoProduto(p){
-  if(p.classeVisual==='EVENTO'||(!p.classeVisual&&p.eventoId&&p.posicoesPorPedidoLoop>1))return 'EVENTO';
+  if(p.classeVisual==='ROXO'||p.classeVisual==='EVENTO'||(!p.classeVisual&&p.eventoId&&p.posicoesPorPedidoLoop>1))return 'ROXO';
+  if(p.classeVisual==='DOURADO')return 'DOURADO';
   if(p.classeVisual==='VERDE'||(!p.classeVisual&&p.elegivelLoop))return 'VERDE';
   return 'CINZA';
  }
@@ -43,7 +44,7 @@
   }
  }
  function escolherCor(cor){
-  if(!['CINZA','VERDE','EVENTO'].includes(cor))return;
+  if(!['CINZA','VERDE','DOURADO','ROXO'].includes(cor))return;
   corFiltro=corFiltro===cor?null:cor;
   quantidadeVitrine=12;
   atualizarFiltroCor();mostrarCatalogo();
@@ -286,14 +287,14 @@
   el('akitemmCarregarMais').hidden=filtrados.length<=quantidadeVitrine;
   for(const p of filtrados.slice(0,quantidadeVitrine)){
    const card=document.createElement('article');
-   const especial=!!p.eventoId&&p.posicoesPorPedidoLoop>1;
-   // Classificação imutável compatível com os testes existentes.
+   const classe=corDoProduto(p),especial=classe==='ROXO';
    card.className='produto-loja-loop '+(especial?
-    'produto-loja-loop-especial':p.elegivelLoop?
+    'produto-loja-loop-especial':classe==='DOURADO'?
+    'produto-loja-loop-dourado':classe==='VERDE'?
      'produto-loja-loop-elegivel':'produto-loja-loop-nao-elegivel');
    const imagem=miniatura(p,'akitemm-imagem-produto');
    if(especial){
-    const tarja=document.createElement('strong');tarja.className='tarja-promocao-especial-loop';tarja.textContent='PROMOÇÃO ESPECIAL';
+    const tarja=document.createElement('strong');tarja.className='tarja-promocao-especial-loop';tarja.textContent='EVENTO ESPECIAL';
     imagem.append(tarja);
    }
    const dados=document.createElement('div');dados.className='akitemm-dados-produto';
