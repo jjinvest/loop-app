@@ -210,7 +210,7 @@ const {once}=require('node:events');
    await admin.locator('#resultadoSimulacao')
     .filter({hasText:/Posições criadas: 0/}).waitFor();
    assert.match(await admin.locator('#resultadoSimulacao').innerText(),
-    /referência com produtos verdes em simulação/);
+    /referência com produtos elegíveis em simulação/);
    assert.equal(await admin.locator('#sinalizacaoProdutoId').inputValue(),'curso-homologacao-250');
    const confAdmin=await admin.request.get(
     base+'/staging/escritorio-unificado/sinalizacao/curso-homologacao-250',
