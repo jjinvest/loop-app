@@ -486,3 +486,59 @@ $('prepararEntrega').addEventListener('submit',async e=>{
   await atualizar();dizer('Entrega de teste registrada; não houve entrega comercial.');
  }catch(err){dizer('Operação bloqueada: '+err.message);}finally{b.disabled=false;}
 });
+
+async function atualizarMotorContaEnsaio(){
+ const r=await api('/motor/estado');
+ const area=$('motorEnsaioResumo');area.replaceChildren();
+ area.append(linha('Fila A de ensaio',r.filaA.length),
+  linha('Fila B de ensaio',r.filaB.length),
+  linha('Ocupantes no tabuleiro',Number(Boolean(r.tabuleiro.centro))+
+   r.tabuleiro.vagas.filter(Boolean).length),
+  linha('Eventos de ensaio no ciclo',r.tabuleiro.eventosNoCiclo+'/6'),
+  linha('Giros de ensaio',r.catraca.giros),
+  linha('Catraca',r.catraca.estado));
+ return r;
+}
+async function operacaoMotorContaEnsaio(rota,body,mensagem){
+ const alvo=$('motorEnsaioStatus');
+ alvo.textContent='Conferindo operação de ensaio...';
+ try{
+  const r=await api('/motor/'+rota,{method:'POST',body});
+  await atualizarMotorContaEnsaio();
+  alvo.textContent=mensagem+' · '+(r.motivo||(
+   r.posicaoId?'#'+r.posicaoId:'Motor atualizado'))+
+   ' · Nenhuma movimentação financeira real.';
+ }catch(e){
+  alvo.textContent='Operação não executada: '+e.message;
+ }
+}
+$('motorEnsaioAtualizar').addEventListener('click',()=>{
+ atualizarMotorContaEnsaio().then(()=>
+  $('motorEnsaioStatus').textContent='Leitura do motor no SQLite concluída.')
+  .catch(e=>$('motorEnsaioStatus').textContent='Consulta indisponível: '+e.message);
+});
+$('formMotorEnsaioPedido').addEventListener('submit',async e=>{
+ e.preventDefault();
+ const botao=e.submitter;botao.disabled=true;
+ try{
+  await operacaoMotorContaEnsaio('vincular-pedido',{
+   prepedidoId:$('motorEnsaioPrepedido').value,
+   aceiteEnsaio:$('motorEnsaioCiencia').checked
+  },'Pedido vinculado ao motor de ensaio');
+ }finally{botao.disabled=false;}
+});
+$('motorEnsaioRegistrarEvento').addEventListener('click',async e=>{
+ const botao=e.currentTarget;botao.disabled=true;
+ try{
+  await operacaoMotorContaEnsaio('evento',{
+   prepedidoId:$('motorEnsaioPrepedido').value
+  },'Evento de ensaio conferido');
+ }finally{botao.disabled=false;}
+});
+$('motorEnsaioPreparar').addEventListener('click',()=>operacaoMotorContaEnsaio(
+ 'preparar',{},'Tabuleiro de ensaio preparado'));
+for(const [id,acao] of [['motorEnsaioAbrir','ABRIR'],
+ ['motorEnsaioPausar','PAUSAR'],['motorEnsaioGirar','GIRAR']]){
+ $(id).addEventListener('click',()=>operacaoMotorContaEnsaio(
+  'catraca',{acao},'Catraca de ensaio: '+acao));
+}
