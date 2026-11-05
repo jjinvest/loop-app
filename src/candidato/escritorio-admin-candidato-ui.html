@@ -42,15 +42,16 @@
 </form>
 <p id="resultadoProdutoAdmin" class="subtexto" role="status"></p>
 <h3 id="tituloSinalizacaoAdmin">Cores dos produtos na vitrine</h3>
-<p class="subtexto">Cinza = compra comum; verde = produto sinalizado para LOOP; dourado/roxo = evento especial. Nesta prévia, a cor NÃO cria posições nem direitos financeiros.</p>
+<p class="subtexto">Cinza = compra comum; verde = produto elegível; dourado = produto individual de R$ 250 ou mais; roxo = evento especial sujeito a regras próprias. Estas são cores da LOJA, não das posições/filas do LOOP. Nesta prévia, nenhuma cor cria direitos financeiros.</p>
 <form id="formSinalizacaoAdmin">
 <label for="sinalizacaoProdutoId">Produto do catálogo</label>
 <input id="sinalizacaoProdutoId" readonly required placeholder="Clique em Cor na loja acima">
 <label for="sinalizacaoClasse">Classificação visual</label>
 <select id="sinalizacaoClasse" required>
 <option value="CINZA">Cinza — Compra comum (sem LOOP)</option>
-<option value="VERDE">Verde — Qualifica para o LOOP (somente legenda de teste)</option>
-<option value="EVENTO">Dourado/roxo — Evento especial (somente legenda de teste)</option>
+<option value="VERDE">Verde — Elegível para compra qualificada (laboratório)</option>
+<option value="DOURADO">Dourado — Produto integral a partir de R$ 250 (laboratório)</option>
+<option value="ROXO">Roxo — Evento especial a configurar (laboratório)</option>
 </select>
 <label for="sinalizacaoMinimo">Quantidade mínima de unidades (sinalização da oferta)</label>
 <input id="sinalizacaoMinimo" type="number" step="1" min="1" max="50" value="1" required>
@@ -58,7 +59,7 @@
 </form>
 <p id="resultadoSinalizacaoAdmin" class="subtexto" role="status"></p>
 <h3>Simular a qualificação da compra</h3>
-<p class="subtexto">Verifica apenas cor verde, quantidade mínima e referência de R$ 250 no carrinho. Não confirma pagamento ou CPF, não cria posição e não libera evento especial.</p>
+<p class="subtexto">Confere produtos verdes/dourados e referência de R$ 250 no carrinho. Roxo depende da configuração e aprovação específica do evento. Não confirma pagamento ou CPF, nem cria posições.</p>
 <form id="formSimularQualificacao">
 <label for="produtoSimulado">Produto</label>
 <input id="produtoSimulado" readonly required placeholder="Selecione Cor na loja no produto acima">
