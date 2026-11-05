@@ -43,18 +43,49 @@ function auditarCoberturaDePedido({fotografia,valorPedidoCentavos,
  const referencia=vezes(n,REF);
  const exposicao=vezes(n,EXPOSICAO_TEORICA_CICLO);
  const diferencaBruta=valorPedidoCentavos-referencia;
+ // Um CINZA caro nao pode mascarar um ROXO sem valor suficiente.
+ // VERDE forma apenas um grupo por pedido; ROXO e DOURADO sao
+ // auditados por LINHA de produto, sem compensar deficits individuais.
+ const grupos=[];
+ const verde=calculado.valorVerdeConsideradoCentavos;
+ if(calculado.posicoesVerde)grupos.push({
+  grupo:'VERDE',produtoId:null,subtotalCentavos:verde,
+  posicoes:1,referenciaCentavos:REF
+ });
+ for(const item of fotografia.itens){
+  const classe=item.classificacao==='EVENTO'?'ROXO':item.classificacao;
+  const posicoes=classe==='DOURADO'?item.quantidade:
+   classe==='ROXO'?(item.posicoesPorUnidadeRoxo||0)*item.quantidade:0;
+  if(posicoes)grupos.push({
+   grupo:classe,produtoId:item.produtoId,
+   subtotalCentavos:item.subtotalCentavos,posicoes,
+   referenciaCentavos:vezes(posicoes,REF)
+  });
+ }
+ const segmentosInsuficientes=grupos.filter(g=>
+  g.subtotalCentavos<g.referenciaCentavos).map(g=>({
+   grupo:g.grupo,produtoId:g.produtoId,posicoes:g.posicoes,
+   deficitCentavos:g.referenciaCentavos-g.subtotalCentavos
+  }));
+ const deficitSegmentosCentavos=segmentosInsuficientes.reduce((v,g)=>
+  somar(v,g.deficitCentavos),0);
+ const valorDeProdutosQueGeramPosicaoCentavos=grupos.reduce((v,g)=>
+  somar(v,g.subtotalCentavos),0);
  const custo=validarCustos(custosEstimados);
  const margem= custo===null?null:valorPedidoCentavos-custo-referencia;
  const alertas=[];
  if(calculado.pendenciasConfiguracaoRoxo)alertas.push('EVENTO_ROXO_NAO_CONFIGURADO');
  if(calculado.excedeLimitePorPedido)alertas.push('LIMITE_DEZ_POSICOES');
  if(diferencaBruta<0)alertas.push('REFERENCIA_POR_POSICAO_SUPERA_PRECO_BRUTO');
+ if(segmentosInsuficientes.length)
+  alertas.push('PRODUTO_QUALIFICADOR_COM_COBERTURA_BRUTA_INSUFICIENTE');
  if(custo===null)alertas.push('FORNECEDOR_PSP_TRIBUTOS_FRETE_RESERVAS_SEM_EVIDENCIA');
  else if(margem<0)alertas.push('REFERENCIA_SEM_COBERTURA_APOS_CUSTOS_ESTIMADOS');
  // Nao ha validação de KYC, banco ou legitimidade das bases estimadas.
  alertas.push('FALTA_LIQUIDACAO_BANCARIA_E_COMPROVACAO_EXTERNA');
  return {
   estado:diferencaBruta<0?'BRUTO_INSUFICIENTE':
+   segmentosInsuficientes.length?'SEGMENTO_SEM_COBERTURA_BRUTA':
    custo===null?'CUSTOS_NAO_COMPROVADOS':
     margem<0?'INSUFICIENTE_APOS_CUSTOS_ESTIMADOS':
      'COBERTURA_ARITMETICA_COM_PREMISSAS_NAO_AUDITADAS',
@@ -63,6 +94,10 @@ function auditarCoberturaDePedido({fotografia,valorPedidoCentavos,
   valorBrutoCentavos:valorPedidoCentavos,
   reservaReferenciaPosicoesCentavos:referencia,
   diferencaBrutaAposReferenciaCentavos:diferencaBruta,
+  valorDeProdutosQueGeramPosicaoCentavos,
+  diferencaDeQualificadoresAposReferenciaCentavos:
+   valorDeProdutosQueGeramPosicaoCentavos-referencia,
+  segmentosInsuficientes,deficitSegmentosCentavos,
   custosEstimadosCentavos:custo,
   saldoAposCustosEReferenciaCentavos:margem,
   exposicaoCondicionalSeTodasPosicoesConcluiremCentavos:exposicao,
@@ -89,7 +124,8 @@ function auditarCarteiraDePedidosAkitemmLab({banco,sinalizacao,limite=50}={}){
   'ORDER BY criado_em DESC,prepedido_id DESC LIMIT ?'
  ].join(' ')).all(limite);
  const resumo={pedidosNaAmostra:rows.length,pedidosTotal:total,
-  brutoInsuficiente:0,semComprovacaoDeCustos:0,
+  brutoInsuficiente:0,segmentosInsuficientes:0,
+  semComprovacaoDeCustos:0,
   semFotografiaVigente:0,lotesDivergentes:0,
   lotesSemPSPConferido:0,reversoesOuRevisoes:0,comPSPConferido:0,
   referenciaTotalCalculadaCentavos:0,exposicaoCondicionalCentavos:0};
@@ -125,7 +161,10 @@ function auditarCarteiraDePedidosAkitemmLab({banco,sinalizacao,limite=50}={}){
    resumo.lotesDivergentes++;
   }
   if(resultado.estado==='BRUTO_INSUFICIENTE')resumo.brutoInsuficiente++;
-  if(resultado.estado==='CUSTOS_NAO_COMPROVADOS'||resultado.estado==='BRUTO_INSUFICIENTE')
+  if(resultado.segmentosInsuficientes?.length)resumo.segmentosInsuficientes++;
+  if(resultado.estado==='CUSTOS_NAO_COMPROVADOS'||
+     resultado.estado==='BRUTO_INSUFICIENTE'||
+     resultado.estado==='SEGMENTO_SEM_COBERTURA_BRUTA')
    resumo.semComprovacaoDeCustos++;
   if(resultado.totalPosicoesPlanejadas===undefined)resumo.semFotografiaVigente++;
   resumo.referenciaTotalCalculadaCentavos=somar(
@@ -139,6 +178,8 @@ function auditarCarteiraDePedidosAkitemmLab({banco,sinalizacao,limite=50}={}){
    posicoesNoMotorEnsaio:lotes,pspSandboxConferido:confirmado,
    saldoBrutoAposReservaCentavos:resultado.diferencaBrutaAposReferenciaCentavos??null,
    referenciaCentavos:resultado.reservaReferenciaPosicoesCentavos??null,
+   deficitQualificadoresCentavos:resultado.deficitSegmentosCentavos??null,
+   segmentosInsuficientes:resultado.segmentosInsuficientes??[],
    alertas:[...new Set(flags)],aptoParaLiberarReal:false});
  }
  return {modo:'AUDITORIA_COBERTURA_AKITEMM_SOMENTE_ENSAIO',
