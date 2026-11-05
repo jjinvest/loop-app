@@ -80,11 +80,13 @@ const {once}=require('node:events');
    await page.locator('#atalhoPosicoes').click();
    await page.locator('#posicoesPainel').filter({hasText:/Nenhuma posição comercial ativada/}).waitFor();
    await page.locator('#abaLinks').click();
+   await page.waitForFunction(()=>document.getElementById('linkLoja').value.endsWith('/staging/loja'));
    assert.match(await page.locator('#linkLoja').inputValue(),/staging\/loja$/);
    assert.match(await page.locator('#linkEscritorio').inputValue(),/minha-conta$/);
    await page.locator('#abaFinanceiro').click();
    assert.match(await page.locator('#estadoFinanceiro').innerText(),/Nenhum saldo comercial/);
    await page.locator('#abaConta').click();
+   await page.locator('#perfilCliente').filter({hasText:new RegExp(item.nick,'i')}).waitFor();
    assert.match(await page.locator('#perfilCliente').innerText(),new RegExp(item.nick,'i'));
    await page.locator('#abaMeusPedidos').click();
    // Também verificar o Escritório do Administrador no MESMO SQLite.
