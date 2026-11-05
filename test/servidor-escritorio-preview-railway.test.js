@@ -71,7 +71,11 @@ test('gateway exige acesso antes de HTML e rotas administrativas',async t=>{
  assert.equal((await x.consultar('/api/checkout/finalizar')).status,404);
  assert.equal((await x.consultar('/')).status,302);
  assert.equal((await x.consultar('/minha-conta')).status,200);
- assert.equal((await x.consultar('/loja')).status,200);
+ const loja=await x.consultar('/loja');
+ assert.equal(loja.status,302,'vitrine redireciona para rota local da vitrine');
+ const alvo=loja.headers.get('location');
+ assert.match(alvo,/^\/staging\//);
+ assert.equal((await x.consultar(alvo)).status,200);
 });
 test('cadastro de ensaio cria conta no mesmo SQLite e financeiros permanecem bloqueados',async t=>{
  const x=await preparar(t);
