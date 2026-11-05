@@ -48,3 +48,23 @@ button:disabled{opacity:.5;cursor:not-allowed}.primario{background:linear-gradie
 .alternar-acesso{display:block;margin:1rem 0 .2rem;background:transparent;
  color:#f2d894;border:0;text-decoration:underline;text-align:left;padding:.4rem .1rem}
 .alternar-acesso:hover,.alternar-acesso:focus-visible{color:#fff}
+
+/* Campo original preservado; olho embutido sem deslocar labels ou botoes. */
+.envoltorio-senha{position:relative;display:block}
+.envoltorio-senha input{padding-right:3.6rem}
+.envoltorio-senha .alternar-visibilidade{
+ position:absolute;right:.35rem;top:50%;transform:translateY(-50%);
+ width:2.75rem;height:2.65rem;min-height:0;padding:0;
+ border:0;background:transparent;color:#f5da91;font-size:1.35rem;
+ display:flex;align-items:center;justify-content:center;cursor:pointer
+}
+.envoltorio-senha .alternar-visibilidade[aria-pressed="true"]{
+ background:#423b29;border-radius:8px
+}
+.envoltorio-senha .alternar-visibilidade:focus-visible{
+ outline:2px solid #eac774;outline-offset:-2px
+}
+#painelRecuperacao form{margin-top:.8rem}
+#painelRecuperacao form .primario{margin-top:1rem;width:100%}
+#estadoRecuperacao:not(:empty){padding:.65rem .8rem;margin:.75rem 0;
+ border:1px solid #766b4e;background:#24221e;border-radius:8px}
