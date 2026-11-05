@@ -2402,3 +2402,18 @@ Após o proprietário experimentar o formulário no Android, o mínimo rígido d
 A suíte geral e a navegação Chromium PC/celular com senha de 8 caracteres passaram em https://github.com/jjinvest/loop-app/actions/runs/42018023685. Nova execução com asserts explícitos de minlength/maxlength: https://github.com/jjinvest/loop-app/actions/runs/42018168464. Prévia Railway pinada no commit 6da8b5b97b6947ccd4732a33884e9254f6cec6ce, deploy SUCCESS, preservando o volume SQLite e mantendo PR #1 DRAFT, sem operação comercial.
 
 Não transportar esta política de senha curta automaticamente para a produção: revisar autenticação, proteção contra abuso, recuperação segura e suporte a senhas longas antes de lançar.
+
+
+### 213 — Olhinho e recuperação de senha por e-mail no Escritório (05/11/2026)
+
+Solicitação do proprietário: preservar a apresentação aprovada dos campos de cadastro/login, acrescentar controle visual de mostrar/ocultar senha e disponibilizar recuperação **através do e-mail cadastrado**, com o fluxo convencional.
+
+Na branch independente de homologação `feature/escritorio-preview-protegido-20261105`, os campos de senha do login, cadastro, troca e recuperação receberam o botão `👁`, `type=button`, `aria-label` e `aria-pressed`. O botão muda o tipo do input sem alterar seu valor, sem redesenhar as telas e sem enviar informações. O login passou a oferecer `Esqueci minha senha`, que abre formulário de e-mail; se o transportador estiver configurado, o servidor envia código de oito dígitos válido por 15 minutos para aquele endereço, exige código + senha nova e encerra todas as sessões do titular em uma única transação SQLite.
+
+Proteções: HMAC do código no banco, 5 tentativas por desafio, cooldown de 2 minutos e máximo 3 solicitações por hora por conta, uso único, bloqueio de códigos expirados e ausência de enumeração de e-mails (retorno 202 genérico para conhecidos/desconhecidos). O serviço de recuperação também respeita a custódia criptográfica existente; não expõe senha antiga, segredo, código ou e-mail em logs ou URL. Testes incluem e-mail existente/inexistente, tentativa inválida, reutilização, revogação das sessões e integridade SQLite. Adaptador Resend isolado com timeout e validação do aceite do provedor; nenhum segredo em GitHub.
+
+**Bloqueio externo real:** o serviço Railway `akitemm-escritorio-preview` **não possui** `RESEND_API_KEY` nem `RESEND_FROM_EMAIL` configurados. Consequentemente, a opção existe na interface mas o botão informa `a recuperação por e-mail ainda não está configurada neste ambiente`; não finge enviar e-mail e não altera senha. É preciso confirmar domínio remetente no Resend e provisionar as duas variáveis de forma privada no serviço antes de testar a entrega real. O gateway apenas habilita o transportador com ambas as variáveis e chave de recuperação derivada do segredo privado já custodiado; variável incompleta bloqueia o startup em vez de permitir configuração parcial.
+
+[CI aprovado — testes de segurança, suíte completa e Chromium PC/celular](https://github.com/jjinvest/loop-app/actions/runs/42021902710). Deploy do preview independente em Railway SUCCESS no commit `2769bf5980147b020a180cdc0200c75f5becf02e`, mesmo volume `/dados-preview` preservado, serviço `asaas-webhook-staging` online separado. PR #1 permanece DRAFT, sem merge, sem checkout comercial e sem operações financeiras reais.
+
+**Atenção ao lançamento:** esta implementação é homologação funcional, não substitui controles de segurança e conformidade de conta pública, validação da titularidade do e-mail na inscrição, prevenção de abuso em escala, observabilidade nem revisão de proteção de dados. Desbloquear apenas depois de comprovar envio/recepção e execução ponta a ponta com remetente verificado.
