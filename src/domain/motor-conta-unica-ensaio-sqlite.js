@@ -4,6 +4,7 @@
 // Bloqueio absoluto em NODE_ENV=production e sem rotas publicas de escrita.
 const {SimuladorLoop}=require('./simulador-loop');
 const {LIMITE_POSICOES_ATIVAS}=require('./capacidade-posicoes-loop');
+const {planejarPosicoesCompraAkitemm}=require('./plano-posicoes-compra-akitemm');
 const PEDIDO=/^hom-[a-f0-9-]{36}$/;
 const TITULAR=/^titular-[a-f0-9-]{36}$/;
 function falha(codigo){const e=new Error(codigo);e.codigo=codigo;throw e;}
@@ -28,6 +29,10 @@ class MotorContaUnicaEnsaioSQLite{
    'titular_id TEXT,numero_posicao INTEGER,criado_em INTEGER NOT NULL);',
    'CREATE UNIQUE INDEX IF NOT EXISTS idx_motor_ensaio_prepared_once',
    "ON akitemm_motor_conta_ensaio_operacoes(prepedido_id) WHERE tipo='VINCULAR_PEDIDO';",
+   'CREATE TABLE IF NOT EXISTS akitemm_motor_ensaio_lotes_pedido(',
+   'prepedido_id TEXT NOT NULL,ordinal INTEGER NOT NULL CHECK(ordinal BETWEEN 1 AND 10),',
+   'titular_id TEXT NOT NULL,numero_posicao INTEGER NOT NULL UNIQUE,',
+   'PRIMARY KEY(prepedido_id,ordinal));',
    'CREATE INDEX IF NOT EXISTS idx_motor_ensaio_giros',
    'ON akitemm_motor_conta_ensaio_operacoes(tipo,criado_em);'
   ].join(' '));
@@ -85,12 +90,24 @@ class MotorContaUnicaEnsaioSQLite{
    const foto=this.sinalizacao.consultarFotografiaPrepedido({
     prepedidoId,titularId:pedido.titularId
    });
-   if(pedido.totalCentavos<25000||
-      foto?.totalCentavos!==pedido.totalCentavos||
+   if(foto?.totalCentavos!==pedido.totalCentavos)
+    falha('FOTOGRAFIA_HISTORICA_INCONSISTENTE');
+   // Fotografias anteriores à regra mista seguem estritamente o contrato
+   // legado: uma posição verde; nunca reinterpretar pedidos antigos.
+   let quantidade=1;
+   if(foto?.planejamentoPosicoes){
+    const plano=planejarPosicoesCompraAkitemm(foto.itens);
+    if(JSON.stringify(plano)!==JSON.stringify(foto.planejamentoPosicoes)||
+       !plano.podeVincularEnsaio||
+       plano.valorTotalCentavos!==pedido.totalCentavos)
+     falha('PLANEJAMENTO_PEDIDO_NAO_QUALIFICA_ENSAIO');
+    quantidade=plano.quantidadePosicoesPrevistas;
+   }else if(pedido.totalCentavos<25000||
       foto?.referenciaVerdeAtingida!==true||
       foto?.valorVerdeConsideradoCentavos<25000||
-      foto?.podeSimularFilaBAzul!==true||foto?.eventoPendente===true)
+      foto?.podeSimularFilaBAzul!==true||foto?.eventoPendente===true){
     falha('PEDIDO_NAO_QUALIFICA_ENSAIO_MOTOR');
+   }
    const anterior=this.banco.prepare([
     'SELECT numero_posicao AS posicaoId,titular_id AS titularId',
     'FROM akitemm_motor_conta_ensaio_operacoes',
@@ -99,21 +116,38 @@ class MotorContaUnicaEnsaioSQLite{
    if(anterior){
     if(anterior.titularId!==pedido.titularId)
      falha('INTEGRIDADE_TITULAR_MOTOR');
+    const posicoes=this.banco.prepare([
+     'SELECT numero_posicao AS id FROM akitemm_motor_ensaio_lotes_pedido',
+     'WHERE prepedido_id=? ORDER BY ordinal'
+    ].join(' ')).all(prepedidoId).map(p=>p.id);
+    if(!posicoes.length)posicoes.push(anterior.posicaoId);
     return {repetido:true,posicaoId:anterior.posicaoId,
+     posicoesIds:posicoes,quantidadePosicoes:posicoes.length,
      apenasEnsaio:true,posicoesReais:0,financeiroReal:false};
    }
    if(!TITULAR.test(pedido.titularId))falha('TITULAR_MOTOR_INVALIDO');
-   if(this._contarAtivas(sim,pedido.titularId)>=LIMITE_POSICOES_ATIVAS)
+   if(!Number.isSafeInteger(quantidade)||quantidade<1||quantidade>LIMITE_POSICOES_ATIVAS||
+      this._contarAtivas(sim,pedido.titularId)+quantidade>LIMITE_POSICOES_ATIVAS)
     falha('LIMITE_DEZ_POSICOES_MOTOR_ENSAIO');
-   const r=sim.registrarPosicaoSimulada({
-    participanteId:pedido.titularId,vendaId:'ensaio:'+prepedidoId,
-    adesaoPendente:true
-   });
-   if(r.repetida)falha('INDICE_PEDIDO_MOTOR_INCONSISTENTE');
+   const posicoesIds=[];
+   for(let indice=1;indice<=quantidade;indice++){
+    const r=sim.registrarPosicaoSimulada({
+     participanteId:pedido.titularId,
+     vendaId:'ensaio:'+prepedidoId+(indice===1?'':':'+indice),
+     adesaoPendente:true
+    });
+    if(r.repetida)falha('INDICE_PEDIDO_MOTOR_INCONSISTENTE');
+    posicoesIds.push(r.posicao.id);
+    this.banco.prepare([
+     'INSERT INTO akitemm_motor_ensaio_lotes_pedido',
+     '(prepedido_id,ordinal,titular_id,numero_posicao) VALUES(?,?,?,?)'
+    ].join(' ')).run(prepedidoId,indice,pedido.titularId,r.posicao.id);
+   }
    this._evento('VINCULAR_PEDIDO',{
-    prepedidoId,titularId:pedido.titularId,posicaoId:r.posicao.id
+    prepedidoId,titularId:pedido.titularId,posicaoId:posicoesIds[0]
    });
-   return {repetido:false,posicaoId:r.posicao.id,
+   return {repetido:false,posicaoId:posicoesIds[0],
+    posicoesIds,quantidadePosicoes:posicoesIds.length,
     apenasEnsaio:true,posicoesReais:0,financeiroReal:false};
   });
  }
