@@ -5,6 +5,7 @@
 // aqui pode ativar saques, giros, PSP comercial ou posicoes reais.
 const {planejarPosicoesCompraAkitemm}=require('./plano-posicoes-compra-akitemm');
 const {consultarPedido}=require('./relatorio-homologacao-checkout-staging');
+const {consultarResumoFinanceiroOperacionalLab}=require('./resumo-financeiro-operacional-lab');
 const REF=25000, EXPOSICAO_TEORICA_CICLO=75000;
 const CAMPOS_CUSTO=Object.freeze(['fornecedorCentavos','pspCentavos',
  'tributosCentavos','freteSuportadoCentavos','reservaReembolsosCentavos',
@@ -115,6 +116,7 @@ function auditarCarteiraDePedidosAkitemmLab({banco,sinalizacao,limite=50}={}){
   falha('FONTES_SQLITE_DO_PEDIDO_OBRIGATORIAS');
  if(!Number.isSafeInteger(limite)||limite<1||limite>100)
   falha('LIMITE_AUDITORIA_INVALIDO');
+ const livros=consultarResumoFinanceiroOperacionalLab({banco});
  const total=banco.prepare('SELECT COUNT(*) AS n FROM akitemm_checkout_prepedidos_staging').get().n;
  const existeLote=!!banco.prepare("SELECT 1 FROM sqlite_master WHERE type='table' AND name='akitemm_motor_ensaio_lotes_pedido'").get();
  const existeAceite=!!banco.prepare("SELECT 1 FROM sqlite_master WHERE type='table' AND name='akitemm_motor_ensaio_aceites_posicao'").get();
@@ -226,6 +228,20 @@ function auditarCarteiraDePedidosAkitemmLab({banco,sinalizacao,limite=50}={}){
   marcoZeroFinanceiroAprovado:false,
   custosBonificacaoComprovados:false,reservasBancariasDisponiveisComprovadas:false,
   pagamentosDoPSPSaoSomenteSandbox:true,somenteLeitura:true,
+  livrosFinanceirosLab:{
+   fontesAusentes:livros.fontesAusentes,
+   fontesDocumentaisCompletas:livros.fontesAusentes.length===0,
+   provisoesDeCiclosNaoLiquidadasCentavos:livros.ciclos?.previstoCentavos??null,
+   provisoesDeParcelasNaoLiquidadasCentavos:livros.parcelas?.previstoCentavos??null,
+   bonusSolicitadoNoEnsaioCentavos:livros.bonus?.solicitadoBrutoCentavos??null,
+   saquesCentroSolicitadosNoEnsaioCentavos:livros.centro?.solicitadoCentavos??null,
+   gestaoCofresPendenteNoEnsaioCentavos:livros.gestao?.solicitadoCentavos??null,
+   destinosProjetadosPorCofre:livros.destinosPrevistosPorCofre,
+   destinosDesconhecidos:livros.destinosDesconhecidos,
+   dadosDaLojaNaoEquivalemAoLivroFinanceiro:true,
+   provisoesNaoSaoCaixaReal:true,saquesReais:0,
+   extratosBancariosConciliados:false
+  },
   resumo,pedidos};
 }
 module.exports={auditarCoberturaDePedido,auditarCarteiraDePedidosAkitemmLab,
