@@ -16,7 +16,7 @@ const auth='Basic '+Buffer.from('acesso:'+senha).toString('base64');
 async function preparar(t){
  const db=new DatabaseSync(':memory:');
  db.exec('PRAGMA foreign_keys=ON;PRAGMA journal_mode=WAL;');
- const {app}=criarAppLojaEscritorioCandidato({
+ const {app,equipe}=criarAppLojaEscritorioCandidato({
   banco:db,repositorioCatalogo:catalogoFicticioCheckout(),
   chaveEmail:randomBytes(32),chaveCifra:randomBytes(32),
   segredoOperador:operador,termosVersao:'LAB-preview-teste-2026',
@@ -25,7 +25,8 @@ async function preparar(t){
  const backend=app.listen(0,'127.0.0.1');
  await once(backend,'listening');
  const gateway=criarGateway({portaInterna:backend.address().port,
-  senhaAcesso:senha,segredoOperador:operador});
+  senhaAcesso:senha,segredoOperador:operador,
+  validarNickIndicador:nick=>equipe.existeNick(nick)});
  gateway.listen(0,'127.0.0.1');
  await once(gateway,'listening');
  t.after(async()=>{
@@ -108,4 +109,54 @@ test('origem remota forjada bloqueada, sem abrir financeiro',async t=>{
  });
  assert.equal(r.status,403);
  assert.equal((await x.consultar('/healthz')).status,200);
+});
+test('convite por link registra cadastro correto, rejeita fraude e nao libera comissao',async t=>{
+ const x=await preparar(t);
+ const cadastrar=(nick,headers={})=>x.consultar('/staging/contas/cadastrar',{
+  method:'POST',headers:{'Content-Type':'application/json',...headers},
+  body:JSON.stringify({nome:nick+' Exemplo',nick,
+   email:nick.toLowerCase()+'@example.invalid',
+   senha:'SenhaFicticiaForte2026!',aceiteExplicito:true})
+ });
+ assert.equal((await cadastrar('Alice')).status,201);
+ assert.equal((await x.consultar('/escritorio/Ghost')).status,404);
+ const refLink=await x.consultar('/escritorio/Alice');
+ assert.equal(refLink.status,302);
+ assert.equal(refLink.headers.get('location'),'/minha-conta');
+ const cookie=refLink.headers.getSetCookie()
+  .find(s=>s.startsWith('akitemm_preview_ref='));
+ assert.ok(cookie,'cookie de vinculo existe');
+ assert.match(cookie,/HttpOnly/);assert.match(cookie,/Secure/);
+ assert.equal((await cadastrar('Bruna',{Cookie:cookie.split(';')[0],
+  'X-Akitemm-Preview-Indicador':'Mallory'})).status,201);
+ assert.equal((await cadastrar('Clara',{Cookie:
+  'akitemm_preview_ref=v1.alice.1234567890123.'+'a'.repeat(64),
+  'X-Akitemm-Preview-Indicador':'Alice'})).status,201);
+ const login=async nick=>{
+  const r=await x.consultar('/staging/contas/entrar',{
+   method:'POST',headers:{'Content-Type':'application/json'},
+   body:JSON.stringify({nick,senha:'SenhaFicticiaForte2026!'})
+  });
+  assert.equal(r.status,200);
+  return r.headers.getSetCookie().find(s=>s.startsWith('loop_candidato_s=')).split(';')[0];
+ };
+ const a=await login('Alice'),b=await login('Bruna');
+ const resposta=await x.consultar('/staging/minha-equipe',{headers:{Cookie:a}});
+ assert.equal(resposta.status,200);
+ const equipe=await resposta.json();
+ assert.equal(equipe.total,1);
+ assert.deepEqual(equipe.cadastros.map(p=>p.nick),['bruna']);
+ assert.equal(equipe.proximaPagina,null);
+ assert.equal(equipe.bonificacoesReais,0);
+ assert.equal(equipe.indicacoesQualificadas,0);
+ assert.equal(JSON.stringify(equipe).includes('example.invalid'),false);
+ const soBruna=await x.consultar('/staging/minha-equipe',{headers:{Cookie:b}});
+ assert.equal((await soBruna.json()).total,0);
+ assert.equal((await x.consultar('/staging/minha-equipe')).status,401);
+ assert.equal((await x.consultar('/staging/minha-equipe?pagina=NaN',
+  {headers:{Cookie:a}})).status,400);
+ const loja=await x.consultar('/loja/alice');
+ assert.equal(loja.status,302);
+ assert.equal(loja.headers.get('location'),'/loja');
+ assert.deepEqual(x.db.prepare('PRAGMA foreign_key_check').all(),[]);
 });
