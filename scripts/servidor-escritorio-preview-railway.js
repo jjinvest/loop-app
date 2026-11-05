@@ -75,8 +75,9 @@ function criarGateway({portaInterna,senhaAcesso,segredoOperador}={}){
    return negar(401,'Acesso exclusivo para homologação',{
     'WWW-Authenticate':'Basic realm="AKITEMM - Acesso de teste", charset="UTF-8"'
    });
+  const agora=String(Date.now());
   const novoCookie=basicaValida&&!sessaoValida?
-   sessaoNome+'=v1.'+Date.now()+'.'+assinar(String(Date.now()))+
+   sessaoNome+'=v1.'+agora+'.'+assinar(agora)+
    '; HttpOnly; Secure; SameSite=Strict; Path=/; Max-Age=43200':null;
   const origem=req.headers.origin;
   if(origem){
