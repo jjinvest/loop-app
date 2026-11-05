@@ -72,6 +72,7 @@
    <button type="button" role="tab" id="abaPreparar" aria-controls="conteudoPreparar" aria-selected="false" tabindex="-1">Comprar</button>
    <button type="button" role="tab" id="abaMeusPedidos" aria-controls="conteudoMeusPedidos" aria-selected="false" tabindex="-1">Meus Pedidos</button>
    <button type="button" role="tab" id="abaPosicoes" aria-controls="conteudoPosicoes" aria-selected="false" tabindex="-1">Minhas Posições</button>
+   <button type="button" role="tab" id="abaEquipe" aria-controls="conteudoEquipe" aria-selected="false" tabindex="-1">Minha Equipe</button>
    <button type="button" role="tab" id="abaLinks" aria-controls="conteudoLinks" aria-selected="false" tabindex="-1">Meus Links</button>
    <button type="button" role="tab" id="abaFinanceiro" aria-controls="conteudoFinanceiro" aria-selected="false" tabindex="-1">Financeiro</button>
    <button type="button" role="tab" id="abaConta" aria-controls="conteudoConta" aria-selected="false" tabindex="-1">Minha Conta</button>
@@ -83,6 +84,7 @@
     <div><strong id="resumoPedidos">—</strong><span>Meus Pedidos</span></div>
     <div><strong id="resumoPosicoes">—</strong><span>Posições de ensaio</span></div>
     <div><strong id="resumoEmail">—</strong><span>E-mail</span></div>
+    <div><strong id="resumoEquipe">—</strong><span>Cadastros por meu link</span></div>
    </div>
    <div class="atalhos-cliente">
     <button type="button" id="atalhoPedidos" class="primario">Ver meus pedidos</button>
@@ -124,6 +126,14 @@
    <button type="button" id="posicoesVerPedidos">Ver meus pedidos</button>
    <p class="subtexto">Esta consulta não coloca ninguém em fila comercial e não inicia giros.</p>
   </section>
+  <section class="painel" id="conteudoEquipe" role="tabpanel" aria-labelledby="abaEquipe" hidden>
+   <div class="linha"><h2>Minha Equipe</h2><button type="button" id="atualizarEquipe">Atualizar</button></div>
+   <p id="equipeResumo" aria-live="polite">Consultando minha equipe…</p>
+   <div id="listaEquipe" aria-live="polite"></div>
+   <button type="button" id="maisEquipe" hidden>Mostrar mais cadastros</button>
+   <button type="button" id="equipeVerLinks">Ver meus links de convite</button>
+   <p class="subtexto">Os cadastros de ensaio realizados por seu link aparecem aqui com o nick. Ainda não são indicações comerciais válidas, não geram comissões e não movimentam posições.</p>
+  </section>
   <section class="painel" id="conteudoLinks" role="tabpanel" aria-labelledby="abaLinks" hidden>
    <h2>Meus Links</h2>
    <p id="linksNick">Conta autenticada</p>
@@ -131,7 +141,7 @@
    <button type="button" id="copiarLinkLoja">Copiar link da loja</button>
    <label for="linkEscritorio">Meu Escritório</label><input id="linkEscritorio" readonly>
    <button type="button" id="copiarLinkEscritorio">Copiar link do Escritório</button>
-   <p class="subtexto">Estes links abrem as páginas. O vínculo de indicação e suas bonificações ainda não estão habilitados; copiar um link não registra indicação.</p>
+   <p class="subtexto">Links personalizados de ensaio: quem fizer um novo cadastro a partir deles será registrado em Minha Equipe. Apenas o cadastro é vinculado; não há bônus, posição ou indicação comercial válida nesta fase.</p>
   </section>
   <section class="painel" id="conteudoFinanceiro" role="tabpanel" aria-labelledby="abaFinanceiro" hidden>
    <h2>Painel Financeiro</h2>

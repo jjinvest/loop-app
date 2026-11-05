@@ -4,10 +4,10 @@
 const API='/staging';
 let cotacaoEscolhida=null;
 const $=id=>document.getElementById(id);
-let csrf=null,aprovada=false,aba='conteudoResumo';
+let csrf=null,aprovada=false,aba='conteudoResumo',proximaPaginaEquipe=null;
 const ABAS=[['abaResumo','conteudoResumo'],['abaPreparar','conteudoPreparar'],
  ['abaMeusPedidos','conteudoMeusPedidos'],['abaPosicoes','conteudoPosicoes'],
- ['abaLinks','conteudoLinks'],['abaFinanceiro','conteudoFinanceiro'],
+ ['abaEquipe','conteudoEquipe'],['abaLinks','conteudoLinks'],['abaFinanceiro','conteudoFinanceiro'],
  ['abaConta','conteudoConta']];
 const moeda=v=>new Intl.NumberFormat('pt-BR',{style:'currency',currency:'BRL'}).format(v/100);
 const dizer=msg=>{$('mensagem').textContent=msg;};
@@ -34,7 +34,7 @@ function mostrarSessao(ativa){
  $('painelCadastro').hidden=ativa;
  $('painelConta').hidden=!ativa;
  if(!ativa){csrf=null;aprovada=false;$('prepararPedido').disabled=true;
-  $('senha').value='';}
+  $('senha').value='';proximaPaginaEquipe=null;}
 }
 function mostrarAba(alvo){
  aba=alvo;
@@ -47,6 +47,7 @@ function mostrarAba(alvo){
  if(alvo==='conteudoMeusPedidos')atualizarPedidos();
  if(alvo==='conteudoResumo')atualizarResumo();
  if(alvo==='conteudoPosicoes')atualizarPosicoes();
+ if(alvo==='conteudoEquipe')atualizarEquipe(0);
  if(alvo==='conteudoLinks')atualizarLinks();
  if(alvo==='conteudoConta')atualizarConta();
 }
@@ -229,14 +230,15 @@ async function confirmarCodigoEmail(e){
 
 async function atualizarResumo(){
  try{
-  const [perfil,pedidos,filas]=await Promise.all([
+  const [perfil,pedidos,filas,equipe]=await Promise.all([
    requisitar('/contas/me'),requisitar('/meus-pedidos'),
-   requisitar('/minha-previa-filas')
+   requisitar('/minha-previa-filas'),requisitar('/minha-equipe')
   ]);
   $('boasVindas').textContent='Bem-vindo, '+perfil.nome+' · @'+perfil.nick;
   $('resumoPedidos').textContent=String(pedidos.pedidos?.length||0);
   $('resumoPosicoes').textContent=String(filas.meusPendentesHistoricos||0);
   $('resumoEmail').textContent=perfil.emailVerificado?'Confirmado':'Pendente';
+  $('resumoEquipe').textContent=String(equipe.total);
   $('linksNick').textContent='Seu nick: @'+perfil.nick;
  }catch(e){dizer('Não foi possível atualizar a visão geral: '+e.message);}
 }
@@ -250,12 +252,36 @@ async function atualizarPosicoes(){
    ' Nenhuma posição comercial ativada.';
  }catch(e){$('posicoesPainel').textContent='Consulta indisponível: '+e.message;}
 }
+async function atualizarEquipe(pagina=0){
+ try{
+  const dados=await requisitar('/minha-equipe?pagina='+pagina);
+  if(pagina===0)$('listaEquipe').replaceChildren();
+  $('equipeResumo').textContent=dados.total+
+   ' cadastro(s) por seus links nesta prévia. Indicações comerciais válidas: 0.';
+  if(pagina===0&&dados.total===0){
+   const vazio=document.createElement('p');
+   vazio.textContent='Sua equipe ainda não possui cadastros de teste. Compartilhe o link em Meus Links.';
+   $('listaEquipe').append(vazio);
+  }
+  for(const pessoa of dados.cadastros){
+   const linha=document.createElement('p');
+   linha.className='pedido';
+   linha.textContent='@'+pessoa.nick+' · Cadastro em '+
+    new Date(pessoa.registradoEm).toLocaleString('pt-BR');
+   $('listaEquipe').append(linha);
+  }
+  proximaPaginaEquipe=dados.proximaPagina;
+  $('maisEquipe').hidden=proximaPaginaEquipe===null;
+ }catch(e){
+  $('equipeResumo').textContent='Não foi possível consultar sua equipe: '+e.message;
+ }
+}
 async function atualizarLinks(){
  try{
   const perfil=await requisitar('/contas/me');
   $('linksNick').textContent='Seu nick: @'+perfil.nick;
-  $('linkLoja').value=location.origin+'/staging/loja';
-  $('linkEscritorio').value=location.origin+'/minha-conta';
+  $('linkLoja').value=location.origin+'/loja/'+perfil.nick;
+  $('linkEscritorio').value=location.origin+'/escritorio/'+perfil.nick;
  }catch(e){dizer('Não foi possível consultar seus links: '+e.message);}
 }
 async function copiarLink(id){
@@ -438,6 +464,11 @@ $('atualizarPedidos').addEventListener('click',atualizarPedidos);
 $('sair').addEventListener('click',sair);
 $('atualizarResumo').addEventListener('click',atualizarResumo);
 $('atualizarPosicoes').addEventListener('click',atualizarPosicoes);
+$('atualizarEquipe').addEventListener('click',()=>atualizarEquipe(0));
+$('maisEquipe').addEventListener('click',()=>{
+ if(proximaPaginaEquipe!==null)atualizarEquipe(proximaPaginaEquipe);
+});
+$('equipeVerLinks').addEventListener('click',()=>mostrarAba('conteudoLinks'));
 $('atalhoPedidos').addEventListener('click',()=>mostrarAba('conteudoMeusPedidos'));
 $('atalhoPosicoes').addEventListener('click',()=>mostrarAba('conteudoPosicoes'));
 $('atalhoLoja').addEventListener('click',()=>{location.href='/staging/loja';});
