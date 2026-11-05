@@ -18,7 +18,7 @@ const errosTraduzidos={
  NICK_INVALIDO:'Seu nick deve ter apenas letras, com até 9 caracteres.',
  NOME_INVALIDO:'Confira o nome informado.',
  EMAIL_INVALIDO:'Confira o e-mail informado.',
- SENHA_INVALIDA:'A senha deve ter pelo menos 12 caracteres.',
+ SENHA_INVALIDA:'Confira a senha informada.',
  CADASTRO_JA_EXISTENTE:'Este nick ou e-mail já está cadastrado. Use a opção Já tenho cadastro.',
  TERMOS_LAB_NAO_ACEITOS:'Marque a confirmação dos termos para continuar.',
  CADASTRO_INDISPONIVEL:'O cadastro está indisponível. Tente novamente.'
