@@ -13,7 +13,7 @@ const CUSTOMER='cus_TestadorPagamentoSandbox2026';
 const PAYMENT='pay_TestadorPagamentoSandbox2026';
 test('webhook bruto nao gera posicoes; PSP reconsultado cria lote ROXO pendente unico, sem direito',async t=>{
  const db=new DatabaseSync(':memory:');db.exec('PRAGMA foreign_keys=ON');
- let gets=0,posts=0;
+ let gets=0,posts=0,estadoPSP='RECEIVED';
  const provedor={
   ambiente:'ASAAS_SANDBOX_EXCLUSIVO',
   async criarCobrancaPix({valorCentavos}){
@@ -24,7 +24,7 @@ test('webhook bruto nao gera posicoes; PSP reconsultado cria lote ROXO pendente 
   },
   async consultarCobranca(id){
    gets++;assert.equal(id,PAYMENT);
-   return {pagamentoId:PAYMENT,status:'RECEIVED',valorCentavos:25000,
+   return {pagamentoId:PAYMENT,status:estadoPSP,valorCentavos:25000,
     billingType:'PIX',clienteAsaasId:CUSTOMER,
     externalReference:'LOOPLAB-'+pedidoId};
   }
@@ -111,6 +111,25 @@ test('webhook bruto nao gera posicoes; PSP reconsultado cria lote ROXO pendente 
  assert.equal(posts,1,'replay nao gera nova cobranca');
  assert.equal(r.motorConta.consultar({titularId}).posicoesReais,0);
  assert.equal(r.motorConta.consultar({titularId}).dinheiroReal,false);
+ // Reversão reconsultada não apaga o histórico, mas tira as posições
+ // da elegibilidade de fila/catraca e impede reativação por replay.
+ estadoPSP='REFUNDED';
+ const reversaoId='evt_AutoMotorRefund2026';
+ r.inbox.registrar({cabecalhoToken:TOKEN,corpoBruto:Buffer.from(JSON.stringify({
+  id:reversaoId,event:'PAYMENT_REFUNDED',payment:{id:PAYMENT}
+ }))});
+ const devolucao=await call('/staging/escritorio-unificado/reconsultar-psp',{
+  method:'POST',admin:true,body:{eventoId:reversaoId}
+ });
+ assert.equal(devolucao.status,200,JSON.stringify(devolucao.json));
+ assert.equal(devolucao.json.vinculoMotorEnsaio.estado,'SUSPENSO_POR_REVERSAO_PSP');
+ assert.equal(devolucao.json.vinculoMotorEnsaio.quantidadeSuspensa,5);
+ const suspensas=r.motorConta.consultar({titularId});
+ assert.equal(suspensas.posicoesAtivasDoTitular,5);
+ assert.equal(suspensas.pendentesDeEnsaio,0);
+ assert.ok(suspensas.minhasPosicoes.every(x=>x.estado==='ENSAIO_EM_REVISAO_PSP'));
+ assert.throws(()=>r.motorConta.vincularPedidoConferidoSandbox({prepedidoId:pedidoId}),
+  /PSP_SANDBOX_NAO_CONCILIADO_PARA_LOTE/);
  assert.deepEqual(db.prepare('PRAGMA foreign_key_check').all(),[]);
  assert.equal(db.prepare('PRAGMA integrity_check').get().integrity_check,'ok');
 });
