@@ -30,7 +30,7 @@ function executar(){
   }},
   catalogo:produtos,
   el:id=>{assert.equal(id,'akitemmBusca');return {value:''};},
-  configLoja:null,mostradas:0,mostrarCatalogo(){this.mostradas++;},
+  configLoja:null,mostrarCatalogo(){},
  };
  const codigo=[
   "let corFiltro=null,filtro='todos',quantidadeVitrine=99;",
