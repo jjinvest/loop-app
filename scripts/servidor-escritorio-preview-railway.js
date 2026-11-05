@@ -4,7 +4,7 @@
 const http=require('node:http');
 const fs=require('node:fs');
 const path=require('node:path');
-const {createHash,hkdfSync,timingSafeEqual}=require('node:crypto');
+const {createHash,createHmac,hkdfSync,timingSafeEqual}=require('node:crypto');
 const {DatabaseSync}=require('node:sqlite');
 const {criarAppLojaEscritorioCandidato}=
  require('../src/candidato/servidor-loja-escritorio-candidato');
@@ -26,6 +26,18 @@ function criarGateway({portaInterna,senhaAcesso,segredoOperador}={}){
     typeof segredoOperador!=='string'||segredoOperador.length<32)
   falha('GATEWAY_PREVIA_INVALIDO');
  const backend='127.0.0.1:'+portaInterna;
+ const sessaoNome='akitemm_preview_access';
+ const duracao=12*60*60*1000;
+ const assinar=ts=>createHmac('sha256',senhaAcesso).update('preview:'+ts).digest('hex');
+ const lerSessao=req=>{
+  const cookies=(req.headers.cookie||'').split(';').map(x=>x.trim());
+  const p=cookies.find(x=>x.startsWith(sessaoNome+'='));
+  const m=p?.slice(sessaoNome.length+1).match(/^v1\.(\d{13})\.([a-f0-9]{64})$/);
+  if(!m)return false;
+  const ts=Number(m[1]);
+  return ts<=Date.now()&&Date.now()-ts<duracao&&
+   seguro(m[2],assinar(m[1]));
+ };
  const corpoAdmin=fs.readFileSync(path.join(__dirname,
   '../src/candidato/escritorio-admin-candidato-ui.js'),'utf8')+
   "\n// Na previa privada, o proxy autentica o operador no servidor.\n"+
@@ -57,10 +69,15 @@ function criarGateway({portaInterna,senhaAcesso,segredoOperador}={}){
    try{decodificado=Buffer.from(auth.slice(6),'base64').toString('utf8');}
    catch{}
   }
-  if(!seguro(decodificado,'acesso:'+senhaAcesso))
+  const basicaValida=seguro(decodificado,'acesso:'+senhaAcesso);
+  const sessaoValida=lerSessao(req);
+  if(!basicaValida&&!sessaoValida)
    return negar(401,'Acesso exclusivo para homologação',{
     'WWW-Authenticate':'Basic realm="AKITEMM - Acesso de teste", charset="UTF-8"'
    });
+  const novoCookie=basicaValida&&!sessaoValida?
+   sessaoNome+'=v1.'+Date.now()+'.'+assinar(String(Date.now()))+
+   '; HttpOnly; Secure; SameSite=Strict; Path=/; Max-Age=43200':null;
   const origem=req.headers.origin;
   if(origem){
    let origemOk=false;
@@ -73,7 +90,7 @@ function criarGateway({portaInterna,senhaAcesso,segredoOperador}={}){
   if(req.method==='OPTIONS'||!['GET','HEAD','POST','PATCH','PUT','DELETE'].includes(req.method))
    return negar(405,'Método não permitido');
   if(url.pathname==='/'){
-   res.writeHead(302,{...cabecalhosBase,Location:'/escritorio'});
+   res.writeHead(302,{...cabecalhosBase,Location:'/escritorio',...(novoCookie?{'Set-Cookie':novoCookie}:{})});
    return res.end();
   }
   const atalhos={
@@ -86,7 +103,8 @@ function criarGateway({portaInterna,senhaAcesso,segredoOperador}={}){
   if(url.pathname==='/staging/assets/admin.js'){
    if(req.method!=='GET')return negar(405,'Método não permitido');
    res.writeHead(200,{...cabecalhosBase,
-    'Content-Type':'text/javascript; charset=utf-8'});
+    'Content-Type':'text/javascript; charset=utf-8',
+    ...(novoCookie?{'Set-Cookie':novoCookie}:{})});
    return res.end(corpoAdmin);
   }
   const destino=(atalhos[url.pathname]||url.pathname)+url.search;
@@ -108,6 +126,9 @@ function criarGateway({portaInterna,senhaAcesso,segredoOperador}={}){
    if(retorno['set-cookie']){
     retorno['set-cookie']=retorno['set-cookie'].map(x=>
      /;\s*Secure(?:;|$)/i.test(x)?x:x+'; Secure');
+   }
+   if(novoCookie){
+    retorno['set-cookie']=[...(retorno['set-cookie']||[]),novoCookie];
    }
    delete retorno['transfer-encoding'];
    res.writeHead(resp.statusCode||502,retorno);
@@ -137,6 +158,8 @@ async function iniciar({env=process.env}={}){
  if(!path.isAbsolute(dbPath)||!path.resolve(dbPath).startsWith(pasta+'/'))
   falha('BANCO_PREVIA_FORA_DO_VOLUME');
  fs.mkdirSync(pasta,{recursive:true,mode:0o700});
+ if(fs.statSync(pasta).dev===fs.statSync('/').dev)
+  falha('VOLUME_PREVIA_NAO_MONTADO');
  const db=new DatabaseSync(dbPath);
  db.exec('PRAGMA foreign_keys=ON;PRAGMA journal_mode=WAL;PRAGMA busy_timeout=5000;');
  const tokenOperador=derivar(segredoRaiz,'operador').toString('hex');
