@@ -117,6 +117,12 @@ test('webhook bruto nao gera posicoes; PSP reconsultado cria lote ROXO pendente 
   {admin:true});
  assert.equal(auditoria.status,200,JSON.stringify(auditoria.json));
  assert.equal(auditoria.json.resumo.brutoInsuficiente,1);
+ assert.equal(auditoria.json.resumo.posicoesNoMotorEnsaio,5);
+ assert.equal(auditoria.json.resumo.aceitesHistoricosIndividuais,0);
+ assert.equal(auditoria.json.resumo.valorCondicionalDosLotesCentavos,375000);
+ assert.equal(auditoria.json.pedidos[0].posicoesSemAceiteIndividual,5);
+ assert.equal(auditoria.json.reservasBancariasDisponiveisComprovadas,false);
+ assert.equal(auditoria.json.custosBonificacaoComprovados,false);
  assert.equal(auditoria.json.resumo.referenciaTotalCalculadaCentavos,125000);
  assert.equal(auditoria.json.pedidos[0].posicoesPlanejadas,5);
  assert.equal(auditoria.json.pedidos[0].saldoBrutoAposReservaCentavos,-100000);
@@ -155,6 +161,13 @@ test('webhook bruto nao gera posicoes; PSP reconsultado cria lote ROXO pendente 
  assert.equal(pos.minhasPosicoes.filter(x=>x.aceiteIndividualRegistrado).length,1);
  assert.equal(pos.minhasPosicoes.filter(x=>x.pendente).length,4);
  assert.equal(db.prepare('SELECT COUNT(*) AS n FROM akitemm_motor_ensaio_aceites_posicao').get().n,1);
+ const auditoriaAposAceite=await call('/staging/escritorio-unificado/auditoria-cobertura',
+  {admin:true});
+ assert.equal(auditoriaAposAceite.status,200,JSON.stringify(auditoriaAposAceite.json));
+ assert.equal(auditoriaAposAceite.json.resumo.aceitesHistoricosIndividuais,1);
+ assert.equal(auditoriaAposAceite.json.resumo.aceitesSemPSPVigente,0);
+ assert.equal(auditoriaAposAceite.json.pedidos[0].posicoesSemAceiteIndividual,4);
+ assert.equal(auditoriaAposAceite.json.pedidos[0].aceitesHistoricosIndividuais,1);
  // Outra conta nao ve nem consegue aceitar a posicao vinculada ao titular.
  const outro=await call('/staging/contas/cadastrar',{method:'POST',body:{
   nome:'Outro titular laboratorio',nick:'Outro',email:'outro@example.invalid',
@@ -196,6 +209,15 @@ test('webhook bruto nao gera posicoes; PSP reconsultado cria lote ROXO pendente 
  assert.equal(suspensas.posicoesAtivasDoTitular,5);
  assert.equal(suspensas.pendentesDeEnsaio,0);
  assert.ok(suspensas.minhasPosicoes.every(x=>x.estado==='ENSAIO_EM_REVISAO_PSP'));
+ const auditoriaRevertida=await call('/staging/escritorio-unificado/auditoria-cobertura',
+  {admin:true});
+ assert.equal(auditoriaRevertida.status,200,JSON.stringify(auditoriaRevertida.json));
+ assert.equal(auditoriaRevertida.json.resumo.aceitesHistoricosIndividuais,1);
+ assert.equal(auditoriaRevertida.json.resumo.aceitesSemPSPVigente,1);
+ assert.equal(auditoriaRevertida.json.resumo.lotesSemPSPConferido,1);
+ assert.ok(auditoriaRevertida.json.pedidos[0].alertas.includes('ACEITES_HISTORICOS_SEM_PSP_VIGENTE'));
+ assert.equal(auditoriaRevertida.json.resumo.posicoesNoMotorEnsaio,5);
+ assert.equal(auditoriaRevertida.json.pagamentosDoPSPSaoSomenteSandbox,true);
  assert.equal((await call(rotaAceite,{method:'POST',cookie,csrf,body:bodyAceite})).status,409);
  assert.equal(db.prepare('SELECT COUNT(*) AS n FROM akitemm_motor_ensaio_aceites_posicao').get().n,1,
   'reversao nao apaga aceite historico');
