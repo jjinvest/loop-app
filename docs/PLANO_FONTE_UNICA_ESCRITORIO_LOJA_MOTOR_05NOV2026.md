@@ -25,7 +25,7 @@ Data: 05/11/2026. Fonte: branch `feature/unificar-escritorio-real-20261105`. Est
 - Estados de erro e revisão não são escondidos; mais de dez registros históricos permanecem sinalizados no histórico, sem confundir o limite de **dez posições ATIVAS** com a quantidade de pedidos passados.
 - Teste focado em proteção de texto do pedido, isolamento da fonte e limite visual: `test/grade-posicoes-ensaios-unificada.test.js`.
 - **Motor de escrita permanece desconectado**; isto é unificação de interface e leitura, não ativação. Nada foi implantado no serviço comercial.
-- CI de validação deste lote: https://github.com/jjinvest/loop-app/actions/runs/42052973391 (verificar conclusão antes de considerar aprovado).
+- CI final deste lote: https://github.com/jjinvest/loop-app/actions/runs/42053672402 — sucesso em suíte completa, Chromium PC/celular e capturas. A primeira tentativa https://github.com/jjinvest/loop-app/actions/runs/42052973391 falhou por asserção de texto legado no roteiro do navegador, ajustada sem alterar a regra da aplicação.
 
 ## Pendências materiais, NÃO classificar como concluídas
 1. **Motor operacional:** adaptar o motor persistente, eventos, travas e catraca à identidade da conta única, com estados e dados duráveis no mesmo repositório SQLite. Hoje o motor histórico tem classes e contas de laboratório próprias.
