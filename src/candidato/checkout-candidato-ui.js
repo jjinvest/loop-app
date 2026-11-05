@@ -6,7 +6,7 @@ let cotacaoEscolhida=null;
 const $=id=>document.getElementById(id);
 let csrf=null,aprovada=false,aba='conteudoResumo',proximaPaginaEquipe=null;
 let telaAcesso='cadastro';
-const ABAS=[['abaResumo','conteudoResumo'],['abaPreparar','conteudoPreparar'],
+const ABAS=[['abaResumo','conteudoResumo'],['abaTabuleiro','conteudoTabuleiro'],['abaPreparar','conteudoPreparar'],
  ['abaMeusPedidos','conteudoMeusPedidos'],['abaPosicoes','conteudoPosicoes'],
  ['abaEquipe','conteudoEquipe'],['abaLinks','conteudoLinks'],['abaFinanceiro','conteudoFinanceiro'],
  ['abaConta','conteudoConta']];
@@ -63,6 +63,8 @@ async function requisitar(rota,{method='GET',body,chave,mutacao=false}={}){
  return dados;
 }
 function mostrarSessao(ativa){
+ document.body.classList.toggle('loop03-logado',ativa);
+ if(!ativa)fecharMenuIntegrado();
  if(!ativa){$('painelVerificarEmail').hidden=true;$('painelIdentidadeTeste').hidden=true;
    $('cpfTeste').value='';$('aceiteCpfTeste').checked=false;}
  $('painelLogin').hidden=ativa||telaAcesso!=='login';
@@ -78,8 +80,11 @@ function mostrarAba(alvo){
   const ativo=painel===alvo,botao=$(id);
   botao.setAttribute('aria-selected',String(ativo));
   botao.tabIndex=ativo?0:-1;
+  botao.setAttribute('aria-current',ativo?'page':'false');
   $(painel).hidden=!ativo;
  }
+ fecharMenuIntegrado();
+ if(alvo==='conteudoTabuleiro')atualizarTabuleiroIntegrado();
  if(alvo==='conteudoMeusPedidos')atualizarPedidos();
  if(alvo==='conteudoResumo')atualizarResumo();
  if(alvo==='conteudoPosicoes')atualizarPosicoes();
@@ -271,12 +276,38 @@ async function atualizarResumo(){
    requisitar('/minha-previa-filas'),requisitar('/minha-equipe')
   ]);
   $('boasVindas').textContent='Bem-vindo, '+perfil.nome+' · @'+perfil.nick;
+  $('loop03NickIntegrado').textContent='@'+perfil.nick;
+  $('loop03TotalIntegrado').textContent=String(filas.meusPendentesHistoricos||0)+' de ensaio';
   $('resumoPedidos').textContent=String(pedidos.pedidos?.length||0);
   $('resumoPosicoes').textContent=String(filas.meusPendentesHistoricos||0);
   $('resumoEmail').textContent=perfil.emailVerificado?'Confirmado':'Pendente';
   $('resumoEquipe').textContent=String(equipe.total);
   $('linksNick').textContent='Seu nick: @'+perfil.nick;
  }catch(e){dizer('Não foi possível atualizar a visão geral: '+e.message);}
+}
+async function atualizarTabuleiroIntegrado(){
+ const estado=$('estadoTabuleiroIntegrado');
+ try{
+  const dados=await requisitar('/minha-previa-filas');
+  const pendentes=Number(dados.meusPendentesHistoricos||0);
+  const hipoteticas=Number(dados.meusSimuladosNaFilaB||0);
+  estado.textContent='Sua conta possui '+pendentes+' posição(ões) pendente(s) de ensaio. '+
+   'Projeção fictícia na Fila B: '+hipoteticas+'. '+
+   (dados.motivo||'')+
+   ' Isso não representa ocupação real do tabuleiro nem autoriza giros.';
+ }catch(e){
+  estado.textContent='Leitura da conta indisponível: '+e.message;
+ }
+}
+function fecharMenuIntegrado(){
+ const menu=$('loop03SidebarIntegrado'),botao=$('loop03MenuIntegrado');
+ if(menu)menu.classList.remove('loop03-aberto');
+ if(botao)botao.setAttribute('aria-expanded','false');
+}
+function alternarMenuIntegrado(){
+ const menu=$('loop03SidebarIntegrado'),botao=$('loop03MenuIntegrado');
+ const aberto=menu.classList.toggle('loop03-aberto');
+ botao.setAttribute('aria-expanded',String(aberto));
 }
 async function atualizarPosicoes(){
  try{
@@ -563,6 +594,11 @@ $('atualizarCatalogo').addEventListener('click',async()=>{
 $('prepararPedido').addEventListener('click',preparar);
 $('atualizarPedidos').addEventListener('click',atualizarPedidos);
 $('sair').addEventListener('click',sair);
+$('atualizarTabuleiroIntegrado').addEventListener('click',atualizarTabuleiroIntegrado);
+$('tabuleiroVerPosicoesIntegrado').addEventListener('click',()=>mostrarAba('conteudoPosicoes'));
+$('loop03IrPosicoesIntegrado').addEventListener('click',()=>mostrarAba('conteudoPosicoes'));
+$('loop03MenuIntegrado').addEventListener('click',alternarMenuIntegrado);
+document.addEventListener('keydown',e=>{if(e.key==='Escape')fecharMenuIntegrado();});
 $('atualizarResumo').addEventListener('click',atualizarResumo);
 $('atualizarPosicoes').addEventListener('click',atualizarPosicoes);
 $('atualizarEquipe').addEventListener('click',()=>atualizarEquipe(0));
