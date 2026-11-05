@@ -309,15 +309,63 @@ function alternarMenuIntegrado(){
  const aberto=menu.classList.toggle('loop03-aberto');
  botao.setAttribute('aria-expanded',String(aberto));
 }
+// Os cartoes usam EXCLUSIVAMENTE a leitura da propria conta no SQLite.
+ // Nao mostram posicoes comerciais nem numero do tabuleiro sem o motor real.
 async function atualizarPosicoes(){
+ const area=$('posicoesPainel');
  try{
   const dados=await requisitar('/minha-previa-filas');
-  const total=dados.meusPendentesHistoricos||0,
-   fila=dados.meusSimuladosNaFilaB||0;
-  $('posicoesPainel').textContent='Posições fictícias registradas: '+total+
-   '. Projeção na Fila B: '+fila+'. '+(dados.motivo||'')+
-   ' Nenhuma posição comercial ativada.';
- }catch(e){$('posicoesPainel').textContent='Consulta indisponível: '+e.message;}
+  const registros=Array.isArray(dados.pendencias)?dados.pendencias:[];
+  const total=Number(dados.meusPendentesHistoricos||0);
+  const fila=Number(dados.meusSimuladosNaFilaB||0);
+  const resumo=document.createElement('p');
+  resumo.className='subtexto';
+  resumo.textContent='Registros de ensaio desta conta: '+total+
+   ' · Hipotese de Fila B: '+fila+
+   ' · Posicoes comerciais ativas: 0. '+(dados.motivo||'');
+  const grade=document.createElement('div');
+  grade.className='loop03-grade-posicoes-ensaio';
+  grade.setAttribute('role','list');
+  grade.setAttribute('aria-label','Dez espacos de posicao; somente ensaio');
+  const estados={
+   APENAS_PREVIA_FILA_B_AZUL:'Pendente de confirmacao · hipotese Fila B',
+   EXIGE_REVISAO_PSP:'Pagamento de teste exige revisao',
+   SEM_FOTOGRAFIA_HISTORICA:'Falta fotografia historica',
+   OFERTA_HISTORICA_NAO_QUALIFICADA:'Oferta nao qualificada',
+   ACIMA_DEZ_APENAS_PARA_PLANEJAMENTO:'Acima do limite para planejamento'
+  };
+  for(let i=0;i<10;i++){
+   const item=registros[i]||null;
+   const cartao=document.createElement('article');
+   cartao.className='loop03-cartao-posicao-ensaio'+
+    (item?' loop03-cartao-posicao-pendente':'');
+   cartao.setAttribute('role','listitem');
+   const nome=document.createElement('h3');
+   nome.textContent='Posicao '+(i+1);
+   const numero=document.createElement('strong');
+   numero.textContent=item?'PENDENTE · TESTE':'Espaco disponivel';
+   const status=document.createElement('p');
+   status.textContent=item?(estados[item.estado]||'Registro em revisao'):'Sem posicao vinculada';
+   cartao.append(nome,numero,status);
+   if(item){
+    const origem=document.createElement('small');
+    origem.textContent='Pedido de ensaio: '+String(item.prepedidoId||'Nao identificado');
+    cartao.append(origem);
+   }
+   grade.append(cartao);
+  }
+  const aviso=document.createElement('p');
+  aviso.className='subtexto';
+  aviso.textContent=registros.length>10?
+   'Outros '+(registros.length-10)+' registros permanecem no historico de pedidos. O limite de 10 se aplica a posicoes ATIVAS, nao a este historico.':
+   'Nenhum cartao permite ativar, girar ou receber valores reais nesta homologacao.';
+  area.replaceChildren(resumo,grade,aviso);
+ }catch(e){
+  area.replaceChildren();
+  const erro=document.createElement('p');
+  erro.textContent='Consulta indisponivel: '+e.message;
+  area.append(erro);
+ }
 }
 async function atualizarEquipe(pagina=0){
  try{
