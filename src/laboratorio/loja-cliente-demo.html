@@ -37,10 +37,10 @@
       <button type="button" id="akitemmFiltroTodos" class="akitemm-chip selecionado" aria-pressed="true">Todos</button>
       <label class="akitemm-busca" for="akitemmBusca"><span aria-hidden="true">⌕</span><input id="akitemmBusca" type="search" placeholder="Buscar produtos, cursos ou assuntos…" autocomplete="off"></label>
       <button type="button" id="akitemmFiltroOfertas" class="akitemm-chip" aria-pressed="false">Ofertas</button>
-       <div class="akitemm-legenda-cores" aria-label="Legenda das cores dos produtos">
-        <span><i class="akitemm-cor-cinza" aria-hidden="true"></i>Compra comum (sem LOOP)</span>
-        <span><i class="akitemm-cor-verde" aria-hidden="true"></i>Qualifica para o LOOP*</span>
-        <span><i class="akitemm-cor-evento" aria-hidden="true"></i>Evento especial*</span>
+       <div class="akitemm-legenda-cores" role="group" aria-label="Filtrar produtos por cor">
+        <button type="button" data-akitemm-cor="CINZA" aria-pressed="false" title="Filtrar compras comuns"><i class="akitemm-cor-cinza" aria-hidden="true"></i>Compra comum (sem LOOP)</button>
+        <button type="button" data-akitemm-cor="VERDE" aria-pressed="false" title="Filtrar produtos qualificados"><i class="akitemm-cor-verde" aria-hidden="true"></i>Qualifica para o LOOP*</button>
+        <button type="button" data-akitemm-cor="EVENTO" aria-pressed="false" title="Filtrar eventos especiais"><i class="akitemm-cor-evento" aria-hidden="true"></i>Evento especial*</button>
        </div>
      </div>
      <p class="akitemm-legenda-ressalva">* Conforme as regras da oferta e confirmação da compra. Cor não garante contemplação.</p>
