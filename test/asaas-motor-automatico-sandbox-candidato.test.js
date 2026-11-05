@@ -113,8 +113,11 @@ test('webhook bruto nao gera posicoes; PSP reconsultado cria lote ROXO pendente 
  assert.equal(r.motorConta.consultar({titularId}).pendentesDeEnsaio,5);
  // Auditoria do mesmo pedido: ROXO a R$ 250 com 5 posicoes eh
  // aritmeticamente inviavel antes de pagar fornecedor ou PSP.
+ const mudancasAntesAuditoria=db.prepare('SELECT total_changes() AS n').get().n;
  const auditoria=await call('/staging/escritorio-unificado/auditoria-cobertura',
   {admin:true});
+ assert.equal(db.prepare('SELECT total_changes() AS n').get().n,mudancasAntesAuditoria,
+  'auditoria de pedidos, posicoes e cofres nunca pode escrever no banco');
  assert.equal(auditoria.status,200,JSON.stringify(auditoria.json));
  assert.equal(auditoria.json.resumo.brutoInsuficiente,1);
  assert.equal(auditoria.json.resumo.posicoesNoMotorEnsaio,5);
