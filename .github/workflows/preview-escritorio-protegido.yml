@@ -12,6 +12,10 @@ on:
       - 'src/adapters/email-recuperacao-resend.js'
       - 'test/recuperacao-senha-candidata.test.js'
       - 'src/candidato/servidor-loja-escritorio-candidato.js'
+      - 'src/domain/motor-conta-unica-ensaio-sqlite.js'
+      - 'src/candidato/escritorio-admin-candidato-ui.html'
+      - 'src/candidato/escritorio-admin-candidato-ui.js'
+      - 'test/motor-conta-unica-ensaio-sqlite.test.js'
       - 'src/candidato/checkout-candidato-ui.html'
       - 'src/candidato/checkout-candidato-ui.js'
       - 'src/candidato/escritorio-cliente-integrado.css'
@@ -41,6 +45,8 @@ jobs:
       - run: node --check src/domain/equipe-candidata-sqlite.js
       - run: node --check src/candidato/servidor-loja-escritorio-candidato.js
       - run: node --check src/candidato/checkout-candidato-ui.js
+      - run: node --check src/domain/motor-conta-unica-ensaio-sqlite.js
+      - run: node --check src/candidato/escritorio-admin-candidato-ui.js
       - run: node --test test/servidor-escritorio-preview-railway.test.js
       - run: node --check src/adapters/email-recuperacao-resend.js
       - run: node --check src/domain/conta-unica-candidata-sqlite.js
