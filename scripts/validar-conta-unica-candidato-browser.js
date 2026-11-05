@@ -40,6 +40,14 @@ const {once}=require('node:events');
     viewport:item.viewport,isMobile:item.isMobile,deviceScaleFactor:1
    });
    const page=await context.newPage();
+   // A navegacao aprovada e lateral no PC, e em menu recolhido no celular.
+   async function abrirAba(id){
+    if(item.isMobile){
+     const menu=page.locator('#loop03MenuIntegrado');
+     if(await menu.getAttribute('aria-expanded')!=='true')await menu.click();
+    }
+    await page.locator(id).click();
+   }
    const failures=[];
    page.on('pageerror',e=>failures.push(e.message));
    await page.goto(base+'/staging/cliente',{waitUntil:'networkidle'});
@@ -98,7 +106,7 @@ const {once}=require('node:events');
     .filter({hasText:/CPF fictício registrado/}).waitFor();
    assert.equal(await page.locator('#formCpfTeste').isHidden(),true);
    assert.equal(await page.locator('#cpfTeste').inputValue(),'');
-   await page.locator('#abaPreparar').click();
+   await abrirAba('#abaPreparar');
    await page.locator('#calcularCotacao').click();
    await page.locator('#mensagem').filter({hasText:/Cotação conferida/}).waitFor();
    await page.locator('#prepararPedido').click();
@@ -107,26 +115,26 @@ const {once}=require('node:events');
    await page.locator('#listaPedidos').getByRole('button',{name:'Ver requisitos de ativação'}).click();
    await page.locator('#listaPedidos').filter({hasText:/BLOQUEADA_PARA_ATIVACAO_DEFINITIVA/}).waitFor();
    assert.match(await page.locator('#listaPedidos').innerText(),/R\$\s?250,00/);
-   await page.locator('#abaResumo').click();
+   await abrirAba('#abaResumo');
    await page.locator('#resumoPedidos').filter({hasText:'1'}).waitFor();
    assert.match(await page.locator('#boasVindas').innerText(),new RegExp(item.nick,'i'));
    await page.locator('#atalhoPosicoes').click();
    await page.locator('#posicoesPainel').filter({hasText:/Nenhuma posição comercial ativada/}).waitFor();
-   await page.locator('#abaLinks').click();
+   await abrirAba('#abaLinks');
    await page.waitForFunction(()=>document.getElementById('linkLoja').value.includes('/loja/'));
    assert.ok((await page.locator('#linkLoja').inputValue()).endsWith('/loja/'+item.nick.toLowerCase()));
    assert.ok((await page.locator('#linkEscritorio').inputValue()).endsWith('/escritorio/'+item.nick.toLowerCase()));
-   await page.locator('#abaEquipe').click();
+   await abrirAba('#abaEquipe');
    await page.locator('#equipeResumo').filter({hasText:'0 cadastro(s)'}).waitFor();
    assert.match(await page.locator('#listaEquipe').innerText(),/ainda não possui cadastros/);
    await page.locator('#equipeVerLinks').click();
    assert.equal(await page.locator('#abaLinks').getAttribute('aria-selected'),'true');
-   await page.locator('#abaFinanceiro').click();
+   await abrirAba('#abaFinanceiro');
    assert.match(await page.locator('#estadoFinanceiro').innerText(),/Nenhum saldo comercial/);
-   await page.locator('#abaConta').click();
+   await abrirAba('#abaConta');
    await page.locator('#perfilCliente').filter({hasText:new RegExp(item.nick,'i')}).waitFor();
    assert.match(await page.locator('#perfilCliente').innerText(),new RegExp(item.nick,'i'));
-   await page.locator('#abaMeusPedidos').click();
+   await abrirAba('#abaMeusPedidos');
    // Também verificar o Escritório do Administrador no MESMO SQLite.
    const admin=await context.newPage();
    admin.on('pageerror',e=>failures.push(e.message));
@@ -214,22 +222,22 @@ const {once}=require('node:events');
     await page.locator('#loop03MenuIntegrado').click();
     assert.equal(await page.locator('#loop03MenuIntegrado').getAttribute('aria-expanded'),'true');
    }
-   await page.locator('#abaTabuleiro').click();
+   await abrirAba('#abaTabuleiro');
    await page.locator('#estadoTabuleiroIntegrado').filter({hasText:/não representa ocupação real/}).waitFor();
    await page.locator('#tabuleiroVerPosicoesIntegrado').click();
    await page.locator('#conteudoPosicoes').waitFor({state:'visible'});
    if(item.nome==='celular')await page.locator('#loop03MenuIntegrado').click();
-   await page.locator('#abaResumo').click();
+   await abrirAba('#abaResumo');
    await page.locator('#conteudoResumo').waitFor({state:'visible'});
    const screenshot=path.join(__dirname,'../artifacts',
     'conta-unica-candidato-'+item.nome+'.png');
    await page.screenshot({path:screenshot,fullPage:true});
    await page.reload({waitUntil:'networkidle'});
    await page.locator('#painelConta').waitFor({state:'visible'});
-   await page.locator('#abaMeusPedidos').click();
+   await abrirAba('#abaMeusPedidos');
    await page.locator('#listaPedidos article.pedido').first().waitFor();
    assert.equal(await page.locator('#listaPedidos article.pedido').count(),1);
-   await page.locator('#abaPreparar').click();
+   await abrirAba('#abaPreparar');
    await page.locator('#atualizarCatalogo').click();
    await page.locator('#produtoDoCatalogo').selectOption('curso-extra-'+item.nick.toLowerCase());
    await page.locator('#quantidadeDoCatalogo').fill('2');
@@ -242,7 +250,7 @@ const {once}=require('node:events');
    await page.screenshot({path:path.join(__dirname,'../artifacts',
     'cliente-catalogo-editavel-'+item.nome+'.png'),fullPage:true});
    await page.reload({waitUntil:'networkidle'});
-   await page.locator('#abaMeusPedidos').click();
+   await abrirAba('#abaMeusPedidos');
    await page.locator('#listaPedidos article.pedido').nth(1).waitFor();
    assert.equal(await page.locator('#listaPedidos article.pedido').count(),2);
    // A própria vitrine AKITEMM aprovada: mesmo titular, catálogo, carrinho e pré-pedidos.
@@ -280,7 +288,7 @@ const {once}=require('node:events');
    await loja.screenshot({path:path.join(__dirname,'../artifacts',
     'vitrine-aprovada-candidato-'+item.nome+'.png'),fullPage:true});
    await loja.close();
-   await page.locator('#abaMeusPedidos').click();
+   await abrirAba('#abaMeusPedidos');
    await page.locator('#atualizarPedidos').click();
    await page.locator('#listaPedidos article.pedido').nth(2).waitFor();
    assert.equal(await page.locator('#listaPedidos article.pedido').count(),3);
