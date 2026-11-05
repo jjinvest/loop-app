@@ -36,6 +36,7 @@ const {ProjecaoFilasCandidatoSandbox}=require('../domain/projecao-filas-candidat
 const {PreAdesaoSandboxCandidatoSQLite}=require('../domain/pre-adesao-sandbox-candidato-sqlite');
 const {DiagnosticoAtivacaoCandidato}=require('../domain/diagnostico-ativacao-candidato');
 const {EquipeCandidataSQLite}=require('../domain/equipe-candidata-sqlite');
+const {MotorContaUnicaEnsaioSQLite}=require('../domain/motor-conta-unica-ensaio-sqlite');
 const {criarRouterRascunhosCheckoutStaging}=require('../routes/rascunhos-checkout-staging');
 const {criarRouterPrePedidosCheckoutStaging}=require('../routes/prepedidos-checkout-staging');
 const {criarAutorizacao,localSeguro}=require('../routes/admin-catalogo-laboratorio');
@@ -438,6 +439,56 @@ function criarAppLojaEscritorioCandidato({banco,repositorioCatalogo,
  const projecaoFilas=new ProjecaoFilasCandidatoSandbox({
   banco,posicoes,sinalizacao:sinalizacaoVitrine,preAdesao
  });
+ // O MESMO SQLITE guarda identidade, pre-pedidos e snapshot do motor V6.
+ // A sessao autentica so pode ler sua parte do tabuleiro.
+ // Escritas manuais de ENSAIO exigem operador: webhook bruto ou pre-pedido
+ // nao constituem evento ou ativacao comercial.
+ const motorConta=new MotorContaUnicaEnsaioSQLite({banco,sinalizacao:sinalizacaoVitrine});
+ app.get('/staging/motor/estado',(req,res)=>{
+  const s=contas.sessao(req);
+  if(!s)return res.status(401).json({erro:'SESSAO_AUSENTE'});
+  try{return res.json(motorConta.consultar({titularId:s.titularId}));}
+  catch(e){return res.status(503).json({erro:e.codigo||'MOTOR_ENSAIO_INDISPONIVEL'});}
+ });
+ app.get('/staging/escritorio-unificado/motor/estado',autorizarOperador,(_req,res)=>{
+  try{return res.json(motorConta.consultar());}
+  catch(e){return res.status(503).json({erro:e.codigo||'MOTOR_ENSAIO_INDISPONIVEL'});}
+ });
+ app.post('/staging/escritorio-unificado/motor/vincular-pedido',autorizarOperador,(req,res)=>{
+  if(!req.is('application/json')||!req.body||Array.isArray(req.body)||
+     Object.keys(req.body).sort().join(',')!=='aceiteEnsaio,prepedidoId')
+   return res.status(400).json({erro:'CAMPOS_INVALIDOS'});
+  try{
+   const r=motorConta.vincularPedido(req.body);
+   return res.status(r.repetido?200:201).json(r);
+  }catch(e){
+   const codigo=e.codigo||'MOTOR_ENSAIO_INDISPONIVEL';
+   return res.status(codigo==='LIMITE_DEZ_POSICOES_MOTOR_ENSAIO'?409:400)
+    .json({erro:codigo});
+  }
+ });
+ app.post('/staging/escritorio-unificado/motor/preparar',autorizarOperador,(req,res)=>{
+  if(!req.is('application/json')||!req.body||Array.isArray(req.body)||
+     Object.keys(req.body).length!==0)
+   return res.status(400).json({erro:'CAMPOS_INVALIDOS'});
+  try{return res.json(motorConta.prepararTabuleiro());}
+  catch(e){return res.status(409).json({erro:e.codigo||'MOTOR_ENSAIO_INDISPONIVEL'});}
+ });
+ app.post('/staging/escritorio-unificado/motor/evento',autorizarOperador,(req,res)=>{
+  if(!req.is('application/json')||!req.body||Array.isArray(req.body)||
+     Object.keys(req.body).join(',')!=='prepedidoId')
+   return res.status(400).json({erro:'CAMPOS_INVALIDOS'});
+  try{return res.json(motorConta.registrarEvento(req.body));}
+  catch(e){return res.status(409).json({erro:e.codigo||'MOTOR_ENSAIO_INDISPONIVEL'});}
+ });
+ app.post('/staging/escritorio-unificado/motor/catraca',autorizarOperador,(req,res)=>{
+  if(!req.is('application/json')||!req.body||Array.isArray(req.body)||
+     Object.keys(req.body).join(',')!=='acao')
+   return res.status(400).json({erro:'CAMPOS_INVALIDOS'});
+  try{return res.json(motorConta.controlarCatraca(req.body.acao));}
+  catch(e){return res.status(409).json({erro:e.codigo||'MOTOR_ENSAIO_INDISPONIVEL'});}
+ });
+
  // Porta única de leitura para o check-list de ativação definitiva.
  // Nenhum dos dois endpoints chama um motor de escrita.
  app.get('/staging/escritorio-unificado/diagnostico-ativacao/:id',
@@ -770,6 +821,6 @@ function criarAppLojaEscritorioCandidato({banco,repositorioCatalogo,
   erro:'CANDIDATO_INDISPONIVEL',financeiroReal:false
  }));
  return {app,contas,cpf,provasEmail,intencoes,prePedidos,ponte,
-  inbox,worker,posicoes,projecaoFilas,preAdesao,diagnosticoAtivacao,entregas,integridade,missoes,catalogo,sinalizacaoVitrine,departamentosAdmin,equipe,banco};
+  inbox,worker,posicoes,projecaoFilas,preAdesao,diagnosticoAtivacao,entregas,integridade,missoes,catalogo,sinalizacaoVitrine,departamentosAdmin,equipe,motorConta,banco};
 }
 module.exports={criarAppLojaEscritorioCandidato};
