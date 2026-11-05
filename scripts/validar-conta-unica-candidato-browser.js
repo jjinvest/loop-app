@@ -226,7 +226,9 @@ const {once}=require('node:events');
     assert.equal(await page.locator('#loop03MenuIntegrado').getAttribute('aria-expanded'),'true');
    }
    await abrirAba('#abaTabuleiro');
-   await page.locator('#estadoTabuleiroIntegrado').filter({hasText:/não representa ocupação real/}).waitFor();
+   await page.locator('#estadoTabuleiroIntegrado').filter({hasText:/Motor V6 conectado ao SQLite/}).waitFor();
+   assert.equal(await page.locator('#tabuleiroMotorCentro').innerText(),'#0000');
+   assert.equal(await page.locator('#tabuleiroMotorIntegrado .espaco-tabuleiro-demo').count(),7);
    await page.locator('#tabuleiroVerPosicoesIntegrado').click();
    await page.locator('#conteudoPosicoes').waitFor({state:'visible'});
    if(item.nome==='celular')await page.locator('#loop03MenuIntegrado').click();
