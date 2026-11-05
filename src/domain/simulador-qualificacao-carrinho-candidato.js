@@ -3,6 +3,7 @@
 // Não verifica CPF, termos, pagamento, titularidade, motor de filas, tabuleiro,
 // cofre ou elegibilidade jurídica. Não cria qualquer posição ou lançamento.
 const {entradaValida}=require('./cotacao-checkout-publico');
+const {planejarPosicoesCompraAkitemm}=require('./plano-posicoes-compra-akitemm');
 const REFERENCIA_CENTAVOS=25000;
 function erro(codigo){const e=new Error(codigo);e.codigo=codigo;throw e;}
 async function simularQualificacaoCandidato({entrada,catalogo,sinalizacao}={}){
@@ -27,8 +28,12 @@ async function simularQualificacaoCandidato({entrada,catalogo,sinalizacao}={}){
   let situacao;
   if(s.classificacao==='CINZA')situacao='COMPRA_COMUM_NAO_CONTA';
   else if(s.classificacao==='ROXO'){
-   eventoPendente=true;situacao='EVENTO_EXIGE_REGRAS_E_APROVACAO';
-  }else if(s.classificacao==='VERDE'||s.classificacao==='DOURADO'){
+   if(!s.posicoesPorUnidadeRoxo)eventoPendente=true;
+   situacao='EVENTO_APENAS_PLANEJADO_SEM_DIREITOS';
+  }else if(s.classificacao==='DOURADO'){
+   situacao=p.precoCentavos>=REFERENCIA_CENTAVOS?
+    'UNIDADE_DOURADA_PLANEJADA_SEM_DIREITOS':'DOURADO_PRECO_INSUFICIENTE';
+  }else if(s.classificacao==='VERDE'){
    if(quantidade<s.quantidadeMinimaLoop||(s.classificacao==='DOURADO'&&p.precoCentavos<REFERENCIA_CENTAVOS)){
     limiarPendente=true;situacao='QUANTIDADE_MINIMA_NAO_ATINGIDA';
    }else{
@@ -40,17 +45,25 @@ async function simularQualificacaoCandidato({entrada,catalogo,sinalizacao}={}){
    produtoId,quantidade,precoUnitarioCentavos:p.precoCentavos,
    subtotalCentavos:subtotal,classificacao:s.classificacao,
    quantidadeMinimaLoop:s.quantidadeMinimaLoop,
-   revisaoClassificacao:s.revisao,situacao
+   revisaoClassificacao:s.revisao,situacao,
+   minimo:s.quantidadeMinimaLoop,
+   posicoesPorUnidadeRoxo:s.posicoesPorUnidadeRoxo||0
   });
  }
+ const planejamentoPosicoes=planejarPosicoesCompraAkitemm(detalhes);
  const referenciaAtingida=valorVerde>=REFERENCIA_CENTAVOS;
  const faltamCentavos=Math.max(0,REFERENCIA_CENTAVOS-valorVerde);
  const status=referenciaAtingida?'REFERENCIA_VERDE_ATINGIDA_EM_SIMULACAO':
+  planejamentoPosicoes.posicoesDourado>0?'DOURADO_PLANEJADO_SEM_DIREITOS':
   eventoPendente?'EVENTO_PENDENTE_DE_APROVACAO':
   limiarPendente?'QUANTIDADE_MINIMA_PENDENTE':
   quantidadeProdutosVerdes?'VALOR_VERDE_INSUFICIENTE':
   'SEM_PRODUTO_VERDE_APTO';
- const mensagem=referenciaAtingida?
+ const mensagem=planejamentoPosicoes.excedeLimitePorPedido?
+  'A compra prevê mais de dez posições; deverá ser bloqueada ou revisada antes de qualquer cobrança. Nenhuma posição real criada.':
+  planejamentoPosicoes.posicoesDourado>0||planejamentoPosicoes.posicoesRoxo>0?
+  'Compra com produtos especiais: posição dourada por unidade e roxa por quantidade configurada. A parcela verde gera no máximo uma posição se atingir R$ 250. Prévia sem direitos comerciais.':
+  referenciaAtingida?
   'O carrinho atinge a referência com produtos elegíveis em simulação. Nenhuma posição foi criada. Ainda seriam necessárias compra confirmada, CPF, termos e todas as demais verificações.':
   eventoPendente?
    'Produtos de evento não entram na qualificação comum. O administrador ainda deve homologar regras, quantidade de posições e autorizações do evento.':
@@ -61,7 +74,7 @@ async function simularQualificacaoCandidato({entrada,catalogo,sinalizacao}={}){
   referenciaLoopCentavos:REFERENCIA_CENTAVOS,
   totalPedidoCentavos:total,valorVerdeConsideradoCentavos:valorVerde,
   faltamCentavos,referenciaAtingida,
-  itens:detalhes,eventoPendente,validacaoEspecialAutomatica:false,
+  itens:detalhes,planejamentoPosicoes,eventoPendente,validacaoEspecialAutomatica:false,
   direitosCriados:0,posicoesCriadas:0,pagamentosCriados:0,saquesCriados:0,
   autorizacaoReal:false,chequeCpfETermosExecutado:false,
   pagamentoConfirmado:false,mensagem};
