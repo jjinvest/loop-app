@@ -45,6 +45,14 @@ test('gateway unificado: Pix, aviso e motor usam o mesmo SQLite de laboratorio',
   await new Promise(ok=>interno.close(ok));banco.close();});
  const base='http://127.0.0.1:'+gateway.address().port;
  const auth='Basic '+Buffer.from('acesso:'+senha).toString('base64');
+ const pronto=await fetch(base+'/staging/escritorio-unificado/sandbox-pix/estado',{
+  headers:{Authorization:auth}});
+ assert.equal(pronto.status,200);
+ const status=await pronto.json();
+ assert.equal(status.status,'INTEGRADO_SANDBOX_NO_MESMO_SQLITE');
+ assert.equal(status.webhookIngressAtivo,true);
+ assert.equal(status.usaSQLiteDaLoja,true);
+ assert.equal(status.checkoutComercialHabilitado,false);
  async function post(route,body,extra={}){
   const x=await fetch(base+route,{method:'POST',
    headers:{Authorization:auth,'Content-Type':'application/json',
