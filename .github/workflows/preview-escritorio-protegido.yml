@@ -45,3 +45,12 @@ jobs:
       - run: npm install --no-save playwright@1.56.1
       - run: npx playwright install --with-deps chromium
       - run: node scripts/validar-conta-unica-candidato-browser.js
+      - name: Guardar capturas reais da mesma interface no PC e celular
+        uses: actions/upload-artifact@v4
+        with:
+          name: capturas-escritorio-cliente-pc-celular
+          path: |
+            artifacts/conta-unica-candidato-pc.png
+            artifacts/conta-unica-candidato-celular.png
+          if-no-files-found: error
+          retention-days: 20
