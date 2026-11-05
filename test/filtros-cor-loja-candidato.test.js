@@ -13,7 +13,7 @@ function faixa(inicio,fim){
  return js.slice(a,b);
 }
 function executar(){
- const botoes=['CINZA','VERDE','EVENTO'].map(cor=>({
+ const botoes=['CINZA','VERDE','DOURADO','ROXO'].map(cor=>({
   dataset:{akitemmCor:cor},attributes:{},classList:{
    toggle(classe,ativo){assert.equal(classe,'selecionado');this.ativo=ativo;}
   },
@@ -22,7 +22,8 @@ function executar(){
  const produtos=[
   {produtoId:'normal',classeVisual:'CINZA',nome:'Curso cinza',tipo:'PDF',descricao:'Básico',detalhes:[]},
   {produtoId:'verde',classeVisual:'VERDE',nome:'Curso verde',tipo:'PDF',descricao:'Qualificado',detalhes:[]},
-  {produtoId:'evento',classeVisual:'EVENTO',elegivelLoop:true,nome:'Curso evento',tipo:'PDF',descricao:'Especial',detalhes:[]}
+  {produtoId:'dourado',classeVisual:'DOURADO',elegivelLoop:true,nome:'Curso integral',tipo:'PDF',descricao:'Integral',detalhes:[]},
+  {produtoId:'evento',classeVisual:'ROXO',elegivelLoop:false,nome:'Evento carro',tipo:'FISICO',descricao:'Especial',detalhes:[]}
  ];
  const contexto={
   document:{querySelectorAll:seletor=>{
@@ -41,16 +42,17 @@ function executar(){
  const funcoes=vm.runInNewContext(codigo,contexto);
  return {...funcoes,botoes,produtos,contexto};
 }
-test('os tres quadradinhos permanecem na loja com nome e estado de selecao',()=>{
- assert.equal((html.match(/data-akitemm-cor="(?:CINZA|VERDE|EVENTO)"/g)||[]).length,3);
+test('os quatro quadradinhos permanecem na loja com nome e estado de selecao',()=>{
+ assert.equal((html.match(/data-akitemm-cor="(?:CINZA|VERDE|DOURADO|ROXO)"/g)||[]).length,4);
  assert.match(html,/role="group" aria-label="Filtrar produtos por cor"/);
- for(const nome of ['CINZA','VERDE','EVENTO'])
+ for(const nome of ['CINZA','VERDE','DOURADO','ROXO'])
   assert.match(html,new RegExp('data-akitemm-cor="'+nome+'" aria-pressed="false"'));
 });
 test('clicar nas cores filtra a vitrine, alterna selecao e desmarca quando repetir',()=>{
  const l=executar();
- assert.deepEqual(Array.from(l.produtosFiltrados(),p=>p.produtoId),['normal','verde','evento']);
- assert.equal(l.corDoProduto(l.produtos[2]),'EVENTO');
+ assert.deepEqual(Array.from(l.produtosFiltrados(),p=>p.produtoId),['normal','verde','dourado','evento']);
+ assert.equal(l.corDoProduto(l.produtos[3]),'ROXO');
+ assert.equal(l.corDoProduto(l.produtos[2]),'DOURADO');
  l.escolherCor('CINZA');
  assert.deepEqual(Array.from(l.produtosFiltrados(),p=>p.produtoId),['normal']);
  assert.equal(l.botoes[0].attributes['aria-pressed'],'true');
@@ -58,17 +60,22 @@ test('clicar nas cores filtra a vitrine, alterna selecao e desmarca quando repet
  assert.deepEqual(Array.from(l.produtosFiltrados(),p=>p.produtoId),['verde']);
  assert.equal(l.botoes[0].attributes['aria-pressed'],'false');
  assert.equal(l.botoes[1].attributes['aria-pressed'],'true');
- l.escolherCor('EVENTO');
- assert.deepEqual(Array.from(l.produtosFiltrados(),p=>p.produtoId),['evento']);
+ l.escolherCor('DOURADO');
+ assert.deepEqual(Array.from(l.produtosFiltrados(),p=>p.produtoId),['dourado']);
  assert.equal(l.botoes[2].attributes['aria-pressed'],'true');
- l.escolherCor('EVENTO');
- assert.equal(l.consultarFiltro(),null);
- assert.equal(l.produtosFiltrados().length,3);
+ l.escolherCor('ROXO');
+ assert.deepEqual(Array.from(l.produtosFiltrados(),p=>p.produtoId),['evento']);
+ assert.equal(l.botoes[3].attributes['aria-pressed'],'true');
  assert.equal(l.botoes[2].attributes['aria-pressed'],'false');
+ l.escolherCor('ROXO');
+ assert.equal(l.consultarFiltro(),null);
+ assert.equal(l.produtosFiltrados().length,4);
+ assert.equal(l.botoes[3].attributes['aria-pressed'],'false');
 });
 test('a cor do evento tem prioridade sobre verde e nao representa pagamento ou posicao',()=>{
  const l=executar();
- assert.equal(l.corDoProduto({classeVisual:'EVENTO',elegivelLoop:true}),'EVENTO');
+ assert.equal(l.corDoProduto({classeVisual:'ROXO',elegivelLoop:true}),'ROXO');
+ assert.equal(l.corDoProduto({classeVisual:'DOURADO',elegivelLoop:true}),'DOURADO');
  assert.equal(l.corDoProduto({classeVisual:'VERDE',elegivelLoop:true}),'VERDE');
  assert.equal(l.corDoProduto({classeVisual:'CINZA',elegivelLoop:true}),'CINZA');
  assert.doesNotMatch(faixa('function corDoProduto(p){','function fotoDo(p){'),
