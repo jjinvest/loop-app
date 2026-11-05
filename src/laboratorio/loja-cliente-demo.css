@@ -90,7 +90,7 @@ button:disabled{opacity:.48;cursor:not-allowed}
 }
 .tarja-promocao-especial-loop{
  display:block;align-self:stretch;
- background:linear-gradient(105deg,#4a247d 0%,#61309b 55%,#8856cc 100%);
+ background:linear-gradient(105deg,#5a318e 0%,#61309b 55%,#8856cc 100%);
  border:1px solid #bc91ef;color:#fffbea;text-align:center;
  padding:7px 9px;border-radius:8px;font-weight:900;
  text-shadow:0 1px 2px #26123b;
