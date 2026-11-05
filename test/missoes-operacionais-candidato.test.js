@@ -88,11 +88,12 @@ test('missões não iniciam em produção',()=>{
  try{assert.throws(()=>new MissoesOperacionaisCandidatoSQLite({banco:db}),/ADMIN_NAO_HOMOLOGADO/);}
  finally{db.close();if(antigo===undefined)delete process.env.NODE_ENV;else process.env.NODE_ENV=antigo;}
 });
-test('legenda da loja usa as três classes existentes e não modifica elegibilidade',()=>{
+test('legenda da loja separa quatro classes sem confundir estados do LOOP',()=>{
  const fs=require('node:fs'),path=require('node:path');
  const ui=fs.readFileSync(path.join(__dirname,'../src/laboratorio/loja-cliente-demo.html'),'utf8');
- for(const s of ['akitemm-cor-cinza','akitemm-cor-verde','akitemm-cor-evento',
-  'Compra comum (sem LOOP)','Qualifica para o LOOP','Evento especial']){
+ for(const s of ['akitemm-cor-cinza','akitemm-cor-verde','akitemm-cor-dourado',
+  'akitemm-cor-roxo','Cinza · Compra comum','Verde · Qualificado',
+  'Dourado · Integral','Roxo · Evento especial']){
   assert.ok(ui.includes(s),s);
  }
  assert.ok(!ui.includes('onclick="'));
