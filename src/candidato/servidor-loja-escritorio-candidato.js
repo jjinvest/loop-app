@@ -476,6 +476,19 @@ function criarAppLojaEscritorioCandidato({banco,repositorioCatalogo,
  const motorConta=new MotorContaUnicaEnsaioSQLite({
   banco,sinalizacao:sinalizacaoVitrine,ponte,cpf,termosVersao
  });
+ // Indica exatamente a capacidade operacional: testes do motor nao
+ // significam que credenciais Asaas estejam presentes na previa Railway.
+ app.get('/staging/escritorio-unificado/sandbox-pix/estado',
+  autorizarOperador,(_req,res)=>res.json({
+   status:operacoesSandboxAutorizadas&&Boolean(worker)?
+    'INTEGRADO_SANDBOX_NO_MESMO_SQLITE':'AGUARDANDO_CREDENCIAIS_SANDBOX_NA_PREVIA',
+   servicosExigemBancoCompartilhado:false,
+   usaSQLiteDaLoja:ponte.banco===banco,
+   webhookIngressAtivo:Boolean(inbox)&&operacoesSandboxAutorizadas,
+   consultarPSPDisponivel:Boolean(worker)&&operacoesSandboxAutorizadas,
+   saquesReaisHabilitados:false,checkoutComercialHabilitado:false
+  }));
+
  app.get('/staging/motor/estado',(req,res)=>{
   const s=contas.sessao(req);
   if(!s)return res.status(401).json({erro:'SESSAO_AUSENTE'});
