@@ -304,7 +304,8 @@ async function conferirCoberturaAkitemm(){
   const r=await api('/auditoria-cobertura?limite=50');
   resumo.textContent='Pedidos examinados: '+r.resumo.pedidosNaAmostra+
    ' / '+r.resumo.pedidosTotal+
-   ' · Sem cobertura bruta de posições: '+r.resumo.brutoInsuficiente+
+   ' · Cobertura bruta insuficiente: '+r.resumo.brutoInsuficiente+
+   ' · Produtos individuais sem cobertura: '+r.resumo.segmentosInsuficientes+
    ' · Sem custo externo comprovado: '+r.resumo.semComprovacaoDeCustos+
    ' · Lotes sem PSP vigente: '+r.resumo.lotesSemPSPConferido+
    '. Marco Zero financeiro: NÃO APROVADO.';
