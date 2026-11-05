@@ -260,4 +260,40 @@ test('webhook bruto nao gera posicoes; PSP reconsultado cria lote ROXO pendente 
  }
  assert.deepEqual(db.prepare('PRAGMA foreign_key_check').all(),[]);
  assert.equal(db.prepare('PRAGMA integrity_check').get().integrity_check,'ok');
+ // O primeiro painel exibia somente os 50 pedidos mais recentes. A partir
+ // desta etapa a navegação deve percorrer TODOS, com contadores por página.
+ const segundo=await call('/staging/vitrine/loja/pedidos',{
+  method:'POST',cookie,csrf,key:'segundo-pedido-sandbox-auditoria-2026',
+  body:{itens:[{produtoId:'curso-homologacao-250',quantidade:1}]}
+ });
+ assert.equal(segundo.status,201,JSON.stringify(segundo.json));
+ const vistos=[];
+ for(let offset=0;offset<2;offset++){
+  const pagina=await call('/staging/escritorio-unificado/auditoria-cobertura?limite=1&offset='+offset,
+   {admin:true});
+  assert.equal(pagina.status,200,JSON.stringify(pagina.json));
+  assert.equal(pagina.json.resumo.pedidosTotal,2);
+  assert.equal(pagina.json.resumo.pedidosNaAmostra,1);
+  assert.equal(pagina.json.escopoDosContadores,'PAGINA_ATUAL_NAO_TOTAL_GLOBAL');
+  assert.equal(pagina.json.amostraParcial,true);
+  assert.equal(pagina.json.paginacao.offset,offset);
+  assert.equal(pagina.json.paginacao.totalDePedidos,2);
+  assert.equal(pagina.json.paginacao.quantidadeNaPagina,1);
+  assert.equal(pagina.json.paginacao.proximaPaginaOffset,offset===0?1:null);
+  assert.equal(pagina.json.paginacao.paginaAnteriorOffset,offset===0?null:0);
+  vistos.push(pagina.json.pedidos[0].prepedidoId);
+ }
+ assert.deepEqual(new Set(vistos),new Set([pedidoId,segundo.json.pedido.pedidoId]));
+ const semPedidos=await call('/staging/escritorio-unificado/auditoria-cobertura?limite=1&offset=2',
+  {admin:true});
+ assert.equal(semPedidos.status,200);
+ assert.equal(semPedidos.json.pedidos.length,0);
+ assert.equal(semPedidos.json.paginacao.paginaVazia,true);
+ for(const query of ['offset=-1','offset=1.5','offset=abc',
+  'offset=1000000000000','limite=1&offset=1&intruso=sim']){
+  const invalido=await call('/staging/escritorio-unificado/auditoria-cobertura?'+query,
+   {admin:true});
+  assert.equal(invalido.status,400,query);
+ }
+ assert.equal(db.prepare('PRAGMA integrity_check').get().integrity_check,'ok');
 });
