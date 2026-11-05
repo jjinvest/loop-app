@@ -88,3 +88,27 @@ body.loop03-logado main>.mensagem-pagina{margin:0 0 .75rem}
  .cliente-integrado #conteudoTabuleiro .mapa-tabuleiro-posicoes-demo{width:min(100%,330px)}
  .cliente-integrado #conteudoTabuleiro .loop03-linha-fila{padding:5px}
 }
+
+/* O tabuleiro do cliente volta a ser uma roda real (centro + seis perifericas).
+   Escopo SOMENTE da aba Tabuleiro: filas, outras abas e paleta aprovada intocadas. */
+.cliente-integrado #conteudoTabuleiro .mapa-tabuleiro-posicoes-demo{
+ position:relative;display:block;aspect-ratio:1/1;
+ width:min(100%,460px);max-width:460px;box-sizing:border-box;
+ margin:10px auto 18px;padding:0;
+}
+.cliente-integrado #conteudoTabuleiro .mapa-tabuleiro-posicoes-demo>.espaco-tabuleiro-demo{
+ position:absolute;display:flex;width:25%;height:25%;
+ min-width:0;min-height:0;aspect-ratio:1/1;
+ transform:translate(-50%,-50%);
+ padding:3px;box-sizing:border-box;
+}
+.cliente-integrado #conteudoTabuleiro .mapa-tabuleiro-posicoes-demo>.tabuleiro-centro{left:50%;top:50%}
+.cliente-integrado #conteudoTabuleiro .mapa-tabuleiro-posicoes-demo>.tabuleiro-vaga-1{left:50%;top:17%}
+.cliente-integrado #conteudoTabuleiro .mapa-tabuleiro-posicoes-demo>.tabuleiro-vaga-2{left:78.5%;top:33.5%}
+.cliente-integrado #conteudoTabuleiro .mapa-tabuleiro-posicoes-demo>.tabuleiro-vaga-3{left:78.5%;top:66.5%}
+.cliente-integrado #conteudoTabuleiro .mapa-tabuleiro-posicoes-demo>.tabuleiro-vaga-4{left:50%;top:83%}
+.cliente-integrado #conteudoTabuleiro .mapa-tabuleiro-posicoes-demo>.tabuleiro-vaga-5{left:21.5%;top:66.5%}
+.cliente-integrado #conteudoTabuleiro .mapa-tabuleiro-posicoes-demo>.tabuleiro-vaga-6{left:21.5%;top:33.5%}
+@media(max-width:600px){
+ .cliente-integrado #conteudoTabuleiro .mapa-tabuleiro-posicoes-demo{width:min(100%,330px)}
+}
