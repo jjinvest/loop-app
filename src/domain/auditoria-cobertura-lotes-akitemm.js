@@ -120,6 +120,21 @@ function auditarCarteiraDePedidosAkitemmLab({banco,sinalizacao,limite=50}={}){
  const total=banco.prepare('SELECT COUNT(*) AS n FROM akitemm_checkout_prepedidos_staging').get().n;
  const existeLote=!!banco.prepare("SELECT 1 FROM sqlite_master WHERE type='table' AND name='akitemm_motor_ensaio_lotes_pedido'").get();
  const existeAceite=!!banco.prepare("SELECT 1 FROM sqlite_master WHERE type='table' AND name='akitemm_motor_ensaio_aceites_posicao'").get();
+ // Conferencia GLOBAL: tambem detecta lotes ou aceites que nao
+ // pertencem a nenhum prepedido legitimo (nao somente os da pagina).
+ const lotesSemPedido=existeLote?banco.prepare([
+  'SELECT COUNT(*) AS n FROM akitemm_motor_ensaio_lotes_pedido l',
+  'LEFT JOIN akitemm_checkout_prepedidos_staging p',
+  'ON p.prepedido_id=l.prepedido_id AND p.titular_id=l.titular_id',
+  'WHERE p.prepedido_id IS NULL'
+ ].join(' ')).get().n:0;
+ const aceitesSemVinculoConsistente=existeLote&&existeAceite?banco.prepare([
+  'SELECT COUNT(*) AS n FROM akitemm_motor_ensaio_aceites_posicao a',
+  'LEFT JOIN akitemm_motor_ensaio_lotes_pedido l',
+  'ON l.numero_posicao=a.numero_posicao AND',
+  'l.prepedido_id=a.prepedido_id AND l.titular_id=a.titular_id',
+  'WHERE l.numero_posicao IS NULL'
+ ].join(' ')).get().n:0;
  const contarAceites=existeLote&&existeAceite?banco.prepare([
   'SELECT COUNT(*) AS quantidade,',
   'COALESCE(SUM(CASE WHEN a.numero_posicao IS NOT NULL THEN 1 ELSE 0 END),0) AS aceites,',
@@ -144,7 +159,9 @@ function auditarCarteiraDePedidosAkitemmLab({banco,sinalizacao,limite=50}={}){
   referenciaTotalCalculadaCentavos:0,exposicaoCondicionalCentavos:0,
   posicoesNoMotorEnsaio:0,aceitesHistoricosIndividuais:0,
   aceitesSemPSPVigente:0,aceitesComTitularDivergente:0,
-  lotesParciais:0,valorCondicionalDosLotesCentavos:0};
+  lotesParciais:0,valorCondicionalDosLotesCentavos:0,
+  lotesSemPedidoValidoNoBanco:lotesSemPedido,
+  aceitesSemVinculoConsistenteNoBanco:aceitesSemVinculoConsistente};
  const pedidos=[];
  for(const row of rows){
   const foto=sinalizacao.consultarFotografiaPrepedido({
@@ -228,6 +245,11 @@ function auditarCarteiraDePedidosAkitemmLab({banco,sinalizacao,limite=50}={}){
   marcoZeroFinanceiroAprovado:false,
   custosBonificacaoComprovados:false,reservasBancariasDisponiveisComprovadas:false,
   pagamentosDoPSPSaoSomenteSandbox:true,somenteLeitura:true,
+  alertasGlobais:[
+   ...(lotesSemPedido?['LOTES_COM_TITULAR_OU_PEDIDO_INEXISTENTE']:[]),
+   ...(aceitesSemVinculoConsistente?['ACEITES_SEM_LOTE_CONSISTENTE']:[]),
+   ...(livros.destinosDesconhecidos?['DESTINO_DE_COFRE_DESCONHECIDO']:[])
+  ],
   livrosFinanceirosLab:{
    fontesAusentes:livros.fontesAusentes,
    fontesDocumentaisCompletas:livros.fontesAusentes.length===0,
