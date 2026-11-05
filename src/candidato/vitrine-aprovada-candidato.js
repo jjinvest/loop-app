@@ -48,7 +48,7 @@ function createVitrineCandidata({app,banco,catalogo,contas,intencoes,prePedidos,
  if(!origemJs.includes(ant)||!origemJs.includes(marcador)||
     !origemJs.includes('const catalogo=[],carrinho=new Map();')||
     !origemJs.includes('const data=await response.json();')||
-    !origemJs.includes('const especial=!!p.eventoId&&p.posicoesPorPedidoLoop>1;'))
+    !origemJs.includes("const classe=corDoProduto(p),especial=classe==='ROXO';"))
   fail('CONTRATO_JS_VITRINE_MUDOU_REVISAR_ADAPTADOR');
  const js=origemJs
   .replace("fetch('/api/laboratorio/participante/'+caminho,{",
@@ -62,8 +62,6 @@ function createVitrineCandidata({app,banco,catalogo,contas,intencoes,prePedidos,
   .replace('if(quantidade<100)','if(quantidade<50)')
   .replace('if(qtd>=100)','if(qtd>=50)')
   .replace('Máximo de 100 unidades por produto.','Máximo de 50 unidades por produto neste laboratório.')
-  .replace('const especial=!!p.eventoId&&p.posicoesPorPedidoLoop>1;',
-   "const especial=p.classeVisual==='EVENTO';")
   .replace(marcador,
    "adicional.textContent='Evento visual de laboratório · sem posições ou benefícios reais';");
  app.get('/staging/loja',(req,res)=>{
