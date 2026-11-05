@@ -295,6 +295,36 @@ $('sair').addEventListener('click',()=>{
  $('historicoPosicoes').replaceChildren();$('resumoHistoricoPosicoes').textContent='';
  $('listaMissoes').replaceChildren();dizer('Acesso encerrado.');
 });
+async function conferirCoberturaAkitemm(){
+ const botao=$('consultarCoberturaAkitemm');
+ botao.disabled=true;
+ const resumo=$('resumoCoberturaAkitemm'),lista=$('listaCoberturaAkitemm');
+ lista.replaceChildren();
+ try{
+  const r=await api('/auditoria-cobertura?limite=50');
+  resumo.textContent='Pedidos examinados: '+r.resumo.pedidosNaAmostra+
+   ' / '+r.resumo.pedidosTotal+
+   ' · Sem cobertura bruta de posições: '+r.resumo.brutoInsuficiente+
+   ' · Sem custo externo comprovado: '+r.resumo.semComprovacaoDeCustos+
+   ' · Lotes sem PSP vigente: '+r.resumo.lotesSemPSPConferido+
+   '. Marco Zero financeiro: NÃO APROVADO.';
+  if(r.amostraParcial)lista.append(elem('p','Amostra limitada. Consulte todos os pedidos para conferência completa.'));
+  const invalidos=r.pedidos.filter(p=>p.alertas.length>0);
+  if(!invalidos.length)lista.append(elem('p','Nenhum alerta nesta amostra; custos e banco continuam pendentes.'));
+  for(const p of invalidos.slice(0,20)){
+   const card=elem('article');card.className='alerta-operacional';
+   card.append(elem('strong','Pedido '+p.prepedidoId),
+    elem('p','Posições: '+(p.posicoesPlanejadas??'sem plano')+
+     ' · Referência: '+(p.referenciaCentavos===null?'sem dados':
+     new Intl.NumberFormat('pt-BR',{style:'currency',currency:'BRL'}).format(p.referenciaCentavos/100))+
+     ' · '+p.estado),
+    elem('small',p.alertas.join(' · ')));
+   lista.append(card);
+  }
+ }catch(e){resumo.textContent='Auditoria indisponível: '+e.message;}
+ finally{botao.disabled=false;}
+}
+$('consultarCoberturaAkitemm').addEventListener('click',conferirCoberturaAkitemm);
 $('atualizar').addEventListener('click',()=>atualizar().catch(e=>dizer(e.message)));
 $('recarregarPreviaFilas').addEventListener('click',()=>atualizar().catch(e=>dizer(e.message)));
 for(const [id,destino] of [['historicoPosicoesAtualizar','atualizar'],['historicoPosicoesAnterior','anterior'],['historicoPosicoesProximo','proximo']]){
