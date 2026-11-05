@@ -4,6 +4,7 @@ const assert=require('node:assert/strict');
 const {DatabaseSync}=require('node:sqlite');
 const {MotorContaUnicaEnsaioSQLite}=
  require('../src/domain/motor-conta-unica-ensaio-sqlite');
+const {planejarPosicoesCompraAkitemm}=require('../src/domain/plano-posicoes-compra-akitemm');
 const titular=n=>'titular-'+String(n).padStart(8,'0')+'-0000-0000-0000-000000000000';
 const pedido=n=>'hom-'+String(n).padStart(8,'0')+'-0000-0000-0000-000000000000';
 function preparar(){
@@ -27,7 +28,7 @@ function preparar(){
  };
  const conta=n=>db.prepare('INSERT INTO akitemm_conta_unica_candidata VALUES(?)')
   .run(titular(n));
- return {db,sinalizacao,gravar,conta,
+ return {db,sinalizacao,gravar,conta,fotos,
   motor:new MotorContaUnicaEnsaioSQLite({banco:db,sinalizacao})};
 }
 test('motor inicia vazio na MESMA conexao SQLite, sem criar posicoes ou eventos',()=>{
@@ -129,4 +130,67 @@ test('motor de ensaio jamais pode ser iniciado em producao',()=>{
    banco:db,sinalizacao:{db,consultarFotografiaPrepedido:()=>null}
   }),/MOTOR_ENSAIO_PROIBIDO_PRODUCAO/);
  }finally{db.close();if(old===undefined)delete process.env.NODE_ENV;else process.env.NODE_ENV=old;}
+});
+
+test('compra mista abre lote indivisivel de oito posicoes, sem credito real',()=>{
+ const {db,motor,conta,gravar,fotos,sinalizacao}=preparar();
+ try{
+  conta(1);gravar(1,1,{total:200000});
+  const itens=[
+   {produtoId:'verde-100',classificacao:'VERDE',quantidade:3,
+    precoUnitarioCentavos:10000,subtotalCentavos:30000,minimo:1},
+   {produtoId:'ouro-350',classificacao:'DOURADO',quantidade:2,
+    precoUnitarioCentavos:35000,subtotalCentavos:70000,minimo:1},
+   {produtoId:'evento-1000',classificacao:'ROXO',quantidade:1,
+    precoUnitarioCentavos:100000,subtotalCentavos:100000,minimo:1,
+    posicoesPorUnidadeRoxo:5}
+  ];
+  const planejamentoPosicoes=planejarPosicoesCompraAkitemm(itens);
+  fotos.set(pedido(1),{titularId:titular(1),totalCentavos:200000,
+   planejamentoPosicoes,itens});
+  const primeira=motor.vincularPedido({prepedidoId:pedido(1),aceiteEnsaio:true});
+  assert.equal(primeira.quantidadePosicoes,8);
+  assert.equal(new Set(primeira.posicoesIds).size,8);
+  assert.equal(primeira.posicoesReais,0);
+  assert.equal(primeira.financeiroReal,false);
+  const repetida=motor.vincularPedido({prepedidoId:pedido(1),aceiteEnsaio:true});
+  assert.equal(repetida.repetido,true);
+  assert.deepEqual(repetida.posicoesIds,primeira.posicoesIds);
+  assert.equal(motor.consultar({titularId:titular(1)}).posicoesAtivasDoTitular,8);
+  assert.equal(db.prepare('SELECT COUNT(*) AS n FROM akitemm_motor_ensaio_lotes_pedido').get().n,8);
+  assert.equal(new MotorContaUnicaEnsaioSQLite({banco:db,sinalizacao})
+   .consultar({titularId:titular(1)}).posicoesAtivasDoTitular,8);
+  gravar(2,1,{total:150000});
+  const tres=[{produtoId:'ouro-500',classificacao:'DOURADO',
+   quantidade:3,precoUnitarioCentavos:50000,subtotalCentavos:150000}];
+  fotos.set(pedido(2),{titularId:titular(1),totalCentavos:150000,
+   itens:tres,planejamentoPosicoes:planejarPosicoesCompraAkitemm(tres)});
+  assert.throws(()=>motor.vincularPedido({prepedidoId:pedido(2),aceiteEnsaio:true}),
+   /LIMITE_DEZ_POSICOES_MOTOR_ENSAIO/);
+  assert.equal(db.prepare('SELECT COUNT(*) AS n FROM akitemm_motor_ensaio_lotes_pedido').get().n,8);
+  assert.equal(motor.consultar({titularId:titular(1)}).posicoesAtivasDoTitular,8);
+  assert.equal(db.prepare('PRAGMA integrity_check').get().integrity_check,'ok');
+ }finally{db.close();}
+});
+test('verde abaixo do piso e roxo nao configurado nao criam entradas no motor',()=>{
+ const {db,motor,conta,gravar,fotos}=preparar();
+ try{
+  conta(1);gravar(1,1,{total:100000});
+  const itens=[{produtoId:'verde-100',classificacao:'VERDE',quantidade:1,
+   precoUnitarioCentavos:10000,subtotalCentavos:10000},
+   {produtoId:'cinza-900',classificacao:'CINZA',quantidade:1,
+    precoUnitarioCentavos:90000,subtotalCentavos:90000}];
+  fotos.set(pedido(1),{titularId:titular(1),totalCentavos:100000,itens,
+   planejamentoPosicoes:planejarPosicoesCompraAkitemm(itens)});
+  assert.throws(()=>motor.vincularPedido({prepedidoId:pedido(1),aceiteEnsaio:true}),
+   /PLANEJAMENTO_PEDIDO_NAO_QUALIFICA_ENSAIO/);
+  gravar(2,1,{total:1000000});
+  const roxo=[{produtoId:'carro-10k',classificacao:'ROXO',quantidade:1,
+   precoUnitarioCentavos:1000000,subtotalCentavos:1000000}];
+  fotos.set(pedido(2),{titularId:titular(1),totalCentavos:1000000,itens:roxo,
+   planejamentoPosicoes:planejarPosicoesCompraAkitemm(roxo)});
+  assert.throws(()=>motor.vincularPedido({prepedidoId:pedido(2),aceiteEnsaio:true}),
+   /PLANEJAMENTO_PEDIDO_NAO_QUALIFICA_ENSAIO/);
+  assert.equal(motor.consultar({titularId:titular(1)}).posicoesAtivasDoTitular,0);
+ }finally{db.close();}
 });
