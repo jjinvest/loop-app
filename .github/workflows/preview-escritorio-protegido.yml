@@ -6,6 +6,8 @@ on:
     paths:
       - 'scripts/servidor-escritorio-preview-railway.js'
       - 'test/servidor-escritorio-preview-railway.test.js'
+      - 'src/domain/equipe-candidata-sqlite.js'
+      - 'src/candidato/servidor-loja-escritorio-candidato.js'
       - 'src/candidato/checkout-candidato-ui.html'
       - 'src/candidato/checkout-candidato-ui.js'
       - 'src/laboratorio/checkout-staging-ui.css'
@@ -29,6 +31,9 @@ jobs:
       - run: npm ci --ignore-scripts --no-fund
       - run: node --check scripts/servidor-escritorio-preview-railway.js
       - run: node --check test/servidor-escritorio-preview-railway.test.js
+      - run: node --check src/domain/equipe-candidata-sqlite.js
+      - run: node --check src/candidato/servidor-loja-escritorio-candidato.js
+      - run: node --check src/candidato/checkout-candidato-ui.js
       - run: node --test test/servidor-escritorio-preview-railway.test.js
       - run: npm test
       - run: npm install --no-save playwright@1.56.1
