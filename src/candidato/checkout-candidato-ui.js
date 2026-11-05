@@ -297,6 +297,7 @@ function preencherVagaMotor(id,p,centro=false){
  numero.textContent=p?'#'+p.numero:(centro?'#0000':'—');
  numero.classList.toggle('posicao-dourado',Boolean(p?.dourada));
  numero.classList.toggle('posicao-azul',Boolean(p?.pendente));
+ numero.classList.toggle('posicao-verde',Boolean(p?.aceiteEnsaio));
  numero.classList.toggle('loop03-iluminada',Boolean(p?.minha));
  bolinha.setAttribute('aria-label',(centro?'Centro':'Vaga do tabuleiro')+
   ': '+(p?('#'+p.numero+' · '+p.status):'vazio')+
@@ -313,7 +314,7 @@ function preencherFilaMotor(id,itens,tipo){
   linha.className='loop03-linha-fila';
   const inicial=document.createElement('span');
   inicial.className='loop03-inicial-fila '+(p.dourada?'loop03-dourada':
-   p.pendente?'loop03-azul':tipo==='A'?'loop03-a':'loop03-b');
+   p.pendente?'loop03-azul':p.aceiteEnsaio?'loop03-verde':tipo==='A'?'loop03-a':'loop03-b');
   inicial.textContent=p.dourada?'●':tipo;
   const conteudo=document.createElement('span');
   conteudo.className='loop03-fila-identificacao';
@@ -369,8 +370,10 @@ function alternarMenuIntegrado(){
 async function atualizarPosicoes(){
  const area=$('posicoesPainel');
  try{
-  const [dados,motor]=await Promise.all([
-   requisitar('/minha-previa-filas'),requisitar('/motor/estado')
+  const [dados,motor,identidade,termos]=await Promise.all([
+   requisitar('/minha-previa-filas'),requisitar('/motor/estado'),
+   requisitar('/contas/identidade').catch(()=>({registrado:false})),
+   requisitar('/contas/termos-identidade').catch(()=>({disponivel:false}))
   ]);
   const historicos=Array.isArray(dados.pendencias)?dados.pendencias:[];
   const ativas=Array.isArray(motor.minhasPosicoes)?motor.minhasPosicoes:[];
@@ -397,6 +400,7 @@ async function atualizarPosicoes(){
    const cartao=document.createElement('article');
    cartao.className='loop03-cartao-posicao-ensaio'+
     (posicao?.pendente||registro?' loop03-cartao-posicao-pendente':'')+
+    (posicao?.aceiteIndividualRegistrado?' loop03-cartao-posicao-aceito':'')+
     (posicao?.numero===posicaoSelecionadaMotor?' loop03-cartao-motor-selecionado':'');
    cartao.setAttribute('role','listitem');
    const nome=document.createElement('h3');
@@ -409,6 +413,48 @@ async function atualizarPosicoes(){
     (posicao.fila?' '+posicao.fila:'')+(posicao.pendente?' · aguardando confirmação':'')):
     registro?(estados[registro.estado]||'Registro em revisão'):'Sem posição vinculada';
    cartao.append(nome,numero,status);
+   if(posicao?.aceiteIndividualRegistrado){
+    const aceite=document.createElement('small');
+    aceite.textContent='Aceite desta posição registrado no ensaio · identidade externa não verificada.';
+    cartao.append(aceite);
+   }
+   if(posicao?.pendente){
+    const formulario=document.createElement('form');
+    formulario.className='loop03-form-aceite-posicao';
+    const explicacao=document.createElement('small');
+    explicacao.textContent=identidade.registrado?
+     'CPF já vinculado à conta (final '+identidade.cpfFinal+'). Confirme os termos desta posição.':
+     'Cadastre primeiro um CPF fictício na área Minha Conta para habilitar o aceite desta posição.';
+    formulario.append(explicacao);
+    if(identidade.registrado&&termos.disponivel){
+     const rotulo=document.createElement('label');
+     const caixa=document.createElement('input');
+     caixa.type='checkbox';caixa.required=true;
+     rotulo.append(caixa,document.createTextNode(
+      ' Aceito nesta posição os termos de ensaio '+termos.termosVersao+' (sem direitos reais).'));
+     const botaoAceite=document.createElement('button');
+     botaoAceite.type='submit';botaoAceite.textContent='Confirmar esta posição (ensaio)';
+     formulario.append(rotulo,botaoAceite);
+     formulario.addEventListener('submit',async ev=>{
+      ev.preventDefault();
+      if(!caixa.checked)return;
+      botaoAceite.disabled=true;
+      try{
+       const resultado=await requisitar('/motor/posicoes/confirmar-ensaio',{
+        method:'POST',mutacao:true,
+        body:{posicaoId:posicao.numero,versaoTermos:termos.termosVersao,
+         aceiteExplicito:true}
+       });
+       if(resultado.aceiteIndividualRegistrado!==true)throw Error('ACEITE_NAO_REGISTRADO');
+       dizer('Aceite de ensaio registrado para a posição #'+posicao.numero+'.');
+       await atualizarPosicoes();
+       if(aba==='conteudoTabuleiro')await atualizarTabuleiroIntegrado();
+      }catch(e){dizer('Não foi possível confirmar a posição #'+posicao.numero+': '+e.message);
+       botaoAceite.disabled=false;}
+     });
+    }
+    cartao.append(formulario);
+   }
    if(posicao){
     const botao=document.createElement('button');botao.type='button';
     botao.textContent='Selecionar esta posição de ensaio';
