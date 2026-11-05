@@ -16,6 +16,7 @@ on:
       - 'src/domain/plano-posicoes-compra-akitemm.js'
       - 'test/plano-posicoes-compra-akitemm.test.js'
       - 'test/asaas-motor-automatico-sandbox-candidato.test.js'
+      - 'test/preview-unificacao-psp-webhook.test.js'
       - 'test/auditoria-cobertura-lotes-akitemm.test.js'
       - 'src/domain/auditoria-cobertura-lotes-akitemm.js'
       - 'src/candidato/escritorio-admin-candidato-ui.html'
