@@ -119,6 +119,35 @@ function criarAppLojaEscritorioCandidato({banco,repositorioCatalogo,
   if(!localSeguro(req))return res.status(403).json({erro:'SOMENTE_LOOPBACK'});
   next();
  });
+ // Entrada autentica de webhook no MESMO banco do pedido e do motor.
+ // Declarada ANTES do parser JSON para verificar bytes originais do Asaas.
+ // Nenhum aviso bruto gera posicoes, comissao, giro ou saldo.
+ app.post('/staging/asaas/webhook-unificado',
+  express.raw({type:'application/json',inflate:false,limit:'16kb'}),
+  (req,res)=>{
+   if(!operacoesSandboxAutorizadas||!inbox)
+    return res.status(404).json({erro:'WEBHOOK_SANDBOX_INATIVO'});
+   if(!req.is('application/json')||!Buffer.isBuffer(req.body))
+    return res.status(415).json({erro:'WEBHOOK_JSON_OBRIGATORIO'});
+   try{
+    const r=inbox.registrar({
+     cabecalhoToken:req.get('asaas-access-token'),corpoBruto:req.body
+    });
+    return res.json({eventoRegistrado:r.registrado===true,
+     repetido:r.repetido===true,pendenteReconsulta:r.pendenteReconsulta===true,
+     precisaConciliarNoMesmoBanco:true,financasReais:false,
+     posicoesCriadas:0});
+   }catch(e){
+    const codigo=e.codigo||'WEBHOOK_INDETERMINADO';
+    return res.status(['TOKEN_WEBHOOK_INVALIDO',
+     'TOKEN_SANDBOX_NAO_CONFIGURADO'].includes(codigo)?401:
+     ['CORPO_WEBHOOK_INVALIDO','EVENTO_ASAAS_SANDBOX_NAO_VALIDO',
+      'VALOR_WEBHOOK_INVALIDO'].includes(codigo)?400:409)
+     .json({erro:codigo==='TOKEN_WEBHOOK_INVALIDO'?'TOKEN_INVALIDO':
+      codigo==='TOKEN_SANDBOX_NAO_CONFIGURADO'?'TOKEN_INVALIDO':
+      codigo==='WEBHOOK_INDETERMINADO'?'WEBHOOK_REQUER_REVISAO':codigo});
+   }
+  });
  app.use(express.json({limit:'12kb',strict:true}));
  const sessao=req=>contas.sessao(req);
  const autorizacao=req=>contas.autorizarMutacao(req);
@@ -731,6 +760,57 @@ function criarAppLojaEscritorioCandidato({banco,repositorioCatalogo,
  // Quadro de acompanhamento do PSP, habilitado apenas em homologação.
  // Apenas contagens e códigos operacionais, sem credenciais, CPF ou payload.
  if(worker){
+  // Uma cobranca PIX do SANDBOX precisa usar o MESMO prepedido e titular
+  // do Escritorio, fotografia historica, cobertura bruta e limite atual.
+  // Nao se gera QR Pix real ou creditos comercialmente sacaveis.
+  app.post('/staging/escritorio-unificado/sandbox-pix/preparar',
+   autorizarOperador,async(req,res)=>{
+    if(!operacoesSandboxAutorizadas)
+     return res.status(403).json({erro:'SANDBOX_NAO_CONFIGURADO'});
+    const b=req.body;
+    if(!req.is('application/json')||!b||Array.isArray(b)||
+       Object.keys(b).sort().join(',')!==
+        'aceiteEnsaio,clienteAsaasId,prepedidoId'||b.aceiteEnsaio!==true||
+       typeof b.prepedidoId!=='string'||!/^hom-[0-9a-f-]{36}$/.test(b.prepedidoId)||
+       typeof b.clienteAsaasId!=='string'||!/^cus_[A-Za-z0-9_-]{5,80}$/.test(b.clienteAsaasId))
+     return res.status(400).json({erro:'PARAMETROS_ENSAIO_INVALIDOS'});
+    const row=banco.prepare([
+     'SELECT titular_id AS titularId,total_centavos AS centavos',
+     'FROM akitemm_checkout_prepedidos_staging WHERE prepedido_id=?'
+    ].join(' ')).get(b.prepedidoId);
+    if(!row)return res.status(404).json({erro:'PREPEDIDO_INEXISTENTE'});
+    try{
+     const foto=sinalizacaoVitrine.consultarFotografiaPrepedido({
+      prepedidoId:b.prepedidoId,titularId:row.titularId
+     });
+     const {auditarCoberturaDePedido}=require('../domain/auditoria-cobertura-lotes-akitemm');
+     const audit=auditarCoberturaDePedido({
+      fotografia:foto,valorPedidoCentavos:row.centavos
+     });
+     if(!foto?.planejamentoPosicoes?.podeVincularEnsaio||
+        audit.alertas.includes('EVENTO_ROXO_NAO_CONFIGURADO')||
+        audit.segmentosInsuficientes?.length||
+        audit.diferencaBrutaAposReferenciaCentavos<0)
+      return res.status(409).json({erro:'PRECOBRANCA_SEM_COBERTURA_MINIMA'});
+     const ativas=motorConta.consultar({titularId:row.titularId}).posicoesAtivasDoTitular;
+     const prev=foto.planejamentoPosicoes.quantidadePosicoesPrevistas;
+     if(!Number.isSafeInteger(ativas)||prev+ativas>10)
+      return res.status(409).json({erro:'LIMITE_POSICOES_ANTES_DA_COBRANCA'});
+     ponte.preparar({titularId:row.titularId,prepedidoId:b.prepedidoId,
+      clienteAsaasId:b.clienteAsaasId});
+     const r=await ponte.enviarUmaVez({titularId:row.titularId,
+      prepedidoId:b.prepedidoId,provedor:provedorReconsultaSandbox,
+      execucaoLiberada:true,exigirCoberturaBruta:true});
+     return res.status(r.repetido?200:201).json({
+      ambiente:'ASAAS_SANDBOX_EXCLUSIVO',
+      prepedidoId:b.prepedidoId,estado:r.registro?.estado,
+      repetido:r.repetido===true,consultaPSPRecebido:false,
+      posicoesReais:0,saquesReais:0
+     });
+    }catch(e){
+     return res.status(409).json({erro:e.codigo||'COBRANCA_SANDBOX_REQUER_REVISAO'});
+    }
+   });
   app.get('/staging/escritorio-unificado/monitor-psp',autorizarOperador,
    (_req,res)=>{
     if(!operacoesSandboxAutorizadas)return res.status(403)
