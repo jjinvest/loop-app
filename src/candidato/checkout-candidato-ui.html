@@ -104,8 +104,8 @@
     </div>
     <div class="loop03-indicadores" aria-label="Resumo operacional da conta">
      <button type="button" id="loop03IrPosicoesIntegrado" class="loop03-indicador"><small>POSIÇÕES · ENSAIO</small><strong id="loop03TotalIntegrado">—</strong><span>Ver minhas posições</span></button>
-     <div class="loop03-indicador"><small>GIROS · 24H</small><strong>—</strong><span>Motor não integrado nesta prévia</span></div>
-     <div class="loop03-indicador"><small>NÚMERO</small><strong>#0000</strong><span>Nenhuma posição comercial selecionada</span></div>
+     <div class="loop03-indicador"><small>GIROS · 24H · ENSAIO</small><strong id="loop03Giros24Integrado">—</strong><span>Motor conectado ao mesmo SQLite</span></div>
+     <div class="loop03-indicador"><small>NÚMERO · ENSAIO</small><strong id="loop03NumeroIntegrado">#0000</strong><span>Seleção da minha posição de ensaio</span></div>
      <div class="loop03-indicador"><small>FINANCEIRO</small><strong>—</strong><span>Sem saldo financeiro real nesta prévia</span></div>
     </div>
     <div class="barra-conta"><span>Dados exclusivos da sua conta</span><a href="/staging/loja" class="primario">Abrir loja AKITEMM</a></div>
@@ -182,8 +182,55 @@
   </section>
   <section class="painel" id="conteudoTabuleiro" role="tabpanel" aria-labelledby="abaTabuleiro" hidden>
    <div class="linha"><h2>Tabuleiro LOOP 3.0</h2><button type="button" id="atualizarTabuleiroIntegrado">Atualizar</button></div>
-   <p class="subtexto">O tabuleiro do motor já existe em laboratório. A ligação segura do motor à conta online ainda não foi habilitada; por isso não exibimos ocupantes ou giros inventados.</p>
-   <p id="estadoTabuleiroIntegrado" role="status" aria-live="polite">Consultando o estado das suas posições de homologação.</p>
+   <p class="subtexto">Mesmo motor V6 e mesmo SQLite da conta e da loja. Movimentos de homologação são identificados como ensaio, sem posições ou ganhos comerciais.</p>
+   <div class="loop03-mapa-grade" id="tabuleiroMotorIntegrado">
+    <section class="bloco-fila-participante" aria-label="Fila A de ensaio">
+     <h3><span class="loop03-icone-cabecalho">◉</span> FILA A</h3>
+     <div id="motorFilaA" aria-live="polite"></div>
+    </section>
+    <section class="loop03-roda" aria-label="Roda do motor LOOP em ensaio">
+     <div class="painel-tabuleiro-imersivo">
+      <div class="mapa-tabuleiro-posicoes-demo" aria-label="Centro e seis vagas">
+      <div class="espaco-tabuleiro-demo tabuleiro-vaga-1" aria-label="Vaga 1">
+       <span class="titulo-espaco-tabuleiro-demo">VAGA 1</span>
+       <strong class="selo-posicao-demo" id="tabuleiroMotorVaga1">—</strong>
+      </div>
+      <div class="espaco-tabuleiro-demo tabuleiro-vaga-2" aria-label="Vaga 2">
+       <span class="titulo-espaco-tabuleiro-demo">VAGA 2</span>
+       <strong class="selo-posicao-demo" id="tabuleiroMotorVaga2">—</strong>
+      </div>
+      <div class="espaco-tabuleiro-demo tabuleiro-vaga-3" aria-label="Vaga 3">
+       <span class="titulo-espaco-tabuleiro-demo">VAGA 3</span>
+       <strong class="selo-posicao-demo" id="tabuleiroMotorVaga3">—</strong>
+      </div>
+      <div class="espaco-tabuleiro-demo tabuleiro-vaga-4" aria-label="Vaga 4">
+       <span class="titulo-espaco-tabuleiro-demo">VAGA 4</span>
+       <strong class="selo-posicao-demo" id="tabuleiroMotorVaga4">—</strong>
+      </div>
+      <div class="espaco-tabuleiro-demo tabuleiro-vaga-5" aria-label="Vaga 5">
+       <span class="titulo-espaco-tabuleiro-demo">VAGA 5</span>
+       <strong class="selo-posicao-demo" id="tabuleiroMotorVaga5">—</strong>
+      </div>
+      <div class="espaco-tabuleiro-demo tabuleiro-vaga-6" aria-label="Vaga 6">
+       <span class="titulo-espaco-tabuleiro-demo">VAGA 6</span>
+       <strong class="selo-posicao-demo" id="tabuleiroMotorVaga6">—</strong>
+      </div>
+       <div class="espaco-tabuleiro-demo tabuleiro-centro" aria-label="Centro">
+        <span class="titulo-espaco-tabuleiro-demo">CENTRO</span>
+        <strong class="selo-posicao-demo" id="tabuleiroMotorCentro">#0000</strong>
+       </div>
+      </div>
+      <div class="loop03-marcadores-motor" aria-label="Seis eventos do ciclo"><span class="loop03-evento-cliente" id="motorBolinha1" aria-label="Evento 1 cliente"></span><span class="loop03-evento-empresa" id="motorBolinha2" aria-label="Evento 2 empresa"></span><span class="loop03-evento-cliente" id="motorBolinha3" aria-label="Evento 3 cliente"></span><span class="loop03-evento-empresa" id="motorBolinha4" aria-label="Evento 4 empresa"></span><span class="loop03-evento-cliente" id="motorBolinha5" aria-label="Evento 5 cliente"></span><span class="loop03-evento-empresa" id="motorBolinha6" aria-label="Evento 6 empresa"></span></div>
+      <p id="motorContadorEventos" class="subtexto">0/6 eventos válidos de ensaio</p>
+      <p class="subtexto">A catraca avança após 6 eventos válidos. A entrada acontece pela vaga 6.</p>
+     </div>
+    </section>
+    <section class="bloco-fila-participante" aria-label="Fila B de ensaio">
+     <h3><span class="loop03-icone-cabecalho">◉</span> FILA B</h3>
+     <div id="motorFilaB" aria-live="polite"></div>
+    </section>
+   </div>
+   <p id="estadoTabuleiroIntegrado" role="status" aria-live="polite">Consultando o estado durável do motor de ensaio.</p>
    <button type="button" id="tabuleiroVerPosicoesIntegrado">Ver minhas posições</button>
   </section>
   <section class="painel" id="conteudoPosicoes" role="tabpanel" aria-labelledby="abaPosicoes" hidden>
