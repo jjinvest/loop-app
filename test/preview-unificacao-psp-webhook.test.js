@@ -47,7 +47,8 @@ test('gateway unificado: Pix, aviso e motor usam o mesmo SQLite de laboratorio',
  const auth='Basic '+Buffer.from('acesso:'+senha).toString('base64');
  async function post(route,body,extra={}){
   const x=await fetch(base+route,{method:'POST',
-   headers:{Authorization:auth,'Content-Type':'application/json',...extra},
+   headers:{Authorization:auth,'Content-Type':'application/json',
+    'X-LOOP-LAB':'participante',...extra},
    body:JSON.stringify(body)});
   return {status:x.status,body:await x.json(),cookie:x.headers.get('set-cookie')};
  }
