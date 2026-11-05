@@ -71,6 +71,26 @@
 
 </section>
 <section class="painel"><h2>Pedidos no Escritório</h2><div id="pedidos"></div></section>
+<section class="painel" aria-labelledby="motorEnsaioTitulo">
+<div class="linha"><h2 id="motorEnsaioTitulo">Motor LOOP 3.0 · mesmo SQLite · ensaio controlado</h2>
+<button type="button" id="motorEnsaioAtualizar">Atualizar motor</button></div>
+<p class="subtexto">Esta é a ligação do motor V6 existente à conta e à loja, não outra simulação visual. Apenas o operador pode lançar um pedido como EVENTO FICTÍCIO de ensaio. Nenhuma cobrança é criada, nenhum Pix é confirmado, nenhum saque ou comissão é liberado.</p>
+<form id="formMotorEnsaioPedido">
+<label for="motorEnsaioPrepedido">Pré-pedido preparado e qualificado no laboratório</label>
+<input id="motorEnsaioPrepedido" pattern="hom-[a-f0-9-]{36}" maxlength="40" placeholder="hom-..." required>
+<label><input id="motorEnsaioCiencia" type="checkbox" required> Tenho ciência de que é apenas um ensaio manual, sem recebimento bancário nem posição comercial.</label>
+<div class="linha"><button type="submit" class="primario">Vincular posição de ENSAIO</button>
+<button type="button" id="motorEnsaioRegistrarEvento">Registrar evento de ENSAIO deste pedido</button></div>
+</form>
+<div class="linha">
+<button type="button" id="motorEnsaioPreparar">Preencher tabuleiro de ensaio</button>
+<button type="button" id="motorEnsaioAbrir">Abrir catraca de ensaio</button>
+<button type="button" id="motorEnsaioPausar">Pausar catraca</button>
+<button type="button" id="motorEnsaioGirar">Executar giro de ensaio (6 eventos)</button>
+</div>
+<p id="motorEnsaioStatus" role="status" aria-live="polite" class="subtexto"></p>
+<div id="motorEnsaioResumo" class="indicadores" aria-label="Estado verdadeiro do motor de ensaio"></div>
+</section>
 <section class="painel" aria-labelledby="previaFilaTitulo">
 <div class="linha"><h2 id="previaFilaTitulo">Prévia da Fila B e posições · sem operação real</h2><button type="button" id="recarregarPreviaFilas">Conferir</button></div>
 <p class="subtexto">Somente posições fictícias com recebimento confirmado por reconsulta independente entram nesta hipótese. A classificação histórica da oferta ainda não foi homologada; nenhum participante entra no motor real.</p>
