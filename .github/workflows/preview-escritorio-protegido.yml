@@ -17,6 +17,8 @@ on:
       - 'test/plano-posicoes-compra-akitemm.test.js'
       - 'test/asaas-motor-automatico-sandbox-candidato.test.js'
       - 'test/preview-unificacao-psp-webhook.test.js'
+      - 'scripts/provar-restauracao-sqlite-unificado-lab.js'
+      - 'test/provar-restauracao-sqlite-unificado-lab.test.js'
       - 'test/auditoria-cobertura-lotes-akitemm.test.js'
       - 'src/domain/auditoria-cobertura-lotes-akitemm.js'
       - 'src/candidato/escritorio-admin-candidato-ui.html'
@@ -66,6 +68,8 @@ jobs:
       - run: node --check src/domain/motor-conta-unica-ensaio-sqlite.js
       - run: node --check src/domain/plano-posicoes-compra-akitemm.js
       - run: node --check src/domain/auditoria-cobertura-lotes-akitemm.js
+      - run: node --check scripts/provar-restauracao-sqlite-unificado-lab.js
+      - run: node --test test/provar-restauracao-sqlite-unificado-lab.test.js
       - run: node --check src/candidato/escritorio-admin-candidato-ui.js
       - run: node --test test/servidor-escritorio-preview-railway.test.js
       - run: node --check src/adapters/email-recuperacao-resend.js
