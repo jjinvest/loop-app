@@ -1,0 +1,19 @@
+# LOOP 3.0 / AKITEMM — conexão técnica unificada e recuperação (05/11/2026)
+
+## Estado comprovado no código
+- O serviço candidato do Escritório/AKITEMM dispõe de **mesma base SQLite** para cadastro/login, pedido, fotografia imutável, ponte Asaas Sandbox, inbox de webhook, reconciliação PSP, posições pendentes e motor de laboratório. Não são mais necessárias duas bases para **um novo fluxo unificado local**, ao contrário do receptor Asaas legado, que permanece independente para preservar o histórico anterior.
+- O gateway Railway da prévia admite um ingresso **opcional**, apenas `POST /webhooks/asaas-sandbox-unificado`, com bytes preservados e autenticação do token Asaas validada pelo backend; webhook bruto não ativa posições. A emissão de cobrança Sandbox de pedido exige operador e cobertura da oferta/limite de posições, sem cobrança real. Reconsulta PSP independente e motor operam sobre o mesmo SQLite candidato. Teste end-to-end passa pelo gateway, webhook, PSP falso determinístico e motor.
+- **A prévia privada existente não está com Asaas habilitado**: faltam as variáveis `LOOP_PREVIEW_ASAAS_HABILITADO=SIM`, `LOOP_PREVIEW_ASAAS_SANDBOX_API_KEY` e `LOOP_PREVIEW_ASAAS_WEBHOOK_TOKEN` no serviço da prévia, e ajustar o webhook do ambiente de testes no Asaas. Não transferir credenciais de outro serviço, não ligar a produção nem repetir cobranças para testar. Nenhum webhook público novo deve ser alegado como ativo antes dessas ações.
+- Identificação por CPF e termos continuam **apenas de laboratório**; o novo fluxo não libera KYC, comissão, ganhos, cofres ou saques reais. O serviço atual usa SQLite em um volume persistente no Railway, não é PostgreSQL e não significa capacidade ilimitada de clientes.
+
+## Recuperação do banco inteiro
+- `scripts/provar-restauracao-sqlite-unificado-lab.js` confere uma fotografia transacional `VACUUM INTO` a partir do SQLite do volume, abre a cópia em um arquivo **isolado**, verifica integridade, FKs, tabelas essenciais e relação entre pré-pedido, cobrança, titular, lote e aceite. Confere hash SHA-256 em **streaming**, sem carregar o banco em memória; apaga o arquivo temporário após a prova.
+- Faz **somente leitura** do banco em uso e requer `LOOP_RECUPERACAO_ISOLADA_AUTORIZADA=SIM` para executar como CLI. O ambiente CLI exige volume real `RAILWAY_VOLUME_MOUNT_PATH` e `LOOP_PREVIEW_SQLITE`; nunca apontar para produção sem autorização.
+- Teste inclui dois clientes, dois pedidos, uma cobrança Sandbox fictícia, um lote e um aceite sintético; demonstra abertura da cópia, integridade, preservação dos registros e zero alterações no original, recusa origem fora do volume e detecta lote órfão.
+- **Importante:** os testes executaram em banco isolado do CI, **não no volume real do Railway**. O bucket `loop-backup-offsite` está provisionado mas **não foi provada rotina de envio, agendamento, retenção nem restauração de um objeto real**. Sem isso, não declarar backup automático confiável.
+- Antes de aceitar clientes em escala, serão necessários mensuração de capacidade e planejamento de banco/arquitetura que cresça além do único SQLite de 1 GB, sem migrar precipitadamente bases ainda em homologação.
+
+## Evidências
+- CI integrado com Node.js e navegador Chromium PC/celular na branch `feature/unificar-escritorio-real-20261105`: [run 42126240413](https://github.com/jjinvest/loop-app/actions/runs/42126240413) — SUCCESS.
+- PR #1 principal permanece DRAFT, sem merge, operação bancária real ou migração destrutiva.
+- O próximo bloqueio técnico objetivo é a **configuração de credenciais exclusivas do Sandbox no serviço da prévia**, sob autorização do proprietário, e a prova real do backup fora do volume. Contratos de fornecedor, KYC, apuração fiscal/contábil e revisão regulatória são bloqueios adicionais do lançamento comercial.
