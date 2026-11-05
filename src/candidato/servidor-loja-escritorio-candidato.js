@@ -443,7 +443,7 @@ function criarAppLojaEscritorioCandidato({banco,repositorioCatalogo,
  // A sessao autentica so pode ler sua parte do tabuleiro.
  // Escritas manuais de ENSAIO exigem operador: webhook bruto ou pre-pedido
  // nao constituem evento ou ativacao comercial.
- const motorConta=new MotorContaUnicaEnsaioSQLite({banco,sinalizacao:sinalizacaoVitrine});
+ const motorConta=new MotorContaUnicaEnsaioSQLite({banco,sinalizacao:sinalizacaoVitrine,ponte});
  app.get('/staging/motor/estado',(req,res)=>{
   const s=contas.sessao(req);
   if(!s)return res.status(401).json({erro:'SESSAO_AUSENTE'});
@@ -467,6 +467,23 @@ function criarAppLojaEscritorioCandidato({banco,repositorioCatalogo,
     .json({erro:codigo});
   }
  });
+ // Recuperação idempotente após PSP confirmado e eventual falha temporária
+ // do vínculo. Nunca cria posição sem reconsulta RECEIVED válida.
+ app.post('/staging/escritorio-unificado/motor/conciliar-pedido-sandbox',
+  autorizarOperador,(req,res)=>{
+   if(!operacoesSandboxAutorizadas)
+    return res.status(403).json({erro:'OPERACAO_SANDBOX_DESATIVADA'});
+   if(!req.is('application/json')||!req.body||Array.isArray(req.body)||
+      Object.keys(req.body).join(',')!=='prepedidoId')
+    return res.status(400).json({erro:'PREPEDIDO_INVALIDO'});
+   try{
+    const m=motorConta.vincularPedidoConferidoSandbox(req.body);
+    return res.status(m.repetido?200:201).json(m);
+   }catch(e){
+    return res.status(e.codigo==='LIMITE_DEZ_POSICOES_MOTOR_ENSAIO'?409:400)
+     .json({erro:e.codigo||'CONCILIACAO_MOTOR_NAO_CONCLUIDA'});
+   }
+  });
  app.post('/staging/escritorio-unificado/motor/preparar',autorizarOperador,(req,res)=>{
   if(!req.is('application/json')||!req.body||Array.isArray(req.body)||
      Object.keys(req.body).length!==0)
@@ -695,6 +712,31 @@ function criarAppLojaEscritorioCandidato({banco,repositorioCatalogo,
       eventoId:req.body.eventoId,provedor:provedorReconsultaSandbox,
       execucaoLiberada:true
      });
+     // NUNCA gerar posição a partir de webhook bruto. Apenas depois de
+     // GET PSP independente, evento recebido e integridade no MESMO SQLite.
+     // Posições são PENDENTES EM ENSAIO, não confirmadas por CPF/termos.
+     if(r.estado==='CONCLUIDO'&&r.codigo==='PSP_RECONSULTADO'){
+      const aviso=inbox.consultarEvento(req.body.eventoId);
+      if(aviso?.tipo==='PAYMENT_RECEIVED'){
+       try{
+        const m=motorConta.vincularPedidoConferidoSandbox({
+         prepedidoId:aviso.prepedidoId
+        });
+        return res.json({...r,vinculoMotorEnsaio:{
+         estado:m.repetido?'JA_VINCULADO':'PENDENTES_GERADAS',
+         quantidade:m.quantidadePosicoes,apenasEnsaio:true,
+         posicoesComerciais:0,cpfETermosConfirmados:false
+        }});
+       }catch(e){
+        // Falha de posição não reverte a prova PSP, não gera lote parcial e
+        // não repete cobrança. Deixa a pendência auditável para o operador.
+        return res.json({...r,vinculoMotorEnsaio:{
+         estado:'BLOQUEADO',codigo:e.codigo||'LOTE_REQUER_REVISAO',
+         apenasEnsaio:true,posicoesComerciais:0
+        }});
+       }
+      }
+     }
      return res.json(r);
     }catch(e){
      if(e.codigo==='EVENTO_NAO_ENCONTRADO')
