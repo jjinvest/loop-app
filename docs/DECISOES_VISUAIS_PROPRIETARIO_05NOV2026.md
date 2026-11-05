@@ -24,4 +24,10 @@ Origem: inspeção do proprietário da prévia online, fotos do celular e confir
 - **CORES DO LOOP (somente conta, filas, posições e tabuleiro):** VERMELHO = cadastro/posição não ativada; AZUL = posição com compra confirmada mas pendência de CPF/termos; VERDE = posição confirmada; AMARELO = Fila A prioritária; BRANCO = Fila B; DOURADO = posição da empresa. Manter as demais regras de fila/centro/estado aprovadas.
 - Não inferir nem copiar cor do produto para cor do titular, posição ou fila. **Produto dourado não é posição dourada da empresa**; **produto roxo não muda a cor do cliente**. A posição derivada da compra qualificada segue seu próprio fluxo de confirmação.
 - No código, interface, cadastro administrativo, filtros, eventos e testes, tratar os grupos como namespaces/campos separados; nunca reaproveitar um enum de uma área para estados da outra.
-- Os filtros quatro cores da LOJA foram definidos como padrão. O estágio atual da vitrine ainda possui filtro EVENTO agrupado: separar DOURADO e ROXO no trabalho de implementação da loja, sem modificar as telas do LOOP nem misturar seus estados.
+- **Implementação concluída no código:** a LOJA já possui quatro filtros independentes CINZA/VERDE/DOURADO/ROXO, com cards e marcações distintas; o administrador classifica por produto. O tabuleiro do CLIENTE usa seis vagas posicionadas radialmente ao redor do centro, apenas na aba Tabuleiro. Os estados do LOOP permanecem independentes.
+
+## Compatibilidade e limites da revisão
+- Cor DOURADO exige produto com valor unitário de pelo menos R$ 250; compra composta verde é outro caso. ROXO marca evento a configurar e homologar, não libera dez posições por simples cor.
+- Classificações antigas EVENTO são interpretadas como ROXO para leitura; a coluna SQLite legada e os históricos imutáveis são preservados com tabela de classificação V2 transacional. Nenhum banco foi zerado.
+- Cores de produtos jamais são repassadas como cor de posição, fila ou dono. Motor, pagamentos e direitos permanecem com gate independente de homologação.
+- Só a loja sofreu alteração nos filtros/cartões; só a aba Tabuleiro sofreu alteração na geometria. Sem outras remodelações.
