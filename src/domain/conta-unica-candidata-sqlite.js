@@ -2,7 +2,7 @@
 // Candidato OFFLINE para identidade UNICA de cliente + Escritório.
 // Nao habilitar em produção antes de verificar email, CPF, LGPD e operação.
 // Nao registra qualquer direito financeiro ou cadastro publico.
-const {randomUUID,randomBytes,createHash,createHmac,timingSafeEqual,
+const {randomUUID,randomBytes,randomInt,createHash,createHmac,timingSafeEqual,
  createCipheriv,createDecipheriv,scrypt}=require('node:crypto');
 const {promisify}=require('node:util');
 const derivar=promisify(scrypt);
@@ -67,7 +67,8 @@ function tokenCookie(req){
  return SESSAO.test(token)?token:null;
 }
 class ContaUnicaCandidataSQLite{
- constructor({banco,chaveEmail,chaveCifra,agora=()=>Date.now()}={}){
+ constructor({banco,chaveEmail,chaveCifra,chaveRecuperacao=null,
+  enviarRecuperacao=null,agora=()=>Date.now()}={}){
   if(process.env.NODE_ENV==='production')falha('CANDIDATO_NAO_HOMOLOGADO');
   if(typeof banco?.prepare!=='function'||typeof banco?.exec!=='function')
    throw new TypeError('SQLite obrigatorio');
@@ -76,8 +77,18 @@ class ContaUnicaCandidataSQLite{
      timingSafeEqual(chaveEmail,chaveCifra))
    falha('CUSTODIA_INDEPENDENTE_OBRIGATORIA');
   if(typeof agora!=='function')falha('RELOGIO_INVALIDO');
+  if((chaveRecuperacao===null)!==(enviarRecuperacao===null))
+   falha('RECUPERACAO_EMAIL_CONFIGURACAO_INCOMPLETA');
+  if(chaveRecuperacao!==null&&
+     (!Buffer.isBuffer(chaveRecuperacao)||chaveRecuperacao.length!==32||
+      timingSafeEqual(chaveRecuperacao,chaveEmail)||
+      timingSafeEqual(chaveRecuperacao,chaveCifra)||
+      typeof enviarRecuperacao!=='function'))
+   falha('RECUPERACAO_EMAIL_CONFIGURACAO_INVALIDA');
   this.banco=banco;this.emailKey=Buffer.from(chaveEmail);
   this.cipherKey=Buffer.from(chaveCifra);
+  this.recuperacaoKey=chaveRecuperacao&&Buffer.from(chaveRecuperacao);
+  this.enviarRecuperacao=enviarRecuperacao;
   this.agora=agora;
   banco.exec([
    'CREATE TABLE IF NOT EXISTS akitemm_conta_unica_candidata(',
@@ -115,6 +126,21 @@ class ContaUnicaCandidataSQLite{
    "BEGIN SELECT RAISE(ABORT,'custodia imutavel'); END;"
   ].join(' '));
   this._iniciarCustodia();
+  if(this.recuperacaoKey){
+   banco.exec([
+    'CREATE TABLE IF NOT EXISTS akitemm_recuperacao_senha_candidata(',
+    'id TEXT PRIMARY KEY,',
+    'titular_id TEXT NOT NULL REFERENCES',
+    'akitemm_conta_unica_candidata(id) ON DELETE RESTRICT,',
+    'codigo_hmac TEXT NOT NULL,',
+    "estado TEXT NOT NULL CHECK(estado IN ('RESERVADO','ENVIADO','FALHOU','USADO','BLOQUEADO')),",
+    'tentativas INTEGER NOT NULL DEFAULT 0 CHECK(tentativas BETWEEN 0 AND 5),',
+    'criado_em INTEGER NOT NULL,expira_em INTEGER NOT NULL,',
+    'enviado_em INTEGER,usado_em INTEGER);',
+    'CREATE INDEX IF NOT EXISTS idx_recuperacao_senha_titular',
+    'ON akitemm_recuperacao_senha_candidata(titular_id,criado_em DESC);'
+   ].join(' '));
+  }
  }
  _provaCustodia(key,dominio){
   return createHmac('sha256',key)
@@ -320,6 +346,118 @@ class ContaUnicaCandidataSQLite{
    this.banco.exec('COMMIT');
    return {senhaAlterada:true,todasSessoesRevogadas:true,
     nenhumaOperacaoFinanceira:true};
+  }catch(e){this.banco.exec('ROLLBACK');throw e;}
+ }
+
+ recuperacaoDisponivel(){return this.recuperacaoKey!==null;}
+ _hmacRecuperacao(titularId,codigo){
+  return createHmac('sha256',this.recuperacaoKey)
+   .update('AKITEMM-RECUPERACAO-SENHA-LAB-V1|')
+   .update(titularId).update('|').update(codigo).digest('hex');
+ }
+ async solicitarRecuperacao({email}={}){
+  if(!this.recuperacaoDisponivel()||process.env.NODE_ENV==='production')
+   falha('RECUPERACAO_EMAIL_INDISPONIVEL');
+  const endereco=emailValido(email);
+  const resposta={solicitacaoRecebida:true,semRevelarCadastro:true};
+  const a=this.banco.prepare([
+   'SELECT id FROM akitemm_conta_unica_candidata',
+   'WHERE email_hmac=?'
+  ].join(' ')).get(hmac(this.emailKey,endereco));
+  // Resposta idêntica para endereços existentes e inexistentes.
+  if(!a)return resposta;
+  const agora=this._agora();
+  const ultima=this.banco.prepare([
+   'SELECT criado_em FROM akitemm_recuperacao_senha_candidata',
+   'WHERE titular_id=? ORDER BY criado_em DESC LIMIT 1'
+  ].join(' ')).get(a.id);
+  if(ultima&&agora-ultima.criado_em<120000)return resposta;
+  const contagem=this.banco.prepare([
+   'SELECT COUNT(*) AS total FROM akitemm_recuperacao_senha_candidata',
+   'WHERE titular_id=? AND criado_em>?'
+  ].join(' ')).get(a.id,agora-3600000).total;
+  if(contagem>=3)return resposta;
+  const codigo=String(randomInt(0,100000000)).padStart(8,'0');
+  const id='senha-'+randomUUID();
+  this.banco.prepare([
+   'INSERT INTO akitemm_recuperacao_senha_candidata',
+   '(id,titular_id,codigo_hmac,estado,criado_em,expira_em)',
+   "VALUES(?,?,?,'RESERVADO',?,?)"
+  ].join(' ')).run(id,a.id,this._hmacRecuperacao(a.id,codigo),
+   agora,agora+15*60000);
+  let enviado=false;
+  try{
+   enviado=(await this.enviarRecuperacao({
+    para:this.emailParaEntrega(a.id),codigo,expiraEm:agora+15*60000
+   }))===true;
+  }catch{enviado=false;}
+  this.banco.prepare([
+   'UPDATE akitemm_recuperacao_senha_candidata',
+   'SET estado=?,enviado_em=? WHERE id=? AND estado=?'
+  ].join(' ')).run(enviado?'ENVIADO':'FALHOU',
+   enviado?this._agora():null,id,'RESERVADO');
+  return resposta;
+ }
+ async confirmarRecuperacao({email,codigo,novaSenha}={}){
+  if(!this.recuperacaoDisponivel()||process.env.NODE_ENV==='production')
+   falha('RECUPERACAO_EMAIL_INDISPONIVEL');
+  const endereco=emailValido(email);
+  if(typeof codigo!=='string'||!/^[0-9]{8}$/.test(codigo)||
+     !senhaValida(novaSenha))
+   falha('RECUPERACAO_CODIGO_OU_SENHA_INVALIDOS');
+  const conta=this.banco.prepare([
+   'SELECT id FROM akitemm_conta_unica_candidata WHERE email_hmac=?'
+  ].join(' ')).get(hmac(this.emailKey,endereco));
+  if(!conta)falha('RECUPERACAO_CODIGO_OU_SENHA_INVALIDOS');
+  const agora=this._agora();
+  const desafio=this.banco.prepare([
+   'SELECT id,codigo_hmac,estado,tentativas,expira_em',
+   'FROM akitemm_recuperacao_senha_candidata',
+   'WHERE titular_id=? ORDER BY criado_em DESC LIMIT 1'
+  ].join(' ')).get(conta.id);
+  if(!desafio||desafio.estado!=='ENVIADO'||desafio.expira_em<=agora||
+     desafio.tentativas>=5)
+   falha('RECUPERACAO_CODIGO_OU_SENHA_INVALIDOS');
+  if(!comparar(this._hmacRecuperacao(conta.id,codigo),
+    desafio.codigo_hmac)){
+   const n=desafio.tentativas+1;
+   this.banco.prepare([
+    'UPDATE akitemm_recuperacao_senha_candidata',
+    'SET tentativas=?,estado=? WHERE id=? AND estado=?'
+   ].join(' ')).run(n,n>=5?'BLOQUEADO':'ENVIADO',
+    desafio.id,'ENVIADO');
+   falha('RECUPERACAO_CODIGO_OU_SENHA_INVALIDOS');
+  }
+  const salt=randomBytes(16).toString('hex');
+  const senhaHash=await hashSenha(novaSenha,salt);
+  // Uso único: consumir desafio e revogar todas as sessões na mesma
+  // transação SQLite. Nenhum código fica em logs ou na resposta.
+  this.banco.exec('BEGIN IMMEDIATE');
+  try{
+   const atual=this.banco.prepare([
+    'SELECT id FROM akitemm_recuperacao_senha_candidata',
+    "WHERE id=? AND estado='ENVIADO' AND expira_em>?",
+    'AND tentativas<5 AND id=(',
+    'SELECT id FROM akitemm_recuperacao_senha_candidata',
+    'WHERE titular_id=? ORDER BY criado_em DESC LIMIT 1)'
+   ].join(' ')).get(desafio.id,this._agora(),conta.id);
+   if(!atual)falha('RECUPERACAO_CODIGO_OU_SENHA_INVALIDOS');
+   const consome=this.banco.prepare([
+    'UPDATE akitemm_recuperacao_senha_candidata',
+    "SET estado='USADO',usado_em=? WHERE id=? AND estado='ENVIADO'"
+   ].join(' ')).run(this._agora(),desafio.id);
+   if(consome.changes!==1)
+    falha('RECUPERACAO_CODIGO_OU_SENHA_INVALIDOS');
+   this.banco.prepare([
+    'UPDATE akitemm_conta_unica_candidata',
+    'SET senha_salt=?,senha_hash=?,tentativas=0,bloqueado_ate=0',
+    'WHERE id=?'
+   ].join(' ')).run(salt,senhaHash,conta.id);
+   this.banco.prepare([
+    'DELETE FROM akitemm_sessoes_candidatas WHERE titular_id=?'
+   ].join(' ')).run(conta.id);
+   this.banco.exec('COMMIT');
+   return {senhaRedefinida:true,todasSessoesRevogadas:true};
   }catch(e){this.banco.exec('ROLLBACK');throw e;}
  }
  sair(req){
