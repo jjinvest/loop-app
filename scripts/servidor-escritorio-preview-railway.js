@@ -10,6 +10,7 @@ const {criarAppLojaEscritorioCandidato}=
  require('../src/candidato/servidor-loja-escritorio-candidato');
 const {catalogoFicticioCheckout}=
  require('../src/laboratorio/servidor-checkout-staging-local');
+const {AsaasSandboxLojaV6}=require('../src/domain/asaas-sandbox-loja-v6');
 const {criarTransporteRecuperacaoResend}=
  require('../src/adapters/email-recuperacao-resend');
 
@@ -22,7 +23,8 @@ function validarSegredos({senhaAcesso,segredoRaiz}){
     senhaAcesso===segredoRaiz)
   falha('SEGREDOS_PREVIA_NAO_CONFIGURADOS');
 }
-function criarGateway({portaInterna,senhaAcesso,segredoOperador,validarNickIndicador=()=>false}={}){
+function criarGateway({portaInterna,senhaAcesso,segredoOperador,
+ validarNickIndicador=()=>false,permitirWebhookSandbox=false}={}){
  if(!Number.isSafeInteger(portaInterna)||portaInterna<1||portaInterna>65535||
     typeof senhaAcesso!=='string'||senhaAcesso.length<24||
     typeof segredoOperador!=='string'||segredoOperador.length<32)
@@ -82,6 +84,16 @@ function criarGateway({portaInterna,senhaAcesso,segredoOperador,validarNickIndic
    res.writeHead(200,{...cabecalhosBase,'Content-Type':'application/json'});
    return res.end(JSON.stringify({estado:'PREVIA_PROTEGIDA',financeiroReal:false}));
   }
+  const webhookUnificado=url.pathname==='/webhooks/asaas-sandbox-unificado';
+  if(webhookUnificado){
+   if(!permitirWebhookSandbox)return negar(404,'Webhook de ensaio desativado');
+   if(req.method!=='POST')return negar(405,'Método não permitido');
+   if(req.headers.origin)return negar(403,'Origem não autorizada');
+   if(!/^application\/json(?:\s*;.*)?$/i.test(req.headers['content-type']||''))
+    return negar(415,'JSON obrigatório');
+   if(typeof req.headers['asaas-access-token']!=='string')
+    return negar(401,'Token obrigatório');
+  }
   const auth=req.headers.authorization||'';
   let decodificado='';
   if(/^Basic [A-Za-z0-9+/=]+$/.test(auth)){
@@ -90,7 +102,7 @@ function criarGateway({portaInterna,senhaAcesso,segredoOperador,validarNickIndic
   }
   const basicaValida=seguro(decodificado,'acesso:'+senhaAcesso);
   const sessaoValida=lerSessao(req);
-  if(!basicaValida&&!sessaoValida)
+  if(!basicaValida&&!sessaoValida&&!webhookUnificado)
    return negar(401,'Acesso exclusivo para homologação',{
     'WWW-Authenticate':'Basic realm="AKITEMM - Acesso de teste", charset="UTF-8"'
    });
@@ -132,7 +144,8 @@ function criarGateway({portaInterna,senhaAcesso,segredoOperador,validarNickIndic
    '/minha-conta':'/staging/cliente',
    '/loja':'/staging/loja'
   };
-  if(!url.pathname.startsWith('/staging/')&&!Object.hasOwn(atalhos,url.pathname))
+  if(!url.pathname.startsWith('/staging/')&&
+     !Object.hasOwn(atalhos,url.pathname)&&!webhookUnificado)
    return negar(404,'Página não encontrada');
   if(url.pathname==='/staging/assets/admin.js'){
    if(req.method!=='GET')return negar(405,'Método não permitido');
@@ -141,7 +154,8 @@ function criarGateway({portaInterna,senhaAcesso,segredoOperador,validarNickIndic
     ...(novoCookie?{'Set-Cookie':novoCookie}:{})});
    return res.end(corpoAdmin);
   }
-  const destino=(atalhos[url.pathname]||url.pathname)+url.search;
+  const destino=webhookUnificado?'/staging/asaas/webhook-unificado':
+   (atalhos[url.pathname]||url.pathname)+url.search;
   // O navegador só conhece o gateway HTTPS. O backend de homologação
   // conhece somente uma conexão de loopback com Host local.
   const headers={...req.headers,host:backend,origin:'http://'+backend};
@@ -213,9 +227,27 @@ async function iniciar({env=process.env}={}){
  const enviarRecuperacao=temEnvio?criarTransporteRecuperacaoResend({
   apiKey:env.RESEND_API_KEY,remetente:env.RESEND_FROM_EMAIL
  }):null;
+ // Um serviço + UM volume SQLite para compra, webhook, reconsulta e motor.
+ // Exige opt-in explícito e credenciais do SANDBOX nesta PRÉVIA privada.
+ // As credenciais de outro serviço/volume Railway NÃO se compartilham.
+ const sandboxAtivo=env.LOOP_PREVIEW_ASAAS_HABILITADO==='SIM';
+ if(sandboxAtivo&&(
+    typeof env.LOOP_PREVIEW_ASAAS_SANDBOX_API_KEY!=='string'||
+    !env.LOOP_PREVIEW_ASAAS_SANDBOX_API_KEY.startsWith('$aact_hmlg_')||
+    env.LOOP_PREVIEW_ASAAS_SANDBOX_API_KEY.length<25||
+    typeof env.LOOP_PREVIEW_ASAAS_WEBHOOK_TOKEN!=='string'||
+    env.LOOP_PREVIEW_ASAAS_WEBHOOK_TOKEN.length<32))
+  falha('ASAAS_SANDBOX_PREVIA_CONFIG_INCOMPLETA');
+ const psp=sandboxAtivo?new AsaasSandboxLojaV6({
+  apiKey:env.LOOP_PREVIEW_ASAAS_SANDBOX_API_KEY
+ }):null;
  const c=criarAppLojaEscritorioCandidato({
   banco:db,repositorioCatalogo:catalogoFicticioCheckout(),
   chaveEmail:derivar(segredoRaiz,'email'),chaveCifra:derivar(segredoRaiz,'cifra'),
+  ...(sandboxAtivo?{chaveCpfHmac:derivar(segredoRaiz,'cpf-hmac'),
+   chaveCpfCifra:derivar(segredoRaiz,'cpf-cifra')}:{}),
+  webhookHomologacaoToken:sandboxAtivo?env.LOOP_PREVIEW_ASAAS_WEBHOOK_TOKEN:null,
+  provedorReconsultaSandbox:psp,operacoesSandboxAutorizadas:sandboxAtivo,
   chaveRecuperacao:temEnvio?derivar(segredoRaiz,'senha-recuperacao'):null,
   enviarRecuperacao,
   // CPF de ensaio desabilitado para não incentivar dados pessoais em prévia.
@@ -226,7 +258,8 @@ async function iniciar({env=process.env}={}){
  await new Promise((ok,fail)=>{interno.once('listening',ok);interno.once('error',fail);});
  const gateway=criarGateway({portaInterna:interno.address().port,
   senhaAcesso,segredoOperador:tokenOperador,
-  validarNickIndicador:nick=>c.equipe.existeNick(nick)});
+  validarNickIndicador:nick=>c.equipe.existeNick(nick),
+  permitirWebhookSandbox:sandboxAtivo});
  const port=Number(env.PORT||3000);
  if(!Number.isSafeInteger(port)||port<1||port>65535)
   falha('PORTA_PREVIA_INVALIDA');
