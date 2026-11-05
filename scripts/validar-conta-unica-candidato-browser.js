@@ -168,6 +168,10 @@ const {once}=require('node:events');
    await admin.locator('#consultarCoberturaAkitemm').click();
    await admin.locator('#resumoCoberturaAkitemm')
     .filter({hasText:/Marco Zero financeiro: NÃO APROVADO/}).waitFor();
+   assert.match(await admin.locator('#resumoCoberturaAkitemm').innerText(),/CONTADORES DESTA PÁGINA/);
+   assert.equal(await admin.locator('#listaCoberturaAkitemm button').count(),2);
+   assert.equal(await admin.locator('#listaCoberturaAkitemm')
+    .getByRole('button',{name:'Página anterior'}).isDisabled(),true);
    assert.equal(await admin.locator('#consultarCoberturaAkitemm').isDisabled(),false);
    await admin.locator('#quadroDepartamentos button').filter({hasText:'Pedidos'}).click();
    assert.equal(await admin.locator('#filtrarDepartamento').inputValue(),'PEDIDOS');
