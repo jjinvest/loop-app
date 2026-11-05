@@ -15,6 +15,7 @@ on:
       - 'src/domain/motor-conta-unica-ensaio-sqlite.js'
       - 'src/domain/plano-posicoes-compra-akitemm.js'
       - 'test/plano-posicoes-compra-akitemm.test.js'
+      - 'test/asaas-motor-automatico-sandbox-candidato.test.js'
       - 'src/candidato/escritorio-admin-candidato-ui.html'
       - 'src/candidato/escritorio-admin-candidato-ui.js'
       - 'test/motor-conta-unica-ensaio-sqlite.test.js'
