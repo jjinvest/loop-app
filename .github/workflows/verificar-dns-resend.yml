@@ -1,4 +1,5 @@
 name: AKITEMM - Conferir DNS publico do Resend
+# Nova consulta de propagacao solicitada apos inclusao do CNAME rsend.
 on:
   push:
     branches:
