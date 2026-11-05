@@ -24,3 +24,15 @@ button:disabled{opacity:.5;cursor:not-allowed}.primario{background:linear-gradie
  color:#fff;background:#282828;border:1px solid #766b4e;border-radius:8px;
  font:inherit}
 #conteudoPreparar #atualizarCatalogo{margin:10px 0}
+
+/* Navegação funcional do Escritório: mesmas cores, adaptável a celular/PC. */
+.abas{flex-wrap:wrap;gap:.35rem;padding-bottom:.35rem}
+.abas button{flex:1 1 125px;min-width:0;border-radius:9px;white-space:normal}
+.indicadores-cliente{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:.65rem;margin:1rem 0}
+.indicadores-cliente>div{background:#242018;border:1px solid #564629;border-radius:10px;padding:1rem .7rem}
+.indicadores-cliente strong{display:block;color:#e8c56e;font-size:1.4rem;word-break:break-word}
+.indicadores-cliente span{display:block;color:#b8b0a2;font-size:.82rem}
+.atalhos-cliente{display:flex;gap:.6rem;flex-wrap:wrap}
+.atalhos-cliente button{flex:1 1 180px}
+#conteudoLinks input{font-size:.85rem}
+@media(max-width:520px){.indicadores-cliente{gap:.3rem}.indicadores-cliente>div{padding:.7rem .35rem}.indicadores-cliente strong{font-size:1.1rem}.indicadores-cliente span{font-size:.73rem}.abas button{flex:1 1 95px;font-size:.82rem}}

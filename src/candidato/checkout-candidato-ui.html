@@ -14,8 +14,8 @@
  <span class="ambiente">SEM VENDAS REAIS</span>
 </header>
 <main>
- <h1>Escritório do cliente</h1>
- <p class="explicacao">Prévia funcional de laboratório: pedidos de teste, sem pagamentos reais, posições comerciais, saques ou bônus.</p>
+ <h1>Meu Escritório AKITEMM</h1>
+ <p class="explicacao">Acompanhe sua conta, pedidos e posições. Neste ambiente, as operações são de teste e não movimentam dinheiro.</p>
  <section class="painel" id="painelLogin" aria-labelledby="tituloLogin">
   <h2 id="tituloLogin">Entrar com meu nick</h2>
   <p class="subtexto">Prévia de cadastro: a conta é somente fictícia, sem verificação externa nem compras reais.</p>
@@ -44,7 +44,7 @@
   </form>
  </section>
  <section id="painelConta" hidden aria-label="Conta de homologação">
-  <div class="barra-conta"><span>Conta de laboratório autenticada</span><a href="/staging/loja" class="primario">Abrir loja AKITEMM</a><button type="button" id="sair">Sair</button></div>
+  <div class="barra-conta"><span>Meu Escritório · acesso autenticado</span><a href="/staging/loja" class="primario">Abrir loja AKITEMM</a><button type="button" id="sair">Sair</button></div>
   <section class="painel" id="painelVerificarEmail" hidden aria-label="Confirmar e-mail de ensaio">
    <h2>Confirmar e-mail de teste</h2>
    <p class="subtexto">A confirmação só funciona com um provedor de e-mail de laboratório configurado. Não substitui a verificação de identidade.</p>
@@ -68,10 +68,31 @@
    </form>
   </section>
   <div role="tablist" aria-label="Áreas do cliente" class="abas">
-   <button type="button" role="tab" id="abaPreparar" aria-controls="conteudoPreparar" aria-selected="true" tabindex="0">Preparar pedido</button>
+   <button type="button" role="tab" id="abaResumo" aria-controls="conteudoResumo" aria-selected="true" tabindex="0">Início</button>
+   <button type="button" role="tab" id="abaPreparar" aria-controls="conteudoPreparar" aria-selected="false" tabindex="-1">Comprar</button>
    <button type="button" role="tab" id="abaMeusPedidos" aria-controls="conteudoMeusPedidos" aria-selected="false" tabindex="-1">Meus Pedidos</button>
+   <button type="button" role="tab" id="abaPosicoes" aria-controls="conteudoPosicoes" aria-selected="false" tabindex="-1">Minhas Posições</button>
+   <button type="button" role="tab" id="abaLinks" aria-controls="conteudoLinks" aria-selected="false" tabindex="-1">Meus Links</button>
+   <button type="button" role="tab" id="abaFinanceiro" aria-controls="conteudoFinanceiro" aria-selected="false" tabindex="-1">Financeiro</button>
+   <button type="button" role="tab" id="abaConta" aria-controls="conteudoConta" aria-selected="false" tabindex="-1">Minha Conta</button>
   </div>
-  <section class="painel" id="conteudoPreparar" role="tabpanel" aria-labelledby="abaPreparar">
+  <section class="painel" id="conteudoResumo" role="tabpanel" aria-labelledby="abaResumo">
+   <h2>Visão geral</h2>
+   <p id="boasVindas" role="status">Consultando sua conta…</p>
+   <div class="indicadores-cliente" aria-label="Dados atualizados da minha conta">
+    <div><strong id="resumoPedidos">—</strong><span>Meus Pedidos</span></div>
+    <div><strong id="resumoPosicoes">—</strong><span>Posições de ensaio</span></div>
+    <div><strong id="resumoEmail">—</strong><span>E-mail</span></div>
+   </div>
+   <div class="atalhos-cliente">
+    <button type="button" id="atalhoPedidos" class="primario">Ver meus pedidos</button>
+    <button type="button" id="atalhoPosicoes">Ver posições</button>
+    <button type="button" id="atalhoLoja">Abrir loja</button>
+    <button type="button" id="atualizarResumo">Atualizar meus dados</button>
+   </div>
+   <p class="subtexto">Os dados são consultados diretamente da sua conta. Posições, pagamentos e saques reais ainda não estão disponíveis neste ambiente.</p>
+  </section>
+  <section class="painel" id="conteudoPreparar" role="tabpanel" aria-labelledby="abaPreparar" hidden>
    <h2>Loja AKITEMM · produtos de laboratório</h2>
    <p class="subtexto">Catálogo sincronizado com o Escritório do Administrador. Nenhum produto será entregue ou cobrado.</p>
    <label for="produtoDoCatalogo">Produto</label><select id="produtoDoCatalogo" required></select>
@@ -96,6 +117,40 @@
     <h3>Comunicados sobre meus pedidos</h3>
     <p class="subtexto">Avisos de homologação, não comprovantes de pagamento.</p>
     <div id="comunicadosCliente" aria-live="polite"></div>
+  </section>
+  <section class="painel" id="conteudoPosicoes" role="tabpanel" aria-labelledby="abaPosicoes" hidden>
+   <div class="linha"><h2>Minhas Posições</h2><button type="button" id="atualizarPosicoes">Atualizar</button></div>
+   <p id="posicoesPainel" aria-live="polite">Consultando posições…</p>
+   <button type="button" id="posicoesVerPedidos">Ver meus pedidos</button>
+   <p class="subtexto">Esta consulta não coloca ninguém em fila comercial e não inicia giros.</p>
+  </section>
+  <section class="painel" id="conteudoLinks" role="tabpanel" aria-labelledby="abaLinks" hidden>
+   <h2>Meus Links</h2>
+   <p id="linksNick">Conta autenticada</p>
+   <label for="linkLoja">Loja AKITEMM</label><input id="linkLoja" readonly>
+   <button type="button" id="copiarLinkLoja">Copiar link da loja</button>
+   <label for="linkEscritorio">Meu Escritório</label><input id="linkEscritorio" readonly>
+   <button type="button" id="copiarLinkEscritorio">Copiar link do Escritório</button>
+   <p class="subtexto">Estes links abrem as páginas. O vínculo de indicação e suas bonificações ainda não estão habilitados; copiar um link não registra indicação.</p>
+  </section>
+  <section class="painel" id="conteudoFinanceiro" role="tabpanel" aria-labelledby="abaFinanceiro" hidden>
+   <h2>Painel Financeiro</h2>
+   <p id="estadoFinanceiro">Nenhum saldo comercial foi ativado neste ambiente.</p>
+   <p class="subtexto">Bônus de indicação, saldos de posições e saques precisam de conciliação financeira e homologação. Não exibimos saldo fictício como dinheiro disponível.</p>
+   <button type="button" id="financeiroVerPedidos">Consultar meus pedidos</button>
+  </section>
+  <section class="painel" id="conteudoConta" role="tabpanel" aria-labelledby="abaConta" hidden>
+   <h2>Minha Conta</h2>
+   <p id="perfilCliente" aria-live="polite">Consultando perfil…</p>
+   <h3>Trocar minha senha</h3>
+   <form id="formTrocarSenha">
+    <label for="senhaAtual">Senha atual</label>
+    <input id="senhaAtual" type="password" autocomplete="current-password" required>
+    <label for="novaSenha">Nova senha (mínimo 12 caracteres)</label>
+    <input id="novaSenha" type="password" minlength="12" maxlength="256" autocomplete="new-password" required>
+    <button class="primario" type="submit">Alterar senha</button>
+   </form>
+   <p class="subtexto">Ao trocar sua senha, todas as sessões anteriores serão encerradas. Entre novamente com a nova senha.</p>
   </section>
  </section>
  <p id="mensagem" role="status" aria-live="polite"></p>

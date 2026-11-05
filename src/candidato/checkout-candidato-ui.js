@@ -4,7 +4,11 @@
 const API='/staging';
 let cotacaoEscolhida=null;
 const $=id=>document.getElementById(id);
-let csrf=null,aprovada=false,aba='conteudoPreparar';
+let csrf=null,aprovada=false,aba='conteudoResumo';
+const ABAS=[['abaResumo','conteudoResumo'],['abaPreparar','conteudoPreparar'],
+ ['abaMeusPedidos','conteudoMeusPedidos'],['abaPosicoes','conteudoPosicoes'],
+ ['abaLinks','conteudoLinks'],['abaFinanceiro','conteudoFinanceiro'],
+ ['abaConta','conteudoConta']];
 const moeda=v=>new Intl.NumberFormat('pt-BR',{style:'currency',currency:'BRL'}).format(v/100);
 const dizer=msg=>{$('mensagem').textContent=msg;};
 async function requisitar(rota,{method='GET',body,chave,mutacao=false}={}){
@@ -34,13 +38,17 @@ function mostrarSessao(ativa){
 }
 function mostrarAba(alvo){
  aba=alvo;
- for(const [id,painel] of [['abaPreparar','conteudoPreparar'],['abaMeusPedidos','conteudoMeusPedidos']]){
+ for(const [id,painel] of ABAS){
   const ativo=painel===alvo,botao=$(id);
   botao.setAttribute('aria-selected',String(ativo));
   botao.tabIndex=ativo?0:-1;
   $(painel).hidden=!ativo;
  }
  if(alvo==='conteudoMeusPedidos')atualizarPedidos();
+ if(alvo==='conteudoResumo')atualizarResumo();
+ if(alvo==='conteudoPosicoes')atualizarPosicoes();
+ if(alvo==='conteudoLinks')atualizarLinks();
+ if(alvo==='conteudoConta')atualizarConta();
 }
 function exibirPedidos(pedidos){
  const area=$('listaPedidos');area.replaceChildren();
@@ -218,19 +226,94 @@ async function confirmarCodigoEmail(e){
  }catch(e){dizer('Falha ao conferir código: '+e.message);}
  finally{botao.disabled=false;}
 }
+
+async function atualizarResumo(){
+ try{
+  const [perfil,pedidos,filas]=await Promise.all([
+   requisitar('/contas/me'),requisitar('/meus-pedidos'),
+   requisitar('/minha-previa-filas')
+  ]);
+  $('boasVindas').textContent='Bem-vindo, '+perfil.nome+' · @'+perfil.nick;
+  $('resumoPedidos').textContent=String(pedidos.pedidos?.length||0);
+  $('resumoPosicoes').textContent=String(filas.meusPendentesHistoricos||0);
+  $('resumoEmail').textContent=perfil.emailVerificado?'Confirmado':'Pendente';
+  $('linksNick').textContent='Seu nick: @'+perfil.nick;
+ }catch(e){dizer('Não foi possível atualizar a visão geral: '+e.message);}
+}
+async function atualizarPosicoes(){
+ try{
+  const dados=await requisitar('/minha-previa-filas');
+  const total=dados.meusPendentesHistoricos||0,
+   fila=dados.meusSimuladosNaFilaB||0;
+  $('posicoesPainel').textContent='Posições fictícias registradas: '+total+
+   '. Projeção na Fila B: '+fila+'. '+(dados.motivo||'')+
+   ' Nenhuma posição comercial ativada.';
+ }catch(e){$('posicoesPainel').textContent='Consulta indisponível: '+e.message;}
+}
+async function atualizarLinks(){
+ try{
+  const perfil=await requisitar('/contas/me');
+  $('linksNick').textContent='Seu nick: @'+perfil.nick;
+  $('linkLoja').value=location.origin+'/staging/loja';
+  $('linkEscritorio').value=location.origin+'/minha-conta';
+ }catch(e){dizer('Não foi possível consultar seus links: '+e.message);}
+}
+async function copiarLink(id){
+ const campo=$(id);
+ try{
+  if(!campo.value)throw Error('LINK_NAO_DISPONIVEL');
+  await navigator.clipboard.writeText(campo.value);
+  dizer('Link copiado.');
+ }catch{
+  campo.focus();campo.select();
+  dizer('Selecione e copie o link mostrado.');
+ }
+}
+async function atualizarConta(){
+ try{
+  const perfil=await requisitar('/contas/me');
+  $('perfilCliente').textContent='Nome: '+perfil.nome+
+   ' · Nick: @'+perfil.nick+
+   ' · E-mail: '+(perfil.emailVerificado?'confirmado':'não confirmado')+
+   '. Identidade comercial: pendente.';
+ }catch(e){$('perfilCliente').textContent='Perfil indisponível: '+e.message;}
+}
+async function trocarSenha(e){
+ e.preventDefault();
+ const botao=$('formTrocarSenha').querySelector('button');
+ botao.disabled=true;
+ try{
+  const anterior=$('senhaAtual').value,nova=$('novaSenha').value;
+  const resultado=await requisitar('/contas/senha',{method:'POST',
+   body:{senhaAtual:anterior,novaSenha:nova},mutacao:true});
+  if(resultado.senhaAlterada!==true||resultado.todasSessoesRevogadas!==true)
+   throw Error('TROCA_SENHA_NAO_CONFIRMADA');
+  $('senhaAtual').value='';$('novaSenha').value='';
+  mostrarSessao(false);
+  dizer('Senha alterada. Todas as sessões foram encerradas; entre com sua nova senha.');
+ }catch(err){
+  $('senhaAtual').value='';$('novaSenha').value='';
+  dizer('Não foi possível alterar a senha: '+err.message);
+ }finally{botao.disabled=false;}
+}
+async function autenticarConta(nick,senha){
+ const dados=await requisitar('/contas/entrar',{method:'POST',
+  body:{nick,senha}});
+ csrf=dados.csrf;mostrarSessao(true);$('senha').value='';
+ await atualizarVerificacaoEmail();
+ await atualizarIdentidadeTeste();
+ await carregarCatalogo();
+ mostrarAba('conteudoResumo');
+ return dados;
+}
+
 async function entrar(e){
  e.preventDefault();
  const botao=$('formLogin').querySelector('button');
  botao.disabled=true;dizer('Validando conta de homologação...');
  try{
-  const dados=await requisitar('/contas/entrar',{method:'POST',
-   body:{nick:$('login').value,senha:$('senha').value}});
-  csrf=dados.csrf;mostrarSessao(true);$('senha').value='';
-  await atualizarVerificacaoEmail();
-  await atualizarIdentidadeTeste();
-  await carregarCatalogo();
-  dizer('Sessão local iniciada. Nenhuma cobrança habilitada.');
-  mostrarAba('conteudoPreparar');
+  await autenticarConta($('login').value,$('senha').value);
+  dizer('Bem-vindo ao seu Escritório. Seus dados estão disponíveis nas abas.');
  }catch(err){dizer('Não foi possível entrar: '+err.message);}
  finally{botao.disabled=false;}
 }
@@ -312,8 +395,8 @@ async function restaurarSessao(){
   await atualizarVerificacaoEmail();
   await atualizarIdentidadeTeste();
   await carregarCatalogo();
-  dizer('Sessão de laboratório restaurada.');
-  mostrarAba('conteudoMeusPedidos');
+  dizer('Sua sessão foi restaurada.');
+  mostrarAba('conteudoResumo');
  }catch(e){mostrarSessao(false);dizer('Entre com seu nick de teste ou crie uma conta fictícia.');}
 }
 async function cadastrar(e){
@@ -321,7 +404,7 @@ async function cadastrar(e){
  const botao=$('formCadastro').querySelector('button');
  botao.disabled=true;
  try{
-  const nick=$('cadastroNick').value;
+  const nick=$('cadastroNick').value,senha=$('cadastroSenha').value;
   const r=await requisitar('/contas/cadastrar',{method:'POST',
    body:{
     nome:$('cadastroNome').value,
@@ -333,7 +416,8 @@ async function cadastrar(e){
    throw Error('CADASTRO_INCOMPATIVEL');
   $('login').value=nick;
   $('cadastroSenha').value='';
-  dizer('Conta fictícia criada. Entre com seu nick e senha para acompanhar pedidos.');
+  await autenticarConta(nick,senha);
+  dizer('Conta criada! Você já está dentro do seu Escritório.');
  }catch(e){dizer('Não foi possível cadastrar: '+e.message);}
  finally{botao.disabled=false;}
 }
@@ -352,7 +436,17 @@ $('atualizarCatalogo').addEventListener('click',async()=>{
 $('prepararPedido').addEventListener('click',preparar);
 $('atualizarPedidos').addEventListener('click',atualizarPedidos);
 $('sair').addEventListener('click',sair);
-for(const [btn,section] of [['abaPreparar','conteudoPreparar'],['abaMeusPedidos','conteudoMeusPedidos']]){
+$('atualizarResumo').addEventListener('click',atualizarResumo);
+$('atualizarPosicoes').addEventListener('click',atualizarPosicoes);
+$('atalhoPedidos').addEventListener('click',()=>mostrarAba('conteudoMeusPedidos'));
+$('atalhoPosicoes').addEventListener('click',()=>mostrarAba('conteudoPosicoes'));
+$('atalhoLoja').addEventListener('click',()=>{location.href='/staging/loja';});
+$('posicoesVerPedidos').addEventListener('click',()=>mostrarAba('conteudoMeusPedidos'));
+$('financeiroVerPedidos').addEventListener('click',()=>mostrarAba('conteudoMeusPedidos'));
+$('copiarLinkLoja').addEventListener('click',()=>copiarLink('linkLoja'));
+$('copiarLinkEscritorio').addEventListener('click',()=>copiarLink('linkEscritorio'));
+$('formTrocarSenha').addEventListener('submit',trocarSenha);
+for(const [btn,section] of ABAS){
  $(btn).addEventListener('click',()=>mostrarAba(section));
 }
 restaurarSessao();
