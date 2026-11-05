@@ -20,3 +20,9 @@ Esta é a **regra de negócio aprovada**, não uma afirmação de que os direito
 **Exemplos de teste esperados:** R$ 249 de VERDE = 0; R$ 250 de VERDE = 1; R$ 1.000 de VERDE = 1; duas compras separadas de R$ 250 de VERDE = 2; três unidades DOURADAS = 3; um ROXO configurado como 5 = 5; qualquer valor CINZA = 0. Identificar regras por cores de produto, separadas dos estados/cores do LOOP.
 
 Ajustes visuais fora dos campos de cor/quantidade não foram autorizados.
+
+## Esclarecimento de compra mista e preços — 05/11/2026
+- Um carrinho contendo dourado + roxo + verde aplica **as três regras separadamente**. Exemplo: uma unidade dourada rende uma posição, uma unidade roxa rende o número de posições configurado naquele evento e o conjunto de verdes rende **no máximo uma posição adicional**, somente se a soma de seus próprios valores alcançar R$ 250.
+- O preço dos itens dourados, roxos ou cinzas **não pode ser somado** para completar os R$ 250 da parcela verde. O verde abaixo do piso pode ser comprado normalmente, sem posição verde.
+- O proprietário pretende precificar itens comerciais qualificados para cobrir custos de fornecedor, logística, margem e obrigações do sistema; **R$ 250 exatos são previstos especialmente para curso/PDF**. O preço de cada item e as condições comerciais são definidos por ele no cadastro. Não converter essa intenção de precificação em bloqueio automático para itens cinza de menor preço ou compras verdes abaixo de R$ 250.
+- Este bloco esclarece continuidade; **nenhuma mudança de UI, motor ou direitos comerciais** foi autorizada.
