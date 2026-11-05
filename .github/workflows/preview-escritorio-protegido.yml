@@ -1,0 +1,28 @@
+name: LOOP - Prévia protegida de Escritórios
+on:
+  push:
+    branches:
+      - feature/escritorio-preview-protegido-20261105
+    paths:
+      - 'scripts/servidor-escritorio-preview-railway.js'
+      - 'test/servidor-escritorio-preview-railway.test.js'
+      - '.github/workflows/preview-escritorio-protegido.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  homologacao:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+      - run: npm ci --ignore-scripts --no-fund
+      - run: node --check scripts/servidor-escritorio-preview-railway.js
+      - run: node --check test/servidor-escritorio-preview-railway.test.js
+      - run: node --test test/servidor-escritorio-preview-railway.test.js
