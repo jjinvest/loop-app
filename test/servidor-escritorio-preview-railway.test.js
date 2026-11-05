@@ -57,6 +57,12 @@ test('gateway exige acesso antes de HTML e rotas administrativas',async t=>{
  const codigo=await js.text();
  assert.match(codigo,/PREVIA_OPERADOR/);
  assert.equal(codigo.includes(operador),false,'segredo nunca vai ao navegador');
+ const cookieGate=certo.headers.get('set-cookie')?.split(';')[0];
+ assert.match(cookieGate,/^akitemm_preview_access=v1\./);
+ const viaNavegador=await fetch(x.base+'/staging/escritorio-unificado',{
+  headers:{Cookie:cookieGate,Authorization:'Bearer PREVIA_OPERADOR'}
+ });
+ assert.equal(viaNavegador.status,200,'fetch do painel com Bearer usa cookie de acesso');
  const administrativo=await x.consultar('/staging/escritorio-unificado');
  assert.equal(administrativo.status,200);
  const dados=await administrativo.json();
