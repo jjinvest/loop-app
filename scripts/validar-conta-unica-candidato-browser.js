@@ -52,6 +52,8 @@ const {once}=require('node:events');
    await page.locator('#cadastroNome').fill(item.nick+' Exemplo');
    await page.locator('#cadastroNick').fill(item.nick);
    await page.locator('#cadastroEmail').fill(item.nick.toLowerCase()+'@example.invalid');
+   assert.equal(await page.locator('#cadastroSenha').getAttribute('minlength'),'8');
+   assert.equal(await page.locator('#cadastroSenha').getAttribute('maxlength'),'12');
    await page.locator('#cadastroSenha').fill('Abc123xy');
    await page.locator('#cadastroTermos').check();
    await page.locator('#formCadastro button[type=submit]').click();
