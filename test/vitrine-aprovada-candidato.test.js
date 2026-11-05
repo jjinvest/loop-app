@@ -49,7 +49,7 @@ test('vitrine aprovada usa mesmo catálogo SQLite e Meus Pedidos, sem financeiro
  assert.equal(html.status,200);
  for(const s of ['akitemm-grade-pagina','akitemm-legenda-cores',
   'akitemmFiltroTodos','catalogoLojaLoop','registrarPedidoLoja',
-  '/staging/assets/loja-aprovada.js','Compra comum (sem LOOP)'])
+  '/staging/assets/loja-aprovada.js','Cinza · Compra comum','Dourado · Integral','Roxo · Evento especial'])
   assert.ok(html.body.includes(s),'interface aprovada: '+s);
  assert.ok(!html.body.includes('src="/laboratorio/loja.js"'));
  const s=await get('/staging/assets/loja-aprovada.js');
