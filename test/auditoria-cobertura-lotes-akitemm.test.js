@@ -93,3 +93,41 @@ test('fotografia antiga sem plano nao eh reinterpretada',()=>{
  assert.equal(r.estado,'FOTO_SEM_PLANO_VIGENTE');
  assert.equal(r.podeLiberarOperacaoReal,false);
 });
+
+test('cinza de mil reais nao cobre roxo de R$250 configurado cinco posicoes',()=>{
+ const r=auditarCoberturaDePedido(pedido([
+  item('cinza-1000','CINZA',100000),
+  item('evento-250','ROXO',25000,1,{posicoesPorUnidadeRoxo:5})
+ ]));
+ assert.equal(r.diferencaBrutaAposReferenciaCentavos,0,
+  'bruto global pode esconder insuficiencia do proprio evento');
+ assert.equal(r.estado,'SEGMENTO_SEM_COBERTURA_BRUTA');
+ assert.equal(r.segmentosInsuficientes.length,1);
+ assert.equal(r.segmentosInsuficientes[0].grupo,'ROXO');
+ assert.equal(r.deficitSegmentosCentavos,100000);
+ assert.ok(r.alertas.includes('PRODUTO_QUALIFICADOR_COM_COBERTURA_BRUTA_INSUFICIENTE'));
+ assert.equal(r.podeLiberarOperacaoReal,false);
+});
+test('um roxo caro nao mascara outro roxo abaixo de sua propria referencia',()=>{
+ const r=auditarCoberturaDePedido(pedido([
+  item('evento-250','ROXO',25000,1,{posicoesPorUnidadeRoxo:5}),
+  item('evento-10000','ROXO',1000000,1,{posicoesPorUnidadeRoxo:5})
+ ]));
+ assert.equal(r.estado,'SEGMENTO_SEM_COBERTURA_BRUTA');
+ assert.equal(r.deficitSegmentosCentavos,100000);
+ assert.equal(r.segmentosInsuficientes.length,1);
+ assert.equal(r.segmentosInsuficientes[0].produtoId,'evento-250');
+});
+test('verde que nao qualifica e cinza nao financiam parcela roxa subcoberta',()=>{
+ const r=auditarCoberturaDePedido(pedido([
+  item('verde-249','VERDE',24900),
+  item('cinza-300','CINZA',30000),
+  item('evento-250','ROXO',25000,1,{posicoesPorUnidadeRoxo:5})
+ ]));
+ assert.equal(r.posicoesVerde,0);
+ assert.equal(r.totalPosicoesPlanejadas,5);
+ assert.equal(r.valorDeProdutosQueGeramPosicaoCentavos,25000);
+ assert.equal(r.diferencaDeQualificadoresAposReferenciaCentavos,-100000);
+ assert.equal(r.estado,'BRUTO_INSUFICIENTE');
+ assert.equal(r.deficitSegmentosCentavos,100000);
+});
