@@ -1,13 +1,15 @@
 'use strict';
 // Sinalização VISUAL da vitrine aprovada, apenas para homologação local.
 // NÃO é fonte de elegibilidade financeira, direito a posição ou evento real.
+const {planejarPosicoesCompraAkitemm}=require('./plano-posicoes-compra-akitemm');
 const ID=/^[a-z0-9-]{3,80}$/;
 const CLASSES=new Set(['CINZA','VERDE','DOURADO','ROXO','EVENTO']); // EVENTO legado = ROXO
 function fail(codigo){const e=new Error(codigo);e.codigo=codigo;throw e;}
 function validar(x){
  if(!x||typeof x!=='object'||Array.isArray(x)||
-  Object.keys(x).sort().join(',')!==
-  'classificacao,quantidadeMinimaLoop,revisaoEsperada')
+  !['classificacao,quantidadeMinimaLoop,revisaoEsperada',
+   'classificacao,posicoesPorUnidadeRoxo,quantidadeMinimaLoop,revisaoEsperada']
+   .includes(Object.keys(x).sort().join(',')))
   fail('CAMPOS_SINALIZACAO_INVALIDOS');
  if(!CLASSES.has(x.classificacao))fail('COR_VITRINE_INVALIDA');
  if(!Number.isSafeInteger(x.quantidadeMinimaLoop)||
@@ -19,6 +21,11 @@ function validar(x){
   fail('COR_NEUTRA_SEM_REGRAS_LOOP');
  if(['DOURADO','ROXO','EVENTO'].includes(x.classificacao)&&x.quantidadeMinimaLoop!==1)
   fail('PRODUTO_ESPECIAL_QUANTIDADE_MINIMA_UM');
+ if(x.posicoesPorUnidadeRoxo!==undefined&&
+  (!['ROXO','EVENTO'].includes(x.classificacao)||
+   !Number.isSafeInteger(x.posicoesPorUnidadeRoxo)||
+   x.posicoesPorUnidadeRoxo<0||x.posicoesPorUnidadeRoxo>10))
+  fail('CONFIGURACAO_ROXO_INVALIDA');
  return x;
 }
 class SinalizacaoVitrineCandidatoSQLite{
@@ -40,6 +47,10 @@ class SinalizacaoVitrineCandidatoSQLite{
    'produto_id TEXT PRIMARY KEY REFERENCES akitemm_vitrine_sinalizacao_staging(produto_id)',
    "ON DELETE RESTRICT,classificacao TEXT NOT NULL CHECK(classificacao IN ('CINZA','VERDE','DOURADO','ROXO')) ,",
    'revisao INTEGER NOT NULL CHECK(revisao>=1));',
+   'CREATE TABLE IF NOT EXISTS akitemm_vitrine_evento_roxo_staging(',
+   'produto_id TEXT PRIMARY KEY REFERENCES akitemm_vitrine_sinalizacao_staging(produto_id)',
+   'ON DELETE RESTRICT,posicoes_por_unidade INTEGER NOT NULL',
+   'CHECK(posicoes_por_unidade BETWEEN 1 AND 10),revisao INTEGER NOT NULL);',
    'CREATE TABLE IF NOT EXISTS akitemm_vitrine_sinalizacao_historico_staging(',
    'id INTEGER PRIMARY KEY AUTOINCREMENT,produto_id TEXT NOT NULL',
    'REFERENCES akitemm_vitrine_sinalizacao_staging(produto_id),',
@@ -72,7 +83,10 @@ class SinalizacaoVitrineCandidatoSQLite{
   const nova=row?this.db.prepare('SELECT classificacao,revisao FROM akitemm_vitrine_cores_v2_staging WHERE produto_id=?').get(id):null;
   if(nova&&nova.revisao!==row.revisao)fail('REVISAO_COR_V2_INCONSISTENTE');
   const classe=nova?.classificacao||(row?.classificacao==='EVENTO'?'ROXO':row?.classificacao)||'CINZA';
+  const evento=classe==='ROXO'?this.db.prepare('SELECT posicoes_por_unidade AS quantidade,revisao FROM akitemm_vitrine_evento_roxo_staging WHERE produto_id=?').get(id):null;
+  if(evento&&evento.revisao!==row.revisao)fail('REVISAO_EVENTO_INCONSISTENTE');
   return {produtoId:id,classificacao:classe,
+   posicoesPorUnidadeRoxo:evento?.quantidade||0,
    quantidadeMinimaLoop:row?.quantidadeMinimaLoop||1,
    revisao:row?.revisao||0,atualizadoEm:row?.atualizadoEm||null,
    apenasSinalizacao:true,beneficioRealHabilitado:false};
@@ -87,6 +101,7 @@ class SinalizacaoVitrineCandidatoSQLite{
   const antigo=this.consultar(id);
   if(antigo.revisao!==entrada.revisaoEsperada)fail('CONFLITO_REVISAO');
   const novo={produtoId:id,classificacao:classe,
+   posicoesPorUnidadeRoxo:classe==='ROXO'?(entrada.posicoesPorUnidadeRoxo||0):0,
    quantidadeMinimaLoop:entrada.quantidadeMinimaLoop};
   const legado=classe==='ROXO'?'EVENTO':classe==='DOURADO'?'VERDE':classe;
   const now=Date.now(),db=this.db;
@@ -112,6 +127,10 @@ class SinalizacaoVitrineCandidatoSQLite{
     '(produto_id,classificacao,revisao) VALUES(?,?,?)',
     'ON CONFLICT(produto_id) DO UPDATE SET classificacao=excluded.classificacao,revisao=excluded.revisao'
    ].join(' ')).run(id,classe,rev);
+   db.prepare('DELETE FROM akitemm_vitrine_evento_roxo_staging WHERE produto_id=?').run(id);
+   if(classe==='ROXO'&&novo.posicoesPorUnidadeRoxo>0)
+    db.prepare('INSERT INTO akitemm_vitrine_evento_roxo_staging(produto_id,posicoes_por_unidade,revisao) VALUES(?,?,?)')
+     .run(id,novo.posicoesPorUnidadeRoxo,rev);
    db.prepare([
     'INSERT INTO akitemm_vitrine_sinalizacao_historico_staging',
     '(produto_id,revisao,antes_json,depois_json,criado_em)',
@@ -148,21 +167,23 @@ class SinalizacaoVitrineCandidatoSQLite{
       p.subtotalCentavos!==p.quantidade*p.precoUnitarioCentavos)
     fail('FOTOGRAFIA_ITEM_INVALIDO');
    const s=this.consultar(p.produtoId);
-   const apto=(s.classificacao==='VERDE'||
-    (s.classificacao==='DOURADO'&&p.precoUnitarioCentavos>=25000))&&
-    p.quantidade>=s.quantidadeMinimaLoop;
+   const apto=s.classificacao==='VERDE'&&p.quantidade>=s.quantidadeMinimaLoop;
    total+=p.subtotalCentavos;
    if(apto)verde+=p.subtotalCentavos;
    if(s.classificacao==='ROXO')evento=true;
    fotografiaItens.push({produtoId:p.produtoId,quantidade:p.quantidade,
     precoUnitarioCentavos:p.precoUnitarioCentavos,
     subtotalCentavos:p.subtotalCentavos,classificacao:s.classificacao,
-    minimo:s.quantidadeMinimaLoop,revisao:s.revisao,verdeApto:apto});
+    minimo:s.quantidadeMinimaLoop,revisao:s.revisao,verdeApto:apto,
+    posicoesPorUnidadeRoxo:s.posicoesPorUnidadeRoxo});
   }
   if(total!==totalCentavos)fail('FOTOGRAFIA_TOTAL_DIVERGENTE');
+  const planejamentoPosicoes=planejarPosicoesCompraAkitemm(fotografiaItens);
   const snap={prepedidoId,titularId,criadoEm,totalCentavos,
    valorVerdeConsideradoCentavos:verde,referenciaVerdeAtingida:verde>=25000,
-   eventoPendente:evento,podeSimularFilaBAzul:verde>=25000&&!evento,
+   eventoPendente:evento&&planejamentoPosicoes.pendenciasConfiguracaoRoxo>0,
+   podeSimularFilaBAzul:planejamentoPosicoes.podeVincularEnsaio,
+   planejamentoPosicoes,
    itens:fotografiaItens,somenteLaboratorio:true,direitosCriados:0};
   this.db.prepare([
    'INSERT INTO akitemm_vitrine_fotografia_classificacao_prepedido',
@@ -191,7 +212,7 @@ class SinalizacaoVitrineCandidatoSQLite{
    quantidadeMinimaLoop:s.quantidadeMinimaLoop,
    // ROXO é apenas decoração local até regras, datas e autorização formal.
    // Não inventar quantidade de posições nem evento no motor.
-   eventoId:null,posicoesPorPedidoLoop:0,
+   eventoId:null,posicoesPorPedidoLoop:classe==='ROXO'?s.posicoesPorUnidadeRoxo:0,
    classeVisual:classe,
    fotoSomenteSeAutorizada:true,somenteLaboratorio:true};
  }
