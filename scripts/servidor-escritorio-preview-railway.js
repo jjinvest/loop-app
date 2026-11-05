@@ -160,8 +160,9 @@ async function iniciar({env=process.env}={}){
  if(!path.isAbsolute(dbPath)||!path.resolve(dbPath).startsWith(pasta+'/'))
   falha('BANCO_PREVIA_FORA_DO_VOLUME');
  fs.mkdirSync(pasta,{recursive:true,mode:0o700});
- if(fs.statSync(pasta).dev===fs.statSync('/').dev)
-  falha('VOLUME_PREVIA_NAO_MONTADO');
+ const montado=fs.readFileSync('/proc/self/mountinfo','utf8').split('\n')
+  .some(linha=>linha.split(' ')[4]===pasta);
+ if(!montado)falha('VOLUME_PREVIA_NAO_MONTADO');
  const db=new DatabaseSync(dbPath);
  db.exec('PRAGMA foreign_keys=ON;PRAGMA journal_mode=WAL;PRAGMA busy_timeout=5000;');
  const tokenOperador=derivar(segredoRaiz,'operador').toString('hex');
