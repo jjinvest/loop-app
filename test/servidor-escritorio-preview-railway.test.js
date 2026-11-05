@@ -56,6 +56,7 @@ test('gateway exige acesso antes de HTML e rotas administrativas',async t=>{
  assert.equal(js.status,200);
  const codigo=await js.text();
  assert.match(codigo,/PREVIA_OPERADOR/);
+ assert.match(codigo,/credentials:'same-origin'/);
  assert.equal(codigo.includes(operador),false,'segredo nunca vai ao navegador');
  const cookieGate=certo.headers.get('set-cookie')?.split(';')[0];
  assert.match(cookieGate,/^akitemm_preview_access=v1\./);
