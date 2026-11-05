@@ -608,3 +608,36 @@ for(const [id,acao] of [['motorEnsaioAbrir','ABRIR'],
  $(id).addEventListener('click',()=>operacaoMotorContaEnsaio(
   'catraca',{acao},'Catraca de ensaio: '+acao));
 }
+
+async function conferirPixUnificado(){
+ const estado=$('estadoPixUnificado'),enviar=$('pixUnificadoEnviar');
+ enviar.disabled=true;
+ try{
+  const r=await api('/sandbox-pix/estado');
+  if(r.status==='INTEGRADO_SANDBOX_NO_MESMO_SQLITE'&&
+     r.usaSQLiteDaLoja&&r.webhookIngressAtivo&&r.consultarPSPDisponivel){
+   estado.textContent='Asaas Sandbox conectado à loja, ao webhook e ao motor no MESMO banco de homologação. Nenhum saque real habilitado.';
+   enviar.disabled=false;
+  }else{
+   estado.textContent='Ainda não ativado nesta prévia: faltam credenciais específicas do Asaas Sandbox. Banco e volume já estão disponíveis.';
+  }
+ }catch(e){estado.textContent='Não foi possível conferir: '+e.message;}
+}
+$('consultarPixUnificado').addEventListener('click',conferirPixUnificado);
+$('formPixUnificado').addEventListener('submit',async ev=>{
+ ev.preventDefault();
+ const botao=$('pixUnificadoEnviar'),estado=$('estadoPixUnificado');
+ if(botao.disabled||!$('pixUnificadoCiencia').checked)return;
+ botao.disabled=true;
+ try{
+  const r=await api('/sandbox-pix/preparar',{method:'POST',body:{
+   prepedidoId:$('pixUnificadoPedido').value.trim(),
+   clienteAsaasId:$('pixUnificadoCliente').value.trim(),
+   aceiteEnsaio:true
+  }});
+  estado.textContent='Pix SANDBOX '+(r.repetido?'já registrado':'preparado')+
+   ' para o pré-pedido '+r.prepedidoId+'. Aguardar webhook e reconsulta do PSP. Nenhuma posição comercial criada.';
+  await atualizar();
+ }catch(e){estado.textContent='Cobrança não preparada: '+e.message;}
+ finally{await conferirPixUnificado();}
+});
