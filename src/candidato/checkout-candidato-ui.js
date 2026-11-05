@@ -6,6 +6,7 @@ let cotacaoEscolhida=null;
 const $=id=>document.getElementById(id);
 let csrf=null,aprovada=false,aba='conteudoResumo',proximaPaginaEquipe=null;
 let telaAcesso='cadastro';
+let posicaoSelecionadaMotor=null;
 const ABAS=[['abaResumo','conteudoResumo'],['abaTabuleiro','conteudoTabuleiro'],['abaPreparar','conteudoPreparar'],
  ['abaMeusPedidos','conteudoMeusPedidos'],['abaPosicoes','conteudoPosicoes'],
  ['abaEquipe','conteudoEquipe'],['abaLinks','conteudoLinks'],['abaFinanceiro','conteudoFinanceiro'],
@@ -271,32 +272,87 @@ async function confirmarCodigoEmail(e){
 
 async function atualizarResumo(){
  try{
-  const [perfil,pedidos,filas,equipe]=await Promise.all([
+  const [perfil,pedidos,filas,equipe,motor]=await Promise.all([
    requisitar('/contas/me'),requisitar('/meus-pedidos'),
-   requisitar('/minha-previa-filas'),requisitar('/minha-equipe')
+   requisitar('/minha-previa-filas'),requisitar('/minha-equipe'),
+   requisitar('/motor/estado')
   ]);
   $('boasVindas').textContent='Bem-vindo, '+perfil.nome+' · @'+perfil.nick;
   $('loop03NickIntegrado').textContent='@'+perfil.nick;
-  $('loop03TotalIntegrado').textContent=String(filas.meusPendentesHistoricos||0)+' de ensaio';
+  $('loop03TotalIntegrado').textContent=String(motor.posicoesAtivasDoTitular)+' / '+
+   String(motor.limitePosicoesAtivas)+' (ensaio)';
+  $('loop03Giros24Integrado').textContent=String(motor.catraca.giros24h);
+  const selecionada=motor.minhasPosicoes.find(x=>x.numero===posicaoSelecionadaMotor);
+  if(!selecionada)posicaoSelecionadaMotor=null;
+  $('loop03NumeroIntegrado').textContent=selecionada?'#'+selecionada.numero:'#0000';
   $('resumoPedidos').textContent=String(pedidos.pedidos?.length||0);
-  $('resumoPosicoes').textContent=String(filas.meusPendentesHistoricos||0);
+  $('resumoPosicoes').textContent=String(motor.posicoesAtivasDoTitular)+
+   ' no motor de ensaio; '+String(filas.meusPendentesHistoricos||0)+' históricos PSP';
   $('resumoEmail').textContent=perfil.emailVerificado?'Confirmado':'Pendente';
   $('resumoEquipe').textContent=String(equipe.total);
   $('linksNick').textContent='Seu nick: @'+perfil.nick;
  }catch(e){dizer('Não foi possível atualizar a visão geral: '+e.message);}
 }
+function preencherVagaMotor(id,p,centro=false){
+ const numero=$(id),bolinha=numero.closest('.espaco-tabuleiro-demo');
+ numero.textContent=p?'#'+p.numero:(centro?'#0000':'—');
+ numero.classList.toggle('posicao-dourado',Boolean(p?.dourada));
+ numero.classList.toggle('posicao-azul',Boolean(p?.pendente));
+ numero.classList.toggle('loop03-iluminada',Boolean(p?.minha));
+ bolinha.setAttribute('aria-label',(centro?'Centro':'Vaga do tabuleiro')+
+  ': '+(p?('#'+p.numero+' · '+p.status):'vazio')+
+  (p?.minha?' · minha posição':''));
+}
+function preencherFilaMotor(id,itens,tipo){
+ const area=$(id);area.replaceChildren();
+ if(!itens.length){
+  const vazio=document.createElement('p');vazio.className='subtexto';
+  vazio.textContent='Fila vazia';area.append(vazio);return;
+ }
+ for(const p of itens){
+  const linha=document.createElement('div');
+  linha.className='loop03-linha-fila';
+  const inicial=document.createElement('span');
+  inicial.className='loop03-inicial-fila '+(p.dourada?'loop03-dourada':
+   p.pendente?'loop03-azul':tipo==='A'?'loop03-a':'loop03-b');
+  inicial.textContent=p.dourada?'●':tipo;
+  const conteudo=document.createElement('span');
+  conteudo.className='loop03-fila-identificacao';
+  const numero=document.createElement('span');
+  numero.className='loop03-numero-titular';
+  numero.textContent='#'+p.numero;
+  conteudo.append(numero);
+  if(p.minha){
+   const minha=document.createElement('small');minha.textContent='Minha posição · ensaio';
+   conteudo.append(minha);
+  }
+  linha.append(inicial,conteudo);
+  area.append(linha);
+ }
+}
 async function atualizarTabuleiroIntegrado(){
  const estado=$('estadoTabuleiroIntegrado');
  try{
-  const dados=await requisitar('/minha-previa-filas');
-  const pendentes=Number(dados.meusPendentesHistoricos||0);
-  const hipoteticas=Number(dados.meusSimuladosNaFilaB||0);
-  estado.textContent='Sua conta possui '+pendentes+' posição(ões) pendente(s) de ensaio. '+
-   'Projeção fictícia na Fila B: '+hipoteticas+'. '+
-   (dados.motivo||'')+
-   ' Isso não representa ocupação real do tabuleiro nem autoriza giros.';
+  const motor=await requisitar('/motor/estado');
+  if(motor.origem!=='MOTOR_LOOP_EXISTENTE_COM_SQLITE_DA_CONTA'||
+     motor.autorizacaoComercial!==false||motor.dinheiroReal!==false)
+   throw Error('FONTE_MOTOR_INCOMPATIVEL');
+  preencherFilaMotor('motorFilaA',motor.filaA,'A');
+  preencherFilaMotor('motorFilaB',motor.filaB,'B');
+  preencherVagaMotor('tabuleiroMotorCentro',motor.tabuleiro.centro,true);
+  motor.tabuleiro.vagas.forEach((p,i)=>
+   preencherVagaMotor('tabuleiroMotorVaga'+(i+1),p));
+  for(let i=1;i<=6;i++)$('motorBolinha'+i).classList.toggle(
+   'loop03-marcador-aceso',i<=motor.tabuleiro.eventosNoCiclo);
+  $('motorContadorEventos').textContent=motor.tabuleiro.eventosNoCiclo+
+   '/6 eventos válidos de ensaio';
+  $('loop03Giros24Integrado').textContent=String(motor.catraca.giros24h);
+  estado.textContent='Motor V6 conectado ao SQLite desta conta · '+motor.ordemAlimentacao+
+   ' · '+motor.catraca.estado+' · '+motor.catraca.giros+
+   ' giros de ensaio. Posições e valores comerciais continuam bloqueados.';
  }catch(e){
-  estado.textContent='Leitura da conta indisponível: '+e.message;
+  estado.textContent='Leitura do motor indisponível: '+e.message+
+   '. Não foram apresentados ocupantes ou giros não verificados.';
  }
 }
 function fecharMenuIntegrado(){
@@ -314,56 +370,72 @@ function alternarMenuIntegrado(){
 async function atualizarPosicoes(){
  const area=$('posicoesPainel');
  try{
-  const dados=await requisitar('/minha-previa-filas');
-  const registros=Array.isArray(dados.pendencias)?dados.pendencias:[];
-  const total=Number(dados.meusPendentesHistoricos||0);
-  const fila=Number(dados.meusSimuladosNaFilaB||0);
+  const [dados,motor]=await Promise.all([
+   requisitar('/minha-previa-filas'),requisitar('/motor/estado')
+  ]);
+  const historicos=Array.isArray(dados.pendencias)?dados.pendencias:[];
+  const ativas=Array.isArray(motor.minhasPosicoes)?motor.minhasPosicoes:[];
+  const historicosExtras=historicos.filter(h=>
+   !ativas.some(p=>p.prepedidoId&&p.prepedidoId===h.prepedidoId));
   const resumo=document.createElement('p');
   resumo.className='subtexto';
-  resumo.textContent='Registros de ensaio desta conta: '+total+
-   ' · Hipotese de Fila B: '+fila+
-   ' · Posicoes comerciais ativas: 0. '+(dados.motivo||'');
+  resumo.textContent='Ativas no motor de ensaio: '+ativas.length+
+   '/10 · Registros históricos PSP de laboratório: '+historicos.length+
+   ' · Posicoes comerciais ativas: 0.';
   const grade=document.createElement('div');
   grade.className='loop03-grade-posicoes-ensaio';
   grade.setAttribute('role','list');
-  grade.setAttribute('aria-label','Dez espacos de posicao; somente ensaio');
+  grade.setAttribute('aria-label','Dez espaços de posições da própria conta');
   const estados={
-   APENAS_PREVIA_FILA_B_AZUL:'Pendente de confirmacao · hipotese Fila B',
-   EXIGE_REVISAO_PSP:'Pagamento de teste exige revisao',
-   SEM_FOTOGRAFIA_HISTORICA:'Falta fotografia historica',
-   OFERTA_HISTORICA_NAO_QUALIFICADA:'Oferta nao qualificada',
+   APENAS_PREVIA_FILA_B_AZUL:'Pendente de confirmação · hipótese Fila B',
+   EXIGE_REVISAO_PSP:'Pagamento de teste exige revisão',
+   SEM_FOTOGRAFIA_HISTORICA:'Falta fotografia histórica',
+   OFERTA_HISTORICA_NAO_QUALIFICADA:'Oferta não qualificada',
    ACIMA_DEZ_APENAS_PARA_PLANEJAMENTO:'Acima do limite para planejamento'
   };
   for(let i=0;i<10;i++){
-   const item=registros[i]||null;
+   const posicao=ativas[i]||null,registro=posicao?null:historicosExtras[i-ativas.length]||null;
    const cartao=document.createElement('article');
    cartao.className='loop03-cartao-posicao-ensaio'+
-    (item?' loop03-cartao-posicao-pendente':'');
+    (posicao?.pendente||registro?' loop03-cartao-posicao-pendente':'')+
+    (posicao?.numero===posicaoSelecionadaMotor?' loop03-cartao-motor-selecionado':'');
    cartao.setAttribute('role','listitem');
    const nome=document.createElement('h3');
-   nome.textContent='Posicao '+(i+1);
+   nome.textContent='Posição '+(i+1);
    const numero=document.createElement('strong');
-   numero.textContent=item?'PENDENTE · TESTE':'Espaco disponivel';
+   numero.textContent=posicao?'#'+posicao.numero:
+    registro?'PENDENTE · TESTE':'Espaço disponível';
    const status=document.createElement('p');
-   status.textContent=item?(estados[item.estado]||'Registro em revisao'):'Sem posicao vinculada';
+   status.textContent=posicao?('Motor de ensaio · '+posicao.local+
+    (posicao.fila?' '+posicao.fila:'')+(posicao.pendente?' · aguardando confirmação':'')):
+    registro?(estados[registro.estado]||'Registro em revisão'):'Sem posição vinculada';
    cartao.append(nome,numero,status);
-   if(item){
+   if(posicao){
+    const botao=document.createElement('button');botao.type='button';
+    botao.textContent='Selecionar esta posição de ensaio';
+    botao.addEventListener('click',()=>{
+     posicaoSelecionadaMotor=posicao.numero;
+     $('loop03NumeroIntegrado').textContent='#'+posicao.numero;
+     atualizarPosicoes();
+    });
+    cartao.append(botao);
+   }else if(registro){
     const origem=document.createElement('small');
-    origem.textContent='Pedido de ensaio: '+String(item.prepedidoId||'Nao identificado');
+    origem.textContent='Pedido de ensaio: '+String(registro.prepedidoId||'Não identificado');
     cartao.append(origem);
    }
    grade.append(cartao);
   }
-  const aviso=document.createElement('p');
-  aviso.className='subtexto';
-  aviso.textContent=registros.length>10?
-   'Outros '+(registros.length-10)+' registros permanecem no historico de pedidos. O limite de 10 se aplica a posicoes ATIVAS, nao a este historico.':
-   'Nenhum cartao permite ativar, girar ou receber valores reais nesta homologacao.';
+  const aviso=document.createElement('p');aviso.className='subtexto';
+  const fora=Math.max(0,historicosExtras.length-(10-ativas.length));
+  aviso.textContent=fora?
+   'Outros '+fora+' registros permanecem no histórico de pedidos. O limite de 10 aplica-se a posições ativas, não aos pedidos passados.':
+   'Nenhum cartão permite ativar, girar ou receber valores reais nesta homologação.';
   area.replaceChildren(resumo,grade,aviso);
  }catch(e){
   area.replaceChildren();
   const erro=document.createElement('p');
-  erro.textContent='Consulta indisponivel: '+e.message;
+  erro.textContent='Consulta indisponível: '+e.message;
   area.append(erro);
  }
 }
