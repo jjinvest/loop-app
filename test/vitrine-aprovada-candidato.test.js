@@ -149,6 +149,39 @@ test('vitrine aprovada usa mesmo catálogo SQLite e Meus Pedidos, sem financeiro
  assert.equal(novo.json.pedido.totalCentavos,60000);
  assert.equal((await json(rota,{...options,key:'vitrine-prepedido-idempotente-002',
   body:{itens:[{produtoId:'curso-homologacao-250',quantidade:1}]}})).status,409);
+ // Evento roxo com cinco posicoes configuradas: pedido -> fotografia -> motor
+ // existente. Tudo somente no ensaio manual do operador.
+ const roxoCinco=await json(admin,{method:'PATCH',admin:true,body:{
+  classificacao:'ROXO',quantidadeMinimaLoop:1,
+  posicoesPorUnidadeRoxo:5,revisaoEsperada:3}});
+ assert.equal(roxoCinco.status,200,JSON.stringify(roxoCinco.json));
+ assert.equal(roxoCinco.json.posicoesPorUnidadeRoxo,5);
+ assert.equal((await json(catalog,{cookie:ana.cookie})).json.produtos[0].posicoesPorPedidoLoop,5);
+ const eventoCinco=await json(rota,{...options,
+  key:'vitrine-prepedido-evento-roxo-cinco',
+  body:{itens:[{produtoId:'curso-homologacao-250',quantidade:1}]}});
+ assert.equal(eventoCinco.status,201,JSON.stringify(eventoCinco.json));
+ const fotoCinco=sinalizacaoVitrine.consultarFotografiaPrepedido({
+  prepedidoId:eventoCinco.json.pedido.pedidoId});
+ assert.equal(fotoCinco.planejamentoPosicoes.posicoesRoxo,5);
+ assert.equal(fotoCinco.planejamentoPosicoes.quantidadePosicoesPrevistas,5);
+ assert.equal(fotoCinco.eventoPendente,false);
+ const rotaMotor='/staging/escritorio-unificado/motor/vincular-pedido';
+ const vinculo=await json(rotaMotor,{method:'POST',admin:true,body:{
+  prepedidoId:eventoCinco.json.pedido.pedidoId,aceiteEnsaio:true}});
+ assert.equal(vinculo.status,201,JSON.stringify(vinculo.json));
+ assert.equal(vinculo.json.quantidadePosicoes,5);
+ assert.equal(vinculo.json.posicoesReais,0);
+ const novamente=await json(rotaMotor,{method:'POST',admin:true,body:{
+  prepedidoId:eventoCinco.json.pedido.pedidoId,aceiteEnsaio:true}});
+ assert.equal(novamente.status,200);
+ assert.deepEqual(novamente.json.posicoesIds,vinculo.json.posicoesIds);
+ assert.equal((await json('/staging/motor/estado',{
+  method:'GET',cookie:ana.cookie})).json.posicoesAtivasDoTitular,5);
+ assert.equal((await json('/staging/motor/estado',{
+  method:'GET',cookie:bia.cookie})).json.posicoesAtivasDoTitular,0);
+ assert.equal(sinalizacaoVitrine.consultarFotografiaPrepedido({
+  prepedidoId:primeiro.json.pedido.pedidoId}).eventoPendente,true);
  assert.equal((await json('/staging/checkout/finalizar',{method:'POST',body:{}})).status,503);
  assert.equal((await json('/staging/vitrine/loja/entrega',
   {method:'POST',cookie:ana.cookie,body:{}})).status,409);
