@@ -58,7 +58,8 @@ test('mesma grade mostra posicoes vindas do motor sem confundir com dinheiro',as
  assert.equal(area.children[1].children.length,10);
  assert.equal(area.children[1].children[0].children[1].textContent,'#42');
  assert.match(area.children[1].children[0].children[2].textContent,/Motor de ensaio/);
- assert.equal(area.children[1].children[0].children[3].tag,'button');
+ assert.equal(area.children[1].children[0].children[3].tag,'form');
+ assert.equal(area.children[1].children[0].children[4].tag,'button');
  assert.match(area.children[0].textContent,/comerciais ativas: 0/);
 });
 test('historico acima de dez permanece indicado sem confundir limite de pedidos',async()=>{
