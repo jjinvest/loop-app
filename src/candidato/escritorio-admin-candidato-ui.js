@@ -134,6 +134,8 @@ async function editarCor(id){
   $('produtoSimulado').value=id;
   $('sinalizacaoClasse').value=r.classificacao;
   $('sinalizacaoMinimo').value=String(r.quantidadeMinimaLoop);
+  $('sinalizacaoPosicoesRoxo').value=String(r.posicoesPorUnidadeRoxo||0);
+  $('sinalizacaoPosicoesRoxo').disabled=r.classificacao!=='ROXO';
   $('tituloSinalizacaoAdmin').scrollIntoView({behavior:'smooth',block:'start'});
   $('resultadoSinalizacaoAdmin').textContent='Configuração visual carregada; revisão '+r.revisao+'.';
  }finally{
@@ -366,7 +368,9 @@ $('formPreAdesao').addEventListener('submit',async e=>{
 
 $('recarregarProdutos').addEventListener('click',()=>atualizarProdutos().catch(e=>dizer(e.message)));
 $('sinalizacaoClasse').addEventListener('change',()=>{
- if($('sinalizacaoClasse').value==='CINZA')$('sinalizacaoMinimo').value='1';
+ const classe=$('sinalizacaoClasse').value;
+ if(classe!=='VERDE')$('sinalizacaoMinimo').value='1';
+ $('sinalizacaoPosicoesRoxo').disabled=classe!=='ROXO';
 });
 $('formSinalizacaoAdmin').addEventListener('submit',async e=>{
  e.preventDefault();
@@ -379,9 +383,12 @@ $('formSinalizacaoAdmin').addEventListener('submit',async e=>{
    quantidadeMinimaLoop:Number($('sinalizacaoMinimo').value),
    revisaoEsperada:sinalizacaoAtual.revisao
   };
+  if(data.classificacao==='ROXO')
+   data.posicoesPorUnidadeRoxo=Number($('sinalizacaoPosicoesRoxo').value);
   sinalizacaoAtual=await api('/sinalizacao/'+encodeURIComponent(sinalizacaoAtual.produtoId),{
    method:'PATCH',body:data
   });
+  $('sinalizacaoPosicoesRoxo').value=String(sinalizacaoAtual.posicoesPorUnidadeRoxo||0);
   $('resultadoSinalizacaoAdmin').textContent='Cor salva no catálogo compartilhado. Atualize a vitrine para conferir.';
  }catch(err){$('resultadoSinalizacaoAdmin').textContent='Não foi possível salvar a cor: '+err.message;}
  finally{botao.disabled=false;}
