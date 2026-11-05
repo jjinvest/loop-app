@@ -32,6 +32,7 @@ test('webhook bruto nao gera posicoes; PSP reconsultado cria lote ROXO pendente 
  const r=criarAppLojaEscritorioCandidato({
   banco:db,repositorioCatalogo:catalogoFicticioCheckout(),
   chaveEmail:randomBytes(32),chaveCifra:randomBytes(32),
+  chaveCpfHmac:randomBytes(32),chaveCpfCifra:randomBytes(32),
   webhookHomologacaoToken:TOKEN,provedorReconsultaSandbox:provedor,
   operacoesSandboxAutorizadas:true,
   segredoOperador:OP,termosVersao:'LAB-auto-conciliacao-2026',
@@ -101,6 +102,46 @@ test('webhook bruto nao gera posicoes; PSP reconsultado cria lote ROXO pendente 
  assert.equal(gets,1);
  assert.equal(r.motorConta.consultar({titularId}).posicoesAtivasDoTitular,5);
  assert.equal(r.motorConta.consultar({titularId}).pendentesDeEnsaio,5);
+ const primeiraPosicao=r.motorConta.consultar({titularId}).minhasPosicoes[0].numero;
+ const versaoTermos='LAB-auto-conciliacao-2026';
+ const bodyAceite={posicaoId:primeiraPosicao,versaoTermos,aceiteExplicito:true};
+ const rotaAceite='/staging/motor/posicoes/confirmar-ensaio';
+ assert.equal((await call(rotaAceite,{method:'POST',cookie,csrf,body:bodyAceite})).status,409,
+  'sem CPF ainda nao ha aceite individual');
+ assert.equal((await call(rotaAceite,{method:'POST',body:bodyAceite})).status,401);
+ assert.equal((await call(rotaAceite,{method:'POST',cookie,body:bodyAceite})).status,403);
+ const cpf=await call('/staging/contas/identidade',{method:'POST',cookie,csrf,body:{
+  cpf:'52998224725',aceiteExplicito:true
+ }});
+ assert.equal(cpf.status,201,JSON.stringify(cpf.json));
+ assert.equal((await call(rotaAceite,{method:'POST',cookie,csrf,body:{
+  ...bodyAceite,aceiteExplicito:false
+ }})).status,400);
+ const aceite=await call(rotaAceite,{method:'POST',cookie,csrf,body:bodyAceite});
+ assert.equal(aceite.status,201,JSON.stringify(aceite.json));
+ assert.equal(aceite.json.aceiteIndividualRegistrado,true);
+ assert.equal(aceite.json.identidadeExternaVerificada,false);
+ assert.equal(aceite.json.criouDireitoReal,false);
+ assert.equal((await call(rotaAceite,{method:'POST',cookie,csrf,body:bodyAceite})).status,200);
+ const pos=r.motorConta.consultar({titularId});
+ assert.equal(pos.pendentesDeEnsaio,4);
+ assert.equal(pos.minhasPosicoes.filter(x=>x.aceiteIndividualRegistrado).length,1);
+ assert.equal(pos.minhasPosicoes.filter(x=>x.pendente).length,4);
+ assert.equal(db.prepare('SELECT COUNT(*) AS n FROM akitemm_motor_ensaio_aceites_posicao').get().n,1);
+ // Outra conta nao ve nem consegue aceitar a posicao vinculada ao titular.
+ const outro=await call('/staging/contas/cadastrar',{method:'POST',body:{
+  nome:'Outro titular laboratorio',nick:'Outro',email:'outro@example.invalid',
+  senha:'OutraSenhaLaboratorio2026#Forte',aceiteExplicito:true
+ }});
+ assert.equal(outro.status,201);
+ const loginOutro=await call('/staging/contas/entrar',{method:'POST',body:{
+  nick:'Outro',senha:'OutraSenhaLaboratorio2026#Forte'
+ }});
+ assert.equal(loginOutro.status,200);
+ const cookieOutro=loginOutro.cookie.match(new RegExp(COOKIE+'=([a-f0-9]{64})'))[1];
+ assert.equal((await call(rotaAceite,{method:'POST',cookie:cookieOutro,
+  csrf:loginOutro.json.csrf,body:bodyAceite})).status,404);
+ assert.equal(r.motorConta.consultar({titularId:outro.json.titularId}).posicoesAtivasDoTitular,0);
  const replay=await call('/staging/escritorio-unificado/reconsultar-psp',{
   method:'POST',admin:true,body:{eventoId:evt}
  });
@@ -128,6 +169,9 @@ test('webhook bruto nao gera posicoes; PSP reconsultado cria lote ROXO pendente 
  assert.equal(suspensas.posicoesAtivasDoTitular,5);
  assert.equal(suspensas.pendentesDeEnsaio,0);
  assert.ok(suspensas.minhasPosicoes.every(x=>x.estado==='ENSAIO_EM_REVISAO_PSP'));
+ assert.equal((await call(rotaAceite,{method:'POST',cookie,csrf,body:bodyAceite})).status,409);
+ assert.equal(db.prepare('SELECT COUNT(*) AS n FROM akitemm_motor_ensaio_aceites_posicao').get().n,1,
+  'reversao nao apaga aceite historico');
  assert.throws(()=>r.motorConta.vincularPedidoConferidoSandbox({prepedidoId:pedidoId}),
   /PSP_SANDBOX_NAO_CONCILIADO_PARA_LOTE/);
  assert.deepEqual(db.prepare('PRAGMA foreign_key_check').all(),[]);
