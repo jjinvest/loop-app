@@ -44,6 +44,7 @@ function erro(codigo){const e=new Error(codigo);e.codigo=codigo;throw e;}
 function criarAppLojaEscritorioCandidato({banco,repositorioCatalogo,
  chaveEmail,chaveCifra,chaveCpfHmac=null,chaveCpfCifra=null,
  chaveProvaEmail=null,enviarEmailDeVerificacao=null,
+ chaveRecuperacao=null,enviarRecuperacao=null,
  transporteResend=null,
  webhookHomologacaoToken=null,provedorReconsultaSandbox=null,
  operacoesSandboxAutorizadas=false,
@@ -56,7 +57,9 @@ function criarAppLojaEscritorioCandidato({banco,repositorioCatalogo,
  if(typeof termosVersao!=='string'||!/^LAB-/.test(termosVersao)||
     typeof termosTexto!=='string'||termosTexto.length<40)
   erro('TERMOS_LAB_INVALIDOS');
- const contas=new ContaUnicaCandidataSQLite({banco,chaveEmail,chaveCifra});
+ const contas=new ContaUnicaCandidataSQLite({
+  banco,chaveEmail,chaveCifra,chaveRecuperacao,enviarRecuperacao
+ });
  const equipe=new EquipeCandidataSQLite({banco});
  if((chaveCpfHmac===null)!==(chaveCpfCifra===null))
   erro('CPF_CUSTODIA_INCOMPLETA');
@@ -211,6 +214,41 @@ function criarAppLojaEscritorioCandidato({banco,repositorioCatalogo,
   }catch(e){
    return res.status(e.codigo==='CONTA_TEMPORARIAMENTE_BLOQUEADA'?429:401)
     .json({erro:'CREDENCIAIS_INVALIDAS'});
+  }
+ });
+ // Solicitação anônima: nunca revela se o e-mail pertence a uma conta.
+ // Sem provedor configurado, responde indisponível sem simular envio.
+ app.post('/staging/contas/recuperar-senha',async(req,res)=>{
+  if(!req.is('application/json'))
+   return res.status(415).json({erro:'JSON_OBRIGATORIO'});
+  if(!req.body||Array.isArray(req.body)||
+     Object.keys(req.body).join(',')!=='email')
+   return res.status(400).json({erro:'CAMPOS_INVALIDOS'});
+  try{
+   await contas.solicitarRecuperacao({email:req.body.email});
+   return res.status(202).json({solicitacaoRecebida:true,
+    seEmailExistirCodigoSeraEnviado:true});
+  }catch(e){
+   if(e.codigo==='RECUPERACAO_EMAIL_INDISPONIVEL')
+    return res.status(503).json({erro:e.codigo});
+   if(e.codigo==='EMAIL_INVALIDO')
+    return res.status(400).json({erro:'EMAIL_INVALIDO'});
+   return res.status(503).json({erro:'RECUPERACAO_EMAIL_INDISPONIVEL'});
+  }
+ });
+ app.post('/staging/contas/redefinir-senha',async(req,res)=>{
+  if(!req.is('application/json'))
+   return res.status(415).json({erro:'JSON_OBRIGATORIO'});
+  if(!req.body||Array.isArray(req.body)||
+     Object.keys(req.body).sort().join(',')!=='codigo,email,novaSenha')
+   return res.status(400).json({erro:'CAMPOS_INVALIDOS'});
+  try{
+   const r=await contas.confirmarRecuperacao(req.body);
+   return res.json({...r,pagamentosReais:false});
+  }catch(e){
+   if(e.codigo==='RECUPERACAO_EMAIL_INDISPONIVEL')
+    return res.status(503).json({erro:e.codigo});
+   return res.status(400).json({erro:'RECUPERACAO_CODIGO_OU_SENHA_INVALIDOS'});
   }
  });
  app.get('/staging/minha-equipe',(req,res)=>{
