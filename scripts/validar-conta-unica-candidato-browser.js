@@ -163,6 +163,12 @@ const {once}=require('node:events');
    assert.match(await admin.locator('#resumoPreviaFilas').innerText(),
     /Projeção de posições fictícias indisponível/);
    assert.equal(await admin.locator('#quadroDepartamentos button').count(),12);
+   // Auditoria financeira conserva a tela aprovada e nao libera saldo:
+   // mesmo quando nao ha alertas, custos externos seguem pendentes.
+   await admin.locator('#consultarCoberturaAkitemm').click();
+   await admin.locator('#resumoCoberturaAkitemm')
+    .filter({hasText:/Marco Zero financeiro: NÃO APROVADO/}).waitFor();
+   assert.equal(await admin.locator('#consultarCoberturaAkitemm').isDisabled(),false);
    await admin.locator('#quadroDepartamentos button').filter({hasText:'Pedidos'}).click();
    assert.equal(await admin.locator('#filtrarDepartamento').inputValue(),'PEDIDOS');
    assert.equal(await admin.locator('#alertasOperacionais article.alerta-operacional').count(),0);
