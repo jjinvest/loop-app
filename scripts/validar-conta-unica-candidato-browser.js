@@ -122,7 +122,7 @@ const {once}=require('node:events');
    await page.locator('#posicoesPainel').filter({hasText:/Posicoes comerciais ativas: 0/}).waitFor();
    assert.equal(await page.locator('#posicoesPainel .loop03-cartao-posicao-ensaio').count(),10);
    assert.equal(await page.locator('#posicoesPainel .loop03-cartao-posicao-pendente').count(),0);
-   assert.match(await page.locator('#posicoesPainel').innerText(),/Nenhum cartao permite ativar/);
+   assert.match(await page.locator('#posicoesPainel').innerText(),/Nenhum cartão permite ativar/);
    await abrirAba('#abaLinks');
    await page.waitForFunction(()=>document.getElementById('linkLoja').value.includes('/loja/'));
    assert.ok((await page.locator('#linkLoja').inputValue()).endsWith('/loja/'+item.nick.toLowerCase()));
