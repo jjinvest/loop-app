@@ -72,9 +72,13 @@ button:disabled{opacity:.48;cursor:not-allowed}
 .produto-loja-loop.produto-loja-loop-elegivel{border-color:#5da97c;box-shadow:inset 0 0 0 1px #5da97c36}
 .produto-loja-loop.produto-loja-loop-nao-elegivel{border-color:#6b757a;box-shadow:inset 0 0 0 1px #6b757a22}
 
-/* Tres categorias AKITEMM: CINZA sem LOOP, VERDE ate uma posicao
-   por pedido elegivel, DOURADO + ROXO em evento especial multiposicoes.
-   Nenhuma tarja vermelha: dourado/roxo e a identidade aprovada. */
+/* Quatro categorias AKITEMM: CINZA/VERDE/DOURADO/ROXO sao SOMENTE
+   classificacoes de produtos; sem relacao com cor das posicoes e filas LOOP. */
+.produto-loja-loop.produto-loja-loop-dourado{
+ border:2px solid #dcb759;
+ background:radial-gradient(circle at 80% 0%,#f0cb6540,transparent 68%),linear-gradient(145deg,#342b1d,#151c23);
+ box-shadow:inset 0 0 0 1px #eecb6355,0 0 12px #e0ad5236;
+}
 .produto-loja-loop.produto-loja-loop-especial{
  border:2px solid #e8bc58;
  background:radial-gradient(circle at 85% 0%,#8e61bd3d,transparent 62%),
@@ -565,7 +569,8 @@ body.akitemm-loja{background:#071018;color:#f0f2f6;font-family:system-ui,-apple-
 .akitemm-legenda-cores i{display:inline-block;flex:none;width:13px;height:13px;border:1.5px solid;border-radius:3px}
 .akitemm-legenda-cores .akitemm-cor-cinza{border-color:#6b757a;background:#41484d}
 .akitemm-legenda-cores .akitemm-cor-verde{border-color:#5da97c;background:#257449}
-.akitemm-legenda-cores .akitemm-cor-evento{border-color:#e8bc58;background:linear-gradient(135deg,#e8bc58,#ab75e8)}
+.akitemm-legenda-cores .akitemm-cor-dourado{border-color:#ffe6a0;background:#c59b2f}
+.akitemm-legenda-cores .akitemm-cor-roxo{border-color:#bc8aeb;background:#7045aa}
 .akitemm-legenda-ressalva{color:#aab2ba;font-size:11px;margin:-7px 0 12px;line-height:1.35}
 @media(max-width:900px){.akitemm-legenda-cores{width:100%;margin-left:0}.akitemm-legenda-cores span{white-space:normal}}
 
