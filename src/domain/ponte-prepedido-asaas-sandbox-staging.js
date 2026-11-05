@@ -4,6 +4,7 @@
 // posicoes, saldos, saque, entrega ou comprovante para o motor LOOP.
 // Transacao SQLite reserva o envio ANTES da rede: timeout nunca reenvia POST.
 const {randomUUID}=require('node:crypto');
+const {auditarCoberturaDePedido}=require('./auditoria-cobertura-lotes-akitemm');
 const PREPEDIDO=/^hom-[0-9a-f-]{36}$/;
 const TITULAR=/^[a-zA-Z0-9_-]{6,80}$/;
 const CLIENTE=/^[a-zA-Z0-9_-]{5,90}$/;
@@ -133,7 +134,8 @@ class PontePrepedidoAsaasSandboxStaging{
    return {repetido:false,registro:this.consultar({titularId,prepedidoId})};
   }catch(e){b.exec('ROLLBACK');throw e;}
  }
- async enviarUmaVez({titularId,prepedidoId,provedor,execucaoLiberada=false}={}){
+ async enviarUmaVez({titularId,prepedidoId,provedor,execucaoLiberada=false,
+  exigirCoberturaBruta=false}={}){
   apenasStaging();this._validar(titularId,prepedidoId);
   if(execucaoLiberada!==true)throw falha('ENVIO_SANDBOX_NAO_AUTORIZADO');
   if(provedor?.ambiente!=='ASAAS_SANDBOX_EXCLUSIVO'||
@@ -151,6 +153,33 @@ class PontePrepedidoAsaasSandboxStaging{
    if(row.estado!=='PREPARADA'){
     b.exec('COMMIT');
     return {repetido:true,registro:this._publica(row)};
+   }
+   // Modo ESTRITO, opt-in do laboratorio: avalia o pedido congelado
+   // ANTES de reservar envio ou chamar o PSP. A auditoria nao consulta
+   // PSP, nao altera o pedido e nao confunde dinheiro bruto com margem.
+   // Modo antigo de testes pode continuar simulando pedidos negativos.
+   if(exigirCoberturaBruta===true){
+    const fotografia=b.prepare([
+     'SELECT fotografia_json AS documento FROM',
+     'akitemm_vitrine_fotografia_classificacao_prepedido',
+     'WHERE prepedido_id=? AND titular_id=?'
+    ].join(' ')).get(prepedidoId,titularId);
+    if(!fotografia)throw falha('FOTOGRAFIA_PRECOBRANCA_OBRIGATORIA');
+    let conferido;
+    try{
+     conferido=auditarCoberturaDePedido({
+      fotografia:JSON.parse(fotografia.documento),
+      valorPedidoCentavos:row.valor_centavos
+     });
+    }catch{
+     throw falha('PRECOBRANCA_FOTOGRAFIA_DIVERGENTE');
+    }
+    if(conferido.estado==='BRUTO_INSUFICIENTE'||
+       conferido.estado==='SEGMENTO_SEM_COBERTURA_BRUTA'||
+       conferido.segmentosInsuficientes?.length||
+       conferido.alertas?.includes('EVENTO_ROXO_NAO_CONFIGURADO')||
+       conferido.alertas?.includes('LIMITE_DEZ_POSICOES'))
+     throw falha('COBERTURA_BRUTA_INSUFICIENTE_PARA_COBRANCA');
    }
    b.prepare([
     'UPDATE akitemm_prepedido_asaas_sandbox_staging',
