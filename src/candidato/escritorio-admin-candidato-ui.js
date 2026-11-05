@@ -308,7 +308,13 @@ async function conferirCoberturaAkitemm(){
    ' · Produtos individuais sem cobertura: '+r.resumo.segmentosInsuficientes+
    ' · Sem custo externo comprovado: '+r.resumo.semComprovacaoDeCustos+
    ' · Lotes sem PSP vigente: '+r.resumo.lotesSemPSPConferido+
-   '. Marco Zero financeiro: NÃO APROVADO.';
+   ' · Posições no motor: '+r.resumo.posicoesNoMotorEnsaio+
+   ' · Aceites individuais históricos: '+r.resumo.aceitesHistoricosIndividuais+
+   ' · Aceites com PSP revertido ou não vigente: '+r.resumo.aceitesSemPSPVigente+
+   ' · Exposição condicional dos lotes (cenário máximo): '+
+    new Intl.NumberFormat('pt-BR',{style:'currency',currency:'BRL'})
+     .format(r.resumo.valorCondicionalDosLotesCentavos/100)+
+   '. Banco, custos e reservas reais NÃO CONCILIADOS. Marco Zero financeiro: NÃO APROVADO.';
   if(r.amostraParcial)lista.append(elem('p','Amostra limitada. Consulte todos os pedidos para conferência completa.'));
   const invalidos=r.pedidos.filter(p=>p.alertas.length>0);
   if(!invalidos.length)lista.append(elem('p','Nenhum alerta nesta amostra; custos e banco continuam pendentes.'));
