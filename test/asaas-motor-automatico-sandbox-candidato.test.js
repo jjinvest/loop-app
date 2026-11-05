@@ -122,6 +122,11 @@ test('webhook bruto nao gera posicoes; PSP reconsultado cria lote ROXO pendente 
  assert.equal(auditoria.json.resumo.valorCondicionalDosLotesCentavos,375000);
  assert.equal(auditoria.json.pedidos[0].posicoesSemAceiteIndividual,5);
  assert.equal(auditoria.json.reservasBancariasDisponiveisComprovadas,false);
+ assert.equal(auditoria.json.livrosFinanceirosLab.provisoesNaoSaoCaixaReal,true);
+ assert.equal(auditoria.json.livrosFinanceirosLab.extratosBancariosConciliados,false);
+ assert.equal(auditoria.json.livrosFinanceirosLab.saquesReais,0);
+ assert.ok(Array.isArray(auditoria.json.livrosFinanceirosLab.fontesAusentes));
+ assert.equal(auditoria.json.livrosFinanceirosLab.dadosDaLojaNaoEquivalemAoLivroFinanceiro,true);
  assert.equal(auditoria.json.custosBonificacaoComprovados,false);
  assert.equal(auditoria.json.resumo.referenciaTotalCalculadaCentavos,125000);
  assert.equal(auditoria.json.pedidos[0].posicoesPlanejadas,5);
