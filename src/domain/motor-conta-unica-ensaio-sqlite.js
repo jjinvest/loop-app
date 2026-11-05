@@ -5,6 +5,7 @@
 const {SimuladorLoop}=require('./simulador-loop');
 const {LIMITE_POSICOES_ATIVAS}=require('./capacidade-posicoes-loop');
 const {planejarPosicoesCompraAkitemm}=require('./plano-posicoes-compra-akitemm');
+const {consultarPedido}=require('./relatorio-homologacao-checkout-staging');
 const PEDIDO=/^hom-[a-f0-9-]{36}$/;
 const TITULAR=/^titular-[a-f0-9-]{36}$/;
 function falha(codigo){const e=new Error(codigo);e.codigo=codigo;throw e;}
@@ -12,13 +13,14 @@ function validarAmbiente(){
  if(process.env.NODE_ENV==='production')falha('MOTOR_ENSAIO_PROIBIDO_PRODUCAO');
 }
 class MotorContaUnicaEnsaioSQLite{
- constructor({banco,sinalizacao}={}){
+ constructor({banco,sinalizacao,ponte=null}={}){
   validarAmbiente();
   if(typeof banco?.prepare!=='function'||typeof banco?.exec!=='function'||
      sinalizacao?.db!==banco||
-     typeof sinalizacao?.consultarFotografiaPrepedido!=='function')
+     typeof sinalizacao?.consultarFotografiaPrepedido!=='function'||
+     (ponte!==null&&(ponte?.banco!==banco||typeof ponte?.consultar!=='function')))
    falha('MOTOR_FONTE_SQLITE_UNICA_OBRIGATORIA');
-  this.banco=banco;this.sinalizacao=sinalizacao;
+  this.banco=banco;this.sinalizacao=sinalizacao;this.ponte=ponte;
   banco.exec([
    'CREATE TABLE IF NOT EXISTS akitemm_motor_conta_ensaio_estado(',
    'id INTEGER PRIMARY KEY CHECK(id=1),revisao INTEGER NOT NULL CHECK(revisao>=1),',
@@ -74,7 +76,7 @@ class MotorContaUnicaEnsaioSQLite{
    estado.tabuleiro.centro,...estado.tabuleiro.vagas]
    .filter(p=>p&&!p.empresa&&p.participanteId===titularId).length;
  }
- vincularPedido({prepedidoId,aceiteEnsaio}={}){
+ vincularPedido({prepedidoId,aceiteEnsaio,exigirPSPSandbox=false}={}){
   if(typeof prepedidoId!=='string'||!PEDIDO.test(prepedidoId))
    falha('PREPEDIDO_INVALIDO');
   if(aceiteEnsaio!==true)falha('CIENCIA_DE_ENSAIO_OBRIGATORIA');
@@ -92,6 +94,29 @@ class MotorContaUnicaEnsaioSQLite{
    });
    if(foto?.totalCentavos!==pedido.totalCentavos)
     falha('FOTOGRAFIA_HISTORICA_INCONSISTENTE');
+   if(exigirPSPSandbox){
+    if(!this.ponte||!foto?.planejamentoPosicoes)
+     falha('RECONCILIACAO_SANDBOX_NAO_CONFIGURADA');
+    // A prova real aqui é somente PSP SANDBOX: aviso bruto não vale.
+    // Reconsulta independente RECEIVED, titular, pagamento, valor, histórico
+    // e ausência de reversão são reavaliados NA transação de escrita.
+    const pagamento=consultarPedido({
+     banco:this.banco,prepedidoId,titularId:pedido.titularId
+    });
+    const ponte=this.ponte.consultar({
+     titularId:pedido.titularId,prepedidoId
+    });
+    if(!pagamento||pagamento.conferenciaPSPConcluida!==true||
+       pagamento.exigeRevisaoManual===true||
+       pagamento.ultimoStatusPSP!=='RECEIVED'||
+       pagamento.valorCentavos!==pedido.totalCentavos||
+       ponte?.estado!=='RECEBIMENTO_INFORMADO_SANDBOX'||
+       ponte?.valorCentavos!==pedido.totalCentavos||
+       ponte?.ultimaConsultaSandbox?.statusAsaas!=='RECEIVED'||
+       ponte?.revisaoManualObrigatoria===true||
+       !ponte.pagamentoSandboxId)
+     falha('PSP_SANDBOX_NAO_CONCILIADO_PARA_LOTE');
+   }
    // Fotografias anteriores à regra mista seguem estritamente o contrato
    // legado: uma posição verde; nunca reinterpretar pedidos antigos.
    let quantidade=1;
@@ -150,6 +175,14 @@ class MotorContaUnicaEnsaioSQLite{
     posicoesIds,quantidadePosicoes:posicoesIds.length,
     apenasEnsaio:true,posicoesReais:0,financeiroReal:false};
   });
+ }
+ // Esta via AUTOMATIZAVEL é permitida só quando o PSP sandbox
+ // previamente reconsultado e a fotografia versionada continuam válidos.
+ // Registra posições azuis/pendentes, nunca as confirma ou paga.
+ vincularPedidoConferidoSandbox({prepedidoId}={}){
+  if(!this.ponte)falha('RECONCILIACAO_SANDBOX_NAO_CONFIGURADA');
+  return this.vincularPedido({prepedidoId,aceiteEnsaio:true,
+   exigirPSPSandbox:true});
  }
  prepararTabuleiro(){
   return this._transacao(sim=>{
