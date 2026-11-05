@@ -9,12 +9,12 @@ Não modificar visual, abas, atalhos, cores ou componentes já aprovados além d
 - O tabuleiro aprovado tem **centro e seis posições periféricas distribuídas circularmente em torno dele, dentro do anel dourado**, na paleta de cores anteriormente aprovada. A grade visual irregular atual no celular NÃO foi aprovada.
 
 ## TEMPORÁRIO DE TESTE
-- Aba "Preparar pedido" dentro do Escritório: manter enquanto útil aos testes, **retirar da versão final** após substituir cobertura de testes que dependa dela. Não duplicar a loja dentro do Escritório.
+- A aba "Preparar pedido" foi **retirada do Escritório do Cliente** a pedido do proprietário. Testes de compra e preparação de pré-pedido agora se fazem pela própria Loja AKITEMM, usando a conta compartilhada. Não duplicar a loja dentro do Escritório.
 - Indicadores/avisos de "ensaio", operações do motor experimental e produtos fictícios são homologação, não créditos comerciais.
 
 ## PENDENTE — corrigir só o que foi apontado
 - Corrigir apenas o formato e as cores do **Tabuleiro**, sem alterar outras áreas.
-- Na loja, a busca, categorias, cartões, imagens condicionadas ao cadastro, carrinho e sinalização cinza/verde/evento já constam do código. Contudo, os **três quadradinhos clicáveis para filtrar por cor** no topo ainda precisam ser implementados: a legenda já existente não substitui os filtros. Não pressupor fotos reais ou produtos definitivos cadastrados.
+- Na loja, a busca, categorias, cartões, imagens condicionadas ao cadastro e carrinho são preservados. **Os três quadradinhos cinza/verde/evento já foram convertidos em filtros reais**, com seleção visível, desmarcação ao repetir e botão Todos para limpar. Não pressupor fotos reais ou produtos definitivos cadastrados. A implementação de filtro é apenas visual: não cria posições nem pagamentos.
 - Não remover, redesenhar ou acrescentar abas permanentes sem nova instrução.
 
 Origem: inspeção do proprietário da prévia online, fotos do celular e confirmação verbal em 05/11/2026.
