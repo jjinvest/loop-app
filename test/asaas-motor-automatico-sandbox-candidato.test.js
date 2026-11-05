@@ -77,6 +77,15 @@ test('webhook bruto nao gera posicoes; PSP reconsultado cria lote ROXO pendente 
  assert.equal(snap.planejamentoPosicoes.quantidadePosicoesPrevistas,5);
  const preparo=r.ponte.preparar({titularId,prepedidoId:pedidoId,clienteAsaasId:CUSTOMER});
  assert.equal(preparo.repetido,false);
+ // Modo estrito de pre-cobranca barra o ROXO 250/5 antes de qualquer POST
+ // ao PSP e sem deixar tentativa de criacao indeterminada.
+ await assert.rejects(r.ponte.enviarUmaVez({
+  titularId,prepedidoId:pedidoId,provedor,execucaoLiberada:true,
+  exigirCoberturaBruta:true
+ }),{codigo:'COBERTURA_BRUTA_INSUFICIENTE_PARA_COBRANCA'});
+ assert.equal(posts,0);
+ assert.equal(r.ponte.consultar({titularId,prepedidoId:pedidoId}).estado,'PREPARADA');
+ // Operador pode executar simulacao NEGATIVA de laboratorio mesmo assim.
  await r.ponte.enviarUmaVez({titularId,prepedidoId:pedidoId,provedor,
   execucaoLiberada:true});
  assert.equal(posts,1);
