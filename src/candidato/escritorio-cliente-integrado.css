@@ -46,3 +46,16 @@ body.loop03-logado main>.mensagem-pagina{margin:0 0 .75rem}
  .cliente-integrado .loop03-corpo>.painel{padding:12px}
  .cliente-integrado .loop03-corpo .barra-conta{font-size:.73rem}
 }
+
+/* Grade da aba aprovada: 3 colunas no PC, responsiva no celular.
+   A origem dos itens e a pre-adesao de homologacao, nao o motor comercial. */
+.cliente-integrado .loop03-grade-posicoes-ensaio{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin:16px 0}
+.cliente-integrado .loop03-cartao-posicao-ensaio{min-width:0;min-height:168px;padding:15px;border:1px solid #856d4d;border-radius:16px;background:linear-gradient(145deg,#25202c,#0e181c);box-shadow:inset 0 1px #b9945938;color:#e8e7e5}
+.cliente-integrado .loop03-cartao-posicao-ensaio h3{margin:0 0 14px;color:#f2ce87;font-size:1rem}
+.cliente-integrado .loop03-cartao-posicao-ensaio strong{display:block;overflow-wrap:anywhere;color:#e3e4df;font-size:.96rem}
+.cliente-integrado .loop03-cartao-posicao-ensaio p{margin:12px 0 6px;font-size:.8rem;color:#bdccc9}
+.cliente-integrado .loop03-cartao-posicao-ensaio small{display:block;overflow-wrap:anywhere;color:#9caeaa;font-size:.69rem}
+.cliente-integrado .loop03-cartao-posicao-pendente{border-color:#896175}
+.cliente-integrado .loop03-cartao-posicao-pendente strong{color:#f4b1bb}
+@media(max-width:800px){.cliente-integrado .loop03-grade-posicoes-ensaio{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:480px){.cliente-integrado .loop03-grade-posicoes-ensaio{grid-template-columns:minmax(0,1fr)}}
