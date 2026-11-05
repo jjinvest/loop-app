@@ -95,7 +95,9 @@ async function provarRestauracaoSqliteUnificadoLab({
   copia.close();copia=null;
   const tamanho=fs.statSync(isolado).size;
   if(tamanho<4096)falha('SQLITE_RESTAURACAO_VAZIA');
-  const hash=createHash('sha256').update(fs.readFileSync(isolado)).digest('hex');
+  const digest=createHash('sha256');
+  for await(const chunk of fs.createReadStream(isolado))digest.update(chunk);
+  const hash=digest.digest('hex');
   return {estado:'RECUPERACAO_ISOLADA_SQLITE_INTEGRA',
    cobertura:'CONTA_LOJA_PEDIDO_ASAAS_SANDBOX_MOTOR_ACEITES',
    tabelasVerificadas:audit.tabelas,
