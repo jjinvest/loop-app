@@ -35,6 +35,7 @@ const {createVitrineCandidata}=require('./vitrine-aprovada-candidato');
 const {ProjecaoFilasCandidatoSandbox}=require('../domain/projecao-filas-candidato-sandbox');
 const {PreAdesaoSandboxCandidatoSQLite}=require('../domain/pre-adesao-sandbox-candidato-sqlite');
 const {DiagnosticoAtivacaoCandidato}=require('../domain/diagnostico-ativacao-candidato');
+const {EquipeCandidataSQLite}=require('../domain/equipe-candidata-sqlite');
 const {criarRouterRascunhosCheckoutStaging}=require('../routes/rascunhos-checkout-staging');
 const {criarRouterPrePedidosCheckoutStaging}=require('../routes/prepedidos-checkout-staging');
 const {criarAutorizacao,localSeguro}=require('../routes/admin-catalogo-laboratorio');
@@ -56,6 +57,7 @@ function criarAppLojaEscritorioCandidato({banco,repositorioCatalogo,
     typeof termosTexto!=='string'||termosTexto.length<40)
   erro('TERMOS_LAB_INVALIDOS');
  const contas=new ContaUnicaCandidataSQLite({banco,chaveEmail,chaveCifra});
+ const equipe=new EquipeCandidataSQLite({banco});
  if((chaveCpfHmac===null)!==(chaveCpfCifra===null))
   erro('CPF_CUSTODIA_INCOMPLETA');
  const cpf=chaveCpfHmac===null?null:new TitularidadeCpfTermosCandidato({
@@ -177,6 +179,12 @@ function criarAppLojaEscritorioCandidato({banco,repositorioCatalogo,
    return res.status(400).json({erro:'CAMPOS_INVALIDOS'});
   try{
    const conta=await contas.cadastrar({...body,termosVersao,termosTexto});
+   // Atribuicao de ensaio recebida somente do gateway confiavel, nunca
+   // do formulario do cliente. Sem direito financeiro ou indicacao valida.
+   const indicadorNick=req.get('x-akitemm-preview-indicador');
+   if(indicadorNick)equipe.registrarCadastro({
+    indicadoId:conta.titularId,indicadorNick
+   });
    return res.status(201).json(conta);
   }catch(e){
    if(e.codigo==='CADASTRO_JA_EXISTENTE')
@@ -204,6 +212,16 @@ function criarAppLojaEscritorioCandidato({banco,repositorioCatalogo,
    return res.status(e.codigo==='CONTA_TEMPORARIAMENTE_BLOQUEADA'?429:401)
     .json({erro:'CREDENCIAIS_INVALIDAS'});
   }
+ });
+ app.get('/staging/minha-equipe',(req,res)=>{
+  const s=contas.sessao(req);
+  if(!s)return res.status(401).json({erro:'SESSAO_AUSENTE'});
+  if(Object.keys(req.query).some(k=>k!=='pagina')||
+     typeof req.query.pagina==='object')
+   return res.status(400).json({erro:'PAGINACAO_INVALIDA'});
+  const pagina=req.query.pagina===undefined?0:Number(req.query.pagina);
+  try{return res.json(equipe.listar({titularId:s.titularId,pagina}));}
+  catch{return res.status(400).json({erro:'PAGINACAO_INVALIDA'});}
  });
  app.get('/staging/contas/me',(req,res)=>{
   const s=sessao(req);
@@ -707,6 +725,6 @@ function criarAppLojaEscritorioCandidato({banco,repositorioCatalogo,
   erro:'CANDIDATO_INDISPONIVEL',financeiroReal:false
  }));
  return {app,contas,cpf,provasEmail,intencoes,prePedidos,ponte,
-  inbox,worker,posicoes,projecaoFilas,preAdesao,diagnosticoAtivacao,entregas,integridade,missoes,catalogo,sinalizacaoVitrine,departamentosAdmin,banco};
+  inbox,worker,posicoes,projecaoFilas,preAdesao,diagnosticoAtivacao,entregas,integridade,missoes,catalogo,sinalizacaoVitrine,departamentosAdmin,equipe,banco};
 }
 module.exports={criarAppLojaEscritorioCandidato};
