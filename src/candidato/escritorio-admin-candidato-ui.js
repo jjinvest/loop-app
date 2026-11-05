@@ -295,14 +295,16 @@ $('sair').addEventListener('click',()=>{
  $('historicoPosicoes').replaceChildren();$('resumoHistoricoPosicoes').textContent='';
  $('listaMissoes').replaceChildren();dizer('Acesso encerrado.');
 });
-async function conferirCoberturaAkitemm(){
+async function conferirCoberturaAkitemm({offset=0}={}){
  const botao=$('consultarCoberturaAkitemm');
  botao.disabled=true;
  const resumo=$('resumoCoberturaAkitemm'),lista=$('listaCoberturaAkitemm');
  lista.replaceChildren();
  try{
-  const r=await api('/auditoria-cobertura?limite=50');
-  resumo.textContent='Pedidos examinados: '+r.resumo.pedidosNaAmostra+
+  const r=await api('/auditoria-cobertura?limite=50&offset='+offset);
+  resumo.textContent='CONTADORES DESTA PÁGINA · Página '+
+   (Math.floor(r.paginacao.offset/r.paginacao.limite)+1)+
+   ' · Pedidos examinados: '+r.resumo.pedidosNaAmostra+
    ' / '+r.resumo.pedidosTotal+
    ' · Cobertura bruta insuficiente: '+r.resumo.brutoInsuficiente+
    ' · Produtos individuais sem cobertura: '+r.resumo.segmentosInsuficientes+
@@ -316,9 +318,11 @@ async function conferirCoberturaAkitemm(){
     new Intl.NumberFormat('pt-BR',{style:'currency',currency:'BRL'})
      .format(r.resumo.valorCondicionalDosLotesCentavos/100)+
    '. Banco, custos e reservas reais NÃO CONCILIADOS. Marco Zero financeiro: NÃO APROVADO.';
-  if(r.amostraParcial)lista.append(elem('p','Amostra limitada. Consulte todos os pedidos para conferência completa.'));
+  if(r.amostraParcial)lista.append(elem('p',
+   'A auditoria desta página não representa todos os pedidos. Consulte as demais páginas.'));
   const invalidos=r.pedidos.filter(p=>p.alertas.length>0);
-  if(!invalidos.length)lista.append(elem('p','Nenhum alerta nesta amostra; custos e banco continuam pendentes.'));
+  if(!invalidos.length)lista.append(elem('p',
+   'Nenhum alerta nesta página; custos e banco continuam pendentes.'));
   for(const p of invalidos.slice(0,20)){
    const card=elem('article');card.className='alerta-operacional';
    card.append(elem('strong','Pedido '+p.prepedidoId),
@@ -329,6 +333,23 @@ async function conferirCoberturaAkitemm(){
     elem('small',p.alertas.join(' · ')));
    lista.append(card);
   }
+  const pag=r.paginacao;
+  const navegacao=elem('div');navegacao.className='linha';
+  const anterior=elem('button','Página anterior');anterior.type='button';
+  anterior.disabled=pag.paginaAnteriorOffset===null;
+  const proximo=elem('button','Próxima página');proximo.type='button';
+  proximo.disabled=pag.proximaPaginaOffset===null;
+  anterior.addEventListener('click',()=>conferirCoberturaAkitemm({
+   offset:pag.paginaAnteriorOffset
+  }));
+  proximo.addEventListener('click',()=>conferirCoberturaAkitemm({
+   offset:pag.proximaPaginaOffset
+  }));
+  navegacao.append(anterior,elem('small',
+   'Exibindo '+(pag.quantidadeNaPagina?
+    (pag.offset+1)+'–'+(pag.offset+pag.quantidadeNaPagina):'0')+
+   ' de '+pag.totalDePedidos+' pedidos'),proximo);
+  lista.append(navegacao);
  }catch(e){resumo.textContent='Auditoria indisponível: '+e.message;}
  finally{botao.disabled=false;}
 }
