@@ -3,6 +3,7 @@ on:
   push:
     branches:
       - feature/escritorio-preview-protegido-20261105
+      - feature/unificar-escritorio-real-20261105
     paths:
       - 'scripts/servidor-escritorio-preview-railway.js'
       - 'test/servidor-escritorio-preview-railway.test.js'
@@ -13,6 +14,8 @@ on:
       - 'src/candidato/servidor-loja-escritorio-candidato.js'
       - 'src/candidato/checkout-candidato-ui.html'
       - 'src/candidato/checkout-candidato-ui.js'
+      - 'src/candidato/escritorio-cliente-integrado.css'
+      - 'src/laboratorio/loop-03-shell.css'
       - 'src/laboratorio/checkout-staging-ui.css'
       - 'scripts/validar-conta-unica-candidato-browser.js'
       - '.github/workflows/preview-escritorio-protegido.yml'
