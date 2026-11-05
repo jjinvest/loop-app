@@ -170,6 +170,13 @@ function criarAppLojaEscritorioCandidato({banco,repositorioCatalogo,
  app.get('/staging/assets/cliente.css',(_req,res)=>res.type('css').sendFile(
   path.join(__dirname,'../laboratorio/checkout-staging-ui.css')
  ));
+ // Fonte visual unica: CSS da interface anterior aprovada, compartilhado.
+ app.get('/staging/assets/loop03-aprovado.css',(_req,res)=>res.type('css').sendFile(
+  path.join(__dirname,'../laboratorio/loop-03-shell.css')
+ ));
+ app.get('/staging/assets/cliente-integrado.css',(_req,res)=>res.type('css').sendFile(
+  path.join(__dirname,'escritorio-cliente-integrado.css')
+ ));
  app.get('/staging/escritorio-admin',(_req,res)=>res.sendFile(path.join(__dirname,'escritorio-admin-candidato-ui.html')));
  app.get('/staging/assets/admin.js',(_req,res)=>res.type('js').sendFile(path.join(__dirname,'escritorio-admin-candidato-ui.js')));
  app.get('/staging/assets/admin.css',(_req,res)=>res.type('css').sendFile(path.join(__dirname,'escritorio-admin-candidato-ui.css')));
