@@ -20,14 +20,30 @@ function validarSegredos({senhaAcesso,segredoRaiz}){
     senhaAcesso===segredoRaiz)
   falha('SEGREDOS_PREVIA_NAO_CONFIGURADOS');
 }
-function criarGateway({portaInterna,senhaAcesso,segredoOperador}={}){
+function criarGateway({portaInterna,senhaAcesso,segredoOperador,validarNickIndicador=()=>false}={}){
  if(!Number.isSafeInteger(portaInterna)||portaInterna<1||portaInterna>65535||
     typeof senhaAcesso!=='string'||senhaAcesso.length<24||
     typeof segredoOperador!=='string'||segredoOperador.length<32)
   falha('GATEWAY_PREVIA_INVALIDO');
  const backend='127.0.0.1:'+portaInterna;
  const sessaoNome='akitemm_preview_access';
+ const indicacaoCookie='akitemm_preview_ref';
  const duracao=12*60*60*1000;
+ const prazoIndicacao=30*24*60*60*1000;
+ const assinarIndicacao=(nick,ts)=>createHmac('sha256',segredoOperador)
+  .update('AKITEMM-REF-LAB-V1:'+nick+':'+ts).digest('hex');
+ const lerIndicacao=req=>{
+  const p=(req.headers.cookie||'').split(';').map(x=>x.trim())
+   .filter(x=>x.startsWith(indicacaoCookie+'='));
+  if(p.length!==1)return null;
+  const v=p[0].slice(indicacaoCookie.length+1);
+  const m=v.match(/^v1\.([a-z]{1,9})\.(\d{13})\.([a-f0-9]{64})$/);
+  if(!m)return null;
+  const ts=Number(m[2]);
+  if(ts>Date.now()||Date.now()-ts>prazoIndicacao||
+     !seguro(m[3],assinarIndicacao(m[1],m[2])))return null;
+  return m[1];
+ };
  const assinar=ts=>createHmac('sha256',senhaAcesso).update('preview:'+ts).digest('hex');
  const lerSessao=req=>{
   const cookies=(req.headers.cookie||'').split(';').map(x=>x.trim());
@@ -95,6 +111,20 @@ function criarGateway({portaInterna,senhaAcesso,segredoOperador}={}){
    res.writeHead(302,{...cabecalhosBase,Location:'/escritorio',...(novoCookie?{'Set-Cookie':novoCookie}:{})});
    return res.end();
   }
+  const caminhoConvite=url.pathname.match(/^\/(loja|escritorio)\/([A-Za-z]{1,9})$/);
+  if(caminhoConvite){
+   if(req.method!=='GET')return negar(405,'Método não permitido');
+   const nick=caminhoConvite[2].toLowerCase();
+   if(!validarNickIndicador(nick))return negar(404,'Link de ensaio inexistente');
+   const ts=String(Date.now());
+   const refCookie=indicacaoCookie+'=v1.'+nick+'.'+ts+'.'+
+    assinarIndicacao(nick,ts)+
+    '; HttpOnly; Secure; SameSite=Lax; Path=/; Max-Age=2592000';
+   res.writeHead(302,{...cabecalhosBase,
+    Location:caminhoConvite[1]==='loja'?'/loja':'/minha-conta',
+    'Set-Cookie':[...(novoCookie?[novoCookie]:[]),refCookie]});
+   return res.end();
+  }
   const atalhos={
    '/escritorio':'/staging/escritorio-admin',
    '/minha-conta':'/staging/cliente',
@@ -117,6 +147,13 @@ function criarGateway({portaInterna,senhaAcesso,segredoOperador}={}){
    if(k.startsWith('x-forwarded-')||['forwarded','proxy-authorization',
       'connection','transfer-encoding'].includes(k))delete headers[k];
   delete headers.authorization;
+  // Nunca confiar em headers de indicacao enviados pelo navegador:
+  // somente um cookie de convite autenticado pelo gateway e aceito.
+  delete headers['x-akitemm-preview-indicador'];
+  if(destino==='/staging/contas/cadastrar'&&req.method==='POST'){
+   const nick=lerIndicacao(req);
+   if(nick)headers['x-akitemm-preview-indicador']=nick;
+  }
   if(destino.startsWith('/staging/escritorio-unificado'))
    headers.authorization='Bearer '+segredoOperador;
   // Transfer-encoding e recomputado pelo HTTP client, sem ambiguidade CL/TE.
@@ -176,7 +213,8 @@ async function iniciar({env=process.env}={}){
  const interno=c.app.listen(0,'127.0.0.1');
  await new Promise((ok,fail)=>{interno.once('listening',ok);interno.once('error',fail);});
  const gateway=criarGateway({portaInterna:interno.address().port,
-  senhaAcesso,segredoOperador:tokenOperador});
+  senhaAcesso,segredoOperador:tokenOperador,
+  validarNickIndicador:nick=>c.equipe.existeNick(nick)});
  const port=Number(env.PORT||3000);
  if(!Number.isSafeInteger(port)||port<1||port>65535)
   falha('PORTA_PREVIA_INVALIDA');
