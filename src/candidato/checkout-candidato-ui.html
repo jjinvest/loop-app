@@ -39,11 +39,12 @@
    <label for="cadastroNome">Nome fictício</label>
    <input id="cadastroNome" name="nome" maxlength="90" autocomplete="off" required>
    <label for="cadastroNick">Nick (1 a 9 letras)</label>
+   <p class="subtexto">Nome e nick aceitam maiúsculas e minúsculas.</p>
    <input id="cadastroNick" name="nick" minlength="1" maxlength="9" pattern="[A-Za-z]{1,9}" required>
    <label for="cadastroEmail">E-mail fictício</label>
    <input id="cadastroEmail" name="email" type="email" maxlength="254" autocomplete="off" required>
-   <label for="cadastroSenha">Senha exclusiva do laboratório (mínimo 12 caracteres)</label>
-   <input id="cadastroSenha" name="senha" type="password" minlength="12" maxlength="256" autocomplete="new-password" required>
+   <label for="cadastroSenha">Senha de teste (8 a 12 caracteres)</label>
+   <input id="cadastroSenha" name="senha" type="password" minlength="8" maxlength="12" autocomplete="new-password" required>
    <label><input id="cadastroTermos" type="checkbox" required> Confirmo o aceite dos termos de demonstração, sem transações ou benefícios reais.</label>
    <button type="submit" class="primario">Concluir meu cadastro</button>
   </form>
@@ -162,8 +163,8 @@
    <form id="formTrocarSenha">
     <label for="senhaAtual">Senha atual</label>
     <input id="senhaAtual" type="password" autocomplete="current-password" required>
-    <label for="novaSenha">Nova senha (mínimo 12 caracteres)</label>
-    <input id="novaSenha" type="password" minlength="12" maxlength="256" autocomplete="new-password" required>
+    <label for="novaSenha">Nova senha (8 a 12 caracteres)</label>
+    <input id="novaSenha" type="password" minlength="8" maxlength="12" autocomplete="new-password" required>
     <button class="primario" type="submit">Alterar senha</button>
    </form>
    <p class="subtexto">Ao trocar sua senha, todas as sessões anteriores serão encerradas. Entre novamente com a nova senha.</p>
