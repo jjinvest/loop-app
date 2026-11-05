@@ -736,6 +736,25 @@ function criarAppLojaEscritorioCandidato({banco,repositorioCatalogo,
         }});
        }
       }
+      if(['PAYMENT_REFUNDED','PAYMENT_PARTIALLY_REFUNDED',
+       'PAYMENT_REFUND_IN_PROGRESS','PAYMENT_CHARGEBACK_REQUESTED',
+       'PAYMENT_CHARGEBACK_DISPUTE','PAYMENT_DELETED'].includes(aviso?.tipo)){
+       try{
+        const suspenso=motorConta.suspenderLoteRevertidoSandbox({
+         prepedidoId:aviso.prepedidoId
+        });
+        return res.json({...r,vinculoMotorEnsaio:{
+         estado:'SUSPENSO_POR_REVERSAO_PSP',
+         quantidadeSuspensa:suspenso.suspensas,apenasEnsaio:true,
+         catracaPausada:suspenso.catracaPausada||false
+        }});
+       }catch(e){
+        return res.json({...r,vinculoMotorEnsaio:{
+         estado:'REVERSAO_EXIGE_REVISAO',codigo:e.codigo||'REVISAO_MANUAL',
+         apenasEnsaio:true
+        }});
+       }
+      }
      }
      return res.json(r);
     }catch(e){
