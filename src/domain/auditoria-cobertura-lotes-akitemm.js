@@ -117,6 +117,17 @@ function auditarCarteiraDePedidosAkitemmLab({banco,sinalizacao,limite=50}={}){
   falha('LIMITE_AUDITORIA_INVALIDO');
  const total=banco.prepare('SELECT COUNT(*) AS n FROM akitemm_checkout_prepedidos_staging').get().n;
  const existeLote=!!banco.prepare("SELECT 1 FROM sqlite_master WHERE type='table' AND name='akitemm_motor_ensaio_lotes_pedido'").get();
+ const existeAceite=!!banco.prepare("SELECT 1 FROM sqlite_master WHERE type='table' AND name='akitemm_motor_ensaio_aceites_posicao'").get();
+ const contarAceites=existeLote&&existeAceite?banco.prepare([
+  'SELECT COUNT(*) AS quantidade,',
+  'COALESCE(SUM(CASE WHEN a.numero_posicao IS NOT NULL THEN 1 ELSE 0 END),0) AS aceites,',
+  'COALESCE(SUM(CASE WHEN a.numero_posicao IS NOT NULL AND',
+  '(a.prepedido_id<>l.prepedido_id OR a.titular_id<>l.titular_id)',
+  'THEN 1 ELSE 0 END),0) AS identidadesDivergentes',
+  'FROM akitemm_motor_ensaio_lotes_pedido l',
+  'LEFT JOIN akitemm_motor_ensaio_aceites_posicao a ON a.numero_posicao=l.numero_posicao',
+  'WHERE l.prepedido_id=? AND l.titular_id=?'
+ ].join(' ')):null;
  const rows=banco.prepare([
   'SELECT prepedido_id AS prepedidoId,titular_id AS titularId,',
   'total_centavos AS valorCentavos',
@@ -128,7 +139,10 @@ function auditarCarteiraDePedidosAkitemmLab({banco,sinalizacao,limite=50}={}){
   semComprovacaoDeCustos:0,
   semFotografiaVigente:0,lotesDivergentes:0,
   lotesSemPSPConferido:0,reversoesOuRevisoes:0,comPSPConferido:0,
-  referenciaTotalCalculadaCentavos:0,exposicaoCondicionalCentavos:0};
+  referenciaTotalCalculadaCentavos:0,exposicaoCondicionalCentavos:0,
+  posicoesNoMotorEnsaio:0,aceitesHistoricosIndividuais:0,
+  aceitesSemPSPVigente:0,aceitesComTitularDivergente:0,
+  lotesParciais:0,valorCondicionalDosLotesCentavos:0};
  const pedidos=[];
  for(const row of rows){
   const foto=sinalizacao.consultarFotografiaPrepedido({
@@ -145,16 +159,36 @@ function auditarCarteiraDePedidosAkitemmLab({banco,sinalizacao,limite=50}={}){
   const psp=consultarPedido({
    banco,prepedidoId:row.prepedidoId,titularId:row.titularId
   });
-  const lotes=existeLote?banco.prepare([
+  const lidos=contarAceites?contarAceites.get(row.prepedidoId,row.titularId):null;
+  const lotes=lidos?lidos.quantidade:existeLote?banco.prepare([
    'SELECT COUNT(*) AS n FROM akitemm_motor_ensaio_lotes_pedido',
    'WHERE prepedido_id=? AND titular_id=?'
   ].join(' ')).get(row.prepedidoId,row.titularId).n:0;
+  const aceites=lidos?.aceites||0;
+  resumo.posicoesNoMotorEnsaio=somar(resumo.posicoesNoMotorEnsaio,lotes);
+  resumo.aceitesHistoricosIndividuais=somar(resumo.aceitesHistoricosIndividuais,aceites);
+  resumo.valorCondicionalDosLotesCentavos=somar(
+   resumo.valorCondicionalDosLotesCentavos,vezes(lotes,EXPOSICAO_TEORICA_CICLO));
   const flags=[...resultado.alertas||[]];
   const confirmado=psp?.conferenciaPSPConcluida===true&&
    psp?.exigeRevisaoManual!==true&&psp?.ultimoStatusPSP==='RECEIVED';
   if(psp?.exigeRevisaoManual)resumo.reversoesOuRevisoes++;
   if(confirmado)resumo.comPSPConferido++;
   if(lotes&&!confirmado){flags.push('LOTE_SEM_PSP_VIGENTE');resumo.lotesSemPSPConferido++;}
+  if(aceites&&!confirmado){
+   flags.push('ACEITES_HISTORICOS_SEM_PSP_VIGENTE');
+   resumo.aceitesSemPSPVigente=somar(resumo.aceitesSemPSPVigente,aceites);
+  }
+  if(lidos?.identidadesDivergentes){
+   flags.push('ACEITE_INDIVIDUAL_TITULAR_OU_PEDIDO_DIVERGENTE');
+   resumo.aceitesComTitularDivergente=somar(resumo.aceitesComTitularDivergente,
+    lidos.identidadesDivergentes);
+  }
+  if(resultado.totalPosicoesPlanejadas!==undefined&&lotes>0&&
+     lotes<resultado.totalPosicoesPlanejadas){
+   flags.push('LOTE_INCOMPLETO_FRENTE_AO_PLANO');
+   resumo.lotesParciais++;
+  }
   if(resultado.totalPosicoesPlanejadas!==undefined&&
      lotes>resultado.totalPosicoesPlanejadas){
    flags.push('LOTE_EXCEDE_POSICOES_PLANEJADAS');
@@ -175,7 +209,10 @@ function auditarCarteiraDePedidosAkitemmLab({banco,sinalizacao,limite=50}={}){
   // Somente metadados do pedido. Jamais expor CPF, nick ou ID do titular.
   pedidos.push({prepedidoId:row.prepedidoId,estado:resultado.estado,
    posicoesPlanejadas:resultado.totalPosicoesPlanejadas??null,
-   posicoesNoMotorEnsaio:lotes,pspSandboxConferido:confirmado,
+   posicoesNoMotorEnsaio:lotes,aceitesHistoricosIndividuais:aceites,
+   posicoesSemAceiteIndividual:lotes-aceites,
+   exposicaoCondicionalDeLotesCentavos:vezes(lotes,EXPOSICAO_TEORICA_CICLO),
+   pspSandboxConferido:confirmado,
    saldoBrutoAposReservaCentavos:resultado.diferencaBrutaAposReferenciaCentavos??null,
    referenciaCentavos:resultado.reservaReferenciaPosicoesCentavos??null,
    deficitQualificadoresCentavos:resultado.deficitSegmentosCentavos??null,
@@ -186,7 +223,9 @@ function auditarCarteiraDePedidosAkitemmLab({banco,sinalizacao,limite=50}={}){
   amostraParcial:rows.length<total,temCustosFornecedorComprovados:false,
   posicoesReaisCriadas:0,saquesReaisAutorizados:false,
   estoqueOuFreteContratualConfirmado:false,bancoConciliado:false,
-  marcoZeroFinanceiroAprovado:false,somenteLeitura:true,
+  marcoZeroFinanceiroAprovado:false,
+  custosBonificacaoComprovados:false,reservasBancariasDisponiveisComprovadas:false,
+  pagamentosDoPSPSaoSomenteSandbox:true,somenteLeitura:true,
   resumo,pedidos};
 }
 module.exports={auditarCoberturaDePedido,auditarCarteiraDePedidosAkitemmLab,
