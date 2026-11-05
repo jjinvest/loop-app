@@ -45,7 +45,7 @@ test('roxo carro 10 mil e cinco posicoes tem cobertura BRUTA, nao liquidez confi
   {posicoesPorUnidadeRoxo:5})]));
  assert.equal(r.diferencaBrutaAposReferenciaCentavos,875000);
  assert.equal(r.estado,'CUSTOS_NAO_COMPROVADOS');
- assert.equal(r.temDinheiroBanco,false);
+ assert.equal(r.dinheiroRealComprovadoCentavos,0);
  assert.equal(r.validacaoBancariaExecutada,false);
 });
 test('despesas completas cenario ruim torna resultado insuficiente sem transferir',()=>{
