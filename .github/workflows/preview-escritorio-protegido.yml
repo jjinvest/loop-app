@@ -15,6 +15,7 @@ on:
       - 'src/candidato/checkout-candidato-ui.html'
       - 'src/candidato/checkout-candidato-ui.js'
       - 'src/candidato/escritorio-cliente-integrado.css'
+      - 'test/grade-posicoes-ensaios-unificada.test.js'
       - 'src/laboratorio/loop-03-shell.css'
       - 'src/laboratorio/checkout-staging-ui.css'
       - 'scripts/validar-conta-unica-candidato-browser.js'
