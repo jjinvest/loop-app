@@ -112,3 +112,15 @@ body.loop03-logado main>.mensagem-pagina{margin:0 0 .75rem}
 @media(max-width:600px){
  .cliente-integrado #conteudoTabuleiro .mapa-tabuleiro-posicoes-demo{width:min(100%,330px)}
 }
+
+/* Aceite individual das posicoes no LOOP (somente homologacao). A cor da
+   posicao nunca se confunde com a classificacao do produto na AKITEMM. */
+.cliente-integrado .loop03-form-aceite-posicao{display:flex;flex-direction:column;gap:8px;margin-top:10px}
+.cliente-integrado .loop03-form-aceite-posicao label{display:flex;align-items:flex-start;gap:7px;font-size:.78rem;line-height:1.35}
+.cliente-integrado .loop03-form-aceite-posicao input[type=checkbox]{flex:none;margin-top:3px}
+.cliente-integrado .loop03-form-aceite-posicao button{font-size:.77rem;white-space:normal;padding:8px 10px}
+.cliente-integrado .loop03-cartao-posicao-aceito{border-color:#69edab}
+.cliente-integrado .loop03-cartao-posicao-aceito strong{color:#9ff7c6}
+.cliente-integrado #conteudoTabuleiro .espaco-tabuleiro-demo:has(.posicao-verde){background:radial-gradient(circle at 25% 20%,#b2ffd3,#2a9762 70%,#124732);border-color:#9ff7c6}
+.cliente-integrado #conteudoTabuleiro .mapa-fila-posicoes-demo .selo-posicao-demo.posicao-verde{background:#22744d;color:#fff;border-color:#9ff7c6}
+.cliente-integrado #conteudoTabuleiro .loop03-inicial-fila.loop03-verde{background:#22744d;color:#fff}
