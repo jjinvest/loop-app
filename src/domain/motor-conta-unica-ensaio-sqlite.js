@@ -636,6 +636,11 @@ class MotorContaUnicaEnsaioSQLite{
   });
   if(novo.ativo&&!this.ponte)
    falha('AGENDA_AUTOMATICA_REQUER_ASAAS_SANDBOX');
+  const metaConfig=metaQuantidade===undefined?undefined:
+   validarMeta({...this._meta(),quantidade:metaQuantidade,
+    dataAlvo:metaDataAlvo});
+  if(metaConfig?.quantidade>0&&modo!=='AGENDADA')
+   falha('META_CATRACA_REQUER_MODO_AGENDADO');
   const resposta=this._transacao(sim=>{
    this.banco.prepare([
     'UPDATE akitemm_motor_agenda_catraca_lab',
@@ -648,6 +653,16 @@ class MotorContaUnicaEnsaioSQLite{
    this.banco.prepare(
     'UPDATE akitemm_motor_catraca_modo_lab SET modo=? WHERE id=1'
    ).run(modo);
+   if(metaConfig!==undefined){
+    const ativacao=dadosAtivacao(agoraMs);
+    this.banco.prepare([
+     'UPDATE akitemm_motor_catraca_meta_lab SET quantidade=?,',
+     'data_alvo=?,ativada_dia=?,ativada_minuto=?,',
+     'ultimo_dia=?,ultimo_minuto=-1,base_giros=? WHERE id=1'
+    ].join(' ')).run(metaConfig.quantidade,metaConfig.dataAlvo,
+     ativacao.ativadaDia,ativacao.ativadaMinuto,
+     ativacao.ativadaDia,sim.giros);
+   }
    sim.pausarCatraca();
    this._evento('CONFIGURAR_AGENDA_CATRACA');
    return {configurada:true,agendaAtiva:novo.ativo,
