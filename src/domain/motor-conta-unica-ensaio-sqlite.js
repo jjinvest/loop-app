@@ -673,6 +673,17 @@ class MotorContaUnicaEnsaioSQLite{
     return {acao:'GIRO_AGENDADO',girou:true,luzesAcesas:0,
      dinheiroReal:false};
    }
+   // O tabuleiro usa o MESMO alimentador 3A:1B das filas, sem
+   // operador ter que montar um segundo tabuleiro para o relógio.
+   // So inicia automaticamente com sete posicoes elegiveis em fila.
+   if(!sim.tabuleiro.iniciado&&
+      (!sim.tabuleiro.centro||sim.tabuleiro.vagas.some(v=>!v))&&
+      sim.filas.filaA.length+sim.filas.filaB.length+
+      Number(Boolean(sim.tabuleiro.centro))+
+      sim.tabuleiro.vagas.filter(Boolean).length>=7){
+    sim.prepararTabuleiro();
+    this._evento('PREPARAR_TABULEIRO_AGENDADO');
+   }
    if(!sim.tabuleiro.centro){
     // Nenhum centro, nenhuma contagem artificial do ciclo.
     return {acao:'AGUARDANDO_CENTRO',luzesAcesas:0,
