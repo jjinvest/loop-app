@@ -225,6 +225,38 @@ function criarGateway({portaInterna,senhaAcesso,segredoOperador,
   req.pipe(upstream);
  });
 }
+// Trava novas conexoes ANTES de aguardar backup/PSP. As conexoes ainda
+// ativas drenam antes de encerrar o backend e fechar o mesmo SQLite.
+function criarEncerramentoPreview({gateway,interno,banco,agendador=null,backupOffsite=null}={}){
+ if(!gateway||typeof gateway.close!=='function'||
+    !interno||typeof interno.close!=='function'||
+    !banco||typeof banco.close!=='function')
+  falha('ENCERRAMENTO_PREVIA_INVALIDO');
+ let operacao=null;
+ return function encerrar(){
+  if(operacao!==null)return operacao;
+  operacao=(async()=>{
+   // A resolucao guarda o erro para nao criar uma rejeicao sem handler
+   // durante o aguardo das operacoes financeiras de laboratorio.
+   const drenagemGateway=new Promise(resolve=>{
+    try{
+     gateway.close(erro=>resolve(erro||null));
+     gateway.closeIdleConnections?.();
+    }catch(e){resolve(e);}
+   });
+   if(agendador)await agendador.encerrar();
+   if(backupOffsite)await backupOffsite.encerrar();
+   const erroGateway=await drenagemGateway;
+   if(erroGateway)throw erroGateway;
+   await new Promise((resolve,reject)=>{
+    interno.close(erro=>erro?reject(erro):resolve());
+    interno.closeIdleConnections?.();
+   });
+   banco.close();
+  })();
+  return operacao;
+ };
+}
 function derivar(raiz,rotulo){
  return Buffer.from(hkdfSync('sha256',Buffer.from(raiz,'utf8'),
   Buffer.from('AKITEMM_PREVIA_NAO_COMERCIAL_2026'),
@@ -330,21 +362,15 @@ async function iniciar({env=process.env}={}){
    process.stdout.write('LOOP_BACKUP_OFFSITE_AGENDADO=ATIVO_ENSAIO_SEM_PROVA_ANTECIPADA\\n');
   }
  });
- let encerrando=false;
- async function encerrar(){
-  if(encerrando)return;
-  encerrando=true;
-  if(agendador)await agendador.encerrar();
-  if(backupOffsite)await backupOffsite.encerrar();
-  gateway.close(()=>interno.close(()=>db.close()));
- }
+ const encerrar=criarEncerramentoPreview({gateway,interno,banco:db,
+  agendador,backupOffsite});
  process.once('SIGTERM',()=>{void encerrar();});
  process.once('SIGINT',()=>{void encerrar();});
- return {gateway,interno,db,agendador,backupOffsite};
+ return {gateway,interno,db,agendador,backupOffsite,encerrar};
 }
 if(require.main===module)iniciar().catch(e=>{
  process.stderr.write('AKITEMM_PREVIA_BLOQUEADA='+
   String(e.codigo||'ERRO_DE_INICIALIZACAO')+'\n');
  process.exitCode=1;
 });
-module.exports={criarGateway,iniciar};
+module.exports={criarGateway,criarEncerramentoPreview,iniciar};
