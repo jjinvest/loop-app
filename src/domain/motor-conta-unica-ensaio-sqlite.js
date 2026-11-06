@@ -518,6 +518,183 @@ class MotorContaUnicaEnsaioSQLite{
     dinheiroReal:false,somenteEnsaio:true};
   });
  }
+ // A venda recebida continua na fila SQLite mesmo que o tabuleiro esteja
+ // pausado. Esta consulta e a FONTE do estoque para novas luzes do ciclo:
+ // nenhuma venda artificial e criada na passagem do tempo.
+ _agenda(){
+  const row=this.banco.prepare([
+   'SELECT ativo,abertura,fechamento,intervalo_minutos AS intervaloMinutos,',
+   'excecao_data AS excecaoData,excecao_fechamento AS excecaoFechamento,',
+   'pausa_manual AS pausaManual,ultimo_dia AS ultimoDia,',
+   'ultimo_slot AS ultimoSlot FROM akitemm_motor_agenda_catraca_lab',
+   'WHERE id=1'
+  ].join(' ')).get();
+  if(!row)falha('AGENDA_SQLITE_NAO_INICIALIZADA');
+  return validarAgenda({...row,ativo:row.ativo===1,
+   pausaManual:row.pausaManual===1});
+ }
+ _pedidosAguardando(sim,limite=5000){
+  if(!this.ponte)return [];
+  const rows=this.banco.prepare([
+   'SELECT prepedido_id AS prepedidoId,titular_id AS titularId',
+   'FROM akitemm_motor_conta_ensaio_operacoes',
+   "WHERE tipo='VINCULAR_PEDIDO'",
+   'ORDER BY criado_em,id LIMIT ?'
+  ].join(' ')).all(limite);
+  const elegiveis=[];
+  for(const p of rows){
+   if(sim.tabuleiro.vendasProcessadas.has('ensaio:'+p.prepedidoId))
+    continue;
+   try{this._conferirPedidoEventoPSPSandbox(p.prepedidoId,p.titularId);}
+   catch{continue;}
+   elegiveis.push(p);
+  }
+  return elegiveis;
+ }
+ consultarAgenda({agoraMs=Date.now()}={}){
+  validarAmbiente();
+  const config=this._agenda();
+  const horario=avaliarAgenda(config,agoraMs);
+  const sim=this._simulador();
+  return {...config,...horario,
+   aguardandoContabilizacao:this._pedidosAguardando(sim).length,
+   luzesAcesas:sim.tabuleiro.vendasDoCiclo.length,
+   luzesRoxasAcesas:sim.tabuleiro.vendasDoCiclo.filter(v=>
+    v.destinoPrevisto==='PARTICIPANTE').length,
+   luzesPretasAcesas:sim.tabuleiro.vendasDoCiclo.filter(v=>
+    v.destinoPrevisto!=='PARTICIPANTE').length,
+   catracaEstado:sim.catracaAberta?'ABERTA':'PAUSADA',
+   giros:sim.giros,comprasNaoInventadas:true,
+   dinheiroReal:false};
+ }
+ configurarAgenda({ativo,abertura,fechamento,
+  intervaloMinutos,excecaoData=null,excecaoFechamento=null,
+  agoraMs=Date.now()}={}){
+  const velho=this._agenda();
+  const local=avaliarAgenda(velho,agoraMs);
+  const novo=validarAgenda({
+   ...velho,ativo,abertura,fechamento,intervaloMinutos,
+   excecaoData,excecaoFechamento,
+   pausaManual:false,
+   // Uma nova configuracao comecara no proximo horario escolhido,
+   // nao acendera retroativamente luzes de varias horas.
+   ultimoDia:local.dia,
+   ultimoSlot:Math.max(0,Math.floor(
+    (Number(local.horarioLocal.slice(0,2))*60+
+     Number(local.horarioLocal.slice(3,5)))-
+    (Number(abertura?.slice(0,2))*60+Number(abertura?.slice(3,5)))
+   )/intervaloMinutos)
+  });
+  if(novo.ativo&&!this.ponte)
+   falha('AGENDA_AUTOMATICA_REQUER_ASAAS_SANDBOX');
+  const resposta=this._transacao(sim=>{
+   this.banco.prepare([
+    'UPDATE akitemm_motor_agenda_catraca_lab',
+    'SET ativo=?,abertura=?,fechamento=?,intervalo_minutos=?,',
+    'excecao_data=?,excecao_fechamento=?,pausa_manual=0,',
+    'ultimo_dia=?,ultimo_slot=? WHERE id=1'
+   ].join(' ')).run(novo.ativo?1:0,novo.abertura,novo.fechamento,
+    novo.intervaloMinutos,novo.excecaoData,novo.excecaoFechamento,
+    novo.ultimoDia,novo.ultimoSlot);
+   sim.pausarCatraca();
+   this._evento('CONFIGURAR_AGENDA_CATRACA');
+   return {configurada:true,agendaAtiva:novo.ativo,
+    proximoPulsoSomenteEmHorario:true,somenteEnsaio:true};
+  });
+  return {...resposta,agenda:this.consultarAgenda({agoraMs})};
+ }
+ // Executar no mesmo SQLite pelo timer do servidor, serializado em
+ // BEGIN IMMEDIATE. Um pulso contabiliza NO MAXIMO UMA compra conciliada,
+ // ou, depois do sexto evento, executa UM giro controlado. Ao ficar
+ // offline nao corre atras do atraso com multiplos giros instantaneos.
+ processarPulsoAgenda({agoraMs=Date.now()}={}){
+  validarAmbiente();
+  const config=this._agenda();
+  const janela=avaliarAgenda(config,agoraMs);
+  if(!config.ativo)
+   return {acao:'DESATIVADA',somenteEnsaio:true};
+  if(!janela.dentroDoHorario||config.pausaManual){
+   const sim=this._simulador();
+   if(!sim.catracaAberta)
+    return {acao:config.pausaManual?'PAUSA_MANUAL':'FORA_HORARIO',
+     somenteEnsaio:true};
+   return this._transacao(s=>{
+    s.pausarCatraca();
+    this._evento('PAUSAR_AGENDA_CATRACA');
+    return {acao:'PAUSADA',somenteEnsaio:true};
+   });
+  }
+  // Ao entrar na janela, a catraca fica ABERTA, mas nao acende luz
+  // antes do primeiro intervalo e nunca libera dinheiro.
+  const simAntes=this._simulador();
+  if(!janela.podeContabilizar){
+   if(simAntes.catracaAberta)return {acao:'AGUARDANDO_INTERVALO',somenteEnsaio:true};
+   return this._transacao(sim=>{
+    sim.abrirCatraca();
+    this._evento('ABRIR_AGENDA_CATRACA');
+    return {acao:'ABERTA_AGUARDANDO_INTERVALO',somenteEnsaio:true};
+   });
+  }
+  return this._transacao(sim=>{
+   const atual=this._agenda();
+   const instante=avaliarAgenda(atual,agoraMs);
+   if(!instante.podeContabilizar)return {acao:'SLOT_JA_PROCESSADO',somenteEnsaio:true};
+   this.banco.prepare([
+    'UPDATE akitemm_motor_agenda_catraca_lab',
+    'SET ultimo_dia=?,ultimo_slot=? WHERE id=1'
+   ].join(' ')).run(instante.dia,instante.slot);
+   if(!sim.catracaAberta)sim.abrirCatraca();
+   if(sim.tabuleiro.vendasDoCiclo.length===6){
+    try{
+     for(const evento of sim.tabuleiro.vendasDoCiclo){
+      const prepedidoId=evento.vendaId.slice('ensaio:'.length);
+      const origem=this.banco.prepare([
+       'SELECT titular_id AS titularId',
+       'FROM akitemm_motor_conta_ensaio_operacoes',
+       "WHERE tipo='VINCULAR_PEDIDO' AND prepedido_id=? LIMIT 1"
+      ].join(' ')).get(prepedidoId);
+      if(!origem)falha('AGENDA_EVENTO_SEM_ORIGEM_PSP');
+      this._conferirPedidoEventoPSPSandbox(prepedidoId,origem.titularId);
+     }
+    }catch{
+     this.banco.prepare([
+      'UPDATE akitemm_motor_agenda_catraca_lab',
+      'SET pausa_manual=1 WHERE id=1'
+     ].join(' ')).run();
+     sim.pausarCatraca();
+     this._evento('AGENDA_PSP_REVISAO');
+     return {acao:'BLOQUEADA_PSP_EXIGE_REVISAO',luzesAcesas:6,
+      dinheiroReal:false};
+    }
+    const resultado=sim.tentarGiro();
+    if(!resultado.girou)return {acao:'GIRO_NAO_EXECUTADO',
+     motivo:resultado.motivo,dinheiroReal:false};
+    this._evento('GIRO_AGENDADO');
+    return {acao:'GIRO_AGENDADO',girou:true,luzesAcesas:0,
+     dinheiroReal:false};
+   }
+   if(!sim.tabuleiro.centro){
+    // Nenhum centro, nenhuma contagem artificial do ciclo.
+    return {acao:'AGUARDANDO_CENTRO',luzesAcesas:0,
+     dinheiroReal:false};
+   }
+   const candidato=this._pedidosAguardando(sim)[0];
+   if(!candidato)return {acao:'SEM_COMPRA_PSP_NA_FILA',
+    luzesAcesas:sim.tabuleiro.vendasDoCiclo.length,
+    dinheiroReal:false};
+   const r=sim.registrarVendaNoCicloSimulada({
+    vendaId:'ensaio:'+candidato.prepedidoId
+   });
+   if(r.repetida)falha('AGENDA_DUPLICACAO_INTERNA');
+   this._evento('EVENTO_CICLO',{
+    prepedidoId:candidato.prepedidoId,titularId:candidato.titularId
+   });
+   return {acao:'LUZ_DO_CICLO',ordem:r.venda.ordem,
+    destino:r.venda.destinoPrevisto,
+    luzesAcesas:r.estado.vendasNoCiclo,
+    posicoesNaoMovidas:true,dinheiroReal:false};
+  });
+ }
  controlarCatraca(acao){
   if(!['ABRIR','PAUSAR','GIRAR'].includes(acao))falha('ACAO_CATRACA_INVALIDA');
   return this._transacao(sim=>{
