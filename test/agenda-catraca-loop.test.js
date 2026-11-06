@@ -41,11 +41,27 @@ test('pausa manual bloqueia pulsos, mas nao altera relogio de vendas',()=>{
 });
 test('config invalidos nao iniciam agendamento de ensaio',()=>{
  for(const params of [
-  {...cfg,abertura:'18:00',fechamento:'09:00'},
+  {...cfg,abertura:'27:00',fechamento:'09:00'},
   {...cfg,intervaloMinutos:0},
-  {...cfg,intervaloMinutos:61},
+  {...cfg,intervaloMinutos:1.5},
   {...cfg,excecaoData:'2026-11-06'},
   {...cfg,excecaoFechamento:'21:00'},
   {...cfg,ultimoSlot:0.5}
  ])assert.throws(()=>validarAgenda(params),/AGENDA_/);
+});
+test('horarios livres: duas horas, madrugada e encerramento ate 00:00 do dia seguinte',()=>{
+ const estendido={...cfg,intervaloMinutos:120,
+  excecaoData:'2026-11-06',excecaoFechamento:'00:00'};
+ assert.equal(avaliarAgenda(estendido,at('11:00:00')).podeContabilizar,true);
+ assert.equal(avaliarAgenda(estendido,at('20:59:00')).dentroDoHorario,true);
+ assert.equal(avaliarAgenda(estendido,at('23:59:00')).dentroDoHorario,true);
+ assert.equal(avaliarAgenda(estendido,
+  Date.parse('2026-11-07T00:00:00-03:00')).dentroDoHorario,false);
+ const madrugada={...cfg,abertura:'18:00',fechamento:'02:00',
+  intervaloMinutos:120};
+ assert.equal(avaliarAgenda(madrugada,
+  Date.parse('2026-11-07T01:00:00-03:00')).dentroDoHorario,true);
+ assert.equal(avaliarAgenda(madrugada,
+  Date.parse('2026-11-07T02:00:00-03:00')).dentroDoHorario,false);
+ assert.doesNotThrow(()=>validarAgenda({...cfg,intervaloMinutos:600}));
 });
