@@ -84,9 +84,33 @@ function criarGateway({portaInterna,senhaAcesso,segredoOperador,
   let url;
   try{url=new URL(req.url,'http://gateway.invalid');}
   catch{return negar(400,'Requisição inválida');}
-  if(url.pathname==='/healthz'&&req.method==='GET'){
-   res.writeHead(200,{...cabecalhosBase,'Content-Type':'application/json'});
-   return res.end(JSON.stringify({estado:'PREVIA_PROTEGIDA',financeiroReal:false}));
+  // Liveness nao pode declarar o gateway saudavel se o backend caiu.
+  // Readiness confere as invariantes reais do SQLite pelo backend isolado.
+  // Nao encaminhar dados internos ou segredos a quem consulta o probe.
+  if(req.method==='GET'&&
+    (url.pathname==='/healthz'||url.pathname==='/readyz')){
+   const profunda=url.pathname==='/readyz';
+   let respondido=false;
+   const concluir=(ok)=>{
+    if(respondido||res.destroyed)return;
+    respondido=true;
+    res.writeHead(ok?200:503,{...cabecalhosBase,
+     'Content-Type':'application/json; charset=utf-8'});
+    res.end(JSON.stringify({
+     estado:ok?(profunda?'BANCO_DE_ENSAIO_APTO':'PREVIA_PROTEGIDA'):
+      (profunda?'PRONTIDAO_INDISPONIVEL':'PREVIA_INDISPONIVEL'),
+     financeiroReal:false,marcoZeroLiberado:false
+    }));
+   };
+   const probe=http.get({hostname:'127.0.0.1',port:portaInterna,
+    path:profunda?'/readyz':'/healthz',timeout:2500},resposta=>{
+    resposta.resume();
+    concluir(resposta.statusCode===200);
+   });
+   probe.on('timeout',()=>probe.destroy());
+   probe.on('error',()=>concluir(false));
+   req.on('aborted',()=>probe.destroy());
+   return;
   }
   const webhookUnificado=url.pathname==='/webhooks/asaas-sandbox-unificado';
   if(webhookUnificado){
