@@ -951,6 +951,41 @@ if(worker){
      return res.status(409).json({erro:e.codigo||'COBRANCA_SANDBOX_REQUER_REVISAO'});
     }
    });
+  // Consulta read-only EXCLUSIVA do ensaio de replay. Retorna apenas o ID
+  // da unica cobranca sandbox ja ligada a uma posicao no MESMO SQLite.
+  // Rota invisivel fora da autorizacao explicita temporaria de laboratorio.
+  app.get('/staging/escritorio-unificado/webhook-replay-fixture',
+   autorizarOperador,(_req,res)=>{
+    if(!operacoesSandboxAutorizadas||
+       process.env.LOOP_PREVIEW_EXCLUSIVO!=='SIM'||
+       process.env.LOOP_PREVIEW_WEBHOOK_REPLAY_EXECUTAR!=='SIM')
+     return res.status(404).json({erro:'ENSAIO_REPLAY_INATIVO'});
+    const provas=banco.prepare([
+     'SELECT DISTINCT p.prepedido_id AS prepedidoId,',
+     'p.pagamento_id AS pagamentoId,p.external_ref AS externalReference,',
+     'p.valor_centavos AS valorCentavos',
+     'FROM akitemm_prepedido_asaas_sandbox_staging p',
+     'JOIN akitemm_motor_ensaio_lotes_pedido m',
+     'ON m.prepedido_id=p.prepedido_id',
+     'JOIN akitemm_prepedido_webhook_inbox_staging i',
+     'ON i.prepedido_id=p.prepedido_id',
+     'JOIN akitemm_prepedido_webhook_reconsulta_staging r',
+     'ON r.evento_id=i.evento_id',
+     "WHERE p.estado='RECEBIMENTO_INFORMADO_SANDBOX'",
+     "AND i.tipo='PAYMENT_RECEIVED'",
+     "AND r.estado='CONCLUIDO' AND r.codigo='PSP_RECONSULTADO'",
+     'ORDER BY p.prepedido_id LIMIT 2'
+    ].join(' ')).all();
+    if(provas.length!==1||provas[0].valorCentavos!==25000||
+       !/^LOOPLAB-hom-[0-9a-f-]{36}$/.test(provas[0].externalReference||'')||
+       !/^[A-Za-z0-9_-]{5,90}$/.test(provas[0].pagamentoId||''))
+     return res.status(409).json({erro:'ENSAIO_REPLAY_FONTE_NAO_UNICA'});
+    return res.json({ambiente:'ASAAS_SANDBOX_EXCLUSIVO',
+     pagamentoId:provas[0].pagamentoId,
+     externalReference:provas[0].externalReference,
+     valorCentavos:provas[0].valorCentavos,
+     consultaSomenteLeitura:true,financeiroReal:false});
+   });
   app.get('/staging/escritorio-unificado/monitor-psp',autorizarOperador,
    (_req,res)=>{
     if(!operacoesSandboxAutorizadas)return res.status(403)
