@@ -169,5 +169,13 @@
 <section class="painel"><h2>Operações Sandbox controladas</h2>
 <p class="subtexto">Somente quando habilitadas no servidor. Reconsulta e entrega fictícia não movimentam dinheiro real.</p>
 <form id="reconsultar"><label for="eventoId">Evento Asaas Sandbox</label><input id="eventoId" pattern="[A-Za-z0-9_&-]{5,150}" required><button>Reconsultar pagamento de teste</button></form>
+<div class="linha">
+<button type="button" id="reconciliarPendentesPsp" disabled>
+Conciliar avisos pendentes (lote de até 20)
+</button>
+<p id="resultadoConciliacaoPsp" role="status" aria-live="polite" class="subtexto">
+Disponível somente quando o Asaas Sandbox estiver conectado nesta prévia.
+</p>
+</div>
 <form id="prepararEntrega"><label for="prepedidoId">Pré-pedido de teste</label><input id="prepedidoId" pattern="hom-[a-f0-9-]{36}" required><button>Preparar entrega fictícia</button></form></section>
 </section><p id="estado" role="status" aria-live="polite"></p><p class="rodape">Prévia local; nunca publicar este servidor como checkout.</p></main></body></html>
