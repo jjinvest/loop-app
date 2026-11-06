@@ -579,11 +579,11 @@ class MotorContaUnicaEnsaioSQLite{
    // Uma nova configuracao comecara no proximo horario escolhido,
    // nao acendera retroativamente luzes de varias horas.
    ultimoDia:local.dia,
-   ultimoSlot:Math.max(0,Math.floor(
+   ultimoSlot:Math.max(0,Math.floor((
     (Number(local.horarioLocal.slice(0,2))*60+
      Number(local.horarioLocal.slice(3,5)))-
     (Number(abertura?.slice(0,2))*60+Number(abertura?.slice(3,5)))
-   )/intervaloMinutos)
+   )/intervaloMinutos))
   });
   if(novo.ativo&&!this.ponte)
    falha('AGENDA_AUTOMATICA_REQUER_ASAAS_SANDBOX');
@@ -698,6 +698,26 @@ class MotorContaUnicaEnsaioSQLite{
  controlarCatraca(acao){
   if(!['ABRIR','PAUSAR','GIRAR'].includes(acao))falha('ACAO_CATRACA_INVALIDA');
   return this._transacao(sim=>{
+   const config=this._agenda();
+   if(config.ativo){
+    const tempo=avaliarAgenda(config,Date.now());
+    if(!tempo.dentroDoHorario&&acao!=='PAUSAR')
+     return {girou:false,motivo:'FORA_HORARIO_DA_AGENDA',
+      somenteEnsaio:true,creditoReal:false};
+    if(acao==='GIRAR'&&config.pausaManual)
+     return {girou:false,motivo:'CATRACA_PAUSADA_MANUALMENTE',
+      somenteEnsaio:true,creditoReal:false};
+    if(acao==='PAUSAR')this.banco.prepare([
+     'UPDATE akitemm_motor_agenda_catraca_lab',
+     'SET pausa_manual=1 WHERE id=1'
+    ].join(' ')).run();
+    if(acao==='ABRIR'){
+     this.banco.prepare([
+      'UPDATE akitemm_motor_agenda_catraca_lab',
+      'SET pausa_manual=0,ultimo_dia=?,ultimo_slot=? WHERE id=1'
+     ].join(' ')).run(tempo.dia,Math.max(0,tempo.slot));
+    }
+   }
    let r;
    if(acao==='ABRIR')r=sim.abrirCatraca();
    if(acao==='PAUSAR')r=sim.pausarCatraca();
@@ -778,6 +798,7 @@ class MotorContaUnicaEnsaioSQLite{
     preparadoParaGiro:estado.tabuleiro.elegivelParaGiro,
     ciclosConcluidos:estado.tabuleiro.ciclosConcluidos},
    catraca:{estado:estado.catraca.status,giros:estado.catraca.giros,giros24h},
+   agenda:this.consultarAgenda(),
    minhasPosicoes:minhas,pendentesDeEnsaio:minhas.filter(p=>p.pendente).length,
    posicoesAtivasDoTitular:minhas.length,
    status:'SEM_PAGAMENTO_OU_ATIVACAO_REAL'};
