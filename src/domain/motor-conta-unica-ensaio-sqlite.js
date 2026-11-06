@@ -466,6 +466,31 @@ class MotorContaUnicaEnsaioSQLite{
     somenteEnsaio:true};
   });
  }
+ // O giro de ensaio NAO pode aceitar pedido com webhook bruto,
+ // pagamento pendente ou PSP estornado. Somente GET PSP ja reconsultado
+ // e salvo no mesmo SQLite permite contar um evento no ciclo.
+ _conferirPedidoEventoPSPSandbox(prepedidoId,titularId){
+  if(!this.ponte)return;
+  if(this.banco.prepare([
+   'SELECT 1 AS bloqueado FROM akitemm_motor_conta_ensaio_operacoes',
+   "WHERE prepedido_id=? AND tipo='REVERSAO_PSP' LIMIT 1"
+  ].join(' ')).get(prepedidoId))
+   falha('EVENTO_PSP_REVERTIDO_OU_SUSPENSO');
+  const relatorio=consultarPedido({
+   banco:this.banco,prepedidoId,titularId
+  });
+  const psp=this.ponte.consultar({prepedidoId,titularId});
+  if(relatorio?.conferenciaPSPConcluida!==true||
+     relatorio.exigeRevisaoManual===true||
+     relatorio.ultimoStatusPSP!=='RECEIVED'||
+     relatorio.posicoesFicticiasAptasAgora<1||
+     psp?.estado!=='RECEBIMENTO_INFORMADO_SANDBOX'||
+     psp?.ultimaConsultaSandbox?.statusAsaas!=='RECEIVED'||
+     psp?.revisaoManualObrigatoria===true||
+     !psp.pagamentoSandboxId||
+     psp.valorCentavos!==relatorio.valorCentavos)
+   falha('EVENTO_REQUER_COMPRA_PSP_CONCILIADA');
+ }
  registrarEvento({prepedidoId}={}){
   if(typeof prepedidoId!=='string'||!PEDIDO.test(prepedidoId))
    falha('PREPEDIDO_INVALIDO');
@@ -475,9 +500,7 @@ class MotorContaUnicaEnsaioSQLite{
     "WHERE prepedido_id=? AND tipo='VINCULAR_PEDIDO'"
    ].join(' ')).get(prepedidoId);
    if(!origem)falha('PEDIDO_FORA_DO_MOTOR_ENSAIO');
-   if(this.ponte&&this.banco.prepare([
-    "SELECT 1 FROM akitemm_motor_conta_ensaio_operacoes WHERE prepedido_id=? AND tipo='REVERSAO_PSP'"
-   ].join(' ')).get(prepedidoId))falha('PEDIDO_EM_REVISAO_PSP');
+   this._conferirPedidoEventoPSPSandbox(prepedidoId,origem.titular_id);
    const resultado=sim.registrarVendaNoCicloSimulada({vendaId:'ensaio:'+prepedidoId});
    if(!resultado.repetida)this._evento('EVENTO_CICLO',{titularId:origem.titular_id});
    return {repetido:resultado.repetida,eventosNoCiclo:resultado.estado.vendasNoCiclo,
@@ -493,6 +516,21 @@ class MotorContaUnicaEnsaioSQLite{
    if(acao==='PAUSAR')r=sim.pausarCatraca();
    if(acao==='GIRAR'&&[sim.tabuleiro.centro,...sim.tabuleiro.vagas].some(p=>
      p?.statusAdesao==='REVISAR_PSP'))falha('CATRACA_BLOQUEADA_PSP_EM_REVISAO');
+   if(acao==='GIRAR'&&this.ponte){
+    // Uma reversao entre registro do evento e giro nao pode contar.
+    for(const venda of sim.tabuleiro.vendasDoCiclo){
+     if(typeof venda.vendaId!=='string'||
+        !venda.vendaId.startsWith('ensaio:'))
+      falha('EVENTO_CICLO_ORIGEM_DESCONHECIDA');
+     const id=venda.vendaId.slice('ensaio:'.length);
+     const titular=this.banco.prepare([
+      'SELECT titular_id AS id FROM akitemm_motor_conta_ensaio_operacoes',
+      "WHERE prepedido_id=? AND tipo='VINCULAR_PEDIDO' LIMIT 1"
+     ].join(' ')).get(id)?.id;
+     if(!titular)falha('EVENTO_SEM_TITULAR');
+     this._conferirPedidoEventoPSPSandbox(id,titular);
+    }
+   }
    if(acao==='GIRAR')r=sim.tentarGiro();
    if(acao==='GIRAR'&&!r.girou)
     return {girou:false,motivo:r.motivo,somenteEnsaio:true,
