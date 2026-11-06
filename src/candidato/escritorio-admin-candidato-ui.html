@@ -136,6 +136,15 @@
 <button type="button" id="agendaMotorHoje21">Aplicar exceção para hoje</button>
 <small>Escolha a hora que quiser, inclusive 00:00 para encerrar à meia-noite.</small>
 </div>
+<div class="linha">
+<label for="agendaMotorMetaQuantidade">Meta de pessoas por turno (opcional)
+<input id="agendaMotorMetaQuantidade" type="number" min="0" step="1" value="0" inputmode="numeric">
+<small>Ex.: 10 pessoas entre 9h e 18h. Zero desliga a meta e mantém a contabilização por intervalo.</small></label>
+<label for="agendaMotorMetaDia">Somente nesta data (opcional)
+<input id="agendaMotorMetaDia" type="date">
+<small>Deixe vazio para repetir a meta nos dias em que a agenda estiver ativa.</small></label>
+</div>
+<p class="subtexto">A meta distribui até a quantidade escolhida ao longo do horário, sem liberar todos os ciclos de uma vez. Cada pessoa exige seis vendas diferentes recebidas e conciliadas no Sandbox. Se não houver vendas suficientes, a meta não é forçada. O STOP continua prevalecendo.</p>
 <label for="agendaMotorModo">Funcionamento da catraca
 <select id="agendaMotorModo">
 <option value="MANUAL">Manual (homologação: aguardando comando)</option>
