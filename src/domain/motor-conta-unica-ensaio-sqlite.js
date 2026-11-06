@@ -869,11 +869,7 @@ class MotorContaUnicaEnsaioSQLite{
  // confirmado, devolve parcial em vez de inventar evento ou dinheiro.
  // Respeita STOP; a pausa/horario podem ser explicitamente sobrepostos
  // por este comando autenticado, com registro auditavel em SQLite.
- liberarLoteEnsaio({quantidade}={}){
-  if(!Number.isSafeInteger(quantidade)||quantidade<1)
-   falha('LOTE_CATRACA_QUANTIDADE_INVALIDA');
-  if(!this.ponte)falha('LOTE_CATRACA_REQUER_PSP_SANDBOX');
-  return this._transacao(sim=>{
+ _liberarLoteNaTransacao(sim,quantidade){
    if(this._modoCatraca()==='STOP')
     return {solicitados:quantidade,liberados:0,
      motivo:'STOP_ADMINISTRATIVO',somenteEnsaio:true,dinheiroReal:false};
@@ -940,7 +936,12 @@ class MotorContaUnicaEnsaioSQLite{
     motivo:motivo||'LOTE_EXECUTADO',
     luzesPendentes:sim.tabuleiro.vendasDoCiclo.length,
     dinheiroReal:false,somenteEnsaio:true};
-  });
+ }
+ liberarLoteEnsaio({quantidade}={}){
+  if(!Number.isSafeInteger(quantidade)||quantidade<1)
+   falha('LOTE_CATRACA_QUANTIDADE_INVALIDA');
+  if(!this.ponte)falha('LOTE_CATRACA_REQUER_PSP_SANDBOX');
+  return this._transacao(sim=>this._liberarLoteNaTransacao(sim,quantidade));
  }
  controlarCatraca(acao){
   if(!['ABRIR','PAUSAR','GIRAR'].includes(acao))falha('ACAO_CATRACA_INVALIDA');
