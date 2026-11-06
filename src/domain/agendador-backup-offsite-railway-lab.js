@@ -3,19 +3,23 @@
 // isolada. Mesma origem da loja/PSP/motor. Nenhuma chave, CPF, URL ou nome
 // de cliente sai em log ou retorna na API. Somente PREVIA DE HOMOLOGACAO.
 const {randomUUID}=require('node:crypto');
+const path=require('node:path');
 const {envio}=require('../../scripts/validar-backup-offsite-checkout-staging');
 const {assinarObjetoS3Lab,validarConfig}=
  require('./s3-url-assinada-backup-lab');
 function falha(codigo){const e=new Error(codigo);e.codigo=codigo;throw e;}
 const DIA=24*60*60*1000;
 function criarAgendadorBackupOffsiteLab({
- fonteSqlite,senha,config,intervaloMs=DIA,limiteBytes=512*1024*1024,
+ fonteSqlite,raizVolume='/dados-preview',senha,config,
+ intervaloMs=DIA,limiteBytes=512*1024*1024,
  buscar=fetch,agendar=setInterval,cancelar=clearInterval,agora=()=>new Date(),
  uuid=randomUUID,onErro=()=>{}
 }={}){
  if(process.env.NODE_ENV==='production')
   falha('BACKUP_PREVIA_PROIBIDO_PRODUCAO');
- if(typeof fonteSqlite!=='string'||!fonteSqlite.startsWith('/dados-preview/')||
+ if(typeof fonteSqlite!=='string'||typeof raizVolume!=='string'||
+    !path.isAbsolute(fonteSqlite)||!path.isAbsolute(raizVolume)||
+    path.relative(path.resolve(raizVolume),path.resolve(fonteSqlite)).startsWith('..')||
     !fonteSqlite.endsWith('.sqlite')||typeof senha!=='string'||
     senha.length<32||typeof buscar!=='function'||typeof agendar!=='function'||
     typeof cancelar!=='function'||typeof agora!=='function'||
