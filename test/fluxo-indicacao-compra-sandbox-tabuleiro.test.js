@@ -295,3 +295,31 @@ test('fora do horario e em pausa manual as compras continuam na fila, mas nenhum
   assert.equal(x.db.prepare('PRAGMA integrity_check').get().integrity_check,'ok');
  }finally{x.db.close();}
 });
+
+test('agenda monta tabuleiro com sete clientes distintos sem criar segundas filas',()=>{
+ const x=preparar();
+ const t=h=>Date.parse('2026-11-06T'+h+':00-03:00');
+ try{
+  for(let i=1;i<=7;i++){
+   x.conta(i,'Cliente'+String(i).replace(/\d/g,'').concat(
+    String.fromCharCode(96+i)));
+   x.comprar(i,i,true);
+  }
+  assert.equal(x.motor.consultar().tabuleiro.centro,null);
+  x.motor.configurarAgenda({
+   ativo:true,abertura:'09:00',fechamento:'18:00',
+   intervaloMinutos:10,agoraMs:t('09:00')
+  });
+  const pulso=x.motor.processarPulsoAgenda({agoraMs:t('09:10')});
+  assert.equal(pulso.acao,'LUZ_DO_CICLO');
+  const estado=x.motor.consultar();
+  assert.ok(estado.tabuleiro.centro);
+  assert.equal(estado.tabuleiro.vagas.filter(Boolean).length,6);
+  assert.equal(estado.tabuleiro.eventosNoCiclo,1);
+  assert.equal(estado.filaA.length+estado.filaB.length,0);
+  assert.equal(estado.ordemAlimentacao,'3A:1B');
+  assert.equal(x.motor.consultarAgenda({agoraMs:t('09:10')})
+   .aguardandoContabilizacao,6);
+  assert.equal(x.db.prepare('PRAGMA integrity_check').get().integrity_check,'ok');
+ }finally{x.db.close();}
+});
