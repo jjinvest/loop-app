@@ -19,10 +19,15 @@ test('gateway unificado: Pix, aviso e motor usam o mesmo SQLite de laboratorio',
  const banco=new DatabaseSync(':memory:');
  banco.exec('PRAGMA foreign_keys=ON;PRAGMA journal_mode=WAL;');
  let envios=0,consultas=0,provas=0,prepedidoId='';
+ let resolverPix,avisarPix;
+ const pixAguardando=new Promise(resolve=>{resolverPix=resolve;});
+ const pixIniciado=new Promise(resolve=>{avisarPix=resolve;});
  const psp={ambiente:'ASAAS_SANDBOX_EXCLUSIVO',
   async testarAcessoRemoto(){provas++;return {ambiente:this.ambiente,pspRemotoRespondeu:true};},
   async criarCobrancaPix({valorCentavos,pedidoId}){
    envios++;assert.equal(valorCentavos,25000);assert.equal(pedidoId,prepedidoId);
+   avisarPix();
+   await pixAguardando;
    return {ambiente:this.ambiente,pagamentoId:pagamento,valorCentavos,status:'PENDING'};
   },
   async consultarCobranca(id){
@@ -103,7 +108,25 @@ test('gateway unificado: Pix, aviso e motor usam o mesmo SQLite de laboratorio',
  const invalido=await post(rota,{...dados,aceiteEnsaio:false});
  assert.equal(invalido.status,400);
  assert.equal(envios,0);
- const cobrado=await post(rota,dados);
+ // O webhook do Asaas chega ANTES de o POST de criacao responder:
+ // primeiro fica em quarentena, depois o ciclo automatico o recupera.
+ const emCriacao=post(rota,dados);
+ await pixIniciado;
+ const hook='/webhooks/asaas-sandbox-unificado';
+ const aviso={id:'evt_PreviaUnificada2026Recebido',event:'PAYMENT_RECEIVED',
+  payment:{id:pagamento,billingType:'PIX',status:'RECEIVED',
+   value:250,externalReference:'LOOPLAB-'+prepedidoId}};
+ const webhook=async valor=>fetch(base+hook,{method:'POST',headers:{
+  'Content-Type':'application/json','asaas-access-token':valor
+ },body:JSON.stringify(aviso)});
+ let antecipado;
+ try{antecipado=await webhook(token);}finally{resolverPix();}
+ assert.equal(antecipado.status,200);
+ assert.equal((await antecipado.json()).pendenteReconsulta,false);
+ assert.equal(banco.prepare([
+  'SELECT COUNT(*) AS n FROM akitemm_prepedido_webhook_antecipados_staging'
+ ].join(' ')).get().n,1);
+ const cobrado=await emCriacao;
  assert.equal(cobrado.status,201,JSON.stringify(cobrado.body));
  assert.equal(cobrado.body.ambiente,'ASAAS_SANDBOX_EXCLUSIVO');
  assert.equal(cobrado.body.posicoesReais,0);
@@ -111,12 +134,6 @@ test('gateway unificado: Pix, aviso e motor usam o mesmo SQLite de laboratorio',
  assert.equal(repetido.status,200);
  assert.equal(repetido.body.repetido,true);
  assert.equal(envios,1);
- const hook='/webhooks/asaas-sandbox-unificado';
- const aviso={id:'evt_PreviaUnificada2026Recebido',event:'PAYMENT_RECEIVED',
-  payment:{id:pagamento}};
- const webhook=async valor=>fetch(base+hook,{method:'POST',headers:{
-  'Content-Type':'application/json','asaas-access-token':valor
- },body:JSON.stringify(aviso)});
  assert.equal((await webhook('token-errado')).status,401);
  assert.equal((await fetch(base+hook)).status,405);
  const aceito=await webhook(token);
@@ -143,6 +160,8 @@ test('gateway unificado: Pix, aviso e motor usam o mesmo SQLite de laboratorio',
  const rodada=await auto.executarUmaVez();
  assert.equal(rodada.estado,'CONCLUIDA');
  assert.equal(rodada.consultados,1);
+ assert.equal(rodada.quarentenaRecuperada,1);
+ assert.equal(rodada.quarentenaAguardandoVinculo,0);
  assert.equal(rodada.pendentesRestantes,0);
  await auto.encerrar();
  const conf=await conciliar();
