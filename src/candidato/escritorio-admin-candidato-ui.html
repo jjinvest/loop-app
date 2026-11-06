@@ -136,7 +136,14 @@
 <button type="button" id="agendaMotorHoje21">Aplicar exceção para hoje</button>
 <small>Escolha a hora que quiser, inclusive 00:00 para encerrar à meia-noite.</small>
 </div>
-<label><input id="agendaMotorAtiva" type="checkbox"> Ativar contabilização automática de ENSAIO (não movimenta valores reais)</label>
+<label for="agendaMotorModo">Funcionamento da catraca
+<select id="agendaMotorModo">
+<option value="MANUAL">Manual (homologação: aguardando comando)</option>
+<option value="NATURAL">Natural — as vendas válidas empurram a catraca</option>
+<option value="AGENDADA">Controlada por horários e intervalos</option>
+<option value="STOP">STOP — suspender todo movimento da catraca</option>
+</select></label>
+<p class="subtexto">No modo natural não existe limite de horário: as compras recebidas movimentam as filas e a catraca executa ciclos quando houver seis eventos válidos. No modo controlado, as compras e filas continuam, mas a catraca respeita o horário escolhido. STOP não interrompe a loja.</p>
 <button type="submit" class="primario">Salvar agenda da catraca</button>
 </form>
 <p class="subtexto" id="agendaMotorEstado" role="status" aria-live="polite">Agenda: ainda não consultada.</p>
