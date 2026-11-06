@@ -68,3 +68,37 @@ test('nao aceita executar sem worker, intervalo curto ou lote fora do teto',()=>
  assert.throws(()=>criarAgendadorConciliacaoSandbox({executar:fn,limite:21}),
   /AGENDADOR_SANDBOX_CONFIG_INVALIDA/);
 });
+
+test('duas chamadas de encerramento aguardam o mesmo GET antes do fechamento do SQLite',async()=>{
+ let liberar,consultas=0,cancelamentos=0;
+ const pendente=new Promise(resolve=>{liberar=resolve;});
+ const agendador=criarAgendadorConciliacaoSandbox({
+  executar:async()=>{
+   consultas++;
+   await pendente;
+   return {consultados:1,pendentesRestantes:0};
+  },
+  agendar:()=>({unref(){}}),
+  cancelar:()=>{cancelamentos++;}
+ });
+ agendador.iniciar();
+ await Promise.resolve();
+ assert.equal(consultas,1);
+ const primeiro=agendador.encerrar();
+ const segundo=agendador.encerrar();
+ let primeiroFechado=false,segundoFechado=false;
+ void primeiro.then(()=>{primeiroFechado=true;});
+ void segundo.then(()=>{segundoFechado=true;});
+ await Promise.resolve();
+ await Promise.resolve();
+ assert.equal(primeiroFechado,false,'primeiro encerramento deve aguardar GET PSP');
+ assert.equal(segundoFechado,false,'segundo encerramento nao pode antecipar fechamento');
+ assert.equal(cancelamentos,1,'timer e cancelado uma unica vez');
+ assert.equal((await agendador.executarUmaVez()).estado,'ENCERRADO');
+ liberar();
+ await Promise.all([primeiro,segundo]);
+ assert.equal(primeiroFechado,true);
+ assert.equal(segundoFechado,true);
+ assert.equal(consultas,1,'nao pode iniciar nova conciliacao no encerramento');
+ assert.equal(agendador.estado().emExecucao,false);
+});
