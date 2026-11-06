@@ -80,6 +80,7 @@ test('backup completo: SQLite WAL cifrado, PUT GET, RESTAURA sem alterar fonte',
  assert.equal(r.copiaOffsiteComprovada,true);
  assert.equal(r.restauracaoIsoladaComprovada,true);
  assert.equal(w.estado().copiasVerificadasNoProcesso,1);
+ assert.equal(w.estado().backupAtualEmDia,true);
  assert.equal(w.estado().ultimaConfirmacao.integridadeCifradaSha256.length,64);
  assert.equal(puts,1);assert.equal(gets,1);
  assert.deepEqual(confirmacoes,['CIFRADO_ENVIADO_BAIXADO_E_RESTAURADO']);
@@ -154,4 +155,36 @@ test('agendador não sobrepõe execuções; término aguarda última cópia',asy
  assert.equal(w.estado().habilitado,false);
  assert.equal(w.estado().copiasVerificadasNoProcesso,1);
  assert.equal((await w.executarUmaVez()).estado,'ENCERRADO');
+});
+
+test('backup antigo ou falha posterior nunca aparenta copia ATUAL saudavel',async t=>{
+ const f=origem(t);let remoto,adulterar=false,horario=data;
+ const buscar=async(_url,req)=>{
+  if(req.method==='PUT'){
+   const partes=[];for await(const p of req.body)partes.push(p);
+   remoto=Buffer.concat(partes);
+   return new Response(null,{status:200});
+  }
+  if(adulterar){
+   const ruim=Buffer.from(remoto);ruim[ruim.length-24]^=1;
+   return new Response(ruim,{status:200});
+  }
+  return new Response(remoto,{status:200});
+ };
+ const w=criarAgendadorBackupOffsiteLab(options(f,{
+  buscar,agora:()=>horario
+ }));
+ assert.equal((await w.executarUmaVez()).copiaOffsiteComprovada,true);
+ assert.equal(w.estado().backupAtualEmDia,true);
+ horario=new Date('2026-11-07T04:00:01.000Z');
+ assert.equal(w.estado().backupAtualEmDia,false);
+ assert.equal(w.estado().copiaOffsiteHistoricaComprovada,true);
+ horario=new Date('2026-11-06T03:00:00.000Z');
+ adulterar=true;
+ assert.equal((await w.executarUmaVez()).copiaOffsiteComprovada,false);
+ assert.equal(w.estado().ultimaTentativaFalhou,true);
+ assert.equal(w.estado().backupAtualEmDia,false);
+ assert.equal(w.estado().copiasVerificadasNoProcesso,1);
+ assert.equal(w.estado().copiaOffsiteHistoricaComprovada,true);
+ await w.encerrar();
 });
