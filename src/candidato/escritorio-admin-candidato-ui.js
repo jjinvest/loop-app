@@ -632,7 +632,11 @@ async function atualizarMotorContaEnsaio(){
  $('agendaMotorEstado').textContent='Horário '+r.agenda.abertura+'–'+
   r.agenda.fechamentoAplicado+' ('+r.agenda.fuso+') · '+
   'Modo '+(r.agenda.modoExecucao||'MANUAL')+' · '+
-  (r.agenda.dentroDoHorario?'dentro do horário':'fora do horário')+
+  (r.agenda.modoExecucao==='AGENDADA'?
+   (r.agenda.dentroDoHorario?'dentro do horário':'fora do horário'):
+   r.agenda.modoExecucao==='NATURAL'?'sem limite de horário':
+   r.agenda.modoExecucao==='STOP'?'movimento bloqueado pelo STOP':
+   'somente comandos manuais')+
   (r.agenda.pausaManual?' · PAUSA MANUAL':'')+
   ' · '+r.agenda.aguardandoContabilizacao+
   ' compra(s) Sandbox confirmada(s) aguardando contabilização. '+
