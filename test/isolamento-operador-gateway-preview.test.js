@@ -65,7 +65,7 @@ test('operador da previa recebe cookie proprio e pode usar APIs autenticadas',as
    headers:{Authorization:basica('acesso',A)}
   });
   assert.equal(r.status,200);
-  const cookieAdmin=cookie(r,'akitemm_preview_admin');
+  const cookieAdmin=cookie(r,'akitemm_preview_admin_v2');
   assert.ok(cookieAdmin);
   const admin=await fetch(x.url+'/staging/escritorio-unificado/motor/estado',
    {headers:{Cookie:cookieAdmin}});
@@ -77,7 +77,7 @@ test('operador da previa recebe cookie proprio e pode usar APIs autenticadas',as
   const js=await tela.text();
   assert.ok(js.includes('PREVIA_OPERADOR'));
   const forjado=await fetch(x.url+'/staging/escritorio-unificado/motor/estado',
-   {headers:{Cookie:'akitemm_preview_admin=v1.1234567890123.'+'0'.repeat(64)}});
+   {headers:{Cookie:'akitemm_preview_admin_v2=v1.1234567890123.'+'0'.repeat(64)}});
   assert.equal(forjado.status,401);
  }finally{await x.fechar();}
 });
@@ -92,7 +92,7 @@ test('com credencial admin separada a senha de acesso de cliente nao autoriza op
    headers:{Authorization:basica('operador',D)}
   });
   assert.equal(admin.status,200);
-  const ck=cookie(admin,'akitemm_preview_admin');
+  const ck=cookie(admin,'akitemm_preview_admin_v2');
   assert.ok(ck);
   const api=await fetch(x.url+'/staging/escritorio-unificado/motor/estado',
    {headers:{Cookie:ck}});
