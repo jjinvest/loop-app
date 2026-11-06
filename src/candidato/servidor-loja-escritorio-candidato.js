@@ -886,8 +886,11 @@ if(worker){
      return res.status(403).json({erro:'SANDBOX_NAO_CONFIGURADO'});
     const b=req.body;
     if(!req.is('application/json')||!b||Array.isArray(b)||
-       Object.keys(b).sort().join(',')!==
-        'aceiteEnsaio,clienteAsaasId,prepedidoId'||b.aceiteEnsaio!==true||
+       !['aceiteEnsaio,clienteAsaasId,prepedidoId',
+         'aceiteEnsaio,aceiteSemPosicao,clienteAsaasId,prepedidoId']
+        .includes(Object.keys(b).sort().join(','))||
+       (b.aceiteSemPosicao!==undefined&&typeof b.aceiteSemPosicao!=='boolean')||
+       b.aceiteEnsaio!==true||
        typeof b.prepedidoId!=='string'||!/^hom-[0-9a-f-]{36}$/.test(b.prepedidoId)||
        typeof b.clienteAsaasId!=='string'||!/^cus_[A-Za-z0-9_-]{5,80}$/.test(b.clienteAsaasId))
      return res.status(400).json({erro:'PARAMETROS_ENSAIO_INVALIDOS'});
@@ -925,6 +928,7 @@ if(worker){
       titularId:row.titularId,prepedidoId:b.prepedidoId,
       clienteAsaasId:b.clienteAsaasId,
       capacidade:{quantidadePosicoes:prev,
+       cienteSemPosicao:b.aceiteSemPosicao===true,
        consultarAtivas:()=>motorConta.consultar({
         titularId:row.titularId
        }).posicoesAtivasDoTitular}
