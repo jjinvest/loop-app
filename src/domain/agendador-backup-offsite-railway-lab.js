@@ -13,7 +13,7 @@ function criarAgendadorBackupOffsiteLab({
  fonteSqlite,raizVolume='/dados-preview',senha,config,
  intervaloMs=DIA,limiteBytes=512*1024*1024,
  buscar=fetch,agendar=setInterval,cancelar=clearInterval,agora=()=>new Date(),
- uuid=randomUUID,onErro=()=>{}
+ uuid=randomUUID,onErro=()=>{},onSucesso=()=>{}
 }={}){
  if(process.env.NODE_ENV==='production')
   falha('BACKUP_PREVIA_PROIBIDO_PRODUCAO');
@@ -24,6 +24,7 @@ function criarAgendadorBackupOffsiteLab({
     senha.length<32||typeof buscar!=='function'||typeof agendar!=='function'||
     typeof cancelar!=='function'||typeof agora!=='function'||
     typeof uuid!=='function'||typeof onErro!=='function'||
+    typeof onSucesso!=='function'||
     !Number.isSafeInteger(intervaloMs)||intervaloMs<3600000||
     intervaloMs>7*DIA||!Number.isSafeInteger(limiteBytes)||
     limiteBytes<1024*1024||limiteBytes>512*1024*1024)
@@ -77,13 +78,19 @@ function criarAgendadorBackupOffsiteLab({
    rodadas++;ultimoCodigo='OFFSITE_CIFRADO_LIDO_E_RESTAURADO';
    ultimaConfirmacao={quando:r.quando,bytes:r.bytes,
     integridadeCifradaSha256:r.sha256};
+   try{onSucesso('CIFRADO_ENVIADO_BAIXADO_E_RESTAURADO');}catch{}
    return {estado:'OFFSITE_CIFRADO_LIDO_E_RESTAURADO',
     copiaOffsiteComprovada:true,restauracaoIsoladaComprovada:true,
     bancoOriginalNaoModificado:true,
     dinheiroRealGerado:false};
-  }catch(_e){
+  }catch(e){
    falhas++;ultimoCodigo='BACKUP_REQUER_VERIFICACAO';
-   try{onErro('BACKUP_OFFSITE_REQUER_VERIFICACAO');}catch{}
+   // Apenas códigos de erro operacionais controlados; jamais logar URL,
+   // token, segredo, SQL, dados de cliente ou stack trace do provedor.
+   const codigo=typeof e?.codigo==='string'&&
+    /^[A-Z][A-Z0-9_]{3,70}$/.test(e.codigo)?
+    e.codigo:'BACKUP_OFFSITE_REQUER_VERIFICACAO';
+   try{onErro(codigo);}catch{}
    return {estado:ultimoCodigo,copiaOffsiteComprovada:false,
     restauracaoIsoladaComprovada:false,dinheiroRealGerado:false};
   }finally{
