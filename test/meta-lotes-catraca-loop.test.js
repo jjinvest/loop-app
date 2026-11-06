@@ -45,3 +45,11 @@ test('metas so aceitam inteiros positivos e data real',()=>{
   {...original,baseGiros:-1}
  ])assert.throws(()=>validarMeta(m),/META_LOTES_CONFIG_INVALIDA/);
 });
+test('um milhao de ciclos distribuidos no tempo sem arredondamento que estoura teto',()=>{
+ const a={...PADRAO,ativo:true};
+ const meta={...original,quantidade:1000000};
+ assert.equal(planejado(meta,a,when('09:00')).ciclosAutorizadosAteAgora,1851);
+ assert.equal(planejado(meta,a,when('09:01')).ciclosAutorizadosAteAgora,3703);
+ assert.equal(planejado(meta,a,when('17:59')).ciclosAutorizadosAteAgora,1000000);
+ assert.doesNotThrow(()=>validarMeta({...original,quantidade:1000000}));
+});
