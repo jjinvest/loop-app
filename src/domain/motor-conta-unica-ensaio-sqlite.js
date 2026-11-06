@@ -54,6 +54,8 @@ class MotorContaUnicaEnsaioSQLite{
    "BEGIN SELECT RAISE(ABORT,'aceite por posicao imutavel'); END;",
    'CREATE INDEX IF NOT EXISTS idx_motor_ensaio_giros',
    'ON akitemm_motor_conta_ensaio_operacoes(tipo,criado_em);',
+   'CREATE INDEX IF NOT EXISTS idx_motor_evento_pedido',
+   'ON akitemm_motor_conta_ensaio_operacoes(tipo,prepedido_id);',
    'CREATE TABLE IF NOT EXISTS akitemm_motor_agenda_catraca_lab(',
    'id INTEGER PRIMARY KEY CHECK(id=1),',
    'ativo INTEGER NOT NULL CHECK(ativo IN (0,1)),',
@@ -526,7 +528,9 @@ class MotorContaUnicaEnsaioSQLite{
    if(!origem)falha('PEDIDO_FORA_DO_MOTOR_ENSAIO');
    this._conferirPedidoEventoPSPSandbox(prepedidoId,origem.titular_id);
    const resultado=sim.registrarVendaNoCicloSimulada({vendaId:'ensaio:'+prepedidoId});
-   if(!resultado.repetida)this._evento('EVENTO_CICLO',{titularId:origem.titular_id});
+   if(!resultado.repetida)this._evento('EVENTO_CICLO',{
+    titularId:origem.titular_id,prepedidoId
+   });
    return {repetido:resultado.repetida,eventosNoCiclo:resultado.estado.vendasNoCiclo,
     prontoParaGiro:resultado.estado.elegivelParaGiro,
     dinheiroReal:false,somenteEnsaio:true};
@@ -565,19 +569,34 @@ class MotorContaUnicaEnsaioSQLite{
  }
  _pedidosAguardando(sim,limite=5000){
   if(!this.ponte)return [];
-  const rows=this.banco.prepare([
-   'SELECT prepedido_id AS prepedidoId,titular_id AS titularId',
-   'FROM akitemm_motor_conta_ensaio_operacoes',
-   "WHERE tipo='VINCULAR_PEDIDO'",
-   'ORDER BY criado_em,id LIMIT ?'
-  ].join(' ')).all(limite);
+  if(!Number.isSafeInteger(limite)||limite<1)
+   falha('FILA_PSP_LIMITE_TECNICO_INVALIDO');
+  // Cursor cronologico atravessa TODA a fila: o limite e apenas
+  // o tamanho do lote tecnico, nao um teto de pedidos historicos.
+  const consulta=this.banco.prepare([
+   'SELECT o.prepedido_id AS prepedidoId,',
+   'o.titular_id AS titularId,o.criado_em AS criadoEm,o.id',
+   'FROM akitemm_motor_conta_ensaio_operacoes o',
+   "WHERE o.tipo='VINCULAR_PEDIDO'",
+   'AND (o.criado_em>? OR (o.criado_em=? AND o.id>?))',
+   'AND NOT EXISTS (SELECT 1 FROM akitemm_motor_conta_ensaio_operacoes e',
+   "WHERE e.tipo='EVENTO_CICLO' AND e.prepedido_id=o.prepedido_id)",
+   'ORDER BY o.criado_em,o.id LIMIT ?'
+  ].join(' '));
+  let cursorTime=-1,cursorId=0;
   const elegiveis=[];
-  for(const p of rows){
-   if(sim.tabuleiro.vendasProcessadas.has('ensaio:'+p.prepedidoId))
-    continue;
-   try{this._conferirPedidoEventoPSPSandbox(p.prepedidoId,p.titularId);}
-   catch{continue;}
-   elegiveis.push(p);
+  while(elegiveis.length<limite){
+   const rows=consulta.all(cursorTime,cursorTime,cursorId,
+    Math.min(256,limite-elegiveis.length));
+   if(!rows.length)break;
+   for(const p of rows){
+    cursorTime=p.criadoEm;cursorId=p.id;
+    if(sim.tabuleiro.vendasProcessadas.has('ensaio:'+p.prepedidoId))
+     continue;
+    try{this._conferirPedidoEventoPSPSandbox(p.prepedidoId,p.titularId);}
+    catch{continue;}
+    elegiveis.push({prepedidoId:p.prepedidoId,titularId:p.titularId});
+   }
   }
   return elegiveis;
  }
