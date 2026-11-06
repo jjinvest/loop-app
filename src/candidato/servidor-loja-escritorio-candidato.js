@@ -955,7 +955,18 @@ if(worker){
     resultado.alertasRevisao=worker.resumoPendencias().exigeRevisao;
     return resultado;
   }
-  executarConciliacaoSandbox=executarLoteSandbox;
+  // Evita reconsultas simultâneas quando o botão manual encontra o
+  // ciclo automático. Uma operação em andamento é compartilhada.
+  let loteEmExecucao=null;
+  async function executarLoteSandboxUnico(limite){
+   if(loteEmExecucao!==null)return loteEmExecucao;
+   const operacao=executarLoteSandbox(limite);
+   loteEmExecucao=operacao;
+   try{return await operacao;}finally{
+    if(loteEmExecucao===operacao)loteEmExecucao=null;
+   }
+  }
+  executarConciliacaoSandbox=executarLoteSandboxUnico;
   app.post('/staging/escritorio-unificado/reconciliar-pendentes-sandbox',
    autorizarOperador,async(req,res)=>{
     if(!operacoesSandboxAutorizadas)
@@ -966,7 +977,7 @@ if(worker){
        req.body.limite<1||req.body.limite>20)
      return res.status(400).json({erro:'LOTE_CONCILIACAO_INVALIDO'});
     try{
-     return res.json(await executarLoteSandbox(req.body.limite));
+     return res.json(await executarLoteSandboxUnico(req.body.limite));
     }catch(_e){
      return res.status(503).json({erro:'LOTE_CONCILIACAO_NAO_CONCLUIDO'});
     }
