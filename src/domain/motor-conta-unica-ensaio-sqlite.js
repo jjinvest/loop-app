@@ -639,8 +639,8 @@ class MotorContaUnicaEnsaioSQLite{
   const metaConfig=metaQuantidade===undefined?undefined:
    validarMeta({...this._meta(),quantidade:metaQuantidade,
     dataAlvo:metaDataAlvo});
-  if(metaConfig?.quantidade>0&&modo!=='AGENDADA')
-   falha('META_CATRACA_REQUER_MODO_AGENDADO');
+  // Metas persistidas so sao executadas no modo AGENDADA.
+  // Mudar para NATURAL, MANUAL ou STOP nunca prende o administrador.
   const resposta=this._transacao(sim=>{
    this.banco.prepare([
     'UPDATE akitemm_motor_agenda_catraca_lab',
