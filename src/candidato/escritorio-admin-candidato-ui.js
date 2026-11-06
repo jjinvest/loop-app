@@ -628,10 +628,10 @@ async function atualizarMotorContaEnsaio(){
   linha('Compras confirmadas aguardando luz',r.agenda.aguardandoContabilizacao),
   linha('Giros de ensaio',r.catraca.giros),
   linha('Catraca',r.catraca.estado),
-  linha('Agenda',r.agenda.ativo?'ATIVA':'DESATIVADA'));
+  linha('Modo da catraca',r.agenda.modoExecucao||'MANUAL'));
  $('agendaMotorEstado').textContent='Horário '+r.agenda.abertura+'–'+
   r.agenda.fechamentoAplicado+' ('+r.agenda.fuso+') · '+
-  (r.agenda.ativo?'automática':'desativada')+' · '+
+  'Modo '+(r.agenda.modoExecucao||'MANUAL')+' · '+
   (r.agenda.dentroDoHorario?'dentro do horário':'fora do horário')+
   (r.agenda.pausaManual?' · PAUSA MANUAL':'')+
   ' · '+r.agenda.aguardandoContabilizacao+
@@ -642,7 +642,7 @@ async function atualizarMotorContaEnsaio(){
  $('agendaMotorIntervalo').value=String(r.agenda.intervaloMinutos);
  $('agendaMotorExcecaoData').value=r.agenda.excecaoData||'';
  $('agendaMotorExcecaoFim').value=r.agenda.excecaoFechamento||'';
- $('agendaMotorAtiva').checked=r.agenda.ativo===true;
+ $('agendaMotorModo').value=r.agenda.modoExecucao||'MANUAL';
  agendaHojeLocal=r.agenda.dia;
  return r;
 }
@@ -680,7 +680,8 @@ $('formAgendaMotor').addEventListener('submit',async e=>{
   if(Boolean(data)!==Boolean(hora))
    throw Error('A exceção precisa ter data e horário.');
   const r=await api('/motor/agenda',{method:'POST',body:{
-   ativo:$('agendaMotorAtiva').checked,
+   ativo:$('agendaMotorModo').value==='AGENDADA',
+   modoExecucao:$('agendaMotorModo').value,
    abertura:$('agendaMotorInicio').value,
    fechamento:$('agendaMotorFim').value,
    intervaloMinutos:Number($('agendaMotorIntervalo').value),
