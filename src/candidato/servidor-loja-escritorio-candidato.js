@@ -972,6 +972,12 @@ if(worker){
     throw erro('OPERACAO_SANDBOX_DESATIVADA');
    if(!Number.isSafeInteger(limite)||limite<1||limite>20)
     throw erro('LOTE_CONCILIACAO_INVALIDO');
+   // Quando a resposta da criacao Pix chega depois do webhook, reunir
+   // o sinal antecipado ao MESMO SQLite antes da reconsulta independente.
+   // Nenhum aviso bruto gera direitos financeiros ou posicoes.
+   const quarentena=inbox.reconciliarAntecipados({
+    execucaoLiberada:true,limite
+   });
     // GET PSP concluido nao prova que o lote chegou ao motor: a escrita
     // do motor pode falhar DEPOIS do worker marcar o evento concluido.
     // Reconciliacoes novas primeiro, depois reparo de vinculos ausentes.
@@ -998,6 +1004,9 @@ if(worker){
      'i.recebido_em,i.evento_id LIMIT ?'
     ].join(' ')).all(limite);
     const resultado={consultados:0,conciliados:0,
+     quarentenaRecuperada:quarentena.vinculados,
+     quarentenaAguardandoVinculo:quarentena.aguardandoVinculo,
+     quarentenaDivergente:quarentena.divergentes,
      revisaoNecessaria:0,lotesPendentesCriados:0,
      lotesSuspensos:0,errosDeProcessamento:0,
      ambiente:'ASAAS_SANDBOX_EXCLUSIVO',
