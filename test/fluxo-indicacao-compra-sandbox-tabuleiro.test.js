@@ -15,7 +15,8 @@ function preparar(){
  'CREATE TABLE akitemm_prepedido_asaas_sandbox_staging(prepedido_id TEXT PRIMARY KEY,titular_id TEXT,estado TEXT,pagamento_id TEXT);',
  'CREATE TABLE akitemm_prepedido_asaas_consultas_staging(id INTEGER PRIMARY KEY AUTOINCREMENT,prepedido_id TEXT,pagamento_id TEXT,status_asaas TEXT,consultado_em TEXT);',
  'CREATE TABLE akitemm_prepedido_webhook_inbox_staging(evento_id TEXT PRIMARY KEY,prepedido_id TEXT,pagamento_id TEXT,tipo TEXT);',
- 'CREATE TABLE akitemm_prepedido_webhook_reconsulta_staging(evento_id TEXT PRIMARY KEY,estado TEXT,codigo TEXT);'
+ 'CREATE TABLE akitemm_prepedido_webhook_reconsulta_staging(evento_id TEXT PRIMARY KEY,estado TEXT,codigo TEXT);',
+ 'CREATE TABLE akitemm_prepedido_posicoes_pendentes_sandbox_staging(prepedido_id TEXT,titular_id TEXT);'
  ].join(' '));
  const fotos=new Map(),estadosPSP=new Map();
  const sinalizacao={db,consultarFotografiaPrepedido:({prepedidoId,titularId})=>{
@@ -41,6 +42,8 @@ function preparar(){
   db.prepare('INSERT INTO akitemm_prepedido_asaas_consultas_staging(prepedido_id,pagamento_id,status_asaas,consultado_em) VALUES(?,?,?,?)')
    .run(id,asaas,recebido?'RECEIVED':'PENDING',new Date().toISOString());
   if(recebido){
+   db.prepare('INSERT INTO akitemm_prepedido_posicoes_pendentes_sandbox_staging VALUES(?,?)')
+    .run(id,titular);
    db.prepare('INSERT INTO akitemm_prepedido_webhook_inbox_staging VALUES(?,?,?,?)')
     .run('evt_'+n,id,asaas,'PAYMENT_RECEIVED');
    db.prepare('INSERT INTO akitemm_prepedido_webhook_reconsulta_staging VALUES(?,?,?)')
@@ -141,5 +144,68 @@ test('pedido de B pendente no PSP nao vira indicacao apesar de lote no motor',()
    indicadorId:tid(1),indicadoId:tid(2),posicaoAlvoId:a.posicaoId
   }),/INDICACAO_AGUARDANDO_COMPRA_PSP_CONCILIADA/);
   assert.equal(x.motor.consultar().filaA.length,0);
+ }finally{x.db.close();}
+});
+test('seis compras PSP independentes alimentam um giro e exigem status atual de cada pagamento',()=>{
+ const x=preparar();
+ try{
+  for(let i=1;i<=4;i++)x.conta(i,['Alpha','Bravo','Charlie','Delta'][i-1]);
+  for(let i=1;i<=8;i++)x.comprar(i,((i-1)%4)+1,true);
+  const board=x.motor.prepararTabuleiro();
+  assert.equal(board.preparado,true);
+  assert.equal(board.ocupadas,7);
+  const before=x.motor.consultar();
+  const numeroCentro=before.tabuleiro.centro.numero;
+  assert.equal(before.tabuleiro.vagas.length,6);
+  assert.equal(x.motor.controlarCatraca('GIRAR').girou,false);
+  for(let i=1;i<=5;i++){
+   const r=x.motor.registrarEvento({prepedidoId:pid(i)});
+   assert.equal(r.repetido,false);
+   assert.equal(r.eventosNoCiclo,i);
+   assert.equal(r.prontoParaGiro,false);
+  }
+  assert.equal(x.motor.registrarEvento({prepedidoId:pid(1)}).repetido,true);
+  x.motor.controlarCatraca('ABRIR');
+  assert.equal(x.motor.controlarCatraca('GIRAR').girou,false);
+  const sexto=x.motor.registrarEvento({prepedidoId:pid(6)});
+  assert.equal(sexto.eventosNoCiclo,6);
+  assert.equal(sexto.prontoParaGiro,true);
+  x.motor.controlarCatraca('PAUSAR');
+  assert.equal(x.motor.controlarCatraca('GIRAR').motivo,'CATRACA_PAUSADA');
+  x.motor.controlarCatraca('ABRIR');
+  // Uma nova reconsulta persistida que nao diz RECEIVED bloqueia
+  // o giro sem consumir eventos nem mover uma unica posicao.
+  x.db.prepare(
+   'INSERT INTO akitemm_prepedido_asaas_consultas_staging(prepedido_id,pagamento_id,status_asaas,consultado_em) VALUES(?,?,?,?)'
+  ).run(pid(1),'pay_'+pid(1).slice(4,12),'PENDING',new Date().toISOString());
+  assert.throws(()=>x.motor.controlarCatraca('GIRAR'),
+   /EVENTO_REQUER_COMPRA_PSP_CONCILIADA/);
+  assert.equal(x.motor.consultar().tabuleiro.centro.numero,numeroCentro);
+  assert.equal(x.motor.consultar().tabuleiro.vendasNoCiclo,6);
+  x.db.prepare(
+   'INSERT INTO akitemm_prepedido_asaas_consultas_staging(prepedido_id,pagamento_id,status_asaas,consultado_em) VALUES(?,?,?,?)'
+  ).run(pid(1),'pay_'+pid(1).slice(4,12),'RECEIVED',new Date().toISOString());
+  assert.equal(x.motor.controlarCatraca('GIRAR').girou,true);
+  const after=x.motor.consultar();
+  assert.equal(after.catraca.giros,1);
+  assert.equal(after.tabuleiro.centro.numero,before.tabuleiro.vagas[0].numero);
+  assert.equal(after.tabuleiro.vendasNoCiclo,0);
+  assert.equal(after.saldoRealCentavos,null);
+  assert.equal(after.dinheiroReal,false);
+  assert.equal(x.db.prepare(
+   "SELECT COUNT(*) AS n FROM akitemm_motor_conta_ensaio_operacoes WHERE tipo='GIRO'"
+  ).get().n,1);
+  assert.equal(x.db.prepare('PRAGMA integrity_check').get().integrity_check,'ok');
+ }finally{x.db.close();}
+});
+test('webhook sem PSP recebido nao abastece catraca apesar de existir lote',()=>{
+ const x=preparar();
+ try{
+  x.conta(1,'Alpha');
+  x.comprar(1,1,false);
+  x.motor.prepararTabuleiro();
+  assert.throws(()=>x.motor.registrarEvento({prepedidoId:pid(1)}),
+   /EVENTO_REQUER_COMPRA_PSP_CONCILIADA/);
+  assert.equal(x.motor.consultar().tabuleiro.vendasNoCiclo,0);
  }finally{x.db.close();}
 });
