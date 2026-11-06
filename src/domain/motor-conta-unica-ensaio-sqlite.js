@@ -65,8 +65,8 @@ class MotorContaUnicaEnsaioSQLite{
    "1,0,'09:00','18:00',10,NULL,NULL,0,NULL,-1);",
    'CREATE TABLE IF NOT EXISTS akitemm_motor_catraca_modo_lab(',
    "id INTEGER PRIMARY KEY CHECK(id=1), modo TEXT NOT NULL",
-   "CHECK(modo IN ('PARADA','NATURAL','AGENDADA')));",
-   "INSERT OR IGNORE INTO akitemm_motor_catraca_modo_lab VALUES(1,'PARADA');",
+   "CHECK(modo IN ('MANUAL','STOP','NATURAL','AGENDADA')));",
+   "INSERT OR IGNORE INTO akitemm_motor_catraca_modo_lab VALUES(1,'MANUAL');",
    'CREATE TABLE IF NOT EXISTS akitemm_motor_indicacoes_qualificadas_lab(',
    'indicado_id TEXT PRIMARY KEY REFERENCES',
    'akitemm_conta_unica_candidata(id) ON DELETE RESTRICT,',
@@ -528,7 +528,7 @@ class MotorContaUnicaEnsaioSQLite{
  _modoCatraca(){
   return this.banco.prepare(
    'SELECT modo FROM akitemm_motor_catraca_modo_lab WHERE id=1'
-  ).get()?.modo||'PARADA';
+  ).get()?.modo||'MANUAL';
  }
  _agenda(){
   const row=this.banco.prepare([
@@ -582,8 +582,8 @@ class MotorContaUnicaEnsaioSQLite{
   modoExecucao=null,agoraMs=Date.now()}={}){
   const velho=this._agenda();
   const modo=modoExecucao===null?
-   (ativo?'AGENDADA':'PARADA'):modoExecucao;
-  if(!['PARADA','NATURAL','AGENDADA'].includes(modo))
+   (ativo?'AGENDADA':'MANUAL'):modoExecucao;
+  if(!['MANUAL','STOP','NATURAL','AGENDADA'].includes(modo))
    falha('MODO_CATRACA_INVALIDO');
   const local=avaliarAgenda(velho,agoraMs);
   const novo=validarAgenda({
@@ -630,7 +630,9 @@ class MotorContaUnicaEnsaioSQLite{
   const config=this._agenda();
   const modo=this._modoCatraca();
   if(modo==='NATURAL')return this._processarNatural();
-  if(modo==='PARADA'){
+  if(modo==='MANUAL')return {acao:'CONTROLE_MANUAL',
+   somenteEnsaio:true};
+  if(modo==='STOP'){
    const sim=this._simulador();
    if(!sim.catracaAberta)return {acao:'STOP_CATRACA',
     somenteEnsaio:true};
