@@ -147,6 +147,14 @@
 <button type="submit" class="primario">Salvar agenda da catraca</button>
 </form>
 <p class="subtexto" id="agendaMotorEstado" role="status" aria-live="polite">Agenda: ainda não consultada.</p>
+<form id="formLiberarLoteMotor">
+<label for="motorLoteQuantidade">Liberar até quantas pessoas do centro agora?
+<input id="motorLoteQuantidade" type="number" min="1" step="1" value="5" required inputmode="numeric"></label>
+<button type="submit">Executar lote de ensaio</button>
+<p class="subtexto">Exemplo: 5 pessoas = até 5 ciclos completos, cada um exigindo 6 compras distintas recebidas e conciliadas no Sandbox. Se faltarem compras, não inventa posições nem valores. O STOP impede a liberação.</p>
+</form>
+<p class="subtexto" id="motorLoteResultado" role="status" aria-live="polite"></p>
+
 <p id="motorEnsaioStatus" role="status" aria-live="polite" class="subtexto"></p>
 <div id="motorEnsaioResumo" class="indicadores" aria-label="Estado verdadeiro do motor de ensaio"></div>
 </section>
