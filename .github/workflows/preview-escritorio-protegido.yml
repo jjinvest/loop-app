@@ -16,6 +16,7 @@ on:
       - 'src/domain/plano-posicoes-compra-akitemm.js'
       - 'test/plano-posicoes-compra-akitemm.test.js'
       - 'test/asaas-motor-automatico-sandbox-candidato.test.js'
+      - 'test/asaas-vinculo-motor-recuperacao-candidato.test.js'
       - 'test/preview-unificacao-psp-webhook.test.js'
       - 'src/domain/agendador-conciliacao-asaas-sandbox.js'
       - 'src/domain/agendador-backup-offsite-railway-lab.js'
@@ -85,6 +86,7 @@ jobs:
       - run: node --check src/adapters/email-recuperacao-resend.js
       - run: node --check src/domain/conta-unica-candidata-sqlite.js
       - run: node --test test/recuperacao-senha-candidata.test.js
+      - run: node --test test/asaas-vinculo-motor-recuperacao-candidato.test.js
       - run: npm test
       - run: npm install --no-save playwright@1.56.1
       - run: npx playwright install --with-deps chromium
