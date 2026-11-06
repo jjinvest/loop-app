@@ -72,7 +72,9 @@ test('backup completo: SQLite WAL cifrado, PUT GET, RESTAURA sem alterar fonte',
   return new Response(remoto,{status:200});
  };
  const changes=f.banco.prepare('SELECT total_changes() AS n').get().n;
- const w=criarAgendadorBackupOffsiteLab(options(f,{buscar}));
+ const confirmacoes=[];
+ const w=criarAgendadorBackupOffsiteLab(options(f,{buscar,
+  onSucesso:codigo=>confirmacoes.push(codigo)}));
  const r=await w.executarUmaVez();
  assert.equal(r.estado,'OFFSITE_CIFRADO_LIDO_E_RESTAURADO');
  assert.equal(r.copiaOffsiteComprovada,true);
@@ -80,6 +82,7 @@ test('backup completo: SQLite WAL cifrado, PUT GET, RESTAURA sem alterar fonte',
  assert.equal(w.estado().copiasVerificadasNoProcesso,1);
  assert.equal(w.estado().ultimaConfirmacao.integridadeCifradaSha256.length,64);
  assert.equal(puts,1);assert.equal(gets,1);
+ assert.deepEqual(confirmacoes,['CIFRADO_ENVIADO_BAIXADO_E_RESTAURADO']);
  assert.equal(f.banco.prepare('SELECT total_changes() AS n').get().n,changes);
  assert.equal(f.banco.prepare('PRAGMA integrity_check').get().integrity_check,'ok');
  assert.deepEqual(f.banco.prepare('PRAGMA foreign_key_check').all(),[]);
@@ -105,7 +108,7 @@ test('resposta GET adulterada bloqueia sucesso e nunca expõe segredo',async t=>
  assert.equal(r.estado,'BACKUP_REQUER_VERIFICACAO');
  assert.equal(w.estado().copiasVerificadasNoProcesso,0);
  assert.equal(w.estado().falhasNoProcesso,1);
- assert.deepEqual(avisos,['BACKUP_OFFSITE_REQUER_VERIFICACAO']);
+ assert.deepEqual(avisos,['BACKUP_OFFSITE_INTEGRO_NAO_COMPROVADO']);
  assert.equal(JSON.stringify(r).includes(senha),false);
  await w.encerrar();
 });
