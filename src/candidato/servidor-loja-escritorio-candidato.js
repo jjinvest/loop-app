@@ -667,6 +667,25 @@ function criarAppLojaEscritorioCandidato({banco,repositorioCatalogo,
   try{return res.json(motorConta.registrarEvento(req.body));}
   catch(e){return res.status(409).json({erro:e.codigo||'MOTOR_ENSAIO_INDISPONIVEL'});}
  });
+ // Agenda usa o MESMO motor de ensaio. Configuracao padrao 09h-18h
+ // America/Sao_Paulo, 10 min, excecao ate 21h opcional por data.
+ // Nenhum timer gera compra: ele so contabiliza PSP ja confirmado.
+ app.get('/staging/escritorio-unificado/motor/agenda',autorizarOperador,(_req,res)=>{
+  try{return res.json(motorConta.consultarAgenda());}
+  catch(e){return res.status(503).json({erro:e.codigo||'AGENDA_INDISPONIVEL'});}
+ });
+ app.post('/staging/escritorio-unificado/motor/agenda',autorizarOperador,(req,res)=>{
+  if(!req.is('application/json')||!req.body||Array.isArray(req.body)||
+     Object.keys(req.body).sort().join(',')!==
+     'abertura,ativo,excecaoData,excecaoFechamento,fechamento,intervaloMinutos')
+   return res.status(400).json({erro:'AGENDA_CAMPOS_INVALIDOS'});
+  try{
+   const r=motorConta.configurarAgenda(req.body);
+   return res.json(r);
+  }catch(e){return res.status(409).json({
+   erro:e.codigo||'AGENDA_CONFIG_INVALIDA'
+  });}
+ });
  app.post('/staging/escritorio-unificado/motor/catraca',autorizarOperador,(req,res)=>{
   if(!req.is('application/json')||!req.body||Array.isArray(req.body)||
      Object.keys(req.body).join(',')!=='acao')
