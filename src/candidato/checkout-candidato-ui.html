@@ -157,6 +157,11 @@
    <div class="linha"><h2>Meus Pedidos</h2><button type="button" id="atualizarPedidos">Atualizar</button></div>
    <p class="subtexto">Histórico exclusivo desta conta. Situações do Asaas são apenas registros de homologação.</p>
    <div id="listaPedidos" aria-live="polite"><p>Nenhum pedido consultado.</p></div>
+   <nav class="linha" aria-label="Navegação do histórico de pedidos">
+    <button type="button" id="pedidosAnterior" disabled>Anterior</button>
+    <span id="pedidosPaginacao" role="status" aria-live="polite">Nenhum pedido carregado.</span>
+    <button type="button" id="pedidosProximo" disabled>Próximos</button>
+   </nav>
     <h3>Prévia das minhas posições</h3>
     <p class="subtexto">Posições de laboratório; não são adesões ou créditos reais.</p>
     <div id="minhaPreviaFilas" aria-live="polite"></div>
