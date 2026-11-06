@@ -216,6 +216,7 @@ async function atualizar(){
   linha('Contas',e.contasCandidatas),
   linha('Pré-pedidos',e.resumo.prepedidosStaging),
   linha('PSP conciliados',e.resumo.recebimentosPSPConciliados),
+  linha('PSP sem posição — revisar',e.vinculosMotorAusentes),
   linha('Posições fictícias',e.posicoesPendentesFicticias),
   linha('Missões no filtro',m.total)
  );
@@ -581,6 +582,7 @@ $('reconciliarPendentesPsp').addEventListener('click',async()=>{
    r.lotesPendentesCriados+' lotes de posições pendentes, '+
    r.lotesSuspensos+' lotes suspensos por reversão, '+
    r.pendentesRestantes+' avisos aguardando, '+
+   r.vinculosMotorAusentes+' eventos de pagamento sandbox sem vínculo no motor, '+
    r.revisaoNecessaria+' casos desta rodada exigindo revisão. '+
    'Nenhum saque ou pagamento real liberado.';
   await atualizar();
