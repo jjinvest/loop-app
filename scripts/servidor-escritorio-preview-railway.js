@@ -84,12 +84,26 @@ function criarGateway({portaInterna,senhaAcesso,segredoOperador,
   let url;
   try{url=new URL(req.url,'http://gateway.invalid');}
   catch{return negar(400,'Requisição inválida');}
+  const auth=req.headers.authorization||'';
+  let decodificado='';
+  if(/^Basic [A-Za-z0-9+/=]+$/.test(auth)){
+   try{decodificado=Buffer.from(auth.slice(6),'base64').toString('utf8');}
+   catch{}
+  }
+  const basicaValida=seguro(decodificado,'acesso:'+senhaAcesso);
+  const sessaoValida=lerSessao(req);
   // Liveness nao pode declarar o gateway saudavel se o backend caiu.
   // Readiness confere as invariantes reais do SQLite pelo backend isolado.
   // Nao encaminhar dados internos ou segredos a quem consulta o probe.
   if(req.method==='GET'&&
     (url.pathname==='/healthz'||url.pathname==='/readyz')){
    const profunda=url.pathname==='/readyz';
+   // A auditoria profunda do SQLite percorre varias tabelas: nao oferecer
+   // esse trabalho custoso a visitantes anonimos da previa protegida.
+   if(profunda&&!basicaValida&&!sessaoValida)
+    return negar(401,'Acesso exclusivo para homologação',{
+     'WWW-Authenticate':'Basic realm="AKITEMM - Acesso de teste"'
+    });
    let respondido=false;
    const concluir=(ok)=>{
     if(respondido||res.destroyed)return;
@@ -122,14 +136,6 @@ function criarGateway({portaInterna,senhaAcesso,segredoOperador,
    if(typeof req.headers['asaas-access-token']!=='string')
     return negar(401,'Token obrigatório');
   }
-  const auth=req.headers.authorization||'';
-  let decodificado='';
-  if(/^Basic [A-Za-z0-9+/=]+$/.test(auth)){
-   try{decodificado=Buffer.from(auth.slice(6),'base64').toString('utf8');}
-   catch{}
-  }
-  const basicaValida=seguro(decodificado,'acesso:'+senhaAcesso);
-  const sessaoValida=lerSessao(req);
   if(!basicaValida&&!sessaoValida&&!webhookUnificado)
    return negar(401,'Acesso exclusivo para homologação',{
     'WWW-Authenticate':'Basic realm="AKITEMM - Acesso de teste", charset="UTF-8"'
