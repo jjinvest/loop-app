@@ -436,7 +436,7 @@ test('meta de dez pessoas entre 09h e 18h libera so quando o horario autoriza',(
   assert.equal(primeiro.liberadosAgora,1);
   assert.equal(x.motor.consultar().catraca.giros,1);
   assert.equal(x.motor.processarPulsoAgenda({agoraMs:t('09:53')}).acao,
-   'META_JA_AVALIADA');
+   'META_AGUARDANDO_PROXIMA_LIBERACAO');
   assert.equal(x.motor.consultar().catraca.giros,1);
   assert.equal(x.motor.processarPulsoAgenda({agoraMs:t('09:54')}).acao,
    'META_AGUARDANDO_PROXIMA_LIBERACAO');
@@ -472,5 +472,33 @@ test('meta sem vendas suficientes nao inventa ciclos e preserva filas',()=>{
   assert.equal(x.motor.consultar().catraca.giros,1);
   assert.equal(x.motor.consultar().tabuleiro.eventosNoCiclo,2);
   assert.equal(x.motor.consultar().saldoRealCentavos,null);
+ }finally{x.db.close();}
+});
+
+test('meta de um milhao e apenas doze compras autoriza dois ciclos sem teto de um giro por minuto',()=>{
+ const x=preparar();
+ const t=s=>Date.parse('2026-11-06T'+s+':00-03:00');
+ try{
+  for(let i=1;i<=8;i++)x.conta(i,'Milhao'+String.fromCharCode(96+i));
+  for(let i=1;i<=12;i++)x.comprar(i,((i-1)%8)+1,true);
+  x.motor.configurarAgenda({
+   ativo:true,modoExecucao:'AGENDADA',abertura:'09:00',
+   fechamento:'18:00',intervaloMinutos:10,
+   metaQuantidade:1000000,metaDataAlvo:'2026-11-06',
+   agoraMs:t('09:00')
+  });
+  const p=x.motor.processarPulsoAgenda({agoraMs:t('09:01')});
+  assert.equal(p.acao,'GIRO_META_AGENDADA');
+  assert.equal(p.liberadosAgora,2);
+  assert.equal(x.motor.consultar().catraca.giros,2);
+  assert.equal(x.motor.consultarAgenda({agoraMs:t('09:01')})
+   .metaLotes.quantidade,1000000);
+  const repeat=x.motor.processarPulsoAgenda({agoraMs:t('09:01')});
+  assert.equal(repeat.acao,'META_AGUARDANDO_PSP');
+  assert.equal(repeat.liberadosAgora,0);
+  assert.equal(x.motor.consultar().catraca.giros,2);
+  assert.equal(x.motor.consultar().tabuleiro.eventosNoCiclo,0);
+  assert.equal(x.motor.consultar().saldoRealCentavos,null);
+  assert.equal(x.db.prepare('PRAGMA integrity_check').get().integrity_check,'ok');
  }finally{x.db.close();}
 });
