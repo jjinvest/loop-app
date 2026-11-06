@@ -866,6 +866,24 @@ function criarAppLojaEscritorioCandidato({banco,repositorioCatalogo,
    "AND (c.estado IS NULL OR c.estado<>'CONCLUIDO')"
   ].join(' ')).get().n;
  }
+ // Indicadores operacionais de recuperacao, sem dados pessoais,
+ // valores, payloads ou IDs do PSP. Alimentam o painel real do admin.
+ function statusRecuperacaoPSP(){
+  if(!worker)return {processando:0,retomaveis:0,segundaFalha:0};
+  const n=banco.prepare([
+   'SELECT',
+   "SUM(CASE WHEN estado='PROCESSANDO' THEN 1 ELSE 0 END) AS processando,",
+   "SUM(CASE WHEN estado='EXIGE_REVISAO'",
+   "AND codigo='PROCESSAMENTO_INTERROMPIDO_REVISAR'",
+   "THEN 1 ELSE 0 END) AS retomaveis,",
+   "SUM(CASE WHEN estado='EXIGE_REVISAO'",
+   "AND codigo='RETOMADA_REINTERROMPIDA_EXIGE_REVISAO'",
+   'THEN 1 ELSE 0 END) AS segundaFalha',
+   'FROM akitemm_prepedido_webhook_reconsulta_staging'
+  ].join(' ')).get();
+  return {processando:n?.processando||0,
+   retomaveis:n?.retomaveis||0,segundaFalha:n?.segundaFalha||0};
+ }
  function atualizarCheckpointReversao(eventoId,estado){
   banco.prepare([
    'INSERT INTO akitemm_motor_reversoes_psp_checkpoint',
@@ -993,10 +1011,11 @@ if(worker){
     const resumo={...worker.resumoPendencias(),
      vinculosMotorAusentes:contarVinculosMotorAusentes(),
      reversoesMotorPendentes:contarReversoesMotorPendentes()};
+    const recuperacaoPSP=statusRecuperacaoPSP();
     const fila=worker.pendencias({limite:30});
     return res.json({
      ambiente:'ASAAS_SANDBOX_EXCLUSIVO',somenteLaboratorio:true,
-     resumo,fila,posicoesReais:0,pagamentosReais:0,
+     resumo,recuperacaoPSP,fila,posicoesReais:0,pagamentosReais:0,
      saquesReais:0,consultaPSPExecutadaNestaLeitura:false
     });
    });
@@ -1159,6 +1178,7 @@ if(worker){
      quarentenaAguardandoVinculo:quarentena.aguardandoVinculo,
      quarentenaDivergente:quarentena.divergentes,
      interrupcoesDetectadas:interrupcoes.recuperados,
+     interrupcoesReinterrompidas:interrupcoes.reinterrompidos,
      retomadasComProvaPSP:0,
      revisaoNecessaria:0,lotesPendentesCriados:0,
      lotesSuspensos:0,errosDeProcessamento:0,
@@ -1317,6 +1337,7 @@ if(worker){
     integridadePagamentosEntregas:auditarRelacoesPspCandidato({banco}),
     vinculosMotorAusentes:contarVinculosMotorAusentes(),
     reversoesMotorPendentes:contarReversoesMotorPendentes(),
+    recuperacaoPSP:statusRecuperacaoPSP(),
     escritorioFonteUnica:true,
     contasCandidatas:banco.prepare(
      'SELECT COUNT(*) AS n FROM akitemm_conta_unica_candidata'
