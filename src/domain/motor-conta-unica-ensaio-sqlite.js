@@ -621,6 +621,84 @@ class MotorContaUnicaEnsaioSQLite{
   });
   return {...resposta,agenda:this.consultarAgenda({agoraMs})};
  }
+ // Sem Circuit Breaker/agenda, a CATrACA segue a fila naturalmente:
+ // compras recebidas sao a fonte dos eventos. Nunca gera compras nem
+ // acelera o PSP. O limite interno de 60 eventos por tick protege o SQLite,
+ // sem estabelecer quota comercial; ticks seguintes continuam o trabalho.
+ _processarNatural(){
+  if(!this.ponte)return {acao:'NATURAL_REQUER_PSP_SANDBOX',somenteEnsaio:true};
+  const cfg=this._agenda();
+  if(cfg.pausaManual)return {acao:'PAUSA_MANUAL',somenteEnsaio:true};
+  const previo=this._simulador();
+  const disponiveis=this._pedidosAguardando(previo,5000);
+  if(!disponiveis.length&&previo.tabuleiro.vendasDoCiclo.length!==6)
+   return {acao:'NATURAL_SEM_EVENTOS_NOVOS',somenteEnsaio:true};
+  return this._transacao(sim=>{
+   if(this._modoCatraca()!=='NATURAL'||this._agenda().pausaManual)
+    return {acao:'NATURAL_SUSPENSO',somenteEnsaio:true};
+   if(!sim.tabuleiro.centro&&
+      sim.filas.filaA.length+sim.filas.filaB.length+
+      sim.tabuleiro.vagas.filter(Boolean).length>=7){
+    sim.prepararTabuleiro();
+    this._evento('PREPARAR_TABULEIRO_NATURAL');
+   }
+   if(!sim.tabuleiro.centro)
+    return {acao:'NATURAL_AGUARDANDO_TABULEIRO',somenteEnsaio:true};
+   sim.abrirCatraca();
+   let eventos=0,giros=0,exigeRevisao=false;
+   const pedidos=this._pedidosAguardando(sim,5000);
+   // Uma compra elegivel acende uma luz; seis luzes validas fazem UM
+   // ciclo. Um lote de compras pode produzir varios ciclos sem relogio.
+   while((eventos<60||sim.tabuleiro.vendasDoCiclo.length===6)&&giros<10){
+    if(sim.tabuleiro.vendasDoCiclo.length===6){
+     let reconsultaOK=true;
+     for(const evento of sim.tabuleiro.vendasDoCiclo){
+      const id=evento.vendaId?.startsWith('ensaio:')?
+       evento.vendaId.slice(7):null;
+      const origem=id&&this.banco.prepare([
+       'SELECT titular_id AS titularId',
+       'FROM akitemm_motor_conta_ensaio_operacoes',
+       "WHERE tipo='VINCULAR_PEDIDO' AND prepedido_id=? LIMIT 1"
+      ].join(' ')).get(id);
+      try{
+       if(!origem)falha('EVENTO_SEM_TITULAR');
+       this._conferirPedidoEventoPSPSandbox(id,origem.titularId);
+      }catch{reconsultaOK=false;break;}
+     }
+     if(!reconsultaOK){
+      this.banco.prepare([
+       'UPDATE akitemm_motor_agenda_catraca_lab',
+       'SET pausa_manual=1 WHERE id=1'
+      ].join(' ')).run();
+      sim.pausarCatraca();
+      this._evento('NATURAL_PSP_EXIGE_REVISAO');
+      exigeRevisao=true;break;
+     }
+     const giro=sim.tentarGiro();
+     if(!giro.girou)break;
+     this._evento('GIRO');
+     giros++;
+     continue;
+    }
+    const proximo=pedidos.shift();
+    if(!proximo)break;
+    // Idempotencia duravel tambem vale no processamento NATURAL.
+    const r=sim.registrarVendaNoCicloSimulada({
+     vendaId:'ensaio:'+proximo.prepedidoId
+    });
+    if(r.repetida)continue;
+    this._evento('EVENTO_CICLO',{
+     prepedidoId:proximo.prepedidoId,titularId:proximo.titularId
+    });
+    eventos++;
+   }
+   return {acao:exigeRevisao?'NATURAL_PSP_EXIGE_REVISAO':
+    giros?'GIRO_NATURAL':eventos?'LUZ_NATURAL':'NATURAL_AGUARDANDO',
+    eventosContabilizados:eventos,giros,ultimasLuzes:
+     sim.tabuleiro.vendasDoCiclo.length,
+    somenteEnsaio:true,dinheiroReal:false};
+  });
+ }
  // Executar no mesmo SQLite pelo timer do servidor, serializado em
  // BEGIN IMMEDIATE. Um pulso contabiliza NO MAXIMO UMA compra conciliada,
  // ou, depois do sexto evento, executa UM giro controlado. Ao ficar
@@ -740,6 +818,23 @@ class MotorContaUnicaEnsaioSQLite{
   if(!['ABRIR','PAUSAR','GIRAR'].includes(acao))falha('ACAO_CATRACA_INVALIDA');
   return this._transacao(sim=>{
    const config=this._agenda();
+   const modo=this._modoCatraca();
+   if(modo==='STOP'&&acao!=='PAUSAR')
+    return {girou:false,motivo:'STOP_ADMINISTRATIVO',somenteEnsaio:true,
+     creditoReal:false};
+   if(modo==='NATURAL'&&config.pausaManual&&acao==='GIRAR')
+    return {girou:false,motivo:'CATRACA_PAUSADA_MANUALMENTE',
+     somenteEnsaio:true,creditoReal:false};
+   if(acao==='PAUSAR'&&modo!=='MANUAL'&&modo!=='STOP')
+    this.banco.prepare([
+     'UPDATE akitemm_motor_agenda_catraca_lab',
+     'SET pausa_manual=1 WHERE id=1'
+    ].join(' ')).run();
+   if(acao==='ABRIR'&&modo==='NATURAL')
+    this.banco.prepare([
+     'UPDATE akitemm_motor_agenda_catraca_lab',
+     'SET pausa_manual=0 WHERE id=1'
+    ].join(' ')).run();
    if(config.ativo){
     const tempo=avaliarAgenda(config,Date.now());
     if(!tempo.dentroDoHorario&&acao!=='PAUSAR')
