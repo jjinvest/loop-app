@@ -906,7 +906,11 @@ if(worker){
      if(!Number.isSafeInteger(ativas)||prev+ativas>10)
       return res.status(409).json({erro:'LIMITE_POSICOES_ANTES_DA_COBRANCA'});
      ponte.preparar({titularId:row.titularId,prepedidoId:b.prepedidoId,
-      clienteAsaasId:b.clienteAsaasId});
+      clienteAsaasId:b.clienteAsaasId,
+      capacidade:{quantidadePosicoes:prev,
+       consultarAtivas:()=>motorConta.consultar({
+        titularId:row.titularId
+       }).posicoesAtivasDoTitular}});
      const r=await ponte.enviarUmaVez({titularId:row.titularId,
       prepedidoId:b.prepedidoId,provedor:provedorReconsultaSandbox,
       execucaoLiberada:true,exigirCoberturaBruta:true});
