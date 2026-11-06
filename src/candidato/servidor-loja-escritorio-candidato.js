@@ -902,28 +902,43 @@ if(worker){
      const audit=auditarCoberturaDePedido({
       fotografia:foto,valorPedidoCentavos:row.centavos
      });
-     if(!foto?.planejamentoPosicoes?.podeVincularEnsaio||
-        audit.alertas.includes('EVENTO_ROXO_NAO_CONFIGURADO')||
-        audit.segmentosInsuficientes?.length||
-        audit.diferencaBrutaAposReferenciaCentavos<0)
+     // Comprar na loja NAO depende de ter vaga no LOOP. Apenas a
+     // promessa de posicoes exige plano qualificado, cobertura e limite.
+     // Cinza, verde abaixo de R$250 e cliente com dez posicoes seguem
+     // como compra de produto, sem geracao automatica de novas posicoes.
+     const plano=foto?.planejamentoPosicoes;
+     if(!plano||audit.alertas.includes('EVENTO_ROXO_NAO_CONFIGURADO'))
+      return res.status(409).json({erro:'PRECOBRANCA_CLASSIFICACAO_INDETERMINADA'});
+     const prev=plano.quantidadePosicoesPrevistas;
+     if(!Number.isSafeInteger(prev)||prev<0)
+      return res.status(409).json({erro:'PLANEJAMENTO_POSICOES_INVALIDO'});
+     // Se o pedido se qualifica, a cobertura bruta por SEGMENTO
+     // ainda precisa ser validada; nao usar o valor cinza para financiar
+     // posicoes prometidas em verde/dourado/roxo.
+     if(prev>0&&plano.podeVincularEnsaio&&
+        (audit.segmentosInsuficientes?.length||
+         audit.diferencaBrutaAposReferenciaCentavos<0))
       return res.status(409).json({erro:'PRECOBRANCA_SEM_COBERTURA_MINIMA'});
-     const ativas=motorConta.consultar({titularId:row.titularId}).posicoesAtivasDoTitular;
-     const prev=foto.planejamentoPosicoes.quantidadePosicoesPrevistas;
-     if(!Number.isSafeInteger(ativas)||prev+ativas>10)
-      return res.status(409).json({erro:'LIMITE_POSICOES_ANTES_DA_COBRANCA'});
-     ponte.preparar({titularId:row.titularId,prepedidoId:b.prepedidoId,
+     const preparado=ponte.preparar({
+      titularId:row.titularId,prepedidoId:b.prepedidoId,
       clienteAsaasId:b.clienteAsaasId,
       capacidade:{quantidadePosicoes:prev,
        consultarAtivas:()=>motorConta.consultar({
         titularId:row.titularId
-       }).posicoesAtivasDoTitular}});
+       }).posicoesAtivasDoTitular}
+     });
      const r=await ponte.enviarUmaVez({titularId:row.titularId,
       prepedidoId:b.prepedidoId,provedor:provedorReconsultaSandbox,
-      execucaoLiberada:true,exigirCoberturaBruta:true});
+      execucaoLiberada:true,
+      exigirCoberturaBruta:(preparado.registro.posicoesReservadas??prev)>0});
      return res.status(r.repetido?200:201).json({
       ambiente:'ASAAS_SANDBOX_EXCLUSIVO',
       prepedidoId:b.prepedidoId,estado:r.registro?.estado,
       repetido:r.repetido===true,consultaPSPRecebido:false,
+      posicoesPrevistas:preparado.registro.posicoesPrevistas,
+      posicoesReservadas:preparado.registro.posicoesReservadas,
+      modalidadeDeParticipacao:preparado.registro.modalidadeDeParticipacao,
+      compraSemNovaPosicao:preparado.registro.compraSemNovaPosicao,
       posicoesReais:0,saquesReais:0
      });
     }catch(e){
