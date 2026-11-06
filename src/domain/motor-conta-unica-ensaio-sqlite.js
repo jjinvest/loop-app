@@ -4,6 +4,7 @@
 // Bloqueio absoluto em NODE_ENV=production e sem rotas publicas de escrita.
 const {SimuladorLoop}=require('./simulador-loop');
 const {PADRAO,validarAgenda,avaliarAgenda}=require('./agenda-catraca-loop');
+const {planejado,dadosAtivacao,validarMeta}=require('./meta-lotes-catraca-loop');
 const {LIMITE_POSICOES_ATIVAS}=require('./capacidade-posicoes-loop');
 const {planejarPosicoesCompraAkitemm}=require('./plano-posicoes-compra-akitemm');
 const {consultarPedido}=require('./relatorio-homologacao-checkout-staging');
@@ -67,6 +68,15 @@ class MotorContaUnicaEnsaioSQLite{
    "id INTEGER PRIMARY KEY CHECK(id=1), modo TEXT NOT NULL",
    "CHECK(modo IN ('MANUAL','STOP','NATURAL','AGENDADA')));",
    "INSERT OR IGNORE INTO akitemm_motor_catraca_modo_lab VALUES(1,'MANUAL');",
+   'CREATE TABLE IF NOT EXISTS akitemm_motor_catraca_meta_lab(',
+   'id INTEGER PRIMARY KEY CHECK(id=1),',
+   'quantidade INTEGER NOT NULL CHECK(quantidade>=0),',
+   'data_alvo TEXT,ativada_dia TEXT,',
+   'ativada_minuto INTEGER NOT NULL DEFAULT 0,',
+   'ultimo_dia TEXT,ultimo_minuto INTEGER NOT NULL DEFAULT -1,',
+   'base_giros INTEGER NOT NULL DEFAULT 0);',
+   "INSERT OR IGNORE INTO akitemm_motor_catraca_meta_lab",
+   "VALUES(1,0,NULL,NULL,0,NULL,-1,0);",
    'CREATE TABLE IF NOT EXISTS akitemm_motor_indicacoes_qualificadas_lab(',
    'indicado_id TEXT PRIMARY KEY REFERENCES',
    'akitemm_conta_unica_candidata(id) ON DELETE RESTRICT,',
@@ -530,6 +540,17 @@ class MotorContaUnicaEnsaioSQLite{
    'SELECT modo FROM akitemm_motor_catraca_modo_lab WHERE id=1'
   ).get()?.modo||'MANUAL';
  }
+ _meta(){
+  const row=this.banco.prepare([
+   'SELECT quantidade,data_alvo AS dataAlvo,',
+   'ativada_dia AS ativadaDia,ativada_minuto AS ativadaMinuto,',
+   'ultimo_dia AS ultimoDia,ultimo_minuto AS ultimoMinuto,',
+   'base_giros AS baseGiros',
+   'FROM akitemm_motor_catraca_meta_lab WHERE id=1'
+  ].join(' ')).get();
+  if(!row)falha('META_CATRACA_SQLITE_AUSENTE');
+  return validarMeta(row);
+ }
  _agenda(){
   const row=this.banco.prepare([
    'SELECT ativo,abertura,fechamento,intervalo_minutos AS intervaloMinutos,',
@@ -565,8 +586,21 @@ class MotorContaUnicaEnsaioSQLite{
   const config=this._agenda();
   const horario=avaliarAgenda(config,agoraMs);
   const sim=this._simulador();
+  const meta=this._meta();
+  const planejamento=meta.quantidade>0?
+   planejado(meta,config,agoraMs):null;
+  const realizados=meta.ultimoDia===planejamento?.dia?
+   Math.max(0,sim.giros-meta.baseGiros):0;
   return {...config,...horario,
    modoExecucao:this._modoCatraca(),
+   metaLotes:{
+    ativa:meta.quantidade>0&&this._modoCatraca()==='AGENDADA',
+    quantidade:meta.quantidade,dataAlvo:meta.dataAlvo,
+    realizadosNoDia:realizados,
+    ciclosAutorizadosAteAgora:planejamento?.ciclosAutorizadosAteAgora||0,
+    restantes:Math.max(0,meta.quantidade-realizados),
+    horarioLivre:true,liberacaoDependeDePSP:true
+   },
    aguardandoContabilizacao:this._pedidosAguardando(sim).length,
    luzesAcesas:sim.tabuleiro.vendasDoCiclo.length,
    luzesRoxasAcesas:sim.tabuleiro.vendasDoCiclo.filter(v=>
@@ -579,7 +613,8 @@ class MotorContaUnicaEnsaioSQLite{
  }
  configurarAgenda({ativo,abertura,fechamento,
   intervaloMinutos,excecaoData=null,excecaoFechamento=null,
-  modoExecucao=null,agoraMs=Date.now()}={}){
+  modoExecucao=null,metaQuantidade=undefined,metaDataAlvo=null,
+  agoraMs=Date.now()}={}){
   const velho=this._agenda();
   const modo=modoExecucao===null?
    (ativo?'AGENDADA':'MANUAL'):modoExecucao;
