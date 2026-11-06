@@ -17,6 +17,8 @@ on:
       - 'test/plano-posicoes-compra-akitemm.test.js'
       - 'test/asaas-motor-automatico-sandbox-candidato.test.js'
       - 'test/preview-unificacao-psp-webhook.test.js'
+      - 'src/domain/agendador-conciliacao-asaas-sandbox.js'
+      - 'test/agendador-conciliacao-asaas-sandbox.test.js'
       - 'scripts/provar-restauracao-sqlite-unificado-lab.js'
       - 'test/provar-restauracao-sqlite-unificado-lab.test.js'
       - 'test/auditoria-cobertura-lotes-akitemm.test.js'
@@ -61,6 +63,8 @@ jobs:
           cache: npm
       - run: npm ci --ignore-scripts --no-fund
       - run: node --check scripts/servidor-escritorio-preview-railway.js
+      - run: node --check src/domain/agendador-conciliacao-asaas-sandbox.js
+      - run: node --test test/agendador-conciliacao-asaas-sandbox.test.js
       - run: node --check test/servidor-escritorio-preview-railway.test.js
       - run: node --check src/domain/equipe-candidata-sqlite.js
       - run: node --check src/candidato/servidor-loja-escritorio-candidato.js
