@@ -30,7 +30,7 @@ function criarAgendadorBackupOffsiteLab({
     limiteBytes<1024*1024||limiteBytes>512*1024*1024)
   falha('BACKUP_OFFSITE_CONFIG_INVALIDA');
  const cfg=validarConfig(config);
- let timer=null,emExecucao=null,encerrado=false,rodadas=0,falhas=0;
+ let timer=null,emExecucao=null,encerrado=false,encerramento=null,rodadas=0,falhas=0;
  let ultimaConfirmacao=null,ultimoCodigo='NAO_EXECUTADO';
  function estado(){
   // O historico nao prova frescor: falha posterior invalida o estado atual.
@@ -115,13 +115,19 @@ function criarAgendadorBackupOffsiteLab({
   void executarUmaVez();
   return estado();
  }
- async function encerrar(){
-  if(encerrado)return;
+ function encerrar(){
+  // Chamadores concorrentes aguardam o MESMO envio/restauracao em curso.
+  // Ninguem deve fechar o SQLite antes de essa promessa finalizar.
+  if(encerramento!==null)return encerramento;
   encerrado=true;
   if(timer!==null){cancelar(timer);timer=null;}
-  if(emExecucao!==null){
-   try{await emExecucao;}catch{}
-  }
+  const operacaoAtiva=emExecucao;
+  encerramento=(async()=>{
+   if(operacaoAtiva!==null){
+    try{await operacaoAtiva;}catch{}
+   }
+  })();
+  return encerramento;
  }
  return {iniciar,executarUmaVez,encerrar,estado};
 }
