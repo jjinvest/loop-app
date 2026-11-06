@@ -173,6 +173,10 @@ const {once}=require('node:events');
    assert.equal(await admin.locator('#listaCoberturaAkitemm')
     .getByRole('button',{name:'Página anterior'}).isDisabled(),true);
    assert.equal(await admin.locator('#consultarCoberturaAkitemm').isDisabled(),false);
+   await admin.locator('#conferirBackupOffsite').click();
+   await admin.locator('#estadoBackupOffsite').filter({
+    hasText:/Backup externo ainda não comprovado neste serviço/
+   }).waitFor();
    // Sem credencial Asaas nesta previa: nao permitir falsa conciliacao
    // nem habilitar o botao de lote como se o PSP externo estivesse ligado.
    assert.equal(await admin.locator('#reconciliarPendentesPsp').isDisabled(),true);
