@@ -686,6 +686,16 @@ function criarAppLojaEscritorioCandidato({banco,repositorioCatalogo,
    erro:e.codigo||'AGENDA_CONFIG_INVALIDA'
   });}
  });
+ // Liberacao voluntaria de N posicoes centrais de ENSAIO:
+ // cada uma so conclui com 6 compras PSP confirmadas/reconsultadas.
+ // A fila e a loja nao sao afetadas se nao existir estoque suficiente.
+ app.post('/staging/escritorio-unificado/motor/liberar-lote',autorizarOperador,(req,res)=>{
+  if(!req.is('application/json')||!req.body||Array.isArray(req.body)||
+     Object.keys(req.body).join(',')!=='quantidade')
+   return res.status(400).json({erro:'LOTE_CATRACA_CAMPOS_INVALIDOS'});
+  try{return res.json(motorConta.liberarLoteEnsaio(req.body));}
+  catch(e){return res.status(409).json({erro:e.codigo||'LOTE_CATRACA_BLOQUEADO'});}
+ });
  app.post('/staging/escritorio-unificado/motor/catraca',autorizarOperador,(req,res)=>{
   if(!req.is('application/json')||!req.body||Array.isArray(req.body)||
      Object.keys(req.body).join(',')!=='acao')
