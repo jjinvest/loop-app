@@ -173,6 +173,14 @@ const {once}=require('node:events');
    assert.equal(await admin.locator('#listaCoberturaAkitemm')
     .getByRole('button',{name:'Página anterior'}).isDisabled(),true);
    assert.equal(await admin.locator('#consultarCoberturaAkitemm').isDisabled(),false);
+   // Sem credencial Asaas nesta previa: nao permitir falsa conciliacao
+   // nem habilitar o botao de lote como se o PSP externo estivesse ligado.
+   assert.equal(await admin.locator('#reconciliarPendentesPsp').isDisabled(),true);
+   await admin.locator('#consultarPixUnificado').click();
+   await admin.locator('#estadoPixUnificado').filter({
+    hasText:/faltam credenciais específicas do Asaas Sandbox/
+   }).waitFor();
+   assert.equal(await admin.locator('#reconciliarPendentesPsp').isDisabled(),true);
    await admin.locator('#quadroDepartamentos button').filter({hasText:'Pedidos'}).click();
    assert.equal(await admin.locator('#filtrarDepartamento').inputValue(),'PEDIDOS');
    assert.equal(await admin.locator('#alertasOperacionais article.alerta-operacional').count(),0);
