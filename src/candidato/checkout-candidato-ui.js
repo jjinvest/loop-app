@@ -432,7 +432,9 @@ async function atualizarPosicoes(){
     registro?'PENDENTE · TESTE':'Espaço disponível';
    const status=document.createElement('p');
    status.textContent=posicao?('Motor de ensaio · '+posicao.local+
-    (posicao.fila?' '+posicao.fila:'')+(posicao.pendente?' · aguardando confirmação':'')):
+    (posicao.fila?' '+posicao.fila:'')+
+    ' · indicações nesta posição: '+(posicao.indicacoesVinculadas||0)+
+    (posicao.pendente?' · aguardando confirmação':'')):
     registro?(estados[registro.estado]||'Registro em revisão'):'Sem posição vinculada';
    cartao.append(nome,numero,status);
    if(posicao?.aceiteIndividualRegistrado){
@@ -511,7 +513,8 @@ async function atualizarEquipe(pagina=0){
   const dados=await requisitar('/minha-equipe?pagina='+pagina);
   if(pagina===0)$('listaEquipe').replaceChildren();
   $('equipeResumo').textContent=dados.total+
-   ' cadastro(s) por seus links nesta prévia. Indicações comerciais válidas: 0.';
+   ' cadastro(s) pelos links · '+dados.indicacoesQualificadas+
+   ' indicação(ões) com compra Sandbox validada · comissões reais: 0.';
   if(pagina===0&&dados.total===0){
    const vazio=document.createElement('p');
    vazio.textContent='Sua equipe ainda não possui cadastros de teste. Compartilhe o link em Meus Links.';
@@ -523,6 +526,44 @@ async function atualizarEquipe(pagina=0){
    linha.textContent='@'+pessoa.nick+' · Cadastro em '+
     new Date(pessoa.registradoEm).toLocaleString('pt-BR');
    $('listaEquipe').append(linha);
+   if(pessoa.qualificadaEnsaio===true){
+    const status=document.createElement('small');
+    status.textContent='Indicação de ensaio atribuída à posição #'+
+     pessoa.posicaoAlvoId+' · sem comissão real.';
+    $('listaEquipe').append(status);
+   }else if(pessoa.possuiPosicaoDeEnsaio===true){
+    const botao=document.createElement('button');
+    botao.type='button';
+    botao.textContent='Alocar indicação à posição selecionada';
+    botao.addEventListener('click',async()=>{
+     if(!Number.isSafeInteger(posicaoSelecionadaMotor)){
+      dizer('Abra Minhas Posições e escolha qual posição receberá a indicação.');
+      return;
+     }
+     botao.disabled=true;
+     try{
+      const resultado=await requisitar('/minha-equipe/indicacoes/qualificar-ensaio',{
+       method:'POST',mutacao:true,
+       body:{indicadoId:pessoa.indicadoId,posicaoAlvoId:posicaoSelecionadaMotor}
+      });
+      if(resultado.qualificada!==true)throw Error('INDICACAO_NAO_QUALIFICADA');
+      dizer('Indicação de ensaio atribuída à posição #'+
+       posicaoSelecionadaMotor+' · consulte a fila A no tabuleiro.');
+      await atualizarEquipe(0);
+      await atualizarPosicoes();
+      if(aba==='conteudoTabuleiro')await atualizarTabuleiroIntegrado();
+     }catch(e){
+      dizer('Indicação não atribuída: '+e.message+
+       '. Confirme o aceite da posição e a compra Pix Sandbox do indicado.');
+      botao.disabled=false;
+     }
+    });
+    $('listaEquipe').append(botao);
+   }else{
+    const observacao=document.createElement('small');
+    observacao.textContent='Aguardando compra elegível e conciliação Sandbox do indicado.';
+    $('listaEquipe').append(observacao);
+   }
   }
   proximaPaginaEquipe=dados.proximaPagina;
   $('maisEquipe').hidden=proximaPaginaEquipe===null;
