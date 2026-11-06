@@ -372,10 +372,15 @@ async function atualizarTabuleiroIntegrado(){
   estado.textContent='Motor V6 conectado ao SQLite desta conta · '+motor.ordemAlimentacao+
    ' · '+motor.catraca.estado+' · '+motor.catraca.giros+
    ' giros de ensaio. '+
-   (motor.agenda?.ativo?
-    'Agenda: '+motor.agenda.abertura+'–'+motor.agenda.fechamentoAplicado+
-     ', uma venda contabilizada a cada '+motor.agenda.intervaloMinutos+' min. ':
-    'Catraca sob controle manual. ')+
+   (motor.agenda?.modoExecucao==='NATURAL'?
+    'Modo natural: vendas confirmadas alimentam o movimento sem horário. ':
+    motor.agenda?.modoExecucao==='AGENDADA'?
+    'Controle de horário: '+motor.agenda.abertura+'–'+
+     motor.agenda.fechamentoAplicado+', intervalo '+motor.agenda.intervaloMinutos+
+     ' min. ':
+    motor.agenda?.modoExecucao==='STOP'?
+    'STOP do administrador: a catraca não se move; vendas e filas continuam. ':
+    'Catraca sob comando manual de laboratório. ')+
    'Compras Sandbox confirmadas aguardando luz: '+
    (motor.agenda?.aguardandoContabilizacao??0)+
    '. Luzes representam vendas anteriores, nunca compras inventadas. '+
