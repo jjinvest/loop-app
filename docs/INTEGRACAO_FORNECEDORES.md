@@ -1,5 +1,64 @@
 # LOOP - modelo de vendas por distribuidores conectados (dropshipping)
 
+## 06/11/2026 — Frete da franquia calculado dentro da AKITEMM, sem Shopee
+
+**Decisão do proprietário:** a AKITEMM é o ponto de venda e checkout. A
+franquia/distribuidor faz fisicamente a separação, postagem, transporte e
+entrega; a loja não contrata nem opera transportadoras. O cliente informa o
+CEP no carrinho da AKITEMM e vê uma **cotação real devolvida pela API do
+fornecedor**, com preço e prazo antes de autorizar o pagamento. O frete não
+deve ser inventado, tabelado localmente sem autorização ou confundido com
+custo, margem ou posição no LOOP.
+
+**Shopee não é a rota desejada:** a franquia já possui integração com a
+Shopee, mas isso não demonstra que ela permita usar as mesmas credenciais
+ou receber pedidos de lojas independentes. Antes da conexão direta,
+confirmar documentação/termos da API específica para parceiros externos
+da franquia, autorização comercial e fiscal, endpoints e homologação.
+
+**Fluxo desejado para produto FÍSICO, após autorização e prova do parceiro:**
+1. Produto AKITEMM ligado a `fornecedorId` e SKU externo; consultar
+   disponibilidade e custo, sem alterar identidade comercial local.
+2. Cliente informa CEP; servidor faz cotação em tempo real no fornecedor
+   pelo CEP, SKU e quantidade, recebe preço em centavos, serviço, prazo,
+   identificador de cotação e validade. Múltiplos fornecedores exigem
+   cotação e totalização por origem sem duplicar/omitir fretes.
+3. Mostrar subtotal, frete e total final **antes** do Pix; congelar no
+   pedido a cotação válida, serviço escolhido, custo do fornecedor e
+   informações necessárias para auditoria e atendimento. Sem cotação
+   verificável, **não prometer nem cobrar frete físico**.
+4. Depois de pagamento confirmado independentemente pelo PSP, enviar uma
+   única ordem ao fornecedor, com SKU, quantidade e endereço mínimo
+   necessário, usando identificador de idempotência e fila durável. Queda,
+   timeout ou resposta indefinida exigem reconciliação, não POST duplicado.
+5. Receber o pedido externo e os eventos autenticados de separação,
+   transporte, rastreamento, entrega, devolução e falha; mostrar em
+   `Meus Pedidos` e no Administrador, sem permitir declarar entrega real
+   por um botão local.
+6. Dados pessoais, nota fiscal, quem cobra/repassa frete, política de
+   devoluções e custos do fornecedor dependem de contrato. A AKITEMM,
+   sendo a vendedora, mantém deveres legais perante o comprador.
+
+**Cursos/PDFs não exigem frete.** A loja permanece aberta a compras
+sem novas posições quando o titular já tem dez posições ativas ou
+reservadas; frete não ativa posição por si só. A composição e os
+valores dos pacotes ROXOS continuam sujeitos à configuração própria
+e à aprovação financeira/jurídica.
+
+**Estado técnico atual:** já existem vínculos SKU/fornecedor e
+importação simulada. Em `src/integracoes/registro-fornecedores.js` foi
+incluído o método **opcional** `cotarFrete` com validação de CEP,
+SKUs, quantidade, prazo, valor, expiração e retorno de cotação. Ele
+**não acessa nenhuma API real e não habilita checkout** até ser
+implementado o adaptador autorizado da franquia; sem adaptador, retorna
+erro explícito, em vez de preço fabricado. Testes de contrato em
+`test/registro-fornecedores-frete.test.js`.
+
+**Bloqueio externo atual:** falta o nome/painel/documentação da franquia,
+forma autorizada de conexão externa, credenciais guardadas em serviço
+seguro (nunca no chat/GitHub) e ambiente de homologação. Não conectar
+direto com Shopee nem habilitar expedição real sem estes elementos.
+
 ## Modelo comercial informado pelo idealizador
 
 A maioria dos produtos fisicos sera apresentada na vitrine do LOOP, mas
@@ -90,9 +149,13 @@ registros distintos.
    enviada pelo navegador.
 4. Pedido ao fornecedor: apos confirmacao, envia **uma unica ordem** com
    identificador idempotente, SKU, quantidade e endereco necessario para entrega.
-5. Posicao no LOOP: a venda confirmada gera **uma posicao propria**, independente
-   do preco, mediante transacao consistente com o estado da compra. O fluxo
-   das filas e separado dos pagamentos e da logistica.
+5. Posição no LOOP: compra e posição são direitos distintos. Carrinho
+   qualificado **VERDE** gera no máximo uma posição quando os produtos
+   verdes elegíveis somam pelo menos R$250; **CINZA** gera zero; **DOURADO**
+   gera uma por unidade dentro do teto; **ROXO** usa regra especial
+   configurada e aprovada no Administrador. Limite de dez posições ativas
+   por titular, **sem limite para novas compras**. Respeitar reserva
+   pré-cobrança e comunicar compras sem posição antes do Pix.
 6. Acompanhamento: guardar identificador do pedido no parceiro e eventos de
    rastreio, falhas de despacho, extravios, devolucoes e eventuais reembolsos.
 7. Falhas e recuperacao: a chamada ao fornecedor pode falhar sem desfazer um
