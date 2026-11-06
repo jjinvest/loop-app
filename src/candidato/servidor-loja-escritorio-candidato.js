@@ -824,6 +824,8 @@ function criarAppLojaEscritorioCandidato({banco,repositorioCatalogo,
    'ON r.evento_id=i.evento_id',
    "WHERE r.estado='CONCLUIDO' AND r.codigo='PSP_RECONSULTADO'",
    "AND i.tipo='PAYMENT_RECEIVED'",
+   'AND EXISTS (SELECT 1 FROM akitemm_prepedido_asaas_sandbox_staging p',
+   "WHERE p.prepedido_id=i.prepedido_id AND p.estado='RECEBIMENTO_INFORMADO_SANDBOX')",
    'AND NOT EXISTS (SELECT 1 FROM akitemm_motor_conta_ensaio_operacoes m',
    "WHERE m.prepedido_id=i.prepedido_id AND m.tipo='VINCULAR_PEDIDO')"
   ].join(' ')).get().n;
@@ -977,6 +979,8 @@ if(worker){
     const vinculoMotorAusente=[
      "r.estado='CONCLUIDO' AND r.codigo='PSP_RECONSULTADO'",
      "AND i.tipo='PAYMENT_RECEIVED'",
+     'AND EXISTS (SELECT 1 FROM akitemm_prepedido_asaas_sandbox_staging p',
+     "WHERE p.prepedido_id=i.prepedido_id AND p.estado='RECEBIMENTO_INFORMADO_SANDBOX')",
      'AND NOT EXISTS(SELECT 1 FROM akitemm_motor_conta_ensaio_operacoes m',
      "WHERE m.prepedido_id=i.prepedido_id AND m.tipo='VINCULAR_PEDIDO')"
     ].join(' ');
