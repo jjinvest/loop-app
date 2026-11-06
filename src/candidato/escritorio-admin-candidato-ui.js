@@ -218,6 +218,9 @@ async function atualizar(){
   linha('PSP conciliados',e.resumo.recebimentosPSPConciliados),
   linha('PSP sem posição — revisar',e.vinculosMotorAusentes),
   linha('Estornos sem suspensão — revisar',e.reversoesMotorPendentes),
+  linha('Reconsultas PSP em andamento',e.recuperacaoPSP?.processando??0),
+  linha('Interrupções PSP em recuperação',e.recuperacaoPSP?.retomaveis??0),
+  linha('Reincidências — revisão humana',e.recuperacaoPSP?.segundaFalha??0),
   linha('Posições fictícias',e.posicoesPendentesFicticias),
   linha('Missões no filtro',m.total)
  );
@@ -585,7 +588,10 @@ $('reconciliarPendentesPsp').addEventListener('click',async()=>{
    r.pendentesRestantes+' avisos aguardando, '+
    r.vinculosMotorAusentes+' eventos de pagamento sandbox sem vínculo no motor, '+
    r.reversoesMotorPendentes+' reversões PSP aguardando suspensão do motor, '+
-   r.revisaoNecessaria+' casos desta rodada exigindo revisão. '+
+   r.revisaoNecessaria+' casos desta rodada exigindo revisão, '+
+   (r.interrupcoesDetectadas??0)+' interrupções antigas detectadas, '+
+   (r.retomadasComProvaPSP??0)+' retomadas com PSP reconsultado, '+
+   (r.interrupcoesReinterrompidas??0)+' interrupções repetidas bloqueadas. '+
    'Nenhum saque ou pagamento real liberado.';
   await atualizar();
   await atualizarMotorContaEnsaio();
