@@ -29,11 +29,13 @@ function validarSegredos({senhaAcesso,segredoRaiz}){
     senhaAcesso===segredoRaiz)
   falha('SEGREDOS_PREVIA_NAO_CONFIGURADOS');
 }
-function criarGateway({portaInterna,senhaAcesso,segredoOperador,
+function criarGateway({portaInterna,senhaAcesso,senhaAdmin=null,segredoOperador,
  validarNickIndicador=()=>false,permitirWebhookSandbox=false}={}){
  if(!Number.isSafeInteger(portaInterna)||portaInterna<1||portaInterna>65535||
     typeof senhaAcesso!=='string'||senhaAcesso.length<24||
-    typeof segredoOperador!=='string'||segredoOperador.length<32)
+    typeof segredoOperador!=='string'||segredoOperador.length<32||
+    (senhaAdmin!==null&&(typeof senhaAdmin!=='string'||
+     senhaAdmin.length<24||senhaAdmin===senhaAcesso)))
   falha('GATEWAY_PREVIA_INVALIDO');
  const backend='127.0.0.1:'+portaInterna;
  const sessaoNome='akitemm_preview_access';
@@ -113,6 +115,9 @@ function criarGateway({portaInterna,senhaAcesso,segredoOperador,
    catch{}
   }
   const basicaValida=seguro(decodificado,'acesso:'+senhaAcesso);
+  // A credencial da operacao pode ser separada do acesso de cliente.
+  const operadorBasicoValido=senhaAdmin===null?
+   basicaValida:seguro(decodificado,'operador:'+senhaAdmin);
   const sessaoValida=lerSessao(req);
   // Liveness nao pode declarar o gateway saudavel se o backend caiu.
   // Readiness confere as invariantes reais do SQLite pelo backend isolado.
@@ -161,7 +166,7 @@ function criarGateway({portaInterna,senhaAcesso,segredoOperador,
   // Um cookie do VISITANTE nao permite abrir painel ou APIs do operador.
   // O Basic do operador e convertido em cookie de administrador distinto.
   const exigeOperador=rotaAdmin(url.pathname);
-  const adminValido=basicaValida||lerAdmin(req);
+  const adminValido=operadorBasicoValido||lerAdmin(req);
   if(exigeOperador&&!adminValido)
    return negar(401,'Operador autorizado necessário',{
     'WWW-Authenticate':'Basic realm="AKITEMM - Administrador", charset="UTF-8"'
@@ -171,7 +176,7 @@ function criarGateway({portaInterna,senhaAcesso,segredoOperador,
     'WWW-Authenticate':'Basic realm="AKITEMM - Acesso de teste", charset="UTF-8"'
    });
   const agora=String(Date.now());
-  const novoAdminCookie=exigeOperador&&basicaValida&&!lerAdmin(req)?
+  const novoAdminCookie=exigeOperador&&operadorBasicoValido&&!lerAdmin(req)?
    adminCookie+'=v1.'+agora+'.'+assinarAdmin(agora)+
    '; HttpOnly; Secure; SameSite=Strict; Path=/; Max-Age=43200':null;
   const novoCookie=basicaValida&&!sessaoValida?
@@ -401,7 +406,8 @@ async function iniciar({env=process.env}={}){
  const interno=c.app.listen(0,'127.0.0.1');
  await new Promise((ok,fail)=>{interno.once('listening',ok);interno.once('error',fail);});
  const gateway=criarGateway({portaInterna:interno.address().port,
-  senhaAcesso,segredoOperador:tokenOperador,
+  senhaAcesso,senhaAdmin:process.env.LOOP_PREVIEW_SENHA_ADMIN||null,
+  segredoOperador:tokenOperador,
   validarNickIndicador:nick=>c.equipe.existeNick(nick),
   permitirWebhookSandbox:sandboxAtivo});
  const agendador=autoAtivo?criarAgendadorConciliacaoSandbox({
