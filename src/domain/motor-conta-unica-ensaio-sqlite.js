@@ -749,6 +749,63 @@ class MotorContaUnicaEnsaioSQLite{
     somenteEnsaio:true,dinheiroReal:false};
   });
  }
+ // Uma META distribui ate N centros pelo turno, sem garantia
+ // de que existirao seis compras PSP para cada ciclo. Uma transacao
+ // reiniciavel contabiliza NO MAXIMO UM centro por minuto do turno.
+ _processarMetaAgenda({agoraMs=Date.now()}={}){
+  const config=this._agenda();
+  const meta=this._meta();
+  const p=planejado(meta,config,agoraMs);
+  if(!p.abertoParaMeta||config.pausaManual){
+   const sim=this._simulador();
+   if(!sim.catracaAberta)
+    return {acao:config.pausaManual?'PAUSA_MANUAL':'META_FORA_HORARIO',
+     meta:meta.quantidade,executados:0,somenteEnsaio:true};
+   return this._transacao(s=>{
+    s.pausarCatraca();
+    this._evento('PAUSAR_CATRACA_META');
+    return {acao:'META_PAUSADA',somenteEnsaio:true};
+   });
+  }
+  return this._transacao(sim=>{
+   const atual=this._meta();
+   const janela=planejado(atual,this._agenda(),agoraMs);
+   if(!janela.abertoParaMeta)return {acao:'META_FORA_HORARIO',
+    somenteEnsaio:true};
+   if(atual.ultimoDia!==janela.dia){
+    this.banco.prepare([
+     'UPDATE akitemm_motor_catraca_meta_lab',
+     'SET ultimo_dia=?,ultimo_minuto=-1,base_giros=? WHERE id=1'
+    ].join(' ')).run(janela.dia,sim.giros);
+    atual.ultimoDia=janela.dia;
+    atual.ultimoMinuto=-1;
+    atual.baseGiros=sim.giros;
+   }
+   // Um minuto do turno so pode liberar UMA tentativa de ciclo.
+   // Repeticoes, reinicio, multi-pod e replays nao liberam lote extra.
+   if(atual.ultimoMinuto>=janela.minutoNoTurno)
+    return {acao:'META_JA_AVALIADA',somenteEnsaio:true};
+   this.banco.prepare([
+    'UPDATE akitemm_motor_catraca_meta_lab',
+    'SET ultimo_minuto=? WHERE id=1'
+   ].join(' ')).run(janela.minutoNoTurno);
+   const feitos=Math.max(0,sim.giros-atual.baseGiros);
+   const falta=janela.ciclosAutorizadosAteAgora-feitos;
+   if(falta<=0)return {acao:'META_AGUARDANDO_PROXIMA_LIBERACAO',
+    solicitados:atual.quantidade,realizados:feitos,
+    autorizados:janela.ciclosAutorizadosAteAgora,
+    somenteEnsaio:true,dinheiroReal:false};
+   const result=this._liberarLoteNaTransacao(sim,1);
+   const realizados=feitos+result.liberados;
+   this._evento('META_CATRACA_AVALIADA');
+   return {acao:result.liberados?'GIRO_META_AGENDADA':'META_AGUARDANDO_PSP',
+    solicitados:atual.quantidade,realizados,
+    autorizados:janela.ciclosAutorizadosAteAgora,
+    liberadosAgora:result.liberados,eventoPSPValidado:true,
+    motivo:result.motivo,restantes:Math.max(0,atual.quantidade-realizados),
+    dinheiroReal:false,somenteEnsaio:true};
+  });
+ }
  // Executar no mesmo SQLite pelo timer do servidor, serializado em
  // BEGIN IMMEDIATE. Um pulso contabiliza NO MAXIMO UMA compra conciliada,
  // ou, depois do sexto evento, executa UM giro controlado. Ao ficar
@@ -760,6 +817,8 @@ class MotorContaUnicaEnsaioSQLite{
   if(modo==='NATURAL')return this._processarNatural();
   if(modo==='MANUAL')return {acao:'CONTROLE_MANUAL',
    somenteEnsaio:true};
+  if(modo==='AGENDADA'&&this._meta().quantidade>0)
+   return this._processarMetaAgenda({agoraMs});
   if(modo==='STOP'){
    const sim=this._simulador();
    if(!sim.catracaAberta)return {acao:'STOP_CATRACA',
