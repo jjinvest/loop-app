@@ -136,3 +136,55 @@ test('GET PSP concluido recupera vinculo motor apos falha transitoria sem nova c
  assert.equal(r.motorConta.consultar({titularId:titular.titularId}).posicoesAtivasDoTitular,1);
  assert.deepEqual(banco.prepare('PRAGMA foreign_key_check').all(),[]);
 });
+
+test('capacidade de dez posicoes fica reservada no mesmo SQLite antes de novo Pix',async t=>{
+ const banco=new DatabaseSync(':memory:');
+ banco.exec('PRAGMA foreign_keys=ON;');
+ t.after(()=>banco.close());
+ const app=criarAppLojaEscritorioCandidato({
+  banco,repositorioCatalogo:catalogoFicticioCheckout(),
+  chaveEmail:randomBytes(32),chaveCifra:randomBytes(32),
+  segredoOperador:OPERADOR,termosVersao:'LAB-reserva-antes-pix',
+  termosTexto:'Somente ensaio local sem pagamento real, renda ou direito comercial.'
+ });
+ const titular=await app.contas.cadastrar({nome:'Reserva Ensaio',nick:'Reserva',
+  email:'reserva@example.invalid',senha:'SenhaDeReserva2026!Forte',
+  termosVersao:'LAB-reserva-antes-pix',
+  termosTexto:'Somente ensaio local sem pagamento real, renda ou direito comercial.',
+  aceiteExplicito:true});
+ await app.sinalizacaoVitrine.atualizar('curso-homologacao-250',{
+  classificacao:'VERDE',quantidadeMinimaLoop:1,revisaoEsperada:0
+ });
+ const catalogo=catalogoFicticioCheckout();
+ const entrada={itens:[{produtoId:'curso-homologacao-250',quantidade:1}]};
+ for(let i=0;i<11;i++){
+  const cotacao=await cotarCheckoutPublico({repositorio:catalogo,entrada});
+  const intencao=app.intencoes.criar({
+   titularId:titular.titularId,chaveIdempotencia:'reserva-ensaio-'+i,
+   entrada,cotacao
+  });
+  const pedido=await app.prePedidos.preparar({
+   titularId:titular.titularId,
+   rascunhoId:intencao.intencao.pedidoId,
+   repositorioCatalogo:catalogo
+  });
+  const preparar=()=>app.ponte.preparar({
+   titularId:titular.titularId,
+   prepedidoId:pedido.prepedido.prepedidoId,clienteAsaasId:CUSTOMER,
+   capacidade:{quantidadePosicoes:1,
+    consultarAtivas:()=>app.motorConta.consultar({
+     titularId:titular.titularId
+    }).posicoesAtivasDoTitular}
+  });
+  if(i<10)assert.equal(preparar().repetido,false);
+  else assert.throws(preparar,{codigo:'LIMITE_POSICOES_ANTES_DA_COBRANCA'});
+ }
+ assert.equal(banco.prepare([
+  'SELECT COUNT(*) AS n FROM akitemm_prepedido_asaas_sandbox_staging',
+  'WHERE titular_id=?'
+ ].join(' ')).get(titular.titularId).n,10);
+ assert.equal(banco.prepare([
+  'SELECT COUNT(*) AS n FROM akitemm_motor_ensaio_lotes_pedido'
+ ].join(' ')).get().n,0,'reservar nunca cria posicao');
+ assert.deepEqual(banco.prepare('PRAGMA foreign_key_check').all(),[]);
+});
