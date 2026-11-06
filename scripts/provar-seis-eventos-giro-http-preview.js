@@ -89,14 +89,14 @@ async function provar({env=process.env,fetchImpl=globalThis.fetch}={}){
    saldoRealCentavos:0,saquesReais:0};
  }finally{
   if(abriu){try{await http(cat,{acao:'PAUSAR'})}
-   catch{process.stderr.write('GIRO_SANDBOX=PAUSA_REQUER_REVISAO\\n');}}
-  if(!girou)process.stderr.write('GIRO_SANDBOX=PROVA_INCOMPLETA_SEM_GIRO\\n');
+   catch{process.stderr.write('GIRO_SANDBOX=PAUSA_REQUER_REVISAO\n');}}
+  if(!girou)process.stderr.write('GIRO_SANDBOX=PROVA_INCOMPLETA_SEM_GIRO\n');
  }
 }
 if(require.main===module)provar().then(x=>{
- process.stdout.write('LOOP_SEIS_EVENTOS_GIRO_HTTPS='+JSON.stringify(x)+'\\n');
+ process.stdout.write('LOOP_SEIS_EVENTOS_GIRO_HTTPS='+JSON.stringify(x)+'\n');
 }).catch(e=>{
  process.stderr.write('LOOP_SEIS_EVENTOS_GIRO_HTTPS='+String(e.message)
-  .replace(/[^A-Z0-9_]/g,'').slice(0,95)+'\\n');process.exitCode=1;
+  .replace(/[^A-Z0-9_]/g,'').slice(0,95)+'\n');process.exitCode=1;
 });
 module.exports={provar};
