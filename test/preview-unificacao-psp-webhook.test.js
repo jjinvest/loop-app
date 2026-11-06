@@ -160,9 +160,16 @@ test('gateway unificado: Pix, aviso e motor usam o mesmo SQLite de laboratorio',
  const rodada=await auto.executarUmaVez();
  assert.equal(rodada.estado,'CONCLUIDA');
  assert.equal(rodada.consultados,1);
- assert.equal(rodada.quarentenaRecuperada,1);
- assert.equal(rodada.quarentenaAguardandoVinculo,0);
  assert.equal(rodada.pendentesRestantes,0);
+ assert.equal(banco.prepare([
+  'SELECT COUNT(*) AS n FROM akitemm_prepedido_webhook_inbox_staging',
+  'WHERE evento_id=?'
+ ].join(' ')).get(aviso.id).n,1,
+ 'agendador promoveu o aviso antecipado da quarentena para inbox normal');
+ assert.equal(banco.prepare([
+  'SELECT COUNT(*) AS n FROM akitemm_prepedido_webhook_reconsulta_staging',
+  'WHERE evento_id=?'
+ ].join(' ')).get(aviso.id).n,1);
  await auto.encerrar();
  const conf=await conciliar();
  assert.equal(conf.status,200,JSON.stringify(conf.body));
