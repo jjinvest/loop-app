@@ -81,6 +81,14 @@ function consultarPedido({banco,prepedidoId,titularId=null}={}){
   'SELECT COUNT(*) AS n FROM akitemm_prepedido_posicoes_pendentes_sandbox_staging',
   'WHERE prepedido_id=? AND titular_id=?'
  ].join(' ')).get(prepedidoId,pedido.titularId).n:0;
+ // A posicao pendente na inbox e a posicao JA VINCULADA ao motor
+ // sao registros diferentes. Nao declarar o cliente sem posicao so
+ // porque a etapa pendente foi consumida pelo motor unificado.
+ const temMotor=tabela(banco,'akitemm_motor_ensaio_lotes_pedido');
+ const posMotor=temMotor?banco.prepare([
+  'SELECT COUNT(*) AS n FROM akitemm_motor_ensaio_lotes_pedido',
+  'WHERE prepedido_id=? AND titular_id=?'
+ ].join(' ')).get(prepedidoId,pedido.titularId).n:0;
  const temVinculos=tabela(banco,'akitemm_checkout_escritorio_vinculos_staging');
  const contaEscritorioVinculada=temVinculos&&!!banco.prepare([
   'SELECT 1 FROM akitemm_checkout_escritorio_vinculos_staging',
@@ -109,6 +117,7 @@ function consultarPedido({banco,prepedidoId,titularId=null}={}){
   // Historico nunca é apagado. A posição fictícia só é "apta agora"
   // enquanto o último GET PSP continuar RECEIVED e sem revisão.
   posicoesPendentesFicticias:pos,
+  posicoesMotorEnsaio:posMotor,
   posicoesFicticiasAptasAgora:comprovado&&!exigeRevisao?pos:0,
   contaEscritorioVinculada,
   exigeRevisaoManual:exigeRevisao,
