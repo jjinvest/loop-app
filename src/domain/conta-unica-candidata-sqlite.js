@@ -251,39 +251,57 @@ class ContaUnicaCandidataSQLite{
   let n;try{n=nickValido(nick);}catch{falha('CREDENCIAIS_INVALIDAS');}
   if(typeof senha!=='string'||senha.length>256||!senha.length)
    falha('CREDENCIAIS_INVALIDAS');
-  const ts=this._agora();
-  const a=this.banco.prepare(
+  // scrypt e assincrono. Nao usar a fotografia anterior ao await
+  // para emitir sessao ou sobrescrever tentativas de outros logins.
+  const anterior=this.banco.prepare(
    'SELECT * FROM akitemm_conta_unica_candidata WHERE nick=?'
   ).get(n);
-  const hash=await hashSenha(senha,a?.senha_salt||
+  const hash=await hashSenha(senha,anterior?.senha_salt||
    'abcdabcdabcdabcdabcdabcdabcdabcd');
-  if(!a||!comparar(hash,a.senha_hash)){
-   if(a){
-    const count=a.tentativas+1;
-    this.banco.prepare([
-     'UPDATE akitemm_conta_unica_candidata',
-     'SET tentativas=?,bloqueado_ate=? WHERE id=?'
-    ].join(' ')).run(Math.min(count,5),
-     count>=5?Math.max(ts+BLOQUEIO_MS,a.bloqueado_ate):a.bloqueado_ate,a.id);
-   }
-   falha('CREDENCIAIS_INVALIDAS');
-  }
-  if(a.bloqueado_ate>ts)falha('CONTA_TEMPORARIAMENTE_BLOQUEADA');
   const token=randomBytes(32).toString('hex');
   const csrf=createHmac('sha256',Buffer.from(token,'hex'))
    .update('AKITEMM-CANDIDATO-CSRF-V1').digest('hex');
+  let resultado=null,motivo='CREDENCIAIS_INVALIDAS';
   this.banco.exec('BEGIN IMMEDIATE');
   try{
-   this.banco.prepare(
-    'UPDATE akitemm_conta_unica_candidata SET tentativas=0,bloqueado_ate=0 WHERE id=?'
-   ).run(a.id);
-   this.banco.prepare([
-    'INSERT INTO akitemm_sessoes_candidatas',
-    '(token_hash,titular_id,criado_em,expira_em) VALUES(?,?,?,?)'
-   ].join(' ')).run(digest(token),a.id,ts,ts+DURACAO_MS);
+   // Toda decisao usa a credencial atual sob o lock SQLite, sem await.
+   const atual=this.banco.prepare(
+    'SELECT * FROM akitemm_conta_unica_candidata WHERE nick=?'
+   ).get(n);
+   const vigente=Boolean(anterior&&atual&&
+    anterior.id===atual.id&&
+    anterior.senha_salt===atual.senha_salt&&
+    anterior.senha_hash===atual.senha_hash);
+   const ts=this._agora();
+   if(vigente){
+    if(atual.bloqueado_ate>ts){
+     motivo='CONTA_TEMPORARIAMENTE_BLOQUEADA';
+    }else if(comparar(hash,atual.senha_hash)){
+     this.banco.prepare([
+      'UPDATE akitemm_conta_unica_candidata',
+      'SET tentativas=0,bloqueado_ate=0 WHERE id=?'
+     ].join(' ')).run(atual.id);
+     this.banco.prepare([
+      'INSERT INTO akitemm_sessoes_candidatas',
+      '(token_hash,titular_id,criado_em,expira_em) VALUES(?,?,?,?)'
+     ].join(' ')).run(digest(token),atual.id,ts,ts+DURACAO_MS);
+     resultado={titularId:atual.id,nick:atual.nick,token,csrf,
+      expiraEm:ts+DURACAO_MS};
+    }else{
+     const count=atual.tentativas+1;
+     this.banco.prepare([
+      'UPDATE akitemm_conta_unica_candidata',
+      'SET tentativas=?,bloqueado_ate=? WHERE id=?'
+     ].join(' ')).run(Math.min(count,5),
+      count>=5?Math.max(ts+BLOQUEIO_MS,atual.bloqueado_ate):
+       atual.bloqueado_ate,atual.id);
+    }
+   }
+   // Tentativas falhas precisam COMMITAR, nao rollback.
    this.banco.exec('COMMIT');
   }catch(e){this.banco.exec('ROLLBACK');throw e;}
-  return {titularId:a.id,nick:a.nick,token,csrf,expiraEm:ts+DURACAO_MS};
+  if(!resultado)falha(motivo);
+  return resultado;
  }
  sessao(req){
   const token=tokenCookie(req);if(!token)return null;
