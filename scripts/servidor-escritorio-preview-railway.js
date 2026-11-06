@@ -38,6 +38,7 @@ function criarGateway({portaInterna,senhaAcesso,segredoOperador,
  const backend='127.0.0.1:'+portaInterna;
  const sessaoNome='akitemm_preview_access';
  const indicacaoCookie='akitemm_preview_ref';
+ const adminCookie='akitemm_preview_admin';
  const duracao=12*60*60*1000;
  const prazoIndicacao=30*24*60*60*1000;
  const assinarIndicacao=(nick,ts)=>createHmac('sha256',segredoOperador)
@@ -55,6 +56,25 @@ function criarGateway({portaInterna,senhaAcesso,segredoOperador,
   return m[1];
  };
  const assinar=ts=>createHmac('sha256',senhaAcesso).update('preview:'+ts).digest('hex');
+ const assinarAdmin=ts=>createHmac('sha256',segredoOperador)
+  .update('AKITEMM-ADMIN-ISOLADO-V1:'+ts).digest('hex');
+ const lerAdmin=req=>{
+  const matches=(req.headers.cookie||'').split(';').map(x=>x.trim())
+   .filter(x=>x.startsWith(adminCookie+'='));
+  if(matches.length!==1)return false;
+  const m=matches[0].slice(adminCookie.length+1)
+   .match(/^v1\.(\d{13})\.([a-f0-9]{64})$/);
+  if(!m)return false;
+  const ts=Number(m[1]);
+  return ts<=Date.now()&&Date.now()-ts<duracao&&
+   seguro(m[2],assinarAdmin(m[1]));
+ };
+ const rotaAdmin=path=>
+  path==='/escritorio'||path==='/staging/escritorio-admin'||
+  path==='/staging/escritorio-unificado'||
+  path.startsWith('/staging/escritorio-unificado/')||
+  path==='/staging/assets/admin.js'||
+  path==='/staging/assets/admin.css';
  const lerSessao=req=>{
   const cookies=(req.headers.cookie||'').split(';').map(x=>x.trim());
   const p=cookies.find(x=>x.startsWith(sessaoNome+'='));
@@ -138,11 +158,22 @@ function criarGateway({portaInterna,senhaAcesso,segredoOperador,
    if(typeof req.headers['asaas-access-token']!=='string')
     return negar(401,'Token obrigatório');
   }
-  if(!basicaValida&&!sessaoValida&&!webhookUnificado)
+  // Um cookie do VISITANTE nao permite abrir painel ou APIs do operador.
+  // O Basic do operador e convertido em cookie de administrador distinto.
+  const exigeOperador=rotaAdmin(url.pathname);
+  const adminValido=basicaValida||lerAdmin(req);
+  if(exigeOperador&&!adminValido)
+   return negar(401,'Operador autorizado necessário',{
+    'WWW-Authenticate':'Basic realm="AKITEMM - Administrador", charset="UTF-8"'
+   });
+  if(!basicaValida&&!sessaoValida&&!webhookUnificado&&!adminValido)
    return negar(401,'Acesso exclusivo para homologação',{
     'WWW-Authenticate':'Basic realm="AKITEMM - Acesso de teste", charset="UTF-8"'
    });
   const agora=String(Date.now());
+  const novoAdminCookie=exigeOperador&&basicaValida&&!lerAdmin(req)?
+   adminCookie+'=v1.'+agora+'.'+assinarAdmin(agora)+
+   '; HttpOnly; Secure; SameSite=Strict; Path=/; Max-Age=43200':null;
   const novoCookie=basicaValida&&!sessaoValida?
    sessaoNome+'=v1.'+agora+'.'+assinar(agora)+
    '; HttpOnly; Secure; SameSite=Strict; Path=/; Max-Age=43200':null;
@@ -157,6 +188,9 @@ function criarGateway({portaInterna,senhaAcesso,segredoOperador,
   }
   if(req.method==='OPTIONS'||!['GET','HEAD','POST','PATCH','PUT','DELETE'].includes(req.method))
    return negar(405,'Método não permitido');
+  // O webhook remoto e exclusivo; jamais oferecer a rota interna ao browser.
+  if(url.pathname.startsWith('/staging/asaas/'))
+   return negar(404,'Rota interna não disponível');
   if(url.pathname==='/'){
    res.writeHead(302,{...cabecalhosBase,Location:'/escritorio',...(novoCookie?{'Set-Cookie':novoCookie}:{})});
    return res.end();
@@ -218,8 +252,10 @@ function criarGateway({portaInterna,senhaAcesso,segredoOperador,
     retorno['set-cookie']=retorno['set-cookie'].map(x=>
      /;\s*Secure(?:;|$)/i.test(x)?x:x+'; Secure');
    }
-   if(novoCookie){
-    retorno['set-cookie']=[...(retorno['set-cookie']||[]),novoCookie];
+   if(novoCookie||novoAdminCookie){
+    retorno['set-cookie']=[...(retorno['set-cookie']||[]),
+     ...(novoCookie?[novoCookie]:[]),
+     ...(novoAdminCookie?[novoAdminCookie]:[])];
    }
    delete retorno['transfer-encoding'];
    res.writeHead(resp.statusCode||502,retorno);
