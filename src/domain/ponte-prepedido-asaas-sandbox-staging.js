@@ -101,7 +101,7 @@ class PontePrepedidoAsaasSandboxStaging{
   this._validar(titularId,prepedidoId);
   return this._publica(this._linha(titularId,prepedidoId));
  }
- preparar({titularId,prepedidoId,clienteAsaasId}={}){
+ preparar({titularId,prepedidoId,clienteAsaasId,capacidade=null}={}){
   apenasStaging();this._validar(titularId,prepedidoId);
   if(typeof clienteAsaasId!=='string'||!CLIENTE.test(clienteAsaasId))
    throw falha('CLIENTE_SANDBOX_INVALIDO');
@@ -122,6 +122,42 @@ class PontePrepedidoAsaasSandboxStaging{
      throw falha('CONFLITO_VINCULO_SANDBOX');
     b.exec('COMMIT');
     return {repetido:true,registro:this._publica(antigo)};
+   }
+   if(capacidade!==null){
+    const quantidade=capacidade?.quantidadePosicoes;
+    if(!Number.isSafeInteger(quantidade)||quantidade<1||quantidade>10||
+       typeof capacidade.consultarAtivas!=='function')
+     throw falha('CAPACIDADE_POSICOES_NAO_COMPROVADA');
+    // Esta transacao IMMEDIATE serializa reservas do MESMO SQLite mesmo
+    // entre requests/processos. Nao liberar um segundo Pix sobre o mesmo
+    // teto de 10 posicoes ainda comprometido por cobrancas anteriores.
+    const ativas=capacidade.consultarAtivas();
+    if(!Number.isSafeInteger(ativas)||ativas<0||ativas>10)
+     throw falha('CAPACIDADE_POSICOES_NAO_COMPROVADA');
+    const reservadas=b.prepare([
+     'SELECT p.prepedido_id AS pedidoId,',
+     'f.fotografia_json AS foto',
+     'FROM akitemm_prepedido_asaas_sandbox_staging p',
+     'LEFT JOIN akitemm_vitrine_fotografia_classificacao_prepedido f',
+     'ON f.prepedido_id=p.prepedido_id',
+     'WHERE p.titular_id=?',
+     "AND p.estado IN ('PREPARADA','CRIACAO_INDETERMINADA',",
+     "'PENDENTE_SANDBOX','RECEBIMENTO_INFORMADO_SANDBOX','EXIGE_REVISAO')",
+     'AND NOT EXISTS (SELECT 1 FROM akitemm_motor_conta_ensaio_operacoes m',
+     "WHERE m.prepedido_id=p.prepedido_id AND m.tipo='VINCULAR_PEDIDO')"
+    ].join(' ')).all(titularId);
+    let comprometidas=0;
+    for(const item of reservadas){
+     let qtd;
+     try{
+      qtd=JSON.parse(item.foto).planejamentoPosicoes.quantidadePosicoesPrevistas;
+     }catch{throw falha('CAPACIDADE_RESERVAS_INDETERMINADAS');}
+     if(!Number.isSafeInteger(qtd)||qtd<1||qtd>10)
+      throw falha('CAPACIDADE_RESERVAS_INDETERMINADAS');
+     comprometidas+=qtd;
+    }
+    if(ativas+comprometidas+quantidade>10)
+     throw falha('LIMITE_POSICOES_ANTES_DA_COBRANCA');
    }
    const data=this._data();
    b.prepare([
