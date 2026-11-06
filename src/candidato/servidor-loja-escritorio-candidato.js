@@ -305,6 +305,31 @@ function criarAppLojaEscritorioCandidato({banco,repositorioCatalogo,
   try{return res.json(equipe.listar({titularId:s.titularId,pagina}));}
   catch{return res.status(400).json({erro:'PAGINACAO_INVALIDA'});}
  });
+ // Qualificacao de ensaio: somente o titular logado aloca a uma posicao
+ // propria confirmada. Compra do indicado exige PSP Sandbox reconsultado.
+ // Nenhuma comissao ou saldo real decorre da operacao.
+ app.post('/staging/minha-equipe/indicacoes/qualificar-ensaio',(req,res)=>{
+  const s=contas.sessao(req);
+  if(!s)return res.status(401).json({erro:'SESSAO_AUSENTE'});
+  if(!contas.autorizarMutacao(req))
+   return res.status(403).json({erro:'CSRF_INVALIDO'});
+  if(!operacoesSandboxAutorizadas)
+   return res.status(403).json({erro:'OPERACAO_SANDBOX_DESATIVADA'});
+  if(!req.is('application/json')||!req.body||Array.isArray(req.body)||
+     Object.keys(req.body).sort().join(',')!=='indicadoId,posicaoAlvoId')
+   return res.status(400).json({erro:'CAMPOS_INVALIDOS'});
+  try{
+   const r=motorConta.qualificarIndicacaoEnsaio({
+    indicadorId:s.titularId,indicadoId:req.body.indicadoId,
+    posicaoAlvoId:req.body.posicaoAlvoId
+   });
+   return res.status(r.repetido?200:201).json(r);
+  }catch(e){
+   const codigo=e.codigo||'INDICACAO_NAO_QUALIFICADA';
+   return res.status(codigo==='INDICACAO_DADOS_INVALIDOS'?400:409)
+    .json({erro:codigo});
+  }
+ });
  app.get('/staging/contas/me',(req,res)=>{
   const s=sessao(req);
   if(!s)return res.status(401).json({erro:'SESSAO_AUSENTE'});
