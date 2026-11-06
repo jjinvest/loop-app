@@ -27,3 +27,11 @@ O trabalhador de reconsulta gravava `PROCESSANDO` antes do GET remoto. Se o proc
 **Ainda não comprovado:** interrupção real do processo exatamente entre a chamada remota e o commit, replay originado pelo Asaas após HTTP 5xx, concorrência multi-instância sob escrita e exercício de carga transacional. **G3 permanece PARCIAL** até essas provas adversariais. G8/G9 (legalidade e cobertura econômica do modelo de remuneração) continuam bloqueando divulgação de ganhos e captação comercial.
 
 Nenhuma operação financeira real, saque ou merge para produção foi liberado. PR #1 permanece DRAFT.
+
+## Prova HTTPS da interface unificada
+
+Além da prova do worker e do SQLite em disco, foi criado o verificador somente de leitura `scripts/verificar-painel-admin-recuperacao-preview.js`, que acessa **HTTPS autenticado da prévia ativa** para consultar o JavaScript que o navegador recebe, `GET /staging/escritorio-unificado` e `GET /staging/escritorio-unificado/monitor-psp`. A prova confere que o painel mostra os novos indicadores e que os dois endpoints devolvem **as mesmas contagens reais** de recuperação, sem publicar identificadores/segredos nem emitir POST.
+
+O Railway registrou `LOOP_ADMIN_INTEGRADO` com `painelExistenteLigadoAoBanco=true`, `recuperacaoVisivel=true`, `backendEJanelasCoerentes=true` e `operacoesDeEscrita=0` no deploy `c629910f-15b0-42fe-83db-6a7d7c3cc23f`, que terminou **SUCCESS** com healthcheck. Candidato testado: `2eb8a779c1ab51b9782617d2a6619bbeb8d2acf8`.
+
+Após a prova, a consulta externa ao painel foi retirada do **pre-deploy normal**. Isso evita que uma queda da instância antiga impeça a implantação de sua substituta durante uma recuperação. Permanecem as regressões locais de segurança e as sondas de acesso e configuração do Sandbox. As rotas do painel só permitem leitura autenticada.
