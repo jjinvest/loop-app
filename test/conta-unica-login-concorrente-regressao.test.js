@@ -1,0 +1,64 @@
+'use strict';
+const {test}=require('node:test');
+const assert=require('node:assert/strict');
+const {randomBytes}=require('node:crypto');
+const {DatabaseSync}=require('node:sqlite');
+const {ContaUnicaCandidataSQLite}=require('../src/domain/conta-unica-candidata-sqlite');
+const TERMOS='Somente ensaio de autenticação sem dinheiro nem direitos comerciais.';
+
+async function preparar(t){
+ const banco=new DatabaseSync(':memory:');
+ banco.exec('PRAGMA foreign_keys=ON;');
+ t.after(()=>banco.close());
+ const conta=new ContaUnicaCandidataSQLite({
+  banco,chaveEmail:randomBytes(32),chaveCifra:randomBytes(32)
+ });
+ await conta.cadastrar({nome:'Teste Concorrente',nick:'Teste',
+  email:'teste-concorrente@example.invalid',
+  senha:'SenhaCorreta2026!Forte',termosVersao:'LAB-login-concorrente',
+  termosTexto:TERMOS,aceiteExplicito:true});
+ return {banco,conta};
+}
+
+test('oito erros concorrentes nao perdem incrementos e bloqueiam a conta',async t=>{
+ const {banco,conta}=await preparar(t);
+ const pedidos=Array.from({length:8},()=>conta.entrar({
+  nick:'Teste',senha:'SenhaIncorretaCompletamente!'
+ }));
+ const saidas=await Promise.allSettled(pedidos);
+ assert.ok(saidas.every(x=>x.status==='rejected'));
+ const row=banco.prepare(
+  'SELECT tentativas,bloqueado_ate FROM akitemm_conta_unica_candidata'
+ ).get();
+ assert.equal(row.tentativas,5);
+ assert.ok(row.bloqueado_ate>Date.now());
+ await assert.rejects(conta.entrar({
+  nick:'Teste',senha:'SenhaCorreta2026!Forte'
+ }),{codigo:'CONTA_TEMPORARIAMENTE_BLOQUEADA'});
+ assert.equal(banco.prepare(
+  'SELECT COUNT(*) AS n FROM akitemm_sessoes_candidatas'
+ ).get().n,0);
+});
+
+test('login iniciado antes de alteracao da senha nao recria sessao revogada',async t=>{
+ const {banco,conta}=await preparar(t);
+ const anterior=conta.entrar({nick:'Teste',senha:'SenhaCorreta2026!Forte'});
+ // O login ja leu o salt e esta aguardando scrypt. Simular a revogacao
+ // efetivada por troca/redefinicao em outra requisicao nesse intervalo.
+ banco.exec('BEGIN IMMEDIATE');
+ try{
+  banco.prepare([
+   'UPDATE akitemm_conta_unica_candidata',
+   'SET senha_hash=?'
+  ].join(' ')).run('a'.repeat(128));
+  banco.prepare('DELETE FROM akitemm_sessoes_candidatas').run();
+  banco.exec('COMMIT');
+ }catch(e){banco.exec('ROLLBACK');throw e;}
+ await assert.rejects(anterior,{codigo:'CREDENCIAIS_INVALIDAS'});
+ assert.equal(banco.prepare(
+  'SELECT COUNT(*) AS n FROM akitemm_sessoes_candidatas'
+ ).get().n,0,'hash antigo nao pode autorizar sessao nova');
+ assert.equal(banco.prepare(
+  'SELECT tentativas FROM akitemm_conta_unica_candidata'
+ ).get().tentativas,0,'troca concorrente nao equivale a senha errada');
+});
