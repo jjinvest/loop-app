@@ -7,6 +7,8 @@ const {criarAppLojaEscritorioCandidato}=
 const {catalogoFicticioCheckout}=
  require('../src/laboratorio/servidor-checkout-staging-local');
 const {COOKIE}=require('../src/domain/conta-unica-candidata-sqlite');
+const {auditarIntegridadeMotorCandidato}=
+ require('../src/domain/auditoria-integridade-motor-candidato-sqlite');
 const TOKEN='EnsaioWebhookConfirmacaoAsaas2026TokenFortissimo';
 const OP='OperadorSomenteLocalConfirmacaoPagamento_'+('R'.repeat(50));
 const CUSTOMER='cus_TestadorPagamentoSandbox2026';
@@ -243,6 +245,29 @@ test('webhook bruto nao gera posicoes; PSP reconsultado cria lote ROXO pendente 
   'SELECT estado FROM akitemm_motor_reversoes_psp_checkpoint',
   'WHERE evento_id=?'
  ].join(' ')).get(reversaoId).estado,'CONCLUIDO');
+ const auditMotor=auditarIntegridadeMotorCandidato({
+  banco:db,exigirMotor:true
+ });
+ assert.equal(auditMotor.checkpointsAuditados,1,
+  'checkpoint de reversao persiste e pertence ao PSP correto');
+ // A referencia errada aponta para webhook valido mas de RECEBIMENTO.
+ // O SQLite continua OK e a auditoria semantica precisa detectar fraude.
+ db.prepare([
+  'UPDATE akitemm_motor_reversoes_psp_checkpoint',
+  'SET evento_id=? WHERE evento_id=?'
+ ].join(' ')).run(evt,reversaoId);
+ assert.deepEqual(db.prepare('PRAGMA foreign_key_check').all(),[]);
+ assert.equal(db.prepare('PRAGMA integrity_check').get().integrity_check,'ok');
+ assert.throws(()=>auditarIntegridadeMotorCandidato({
+  banco:db,exigirMotor:true
+ }),{codigo:'MOTOR_SQLITE_REVERSOES_INCONSISTENTES'});
+ db.prepare([
+  'UPDATE akitemm_motor_reversoes_psp_checkpoint',
+  'SET evento_id=? WHERE evento_id=?'
+ ].join(' ')).run(reversaoId,evt);
+ assert.equal(auditarIntegridadeMotorCandidato({
+  banco:db,exigirMotor:true
+ }).checkpointsAuditados,1);
  assert.equal(gets,2,'retry de suspensao nao repete consulta PSP');
  assert.equal(posts,1,'retry de suspensao nao cria cobranca');
  // A reconsulta manual permanece disponivel, mas nao deve ressuscitar
