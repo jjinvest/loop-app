@@ -76,6 +76,12 @@ test('gateway exige acesso antes de HTML e rotas administrativas',async t=>{
  assert.equal(psp.status,'AGUARDANDO_CREDENCIAIS_SANDBOX_NA_PREVIA');
  assert.equal(psp.usaSQLiteDaLoja,true);
  assert.equal(psp.consultarPSPDisponivel,false);
+ const backup=await x.consultar('/staging/escritorio-unificado/backup-offsite/estado');
+ assert.equal(backup.status,200);
+ const copia=await backup.json();
+ assert.equal(copia.backupRailwayComprovado,false);
+ assert.equal(copia.estado,'BACKUP_OFFSITE_NAO_HABILITADO_NESTE_SERVICO');
+ assert.equal(copia.marcoZeroAprovado,false);
  assert.equal((await fetch(x.base+'/webhooks/asaas-sandbox-unificado',{
   method:'POST',headers:{'Content-Type':'application/json'},
   body:'{}'
