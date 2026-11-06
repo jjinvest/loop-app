@@ -925,7 +925,8 @@ if(worker){
     if(!operacoesSandboxAutorizadas)return res.status(403)
      .json({erro:'OPERACAO_SANDBOX_DESATIVADA'});
     const resumo={...worker.resumoPendencias(),
-     vinculosMotorAusentes:contarVinculosMotorAusentes()};
+     vinculosMotorAusentes:contarVinculosMotorAusentes(),
+     reversoesMotorPendentes:contarReversoesMotorPendentes()};
     const fila=worker.pendencias({limite:30});
     return res.json({
      ambiente:'ASAAS_SANDBOX_EXCLUSIVO',somenteLaboratorio:true,
@@ -1033,8 +1034,19 @@ if(worker){
      'AND NOT EXISTS(SELECT 1 FROM akitemm_motor_conta_ensaio_operacoes m',
      "WHERE m.prepedido_id=i.prepedido_id AND m.tipo='VINCULAR_PEDIDO')"
     ].join(' ');
+    const reversaoMotorPendente=[
+     "r.estado='CONCLUIDO' AND r.codigo='PSP_RECONSULTADO'",
+     "AND i.tipo IN ('PAYMENT_REFUNDED','PAYMENT_PARTIALLY_REFUNDED',",
+     "'PAYMENT_REFUND_IN_PROGRESS','PAYMENT_CHARGEBACK_REQUESTED',",
+     "'PAYMENT_CHARGEBACK_DISPUTE','PAYMENT_DELETED')",
+     'AND EXISTS (SELECT 1 FROM akitemm_prepedido_asaas_sandbox_staging p',
+     "WHERE p.prepedido_id=i.prepedido_id AND p.estado='REVERSAO_INFORMADA_SANDBOX')",
+     'AND NOT EXISTS (SELECT 1 FROM akitemm_motor_reversoes_psp_checkpoint c',
+     "WHERE c.evento_id=i.evento_id AND c.estado='CONCLUIDO')"
+    ].join(' ');
     const pendenteOuSemMotor=
-     '(r.evento_id IS NULL OR ('+vinculoMotorAusente+'))';
+     '(r.evento_id IS NULL OR ('+vinculoMotorAusente+') OR ('+
+      reversaoMotorPendente+'))';
     const baseFila=[
      'FROM akitemm_prepedido_webhook_inbox_staging i',
      'LEFT JOIN akitemm_prepedido_webhook_reconsulta_staging r',
@@ -1078,6 +1090,7 @@ if(worker){
      'WHERE '+pendenteOuSemMotor
     ].join(' ')).get().n;
     resultado.vinculosMotorAusentes=contarVinculosMotorAusentes();
+    resultado.reversoesMotorPendentes=contarReversoesMotorPendentes();
     resultado.alertasRevisao=worker.resumoPendencias().exigeRevisao;
     return resultado;
   }
@@ -1201,6 +1214,7 @@ if(worker){
     integridadeTitular:integridade.auditar(),
     integridadePagamentosEntregas:auditarRelacoesPspCandidato({banco}),
     vinculosMotorAusentes:contarVinculosMotorAusentes(),
+    reversoesMotorPendentes:contarReversoesMotorPendentes(),
     escritorioFonteUnica:true,
     contasCandidatas:banco.prepare(
      'SELECT COUNT(*) AS n FROM akitemm_conta_unica_candidata'
