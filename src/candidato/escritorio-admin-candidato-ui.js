@@ -540,6 +540,28 @@ $('criarMissao').addEventListener('submit',async e=>{
  }catch(err){dizer('Missão não registrada: '+err.message);}
  finally{botao.disabled=false;}
 });
+$('reconciliarPendentesPsp').addEventListener('click',async()=>{
+ const botao=$('reconciliarPendentesPsp'),status=$('resultadoConciliacaoPsp');
+ botao.disabled=true;
+ status.textContent='Conferindo os avisos novos no Sandbox e vinculando ao mesmo motor de ensaio...';
+ try{
+  const r=await api('/reconciliar-pendentes-sandbox',{
+   method:'POST',body:{limite:20}
+  });
+  status.textContent='Conciliação do lote: '+r.consultados+' avisos conferidos, '+
+   r.lotesPendentesCriados+' lotes de posições pendentes, '+
+   r.lotesSuspensos+' lotes suspensos por reversão, '+
+   r.pendentesRestantes+' avisos aguardando, '+
+   r.revisaoNecessaria+' casos desta rodada exigindo revisão. '+
+   'Nenhum saque ou pagamento real liberado.';
+  await atualizar();
+  await atualizarMotorContaEnsaio();
+ }catch(e){
+  status.textContent='Conciliação bloqueada: '+e.message;
+ }finally{
+  await conferirPixUnificado();
+ }
+});
 $('reconsultar').addEventListener('submit',async e=>{
  e.preventDefault();const b=e.submitter;b.disabled=true;
  try{await api('/reconsultar-psp',{method:'POST',body:{eventoId:$('eventoId').value}});
@@ -618,7 +640,9 @@ async function conferirPixUnificado(){
      r.usaSQLiteDaLoja&&r.webhookIngressAtivo&&r.consultarPSPDisponivel){
    estado.textContent='Asaas Sandbox conectado à loja, ao webhook e ao motor no MESMO banco de homologação. Nenhum saque real habilitado.';
    enviar.disabled=false;
+   $('reconciliarPendentesPsp').disabled=false;
   }else{
+   $('reconciliarPendentesPsp').disabled=true;
    estado.textContent='Ainda não ativado nesta prévia: faltam credenciais específicas do Asaas Sandbox. Banco e volume já estão disponíveis.';
   }
  }catch(e){estado.textContent='Não foi possível conferir: '+e.message;}
