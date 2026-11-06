@@ -35,6 +35,13 @@ async function diagnosticar({env=process.env,fetchImpl=globalThis.fetch}={}){
   recebimentosPSPConciliados:rel.resumo?.recebimentosPSPConciliados??null,
   candidatosDistintosNaAmostra:exclusivos.size,
   seisComprovadosNaAmostra:exclusivos.size>=6,
+  statusDaAmostra:(rel.pedidos||[]).map(p=>({
+   pspReconsultado:p.conferenciaPSPConcluida===true,
+   pspRecebido:p.ultimoStatusPSP==='RECEIVED',
+   revisao:p.exigeRevisaoManual===true,
+   posicoesAptas:p.posicoesFicticiasAptasAgora??null,
+   status:p.estadoOperacional
+  })),
   eventosNoCiclo:motor.tabuleiro.eventosNoCiclo,
   girosDoMotor:motor.catraca.giros,
   tabuleiroOcupado:[motor.tabuleiro.centro,...motor.tabuleiro.vagas]
