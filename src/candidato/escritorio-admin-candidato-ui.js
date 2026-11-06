@@ -665,8 +665,9 @@ $('agendaMotorHoje21').addEventListener('click',()=>{
   return;
  }
  $('agendaMotorExcecaoData').value=agendaHojeLocal;
- $('agendaMotorExcecaoFim').value='21:00';
- $('agendaMotorEstado').textContent='Exceção selecionada: hoje até 21h. Salve a agenda para aplicar.';
+ if(!$('agendaMotorExcecaoFim').value)
+  $('agendaMotorExcecaoFim').value=$('agendaMotorFim').value||'18:00';
+ $('agendaMotorEstado').textContent='Data de hoje selecionada. Escolha livremente o horário de encerramento, inclusive 00:00, e salve.';
 });
 $('formAgendaMotor').addEventListener('submit',async e=>{
  e.preventDefault();
