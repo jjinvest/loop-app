@@ -225,7 +225,9 @@ test('healthz nao declara sucesso com backend indisponivel; readyz confere pront
  });
  const base='http://127.0.0.1:'+gateway.address().port;
  const consultar=async rota=>{
-  const r=await fetch(base+rota);
+  const r=await fetch(base+rota,{
+   headers:rota==='/readyz'?{Authorization:auth}:{}
+  });
   const body=await r.text();
   assert.equal(body.includes('nunca-repassar'),false,
    'gateway nao expõe corpo interno de diagnostico');
@@ -250,9 +252,11 @@ test('healthz nao declara sucesso com backend indisponivel; readyz confere pront
  assert.equal((await consultar('/readyz')).codigo,503);
 });
 
-test('readiness publica usa auditoria SQLite interna sem abrir acesso administrativo',async t=>{
+test('readiness protegida usa auditoria SQLite interna sem abrir acesso administrativo',async t=>{
  const x=await preparar(t);
- const r=await fetch(x.base+'/readyz');
+ assert.equal((await fetch(x.base+'/readyz')).status,401,
+  'auditoria profunda nao deve aceitar acesso anonimo');
+ const r=await x.consultar('/readyz');
  assert.equal(r.status,200);
  const status=await r.json();
  assert.equal(status.estado,'BANCO_DE_ENSAIO_APTO');
