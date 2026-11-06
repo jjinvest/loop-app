@@ -3,6 +3,7 @@
 // As operacoes abaixo nao constituem liquidação PSP, adesao, direito ou ganho.
 // Bloqueio absoluto em NODE_ENV=production e sem rotas publicas de escrita.
 const {SimuladorLoop}=require('./simulador-loop');
+const {PADRAO,validarAgenda,avaliarAgenda}=require('./agenda-catraca-loop');
 const {LIMITE_POSICOES_ATIVAS}=require('./capacidade-posicoes-loop');
 const {planejarPosicoesCompraAkitemm}=require('./plano-posicoes-compra-akitemm');
 const {consultarPedido}=require('./relatorio-homologacao-checkout-staging');
@@ -52,6 +53,16 @@ class MotorContaUnicaEnsaioSQLite{
    "BEGIN SELECT RAISE(ABORT,'aceite por posicao imutavel'); END;",
    'CREATE INDEX IF NOT EXISTS idx_motor_ensaio_giros',
    'ON akitemm_motor_conta_ensaio_operacoes(tipo,criado_em);',
+   'CREATE TABLE IF NOT EXISTS akitemm_motor_agenda_catraca_lab(',
+   'id INTEGER PRIMARY KEY CHECK(id=1),',
+   'ativo INTEGER NOT NULL CHECK(ativo IN (0,1)),',
+   'abertura TEXT NOT NULL,fechamento TEXT NOT NULL,',
+   'intervalo_minutos INTEGER NOT NULL,',
+   'excecao_data TEXT,excecao_fechamento TEXT,',
+   'pausa_manual INTEGER NOT NULL CHECK(pausa_manual IN (0,1)),',
+   'ultimo_dia TEXT,ultimo_slot INTEGER NOT NULL);',
+   "INSERT OR IGNORE INTO akitemm_motor_agenda_catraca_lab VALUES(",
+   "1,0,'09:00','18:00',10,NULL,NULL,0,NULL,-1);",
    'CREATE TABLE IF NOT EXISTS akitemm_motor_indicacoes_qualificadas_lab(',
    'indicado_id TEXT PRIMARY KEY REFERENCES',
    'akitemm_conta_unica_candidata(id) ON DELETE RESTRICT,',
