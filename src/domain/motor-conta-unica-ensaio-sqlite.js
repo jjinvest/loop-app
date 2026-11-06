@@ -669,7 +669,7 @@ class MotorContaUnicaEnsaioSQLite{
     const resultado=sim.tentarGiro();
     if(!resultado.girou)return {acao:'GIRO_NAO_EXECUTADO',
      motivo:resultado.motivo,dinheiroReal:false};
-    this._evento('GIRO_AGENDADO');
+    this._evento('GIRO');
     return {acao:'GIRO_AGENDADO',girou:true,luzesAcesas:0,
      dinheiroReal:false};
    }
