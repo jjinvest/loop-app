@@ -236,7 +236,7 @@ function criarGateway({portaInterna,senhaAcesso,segredoOperador,
 // Trava novas conexoes ANTES de aguardar backup/PSP. As conexoes ainda
 // ativas drenam antes de encerrar o backend e fechar o mesmo SQLite.
 function criarEncerramentoPreview({gateway,interno,banco,agendador=null,
- backupOffsite=null,temporizadorCatraca=null}={}){
+ backupOffsite=null,pararTemporizadorCatraca=null}={}){
  if(!gateway||typeof gateway.close!=='function'||
     !interno||typeof interno.close!=='function'||
     !banco||typeof banco.close!=='function')
@@ -253,7 +253,9 @@ function criarEncerramentoPreview({gateway,interno,banco,agendador=null,
      gateway.closeIdleConnections?.();
     }catch(e){resolve(e);}
    });
-   if(temporizadorCatraca!==null)clearInterval(temporizadorCatraca);
+   // O temporizador e criado somente quando gateway entra em escuta.
+   // Encerrar por callback garante limpar o timer real, nao uma copia null.
+   if(pararTemporizadorCatraca)pararTemporizadorCatraca();
    if(agendador)await agendador.encerrar();
    if(backupOffsite)await backupOffsite.encerrar();
    const erroGateway=await drenagemGateway;
@@ -398,7 +400,10 @@ async function iniciar({env=process.env}={}){
   }
  });
  const encerrar=criarEncerramentoPreview({gateway,interno,banco:db,
-  agendador,backupOffsite,temporizadorCatraca});
+  agendador,backupOffsite,
+  pararTemporizadorCatraca:()=>{if(temporizadorCatraca!==null)
+   clearInterval(temporizadorCatraca);}
+ });
  process.once('SIGTERM',()=>{void encerrar();});
  process.once('SIGINT',()=>{void encerrar();});
  return {gateway,interno,db,agendador,backupOffsite,encerrar};
