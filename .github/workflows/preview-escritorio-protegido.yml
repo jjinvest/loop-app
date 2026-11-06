@@ -18,6 +18,9 @@ on:
       - 'test/asaas-motor-automatico-sandbox-candidato.test.js'
       - 'test/preview-unificacao-psp-webhook.test.js'
       - 'src/domain/agendador-conciliacao-asaas-sandbox.js'
+      - 'src/domain/agendador-backup-offsite-railway-lab.js'
+      - 'src/domain/s3-url-assinada-backup-lab.js'
+      - 'test/agendador-backup-offsite-railway-lab.test.js'
       - 'test/agendador-conciliacao-asaas-sandbox.test.js'
       - 'scripts/provar-restauracao-sqlite-unificado-lab.js'
       - 'test/provar-restauracao-sqlite-unificado-lab.test.js'
@@ -64,6 +67,9 @@ jobs:
       - run: npm ci --ignore-scripts --no-fund
       - run: node --check scripts/servidor-escritorio-preview-railway.js
       - run: node --check src/domain/agendador-conciliacao-asaas-sandbox.js
+      - run: node --check src/domain/s3-url-assinada-backup-lab.js
+      - run: node --check src/domain/agendador-backup-offsite-railway-lab.js
+      - run: node --test test/agendador-backup-offsite-railway-lab.test.js
       - run: node --test test/agendador-conciliacao-asaas-sandbox.test.js
       - run: node --check test/servidor-escritorio-preview-railway.test.js
       - run: node --check src/domain/equipe-candidata-sqlite.js
