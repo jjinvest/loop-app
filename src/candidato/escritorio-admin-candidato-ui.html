@@ -121,18 +121,20 @@
 <button type="button" id="motorEnsaioGirar">Executar giro de ensaio (6 eventos)</button>
 </div>
 <h3>Agenda da catraca · horário de Brasília</h3>
-<p class="subtexto">As compras confirmadas continuam acumuladas no SQLite e as filas continuam recebendo posições. A catraca controla apenas a contabilização das seis luzes e o deslocamento do tabuleiro. O relógio NUNCA inventa compras ou libera saques.</p>
+<p class="subtexto">A fila é viva: novas compras e indicações continuam mesmo quando o circuito está pausado. A catraca só executa eventos de compras conciliadas e o movimento do tabuleiro. O relógio é um controle opcional: não cria venda, não limita a operação comercial e não faz saques.</p>
 <form id="formAgendaMotor">
 <div class="linha">
 <label for="agendaMotorInicio">Abre às <input id="agendaMotorInicio" type="time" value="09:00" required></label>
 <label for="agendaMotorFim">Fecha às <input id="agendaMotorFim" type="time" value="18:00" required></label>
-<label for="agendaMotorIntervalo">Uma luz a cada
-<select id="agendaMotorIntervalo"><option value="5">5 minutos</option><option value="10" selected>10 minutos</option><option value="15">15 minutos</option><option value="30">30 minutos</option><option value="60">60 minutos</option></select></label>
+<label for="agendaMotorIntervalo">Intervalo livre (minutos)
+<input id="agendaMotorIntervalo" type="number" min="1" step="1" value="10" inputmode="numeric" required>
+<small>Ex.: 5, 10, 15, 60, 120 (2 horas) ou outro valor escolhido.</small></label>
 </div>
 <div class="linha">
 <label for="agendaMotorExcecaoData">Exceção neste dia <input id="agendaMotorExcecaoData" type="date"></label>
 <label for="agendaMotorExcecaoFim">Fechar excepcionalmente às <input id="agendaMotorExcecaoFim" type="time"></label>
-<button type="button" id="agendaMotorHoje21">Hoje até 21h</button>
+<button type="button" id="agendaMotorHoje21">Aplicar exceção para hoje</button>
+<small>Escolha a hora que quiser, inclusive 00:00 para encerrar à meia-noite.</small>
 </div>
 <label><input id="agendaMotorAtiva" type="checkbox"> Ativar contabilização automática de ENSAIO (não movimenta valores reais)</label>
 <button type="submit" class="primario">Salvar agenda da catraca</button>
