@@ -371,7 +371,15 @@ async function atualizarTabuleiroIntegrado(){
   $('loop03Giros24Integrado').textContent=String(motor.catraca.giros24h);
   estado.textContent='Motor V6 conectado ao SQLite desta conta · '+motor.ordemAlimentacao+
    ' · '+motor.catraca.estado+' · '+motor.catraca.giros+
-   ' giros de ensaio. Posições e valores comerciais continuam bloqueados.';
+   ' giros de ensaio. '+
+   (motor.agenda?.ativo?
+    'Agenda: '+motor.agenda.abertura+'–'+motor.agenda.fechamentoAplicado+
+     ', uma venda contabilizada a cada '+motor.agenda.intervaloMinutos+' min. ':
+    'Catraca sob controle manual. ')+
+   'Compras Sandbox confirmadas aguardando luz: '+
+   (motor.agenda?.aguardandoContabilizacao??0)+
+   '. Luzes representam vendas anteriores, nunca compras inventadas. '+
+   'Posições e valores comerciais continuam bloqueados.';
  }catch(e){
   estado.textContent='Leitura do motor indisponível: '+e.message+
    '. Não foram apresentados ocupantes ou giros não verificados.';
@@ -755,6 +763,13 @@ $('pedidosProximo').addEventListener('click',()=>{
 });
 $('sair').addEventListener('click',sair);
 $('atualizarTabuleiroIntegrado').addEventListener('click',atualizarTabuleiroIntegrado);
+// Ao abrir o tabuleiro, mostrar luzes e filas que mudaram por venda
+// conciliada e agendamento. Polling e somente GET, sem evento financeiro.
+setInterval(()=>{
+ if(aba==='conteudoTabuleiro'&&csrf!==null&&!document.hidden)
+  void atualizarTabuleiroIntegrado();
+},15000);
+
 $('tabuleiroVerPosicoesIntegrado').addEventListener('click',()=>mostrarAba('conteudoPosicoes'));
 $('loop03IrPosicoesIntegrado').addEventListener('click',()=>mostrarAba('conteudoPosicoes'));
 $('loop03MenuIntegrado').addEventListener('click',alternarMenuIntegrado);
