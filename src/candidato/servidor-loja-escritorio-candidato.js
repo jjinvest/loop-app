@@ -476,6 +476,15 @@ function criarAppLojaEscritorioCandidato({banco,repositorioCatalogo,
  const motorConta=new MotorContaUnicaEnsaioSQLite({
   banco,sinalizacao:sinalizacaoVitrine,ponte,cpf,termosVersao
  });
+ // Checkpoint duravel da aplicacao de estornos no motor: o GET PSP pode
+ // concluir antes de a catraca/posicao ser suspensa. Reinicio retoma.
+ if(worker)banco.exec([
+  'CREATE TABLE IF NOT EXISTS akitemm_motor_reversoes_psp_checkpoint(',
+  'evento_id TEXT PRIMARY KEY REFERENCES',
+  'akitemm_prepedido_webhook_inbox_staging(evento_id) ON DELETE RESTRICT,',
+  "estado TEXT NOT NULL CHECK(estado IN ('PENDENTE','CONCLUIDO','EXIGE_REVISAO')),",
+  'atualizado_em TEXT NOT NULL);'
+ ].join(' '));
  // Indica exatamente a capacidade operacional: testes do motor nao
  // significam que credenciais Asaas estejam presentes na previa Railway.
  app.get('/staging/escritorio-unificado/sandbox-pix/estado',
@@ -829,6 +838,34 @@ function criarAppLojaEscritorioCandidato({banco,repositorioCatalogo,
    'AND NOT EXISTS (SELECT 1 FROM akitemm_motor_conta_ensaio_operacoes m',
    "WHERE m.prepedido_id=i.prepedido_id AND m.tipo='VINCULAR_PEDIDO')"
   ].join(' ')).get().n;
+ }
+ function contarReversoesMotorPendentes(){
+  if(!worker)return 0;
+  return banco.prepare([
+   'SELECT COUNT(*) AS n',
+   'FROM akitemm_prepedido_webhook_inbox_staging i',
+   'JOIN akitemm_prepedido_webhook_reconsulta_staging r',
+   'ON r.evento_id=i.evento_id',
+   'JOIN akitemm_prepedido_asaas_sandbox_staging p',
+   'ON p.prepedido_id=i.prepedido_id',
+   'LEFT JOIN akitemm_motor_reversoes_psp_checkpoint c',
+   'ON c.evento_id=i.evento_id',
+   "WHERE r.estado='CONCLUIDO' AND r.codigo='PSP_RECONSULTADO'",
+   "AND i.tipo IN ('PAYMENT_REFUNDED','PAYMENT_PARTIALLY_REFUNDED',",
+   "'PAYMENT_REFUND_IN_PROGRESS','PAYMENT_CHARGEBACK_REQUESTED',",
+   "'PAYMENT_CHARGEBACK_DISPUTE','PAYMENT_DELETED')",
+   "AND p.estado='REVERSAO_INFORMADA_SANDBOX'",
+   "AND (c.estado IS NULL OR c.estado<>'CONCLUIDO')"
+  ].join(' ')).get().n;
+ }
+ function atualizarCheckpointReversao(eventoId,estado){
+  banco.prepare([
+   'INSERT INTO akitemm_motor_reversoes_psp_checkpoint',
+   '(evento_id,estado,atualizado_em) VALUES(?,?,?)',
+   'ON CONFLICT(evento_id) DO UPDATE SET',
+   'estado=excluded.estado,atualizado_em=excluded.atualizado_em',
+   "WHERE akitemm_motor_reversoes_psp_checkpoint.estado<>'CONCLUIDO'"
+  ].join(' ')).run(eventoId,estado,new Date().toISOString());
  }
  let executarConciliacaoSandbox=null;
 if(worker){
