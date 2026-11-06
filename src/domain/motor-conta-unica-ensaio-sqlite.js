@@ -814,6 +814,84 @@ class MotorContaUnicaEnsaioSQLite{
     posicoesNaoMovidas:true,dinheiroReal:false};
   });
  }
+ // O admin pode escolher QUANTOS centros liberar de uma vez. Cada
+ // posicao central que conclui exige 6 vendas PSP distintas. Sem estoque
+ // confirmado, devolve parcial em vez de inventar evento ou dinheiro.
+ // Respeita STOP; a pausa/horario podem ser explicitamente sobrepostos
+ // por este comando autenticado, com registro auditavel em SQLite.
+ liberarLoteEnsaio({quantidade}={}){
+  if(!Number.isSafeInteger(quantidade)||quantidade<1)
+   falha('LOTE_CATRACA_QUANTIDADE_INVALIDA');
+  if(!this.ponte)falha('LOTE_CATRACA_REQUER_PSP_SANDBOX');
+  return this._transacao(sim=>{
+   if(this._modoCatraca()==='STOP')
+    return {solicitados:quantidade,liberados:0,
+     motivo:'STOP_ADMINISTRATIVO',somenteEnsaio:true,dinheiroReal:false};
+   if(!sim.tabuleiro.centro&&
+      sim.filas.filaA.length+sim.filas.filaB.length>=7){
+    sim.prepararTabuleiro();
+    this._evento('PREPARAR_TABULEIRO_LIBERACAO');
+   }
+   if(!sim.tabuleiro.centro)
+    return {solicitados:quantidade,liberados:0,
+     motivo:'TABULEIRO_AGUARDANDO_POSICOES',
+     somenteEnsaio:true,dinheiroReal:false};
+   const estavaAberta=sim.catracaAberta;
+   sim.abrirCatraca();
+   const compras=this._pedidosAguardando(sim,5000);
+   let liberados=0,eventosUsados=0,motivo=null;
+   // Limite de transacao protege concorrencia no SQLite. Quantidades
+   // maiores nao sao rejeitadas: resposta mostra restante para novo lote.
+   while(liberados<Math.min(quantidade,100)){
+    while(sim.tabuleiro.vendasDoCiclo.length<6){
+     const p=compras.shift();if(!p)break;
+     const r=sim.registrarVendaNoCicloSimulada({
+      vendaId:'ensaio:'+p.prepedidoId
+     });
+     if(r.repetida)continue;
+     this._evento('EVENTO_CICLO',{prepedidoId:p.prepedidoId,
+      titularId:p.titularId});
+     eventosUsados++;
+    }
+    if(sim.tabuleiro.vendasDoCiclo.length!==6){
+     motivo='AGUARDANDO_SEIS_COMPRAS_CONCILIADAS';break;
+    }
+    let validos=true;
+    for(const evento of sim.tabuleiro.vendasDoCiclo){
+     const id=evento.vendaId?.startsWith('ensaio:')?
+      evento.vendaId.slice(7):null;
+     const origem=id&&this.banco.prepare([
+      'SELECT titular_id AS titularId',
+      'FROM akitemm_motor_conta_ensaio_operacoes',
+      "WHERE tipo='VINCULAR_PEDIDO' AND prepedido_id=? LIMIT 1"
+     ].join(' ')).get(id);
+     try{
+      if(!origem)falha('EVENTO_SEM_TITULAR');
+      this._conferirPedidoEventoPSPSandbox(id,origem.titularId);
+     }catch{validos=false;break;}
+    }
+    if(!validos){
+     this.banco.prepare([
+      'UPDATE akitemm_motor_agenda_catraca_lab',
+      'SET pausa_manual=1 WHERE id=1'
+     ].join(' ')).run();
+     motivo='PSP_EXIGE_REVISAO';break;
+    }
+    const giro=sim.tentarGiro();
+    if(!giro.girou){motivo=giro.motivo;break;}
+    this._evento('GIRO');
+    liberados++;
+   }
+   if(!estavaAberta||motivo==='PSP_EXIGE_REVISAO')
+    sim.pausarCatraca();
+   this._evento('LIBERAR_LOTE_ADMIN');
+   return {solicitados:quantidade,liberados,
+    restantes:quantidade-liberados,eventosUsados,
+    motivo:motivo||'LOTE_EXECUTADO',
+    luzesPendentes:sim.tabuleiro.vendasDoCiclo.length,
+    dinheiroReal:false,somenteEnsaio:true};
+  });
+ }
  controlarCatraca(acao){
   if(!['ABRIR','PAUSAR','GIRAR'].includes(acao))falha('ACAO_CATRACA_INVALIDA');
   return this._transacao(sim=>{
