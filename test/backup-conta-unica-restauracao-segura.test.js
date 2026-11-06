@@ -184,3 +184,33 @@ test('backup rejeita entrega PSP forjada mesmo com SQLite e titular coerentes',a
   assert.equal(fs.existsSync(a.backup),false);
  }finally{db.close();}
 });
+
+test('backup offsite recusa snapshot e lote do motor incoerentes',async t=>{
+ const a=paths(t);
+ const keys={email:randomBytes(32),cifra:randomBytes(32),
+  provaEmail:randomBytes(32)};
+ const db=new DatabaseSync(a.origem);
+ db.exec('PRAGMA foreign_keys=ON;PRAGMA journal_mode=WAL;');
+ t.after(()=>db.close());
+ criarAppLojaEscritorioCandidato(config(db,keys));
+ db.prepare([
+  'INSERT INTO akitemm_motor_conta_ensaio_estado',
+  '(id,revisao,snapshot,atualizado_em) VALUES(1,1,?,?)'
+ ].join(' ')).run('{"formato":"FORJADO"}',Date.now());
+ assert.equal(db.prepare('PRAGMA integrity_check').get().integrity_check,'ok');
+ await assert.rejects(criarBackupCriptografado({
+  origem:a.origem,destino:a.backup,senha:SENHA_BACKUP,autorizado:true
+ }),{codigo:'BACKUP_CANDIDATO_MOTOR_DIVERGENTE'});
+ assert.equal(fs.existsSync(a.backup),false,'nao deve produzir copia aprovada');
+ db.prepare('DELETE FROM akitemm_motor_conta_ensaio_estado').run();
+ db.prepare([
+  'INSERT INTO akitemm_motor_ensaio_lotes_pedido',
+  '(prepedido_id,ordinal,titular_id,numero_posicao) VALUES(?,?,?,?)'
+ ].join(' ')).run('hom-00000000-0000-4000-8000-000000000000',
+  1,'titular-00000000-0000-4000-8000-000000000000',99999);
+ assert.deepEqual(db.prepare('PRAGMA foreign_key_check').all(),[]);
+ await assert.rejects(criarBackupCriptografado({
+  origem:a.origem,destino:a.backup,senha:SENHA_BACKUP,autorizado:true
+ }),{codigo:'BACKUP_CANDIDATO_MOTOR_DIVERGENTE'});
+ assert.equal(fs.existsSync(a.backup),false);
+});
