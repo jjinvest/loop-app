@@ -76,6 +76,9 @@ test('gateway exige acesso antes de HTML e rotas administrativas',async t=>{
  assert.equal(psp.status,'AGUARDANDO_CREDENCIAIS_SANDBOX_NA_PREVIA');
  assert.equal(psp.usaSQLiteDaLoja,true);
  assert.equal(psp.consultarPSPDisponivel,false);
+ const acessoRemoto=await x.consultar('/staging/escritorio-unificado/sandbox-pix/provar-acesso-remoto');
+ assert.equal(acessoRemoto.status,503);
+ assert.equal((await acessoRemoto.json()).erro,'PROVA_REMOTA_SANDBOX_INDISPONIVEL');
  const backup=await x.consultar('/staging/escritorio-unificado/backup-offsite/estado');
  assert.equal(backup.status,200);
  const copia=await backup.json();
