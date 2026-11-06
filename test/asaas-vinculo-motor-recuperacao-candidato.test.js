@@ -252,6 +252,15 @@ test('dez posicoes reservadas nao bloqueiam a decima primeira compra sem posicao
  assert.equal(destino.estado,'RECEBIMENTO_INFORMADO_SANDBOX');
  assert.equal(destino.compraSemNovaPosicao,true);
  assert.equal(destino.posicoesReservadas,0);
+ // Mesmo que o titular libere vaga DEPOIS, o contrato historico de
+ // compra sem posicao e imutavel. Nem o operador pode gerar posicao
+ // por atalho interno, nem a conciliacao PSP pode fazer replay tardio.
+ assert.throws(()=>app.motorConta.vincularPedidoConferidoSandbox({
+  prepedidoId:ultimoPedido
+ }),{codigo:'COMPRA_SOMENTE_PRODUTO_NAO_GERA_POSICAO'});
+ assert.throws(()=>app.motorConta.vincularPedido({
+  prepedidoId:ultimoPedido,aceiteEnsaio:true
+ }),{codigo:'COMPRA_SOMENTE_PRODUTO_NAO_GERA_POSICAO'});
  assert.equal(app.motorConta.consultar({titularId:titular.titularId})
   .posicoesAtivasDoTitular,0,'pagar produto nao cria a decima primeira posicao');
  const replay=await app.executarConciliacaoSandbox(20);
