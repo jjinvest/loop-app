@@ -47,8 +47,11 @@ function planejado(meta,agenda,agoraMs){
  const prazo=horario.dentroDoHorario&&aplicaDia&&restante>0&&
   minuto>=comeco&&meta.quantidade>0;
  const transcorrido= Math.max(0,minuto-comeco+1);
- const alvo=prazo?Math.min(meta.quantidade,
-  Math.floor(transcorrido*meta.quantidade/restante)):0;
+ // BigInt evita perda de precisao ao distribuir metas grandes,
+ // inclusive 1 milhao ou qualquer inteiro seguro configurado pelo admin.
+ const alvo=prazo?Number((
+  BigInt(transcorrido)*BigInt(meta.quantidade)
+ )/BigInt(restante)):0;
  return {
   dia,horarioLocal:horario.horarioLocal,
   dentroDoHorario:horario.dentroDoHorario,
