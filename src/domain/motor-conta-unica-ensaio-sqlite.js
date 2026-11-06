@@ -63,6 +63,10 @@ class MotorContaUnicaEnsaioSQLite{
    'ultimo_dia TEXT,ultimo_slot INTEGER NOT NULL);',
    "INSERT OR IGNORE INTO akitemm_motor_agenda_catraca_lab VALUES(",
    "1,0,'09:00','18:00',10,NULL,NULL,0,NULL,-1);",
+   'CREATE TABLE IF NOT EXISTS akitemm_motor_catraca_modo_lab(',
+   "id INTEGER PRIMARY KEY CHECK(id=1), modo TEXT NOT NULL",
+   "CHECK(modo IN ('PARADA','NATURAL','AGENDADA')));",
+   "INSERT OR IGNORE INTO akitemm_motor_catraca_modo_lab VALUES(1,'PARADA');",
    'CREATE TABLE IF NOT EXISTS akitemm_motor_indicacoes_qualificadas_lab(',
    'indicado_id TEXT PRIMARY KEY REFERENCES',
    'akitemm_conta_unica_candidata(id) ON DELETE RESTRICT,',
@@ -521,6 +525,11 @@ class MotorContaUnicaEnsaioSQLite{
  // A venda recebida continua na fila SQLite mesmo que o tabuleiro esteja
  // pausado. Esta consulta e a FONTE do estoque para novas luzes do ciclo:
  // nenhuma venda artificial e criada na passagem do tempo.
+ _modoCatraca(){
+  return this.banco.prepare(
+   'SELECT modo FROM akitemm_motor_catraca_modo_lab WHERE id=1'
+  ).get()?.modo||'PARADA';
+ }
  _agenda(){
   const row=this.banco.prepare([
    'SELECT ativo,abertura,fechamento,intervalo_minutos AS intervaloMinutos,',
@@ -557,6 +566,7 @@ class MotorContaUnicaEnsaioSQLite{
   const horario=avaliarAgenda(config,agoraMs);
   const sim=this._simulador();
   return {...config,...horario,
+   modoExecucao:this._modoCatraca(),
    aguardandoContabilizacao:this._pedidosAguardando(sim).length,
    luzesAcesas:sim.tabuleiro.vendasDoCiclo.length,
    luzesRoxasAcesas:sim.tabuleiro.vendasDoCiclo.filter(v=>
@@ -569,11 +579,15 @@ class MotorContaUnicaEnsaioSQLite{
  }
  configurarAgenda({ativo,abertura,fechamento,
   intervaloMinutos,excecaoData=null,excecaoFechamento=null,
-  agoraMs=Date.now()}={}){
+  modoExecucao=null,agoraMs=Date.now()}={}){
   const velho=this._agenda();
+  const modo=modoExecucao===null?
+   (ativo?'AGENDADA':'PARADA'):modoExecucao;
+  if(!['PARADA','NATURAL','AGENDADA'].includes(modo))
+   falha('MODO_CATRACA_INVALIDO');
   const local=avaliarAgenda(velho,agoraMs);
   const novo=validarAgenda({
-   ...velho,ativo,abertura,fechamento,intervaloMinutos,
+   ...velho,ativo:modo==='AGENDADA',abertura,fechamento,intervaloMinutos,
    excecaoData,excecaoFechamento,
    pausaManual:false,
    // Uma nova configuracao comecara no proximo horario escolhido,
@@ -596,10 +610,14 @@ class MotorContaUnicaEnsaioSQLite{
    ].join(' ')).run(novo.ativo?1:0,novo.abertura,novo.fechamento,
     novo.intervaloMinutos,novo.excecaoData,novo.excecaoFechamento,
     novo.ultimoDia,novo.ultimoSlot);
+   this.banco.prepare(
+    'UPDATE akitemm_motor_catraca_modo_lab SET modo=? WHERE id=1'
+   ).run(modo);
    sim.pausarCatraca();
    this._evento('CONFIGURAR_AGENDA_CATRACA');
    return {configurada:true,agendaAtiva:novo.ativo,
-    proximoPulsoSomenteEmHorario:true,somenteEnsaio:true};
+    modoExecucao:modo,proximoPulsoSomenteEmHorario:modo==='AGENDADA',
+    somenteEnsaio:true};
   });
   return {...resposta,agenda:this.consultarAgenda({agoraMs})};
  }
@@ -610,9 +628,19 @@ class MotorContaUnicaEnsaioSQLite{
  processarPulsoAgenda({agoraMs=Date.now()}={}){
   validarAmbiente();
   const config=this._agenda();
+  const modo=this._modoCatraca();
+  if(modo==='NATURAL')return this._processarNatural();
+  if(modo==='PARADA'){
+   const sim=this._simulador();
+   if(!sim.catracaAberta)return {acao:'STOP_CATRACA',
+    somenteEnsaio:true};
+   return this._transacao(s=>{
+    s.pausarCatraca();
+    this._evento('STOP_CATRACA');
+    return {acao:'STOP_CATRACA',somenteEnsaio:true};
+   });
+  }
   const janela=avaliarAgenda(config,agoraMs);
-  if(!config.ativo)
-   return {acao:'DESATIVADA',somenteEnsaio:true};
   if(!janela.dentroDoHorario||config.pausaManual){
    const sim=this._simulador();
    if(!sim.catracaAberta)
