@@ -141,9 +141,29 @@ test('dez posicoes reservadas nao bloqueiam a decima primeira compra sem posicao
  const banco=new DatabaseSync(':memory:');
  banco.exec('PRAGMA foreign_keys=ON;');
  t.after(()=>banco.close());
+ let ultimoPedido=null,post=0,gets=0;
+ const provedor={
+  ambiente:'ASAAS_SANDBOX_EXCLUSIVO',
+  async criarCobrancaPix({pedidoId,valorCentavos}){
+   post++;
+   assert.equal(pedidoId,ultimoPedido);
+   assert.equal(valorCentavos,25000);
+   return {ambiente:this.ambiente,pagamentoId:'pay_CompraExtraSemPosicao',
+    valorCentavos,status:'PENDING'};
+  },
+  async consultarCobranca(id){
+   gets++;
+   assert.equal(id,'pay_CompraExtraSemPosicao');
+   return {pagamentoId:id,status:'RECEIVED',valorCentavos:25000,
+    billingType:'PIX',clienteAsaasId:CUSTOMER,
+    externalReference:'LOOPLAB-'+ultimoPedido};
+  }
+ };
  const app=criarAppLojaEscritorioCandidato({
   banco,repositorioCatalogo:catalogoFicticioCheckout(),
   chaveEmail:randomBytes(32),chaveCifra:randomBytes(32),
+  webhookHomologacaoToken:TOKEN,provedorReconsultaSandbox:provedor,
+  operacoesSandboxAutorizadas:true,
   segredoOperador:OPERADOR,termosVersao:'LAB-reserva-antes-pix',
   termosTexto:'Somente ensaio local sem pagamento real, renda ou direito comercial.'
  });
@@ -177,6 +197,7 @@ test('dez posicoes reservadas nao bloqueiam a decima primeira compra sem posicao
      titularId:titular.titularId
     }).posicoesAtivasDoTitular}
   });
+  if(i===10)ultimoPedido=pedido.prepedido.prepedidoId;
   if(i===10){
    assert.throws(()=>app.ponte.preparar({
     titularId:titular.titularId,
@@ -212,5 +233,30 @@ test('dez posicoes reservadas nao bloqueiam a decima primeira compra sem posicao
  assert.equal(banco.prepare([
   'SELECT COUNT(*) AS n FROM akitemm_motor_ensaio_lotes_pedido'
  ].join(' ')).get().n,0,'reservar nunca cria posicao');
+ assert.equal(ultimoPedido!==null,true);
+ await app.ponte.enviarUmaVez({titularId:titular.titularId,
+  prepedidoId:ultimoPedido,provedor,execucaoLiberada:true,
+  exigirCoberturaBruta:false});
+ app.inbox.registrar({cabecalhoToken:TOKEN,
+  corpoBruto:Buffer.from(JSON.stringify({
+   id:'evt_CompraExtraSemPosicao2026',event:'PAYMENT_RECEIVED',
+   payment:{id:'pay_CompraExtraSemPosicao'}
+  }))});
+ const reconciliado=await app.executarConciliacaoSandbox(20);
+ assert.equal(reconciliado.consultados,1);
+ assert.equal(reconciliado.vinculosMotorAusentes,0);
+ assert.equal(reconciliado.pendentesRestantes,0);
+ assert.equal(post,1);assert.equal(gets,1);
+ const destino=app.ponte.consultar({titularId:titular.titularId,
+  prepedidoId:ultimoPedido});
+ assert.equal(destino.estado,'RECEBIMENTO_INFORMADO_SANDBOX');
+ assert.equal(destino.compraSemNovaPosicao,true);
+ assert.equal(destino.posicoesReservadas,0);
+ assert.equal(app.motorConta.consultar({titularId:titular.titularId})
+  .posicoesAtivasDoTitular,0,'pagar produto nao cria a decima primeira posicao');
+ const replay=await app.executarConciliacaoSandbox(20);
+ assert.equal(replay.consultados,0);
+ assert.equal(replay.pendentesRestantes,0);
+ assert.equal(post,1);assert.equal(gets,1);
  assert.deepEqual(banco.prepare('PRAGMA foreign_key_check').all(),[]);
 });
