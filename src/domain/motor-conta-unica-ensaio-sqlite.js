@@ -148,6 +148,31 @@ class MotorContaUnicaEnsaioSQLite{
       foto?.podeSimularFilaBAzul!==true||foto?.eventoPendente===true){
     falha('PEDIDO_NAO_QUALIFICA_ENSAIO_MOTOR');
    }
+   // O contrato do pedido e congelado ANTES do Pix. A liberacao
+   // posterior de vagas nao converte compra SOMENTE PRODUTO em posicao,
+   // nem uma rota administrativa pode contornar essa regra. Versoes
+   // legadas sem contrato nao sao retroativamente reinterpretadas.
+   const tabelaReserva=this.banco.prepare([
+    "SELECT 1 AS sim FROM sqlite_master WHERE type='table'",
+    "AND name='akitemm_prepedido_asaas_reserva_posicoes_staging'"
+   ].join(' ')).get();
+   if(tabelaReserva){
+    const reserva=this.banco.prepare([
+     'SELECT titular_id AS titularId,',
+     'posicoes_previstas AS previstas,',
+     'posicoes_reservadas AS reservadas',
+     'FROM akitemm_prepedido_asaas_reserva_posicoes_staging',
+     'WHERE prepedido_id=?'
+    ].join(' ')).get(prepedidoId);
+    if(reserva){
+     if(reserva.titularId!==pedido.titularId)
+      falha('RESERVA_POSICAO_TITULAR_DIVERGENTE');
+     if(reserva.reservadas===0)
+      falha('COMPRA_SOMENTE_PRODUTO_NAO_GERA_POSICAO');
+     if(reserva.previstas!==quantidade||reserva.reservadas!==quantidade)
+      falha('RESERVA_POSICOES_DIVERGENTE');
+    }
+   }
    const anterior=this.banco.prepare([
     'SELECT numero_posicao AS posicaoId,titular_id AS titularId',
     'FROM akitemm_motor_conta_ensaio_operacoes',
