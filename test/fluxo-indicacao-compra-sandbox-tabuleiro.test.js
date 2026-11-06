@@ -502,3 +502,37 @@ test('meta de um milhao e apenas doze compras autoriza dois ciclos sem teto de u
   assert.equal(x.db.prepare('PRAGMA integrity_check').get().integrity_check,'ok');
  }finally{x.db.close();}
 });
+
+test('apos cinco mil eventos historicos a catraca ainda encontra compras novas sem reusar as antigas',()=>{
+ const x=preparar();
+ try{
+  for(let i=1;i<=8;i++)x.conta(i,'Fila'+String.fromCharCode(96+i));
+  // Dados ficticios de historico, processados de forma persistente.
+  // Exercita paginacao por cursor sem depender de chamadas PSP externas.
+  const vinculo=x.db.prepare([
+   'INSERT INTO akitemm_motor_conta_ensaio_operacoes',
+   '(tipo,prepedido_id,titular_id,criado_em) VALUES(?,?,?,?)'
+  ].join(' '));
+  const anteriores=x.db.prepare([
+   'INSERT INTO akitemm_motor_conta_ensaio_operacoes',
+   '(tipo,prepedido_id,titular_id,criado_em) VALUES(?,?,?,?)'
+  ].join(' '));
+  const passado=Date.now()-86400000;
+  for(let i=0;i<5101;i++){
+   const id='hom-'+(0x10000000+i).toString(16)+
+    '-0000-0000-0000-000000000000';
+   vinculo.run('VINCULAR_PEDIDO',id,tid(1),passado+i);
+   anteriores.run('EVENTO_CICLO',id,tid(1),passado+i);
+  }
+  for(let i=1;i<=8;i++)x.comprar(i,i,true);
+  const pendentes=x.motor._pedidosAguardando(x.motor._simulador(),8);
+  assert.equal(pendentes.length,8);
+  assert.equal(pendentes[0].prepedidoId,pid(1));
+  assert.equal(pendentes[7].prepedidoId,pid(8));
+  const lote=x.motor.liberarLoteEnsaio({quantidade:2});
+  assert.equal(lote.liberados,1);
+  assert.equal(lote.eventosUsados,8);
+  assert.equal(x.motor.consultar().tabuleiro.eventosNoCiclo,2);
+  assert.equal(x.db.prepare('PRAGMA integrity_check').get().integrity_check,'ok');
+ }finally{x.db.close();}
+});
