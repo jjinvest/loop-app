@@ -5,7 +5,7 @@ const {once}=require('node:events');
 const http=require('node:http');
 const {randomBytes}=require('node:crypto');
 const {DatabaseSync}=require('node:sqlite');
-const {criarGateway}=require('../scripts/servidor-escritorio-preview-railway');
+const {criarGateway,criarEncerramentoPreview}=require('../scripts/servidor-escritorio-preview-railway');
 const {criarAppLojaEscritorioCandidato}=
  require('../src/candidato/servidor-loja-escritorio-candidato');
 const {catalogoFicticioCheckout}=
@@ -259,4 +259,62 @@ test('readiness publica usa auditoria SQLite interna sem abrir acesso administra
  assert.equal(status.financeiroReal,false);
  assert.equal(status.marcoZeroLiberado,false);
  assert.equal((await fetch(x.base+'/staging/escritorio-unificado')).status,401);
+});
+
+test('encerramento seguro preserva operacoes ativas antes de fechar SQLite',async t=>{
+ let liberarHttp,liberarPsp,liberarBackup;
+ let avisarHttp;
+ const entrouHttp=new Promise(resolve=>{avisarHttp=resolve;});
+ const retidoHttp=new Promise(resolve=>{liberarHttp=resolve;});
+ const retidoPsp=new Promise(resolve=>{liberarPsp=resolve;});
+ const retidoBackup=new Promise(resolve=>{liberarBackup=resolve;});
+ let fechamentosDb=0,encerramentosPsp=0,encerramentosBackup=0;
+ const interno=http.createServer((_req,res)=>res.end('interno'));
+ interno.listen(0,'127.0.0.1');
+ await once(interno,'listening');
+ const gateway=http.createServer((_req,res)=>{
+  avisarHttp();
+  void retidoHttp.then(()=>res.end('resposta-drenada'));
+ });
+ gateway.listen(0,'127.0.0.1');
+ await once(gateway,'listening');
+ t.after(async()=>{
+  if(gateway.listening)await new Promise(done=>gateway.close(done));
+  if(interno.listening)await new Promise(done=>interno.close(done));
+ });
+ const base='http://127.0.0.1:'+gateway.address().port;
+ const requisicao=fetch(base+'/trabalho-em-andamento');
+ await entrouHttp;
+ const encerrar=criarEncerramentoPreview({
+  gateway,interno,banco:{close(){fechamentosDb++;}},
+  agendador:{encerrar(){encerramentosPsp++;return retidoPsp;}},
+  backupOffsite:{encerrar(){encerramentosBackup++;return retidoBackup;}}
+ });
+ const a=encerrar(),b=encerrar();
+ assert.strictEqual(a,b,'concorrentes compartilham o MESMO encerramento');
+ assert.equal(gateway.listening,false,'gateway para de aceitar novos clientes');
+ assert.equal(encerramentosPsp,1);
+ assert.equal(fechamentosDb,0);
+ liberarPsp();
+ await new Promise(setImmediate);
+ assert.equal(encerramentosBackup,1);
+ assert.equal(fechamentosDb,0,'backup ainda protege o mesmo SQLite');
+ liberarBackup();
+ await new Promise(setImmediate);
+ assert.equal(fechamentosDb,0,'requisicao HTTP ativa ainda precisa drenar');
+ liberarHttp();
+ const resposta=await requisicao;
+ assert.equal(resposta.status,200);
+ assert.equal(await resposta.text(),'resposta-drenada');
+ await Promise.all([a,b]);
+ assert.equal(interno.listening,false);
+ assert.equal(fechamentosDb,1);
+ assert.equal(encerramentosPsp,1);
+ assert.equal(encerramentosBackup,1);
+ await encerrar();
+ assert.equal(fechamentosDb,1,'repeticao nao fecha o banco duas vezes');
+});
+
+test('encerramento da previa exige gateway, backend e banco',()=>{
+ assert.throws(()=>criarEncerramentoPreview({}),/ENCERRAMENTO_PREVIA_INVALIDO/);
 });
