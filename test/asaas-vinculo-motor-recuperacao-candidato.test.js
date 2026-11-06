@@ -172,10 +172,23 @@ test('dez posicoes reservadas nao bloqueiam a decima primeira compra sem posicao
    titularId:titular.titularId,
    prepedidoId:pedido.prepedido.prepedidoId,clienteAsaasId:CUSTOMER,
    capacidade:{quantidadePosicoes:1,
+    cienteSemPosicao:i===10,
     consultarAtivas:()=>app.motorConta.consultar({
      titularId:titular.titularId
     }).posicoesAtivasDoTitular}
   });
+  if(i===10){
+   assert.throws(()=>app.ponte.preparar({
+    titularId:titular.titularId,
+    prepedidoId:pedido.prepedido.prepedidoId,
+    clienteAsaasId:CUSTOMER,
+    capacidade:{quantidadePosicoes:1,
+     cienteSemPosicao:false,
+     consultarAtivas:()=>app.motorConta.consultar({
+      titularId:titular.titularId
+     }).posicoesAtivasDoTitular}
+   }),{codigo:'COMPRA_SEM_POSICAO_EXIGE_CIENCIA'});
+  }
   const reserva=preparar();
   assert.equal(reserva.repetido,false);
   assert.equal(reserva.registro.posicoesPrevistas,1);
