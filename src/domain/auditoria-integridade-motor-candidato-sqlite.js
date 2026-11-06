@@ -71,18 +71,29 @@ function auditarIntegridadeMotorCandidato({banco,exigirMotor=false}={}){
    'SELECT v.prepedido_id AS pedidoId,v.titular_id AS titularId,',
    'v.posicoes_previstas AS previstas,v.posicoes_reservadas AS reservadas,',
    'v.modalidade,p.prepedido_id AS pspPedido,p.titular_id AS pspTitular,',
-   'c.prepedido_id AS checkoutPedido,c.titular_id AS checkoutTitular',
+   'c.prepedido_id AS checkoutPedido,c.titular_id AS checkoutTitular,',
+   'f.fotografia_json AS foto,f.titular_id AS fotoTitular',
    'FROM akitemm_prepedido_asaas_reserva_posicoes_staging v',
    'LEFT JOIN akitemm_prepedido_asaas_sandbox_staging p',
    'ON p.prepedido_id=v.prepedido_id',
    'LEFT JOIN akitemm_checkout_prepedidos_staging c',
-   'ON c.prepedido_id=v.prepedido_id'
+   'ON c.prepedido_id=v.prepedido_id',
+   'LEFT JOIN akitemm_vitrine_fotografia_classificacao_prepedido f',
+   'ON f.prepedido_id=v.prepedido_id'
   ].join(' ')).all();
   for(const x of reservas){
    reservasAuditadas++;
    if(x.pspPedido!==x.pedidoId||x.checkoutPedido!==x.pedidoId||
-      x.pspTitular!==x.titularId||x.checkoutTitular!==x.titularId)
+      x.pspTitular!==x.titularId||x.checkoutTitular!==x.titularId||
+      x.fotoTitular!==x.titularId)
     falha('MOTOR_SQLITE_RESERVAS_TITULAR_DIVERGENTE');
+   let fotografia;
+   try{fotografia=JSON.parse(x.foto);}
+   catch{falha('MOTOR_SQLITE_RESERVA_FOTOGRAFIA_INVALIDA');}
+   if(fotografia?.prepedidoId!==x.pedidoId||
+      fotografia?.titularId!==x.titularId||
+      fotografia?.planejamentoPosicoes?.quantidadePosicoesPrevistas!==x.previstas)
+    falha('MOTOR_SQLITE_RESERVA_FOTOGRAFIA_DIVERGENTE');
    if(!Number.isSafeInteger(x.previstas)||x.previstas<0||
       !Number.isSafeInteger(x.reservadas)||x.reservadas<0||
       x.reservadas>10||x.reservadas>x.previstas)
