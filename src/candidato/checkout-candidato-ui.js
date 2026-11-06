@@ -3,7 +3,8 @@
 // posicao verdadeira. Nunca inserir valores da API via innerHTML.
 const API='/staging';
 const $=id=>document.getElementById(id);
-let csrf=null,aba='conteudoResumo',proximaPaginaEquipe=null;
+let csrf=null,aba='conteudoResumo',proximaPaginaEquipe=null,
+ paginaPedidos=0,carregamentoPedidos=0;
 let telaAcesso='cadastro';
 let posicaoSelecionadaMotor=null;
 const ABAS=[['abaResumo','conteudoResumo'],['abaTabuleiro','conteudoTabuleiro'],
@@ -72,7 +73,7 @@ function mostrarSessao(ativa){
  $('painelRecuperacao').hidden=ativa||telaAcesso!=='recuperacao';
  $('painelConta').hidden=!ativa;
  if(!ativa){csrf=null;
-  $('senha').value='';proximaPaginaEquipe=null;}
+  $('senha').value='';proximaPaginaEquipe=null;paginaPedidos=0;}
 }
 function mostrarAba(alvo){
  aba=alvo;
@@ -118,6 +119,19 @@ function exibirPedidos(pedidos){
   const status=document.createElement('p');status.className='estado';
   status.textContent=estados[pedido.statusHomologacao]||'Status em verificação (laboratório)';
   artigo.append(titulo,resumo,data,status);
+  if(pedido.compraSemNovaPosicao===true){
+   const aviso=document.createElement('p');aviso.className='aviso';
+   aviso.textContent=pedido.modalidadeDeParticipacao==='SEM_POSICOES_LIMITE'?
+    'Compra de produto sem nova posição no LOOP: limite de 10 posições atingido.':
+    'Compra comum de produto, sem geração de posição no LOOP.';
+   artigo.append(aviso);
+  }else if(Number.isSafeInteger(pedido.posicoesReservadas)&&
+           pedido.posicoesReservadas>0){
+   const detalhe=document.createElement('p');detalhe.className='subtexto';
+   detalhe.textContent='Reserva de homologação: '+pedido.posicoesReservadas+
+    ' posição(ões) prevista(s), ainda não criada(s) nem ativada(s).';
+   artigo.append(detalhe);
+  }
   if(pedido.conferenciaPSPConcluida===true){
    const selo=document.createElement('p');selo.className='subtexto';
    selo.textContent='Pagamento fictício conferido por consulta independente ao Asaas Sandbox.';
@@ -157,7 +171,15 @@ function exibirPedidos(pedidos){
 }
 async function atualizarPedidos(){
  try{
-  const dados=await requisitar('/meus-pedidos');
+  const requisicao=++carregamentoPedidos;
+  const dados=await requisitar('/meus-pedidos?pagina='+paginaPedidos+'&tamanho=20');
+  if(requisicao!==carregamentoPedidos)return;
+  const pag=dados.paginacao||{pagina:0,haAnterior:false,haMais:false,total:dados.pedidos.length};
+  paginaPedidos=pag.pagina;
+  $('pedidosAnterior').disabled=!pag.haAnterior;
+  $('pedidosProximo').disabled=!pag.haMais;
+  $('pedidosPaginacao').textContent='Página '+(pag.pagina+1)+
+   ' · '+pag.total+' pedido(s) no histórico';
   exibirPedidos(dados.pedidos);
   const previa=await requisitar('/minha-previa-filas');
   const resumo=$('minhaPreviaFilas');resumo.replaceChildren();
@@ -284,7 +306,7 @@ async function atualizarResumo(){
   const selecionada=motor.minhasPosicoes.find(x=>x.numero===posicaoSelecionadaMotor);
   if(!selecionada)posicaoSelecionadaMotor=null;
   $('loop03NumeroIntegrado').textContent=selecionada?'#'+selecionada.numero:'#0000';
-  $('resumoPedidos').textContent=String(pedidos.pedidos?.length||0);
+  $('resumoPedidos').textContent=String(pedidos.totalPedidos??pedidos.pedidos?.length??0);
   $('resumoPosicoes').textContent=String(motor.posicoesAtivasDoTitular)+
    ' no motor de ensaio; '+String(filas.meusPendentesHistoricos||0)+' históricos PSP';
   $('resumoEmail').textContent=perfil.emailVerificado?'Confirmado':'Pendente';
@@ -683,7 +705,13 @@ $('solicitarCodigoEmail').addEventListener('click',solicitarCodigoEmail);
 $('formConfirmarEmail').addEventListener('submit',confirmarCodigoEmail);
 $('formLogin').addEventListener('submit',entrar);
 $('formCpfTeste').addEventListener('submit',registrarIdentidadeTeste);
-$('atualizarPedidos').addEventListener('click',atualizarPedidos);
+$('atualizarPedidos').addEventListener('click',()=>atualizarPedidos());
+$('pedidosAnterior').addEventListener('click',()=>{
+ if(paginaPedidos>0){paginaPedidos--;atualizarPedidos();}
+});
+$('pedidosProximo').addEventListener('click',()=>{
+ paginaPedidos++;atualizarPedidos();
+});
 $('sair').addEventListener('click',sair);
 $('atualizarTabuleiroIntegrado').addEventListener('click',atualizarTabuleiroIntegrado);
 $('tabuleiroVerPosicoesIntegrado').addEventListener('click',()=>mostrarAba('conteudoPosicoes'));
