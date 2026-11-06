@@ -207,14 +207,44 @@ test('webhook bruto nao gera posicoes; PSP reconsultado cria lote ROXO pendente 
  r.inbox.registrar({cabecalhoToken:TOKEN,corpoBruto:Buffer.from(JSON.stringify({
   id:reversaoId,event:'PAYMENT_REFUNDED',payment:{id:PAYMENT}
  }))});
+ // Falha: PSP confirmou REFUNDED, mas a suspensao no motor
+ // falha uma vez. Checkpoint deve garantir a nova tentativa.
+ const suspenderReal=r.motorConta.suspenderLoteRevertidoSandbox.bind(r.motorConta);
+ let falhaReversao=true;
+ r.motorConta.suspenderLoteRevertidoSandbox=(args)=>{
+  if(falhaReversao){falhaReversao=false;
+   throw Object.assign(new Error('falha transitoria de escrita no motor'),
+    {codigo:'FALHA_TRANSITORIA_SUSPENSAO'});
+  }
+  return suspenderReal(args);
+ };
  const devolucao=await call('/staging/escritorio-unificado/reconciliar-pendentes-sandbox',{
   method:'POST',admin:true,body:{limite:20}
  });
  assert.equal(devolucao.status,200,JSON.stringify(devolucao.json));
  assert.equal(devolucao.json.consultados,1);
- assert.equal(devolucao.json.lotesSuspensos,1);
- assert.equal(devolucao.json.pendentesRestantes,0);
- assert.equal(devolucao.json.posicoesComerciais,0);
+ assert.equal(devolucao.json.lotesSuspensos,0);
+ assert.equal(devolucao.json.reversoesMotorPendentes,1);
+ assert.equal(devolucao.json.pendentesRestantes,1);
+ assert.equal(db.prepare([
+  'SELECT estado FROM akitemm_motor_reversoes_psp_checkpoint',
+  'WHERE evento_id=?'
+ ].join(' ')).get(reversaoId).estado,'EXIGE_REVISAO');
+ const retomada=await call('/staging/escritorio-unificado/reconciliar-pendentes-sandbox',{
+  method:'POST',admin:true,body:{limite:20}
+ });
+ assert.equal(retomada.status,200,JSON.stringify(retomada.json));
+ assert.equal(retomada.json.consultados,1);
+ assert.equal(retomada.json.lotesSuspensos,1);
+ assert.equal(retomada.json.reversoesMotorPendentes,0);
+ assert.equal(retomada.json.pendentesRestantes,0);
+ assert.equal(retomada.json.posicoesComerciais,0);
+ assert.equal(db.prepare([
+  'SELECT estado FROM akitemm_motor_reversoes_psp_checkpoint',
+  'WHERE evento_id=?'
+ ].join(' ')).get(reversaoId).estado,'CONCLUIDO');
+ assert.equal(gets,2,'retry de suspensao nao repete consulta PSP');
+ assert.equal(posts,1,'retry de suspensao nao cria cobranca');
  // A reconsulta manual permanece disponivel, mas nao deve ressuscitar
  // uma posicao depois de reembolso ja conciliado.
  const reconsultaRepetida=await call('/staging/escritorio-unificado/reconsultar-psp',{
