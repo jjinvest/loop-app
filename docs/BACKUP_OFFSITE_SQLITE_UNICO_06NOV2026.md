@@ -28,3 +28,10 @@
 - `scripts/servidor-escritorio-preview-railway.js`: usa **o mesmo SQLite** e vincula o bucket real por variáveis Railway.
 - `scripts/backup-criptografado-checkout-staging.js` e `scripts/validar-backup-offsite-checkout-staging.js`: implementações anteriores reutilizadas; não há pipeline paralelo.
 - `test/agendador-backup-offsite-railway-lab.test.js` e testes de servidor/navegador.
+
+
+## Saúde operacional do backup — correção no bloco de continuidade
+- A cópia histórica verificada continua registrada sem ser apagada por falhas futuras, mas o estado novo `backupAtualEmDia` só é verdadeiro quando a última tentativa terminou com restauração comprovada e a confirmação tem no máximo 26 horas. Uma falha posterior ou envelhecimento tornam o estado atual **não saudável**, sem falsificar o sucesso histórico.
+- O botão de conferência do Administrador usa a validade atual em vez de mostrar sucesso antigo como atual. O endpoint mantém a evidência histórica separada, sem vazar dados pessoais, chaves ou URLs.
+- Teste `test/agendador-backup-offsite-railway-lab.test.js` inclui cópia boa, envelhecimento acima de 26 horas e falha posterior com objeto adulterado. O teste focalizado passou no job de homologação de `bd6caef322a05e3164badacfeb6707a45f4b2a70`; a validação geral e navegador devem ser conferidos no mesmo run antes de considerá-lo concluído.
+- A correção não ativa Asaas Sandbox, não prova recuperação inter-regional nem altera o status financeiro do Marco Zero.
