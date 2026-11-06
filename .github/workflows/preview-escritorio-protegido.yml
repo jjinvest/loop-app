@@ -17,6 +17,12 @@ on:
       - 'test/plano-posicoes-compra-akitemm.test.js'
       - 'test/asaas-motor-automatico-sandbox-candidato.test.js'
       - 'test/asaas-vinculo-motor-recuperacao-candidato.test.js'
+      - 'src/domain/ponte-prepedido-asaas-sandbox-staging.js'
+      - 'src/domain/auditoria-integridade-motor-candidato-sqlite.js'
+      - 'scripts/backup-criptografado-checkout-staging.js'
+      - 'test/backup-conta-unica-restauracao-segura.test.js'
+      - 'test/conta-unica-login-concorrente-regressao.test.js'
+      - 'test/troca-senha-conta-unica-candidata.test.js'
       - 'test/preview-unificacao-psp-webhook.test.js'
       - 'src/domain/agendador-conciliacao-asaas-sandbox.js'
       - 'src/domain/agendador-backup-offsite-railway-lab.js'
@@ -87,6 +93,10 @@ jobs:
       - run: node --check src/domain/conta-unica-candidata-sqlite.js
       - run: node --test test/recuperacao-senha-candidata.test.js
       - run: node --test test/asaas-vinculo-motor-recuperacao-candidato.test.js
+      - run: node --test test/conta-unica-login-concorrente-regressao.test.js
+      - run: node --test test/backup-conta-unica-restauracao-segura.test.js
+      - run: node --test test/asaas-motor-automatico-sandbox-candidato.test.js
+      - run: node --check src/domain/auditoria-integridade-motor-candidato-sqlite.js
       - run: npm test
       - run: npm install --no-save playwright@1.56.1
       - run: npx playwright install --with-deps chromium
