@@ -14,6 +14,8 @@ const {cotarCheckoutPublico}=require('../src/domain/cotacao-checkout-publico');
 const {criarBackupCriptografado,restaurarBackupCriptografado}=
  require('../scripts/backup-criptografado-checkout-staging');
 const {COOKIE}=require('../src/domain/conta-unica-candidata-sqlite');
+const {auditarIntegridadeMotorCandidato}=
+ require('../src/domain/auditoria-integridade-motor-candidato-sqlite');
 
 const SENHA_BACKUP='EnsaioSeguroDeRestauração_2026_ChaveNãoProdutiva_123456';
 const SENHA_CONTA='SenhaLaboratorioDeRestauração2026!';
@@ -213,4 +215,67 @@ test('backup offsite recusa snapshot e lote do motor incoerentes',async t=>{
   origem:a.origem,destino:a.backup,senha:SENHA_BACKUP,autorizado:true
  }),{codigo:'BACKUP_CANDIDATO_MOTOR_DIVERGENTE'});
  assert.equal(fs.existsSync(a.backup),false);
+});
+
+test('backup bloqueia reserva adulterada de compra e fotografia original',async t=>{
+ const a=paths(t);
+ const keys={email:randomBytes(32),cifra:randomBytes(32),
+  provaEmail:randomBytes(32)};
+ const db=new DatabaseSync(a.origem);
+ db.exec('PRAGMA foreign_keys=ON;PRAGMA journal_mode=WAL;');
+ t.after(()=>db.close());
+ const app=criarAppLojaEscritorioCandidato(config(db,keys));
+ const pessoa=await cadastrar(app.contas,'Reserva');
+ await app.sinalizacaoVitrine.atualizar('curso-homologacao-250',{
+  classificacao:'VERDE',quantidadeMinimaLoop:1,revisaoEsperada:0
+ });
+ const catalogo=catalogoFicticioCheckout();
+ const entrada={itens:[{produtoId:'curso-homologacao-250',quantidade:1}]};
+ const cotacao=await cotarCheckoutPublico({repositorio:catalogo,entrada});
+ const draft=app.intencoes.criar({
+  titularId:pessoa.titularId,
+  chaveIdempotencia:'backup-reserva-indelevel-2026',
+  entrada,cotacao
+ });
+ const pre=await app.prePedidos.preparar({
+  titularId:pessoa.titularId,
+  rascunhoId:draft.intencao.pedidoId,
+  repositorioCatalogo:catalogo
+ });
+ const pid=pre.prepedido.prepedidoId;
+ app.ponte.preparar({
+  titularId:pessoa.titularId,prepedidoId:pid,
+  clienteAsaasId:'cus_RespaldoReserva2026',
+  capacidade:{quantidadePosicoes:1,consultarAtivas:()=>0}
+ });
+ assert.equal(auditarIntegridadeMotorCandidato({
+  banco:db,exigirMotor:true
+ }).reservasAuditadas,1);
+ const base='UPDATE akitemm_prepedido_asaas_reserva_posicoes_staging';
+ const executar=sql=>db.prepare(base+' SET '+sql+' WHERE prepedido_id=?');
+ const rejeitar=async codigo=>{
+  assert.deepEqual(db.prepare('PRAGMA foreign_key_check').all(),[]);
+  assert.equal(db.prepare('PRAGMA integrity_check').get().integrity_check,'ok');
+  assert.throws(()=>auditarIntegridadeMotorCandidato({
+   banco:db,exigirMotor:true
+  }),{codigo});
+  await assert.rejects(criarBackupCriptografado({
+   origem:a.origem,destino:a.backup,
+   senha:SENHA_BACKUP,autorizado:true
+  }),{codigo:'BACKUP_CANDIDATO_MOTOR_DIVERGENTE'});
+  assert.equal(fs.existsSync(a.backup),false,
+   'backup offsite nao pode certificar o pedido adulterado');
+ };
+ executar('posicoes_reservadas=0').run(pid);
+ await rejeitar('MOTOR_SQLITE_RESERVAS_INCONSISTENTES');
+ executar('posicoes_reservadas=1').run(pid);
+ executar('titular_id=?').run('titular-'+randomUUID(),pid);
+ await rejeitar('MOTOR_SQLITE_RESERVAS_TITULAR_DIVERGENTE');
+ executar('titular_id=?').run(pessoa.titularId,pid);
+ executar('posicoes_previstas=2').run(pid);
+ await rejeitar('MOTOR_SQLITE_RESERVA_FOTOGRAFIA_DIVERGENTE');
+ executar('posicoes_previstas=1').run(pid);
+ assert.equal(auditarIntegridadeMotorCandidato({
+  banco:db,exigirMotor:true
+ }).reservasAuditadas,1);
 });
