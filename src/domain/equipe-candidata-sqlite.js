@@ -48,15 +48,48 @@ class EquipeCandidataSQLite{
   const total=this.banco.prepare(
    'SELECT COUNT(*) AS total FROM akitemm_convites_candidatos_lab WHERE indicador_id=?'
   ).get(titularId).total;
+  // A equipe fica no mesmo SQLite do motor, sem duplicar criterio de
+  // validacao PSP: o LEDGER imutavel e a unica fonte da atribuicao.
+  const tabela=nome=>Boolean(this.banco.prepare([
+   "SELECT 1 FROM sqlite_master WHERE type='table' AND name=?"
+  ].join(' ')).get(nome));
+  const temAtribuicoes=tabela('akitemm_motor_indicacoes_qualificadas_lab');
+  const temLotes=tabela('akitemm_motor_ensaio_lotes_pedido');
   const linhas=this.banco.prepare([
-   'SELECT c.nick AS nick, i.criado_em AS registradoEm',
+   'SELECT i.indicado_id AS indicadoId,c.nick AS nick,',
+   'i.criado_em AS registradoEm,',
+   ...(temAtribuicoes?[
+    'q.posicao_alvo_id AS posicaoAlvoId,',
+    'CASE WHEN q.indicado_id IS NULL THEN 0 ELSE 1 END AS qualificadaEnsaio'
+   ]:[
+    'NULL AS posicaoAlvoId,0 AS qualificadaEnsaio'
+   ]),
+   ...(temLotes?[
+    ',CASE WHEN EXISTS(',
+    'SELECT 1 FROM akitemm_motor_ensaio_lotes_pedido l',
+    'WHERE l.titular_id=i.indicado_id)',
+    'THEN 1 ELSE 0 END AS possuiPosicaoDeEnsaio'
+   ]:[',0 AS possuiPosicaoDeEnsaio']),
    'FROM akitemm_convites_candidatos_lab i',
    'JOIN akitemm_conta_unica_candidata c ON c.id=i.indicado_id',
+   ...(temAtribuicoes?[
+    'LEFT JOIN akitemm_motor_indicacoes_qualificadas_lab q',
+    'ON q.indicado_id=i.indicado_id AND q.indicador_id=i.indicador_id'
+   ]:[]),
    'WHERE i.indicador_id=?',
    'ORDER BY i.criado_em DESC,i.indicado_id DESC LIMIT 20 OFFSET ?'
-  ].join(' ')).all(titularId,pagina*20);
+  ].join(' ')).all(titularId,pagina*20).map(x=>({
+   indicadoId:x.indicadoId,nick:x.nick,registradoEm:x.registradoEm,
+   posicaoAlvoId:x.posicaoAlvoId,
+   qualificadaEnsaio:x.qualificadaEnsaio===1,
+   possuiPosicaoDeEnsaio:x.possuiPosicaoDeEnsaio===1
+  }));
+  const qualificadas=temAtribuicoes?this.banco.prepare([
+   'SELECT COUNT(*) AS n FROM akitemm_motor_indicacoes_qualificadas_lab',
+   'WHERE indicador_id=?'
+  ].join(' ')).get(titularId).n:0;
   return {total,pagina,proximaPagina:(pagina+1)*20<total?pagina+1:null,
-   cadastros:linhas,indicacoesQualificadas:0,
+   cadastros:linhas,indicacoesQualificadas:qualificadas,
    bonificacoesReais:0,pagamentosReais:0,somenteEnsaio:true};
  }
 }
