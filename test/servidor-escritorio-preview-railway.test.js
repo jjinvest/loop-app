@@ -332,3 +332,30 @@ test('porta invalida falha antes de tentar montar SQLite ou abrir listener',asyn
   PORT:'porta-invalida'
  }}),{codigo:'PORTA_PREVIA_INVALIDA'});
 });
+
+test('readiness rejeita snapshot do motor adulterado mesmo com SQLite e FKs ok',async t=>{
+ const x=await preparar(t);
+ const antes=await x.consultar('/readyz');
+ assert.equal(antes.status,200);
+ x.db.prepare([
+  'INSERT INTO akitemm_motor_conta_ensaio_estado',
+  '(id,revisao,snapshot,atualizado_em) VALUES(1,1,?,?)'
+ ].join(' ')).run('{"formato":"FALSO","versao":1}',Date.now());
+ assert.equal(x.db.prepare('PRAGMA integrity_check').get().integrity_check,'ok');
+ assert.deepEqual(x.db.prepare('PRAGMA foreign_key_check').all(),[]);
+ const depois=await x.consultar('/readyz');
+ assert.equal(depois.status,503);
+ assert.equal((await depois.json()).marcoZeroLiberado,false);
+});
+
+test('readiness rejeita lote orfao sem violacao explicita de foreign key',async t=>{
+ const x=await preparar(t);
+ x.db.prepare([
+  'INSERT INTO akitemm_motor_ensaio_lotes_pedido',
+  '(prepedido_id,ordinal,titular_id,numero_posicao) VALUES(?,?,?,?)'
+ ].join(' ')).run('hom-00000000-0000-4000-8000-000000000000',
+  1,'titular-00000000-0000-4000-8000-000000000000',99999);
+ assert.equal(x.db.prepare('PRAGMA integrity_check').get().integrity_check,'ok');
+ assert.deepEqual(x.db.prepare('PRAGMA foreign_key_check').all(),[]);
+ assert.equal((await x.consultar('/readyz')).status,503);
+});
