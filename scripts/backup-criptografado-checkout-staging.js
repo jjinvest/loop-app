@@ -82,7 +82,7 @@ function validarTitularCandidato(banco,tabelas){
 }
 function endurecerAcessoRestaurado(arquivo){
  const banco=new DatabaseSync(arquivo);
- let sessoesRevogadas=0,desafiosInvalidos=0;
+ let sessoesRevogadas=0,desafiosInvalidos=0,recuperacoesInvalidadas=0;
  try{
   const tabelas=new Set(banco.prepare(
    "SELECT name FROM sqlite_master WHERE type='table'"
@@ -103,10 +103,18 @@ function endurecerAcessoRestaurado(arquivo){
      "SET estado='BLOQUEADO'",
      "WHERE estado IN ('ENVIADO','RESERVADO')"
     ].join(' ')).run().changes;
+   // Restaurar um snapshot pode ressuscitar codigo de senha que ja foi
+   // utilizado/invalidado depois do backup. Bloqueio atomico no destino.
+   if(tabelas.has('akitemm_recuperacao_senha_candidata'))
+    recuperacoesInvalidadas=banco.prepare([
+     'UPDATE akitemm_recuperacao_senha_candidata',
+     "SET estado='BLOQUEADO'",
+     "WHERE estado IN ('ENVIADO','RESERVADO')"
+    ].join(' ')).run().changes;
    banco.exec('COMMIT');
   }catch(e){banco.exec('ROLLBACK');throw e;}
  }finally{banco.close();}
- return {sessoesRevogadas,desafiosInvalidos};
+ return {sessoesRevogadas,desafiosInvalidos,recuperacoesInvalidadas};
 }
 function validarBanco(arquivo){
  const banco=new DatabaseSync(arquivo,{readOnly:true});
@@ -225,6 +233,7 @@ async function restaurarBackupCriptografado({
    identidadeCandidataAuditada:integridade.contaUnicaValidada,
    sessoesCandidatasRevogadas:acesso.sessoesRevogadas,
    provasEmailPendentesInvalidadas:acesso.desafiosInvalidos,
+   codigosRecuperacaoSenhaInvalidados:acesso.recuperacoesInvalidadas,
    origemCriptografada:true,destinoNaoSobrescrito:true,
    permissao:'0600',recuperacaoOffsiteComprovada:false,
    recuperacaoEmProducao:false,pagamentosReais:0,posicoesCriadas:0};
