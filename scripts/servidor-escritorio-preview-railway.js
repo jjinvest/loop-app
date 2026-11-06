@@ -302,7 +302,7 @@ async function iniciar({env=process.env}={}){
   }
   if(backupOffsite){
    backupOffsite.iniciar();
-   process.stdout.write('LOOP_BACKUP_OFFSITE_AGENDADO=ATIVO_ENSAIO_SEM_PROVA_ANTE CIPADA\\n'.replace('ANTE CIPADA','ANTECIPADA'));
+   process.stdout.write('LOOP_BACKUP_OFFSITE_AGENDADO=ATIVO_ENSAIO_SEM_PROVA_ANTECIPADA\\n');
   }
  });
  let encerrando=false;
