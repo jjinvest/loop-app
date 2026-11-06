@@ -483,7 +483,6 @@ class MotorContaUnicaEnsaioSQLite{
   if(relatorio?.conferenciaPSPConcluida!==true||
      relatorio.exigeRevisaoManual===true||
      relatorio.ultimoStatusPSP!=='RECEIVED'||
-     relatorio.posicoesFicticiasAptasAgora<1||
      psp?.estado!=='RECEBIMENTO_INFORMADO_SANDBOX'||
      psp?.ultimaConsultaSandbox?.statusAsaas!=='RECEIVED'||
      psp?.revisaoManualObrigatoria===true||
