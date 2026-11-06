@@ -414,3 +414,63 @@ test('STOP bloqueia inclusive lote manual, mas novas vendas continuam',()=>{
   assert.equal(x.motor.consultar().filaB.length,1);
  }finally{x.db.close();}
 });
+
+test('meta de dez pessoas entre 09h e 18h libera so quando o horario autoriza',()=>{
+ const x=preparar();
+ const t=s=>Date.parse('2026-11-06T'+s+':00-03:00');
+ try{
+  for(let i=1;i<=8;i++)x.conta(i,'Meta'+String.fromCharCode(96+i));
+  for(let i=1;i<=15;i++)x.comprar(i,((i-1)%8)+1,true);
+  const r=x.motor.configurarAgenda({
+   ativo:true,modoExecucao:'AGENDADA',abertura:'09:00',
+   fechamento:'18:00',intervaloMinutos:10,
+   metaQuantidade:10,metaDataAlvo:'2026-11-06',
+   agoraMs:t('09:00')
+  });
+  assert.equal(r.agenda.metaLotes.quantidade,10);
+  assert.equal(x.motor.processarPulsoAgenda({agoraMs:t('09:30')}).acao,
+   'META_AGUARDANDO_PROXIMA_LIBERACAO');
+  assert.equal(x.motor.consultar().catraca.giros,0);
+  const primeiro=x.motor.processarPulsoAgenda({agoraMs:t('09:53')});
+  assert.equal(primeiro.acao,'GIRO_META_AGENDADA');
+  assert.equal(primeiro.liberadosAgora,1);
+  assert.equal(x.motor.consultar().catraca.giros,1);
+  assert.equal(x.motor.processarPulsoAgenda({agoraMs:t('09:53')}).acao,
+   'META_JA_AVALIADA');
+  assert.equal(x.motor.consultar().catraca.giros,1);
+  assert.equal(x.motor.processarPulsoAgenda({agoraMs:t('09:54')}).acao,
+   'META_AGUARDANDO_PROXIMA_LIBERACAO');
+  const segundo=x.motor.processarPulsoAgenda({agoraMs:t('10:47')});
+  assert.equal(segundo.acao,'GIRO_META_AGENDADA');
+  assert.equal(segundo.liberadosAgora,1);
+  assert.equal(x.motor.consultar().catraca.giros,2);
+  assert.equal(x.motor.consultarAgenda({agoraMs:t('10:47')})
+   .metaLotes.realizadosNoDia,2);
+  assert.equal(x.motor.consultarAgenda({agoraMs:t('10:47')})
+   .metaLotes.restantes,8);
+  assert.equal(x.motor.consultar().saldoRealCentavos,null);
+  assert.equal(x.db.prepare('PRAGMA integrity_check').get().integrity_check,'ok');
+ }finally{x.db.close();}
+});
+test('meta sem vendas suficientes nao inventa ciclos e preserva filas',()=>{
+ const x=preparar();
+ const t=s=>Date.parse('2026-11-06T'+s+':00-03:00');
+ try{
+  for(let i=1;i<=8;i++)x.conta(i,'Pessoal'+String.fromCharCode(96+i));
+  for(let i=1;i<=8;i++)x.comprar(i,i,true);
+  x.motor.configurarAgenda({
+   ativo:true,modoExecucao:'AGENDADA',
+   abertura:'09:00',fechamento:'10:00',intervaloMinutos:10,
+   metaQuantidade:5,metaDataAlvo:null,agoraMs:t('09:00')
+  });
+  assert.equal(x.motor.processarPulsoAgenda({agoraMs:t('09:12')}).acao,
+   'GIRO_META_AGENDADA');
+  assert.equal(x.motor.consultar().catraca.giros,1);
+  const segundo=x.motor.processarPulsoAgenda({agoraMs:t('09:24')});
+  assert.equal(segundo.acao,'META_AGUARDANDO_PSP');
+  assert.equal(segundo.liberadosAgora,0);
+  assert.equal(x.motor.consultar().catraca.giros,1);
+  assert.equal(x.motor.consultar().tabuleiro.eventosNoCiclo,2);
+  assert.equal(x.motor.consultar().saldoRealCentavos,null);
+ }finally{x.db.close();}
+});
