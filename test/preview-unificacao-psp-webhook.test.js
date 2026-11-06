@@ -18,8 +18,9 @@ const cliente='cus_EnsaioPixUnico',pagamento='pay_EnsaioPixUnico';
 test('gateway unificado: Pix, aviso e motor usam o mesmo SQLite de laboratorio',async t=>{
  const banco=new DatabaseSync(':memory:');
  banco.exec('PRAGMA foreign_keys=ON;PRAGMA journal_mode=WAL;');
- let envios=0,consultas=0,prepedidoId='';
+ let envios=0,consultas=0,provas=0,prepedidoId='';
  const psp={ambiente:'ASAAS_SANDBOX_EXCLUSIVO',
+  async testarAcessoRemoto(){provas++;return {ambiente:this.ambiente,pspRemotoRespondeu:true};},
   async criarCobrancaPix({valorCentavos,pedidoId}){
    envios++;assert.equal(valorCentavos,25000);assert.equal(pedidoId,prepedidoId);
    return {ambiente:this.ambiente,pagamentoId:pagamento,valorCentavos,status:'PENDING'};
@@ -55,6 +56,17 @@ test('gateway unificado: Pix, aviso e motor usam o mesmo SQLite de laboratorio',
  assert.equal(status.webhookIngressAtivo,true);
  assert.equal(status.usaSQLiteDaLoja,true);
  assert.equal(status.checkoutComercialHabilitado,false);
+ const provaUrl=base+'/staging/escritorio-unificado/sandbox-pix/provar-acesso-remoto';
+ assert.equal((await fetch(provaUrl)).status,401);
+ const respostaProva=await fetch(provaUrl,{headers:{Authorization:auth}});
+ assert.equal(respostaProva.status,200);
+ const prova=await respostaProva.json();
+ assert.equal(prova.pspRemotoVerificado,true);
+ assert.equal(prova.webhookExternoComprovado,false);
+ assert.equal(prova.cobrancasCriadas,0);
+ assert.equal(prova.marcoZeroAprovado,false);
+ assert.equal(provas,1);
+ assert.equal(envios,0);
  async function post(route,body,extra={}){
   const x=await fetch(base+route,{method:'POST',
    headers:{Authorization:auth,'Content-Type':'application/json',
