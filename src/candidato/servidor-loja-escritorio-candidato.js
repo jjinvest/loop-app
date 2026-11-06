@@ -27,6 +27,8 @@ const {IntegridadeTitularCandidatoSQLite}=
  require('../domain/integridade-titular-candidato-sqlite');
 const {auditarRelacoesPspCandidato}=
  require('../domain/auditoria-relacional-psp-candidato-sqlite');
+const {auditarIntegridadeMotorCandidato}=
+ require('../domain/auditoria-integridade-motor-candidato-sqlite');
 const {consultarEscritorioHomologacao}=require('../domain/relatorio-homologacao-checkout-staging');
 const {MissoesOperacionaisCandidatoSQLite}=require('../domain/missoes-operacionais-candidato-sqlite');
 const {DepartamentosAdministradorCandidato}=require('../domain/escritorio-admin-departamentos-candidato');
@@ -169,7 +171,11 @@ function criarAppLojaEscritorioCandidato({banco,repositorioCatalogo,
    const fks=banco.prepare('PRAGMA foreign_key_check').all().length;
    const titulares=integridade.auditar();
    const cadeia=auditarRelacoesPspCandidato({banco});
+   const motor=auditarIntegridadeMotorCandidato({
+    banco,exigirMotor:true
+   });
    if(check?.quick_check!=='ok'||fks>0||
+      motor.totalInconsistencias!==0||
       titulares.totalInconsistencias!==0||cadeia.totalInconsistencias!==0)
     return res.status(503).json({
      estado:'BANCO_LABORATORIO_INCONSISTENTE',
