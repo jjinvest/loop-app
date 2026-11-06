@@ -839,6 +839,8 @@ function criarAppLojaEscritorioCandidato({banco,repositorioCatalogo,
    'ON r.evento_id=i.evento_id',
    "WHERE r.estado='CONCLUIDO' AND r.codigo='PSP_RECONSULTADO'",
    "AND i.tipo='PAYMENT_RECEIVED'",
+   'AND NOT EXISTS (SELECT 1 FROM akitemm_prepedido_asaas_reserva_posicoes_staging v',
+   'WHERE v.prepedido_id=i.prepedido_id AND v.posicoes_reservadas=0)',
    'AND EXISTS (SELECT 1 FROM akitemm_prepedido_asaas_sandbox_staging p',
    "WHERE p.prepedido_id=i.prepedido_id AND p.estado='RECEBIMENTO_INFORMADO_SANDBOX')",
    'AND NOT EXISTS (SELECT 1 FROM akitemm_motor_conta_ensaio_operacoes m',
@@ -999,6 +1001,17 @@ if(worker){
    }
    if(r.estado==='CONCLUIDO'&&r.codigo==='PSP_RECONSULTADO'&&
       aviso?.tipo==='PAYMENT_RECEIVED'){
+    // Compra normal ou limite completo: valor pago pode seguir com produto,
+    // mas nao deve gerar nem repetir qualquer tarefa de criacao de posicao.
+    const reserva=banco.prepare([
+     'SELECT posicoes_reservadas AS n,modalidade',
+     'FROM akitemm_prepedido_asaas_reserva_posicoes_staging',
+     'WHERE prepedido_id=?'
+    ].join(' ')).get(aviso.prepedidoId);
+    if(reserva?.n===0)return {...r,vinculoMotorEnsaio:{
+     estado:'COMPRA_SOMENTE_PRODUTOS',quantidade:0,
+     modalidade:reserva.modalidade,apenasEnsaio:true,posicoesComerciais:0
+    }};
     try{
      const m=motorConta.vincularPedidoConferidoSandbox({
       prepedidoId:aviso.prepedidoId
@@ -1060,6 +1073,8 @@ if(worker){
     const vinculoMotorAusente=[
      "r.estado='CONCLUIDO' AND r.codigo='PSP_RECONSULTADO'",
      "AND i.tipo='PAYMENT_RECEIVED'",
+     'AND NOT EXISTS (SELECT 1 FROM akitemm_prepedido_asaas_reserva_posicoes_staging v',
+     'WHERE v.prepedido_id=i.prepedido_id AND v.posicoes_reservadas=0)',
      'AND EXISTS (SELECT 1 FROM akitemm_prepedido_asaas_sandbox_staging p',
      "WHERE p.prepedido_id=i.prepedido_id AND p.estado='RECEBIMENTO_INFORMADO_SANDBOX')",
      'AND NOT EXISTS(SELECT 1 FROM akitemm_motor_conta_ensaio_operacoes m',
