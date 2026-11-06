@@ -323,3 +323,55 @@ test('agenda monta tabuleiro com sete clientes distintos sem criar segundas fila
   assert.equal(x.db.prepare('PRAGMA integrity_check').get().integrity_check,'ok');
  }finally{x.db.close();}
 });
+
+test('modo natural usa compra recebida sem horario, pausa somente catraca e acumula fila',()=>{
+ const x=preparar();
+ const h=s=>Date.parse('2026-11-06T'+s+':00-03:00');
+ try{
+  for(let i=1;i<=7;i++)x.conta(i,'Teste'+String.fromCharCode(96+i));
+  for(let i=1;i<=7;i++)x.comprar(i,i,true);
+  const configurada=x.motor.configurarAgenda({
+   ativo:false,modoExecucao:'NATURAL',abertura:'09:00',fechamento:'18:00',
+   intervaloMinutos:120,agoraMs:h('20:00')
+  });
+  assert.equal(configurada.modoExecucao,'NATURAL');
+  const passo=x.motor.processarPulsoAgenda({agoraMs:h('20:01')});
+  assert.equal(passo.acao,'GIRO_NATURAL');
+  assert.equal(passo.giros,1);
+  assert.equal(passo.eventosContabilizados,7);
+  const depois=x.motor.consultar();
+  assert.equal(depois.catraca.giros,1);
+  assert.equal(depois.tabuleiro.eventosNoCiclo,1);
+  // PAUSA impede novos eventos, mas a compra posterior ainda entra na fila.
+  x.motor.controlarCatraca('PAUSAR');
+  x.comprar(8,7,true);
+  const vendaPausada=x.motor.consultar();
+  assert.equal(vendaPausada.tabuleiro.eventosNoCiclo,1);
+  assert.equal(vendaPausada.filaB.length>0,true);
+  assert.equal(x.motor.processarPulsoAgenda({agoraMs:h('20:03')}).acao,
+   'PAUSA_MANUAL');
+  assert.equal(x.motor.consultar().tabuleiro.eventosNoCiclo,1);
+  x.motor.controlarCatraca('ABRIR');
+  const retomada=x.motor.processarPulsoAgenda({agoraMs:h('20:04')});
+  assert.equal(retomada.acao,'LUZ_NATURAL');
+  assert.equal(x.motor.consultar().tabuleiro.eventosNoCiclo,2);
+  assert.equal(x.motor.consultar().saldoRealCentavos,null);
+ }finally{x.db.close();}
+});
+test('STOP bloqueia movimentos mesmo com compras conciliadas; natural somente após destravar',()=>{
+ const x=preparar();
+ try{
+  x.conta(1,'Alpha');
+  x.comprar(1,1,true);
+  x.motor.configurarAgenda({
+   ativo:false,modoExecucao:'STOP',
+   abertura:'09:00',fechamento:'18:00',intervaloMinutos:10
+  });
+  assert.equal(x.motor.processarPulsoAgenda().acao,'STOP_CATRACA');
+  assert.equal(x.motor.controlarCatraca('ABRIR').motivo,
+   'STOP_ADMINISTRATIVO');
+  assert.equal(x.motor.consultar().filaB.length,1);
+  assert.equal(x.motor.consultar().tabuleiro.eventosNoCiclo,0);
+  assert.equal(x.db.prepare('PRAGMA integrity_check').get().integrity_check,'ok');
+ }finally{x.db.close();}
+});
