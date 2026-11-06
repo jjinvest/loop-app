@@ -850,7 +850,7 @@ function criarAppLojaEscritorioCandidato({banco,repositorioCatalogo,
    'ON p.prepedido_id=i.prepedido_id',
    'LEFT JOIN akitemm_motor_reversoes_psp_checkpoint c',
    'ON c.evento_id=i.evento_id',
-   "WHERE r.estado='CONCLUIDO' AND r.codigo='PSP_RECONSULTADO'",
+   "WHERE r.estado IN ('CONCLUIDO','EXIGE_REVISAO')",
    "AND i.tipo IN ('PAYMENT_REFUNDED','PAYMENT_PARTIALLY_REFUNDED',",
    "'PAYMENT_REFUND_IN_PROGRESS','PAYMENT_CHARGEBACK_REQUESTED',",
    "'PAYMENT_CHARGEBACK_DISPUTE','PAYMENT_DELETED')",
@@ -948,7 +948,13 @@ if(worker){
    if(['PAYMENT_REFUNDED','PAYMENT_PARTIALLY_REFUNDED',
     'PAYMENT_REFUND_IN_PROGRESS','PAYMENT_CHARGEBACK_REQUESTED',
     'PAYMENT_CHARGEBACK_DISPUTE','PAYMENT_DELETED'].includes(aviso?.tipo)){
-    const pspConcluido=r.estado==='CONCLUIDO'&&r.codigo==='PSP_RECONSULTADO';
+    // Reversao comprovada pelo PSP permanece EXIGE_REVISAO no worker,
+    // por exigir acompanhamento humano. Isso NAO elimina a obrigacao
+    // de suspender o motor e registrar checkpoint duravel.
+    const pspConcluido=Boolean(banco.prepare([
+     'SELECT 1 FROM akitemm_prepedido_asaas_sandbox_staging',
+     "WHERE prepedido_id=? AND estado='REVERSAO_INFORMADA_SANDBOX'"
+    ].join(' ')).get(aviso.prepedidoId));
     // O checkpoint e gravado ANTES da mutacao do motor. Se cair agora,
     // a reconciliacao automatica volta a percorrer este mesmo evento.
     if(pspConcluido)atualizarCheckpointReversao(eventoId,'PENDENTE');
@@ -1039,7 +1045,7 @@ if(worker){
      "WHERE m.prepedido_id=i.prepedido_id AND m.tipo='VINCULAR_PEDIDO')"
     ].join(' ');
     const reversaoMotorPendente=[
-     "r.estado='CONCLUIDO' AND r.codigo='PSP_RECONSULTADO'",
+     "r.estado IN ('CONCLUIDO','EXIGE_REVISAO')",
      "AND i.tipo IN ('PAYMENT_REFUNDED','PAYMENT_PARTIALLY_REFUNDED',",
      "'PAYMENT_REFUND_IN_PROGRESS','PAYMENT_CHARGEBACK_REQUESTED',",
      "'PAYMENT_CHARGEBACK_DISPUTE','PAYMENT_DELETED')",
