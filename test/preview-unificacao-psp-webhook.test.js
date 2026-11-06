@@ -110,13 +110,27 @@ test('gateway unificado: Pix, aviso e motor usam o mesmo SQLite de laboratorio',
  assert.equal((await webhook(token)).status,200);
  assert.equal(r.motorConta.consultar({titularId:cadastro.body.titularId})
   .posicoesAtivasDoTitular,0,'webhook bruto nao cria posicao');
- const conf=await post('/staging/escritorio-unificado/reconsultar-psp',{
-  eventoId:aviso.id
- });
+ // Uma operacao processa todos os avisos novos, sem selecionar
+ // evento por evento. O mesmo fluxo de reconsulta e motor e reutilizado.
+ const conciliar=()=>post('/staging/escritorio-unificado/reconciliar-pendentes-sandbox',
+  {limite:20});
+ assert.equal((await post('/staging/escritorio-unificado/reconciliar-pendentes-sandbox',
+  {limite:21})).status,400);
+ assert.equal((await fetch(base+
+  '/staging/escritorio-unificado/reconciliar-pendentes-sandbox',{
+   method:'POST',headers:{'Content-Type':'application/json'},
+   body:JSON.stringify({limite:20})
+  })).status,401);
+ const conf=await conciliar();
  assert.equal(conf.status,200,JSON.stringify(conf.body));
- assert.equal(conf.body.estado,'CONCLUIDO');
- assert.equal(conf.body.vinculoMotorEnsaio.estado,'PENDENTES_GERADAS');
- assert.equal(conf.body.vinculoMotorEnsaio.quantidade,1);
+ assert.equal(conf.body.consultados,1);
+ assert.equal(conf.body.conciliados,1);
+ assert.equal(conf.body.lotesPendentesCriados,1);
+ assert.equal(conf.body.pendentesRestantes,0);
+ assert.equal(conf.body.posicoesComerciais,0);
+ const repetidoLote=await conciliar();
+ assert.equal(repetidoLote.status,200);
+ assert.equal(repetidoLote.body.consultados,0);
  assert.equal(consultas,1);
  assert.equal(r.motorConta.consultar({titularId:cadastro.body.titularId})
   .posicoesAtivasDoTitular,1);
