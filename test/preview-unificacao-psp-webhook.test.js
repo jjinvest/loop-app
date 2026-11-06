@@ -8,6 +8,8 @@ const {criarAppLojaEscritorioCandidato}=
 const {catalogoFicticioCheckout}=
  require('../src/laboratorio/servidor-checkout-staging-local');
 const {COOKIE}=require('../src/domain/conta-unica-candidata-sqlite');
+const {criarAgendadorConciliacaoSandbox}=
+ require('../src/domain/agendador-conciliacao-asaas-sandbox');
 const senha='SenhaPreviaEnsaioFicticioForte2026';
 const operador='OperadorEnsaioFicticio_'+('X'.repeat(38));
 const token='WebhookSandboxApenasEnsaioTestes2026';
@@ -121,11 +123,19 @@ test('gateway unificado: Pix, aviso e motor usam o mesmo SQLite de laboratorio',
    method:'POST',headers:{'Content-Type':'application/json'},
    body:JSON.stringify({limite:20})
   })).status,401);
+ // O mesmo worker funciona sem clique do operador: um tick do
+ // agendador entrega o aviso confirmado ao motor no MESMO SQLite.
+ const auto=criarAgendadorConciliacaoSandbox({
+  executar:r.executarConciliacaoSandbox,limite:20
+ });
+ const rodada=await auto.executarUmaVez();
+ assert.equal(rodada.estado,'CONCLUIDA');
+ assert.equal(rodada.consultados,1);
+ assert.equal(rodada.pendentesRestantes,0);
+ await auto.encerrar();
  const conf=await conciliar();
  assert.equal(conf.status,200,JSON.stringify(conf.body));
- assert.equal(conf.body.consultados,1);
- assert.equal(conf.body.conciliados,1);
- assert.equal(conf.body.lotesPendentesCriados,1);
+ assert.equal(conf.body.consultados,0);
  assert.equal(conf.body.pendentesRestantes,0);
  assert.equal(conf.body.posicoesComerciais,0);
  const repetidoLote=await conciliar();
