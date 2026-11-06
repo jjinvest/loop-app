@@ -51,7 +51,26 @@ class MotorContaUnicaEnsaioSQLite{
    'BEFORE DELETE ON akitemm_motor_ensaio_aceites_posicao',
    "BEGIN SELECT RAISE(ABORT,'aceite por posicao imutavel'); END;",
    'CREATE INDEX IF NOT EXISTS idx_motor_ensaio_giros',
-   'ON akitemm_motor_conta_ensaio_operacoes(tipo,criado_em);'
+   'ON akitemm_motor_conta_ensaio_operacoes(tipo,criado_em);',
+   'CREATE TABLE IF NOT EXISTS akitemm_motor_indicacoes_qualificadas_lab(',
+   'indicado_id TEXT PRIMARY KEY REFERENCES',
+   'akitemm_conta_unica_candidata(id) ON DELETE RESTRICT,',
+   'indicador_id TEXT NOT NULL REFERENCES',
+   'akitemm_conta_unica_candidata(id) ON DELETE RESTRICT,',
+   'prepedido_id TEXT NOT NULL UNIQUE REFERENCES',
+   'akitemm_checkout_prepedidos_staging(prepedido_id) ON DELETE RESTRICT,',
+   'posicao_alvo_id INTEGER NOT NULL REFERENCES',
+   'akitemm_motor_ensaio_lotes_pedido(numero_posicao) ON DELETE RESTRICT,',
+   'evento_id TEXT NOT NULL UNIQUE,confirmado_em TEXT NOT NULL,',
+   'CHECK(indicador_id<>indicado_id));',
+   'CREATE INDEX IF NOT EXISTS idx_motor_indicacoes_por_indicador',
+   'ON akitemm_motor_indicacoes_qualificadas_lab(indicador_id,posicao_alvo_id);',
+   'CREATE TRIGGER IF NOT EXISTS motor_indicacao_imutavel_lab',
+   'BEFORE UPDATE ON akitemm_motor_indicacoes_qualificadas_lab',
+   "BEGIN SELECT RAISE(ABORT,'indicacao de ensaio imutavel'); END;",
+   'CREATE TRIGGER IF NOT EXISTS motor_indicacao_sem_delete_lab',
+   'BEFORE DELETE ON akitemm_motor_indicacoes_qualificadas_lab',
+   "BEGIN SELECT RAISE(ABORT,'indicacao de ensaio imutavel'); END;"
   ].join(' '));
  }
  _simulador(){
@@ -342,6 +361,102 @@ class MotorContaUnicaEnsaioSQLite{
     permissoesFinanceiras:false};
   });
  }
+ qualificarIndicacaoEnsaio({indicadorId,indicadoId,posicaoAlvoId}={}){
+  if(typeof indicadorId!=='string'||!TITULAR.test(indicadorId)||
+     typeof indicadoId!=='string'||!TITULAR.test(indicadoId)||
+     indicadorId===indicadoId||
+     !Number.isSafeInteger(posicaoAlvoId)||posicaoAlvoId<1)
+   falha('INDICACAO_DADOS_INVALIDOS');
+  if(!this.ponte)falha('INDICACAO_REQUER_PSP_SANDBOX');
+  return this._transacao(sim=>{
+   const b=this.banco;
+   const vinculo=b.prepare([
+    'SELECT indicador_id AS indicadorId FROM akitemm_convites_candidatos_lab',
+    'WHERE indicado_id=?'
+   ].join(' ')).get(indicadoId);
+   if(vinculo?.indicadorId!==indicadorId)falha('INDICACAO_SEM_CONVITE_VALIDO');
+   const anterior=b.prepare([
+    'SELECT indicador_id AS indicadorId,posicao_alvo_id AS posicaoAlvoId',
+    'FROM akitemm_motor_indicacoes_qualificadas_lab WHERE indicado_id=?'
+   ].join(' ')).get(indicadoId);
+   if(anterior){
+    if(anterior.indicadorId!==indicadorId||
+       anterior.posicaoAlvoId!==posicaoAlvoId)
+     falha('INDICACAO_JA_ATRIBUIDA_OUTRA_POSICAO');
+    return {repetido:true,qualificada:true,posicaoAlvoId,
+     indicacoesAdicionadas:0,comissaoRealCentavos:0,dinheiroReal:false};
+   }
+   const alvo=b.prepare([
+    'SELECT titular_id AS titularId FROM akitemm_motor_ensaio_lotes_pedido',
+    'WHERE numero_posicao=?'
+   ].join(' ')).get(posicaoAlvoId);
+   const aceite=b.prepare([
+    'SELECT 1 AS registrado FROM akitemm_motor_ensaio_aceites_posicao',
+    'WHERE numero_posicao=? AND titular_id=?'
+   ].join(' ')).get(posicaoAlvoId,indicadorId);
+   if(!alvo||alvo.titularId!==indicadorId||!aceite)
+    falha('POSICAO_ALVO_NAO_CONFIRMADA_PELO_TITULAR');
+   // A conta B deve ter lote no mesmo motor e recebimento confirmado
+   // pela reconsulta PSP; cadastro ou webhook bruto nao sao suficientes.
+   const compras=b.prepare([
+    'SELECT DISTINCT l.prepedido_id AS prepedidoId',
+    'FROM akitemm_motor_ensaio_lotes_pedido l',
+    'JOIN akitemm_checkout_prepedidos_staging p',
+    'ON p.prepedido_id=l.prepedido_id AND p.titular_id=l.titular_id',
+    'WHERE l.titular_id=? ORDER BY l.prepedido_id'
+   ].join(' ')).all(indicadoId);
+   let comprovado=null;
+   for(const item of compras){
+    const relatorio=consultarPedido({
+     banco:b,prepedidoId:item.prepedidoId,titularId:indicadoId
+    });
+    const ponte=this.ponte.consultar({
+     titularId:indicadoId,prepedidoId:item.prepedidoId
+    });
+    if(relatorio?.conferenciaPSPConcluida!==true||
+       relatorio.exigeRevisaoManual===true||
+       relatorio.ultimoStatusPSP!=='RECEIVED'||
+       ponte?.estado!=='RECEBIMENTO_INFORMADO_SANDBOX'||
+       ponte?.ultimaConsultaSandbox?.statusAsaas!=='RECEIVED'||
+       ponte?.revisaoManualObrigatoria===true||
+       !ponte.pagamentoSandboxId||
+       ponte.valorCentavos!==relatorio.valorCentavos)
+     continue;
+    const bloqueio=b.prepare([
+     'SELECT 1 FROM akitemm_motor_conta_ensaio_operacoes',
+     "WHERE prepedido_id=? AND tipo='REVERSAO_PSP' LIMIT 1"
+    ].join(' ')).get(item.prepedidoId);
+    if(bloqueio)continue;
+    comprovado=item.prepedidoId;break;
+   }
+   if(!comprovado)falha('INDICACAO_AGUARDANDO_COMPRA_PSP_CONCILIADA');
+   const eventoId='indicacao-lab:'+indicadoId;
+   const horario=new Date().toISOString();
+   let resultado;
+   try{
+    resultado=sim.registrarIndicacaoSimulada({
+     indicadorId,eventoId,posicaoAlvoId,convidouEm:horario
+    });
+   }catch(e){
+    falha('INDICACAO_MOTOR_'+String(e.message||'INVALIDO')
+     .replace(/[^A-Z0-9_]/gi,'_').slice(0,56));
+   }
+   if(resultado.repetida)falha('INDICACAO_LEDGER_MOTOR_DIVERGENTES');
+   b.prepare([
+    'INSERT INTO akitemm_motor_indicacoes_qualificadas_lab',
+    '(indicado_id,indicador_id,prepedido_id,posicao_alvo_id,',
+    'evento_id,confirmado_em) VALUES(?,?,?,?,?,?)'
+   ].join(' ')).run(indicadoId,indicadorId,comprovado,
+    posicaoAlvoId,eventoId,horario);
+   this._evento('INDICACAO_QUALIFICADA_ENSAIO',{
+    prepedidoId:comprovado,titularId:indicadorId,posicaoId:posicaoAlvoId
+   });
+   return {repetido:false,qualificada:true,posicaoAlvoId,
+    indicacoesAdicionadas:1,
+    promovidaParaFilaA:resultado.promovidas.some(p=>p.id===posicaoAlvoId),
+    comissaoRealCentavos:0,dinheiroReal:false};
+  });
+ }
  prepararTabuleiro(){
   return this._transacao(sim=>{
    if(sim.tabuleiro.iniciado)falha('CICLO_MOTOR_ENSAIO_JA_INICIADO');
@@ -404,7 +519,8 @@ class MotorContaUnicaEnsaioSQLite{
    dourada:p.empresa===true,
    // Nao enviar nome, UUID, nick nem CPF de outros participantes.
    status:p.empresa===true?'EMPRESA':p.statusAdesao==='REVISAR_PSP'?'REVISAO_PSP':p.statusAdesao==='PENDENTE'?'PENDENTE':p.statusAdesao==='ACEITE_ENSAIO'?'ACEITE_ENSAIO':'ENSAIO',
-   aceiteEnsaio:p.participanteId===titularId&&p.statusAdesao==='ACEITE_ENSAIO'
+   aceiteEnsaio:p.participanteId===titularId&&p.statusAdesao==='ACEITE_ENSAIO',
+   indicacoesVinculadas:p.indicacoesVinculadas||0
   }:null;
   const ativas=[
    ...estado.filas.A.pessoas.map(p=>({...p,local:'FILA',fila:'A'})),
@@ -417,6 +533,7 @@ class MotorContaUnicaEnsaioSQLite{
    .map(p=>({numero:p.id,local:p.local,
     fila:p.fila||null,pendente:p.statusAdesao==='PENDENTE',
     aceiteIndividualRegistrado:p.statusAdesao==='ACEITE_ENSAIO',
+    indicacoesVinculadas:p.indicacoesVinculadas||0,
     estado:p.statusAdesao==='REVISAR_PSP'?'ENSAIO_EM_REVISAO_PSP':
      p.statusAdesao==='ACEITE_ENSAIO'?'ACEITE_ENSAIO_SEM_DIREITO':'ENSAIO_SEM_DIREITO'}));
   const giros24h=this.banco.prepare([
