@@ -353,6 +353,27 @@ async function conferirCoberturaAkitemm({offset=0}={}){
  }catch(e){resumo.textContent='Auditoria indisponível: '+e.message;}
  finally{botao.disabled=false;}
 }
+async function conferirBackupOffsite(){
+ const el=$('estadoBackupOffsite'),botao=$('conferirBackupOffsite');
+ botao.disabled=true;
+ try{
+  const r=await api('/backup-offsite/estado');
+  if(r.backupRailwayComprovado===true&&
+     r.ultimaConfirmacao?.integridadeCifradaSha256){
+   el.textContent='Cópia criptografada enviada, relida e restaurada em isolamento: '+
+    new Date(r.ultimaConfirmacao.quando).toLocaleString('pt-BR')+
+    '. Banco original preservado. Restauração em outra região ainda não comprovada.';
+  }else{
+   el.textContent='Backup externo ainda não comprovado neste serviço. '+
+    (r.estado==='BACKUP_OFFSITE_NAO_HABILITADO_NESTE_SERVICO'?
+     'A rotina automática não está habilitada.' :
+     'Último estado: '+r.ultimoEstado+'.')+
+    ' Sem garantia de recuperação comercial.';
+  }
+ }catch(e){el.textContent='Conferência do backup indisponível: '+e.message;}
+ finally{botao.disabled=false;}
+}
+$('conferirBackupOffsite').addEventListener('click',conferirBackupOffsite);
 $('consultarCoberturaAkitemm').addEventListener('click',conferirCoberturaAkitemm);
 $('atualizar').addEventListener('click',()=>atualizar().catch(e=>dizer(e.message)));
 $('recarregarPreviaFilas').addEventListener('click',()=>atualizar().catch(e=>dizer(e.message)));
