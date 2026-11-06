@@ -11,6 +11,14 @@
 - O administrador poderá **montar, substituir e editar a composição** dos pacotes e escolher, para cada oferta roxa, as condições comerciais e o **valor previsto de cada posição** associado ao evento especial, sujeito à validação financeira, regulatória e técnica antes de liberar uso comercial.
 - Mudanças futuras **não podem alterar retroativamente** produtos, quantidades, preços, titular, posição, condições ou aceites de pedidos já fechados. Cada pedido precisa de fotografia imutável da oferta e regras em vigor na compra.
 
+## Controle obrigatório no Escritório do Administrador
+
+- A **interface administrativa existente** será o local de configuração e conferência de todos os quadradinhos (cinza, verde, dourado, roxo); não depender de edições manuais de código ou de um segundo painel.
+- Cada oferta terá controles de **criar, editar, arquivar, ativar/desativar, ordenar/exibir na vitrine e visualizar prévia**, com validação do catálogo e histórico de alterações. O operador escolhe a **cor/categoria** por oferta e pode manter várias ofertas da mesma cor.
+- Para cada oferta roxa: incluir/remover itens, definir produtos, quantidades e valor/condições da composição; quando houver regra especial para posições, exibir configuração específica, status de autorização e **passivo financeiro estimado**, sem conceder direitos até que os gates legais e financeiros estejam aprovados.
+- O painel deve mostrar o reflexo no **mesmo SQLite**: loja, pedido, itens, qualificação, PSP e posições, com status e bloqueios honestos. Atualização de oferta aprovada no Administrador atualiza a vitrine sem segundo cadastro; pedidos anteriores mantêm suas fotografias históricas.
+- Preservar a organização, os departamentos e o visual já aprovados no Escritório do Administrador. Esses comandos **ainda não foram implementados** para os pacotes roxos: este texto é requisito de continuidade, não anúncio de funcionalidade pronta.
+
 ## Integração esperada (planejamento, não implementação)
 
 - Reaproveitar o mesmo catálogo, carrinho, SQLite, pedidos, PSP Sandbox, Escritórios do Cliente/Administrador e motor V6. **Não criar loja paralela, banco paralelo ou redesenhar as telas aprovadas.**
