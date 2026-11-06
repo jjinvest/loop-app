@@ -698,6 +698,26 @@ $('formAgendaMotor').addEventListener('submit',async e=>{
   estado.textContent='Agenda não alterada: '+err.message;
  }finally{if(botao)botao.disabled=false;}
 });
+$('formLiberarLoteMotor').addEventListener('submit',async e=>{
+ e.preventDefault();
+ const botao=e.submitter;if(botao)botao.disabled=true;
+ const estado=$('motorLoteResultado');
+ const quantidade=Number($('motorLoteQuantidade').value);
+ estado.textContent='Conferindo compras PSP e posições antes de liberar o lote...';
+ try{
+  if(!Number.isSafeInteger(quantidade)||quantidade<1)
+   throw Error('Informe um número positivo de pessoas.');
+  const r=await api('/motor/liberar-lote',{
+   method:'POST',body:{quantidade}
+  });
+  estado.textContent='Solicitados '+r.solicitados+
+   ' ciclos; '+r.liberados+' concluídos, '+r.restantes+
+   ' aguardando. '+r.eventosUsados+' compras conciliadas contabilizadas. '+
+   'Motivo: '+r.motivo+'. Nenhum valor real transferido.';
+  await atualizarMotorContaEnsaio();
+ }catch(err){estado.textContent='Lote não liberado: '+err.message;}
+ finally{if(botao)botao.disabled=false;}
+});
 $('motorEnsaioAtualizar').addEventListener('click',()=>{
  atualizarMotorContaEnsaio().then(()=>
   $('motorEnsaioStatus').textContent='Leitura do motor no SQLite concluída.')
