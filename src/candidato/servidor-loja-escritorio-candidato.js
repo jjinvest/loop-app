@@ -943,16 +943,22 @@ if(worker){
    if(['PAYMENT_REFUNDED','PAYMENT_PARTIALLY_REFUNDED',
     'PAYMENT_REFUND_IN_PROGRESS','PAYMENT_CHARGEBACK_REQUESTED',
     'PAYMENT_CHARGEBACK_DISPUTE','PAYMENT_DELETED'].includes(aviso?.tipo)){
+    const pspConcluido=r.estado==='CONCLUIDO'&&r.codigo==='PSP_RECONSULTADO';
+    // O checkpoint e gravado ANTES da mutacao do motor. Se cair agora,
+    // a reconciliacao automatica volta a percorrer este mesmo evento.
+    if(pspConcluido)atualizarCheckpointReversao(eventoId,'PENDENTE');
     try{
      const suspenso=motorConta.suspenderLoteRevertidoSandbox({
       prepedidoId:aviso.prepedidoId
      });
+     if(pspConcluido)atualizarCheckpointReversao(eventoId,'CONCLUIDO');
      return {...r,vinculoMotorEnsaio:{
       estado:'SUSPENSO_POR_REVERSAO_PSP',
       quantidadeSuspensa:suspenso.suspensas,apenasEnsaio:true,
       catracaPausada:suspenso.catracaPausada||false
      }};
     }catch(e){
+     if(pspConcluido)atualizarCheckpointReversao(eventoId,'EXIGE_REVISAO');
      return {...r,vinculoMotorEnsaio:{
       estado:'REVERSAO_EXIGE_REVISAO',codigo:e.codigo||'REVISAO_MANUAL',
       apenasEnsaio:true
