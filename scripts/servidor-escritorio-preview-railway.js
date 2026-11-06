@@ -11,6 +11,8 @@ const {criarAppLojaEscritorioCandidato}=
 const {catalogoFicticioCheckout}=
  require('../src/laboratorio/servidor-checkout-staging-local');
 const {AsaasSandboxLojaV6}=require('../src/domain/asaas-sandbox-loja-v6');
+const {criarAgendadorConciliacaoSandbox}=
+ require('../src/domain/agendador-conciliacao-asaas-sandbox');
 const {criarTransporteRecuperacaoResend}=
  require('../src/adapters/email-recuperacao-resend');
 
@@ -238,6 +240,11 @@ async function iniciar({env=process.env}={}){
     typeof env.LOOP_PREVIEW_ASAAS_WEBHOOK_TOKEN!=='string'||
     env.LOOP_PREVIEW_ASAAS_WEBHOOK_TOKEN.length<32))
   falha('ASAAS_SANDBOX_PREVIA_CONFIG_INCOMPLETA');
+ // Fail closed: o operador deve habilitar o PSP Sandbox primeiro,
+ // com chave e token próprios da mesma prévia. Nenhum cron em produção.
+ const autoAtivo=env.LOOP_PREVIEW_ASAAS_CONCILIACAO_AUTO==='SIM';
+ if(autoAtivo&&!sandboxAtivo)
+  falha('CONCILIACAO_AUTO_EXIGE_SANDBOX_ATIVO');
  const psp=sandboxAtivo?new AsaasSandboxLojaV6({
   apiKey:env.LOOP_PREVIEW_ASAAS_SANDBOX_API_KEY
  }):null;
@@ -263,12 +270,27 @@ async function iniciar({env=process.env}={}){
  const port=Number(env.PORT||3000);
  if(!Number.isSafeInteger(port)||port<1||port>65535)
   falha('PORTA_PREVIA_INVALIDA');
+ const agendador=autoAtivo?criarAgendadorConciliacaoSandbox({
+  executar:c.executarConciliacaoSandbox,limite:20,intervaloMs:30000,
+  onErro:codigo=>process.stderr.write('LOOP_CONCILIACAO_ENSAIO='+codigo+'\\n')
+ }):null;
  gateway.listen(port,'0.0.0.0',()=>{
-  process.stdout.write('AKITEMM_PREVIA_PROTEGIDA=PRONTA_SEM_PAGAMENTOS_REAIS\n');
+  process.stdout.write('AKITEMM_PREVIA_PROTEGIDA=PRONTA_SEM_PAGAMENTOS_REAIS\\n');
+  if(agendador){
+   agendador.iniciar();
+   process.stdout.write('LOOP_CONCILIACAO_SANDBOX_AUTOMATICA=ATIVA_EM_ENSAIO\\n');
+  }
  });
- function encerrar(){gateway.close(()=>interno.close(()=>db.close()));}
- process.once('SIGTERM',encerrar);process.once('SIGINT',encerrar);
- return {gateway,interno,db};
+ let encerrando=false;
+ async function encerrar(){
+  if(encerrando)return;
+  encerrando=true;
+  if(agendador)await agendador.encerrar();
+  gateway.close(()=>interno.close(()=>db.close()));
+ }
+ process.once('SIGTERM',()=>{void encerrar();});
+ process.once('SIGINT',()=>{void encerrar();});
+ return {gateway,interno,db,agendador};
 }
 if(require.main===module)iniciar().catch(e=>{
  process.stderr.write('AKITEMM_PREVIA_BLOQUEADA='+
