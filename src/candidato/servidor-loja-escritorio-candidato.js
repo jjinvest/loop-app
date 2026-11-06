@@ -522,6 +522,23 @@ function criarAppLojaEscritorioCandidato({banco,repositorioCatalogo,
  });
  // Evidencia objetiva de cobertura BRUTA por lote, sem jamais declarar
  // custos como conferidos ou dinheiro de Sandbox como banco liquidado.
+ // O estado do backup é prova de verificação do objeto externo,
+ // não de existência de um bucket, e não expõe chaves ou identificadores.
+ app.get('/staging/escritorio-unificado/backup-offsite/estado',
+  autorizarOperador,(_req,res)=>{
+   const backup=app.locals.backupOffsite||null;
+   return res.json(backup?{
+    ...backup.estado(),componente:'SQLITE_UNICO_LOJA_ASAAS_MOTOR',
+    bucketConfigurado:true,backupRailwayComprovado:
+     backup.estado().copiasVerificadasNoProcesso>0
+   }:{
+    estado:'BACKUP_OFFSITE_NAO_HABILITADO_NESTE_SERVICO',
+    componente:'SQLITE_UNICO_LOJA_ASAAS_MOTOR',
+    bucketConfigurado:false,backupRailwayComprovado:false,
+    recuperacaoExternaComprovada:false,
+    marcoZeroAprovado:false
+   });
+  });
  app.get('/staging/escritorio-unificado/auditoria-cobertura',
   autorizarOperador,(req,res)=>{
    if(Object.keys(req.query).some(k=>!['limite','offset'].includes(k))||
