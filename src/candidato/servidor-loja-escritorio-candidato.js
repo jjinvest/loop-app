@@ -677,7 +677,7 @@ function criarAppLojaEscritorioCandidato({banco,repositorioCatalogo,
  app.post('/staging/escritorio-unificado/motor/agenda',autorizarOperador,(req,res)=>{
   if(!req.is('application/json')||!req.body||Array.isArray(req.body)||
      Object.keys(req.body).sort().join(',')!==
-     'abertura,ativo,excecaoData,excecaoFechamento,fechamento,intervaloMinutos')
+     'abertura,ativo,excecaoData,excecaoFechamento,fechamento,intervaloMinutos,modoExecucao')
    return res.status(400).json({erro:'AGENDA_CAMPOS_INVALIDOS'});
   try{
    const r=motorConta.configurarAgenda(req.body);
