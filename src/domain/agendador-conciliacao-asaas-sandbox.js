@@ -15,7 +15,7 @@ function criarAgendadorConciliacaoSandbox({
     !Number.isSafeInteger(intervaloMs)||intervaloMs<15000||
     intervaloMs>3600000||!Number.isSafeInteger(limite)||limite<1||limite>20)
   falha('AGENDADOR_SANDBOX_CONFIG_INVALIDA');
- let timer=null,emExecucao=null,encerrado=false;
+ let timer=null,emExecucao=null,encerrado=false,encerramento=null;
  let rodadas=0,falhas=0,ultimaConclusao=null;
  function estado(){
   return {habilitado:timer!==null&&!encerrado,
@@ -57,14 +57,19 @@ function criarAgendadorConciliacaoSandbox({
   void executarUmaVez();
   return estado();
  }
- async function encerrar(){
-  if(encerrado)return;
+ function encerrar(){
+  // Duas chamadas simultaneas de encerramento devem esperar a MESMA
+  // operacao ativa antes de qualquer chamador fechar o SQLite.
+  if(encerramento!==null)return encerramento;
   encerrado=true;
   if(timer!==null){cancelar(timer);timer=null;}
-  // Esperar GET PSP / gravação SQLite antes de fechar o volume.
-  if(emExecucao!==null){
-   try{await emExecucao;}catch(_ignorar){}
-  }
+  const operacaoAtiva=emExecucao;
+  encerramento=(async()=>{
+   if(operacaoAtiva!==null){
+    try{await operacaoAtiva;}catch(_ignorar){}
+   }
+  })();
+  return encerramento;
  }
  return {iniciar,executarUmaVez,encerrar,estado};
 }
