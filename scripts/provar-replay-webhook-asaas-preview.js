@@ -39,17 +39,20 @@ function resumoMotor(m){
   catraca:m.catraca,ordemAlimentacao:m.ordemAlimentacao};
  return createHash('sha256').update(JSON.stringify(snapshot)).digest('hex');
 }
-function selecionarCobranca(dados){
- const pagamentos=Array.isArray(dados?.data)?dados.data:null;
- if(!pagamentos||pagamentos.length>100||dados?.hasMore===true)
-  falha('REPLAY_LISTA_PSP_INCONCLUSIVA');
- const candidatos=pagamentos.filter(p=>
-  typeof p?.id==='string'&&/^[A-Za-z0-9_-]{5,90}$/.test(p.id)&&
-  typeof p?.externalReference==='string'&&
-  /^LOOPLAB-hom-[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/.test(p.externalReference)&&
-  p.billingType==='PIX'&&p.status==='RECEIVED'&&p.value===250);
- if(candidatos.length!==1)falha('REPLAY_COBRANCA_UNICA_NAO_COMPROVADA');
- return {id:candidatos[0].id,ref:candidatos[0].externalReference};
+function selecionarCobranca(vinculo,psp){
+ if(vinculo?.ambiente!=='ASAAS_SANDBOX_EXCLUSIVO'||
+    vinculo.consultaSomenteLeitura!==true||
+    vinculo.financeiroReal!==false||
+    vinculo.valorCentavos!==25000||
+    typeof vinculo.pagamentoId!=='string'||
+    !/^[A-Za-z0-9_-]{5,90}$/.test(vinculo.pagamentoId)||
+    typeof vinculo.externalReference!=='string'||
+    !/^LOOPLAB-hom-[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/.test(vinculo.externalReference)||
+    psp?.id!==vinculo.pagamentoId||
+    psp?.externalReference!==vinculo.externalReference||
+    psp.billingType!=='PIX'||psp.status!=='RECEIVED'||psp.value!==250)
+  falha('REPLAY_COBRANCA_PSP_E_MOTOR_DIVERGENTES');
+ return {id:vinculo.pagamentoId,ref:vinculo.externalReference};
 }
 async function provarReplayWebhook({
  env=process.env,fetchImpl=globalThis.fetch,
@@ -76,10 +79,15 @@ async function provarReplayWebhook({
  const motor=async()=>req(PREVIA,'/staging/escritorio-unificado/motor/estado',
   'GET',null,{Authorization:basic});
  const antes=resumoMotor(await motor());
- const lista=await req(PSP,'/payments?limit=100','GET',null,{
+ const vinculo=await req(PREVIA,
+  '/staging/escritorio-unificado/webhook-replay-fixture','GET',null,
+  {Authorization:basic});
+ if(!/^[A-Za-z0-9_-]{5,90}$/.test(vinculo.pagamentoId||''))
+  falha('REPLAY_VINCULO_NAO_VALIDO');
+ const psp=await req(PSP,'/payments/'+vinculo.pagamentoId,'GET',null,{
   access_token:pspKey,'User-Agent':'LoopV6-Sandbox/1.0'
  });
- const p=selecionarCobranca(lista);
+ const p=selecionarCobranca(vinculo,psp);
  const id1=idFactory(),id2=idFactory();
  if(!/^[a-f0-9]{32}$/.test(id1)||!/^[a-f0-9]{32}$/.test(id2)||id1===id2)
   falha('REPLAY_IDS_DE_ENSAIO_INVALIDOS');
