@@ -13,6 +13,8 @@ const {catalogoFicticioCheckout}=
 const {AsaasSandboxLojaV6}=require('../src/domain/asaas-sandbox-loja-v6');
 const {criarAgendadorConciliacaoSandbox}=
  require('../src/domain/agendador-conciliacao-asaas-sandbox');
+const {criarAgendadorBackupOffsiteLab}=
+ require('../src/domain/agendador-backup-offsite-railway-lab');
 const {criarTransporteRecuperacaoResend}=
  require('../src/adapters/email-recuperacao-resend');
 
@@ -248,6 +250,22 @@ async function iniciar({env=process.env}={}){
  const psp=sandboxAtivo?new AsaasSandboxLojaV6({
   apiKey:env.LOOP_PREVIEW_ASAAS_SANDBOX_API_KEY
  }):null;
+ const backupAtivo=env.LOOP_PREVIEW_BACKUP_OFFSITE_AUTO==='SIM';
+ // Sem bucket S3 de homologação configurado, o backup permanece
+ // DESLIGADO e o status informa a lacuna. Nunca usar o volume Asaas.
+ const backupOffsite=backupAtivo?criarAgendadorBackupOffsiteLab({
+  fonteSqlite:dbPath,raizVolume:pasta,
+  senha:derivar(segredoRaiz,'backup-s3-gcm').toString('hex'),
+  config:{
+   endpoint:env.LOOP_BACKUP_S3_ENDPOINT,
+   bucket:env.LOOP_BACKUP_S3_BUCKET,
+   accessKeyId:env.LOOP_BACKUP_S3_ACCESS_KEY_ID,
+   secretAccessKey:env.LOOP_BACKUP_S3_SECRET_ACCESS_KEY,
+   region:env.LOOP_BACKUP_S3_REGION||'auto'
+  },
+  intervaloMs:24*60*60*1000,
+  onErro:codigo=>process.stderr.write('LOOP_BACKUP_OFFSITE='+codigo+'\\n')
+ }):null;
  const c=criarAppLojaEscritorioCandidato({
   banco:db,repositorioCatalogo:catalogoFicticioCheckout(),
   chaveEmail:derivar(segredoRaiz,'email'),chaveCifra:derivar(segredoRaiz,'cifra'),
@@ -262,6 +280,7 @@ async function iniciar({env=process.env}={}){
   segredoOperador:tokenOperador,termosVersao:'LAB-escritorio-preview-2026',
   termosTexto:'Este cadastro e apenas para experimentar as telas da AKITEMM. Use nome e email ficticios, sem CPF ou dados reais. Nenhuma compra ou participacao e ativada.'
  });
+ c.app.locals.backupOffsite=backupOffsite;
  const interno=c.app.listen(0,'127.0.0.1');
  await new Promise((ok,fail)=>{interno.once('listening',ok);interno.once('error',fail);});
  const gateway=criarGateway({portaInterna:interno.address().port,
@@ -281,17 +300,22 @@ async function iniciar({env=process.env}={}){
    agendador.iniciar();
    process.stdout.write('LOOP_CONCILIACAO_SANDBOX_AUTOMATICA=ATIVA_EM_ENSAIO\\n');
   }
+  if(backupOffsite){
+   backupOffsite.iniciar();
+   process.stdout.write('LOOP_BACKUP_OFFSITE_AGENDADO=ATIVO_ENSAIO_SEM_PROVA_ANTE CIPADA\\n'.replace('ANTE CIPADA','ANTECIPADA'));
+  }
  });
  let encerrando=false;
  async function encerrar(){
   if(encerrando)return;
   encerrando=true;
   if(agendador)await agendador.encerrar();
+  if(backupOffsite)await backupOffsite.encerrar();
   gateway.close(()=>interno.close(()=>db.close()));
  }
  process.once('SIGTERM',()=>{void encerrar();});
  process.once('SIGINT',()=>{void encerrar();});
- return {gateway,interno,db,agendador};
+ return {gateway,interno,db,agendador,backupOffsite};
 }
 if(require.main===module)iniciar().catch(e=>{
  process.stderr.write('AKITEMM_PREVIA_BLOQUEADA='+
