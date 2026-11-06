@@ -32,6 +32,10 @@ function config(db,keys,capture=[]){
   chaveEmail:keys.email,chaveCifra:keys.cifra,
   chaveProvaEmail:keys.provaEmail,
   enviarEmailDeVerificacao:async msg=>{capture.push(msg);return true;},
+  ...(keys.recuperacao?{
+   chaveRecuperacao:keys.recuperacao,
+   enviarRecuperacao:async msg=>{capture.push(msg);return true;}
+  }:{}),
   segredoOperador:operator,termosVersao:termsVersion,termosTexto:TERMOS};
 }
 async function cadastrar(contas,nick){
@@ -41,7 +45,8 @@ async function cadastrar(contas,nick){
 }
 test('restauração isolada preserva titular/pedido, mas REVOCA cookies e códigos antigos',async t=>{
  const a=paths(t);
- const keys={email:randomBytes(32),cifra:randomBytes(32),provaEmail:randomBytes(32)};
+ const keys={email:randomBytes(32),cifra:randomBytes(32),
+  provaEmail:randomBytes(32),recuperacao:randomBytes(32)};
  const db=new DatabaseSync(a.origem);
  db.exec('PRAGMA foreign_keys=ON;PRAGMA journal_mode=WAL;PRAGMA busy_timeout=5000');
  const capturados=[];
@@ -53,6 +58,9 @@ test('restauração isolada preserva titular/pedido, mas REVOCA cookies e códig
  assert.equal(app.contas.sessao(cookieReq).titularId,alice.titularId);
  await app.provasEmail.solicitar({titularId:alice.titularId,autorizado:true});
  assert.equal(capturados.length,1);
+ await app.contas.solicitarRecuperacao({email:'alice@example.invalid'});
+ assert.equal(capturados.length,2);
+ const codigoAnteriorAoBackup=capturados[1].codigo;
  const entrada={itens:[{produtoId:'curso-homologacao-250',quantidade:1}]};
  const catalogo=catalogoFicticioCheckout();
  const cotacao=await cotarCheckoutPublico({repositorio:catalogo,entrada});
@@ -75,6 +83,7 @@ test('restauração isolada preserva titular/pedido, mas REVOCA cookies e códig
  assert.equal(resultado.identidadeCandidataAuditada,true);
  assert.equal(resultado.sessoesCandidatasRevogadas,1);
  assert.equal(resultado.provasEmailPendentesInvalidadas,1);
+ assert.equal(resultado.codigosRecuperacaoSenhaInvalidados,1);
  const rdb=new DatabaseSync(a.restaurado);
  rdb.exec('PRAGMA foreign_keys=ON;PRAGMA busy_timeout=5000');
  try{
@@ -94,6 +103,14 @@ test('restauração isolada preserva titular/pedido, mas REVOCA cookies e códig
   }),null);
   assert.equal(rdb.prepare('SELECT estado FROM akitemm_candidato_email_desafios')
    .get().estado,'BLOQUEADO');
+  assert.equal(rdb.prepare([
+   'SELECT estado FROM akitemm_recuperacao_senha_candidata',
+   'ORDER BY criado_em DESC LIMIT 1'
+  ].join(' ')).get().estado,'BLOQUEADO');
+  await assert.rejects(recovered.contas.confirmarRecuperacao({
+   email:'alice@example.invalid',
+   codigo:codigoAnteriorAoBackup,novaSenha:'SenhaRestauradaNova2026!'
+  }),{codigo:'RECUPERACAO_CODIGO_OU_SENHA_INVALIDOS'});
   assert.throws(()=>recovered.provasEmail.confirmar({
    titularId:alice.titularId,codigo:capturados[0].codigo,autorizado:true
   }),/PROVA_EMAIL_EXPIRADA_OU_INVALIDA/);
