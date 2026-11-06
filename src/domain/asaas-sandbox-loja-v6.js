@@ -31,7 +31,7 @@ class AsaasSandboxLojaV6{
  }
  async _requisitar(metodo,caminho,corpo){
   // URL sempre fixa; nenhum endereco controlado por consumidor/operador.
-  if(!/^\/(?:payments(?:\?externalReference=LOOPLAB-[a-z0-9-]{3,70}&limit=10)?|payments\/[a-zA-Z0-9_-]{5,90}(?:\/pixQrCode)?)$/.test(caminho))
+  if(!/^\/(?:payments(?:\?limit=1|\?externalReference=LOOPLAB-[a-z0-9-]{3,70}&limit=10)?|payments\/[a-zA-Z0-9_-]{5,90}(?:\/pixQrCode)?)$/.test(caminho))
    throw falha('CAMINHO_ASAAS_INVALIDO');
   let resposta;
   try{
@@ -45,6 +45,15 @@ class AsaasSandboxLojaV6{
   }catch(_e){throw falha('ASAAS_SANDBOX_REDE_INCONCLUSIVA');}
   if(!resposta.ok)throw falha('ASAAS_SANDBOX_HTTP_'+resposta.status);
   try{return await resposta.json();}catch(_e){throw falha('ASAAS_SANDBOX_RESPOSTA_INVALIDA');}
+ }
+ // Prova de acesso remoto SEM criar cobrancas ou devolver dados da conta.
+ // Nao comprova webhook, liquidacao nem Marco Zero.
+ async testarAcessoRemoto(){
+  const dados=await this._requisitar('GET','/payments?limit=1');
+  if(!Array.isArray(dados?.data))
+   throw falha('ASAAS_SANDBOX_PROVA_RESPOSTA_INVALIDA');
+  return {ambiente:this.ambiente,pspRemotoRespondeu:true,
+   cobrancasCriadas:0,webhookExternoComprovado:false};
  }
  async criarCobrancaPix({clienteAsaasId,valorCentavos,pedidoId}={}){
   if(typeof clienteAsaasId!=='string'||!ID.test(clienteAsaasId)||
