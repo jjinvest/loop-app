@@ -1,7 +1,6 @@
 'use strict';
-// Relogio de exibicao de eventos JA CONFIRMADOS: nao cria venda, nao
-// movimenta dinheiro, nao muda a prioridade das filas nem o PSP.
-// Fonte unica de fuso horario: America/Sao_Paulo.
+// A fila vive pelas vendas; a catraca apenas executa eventos comprovados.
+// Horario e intervalo sao OPCIONAIS, nunca pre-condicao para receber vendas.
 const FUSO='America/Sao_Paulo';
 const RELOGIO=/^(?:[01]\d|2[0-3]):[0-5]\d$/;
 const DATA=/^\d{4}-\d{2}-\d{2}$/;
@@ -10,62 +9,73 @@ const PADRAO=Object.freeze({
  intervaloMinutos:10,excecaoData:null,excecaoFechamento:null,
  pausaManual:false,ultimoDia:null,ultimoSlot:-1
 });
-function minutos(horario){
- if(typeof horario!=='string'||!RELOGIO.test(horario))
-  throw new Error('AGENDA_HORARIO_INVALIDO');
- const [h,m]=horario.split(':').map(Number);
- return h*60+m;
+function minutos(h){
+ if(typeof h!=='string'||!RELOGIO.test(h))
+  throw Error('AGENDA_HORARIO_INVALIDO');
+ const [hora,minuto]=h.split(':').map(Number);
+ return hora*60+minuto;
+}
+function diaValido(d){
+ if(typeof d!=='string'||!DATA.test(d))return false;
+ const parsed=new Date(d+'T12:00:00Z');
+ return Number.isFinite(parsed.getTime())&&
+  parsed.toISOString().slice(0,10)===d;
 }
 function validarAgenda(p){
- if(typeof p!=='object'||p===null||Array.isArray(p)||
-    typeof p.ativo!=='boolean'||
-    typeof p.pausaManual!=='boolean'||
-    !Number.isInteger(p.intervaloMinutos)||
-    p.intervaloMinutos<1||p.intervaloMinutos>60||
-    minutos(p.abertura)>=minutos(p.fechamento)||
+ if(!p||typeof p!=='object'||Array.isArray(p)||
+    typeof p.ativo!=='boolean'||typeof p.pausaManual!=='boolean'||
+    !Number.isSafeInteger(p.intervaloMinutos)||p.intervaloMinutos<1||
     (p.excecaoData===null)!==(p.excecaoFechamento===null))
-  throw new Error('AGENDA_CONFIG_INVALIDA');
+  throw Error('AGENDA_CONFIG_INVALIDA');
+ minutos(p.abertura);minutos(p.fechamento);
  if(p.excecaoData!==null){
-  if(typeof p.excecaoData!=='string'||!DATA.test(p.excecaoData)||
-     Number.isNaN(Date.parse(p.excecaoData+'T12:00:00Z'))||
-     minutos(p.excecaoFechamento)<=minutos(p.abertura))
-   throw new Error('AGENDA_EXCECAO_INVALIDA');
+  if(!diaValido(p.excecaoData))throw Error('AGENDA_EXCECAO_INVALIDA');
+  minutos(p.excecaoFechamento);
  }
- if(p.ultimoDia!==null&&(!DATA.test(p.ultimoDia)||
-    Number.isNaN(Date.parse(p.ultimoDia+'T12:00:00Z'))))
-  throw new Error('AGENDA_DIA_INVALIDO');
+ if(p.ultimoDia!==null&&!diaValido(p.ultimoDia))
+  throw Error('AGENDA_DIA_INVALIDO');
  if(!Number.isSafeInteger(p.ultimoSlot)||p.ultimoSlot< -1)
-  throw new Error('AGENDA_SLOT_INVALIDO');
+  throw Error('AGENDA_SLOT_INVALIDO');
  return p;
 }
 function agoraLocal(agoraMs){
  if(!Number.isSafeInteger(agoraMs)||agoraMs<0)
-  throw new Error('AGENDA_RELOGIO_INVALIDO');
- const partes=new Intl.DateTimeFormat('en-US',{
+  throw Error('AGENDA_RELOGIO_INVALIDO');
+ const parts=new Intl.DateTimeFormat('en-US',{
   timeZone:FUSO,year:'numeric',month:'2-digit',day:'2-digit',
   hour:'2-digit',minute:'2-digit',hourCycle:'h23'
  }).formatToParts(new Date(agoraMs));
- const map=Object.fromEntries(partes.map(p=>[p.type,p.value]));
- const dia=map.year+'-'+map.month+'-'+map.day;
- const minuto=Number(map.hour)%24*60+Number(map.minute);
- return {dia,minuto,horario:map.hour+':'+map.minute};
+ const m=Object.fromEntries(parts.map(p=>[p.type,p.value]));
+ const dia=m.year+'-'+m.month+'-'+m.day;
+ const minuto=Number(m.hour)%24*60+Number(m.minute);
+ return {dia,minuto,horario:m.hour+':'+m.minute};
+}
+function diaAnterior(dia){
+ return new Date(Date.parse(dia+'T12:00:00Z')-86400000)
+  .toISOString().slice(0,10);
 }
 function avaliarAgenda(config,agoraMs){
  const c=validarAgenda({...config});
  const agora=agoraLocal(agoraMs);
- const fechar=agora.dia===c.excecaoData?c.excecaoFechamento:c.fechamento;
- const inicio=minutos(c.abertura),fim=minutos(fechar);
- const dentroDoHorario=agora.minuto>=inicio&&agora.minuto<fim;
- const slot=Math.floor((agora.minuto-inicio)/c.intervaloMinutos);
+ const inicio=minutos(c.abertura);
+ // Cada dia da agenda nasce na hora de abertura. Se a abertura for
+ // 09:00 e o fim 00:00, o fim eh MEIA-NOITE DO DIA SEGUINTE.
+ const diaJanela=agora.minuto<inicio?diaAnterior(agora.dia):agora.dia;
+ const fechamentoAplicado=diaJanela===c.excecaoData?
+  c.excecaoFechamento:c.fechamento;
+ let fim=minutos(fechamentoAplicado);
+ if(fim<=inicio)fim+=1440; // inclui horario igual: turno de 24 horas
+ const transcorrido=(diaJanela===agora.dia?0:1440)+agora.minuto-inicio;
+ const dentroDoHorario=transcorrido>=0&&transcorrido<fim-inicio;
+ const slot=Math.floor(transcorrido/c.intervaloMinutos);
  const liberavel=c.ativo&&dentroDoHorario&&!c.pausaManual&&slot>=1&&
-  (c.ultimoDia!==agora.dia||slot>c.ultimoSlot);
- return {fuso:FUSO,dia:agora.dia,horarioLocal:agora.horario,
-  abertura:c.abertura,fechamentoAplicado:fechar,
-  dentroDoHorario,pausaManual:c.pausaManual,ativo:c.ativo,
+  (c.ultimoDia!==diaJanela||slot>c.ultimoSlot);
+ return {fuso:FUSO,dia:diaJanela,horarioLocal:agora.horario,
+  abertura:c.abertura,fechamentoAplicado,dentroDoHorario,
+  pausaManual:c.pausaManual,ativo:c.ativo,
   podeContabilizar:liberavel,slot,
-  // Nunca multiplicar pulsos apos falta de energia: apenas UM por execucao.
   pulsoMaximo:liberavel?1:0,
   intervaloMinutos:c.intervaloMinutos,
-  proximaLuzNoMinuto:slot>=0?inicio+(slot+1)*c.intervaloMinutos:inicio+c.intervaloMinutos};
+  proximaLuzNoMinuto:inicio+(Math.max(0,slot)+1)*c.intervaloMinutos};
 }
 module.exports={PADRAO,FUSO,minutos,validarAgenda,agoraLocal,avaliarAgenda};
