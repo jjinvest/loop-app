@@ -177,7 +177,8 @@ class ReconsultaWebhookPrepedidoAsaasStaging{
   return resumo;
  }
 
- async processar({eventoId,provedor,execucaoLiberada=false}={}){
+ async processar({eventoId,provedor,execucaoLiberada=false,
+  retomadaSegura=false}={}){
   if(process.env.NODE_ENV==='production')
    throw falha('RECONSULTA_STAGING_PROIBIDA_EM_PRODUCAO');
   if(execucaoLiberada!==true)throw falha('RECONSULTA_NAO_AUTORIZADA');
@@ -193,7 +194,13 @@ class ReconsultaWebhookPrepedidoAsaasStaging{
   let titularId;
   try{
    const anterior=this.consultar(eventoId);
-   if(anterior){
+   // Retomar apenas a interrupcao recuperada com checkpoint persistido.
+   // Erros PSP e reversoes que exigem revisao nao sao reprocessados
+   // automaticamente, mesmo que o agendador tente novamente.
+   const retomada=retomadaSegura===true&&
+    anterior?.estado==='EXIGE_REVISAO'&&
+    anterior.codigo==='PROCESSAMENTO_INTERROMPIDO_REVISAR';
+   if(anterior&&!retomada){
     b.exec('COMMIT');
     return {repetido:true,eventoId,estado:anterior.estado,
      codigo:anterior.codigo,pagamentoReal:false,posicoesCriadas:0};
@@ -209,10 +216,27 @@ class ReconsultaWebhookPrepedidoAsaasStaging{
       fonte.valor_centavos!==aviso.valorAvisadoCentavos))
     throw falha('VINCULO_SANDBOX_DIVERGENTE');
    titularId=fonte.titular_id;
-   b.prepare([
-    'INSERT INTO akitemm_prepedido_webhook_reconsulta_staging',
-    "(evento_id,estado,codigo,iniciado_em) VALUES(?,'PROCESSANDO','RECONSULTA',?)"
-   ].join(' ')).run(eventoId,this.agora());
+   if(retomada){
+    // BEGIN IMMEDIATE confere exclusividade entre workers e instancias.
+    const checkpoint=b.prepare([
+     'SELECT 1 AS valido FROM akitemm_prepedido_webhook_recuperacoes_staging',
+     "WHERE evento_id=? AND codigo='PROCESSAMENTO_INTERROMPIDO_REVISAR'"
+    ].join(' ')).get(eventoId);
+    if(!checkpoint)throw falha('RETOMADA_SEM_CHECKPOINT_DURAVEL');
+    const alteradas=b.prepare([
+     'UPDATE akitemm_prepedido_webhook_reconsulta_staging',
+     "SET estado='PROCESSANDO',codigo='RECONSULTA_RETOMADA',",
+     'iniciado_em=?,finalizado_em=NULL',
+     "WHERE evento_id=? AND estado='EXIGE_REVISAO'",
+     "AND codigo='PROCESSAMENTO_INTERROMPIDO_REVISAR'"
+    ].join(' ')).run(this.agora(),eventoId).changes;
+    if(alteradas!==1)throw falha('RETOMADA_EXCLUSIVA_NAO_OBTIDA');
+   }else{
+    b.prepare([
+     'INSERT INTO akitemm_prepedido_webhook_reconsulta_staging',
+     "(evento_id,estado,codigo,iniciado_em) VALUES(?,'PROCESSANDO','RECONSULTA',?)"
+    ].join(' ')).run(eventoId,this.agora());
+   }
    b.exec('COMMIT');
   }catch(e){b.exec('ROLLBACK');throw e;}
   // Fora da transacao: consulta independente do provedor. Uma perda de
@@ -256,6 +280,7 @@ class ReconsultaWebhookPrepedidoAsaasStaging{
    b.exec('COMMIT');
   }catch(e){b.exec('ROLLBACK');throw e;}
   return {repetido:false,eventoId,estado:situacao,codigo,
+   retomadaDeInterrupcao:retomada,
    pagamentoReal:false,posicoesCriadas:0,bonusGerados:0,
    saqueRealAutorizado:false};
  }
