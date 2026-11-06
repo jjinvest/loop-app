@@ -638,7 +638,9 @@ async function conferirPixUnificado(){
   const r=await api('/sandbox-pix/estado');
   if(r.status==='INTEGRADO_SANDBOX_NO_MESMO_SQLITE'&&
      r.usaSQLiteDaLoja&&r.webhookIngressAtivo&&r.consultarPSPDisponivel){
-   estado.textContent='Asaas Sandbox conectado à loja, ao webhook e ao motor no MESMO banco de homologação. Nenhum saque real habilitado.';
+   estado.textContent='Asaas Sandbox conectado à loja, ao webhook e ao motor no MESMO banco de homologação. '+
+    (r.conciliacaoAutomaticaConfigurada?'Conciliação periódica configurada (sem comando por pagamento). ':'Conciliação automática ainda não habilitada neste serviço. ')+
+    'Nenhum saque real habilitado.';
    enviar.disabled=false;
    $('reconciliarPendentesPsp').disabled=false;
   }else{
