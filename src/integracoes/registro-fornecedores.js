@@ -65,6 +65,75 @@ class RegistroFornecedores {
     };
   }
 
+  // Contrato OPCIONAL de cotacao de frete direto com o fornecedor.
+  // Nao existe tarifa padrao nem fallback inventado: ate conectar a
+  // API autorizada da franquia, nenhuma cotacao sera exibida no checkout.
+  async cotarFrete({ fornecedorId, cepDestino, itens } = {}) {
+    codigo(fornecedorId,'fornecedorId');
+    if (typeof cepDestino !== 'string' ||
+        !/^[0-9]{5}-?[0-9]{3}$/.test(cepDestino)) {
+      throw new Error('CEP de destino invalido');
+    }
+    if (!Array.isArray(itens) || itens.length < 1 || itens.length > 20) {
+      throw new Error('Itens de cotacao invalidos');
+    }
+    const vistos=new Set();
+    const validados=itens.map(item=>{
+      if(!item || typeof item!=='object' || Array.isArray(item)) {
+        throw new Error('Item de cotacao invalido');
+      }
+      const sku=codigo(item.sku,'sku');
+      if(!Number.isSafeInteger(item.quantidade) ||
+         item.quantidade<1 || item.quantidade>50 ||
+         vistos.has(sku)) {
+        throw new Error('Quantidade ou SKU de frete invalido');
+      }
+      vistos.add(sku);
+      return {sku,quantidade:item.quantidade};
+    });
+    const adaptador=this.obter(fornecedorId);
+    if(typeof adaptador.cotarFrete!=='function'){
+      throw new Error('FRETE_FORNECEDOR_NAO_INTEGRADO');
+    }
+    // Somente CEP e SKUs, sem nome, CPF ou endereco completo.
+    const resposta=await adaptador.cotarFrete({
+      cepDestino:cepDestino.replace('-',''),itens:validados
+    });
+    if(!resposta || !Array.isArray(resposta.opcoes) ||
+       resposta.opcoes.length<1 || resposta.opcoes.length>10) {
+      throw new Error('FRETE_FORNECEDOR_RESPOSTA_INVALIDA');
+    }
+    const servicos=new Set();
+    const opcoes=resposta.opcoes.map(x=>{
+      if(!x || typeof x!=='object' ||
+         typeof x.servicoId!=='string' ||
+         !/^[A-Za-z0-9_-]{1,80}$/.test(x.servicoId) ||
+         typeof x.cotacaoId!=='string' ||
+         !/^[A-Za-z0-9_-]{1,120}$/.test(x.cotacaoId) ||
+         servicos.has(x.servicoId) ||
+         !Number.isSafeInteger(x.valorCentavos) ||
+         x.valorCentavos<0 || x.valorCentavos>10000000 ||
+         !Number.isSafeInteger(x.prazoDiasUteis) ||
+         x.prazoDiasUteis<0 || x.prazoDiasUteis>120 ||
+         typeof x.expiraEm!=='string' ||
+         !Number.isFinite(Date.parse(x.expiraEm)) ||
+         Date.parse(x.expiraEm)<=Date.now()) {
+        throw new Error('FRETE_FORNECEDOR_RESPOSTA_INVALIDA');
+      }
+      servicos.add(x.servicoId);
+      return {servicoId:x.servicoId,cotacaoId:x.cotacaoId,
+        valorCentavos:x.valorCentavos,
+        prazoDiasUteis:x.prazoDiasUteis,expiraEm:x.expiraEm};
+    });
+    return {
+      fornecedorId,cepDestino:cepDestino.replace('-',''),opcoes,
+      origem:'API_DO_FORNECEDOR',consultaRealizadaNoServidor:true,
+      naoEhPagamento:true,
+      // A confirmacao de preco/prazo continua dependente da API contratada.
+      pedidoEnviadoAoFornecedor:false
+    };
+  }
+
   async consultarStatus({ fornecedorId, pedidoParceiroId } = {}) {
     codigo(pedidoParceiroId,'pedidoParceiroId');
     const resposta = await this.obter(fornecedorId).consultarStatus({ pedidoParceiroId });
