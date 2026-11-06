@@ -318,3 +318,13 @@ test('encerramento seguro preserva operacoes ativas antes de fechar SQLite',asyn
 test('encerramento da previa exige gateway, backend e banco',()=>{
  assert.throws(()=>criarEncerramentoPreview({}),/ENCERRAMENTO_PREVIA_INVALIDO/);
 });
+
+test('porta invalida falha antes de tentar montar SQLite ou abrir listener',async()=>{
+ const {iniciar}=require('../scripts/servidor-escritorio-preview-railway');
+ await assert.rejects(()=>iniciar({env:{
+  NODE_ENV:'test',LOOP_PREVIEW_EXCLUSIVO:'SIM',
+  LOOP_PREVIEW_SENHA_ACESSO:senha,
+  LOOP_PREVIEW_SEGREDO_RAIZ:'SEGREDO_RAIZ_FICTICIO_DE_TESTE_'+('R'.repeat(64)),
+  PORT:'porta-invalida'
+ }}),{codigo:'PORTA_PREVIA_INVALIDA'});
+});
