@@ -11,6 +11,8 @@ const {createHash,randomBytes,scryptSync,createCipheriv,createDecipheriv}=
 const {DatabaseSync}=require('node:sqlite');
 const {auditarRelacoesPspCandidato}=
  require('../src/domain/auditoria-relacional-psp-candidato-sqlite');
+const {auditarIntegridadeMotorCandidato}=
+ require('../src/domain/auditoria-integridade-motor-candidato-sqlite');
 const MAGIC=Buffer.from('LOOPBKP1','ascii');
 const HEADER_SIZE=36;
 const TAG_SIZE=16;
@@ -136,6 +138,10 @@ function validarBanco(arquivo){
    const psp=auditarRelacoesPspCandidato({banco});
    if(psp.totalInconsistencias!==0)
     throw falha('BACKUP_CANDIDATO_RELACOES_PSP_DIVERGENTES');
+   // O backup offsite utiliza ESTE validador antes do upload e
+   // novamente depois do download/decriptacao no SQLite isolado.
+   try{auditarIntegridadeMotorCandidato({banco,exigirMotor:true});}
+   catch{throw falha('BACKUP_CANDIDATO_MOTOR_DIVERGENTE');}
   }
   return {tabelas:tabelas.size,integro:true,contaUnicaValidada};
  }finally{banco.close();}
