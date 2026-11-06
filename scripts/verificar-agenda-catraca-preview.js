@@ -31,17 +31,27 @@ async function verificar({env=process.env,fetchImpl=globalThis.fetch}={}){
     a.fuso!=='America/Sao_Paulo'||
     a.abertura!=='09:00'||a.fechamento!=='18:00'||
     a.intervaloMinutos!==10||a.ativo!==false||
+    a.modoExecucao!=='MANUAL'||
+    a.metaLotes?.quantidade!==0||
+    a.metaLotes?.ativa!==false||
     a.comprasNaoInventadas!==true||
     JSON.stringify(r.agenda)!==JSON.stringify(a)||
-    !jsAdmin.includes('agendaMotorHoje21')||
+    !jsAdmin.includes('agendaMotorMetaQuantidade')||
+    !jsAdmin.includes('agendaMotorMetaDia')||
+    !jsAdmin.includes('agendaMotorModo')||
+    !jsAdmin.includes('formLiberarLoteMotor')||
     !jsAdmin.includes('/motor/agenda')||
     !jsCliente.includes('aguardandoContabilizacao')||
+    !jsCliente.includes('modoExecucao')||
     !jsCliente.includes('setInterval'))
   err('AGENDA_HTTP_TELA_OU_SQLITE_DIVERGENTE');
  return {
   horarioPadrao:'09:00-18:00',
   fuso:'America/Sao_Paulo',intervaloMinutos:10,
-  excecao21Disponivel:true,pausaManualDisponivel:true,
+  excecaoHorarioLivre:true,pausaManualDisponivel:true,
+  metaLivreDeCentrosPorHorario:true,
+  metaInicialDesativada:true,
+  modoInicialSeguro:'MANUAL',
   vendasContinuamDurantePausa:true,
   telaAdminELuzesClienteConectadas:true,
   ativacaoInicialSegura:true,
