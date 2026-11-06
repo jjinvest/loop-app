@@ -191,13 +191,13 @@ class ReconsultaWebhookPrepedidoAsaasStaging{
   if(!aviso)throw falha('EVENTO_NAO_ENCONTRADO');
   const b=this.banco;
   b.exec('BEGIN IMMEDIATE');
-  let titularId;
+  let titularId,retomada=false;
   try{
    const anterior=this.consultar(eventoId);
    // Retomar apenas a interrupcao recuperada com checkpoint persistido.
    // Erros PSP e reversoes que exigem revisao nao sao reprocessados
    // automaticamente, mesmo que o agendador tente novamente.
-   const retomada=retomadaSegura===true&&
+   retomada=retomadaSegura===true&&
     anterior?.estado==='EXIGE_REVISAO'&&
     anterior.codigo==='PROCESSAMENTO_INTERROMPIDO_REVISAR';
    if(anterior&&!retomada){
