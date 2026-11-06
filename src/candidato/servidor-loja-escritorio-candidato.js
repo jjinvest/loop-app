@@ -772,7 +772,8 @@ function criarAppLojaEscritorioCandidato({banco,repositorioCatalogo,
  });
  // Quadro de acompanhamento do PSP, habilitado apenas em homologação.
  // Apenas contagens e códigos operacionais, sem credenciais, CPF ou payload.
- if(worker){
+ let executarConciliacaoSandbox=null;
+if(worker){
   // Uma cobranca PIX do SANDBOX precisa usar o MESMO prepedido e titular
   // do Escritorio, fotografia historica, cobertura bruta e limite atual.
   // Nao se gera QR Pix real ou creditos comercialmente sacaveis.
@@ -905,15 +906,13 @@ function criarAppLojaEscritorioCandidato({banco,repositorioCatalogo,
   // Uma ação de fechamento verifica TODOS os avisos novos de uma amostra
   // limitada, com GET independente no Sandbox e vínculo do lote no motor.
   // Falhas ficam sinalizadas e podem ser reprocessadas manualmente.
-  app.post('/staging/escritorio-unificado/reconciliar-pendentes-sandbox',
-   autorizarOperador,async(req,res)=>{
-    if(!operacoesSandboxAutorizadas)
-     return res.status(403).json({erro:'OPERACAO_SANDBOX_DESATIVADA'});
-    if(!req.is('application/json')||!req.body||Array.isArray(req.body)||
-       Object.keys(req.body).join(',')!=='limite'||
-       !Number.isSafeInteger(req.body.limite)||
-       req.body.limite<1||req.body.limite>20)
-     return res.status(400).json({erro:'LOTE_CONCILIACAO_INVALIDO'});
+  // API e agendador usam a MESMA rotina, com registro duravel no SQLite.
+  // Falhas por evento nao interrompem o restante, nem produzem saldos.
+  async function executarLoteSandbox(limite){
+   if(!operacoesSandboxAutorizadas||!worker)
+    throw erro('OPERACAO_SANDBOX_DESATIVADA');
+   if(!Number.isSafeInteger(limite)||limite<1||limite>20)
+    throw erro('LOTE_CONCILIACAO_INVALIDO');
     const eventos=banco.prepare([
      'SELECT i.evento_id AS eventoId',
      'FROM akitemm_prepedido_webhook_inbox_staging i',
@@ -921,7 +920,7 @@ function criarAppLojaEscritorioCandidato({banco,repositorioCatalogo,
      'ON r.evento_id=i.evento_id',
      'WHERE r.evento_id IS NULL',
      'ORDER BY i.recebido_em,i.evento_id LIMIT ?'
-    ].join(' ')).all(req.body.limite);
+    ].join(' ')).all(limite);
     const resultado={consultados:0,conciliados:0,
      revisaoNecessaria:0,lotesPendentesCriados:0,
      lotesSuspensos:0,errosDeProcessamento:0,
@@ -952,7 +951,23 @@ function criarAppLojaEscritorioCandidato({banco,repositorioCatalogo,
      'ON r.evento_id=i.evento_id WHERE r.evento_id IS NULL'
     ].join(' ')).get().n;
     resultado.alertasRevisao=worker.resumoPendencias().exigeRevisao;
-    return res.json(resultado);
+    return resultado;
+  }
+  executarConciliacaoSandbox=executarLoteSandbox;
+  app.post('/staging/escritorio-unificado/reconciliar-pendentes-sandbox',
+   autorizarOperador,async(req,res)=>{
+    if(!operacoesSandboxAutorizadas)
+     return res.status(403).json({erro:'OPERACAO_SANDBOX_DESATIVADA'});
+    if(!req.is('application/json')||!req.body||Array.isArray(req.body)||
+       Object.keys(req.body).join(',')!=='limite'||
+       !Number.isSafeInteger(req.body.limite)||
+       req.body.limite<1||req.body.limite>20)
+     return res.status(400).json({erro:'LOTE_CONCILIACAO_INVALIDO'});
+    try{
+     return res.json(await executarLoteSandbox(req.body.limite));
+    }catch(_e){
+     return res.status(503).json({erro:'LOTE_CONCILIACAO_NAO_CONCLUIDO'});
+    }
    });
   app.post('/staging/escritorio-unificado/projetar-posicao-ficticia',
    autorizarOperador,(req,res)=>{
@@ -1071,6 +1086,6 @@ function criarAppLojaEscritorioCandidato({banco,repositorioCatalogo,
   erro:'CANDIDATO_INDISPONIVEL',financeiroReal:false
  }));
  return {app,contas,cpf,provasEmail,intencoes,prePedidos,ponte,
-  inbox,worker,posicoes,projecaoFilas,preAdesao,diagnosticoAtivacao,entregas,integridade,missoes,catalogo,sinalizacaoVitrine,departamentosAdmin,equipe,motorConta,banco};
+  inbox,worker,executarConciliacaoSandbox,posicoes,projecaoFilas,preAdesao,diagnosticoAtivacao,entregas,integridade,missoes,catalogo,sinalizacaoVitrine,departamentosAdmin,equipe,motorConta,banco};
 }
 module.exports={criarAppLojaEscritorioCandidato};
