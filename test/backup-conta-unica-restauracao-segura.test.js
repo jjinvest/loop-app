@@ -278,4 +278,11 @@ test('backup bloqueia reserva adulterada de compra e fotografia original',async 
  assert.equal(auditarIntegridadeMotorCandidato({
   banco:db,exigirMotor:true
  }).reservasAuditadas,1);
+ const backupValido=await criarBackupCriptografado({
+  origem:a.origem,destino:a.backup,
+  senha:SENHA_BACKUP,autorizado:true
+ });
+ assert.equal(backupValido.fonteIntegra,true,
+  'snapshot legitimo deve continuar recuperavel apos restaurar os vinculos');
+ assert.ok(fs.statSync(a.backup).size>100);
 });
