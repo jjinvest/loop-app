@@ -120,6 +120,24 @@
 <button type="button" id="motorEnsaioPausar">Pausar catraca</button>
 <button type="button" id="motorEnsaioGirar">Executar giro de ensaio (6 eventos)</button>
 </div>
+<h3>Agenda da catraca · horário de Brasília</h3>
+<p class="subtexto">As compras confirmadas continuam acumuladas no SQLite e as filas continuam recebendo posições. A catraca controla apenas a contabilização das seis luzes e o deslocamento do tabuleiro. O relógio NUNCA inventa compras ou libera saques.</p>
+<form id="formAgendaMotor">
+<div class="linha">
+<label for="agendaMotorInicio">Abre às <input id="agendaMotorInicio" type="time" value="09:00" required></label>
+<label for="agendaMotorFim">Fecha às <input id="agendaMotorFim" type="time" value="18:00" required></label>
+<label for="agendaMotorIntervalo">Uma luz a cada
+<select id="agendaMotorIntervalo"><option value="5">5 minutos</option><option value="10" selected>10 minutos</option><option value="15">15 minutos</option><option value="30">30 minutos</option><option value="60">60 minutos</option></select></label>
+</div>
+<div class="linha">
+<label for="agendaMotorExcecaoData">Exceção neste dia <input id="agendaMotorExcecaoData" type="date"></label>
+<label for="agendaMotorExcecaoFim">Fechar excepcionalmente às <input id="agendaMotorExcecaoFim" type="time"></label>
+<button type="button" id="agendaMotorHoje21">Hoje até 21h</button>
+</div>
+<label><input id="agendaMotorAtiva" type="checkbox"> Ativar contabilização automática de ENSAIO (não movimenta valores reais)</label>
+<button type="submit" class="primario">Salvar agenda da catraca</button>
+</form>
+<p class="subtexto" id="agendaMotorEstado" role="status" aria-live="polite">Agenda: ainda não consultada.</p>
 <p id="motorEnsaioStatus" role="status" aria-live="polite" class="subtexto"></p>
 <div id="motorEnsaioResumo" class="indicadores" aria-label="Estado verdadeiro do motor de ensaio"></div>
 </section>
