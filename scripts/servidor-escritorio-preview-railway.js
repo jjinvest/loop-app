@@ -235,7 +235,8 @@ function criarGateway({portaInterna,senhaAcesso,segredoOperador,
 }
 // Trava novas conexoes ANTES de aguardar backup/PSP. As conexoes ainda
 // ativas drenam antes de encerrar o backend e fechar o mesmo SQLite.
-function criarEncerramentoPreview({gateway,interno,banco,agendador=null,backupOffsite=null}={}){
+function criarEncerramentoPreview({gateway,interno,banco,agendador=null,
+ backupOffsite=null,temporizadorCatraca=null}={}){
  if(!gateway||typeof gateway.close!=='function'||
     !interno||typeof interno.close!=='function'||
     !banco||typeof banco.close!=='function')
@@ -252,6 +253,7 @@ function criarEncerramentoPreview({gateway,interno,banco,agendador=null,backupOf
      gateway.closeIdleConnections?.();
     }catch(e){resolve(e);}
    });
+   if(temporizadorCatraca!==null)clearInterval(temporizadorCatraca);
    if(agendador)await agendador.encerrar();
    if(backupOffsite)await backupOffsite.encerrar();
    const erroGateway=await drenagemGateway;
@@ -368,19 +370,35 @@ async function iniciar({env=process.env}={}){
   executar:c.executarConciliacaoSandbox,limite:20,intervaloMs:30000,
   onErro:codigo=>process.stderr.write('LOOP_CONCILIACAO_ENSAIO='+codigo+'\\n')
  }):null;
+ let temporizadorCatraca=null;
  gateway.listen(port,'0.0.0.0',()=>{
   process.stdout.write('AKITEMM_PREVIA_PROTEGIDA=PRONTA_SEM_PAGAMENTOS_REAIS\\n');
   if(agendador){
    agendador.iniciar();
    process.stdout.write('LOOP_CONCILIACAO_SANDBOX_AUTOMATICA=ATIVA_EM_ENSAIO\\n');
   }
+  // A agenda comeca DESATIVADA no SQLite e nao altera compras ou filas.
+  // Em janela ativa, no maximo uma compra REAL do Sandbox e contabilizada
+  // por intervalo; nenhum PSP ou pagamento novo e criado por este relogio.
+  temporizadorCatraca=setInterval(()=>{
+   try{
+    const r=c.motorConta.processarPulsoAgenda();
+    if(['LUZ_DO_CICLO','GIRO_AGENDADO',
+      'BLOQUEADA_PSP_EXIGE_REVISAO'].includes(r.acao))
+     process.stdout.write('LOOP_CATRACA_AGENDA='+r.acao+'\n');
+   }catch(e){
+    process.stderr.write('LOOP_CATRACA_AGENDA='+
+     String(e.codigo||'PULSO_BLOQUEADO')+'\n');
+   }
+  },15000);
+  temporizadorCatraca.unref?.();
   if(backupOffsite){
    backupOffsite.iniciar();
    process.stdout.write('LOOP_BACKUP_OFFSITE_AGENDADO=ATIVO_ENSAIO_SEM_PROVA_ANTECIPADA\\n');
   }
  });
  const encerrar=criarEncerramentoPreview({gateway,interno,banco:db,
-  agendador,backupOffsite});
+  agendador,backupOffsite,temporizadorCatraca});
  process.once('SIGTERM',()=>{void encerrar();});
  process.once('SIGINT',()=>{void encerrar();});
  return {gateway,interno,db,agendador,backupOffsite,encerrar};
