@@ -1329,6 +1329,8 @@ if(worker){
      'SELECT COUNT(*) AS n FROM akitemm_prepedido_entregas_sandbox_staging'
     ].join(' ')).get().n,
     conciliacaoSandboxDisponivel:Boolean(worker&&operacoesSandboxAutorizadas),
+    verificacaoEmailDisponivel:provasEmail!==null,
+    recuperacaoSenhaEmailDisponivel:typeof enviarRecuperacao==='function',
     posicoesPendentesFicticias:posicoes?banco.prepare([
      'SELECT COUNT(*) AS n FROM',
      'akitemm_prepedido_posicoes_pendentes_sandbox_staging'
