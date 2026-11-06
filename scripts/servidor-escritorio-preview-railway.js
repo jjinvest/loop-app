@@ -255,6 +255,7 @@ async function iniciar({env=process.env}={}){
    chaveCpfCifra:derivar(segredoRaiz,'cpf-cifra')}:{}),
   webhookHomologacaoToken:sandboxAtivo?env.LOOP_PREVIEW_ASAAS_WEBHOOK_TOKEN:null,
   provedorReconsultaSandbox:psp,operacoesSandboxAutorizadas:sandboxAtivo,
+  conciliacaoAutomaticaConfigurada:autoAtivo,
   chaveRecuperacao:temEnvio?derivar(segredoRaiz,'senha-recuperacao'):null,
   enviarRecuperacao,
   // CPF de ensaio desabilitado para não incentivar dados pessoais em prévia.
