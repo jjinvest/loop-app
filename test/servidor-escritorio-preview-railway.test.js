@@ -2,6 +2,7 @@
 const {test}=require('node:test');
 const assert=require('node:assert/strict');
 const {once}=require('node:events');
+const http=require('node:http');
 const {randomBytes}=require('node:crypto');
 const {DatabaseSync}=require('node:sqlite');
 const {criarGateway}=require('../scripts/servidor-escritorio-preview-railway');
@@ -199,4 +200,63 @@ test('escritorio com interface aprovada compartilha a mesma sessao e APIs',async
  const compatibilidade=await x.consultar('/staging/assets/cliente-integrado.css');
  assert.equal(compatibilidade.status,200);
  assert.match(await compatibilidade.text(),/cliente-integrado/);
+});
+
+test('healthz nao declara sucesso com backend indisponivel; readyz confere prontidao isolada',async t=>{
+ let pronto=true,saudavel=true;
+ const backend=http.createServer((req,res)=>{
+  if(req.url==='/healthz' || req.url==='/readyz'){
+   const ok=req.url==='/readyz'?pronto:saudavel;
+   res.writeHead(ok?200:503,{'Content-Type':'application/json'});
+   res.end(JSON.stringify({estado:ok?'OK':'FALHA',segredo:'nunca-repassar'}));
+   return;
+  }
+  res.writeHead(404);res.end();
+ });
+ backend.listen(0,'127.0.0.1');
+ await once(backend,'listening');
+ const gateway=criarGateway({portaInterna:backend.address().port,
+  senhaAcesso:senha,segredoOperador:operador});
+ gateway.listen(0,'127.0.0.1');
+ await once(gateway,'listening');
+ t.after(async()=>{
+  await new Promise(done=>gateway.close(done));
+  if(backend.listening)await new Promise(done=>backend.close(done));
+ });
+ const base='http://127.0.0.1:'+gateway.address().port;
+ const consultar=async rota=>{
+  const r=await fetch(base+rota);
+  const body=await r.text();
+  assert.equal(body.includes('nunca-repassar'),false,
+   'gateway nao expõe corpo interno de diagnostico');
+  return {codigo:r.status,body:JSON.parse(body)};
+ };
+ assert.equal((await consultar('/healthz')).codigo,200);
+ assert.equal((await consultar('/readyz')).codigo,200);
+ pronto=false;
+ assert.equal((await consultar('/healthz')).codigo,200,
+  'liveness separada de problemas de integridade no banco');
+ const falhaReadiness=await consultar('/readyz');
+ assert.equal(falhaReadiness.codigo,503);
+ assert.equal(falhaReadiness.body.marcoZeroLiberado,false);
+ assert.equal(falhaReadiness.body.financeiroReal,false);
+ saudavel=false;
+ assert.equal((await consultar('/healthz')).codigo,503);
+ pronto=true;
+ saudavel=true;
+ await new Promise(done=>backend.close(done));
+ assert.equal((await consultar('/healthz')).codigo,503,
+  'gateway nunca pode declarar saudavel um backend encerrado');
+ assert.equal((await consultar('/readyz')).codigo,503);
+});
+
+test('readiness publica usa auditoria SQLite interna sem abrir acesso administrativo',async t=>{
+ const x=await preparar(t);
+ const r=await fetch(x.base+'/readyz');
+ assert.equal(r.status,200);
+ const status=await r.json();
+ assert.equal(status.estado,'BANCO_DE_ENSAIO_APTO');
+ assert.equal(status.financeiroReal,false);
+ assert.equal(status.marcoZeroLiberado,false);
+ assert.equal((await fetch(x.base+'/staging/escritorio-unificado')).status,401);
 });
