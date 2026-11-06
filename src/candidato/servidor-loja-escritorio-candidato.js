@@ -813,6 +813,21 @@ function criarAppLojaEscritorioCandidato({banco,repositorioCatalogo,
  });
  // Quadro de acompanhamento do PSP, habilitado apenas em homologação.
  // Apenas contagens e códigos operacionais, sem credenciais, CPF ou payload.
+ // Defasagem observavel: PSP confirmado e persistido, mas o lote
+ // ainda nao tem operacao de vinculo no motor do mesmo SQLite.
+ function contarVinculosMotorAusentes(){
+  if(!worker)return 0;
+  return banco.prepare([
+   'SELECT COUNT(*) AS n',
+   'FROM akitemm_prepedido_webhook_inbox_staging i',
+   'JOIN akitemm_prepedido_webhook_reconsulta_staging r',
+   'ON r.evento_id=i.evento_id',
+   "WHERE r.estado='CONCLUIDO' AND r.codigo='PSP_RECONSULTADO'",
+   "AND i.tipo='PAYMENT_RECEIVED'",
+   'AND NOT EXISTS (SELECT 1 FROM akitemm_motor_conta_ensaio_operacoes m',
+   "WHERE m.prepedido_id=i.prepedido_id AND m.tipo='VINCULAR_PEDIDO')"
+  ].join(' ')).get().n;
+ }
  let executarConciliacaoSandbox=null;
 if(worker){
   // Uma cobranca PIX do SANDBOX precisa usar o MESMO prepedido e titular
@@ -870,7 +885,8 @@ if(worker){
    (_req,res)=>{
     if(!operacoesSandboxAutorizadas)return res.status(403)
      .json({erro:'OPERACAO_SANDBOX_DESATIVADA'});
-    const resumo=worker.resumoPendencias();
+    const resumo={...worker.resumoPendencias(),
+     vinculosMotorAusentes:contarVinculosMotorAusentes()};
     const fila=worker.pendencias({limite:30});
     return res.json({
      ambiente:'ASAAS_SANDBOX_EXCLUSIVO',somenteLaboratorio:true,
@@ -1005,10 +1021,7 @@ if(worker){
      'SELECT COUNT(*) AS n',baseFila,
      'WHERE '+pendenteOuSemMotor
     ].join(' ')).get().n;
-    resultado.vinculosMotorAusentes=banco.prepare([
-     'SELECT COUNT(*) AS n',baseFila,
-     'WHERE '+vinculoMotorAusente
-    ].join(' ')).get().n;
+    resultado.vinculosMotorAusentes=contarVinculosMotorAusentes();
     resultado.alertasRevisao=worker.resumoPendencias().exigeRevisao;
     return resultado;
   }
@@ -1131,6 +1144,7 @@ if(worker){
     ].join(' ')).get().n:0,
     integridadeTitular:integridade.auditar(),
     integridadePagamentosEntregas:auditarRelacoesPspCandidato({banco}),
+    vinculosMotorAusentes:contarVinculosMotorAusentes(),
     escritorioFonteUnica:true,
     contasCandidatas:banco.prepare(
      'SELECT COUNT(*) AS n FROM akitemm_conta_unica_candidata'
