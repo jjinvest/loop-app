@@ -7,6 +7,8 @@ const os=require('node:os');
 const path=require('node:path');
 const {DatabaseSync}=require('node:sqlite');
 const {createHash}=require('node:crypto');
+const {auditarIntegridadeMotorCandidato}=
+ require('../src/domain/auditoria-integridade-motor-candidato-sqlite');
 const NECESSARIAS=[
  'akitemm_conta_unica_candidata',
  'akitemm_checkout_prepedidos_staging',
@@ -68,6 +70,8 @@ function auditoriaBanco(db){
   "OR a.external_ref<>'LOOPLAB-' || a.prepedido_id"
  ].join(' ')).get().n;
  if(inconsistencias!==0)falha('SQLITE_VINCULOS_SEMANTICOS_DIVERGENTES');
+ try{auditarIntegridadeMotorCandidato({banco:db,exigirMotor:true});}
+ catch{falha('SQLITE_MOTOR_SEMANTICO_DIVERGENTE');}
  const totais={};
  for(const [name,table] of Object.entries(METRICAS))
   totais[name]=db.prepare('SELECT COUNT(*) AS n FROM '+table).get().n;
