@@ -520,6 +520,28 @@ function criarAppLojaEscritorioCandidato({banco,repositorioCatalogo,
     codigo==='ACEITE_POSICAO_DADOS_INVALIDOS'?400:409).json({erro:codigo});
   }
  });
+ // Prova REMOTA independente de credencial: apenas GET de uma pagina vazia/limitada.
+ // Nenhum POST de cobranca, nenhuma exposicao de pagamento ou API key.
+ app.get('/staging/escritorio-unificado/sandbox-pix/provar-acesso-remoto',
+  autorizarOperador,async(_req,res)=>{
+   if(!operacoesSandboxAutorizadas||
+      typeof provedorReconsultaSandbox?.testarAcessoRemoto!=='function')
+    return res.status(503).json({erro:'PROVA_REMOTA_SANDBOX_INDISPONIVEL'});
+   try{
+    const prova=await provedorReconsultaSandbox.testarAcessoRemoto();
+    if(prova?.pspRemotoRespondeu!==true||
+       prova?.ambiente!=='ASAAS_SANDBOX_EXCLUSIVO')
+     return res.status(503).json({erro:'PROVA_REMOTA_SANDBOX_INCONCLUSIVA'});
+    return res.json({status:'ASAAS_SANDBOX_GET_REMOTO_COMPROVADO',
+     pspRemotoVerificado:true,webhookExternoComprovado:false,
+     cobrancasCriadas:0,financeiroReal:false,marcoZeroAprovado:false});
+   }catch(e){
+    const codigo=typeof e?.codigo==='string'&&
+     /^ASAAS_SANDBOX_(?:HTTP_[0-9]{3}|REDE_INCONCLUSIVA|RESPOSTA_INVALIDA|PROVA_RESPOSTA_INVALIDA)$/.test(e.codigo)?
+     e.codigo:'PROVA_REMOTA_SANDBOX_INCONCLUSIVA';
+    return res.status(503).json({erro:codigo});
+   }
+  });
  // Evidencia objetiva de cobertura BRUTA por lote, sem jamais declarar
  // custos como conferidos ou dinheiro de Sandbox como banco liquidado.
  // O estado do backup é prova de verificação do objeto externo,
