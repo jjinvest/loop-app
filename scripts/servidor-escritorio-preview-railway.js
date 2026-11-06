@@ -17,6 +17,8 @@ const {criarAgendadorBackupOffsiteLab}=
  require('../src/domain/agendador-backup-offsite-railway-lab');
 const {criarTransporteRecuperacaoResend}=
  require('../src/adapters/email-recuperacao-resend');
+const {criarTransporteEmailVerificacaoResend}=
+ require('../src/adapters/email-verificacao-resend');
 
 function falha(codigo){const e=new Error(codigo);e.codigo=codigo;throw e;}
 function digerir(s){return createHash('sha256').update(s,'utf8').digest();}
@@ -298,6 +300,11 @@ async function iniciar({env=process.env}={}){
  const enviarRecuperacao=temEnvio?criarTransporteRecuperacaoResend({
   apiKey:env.RESEND_API_KEY,remetente:env.RESEND_FROM_EMAIL
  }):null;
+ // Reutiliza o provedor ja configurado para prova de posse de email.
+ // O cadastro, por si so, nao dispara mensagem: requer sessao e CSRF.
+ const enviarVerificacao=temEnvio?criarTransporteEmailVerificacaoResend({
+  apiKey:env.RESEND_API_KEY,remetente:env.RESEND_FROM_EMAIL
+ }):null;
  // Um serviço + UM volume SQLite para compra, webhook, reconsulta e motor.
  // Exige opt-in explícito e credenciais do SANDBOX nesta PRÉVIA privada.
  // As credenciais de outro serviço/volume Railway NÃO se compartilham.
@@ -344,6 +351,8 @@ async function iniciar({env=process.env}={}){
   conciliacaoAutomaticaConfigurada:autoAtivo,
   chaveRecuperacao:temEnvio?derivar(segredoRaiz,'senha-recuperacao'):null,
   enviarRecuperacao,
+  chaveProvaEmail:temEnvio?derivar(segredoRaiz,'prova-posse-email'):null,
+  enviarEmailDeVerificacao:enviarVerificacao,
   // CPF de ensaio desabilitado para não incentivar dados pessoais em prévia.
   segredoOperador:tokenOperador,termosVersao:'LAB-escritorio-preview-2026',
   termosTexto:'Este cadastro e apenas para experimentar as telas da AKITEMM. Use nome e email ficticios, sem CPF ou dados reais. Nenhuma compra ou participacao e ativada.'
