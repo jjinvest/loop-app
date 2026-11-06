@@ -40,7 +40,7 @@ function criarGateway({portaInterna,senhaAcesso,senhaAdmin=null,segredoOperador,
  const backend='127.0.0.1:'+portaInterna;
  const sessaoNome='akitemm_preview_access';
  const indicacaoCookie='akitemm_preview_ref';
- const adminCookie='akitemm_preview_admin';
+ const adminCookie='akitemm_preview_admin_v2';
  const duracao=12*60*60*1000;
  const prazoIndicacao=30*24*60*60*1000;
  const assinarIndicacao=(nick,ts)=>createHmac('sha256',segredoOperador)
@@ -59,13 +59,13 @@ function criarGateway({portaInterna,senhaAcesso,senhaAdmin=null,segredoOperador,
  };
  const assinar=ts=>createHmac('sha256',senhaAcesso).update('preview:'+ts).digest('hex');
  const assinarAdmin=ts=>createHmac('sha256',segredoOperador)
-  .update('AKITEMM-ADMIN-ISOLADO-V1:'+ts).digest('hex');
+  .update('AKITEMM-ADMIN-ISOLADO-V2:'+String(senhaAdmin||'TESTE')+':'+ts).digest('hex');
  const lerAdmin=req=>{
   const matches=(req.headers.cookie||'').split(';').map(x=>x.trim())
    .filter(x=>x.startsWith(adminCookie+'='));
   if(matches.length!==1)return false;
   const m=matches[0].slice(adminCookie.length+1)
-   .match(/^v1\.(\d{13})\.([a-f0-9]{64})$/);
+   .match(/^v2\.(\d{13})\.([a-f0-9]{64})$/);
   if(!m)return false;
   const ts=Number(m[1]);
   return ts<=Date.now()&&Date.now()-ts<duracao&&
@@ -177,7 +177,7 @@ function criarGateway({portaInterna,senhaAcesso,senhaAdmin=null,segredoOperador,
    });
   const agora=String(Date.now());
   const novoAdminCookie=exigeOperador&&operadorBasicoValido&&!lerAdmin(req)?
-   adminCookie+'=v1.'+agora+'.'+assinarAdmin(agora)+
+   adminCookie+'=v2.'+agora+'.'+assinarAdmin(agora)+
    '; HttpOnly; Secure; SameSite=Strict; Path=/; Max-Age=43200':null;
   const novoCookie=basicaValida&&!sessaoValida?
    sessaoNome+'=v1.'+agora+'.'+assinar(agora)+
@@ -197,7 +197,7 @@ function criarGateway({portaInterna,senhaAcesso,senhaAdmin=null,segredoOperador,
   if(url.pathname.startsWith('/staging/asaas/'))
    return negar(404,'Rota interna não disponível');
   if(url.pathname==='/'){
-   res.writeHead(302,{...cabecalhosBase,Location:'/escritorio',...(novoCookie?{'Set-Cookie':novoCookie}:{})});
+   res.writeHead(302,{...cabecalhosBase,Location:'/minha-conta',...(novoCookie?{'Set-Cookie':novoCookie}:{})});
    return res.end();
   }
   const caminhoConvite=url.pathname.match(/^\/(loja|escritorio)\/([A-Za-z]{1,9})$/);
@@ -321,6 +321,11 @@ async function iniciar({env=process.env}={}){
  const senhaAcesso=env.LOOP_PREVIEW_SENHA_ACESSO,
   segredoRaiz=env.LOOP_PREVIEW_SEGREDO_RAIZ;
  validarSegredos({senhaAcesso,segredoRaiz});
+ // Sem senha isolada de operador, a prévia não inicia.
+ if(typeof env.LOOP_PREVIEW_SENHA_ADMIN!=='string'||
+    env.LOOP_PREVIEW_SENHA_ADMIN.length<24||
+    env.LOOP_PREVIEW_SENHA_ADMIN===senhaAcesso)
+  falha('ADMIN_CREDENCIAL_SEPARADA_OBRIGATORIA');
  // Falhar antes de abrir volume SQLite ou servidor interno: configurar uma
  // porta invalida nao pode deixar o processo vivo com listener fantasma.
  const port=Number(env.PORT||3000);
