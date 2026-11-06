@@ -13,6 +13,10 @@ const env={
  LOOP_PREVIEW_SENHA_ACESSO:'SENHA_FICTICIA_NAO_USAR_123456789012345'
 };
 const ID='pay_TESTES_REPLAY_12345',REF='LOOPLAB-hom-12345678-1234-4123-8123-123456789abc';
+const vinculo={ambiente:'ASAAS_SANDBOX_EXCLUSIVO',
+ pagamentoId:ID,externalReference:REF,valorCentavos:25000,
+ consultaSomenteLeitura:true,financeiroReal:false};
+const psp={id:ID,externalReference:REF,billingType:'PIX',status:'RECEIVED',value:250};
 const pos={numero:1,status:'PENDENTE',dourada:false};
 const estado={laboratorio:true,dinheiroReal:false,autorizacaoComercial:false,
  posicoesReais:0,filaA:[],filaB:[pos],ordemAlimentacao:'3A:1B',
@@ -30,15 +34,15 @@ test('exige Sandbox, opt-in e segredo webhook separado de API key',()=>{
  ])
   assert.throws(()=>validarAmbiente({...env,...change}),/REPLAY_SANDBOX_/);
 });
-test('seleciona somente cobranca unica PIX recebida de R$250',()=>{
- assert.deepEqual(selecionarCobranca({data:[{
-  id:ID,externalReference:REF,billingType:'PIX',status:'RECEIVED',value:250
- }]}),{id:ID,ref:REF});
- for(const data of [
-  [],[{id:ID,externalReference:REF,billingType:'PIX',status:'PENDING',value:250}],
-  [{id:ID,externalReference:REF,billingType:'PIX',status:'RECEIVED',value:250},
-   {id:'pay_OUTRA_12345',externalReference:REF,billingType:'PIX',status:'RECEIVED',value:250}]
- ]) assert.throws(()=>selecionarCobranca({data}),/REPLAY_/);
+test('seleciona cobranca vinculada no motor e confirmada por GET PSP',()=>{
+ assert.deepEqual(selecionarCobranca(vinculo,psp),{id:ID,ref:REF});
+ for(const falsos of [
+  [vinculo,{...psp,status:'PENDING'}],
+  [vinculo,{...psp,value:251}],
+  [{...vinculo,pagamentoId:'pay_OUTRO_12345'},psp],
+  [{...vinculo,valorCentavos:0},psp],
+  [{...vinculo,financeiroReal:true},psp]
+ ]) assert.throws(()=>selecionarCobranca(...falsos),/REPLAY_/);
 });
 test('fingerprint rejeita motor com mais de uma posicao e nao divulga PII',()=>{
  const hash=resumoMotor(estado);
@@ -54,9 +58,7 @@ test('ensaio remoto com simulacao HTTP garante 6 eventos e 1 posicao',async()=>{
   assert.equal(opt.redirect,'error');
   if(url.includes('api-sandbox.asaas.com')){
    chamadasPsp++;assert.equal(opt.method,'GET');assert.equal(opt.body,undefined);
-   return {status:200,json:async()=>({data:[{
-    id:ID,externalReference:REF,billingType:'PIX',status:'RECEIVED',value:250
-   }]})};
+   return {status:200,json:async()=>psp};
   }
   if(url.endsWith('/webhooks/asaas-sandbox-unificado')){
    assert.equal(opt.method,'POST');
@@ -69,6 +71,8 @@ test('ensaio remoto com simulacao HTTP garante 6 eventos e 1 posicao',async()=>{
    })};
   }
   assert.match(opt.headers.Authorization||'',/^Basic /);
+  if(url.endsWith('/webhook-replay-fixture'))
+   return {status:200,json:async()=>vinculo};
   if(url.endsWith('/motor/estado'))
    return {status:200,json:async()=>estado};
   if(url.endsWith('/reconciliar-pendentes-sandbox')){
@@ -94,7 +98,7 @@ test('ensaio remoto com simulacao HTTP garante 6 eventos e 1 posicao',async()=>{
  assert.equal(reconciliacoes,1);assert.equal(chamadasPsp,1);
  assert.equal(times.length,6);assert.equal(new Set(times).size,2);
  assert.equal([...seen.values()].sort().join(','),'2,4');
- assert.equal(urls.some(x=>x.includes('/payments?limit=100')),true);
+ assert.equal(urls.some(x=>x.endsWith('/payments/'+ID)),true);
  assert.equal(JSON.stringify(r).includes(env.LOOP_PREVIEW_ASAAS_WEBHOOK_TOKEN),false);
 });
 test('nenhuma chamada em producao, dominio alternativo ou opt-in ausente',async()=>{
