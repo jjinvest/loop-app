@@ -751,7 +751,7 @@ class MotorContaUnicaEnsaioSQLite{
  }
  // Uma META distribui ate N centros pelo turno, sem garantia
  // de que existirao seis compras PSP para cada ciclo. Uma transacao
- // reiniciavel contabiliza NO MAXIMO UM centro por minuto do turno.
+ // reiniciavel usa lote tecnico limitado, sem teto de meta nem um giro/min.
  _processarMetaAgenda({agoraMs=Date.now()}={}){
   const config=this._agenda();
   const meta=this._meta();
@@ -781,21 +781,22 @@ class MotorContaUnicaEnsaioSQLite{
     atual.ultimoMinuto=-1;
     atual.baseGiros=sim.giros;
    }
-   // Um minuto do turno so pode liberar UMA tentativa de ciclo.
-   // Repeticoes, reinicio, multi-pod e replays nao liberam lote extra.
-   if(atual.ultimoMinuto>=janela.minutoNoTurno)
-    return {acao:'META_JA_AVALIADA',somenteEnsaio:true};
-   this.banco.prepare([
-    'UPDATE akitemm_motor_catraca_meta_lab',
-    'SET ultimo_minuto=? WHERE id=1'
-   ].join(' ')).run(janela.minutoNoTurno);
+   // Nenhum limite arbitrario de UM giro por minuto: se a meta
+   // autorizar multiplos, liberar o numero de ciclos ja comprovados.
+   // Uma transacao processa um lote tecnico finito (ate 100 giros).
+   // Os proximos ticks continuam o restante, sem teto comercial.
+   // SQLite + vendasProcessadas impedem replays apos reinicio.
    const feitos=Math.max(0,sim.giros-atual.baseGiros);
    const falta=janela.ciclosAutorizadosAteAgora-feitos;
    if(falta<=0)return {acao:'META_AGUARDANDO_PROXIMA_LIBERACAO',
     solicitados:atual.quantidade,realizados:feitos,
     autorizados:janela.ciclosAutorizadosAteAgora,
     somenteEnsaio:true,dinheiroReal:false};
-   const result=this._liberarLoteNaTransacao(sim,1);
+   this.banco.prepare([
+    'UPDATE akitemm_motor_catraca_meta_lab',
+    'SET ultimo_minuto=? WHERE id=1'
+   ].join(' ')).run(janela.minutoNoTurno);
+   const result=this._liberarLoteNaTransacao(sim,falta);
    const realizados=feitos+result.liberados;
    this._evento('META_CATRACA_AVALIADA');
    return {acao:result.liberados?'GIRO_META_AGENDADA':'META_AGUARDANDO_PSP',
