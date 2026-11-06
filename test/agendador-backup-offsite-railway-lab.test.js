@@ -188,3 +188,42 @@ test('backup antigo ou falha posterior nunca aparenta copia ATUAL saudavel',asyn
  assert.equal(w.estado().copiaOffsiteHistoricaComprovada,true);
  await w.encerrar();
 });
+
+test('dois encerramentos aguardam a mesma restauracao offsite antes de liberar SQLite',async t=>{
+ const f=origem(t);let remoto,notificar,liberar;
+ const iniciou=new Promise(resolve=>{notificar=resolve;});
+ const retido=new Promise(resolve=>{liberar=resolve;});
+ let cancelamentos=0;
+ const buscar=async(_url,req)=>{
+  if(req.method==='PUT'){
+   notificar();
+   await retido;
+   const partes=[];for await(const p of req.body)partes.push(p);
+   remoto=Buffer.concat(partes);
+   return new Response(null,{status:200});
+  }
+  return new Response(remoto,{status:200});
+ };
+ const w=criarAgendadorBackupOffsiteLab(options(f,{
+  buscar,agendar:()=>({unref(){}}),cancelar:()=>{cancelamentos++;}
+ }));
+ w.iniciar();
+ await iniciou;
+ const primeira=w.encerrar(),segunda=w.encerrar();
+ let primeiraFinalizada=false,segundaFinalizada=false;
+ void primeira.then(()=>{primeiraFinalizada=true;});
+ void segunda.then(()=>{segundaFinalizada=true;});
+ await Promise.resolve();
+ await Promise.resolve();
+ assert.equal(primeiraFinalizada,false);
+ assert.equal(segundaFinalizada,false,
+  'segundo encerramento nao pode liberar fechamento antes do PUT/GET');
+ assert.equal(cancelamentos,1);
+ assert.equal((await w.executarUmaVez()).estado,'ENCERRADO');
+ liberar();
+ await Promise.all([primeira,segunda]);
+ assert.equal(primeiraFinalizada,true);
+ assert.equal(segundaFinalizada,true);
+ assert.equal(w.estado().copiasVerificadasNoProcesso,1);
+ assert.equal(w.estado().emExecucao,false);
+});
