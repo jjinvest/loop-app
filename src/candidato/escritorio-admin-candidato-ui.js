@@ -628,7 +628,11 @@ async function atualizarMotorContaEnsaio(){
   linha('Compras confirmadas aguardando luz',r.agenda.aguardandoContabilizacao),
   linha('Giros de ensaio',r.catraca.giros),
   linha('Catraca',r.catraca.estado),
-  linha('Modo da catraca',r.agenda.modoExecucao||'MANUAL'));
+  linha('Modo da catraca',r.agenda.modoExecucao||'MANUAL'),
+  linha('Meta de centros por turno',r.agenda.metaLotes?.quantidade||'Sem meta'),
+  linha('Liberados no turno',r.agenda.metaLotes?.realizadosNoDia||0),
+  linha('Autorizados pelo horário até agora',
+   r.agenda.metaLotes?.ciclosAutorizadosAteAgora||0));
  $('agendaMotorEstado').textContent='Horário '+r.agenda.abertura+'–'+
   r.agenda.fechamentoAplicado+' ('+r.agenda.fuso+') · '+
   'Modo '+(r.agenda.modoExecucao||'MANUAL')+' · '+
@@ -647,6 +651,9 @@ async function atualizarMotorContaEnsaio(){
  $('agendaMotorExcecaoData').value=r.agenda.excecaoData||'';
  $('agendaMotorExcecaoFim').value=r.agenda.excecaoFechamento||'';
  $('agendaMotorModo').value=r.agenda.modoExecucao||'MANUAL';
+ $('agendaMotorMetaQuantidade').value=String(
+  r.agenda.metaLotes?.quantidade||0);
+ $('agendaMotorMetaDia').value=r.agenda.metaLotes?.dataAlvo||'';
  agendaHojeLocal=r.agenda.dia;
  return r;
 }
@@ -686,6 +693,8 @@ $('formAgendaMotor').addEventListener('submit',async e=>{
   const r=await api('/motor/agenda',{method:'POST',body:{
    ativo:$('agendaMotorModo').value==='AGENDADA',
    modoExecucao:$('agendaMotorModo').value,
+   metaQuantidade:Number($('agendaMotorMetaQuantidade').value),
+   metaDataAlvo:$('agendaMotorMetaDia').value||null,
    abertura:$('agendaMotorInicio').value,
    fechamento:$('agendaMotorFim').value,
    intervaloMinutos:Number($('agendaMotorIntervalo').value),
