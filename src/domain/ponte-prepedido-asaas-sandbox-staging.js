@@ -189,6 +189,10 @@ class PontePrepedidoAsaasSandboxStaging{
     }
     const reservadas=quantidade>0&&quantidade<=10&&
      ativas+comprometidas+quantidade<=10?quantidade:0;
+    // Consentimento antes do POST Pix: o cliente pode comprar o
+    // produto sem vaga, mas nao descobrir depois que perdeu um direito.
+    if(reservadas===0&&capacidade.cienteSemPosicao!==true)
+     throw falha('COMPRA_SEM_POSICAO_EXIGE_CIENCIA');
     reserva={previstas:quantidade,reservadas,
      modalidade:reservadas>0?'COM_POSICOES':
       quantidade===0?'SEM_POSICOES_PRODUTO':'SEM_POSICOES_LIMITE'};
