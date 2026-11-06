@@ -667,11 +667,21 @@ async function conferirPixUnificado(){
   const r=await api('/sandbox-pix/estado');
   if(r.status==='INTEGRADO_SANDBOX_NO_MESMO_SQLITE'&&
      r.usaSQLiteDaLoja&&r.webhookIngressAtivo&&r.consultarPSPDisponivel){
-   estado.textContent='Asaas Sandbox conectado à loja, ao webhook e ao motor no MESMO banco de homologação. '+
-    (r.conciliacaoAutomaticaConfigurada?'Conciliação periódica configurada (sem comando por pagamento). ':'Conciliação automática ainda não habilitada neste serviço. ')+
-    'Nenhum saque real habilitado.';
-   enviar.disabled=false;
-   $('reconciliarPendentesPsp').disabled=false;
+   estado.textContent='Banco e motor de homologação configurados. Conferindo acesso externo do Asaas Sandbox sem criar Pix...';
+   try{
+    const prova=await api('/sandbox-pix/provar-acesso-remoto');
+    if(prova.pspRemotoVerificado!==true)throw Error('PROVA_REMOTA_INCONCLUSIVA');
+    estado.textContent='Asaas Sandbox: acesso remoto por GET comprovado, integrado ao MESMO banco da loja e motor. '+
+     'Entrega externa do webhook ainda precisa ser comprovada. '+
+     (r.conciliacaoAutomaticaConfigurada?'Conciliação periódica configurada. ':'Conciliação automática não habilitada. ')+
+     'Nenhum saque real habilitado.';
+    enviar.disabled=false;
+    $('reconciliarPendentesPsp').disabled=false;
+   }catch(e){
+    $('reconciliarPendentesPsp').disabled=true;
+    estado.textContent='Ligação interna configurada, mas acesso REMOTO ao Asaas Sandbox ainda NÃO comprovado: '+
+     e.message+'. Pix de ensaio bloqueado nesta tela.';
+   }
   }else{
    $('reconciliarPendentesPsp').disabled=true;
    estado.textContent='Ainda não ativado nesta prévia: faltam credenciais específicas do Asaas Sandbox. Banco e volume já estão disponíveis.';
