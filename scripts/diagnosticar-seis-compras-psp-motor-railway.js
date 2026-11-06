@@ -27,7 +27,7 @@ async function diagnosticar({env=process.env,fetchImpl=globalThis.fetch}={}){
   p.conferenciaPSPConcluida===true&&
   p.exigeRevisaoManual===false&&
   p.ultimoStatusPSP==='RECEIVED'&&
-  p.posicoesFicticiasAptasAgora===1
+  Number.isSafeInteger(p.posicoesMotorEnsaio)&&p.posicoesMotorEnsaio>0
  );
  const exclusivos=new Set(aptos.map(p=>p.prepedidoId));
  return {semEscrita:true,pedidosNaAmostra:(rel.pedidos||[]).length,
@@ -40,6 +40,7 @@ async function diagnosticar({env=process.env,fetchImpl=globalThis.fetch}={}){
    pspRecebido:p.ultimoStatusPSP==='RECEIVED',
    revisao:p.exigeRevisaoManual===true,
    posicoesAptas:p.posicoesFicticiasAptasAgora??null,
+   posicoesNoMotor:p.posicoesMotorEnsaio??null,
    status:p.estadoOperacional
   })),
   eventosNoCiclo:motor.tabuleiro.eventosNoCiclo,
