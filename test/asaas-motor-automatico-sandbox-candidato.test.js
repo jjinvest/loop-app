@@ -207,12 +207,24 @@ test('webhook bruto nao gera posicoes; PSP reconsultado cria lote ROXO pendente 
  r.inbox.registrar({cabecalhoToken:TOKEN,corpoBruto:Buffer.from(JSON.stringify({
   id:reversaoId,event:'PAYMENT_REFUNDED',payment:{id:PAYMENT}
  }))});
- const devolucao=await call('/staging/escritorio-unificado/reconsultar-psp',{
-  method:'POST',admin:true,body:{eventoId:reversaoId}
+ const devolucao=await call('/staging/escritorio-unificado/reconciliar-pendentes-sandbox',{
+  method:'POST',admin:true,body:{limite:20}
  });
  assert.equal(devolucao.status,200,JSON.stringify(devolucao.json));
- assert.equal(devolucao.json.vinculoMotorEnsaio.estado,'SUSPENSO_POR_REVERSAO_PSP');
- assert.equal(devolucao.json.vinculoMotorEnsaio.quantidadeSuspensa,5);
+ assert.equal(devolucao.json.consultados,1);
+ assert.equal(devolucao.json.lotesSuspensos,1);
+ assert.equal(devolucao.json.pendentesRestantes,0);
+ assert.equal(devolucao.json.posicoesComerciais,0);
+ // A reconsulta manual permanece disponivel, mas nao deve ressuscitar
+ // uma posicao depois de reembolso ja conciliado.
+ const reconsultaRepetida=await call('/staging/escritorio-unificado/reconsultar-psp',{
+  method:'POST',admin:true,body:{eventoId:reversaoId}
+ });
+ assert.equal(reconsultaRepetida.status,200);
+ assert.equal(reconsultaRepetida.json.repetido,true);
+ assert.equal(reconsultaRepetida.json.vinculoMotorEnsaio.estado,
+  'SUSPENSO_POR_REVERSAO_PSP');
+ assert.equal(reconsultaRepetida.json.vinculoMotorEnsaio.quantidadeSuspensa,0);
  const suspensas=r.motorConta.consultar({titularId});
  assert.equal(suspensas.posicoesAtivasDoTitular,5);
  assert.equal(suspensas.pendentesDeEnsaio,0);
