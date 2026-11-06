@@ -1002,9 +1002,10 @@ if(worker){
    });
   // Um único procedimento de conciliação é utilizado pelo operador
   // individual e pelo fechamento em lote. Nunca confia apenas no webhook.
-  async function reconciliarEventoSandbox(eventoId){
+  async function reconciliarEventoSandbox(eventoId,{retomadaSegura=false}={}){
    const r=await worker.processar({
-    eventoId,provedor:provedorReconsultaSandbox,execucaoLiberada:true
+    eventoId,provedor:provedorReconsultaSandbox,execucaoLiberada:true,
+    retomadaSegura
    });
    const aviso=inbox.consultarEvento(eventoId);
    if(['PAYMENT_REFUNDED','PAYMENT_PARTIALLY_REFUNDED',
@@ -1105,6 +1106,13 @@ if(worker){
    const quarentena=inbox.reconciliarAntecipados({
     execucaoLiberada:true,limite
    });
+   // Quando o servidor anterior caiu apos gravar PROCESSANDO, a tentativa
+   // em SQLite ficou orfa. Marcar checkpoints velhos sem executar PSP nesta
+   // etapa. O lote retomara com uma NOVA consulta independente ao Asaas.
+   // Nao reviver divergencias PSP, chargebacks ou erros de rede.
+   const interrupcoes=worker.recuperarTravados({
+    execucaoLiberada:true,idadeMinimaMs:120000,limite
+   });
     // GET PSP concluido nao prova que o lote chegou ao motor: a escrita
     // do motor pode falhar DEPOIS do worker marcar o evento concluido.
     // Reconciliacoes novas primeiro, depois reparo de vinculos ausentes.
@@ -1129,9 +1137,12 @@ if(worker){
      'AND NOT EXISTS (SELECT 1 FROM akitemm_motor_reversoes_psp_checkpoint c',
      "WHERE c.evento_id=i.evento_id AND c.estado='CONCLUIDO')"
     ].join(' ');
+    const retomadaInterrompida=
+     "r.estado='EXIGE_REVISAO' AND "+
+     "r.codigo='PROCESSAMENTO_INTERROMPIDO_REVISAR'";
     const pendenteOuSemMotor=
-     '(r.evento_id IS NULL OR ('+vinculoMotorAusente+') OR ('+
-      reversaoMotorPendente+'))';
+     '(r.evento_id IS NULL OR ('+retomadaInterrompida+') OR ('+
+      vinculoMotorAusente+') OR ('+reversaoMotorPendente+'))';
     const baseFila=[
      'FROM akitemm_prepedido_webhook_inbox_staging i',
      'LEFT JOIN akitemm_prepedido_webhook_reconsulta_staging r',
@@ -1147,6 +1158,8 @@ if(worker){
      quarentenaRecuperada:quarentena.vinculados,
      quarentenaAguardandoVinculo:quarentena.aguardandoVinculo,
      quarentenaDivergente:quarentena.divergentes,
+     interrupcoesDetectadas:interrupcoes.recuperados,
+     retomadasComProvaPSP:0,
      revisaoNecessaria:0,lotesPendentesCriados:0,
      lotesSuspensos:0,errosDeProcessamento:0,
      ambiente:'ASAAS_SANDBOX_EXCLUSIVO',
@@ -1154,8 +1167,12 @@ if(worker){
      somenteLaboratorio:true};
     for(const evento of eventos){
      try{
-      const r=await reconciliarEventoSandbox(evento.eventoId);
+      const r=await reconciliarEventoSandbox(evento.eventoId,{
+       retomadaSegura:true
+      });
       resultado.consultados++;
+      if(r.retomadaDeInterrupcao===true&&r.estado==='CONCLUIDO')
+       resultado.retomadasComProvaPSP++;
       if(r.estado==='CONCLUIDO')resultado.conciliados++;
       else resultado.revisaoNecessaria++;
       if(r.vinculoMotorEnsaio?.estado==='PENDENTES_GERADAS')
