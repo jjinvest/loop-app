@@ -264,7 +264,8 @@ async function iniciar({env=process.env}={}){
    region:env.LOOP_BACKUP_S3_REGION||'auto'
   },
   intervaloMs:24*60*60*1000,
-  onErro:codigo=>process.stderr.write('LOOP_BACKUP_OFFSITE='+codigo+'\\n')
+  onErro:codigo=>process.stderr.write('LOOP_BACKUP_OFFSITE='+codigo+'\\n'),
+  onSucesso:codigo=>process.stdout.write('LOOP_BACKUP_OFFSITE='+codigo+'\\n')
  }):null;
  const c=criarAppLojaEscritorioCandidato({
   banco:db,repositorioCatalogo:catalogoFicticioCheckout(),
