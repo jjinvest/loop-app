@@ -182,3 +182,47 @@ test('imutabilidade + reinicio SQLite preservam rascunho e prepedido sem dinheir
  assert.equal((await fetch(base+'/staging/prepedidos',{method:'POST'})).status,404);
  assert.equal((await fetch(base+'/health/ready')).status,503);
 });
+
+test('Meus Pedidos pagina alem do antigo limite de trinta sem trocar titular',async t=>{
+ const s=await montar(t);
+ const a=await s.entrar('titular-ensaio-a');
+ const b=await s.entrar('titular-ensaio-b');
+ const entrada={itens:[{produtoId:'curso-homologacao-100',quantidade:1}]};
+ const criados=[];
+ for(let i=0;i<45;i++){
+  const draft=await s.requisitar('/rascunhos',{
+   method:'POST',cookie:a.cookie,csrf:a.csrf,
+   key:'historico-cliente-'+String(i).padStart(4,'0'),
+   body:entrada
+  });
+  assert.equal(draft.status,201,JSON.stringify(draft.body));
+  const pedido=await s.requisitar('/prepedidos',{
+   method:'POST',cookie:a.cookie,csrf:a.csrf,
+   body:{rascunhoId:draft.body.intencao.pedidoId}
+  });
+  assert.equal(pedido.status,201,JSON.stringify(pedido.body));
+  criados.push(pedido.body.prepedido.prepedidoId);
+ }
+ const consultar=async(cookie,query)=>s.requisitar('/meus-pedidos'+query,{cookie});
+ const pag0=await consultar(a.cookie,'?pagina=0&tamanho=20');
+ const pag1=await consultar(a.cookie,'?pagina=1&tamanho=20');
+ const pag2=await consultar(a.cookie,'?pagina=2&tamanho=20');
+ for(const p of [pag0,pag1,pag2])assert.equal(p.status,200,JSON.stringify(p.body));
+ assert.deepEqual([pag0.body.pedidos.length,pag1.body.pedidos.length,
+  pag2.body.pedidos.length],[20,20,5]);
+ assert.equal(pag0.body.totalPedidos,45);
+ assert.equal(pag2.body.paginacao.total,45);
+ assert.equal(pag0.body.paginacao.haMais,true);
+ assert.equal(pag2.body.paginacao.haMais,false);
+ assert.equal(pag2.body.paginacao.haAnterior,true);
+ const todos=[...pag0.body.pedidos,...pag1.body.pedidos,...pag2.body.pedidos];
+ assert.equal(new Set(todos.map(p=>p.prepedidoId)).size,45);
+ assert.deepEqual(new Set(todos.map(p=>p.prepedidoId)),new Set(criados));
+ assert.deepEqual((await consultar(b.cookie,'?pagina=0&tamanho=20')).body.pedidos,[]);
+ assert.equal((await consultar(a.cookie,'?pagina=-1')).status,400);
+ assert.equal((await consultar(a.cookie,'?tamanho=51')).status,400);
+ assert.equal((await consultar(a.cookie,'?pagina=1&pagina=2')).status,400);
+ assert.equal((await consultar(a.cookie,'?campo=outro')).status,400);
+ assert.equal((await consultar(null,'?pagina=0')).status,401);
+ assert.deepEqual(s.banco.prepare('PRAGMA foreign_key_check').all(),[]);
+});
