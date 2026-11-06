@@ -1,6 +1,7 @@
 'use strict';
 const {test}=require('node:test');
 const assert=require('node:assert/strict');
+const {once}=require('node:events');
 const {randomBytes}=require('node:crypto');
 const {DatabaseSync}=require('node:sqlite');
 const {criarAppLojaEscritorioCandidato}=
@@ -17,7 +18,6 @@ const PAYMENT='pay_RetryMotorCandidato2026';
 test('GET PSP concluido recupera vinculo motor apos falha transitoria sem nova cobranca',async t=>{
  const banco=new DatabaseSync(':memory:');
  banco.exec('PRAGMA foreign_keys=ON');
- t.after(()=>banco.close());
  let pedidoId=null,gets=0,posts=0;
  const provedor={
   ambiente:'ASAAS_SANDBOX_EXCLUSIVO',
@@ -43,6 +43,17 @@ test('GET PSP concluido recupera vinculo motor apos falha transitoria sem nova c
   segredoOperador:OPERADOR,termosVersao:'LAB-retry-motor-2026',
   termosTexto:'Somente ensaio local sem dinheiro, premios, saques ou direitos reais.'
  });
+ const server=r.app.listen(0,'127.0.0.1');
+ await once(server,'listening');
+ t.after(async()=>{await new Promise(done=>server.close(done));banco.close();});
+ const monitorar=async rota=>{
+  const resp=await fetch('http://127.0.0.1:'+server.address().port+
+   '/staging/escritorio-unificado'+rota,{
+    headers:{Authorization:'Bearer '+OPERADOR}
+   });
+  assert.equal(resp.status,200);
+  return resp.json();
+ };
  const titular=await r.contas.cadastrar({
   nome:'Cliente Ensaio',nick:'Retry',
   email:'retry-motor@example.invalid',senha:'SenhaFicticiaEnsaio2026#Forte',
@@ -91,6 +102,8 @@ test('GET PSP concluido recupera vinculo motor apos falha transitoria sem nova c
  assert.equal(tentativa.revisaoNecessaria,1,'falha do motor fica sinalizada');
  assert.equal(tentativa.lotesPendentesCriados,0);
  assert.equal(tentativa.vinculosMotorAusentes,1);
+ assert.equal((await monitorar('/monitor-psp')).resumo.vinculosMotorAusentes,1);
+ assert.equal((await monitorar('')).vinculosMotorAusentes,1);
  assert.equal(tentativa.pendentesRestantes,1,
   'falha depois de GET PSP nao desaparece do trabalho pendente');
  assert.equal(r.worker.consultar(recebido).estado,'CONCLUIDO');
@@ -107,6 +120,8 @@ test('GET PSP concluido recupera vinculo motor apos falha transitoria sem nova c
  assert.equal(recuperado.consultados,1);
  assert.equal(recuperado.lotesPendentesCriados,1);
  assert.equal(recuperado.vinculosMotorAusentes,0);
+ assert.equal((await monitorar('/monitor-psp')).resumo.vinculosMotorAusentes,0);
+ assert.equal((await monitorar('')).vinculosMotorAusentes,0);
  assert.equal(recuperado.pendentesRestantes,0);
  assert.equal(gets,2,'replay do GET conferido nao faz nova consulta remota');
  assert.equal(posts,1,'retomar motor nao cria nova cobranca');
