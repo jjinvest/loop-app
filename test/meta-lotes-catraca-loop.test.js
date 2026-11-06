@@ -1,0 +1,47 @@
+'use strict';
+const {test}=require('node:test');
+const assert=require('node:assert/strict');
+const {planejado,validarMeta,dadosAtivacao}=
+ require('../src/domain/meta-lotes-catraca-loop');
+const {PADRAO}=require('../src/domain/agenda-catraca-loop');
+const when=h=>Date.parse('2026-11-06T'+h+':00-03:00');
+const original={quantidade:10,dataAlvo:null,ativadaDia:'2026-11-06',
+ ativadaMinuto:9*60,ultimoDia:'2026-11-06',
+ ultimoMinuto:-1,baseGiros:0};
+test('10 centros distribuidos no turno 09-18 sem explosao no inicio',()=>{
+ const a={...PADRAO,ativo:true};
+ assert.equal(planejado(original,a,when('09:00')).ciclosAutorizadosAteAgora,0);
+ assert.equal(planejado(original,a,when('09:52')).ciclosAutorizadosAteAgora,0);
+ assert.equal(planejado(original,a,when('09:53')).ciclosAutorizadosAteAgora,1);
+ assert.equal(planejado(original,a,when('12:00')).ciclosAutorizadosAteAgora,3);
+ assert.equal(planejado(original,a,when('17:59')).ciclosAutorizadosAteAgora,10);
+ assert.equal(planejado(original,a,when('18:00')).ciclosAutorizadosAteAgora,0);
+});
+test('meta iniciada no meio do turno distribui no tempo restante',()=>{
+ const m={...original,ativadaMinuto:12*60};
+ const a={...PADRAO,ativo:true};
+ assert.equal(planejado(m,a,when('11:59')).ciclosAutorizadosAteAgora,0);
+ assert.equal(planejado(m,a,when('12:00')).ciclosAutorizadosAteAgora,0);
+ assert.equal(planejado(m,a,when('14:59')).ciclosAutorizadosAteAgora,5);
+ assert.equal(planejado(m,a,when('17:59')).ciclosAutorizadosAteAgora,10);
+});
+test('meta por data especifica e horario livre ate meia noite',()=>{
+ const m={...original,quantidade:5,dataAlvo:'2026-11-06'};
+ const a={...PADRAO,ativo:true,fechamento:'00:00'};
+ assert.equal(planejado(m,a,when('23:59')).ciclosAutorizadosAteAgora,5);
+ assert.equal(planejado(m,a,
+  Date.parse('2026-11-07T00:00:00-03:00')).abertoParaMeta,false);
+ assert.equal(planejado(m,a,
+  Date.parse('2026-11-07T09:30:00-03:00')).dataAlvoAtendida,false);
+});
+test('metas so aceitam inteiros positivos e data real',()=>{
+ assert.deepEqual(dadosAtivacao(when('15:32')),
+  {ativadaDia:'2026-11-06',ativadaMinuto:932});
+ for(const m of [
+  {...original,quantidade:-1},
+  {...original,quantidade:1.5},
+  {...original,dataAlvo:'2026-02-30'},
+  {...original,ultimoDia:'2026-00-02'},
+  {...original,baseGiros:-1}
+ ])assert.throws(()=>validarMeta(m),/META_LOTES_CONFIG_INVALIDA/);
+});
