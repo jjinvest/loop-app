@@ -8,6 +8,7 @@ const {criarAppLojaEscritorioCandidato}=
 const {catalogoFicticioCheckout}=
  require('../src/laboratorio/servidor-checkout-staging-local');
 const {cotarCheckoutPublico}=require('../src/domain/cotacao-checkout-publico');
+const {SimuladorLoop}=require('../src/domain/simulador-loop');
 const {provarRestauracaoSqliteUnificadoLab:provar}=
  require('../scripts/provar-restauracao-sqlite-unificado-lab');
 function fixture(t){
@@ -55,15 +56,32 @@ test('prova de recuperacao do SQLite completo e unica fonte preserva pedidos, PS
   titularId:a.titularId,prepedidoId:a.prepedidoId,
   clienteAsaasId:'cus_RecuperacaoSandboxFicticio2026'
  });
+ // Esta nao e apenas uma linha de lote: uma restauracao valida
+ // exige snapshot recuperavel e operacao atomica do motor.
+ const sim=new SimuladorLoop();
+ const pos=sim.registrarPosicaoSimulada({
+  participanteId:a.titularId,vendaId:'ensaio:'+a.prepedidoId,
+  adesaoPendente:true
+ });
+ const posicaoId=pos.posicao.id;
+ f.banco.prepare([
+  'INSERT INTO akitemm_motor_conta_ensaio_estado',
+  '(id,revisao,snapshot,atualizado_em) VALUES(1,1,?,?)'
+ ].join(' ')).run(JSON.stringify(sim.exportarSnapshot()),Date.now());
+ f.banco.prepare([
+  'INSERT INTO akitemm_motor_conta_ensaio_operacoes',
+  '(tipo,prepedido_id,titular_id,numero_posicao,criado_em)',
+  "VALUES('VINCULAR_PEDIDO',?,?,?,?)"
+ ].join(' ')).run(a.prepedidoId,a.titularId,posicaoId,Date.now());
  f.banco.prepare([
   'INSERT INTO akitemm_motor_ensaio_lotes_pedido',
   '(prepedido_id,ordinal,titular_id,numero_posicao) VALUES(?,?,?,?)'
- ].join(' ')).run(a.prepedidoId,1,a.titularId,7);
+ ].join(' ')).run(a.prepedidoId,1,a.titularId,posicaoId);
  f.banco.prepare([
   'INSERT INTO akitemm_motor_ensaio_aceites_posicao',
   '(numero_posicao,prepedido_id,titular_id,cpf_hmac,versao_termos,hash_termos,criado_em)',
   'VALUES(?,?,?,?,?,?,?)'
- ].join(' ')).run(7,a.prepedidoId,a.titularId,
+ ].join(' ')).run(posicaoId,a.prepedidoId,a.titularId,
   'hmac-ficticio','LAB-recuperacao-2026','hash-termos-ficticio',new Date().toISOString());
  const antes=f.banco.prepare('SELECT total_changes() AS n').get().n;
  const r=await provar({
