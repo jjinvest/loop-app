@@ -151,3 +151,38 @@ test('retomada sem permissao e negada sem reconsulta remota',async()=>{
   assert.equal(x.consultas,0);
  }finally{x.db.close();}
 });
+
+test('segunda interrupcao nao gera retry infinito nem fere PK da auditoria',async()=>{
+ const x=laboratorio();
+ try{
+  inserirCheckpoint(x.db);
+  const primeira=x.worker.recuperarTravados({
+   execucaoLiberada:true,idadeMinimaMs:120000
+  });
+  assert.equal(primeira.recuperados,1);
+  const retomar=x.db.prepare([
+   'UPDATE akitemm_prepedido_webhook_reconsulta_staging',
+   "SET estado='PROCESSANDO',codigo='RECONSULTA_RETOMADA',iniciado_em=?,",
+   'finalizado_em=NULL WHERE evento_id=?'
+  ].join(' ')).run(new Date(agoraMs-180000).toISOString(),evento);
+  assert.equal(retomar.changes,1);
+  const segunda=x.worker.recuperarTravados({
+   execucaoLiberada:true,idadeMinimaMs:120000
+  });
+  assert.equal(segunda.recuperados,0);
+  assert.equal(segunda.reinterrompidos,1);
+  const estado=x.worker.consultar(evento);
+  assert.equal(estado.estado,'EXIGE_REVISAO');
+  assert.equal(estado.codigo,'RETOMADA_REINTERROMPIDA_EXIGE_REVISAO');
+  const r=await x.worker.processar({
+   eventoId:evento,provedor:x.provedor,
+   execucaoLiberada:true,retomadaSegura:true
+  });
+  assert.equal(r.repetido,true);
+  assert.equal(x.consultas,0);
+  const historico=x.db.prepare(
+   'SELECT COUNT(*) AS n FROM akitemm_prepedido_webhook_recuperacoes_staging'
+  ).get().n;
+  assert.equal(historico,1);
+ }finally{x.db.close();}
+});
