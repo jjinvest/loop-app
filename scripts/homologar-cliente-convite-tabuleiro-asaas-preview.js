@@ -140,18 +140,19 @@ async function homologarClienteConviteTabuleiro({
    falha('FLUXO_CLIENTE_CUSTOMER_SANDBOX_INVALIDO');
   return r.data.id;
  };
- // Preflight ANTES de criacao de contas/pedidos: catalogo e sinal
- // devem estar corretos, evitando reclassificacao silenciosa da loja.
- const catalogo=(await req(BASE,'/staging/vitrine/loja/catalogo')).data;
+ const senhaA=novaSenha(),senhaB=novaSenha();
+ const titularA=await cadastro(nickA,senhaA);
+ const sessaoA=await entrar(nickA,senhaA);
+ // Preflight autenticado ANTES dos pedidos/Pix: catalogo e sinal
+ // corretos, sem reclassificacao silenciosa da loja.
+ const catalogo=(await req(BASE,'/staging/vitrine/loja/catalogo',
+  {sessao:sessaoA})).data;
  const produto=catalogo.produtos?.find(p=>(p.id||p.produtoId)===SKU);
  const sinal=(await req(BASE,
   '/staging/escritorio-unificado/sinalizacao/'+SKU)).data;
  if(!produto||produto.precoCentavos!==25000||
     sinal.classificacao!=='VERDE'||sinal.quantidadeMinimaLoop!==1)
   falha('FLUXO_CLIENTE_CATALOGO_NAO_PREPARADO');
- const senhaA=novaSenha(),senhaB=novaSenha();
- const titularA=await cadastro(nickA,senhaA);
- const sessaoA=await entrar(nickA,senhaA);
  const clienteA=await criarClienteAsaas(nickA);
  const posicaoA=await vincularPix(nickA,sessaoA,clienteA);
  // Identidade EXCLUSIVAMENTE ficticia e termos de laboratorio. Nao e KYC.
