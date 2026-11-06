@@ -33,7 +33,16 @@ function criarAgendadorBackupOffsiteLab({
  let timer=null,emExecucao=null,encerrado=false,rodadas=0,falhas=0;
  let ultimaConfirmacao=null,ultimoCodigo='NAO_EXECUTADO';
  function estado(){
+  // O historico nao prova frescor: falha posterior invalida o estado atual.
+  const horario=agora();
+  const idadeMs=ultimaConfirmacao&&horario instanceof Date?
+   horario.getTime()-Date.parse(ultimaConfirmacao.quando):NaN;
+  const backupAtualEmDia=rodadas>0&&
+   ultimoCodigo==='OFFSITE_CIFRADO_LIDO_E_RESTAURADO'&&
+   Number.isFinite(idadeMs)&&idadeMs>=0&&idadeMs<=26*60*60*1000;
   return {habilitado:timer!==null&&!encerrado,
+   backupAtualEmDia,ultimaTentativaFalhou:
+    ultimoCodigo==='BACKUP_REQUER_VERIFICACAO',
    emExecucao:emExecucao!==null,
    copiasVerificadasNoProcesso:rodadas,
    falhasNoProcesso:falhas,ultimaConfirmacao,
