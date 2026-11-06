@@ -181,7 +181,7 @@ test('seis compras PSP independentes alimentam um giro e exigem status atual de 
   assert.throws(()=>x.motor.controlarCatraca('GIRAR'),
    /EVENTO_REQUER_COMPRA_PSP_CONCILIADA/);
   assert.equal(x.motor.consultar().tabuleiro.centro.numero,numeroCentro);
-  assert.equal(x.motor.consultar().tabuleiro.vendasNoCiclo,6);
+  assert.equal(x.motor.consultar().tabuleiro.eventosNoCiclo,6);
   x.db.prepare(
    'INSERT INTO akitemm_prepedido_asaas_consultas_staging(prepedido_id,pagamento_id,status_asaas,consultado_em) VALUES(?,?,?,?)'
   ).run(pid(1),'pay_'+pid(1).slice(4,12),'RECEIVED',new Date().toISOString());
@@ -189,7 +189,7 @@ test('seis compras PSP independentes alimentam um giro e exigem status atual de 
   const after=x.motor.consultar();
   assert.equal(after.catraca.giros,1);
   assert.equal(after.tabuleiro.centro.numero,before.tabuleiro.vagas[0].numero);
-  assert.equal(after.tabuleiro.vendasNoCiclo,0);
+  assert.equal(after.tabuleiro.eventosNoCiclo,0);
   assert.equal(after.saldoRealCentavos,null);
   assert.equal(after.dinheiroReal,false);
   assert.equal(x.db.prepare(
@@ -206,6 +206,6 @@ test('webhook sem PSP recebido nao abastece catraca apesar de existir lote',()=>
   x.motor.prepararTabuleiro();
   assert.throws(()=>x.motor.registrarEvento({prepedidoId:pid(1)}),
    /EVENTO_REQUER_COMPRA_PSP_CONCILIADA/);
-  assert.equal(x.motor.consultar().tabuleiro.vendasNoCiclo,0);
+  assert.equal(x.motor.consultar().tabuleiro.eventosNoCiclo,0);
  }finally{x.db.close();}
 });
