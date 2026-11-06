@@ -359,10 +359,18 @@ async function conferirBackupOffsite(){
  try{
   const r=await api('/backup-offsite/estado');
   if(r.backupRailwayComprovado===true&&
+     r.backupAtualEmDia===true&&
      r.ultimaConfirmacao?.integridadeCifradaSha256){
    el.textContent='Cópia criptografada enviada, relida e restaurada em isolamento: '+
     new Date(r.ultimaConfirmacao.quando).toLocaleString('pt-BR')+
     '. Banco original preservado. Restauração em outra região ainda não comprovada.';
+  }else if(r.backupRailwayComprovado===true){
+   el.textContent='Existe cópia externa verificada anteriormente, mas o '+
+    'backup atual exige verificação (falha recente ou última cópia antiga). '+
+    'Última confirmação: '+
+    (r.ultimaConfirmacao?.quando?
+     new Date(r.ultimaConfirmacao.quando).toLocaleString('pt-BR'):'indisponível')+
+    '. Sem garantia de recuperação comercial.';
   }else{
    el.textContent='Backup externo ainda não comprovado neste serviço. '+
     (r.estado==='BACKUP_OFFSITE_NAO_HABILITADO_NESTE_SERVICO'?
