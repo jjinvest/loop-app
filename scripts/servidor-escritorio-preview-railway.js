@@ -268,6 +268,11 @@ async function iniciar({env=process.env}={}){
  const senhaAcesso=env.LOOP_PREVIEW_SENHA_ACESSO,
   segredoRaiz=env.LOOP_PREVIEW_SEGREDO_RAIZ;
  validarSegredos({senhaAcesso,segredoRaiz});
+ // Falhar antes de abrir volume SQLite ou servidor interno: configurar uma
+ // porta invalida nao pode deixar o processo vivo com listener fantasma.
+ const port=Number(env.PORT||3000);
+ if(!Number.isSafeInteger(port)||port<1||port>65535)
+  falha('PORTA_PREVIA_INVALIDA');
  const pasta='/dados-preview';
  const dbPath=env.LOOP_PREVIEW_SQLITE||pasta+'/escritorio.sqlite';
  if(!path.isAbsolute(dbPath)||!path.resolve(dbPath).startsWith(pasta+'/'))
@@ -344,9 +349,6 @@ async function iniciar({env=process.env}={}){
   senhaAcesso,segredoOperador:tokenOperador,
   validarNickIndicador:nick=>c.equipe.existeNick(nick),
   permitirWebhookSandbox:sandboxAtivo});
- const port=Number(env.PORT||3000);
- if(!Number.isSafeInteger(port)||port<1||port>65535)
-  falha('PORTA_PREVIA_INVALIDA');
  const agendador=autoAtivo?criarAgendadorConciliacaoSandbox({
   executar:c.executarConciliacaoSandbox,limite:20,intervaloMs:30000,
   onErro:codigo=>process.stderr.write('LOOP_CONCILIACAO_ENSAIO='+codigo+'\\n')
