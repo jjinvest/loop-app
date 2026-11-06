@@ -954,13 +954,28 @@ if(worker){
     throw erro('OPERACAO_SANDBOX_DESATIVADA');
    if(!Number.isSafeInteger(limite)||limite<1||limite>20)
     throw erro('LOTE_CONCILIACAO_INVALIDO');
-    const eventos=banco.prepare([
-     'SELECT i.evento_id AS eventoId',
+    // GET PSP concluido nao prova que o lote chegou ao motor: a escrita
+    // do motor pode falhar DEPOIS do worker marcar o evento concluido.
+    // Reconciliacoes novas primeiro, depois reparo de vinculos ausentes.
+    // O motor revalida PSP, titularidade e limites em transacao idempotente.
+    const vinculoMotorAusente=[
+     "r.estado='CONCLUIDO' AND r.codigo='PSP_RECONSULTADO'",
+     "AND i.tipo='PAYMENT_RECEIVED'",
+     'AND NOT EXISTS(SELECT 1 FROM akitemm_motor_conta_ensaio_operacoes m',
+     "WHERE m.prepedido_id=i.prepedido_id AND m.tipo='VINCULAR_PEDIDO')"
+    ].join(' ');
+    const pendenteOuSemMotor=
+     '(r.evento_id IS NULL OR ('+vinculoMotorAusente+'))';
+    const baseFila=[
      'FROM akitemm_prepedido_webhook_inbox_staging i',
      'LEFT JOIN akitemm_prepedido_webhook_reconsulta_staging r',
-     'ON r.evento_id=i.evento_id',
-     'WHERE r.evento_id IS NULL',
-     'ORDER BY i.recebido_em,i.evento_id LIMIT ?'
+     'ON r.evento_id=i.evento_id'
+    ].join(' ');
+    const eventos=banco.prepare([
+     'SELECT i.evento_id AS eventoId',baseFila,
+     'WHERE '+pendenteOuSemMotor,
+     'ORDER BY CASE WHEN r.evento_id IS NULL THEN 0 ELSE 1 END,',
+     'i.recebido_em,i.evento_id LIMIT ?'
     ].join(' ')).all(limite);
     const resultado={consultados:0,conciliados:0,
      revisaoNecessaria:0,lotesPendentesCriados:0,
@@ -987,9 +1002,12 @@ if(worker){
      }
     }
     resultado.pendentesRestantes=banco.prepare([
-     'SELECT COUNT(*) AS n FROM akitemm_prepedido_webhook_inbox_staging i',
-     'LEFT JOIN akitemm_prepedido_webhook_reconsulta_staging r',
-     'ON r.evento_id=i.evento_id WHERE r.evento_id IS NULL'
+     'SELECT COUNT(*) AS n',baseFila,
+     'WHERE '+pendenteOuSemMotor
+    ].join(' ')).get().n;
+    resultado.vinculosMotorAusentes=banco.prepare([
+     'SELECT COUNT(*) AS n',baseFila,
+     'WHERE '+vinculoMotorAusente
     ].join(' ')).get().n;
     resultado.alertasRevisao=worker.resumoPendencias().exigeRevisao;
     return resultado;
