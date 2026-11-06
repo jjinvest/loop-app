@@ -13,6 +13,7 @@ function criarRouterPrePedidosCheckoutStaging({
  if(typeof prePedidos?.preparar!=='function'||
   typeof prePedidos?.consultar!=='function'||
   typeof prePedidos?.listar!=='function'||
+  typeof prePedidos?.paginar!=='function'||
   typeof repositorioCatalogo?.buscar!=='function'||
   typeof identificarTitular!=='function'||
   typeof autorizarMutacao!=='function')
@@ -72,7 +73,21 @@ function criarRouterPrePedidosCheckoutStaging({
  r.get('/meus-pedidos',(req,res,next)=>{
   try{
    const titularId=req.titularPrePedido;
-   const pedidos=prePedidos.listar({titularId}).map(p=>{
+   const validar=(x,defaultValue,max)=>{
+    if(x===undefined)return defaultValue;
+    if(typeof x!=='string'||!/^(0|[1-9][0-9]*)$/.test(x)||
+       x.length>9||Number(x)>max)return null;
+    return Number(x);
+   };
+   if(Object.keys(req.query).some(k=>!['pagina','tamanho'].includes(k))||
+      ['pagina','tamanho'].some(k=>Array.isArray(req.query[k])))
+    return res.status(400).json({erro:'PAGINACAO_PEDIDOS_INVALIDA'});
+   const pagina=validar(req.query.pagina,0,1000000);
+   const tamanho=validar(req.query.tamanho,20,50);
+   if(pagina===null||tamanho===null||tamanho===0)
+    return res.status(400).json({erro:'PAGINACAO_PEDIDOS_INVALIDA'});
+   const consulta=prePedidos.paginar({titularId,pagina,tamanho});
+   const pedidos=consulta.pedidos.map(p=>{
     const andamento=ponteAsaasSandbox?.consultar({
      titularId,prepedidoId:p.prepedidoId
     })||null;
@@ -84,6 +99,10 @@ function criarRouterPrePedidosCheckoutStaging({
      prepedidoId:p.prepedidoId,criadoEm:p.criadoEm,
      moeda:p.moeda,totalCentavos:p.totalCentavos,itens:p.itens,
      statusHomologacao:andamento?.estado??'SEM_COBRANCA_SANDBOX',
+     posicoesPlanejadas:andamento?.posicoesPrevistas??null,
+     posicoesReservadas:andamento?.posicoesReservadas??null,
+     compraSemNovaPosicao:andamento?.compraSemNovaPosicao===true,
+     modalidadeDeParticipacao:andamento?.modalidadeDeParticipacao??null,
      statusInformadoPeloPSP:andamento?.ultimaConsultaSandbox?.statusAsaas??null,
      consultaPSPRealizadaNestaLeitura:false,
      conferenciaPSPConcluida:auditoria?.conferenciaPSPConcluida===true,
@@ -104,6 +123,9 @@ function criarRouterPrePedidosCheckoutStaging({
     };
    });
    return res.json({pedidos,ambiente:'STAGING_LOCAL',
+    paginacao:{pagina:consulta.pagina,tamanho:consulta.tamanho,
+     total:consulta.total,haAnterior:consulta.haAnterior,haMais:consulta.haMais},
+    totalPedidos:consulta.total,
     checkoutPublico:false,consultaPSPRealizadaNestaLeitura:false});
   }catch(e){erro(e,res,next);}
  });
