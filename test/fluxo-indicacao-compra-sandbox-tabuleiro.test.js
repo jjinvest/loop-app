@@ -209,3 +209,89 @@ test('webhook sem PSP recebido nao abastece catraca apesar de existir lote',()=>
   assert.equal(x.motor.consultar().tabuleiro.eventosNoCiclo,0);
  }finally{x.db.close();}
 });
+
+test('agenda contabiliza uma compra PSP a cada dez minutos, com luzes 3 roxas e 3 pretas e giro separado',()=>{
+ const x=preparar();
+ const dia='2026-11-06';
+ const time=(hhmm)=>Date.parse(dia+'T'+hhmm+':00-03:00');
+ try{
+  for(let i=1;i<=4;i++)x.conta(i,['Alpha','Bravo','Charlie','Delta'][i-1]);
+  for(let i=1;i<=8;i++)x.comprar(i,((i-1)%4)+1,true);
+  x.motor.prepararTabuleiro();
+  const inicial=x.motor.consultar();
+  const centroAnterior=inicial.tabuleiro.centro.numero;
+  const p=x.motor.configurarAgenda({
+   ativo:true,abertura:'09:00',fechamento:'18:00',
+   intervaloMinutos:10,agoraMs:time('09:00')
+  });
+  assert.equal(p.agenda.ativo,true);
+  assert.equal(x.motor.consultarAgenda({agoraMs:time('09:00')})
+   .aguardandoContabilizacao,8);
+  assert.equal(x.motor.processarPulsoAgenda({agoraMs:time('08:59')}).acao,
+   'FORA_HORARIO');
+  assert.equal(x.motor.processarPulsoAgenda({agoraMs:time('09:00')}).acao,
+   'ABERTA_AGUARDANDO_INTERVALO');
+  assert.equal(x.motor.processarPulsoAgenda({agoraMs:time('09:09')}).acao,
+   'AGUARDANDO_INTERVALO');
+  assert.equal(x.motor.consultar().tabuleiro.eventosNoCiclo,0);
+  for(let i=1;i<=6;i++){
+   const horario=''+(9+Math.floor(i/6));
+   const minuto=(i*10)%60;
+   const quando=horario.padStart(2,'0')+':'+String(minuto).padStart(2,'0');
+   const r=x.motor.processarPulsoAgenda({agoraMs:time(quando)});
+   assert.equal(r.acao,'LUZ_DO_CICLO');
+   assert.equal(r.luzesAcesas,i);
+   assert.equal(x.motor.processarPulsoAgenda({
+    agoraMs:time(quando)+15000
+   }).acao,'AGUARDANDO_INTERVALO');
+  }
+  const estado=x.motor.consultarAgenda({agoraMs:time('10:00')});
+  assert.equal(estado.luzesRoxasAcesas,3);
+  assert.equal(estado.luzesPretasAcesas,3);
+  assert.equal(estado.aguardandoContabilizacao,2);
+  assert.equal(x.motor.consultar().tabuleiro.centro.numero,centroAnterior);
+  assert.equal(x.motor.consultar().catraca.giros,0);
+  const girou=x.motor.processarPulsoAgenda({agoraMs:time('10:10')});
+  assert.equal(girou.acao,'GIRO_AGENDADO');
+  assert.equal(girou.girou,true);
+  assert.equal(x.motor.consultar().catraca.giros,1);
+  assert.equal(x.motor.consultar().tabuleiro.eventosNoCiclo,0);
+  assert.equal(x.motor.consultar().saldoRealCentavos,null);
+  x.motor.processarPulsoAgenda({agoraMs:time('18:00')});
+  assert.equal(x.motor.consultar().catraca.estado,'PAUSADA');
+ }finally{x.db.close();}
+});
+test('fora do horario e em pausa manual as compras continuam na fila, mas nenhuma luz e criada',()=>{
+ const x=preparar();
+ const t=s=>Date.parse('2026-11-06T'+s+':00-03:00');
+ try{
+  x.conta(1,'Alpha');x.conta(2,'Bravo');x.conta(3,'Charlie');
+  x.comprar(1,1,true);
+  x.motor.prepararTabuleiro();
+  x.motor.configurarAgenda({
+   ativo:true,abertura:'09:00',fechamento:'18:00',
+   intervaloMinutos:5,agoraMs:t('09:00')
+  });
+  x.motor.processarPulsoAgenda({agoraMs:t('09:05')});
+  assert.equal(x.motor.consultar().tabuleiro.eventosNoCiclo,1);
+  x.motor.controlarCatraca('PAUSAR');
+  x.comprar(2,2,true);x.comprar(3,3,true);
+  const a=x.motor.consultarAgenda({agoraMs:t('09:15')});
+  assert.equal(a.aguardandoContabilizacao,2);
+  assert.equal(a.luzesAcesas,1);
+  assert.equal(x.motor.processarPulsoAgenda({agoraMs:t('09:15')}).acao,
+   'PAUSA_MANUAL');
+  assert.equal(x.motor.consultar().tabuleiro.eventosNoCiclo,1);
+  assert.equal(x.motor.consultar().filaB.length>=2,true);
+  x.motor.configurarAgenda({
+   ativo:true,abertura:'09:00',fechamento:'18:00',
+   intervaloMinutos:5,agoraMs:t('09:17')
+  });
+  x.motor.processarPulsoAgenda({agoraMs:t('09:20')});
+  assert.equal(x.motor.consultar().tabuleiro.eventosNoCiclo,2);
+  assert.equal(x.motor.consultarAgenda({agoraMs:t('20:00')}).dentroDoHorario,false);
+  x.motor.processarPulsoAgenda({agoraMs:t('20:00')});
+  assert.equal(x.motor.consultar().catraca.estado,'PAUSADA');
+  assert.equal(x.db.prepare('PRAGMA integrity_check').get().integrity_check,'ok');
+ }finally{x.db.close();}
+});
