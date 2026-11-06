@@ -137,7 +137,7 @@ test('GET PSP concluido recupera vinculo motor apos falha transitoria sem nova c
  assert.deepEqual(banco.prepare('PRAGMA foreign_key_check').all(),[]);
 });
 
-test('capacidade de dez posicoes fica reservada no mesmo SQLite antes de novo Pix',async t=>{
+test('dez posicoes reservadas nao bloqueiam a decima primeira compra sem posicao',async t=>{
  const banco=new DatabaseSync(':memory:');
  banco.exec('PRAGMA foreign_keys=ON;');
  t.after(()=>banco.close());
@@ -176,11 +176,24 @@ test('capacidade de dez posicoes fica reservada no mesmo SQLite antes de novo Pi
      titularId:titular.titularId
     }).posicoesAtivasDoTitular}
   });
-  if(i<10)assert.equal(preparar().repetido,false);
-  else assert.throws(preparar,{codigo:'LIMITE_POSICOES_ANTES_DA_COBRANCA'});
+  const reserva=preparar();
+  assert.equal(reserva.repetido,false);
+  assert.equal(reserva.registro.posicoesPrevistas,1);
+  assert.equal(reserva.registro.posicoesReservadas,i<10?1:0);
+  assert.equal(reserva.registro.compraSemNovaPosicao,i===10);
+  if(i===10){
+   assert.equal(reserva.registro.modalidadeDeParticipacao,'SEM_POSICOES_LIMITE');
+   assert.equal(preparar().registro.posicoesReservadas,0,
+    'idempotencia nao converte compra sem posicao ao liberar vaga');
+  }
  }
  assert.equal(banco.prepare([
   'SELECT COUNT(*) AS n FROM akitemm_prepedido_asaas_sandbox_staging',
+  'WHERE titular_id=?'
+ ].join(' ')).get(titular.titularId).n,11);
+ assert.equal(banco.prepare([
+  'SELECT SUM(posicoes_reservadas) AS n FROM',
+  'akitemm_prepedido_asaas_reserva_posicoes_staging',
   'WHERE titular_id=?'
  ].join(' ')).get(titular.titularId).n,10);
  assert.equal(banco.prepare([
