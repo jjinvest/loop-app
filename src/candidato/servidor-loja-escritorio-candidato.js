@@ -836,6 +836,52 @@ function criarAppLojaEscritorioCandidato({banco,repositorioCatalogo,
      saquesReais:0,consultaPSPExecutadaNestaLeitura:false
     });
    });
+  // Um único procedimento de conciliação é utilizado pelo operador
+  // individual e pelo fechamento em lote. Nunca confia apenas no webhook.
+  async function reconciliarEventoSandbox(eventoId){
+   const r=await worker.processar({
+    eventoId,provedor:provedorReconsultaSandbox,execucaoLiberada:true
+   });
+   const aviso=inbox.consultarEvento(eventoId);
+   if(['PAYMENT_REFUNDED','PAYMENT_PARTIALLY_REFUNDED',
+    'PAYMENT_REFUND_IN_PROGRESS','PAYMENT_CHARGEBACK_REQUESTED',
+    'PAYMENT_CHARGEBACK_DISPUTE','PAYMENT_DELETED'].includes(aviso?.tipo)){
+    try{
+     const suspenso=motorConta.suspenderLoteRevertidoSandbox({
+      prepedidoId:aviso.prepedidoId
+     });
+     return {...r,vinculoMotorEnsaio:{
+      estado:'SUSPENSO_POR_REVERSAO_PSP',
+      quantidadeSuspensa:suspenso.suspensas,apenasEnsaio:true,
+      catracaPausada:suspenso.catracaPausada||false
+     }};
+    }catch(e){
+     return {...r,vinculoMotorEnsaio:{
+      estado:'REVERSAO_EXIGE_REVISAO',codigo:e.codigo||'REVISAO_MANUAL',
+      apenasEnsaio:true
+     }};
+    }
+   }
+   if(r.estado==='CONCLUIDO'&&r.codigo==='PSP_RECONSULTADO'&&
+      aviso?.tipo==='PAYMENT_RECEIVED'){
+    try{
+     const m=motorConta.vincularPedidoConferidoSandbox({
+      prepedidoId:aviso.prepedidoId
+     });
+     return {...r,vinculoMotorEnsaio:{
+      estado:m.repetido?'JA_VINCULADO':'PENDENTES_GERADAS',
+      quantidade:m.quantidadePosicoes,apenasEnsaio:true,
+      posicoesComerciais:0,cpfETermosConfirmados:false
+     }};
+    }catch(e){
+     return {...r,vinculoMotorEnsaio:{
+      estado:'BLOQUEADO',codigo:e.codigo||'LOTE_REQUER_REVISAO',
+      apenasEnsaio:true,posicoesComerciais:0
+     }};
+    }
+   }
+   return r;
+  }
   app.post('/staging/escritorio-unificado/reconsultar-psp',autorizarOperador,
    async(req,res)=>{
     if(!operacoesSandboxAutorizadas)return res.status(403)
@@ -847,58 +893,7 @@ function criarAppLojaEscritorioCandidato({banco,repositorioCatalogo,
        !/^[A-Za-z0-9_&-]{5,150}$/.test(req.body.eventoId))
      return res.status(400).json({erro:'EVENTO_INVALIDO'});
     try{
-     const r=await worker.processar({
-      eventoId:req.body.eventoId,provedor:provedorReconsultaSandbox,
-      execucaoLiberada:true
-     });
-     // O PSP pode comprovar a REVERSAO e, corretamente, classificar
-     // a reconsulta como EXIGE_REVISAO. Mesmo assim, suspender o lote
-     // confirmado, sem criar benefício ou descartar prova histórica.
-     const aviso=inbox.consultarEvento(req.body.eventoId);
-      if(['PAYMENT_REFUNDED','PAYMENT_PARTIALLY_REFUNDED',
-       'PAYMENT_REFUND_IN_PROGRESS','PAYMENT_CHARGEBACK_REQUESTED',
-       'PAYMENT_CHARGEBACK_DISPUTE','PAYMENT_DELETED'].includes(aviso?.tipo)){
-       try{
-        const suspenso=motorConta.suspenderLoteRevertidoSandbox({
-         prepedidoId:aviso.prepedidoId
-        });
-        return res.json({...r,vinculoMotorEnsaio:{
-         estado:'SUSPENSO_POR_REVERSAO_PSP',
-         quantidadeSuspensa:suspenso.suspensas,apenasEnsaio:true,
-         catracaPausada:suspenso.catracaPausada||false
-        }});
-       }catch(e){
-        return res.json({...r,vinculoMotorEnsaio:{
-         estado:'REVERSAO_EXIGE_REVISAO',codigo:e.codigo||'REVISAO_MANUAL',
-         apenasEnsaio:true
-        }});
-       }
-      }
-     // NUNCA gerar posição a partir de webhook bruto. Apenas depois de
-     // GET PSP independente, evento recebido e integridade no MESMO SQLite.
-     // Posições são PENDENTES EM ENSAIO, não confirmadas por CPF/termos.
-     if(r.estado==='CONCLUIDO'&&r.codigo==='PSP_RECONSULTADO'){
-      if(aviso?.tipo==='PAYMENT_RECEIVED'){
-       try{
-        const m=motorConta.vincularPedidoConferidoSandbox({
-         prepedidoId:aviso.prepedidoId
-        });
-        return res.json({...r,vinculoMotorEnsaio:{
-         estado:m.repetido?'JA_VINCULADO':'PENDENTES_GERADAS',
-         quantidade:m.quantidadePosicoes,apenasEnsaio:true,
-         posicoesComerciais:0,cpfETermosConfirmados:false
-        }});
-       }catch(e){
-        // Falha de posição não reverte a prova PSP, não gera lote parcial e
-        // não repete cobrança. Deixa a pendência auditável para o operador.
-        return res.json({...r,vinculoMotorEnsaio:{
-         estado:'BLOQUEADO',codigo:e.codigo||'LOTE_REQUER_REVISAO',
-         apenasEnsaio:true,posicoesComerciais:0
-        }});
-       }
-      }
-     }
-     return res.json(r);
+     return res.json(await reconciliarEventoSandbox(req.body.eventoId));
     }catch(e){
      if(e.codigo==='EVENTO_NAO_ENCONTRADO')
       return res.status(404).json({erro:e.codigo});
@@ -906,6 +901,58 @@ function criarAppLojaEscritorioCandidato({banco,repositorioCatalogo,
       return res.status(409).json({erro:e.codigo});
      return res.status(503).json({erro:'RECONSULTA_PSP_NAO_CONCLUIDA'});
     }
+   });
+  // Uma ação de fechamento verifica TODOS os avisos novos de uma amostra
+  // limitada, com GET independente no Sandbox e vínculo do lote no motor.
+  // Falhas ficam sinalizadas e podem ser reprocessadas manualmente.
+  app.post('/staging/escritorio-unificado/reconciliar-pendentes-sandbox',
+   autorizarOperador,async(req,res)=>{
+    if(!operacoesSandboxAutorizadas)
+     return res.status(403).json({erro:'OPERACAO_SANDBOX_DESATIVADA'});
+    if(!req.is('application/json')||!req.body||Array.isArray(req.body)||
+       Object.keys(req.body).join(',')!=='limite'||
+       !Number.isSafeInteger(req.body.limite)||
+       req.body.limite<1||req.body.limite>20)
+     return res.status(400).json({erro:'LOTE_CONCILIACAO_INVALIDO'});
+    const eventos=banco.prepare([
+     'SELECT i.evento_id AS eventoId',
+     'FROM akitemm_prepedido_webhook_inbox_staging i',
+     'LEFT JOIN akitemm_prepedido_webhook_reconsulta_staging r',
+     'ON r.evento_id=i.evento_id',
+     'WHERE r.evento_id IS NULL',
+     'ORDER BY i.recebido_em,i.evento_id LIMIT ?'
+    ].join(' ')).all(req.body.limite);
+    const resultado={consultados:0,conciliados:0,
+     revisaoNecessaria:0,lotesPendentesCriados:0,
+     lotesSuspensos:0,errosDeProcessamento:0,
+     ambiente:'ASAAS_SANDBOX_EXCLUSIVO',
+     caixaRealComprovado:false,saquesReais:0,posicoesComerciais:0,
+     somenteLaboratorio:true};
+    for(const evento of eventos){
+     try{
+      const r=await reconciliarEventoSandbox(evento.eventoId);
+      resultado.consultados++;
+      if(r.estado==='CONCLUIDO')resultado.conciliados++;
+      else resultado.revisaoNecessaria++;
+      if(r.vinculoMotorEnsaio?.estado==='PENDENTES_GERADAS')
+       resultado.lotesPendentesCriados++;
+      if(r.vinculoMotorEnsaio?.estado==='SUSPENSO_POR_REVERSAO_PSP')
+       resultado.lotesSuspensos++;
+      if(['BLOQUEADO','REVERSAO_EXIGE_REVISAO'].includes(
+       r.vinculoMotorEnsaio?.estado))resultado.revisaoNecessaria++;
+     }catch(_e){
+      resultado.errosDeProcessamento++;
+      // Nao interromper os demais pedidos nem expor dados pessoais
+      // ou detalhes do PSP. Evento problemático segue na caixa de avisos.
+     }
+    }
+    resultado.pendentesRestantes=banco.prepare([
+     'SELECT COUNT(*) AS n FROM akitemm_prepedido_webhook_inbox_staging i',
+     'LEFT JOIN akitemm_prepedido_webhook_reconsulta_staging r',
+     'ON r.evento_id=i.evento_id WHERE r.evento_id IS NULL'
+    ].join(' ')).get().n;
+    resultado.alertasRevisao=worker.resumoPendencias().exigeRevisao;
+    return res.json(resultado);
    });
   app.post('/staging/escritorio-unificado/projetar-posicao-ficticia',
    autorizarOperador,(req,res)=>{
