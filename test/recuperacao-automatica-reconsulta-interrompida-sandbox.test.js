@@ -1,6 +1,7 @@
 'use strict';
 const {test}=require('node:test');
 const assert=require('node:assert/strict');
+const fs=require('node:fs'),os=require('node:os'),path=require('node:path');
 const {DatabaseSync}=require('node:sqlite');
 const {InboxWebhookPrepedidoAsaasStaging}=
  require('../src/domain/inbox-webhook-prepedido-asaas-staging');
@@ -14,9 +15,10 @@ const prepedido='hom-12345678-1234-4123-8123-123456789abc';
 const pagamento='pay_TESTE_DE_RETOMADA_00001';
 const evento='evt_RECUPERACAO_00001';
 const data=()=>new Date(agoraMs).toISOString();
-function laboratorio(){
- const db=new DatabaseSync(':memory:');
+function laboratorio({file=':memory:',seed=true}={}){
+ const db=new DatabaseSync(file);
  db.exec('PRAGMA foreign_keys=ON');
+ if(seed){
  db.exec([
   'CREATE TABLE akitemm_prepedido_asaas_sandbox_staging(',
   'prepedido_id TEXT PRIMARY KEY NOT NULL,',
@@ -32,13 +34,14 @@ function laboratorio(){
  ].join(' ')).run(prepedido,
   'titular-12345678-1234-4123-8123-123456789abc',
   pagamento,25000,'LOOPLAB-'+prepedido);
+ }
  const inbox=new InboxWebhookPrepedidoAsaasStaging({banco:db,token,agora:data});
  const body=Buffer.from(JSON.stringify({
   id:evento,event:'PAYMENT_RECEIVED',
   payment:{id:pagamento,externalReference:'LOOPLAB-'+prepedido,
    billingType:'PIX',status:'RECEIVED',value:250}
  }));
- inbox.registrar({cabecalhoToken:token,corpoBruto:body});
+ if(seed)inbox.registrar({cabecalhoToken:token,corpoBruto:body});
  let consultas=0;
  const ponte=Object.create(PontePrepedidoAsaasSandboxStaging.prototype);
  ponte.banco=db;
@@ -185,4 +188,45 @@ test('segunda interrupcao nao gera retry infinito nem fere PK da auditoria',asyn
   ).get().n;
   assert.equal(historico,1);
  }finally{x.db.close();}
+});
+
+test('fecha e reabre SQLite em disco apos PROCESSANDO e recupera sem duplicar evento',async()=>{
+ const dir=fs.mkdtempSync(path.join(os.tmpdir(),'loop-crash-as-sandbox-'));
+ const arquivo=path.join(dir,'laboratorio.sqlite');
+ let a=null,b=null;
+ try{
+  a=laboratorio({file:arquivo});
+  inserirCheckpoint(a.db);
+  a.db.close();a=null;
+  // Simula uma instância totalmente nova com a mesma fonte persistida,
+  // não apenas retorno de uma funcao na instancia antiga.
+  b=laboratorio({file:arquivo,seed:false});
+  const resultado=b.worker.recuperarTravados({
+   execucaoLiberada:true,idadeMinimaMs:120000,limite:5
+  });
+  assert.equal(resultado.recuperados,1);
+  assert.equal(b.consultas,0);
+  const concluido=await b.worker.processar({
+   eventoId:evento,provedor:b.provedor,
+   execucaoLiberada:true,retomadaSegura:true
+  });
+  assert.equal(concluido.estado,'CONCLUIDO');
+  assert.equal(b.consultas,1);
+  const inbox=b.db.prepare(
+   'SELECT COUNT(*) AS n FROM akitemm_prepedido_webhook_inbox_staging'
+  ).get().n;
+  assert.equal(inbox,1,'o mesmo evento nao deve ser recriado');
+  const reconsultas=b.db.prepare(
+   'SELECT COUNT(*) AS n FROM akitemm_prepedido_webhook_reconsulta_staging'
+  ).get().n;
+  assert.equal(reconsultas,1,'checkpoint do mesmo evento deve ser unico');
+  const auditorias=b.db.prepare(
+   'SELECT COUNT(*) AS n FROM akitemm_prepedido_webhook_recuperacoes_staging'
+  ).get().n;
+  assert.equal(auditorias,1);
+ }finally{
+  if(a)a.db.close();
+  if(b)b.db.close();
+  fs.rmSync(dir,{recursive:true,force:true});
+ }
 });
