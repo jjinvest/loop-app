@@ -614,6 +614,7 @@ $('prepararEntrega').addEventListener('submit',async e=>{
  }catch(err){dizer('Operação bloqueada: '+err.message);}finally{b.disabled=false;}
 });
 
+let agendaHojeLocal=null;
 async function atualizarMotorContaEnsaio(){
  const r=await api('/motor/estado');
  const area=$('motorEnsaioResumo');area.replaceChildren();
@@ -622,8 +623,27 @@ async function atualizarMotorContaEnsaio(){
   linha('Ocupantes no tabuleiro',Number(Boolean(r.tabuleiro.centro))+
    r.tabuleiro.vagas.filter(Boolean).length),
   linha('Eventos de ensaio no ciclo',r.tabuleiro.eventosNoCiclo+'/6'),
+  linha('Luzes roxas contabilizadas',r.agenda.luzesRoxasAcesas+'/3'),
+  linha('Luzes pretas contabilizadas',r.agenda.luzesPretasAcesas+'/3'),
+  linha('Compras confirmadas aguardando luz',r.agenda.aguardandoContabilizacao),
   linha('Giros de ensaio',r.catraca.giros),
-  linha('Catraca',r.catraca.estado));
+  linha('Catraca',r.catraca.estado),
+  linha('Agenda',r.agenda.ativo?'ATIVA':'DESATIVADA'));
+ $('agendaMotorEstado').textContent='Horário '+r.agenda.abertura+'–'+
+  r.agenda.fechamentoAplicado+' ('+r.agenda.fuso+') · '+
+  (r.agenda.ativo?'automática':'desativada')+' · '+
+  (r.agenda.dentroDoHorario?'dentro do horário':'fora do horário')+
+  (r.agenda.pausaManual?' · PAUSA MANUAL':'')+
+  ' · '+r.agenda.aguardandoContabilizacao+
+  ' compra(s) Sandbox confirmada(s) aguardando contabilização. '+
+  'As vendas e as filas continuam mesmo com a catraca pausada.';
+ $('agendaMotorInicio').value=r.agenda.abertura;
+ $('agendaMotorFim').value=r.agenda.fechamento;
+ $('agendaMotorIntervalo').value=String(r.agenda.intervaloMinutos);
+ $('agendaMotorExcecaoData').value=r.agenda.excecaoData||'';
+ $('agendaMotorExcecaoFim').value=r.agenda.excecaoFechamento||'';
+ $('agendaMotorAtiva').checked=r.agenda.ativo===true;
+ agendaHojeLocal=r.agenda.dia;
  return r;
 }
 async function operacaoMotorContaEnsaio(rota,body,mensagem){
@@ -639,6 +659,39 @@ async function operacaoMotorContaEnsaio(rota,body,mensagem){
   alvo.textContent='Operação não executada: '+e.message;
  }
 }
+$('agendaMotorHoje21').addEventListener('click',()=>{
+ if(!agendaHojeLocal){
+  $('agendaMotorEstado').textContent='Atualize o motor antes de escolher o dia.';
+  return;
+ }
+ $('agendaMotorExcecaoData').value=agendaHojeLocal;
+ $('agendaMotorExcecaoFim').value='21:00';
+ $('agendaMotorEstado').textContent='Exceção selecionada: hoje até 21h. Salve a agenda para aplicar.';
+});
+$('formAgendaMotor').addEventListener('submit',async e=>{
+ e.preventDefault();
+ const botao=e.submitter;if(botao)botao.disabled=true;
+ const data=$('agendaMotorExcecaoData').value||null;
+ const hora=$('agendaMotorExcecaoFim').value||null;
+ const estado=$('agendaMotorEstado');
+ estado.textContent='Salvando horário e intervalo no SQLite...';
+ try{
+  if(Boolean(data)!==Boolean(hora))
+   throw Error('A exceção precisa ter data e horário.');
+  const r=await api('/motor/agenda',{method:'POST',body:{
+   ativo:$('agendaMotorAtiva').checked,
+   abertura:$('agendaMotorInicio').value,
+   fechamento:$('agendaMotorFim').value,
+   intervaloMinutos:Number($('agendaMotorIntervalo').value),
+   excecaoData:data,excecaoFechamento:hora
+  }});
+  if(!r.configurada)throw Error('AGENDA_NAO_GRAVADA');
+  await atualizarMotorContaEnsaio();
+  estado.textContent='Agenda salva no SQLite. Primeira luz somente no próximo intervalo válido; nenhuma compra ou transferência criada.';
+ }catch(err){
+  estado.textContent='Agenda não alterada: '+err.message;
+ }finally{if(botao)botao.disabled=false;}
+});
 $('motorEnsaioAtualizar').addEventListener('click',()=>{
  atualizarMotorContaEnsaio().then(()=>
   $('motorEnsaioStatus').textContent='Leitura do motor no SQLite concluída.')
