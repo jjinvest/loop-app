@@ -375,3 +375,42 @@ test('STOP bloqueia movimentos mesmo com compras conciliadas; natural somente ap
   assert.equal(x.db.prepare('PRAGMA integrity_check').get().integrity_check,'ok');
  }finally{x.db.close();}
 });
+
+test('lote de cinco pessoas libera somente ciclos sustentados por seis vendas cada',()=>{
+ const x=preparar();
+ try{
+  for(let i=1;i<=8;i++){
+   x.conta(i,'Conta'+String.fromCharCode(96+i));
+   x.comprar(i,i,true);
+  }
+  const lote=x.motor.liberarLoteEnsaio({quantidade:5});
+  assert.equal(lote.solicitados,5);
+  assert.equal(lote.liberados,1);
+  assert.equal(lote.restantes,4);
+  assert.equal(lote.eventosUsados,8);
+  assert.equal(lote.motivo,'AGUARDANDO_SEIS_COMPRAS_CONCILIADAS');
+  assert.equal(x.motor.consultar().catraca.giros,1);
+  assert.equal(x.motor.consultar().tabuleiro.eventosNoCiclo,2);
+  assert.equal(x.motor.consultar().saldoRealCentavos,null);
+  // Segundo lote nao reutiliza as mesmas 8 compras.
+  const repetido=x.motor.liberarLoteEnsaio({quantidade:5});
+  assert.equal(repetido.liberados,0);
+  assert.equal(repetido.eventosUsados,0);
+  assert.equal(x.motor.consultar().catraca.giros,1);
+ }finally{x.db.close();}
+});
+test('STOP bloqueia inclusive lote manual, mas novas vendas continuam',()=>{
+ const x=preparar();
+ try{
+  x.conta(1,'Alpha');
+  x.comprar(1,1,true);
+  x.motor.configurarAgenda({
+   ativo:false,modoExecucao:'STOP',abertura:'09:00',
+   fechamento:'18:00',intervaloMinutos:120
+  });
+  const r=x.motor.liberarLoteEnsaio({quantidade:10});
+  assert.equal(r.liberados,0);
+  assert.equal(r.motivo,'STOP_ADMINISTRATIVO');
+  assert.equal(x.motor.consultar().filaB.length,1);
+ }finally{x.db.close();}
+});
