@@ -68,30 +68,44 @@ class ReconsultaWebhookPrepedidoAsaasStaging{
   banco.exec('BEGIN IMMEDIATE');
   try{
    const candidatos=banco.prepare([
-    'SELECT evento_id,iniciado_em FROM',
+    'SELECT evento_id,iniciado_em,codigo FROM',
     'akitemm_prepedido_webhook_reconsulta_staging',
     "WHERE estado='PROCESSANDO' ORDER BY iniciado_em,evento_id LIMIT ?"
    ].join(' ')).all(limite);
-   const recuperados=[];
+   const recuperados=[],reinterrompidos=[];
    for(const item of candidatos){
     const inicio=Date.parse(item.iniciado_em);
     if(!Number.isFinite(inicio)||inicio>instante||
        instante-inicio<idadeMinimaMs)continue;
+    // Segunda queda no mesmo evento nunca inicia terceira consulta
+    // automaticamente. Requer revisao independente pelo operador.
+    const anterior=banco.prepare([
+     'SELECT 1 AS existe FROM akitemm_prepedido_webhook_recuperacoes_staging',
+     'WHERE evento_id=?'
+    ].join(' ')).get(item.evento_id);
+    const reinterrupcao=Boolean(anterior)||item.codigo==='RECONSULTA_RETOMADA';
+    const codigo=reinterrupcao?
+     'RETOMADA_REINTERROMPIDA_EXIGE_REVISAO':
+     'PROCESSAMENTO_INTERROMPIDO_REVISAR';
     const mudou=banco.prepare([
      'UPDATE akitemm_prepedido_webhook_reconsulta_staging',
-     "SET estado='EXIGE_REVISAO',codigo='PROCESSAMENTO_INTERROMPIDO_REVISAR',",
+     "SET estado='EXIGE_REVISAO',codigo=?,",
      "finalizado_em=? WHERE evento_id=? AND estado='PROCESSANDO'"
-    ].join(' ')).run(this.agora(),item.evento_id).changes;
+    ].join(' ')).run(codigo,this.agora(),item.evento_id).changes;
     if(!mudou)continue;
+    if(reinterrupcao){
+     reinterrompidos.push(item.evento_id);
+     continue;
+    }
     banco.prepare([
      'INSERT INTO akitemm_prepedido_webhook_recuperacoes_staging',
      '(evento_id,codigo,registrado_em) VALUES(?,?,?)'
-    ].join(' ')).run(item.evento_id,
-     'PROCESSAMENTO_INTERROMPIDO_REVISAR',this.agora());
+    ].join(' ')).run(item.evento_id,codigo,this.agora());
     recuperados.push(item.evento_id);
    }
    banco.exec('COMMIT');
    return {recuperados:recuperados.length,eventos:recuperados,
+    reinterrompidos:reinterrompidos.length,
     reenvioWebhook:false,novaCobranca:false,
     reconsultaRemotaExecutada:false,exigeRevisaoManual:true,
     pagamentoReal:false,posicoesCriadas:0};
