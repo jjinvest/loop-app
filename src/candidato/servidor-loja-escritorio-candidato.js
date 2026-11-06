@@ -49,7 +49,7 @@ function criarAppLojaEscritorioCandidato({banco,repositorioCatalogo,
  chaveRecuperacao=null,enviarRecuperacao=null,
  transporteResend=null,
  webhookHomologacaoToken=null,provedorReconsultaSandbox=null,
- operacoesSandboxAutorizadas=false,
+ operacoesSandboxAutorizadas=false,conciliacaoAutomaticaConfigurada=false,
  segredoOperador,termosVersao,termosTexto}={}){
  if(process.env.NODE_ENV==='production')erro('CANDIDATO_NAO_HOMOLOGADO');
  if(typeof repositorioCatalogo?.buscar!=='function')
@@ -486,6 +486,8 @@ function criarAppLojaEscritorioCandidato({banco,repositorioCatalogo,
    usaSQLiteDaLoja:ponte.banco===banco,
    webhookIngressAtivo:Boolean(inbox)&&operacoesSandboxAutorizadas,
    consultarPSPDisponivel:Boolean(worker)&&operacoesSandboxAutorizadas,
+   conciliacaoAutomaticaConfigurada:operacoesSandboxAutorizadas&&
+    Boolean(worker)&&conciliacaoAutomaticaConfigurada===true,
    saquesReaisHabilitados:false,checkoutComercialHabilitado:false
   }));
 
