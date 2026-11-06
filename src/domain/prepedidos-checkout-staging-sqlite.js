@@ -108,6 +108,25 @@ class PrePedidosCheckoutStagingSQLite{
    'WHERE titular_id=? ORDER BY criado_em DESC,prepedido_id DESC LIMIT ?'
   ].join(' ')).all(titularId,limite).map(x=>this._saida(x));
  }
+ // A lista antiga continua limitada para leitores internos; o cliente
+ // navega todo o historico, sempre filtrado por titular e ordem estavel.
+ paginar({titularId,pagina=0,tamanho=20}={}){
+  this._validarTitular(titularId);
+  if(!Number.isSafeInteger(pagina)||pagina<0||pagina>1000000||
+     !Number.isSafeInteger(tamanho)||tamanho<1||tamanho>50)
+   throw falha('PAGINACAO_PEDIDOS_INVALIDA');
+  const total=this.banco.prepare([
+   'SELECT COUNT(*) AS n FROM akitemm_checkout_prepedidos_staging',
+   'WHERE titular_id=?'
+  ].join(' ')).get(titularId).n;
+  const linhas=this.banco.prepare([
+   'SELECT * FROM akitemm_checkout_prepedidos_staging',
+   'WHERE titular_id=?',
+   'ORDER BY criado_em DESC,prepedido_id DESC LIMIT ? OFFSET ?'
+  ].join(' ')).all(titularId,tamanho,pagina*tamanho);
+  return {pedidos:linhas.map(x=>this._saida(x)),pagina,tamanho,total,
+   haAnterior:pagina>0,haMais:(pagina+1)*tamanho<total};
+ }
  async preparar({titularId,rascunhoId,repositorioCatalogo}={}){
   this._validarTitular(titularId);
   this._validarRascunho(rascunhoId);
