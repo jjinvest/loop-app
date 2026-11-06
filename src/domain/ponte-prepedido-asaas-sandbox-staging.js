@@ -38,6 +38,20 @@ class PontePrepedidoAsaasSandboxStaging{
    "'PENDENTE_SANDBOX','RECEBIMENTO_INFORMADO_SANDBOX',",
    "'REVERSAO_INFORMADA_SANDBOX','EXIGE_REVISAO')),",
    'criado_em TEXT NOT NULL,atualizado_em TEXT NOT NULL);',
+   // Compra e posicao sao direitos distintos: jamais bloquear a compra
+   // por limite de vagas. Registrar a elegibilidade antes do Pix e NAO
+   // reinterpretar pedidos antigos quando vagas forem liberadas.
+   'CREATE TABLE IF NOT EXISTS akitemm_prepedido_asaas_reserva_posicoes_staging(',
+   'prepedido_id TEXT PRIMARY KEY REFERENCES',
+   'akitemm_prepedido_asaas_sandbox_staging(prepedido_id) ON DELETE RESTRICT,',
+   'titular_id TEXT NOT NULL,',
+   'posicoes_previstas INTEGER NOT NULL CHECK(posicoes_previstas>=0),',
+   'posicoes_reservadas INTEGER NOT NULL CHECK(posicoes_reservadas BETWEEN 0 AND 10),',
+   "modalidade TEXT NOT NULL CHECK(modalidade IN ('COM_POSICOES',",
+   "'SEM_POSICOES_LIMITE','SEM_POSICOES_PRODUTO','LEGADO_SEM_RESERVA')),",
+   'criado_em TEXT NOT NULL);',
+   'CREATE INDEX IF NOT EXISTS idx_asaas_reserva_titular',
+   'ON akitemm_prepedido_asaas_reserva_posicoes_staging(titular_id);',
    'CREATE TABLE IF NOT EXISTS akitemm_prepedido_asaas_consultas_staging(',
    'id INTEGER PRIMARY KEY AUTOINCREMENT,',
    'prepedido_id TEXT NOT NULL REFERENCES',
@@ -84,8 +98,18 @@ class PontePrepedidoAsaasSandboxStaging{
    'FROM akitemm_prepedido_asaas_consultas_staging',
    'WHERE prepedido_id=? ORDER BY id DESC LIMIT 1'
   ].join(' ')).get(row.prepedido_id)||null;
+  const reserva=this.banco.prepare([
+   'SELECT posicoes_previstas AS posicoesPrevistas,',
+   'posicoes_reservadas AS posicoesReservadas,modalidade',
+   'FROM akitemm_prepedido_asaas_reserva_posicoes_staging',
+   'WHERE prepedido_id=? AND titular_id=?'
+  ].join(' ')).get(row.prepedido_id,row.titular_id);
   return {
    prepedidoId:row.prepedido_id,estado:row.estado,valorCentavos:row.valor_centavos,
+   posicoesPrevistas:reserva?.posicoesPrevistas??null,
+   posicoesReservadas:reserva?.posicoesReservadas??null,
+   modalidadeDeParticipacao:reserva?.modalidade??'LEGADO_SEM_RESERVA',
+   compraSemNovaPosicao:reserva?.posicoesReservadas===0,
    pagamentoSandboxId:row.pagamento_id,ultimaConsultaSandbox:ultimo,
    ambiente:'ASAAS_SANDBOX_EXCLUSIVO',
    criarPixAutomaticamente:false,pagamentoReal:false,valorRecebidoRealCentavos:0,
@@ -123,21 +147,24 @@ class PontePrepedidoAsaasSandboxStaging{
     b.exec('COMMIT');
     return {repetido:true,registro:this._publica(antigo)};
    }
+   let reserva=null;
    if(capacidade!==null){
     const quantidade=capacidade?.quantidadePosicoes;
-    if(!Number.isSafeInteger(quantidade)||quantidade<1||quantidade>10||
+    if(!Number.isSafeInteger(quantidade)||quantidade<0||quantidade>10000||
        typeof capacidade.consultarAtivas!=='function')
      throw falha('CAPACIDADE_POSICOES_NAO_COMPROVADA');
-    // Esta transacao IMMEDIATE serializa reservas do MESMO SQLite mesmo
-    // entre requests/processos. Nao liberar um segundo Pix sobre o mesmo
-    // teto de 10 posicoes ainda comprometido por cobrancas anteriores.
+    // BEGIN IMMEDIATE garante que duas compras simultaneas consultam a
+    // mesma contagem das vagas ja prometidas na base unificada.
     const ativas=capacidade.consultarAtivas();
     if(!Number.isSafeInteger(ativas)||ativas<0||ativas>10)
      throw falha('CAPACIDADE_POSICOES_NAO_COMPROVADA');
-    const reservadas=b.prepare([
+    const anteriores=b.prepare([
      'SELECT p.prepedido_id AS pedidoId,',
-     'f.fotografia_json AS foto',
+     'f.fotografia_json AS foto,',
+     'v.posicoes_reservadas AS reservadas',
      'FROM akitemm_prepedido_asaas_sandbox_staging p',
+     'LEFT JOIN akitemm_prepedido_asaas_reserva_posicoes_staging v',
+     'ON v.prepedido_id=p.prepedido_id',
      'LEFT JOIN akitemm_vitrine_fotografia_classificacao_prepedido f',
      'ON f.prepedido_id=p.prepedido_id',
      'WHERE p.titular_id=?',
@@ -147,17 +174,24 @@ class PontePrepedidoAsaasSandboxStaging{
      "WHERE m.prepedido_id=p.prepedido_id AND m.tipo='VINCULAR_PEDIDO')"
     ].join(' ')).all(titularId);
     let comprometidas=0;
-    for(const item of reservadas){
-     let qtd;
-     try{
-      qtd=JSON.parse(item.foto).planejamentoPosicoes.quantidadePosicoesPrevistas;
-     }catch{throw falha('CAPACIDADE_RESERVAS_INDETERMINADAS');}
-     if(!Number.isSafeInteger(qtd)||qtd<1||qtd>10)
+    for(const item of anteriores){
+     let qtd=item.reservadas;
+     if(qtd===null){
+      // Sem registro historico de reserva, considerar todas as vagas
+      // prometidas pela fotografia para NAO liberar cotas indevidas.
+      try{
+       qtd=JSON.parse(item.foto).planejamentoPosicoes.quantidadePosicoesPrevistas;
+      }catch{throw falha('CAPACIDADE_RESERVAS_INDETERMINADAS');}
+     }
+     if(!Number.isSafeInteger(qtd)||qtd<0)
       throw falha('CAPACIDADE_RESERVAS_INDETERMINADAS');
      comprometidas+=qtd;
     }
-    if(ativas+comprometidas+quantidade>10)
-     throw falha('LIMITE_POSICOES_ANTES_DA_COBRANCA');
+    const reservadas=quantidade>0&&quantidade<=10&&
+     ativas+comprometidas+quantidade<=10?quantidade:0;
+    reserva={previstas:quantidade,reservadas,
+     modalidade:reservadas>0?'COM_POSICOES':
+      quantidade===0?'SEM_POSICOES_PRODUTO':'SEM_POSICOES_LIMITE'};
    }
    const data=this._data();
    b.prepare([
@@ -166,6 +200,12 @@ class PontePrepedidoAsaasSandboxStaging{
     "pagamento_id,estado,criado_em,atualizado_em) VALUES(?,?,?,?,?,NULL,'PREPARADA',?,?)"
    ].join(' ')).run(prepedidoId,titularId,clienteAsaasId,
     original.total_centavos,'LOOPLAB-'+prepedidoId,data,data);
+   if(reserva!==null)b.prepare([
+    'INSERT INTO akitemm_prepedido_asaas_reserva_posicoes_staging',
+    '(prepedido_id,titular_id,posicoes_previstas,posicoes_reservadas,',
+    'modalidade,criado_em) VALUES(?,?,?,?,?,?)'
+   ].join(' ')).run(prepedidoId,titularId,reserva.previstas,
+    reserva.reservadas,reserva.modalidade,data);
    b.exec('COMMIT');
    return {repetido:false,registro:this.consultar({titularId,prepedidoId})};
   }catch(e){b.exec('ROLLBACK');throw e;}
