@@ -1,0 +1,145 @@
+'use strict';
+const {test}=require('node:test');
+const assert=require('node:assert/strict');
+const {DatabaseSync}=require('node:sqlite');
+const {MotorContaUnicaEnsaioSQLite}=require('../src/domain/motor-conta-unica-ensaio-sqlite');
+const {EquipeCandidataSQLite}=require('../src/domain/equipe-candidata-sqlite');
+const tid=n=>'titular-'+String(n).padStart(8,'0')+'-0000-0000-0000-000000000000';
+const pid=n=>'hom-'+String(n).padStart(8,'0')+'-0000-0000-0000-000000000000';
+function preparar(){
+ const db=new DatabaseSync(':memory:');
+ db.exec([
+ 'PRAGMA foreign_keys=ON;',
+ 'CREATE TABLE akitemm_conta_unica_candidata(id TEXT PRIMARY KEY,nick TEXT UNIQUE COLLATE NOCASE);',
+ 'CREATE TABLE akitemm_checkout_prepedidos_staging(prepedido_id TEXT PRIMARY KEY,titular_id TEXT,total_centavos INTEGER,criado_em TEXT);',
+ 'CREATE TABLE akitemm_prepedido_asaas_sandbox_staging(prepedido_id TEXT PRIMARY KEY,titular_id TEXT,estado TEXT,pagamento_id TEXT);',
+ 'CREATE TABLE akitemm_prepedido_asaas_consultas_staging(id INTEGER PRIMARY KEY AUTOINCREMENT,prepedido_id TEXT,pagamento_id TEXT,status_asaas TEXT,consultado_em TEXT);',
+ 'CREATE TABLE akitemm_prepedido_webhook_inbox_staging(evento_id TEXT PRIMARY KEY,prepedido_id TEXT,pagamento_id TEXT,tipo TEXT);',
+ 'CREATE TABLE akitemm_prepedido_webhook_reconsulta_staging(evento_id TEXT PRIMARY KEY,estado TEXT,codigo TEXT);'
+ ].join(' '));
+ const fotos=new Map(),estadosPSP=new Map();
+ const sinalizacao={db,consultarFotografiaPrepedido:({prepedidoId,titularId})=>{
+  const x=fotos.get(prepedidoId);return x?.titularId===titularId?x:null;
+ }};
+ const ponte={banco:db,consultar:({prepedidoId})=>{
+  const x=estadosPSP.get(prepedidoId);
+  return x?{estado:x.estado,valorCentavos:25000,pagamentoSandboxId:'pay_'+prepedidoId.slice(4,12),
+   ultimaConsultaSandbox:{statusAsaas:x.status},revisaoManualObrigatoria:false}:null;
+ }};
+ const equipe=new EquipeCandidataSQLite({banco:db});
+ const motor=new MotorContaUnicaEnsaioSQLite({banco:db,sinalizacao,ponte});
+ const conta=(n,nick)=>db.prepare('INSERT INTO akitemm_conta_unica_candidata(id,nick) VALUES(?,?)').run(tid(n),nick);
+ const comprar=(n,t,recebido)=>{
+  const id=pid(n),titular=tid(t),asaas='pay_'+id.slice(4,12);
+  db.prepare('INSERT INTO akitemm_checkout_prepedidos_staging VALUES(?,?,?,?)')
+   .run(id,titular,25000,new Date().toISOString());
+  fotos.set(id,{titularId:titular,totalCentavos:25000,referenciaVerdeAtingida:true,
+   valorVerdeConsideradoCentavos:25000,podeSimularFilaBAzul:true,eventoPendente:false});
+  const estado=recebido?'RECEBIMENTO_INFORMADO_SANDBOX':'PENDENTE_SANDBOX';
+  db.prepare('INSERT INTO akitemm_prepedido_asaas_sandbox_staging VALUES(?,?,?,?)')
+   .run(id,titular,estado,asaas);
+  db.prepare('INSERT INTO akitemm_prepedido_asaas_consultas_staging(prepedido_id,pagamento_id,status_asaas,consultado_em) VALUES(?,?,?,?)')
+   .run(id,asaas,recebido?'RECEIVED':'PENDING',new Date().toISOString());
+  if(recebido){
+   db.prepare('INSERT INTO akitemm_prepedido_webhook_inbox_staging VALUES(?,?,?,?)')
+    .run('evt_'+n,id,asaas,'PAYMENT_RECEIVED');
+   db.prepare('INSERT INTO akitemm_prepedido_webhook_reconsulta_staging VALUES(?,?,?)')
+    .run('evt_'+n,'CONCLUIDO','PSP_RECONSULTADO');
+  }
+  estadosPSP.set(id,{estado,status:recebido?'RECEIVED':'PENDING'});
+  return motor.vincularPedido({prepedidoId:id,aceiteEnsaio:true});
+ };
+ // Fixture isolada do aceite; a verificacao real CPF/termos e PSP possui
+ // teste proprio. Nao e rota que libera KYC/recebimento comercial.
+ const aceitar=id=>{
+  const l=db.prepare('SELECT titular_id,prepedido_id FROM akitemm_motor_ensaio_lotes_pedido WHERE numero_posicao=?').get(id);
+  db.prepare('INSERT INTO akitemm_motor_ensaio_aceites_posicao VALUES(?,?,?,?,?,?,?)')
+   .run(id,l.prepedido_id,l.titular_id,'hmac-lab','LAB-TERMOS','hash-lab',new Date().toISOString());
+  motor._transacao(sim=>{
+   const p=[...sim.filas.filaA,...sim.filas.filaB,sim.tabuleiro.centro,...sim.tabuleiro.vagas]
+    .find(p=>p?.id===id);
+   p.statusAdesao='ACEITE_ENSAIO';
+  });
+ };
+ return {db,motor,equipe,conta,comprar,aceitar};
+}
+test('compra de A -> convite -> compra PSP de B -> fila A -> centro do tabuleiro',()=>{
+ const x=preparar();
+ try{
+  x.conta(1,'Alpha');x.conta(2,'Bravo');
+  const a=x.comprar(1,1,true);x.aceitar(a.posicaoId);
+  assert.equal(x.motor.consultar().filaB.length,1);
+  x.equipe.registrarCadastro({indicadoId:tid(2),indicadorNick:'Alpha'});
+  assert.throws(()=>x.motor.qualificarIndicacaoEnsaio({
+   indicadorId:tid(1),indicadoId:tid(2),posicaoAlvoId:a.posicaoId
+  }),/INDICACAO_AGUARDANDO_COMPRA_PSP_CONCILIADA/);
+  x.comprar(2,2,true);
+  const aprovado=x.motor.qualificarIndicacaoEnsaio({
+   indicadorId:tid(1),indicadoId:tid(2),posicaoAlvoId:a.posicaoId
+  });
+  assert.equal(aprovado.qualificada,true);
+  assert.equal(aprovado.promovidaParaFilaA,true);
+  assert.equal(aprovado.comissaoRealCentavos,0);
+  const estado=x.motor.consultar({titularId:tid(1)});
+  assert.equal(estado.filaA[0].numero,a.posicaoId);
+  assert.equal(estado.filaA[0].indicacoesVinculadas,1);
+  assert.equal(estado.minhasPosicoes[0].indicacoesVinculadas,1);
+  const equipe=x.equipe.listar({titularId:tid(1)});
+  assert.equal(equipe.indicacoesQualificadas,1);
+  assert.equal(equipe.cadastros[0].qualificadaEnsaio,true);
+  assert.equal(equipe.cadastros[0].posicaoAlvoId,a.posicaoId);
+  const repetido=x.motor.qualificarIndicacaoEnsaio({
+   indicadorId:tid(1),indicadoId:tid(2),posicaoAlvoId:a.posicaoId
+  });
+  assert.equal(repetido.repetido,true);
+  const board=x.motor.prepararTabuleiro();
+  assert.equal(board.preparado,true);
+  assert.equal(x.motor.consultar().tabuleiro.centro.numero,a.posicaoId);
+  assert.equal(x.motor.consultar().catraca.giros,0);
+  assert.equal(x.motor.consultar().saldoRealCentavos,null);
+  assert.equal(x.db.prepare('SELECT COUNT(*) AS n FROM akitemm_motor_indicacoes_qualificadas_lab').get().n,1);
+  assert.equal(x.db.prepare('PRAGMA integrity_check').get().integrity_check,'ok');
+ }finally{x.db.close();}
+});
+test('sem convite, aceite ou compra confirmada nao altera fila; outra conta nao realoca',()=>{
+ const x=preparar();
+ try{
+  x.conta(1,'Alpha');x.conta(2,'Bravo');x.conta(3,'Delta');
+  const a=x.comprar(1,1,true),b=x.comprar(2,2,true);
+  assert.throws(()=>x.motor.qualificarIndicacaoEnsaio({
+   indicadorId:tid(1),indicadoId:tid(2),posicaoAlvoId:a.posicaoId
+  }),/INDICACAO_SEM_CONVITE_VALIDO/);
+  x.equipe.registrarCadastro({indicadoId:tid(2),indicadorNick:'Alpha'});
+  assert.throws(()=>x.motor.qualificarIndicacaoEnsaio({
+   indicadorId:tid(1),indicadoId:tid(2),posicaoAlvoId:a.posicaoId
+  }),/POSICAO_ALVO_NAO_CONFIRMADA/);
+  x.aceitar(a.posicaoId);
+  assert.throws(()=>x.motor.qualificarIndicacaoEnsaio({
+   indicadorId:tid(1),indicadoId:tid(2),posicaoAlvoId:b.posicaoId
+  }),/POSICAO_ALVO_NAO_CONFIRMADA/);
+  assert.throws(()=>x.motor.qualificarIndicacaoEnsaio({
+   indicadorId:tid(3),indicadoId:tid(2),posicaoAlvoId:a.posicaoId
+  }),/INDICACAO_SEM_CONVITE_VALIDO/);
+  const r=x.motor.qualificarIndicacaoEnsaio({
+   indicadorId:tid(1),indicadoId:tid(2),posicaoAlvoId:a.posicaoId
+  });
+  assert.equal(r.qualificada,true);
+  assert.throws(()=>x.motor.qualificarIndicacaoEnsaio({
+   indicadorId:tid(1),indicadoId:tid(2),posicaoAlvoId:b.posicaoId
+  }),/INDICACAO_JA_ATRIBUIDA_OUTRA_POSICAO/);
+  assert.equal(x.motor.consultar().filaA.length,1);
+ }finally{x.db.close();}
+});
+test('pedido de B pendente no PSP nao vira indicacao apesar de lote no motor',()=>{
+ const x=preparar();
+ try{
+  x.conta(1,'Alpha');x.conta(2,'Bravo');
+  const a=x.comprar(1,1,true);x.aceitar(a.posicaoId);
+  x.equipe.registrarCadastro({indicadoId:tid(2),indicadorNick:'Alpha'});
+  x.comprar(2,2,false);
+  assert.throws(()=>x.motor.qualificarIndicacaoEnsaio({
+   indicadorId:tid(1),indicadoId:tid(2),posicaoAlvoId:a.posicaoId
+  }),/INDICACAO_AGUARDANDO_COMPRA_PSP_CONCILIADA/);
+  assert.equal(x.motor.consultar().filaA.length,0);
+ }finally{x.db.close();}
+});
