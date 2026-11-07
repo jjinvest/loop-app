@@ -420,7 +420,7 @@ async function iniciar({env=process.env}={}){
  const interno=c.app.listen(0,'127.0.0.1');
  await new Promise((ok,fail)=>{interno.once('listening',ok);interno.once('error',fail);});
  const gateway=criarGateway({portaInterna:interno.address().port,
-  senhaAcesso,senhaAdmin:process.env.LOOP_PREVIEW_SENHA_ADMIN||null,
+  senhaAcesso,senhaAdmin:env.LOOP_PREVIEW_SENHA_ADMIN,
   segredoOperador:tokenOperador,
   validarNickIndicador:nick=>c.equipe.existeNick(nick),
   permitirWebhookSandbox:sandboxAtivo});
