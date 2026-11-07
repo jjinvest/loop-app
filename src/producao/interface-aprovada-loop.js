@@ -6,11 +6,15 @@ const fs=require('node:fs');
 const path=require('node:path');
 const htmlOriginal=fs.readFileSync(path.join(__dirname,
  '../candidato/checkout-candidato-ui.html'),'utf8');
+const lojaOriginal=fs.readFileSync(path.join(__dirname,
+ '../laboratorio/loja-cliente-demo.html'),'utf8');
 const ARQUIVOS=Object.freeze({
  '/identidade/assets/cliente.css':'../laboratorio/checkout-staging-ui.css',
  '/identidade/assets/loop03-aprovado.css':'../laboratorio/loop-03-shell.css',
  '/identidade/assets/cliente-integrado.css':'../candidato/escritorio-cliente-integrado.css',
- '/identidade/assets/cliente.js':'./interface-aprovada-contas.js'
+ '/identidade/assets/cliente.js':'./interface-aprovada-contas.js',
+ '/identidade/assets/loja.css':'../laboratorio/loja-cliente-demo.css',
+ '/identidade/assets/loja.js':'./interface-aprovada-loja.js'
 });
 function trocarExato(texto,antes,depois){
  const partes=texto.split(antes);
@@ -58,8 +62,23 @@ function renderizarInterfaceAprovada(){
  // como conteúdo comercial. Não expor recursos financeiros incompletos.
  return html;
 }
-function montarInterfaceAprovada(app){
+function renderizarLojaAprovada(){
+ let html=lojaOriginal;
+ html=trocarExato(html,'/laboratorio/loja.css',
+  '/identidade/assets/loja.css');
+ html=trocarExato(html,
+  '<script src="/laboratorio/educacao-carrinho.js" defer></script>',
+  '');
+ html=trocarExato(html,
+  '<script src="/laboratorio/loja.js" defer></script>',
+  '<script src="/identidade/assets/loja.js" defer></script>');
+ return html;
+}
+function montarInterfaceAprovada(app,{protegerLoja}={}){
+ if(typeof protegerLoja!=='function')
+  throw Error('PROTECAO_LOJA_OBRIGATORIA');
  const html=renderizarInterfaceAprovada();
+ const htmlLoja=renderizarLojaAprovada();
  app.get(['/escritorio','/minha-conta'],(_req,res)=>
   res.type('html').send(html));
  for(const [rota,arquivo] of Object.entries(ARQUIVOS)){
@@ -68,10 +87,8 @@ function montarInterfaceAprovada(app){
    .sendFile(caminho));
  }
  // Não abrir vitrine fictícia em produção por meio do mesmo nick.
- app.get('/loja',(_req,res)=>res.status(503).json({
-  erro:'LOJA_AINDA_NAO_HABILITADA_PARA_VENDA_REAL',
-  checkoutReal:false,
-  financeiroReal:false
- }));
+ app.get('/loja',protegerLoja,(_req,res)=>
+  res.type('html').send(htmlLoja));
 }
-module.exports={renderizarInterfaceAprovada,montarInterfaceAprovada};
+module.exports={renderizarInterfaceAprovada,renderizarLojaAprovada,
+ montarInterfaceAprovada};
