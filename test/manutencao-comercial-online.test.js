@@ -90,6 +90,9 @@ test('pausa e retomada persistentes permitem leitura e auditam ambos os moviment
  assert.equal(x.catalogo.listarVitrine().length,1);
  const prova=x.auditoria.verificar();
  assert.equal(prova.integra,true);
+ assert.equal(prova.verificacaoCompleta,true);
+ assert.throws(()=>x.auditoria.verificar({limite:2}),
+  {codigo:'AUDITORIA_ACIMA_DO_LIMITE'});
  assert.deepEqual(x.auditoria.listar({limite:4}).map(x=>x.acao),[
   'CUSTO_FORNECEDOR_ALTERADO','MANUTENCAO_COMERCIAL_ALTERADA',
   'MANUTENCAO_COMERCIAL_ALTERADA','OFERTA_STATUS_ALTERADO'
