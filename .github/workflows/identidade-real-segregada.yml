@@ -10,6 +10,7 @@ on:
       - 'test/identidade-real-persistencia.test.js'
       - 'test/api-identidade-real-sem-pagamentos.test.js'
       - 'test/limite-operacoes-identidade-real-sqlite.test.js'
+      - 'test/troca-senha-identidade-real-sqlite.test.js'
       - '.github/workflows/identidade-real-segregada.yml'
   workflow_dispatch:
 permissions:
@@ -43,6 +44,8 @@ jobs:
         run: node --test test/api-identidade-real-sem-pagamentos.test.js
       - name: Limites de login/cadastro/recuperação persistentes e HTTP 429
         run: node --test test/limite-operacoes-identidade-real-sqlite.test.js
+      - name: Troca de senha autenticada, concorrente e com CSRF
+        run: node --test test/troca-senha-identidade-real-sqlite.test.js
       - name: Não ativar cadastro real com configuração de laboratório
         env:
           NODE_ENV: production
