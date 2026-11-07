@@ -150,6 +150,14 @@ async function enviarBackupOffsiteIdentidade({
      chaves.cotacoesLidas!==local.cotacoes))
    falha('OFFSITE_REAL_LEITURA_DIVERGENTE');
   return {estado:'OFFSITE_REAL_IDENTIDADE_CIFRADO_BAIXADO_RESTAURADO',
+   manifestoIndependente:{
+    chaveObjeto:key,sha256Cifrado:local.sha256Cifrado,bytes:recebidos,
+    contas:prova.contas,pedidos:local.pedidos,
+    linhasCustos:local.linhasCustos,remessas:local.remessas,
+    cotacoes:local.cotacoes,
+    administracaoIncluida:local.administracaoIncluida,
+    recuperacaoComercialIncluida:local.recuperacaoComercialIncluida
+   },
    sha256Cifrado:local.sha256Cifrado,bytes:recebidos,contas:prova.contas,
    semPIIEmRelatorio:true,integridadeSQLite:'ok',
    copiaExternaConfirmada:true,restauracaoIsoladaConfirmada:true,
