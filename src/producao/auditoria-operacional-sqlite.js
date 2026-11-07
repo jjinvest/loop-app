@@ -58,6 +58,10 @@ class AuditoriaOperacionalSQLite{
    falha('AUDITORIA_DADOS_SENSIVEIS_OU_EXCESSIVOS');
   const ts=this.agora();
   if(!Number.isSafeInteger(ts)||ts<=0)falha('AUDITORIA_RELOGIO_INVALIDO');
+  // Falha fechada: não anexar eventos a uma cadeia adulterada.
+  // O custo de conferir a cadeia é aceito nas operações administrativas
+  // (baixa frequência); substituir por checkpoints externos quando crescer.
+  this.verificar();
   // Quem invoca deve manter BEGIN IMMEDIATE até finalizar a alteração.
   // Não abrir transação paralela: transação e auditoria são indivisíveis.
   const anterior=this.db.prepare([
