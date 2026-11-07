@@ -11,6 +11,7 @@ const {pipeline}=require('node:stream/promises');
 const {createHmac,createHash,randomUUID}=require('node:crypto');
 const {criarBackupIdentidadeReal,restaurarBackupIdentidadeReal}=
  require('./backup-identidade-real');
+const {provarChavesRecuperacao}=require('./prova-chaves-recuperacao');
 function falha(c){const e=new Error(c);e.codigo=c;throw e;}
 const h=(k,x,enc)=>createHmac('sha256',k).update(x).digest(enc);
 const sha=s=>createHash('sha256').update(s).digest('hex');
@@ -66,7 +67,8 @@ async function fileHash(nome){
 }
 async function enviarBackupOffsiteIdentidade({
  fonteSqlite,chaveBackup,config,buscar=fetch,agora=()=>new Date(),
- id=randomUUID,maxBytes=512*1024*1024
+ id=randomUUID,maxBytes=512*1024*1024,
+ exigirProvaChaves=false,chavesRecuperacao=null
 }={}){
  if(typeof fonteSqlite!=='string'||typeof buscar!=='function'||
     typeof agora!=='function'||typeof id!=='function'||
@@ -134,13 +136,31 @@ async function enviarBackupOffsiteIdentidade({
   const prova=await restaurarBackupIdentidadeReal({
    origem:baixado,destino:restaurado,chaveBackup,autorizado:true
   });
-  if(prova.contas!==local.contas||prova.integridadeSQLite!=='ok')
+  if(prova.integridadeSQLite!=='ok'||[
+    'contas','pedidos','linhasCustos','remessas','cotacoes',
+    'recuperacaoComercialIncluida','administracaoIncluida'
+   ].some(k=>prova[k]!==local[k]))
    falha('OFFSITE_REAL_RESTAURACAO_DIVERGENTE');
+  const chaves=exigirProvaChaves?
+   provarChavesRecuperacao({arquivo:restaurado,chaves:chavesRecuperacao}):null;
+  if(chaves&&(
+     chaves.contasLidas!==local.contas||
+     chaves.pedidosLidos!==local.pedidos||
+     chaves.remessasLidas!==local.remessas||
+     chaves.cotacoesLidas!==local.cotacoes))
+   falha('OFFSITE_REAL_LEITURA_DIVERGENTE');
   return {estado:'OFFSITE_REAL_IDENTIDADE_CIFRADO_BAIXADO_RESTAURADO',
    sha256Cifrado:local.sha256Cifrado,bytes:recebidos,contas:prova.contas,
    semPIIEmRelatorio:true,integridadeSQLite:'ok',
    copiaExternaConfirmada:true,restauracaoIsoladaConfirmada:true,
    sessaoAntigaNaoRessuscita:true,
+   recuperacaoComercialIncluida:local.recuperacaoComercialIncluida,
+   pedidos:local.pedidos,linhasCustos:local.linhasCustos,
+   remessas:local.remessas,cotacoes:local.cotacoes,
+   chavesDeLeituraVerificadas:chaves?.chavesDeLeituraVerificadas===true,
+   auditoriaHmacVerificada:chaves?.trilhaAdminVerificada===true,
+   custodiaExternaIndependenteComprovada:false,
+   conciliacaoPspBancoComprovada:false,
    recuperacaoOutraRegiaoComprovada:false,backupFinanceiro:false,
    rpoRtoContratualmenteGarantidos:false,checkoutRealHabilitado:false};
  }catch(e){

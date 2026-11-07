@@ -217,6 +217,7 @@ async function restaurarBackupIdentidadeReal({
   fs.chmodSync(p.destino,0o600);
   return {estado:'IDENTIDADE_RESTAURADA_EM_ARQUIVO_NOVO',
    contas:antes.contas,integridadeSQLite:'ok',...invalidacao,
+   administracaoIncluida:antes.administracaoIncluida,
    recuperacaoComercialIncluida:antes.recuperacaoComercialIncluida,
    pedidos:antes.pedidos,linhasCustos:antes.linhasCustos,
    remessas:antes.remessas,cotacoes:antes.cotacoes,

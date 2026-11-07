@@ -56,12 +56,19 @@ function configurar(ambiente=process.env){
  // do cliente ou o segredo da homologação.
  const chaveAdmin=key('LOOP_REAL_CHAVE_ADMIN');
  const chaveAuditoria=key('LOOP_REAL_CHAVE_AUDITORIA');
+ // Chaves próprias para payloads comerciais: opcionais enquanto a respectiva
+ // tabela está vazia; obrigatórias na prova do restore se houver registros.
+ const keyComercial=n=>ambiente[n]===undefined?null:key(n);
+ const chaveCotacoes=keyComercial('LOOP_REAL_CHAVE_COTACOES');
+ const chavePedidos=keyComercial('LOOP_REAL_CHAVE_PEDIDOS');
+ const chaveOutbox=keyComercial('LOOP_REAL_CHAVE_OUTBOX');
  const credencialAdmin=ambiente.LOOP_REAL_ADMIN_CREDENCIAL;
  if(typeof credencialAdmin!=='string'||
     credencialAdmin.length<24||credencialAdmin.length>256)
   throw Error('ADMIN_REAL_CREDENCIAL_NAO_CONFIGURADA');
  const separadas=[chaveEmail,chaveCifra,chaveCodigo,chaveBackup,
-  chaveAdmin,chaveAuditoria];
+  chaveAdmin,chaveAuditoria,chaveCotacoes,chavePedidos,chaveOutbox]
+  .filter(Boolean);
  for(let i=0;i<separadas.length;i++){
   for(let j=i+1;j<separadas.length;j++){
    if(separadas[i].equals(separadas[j]))
@@ -95,7 +102,9 @@ function configurar(ambiente=process.env){
   (finalidade==='SENHA'?recuperar:confirmar)(args);
  return {arquivo,chaveEmail,chaveCifra,chaveCodigo,termos,privacidade,
   origemHttps,enviarEmail,chaveBackup,configS3,
-  chaveAdmin,chaveAuditoria,credencialAdmin};
+  chaveAdmin,chaveAuditoria,credencialAdmin,
+  chavesRecuperacao:{chaveEmail,chaveCifra,chaveCodigo,chaveAuditoria,
+   chaveCotacoes,chavePedidos,chaveOutbox}};
 }
 async function iniciar(ambiente=process.env){
  const config=configurar(ambiente);
@@ -123,7 +132,8 @@ async function iniciar(ambiente=process.env){
   agendador=criarAgendadorBackupIdentidadeReal({
    executar:()=>enviarBackupOffsiteIdentidade({
     fonteSqlite:config.arquivo,chaveBackup:config.chaveBackup,
-    config:config.configS3
+    config:config.configS3,exigirProvaChaves:true,
+    chavesRecuperacao:config.chavesRecuperacao
    })
   });
   // Falha de rede, segredo, bucket, restauração ou dados bloqueia o

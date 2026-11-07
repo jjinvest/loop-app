@@ -351,3 +351,49 @@ test('backup rejeita outbox vinculada a pagamento de outro pedido e preserva rev
  assert.equal(fs.existsSync(x.backup),false);
  x.banco.close();
 });
+
+const {enviarBackupOffsiteIdentidade}=
+ require('../src/producao/backup-identidade-offsite');
+test('offsite comercial só confirma restauração quando as chaves leem pedido e remessa',async t=>{
+ const x=fixture(t),m=await montarPedidoComRemessa(x);
+ const config={endpoint:'https://bucket.storageapi.dev',
+  bucket:'loop-clientes-private-2026',accessKeyId:'CHAVE_DE_TESTE_PUBLICA',
+  secretAccessKey:'SegredoFicticioNaoUsarEmProducao1234567890',region:'auto'};
+ const chaves={chaveEmail:x.opcoes.chaveEmail,
+  chaveCifra:x.opcoes.chaveCifra,chaveCodigo:x.opcoes.chaveCodigo,
+  chavePedidos:m.chavePedidos,chaveOutbox:m.chaveOutbox};
+ let remoto=null,puts=0,gets=0;
+ const buscar=async(_url,args)=>{
+  if(args.method==='PUT'){
+   puts++;const b=[];for await(const p of args.body)b.push(p);
+   remoto=Buffer.concat(b);return new Response(null,{status:200});
+  }
+  gets++;
+  return new Response(remoto,{status:200});
+ };
+ const opts={fonteSqlite:x.arquivo,chaveBackup:x.chaveBackup,config,
+  buscar,agora:()=>new Date('2026-11-07T08:00:00Z'),
+  id:()=>'01234567-89ab-4cde-8fab-0123456789ab',
+  exigirProvaChaves:true,chavesRecuperacao:chaves};
+ await assert.rejects(enviarBackupOffsiteIdentidade({
+  ...opts,chavesRecuperacao:{...chaves,chaveOutbox:null}
+ }),{codigo:'RECUPERACAO_CHAVE_COMERCIAL_AUSENTE'});
+ await assert.rejects(enviarBackupOffsiteIdentidade({
+  ...opts,chavesRecuperacao:{...chaves,chavePedidos:randomBytes(32)}
+ }),{codigo:'RECUPERACAO_CIFRA_DIVERGENTE'});
+ const prova=await enviarBackupOffsiteIdentidade(opts);
+ assert.equal(prova.chavesDeLeituraVerificadas,true);
+ assert.equal(prova.recuperacaoComercialIncluida,true);
+ assert.equal(prova.pedidos,1);
+ assert.equal(prova.linhasCustos,1);
+ assert.equal(prova.remessas,1);
+ assert.equal(prova.conciliacaoPspBancoComprovada,false);
+ assert.equal(prova.custodiaExternaIndependenteComprovada,false);
+ assert.equal(prova.backupFinanceiro,false);
+ assert.equal(puts,3);assert.equal(gets,3);
+ assert.equal(x.banco.prepare(
+  'SELECT estado FROM loja_real_outbox_fornecedor WHERE pedido_id=?'
+ ).get(m.pedido.pedidoId).estado,'INDETERMINADO');
+ assert.equal(x.banco.prepare('PRAGMA integrity_check').get().integrity_check,'ok');
+ x.banco.close();
+});
