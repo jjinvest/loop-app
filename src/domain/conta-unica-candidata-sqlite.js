@@ -433,24 +433,32 @@ class ContaUnicaCandidataSQLite{
   // Resposta idêntica para endereços existentes e inexistentes.
   if(!a)return resposta;
   const agora=this._agora();
-  const ultima=this.banco.prepare([
-   'SELECT criado_em FROM akitemm_recuperacao_senha_candidata',
-   'WHERE titular_id=? ORDER BY criado_em DESC LIMIT 1'
-  ].join(' ')).get(a.id);
-  if(ultima&&agora-ultima.criado_em<120000)return resposta;
-  const contagem=this.banco.prepare([
-   'SELECT COUNT(*) AS total FROM akitemm_recuperacao_senha_candidata',
-   'WHERE titular_id=? AND criado_em>?'
-  ].join(' ')).get(a.id,agora-3600000).total;
-  if(contagem>=3)return resposta;
   const codigo=String(randomInt(0,100000000)).padStart(8,'0');
   const id='senha-'+randomUUID();
-  this.banco.prepare([
-   'INSERT INTO akitemm_recuperacao_senha_candidata',
-   '(id,titular_id,codigo_hmac,estado,criado_em,expira_em)',
-   "VALUES(?,?,?,'RESERVADO',?,?)"
-  ].join(' ')).run(id,a.id,this._hmacRecuperacao(a.id,codigo),
-   agora,agora+15*60000);
+  // Duas instancias nao podem ultrapassar o cooldown nem o limite horario
+  // pela janela entre SELECT de quota e INSERT do desafio.
+  this.banco.exec('BEGIN IMMEDIATE');
+  try{
+   const ultima=this.banco.prepare([
+    'SELECT criado_em FROM akitemm_recuperacao_senha_candidata',
+    'WHERE titular_id=? ORDER BY criado_em DESC LIMIT 1'
+   ].join(' ')).get(a.id);
+   const contagem=this.banco.prepare([
+    'SELECT COUNT(*) AS total FROM akitemm_recuperacao_senha_candidata',
+    'WHERE titular_id=? AND criado_em>?'
+   ].join(' ')).get(a.id,agora-3600000).total;
+   if((ultima&&agora-ultima.criado_em<120000)||contagem>=3){
+    this.banco.exec('COMMIT');
+    return resposta;
+   }
+   this.banco.prepare([
+    'INSERT INTO akitemm_recuperacao_senha_candidata',
+    '(id,titular_id,codigo_hmac,estado,criado_em,expira_em)',
+    "VALUES(?,?,?,'RESERVADO',?,?)"
+   ].join(' ')).run(id,a.id,this._hmacRecuperacao(a.id,codigo),
+    agora,agora+15*60000);
+   this.banco.exec('COMMIT');
+  }catch(e){this.banco.exec('ROLLBACK');throw e;}
   let enviado=false;
   try{
    enviado=(await this.enviarRecuperacao({
