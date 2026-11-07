@@ -225,12 +225,13 @@ function criarAppLojaEscritorioCandidato({banco,repositorioCatalogo,
      Object.keys(body).sort().join(',')!=='aceiteExplicito,email,nick,nome,senha')
    return res.status(400).json({erro:'CAMPOS_INVALIDOS'});
   try{
-   const conta=await contas.cadastrar({...body,termosVersao,termosTexto});
-   // Atribuicao de ensaio recebida somente do gateway confiavel, nunca
-   // do formulario do cliente. Sem direito financeiro ou indicacao valida.
+   // Recebida apenas do gateway assinado. Criacao da conta + vinculo
+   // de indicacao ocorrem no MESMO COMMIT, nunca apos confirmar cadastro.
    const indicadorNick=req.get('x-akitemm-preview-indicador');
-   if(indicadorNick)equipe.registrarCadastro({
-    indicadoId:conta.titularId,indicadorNick
+   const conta=await contas.cadastrar({...body,termosVersao,termosTexto,
+    onCriada:indicadorNick?({titularId})=>equipe.registrarCadastro({
+     indicadoId:titularId,indicadorNick
+    }):null
    });
    return res.status(201).json(conta);
   }catch(e){
