@@ -102,7 +102,7 @@ test('Pix conciliado vira uma única ordem e endereco fica cifrado em SQLite',as
  assert.equal(a.sent.length,1,'não pode duplicar pedido externo');
  await assert.rejects(a.y.registrarPagamentoConciliado({
   ...a.entrada,itens:[{sku:'SKU_001',quantidade:2}]
- }),{codigo:'PEDIDO_FORNECEDOR_CONFLITO'});
+ }),{codigo:'PEDIDO_DIVERGENTE_DO_ORIGINAL'});
  assert.equal(a.db1.prepare('PRAGMA integrity_check').get().integrity_check,'ok');
 });
 test('timeout apos possível POST não reenvia; consulta recupera confirmação',async t=>{
