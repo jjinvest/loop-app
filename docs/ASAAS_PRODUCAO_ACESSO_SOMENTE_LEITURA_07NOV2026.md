@@ -22,3 +22,5 @@ Referências oficiais:
 - https://docs.asaas.com/reference/recuperar-extrato
 
 **Limites:** acesso de Produção ainda **não comprovado**, chave não fornecida, integração financeira externa/contábil não concluída, caso WeDrop sem permissão confirmada; operação comercial permanece bloqueada. PR #1 DRAFT e telas já aprovadas preservadas.
+
+**CI confirmado:** [42375397574 — SUCCESS](https://github.com/jjinvest/loop-app/actions/runs/42375397574), revisão `f054236657fc1331c938c235416f361892acb893`. O teste simulou conexões e negativas. A chave de produção ainda não foi criada/conectada aqui e nenhuma requisição financeira real foi feita.

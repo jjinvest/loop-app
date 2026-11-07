@@ -114,3 +114,5 @@ Auditor de caixa de tres fontes now contempla DEBITO_REVERSAO da conta bancaria 
 ## Continuidade 259 — diagnóstico comercial Asaas sem habilitar dinheiro (07/11/2026)
 
 Preparada consulta da conta Asaas Produção e capacidade de leitura do extrato, com allowlist explícita de dois GET, segredo de Produção distinto do Sandbox, validação da aprovação cadastral, opt-in manual e relatório sem valores/PII/IDs. Nenhuma chamada externa de Produção ocorreu porque não há credencial aprovada em runtime isolado. O banco externo segue sem instituição/contrato definido, WeDrop sem integração autorizada. Procedimento: docs/ASAAS_PRODUCAO_ACESSO_SOMENTE_LEITURA_07NOV2026.md. CI testa com respostas simuladas; verificar resultado no HEAD. Não habilitar checkout ou depositar chave no preview.
+
+**Evidência 259 validada:** [GitHub Actions 42375397574 — SUCCESS](https://github.com/jjinvest/loop-app/actions/runs/42375397574), código `f054236657fc1331c938c235416f361892acb893`. Escopo: preparação da leitura comercial com testes simulados, NÃO acesso efetivo de Produção.
