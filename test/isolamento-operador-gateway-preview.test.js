@@ -45,11 +45,18 @@ test('cookie de visitante nao abre APIs administrativas nem injeta bearer no bac
   for(const path of ['/escritorio','/staging/escritorio-admin',
    '/staging/escritorio-unificado','/staging/escritorio-unificado/motor/estado',
    '/staging/escritorio-unificado/motor/liberar-lote',
-   '/staging/assets/admin.js','/staging/assets/admin.css']){
+   '/staging/assets/admin.js','/staging/assets/admin.css',
+   '/STAGING/ESCRITORIO-ADMIN',
+   '/STAGING/ESCRITORIO-UNIFICADO/MOTOR/ESTADO',
+   '/staging/escritorio%2dunificado/motor/estado',
+   '/staging/assets/%61dmin.js']){
    const r=await fetch(x.url+path,{headers:{Cookie:ck}});
    assert.equal(r.status,401,path);
   }
   assert.equal(x.chamadas.length,n,'sem encaminhamento ao upstream');
+  const raiz=await fetch(x.url+'/',{headers:{Cookie:ck},redirect:'manual'});
+  assert.equal(raiz.status,302);
+  assert.equal(raiz.headers.get('location'),'/minha-conta');
   const cliente=await fetch(x.url+'/minha-conta',{headers:{Cookie:ck}});
   assert.equal(cliente.status,200,'cliente autentica normalmente');
   const interno=await fetch(x.url+'/staging/asaas/webhook-unificado',{
