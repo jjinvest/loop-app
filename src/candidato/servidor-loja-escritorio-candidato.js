@@ -4,6 +4,7 @@
 // NUNCA montar em src/server.js; nao expor em Railway publico.
 const express=require('express');
 const path=require('node:path');
+const {createHash}=require('node:crypto');
 const {ContaUnicaCandidataSQLite,COOKIE,DURACAO_MS}=
  require('../domain/conta-unica-candidata-sqlite');
 const {TitularidadeCpfTermosCandidato}=
@@ -217,24 +218,39 @@ function criarAppLojaEscritorioCandidato({banco,repositorioCatalogo,
  app.get('/staging/escritorio-admin',(_req,res)=>res.sendFile(path.join(__dirname,'escritorio-admin-candidato-ui.html')));
  app.get('/staging/assets/admin.js',(_req,res)=>res.type('js').sendFile(path.join(__dirname,'escritorio-admin-candidato-ui.js')));
  app.get('/staging/assets/admin.css',(_req,res)=>res.type('css').sendFile(path.join(__dirname,'escritorio-admin-candidato-ui.css')));
- // Quem se cadastra precisa ler a mesma versao que sera registrada
- // de modo imutavel com seu aceite. Disponivel antes do primeiro login.
+ // Publico sob o gateway de homologacao; uma conta nova ve o texto
+ // exato e a impressao SHA-256 que o backend guardara no cadastro.
+ const termosHashCadastro=createHash('sha256')
+  .update(termosTexto,'utf8').digest('hex');
  app.get('/staging/contas/termos-cadastro',(_req,res)=>res.json({
-  termosVersao,termosTexto,somenteEnsaio:true,
-  cadastroRealHabilitado:false
+  termosVersao,termosTexto,termosHash:termosHashCadastro,
+  somenteEnsaio:true,cadastroRealHabilitado:false
  }));
  app.post('/staging/contas/cadastrar',async(req,res)=>{
   if(!req.is('application/json'))
    return res.status(415).json({erro:'JSON_OBRIGATORIO'});
   const body=req.body;
-  if(!body||Array.isArray(body)||typeof body!=='object'||
-     Object.keys(body).sort().join(',')!=='aceiteExplicito,email,nick,nome,senha')
+  if(!body||Array.isArray(body)||typeof body!=='object')
    return res.status(400).json({erro:'CAMPOS_INVALIDOS'});
+  // Compatibilidade exclusiva com os ensaios legados sem snapshot.
+  // A interface nova envia ambas as evidencias de leitura e aceita
+  // somente a versao exata apresentada antes de preencher o formulario.
+  const chaves=Object.keys(body).sort().join(',');
+  const antiga='aceiteExplicito,email,nick,nome,senha';
+  const atual='aceiteExplicito,email,nick,nome,senha,termosHashAceito,termosVersaoAceita';
+  if(chaves!==antiga&&chaves!==atual)
+   return res.status(400).json({erro:'CAMPOS_INVALIDOS'});
+  if(chaves===atual&&(body.termosVersaoAceita!==termosVersao||
+     body.termosHashAceito!==termosHashCadastro))
+   return res.status(409).json({erro:'TERMOS_ALTERADOS_RELER'});
   try{
    // Recebida apenas do gateway assinado. Criacao da conta + vinculo
    // de indicacao ocorrem no MESMO COMMIT, nunca apos confirmar cadastro.
    const indicadorNick=req.get('x-akitemm-preview-indicador');
-   const conta=await contas.cadastrar({...body,termosVersao,termosTexto,
+   const conta=await contas.cadastrar({
+    nome:body.nome,nick:body.nick,email:body.email,
+    senha:body.senha,aceiteExplicito:body.aceiteExplicito,
+    termosVersao,termosTexto,
     onCriada:indicadorNick?({titularId})=>{
      const vinculo=equipe.registrarCadastro({
       indicadoId:titularId,indicadorNick
