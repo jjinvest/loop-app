@@ -229,14 +229,23 @@ function criarAppLojaEscritorioCandidato({banco,repositorioCatalogo,
    // de indicacao ocorrem no MESMO COMMIT, nunca apos confirmar cadastro.
    const indicadorNick=req.get('x-akitemm-preview-indicador');
    const conta=await contas.cadastrar({...body,termosVersao,termosTexto,
-    onCriada:indicadorNick?({titularId})=>equipe.registrarCadastro({
-     indicadoId:titularId,indicadorNick
-    }):null
+    onCriada:indicadorNick?({titularId})=>{
+     const vinculo=equipe.registrarCadastro({
+      indicadoId:titularId,indicadorNick
+     });
+     if(vinculo.registrado!==true){
+      const e=new Error('INDICACAO_ORIGEM_NAO_CONFIRMADA');
+      e.codigo='INDICACAO_ORIGEM_NAO_CONFIRMADA';
+      throw e;
+     }
+    }:null
    });
    return res.status(201).json(conta);
   }catch(e){
    if(e.codigo==='CADASTRO_JA_EXISTENTE')
     return res.status(409).json({erro:'CADASTRO_JA_EXISTENTE'});
+   if(e.codigo==='INDICACAO_ORIGEM_NAO_CONFIRMADA')
+    return res.status(409).json({erro:e.codigo});
    if(['NICK_INVALIDO','NOME_INVALIDO','EMAIL_INVALIDO','SENHA_INVALIDA',
       'TERMOS_LAB_NAO_ACEITOS'].includes(e.codigo))
     return res.status(400).json({erro:e.codigo});
