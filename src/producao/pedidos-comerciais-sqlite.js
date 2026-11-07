@@ -28,8 +28,9 @@ function endereco(x){
  return {...out,cep:x.cep.replace('-',''),uf:x.uf,
   complemento:(x.complemento||'').trim()};
 }
-function cotacaoValida(x,cotacaoId,ts){
- if(!x||x.cotacaoId!==cotacaoId||x.status!=='APROVADA'||
+function cotacaoValida(x,cotacaoId,titularId,cepDestino,ts){
+ if(!x||x.cotacaoId!==cotacaoId||x.titularId!==titularId||
+    x.cepDestino!==cepDestino||x.status!=='APROVADA'||
     !Number.isSafeInteger(x.expiraEm)||x.expiraEm<=ts||
     x.expiraEm>ts+24*3600*1000)erro('COTACAO_COMERCIAL_NAO_CONFIRMADA');
  // Cada distribuidor tem sua lista de SKUs e frete. O carrinho possui
@@ -177,8 +178,14 @@ class PedidosComerciaisSQLite{
   }
   // Cotacao e frete nunca chegam do browser; o backend busca valores no
   // parceiro ou catalogo comercial homologado antes de gravar o pedido.
-  const preco=cotacaoValida(await this.cotacao({cotacaoId}),cotacaoId,this.agora());
-  const payload={grupos:preco.grupos,enderecoEntrega:endereco(enderecoEntrega)};
+  const entrega=endereco(enderecoEntrega);
+  // Cotacao deve pertencer ao mesmo titular e ao MESMO CEP final de envio.
+  // Impede reaproveitar frete de outro carrinho ou de outro destino.
+  const preco=cotacaoValida(
+   await this.cotacao({cotacaoId,titularId}),
+   cotacaoId,titularId,entrega.cep,this.agora()
+  );
+  const payload={grupos:preco.grupos,enderecoEntrega:entrega};
   const cifrado=cifrar(this.key,payload);
   const ts=this.agora();
   this.db.exec('BEGIN IMMEDIATE');
