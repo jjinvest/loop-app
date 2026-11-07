@@ -367,6 +367,18 @@ const {once}=require('node:events');
    await admin.locator('#quadroDepartamentos button').filter({hasText:'Tabuleiro'}).click();
    await admin.locator('#departamentoOperacionalTitulo')
     .filter({hasText:'Tabuleiro · operação'}).waitFor();
+   // Verificar a catraca financeira distinta do giro fisico e o plano
+   // de tres bancos nao conectados, nos mesmos painéis PC/celular.
+   await admin.locator('#atualizarFluxoFinanceiroAdmin').click();
+   await admin.locator('#fluxoFinanceiroEstado')
+    .filter({hasText:/Luzes e giros reconciliados/}).waitFor();
+   assert.match(await admin.locator('#fluxoFinanceiroBancos').innerText(),
+    /Mercado Pago.*Banco Inter.*Terceiro banco/);
+   assert.match(await admin.locator('#fluxoFinanceiroMetricas').innerText(),
+    /Luzes financeiras acumuladas/);
+   assert.match(await admin.locator('#fluxoFinanceiroCofres').innerText(),
+    /Centro.*Investimento.*Reserva.*Douradas/s);
+
    // Apos abrir Tabuleiro, operador cria UMA dourada no mesmo motor,
    // sem tocar em saldo e sem abrir interface paralela.
    await admin.locator('#departamentoOperacionalAcoes')
