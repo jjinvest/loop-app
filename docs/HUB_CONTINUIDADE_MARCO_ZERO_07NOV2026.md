@@ -269,3 +269,25 @@ Implementação na branch de integração existente:
 **Evidência confirmada:** GitHub Actions [42406927437 — SUCCESS](https://github.com/jjinvest/loop-app/actions/runs/42406927437) no código `f0e6d8e9d83f4e71466bc5f12c42a0521cf000d1`, com testes HTTP SQLite de pesquisa, autenticação 401, filtros inválidos 400, paginação sem duplicar, integridade SQLite e Playwright Chromium PC e celular em fluxo integrado de administração e loja. A primeira rodada falhou e foi corrigida, não omitida.
 
 **Limite de publicação:** a última implantação Railway **efetivamente verificada** em `akitemm-escritorio-preview` (ambiente `homologacao`) ainda é o commit anterior `1855e3ba5766`, implantação `59dae68a-c813-4771-a783-8b5a3a6676bd` SUCCESS. Este avanço administrativo está **salvo e aprovado no GitHub, mas não foi publicado na prévia Railway**: não declarar o link vivo atualizado sem novo deploy comprovado. Há alterações de infraestrutura em estado STAGED na Railway, que não foram aplicadas nesta intervenção. PR #1 DRAFT, sem merge/deploy de produção e sem dinheiro real.
+
+
+## Continuidade 273 — departamentos como operações, não filtros (07/11/2026)
+
+**Origem:** titular identificou que cartões de Clientes, Pedidos, Produtos, Entregas, Indicações, Posições, Filas, Tabuleiro, Cofres, Saques, Segurança e Outros apenas filtravam missões. Decisão: manter **um único Escritório** e conectar o núcleo operacional à **mesma conexão SQLite** do checkout, titularidade, catálogo, indicação, posição e motor. Não criar outra tela nem outro motor.
+
+**Mudanças aplicadas:**
+- `src/domain/painel-operacional-admin-candidato.js`: projeção única e somente-leitura para os **12 departamentos**, com contadores efetivos, registros limitados a 20 por página, estados de laboratório e ações disponíveis; utiliza catálogo, conta, checkout, entregas, indicação qualificada e estado do motor V6 persistidos no mesmo SQLite. Não confunde registro de indicação com indicação qualificada, nem pedido preparado com pagamento confirmado.
+- `GET /staging/escritorio-unificado/departamentos/:codigo/operacao?pagina=N`: acesso exclusivo de operador, paginação validada, sem escrita ou autorização comercial; API usa o mesmo objeto `banco` e `motorConta` do Escritório/loja, sem copiar estado para uma base paralela.
+- Interface `escritorio-admin-candidato-ui.html/js/css`: cartões passaram a abrir painel operacional **logo abaixo dos próprios cartões**, com estado, métricas, registros, navegação e ações que levam aos controles reais já existentes (catálogo, pré-pedido, entrega, PSP, agenda/catraca, posições, cobertura/backup e missões). Suporte PC/celular; limpar ao encerrar sessão. Lista de missões continua como suporte de auditoria, não como destino único de cada cartão.
+- Pesquisa passa a localizar **clientes sem pedidos**, além das buscas já existentes. Não retorna e-mail, senha, CPF ou endereço.
+- Cofres e Saques continuam como **BLOQUEADO_COMERCIAL**, com diagnóstico e missão, nunca saldo ou saque inventado. Não presumir que só a leitura do estado V6 libera financeiro. A agenda da catraca continua com intervalo mínimo de 1 minuto, e o giro exige os 6 eventos válidos; **10 segundos ainda não foram implementados** e não devem ser descritos como funcionando.
+- O workflow `.github/workflows/preview-escritorio-protegido.yml` verifica a integração em conjunto. `test/escritorio-admin-operacoes-unificadas.test.js` cobre os 12 departamentos, privacidade/401, validação/400, cliente sem compra, pedido, catálogo, paginação, SQLite e estados comerciais bloqueados. `scripts/validar-conta-unica-candidato-browser.js` percorre Pedidos → Tabuleiro → Agenda → Cofres → Pedidos no PC e no celular. Corrigidos os testes que dependiam do destino anterior apenas de missões e da capitalização do nick.
+- Não foram modificadas as regras de 6 eventos, 3A:1B, 10 posições ativas, 2 no tabuleiro nem autorizações PSP.
+
+**Validação e publicação realmente conferidas:**
+- GitHub Actions `42409058478` **SUCCESS**: https://github.com/jjinvest/loop-app/actions/runs/42409058478
+- Commit de código testado: `74d956cf2419da3f59d933820bb0c14c46efe7b4`.
+- Railway serviço `akitemm-escritorio-preview`, ambiente `homologacao`: deployment `24fb8072-241f-4dc9-95ac-85dba26a12d4` **SUCCESS**, 1/1 réplica online, 0 alertas. Fonte corresponde exatamente ao commit testado; pré-deploy da infraestrutura 25/25 testes, sem movimentação real.
+- Painel: https://akitemm-escritorio-preview-homologacao.up.railway.app/staging/escritorio-admin
+- As 12 alterações de infraestrutura **STAGED**, relativas exclusivamente a `loop-identidade-real` e volume `identidade-real-sqlite`, permanecem **não aplicadas**. PR #1 `fix/teste-escrita-catraca-20261014` continua **DRAFT**, sem merge.
+- Limite importante para continuidade: departamentos agora são operacionais **dentro da homologação** para o que já existe no motor. A homologação financeira/comercial e o controle em segundos exigem trabalhos próprios; não declarar Marco Zero comercial liberado por esta entrega.
