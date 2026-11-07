@@ -397,3 +397,30 @@ test('offsite comercial só confirma restauração quando as chaves leem pedido 
  assert.equal(x.banco.prepare('PRAGMA integrity_check').get().integrity_check,'ok');
  x.banco.close();
 });
+
+const {provarChavesRecuperacao}=
+ require('../src/producao/prova-chaves-recuperacao');
+test('prova de chaves detecta adulteração HMAC administrativa mesmo com SQLite íntegro',async t=>{
+ const x=fixture(t),chaveAuditoria=randomBytes(32);
+ await cadastrar(x,'Ana','ana@auditoria.invalid');
+ const auditoria=new AuditoriaOperacionalSQLite({banco:x.banco,chaveAuditoria});
+ auditoria.registrar({acao:'PRODUTO_CRIADO',ator:'ADMIN_COMERCIAL',
+  entidade:'PRODUTO_01',antes:{},depois:{estado:'RASCUNHO'},
+  revisaoAnterior:0,revisaoNova:1});
+ const chaves={chaveEmail:x.opcoes.chaveEmail,chaveCifra:x.opcoes.chaveCifra,
+  chaveCodigo:x.opcoes.chaveCodigo,chaveAuditoria};
+ const r=provarChavesRecuperacao({arquivo:x.arquivo,chaves});
+ assert.equal(r.trilhaAdminVerificada,true);
+ assert.equal(r.eventosAuditados,1);
+ assert.throws(()=>provarChavesRecuperacao({
+  arquivo:x.arquivo,chaves:{...chaves,chaveAuditoria:randomBytes(32)}
+ }),{codigo:'RECUPERACAO_AUDITORIA_HMAC_DIVERGENTE'});
+ x.banco.exec('DROP TRIGGER loja_real_auditoria_admin_imutavel_u');
+ x.banco.prepare(
+  'UPDATE loja_real_auditoria_admin SET depois_json=? WHERE id=1'
+ ).run('{"estado":"ATIVO"}');
+ assert.equal(x.banco.prepare('PRAGMA integrity_check').get().integrity_check,'ok');
+ assert.throws(()=>provarChavesRecuperacao({arquivo:x.arquivo,chaves}),
+  {codigo:'RECUPERACAO_AUDITORIA_HMAC_DIVERGENTE'});
+ x.banco.close();
+});
