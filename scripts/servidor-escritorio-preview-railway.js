@@ -71,12 +71,19 @@ function criarGateway({portaInterna,senhaAcesso,senhaAdmin=null,segredoOperador,
   return ts<=Date.now()&&Date.now()-ts<duracao&&
    seguro(m[2],assinarAdmin(m[1]));
  };
- const rotaAdmin=path=>
-  path==='/escritorio'||path==='/staging/escritorio-admin'||
-  path==='/staging/escritorio-unificado'||
-  path.startsWith('/staging/escritorio-unificado/')||
-  path==='/staging/assets/admin.js'||
-  path==='/staging/assets/admin.css';
+ const rotaAdmin=path=>{
+  // Express aceita rotas sem diferenciar maiusculas. O gateway nao pode
+  // deixar a verificacao de permissao ser mais restritiva que o backend.
+  // Tambem trata codificacao de caracteres sem transformar a URL encaminhada.
+  let p;
+  try{p=decodeURIComponent(path).toLowerCase();}
+  catch{return true;}
+  return p==='/escritorio'||p==='/staging/escritorio-admin'||
+   p==='/staging/escritorio-unificado'||
+   p.startsWith('/staging/escritorio-unificado/')||
+   p==='/staging/assets/admin.js'||
+   p==='/staging/assets/admin.css';
+ };
  const lerSessao=req=>{
   const cookies=(req.headers.cookie||'').split(';').map(x=>x.trim());
   const p=cookies.find(x=>x.startsWith(sessaoNome+'='));
