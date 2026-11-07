@@ -29,13 +29,13 @@ function validarSegredos({senhaAcesso,segredoRaiz}){
     senhaAcesso===segredoRaiz)
   falha('SEGREDOS_PREVIA_NAO_CONFIGURADOS');
 }
-function criarGateway({portaInterna,senhaAcesso,senhaAdmin=null,segredoOperador,
+function criarGateway({portaInterna,senhaAcesso,senhaAdmin,segredoOperador,
  validarNickIndicador=()=>false,permitirWebhookSandbox=false}={}){
  if(!Number.isSafeInteger(portaInterna)||portaInterna<1||portaInterna>65535||
     typeof senhaAcesso!=='string'||senhaAcesso.length<24||
     typeof segredoOperador!=='string'||segredoOperador.length<32||
-    (senhaAdmin!==null&&(typeof senhaAdmin!=='string'||
-     senhaAdmin.length<24||senhaAdmin===senhaAcesso)))
+    typeof senhaAdmin!=='string'||senhaAdmin.length<24||
+    senhaAdmin===senhaAcesso)
   falha('GATEWAY_PREVIA_INVALIDO');
  const backend='127.0.0.1:'+portaInterna;
  const sessaoNome='akitemm_preview_access';
@@ -59,7 +59,7 @@ function criarGateway({portaInterna,senhaAcesso,senhaAdmin=null,segredoOperador,
  };
  const assinar=ts=>createHmac('sha256',senhaAcesso).update('preview:'+ts).digest('hex');
  const assinarAdmin=ts=>createHmac('sha256',segredoOperador)
-  .update('AKITEMM-ADMIN-ISOLADO-V2:'+String(senhaAdmin||'TESTE')+':'+ts).digest('hex');
+  .update('AKITEMM-ADMIN-ISOLADO-V2:'+senhaAdmin+':'+ts).digest('hex');
  const lerAdmin=req=>{
   const matches=(req.headers.cookie||'').split(';').map(x=>x.trim())
    .filter(x=>x.startsWith(adminCookie+'='));
@@ -125,8 +125,7 @@ function criarGateway({portaInterna,senhaAcesso,senhaAdmin=null,segredoOperador,
   }
   const basicaValida=seguro(decodificado,'acesso:'+senhaAcesso);
   // A credencial da operacao pode ser separada do acesso de cliente.
-  const operadorBasicoValido=senhaAdmin===null?
-   basicaValida:seguro(decodificado,'operador:'+senhaAdmin);
+  const operadorBasicoValido=seguro(decodificado,'operador:'+senhaAdmin);
   const sessaoValida=lerSessao(req);
   // Liveness nao pode declarar o gateway saudavel se o backend caiu.
   // Readiness confere as invariantes reais do SQLite pelo backend isolado.
