@@ -14,6 +14,8 @@ const {SessaoAdminComercialSQLite}=
  require('../src/producao/sessao-admin-comercial-sqlite');
 const {AuditoriaOperacionalSQLite}=
  require('../src/producao/auditoria-operacional-sqlite');
+const {ManutencaoComercialSQLite}=
+ require('../src/producao/manutencao-comercial-sqlite');
 const {criarAppIdentidadeLoop}=
  require('../src/producao/servidor-identidade-loop');
 const ORIGEM='https://loja.example.invalid';
@@ -34,18 +36,19 @@ function preparar(t){
  const auditoria=new AuditoriaOperacionalSQLite({
   banco,chaveAuditoria:randomBytes(32)
  });
+ const manutencao=new ManutencaoComercialSQLite({banco,auditoria});
  const catalogo=new CatalogoMultiDistribuidoresSQLite({
-  banco,distribuidorHomologado:()=>false,auditoria
+  banco,distribuidorHomologado:()=>false,auditoria,manutencao
  });
- const controle=new ControleEconomicoLojaSQLite({banco,auditoria});
+ const controle=new ControleEconomicoLojaSQLite({banco,auditoria,manutencao});
  const sessoes=new SessaoAdminComercialSQLite({
   banco,chaveAdmin:randomBytes(32),credencialAdmin:SENHA_OPERADOR
  });
  const app=criarAppIdentidadeLoop({
   contas,origemHttps:ORIGEM,permitirCadastro:true,
-  adminComercial:{catalogo,controle,sessoes,auditoria}
+  adminComercial:{catalogo,controle,sessoes,auditoria,manutencao}
  });
- return {banco,app,contas,catalogo,controle,sessoes,auditoria};
+ return {banco,app,contas,catalogo,controle,sessoes,auditoria,manutencao};
 }
 async function servir(t,app){
  const server=app.listen(0,'127.0.0.1');await once(server,'listening');
@@ -79,7 +82,8 @@ test('admin aprovado: login distinto, cadastrar produto/oferta, editar preços e
  const html=await htmlRes.text();
  for(const campo of ['formNovoProduto','formNovaOferta',
   'formEconomiaProduto','salvarPrecoAdmin','salvarCustoAdmin',
-  'listaProdutosAdmin','exportarCatalogoAdmin','exportarPedidosAdmin'])
+  'listaProdutosAdmin','exportarCatalogoAdmin','exportarPedidosAdmin',
+  'suspenderComercialAdmin','retomarComercialAdmin','estadoManutencaoAdmin'])
   assert.match(html,new RegExp('id="'+campo+'"'),campo);
  assert.match(html,/src="\/identidade\/assets\/admin-comercial.js"/);
  assert.doesNotMatch(html,/src="\/staging\/assets\/admin.js"/);
@@ -92,6 +96,7 @@ test('admin aprovado: login distinto, cadastrar produto/oferta, editar preços e
  assert.match(codigo,/salvarPrecoAdmin/);
  assert.match(codigo,/salvarCustoAdmin/);
  assert.match(codigo,/formEconomiaProduto/);
+ assert.match(codigo,/alterarManutencao/);
  assert.doesNotMatch(codigo,/require\('node:fs'\)/);
  assert.equal((await get('/identidade/assets/admin-comercial.js')).status,401);
  assert.equal((await get('/api/admin/comercial/produtos-valores')).status,401);
@@ -177,6 +182,39 @@ test('admin aprovado: login distinto, cadastrar produto/oferta, editar preços e
  assert.equal((await get('/api/admin/comercial/contador/catalogo.csv')).status,401);
  assert.deepEqual(x.catalogo.listarVitrine(),[],
   'cadastro administrativo nunca cria venda sem aprovação do distribuidor');
+ const estadoInicial=await get('/api/admin/comercial/manutencao',{Cookie:cookieAdmin});
+ assert.equal(estadoInicial.status,200);
+ assert.equal((await estadoInicial.json()).suspensa,false);
+ assert.equal((await get('/api/admin/comercial/manutencao')).status,401);
+ const semPermissao=await post('/manutencao',{
+  suspensa:true,revisaoEsperada:0,motivo:'INCIDENTE_OPERACIONAL'
+ },{Cookie:cookieAdmin,Origin:ORIGEM,'Content-Type':'application/json'});
+ assert.equal(semPermissao.status,403);
+ const bloqueou=await post('/manutencao',{
+  suspensa:true,revisaoEsperada:0,motivo:'CORRECAO_TECNICA'
+ });
+ assert.equal(bloqueou.status,200);
+ assert.equal((await bloqueou.json()).suspensa,true);
+ assert.equal((await post('/ofertas-cadastrar',{
+  produtoId:'tenis_001',distribuidorId:'distribuidor_B',
+  sku:'SKU_TENIS_2',precoUnitCentavos:22000,prioridade:100
+ })).status,423);
+ assert.equal((await get('/api/admin/comercial/produtos-valores',{
+  Cookie:cookieAdmin
+ })).status,200,'consultas administrativas não param');
+ assert.equal((await get('/api/admin/comercial/auditoria',{
+  Cookie:cookieAdmin
+ })).status,200);
+ const reabriu=await post('/manutencao',{
+  suspensa:false,revisaoEsperada:1,motivo:'RETOMADA_OPERACAO'
+ });
+ assert.equal(reabriu.status,200);
+ assert.equal((await reabriu.json()).revisao,2);
+ assert.equal((await post('/ofertas-cadastrar',{
+  produtoId:'tenis_001',distribuidorId:'distribuidor_B',
+  sku:'SKU_TENIS_2',precoUnitCentavos:22000,prioridade:100
+ })).status,201);
+ assert.equal(x.auditoria.verificar().integra,true);
  const saiu=await fetch(base+'/api/admin/sair',{
   method:'POST',headers:{
    Cookie:cookieAdmin,Origin:ORIGEM,'X-Loop-Admin-Csrf':admin.csrfToken
