@@ -18,14 +18,15 @@
    throw Error('Valor fora do limite permitido.');
   return centavos;
  };
- let csrf=null,selecionado=null,ofertas=[],produtos=[];
+ let csrf=null,selecionado=null,ofertas=[],produtos=[],manutencao=null;
  const status=msg=>{$('resultadoProdutoAdmin').textContent=msg;};
  function travar(bloqueado){
-  $('salvarPrecoAdmin').disabled=bloqueado||!selecionado;
-  $('salvarCustoAdmin').disabled=bloqueado||!selecionado;
+  const seguro=manutencao?.suspensa===true;
+  $('salvarPrecoAdmin').disabled=bloqueado||seguro||!selecionado;
+  $('salvarCustoAdmin').disabled=bloqueado||seguro||!selecionado;
   $('recarregarProdutos').disabled=bloqueado;
-  $('salvarNovoProduto').disabled=bloqueado||!csrf;
-  $('salvarNovaOferta').disabled=bloqueado||!csrf;
+  $('salvarNovoProduto').disabled=bloqueado||seguro||!csrf;
+  $('salvarNovaOferta').disabled=bloqueado||seguro||!csrf;
  }
  function limparSelecao(){
   selecionado=null;
@@ -86,6 +87,7 @@
   if(resp.status===401)throw Error('Sessão administrativa necessária.');
   if(resp.status===403)throw Error('Sessão expirada ou autorização negada.');
   if(resp.status===409)throw Error('Dados alterados em outra sessão. Atualize e tente de novo.');
+  if(resp.status===423)throw Error('Operações comerciais pausadas para manutenção.');
   if(!resp.ok)throw Error('Operação não concluída ('+(data.erro||resp.status)+').');
   return data;
  }
@@ -235,6 +237,53 @@
    div.appendChild(item);
   }
  }
+ async function atualizarManutencao(){
+  try{
+   const d=await pedir('/manutencao');
+   if(typeof d.suspensa!=='boolean'||
+      !Number.isSafeInteger(d.revisao))throw Error('Estado inválido');
+   manutencao=d;
+   $('estadoManutencaoAdmin').textContent=d.suspensa?
+    'Novas operações suspensas. Contas e entregas já pagas continuam.':
+    'Operações comerciais sem suspensão administrativa.';
+   $('suspenderComercialAdmin').disabled=d.suspensa||!csrf;
+   $('retomarComercialAdmin').disabled=!d.suspensa||!csrf;
+   travar(false);
+  }catch(e){
+   manutencao=null;
+   $('estadoManutencaoAdmin').textContent=
+    'Controle de manutenção indisponível: '+e.message;
+   $('suspenderComercialAdmin').disabled=true;
+   $('retomarComercialAdmin').disabled=true;
+  }
+ }
+ async function alterarManutencao(suspensa){
+  if(!manutencao||!csrf)throw Error('Controle indisponível.');
+  const motivo=$('motivoManutencaoAdmin').value;
+  $('suspenderComercialAdmin').disabled=true;
+  $('retomarComercialAdmin').disabled=true;
+  try{
+   const mudou=await pedir('/manutencao',{method:'POST',body:{
+    suspensa,revisaoEsperada:manutencao.revisao,motivo
+   }});
+   if(mudou.suspensa!==suspensa)throw Error('Confirmação inválida');
+   await atualizarManutencao();
+   await consultarAuditoria();
+  }catch(e){await atualizarManutencao();throw e;}
+ }
+ $('suspenderComercialAdmin').addEventListener('click',()=>{
+  void alterarManutencao(true).catch(e=>{
+   $('estadoManutencaoAdmin').textContent=e.message;
+  });
+ });
+ $('retomarComercialAdmin').addEventListener('click',()=>{
+  void alterarManutencao(false).catch(e=>{
+   $('estadoManutencaoAdmin').textContent=e.message;
+  });
+ });
+ $('atualizarManutencaoAdmin').addEventListener('click',()=>{
+  void atualizarManutencao();
+ });
  $('recarregarAuditoriaAdmin').addEventListener('click',()=>{
   void consultarAuditoria().catch(e=>{
    $('estadoAuditoriaAdmin').textContent=e.message;
@@ -266,6 +315,7 @@
     throw Error('Não foi possível validar a sessão do administrador.');
    csrf=dados.csrfToken;
    await atualizar();
+   await atualizarManutencao();
    await consultarAuditoria();
   }catch(e){travar(true);status(e.message);}
  })();
