@@ -174,54 +174,96 @@ class PreLancamentoCofresV6DemoSQLite{
     '(giro,posicao_id,beneficiario,destino,valor_centavos,registrado_em)',
     'VALUES(?,?,?,?,?,?)'
    ].join(' '));
-   let atual=b.prepare([
-    'SELECT COALESCE(SUM(centro_centavos),0) AS entradas',
-    'FROM loop_v6_pre_receitas'
-   ].join(' ')).get().entradas;
-   atual-=b.prepare('SELECT COALESCE(SUM(valor_centavos),0) AS saidas FROM loop_v6_pre_saidas')
-     .get().saidas;
+   const inserirFonte=b.prepare([
+    'INSERT INTO loop_v6_pre_douradas_integral_fontes',
+    '(giro,ordem,pedido_id,centro_centavos,esquerda_centavos,direita_centavos)',
+    'VALUES(?,?,?,?,?,?)'
+   ].join(' '));
    let novas=0;
    for(const ciclo of sim.tabuleiro.ciclosConcluidos){
     if(ciclo.vendas?.length!==6)continue;
     const existente=b.prepare('SELECT * FROM loop_v6_pre_saidas WHERE giro=?')
-      .get(ciclo.ciclo);
-    const centro=ciclo.centro;
+     .get(ciclo.ciclo);
+    const centro=ciclo.centro,ouro=centroDoLoop(centro);
+    const integral=ouro&&
+     ciclo.vendas[0]?.regraDourada===REGRA_DOURADA_INTEGRAL;
     let valorSaida;
-    if(centroDoLoop(centro)){
-      // Um centro da empresa nao credita cliente, mas reserva em seu proprio destino.
-      const livroPedidos=b.prepare([
-        'SELECT v.valor_referencia_centavos AS valor',
-        'FROM admin_ponte_posicoes_valores_demo v WHERE v.pedido_id=?'
-      ].join(' '));
-      valorSaida=0;
-      for(const ordem of [1,3,5]){
-       const id=ciclo.vendas[ordem-1]?.vendaId||'';
-       if(!id.startsWith('compra-demo-'))throw erro('EVENTO_CENTRO_INVALIDO');
-       const fonte=livroPedidos.get(id.slice('compra-demo-'.length));
-       if(!fonte)throw erro('EVENTO_CENTRO_NAO_CONFIRMADO');
-       valorSaida+=fonte.valor;
+    const fontes=[];
+    if(ouro){
+     // V1 historica: so parcelas 1/3/5. V2: todas as seis, sem criar
+     // receita nem debitar o valor integral de um unico cofre.
+     const livroPedidos=b.prepare([
+      'SELECT v.valor_referencia_centavos AS valor',
+      'FROM admin_ponte_posicoes_valores_demo v WHERE v.pedido_id=?'
+     ].join(' '));
+     const receitas=b.prepare([
+      'SELECT centro_centavos AS centro,esquerda_centavos AS esquerda,',
+      'direita_centavos AS direita,liquido_centavos AS liquido',
+      'FROM loop_v6_pre_receitas WHERE pedido_id=?'
+     ].join(' '));
+     valorSaida=0;
+     const ids=new Set();
+     for(const ordem of (integral?[1,2,3,4,5,6]:[1,3,5])){
+      const id=ciclo.vendas[ordem-1]?.vendaId||'';
+      if(!id.startsWith('compra-demo-'))throw erro('EVENTO_CENTRO_INVALIDO');
+      const pedidoId=id.slice('compra-demo-'.length);
+      if(ids.has(pedidoId))throw erro('DOURADA_FONTE_DUPLICADA');
+      ids.add(pedidoId);
+      const fonte=livroPedidos.get(pedidoId);
+      if(!fonte||!valor(fonte.valor))throw erro('EVENTO_CENTRO_NAO_CONFIRMADO');
+      valorSaida+=fonte.valor;
+      if(integral){
+       const receita=receitas.get(pedidoId);
+       if(!receita||receita.liquido!==fonte.valor||
+          receita.centro+receita.esquerda+receita.direita!==receita.liquido)
+        throw erro('DOURADA_FONTE_NAO_CONCILIADA');
+       fontes.push({ordem,pedidoId,...receita});
       }
+     }
     }else{
-      // Obrigacao individual registrada pelo livro de seis fontes.
-      const projetado=this.livro._documentar(ciclo);
-      valorSaida=projetado.previstoCentroCentavos;
+     // Participantes nao sao afetados: continuam com tres parcelas.
+     const projetado=this.livro._documentar(ciclo);
+     valorSaida=projetado.previstoCentroCentavos;
     }
     if(!valor(valorSaida))throw erro('OBRIGACAO_INVALIDA');
-    const destino=centroDoLoop(centro)?'LOOP_DOURADAS':'ESCRITORIO_PREVISTO';
-    const beneficiario=centroDoLoop(centro)?null:centro.participanteId;
+    const destino=ouro?'LOOP_DOURADAS':'ESCRITORIO_PREVISTO';
+    const beneficiario=ouro?null:centro.participanteId;
     if(existente){
-      if(existente.posicao_id!==centro.id||existente.valor_centavos!==valorSaida||
-         existente.destino!==destino||existente.beneficiario!==beneficiario)
-       throw erro('DIVERGENCIA_SAIDA');
-      continue;
+     if(existente.posicao_id!==centro.id||existente.valor_centavos!==valorSaida||
+        existente.destino!==destino||existente.beneficiario!==beneficiario)
+      throw erro('DIVERGENCIA_SAIDA');
+     if(integral&&b.prepare([
+      'SELECT COUNT(*) AS n FROM loop_v6_pre_douradas_integral_fontes',
+      'WHERE giro=?'
+     ].join(' ')).get(ciclo.ciclo).n!==6)
+      throw erro('DOURADA_FONTES_INCOMPLETAS');
+     continue;
     }
-    if(atual<valorSaida)throw erro('SALDO_CENTRAL_SIMULADO_INSUFICIENTE');
+    const saldo=this.resumo();
+    if(integral){
+     const por=campo=>fontes.reduce((acc,f)=>acc+f[campo],0);
+     if(fontes.length!==6||
+        por('centro')>saldo.centroRestanteSimuladoCentavos||
+        por('esquerda')>saldo.investimentoRestanteSimuladoCentavos||
+        por('direita')>saldo.reservaRestanteSimuladoCentavos)
+      throw erro('SALDO_DOURADA_INTEGRAL_NAO_CONCILIADO');
+     // Uma mesma receita nao pode alimentar dois centros dourados.
+     for(const fonte of fontes)if(b.prepare([
+      'SELECT 1 FROM loop_v6_pre_douradas_integral_fontes WHERE pedido_id=?'
+     ].join(' ')).get(fonte.pedidoId))
+      throw erro('DOURADA_FONTE_JA_COMPROMETIDA');
+    }else if(saldo.centroRestanteSimuladoCentavos<valorSaida)
+     throw erro('SALDO_CENTRAL_SIMULADO_INSUFICIENTE');
     inserir.run(ciclo.ciclo,centro.id,beneficiario,destino,
-      valorSaida,new Date().toISOString());
-    atual-=valorSaida;novas++;
+     valorSaida,new Date().toISOString());
+    if(integral)for(const fonte of fontes)
+     inserirFonte.run(ciclo.ciclo,fonte.ordem,fonte.pedidoId,
+      fonte.centro,fonte.esquerda,fonte.direita);
+    novas++;
    }
    if(!transacaoAberta)b.exec('COMMIT');
-   return {novas,centroSimuladoRestanteCentavos:atual,transferenciasReais:false};
+   return {novas,centroSimuladoRestanteCentavos:this.resumo().centroRestanteSimuladoCentavos,
+    transferenciasReais:false};
   }catch(e){if(!transacaoAberta)b.exec('ROLLBACK');throw e;}
  }
  resumo(){
