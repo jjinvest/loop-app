@@ -93,14 +93,8 @@ function criarRouterAdminEconomiaAkitemm({
     (n/100).toFixed(2).replace('.',','):'';
    const cabecalho=[
     'Pedido_ID','Status','Data_criacao','Ultima_atualizacao',
-    'ID_pagamento_PSP','Valor_produtos_R
-module.exports={criarRouterAdminEconomiaAkitemm};
-,'Frete_cobrado_R
-module.exports={criarRouterAdminEconomiaAkitemm};
-,
-    'Total_pedido_R
-module.exports={criarRouterAdminEconomiaAkitemm};
-,'Distribuidores','Quantidade_itens',
+    'ID_pagamento_PSP','Valor_produtos_BRL','Frete_cobrado_BRL',
+    'Total_pedido_BRL','Distribuidores','Quantidade_itens',
     'Taxas_PSP_conciliadas','Custo_fornecedor_pago_comprovado',
     'Impostos_apurados','Lucro_liquido_apurado'
    ];
