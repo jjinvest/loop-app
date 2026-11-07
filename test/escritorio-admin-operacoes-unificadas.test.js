@@ -111,6 +111,53 @@ test('12 departamentos operam no SQLite compartilhado sem inventar dados comerci
  assert.ok(depTabuleiro.acoes.includes('CRIAR_DOURADA'));
  assert.equal(banco.prepare('SELECT COUNT(*) AS n FROM akitemm_motor_douradas_manuais_lab').get().n,1);
  assert.equal(banco.prepare('SELECT COUNT(*) AS n FROM akitemm_motor_ensaio_lotes_pedido').get().n,0);
+
+ // Cadastro interno por produto: custo/LOOP/margem somente no administrador.
+ const produtoAlvo='curso-homologacao-250';
+ async function putInterno(path,body,method='PUT',authorized=true){
+  const res=await fetch(base+raiz+path,{method,
+   headers:{'Content-Type':'application/json',
+    ...(authorized?{Authorization:'Bearer '+token}:{})},
+   body:JSON.stringify(body)});
+  return {status:res.status,data:await res.json()};
+ }
+ assert.equal((await get(raiz+'/produtos/'+produtoAlvo+'/custos',false)).status,401);
+ const ausente=(await get(raiz+'/produtos/'+produtoAlvo+'/custos')).data;
+ assert.equal(ausente.situacao,'CUSTOS_NAO_CADASTRADOS');
+ assert.equal(ausente.referenciaLoopCentavos,0,'cinza nao destina LOOP');
+ assert.equal((await putInterno('/produtos/'+produtoAlvo,{revisaoEsperada:0,
+  alteracoes:{precoCentavos:50000}},'PATCH')).status,200);
+ assert.equal((await putInterno('/sinalizacao/'+produtoAlvo,{
+  classificacao:'DOURADO',quantidadeMinimaLoop:1,revisaoEsperada:0
+ },'PATCH')).status,200);
+ const custoEnsaio={
+  custoFornecedorCentavos:17500,freteCustoCentavos:1500,
+  tarifaPspEstimadaCentavos:500,reservaTributariaEstimadaCentavos:500,
+  revisaoEsperada:0
+ };
+ assert.equal((await putInterno('/produtos/'+produtoAlvo+'/custos',
+  custoEnsaio,'PUT',false)).status,401);
+ const salvo=await putInterno('/produtos/'+produtoAlvo+'/custos',custoEnsaio);
+ assert.equal(salvo.status,200,JSON.stringify(salvo));
+ assert.equal(salvo.data.referenciaLoopCentavos,25000);
+ assert.equal(salvo.data.somaCustosEstimadosCentavos,20000);
+ assert.equal(salvo.data.margemComercialEstimadaCentavos,5000);
+ assert.equal(salvo.data.classificacao,'DOURADO');
+ assert.equal(salvo.data.financeiroReal,false);
+ assert.equal((await putInterno('/produtos/'+produtoAlvo+'/custos',
+  custoEnsaio)).status,409,'revisao concorrente nao pode sobrescrever custos');
+ assert.equal((await putInterno('/produtos/'+produtoAlvo+'/custos',
+  {...custoEnsaio,custoFornecedorCentavos:-1,revisaoEsperada:1}
+ )).status,400);
+ const publico=await get('/staging/catalogo-produtos');
+ // A privacidade vale independentemente da rota pública disponibilizada.
+ if(publico.status===200){
+  assert.equal(JSON.stringify(publico.data).includes('custoFornecedorCentavos'),false);
+  assert.equal(JSON.stringify(publico.data).includes('margemComercialEstimadaCentavos'),false);
+ }
+ assert.equal(banco.prepare('SELECT COUNT(*) AS n FROM akitemm_custos_produtos_admin_historico_lab').get().n,1);
+ assert.throws(()=>banco.exec('DELETE FROM akitemm_custos_produtos_admin_historico_lab'),
+  /custo historico imutavel/);
  assert.equal(banco.prepare('PRAGMA integrity_check').get().integrity_check,'ok');
  assert.deepEqual(banco.prepare('PRAGMA foreign_key_check').all(),[]);
  assert.equal((await get('/readyz')).status,200);
