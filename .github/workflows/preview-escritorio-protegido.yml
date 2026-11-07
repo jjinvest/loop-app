@@ -12,6 +12,7 @@ on:
       - 'src/domain/conta-unica-candidata-sqlite.js'
       - 'src/adapters/email-recuperacao-resend.js'
       - 'test/recuperacao-senha-candidata.test.js'
+      - 'test/recuperacao-senha-multi-instancia.test.js'
       - 'src/candidato/servidor-loja-escritorio-candidato.js'
       - 'src/domain/motor-conta-unica-ensaio-sqlite.js'
       - 'src/domain/plano-posicoes-compra-akitemm.js'
@@ -108,6 +109,7 @@ jobs:
       - run: node --check src/adapters/email-recuperacao-resend.js
       - run: node --check src/domain/conta-unica-candidata-sqlite.js
       - run: node --test test/recuperacao-senha-candidata.test.js
+      - run: node --test test/recuperacao-senha-multi-instancia.test.js
       - run: node --test test/registro-fornecedores-frete.test.js
       - run: node --test test/prepedidos-checkout-staging-fluxo-unico.test.js
       - run: node --test test/asaas-vinculo-motor-recuperacao-candidato.test.js
