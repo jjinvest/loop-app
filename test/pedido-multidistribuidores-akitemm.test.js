@@ -85,7 +85,12 @@ async function preparar(t){
  const outbox=new PedidosFornecedorOutbox({
   banco:db,registro,chavePedidos:randomBytes(32),
   consultarPagamentoConciliado:psp,
-  consultarPedidoAprovado:args=>pedidos.consultarPedidoAprovado(args)
+  consultarPedidoAprovado:args=>pedidos.consultarPedidoAprovado(args),
+  consultarLiberacaoCustoFornecedor:async({pedidoId,fornecedorId})=>({
+   pedidoId,fornecedorId,estado:'CUSTO_QUITADO',
+   referencia:'FORNECEDOR_PROVA_TESTE_01',
+   origem:'CANAL_FORNECEDOR_AUTORIZADO'
+  })
  });
  const entrada={titularId:ana.titularId,cotacaoId:'COTACAO_MULTI_01',
   chaveIdempotencia:'CLIENTE_CARRINHO_1',enderecoEntrega:ENDERECO};
