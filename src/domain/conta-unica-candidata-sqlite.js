@@ -14,6 +14,7 @@ const VERSAO=/^LAB-[A-Za-z0-9._-]{3,64}$/;
 const COOKIE='loop_candidato_s';
 const DURACAO_MS=60*60*1000;
 const BLOQUEIO_MS=15*60*1000;
+const LIMITE_SESSOES_TITULAR=5;
 function falha(codigo){const e=new Error(codigo);e.codigo=codigo;throw e;}
 function hmac(key,value){
  return createHmac('sha256',key).update('AKITEMM-CONTA-CANDIDATA-EMAIL-1:')
@@ -120,6 +121,8 @@ class ContaUnicaCandidataSQLite{
    'criado_em INTEGER NOT NULL, expira_em INTEGER NOT NULL);',
    'CREATE INDEX IF NOT EXISTS idx_sessoes_candidatas_titular',
    'ON akitemm_sessoes_candidatas(titular_id,expira_em);',
+   'CREATE INDEX IF NOT EXISTS idx_sessoes_candidatas_expiracao',
+   'ON akitemm_sessoes_candidatas(expira_em);',
    'CREATE TRIGGER IF NOT EXISTS conta_candidata_identidade_imutavel',
    'BEFORE UPDATE OF id,nick,email_hmac,nome_iv,nome_cifra,nome_tag,',
    'email_iv,email_cifra,email_tag,termos_versao,termos_hash',
@@ -291,10 +294,23 @@ class ContaUnicaCandidataSQLite{
       'UPDATE akitemm_conta_unica_candidata',
       'SET tentativas=0,bloqueado_ate=0 WHERE id=?'
      ].join(' ')).run(atual.id);
+     // Sessao atual e contas anteriores nao podem encher o SQLite
+     // indefinidamente. O expurgo respeita vencimentos, e cada titular
+     // conserva somente as 5 sessoes mais recentes (PC + celular etc.).
+     this.banco.prepare(
+      'DELETE FROM akitemm_sessoes_candidatas WHERE expira_em<=?'
+     ).run(ts);
      this.banco.prepare([
       'INSERT INTO akitemm_sessoes_candidatas',
       '(token_hash,titular_id,criado_em,expira_em) VALUES(?,?,?,?)'
      ].join(' ')).run(digest(token),atual.id,ts,ts+DURACAO_MS);
+     this.banco.prepare([
+      'DELETE FROM akitemm_sessoes_candidatas',
+      'WHERE token_hash IN (',
+      'SELECT token_hash FROM akitemm_sessoes_candidatas',
+      'WHERE titular_id=? ORDER BY criado_em DESC,rowid DESC',
+      'LIMIT -1 OFFSET ?)'
+     ].join(' ')).run(atual.id,LIMITE_SESSOES_TITULAR);
      resultado={titularId:atual.id,nick:atual.nick,token,csrf,
       expiraEm:ts+DURACAO_MS};
     }else{
