@@ -18,7 +18,7 @@ function criarTransporteRecuperacaoResend({
    throw Error('EMAIL_RECUPERACAO_INVALIDO');
   const payload={
    from:remetente,to:[para],
-   subject:'AKITEMM — recuperar acesso',
+   subject:'LOOP 3.0 — recuperar acesso ao Escritório Virtual',
    text:'Seu código para recuperar a senha: '+codigo+
     '\nValidade: 15 minutos. Se você não solicitou, ignore esta mensagem.'+
     '\nNunca informe esse código a outra pessoa. Nenhuma compra ou saque é autorizado.'
