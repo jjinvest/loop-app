@@ -686,6 +686,23 @@ function criarAppLojaEscritorioCandidato({banco,repositorioCatalogo,
   try{return res.json(motorConta.consultar());}
   catch(e){return res.status(503).json({erro:e.codigo||'MOTOR_ENSAIO_INDISPONIVEL'});}
  });
+ // Criacao manual de UMA dourada no motor unico; protegida, auditavel,
+ // sem saldo, compra, aporte ou permissao financeira comercial.
+ app.post('/staging/escritorio-unificado/motor/douradas/criar',
+  autorizarOperador,(req,res)=>{
+   res.set('Cache-Control','no-store');
+   if(!req.is('application/json'))return res.status(415).json({erro:'JSON_OBRIGATORIO'});
+   if(!req.body||typeof req.body!=='object'||Array.isArray(req.body)||
+      Object.keys(req.body).sort().join(',')!=='aceiteEnsaio,eventoId')
+    return res.status(400).json({erro:'DOURADA_MANUAL_DADOS_INVALIDOS'});
+   try{
+    const r=motorConta.criarDouradaManualEnsaio(req.body);
+    return res.status(r.repetido?200:201).json(r);
+   }catch(e){
+    return res.status(e.codigo==='DOURADA_MANUAL_DADOS_INVALIDOS'?400:409)
+     .json({erro:e.codigo||'DOURADA_MANUAL_INDISPONIVEL'});
+   }
+  });
  // Apenas operador: editar tinta/texto de dourada, NUNCA a identidade no motor.
  app.post('/staging/escritorio-unificado/motor/douradas/visual',autorizarOperador,(req,res)=>{
   res.set('Cache-Control','no-store');
