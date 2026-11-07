@@ -1143,8 +1143,7 @@ class MotorContaUnicaEnsaioSQLite{
    }
    const sim=this._simulador();
    const criada=sim.registrarPosicaoSimulada({
-    nome:'Posição dourada LOOP',participanteId:'LOOP_EMPRESA',
-    vendaId:'dourada-manual-lab:'+eventoId
+    nome:'Posição dourada LOOP',participanteId:'LOOP_EMPRESA'
    });
    if(criada.repetida)falha('DOURADA_MANUAL_EVENTO_DUPLICADO_NO_MOTOR');
    const posicao=sim.filas.filaB.find(p=>p.id===criada.posicao.id);
