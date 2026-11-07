@@ -54,6 +54,27 @@ const {once}=require('node:events');
    // Cliente existente entra diretamente; cadastro so no primeiro acesso.
    assert.equal(await page.locator('#painelLogin').isVisible(),true);
    assert.equal(await page.locator('#painelCadastro').isHidden(),true);
+   // Screenshot de regressão e medição de layout: nunca "olho" largo/central.
+   const medirOlho=async id=>page.evaluate(id=>{
+    const campo=document.getElementById(id);
+    const botao=document.querySelector('[data-senha="'+id+'"]');
+    const a=campo.getBoundingClientRect(),b=botao.getBoundingClientRect();
+    return {campo:{x:a.x,right:a.right,top:a.top,bottom:a.bottom,width:a.width},
+     botao:{x:b.x,right:b.right,top:b.top,bottom:b.bottom,width:b.width},
+     icon:!!botao.querySelector('svg'),
+     cssPosition:getComputedStyle(botao).position,
+     type:campo.type};
+   },id);
+   const olho=await medirOlho('senha');
+   assert.equal(olho.icon,true,'icone deve ser SVG, nao emoji solto');
+   assert.equal(olho.cssPosition,'absolute');
+   assert.ok(olho.botao.width>=40&&olho.botao.width<=50,JSON.stringify(olho));
+   assert.ok(olho.botao.x>olho.campo.x+olho.campo.width*.65,JSON.stringify(olho));
+   assert.ok(Math.abs(olho.botao.right-olho.campo.right)<15,JSON.stringify(olho));
+   assert.ok(olho.botao.top>=olho.campo.top-3&&
+    olho.botao.bottom<=olho.campo.bottom+3,JSON.stringify(olho));
+   await page.screenshot({path:path.join(__dirname,'../artifacts',
+    'login-olho-lateral-'+item.nome+'.png'),fullPage:true});
    await page.locator('#mudarParaCadastro').click();
    await page.locator('#painelCadastro').waitFor({state:'visible'});
    await page.locator('#mudarParaLogin').click();
@@ -100,6 +121,38 @@ const {once}=require('node:events');
    assert.equal(await page.locator('#abaResumo').getAttribute('aria-selected'),'true');
    await page.locator('#resumoPedidos').filter({hasText:'0'}).waitFor();
    await page.locator('#painelIdentidadeTeste').waitFor({state:'visible'});
+   // O conteúdo da aba precisa VIR ANTES de e-mail, CPF e resumos auxiliares.
+   for(const [abaTeste,conteudoTeste] of [
+    ['#abaTabuleiro','#conteudoTabuleiro'],
+    ['#abaPosicoes','#conteudoPosicoes'],
+    ['#abaResumo','#conteudoResumo']
+   ]){
+    await abrirAba(abaTeste);
+    await page.locator(conteudoTeste).waitFor({state:'visible'});
+    const frente=await page.evaluate(seletor=>{
+     const ativo=document.querySelector(seletor);
+     const email=document.getElementById('painelVerificarEmail');
+     const cpf=document.getElementById('painelIdentidadeTeste');
+     const indicador=document.querySelector('.loop03-corpo>.loop03-indicadores');
+     return {
+      antesEmail:!!(ativo.compareDocumentPosition(email)&Node.DOCUMENT_POSITION_FOLLOWING),
+      antesCpf:!!(ativo.compareDocumentPosition(cpf)&Node.DOCUMENT_POSITION_FOLLOWING),
+      antesIndicadores:!!(ativo.compareDocumentPosition(indicador)&Node.DOCUMENT_POSITION_FOLLOWING),
+      primeiroAposBoasVindas:ativo.previousElementSibling?.classList.contains('loop03-boasvindas')
+     };
+    },conteudoTeste);
+    assert.deepEqual(frente,{
+     antesEmail:true,antesCpf:true,antesIndicadores:true,primeiroAposBoasVindas:true
+    },'aba prioritaria em '+item.nome+' '+abaTeste);
+    if(item.isMobile){
+     await page.waitForFunction(seletor=>{
+      const painel=document.querySelector(seletor);
+      return Math.abs(painel.getBoundingClientRect().top)<25;
+     },conteudoTeste,{timeout:3000});
+    }
+   }
+   await page.screenshot({path:path.join(__dirname,'../artifacts',
+    'aba-escritorio-prioritaria-'+item.nome+'.png'),fullPage:true});
    assert.match(await page.locator('#termosCpfTexto').innerText(),/LAB-navegador-2026/);
    await page.locator('#cpfTeste').fill(
     item.nome==='pc'?'529.982.247-25':'111.444.777-35');

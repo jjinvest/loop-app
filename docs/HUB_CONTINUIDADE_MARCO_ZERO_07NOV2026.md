@@ -148,3 +148,13 @@ Solicitado padrão elevado, mas não exagerado, de definição em **todas as art
 ### Continuidade 263 — publicação homologada e padrão visual reforçado (07/11/2026)
 
 Implementação de qualidade de imagens nas telas originais, aprovada no GitHub CI e testes de navegador PC/celular: https://github.com/jjinvest/loop-app/actions/runs/42385388757 — SUCCESS. Publicada somente a **prévia de homologação** do LOOP/AKITEMM no Railway, deploy `8cc4644e-4501-431d-8cf4-6e9ba7778c93` **SUCCESS**, commit `5fabe300b883c1b6279cc3b60a49f0ffe062b568`, com **25 testes aprovados** no pré-deploy, sem falhas. URL de teste: https://akitemm-escritorio-preview-homologacao.up.railway.app . Sem merge, cobrança real ou alteração das estruturas aprovadas; o volume SQLite existente permanece associado ao serviço. O código verifica dimensões em pixels e recomenda trocar fotos insuficientes; permite até 4 MB em Novidades e protege a exibição de ampliação/corte artificial. **Não declarar que a plataforma já possui pipeline automático completo de otimização**: faltam derivados responsivos WebP/AVIF, srcset, estratégia de cache/CDN, revisão de originais de catálogo/banners e testes reais de desempenho e acessibilidade para o Marco Zero.
+
+
+## Continuidade 264 — olhinho da senha e ordem real das abas (07/11/2026)
+
+Ajustes pedidos em imagens de celular da prévia oficial LOOP (sem redesenhar o esqueleto):
+
+- Em todos os formulários já existentes (login, cadastro, recuperação, troca de senha), o botão de olho passa a ser um **ícone SVG**, quadrado de 44 px posicionado à direita dentro do campo, sem usar o emoji grande. Corrigido conflito da regra \`#formLogin button\` (antes impunha 100% de largura e margem ao olho), preservada ação mostrar/ocultar \`type=password/text\`, \`aria-pressed\`, \`aria-label\`, foco e teclado.
+- A função **mostrarAba** move o painel ativo para imediatamente após a barra \`loop03-boasvindas\` no próprio DOM, antes dos blocos auxiliares e das confirmações de e-mail/identidade. Isso funciona para **todas as abas**, PC e celular; no celular ainda rola ao conteúdo escolhido. Sem páginas paralelas, sem duplicação de blocos, sem alterar os fluxos de conta e motor.
+- A confirmação de e-mail já possui controle para esconder \`painelVerificarEmail\` após \`emailVerificado=true\`; mantém-se a regra. A identificação por CPF continua disponível e segura, porém subordinada visualmente à seção escolhida.
+- Regressão real Playwright no PC e celular mede a posição do olho, testa alternar senha e verifica prioridade DOM, visibilidade e rolagem de Tabuleiro, Minhas Posições e Escritório Virtual, com evidências capturadas. Conferir o resultado da CI e a implantação de homologação antes de declarar concluído.

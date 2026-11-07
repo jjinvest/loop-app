@@ -27,7 +27,7 @@
    <label for="login">Nick</label>
    <input id="login" name="nick" autocomplete="username" minlength="1" maxlength="9" pattern="[A-Za-z]{1,9}" required>
    <label for="senha">Senha</label>
-   <div class="envoltorio-senha"><input id="senha" name="senha" type="password" autocomplete="current-password" required><button type="button" class="alternar-visibilidade" data-senha="senha" aria-label="Mostrar senha" aria-pressed="false" title="Mostrar senha">👁</button></div>
+   <div class="envoltorio-senha"><input id="senha" name="senha" type="password" autocomplete="current-password" required><button type="button" class="alternar-visibilidade" data-senha="senha" aria-label="Mostrar senha" aria-pressed="false" title="Mostrar senha"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M2.2 12S5.7 6.5 12 6.5 21.8 12 21.8 12 18.3 17.5 12 17.5 2.2 12 2.2 12Z"/><circle cx="12" cy="12" r="2.7"/><path class="traco-senha-oculta" d="M4.5 19.5 19.5 4.5"/></svg></button></div>
    <button type="submit" class="primario">Entrar</button>
   </form>
   <button type="button" class="alternar-acesso" id="abrirRecuperacao">Esqueci minha senha</button>
@@ -47,7 +47,7 @@
    <label for="cadastroEmail">E-mail fictício</label>
    <input id="cadastroEmail" name="email" type="email" maxlength="254" autocomplete="off" required>
    <label for="cadastroSenha">Senha de teste (8 a 12 caracteres)</label>
-   <div class="envoltorio-senha"><input id="cadastroSenha" name="senha" type="password" minlength="8" maxlength="12" autocomplete="new-password" required><button type="button" class="alternar-visibilidade" data-senha="cadastroSenha" aria-label="Mostrar senha" aria-pressed="false" title="Mostrar senha">👁</button></div>
+   <div class="envoltorio-senha"><input id="cadastroSenha" name="senha" type="password" minlength="8" maxlength="12" autocomplete="new-password" required><button type="button" class="alternar-visibilidade" data-senha="cadastroSenha" aria-label="Mostrar senha" aria-pressed="false" title="Mostrar senha"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M2.2 12S5.7 6.5 12 6.5 21.8 12 21.8 12 18.3 17.5 12 17.5 2.2 12 2.2 12Z"/><circle cx="12" cy="12" r="2.7"/><path class="traco-senha-oculta" d="M4.5 19.5 19.5 4.5"/></svg></button></div>
    <details id="termosCadastroDetalhes" open>
     <summary>Leia os termos desta conta antes de aceitar</summary>
     <p id="versaoTermosCadastro" class="subtexto">Carregando versão dos termos...</p>
@@ -71,7 +71,7 @@
    <label for="codigoRecuperacao">Código recebido por e-mail</label>
    <input id="codigoRecuperacao" type="text" inputmode="numeric" pattern="[0-9]{8}" minlength="8" maxlength="8" autocomplete="one-time-code" required>
    <label for="senhaRecuperacao">Nova senha (8 a 12 caracteres)</label>
-   <div class="envoltorio-senha"><input id="senhaRecuperacao" type="password" minlength="8" maxlength="12" autocomplete="new-password" required><button type="button" class="alternar-visibilidade" data-senha="senhaRecuperacao" aria-label="Mostrar senha" aria-pressed="false" title="Mostrar senha">👁</button></div>
+   <div class="envoltorio-senha"><input id="senhaRecuperacao" type="password" minlength="8" maxlength="12" autocomplete="new-password" required><button type="button" class="alternar-visibilidade" data-senha="senhaRecuperacao" aria-label="Mostrar senha" aria-pressed="false" title="Mostrar senha"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M2.2 12S5.7 6.5 12 6.5 21.8 12 21.8 12 18.3 17.5 12 17.5 2.2 12 2.2 12Z"/><circle cx="12" cy="12" r="2.7"/><path class="traco-senha-oculta" d="M4.5 19.5 19.5 4.5"/></svg></button></div>
    <button type="submit" class="primario">Salvar nova senha</button>
   </form>
   <button type="button" class="alternar-acesso" id="voltarLogin">Voltar para o login</button>
@@ -265,9 +265,9 @@
    <h3>Trocar minha senha</h3>
    <form id="formTrocarSenha">
     <label for="senhaAtual">Senha atual</label>
-    <div class="envoltorio-senha"><input id="senhaAtual" type="password" autocomplete="current-password" required><button type="button" class="alternar-visibilidade" data-senha="senhaAtual" aria-label="Mostrar senha" aria-pressed="false" title="Mostrar senha">👁</button></div>
+    <div class="envoltorio-senha"><input id="senhaAtual" type="password" autocomplete="current-password" required><button type="button" class="alternar-visibilidade" data-senha="senhaAtual" aria-label="Mostrar senha" aria-pressed="false" title="Mostrar senha"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M2.2 12S5.7 6.5 12 6.5 21.8 12 21.8 12 18.3 17.5 12 17.5 2.2 12 2.2 12Z"/><circle cx="12" cy="12" r="2.7"/><path class="traco-senha-oculta" d="M4.5 19.5 19.5 4.5"/></svg></button></div>
     <label for="novaSenha">Nova senha (8 a 12 caracteres)</label>
-    <div class="envoltorio-senha"><input id="novaSenha" type="password" minlength="8" maxlength="12" autocomplete="new-password" required><button type="button" class="alternar-visibilidade" data-senha="novaSenha" aria-label="Mostrar senha" aria-pressed="false" title="Mostrar senha">👁</button></div>
+    <div class="envoltorio-senha"><input id="novaSenha" type="password" minlength="8" maxlength="12" autocomplete="new-password" required><button type="button" class="alternar-visibilidade" data-senha="novaSenha" aria-label="Mostrar senha" aria-pressed="false" title="Mostrar senha"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M2.2 12S5.7 6.5 12 6.5 21.8 12 21.8 12 18.3 17.5 12 17.5 2.2 12 2.2 12Z"/><circle cx="12" cy="12" r="2.7"/><path class="traco-senha-oculta" d="M4.5 19.5 19.5 4.5"/></svg></button></div>
     <button class="primario" type="submit">Alterar senha</button>
    </form>
    <p class="subtexto">Ao trocar sua senha, todas as sessões anteriores serão encerradas. Entre novamente com a nova senha.</p>

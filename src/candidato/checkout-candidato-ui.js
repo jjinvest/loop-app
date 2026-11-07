@@ -79,6 +79,14 @@ function mostrarSessao(ativa){
   $('senha').value='';proximaPaginaEquipe=null;paginaPedidos=0;}
 }
 function mostrarAba(alvo){
+ // Prioriza a seção escolhida na ordem REAL do documento, não apenas
+ // em CSS: teclado, leitor de tela, PC e celular seguem o mesmo fluxo.
+ const selecionado=$(alvo);
+ const corpo=$('painelConta')?.querySelector('.loop03-corpo');
+ const boasVindas=corpo?.querySelector('.loop03-boasvindas');
+ if(selecionado&&boasVindas&&selecionado.parentElement===corpo){
+  boasVindas.insertAdjacentElement('afterend',selecionado);
+ }
  aba=alvo;
  for(const [id,painel] of ABAS){
   const ativo=painel===alvo,botao=$(id);
@@ -88,6 +96,14 @@ function mostrarAba(alvo){
   $(painel).hidden=!ativo;
  }
  fecharMenuIntegrado();
+ // No celular abre direto o conteúdo selecionado, sem obriga-lo a rolar
+ // por confirmações pendentes ou pelo resumo operacional.
+ if(window.matchMedia('(max-width: 860px)').matches){
+  requestAnimationFrame(()=>{
+   if(aba===alvo&&!selecionado.hidden)
+    selecionado.scrollIntoView({block:'start',behavior:'instant'});
+  });
+ }
  if(alvo==='conteudoTabuleiro')atualizarTabuleiroIntegrado();
  if(alvo==='conteudoMeusPedidos')atualizarPedidos();
  if(alvo==='conteudoResumo')atualizarResumo();
@@ -657,7 +673,7 @@ async function autenticarConta(nick,senha){
 
 async function entrar(e){
  e.preventDefault();
- const botao=$('formLogin').querySelector('button');
+ const botao=$('formLogin').querySelector('button[type=submit]');
  botao.disabled=true;dizer('Validando conta de homologação...');
  try{
   await autenticarConta($('login').value,$('senha').value);

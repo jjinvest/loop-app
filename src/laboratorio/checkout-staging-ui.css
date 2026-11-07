@@ -68,3 +68,30 @@ button:disabled{opacity:.5;cursor:not-allowed}.primario{background:linear-gradie
 #painelRecuperacao form .primario{margin-top:1rem;width:100%}
 #estadoRecuperacao:not(:empty){padding:.65rem .8rem;margin:.75rem 0;
  border:1px solid #766b4e;background:#24221e;border-radius:8px}
+
+
+/* LOGIN responsivo: o botão de revelar senha permanece dentro do input.
+   A regra antiga #formLogin button prevalecia em largura e margem. */
+.envoltorio-senha{position:relative;width:100%;min-width:0}
+.envoltorio-senha>input{
+ display:block;width:100%;min-width:0;padding-inline-end:3.65rem;
+}
+#formLogin .envoltorio-senha>.alternar-visibilidade,
+.envoltorio-senha>.alternar-visibilidade{
+ position:absolute;inset-inline-end:.35rem;left:auto;top:50%;
+ transform:translateY(-50%);margin:0;
+ width:2.75rem;min-width:2.75rem;max-width:2.75rem;
+ height:2.75rem;min-height:2.75rem;padding:0;
+ display:inline-flex;align-items:center;justify-content:center;
+ border:0;border-radius:8px;background:transparent;
+ color:#f6d493;font-size:1rem;line-height:1;z-index:1;
+}
+.envoltorio-senha>.alternar-visibilidade svg{
+ display:block;width:1.5rem;height:1.5rem;fill:none;stroke:currentColor;
+ stroke-width:1.85;stroke-linecap:round;stroke-linejoin:round;
+}
+.envoltorio-senha>.alternar-visibilidade:focus-visible{
+ outline:2px solid #f1cb82;outline-offset:1px;
+}
+.envoltorio-senha .traco-senha-oculta{display:none}
+.envoltorio-senha .alternar-visibilidade[aria-pressed="true"] .traco-senha-oculta{display:block}
