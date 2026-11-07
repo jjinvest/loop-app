@@ -11,7 +11,7 @@ const {GestaoCofresProprietarioV6DemoSQLite}=require('../src/domain/gestao-cofre
 const {disponibilidadeCofreDemo}=require('../src/domain/disponibilidade-cofres-v6-demo-sqlite');
 const {STATUS_CONFIRMADO}=require('../src/domain/processador-pedidos-simulados');
 
-test('segundo caixa deduz bonificacao confirmada, dourada e gestao sem utilizar reserva duas vezes',async t=>{
+test('segundo caixa deduz bonificacao e gestao, mas novas douradas nao consomem reserva',async t=>{
  const repo=new RepositorioCatalogoSQLite({caminho:':memory:'});
  t.after(()=>repo.fechar());
  const b=repo.banco,contas=new ContasParticipantesDemoSQLite({banco:b}),provas=new Map();
@@ -80,21 +80,20 @@ test('segundo caixa deduz bonificacao confirmada, dourada e gestao sem utilizar 
  assert.equal(solicitar('primeira-solicitacao',12500).repetido,true);
  assert.equal(conciliacao.conferir().cofreDireitaDisponivelSimuladoCentavos,35000);
  const dourada=ponte.criarDouradaManualDemo({eventoId:'dourada-caixa2-protegida'});
- assert.equal(dourada.valorReferenciaCentavos,25000);
- assert.equal(dourada.reservaDisponivelDepoisCentavos,10000);
+ assert.equal(dourada.reservaConsumidaCentavos,0);
+ assert.equal(dourada.aporteRegistrado,false);
  assert.equal(dourada.receitaNovaCentavos,0);
  const apos=conciliacao.conferir();
  assert.equal(apos.bonificacoesComprometidasCentavos,2500);
- assert.equal(apos.reservaDouradasComprometidaCentavos,25000);
+ assert.equal(apos.reservaDouradasComprometidaCentavos,0);
  assert.equal(apos.gestaoPendenteComprometidaCentavos,12500);
- assert.equal(apos.cofreDireitaDisponivelSimuladoCentavos,10000);
+ assert.equal(apos.cofreDireitaDisponivelSimuladoCentavos,35000);
  assert.equal(apos.quantidadeDivergencias,0);
  assert.equal(apos.cofreCentroRestanteSimuladoCentavos,150000);
- assert.throws(()=>solicitar('valor-acima-do-livre',10001),
+ assert.throws(()=>solicitar('valor-acima-do-livre',35001),
   {codigo:'SALDO_DEMONSTRATIVO_INSUFICIENTE'});
- assert.throws(()=>ponte.criarDouradaManualDemo({eventoId:'dourada-caixa2-bloqueada'}),
-  {codigo:'SALDO_RESERVA_INSUFICIENTE'});
- assert.equal(solicitar('ultimo-livre',10000).repetido,false);
+ assert.equal(ponte.criarDouradaManualDemo({eventoId:'dourada-caixa2-sem-reserva'}).reservaConsumidaCentavos,0);
+ assert.equal(solicitar('ultimo-livre',35000).repetido,false);
  assert.equal(conciliacao.conferir().cofreDireitaDisponivelSimuladoCentavos,0);
  assert.equal(ponte.criarDouradaManualDemo({eventoId:'dourada-caixa2-protegida'}).repetida,true);
  // Outra origem nao pode alterar o segundo caixa; nenhuma transferencia real.
@@ -102,11 +101,10 @@ test('segundo caixa deduz bonificacao confirmada, dourada e gestao sem utilizar 
  assert.equal(esquerda.dinheiroTransferidoCentavos,0);
  assert.equal(conciliacao.conferir().cofreDireitaDisponivelSimuladoCentavos,0);
  assert.equal(gestao.listar().registros.length,3);
- assert.equal(ponte.consultar().douradasManuais.length,1);
+ assert.equal(ponte.consultar().douradasManuais.length,2);
  const reconstruida=new PonteComprasConvitesDemoSQLite({banco:b,contas,
   consultarPagamentoConfiavel:async id=>provas.get(id)});
- assert.throws(()=>reconstruida.criarDouradaManualDemo({eventoId:'dourada-caixa2-reinicio'}),
-  {codigo:'SALDO_RESERVA_INSUFICIENTE'});
+ assert.equal(reconstruida.criarDouradaManualDemo({eventoId:'dourada-caixa2-reinicio'}).reservaConsumidaCentavos,0);
  assert.equal(reconstruida.criarDouradaManualDemo({eventoId:'dourada-caixa2-protegida'}).repetida,true);
  assert.equal(conciliacao.conferir().quantidadeDivergencias,0);
 });
