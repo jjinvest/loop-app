@@ -109,3 +109,8 @@ A conciliacao read-only foi reforcada contra remessa para fornecedor sem custo, 
 ## Continuidade 258 — estornos/reversoes de liquidacao (07/11/2026)
 
 Auditor de caixa de tres fontes now contempla DEBITO_REVERSAO da conta bancaria ligado a transacao de credito original e lote, emitindo alerta obrigatorio mesmo se o liquido conciliar. Rejeita duplicacao e falso zero apos estorno. Testes em test/conciliacao-financeira-externa-readonly.test.js. Faltam conectores read-only PSP/banco, contrato com fornecedores, credenciais/custodia externas e evidencias juridico-fiscais; sem liberacao comercial, PR #1 DRAFT. Conferir CI desta revisao.
+
+
+## Continuidade 259 — diagnóstico comercial Asaas sem habilitar dinheiro (07/11/2026)
+
+Preparada consulta da conta Asaas Produção e capacidade de leitura do extrato, com allowlist explícita de dois GET, segredo de Produção distinto do Sandbox, validação da aprovação cadastral, opt-in manual e relatório sem valores/PII/IDs. Nenhuma chamada externa de Produção ocorreu porque não há credencial aprovada em runtime isolado. O banco externo segue sem instituição/contrato definido, WeDrop sem integração autorizada. Procedimento: docs/ASAAS_PRODUCAO_ACESSO_SOMENTE_LEITURA_07NOV2026.md. CI testa com respostas simuladas; verificar resultado no HEAD. Não habilitar checkout ou depositar chave no preview.
