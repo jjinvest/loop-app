@@ -44,8 +44,9 @@ test('HTML original do cliente é reaproveitado sem script LAB, nova tela ou CPF
  assert.doesNotMatch(html,/E-mail fictício/);
 });
 test('interface aprovada e identidade real servidas da mesma origem protegida',async t=>{
+ const titular=contas(t);
  const app=criarAppIdentidadeLoop({
-  contas:contas(t),origemHttps:ORIGEM,permitirCadastro:true
+  contas:titular,origemHttps:ORIGEM,permitirCadastro:true
  });
  const s=app.listen(0,'127.0.0.1');await once(s,'listening');
  t.after(()=>new Promise(resolve=>s.close(resolve)));
@@ -69,10 +70,47 @@ test('interface aprovada e identidade real servidas da mesma origem protegida',a
   assert.equal(res.status,200,p);
   assert.match(res.headers.get('content-type'),/text\/css/);
  }
- const loja=await get('/loja');
- assert.equal(loja.status,503,'não ativar loja real sem catálogo/fornecedor');
- assert.equal((await loja.json()).checkoutReal,false);
+ assert.equal((await get('/loja')).status,401,'a vitrine exige titular autenticado');
+ assert.equal((await get('/api/loja/estado')).status,401);
+ const documentos=titular.documentos();
+ const nick='Ana',senha='SenhaFicticia2026!';
+ await titular.cadastrar({
+  nome:'Ana de Ensaio',nick,email:'ana@example.invalid',senha,
+  aceiteTermos:true,aceitePrivacidade:true,
+  versaoTermos:documentos.termos.versao,hashTermos:documentos.termos.hash,
+  versaoPrivacidade:documentos.privacidade.versao,
+  hashPrivacidade:documentos.privacidade.hash
+ });
+ const login=await fetch(base+'/api/contas/entrar',{
+  method:'POST',headers:{Origin:ORIGEM,'Content-Type':'application/json'},
+  body:JSON.stringify({nick,senha})
+ });
+ assert.equal(login.status,200);
+ const cookie=login.headers.get('set-cookie').split(';')[0];
+ const loja=await fetch(base+'/loja',{headers:{Cookie:cookie}});
+ assert.equal(loja.status,200,'o mesmo login deve abrir loja aprovada');
+ const lojaHtml=await loja.text();
+ assert.match(lojaHtml,/id="catalogoLojaLoop"/);
+ assert.match(lojaHtml,/id="akitemmFormEntrega"/);
+ assert.match(lojaHtml,/src="\/identidade\/assets\/loja.js"/);
+ assert.doesNotMatch(lojaHtml,/src="\/laboratorio\/loja.js"/);
+ const scriptLoja=await get('/identidade/assets/loja.js');
+ assert.equal(scriptLoja.status,200);
+ assert.match(await scriptLoja.text(),/loja conectada à sua conta LOOP/);
+ const estado=await fetch(base+'/api/loja/estado',{
+  headers:{Cookie:cookie}
+ });
+ assert.equal(estado.status,200);
+ const descricao=await estado.json();
+ assert.equal(descricao.contaUnica,true);
+ assert.equal(descricao.catalogoComercialDisponivel,false);
+ assert.equal(descricao.checkoutReal,false);
  assert.equal((await get('/api/contas/me')).status,401);
+ const proibido=await fetch(base+'/api/loja/pedidos',{
+  method:'POST',headers:{Origin:ORIGEM,'Content-Type':'application/json',Cookie:cookie},
+  body:JSON.stringify({produto:'fake'})
+ });
+ assert.equal(proibido.status,503);
  assert.equal((await get('/api/checkout/finalizar')).status,503);
  assert.equal((await get('/api/saques/solicitar')).status,503);
 });
