@@ -483,6 +483,7 @@ const destinosOperacionais=Object.freeze({
  PREPARAR_ENTREGA:['prepararEntrega','Preparar entrega de ensaio'],
  VER_POSICOES:['previaFilaTitulo','Consultar posições e filas'],
  VER_CATRACA:['motorEnsaioTitulo','Abrir controle da catraca'],
+ CRIAR_DOURADA:['painelCriacaoDouradaAdmin','Criar 1 bola dourada'],
  VER_AGENDA:['formAgendaMotor','Configurar horários da catraca'],
  CONFERIR_COBERTURA:['tituloAuditoriaCobertura','Auditar cobertura financeira'],
  CONFERIR_BACKUP:['conferirBackupOffsite','Auditar backup'],
@@ -1070,6 +1071,35 @@ $('prepararEntrega').addEventListener('submit',async e=>{
  }catch(err){dizer('Operação bloqueada: '+err.message);}finally{b.disabled=false;}
 });
 
+// Uma ação unitária, escrita no mesmo motor; mesma chave para repetição
+// em caso de falha de rede, impedindo duplicação após reenvio.
+$('formCriarDouradaAdmin').addEventListener('submit',async e=>{
+ e.preventDefault();
+ const botao=$('criarDouradaManualEnsaio'),estado=$('statusCriarDouradaAdmin');
+ if(botao.disabled)return;
+ botao.disabled=true;
+ estado.textContent='Registrando uma dourada no motor e no SQLite...';
+ try{
+  if(!$('criarDouradaCiencia').checked)
+   throw Error('Confirme que a criação é apenas de ensaio.');
+  if(!chaveDouradaPendente)
+   chaveDouradaPendente='dourada-'+crypto.randomUUID();
+  const result=await api('/motor/douradas/criar',{method:'POST',body:{
+   eventoId:chaveDouradaPendente,aceiteEnsaio:true
+  }});
+  chaveDouradaPendente=null;
+  $('criarDouradaCiencia').checked=false;
+  estado.textContent=(result.repetido?'Dourada já registrada':'Bola dourada criada')+
+   ' · posição #'+result.posicaoId+' · entrada na fila B.'+
+   ' Reserva não descontada; valor real recebido: R$ 0.'+
+   ' Centro dourado: 6 eventos para o cofre das douradas.';
+  try{await atualizarMotorContaEnsaio();}
+  catch{estado.textContent+=' Atualize o motor para conferir a posição.';}
+ }catch(err){
+  estado.textContent='Criação não confirmada: '+err.message+
+   '. A próxima tentativa mantém a mesma solicitação para evitar duplicação.';
+ }finally{botao.disabled=false;}
+});
 function atualizarListaDouradasAdmin(r){
  const alvo=$('douradasAtivasAdmin');alvo.replaceChildren();
  const registros=[...r.filaA,...r.filaB,r.tabuleiro.centro,...r.tabuleiro.vagas]
@@ -1116,6 +1146,7 @@ $('limparVisualDouradaAdmin').addEventListener('click',()=>{
  $('formVisualDouradaAdmin').requestSubmit();
 });
 let agendaHojeLocal=null;
+let chaveDouradaPendente=null;
 async function atualizarMotorContaEnsaio(){
  const r=await api('/motor/estado');
  atualizarListaDouradasAdmin(r);
@@ -1129,6 +1160,7 @@ async function atualizarMotorContaEnsaio(){
   linha('Luzes pretas contabilizadas',r.agenda.luzesPretasAcesas+'/3'),
   linha('Compras confirmadas aguardando luz',r.agenda.aguardandoContabilizacao),
   linha('Giros de ensaio',r.catraca.giros),
+  linha('Douradas manuais criadas',r.douradasManuaisCriadas||0),
   linha('Catraca',r.catraca.estado),
   linha('Modo da catraca',r.agenda.modoExecucao||'MANUAL'),
   linha('Meta de centros por turno',r.agenda.metaLotes?.quantidade||'Sem meta'),
