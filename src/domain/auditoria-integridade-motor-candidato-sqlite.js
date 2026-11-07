@@ -148,25 +148,66 @@ function auditarIntegridadeMotorCandidato({banco,exigirMotor=false}={}){
   checkpointsAuditados=contar(
    'SELECT COUNT(*) AS n FROM akitemm_motor_reversoes_psp_checkpoint');
  }
+ // O livro de criacao de douradas e imutavel e deve corresponder a cada
+ // posicao efetivamente existente no snapshot do mesmo motor.
+ const tabelaDouradas='akitemm_motor_douradas_manuais_lab';
+ const registrosDouradas=presentes.has(tabelaDouradas)?banco.prepare([
+  'SELECT evento_id AS eventoId,numero_posicao AS posicaoId',
+  'FROM akitemm_motor_douradas_manuais_lab'
+ ].join(' ')).all():[];
+ const operacoesDouradas=contar([
+  'SELECT COUNT(*) AS n FROM akitemm_motor_conta_ensaio_operacoes',
+  "WHERE tipo='CRIAR_DOURADA_MANUAL'"
+ ].join(' '));
+ if(registrosDouradas.length!==operacoesDouradas)
+  falha('MOTOR_DOURADAS_LIVRO_OPERACAO_DIVERGENTE');
+ const duplicadas=banco.prepare([
+  'SELECT COUNT(*) AS n FROM akitemm_motor_conta_ensaio_operacoes o',
+  "WHERE o.tipo='CRIAR_DOURADA_MANUAL' AND NOT EXISTS (",
+  'SELECT 1 FROM akitemm_motor_douradas_manuais_lab d',
+  'WHERE d.numero_posicao=o.numero_posicao)'
+ ].join(' ')).get().n;
+ if(presentes.has(tabelaDouradas)&&duplicadas>0)
+  falha('MOTOR_DOURADAS_OPERACAO_ORFA');
  const row=banco.prepare([
   'SELECT revisao,snapshot FROM akitemm_motor_conta_ensaio_estado',
   'WHERE id=1'
  ].join(' ')).get();
  const temLotes=contar('SELECT COUNT(*) AS n FROM akitemm_motor_ensaio_lotes_pedido')>0;
- if(!row&&temLotes)falha('MOTOR_SQLITE_SNAPSHOT_AUSENTE');
+ if(!row&&(temLotes||registrosDouradas.length))falha('MOTOR_SQLITE_SNAPSHOT_AUSENTE');
  if(row){
   if(!Number.isSafeInteger(row.revisao)||row.revisao<1||
      typeof row.snapshot!=='string'||row.snapshot.length>32*1024*1024)
    falha('MOTOR_SQLITE_SNAPSHOT_INVALIDO');
+  let restaurado;
   try{
    // Reconstituir a semantica completa: seis vagas, filas, ciclos,
    // catraca, IDs repetidos, destino financeiro e regras de snapshot.
-   SimuladorLoop.restaurarSnapshot(JSON.parse(row.snapshot));
+   restaurado=SimuladorLoop.restaurarSnapshot(JSON.parse(row.snapshot));
   }catch{falha('MOTOR_SQLITE_SNAPSHOT_INVALIDO');}
+  const posicoes=[...restaurado.filas.filaA,...restaurado.filas.filaB,
+   restaurado.tabuleiro.centro,...restaurado.tabuleiro.vagas,
+   ...restaurado.tabuleiro.ciclosConcluidos.map(x=>x.centro)]
+   .filter(Boolean);
+  const porId=new Map(posicoes.map(p=>[p.id,p]));
+  for(const d of registrosDouradas){
+   const p=porId.get(d.posicaoId);
+   if(!p||p.empresa!==true||p.participanteId!=='LOOP_EMPRESA'||
+      p.titularOperacional!=='LOOP_EMPRESA'||
+      p.origemOperacional!=='ADMIN_MANUAL_SEM_COMPRA'||
+      p.aporteInternoCentavos!==0||p.geradaSemCompra!==true)
+    falha('MOTOR_DOURADA_MANUAL_SEM_POSICAO');
+   if(banco.prepare([
+    'SELECT COUNT(*) AS n FROM akitemm_motor_ensaio_lotes_pedido',
+    'WHERE numero_posicao=?'
+   ].join(' ')).get(d.posicaoId).n!==0)
+    falha('MOTOR_DOURADA_COM_PEDIDO_INDEVIDO');
+  }
  }
  return {presente:true,totalInconsistencias:0,
   snapshotValidado:Boolean(row),lotesOrfaos:0,aceitesOrfaos:0,
-  operacoesOrfas:0,reservasAuditadas,checkpointsAuditados,
+  operacoesOrfas:0,douradasManuaisAuditadas:registrosDouradas.length,
+  reservasAuditadas,checkpointsAuditados,
   valorRealProvado:false};
 }
 module.exports={auditarIntegridadeMotorCandidato};
