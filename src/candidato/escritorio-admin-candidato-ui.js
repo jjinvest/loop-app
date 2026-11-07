@@ -2,6 +2,7 @@
 // Somente laboratório; credencial do operador mantida apenas em memória.
 const $=id=>document.getElementById(id),elem=(tag,value)=>{const x=document.createElement(tag);if(value!==undefined)x.textContent=value;return x;};
 let auth=null,chave=null,paginaMissoes=0,paginaAlertas=0,paginaProdutos=0,edicaoProduto=null,chaveProduto=null,sinalizacaoAtual=null;
+let departamentoAberto=null,paginaOperacional=0,sequenciaOperacional=0;
 let paginaPesquisaAdmin=0,pesquisaAtualAdmin=null,sequenciaPesquisaAdmin=0;
 const dizer=x=>$('estado').textContent=x;
 let cursoresPosicoes=[null],indicePosicoes=0,proximoCursorPosicoes=null;
@@ -469,6 +470,118 @@ async function editarCor(id){
 
 
 
+
+// Um departamento = uma projeção operacional do SQLite + ações já existentes.
+// Nenhum quadro paralelo e nenhum cliente/saque fictício.
+const destinosOperacionais=Object.freeze({
+ BUSCAR_CLIENTES:['tituloPesquisaAdmin','Buscar clientes'],
+ BUSCAR_PEDIDOS:['tituloPesquisaAdmin','Buscar pedidos'],
+ CRIAR_MISSAO:['criarMissao','Registrar ação operacional'],
+ CONFERIR_PSP:['tituloPixUnificado','Conferir PSP de ensaio'],
+ EDITAR_PRODUTOS:['tituloProdutosAdmin','Editar catálogo'],
+ PREPARAR_ENTREGA:['prepararEntrega','Preparar entrega de ensaio'],
+ VER_POSICOES:['previaFilaTitulo','Consultar posições e filas'],
+ VER_CATRACA:['motorEnsaioTitulo','Abrir controle da catraca'],
+ VER_AGENDA:['formAgendaMotor','Configurar horários da catraca'],
+ CONFERIR_COBERTURA:['tituloAuditoriaCobertura','Auditar cobertura financeira'],
+ CONFERIR_BACKUP:['conferirBackupOffsite','Auditar backup'],
+ VER_MISSOES:['resumoMissoes','Consultar missões']
+});
+function navegarParaControle(id){
+ const destino=$(id);
+ if(!destino)throw Error('CONTROLE_NAO_ENCONTRADO');
+ destino.scrollIntoView({behavior:'smooth',block:'center'});
+ if(destino.matches('input,select,button,textarea'))destino.focus({preventScroll:true});
+}
+async function carregarDepartamentoOperacional({rolar=false}={}){
+ if(!departamentoAberto)return;
+ const codigo=departamentoAberto,seq=++sequenciaOperacional;
+ const panel=$('painelDepartamentoOperacional'),estado=$('departamentoOperacionalEstado');
+ panel.hidden=false;
+ estado.textContent='Consultando dados operacionais no SQLite...';
+ $('departamentoOperacionalRegistros').replaceChildren();
+ $('departamentoOperacionalAcoes').replaceChildren();
+ $('departamentoOperacionalMetricas').replaceChildren();
+ $('departamentoOperacionalAnterior').disabled=true;
+ $('departamentoOperacionalProximo').disabled=true;
+ $('departamentoOperacionalAtualizar').disabled=true;
+ try{
+  const dados=await api('/departamentos/'+encodeURIComponent(codigo)+
+   '/operacao?pagina='+paginaOperacional);
+  if(seq!==sequenciaOperacional||!auth||departamentoAberto!==codigo)return;
+  $('departamentoOperacionalTitulo').textContent=dados.nome+' · operação';
+  const situacao=dados.estado==='BLOQUEADO_COMERCIAL'?
+   'Operação comercial não habilitada. ':'Operação de laboratório conectada. ';
+  estado.textContent=situacao+dados.descricao+' '+dados.mensagem+
+   ' Página '+(dados.pagina+1)+' · '+dados.total+' registro(s).';
+  const metricas=$('departamentoOperacionalMetricas');
+  for(const metrica of dados.metricas)metricas.append(linha(metrica.rotulo,metrica.valor));
+  const acoes=$('departamentoOperacionalAcoes');
+  for(const acao of dados.acoes){
+   const destino=destinosOperacionais[acao];
+   if(!destino)continue;
+   const botao=elem('button',destino[1]);botao.type='button';
+   botao.addEventListener('click',()=>{
+    try{
+     if(acao==='CRIAR_MISSAO')$('departamento').value=codigo;
+     if(acao==='BUSCAR_CLIENTES')$('pesquisaTipoAdmin').value='clientes';
+     if(acao==='BUSCAR_PEDIDOS')$('pesquisaTipoAdmin').value='pedidos';
+     navegarParaControle(destino[0]);
+    }catch(e){estado.textContent='Controle indisponível: '+e.message;}
+   });
+   acoes.append(botao);
+  }
+  const registros=$('departamentoOperacionalRegistros');
+  if(!dados.registros.length)registros.append(elem('p',
+   dados.estado==='BLOQUEADO_COMERCIAL'?'Nenhuma operação financeira comercial permitida.':
+    'Ainda não existem registros nesta área. Os controles disponíveis estão acima.'));
+  for(const item of dados.registros){
+   const card=elem('article');card.className='produto-admin-item';
+   const info=elem('div');info.append(elem('strong',item.titulo),elem('small',item.detalhe));
+   card.append(info);
+   if(item.produtoId||item.prepedidoId){
+    const acao=elem('button',item.produtoId?'Editar produto':
+     codigo==='ENTREGAS'?'Abrir preparação de entrega':'Conferir pedido');
+    acao.type='button';
+    acao.addEventListener('click',async()=>{
+     acao.disabled=true;
+     try{
+      if(item.produtoId){
+       preencherProduto(await api('/produtos/'+encodeURIComponent(item.produtoId)));
+      }else if(codigo==='ENTREGAS'){
+       $('prepedidoId').value=item.prepedidoId;
+       navegarParaControle('prepararEntrega');
+      }else{
+       $('preAdesaoId').value=item.prepedidoId;
+       mostrarPreAdesao(await api('/pre-adesao/'+encodeURIComponent(item.prepedidoId)));
+       navegarParaControle('formPreAdesao');
+      }
+     }catch(e){estado.textContent='Não foi possível abrir o registro: '+e.message;}
+     finally{acao.disabled=false;}
+    });
+    card.append(acao);
+   }
+   registros.append(card);
+  }
+  $('departamentoOperacionalAnterior').disabled=paginaOperacional===0;
+  $('departamentoOperacionalProximo').disabled=!dados.haMais;
+  if(rolar)panel.scrollIntoView({behavior:'smooth',block:'start'});
+ }catch(e){
+  if(seq===sequenciaOperacional){
+   estado.textContent='Departamento temporariamente indisponível: '+e.message;
+  }
+ }finally{
+  if(seq===sequenciaOperacional)$('departamentoOperacionalAtualizar').disabled=false;
+ }
+}
+$('departamentoOperacionalAtualizar').addEventListener('click',()=>carregarDepartamentoOperacional());
+$('departamentoOperacionalAnterior').addEventListener('click',()=>{
+ if(paginaOperacional>0){paginaOperacional--;carregarDepartamentoOperacional();}
+});
+$('departamentoOperacionalProximo').addEventListener('click',()=>{
+ if(departamentoAberto){paginaOperacional++;carregarDepartamentoOperacional();}
+});
+
 function atualizarDepartamentos(departamentos){
  const area=$('quadroDepartamentos');area.replaceChildren();
  const ativo=$('filtrarDepartamento').value;
@@ -477,19 +590,19 @@ function atualizarDepartamentos(departamentos){
   button.setAttribute('aria-pressed',String(ativo===d.codigo));
   button.append(elem('strong',d.nome),
    elem('span',d.missoesPendentes+' missão(ões) em aberto'),
-   elem('small',d.quantidadeDadosLaboratorio===null?
-    'Operações comerciais não conectadas':
-    d.quantidadeDadosLaboratorio+' · '+d.descricao));
+   elem('small',d.codigo==='COFRES'||d.codigo==='SAQUES'?
+    'Financeiro comercial bloqueado · consultar pendências':
+    (d.quantidadeDadosLaboratorio===null?'Abrir operações conectadas ao motor de ensaio':
+     d.quantidadeDadosLaboratorio+' · '+d.descricao)));
   button.addEventListener('click',async()=>{
-   const atual=$('filtrarDepartamento').value;
-   const escolhido=atual===d.codigo?'':d.codigo;
-   $('filtrarDepartamento').value=escolhido;
+   departamentoAberto=d.codigo;paginaOperacional=0;
+   $('filtrarDepartamento').value=d.codigo;
    $('departamento').value=d.codigo;paginaMissoes=0;
+   button.setAttribute('aria-pressed','true');
    try{
     await atualizar();
-    $('resumoMissoes').scrollIntoView({behavior:'smooth',block:'start'});
-    dizer(escolhido?'Departamento '+d.nome+' selecionado. Missões abaixo.':
-     'Todos os departamentos exibidos abaixo.');
+    await carregarDepartamentoOperacional({rolar:true});
+    dizer('Departamento '+d.nome+' aberto com dados operacionais e ações próprias.');
    }catch(e){dizer('Não foi possível abrir o departamento: '+e.message);}
   });
   area.append(button);
@@ -635,6 +748,11 @@ $('sair').addEventListener('click',()=>{
   $('pesquisaEstadoAdmin').textContent='Acesso encerrado.';
   $('pesquisaAnteriorAdmin').disabled=true;$('pesquisaProximoAdmin').disabled=true;
   $('pesquisaExecutarAdmin').disabled=false;
+  ++sequenciaOperacional;departamentoAberto=null;paginaOperacional=0;
+  $('painelDepartamentoOperacional').hidden=true;
+  $('departamentoOperacionalRegistros').replaceChildren();
+  $('departamentoOperacionalAcoes').replaceChildren();
+  $('departamentoOperacionalMetricas').replaceChildren();
   dizer('Acesso encerrado.');
 });
 async function conferirCoberturaAkitemm({offset=0}={}){
