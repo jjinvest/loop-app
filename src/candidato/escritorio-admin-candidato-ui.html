@@ -212,6 +212,22 @@
 </p>
  <div id="listaCoberturaAkitemm"></div>
 </section>
+<section class="painel" id="painelFluxoFinanceiroAdmin" aria-labelledby="tituloFluxoFinanceiroAdmin">
+<div class="linha"><h2 id="tituloFluxoFinanceiroAdmin">Caixa e luzes do LOOP · mesma base SQLite</h2>
+<button id="atualizarFluxoFinanceiroAdmin" type="button">Atualizar caixa e eventos</button></div>
+<p class="subtexto">Catraca financeira: cada compra confirmada e consumida pelo temporizador acende UMA luz e registra UMA provisão no cofre correspondente, antes do giro físico. As cores roxa/preta mostram a sequência visual, não pagamentos. Depois da sexta luz ocorre o giro das pessoas, sem duplicar valores.</p>
+<div id="fluxoFinanceiroMetricas" class="indicadores"></div>
+<h3>Quatro cofres internos · provisões não sacáveis</h3>
+<div id="fluxoFinanceiroCofres" class="indicadores"></div>
+<h3>Três destinos bancários planejados</h3>
+<p id="fluxoFinanceiroBancos" class="subtexto">Aguardando leitura. As contas bancárias não estão conectadas.</p>
+<h3>Produtos vendidos · custos e fornecedor previstos</h3>
+<p id="fluxoFinanceiroPedidos" class="subtexto">Ainda não há pedido conciliado com caixa.</p>
+<h3>Últimas luzes financeiras registradas</h3>
+<p id="fluxoFinanceiroLuzes" class="subtexto">Nenhuma luz contabilizada nesta base.</p>
+<p class="subtexto">Dia de caixa: conferência a partir das 09:00 (Brasília). Não confundir previsão do fornecedor com pagamento realizado, nem provisão do centro com Pix liberado. Transferências comerciais continuam bloqueadas.</p>
+<p id="fluxoFinanceiroEstado" role="status" aria-live="polite">Aguardando consulta ao mesmo motor.</p>
+</section>
 <section class="painel" aria-labelledby="motorEnsaioTitulo">
 <div class="linha"><h2 id="motorEnsaioTitulo">Motor LOOP 3.0 · mesmo SQLite · ensaio controlado</h2>
 <button type="button" id="motorEnsaioAtualizar">Atualizar motor</button></div>
