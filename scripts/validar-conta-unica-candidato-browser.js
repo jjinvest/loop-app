@@ -159,6 +159,23 @@ const {once}=require('node:events');
    await admin.locator('#token').fill('somente-teste-do-navegador-'+('x'.repeat(40)));
    await admin.locator('#formAcesso button').click();
    await admin.locator('#administracao').waitFor({state:'visible'});
+   // Provar a operação REAL dos controles editoriais sem redesenhar o admin.
+   assert.equal(await admin.locator('#formNovidadesAdmin').count(),1);
+   await admin.locator('#novidadeTituloAdmin').fill('LANÇAMENTO '+item.nick);
+   await admin.locator('#novidadeTextoAdmin').fill(
+    'Comunicado editorial de ensaio: nenhuma gratuidade ou pagamento é ativado.');
+   await admin.locator('#novidadeImagemAdmin').setInputFiles({
+    name:'novidade-teste.png',mimeType:'image/png',
+    buffer:Buffer.from(
+     'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVQIHWP4//8/AwAI/AL+anxrAAAAAElFTkSuQmCC',
+     'base64')
+   });
+   await admin.locator('#novidadeEstadoAdmin').selectOption('PUBLICADA');
+   await admin.locator('#novidadeSalvarAdmin').click();
+   await admin.locator('#novidadeResultadoAdmin')
+    .filter({hasText:/Novidade salva: PUBLICADA/}).waitFor();
+   assert.match(await admin.locator('#listaNovidadesAdmin').innerText(),
+    new RegExp('LANÇAMENTO '+item.nick));
    assert.equal(await admin.locator('#formPreAdesao').count(),1);
    assert.equal(await admin.locator('#conferirPreAdesao').count(),1);
    await admin.locator('#resumoPreviaFilas')
@@ -312,6 +329,29 @@ const {once}=require('node:events');
     throw Error('VITRINE_NAO_INICIALIZOU: '+estado+'; ERROS='+JSON.stringify(failures)+'; '+err.message);
    }
    assert.ok(await loja.locator('#catalogoLojaLoop article.produto-loja-loop').count()>=2);
+   // Os quatro botoes originais continuam na MESMA pagina e exibem conteudo
+   // consistente com produtos/publicacoes confirmados, tambem no celular.
+   assert.equal(await loja.locator('[data-akitemm-categoria]').count(),4);
+   await loja.locator('[data-akitemm-categoria="novidades"]').click();
+   await loja.locator('#novidadesVitrineAkitemm article.akitemm-novidade-publicacao')
+    .filter({hasText:'LANÇAMENTO '+item.nick}).waitFor();
+   assert.equal(await loja.locator('#novidadesVitrineAkitemm img').count(),1);
+   await loja.locator('#novidadesVitrineAkitemm img').first()
+    .evaluate(async img=>{if(!img.complete)await new Promise(resolve=>{
+     img.addEventListener('load',resolve,{once:true});
+     img.addEventListener('error',resolve,{once:true});
+    });});
+   assert.ok(await loja.locator('#novidadesVitrineAkitemm img').first()
+    .evaluate(img=>img.naturalWidth>0),'imagem da novidade precisa carregar na loja');
+   await loja.locator('[data-akitemm-categoria="cursos"]').click();
+   assert.ok(await loja.locator('#catalogoLojaLoop article.produto-loja-loop').count()>=2);
+   assert.equal(await loja.locator('#novidadesVitrineAkitemm').isHidden(),true);
+   await loja.locator('[data-akitemm-categoria="fisicos"]').click();
+   assert.equal(await loja.locator('#catalogoLojaLoop article.produto-loja-loop').count(),0);
+   await loja.locator('[data-akitemm-categoria="mais-vendidos"]').click();
+   assert.equal(await loja.locator('#catalogoLojaLoop article.produto-loja-loop').count(),0,
+    'ensaios nao sao vendas reais confirmadas');
+   await loja.locator('#akitemmFiltroTodos').click();
    const estadoVitrine=await loja.evaluate(async()=>{
     const r=await fetch('/staging/vitrine/loja/catalogo',{credentials:'same-origin'});
     return {status:r.status,body:await r.json()};
