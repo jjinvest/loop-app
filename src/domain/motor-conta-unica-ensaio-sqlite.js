@@ -3,6 +3,8 @@
 // As operacoes abaixo nao constituem liquidação PSP, adesao, direito ou ganho.
 // Bloqueio absoluto em NODE_ENV=production e sem rotas publicas de escrita.
 const {SimuladorLoop}=require('./simulador-loop');
+const {LivroLuzesFinanceirasCandidatoSQLite}=
+ require('./livro-luzes-financeiras-candidato-sqlite');
 const {PADRAO,validarAgenda,avaliarAgenda}=require('./agenda-catraca-loop');
 const {planejado,dadosAtivacao,validarMeta}=require('./meta-lotes-catraca-loop');
 const {LIMITE_POSICOES_ATIVAS}=require('./capacidade-posicoes-loop');
@@ -25,6 +27,7 @@ class MotorContaUnicaEnsaioSQLite{
      (termosVersao!==null&&(typeof termosVersao!=='string'||!/^LAB-/.test(termosVersao))))
    falha('MOTOR_FONTE_SQLITE_UNICA_OBRIGATORIA');
   this.banco=banco;this.sinalizacao=sinalizacao;this.ponte=ponte;
+  this.livroLuzesFinanceiras=new LivroLuzesFinanceirasCandidatoSQLite({banco});
   this.cpf=cpf;this.termosVersao=termosVersao;
   banco.exec([
    'CREATE TABLE IF NOT EXISTS akitemm_motor_conta_ensaio_estado(',
@@ -153,11 +156,27 @@ class MotorContaUnicaEnsaioSQLite{
   this.banco.exec('BEGIN IMMEDIATE');
   try{
    const sim=this._simulador();
+   const antes=new Set(sim.tabuleiro.vendasDoCiclo.map(v=>v.vendaId));
+   const indiceCiclosAntes=sim.tabuleiro.ciclosConcluidos.length;
    const resultado=acao(sim);
+   // Luz, destino e snapshot persistidos antes do giro fisico no mesmo COMMIT.
+   this.livroLuzesFinanceiras.registrarNovasLuzes({antes,sim,
+    indiceCiclosAntes,comPspSandbox:this.ponte!==null});
    this._gravar(sim);
    this.banco.exec('COMMIT');
    return resultado;
   }catch(e){this.banco.exec('ROLLBACK');throw e;}
+ }
+ consultarFluxoFinanceiro(){
+  const livro=this.livroLuzesFinanceiras.consultar();
+  const sim=this._simulador();
+  const atuais=sim.tabuleiro.vendasDoCiclo;
+  return {...livro,luzesNoCiclo:atuais.length,
+   roxasNoCiclo:atuais.filter(x=>x.destinoPrevisto==='PARTICIPANTE').length,
+   pretasNoCiclo:atuais.filter(x=>x.destinoPrevisto!=='PARTICIPANTE').length,
+   girosFisicosConcluidos:sim.giros,
+   eventoFinanceiroExigeGiroFisico:false,
+   liberacaoDeTransferenciaReal:false};
  }
  _contarAtivas(sim,titularId){
   const estado=sim.estado();
