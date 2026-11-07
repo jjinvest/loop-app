@@ -1,0 +1,28 @@
+name: LOOP - Ensaio integrado de tres titulares
+on:
+  push:
+    branches:
+      - feature/unificar-escritorio-real-20261105
+    paths:
+      - 'test/ensaio-tres-clientes-acesso-unificado-preview.test.js'
+      - '.github/workflows/ensaio-tres-clientes-loop.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: ensaio-tres-clientes-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  validar-tres-clientes:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+      - run: npm ci --ignore-scripts --no-fund
+      - run: node --test test/ensaio-tres-clientes-acesso-unificado-preview.test.js
