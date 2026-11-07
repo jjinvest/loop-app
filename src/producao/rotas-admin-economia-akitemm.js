@@ -6,7 +6,7 @@
 const express=require('express');
 function erro(c){const e=new Error(c);e.codigo=c;throw e;}
 function criarRouterAdminEconomiaAkitemm({
- controle,pedidosComerciais=null,autorizarAdministrador,validarCsrfAdmin,origemHttps
+ controle,catalogo=null,pedidosComerciais=null,autorizarAdministrador,validarCsrfAdmin,origemHttps
 }={}){
  if(!controle||typeof controle.listarOfertas!=='function'||
     typeof controle.definirCusto!=='function'||
@@ -15,6 +15,11 @@ function criarRouterAdminEconomiaAkitemm({
     typeof autorizarAdministrador!=='function'||
     typeof validarCsrfAdmin!=='function')
   erro('ADMIN_REAL_SEM_AUTORIZACAO');
+ if(catalogo!==null&&(
+    typeof catalogo.criarProduto!=='function'||
+    typeof catalogo.vincularOferta!=='function'||
+    typeof catalogo.listarProdutosAdministrativos!=='function'))
+  erro('CATALOGO_ADMIN_NAO_CONFIGURADO');
  if(pedidosComerciais!==null&&
     typeof pedidosComerciais.listarResumoContabil!=='function')
   erro('CONTABILIDADE_PEDIDOS_NAO_CONFIGURADA');
@@ -41,6 +46,59 @@ function criarRouterAdminEconomiaAkitemm({
    impostosCalculados:false,profitLiquidoCalculado:false
   });}catch{return res.status(503).json({erro:'ECONOMIA_INDISPONIVEL'});}
  });
+ // Cadastro de produtos/distribuidores comerciais reais apenas em
+ // RASCUNHO: nunca ativa oferta sem homologação do parceiro.
+ router.get('/produtos-cadastrados',(_req,res)=>{
+  if(!catalogo)return res.status(503).json({erro:'CATALOGO_ADMIN_NAO_CONFIGURADO'});
+  try{return res.json({
+   produtos:catalogo.listarProdutosAdministrativos({limite:500}),
+   nenhumProdutoPublicadoPorEstaRota:true
+  });}catch{return res.status(503).json({erro:'CATALOGO_INDISPONIVEL'});}
+ });
+ const editarCadastro=(req,res,next)=>{
+  if(req.get('origin')!==origem)
+   return res.status(403).json({erro:'ORIGEM_ADMIN_INVALIDA'});
+  if(!req.is('application/json'))
+   return res.status(415).json({erro:'JSON_OBRIGATORIO'});
+  next();
+ };
+ router.post('/produtos-cadastrar',express.json({limit:'4kb',strict:true}),
+  editarCadastro,validarCsrfAdmin,(req,res)=>{
+   if(!catalogo)return res.status(503).json({erro:'CATALOGO_ADMIN_NAO_CONFIGURADO'});
+   const b=req.body;
+   if(!b||Array.isArray(b)||
+      Object.keys(b).sort().join(',')!=='descricao,produtoId,titulo')
+    return res.status(400).json({erro:'CAMPOS_INVALIDOS'});
+   try{
+    const produto=catalogo.criarProduto(b);
+    return res.status(201).json(produto);
+   }catch(e){
+    if(e.codigo==='PRODUTO_COMERCIAL_INVALIDO')
+     return res.status(400).json({erro:e.codigo});
+    if(/UNIQUE|constraint/i.test(e.message||''))
+     return res.status(409).json({erro:'PRODUTO_JA_CADASTRADO'});
+    return res.status(503).json({erro:'CATALOGO_INDISPONIVEL'});
+   }
+  });
+ router.post('/ofertas-cadastrar',express.json({limit:'4kb',strict:true}),
+  editarCadastro,validarCsrfAdmin,(req,res)=>{
+   if(!catalogo)return res.status(503).json({erro:'CATALOGO_ADMIN_NAO_CONFIGURADO'});
+   const b=req.body;
+   if(!b||Array.isArray(b)||
+      Object.keys(b).sort().join(',')!==
+       'distribuidorId,precoUnitCentavos,prioridade,produtoId,sku')
+    return res.status(400).json({erro:'CAMPOS_INVALIDOS'});
+   try{
+    const oferta=catalogo.vincularOferta(b);
+    return res.status(201).json(oferta);
+   }catch(e){
+    if(['OFERTA_COMERCIAL_INVALIDA','PRODUTO_COMERCIAL_NAO_EXISTE'].includes(e.codigo))
+     return res.status(400).json({erro:e.codigo});
+    if(/UNIQUE|constraint/i.test(e.message||''))
+     return res.status(409).json({erro:'SKU_OU_OFERTA_EM_CONFLITO'});
+    return res.status(503).json({erro:'CATALOGO_INDISPONIVEL'});
+   }
+  });
  router.post('/produtos-valores/:produtoId/:distribuidorId',
   express.json({limit:'4kb',strict:true}),
   (req,res,next)=>{
