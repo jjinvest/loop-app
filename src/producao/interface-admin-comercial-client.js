@@ -18,12 +18,14 @@
    throw Error('Valor fora do limite permitido.');
   return centavos;
  };
- let csrf=null,selecionado=null,ofertas=[];
+ let csrf=null,selecionado=null,ofertas=[],produtos=[];
  const status=msg=>{$('resultadoProdutoAdmin').textContent=msg;};
  function travar(bloqueado){
   $('salvarPrecoAdmin').disabled=bloqueado||!selecionado;
   $('salvarCustoAdmin').disabled=bloqueado||!selecionado;
   $('recarregarProdutos').disabled=bloqueado;
+  $('salvarNovoProduto').disabled=bloqueado||!csrf;
+  $('salvarNovaOferta').disabled=bloqueado||!csrf;
  }
  function limparSelecao(){
   selecionado=null;
@@ -87,12 +89,41 @@
   if(!resp.ok)throw Error('Operação não concluída ('+(data.erro||resp.status)+').');
   return data;
  }
+ function exibirProdutosCadastrados(lista){
+  const destino=$('listaProdutosCadastrados');
+  destino.replaceChildren();
+  const escolha=$('ofertaProdutoId');
+  const antes=escolha.value;
+  escolha.replaceChildren();
+  if(lista.length===0){
+   destino.textContent='Nenhum produto comercial cadastrado.';
+   return;
+  }
+  for(const p of lista){
+   const item=document.createElement('p');
+   item.textContent=p.produtoId+' · '+p.titulo+
+    ' · '+p.quantidadeDistribuidores+' distribuidores'+
+    (p.ativo?' · ativo':' · rascunho');
+   destino.appendChild(item);
+   const option=document.createElement('option');
+   option.value=p.produtoId;
+   option.textContent=p.titulo+' ('+p.produtoId+')';
+   escolha.appendChild(option);
+  }
+  if(lista.some(x=>x.produtoId===antes))escolha.value=antes;
+ }
  async function atualizar(){
   const dados=await pedir('/produtos-valores');
   if(dados.dadosPrivados!==true||!Array.isArray(dados.ofertas))
    throw Error('Resposta de administração inválida.');
   ofertas=dados.ofertas;
   exibir(ofertas);
+  const catalogo=await pedir('/produtos-cadastrados');
+  if(!Array.isArray(catalogo.produtos)||
+     catalogo.nenhumProdutoPublicadoPorEstaRota!==true)
+   throw Error('Resposta do catálogo administrativo inválida.');
+  produtos=catalogo.produtos;
+  exibirProdutosCadastrados(produtos);
   if(selecionado){
    const atualizado=ofertas.find(x=>x.produtoId===selecionado.produtoId&&
     x.distribuidorId===selecionado.distribuidorId);
@@ -136,6 +167,56 @@
    throw e;
   }finally{travar(false);}
  }
+ $('formNovoProduto').addEventListener('submit',e=>{
+  e.preventDefault();
+  const form=e.currentTarget;
+  const botao=$('salvarNovoProduto');
+  botao.disabled=true;
+  void (async()=>{
+   const produtoId=$('novoProdutoId').value.trim();
+   const titulo=$('novoProdutoTitulo').value.trim();
+   const descricao=$('novoProdutoDescricao').value.trim();
+   const criado=await pedir('/produtos-cadastrar',{
+    method:'POST',body:{produtoId,titulo,descricao}
+   });
+   if(criado.produtoId!==produtoId||criado.ativo!==false)
+    throw Error('Não foi possível confirmar o cadastro de rascunho.');
+   form.reset();
+   await atualizar();
+   $('ofertaProdutoId').value=produtoId;
+   $('resultadoCadastroAdmin').textContent=
+    'Produto '+produtoId+' cadastrado como rascunho. Adicione o distribuidor.';
+  })().catch(err=>{
+   $('resultadoCadastroAdmin').textContent=err.message;
+  }).finally(()=>{botao.disabled=!csrf;});
+ });
+ $('formNovaOferta').addEventListener('submit',e=>{
+  e.preventDefault();
+  const form=e.currentTarget;
+  const botao=$('salvarNovaOferta');
+  botao.disabled=true;
+  void (async()=>{
+   const novo={
+    produtoId:$('ofertaProdutoId').value,
+    distribuidorId:$('ofertaDistribuidorId').value.trim(),
+    sku:$('ofertaSku').value.trim(),
+    precoUnitCentavos:validarDinheiro($('ofertaPreco').value),
+    prioridade:Number($('ofertaPrioridade').value)
+   };
+   if(!Number.isSafeInteger(novo.prioridade)||
+      novo.prioridade<1||novo.prioridade>9999)
+    throw Error('Prioridade inválida.');
+   const salvo=await pedir('/ofertas-cadastrar',{method:'POST',body:novo});
+   if(salvo.produtoId!==novo.produtoId||salvo.ofertaAtiva!==false)
+    throw Error('O distribuidor não foi registrado corretamente.');
+   form.reset();$('ofertaPrioridade').value='100';
+   await atualizar();
+   $('resultadoCadastroAdmin').textContent=
+    'Distribuidor vinculado como rascunho. Venda ainda bloqueada.';
+  })().catch(err=>{
+   $('resultadoCadastroAdmin').textContent=err.message;
+  }).finally(()=>{botao.disabled=!csrf;});
+ });
  $('recarregarProdutos').addEventListener('click',()=>{
   void atualizar().catch(e=>status(e.message));
  });
