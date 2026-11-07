@@ -106,6 +106,12 @@ test('catraca exige 6 eventos distintos, pausa respeitada e limite de 2 no tabul
   for(let n=1;n<=6;n++){
    const r=motor.registrarEvento({prepedidoId:pedido(n)});
    assert.equal(r.eventosNoCiclo,n);
+   // A catraca FINANCEIRA contabiliza ja na luz, ANTES do giro fisico.
+   const livro=motor.consultarFluxoFinanceiro();
+   assert.equal(livro.luzesFinanceirasRegistradas,n);
+   assert.equal(livro.girosFisicosConcluidos,0);
+   assert.equal(livro.luzesNoCiclo,n);
+   assert.equal(livro.valorDisponivelParaSaqueCentavos,0);
    const luzes=motor.consultarAgenda();
    assert.equal(luzes.luzesRoxasAcesas,Math.ceil(n/2));
    assert.equal(luzes.luzesPretasAcesas,Math.floor(n/2));
@@ -119,6 +125,15 @@ test('catraca exige 6 eventos distintos, pausa respeitada e limite de 2 no tabul
   const apos=new MotorContaUnicaEnsaioSQLite({banco:db,sinalizacao}).consultar();
   assert.equal(apos.catraca.giros,1);
   assert.equal(apos.catraca.giros24h,1);
+  const depoisGiro=motor.consultarFluxoFinanceiro();
+  assert.equal(depoisGiro.luzesFinanceirasRegistradas,6);
+  assert.equal(depoisGiro.girosFisicosConcluidos,1);
+  assert.equal(depoisGiro.luzesNoCiclo,0);
+  assert.deepEqual(depoisGiro.cofres.map(x=>x.eventos),[3,2,1,0]);
+  assert.equal(depoisGiro.valorDisponivelParaSaqueCentavos,0);
+  assert.equal(db.prepare(
+   'SELECT COUNT(*) AS n FROM akitemm_luzes_financeiras_eventos_lab'
+  ).get().n,6);
   assert.equal(apos.tabuleiro.eventosNoCiclo,0);
   assert.equal(apos.posicoesReais,0);
   assert.equal(apos.saldoRealCentavos,null);
@@ -330,7 +345,7 @@ test('dourada manual entra no motor UNICO da conta, sem compra, reserva ou giro 
 });
 
 test('3 luzes roxas e 3 pretas permanecem no quadro mesmo com centro dourado, sem dinheiro real',()=>{
- const {db,motor,sinalizacao}=preparar();
+ const {db,motor,sinalizacao,conta,gravar}=preparar();
  try{
   for(let i=1;i<=7;i++)motor.criarDouradaManualEnsaio({
    eventoId:'dourada-luzes-integrado-'+String(i).padStart(4,'0'),
@@ -339,11 +354,14 @@ test('3 luzes roxas e 3 pretas permanecem no quadro mesmo com centro dourado, se
   const inicial=motor.prepararTabuleiro();
   assert.equal(inicial.ocupadas,7);
   assert.equal(motor.consultar().tabuleiro.centro.dourada,true);
-  motor._transacao(sim=>{
-   for(let i=1;i<=6;i++)sim.registrarVendaNoCicloSimulada({
-    vendaId:'evento-ficticio-sem-psp-luzes-'+i
-   });
-  });
+  // Mesmo centro dourado, seis compras reais DO ENSAIO e distintas:
+  // nenhuma luz nasce do botão sem pedido vinculado ao motor.
+  for(let i=1;i<=6;i++){
+   conta(i);gravar(i,i);
+   motor.vincularPedido({prepedidoId:pedido(i),aceiteEnsaio:true});
+   motor.registrarEvento({prepedidoId:pedido(i)});
+   assert.equal(motor.consultarFluxoFinanceiro().girosFisicosConcluidos,0);
+  }
   const agenda=motor.consultarAgenda();
   assert.equal(agenda.luzesAcesas,6);
   assert.equal(agenda.luzesRoxasAcesas,3);
@@ -351,6 +369,11 @@ test('3 luzes roxas e 3 pretas permanecem no quadro mesmo com centro dourado, se
   const sim=motor._simulador();
   assert.deepEqual(sim.tabuleiro.vendasDoCiclo.map(v=>v.destinoCofre),
    Array(6).fill('LOOP_DOURADAS'));
+  const livro=motor.consultarFluxoFinanceiro();
+  assert.equal(livro.luzesFinanceirasRegistradas,6);
+  assert.equal(livro.cofres.find(x=>x.cofre==='LOOP_DOURADAS').eventos,6);
+  assert.equal(livro.cofres.find(x=>x.cofre==='LOOP_CENTRO').eventos,0);
+  assert.equal(livro.transferenciasBancariasEfetuadas,0);
   assert.equal(motor.consultar().dinheiroReal,false);
   assert.equal(motor.consultar().saldoRealCentavos,null);
   assert.equal(motor.consultar().catraca.giros,0);
