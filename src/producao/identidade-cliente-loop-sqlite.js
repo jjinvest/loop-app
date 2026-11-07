@@ -13,6 +13,15 @@ const VERSAO=/^LOOP-[A-Za-z0-9._-]{5,80}$/;
 const COOKIE='loop_real_s';
 const PRAZO_SESSAO=60*60*1000, BLOQUEIO=15*60*1000;
 const PRAZO_CODIGO=15*60*1000,ESPERA_CODIGO=2*60*1000;
+// Limites persistidos no MESMO SQLite (não desaparecem após reinício ou
+// mudança de instância). Nenhum nick/e-mail bruto é gravado nesta tabela.
+const LIMITES=Object.freeze({
+ global:{janelaMs:60000,max:300},
+ login:{janelaMs:15*60000,max:20},
+ cadastro:{janelaMs:60*60000,max:5},
+ solicitar:{janelaMs:60*60000,max:12},
+ confirmar:{janelaMs:15*60000,max:15}
+});
 let hashes=0;
 function erro(c){const e=new Error(c);e.codigo=c;throw e;}
 function validaEmail(s){
@@ -119,7 +128,12 @@ class IdentidadeClienteLoopReal{
    'ON loop_real_codigos(titular_id,finalidade,criado_em DESC);',
    'CREATE TABLE IF NOT EXISTS loop_real_custodia(',
    'id INTEGER PRIMARY KEY CHECK(id=1),email_prova TEXT NOT NULL,',
-   'cifra_prova TEXT NOT NULL,codigo_prova TEXT NOT NULL);'
+   'cifra_prova TEXT NOT NULL,codigo_prova TEXT NOT NULL);',
+   'CREATE TABLE IF NOT EXISTS loop_real_limites(',
+   'chave TEXT PRIMARY KEY,janela_inicio INTEGER NOT NULL,',
+   'usos INTEGER NOT NULL CHECK(usos>0));',
+   'CREATE INDEX IF NOT EXISTS idx_loop_real_limites_janela',
+   'ON loop_real_limites(janela_inicio);'
   ].join(' '));
   // Impossibilita reabrir banco existente com uma chave diferente.
   const provas=[this.keyEmail,this.keyCipher,this.keyCodigo]
@@ -138,6 +152,41 @@ class IdentidadeClienteLoopReal{
   }
  }
  _agora(){const n=this.agora();if(!Number.isSafeInteger(n)||n<=0)erro('RELOGIO_INVALIDO');return n;}
+ limitar(acao,identificador){
+  const politica=LIMITES[acao];
+  if(!Object.hasOwn(LIMITES,acao)||typeof identificador!=='string'||
+     identificador.length<1||identificador.length>254)
+   erro('LIMITE_OPERACAO_INVALIDO');
+  const chave=assinar(this.keyCodigo,'LIMITE-'+acao,
+   identificador.toLowerCase());
+  const ts=this._agora();
+  let permitido=true;
+  this.banco.exec('BEGIN IMMEDIATE');
+  try{
+   // Não manter dados de abuso de identificadores abandonados para sempre.
+   this.banco.prepare(
+    'DELETE FROM loop_real_limites WHERE janela_inicio<?'
+   ).run(ts-60*60*1000);
+   const atual=this.banco.prepare(
+    'SELECT janela_inicio,usos FROM loop_real_limites WHERE chave=?'
+   ).get(chave);
+   if(atual&&ts-atual.janela_inicio<politica.janelaMs){
+    if(atual.usos>=politica.max)permitido=false;
+    else this.banco.prepare(
+     'UPDATE loop_real_limites SET usos=usos+1 WHERE chave=?'
+    ).run(chave);
+   }else{
+    this.banco.prepare([
+     'INSERT INTO loop_real_limites(chave,janela_inicio,usos)',
+     'VALUES(?,?,1) ON CONFLICT(chave)',
+     'DO UPDATE SET janela_inicio=excluded.janela_inicio,usos=1'
+    ].join(' ')).run(chave,ts);
+   }
+   this.banco.exec('COMMIT');
+  }catch(e){this.banco.exec('ROLLBACK');throw e;}
+  if(!permitido)erro('ACESSO_TEMPORARIAMENTE_LIMITADO');
+  return true;
+ }
  documentos(){return {termos:this.termos,privacidade:this.privacidade,financeiroReal:false};}
  async cadastrar({nome,nick,email,senha,aceiteTermos=false,
   aceitePrivacidade=false,versaoTermos,hashTermos,
