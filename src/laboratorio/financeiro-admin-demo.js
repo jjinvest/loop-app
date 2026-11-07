@@ -1552,12 +1552,8 @@
         saldo.cofreCentroRestanteSimuladoCentavos
       ];
       ids.slice(0,6).forEach((id,i)=>el(id).textContent=Number.isSafeInteger(valores[i])?money(valores[i]):'—');
-      const valor=ref.atual?.valorCentavos,livre=saldo.cofreDireitaDisponivelSimuladoCentavos;
       el('caixa2CapacidadeFinanceiroDemo').textContent=
-       !saldo.quantidadeDivergencias&&Number.isSafeInteger(valor)&&valor>0&&
-       Number.isSafeInteger(livre)?
-        String(Math.max(0,Math.floor(livre/valor)))+' posição(ões) de '+money(valor):
-        'Indisponível';
+       'Sem desconto da reserva para novas douradas';
       aviso.textContent=saldo.quantidadeDivergencias?
         'DIVERGÊNCIA no caixa demonstrativo: novas operações devem ficar bloqueadas.':
         'Saldo livre = bruto - bonificações - aportes históricos de douradas - gestão pendente. Novas douradas não descontam a reserva.';
