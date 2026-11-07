@@ -86,6 +86,31 @@ test('12 departamentos operam no SQLite compartilhado sem inventar dados comerci
   raiz+'/departamentos/PEDIDOS/operacao?forcarGiro=true',
   raiz+'/pesquisa?tipo=clientes&termo=Beatriz&pagina=10001'
  ])assert.equal((await get(invalid)).status,400,invalid);
+ // Fluxo real HTTP pelo MESMO gateway administrativo e mesmo motor.
+ const urlDourada=raiz+'/motor/douradas/criar';
+ const evento='dourada-api-operador-0001';
+ async function postDourada(body,autorizado=true){
+  const resp=await fetch(base+urlDourada,{
+   method:'POST',headers:{'Content-Type':'application/json',
+    ...(autorizado?{Authorization:'Bearer '+token}:{})},
+   body:JSON.stringify(body)});
+  return {status:resp.status,data:await resp.json()};
+ }
+ assert.equal((await postDourada({eventoId:evento,aceiteEnsaio:true},false)).status,401);
+ assert.equal((await postDourada({eventoId:evento,aceiteEnsaio:false})).status,400);
+ assert.equal((await postDourada({eventoId:evento,aceiteEnsaio:true,quantidade:100})).status,400);
+ assert.equal((await postDourada({eventoId:evento,aceiteEnsaio:true})).status,201);
+ const repetir=await postDourada({eventoId:evento,aceiteEnsaio:true});
+ assert.equal(repetir.status,200);assert.equal(repetir.data.repetido,true);
+ const estadoMotor=await get(raiz+'/motor/estado');
+ assert.equal(estadoMotor.status,200);
+ assert.equal(estadoMotor.data.douradasManuaisCriadas,1);
+ assert.equal(estadoMotor.data.filaB.filter(x=>x.dourada).length,1);
+ assert.equal(estadoMotor.data.catraca.giros,0);
+ const depTabuleiro=(await get(raiz+'/departamentos/TABULEIRO/operacao')).data;
+ assert.ok(depTabuleiro.acoes.includes('CRIAR_DOURADA'));
+ assert.equal(banco.prepare('SELECT COUNT(*) AS n FROM akitemm_motor_douradas_manuais_lab').get().n,1);
+ assert.equal(banco.prepare('SELECT COUNT(*) AS n FROM akitemm_motor_ensaio_lotes_pedido').get().n,0);
  assert.equal(banco.prepare('PRAGMA integrity_check').get().integrity_check,'ok');
  assert.deepEqual(banco.prepare('PRAGMA foreign_key_check').all(),[]);
  assert.equal((await get('/readyz')).status,200);
