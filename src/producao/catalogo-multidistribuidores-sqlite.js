@@ -112,6 +112,22 @@ class CatalogoMultiDistribuidoresSQLite{
   return {produtoId:p.produto_id,titulo:p.titulo,tipo:p.tipo,
    ofertas,compravel:ofertas.length>0};
  }
+ listarProdutosAdministrativos({limite=500}={}){
+  if(!Number.isInteger(limite)||limite<1||limite>500)
+   erro('CONSULTA_CATALOGO_INVALIDA');
+  return this.db.prepare([
+   'SELECT p.produto_id AS produtoId,p.titulo,p.descricao,p.tipo,',
+   'p.ativo,COUNT(o.distribuidor_id) AS quantidadeDistribuidores',
+   'FROM loja_real_produtos p',
+   'LEFT JOIN loja_real_ofertas_distribuidores o',
+   'ON o.produto_id=p.produto_id',
+   'GROUP BY p.produto_id ORDER BY p.titulo,p.produto_id LIMIT ?'
+  ].join(' ')).all(limite).map(p=>({
+   produtoId:p.produtoId,titulo:p.titulo,descricao:p.descricao,
+   tipo:p.tipo,ativo:p.ativo===1,
+   quantidadeDistribuidores:p.quantidadeDistribuidores
+  }));
+ }
  listarVitrine({limite=50}={}){
   if(!Number.isInteger(limite)||limite<1||limite>100)
    erro('CONSULTA_CATALOGO_INVALIDA');
