@@ -21,6 +21,8 @@ const {CatalogoMultiDistribuidoresSQLite}=
  require('../src/producao/catalogo-multidistribuidores-sqlite');
 const {ControleEconomicoLojaSQLite}=
  require('../src/producao/controle-economico-loja-sqlite');
+const {AuditoriaOperacionalSQLite}=
+ require('../src/producao/auditoria-operacional-sqlite');
 function configurar(ambiente=process.env){
  if(ambiente.NODE_ENV!=='production'||ambiente.LOOP_REAL_CADASTRO_GO!=='SIM'||
     ambiente.LOOP_REAL_DADOS_SEPARADOS!=='SIM'||
@@ -51,11 +53,13 @@ function configurar(ambiente=process.env){
  // Operador real tem credencial independente, nunca reutiliza senha
  // do cliente ou o segredo da homologação.
  const chaveAdmin=key('LOOP_REAL_CHAVE_ADMIN');
+ const chaveAuditoria=key('LOOP_REAL_CHAVE_AUDITORIA');
  const credencialAdmin=ambiente.LOOP_REAL_ADMIN_CREDENCIAL;
  if(typeof credencialAdmin!=='string'||
     credencialAdmin.length<24||credencialAdmin.length>256)
   throw Error('ADMIN_REAL_CREDENCIAL_NAO_CONFIGURADA');
- const separadas=[chaveEmail,chaveCifra,chaveCodigo,chaveBackup,chaveAdmin];
+ const separadas=[chaveEmail,chaveCifra,chaveCodigo,chaveBackup,
+  chaveAdmin,chaveAuditoria];
  for(let i=0;i<separadas.length;i++){
   for(let j=i+1;j<separadas.length;j++){
    if(separadas[i].equals(separadas[j]))
@@ -89,7 +93,7 @@ function configurar(ambiente=process.env){
   (finalidade==='SENHA'?recuperar:confirmar)(args);
  return {arquivo,chaveEmail,chaveCifra,chaveCodigo,termos,privacidade,
   origemHttps,enviarEmail,chaveBackup,configS3,
-  chaveAdmin,credencialAdmin};
+  chaveAdmin,chaveAuditoria,credencialAdmin};
 }
 async function iniciar(ambiente=process.env){
  const config=configurar(ambiente);
@@ -100,10 +104,13 @@ async function iniciar(ambiente=process.env){
   const contas=new IdentidadeClienteLoopReal({...config,banco});
   // Tabelas comerciais administrativas criadas ANTES do primeiro snapshot.
   // Nenhum fornecedor é homologado automaticamente.
-  const catalogo=new CatalogoMultiDistribuidoresSQLite({
-   banco,distribuidorHomologado:()=>false
+  const auditoria=new AuditoriaOperacionalSQLite({
+   banco,chaveAuditoria:config.chaveAuditoria
   });
-  const controle=new ControleEconomicoLojaSQLite({banco});
+  const catalogo=new CatalogoMultiDistribuidoresSQLite({
+   banco,distribuidorHomologado:()=>false,auditoria
+  });
+  const controle=new ControleEconomicoLojaSQLite({banco,auditoria});
   const sessoes=new SessaoAdminComercialSQLite({
    banco,chaveAdmin:config.chaveAdmin,
    credencialAdmin:config.credencialAdmin
@@ -120,7 +127,7 @@ async function iniciar(ambiente=process.env){
   const app=criarAppIdentidadeLoop({
    contas,origemHttps:config.origemHttps,permitirCadastro:true,
    backupEstado:()=>agendador.estado(),
-   adminComercial:{catalogo,controle,sessoes}
+   adminComercial:{catalogo,controle,sessoes,auditoria}
   });
   const porta=Number(ambiente.PORT||3000);
   if(!Number.isSafeInteger(porta)||porta<1||porta>65535)
