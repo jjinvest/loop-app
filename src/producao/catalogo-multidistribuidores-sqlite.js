@@ -8,11 +8,15 @@ const IDENT=/^[A-Za-z0-9_-]{1,80}$/;
 function erro(c){const e=new Error(c);e.codigo=c;throw e;}
 function id(s){return typeof s==='string'&&IDENT.test(s);}
 class CatalogoMultiDistribuidoresSQLite{
- constructor({banco,distribuidorHomologado,agora=()=>Date.now()}={}){
+ constructor({banco,distribuidorHomologado,auditoria=null,agora=()=>Date.now()}={}){
   if(typeof banco?.prepare!=='function'||typeof banco?.exec!=='function'||
      typeof distribuidorHomologado!=='function'||typeof agora!=='function')
    erro('CATALOGO_REAL_NAO_CONFIGURADO');
-  this.db=banco;this.homologado=distribuidorHomologado;this.agora=agora;
+  if(auditoria!==null&&
+     (typeof auditoria.registrar!=='function'||auditoria.db!==banco))
+   erro('AUDITORIA_CATALOGO_NAO_CONFIGURADA');
+  this.db=banco;this.homologado=distribuidorHomologado;
+  this.auditoria=auditoria;this.agora=agora;
   banco.exec([
    'CREATE TABLE IF NOT EXISTS loja_real_produtos(',
    'produto_id TEXT PRIMARY KEY,titulo TEXT NOT NULL,',
@@ -39,11 +43,20 @@ class CatalogoMultiDistribuidoresSQLite{
      typeof descricao!=='string'||descricao.length>2000||
      tipo!=='FISICO')erro('PRODUTO_COMERCIAL_INVALIDO');
   const agora=this.agora();
-  this.db.prepare([
-   'INSERT INTO loja_real_produtos(',
-   'produto_id,titulo,descricao,tipo,ativo,criado_em,atualizado_em)',
-   'VALUES(?,?,?,?,0,?,?)'
-  ].join(' ')).run(produtoId,titulo.trim(),descricao.trim(),tipo,agora,agora);
+  if(this.auditoria)this.db.exec('BEGIN IMMEDIATE');
+  try{
+   this.db.prepare([
+    'INSERT INTO loja_real_produtos(',
+    'produto_id,titulo,descricao,tipo,ativo,criado_em,atualizado_em)',
+    'VALUES(?,?,?,?,0,?,?)'
+   ].join(' ')).run(produtoId,titulo.trim(),descricao.trim(),tipo,agora,agora);
+   if(this.auditoria){
+    this.auditoria.registrar({acao:'PRODUTO_CRIADO',ator:'ADMIN_COMERCIAL',
+     entidade:'PRODUTO_'+produtoId,antes:{existe:false},
+     depois:{existe:true,tipo:'FISICO',ativo:false},revisaoNova:1});
+    this.db.exec('COMMIT');
+   }
+  }catch(e){if(this.auditoria)this.db.exec('ROLLBACK');throw e;}
   return {produtoId,ativo:false,semVendaReal:true};
  }
  vincularOferta({produtoId,distribuidorId,sku,
@@ -57,16 +70,32 @@ class CatalogoMultiDistribuidoresSQLite{
    'SELECT produto_id FROM loja_real_produtos WHERE produto_id=?'
   ).get(produtoId))erro('PRODUTO_COMERCIAL_NAO_EXISTE');
   // Criar oferta não significa ter contrato, frete ou integração.
-  this.db.prepare([
-   'INSERT INTO loja_real_ofertas_distribuidores(',
-   'produto_id,distribuidor_id,sku,preco_centavos,prioridade,ativo,atualizado_em)',
-   'VALUES(?,?,?,?,?,0,?)',
-   'ON CONFLICT(produto_id,distribuidor_id) DO UPDATE SET',
-   'sku=excluded.sku,preco_centavos=excluded.preco_centavos,',
-   'prioridade=excluded.prioridade,ativo=0,',
-   'atualizado_em=excluded.atualizado_em'
-  ].join(' ')).run(produtoId,distribuidorId,sku,precoUnitCentavos,
-   prioridade,this.agora());
+  if(this.auditoria)this.db.exec('BEGIN IMMEDIATE');
+  try{
+   const anterior=this.db.prepare([
+    'SELECT sku,preco_centavos,prioridade,ativo',
+    'FROM loja_real_ofertas_distribuidores',
+    'WHERE produto_id=? AND distribuidor_id=?'
+   ].join(' ')).get(produtoId,distribuidorId);
+   this.db.prepare([
+    'INSERT INTO loja_real_ofertas_distribuidores(',
+    'produto_id,distribuidor_id,sku,preco_centavos,prioridade,ativo,atualizado_em)',
+    'VALUES(?,?,?,?,?,0,?)',
+    'ON CONFLICT(produto_id,distribuidor_id) DO UPDATE SET',
+    'sku=excluded.sku,preco_centavos=excluded.preco_centavos,',
+    'prioridade=excluded.prioridade,ativo=0,',
+    'atualizado_em=excluded.atualizado_em'
+   ].join(' ')).run(produtoId,distribuidorId,sku,precoUnitCentavos,
+    prioridade,this.agora());
+   if(this.auditoria){
+    this.auditoria.registrar({acao:'OFERTA_RASCUNHO_CRIADA',
+     ator:'ADMIN_COMERCIAL',entidade:produtoId+'__'+distribuidorId,
+     antes:anterior?{sku:anterior.sku,precoCentavos:anterior.preco_centavos,
+      prioridade:anterior.prioridade,ativo:anterior.ativo===1}:{existe:false},
+     depois:{sku,precoCentavos:precoUnitCentavos,prioridade,ativo:false}});
+    this.db.exec('COMMIT');
+   }
+  }catch(e){if(this.auditoria)this.db.exec('ROLLBACK');throw e;}
   return {produtoId,distribuidorId,ofertaAtiva:false};
  }
  ativarProduto({produtoId,ativo=false}={}){
