@@ -14,6 +14,8 @@ const {catalogoFicticioCheckout}=
 const senha='SENHA_DE_PREVIA_FICTICIA_SEGURA_2026_123';
 const operador='OPERADOR_FICTICIO_NAO_COMERCIAL_2026_1234567890';
 const auth='Basic '+Buffer.from('acesso:'+senha).toString('base64');
+const senhaAdmin='SenhaAdministrativaFicticiaExclusiva2026';
+const authAdmin='Basic '+Buffer.from('operador:'+senhaAdmin).toString('base64');
 async function preparar(t){
  const db=new DatabaseSync(':memory:');
  db.exec('PRAGMA foreign_keys=ON;PRAGMA journal_mode=WAL;');
@@ -26,7 +28,7 @@ async function preparar(t){
  const backend=app.listen(0,'127.0.0.1');
  await once(backend,'listening');
  const gateway=criarGateway({portaInterna:backend.address().port,
-  senhaAcesso:senha,segredoOperador:operador,
+  senhaAcesso:senha,senhaAdmin,segredoOperador:operador,
   validarNickIndicador:nick=>equipe.existeNick(nick)});
  gateway.listen(0,'127.0.0.1');
  await once(gateway,'listening');
@@ -36,9 +38,15 @@ async function preparar(t){
   db.close();
  });
  const base='http://127.0.0.1:'+gateway.address().port;
- const consultar=(p,opts={})=>fetch(base+p,{
-  ...opts,headers:{Authorization:auth,...(opts.headers||{})},redirect:'manual'
- });
+ const consultar=(p,opts={})=>{
+  const rotaAdmin=p==='/escritorio'||p==='/staging/escritorio-admin'||
+   p.startsWith('/staging/escritorio-unificado')||
+   p.startsWith('/staging/assets/admin.');
+  return fetch(base+p,{
+   ...opts,headers:{Authorization:rotaAdmin?authAdmin:auth,
+    ...(opts.headers||{})},redirect:'manual'
+  });
+ };
  return {base,consultar,db};
 }
 test('gateway exige acesso antes de HTML e rotas administrativas',async t=>{
@@ -51,6 +59,15 @@ test('gateway exige acesso antes de HTML e rotas administrativas',async t=>{
   headers:{Authorization:'Basic '+Buffer.from('acesso:incorreto').toString('base64')}
  });
  assert.equal(errado.status,401);
+ const cliente=await x.consultar('/minha-conta');
+ assert.equal(cliente.status,200);
+ const cookieCliente=cliente.headers.get('set-cookie')?.split(';')[0];
+ assert.match(cookieCliente,/^akitemm_preview_access=v1\./);
+ const negado=await fetch(x.base+'/staging/escritorio-unificado',{
+  headers:{Cookie:cookieCliente,Authorization:auth}
+ });
+ assert.equal(negado.status,401,
+  'credencial e cookie do cliente nao podem abrir APIs administrativas');
  const certo=await x.consultar('/escritorio');
  assert.equal(certo.status,200);
  assert.match(await certo.text(),/Escritório do Administrador/);
@@ -61,11 +78,12 @@ test('gateway exige acesso antes de HTML e rotas administrativas',async t=>{
  assert.match(codigo,/credentials:'same-origin'/);
  assert.equal(codigo.includes(operador),false,'segredo nunca vai ao navegador');
  const cookieGate=certo.headers.get('set-cookie')?.split(';')[0];
- assert.match(cookieGate,/^akitemm_preview_access=v1\./);
+ assert.match(cookieGate,/^akitemm_preview_admin_v2=v2\./);
  const viaNavegador=await fetch(x.base+'/staging/escritorio-unificado',{
   headers:{Cookie:cookieGate,Authorization:'Bearer PREVIA_OPERADOR'}
  });
- assert.equal(viaNavegador.status,200,'fetch do painel com Bearer usa cookie de acesso');
+ assert.equal(viaNavegador.status,200,
+  'painel aceita somente sessao isolada do operador');
  const administrativo=await x.consultar('/staging/escritorio-unificado');
  assert.equal(administrativo.status,200);
  const dados=await administrativo.json();
@@ -328,6 +346,7 @@ test('porta invalida falha antes de tentar montar SQLite ou abrir listener',asyn
  await assert.rejects(()=>iniciar({env:{
   NODE_ENV:'test',LOOP_PREVIEW_EXCLUSIVO:'SIM',
   LOOP_PREVIEW_SENHA_ACESSO:senha,
+  LOOP_PREVIEW_SENHA_ADMIN:senhaAdmin,
   LOOP_PREVIEW_SEGREDO_RAIZ:'SEGREDO_RAIZ_FICTICIO_DE_TESTE_'+('R'.repeat(64)),
   PORT:'porta-invalida'
  }}),{codigo:'PORTA_PREVIA_INVALIDA'});
