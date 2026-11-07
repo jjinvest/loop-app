@@ -10,6 +10,7 @@ function criarRouterAdminEconomiaAkitemm({
 }={}){
  if(!controle||typeof controle.listarOfertas!=='function'||
     typeof controle.definirCusto!=='function'||
+    typeof controle.atualizarPrecoVenda!=='function'||
     typeof controle.csvContador!=='function'||
     typeof autorizarAdministrador!=='function'||
     typeof validarCsrfAdmin!=='function')
@@ -64,6 +65,38 @@ function criarRouterAdminEconomiaAkitemm({
     if(e.codigo==='REVISAO_CUSTO_EM_CONFLITO')
      return res.status(409).json({erro:e.codigo});
     if(['CUSTO_FORNECEDOR_INVALIDO','OFERTA_NAO_EXISTE'].includes(e.codigo))
+     return res.status(400).json({erro:e.codigo});
+    return res.status(503).json({erro:'ECONOMIA_INDISPONIVEL'});
+   }
+  });
+ // Preço de vitrine é mutável, mas cada alteração fica auditada.
+ // Esta rota não cria pagamento e preserva o snapshot dos pedidos antigos.
+ router.post('/produtos-preco/:produtoId/:distribuidorId',
+  express.json({limit:'4kb',strict:true}),
+  (req,res,next)=>{
+   if(req.get('origin')!==origem)
+    return res.status(403).json({erro:'ORIGEM_ADMIN_INVALIDA'});
+   if(!req.is('application/json'))
+    return res.status(415).json({erro:'JSON_OBRIGATORIO'});
+   next();
+  },validarCsrfAdmin,(req,res)=>{
+   const b=req.body;
+   if(!b||Array.isArray(b)||
+      Object.keys(b).sort().join(',')!==
+       'precoAnteriorCentavos,precoVendaCentavos,revisaoPrecoEsperada')
+    return res.status(400).json({erro:'CAMPOS_INVALIDOS'});
+   try{
+    return res.json(controle.atualizarPrecoVenda({
+     produtoId:req.params.produtoId,
+     distribuidorId:req.params.distribuidorId,
+     precoVendaCentavos:b.precoVendaCentavos,
+     precoAnteriorCentavos:b.precoAnteriorCentavos,
+     revisaoPrecoEsperada:b.revisaoPrecoEsperada
+    }));
+   }catch(e){
+    if(e.codigo==='REVISAO_PRECO_EM_CONFLITO')
+     return res.status(409).json({erro:e.codigo});
+    if(['PRECO_VENDA_INVALIDO','OFERTA_NAO_EXISTE'].includes(e.codigo))
      return res.status(400).json({erro:e.codigo});
     return res.status(503).json({erro:'ECONOMIA_INDISPONIVEL'});
    }
