@@ -614,3 +614,74 @@ body.akitemm-loja{background:#071018;color:#f0f2f6;font-family:system-ui,-apple-
  margin-inline:auto;object-fit:scale-down;object-position:center;
  image-rendering:auto;
 }
+
+/* Produto escolhido ocupa a própria área da vitrine: não abre modal. */
+.akitemm-loja #akitemmVisualizacaoProduto[hidden]{display:none!important}
+.akitemm-loja #akitemmAreaProdutos[data-modo="detalhe"] :is(
+ #akitemmResultadoProdutos,#novidadesVitrineAkitemm,#catalogoLojaLoop,
+ #akitemmCarregarMais,#referenciaLojaLoop,#atualizarCatalogoLoja
+){display:none!important}
+.akitemm-loja #akitemmAreaProdutos[data-modo="detalhe"] #akitemmVerTodos{
+ display:none!important
+}
+.akitemm-loja .akitemm-produto-inline{
+ min-width:0;max-width:100%;padding:16px;
+ border:1px solid #be9553;border-radius:14px;
+ background:linear-gradient(145deg,#111d2b,#141c28 62%,#201829);
+ overflow-wrap:anywhere;
+}
+.akitemm-loja .akitemm-produto-inline h2{
+ color:#efc87e;font-size:clamp(1.2rem,3vw,1.75rem);
+ margin:12px 0 10px;
+}
+.akitemm-loja .akitemm-voltar-produtos{
+ color:#f7d594!important;background:#25231f!important;
+ border:1px solid #bb9257;border-radius:9px;padding:10px 13px;
+ min-height:42px;cursor:pointer;font-weight:700;
+}
+.akitemm-loja .akitemm-produto-inline .akitemm-detalhe-conteudo{
+ grid-template-columns:minmax(0,45%) minmax(0,1fr);
+}
+.akitemm-loja .akitemm-produto-inline .akitemm-detalhe-foto-principal{
+ box-sizing:border-box;max-width:100%;
+}
+.akitemm-loja .akitemm-produto-inline .akitemm-detalhe-avaliacoes{
+ margin-top:16px;padding-top:16px;
+}
+.akitemm-loja .akitemm-categorias button{
+ grid-template-columns:clamp(25px,3vw,42px) minmax(0,1fr) 12px!important;
+ grid-template-rows:auto auto;align-items:center;column-gap:9px;
+ min-width:0!important;
+}
+.akitemm-loja .akitemm-categorias button>span{
+ grid-column:1!important;grid-row:1 / span 2!important;
+ width:100%;min-width:0;display:grid;place-items:center;
+}
+.akitemm-loja .akitemm-categorias button>span svg{
+ max-width:100%;height:auto;display:block;
+}
+.akitemm-loja .akitemm-categorias button>strong{
+ grid-column:2;grid-row:1;min-width:0;
+ overflow-wrap:anywhere;line-height:1.2;
+}
+.akitemm-loja .akitemm-categorias button>small{
+ grid-column:2;grid-row:2;min-width:0;
+ overflow-wrap:anywhere;line-height:1.35;
+}
+.akitemm-loja .akitemm-categorias button>b{
+ grid-column:3!important;grid-row:1 / span 2!important;
+}
+@media(max-width:800px){
+ .akitemm-loja .akitemm-produto-inline .akitemm-detalhe-conteudo{
+  grid-template-columns:minmax(0,1fr);
+ }
+ .akitemm-loja .akitemm-produto-inline{padding:12px}
+}
+@media(max-width:480px){
+ .akitemm-loja .akitemm-categorias button{
+  grid-template-columns:25px minmax(0,1fr) 9px!important;
+  column-gap:7px;padding:9px 8px;min-height:92px;
+ }
+ .akitemm-loja .akitemm-categorias button strong{font-size:12px}
+ .akitemm-loja .akitemm-categorias button small{font-size:10px}
+}

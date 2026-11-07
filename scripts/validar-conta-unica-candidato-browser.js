@@ -460,6 +460,53 @@ const {once}=require('node:events');
    await loja.locator('#akitemmTextoSuporte')
     .filter({hasText:'Atendimento fictício para ensaio de integração do LOOP '+item.nick})
     .waitFor();
+   // Busca global representa o texto: sem produto mostra vazio explícito.
+   await loja.locator('#akitemmBusca').fill('produtoquecomcertezanãoexiste2026');
+   assert.equal(await loja.locator('#catalogoLojaLoop article').count(),0);
+   assert.match(await loja.locator('#akitemmResultadoProdutos').innerText(),
+    /Produto inexistente/);
+   // Produto existente: somente o resultado correspondente.
+   await loja.locator('[data-akitemm-categoria="fisicos"]').click();
+   await loja.locator('#akitemmBusca').fill('Curso adicional fictício '+item.nick);
+   assert.equal(await loja.locator('#catalogoLojaLoop article.produto-loja-loop').count(),1,
+    'busca global ignora filtro anterior e não mistura produtos');
+   await loja.locator('#catalogoLojaLoop article.produto-loja-loop button.akitemm-ver-detalhes').click();
+   await loja.locator('#akitemmVisualizacaoProduto').waitFor({state:'visible'});
+   assert.equal(await loja.locator('#akitemmAreaProdutos').getAttribute('data-modo'),'detalhe');
+   assert.equal(await loja.locator('#catalogoLojaLoop').isVisible(),false);
+   assert.equal(await loja.locator('#akitemmModalDetalhes').count(),0,
+    'produto selecionado abre na própria página, modal antigo removido');
+   assert.match(await loja.locator('#akitemmProdutoInlineConteudo h2').innerText(),
+    new RegExp('Curso adicional fictício '+item.nick,'i'));
+   assert.ok(await loja.locator('#akitemmProdutoInlineConteudo .akitemm-detalhe-informacoes').isVisible());
+   assert.ok(await loja.locator('#akitemmProdutoInlineConteudo .akitemm-detalhe-avaliacoes').isVisible());
+   await loja.screenshot({path:path.join(__dirname,'../artifacts',
+    'produto-selecionado-inline-'+item.nome+'.png'),fullPage:true});
+   await loja.locator('#akitemmVoltarProdutos').click();
+   assert.equal(await loja.locator('#akitemmAreaProdutos').getAttribute('data-modo'),'lista');
+   assert.equal(await loja.locator('#catalogoLojaLoop article.produto-loja-loop').count(),1);
+   await loja.locator('#akitemmBusca').fill('');
+   await loja.locator('#akitemmFiltroTodos').click();
+   // Ícones não podem cobrir nome/descrição nos quatro cartões.
+   const cabecalhoCategoria=await loja.locator('.akitemm-categorias button').evaluateAll(botoes=>
+    botoes.map(botao=>{
+     const svg=botao.querySelector('svg')?.getBoundingClientRect();
+     const titulo=botao.querySelector('strong')?.getBoundingClientRect();
+     const legenda=botao.querySelector('small')?.getBoundingClientRect();
+     return {iconeDireita:svg?.right,nomeEsquerda:titulo?.left,
+      legendaEsquerda:legenda?.left,nomeDireita:titulo?.right,
+      botaoDireita:botao.getBoundingClientRect().right};
+    })
+   );
+   assert.equal(cabecalhoCategoria.length,4);
+   for(const bloco of cabecalhoCategoria){
+    assert.ok(bloco.nomeEsquerda>=bloco.iconeDireita-1,
+     'nome não se sobrepõe ao ícone: '+JSON.stringify(bloco));
+    assert.ok(bloco.legendaEsquerda>=bloco.iconeDireita-1,
+     'descrição não se sobrepõe ao ícone: '+JSON.stringify(bloco));
+    assert.ok(bloco.nomeDireita<bloco.botaoDireita,
+     'nome não sai do cartão: '+JSON.stringify(bloco));
+   }
    await loja.waitForFunction(nick=>{
     const campo=document.getElementById('enderecoDivulgarLojaLoop');
     const botao=document.getElementById('copiarDivulgarLojaLoop');

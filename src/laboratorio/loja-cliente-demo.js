@@ -11,6 +11,7 @@
  let assinaturaCarrinhoAnterior='';
  let novidadesVitrine=[];
  let avaliacoesDisponiveis=[],avisosGerais=[];
+ let produtoAberto=null,versaoDetalhe=0;
  const vazio=document.createElement.bind(document);
  const inform=msg=>{el('estadoLojaLoop').textContent=msg;};
  const fotoPermitida=src=>typeof src==='string'&&
@@ -157,8 +158,25 @@
   atualizarCarrinho();
  }
 
+ function fecharDetalhes(){
+  if(produtoAberto===null)return;
+  produtoAberto=null;versaoDetalhe++;
+  el('akitemmAreaProdutos').dataset.modo='lista';
+  el('akitemmVisualizacaoProduto').hidden=true;
+  el('akitemmProdutoInlineConteudo').replaceChildren();
+  el('tituloCatalogoLoja').textContent=({
+   todos:'Produtos em destaque',ofertas:'Ofertas',cursos:'Cursos',
+   fisicos:'Produtos físicos',novidades:'Novidades',
+   'mais-vendidos':'Mais vendidos'
+  })[filtro]||'Produtos em destaque';
+ }
  async function abrirDetalhes(p){
-  const alvo=el('akitemmDetalhesConteudo');alvo.replaceChildren();
+  const idDaAbertura=++versaoDetalhe;
+  produtoAberto=p.produtoId;
+  el('akitemmAreaProdutos').dataset.modo='detalhe';
+  el('akitemmVisualizacaoProduto').hidden=false;
+  el('tituloCatalogoLoja').textContent='Produto selecionado';
+  const alvo=el('akitemmProdutoInlineConteudo');alvo.replaceChildren();
   const h=document.createElement('h2');h.textContent=p.nome;alvo.append(h);
   const conteudo=document.createElement('div');conteudo.className='akitemm-detalhe-conteudo';
   const galeria=document.createElement('div');galeria.className='akitemm-detalhe-galeria';
@@ -203,16 +221,17 @@
    'Compra comum AKITEMM: não gera posição LOOP.';
   const botao=document.createElement('button');botao.type='button';botao.className='akitemm-adicionar';
   botao.textContent='Adicionar ao carrinho';
-  botao.addEventListener('click',()=>{adicionar(p);el('akitemmModalDetalhes').close();});
+  botao.addEventListener('click',()=>adicionar(p));
   informacoes.append(preco,tipo,descricao,caracteristicas,aviso,botao);
   conteudo.append(galeria,informacoes);alvo.append(conteudo);
   const avaliacoes=document.createElement('section');avaliacoes.className='akitemm-detalhe-avaliacoes';
   const title=document.createElement('h3');title.textContent='Avaliações de compradores';
   const lista=document.createElement('div');lista.textContent='Consultando avaliações…';
   avaliacoes.append(title,lista);alvo.append(avaliacoes);
-  el('akitemmModalDetalhes').showModal();
+  el('akitemmAreaProdutos').scrollIntoView({behavior:'instant',block:'start'});
   try{
    const r=await api('loja/avaliacoes/'+encodeURIComponent(p.produtoId));
+   if(produtoAberto!==p.produtoId||idDaAbertura!==versaoDetalhe)return;
    lista.replaceChildren();
    if(!(r.avaliacoes||[]).length){
     const m=document.createElement('p');m.textContent='Nenhuma avaliação publicada para este produto.';
@@ -244,7 +263,10 @@
     }
     lista.append(item);
    }
-  }catch{lista.textContent='Avaliações temporariamente indisponíveis.';}
+  }catch{
+   if(produtoAberto===p.produtoId&&idDaAbertura===versaoDetalhe)
+    lista.textContent='Avaliações temporariamente indisponíveis.';
+  }
  }
  function renderizarNovidadesEditorais(){
   const root=el('novidadesVitrineAkitemm');root.replaceChildren();
@@ -303,6 +325,7 @@
   }).sort((a,b)=>filtro==='mais-vendidos'?(b.quantidadeVendida||0)-(a.quantidadeVendida||0):0);
  }
  function escolherFiltro(novo){
+  fecharDetalhes();
   filtro=novo;quantidadeVitrine=12;
   if(novo==='todos'){corFiltro=null;atualizarFiltroCor();}
   el('akitemmFiltroTodos').classList.toggle('selecionado',novo==='todos');
@@ -324,13 +347,17 @@
   return !!el('novidadesVitrineAkitemm').childElementCount;
  }
  function mostrarCatalogo(){
+  fecharDetalhes();
   const destino=el('catalogoLojaLoop');destino.replaceChildren();
   renderizarNovidadesEditorais();
   const filtrados=produtosFiltrados();
   const haPublicacoes=filtradoNovidadePublicada();
-  el('akitemmResultadoProdutos').textContent=filtrados.length||haPublicacoes?'':(
-   filtro==='novidades'?'Nenhuma novidade publicada por enquanto.':
-   catalogo.length?'Nenhum produto encontrado neste filtro.':'Nenhum produto publicado ainda.');
+  const termoBusca=el('akitemmBusca').value.trim();
+  el('akitemmResultadoProdutos').textContent=filtrados.length||haPublicacoes?
+   (termoBusca?filtrados.length+' produto(s) encontrado(s) para "'+termoBusca+'".':''):
+   (termoBusca?'Produto inexistente.':
+    filtro==='novidades'?'Nenhuma novidade publicada por enquanto.':
+    catalogo.length?'Nenhum produto encontrado neste filtro.':'Nenhum produto publicado ainda.');
   el('referenciaLojaLoop').textContent='Referência do LOOP para compras elegíveis: '+dinheiro(referenciaCentavos)+
    '. Produtos físicos e digitais podem ou não participar, conforme autorização do administrador.';
   el('akitemmCarregarMais').hidden=filtrados.length<=quantidadeVitrine;
@@ -605,7 +632,17 @@
   botao.addEventListener('click',()=>escolherCor(botao.dataset.akitemmCor));
  el('akitemmFiltroTodos').addEventListener('click',()=>escolherFiltro('todos'));
  el('akitemmFiltroOfertas').addEventListener('click',()=>escolherFiltro('ofertas'));
- el('akitemmBusca').addEventListener('input',mostrarCatalogo);
+ el('akitemmBusca').addEventListener('input',()=>{
+  if(el('akitemmBusca').value.trim()){
+   // Busca é global, nunca fica presa ao filtro escolhido antes.
+   escolherFiltro('todos');
+  }else mostrarCatalogo();
+ });
+ el('akitemmVoltarProdutos').addEventListener('click',()=>{
+  fecharDetalhes();
+  el('akitemmBusca').focus({preventScroll:true});
+  el('akitemmAreaProdutos').scrollIntoView({block:'start',behavior:'instant'});
+ });
  el('akitemmCarregarMais').addEventListener('click',()=>{
   quantidadeVitrine+=12;mostrarCatalogo();
  });
