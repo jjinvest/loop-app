@@ -221,7 +221,7 @@ function criarAppIdentidadeLoop({contas,origemHttps,permitirCadastro=false}={}){
   catalogoComercialDisponivel:false,fornecedoresAtivos:0,
   checkoutReal:false,financeiroReal:false
  }));
- app.all(/^/api/loja(?:/|$)/,(_req,res)=>res.status(503).json({
+ app.all(new RegExp('^/api/loja(?:/|$)'),(_req,res)=>res.status(503).json({
   erro:'OPERACAO_COMERCIAL_NAO_HABILITADA',checkoutReal:false
  }));
  // As funcionalidades financeiras continuam fora deste serviço,
