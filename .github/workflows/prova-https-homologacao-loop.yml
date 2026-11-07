@@ -1,0 +1,53 @@
+name: LOOP - Prova HTTPS da homologacao
+on:
+  push:
+    branches:
+      - feature/unificar-escritorio-real-20261105
+    paths:
+      - '.github/workflows/prova-https-homologacao-loop.yml'
+  workflow_dispatch:
+permissions: {}
+concurrency:
+  group: prova-https-homologacao-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  validar-externamente:
+    runs-on: ubuntu-latest
+    timeout-minutes: 4
+    steps:
+      - name: Comprovar HTTPS sem credenciais nem dados reais
+        shell: bash
+        run: |
+          set -euo pipefail
+          BASE='https://akitemm-escritorio-preview-homologacao.up.railway.app'
+          arquivo="$(mktemp)"
+          cabecalho="$(mktemp)"
+          trap 'rm -f "$arquivo" "$cabecalho"' EXIT
+          request() {
+            local path="$1"
+            curl --silent --show-error --retry 2 --retry-delay 1 \
+              --connect-timeout 6 --max-time 14 --proto '=https' \
+              --dump-header "$cabecalho" --output "$arquivo" \
+              --write-out '%{http_code}' "$BASE$path"
+          }
+          codigo="$(request '/healthz')"
+          test "$codigo" = '200' || { echo 'HEALTH_HTTPS_FALHOU=' "$codigo"; exit 1; }
+          python3 - "$arquivo" <<'PY'
+          import json,sys
+          with open(sys.argv[1],encoding='utf8') as f: data=json.load(f)
+          assert data.get('estado')=='PREVIA_PROTEGIDA', 'Estado do gateway inesperado'
+          assert data.get('financeiroReal') is False, 'Financeiro real nao bloqueado'
+          assert data.get('marcoZeroLiberado') is False, 'Autorizacao comercial indevida'
+          print('HEALTH_HTTPS_OK_LABORATORIO')
+          PY
+          for rota in /minha-conta /escritorio /staging/cliente /staging/escritorio-admin /staging/escritorio-unificado /staging/loja /readyz; do
+            codigo="$(request "$rota")"
+            test "$codigo" = '401' || {
+              echo "PROTECAO_FALHOU_ROTA=$rota HTTP=$codigo"; exit 1;
+            }
+            grep -qi '^www-authenticate: Basic' "$cabecalho" || {
+              echo "CHALLENGE_BASIC_AUSENTE_ROTA=$rota"; exit 1;
+            }
+          done
+          echo 'SETE_ROTAS_PRIVADAS_BLOQUEADAS_HTTPS_OK'
+          echo 'SEM_DADOS_REAIS_SEM_AUTORIZACAO_FINANCEIRA'
