@@ -4,9 +4,16 @@
 const express=require('express');
 const {COOKIE}=require('./identidade-cliente-loop-sqlite');
 const {montarInterfaceAprovada}=require('./interface-aprovada-loop');
-function criarAppIdentidadeLoop({contas,origemHttps,permitirCadastro=false}={}){
+function criarAppIdentidadeLoop({contas,origemHttps,
+ permitirCadastro=false,backupEstado=null}={}){
  if(!contas||typeof contas.entrar!=='function'||typeof contas.sessao!=='function')
   throw Error('IDENTIDADE_REAL_NAO_CONFIGURADA');
+ if(process.env.NODE_ENV==='production'&&permitirCadastro&&
+    typeof backupEstado!=='function')
+  throw Error('BACKUP_OFFSITE_REAL_NAO_CONFIGURADO');
+ const backupAtual=()=>typeof backupEstado==='function'?
+  backupEstado()?.backupAtualEmDia===true:true;
+ const cadastroLiberado=()=>permitirCadastro&&backupAtual();
  let origem;
  try{
   const url=new URL(origemHttps);
@@ -98,7 +105,7 @@ function criarAppIdentidadeLoop({contas,origemHttps,permitirCadastro=false}={}){
    const check=contas.banco.prepare(
     'SELECT email_prova FROM loop_real_custodia WHERE id=1'
    ).get()?.email_prova;
-   if(!check||!permitirCadastro)return res.status(503).json({
+   if(!check||!cadastroLiberado())return res.status(503).json({
     estado:'CADASTRO_REAL_INATIVO',financeiroReal:false
    });
    return res.json({estado:'CADASTRO_REAL_PRONTO_SEM_FINANCEIRO',
@@ -108,11 +115,11 @@ function criarAppIdentidadeLoop({contas,origemHttps,permitirCadastro=false}={}){
   });}
  });
  app.get('/api/contas/documentos',(_req,res)=>{
-  if(!permitirCadastro)return res.status(503).json({erro:'CADASTRO_INATIVO'});
+  if(!cadastroLiberado())return res.status(503).json({erro:'CADASTRO_INATIVO'});
   res.json(contas.documentos());
  });
  app.post('/api/contas/cadastrar',mutation,async(req,res)=>{
-  if(!permitirCadastro)return res.status(503).json({erro:'CADASTRO_INATIVO'});
+  if(!cadastroLiberado())return res.status(503).json({erro:'CADASTRO_INATIVO'});
   const b=req.body;
   if(!b||Array.isArray(b)||Object.keys(b).sort().join(',')!==
     'aceitePrivacidade,aceiteTermos,email,hashPrivacidade,hashTermos,nick,nome,senha,versaoPrivacidade,versaoTermos')
