@@ -54,6 +54,31 @@ test('API compartilha login entre paginas e rejeita compra, cookies falsos e CSR
  const me=await req('/api/contas/me',{headers:{Cookie:cookie}});
  assert.equal(me.status,200);
  assert.equal((await me.json()).lojaEEscritorioMesmaConta,true);
+ const dadosAna=await req('/api/contas/meus-dados',{headers:{Cookie:cookie}});
+ assert.equal(dadosAna.status,200);
+ const proprio=await dadosAna.json();
+ assert.equal(proprio.email,'ana@example.invalid');
+ assert.equal(proprio.nick,'ana');
+ assert.equal(proprio.nome,'Ana Exemplo');
+ assert.equal(proprio.documentosAceitos.privacidade.hash,docs.privacidade.hash);
+ assert.equal((await req('/api/contas/meus-dados')).status,401);
+ const dadosBia={...data,nome:'Bia Exemplo',nick:'Bia',email:'bia@example.invalid'};
+ const crBia=await req('/api/contas/cadastrar',{method:'POST',
+  body:dadosBia,headers:{Origin:ORIGIN}});
+ assert.equal(crBia.status,201);
+ const loginBia=await req('/api/contas/entrar',{method:'POST',
+  body:{nick:'Bia',senha:data.senha},headers:{Origin:ORIGIN}});
+ assert.equal(loginBia.status,200);
+ const cookieBia=loginBia.headers.get('set-cookie').split(';')[0];
+ const dadosB=await req('/api/contas/meus-dados',{headers:{Cookie:cookieBia}});
+ assert.equal(dadosB.status,200);
+ assert.equal((await dadosB.json()).email,'bia@example.invalid');
+ assert.equal((await req('/api/contas/meus-dados?titularId='+proprio.nick,
+  {headers:{Cookie:cookieBia}})).status,200,
+  'parametro arbitrario nao altera identidade do titular autenticado');
+ const segundaConsulta=await req('/api/contas/meus-dados?titularId='+proprio.nick,
+  {headers:{Cookie:cookieBia}});
+ assert.equal((await segundaConsulta.json()).nick,'bia');
  assert.equal((await req('/api/checkout/finalizar',{method:'POST'})).status,503);
  assert.equal((await req('/api/saques/solicitar',{method:'POST'})).status,503);
  assert.equal((await req('/api/contas/sair',{method:'POST',
