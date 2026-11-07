@@ -20,7 +20,8 @@ const config={
 const chaveObjeto=
  'clientes/2026-11-07/01234567-89ab-4cde-8fab-0123456789ab.looprealbak';
 const DOC='Texto de teste para criar identidade isolada e confirmar o backup. '+
- 'Sem cobranca, pagamento, distribuidor, ganhos ou uso comercial.';
+ 'Sem cobranca, pagamento, distribuidor, ganhos ou uso comercial. '+
+ 'Conteudo exclusivamente ficticio de homologacao; nenhuma clausula e valida.';
 async function fixture(t){
  const dir=fs.mkdtempSync(path.join(os.tmpdir(),'loop-dr-test-'));
  t.after(()=>fs.rmSync(dir,{recursive:true,force:true}));
