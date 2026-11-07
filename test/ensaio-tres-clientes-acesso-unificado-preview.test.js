@@ -105,6 +105,47 @@ test('ensaio de tres titulares: lojas, escritorios, links e admin isolados',asyn
  assert.deepEqual(equipeAna.cadastros.map(p=>p.nick).sort(),['bia','ceci']);
  assert.equal((await consultarEquipe(usuarios.bia)).total,0);
  assert.equal((await consultarEquipe(usuarios.ceci)).total,0);
+ // Um pedido ficticio de Ana nao pode aparecer em "Meus Pedidos" de Bia
+ // ou Ceci, nem ser consultado por URL usando uma sessao de outra pessoa.
+ const itens={itens:[{produtoId:'curso-homologacao-250',quantidade:1}]};
+ const cotacao=await chamar('/staging/cotacao',{metodo:'POST',dados:itens});
+ assert.equal(cotacao.status,200);
+ assert.equal((await cotacao.json()).totalCentavos,25000);
+ const acessoAna={Cookie:usuarios.ana.cookie,
+  'X-Checkout-Csrf':usuarios.ana.csrf};
+ const rascunho=await chamar('/staging/rascunhos',{metodo:'POST',
+  headers:{...acessoAna,'Idempotency-Key':'piloto-tres-titulares-2026-01'},
+  dados:itens});
+ assert.equal(rascunho.status,201);
+ const pedidoId=(await rascunho.json()).intencao.pedidoId;
+ const prepedido=await chamar('/staging/prepedidos',{metodo:'POST',
+  headers:acessoAna,dados:{rascunhoId:pedidoId}});
+ assert.equal(prepedido.status,201);
+ const idPrepedido=(await prepedido.json()).prepedido.prepedidoId;
+ for(const [nick,u] of Object.entries(usuarios)){
+  const r=await chamar('/staging/meus-pedidos',{headers:{Cookie:u.cookie}});
+  assert.equal(r.status,200);
+  const pedidos=(await r.json()).pedidos;
+  assert.equal(pedidos.length,nick==='ana'?1:0,
+   'historico de compras nao atravessa fronteira de titular '+nick);
+  if(nick==='ana')assert.equal(pedidos[0].prepedidoId,idPrepedido);
+  else{
+   const entrega=await chamar('/staging/prepedidos/'+idPrepedido+'/entrega',
+    {headers:{Cookie:u.cookie}});
+   assert.equal(entrega.status,404,
+    'consulta por ID do pedido de Ana nao permite acesso cruzado a '+nick);
+   const diagnostico=await chamar(
+    '/staging/meu-diagnostico-ativacao/'+idPrepedido,
+    {headers:{Cookie:u.cookie}});
+   assert.equal(diagnostico.status,404,
+    'diagnostico de Ana nao pode vazar para '+nick);
+  }
+ }
+ assert.equal((await chamar('/staging/meus-pedidos')).status,401);
+ const duploCookie=await chamar('/staging/contas/me',{
+  headers:{Cookie:usuarios.ana.cookie+'; '+usuarios.bia.cookie}});
+ assert.equal(duploCookie.status,401,
+  'dois cookies de contas distintas nunca elegem titular arbitrario');
  assert.equal((await chamar('/staging/minha-equipe')).status,401);
  assert.equal((await chamar('/staging/loja')).status,302,
   'sem sessao, nao abre o carrinho de outra conta');
