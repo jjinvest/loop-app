@@ -26,7 +26,7 @@ function criarTransporteEmailVerificacaoResend({
   // ou registra o código em URL navegável.
   const payload={
    from:remetente,to:[para],
-   subject:'AKITEMM — confirme seu e-mail',
+   subject:'LOOP 3.0 — confirme seu e-mail do Escritório Virtual',
    text:'Código de confirmação: '+codigo+
     '\nVálido por 15 minutos. Se você não solicitou, ignore este e-mail.'+
     '\nEste código não confirma pagamento nem identidade civil.'
