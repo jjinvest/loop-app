@@ -102,7 +102,10 @@ test('mesma identidade da loja entra no Escritorio LOOP sem novo cadastro',async
  assert.ok(cookie);
  const headers={Cookie:cookie.split(';')[0]};
  const loja=await x.consultar('/loja',{headers});
- assert.equal(loja.status,200,'loja abre com sessao de titular existente');
+ assert.equal(loja.status,302,'atalho de loja preserva o escopo protegido da sessao');
+ assert.equal(loja.headers.get('location'),'/staging/loja');
+ assert.equal((await x.consultar('/staging/loja',{headers})).status,200,
+  'loja abre ao seguir o atalho com mesma sessao de titular existente');
  const perfilLoja=await x.consultar('/staging/vitrine/minha-conta',{headers});
  assert.equal(perfilLoja.status,200);
  assert.equal((await perfilLoja.json()).conta.nick,'marta');
@@ -185,8 +188,9 @@ test('gateway exige acesso antes de HTML e rotas administrativas',async t=>{
  const loja=await x.consultar('/loja');
  assert.equal(loja.status,302,'vitrine redireciona para rota local da vitrine');
  const alvo=loja.headers.get('location');
- assert.match(alvo,/^\/staging\//);
- assert.equal((await x.consultar(alvo)).status,200);
+ assert.equal(alvo,'/staging/loja');
+ assert.equal((await x.consultar(alvo)).status,302,
+  'navegador sem sessao de cliente nao abre loja apos atalho');
 });
 test('cadastro de ensaio cria conta no mesmo SQLite e financeiros permanecem bloqueados',async t=>{
  const x=await preparar(t);
