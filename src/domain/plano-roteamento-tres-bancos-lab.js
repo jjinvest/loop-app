@@ -24,7 +24,7 @@ function planejarRecebimentoTresBancos({fotografia,taxaRealPspCentavos=null}={})
   tributos=fotografia.reservaTributariaEstimadaCentavos;
  const limpo=taxa===null?null:bruto-taxa,
   loja=limpo===null?null:limpo-compromissoLoop,
-  obrigaFornecedor=custo===null?null:custo+(frete??0),
+  obrigaFornecedor=custo,
   margem=loja!==null&&custo!==null&&frete!==null&&tributos!==null?
    loja-custo-frete-tributos:null;
  const saldoInsuficiente=compromissoLoop>bruto||limpo!==null&&loja<0;
@@ -54,6 +54,7 @@ function planejarRecebimentoTresBancos({fotografia,taxaRealPspCentavos=null}={})
   loopReservarCentavos:compromissoLoop,
   sobraComercialPrevistaCentavos:loja===null||loja<0?null:loja,
   fornecedorAPagarPrevistoCentavos:obrigaFornecedor,
+  freteReservarPrevistoCentavos:frete,
   fornecedorPagoCentavos:0,margemComercialEstimadaCentavos:margem,
   receptores,alerta,
   liquidacaoPspRealComprovada:false,splitAsaasParaBancoExterno:false,
