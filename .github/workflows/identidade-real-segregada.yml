@@ -7,6 +7,7 @@ on:
       - 'src/producao/**'
       - 'src/integracoes/registro-fornecedores.js'
       - 'scripts/iniciar-identidade-real-loop.js'
+      - 'scripts/provar-recuperacao-independente-identidade.js'
       - 'test/identidade-real-isolada.test.js'
       - 'test/identidade-real-persistencia.test.js'
       - 'test/api-identidade-real-sem-pagamentos.test.js'
@@ -18,6 +19,7 @@ on:
       - 'test/carrinho-cotacao-multidistribuidores.test.js'
       - 'test/backup-identidade-real-restauracao.test.js'
       - 'test/backup-identidade-real-offsite.test.js'
+      - 'test/recuperacao-independente-offsite.test.js'
       - 'test/agendador-backup-identidade-real.test.js'
       - 'test/meus-pedidos-titular-real.test.js'
       - 'test/controle-economico-loja-sqlite.test.js'
@@ -68,6 +70,8 @@ jobs:
           node --check src/producao/cotacoes-multidistribuidores-sqlite.js
           node --check src/producao/backup-identidade-real.js
           node --check src/producao/backup-identidade-offsite.js
+          node --check src/producao/recuperacao-independente-offsite.js
+          node --check scripts/provar-recuperacao-independente-identidade.js
           node --check src/producao/agendador-backup-identidade-real.js
           node --check scripts/iniciar-identidade-real-loop.js
       - name: Conta, consentimento, senhas e recuperação
@@ -96,6 +100,8 @@ jobs:
         run: node --test test/backup-identidade-real-restauracao.test.js
       - name: Cópia offsite da identidade cifrada, GET e restauração independente
         run: node --test test/backup-identidade-real-offsite.test.js
+      - name: Recuperacao DR fora do servico original com manifesto e chaves
+        run: node --test test/recuperacao-independente-offsite.test.js
       - name: Abertura real somente após backup externo íntegro e atual
         run: node --test test/agendador-backup-identidade-real.test.js
       - name: Meus Pedidos verdadeiro, sem fuga entre titulares nem venda fictícia
