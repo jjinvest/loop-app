@@ -9,6 +9,7 @@ on:
       - 'test/identidade-real-isolada.test.js'
       - 'test/identidade-real-persistencia.test.js'
       - 'test/api-identidade-real-sem-pagamentos.test.js'
+      - 'test/limite-operacoes-identidade-real-sqlite.test.js'
       - '.github/workflows/identidade-real-segregada.yml'
   workflow_dispatch:
 permissions:
@@ -40,6 +41,8 @@ jobs:
         run: node --test test/identidade-real-persistencia.test.js
       - name: API real não abre dinheiro nem aceita CSRF inválido
         run: node --test test/api-identidade-real-sem-pagamentos.test.js
+      - name: Limites de login/cadastro/recuperação persistentes e HTTP 429
+        run: node --test test/limite-operacoes-identidade-real-sqlite.test.js
       - name: Não ativar cadastro real com configuração de laboratório
         env:
           NODE_ENV: production
