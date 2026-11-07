@@ -217,6 +217,12 @@ function criarAppLojaEscritorioCandidato({banco,repositorioCatalogo,
  app.get('/staging/escritorio-admin',(_req,res)=>res.sendFile(path.join(__dirname,'escritorio-admin-candidato-ui.html')));
  app.get('/staging/assets/admin.js',(_req,res)=>res.type('js').sendFile(path.join(__dirname,'escritorio-admin-candidato-ui.js')));
  app.get('/staging/assets/admin.css',(_req,res)=>res.type('css').sendFile(path.join(__dirname,'escritorio-admin-candidato-ui.css')));
+ // Quem se cadastra precisa ler a mesma versao que sera registrada
+ // de modo imutavel com seu aceite. Disponivel antes do primeiro login.
+ app.get('/staging/contas/termos-cadastro',(_req,res)=>res.json({
+  termosVersao,termosTexto,somenteEnsaio:true,
+  cadastroRealHabilitado:false
+ }));
  app.post('/staging/contas/cadastrar',async(req,res)=>{
   if(!req.is('application/json'))
    return res.status(415).json({erro:'JSON_OBRIGATORIO'});
