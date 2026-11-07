@@ -731,7 +731,7 @@ async function cadastrar(e){
    $('cadastroTermos').checked=false;
    void carregarTermosCadastro();
   }
- }finally{botao.disabled=false;}
+ }finally{botao.disabled=!termosCadastroLidos;}
 }
 
 function alternarVisibilidade(botao){
