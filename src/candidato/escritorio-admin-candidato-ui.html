@@ -208,6 +208,16 @@
 <button type="button" id="motorEnsaioPausar">Pausar catraca</button>
 <button type="button" id="motorEnsaioGirar">Executar giro de ensaio (6 eventos)</button>
 </div>
+<fieldset class="douradas-visuais-admin" id="painelCriacaoDouradaAdmin">
+<legend>Bolas douradas da empresa · criar posições</legend>
+<p class="subtexto">Criação unitária no mesmo motor do Escritório. Cada clique confirmado cria <strong>uma bola dourada</strong> no fim da fila B. Não desconta do caixa de reserva, não cria compra, comissão, pagamento nem crédito. Quando a posição da empresa alcançar o centro, os seis eventos válidos serão destinados ao cofre exclusivo das douradas. Esta interface está em homologação.</p>
+<form id="formCriarDouradaAdmin" autocomplete="off">
+<label><input id="criarDouradaCiencia" type="checkbox" required> Confirmo a criação de 1 posição dourada de ensaio, sem qualquer recebimento ou débito financeiro.</label>
+<div class="linha"><button type="submit" id="criarDouradaManualEnsaio" class="primario">Criar 1 bola dourada</button></div>
+<p id="statusCriarDouradaAdmin" role="status" aria-live="polite">Nenhuma criação solicitada.</p>
+</form>
+</fieldset>
+
 <fieldset class="douradas-visuais-admin">
 <legend>Aparência das bolas douradas</legend>
 <p class="subtexto">Todas começam totalmente douradas, sem texto. O ID da posição continua oculto na bola e é usado aqui apenas para selecionar a dourada. Nome e número abaixo são exclusivamente visuais e não afetam as filas, o giro ou o financeiro.</p>
