@@ -3,7 +3,7 @@
 // Cofres de PRE-LANCAMENTO apenas de LABORATORIO.
 // Nao e saldo de PSP/banco; nao transfere e nunca cria saldo sacavel.
 // Registrar compras, dar START e autorizar giros sao 3 eventos separados.
-const {centroDoLoop}=require('./destino-financeiro-centro-loop');
+const {centroDoLoop,REGRA_DOURADA_INTEGRAL}=require('./destino-financeiro-centro-loop');
 const {LivroProvisoesV6DemoSQLite}=require('./livro-provisoes-v6-demo-sqlite');
 function erro(c){const e=new Error(c);e.codigo=c;return e;}
 function valor(n){return Number.isSafeInteger(n)&&n>0&&n<=100000000;}
@@ -34,7 +34,17 @@ class PreLancamentoCofresV6DemoSQLite{
    'posicao_id INTEGER NOT NULL, beneficiario TEXT,',
    'destino TEXT NOT NULL, valor_centavos INTEGER NOT NULL,',
    'registrado_em TEXT NOT NULL);',
-   ...['loop_v6_pre_aportes_demo','loop_v6_pre_receitas','loop_v6_pre_saidas'].flatMap(nome=>[
+   // Reclassificacao imutavel de fontes para ciclos dourados integrais V2.
+   'CREATE TABLE IF NOT EXISTS loop_v6_pre_douradas_integral_fontes (',
+   'giro INTEGER NOT NULL REFERENCES loop_v6_pre_saidas(giro),',
+   'ordem INTEGER NOT NULL CHECK(ordem BETWEEN 1 AND 6),',
+   'pedido_id TEXT NOT NULL UNIQUE REFERENCES loop_v6_pre_receitas(pedido_id),',
+   'centro_centavos INTEGER NOT NULL CHECK(centro_centavos>=0),',
+   'esquerda_centavos INTEGER NOT NULL CHECK(esquerda_centavos>=0),',
+   'direita_centavos INTEGER NOT NULL CHECK(direita_centavos>=0),',
+   'PRIMARY KEY(giro,ordem));',
+   ...['loop_v6_pre_aportes_demo','loop_v6_pre_receitas','loop_v6_pre_saidas',
+    'loop_v6_pre_douradas_integral_fontes'].flatMap(nome=>[
     'CREATE TRIGGER IF NOT EXISTS '+nome+'_no_update',
     'BEFORE UPDATE ON '+nome+" BEGIN SELECT RAISE(ABORT,'caixa-demo imutavel'); END;",
     'CREATE TRIGGER IF NOT EXISTS '+nome+'_no_delete',
@@ -233,21 +243,37 @@ class PreLancamentoCofresV6DemoSQLite{
    "COALESCE(SUM(CASE WHEN destino='LOOP_DOURADAS' THEN 1 ELSE 0 END),0) AS girosDouradas",
    'FROM loop_v6_pre_saidas'
   ].join(' ')).get();
+  const reclass=b.prepare([
+   'SELECT COALESCE(SUM(centro_centavos),0) AS centro,',
+   'COALESCE(SUM(esquerda_centavos),0) AS esquerda,',
+   'COALESCE(SUM(direita_centavos),0) AS direita',
+   'FROM loop_v6_pre_douradas_integral_fontes'
+  ].join(' ')).get();
+  const integral=b.prepare([
+   'SELECT COALESCE(SUM(valor_centavos),0) AS total',
+   'FROM loop_v6_pre_saidas WHERE giro IN',
+   '(SELECT giro FROM loop_v6_pre_douradas_integral_fontes)'
+  ].join(' ')).get().total;
+  const debitadoCentro=s.total-integral+reclass.centro;
+  const centroRestante=r.centro-debitadoCentro;
+  const esquerdaRestante=r.esquerda-reclass.esquerda;
+  const direitaRestante=r.direita-reclass.direita;
   return {configurado:true,fase:l.fase,iniciadoEm:l.iniciado_em,
    valorFixoLoopCentavos:l.liquido_por_compra,
    aportesFicticiosConfirmados:r.compras,
    comprasConferidas:r.compras,totalHipoteticoCentavos:r.total,
    centroRecebidoSimuladoCentavos:r.centro,
-   centroComprometidoSimuladoCentavos:s.total,
-   centroRestanteSimuladoCentavos:r.centro-s.total,
+   centroComprometidoSimuladoCentavos:debitadoCentro,
+   centroRestanteSimuladoCentavos:centroRestante,
    // O quarto cofre nao e um pagamento nem volta automaticamente ao centro.
    douradasAcumuladoSimuladoCentavos:s.douradas,
    escritoriosPrevistosSimuladoCentavos:s.escritorios,
    girosComCentroDourado:s.girosDouradas,
-   investimentoRestanteSimuladoCentavos:r.esquerda,
-   reservaRestanteSimuladoCentavos:r.direita,
-   totalDemonstrativoConservadoCentavos:r.centro-s.total+
-     s.douradas+s.escritorios+r.esquerda+r.direita,
+   investimentoRestanteSimuladoCentavos:esquerdaRestante,
+   reservaRestanteSimuladoCentavos:direitaRestante,
+   reclassificacaoDouradasV2Centavos:integral,
+   totalDemonstrativoConservadoCentavos:centroRestante+
+     s.douradas+s.escritorios+esquerdaRestante+direitaRestante,
    girosRegistrados:s.giros,
    cofresDoLoop:['LOOP_CENTRO','LOOP_ESQUERDA','LOOP_DIREITA','LOOP_DOURADAS'],
    caixaDaLojaSeparado:true,valoresReaisConciliados:false,
