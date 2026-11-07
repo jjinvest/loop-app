@@ -62,6 +62,8 @@ on:
       - 'src/domain/akitemm-config-loja-demo-sqlite.js'
       - 'test/akitemm-config-loja-demo.test.js'
       - 'test/escritorio-admin-pesquisa-conectada.test.js'
+      - 'src/domain/painel-operacional-admin-candidato.js'
+      - 'test/escritorio-admin-operacoes-unificadas.test.js'
       - 'test/config-loja-candidato-integrado.test.js'
       - 'test/novidades-loja-candidato.test.js'
       - 'src/candidato/escritorio-admin-candidato-ui.css'
@@ -121,6 +123,8 @@ jobs:
       - run: node --check src/candidato/escritorio-admin-candidato-ui.js
       - name: Pesquisa administrativa real e isolamento do operador
         run: node --test test/escritorio-admin-pesquisa-conectada.test.js
+      - name: Departamentos operacionais e fontes integradas do SQLite
+        run: node --test test/escritorio-admin-operacoes-unificadas.test.js
       - name: Novidades no admin e na loja original, imagens e isolamento
         run: node --test test/novidades-loja-candidato.test.js
       - run: node --test test/akitemm-config-loja-demo.test.js
