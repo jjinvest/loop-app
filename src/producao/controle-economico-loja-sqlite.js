@@ -36,6 +36,22 @@ class ControleEconomicoLojaSQLite{
    "SELECT RAISE(ABORT,'AUDITORIA_IMUTAVEL'); END;",
    'CREATE TRIGGER IF NOT EXISTS loja_real_custos_historico_imutavel_d',
    'BEFORE DELETE ON loja_real_custos_historico BEGIN',
+   "SELECT RAISE(ABORT,'AUDITORIA_IMUTAVEL'); END;",
+   'CREATE TABLE IF NOT EXISTS loja_real_revisoes_preco(',
+   'produto_id TEXT NOT NULL,distribuidor_id TEXT NOT NULL,',
+   'revisao INTEGER NOT NULL CHECK(revisao>=1),',
+   'PRIMARY KEY(produto_id,distribuidor_id));',
+   'CREATE TABLE IF NOT EXISTS loja_real_precos_historico(',
+   'id INTEGER PRIMARY KEY AUTOINCREMENT,',
+   'produto_id TEXT NOT NULL,distribuidor_id TEXT NOT NULL,',
+   'sku TEXT NOT NULL,preco_anterior_centavos INTEGER NOT NULL,',
+   'preco_novo_centavos INTEGER NOT NULL,revisao INTEGER NOT NULL,',
+   'alterado_em INTEGER NOT NULL);',
+   'CREATE TRIGGER IF NOT EXISTS loja_real_precos_historico_imutavel_u',
+   'BEFORE UPDATE ON loja_real_precos_historico BEGIN',
+   "SELECT RAISE(ABORT,'AUDITORIA_IMUTAVEL'); END;",
+   'CREATE TRIGGER IF NOT EXISTS loja_real_precos_historico_imutavel_d',
+   'BEFORE DELETE ON loja_real_precos_historico BEGIN',
    "SELECT RAISE(ABORT,'AUDITORIA_IMUTAVEL'); END;"
   ].join(' '));
  }
@@ -82,6 +98,49 @@ class ControleEconomicoLojaSQLite{
    return this.consultarOferta({produtoId,distribuidorId});
   }catch(e){this.db.exec('ROLLBACK');throw e;}
  }
+ atualizarPrecoVenda({produtoId,distribuidorId,precoVendaCentavos,
+  precoAnteriorCentavos,revisaoPrecoEsperada}={}){
+  if(!id(produtoId)||!id(distribuidorId)||
+     !inteiro(precoVendaCentavos,1)||
+     !inteiro(precoAnteriorCentavos,1)||
+     !inteiro(revisaoPrecoEsperada))
+   falha('PRECO_VENDA_INVALIDO');
+  this.db.exec('BEGIN IMMEDIATE');
+  try{
+   const oferta=this._oferta(produtoId,distribuidorId);
+   if(!oferta)falha('OFERTA_NAO_EXISTE');
+   const atual=this.db.prepare([
+    'SELECT revisao FROM loja_real_revisoes_preco',
+    'WHERE produto_id=? AND distribuidor_id=?'
+   ].join(' ')).get(produtoId,distribuidorId);
+   if((atual?.revisao||0)!==revisaoPrecoEsperada||
+      oferta.preco_centavos!==precoAnteriorCentavos)
+    falha('REVISAO_PRECO_EM_CONFLITO');
+   const ts=this.agora(),revisao=revisaoPrecoEsperada+1;
+   const mudanca=this.db.prepare([
+    'UPDATE loja_real_ofertas_distribuidores',
+    'SET preco_centavos=?,atualizado_em=?',
+    'WHERE produto_id=? AND distribuidor_id=? AND preco_centavos=?'
+   ].join(' ')).run(precoVendaCentavos,ts,produtoId,distribuidorId,
+    precoAnteriorCentavos);
+   if(mudanca.changes!==1)falha('REVISAO_PRECO_EM_CONFLITO');
+   this.db.prepare([
+    'INSERT INTO loja_real_revisoes_preco(',
+    'produto_id,distribuidor_id,revisao) VALUES(?,?,?)',
+    'ON CONFLICT(produto_id,distribuidor_id)',
+    'DO UPDATE SET revisao=excluded.revisao'
+   ].join(' ')).run(produtoId,distribuidorId,revisao);
+   this.db.prepare([
+    'INSERT INTO loja_real_precos_historico(',
+    'produto_id,distribuidor_id,sku,preco_anterior_centavos,',
+    'preco_novo_centavos,revisao,alterado_em)',
+    'VALUES(?,?,?,?,?,?,?)'
+   ].join(' ')).run(produtoId,distribuidorId,oferta.sku,
+    precoAnteriorCentavos,precoVendaCentavos,revisao,ts);
+   this.db.exec('COMMIT');
+   return this.consultarOferta({produtoId,distribuidorId});
+  }catch(e){this.db.exec('ROLLBACK');throw e;}
+ }
  consultarOferta({produtoId,distribuidorId}={}){
   if(!id(produtoId)||!id(distribuidorId))
    falha('OFERTA_INVALIDA');
@@ -92,6 +151,10 @@ class ControleEconomicoLojaSQLite{
    'FROM loja_real_custos_ofertas',
    'WHERE produto_id=? AND distribuidor_id=?'
   ].join(' ')).get(produtoId,distribuidorId);
+  const revisaoPreco=this.db.prepare([
+   'SELECT revisao FROM loja_real_revisoes_preco',
+   'WHERE produto_id=? AND distribuidor_id=?'
+  ].join(' ')).get(produtoId,distribuidorId)?.revisao||0;
   const preco=oferta.preco_centavos;
   const custo=custos?.custo_unit_centavos??null;
   const margemBruta=custo===null?null:preco-custo;
@@ -102,7 +165,7 @@ class ControleEconomicoLojaSQLite{
    // encargos, estornos, comissões, reserva ou operação do LOOP.
    lucroLiquidoCalculado:false,
    tributosApurados:false,ativo:oferta.ativo===1,
-   revisaoCusto:custos?.revisao||0};
+   revisaoCusto:custos?.revisao||0,revisaoPreco};
  }
  listarOfertas({limite=100}={}){
   if(!Number.isInteger(limite)||limite<1||limite>500)
