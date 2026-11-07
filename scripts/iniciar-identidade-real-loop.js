@@ -15,6 +15,12 @@ const {validarConfig:validarBackupS3,enviarBackupOffsiteIdentidade}=
  require('../src/producao/backup-identidade-offsite');
 const {criarAgendadorBackupIdentidadeReal}=
  require('../src/producao/agendador-backup-identidade-real');
+const {SessaoAdminComercialSQLite}=
+ require('../src/producao/sessao-admin-comercial-sqlite');
+const {CatalogoMultiDistribuidoresSQLite}=
+ require('../src/producao/catalogo-multidistribuidores-sqlite');
+const {ControleEconomicoLojaSQLite}=
+ require('../src/producao/controle-economico-loja-sqlite');
 function configurar(ambiente=process.env){
  if(ambiente.NODE_ENV!=='production'||ambiente.LOOP_REAL_CADASTRO_GO!=='SIM'||
     ambiente.LOOP_REAL_DADOS_SEPARADOS!=='SIM'||
@@ -42,8 +48,19 @@ function configurar(ambiente=process.env){
  if(ambiente.LOOP_REAL_BACKUP_OFFSITE_AUTO!=='SIM')
   throw Error('BACKUP_OFFSITE_REAL_OBRIGATORIO');
  const chaveBackup=key('LOOP_REAL_CHAVE_BACKUP');
- for(const k of [chaveEmail,chaveCifra,chaveCodigo]){
-  if(k.equals(chaveBackup))throw Error('CHAVE_BACKUP_DEVE_SER_INDEPENDENTE');
+ // Operador real tem credencial independente, nunca reutiliza senha
+ // do cliente ou o segredo da homologação.
+ const chaveAdmin=key('LOOP_REAL_CHAVE_ADMIN');
+ const credencialAdmin=ambiente.LOOP_REAL_ADMIN_CREDENCIAL;
+ if(typeof credencialAdmin!=='string'||
+    credencialAdmin.length<24||credencialAdmin.length>256)
+  throw Error('ADMIN_REAL_CREDENCIAL_NAO_CONFIGURADA');
+ const separadas=[chaveEmail,chaveCifra,chaveCodigo,chaveBackup,chaveAdmin];
+ for(let i=0;i<separadas.length;i++){
+  for(let j=i+1;j<separadas.length;j++){
+   if(separadas[i].equals(separadas[j]))
+    throw Error('CHAVES_REAIS_DEVEM_SER_INDEPENDENTES');
+  }
  }
  const configS3={
   endpoint:ambiente.LOOP_REAL_S3_ENDPOINT,
@@ -71,7 +88,8 @@ function configurar(ambiente=process.env){
  const enviarEmail=async({finalidade,...args})=>
   (finalidade==='SENHA'?recuperar:confirmar)(args);
  return {arquivo,chaveEmail,chaveCifra,chaveCodigo,termos,privacidade,
-  origemHttps,enviarEmail,chaveBackup,configS3};
+  origemHttps,enviarEmail,chaveBackup,configS3,
+  chaveAdmin,credencialAdmin};
 }
 async function iniciar(ambiente=process.env){
  const config=configurar(ambiente);
@@ -89,9 +107,20 @@ async function iniciar(ambiente=process.env){
   // Falha de rede, segredo, bucket, restauração ou dados bloqueia o
   // listener; nenhuma conta real é criada sem prova de recuperação.
   await agendador.iniciar();
+  // Catálogo começa vazio; distribuidor não homologado não aparece
+  // como disponível na vitrine. Registro completo é do operador.
+  const catalogo=new CatalogoMultiDistribuidoresSQLite({
+   banco,distribuidorHomologado:()=>false
+  });
+  const controle=new ControleEconomicoLojaSQLite({banco});
+  const sessoes=new SessaoAdminComercialSQLite({
+   banco,chaveAdmin:config.chaveAdmin,
+   credencialAdmin:config.credencialAdmin
+  });
   const app=criarAppIdentidadeLoop({
    contas,origemHttps:config.origemHttps,permitirCadastro:true,
-   backupEstado:()=>agendador.estado()
+   backupEstado:()=>agendador.estado(),
+   adminComercial:{catalogo,controle,sessoes}
   });
   const porta=Number(ambiente.PORT||3000);
   if(!Number.isSafeInteger(porta)||porta<1||porta>65535)
