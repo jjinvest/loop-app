@@ -4,7 +4,8 @@
 // NAO constituem banco de dados, comprovantes de venda ou registros financeiros.
 const { DESTINOS } = require('./tabuleiro-loop');
 const {
- cofreDoEvento,origemDoCentro,centroDoLoop
+ cofreDoEvento,origemDoCentro,centroDoLoop,
+ REGRA_DOURADA_INTEGRAL,REGRA_DOURADA_LEGADA
 }=require('./destino-financeiro-centro-loop');
 
 function exigir(condicao, mensagem) {
@@ -144,7 +145,12 @@ function restaurarSnapshot(snapshot, criarLoop) {
     // Na versao V6, o destino e determinado pelo centro real, dourado
     // ou desistente no instante da venda, nunca por um campo arbitrario
     // de snapshot. Preservar os registros historicos V5 sem esse campo.
-    const destinoCorreto=cofreDoEvento({posicaoCentro:centro,ordem:indice+1});
+    const regraDourada=v.regraDourada||REGRA_DOURADA_LEGADA;
+    exigir(v.regraDourada===undefined||
+     (centroDoLoop(centro)&&v.regraDourada===REGRA_DOURADA_INTEGRAL),
+     'versao da distribuicao dourada invalida');
+    const destinoCorreto=cofreDoEvento({posicaoCentro:centro,ordem:indice+1,
+     regraDourada});
     const origemCorreta=origemDoCentro(centro);
     const dourada=centroDoLoop(centro);
     exigir(legadoV5||(
@@ -167,13 +173,21 @@ function restaurarSnapshot(snapshot, criarLoop) {
     exigir(!idsVendas.has(v.vendaId), 'venda repetida entre ciclos');
     idsVendas.add(v.vendaId);
   }
+  function conferirVersaoCiclo(vendasDoCentro,centro){
+    if(!centroDoLoop(centro))return;
+    const versoes=new Set(vendasDoCentro.map(v=>
+     v.regraDourada||REGRA_DOURADA_LEGADA));
+    exigir(versoes.size<=1,'um ciclo dourado nao pode misturar regras V1 e V2');
+  }
   concluidos.forEach((completo, i) => {
     exigir(objeto(completo) && completo.ciclo === i+1 &&
       objeto(completo.centro) && Array.isArray(completo.vendas) &&
       (completo.vendas.length === 5||completo.vendas.length === 6), 'ciclo concluido invalido');
     checarPosicao(completo.centro, 'centro de ciclo concluido');
+    conferirVersaoCiclo(completo.vendas,completo.centro);
     completo.vendas.forEach((v,j) => conferirVenda(v,j,i+1,completo.centro,completo.vendas.length===5));
   });
+  if(t.centro)conferirVersaoCiclo(vendas,t.centro);
   vendas.forEach((v,i) => {
     exigir(t.centro !== null, 'vendas sem centro');
     conferirVenda(v,i,concluidos.length+1,t.centro,migradoV5);
