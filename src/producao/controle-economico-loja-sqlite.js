@@ -13,13 +13,17 @@ function excelSeguro(v){
  return '"'+guarded.replaceAll('"','""')+'"';
 }
 class ControleEconomicoLojaSQLite{
- constructor({banco,auditoria=null,agora=()=>Date.now()}={}){
+ constructor({banco,auditoria=null,manutencao=null,agora=()=>Date.now()}={}){
   if(typeof banco?.prepare!=='function'||typeof banco?.exec!=='function'||
      typeof agora!=='function')falha('CONTROLE_ECONOMICO_NAO_CONFIGURADO');
   if(auditoria!==null&&
      (typeof auditoria.registrar!=='function'||auditoria.db!==banco))
    falha('AUDITORIA_ECONOMICA_NAO_CONFIGURADA');
-  this.db=banco;this.auditoria=auditoria;this.agora=agora;
+  if(manutencao!==null&&(!auditoria||manutencao.db!==banco||
+     typeof manutencao.garantirOperacaoDisponivel!=='function'))
+   falha('MANUTENCAO_ECONOMICA_NAO_CONFIGURADA');
+  this.db=banco;this.auditoria=auditoria;
+  this.manutencao=manutencao;this.agora=agora;
   banco.exec([
    'CREATE TABLE IF NOT EXISTS loja_real_custos_ofertas(',
    'produto_id TEXT NOT NULL,distribuidor_id TEXT NOT NULL,',
@@ -72,6 +76,7 @@ class ControleEconomicoLojaSQLite{
    falha('CUSTO_FORNECEDOR_INVALIDO');
   this.db.exec('BEGIN IMMEDIATE');
   try{
+   if(this.manutencao)this.manutencao.garantirOperacaoDisponivel();
    const oferta=this._oferta(produtoId,distribuidorId);
    if(!oferta)falha('OFERTA_NAO_EXISTE');
    const atual=this.db.prepare([
@@ -117,6 +122,7 @@ class ControleEconomicoLojaSQLite{
    falha('PRECO_VENDA_INVALIDO');
   this.db.exec('BEGIN IMMEDIATE');
   try{
+   if(this.manutencao)this.manutencao.garantirOperacaoDisponivel();
    const oferta=this._oferta(produtoId,distribuidorId);
    if(!oferta)falha('OFERTA_NAO_EXISTE');
    const atual=this.db.prepare([
