@@ -3,6 +3,7 @@
 // Somente homologacao: nem provisao, nem cor, nem giro executa Pix ou saque.
 // Toda luz nova vem de UMA compra vinculada no mesmo SQLite do motor.
 const {PISO_VERDE}=require('./plano-posicoes-compra-akitemm');
+const {planejarRecebimentoTresBancos}=require('./plano-roteamento-tres-bancos-lab');
 const {cofreDoEvento,REGRA_DOURADA_LEGADA}=
  require('./destino-financeiro-centro-loop');
 const PEDIDO=/^hom-[a-f0-9-]{36}$/;
@@ -187,10 +188,13 @@ class LivroLuzesFinanceirasCandidatoSQLite{
    'SELECT COUNT(*) AS n FROM akitemm_luzes_financeiras_eventos_lab'
   ).get().n;
   const semCustos=pedidos.filter(p=>!p.custosCompletos).length;
+  const roteamentoBancarioPlanejado=pedidos.map(fotografia=>
+   planejarRecebimentoTresBancos({fotografia}));
   return {luzesFinanceirasRegistradas:qtd,luzes,cofres,
    pedidosFotografados:this.banco.prepare(
     'SELECT COUNT(*) AS n FROM akitemm_pedido_custos_fotografia_lab'
    ).get().n,pedidos,amostraPedidosSemCustos:semCustos,
+   roteamentoBancarioPlanejado,
    bancosPlanejados:[
     {caixa:'LOJA',instituicaoSugerida:'Mercado Pago',conectado:false},
     {caixa:'LOOP_CENTRO',instituicaoSugerida:'Banco Inter',conectado:false},
