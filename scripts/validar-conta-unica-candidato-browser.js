@@ -418,6 +418,26 @@ const {once}=require('node:events');
    await admin.locator('#produtoPrecoAdmin').fill('99.00');
    await admin.locator('#formProduto button[type=submit]').click();
    await admin.locator('#resultadoProdutoAdmin').filter({hasText:/Produto salvo/}).waitFor();
+   // Custos internos usam o MESMO produto: não vazam para o cliente
+   // nem autorizam transferência, lucro ou saque real.
+   await admin.locator('#custosProdutoSelecionadoAdmin')
+    .filter({hasText:/Produto curso-extra-/}).waitFor();
+   await admin.locator('#custoFornecedorAdmin').fill('25.00');
+   await admin.locator('#custoFreteAdmin').fill('5.00');
+   await admin.locator('#custoPspAdmin').fill('1.50');
+   await admin.locator('#custoTributosAdmin').fill('2.00');
+   await admin.locator('#resumoMargemProdutoAdmin')
+    .filter({hasText:/margem estimada.*R.*65,50/i}).waitFor();
+   await admin.locator('#salvarCustoProdutoAdmin').click();
+   await admin.locator('#statusCustosProdutoAdmin')
+    .filter({hasText:/Custos registrados no SQLite/}).waitFor();
+   const custoResp=await admin.request.get(
+    base+'/staging/escritorio-unificado/produtos/'+novoProdutoId+'/custos',
+    {headers:{Authorization:'Bearer '+'somente-teste-do-navegador-'+('x'.repeat(40))}});
+   assert.equal(custoResp.status(),200);
+   const custosSalvos=await custoResp.json();
+   assert.equal(custosSalvos.custoFornecedorCentavos,2500);
+   assert.equal(custosSalvos.margemComercialEstimadaCentavos,6550);
    assert.match(await admin.locator('#listaProdutosAdmin').innerText(),/Curso adicional fictício/);
    await admin.locator('#listaProdutosAdmin .produto-admin-item')
     .filter({hasText:'curso-homologacao-250'})
