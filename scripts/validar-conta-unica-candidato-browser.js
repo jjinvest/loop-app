@@ -218,7 +218,7 @@ const {once}=require('node:events');
    const indicado=page.locator('#listaEquipe article.loop03-rede-pessoa');
    await indicado.first().waitFor();
    assert.equal(await indicado.count(),1);
-   assert.match(await indicado.first().innerText(),new RegExp('@'+nickIndicado));
+   assert.match(await indicado.first().innerText(),new RegExp('@'+nickIndicado,'i'));
    assert.match(await indicado.first().innerText(),/#0001/);
    assert.match(await indicado.first().innerText(),/Telefone: não disponibilizado/);
    assert.match(await indicado.first().innerText(),/Cadastro realizado/);

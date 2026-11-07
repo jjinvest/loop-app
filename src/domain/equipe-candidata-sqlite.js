@@ -53,7 +53,7 @@ class EquipeCandidataSQLite{
   ).get(titularId).total;
   // A numeração de exibição não altera o ID imutável de cada cadastro.
   // A busca por #n usa o ordinal cronológico, não a posição no motor.
-  const somenteNumero=/^#?[0-9]{1,7}$/.test(termo);
+  const somenteNumero=/^#?[0-9]{1,7}$/.test(termo)&&Number(termo.replace('#',''))>0;
   const n=Number(termo.replace('#',''));
   const filtro=termo?(somenteNumero?[
    'AND i.indicado_id=(SELECT antigo.indicado_id',
