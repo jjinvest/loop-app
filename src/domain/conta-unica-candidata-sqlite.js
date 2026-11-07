@@ -47,10 +47,20 @@ function emailValido(email){
     email.includes('..')||/[<>]/.test(email))falha('EMAIL_INVALIDO');
  return email.trim().toLowerCase();
 }
+// scrypt tem custo propositalmente elevado. Sem limite de trabalho em voo,
+// cadastros e tentativas de login anônimas podem enfileirar milhares de hashes
+// e derrubar a disponibilidade para clientes legítimos.
+const LIMITE_HASHES_EM_VOO=16;
+let hashesEmVoo=0;
 async function hashSenha(senha,salt){
- return (await derivar(senha,Buffer.from(salt,'hex'),64,{
-  N:16384,r:8,p:1,maxmem:32*1024*1024
- })).toString('hex');
+ if(hashesEmVoo>=LIMITE_HASHES_EM_VOO)
+  falha('AUTENTICACAO_TEMPORARIAMENTE_OCUPADA');
+ hashesEmVoo++;
+ try{
+  return (await derivar(senha,Buffer.from(salt,'hex'),64,{
+   N:16384,r:8,p:1,maxmem:32*1024*1024
+  })).toString('hex');
+ }finally{hashesEmVoo--;}
 }
 function senhaValida(senha){
  // Senha de teste aceita desde 8 caracteres; credenciais antigas
