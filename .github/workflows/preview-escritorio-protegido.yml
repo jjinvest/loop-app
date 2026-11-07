@@ -110,7 +110,9 @@ jobs:
       - run: node --test test/backup-conta-unica-restauracao-segura.test.js
       - run: node --test test/asaas-motor-automatico-sandbox-candidato.test.js
       - run: node --check src/domain/auditoria-integridade-motor-candidato-sqlite.js
-      - run: npm test
+      # Limitar processos do test runner: em runner compartilhado, 279 arquivos
+      # concorrentes podem bloquear por memoria/CPU e esconder a falha real.
+      - run: node --test --test-concurrency=8
       - run: npm install --no-save playwright@1.56.1
       - run: npx playwright install --with-deps chromium
       - run: node scripts/validar-conta-unica-candidato-browser.js
