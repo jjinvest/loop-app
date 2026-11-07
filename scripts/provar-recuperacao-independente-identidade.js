@@ -39,6 +39,7 @@ function carregarConfiguracao(ambiente){
  return {
   atestacaoManifesto,
   chavePublicaManifesto:fs.readFileSync(nomeChavePublica,'utf8'),
+  sha256ChavePublicaAprovada:ambiente.LOOP_DR_CHAVE_PUBLICA_SHA256_CONFIAVEL,
   config:{
    endpoint:ambiente.LOOP_DR_S3_ENDPOINT,
    bucket:ambiente.LOOP_DR_S3_BUCKET,

@@ -94,3 +94,8 @@ O backup AES-256-GCM de identidade/admin foi estendido para incluir **no mesmo s
 ## Continuidade 255 — assinatura do manifesto DR (07/11/2026)
 
 Recuperador independente agora exige envelope Ed25519 e chave publica confiavel do custodiante, valida todos os campos antes de GET, rejeita documento sem assinatura, adulterado, algoritmo trocado ou chave errada. CLI DR exige arquivo de chave publica fora dos volumes de origem. Contrato no runbook RECUPERACAO_INDEPENDENTE_DR_COMERCIAL_07NOV2026.md. Custodia independente e recuperacao real em outra regiao continuam SEM PROVA; PSP/banco/fornecedor permanecem declarados; nenhuma autorizacao de operacao comercial. PR #1 DRAFT. Confirmar CI do commit antes de atestar cobertura.
+
+
+## Continuidade 256 — autenticar a identidade da chave DR (07/11/2026)
+
+O executor DR exige fingerprint SHA256/SPKI DER aprovado separadamente da chave PEM e do envelope. Nova ferramenta offline de custodiante assina manifesto fora da origem, com chave Ed25519 em arquivo privado 0600 e saída sem sobrescrita. Regressão exige rejeicao de fingerprint ausente/trocado, manifesto adulterado e operacao de assinatura não autorizada. Runbook RECUPERACAO_INDEPENDENTE_DR_COMERCIAL_07NOV2026.md atualizado. Sem prova externa da independencia do custodiante ou conciliacao bancaria; Marco Zero ainda bloqueado. CI da revisão requer verificacao.

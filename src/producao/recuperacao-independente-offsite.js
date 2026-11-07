@@ -38,7 +38,7 @@ function canonizarManifesto(manifesto){
   JSON.stringify(CAMPOS_MANIFESTO.map(k=>m[k])),'utf8');
 }
 // A chave PRIVADA deve estar somente com custodiante separado da origem.
-function validarAtestacaoManifesto(atestacao,chavePublicaManifesto){
+function validarAtestacaoManifesto(atestacao,chavePublicaManifesto,sha256ChaveAprovada){
  const codigo='RECUPERACAO_INDEPENDENTE_MANIFESTO_NAO_AUTENTICADO';
  if(!atestacao||typeof atestacao!=='object'||
     Array.isArray(atestacao)||atestacao.versao!==1||
@@ -46,6 +46,8 @@ function validarAtestacaoManifesto(atestacao,chavePublicaManifesto){
     typeof atestacao.assinaturaEd25519Hex!=='string'||
     !/^[a-f0-9]{128}$/.test(atestacao.assinaturaEd25519Hex)||
     typeof chavePublicaManifesto!=='string'||
+    typeof sha256ChaveAprovada!=='string'||
+    !/^[a-f0-9]{64}$/.test(sha256ChaveAprovada)||
     !chavePublicaManifesto.startsWith('-----BEGIN PUBLIC KEY-----')||
     Object.keys(atestacao).sort().join('|')!==
     ['versao','algoritmo','manifesto','assinaturaEd25519Hex'].sort().join('|'))
@@ -54,6 +56,11 @@ function validarAtestacaoManifesto(atestacao,chavePublicaManifesto){
  try{key=createPublicKey(chavePublicaManifesto);}
  catch{falha(codigo);}
  if(key.asymmetricKeyType!=='ed25519')falha(codigo);
+ // SHA256 do SPKI DER: o custodiante aprova o fingerprint por canal separado.
+ const fingerprint=createHash('sha256').update(
+  key.export({type:'spki',format:'der'})).digest('hex');
+ if(!timingSafeEqual(Buffer.from(fingerprint,'hex'),
+   Buffer.from(sha256ChaveAprovada,'hex')))falha(codigo);
  try{
   if(!verify(null,canonizarManifesto(atestacao.manifesto),key,
     Buffer.from(atestacao.assinaturaEd25519Hex,'hex')))falha(codigo);
@@ -64,11 +71,13 @@ function mesmoHash(a,b){
  return timingSafeEqual(Buffer.from(a,'hex'),Buffer.from(b,'hex'));
 }
 async function provarRecuperacaoIndependente({
- config,atestacaoManifesto,chavePublicaManifesto,chaveBackup,chavesRecuperacao,
+ config,atestacaoManifesto,chavePublicaManifesto,
+ sha256ChavePublicaAprovada,chaveBackup,chavesRecuperacao,
  buscar=fetch,agora=()=>new Date(),maxBytes=536870912
 }={}){
  // O manifesto sem assinatura autenticada nao autoriza nem GET.
- const m=validarAtestacaoManifesto(atestacaoManifesto,chavePublicaManifesto);
+ const m=validarAtestacaoManifesto(atestacaoManifesto,chavePublicaManifesto,
+  sha256ChavePublicaAprovada);
  if(!Buffer.isBuffer(chaveBackup)||chaveBackup.length!==32||
     !chavesRecuperacao||typeof chavesRecuperacao!=='object'||
     typeof buscar!=='function'||typeof agora!=='function'||
@@ -140,6 +149,7 @@ async function provarRecuperacaoIndependente({
    estado:'OBJETO_CIFRADO_BAIXADO_RESTAURADO_E_LIDO',
    somenteGet:true,hashExternoConferido:true,
    manifestoAssinadoVerificado:true,
+   fingerprintChavePublicaConfiavelVerificado:true,
    origemIndependenteDoCustodianteComprovada:false,
    chavesDeLeituraVerificadas:true,sessoesRestauradasRevogadas:true,
    // Conta apenas evidência do teste executado. Não autoatestar região,

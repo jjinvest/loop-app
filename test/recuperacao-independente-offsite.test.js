@@ -4,7 +4,7 @@ const assert=require('node:assert/strict');
 const fs=require('node:fs');
 const os=require('node:os');
 const path=require('node:path');
-const {randomBytes,generateKeyPairSync,sign}=require('node:crypto');
+const {randomBytes,generateKeyPairSync,sign,createHash}=require('node:crypto');
 const {DatabaseSync}=require('node:sqlite');
 const {IdentidadeClienteLoopReal}=
  require('../src/producao/identidade-cliente-loop-sqlite');
@@ -64,8 +64,10 @@ async function fixture(t){
  const pares=generateKeyPairSync('ed25519');
  const chavePublicaManifesto=pares.publicKey.export({type:'spki',format:'pem'});
  const chavePrivadaManifesto=pares.privateKey;
+ const sha256ChavePublicaAprovada=createHash('sha256')
+  .update(pares.publicKey.export({type:'spki',format:'der'})).digest('hex');
  return {banco,objeto,manifesto,chaveBackup,chavesRecuperacao,
-  chavePrivadaManifesto,chavePublicaManifesto,
+  chavePrivadaManifesto,chavePublicaManifesto,sha256ChavePublicaAprovada,
   atestacaoManifesto:assinar(manifesto,chavePrivadaManifesto)};
 }
 function assinar(manifesto,chave){
@@ -74,7 +76,9 @@ function assinar(manifesto,chave){
 }
 const opts=(f,extra={})=>({
  config,atestacaoManifesto:f.atestacaoManifesto,
- chavePublicaManifesto:f.chavePublicaManifesto,chaveBackup:f.chaveBackup,
+ chavePublicaManifesto:f.chavePublicaManifesto,
+ sha256ChavePublicaAprovada:f.sha256ChavePublicaAprovada,
+ chaveBackup:f.chaveBackup,
  chavesRecuperacao:f.chavesRecuperacao,
  agora:()=>new Date('2026-11-07T08:00:00Z'),
  buscar:async(url,opt)=>{
@@ -107,6 +111,7 @@ test('GET independente reconstitui somente em pasta descartavel e valida custodi
  assert.equal(prova.contas,1);
  assert.equal(prova.chavesDeLeituraVerificadas,true);
  assert.equal(prova.manifestoAssinadoVerificado,true);
+ assert.equal(prova.fingerprintChavePublicaConfiavelVerificado,true);
  assert.equal(prova.origemIndependenteDoCustodianteComprovada,false);
  assert.equal(prova.recuperacaoOutraRegiaoComprovada,false);
  assert.equal(prova.custodiaExternaIndependenteComprovada,false);
@@ -175,5 +180,36 @@ test('assinatura externa obrigatoria: ausente, adulterada e chave nao confiavel'
   atestacaoManifesto:{...f.atestacaoManifesto,algoritmo:'RSA'}
  })),{codigo:'RECUPERACAO_INDEPENDENTE_MANIFESTO_NAO_AUTENTICADO'});
  assert.deepEqual(validarAtestacaoManifesto(f.atestacaoManifesto,
-  f.chavePublicaManifesto),f.manifesto);
+  f.chavePublicaManifesto,f.sha256ChavePublicaAprovada),f.manifesto);
+});
+
+test('fingerprint SPKI precisa de aprovacao independente, nao apenas chave PEM no mesmo host',async t=>{
+ const f=await fixture(t);
+ for(const sha of [undefined,'f'.repeat(64),'1'.repeat(30),'A'.repeat(64)]){
+  await assert.rejects(provarRecuperacaoIndependente(opts(f,{
+   sha256ChavePublicaAprovada:sha
+  })),{codigo:'RECUPERACAO_INDEPENDENTE_MANIFESTO_NAO_AUTENTICADO'});
+ }
+});
+
+test('custodiante externo gera envelope sem expor chave e nao sobrepoe arquivo',async t=>{
+ const f=await fixture(t),root=fs.mkdtempSync(path.join(os.tmpdir(),'loop-signer-'));
+ t.after(()=>fs.rmSync(root,{recursive:true,force:true}));
+ const input=path.join(root,'manifesto.json'),privada=path.join(root,'privada.pem'),
+  envelope=path.join(root,'atestado.json');
+ fs.writeFileSync(input,JSON.stringify(f.manifesto));
+ fs.writeFileSync(privada,f.chavePrivadaManifesto.export({
+  type:'pkcs8',format:'pem'}),{mode:0o600});
+ const {criarAtestacaoOffline}=require('../scripts/assinar-manifesto-dr-offline');
+ const env={LOOP_DR_CUSTODIANTE_AUTORIZADO:'SIM',
+  LOOP_DR_CUSTODIANTE_MANIFESTO_ARQUIVO:input,
+  LOOP_DR_CUSTODIANTE_PRIVADA_ARQUIVO:privada,
+  LOOP_DR_CUSTODIANTE_SAIDA_ARQUIVO:envelope};
+ const result=criarAtestacaoOffline(env);
+ assert.equal(result.sha256ChavePublicaAprovada,f.sha256ChavePublicaAprovada);
+ assert.deepEqual(validarAtestacaoManifesto(JSON.parse(fs.readFileSync(envelope,'utf8')),
+  f.chavePublicaManifesto,result.sha256ChavePublicaAprovada),f.manifesto);
+ assert.throws(()=>criarAtestacaoOffline(env),{code:'EEXIST'});
+ assert.throws(()=>criarAtestacaoOffline({...env,LOOP_DR_CUSTODIANTE_AUTORIZADO:'NAO'}),
+  {codigo:'DR_CUSTODIANTE_NAO_AUTORIZADO'});
 });
