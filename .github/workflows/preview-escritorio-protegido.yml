@@ -115,19 +115,35 @@ jobs:
       - run: node --test test/backup-conta-unica-restauracao-segura.test.js
       - run: node --test test/asaas-motor-automatico-sandbox-candidato.test.js
       - run: node --check src/domain/auditoria-integridade-motor-candidato-sqlite.js
-      # Gate rapido e integrado em cada alteracao: negocio, posse do titular,
-      # senha, administrador, PSP e motor. Nao repetir a suite inteira a cada push.
-      - run: >-
-          node --test --test-concurrency=4
-          test/loja-escritorio-conta-unica-candidata.test.js
-          test/troca-senha-conta-unica-candidata.test.js
-          test/isolamento-operador-gateway-preview.test.js
-          test/ensaio-tres-clientes-acesso-unificado-preview.test.js
-          test/preview-unificacao-psp-webhook.test.js
-          test/candidato-psp-posicao-entrega-escritorio-unificados.test.js
-          test/fluxo-indicacao-compra-sandbox-tabuleiro.test.js
-          test/meta-lotes-catraca-loop.test.js
-          test/grade-posicoes-ensaios-unificada.test.js
+      # Cada fluxo tem limite proprio: diagnostica o bloqueio com precisão
+      # e evita repetir a suite integral ou deixar um processo pendurado.
+      - name: Identidade unica loja e escritorio
+        timeout-minutes: 3
+        run: node --test test/loja-escritorio-conta-unica-candidata.test.js
+      - name: Troca de senha e revogacao de sessoes
+        timeout-minutes: 3
+        run: node --test test/troca-senha-conta-unica-candidata.test.js
+      - name: Isolamento do operador no gateway
+        timeout-minutes: 3
+        run: node --test test/isolamento-operador-gateway-preview.test.js
+      - name: Tres titulares e privacidade horizontal
+        timeout-minutes: 3
+        run: node --test test/ensaio-tres-clientes-acesso-unificado-preview.test.js
+      - name: Webhook e unica base de dados
+        timeout-minutes: 3
+        run: node --test test/preview-unificacao-psp-webhook.test.js
+      - name: Pagamento sandbox posicao entrega escritorio
+        timeout-minutes: 4
+        run: node --test test/candidato-psp-posicao-entrega-escritorio-unificados.test.js
+      - name: Indicacao e catraca com eventos validados
+        timeout-minutes: 4
+        run: node --test test/fluxo-indicacao-compra-sandbox-tabuleiro.test.js
+      - name: Metas e lotes do circuito
+        timeout-minutes: 3
+        run: node --test test/meta-lotes-catraca-loop.test.js
+      - name: Grade responsiva de posicoes
+        timeout-minutes: 3
+        run: node --test test/grade-posicoes-ensaios-unificada.test.js
       # Suite integral permanece obrigatoria antes de liberar versao; somente
       # workflow_dispatch com opt-in para nao duplicar auditoria em cada push.
       - if: ${{ github.event_name == 'workflow_dispatch' && inputs.suite_integral == true }}
