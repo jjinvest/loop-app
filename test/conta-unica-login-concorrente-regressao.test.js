@@ -109,3 +109,49 @@ test('limite de trabalho scrypt protege operacao contra rajada anonima',async t=
  const legitimo=await conta.entrar({nick:'Teste',senha:'SenhaCorreta2026!Forte'});
  assert.ok(legitimo.token,'apos drenar carga, login legitimo volta a funcionar');
 });
+
+test('sessao do cliente: no maximo cinco por titular, revogando a mais antiga',async t=>{
+ const {banco,conta}=await preparar(t);
+ const acessos=[];
+ for(let i=0;i<7;i++){
+  const s=await conta.entrar({nick:'Teste',senha:'SenhaCorreta2026!Forte'});
+  acessos.push(s.token);
+ }
+ const ler=token=>conta.sessao({get(nome){
+  return nome==='cookie'?COOKIE+'='+token:undefined;
+ }});
+ assert.equal(banco.prepare(
+  'SELECT COUNT(*) AS total FROM akitemm_sessoes_candidatas'
+ ).get().total,5);
+ assert.equal(ler(acessos[0]),null,'sessao mais antiga nao pode continuar ativa');
+ assert.equal(ler(acessos[1]),null,'segunda sessao mais antiga revogada');
+ for(const token of acessos.slice(2))
+  assert.ok(ler(token),'ultimas cinco sessoes permanecem validas');
+});
+
+test('sessao expirada e removida do SQLite no proximo login legitimo',async t=>{
+ const banco=new DatabaseSync(':memory:');
+ banco.exec('PRAGMA foreign_keys=ON');
+ t.after(()=>banco.close());
+ let agora=1_800_000_000_000;
+ const conta=new ContaUnicaCandidataSQLite({
+  banco,chaveEmail:randomBytes(32),chaveCifra:randomBytes(32),
+  agora:()=>agora
+ });
+ await conta.cadastrar({nome:'Teste Expiracao',nick:'Expira',
+  email:'expira@example.invalid',senha:'SenhaCorreta2026!Forte',
+  termosVersao:'LAB-limpeza-sessoes-2026',termosTexto:TERMOS,
+  aceiteExplicito:true});
+ const anterior=await conta.entrar({nick:'Expira',senha:'SenhaCorreta2026!Forte'});
+ assert.equal(banco.prepare(
+  'SELECT COUNT(*) AS total FROM akitemm_sessoes_candidatas'
+ ).get().total,1);
+ agora=anterior.expiraEm+1;
+ const novo=await conta.entrar({nick:'Expira',senha:'SenhaCorreta2026!Forte'});
+ assert.ok(novo.token);
+ assert.equal(banco.prepare(
+  'SELECT COUNT(*) AS total FROM akitemm_sessoes_candidatas'
+ ).get().total,1,'expurgo nao deve acumular cookies vencidos');
+ assert.equal(conta.sessao({get:k=>k==='cookie'?COOKIE+'='+anterior.token:''}),null);
+ assert.ok(conta.sessao({get:k=>k==='cookie'?COOKIE+'='+novo.token:''}));
+});
