@@ -263,3 +263,62 @@ test('visual não pode virar ID, editar participante, injetar HTML ou renumerar 
   assert.equal(motor.consultar().limitePosicoesAtivas,10);
  }finally{db.close();}
 });
+
+test('dourada manual entra no motor UNICO da conta, sem compra, reserva ou giro e com idempotencia apos reinicio',()=>{
+ const {db,motor,sinalizacao}=preparar();
+ try{
+  const eventoId='dourada-ensaio-integrado-0001';
+  assert.throws(()=>motor.criarDouradaManualEnsaio({eventoId,aceiteEnsaio:false}),
+   {codigo:'DOURADA_MANUAL_DADOS_INVALIDOS'});
+  assert.throws(()=>motor.criarDouradaManualEnsaio({eventoId:'invalido',aceiteEnsaio:true}),
+   {codigo:'DOURADA_MANUAL_DADOS_INVALIDOS'});
+  const antes=motor.consultar();
+  assert.equal(antes.filaB.length,0);
+  assert.equal(antes.douradasManuaisCriadas,0);
+  const primeira=motor.criarDouradaManualEnsaio({eventoId,aceiteEnsaio:true});
+  assert.equal(primeira.repetido,false);
+  assert.equal(primeira.posicaoId,1);
+  assert.equal(primeira.fila,'B');
+  assert.equal(primeira.cor,'DOURADO');
+  assert.equal(primeira.cofreDestino,'LOOP_DOURADAS');
+  assert.equal(primeira.reservaConsumidaCentavos,0);
+  assert.equal(primeira.receitaNovaCentavos,0);
+  const repetida=motor.criarDouradaManualEnsaio({eventoId,aceiteEnsaio:true});
+  assert.equal(repetida.repetido,true);
+  assert.equal(repetida.posicaoId,primeira.posicaoId);
+  const segunda=motor.criarDouradaManualEnsaio({
+   eventoId:'dourada-ensaio-integrado-0002',aceiteEnsaio:true
+  });
+  assert.equal(segunda.posicaoId,2);
+  assert.equal(motor.consultar().douradasManuaisCriadas,2);
+  assert.equal(motor.consultar().filaB.length,2);
+  assert.equal(motor.consultar().filaB.every(x=>x.dourada),true);
+  assert.equal(motor.consultar().catraca.giros,0);
+  assert.equal(motor.consultar().tabuleiro.eventosNoCiclo,0);
+  assert.equal(db.prepare(
+   "SELECT COUNT(*) AS n FROM akitemm_motor_conta_ensaio_operacoes WHERE tipo='VINCULAR_PEDIDO'"
+  ).get().n,0);
+  assert.equal(db.prepare('SELECT COUNT(*) AS n FROM akitemm_motor_ensaio_lotes_pedido').get().n,0);
+  assert.equal(db.prepare('SELECT COUNT(*) AS n FROM akitemm_motor_douradas_manuais_lab').get().n,2);
+  const snap=JSON.parse(db.prepare('SELECT snapshot FROM akitemm_motor_conta_ensaio_estado').get().snapshot);
+  assert.equal(snap.filas.filaB[0].participanteId,'LOOP_EMPRESA');
+  assert.equal(snap.filas.filaB[0].empresa,true);
+  assert.equal(snap.filas.filaB[0].origemOperacional,'ADMIN_MANUAL_SEM_COMPRA');
+  assert.equal(snap.filas.filaB[0].aporteInternoCentavos,0);
+  assert.deepEqual(snap.filas.vendasRegistradas,[]);
+  const reaberto=new MotorContaUnicaEnsaioSQLite({banco:db,sinalizacao});
+  assert.equal(reaberto.consultar().filaB.length,2);
+  assert.equal(reaberto.criarDouradaManualEnsaio({eventoId,aceiteEnsaio:true}).posicaoId,1);
+  assert.equal(reaberto.criarDouradaManualEnsaio({
+   eventoId:'dourada-ensaio-integrado-0003',aceiteEnsaio:true
+  }).posicaoId,3);
+  assert.equal(reaberto.consultar().douradasManuaisCriadas,3);
+  assert.throws(()=>db.exec('DELETE FROM akitemm_motor_douradas_manuais_lab'),
+   /dourada manual imutavel/);
+  assert.throws(()=>db.exec(
+   "UPDATE akitemm_motor_douradas_manuais_lab SET evento_id='dourada-alterada' WHERE numero_posicao=1"
+  ),/dourada manual imutavel/);
+  assert.equal(db.prepare('PRAGMA quick_check').get().quick_check,'ok');
+  assert.deepEqual(db.prepare('PRAGMA foreign_key_check').all(),[]);
+ }finally{db.close();}
+});
