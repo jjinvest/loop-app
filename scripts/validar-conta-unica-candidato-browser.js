@@ -290,6 +290,26 @@ const {once}=require('node:events');
    await admin.locator('#token').fill('somente-teste-do-navegador-'+('x'.repeat(40)));
    await admin.locator('#formAcesso button').click();
    await admin.locator('#administracao').waitFor({state:'visible'});
+   // Busca administrativa real também no navegador PC/celular.
+   await admin.locator('#pesquisaTipoAdmin').selectOption('pedidos');
+   await admin.locator('#pesquisaTermoAdmin').fill(item.nick);
+   await admin.locator('#pesquisaExecutarAdmin').click();
+   await admin.locator('#pesquisaEstadoAdmin').filter({hasText:/resultado\(s\) em pedidos/}).waitFor();
+   assert.match(await admin.locator('#pesquisaResultadosAdmin').innerText(),/hom-/);
+   await admin.locator('#pesquisaTipoAdmin').selectOption('produtos');
+   await admin.locator('#pesquisaTermoAdmin').fill('curso-homologacao-250');
+   await admin.locator('#pesquisaExecutarAdmin').click();
+   await admin.locator('#pesquisaEstadoAdmin').filter({hasText:/resultado\(s\) em produtos/}).waitFor();
+   assert.match(await admin.locator('#pesquisaResultadosAdmin').innerText(),/curso-homologacao-250/);
+   await admin.locator('#pesquisaResultadosAdmin').getByRole('button',{name:'Editar no catálogo'}).first().click();
+   assert.equal(await admin.locator('#produtoIdAdmin').inputValue(),'curso-homologacao-250');
+   await admin.locator('#cancelarEdicaoProduto').click();
+   await admin.locator('#pesquisaTermoAdmin').fill('produto-inexistente-zz88');
+   await admin.locator('#pesquisaExecutarAdmin').click();
+   await admin.locator('#pesquisaResultadosAdmin').filter({hasText:'Nenhum registro encontrado.'}).waitFor();
+   await admin.locator('#pesquisaLimparAdmin').click();
+   assert.equal(await admin.locator('#pesquisaResultadosAdmin').innerText(),'');
+
    // Provar a operação REAL dos controles editoriais sem redesenhar o admin.
    assert.equal(await admin.locator('#formNovidadesAdmin').count(),1);
    await admin.locator('#novidadeTituloAdmin').fill('LANÇAMENTO '+item.nick);
