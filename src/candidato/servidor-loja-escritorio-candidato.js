@@ -35,7 +35,6 @@ const {MissoesOperacionaisCandidatoSQLite}=require('../domain/missoes-operaciona
 const {DepartamentosAdministradorCandidato}=require('../domain/escritorio-admin-departamentos-candidato');
 const {criarPaginaOperacional}=require('../domain/painel-operacional-admin-candidato');
 const {CatalogoAdminCandidatoSQLite}=require('../domain/catalogo-admin-candidato-sqlite');
-const {CustosProdutoAdminCandidatoSQLite}=require('../domain/custos-produtos-admin-candidato-sqlite');
 const {NovidadesLojaCandidatoSQLite,MAX_IMAGEM}=require('../domain/novidades-loja-candidato-sqlite');
 const {EnderecoEntregaEnsaioSQLite}=require('../domain/endereco-entrega-ensaio-sqlite');
 const {AkitemmConfigLojaDemoSQLite}=require('../domain/akitemm-config-loja-demo-sqlite');
@@ -539,7 +538,7 @@ function criarAppLojaEscritorioCandidato({banco,repositorioCatalogo,
   catch(e){return res.status(503).json({erro:e.codigo||'PROJECAO_INDISPONIVEL'});}
  });
  const sinalizacaoVitrine=createVitrineCandidata({app,banco,catalogo,contas,intencoes,prePedidos,autorizarOperador,novidades,enderecoEntrega,configLoja});
- const custosProduto=new CustosProdutoAdminCandidatoSQLite({banco,catalogo,sinalizacao:sinalizacaoVitrine});
+ const custosProduto=sinalizacaoVitrine.custosProduto; // objeto do MESMO catálogo usado na foto do prepedido
  // Mesmo SQLite/operador autorizado: alteração editorial, sem pagamento.
  app.get('/staging/escritorio-unificado/loja/config',autorizarOperador,(_req,res)=>{
   try{return res.json(configLoja.consultarComRevisao());}
@@ -602,6 +601,14 @@ function criarAppLojaEscritorioCandidato({banco,repositorioCatalogo,
   try{return res.json(motorConta.consultar({titularId:s.titularId}));}
   catch(e){return res.status(503).json({erro:e.codigo||'MOTOR_ENSAIO_INDISPONIVEL'});}
  });
+ // Livro imutavel das luzes, no mesmo SQLite das compras/filas.
+ // A luz autoriza previsao contábil; nao transfere nem libera Pix real.
+ app.get('/staging/escritorio-unificado/financeiro/fluxo',
+  autorizarOperador,(_req,res)=>{
+   res.set('Cache-Control','no-store');
+   try{return res.json(motorConta.consultarFluxoFinanceiro());}
+   catch(e){return res.status(503).json({erro:e.codigo||'LIVRO_LUZES_INDISPONIVEL'});}
+  });
  // Aceite explícito, INDIVIDUAL e autenticado do próprio titular.
  // Nunca há CPF no corpo/retorno: o cadastro cifrado da conta é reutilizado.
  app.post('/staging/motor/posicoes/confirmar-ensaio',(req,res)=>{
