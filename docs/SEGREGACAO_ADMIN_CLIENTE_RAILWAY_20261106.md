@@ -15,7 +15,7 @@
 
 - O conjunto `test/isolamento-operador-gateway-preview.test.js` demonstra que o cookie de visitante é rejeitado nas rotas administrativas, que o token de operador não é aceito como token de cliente, que credenciais diferentes são exigidas e que tentativas de falsificar o cookie são bloqueadas.
 - Implantação Railway `a511c477-ebd7-4a2b-8ccd-b4c7e8030d1b`: **SUCCESS**, verificação de prontidão e regressões do fluxo cliente/fila/catraca; nova configuração administrativa separada carregada no serviço.
-- `scripts/provar-fronteira-admin-railway.js` prepara a prova HTTP GET na aplicação publicada, incluindo tentativa de cliente de ler rotas administrativas. **Conferir logs da implantação de prova posterior antes de declarar esta etapa concluída externamente.**
+- **Prova real publicada, Railway deployment `4fe787d2-e59d-4e0d-8c1b-79157bb70b72`: SUCCESS/healthcheck.** `LOOP_FRONTEIRA_ADMIN_HTTP`: `rotasAdminBloqueadasParaCliente=9`, `clientePaginaAcessivel=true`, `sessaoAdminSeparada=true`, `adminV2=true`, `webhookInternoInacessivel=true`, `alteracoesEstado=0`. Testou tanto Basic de cliente quanto cookie visitante em nove caminhos, incluindo maiúsculas e percent-encoding. O operador foi autenticado e consultou o motor. **Zero POST, nenhum dado pessoal e nenhum dinheiro real**.
 
 **Não é certificação abrangente de segurança:** permanecem revisão de autorização de cada rota, ameaça de sessão e CSRF, pentest, LGPD/privacidade, governança e separação definitiva da base do futuro piloto real. Nenhuma conta financeira comercial foi aberta; a PR #1 continua DRAFT.
 
