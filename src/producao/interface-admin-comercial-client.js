@@ -160,6 +160,7 @@
       result.distribuidorId!==anterior.distribuidorId)
     throw Error('Produto da resposta não corresponde ao selecionado.');
    await atualizar();
+   await consultarAuditoria();
    status((tipo==='preco'?'Preço de venda':'Custo do fornecedor')+
     ' salvo com sucesso e histórico de revisão registrado.');
   }catch(e){
@@ -217,6 +218,28 @@
    $('resultadoCadastroAdmin').textContent=err.message;
   }).finally(()=>{botao.disabled=!csrf;});
  });
+ async function consultarAuditoria(){
+  const r=await pedir('/auditoria');
+  if(r.auditoriaIntegra!==true||r.somenteLeitura!==true||
+     !Array.isArray(r.eventos))throw Error('Auditoria indisponível.');
+  const div=$('listaAuditoriaAdmin');
+  div.replaceChildren();
+  $('estadoAuditoriaAdmin').textContent='Histórico verificado: '+
+   r.totalHistorico+' operações registradas.';
+  for(const evento of r.eventos){
+   const item=document.createElement('p');
+   const data=new Date(evento.ocorridoEm);
+   item.textContent='#'+evento.eventoId+' · '+
+    (Number.isFinite(data.getTime())?data.toLocaleString('pt-BR'):'Data indisponível')+
+    ' · '+evento.acao+' · '+evento.entidade;
+   div.appendChild(item);
+  }
+ }
+ $('recarregarAuditoriaAdmin').addEventListener('click',()=>{
+  void consultarAuditoria().catch(e=>{
+   $('estadoAuditoriaAdmin').textContent=e.message;
+  });
+ });
  $('recarregarProdutos').addEventListener('click',()=>{
   void atualizar().catch(e=>status(e.message));
  });
@@ -243,6 +266,7 @@
     throw Error('Não foi possível validar a sessão do administrador.');
    csrf=dados.csrfToken;
    await atualizar();
+   await consultarAuditoria();
   }catch(e){travar(true);status(e.message);}
  })();
 })();
