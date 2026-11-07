@@ -38,9 +38,9 @@ test('auditabilidade: criar/editar durante operação registra cadeia HMAC e man
   produtoId:'produto_A',distribuidorId:'distribuidor_A'
  }).diferencaBrutaCentavos,8000);
  assert.equal(catalogo.listarVitrine().length,0);
- assert.throws(()=>banco.prepare([
+ assert.throws(()=>banco.prepare(
   'UPDATE loja_real_auditoria_admin SET acao=? WHERE id=1'
- ]).run('APAGADO'),/AUDITORIA_IMUTAVEL/);
+ ).run('APAGADO'),/AUDITORIA_IMUTAVEL/);
  assert.throws(()=>banco.prepare(
   'DELETE FROM loja_real_auditoria_admin WHERE id=1'
  ).run(),/AUDITORIA_IMUTAVEL/);
