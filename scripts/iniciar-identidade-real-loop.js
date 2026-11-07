@@ -23,6 +23,8 @@ const {ControleEconomicoLojaSQLite}=
  require('../src/producao/controle-economico-loja-sqlite');
 const {AuditoriaOperacionalSQLite}=
  require('../src/producao/auditoria-operacional-sqlite');
+const {ManutencaoComercialSQLite}=
+ require('../src/producao/manutencao-comercial-sqlite');
 function configurar(ambiente=process.env){
  if(ambiente.NODE_ENV!=='production'||ambiente.LOOP_REAL_CADASTRO_GO!=='SIM'||
     ambiente.LOOP_REAL_DADOS_SEPARADOS!=='SIM'||
@@ -109,10 +111,11 @@ async function iniciar(ambiente=process.env){
   });
   // Corrupção ou perda da chave da auditoria impede iniciar aplicação.
   auditoria.verificar();
+  const manutencao=new ManutencaoComercialSQLite({banco,auditoria});
   const catalogo=new CatalogoMultiDistribuidoresSQLite({
-   banco,distribuidorHomologado:()=>false,auditoria
+   banco,distribuidorHomologado:()=>false,auditoria,manutencao
   });
-  const controle=new ControleEconomicoLojaSQLite({banco,auditoria});
+  const controle=new ControleEconomicoLojaSQLite({banco,auditoria,manutencao});
   const sessoes=new SessaoAdminComercialSQLite({
    banco,chaveAdmin:config.chaveAdmin,
    credencialAdmin:config.credencialAdmin
@@ -129,7 +132,7 @@ async function iniciar(ambiente=process.env){
   const app=criarAppIdentidadeLoop({
    contas,origemHttps:config.origemHttps,permitirCadastro:true,
    backupEstado:()=>agendador.estado(),
-   adminComercial:{catalogo,controle,sessoes,auditoria}
+   adminComercial:{catalogo,controle,sessoes,auditoria,manutencao}
   });
   const porta=Number(ambiente.PORT||3000);
   if(!Number.isSafeInteger(porta)||porta<1||porta>65535)
