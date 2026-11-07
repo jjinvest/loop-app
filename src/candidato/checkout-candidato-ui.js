@@ -16,6 +16,7 @@ const dizer=msg=>{$('mensagem').textContent=msg;};
 const errosTraduzidos={
  CREDENCIAIS_INVALIDAS:'Nick ou senha incorretos. Confira os dados e tente novamente.',
  CONTA_TEMPORARIAMENTE_BLOQUEADA:'Muitas tentativas incorretas. Aguarde 15 minutos e tente novamente.',
+ AUTENTICACAO_TEMPORARIAMENTE_OCUPADA:'Muitos acessos simultâneos. Aguarde um momento e tente novamente.',
  NICK_INVALIDO:'Seu nick deve ter apenas letras, com até 9 caracteres.',
  NOME_INVALIDO:'Confira o nome informado.',
  EMAIL_INVALIDO:'Confira o e-mail informado.',
