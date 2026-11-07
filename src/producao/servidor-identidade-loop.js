@@ -4,9 +4,10 @@
 const express=require('express');
 const {COOKIE}=require('./identidade-cliente-loop-sqlite');
 const {montarInterfaceAprovada}=require('./interface-aprovada-loop');
+const {montarGatewayAdminComercial}=require('./gateway-admin-comercial');
 function criarAppIdentidadeLoop({contas,origemHttps,
  permitirCadastro=false,backupEstado=null,
- pedidosComerciais=null,remessasOutbox=null}={}){
+ pedidosComerciais=null,remessasOutbox=null,adminComercial=null}={}){
  if(!contas||typeof contas.entrar!=='function'||typeof contas.sessao!=='function')
   throw Error('IDENTIDADE_REAL_NAO_CONFIGURADA');
  if(process.env.NODE_ENV==='production'&&permitirCadastro&&
@@ -65,6 +66,10 @@ function criarAppIdentidadeLoop({contas,origemHttps,
  };
  // HTML/CSS já aprovados; loja requer a mesma sessão da conta.
  montarInterfaceAprovada(app,{protegerLoja:protegido});
+ // Sessão de administrador é completamente separada do login de cliente.
+ // Sem credencial e middleware de operador, rotas administrativas não existem.
+ if(adminComercial!==null)
+  montarGatewayAdminComercial(app,{...adminComercial,origemHttps});
  const mutation=(req,res,next)=>{
   if(!origemOk(req))return res.status(403).json({erro:'ORIGEM_INVALIDA'});
   if(!req.is('application/json'))
