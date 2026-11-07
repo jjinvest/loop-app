@@ -8,15 +8,19 @@ const IDENT=/^[A-Za-z0-9_-]{1,80}$/;
 function erro(c){const e=new Error(c);e.codigo=c;throw e;}
 function id(s){return typeof s==='string'&&IDENT.test(s);}
 class CatalogoMultiDistribuidoresSQLite{
- constructor({banco,distribuidorHomologado,auditoria=null,agora=()=>Date.now()}={}){
+ constructor({banco,distribuidorHomologado,auditoria=null,
+  manutencao=null,agora=()=>Date.now()}={}){
   if(typeof banco?.prepare!=='function'||typeof banco?.exec!=='function'||
      typeof distribuidorHomologado!=='function'||typeof agora!=='function')
    erro('CATALOGO_REAL_NAO_CONFIGURADO');
   if(auditoria!==null&&
      (typeof auditoria.registrar!=='function'||auditoria.db!==banco))
    erro('AUDITORIA_CATALOGO_NAO_CONFIGURADA');
+  if(manutencao!==null&&(!auditoria||manutencao.db!==banco||
+     typeof manutencao.garantirOperacaoDisponivel!=='function'))
+   erro('MANUTENCAO_CATALOGO_NAO_CONFIGURADA');
   this.db=banco;this.homologado=distribuidorHomologado;
-  this.auditoria=auditoria;this.agora=agora;
+  this.auditoria=auditoria;this.manutencao=manutencao;this.agora=agora;
   banco.exec([
    'CREATE TABLE IF NOT EXISTS loja_real_produtos(',
    'produto_id TEXT PRIMARY KEY,titulo TEXT NOT NULL,',
@@ -45,6 +49,7 @@ class CatalogoMultiDistribuidoresSQLite{
   const agora=this.agora();
   if(this.auditoria)this.db.exec('BEGIN IMMEDIATE');
   try{
+   if(this.manutencao)this.manutencao.garantirOperacaoDisponivel();
    this.db.prepare([
     'INSERT INTO loja_real_produtos(',
     'produto_id,titulo,descricao,tipo,ativo,criado_em,atualizado_em)',
@@ -72,8 +77,9 @@ class CatalogoMultiDistribuidoresSQLite{
   // Criar oferta não significa ter contrato, frete ou integração.
   if(this.auditoria)this.db.exec('BEGIN IMMEDIATE');
   try{
+   if(this.manutencao)this.manutencao.garantirOperacaoDisponivel();
    const anterior=this.db.prepare([
-    'SELECT sku,preco_centavos,prioridade,ativo',
+    'SELECT sku,preco_centavos,prioridade,ativo'
     'FROM loja_real_ofertas_distribuidores',
     'WHERE produto_id=? AND distribuidor_id=?'
    ].join(' ')).get(produtoId,distribuidorId);
@@ -103,6 +109,7 @@ class CatalogoMultiDistribuidoresSQLite{
    erro('PRODUTO_COMERCIAL_INVALIDO');
   if(this.auditoria)this.db.exec('BEGIN IMMEDIATE');
   try{
+   if(this.manutencao)this.manutencao.garantirOperacaoDisponivel();
    const antes=this.db.prepare(
     'SELECT ativo FROM loja_real_produtos WHERE produto_id=?'
    ).get(produtoId);
@@ -128,8 +135,9 @@ class CatalogoMultiDistribuidoresSQLite{
    erro('DISTRIBUIDOR_SEM_HOMOLOGACAO');
   if(this.auditoria)this.db.exec('BEGIN IMMEDIATE');
   try{
+   if(this.manutencao)this.manutencao.garantirOperacaoDisponivel();
    const antes=this.db.prepare([
-    'SELECT ativo FROM loja_real_ofertas_distribuidores',
+    'SELECT ativo FROM loja_real_ofertas_distribuidores'
     'WHERE produto_id=? AND distribuidor_id=?'
    ].join(' ')).get(produtoId,distribuidorId);
    const r=this.db.prepare([
