@@ -112,10 +112,15 @@ class LivroLuzesFinanceirasCandidatoSQLite{
  }
  // Chamado pela transacao ORIGINAL de giro/temporizador. Nao abre transacao.
  // Antes e depois: giro fisico nao insere luz se luz ja existia.
- registrarNovasLuzes({antes,sim,comPspSandbox=false}={}){
-  if(!sim||!(antes instanceof Set))falha('MOTOR_LUZES_ORIGEM_OBRIGATORIA');
+ registrarNovasLuzes({antes,sim,indiceCiclosAntes=0,comPspSandbox=false}={}){
+  if(!sim||!(antes instanceof Set)||!Number.isSafeInteger(indiceCiclosAntes)||
+     indiceCiclosAntes<0)falha('MOTOR_LUZES_ORIGEM_OBRIGATORIA');
   let novas=0;
-  const rows=LivroLuzesFinanceirasCandidatoSQLite.vendas(sim);
+  // Somente novos eventos desta transacao. Historico nao e recriado
+  // em cada pulso, impedindo quadratica e reinterpretacao retroativa.
+  const rows=[...sim.tabuleiro.ciclosConcluidos
+   .slice(indiceCiclosAntes).flatMap(c=>c.vendas),
+   ...sim.tabuleiro.vendasDoCiclo];
   for(const venda of rows){
    if(antes.has(venda.vendaId))continue;
    if(typeof venda.vendaId!=='string'||!venda.vendaId.startsWith('ensaio:'))
@@ -132,7 +137,6 @@ class LivroLuzesFinanceirasCandidatoSQLite{
     'WHERE venda_id=?'
    ].join(' ')).get(venda.vendaId);
    if(registrado)continue;
-   const centro={empresa:false};
    const cofre=cofreDoEvento({posicaoCentro:{
     empresa:venda.destinoCofre==='LOOP_DOURADAS'
    },ordem:venda.ordem,
