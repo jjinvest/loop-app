@@ -20,15 +20,17 @@ async function ambiente(t){
  t.after(()=>{
   b2.close();b1.close();fs.rmSync(pasta,{recursive:true,force:true});
  });
+ let agora=1_800_000_000_000;
  const chaves={chaveEmail:randomBytes(32),chaveCifra:randomBytes(32),
   chaveRecuperacao:randomBytes(32)};
+ const relogio=()=>agora;
  const enviados=[];
  const enviarRecuperacao=async dados=>{enviados.push(dados);return true;};
  const a=new ContaUnicaCandidataSQLite({
-  banco:b1,...chaves,enviarRecuperacao
+  banco:b1,...chaves,agora:relogio,enviarRecuperacao
  });
  const b=new ContaUnicaCandidataSQLite({
-  banco:b2,...chaves,enviarRecuperacao
+  banco:b2,...chaves,agora:relogio,enviarRecuperacao
  });
  await a.cadastrar({
   nome:'Cliente Ensaio',nick:'Cliente',email:'cliente@example.invalid',
@@ -43,7 +45,8 @@ async function ambiente(t){
  const entrada=(cod,novaSenha='SenhaNovaFicticia2026!')=>({
   email:'cliente@example.invalid',codigo:cod,novaSenha
  });
- return {a,b,b1,b2,codigo,errado,entrada};
+ return {a,b,b1,b2,codigo,errado,entrada,enviados,
+  avancar:ms=>{agora+=ms;}};
 }
 
 test('duas instancias SQLite somam cinco erros e revogam codigo',async t=>{
@@ -89,4 +92,34 @@ test('codigo correto em hash pendente nao vence quinta falha em outra instancia'
  })).token);
  assert.equal(x.b1.prepare('PRAGMA integrity_check').get().integrity_check,'ok');
  assert.deepEqual(x.b2.prepare('PRAGMA foreign_key_check').all(),[]);
+});
+
+test('duas instancias nao duplicam e-mails nem burlam limite de recuperacao',async t=>{
+ const x=await ambiente(t);
+ const solicitar=conta=>conta.solicitarRecuperacao({
+  email:'cliente@example.invalid'
+ });
+ const mesmoInstante=await Promise.all([
+  solicitar(x.a),solicitar(x.b),solicitar(x.a),solicitar(x.b)
+ ]);
+ assert.ok(mesmoInstante.every(r=>r.solicitacaoRecebida===true));
+ assert.equal(x.enviados.length,1,
+  'quatro requisicoes simultaneas nao enviam quatro codigos');
+ assert.equal(x.b2.prepare(
+  'SELECT COUNT(*) AS total FROM akitemm_recuperacao_senha_candidata'
+ ).get().total,1);
+ x.avancar(120_001);
+ await solicitar(x.b);
+ assert.equal(x.enviados.length,2);
+ x.avancar(120_001);
+ await solicitar(x.a);
+ assert.equal(x.enviados.length,3);
+ x.avancar(120_001);
+ const bloqueadas=await Promise.all([solicitar(x.a),solicitar(x.b)]);
+ assert.ok(bloqueadas.every(r=>r.solicitacaoRecebida));
+ assert.equal(x.enviados.length,3,'limite de tres codigos por hora');
+ assert.equal(x.b1.prepare(
+  'SELECT COUNT(*) AS total FROM akitemm_recuperacao_senha_candidata'
+ ).get().total,3);
+ assert.equal(x.b2.prepare('PRAGMA integrity_check').get().integrity_check,'ok');
 });
