@@ -313,6 +313,9 @@ test('dourada manual entra no motor UNICO da conta, sem compra, reserva ou giro 
    eventoId:'dourada-ensaio-integrado-0003',aceiteEnsaio:true
   }).posicaoId,3);
   assert.equal(reaberto.consultar().douradasManuaisCriadas,3);
+  // Auditoria global da conta/loja/motor reconhece as douradas sem pedido.
+  const {auditarIntegridadeMotorCandidato}=require('../src/domain/auditoria-integridade-motor-candidato-sqlite');
+  assert.equal(auditarIntegridadeMotorCandidato({banco:db,exigirMotor:true}).douradasManuaisAuditadas,3);
   assert.throws(()=>db.exec('DELETE FROM akitemm_motor_douradas_manuais_lab'),
    /dourada manual imutavel/);
   assert.throws(()=>db.exec(
