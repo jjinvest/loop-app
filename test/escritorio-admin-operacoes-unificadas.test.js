@@ -195,6 +195,31 @@ test('12 departamentos operam no SQLite compartilhado sem inventar dados comerci
  assert.equal(pedidoNovo.fretePrevistoCentavos,1500);
  assert.equal(pedidoNovo.margemComercialEstimadaCentavos,5000);
  assert.equal(pedidoNovo.fornecedorPagoCentavos,0);
+ // Ensaio exigido pelo titular: produto de R$500, 1 posição DOURADA
+ // de R$250, somente planejamento de Inter/MP; as despesas
+ // abaixo sao uma FOTOGRAFIA FICTICIA configurada neste teste.
+ const plano=fluxo.data.roteamentoBancarioPlanejado.find(
+  x=>x.prepedidoId===novoPedido.prepedido.prepedidoId);
+ assert.ok(plano,'roteamento do pedido deve aparecer no mesmo Escritorio');
+ assert.equal(plano.valorBrutoCotadoCentavos,50000);
+ assert.equal(plano.loopReservarCentavos,25000);
+ assert.equal(plano.valorLiquidoPrevistoCentavos,49500);
+ assert.equal(plano.sobraComercialPrevistaCentavos,24500);
+ assert.equal(plano.fornecedorAPagarPrevistoCentavos,19000);
+ assert.equal(plano.margemComercialEstimadaCentavos,5000);
+ assert.deepEqual(plano.receptores.map(x=>x.destino),[
+  'LOOP_INTER','LOJA_MERCADO_PAGO','COFRES_LATERAIS_TERCEIRO_BANCO']);
+ assert.equal(plano.receptores[0].montantePrevistoCentavos,25000);
+ assert.equal(plano.receptores[1].montantePrevistoCentavos,24500);
+ assert.equal(plano.receptores[2].montantePrevistoCentavos,null);
+ assert.ok(plano.receptores.every(x=>!x.contaConectada&&
+  !x.transferenciaExecutada));
+ assert.equal(plano.splitAsaasParaBancoExterno,false);
+ assert.equal(plano.liquidacaoPspRealComprovada,false);
+ assert.equal(plano.fornecedorPagamentoConfirmado,false);
+ assert.equal(plano.caixaCentroSacavelCentavos,0);
+ assert.equal(plano.cofreLateralSacavelCentavos,0);
+ assert.equal(plano.estado,'PREVISAO_NAO_EXECUTADA');
  assert.equal(fluxo.data.luzesFinanceirasRegistradas,0);
  assert.equal(fluxo.data.girosFisicosConcluidos,0);
  assert.equal(fluxo.data.transferenciasBancariasEfetuadas,0);
