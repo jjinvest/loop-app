@@ -124,12 +124,78 @@ class PedidosComerciaisSQLite{
    "'APROVADO_PARA_EXPEDICAO','CANCELADO')),",
    'pagamento_id TEXT UNIQUE,criado_em INTEGER NOT NULL,atualizado_em INTEGER NOT NULL);',
    'CREATE INDEX IF NOT EXISTS idx_loja_real_pedidos_titular',
-   'ON loja_real_pedidos(titular_id,criado_em DESC);'
+   'ON loja_real_pedidos(titular_id,criado_em DESC);',
+   // Snapshot imutável da composição econômica no MOMENTO da venda.
+   // O custo NÃO está na API pública e NÃO representa despesa quitada.
+   'CREATE TABLE IF NOT EXISTS loja_real_custos_pedido(',
+   'pedido_id TEXT NOT NULL REFERENCES loja_real_pedidos(pedido_id)',
+   'ON DELETE RESTRICT,fornecedor_id TEXT NOT NULL,sku TEXT NOT NULL,',
+   'produto_id TEXT,custo_unit_centavos INTEGER',
+   'CHECK(custo_unit_centavos IS NULL OR custo_unit_centavos>=0),',
+   'revisao_custo INTEGER,preco_unit_centavos INTEGER NOT NULL',
+   'CHECK(preco_unit_centavos>0),',
+   'quantidade INTEGER NOT NULL CHECK(quantidade>0),',
+   'capturado_em INTEGER NOT NULL,',
+   'PRIMARY KEY(pedido_id,fornecedor_id,sku));',
+   'CREATE TRIGGER IF NOT EXISTS loja_real_custos_pedido_inalteravel_u',
+   'BEFORE UPDATE ON loja_real_custos_pedido BEGIN',
+   "SELECT RAISE(ABORT,'SNAPSHOT_CUSTO_IMUTAVEL'); END;",
+   'CREATE TRIGGER IF NOT EXISTS loja_real_custos_pedido_inalteravel_d',
+   'BEFORE DELETE ON loja_real_custos_pedido BEGIN',
+   "SELECT RAISE(ABORT,'SNAPSHOT_CUSTO_IMUTAVEL'); END;"
   ].join(' '));
  }
  _row(pedidoId){
   return this.db.prepare('SELECT * FROM loja_real_pedidos WHERE pedido_id=?')
    .get(pedidoId);
+ }
+ _capturarCustoDoCarrinho(pedidoId,grupos,ts){
+  // Mesma transação SQLite da criação da compra: nunca consultar custos
+  // atuais para calcular a margem de uma venda antiga.
+  const catalogoExiste=!!this.db.prepare([
+   "SELECT 1 AS ok FROM sqlite_master",
+   "WHERE type='table' AND name='loja_real_ofertas_distribuidores'"
+  ].join(' ')).get();
+  const custosExistem=!!this.db.prepare([
+   "SELECT 1 AS ok FROM sqlite_master",
+   "WHERE type='table' AND name='loja_real_custos_ofertas'"
+  ].join(' ')).get();
+  const select=(catalogoExiste&&custosExistem)?this.db.prepare([
+   'SELECT o.produto_id,c.custo_unit_centavos,c.revisao',
+   'FROM loja_real_ofertas_distribuidores o',
+   'LEFT JOIN loja_real_custos_ofertas c ON',
+   'c.produto_id=o.produto_id AND c.distribuidor_id=o.distribuidor_id',
+   'AND c.sku=o.sku',
+   'WHERE o.distribuidor_id=? AND o.sku=?'
+  ].join(' ')):null;
+  const add=this.db.prepare([
+   'INSERT INTO loja_real_custos_pedido(',
+   'pedido_id,fornecedor_id,sku,produto_id,custo_unit_centavos,',
+   'revisao_custo,preco_unit_centavos,quantidade,capturado_em)',
+   'VALUES(?,?,?,?,?,?,?,?,?)'
+  ].join(' '));
+  for(const grupo of grupos){
+   for(const item of grupo.itens){
+    const origem=select?.get(grupo.fornecedorId,item.sku)||null;
+    add.run(pedidoId,grupo.fornecedorId,item.sku,
+     origem?.produto_id||null,origem?.custo_unit_centavos??null,
+     origem?.revisao??null,item.precoUnitCentavos,item.quantidade,ts);
+   }
+  }
+ }
+ _custosCongelados(pedidoId,linhasEsperadas){
+  const c=this.db.prepare([
+   'SELECT COUNT(*) AS linhas,',
+   'SUM(CASE WHEN custo_unit_centavos IS NULL THEN 1 ELSE 0 END) AS faltantes,',
+   'SUM(quantidade*custo_unit_centavos) AS custo_total',
+   'FROM loja_real_custos_pedido WHERE pedido_id=?'
+  ].join(' ')).get(pedidoId);
+  const completos=c.linhas===linhasEsperadas&&c.faltantes===0&&
+   Number.isSafeInteger(c.custo_total);
+  return {custoFornecedorEstimadoCentavos:completos?c.custo_total:null,
+   custoFornecedorIntegralmenteInformado:completos,
+   linhasSemCustoInformado:c.linhas===linhasEsperadas?
+    c.faltantes:linhasEsperadas};
  }
  _publico(r){
   const dados=decifrar(this.key,r);
@@ -218,6 +284,7 @@ class PedidosComerciaisSQLite{
    ].join(' ')).run(pedidoId,titularId,preco.fornecedorId,cotacaoId,
     hash,cifrado.iv,cifrado.ct,cifrado.tag,
     preco.freteCentavos,preco.valorTotalCentavos,ts,ts);
+   this._capturarCustoDoCarrinho(pedidoId,preco.grupos,ts);
    const novo=this._row(pedidoId);
    this.db.exec('COMMIT');
    return {...this._publico(novo),repetido:false};
@@ -288,11 +355,18 @@ class PedidosComerciaisSQLite{
    }
    if(somaItens+r.frete_centavos!==r.valor_total_centavos)
     erro('PEDIDO_HISTORICO_INCONSISTENTE');
+   const snapshot=this._custosCongelados(r.pedido_id,itens.length);
    return {
     pedidoId:r.pedido_id,status:r.status,
     pagamentoId:r.pagamento_id,
     criadoEm:r.criado_em,ultimaAtualizacaoEm:r.atualizado_em,
     receitaProdutosCentavos:somaItens,
+    // Diferença bruta é estimativa antes de taxas, tributos e fretes
+    // PAGOS ao distribuidor, e NUNCA saldo disponível para o LOOP.
+    ...snapshot,
+    diferencaBrutaEstimadaCentavos:
+     snapshot.custoFornecedorIntegralmenteInformado?
+      somaItens-snapshot.custoFornecedorEstimadoCentavos:null,
     freteCobradoClienteCentavos:r.frete_centavos,
     valorTotalPedidoCentavos:r.valor_total_centavos,
     distribuidores:grupos.map(g=>g.fornecedorId),
