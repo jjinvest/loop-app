@@ -94,9 +94,12 @@ function criarVisaoFinanceiraAdminDemo({
     const sobra=v.precoCentavos-v.fornecedorCentavos-v.parcelaLoopCentavos;
     if(!validarCentavos(sobra))throw new Error('Venda ficticia nao cobre obrigacoes');
     const destinoCiclo=caixaCiclo[i];
-    if((DESTINOS[i]==='PARTICIPANTE')&&![COFRES.CENTRO,COFRES.DOURADAS].includes(destinoCiclo)||
-       (DESTINOS[i]!=='PARTICIPANTE'&&[COFRES.CENTRO,COFRES.DOURADAS].includes(destinoCiclo))||
-       (DESTINOS[i]==='EMPRESA_INVESTIMENTO'&&destinoCiclo!==COFRES.ESQUERDA)){
+    if(centroDoLoop(centroPosicao)?
+       destinoCiclo!==COFRES.DOURADAS:
+       (DESTINOS[i]==='PARTICIPANTE'?
+        destinoCiclo!==COFRES.CENTRO:
+        destinoCiclo!==(DESTINOS[i]==='EMPRESA_INVESTIMENTO'?
+         COFRES.ESQUERDA:COFRES.DIREITA))){
       throw new Error('Destino do ciclo divergente do tabuleiro existente');
     }
     const fornecedorDestino=modo===MODOS.SPLIT?'DISTRIBUIDOR_EXTERNO_SIMULADO':COFRES.DISTRIBUIDOR;
