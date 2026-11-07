@@ -5,7 +5,8 @@
 const {createHmac}=require('node:crypto');
 const ACOES=new Set([
  'PRODUTO_CRIADO','OFERTA_RASCUNHO_CRIADA',
- 'CUSTO_FORNECEDOR_ALTERADO','PRECO_VENDA_ALTERADO'
+ 'CUSTO_FORNECEDOR_ALTERADO','PRECO_VENDA_ALTERADO',
+ 'PRODUTO_STATUS_ALTERADO','OFERTA_STATUS_ALTERADO'
 ]);
 const TEXTO=/^[A-Za-z0-9_-]{1,200}$/;
 function falha(c){const e=new Error(c);e.codigo=c;throw e;}
