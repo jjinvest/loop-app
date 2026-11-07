@@ -15,6 +15,15 @@ const TABELAS=Object.freeze([
  'loop_real_contas','loop_real_sessoes','loop_real_codigos',
  'loop_real_custodia','loop_real_limites'
 ]);
+// Todas as tabelas de administração e catálogo devem ir no MESMO snapshot
+// atômico do cadastro. Tabelas de pedidos/financeiro permanecem bloqueadas
+// até habilitar recuperação transacional ponta a ponta.
+const TABELAS_ADMIN=Object.freeze([
+ 'loja_real_produtos','loja_real_ofertas_distribuidores',
+ 'loja_real_custos_ofertas','loja_real_custos_historico',
+ 'loja_real_revisoes_preco','loja_real_precos_historico',
+ 'loja_real_sessoes_admin','loja_real_limite_login_admin'
+]);
 function falha(c){const e=new Error(c);e.codigo=c;throw e;}
 function conferir({origem,destino,chaveBackup,autorizado,restaurar=false}){
  if(autorizado!==true||!Buffer.isBuffer(chaveBackup)||
@@ -54,10 +63,30 @@ function validarIdentidade(arquivo){
    "SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%'"
   ).all().map(x=>x.name);
   if(TABELAS.some(x=>!lista.includes(x)))falha('BACKUP_REAL_ESQUEMA_INCOMPLETO');
-  // Escopo deliberadamente identidade. Um checkout comercial exige backup
-  // transacional conjunto com PSP/outbox; NUNCA restaurá-lo separadamente.
-  if(lista.some(x=>!TABELAS.includes(x)))
+  const todos=[...TABELAS,...TABELAS_ADMIN];
+  if(lista.some(x=>!todos.includes(x)))
    falha('BACKUP_IDENTIDADE_NAO_COBRE_TABELAS_COMERCIAIS');
+  // Não aceitar snapshot parcial de painel: ou TODAS as tabelas do
+  // administrador existem, ou nenhuma. Pedidos reais/PSP/saques não
+  // podem entrar nesta rotina antes do backup financeiro integral.
+  const adminPresente=TABELAS_ADMIN.some(x=>lista.includes(x));
+  if(adminPresente&&TABELAS_ADMIN.some(x=>!lista.includes(x)))
+   falha('BACKUP_ADMIN_PARCIAL');
+  if(adminPresente){
+   const ver=(t,colunas)=>{
+    const encontrados=b.prepare('PRAGMA table_info('+t+')')
+     .all().map(x=>x.name);
+    if(colunas.some(x=>!encontrados.includes(x)))
+     falha('BACKUP_ADMIN_ESQUEMA_INCOMPLETO');
+   };
+   ver('loja_real_produtos',['produto_id','titulo','ativo']);
+   ver('loja_real_ofertas_distribuidores',
+    ['produto_id','distribuidor_id','preco_centavos']);
+   ver('loja_real_custos_ofertas',
+    ['produto_id','distribuidor_id','custo_unit_centavos']);
+   ver('loja_real_precos_historico',['id','revisao']);
+   ver('loja_real_sessoes_admin',['token_hash','csrf','expira_em']);
+  }
   const integridade=b.prepare('PRAGMA integrity_check').all();
   if(integridade.length!==1||integridade[0].integrity_check!=='ok')
    falha('BACKUP_REAL_SQLITE_CORROMPIDO');
@@ -66,7 +95,7 @@ function validarIdentidade(arquivo){
   if(!b.prepare('SELECT id FROM loop_real_custodia WHERE id=1').get())
    falha('BACKUP_REAL_SEM_CUSTODIA');
   return {contas:b.prepare('SELECT COUNT(*) AS n FROM loop_real_contas').get().n,
-   integridade:'ok'};
+   administracaoIncluida:adminPresente,integridade:'ok'};
  }finally{b.close();}
 }
 function derivar(k,salt){return Buffer.from(hkdfSync(
@@ -107,6 +136,7 @@ async function criarBackupIdentidadeReal({
   fs.appendFileSync(p.destino,cifra.getAuthTag());
   return {estado:'IDENTIDADE_REAL_BACKUP_LOCAL_CIFRADO',
    contas:prova.contas,integridadeSQLite:prova.integridade,
+   administracaoIncluida:prova.administracaoIncluida,
    sha256Cifrado:await digest(p.destino),
    tamanhoBytes:fs.statSync(p.destino).size,permissao:'0600',
    copiaOffsiteConfirmada:false,restauracaoOffsiteConfirmada:false,
@@ -127,12 +157,20 @@ function bloquearAcessoRestaurado(arquivo){
   db.exec('PRAGMA foreign_keys=ON;BEGIN IMMEDIATE;');
   try{
    const sessoes=db.prepare('DELETE FROM loop_real_sessoes').run().changes;
+   const temAdmin=!!db.prepare([
+    "SELECT 1 FROM sqlite_master WHERE type='table'",
+    "AND name='loja_real_sessoes_admin'"
+   ].join(' ')).get();
+   const sessoesAdminRevogadas=temAdmin?db.prepare(
+    'DELETE FROM loja_real_sessoes_admin'
+   ).run().changes:0;
    const codigos=db.prepare([
     "UPDATE loop_real_codigos SET estado='BLOQUEADO'",
     "WHERE estado IN ('ENVIADO','RESERVADO')"
    ].join(' ')).run().changes;
    db.exec('COMMIT');
-   return {sessoesRevogadas:sessoes,codigosInvalidados:codigos};
+   return {sessoesRevogadas:sessoes,
+    sessoesAdminRevogadas,codigosInvalidados:codigos};
   }catch(e){db.exec('ROLLBACK');throw e;}
  }finally{db.close();}
 }
