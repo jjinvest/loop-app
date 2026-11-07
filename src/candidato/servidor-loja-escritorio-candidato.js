@@ -898,6 +898,56 @@ function criarAppLojaEscritorioCandidato({banco,repositorioCatalogo,
   catch(e){return res.status(e.codigo==='NOVIDADE_CONFLITO_REVISAO'?409:400)
    .json({erro:e.codigo||'NOVIDADE_IMAGEM_INVALIDA'});}
  });
+
+ // Busca real no banco único. Operador autenticado, resultados sem CPF/email.
+ app.get('/staging/escritorio-unificado/pesquisa',autorizarOperador,async(req,res)=>{
+  const q=req.query;
+  if(Object.keys(q).some(k=>!['tipo','termo','pagina'].includes(k))||
+     Object.values(q).some(v=>typeof v!=='string')||
+     !['pedidos','produtos','missoes'].includes(q.tipo)||
+     typeof q.termo!=='string'||q.termo.trim().length<2||
+     q.termo.length>80||/[\u0000-\u001f\u007f]/.test(q.termo)||
+     (q.pagina!==undefined&&!/^(0|[1-9][0-9]{0,4})$/.test(q.pagina)))
+   return res.status(400).json({erro:'PESQUISA_INVALIDA'});
+  const tipo=q.tipo,termo=q.termo.trim(),pagina=q.pagina===undefined?0:Number(q.pagina),limite=20;
+  if(!Number.isSafeInteger(pagina)||pagina>10000)
+   return res.status(400).json({erro:'PESQUISA_INVALIDA'});
+  try{
+   let total,resultados;
+   if(tipo==='produtos'){
+    const normalizar=x=>String(x||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();
+    const agulha=normalizar(termo);
+    const registros=(await catalogo.listar()).filter(p=>
+     [p.id,p.nome,p.descricao].some(v=>normalizar(v).includes(agulha)));
+    total=registros.length;
+    resultados=registros.slice(pagina*limite,(pagina+1)*limite).map(p=>({
+     id:p.id,titulo:p.nome,detalhe:p.id+' · '+p.tipo+' · '+p.estado}));
+   }else if(tipo==='missoes'){
+    const filtro=" WHERE instr(lower(id),lower(?))>0 OR instr(lower(titulo),lower(?))>0"+
+     " OR instr(lower(descricao),lower(?))>0 OR instr(lower(coalesce(prepedido_id,'')),lower(?))>0";
+    const tabela='akitemm_admin_missoes_staging',args=[termo,termo,termo,termo];
+    total=banco.prepare('SELECT COUNT(*) AS n FROM '+tabela+filtro).get(...args).n;
+    const rows=banco.prepare('SELECT id,titulo,departamento,situacao,prepedido_id FROM '+tabela+
+     filtro+' ORDER BY atualizado_em DESC,id DESC LIMIT ? OFFSET ?').all(...args,limite,pagina*limite);
+    resultados=rows.map(x=>({id:x.id,titulo:x.titulo,
+     detalhe:x.departamento+' · '+x.situacao+(x.prepedido_id?' · Pedido '+x.prepedido_id:'')}));
+   }else{
+    const from=' FROM akitemm_checkout_prepedidos_staging p JOIN akitemm_conta_unica_candidata c ON c.id=p.titular_id';
+    const filtro=' WHERE instr(lower(p.prepedido_id),lower(?))>0 OR instr(lower(c.nick),lower(?))>0';
+    const args=[termo,termo];
+    total=banco.prepare('SELECT COUNT(*) AS n'+from+filtro).get(...args).n;
+    const rows=banco.prepare('SELECT p.prepedido_id AS id,c.nick'+from+filtro+
+     ' ORDER BY p.criado_em DESC,p.prepedido_id DESC LIMIT ? OFFSET ?').all(...args,limite,pagina*limite);
+    resultados=rows.map(x=>{
+     const pedido=consultarPedido({banco,prepedidoId:x.id});
+     return {id:x.id,titulo:x.nick,detalhe:x.id+' · '+(pedido.estadoOperacional||'Pré-pedido de ensaio')};
+    });
+   }
+   return res.json({tipo,termo,pagina,porPagina:limite,total,resultados,
+    haMais:(pagina+1)*limite<total,laboratorio:true,financeiroReal:false});
+  }catch{return res.status(503).json({erro:'PESQUISA_INDISPONIVEL'});}
+ });
+
  app.get('/staging/escritorio-unificado/produtos',autorizarOperador,async(req,res)=>{
   try{
    if(Object.keys(req.query).some(k=>k!=='pagina')||
