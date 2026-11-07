@@ -5,11 +5,13 @@ on:
       - feature/unificar-escritorio-real-20261105
     paths:
       - 'src/producao/**'
+      - 'src/integracoes/registro-fornecedores.js'
       - 'scripts/iniciar-identidade-real-loop.js'
       - 'test/identidade-real-isolada.test.js'
       - 'test/identidade-real-persistencia.test.js'
       - 'test/api-identidade-real-sem-pagamentos.test.js'
       - 'test/interface-aprovada-identidade-real.test.js'
+      - 'test/prontidao-fornecedor-akitemm.test.js'
       - 'test/limite-operacoes-identidade-real-sqlite.test.js'
       - 'test/troca-senha-identidade-real-sqlite.test.js'
       - '.github/workflows/identidade-real-segregada.yml'
@@ -51,6 +53,8 @@ jobs:
         run: node --test test/troca-senha-identidade-real-sqlite.test.js
       - name: Reutilização da UI aprovada e guarda da loja
         run: node --test test/interface-aprovada-identidade-real.test.js
+      - name: Prontidao de integração do fornecedor, sem pedidos nem frete ficticios
+        run: node --test test/prontidao-fornecedor-akitemm.test.js
       - name: Não ativar cadastro real com configuração de laboratório
         env:
           NODE_ENV: production
