@@ -105,10 +105,10 @@ test('mesma identidade da loja entra no Escritorio LOOP sem novo cadastro',async
  assert.equal(loja.status,200,'loja abre com sessao de titular existente');
  const perfilLoja=await x.consultar('/staging/vitrine/minha-conta',{headers});
  assert.equal(perfilLoja.status,200);
- assert.equal((await perfilLoja.json()).conta.nick,'Marta');
+ assert.equal((await perfilLoja.json()).conta.nick,'marta');
  const perfilEscritorio=await x.consultar('/staging/contas/me',{headers});
  assert.equal(perfilEscritorio.status,200);
- assert.equal((await perfilEscritorio.json()).nick,'Marta');
+ assert.equal((await perfilEscritorio.json()).nick,'marta');
  assert.equal((await x.consultar('/staging/vitrine/minha-conta')).status,401,
   'navegador sem sessao nao herda identidade de outro titular');
 });
