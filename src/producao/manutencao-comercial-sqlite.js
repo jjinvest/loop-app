@@ -5,7 +5,8 @@
 // Estado persistente em SQLite, reversível, auditado na MESMA transação.
 // Nunca cria, cancela ou modifica pagamentos/posições no LOOP.
 function falha(codigo){const e=new Error(codigo);e.codigo=codigo;throw e;}
-const MOTIVO=/^[\p{L}\p{N} .,;:()/_-]{5,160}$/u;
+const MOTIVOS=new Set(['CORRECAO_TECNICA','VALIDACAO_CATALOGO',
+ 'INCIDENTE_OPERACIONAL','RETOMADA_OPERACAO']);
 class ManutencaoComercialSQLite{
  constructor({banco,auditoria,agora=()=>Date.now()}={}){
   if(typeof banco?.prepare!=='function'||typeof banco?.exec!=='function'||
@@ -45,9 +46,9 @@ class ManutencaoComercialSQLite{
  alterar({suspensa,revisaoEsperada,motivo}={}){
   if(typeof suspensa!=='boolean'||!Number.isSafeInteger(revisaoEsperada)||
      revisaoEsperada<0||revisaoEsperada>100000000||
-     typeof motivo!=='string'||!MOTIVO.test(motivo.trim()))
+     !MOTIVOS.has(motivo))
    falha('MANUTENCAO_COMANDO_INVALIDO');
-  const justificativa=motivo.trim();
+  const justificativa=motivo;
   this.db.exec('BEGIN IMMEDIATE');
   try{
    const atual=this.estado();
