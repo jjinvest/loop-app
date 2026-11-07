@@ -333,16 +333,18 @@ const {once}=require('node:events');
    // consistente com produtos/publicacoes confirmados, tambem no celular.
    assert.equal(await loja.locator('[data-akitemm-categoria]').count(),4);
    await loja.locator('[data-akitemm-categoria="novidades"]').click();
-   await loja.locator('#novidadesVitrineAkitemm article.akitemm-novidade-publicacao')
-    .filter({hasText:'LANÇAMENTO '+item.nick}).waitFor();
-   assert.equal(await loja.locator('#novidadesVitrineAkitemm img').count(),1);
-   await loja.locator('#novidadesVitrineAkitemm img').first()
-    .evaluate(async img=>{if(!img.complete)await new Promise(resolve=>{
+   const anuncio=loja.locator('#novidadesVitrineAkitemm article.akitemm-novidade-publicacao')
+    .filter({hasText:'LANÇAMENTO '+item.nick});
+   await anuncio.waitFor();
+   assert.equal(await anuncio.locator('img').count(),1);
+   await anuncio.locator('img').evaluate(async img=>{
+    if(!img.complete)await new Promise(resolve=>{
      img.addEventListener('load',resolve,{once:true});
      img.addEventListener('error',resolve,{once:true});
-    });});
-   assert.ok(await loja.locator('#novidadesVitrineAkitemm img').first()
-    .evaluate(img=>img.naturalWidth>0),'imagem da novidade precisa carregar na loja');
+    });
+   });
+   assert.ok(await anuncio.locator('img').evaluate(img=>img.naturalWidth>0),
+    'imagem da novidade precisa carregar na loja');
    await loja.locator('[data-akitemm-categoria="cursos"]').click();
    assert.ok(await loja.locator('#catalogoLojaLoop article.produto-loja-loop').count()>=2);
    assert.equal(await loja.locator('#novidadesVitrineAkitemm').isHidden(),true);
