@@ -137,10 +137,17 @@ class PedidosFornecedorOutbox {
    falha('PEDIDO_FORNECEDOR_INVALIDO');
   // A fonte autoritativa do pedido prova SKU, endereço, valor e fornecedor.
   // Um Pix confirmado de outro carrinho não autoriza expedição.
-  const payload={itens:itensValidos(itens),
-   enderecoEntrega:enderecoValido(enderecoEntrega)};
-  const {prova}=await this._validarPedidoAprovado({
-   pedidoId,fornecedorId,payload
+  // Preferir o pedido IMUTAVEL do servidor. O chamador nao precisa
+  // reenviar dados sensiveis do cliente apos a compra. Para chamadas
+  // legadas que os informam, rejeitar divergencia com a fonte original.
+  const legado=itens!==undefined||enderecoEntrega!==undefined;
+  if(legado&&(itens===undefined||enderecoEntrega===undefined))
+   falha('PEDIDO_DIVERGENTE_DO_ORIGINAL');
+  const payloadLegado=legado?{
+   itens:itensValidos(itens),enderecoEntrega:enderecoValido(enderecoEntrega)
+  }:null;
+  const {prova,payload}=await this._validarPedidoAprovado({
+   pedidoId,fornecedorId,payload:payloadLegado
   });
   const texto=JSON.stringify(payload),sumario=hash(texto),enc=cifra(this.key,texto);
   const ts=this.agora(),idempotencia=createHmac('sha256',this.key)
