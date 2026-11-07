@@ -51,16 +51,15 @@ test('posicao dourada cumpre mesmo giro, mas destino financeiro e o quarto cofre
  assert.equal(resposta.centrosDourados,1);
  assert.equal(resposta.centrosDeParticipantes,0);
  assert.deepEqual(resposta.girosLiberados[0].eventos.map(e=>e.destinoCofre),
-  ['LOOP_DOURADAS','LOOP_ESQUERDA','LOOP_DOURADAS',
-   'LOOP_DIREITA','LOOP_DOURADAS','LOOP_ESQUERDA']);
+  Array(6).fill('LOOP_DOURADAS'));
  const depois=cofre.resumo();
  assert.equal(depois.centroRestanteSimuladoCentavos,25000);
- assert.equal(depois.douradasAcumuladoSimuladoCentavos,75000);
+ assert.equal(depois.douradasAcumuladoSimuladoCentavos,150000);
  assert.equal(depois.escritoriosPrevistosSimuladoCentavos,0);
  assert.equal(depois.girosComCentroDourado,1);
  assert.equal(depois.totalDemonstrativoConservadoCentavos,200000);
  assert.equal(cb.livro.resumo().totalPrevistoParaTitularesCentavos,0);
- assert.equal(cb.livro.resumo().destinoMatematicoPorCofreCentavos.LOOP_DOURADAS,75000);
+ assert.equal(cb.livro.resumo().destinoMatematicoPorCofreCentavos.LOOP_DOURADAS,150000);
  assert.equal(cb.livro.extrato(titulares[0].contaId).totalPrevistoCentavos,0);
  assert.equal(depois.saldoRealCentavos,0);
  assert.equal(depois.valorParaSaqueCentavos,0);
