@@ -63,11 +63,13 @@ function criarAppIdentidadeLoop({contas,origemHttps,permitirCadastro=false}={}){
      code==='ACESSO_TEMPORARIAMENTE_LIMITADO')
    return res.status(429).json({erro:code});
   if(code==='CADASTRO_EXISTENTE')return res.status(409).json({erro:code});
-  if(code==='DOCUMENTOS_ALTERADOS_RELER')return res.status(409).json({erro:code});
+  if(code==='DOCUMENTOS_ALTERADOS_RELER'||
+     code==='CREDENCIAL_ALTERADA_CONCORRENTEMENTE')
+   return res.status(409).json({erro:code});
   if(['NOME_INVALIDO','EMAIL_INVALIDO','NICK_INVALIDO','SENHA_INVALIDA',
-   'CODIGO_INVALIDO'].includes(code))
+   'CODIGO_INVALIDO','SENHA_NOVA_DEVE_SER_DIFERENTE'].includes(code))
    return res.status(400).json({erro:code});
-  if(code==='CREDENCIAIS_INVALIDAS')
+  if(code==='CREDENCIAIS_INVALIDAS'||code==='SENHA_ATUAL_INCORRETA')
    return res.status(401).json({erro:code});
   return res.status(503).json({erro:'OPERACAO_INDISPONIVEL'});
  };
@@ -166,6 +168,23 @@ function criarAppIdentidadeLoop({contas,origemHttps,permitirCadastro=false}={}){
    return res.json(await contas.confirmarCodigo({
     titularId:req.conta.titularId,finalidade:'EMAIL',codigo:req.body.codigo
    }));
+  }catch(e){return falha(res,e);}
+ });
+ // A troca dentro da sessão não usa o e-mail como identificador e
+ // revoga todos os dispositivos do titular, sem afetar outras contas.
+ app.post('/api/contas/senha/trocar',mutation,protegido,csrf,async(req,res)=>{
+  const b=req.body;
+  if(!b||Array.isArray(b)||
+     Object.keys(b).sort().join(',')!=='novaSenha,senhaAtual')
+   return res.status(400).json({erro:'CAMPOS_INVALIDOS'});
+  if(!limite(res,'trocar',req.conta.titularId))return;
+  try{
+   const resultado=await contas.trocarSenha({
+    titularId:req.conta.titularId,
+    senhaAtual:b.senhaAtual,novaSenha:b.novaSenha
+   });
+   res.set('Set-Cookie',cookie('',true));
+   return res.json(resultado);
   }catch(e){return falha(res,e);}
  });
  app.post('/api/contas/senha/solicitar',mutation,async(req,res)=>{
