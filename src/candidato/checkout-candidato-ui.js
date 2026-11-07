@@ -5,7 +5,7 @@ const API='/staging';
 const $=id=>document.getElementById(id);
 let csrf=null,aba='conteudoResumo',proximaPaginaEquipe=null,
  paginaPedidos=0,carregamentoPedidos=0;
-let telaAcesso='cadastro';
+let telaAcesso='login';
 let posicaoSelecionadaMotor=null;
 const ABAS=[['abaResumo','conteudoResumo'],['abaTabuleiro','conteudoTabuleiro'],
  ['abaMeusPedidos','conteudoMeusPedidos'],['abaPosicoes','conteudoPosicoes'],
