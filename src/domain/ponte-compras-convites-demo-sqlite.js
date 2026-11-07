@@ -7,7 +7,8 @@ const {LIMITE_POSICOES_ATIVAS}=require('./capacidade-posicoes-loop');
 const { STATUS_CONFIRMADO }=require('./processador-pedidos-simulados');
 const {ConfiguracaoValorLoopDemoSQLite}=require('./configuracao-valor-loop-demo-sqlite');
 const {IndicacoesLinksComissoesDemoSQLite}=require('./indicacoes-links-comissoes-demo-sqlite');
-const {cofreDoEvento,origemDoCentro,centroDoLoop}=require('./destino-financeiro-centro-loop');
+const {cofreDoEvento,origemDoCentro,centroDoLoop,
+ REGRA_DOURADA_LEGADA}=require('./destino-financeiro-centro-loop');
 const {DESTINOS}=require('./tabuleiro-loop');
 const {PreLancamentoCofresV6DemoSQLite}=require('./prelancamento-cofres-v6-demo-sqlite');
 const {ConciliacaoCofresV6DemoSQLite}=require('./conciliacao-cofres-v6-demo-sqlite');
@@ -858,7 +859,8 @@ class PonteComprasConvitesDemoSQLite{
   const seisEventos=vendas.length===DESTINOS.length;
   const resultados=vendas.map((v,i)=>{
    const ordem=i+1;
-   const cofrePrevisto=cofreDoEvento({posicaoCentro:centro,ordem});
+   const cofrePrevisto=cofreDoEvento({posicaoCentro:centro,ordem,
+     regraDourada:v.regraDourada||REGRA_DOURADA_LEGADA});
    const correto=v.ordem===ordem&&v.posicaoCentroId===centro.id&&
     v.destinoPrevisto===DESTINOS[i]&&v.ciclo===cicloNumero&&
     v.destinoCofre===cofrePrevisto;
