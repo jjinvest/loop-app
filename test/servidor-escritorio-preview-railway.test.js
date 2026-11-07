@@ -63,7 +63,7 @@ test('senha de visitante e cookie nao abrem variantes das rotas de admin',async 
  const x=await preparar(t);
  const cliente=await x.consultar('/minha-conta');
  const cookieCliente=cliente.headers.get('set-cookie')?.split(';')[0];
- assert.match(cookieCliente,/^akitemm_preview_access=v1\\./);
+ assert.match(cookieCliente,/^akitemm_preview_access=v1\./);
  for(const rota of [
   '/escritorio/','/ESCRITORIO','/staging/escritorio-admin/',
   '/staging/escritorio-unificado/',
@@ -75,6 +75,42 @@ test('senha de visitante e cookie nao abrem variantes das rotas de admin',async 
    headers:{Authorization:auth,Cookie:cookieCliente}});
   assert.equal(resposta.status,401,rota+' deve exigir operador');
  }
+});
+test('mesma identidade da loja entra no Escritorio LOOP sem novo cadastro',async t=>{
+ const x=await preparar(t);
+ const pagina=await x.consultar('/minha-conta');
+ const html=await pagina.text();
+ assert.match(html,/<title>LOOP 3\.0 · Escritório Virtual/);
+ assert.match(html,/<h1>Escritório Virtual LOOP<\/h1>/);
+ assert.match(html,/<section class="painel" id="painelLogin" aria-labelledby="tituloLogin">/);
+ assert.match(html,/<section class="painel" id="painelCadastro" aria-labelledby="tituloCadastro" hidden>/);
+ const js=await x.consultar('/staging/assets/cliente.js');
+ assert.match(await js.text(),/let telaAcesso='login'/);
+ const criar=await x.consultar('/staging/contas/cadastrar',{
+  method:'POST',headers:{'Content-Type':'application/json'},
+  body:JSON.stringify({nome:'Marta de Ensaio',nick:'Marta',
+   email:'marta@example.invalid',senha:'TesteUnificado2026!',
+   aceiteExplicito:true})
+ });
+ assert.equal(criar.status,201);
+ const entrada=await x.consultar('/staging/contas/entrar',{
+  method:'POST',headers:{'Content-Type':'application/json'},
+  body:JSON.stringify({nick:'Marta',senha:'TesteUnificado2026!'})
+ });
+ assert.equal(entrada.status,200);
+ const cookie=entrada.headers.getSetCookie().find(s=>s.startsWith('loop_candidato_s='));
+ assert.ok(cookie);
+ const headers={Cookie:cookie.split(';')[0]};
+ const loja=await x.consultar('/loja',{headers});
+ assert.equal(loja.status,200,'loja abre com sessao de titular existente');
+ const perfilLoja=await x.consultar('/staging/vitrine/minha-conta',{headers});
+ assert.equal(perfilLoja.status,200);
+ assert.equal((await perfilLoja.json()).conta.nick,'Marta');
+ const perfilEscritorio=await x.consultar('/staging/contas/me',{headers});
+ assert.equal(perfilEscritorio.status,200);
+ assert.equal((await perfilEscritorio.json()).nick,'Marta');
+ assert.equal((await x.consultar('/staging/vitrine/minha-conta')).status,401,
+  'navegador sem sessao nao herda identidade de outro titular');
 });
 test('gateway exige acesso antes de HTML e rotas administrativas',async t=>{
  const x=await preparar(t);
@@ -261,7 +297,7 @@ test('healthz nao declara sucesso com backend indisponivel; readyz confere pront
  backend.listen(0,'127.0.0.1');
  await once(backend,'listening');
  const gateway=criarGateway({portaInterna:backend.address().port,
-  senhaAcesso:senha,segredoOperador:operador});
+  senhaAcesso:senha,senhaAdmin,segredoOperador:operador});
  gateway.listen(0,'127.0.0.1');
  await once(gateway,'listening');
  t.after(async()=>{
