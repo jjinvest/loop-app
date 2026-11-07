@@ -4,6 +4,7 @@
 // O preco/custos da loja NAO sao recebimento do LOOP.
 // Um livro de aportes locais NAO e comprovacao do banco ou PSP.
 const {disponibilidadeCofreDemo}=require('./disponibilidade-cofres-v6-demo-sqlite');
+const {REGRA_DOURADA_INTEGRAL}=require('./destino-financeiro-centro-loop');
 const DESTINOS=Object.freeze([
   'LOOP_CENTRO','LOOP_ESQUERDA','LOOP_DIREITA','LOOP_DOURADAS'
 ]);
@@ -84,7 +85,8 @@ class ConciliacaoCofresV6DemoSQLite{
       's.beneficiario AS beneficiario,s.destino AS destino,',
       's.valor_centavos AS valor,',
       'p.posicao_centro AS posicaoProvisao,p.conta_id AS contaProvisao,',
-      'p.cofre_centro AS cofreProvisao,p.previsto_centro AS previstoCentro',
+      'p.cofre_centro AS cofreProvisao,p.previsto_centro AS previstoCentro,',
+       'p.documento_json AS documentoProvisao',
       'FROM loop_v6_pre_saidas s',
       'LEFT JOIN loop_v6_provisoes_ciclos p ON p.giro=s.giro',
       'ORDER BY s.giro'
@@ -110,9 +112,16 @@ class ConciliacaoCofresV6DemoSQLite{
          parcelas.some((v,i)=>v.ordem!==i+1))
         alertar('SEIS_EVENTOS_INVALIDOS',String(s.giro));
       if(dourado){
-        const ouro=parcelas.filter(v=>[1,3,5].includes(v.ordem));
-        if(ouro.length!==3||ouro.some(v=>v.destino!=='LOOP_DOURADAS')||
-           total(ouro,'referencia')!==s.valor)
+        const integral=JSON.parse(s.documentoProvisao||'{}').regraDourada===
+         REGRA_DOURADA_INTEGRAL;
+        const ordens=integral?[1,2,3,4,5,6]:[1,3,5];
+        const ouro=parcelas.filter(v=>ordens.includes(v.ordem));
+        if(ouro.length!==ordens.length||ouro.some(v=>v.destino!=='LOOP_DOURADAS')||
+           total(ouro,'referencia')!==s.valor||
+           (integral&&b.prepare([
+            'SELECT COUNT(*) AS n FROM loop_v6_pre_douradas_integral_fontes',
+            'WHERE giro=?'
+           ].join(' ')).get(s.giro).n!==6))
           alertar('VALOR_COFRE_DOURADAS_DIVERGENTE',String(s.giro));
       }else if(s.previstoCentro!==s.valor){
         alertar('VALOR_ESCRITORIO_DIVERGENTE',String(s.giro));
@@ -125,17 +134,34 @@ class ConciliacaoCofresV6DemoSQLite{
         alertar('PROVISAO_SEM_SAIDA_CENTRAL',String(p.giro));
     const enviadosDourado=total(saidas.filter(s=>s.destino==='LOOP_DOURADAS'),'valor');
     const enviadosEscritorio=total(saidas.filter(s=>s.destino==='ESCRITORIO_PREVISTO'),'valor');
-    const debitadoCentro=total(saidas,'valor');
+    const fonte=b.prepare([
+      'SELECT COALESCE(SUM(centro_centavos),0) AS centro,',
+      'COALESCE(SUM(esquerda_centavos),0) AS esquerda,',
+      'COALESCE(SUM(direita_centavos),0) AS direita,',
+      'COUNT(*) AS eventos',
+      'FROM loop_v6_pre_douradas_integral_fontes'
+    ].join(' ')).get();
+    const saidaIntegral=b.prepare([
+      'SELECT COALESCE(SUM(valor_centavos),0) AS total',
+      'FROM loop_v6_pre_saidas WHERE giro IN',
+      '(SELECT giro FROM loop_v6_pre_douradas_integral_fontes)'
+    ].join(' ')).get().total;
+    if(fonte.centro+fonte.esquerda+fonte.direita!==saidaIntegral||
+       fonte.eventos%6!==0)
+      alertar('FONTES_DOURADAS_NAO_CONSERVADAS','Eventos V2');
+    const debitadoCentro=total(saidas,'valor')-saidaIntegral+fonte.centro;
     const saldoCentro=somas.centro-debitadoCentro;
-    const saldoEsquerda=somas.esquerda;
-    const saldoDireita=somas.direita;
+    const saldoEsquerda=somas.esquerda-fonte.esquerda;
+    const saldoDireita=somas.direita-fonte.direita;
     const totalConservado=saldoCentro+saldoEsquerda+saldoDireita+
       enviadosDourado+enviadosEscritorio;
-    if(saldoCentro<0)
-      alertar('CENTRO_FICTICIO_NEGATIVO','Saldo calculado em centavos');
+    if(saldoCentro<0||saldoEsquerda<0||saldoDireita<0)
+      alertar('COFRE_DE_ORIGEM_FICTICIO_NEGATIVO','Saldos depois de V2');
     if(totalConservado!==somas.total)
       alertar('MOVIMENTOS_NAO_CONSERVADOS','Quatro cofres e previsoes dos escritorios');
     if(pre.centroRestanteSimuladoCentavos!==saldoCentro||
+       pre.investimentoRestanteSimuladoCentavos!==saldoEsquerda||
+       pre.reservaRestanteSimuladoCentavos!==saldoDireita||
        pre.douradasAcumuladoSimuladoCentavos!==enviadosDourado||
        pre.escritoriosPrevistosSimuladoCentavos!==enviadosEscritorio)
       alertar('SALDO_RESUMO_INCOMPATIVEL','Livro do pre-lancamento');
