@@ -33,6 +33,7 @@ const {auditarIntegridadeMotorCandidato}=
 const {consultarPedido,consultarEscritorioHomologacao}=require('../domain/relatorio-homologacao-checkout-staging');
 const {MissoesOperacionaisCandidatoSQLite}=require('../domain/missoes-operacionais-candidato-sqlite');
 const {DepartamentosAdministradorCandidato}=require('../domain/escritorio-admin-departamentos-candidato');
+const {criarPaginaOperacional}=require('../domain/painel-operacional-admin-candidato');
 const {CatalogoAdminCandidatoSQLite}=require('../domain/catalogo-admin-candidato-sqlite');
 const {NovidadesLojaCandidatoSQLite,MAX_IMAGEM}=require('../domain/novidades-loja-candidato-sqlite');
 const {EnderecoEntregaEnsaioSQLite}=require('../domain/endereco-entrega-ensaio-sqlite');
@@ -1005,6 +1006,27 @@ function criarAppLojaEscritorioCandidato({banco,repositorioCatalogo,
     situacao:q.situacao||null,pagina:q.pagina===undefined?0:Number(q.pagina)}));
   }catch(e){return res.status(400).json({erro:e.codigo||'FILTRO_INVALIDO'});}
  });
+
+ // Leitura real do mesmo SQLite e motor, exclusiva do operador.
+ app.get('/staging/escritorio-unificado/departamentos/:codigo/operacao',
+  autorizarOperador,async(req,res)=>{
+   const q=req.query;
+   if(Object.keys(q).some(k=>k!=='pagina')||
+      Object.values(q).some(v=>typeof v!=='string')||
+      (q.pagina!==undefined&&!/^(0|[1-9][0-9]{0,4})$/.test(q.pagina)))
+    return res.status(400).json({erro:'PAGINA_INVALIDA'});
+   try{
+    const consultar=criarPaginaOperacional({
+     banco,catalogo,motorConta,codigo:req.params.codigo,
+     pagina:q.pagina===undefined?0:Number(q.pagina)
+    });
+    return res.json(await consultar());
+   }catch(e){
+    return res.status(['DEPARTAMENTO_INVALIDO','PAGINA_INVALIDA'].includes(e.codigo)?400:503)
+     .json({erro:e.codigo||'DEPARTAMENTO_INDISPONIVEL'});
+   }
+  });
+
  app.get('/staging/escritorio-unificado/departamentos',autorizarOperador,async(_req,res)=>{
   try{return res.json(await departamentosAdmin.painel());}
   catch{return res.status(503).json({erro:'PAINEL_DEPARTAMENTOS_INDISPONIVEL'});}
