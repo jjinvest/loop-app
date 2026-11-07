@@ -139,10 +139,90 @@ function renderizarPreviaFilas(p){
 }
 
 
+let custosProdutoAtual=null;
+const moedaInterna=n=>new Intl.NumberFormat('pt-BR',{style:'currency',currency:'BRL'}).format(n/100);
+const camposCustos=[
+ ['custoFornecedorAdmin','custoFornecedorCentavos'],
+ ['custoFreteAdmin','freteCustoCentavos'],
+ ['custoPspAdmin','tarifaPspEstimadaCentavos'],
+ ['custoTributosAdmin','reservaTributariaEstimadaCentavos']
+];
+function lerCentavosCampo(id){
+ const raw=$(id).value.trim();
+ if(!/^\d+(?:\.\d{1,2})?$/.test(raw))return null;
+ const [i,c='']=raw.split('.');
+ const v=Number(i)*100+Number(c.padEnd(2,'0'));
+ return Number.isSafeInteger(v)&&v<=100000000?v:null;
+}
+function atualizarCalculoInterno(){
+ const out=$('resumoMargemProdutoAdmin');
+ if(!custosProdutoAtual){out.textContent='Selecione um produto salvo.';return;}
+ const unitario=lerCentavosCampo('produtoPrecoAdmin');
+ const custos=camposCustos.map(([campo])=>lerCentavosCampo(campo));
+ if(unitario===null||custos.some(v=>v===null)){
+  out.textContent='Preencha preço e custos válidos para conferir a margem.';return;
+ }
+ const loop=custosProdutoAtual.referenciaLoopCentavos;
+ if(loop===null){
+  out.textContent='LOOP dependente da composição do carrinho ou evento especial.'+
+   ' Margem por unidade indefinida, não creditar saldo.';return;
+ }
+ const despesas=custos.reduce((a,v)=>a+v,0),margem=unitario-despesas-loop;
+ out.textContent='Venda '+moedaInterna(unitario)+' − LOOP '+moedaInterna(loop)+
+  ' − custo/taxas/provisões '+moedaInterna(despesas)+' = margem estimada '+
+  moedaInterna(margem)+(margem<0?' · ATENÇÃO: margem negativa.':'')+
+  ' (nenhum repasse executado)';
+}
+function limparCustosProduto(){
+ custosProdutoAtual=null;$('formCustosProdutoAdmin').reset();
+ $('custoProdutoIdAdmin').value='';$('salvarCustoProdutoAdmin').disabled=true;
+ $('custosProdutoSelecionadoAdmin').textContent='Selecione um produto no catálogo.';
+ $('statusCustosProdutoAdmin').textContent='';atualizarCalculoInterno();
+}
+async function abrirCustosProduto(id){
+ $('salvarCustoProdutoAdmin').disabled=true;custosProdutoAtual=null;
+ $('custosProdutoSelecionadoAdmin').textContent='Consultando custos internos...';
+ try{
+  const x=await api('/produtos/'+encodeURIComponent(id)+'/custos');
+  if($('produtoIdAdmin').value!==id)return;
+  custosProdutoAtual=x;$('custoProdutoIdAdmin').value=id;
+  for(const [campo,chave] of camposCustos)
+   $(campo).value=x[chave]===null?(chave==='custoFornecedorCentavos'?'':'0'):
+    (x[chave]/100).toFixed(2);
+  $('custosProdutoSelecionadoAdmin').textContent='Produto '+id+' · '+x.classificacao+
+   ' · LOOP por unidade: '+(x.referenciaLoopCentavos===null?'definido por carrinho':
+    moedaInterna(x.referenciaLoopCentavos))+' · revisão '+x.revisao;
+  $('salvarCustoProdutoAdmin').disabled=false;atualizarCalculoInterno();
+ }catch(e){$('custosProdutoSelecionadoAdmin').textContent='Erro: '+e.message;}
+}
+$('formCustosProdutoAdmin').addEventListener('input',atualizarCalculoInterno);
+$('produtoPrecoAdmin').addEventListener('input',atualizarCalculoInterno);
+$('formCustosProdutoAdmin').addEventListener('submit',async e=>{
+ e.preventDefault();const botao=e.submitter;
+ if(!custosProdutoAtual||botao.disabled)return;
+ botao.disabled=true;const out=$('statusCustosProdutoAdmin');
+ try{
+  const dados={revisaoEsperada:custosProdutoAtual.revisao};
+  for(const [campo,chave] of camposCustos){
+   dados[chave]=lerCentavosCampo(campo);
+   if(dados[chave]===null)throw Error('Informe custos válidos em reais.');
+  }
+  const x=await api('/produtos/'+encodeURIComponent(custosProdutoAtual.produtoId)+
+   '/custos',{method:'PUT',body:dados});
+  custosProdutoAtual=x;atualizarCalculoInterno();
+  out.textContent='Custos registrados no SQLite. '+
+   (x.margemComercialEstimadaCentavos===null?'Margem depende do carrinho.':
+    'Margem estimada: '+moedaInterna(x.margemComercialEstimadaCentavos))+
+   ' · sem transferência bancária.';
+ }catch(e){out.textContent='Custos não gravados: '+e.message+
+  ' (reabra o produto em caso de revisão concorrente).';}
+ finally{botao.disabled=false;}
+});
 function limparProduto(){
  edicaoProduto=null;chaveProduto=null;$('formProduto').reset();
  $('produtoIdAdmin').readOnly=false;$('produtoTipoAdmin').disabled=false;
  $('tituloFormularioProduto').textContent='Cadastrar produto fictício';
+ limparCustosProduto();
  $('salvarProdutoAdmin').textContent='Salvar produto';
 }
 function preencherProduto(item){
@@ -157,6 +237,8 @@ function preencherProduto(item){
  );
  $('tituloFormularioProduto').textContent='Editar produto · revisão '+item.revisao;
  $('salvarProdutoAdmin').textContent='Atualizar catálogo do laboratório';
+ abrirCustosProduto(item.produto.id).catch(e=>
+  $('statusCustosProdutoAdmin').textContent='Erro ao consultar custos: '+e.message);
  $('formProduto').scrollIntoView({behavior:'smooth',block:'start'});
 }
 function renderizarProdutos(r){
@@ -994,7 +1076,8 @@ $('formProduto').addEventListener('submit',async event=>{
      fotos:[],detalhes:[],videoApresentacaoUrl:null}}});
   }
   limparProduto();await atualizar();
-  $('resultadoProdutoAdmin').textContent='Produto salvo no mesmo catálogo das novas cotações de teste.';
+  preencherProduto(await api('/produtos/'+encodeURIComponent(id)));
+  $('resultadoProdutoAdmin').textContent='Produto salvo; confira e salve os custos internos abaixo.';
  }catch(e){$('resultadoProdutoAdmin').textContent='Produto não salvo: '+e.message;}
  finally{botao.disabled=false;}
 });
