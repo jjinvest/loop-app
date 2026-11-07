@@ -11,6 +11,7 @@ const {COOKIE}=require('../src/domain/conta-unica-candidata-sqlite');
 const {criarAgendadorConciliacaoSandbox}=
  require('../src/domain/agendador-conciliacao-asaas-sandbox');
 const senha='SenhaPreviaEnsaioFicticioForte2026';
+const senhaAdmin='SenhaAdminExclusivaForteEnsaio2026!';
 const operador='OperadorEnsaioFicticio_'+('X'.repeat(38));
 const token='WebhookSandboxApenasEnsaioTestes2026';
 const cliente='cus_EnsaioPixUnico',pagamento='pay_EnsaioPixUnico';
@@ -46,15 +47,22 @@ test('gateway unificado: Pix, aviso e motor usam o mesmo SQLite de laboratorio',
   termosTexto:'Somente teste de sistema sem cobranca, lucro ou saque comercial.'
  });
  const interno=r.app.listen(0,'127.0.0.1');await once(interno,'listening');
- const gateway=criarGateway({portaInterna:interno.address().port,
-  senhaAcesso:senha,segredoOperador:operador,permitirWebhookSandbox:true});
+ let gateway=null;
+ // Limpeza garantida mesmo se a construcao do gateway falhar.
+ t.after(async()=>{
+  if(gateway?.listening)await new Promise(ok=>gateway.close(ok));
+  if(interno.listening)await new Promise(ok=>interno.close(ok));
+  banco.close();
+ });
+ gateway=criarGateway({portaInterna:interno.address().port,
+  senhaAcesso:senha,senhaAdmin,segredoOperador:operador,
+  permitirWebhookSandbox:true});
  gateway.listen(0,'127.0.0.1');await once(gateway,'listening');
- t.after(async()=>{await new Promise(ok=>gateway.close(ok));
-  await new Promise(ok=>interno.close(ok));banco.close();});
  const base='http://127.0.0.1:'+gateway.address().port;
  const auth='Basic '+Buffer.from('acesso:'+senha).toString('base64');
+ const authAdmin='Basic '+Buffer.from('operador:'+senhaAdmin).toString('base64');
  const pronto=await fetch(base+'/staging/escritorio-unificado/sandbox-pix/estado',{
-  headers:{Authorization:auth}});
+  headers:{Authorization:authAdmin}});
  assert.equal(pronto.status,200);
  const status=await pronto.json();
  assert.equal(status.status,'INTEGRADO_SANDBOX_NO_MESMO_SQLITE');
@@ -63,7 +71,7 @@ test('gateway unificado: Pix, aviso e motor usam o mesmo SQLite de laboratorio',
  assert.equal(status.checkoutComercialHabilitado,false);
  const provaUrl=base+'/staging/escritorio-unificado/sandbox-pix/provar-acesso-remoto';
  assert.equal((await fetch(provaUrl)).status,401);
- const respostaProva=await fetch(provaUrl,{headers:{Authorization:auth}});
+ const respostaProva=await fetch(provaUrl,{headers:{Authorization:authAdmin}});
  assert.equal(respostaProva.status,200);
  const prova=await respostaProva.json();
  assert.equal(prova.pspRemotoVerificado,true);
@@ -74,7 +82,8 @@ test('gateway unificado: Pix, aviso e motor usam o mesmo SQLite de laboratorio',
  assert.equal(envios,0);
  async function post(route,body,extra={}){
   const x=await fetch(base+route,{method:'POST',
-   headers:{Authorization:auth,'Content-Type':'application/json',
+   headers:{Authorization:route.startsWith('/staging/escritorio-unificado/')?
+     authAdmin:auth,'Content-Type':'application/json',
     'X-LOOP-LAB':'participante',...extra},
    body:JSON.stringify(body)});
   return {status:x.status,body:await x.json(),cookie:x.headers.get('set-cookie')};
@@ -91,7 +100,7 @@ test('gateway unificado: Pix, aviso e motor usam o mesmo SQLite de laboratorio',
  const cookie=login.cookie.match(new RegExp(COOKIE+'=([a-f0-9]{64})'))[1];
  const csrf=login.body.csrf;
  const cor=await fetch(base+'/staging/escritorio-unificado/sinalizacao/curso-homologacao-250',{
-  method:'PATCH',headers:{Authorization:auth,'Content-Type':'application/json'},
+  method:'PATCH',headers:{Authorization:authAdmin,'Content-Type':'application/json'},
   body:JSON.stringify({classificacao:'VERDE',quantidadeMinimaLoop:1,revisaoEsperada:0})
  });
  assert.equal(cor.status,200,await cor.text());
@@ -186,7 +195,7 @@ test('gateway unificado: Pix, aviso e motor usam o mesmo SQLite de laboratorio',
   eventoId:aviso.id})).body.vinculoMotorEnsaio.estado,'JA_VINCULADO');
  assert.equal(envios,1);
  const audit=await fetch(base+'/staging/escritorio-unificado/auditoria-cobertura',{
-  headers:{Authorization:auth}});
+  headers:{Authorization:authAdmin}});
  assert.equal(audit.status,200);
  const rel=await audit.json();
  assert.equal(rel.resumo.posicoesNoMotorEnsaio,1);
