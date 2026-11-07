@@ -31,7 +31,6 @@ function renderizarInterfaceAprovada(){
  ['Nome fictício','Nome'],
  ['E-mail fictício','E-mail'],
  ['Senha de teste (8 a 12 caracteres)','Senha (mínimo 12 caracteres)'],
- ['Nova senha (8 a 12 caracteres)','Nova senha (mínimo 12 caracteres)'],
  ['SEM VENDAS REAIS','SEM COMPRAS OU PAGAMENTOS REAIS'],
  ['HOMOLOGAÇÃO · SEM PAGAMENTOS REAIS',
   'CADASTRO REAL EM PREPARAÇÃO · SEM PAGAMENTOS REAIS'],
@@ -40,7 +39,8 @@ function renderizarInterfaceAprovada(){
  ]){
   html=trocarExato(html,antes,depois);
  }
- // Os dois campos de nova senha usam o mesmo padrão; os demais permanecem.
+ // Os campos de senha e as descrições de recuperação/conta seguem o mesmo padrão de segurança.
+ html=html.replaceAll('Nova senha (8 a 12 caracteres)','Nova senha (mínimo 12 caracteres)');
  html=html.replaceAll('minlength="8" maxlength="12" autocomplete="new-password"',
   'minlength="12" maxlength="128" autocomplete="new-password"');
  const anterior='   <label><input id="cadastroTermos"';
