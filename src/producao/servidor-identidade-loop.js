@@ -120,6 +120,12 @@ function criarAppIdentidadeLoop({contas,origemHttps,permitirCadastro=false}={}){
   csrf:req.conta.csrf,expiraEm:req.conta.expiraEm,
   lojaEEscritorioMesmaConta:true,financeiroReal:false
  }));
+ // Direito de acesso: o titular consulta somente os seus próprios dados
+ // e a versão dos documentos aceitos. Sem IDs escolhidos pelo navegador.
+ app.get('/api/contas/meus-dados',protegido,(req,res)=>{
+  try{return res.json(contas.dadosTitular(req.conta.titularId));}
+  catch{return res.status(503).json({erro:'DADOS_INDISPONIVEIS'});}
+ });
  app.post('/api/contas/sair',mutation,protegido,csrf,(req,res)=>{
   contas.sair(cookieValor(req));
   res.set('Set-Cookie',cookie('',true));
