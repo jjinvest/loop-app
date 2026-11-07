@@ -63,11 +63,13 @@ function decifra(key,row){
 function hash(txt){return createHash('sha256').update(txt).digest('hex');}
 class PedidosFornecedorOutbox {
  constructor({banco,registro,consultarPagamentoConciliado,
-  consultarPedidoAprovado,chavePedidos,agora=()=>Date.now()}={}){
+  consultarPedidoAprovado,consultarLiberacaoCustoFornecedor,
+  chavePedidos,agora=()=>Date.now()}={}){
   if(typeof banco?.prepare!=='function'||typeof banco?.exec!=='function'||
      typeof registro?.obter!=='function'||
      typeof consultarPagamentoConciliado!=='function'||
      typeof consultarPedidoAprovado!=='function'||
+     typeof consultarLiberacaoCustoFornecedor!=='function'||
      !Buffer.isBuffer(chavePedidos)||chavePedidos.length!==32||
      typeof agora!=='function')falha('DEPENDENCIAS_OUTBOX_OBRIGATORIAS');
   this.db=banco;this.registro=registro;
@@ -75,6 +77,9 @@ class PedidosFornecedorOutbox {
   // Fonte autoritativa do pedido interno: NUNCA confiar em itens/endereço
   // enviados pelo cliente após a confirmação do Pix.
   this.consultarPedidoAprovado=consultarPedidoAprovado;
+  // Cliente pagou a AKITEMM; fornecedor exige outro acerto de custo.
+  // Esta consulta deve vir do ERP/fornecedor autoritativo, nunca do browser.
+  this.consultarLiberacaoCustoFornecedor=consultarLiberacaoCustoFornecedor;
   this.key=Buffer.from(chavePedidos);this.agora=agora;
   banco.exec([
    'CREATE TABLE IF NOT EXISTS loja_real_outbox_fornecedor(',
@@ -193,6 +198,15 @@ class PedidosFornecedorOutbox {
      autoriza.prova.valorCentavos!==registrado.valor_pago_centavos||
      hash(JSON.stringify(autoriza.payload))!==registrado.payload_hash)
    falha('PEDIDO_DIVERGENTE_DO_ORIGINAL');
+  // Evita expedir mercadoria da WeDrop (ou outro distribuidor) sem
+  // confirmar a obrigação de fornecimento separada do Pix do consumidor.
+  const custo=await this.consultarLiberacaoCustoFornecedor({pedidoId,fornecedorId});
+  if(!custo||custo.pedidoId!==pedidoId||custo.fornecedorId!==fornecedorId||
+     !['CUSTO_QUITADO','CREDITO_CONTRATUAL_AUTORIZADO'].includes(custo.estado)||
+     typeof custo.referencia!=='string'||
+     !/^[A-Za-z0-9_-]{8,120}$/.test(custo.referencia)||
+     custo.origem!=='CANAL_FORNECEDOR_AUTORIZADO')
+   falha('CUSTO_FORNECEDOR_SEM_LIBERACAO');
   let payload,row;
   this.db.exec('BEGIN IMMEDIATE');
   try{
