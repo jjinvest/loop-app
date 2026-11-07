@@ -21,6 +21,7 @@ on:
       - 'test/agendador-backup-identidade-real.test.js'
       - 'test/meus-pedidos-titular-real.test.js'
       - 'test/controle-economico-loja-sqlite.test.js'
+      - 'test/admin-economia-privado-akitemm.test.js'
       - 'test/limite-operacoes-identidade-real-sqlite.test.js'
       - 'test/troca-senha-identidade-real-sqlite.test.js'
       - '.github/workflows/identidade-real-segregada.yml'
@@ -52,6 +53,7 @@ jobs:
           node --check src/producao/pedidos-fornecedor-outbox.js
           node --check src/producao/pedidos-comerciais-sqlite.js
           node --check src/producao/controle-economico-loja-sqlite.js
+          node --check src/producao/rotas-admin-economia-akitemm.js
           node --check src/producao/catalogo-multidistribuidores-sqlite.js
           node --check src/producao/cotacoes-multidistribuidores-sqlite.js
           node --check src/producao/backup-identidade-real.js
@@ -90,6 +92,8 @@ jobs:
         run: node --test test/meus-pedidos-titular-real.test.js
       - name: Preco de venda custo fornecedor margem e dados do contador
         run: node --test test/controle-economico-loja-sqlite.test.js
+      - name: Custos de distribuidores apenas ao administrador autorizado
+        run: node --test test/admin-economia-privado-akitemm.test.js
       - name: Não ativar cadastro real com configuração de laboratório
         env:
           NODE_ENV: production
