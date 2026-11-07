@@ -54,53 +54,65 @@ async function criarReservaFicticia(fixture,{quantidade=12}={}){
   banco:repo.banco,preLancamento:pre,livro:pre.livro
  })};
 }
-test('dourada MANUAL exige saldo e compromete uma vez o cofre de reserva',async t=>{
+test('nova dourada manual nao consome reserva, sem pre-lancamento, imutavel e idempotente',t=>{
+ const {repo,ponte,razao,contas}=montar();t.after(()=>repo.fechar());
+ const primeira=ponte.criarDouradaManualDemo({eventoId:'dourada-sem-reserva'});
+ assert.equal(primeira.posicaoId,1);
+ assert.equal(primeira.fila,'B');assert.equal(primeira.cor,'DOURADO');
+ assert.equal(primeira.aporteRegistrado,false);
+ assert.equal(primeira.reservaConsumidaCentavos,0);
+ assert.equal(primeira.receitaNovaCentavos,0);
+ assert.equal(primeira.cofreDestinoContemplacao,'LOOP_DOURADAS');
+ const repetida=ponte.criarDouradaManualDemo({eventoId:'dourada-sem-reserva'});
+ assert.equal(repetida.repetida,true);
+ assert.equal(repetida.posicaoId,primeira.posicaoId);
+ const segunda=ponte.criarDouradaManualDemo({eventoId:'dourada-sem-reserva-2'});
+ assert.equal(segunda.posicaoId,primeira.posicaoId+1);
+ const contabil=repo.banco.prepare(
+  'SELECT COUNT(*) AS n FROM admin_ponte_douradas_financiadas_demo'
+ ).get();
+ assert.equal(contabil.n,0);
+ const estado=ponte.consultar();
+ assert.equal(estado.douradasManuais.length,2);
+ assert.equal(estado.compras.length,0);
+ assert.equal(razao.consultar().lancamentosRegistrados,0);
+ assert.equal(ponte.auditarIntegridadeOperacionalDemo().totalAlertas,0);
+ const sim=ponte._restaurar();
+ for(const p of sim.filas.filaB){
+  assert.equal(p.empresa,true);assert.equal(p.titularOperacional,'LOOP_EMPRESA');
+  assert.equal(p.statusAdesao,'POSICAO_LOOP');
+  assert.equal(p.origemOperacional,'ADMIN_MANUAL_SEM_COMPRA');
+  assert.equal(p.geradaSemCompra,true);
+  assert.equal(p.aporteInternoCentavos,0);
+ }
+ assert.throws(()=>repo.banco.exec('DELETE FROM admin_ponte_douradas_manuais_demo'),
+  /bola dourada imutavel/);
+ const reaberta=new PonteComprasConvitesDemoSQLite({banco:repo.banco,contas});
+ assert.equal(reaberta.criarDouradaManualDemo({eventoId:'dourada-sem-reserva'}).repetida,true);
+ assert.equal(reaberta.criarDouradaManualDemo({eventoId:'dourada-sem-reserva-3'}).posicaoId,3);
+ assert.equal(reaberta.auditarIntegridadeOperacionalDemo().totalAlertas,0);
+});
+
+test('douradas novas nao afetam saldo ou compromissos antigos do cofre de reserva',async t=>{
  const fixture=montar();const {repo,ponte,razao}=fixture;
  t.after(()=>repo.fechar());
- assert.throws(()=>ponte.criarDouradaManualDemo({eventoId:'dourada-sem-reserva'}),
-  {codigo:'RESERVA_NAO_CONFIGURADA'});
- assert.equal(ponte.consultar().douradasManuais.length,0);
  const {pre,conciliacao}=await criarReservaFicticia(fixture);
  assert.equal(pre.resumo().reservaRestanteSimuladoCentavos,50000);
  const inicial=conciliacao.conferir();
- assert.equal(inicial.cofreDireitaSimuladoCentavos,50000);
- const primeira=ponte.criarDouradaManualDemo({eventoId:'dourada-financiada-a'});
- assert.equal(primeira.valorReferenciaCentavos,25000);
- assert.equal(primeira.aporteRegistrado,true);
- assert.equal(primeira.receitaNovaCentavos,0);
- assert.equal(primeira.fila,'B');
- assert.equal(primeira.cor,'DOURADO');
- assert.equal(ponte.criarDouradaManualDemo({eventoId:'dourada-financiada-a'}).repetida,true);
- assert.equal(conciliacao.conferir().cofreDireitaDisponivelSimuladoCentavos,25000);
- const segunda=ponte.criarDouradaManualDemo({eventoId:'dourada-financiada-b'});
+ assert.equal(inicial.cofreDireitaDisponivelSimuladoCentavos,50000);
+ const primeira=ponte.criarDouradaManualDemo({eventoId:'dourada-reserva-intocada-a'});
+ const segunda=ponte.criarDouradaManualDemo({eventoId:'dourada-reserva-intocada-b'});
  assert.equal(segunda.posicaoId,primeira.posicaoId+1);
- assert.equal(conciliacao.conferir().cofreDireitaDisponivelSimuladoCentavos,0);
- assert.equal(conciliacao.conferir().reservaDouradasComprometidaCentavos,50000);
- assert.throws(()=>ponte.criarDouradaManualDemo({eventoId:'dourada-financiada-c'}),
-  {codigo:'SALDO_RESERVA_INSUFICIENTE'});
+ assert.equal(segunda.reservaConsumidaCentavos,0);
+ assert.equal(conciliacao.conferir().cofreDireitaDisponivelSimuladoCentavos,50000);
+ assert.equal(conciliacao.conferir().reservaDouradasComprometidaCentavos,0);
+ assert.equal(pre.resumo().reservaRestanteSimuladoCentavos,50000);
  assert.equal(ponte.consultar().douradasManuais.length,2);
- assert.equal(ponte.consultar().compras.length,12);
  assert.equal(ponte.auditarIntegridadeOperacionalDemo().totalAlertas,0);
  assert.equal(razao.consultar().lancamentosRegistrados,0);
- assert.equal(pre.resumo().reservaRestanteSimuladoCentavos,50000);
- const sim=ponte._restaurar();
- for(const p of sim.filas.filaB.slice(-2)){
-  assert.equal(p.empresa,true);
-  assert.equal(p.titularOperacional,'LOOP_EMPRESA');
-  assert.equal(p.statusAdesao,'POSICAO_LOOP');
-  assert.equal(p.origemOperacional,'ADMIN_MANUAL_COM_APORTE_RESERVA_DEMO');
-  assert.equal(p.geradaSemCompra,false);
-  assert.equal(p.aporteInternoCentavos,25000);
- }
- assert.throws(()=>repo.banco.exec('DELETE FROM admin_ponte_douradas_financiadas_demo'),
-  /aporte dourada imutavel/);
- const ponteReaberta=new PonteComprasConvitesDemoSQLite({banco:repo.banco,
-  contas:fixture.contas,consultarPagamentoConfiavel:async id=>fixture.comprovantes.get(id)});
- assert.throws(()=>ponteReaberta.criarDouradaManualDemo({eventoId:'dourada-pos-reinicio'}),
-  {codigo:'SALDO_RESERVA_INSUFICIENTE'});
- assert.equal(ponteReaberta.criarDouradaManualDemo({eventoId:'dourada-financiada-b'}).repetida,true);
+ assert.equal(repo.banco.prepare(
+  'SELECT COUNT(*) AS n FROM admin_ponte_douradas_financiadas_demo').get().n,0);
 });
-
 test('dourada operacional no simulador respeita seis eventos e destinacoes de cofres',t=>{
  const {repo,ponte,razao}=montar();t.after(()=>repo.fechar());
  const sim=ponte._restaurar();
