@@ -33,9 +33,11 @@ test('loja AKITEMM independente do LOOP e dados de entrega não incluem informa�
  assert.match(html,/href="\/escritorio"/);
  assert.doesNotMatch(html,/class="loop03-sidebar"/);
  for(const id of ['akitemmBusca','akitemmFormEntrega','akitemmBannerConteudo',
-  'akitemmModalDetalhes','registrarPedidoLoja','akitemmFotoTitular','akitemmNomeTitular']){
+  'akitemmVisualizacaoProduto','akitemmVoltarProdutos','registrarPedidoLoja',
+  'akitemmFotoTitular','akitemmNomeTitular']){
   assert.ok(html.includes('id="'+id+'"'),id+' está funcional no layout');
  }
+ assert.doesNotMatch(html,/id="akitemmModalDetalhes"/,'detalhes não abrem modal duplicado');
  assert.match(html,/name="logradouro"/);
  assert.match(html,/name="bairro"/);
  assert.match(html,/name="cep"/);
