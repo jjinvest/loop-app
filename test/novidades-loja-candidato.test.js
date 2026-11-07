@@ -108,14 +108,14 @@ test('mesma loja e admin: autenticação, publicação, imagem e nenhum Pix/posi
  assert.equal(live.status,200);r=await live.json();
  const cadastrado=await fetch(base+'/staging/contas/cadastrar',{
   method:'POST',headers:{'Content-Type':'application/json'},
-  body:JSON.stringify({nome:'Teste Novidades',nick:'novidades2026',
+  body:JSON.stringify({nome:'Teste Novidades',nick:'novidade26',
    email:'novidades@example.invalid',senha:'SenhaTesteNovidades2026!',
    aceiteExplicito:true})
  });
  assert.equal(cadastrado.status,201);
  const login=await fetch(base+'/staging/contas/entrar',{
   method:'POST',headers:{'Content-Type':'application/json'},
-  body:JSON.stringify({nick:'novidades2026',senha:'SenhaTesteNovidades2026!'})
+  body:JSON.stringify({nick:'novidade26',senha:'SenhaTesteNovidades2026!'})
  });
  assert.equal(login.status,200);
  const cookie=login.headers.getSetCookie().find(x=>x.startsWith('loop_candidato_s=')).split(';')[0];
