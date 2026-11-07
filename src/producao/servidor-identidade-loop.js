@@ -5,12 +5,19 @@ const express=require('express');
 const {COOKIE}=require('./identidade-cliente-loop-sqlite');
 const {montarInterfaceAprovada}=require('./interface-aprovada-loop');
 function criarAppIdentidadeLoop({contas,origemHttps,
- permitirCadastro=false,backupEstado=null}={}){
+ permitirCadastro=false,backupEstado=null,
+ pedidosComerciais=null,remessasOutbox=null}={}){
  if(!contas||typeof contas.entrar!=='function'||typeof contas.sessao!=='function')
   throw Error('IDENTIDADE_REAL_NAO_CONFIGURADA');
  if(process.env.NODE_ENV==='production'&&permitirCadastro&&
     typeof backupEstado!=='function')
   throw Error('BACKUP_OFFSITE_REAL_NAO_CONFIGURADO');
+ if((pedidosComerciais===null)!==(remessasOutbox===null))
+  throw Error('PEDIDOS_REAIS_INTEGRACAO_INCOMPLETA');
+ if(pedidosComerciais!==null&&(
+    typeof pedidosComerciais.listarDoTitular!=='function'||
+    typeof remessasOutbox.consultar!=='function'))
+  throw Error('PEDIDOS_REAIS_INTEGRACAO_INVALIDA');
  const backupAtual=()=>typeof backupEstado==='function'?
   backupEstado()?.backupAtualEmDia===true:true;
  const cadastroLiberado=()=>permitirCadastro&&backupAtual();
@@ -228,6 +235,43 @@ function criarAppIdentidadeLoop({contas,origemHttps,
   catalogoComercialDisponivel:false,fornecedoresAtivos:0,
   checkoutReal:false,financeiroReal:false
  }));
+ // "Meus Pedidos" mostra somente registros comerciais existentes e
+ // remessas do próprio titular, nunca catálogo fictício ou dados de outro
+ // cliente. Sem PSP/fornecedores homologados, responde 503 (não inventa).
+ app.get('/api/loja/pedidos',protegido,(req,res)=>{
+  if(!pedidosComerciais||!remessasOutbox)
+   return res.status(503).json({
+    erro:'PEDIDOS_REAIS_AINDA_NAO_INTEGRADOS',checkoutReal:false
+   });
+  try{
+   const base=pedidosComerciais.listarDoTitular({
+    titularId:req.conta.titularId,limite:30
+   });
+   if(!Array.isArray(base)||base.length>30)
+    throw Error('PEDIDOS_FORA_DA_QUOTA');
+   const pedidos=base.map(pedido=>{
+    const fornecedores=Array.isArray(pedido.fornecedores)?
+     pedido.fornecedores:
+     (pedido.fornecedorId?[pedido.fornecedorId]:[]);
+    if(typeof pedido.pedidoId!=='string'||fornecedores.length>25)
+     throw Error('PEDIDO_INVALIDO');
+    const remessas=fornecedores.map(fornecedorId=>{
+     const remessa=remessasOutbox.consultar({
+      pedidoId:pedido.pedidoId,fornecedorId
+     });
+     return {fornecedorId,
+      estado:remessa?.estado||'AGUARDANDO_SEPARACAO',
+      pedidoParceiroId:remessa?.pedidoParceiroId||null};
+    });
+    return {pedidoId:pedido.pedidoId,status:pedido.status,
+     criadoEm:pedido.criadoEm,valorTotalCentavos:pedido.valorTotalCentavos,
+     quantidadeDistribuidores:fornecedores.length,remessas};
+   });
+   return res.json({pedidos,totalExibido:pedidos.length,
+    fonte:'PEDIDOS_COMERCIAIS_DO_TITULAR',
+    checkoutRealHabilitadoPorEstaConsulta:false});
+  }catch{return res.status(503).json({erro:'PEDIDOS_INDISPONIVEIS'});}
+ });
  app.all(new RegExp('^/api/loja(?:/|$)'),(_req,res)=>res.status(503).json({
   erro:'OPERACAO_COMERCIAL_NAO_HABILITADA',checkoutReal:false
  }));
