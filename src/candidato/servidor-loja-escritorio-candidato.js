@@ -256,8 +256,11 @@ function criarAppLojaEscritorioCandidato({banco,repositorioCatalogo,
     csrf:x.csrf,expiraEm:x.expiraEm,
     emailVerificado:false,pagamentosReais:false});
   }catch(e){
-   return res.status(e.codigo==='CONTA_TEMPORARIAMENTE_BLOQUEADA'?429:401)
-    .json({erro:'CREDENCIAIS_INVALIDAS'});
+   if(e.codigo==='AUTENTICACAO_TEMPORARIAMENTE_OCUPADA')
+    return res.status(429).json({erro:e.codigo});
+   if(e.codigo==='CONTA_TEMPORARIAMENTE_BLOQUEADA')
+    return res.status(429).json({erro:e.codigo});
+   return res.status(401).json({erro:'CREDENCIAIS_INVALIDAS'});
   }
  });
  // Solicitação anônima: nunca revela se o e-mail pertence a uma conta.
@@ -292,6 +295,8 @@ function criarAppLojaEscritorioCandidato({banco,repositorioCatalogo,
   }catch(e){
    if(e.codigo==='RECUPERACAO_EMAIL_INDISPONIVEL')
     return res.status(503).json({erro:e.codigo});
+   if(e.codigo==='AUTENTICACAO_TEMPORARIAMENTE_OCUPADA')
+    return res.status(429).json({erro:e.codigo});
    return res.status(400).json({erro:'RECUPERACAO_CODIGO_OU_SENHA_INVALIDOS'});
   }
  });
