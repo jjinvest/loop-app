@@ -186,3 +186,23 @@ Nenhuma venda real nem bonificação atribuída. Tudo no ambiente de homologaç�
 **Integração de verdade:** a função de fotografia de classificação do pré-pedido também grava fotografia imutável de endereço de entrega para produtos físicos **na mesma transação do pré-pedido**, com rollback integral se não houver endereço cadastrado. O endereço do pré-pedido não muda se o titular editar seu endereço depois. Pedido PDF dispensa endereço. Nenhum dado de entrega é enviado à WeDrop, nenhuma compra comercial, cálculo de frete, expedição ou pagamento real. Os testes devem comprovar operação HTTP com duas contas isoladas, CSRF, criptografia, rollback sem endereço, registro único e imutabilidade/idempotência do snapshot do pedido. CI/preview ainda dependem de validação neste bloco.
 
 **Auditoria independente:** retomada conforme a última tarefa do Codex ligada à issue #3. Usar Codex após correção das conexões e entregar leitura independente (especialmente segurança, estados financeiros e operações bloqueadas). Nesta conversa não há ferramenta Codex vinculada; não declarar revisão Codex executada. Conservar PR #1 DRAFT e sem deploy comercial.
+
+
+## Continuidade 267 — comandos reais e revisão Codex (07/11/2026)
+
+**Missão:** eliminar comandos visualmente existentes mas inertes, ligar a execução ao mesmo titular e mesmo SQLite, validar pela interface aprovada, depois pedir auditoria independente Codex; não criar tela paralela, não confundir ensaio com liberação comercial.
+
+**Conexões corrigidas em sequência:**
+1. **Cadastro e frete:** endpoint de salvar endereço antes retornava HTTP 409 fixo. Agora grava dados **de laboratório fictícios** cifrados, com CSRF, e vincula snapshot imutável ao pré-pedido de produto físico na MESMA transação; sem endereço, pré-pedido físico faz rollback integral. Testes e navegador https://github.com/jjinvest/loop-app/actions/runs/42390887983 — SUCCESS. Railway preview implantado `e04f1396-b80b-4674-b14c-8ac636d6e0d6` — SUCCESS (25/25).
+2. **Copiar link da loja:** endpoint da vitrine antes respondia sempre `ativo:false,linkLoja:null`, mantendo botão bloqueado apesar da mesma conta já ter dois links no Escritório. Agora a API autenticada retorna a URL /loja/{nick} e /escritorio/{nick} pela mesma identidade; botão Copiar habilitado com fallback de seleção. A própria vitrine alerta que a divulgação é **apenas para cadastro de ensaio**, sem comissão, posição ou compra real. Testes HTTP de isolamento + navegador PC/celular https://github.com/jjinvest/loop-app/actions/runs/42391493180 — SUCCESS. Código em `fbff59d295b8151d05d2a444e33afd21535fe0a6`. Railway preview `80e19ee3-40a7-4887-8e54-b103972b7b0c` — SUCCESS (25/25).
+
+**Comandos ainda não aptos a clientes reais:**
+- Loja: pedido/checkout apenas pré-pedido e simulação de elegibilidade; avaliações/entrega reais bloqueadas; configuração de banners/suporte no candidato é estática; não há parceiro WeDrop homologado nem cotação de frete comercial.
+- Financeiro: Pix comercial, conciliação PSP↔banco independente, saques, comissão e operação plena do motor exigem integração final e gates externos; o ambiente não deve exibir provas simuladas como recebimentos bancários reais.
+- Cliente: recuperação/envio de e-mail depende da custódia de segredos/provedor e configuração; CPF e LGPD exigem verificações e aprovações externas; sem direito financeiro comercial.
+- Links: o teste permite cadastrar convites; **a política comercial definitiva exige primeira compra confirmada antes de liberar divulgação**, ainda não homologada.
+- Infraestrutura: PR #1 permanece DRAFT; não houve merge nem liberação de pagamentos reais. Recuperação DR independente e critérios legais/fiscais ainda têm gate separado.
+
+**Auditoria Codex:** issue https://github.com/jjinvest/loop-app/issues/3 atualizada em comentário com HEAD e provas. Nenhuma sessão Codex foi iniciada via esta conversa. Na próxima passagem, Codex deverá auditar os comandos que parecem funcionais mas não alteram estado e classificar PASSOU/FALHOU/NÃO COMPROVADO.
+
+Link de teste da mesma plataforma: https://akitemm-escritorio-preview-homologacao.up.railway.app
