@@ -111,6 +111,14 @@ test('mesma identidade da loja entra no Escritorio LOOP sem novo cadastro',async
  assert.equal((await perfilEscritorio.json()).nick,'marta');
  assert.equal((await x.consultar('/staging/vitrine/minha-conta')).status,401,
   'navegador sem sessao nao herda identidade de outro titular');
+ const atalho=await x.consultar('/loja?origem=escritorio');
+ assert.equal(atalho.status,302);
+ assert.equal(atalho.headers.get('location'),'/staging/loja?origem=escritorio',
+  'atalho comercial deve atravessar Path=/staging sem perder o cookie');
+ assert.equal((await x.consultar('/staging/loja')).status,302,
+  'loja continua protegida e exige login, mesmo acessada diretamente');
+ assert.equal((await x.consultar('/staging/loja',{headers})).status,200,
+  'apos o redirecionamento o navegador envia a sessao do titular');
 });
 test('gateway exige acesso antes de HTML e rotas administrativas',async t=>{
  const x=await preparar(t);
