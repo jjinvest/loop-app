@@ -13,7 +13,8 @@ function montarGatewayAdminComercial(app,{
     typeof sessoes?.sair!=='function'||
     !controle||!catalogo||typeof origemHttps!=='string'||
     (auditoria!==null&&typeof auditoria.verificar!=='function')||
-    (process.env.NODE_ENV==='production'&&auditoria===null))
+    (process.env.NODE_ENV==='production'&&
+     (auditoria===null||manutencao===null)))
   erro('ADMIN_REAL_SEM_CUSTODIA');
  let origem;
  try{
