@@ -75,11 +75,11 @@ test('financeiro separa parcelas douradas, conserva investimento e reserva, livr
  for(const centroPosicao of [dourada,desistente]){
   const f=criarVisaoFinanceiraAdminDemo({centroPosicao});
   const total=id=>f.caixas.find(c=>c.id===id).entradasAcumuladasCentavos;
-  assert.equal(total(COFRES.DOURADAS),10);
+  assert.equal(total(COFRES.DOURADAS),150000);
   assert.equal(total(COFRES.CENTRO),0);
   assert.equal(total(COFRES.ESQUERDA),0);
   assert.equal(total(COFRES.DIREITA),0);
-  assert.equal(f.totalLoopCentavos,10);
+  assert.equal(f.totalLoopCentavos,150000);
   assert.equal(f.centroAssumidoPeloLoop,true);
   assert.deepEqual(f.vendas.map(v=>v.destinoCiclo),esperados);
  }
@@ -87,7 +87,7 @@ test('financeiro separa parcelas douradas, conserva investimento e reserva, livr
  assert.equal(raiz.registrarCicloFicticio({cicloId:id,centroPosicao:dourada}).repetido,false);
  assert.equal(raiz.registrarCicloFicticio({cicloId:id,centroPosicao:dourada}).repetido,true);
  const extrato=raiz.consultar();
- assert.equal(extrato.caixas.find(x=>x.id===COFRES.DOURADAS).saldoProjetadoCentavos,10);
+ assert.equal(extrato.caixas.find(x=>x.id===COFRES.DOURADAS).saldoProjetadoCentavos,150000);
  assert.equal(extrato.caixas.find(x=>x.id===COFRES.CENTRO).saldoProjetadoCentavos,0);
  assert.equal(extrato.caixas.find(x=>x.id===COFRES.ESQUERDA).saldoProjetadoCentavos,0);
  assert.equal(extrato.caixas.find(x=>x.id===COFRES.DIREITA).saldoProjetadoCentavos,0);
