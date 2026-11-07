@@ -29,6 +29,7 @@ on:
       - 'scripts/backup-criptografado-checkout-staging.js'
       - 'test/backup-conta-unica-restauracao-segura.test.js'
       - 'test/conta-unica-login-concorrente-regressao.test.js'
+      - 'test/cadastro-indicacao-atomicidade-sqlite.test.js'
       - 'test/troca-senha-conta-unica-candidata.test.js'
       - 'test/preview-unificacao-psp-webhook.test.js'
       - 'src/domain/agendador-conciliacao-asaas-sandbox.js'
@@ -114,6 +115,7 @@ jobs:
       - run: node --test test/prepedidos-checkout-staging-fluxo-unico.test.js
       - run: node --test test/asaas-vinculo-motor-recuperacao-candidato.test.js
       - run: node --test test/conta-unica-login-concorrente-regressao.test.js
+      - run: node --test test/cadastro-indicacao-atomicidade-sqlite.test.js
       - run: node --test test/backup-conta-unica-restauracao-segura.test.js
       - run: node --test test/asaas-motor-automatico-sandbox-candidato.test.js
       - run: node --check src/domain/auditoria-integridade-motor-candidato-sqlite.js
