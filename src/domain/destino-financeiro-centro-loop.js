@@ -13,11 +13,19 @@ function centroDoLoop(posicao){
   (posicao.titularOperacional==='LOOP_EMPRESA'||posicao.empresa===true||
    ['PRAZO_ENCERRADO','DESISTENTE'].includes(posicao.statusAdesao));
 }
-function cofreDoEvento({posicaoCentro,ordem}={}){
+// V2: somente os NOVOS ciclos com centro da empresa destinam os seis eventos
+// integralmente ao cofre dourado. V1 preserva as provisoes/ciclos imutaveis.
+// Nenhum credito novo e gerado na criacao da posicao.
+const REGRA_DOURADA_INTEGRAL='DOURADA_INTEGRAL_V2';
+const REGRA_DOURADA_LEGADA='DOURADA_PARTILHADA_V1';
+function cofreDoEvento({posicaoCentro,ordem,regraDourada=REGRA_DOURADA_INTEGRAL}={}){
  if(!Number.isInteger(ordem)||ordem<1||ordem>6)
   throw new RangeError('Evento financeiro exige ordem de 1 a 6');
- return centroDoLoop(posicaoCentro)&&[1,3,5].includes(ordem)?
-  COFRE_DOURADAS:DESTINOS[ordem-1];
+ if(![REGRA_DOURADA_INTEGRAL,REGRA_DOURADA_LEGADA].includes(regraDourada))
+  throw new RangeError('Regra dourada desconhecida');
+ if(!centroDoLoop(posicaoCentro))return DESTINOS[ordem-1];
+ return regraDourada===REGRA_DOURADA_LEGADA&&![1,3,5].includes(ordem)?
+  DESTINOS[ordem-1]:COFRE_DOURADAS;
 }
 function origemDoCentro(posicao){
  if(!centroDoLoop(posicao))return 'PARTICIPANTE_REAL_SIMULADO';
@@ -25,4 +33,5 @@ function origemDoCentro(posicao){
   posicao.statusAdesao==='PRAZO_ENCERRADO'?'ADESAO_VENCIDA_ASSUMIDA_LOOP':
   'POSICAO_OPERACIONAL_LOOP';
 }
-module.exports={COFRE_DOURADAS,centroDoLoop,cofreDoEvento,origemDoCentro};
+module.exports={COFRE_DOURADAS,centroDoLoop,cofreDoEvento,origemDoCentro,
+ REGRA_DOURADA_INTEGRAL,REGRA_DOURADA_LEGADA};
