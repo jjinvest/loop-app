@@ -31,3 +31,22 @@ Branch: `feature/unificar-escritorio-real-20261105`; PR #1 DRAFT. O projeto já 
 ## Correção de expedição: duas confirmações independentes
 
 A página pública da WeDrop afirma que o lojista paga o custo da mercadoria **depois da venda**, antes da remessa. Logo, o Pix do comprador confirmado pela AKITEMM **não é prova** de que a WeDrop recebeu o custo do produto. Foi corrigido o outbox `src/producao/pedidos-fornecedor-outbox.js` para exigir a função obrigatória `consultarLiberacaoCustoFornecedor({pedidoId,fornecedorId})`, **separada** de `consultarPagamentoConciliado`. O despacho só inicia quando essa consulta autoritativa retorna: pedido e distribuidor correspondentes, estado `CUSTO_QUITADO` ou `CREDITO_CONTRATUAL_AUTORIZADO`, referência validada e origem `CANAL_FORNECEDOR_AUTORIZADO`. Sem prova, retorna `CUSTO_FORNECEDOR_SEM_LIBERACAO` e mantém o pedido PENDENTE sem chamar a API de expedição. A própria WeDrop deve confirmar se o plano permite carteira/crédito e qual evidência retorna; **nenhum custo foi pago** e a função de produção **ainda não está ligada a canal externo**. Os testes de distribuidor usam dados artificiais. Isso preserva o fluxo 1 compra/1 cobrança para cliente, mas impede expedir sem a liquidação de custo do respectivo parceiro.
+
+
+## Restrição efetiva do plano Shopee Start confirmada em captura do painel
+
+**Nova evidência do proprietário, 07/11/2026:** no painel autenticado `dash.wedrop.com.br/my...` aparece textualmente: “O seu plano Shopee Start integra apenas lojas da Shopee. Para vender também no Mercado Livre, Amazon, TikTok Shop e outros canais, temos outro plano disponível.” O painel oferece upgrade “Conhecer o plano completo”, percebido pelo usuário como custo adicional de aproximadamente R$900. Esse valor **não foi verificado como cotação contratual** e não deve ser pressuposto nem comprado automaticamente. O usuário deseja manter as vendas/recebimentos e a coleta de dados do cliente **dentro da AKITEMM**, pagando posteriormente o custo ao distribuidor.
+
+**Consequência concreta:** o WeDrop Shopee Start **não pode ser tratado como integração da própria AKITEMM**. Não desenvolver ponte que crie pedidos fictícios na Shopee, compre em nome de clientes ou use etiquetas de envios Shopee para vendas off-platform sem **autorização expressa das plataformas e base contratual/fiscal**. A logística Shopee é intermediada para transações em sua plataforma, com etiqueta gerada após o pagamento do pedido Shopee; repasse de pedido pago fora da Shopee não é recurso demonstrado. Fontes:
+- https://help.shopee.com.br/portal/4/article/77113 (Termos de Serviço — entrega e logística);
+- https://help.shopee.com.br/portal/4/article/124091 (Programa de Logística — etiqueta emitida para pedido pago na Shopee);
+- https://wedrop.com.br/institucional/ (WeDrop afirma atender lojas próprias em **outros planos**, mas não comprova tal direito para Shopee Start);
+- https://site.marcelowedrop.com/wedrop-start-shopee-trends/ (Shopee Start exige venda na Shopee e custo do produto pago após venda).
+
+**Caminhos legítimos para triagem:**
+1. Perguntar ao suporte se o membro Shopee Start pode contratar **expedição manual/autorizada de pedidos originados na AKITEMM**, preço por pedido, API/ERP/arquivo/portal, aprovação fiscal e rastreamento, sem exigir plano completo.
+2. Verificar uma oferta formal de integração da **loja própria AKITEMM** em outro plano, apenas se houver prova de retorno econômico e necessidade real. Não pressionar o usuário a pagar upgrade.
+3. Caso não autorizado, integrar outro distribuidor que suporte explicitamente venda externa via loja própria e despacho após pagamento do custo. Preservar catálogo multi-oferta e separação N produtos/N distribuidores já construídos.
+4. Shopee pode ser **canal de vendas paralelo**, mas os pedidos originados e pagos na Shopee não devem gerar automaticamente compra/posição no LOOP como se tivessem sido pagos no checkout AKITEMM; tratar origens e reconciliação separadamente.
+
+**Estado:** bloqueio de canal comercial **EXTERNO**, não falha da arquitetura multi-distribuidores AKITEMM. Não declarar a conexão WeDrop concluída, nem abrir checkout real sem a permissão e o fornecedor efetivamente homologado.
