@@ -174,6 +174,9 @@ test('backup preserva catálogo, custos e auditoria íntegra, mas revoga sessão
   precoAnteriorCentavos:19000,precoVendaCentavos:19900,
   revisaoPrecoEsperada:0});
  assert.equal(trilha.verificar().total,4);
+ manutencao.alterar({suspensa:true,revisaoEsperada:0,
+  motivo:'CORRECAO_TECNICA'});
+ assert.equal(trilha.verificar().total,5);
  assert.equal(validarIdentidade(x.arquivo).administracaoIncluida,true);
  const feito=await criarBackupIdentidadeReal({
   origem:x.arquivo,destino:x.backup,
@@ -191,11 +194,22 @@ test('backup preserva catálogo, custos e auditoria íntegra, mas revoga sessão
  const reaberta=new AuditoriaOperacionalSQLite({
   banco:bd,chaveAuditoria
  });
- assert.equal(reaberta.verificar().total,4);
- const c=new ControleEconomicoLojaSQLite({banco:bd,auditoria:reaberta});
+ assert.equal(reaberta.verificar().total,5);
+ const restaurada=new ManutencaoComercialSQLite({
+  banco:bd,auditoria:reaberta
+ });
+ assert.equal(restaurada.estado().suspensa,true);
+ assert.equal(restaurada.estado().revisao,1);
+ const c=new ControleEconomicoLojaSQLite({
+  banco:bd,auditoria:reaberta,manutencao:restaurada
+ });
  const item=c.consultarOferta({produtoId:'p01',distribuidorId:'dist01'});
  assert.equal(item.precoVendaCentavos,19900);
  assert.equal(item.custoFornecedorCentavos,12500);
+ assert.throws(()=>c.definirCusto({
+  produtoId:'p01',distribuidorId:'dist01',
+  custoUnitCentavos:11000,revisaoEsperada:1
+ }),{codigo:'OPERACAO_COMERCIAL_EM_MANUTENCAO'});
  const admin2=new SessaoAdminComercialSQLite({
   banco:bd,chaveAdmin,credencialAdmin
  });
