@@ -63,6 +63,9 @@ on:
       - 'test/akitemm-config-loja-demo.test.js'
       - 'test/escritorio-admin-pesquisa-conectada.test.js'
       - 'src/domain/painel-operacional-admin-candidato.js'
+      - 'src/domain/livro-luzes-financeiras-candidato-sqlite.js'
+      - 'src/domain/custos-produtos-admin-candidato-sqlite.js'
+      - 'src/candidato/vitrine-aprovada-candidato.js'
       - 'src/domain/destino-financeiro-centro-loop.js'
       - 'src/domain/tabuleiro-loop.js'
       - 'src/domain/estado-simulacao.js'
@@ -142,6 +145,8 @@ jobs:
         run: node --test test/escritorio-admin-pesquisa-conectada.test.js
       - name: Departamentos operacionais e fontes integradas do SQLite
         run: node --test test/escritorio-admin-operacoes-unificadas.test.js
+      - name: Verificacao do livro de luzes e custos congelados
+        run: node --check src/domain/livro-luzes-financeiras-candidato-sqlite.js && node --check src/candidato/vitrine-aprovada-candidato.js
       - name: Regra restrita de douradas e cofre exclusivo, sem consumir reserva
         run: node --test test/dourada-manual-auditoria-pontas-loop-v6.test.js test/disponibilidade-caixa2-integracao-v6.test.js
       - run: node --check src/domain/estado-simulacao.js
