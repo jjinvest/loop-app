@@ -14,10 +14,10 @@
 <section class="painel"><div class="linha"><h2>Visão geral</h2><button type="button" id="atualizar">Atualizar</button></div><div id="indicadores" class="indicadores"></div></section>
 <section class="painel" aria-labelledby="tituloPesquisaAdmin">
 <h2 id="tituloPesquisaAdmin">Pesquisa administrativa · mesmo SQLite</h2>
-<p class="subtexto">Busque pedidos por nick ou ID, produtos por nome ou ID e missões por título ou pedido. Consulta protegida, sem operações financeiras.</p>
+<p class="subtexto">Consulte clientes, pedidos, produtos e missões por nick, nome ou identificador, inclusive sem pedidos. Consulta protegida, sem operações financeiras.</p>
 <form id="formPesquisaAdmin" autocomplete="off">
 <div class="duas-colunas">
-<label for="pesquisaTipoAdmin">Pesquisar em<select id="pesquisaTipoAdmin"><option value="pedidos">Pedidos e clientes</option><option value="produtos">Produtos</option><option value="missoes">Missões</option></select></label>
+<label for="pesquisaTipoAdmin">Pesquisar em<select id="pesquisaTipoAdmin"><option value="clientes">Clientes</option><option value="pedidos">Pedidos</option><option value="produtos">Produtos</option><option value="missoes">Missões</option></select></label>
 <label for="pesquisaTermoAdmin">Nome ou identificador<input id="pesquisaTermoAdmin" type="search" minlength="2" maxlength="80" required placeholder="Digite pelo menos 2 caracteres"></label>
 </div>
 <div class="linha"><button type="submit" id="pesquisaExecutarAdmin" class="primario">Pesquisar</button><button type="button" id="pesquisaLimparAdmin">Limpar pesquisa</button></div>
