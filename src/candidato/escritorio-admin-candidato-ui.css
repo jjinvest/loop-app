@@ -49,3 +49,12 @@
 .config-loja-admin .config-banner-item .linha{display:flex;flex-wrap:wrap;gap:8px}
 .config-loja-admin .config-banner-item button{min-width:75px}
 .config-loja-admin #configResultadoAdmin{overflow-wrap:anywhere}
+
+/* Busca operacional no mesmo painel, responsiva no PC e celular. */
+#formPesquisaAdmin{display:grid;gap:12px}
+#formPesquisaAdmin label{display:grid;gap:6px}
+#formPesquisaAdmin input[type=search]{box-sizing:border-box;width:100%;min-width:0;padding:12px;color:white;background:#282828;border:1px solid #766b4e;border-radius:8px;font:inherit}
+#pesquisaResultadosAdmin{display:grid;gap:8px;overflow-wrap:anywhere}
+#pesquisaResultadosAdmin .produto-admin-item>div{min-width:0;overflow-wrap:anywhere}
+#pesquisaResultadosAdmin button{flex-shrink:0}
+@media(max-width:650px){#pesquisaResultadosAdmin button{width:100%}}
