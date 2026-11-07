@@ -50,7 +50,7 @@ test('administrador vê preço de venda, custo do fornecedor e diferença bruta,
  {codigo:'REVISAO_CUSTO_EM_CONFLITO'});
  const hist=x.banco.prepare(
   'SELECT custo_anterior_centavos AS antes,custo_novo_centavos AS depois FROM loja_real_custos_historico ORDER BY id'
- ).all();
+ ).all().map(x=>({antes:x.antes,depois:x.depois}));
  assert.deepEqual(hist,[
   {antes:null,depois:11500},{antes:11500,depois:12500}
  ]);
@@ -82,7 +82,7 @@ test('CSV para contador não inventa imposto nem calcula lucro líquido',t=>{
  x.custos.definirCusto({produtoId:'tenis',distribuidorId:'wedrop',
   custoUnitCentavos:16000});
  const csv=x.custos.csvContador();
- assert.match(csv,/Produto_ID;Distribuidor_ID;SKU;Preco_de_venda_R\$/);
+ assert.match(csv,/"Produto_ID";"Distribuidor_ID";"SKU";"Preco_de_venda_R\$"/);
  assert.match(csv,/"tenis";"wedrop";"WD_002";"250,00";"160,00";"90,00";"NAO";"NAO";"1"/);
  assert.match(csv,/"camiseta";"segundo";"OUTRO_01";"185,00";"";"";"NAO";"NAO";"0"/);
  assert.equal(csv.includes('CPF'),false);
