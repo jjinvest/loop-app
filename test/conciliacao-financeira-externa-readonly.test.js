@@ -76,7 +76,7 @@ test('extrato bancario com transferencia divergente bloqueia conciliação',t=>{
  const r=analisar(x);
  assert.equal(r.totalDivergencias,1);
  assert.equal(r.divergenciasPorCodigo.LOTE_PSP_CREDITO_BANCARIO_DIVERGENTE,1);
- assert.equal(r.concilicaoRealCertificada,false);
+ assert.equal(r.conciliacaoRealCertificada,false);
 });
 test('cobranca PSP de outro pedido e estorno nao podem ser apresentados como recebimento',t=>{
  const x=fixture(t);
