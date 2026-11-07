@@ -5,12 +5,14 @@ const {montarAdminComercialAprovado}=
  require('./interface-admin-comercial-aprovada');
 function erro(c){const e=new Error(c);e.codigo=c;throw e;}
 function montarGatewayAdminComercial(app,{
- sessoes,controle,catalogo,pedidosComerciais=null,origemHttps
+ sessoes,controle,catalogo,auditoria=null,pedidosComerciais=null,origemHttps
 }={}){
  if(typeof sessoes?.autenticar!=='function'||
     typeof sessoes?.sessao!=='function'||
     typeof sessoes?.sair!=='function'||
-    !controle||!catalogo||typeof origemHttps!=='string')
+    !controle||!catalogo||typeof origemHttps!=='string'||
+    (auditoria!==null&&typeof auditoria.verificar!=='function')||
+    (process.env.NODE_ENV==='production'&&auditoria===null))
   erro('ADMIN_REAL_SEM_CUSTODIA');
  let origem;
  try{
@@ -101,7 +103,7 @@ function montarGatewayAdminComercial(app,{
   return res.json({sessaoAdminEncerrada:true});
  });
  montarAdminComercialAprovado(app,{
-  controle,catalogo,pedidosComerciais,
+  controle,catalogo,auditoria,pedidosComerciais,
   autorizarAdministrador:proteger,
   validarCsrfAdmin:validarCsrf,
   obterCsrfAdmin:req=>req.operador?.csrf,
