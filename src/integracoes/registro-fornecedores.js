@@ -50,6 +50,38 @@ class RegistroFornecedores {
     return adapter;
   }
 
+  // Diagnostico de encaixe tecnico; nao executa chamadas externas nem
+  // afirma que um parceiro fisico inexiste. O fornecedor pode ja estar
+  // contratado e apenas nao ter sido conectado a plataforma AKITEMM.
+  diagnosticarIntegracao({fornecedorId}={}){
+    codigo(fornecedorId,'fornecedorId');
+    const adaptador=this.adaptadores.get(fornecedorId);
+    if(!adaptador)return {
+      fornecedorId,adaptadorConectado:false,apiHomologada:false,
+      freteRealDisponivel:false,pedidosExternosDisponiveis:false,
+      consultaStatusDisponivel:false,checkoutHabilitado:false,
+      pendencias:['ADAPTADOR_API_FORNECEDOR_NAO_CONECTADO']
+    };
+    const recursos={
+      consultarEstoque:typeof adaptador.consultarEstoque==='function',
+      consultarStatus:typeof adaptador.consultarStatus==='function',
+      cotarFrete:typeof adaptador.cotarFrete==='function',
+      enviarPedidoIdempotente:
+        typeof adaptador.enviarPedidoIdempotente==='function',
+      consultarPedidoPorChave:
+        typeof adaptador.consultarPedidoPorChave==='function'
+    };
+    const pendencias=Object.entries(recursos).filter(([,ok])=>!ok)
+      .map(([nome])=>'API_SEM_'+nome.toUpperCase());
+    return {fornecedorId,adaptadorConectado:true,
+      apiHomologada:false,
+      freteRealDisponivel:recursos.cotarFrete,
+      pedidosExternosDisponiveis:recursos.enviarPedidoIdempotente,
+      consultaStatusDisponivel:recursos.consultarStatus,
+      checkoutHabilitado:false,
+      pendencias};
+  }
+
   async consultarEstoque({ fornecedorId, sku } = {}) {
     codigo(sku,'sku');
     const resposta = await this.obter(fornecedorId).consultarEstoque({ sku });
