@@ -31,10 +31,15 @@ async function provar({env=process.env,fetcher=globalThis.fetch}={}){
   .split(';')[0];
  if(!cookieVisitante.startsWith('akitemm_preview_access='))
   falha('FRONTEIRA_COOKIE_CLIENTE_AUSENTE');
- for(const rota of ['/escritorio','/staging/assets/admin.js',
+ const tentativas=['/escritorio','/staging/assets/admin.js',
   '/staging/escritorio-unificado/motor/estado',
   '/staging/escritorio-unificado/motor/agenda',
-  '/staging/escritorio-unificado/monitor-psp']){
+  '/staging/escritorio-unificado/monitor-psp',
+  '/STAGING/ESCRITORIO-ADMIN',
+  '/STAGING/ESCRITORIO-UNIFICADO/MOTOR/ESTADO',
+  '/staging/escritorio%2dunificado/motor/estado',
+  '/staging/assets/%61dmin.js'];
+ for(const rota of tentativas){
   const direct=await get(rota,cliente);
   if(direct.status!==401)falha('FRONTEIRA_CLIENTE_ACESSOU_ADMIN');
   const session=await get(rota,null,cookieVisitante);
@@ -51,7 +56,7 @@ async function provar({env=process.env,fetcher=globalThis.fetch}={}){
  if(rPainel.status!==200)falha('FRONTEIRA_API_ADMIN_AUSENTE');
  const rAsaas=await get('/staging/asaas/webhook-unificado',operador);
  if(rAsaas.status!==404)falha('FRONTEIRA_WEBHOOK_INTERNO_EXPOSTO');
- return {clientePaginaAcessivel:true,rotasAdminBloqueadasParaCliente:5,
+ return {clientePaginaAcessivel:true,rotasAdminBloqueadasParaCliente:tentativas.length,
   sessaoAdminSeparada:true,adminV2:true,webhookInternoInacessivel:true,
   requestsSomenteGET:true,alteracoesEstado:0,financeiroReal:false};
 }
