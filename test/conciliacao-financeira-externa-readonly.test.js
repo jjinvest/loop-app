@@ -219,7 +219,7 @@ test('reversoes maiores que credito e transacoes bancarias repetidas nao sao con
  const r=analisar({...x,extratoBanco:[...x.extratoBanco,reverso]});
  assert.equal(r.divergenciasPorCodigo.REVERSAO_BANCARIA_SUPERA_CREDITO,1);
  assert.throws(()=>analisar({...x,extratoBanco:[...x.extratoBanco,
-  {...reverso,transacaoBancoId:'TRANS1'}]}),
+  reverso,{...reverso}]}),
   {codigo:'CONCILIACAO_BANCO_DUPLICADO'});
 });
 test('reversao invalida, valor nulo ou origem identica sao rejeitados',t=>{
