@@ -7,6 +7,7 @@ on:
       - 'src/producao/**'
       - 'scripts/iniciar-identidade-real-loop.js'
       - 'test/identidade-real-isolada.test.js'
+      - 'test/identidade-real-persistencia.test.js'
       - 'test/api-identidade-real-sem-pagamentos.test.js'
       - '.github/workflows/identidade-real-segregada.yml'
   workflow_dispatch:
@@ -35,6 +36,8 @@ jobs:
           node --check scripts/iniciar-identidade-real-loop.js
       - name: Conta, consentimento, senhas e recuperação
         run: node --test test/identidade-real-isolada.test.js
+      - name: SQLite de cadastro persiste após reinicialização
+        run: node --test test/identidade-real-persistencia.test.js
       - name: API real não abre dinheiro nem aceita CSRF inválido
         run: node --test test/api-identidade-real-sem-pagamentos.test.js
       - name: Não ativar cadastro real com configuração de laboratório
