@@ -20,7 +20,8 @@ const LIMITES=Object.freeze({
  login:{janelaMs:15*60000,max:20},
  cadastro:{janelaMs:60*60000,max:5},
  solicitar:{janelaMs:60*60000,max:12},
- confirmar:{janelaMs:15*60000,max:15}
+ confirmar:{janelaMs:15*60000,max:15},
+ trocar:{janelaMs:15*60000,max:10}
 });
 let hashes=0;
 function erro(c){const e=new Error(c);e.codigo=c;throw e;}
@@ -284,6 +285,66 @@ class IdentidadeClienteLoopReal{
   if(typeof token!=='string'||!/^[a-f0-9]{64}$/.test(token))return false;
   return this.banco.prepare('DELETE FROM loop_real_sessoes WHERE token_hash=?')
    .run(hex(token)).changes===1;
+ }
+ async trocarSenha({titularId,senhaAtual,novaSenha}={}){
+  if(typeof titularId!=='string'||!/^titular-[a-f0-9-]{36}$/.test(titularId))
+   erro('LOGIN_OBRIGATORIO');
+  if(!senhaValida(novaSenha))erro('SENHA_INVALIDA');
+  if(typeof senhaAtual!=='string'||senhaAtual.length<1||senhaAtual.length>128)
+   erro('SENHA_ATUAL_INCORRETA');
+  if(senhaAtual===novaSenha)erro('SENHA_NOVA_DEVE_SER_DIFERENTE');
+  const anterior=this.banco.prepare([
+   'SELECT id,senha_salt,senha_hash FROM loop_real_contas WHERE id=?'
+  ].join(' ')).get(titularId);
+  if(!anterior)erro('LOGIN_OBRIGATORIO');
+  // Hash demorado acontece fora da transação. A decisão revalida o hash
+  // original e o bloqueio em BEGIN IMMEDIATE, inclusive entre processos.
+  const validada=igual(
+   await hashSenha(senhaAtual,anterior.senha_salt),anterior.senha_hash
+  );
+  if(!validada){
+   this.banco.exec('BEGIN IMMEDIATE');
+   let aberto=true;
+   try{
+    const atual=this.banco.prepare([
+     'SELECT senha_hash,tentativas,bloqueado_ate',
+     'FROM loop_real_contas WHERE id=?'
+    ].join(' ')).get(titularId);
+    if(!atual||atual.senha_hash!==anterior.senha_hash)
+     erro('CREDENCIAL_ALTERADA_CONCORRENTEMENTE');
+    const ts=this._agora();
+    if(atual.bloqueado_ate>ts)erro('CONTA_BLOQUEADA');
+    const n=atual.tentativas+1;
+    this.banco.prepare([
+     'UPDATE loop_real_contas SET tentativas=?,bloqueado_ate=?',
+     'WHERE id=?'
+    ].join(' ')).run(Math.min(n,5),n>=5?ts+BLOQUEIO:0,titularId);
+    this.banco.exec('COMMIT');aberto=false;
+   }catch(e){if(aberto)this.banco.exec('ROLLBACK');throw e;}
+   erro('SENHA_ATUAL_INCORRETA');
+  }
+  const salt=randomBytes(16).toString('hex'),hash=await hashSenha(novaSenha,salt);
+  this.banco.exec('BEGIN IMMEDIATE');
+  let aberto=true;
+  try{
+   const atual=this.banco.prepare([
+    'SELECT senha_hash,bloqueado_ate FROM loop_real_contas',
+    'WHERE id=?'
+   ].join(' ')).get(titularId);
+   if(!atual||atual.senha_hash!==anterior.senha_hash)
+    erro('CREDENCIAL_ALTERADA_CONCORRENTEMENTE');
+   if(atual.bloqueado_ate>this._agora())erro('CONTA_BLOQUEADA');
+   this.banco.prepare([
+    'UPDATE loop_real_contas SET senha_salt=?,senha_hash=?,',
+    'tentativas=0,bloqueado_ate=0 WHERE id=?'
+   ].join(' ')).run(salt,hash,titularId);
+   this.banco.prepare(
+    'DELETE FROM loop_real_sessoes WHERE titular_id=?'
+   ).run(titularId);
+   this.banco.exec('COMMIT');aberto=false;
+   return {senhaAlterada:true,sessoesRevogadas:true,
+    reentrarNecessario:true,financeiroReal:false};
+  }catch(e){if(aberto)this.banco.exec('ROLLBACK');throw e;}
  }
  dadosTitular(titularId){
   // Consulta apenas por ID extraído de uma sessão autenticada pelo servidor;
