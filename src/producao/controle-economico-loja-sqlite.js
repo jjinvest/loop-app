@@ -13,10 +13,13 @@ function excelSeguro(v){
  return '"'+guarded.replaceAll('"','""')+'"';
 }
 class ControleEconomicoLojaSQLite{
- constructor({banco,agora=()=>Date.now()}={}){
+ constructor({banco,auditoria=null,agora=()=>Date.now()}={}){
   if(typeof banco?.prepare!=='function'||typeof banco?.exec!=='function'||
      typeof agora!=='function')falha('CONTROLE_ECONOMICO_NAO_CONFIGURADO');
-  this.db=banco;this.agora=agora;
+  if(auditoria!==null&&
+     (typeof auditoria.registrar!=='function'||auditoria.db!==banco))
+   falha('AUDITORIA_ECONOMICA_NAO_CONFIGURADA');
+  this.db=banco;this.auditoria=auditoria;this.agora=agora;
   banco.exec([
    'CREATE TABLE IF NOT EXISTS loja_real_custos_ofertas(',
    'produto_id TEXT NOT NULL,distribuidor_id TEXT NOT NULL,',
@@ -94,6 +97,13 @@ class ControleEconomicoLojaSQLite{
     'VALUES(?,?,?,?,?,?,?)'
    ].join(' ')).run(produtoId,distribuidorId,oferta.sku,
     atual?.custo_unit_centavos??null,custoUnitCentavos,revisao,ts);
+   if(this.auditoria)this.auditoria.registrar({
+    acao:'CUSTO_FORNECEDOR_ALTERADO',ator:'ADMIN_COMERCIAL',
+    entidade:produtoId+'__'+distribuidorId,
+    antes:{sku:oferta.sku,custoCentavos:atual?.custo_unit_centavos??null},
+    depois:{sku:oferta.sku,custoCentavos:custoUnitCentavos},
+    revisaoAnterior:revisaoEsperada,revisaoNova:revisao
+   });
    this.db.exec('COMMIT');
    return this.consultarOferta({produtoId,distribuidorId});
   }catch(e){this.db.exec('ROLLBACK');throw e;}
@@ -137,6 +147,13 @@ class ControleEconomicoLojaSQLite{
     'VALUES(?,?,?,?,?,?,?)'
    ].join(' ')).run(produtoId,distribuidorId,oferta.sku,
     precoAnteriorCentavos,precoVendaCentavos,revisao,ts);
+   if(this.auditoria)this.auditoria.registrar({
+    acao:'PRECO_VENDA_ALTERADO',ator:'ADMIN_COMERCIAL',
+    entidade:produtoId+'__'+distribuidorId,
+    antes:{sku:oferta.sku,precoCentavos:precoAnteriorCentavos},
+    depois:{sku:oferta.sku,precoCentavos:precoVendaCentavos},
+    revisaoAnterior:revisaoPrecoEsperada,revisaoNova:revisao
+   });
    this.db.exec('COMMIT');
    return this.consultarOferta({produtoId,distribuidorId});
   }catch(e){this.db.exec('ROLLBACK');throw e;}
