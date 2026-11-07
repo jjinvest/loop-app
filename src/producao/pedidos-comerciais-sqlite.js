@@ -30,29 +30,59 @@ function endereco(x){
 }
 function cotacaoValida(x,cotacaoId,ts){
  if(!x||x.cotacaoId!==cotacaoId||x.status!=='APROVADA'||
-    !idOk(x.fornecedorId)||!Array.isArray(x.itens)||
-    x.itens.length<1||x.itens.length>20||
-    !Number.isSafeInteger(x.freteCentavos)||x.freteCentavos<0||
     !Number.isSafeInteger(x.expiraEm)||x.expiraEm<=ts||
     x.expiraEm>ts+24*3600*1000)erro('COTACAO_COMERCIAL_NAO_CONFIRMADA');
- const vistos=new Set();
- let soma=x.freteCentavos;
- const itens=x.itens.map(i=>{
-  if(!i||typeof i!=='object'||Array.isArray(i)||
-     typeof i.sku!=='string'||!SKU.test(i.sku)||
-     !Number.isSafeInteger(i.quantidade)||i.quantidade<1||i.quantidade>50||
-     !Number.isSafeInteger(i.precoUnitCentavos)||i.precoUnitCentavos<1||
-     vistos.has(i.sku))erro('COTACAO_COMERCIAL_INVALIDA');
-  vistos.add(i.sku);
-  const valor=i.precoUnitCentavos*i.quantidade;
-  if(!Number.isSafeInteger(valor)||valor>100000000)erro('COTACAO_COMERCIAL_INVALIDA');
-  soma+=valor;
-  return {sku:i.sku,quantidade:i.quantidade,precoUnitCentavos:i.precoUnitCentavos};
- });
- if(!Number.isSafeInteger(soma)||soma>100000000)
+ // Cada distribuidor tem sua lista de SKUs e frete. O carrinho possui
+ // um único total e uma única cobrança, mesmo com várias remessas.
+ const multiplo=Object.hasOwn(x,'grupos');
+ if(multiplo&&(
+    Object.hasOwn(x,'fornecedorId')||
+    Object.hasOwn(x,'itens')||Object.hasOwn(x,'freteCentavos')))
   erro('COTACAO_COMERCIAL_INVALIDA');
- return {fornecedorId:x.fornecedorId,cotacaoId,itens,
-  freteCentavos:x.freteCentavos,valorTotalCentavos:soma};
+ const fontes=multiplo?x.grupos:[{
+  fornecedorId:x.fornecedorId,itens:x.itens,freteCentavos:x.freteCentavos
+ }];
+ if(!Array.isArray(fontes)||fontes.length<1||fontes.length>25)
+  erro('COTACAO_COMERCIAL_INVALIDA');
+ const fornecedores=new Set();
+ let quantidadeItens=0,totalFrete=0,totalGeral=0;
+ const grupos=fontes.map(grupo=>{
+  if(!grupo||typeof grupo!=='object'||Array.isArray(grupo)||
+     !idOk(grupo.fornecedorId)||fornecedores.has(grupo.fornecedorId)||
+     !Array.isArray(grupo.itens)||grupo.itens.length<1||
+     grupo.itens.length>50||!Number.isSafeInteger(grupo.freteCentavos)||
+     grupo.freteCentavos<0||grupo.freteCentavos>10000000)
+   erro('COTACAO_COMERCIAL_INVALIDA');
+  fornecedores.add(grupo.fornecedorId);
+  quantidadeItens+=grupo.itens.length;
+  if(quantidadeItens>100)erro('COTACAO_COMERCIAL_INVALIDA');
+  const vistos=new Set();
+  let valorProdutos=0;
+  const itens=grupo.itens.map(i=>{
+   if(!i||typeof i!=='object'||Array.isArray(i)||
+      typeof i.sku!=='string'||!SKU.test(i.sku)||
+      !Number.isSafeInteger(i.quantidade)||i.quantidade<1||
+      i.quantidade>50||!Number.isSafeInteger(i.precoUnitCentavos)||
+      i.precoUnitCentavos<1||vistos.has(i.sku))
+    erro('COTACAO_COMERCIAL_INVALIDA');
+   vistos.add(i.sku);
+   const valor=i.precoUnitCentavos*i.quantidade;
+   if(!Number.isSafeInteger(valor)||valor>100000000)
+    erro('COTACAO_COMERCIAL_INVALIDA');
+   valorProdutos+=valor;
+   return {sku:i.sku,quantidade:i.quantidade,
+    precoUnitCentavos:i.precoUnitCentavos};
+  });
+  totalFrete+=grupo.freteCentavos;
+  totalGeral+=valorProdutos+grupo.freteCentavos;
+  return {fornecedorId:grupo.fornecedorId,itens,
+   freteCentavos:grupo.freteCentavos};
+ });
+ if(!Number.isSafeInteger(totalGeral)||totalGeral>100000000)
+  erro('COTACAO_COMERCIAL_INVALIDA');
+ return {fornecedorId:grupos.length===1?grupos[0].fornecedorId:'MULTIPLOS',
+  cotacaoId,grupos,freteCentavos:totalFrete,
+  valorTotalCentavos:totalGeral};
 }
 function cifrar(k,dado){
  const iv=randomBytes(12),c=createCipheriv('aes-256-gcm',k,iv);
@@ -101,7 +131,15 @@ class PedidosComerciaisSQLite{
    .get(pedidoId);
  }
  _publico(r){
-  return {pedidoId:r.pedido_id,fornecedorId:r.fornecedor_id,
+  const dados=decifrar(this.key,r);
+  const grupos=dados.grupos||[{
+   fornecedorId:r.fornecedor_id,itens:dados.itens,
+   freteCentavos:r.frete_centavos
+  }];
+  return {pedidoId:r.pedido_id,
+   fornecedorId:grupos.length===1?grupos[0].fornecedorId:null,
+   fornecedores:grupos.map(g=>g.fornecedorId),
+   quantidadeDistribuidores:grupos.length,
    cotacaoId:r.cotacao_id,status:r.status,
    valorTotalCentavos:r.valor_total_centavos,
    freteCentavos:r.frete_centavos,
@@ -140,7 +178,7 @@ class PedidosComerciaisSQLite{
   // Cotacao e frete nunca chegam do browser; o backend busca valores no
   // parceiro ou catalogo comercial homologado antes de gravar o pedido.
   const preco=cotacaoValida(await this.cotacao({cotacaoId}),cotacaoId,this.agora());
-  const payload={itens:preco.itens,enderecoEntrega:endereco(enderecoEntrega)};
+  const payload={grupos:preco.grupos,enderecoEntrega:endereco(enderecoEntrega)};
   const cifrado=cifrar(this.key,payload);
   const ts=this.agora();
   this.db.exec('BEGIN IMMEDIATE');
@@ -215,16 +253,27 @@ class PedidosComerciaisSQLite{
    return {...this._publico(confirmado),confirmado:true};
   }catch(e){this.db.exec('ROLLBACK');throw e;}
  }
- consultarPedidoAprovado({pedidoId}={}){
+ consultarPedidoAprovado({pedidoId,fornecedorId}={}){
   if(!idOk(pedidoId))erro('PEDIDO_INVALIDO');
   const r=this._row(pedidoId);
   if(!r)return null;
   const dados=decifrar(this.key,r);
-  return {pedidoId:r.pedido_id,fornecedorId:r.fornecedor_id,
-   status:r.status,pagamentoId:r.pagamento_id,
-   valorTotalCentavos:r.valor_total_centavos,
-   itens:dados.itens.map(x=>({sku:x.sku,quantidade:x.quantidade})),
-   enderecoEntrega:dados.enderecoEntrega};
+  const grupos=dados.grupos||[{
+  fornecedorId:r.fornecedor_id,itens:dados.itens,
+  freteCentavos:r.frete_centavos
+ }];
+ const selecionado=fornecedorId===undefined?
+  (grupos.length===1?grupos[0]:null):
+  grupos.find(g=>g.fornecedorId===fornecedorId);
+ if(!selecionado)return null;
+ return {pedidoId:r.pedido_id,fornecedorId:selecionado.fornecedorId,
+  status:r.status,pagamentoId:r.pagamento_id,
+  // Pagamento conciliado contra o VALOR TOTAL do carrinho, não a
+  // parcela individual de um dos distribuidores.
+  valorTotalCentavos:r.valor_total_centavos,
+  freteFornecedorCentavos:selecionado.freteCentavos,
+  itens:selecionado.itens.map(x=>({sku:x.sku,quantidade:x.quantidade})),
+  enderecoEntrega:dados.enderecoEntrega};
  }
 }
 module.exports={PedidosComerciaisSQLite};
