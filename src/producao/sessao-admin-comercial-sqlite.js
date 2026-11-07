@@ -38,6 +38,7 @@ class SessaoAdminComercialSQLite{
    .digest();
   const valido=timingSafeEqual(candidata,this.prova);
   this.db.exec('BEGIN IMMEDIATE');
+  let emTransacao=true;
   try{
    const anterior=this.db.prepare(
     'SELECT tentativas,janela_ate FROM loja_real_limite_login_admin WHERE id=1'
@@ -52,7 +53,7 @@ class SessaoAdminComercialSQLite{
      'tentativas=?,janela_ate=?'
     ].join(' ')).run(agora+QUINZE_MIN,ativos+1,
      ativos?anterior.janela_ate:agora+QUINZE_MIN);
-    this.db.exec('COMMIT');
+    this.db.exec('COMMIT');emTransacao=false;
     falha('CREDENCIAL_ADMIN_INVALIDA');
    }
    this.db.prepare([
@@ -68,11 +69,11 @@ class SessaoAdminComercialSQLite{
     'INSERT INTO loja_real_sessoes_admin(token_hash,csrf,expira_em,criado_em)',
     'VALUES(?,?,?,?)'
    ].join(' ')).run(this._hash(token),csrf,agora+DUAS_HORAS,agora);
-   this.db.exec('COMMIT');
+   this.db.exec('COMMIT');emTransacao=false;
    return {token,csrf,expiraEm:agora+DUAS_HORAS};
   }catch(e){
    // Tentativa inválida foi consolidada antes da exceção.
-   if(this.db.isTransaction)this.db.exec('ROLLBACK');
+   if(emTransacao)this.db.exec('ROLLBACK');
    throw e;
   }
  }
