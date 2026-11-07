@@ -20,6 +20,7 @@ function criar(t){
  t.after(()=>{db2.close();db1.close()});
  const sent=[],consultas=[];
  let falhar=false,compraConfirmada=true,respostaConsulta={encontrado:false};
+ let statusPedido='APROVADO_PARA_EXPEDICAO',itensDoPedido=null;
  const registro=new RegistroFornecedores();
  registro.registrar({fornecedorId:'franquia',adaptador:{
   versaoContrato:CONTRATO_FORNECEDOR,
@@ -39,6 +40,12 @@ function criar(t){
   consultarPagamentoConciliado:async({pedidoId})=>({
    pedidoId,status:compraConfirmada?'CONFIRMADO':'PENDENTE',
    moeda:'BRL',pagamentoId:'PIX_VALIDADO_01',valorCentavos:28000
+  }),
+  consultarPedidoAprovado:async({pedidoId})=>({
+   pedidoId,fornecedorId:'franquia',status:statusPedido,
+   pagamentoId:'PIX_VALIDADO_01',valorTotalCentavos:28000,
+   itens:itensDoPedido||entrada.itens,
+   enderecoEntrega:entrada.enderecoEntrega
   })
  });
  const x=criarOutbox(db1),y=criarOutbox(db2);
@@ -51,6 +58,8 @@ function criar(t){
  };
  return {x,y,db1,db2,entrada,sent,consultas,
   falhar:v=>{falhar=v},confirmado:v=>{compraConfirmada=v},
+  statusPedido:v=>{statusPedido=v},
+  itensPedido:v=>{itensDoPedido=v},
   consulta:v=>{respostaConsulta=v}};
 }
 test('compra sem confirmação no PSP não gera ordem de fornecedor',async t=>{
@@ -125,4 +134,39 @@ test('timeout apos possível POST não reenvia; consulta recupera confirmação'
  assert.equal(a.sent.length,1);
  assert.equal(a.consultas.length,2);
  assert.equal(a.db2.prepare('PRAGMA integrity_check').get().integrity_check,'ok');
+});
+
+test('Pix estornado antes do despacho não pode enviar ao parceiro',async t=>{
+ const a=criar(t);
+ await a.x.registrarPagamentoConciliado(a.entrada);
+ a.confirmado(false);
+ await assert.rejects(a.y.despachar({
+  pedidoId:a.entrada.pedidoId,fornecedorId:a.entrada.fornecedorId
+ }),{codigo:'PAGAMENTO_PSP_NAO_CONCILIADO'});
+ assert.equal(a.sent.length,0);
+ assert.equal(a.x.consultar({
+  pedidoId:a.entrada.pedidoId,fornecedorId:a.entrada.fornecedorId
+ }).estado,'PENDENTE','não marcar como enviado ou indeterminado sem prova');
+});
+
+test('pedido cancelado após o Pix ou alterado no cadastro não autoriza envio',async t=>{
+ const a=criar(t);
+ await assert.rejects(a.x.registrarPagamentoConciliado({
+  ...a.entrada,itens:[{sku:'SKU_099',quantidade:4}]
+ }),{codigo:'PEDIDO_DIVERGENTE_DO_ORIGINAL'});
+ assert.equal(a.sent.length,0);
+ await a.x.registrarPagamentoConciliado(a.entrada);
+ a.statusPedido('CANCELADO');
+ await assert.rejects(a.y.despachar({
+  pedidoId:a.entrada.pedidoId,fornecedorId:a.entrada.fornecedorId
+ }),{codigo:'PEDIDO_INTERNO_NAO_APROVADO'});
+ a.statusPedido('APROVADO_PARA_EXPEDICAO');
+ a.itensPedido([{sku:'SKU_099',quantidade:1}]);
+ await assert.rejects(a.x.despachar({
+  pedidoId:a.entrada.pedidoId,fornecedorId:a.entrada.fornecedorId
+ }),{codigo:'PEDIDO_DIVERGENTE_DO_ORIGINAL'});
+ assert.equal(a.sent.length,0);
+ assert.equal(a.db1.prepare(
+  "SELECT estado FROM loja_real_outbox_fornecedor"
+ ).get().estado,'PENDENTE');
 });
