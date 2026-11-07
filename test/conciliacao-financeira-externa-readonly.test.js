@@ -15,7 +15,8 @@ function fixture(t){
   'pedido_id TEXT,fornecedor_id TEXT,sku TEXT,',
   'custo_unit_centavos INTEGER,quantidade INTEGER);',
   'CREATE TABLE loja_real_outbox_fornecedor(',
-  'pedido_id TEXT,fornecedor_id TEXT,estado TEXT);'
+  'pedido_id TEXT,fornecedor_id TEXT,estado TEXT,',
+  'pagamento_id TEXT,valor_pago_centavos INTEGER,pedido_parceiro_id TEXT);'
  ].join(' '));
  const pedido=db.prepare(
   'INSERT INTO loja_real_pedidos VALUES(?,?,?,?,?)');
@@ -25,9 +26,10 @@ function fixture(t){
  custo.run('P1','FORN1','SKU1',8000,1);
  custo.run('P1','FORN2','SKU2',3000,2);
  custo.run('P2','FORN1','SKU3',15000,2);
- const out=db.prepare('INSERT INTO loja_real_outbox_fornecedor VALUES(?,?,?)');
- out.run('P1','FORN1','ENVIADO');out.run('P1','FORN2','ENVIADO');
- out.run('P2','FORN1','ENVIADO');
+ const out=db.prepare('INSERT INTO loja_real_outbox_fornecedor VALUES(?,?,?,?,?,?)');
+ out.run('P1','FORN1','ENVIADO','PAY1',25000,'PEDPARC1');
+ out.run('P1','FORN2','ENVIADO','PAY1',25000,'PEDPARC2');
+ out.run('P2','FORN1','ENVIADO','PAY2',50000,'PEDPARC3');
  const extratoPsp=[
   {pedidoId:'P1',pagamentoId:'PAY1',moeda:'BRL',estado:'RECEBIDO',
    brutoCentavos:25000,tarifaCentavos:300,liquidoCentavos:24700,
@@ -120,4 +122,49 @@ test('sem tabelas de pedidos ou dados negativos nao existe conciliação comprov
  const x=fixture(t);
  x.extratoPsp[0].liquidoCentavos=-1;
  assert.throws(()=>analisar(x),{codigo:'CONCILIACAO_EXTRATO_PSP_INVALIDO'});
+});
+
+test('remessa a fornecedor sem custo congelado nunca passa despercebida',t=>{
+ const x=fixture(t);
+ x.banco.prepare('INSERT INTO loja_real_outbox_fornecedor VALUES(?,?,?,?,?,?)')
+  .run('P1','FORN-ORFAO','ENVIADO','PAY1',25000,'PEDPARCX');
+ const r=analisar(x);
+ assert.equal(r.divergenciasPorCodigo.REMESSA_FORNECEDOR_SEM_CUSTO_CONGELADO,1);
+ assert.equal(r.conciliacaoRealCertificada,false);
+});
+test('pedido nao aprovado com remessa comercial fica registrado como divergencia',t=>{
+ const x=fixture(t);
+ x.banco.prepare(
+  "UPDATE loja_real_pedidos SET status='AGUARDANDO_PAGAMENTO', pagamento_id=NULL WHERE pedido_id='P2'"
+ ).run();
+ const r=analisar(x);
+ assert.equal(r.divergenciasPorCodigo.REMESSA_PEDIDO_NAO_APROVADO,1);
+ assert.ok(r.totalDivergencias>0);
+});
+test('remessa usa o mesmo PSP e valor aprovado no pedido',t=>{
+ const x=fixture(t);
+ x.banco.prepare(
+  "UPDATE loja_real_outbox_fornecedor SET pagamento_id='PAY2' WHERE pedido_id='P1' AND fornecedor_id='FORN2'"
+ ).run();
+ const r=analisar(x);
+ assert.equal(r.divergenciasPorCodigo.REMESSA_PSP_VALOR_INCONSISTENTE,1);
+});
+test('comprovante pago sem envio confirmado e envio sem parceiro exigem revisao',t=>{
+ const x=fixture(t);
+ x.banco.prepare(
+  "UPDATE loja_real_outbox_fornecedor SET estado='PENDENTE',pedido_parceiro_id=NULL WHERE pedido_id='P1' AND fornecedor_id='FORN1'"
+ ).run();
+ x.banco.prepare(
+  "UPDATE loja_real_outbox_fornecedor SET pedido_parceiro_id=NULL WHERE pedido_id='P1' AND fornecedor_id='FORN2'"
+ ).run();
+ const r=analisar(x);
+ assert.equal(r.divergenciasPorCodigo.FORNECEDOR_PAGO_SEM_REMESSA_CONFIRMADA,1);
+ assert.equal(r.divergenciasPorCodigo.REMESSA_ENVIADA_SEM_REFERENCIA_PARCEIRO,1);
+ assert.equal(r.saquePermitido,false);
+});
+test('esquema de outbox parcial nao pode se apresentar como conciliacao limpa',t=>{
+ const x=fixture(t);
+ x.banco.exec('DROP TABLE loja_real_outbox_fornecedor');
+ x.banco.exec('CREATE TABLE loja_real_outbox_fornecedor(pedido_id TEXT,fornecedor_id TEXT,estado TEXT)');
+ assert.throws(()=>analisar(x),{codigo:'CONCILIACAO_BANCO_INTERNO_INCOMPLETO'});
 });

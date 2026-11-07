@@ -99,3 +99,8 @@ Recuperador independente agora exige envelope Ed25519 e chave publica confiavel 
 ## Continuidade 256 — autenticar a identidade da chave DR (07/11/2026)
 
 O executor DR exige fingerprint SHA256/SPKI DER aprovado separadamente da chave PEM e do envelope. Nova ferramenta offline de custodiante assina manifesto fora da origem, com chave Ed25519 em arquivo privado 0600 e saída sem sobrescrita. Regressão exige rejeicao de fingerprint ausente/trocado, manifesto adulterado e operacao de assinatura não autorizada. Runbook RECUPERACAO_INDEPENDENTE_DR_COMERCIAL_07NOV2026.md atualizado. Sem prova externa da independencia do custodiante ou conciliacao bancaria; Marco Zero ainda bloqueado. CI da revisão requer verificacao.
+
+
+## Continuidade 257 — auditoria de remessas sem falso zero (07/11/2026)
+
+A conciliacao read-only foi reforcada contra remessa para fornecedor sem custo, pedido ainda nao aprovado, pagamento e valor de pedido divergentes, falta de ID parceiro e comprovante externo pago enquanto a outbox ainda indica PENDENTE. Ver docs/CONVERGENCIA_DECLARADA_PSP_BANCO_FORNECEDOR_07NOV2026.md. Sem conectores bancarios reais, sem certificar receita/caixa; nenhum deploy ou operacao comercial. Conferir CI da revisao no HEAD. Proximos gates continuam recuperacao externa com custodia e credenciais efetivas somente leitura.

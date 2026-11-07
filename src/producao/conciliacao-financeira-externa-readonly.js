@@ -44,12 +44,22 @@ function analisarConvergenciaFinanceiraDeclarada({
     !Array.isArray(comprovantesFornecedor))
   erro('CONCILIACAO_FONTES_NAO_CONFIGURADAS');
  // Sem um destes três conjuntos de tabelas NÃO alegar saldo zero.
- for(const tabela of ['loja_real_pedidos','loja_real_custos_pedido',
-  'loja_real_outbox_fornecedor']){
+ for(const [tabela,colunas] of [
+  ['loja_real_pedidos',['pedido_id','pagamento_id','status',
+   'valor_total_centavos','criado_em']],
+  ['loja_real_custos_pedido',['pedido_id','fornecedor_id',
+   'custo_unit_centavos','quantidade']],
+  ['loja_real_outbox_fornecedor',['pedido_id','fornecedor_id','estado',
+   'pagamento_id','valor_pago_centavos','pedido_parceiro_id']]
+ ]){
   const existe=banco.prepare(
    "SELECT name FROM sqlite_master WHERE type='table' AND name=?"
   ).get(tabela);
   if(!existe)erro('CONCILIACAO_BANCO_INTERNO_INCOMPLETO');
+  const campos=new Set(banco.prepare('PRAGMA table_info('+tabela+')')
+   .all().map(x=>x.name));
+  if(colunas.some(c=>!campos.has(c)))
+   erro('CONCILIACAO_BANCO_INTERNO_INCOMPLETO');
  }
  const amostras=[],contador=new Map();
  let totalAvisos=0;
@@ -83,6 +93,33 @@ function analisarConvergenciaFinanceiraDeclarada({
    erro('CONCILIACAO_FORNECEDOR_DUPLICADO');
   fornecedor.set(chave,x);
   transacoesFornecedor.add(x.transacaoFornecedorId);
+ }
+ // Auditoria de remessas percorrendo TODOS os pedidos, inclusive pendentes.
+ // Uma remessa enviada para pedido nao pago ou fornecedor sem custo congelado
+ // e um alerta financeiro, mesmo que o total do extrato declarado seja igual.
+ const pedidoDaRemessa=banco.prepare([
+  'SELECT status,pagamento_id,valor_total_centavos FROM loja_real_pedidos',
+  'WHERE pedido_id=?'
+ ].join(' '));
+ const custoDaRemessa=banco.prepare([
+  'SELECT 1 AS existe FROM loja_real_custos_pedido',
+  'WHERE pedido_id=? AND fornecedor_id=? LIMIT 1'
+ ].join(' '));
+ const remessasGlobais=banco.prepare([
+  'SELECT pedido_id,fornecedor_id,pagamento_id,valor_pago_centavos,',
+  'estado,pedido_parceiro_id FROM loja_real_outbox_fornecedor'
+ ].join(' '));
+ for(const r of remessasGlobais.iterate()){
+  const p=pedidoDaRemessa.get(r.pedido_id);
+  if(!p||p.status!=='APROVADO_PARA_EXPEDICAO')
+   avisar('REMESSA_PEDIDO_NAO_APROVADO',r.pedido_id);
+  if(p&&(!p.pagamento_id||p.pagamento_id!==r.pagamento_id||
+          p.valor_total_centavos!==r.valor_pago_centavos))
+   avisar('REMESSA_PSP_VALOR_INCONSISTENTE',r.pedido_id);
+  if(!custoDaRemessa.get(r.pedido_id,r.fornecedor_id))
+   avisar('REMESSA_FORNECEDOR_SEM_CUSTO_CONGELADO',r.pedido_id);
+  if(r.estado==='ENVIADO'&&!r.pedido_parceiro_id)
+   avisar('REMESSA_ENVIADA_SEM_REFERENCIA_PARCEIRO',r.pedido_id);
  }
  const custos=banco.prepare([
   'SELECT fornecedor_id,COUNT(*) AS linhas,',
@@ -137,7 +174,11 @@ function analisarConvergenciaFinanceiraDeclarada({
   }
   const congelados=custos.all(id),outbox=remessas.all(id);
   const outboxMap=new Map();
-  for(const x of outbox)outboxMap.set(x.fornecedor_id,x.estado);
+  for(const x of outbox){
+   if(outboxMap.has(x.fornecedor_id))
+    avisar('REMESSA_DUPLICADA_NO_BANCO',id);
+   outboxMap.set(x.fornecedor_id,x.estado);
+  }
   if(congelados.length===0){
    avisar('CUSTO_CONGELADO_AUSENTE',id);continue;
   }
@@ -158,6 +199,8 @@ function analisarConvergenciaFinanceiraDeclarada({
     avisar('FORNECEDOR_SEM_COMPROVANTE_PAGO',id);
    }else{
     usadosFornecedor.add(chave);
+    if(outboxMap.get(c.fornecedor_id)!=='ENVIADO')
+     avisar('FORNECEDOR_PAGO_SEM_REMESSA_CONFIRMADA',id);
     totalPagoFornecedorDeclarado+=
      comprovante.custoPagoCentavos+comprovante.fretePagoCentavos;
     if(!Number.isSafeInteger(totalPagoFornecedorDeclarado))

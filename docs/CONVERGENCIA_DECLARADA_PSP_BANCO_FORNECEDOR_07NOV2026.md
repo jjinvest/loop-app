@@ -29,3 +29,10 @@ Testes: `test/conciliacao-financeira-externa-readonly.test.js` valida lote únic
 4. Acrescentar captura de proveniência externa, auditoria HMAC e snapshot de fechamento imutável, conciliação de saques, impostos, reservas, despesas, chargebacks e regras de caixa aprovadas por revisão jurídica/contábil. Nada disso é certificado pelos testes atuais.
 
 **Sem aprovação de lançamento comercial, saque, benefício, posição ou dinheiro real; PR #1 continua DRAFT; telas aprovadas intactas.** Próximo bloco útil é conectar os adapters de leitura aos provedores reais quando houver credenciais, contratos e autorização, preservando a trava financeira.
+
+
+## Continuidade 257 — conferir remessas fora do caminho feliz (07/11/2026)
+
+Lacuna corrigida: a auditoria financeira anterior verificava custo e pagamento dos pedidos aprovados, mas podia omitir remessa de fornecedor adicional sem custo congelado, remessa iniciada para pedido nao aprovado, pagamento_id/valor incorretos na outbox, remessa marcada ENVIADO sem ID do parceiro e comprovante PAGO mesmo com outbox ainda PENDENTE. O comparador read-only agora verifica a outbox de TODOS os pedidos e confronta status, referencia PSP, valor congelado e fornecedor, alem de distinguir PAGO no extrato de ENVIADO no parceiro. Falha de esquema minimo do SQLite impede tratar leitura parcial como extrato limpo. A amostra de alertas segue limitada, mas totais continuam sem limite de linhas. Validacao dedicada testa essas divergencias sem HTTP nem SQL de escrita.
+
+Este bloco fecha somente falsos negativos no auditor declarativo. Nenhuma origem PSP/bancaria/fornecedor foi autenticada, nenhum dinheiro foi conciliado e conciliacaoRealCertificada segue FALSE. Nova evidencia de CI deve ser conferida antes de marcar a implementacao como comprovada.
