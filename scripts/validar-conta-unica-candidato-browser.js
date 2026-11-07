@@ -137,20 +137,51 @@ const {once}=require('node:events');
      return {
       antesEmail:!!(ativo.compareDocumentPosition(email)&Node.DOCUMENT_POSITION_FOLLOWING),
       antesCpf:!!(ativo.compareDocumentPosition(cpf)&Node.DOCUMENT_POSITION_FOLLOWING),
-      antesIndicadores:!!(ativo.compareDocumentPosition(indicador)&Node.DOCUMENT_POSITION_FOLLOWING),
-      primeiroAposBoasVindas:ativo.previousElementSibling?.classList.contains('loop03-boasvindas')
+      indicadoresAntesPainel:!!(indicador.compareDocumentPosition(ativo)&Node.DOCUMENT_POSITION_FOLLOWING),
+      primeiroAposAcessoLoja:ativo.previousElementSibling?.classList.contains('barra-conta')
      };
     },conteudoTeste);
     assert.deepEqual(frente,{
-     antesEmail:true,antesCpf:true,antesIndicadores:true,primeiroAposBoasVindas:true
+     antesEmail:true,antesCpf:true,indicadoresAntesPainel:true,primeiroAposAcessoLoja:true
     },'aba prioritaria em '+item.nome+' '+abaTeste);
     if(item.isMobile){
-     await page.waitForFunction(seletor=>{
-      const painel=document.querySelector(seletor);
-      return Math.abs(painel.getBoundingClientRect().top)<25;
-     },conteudoTeste,{timeout:3000});
+     await page.waitForFunction(()=>{
+      const titulo=document.querySelector('.cliente-integrado .loop03-boasvindas');
+      return Math.abs(titulo.getBoundingClientRect().top)<28;
+     },null,{timeout:3000});
     }
    }
+   const geom=await page.evaluate(()=>{
+    const seletores=['.loop03-banner-topo','.loop03-boasvindas',
+     '.loop03-indicadores','.barra-conta','#conteudoResumo'];
+    const caixas=seletores.map(s=>{
+     const r=document.querySelector('.cliente-integrado '+s).getBoundingClientRect();
+     return {seletor:s,top:r.top,bottom:r.bottom,height:r.height};
+    });
+    const botao=document.getElementById('loop03MenuIntegrado');
+    const br=botao.getBoundingClientRect();
+    const linkLojaMarca=document.querySelector('.cliente-integrado .barra-conta>a');
+    return {caixas,raio:getComputedStyle(botao).borderRadius,
+     larguraBotao:br.width,alturaBotao:br.height,
+     marca:linkLojaMarca.textContent.trim(),destino:linkLojaMarca.getAttribute('href'),
+     aria:linkLojaMarca.getAttribute('aria-label')};
+   });
+   const [faixa,titulo,indicadores,linhaLoja,painel]=geom.caixas;
+   assert.equal(geom.marca,'AKITEMM');
+   assert.equal(geom.aria,'Abrir loja AKITEMM');
+   assert.equal(geom.destino,'/staging/loja');
+   assert.ok(faixa.bottom<=titulo.top+2,JSON.stringify(geom));
+   assert.ok(titulo.bottom<=indicadores.top+2,JSON.stringify(geom));
+   assert.ok(indicadores.bottom<=linhaLoja.top+2,JSON.stringify(geom));
+   assert.ok(linhaLoja.bottom<=painel.top+3,JSON.stringify(geom));
+   if(item.isMobile){
+    assert.ok(faixa.height<125,'banner muito alto: '+JSON.stringify(geom));
+    assert.equal(geom.larguraBotao,44);
+    assert.equal(geom.alturaBotao,44);
+    assert.equal(geom.raio,'50%');
+   }
+   await page.screenshot({path:path.join(__dirname,'../artifacts',
+    'escritorio-resumo-acima-aba-'+item.nome+'.png'),fullPage:true});
    await page.screenshot({path:path.join(__dirname,'../artifacts',
     'aba-escritorio-prioritaria-'+item.nome+'.png'),fullPage:true});
    assert.match(await page.locator('#termosCpfTexto').innerText(),/LAB-navegador-2026/);

@@ -84,8 +84,11 @@ function mostrarAba(alvo){
  const selecionado=$(alvo);
  const corpo=$('painelConta')?.querySelector('.loop03-corpo');
  const boasVindas=corpo?.querySelector('.loop03-boasvindas');
- if(selecionado&&boasVindas&&selecionado.parentElement===corpo){
-  boasVindas.insertAdjacentElement('afterend',selecionado);
+ const faixaResumo=corpo?.querySelector('.barra-conta');
+ if(selecionado&&faixaResumo&&selecionado.parentElement===corpo){
+  // Titulo, quatro indicadores e loja continuam acima da aba escolhida.
+  // A aba permanece acima dos blocos auxiliares de confirmacao e identidade.
+  faixaResumo.insertAdjacentElement('afterend',selecionado);
  }
  aba=alvo;
  for(const [id,painel] of ABAS){
@@ -96,12 +99,11 @@ function mostrarAba(alvo){
   $(painel).hidden=!ativo;
  }
  fecharMenuIntegrado();
- // No celular abre direto o conteúdo selecionado, sem obriga-lo a rolar
- // por confirmações pendentes ou pelo resumo operacional.
+ // No celular, mostrar os quatro indicadores antes do conteudo selecionado.
  if(window.matchMedia('(max-width: 860px)').matches){
   requestAnimationFrame(()=>{
-   if(aba===alvo&&!selecionado.hidden)
-    selecionado.scrollIntoView({block:'start',behavior:'instant'});
+   if(aba===alvo&&!selecionado.hidden&&boasVindas)
+    boasVindas.scrollIntoView({block:'start',behavior:'instant'});
   });
  }
  if(alvo==='conteudoTabuleiro')atualizarTabuleiroIntegrado();
