@@ -52,6 +52,8 @@ async function preparar(t){
   versaoTermos:docs.termos.versao,hashTermos:docs.termos.hash,
   versaoPrivacidade:docs.privacidade.versao,hashPrivacidade:docs.privacidade.hash
  });
+ cotacaoCompleta.titularId=ana.titularId;
+ cotacaoCompleta.cepDestino=ENDERECO.cep;
  await identity.solicitarCodigo({titularId:ana.titularId,finalidade:'EMAIL'});
  await identity.confirmarCodigo({
   titularId:ana.titularId,codigo:enviados[0].codigo,finalidade:'EMAIL'
@@ -159,6 +161,7 @@ test('estorno entre a primeira e segunda remessa impede novo envio',async t=>{
 test('cotação inválida por fornecedor repetido ou valor divergente não cria pedido',async t=>{
  const x=await preparar(t);
  const base={cotacaoId:'COTACAO_MULTI_01',status:'APROVADA',
+  titularId:x.ana.titularId,cepDestino:ENDERECO.cep,
   expiraEm:Date.now()+900000};
  x.mudarCotacao({...base,grupos:[
   {fornecedorId:'dist_A',freteCentavos:1000,
@@ -168,5 +171,21 @@ test('cotação inválida por fornecedor repetido ou valor divergente não cria 
  ]});
  await assert.rejects(x.pedidos.criarPedido(x.entrada),
   {codigo:'COTACAO_COMERCIAL_INVALIDA'});
+ assert.equal(x.db.prepare('SELECT COUNT(*) AS n FROM loja_real_pedidos').get().n,0);
+});
+
+test('cotacao de outro titular ou CEP nao pode ser reutilizada',async t=>{
+ const x=await preparar(t);
+ const valido={cotacaoId:'COTACAO_MULTI_01',status:'APROVADA',
+  titularId:'titular-de-outro-cliente',cepDestino:ENDERECO.cep,
+  expiraEm:Date.now()+900000,
+  grupos:[{fornecedorId:'dist_A',freteCentavos:800,
+   itens:[{sku:'SKU_01',quantidade:1,precoUnitCentavos:25000}]}]};
+ x.mudarCotacao(valido);
+ await assert.rejects(x.pedidos.criarPedido(x.entrada),
+  {codigo:'COTACAO_COMERCIAL_NAO_CONFIRMADA'});
+ x.mudarCotacao({...valido,titularId:x.ana.titularId,cepDestino:'01001000'});
+ await assert.rejects(x.pedidos.criarPedido(x.entrada),
+  {codigo:'COTACAO_COMERCIAL_NAO_CONFIRMADA'});
  assert.equal(x.db.prepare('SELECT COUNT(*) AS n FROM loja_real_pedidos').get().n,0);
 });
