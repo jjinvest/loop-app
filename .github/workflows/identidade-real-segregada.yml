@@ -23,6 +23,7 @@ on:
       - 'test/controle-economico-loja-sqlite.test.js'
       - 'test/admin-economia-privado-akitemm.test.js'
       - 'test/admin-comercial-integracao-operacional.test.js'
+      - 'test/auditoria-admin-manutencao-online.test.js'
       - 'test/pedido-custo-historico-contador.test.js'
       - 'test/limite-operacoes-identidade-real-sqlite.test.js'
       - 'test/troca-senha-identidade-real-sqlite.test.js'
@@ -60,6 +61,7 @@ jobs:
           node --check src/producao/interface-admin-comercial-client.js
           node --check src/producao/sessao-admin-comercial-sqlite.js
           node --check src/producao/gateway-admin-comercial.js
+          node --check src/producao/auditoria-operacional-sqlite.js
           node --check src/producao/catalogo-multidistribuidores-sqlite.js
           node --check src/producao/cotacoes-multidistribuidores-sqlite.js
           node --check src/producao/backup-identidade-real.js
@@ -104,6 +106,8 @@ jobs:
         run: node --test test/pedido-custo-historico-contador.test.js
       - name: Administrador funcional com login independente, produtos, distribuidores e CSV
         run: node --test test/admin-comercial-integracao-operacional.test.js
+      - name: Manutenção administrativa sem apagar histórico e com rollback de operação
+        run: node --test test/auditoria-admin-manutencao-online.test.js
       - name: Não ativar cadastro real com configuração de laboratório
         env:
           NODE_ENV: production
