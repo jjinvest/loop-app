@@ -67,6 +67,27 @@
 <button id="cancelarEdicaoProduto" type="button">Novo produto</button></div>
 </form>
 <p id="resultadoProdutoAdmin" class="subtexto" role="status"></p>
+<section aria-labelledby="tituloCustosProdutoAdmin">
+<h3 id="tituloCustosProdutoAdmin">Custos internos e margem do produto</h3>
+<p class="subtexto">Somente o administrador vê estes valores. Primeiro salve ou selecione um produto. O sistema lê sua cor configurada: DOURADO reserva R$ 250 por unidade, VERDE é calculado por carrinho e ROXO depende do evento. Valores estimados, sem transferência bancária.</p>
+<p id="custosProdutoSelecionadoAdmin" aria-live="polite">Selecione um produto no catálogo.</p>
+<form id="formCustosProdutoAdmin">
+<input id="custoProdutoIdAdmin" type="hidden">
+<div class="duas-colunas">
+<label for="custoFornecedorAdmin">Custo unitário do fornecedor (R$)
+<input id="custoFornecedorAdmin" type="number" min="0" max="1000000" step="0.01" inputmode="decimal" required></label>
+<label for="custoFreteAdmin">Custo estimado de frete por unidade (R$)
+<input id="custoFreteAdmin" type="number" min="0" max="1000000" step="0.01" inputmode="decimal" value="0" required></label>
+<label for="custoPspAdmin">Taxa estimada do pagamento por unidade (R$)
+<input id="custoPspAdmin" type="number" min="0" max="1000000" step="0.01" inputmode="decimal" value="0" required></label>
+<label for="custoTributosAdmin">Provisão tributária estimada por unidade (R$)
+<input id="custoTributosAdmin" type="number" min="0" max="1000000" step="0.01" inputmode="decimal" value="0" required></label>
+</div>
+<p id="resumoMargemProdutoAdmin" role="status" aria-live="polite">Custo e margem ainda não definidos.</p>
+<div class="linha"><button id="salvarCustoProdutoAdmin" type="submit" disabled>Salvar custos e margem calculada</button></div>
+<p id="statusCustosProdutoAdmin" role="status" aria-live="polite"></p>
+</form>
+</section>
 
 <div class="novidades-editoriais-admin">
 <h3>Novidades · publicações da loja AKITEMM</h3>
