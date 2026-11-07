@@ -39,7 +39,8 @@ function renderizarAdminComercialAprovado(){
  return pagina.replace(destino,adicao+auditoriaPainel+destino);
 }
 function montarAdminComercialAprovado(app,{
- controle,catalogo,auditoria=null,pedidosComerciais=null,autorizarAdministrador,
+ controle,catalogo,auditoria=null,manutencao=null,
+ pedidosComerciais=null,autorizarAdministrador,
  validarCsrfAdmin,obterCsrfAdmin,origemHttps
 }={}){
  if(!controle||typeof controle.listarOfertas!=='function'||
@@ -49,7 +50,7 @@ function montarAdminComercialAprovado(app,{
   throw Error('ADMIN_REAL_SEM_SESSAO_SEGURA');
  const html=renderizarAdminComercialAprovado();
  const router=criarRouterAdminEconomiaAkitemm({
-  controle,catalogo,auditoria,pedidosComerciais,autorizarAdministrador,
+  controle,catalogo,auditoria,manutencao,pedidosComerciais,autorizarAdministrador,
   validarCsrfAdmin,origemHttps
  });
  const cabe=res=>{
