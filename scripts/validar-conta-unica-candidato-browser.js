@@ -367,6 +367,17 @@ const {once}=require('node:events');
    await admin.locator('#quadroDepartamentos button').filter({hasText:'Tabuleiro'}).click();
    await admin.locator('#departamentoOperacionalTitulo')
     .filter({hasText:'Tabuleiro · operação'}).waitFor();
+   // Apos abrir Tabuleiro, operador cria UMA dourada no mesmo motor,
+   // sem tocar em saldo e sem abrir interface paralela.
+   await admin.locator('#departamentoOperacionalAcoes')
+    .getByRole('button',{name:'Criar 1 bola dourada'}).click();
+   await admin.locator('#criarDouradaCiencia').check();
+   await admin.locator('#criarDouradaManualEnsaio').click();
+   await admin.locator('#statusCriarDouradaAdmin')
+    .filter({hasText:/Bola dourada criada.*fila B/}).waitFor();
+   assert.match(await admin.locator('#douradasAtivasAdmin').innerText(),/ID interno #/);
+   assert.match(await admin.locator('#motorEnsaioResumo').innerText(),/Douradas manuais criadas/);
+   assert.equal(await admin.locator('#criarDouradaCiencia').isChecked(),false);
    await admin.locator('#departamentoOperacionalAcoes')
     .getByRole('button',{name:'Configurar horários da catraca'}).click();
    assert.equal(await admin.locator('#formAgendaMotor').isVisible(),true);
