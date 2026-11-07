@@ -338,13 +338,28 @@ class ContaUnicaCandidataSQLite{
    falha('CONTA_TEMPORARIAMENTE_BLOQUEADA');
   const hashAntigo=await hashSenha(senhaAtual,conta.senha_salt);
   if(!comparar(hashAntigo,conta.senha_hash)){
-   const erros=conta.tentativas+1;
-   this.banco.prepare([
-    'UPDATE akitemm_conta_unica_candidata',
-    'SET tentativas=?,bloqueado_ate=? WHERE id=?'
-   ].join(' ')).run(Math.min(erros,5),
-    erros>=5?agora+BLOQUEIO_MS:conta.bloqueado_ate,
-    sessao.titularId);
+   // As verificacoes scrypt concorrentes nao podem sobrescrever uma
+   // contagem de falhas mais recente: decidir sob o lock SQLite.
+   this.banco.exec('BEGIN IMMEDIATE');
+   try{
+    const atual=this.banco.prepare([
+     'SELECT senha_hash,tentativas,bloqueado_ate',
+     'FROM akitemm_conta_unica_candidata WHERE id=?'
+    ].join(' ')).get(sessao.titularId);
+    if(!atual||atual.senha_hash!==conta.senha_hash)
+     falha('CONCORRENCIA_CREDENCIAL');
+    const ts=this._agora();
+    if(atual.bloqueado_ate>ts)
+     falha('CONTA_TEMPORARIAMENTE_BLOQUEADA');
+    const erros=atual.tentativas+1;
+    this.banco.prepare([
+     'UPDATE akitemm_conta_unica_candidata',
+     'SET tentativas=?,bloqueado_ate=? WHERE id=?'
+    ].join(' ')).run(Math.min(erros,5),
+     erros>=5?ts+BLOQUEIO_MS:atual.bloqueado_ate,
+     sessao.titularId);
+    this.banco.exec('COMMIT');
+   }catch(e){this.banco.exec('ROLLBACK');throw e;}
    falha('SENHA_ATUAL_INCORRETA');
   }
   if(senhaAtual===novaSenha)falha('NOVA_SENHA_DEVE_SER_DIFERENTE');
@@ -352,6 +367,13 @@ class ContaUnicaCandidataSQLite{
   const hashNovo=await hashSenha(novaSenha,salt);
   this.banco.exec('BEGIN IMMEDIATE');
   try{
+   const atual=this.banco.prepare([
+    'SELECT bloqueado_ate FROM akitemm_conta_unica_candidata',
+    'WHERE id=? AND senha_hash=?'
+   ].join(' ')).get(sessao.titularId,conta.senha_hash);
+   if(!atual)falha('CONCORRENCIA_CREDENCIAL');
+   if(atual.bloqueado_ate>this._agora())
+    falha('CONTA_TEMPORARIAMENTE_BLOQUEADA');
    const ok=this.banco.prepare([
     'UPDATE akitemm_conta_unica_candidata',
     'SET senha_salt=?,senha_hash=?,tentativas=0,bloqueado_ate=0',
