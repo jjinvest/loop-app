@@ -41,6 +41,39 @@
 <button id="cancelarEdicaoProduto" type="button">Novo produto</button></div>
 </form>
 <p id="resultadoProdutoAdmin" class="subtexto" role="status"></p>
+
+<div class="novidades-editoriais-admin">
+<h3>Novidades · publicações da loja AKITEMM</h3>
+<p class="subtexto">Editar aqui o conteúdo do botão Novidades na própria loja aprovada. Publicações podem ter texto, imagem ou ambos. Vários comunicados e lançamentos podem coexistir. Promoção ou brinde anunciado NÃO modifica preço, checkout nem cria entrega: benefícios reais exigem implementação e aprovação separadas.</p>
+<button id="novidadesAtualizarAdmin" type="button">Atualizar novidades</button>
+<div id="listaNovidadesAdmin" aria-live="polite"></div>
+<form id="formNovidadesAdmin" autocomplete="off">
+<input id="novidadeIdAdmin" type="hidden">
+<label for="novidadeTituloAdmin">Título ou chamada (opcional se houver imagem)</label>
+<input id="novidadeTituloAdmin" maxlength="100" placeholder="Ex.: Nova coleção de cursos">
+<label for="novidadeTextoAdmin">Descrição / promoção / comunicado (opcional se houver imagem)</label>
+<textarea id="novidadeTextoAdmin" maxlength="1500" rows="4" placeholder="Texto livre da novidade"></textarea>
+<div class="duas-colunas">
+<label for="novidadeProdutoAdmin">Produto vinculado (opcional)
+<input id="novidadeProdutoAdmin" pattern="[a-z0-9-]{3,80}" maxlength="80" placeholder="ID existente do catálogo"></label>
+<label for="novidadeOrdemAdmin">Ordem de exibição
+<input id="novidadeOrdemAdmin" type="number" min="0" max="9999" step="1" value="0" required></label>
+</div>
+<label for="novidadeImagemAdmin">Imagem opcional: PNG, JPG ou WebP, até 2 MB
+<input id="novidadeImagemAdmin" type="file" accept="image/png,image/jpeg,image/webp"></label>
+<small id="novidadeImagemStatusAdmin">Nenhuma imagem escolhida.</small>
+<label for="novidadeEstadoAdmin">Situação editorial</label>
+<select id="novidadeEstadoAdmin">
+<option value="RASCUNHO">Rascunho (não visível)</option>
+<option value="PUBLICADA">Publicada no botão Novidades</option>
+<option value="ARQUIVADA">Arquivada (não visível)</option>
+</select>
+<div class="linha"><button type="submit" id="novidadeSalvarAdmin" class="primario">Salvar novidade</button>
+<button type="button" id="novidadeNovaAdmin">Criar outra</button>
+<button type="button" id="novidadeRemoverImagemAdmin">Remover imagem atual</button></div>
+</form>
+<p id="novidadeResultadoAdmin" role="status" aria-live="polite" class="subtexto"></p>
+</div>
 <h3 id="tituloSinalizacaoAdmin">Cores dos produtos na vitrine</h3>
 <p class="subtexto">Cinza = compra comum; verde = produto elegível; dourado = produto individual de R$ 250 ou mais; roxo = evento especial sujeito a regras próprias. Estas são cores da LOJA, não das posições/filas do LOOP. Nesta prévia, nenhuma cor cria direitos financeiros.</p>
 <form id="formSinalizacaoAdmin">

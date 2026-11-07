@@ -120,6 +120,116 @@ function renderizarProdutos(r){
  $('produtosProximo').disabled=!r.haMais;
 }
 async function atualizarProdutos(){renderizarProdutos(await api('/produtos?pagina='+paginaProdutos));}
+let novidadeEmEdicao=null;
+function limparEdicaoNovidade(){
+ novidadeEmEdicao=null;
+ $('formNovidadesAdmin').reset();
+ $('novidadeIdAdmin').value='';
+ $('novidadeImagemStatusAdmin').textContent='Nenhuma imagem escolhida.';
+ $('novidadeRemoverImagemAdmin').disabled=true;
+}
+function preencherEdicaoNovidade(n){
+ novidadeEmEdicao=n;
+ $('novidadeIdAdmin').value=String(n.id);
+ $('novidadeTituloAdmin').value=n.titulo;
+ $('novidadeTextoAdmin').value=n.texto;
+ $('novidadeProdutoAdmin').value=n.produtoId||'';
+ $('novidadeOrdemAdmin').value=String(n.ordem);
+ $('novidadeEstadoAdmin').value=n.estado;
+ $('novidadeImagemAdmin').value='';
+ $('novidadeImagemStatusAdmin').textContent=n.temImagem?
+  'Imagem anexada à publicação. Selecione outra para substituir.':'Sem imagem anexada.';
+ $('novidadeRemoverImagemAdmin').disabled=!n.temImagem;
+ $('formNovidadesAdmin').scrollIntoView({behavior:'smooth',block:'nearest'});
+}
+async function carregarNovidadesAdmin(){
+ const r=await api('/novidades');
+ const area=$('listaNovidadesAdmin');area.replaceChildren();
+ if(!r.itens.length)area.append(elem('p','Nenhuma novidade criada. Use o formulário abaixo.'));
+ for(const n of r.itens){
+  const linha=elem('div');linha.className='produto-admin-item';
+  const desc=elem('span',(n.titulo||'[Publicação por imagem]')+
+   ' · '+n.estado+' · Ordem '+n.ordem+
+   ' · '+(n.temImagem?'Com imagem':'Sem imagem')+' · Revisão '+n.revisao);
+  const botao=elem('button','Editar');botao.type='button';
+  botao.addEventListener('click',()=>preencherEdicaoNovidade(n));
+  linha.append(desc,botao);area.append(linha);
+ }
+}
+async function enviarImagemNovidade(id,revisao,arquivo){
+ if(!['image/png','image/jpeg','image/webp'].includes(arquivo.type)||
+    arquivo.size>2*1024*1024||arquivo.size<12)
+  throw Error('IMAGEM_FORMATO_OU_TAMANHO_INVALIDO');
+ const r=await fetch('/staging/escritorio-unificado/novidades/'+id+'/imagem',{
+  method:'PUT',credentials:'omit',cache:'no-store',
+  headers:{Authorization:'Bearer '+auth,'Content-Type':arquivo.type,
+   'X-Novidade-Revisao':String(revisao)},body:arquivo
+ });
+ const obj=await r.json().catch(()=>({}));
+ if(!r.ok)throw Error(obj.erro||'FALHA_IMAGEM');
+ return obj;
+}
+$('novidadesAtualizarAdmin').addEventListener('click',()=>carregarNovidadesAdmin().catch(e=>
+ $('novidadeResultadoAdmin').textContent='Consulta indisponível: '+e.message));
+$('novidadeNovaAdmin').addEventListener('click',limparEdicaoNovidade);
+$('novidadeImagemAdmin').addEventListener('change',()=>{
+ const arq=$('novidadeImagemAdmin').files[0];
+ $('novidadeImagemStatusAdmin').textContent=arq?arq.name+
+  ' · '+Math.round(arq.size/1024)+' KB':'Nenhuma imagem escolhida.';
+});
+$('novidadeRemoverImagemAdmin').addEventListener('click',async e=>{
+ const btn=e.currentTarget;btn.disabled=true;
+ try{
+  if(!novidadeEmEdicao?.temImagem)throw Error('SEM_IMAGEM');
+  const r=await fetch('/staging/escritorio-unificado/novidades/'+novidadeEmEdicao.id+'/imagem',{
+   method:'DELETE',credentials:'omit',cache:'no-store',
+   headers:{Authorization:'Bearer '+auth,
+    'X-Novidade-Revisao':String(novidadeEmEdicao.revisao)}
+  });
+  const dados=await r.json().catch(()=>({}));
+  if(!r.ok)throw Error(dados.erro||'FALHA_REMOVER_IMAGEM');
+  novidadeEmEdicao=dados;
+  preencherEdicaoNovidade(dados);await carregarNovidadesAdmin();
+  $('novidadeResultadoAdmin').textContent='Imagem removida; publicação permanece conforme sua situação.';
+ }catch(err){$('novidadeResultadoAdmin').textContent='Não removida: '+err.message;}
+ finally{btn.disabled=false;}
+});
+$('formNovidadesAdmin').addEventListener('submit',async e=>{
+ e.preventDefault();const btn=e.submitter;btn.disabled=true;
+ const campo=$('novidadeResultadoAdmin');
+ try{
+  const arquivo=$('novidadeImagemAdmin').files[0];
+  const estado=$('novidadeEstadoAdmin').value;
+  const valores={
+   titulo:$('novidadeTituloAdmin').value,
+   texto:$('novidadeTextoAdmin').value,
+   produtoId:$('novidadeProdutoAdmin').value||null,
+   ordem:Number($('novidadeOrdemAdmin').value)
+  };
+  if(!valores.titulo.trim()&&!valores.texto.trim()&&!arquivo&&!novidadeEmEdicao?.temImagem)
+   throw Error('INFORME_TEXTO_OU_IMAGEM');
+  let r;
+  if(novidadeEmEdicao){
+   const estadoTemporario=arquivo?'RASCUNHO':estado;
+   r=await api('/novidades/'+novidadeEmEdicao.id,{
+    method:'PATCH',body:{revisaoEsperada:novidadeEmEdicao.revisao,
+     alteracoes:{...valores,estado:estadoTemporario}}
+   });
+  }else{
+   r=await api('/novidades',{method:'POST',body:{...valores,estado:'RASCUNHO'}});
+  }
+  if(arquivo)r=await enviarImagemNovidade(r.id,r.revisao,arquivo);
+  if(r.estado!==estado)r=await api('/novidades/'+r.id,{
+   method:'PATCH',body:{revisaoEsperada:r.revisao,alteracoes:{estado}}
+  });
+  preencherEdicaoNovidade(r);await carregarNovidadesAdmin();
+  campo.textContent='Novidade salva: '+r.estado+
+   '. Exibição no botão Novidades atualiza após recarregar a loja. Nenhum brinde automático foi criado.';
+ }catch(err){campo.textContent='Novidade não salva por completo: '+err.message+
+  '. Atualize a lista antes de reenviar para evitar versões conflitantes.';}
+ finally{btn.disabled=false;}
+});
+
 let ultimaLeituraCor=0;
 async function editarCor(id){
  const chamada=++ultimaLeituraCor;
@@ -227,6 +337,7 @@ async function atualizar(){
  atualizarDepartamentos(d.departamentos);
  atualizarAlertas(alertas);
  renderizarProdutos(produtos);
+ carregarNovidadesAdmin().catch(e=>{$('novidadeResultadoAdmin').textContent='Novidades indisponíveis: '+e.message;});
  renderizarPreviaFilas(previa);
  $('resumoMissoes').textContent='Página '+(m.pagina+1)+' · '+m.total+' missão(ões) neste filtro.';
  $('missoesAnterior').disabled=paginaMissoes===0;

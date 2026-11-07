@@ -34,6 +34,7 @@ const {consultarEscritorioHomologacao}=require('../domain/relatorio-homologacao-
 const {MissoesOperacionaisCandidatoSQLite}=require('../domain/missoes-operacionais-candidato-sqlite');
 const {DepartamentosAdministradorCandidato}=require('../domain/escritorio-admin-departamentos-candidato');
 const {CatalogoAdminCandidatoSQLite}=require('../domain/catalogo-admin-candidato-sqlite');
+const {NovidadesLojaCandidatoSQLite,MAX_IMAGEM}=require('../domain/novidades-loja-candidato-sqlite');
 const {createVitrineCandidata}=require('./vitrine-aprovada-candidato');
 const {ProjecaoFilasCandidatoSandbox}=require('../domain/projecao-filas-candidato-sandbox');
 const {PreAdesaoSandboxCandidatoSQLite}=require('../domain/pre-adesao-sandbox-candidato-sqlite');
@@ -90,6 +91,7 @@ function criarAppLojaEscritorioCandidato({banco,repositorioCatalogo,
  const integridade=new IntegridadeTitularCandidatoSQLite({banco});
  const missoes=new MissoesOperacionaisCandidatoSQLite({banco});
  const catalogo=new CatalogoAdminCandidatoSQLite({banco,repositorioBase:repositorioCatalogo});
+ const novidades=new NovidadesLojaCandidatoSQLite({banco});
  const departamentosAdmin=new DepartamentosAdministradorCandidato({banco,missoes,catalogo});
  const entregas=new EntregasPrePedidosAsaasSandboxStaging({banco});
  // Operador usa o MESMO SQLite que o checkout e o Escritório: webhook
@@ -529,7 +531,7 @@ function criarAppLojaEscritorioCandidato({banco,repositorioCatalogo,
   try{return res.json(projecaoFilas.consultar({titularId:s.titularId}));}
   catch(e){return res.status(503).json({erro:e.codigo||'PROJECAO_INDISPONIVEL'});}
  });
- const sinalizacaoVitrine=createVitrineCandidata({app,banco,catalogo,contas,intencoes,prePedidos,autorizarOperador});
+ const sinalizacaoVitrine=createVitrineCandidata({app,banco,catalogo,contas,intencoes,prePedidos,autorizarOperador,novidades});
  const preAdesao=new PreAdesaoSandboxCandidatoSQLite({
   banco,posicoes,sinalizacao:sinalizacaoVitrine,cpf,termosVersao
  });
@@ -822,6 +824,47 @@ function criarAppLojaEscritorioCandidato({banco,repositorioCatalogo,
  });
  // Campos de catálogo aplicam-se apenas às próximas cotações e rascunhos.
  // Pedidos anteriores preservam a fotografia; produção não é montada.
+ // Controles editoriais dentro do MESMO painel de produtos: operador apenas.
+ app.get('/staging/escritorio-unificado/novidades',autorizarOperador,(_req,res)=>{
+  res.set('Cache-Control','no-store');
+  try{return res.json({itens:novidades.listar()});}
+  catch(e){return res.status(503).json({erro:e.codigo||'NOVIDADES_INDISPONIVEIS'});}
+ });
+ app.post('/staging/escritorio-unificado/novidades',autorizarOperador,(req,res)=>{
+  if(!req.is('application/json'))return res.status(415).json({erro:'JSON_OBRIGATORIO'});
+  try{return res.status(201).json(novidades.criar(req.body));}
+  catch(e){return res.status(400).json({erro:e.codigo||'NOVIDADE_INVALIDA'});}
+ });
+ app.patch('/staging/escritorio-unificado/novidades/:id',autorizarOperador,(req,res)=>{
+  if(!req.is('application/json'))return res.status(415).json({erro:'JSON_OBRIGATORIO'});
+  if(!req.body||Array.isArray(req.body)||typeof req.body!=='object'||
+     Object.keys(req.body).sort().join(',')!=='alteracoes,revisaoEsperada')
+   return res.status(400).json({erro:'NOVIDADE_DADOS_INVALIDOS'});
+  try{return res.json(novidades.atualizar({
+   id:Number(req.params.id),...req.body
+  }));}
+  catch(e){return res.status(e.codigo==='NOVIDADE_CONFLITO_REVISAO'?409:400)
+   .json({erro:e.codigo||'NOVIDADE_INVALIDA'});}
+ });
+ app.put('/staging/escritorio-unificado/novidades/:id/imagem',autorizarOperador,
+  express.raw({type:['image/png','image/jpeg','image/webp'],limit:MAX_IMAGEM+1024}),(req,res)=>{
+   if(!Buffer.isBuffer(req.body))
+    return res.status(415).json({erro:'NOVIDADE_IMAGEM_INVALIDA'});
+   const revisaoEsperada=Number(req.get('x-novidade-revisao'));
+   try{return res.json(novidades.gravarImagem({
+    id:Number(req.params.id),revisaoEsperada,
+    mime:req.get('content-type')?.split(';')[0],dados:req.body
+   }));}
+   catch(e){return res.status(e.codigo==='NOVIDADE_CONFLITO_REVISAO'?409:400)
+    .json({erro:e.codigo||'NOVIDADE_IMAGEM_INVALIDA'});}
+  });
+ app.delete('/staging/escritorio-unificado/novidades/:id/imagem',autorizarOperador,(req,res)=>{
+  try{return res.json(novidades.limparImagem({
+   id:Number(req.params.id),revisaoEsperada:Number(req.get('x-novidade-revisao'))
+  }));}
+  catch(e){return res.status(e.codigo==='NOVIDADE_CONFLITO_REVISAO'?409:400)
+   .json({erro:e.codigo||'NOVIDADE_IMAGEM_INVALIDA'});}
+ });
  app.get('/staging/escritorio-unificado/produtos',autorizarOperador,async(req,res)=>{
   try{
    if(Object.keys(req.query).some(k=>k!=='pagina')||

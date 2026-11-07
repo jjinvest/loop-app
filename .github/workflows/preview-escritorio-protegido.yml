@@ -55,6 +55,9 @@ on:
       - 'src/laboratorio/loja-cliente-demo.js'
       - 'src/laboratorio/loja-cliente-demo.css'
       - 'test/filtros-cor-loja-candidato.test.js'
+      - 'src/domain/novidades-loja-candidato-sqlite.js'
+      - 'test/novidades-loja-candidato.test.js'
+      - 'src/candidato/escritorio-admin-candidato-ui.css'
       - 'test/tabuleiro-circular-cliente-ui.test.js'
       - 'test/vitrine-aprovada-candidato.test.js'
       - 'test/simulador-qualificacao-candidato.test.js'
@@ -109,6 +112,8 @@ jobs:
       - run: node --check scripts/provar-restauracao-sqlite-unificado-lab.js
       - run: node --test test/provar-restauracao-sqlite-unificado-lab.test.js
       - run: node --check src/candidato/escritorio-admin-candidato-ui.js
+      - name: Novidades no admin e na loja original, imagens e isolamento
+        run: node --test test/novidades-loja-candidato.test.js
       - run: node --test test/servidor-escritorio-preview-railway.test.js
       - run: node --check src/adapters/email-recuperacao-resend.js
       - run: node --check src/domain/conta-unica-candidata-sqlite.js

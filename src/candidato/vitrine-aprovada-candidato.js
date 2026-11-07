@@ -8,11 +8,12 @@ const {SinalizacaoVitrineCandidatoSQLite}=require('../domain/sinalizacao-vitrine
 const {simularQualificacaoCandidato}=require('../domain/simulador-qualificacao-carrinho-candidato');
 const DIR=path.join(__dirname,'../laboratorio');
 function fail(codigo){const e=new Error(codigo);e.codigo=codigo;throw e;}
-function createVitrineCandidata({app,banco,catalogo,contas,intencoes,prePedidos,autorizarOperador}={}){
+function createVitrineCandidata({app,banco,catalogo,contas,intencoes,prePedidos,autorizarOperador,novidades}={}){
  if(process.env.NODE_ENV==='production')fail('VITRINE_LAB_NAO_HOMOLOGADA');
  if(!app?.get||!app?.post||!app?.patch||catalogo?.db!==banco||
     typeof contas?.sessao!=='function'||typeof prePedidos?.preparar!=='function'||
-    typeof intencoes?.criar!=='function'||typeof autorizarOperador!=='function')
+    typeof intencoes?.criar!=='function'||typeof autorizarOperador!=='function'||
+    novidades?.banco!==banco)
   fail('INTEGRACAO_VITRINE_INCOMPLETA');
  const sinalizacao=new SinalizacaoVitrineCandidatoSQLite({banco,catalogo});
  // Todas as novas rotas de pré-pedido usam o mesmo registro transacional.
@@ -78,6 +79,18 @@ function createVitrineCandidata({app,banco,catalogo,contas,intencoes,prePedidos,
   const p=contas.perfil(req.titularVitrine);
   return res.json({perfil:{nome:p.nome,temFoto:false},
    conta:{nick:p.nick},csrf:sessao(req).csrf,laboratorio:true});
+ });
+ // Mesmo site original. Publicações opcionais da seção Novidades.
+ app.get('/staging/vitrine/novidades',autorizarCliente,(_req,res)=>{
+  try{return res.json({itens:novidades.listar({publicadas:true}),
+   semBeneficioAutomatico:true});}
+  catch(e){return res.status(503).json({erro:e.codigo||'NOVIDADES_INDISPONIVEIS'});}
+ });
+ app.get('/staging/vitrine/novidades/:id/imagem',autorizarCliente,(req,res)=>{
+  try{
+   const r=novidades.imagem({id:Number(req.params.id),publicada:true});
+   return res.type(r.mime).set('Cache-Control','private, no-store').send(r.bytes);
+  }catch(e){return res.status(404).json({erro:'NOVIDADE_IMAGEM_INDISPONIVEL'});}
  });
  app.get('/staging/vitrine/loja/catalogo',autorizarCliente,
   async(req,res)=>{

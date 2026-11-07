@@ -9,6 +9,7 @@
  let conviteLoopCheckoutAtivo=false;
  let timerBanner=null,enderecoEntrega=null,quantidadeVitrine=12;
  let assinaturaCarrinhoAnterior='';
+ let novidadesVitrine=[];
  let avaliacoesDisponiveis=[],avisosGerais=[];
  const vazio=document.createElement.bind(document);
  const inform=msg=>{el('estadoLojaLoop').textContent=msg;};
@@ -245,6 +246,43 @@
    }
   }catch{lista.textContent='Avaliações temporariamente indisponíveis.';}
  }
+ function renderizarNovidadesEditorais(){
+  const root=el('novidadesVitrineAkitemm');root.replaceChildren();
+  root.hidden=filtro!=='novidades';
+  if(root.hidden)return;
+  const pesquisa=el('akitemmBusca').value.trim().normalize('NFD')
+   .replace(/[\u0300-\u036f]/g,'').toLocaleLowerCase('pt-BR');
+  for(const n of novidadesVitrine){
+   const combinacao=[n.titulo,n.texto].join(' ').normalize('NFD')
+    .replace(/[\u0300-\u036f]/g,'').toLocaleLowerCase('pt-BR');
+   if(pesquisa&&!combinacao.includes(pesquisa))continue;
+   const card=document.createElement('article');card.className='akitemm-novidade-publicacao';
+   if(n.temImagem&&Number.isSafeInteger(n.id)&&n.id>0){
+    const img=document.createElement('img');
+    img.src='/staging/vitrine/novidades/'+n.id+'/imagem';
+    img.loading='lazy';img.alt=n.titulo||'Imagem da novidade';
+    card.append(img);
+   }
+   const content=document.createElement('div');content.className='akitemm-novidade-conteudo';
+   if(n.titulo){const title=document.createElement('h3');title.textContent=n.titulo;content.append(title);}
+   if(n.texto){const t=document.createElement('p');t.textContent=n.texto;content.append(t);}
+   const ligado=catalogo.find(p=>p.produtoId===n.produtoId);
+   if(ligado){
+    const botao=document.createElement('button');botao.type='button';
+    botao.className='akitemm-ver-detalhes';botao.textContent='Ver produto';
+    botao.addEventListener('click',()=>abrirDetalhes(ligado));content.append(botao);
+   }
+   card.append(content);root.append(card);
+  }
+ }
+ async function carregarNovidadesEditorais(){
+  try{
+   const resposta=await api('novidades');
+   novidadesVitrine=Array.isArray(resposta.itens)?resposta.itens.filter(n=>
+    n&&n.estado==='PUBLICADA'&&Number.isSafeInteger(n.id)):[];
+  }catch{novidadesVitrine=[];} // Laboratorio legado sem rota: nao falhar a loja.
+  renderizarNovidadesEditorais();
+ }
  function produtosFiltrados(){
   const termo=el('akitemmBusca').value.trim().normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLocaleLowerCase('pt-BR');
   const cfg=configLoja||{};
@@ -277,10 +315,17 @@
   })[novo]||'Produtos em destaque';
   mostrarCatalogo();
  }
+ function filtradoNovidadePublicada(){
+  if(filtro!=='novidades')return false;
+  return !!el('novidadesVitrineAkitemm').childElementCount;
+ }
  function mostrarCatalogo(){
   const destino=el('catalogoLojaLoop');destino.replaceChildren();
+  renderizarNovidadesEditorais();
   const filtrados=produtosFiltrados();
-  el('akitemmResultadoProdutos').textContent=filtrados.length?'':(
+  const haPublicacoes=filtradoNovidadePublicada();
+  el('akitemmResultadoProdutos').textContent=filtrados.length||haPublicacoes?'':(
+   filtro==='novidades'?'Nenhuma novidade publicada por enquanto.':
    catalogo.length?'Nenhum produto encontrado neste filtro.':'Nenhum produto publicado ainda.');
   el('referenciaLojaLoop').textContent='Referência do LOOP para compras elegíveis: '+dinheiro(referenciaCentavos)+
    '. Produtos físicos e digitais podem ou não participar, conforme autorização do administrador.';
@@ -524,7 +569,7 @@
  async function inicializar(){
   try{
    await Promise.all([carregarCatalogo(),carregarPedidos(),carregarLinkDivulgacaoLoja(),carregarPerfil(),carregarEntrega()]);
-   await Promise.allSettled([carregarConfig(),carregarNotificacoes()]);
+   await Promise.allSettled([carregarConfig(),carregarNotificacoes(),carregarNovidadesEditorais()]);
    el('conteudoLojaLoop').hidden=false;
    inform('Loja AKITEMM em laboratório: pedidos de teste, sem cobrança ou entrega real.');
   }catch(e){
