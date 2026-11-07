@@ -3,7 +3,8 @@
 // Livro de OBRIGACOES PREVISTAS, somente laboratorio.
 // Documenta o ciclo concluido e seus seis pedidos internos simulados.
 // NUNCA converte previsao em credito liquidado, dinheiro sacavel ou saldo real.
-const {cofreDoEvento,centroDoLoop}=require('./destino-financeiro-centro-loop');
+const {cofreDoEvento,centroDoLoop,REGRA_DOURADA_INTEGRAL,
+ REGRA_DOURADA_LEGADA}=require('./destino-financeiro-centro-loop');
 
 function falha(codigo){const e=new Error(codigo);e.codigo=codigo;return e;}
 function inteiroPositivo(n){return Number.isSafeInteger(n)&&n>0;}
@@ -74,6 +75,10 @@ class LivroProvisoesV6DemoSQLite{
        !Array.isArray(ciclo.vendas)||ciclo.vendas.length!==6)
       throw falha('CICLO_INCOMPLETO_V6');
     const centro=ciclo.centro;
+    // Legado sem marcador conserva a destinacao originalmente gravada e
+    // documento JSON byte-a-byte. V2 so vale para ciclos iniciados novos.
+    const regraDourada=centroDoLoop(centro)?
+     (ciclo.vendas[0]?.regraDourada||REGRA_DOURADA_LEGADA):null;
     const titular=this._origemCentro(centro);
     const procurar=this.banco.prepare([
       'SELECT c.pedido_id AS pedidoId,c.conta_id AS contaId,',
@@ -88,7 +93,10 @@ class LivroProvisoesV6DemoSQLite{
       const v=ciclo.vendas[i];
       if(!v||typeof v.vendaId!=='string'||!v.vendaId.startsWith('compra-demo-')||
          v.ciclo!==ciclo.ciclo||v.ordem!==i+1||v.posicaoCentroId!==centro.id||
-         v.destinoCofre!==cofreDoEvento({posicaoCentro:centro,ordem:i+1})||
+         v.destinoCofre!==cofreDoEvento({posicaoCentro:centro,ordem:i+1,
+          regraDourada:regraDourada||REGRA_DOURADA_LEGADA})||
+         (regraDourada===REGRA_DOURADA_INTEGRAL&&
+          v.regraDourada!==REGRA_DOURADA_INTEGRAL)||
          vistos.has(v.vendaId))throw falha('EVENTO_CICLO_INVALIDO');
       vistos.add(v.vendaId);
       const pedido=v.vendaId.slice('compra-demo-'.length);
@@ -105,7 +113,9 @@ class LivroProvisoesV6DemoSQLite{
       titularContaId:titular.contaId,cofreCentro:titular.cofre,
       referenciaCentroCentavos:titular.referencia,
       previstoCentroCentavos:previsao,
-      totalReferenciasEventosCentavos:soma,eventos};
+      totalReferenciasEventosCentavos:soma,
+      ...(regraDourada===REGRA_DOURADA_INTEGRAL?{regraDourada}:{}),
+      eventos};
     return documento;
   }
   registrarCiclos({sim,transacaoAberta=false}={}){
