@@ -2,6 +2,7 @@
 // Somente laboratório; credencial do operador mantida apenas em memória.
 const $=id=>document.getElementById(id),elem=(tag,value)=>{const x=document.createElement(tag);if(value!==undefined)x.textContent=value;return x;};
 let auth=null,chave=null,paginaMissoes=0,paginaAlertas=0,paginaProdutos=0,edicaoProduto=null,chaveProduto=null,sinalizacaoAtual=null;
+let paginaPesquisaAdmin=0,pesquisaAtualAdmin=null,sequenciaPesquisaAdmin=0;
 const dizer=x=>$('estado').textContent=x;
 let cursoresPosicoes=[null],indicePosicoes=0,proximoCursorPosicoes=null;
 async function carregarHistoricoPosicoes(){
@@ -52,6 +53,65 @@ async function api(path,{method='GET',body,idempotencia}={}){
  return out;
 }
 function linha(rotulo,valor){const a=elem('div');a.className='indicador';a.append(elem('strong',String(valor)),elem('span',rotulo));return a;}
+
+
+async function executarPesquisaAdmin(){
+ const busca=pesquisaAtualAdmin;if(!busca)return;
+ const seq=++sequenciaPesquisaAdmin,estado=$('pesquisaEstadoAdmin'),area=$('pesquisaResultadosAdmin'),botao=$('pesquisaExecutarAdmin');
+ botao.disabled=true;estado.textContent='Pesquisando no SQLite...';area.replaceChildren();
+ $('pesquisaAnteriorAdmin').disabled=true;$('pesquisaProximoAdmin').disabled=true;
+ try{
+  const q=new URLSearchParams({tipo:busca.tipo,termo:busca.termo,pagina:String(paginaPesquisaAdmin)});
+  const r=await api('/pesquisa?'+q.toString());
+  if(seq!==sequenciaPesquisaAdmin||!auth)return;
+  estado.textContent='Página '+(r.pagina+1)+' · '+r.total+' resultado(s) em '+busca.tipo+'.';
+  if(!r.resultados.length)area.append(elem('p','Nenhum registro encontrado.'));
+  for(const item of r.resultados){
+   const card=elem('article');card.className='produto-admin-item';
+   const info=elem('div');info.append(elem('strong',item.titulo),elem('small',item.detalhe));
+   const acao=elem('button',busca.tipo==='pedidos'?'Conferir pré-adesão':busca.tipo==='produtos'?'Editar no catálogo':'Ver histórico');
+   acao.type='button';
+   acao.addEventListener('click',async()=>{
+    acao.disabled=true;
+    try{
+     if(busca.tipo==='pedidos'){
+      $('preAdesaoId').value=item.id;
+      mostrarPreAdesao(await api('/pre-adesao/'+encodeURIComponent(item.id)));
+      $('formPreAdesao').scrollIntoView({behavior:'smooth',block:'center'});
+     }else if(busca.tipo==='produtos'){
+      preencherProduto(await api('/produtos/'+encodeURIComponent(item.id)));
+     }else{
+      const historico=await api('/missoes/'+encodeURIComponent(item.id)+'/historico');
+      const lista=elem('ol');
+      for(const x of historico.historico)lista.append(elem('li',x.acao+' · '+x.nota));
+      card.append(lista);acao.remove();
+     }
+    }catch(e){estado.textContent='Consulta do registro falhou: '+e.message;}
+    finally{acao.disabled=false;}
+   });
+   card.append(info,acao);area.append(card);
+  }
+  $('pesquisaAnteriorAdmin').disabled=paginaPesquisaAdmin===0;
+  $('pesquisaProximoAdmin').disabled=!r.haMais;
+ }catch(e){if(seq===sequenciaPesquisaAdmin)estado.textContent='Pesquisa indisponível: '+e.message;}
+ finally{if(seq===sequenciaPesquisaAdmin)botao.disabled=false;}
+}
+$('formPesquisaAdmin').addEventListener('submit',e=>{
+ e.preventDefault();pesquisaAtualAdmin={tipo:$('pesquisaTipoAdmin').value,termo:$('pesquisaTermoAdmin').value.trim()};
+ paginaPesquisaAdmin=0;executarPesquisaAdmin();
+});
+$('pesquisaLimparAdmin').addEventListener('click',()=>{
+ ++sequenciaPesquisaAdmin;pesquisaAtualAdmin=null;paginaPesquisaAdmin=0;
+ $('formPesquisaAdmin').reset();$('pesquisaResultadosAdmin').replaceChildren();
+ $('pesquisaEstadoAdmin').textContent='Pesquisa limpa.';
+ $('pesquisaExecutarAdmin').disabled=false;$('pesquisaAnteriorAdmin').disabled=true;$('pesquisaProximoAdmin').disabled=true;
+});
+$('pesquisaAnteriorAdmin').addEventListener('click',()=>{
+ if(paginaPesquisaAdmin>0){paginaPesquisaAdmin--;executarPesquisaAdmin();}
+});
+$('pesquisaProximoAdmin').addEventListener('click',()=>{
+ if(pesquisaAtualAdmin){paginaPesquisaAdmin++;executarPesquisaAdmin();}
+});
 
 function renderizarPreviaFilas(p){
  const root=$('resumoPreviaFilas');root.replaceChildren();
@@ -420,11 +480,17 @@ function atualizarDepartamentos(departamentos){
    elem('small',d.quantidadeDadosLaboratorio===null?
     'Operações comerciais não conectadas':
     d.quantidadeDadosLaboratorio+' · '+d.descricao));
-  button.addEventListener('click',()=>{
+  button.addEventListener('click',async()=>{
    const atual=$('filtrarDepartamento').value;
-   $('filtrarDepartamento').value=atual===d.codigo?'':d.codigo;
+   const escolhido=atual===d.codigo?'':d.codigo;
+   $('filtrarDepartamento').value=escolhido;
    $('departamento').value=d.codigo;paginaMissoes=0;
-   atualizar().catch(e=>dizer(e.message));
+   try{
+    await atualizar();
+    $('resumoMissoes').scrollIntoView({behavior:'smooth',block:'start'});
+    dizer(escolhido?'Departamento '+d.nome+' selecionado. Missões abaixo.':
+     'Todos os departamentos exibidos abaixo.');
+   }catch(e){dizer('Não foi possível abrir o departamento: '+e.message);}
   });
   area.append(button);
  }
@@ -563,7 +629,12 @@ $('sair').addEventListener('click',()=>{
  auth=null;$('acesso').hidden=false;$('administracao').hidden=true;
  cursoresPosicoes=[null];indicePosicoes=0;proximoCursorPosicoes=null;
  $('historicoPosicoes').replaceChildren();$('resumoHistoricoPosicoes').textContent='';
- $('listaMissoes').replaceChildren();dizer('Acesso encerrado.');
+ $('listaMissoes').replaceChildren();
+  ++sequenciaPesquisaAdmin;pesquisaAtualAdmin=null;paginaPesquisaAdmin=0;
+  $('pesquisaResultadosAdmin').replaceChildren();$('formPesquisaAdmin').reset();
+  $('pesquisaEstadoAdmin').textContent='Acesso encerrado.';
+  $('pesquisaAnteriorAdmin').disabled=true;$('pesquisaProximoAdmin').disabled=true;
+  dizer('Acesso encerrado.');
 });
 async function conferirCoberturaAkitemm({offset=0}={}){
  const botao=$('consultarCoberturaAkitemm');
