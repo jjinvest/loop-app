@@ -30,7 +30,7 @@ const {auditarRelacoesPspCandidato}=
  require('../domain/auditoria-relacional-psp-candidato-sqlite');
 const {auditarIntegridadeMotorCandidato}=
  require('../domain/auditoria-integridade-motor-candidato-sqlite');
-const {consultarEscritorioHomologacao}=require('../domain/relatorio-homologacao-checkout-staging');
+const {consultarPedido,consultarEscritorioHomologacao}=require('../domain/relatorio-homologacao-checkout-staging');
 const {MissoesOperacionaisCandidatoSQLite}=require('../domain/missoes-operacionais-candidato-sqlite');
 const {DepartamentosAdministradorCandidato}=require('../domain/escritorio-admin-departamentos-candidato');
 const {CatalogoAdminCandidatoSQLite}=require('../domain/catalogo-admin-candidato-sqlite');
