@@ -6,7 +6,7 @@
 const express=require('express');
 function erro(c){const e=new Error(c);e.codigo=c;throw e;}
 function criarRouterAdminEconomiaAkitemm({
- controle,autorizarAdministrador,validarCsrfAdmin,origemHttps
+ controle,pedidosComerciais=null,autorizarAdministrador,validarCsrfAdmin,origemHttps
 }={}){
  if(!controle||typeof controle.listarOfertas!=='function'||
     typeof controle.definirCusto!=='function'||
@@ -14,6 +14,9 @@ function criarRouterAdminEconomiaAkitemm({
     typeof autorizarAdministrador!=='function'||
     typeof validarCsrfAdmin!=='function')
   erro('ADMIN_REAL_SEM_AUTORIZACAO');
+ if(pedidosComerciais!==null&&
+    typeof pedidosComerciais.listarResumoContabil!=='function')
+  erro('CONTABILIDADE_PEDIDOS_NAO_CONFIGURADA');
  let origem;
  try{
   const url=new URL(origemHttps);
@@ -73,6 +76,51 @@ function criarRouterAdminEconomiaAkitemm({
     'Content-Disposition':'attachment; filename="akitemm-produtos-para-contador.csv"'
    }).send('\uFEFF'+csv);
   }catch{return res.status(503).json({erro:'CSV_INDISPONIVEL'});}
+ });
+ router.get('/contador/pedidos.csv',(_req,res)=>{
+  if(!pedidosComerciais)
+   return res.status(503).json({erro:'PEDIDOS_REAIS_AINDA_NAO_INTEGRADOS'});
+  try{
+   const rows=pedidosComerciais.listarResumoContabil({limite:500});
+   if(!Array.isArray(rows)||rows.length>500)
+    throw Error('PEDIDOS_INCONSISTENTES');
+   const escapar=v=>{
+    const s=String(v??'');
+    return '"'+(/^[=+@\-\t\r]/.test(s)?"'"+s:s)
+     .replaceAll('"','""')+'"';
+   };
+   const dinheiro=n=>Number.isSafeInteger(n)?
+    (n/100).toFixed(2).replace('.',','):'';
+   const cabecalho=[
+    'Pedido_ID','Status','Data_criacao','Ultima_atualizacao',
+    'ID_pagamento_PSP','Valor_produtos_R
+module.exports={criarRouterAdminEconomiaAkitemm};
+,'Frete_cobrado_R
+module.exports={criarRouterAdminEconomiaAkitemm};
+,
+    'Total_pedido_R
+module.exports={criarRouterAdminEconomiaAkitemm};
+,'Distribuidores','Quantidade_itens',
+    'Taxas_PSP_conciliadas','Custo_fornecedor_pago_comprovado',
+    'Impostos_apurados','Lucro_liquido_apurado'
+   ];
+   const linhas=rows.map(p=>[
+    p.pedidoId,p.status,
+    new Date(p.criadoEm).toISOString(),
+    new Date(p.ultimaAtualizacaoEm).toISOString(),
+    p.pagamentoId||'',dinheiro(p.receitaProdutosCentavos),
+    dinheiro(p.freteCobradoClienteCentavos),
+    dinheiro(p.valorTotalPedidoCentavos),
+    p.distribuidores.join('|'),p.quantidadeItens,'NAO','NAO','NAO','NAO'
+   ]);
+   const csv='\uFEFF'+[cabecalho,...linhas].map(row=>
+    row.map(escapar).join(';')).join('\r\n')+'\r\n';
+   res.set({
+    'Content-Type':'text/csv; charset=utf-8',
+    'Content-Disposition':'attachment; filename="akitemm-pedidos-contador.csv"'
+   });
+   return res.send(csv);
+  }catch{return res.status(503).json({erro:'PEDIDOS_CONTABEIS_INDISPONIVEIS'});}
  });
  return router;
 }
