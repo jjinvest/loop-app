@@ -23,13 +23,13 @@ test('origem de convite invalida nao cria titular orfao nem perde nick',async t=
  await once(server,'listening');
  t.after(async()=>{await new Promise(resolve=>server.close(resolve));banco.close();});
  const base='http://127.0.0.1:'+server.address().port;
- const cadastro=(indicador)=>fetch(base+'/staging/contas/cadastrar',{
+ const cadastro=(indicador,prova={})=>fetch(base+'/staging/contas/cadastrar',{
   method:'POST',
   headers:{'Content-Type':'application/json',
    ...(indicador?{'x-akitemm-preview-indicador':indicador}:{})},
   body:JSON.stringify({nome:'Bruna Ficticia',nick:'Bruna',
    email:'bruna@example.invalid',senha:'SenhaFicticiaSegura2026!',
-   aceiteExplicito:true})
+   aceiteExplicito:true,...prova})
  });
  // Gateway real so injeta o header com cookie assinado. Neste teste,
  // simular uma referencia que perdeu o dono ANTES de gravar no DB.
@@ -42,8 +42,32 @@ test('origem de convite invalida nao cria titular orfao nem perde nick',async t=
  assert.equal(banco.prepare(
   'SELECT COUNT(*) AS n FROM akitemm_convites_candidatos_lab'
  ).get().n,0);
- const correta=await cadastro(null);
- assert.equal(correta.status,201,'cliente consegue recadastrar apos falha');
+ // O primeiro acesso deve exibir exatamente o texto do contrato
+ // registrado no SQLite; aceitar versão antiga jamais autoriza registro.
+ const termosR=await fetch(base+'/staging/contas/termos-cadastro');
+ assert.equal(termosR.status,200);
+ const termos=await termosR.json();
+ assert.equal(termos.somenteEnsaio,true);
+ assert.equal(termos.cadastroRealHabilitado,false);
+ assert.equal(termos.termosVersao,'LAB-vinculo-atomico-http');
+ assert.ok(termos.termosTexto.includes('Cadastro ficticio'));
+ const {createHash}=require('node:crypto');
+ assert.equal(termos.termosHash,createHash('sha256')
+  .update(termos.termosTexto).digest('hex'));
+ const stale=await cadastro(null,{
+  termosVersaoAceita:'LAB-versao-antiga',
+  termosHashAceito:termos.termosHash
+ });
+ assert.equal(stale.status,409);
+ assert.equal((await stale.json()).erro,'TERMOS_ALTERADOS_RELER');
+ assert.equal(banco.prepare(
+  'SELECT COUNT(*) AS n FROM akitemm_conta_unica_candidata'
+ ).get().n,0,'contrato antigo nao pode gerar conta');
+ const correta=await cadastro(null,{
+  termosVersaoAceita:termos.termosVersao,
+  termosHashAceito:termos.termosHash
+ });
+ assert.equal(correta.status,201,'conta somente com termos atuais');
  assert.equal((await correta.json()).contaCriada,true);
  assert.equal(banco.prepare(
   'SELECT COUNT(*) AS n FROM akitemm_conta_unica_candidata'
