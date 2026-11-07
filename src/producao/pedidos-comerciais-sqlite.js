@@ -102,13 +102,17 @@ function decifrar(k,r){
 }
 class PedidosComerciaisSQLite{
  constructor({banco,chavePedidos,consultarCotacaoConfiavel,
-  consultarPagamentoPsp,agora=()=>Date.now()}={}){
+  consultarPagamentoPsp,manutencao=null,agora=()=>Date.now()}={}){
   if(typeof banco?.prepare!=='function'||typeof banco?.exec!=='function'||
      !Buffer.isBuffer(chavePedidos)||chavePedidos.length!==32||
      typeof consultarCotacaoConfiavel!=='function'||
      typeof consultarPagamentoPsp!=='function'||
      typeof agora!=='function')erro('PEDIDOS_REAIS_NAO_CONFIGURADOS');
+  if(manutencao!==null&&(manutencao.db!==banco||
+    typeof manutencao.garantirOperacaoDisponivel!=='function'))
+   erro('MANUTENCAO_PEDIDOS_NAO_CONFIGURADA');
   this.db=banco;this.key=Buffer.from(chavePedidos);
+  this.manutencao=manutencao;
   this.cotacao=consultarCotacaoConfiavel;
   this.psp=consultarPagamentoPsp;
   this.agora=agora;
@@ -242,6 +246,7 @@ class PedidosComerciaisSQLite{
     erro('IDEMPOTENCIA_PEDIDO_CONFLITO');
    return {...this._publico(anterior),repetido:true};
   }
+  if(this.manutencao)this.manutencao.garantirOperacaoDisponivel();
   // Cotacao e frete nunca chegam do browser; o backend busca valores no
   // parceiro ou catalogo comercial homologado antes de gravar o pedido.
   const entrega=endereco(enderecoEntrega);
@@ -265,6 +270,7 @@ class PedidosComerciaisSQLite{
     this.db.exec('COMMIT');
     return {...this._publico(atual),repetido:true};
    }
+   if(this.manutencao)this.manutencao.garantirOperacaoDisponivel();
    // A mesma cotacao nao deve ser usada para outro titular/checkout.
    if(this.db.prepare(
     'SELECT pedido_id FROM loja_real_pedidos WHERE cotacao_id=?'
