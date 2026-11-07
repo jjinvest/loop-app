@@ -429,6 +429,15 @@ const {once}=require('node:events');
     throw Error('VITRINE_NAO_INICIALIZOU: '+estado+'; ERROS='+JSON.stringify(failures)+'; '+err.message);
    }
    assert.ok(await loja.locator('#catalogoLojaLoop article.produto-loja-loop').count()>=2);
+   await loja.waitForFunction(nick=>{
+    const campo=document.getElementById('enderecoDivulgarLojaLoop');
+    const botao=document.getElementById('copiarDivulgarLojaLoop');
+    return campo?.value.endsWith('/loja/'+nick)&&botao?.disabled===false;
+   },item.nick.toLowerCase(),{timeout:10000});
+   assert.match(await loja.locator('#statusDivulgarLojaLoop').innerText(),
+    /Sem compras ou comissões reais/);
+   assert.equal(await loja.locator('#enderecoDivulgarLojaLoop').inputValue(),
+    base+'/loja/'+item.nick.toLowerCase());
    // Os quatro botoes originais continuam na MESMA pagina e exibem conteudo
    // consistente com produtos/publicacoes confirmados, tambem no celular.
    assert.equal(await loja.locator('[data-akitemm-categoria]').count(),4);

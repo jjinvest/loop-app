@@ -484,7 +484,9 @@
   const input=el('enderecoDivulgarLojaLoop');
   input.value=l.linkLoja?location.origin+(l.linkLoja.startsWith('/')?l.linkLoja:'/loja/'+l.apelido):'';
   el('copiarDivulgarLojaLoop').disabled=!l.ativo||!input.value;
-  el('statusDivulgarLojaLoop').textContent=l.ativo?'Link AKITEMM ativo.':'Link disponível após primeira compra confirmada.';
+  el('statusDivulgarLojaLoop').textContent=l.apenasEnsaio?
+   'Link de cadastro de ensaio ativo. Sem compras ou comissões reais.':
+   (l.ativo?'Link AKITEMM ativo.':'Link disponível após primeira compra confirmada.');
  }
  function mostrarBanner(){
   const bann=configLoja?.banners||[];

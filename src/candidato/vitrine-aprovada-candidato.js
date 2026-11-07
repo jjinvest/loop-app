@@ -184,8 +184,16 @@ function createVitrineCandidata({app,banco,catalogo,contas,intencoes,prePedidos,
   try{return res.json(enderecoEntrega.salvar(req.titularVitrine,req.body));}
   catch(e){return res.status(400).json({erro:e.codigo||'ENDERECO_INVALIDO'});}
  });
- app.get('/staging/vitrine/meus-links',autorizarCliente,
-  (_req,res)=>res.json({ativo:false,linkLoja:null,apelido:null}));
+ app.get('/staging/vitrine/meus-links',autorizarCliente,(req,res)=>{
+  // Fonte unica de identidade: o link da loja usa o mesmo nick do Escritório.
+  // Só atribui cadastros de LAB pelo gateway assinado, nunca bonificação real.
+  try{
+   const perfil=contas.perfil(req.titularVitrine);
+   return res.json({ativo:true,linkLoja:'/loja/'+perfil.nick,
+    linkEscritorio:'/escritorio/'+perfil.nick,apelido:perfil.nick,
+    apenasEnsaio:true,indicadoQualificado:false,semComissaoReal:true});
+  }catch{return res.status(503).json({erro:'LINK_INDICACAO_INDISPONIVEL'});}
+ });
  app.get('/staging/vitrine/loja/config',autorizarCliente,
   (_req,res)=>res.json({config:{banners:[],redes:{},informacoes:{
    suporte:'Apenas prévia de laboratório; atendimento comercial indisponível.'

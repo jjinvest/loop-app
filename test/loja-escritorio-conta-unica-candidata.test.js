@@ -89,6 +89,18 @@ test('conta única prepara checkout e Escritório com o MESMO titular, sem Pix',
  assert.equal((await enviar(base,'/staging/contas/me')).status,401);
  const me=await enviar(base,'/staging/contas/me',{cookie:cookieA});
  assert.equal(me.status,200);
+ const semSessao=await enviar(base,'/staging/vitrine/meus-links');
+ assert.equal(semSessao.status,401);
+ const linkA=await enviar(base,'/staging/vitrine/meus-links',{cookie:cookieA});
+ const linkB=await enviar(base,'/staging/vitrine/meus-links',{cookie:cookieB});
+ assert.equal(linkA.status,200);assert.equal(linkB.status,200);
+ assert.deepEqual([linkA.body.linkLoja,linkA.body.linkEscritorio],[
+  '/loja/alice','/escritorio/alice'
+ ]);
+ assert.equal(linkB.body.linkLoja,'/loja/bia');
+ assert.equal(linkA.body.ativo,true);
+ assert.equal(linkA.body.apenasEnsaio,true);
+ assert.equal(linkA.body.semComissaoReal,true);
  assert.equal((await enviar(base,'/staging/contas/identidade',{
   method:'POST',cookie:cookieA,data:{
    cpf:'529.982.247-25',aceiteExplicito:true
