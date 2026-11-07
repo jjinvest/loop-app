@@ -3,7 +3,7 @@ const {test}=require('node:test');
 const assert=require('node:assert/strict');
 const {randomBytes}=require('node:crypto');
 const {DatabaseSync}=require('node:sqlite');
-const {ContaUnicaCandidataSQLite}=require('../src/domain/conta-unica-candidata-sqlite');
+const {ContaUnicaCandidataSQLite,COOKIE}=require('../src/domain/conta-unica-candidata-sqlite');
 const TERMOS='Somente ensaio de autenticação sem dinheiro nem direitos comerciais.';
 
 async function preparar(t){
@@ -61,4 +61,33 @@ test('login iniciado antes de alteracao da senha nao recria sessao revogada',asy
  assert.equal(banco.prepare(
   'SELECT tentativas FROM akitemm_conta_unica_candidata'
  ).get().tentativas,0,'troca concorrente nao equivale a senha errada');
+});
+
+test('troca de senha: erros simultaneos preservam bloqueio e nao perdem tentativas',async t=>{
+ const {banco,conta}=await preparar(t);
+ const login=await conta.entrar({nick:'Teste',senha:'SenhaCorreta2026!Forte'});
+ const req={get(campo){
+  if(campo==='cookie')return COOKIE+'='+login.token;
+  if(campo==='x-checkout-csrf')return login.csrf;
+  return undefined;
+ }};
+ const trocas=await Promise.allSettled(Array.from({length:8},()=>
+  conta.trocarSenha({
+   req,senhaAtual:'SenhaIncorretaCompletamente!',
+   novaSenha:'OutraSenhaDeLaboratorio2026!'
+  })
+ ));
+ assert.ok(trocas.every(r=>r.status==='rejected'),
+  'nenhuma senha incorreta pode trocar credencial');
+ const erros=trocas.map(r=>r.reason.codigo);
+ assert.equal(erros.filter(c=>c==='SENHA_ATUAL_INCORRETA').length,5);
+ assert.equal(erros.filter(c=>c==='CONTA_TEMPORARIAMENTE_BLOQUEADA').length,3);
+ const estado=banco.prepare(
+  'SELECT tentativas,bloqueado_ate FROM akitemm_conta_unica_candidata'
+ ).get();
+ assert.equal(estado.tentativas,5);
+ assert.ok(estado.bloqueado_ate>Date.now());
+ await assert.rejects(conta.entrar({
+  nick:'Teste',senha:'SenhaCorreta2026!Forte'
+ }),{codigo:'CONTA_TEMPORARIAMENTE_BLOQUEADA'});
 });
