@@ -376,16 +376,15 @@ const {once}=require('node:events');
    await admin.locator('#configSalvarAdmin').click();
    await admin.locator('#configResultadoAdmin')
     .filter({hasText:/Vitrine e atendimento salvos/}).waitFor();
-   const configAdmin=await admin.evaluate(async()=>{
-    const r=await fetch('/staging/escritorio-unificado/loja/config',{
-     credentials:'same-origin'
+   const configResposta=await admin.request.get(
+    base+'/staging/escritorio-unificado/loja/config',{
+     headers:{Authorization:'Bearer '+'somente-teste-do-navegador-'+('x'.repeat(40))}
     });
-    return {status:r.status,body:await r.json()};
-   });
-   assert.equal(configAdmin.status,200);
-   assert.equal(configAdmin.body.config.banners.length,1);
-   assert.equal(configAdmin.body.config.banners[0].titulo,'Banner conectado '+item.nick);
-   assert.ok(configAdmin.body.revisao>=1);
+   assert.equal(configResposta.status(),200);
+   const configAdmin=await configResposta.json();
+   assert.equal(configAdmin.config.banners.length,1);
+   assert.equal(configAdmin.config.banners[0].titulo,'Banner conectado '+item.nick);
+   assert.ok(configAdmin.revisao>=1);
    await admin.screenshot({path:path.join(__dirname,'../artifacts',
     'escritorio-admin-candidato-'+item.nome+'.png'),fullPage:true});
    await page.locator('#atualizarPedidos').click();
