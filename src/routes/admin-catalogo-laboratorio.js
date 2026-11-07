@@ -43,7 +43,16 @@ function criarAutorizacao({ segredo }) {
     if (!token || recebido.length !== esperado.length || !timingSafeEqual(recebido, esperado)) {
       return res.status(401).json({ erro: 'CREDENCIAL_ADMIN_INVALIDA' });
     }
-    if (['POST','PATCH','PUT','DELETE'].includes(req.method) && !req.is('application/json')) {
+    // Excecao BINARIA muito restrita para imagem de Novidades:
+    // todas as outras mutacoes administrativas continuam exigindo JSON.
+    const somenteImagem = /^\/staging\/escritorio-unificado\/novidades\/[1-9][0-9]*\/imagem$/.test(req.path);
+    const uploadImagem = somenteImagem && req.method === 'PUT' &&
+      ['image/png','image/jpeg','image/webp'].includes(req.get('content-type')?.split(';')[0]);
+    const apagarImagem = somenteImagem && req.method === 'DELETE' &&
+      !req.get('content-type') &&
+      (!req.get('content-length') || req.get('content-length') === '0');
+    if (['POST','PATCH','PUT','DELETE'].includes(req.method) &&
+        !req.is('application/json') && !uploadImagem && !apagarImagem) {
       return res.status(415).json({ erro: 'USE_APPLICATION_JSON' });
     }
     next();
