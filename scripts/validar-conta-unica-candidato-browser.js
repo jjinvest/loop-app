@@ -434,7 +434,7 @@ const {once}=require('node:events');
     const botao=document.getElementById('copiarDivulgarLojaLoop');
     return campo?.value.endsWith('/loja/'+nick)&&botao?.disabled===false;
    },item.nick.toLowerCase(),{timeout:10000});
-   assert.match(await loja.locator('#statusDivulgarLojaLoop').innerText(),
+   assert.match(await loja.locator('#statusDivulgarLojaLoop').textContent(),
     /Sem compras ou comissões reais/);
    assert.equal(await loja.locator('#enderecoDivulgarLojaLoop').inputValue(),
     base+'/loja/'+item.nick.toLowerCase());
