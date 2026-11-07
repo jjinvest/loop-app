@@ -1,6 +1,6 @@
 'use strict';
 // Coerencia entre livros de previsoes. Nao e conciliacao bancaria e nao liquida valores.
-const {cofreDoEvento}=require('./destino-financeiro-centro-loop');
+const {cofreDoEvento,REGRA_DOURADA_LEGADA}=require('./destino-financeiro-centro-loop');
 const FONTES=Object.freeze([
  'loop_v6_provisoes_ciclos','loop_v6_provisoes_eventos','loop_v6_provisoes_parcelas'
 ]);
@@ -15,15 +15,19 @@ function consultarIntegridadeProvisoesLab({banco}={}){
  // Agregar antes do JOIN evita multiplicar seis eventos por tres parcelas.
  const destinos=Array.from({length:6},(_,i)=>[i+1,
   cofreDoEvento({posicaoCentro:{empresa:false},ordem:i+1}),
+  cofreDoEvento({posicaoCentro:{empresa:true},ordem:i+1,
+   regraDourada:REGRA_DOURADA_LEGADA}),
   cofreDoEvento({posicaoCentro:{empresa:true},ordem:i+1})]);
- const contagens=banco.prepare(`WITH destinos(ordem,participante,empresa) AS (
-  VALUES ${destinos.map(()=>'(?,?,?)').join(',')}
+ const contagens=banco.prepare(`WITH destinos(ordem,participante,empresaLegada,empresaIntegral) AS (
+  VALUES ${destinos.map(()=>'(?,?,?,?)').join(',')}
  ), eventos AS (
   SELECT e.giro,COUNT(*) n,COUNT(DISTINCT e.ordem) ordens,SUM(e.referencia_centavos) total,
    SUM(CASE WHEN typeof(e.referencia_centavos)<>'integer' OR e.referencia_centavos<=0
     OR e.ordem NOT BETWEEN 1 AND 6
     OR e.destino_cofre IS NOT CASE WHEN c.conta_id IS NULL
-     THEN d.empresa ELSE d.participante END
+     THEN CASE WHEN json_extract(c.documento_json,'$.regraDourada')='DOURADA_INTEGRAL_V2'
+      THEN d.empresaIntegral ELSE d.empresaLegada END
+     ELSE d.participante END
     THEN 1 ELSE 0 END) invalidos
   FROM loop_v6_provisoes_eventos e
   LEFT JOIN loop_v6_provisoes_ciclos c ON c.giro=e.giro
