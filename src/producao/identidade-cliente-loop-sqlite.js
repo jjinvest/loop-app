@@ -236,6 +236,32 @@ class IdentidadeClienteLoopReal{
   return this.banco.prepare('DELETE FROM loop_real_sessoes WHERE token_hash=?')
    .run(hex(token)).changes===1;
  }
+ dadosTitular(titularId){
+  // Consulta apenas por ID extraído de uma sessão autenticada pelo servidor;
+  // nunca aceitar titularId arbitrário de query/body do navegador.
+  if(typeof titularId!=='string'||!/^titular-[a-f0-9-]{36}$/.test(titularId))
+   erro('TITULAR_INVALIDO');
+  const row=this.banco.prepare([
+   'SELECT nick,nome_iv,nome_ct,nome_tag,',
+   'email_iv,email_ct,email_tag,',
+   'termos_versao,termos_hash,priv_versao,priv_hash,',
+   'criado_em,email_confirmado_em',
+   'FROM loop_real_contas WHERE id=?'
+  ].join(' ')).get(titularId);
+  if(!row)erro('TITULAR_INEXISTENTE');
+  return {
+   nick:row.nick,
+   nome:decifrar(this.keyCipher,row.nome_iv,row.nome_ct,row.nome_tag),
+   email:decifrar(this.keyCipher,row.email_iv,row.email_ct,row.email_tag),
+   documentosAceitos:{
+    termos:{versao:row.termos_versao,hash:row.termos_hash},
+    privacidade:{versao:row.priv_versao,hash:row.priv_hash}
+   },
+   registradoEm:row.criado_em,emailVerificado:row.email_confirmado_em!==null,
+   // Sem CPF, endereço, saldos ou dados da loja em outro domínio.
+   nenhumPagamentoRealNesteServico:true
+  };
+ }
  _codigo(id,codigo,finalidade){
   return assinar(this.keyCodigo,'CODIGO-'+finalidade,id+':'+codigo);
  }
