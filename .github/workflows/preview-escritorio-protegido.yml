@@ -15,6 +15,7 @@ on:
       - 'test/recuperacao-senha-multi-instancia.test.js'
       - 'src/candidato/servidor-loja-escritorio-candidato.js'
       - 'src/domain/motor-conta-unica-ensaio-sqlite.js'
+      - 'test/motor-conta-unica-ensaio-sqlite.test.js'
       - 'src/domain/plano-posicoes-compra-akitemm.js'
       - 'test/plano-posicoes-compra-akitemm.test.js'
       - 'test/asaas-motor-automatico-sandbox-candidato.test.js'
@@ -102,6 +103,7 @@ jobs:
       - run: node --check src/candidato/servidor-loja-escritorio-candidato.js
       - run: node --check src/candidato/checkout-candidato-ui.js
       - run: node --check src/domain/motor-conta-unica-ensaio-sqlite.js
+      - run: node --test test/motor-conta-unica-ensaio-sqlite.test.js
       - run: node --check src/domain/plano-posicoes-compra-akitemm.js
       - run: node --check src/domain/auditoria-cobertura-lotes-akitemm.js
       - run: node --check scripts/provar-restauracao-sqlite-unificado-lab.js

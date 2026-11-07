@@ -36,6 +36,22 @@ class MotorContaUnicaEnsaioSQLite{
    'titular_id TEXT,numero_posicao INTEGER,criado_em INTEGER NOT NULL);',
    'CREATE UNIQUE INDEX IF NOT EXISTS idx_motor_ensaio_prepared_once',
    "ON akitemm_motor_conta_ensaio_operacoes(prepedido_id) WHERE tipo='VINCULAR_PEDIDO';",
+   // Camada EXCLUSIVAMENTE VISUAL, fora do snapshot financeiro e da fila.
+   'CREATE TABLE IF NOT EXISTS akitemm_motor_douradas_rotulos_lab(',
+   'numero_posicao INTEGER PRIMARY KEY CHECK(numero_posicao>0),',
+   'nome_visual TEXT NOT NULL,numero_visual TEXT NOT NULL,',
+   'revisao INTEGER NOT NULL CHECK(revisao>=1),',
+   'atualizado_em INTEGER NOT NULL);',
+   'CREATE TABLE IF NOT EXISTS akitemm_motor_douradas_rotulos_auditoria_lab(',
+   'id INTEGER PRIMARY KEY AUTOINCREMENT,numero_posicao INTEGER NOT NULL,',
+   'nome_visual TEXT NOT NULL,numero_visual TEXT NOT NULL,',
+   'revisao INTEGER NOT NULL,alterado_em INTEGER NOT NULL);',
+   'CREATE TRIGGER IF NOT EXISTS akitemm_douradas_rotulo_audit_no_update',
+   'BEFORE UPDATE ON akitemm_motor_douradas_rotulos_auditoria_lab',
+   "BEGIN SELECT RAISE(ABORT,'auditoria de rotulo imutavel'); END;",
+   'CREATE TRIGGER IF NOT EXISTS akitemm_douradas_rotulo_audit_no_delete',
+   'BEFORE DELETE ON akitemm_motor_douradas_rotulos_auditoria_lab',
+   "BEGIN SELECT RAISE(ABORT,'auditoria de rotulo imutavel'); END;",
    'CREATE TABLE IF NOT EXISTS akitemm_motor_ensaio_lotes_pedido(',
    'prepedido_id TEXT NOT NULL,ordinal INTEGER NOT NULL CHECK(ordinal BETWEEN 1 AND 10),',
    'titular_id TEXT NOT NULL,numero_posicao INTEGER NOT NULL UNIQUE,',
@@ -1090,6 +1106,51 @@ class MotorContaUnicaEnsaioSQLite{
    return {girou:acao==='GIRAR',somenteEnsaio:true,creditoReal:false};
   });
  }
+ // Somente painel do OPERADOR deve chamar este método. Nome e número
+ // não modificam ID, snapshot do motor, compra, prioridade, valor ou cofre.
+ definirVisualDourada({posicaoId,nomeVisual='',numeroVisual=''}={}){
+  validarAmbiente();
+  if(!Number.isSafeInteger(posicaoId)||posicaoId<1||
+     typeof nomeVisual!=='string'||typeof numeroVisual!=='string')
+   falha('DOURADA_VISUAL_DADOS_INVALIDOS');
+  const nome=nomeVisual.trim(),numero=numeroVisual.trim();
+  if(nome.length>24||!/^[\p{L}\p{M}\p{N} ._'-]{0,24}$/u.test(nome)||
+     !/^([0-9]{1,8})?$/.test(numero))
+   falha('DOURADA_VISUAL_DADOS_INVALIDOS');
+  this.banco.exec('BEGIN IMMEDIATE');
+  try{
+   const sim=this._simulador();
+   const ativos=[...sim.filas.filaA,...sim.filas.filaB,
+    sim.tabuleiro.centro,...sim.tabuleiro.vagas];
+   const p=ativos.find(x=>x&&x.id===posicaoId&&x.empresa===true);
+   if(!p)falha('DOURADA_VISUAL_POSICAO_NAO_ELEGIVEL');
+   const atual=this.banco.prepare([
+    'SELECT nome_visual AS nomeVisual,numero_visual AS numeroVisual,',
+    'revisao FROM akitemm_motor_douradas_rotulos_lab WHERE numero_posicao=?'
+   ].join(' ')).get(posicaoId);
+   if((atual?.nomeVisual||'')===nome&&(atual?.numeroVisual||'')===numero){
+    this.banco.exec('COMMIT');
+    return {posicaoId,nomeVisual:nome,numeroVisual:numero,
+     revisao:atual?.revisao||0,semAlteracao:true,identificadorInternoPreservado:true};
+   }
+   const revisao=(atual?.revisao||0)+1,agora=Date.now();
+   this.banco.prepare([
+    'INSERT INTO akitemm_motor_douradas_rotulos_lab',
+    '(numero_posicao,nome_visual,numero_visual,revisao,atualizado_em)',
+    'VALUES(?,?,?,?,?) ON CONFLICT(numero_posicao) DO UPDATE SET',
+    'nome_visual=excluded.nome_visual,numero_visual=excluded.numero_visual,',
+    'revisao=excluded.revisao,atualizado_em=excluded.atualizado_em'
+   ].join(' ')).run(posicaoId,nome,numero,revisao,agora);
+   this.banco.prepare([
+    'INSERT INTO akitemm_motor_douradas_rotulos_auditoria_lab',
+    '(numero_posicao,nome_visual,numero_visual,revisao,alterado_em)',
+    'VALUES(?,?,?,?,?)'
+   ].join(' ')).run(posicaoId,nome,numero,revisao,agora);
+   this.banco.exec('COMMIT');
+   return {posicaoId,nomeVisual:nome,numeroVisual:numero,
+    revisao,semAlteracao:false,identificadorInternoPreservado:true};
+  }catch(e){this.banco.exec('ROLLBACK');throw e;}
+ }
  consultar({titularId=null}={}){
   validarAmbiente();
   if(titularId!==null){
@@ -1101,11 +1162,20 @@ class MotorContaUnicaEnsaioSQLite{
   }
   const sim=this._simulador();
   const estado=sim.estado();
+  const rotulosDouradas=new Map(this.banco.prepare([
+   'SELECT numero_posicao,nome_visual,numero_visual',
+   'FROM akitemm_motor_douradas_rotulos_lab'
+  ].join(' ')).all().map(r=>[r.numero_posicao,r]));
   const visual=p=>p?{
    numero:p.id,
    minha:p.participanteId===titularId&&p.empresa!==true,
    pendente:p.statusAdesao==='PENDENTE'&&p.empresa!==true,
    dourada:p.empresa===true,
+   ...(p.empresa===true?{
+    // Dados somente de exibicao; o campo numero acima segue sendo o ID real.
+    nomeVisual:rotulosDouradas.get(p.id)?.nome_visual||'',
+    numeroVisual:rotulosDouradas.get(p.id)?.numero_visual||''
+   }:{}),
    // Nao enviar nome, UUID, nick nem CPF de outros participantes.
    status:p.empresa===true?'EMPRESA':p.statusAdesao==='REVISAR_PSP'?'REVISAO_PSP':p.statusAdesao==='PENDENTE'?'PENDENTE':p.statusAdesao==='ACEITE_ENSAIO'?'ACEITE_ENSAIO':'ENSAIO',
    aceiteEnsaio:p.participanteId===titularId&&p.statusAdesao==='ACEITE_ENSAIO',

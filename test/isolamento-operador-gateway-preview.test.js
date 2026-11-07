@@ -53,6 +53,7 @@ test('cookie de visitante nao abre APIs administrativas nem injeta bearer no bac
   for(const path of ['/escritorio','/staging/escritorio-admin',
    '/staging/escritorio-unificado','/staging/escritorio-unificado/motor/estado',
    '/staging/escritorio-unificado/motor/liberar-lote',
+   '/staging/escritorio-unificado/motor/douradas/visual',
    '/staging/assets/admin.js','/staging/assets/admin.css',
    '/STAGING/ESCRITORIO-ADMIN',
    '/STAGING/ESCRITORIO-UNIFICADO/MOTOR/ESTADO',
@@ -61,6 +62,11 @@ test('cookie de visitante nao abre APIs administrativas nem injeta bearer no bac
    const r=await fetch(x.url+path,{headers:{Cookie:ck}});
    assert.equal(r.status,401,path);
   }
+  const visual=await fetch(x.url+'/staging/escritorio-unificado/motor/douradas/visual',{
+   method:'POST',headers:{Cookie:ck,'Content-Type':'application/json'},
+   body:JSON.stringify({posicaoId:1,nomeVisual:'VIP',numeroVisual:'1'})
+  });
+  assert.equal(visual.status,401,'visitante nao altera visual das douradas');
   assert.equal(x.chamadas.length,n,'sem encaminhamento ao upstream');
   const raiz=await fetch(x.url+'/',{headers:{Cookie:ck},redirect:'manual'});
   assert.equal(raiz.status,302);

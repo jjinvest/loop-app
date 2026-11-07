@@ -317,15 +317,26 @@ async function atualizarResumo(){
   $('linksNick').textContent='Seu nick: @'+perfil.nick;
  }catch(e){dizer('Não foi possível atualizar a visão geral: '+e.message);}
 }
+function rotuloVisualDourada(p){
+ if(!p?.dourada)return '';
+ const n=typeof p.numeroVisual==='string'&&/^[0-9]{1,8}$/.test(p.numeroVisual)?
+  '#'+p.numeroVisual:'';
+ const nome=typeof p.nomeVisual==='string'&&p.nomeVisual.length<=24?
+  p.nomeVisual:'';
+ return [n,nome].filter(Boolean).join('\n');
+}
 function preencherVagaMotor(id,p,centro=false){
  const numero=$(id),bolinha=numero.closest('.espaco-tabuleiro-demo');
- numero.textContent=p?'#'+p.numero:(centro?'#0000':'—');
+ numero.textContent=p?.dourada?rotuloVisualDourada(p):
+  p?'#'+p.numero:(centro?'#0000':'—');
  numero.classList.toggle('posicao-dourado',Boolean(p?.dourada));
  numero.classList.toggle('posicao-azul',Boolean(p?.pendente));
  numero.classList.toggle('posicao-verde',Boolean(p?.aceiteEnsaio));
  numero.classList.toggle('loop03-iluminada',Boolean(p?.minha));
  bolinha.setAttribute('aria-label',(centro?'Centro':'Vaga do tabuleiro')+
-  ': '+(p?('#'+p.numero+' · '+p.status):'vazio')+
+  ': '+(p?.dourada?('bola dourada'+
+   (rotuloVisualDourada(p)?' · '+rotuloVisualDourada(p).replace('\n',' · '):'')):
+   p?('#'+p.numero+' · '+p.status):'vazio')+
   (p?.minha?' · minha posição':''));
 }
 function preencherFilaMotor(id,itens,tipo){
@@ -340,12 +351,13 @@ function preencherFilaMotor(id,itens,tipo){
   const inicial=document.createElement('span');
   inicial.className='loop03-inicial-fila '+(p.dourada?'loop03-dourada':
    p.pendente?'loop03-azul':p.aceiteEnsaio?'loop03-verde':tipo==='A'?'loop03-a':'loop03-b');
-  inicial.textContent=p.dourada?'●':tipo;
+  inicial.textContent=p.dourada?'':tipo;
   const conteudo=document.createElement('span');
   conteudo.className='loop03-fila-identificacao';
   const numero=document.createElement('span');
   numero.className='loop03-numero-titular';
-  numero.textContent='#'+p.numero;
+  numero.textContent=p.dourada?rotuloVisualDourada(p).replace('\n',' · '):
+   '#'+p.numero;
   conteudo.append(numero);
   if(p.minha){
    const minha=document.createElement('small');minha.textContent='Minha posição · ensaio';

@@ -660,6 +660,21 @@ function criarAppLojaEscritorioCandidato({banco,repositorioCatalogo,
   try{return res.json(motorConta.consultar());}
   catch(e){return res.status(503).json({erro:e.codigo||'MOTOR_ENSAIO_INDISPONIVEL'});}
  });
+ // Apenas operador: editar tinta/texto de dourada, NUNCA a identidade no motor.
+ app.post('/staging/escritorio-unificado/motor/douradas/visual',autorizarOperador,(req,res)=>{
+  res.set('Cache-Control','no-store');
+  if(!req.is('application/json')||!req.body||
+     typeof req.body!=='object'||Array.isArray(req.body)||
+     Object.keys(req.body).sort().join(',')!=='nomeVisual,numeroVisual,posicaoId')
+   return res.status(400).json({erro:'DOURADA_VISUAL_DADOS_INVALIDOS'});
+  try{return res.json(motorConta.definirVisualDourada(req.body));}
+  catch(e){
+   const codigo=e.codigo||'DOURADA_VISUAL_INDISPONIVEL';
+   return res.status(codigo==='DOURADA_VISUAL_DADOS_INVALIDOS'?400:
+    codigo==='DOURADA_VISUAL_POSICAO_NAO_ELEGIVEL'?409:503)
+    .json({erro:codigo});
+  }
+ });
  app.post('/staging/escritorio-unificado/motor/vincular-pedido',autorizarOperador,(req,res)=>{
   if(!req.is('application/json')||!req.body||Array.isArray(req.body)||
      Object.keys(req.body).sort().join(',')!=='aceiteEnsaio,prepedidoId')

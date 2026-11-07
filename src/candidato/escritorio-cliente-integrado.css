@@ -124,3 +124,7 @@ body.loop03-logado main>.mensagem-pagina{margin:0 0 .75rem}
 .cliente-integrado #conteudoTabuleiro .espaco-tabuleiro-demo:has(.posicao-verde){background:radial-gradient(circle at 25% 20%,#b2ffd3,#2a9762 70%,#124732);border-color:#9ff7c6}
 .cliente-integrado #conteudoTabuleiro .mapa-fila-posicoes-demo .selo-posicao-demo.posicao-verde{background:#22744d;color:#fff;border-color:#9ff7c6}
 .cliente-integrado #conteudoTabuleiro .loop03-inicial-fila.loop03-verde{background:#22744d;color:#fff}
+
+/* Douradas: a identidade do motor e interna; padrao ouro sem letra/numero. */
+.cliente-integrado #conteudoTabuleiro .espaco-tabuleiro-demo:has(.posicao-dourado) .titulo-espaco-tabuleiro-demo{visibility:hidden}
+.cliente-integrado #conteudoTabuleiro .espaco-tabuleiro-demo .selo-posicao-demo.posicao-dourado{white-space:pre-line;overflow-wrap:anywhere;text-align:center;max-width:88%;font-size:clamp(.58rem,1.55vw,.98rem);font-weight:800;line-height:1.08}

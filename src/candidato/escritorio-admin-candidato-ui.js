@@ -614,9 +614,55 @@ $('prepararEntrega').addEventListener('submit',async e=>{
  }catch(err){dizer('Operação bloqueada: '+err.message);}finally{b.disabled=false;}
 });
 
+function atualizarListaDouradasAdmin(r){
+ const alvo=$('douradasAtivasAdmin');alvo.replaceChildren();
+ const registros=[...r.filaA,...r.filaB,r.tabuleiro.centro,...r.tabuleiro.vagas]
+  .filter(p=>p?.dourada);
+ if(registros.length===0){
+  alvo.append(elem('p','Nenhuma bola dourada ativa neste momento.'));return;
+ }
+ const usadas=new Set();
+ for(const p of registros){
+  if(usadas.has(p.numero))continue;usadas.add(p.numero);
+  const linha=elem('div');linha.className='produto-admin-item';
+  const descricao=elem('span','ID interno #'+p.numero+' · '+
+   ([p.numeroVisual&&'#'+p.numeroVisual,p.nomeVisual].filter(Boolean).join(' · ')||'sem texto'));
+  const botao=elem('button','Editar');botao.type='button';
+  botao.addEventListener('click',()=>{
+   $('douradaIdInternoAdmin').value=String(p.numero);
+   $('douradaNumeroVisualAdmin').value=p.numeroVisual||'';
+   $('douradaNomeVisualAdmin').value=p.nomeVisual||'';
+   $('statusVisualDouradaAdmin').textContent='Editando apenas o visual da dourada.';
+  });
+  linha.append(descricao,botao);alvo.append(linha);
+ }
+}
+$('formVisualDouradaAdmin').addEventListener('submit',async e=>{
+ e.preventDefault();const botao=e.submitter||$('formVisualDouradaAdmin').querySelector('button[type=submit]');
+ botao.disabled=true;
+ try{
+  const posicaoId=Number($('douradaIdInternoAdmin').value);
+  if(!Number.isSafeInteger(posicaoId)||posicaoId<1)throw Error('ID_INVALIDO');
+  const r=await api('/motor/douradas/visual',{method:'POST',body:{
+   posicaoId,
+   nomeVisual:$('douradaNomeVisualAdmin').value,
+   numeroVisual:$('douradaNumeroVisualAdmin').value
+  }});
+  $('statusVisualDouradaAdmin').textContent='Dourada atualizada. '+(
+   r.nomeVisual||r.numeroVisual?'Rótulo visual salvo.':'Sem texto, padrão original.');
+  await atualizarMotorContaEnsaio();
+ }catch(e){$('statusVisualDouradaAdmin').textContent='Não salvo: '+e.message;}
+ finally{botao.disabled=false;}
+});
+$('limparVisualDouradaAdmin').addEventListener('click',()=>{
+ $('douradaNomeVisualAdmin').value='';
+ $('douradaNumeroVisualAdmin').value='';
+ $('formVisualDouradaAdmin').requestSubmit();
+});
 let agendaHojeLocal=null;
 async function atualizarMotorContaEnsaio(){
  const r=await api('/motor/estado');
+ atualizarListaDouradasAdmin(r);
  const area=$('motorEnsaioResumo');area.replaceChildren();
  area.append(linha('Fila A de ensaio',r.filaA.length),
   linha('Fila B de ensaio',r.filaB.length),

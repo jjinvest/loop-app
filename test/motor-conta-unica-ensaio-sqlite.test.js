@@ -194,3 +194,72 @@ test('verde abaixo do piso e roxo nao configurado nao criam entradas no motor',(
   assert.equal(motor.consultar({titularId:titular(1)}).posicoesAtivasDoTitular,0);
  }finally{db.close();}
 });
+
+// Rótulos dourados: campos estritamente visuais, persistentes, sem alterar IDs.
+test('douradas são limpas por padrão, rotulos editáveis sem mudar snapshot e auditáveis',()=>{
+ const {db,motor,sinalizacao}=preparar();
+ try{
+  const sim=motor._simulador();
+  const criada=sim.registrarPosicaoSimulada({
+   nome:'Operacional',participanteId:'LOOP_EMPRESA'
+  }).posicao;
+  const p=sim.filas.filaB.find(x=>x.id===criada.id);
+  p.empresa=true;p.titularOperacional='LOOP_EMPRESA';p.statusAdesao='POSICAO_LOOP';
+  motor._gravar(sim);
+  const antes=db.prepare('SELECT snapshot FROM akitemm_motor_conta_ensaio_estado WHERE id=1').get().snapshot;
+  const defaultVisivel=motor.consultar().filaB.find(x=>x.numero===criada.id);
+  assert.equal(defaultVisivel.dourada,true);
+  assert.equal(defaultVisivel.nomeVisual,'');assert.equal(defaultVisivel.numeroVisual,'');
+  const primeira=motor.definirVisualDourada({posicaoId:criada.id,
+   nomeVisual:' Reserva VIP ',numeroVisual:'007'});
+  assert.equal(primeira.posicaoId,criada.id);
+  assert.equal(primeira.nomeVisual,'Reserva VIP');
+  assert.equal(primeira.numeroVisual,'007');
+  assert.equal(motor.definirVisualDourada({posicaoId:criada.id,
+   nomeVisual:'Reserva VIP',numeroVisual:'007'}).semAlteracao,true);
+  const reaberto=new MotorContaUnicaEnsaioSQLite({banco:db,sinalizacao});
+  const rotulo=reaberto.consultar().filaB.find(x=>x.numero===criada.id);
+  assert.equal(rotulo.nomeVisual,'Reserva VIP');
+  assert.equal(rotulo.numeroVisual,'007');
+  assert.equal(db.prepare('SELECT snapshot FROM akitemm_motor_conta_ensaio_estado WHERE id=1').get().snapshot,antes);
+  assert.equal(db.prepare('SELECT COUNT(*) AS n FROM akitemm_motor_conta_ensaio_operacoes').get().n,0);
+  assert.equal(db.prepare('SELECT COUNT(*) AS n FROM akitemm_motor_douradas_rotulos_auditoria_lab').get().n,1);
+  const reset=reaberto.definirVisualDourada({posicaoId:criada.id});
+  assert.equal(reset.revisao,2);
+  const apos=reaberto.consultar().filaB.find(x=>x.numero===criada.id);
+  assert.equal(apos.nomeVisual,'');assert.equal(apos.numeroVisual,'');
+  assert.equal(db.prepare('SELECT COUNT(*) AS n FROM akitemm_motor_douradas_rotulos_auditoria_lab').get().n,2);
+  assert.throws(()=>db.exec('DELETE FROM akitemm_motor_douradas_rotulos_auditoria_lab'),
+   /auditoria de rotulo imutavel/);
+ }finally{db.close();}
+});
+test('visual não pode virar ID, editar participante, injetar HTML ou renumerar fila',()=>{
+ const {db,motor,gravar,conta}=preparar();
+ try{
+  conta(1);gravar(1);
+  const normal=motor.vincularPedido({prepedidoId:pedido(1),aceiteEnsaio:true});
+  const id=normal.posicaoId;
+  const dados={posicaoId:id,nomeVisual:'Cliente',numeroVisual:'100'};
+  assert.throws(()=>motor.definirVisualDourada(dados),
+   {codigo:'DOURADA_VISUAL_POSICAO_NAO_ELEGIVEL'});
+  const sim=motor._simulador();
+  const criada=sim.registrarPosicaoSimulada({
+   nome:'Operacional',participanteId:'LOOP_EMPRESA'
+  }).posicao;
+  const dourada=sim.filas.filaB.find(x=>x.id===criada.id);
+  dourada.empresa=true;dourada.titularOperacional='LOOP_EMPRESA';
+  motor._gravar(sim);
+  for(const r of [
+   {posicaoId:criada.id,nomeVisual:'<script>alert(1)</script>'},
+   {posicaoId:criada.id,nomeVisual:'X\nY'},
+   {posicaoId:criada.id,numeroVisual:'12A'},
+   {posicaoId:criada.id,numeroVisual:'123456789'},
+   {posicaoId:String(criada.id),nomeVisual:'VIP'}
+  ])assert.throws(()=>motor.definirVisualDourada(r),
+   {codigo:'DOURADA_VISUAL_DADOS_INVALIDOS'});
+  motor.definirVisualDourada({posicaoId:criada.id,nomeVisual:'VIP',numeroVisual:'0001'});
+  assert.equal(motor.consultar({titularId:titular(1)}).filaB.find(x=>x.numero===id).nomeVisual,undefined);
+  assert.equal(motor.consultar().filaB.find(x=>x.numero===criada.id).numeroVisual,'0001');
+  assert.equal(motor.consultar().limitePosicoesAtivas,10);
+ }finally{db.close();}
+});

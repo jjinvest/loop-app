@@ -120,6 +120,25 @@
 <button type="button" id="motorEnsaioPausar">Pausar catraca</button>
 <button type="button" id="motorEnsaioGirar">Executar giro de ensaio (6 eventos)</button>
 </div>
+<fieldset class="douradas-visuais-admin">
+<legend>Aparência das bolas douradas</legend>
+<p class="subtexto">Todas começam totalmente douradas, sem texto. O ID da posição continua oculto na bola e é usado aqui apenas para selecionar a dourada. Nome e número abaixo são exclusivamente visuais e não afetam as filas, o giro ou o financeiro.</p>
+<div id="douradasAtivasAdmin" aria-live="polite"></div>
+<form id="formVisualDouradaAdmin" autocomplete="off">
+<div class="duas-colunas">
+<label for="douradaIdInternoAdmin">Posição dourada a personalizar (ID interno)
+<input id="douradaIdInternoAdmin" type="number" min="1" step="1" required></label>
+<label for="douradaNumeroVisualAdmin">Número visual opcional
+<input id="douradaNumeroVisualAdmin" inputmode="numeric" maxlength="8" pattern="[0-9]{0,8}" placeholder="Ex.: 007"></label>
+</div>
+<label for="douradaNomeVisualAdmin">Nome visual opcional
+<input id="douradaNomeVisualAdmin" maxlength="24" placeholder="Ex.: Reserva VIP"></label>
+<div class="linha"><button type="submit">Salvar aparência</button>
+<button type="button" id="limparVisualDouradaAdmin">Voltar à dourada sem texto</button></div>
+<p id="statusVisualDouradaAdmin" role="status" aria-live="polite"></p>
+</form>
+</fieldset>
+
 <h3>Agenda da catraca · horário de Brasília</h3>
 <p class="subtexto">A fila é viva: novas compras e indicações continuam mesmo quando o circuito está pausado. A catraca só executa eventos de compras conciliadas e o movimento do tabuleiro. O relógio é um controle opcional: não cria venda, não limita a operação comercial e não faz saques.</p>
 <form id="formAgendaMotor">
