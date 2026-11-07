@@ -31,8 +31,8 @@ async function fixture(t){
   chaveCodigo=randomBytes(32),chaveBackup=randomBytes(32);
  const contas=new IdentidadeClienteLoopReal({
   banco,chaveEmail,chaveCifra,chaveCodigo,
-  termos:{versao:'TERMOS-TESTE',texto:DOC},
-  privacidade:{versao:'PRIVACIDADE-TESTE',texto:DOC},
+  termos:{versao:'LOOP-TERMOS-TESTE',texto:DOC},
+  privacidade:{versao:'LOOP-PRIVACIDADE-TESTE',texto:DOC},
   enviarEmail:async()=>true
  });
  const docs=contas.documentos();
