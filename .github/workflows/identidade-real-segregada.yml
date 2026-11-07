@@ -17,6 +17,7 @@ on:
       - 'test/catalogo-multidistribuidores-akitemm.test.js'
       - 'test/carrinho-cotacao-multidistribuidores.test.js'
       - 'test/backup-identidade-real-restauracao.test.js'
+      - 'test/backup-identidade-real-offsite.test.js'
       - 'test/limite-operacoes-identidade-real-sqlite.test.js'
       - 'test/troca-senha-identidade-real-sqlite.test.js'
       - '.github/workflows/identidade-real-segregada.yml'
@@ -50,6 +51,7 @@ jobs:
           node --check src/producao/catalogo-multidistribuidores-sqlite.js
           node --check src/producao/cotacoes-multidistribuidores-sqlite.js
           node --check src/producao/backup-identidade-real.js
+          node --check src/producao/backup-identidade-offsite.js
           node --check scripts/iniciar-identidade-real-loop.js
       - name: Conta, consentimento, senhas e recuperação
         run: node --test test/identidade-real-isolada.test.js
@@ -75,6 +77,8 @@ jobs:
         run: node --test test/carrinho-cotacao-multidistribuidores.test.js
       - name: Backup cifrado de identidade e restauração sem reativar sessões
         run: node --test test/backup-identidade-real-restauracao.test.js
+      - name: Cópia offsite da identidade cifrada, GET e restauração independente
+        run: node --test test/backup-identidade-real-offsite.test.js
       - name: Não ativar cadastro real com configuração de laboratório
         env:
           NODE_ENV: production
