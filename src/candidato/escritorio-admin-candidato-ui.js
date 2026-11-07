@@ -70,6 +70,7 @@ async function executarPesquisaAdmin(){
   for(const item of r.resultados){
    const card=elem('article');card.className='produto-admin-item';
    const info=elem('div');info.append(elem('strong',item.titulo),elem('small',item.detalhe));
+   if(busca.tipo==='clientes'){card.append(info);area.append(card);continue;}
    const acao=elem('button',busca.tipo==='pedidos'?'Conferir pré-adesão':busca.tipo==='produtos'?'Editar no catálogo':'Ver histórico');
    acao.type='button';
    acao.addEventListener('click',async()=>{
