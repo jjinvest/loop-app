@@ -95,6 +95,9 @@ function criarRouterAdminEconomiaAkitemm({
     'Pedido_ID','Status','Data_criacao','Ultima_atualizacao',
     'ID_pagamento_PSP','Valor_produtos_BRL','Frete_cobrado_BRL',
     'Total_pedido_BRL','Distribuidores','Quantidade_itens',
+    'Custo_fornecedor_estimado_no_pedido_BRL',
+    'Diferenca_bruta_estimada_no_pedido_BRL',
+    'Custo_unitario_informado_em_todas_linhas','Linhas_sem_custo',
     'Taxas_PSP_conciliadas','Custo_fornecedor_pago_comprovado',
     'Impostos_apurados','Lucro_liquido_apurado'
    ];
@@ -105,7 +108,11 @@ function criarRouterAdminEconomiaAkitemm({
     p.pagamentoId||'',dinheiro(p.receitaProdutosCentavos),
     dinheiro(p.freteCobradoClienteCentavos),
     dinheiro(p.valorTotalPedidoCentavos),
-    p.distribuidores.join('|'),p.quantidadeItens,'NAO','NAO','NAO','NAO'
+    p.distribuidores.join('|'),p.quantidadeItens,
+    dinheiro(p.custoFornecedorEstimadoCentavos),
+    dinheiro(p.diferencaBrutaEstimadaCentavos),
+    p.custoFornecedorIntegralmenteInformado===true?'SIM':'NAO',
+    p.linhasSemCustoInformado??'','NAO','NAO','NAO','NAO'
    ]);
    const csv='\uFEFF'+[cabecalho,...linhas].map(row=>
     row.map(escapar).join(';')).join('\r\n')+'\r\n';
