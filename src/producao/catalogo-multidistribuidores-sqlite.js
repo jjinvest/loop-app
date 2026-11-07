@@ -79,7 +79,7 @@ class CatalogoMultiDistribuidoresSQLite{
   try{
    if(this.manutencao)this.manutencao.garantirOperacaoDisponivel();
    const anterior=this.db.prepare([
-    'SELECT sku,preco_centavos,prioridade,ativo'
+    'SELECT sku,preco_centavos,prioridade,ativo',
     'FROM loja_real_ofertas_distribuidores',
     'WHERE produto_id=? AND distribuidor_id=?'
    ].join(' ')).get(produtoId,distribuidorId);
