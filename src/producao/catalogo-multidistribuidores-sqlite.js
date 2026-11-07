@@ -137,7 +137,7 @@ class CatalogoMultiDistribuidoresSQLite{
   try{
    if(this.manutencao)this.manutencao.garantirOperacaoDisponivel();
    const antes=this.db.prepare([
-    'SELECT ativo FROM loja_real_ofertas_distribuidores'
+    'SELECT ativo FROM loja_real_ofertas_distribuidores',
     'WHERE produto_id=? AND distribuidor_id=?'
    ].join(' ')).get(produtoId,distribuidorId);
    const r=this.db.prepare([
