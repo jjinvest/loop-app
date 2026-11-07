@@ -12,8 +12,8 @@ const AREAS=Object.freeze({
  POSICOES:{descricao:'Vínculos de posições de ensaio por pedido e titular.',acoes:['VER_POSICOES','VER_CATRACA','CRIAR_MISSAO']},
  FILAS:{descricao:'Filas A e B do próprio motor, respeitando 3A:1B.',acoes:['VER_CATRACA','VER_POSICOES']},
  TABULEIRO:{descricao:'Centro, vagas, eventos e giros do motor V6 existente.',acoes:['VER_CATRACA','CRIAR_DOURADA','VER_AGENDA','CRIAR_MISSAO']},
- COFRES:{descricao:'Cofres comerciais indisponíveis até escrituração e conciliação homologadas.',acoes:['CONFERIR_COBERTURA','CRIAR_MISSAO']},
- SAQUES:{descricao:'Saques comerciais bloqueados até custódia, saldo e PSP homologados.',acoes:['CONFERIR_COBERTURA','CRIAR_MISSAO']},
+ COFRES:{descricao:'Quatro cofres em previsões por luz do mesmo motor; saldo real e transferência bloqueados.',acoes:['VER_FLUXO_FINANCEIRO','CONFERIR_COBERTURA','CRIAR_MISSAO']},
+ SAQUES:{descricao:'Saques reais bloqueados; confira luz por luz e provisão sem valor sacável.',acoes:['VER_FLUXO_FINANCEIRO','CONFERIR_COBERTURA','CRIAR_MISSAO']},
  SEGURANCA:{descricao:'Integridade relacional, backup e travas de ativação do laboratório.',acoes:['CONFERIR_BACKUP','CONFERIR_COBERTURA','CRIAR_MISSAO']},
  OUTROS:{descricao:'Acompanhamento operacional registrado e auditável.',acoes:['CRIAR_MISSAO','VER_MISSOES']}
 });
@@ -121,8 +121,20 @@ function criarPaginaOperacional({banco,catalogo,motorConta,codigo,pagina=0}={}){
      ['Catraca',m.catraca.estado],['Modo de execução',m.agenda.modoExecucao]);
    }
   }else if(codigo==='COFRES'||codigo==='SAQUES'){
-   saida.metricas=resumoPares(['Saldo real','Não habilitado'],
-    ['Movimentação financeira','Bloqueada para operação comercial']);
+   const livro=motorConta.consultarFluxoFinanceiro();
+   saida.metricas=resumoPares(['Luzes financeiras contabilizadas',
+    livro.luzesFinanceirasRegistradas],
+    ['Giros físicos concluídos',livro.girosFisicosConcluidos],
+    ['Saldo real','Não habilitado'],
+    ['Pix e transferências','Bloqueados para operação comercial']);
+   if(codigo==='COFRES')for(const cofre of livro.cofres)
+    saida.metricas.push({rotulo:cofre.cofre+' (provisão não sacável)',
+     valor:'R$ '+(cofre.valorPrevistoNaoSacavelCentavos/100).toFixed(2)});
+   resultado={total:livro.luzes.length,registros:livro.luzes.map(e=>({
+    id:e.vendaId,titulo:'Luz '+e.ordem+' · ciclo '+e.ciclo,
+    detalhe:e.cofreDestino+' · R$ '+(e.referenciaCentavos/100).toFixed(2)+
+     ' previsto, sem liquidação real'
+   }))};
   }else if(codigo==='SEGURANCA'){
    const sqlOk=db.prepare('PRAGMA quick_check').get().quick_check==='ok';
    const fks=db.prepare('PRAGMA foreign_key_check').all().length;
