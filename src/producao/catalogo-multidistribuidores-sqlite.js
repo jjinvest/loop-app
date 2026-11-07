@@ -101,24 +101,53 @@ class CatalogoMultiDistribuidoresSQLite{
  ativarProduto({produtoId,ativo=false}={}){
   if(!id(produtoId)||typeof ativo!=='boolean')
    erro('PRODUTO_COMERCIAL_INVALIDO');
-  const r=this.db.prepare(
-   'UPDATE loja_real_produtos SET ativo=?,atualizado_em=? WHERE produto_id=?'
-  ).run(ativo?1:0,this.agora(),produtoId);
-  if(r.changes!==1)erro('PRODUTO_COMERCIAL_NAO_EXISTE');
-  return {produtoId,ativo};
+  if(this.auditoria)this.db.exec('BEGIN IMMEDIATE');
+  try{
+   const antes=this.db.prepare(
+    'SELECT ativo FROM loja_real_produtos WHERE produto_id=?'
+   ).get(produtoId);
+   const r=this.db.prepare(
+    'UPDATE loja_real_produtos SET ativo=?,atualizado_em=? WHERE produto_id=?'
+   ).run(ativo?1:0,this.agora(),produtoId);
+   if(r.changes!==1)erro('PRODUTO_COMERCIAL_NAO_EXISTE');
+   if(this.auditoria){
+    this.auditoria.registrar({
+     acao:'PRODUTO_STATUS_ALTERADO',ator:'ADMIN_COMERCIAL',
+     entidade:'PRODUTO_'+produtoId,
+     antes:{ativo:antes.ativo===1},depois:{ativo}
+    });
+    this.db.exec('COMMIT');
+   }
+   return {produtoId,ativo};
+  }catch(e){if(this.auditoria)this.db.exec('ROLLBACK');throw e;}
  }
  ativarOferta({produtoId,distribuidorId,ativo=false}={}){
   if(!id(produtoId)||!id(distribuidorId)||typeof ativo!=='boolean')
    erro('OFERTA_COMERCIAL_INVALIDA');
   if(ativo&&this.homologado(distribuidorId)!==true)
    erro('DISTRIBUIDOR_SEM_HOMOLOGACAO');
-  const r=this.db.prepare([
-   'UPDATE loja_real_ofertas_distribuidores',
-   'SET ativo=?,atualizado_em=?',
-   'WHERE produto_id=? AND distribuidor_id=?'
-  ].join(' ')).run(ativo?1:0,this.agora(),produtoId,distribuidorId);
-  if(r.changes!==1)erro('OFERTA_COMERCIAL_NAO_EXISTE');
-  return {produtoId,distribuidorId,ativo};
+  if(this.auditoria)this.db.exec('BEGIN IMMEDIATE');
+  try{
+   const antes=this.db.prepare([
+    'SELECT ativo FROM loja_real_ofertas_distribuidores',
+    'WHERE produto_id=? AND distribuidor_id=?'
+   ].join(' ')).get(produtoId,distribuidorId);
+   const r=this.db.prepare([
+    'UPDATE loja_real_ofertas_distribuidores',
+    'SET ativo=?,atualizado_em=?',
+    'WHERE produto_id=? AND distribuidor_id=?'
+   ].join(' ')).run(ativo?1:0,this.agora(),produtoId,distribuidorId);
+   if(r.changes!==1)erro('OFERTA_COMERCIAL_NAO_EXISTE');
+   if(this.auditoria){
+    this.auditoria.registrar({
+     acao:'OFERTA_STATUS_ALTERADO',ator:'ADMIN_COMERCIAL',
+     entidade:produtoId+'__'+distribuidorId,
+     antes:{ativo:antes.ativo===1},depois:{ativo}
+    });
+    this.db.exec('COMMIT');
+   }
+   return {produtoId,distribuidorId,ativo};
+  }catch(e){if(this.auditoria)this.db.exec('ROLLBACK');throw e;}
  }
  ofertasConfiaveis({produtoId}={}){
   if(!id(produtoId))erro('PRODUTO_COMERCIAL_INVALIDO');
