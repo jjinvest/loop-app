@@ -7,7 +7,7 @@ const express=require('express');
 function erro(c){const e=new Error(c);e.codigo=c;throw e;}
 function criarRouterAdminEconomiaAkitemm({
  controle,catalogo=null,pedidosComerciais=null,auditoria=null,
- autorizarAdministrador,validarCsrfAdmin,origemHttps
+ manutencao=null,autorizarAdministrador,validarCsrfAdmin,origemHttps
 }={}){
  if(!controle||typeof controle.listarOfertas!=='function'||
     typeof controle.definirCusto!=='function'||
@@ -25,6 +25,11 @@ function criarRouterAdminEconomiaAkitemm({
     typeof auditoria.listar!=='function'||
     typeof auditoria.verificar!=='function'))
   erro('AUDITORIA_ADMIN_NAO_CONFIGURADA');
+ if(manutencao!==null&&(
+    typeof manutencao.estado!=='function'||
+    typeof manutencao.alterar!=='function'||
+    manutencao.db!==controle.db))
+  erro('MANUTENCAO_ADMIN_NAO_CONFIGURADA');
  if(pedidosComerciais!==null&&
     typeof pedidosComerciais.listarResumoContabil!=='function')
   erro('CONTABILIDADE_PEDIDOS_NAO_CONFIGURADA');
@@ -43,6 +48,50 @@ function criarRouterAdminEconomiaAkitemm({
   next();
  });
  router.use(autorizarAdministrador);
+ // Emergência não bloqueia login, consulta de preços, auditoria ou
+ // pedidos antigos. Escritas de catálogo param, mesmo com sessão válida.
+ router.use((req,res,next)=>{
+  if(req.method!=='POST'||req.path==='/manutencao'||!manutencao)
+   return next();
+  try{
+   if(manutencao.estado().suspensa)return res.status(423).json({
+    erro:'OPERACAO_COMERCIAL_EM_MANUTENCAO'
+   });
+   next();
+  }catch{return res.status(503).json({erro:'MANUTENCAO_INDISPONIVEL'});}
+ });
+ router.get('/manutencao',(_req,res)=>{
+  if(!manutencao)return res.status(503).json({
+   erro:'MANUTENCAO_NAO_CONFIGURADA'
+  });
+  try{return res.json(manutencao.estado());}
+  catch{return res.status(503).json({erro:'MANUTENCAO_INDISPONIVEL'});}
+ });
+ router.post('/manutencao',express.json({limit:'2kb',strict:true}),
+  (req,res,next)=>{
+   if(req.get('origin')!==origem)
+    return res.status(403).json({erro:'ORIGEM_ADMIN_INVALIDA'});
+   if(!req.is('application/json'))
+    return res.status(415).json({erro:'JSON_OBRIGATORIO'});
+   next();
+  },validarCsrfAdmin,(req,res)=>{
+   if(!manutencao)return res.status(503).json({
+    erro:'MANUTENCAO_NAO_CONFIGURADA'
+   });
+   const body=req.body;
+   if(!body||Array.isArray(body)||
+      Object.keys(body).sort().join(',')!=='motivo,revisaoEsperada,suspensa')
+    return res.status(400).json({erro:'CAMPOS_INVALIDOS'});
+   try{return res.json(manutencao.alterar(body));}
+   catch(e){
+    if(e.codigo==='MANUTENCAO_REVISAO_EM_CONFLITO'||
+       e.codigo==='MANUTENCAO_MODO_JA_DEFINIDO')
+     return res.status(409).json({erro:e.codigo});
+    if(e.codigo==='MANUTENCAO_COMANDO_INVALIDO')
+     return res.status(400).json({erro:e.codigo});
+    return res.status(503).json({erro:'MANUTENCAO_INDISPONIVEL'});
+   }
+  });
  router.get('/auditoria',(_req,res)=>{
   if(!auditoria)return res.status(503).json({
    erro:'AUDITORIA_ADMIN_AINDA_NAO_CONFIGURADA'
