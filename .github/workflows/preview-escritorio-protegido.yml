@@ -63,6 +63,12 @@ on:
       - 'test/akitemm-config-loja-demo.test.js'
       - 'test/escritorio-admin-pesquisa-conectada.test.js'
       - 'src/domain/painel-operacional-admin-candidato.js'
+      - 'src/domain/ponte-compras-convites-demo-sqlite.js'
+      - 'src/routes/admin-ponte-compras-convites-demo.js'
+      - 'src/laboratorio/financeiro-admin-demo.html'
+      - 'src/laboratorio/financeiro-admin-demo.js'
+      - 'test/dourada-manual-auditoria-pontas-loop-v6.test.js'
+      - 'test/disponibilidade-caixa2-integracao-v6.test.js'
       - 'test/escritorio-admin-operacoes-unificadas.test.js'
       - 'test/config-loja-candidato-integrado.test.js'
       - 'test/novidades-loja-candidato.test.js'
@@ -125,6 +131,8 @@ jobs:
         run: node --test test/escritorio-admin-pesquisa-conectada.test.js
       - name: Departamentos operacionais e fontes integradas do SQLite
         run: node --test test/escritorio-admin-operacoes-unificadas.test.js
+      - name: Regra restrita de douradas e cofre exclusivo, sem consumir reserva
+        run: node --test test/dourada-manual-auditoria-pontas-loop-v6.test.js test/disponibilidade-caixa2-integracao-v6.test.js
       - name: Novidades no admin e na loja original, imagens e isolamento
         run: node --test test/novidades-loja-candidato.test.js
       - run: node --test test/akitemm-config-loja-demo.test.js
