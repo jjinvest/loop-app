@@ -109,7 +109,12 @@ async function montar(t){
  const outbox=new PedidosFornecedorOutbox({
   banco:db,registro,chavePedidos:randomBytes(32),
   consultarPagamentoConciliado:psp,
-  consultarPedidoAprovado:args=>pedidos.consultarPedidoAprovado(args)
+  consultarPedidoAprovado:args=>pedidos.consultarPedidoAprovado(args),
+  consultarLiberacaoCustoFornecedor:async({pedidoId,fornecedorId})=>({
+   pedidoId,fornecedorId,estado:'CUSTO_QUITADO',
+   referencia:'FORNECEDOR_PROVA_TESTE_01',
+   origem:'CANAL_FORNECEDOR_AUTORIZADO'
+  })
  });
  return {db,cliente,catalogo,cotacoes,pedidos,outbox,enviados,homologados,
   entrada:{titularId:cliente.titularId,itens:CARRINHO,cepDestino:'27250010'},
