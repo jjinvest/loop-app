@@ -35,6 +35,7 @@ const {MissoesOperacionaisCandidatoSQLite}=require('../domain/missoes-operaciona
 const {DepartamentosAdministradorCandidato}=require('../domain/escritorio-admin-departamentos-candidato');
 const {criarPaginaOperacional}=require('../domain/painel-operacional-admin-candidato');
 const {CatalogoAdminCandidatoSQLite}=require('../domain/catalogo-admin-candidato-sqlite');
+const {CustosProdutoAdminCandidatoSQLite}=require('../domain/custos-produtos-admin-candidato-sqlite');
 const {NovidadesLojaCandidatoSQLite,MAX_IMAGEM}=require('../domain/novidades-loja-candidato-sqlite');
 const {EnderecoEntregaEnsaioSQLite}=require('../domain/endereco-entrega-ensaio-sqlite');
 const {AkitemmConfigLojaDemoSQLite}=require('../domain/akitemm-config-loja-demo-sqlite');
@@ -538,6 +539,7 @@ function criarAppLojaEscritorioCandidato({banco,repositorioCatalogo,
   catch(e){return res.status(503).json({erro:e.codigo||'PROJECAO_INDISPONIVEL'});}
  });
  const sinalizacaoVitrine=createVitrineCandidata({app,banco,catalogo,contas,intencoes,prePedidos,autorizarOperador,novidades,enderecoEntrega,configLoja});
+ const custosProduto=new CustosProdutoAdminCandidatoSQLite({banco,catalogo,sinalizacao:sinalizacaoVitrine});
  // Mesmo SQLite/operador autorizado: alteração editorial, sem pagamento.
  app.get('/staging/escritorio-unificado/loja/config',autorizarOperador,(_req,res)=>{
   try{return res.json(configLoja.consultarComRevisao());}
@@ -1017,6 +1019,24 @@ function criarAppLojaEscritorioCandidato({banco,repositorioCatalogo,
     .json({erro:e.codigo||'PRODUTO_INVALIDO'});
   }
  });
+ // Custos internos protegidos: jamais entram no catalogo ou cotacao publicos.
+ app.get('/staging/escritorio-unificado/produtos/:id/custos',
+  autorizarOperador,async(req,res)=>{
+   res.set('Cache-Control','no-store');
+   try{return res.json(await custosProduto.consultar(req.params.id));}
+   catch(e){return res.status(e.codigo==='PRODUTO_NAO_ENCONTRADO'?404:400)
+    .json({erro:e.codigo||'CUSTOS_INDISPONIVEIS'});}
+  });
+ app.put('/staging/escritorio-unificado/produtos/:id/custos',
+  autorizarOperador,async(req,res)=>{
+   res.set('Cache-Control','no-store');
+   if(!req.is('application/json'))
+    return res.status(415).json({erro:'JSON_OBRIGATORIO'});
+   try{return res.json(await custosProduto.salvar(req.params.id,req.body));}
+   catch(e){return res.status(e.codigo==='CUSTOS_CONFLITO_REVISAO'?409:
+    e.codigo==='PRODUTO_NAO_ENCONTRADO'?404:400)
+    .json({erro:e.codigo||'CUSTOS_INVALIDOS'});}
+  });
  app.get('/staging/escritorio-unificado/produtos/:id/historico',autorizarOperador,(req,res)=>{
   try{return res.json({historico:catalogo.historico(req.params.id)});}
   catch(e){return res.status(400).json({erro:e.codigo||'HISTORICO_INVALIDO'});}
