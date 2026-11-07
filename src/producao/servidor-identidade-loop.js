@@ -40,7 +40,7 @@ function criarAppIdentidadeLoop({contas,origemHttps,permitirCadastro=false}={}){
  };
  const sessao=req=>contas.sessao(cookieValor(req));
  const cookie=(token,apagar=false)=>[
-  COOKIE+'='+token,'HttpOnly','Secure','SameSite=Strict','Path=/api',
+  COOKIE+'='+token,'HttpOnly','Secure','SameSite=Strict','Path=/',
   'Max-Age='+(apagar?'0':'3600')
  ].join('; ');
  const origemOk=req=>req.get('origin')===origem;
