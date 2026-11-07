@@ -51,8 +51,11 @@ const {once}=require('node:events');
    const failures=[];
    page.on('pageerror',e=>failures.push(e.message));
    await page.goto(base+'/staging/cliente',{waitUntil:'networkidle'});
-   assert.equal(await page.locator('#painelLogin').isHidden(),true);
-   assert.equal(await page.locator('#painelCadastro').isVisible(),true);
+   // Cliente existente entra diretamente; cadastro so no primeiro acesso.
+   assert.equal(await page.locator('#painelLogin').isVisible(),true);
+   assert.equal(await page.locator('#painelCadastro').isHidden(),true);
+   await page.locator('#mudarParaCadastro').click();
+   await page.locator('#painelCadastro').waitFor({state:'visible'});
    await page.locator('#mudarParaLogin').click();
    await page.locator('#painelLogin').waitFor({state:'visible'});
    await page.locator('#mudarParaCadastro').click();
