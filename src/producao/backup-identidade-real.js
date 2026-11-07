@@ -22,7 +22,8 @@ const TABELAS_ADMIN=Object.freeze([
  'loja_real_produtos','loja_real_ofertas_distribuidores',
  'loja_real_custos_ofertas','loja_real_custos_historico',
  'loja_real_revisoes_preco','loja_real_precos_historico',
- 'loja_real_sessoes_admin','loja_real_limite_login_admin'
+ 'loja_real_sessoes_admin','loja_real_limite_login_admin',
+ 'loja_real_auditoria_admin'
 ]);
 function falha(c){const e=new Error(c);e.codigo=c;throw e;}
 function conferir({origem,destino,chaveBackup,autorizado,restaurar=false}){
@@ -86,6 +87,7 @@ function validarIdentidade(arquivo){
     ['produto_id','distribuidor_id','custo_unit_centavos']);
    ver('loja_real_precos_historico',['id','revisao']);
    ver('loja_real_sessoes_admin',['token_hash','csrf','expira_em']);
+   ver('loja_real_auditoria_admin',['id','hash_anterior','hash_atual']);
   }
   const integridade=b.prepare('PRAGMA integrity_check').all();
   if(integridade.length!==1||integridade[0].integrity_check!=='ok')
