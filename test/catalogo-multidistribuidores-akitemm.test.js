@@ -27,7 +27,7 @@ test('AKITEMM suporta varios produtos e muitos distribuidores sem cadastrá-los 
  catalogo.vincularOferta({produtoId:'mochila',distribuidorId:'dist_C',
   sku:'SKU_21',precoUnitCentavos:8900,prioridade:1});
  assert.deepEqual(catalogo.listarVitrine(),[]);
- await assert.rejects(async()=>catalogo.ativarOferta({
+ assert.throws(()=>catalogo.ativarOferta({
   produtoId:'camiseta',distribuidorId:'dist_A',ativo:true
  }),{codigo:'DISTRIBUIDOR_SEM_HOMOLOGACAO'});
  homologados.add('dist_A');
