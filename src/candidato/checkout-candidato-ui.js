@@ -6,6 +6,7 @@ const $=id=>document.getElementById(id);
 let csrf=null,aba='conteudoResumo',proximaPaginaEquipe=null,
  paginaPedidos=0,carregamentoPedidos=0;
 let telaAcesso='login';
+let termosCadastroLidos=null,carregandoTermosCadastro=null;
 let posicaoSelecionadaMotor=null;
 const ABAS=[['abaResumo','conteudoResumo'],['abaTabuleiro','conteudoTabuleiro'],
  ['abaMeusPedidos','conteudoMeusPedidos'],['abaPosicoes','conteudoPosicoes'],
@@ -23,6 +24,7 @@ const errosTraduzidos={
  SENHA_INVALIDA:'Confira a senha informada.',
  CADASTRO_JA_EXISTENTE:'Este nick ou e-mail já está cadastrado. Use a opção Já tenho cadastro.',
  TERMOS_LAB_NAO_ACEITOS:'Marque a confirmação dos termos para continuar.',
+ TERMOS_ALTERADOS_RELER:'Os termos foram atualizados. Leia a versão atual e confirme novamente.',
  CADASTRO_INDISPONIVEL:'O cadastro está indisponível. Tente novamente.',
  RECUPERACAO_EMAIL_INDISPONIVEL:'A recuperação por e-mail ainda não está configurada neste ambiente. Nenhuma senha foi alterada.',
  RECUPERACAO_CODIGO_OU_SENHA_INVALIDOS:'Código incorreto, expirado ou senha inválida. Confira os dados.'
@@ -669,8 +671,41 @@ async function restaurarSessao(){
   mostrarAba('conteudoResumo');
  }catch(e){mostrarSessao(false);dizer('');}
 }
+async function carregarTermosCadastro(){
+ if(carregandoTermosCadastro)return carregandoTermosCadastro;
+ const botao=$('formCadastro').querySelector('button[type=submit]');
+ termosCadastroLidos=null;
+ $('cadastroTermos').checked=false;
+ $('cadastroTermos').disabled=true;
+ botao.disabled=true;
+ carregandoTermosCadastro=(async()=>{
+  try{
+   const dados=await requisitar('/contas/termos-cadastro');
+   if(dados.somenteEnsaio!==true||dados.cadastroRealHabilitado!==false||
+      typeof dados.termosVersao!=='string'||!dados.termosVersao.startsWith('LAB-')||
+      typeof dados.termosTexto!=='string'||dados.termosTexto.length<40||
+      typeof dados.termosHash!=='string'||!/^[a-f0-9]{64}$/.test(dados.termosHash))
+    throw Error('TERMOS_NAO_CONFIGURADOS');
+   $('versaoTermosCadastro').textContent='Versão: '+dados.termosVersao;
+   $('textoTermosCadastro').textContent=dados.termosTexto;
+   termosCadastroLidos={versao:dados.termosVersao,hash:dados.termosHash};
+   $('cadastroTermos').disabled=false;
+   botao.disabled=false;
+  }catch{
+   $('versaoTermosCadastro').textContent='Termos indisponíveis';
+   $('textoTermosCadastro').textContent=
+    'Não é possível concluir o cadastro sem apresentar os termos. Tente abrir o cadastro novamente.';
+  }finally{carregandoTermosCadastro=null;}
+ })();
+ return carregandoTermosCadastro;
+}
+
 async function cadastrar(e){
  e.preventDefault();
+ if(!termosCadastroLidos||!$('cadastroTermos').checked){
+  mostrarErroAcesso('cadastro','Leia e confirme os termos exibidos para criar a conta.');
+  return;
+ }
  const botao=$('formCadastro').querySelector('button');
  botao.disabled=true;
  try{
@@ -679,7 +714,9 @@ async function cadastrar(e){
    body:{
     nome:$('cadastroNome').value,
     nick,email:$('cadastroEmail').value,senha:$('cadastroSenha').value,
-    aceiteExplicito:$('cadastroTermos').checked
+    aceiteExplicito:$('cadastroTermos').checked,
+    termosVersaoAceita:termosCadastroLidos.versao,
+    termosHashAceito:termosCadastroLidos.hash
    }
   });
   if(r.contaCriada!==true||r.pagamentoPermitido!==false)
@@ -688,8 +725,13 @@ async function cadastrar(e){
   $('cadastroSenha').value='';
   selecionarTelaAcesso('login');
   dizer('Cadastro concluído. Agora entre com seu nick e a senha que você escolheu.');
- }catch(e){mostrarErroAcesso('cadastro',explicarErro(e));}
- finally{botao.disabled=false;}
+ }catch(e){
+  mostrarErroAcesso('cadastro',explicarErro(e));
+  if(e.message==='TERMOS_ALTERADOS_RELER'){
+   $('cadastroTermos').checked=false;
+   void carregarTermosCadastro();
+  }
+ }finally{botao.disabled=false;}
 }
 
 function alternarVisibilidade(botao){
@@ -752,7 +794,10 @@ $('formSolicitarRecuperacao').addEventListener('submit',solicitarRecuperacao);
 $('formConcluirRecuperacao').addEventListener('submit',confirmarRecuperacao);
 for(const botao of document.querySelectorAll('[data-senha]'))
  botao.addEventListener('click',()=>alternarVisibilidade(botao));
-$('mudarParaCadastro').addEventListener('click',()=>selecionarTelaAcesso('cadastro'));
+$('mudarParaCadastro').addEventListener('click',()=>{
+ selecionarTelaAcesso('cadastro');
+ if(!termosCadastroLidos)void carregarTermosCadastro();
+});
 $('formLogin').addEventListener('input',()=>mostrarErroAcesso('login',''));
 $('formCadastro').addEventListener('input',()=>mostrarErroAcesso('cadastro',''));
 $('formCadastro').addEventListener('submit',cadastrar);
