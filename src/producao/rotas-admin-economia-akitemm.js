@@ -6,7 +6,8 @@
 const express=require('express');
 function erro(c){const e=new Error(c);e.codigo=c;throw e;}
 function criarRouterAdminEconomiaAkitemm({
- controle,catalogo=null,pedidosComerciais=null,autorizarAdministrador,validarCsrfAdmin,origemHttps
+ controle,catalogo=null,pedidosComerciais=null,auditoria=null,
+ autorizarAdministrador,validarCsrfAdmin,origemHttps
 }={}){
  if(!controle||typeof controle.listarOfertas!=='function'||
     typeof controle.definirCusto!=='function'||
@@ -20,6 +21,10 @@ function criarRouterAdminEconomiaAkitemm({
     typeof catalogo.vincularOferta!=='function'||
     typeof catalogo.listarProdutosAdministrativos!=='function'))
   erro('CATALOGO_ADMIN_NAO_CONFIGURADO');
+ if(auditoria!==null&&(
+    typeof auditoria.listar!=='function'||
+    typeof auditoria.verificar!=='function'))
+  erro('AUDITORIA_ADMIN_NAO_CONFIGURADA');
  if(pedidosComerciais!==null&&
     typeof pedidosComerciais.listarResumoContabil!=='function')
   erro('CONTABILIDADE_PEDIDOS_NAO_CONFIGURADA');
@@ -38,6 +43,20 @@ function criarRouterAdminEconomiaAkitemm({
   next();
  });
  router.use(autorizarAdministrador);
+ router.get('/auditoria',(_req,res)=>{
+  if(!auditoria)return res.status(503).json({
+   erro:'AUDITORIA_ADMIN_AINDA_NAO_CONFIGURADA'
+  });
+  try{
+   const verificacao=auditoria.verificar();
+   return res.json({auditoriaIntegra:verificacao.integra,
+    totalHistorico:verificacao.total,
+    eventos:auditoria.listar({limite:50}),
+    somenteLeitura:true,nenhumDadoPessoal:true});
+  }catch{return res.status(503).json({
+   erro:'AUDITORIA_ADMIN_NAO_COMPROVADA'
+  });}
+ });
  router.get('/produtos-valores',(_req,res)=>{
   try{return res.json({
    ofertas:controle.listarOfertas({limite:500}),
