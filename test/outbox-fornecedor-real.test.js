@@ -19,7 +19,7 @@ function criar(t){
   db.exec('PRAGMA journal_mode=WAL;PRAGMA foreign_keys=ON;PRAGMA busy_timeout=5000;');
  t.after(()=>{db2.close();db1.close()});
  const sent=[],consultas=[];
- let falhar=false,compraConfirmada=true,respostaConsulta={encontrado:false};
+ let falhar=false,compraConfirmada=true,custoLiberado=true,respostaConsulta={encontrado:false};
  let statusPedido='APROVADO_PARA_EXPEDICAO',itensDoPedido=null;
  const registro=new RegistroFornecedores();
  registro.registrar({fornecedorId:'franquia',adaptador:{
@@ -41,6 +41,11 @@ function criar(t){
    pedidoId,status:compraConfirmada?'CONFIRMADO':'PENDENTE',
    moeda:'BRL',pagamentoId:'PIX_VALIDADO_01',valorCentavos:28000
   }),
+  consultarLiberacaoCustoFornecedor:async({pedidoId,fornecedorId})=>({
+   pedidoId,fornecedorId,estado:custoLiberado?'CUSTO_QUITADO':'PENDENTE',
+   referencia:'LIQUIDACAO_WEDROP_SIMULADA_01',
+   origem:'CANAL_FORNECEDOR_AUTORIZADO'
+  }),
   consultarPedidoAprovado:async({pedidoId})=>({
    pedidoId,fornecedorId:'franquia',status:statusPedido,
    pagamentoId:'PIX_VALIDADO_01',valorTotalCentavos:28000,
@@ -58,6 +63,7 @@ function criar(t){
  };
  return {x,y,db1,db2,entrada,sent,consultas,
   falhar:v=>{falhar=v},confirmado:v=>{compraConfirmada=v},
+  custoLiberado:v=>{custoLiberado=v},
   statusPedido:v=>{statusPedido=v},
   itensPedido:v=>{itensDoPedido=v},
   consulta:v=>{respostaConsulta=v}};
@@ -169,4 +175,21 @@ test('pedido cancelado após o Pix ou alterado no cadastro não autoriza envio',
  assert.equal(a.db1.prepare(
   "SELECT estado FROM loja_real_outbox_fornecedor"
  ).get().estado,'PENDENTE');
+});
+
+test('custo do distribuidor ainda não quitado impede envio mesmo com PIX do cliente',async t=>{
+ const x=criar(t);
+ await x.x.registrarPagamentoConciliado(x.entrada);
+ x.custoLiberado(false);
+ await assert.rejects(x.x.despachar({pedidoId:x.entrada.pedidoId,
+  fornecedorId:x.entrada.fornecedorId}),
+  {codigo:'CUSTO_FORNECEDOR_SEM_LIBERACAO'});
+ assert.equal(x.sent.length,0);
+ assert.equal(x.x.consultar({pedidoId:x.entrada.pedidoId,
+  fornecedorId:x.entrada.fornecedorId}).estado,'PENDENTE');
+ x.custoLiberado(true);
+ const enviado=await x.x.despachar({pedidoId:x.entrada.pedidoId,
+  fornecedorId:x.entrada.fornecedorId});
+ assert.equal(enviado.estado,'ENVIADO');
+ assert.equal(x.sent.length,1);
 });
