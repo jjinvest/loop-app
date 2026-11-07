@@ -9,6 +9,7 @@ on:
       - 'test/identidade-real-isolada.test.js'
       - 'test/identidade-real-persistencia.test.js'
       - 'test/api-identidade-real-sem-pagamentos.test.js'
+      - 'test/interface-aprovada-identidade-real.test.js'
       - 'test/limite-operacoes-identidade-real-sqlite.test.js'
       - 'test/troca-senha-identidade-real-sqlite.test.js'
       - '.github/workflows/identidade-real-segregada.yml'
@@ -35,6 +36,8 @@ jobs:
         run: |
           node --check src/producao/identidade-cliente-loop-sqlite.js
           node --check src/producao/servidor-identidade-loop.js
+          node --check src/producao/interface-aprovada-loop.js
+          node --check src/producao/interface-aprovada-contas.js
           node --check scripts/iniciar-identidade-real-loop.js
       - name: Conta, consentimento, senhas e recuperação
         run: node --test test/identidade-real-isolada.test.js
@@ -46,6 +49,8 @@ jobs:
         run: node --test test/limite-operacoes-identidade-real-sqlite.test.js
       - name: Troca de senha autenticada, concorrente e com CSRF
         run: node --test test/troca-senha-identidade-real-sqlite.test.js
+      - name: Reutilização da UI aprovada e guarda da loja
+        run: node --test test/interface-aprovada-identidade-real.test.js
       - name: Não ativar cadastro real com configuração de laboratório
         env:
           NODE_ENV: production
