@@ -55,6 +55,7 @@ on:
       - 'src/laboratorio/loja-cliente-demo.js'
       - 'src/laboratorio/loja-cliente-demo.css'
       - 'test/filtros-cor-loja-candidato.test.js'
+      - 'src/routes/admin-catalogo-laboratorio.js'
       - 'src/domain/novidades-loja-candidato-sqlite.js'
       - 'test/novidades-loja-candidato.test.js'
       - 'src/candidato/escritorio-admin-candidato-ui.css'
