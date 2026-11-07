@@ -650,10 +650,13 @@ class MotorContaUnicaEnsaioSQLite{
    },
    aguardandoContabilizacao:this._pedidosAguardando(sim).length,
    luzesAcesas:sim.tabuleiro.vendasDoCiclo.length,
+   // Luzes do tabuleiro usam a sequencia fixa 3 roxas e 3 pretas.
+   // Rótulo financeiro fica em destinoCofre, inclusive quando o centro
+   // pertence a empresa (nesse caso os 6 valores vao a LOOP_DOURADAS).
    luzesRoxasAcesas:sim.tabuleiro.vendasDoCiclo.filter(v=>
-    v.destinoPrevisto==='PARTICIPANTE').length,
+    v.destinoPrevisto==='LOOP_CENTRO').length,
    luzesPretasAcesas:sim.tabuleiro.vendasDoCiclo.filter(v=>
-    v.destinoPrevisto!=='PARTICIPANTE').length,
+    v.destinoPrevisto!=='LOOP_CENTRO').length,
    catracaEstado:sim.catracaAberta?'ABERTA':'PAUSADA',
    giros:sim.giros,comprasNaoInventadas:true,
    dinheiroReal:false};
