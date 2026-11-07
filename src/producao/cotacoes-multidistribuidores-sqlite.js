@@ -178,12 +178,19 @@ class CotacoesMultiDistribuidoresSQLite{
   const payload={cepDestino:previa.cepDestino,grupos,
    valorTotalCentavos:total};
   const c=cifrar(this.key,payload);
-  if(this.manutencao)this.manutencao.garantirOperacaoDisponivel();
-  this.db.prepare([
-   'INSERT INTO loja_real_cotacoes(',
-   'cotacao_id,titular_id,payload_iv,payload_ct,payload_tag,criado_em,expira_em)',
-   'VALUES(?,?,?,?,?,?,?)'
-  ].join(' ')).run(cotacaoId,titularId,c.iv,c.ct,c.tag,this.agora(),validade);
+  // A trava é conferida dentro de BEGIN IMMEDIATE: se outro operador
+  // suspender novas vendas entre a consulta de frete e o INSERT,
+  // a cotação não será emitida após a suspensão.
+  if(this.manutencao)this.db.exec('BEGIN IMMEDIATE');
+  try{
+   if(this.manutencao)this.manutencao.garantirOperacaoDisponivel();
+   this.db.prepare([
+    'INSERT INTO loja_real_cotacoes(',
+    'cotacao_id,titular_id,payload_iv,payload_ct,payload_tag,criado_em,expira_em)',
+    'VALUES(?,?,?,?,?,?,?)'
+   ].join(' ')).run(cotacaoId,titularId,c.iv,c.ct,c.tag,this.agora(),validade);
+   if(this.manutencao)this.db.exec('COMMIT');
+  }catch(e){if(this.manutencao)this.db.exec('ROLLBACK');throw e;}
   return {cotacaoId,titularId,status:'APROVADA',
    distribuidores:grupos.map(x=>x.fornecedorId),
    totalCentavos:total,freteCentavos:total-previa.subtotalProdutosCentavos,
