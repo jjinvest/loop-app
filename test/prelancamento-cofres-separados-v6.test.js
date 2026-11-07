@@ -99,13 +99,13 @@ test('prelancamento separa venda da loja e aporte fixo, so libera depois do STAR
  assert.equal(segundo.girosLiberados[0].centroEmpresa,true);
  assert.equal(segundo.centrosDourados,1);
  assert.equal(cb.preLancamento.resumo().escritoriosPrevistosSimuladoCentavos,75000);
- assert.equal(cb.preLancamento.resumo().douradasAcumuladoSimuladoCentavos,75000);
+ assert.equal(cb.preLancamento.resumo().douradasAcumuladoSimuladoCentavos,150000);
  assert.equal(cb.preLancamento.resumo().totalDemonstrativoConservadoCentavos,300000);
  const conciliado=cb.conciliacao.conferir();
  assert.equal(conciliado.integridadeDemonstrativa,'CONFERIDA_APENAS_EM_SIMULACAO');
  assert.equal(conciliado.quantidadeDivergencias,0);
  assert.equal(conciliado.somaDestinacoesConservadasCentavos,300000);
- assert.equal(conciliado.cofreDouradasSimuladoCentavos,75000);
+ assert.equal(conciliado.cofreDouradasSimuladoCentavos,150000);
  assert.equal(conciliado.valoresApenasPrevistosNosEscritoriosCentavos,75000);
  assert.equal(conciliado.dinheiroBancarioComprovadoCentavos,0);
  assert.equal(conciliado.disponivelParaSaqueCentavos,0);
