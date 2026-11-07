@@ -59,7 +59,8 @@ function criarAppIdentidadeLoop({contas,origemHttps,permitirCadastro=false}={}){
  };
  const falha=(res,e)=>{
   const code=e?.codigo||'OPERACAO_INDISPONIVEL';
-  if(code==='AUTENTICACAO_OCUPADA'||code==='CONTA_BLOQUEADA')
+  if(code==='AUTENTICACAO_OCUPADA'||code==='CONTA_BLOQUEADA'||
+     code==='ACESSO_TEMPORARIAMENTE_LIMITADO')
    return res.status(429).json({erro:code});
   if(code==='CADASTRO_EXISTENTE')return res.status(409).json({erro:code});
   if(code==='DOCUMENTOS_ALTERADOS_RELER')return res.status(409).json({erro:code});
@@ -70,13 +71,27 @@ function criarAppIdentidadeLoop({contas,origemHttps,permitirCadastro=false}={}){
    return res.status(401).json({erro:code});
   return res.status(503).json({erro:'OPERACAO_INDISPONIVEL'});
  };
+ // Limites de operação são atômicos e compartilhados entre processos que
+ // montam o mesmo volume SQLite. Nunca gravar IP, e-mail ou nick em claro.
+ const limite=(res,acao,chave)=>{
+  try{
+   contas.limitar('global','*');
+   contas.limitar(acao,String(chave??'-').slice(0,254));
+   return true;
+  }catch(e){falha(res,e);return false;}
+ };
  app.get('/healthz',(_req,res)=>res.json({
   estado:'SERVICO_IDENTIDADE_SEPARADO',financeiroReal:false
  }));
  app.get('/readyz',(_req,res)=>{
   try{
-   const check=contas.banco.prepare('PRAGMA quick_check').get()?.quick_check;
-   if(check!=='ok'||!permitirCadastro)return res.status(503).json({
+   // Readiness é consultado repetidamente pelo Railway: quick_check
+   // completo a cada GET custa O(tamanho do banco) e permite DoS.
+   // Verificação integral do SQLite fica para o backup/auditoria.
+   const check=contas.banco.prepare(
+    'SELECT email_prova FROM loop_real_custodia WHERE id=1'
+   ).get()?.email_prova;
+   if(!check||!permitirCadastro)return res.status(503).json({
     estado:'CADASTRO_REAL_INATIVO',financeiroReal:false
    });
    return res.json({estado:'CADASTRO_REAL_PRONTO_SEM_FINANCEIRO',
@@ -95,6 +110,7 @@ function criarAppIdentidadeLoop({contas,origemHttps,permitirCadastro=false}={}){
   if(!b||Array.isArray(b)||Object.keys(b).sort().join(',')!==
     'aceitePrivacidade,aceiteTermos,email,hashPrivacidade,hashTermos,nick,nome,senha,versaoPrivacidade,versaoTermos')
    return res.status(400).json({erro:'CAMPOS_INVALIDOS'});
+  if(!limite(res,'cadastro',b.email))return;
   try{
    const result=await contas.cadastrar(b);
    return res.status(201).json(result);
@@ -104,6 +120,7 @@ function criarAppIdentidadeLoop({contas,origemHttps,permitirCadastro=false}={}){
   const b=req.body;
   if(!b||Array.isArray(b)||Object.keys(b).sort().join(',')!=='nick,senha')
    return res.status(400).json({erro:'CAMPOS_INVALIDOS'});
+  if(!limite(res,'login',b.nick))return;
   try{
    const result=await contas.entrar(b);
    res.set('Set-Cookie',cookie(result.token));
@@ -134,6 +151,7 @@ function criarAppIdentidadeLoop({contas,origemHttps,permitirCadastro=false}={}){
  app.post('/api/contas/email/solicitar',mutation,protegido,csrf,async(req,res)=>{
   if(!req.body||Array.isArray(req.body)||Object.keys(req.body).length!==0)
    return res.status(400).json({erro:'CAMPOS_INVALIDOS'});
+  if(!limite(res,'solicitar',req.conta.titularId+':EMAIL'))return;
   try{
    return res.json(await contas.solicitarCodigo({
     titularId:req.conta.titularId,finalidade:'EMAIL'
@@ -143,6 +161,7 @@ function criarAppIdentidadeLoop({contas,origemHttps,permitirCadastro=false}={}){
  app.post('/api/contas/email/confirmar',mutation,protegido,csrf,async(req,res)=>{
   if(!req.body||Array.isArray(req.body)||Object.keys(req.body).join(',')!=='codigo')
    return res.status(400).json({erro:'CAMPOS_INVALIDOS'});
+  if(!limite(res,'confirmar',req.conta.titularId+':EMAIL'))return;
   try{
    return res.json(await contas.confirmarCodigo({
     titularId:req.conta.titularId,finalidade:'EMAIL',codigo:req.body.codigo
@@ -152,6 +171,7 @@ function criarAppIdentidadeLoop({contas,origemHttps,permitirCadastro=false}={}){
  app.post('/api/contas/senha/solicitar',mutation,async(req,res)=>{
   if(!req.body||Array.isArray(req.body)||Object.keys(req.body).join(',')!=='email')
    return res.status(400).json({erro:'CAMPOS_INVALIDOS'});
+  if(!limite(res,'solicitar',String(req.body.email)+':SENHA'))return;
   try{
    await contas.solicitarCodigo({email:req.body.email,finalidade:'SENHA'});
   }catch(e){
@@ -164,6 +184,7 @@ function criarAppIdentidadeLoop({contas,origemHttps,permitirCadastro=false}={}){
   if(!req.body||Array.isArray(req.body)||
      Object.keys(req.body).sort().join(',')!=='codigo,email,novaSenha')
    return res.status(400).json({erro:'CAMPOS_INVALIDOS'});
+  if(!limite(res,'confirmar',String(req.body.email)+':SENHA'))return;
   try{return res.json(await contas.confirmarCodigo({
    email:req.body.email,codigo:req.body.codigo,
    novaSenha:req.body.novaSenha,finalidade:'SENHA'
