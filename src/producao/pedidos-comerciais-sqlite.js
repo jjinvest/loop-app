@@ -260,6 +260,51 @@ class PedidosComerciaisSQLite{
    return {...this._publico(confirmado),confirmado:true};
   }catch(e){this.db.exec('ROLLBACK');throw e;}
  }
+ // Relatório administrativo SEM nomes, documentos, endereço ou qualquer
+ // cálculo tributário. Estado de pagamento significa status do pedido,
+ // não comprovação contábil de repasse do PSP ao banco.
+ listarResumoContabil({limite=500}={}){
+  if(!Number.isInteger(limite)||limite<1||limite>1000)
+   erro('PAGINACAO_INVALIDA');
+  return this.db.prepare([
+   'SELECT * FROM loja_real_pedidos',
+   'ORDER BY criado_em DESC,pedido_id DESC LIMIT ?'
+  ].join(' ')).all(limite).map(r=>{
+   const d=decifrar(this.key,r);
+   const grupos=d.grupos||[{
+    fornecedorId:r.fornecedor_id,itens:d.itens,
+    freteCentavos:r.frete_centavos
+   }];
+   const itens=grupos.flatMap(g=>g.itens.map(i=>({
+    fornecedorId:g.fornecedorId,sku:i.sku,
+    quantidade:i.quantidade,precoUnitCentavos:i.precoUnitCentavos
+   })));
+   let somaItens=0;
+   for(const i of itens){
+    if(!Number.isSafeInteger(i.precoUnitCentavos)||
+       !Number.isSafeInteger(i.quantidade))
+     erro('PEDIDO_HISTORICO_INVALIDO');
+    somaItens+=i.precoUnitCentavos*i.quantidade;
+   }
+   if(somaItens+r.frete_centavos!==r.valor_total_centavos)
+    erro('PEDIDO_HISTORICO_INCONSISTENTE');
+   return {
+    pedidoId:r.pedido_id,status:r.status,
+    pagamentoId:r.pagamento_id,
+    criadoEm:r.criado_em,ultimaAtualizacaoEm:r.atualizado_em,
+    receitaProdutosCentavos:somaItens,
+    freteCobradoClienteCentavos:r.frete_centavos,
+    valorTotalPedidoCentavos:r.valor_total_centavos,
+    distribuidores:grupos.map(g=>g.fornecedorId),
+    quantidadeItens:itens.reduce((a,i)=>a+i.quantidade,0),
+    // Pagar o distribuidor, custo de frete, PSP, tributos, notas e
+    // comprovantes reais precisam de reconciliação independente.
+    despesasLiquidadasConferidas:false,
+    tributosCalculados:false,
+    resultadoLiquidoApurado:false
+   };
+  });
+ }
  consultarPedidoAprovado({pedidoId,fornecedorId}={}){
   if(!idOk(pedidoId))erro('PEDIDO_INVALIDO');
   const r=this._row(pedidoId);
