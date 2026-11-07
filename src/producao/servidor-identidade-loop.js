@@ -27,9 +27,8 @@ function criarAppIdentidadeLoop({contas,origemHttps,permitirCadastro=false}={}){
   next();
  });
  app.use(express.json({limit:'12kb',strict:true}));
- // Reuso das telas e paleta aprovadas do LOOP, sem copiar o laboratório.
- // Os seus botões de compra/motor não são habilitados na conta real.
- montarInterfaceAprovada(app);
+ // A montagem visual ocorre depois de definir middleware de autenticação,
+ // para que a vitrine mantenha a titularidade da mesma sessão.
  const cookieValor=req=>{
   const raw=req.get('cookie')||'';
   if(raw.length>4096)return null;
@@ -41,7 +40,7 @@ function criarAppIdentidadeLoop({contas,origemHttps,permitirCadastro=false}={}){
  };
  const sessao=req=>contas.sessao(cookieValor(req));
  const cookie=(token,apagar=false)=>[
-  COOKIE+'='+token,'HttpOnly','Secure','SameSite=Strict','Path=/api/contas',
+  COOKIE+'='+token,'HttpOnly','Secure','SameSite=Strict','Path=/api',
   'Max-Age='+(apagar?'0':'3600')
  ].join('; ');
  const origemOk=req=>req.get('origin')===origem;
@@ -50,6 +49,8 @@ function criarAppIdentidadeLoop({contas,origemHttps,permitirCadastro=false}={}){
   if(!s)return res.status(401).json({erro:'LOGIN_OBRIGATORIO'});
   req.conta=s;next();
  };
+ // HTML/CSS já aprovados; loja requer a mesma sessão da conta.
+ montarInterfaceAprovada(app,{protegerLoja:protegido});
  const mutation=(req,res,next)=>{
   if(!origemOk(req))return res.status(403).json({erro:'ORIGEM_INVALIDA'});
   if(!req.is('application/json'))
@@ -213,6 +214,16 @@ function criarAppIdentidadeLoop({contas,origemHttps,permitirCadastro=false}={}){
    novaSenha:req.body.novaSenha,finalidade:'SENHA'
   }));}catch(e){return falha(res,e);}
  });
+ // Consulta de capacidade da loja vinculada à mesma conta. Sem produto
+ // real aprovado ou integração de fornecedor, nenhum carrinho pode pagar.
+ app.get('/api/loja/estado',protegido,(_req,res)=>res.json({
+  titularAutenticado:true,loja:'AKITEMM',contaUnica:true,
+  catalogoComercialDisponivel:false,fornecedoresAtivos:0,
+  checkoutReal:false,financeiroReal:false
+ }));
+ app.all(/^/api/loja(?:/|$)/,(_req,res)=>res.status(503).json({
+  erro:'OPERACAO_COMERCIAL_NAO_HABILITADA',checkoutReal:false
+ }));
  // As funcionalidades financeiras continuam fora deste serviço,
  // mesmo com a conta cadastrada e o e-mail confirmado.
  app.all(/^\/api\/(checkout|saques|posicoes|comissoes)(?:\/|$)/,(_req,res)=>
