@@ -62,15 +62,19 @@ function decifra(key,row){
 }
 function hash(txt){return createHash('sha256').update(txt).digest('hex');}
 class PedidosFornecedorOutbox {
- constructor({banco,registro,consultarPagamentoConciliado,chavePedidos,
-  agora=()=>Date.now()}={}){
+ constructor({banco,registro,consultarPagamentoConciliado,
+  consultarPedidoAprovado,chavePedidos,agora=()=>Date.now()}={}){
   if(typeof banco?.prepare!=='function'||typeof banco?.exec!=='function'||
      typeof registro?.obter!=='function'||
      typeof consultarPagamentoConciliado!=='function'||
+     typeof consultarPedidoAprovado!=='function'||
      !Buffer.isBuffer(chavePedidos)||chavePedidos.length!==32||
      typeof agora!=='function')falha('DEPENDENCIAS_OUTBOX_OBRIGATORIAS');
   this.db=banco;this.registro=registro;
   this.consultarPagamentoConciliado=consultarPagamentoConciliado;
+  // Fonte autoritativa do pedido interno: NUNCA confiar em itens/endereço
+  // enviados pelo cliente após a confirmação do Pix.
+  this.consultarPedidoAprovado=consultarPedidoAprovado;
   this.key=Buffer.from(chavePedidos);this.agora=agora;
   banco.exec([
    'CREATE TABLE IF NOT EXISTS loja_real_outbox_fornecedor(',
@@ -103,19 +107,41 @@ class PedidosFornecedorOutbox {
   const row=this._row(pedidoId,fornecedorId);
   return row?this._publico(row):null;
  }
- async registrarPagamentoConciliado({pedidoId,fornecedorId,itens,enderecoEntrega}={}){
-  if(!validoId(pedidoId)||!validoId(fornecedorId))
-   falha('PEDIDO_FORNECEDOR_INVALIDO');
-  // A chamada deve retornar de componente de reconsulta autenticada do PSP
-  // com pedidoId exato e valor real; o browser nao fornece uma confirmacao.
-  const prova=await this.consultarPagamentoConciliado({pedidoId});
+ async _validarPedidoAprovado({pedidoId,fornecedorId,payload}={}){
+  const [prova,pedido]=await Promise.all([
+   this.consultarPagamentoConciliado({pedidoId}),
+   this.consultarPedidoAprovado({pedidoId})
+  ]);
   if(!prova||prova.pedidoId!==pedidoId||
      prova.status!=='CONFIRMADO'||prova.moeda!=='BRL'||
      !validoId(prova.pagamentoId)||
      !Number.isSafeInteger(prova.valorCentavos)||prova.valorCentavos<=0)
    falha('PAGAMENTO_PSP_NAO_CONCILIADO');
+  if(!pedido||pedido.pedidoId!==pedidoId||
+     pedido.fornecedorId!==fornecedorId||
+     pedido.status!=='APROVADO_PARA_EXPEDICAO'||
+     pedido.pagamentoId!==prova.pagamentoId||
+     pedido.valorTotalCentavos!==prova.valorCentavos)
+   falha('PEDIDO_INTERNO_NAO_APROVADO');
+  let autorizado;
+  try{
+   autorizado={itens:itensValidos(pedido.itens),
+    enderecoEntrega:enderecoValido(pedido.enderecoEntrega)};
+  }catch{falha('PEDIDO_INTERNO_INVALIDO');}
+  if(payload&&hash(JSON.stringify(autorizado))!==hash(JSON.stringify(payload)))
+   falha('PEDIDO_DIVERGENTE_DO_ORIGINAL');
+  return {prova,payload:autorizado};
+ }
+ async registrarPagamentoConciliado({pedidoId,fornecedorId,itens,enderecoEntrega}={}){
+  if(!validoId(pedidoId)||!validoId(fornecedorId))
+   falha('PEDIDO_FORNECEDOR_INVALIDO');
+  // A fonte autoritativa do pedido prova SKU, endereço, valor e fornecedor.
+  // Um Pix confirmado de outro carrinho não autoriza expedição.
   const payload={itens:itensValidos(itens),
    enderecoEntrega:enderecoValido(enderecoEntrega)};
+  const {prova}=await this._validarPedidoAprovado({
+   pedidoId,fornecedorId,payload
+  });
   const texto=JSON.stringify(payload),sumario=hash(texto),enc=cifra(this.key,texto);
   const ts=this.agora(),idempotencia=createHmac('sha256',this.key)
    .update('FORNECEDOR:'+pedidoId+':'+fornecedorId).digest('hex');
@@ -149,6 +175,17 @@ class PedidosFornecedorOutbox {
   const adaptador=this.registro.obter(fornecedorId);
   if(typeof adaptador.enviarPedidoIdempotente!=='function')
    falha('API_FORNECEDOR_SEM_ENVIO_IDEMPOTENTE');
+  const registrado=this._row(pedidoId,fornecedorId);
+  if(!registrado)falha('PEDIDO_FORNECEDOR_NAO_ENCONTRADO');
+  if(registrado.estado==='ENVIADO')
+   return {...this._publico(registrado),repetido:true};
+  // Um Pix estornado/cancelado depois do cadastro do outbox não pode
+  // disparar a entrega. Revalidar pagamento E pedido antes da chamada externa.
+  const autoriza=await this._validarPedidoAprovado({pedidoId,fornecedorId});
+  if(autoriza.prova.pagamentoId!==registrado.pagamento_id||
+     autoriza.prova.valorCentavos!==registrado.valor_pago_centavos||
+     hash(JSON.stringify(autoriza.payload))!==registrado.payload_hash)
+   falha('PEDIDO_DIVERGENTE_DO_ORIGINAL');
   let payload,row;
   this.db.exec('BEGIN IMMEDIATE');
   try{
