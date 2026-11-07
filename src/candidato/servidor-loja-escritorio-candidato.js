@@ -337,11 +337,12 @@ function criarAppLojaEscritorioCandidato({banco,repositorioCatalogo,
  app.get('/staging/minha-equipe',(req,res)=>{
   const s=contas.sessao(req);
   if(!s)return res.status(401).json({erro:'SESSAO_AUSENTE'});
-  if(Object.keys(req.query).some(k=>k!=='pagina')||
-     typeof req.query.pagina==='object')
+  if(Object.keys(req.query).some(k=>!['pagina','busca'].includes(k))||
+     typeof req.query.pagina==='object'||typeof req.query.busca==='object')
    return res.status(400).json({erro:'PAGINACAO_INVALIDA'});
   const pagina=req.query.pagina===undefined?0:Number(req.query.pagina);
-  try{return res.json(equipe.listar({titularId:s.titularId,pagina}));}
+  const busca=req.query.busca===undefined?'':req.query.busca;
+  try{return res.json(equipe.listar({titularId:s.titularId,pagina,busca}));}
   catch{return res.status(400).json({erro:'PAGINACAO_INVALIDA'});}
  });
  // Qualificacao de ensaio: somente o titular logado aloca a uma posicao

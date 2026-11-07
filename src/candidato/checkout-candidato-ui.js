@@ -552,67 +552,127 @@ async function atualizarPosicoes(){
   area.append(erro);
  }
 }
+let sequenciaEquipe=0,temporizadorBuscaEquipe=null;
+function elementoEquipe(tag,classe,texto){
+ const el=document.createElement(tag);
+ if(classe)el.className=classe;
+ if(texto!==undefined)el.textContent=texto;
+ return el;
+}
+function criarBotaoAlocacao(pessoa){
+ const botao=elementoEquipe('button','loop03-rede-acao-alocar',
+  'Alocar indicação à posição selecionada');
+ botao.type='button';
+ botao.addEventListener('click',async()=>{
+  if(!Number.isSafeInteger(posicaoSelecionadaMotor)){
+   dizer('Abra Minhas Posições e escolha qual posição receberá a indicação.');
+   return;
+  }
+  botao.disabled=true;
+  try{
+   const resultado=await requisitar('/minha-equipe/indicacoes/qualificar-ensaio',{
+    method:'POST',mutacao:true,
+    body:{indicadoId:pessoa.indicadoId,posicaoAlvoId:posicaoSelecionadaMotor}
+   });
+   if(resultado.qualificada!==true)throw Error('INDICACAO_NAO_QUALIFICADA');
+   dizer('Indicação de ensaio atribuída à posição #'+
+    posicaoSelecionadaMotor+' · consulte a fila A no tabuleiro.');
+   await atualizarEquipe(0);await atualizarPosicoes();
+   if(aba==='conteudoTabuleiro')await atualizarTabuleiroIntegrado();
+  }catch(e){
+   dizer('Indicação não atribuída: '+e.message+
+    '. Confirme o aceite da posição e a compra Pix Sandbox do indicado.');
+   botao.disabled=false;
+  }
+ });
+ return botao;
+}
+function renderizarIndicadoNaRede(pessoa){
+ const numero=Number.isSafeInteger(pessoa.numeroCadastro)&&pessoa.numeroCadastro>0?
+  pessoa.numeroCadastro:null;
+ const validada=pessoa.qualificadaEnsaio===true;
+ const possuiPosicao=pessoa.possuiPosicaoDeEnsaio===true;
+ const cor=validada?'verde':possuiPosicao?'azul':'vermelho';
+ const status=validada?'Vinculada no ensaio':possuiPosicao?
+  'Posição em teste':'Cadastro realizado';
+ const cartao=elementoEquipe('article','loop03-rede-pessoa');
+ cartao.dataset.estado=cor;
+ if(numero!==null)cartao.dataset.numeroCadastro=String(numero);
+ const cabecalho=elementoEquipe('div','loop03-rede-pessoa-cabecalho');
+ const marca=elementoEquipe('span','loop03-rede-pessoa-numero',
+  numero!==null?'#'+String(numero).padStart(4,'0'):'#—');
+ marca.title='Ordem de cadastro na sua rede, não é o ID da posição.';
+ const luz=elementoEquipe('span','loop03-rede-pessoa-luz');
+ luz.setAttribute('aria-hidden','true');
+ const nome=elementoEquipe('strong','loop03-rede-pessoa-nick','@'+pessoa.nick);
+ const statusTxt=elementoEquipe('span','loop03-rede-pessoa-status',status);
+ const botao=elementoEquipe('button','loop03-rede-pessoa-menu','⋮');
+ botao.type='button';botao.setAttribute('aria-label','Detalhes de @'+pessoa.nick);
+ botao.setAttribute('aria-expanded','false');
+ const conteudo=elementoEquipe('div','loop03-rede-pessoa-detalhes');
+ conteudo.hidden=true;
+ const detalhar=()=>{
+  const abrir=conteudo.hidden;
+  for(const outro of $('listaEquipe').querySelectorAll('.loop03-rede-pessoa-detalhes')){
+   outro.hidden=true;
+   const toggle=outro.parentElement.querySelector('.loop03-rede-pessoa-menu');
+   if(toggle)toggle.setAttribute('aria-expanded','false');
+  }
+  conteudo.hidden=!abrir;botao.setAttribute('aria-expanded',String(abrir));
+ };
+ botao.addEventListener('click',detalhar);
+ cabecalho.append(marca,luz,nome,statusTxt,botao);
+ const info=elementoEquipe('div','loop03-rede-pessoa-info');
+ info.append(
+  elementoEquipe('span',null,'Telefone: não disponibilizado nesta prévia'),
+  elementoEquipe('span',null,'Cadastro: '+new Date(pessoa.registradoEm).toLocaleDateString('pt-BR')),
+  elementoEquipe('span',null,'Fila: não informada')
+ );
+ conteudo.append(elementoEquipe('p','subtexto',
+  'Nome civil e telefone exigem autorização de compartilhamento. '+
+  'Este cadastro foi feito por seu link e não comprova uma venda comercial.'));
+ if(validada){
+  conteudo.append(elementoEquipe('p','loop03-rede-pessoa-vinculo',
+   'Atribuída à posição de ensaio #'+pessoa.posicaoAlvoId+
+   ' · nenhuma comissão real.'));
+ }else if(possuiPosicao){
+  conteudo.append(criarBotaoAlocacao(pessoa));
+ }else{
+  conteudo.append(elementoEquipe('p','subtexto',
+   'Aguardando compra elegível e conciliação Sandbox do indicado.'));
+ }
+ cartao.append(cabecalho,info,conteudo);
+ return cartao;
+}
 async function atualizarEquipe(pagina=0){
+ const tentativa=++sequenciaEquipe;
+ const busca=$('buscarEquipe').value.trim().replace(/^@/,'');
  try{
-  const dados=await requisitar('/minha-equipe?pagina='+pagina);
+  const rota='/minha-equipe?pagina='+pagina+(busca?'&busca='+encodeURIComponent(busca):'');
+  const dados=await requisitar(rota);
+  if(tentativa!==sequenciaEquipe)return;
   if(pagina===0)$('listaEquipe').replaceChildren();
-  $('equipeResumo').textContent=dados.total+
-   ' cadastro(s) pelos links · '+dados.indicacoesQualificadas+
-   ' indicação(ões) com compra Sandbox validada · comissões reais: 0.';
-  if(pagina===0&&dados.total===0){
-   const vazio=document.createElement('p');
-   vazio.textContent='Sua equipe ainda não possui cadastros de teste. Compartilhe o link em Meus Links.';
+  $('redeTotalCadastros').textContent=String(dados.total);
+  $('redeAlocadasEnsaio').textContent=String(dados.indicacoesQualificadas);
+  // Não representar pessoas sem pedido conciliado como "a distribuir".
+  $('redeADistribuirEnsaio').textContent='—';
+  $('equipeResumo').textContent=busca?
+   dados.totalFiltrado+' resultado(s) encontrados · '+dados.total+
+   ' cadastro(s) na sua rede.':
+   dados.total+' cadastro(s) pelo seu link · '+dados.indicacoesQualificadas+
+   ' indicação(ões) alocada(s) no ensaio · comissões reais: 0.';
+  if(pagina===0&&dados.totalFiltrado===0){
+   const vazio=elementoEquipe('p','loop03-rede-vazia',busca?
+    'Nenhum cadastro encontrado. Procure por nick ou número do cadastro.':
+    'Sua rede ainda não possui cadastros de teste. Compartilhe o link em Meus Links.');
    $('listaEquipe').append(vazio);
   }
-  for(const pessoa of dados.cadastros){
-   const linha=document.createElement('p');
-   linha.className='pedido';
-   linha.textContent='@'+pessoa.nick+' · Cadastro em '+
-    new Date(pessoa.registradoEm).toLocaleString('pt-BR');
-   $('listaEquipe').append(linha);
-   if(pessoa.qualificadaEnsaio===true){
-    const status=document.createElement('small');
-    status.textContent='Indicação de ensaio atribuída à posição #'+
-     pessoa.posicaoAlvoId+' · sem comissão real.';
-    $('listaEquipe').append(status);
-   }else if(pessoa.possuiPosicaoDeEnsaio===true){
-    const botao=document.createElement('button');
-    botao.type='button';
-    botao.textContent='Alocar indicação à posição selecionada';
-    botao.addEventListener('click',async()=>{
-     if(!Number.isSafeInteger(posicaoSelecionadaMotor)){
-      dizer('Abra Minhas Posições e escolha qual posição receberá a indicação.');
-      return;
-     }
-     botao.disabled=true;
-     try{
-      const resultado=await requisitar('/minha-equipe/indicacoes/qualificar-ensaio',{
-       method:'POST',mutacao:true,
-       body:{indicadoId:pessoa.indicadoId,posicaoAlvoId:posicaoSelecionadaMotor}
-      });
-      if(resultado.qualificada!==true)throw Error('INDICACAO_NAO_QUALIFICADA');
-      dizer('Indicação de ensaio atribuída à posição #'+
-       posicaoSelecionadaMotor+' · consulte a fila A no tabuleiro.');
-      await atualizarEquipe(0);
-      await atualizarPosicoes();
-      if(aba==='conteudoTabuleiro')await atualizarTabuleiroIntegrado();
-     }catch(e){
-      dizer('Indicação não atribuída: '+e.message+
-       '. Confirme o aceite da posição e a compra Pix Sandbox do indicado.');
-      botao.disabled=false;
-     }
-    });
-    $('listaEquipe').append(botao);
-   }else{
-    const observacao=document.createElement('small');
-    observacao.textContent='Aguardando compra elegível e conciliação Sandbox do indicado.';
-    $('listaEquipe').append(observacao);
-   }
-  }
+  for(const pessoa of dados.cadastros)$('listaEquipe').append(renderizarIndicadoNaRede(pessoa));
   proximaPaginaEquipe=dados.proximaPagina;
   $('maisEquipe').hidden=proximaPaginaEquipe===null;
  }catch(e){
-  $('equipeResumo').textContent='Não foi possível consultar sua equipe: '+e.message;
+  if(tentativa!==sequenciaEquipe)return;
+  $('equipeResumo').textContent='Não foi possível consultar sua rede: '+e.message;
  }
 }
 async function atualizarLinks(){
@@ -856,6 +916,10 @@ document.addEventListener('keydown',e=>{if(e.key==='Escape')fecharMenuIntegrado(
 $('atualizarResumo').addEventListener('click',atualizarResumo);
 $('atualizarPosicoes').addEventListener('click',atualizarPosicoes);
 $('atualizarEquipe').addEventListener('click',()=>atualizarEquipe(0));
+$('buscarEquipe').addEventListener('input',()=>{
+ clearTimeout(temporizadorBuscaEquipe);
+ temporizadorBuscaEquipe=setTimeout(()=>atualizarEquipe(0),220);
+});
 $('maisEquipe').addEventListener('click',()=>{
  if(proximaPaginaEquipe!==null)atualizarEquipe(proximaPaginaEquipe);
 });

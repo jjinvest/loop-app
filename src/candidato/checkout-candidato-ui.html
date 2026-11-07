@@ -238,11 +238,18 @@
   </section>
   <section class="painel" id="conteudoEquipe" role="tabpanel" aria-labelledby="abaEquipe" hidden>
    <div class="linha"><h2>Minha Equipe</h2><button type="button" id="atualizarEquipe">Atualizar</button></div>
+   <div class="loop03-rede-informacoes" aria-label="Resumo de Minha Rede">
+    <div><small>CADASTROS PELO LINK</small><strong id="redeTotalCadastros">—</strong></div>
+    <div><small>INDICAÇÕES ALOCADAS · ENSAIO</small><strong id="redeAlocadasEnsaio">—</strong></div>
+    <div><small>A DISTRIBUIR</small><strong id="redeADistribuirEnsaio" aria-label="Não apurado nesta prévia">—</strong></div>
+   </div>
    <p id="equipeResumo" aria-live="polite">Consultando minha equipe…</p>
-   <div id="listaEquipe" aria-live="polite"></div>
+   <label for="buscarEquipe" class="loop03-equipe-label-busca">Buscar por nick ou nº do cadastro</label>
+   <input id="buscarEquipe" type="search" autocomplete="off" maxlength="50" placeholder="Ex.: @apelido ou #1" aria-controls="listaEquipe">
+   <div id="listaEquipe" class="loop03-rede-lista" aria-live="polite" aria-label="Indicações com rolagem vertical"></div>
    <button type="button" id="maisEquipe" hidden>Mostrar mais cadastros</button>
    <button type="button" id="equipeVerLinks">Ver meus links de convite</button>
-   <p class="subtexto">Os cadastros de ensaio realizados por seu link aparecem aqui com o nick. Ainda não são indicações comerciais válidas, não geram comissões e não movimentam posições.</p>
+   <p class="subtexto">Cada registro apresenta a numeração de cadastro, nick e a etapa conhecida do sistema. Nome civil e telefone de terceiros não são compartilhados nesta prévia. Cadastro não equivale a indicação comercial válida e não gera comissão real.</p>
   </section>
   <section class="painel" id="conteudoLinks" role="tabpanel" aria-labelledby="abaLinks" hidden>
    <h2>Meus Links</h2>

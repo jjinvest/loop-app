@@ -197,6 +197,53 @@ const {once}=require('node:events');
    await abrirAba('#abaEquipe');
    await page.locator('#equipeResumo').filter({hasText:'0 cadastro(s)'}).waitFor();
    assert.match(await page.locator('#listaEquipe').innerText(),/ainda não possui cadastros/);
+   assert.equal(await page.locator('#redeTotalCadastros').innerText(),'0');
+   assert.equal(await page.locator('#redeADistribuirEnsaio').innerText(),'—',
+    'não inventar posições disponíveis');
+   // Cadastre UMA pessoa de ensaio pelo link do titular e prove o circuito
+   // cadastro -> SQLite -> API segura -> lista real no PC e celular.
+   const nickIndicado=item.nome==='pc'?'Ciro':'Nina';
+   const inscricao=await fetch(base+'/staging/contas/cadastrar',{
+    method:'POST',
+    headers:{'Content-Type':'application/json',
+     'X-AKITEMM-Preview-Indicador':item.nick},
+    body:JSON.stringify({
+     nome:nickIndicado+' Exemplo',nick:nickIndicado,
+     email:nickIndicado.toLowerCase()+'@example.invalid',
+     senha:'Abc123xy',aceiteExplicito:true
+    })
+   });
+   assert.equal(inscricao.status,201,await inscricao.text());
+   await page.locator('#atualizarEquipe').click();
+   const indicado=page.locator('#listaEquipe article.loop03-rede-pessoa');
+   await indicado.first().waitFor();
+   assert.equal(await indicado.count(),1);
+   assert.match(await indicado.first().innerText(),new RegExp('@'+nickIndicado));
+   assert.match(await indicado.first().innerText(),/#0001/);
+   assert.match(await indicado.first().innerText(),/Telefone: não disponibilizado/);
+   assert.match(await indicado.first().innerText(),/Cadastro realizado/);
+   assert.equal(await indicado.first().getAttribute('data-estado'),'vermelho');
+   assert.equal(await page.locator('#redeTotalCadastros').innerText(),'1');
+   const botaoDetalhes=indicado.first().locator('button.loop03-rede-pessoa-menu');
+   await botaoDetalhes.click();
+   assert.equal(await botaoDetalhes.getAttribute('aria-expanded'),'true');
+   assert.equal(await indicado.first().locator('.loop03-rede-pessoa-detalhes').isVisible(),true);
+   await botaoDetalhes.click();
+   assert.equal(await botaoDetalhes.getAttribute('aria-expanded'),'false');
+   const busca=page.locator('#buscarEquipe');
+   await busca.fill('#1');
+   await page.locator('#equipeResumo').filter({hasText:'1 resultado(s)'}).waitFor();
+   assert.equal(await indicado.count(),1);
+   await busca.fill('NaoExiste');
+   await page.locator('#equipeResumo').filter({hasText:'0 resultado(s)'}).waitFor();
+   assert.match(await page.locator('#listaEquipe').innerText(),/Nenhum cadastro encontrado/);
+   await busca.fill(nickIndicado.toLowerCase());
+   await page.locator('#equipeResumo').filter({hasText:'1 resultado(s)'}).waitFor();
+   assert.equal(await indicado.count(),1);
+   await page.screenshot({path:path.join(__dirname,'../artifacts',
+    'minha-rede-integrada-'+item.nome+'.png'),fullPage:true});
+   await busca.fill('');
+   await page.locator('#equipeResumo').filter({hasText:'1 cadastro(s)'}).waitFor();
    await page.locator('#equipeVerLinks').click();
    assert.equal(await page.locator('#abaLinks').getAttribute('aria-selected'),'true');
    await abrirAba('#abaFinanceiro');

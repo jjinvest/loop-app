@@ -161,3 +161,16 @@ Ajustes pedidos em imagens de celular da prévia oficial LOOP (sem redesenhar o 
 
 
 **Continuidade 264 publicada e validada:** CI [42386969460 — SUCCESS](https://github.com/jjinvest/loop-app/actions/runs/42386969460), inclusive Playwright PC/celular com captura de login e abas, medição da posição do olho, revelação/ocultação de senha e prioridade de Tabuleiro/Posições/Escritório. Commit `1951c558eab85976ee66f2741feea08f8496ebce`. Railway em homologação `akitemm-escritorio-preview` implantado com **SUCCESS** no deployment `34bca82f-5b0d-4c95-a7be-d33262f7eaa7`, incluindo **25/25 testes** de pré-implantação. Prévia publicada: https://akitemm-escritorio-preview-homologacao.up.railway.app . Sem merge, sem produção financeira, sem liberar identidade real staged; o serviço permanece protegido. A priorização respeita a ordem DOM para leitor de tela e teclado, além da rolagem móvel.
+
+
+## Continuidade 265 — Minha Rede ligada à lista real aprovada (07/11/2026)
+
+Solicitação: a aba Minha Equipe / Minha Rede mostrava apenas um bloco informativo e cadastros textuais simples, sem a lista que existia no esqueleto original aprovado. **Reutilizou-se a MESMA aba e a MESMA API do titular**, sem front paralelo nem tela inventada. A fonte é \`EquipeCandidataSQLite\`, cujos vínculos entre indicador e indicado foram gravados no cadastro transacional do SQLite.
+
+- Cabeçalho responsivo com total de cadastros, total de indicações **alocadas no ensaio** e a distribuir (— enquanto não existe apuração segura); filtros por nick ou número sequencial de cadastro, consulta em todo o SQLite com paginação, e botão Mostrar mais.
+- Cartões de indicados em roxo profundo, bordas douradas, bolinha de status conforme evento conhecido (vermelho = apenas cadastro, azul = há posição de ensaio, verde = alocada no motor de ensaio). Cada linha apresenta o ordinal de cadastro \`#0001\` etc., nick, status, data e fila **não informada** enquanto o backend não atestar fila. Três pontinhos abrem detalhes e ação de alocar indicação (exatamente o fluxo pré-existente, com CSRF e status Sandbox).
+- A numeração apresentada é somente cronológica por indicador e **não** altera ID interno, posição ou fila. Busca por \`#n\` / nick, inclusive registros fora da primeira página; o resultado retorna total filtrado sem perder o total geral.
+- Nomes civis, CPF, e telefones de terceiros **não foram expostos**: cadastro do laboratório armazena nome cifrado e não coleta telefone. O campo visual explica que telefone está indisponível. Antes de apresentar nome completo e telefone deve existir base legal, finalidade, autorização granular por titular e dado verificado na origem. Não preencher por presunção.
+- Sem deslocar outras abas, reproduzir o esqueleto real de PC e celular. Teste Playwright cria um cadastro via link de indicação e prova persistência, privacidade, bolinhas, ordem, três pontinhos, busca por nick e número; gera prints reais PC/celular no pipeline. Testes de regressão e deploy Railway protegidos a confirmar antes de marcar concluído.
+
+Nenhuma venda real nem bonificação atribuída. Tudo no ambiente de homologação, PR #1 DRAFT.
