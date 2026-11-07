@@ -112,3 +112,29 @@ test('a assinatura detecta alteração fora da aplicação mesmo sem triggers',t
   {codigo:'AUDITORIA_CADEIA_DIVERGENTE'});
  assert.equal(log.verificar().total,1);
 });
+
+test('ativar e desativar produtos e ofertas mantém trilha inclusive durante manutenção',t=>{
+ const banco=new DatabaseSync(':memory:');
+ banco.exec('PRAGMA foreign_keys=ON');
+ t.after(()=>banco.close());
+ const auditoria=new AuditoriaOperacionalSQLite({
+  banco,chaveAuditoria:randomBytes(32)
+ });
+ const catalogo=new CatalogoMultiDistribuidoresSQLite({
+  banco,distribuidorHomologado:id=>id==='distA',auditoria
+ });
+ catalogo.criarProduto({produtoId:'prodA',titulo:'Produto A'});
+ catalogo.vincularOferta({produtoId:'prodA',distribuidorId:'distA',
+  sku:'SKU_A',precoUnitCentavos:8000});
+ catalogo.ativarProduto({produtoId:'prodA',ativo:true});
+ catalogo.ativarOferta({produtoId:'prodA',distribuidorId:'distA',ativo:true});
+ assert.equal(catalogo.listarVitrine().length,1);
+ catalogo.ativarOferta({produtoId:'prodA',distribuidorId:'distA',ativo:false});
+ catalogo.ativarProduto({produtoId:'prodA',ativo:false});
+ assert.equal(catalogo.listarVitrine().length,0);
+ assert.equal(auditoria.verificar().total,6);
+ assert.deepEqual(auditoria.listar().slice(0,2).map(x=>x.acao),[
+  'PRODUTO_STATUS_ALTERADO','OFERTA_STATUS_ALTERADO'
+ ]);
+ assert.deepEqual(banco.prepare('PRAGMA foreign_key_check').all(),[]);
+});
