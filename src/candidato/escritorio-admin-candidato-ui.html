@@ -28,8 +28,20 @@
 </section>
 <section class="painel" aria-labelledby="departamentosTitulo">
 <h2 id="departamentosTitulo">Departamentos e controles</h2>
-<p class="subtexto">Selecione um departamento para acompanhar suas missões. Números marcados como laboratório não correspondem a operações comerciais.</p>
+<p class="subtexto">Cada departamento abre sua operação no mesmo SQLite do cliente, loja e motor. Dados comerciais não habilitados aparecem explicitamente como bloqueados, nunca como saldo fictício.</p>
 <div id="quadroDepartamentos" class="grade-departamentos" aria-label="Departamentos do Escritório"></div>
+<div id="painelDepartamentoOperacional" class="departamento-operacional" hidden>
+<div class="linha"><h3 id="departamentoOperacionalTitulo" tabindex="-1">Departamento</h3>
+<button type="button" id="departamentoOperacionalAtualizar">Atualizar dados</button></div>
+<p id="departamentoOperacionalEstado" role="status" aria-live="polite"></p>
+<div id="departamentoOperacionalMetricas" class="indicadores"></div>
+<div id="departamentoOperacionalAcoes" class="linha" aria-label="Ações do departamento"></div>
+<div id="departamentoOperacionalRegistros" aria-live="polite"></div>
+<div class="linha">
+<button type="button" id="departamentoOperacionalAnterior" disabled>Anterior</button>
+<button type="button" id="departamentoOperacionalProximo" disabled>Próxima página</button>
+</div>
+</div>
 </section>
 <section class="painel" aria-labelledby="tituloProdutosAdmin">
 <div class="linha"><h2 id="tituloProdutosAdmin">Produtos · edição de laboratório</h2>
