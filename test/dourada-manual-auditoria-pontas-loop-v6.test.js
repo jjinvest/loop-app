@@ -87,7 +87,8 @@ test('nova dourada manual nao consome reserva, sem pre-lancamento, imutavel e id
  }
  assert.throws(()=>repo.banco.exec('DELETE FROM admin_ponte_douradas_manuais_demo'),
   /bola dourada imutavel/);
- const reaberta=new PonteComprasConvitesDemoSQLite({banco:repo.banco,contas});
+ const reaberta=new PonteComprasConvitesDemoSQLite({banco:repo.banco,contas,
+  consultarPagamentoConfiavel:async()=>null});
  assert.equal(reaberta.criarDouradaManualDemo({eventoId:'dourada-sem-reserva'}).repetida,true);
  assert.equal(reaberta.criarDouradaManualDemo({eventoId:'dourada-sem-reserva-3'}).posicaoId,3);
  assert.equal(reaberta.auditarIntegridadeOperacionalDemo().totalAlertas,0);
