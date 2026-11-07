@@ -112,6 +112,16 @@ test('uma compra multiproduto, dois distribuidores, um pagamento e duas remessas
  const confirm=await x.pedidos.confirmarPagamento({pedidoId:pedido.pedidoId});
  assert.equal(confirm.status,'APROVADO_PARA_EXPEDICAO');
  assert.equal(confirm.valorTotalCentavos,37800);
+ const contabil=x.pedidos.listarResumoContabil();
+ assert.equal(contabil.length,1);
+ assert.equal(contabil[0].valorTotalPedidoCentavos,37800);
+ assert.equal(contabil[0].receitaProdutosCentavos,35000);
+ assert.equal(contabil[0].freteCobradoClienteCentavos,2800);
+ assert.deepEqual(contabil[0].distribuidores,['dist_A','dist_B']);
+ assert.equal(contabil[0].tributosCalculados,false);
+ assert.equal(contabil[0].resultadoLiquidoApurado,false);
+ assert.equal(JSON.stringify(contabil).includes('Ana Cliente'),false);
+ assert.equal(JSON.stringify(contabil).includes('27250010'),false);
  const chave={pedidoId:pedido.pedidoId};
  const remessaA=x.pedidos.consultarPedidoAprovado({...chave,fornecedorId:'dist_A'});
  const remessaB=x.pedidos.consultarPedidoAprovado({...chave,fornecedorId:'dist_B'});
