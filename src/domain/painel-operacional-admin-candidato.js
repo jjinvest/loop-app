@@ -11,7 +11,7 @@ const AREAS=Object.freeze({
  INDICACOES:{descricao:'Vínculos de cadastro e indicações efetivamente qualificadas pelo motor de ensaio.',acoes:['VER_POSICOES','CRIAR_MISSAO']},
  POSICOES:{descricao:'Vínculos de posições de ensaio por pedido e titular.',acoes:['VER_POSICOES','VER_CATRACA','CRIAR_MISSAO']},
  FILAS:{descricao:'Filas A e B do próprio motor, respeitando 3A:1B.',acoes:['VER_CATRACA','VER_POSICOES']},
- TABULEIRO:{descricao:'Centro, vagas, eventos e giros do motor V6 existente.',acoes:['VER_CATRACA','VER_AGENDA','CRIAR_MISSAO']},
+ TABULEIRO:{descricao:'Centro, vagas, eventos e giros do motor V6 existente.',acoes:['VER_CATRACA','CRIAR_DOURADA','VER_AGENDA','CRIAR_MISSAO']},
  COFRES:{descricao:'Cofres comerciais indisponíveis até escrituração e conciliação homologadas.',acoes:['CONFERIR_COBERTURA','CRIAR_MISSAO']},
  SAQUES:{descricao:'Saques comerciais bloqueados até custódia, saldo e PSP homologados.',acoes:['CONFERIR_COBERTURA','CRIAR_MISSAO']},
  SEGURANCA:{descricao:'Integridade relacional, backup e travas de ativação do laboratório.',acoes:['CONFERIR_BACKUP','CONFERIR_COBERTURA','CRIAR_MISSAO']},
