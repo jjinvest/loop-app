@@ -13,6 +13,7 @@ on:
       - 'test/interface-aprovada-identidade-real.test.js'
       - 'test/prontidao-fornecedor-akitemm.test.js'
       - 'test/outbox-fornecedor-real.test.js'
+      - 'test/pedido-multidistribuidores-akitemm.test.js'
       - 'test/limite-operacoes-identidade-real-sqlite.test.js'
       - 'test/troca-senha-identidade-real-sqlite.test.js'
       - '.github/workflows/identidade-real-segregada.yml'
@@ -42,6 +43,7 @@ jobs:
           node --check src/producao/interface-aprovada-loop.js
           node --check src/producao/interface-aprovada-contas.js
           node --check src/producao/pedidos-fornecedor-outbox.js
+          node --check src/producao/pedidos-comerciais-sqlite.js
           node --check scripts/iniciar-identidade-real-loop.js
       - name: Conta, consentimento, senhas e recuperação
         run: node --test test/identidade-real-isolada.test.js
@@ -59,6 +61,8 @@ jobs:
         run: node --test test/prontidao-fornecedor-akitemm.test.js
       - name: Pedidos do parceiro idempotentes e recuperaveis apos falha
         run: node --test test/outbox-fornecedor-real.test.js
+      - name: Varios produtos e distribuidores com pagamento unico e remessas isoladas
+        run: node --test test/pedido-multidistribuidores-akitemm.test.js
       - name: Não ativar cadastro real com configuração de laboratório
         env:
           NODE_ENV: production
