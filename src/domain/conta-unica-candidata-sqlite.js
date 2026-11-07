@@ -470,12 +470,20 @@ class ContaUnicaCandidataSQLite{
    falha('RECUPERACAO_CODIGO_OU_SENHA_INVALIDOS');
   if(!comparar(this._hmacRecuperacao(conta.id,codigo),
     desafio.codigo_hmac)){
-   const n=desafio.tentativas+1;
+   // Cada tentativa incorreta deve incrementar a contagem atual no banco,
+   // nunca regravar o valor lido antes por outra instancia/processo.
+   // O mesmo UPDATE revoga o desafio na quinta falha, de modo atomico.
+   // Nunca reativar um codigo usado, expirado ou substituido por outro.
    this.banco.prepare([
     'UPDATE akitemm_recuperacao_senha_candidata',
-    'SET tentativas=?,estado=? WHERE id=? AND estado=?'
-   ].join(' ')).run(n,n>=5?'BLOQUEADO':'ENVIADO',
-    desafio.id,'ENVIADO');
+    'SET tentativas=tentativas+1,',
+    "estado=CASE WHEN tentativas+1>=5 THEN 'BLOQUEADO'",
+    "ELSE 'ENVIADO' END",
+    "WHERE id=? AND estado='ENVIADO' AND expira_em>?",
+    'AND tentativas<5 AND id=(',
+    'SELECT id FROM akitemm_recuperacao_senha_candidata',
+    'WHERE titular_id=? ORDER BY criado_em DESC LIMIT 1)'
+   ].join(' ')).run(desafio.id,this._agora(),conta.id);
    falha('RECUPERACAO_CODIGO_OU_SENHA_INVALIDOS');
   }
   const salt=randomBytes(16).toString('hex');
