@@ -76,8 +76,10 @@ function criarGateway({portaInterna,senhaAcesso,senhaAdmin=null,segredoOperador,
   // deixar a verificacao de permissao ser mais restritiva que o backend.
   // Tambem trata codificacao de caracteres sem transformar a URL encaminhada.
   let p;
-  try{p=decodeURIComponent(path).toLowerCase();}
+  try{p=decodeURIComponent(path).toLowerCase().replace(/\/+$/,'');}
   catch{return true;}
+  // Express aceita a barra final nas rotas fixas. Sem a mesma
+  // normalizacao, um visitante poderia obter HTML/assets administrativos.
   return p==='/escritorio'||p==='/staging/escritorio-admin'||
    p==='/staging/escritorio-unificado'||
    p.startsWith('/staging/escritorio-unificado/')||
