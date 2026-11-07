@@ -280,3 +280,13 @@ integracao de fornecedores reais, estoque sincronizado ou pagamentos.
 **Próxima ligação para a experiência aprovada:** incorporar os novos campos e exportação ao departamento PRODUTOS/FINANCEIRO do **Escritório Administrativo existente**, sem redesenhar a tela, assim que o gateway de produção tiver autenticação e segregação comprovadas; registrar snapshot de custos, preço, pagamentos e documentos fiscais de cada pedido real para contabilidade histórica. Não afirmar que a edição de custo já aparece no painel público nem que a exportação equivale à escrituração fiscal concluída.
 
 **Separação financeira crítica:** a margem comercial não pode ser contada como saldo dos cofres do LOOP ou crédito disponível para remuneração; despesas e eventuais benefícios exigem provisões, conciliação e revisão jurídico-contábil independentes.
+
+
+## Exportação de vendas para o contador — 07/11/2026
+
+A exportação privada foi estendida além do catálogo de produtos:
+- `PedidosComerciaisSQLite.listarResumoContabil()`: histórico de pedidos com `pedidoId`, datas de criação/última atualização, `pagamentoId`, status, subtotal congelado de produtos, frete cobrado do cliente, valor bruto total, fornecedores e quantidade de unidades. Lê os dados do pedido originalmente cifrado, **sem nome, e-mail, CPF, endereço ou credenciais**. Verifica que `receitaProdutos + freteCobrado = valorTotal` antes de retornar.
+- `criarRouterAdminEconomiaAkitemm` oferece `GET /contador/pedidos.csv` e `GET /contador/catalogo.csv` **somente** quando o gateway definitivo injeta autenticação administrativa e CSRF real; acesso de cliente retorna 401. Os arquivos não alegam taxas PSP conciliadas, custos do fornecedor já pagos, impostos apurados ou lucro líquido calculado. A soma por pedido ocorre em uma linha por pedido, sem duplicar valores por SKU/remessa.
+- **Validação código**: [CI 42347100010, SUCESSO](https://github.com/jjinvest/loop-app/actions/runs/42347100010), inclui provedor de pedidos multidistribuidor com valores congelados, controle de acesso administrativo ao extrato e exportação.
+- Não corresponde ainda ao SPED, XML de NF-e, escrituração, extrato bancário, nota de aquisição do distribuidor ou guia tributária. Esses documentos serão recebidos e conciliados em etapas posteriores. As taxas e impostos reais serão informados por PSP/contabilidade, não inventados pelo motor do LOOP.
+- **Interface**: o valor de venda já consta na área PRODUTOS do admin LAB; custo de aquisição, diferença bruta e exportações agora têm backend privado preparado. **Ainda faltam acoplá-los visualmente ao painel administrativo real aprovado e ativar o gateway administrativo segregado**. A prévia de laboratório e a PR DRAFT não sofreram merge/deploy.
