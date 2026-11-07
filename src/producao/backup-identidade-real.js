@@ -1,0 +1,186 @@
+'use strict';
+// Backup local cifrado da IDENTIDADE REAL, separado do laboratório.
+// Não substitui upload offsite, retenção, prova de recuperação inter-regional,
+// backup financeiro nem autorização para disponibilizar pagamentos.
+const fs=require('node:fs');
+const os=require('node:os');
+const path=require('node:path');
+const {DatabaseSync}=require('node:sqlite');
+const {pipeline}=require('node:stream/promises');
+const {createHash,createCipheriv,createDecipheriv,randomBytes,hkdfSync}=
+ require('node:crypto');
+const MAGIC=Buffer.from('LOOPREALBKP1','ascii');
+const HEADER=40,TAG=16;
+const TABELAS=Object.freeze([
+ 'loop_real_contas','loop_real_sessoes','loop_real_codigos',
+ 'loop_real_custodia','loop_real_limites'
+]);
+function falha(c){const e=new Error(c);e.codigo=c;throw e;}
+function conferir({origem,destino,chaveBackup,autorizado,restaurar=false}){
+ if(autorizado!==true||!Buffer.isBuffer(chaveBackup)||
+    chaveBackup.length!==32)falha('CUSTODIA_BACKUP_REAL_NAO_AUTORIZADA');
+ if(typeof origem!=='string'||!path.isAbsolute(origem)||
+    typeof destino!=='string'||!path.isAbsolute(destino)||
+    origem===destino||origem.includes('\0')||destino.includes('\0')||
+    !origem.endsWith(restaurar?'.looprealbak':'.sqlite')||
+    !destino.endsWith(restaurar?'.sqlite':'.looprealbak'))
+  falha('CAMINHOS_BACKUP_REAL_INVALIDOS');
+ const canonicalOrigem=path.resolve(origem),canonicalDestino=path.resolve(destino);
+ if(!fs.existsSync(origem)||!fs.lstatSync(origem).isFile()||
+    fs.lstatSync(origem).isSymbolicLink())
+  falha('ORIGEM_BACKUP_REAL_INSEGURA');
+ const destinoPai=path.dirname(canonicalDestino);
+ if(!fs.existsSync(destinoPai)||
+    !fs.statSync(destinoPai).isDirectory()||
+    fs.lstatSync(destinoPai).isSymbolicLink())
+  falha('DESTINO_BACKUP_REAL_INSEGURO');
+ if(process.env.NODE_ENV==='production'){
+  if(!restaurar){
+   if(canonicalOrigem!=='/dados-reais/clientes.sqlite'||
+      canonicalDestino.startsWith('/dados-reais/'))
+    falha('BACKUP_REAL_VOLUME_OU_ORIGEM_INVALIDOS');
+  }else if(canonicalDestino==='/dados-reais/clientes.sqlite'){
+   // Recuperação somente em arquivo novo, com promoção offline controlada.
+   falha('RESTAURACAO_NAO_PODE_ATINGIR_BANCO_ATIVO');
+  }
+ }
+ if(fs.existsSync(canonicalDestino))falha('DESTINO_BACKUP_REAL_JA_EXISTE');
+ return {origem:canonicalOrigem,destino:canonicalDestino,destinoPai};
+}
+function validarIdentidade(arquivo){
+ const b=new DatabaseSync(arquivo,{readOnly:true});
+ try{
+  const lista=b.prepare(
+   "SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%'"
+  ).all().map(x=>x.name);
+  if(TABELAS.some(x=>!lista.includes(x)))falha('BACKUP_REAL_ESQUEMA_INCOMPLETO');
+  // Escopo deliberadamente identidade. Um checkout comercial exige backup
+  // transacional conjunto com PSP/outbox; NUNCA restaurá-lo separadamente.
+  if(lista.some(x=>!TABELAS.includes(x)))
+   falha('BACKUP_IDENTIDADE_NAO_COBRE_TABELAS_COMERCIAIS');
+  const integridade=b.prepare('PRAGMA integrity_check').all();
+  if(integridade.length!==1||integridade[0].integrity_check!=='ok')
+   falha('BACKUP_REAL_SQLITE_CORROMPIDO');
+  if(b.prepare('PRAGMA foreign_key_check').all().length)
+   falha('BACKUP_REAL_CHAVES_DIVERGENTES');
+  if(!b.prepare('SELECT id FROM loop_real_custodia WHERE id=1').get())
+   falha('BACKUP_REAL_SEM_CUSTODIA');
+  return {contas:b.prepare('SELECT COUNT(*) AS n FROM loop_real_contas').get().n,
+   integridade:'ok'};
+ }finally{b.close();}
+}
+function derivar(k,salt){return Buffer.from(hkdfSync(
+ 'sha256',k,salt,Buffer.from('LOOP-IDENTIDADE-REAL-BACKUP-V1'),32
+));}
+async function digest(arquivo){
+ const sha=createHash('sha256');
+ for await(const bloco of fs.createReadStream(arquivo))sha.update(bloco);
+ return sha.digest('hex');
+}
+async function criarBackupIdentidadeReal({
+ origem,destino,chaveBackup,autorizado=false
+}={}){
+ const p=conferir({origem,destino,chaveBackup,autorizado});
+ const tmp=fs.mkdtempSync(path.join(os.tmpdir(),'loop-real-backup-'));
+ fs.chmodSync(tmp,0o700);
+ const snapshot=path.join(tmp,'snapshot.sqlite');
+ let b=null,fd=null,gerado=false,chave=null;
+ try{
+  validarIdentidade(p.origem);
+  b=new DatabaseSync(p.origem,{readOnly:true});
+  b.prepare('VACUUM INTO ?').run(snapshot);
+  b.close();b=null;
+  fs.chmodSync(snapshot,0o600);
+  const prova=validarIdentidade(snapshot);
+  const salt=randomBytes(16),iv=randomBytes(12);
+  const header=Buffer.concat([MAGIC,salt,iv]);
+  if(header.length!==HEADER)falha('BACKUP_CABECALHO_INVALIDO');
+  chave=derivar(chaveBackup,salt);
+  const cifra=createCipheriv('aes-256-gcm',chave,iv);
+  cifra.setAAD(header);
+  fd=fs.openSync(p.destino,'wx',0o600);
+  gerado=true;
+  fs.writeSync(fd,header);
+  fs.closeSync(fd);fd=null;
+  await pipeline(fs.createReadStream(snapshot),cifra,
+   fs.createWriteStream(p.destino,{flags:'a',mode:0o600}));
+  fs.appendFileSync(p.destino,cifra.getAuthTag());
+  return {estado:'IDENTIDADE_REAL_BACKUP_LOCAL_CIFRADO',
+   contas:prova.contas,integridadeSQLite:prova.integridade,
+   sha256Cifrado:await digest(p.destino),
+   tamanhoBytes:fs.statSync(p.destino).size,permissao:'0600',
+   copiaOffsiteConfirmada:false,restauracaoOffsiteConfirmada:false,
+   backupFinanceiroConfirmado:false};
+ }catch(e){
+  if(gerado)fs.rmSync(p.destino,{force:true});
+  throw e.codigo?e:falha('BACKUP_IDENTIDADE_REAL_FALHOU');
+ }finally{
+  if(fd!==null)fs.closeSync(fd);
+  if(b)try{b.close();}catch{}
+  if(chave)chave.fill(0);
+  fs.rmSync(tmp,{recursive:true,force:true});
+ }
+}
+function bloquearAcessoRestaurado(arquivo){
+ const db=new DatabaseSync(arquivo);
+ try{
+  db.exec('PRAGMA foreign_keys=ON;BEGIN IMMEDIATE;');
+  try{
+   const sessoes=db.prepare('DELETE FROM loop_real_sessoes').run().changes;
+   const codigos=db.prepare([
+    "UPDATE loop_real_codigos SET estado='BLOQUEADO'",
+    "WHERE estado IN ('ENVIADO','RESERVADO')"
+   ].join(' ')).run().changes;
+   db.exec('COMMIT');
+   return {sessoesRevogadas:sessoes,codigosInvalidados:codigos};
+  }catch(e){db.exec('ROLLBACK');throw e;}
+ }finally{db.close();}
+}
+async function restaurarBackupIdentidadeReal({
+ origem,destino,chaveBackup,autorizado=false
+}={}){
+ const p=conferir({origem,destino,chaveBackup,autorizado,restaurar:true});
+ const tmp=fs.mkdtempSync(path.join(p.destinoPai,'.loop-real-restore-'));
+ fs.chmodSync(tmp,0o700);
+ const restaurado=path.join(tmp,'restaurado.sqlite');
+ let chave=null;
+ try{
+  const tamanho=fs.statSync(p.origem).size;
+  if(tamanho<=HEADER+TAG)falha('ARQUIVO_BACKUP_REAL_INVALIDO');
+  const fd=fs.openSync(p.origem,'r');
+  const header=Buffer.alloc(HEADER),tag=Buffer.alloc(TAG);
+  try{
+   if(fs.readSync(fd,header,0,HEADER,0)!==HEADER||
+      fs.readSync(fd,tag,0,TAG,tamanho-TAG)!==TAG||
+      !header.subarray(0,MAGIC.length).equals(MAGIC))
+    falha('ARQUIVO_BACKUP_REAL_INVALIDO');
+  }finally{fs.closeSync(fd);}
+  const salt=header.subarray(MAGIC.length,MAGIC.length+16);
+  const iv=header.subarray(MAGIC.length+16,HEADER);
+  chave=derivar(chaveBackup,salt);
+  const cifra=createDecipheriv('aes-256-gcm',chave,iv);
+  cifra.setAAD(header);cifra.setAuthTag(tag);
+  await pipeline(fs.createReadStream(p.origem,{
+   start:HEADER,end:tamanho-TAG-1
+  }),cifra,fs.createWriteStream(restaurado,{flags:'wx',mode:0o600}));
+  const antes=validarIdentidade(restaurado);
+  const invalidacao=bloquearAcessoRestaurado(restaurado);
+  validarIdentidade(restaurado);
+  // Nunca sobrescrever arquivo preexistente, nem mesmo após corrida.
+  fs.linkSync(restaurado,p.destino);
+  fs.chmodSync(p.destino,0o600);
+  return {estado:'IDENTIDADE_RESTAURADA_EM_ARQUIVO_NOVO',
+   contas:antes.contas,integridadeSQLite:'ok',...invalidacao,
+   destinoExistenteNaoSobrescrito:true,financeiroRealAtivado:false,
+   comprovacaoOffsite:false};
+ }catch(e){
+  if(e.code==='EEXIST')falha('DESTINO_BACKUP_REAL_JA_EXISTE');
+  if(e.codigo)throw e;
+  falha('RESTAURACAO_IDENTIDADE_REAL_FALHOU_OU_CHAVE_INVALIDA');
+ }finally{
+  if(chave)chave.fill(0);
+  fs.rmSync(tmp,{recursive:true,force:true});
+ }
+}
+module.exports={validarIdentidade,criarBackupIdentidadeReal,
+ restaurarBackupIdentidadeReal};
