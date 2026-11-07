@@ -47,7 +47,7 @@ test('API compartilha login entre paginas e rejeita compra, cookies falsos e CSR
  assert.equal(login.status,200);
  const session=await login.json();
  const setCookie=login.headers.get('set-cookie');
- assert.match(setCookie,/HttpOnly;\s*Secure;\s*SameSite=Strict;\s*Path=\/api\/contas/);
+ assert.match(setCookie,/HttpOnly;\s*Secure;\s*SameSite=Strict;\s*Path=\/api(?:;|$)/);
  const cookie=setCookie.split(';')[0];
  assert.ok(cookie.startsWith(COOKIE+'='));
  assert.equal((await req('/api/contas/me')).status,401);
