@@ -45,3 +45,9 @@
 Deploy Railway `7c10c899-534c-4145-9c74-f7aa08bf0dbb`, comando de uso único `scripts/medir-carga-leitura-preview-railway.js`: 160 GET `/healthz` concorrência máxima 8, mais 6 GET `/readyz` autenticados e sequenciais. **166/166 HTTP e JSON esperados; 0 erros; p50 92 ms; p95 411 ms; máximo 1.188 ms.** Nenhuma operação de escrita. Três testes de segurança dedicados aprovados. Opt-in temporário de execução da carga desativado depois do ensaio e comando retirado do pre-deploy normal. **Não equivale a teste de carga de checkout, webhook nem motor.**
 
 **Regra de avanço:** uma evidência não fecha um gate além do seu escopo. Qualquer falha externa reproduzível cria pendência e bloqueia o go/no-go até correção comprovada.
+
+## Complemento G6 — variantes de rota administrativa (07/11/2026 UTC)
+
+- Revisão após segregação HTTP encontrou uma inconsistência entre o roteamento não estrito do Express e a comparação do gateway: `GET /staging/escritorio-admin/`, assim como assets administrativos com barra terminal, não eram classificados pelo mesmo predicado de proteção. Isso poderia expor HTML/JavaScript administrativo a visitante autenticado na prévia; **não foi demonstrada autorização para executar APIs administrativas ou movimentação financeira**, pois o backend exige operador por rota própria.
+- A normalização do gateway agora remove barras finais **apenas na decisão de acesso**, mantendo URL encaminhada intacta. Regressão adversarial cobre seis variantes incluindo case/percent-encoding e exige zero encaminhamento ao backend com cookie do visitante, preservando acesso do operador.
+- Commits na branch de integração: correção `07b52b07ead36c91b34a10109cb8a59cd04ed7f3`, regressão `a0def24d6550038171f04428d43b9b4c2f9fdf39`, gatilho de CI `d5a88a2d6ca5acd0e3e73f96bd2c49dc19d4636f`. **Validação CI e prova HTTPS do Railway ainda não confirmadas para esta revisão**. G6 permanece PARCIAL; sem deploy comercial ou admissão de pessoas reais.
