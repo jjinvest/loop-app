@@ -5,6 +5,8 @@
 const fs=require('node:fs'),path=require('node:path');
 const {entradaValida,cotarCheckoutPublico}=require('../domain/cotacao-checkout-publico');
 const {SinalizacaoVitrineCandidatoSQLite}=require('../domain/sinalizacao-vitrine-candidato-sqlite');
+const {CustosProdutoAdminCandidatoSQLite}=require('../domain/custos-produtos-admin-candidato-sqlite');
+const {LivroLuzesFinanceirasCandidatoSQLite}=require('../domain/livro-luzes-financeiras-candidato-sqlite');
 const {simularQualificacaoCandidato}=require('../domain/simulador-qualificacao-carrinho-candidato');
 const {consultarPedido}=require('../domain/relatorio-homologacao-checkout-staging');
 const DIR=path.join(__dirname,'../laboratorio');
@@ -18,11 +20,19 @@ function createVitrineCandidata({app,banco,catalogo,contas,intencoes,prePedidos,
     configLoja?.banco!==banco)
   fail('INTEGRACAO_VITRINE_INCOMPLETA');
  const sinalizacao=new SinalizacaoVitrineCandidatoSQLite({banco,catalogo});
+ // Mesma base de checkout, catálogo, custos internos, fila e escritorio.
+ const custosProduto=new CustosProdutoAdminCandidatoSQLite({banco,catalogo,sinalizacao});
+ const livroLuzes=new LivroLuzesFinanceirasCandidatoSQLite({banco});
+ sinalizacao.custosProduto=custosProduto;
+ sinalizacao.livroLuzes=livroLuzes;
  // Todas as novas rotas de pré-pedido usam o mesmo registro transacional.
  prePedidos.definirFotografiaClassificacao(args=>{
   // Mesmo COMMIT do prepedido: classificação + endereço físico cifrado.
   const fotografia=sinalizacao.gravarFotografiaPrepedido(args);
   enderecoEntrega.vincularPrepedido(args);
+  // Congela custos e referencia das posicoes no MESMO COMMIT do checkout.
+  // Mudancas futuras do cadastro nao reescrevem pedidos antigos.
+  livroLuzes.congelarCustosPedido({...args,fotografia});
   return fotografia;
  });
  const sessao=req=>contas.sessao(req);
