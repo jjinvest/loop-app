@@ -88,23 +88,28 @@ class AuditoriaOperacionalSQLite{
   if(r.changes!==1)falha('AUDITORIA_NAO_GRAVADA');
   return {eventoId:proxId,hash:assinatura};
  }
- verificar({limite=100000}={}){
-  if(!Number.isSafeInteger(limite)||limite<1||limite>1000000)
+ verificar({limite=null}={}){
+  // Não carregar todo o histórico na memória, nem impor teto oculto de
+  // 100 mil operações. A auditoria percorre por cursor, com memória O(1).
+  // limite opcional é apenas proteção explícita em uma verificação pontual.
+  if(limite!==null&&(!Number.isSafeInteger(limite)||limite<1))
    falha('AUDITORIA_LIMITE_INVALIDO');
-  const rows=this.db.prepare([
+  const linhas=this.db.prepare([
    'SELECT * FROM loja_real_auditoria_admin ORDER BY id ASC'
-  ].join(' ')).all();
-  if(rows.length>limite)falha('AUDITORIA_ACIMA_DO_LIMITE');
-  let prevHash='GENESE',prevId=0;
-  for(const r of rows){
+  ].join(' ')).iterate();
+  let prevHash='GENESE',prevId=0,total=0;
+  for(const r of linhas){
+   total++;
+   if(limite!==null&&total>limite)
+    falha('AUDITORIA_ACIMA_DO_LIMITE');
    if(r.id!==prevId+1||r.hash_anterior!==prevHash||
       !/^[a-f0-9]{64}$/.test(r.hash_atual)||
       this._assinatura(this._dados(r))!==r.hash_atual)
     falha('AUDITORIA_CADEIA_DIVERGENTE');
    prevHash=r.hash_atual;prevId=r.id;
   }
-  return {integra:true,total:rows.length,
-   hashUltimo:prevHash,semInformacoesPessoais:true};
+  return {integra:true,total,hashUltimo:prevHash,
+   semInformacoesPessoais:true,verificacaoCompleta:true};
  }
  listar({limite=50}={}){
   if(!Number.isSafeInteger(limite)||limite<1||limite>100)
