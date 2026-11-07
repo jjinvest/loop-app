@@ -360,6 +360,32 @@ const {once}=require('node:events');
    );
    assert.equal(confAdmin.status(),200);
    assert.equal((await confAdmin.json()).classificacao,'VERDE','Admin deveria persistir a cor');
+   // Configuração editorial na tela de administração REAL, ligada à loja.
+   await admin.locator('#configLojaPainelAdmin summary').click();
+   await admin.locator('#configResultadoAdmin').filter({hasText:/carregada/}).waitFor();
+   await admin.locator('#configSuporteAdmin').fill(
+    'Atendimento fictício para ensaio de integração do LOOP '+item.nick);
+   const removerBanners=admin.locator('#configBannersAdmin .config-banner-item')
+    .getByRole('button',{name:'Remover'});
+   while(await removerBanners.count()>0)await removerBanners.first().click();
+   await admin.locator('#configAdicionarBannerAdmin').click();
+   await admin.locator('#configBannersAdmin [name="titulo"]').fill(
+    'Banner conectado '+item.nick);
+   await admin.locator('#configBannersAdmin [name="descricao"]').fill(
+    'Comunicado de laboratório sem venda real');
+   await admin.locator('#configSalvarAdmin').click();
+   await admin.locator('#configResultadoAdmin')
+    .filter({hasText:/Vitrine e atendimento salvos/}).waitFor();
+   const configAdmin=await admin.evaluate(async()=>{
+    const r=await fetch('/staging/escritorio-unificado/loja/config',{
+     credentials:'same-origin'
+    });
+    return {status:r.status,body:await r.json()};
+   });
+   assert.equal(configAdmin.status,200);
+   assert.equal(configAdmin.body.config.banners.length,1);
+   assert.equal(configAdmin.body.config.banners[0].titulo,'Banner conectado '+item.nick);
+   assert.ok(configAdmin.body.revisao>=1);
    await admin.screenshot({path:path.join(__dirname,'../artifacts',
     'escritorio-admin-candidato-'+item.nome+'.png'),fullPage:true});
    await page.locator('#atualizarPedidos').click();
@@ -429,6 +455,11 @@ const {once}=require('node:events');
     throw Error('VITRINE_NAO_INICIALIZOU: '+estado+'; ERROS='+JSON.stringify(failures)+'; '+err.message);
    }
    assert.ok(await loja.locator('#catalogoLojaLoop article.produto-loja-loop').count()>=2);
+   await loja.locator('#akitemmBannerConteudo')
+    .filter({hasText:'Banner conectado '+item.nick}).waitFor();
+   await loja.locator('#akitemmTextoSuporte')
+    .filter({hasText:'Atendimento fictício para ensaio de integração do LOOP '+item.nick})
+    .waitFor();
    await loja.waitForFunction(nick=>{
     const campo=document.getElementById('enderecoDivulgarLojaLoop');
     const botao=document.getElementById('copiarDivulgarLojaLoop');

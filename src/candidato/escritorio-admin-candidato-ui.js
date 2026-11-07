@@ -120,6 +120,132 @@ function renderizarProdutos(r){
  $('produtosProximo').disabled=!r.haMais;
 }
 async function atualizarProdutos(){renderizarProdutos(await api('/produtos?pagina='+paginaProdutos));}
+let configLojaAtual=null;
+function atualizarNumeracaoBanners(){
+ for(const [indice,bloco] of [...$('configBannersAdmin').children].entries()){
+  const legenda=bloco.querySelector('legend');
+  if(legenda)legenda.textContent='Banner '+(indice+1);
+ }
+}
+function criarBannerConfig(dados={}){
+ const painel=$('configBannersAdmin');
+ if(painel.children.length>=8){
+  $('configResultadoAdmin').textContent='Limite de 8 banners por configuração.';
+  return;
+ }
+ const bloco=document.createElement('fieldset');
+ bloco.className='config-banner-item';
+ const legenda=elem('legend','Banner');bloco.append(legenda);
+ const campos=[
+  ['titulo','Título',90,true,false],
+  ['descricao','Descrição',250,false,true],
+  ['produtoId','ID de produto publicado (opcional)',80,false,false],
+  ['imagemCaminho','Caminho local da imagem (opcional)',250,false,false]
+ ];
+ for(const [nome,rotulo,maximo,obrigatorio,multilinha] of campos){
+  const label=document.createElement('label');
+  label.textContent=rotulo;
+  const input=document.createElement(multilinha?'textarea':'input');
+  input.name=nome;input.maxLength=maximo;
+  if(obrigatorio){input.required=true;input.minLength=3;}
+  if(multilinha)input.rows=2;
+  input.value=dados[nome]||'';
+  if(nome==='produtoId')input.pattern='[a-z0-9-]{3,80}';
+  if(nome==='imagemCaminho')
+   input.placeholder='/imagens/catalogo/arquivo.webp';
+  label.append(input);bloco.append(label);
+ }
+ const botoes=document.createElement('div');botoes.className='linha';
+ const subir=elem('button','Subir');subir.type='button';
+ subir.addEventListener('click',()=>{
+  if(bloco.previousElementSibling)painel.insertBefore(bloco,bloco.previousElementSibling);
+  atualizarNumeracaoBanners();
+ });
+ const descer=elem('button','Descer');descer.type='button';
+ descer.addEventListener('click',()=>{
+  if(bloco.nextElementSibling)painel.insertBefore(bloco.nextElementSibling,bloco);
+  atualizarNumeracaoBanners();
+ });
+ const remover=elem('button','Remover');remover.type='button';
+ remover.addEventListener('click',()=>{
+  bloco.remove();atualizarNumeracaoBanners();
+ });
+ botoes.append(subir,descer,remover);bloco.append(botoes);
+ painel.append(bloco);atualizarNumeracaoBanners();
+}
+function preencherConfigLojaAdmin(dados){
+ configLojaAtual=dados;
+ const config=dados.config;
+ const textos={
+  configSuporteAdmin:'suporte',configContatoAdmin:'contato',
+  configSobreAdmin:'sobre',configPrivacidadeAdmin:'privacidade',
+  configTrocasAdmin:'trocas'
+ };
+ for(const [id,chave] of Object.entries(textos))
+  $(id).value=config.informacoes[chave]||'';
+ const redes={
+  configInstagramAdmin:'instagram',configYoutubeAdmin:'youtube',
+  configFacebookAdmin:'facebook',configWhatsappAdmin:'whatsapp'
+ };
+ for(const [id,chave] of Object.entries(redes))
+  $(id).value=config.redes[chave]||'';
+ $('configBannersAdmin').replaceChildren();
+ for(const banner of config.banners)criarBannerConfig(banner);
+}
+async function carregarConfigLojaAdmin(){
+ const dados=await api('/loja/config');
+ preencherConfigLojaAdmin(dados);
+ $('configResultadoAdmin').textContent='Configuração do SQLite carregada · revisão '+
+  dados.revisao+'. Editar aqui altera a loja após recarregar a vitrine.';
+}
+function colherConfigLojaAdmin(){
+ if(!configLojaAtual)throw Error('CONFIG_NAO_CARREGADA');
+ const textos={
+  configSuporteAdmin:'suporte',configContatoAdmin:'contato',
+  configSobreAdmin:'sobre',configPrivacidadeAdmin:'privacidade',
+  configTrocasAdmin:'trocas'
+ };
+ const redes={
+  configInstagramAdmin:'instagram',configYoutubeAdmin:'youtube',
+  configFacebookAdmin:'facebook',configWhatsappAdmin:'whatsapp'
+ };
+ const config=structuredClone(configLojaAtual.config);
+ for(const [id,chave] of Object.entries(textos))config.informacoes[chave]=$(id).value;
+ for(const [id,chave] of Object.entries(redes))config.redes[chave]=$(id).value;
+ config.banners=[...$('configBannersAdmin').children].map(bloco=>{
+  const get=nome=>bloco.querySelector('[name="'+nome+'"]').value.trim();
+  return {titulo:get('titulo'),descricao:get('descricao'),
+   produtoId:get('produtoId'),imagemCaminho:get('imagemCaminho')};
+ });
+ return {revisaoEsperada:configLojaAtual.revisao,config};
+}
+$('configLojaPainelAdmin').addEventListener('toggle',()=>{
+ if($('configLojaPainelAdmin').open&&!configLojaAtual)
+  carregarConfigLojaAdmin().catch(e=>
+   $('configResultadoAdmin').textContent='Configuração indisponível: '+e.message);
+});
+$('configAtualizarAdmin').addEventListener('click',()=>
+ carregarConfigLojaAdmin().catch(e=>
+  $('configResultadoAdmin').textContent='Configuração indisponível: '+e.message));
+$('configAdicionarBannerAdmin').addEventListener('click',()=>criarBannerConfig());
+$('formConfigLojaAdmin').addEventListener('submit',async e=>{
+ e.preventDefault();
+ const btn=$('configSalvarAdmin');btn.disabled=true;
+ try{
+  const body=colherConfigLojaAdmin();
+  const atualizado=await api('/loja/config',{method:'PUT',body});
+  preencherConfigLojaAdmin(atualizado);
+  $('configResultadoAdmin').textContent=
+   'Vitrine e atendimento salvos na mesma base SQLite · revisão '+
+   atualizado.revisao+'. Abra a AKITEMM ou atualize a loja para conferir. '+
+   'Nenhuma compra ou benefício financeiro criado.';
+ }catch(e){
+  $('configResultadoAdmin').textContent=e.message==='CONFIG_CONFLITO_REVISAO'?
+   'Outro operador salvou uma revisão mais recente. Atualize a configuração antes de tentar novamente.':
+   'Configuração não salva: '+e.message;
+ }finally{btn.disabled=false;}
+});
+
 let novidadeEmEdicao=null;
 function limparEdicaoNovidade(){
  novidadeEmEdicao=null;

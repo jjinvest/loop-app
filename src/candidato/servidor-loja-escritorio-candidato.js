@@ -36,6 +36,7 @@ const {DepartamentosAdministradorCandidato}=require('../domain/escritorio-admin-
 const {CatalogoAdminCandidatoSQLite}=require('../domain/catalogo-admin-candidato-sqlite');
 const {NovidadesLojaCandidatoSQLite,MAX_IMAGEM}=require('../domain/novidades-loja-candidato-sqlite');
 const {EnderecoEntregaEnsaioSQLite}=require('../domain/endereco-entrega-ensaio-sqlite');
+const {AkitemmConfigLojaDemoSQLite}=require('../domain/akitemm-config-loja-demo-sqlite');
 const {createVitrineCandidata}=require('./vitrine-aprovada-candidato');
 const {ProjecaoFilasCandidatoSandbox}=require('../domain/projecao-filas-candidato-sandbox');
 const {PreAdesaoSandboxCandidatoSQLite}=require('../domain/pre-adesao-sandbox-candidato-sqlite');
@@ -93,6 +94,7 @@ function criarAppLojaEscritorioCandidato({banco,repositorioCatalogo,
  const missoes=new MissoesOperacionaisCandidatoSQLite({banco});
  const catalogo=new CatalogoAdminCandidatoSQLite({banco,repositorioBase:repositorioCatalogo});
  const novidades=new NovidadesLojaCandidatoSQLite({banco});
+ const configLoja=new AkitemmConfigLojaDemoSQLite({banco});
  const enderecoEntrega=new EnderecoEntregaEnsaioSQLite({banco,chaveCifra});
  const departamentosAdmin=new DepartamentosAdministradorCandidato({banco,missoes,catalogo});
  const entregas=new EntregasPrePedidosAsaasSandboxStaging({banco});
@@ -534,7 +536,25 @@ function criarAppLojaEscritorioCandidato({banco,repositorioCatalogo,
   try{return res.json(projecaoFilas.consultar({titularId:s.titularId}));}
   catch(e){return res.status(503).json({erro:e.codigo||'PROJECAO_INDISPONIVEL'});}
  });
- const sinalizacaoVitrine=createVitrineCandidata({app,banco,catalogo,contas,intencoes,prePedidos,autorizarOperador,novidades,enderecoEntrega});
+ const sinalizacaoVitrine=createVitrineCandidata({app,banco,catalogo,contas,intencoes,prePedidos,autorizarOperador,novidades,enderecoEntrega,configLoja});
+ // Mesmo SQLite/operador autorizado: alteração editorial, sem pagamento.
+ app.get('/staging/escritorio-unificado/loja/config',autorizarOperador,(_req,res)=>{
+  try{return res.json(configLoja.consultarComRevisao());}
+  catch{return res.status(503).json({erro:'CONFIG_LOJA_INDISPONIVEL'});}
+ });
+ app.put('/staging/escritorio-unificado/loja/config',autorizarOperador,(req,res)=>{
+  if(!req.is('application/json'))return res.status(415).json({erro:'JSON_OBRIGATORIO'});
+  const body=req.body;
+  if(!body||Array.isArray(body)||typeof body!=='object'||
+     Object.keys(body).sort().join(',')!=='config,revisaoEsperada')
+   return res.status(400).json({erro:'CONFIG_CAMPOS_INVALIDOS'});
+  try{return res.json(configLoja.salvarComRevisao(body));}
+  catch(e){
+   if(e.message==='CONFIG_CONFLITO_REVISAO')
+    return res.status(409).json({erro:e.message});
+   return res.status(400).json({erro:'CONFIG_LOJA_INVALIDA'});
+  }
+ });
  const preAdesao=new PreAdesaoSandboxCandidatoSQLite({
   banco,posicoes,sinalizacao:sinalizacaoVitrine,cpf,termosVersao
  });

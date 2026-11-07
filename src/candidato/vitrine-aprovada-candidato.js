@@ -9,12 +9,13 @@ const {simularQualificacaoCandidato}=require('../domain/simulador-qualificacao-c
 const {consultarPedido}=require('../domain/relatorio-homologacao-checkout-staging');
 const DIR=path.join(__dirname,'../laboratorio');
 function fail(codigo){const e=new Error(codigo);e.codigo=codigo;throw e;}
-function createVitrineCandidata({app,banco,catalogo,contas,intencoes,prePedidos,autorizarOperador,novidades,enderecoEntrega}={}){
+function createVitrineCandidata({app,banco,catalogo,contas,intencoes,prePedidos,autorizarOperador,novidades,enderecoEntrega,configLoja}={}){
  if(process.env.NODE_ENV==='production')fail('VITRINE_LAB_NAO_HOMOLOGADA');
  if(!app?.get||!app?.post||!app?.patch||catalogo?.db!==banco||
     typeof contas?.sessao!=='function'||typeof prePedidos?.preparar!=='function'||
     typeof intencoes?.criar!=='function'||typeof autorizarOperador!=='function'||
-    novidades?.banco!==banco||enderecoEntrega?.banco!==banco)
+    novidades?.banco!==banco||enderecoEntrega?.banco!==banco||
+    configLoja?.banco!==banco)
   fail('INTEGRACAO_VITRINE_INCOMPLETA');
  const sinalizacao=new SinalizacaoVitrineCandidatoSQLite({banco,catalogo});
  // Todas as novas rotas de pré-pedido usam o mesmo registro transacional.
@@ -209,10 +210,13 @@ function createVitrineCandidata({app,banco,catalogo,contas,intencoes,prePedidos,
     apenasEnsaio:true,indicadoQualificado:false,semComissaoReal:true});
   }catch{return res.status(503).json({erro:'LINK_INDICACAO_INDISPONIVEL'});}
  });
- app.get('/staging/vitrine/loja/config',autorizarCliente,
-  (_req,res)=>res.json({config:{banners:[],redes:{},informacoes:{
-   suporte:'Apenas prévia de laboratório; atendimento comercial indisponível.'
-  }}}));
+ app.get('/staging/vitrine/loja/config',autorizarCliente,(_req,res)=>{
+  try{
+   const c=configLoja.consultarComRevisao();
+   return res.json({config:c.config,revisao:c.revisao,
+    apenasEnsaio:true,semOfertasComerciais:true});
+  }catch{return res.status(503).json({erro:'CONFIG_LOJA_INDISPONIVEL'});}
+ });
  app.post('/staging/vitrine/loja/avaliacoes',
   autorizarCliente,(_req,res)=>res.status(403).json({erro:'AVALIACOES_NAO_HOMOLOGADAS'}));
  app.get('/staging/escritorio-unificado/sinalizacao/:id',

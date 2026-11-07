@@ -74,6 +74,35 @@
 </form>
 <p id="novidadeResultadoAdmin" role="status" aria-live="polite" class="subtexto"></p>
 </div>
+<details id="configLojaPainelAdmin" class="config-loja-admin">
+<summary><strong>Vitrine e atendimento · banners, redes e informações AKITEMM</strong></summary>
+<p class="subtexto">Configura o conteúdo que já existe na loja. Não cria descontos, promessas, entregas, pagamentos ou benefícios. Para editar, abra o painel e use os campos. Banners aceitam imagem somente por caminho local autorizado do catálogo; deixar vazio para banner de texto.</p>
+<button type="button" id="configAtualizarAdmin">Atualizar configuração</button>
+<form id="formConfigLojaAdmin" autocomplete="off">
+<h4>Atendimento e informações</h4>
+<label for="configSuporteAdmin">Mensagem de suporte na loja</label>
+<textarea id="configSuporteAdmin" rows="3" maxlength="2500" placeholder="Canal de atendimento e horários definidos pelo operador"></textarea>
+<div class="duas-colunas">
+<div><label for="configContatoAdmin">Fale Conosco</label><textarea id="configContatoAdmin" rows="3" maxlength="2500"></textarea></div>
+<div><label for="configSobreAdmin">Sobre a AKITEMM</label><textarea id="configSobreAdmin" rows="3" maxlength="2500"></textarea></div>
+<div><label for="configPrivacidadeAdmin">Política de privacidade · texto de ensaio</label><textarea id="configPrivacidadeAdmin" rows="3" maxlength="2500"></textarea></div>
+<div><label for="configTrocasAdmin">Trocas e devoluções · texto de ensaio</label><textarea id="configTrocasAdmin" rows="3" maxlength="2500"></textarea></div>
+</div>
+<h4>Redes e atendimento (somente URLs oficiais)</h4>
+<div class="duas-colunas">
+<label for="configInstagramAdmin">Instagram<input id="configInstagramAdmin" type="url" maxlength="250" placeholder="https://instagram.com/..."></label>
+<label for="configYoutubeAdmin">YouTube<input id="configYoutubeAdmin" type="url" maxlength="250" placeholder="https://youtube.com/..."></label>
+<label for="configFacebookAdmin">Facebook<input id="configFacebookAdmin" type="url" maxlength="250" placeholder="https://facebook.com/..."></label>
+<label for="configWhatsappAdmin">WhatsApp<input id="configWhatsappAdmin" type="url" maxlength="250" placeholder="https://wa.me/..."></label>
+</div>
+<h4>Banners da loja · até 8</h4>
+<p class="subtexto">A ordem dos banners abaixo define a ordem no carrossel aprovado. Não invente imagens inexistentes nem aumente fotos pequenas artificialmente.</p>
+<div id="configBannersAdmin" aria-live="polite"></div>
+<button id="configAdicionarBannerAdmin" type="button">Adicionar banner</button>
+<button id="configSalvarAdmin" type="submit" class="primario">Salvar vitrine e atendimento</button>
+</form>
+<p id="configResultadoAdmin" role="status" aria-live="polite" class="subtexto"></p>
+</details>
 <h3 id="tituloSinalizacaoAdmin">Cores dos produtos na vitrine</h3>
 <p class="subtexto">Cinza = compra comum; verde = produto elegível; dourado = produto individual de R$ 250 ou mais; roxo = evento especial sujeito a regras próprias. Estas são cores da LOJA, não das posições/filas do LOOP. Nesta prévia, nenhuma cor cria direitos financeiros.</p>
 <form id="formSinalizacaoAdmin">
