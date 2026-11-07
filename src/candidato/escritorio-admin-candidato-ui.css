@@ -58,3 +58,19 @@
 #pesquisaResultadosAdmin .produto-admin-item>div{min-width:0;overflow-wrap:anywhere}
 #pesquisaResultadosAdmin button{flex-shrink:0}
 @media(max-width:650px){#pesquisaResultadosAdmin button{width:100%}}
+
+/* Operações departamentais no mesmo Escritório, sem painéis paralelos. */
+#painelDepartamentoOperacional[hidden]{display:none!important}
+.departamento-operacional{display:grid;gap:12px;margin-top:18px;padding:14px;
+ border:1px solid #74613b;border-radius:12px;background:#141716;min-width:0}
+.departamento-operacional h3{margin:0;color:#edcf92}
+#departamentoOperacionalEstado{overflow-wrap:anywhere;margin:0}
+#departamentoOperacionalAcoes{display:flex;flex-wrap:wrap;gap:8px}
+#departamentoOperacionalRegistros{display:grid;gap:8px;overflow-wrap:anywhere}
+#departamentoOperacionalRegistros .produto-admin-item>div{min-width:0;overflow-wrap:anywhere}
+#departamentoOperacionalRegistros .produto-admin-item>button{flex-shrink:0}
+@media(max-width:650px){
+ .departamento-operacional{padding:10px}
+ #departamentoOperacionalAcoes button{flex:1 1 100%;min-width:0}
+ #departamentoOperacionalRegistros .produto-admin-item>button{width:100%}
+}
