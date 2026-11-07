@@ -92,3 +92,31 @@ test('financeiro separa parcelas douradas, conserva investimento e reserva, livr
  assert.equal(extrato.caixas.find(x=>x.id===COFRES.ESQUERDA).saldoProjetadoCentavos,0);
  assert.equal(extrato.caixas.find(x=>x.id===COFRES.DIREITA).saldoProjetadoCentavos,0);
 });
+
+test('snapshot historico V1 conserva partilha antiga e novo ciclo dourado V2 vai integral ao cofre',()=>{
+ const inicio=new SimuladorLoop({relogio:()=> '2030-01-01T12:00:00.000Z'});
+ for(let i=1;i<=7;i++)inicio.registrarPosicaoSimulada({
+  nome:'Posicao teste dourada '+i,participanteId:'empresa-legado-'+i,
+  vendaId:'posicao-historica-'+i,adesaoPendente:true
+ });
+ inicio.prepararTabuleiro();
+ const v1=['LOOP_DOURADAS','LOOP_ESQUERDA','LOOP_DOURADAS',
+  'LOOP_DIREITA','LOOP_DOURADAS','LOOP_ESQUERDA'];
+ inicio.registrarVendaNoCicloSimulada({vendaId:'v1-legado-1'});
+ // Um snapshot existente na instalacao anterior nao possui marcador V2.
+ delete inicio.tabuleiro.vendasDoCiclo[0].regraDourada;
+ for(let i=2;i<=3;i++)inicio.registrarVendaNoCicloSimulada({vendaId:'v1-legado-'+i});
+ let volta=SimuladorLoop.restaurarSnapshot(inicio.exportarSnapshot());
+ for(let i=4;i<=6;i++)volta.registrarVendaNoCicloSimulada({vendaId:'v1-legado-'+i});
+ assert.deepEqual(volta.tabuleiro.vendasDoCiclo.map(v=>v.destinoCofre),v1);
+ volta.abrirCatraca();assert.equal(volta.tentarGiro().girou,true);
+ const novo=volta.registrarVendaNoCicloSimulada({vendaId:'v2-novo-1'}).venda;
+ assert.equal(novo.regraDourada,'DOURADA_INTEGRAL_V2');
+ assert.equal(novo.destinoCofre,'LOOP_DOURADAS');
+ for(let i=2;i<=6;i++)volta.registrarVendaNoCicloSimulada({vendaId:'v2-novo-'+i});
+ const restaurado=SimuladorLoop.restaurarSnapshot(volta.exportarSnapshot());
+ assert.deepEqual(restaurado.tabuleiro.ciclosConcluidos[0].vendas.map(v=>v.destinoCofre),v1);
+ assert.deepEqual(restaurado.tabuleiro.vendasDoCiclo.map(v=>v.destinoCofre),
+  Array(6).fill('LOOP_DOURADAS'));
+ assert.equal(restaurado.tabuleiro.vendasDoCiclo.every(v=>v.regraDourada==='DOURADA_INTEGRAL_V2'),true);
+});
