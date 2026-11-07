@@ -31,7 +31,8 @@ function montarAdminComercialAprovado(app,{
  controle,pedidosComerciais=null,autorizarAdministrador,
  validarCsrfAdmin,obterCsrfAdmin,origemHttps
 }={}){
- if(typeof autorizarAdministrador!=='function'||
+ if(!controle||typeof controle.listarOfertas!=='function'||
+    typeof autorizarAdministrador!=='function'||
     typeof validarCsrfAdmin!=='function'||
     typeof obterCsrfAdmin!=='function')
   throw Error('ADMIN_REAL_SEM_SESSAO_SEGURA');
@@ -56,7 +57,7 @@ function montarAdminComercialAprovado(app,{
    .sendFile(path.join(__dirname,'../candidato/escritorio-admin-candidato-ui.css'));});
  app.get('/identidade/assets/admin-comercial.js',autorizarAdministrador,
   (_req,res)=>{cabe(res);return res.type('js')
-   .sendFile(path.join(__dirname,'interface-admin-comercial-aprovada.js'));});
+   .sendFile(path.join(__dirname,'interface-admin-comercial-client.js'));});
  app.get('/api/admin/comercial/sessao',autorizarAdministrador,
   async(req,res)=>{
    res.set('Cache-Control','no-store');
