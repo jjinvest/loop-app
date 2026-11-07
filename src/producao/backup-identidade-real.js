@@ -9,15 +9,17 @@ const {DatabaseSync}=require('node:sqlite');
 const {pipeline}=require('node:stream/promises');
 const {createHash,createCipheriv,createDecipheriv,randomBytes,hkdfSync}=
  require('node:crypto');
+const {TABELAS_COMERCIAIS,validarRecuperacaoComercial}=
+ require('./validacao-recuperacao-comercial');
 const MAGIC=Buffer.from('LOOPREALBKP1','ascii');
 const HEADER=40,TAG=16;
 const TABELAS=Object.freeze([
  'loop_real_contas','loop_real_sessoes','loop_real_codigos',
  'loop_real_custodia','loop_real_limites'
 ]);
-// Todas as tabelas de administração e catálogo devem ir no MESMO snapshot
-// atômico do cadastro. Tabelas de pedidos/financeiro permanecem bloqueadas
-// até habilitar recuperação transacional ponta a ponta.
+// Administração, cotações, pedidos, custo congelado e outbox são protegidos
+// juntos quando coexistem no MESMO SQLite. Liquidação PSP/banco e tributos
+// externos NÃO são cobertos nem autorizados por este backup.
 const TABELAS_ADMIN=Object.freeze([
  'loja_real_produtos','loja_real_ofertas_distribuidores',
  'loja_real_custos_ofertas','loja_real_custos_historico',
@@ -64,12 +66,11 @@ function validarIdentidade(arquivo){
    "SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%'"
   ).all().map(x=>x.name);
   if(TABELAS.some(x=>!lista.includes(x)))falha('BACKUP_REAL_ESQUEMA_INCOMPLETO');
-  const todos=[...TABELAS,...TABELAS_ADMIN];
+  const todos=[...TABELAS,...TABELAS_ADMIN,...TABELAS_COMERCIAIS];
   if(lista.some(x=>!todos.includes(x)))
    falha('BACKUP_IDENTIDADE_NAO_COBRE_TABELAS_COMERCIAIS');
-  // Não aceitar snapshot parcial de painel: ou TODAS as tabelas do
-  // administrador existem, ou nenhuma. Pedidos reais/PSP/saques não
-  // podem entrar nesta rotina antes do backup financeiro integral.
+  // Não aceitar snapshot administrativo parcial. Pedidos e remessas
+  // são conferidos semanticamente, sem inferir conciliação bancária.
   const adminPresente=TABELAS_ADMIN.some(x=>lista.includes(x));
   if(adminPresente&&TABELAS_ADMIN.some(x=>!lista.includes(x)))
    falha('BACKUP_ADMIN_PARCIAL');
@@ -97,8 +98,9 @@ function validarIdentidade(arquivo){
    falha('BACKUP_REAL_CHAVES_DIVERGENTES');
   if(!b.prepare('SELECT id FROM loop_real_custodia WHERE id=1').get())
    falha('BACKUP_REAL_SEM_CUSTODIA');
+  const comercial=validarRecuperacaoComercial(b,lista);
   return {contas:b.prepare('SELECT COUNT(*) AS n FROM loop_real_contas').get().n,
-   administracaoIncluida:adminPresente,integridade:'ok'};
+   administracaoIncluida:adminPresente,integridade:'ok',...comercial};
  }finally{b.close();}
 }
 function derivar(k,salt){return Buffer.from(hkdfSync(
@@ -140,6 +142,9 @@ async function criarBackupIdentidadeReal({
   return {estado:'IDENTIDADE_REAL_BACKUP_LOCAL_CIFRADO',
    contas:prova.contas,integridadeSQLite:prova.integridade,
    administracaoIncluida:prova.administracaoIncluida,
+   recuperacaoComercialIncluida:prova.recuperacaoComercialIncluida,
+   pedidos:prova.pedidos,linhasCustos:prova.linhasCustos,
+   remessas:prova.remessas,cotacoes:prova.cotacoes,
    sha256Cifrado:await digest(p.destino),
    tamanhoBytes:fs.statSync(p.destino).size,permissao:'0600',
    copiaOffsiteConfirmada:false,restauracaoOffsiteConfirmada:false,
@@ -212,6 +217,9 @@ async function restaurarBackupIdentidadeReal({
   fs.chmodSync(p.destino,0o600);
   return {estado:'IDENTIDADE_RESTAURADA_EM_ARQUIVO_NOVO',
    contas:antes.contas,integridadeSQLite:'ok',...invalidacao,
+   recuperacaoComercialIncluida:antes.recuperacaoComercialIncluida,
+   pedidos:antes.pedidos,linhasCustos:antes.linhasCustos,
+   remessas:antes.remessas,cotacoes:antes.cotacoes,
    destinoExistenteNaoSobrescrito:true,financeiroRealAtivado:false,
    comprovacaoOffsite:false};
  }catch(e){
