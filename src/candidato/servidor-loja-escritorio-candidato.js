@@ -905,7 +905,7 @@ function criarAppLojaEscritorioCandidato({banco,repositorioCatalogo,
   const q=req.query;
   if(Object.keys(q).some(k=>!['tipo','termo','pagina'].includes(k))||
      Object.values(q).some(v=>typeof v!=='string')||
-     !['pedidos','produtos','missoes'].includes(q.tipo)||
+     !['clientes','pedidos','produtos','missoes'].includes(q.tipo)||
      typeof q.termo!=='string'||q.termo.trim().length<2||
      q.termo.length>80||/[\u0000-\u001f\u007f]/.test(q.termo)||
      (q.pagina!==undefined&&!/^(0|[1-9][0-9]{0,4})$/.test(q.pagina)))
@@ -923,6 +923,15 @@ function criarAppLojaEscritorioCandidato({banco,repositorioCatalogo,
     total=registros.length;
     resultados=registros.slice(pagina*limite,(pagina+1)*limite).map(p=>({
      id:p.id,titulo:p.nome,detalhe:p.id+' · '+p.tipo+' · '+p.estado}));
+   }else if(tipo==='clientes'){
+    const filtro=' WHERE instr(lower(nick),lower(?))>0 OR instr(lower(id),lower(?))>0';
+    total=banco.prepare('SELECT COUNT(*) AS n FROM akitemm_conta_unica_candidata'+filtro)
+     .get(termo,termo).n;
+    const rows=banco.prepare('SELECT id,nick FROM akitemm_conta_unica_candidata'+filtro+
+     ' ORDER BY criado_em DESC,id DESC LIMIT ? OFFSET ?')
+     .all(termo,termo,limite,pagina*limite);
+    resultados=rows.map(x=>({id:x.id,titulo:x.nick,
+     detalhe:'Conta do laboratório · '+x.id}));
    }else if(tipo==='missoes'){
     const filtro=" WHERE instr(lower(id),lower(?))>0 OR instr(lower(titulo),lower(?))>0"+
      " OR instr(lower(descricao),lower(?))>0 OR instr(lower(coalesce(prepedido_id,'')),lower(?))>0";
