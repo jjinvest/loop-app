@@ -9,6 +9,8 @@ on:
       - 'test/servidor-escritorio-preview-railway.test.js'
       - 'test/isolamento-operador-gateway-preview.test.js'
       - 'src/domain/equipe-candidata-sqlite.js'
+      - 'src/domain/endereco-entrega-ensaio-sqlite.js'
+      - 'test/endereco-entrega-loja-candidato.test.js'
       - 'src/domain/conta-unica-candidata-sqlite.js'
       - 'src/adapters/email-recuperacao-resend.js'
       - 'test/recuperacao-senha-candidata.test.js'

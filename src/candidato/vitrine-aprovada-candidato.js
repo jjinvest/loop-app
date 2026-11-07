@@ -8,17 +8,21 @@ const {SinalizacaoVitrineCandidatoSQLite}=require('../domain/sinalizacao-vitrine
 const {simularQualificacaoCandidato}=require('../domain/simulador-qualificacao-carrinho-candidato');
 const DIR=path.join(__dirname,'../laboratorio');
 function fail(codigo){const e=new Error(codigo);e.codigo=codigo;throw e;}
-function createVitrineCandidata({app,banco,catalogo,contas,intencoes,prePedidos,autorizarOperador,novidades}={}){
+function createVitrineCandidata({app,banco,catalogo,contas,intencoes,prePedidos,autorizarOperador,novidades,enderecoEntrega}={}){
  if(process.env.NODE_ENV==='production')fail('VITRINE_LAB_NAO_HOMOLOGADA');
  if(!app?.get||!app?.post||!app?.patch||catalogo?.db!==banco||
     typeof contas?.sessao!=='function'||typeof prePedidos?.preparar!=='function'||
     typeof intencoes?.criar!=='function'||typeof autorizarOperador!=='function'||
-    novidades?.banco!==banco)
+    novidades?.banco!==banco||enderecoEntrega?.banco!==banco)
   fail('INTEGRACAO_VITRINE_INCOMPLETA');
  const sinalizacao=new SinalizacaoVitrineCandidatoSQLite({banco,catalogo});
  // Todas as novas rotas de pré-pedido usam o mesmo registro transacional.
- prePedidos.definirFotografiaClassificacao(
-  args=>sinalizacao.gravarFotografiaPrepedido(args));
+ prePedidos.definirFotografiaClassificacao(args=>{
+  // Mesmo COMMIT do prepedido: classificação + endereço físico cifrado.
+  const fotografia=sinalizacao.gravarFotografiaPrepedido(args);
+  enderecoEntrega.vincularPrepedido(args);
+  return fotografia;
+ });
  const sessao=req=>contas.sessao(req);
  const csrf=req=>contas.autorizarMutacao(req);
  const autorizarCliente=(req,res,next)=>{
@@ -168,10 +172,18 @@ function createVitrineCandidata({app,banco,catalogo,contas,intencoes,prePedidos,
   });
  app.get('/staging/vitrine/loja/avaliacoes/pendentes',
   autorizarCliente,(_req,res)=>res.json({itens:[]}));
- app.get('/staging/vitrine/loja/entrega',
-  autorizarCliente,(_req,res)=>res.json({entrega:null,semEntregaReal:true}));
- app.post('/staging/vitrine/loja/entrega',
-  autorizarCliente,(_req,res)=>res.status(409).json({erro:'ENTREGA_NAO_HOMOLOGADA'}));
+ app.get('/staging/vitrine/loja/entrega',autorizarCliente,(req,res)=>{
+  try{return res.json(enderecoEntrega.consultar(req.titularVitrine));}
+  catch{return res.status(503).json({erro:'ENDERECO_CONSULTA_INDISPONIVEL'});}
+ });
+ app.post('/staging/vitrine/loja/entrega',autorizarCliente,(req,res)=>{
+  if(req.get('x-loop-lab')!=='participante'||!csrf(req))
+   return res.status(403).json({erro:'MUTACAO_NAO_AUTORIZADA'});
+  if(!req.is('application/json'))
+   return res.status(415).json({erro:'JSON_OBRIGATORIO'});
+  try{return res.json(enderecoEntrega.salvar(req.titularVitrine,req.body));}
+  catch(e){return res.status(400).json({erro:e.codigo||'ENDERECO_INVALIDO'});}
+ });
  app.get('/staging/vitrine/meus-links',autorizarCliente,
   (_req,res)=>res.json({ativo:false,linkLoja:null,apelido:null}));
  app.get('/staging/vitrine/loja/config',autorizarCliente,

@@ -35,6 +35,7 @@ const {MissoesOperacionaisCandidatoSQLite}=require('../domain/missoes-operaciona
 const {DepartamentosAdministradorCandidato}=require('../domain/escritorio-admin-departamentos-candidato');
 const {CatalogoAdminCandidatoSQLite}=require('../domain/catalogo-admin-candidato-sqlite');
 const {NovidadesLojaCandidatoSQLite,MAX_IMAGEM}=require('../domain/novidades-loja-candidato-sqlite');
+const {EnderecoEntregaEnsaioSQLite}=require('../domain/endereco-entrega-ensaio-sqlite');
 const {createVitrineCandidata}=require('./vitrine-aprovada-candidato');
 const {ProjecaoFilasCandidatoSandbox}=require('../domain/projecao-filas-candidato-sandbox');
 const {PreAdesaoSandboxCandidatoSQLite}=require('../domain/pre-adesao-sandbox-candidato-sqlite');
@@ -92,6 +93,7 @@ function criarAppLojaEscritorioCandidato({banco,repositorioCatalogo,
  const missoes=new MissoesOperacionaisCandidatoSQLite({banco});
  const catalogo=new CatalogoAdminCandidatoSQLite({banco,repositorioBase:repositorioCatalogo});
  const novidades=new NovidadesLojaCandidatoSQLite({banco});
+ const enderecoEntrega=new EnderecoEntregaEnsaioSQLite({banco,chaveCifra});
  const departamentosAdmin=new DepartamentosAdministradorCandidato({banco,missoes,catalogo});
  const entregas=new EntregasPrePedidosAsaasSandboxStaging({banco});
  // Operador usa o MESMO SQLite que o checkout e o Escritório: webhook
@@ -532,7 +534,7 @@ function criarAppLojaEscritorioCandidato({banco,repositorioCatalogo,
   try{return res.json(projecaoFilas.consultar({titularId:s.titularId}));}
   catch(e){return res.status(503).json({erro:e.codigo||'PROJECAO_INDISPONIVEL'});}
  });
- const sinalizacaoVitrine=createVitrineCandidata({app,banco,catalogo,contas,intencoes,prePedidos,autorizarOperador,novidades});
+ const sinalizacaoVitrine=createVitrineCandidata({app,banco,catalogo,contas,intencoes,prePedidos,autorizarOperador,novidades,enderecoEntrega});
  const preAdesao=new PreAdesaoSandboxCandidatoSQLite({
   banco,posicoes,sinalizacao:sinalizacaoVitrine,cpf,termosVersao
  });

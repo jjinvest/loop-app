@@ -746,7 +746,7 @@
   try{
    const r=await api('loja/entrega',dados);
    enderecoEntrega=r.entrega;
-   el('akitemmStatusEntrega').textContent='Endereço salvo para o próximo pedido (laboratório).';
+   el('akitemmStatusEntrega').textContent='Endereço de ensaio gravado na sua conta. Será vinculado ao pré-pedido físico, sem frete ou entrega real.';
   }catch(e){el('akitemmStatusEntrega').textContent=e.message;}
  });
  el('copiarDivulgarLojaLoop').addEventListener('click',async()=>{
