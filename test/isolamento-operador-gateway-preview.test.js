@@ -13,7 +13,7 @@ async function listen(s){
 async function fechar(s){
  if(s.listening)await new Promise((ok,fail)=>s.close(e=>e?fail(e):ok()));
 }
-async function montar(senhaAdmin=null){
+async function montar(senhaAdmin=D){
  const chamadas=[];
  const backend=http.createServer((req,res)=>{
   chamadas.push({path:req.url,authorization:req.headers.authorization});
@@ -21,9 +21,16 @@ async function montar(senhaAdmin=null){
   res.end('{"prova":"UPSTREAM_FICTICIO"}');
  });
  const portaInterna=await listen(backend);
- const gateway=criarGateway({portaInterna,senhaAcesso:A,
-  senhaAdmin,segredoOperador:SECRET});
- const porta=await listen(gateway);
+ let gateway,porta;
+ try{
+  gateway=criarGateway({portaInterna,senhaAcesso:A,
+   senhaAdmin,segredoOperador:SECRET});
+  porta=await listen(gateway);
+ }catch(e){
+  if(gateway?.listening)await fechar(gateway);
+  await fechar(backend);
+  throw e;
+ }
  return {chamadas,url:'http://127.0.0.1:'+porta,
   fechar:async()=>{await fechar(gateway);await fechar(backend);}};
 }
@@ -38,7 +45,8 @@ test('cookie de visitante nao abre APIs administrativas nem injeta bearer no bac
   const visitante=await fetch(x.url+'/loja',{
    headers:{Authorization:basica('acesso',A)}
   });
-  assert.equal(visitante.status,200);
+  assert.equal(visitante.status,302);
+  assert.equal(visitante.headers.get('location'),'/staging/loja');
   const ck=cookie(visitante,'akitemm_preview_access');
   assert.ok(ck);
   const n=x.chamadas.length;
@@ -69,7 +77,7 @@ test('operador da previa recebe cookie proprio e pode usar APIs autenticadas',as
  const x=await montar();
  try{
   const r=await fetch(x.url+'/escritorio',{
-   headers:{Authorization:basica('acesso',A)}
+   headers:{Authorization:basica('operador',D)}
   });
   assert.equal(r.status,200);
   const cookieAdmin=cookie(r,'akitemm_preview_admin_v2');
@@ -107,7 +115,8 @@ test('com credencial admin separada a senha de acesso de cliente nao autoriza op
   const cliente=await fetch(x.url+'/loja',{
    headers:{Authorization:basica('acesso',A)}
   });
-  assert.equal(cliente.status,200);
+  assert.equal(cliente.status,302);
+  assert.equal(cliente.headers.get('location'),'/staging/loja');
   assert.ok(cookie(cliente,'akitemm_preview_access'));
   assert.throws(()=>criarGateway({
    portaInterna:3000,senhaAcesso:A,senhaAdmin:A,segredoOperador:SECRET
@@ -120,7 +129,8 @@ test('variantes administrativas com barra final nao atravessam o gateway visitan
   const login=await fetch(x.url+'/loja',{
    headers:{Authorization:basica('acesso',A)}
   });
-  assert.equal(login.status,200);
+  assert.equal(login.status,302);
+  assert.equal(login.headers.get('location'),'/staging/loja');
   const ck=cookie(login,'akitemm_preview_access');
   assert.ok(ck);
   const chamadasAntes=x.chamadas.length;
