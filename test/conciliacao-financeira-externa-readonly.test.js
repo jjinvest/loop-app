@@ -168,3 +168,71 @@ test('esquema de outbox parcial nao pode se apresentar como conciliacao limpa',t
  x.banco.exec('CREATE TABLE loja_real_outbox_fornecedor(pedido_id TEXT,fornecedor_id TEXT,estado TEXT)');
  assert.throws(()=>analisar(x),{codigo:'CONCILIACAO_BANCO_INTERNO_INCOMPLETO'});
 });
+
+test('reversao bancaria parcial no mesmo lote nunca deixa falso zero',t=>{
+ const x=fixture(t);
+ x.extratoBanco.push({
+  liquidacaoId:'LOTE123',transacaoBancoId:'REV1',
+  transacaoOrigemId:'TRANS1',moeda:'BRL',
+  estado:'DEBITO_REVERSAO',debitoCentavos:1000
+ });
+ const r=analisar(x);
+ assert.equal(r.reversoesBancariasDeclaradas,1);
+ assert.equal(r.valorDebitosReversaoDeclaradosCentavos,1000);
+ assert.equal(r.divergenciasPorCodigo.REVERSAO_BANCARIA_EXIGE_REVISAO,1);
+ assert.equal(r.divergenciasPorCodigo.LOTE_PSP_CREDITO_BANCARIO_DIVERGENTE,1);
+ assert.equal(r.conciliacaoRealCertificada,false);
+});
+test('reversao nao some mesmo se liquido bancario fechar matematicamente',t=>{
+ const x=fixture(t);
+ x.extratoBanco[0].creditoCentavos+=1000;
+ x.extratoBanco.unshift({
+  liquidacaoId:'LOTE123',transacaoBancoId:'REV1',
+  transacaoOrigemId:'TRANS1',moeda:'BRL',
+  estado:'DEBITO_REVERSAO',debitoCentavos:1000
+ });
+ const r=analisar(x);
+ assert.equal(r.divergenciasPorCodigo.REVERSAO_BANCARIA_EXIGE_REVISAO,1);
+ assert.equal(r.divergenciasPorCodigo.LOTE_PSP_CREDITO_BANCARIO_DIVERGENTE,undefined);
+});
+test('reversao bancaria sem origem ou de lote trocado nao e aceita como compensacao',t=>{
+ const x=fixture(t);
+ x.extratoBanco.push({
+  liquidacaoId:'LOTE123',transacaoBancoId:'REV1',
+  transacaoOrigemId:'INEXISTENTE',moeda:'BRL',
+  estado:'DEBITO_REVERSAO',debitoCentavos:1000
+ },{
+  liquidacaoId:'OUTROLOTE',transacaoBancoId:'REV2',
+  transacaoOrigemId:'TRANS1',moeda:'BRL',
+  estado:'DEBITO_REVERSAO',debitoCentavos:100
+ });
+ const r=analisar(x);
+ assert.equal(r.divergenciasPorCodigo.REVERSAO_BANCARIA_SEM_CREDITO_ORIGINAL,1);
+ assert.equal(r.divergenciasPorCodigo.REVERSAO_BANCARIA_LOTE_DIVERGENTE,1);
+ assert.equal(r.valorDebitosReversaoDeclaradosCentavos,0);
+});
+test('reversoes maiores que credito e transacoes bancarias repetidas nao sao conciliacao',t=>{
+ const x=fixture(t);
+ const reverso={liquidacaoId:'LOTE123',transacaoBancoId:'REV1',
+  transacaoOrigemId:'TRANS1',moeda:'BRL',
+  estado:'DEBITO_REVERSAO',debitoCentavos:75000};
+ const r=analisar({...x,extratoBanco:[...x.extratoBanco,reverso]});
+ assert.equal(r.divergenciasPorCodigo.REVERSAO_BANCARIA_SUPERA_CREDITO,1);
+ assert.throws(()=>analisar({...x,extratoBanco:[...x.extratoBanco,
+  {...reverso,transacaoBancoId:'TRANS1'}]}),
+  {codigo:'CONCILIACAO_BANCO_DUPLICADO'});
+});
+test('reversao invalida, valor nulo ou origem identica sao rejeitados',t=>{
+ const x=fixture(t);
+ const base={liquidacaoId:'LOTE123',transacaoBancoId:'REV1',
+  transacaoOrigemId:'TRANS1',moeda:'BRL',
+  estado:'DEBITO_REVERSAO',debitoCentavos:1000};
+ for(const rev of [{...base,debitoCentavos:0},
+  {...base,transacaoOrigemId:'REV1'},
+  {...base,creditoCentavos:50},
+  {...base,transacaoOrigemId:''},
+  {...base,estado:'DEBITO_AJUSTE'}]){
+  assert.throws(()=>analisar({...x,extratoBanco:[...x.extratoBanco,rev]}),
+   {codigo:'CONCILIACAO_EXTRATO_BANCO_INVALIDO'});
+ }
+});

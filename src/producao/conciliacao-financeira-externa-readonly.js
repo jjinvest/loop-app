@@ -22,9 +22,19 @@ function validarPsp(x){
 }
 function validarBanco(x){
  if(!x||!validarId(x.liquidacaoId)||!validarId(x.transacaoBancoId)||
-    x.moeda!=='BRL'||x.estado!=='CREDITO_CONFIRMADO'||
-    !dinheiro(x.creditoCentavos)||x.creditoCentavos===0)
+    x.moeda!=='BRL')
   erro('CONCILIACAO_EXTRATO_BANCO_INVALIDO');
+ if(x.estado==='CREDITO_CONFIRMADO'){
+  if(!dinheiro(x.creditoCentavos)||x.creditoCentavos===0||
+     x.debitoCentavos!==undefined||x.transacaoOrigemId!==undefined)
+   erro('CONCILIACAO_EXTRATO_BANCO_INVALIDO');
+ }else if(x.estado==='DEBITO_REVERSAO'){
+  if(!dinheiro(x.debitoCentavos)||x.debitoCentavos===0||
+     !validarId(x.transacaoOrigemId)||
+     x.transacaoOrigemId===x.transacaoBancoId||
+     x.creditoCentavos!==undefined)
+   erro('CONCILIACAO_EXTRATO_BANCO_INVALIDO');
+ }else erro('CONCILIACAO_EXTRATO_BANCO_INVALIDO');
  return x;
 }
 function validarFornecedor(x){
@@ -74,16 +84,46 @@ function analisarConvergenciaFinanceiraDeclarada({
   if(psp.has(x.pagamentoId))erro('CONCILIACAO_PSP_DUPLICADO');
   psp.set(x.pagamentoId,x);
  }
- const bancoLotes=new Map(),transacoesBanco=new Set();
+ const bancoLotes=new Map(),transacoesBanco=new Set(),creditosBanco=new Map();
+ const reversoes=[];
  for(const x of extratoBanco){
   validarBanco(x);
   if(transacoesBanco.has(x.transacaoBancoId))
    erro('CONCILIACAO_BANCO_DUPLICADO');
   transacoesBanco.add(x.transacaoBancoId);
+  if(x.estado==='DEBITO_REVERSAO'){reversoes.push(x);continue;}
+  creditosBanco.set(x.transacaoBancoId,x);
   const atual=bancoLotes.get(x.liquidacaoId)||0;
   if(!Number.isSafeInteger(atual+x.creditoCentavos))
    erro('CONCILIACAO_VALOR_EXCEDE_PRECISAO');
   bancoLotes.set(x.liquidacaoId,atual+x.creditoCentavos);
+ }
+ // Reversões podem vir antes do crédito no extrato. Validar vínculo original.
+ let valorDebitosReversaoDeclaradosCentavos=0;
+ const reversoesPorOrigem=new Map();
+ for(const r of reversoes){
+  avisar('REVERSAO_BANCARIA_EXIGE_REVISAO');
+  const origem=creditosBanco.get(r.transacaoOrigemId);
+  if(!origem){
+   avisar('REVERSAO_BANCARIA_SEM_CREDITO_ORIGINAL');
+   continue;
+  }
+  if(origem.liquidacaoId!==r.liquidacaoId){
+   avisar('REVERSAO_BANCARIA_LOTE_DIVERGENTE');
+   continue;
+  }
+  const total=(reversoesPorOrigem.get(r.transacaoOrigemId)||0)+r.debitoCentavos;
+  if(!Number.isSafeInteger(total)||
+     !Number.isSafeInteger(valorDebitosReversaoDeclaradosCentavos+r.debitoCentavos))
+   erro('CONCILIACAO_VALOR_EXCEDE_PRECISAO');
+  reversoesPorOrigem.set(r.transacaoOrigemId,total);
+  if(total>origem.creditoCentavos)
+   avisar('REVERSAO_BANCARIA_SUPERA_CREDITO');
+  valorDebitosReversaoDeclaradosCentavos+=r.debitoCentavos;
+  const anterior=bancoLotes.get(r.liquidacaoId)||0;
+  if(!Number.isSafeInteger(anterior-r.debitoCentavos))
+   erro('CONCILIACAO_VALOR_EXCEDE_PRECISAO');
+  bancoLotes.set(r.liquidacaoId,anterior-r.debitoCentavos);
  }
  const fornecedor=new Map(),transacoesFornecedor=new Set();
  for(const x of comprovantesFornecedor){
@@ -236,6 +276,9 @@ function analisarConvergenciaFinanceiraDeclarada({
   custoFornecedorCongeladoCentavos:totalPrevistoFornecedor,
   custoMaisFreteFornecedorPagoDeclaradoCentavos:totalPagoFornecedorDeclarado,
   lotesPspDeclarados:esperadoBanco.size,
+  reversoesBancariasDeclaradas:reversoes.length,
+  reversoesBancariasVinculadas:reversoesPorOrigem.size,
+  valorDebitosReversaoDeclaradosCentavos,
   totalDivergencias:totalAvisos,
   divergenciasPorCodigo:Object.fromEntries(contador),
   amostraDivergencias:amostras,

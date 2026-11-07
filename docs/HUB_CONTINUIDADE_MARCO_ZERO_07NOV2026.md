@@ -104,3 +104,8 @@ O executor DR exige fingerprint SHA256/SPKI DER aprovado separadamente da chave 
 ## Continuidade 257 — auditoria de remessas sem falso zero (07/11/2026)
 
 A conciliacao read-only foi reforcada contra remessa para fornecedor sem custo, pedido ainda nao aprovado, pagamento e valor de pedido divergentes, falta de ID parceiro e comprovante externo pago enquanto a outbox ainda indica PENDENTE. Ver docs/CONVERGENCIA_DECLARADA_PSP_BANCO_FORNECEDOR_07NOV2026.md. Sem conectores bancarios reais, sem certificar receita/caixa; nenhum deploy ou operacao comercial. Conferir CI da revisao no HEAD. Proximos gates continuam recuperacao externa com custodia e credenciais efetivas somente leitura.
+
+
+## Continuidade 258 — estornos/reversoes de liquidacao (07/11/2026)
+
+Auditor de caixa de tres fontes now contempla DEBITO_REVERSAO da conta bancaria ligado a transacao de credito original e lote, emitindo alerta obrigatorio mesmo se o liquido conciliar. Rejeita duplicacao e falso zero apos estorno. Testes em test/conciliacao-financeira-externa-readonly.test.js. Faltam conectores read-only PSP/banco, contrato com fornecedores, credenciais/custodia externas e evidencias juridico-fiscais; sem liberacao comercial, PR #1 DRAFT. Conferir CI desta revisao.
