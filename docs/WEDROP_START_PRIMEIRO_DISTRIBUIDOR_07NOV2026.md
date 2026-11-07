@@ -1,0 +1,29 @@
+# AKITEMM / LOOP 3.0 — Primeiro distribuidor identificado: WeDrop Start (07/11/2026)
+
+## Confirmação do proprietário e fontes
+
+O proprietário enviou duas capturas do guia **WE DROP START**, mostrando “Guia do novo membro: do zero à sua primeira venda” e “Agora você é um membro We Drop!”, com apresentação de Marcelo. Essas telas identificam o parceiro indicado para o **primeiro encaixe técnico da AKITEMM**. Elas **não** provam API autorizada, contrato ou direito de revender na loja independente; não supor que “parceria oficial Shopee” mostrada no guia constitua endosso independente nem permissão para API da Shopee. Usuário já informou que há mais de um distribuidor e muitos produtos, portanto o contrato `RegistroFornecedores` e catálogo `N produtos ↔ N distribuidores` permanecem genéricos; **não** limitar a loja à WeDrop.
+
+Fontes institucionais consultadas em 07/11/2026:
+- Página de vendas: https://wedrop.com.br/ — anuncia estoque, catálogo, postagem, loja própria e pagamento do custo do produto **após a venda**.
+- FAQs da empresa: https://wedrop.com.br/institucional/ — informa integração com Shopify e possibilidade de lojas virtuais próprias; isto **não garante** suporte à plataforma customizada AKITEMM.
+- Oferta WeDrop Start: https://site.marcelowedrop.com/wedrop-start-shopee-trends/ — fala sobretudo de operação via **Shopee**.
+- Termos de lojista disponíveis publicamente, documento datado de maio de 2025 (confirmar se o Start usa termos iguais/atualizados): https://app.wedropbr.com.br/public/termos-e-condicoes-lojista-wedrop.pdf — seções 8 e 10: uso de **ERP Bling ou outro expressamente autorizado**, condições de ERP/cadastro fiscal, requisitos de pedido (SKU, quantidade, dados de destinatário, comprovante de pagamento/etiqueta conforme canal), responsabilidade por pós-venda; seção 11 prevê **pagamento do custo de aquisição da mercadoria ao parceiro após a venda** e eventual intermediação.
+- Os termos de 2025 diferenciam regras para membro que opera via CPF e via CNPJ; NÃO presumir que o CNPJ do proprietário esteja regular ou que contrato de membro autorize a AKITEMM automaticamente.
+- Não reutilizar logotipo, marca ou imagem da WeDrop na vitrine comercial sem autorização expressa; o documento restringe o uso de sinais da empresa.
+
+## Decisões técnicas já fundamentadas
+
+1. **Canal de integração ainda não comprovado para a conta WeDrop Start do usuário.** Possibilidades a verificar *na plataforma*: A) integração oficial por Bling/ERP aprovado, B) API/canal direto aprovado explicitamente pela WeDrop, C) procedimento comercial operado pelo painel. Não inventar rotas HTTP, tokens, endpoints, e não converter uma integração Shopee em API de fornecedor da AKITEMM.
+2. O cliente compra **na AKITEMM** pelo checkout próprio; sua venda deve gerar **um pedido interno e pagamento**, depois as remessas independentes por distribuidor. Uma venda na Shopee, se vier a existir, é canal distinto; **não** duplicar pedido/receita por sincronização indevida.
+3. Antes de enviar uma ordem à WeDrop, confirmar **dois fluxos financeiros distintos**: recebimento conciliado do cliente no PSP da AKITEMM e **custo de fornecimento/limite de crédito real** quitado/aprovado conforme regra contratual da WeDrop. Pix recebido de cliente não significa que o fornecedor já foi pago. O fluxo deve bloquear despacho sem as duas provas.
+4. Antes da ativação, confirmar estoque/SKU/preço de custo da própria WeDrop, preço final AKITEMM, frete para CEP, tributação, margem, exigência de ERP, etiqueta, dados obrigatórios, rastreio, devoluções e tratamento de dados de cliente (LGPD). A WeDrop tem responsabilidades próprias, mas o cliente final continua sob suporte da AKITEMM no pedido da sua loja.
+5. **Nenhum pagamento, pedido, inscrição, cadastro, produto ou conexão externa foi efetivado nesta etapa**. Este documento registra descoberta real do parceiro, não conclusão da integração.
+
+## Próxima evidência necessária (uma só solicitação ao proprietário)
+
+Ao abrir o **painel autenticado da WeDrop Start**, identificar **“Minhas Integrações”**, **“Bling/ERP”** ou a área de integração da loja (pode enviar captura ocultando e-mail, CPF, token e senha). Isso revelará se o plano permite **loja própria independente** e se a ponte é Bling ou API oficial. Se houver manual técnico, preferir URL do manual. Nunca pedir credenciais no chat nem expor dados pessoais reais em screenshots.
+
+## Não alterar os projetos aprovados
+
+Branch: `feature/unificar-escritorio-real-20261105`; PR #1 DRAFT. O projeto já tem catálogo multi-oferta, cotação com estoque/frete, pedidos de vários distribuidores, outbox idempotente e histórico de pedidos por titular. Acrescentar somente a integração autorizada real, sem recriar loja nem habilitar PSP real antes do go/no-go.
