@@ -129,7 +129,10 @@ test('catraca exige 6 eventos distintos, pausa respeitada e limite de 2 no tabul
   assert.equal(depoisGiro.luzesFinanceirasRegistradas,6);
   assert.equal(depoisGiro.girosFisicosConcluidos,1);
   assert.equal(depoisGiro.luzesNoCiclo,0);
-  assert.deepEqual(depoisGiro.cofres.map(x=>x.eventos),[3,2,1,0]);
+  // Posicao central sem CPF pode ser assumida pela empresa; nesse caso
+  // as SEIS parcelas pertencem ao cofre DOURADAS, sem alterar 3/2/1 cliente.
+  assert.deepEqual(depoisGiro.cofres.map(x=>x.eventos),
+   estado.tabuleiro.centro.dourada?[0,0,0,6]:[3,2,1,0]);
   assert.equal(depoisGiro.valorDisponivelParaSaqueCentavos,0);
   assert.equal(db.prepare(
    'SELECT COUNT(*) AS n FROM akitemm_luzes_financeiras_eventos_lab'
