@@ -1,0 +1,50 @@
+name: LOOP - Identidade real segregada (SEM deploy)
+on:
+  push:
+    branches:
+      - feature/unificar-escritorio-real-20261105
+    paths:
+      - 'src/producao/**'
+      - 'scripts/iniciar-identidade-real-loop.js'
+      - 'test/identidade-real-isolada.test.js'
+      - 'test/api-identidade-real-sem-pagamentos.test.js'
+      - '.github/workflows/identidade-real-segregada.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: identidade-real-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  identidade-segregada:
+    runs-on: ubuntu-latest
+    timeout-minutes: 6
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+      - run: npm ci --ignore-scripts --no-fund
+      - name: Código de conta real deve ser válido
+        run: |
+          node --check src/producao/identidade-cliente-loop-sqlite.js
+          node --check src/producao/servidor-identidade-loop.js
+          node --check scripts/iniciar-identidade-real-loop.js
+      - name: Conta, consentimento, senhas e recuperação
+        run: node --test test/identidade-real-isolada.test.js
+      - name: API real não abre dinheiro nem aceita CSRF inválido
+        run: node --test test/api-identidade-real-sem-pagamentos.test.js
+      - name: Não ativar cadastro real com configuração de laboratório
+        env:
+          NODE_ENV: production
+          LOOP_REAL_CADASTRO_GO: NAO
+        run: |
+          node <<'NODE'
+          const assert=require('node:assert/strict');
+          const {configurar}=require('./scripts/iniciar-identidade-real-loop');
+          assert.throws(()=>configurar(process.env),/CADASTRO_REAL_BLOQUEADO_ATE_GO_FORMAL/);
+          console.log('CADASTRO_REAL_FALHA_FECHADA=OK');
+          NODE
