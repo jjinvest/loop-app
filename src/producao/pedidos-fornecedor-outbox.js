@@ -110,7 +110,7 @@ class PedidosFornecedorOutbox {
  async _validarPedidoAprovado({pedidoId,fornecedorId,payload}={}){
   const [prova,pedido]=await Promise.all([
    this.consultarPagamentoConciliado({pedidoId}),
-   this.consultarPedidoAprovado({pedidoId})
+   this.consultarPedidoAprovado({pedidoId,fornecedorId})
   ]);
   if(!prova||prova.pedidoId!==pedidoId||
      prova.status!=='CONFIRMADO'||prova.moeda!=='BRL'||
