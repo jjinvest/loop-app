@@ -7,13 +7,16 @@ const os=require('node:os');
 const path=require('node:path');
 const {Readable,Transform}=require('node:stream');
 const {pipeline}=require('node:stream/promises');
-const {createHash,timingSafeEqual}=require('node:crypto');
+const {createHash,timingSafeEqual,createPublicKey,verify}=require('node:crypto');
 const {assinarObjetoS3Real}=require('./backup-identidade-offsite');
 const {restaurarBackupIdentidadeReal}=
  require('./backup-identidade-real');
 const {provarChavesRecuperacao}=require('./prova-chaves-recuperacao');
 const CONTAGENS=['contas','pedidos','linhasCustos','remessas','cotacoes'];
 const FLAGS=['administracaoIncluida','recuperacaoComercialIncluida'];
+const CAMPOS_MANIFESTO=['chaveObjeto','sha256Cifrado','bytes',
+ 'contas','pedidos','linhasCustos','remessas','cotacoes',
+ 'administracaoIncluida','recuperacaoComercialIncluida'];
 const OBJETO=/^clientes\/\d{4}-\d{2}-\d{2}\/[0-9a-f-]{36}\.looprealbak$/;
 function falha(c){const e=new Error(c);e.codigo=c;throw e;}
 function validarManifesto(manifesto){
@@ -23,18 +26,49 @@ function validarManifesto(manifesto){
     !/^[0-9a-f]{64}$/.test(manifesto.sha256Cifrado||'')||
     !Number.isSafeInteger(manifesto.bytes)||manifesto.bytes<57||
     CONTAGENS.some(k=>!Number.isSafeInteger(manifesto[k])||manifesto[k]<0)||
-    FLAGS.some(k=>typeof manifesto[k]!=='boolean'))
+    FLAGS.some(k=>typeof manifesto[k]!=='boolean')||
+    Object.keys(manifesto).sort().join('|')!==
+     [...CAMPOS_MANIFESTO].sort().join('|'))
   falha('RECUPERACAO_INDEPENDENTE_MANIFESTO_INVALIDO');
  return manifesto;
+}
+function canonizarManifesto(manifesto){
+ const m=validarManifesto(manifesto);
+ return Buffer.from('LOOP_DR_MANIFESTO_ED25519_V1\n'+
+  JSON.stringify(CAMPOS_MANIFESTO.map(k=>m[k])),'utf8');
+}
+// A chave PRIVADA deve estar somente com custodiante separado da origem.
+function validarAtestacaoManifesto(atestacao,chavePublicaManifesto){
+ const codigo='RECUPERACAO_INDEPENDENTE_MANIFESTO_NAO_AUTENTICADO';
+ if(!atestacao||typeof atestacao!=='object'||
+    Array.isArray(atestacao)||atestacao.versao!==1||
+    atestacao.algoritmo!=='Ed25519'||
+    typeof atestacao.assinaturaEd25519Hex!=='string'||
+    !/^[a-f0-9]{128}$/.test(atestacao.assinaturaEd25519Hex)||
+    typeof chavePublicaManifesto!=='string'||
+    !chavePublicaManifesto.startsWith('-----BEGIN PUBLIC KEY-----')||
+    Object.keys(atestacao).sort().join('|')!==
+    ['versao','algoritmo','manifesto','assinaturaEd25519Hex'].sort().join('|'))
+  falha(codigo);
+ let key;
+ try{key=createPublicKey(chavePublicaManifesto);}
+ catch{falha(codigo);}
+ if(key.asymmetricKeyType!=='ed25519')falha(codigo);
+ try{
+  if(!verify(null,canonizarManifesto(atestacao.manifesto),key,
+    Buffer.from(atestacao.assinaturaEd25519Hex,'hex')))falha(codigo);
+ }catch{falha(codigo);}
+ return atestacao.manifesto;
 }
 function mesmoHash(a,b){
  return timingSafeEqual(Buffer.from(a,'hex'),Buffer.from(b,'hex'));
 }
 async function provarRecuperacaoIndependente({
- config,manifesto,chaveBackup,chavesRecuperacao,
+ config,atestacaoManifesto,chavePublicaManifesto,chaveBackup,chavesRecuperacao,
  buscar=fetch,agora=()=>new Date(),maxBytes=536870912
 }={}){
- const m=validarManifesto(manifesto);
+ // O manifesto sem assinatura autenticada nao autoriza nem GET.
+ const m=validarAtestacaoManifesto(atestacaoManifesto,chavePublicaManifesto);
  if(!Buffer.isBuffer(chaveBackup)||chaveBackup.length!==32||
     !chavesRecuperacao||typeof chavesRecuperacao!=='object'||
     typeof buscar!=='function'||typeof agora!=='function'||
@@ -105,6 +139,8 @@ async function provarRecuperacaoIndependente({
   return {
    estado:'OBJETO_CIFRADO_BAIXADO_RESTAURADO_E_LIDO',
    somenteGet:true,hashExternoConferido:true,
+   manifestoAssinadoVerificado:true,
+   origemIndependenteDoCustodianteComprovada:false,
    chavesDeLeituraVerificadas:true,sessoesRestauradasRevogadas:true,
    // Conta apenas evidência do teste executado. Não autoatestar região,
    // independência de fornecedor, autoria do manifesto ou liquidação.
@@ -124,4 +160,4 @@ async function provarRecuperacaoIndependente({
   fs.rmSync(tmp,{recursive:true,force:true});
  }
 }
-module.exports={validarManifesto,provarRecuperacaoIndependente};
+module.exports={validarManifesto,canonizarManifesto,validarAtestacaoManifesto,provarRecuperacaoIndependente};

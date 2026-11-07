@@ -19,17 +19,26 @@ function carregarConfiguracao(ambiente){
   return Buffer.from(value,'hex');
  };
  const nome=ambiente.LOOP_DR_MANIFESTO_ARQUIVO;
+ const nomeChavePublica=ambiente.LOOP_DR_CHAVE_PUBLICA_MANIFESTO_ARQUIVO;
+ if(typeof nomeChavePublica!=='string'||!path.isAbsolute(nomeChavePublica)||
+    /^(\/dados-reais\/|\/dados-preview\/)/.test(nomeChavePublica)||
+    !fs.existsSync(nomeChavePublica)||
+    !fs.lstatSync(nomeChavePublica).isFile()||
+    fs.lstatSync(nomeChavePublica).isSymbolicLink()||
+    fs.statSync(nomeChavePublica).size>8192)
+  throw Error('RECUPERACAO_DR_CHAVE_PUBLICA_NAO_CONFIGURADA');
  if(typeof nome!=='string'||!path.isAbsolute(nome)||
     /^(\/dados-reais\/|\/dados-preview\/)/.test(nome)||
     !fs.existsSync(nome)||!fs.lstatSync(nome).isFile()||
     fs.lstatSync(nome).isSymbolicLink()||
     fs.statSync(nome).size>8192)
   throw Error('RECUPERACAO_DR_MANIFESTO_FORA_DA_ORIGEM_OBRIGATORIO');
- let manifesto;
- try{manifesto=JSON.parse(fs.readFileSync(nome,'utf8'));}
+ let atestacaoManifesto;
+ try{atestacaoManifesto=JSON.parse(fs.readFileSync(nome,'utf8'));}
  catch{throw Error('RECUPERACAO_DR_MANIFESTO_INVALIDO');}
  return {
-  manifesto,
+  atestacaoManifesto,
+  chavePublicaManifesto:fs.readFileSync(nomeChavePublica,'utf8'),
   config:{
    endpoint:ambiente.LOOP_DR_S3_ENDPOINT,
    bucket:ambiente.LOOP_DR_S3_BUCKET,

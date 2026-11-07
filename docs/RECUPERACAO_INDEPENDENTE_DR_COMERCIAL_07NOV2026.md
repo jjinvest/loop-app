@@ -29,3 +29,12 @@ Testes do recuperador: GET-only; não tocar no SQLite vivo; manifesto inválido;
 **Pendências reais:** executar em infraestrutura independente com custódia e atestação externas; reconciliação bancária/PSP/taxas/fornecedores/tributos/saques com evidência autorizada e parecer jurídico-contábil. O backup do SQLite comercial NÃO contém prova de liquidação bancária; backupFinanceiroConfirmado=false. Sem liberação de checkout, remuneração, saques ou merge da PR #1 DRAFT.
 
 Princípios: preservar UI aprovada, GitHub como fonte oficial, atualizar o HUB e o índice, e medir avanço por gate efetivamente fechado, não pela quantidade de testes.
+
+
+## Continuidade 255 — manifesto DR assinado com Ed25519 (07/11/2026)
+
+A hash SHA e o manifesto out-of-band nao provavam autoria. O recuperador DR agora exige, ANTES de qualquer GET, envelope JSON com versao=1, algoritmo=Ed25519, manifesto e assinaturaEd25519Hex (128 caracteres hexadecimais minusculos). O formato canonico de assinatura e o prefixo LOOP_DR_MANIFESTO_ED25519_V1 seguido de quebra de linha e JSON do array na ordem da constante CAMPOS_MANIFESTO em src/producao/recuperacao-independente-offsite.js. Todos os campos do manifesto sao assinados, independentemente da ordem das chaves no JSON. Ausencia, alteracao, chave errada ou algoritmo incorreto bloqueiam sem acessar armazenamento.
+
+Assinar o manifesto com crypto.sign(null, canonizarManifesto(manifesto), chavePrivadaEd25519) somente em equipamento do custodiante EXTERNO. A chave PRIVADA nunca fica no Railway original, GitHub, CI, chat ou logs. O arquivo LOOP_DR_MANIFESTO_ARQUIVO agora deve conter o envelope ASSINADO. A chave publica confiavel Ed25519 (PEM SPKI) fica em LOOP_DR_CHAVE_PUBLICA_MANIFESTO_ARQUIVO, caminho absoluto separado e fora do volume de origem. Ambos os arquivos devem ter autoria e custodia verificadas fora do processo. Registrar por trilha externa identidade do custodiante, data, maquina/regiao, cofre e versao do objeto.
+
+Assinatura valida autentica a correspondencia com a chave publica apresentada; nao prova por si que a chave e de um custodiante independente, que a origem do objeto e legitima, que houve restauro entre regioes ou que PSP/banco estao conciliados. As flags de independência e financeiro permanecem FALSE. Nao houve acesso a segredos de producao, operacao comercial, nem restauração remota neste bloco. Validar CI do novo commit antes de considerar testes aprovados.

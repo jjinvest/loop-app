@@ -4,13 +4,14 @@ const assert=require('node:assert/strict');
 const fs=require('node:fs');
 const os=require('node:os');
 const path=require('node:path');
-const {randomBytes}=require('node:crypto');
+const {randomBytes,generateKeyPairSync,sign}=require('node:crypto');
 const {DatabaseSync}=require('node:sqlite');
 const {IdentidadeClienteLoopReal}=
  require('../src/producao/identidade-cliente-loop-sqlite');
 const {criarBackupIdentidadeReal}=
  require('../src/producao/backup-identidade-real');
-const {provarRecuperacaoIndependente,validarManifesto}=
+const {provarRecuperacaoIndependente,validarManifesto,canonizarManifesto,
+ validarAtestacaoManifesto}=
  require('../src/producao/recuperacao-independente-offsite');
 const config={
  endpoint:'https://storage.example.invalid',bucket:'loop-clientes-dr-testes',
@@ -60,10 +61,20 @@ async function fixture(t){
   recuperacaoComercialIncluida:gerado.recuperacaoComercialIncluida
  };
  const chavesRecuperacao={chaveEmail,chaveCifra,chaveCodigo};
- return {banco,objeto,manifesto,chaveBackup,chavesRecuperacao};
+ const pares=generateKeyPairSync('ed25519');
+ const chavePublicaManifesto=pares.publicKey.export({type:'spki',format:'pem'});
+ const chavePrivadaManifesto=pares.privateKey;
+ return {banco,objeto,manifesto,chaveBackup,chavesRecuperacao,
+  chavePrivadaManifesto,chavePublicaManifesto,
+  atestacaoManifesto:assinar(manifesto,chavePrivadaManifesto)};
+}
+function assinar(manifesto,chave){
+ return {versao:1,algoritmo:'Ed25519',manifesto,
+  assinaturaEd25519Hex:sign(null,canonizarManifesto(manifesto),chave).toString('hex')};
 }
 const opts=(f,extra={})=>({
- config,manifesto:f.manifesto,chaveBackup:f.chaveBackup,
+ config,atestacaoManifesto:f.atestacaoManifesto,
+ chavePublicaManifesto:f.chavePublicaManifesto,chaveBackup:f.chaveBackup,
  chavesRecuperacao:f.chavesRecuperacao,
  agora:()=>new Date('2026-11-07T08:00:00Z'),
  buscar:async(url,opt)=>{
@@ -95,6 +106,8 @@ test('GET independente reconstitui somente em pasta descartavel e valida custodi
  assert.equal(prova.estado,'OBJETO_CIFRADO_BAIXADO_RESTAURADO_E_LIDO');
  assert.equal(prova.contas,1);
  assert.equal(prova.chavesDeLeituraVerificadas,true);
+ assert.equal(prova.manifestoAssinadoVerificado,true);
+ assert.equal(prova.origemIndependenteDoCustodianteComprovada,false);
  assert.equal(prova.recuperacaoOutraRegiaoComprovada,false);
  assert.equal(prova.custodiaExternaIndependenteComprovada,false);
  assert.equal(prova.conciliacaoPspBancoComprovada,false);
@@ -107,7 +120,8 @@ test('GET independente reconstitui somente em pasta descartavel e valida custodi
 test('SHA conhecido do manifesto e conteudo adulterado sao rejeitados',async t=>{
  const f=await fixture(t);
  await assert.rejects(provarRecuperacaoIndependente(opts(f,{
-  manifesto:{...f.manifesto,sha256Cifrado:'f'.repeat(64)}
+  atestacaoManifesto:assinar({...f.manifesto,sha256Cifrado:'f'.repeat(64)},
+   f.chavePrivadaManifesto)
  })),{codigo:'RECUPERACAO_INDEPENDENTE_HASH_DIVERGENTE'});
  const mudado=Buffer.from(f.objeto);
  mudado[100]^=0x01;
@@ -118,11 +132,12 @@ test('SHA conhecido do manifesto e conteudo adulterado sao rejeitados',async t=>
 test('bytes, contas e chaves reais divergentes falham fechados',async t=>{
  const f=await fixture(t);
  await assert.rejects(provarRecuperacaoIndependente(opts(f,{
-  manifesto:{...f.manifesto,bytes:f.manifesto.bytes+1},
+  atestacaoManifesto:assinar({...f.manifesto,bytes:f.manifesto.bytes+1},
+   f.chavePrivadaManifesto),
   buscar:async()=>new Response(f.objeto,{status:200})
  })),{codigo:'RECUPERACAO_INDEPENDENTE_TAMANHO_DIVERGENTE'});
  await assert.rejects(provarRecuperacaoIndependente(opts(f,{
-  manifesto:{...f.manifesto,contas:2}
+  atestacaoManifesto:assinar({...f.manifesto,contas:2},f.chavePrivadaManifesto)
  })),{codigo:'RECUPERACAO_INDEPENDENTE_DADOS_DIVERGENTES'});
  await assert.rejects(provarRecuperacaoIndependente(opts(f,{
   chavesRecuperacao:{...f.chavesRecuperacao,chaveCifra:randomBytes(32)}
@@ -142,4 +157,23 @@ test('erro remoto e objeto grande nao recebem aprovacao',async t=>{
  await assert.rejects(provarRecuperacaoIndependente(opts(f,{
   buscar:async()=>{throw Error('SEGREDO_DE_TESTE_NAO_EXIBIR');}
  })),{codigo:'RECUPERACAO_INDEPENDENTE_GET_FALHOU'});
+});
+test('assinatura externa obrigatoria: ausente, adulterada e chave nao confiavel',async t=>{
+ const f=await fixture(t);
+ const sem=opts(f);
+ delete sem.atestacaoManifesto;
+ await assert.rejects(provarRecuperacaoIndependente(sem),
+  {codigo:'RECUPERACAO_INDEPENDENTE_MANIFESTO_NAO_AUTENTICADO'});
+ const atestacao={...f.atestacaoManifesto,
+  manifesto:{...f.manifesto,contas:f.manifesto.contas+1}};
+ await assert.rejects(provarRecuperacaoIndependente(opts(f,{atestacaoManifesto:atestacao})),
+  {codigo:'RECUPERACAO_INDEPENDENTE_MANIFESTO_NAO_AUTENTICADO'});
+ const outro=generateKeyPairSync('ed25519').publicKey.export({type:'spki',format:'pem'});
+ await assert.rejects(provarRecuperacaoIndependente(opts(f,{chavePublicaManifesto:outro})),
+  {codigo:'RECUPERACAO_INDEPENDENTE_MANIFESTO_NAO_AUTENTICADO'});
+ await assert.rejects(provarRecuperacaoIndependente(opts(f,{
+  atestacaoManifesto:{...f.atestacaoManifesto,algoritmo:'RSA'}
+ })),{codigo:'RECUPERACAO_INDEPENDENTE_MANIFESTO_NAO_AUTENTICADO'});
+ assert.deepEqual(validarAtestacaoManifesto(f.atestacaoManifesto,
+  f.chavePublicaManifesto),f.manifesto);
 });
