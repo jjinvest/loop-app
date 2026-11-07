@@ -222,10 +222,22 @@ function criarGateway({portaInterna,senhaAcesso,senhaAdmin,segredoOperador,
     'Set-Cookie':[...(novoCookie?[novoCookie]:[]),refCookie]});
    return res.end();
   }
+  // O cookie do cliente tem Path=/staging (menor escopo possivel).
+  // Redirecionar /loja para a rota canonica ANTES do backend: se a
+  // requisicao chegar como /loja, o navegador nao envia o cookie e o
+  // servidor confundiria um titular ja autenticado com visitante.
+  // /staging/loja continua exigindo sessao valida no proprio backend.
+  if(url.pathname==='/loja'){
+   if(req.method!=='GET'&&req.method!=='HEAD')
+    return negar(405,'Método não permitido');
+   res.writeHead(302,{...cabecalhosBase,
+    Location:'/staging/loja'+url.search,
+    ...(novoCookie?{'Set-Cookie':novoCookie}:{})});
+   return res.end();
+  }
   const atalhos={
    '/escritorio':'/staging/escritorio-admin',
-   '/minha-conta':'/staging/cliente',
-   '/loja':'/staging/loja'
+   '/minha-conta':'/staging/cliente'
   };
   if(!url.pathname.startsWith('/staging/')&&
      !Object.hasOwn(atalhos,url.pathname)&&!webhookUnificado)
