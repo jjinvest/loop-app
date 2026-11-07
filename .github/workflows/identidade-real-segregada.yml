@@ -22,6 +22,7 @@ on:
       - 'test/meus-pedidos-titular-real.test.js'
       - 'test/controle-economico-loja-sqlite.test.js'
       - 'test/admin-economia-privado-akitemm.test.js'
+      - 'test/pedido-custo-historico-contador.test.js'
       - 'test/limite-operacoes-identidade-real-sqlite.test.js'
       - 'test/troca-senha-identidade-real-sqlite.test.js'
       - '.github/workflows/identidade-real-segregada.yml'
@@ -94,6 +95,8 @@ jobs:
         run: node --test test/controle-economico-loja-sqlite.test.js
       - name: Custos de distribuidores apenas ao administrador autorizado
         run: node --test test/admin-economia-privado-akitemm.test.js
+      - name: Custos de compra preservados por pedido, mesmo após mudança no fornecedor
+        run: node --test test/pedido-custo-historico-contador.test.js
       - name: Não ativar cadastro real com configuração de laboratório
         env:
           NODE_ENV: production
