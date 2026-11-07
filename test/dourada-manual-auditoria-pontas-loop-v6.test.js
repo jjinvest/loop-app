@@ -175,11 +175,18 @@ test('API administrativa protegida e pagina traz botao de douradas e auditoria',
   method:'POST',headers:head,body:JSON.stringify({eventoId})
  });
  assert.equal((await make('admin-sem-chave',{'Content-Type':'application/json'})).status,401);
- assert.equal((await make('admin-com-chave')).status,409);
- assert.equal((await make('admin-com-chave')).status,409);
+ const criada=await make('admin-com-chave');
+ assert.equal(criada.status,200);
+ const corpo=await criada.json();
+ assert.equal(corpo.resultado.reservaConsumidaCentavos,0);
+ assert.equal(corpo.resultado.aporteRegistrado,false);
+ assert.equal(corpo.aporteInternoDemonstrativo,false);
+ const repetida=await make('admin-com-chave');
+ assert.equal(repetida.status,200);
+ assert.equal((await repetida.json()).resultado.repetida,true);
  const list=await (await fetch(uri,{headers})).json();
- assert.equal(list.douradasManuais.length,0);
- assert.equal(list.filas.B.quantidade,0);
+ assert.equal(list.douradasManuais.length,1);
+ assert.equal(list.filas.B.quantidade,1);
  assert.equal((await fetch(uri+'/auditoria-ciclo?ciclo=1')).status,401);
  assert.equal((await fetch(uri+'/auditoria-ciclo?ciclo=0',{headers})).status,400);
  assert.equal((await fetch(uri+'/auditoria-ciclo?ciclo=1',{headers})).status,404);
