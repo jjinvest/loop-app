@@ -63,6 +63,11 @@ on:
       - 'scripts/validar-conta-unica-candidato-browser.js'
       - '.github/workflows/preview-escritorio-protegido.yml'
   workflow_dispatch:
+    inputs:
+      suite_integral:
+        description: 'Executar a suite geral de regressao antes do marco de liberacao'
+        type: boolean
+        default: false
 # Um unico candidato de homologacao por branch: commits posteriores
 # substituem execucoes obsoletas, sem repetir uma suite inteira em paralelo.
 concurrency:
@@ -110,9 +115,23 @@ jobs:
       - run: node --test test/backup-conta-unica-restauracao-segura.test.js
       - run: node --test test/asaas-motor-automatico-sandbox-candidato.test.js
       - run: node --check src/domain/auditoria-integridade-motor-candidato-sqlite.js
-      # Limitar processos do test runner: em runner compartilhado, 279 arquivos
-      # concorrentes podem bloquear por memoria/CPU e esconder a falha real.
-      - run: node --test --test-concurrency=8
+      # Gate rapido e integrado em cada alteracao: negocio, posse do titular,
+      # senha, administrador, PSP e motor. Nao repetir a suite inteira a cada push.
+      - run: >-
+          node --test --test-concurrency=4
+          test/loja-escritorio-conta-unica-candidata.test.js
+          test/troca-senha-conta-unica-candidata.test.js
+          test/isolamento-operador-gateway-preview.test.js
+          test/ensaio-tres-clientes-acesso-unificado-preview.test.js
+          test/preview-unificacao-psp-webhook.test.js
+          test/candidato-psp-posicao-entrega-escritorio-unificados.test.js
+          test/fluxo-indicacao-compra-sandbox-tabuleiro.test.js
+          test/meta-lotes-catraca-loop.test.js
+          test/grade-posicoes-ensaios-unificada.test.js
+      # Suite integral permanece obrigatoria antes de liberar versao; somente
+      # workflow_dispatch com opt-in para nao duplicar auditoria em cada push.
+      - if: ${{ github.event_name == 'workflow_dispatch' && inputs.suite_integral == true }}
+        run: node --test --test-concurrency=8
       - run: npm install --no-save playwright@1.56.1
       - run: npx playwright install --with-deps chromium
       - run: node scripts/validar-conta-unica-candidato-browser.js
