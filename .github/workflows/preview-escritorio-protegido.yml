@@ -65,6 +65,7 @@ on:
       - 'src/domain/painel-operacional-admin-candidato.js'
       - 'src/domain/destino-financeiro-centro-loop.js'
       - 'src/domain/tabuleiro-loop.js'
+      - 'src/domain/estado-simulacao.js'
       - 'src/domain/livro-provisoes-v6-demo-sqlite.js'
       - 'src/domain/prelancamento-cofres-v6-demo-sqlite.js'
       - 'src/domain/conciliacao-cofres-v6-demo-sqlite.js'
@@ -143,6 +144,7 @@ jobs:
         run: node --test test/escritorio-admin-operacoes-unificadas.test.js
       - name: Regra restrita de douradas e cofre exclusivo, sem consumir reserva
         run: node --test test/dourada-manual-auditoria-pontas-loop-v6.test.js test/disponibilidade-caixa2-integracao-v6.test.js
+      - run: node --check src/domain/estado-simulacao.js
       - name: Seis eventos ao cofre dourado e conciliacao contabil dos aportes
         run: node --test test/caixa-douradas-desistentes-loop.test.js test/quarto-cofre-douradas-mesmo-giro-v6.test.js test/prelancamento-cofres-separados-v6.test.js test/financeiro-admin-demo.test.js test/conciliacao-cofres-bloqueio-v6.test.js test/marco-zero-integridade-provisoes-lab.test.js
       - name: Novidades no admin e na loja original, imagens e isolamento
