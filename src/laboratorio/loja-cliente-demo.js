@@ -58,7 +58,7 @@
   const div=document.createElement('div');div.className=classe;
   const src=fotoDo(p);
   if(src){
-   const img=document.createElement('img');img.src=src;img.alt=p.nome;img.loading='lazy';
+   const img=document.createElement('img');img.src=src;img.alt=p.nome;img.loading='lazy';img.decoding='async';
    div.append(img);
   }else{
    const span=document.createElement('span');span.className='akitemm-imagem-produto-vazia';
@@ -260,7 +260,11 @@
    if(n.temImagem&&Number.isSafeInteger(n.id)&&n.id>0){
     const img=document.createElement('img');
     img.src='/staging/vitrine/novidades/'+n.id+'/imagem';
-    img.loading='lazy';img.alt=n.titulo||'Imagem da novidade';
+    img.loading='lazy';img.decoding='async';
+    img.alt=n.titulo||'Imagem da novidade';
+    if(n.larguraImagemPx&&n.alturaImagemPx){
+     img.width=n.larguraImagemPx;img.height=n.alturaImagemPx;
+    }
     card.append(img);
    }
    const content=document.createElement('div');content.className='akitemm-novidade-conteudo';

@@ -138,7 +138,12 @@ function preencherEdicaoNovidade(n){
  $('novidadeEstadoAdmin').value=n.estado;
  $('novidadeImagemAdmin').value='';
  $('novidadeImagemStatusAdmin').textContent=n.temImagem?
-  'Imagem anexada à publicação. Selecione outra para substituir.':'Sem imagem anexada.';
+  'Imagem atual: '+(n.larguraImagemPx&&n.alturaImagemPx?
+   n.larguraImagemPx+' × '+n.alturaImagemPx+' pixels. ':'')+
+   (n.qualidadeImagem==='BOA_RESOLUCAO'?'Boa resolução.':
+    'Recomenda-se foto maior para maior nitidez.')+
+   ' Selecione outra para substituir.':
+  'Sem imagem. Prefira 1.200 pixels ou mais no lado maior.';
  $('novidadeRemoverImagemAdmin').disabled=!n.temImagem;
  $('formNovidadesAdmin').scrollIntoView({behavior:'smooth',block:'nearest'});
 }
@@ -150,7 +155,9 @@ async function carregarNovidadesAdmin(){
   const linha=elem('div');linha.className='produto-admin-item';
   const desc=elem('span',(n.titulo||'[Publicação por imagem]')+
    ' · '+n.estado+' · Ordem '+n.ordem+
-   ' · '+(n.temImagem?'Com imagem':'Sem imagem')+' · Revisão '+n.revisao);
+   ' · '+(n.temImagem?'Imagem '+(n.larguraImagemPx||'?')+' × '+
+    (n.alturaImagemPx||'?')+' pixels':'Sem imagem')+
+   ' · Revisão '+n.revisao);
   const botao=elem('button','Editar');botao.type='button';
   botao.addEventListener('click',()=>preencherEdicaoNovidade(n));
   linha.append(desc,botao);area.append(linha);
@@ -158,7 +165,7 @@ async function carregarNovidadesAdmin(){
 }
 async function enviarImagemNovidade(id,revisao,arquivo){
  if(!['image/png','image/jpeg','image/webp'].includes(arquivo.type)||
-    arquivo.size>2*1024*1024||arquivo.size<12)
+    arquivo.size>4*1024*1024||arquivo.size<12)
   throw Error('IMAGEM_FORMATO_OU_TAMANHO_INVALIDO');
  const r=await fetch('/staging/escritorio-unificado/novidades/'+id+'/imagem',{
   method:'PUT',credentials:'omit',cache:'no-store',
@@ -172,10 +179,29 @@ async function enviarImagemNovidade(id,revisao,arquivo){
 $('novidadesAtualizarAdmin').addEventListener('click',()=>carregarNovidadesAdmin().catch(e=>
  $('novidadeResultadoAdmin').textContent='Consulta indisponível: '+e.message));
 $('novidadeNovaAdmin').addEventListener('click',limparEdicaoNovidade);
-$('novidadeImagemAdmin').addEventListener('change',()=>{
- const arq=$('novidadeImagemAdmin').files[0];
- $('novidadeImagemStatusAdmin').textContent=arq?arq.name+
-  ' · '+Math.round(arq.size/1024)+' KB':'Nenhuma imagem escolhida.';
+$('novidadeImagemAdmin').addEventListener('change',async()=>{
+ const campo=$('novidadeImagemStatusAdmin');
+ const arquivo=$('novidadeImagemAdmin').files[0];
+ if(!arquivo){campo.textContent='Nenhuma imagem escolhida.';return;}
+ if(!['image/png','image/jpeg','image/webp'].includes(arquivo.type)||
+    arquivo.size>4*1024*1024||arquivo.size<12){
+  campo.textContent='Arquivo inválido: PNG, JPEG ou WebP de até 4 MB.';return;
+ }
+ campo.textContent='Analisando a resolução da imagem…';
+ let figura;
+ try{
+  figura=await createImageBitmap(arquivo);
+  if($('novidadeImagemAdmin').files[0]!==arquivo)return;
+  const w=figura.width,h=figura.height;
+  const boa=Math.max(w,h)>=1080&&Math.min(w,h)>=675;
+  campo.textContent=arquivo.name+' · '+w+' × '+h+' pixels · '+
+   Math.round(arquivo.size/1024)+' KB. '+
+   (boa?'Boa resolução para a vitrine.':
+    'Resolução abaixo do recomendado: prefira pelo menos 1.200 px no lado maior, sem ampliar artificialmente.');
+ }catch{
+  if($('novidadeImagemAdmin').files[0]===arquivo)
+   campo.textContent='Não foi possível ler os pixels. Escolha uma foto válida.';
+ }finally{figura?.close();}
 });
 $('novidadeRemoverImagemAdmin').addEventListener('click',async e=>{
  const btn=e.currentTarget;btn.disabled=true;
@@ -224,7 +250,9 @@ $('formNovidadesAdmin').addEventListener('submit',async e=>{
   });
   preencherEdicaoNovidade(r);await carregarNovidadesAdmin();
   campo.textContent='Novidade salva: '+r.estado+
-   '. Exibição no botão Novidades atualiza após recarregar a loja. Nenhum brinde automático foi criado.';
+   '. '+(r.qualidadeImagem==='ABAIXO_DO_RECOMENDADO'?
+    'Atenção: a foto está abaixo da resolução recomendada; substitua por uma maior. ':'')+
+   'Exibição no botão Novidades atualiza após recarregar a loja. Nenhum brinde automático foi criado.';
  }catch(err){campo.textContent='Novidade não salva por completo: '+err.message+
   '. Atualize a lista antes de reenviar para evitar versões conflitantes.';}
  finally{btn.disabled=false;}

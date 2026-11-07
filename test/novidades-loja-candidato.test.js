@@ -4,7 +4,8 @@ const assert=require('node:assert/strict');
 const {DatabaseSync}=require('node:sqlite');
 const {randomBytes}=require('node:crypto');
 const {once}=require('node:events');
-const {NovidadesLojaCandidatoSQLite}=require('../src/domain/novidades-loja-candidato-sqlite');
+const {NovidadesLojaCandidatoSQLite,MAX_IMAGEM,dimensoesImagem}=
+ require('../src/domain/novidades-loja-candidato-sqlite');
 const {criarAppLojaEscritorioCandidato}=
  require('../src/candidato/servidor-loja-escritorio-candidato');
 const {catalogoFicticioCheckout}=
@@ -34,6 +35,9 @@ test('novidades livres: texto, imagem, ambas, varias, ordenacao e revisao SQLite
  const reaberto=new NovidadesLojaCandidatoSQLite({banco:db});
  assert.equal(reaberto.imagem({id:img.id,publicada:true}).mime,'image/png');
  assert.deepEqual(reaberto.imagem({id:img.id}).bytes,PNG);
+ assert.equal(reaberto.listar({publicadas:true})[0].qualidadeImagem,'ABAIXO_DO_RECOMENDADO');
+ assert.equal(reaberto.listar({publicadas:true})[0].larguraImagemPx,1);
+ assert.equal(reaberto.listar({publicadas:true})[0].alturaImagemPx,1);
  assert.equal(reaberto.listar().length,2);
  assert.equal(reaberto.listar({publicadas:true})[0].semBeneficioAutomatico,true);
  assert.throws(()=>n.atualizar({id:msg.id,revisaoEsperada:1,
@@ -60,7 +64,7 @@ test('bloqueios: tipo de imagem, campo desconhecido, tamanho e status transacion
  for(const [mime,dados] of [
   ['image/svg+xml',Buffer.from('<svg/>')],
   ['image/png',Buffer.from('<script>alert(1)</script>')],
-  ['image/png',Buffer.alloc(2097153)],
+  ['image/png',Buffer.alloc(MAX_IMAGEM+1)],
   ['image/jpeg',Buffer.from('nao e jpg nem png')]
  ])assert.throws(()=>n.gravarImagem({id:um.id,revisaoEsperada:1,mime,dados}),
   {codigo:'NOVIDADE_IMAGEM_INVALIDA'});
@@ -143,4 +147,27 @@ test('mesma loja e admin: autenticação, publicação, imagem e nenhum Pix/posi
  const agora=await fetch(base+'/staging/vitrine/novidades/'+r.id+'/imagem',{headers:{Cookie:cookie}});
  assert.equal(agora.status,404);
  assert.equal(db.prepare('SELECT COUNT(*) AS n FROM akitemm_motor_conta_ensaio_operacoes').get().n,0);
+});
+
+test('o servidor valida dimensoes e preserva os pixels do arquivo original',t=>{
+ const db=preparar(t),n=new NovidadesLojaCandidatoSQLite({banco:db});
+ const um=n.criar({titulo:'Imagem em alta qualidade'});
+ assert.deepEqual(dimensoesImagem(PNG,'image/png'),{
+  larguraPx:1,alturaPx:1,qualidadeSugerida:'ABAIXO_DO_RECOMENDADO'
+ });
+ const gigante=Buffer.from(PNG);
+ gigante.writeUInt32BE(12001,16);gigante.writeUInt32BE(10000,20);
+ assert.equal(dimensoesImagem(gigante,'image/png'),null);
+ assert.throws(()=>n.gravarImagem({id:um.id,revisaoEsperada:um.revisao,
+  mime:'image/png',dados:gigante}),{codigo:'NOVIDADE_IMAGEM_DIMENSOES_INVALIDAS'});
+ const cabecalhoSimulado=Buffer.from(PNG);
+ cabecalhoSimulado.writeUInt32BE(1200,16);
+ cabecalhoSimulado.writeUInt32BE(900,20);
+ assert.equal(dimensoesImagem(cabecalhoSimulado,'image/png').qualidadeSugerida,'BOA_RESOLUCAO');
+ // Cabecalho apenas simulado; não é uma imagem decodificável para a vitrine.
+ const salvo=n.gravarImagem({id:um.id,revisaoEsperada:um.revisao,
+  mime:'image/png',dados:PNG});
+ assert.equal(salvo.qualidadeImagem,'ABAIXO_DO_RECOMENDADO');
+ assert.deepEqual(n.imagem({id:um.id}).bytes,PNG);
+ assert.equal(MAX_IMAGEM,4*1024*1024);
 });

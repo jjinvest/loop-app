@@ -1,7 +1,9 @@
 'use strict';
 // Conteudo editorial de Novidades, isolado de vendas, brindes e posicoes.
 // Usa o mesmo banco SQLite da vitrine e do administrador.
-const MAX_IMAGEM=2*1024*1024;
+const MAX_IMAGEM=4*1024*1024;
+const MAX_PIXELS=40000000;
+const MAX_LADO=12000;
 const CAMPOS=new Set(['titulo','texto','produtoId','ordem','estado']);
 function falha(codigo){const e=new Error(codigo);e.codigo=codigo;throw e;}
 function validarTexto(v,max){
@@ -30,7 +32,55 @@ function validarImagem(dados,mime){
  const webp=mime==='image/webp'&&dados.toString('ascii',0,4)==='RIFF'&&
   dados.toString('ascii',8,12)==='WEBP'&&dados.readUInt32LE(4)===dados.length-8;
  if(!png&&!jpg&&!webp)falha('NOVIDADE_IMAGEM_INVALIDA');
+ if(!dimensoesImagem(dados,mime))falha('NOVIDADE_IMAGEM_DIMENSOES_INVALIDAS');
  return dados;
+}
+// Leitura de cabecalho, sem instalar pacote de processamento ou alterar original.
+function dimensoesImagem(dados,mime){
+ if(!Buffer.isBuffer(dados)||dados.length<24)return null;
+ let largura=0,altura=0;
+ if(mime==='image/png'&&dados.length>=24&&
+    dados.subarray(0,8).equals(Buffer.from('89504e470d0a1a0a','hex'))&&
+    dados.readUInt32BE(8)===13&&dados.toString('ascii',12,16)==='IHDR'){
+  largura=dados.readUInt32BE(16);altura=dados.readUInt32BE(20);
+ }else if(mime==='image/jpeg'&&dados.length>16&&
+   dados[0]===0xff&&dados[1]===0xd8){
+  let i=2;
+  while(i+9<dados.length){
+   if(dados[i]!==0xff){i++;continue;}
+   while(i<dados.length&&dados[i]===0xff)i++;
+   const marca=dados[i++];
+   if(marca===0xd9||marca===0xda)break;
+   if(marca===0x01||(marca>=0xd0&&marca<=0xd7))continue;
+   if(i+2>dados.length)break;
+   const tamanho=dados.readUInt16BE(i);
+   if(tamanho<2||i+tamanho>dados.length)break;
+   if([0xc0,0xc1,0xc2,0xc3,0xc5,0xc6,0xc7,0xc9,0xca,0xcb,0xcd,0xce,0xcf]
+     .includes(marca)&&tamanho>=7){
+    altura=dados.readUInt16BE(i+3);largura=dados.readUInt16BE(i+5);break;
+   }
+   i+=tamanho;
+  }
+ }else if(mime==='image/webp'&&dados.length>=30&&
+   dados.toString('ascii',0,4)==='RIFF'&&
+   dados.toString('ascii',8,12)==='WEBP'&&
+   dados.readUInt32LE(4)===dados.length-8){
+  const chunk=dados.toString('ascii',12,16);
+  if(chunk==='VP8X'){
+   largura=1+dados.readUIntLE(24,3);altura=1+dados.readUIntLE(27,3);
+  }else if(chunk==='VP8L'&&dados[20]===0x2f){
+   largura=1+dados[21]+((dados[22]&0x3f)<<8);
+   altura=1+(dados[22]>>6)+(dados[23]<<2)+((dados[24]&0x0f)<<10);
+  }else if(chunk==='VP8 '&&dados[23]===0x9d&&dados[24]===0x01&&dados[25]===0x2a){
+   largura=dados.readUInt16LE(26)&0x3fff;
+   altura=dados.readUInt16LE(28)&0x3fff;
+  }
+ }
+ if(largura<1||altura<1||largura>MAX_LADO||altura>MAX_LADO||
+    largura*altura>MAX_PIXELS)return null;
+ return {larguraPx:largura,alturaPx:altura,
+  qualidadeSugerida:Math.max(largura,altura)>=1080&&
+    Math.min(largura,altura)>=675?'BOA_RESOLUCAO':'ABAIXO_DO_RECOMENDADO'};
 }
 class NovidadesLojaCandidatoSQLite{
  constructor({banco,agora=()=>Date.now()}={}){
@@ -71,8 +121,13 @@ class NovidadesLojaCandidatoSQLite{
   return r;
  }
  _publico(r){
+  const dimensoes=r.imagem?dimensoesImagem(Buffer.from(r.imagem),r.mime):null;
   return {id:r.id,titulo:r.titulo,texto:r.texto,produtoId:r.produto_id,
    ordem:r.ordem,estado:r.estado,temImagem:r.imagem!==null,
+   larguraImagemPx:dimensoes?.larguraPx||null,
+   alturaImagemPx:dimensoes?.alturaPx||null,
+   qualidadeImagem:dimensoes?.qualidadeSugerida||
+    (r.imagem?'NAO_VERIFICADA':'SEM_IMAGEM'),
    revisao:r.revisao,semBeneficioAutomatico:true};
  }
  _auditoria(r,acao){
@@ -157,4 +212,4 @@ class NovidadesLojaCandidatoSQLite{
   return {mime:r.mime,bytes:Buffer.from(r.imagem)};
  }
 }
-module.exports={NovidadesLojaCandidatoSQLite,MAX_IMAGEM};
+module.exports={NovidadesLojaCandidatoSQLite,MAX_IMAGEM,dimensoesImagem};
