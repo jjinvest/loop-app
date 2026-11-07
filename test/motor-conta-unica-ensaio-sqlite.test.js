@@ -106,6 +106,9 @@ test('catraca exige 6 eventos distintos, pausa respeitada e limite de 2 no tabul
   for(let n=1;n<=6;n++){
    const r=motor.registrarEvento({prepedidoId:pedido(n)});
    assert.equal(r.eventosNoCiclo,n);
+   const luzes=motor.consultarAgenda();
+   assert.equal(luzes.luzesRoxasAcesas,Math.ceil(n/2));
+   assert.equal(luzes.luzesPretasAcesas,Math.floor(n/2));
   }
   assert.equal(motor.registrarEvento({prepedidoId:pedido(1)}).repetido,true);
   assert.throws(()=>motor.registrarEvento({prepedidoId:pedido(7)}),
@@ -323,5 +326,36 @@ test('dourada manual entra no motor UNICO da conta, sem compra, reserva ou giro 
   ),/dourada manual imutavel/);
   assert.equal(db.prepare('PRAGMA quick_check').get().quick_check,'ok');
   assert.deepEqual(db.prepare('PRAGMA foreign_key_check').all(),[]);
+ }finally{db.close();}
+});
+
+test('3 luzes roxas e 3 pretas permanecem no quadro mesmo com centro dourado, sem dinheiro real',()=>{
+ const {db,motor,sinalizacao}=preparar();
+ try{
+  for(let i=1;i<=7;i++)motor.criarDouradaManualEnsaio({
+   eventoId:'dourada-luzes-integrado-'+String(i).padStart(4,'0'),
+   aceiteEnsaio:true
+  });
+  const inicial=motor.prepararTabuleiro();
+  assert.equal(inicial.ocupadas,7);
+  assert.equal(motor.consultar().tabuleiro.centro.dourada,true);
+  motor._transacao(sim=>{
+   for(let i=1;i<=6;i++)sim.registrarVendaNoCicloSimulada({
+    vendaId:'evento-ficticio-sem-psp-luzes-'+i
+   });
+  });
+  const agenda=motor.consultarAgenda();
+  assert.equal(agenda.luzesAcesas,6);
+  assert.equal(agenda.luzesRoxasAcesas,3);
+  assert.equal(agenda.luzesPretasAcesas,3);
+  const sim=motor._simulador();
+  assert.deepEqual(sim.tabuleiro.vendasDoCiclo.map(v=>v.destinoCofre),
+   Array(6).fill('LOOP_DOURADAS'));
+  assert.equal(motor.consultar().dinheiroReal,false);
+  assert.equal(motor.consultar().saldoRealCentavos,null);
+  assert.equal(motor.consultar().catraca.giros,0);
+  const reiniciado=new MotorContaUnicaEnsaioSQLite({banco:db,sinalizacao});
+  assert.equal(reiniciado.consultarAgenda().luzesRoxasAcesas,3);
+  assert.equal(reiniciado.consultarAgenda().luzesPretasAcesas,3);
  }finally{db.close();}
 });
