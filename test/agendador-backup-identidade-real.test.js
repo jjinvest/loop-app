@@ -64,3 +64,30 @@ test('backup inicial sem GET e restauração aborta GO antes de abrir serviço',
  assert.equal(a.estado().backupAtualEmDia,false);
  await a.encerrar();
 });
+
+test('GO real não abre cadastro com GET e restore sem prova das chaves',async()=>{
+ let timerCriado=false;
+ const agendador=criarAgendadorBackupIdentidadeReal({
+  exigirProvaChaves:true,executar:async()=>OK,
+  agendar:()=>{timerCriado=true;return {};},cancelar:()=>{}
+ });
+ await assert.rejects(agendador.iniciar(),
+  {codigo:'BACKUP_OFFSITE_REAL_AINDA_NAO_PROVADO'});
+ assert.equal(timerCriado,false);
+ assert.equal(agendador.estado().chavesDeLeituraVerificadas,false);
+ await agendador.encerrar();
+ let falhar=false;
+ const b=criarAgendadorBackupIdentidadeReal({
+  exigirProvaChaves:true,
+  executar:async()=>falhar?OK:{...OK,chavesDeLeituraVerificadas:true},
+  agendar:()=>({unref(){}}),cancelar:()=>{}
+ });
+ await b.iniciar();
+ assert.equal(b.estado().backupAtualEmDia,true);
+ assert.equal(b.estado().chavesDeLeituraVerificadas,true);
+ falhar=true;
+ await b.executarUmaVez();
+ assert.equal(b.estado().backupAtualEmDia,false);
+ assert.equal(b.estado().chavesDeLeituraVerificadas,false);
+ await b.encerrar();
+});

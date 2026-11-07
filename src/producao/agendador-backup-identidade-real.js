@@ -6,7 +6,7 @@
 const DIA=24*60*60*1000,FRESCOR=26*60*60*1000;
 function falha(c){const e=new Error(c);e.codigo=c;throw e;}
 function criarAgendadorBackupIdentidadeReal({
- executar,intervaloMs=DIA,
+ executar,intervaloMs=DIA,exigirProvaChaves=false,
  agendar=setInterval,cancelar=clearInterval,agora=()=>Date.now()
 }={}){
  if(typeof executar!=='function'||typeof agendar!=='function'||
@@ -15,6 +15,7 @@ function criarAgendadorBackupIdentidadeReal({
     intervaloMs>7*DIA)falha('AGENDADOR_IDENTIDADE_REAL_INVALIDO');
  let timer=null,rodando=null,terminado=false,ultimoOk=null;
  let falhas=0,copias=0,ultimoEstado='AINDA_NAO_INICIADO';
+ let ultimaProvaChaves=false;
  function estado(){
   const now=agora();
   const idade=ultimoOk===null?NaN:now-ultimoOk;
@@ -25,6 +26,8 @@ function criarAgendadorBackupIdentidadeReal({
    contagemFalhas:falhas,emExecucao:rodando!==null,
    emOperacao:timer!==null&&!terminado,
    recuperacaoMultirregionalProvada:false,
+   chavesDeLeituraVerificadas:ultimoEstado==='CONFIRMADO'&&
+    ultimaProvaChaves,
    backupFinanceiroConfirmado:false};
  }
  async function executarUmaVez(){
@@ -35,17 +38,19 @@ function criarAgendadorBackupIdentidadeReal({
     const prova=await executar();
     if(prova?.estado!=='OFFSITE_REAL_IDENTIDADE_CIFRADO_BAIXADO_RESTAURADO'||
        prova.copiaExternaConfirmada!==true||
-       prova.restauracaoIsoladaConfirmada!==true)
+       prova.restauracaoIsoladaConfirmada!==true||
+       (exigirProvaChaves&&prova.chavesDeLeituraVerificadas!==true))
      falha('OFFSITE_IDENTIDADE_NAO_COMPROVADO');
     const ms=agora();
     if(!Number.isSafeInteger(ms)||ms<=0)
      falha('RELOGIO_IDENTIDADE_INVALIDO');
     copias++;ultimoOk=ms;ultimoEstado='CONFIRMADO';
+    ultimaProvaChaves=prova.chavesDeLeituraVerificadas===true;
     return {estado:'OFFSITE_REAL_IDENTIDADE_CONFIRMADO',
      copiaExternaConfirmada:true,restauracaoIsoladaConfirmada:true,
      caixaRealLiberado:false};
    }catch{
-    falhas++;ultimoEstado='FALHOU';
+    falhas++;ultimoEstado='FALHOU';ultimaProvaChaves=false;
     return {estado:'OFFSITE_IDENTIDADE_REQUER_VERIFICACAO',
      copiaExternaConfirmada:false,restauracaoIsoladaConfirmada:false,
      caixaRealLiberado:false};

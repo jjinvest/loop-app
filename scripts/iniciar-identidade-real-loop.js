@@ -130,6 +130,7 @@ async function iniciar(ambiente=process.env){
    credencialAdmin:config.credencialAdmin
   });
   agendador=criarAgendadorBackupIdentidadeReal({
+   exigirProvaChaves:true,
    executar:()=>enviarBackupOffsiteIdentidade({
     fonteSqlite:config.arquivo,chaveBackup:config.chaveBackup,
     config:config.configS3,exigirProvaChaves:true,
