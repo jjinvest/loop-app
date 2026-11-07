@@ -847,15 +847,25 @@ function criarAppLojaEscritorioCandidato({banco,repositorioCatalogo,
    .json({erro:e.codigo||'NOVIDADE_INVALIDA'});}
  });
  app.put('/staging/escritorio-unificado/novidades/:id/imagem',autorizarOperador,
-  express.raw({type:['image/png','image/jpeg','image/webp'],limit:MAX_IMAGEM+1024}),(req,res)=>{
-   if(!Buffer.isBuffer(req.body))
+  async(req,res)=>{
+   const mime=req.get('content-type')?.split(';')[0];
+   if(!['image/png','image/jpeg','image/webp'].includes(mime))
     return res.status(415).json({erro:'NOVIDADE_IMAGEM_INVALIDA'});
-   const revisaoEsperada=Number(req.get('x-novidade-revisao'));
-   try{return res.json(novidades.gravarImagem({
-    id:Number(req.params.id),revisaoEsperada,
-    mime:req.get('content-type')?.split(';')[0],dados:req.body
-   }));}
-   catch(e){return res.status(e.codigo==='NOVIDADE_CONFLITO_REVISAO'?409:400)
+   try{
+    const partes=[];let tamanho=0;
+    // Leitura binaria dedicada: nao serializa foto em JSON nem em log.
+    for await(const p of req){
+     tamanho+=p.length;
+     if(tamanho>MAX_IMAGEM)return res.status(413)
+      .json({erro:'NOVIDADE_IMAGEM_EXCESSIVA'});
+     partes.push(p);
+    }
+    return res.json(novidades.gravarImagem({
+     id:Number(req.params.id),
+     revisaoEsperada:Number(req.get('x-novidade-revisao')),
+     mime,dados:Buffer.concat(partes)
+    }));
+   }catch(e){return res.status(e.codigo==='NOVIDADE_CONFLITO_REVISAO'?409:400)
     .json({erro:e.codigo||'NOVIDADE_IMAGEM_INVALIDA'});}
   });
  app.delete('/staging/escritorio-unificado/novidades/:id/imagem',autorizarOperador,(req,res)=>{
