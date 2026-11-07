@@ -302,7 +302,7 @@ const {once}=require('node:events');
    await admin.locator('#pesquisaEstadoAdmin').filter({hasText:/resultado\(s\) em produtos/}).waitFor();
    assert.match(await admin.locator('#pesquisaResultadosAdmin').innerText(),/curso-homologacao-250/);
    await admin.locator('#pesquisaResultadosAdmin').getByRole('button',{name:'Editar no catálogo'}).first().click();
-   assert.equal(await admin.locator('#produtoIdAdmin').inputValue(),'curso-homologacao-250');
+   await admin.waitForFunction(() => document.getElementById('produtoIdAdmin').value==='curso-homologacao-250');
    await admin.locator('#cancelarEdicaoProduto').click();
    await admin.locator('#pesquisaTermoAdmin').fill('produto-inexistente-zz88');
    await admin.locator('#pesquisaExecutarAdmin').click();
