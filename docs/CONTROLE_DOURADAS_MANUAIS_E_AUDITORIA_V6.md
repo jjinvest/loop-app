@@ -29,18 +29,24 @@ O administrador abre **Financeiro administrativo → Criar bola dourada do LOOP*
 
 As bolas douradas **também podem surgir automaticamente** quando uma posição azul cruza a entrada da vaga 6 sem confirmar CPF e termos. **Outra origem** é a desistência expressa de uma posição já na vaga 6. Nessas duas situações, a posição anterior é assumida operacionalmente pelo LOOP, preservando ID e motivo histórico. Não se cria posição extra.
 
-## Destino do centro: seis eventos
+## Destino do centro: seis eventos — regra V2 vigente
 
-Quando o centro pertence à empresa, seja por criação manual, prazo encerrado ou desistência, o próprio domínio do tabuleiro classifica as seis vendas no padrão:
+**A partir de 07/11/2026, todo NOVO ciclo cujo centro pertença à empresa (bola dourada) tem 100% de seus SEIS eventos atribuídos ao cofre exclusivo `LOOP_DOURADAS`.** Não dividir as parcelas do centro dourado com `LOOP_CENTRO`, `LOOP_ESQUERDA` ou `LOOP_DIREITA`:
 
-1. `LOOP_DOURADAS`;
-2. `LOOP_ESQUERDA` — investimento;
-3. `LOOP_DOURADAS`;
-4. `LOOP_DIREITA` — reserva;
-5. `LOOP_DOURADAS`;
-6. `LOOP_ESQUERDA` — investimento.
+1. Evento 1 → `LOOP_DOURADAS`.
+2. Evento 2 → `LOOP_DOURADAS`.
+3. Evento 3 → `LOOP_DOURADAS`.
+4. Evento 4 → `LOOP_DOURADAS`.
+5. Evento 5 → `LOOP_DOURADAS`.
+6. Evento 6 → `LOOP_DOURADAS`.
 
-Quando o centro é de um participante válido, as parcelas 1/3/5 seguem para `LOOP_CENTRO`. O cálculo da destinação parte da **titularidade operacional registrada no snapshot**, não apenas da cor exibida no painel.
+Inclui douradas administrativas e posições assumidas pelo LOOP após cruzar a vaga 6 sem termos/CPF ou por desistência. A cor **continua dourada**, sem alteração nas filas, na sequência 3A:1B, na catraca ou nos seis eventos. **Criar a dourada permanece sem consumir o cofre de reserva**, conforme a decisão anterior.
+
+**Centro de participante:** a regra do cliente continua inalterada: `LOOP_CENTRO`, `LOOP_ESQUERDA`, `LOOP_CENTRO`, `LOOP_DIREITA`, `LOOP_CENTRO`, `LOOP_ESQUERDA`.
+
+**Histórico imutável (V1):** ciclos dourados já iniciados sob a regra anterior continuam com os destinos efetivamente registrados — `LOOP_DOURADAS`, `LOOP_ESQUERDA`, `LOOP_DOURADAS`, `LOOP_DIREITA`, `LOOP_DOURADAS`, `LOOP_ESQUERDA`. Não estornar, apagar, reclasificar retroativamente ou reinterpretar lançamentos históricos. Um ciclo antigo não pode misturar V1 e V2. A emissão de uma nova dourada não gera receita.
+
+**Conciliação:** os seis eventos V2 são registrados como fontes diferentes no ledger imutável; na projeção de pré-lançamento, as cotas inicialmente separadas nas três origens são reclassificadas para o cofre dourado com conservação integral e sem contagem dupla. Só eventos com aportes demonstrativos já documentados podem alimentar essa projeção. Isto continua sendo **ensaio sem saldo bancário comprovado nem saque autorizado**.
 
 ## Amarração técnica e limites contábeis
 
