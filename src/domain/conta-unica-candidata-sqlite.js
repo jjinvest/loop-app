@@ -218,12 +218,14 @@ class ContaUnicaCandidataSQLite{
   return t;
  }
  async cadastrar({nome,nick,email,senha,aceiteExplicito=false,
-  termosVersao,termosTexto}={}){
+  termosVersao,termosTexto,onCriada=null}={}){
   if(process.env.NODE_ENV==='production')falha('CANDIDATO_NAO_HOMOLOGADO');
   const nickMin=nickValido(nick),emailMin=emailValido(email);
   if(typeof nome!=='string'||!NOME.test(nome.trim()))
    falha('NOME_INVALIDO');
   if(!senhaValida(senha))falha('SENHA_INVALIDA');
+  if(onCriada!==null&&typeof onCriada!=='function')
+   falha('CADASTRO_HOOK_INVALIDO');
   if(aceiteExplicito!==true||!VERSAO.test(termosVersao||'')||
     typeof termosTexto!=='string'||termosTexto.length<40||
     termosTexto.length>20000)
@@ -241,6 +243,10 @@ class ContaUnicaCandidataSQLite{
     'WHERE nick=? COLLATE NOCASE OR email_hmac=? LIMIT 1'
    ].join(' ')).get(nickMin,emailHmac))
    falha('CADASTRO_JA_EXISTENTE');
+  // Cadastro e origem da indicacao sao UMA operacao: se vincular equipe
+  // falhar, nao pode sobrar uma conta sem indicacao, impedida de recadastrar.
+  // O hash scrypt ja terminou ANTES de adquirir o lock de escrita.
+  this.banco.exec('BEGIN IMMEDIATE');
   try{
    this.banco.prepare([
     'INSERT INTO akitemm_conta_unica_candidata',
@@ -250,7 +256,10 @@ class ContaUnicaCandidataSQLite{
     'VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?)'
    ].join(' ')).run(titularId,nickMin,emailHmac,...nomeEnc,...emailEnc,
     salt,senhaHash,termosVersao,sha256(termosTexto),ts);
+   if(onCriada)onCriada({titularId,nick:nickMin});
+   this.banco.exec('COMMIT');
   }catch(e){
+   this.banco.exec('ROLLBACK');
    if(/UNIQUE constraint failed|PRIMARY KEY constraint failed|SQLITE_CONSTRAINT/i
      .test(String(e.code||'')+' '+String(e.message||'')))
     falha('CADASTRO_JA_EXISTENTE');
