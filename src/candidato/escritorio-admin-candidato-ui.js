@@ -1257,13 +1257,21 @@ async function atualizarFluxoFinanceiroAdmin(){
   if(!d.pedidos.length)pedidos.textContent='Nenhum pré-pedido com fotografia de custos.';
   for(const p of d.pedidos){
    const item=elem('p');
+   const rota=d.roteamentoBancarioPlanejado?.find(x=>x.prepedidoId===p.prepedidoId);
+   const inter=rota?.receptores?.find(x=>x.destino==='LOOP_INTER');
+   const loja=rota?.receptores?.find(x=>x.destino==='LOJA_MERCADO_PAGO');
    item.textContent=p.prepedidoId+' · bruto cotado '+dinheiro(p.totalBrutoCotadoCentavos)+
     ' · LOOP previsto '+dinheiro(p.referenciaLoopPrevistaCentavos)+
     ' · fornecedor previsto '+dinheiro(p.custoFornecedorPrevistoCentavos)+
     ' · fornecedor pago: R$ 0,00 (sem comprovação)'+
     ' · margem estimada '+dinheiro(p.margemComercialEstimadaCentavos)+
     (p.margemNegativa?' · ALERTA: margem negativa':'')+
-    (!p.custosCompletos?' · CADASTRAR CUSTOS PARA PRÓXIMOS PEDIDOS':'');
+    (!p.custosCompletos?' · CADASTRAR CUSTOS PARA PRÓXIMOS PEDIDOS':'')+
+    (rota?' · Plano bancário NÃO EXECUTADO: Inter '+dinheiro(inter?.montantePrevistoCentavos??null)+
+     ' / Mercado Pago '+dinheiro(loja?.montantePrevistoCentavos??null)+
+     ' / 3º banco: recebe somente cofres laterais após eventos e conciliação.'+
+     (rota.alerta!=='PLANO_CONTABIL_CONSISTENTE'?
+      ' · ATENÇÃO: '+rota.alerta:''):'');
    pedidos.append(item);
   }
   const luzes=$('fluxoFinanceiroLuzes');luzes.replaceChildren();
