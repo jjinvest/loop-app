@@ -44,8 +44,24 @@ test('admin edita custo sem disponibilizar números ao cliente, exporta dados ao
  const validarCsrfAdmin=(req,res,next)=>
   req.get('x-csrf-admin-teste')==='CORRETO'?
    next():res.status(403).json({erro:'CSRF_ADMIN_INVALIDO'});
+ const pedidosComerciais={
+  listarResumoContabil({limite}){
+   assert.equal(limite,500);
+   return [{
+    pedidoId:'PEDIDO_TESTE_001',status:'APROVADO_PARA_EXPEDICAO',
+    criadoEm:1800000000000,ultimaAtualizacaoEm:1800000005000,
+    pagamentoId:'PAGAMENTO_TESTE_001',
+    receitaProdutosCentavos:19000,
+    freteCobradoClienteCentavos:1500,
+    valorTotalPedidoCentavos:20500,
+    distribuidores:['wedrop'],quantidadeItens:1,
+    tributosCalculados:false,resultadoLiquidoApurado:false
+   }];
+  }
+ };
  app.use('/api/admin/comercial',criarRouterAdminEconomiaAkitemm({
-  controle,origemHttps:ORIGEM,autorizarAdministrador,validarCsrfAdmin
+  controle,pedidosComerciais,origemHttps:ORIGEM,
+  autorizarAdministrador,validarCsrfAdmin
  }));
  const srv=app.listen(0,'127.0.0.1');await once(srv,'listening');
  t.after(()=>new Promise(ok=>srv.close(ok)));
@@ -86,4 +102,16 @@ test('admin edita custo sem disponibilizar números ao cliente, exporta dados ao
  assert.match(conteudo,/"camiseta";"wedrop";"WD_001";"190,00";"120,00";"70,00"/);
  assert.equal(conteudo.includes('CPF'),false);
  assert.equal((await fetch(url+'/contador/catalogo.csv')).status,401);
+ assert.equal((await fetch(url+'/contador/pedidos.csv')).status,401);
+ const vendas=await fetch(url+'/contador/pedidos.csv',{headers});
+ assert.equal(vendas.status,200);
+ assert.match(vendas.headers.get('content-disposition'),/attachment/);
+ const textoVendas=await vendas.text();
+ assert.match(textoVendas,/"PEDIDO_TESTE_001"/);
+ assert.match(textoVendas,/"205,00"/);
+ assert.match(textoVendas,/"190,00"/);
+ assert.match(textoVendas,/"15,00"/);
+ assert.equal(textoVendas.includes('ana@example.invalid'),false);
+ assert.equal(textoVendas.includes('CPF'),false);
+ assert.equal(textoVendas.includes('"NAO";"NAO";"NAO";"NAO"'),true);
 });
