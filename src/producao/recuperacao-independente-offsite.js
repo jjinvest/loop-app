@@ -81,8 +81,9 @@ async function provarRecuperacaoIndependente({
   }catch{
    falha('RECUPERACAO_INDEPENDENTE_DOWNLOAD_INCOMPLETO');
   }
-  if(bytes!==m.bytes||
-     !mesmoHash(hash.digest('hex'),m.sha256Cifrado))
+  if(bytes!==m.bytes)
+   falha('RECUPERACAO_INDEPENDENTE_TAMANHO_DIVERGENTE');
+  if(!mesmoHash(hash.digest('hex'),m.sha256Cifrado))
    falha('RECUPERACAO_INDEPENDENTE_HASH_DIVERGENTE');
   const restauracao=await restaurarBackupIdentidadeReal({
    origem:baixado,destino:restaurado,chaveBackup,autorizado:true
