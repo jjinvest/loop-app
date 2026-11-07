@@ -385,13 +385,32 @@
    const li=document.createElement('li'),nome=document.createElement('strong'),info=document.createElement('small'),status=document.createElement('span');
    nome.textContent='Pedido '+p.pedidoId+' · '+dinheiro(p.totalCentavos);
    info.textContent=p.itens.map(i=>i.quantidade+' × '+i.nome).join(' + ');
-   status.textContent=p.situacaoPagamentoFicticio==='AGUARDANDO_FICTICIO'?
-    'Aguardando confirmação fictícia do laboratório.':
-    p.situacaoPagamentoFicticio==='ESTORNADO_FICTICIO'?'Estorno fictício registrado.':
-     p.posicaoCriada?'Posição LOOP criada após confirmação fictícia.':
-      p.vendaSomenteLoja?'Compra confirmada na AKITEMM, sem posição LOOP.':
-       'Conferência do LOOP pendente.';
-   li.append(nome,info,status);
+   const estados={
+    SEM_COBRANCA_SANDBOX:'Pré-pedido preparado. Sem cobrança Pix registrada.',
+    PREPARADA:'Cobrança de teste preparada, sem confirmação.',
+    PENDENTE_SANDBOX:'Cobrança de teste pendente no Asaas Sandbox.',
+    CRIACAO_INDETERMINADA:'Cobrança indeterminada. Revisão obrigatória.',
+    RECEBIMENTO_INFORMADO_SANDBOX:'Recebimento informado pelo Sandbox, aguardando conferência.',
+    WEBHOOK_RECEBIDO_AGUARDANDO_RECONSULTA:'Aviso do Asaas recebido; aguardando GET independente ao Sandbox.',
+    RECEBIMENTO_PSP_CONCILIADO:'Recebimento de teste conferido no Asaas Sandbox, sem benefício real.',
+    POSICAO_FICTICIA_PENDENTE:'Recebimento de teste conferido; posição de laboratório pendente.',
+    EXIGE_REVISAO_SANDBOX:'Revisão manual obrigatória: nenhum benefício liberado.',
+    REVERSAO_INFORMADA_SANDBOX:'Reversão no Sandbox. Operação suspensa para revisão.',
+    EXIGE_REVISAO:'Revisão manual obrigatória no ambiente de ensaio.'
+   };
+   status.textContent=estados[p.estadoOperacional]||
+    'Pedido de laboratório em verificação. Nenhum pagamento ou posição real.';
+   if(p.exigeRevisaoManual)status.textContent=
+    'Pagamento de teste exige revisão manual. Sem liberação de posição ou benefício.';
+   const acompanhamento=document.createElement('small');
+   acompanhamento.textContent=p.conferenciaPSPConcluida?
+    'Conferência independente persistida (GET Asaas Sandbox). '+
+    'Posições pendentes fictícias: '+(p.posicoesPendentesFicticias||0)+
+    ' · posições vinculadas ao motor de ensaio: '+(p.posicoesMotorEnsaio||0)+
+    ' · nenhum direito comercial.':
+    'Ainda não há confirmação de recebimento por consulta independente ao PSP. '+
+    'A loja não realiza consulta externa nesta página.';
+   li.append(nome,info,status,acompanhamento);
    for(const item of p.itens){
     const aval=avaliacoesDisponiveis.find(x=>x.pedidoId===p.pedidoId&&x.produtoId===item.produtoId);
     if(!aval)continue;
@@ -790,7 +809,7 @@
     (conviteLoopCheckoutAtivo?
      ' ('+(r.pedido.participarLoop?'participação no LOOP escolhida':'compra somente AKITEMM')+')':
      '')+
-    '. Pagamento de laboratório ainda pendente. Nenhum Pix ou código de pagamento real foi gerado.';
+    '. Pré-pedido salvo sem cobrança gerada pela loja. Consulte Meus pedidos para acompanhar o estado persistido no Asaas Sandbox.';
   }catch(e){el('statusPedidoLoja').textContent=e.message;}
   finally{pedidoEmAndamento=false;atualizarCarrinho();}
  });

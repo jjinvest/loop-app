@@ -6,6 +6,7 @@ const fs=require('node:fs'),path=require('node:path');
 const {entradaValida,cotarCheckoutPublico}=require('../domain/cotacao-checkout-publico');
 const {SinalizacaoVitrineCandidatoSQLite}=require('../domain/sinalizacao-vitrine-candidato-sqlite');
 const {simularQualificacaoCandidato}=require('../domain/simulador-qualificacao-carrinho-candidato');
+const {consultarPedido}=require('../domain/relatorio-homologacao-checkout-staging');
 const DIR=path.join(__dirname,'../laboratorio');
 function fail(codigo){const e=new Error(codigo);e.codigo=codigo;throw e;}
 function createVitrineCandidata({app,banco,catalogo,contas,intencoes,prePedidos,autorizarOperador,novidades,enderecoEntrega}={}){
@@ -122,14 +123,28 @@ function createVitrineCandidata({app,banco,catalogo,contas,intencoes,prePedidos,
   autorizarOperador,simular);
  app.get('/staging/vitrine/loja/pedidos',autorizarCliente,(req,res)=>{
   try{
-   return res.json({pedidos:prePedidos.listar({
-    titularId:req.titularVitrine
-   }).map(p=>({
-    pedidoId:p.prepedidoId,prepedidoId:p.prepedidoId,itens:p.itens,
-    totalCentavos:p.totalCentavos,
-    situacaoPagamentoFicticio:'AGUARDANDO_FICTICIO',
-    posicaoCriada:false,vendaSomenteLoja:true,semCompraReal:true
-   })),laboratorio:true,pagamentoReal:false});
+   const titularId=req.titularVitrine;
+   const pedidos=prePedidos.listar({titularId}).map(p=>{
+    // Mesmo estado SQLite lido pelo Escritório e pelo administrador.
+    // Leitura não chama o Asaas nem gera posição, bônus ou pagamento.
+    const estado=consultarPedido({banco,prepedidoId:p.prepedidoId,titularId});
+    if(!estado)fail('PREPEDIDO_SEM_ESTADO_PSP');
+    return {
+     pedidoId:p.prepedidoId,prepedidoId:p.prepedidoId,itens:p.itens,
+     totalCentavos:p.totalCentavos,
+     estadoOperacional:estado.estadoOperacional,
+     estadoSandbox:estado.estadoSandbox,
+     conferenciaPSPConcluida:estado.conferenciaPSPConcluida,
+     exigeRevisaoManual:estado.exigeRevisaoManual,
+     ultimoStatusPSP:estado.ultimoStatusPSP,
+     ultimoGETPSPPersistidoEm:estado.ultimoGETPSPPersistidoEm,
+     posicoesPendentesFicticias:estado.posicoesPendentesFicticias,
+     posicoesMotorEnsaio:estado.posicoesMotorEnsaio,
+     consultaPSPExecutadaNestaLeitura:false,
+     posicaoCriada:false,vendaSomenteLoja:true,semCompraReal:true
+    };
+   });
+   return res.json({pedidos,laboratorio:true,pagamentoReal:false});
   }catch{return res.status(503).json({erro:'PEDIDOS_INDISPONIVEIS'});}
  });
  app.post('/staging/vitrine/loja/pedidos',autorizarCliente,

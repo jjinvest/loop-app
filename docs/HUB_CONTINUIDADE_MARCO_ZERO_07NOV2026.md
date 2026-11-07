@@ -206,3 +206,10 @@ Nenhuma venda real nem bonificação atribuída. Tudo no ambiente de homologaç�
 **Auditoria Codex:** issue https://github.com/jjinvest/loop-app/issues/3 atualizada em comentário com HEAD e provas. Nenhuma sessão Codex foi iniciada via esta conversa. Na próxima passagem, Codex deverá auditar os comandos que parecem funcionais mas não alteram estado e classificar PASSOU/FALHOU/NÃO COMPROVADO.
 
 Link de teste da mesma plataforma: https://akitemm-escritorio-preview-homologacao.up.railway.app
+
+
+## Continuidade 268 — estados do PSP unificados entre loja, Escritório e administrador (07/11/2026)
+
+**Ponta solta:** a rota GET `/staging/vitrine/loja/pedidos` ignorava o estado de pagamento do SQLite, retornando sempre `situacaoPagamentoFicticio=AGUARDANDO_FICTICIO`; o participante podia ver uma situação na loja e outra em Meus Pedidos/admin após PSP Sandbox. **Corrigido na mesma vitrine aprovada:** consulta à única função de leitura `consultarPedido()` com escopo de titular e pré-pedido, sem mutação nem acesso remoto ao PSP. Retorna estado operacional, estado Sandbox, data do último GET PSP persistido, marca de conciliação, revisão manual, posição fictícia pendente e vínculo com motor de ensaio. O card de pedidos usa nomes diferentes para estados e avisa sempre que não são pagamentos/posições reais; também retira texto enganoso de pagamento 'pendente' quando não foi criada nem cobrança de teste. Não expõe IDs de pagamento, contas ou outros titulares.
+
+**Comprovação necessária:** CI com teste integrado existente `test/candidato-psp-posicao-entrega-escritorio-unificados.test.js` comparando três consultas para recebimento confirmado, último GET alterado PENDING/RECEIVED, refund/revisão e isolamento do segundo titular; navegador PC/celular verifica estados sem cobrança. Não executar operação comercial nem liberar saques. Auditar no Codex issue #3 depois de estabilizar o CI. PR #1 permanece DRAFT.

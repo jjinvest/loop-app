@@ -484,6 +484,18 @@ const {once}=require('node:events');
     .filter({hasText:/não atinge a referência/}).waitFor();
    await loja.locator('#registrarPedidoLoja').click();
    await loja.locator('#statusPedidoLoja').filter({hasText:/Pedido hom-/}).waitFor();
+   assert.match(await loja.locator('#statusPedidoLoja').textContent(),
+    /sem cobrança gerada pela loja/);
+   const pedidosLoja=await loja.evaluate(async()=>{
+    const r=await fetch('/staging/vitrine/loja/pedidos',{credentials:'same-origin'});
+    return {status:r.status,pedidos:(await r.json()).pedidos};
+   });
+   assert.equal(pedidosLoja.status,200);
+   assert.equal(pedidosLoja.pedidos.length,3);
+   assert.ok(pedidosLoja.pedidos.every(p=>p.estadoOperacional==='SEM_COBRANCA_SANDBOX'),
+    'todas as leituras devem vir da fonte PSP, não de texto fixo no navegador');
+   assert.match(await loja.locator('#pedidosLojaLoop').textContent(),
+    /Pré-pedido preparado. Sem cobrança Pix registrada/);
    await loja.screenshot({path:path.join(__dirname,'../artifacts',
     'vitrine-aprovada-candidato-'+item.nome+'.png'),fullPage:true});
    await loja.close();

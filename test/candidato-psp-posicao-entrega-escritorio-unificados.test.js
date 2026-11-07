@@ -351,6 +351,18 @@ test('uma conta -> PSP reconsultado -> 1 posicao e entrega ficticias -> Escritor
  assert.equal(entrega.body.habilitadaParaEntregaReal,false);
  const ana=await c.request('/staging/meus-pedidos',{token:c.a.token});
  const bia=await c.request('/staging/meus-pedidos',{token:c.b.token});
+ const loja=await c.request('/staging/vitrine/loja/pedidos',{token:c.a.token});
+ const outraLoja=await c.request('/staging/vitrine/loja/pedidos',{token:c.b.token});
+ assert.equal(loja.status,200);
+ assert.equal(outraLoja.status,200);
+ assert.equal(outraLoja.body.pedidos.length,0,'isolamento dos pedidos na loja');
+ assert.equal(loja.body.pedidos[0].pedidoId,c.prepedidoId);
+ assert.equal(loja.body.pedidos[0].estadoOperacional,
+  ana.body.pedidos[0].situacaoOperacional);
+ assert.equal(loja.body.pedidos[0].conferenciaPSPConcluida,true);
+ assert.equal(loja.body.pedidos[0].posicoesPendentesFicticias,1);
+ assert.equal(loja.body.pedidos[0].posicaoCriada,false);
+ assert.equal(loja.body.pedidos[0].semCompraReal,true);
  assert.equal(ana.status,200);
  assert.equal(ana.body.pedidos.length,1);
  assert.equal(ana.body.pedidos[0].conferenciaPSPConcluida,true);
@@ -375,7 +387,13 @@ test('uma conta -> PSP reconsultado -> 1 posicao e entrega ficticias -> Escritor
   const getsAntes=c.getGets();
   const mudancasAntes=c.banco.prepare('SELECT total_changes() n').get().n;
   const cliente=await c.request('/staging/meus-pedidos',{token:c.a.token});
+  const vitrine=await c.request('/staging/vitrine/loja/pedidos',{token:c.a.token});
   const admin=await c.request(root,{admin:true});
+  assert.equal(vitrine.status,200);
+  assert.equal(vitrine.body.pedidos[0].conferenciaPSPConcluida,
+   estado==='RECEIVED','loja deve refletir o último GET PSP persistido');
+  assert.equal(vitrine.body.pedidos[0].ultimoStatusPSP,estado);
+  assert.equal(vitrine.body.pedidos[0].semCompraReal,true);
   assert.equal(admin.status,200,JSON.stringify(admin.body));
   const vigente=estado==='RECEIVED';
   assert.equal(cliente.body.pedidos[0].conferenciaPSPConcluida,vigente);
@@ -410,6 +428,11 @@ test('uma conta -> PSP reconsultado -> 1 posicao e entrega ficticias -> Escritor
  assert.equal(filaReversa.body.pendentesExigemRevisao,1);
  assert.equal(filaReversa.body.hipoteseFilaB[0].estado,'EXIGE_REVISAO_PSP');
  const reversao=await c.request('/staging/meus-pedidos',{token:c.a.token});
+ const lojaReversa=await c.request('/staging/vitrine/loja/pedidos',{token:c.a.token});
+ assert.equal(lojaReversa.status,200);
+ assert.equal(lojaReversa.body.pedidos[0].estadoOperacional,'EXIGE_REVISAO_SANDBOX');
+ assert.equal(lojaReversa.body.pedidos[0].conferenciaPSPConcluida,false);
+ assert.equal(lojaReversa.body.pedidos[0].posicaoCriada,false);
  assert.equal(reversao.body.pedidos[0].entregaFicticia.status,
   'BLOQUEADA_PARA_REVISAO_SANDBOX');
  assert.equal(reversao.body.pedidos[0].situacaoOperacional,
