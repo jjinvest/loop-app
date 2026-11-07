@@ -763,58 +763,51 @@ class PonteComprasConvitesDemoSQLite{
    };
   }catch(erro){this.banco.exec('ROLLBACK');throw erro;}
  }
- // Somente a DOURADA manual compromete a reserva de seguranca.
- // Azul que vira dourada ja veio de compra e nao sofre segunda cobranca.
+ // Regra vigente: DOURADA ADMINISTRATIVA sem consumir o cofre de reserva.
+ // Lancamentos historicos financiados permanecem imutaveis e comprometidos.
+ // Centro da empresa continua destinado ao cofre LOOP_DOURADAS pelos seis eventos.
  criarDouradaManualDemo({eventoId}={}){
   if(typeof eventoId!=='string'||!/^[a-z0-9-]{3,80}$/.test(eventoId))
    throw falha('EVENTO_DOURADA_INVALIDO','Identificador administrativo invalido');
   const banco=this.banco;banco.exec('BEGIN IMMEDIATE');
   try{
-   const existente=banco.prepare(`
+   const antiga=banco.prepare(`
+    SELECT evento_id AS eventoId,posicao_id AS posicaoId,criada_em AS criadaEm
+    FROM admin_ponte_douradas_manuais_demo WHERE evento_id=?
+   `).get(eventoId);
+   if(antiga){
+    banco.exec('COMMIT');
+    return {...antiga,repetida:true,origem:'ADMIN_MANUAL_SEM_COMPRA',
+     fila:'B',cor:'DOURADO',aporteRegistrado:false,
+     reservaConsumidaCentavos:0,receitaNovaCentavos:0,semPagamentoReal:true};
+   }
+   // Uma operacao antiga nao pode ser reinterpretada como gratuita.
+   const financiada=banco.prepare(`
     SELECT evento_id AS eventoId,posicao_id AS posicaoId,
      criada_em AS criadaEm,valor_referencia_centavos AS valorReferenciaCentavos
     FROM admin_ponte_douradas_financiadas_demo WHERE evento_id=?
    `).get(eventoId);
-   if(existente){
-    banco.exec('COMMIT');return {...existente,repetida:true,
+   if(financiada){
+    banco.exec('COMMIT');return {...financiada,repetida:true,
      origem:'ADMIN_MANUAL_COM_APORTE_RESERVA_DEMO',
      aporteRegistrado:true,semPagamentoReal:true};
    }
-   if(banco.prepare('SELECT 1 FROM admin_ponte_douradas_manuais_demo WHERE evento_id=?').get(eventoId))
-    throw falha('EVENTO_DOURADA_LEGADO','Id reservado em dourada antiga');
-   const ref=this.configuracaoValor.atual();
-   const pre=new PreLancamentoCofresV6DemoSQLite({banco,ponte:this});
-   if(!pre.estado())throw falha('RESERVA_NAO_CONFIGURADA','Cofres demonstrativos nao configurados');
-   const conciliado=new ConciliacaoCofresV6DemoSQLite({banco,preLancamento:pre,livro:pre.livro}).conferir();
-   if(conciliado.quantidadeDivergencias||conciliado.fase==='INATIVO')
-    throw falha('CONCILIACAO_COFRES_DIVERGENTE','Reserva demonstrativa inconsistente');
-   const saldoBruto=conciliado.cofreDireitaSimuladoCentavos;
-   // A mesma reserva de seguranca sustenta bonus e douradas: calcular
-   // antes de liberar qualquer NOVA posicao, sem usar o caixa central.
-   const disponivel=disponibilidadeCofreDemo(banco,{
-    cofreId:'LOOP_DIREITA',saldoBrutoCentavos:saldoBruto
-   });
-   const livre=disponivel.saldoLivreDemonstrativoCentavos;
-   if(!Number.isSafeInteger(livre)||livre<ref.valorCentavos)
-    throw falha('SALDO_RESERVA_INSUFICIENTE','Saldo demonstrativo insuficiente');
    const sim=this._restaurar();
    const nova=sim.registrarPosicaoSimulada({
     nome:'Posição dourada LOOP',participanteId:'LOOP_EMPRESA'
    }).posicao;
    const p=sim.filas.filaB.find(x=>x.id===nova.id);
+   if(!p)throw falha('DOURADA_FILA_INVALIDA','Posicao nao entrou na fila B');
    p.empresa=true;p.titularOperacional='LOOP_EMPRESA';
    p.statusAdesao='POSICAO_LOOP';
-   p.origemOperacional='ADMIN_MANUAL_COM_APORTE_RESERVA_DEMO';
-   p.geradaSemCompra=false;p.aporteInternoCentavos=ref.valorCentavos;
-   p.revisaoValorPosicao=ref.revisao;
+   p.origemOperacional='ADMIN_MANUAL_SEM_COMPRA';
+   p.geradaSemCompra=true;p.aporteInternoCentavos=0;
    const data=this.relogio();
    banco.prepare(`
-    INSERT INTO admin_ponte_douradas_financiadas_demo(
-     evento_id,posicao_id,criada_em,cofre_origem,
-     valor_referencia_centavos,revisao_valor,reserva_bruta_antes_centavos,
-     reserva_livre_antes_centavos,origem)
-    VALUES(?,?,?,'LOOP_DIREITA',?,?,?,?,'ADMIN_MANUAL_COM_APORTE_RESERVA_DEMO')
-   `).run(eventoId,p.id,data,ref.valorCentavos,ref.revisao,saldoBruto,livre);
+    INSERT INTO admin_ponte_douradas_manuais_demo(
+     evento_id,posicao_id,criada_em,origem
+    ) VALUES(?,?,?,'ADMIN_MANUAL_SEM_COMPRA')
+   `).run(eventoId,p.id,data);
    banco.prepare(`
     INSERT INTO admin_ponte_estado_demo(id,snapshot_json) VALUES(1,?)
     ON CONFLICT(id) DO UPDATE SET snapshot_json=excluded.snapshot_json
@@ -822,11 +815,10 @@ class PonteComprasConvitesDemoSQLite{
    banco.exec('COMMIT');
    return {eventoId,posicaoId:p.id,criadaEm:data,repetida:false,
     origem:p.origemOperacional,fila:'B',cor:'DOURADO',
-    cofreOrigem:'LOOP_DIREITA',valorReferenciaCentavos:ref.valorCentavos,
-    revisaoValor:ref.revisao,reservaBrutaAntesCentavos:saldoBruto,
-    reservaDisponivelDepoisCentavos:livre-ref.valorCentavos,
-    aporteRegistrado:true,receitaNovaCentavos:0,
-    bancoConciliado:false,semPagamentoReal:true,semCPF:true,semComissao:true};
+    cofreDestinoContemplacao:'LOOP_DOURADAS',
+    aporteRegistrado:false,reservaConsumidaCentavos:0,
+    receitaNovaCentavos:0,bancoConciliado:false,semPagamentoReal:true,
+    semCPF:true,semComissao:true};
   }catch(e){banco.exec('ROLLBACK');throw e;}
  }
  // Preenchimento ADMINISTRATIVO local, sem criar pagamentos ou vendas.
