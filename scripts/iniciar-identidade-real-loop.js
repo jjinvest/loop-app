@@ -107,6 +107,8 @@ async function iniciar(ambiente=process.env){
   const auditoria=new AuditoriaOperacionalSQLite({
    banco,chaveAuditoria:config.chaveAuditoria
   });
+  // Corrupção ou perda da chave da auditoria impede iniciar aplicação.
+  auditoria.verificar();
   const catalogo=new CatalogoMultiDistribuidoresSQLite({
    banco,distribuidorHomologado:()=>false,auditoria
   });
