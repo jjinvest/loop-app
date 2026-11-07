@@ -2,7 +2,8 @@
 
 // Simulador isolado do tabuleiro LOOP.
 // Nao executa pagamentos nem valida compras; a integracao real fica para outra etapa.
-const {centroDoLoop,cofreDoEvento,origemDoCentro}=require('./destino-financeiro-centro-loop');
+const {centroDoLoop,cofreDoEvento,origemDoCentro,
+ REGRA_DOURADA_INTEGRAL,REGRA_DOURADA_LEGADA}=require('./destino-financeiro-centro-loop');
 const DESTINOS = Object.freeze([
   'PARTICIPANTE',
   'EMPRESA',
@@ -91,11 +92,20 @@ class TabuleiroLoop {
     }
     this.iniciado = true;
     const ordem = this.vendasDoCiclo.length + 1;
+    // Um ciclo ja iniciado no formato historico segue V1 ate concluir.
+    // A regra de seis parcelas integras comeca no primeiro evento de um
+    // NOVO ciclo dourado, sem recalcular snapshots de ciclos anteriores.
+    const regraDourada=centroDoLoop(this.centro)?
+      (this.vendasDoCiclo.length?
+       (this.vendasDoCiclo[0].regraDourada||REGRA_DOURADA_LEGADA):
+       REGRA_DOURADA_INTEGRAL):null;
     const registro = {
       vendaId,
       ordem,
       destinoPrevisto: DESTINOS[ordem - 1],
-      destinoCofre:cofreDoEvento({posicaoCentro:this.centro,ordem}),
+      destinoCofre:cofreDoEvento({posicaoCentro:this.centro,ordem,
+        ...(regraDourada?{regraDourada}:{})}),
+      ...(regraDourada===REGRA_DOURADA_INTEGRAL?{regraDourada}:{}),
       origemTitularCentro:origemDoCentro(this.centro),
       ciclo: this.ciclosConcluidos.length + 1,
       posicaoCentroId: this.centro.id,
