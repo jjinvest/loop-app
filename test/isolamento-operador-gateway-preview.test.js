@@ -114,3 +114,32 @@ test('com credencial admin separada a senha de acesso de cliente nao autoriza op
   }),/GATEWAY_PREVIA_INVALIDO/);
  }finally{await x.fechar();}
 });
+test('variantes administrativas com barra final nao atravessam o gateway visitante',async()=>{
+ const x=await montar(D);
+ try{
+  const login=await fetch(x.url+'/loja',{
+   headers:{Authorization:basica('acesso',A)}
+  });
+  assert.equal(login.status,200);
+  const ck=cookie(login,'akitemm_preview_access');
+  assert.ok(ck);
+  const chamadasAntes=x.chamadas.length;
+  for(const path of [
+   '/staging/escritorio-admin/',
+   '/staging/escritorio-admin///',
+   '/staging/assets/admin.js/',
+   '/staging/assets/admin.css/',
+   '/staging/assets/%61dmin.js/',
+   '/staging/escritorio-unificado/'
+  ]){
+   const r=await fetch(x.url+path,{headers:{Cookie:ck}});
+   assert.equal(r.status,401,path);
+  }
+  assert.equal(x.chamadas.length,chamadasAntes,
+   'o gateway nao pode encaminhar assets ou rotas administrativas ao backend');
+  const admin=await fetch(x.url+'/staging/escritorio-admin/',{
+   headers:{Authorization:basica('operador',D)}
+  });
+  assert.equal(admin.status,200);
+ }finally{await x.fechar();}
+});
