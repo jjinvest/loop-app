@@ -51,7 +51,7 @@ function analisarConvergenciaFinanceiraDeclarada({
   ).get(tabela);
   if(!existe)erro('CONCILIACAO_BANCO_INTERNO_INCOMPLETO');
  }
- const avisos=new Map(),amostras=[],contador=new Map();
+ const amostras=[],contador=new Map();
  let totalAvisos=0;
  function avisar(c,pedidoId=''){
   totalAvisos++;
@@ -201,7 +201,7 @@ function analisarConvergenciaFinanceiraDeclarada({
   extratoBancarioVerificadoComBanco:false,
   notasFiscaisVerificadas:false,
   retencoesTributariasConferidas:false,
-  concilicaoRealCertificada:false,
+  conciliacaoRealCertificada:false,
   lucroLiquidoApurado:false,
   creditoPosicoesPermitido:false,
   saquePermitido:false,
