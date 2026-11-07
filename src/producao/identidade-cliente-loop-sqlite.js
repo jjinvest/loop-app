@@ -258,7 +258,7 @@ class IdentidadeClienteLoopReal{
   try{
    const ultimo=this.banco.prepare([
     'SELECT criado_em FROM loop_real_codigos',
-    'WHERE titular_id=? AND finalidade=? ORDER BY criado_em DESC LIMIT 1'
+    'WHERE titular_id=? AND finalidade=? ORDER BY criado_em DESC,rowid DESC LIMIT 1'
    ].join(' ')).get(row.id,finalidade);
    const count=this.banco.prepare([
     'SELECT COUNT(*) AS n FROM loop_real_codigos',
@@ -284,7 +284,7 @@ class IdentidadeClienteLoopReal{
   this.banco.prepare([
    'UPDATE loop_real_codigos SET estado=? WHERE id=? AND estado=?'
   ].join(' ')).run(aceito?'ENVIADO':'FALHOU',id,'RESERVADO');
-  if(!aceito)erro('EMAIL_REAL_NAO_ENTREGUE');
+  if(!aceito)erro('ENVIO_EMAIL_NAO_CONFIRMADO');
   return resposta;
  }
  async confirmarCodigo({titularId=null,email=null,codigo,finalidade,novaSenha}={}){
@@ -299,6 +299,7 @@ class IdentidadeClienteLoopReal{
   const salt=finalidade==='SENHA'?randomBytes(16).toString('hex'):null;
   const senhaHash=salt?await hashSenha(novaSenha,salt):null;
   this.banco.exec('BEGIN IMMEDIATE');
+  let transacaoAberta=true;
   try{
    const atual=this.banco.prepare([
     'SELECT id,codigo_hmac,estado,tentativas,expira_em',
@@ -313,7 +314,7 @@ class IdentidadeClienteLoopReal{
      "estado=CASE WHEN tentativas+1>=5 THEN 'BLOQUEADO'",
      "ELSE 'ENVIADO' END WHERE id=? AND estado='ENVIADO' AND tentativas<5"
     ].join(' ')).run(atual.id);
-    this.banco.exec('COMMIT');
+    this.banco.exec('COMMIT');transacaoAberta=false;
     erro('CODIGO_INVALIDO');
    }
    this.banco.prepare([
@@ -330,11 +331,11 @@ class IdentidadeClienteLoopReal{
     ].join(' ')).run(salt,senhaHash,row.id);
     this.banco.prepare('DELETE FROM loop_real_sessoes WHERE titular_id=?').run(row.id);
    }
-   this.banco.exec('COMMIT');
+   this.banco.exec('COMMIT');transacaoAberta=false;
    return {confirmado:true,emailVerificado:finalidade==='EMAIL',
     sessoesRevogadas:finalidade==='SENHA',pagamentoReal:false};
   }catch(e){
-   if(this.banco.inTransaction)this.banco.exec('ROLLBACK');
+   if(transacaoAberta)this.banco.exec('ROLLBACK');
    throw e;
   }
  }
