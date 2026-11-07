@@ -16,6 +16,8 @@ const {SessaoAdminComercialSQLite}=
  require('../src/producao/sessao-admin-comercial-sqlite');
 const {AuditoriaOperacionalSQLite}=
  require('../src/producao/auditoria-operacional-sqlite');
+const {ManutencaoComercialSQLite}=
+ require('../src/producao/manutencao-comercial-sqlite');
 const {validarIdentidade,criarBackupIdentidadeReal,
  restaurarBackupIdentidadeReal}=
  require('../src/producao/backup-identidade-real');
@@ -149,11 +151,15 @@ test('backup preserva catálogo, custos e auditoria íntegra, mas revoga sessão
  const trilha=new AuditoriaOperacionalSQLite({
   banco:x.banco,chaveAuditoria
  });
+ const manutencao=new ManutencaoComercialSQLite({
+  banco:x.banco,auditoria:trilha
+ });
  const catalogo=new CatalogoMultiDistribuidoresSQLite({
-  banco:x.banco,distribuidorHomologado:()=>false,auditoria:trilha
+  banco:x.banco,distribuidorHomologado:()=>false,
+  auditoria:trilha,manutencao
  });
  const custos=new ControleEconomicoLojaSQLite({
-  banco:x.banco,auditoria:trilha
+  banco:x.banco,auditoria:trilha,manutencao
  });
  const sessoes=new SessaoAdminComercialSQLite({
   banco:x.banco,chaveAdmin,credencialAdmin
