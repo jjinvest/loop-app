@@ -1,5 +1,19 @@
 # LOOP V6 — Bolas douradas administradas pelo LOOP e auditoria de ciclo
 
+## Regra vigente — criação sem consumir reserva (07/11/2026)
+
+Por decisão expressa do proprietário, **novas bolas douradas criadas manualmente pelo administrador não podem mais consumir, comprometer nem reduzir o cofre direito de reserva**. Este caixa permanece reservado a outras obrigações da empresa, inclusive planejamento tributário.
+
+- Criar **uma dourada por solicitação**, com identificador sequencial, evento idempotente, titular operacional `LOOP_EMPRESA`, cor **DOURADO** inalterada, sem CPF, pedido ou venda inventados, ao **fim da fila B**.
+- Cada nova dourada fica identificada como `ADMIN_MANUAL_SEM_COMPRA`, `aporteInternoCentavos=0`, `geradaSemCompra=true`. O retorno da API declara `reservaConsumidaCentavos=0`, `aporteRegistrado=false` e `receitaNovaCentavos=0`.
+- Douradas antigas criadas sob a regra de aporte são **históricas** e não têm seus lançamentos revertidos, apagados ou reclassificados: a tabela imutável `admin_ponte_douradas_financiadas_demo` permanece no cálculo do comprometimento anterior, se houver. Não devolver artificialmente dinheiro à reserva.
+- Quando uma dourada da empresa chega ao **centro**, os seis eventos mantêm exatamente os destinos existentes: parcelas **1, 3 e 5 ao cofre exclusivo `LOOP_DOURADAS`**, parcela 2 e 6 ao investimento (`LOOP_ESQUERDA`) e parcela 4 à reserva (`LOOP_DIREITA`). Não mudou o tabuleiro, as cores, as filas, os seis eventos nem a proporção 3A:1B.
+- Nenhuma criação automática de saldo, pagamento, saque ou crédito bancário. Eventos de laboratório apenas simulam destinação; obrigação real exige comprovação de recebimentos, passivos, custos e conciliação.
+- Esta alteração foi aplicada **à ponte administrativa de demonstração**, e **não cria automaticamente o comando de emissão na interface unificada `/staging/escritorio-admin`**, onde a integração com o mesmo motor permanece pendente. Não reintroduzir outra base nem simular botão funcional.
+- Ensaios específicos: `test/dourada-manual-auditoria-pontas-loop-v6.test.js` e `test/disponibilidade-caixa2-integracao-v6.test.js`. Caminho de validação no CI `preview-escritorio-protegido.yml`.
+
+O requisito antigo de pré-financiar cada nova dourada foi **revogado para novas criações**, não para o histórico contábil já comprometido. O uso de reserva tributária não deve ser confundido com cálculo automático ou pagamento de impostos.
+
 ## Criação manual (apenas laboratório, 16/10/2026)
 
 O administrador abre **Financeiro administrativo → Criar bola dourada do LOOP** e pressiona **Criar 1 bola dourada**. O servidor, autenticado como administrador local, cria exatamente **uma posição operacional**:
