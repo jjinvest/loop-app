@@ -71,6 +71,7 @@ test('controles de pesquisa e navegação dos departamentos estão ligados',()=>
   'pesquisaAnteriorAdmin','pesquisaProximoAdmin','pesquisaEstadoAdmin'])
   assert.ok(html.includes('id="'+id+'"'),id);
  assert.ok(js.includes("api('/pesquisa?'+q.toString())"));
- assert.ok(js.includes("'resumoMissoes').scrollIntoView"));
+ assert.ok(js.includes("panel.scrollIntoView({behavior:'smooth',block:'start'})"));
+ assert.ok(js.includes("api('/departamentos/'+encodeURIComponent(codigo)"));
  assert.ok(js.includes('++sequenciaPesquisaAdmin;pesquisaAtualAdmin=null'));
 });
