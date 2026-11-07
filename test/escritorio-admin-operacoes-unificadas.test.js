@@ -158,6 +158,55 @@ test('12 departamentos operam no SQLite compartilhado sem inventar dados comerci
  assert.equal(banco.prepare('SELECT COUNT(*) AS n FROM akitemm_custos_produtos_admin_historico_lab').get().n,1);
  assert.throws(()=>banco.exec('DELETE FROM akitemm_custos_produtos_admin_historico_lab'),
   /custo historico imutavel/);
+ // A foto de custo do pedido ja existente nao muda com cadastro posterior.
+ const fotoAntiga=JSON.parse(banco.prepare([
+  'SELECT fotografia_json AS foto FROM akitemm_pedido_custos_fotografia_lab',
+  'WHERE prepedido_id=?'
+ ].join(' ')).get(pid).foto);
+ assert.equal(fotoAntiga.custosCompletos,false);
+ assert.equal(fotoAntiga.custoFornecedorPrevistoCentavos,null);
+ // A segunda compra utiliza a cotacao REAL do catalogo compartilhado, ja
+ // com preco 500 e classificacao DOURADA (uma posicao de referencia R$250).
+ const entradaNova={itens:[{produtoId:produtoAlvo,quantidade:1}]};
+ const cotacaoNova=await cotarCheckoutPublico({
+  repositorio:ctx.catalogo,entrada:entradaNova
+ });
+ assert.equal(cotacaoNova.totalCentavos,50000);
+ const rascunhoNovo=ctx.intencoes.criar({
+  titularId:ana.titularId,entrada:entradaNova,cotacao:cotacaoNova,
+  chaveIdempotencia:'operacao-unificada-rascunho-0002'
+ });
+ const novoPedido=await ctx.prePedidos.preparar({
+  titularId:ana.titularId,rascunhoId:rascunhoNovo.intencao.pedidoId,
+  repositorioCatalogo:ctx.catalogo
+ });
+ assert.equal(novoPedido.repetido,false);
+ const fluxoRoute=raiz+'/financeiro/fluxo';
+ assert.equal((await get(fluxoRoute,false)).status,401);
+ const fluxo=await get(fluxoRoute);
+ assert.equal(fluxo.status,200,JSON.stringify(fluxo));
+ const pedidoNovo=fluxo.data.pedidos.find(
+  x=>x.prepedidoId===novoPedido.prepedido.prepedidoId);
+ assert.ok(pedidoNovo,'foto do pedido precisa entrar no mesmo COMMIT');
+ assert.equal(pedidoNovo.totalBrutoCotadoCentavos,50000);
+ assert.equal(pedidoNovo.referenciaLoopPrevistaCentavos,25000);
+ assert.equal(pedidoNovo.quantidadePosicoesPlanejadas,1);
+ assert.equal(pedidoNovo.custoFornecedorPrevistoCentavos,17500);
+ assert.equal(pedidoNovo.fretePrevistoCentavos,1500);
+ assert.equal(pedidoNovo.margemComercialEstimadaCentavos,5000);
+ assert.equal(pedidoNovo.fornecedorPagoCentavos,0);
+ assert.equal(fluxo.data.luzesFinanceirasRegistradas,0);
+ assert.equal(fluxo.data.girosFisicosConcluidos,0);
+ assert.equal(fluxo.data.transferenciasBancariasEfetuadas,0);
+ assert.equal(fluxo.data.valorDisponivelParaSaqueCentavos,0);
+ assert.ok(fluxo.data.bancosPlanejados.every(x=>x.conectado===false));
+ const fotoImutavel=banco.prepare([
+  'SELECT fotografia_json AS foto FROM akitemm_pedido_custos_fotografia_lab',
+  'WHERE prepedido_id=?'
+ ].join(' ')).get(novoPedido.prepedido.prepedidoId).foto;
+ assert.equal(fotoImutavel,JSON.stringify(pedidoNovo));
+ assert.throws(()=>banco.exec('DELETE FROM akitemm_pedido_custos_fotografia_lab'),
+  /custos de pedido imutaveis/);
  assert.equal(banco.prepare('PRAGMA integrity_check').get().integrity_check,'ok');
  assert.deepEqual(banco.prepare('PRAGMA foreign_key_check').all(),[]);
  assert.equal((await get('/readyz')).status,200);
