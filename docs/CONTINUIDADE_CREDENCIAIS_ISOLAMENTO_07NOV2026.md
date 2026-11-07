@@ -37,3 +37,13 @@ Projeto `loop-asaas-homologacao`, ambiente `homologacao`. Serviço `akitemm-escr
 4. Reconciliar posteriormente a branch de integração com os 29 commits paralelos da PR #1; PR permanece DRAFT. Nenhum pagamento real, saque, merge ou lançamento está autorizado por este checkpoint.
 
 Registrar provas reais de cada gate sem inflar contagens ou dizer que HTTP/CI equivale a auditoria independente.
+
+## Atualização 07/11 — identidade única, interface LOOP e testes
+
+- A loja de homologação e o Escritório Virtual compartilham o mesmo cookie de sessão `loop_candidato_s`, as mesmas APIs de `contas` e o mesmo titular no SQLite; a vitrine `/staging/loja` só abre se houver sessão válida, sem cadastro separado. O navegador sem cookie não recebe a identidade do titular.
+- Corrigida a tela de `/minha-conta`: abre **Entrar** para uma conta existente; **Primeiro acesso? Criar cadastro** permanece disponível. A restauração de sessão existente continua automática.
+- Marca textual do Escritório corrigida de AKITEMM para **LOOP 3.0 / Escritório Virtual**. AKITEMM permanece a vitrine/loja e o link de indicação `/loja/<nick>` é distinto de `/escritorio/<nick>`. O cabeçalho final ainda será decidido pelo proprietário.
+- Adicionado teste integrado do acesso ao escritório e à loja com mesma sessão autenticada, incluindo bloqueio sem sessão; corrigido o teste que supunha nick com maiúscula (os nicks são canonizados em minúscula) e o teste que criava gateway sem senha de administrador.
+- GitHub: alterações `3543b92f`, `79d96239`, `bdd54320`, `8d621427` na branch `feature/unificar-escritorio-real-20261105`; CI do código `8d621427`: https://github.com/jjinvest/loop-app/actions/runs/42325161899 (verificar conclusão; não marcar aprovado sem resultado).
+- Railway: serviço `akitemm-escritorio-preview` permanece fixado no código anteriormente validado `2bd4316f`; **nenhum deploy automático deste bloco** para evitar interromper testes do usuário ou ativar exigência de nova senha admin antes de confirmar a configuração. Senha admin exclusivamente em `LOOP_PREVIEW_SENHA_ADMIN` no Railway, distinta do acesso de teste do visitante. Nunca registrar valores de segredos.
+- Esta é uma homologação de laboratório. Usuário não deve colocar senha pessoal, CPF real ou dados cadastrais verdadeiros nesta prévia. PR #1 DRAFT; nenhum pagamento real, saque, merge ou lançamento autorizado.
