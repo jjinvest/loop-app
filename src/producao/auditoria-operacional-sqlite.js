@@ -7,7 +7,7 @@ const ACOES=new Set([
  'PRODUTO_CRIADO','OFERTA_RASCUNHO_CRIADA',
  'CUSTO_FORNECEDOR_ALTERADO','PRECO_VENDA_ALTERADO'
 ]);
-const TEXTO=/^[A-Za-z0-9_-]{1,120}$/;
+const TEXTO=/^[A-Za-z0-9_-]{1,200}$/;
 function falha(c){const e=new Error(c);e.codigo=c;throw e;}
 function canonico(x){return JSON.stringify(x);}
 class AuditoriaOperacionalSQLite{
