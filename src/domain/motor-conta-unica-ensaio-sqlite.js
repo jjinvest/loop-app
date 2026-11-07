@@ -37,6 +37,18 @@ class MotorContaUnicaEnsaioSQLite{
    'CREATE UNIQUE INDEX IF NOT EXISTS idx_motor_ensaio_prepared_once',
    "ON akitemm_motor_conta_ensaio_operacoes(prepedido_id) WHERE tipo='VINCULAR_PEDIDO';",
    // Camada EXCLUSIVAMENTE VISUAL, fora do snapshot financeiro e da fila.
+   // Douradas administrativas nascem no MOTOR UNICO, sem pedido e sem caixa.
+   // Livro imutavel permite idempotencia e auditoria mesmo apos reinicio.
+   'CREATE TABLE IF NOT EXISTS akitemm_motor_douradas_manuais_lab(',
+   'evento_id TEXT PRIMARY KEY,numero_posicao INTEGER NOT NULL UNIQUE,',
+   "origem TEXT NOT NULL CHECK(origem='ADMIN_MANUAL_SEM_COMPRA'),",
+   'criado_em INTEGER NOT NULL);',
+   'CREATE TRIGGER IF NOT EXISTS motor_douradas_manuais_no_update',
+   'BEFORE UPDATE ON akitemm_motor_douradas_manuais_lab',
+   "BEGIN SELECT RAISE(ABORT,'dourada manual imutavel'); END;",
+   'CREATE TRIGGER IF NOT EXISTS motor_douradas_manuais_no_delete',
+   'BEFORE DELETE ON akitemm_motor_douradas_manuais_lab',
+   "BEGIN SELECT RAISE(ABORT,'dourada manual imutavel'); END;",
    'CREATE TABLE IF NOT EXISTS akitemm_motor_douradas_rotulos_lab(',
    'numero_posicao INTEGER PRIMARY KEY CHECK(numero_posicao>0),',
    'nome_visual TEXT NOT NULL,numero_visual TEXT NOT NULL,',
@@ -1106,6 +1118,58 @@ class MotorContaUnicaEnsaioSQLite{
    return {girou:acao==='GIRAR',somenteEnsaio:true,creditoReal:false};
   });
  }
+ // Exclusivo do operador autenticado pela rota /staging/escritorio-unificado.
+ // Cria UMA dourada no mesmo snapshot SQLite de contas, clientes e catraca.
+ // Nao ha venda, deducao de reserva, comissao ou credito de seis eventos.
+ criarDouradaManualEnsaio({eventoId,aceiteEnsaio}={}){
+  validarAmbiente();
+  if(typeof eventoId!=='string'||
+     !/^dourada-[a-z0-9-]{8,80}$/.test(eventoId)||
+     aceiteEnsaio!==true)falha('DOURADA_MANUAL_DADOS_INVALIDOS');
+  const banco=this.banco;
+  banco.exec('BEGIN IMMEDIATE');
+  try{
+   const anterior=banco.prepare([
+    'SELECT numero_posicao AS posicaoId FROM',
+    'akitemm_motor_douradas_manuais_lab WHERE evento_id=?'
+   ].join(' ')).get(eventoId);
+   if(anterior){
+    banco.exec('COMMIT');
+    return {eventoId,posicaoId:anterior.posicaoId,repetido:true,
+     fila:'B',cor:'DOURADO',origem:'ADMIN_MANUAL_SEM_COMPRA',
+     cofreDestino:'LOOP_DOURADAS',reservaConsumidaCentavos:0,
+     receitaNovaCentavos:0,creditoReal:false,financeiroReal:false,
+     apenasEnsaio:true};
+   }
+   const sim=this._simulador();
+   const criada=sim.registrarPosicaoSimulada({
+    nome:'Posição dourada LOOP',participanteId:'LOOP_EMPRESA',
+    vendaId:'dourada-manual-lab:'+eventoId
+   });
+   if(criada.repetida)falha('DOURADA_MANUAL_EVENTO_DUPLICADO_NO_MOTOR');
+   const posicao=sim.filas.filaB.find(p=>p.id===criada.posicao.id);
+   if(!posicao)falha('DOURADA_MANUAL_FILA_INCONSISTENTE');
+   posicao.empresa=true;
+   posicao.titularOperacional='LOOP_EMPRESA';
+   posicao.statusAdesao='POSICAO_LOOP';
+   posicao.origemOperacional='ADMIN_MANUAL_SEM_COMPRA';
+   posicao.geradaSemCompra=true;
+   posicao.aporteInternoCentavos=0;
+   banco.prepare([
+    'INSERT INTO akitemm_motor_douradas_manuais_lab',
+    '(evento_id,numero_posicao,origem,criado_em)',
+    "VALUES(?,?,'ADMIN_MANUAL_SEM_COMPRA',?)"
+   ].join(' ')).run(eventoId,posicao.id,Date.now());
+   this._evento('CRIAR_DOURADA_MANUAL',{posicaoId:posicao.id});
+   this._gravar(sim);
+   banco.exec('COMMIT');
+   return {eventoId,posicaoId:posicao.id,repetido:false,
+    fila:'B',cor:'DOURADO',origem:'ADMIN_MANUAL_SEM_COMPRA',
+    cofreDestino:'LOOP_DOURADAS',reservaConsumidaCentavos:0,
+    receitaNovaCentavos:0,creditoReal:false,financeiroReal:false,
+    apenasEnsaio:true};
+  }catch(e){banco.exec('ROLLBACK');throw e;}
+ }
  // Somente painel do OPERADOR deve chamar este método. Nome e número
  // não modificam ID, snapshot do motor, compra, prioridade, valor ou cofre.
  definirVisualDourada({posicaoId,nomeVisual='',numeroVisual=''}={}){
@@ -1215,6 +1279,8 @@ class MotorContaUnicaEnsaioSQLite{
    agenda:this.consultarAgenda(),
    minhasPosicoes:minhas,pendentesDeEnsaio:minhas.filter(p=>p.pendente).length,
    posicoesAtivasDoTitular:minhas.length,
+   douradasManuaisCriadas:this.banco.prepare(
+    'SELECT COUNT(*) AS n FROM akitemm_motor_douradas_manuais_lab').get().n,
    status:'SEM_PAGAMENTO_OU_ATIVACAO_REAL'};
  }
 }
