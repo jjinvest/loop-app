@@ -43,7 +43,7 @@ test('cookie de visitante nao abre APIs administrativas nem injeta bearer no bac
  const x=await montar();
  try{
   const visitante=await fetch(x.url+'/loja',{
-   headers:{Authorization:basica('acesso',A)}
+   redirect:'manual',headers:{Authorization:basica('acesso',A)}
   });
   assert.equal(visitante.status,302);
   assert.equal(visitante.headers.get('location'),'/staging/loja');
@@ -113,7 +113,7 @@ test('com credencial admin separada a senha de acesso de cliente nao autoriza op
    {headers:{Cookie:ck}});
   assert.equal(api.status,200);
   const cliente=await fetch(x.url+'/loja',{
-   headers:{Authorization:basica('acesso',A)}
+   redirect:'manual',headers:{Authorization:basica('acesso',A)}
   });
   assert.equal(cliente.status,302);
   assert.equal(cliente.headers.get('location'),'/staging/loja');
@@ -127,7 +127,7 @@ test('variantes administrativas com barra final nao atravessam o gateway visitan
  const x=await montar(D);
  try{
   const login=await fetch(x.url+'/loja',{
-   headers:{Authorization:basica('acesso',A)}
+   redirect:'manual',headers:{Authorization:basica('acesso',A)}
   });
   assert.equal(login.status,302);
   assert.equal(login.headers.get('location'),'/staging/loja');
