@@ -1560,11 +1560,11 @@
         'Indisponível';
       aviso.textContent=saldo.quantidadeDivergencias?
         'DIVERGÊNCIA no caixa demonstrativo: novas operações devem ficar bloqueadas.':
-        'Saldo livre = bruto - bonificações - douradas - gestão pendente. Sem banco, PSP ou saque real.';
+        'Saldo livre = bruto - bonificações - aportes históricos de douradas - gestão pendente. Novas douradas não descontam a reserva.';
     }catch(e){
       if(atual===versaoCaixa2){
         for(const id of ids)el(id).textContent='—';
-        aviso.textContent='Não foi possível confirmar o saldo do caixa 2. Valores indisponíveis; não autorize nova dourada. '+e.message;
+        aviso.textContent='Não foi possível confirmar o saldo do caixa 2. Valores indisponíveis para acompanhamento; a criação de douradas não exige reserva. '+e.message;
       }
     }
   }
@@ -1578,8 +1578,8 @@
         const li=document.createElement('li');
         li.textContent='Posição #'+p.posicaoId+' · origem administrativa · '+p.criadaEm+
           (p.valorReferenciaCentavos>0?
-           ' · reserva comprometida: '+money(p.valorReferenciaCentavos)+' · sem banco/PSP':
-           ' · legado anterior sem aporte');
+           ' · aporte histórico: '+money(p.valorReferenciaCentavos)+' · sem banco/PSP':
+           ' · sem aporte da reserva');
         lista.append(li);
       }
       status.textContent=(res.douradasManuais||[]).length?
@@ -1596,9 +1596,7 @@
         method:'POST',body:JSON.stringify({eventoId:'dourada-'+crypto.randomUUID()})
       });
       status.textContent='Bola dourada #'+r.resultado.posicaoId+
-       ' criada na fila B. Reserva interna comprometida: '+
-        money(r.resultado.valorReferenciaCentavos)+
-        '. Não houve receita nova nem pagamento bancário.';
+       ' criada na fila B sem descontar da reserva. Nenhuma receita nova, pagamento bancário ou crédito foi registrado.';
       await Promise.all([carregarDouradasManuais(),carregarResumoCaixa2()]);
     }catch(e){status.textContent='Não foi possível criar: '+e.message;}
     finally{b.disabled=false;}
