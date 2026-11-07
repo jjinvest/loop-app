@@ -114,3 +114,29 @@ test('interface aprovada e identidade real servidas da mesma origem protegida',a
  assert.equal((await get('/api/checkout/finalizar')).status,503);
  assert.equal((await get('/api/saques/solicitar')).status,503);
 });
+
+test('cadastro real fecha quando backup externo fica vencido',async t=>{
+ let fresco=false;
+ const app=criarAppIdentidadeLoop({
+  contas:contas(t),origemHttps:ORIGEM,permitirCadastro:true,
+  backupEstado:()=>({backupAtualEmDia:fresco})
+ });
+ const server=app.listen(0,'127.0.0.1');await once(server,'listening');
+ t.after(()=>new Promise(resolve=>server.close(resolve)));
+ const url='http://127.0.0.1:'+server.address().port;
+ assert.equal((await fetch(url+'/readyz')).status,503);
+ assert.equal((await fetch(url+'/api/contas/documentos')).status,503);
+ const enviar=()=>fetch(url+'/api/contas/cadastrar',{
+  method:'POST',headers:{Origin:ORIGEM,'Content-Type':'application/json'},
+  body:JSON.stringify({nome:'Ana Exemplo',nick:'Ana'})
+ });
+ assert.equal((await enviar()).status,503,'sem restore offsite não cadastrar');
+ fresco=true;
+ assert.equal((await fetch(url+'/readyz')).status,200);
+ const docs=await fetch(url+'/api/contas/documentos');
+ assert.equal(docs.status,200);
+ assert.equal((await docs.json()).financeiroReal,false);
+ fresco=false;
+ assert.equal((await enviar()).status,503,'falha posterior suspende o cadastro');
+ assert.equal((await fetch(url+'/readyz')).status,503);
+});
