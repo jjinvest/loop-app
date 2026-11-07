@@ -49,6 +49,33 @@ async function preparar(t){
  };
  return {base,consultar,db};
 }
+test('gateway nao aceita administrador ausente nem senha do visitante',()=>{
+ const args={portaInterna:43210,senhaAcesso:senha,segredoOperador:operador};
+ for(const adminInvalido of [undefined,null,'curta',senha]){
+  assert.throws(()=>criarGateway({...args,senhaAdmin:adminInvalido}),
+   e=>e.codigo==='GATEWAY_PREVIA_INVALIDO');
+ }
+ const autorizado=criarGateway({...args,senhaAdmin});
+ assert.equal(typeof autorizado.listen,'function');
+ autorizado.close();
+});
+test('senha de visitante e cookie nao abrem variantes das rotas de admin',async t=>{
+ const x=await preparar(t);
+ const cliente=await x.consultar('/minha-conta');
+ const cookieCliente=cliente.headers.get('set-cookie')?.split(';')[0];
+ assert.match(cookieCliente,/^akitemm_preview_access=v1\\./);
+ for(const rota of [
+  '/escritorio/','/ESCRITORIO','/staging/escritorio-admin/',
+  '/staging/escritorio-unificado/',
+  '/STAGING/ESCRITORIO-UNIFICADO',
+  '/staging/escritorio-unificado%2f',
+  '/staging/assets/admin.js/','/STAGING/ASSETS/ADMIN.CSS'
+ ]){
+  const resposta=await fetch(x.base+rota,{
+   headers:{Authorization:auth,Cookie:cookieCliente}});
+  assert.equal(resposta.status,401,rota+' deve exigir operador');
+ }
+});
 test('gateway exige acesso antes de HTML e rotas administrativas',async t=>{
  const x=await preparar(t);
  const sem=await fetch(x.base+'/escritorio');
