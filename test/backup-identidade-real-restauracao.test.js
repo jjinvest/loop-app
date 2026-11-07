@@ -8,6 +8,14 @@ const {randomBytes}=require('node:crypto');
 const {DatabaseSync}=require('node:sqlite');
 const {IdentidadeClienteLoopReal}=
  require('../src/producao/identidade-cliente-loop-sqlite');
+const {CatalogoMultiDistribuidoresSQLite}=
+ require('../src/producao/catalogo-multidistribuidores-sqlite');
+const {ControleEconomicoLojaSQLite}=
+ require('../src/producao/controle-economico-loja-sqlite');
+const {SessaoAdminComercialSQLite}=
+ require('../src/producao/sessao-admin-comercial-sqlite');
+const {AuditoriaOperacionalSQLite}=
+ require('../src/producao/auditoria-operacional-sqlite');
 const {validarIdentidade,criarBackupIdentidadeReal,
  restaurarBackupIdentidadeReal}=
  require('../src/producao/backup-identidade-real');
@@ -130,5 +138,62 @@ test('não executar backup de identidade isolado se contém tabelas de pedidos c
   origem:x.arquivo,destino:x.backup,chaveBackup:x.chaveBackup,autorizado:true
  }),{codigo:'BACKUP_IDENTIDADE_NAO_COBRE_TABELAS_COMERCIAIS'});
  assert.equal(fs.existsSync(x.backup),false);
+ x.banco.close();
+});
+
+test('backup preserva catálogo, custos e auditoria íntegra, mas revoga sessão do admin',async t=>{
+ const x=fixture(t);
+ await cadastrar(x,'Ana','ana@example.invalid');
+ const chaveAuditoria=randomBytes(32),chaveAdmin=randomBytes(32);
+ const credencialAdmin='CredencialAdminForteSomenteTeste2026!NaoUsar';
+ const trilha=new AuditoriaOperacionalSQLite({
+  banco:x.banco,chaveAuditoria
+ });
+ const catalogo=new CatalogoMultiDistribuidoresSQLite({
+  banco:x.banco,distribuidorHomologado:()=>false,auditoria:trilha
+ });
+ const custos=new ControleEconomicoLojaSQLite({
+  banco:x.banco,auditoria:trilha
+ });
+ const sessoes=new SessaoAdminComercialSQLite({
+  banco:x.banco,chaveAdmin,credencialAdmin
+ });
+ const sessao=sessoes.autenticar(credencialAdmin);
+ catalogo.criarProduto({produtoId:'p01',titulo:'Produto um'});
+ catalogo.vincularOferta({produtoId:'p01',distribuidorId:'dist01',
+  sku:'SKU01',precoUnitCentavos:19000});
+ custos.definirCusto({produtoId:'p01',distribuidorId:'dist01',
+  custoUnitCentavos:12500});
+ custos.atualizarPrecoVenda({produtoId:'p01',distribuidorId:'dist01',
+  precoAnteriorCentavos:19000,precoVendaCentavos:19900,
+  revisaoPrecoEsperada:0});
+ assert.equal(trilha.verificar().total,4);
+ assert.equal(validarIdentidade(x.arquivo).administracaoIncluida,true);
+ const feito=await criarBackupIdentidadeReal({
+  origem:x.arquivo,destino:x.backup,
+  chaveBackup:x.chaveBackup,autorizado:true
+ });
+ assert.equal(feito.administracaoIncluida,true);
+ const restore=await restaurarBackupIdentidadeReal({
+  origem:x.backup,destino:x.restauro,
+  chaveBackup:x.chaveBackup,autorizado:true
+ });
+ assert.equal(restore.sessoesAdminRevogadas,1);
+ assert.equal(validarIdentidade(x.restauro).administracaoIncluida,true);
+ const bd=new DatabaseSync(x.restauro);
+ bd.exec('PRAGMA foreign_keys=ON');
+ const reaberta=new AuditoriaOperacionalSQLite({
+  banco:bd,chaveAuditoria
+ });
+ assert.equal(reaberta.verificar().total,4);
+ const c=new ControleEconomicoLojaSQLite({banco:bd,auditoria:reaberta});
+ const item=c.consultarOferta({produtoId:'p01',distribuidorId:'dist01'});
+ assert.equal(item.precoVendaCentavos,19900);
+ assert.equal(item.custoFornecedorCentavos,12500);
+ const admin2=new SessaoAdminComercialSQLite({
+  banco:bd,chaveAdmin,credencialAdmin
+ });
+ assert.equal(admin2.sessao(sessao.token),null);
+ bd.close();
  x.banco.close();
 });
