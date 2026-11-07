@@ -3,6 +3,7 @@
 // src/candidato e nunca monta as rotas de laboratório ou dinheiro.
 const express=require('express');
 const {COOKIE}=require('./identidade-cliente-loop-sqlite');
+const {montarInterfaceAprovada}=require('./interface-aprovada-loop');
 function criarAppIdentidadeLoop({contas,origemHttps,permitirCadastro=false}={}){
  if(!contas||typeof contas.entrar!=='function'||typeof contas.sessao!=='function')
   throw Error('IDENTIDADE_REAL_NAO_CONFIGURADA');
@@ -21,11 +22,14 @@ function criarAppIdentidadeLoop({contas,origemHttps,permitirCadastro=false}={}){
    'Strict-Transport-Security':'max-age=31536000; includeSubDomains',
    'X-Content-Type-Options':'nosniff','X-Frame-Options':'DENY',
    'Referrer-Policy':'no-referrer',
-   'Content-Security-Policy':"default-src 'none'; frame-ancestors 'none'; base-uri 'none'; form-action 'none'"
+   'Content-Security-Policy':"default-src 'none'; script-src 'self'; style-src 'self'; connect-src 'self'; img-src 'self' data:; font-src 'self'; frame-ancestors 'none'; base-uri 'none'; form-action 'self'"
   });
   next();
  });
  app.use(express.json({limit:'12kb',strict:true}));
+ // Reuso das telas e paleta aprovadas do LOOP, sem copiar o laboratório.
+ // Os seus botões de compra/motor não são habilitados na conta real.
+ montarInterfaceAprovada(app);
  const cookieValor=req=>{
   const raw=req.get('cookie')||'';
   if(raw.length>4096)return null;
