@@ -37,8 +37,6 @@ function renderizarInterfaceAprovada(){
   'CADASTRO REAL EM PREPARAÇÃO · SEM PAGAMENTOS REAIS'],
  ['Li os termos apresentados acima e aceito criar uma conta somente de demonstração.',
   'Li e aceito os termos apresentados acima.'],
- ['minlength="8" maxlength="12" autocomplete="new-password"',
-  'minlength="12" maxlength="128" autocomplete="new-password"'],
  ]){
   html=trocarExato(html,antes,depois);
  }
