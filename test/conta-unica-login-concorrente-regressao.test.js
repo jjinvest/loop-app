@@ -91,3 +91,21 @@ test('troca de senha: erros simultaneos preservam bloqueio e nao perdem tentativ
   nick:'Teste',senha:'SenhaCorreta2026!Forte'
  }),{codigo:'CONTA_TEMPORARIAMENTE_BLOQUEADA'});
 });
+
+test('limite de trabalho scrypt protege operacao contra rajada anonima',async t=>{
+ const {banco,conta}=await preparar(t);
+ const tentativas=Array.from({length:40},()=>conta.entrar({
+  nick:'Fantasma',senha:'SenhaFicticiaTentativa2026!'
+ }));
+ const resultados=await Promise.allSettled(tentativas);
+ assert.ok(resultados.every(x=>x.status==='rejected'));
+ const codigos=resultados.map(x=>x.reason.codigo);
+ assert.ok(codigos.filter(x=>x==='AUTENTICACAO_TEMPORARIAMENTE_OCUPADA').length>=24,
+  'excesso de scrypt pendente deve ser rejeitado sem executar mais hashes');
+ assert.ok(codigos.filter(x=>x==='CREDENCIAIS_INVALIDAS').length<=16);
+ assert.equal(banco.prepare(
+  'SELECT COUNT(*) AS n FROM akitemm_sessoes_candidatas'
+ ).get().n,0,'rajada anonima nao cria sessao');
+ const legitimo=await conta.entrar({nick:'Teste',senha:'SenhaCorreta2026!Forte'});
+ assert.ok(legitimo.token,'apos drenar carga, login legitimo volta a funcionar');
+});
