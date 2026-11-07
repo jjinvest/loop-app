@@ -634,6 +634,7 @@ $('sair').addEventListener('click',()=>{
   $('pesquisaResultadosAdmin').replaceChildren();$('formPesquisaAdmin').reset();
   $('pesquisaEstadoAdmin').textContent='Acesso encerrado.';
   $('pesquisaAnteriorAdmin').disabled=true;$('pesquisaProximoAdmin').disabled=true;
+  $('pesquisaExecutarAdmin').disabled=false;
   dizer('Acesso encerrado.');
 });
 async function conferirCoberturaAkitemm({offset=0}={}){
