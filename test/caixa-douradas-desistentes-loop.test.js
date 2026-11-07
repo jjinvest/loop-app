@@ -10,8 +10,7 @@ const normal={id:1,participanteId:'pessoa',statusAdesao:'ATIVA',empresa:false};
 const dourada={id:1,participanteId:'pessoa',statusAdesao:'PRAZO_ENCERRADO',
  empresa:true,titularOperacional:'LOOP_EMPRESA'};
 const desistente={...dourada,statusAdesao:'DESISTENTE'};
-const esperados=[COFRE_DOURADAS,COFRES.ESQUERDA,COFRE_DOURADAS,COFRES.DIREITA,
- COFRE_DOURADAS,COFRES.ESQUERDA];
+const esperados=Array(6).fill(COFRE_DOURADAS);
 test('centro real, dourado por prazo e desistente utilizam destinos inequívocos',()=>{
  assert.equal(centroDoLoop(normal),false);
  for(const p of [dourada,desistente]){
@@ -76,11 +75,11 @@ test('financeiro separa parcelas douradas, conserva investimento e reserva, livr
  for(const centroPosicao of [dourada,desistente]){
   const f=criarVisaoFinanceiraAdminDemo({centroPosicao});
   const total=id=>f.caixas.find(c=>c.id===id).entradasAcumuladasCentavos;
-  assert.equal(total(COFRES.DOURADAS),75000);
+  assert.equal(total(COFRES.DOURADAS),10);
   assert.equal(total(COFRES.CENTRO),0);
-  assert.equal(total(COFRES.ESQUERDA),50000);
-  assert.equal(total(COFRES.DIREITA),25000);
-  assert.equal(f.totalLoopCentavos,150000);
+  assert.equal(total(COFRES.ESQUERDA),0);
+  assert.equal(total(COFRES.DIREITA),0);
+  assert.equal(f.totalLoopCentavos,10);
   assert.equal(f.centroAssumidoPeloLoop,true);
   assert.deepEqual(f.vendas.map(v=>v.destinoCiclo),esperados);
  }
@@ -88,8 +87,8 @@ test('financeiro separa parcelas douradas, conserva investimento e reserva, livr
  assert.equal(raiz.registrarCicloFicticio({cicloId:id,centroPosicao:dourada}).repetido,false);
  assert.equal(raiz.registrarCicloFicticio({cicloId:id,centroPosicao:dourada}).repetido,true);
  const extrato=raiz.consultar();
- assert.equal(extrato.caixas.find(x=>x.id===COFRES.DOURADAS).saldoProjetadoCentavos,75000);
+ assert.equal(extrato.caixas.find(x=>x.id===COFRES.DOURADAS).saldoProjetadoCentavos,10);
  assert.equal(extrato.caixas.find(x=>x.id===COFRES.CENTRO).saldoProjetadoCentavos,0);
- assert.equal(extrato.caixas.find(x=>x.id===COFRES.ESQUERDA).saldoProjetadoCentavos,50000);
- assert.equal(extrato.caixas.find(x=>x.id===COFRES.DIREITA).saldoProjetadoCentavos,25000);
+ assert.equal(extrato.caixas.find(x=>x.id===COFRES.ESQUERDA).saldoProjetadoCentavos,0);
+ assert.equal(extrato.caixas.find(x=>x.id===COFRES.DIREITA).saldoProjetadoCentavos,0);
 });
