@@ -456,6 +456,7 @@ const {once}=require('node:events');
    assert.ok(await loja.locator('#catalogoLojaLoop article.produto-loja-loop').count()>=2);
    await loja.locator('#akitemmBannerConteudo')
     .filter({hasText:'Banner conectado '+item.nick}).waitFor();
+   await loja.locator('#akitemmSuporte summary').click();
    await loja.locator('#akitemmTextoSuporte')
     .filter({hasText:'Atendimento fictício para ensaio de integração do LOOP '+item.nick})
     .waitFor();
