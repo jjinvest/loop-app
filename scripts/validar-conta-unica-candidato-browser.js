@@ -358,6 +358,25 @@ const {once}=require('node:events');
    assert.equal(await admin.locator('#reconciliarPendentesPsp').isDisabled(),true);
    await admin.locator('#quadroDepartamentos button').filter({hasText:'Pedidos'}).click();
    assert.equal(await admin.locator('#filtrarDepartamento').inputValue(),'PEDIDOS');
+   // Agora os departamentos devem abrir dados e controles reais, nao apenas missões.
+   await admin.locator('#departamentoOperacionalTitulo')
+    .filter({hasText:'Pedidos · operação'}).waitFor();
+   await admin.locator('#departamentoOperacionalEstado')
+    .filter({hasText:/Página 1/}).waitFor();
+   assert.match(await admin.locator('#departamentoOperacionalRegistros').innerText(),/hom-/);
+   await admin.locator('#quadroDepartamentos button').filter({hasText:'Tabuleiro'}).click();
+   await admin.locator('#departamentoOperacionalTitulo')
+    .filter({hasText:'Tabuleiro · operação'}).waitFor();
+   await admin.locator('#departamentoOperacionalAcoes')
+    .getByRole('button',{name:'Configurar horários da catraca'}).click();
+   assert.equal(await admin.locator('#formAgendaMotor').isVisible(),true);
+   await admin.locator('#quadroDepartamentos button').filter({hasText:'Cofres'}).click();
+   await admin.locator('#departamentoOperacionalEstado')
+    .filter({hasText:/Operação comercial não habilitada/}).waitFor();
+   await admin.locator('#quadroDepartamentos button').filter({hasText:'Pedidos'}).click();
+   await admin.locator('#departamentoOperacionalTitulo')
+    .filter({hasText:'Pedidos · operação'}).waitFor();
+
    assert.equal(await admin.locator('#alertasOperacionais article.alerta-operacional').count(),0);
    assert.match(await admin.locator('#pedidos').innerText(),/hom-/);
    await admin.locator('#pedidos')
