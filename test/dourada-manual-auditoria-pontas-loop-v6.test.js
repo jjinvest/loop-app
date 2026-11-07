@@ -27,8 +27,7 @@ function salvarSimulador(ponte,sim){
  ON CONFLICT(id) DO UPDATE SET snapshot_json=excluded.snapshot_json
  `).run(JSON.stringify(sim.exportarSnapshot()));
 }
-const GOLD=['LOOP_DOURADAS','LOOP_ESQUERDA','LOOP_DOURADAS',
- 'LOOP_DIREITA','LOOP_DOURADAS','LOOP_ESQUERDA'];
+const GOLD=Array(6).fill('LOOP_DOURADAS');
 const RED=['LOOP_CENTRO','LOOP_ESQUERDA','LOOP_CENTRO',
  'LOOP_DIREITA','LOOP_CENTRO','LOOP_ESQUERDA'];
 
