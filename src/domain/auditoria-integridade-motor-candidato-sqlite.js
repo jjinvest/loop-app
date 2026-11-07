@@ -161,14 +161,15 @@ function auditarIntegridadeMotorCandidato({banco,exigirMotor=false}={}){
  ].join(' '));
  if(registrosDouradas.length!==operacoesDouradas)
   falha('MOTOR_DOURADAS_LIVRO_OPERACAO_DIVERGENTE');
- const duplicadas=banco.prepare([
-  'SELECT COUNT(*) AS n FROM akitemm_motor_conta_ensaio_operacoes o',
-  "WHERE o.tipo='CRIAR_DOURADA_MANUAL' AND NOT EXISTS (",
-  'SELECT 1 FROM akitemm_motor_douradas_manuais_lab d',
-  'WHERE d.numero_posicao=o.numero_posicao)'
- ].join(' ')).get().n;
- if(presentes.has(tabelaDouradas)&&duplicadas>0)
-  falha('MOTOR_DOURADAS_OPERACAO_ORFA');
+ if(presentes.has(tabelaDouradas)){
+  const duplicadas=banco.prepare([
+   'SELECT COUNT(*) AS n FROM akitemm_motor_conta_ensaio_operacoes o',
+   "WHERE o.tipo='CRIAR_DOURADA_MANUAL' AND NOT EXISTS (",
+   'SELECT 1 FROM akitemm_motor_douradas_manuais_lab d',
+   'WHERE d.numero_posicao=o.numero_posicao)'
+  ].join(' ')).get().n;
+  if(duplicadas>0)falha('MOTOR_DOURADAS_OPERACAO_ORFA');
+ }
  const row=banco.prepare([
   'SELECT revisao,snapshot FROM akitemm_motor_conta_ensaio_estado',
   'WHERE id=1'
