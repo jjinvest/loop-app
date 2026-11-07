@@ -5,7 +5,8 @@ const {montarAdminComercialAprovado}=
  require('./interface-admin-comercial-aprovada');
 function erro(c){const e=new Error(c);e.codigo=c;throw e;}
 function montarGatewayAdminComercial(app,{
- sessoes,controle,catalogo,auditoria=null,pedidosComerciais=null,origemHttps
+ sessoes,controle,catalogo,auditoria=null,manutencao=null,
+ pedidosComerciais=null,origemHttps
 }={}){
  if(typeof sessoes?.autenticar!=='function'||
     typeof sessoes?.sessao!=='function'||
@@ -103,7 +104,7 @@ function montarGatewayAdminComercial(app,{
   return res.json({sessaoAdminEncerrada:true});
  });
  montarAdminComercialAprovado(app,{
-  controle,catalogo,auditoria,pedidosComerciais,
+  controle,catalogo,auditoria,manutencao,pedidosComerciais,
   autorizarAdministrador:proteger,
   validarCsrfAdmin:validarCsrf,
   obterCsrfAdmin:req=>req.operador?.csrf,
