@@ -30,13 +30,14 @@ function planejarRecebimentoTresBancos({fotografia,taxaRealPspCentavos=null}={})
  const saldoInsuficiente=compromissoLoop>bruto||limpo!==null&&loja<0;
  // O split Asaas para bancos externos nao existe. Sao possiveis
  // transferencias posteriores, quando houver liquidação e autorizações.
- const alerta=!fotografia.custosCompletos?'CUSTOS_INCOMPLETOS':
-  taxa===null?'TAXA_DESCONHECIDA':saldoInsuficiente?
-  'LIQUIDO_INSUFICIENTE_PARA_SEPARAR_LOOP':margem<0?
+ const alerta=saldoInsuficiente?'LIQUIDO_INSUFICIENTE_PARA_SEPARAR_LOOP':
+  !fotografia.custosCompletos?'CUSTOS_INCOMPLETOS':
+  taxa===null?'TAXA_DESCONHECIDA':margem<0?
   'MARGEM_COMERCIAL_ESTIMADA_NEGATIVA':'PLANO_CONTABIL_CONSISTENTE';
  const receptores=[
   {destino:'LOOP_INTER',bancoSugerido:'Inter',montantePrevistoCentavos:
-    compromissoLoop,contaConectada:false,transferenciaExecutada:false},
+    saldoInsuficiente?null:compromissoLoop,
+    contaConectada:false,transferenciaExecutada:false},
   {destino:'LOJA_MERCADO_PAGO',bancoSugerido:'Mercado Pago',
    montantePrevistoCentavos:loja===null||loja<0?null:loja,
    contaConectada:false,transferenciaExecutada:false},
@@ -49,7 +50,8 @@ function planejarRecebimentoTresBancos({fotografia,taxaRealPspCentavos=null}={})
  return {prepedidoId:fotografia.prepedidoId||null,
   produtoId:fotografia.itens?.[0]?.produtoId||null,
   valorBrutoCotadoCentavos:bruto,tarifaPspCentavosParaCalculo:taxa,
-  taxaPspRealComprovada:taxaRealPspCentavos!==null,
+  taxaPspInformadaParaSimulacao:taxaRealPspCentavos!==null,
+  taxaPspRealComprovada:false,
   valorLiquidoPrevistoCentavos:limpo,
   loopReservarCentavos:compromissoLoop,
   sobraComercialPrevistaCentavos:loja===null||loja<0?null:loja,
