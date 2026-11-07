@@ -217,3 +217,137 @@ test('backup preserva catálogo, custos e auditoria íntegra, mas revoga sessão
  bd.close();
  x.banco.close();
 });
+
+
+const {PedidosComerciaisSQLite}=
+ require('../src/producao/pedidos-comerciais-sqlite');
+const {PedidosFornecedorOutbox}=
+ require('../src/producao/pedidos-fornecedor-outbox');
+const ENDERECO_BACKUP={destinatario:'Cliente Homologacao',cep:'27250010',
+ logradouro:'Rua Teste',numero:'10',bairro:'Centro',
+ cidade:'Volta Redonda',uf:'RJ',complemento:''};
+async function montarPedidoComRemessa(x){
+ const ana=await cadastrar(x,'Ana','ana@backup.invalid');
+ // Teste restrito ao SQLite, simulando e-mail já verificado.
+ x.banco.prepare('UPDATE loop_real_contas SET email_confirmado_em=? WHERE id=?')
+  .run(Date.now(),ana.titularId);
+ const chavePedidos=randomBytes(32),chaveOutbox=randomBytes(32);
+ const cotacao={cotacaoId:'COT_BACKUP_01',titularId:ana.titularId,
+  cepDestino:ENDERECO_BACKUP.cep,status:'APROVADA',
+  expiraEm:Date.now()+600000,
+  grupos:[{fornecedorId:'DISTRIBUIDOR_A',freteCentavos:700,
+   itens:[{sku:'SKU_BACKUP',quantidade:1,precoUnitCentavos:25000}]}]};
+ const prova=({pedidoId})=>({pedidoId,status:'CONFIRMADO',moeda:'BRL',
+  pagamentoId:'PAGAMENTO_BACKUP_01',valorCentavos:25700});
+ const pedidos=new PedidosComerciaisSQLite({
+  banco:x.banco,chavePedidos,
+  consultarCotacaoConfiavel:async()=>cotacao,
+  consultarPagamentoPsp:async args=>prova(args)
+ });
+ const pedido=await pedidos.criarPedido({
+  titularId:ana.titularId,cotacaoId:cotacao.cotacaoId,
+  chaveIdempotencia:'BACKUP_IDEMPOTENTE_01',
+  enderecoEntrega:ENDERECO_BACKUP
+ });
+ await pedidos.confirmarPagamento({pedidoId:pedido.pedidoId});
+ const outbox=new PedidosFornecedorOutbox({
+  banco:x.banco,chavePedidos:chaveOutbox,
+  registro:{obter:()=>({
+   enviarPedidoIdempotente:async()=>{throw Error('NAO_ENVIAR');},
+   consultarPedidoPorChave:async()=>({encontrado:false})
+  })},
+  consultarPagamentoConciliado:async args=>prova(args),
+  consultarPedidoAprovado:args=>pedidos.consultarPedidoAprovado(args),
+  consultarLiberacaoCustoFornecedor:async()=>null
+ });
+ await outbox.registrarPagamentoConciliado({
+  pedidoId:pedido.pedidoId,fornecedorId:'DISTRIBUIDOR_A'
+ });
+ x.banco.prepare([
+  "UPDATE loja_real_outbox_fornecedor SET estado='INDETERMINADO'",
+  'WHERE pedido_id=?'
+ ].join(' ')).run(pedido.pedidoId);
+ return {ana,pedido,pedidos,outbox,chavePedidos,chaveOutbox,
+  cotacao,prova};
+}
+test('backup único restaura pedido, custo congelado e outbox indeterminada sem reenviar fornecedor',async t=>{
+ const x=fixture(t),m=await montarPedidoComRemessa(x);
+ const antes=validarIdentidade(x.arquivo);
+ assert.equal(antes.recuperacaoComercialIncluida,true);
+ assert.equal(antes.pedidos,1);
+ assert.equal(antes.linhasCustos,1);
+ assert.equal(antes.remessas,1);
+ const backup=await criarBackupIdentidadeReal({
+  origem:x.arquivo,destino:x.backup,
+  chaveBackup:x.chaveBackup,autorizado:true
+ });
+ assert.equal(backup.pedidos,1);
+ assert.equal(backup.remessas,1);
+ assert.equal(backup.backupFinanceiroConfirmado,false);
+ const restaurado=await restaurarBackupIdentidadeReal({
+  origem:x.backup,destino:x.restauro,
+  chaveBackup:x.chaveBackup,autorizado:true
+ });
+ assert.equal(restaurado.recuperacaoComercialIncluida,true);
+ assert.equal(restaurado.pedidos,1);
+ assert.equal(restaurado.remessas,1);
+ const db=new DatabaseSync(x.restauro);
+ db.exec('PRAGMA foreign_keys=ON');
+ const reabertos=new PedidosComerciaisSQLite({
+  banco:db,chavePedidos:m.chavePedidos,
+  consultarCotacaoConfiavel:async()=>m.cotacao,
+  consultarPagamentoPsp:async args=>m.prova(args)
+ });
+ const r=reabertos.consultarDoTitular({
+  pedidoId:m.pedido.pedidoId,titularId:m.ana.titularId
+ });
+ assert.equal(r.status,'APROVADO_PARA_EXPEDICAO');
+ assert.equal(r.valorTotalCentavos,25700);
+ assert.equal(reabertos.listarResumoContabil()[0].receitaProdutosCentavos,25000);
+ const pendente=db.prepare(
+  'SELECT estado FROM loja_real_outbox_fornecedor WHERE pedido_id=?'
+ ).get(m.pedido.pedidoId);
+ assert.equal(pendente.estado,'INDETERMINADO');
+ const outbox=new PedidosFornecedorOutbox({
+  banco:db,chavePedidos:m.chaveOutbox,
+  registro:{obter:()=>({consultarPedidoPorChave:async()=>({encontrado:false})})},
+  consultarPagamentoConciliado:async args=>m.prova(args),
+  consultarPedidoAprovado:args=>reabertos.consultarPedidoAprovado(args),
+  consultarLiberacaoCustoFornecedor:async()=>null
+ });
+ const revisao=await outbox.reconciliar({
+  pedidoId:m.pedido.pedidoId,fornecedorId:'DISTRIBUIDOR_A'
+ });
+ assert.equal(revisao.estado,'INDETERMINADO',
+  'uma falha anterior não dispara POST durante recuperação');
+ assert.equal(db.prepare('PRAGMA foreign_key_check').all().length,0);
+ db.close();x.banco.close();
+});
+test('backup bloqueia pedido com valor histórico adulterado mesmo com SQLite íntegro',async t=>{
+ const x=fixture(t),m=await montarPedidoComRemessa(x);
+ x.banco.exec('DROP TRIGGER loja_real_custos_pedido_inalteravel_u');
+ x.banco.prepare([
+  'UPDATE loja_real_custos_pedido SET preco_unit_centavos=100',
+  'WHERE pedido_id=?'
+ ].join(' ')).run(m.pedido.pedidoId);
+ assert.equal(x.banco.prepare('PRAGMA integrity_check').get().integrity_check,'ok');
+ assert.equal(x.banco.prepare('PRAGMA foreign_key_check').all().length,0);
+ assert.throws(()=>validarIdentidade(x.arquivo),
+  {codigo:'BACKUP_COMERCIAL_PEDIDO_CUSTO_DIVERGENTE'});
+ await assert.rejects(criarBackupIdentidadeReal({
+  origem:x.arquivo,destino:x.backup,
+  chaveBackup:x.chaveBackup,autorizado:true
+ }),{codigo:'BACKUP_COMERCIAL_PEDIDO_CUSTO_DIVERGENTE'});
+ assert.equal(fs.existsSync(x.backup),false);
+ x.banco.close();
+});
+test('backup rejeita outbox vinculada a pagamento de outro pedido e preserva revisão manual',async t=>{
+ const x=fixture(t),m=await montarPedidoComRemessa(x);
+ x.banco.prepare('UPDATE loja_real_outbox_fornecedor SET pagamento_id=? WHERE pedido_id=?')
+  .run('PAGAMENTO_FALSO',m.pedido.pedidoId);
+ assert.equal(x.banco.prepare('PRAGMA foreign_key_check').all().length,0);
+ assert.throws(()=>validarIdentidade(x.arquivo),
+  {codigo:'BACKUP_COMERCIAL_OUTBOX_DIVERGENTE'});
+ assert.equal(fs.existsSync(x.backup),false);
+ x.banco.close();
+});
