@@ -98,6 +98,16 @@ async function iniciar(ambiente=process.env){
  let agendador=null;
  try{
   const contas=new IdentidadeClienteLoopReal({...config,banco});
+  // Tabelas comerciais administrativas criadas ANTES do primeiro snapshot.
+  // Nenhum fornecedor é homologado automaticamente.
+  const catalogo=new CatalogoMultiDistribuidoresSQLite({
+   banco,distribuidorHomologado:()=>false
+  });
+  const controle=new ControleEconomicoLojaSQLite({banco});
+  const sessoes=new SessaoAdminComercialSQLite({
+   banco,chaveAdmin:config.chaveAdmin,
+   credencialAdmin:config.credencialAdmin
+  });
   agendador=criarAgendadorBackupIdentidadeReal({
    executar:()=>enviarBackupOffsiteIdentidade({
     fonteSqlite:config.arquivo,chaveBackup:config.chaveBackup,
@@ -107,16 +117,6 @@ async function iniciar(ambiente=process.env){
   // Falha de rede, segredo, bucket, restauração ou dados bloqueia o
   // listener; nenhuma conta real é criada sem prova de recuperação.
   await agendador.iniciar();
-  // Catálogo começa vazio; distribuidor não homologado não aparece
-  // como disponível na vitrine. Registro completo é do operador.
-  const catalogo=new CatalogoMultiDistribuidoresSQLite({
-   banco,distribuidorHomologado:()=>false
-  });
-  const controle=new ControleEconomicoLojaSQLite({banco});
-  const sessoes=new SessaoAdminComercialSQLite({
-   banco,chaveAdmin:config.chaveAdmin,
-   credencialAdmin:config.credencialAdmin
-  });
   const app=criarAppIdentidadeLoop({
    contas,origemHttps:config.origemHttps,permitirCadastro:true,
    backupEstado:()=>agendador.estado(),
