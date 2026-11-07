@@ -12,6 +12,8 @@ const {ControleEconomicoLojaSQLite}=
  require('../src/producao/controle-economico-loja-sqlite');
 const {SessaoAdminComercialSQLite}=
  require('../src/producao/sessao-admin-comercial-sqlite');
+const {AuditoriaOperacionalSQLite}=
+ require('../src/producao/auditoria-operacional-sqlite');
 const {criarAppIdentidadeLoop}=
  require('../src/producao/servidor-identidade-loop');
 const ORIGEM='https://loja.example.invalid';
@@ -29,18 +31,21 @@ function preparar(t){
   privacidade:{versao:'LOOP-PRIV-2026',texto:DOC},
   enviarEmail:async()=>true
  });
- const catalogo=new CatalogoMultiDistribuidoresSQLite({
-  banco,distribuidorHomologado:()=>false
+ const auditoria=new AuditoriaOperacionalSQLite({
+  banco,chaveAuditoria:randomBytes(32)
  });
- const controle=new ControleEconomicoLojaSQLite({banco});
+ const catalogo=new CatalogoMultiDistribuidoresSQLite({
+  banco,distribuidorHomologado:()=>false,auditoria
+ });
+ const controle=new ControleEconomicoLojaSQLite({banco,auditoria});
  const sessoes=new SessaoAdminComercialSQLite({
   banco,chaveAdmin:randomBytes(32),credencialAdmin:SENHA_OPERADOR
  });
  const app=criarAppIdentidadeLoop({
   contas,origemHttps:ORIGEM,permitirCadastro:true,
-  adminComercial:{catalogo,controle,sessoes}
+  adminComercial:{catalogo,controle,sessoes,auditoria}
  });
- return {banco,app,contas,catalogo,controle,sessoes};
+ return {banco,app,contas,catalogo,controle,sessoes,auditoria};
 }
 async function servir(t,app){
  const server=app.listen(0,'127.0.0.1');await once(server,'listening');
@@ -146,6 +151,19 @@ test('admin aprovado: login distinto, cadastrar produto/oferta, editar preços e
  assert.equal(dados.precoVendaCentavos,19900);
  assert.equal(dados.custoFornecedorCentavos,12500);
  assert.equal(dados.diferencaBrutaCentavos,7400);
+ const auditoria=await get('/api/admin/comercial/auditoria',{
+  Cookie:cookieAdmin
+ });
+ assert.equal(auditoria.status,200);
+ const historico=await auditoria.json();
+ assert.equal(historico.auditoriaIntegra,true);
+ assert.equal(historico.totalHistorico,4);
+ assert.deepEqual(historico.eventos.map(e=>e.acao),[
+  'PRECO_VENDA_ALTERADO','CUSTO_FORNECEDOR_ALTERADO',
+  'OFERTA_RASCUNHO_CRIADA','PRODUTO_CRIADO'
+ ]);
+ assert.equal(JSON.stringify(historico).includes('CredencialPrivada'),false);
+ assert.equal((await get('/api/admin/comercial/auditoria')).status,401);
  const concorrente=await post('/produtos-preco/tenis_001/distribuidor_A',{
   precoAnteriorCentavos:18900,precoVendaCentavos:10900,
   revisaoPrecoEsperada:0
