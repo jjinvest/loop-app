@@ -568,6 +568,7 @@ const destinosOperacionais=Object.freeze({
  CRIAR_DOURADA:['painelCriacaoDouradaAdmin','Criar 1 bola dourada'],
  VER_AGENDA:['formAgendaMotor','Configurar horários da catraca'],
  CONFERIR_COBERTURA:['tituloAuditoriaCobertura','Auditar cobertura financeira'],
+ VER_FLUXO_FINANCEIRO:['painelFluxoFinanceiroAdmin','Ver catraca financeira e cofres'],
  CONFERIR_BACKUP:['conferirBackupOffsite','Auditar backup'],
  VER_MISSOES:['resumoMissoes','Consultar missões']
 });
@@ -1230,6 +1231,58 @@ $('limparVisualDouradaAdmin').addEventListener('click',()=>{
 });
 let agendaHojeLocal=null;
 let chaveDouradaPendente=null;
+async function atualizarFluxoFinanceiroAdmin(){
+ const status=$('fluxoFinanceiroEstado');
+ status.textContent='Conferindo luzes, obrigações e custos no mesmo SQLite...';
+ try{
+  const d=await api('/financeiro/fluxo');
+  const dinheiro=n=>n===null?'Não conciliado':
+   new Intl.NumberFormat('pt-BR',{style:'currency',currency:'BRL'}).format(n/100);
+  const metricas=$('fluxoFinanceiroMetricas');metricas.replaceChildren();
+  metricas.append(linha('Luzes financeiras acumuladas',d.luzesFinanceirasRegistradas),
+   linha('Luzes do ciclo atual',d.luzesNoCiclo+'/6'),
+   linha('Roxas / pretas do ciclo',d.roxasNoCiclo+' / '+d.pretasNoCiclo),
+   linha('Giros físicos concluídos',d.girosFisicosConcluidos),
+   linha('Pedidos com custos congelados',d.pedidosFotografados),
+   linha('Pix real liberado','R$ 0,00 (bloqueado)'));
+  const cofres=$('fluxoFinanceiroCofres');cofres.replaceChildren();
+  const titulos={LOOP_CENTRO:'Centro / participantes',
+   LOOP_ESQUERDA:'Investimento / esquerda',
+   LOOP_DIREITA:'Reserva / direita',LOOP_DOURADAS:'Douradas / empresa'};
+  for(const c of d.cofres)cofres.append(linha(titulos[c.cofre]||c.cofre,
+   dinheiro(c.valorPrevistoNaoSacavelCentavos)+' previsto · '+c.eventos+' luz(es)'));
+  $('fluxoFinanceiroBancos').textContent=d.bancosPlanejados.map(x=>
+   x.instituicaoSugerida+' ('+x.caixa+') — NÃO conectado').join(' | ');
+  const pedidos=$('fluxoFinanceiroPedidos');pedidos.replaceChildren();
+  if(!d.pedidos.length)pedidos.textContent='Nenhum pré-pedido com fotografia de custos.';
+  for(const p of d.pedidos){
+   const item=elem('p');
+   item.textContent=p.prepedidoId+' · bruto cotado '+dinheiro(p.totalBrutoCotadoCentavos)+
+    ' · LOOP previsto '+dinheiro(p.referenciaLoopPrevistaCentavos)+
+    ' · fornecedor previsto '+dinheiro(p.custoFornecedorPrevistoCentavos)+
+    ' · fornecedor pago: R$ 0,00 (sem comprovação)'+
+    ' · margem estimada '+dinheiro(p.margemComercialEstimadaCentavos)+
+    (p.margemNegativa?' · ALERTA: margem negativa':'')+
+    (!p.custosCompletos?' · CADASTRAR CUSTOS PARA PRÓXIMOS PEDIDOS':'');
+   pedidos.append(item);
+  }
+  const luzes=$('fluxoFinanceiroLuzes');luzes.replaceChildren();
+  if(!d.luzes.length)luzes.textContent='Ainda não há evento luminoso registrado.';
+  for(const l of d.luzes){
+   const item=elem('p');
+   item.textContent='Ciclo '+l.ciclo+' · luz '+l.ordem+' ('+
+    (l.papelVisual==='PARTICIPANTE'?'roxa':'preta')+') · '+
+    (titulos[l.cofreDestino]||l.cofreDestino)+' · '+dinheiro(l.referenciaCentavos)+
+    ' previsto · não sacável · '+l.prepedidoId;
+   luzes.append(item);
+  }
+  status.textContent='Luzes e giros reconciliados na mesma base de ensaio. '+
+   'A luz registra a previsão; o giro move a pessoa. '+
+   'Nenhum banco, fornecedor ou participante recebeu transferência real.';
+  return d;
+ }catch(e){status.textContent='Fluxo não disponível: '+e.message;return null;}
+}
+$('atualizarFluxoFinanceiroAdmin').addEventListener('click',()=>atualizarFluxoFinanceiroAdmin());
 async function atualizarMotorContaEnsaio(){
  const r=await api('/motor/estado');
  atualizarListaDouradasAdmin(r);
@@ -1272,6 +1325,7 @@ async function atualizarMotorContaEnsaio(){
   r.agenda.metaLotes?.quantidade||0);
  $('agendaMotorMetaDia').value=r.agenda.metaLotes?.dataAlvo||'';
  agendaHojeLocal=r.agenda.dia;
+ await atualizarFluxoFinanceiroAdmin();
  return r;
 }
 async function operacaoMotorContaEnsaio(rota,body,mensagem){
