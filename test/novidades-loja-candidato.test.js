@@ -100,7 +100,8 @@ test('mesma loja e admin: autenticação, publicação, imagem e nenhum Pix/posi
   method:'PUT',headers:{'Content-Type':'image/png','X-Novidade-Revisao':String(r.revisao)},
   body:PNG
  });
- assert.equal(imagem.status,200);r=await imagem.json();
+ const corpoImagem=await imagem.text();
+ assert.equal(imagem.status,200,corpoImagem);r=JSON.parse(corpoImagem);
  assert.equal(r.temImagem,true);
  const live=await json(rota+'/'+r.id,'PATCH',
   {alteracoes:{estado:'PUBLICADA'},revisaoEsperada:r.revisao});
