@@ -44,14 +44,18 @@ function cepValido(s){
 }
 class CotacoesMultiDistribuidoresSQLite{
  constructor({banco,catalogo,registro,chaveCotacoes,
-  agora=()=>Date.now()}={}){
+  manutencao=null,agora=()=>Date.now()}={}){
   if(typeof banco?.prepare!=='function'||typeof banco?.exec!=='function'||
      typeof catalogo?.ofertasConfiaveis!=='function'||
      typeof registro?.consultarEstoque!=='function'||
      typeof registro?.cotarFrete!=='function'||
      !Buffer.isBuffer(chaveCotacoes)||chaveCotacoes.length!==32||
      typeof agora!=='function')erro('COTACAO_REAL_NAO_CONFIGURADA');
+  if(manutencao!==null&&(manutencao.db!==banco||
+     typeof manutencao.garantirOperacaoDisponivel!=='function'))
+   erro('MANUTENCAO_COTACOES_NAO_CONFIGURADA');
   this.db=banco;this.catalogo=catalogo;this.registro=registro;
+  this.manutencao=manutencao;
   this.key=Buffer.from(chaveCotacoes);this.agora=agora;
   banco.exec([
    'CREATE TABLE IF NOT EXISTS loja_real_cotacoes(',
@@ -65,6 +69,7 @@ class CotacoesMultiDistribuidoresSQLite{
   ].join(' '));
  }
  async simular({itens,cepDestino}={}){
+  if(this.manutencao)this.manutencao.garantirOperacaoDisponivel();
   const lista=itensValidos(itens),cep=cepValido(cepDestino);
   const grupos=new Map();
   for(const linha of lista){
@@ -126,6 +131,7 @@ class CotacoesMultiDistribuidoresSQLite{
  }
  async emitir({titularId,itens,cepDestino,
   servicosFrete,resumoAceito}={}){
+  if(this.manutencao)this.manutencao.garantirOperacaoDisponivel();
   if(typeof titularId!=='string'||!TITULAR.test(titularId)||
      typeof resumoAceito!=='string'||!/^[a-f0-9]{64}$/.test(resumoAceito))
    erro('COTACAO_INVALIDA');
@@ -172,6 +178,7 @@ class CotacoesMultiDistribuidoresSQLite{
   const payload={cepDestino:previa.cepDestino,grupos,
    valorTotalCentavos:total};
   const c=cifrar(this.key,payload);
+  if(this.manutencao)this.manutencao.garantirOperacaoDisponivel();
   this.db.prepare([
    'INSERT INTO loja_real_cotacoes(',
    'cotacao_id,titular_id,payload_iv,payload_ct,payload_tag,criado_em,expira_em)',
