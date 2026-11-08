@@ -211,7 +211,9 @@ test('12 departamentos operam no SQLite compartilhado sem inventar dados comerci
  assert.deepEqual(plano.receptores.map(x=>x.destino),[
   'LOOP_INTER','LOJA_MERCADO_PAGO','COFRES_LATERAIS_TERCEIRO_BANCO']);
  assert.equal(plano.receptores[0].montantePrevistoCentavos,25000);
- assert.equal(plano.receptores[1].montantePrevistoCentavos,24500);
+ assert.equal(plano.receptores[1].montantePrevistoCentavos,5000);
+ assert.equal(plano.margemParaMercadoPagoPrevistaCentavos,5000);
+ assert.deepEqual(plano.obrigacoesComerciaisNaoPagas.map(x=>x.valorPrevistoCentavos),[17500,1500,500]);
  assert.equal(plano.receptores[2].montantePrevistoCentavos,null);
  assert.ok(plano.receptores.every(x=>!x.contaConectada&&
   !x.transferenciaExecutada));
