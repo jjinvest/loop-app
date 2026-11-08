@@ -40,7 +40,9 @@ test('venda R$500: 1 posicao dourada, R$250 LOOP, loja liquida menos taxa, forne
  assert.deepEqual(plano.receptores.map(x=>x.destino),[
   'LOOP_INTER','LOJA_MERCADO_PAGO','COFRES_LATERAIS_TERCEIRO_BANCO']);
  assert.equal(plano.receptores[0].montantePrevistoCentavos,25000);
- assert.equal(plano.receptores[1].montantePrevistoCentavos,24500);
+ assert.equal(plano.receptores[1].montantePrevistoCentavos,5000);
+ assert.equal(plano.margemParaMercadoPagoPrevistaCentavos,5000);
+ assert.deepEqual(plano.obrigacoesComerciaisNaoPagas.map(x=>x.valorPrevistoCentavos),[17500,1500,500]);
  assert.equal(plano.receptores[2].montantePrevistoCentavos,null);
  assert.equal(plano.estado,'PREVISAO_NAO_EXECUTADA');
  assert.equal(plano.alerta,'PLANO_CONTABIL_CONSISTENTE');
