@@ -223,6 +223,17 @@ test('12 departamentos operam no SQLite compartilhado sem inventar dados comerci
  assert.equal(plano.caixaCentroSacavelCentavos,0);
  assert.equal(plano.cofreLateralSacavelCentavos,0);
  assert.equal(plano.estado,'PREVISAO_NAO_EXECUTADA');
+ const celcoin=fluxo.data.ensaiosCelcoin.find(x=>
+  x.prepedidoId===novoPedido.prepedido.prepedidoId);
+ assert.ok(celcoin,'Celcoin precisa usar a MESMA foto do pedido e o mesmo SQLite');
+ assert.deepEqual(celcoin.ordens.map(x=>[x.destino,x.valorPrevistoCentavos]),[
+  ['LOOP_INTER',25000],['FORNECEDOR',17500],['LOJA_MERCADO_PAGO',5000]]);
+ assert.equal(celcoin.retencoes.reduce((v,x)=>v+x.centavos,0),2000);
+ assert.equal(celcoin.terceiroBanco.valorTransferivelCentavos,0);
+ assert.equal(celcoin.chamadasHttp,0);
+ assert.equal(celcoin.pixEnviados,0);
+ assert.equal(celcoin.reciboRealConfirmado,false);
+ assert.equal(celcoin.prontoParaProducao,false);
  assert.equal(fluxo.data.luzesFinanceirasRegistradas,0);
  assert.equal(fluxo.data.girosFisicosConcluidos,0);
  assert.equal(fluxo.data.transferenciasBancariasEfetuadas,0);
