@@ -44,6 +44,8 @@ const {PreAdesaoSandboxCandidatoSQLite}=require('../domain/pre-adesao-sandbox-ca
 const {DiagnosticoAtivacaoCandidato}=require('../domain/diagnostico-ativacao-candidato');
 const {EquipeCandidataSQLite}=require('../domain/equipe-candidata-sqlite');
 const {MotorContaUnicaEnsaioSQLite}=require('../domain/motor-conta-unica-ensaio-sqlite');
+const {provarAcessoCelcoinSandboxReadOnly,estadoCelcoinSandboxReadOnly}=
+ require('../integracoes/celcoin-sandbox-prova-readonly');
 const {auditarCarteiraDePedidosAkitemmLab}=require('../domain/auditoria-cobertura-lotes-akitemm');
 const {criarRouterRascunhosCheckoutStaging}=require('../routes/rascunhos-checkout-staging');
 const {criarRouterPrePedidosCheckoutStaging}=require('../routes/prepedidos-checkout-staging');
@@ -608,6 +610,35 @@ function criarAppLojaEscritorioCandidato({banco,repositorioCatalogo,
    res.set('Cache-Control','no-store');
    try{return res.json(motorConta.consultarFluxoFinanceiro());}
    catch(e){return res.status(503).json({erro:e.codigo||'LIVRO_LUZES_INDISPONIVEL'});}
+  });
+ // Credenciais Celcoin ficam EXCLUSIVAMENTE no backend. Nenhum Pix enviado.
+ const celcoinSandboxEnv=()=>({
+  clientId:process.env.LOOP_PREVIEW_CELCOIN_SANDBOX_CLIENT_ID,
+  clientSecret:process.env.LOOP_PREVIEW_CELCOIN_SANDBOX_CLIENT_SECRET
+ });
+ app.get('/staging/escritorio-unificado/celcoin/sandbox/estado',
+  autorizarOperador,(_req,res)=>{
+   res.set('Cache-Control','no-store');
+   return res.json(estadoCelcoinSandboxReadOnly(celcoinSandboxEnv()));
+  });
+ app.post('/staging/escritorio-unificado/celcoin/sandbox/provar-acesso',
+  autorizarOperador,async(req,res)=>{
+   res.set('Cache-Control','no-store');
+   // Acao explicita do operador; apenas token OAuth e GET de participantes Pix.
+   if(req.body&&Object.keys(req.body).length!==0)
+    return res.status(400).json({erro:'CELCOIN_PROVA_CORPO_NAO_PERMITIDO'});
+   const c=celcoinSandboxEnv();
+   if(!estadoCelcoinSandboxReadOnly(c).credenciaisConfiguradas)
+    return res.status(503).json({erro:'CELCOIN_CREDENCIAIS_SANDBOX_AUSENTES'});
+   try{return res.json(await provarAcessoCelcoinSandboxReadOnly(c));}
+   catch(err){
+    const mensagens=new Set(['CELCOIN_SANDBOX_ACESSO_NAO_AUTORIZADO',
+     'CELCOIN_SANDBOX_HTTP_NAO_CONFIRMADO','CELCOIN_TOKEN_SANDBOX_INVALIDO',
+     'CELCOIN_RESPOSTA_INVALIDA','CELCOIN_LISTA_PARTICIPANTES_INVALIDA',
+     'CELCOIN_PROVA_CONEXAO_INCONCLUSIVA']);
+    return res.status(503).json({erro:mensagens.has(err.codigo)?
+     err.codigo:'CELCOIN_PROVA_INCONCLUSIVA'});
+   }
   });
  // Aceite explícito, INDIVIDUAL e autenticado do próprio titular.
  // Nunca há CPF no corpo/retorno: o cadastro cifrado da conta é reutilizado.
