@@ -1258,6 +1258,7 @@ async function atualizarFluxoFinanceiroAdmin(){
   for(const p of d.pedidos){
    const item=elem('p');
    const rota=d.roteamentoBancarioPlanejado?.find(x=>x.prepedidoId===p.prepedidoId);
+   const celcoin=d.ensaiosCelcoin?.find(x=>x.prepedidoId===p.prepedidoId);
    const inter=rota?.receptores?.find(x=>x.destino==='LOOP_INTER');
    const loja=rota?.receptores?.find(x=>x.destino==='LOJA_MERCADO_PAGO');
    item.textContent=p.prepedidoId+' · bruto cotado '+dinheiro(p.totalBrutoCotadoCentavos)+
@@ -1271,7 +1272,11 @@ async function atualizarFluxoFinanceiroAdmin(){
      ' / Mercado Pago '+dinheiro(loja?.montantePrevistoCentavos??null)+
      ' / 3º banco: recebe somente cofres laterais após eventos e conciliação.'+
      (rota.alerta!=='PLANO_CONTABIL_CONSISTENTE'?
-      ' · ATENÇÃO: '+rota.alerta:''):'');
+      ' · ATENÇÃO: '+rota.alerta:''):'')+
+    (celcoin?' · CELCOIN EM ENSAIO: sem credenciais, saldo ou Pix. '+
+     'Fornecedor '+dinheiro(celcoin.ordens.find(x=>x.destino==='FORNECEDOR')?.valorPrevistoCentavos??null)+
+     ' · margem para Mercado Pago '+dinheiro(celcoin.valorMargemParaMercadoPagoPrevistoCentavos??null)+
+     ' · terceiro banco: contas esquerda/direita ainda não abertas.':'');
    pedidos.append(item);
   }
   const luzes=$('fluxoFinanceiroLuzes');luzes.replaceChildren();
