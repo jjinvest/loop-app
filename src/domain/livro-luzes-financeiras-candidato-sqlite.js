@@ -4,6 +4,7 @@
 // Toda luz nova vem de UMA compra vinculada no mesmo SQLite do motor.
 const {PISO_VERDE}=require('./plano-posicoes-compra-akitemm');
 const {planoCelcoinPorFotografiaLab}=require('./celcoin-fluxo-sandbox-lab');
+const {CelcoinHistoricoMockSQLite}=require('./celcoin-historico-mock-sqlite');
 const {planejarRecebimentoTresBancos}=require('./plano-roteamento-tres-bancos-lab');
 const {cofreDoEvento,REGRA_DOURADA_LEGADA}=
  require('./destino-financeiro-centro-loop');
@@ -47,6 +48,7 @@ class LivroLuzesFinanceirasCandidatoSQLite{
    'BEFORE DELETE ON akitemm_luzes_financeiras_eventos_lab',
    "BEGIN SELECT RAISE(ABORT,'luz financeira imutavel'); END;"
   ].join(' '));
+  this.celcoinMock=new CelcoinHistoricoMockSQLite({banco});
  }
  // Deve ser chamado dentro do BEGIN IMMEDIATE do prepedido, nunca fora.
  congelarCustosPedido({prepedidoId,itens,totalCentavos,fotografia}={}){
@@ -193,12 +195,13 @@ class LivroLuzesFinanceirasCandidatoSQLite{
    planejarRecebimentoTresBancos({fotografia}));
   const ensaiosCelcoin=pedidos.map(fotografia=>
    planoCelcoinPorFotografiaLab({fotografia}));
+  const celcoinHistoricoSimulado=this.celcoinMock.consultar({limite});
   return {luzesFinanceirasRegistradas:qtd,luzes,cofres,
    pedidosFotografados:this.banco.prepare(
     'SELECT COUNT(*) AS n FROM akitemm_pedido_custos_fotografia_lab'
    ).get().n,pedidos,amostraPedidosSemCustos:semCustos,
    roteamentoBancarioPlanejado,
-   ensaiosCelcoin,
+   ensaiosCelcoin,celcoinHistoricoSimulado,
    bancosPlanejados:[
     {caixa:'LOJA',instituicaoSugerida:'Mercado Pago',conectado:false},
     {caixa:'LOOP_CENTRO',instituicaoSugerida:'Banco Inter',conectado:false},
