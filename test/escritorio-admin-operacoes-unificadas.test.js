@@ -231,6 +231,8 @@ test('12 departamentos operam no SQLite compartilhado sem inventar dados comerci
  assert.equal(celcoin.retencoes.reduce((v,x)=>v+x.centavos,0),2000);
  assert.equal(celcoin.terceiroBanco.valorTransferivelCentavos,0);
  assert.equal(celcoin.chamadasHttp,0);
+ assert.equal(fluxo.data.celcoinHistoricoSimulado.eventosMockPersistidos,0);
+ assert.equal(fluxo.data.celcoinHistoricoSimulado.saquesPermitidos,false);
  assert.equal(celcoin.pixEnviados,0);
  assert.equal(celcoin.reciboRealConfirmado,false);
  assert.equal(celcoin.prontoParaProducao,false);
