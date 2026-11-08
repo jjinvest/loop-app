@@ -66,6 +66,8 @@ on:
       - 'src/domain/livro-luzes-financeiras-candidato-sqlite.js'
       - 'src/domain/plano-roteamento-tres-bancos-lab.js'
       - 'src/domain/celcoin-fluxo-sandbox-lab.js'
+      - 'src/integracoes/celcoin-sandbox-prova-readonly.js'
+      - 'test/celcoin-sandbox-prova-readonly.test.js'
       - 'src/domain/celcoin-historico-mock-sqlite.js'
       - 'test/celcoin-historico-mock-sqlite.test.js'
       - 'test/celcoin-fluxo-sandbox-lab.test.js'
@@ -155,6 +157,8 @@ jobs:
         run: node --check src/domain/livro-luzes-financeiras-candidato-sqlite.js && node --check src/candidato/vitrine-aprovada-candidato.js
       - name: Teste da venda R$500 e destinos Banco Inter / Mercado Pago / reserva sem Pix
         run: node --test test/plano-roteamento-tres-bancos-lab.test.js test/celcoin-fluxo-sandbox-lab.test.js
+      - name: Prova Celcoin Sandbox OAuth apenas GET sem dinheiro
+        run: node --test test/celcoin-sandbox-prova-readonly.test.js
       - name: Persistencia Celcoin Mock, rollback e idempotencia entre reinicios
         run: node --test test/celcoin-historico-mock-sqlite.test.js
       - name: Regra restrita de douradas e cofre exclusivo, sem consumir reserva
