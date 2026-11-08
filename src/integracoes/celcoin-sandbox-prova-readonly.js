@@ -50,7 +50,15 @@ async function provarAcessoCelcoinSandboxReadOnly({
   falha('CELCOIN_TOKEN_SANDBOX_INVALIDO');
  const bancos=await solicitar('/pix/v1/participants','GET',{
   headers:{Authorization:'Bearer '+token.access_token}});
- if(!bancos||typeof bancos!=='object')
+ // Resposta HTTP 200 sem participantes identificaveis nao prova consulta valida:
+ // evitar sucesso falso com payload {} ou erro encapsulado em JSON.
+ const registros=Array.isArray(bancos)?bancos:
+  Array.isArray(bancos?.data)?bancos.data:
+  Array.isArray(bancos?.participants)?bancos.participants:
+  Array.isArray(bancos?.result)?bancos.result:
+  Array.isArray(bancos?.items)?bancos.items:null;
+ if(!registros||!registros.some(x=>x&&typeof x==='object'&&
+    /^\d{8}$/.test(String(x.ispb??''))))
   falha('CELCOIN_LISTA_PARTICIPANTES_INVALIDA');
  return Object.freeze({
   ambiente:'CELCOIN_SANDBOX',

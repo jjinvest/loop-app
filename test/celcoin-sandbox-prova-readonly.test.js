@@ -76,3 +76,17 @@ test('sem credenciais nao marca conexao ou PIX habilitado',()=>{
  assert.equal(r.transferenciasReais,0);
  assert.equal(r.chavesExpostas,false);
 });
+
+test('GET com HTTP 200 mas objeto vazio, erro ou lista sem ISPB nao comprova acesso',async()=>{
+ const token={access_token:'token-ficticio-xxxxxxxxxxxxxxxxxxxx',token_type:'bearer'};
+ for(const payload of [{},{error:'sem autorizacao'},[],{data:[{nome:'Sem ISPB'}]}]){
+  let chamadas=0;
+  await assert.rejects(provarAcessoCelcoinSandboxReadOnly({
+   clientId,clientSecret,fetchImpl:async(url)=>{
+    chamadas++;
+    return resposta(200,url.endsWith('/v5/token')?token:payload);
+   }
+  }),/CELCOIN_LISTA_PARTICIPANTES_INVALIDA/);
+  assert.equal(chamadas,2);
+ }
+});
