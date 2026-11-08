@@ -63,7 +63,7 @@ function planoCelcoinPorFotografiaLab({fotografia}={}){
   reciboRealConfirmado:false,liquidacaoRealConfirmada:false,
   chamadasHttp:0,pixEnviados:0,
   saldosBancariosReaisCentavos:null,prontoParaProducao:false,
-  estado:'ENSÁIO_LOCAL_SEM_EXECUCAO'.normalize('NFD').replace(/[\u0300-\u036f]/g,'')};
+  estado:'ENSAIO_LOCAL_SEM_EXECUCAO'};
 }
 // Reconciliador de MOCK: exercita transicoes reais sem jamais elevar
 // autenticidade ou saldo. NAO usar como webhook de producao.
