@@ -155,6 +155,8 @@ jobs:
         run: node --check src/domain/livro-luzes-financeiras-candidato-sqlite.js && node --check src/candidato/vitrine-aprovada-candidato.js
       - name: Teste da venda R$500 e destinos Banco Inter / Mercado Pago / reserva sem Pix
         run: node --test test/plano-roteamento-tres-bancos-lab.test.js test/celcoin-fluxo-sandbox-lab.test.js
+      - name: Persistencia Celcoin Mock, rollback e idempotencia entre reinicios
+        run: node --test test/celcoin-historico-mock-sqlite.test.js
       - name: Regra restrita de douradas e cofre exclusivo, sem consumir reserva
         run: node --test test/dourada-manual-auditoria-pontas-loop-v6.test.js test/disponibilidade-caixa2-integracao-v6.test.js
       - run: node --check src/domain/estado-simulacao.js
