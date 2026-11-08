@@ -66,6 +66,8 @@ on:
       - 'src/domain/livro-luzes-financeiras-candidato-sqlite.js'
       - 'src/domain/plano-roteamento-tres-bancos-lab.js'
       - 'src/domain/celcoin-fluxo-sandbox-lab.js'
+      - 'src/domain/celcoin-historico-mock-sqlite.js'
+      - 'test/celcoin-historico-mock-sqlite.test.js'
       - 'test/celcoin-fluxo-sandbox-lab.test.js'
       - 'test/plano-roteamento-tres-bancos-lab.test.js'
       - 'src/domain/custos-produtos-admin-candidato-sqlite.js'
