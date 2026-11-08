@@ -181,6 +181,18 @@ test('12 departamentos operam no SQLite compartilhado sem inventar dados comerci
   repositorioCatalogo:ctx.catalogo
  });
  assert.equal(novoPedido.repetido,false);
+ // Operador pode inspecionar o estado Celcoin sem ver chaves.
+ const celcoinStatus=raiz+'/celcoin/sandbox/estado';
+ assert.equal((await get(celcoinStatus,false)).status,401);
+ const estadoCelcoin=await get(celcoinStatus);
+ assert.equal(estadoCelcoin.status,200);
+ assert.equal(estadoCelcoin.data.credenciaisConfiguradas,false);
+ assert.equal(estadoCelcoin.data.transferenciasReais,0);
+ assert.equal(JSON.stringify(estadoCelcoin.data).includes('clientSecret'),false);
+ assert.equal((await putInterno('/celcoin/sandbox/provar-acesso',{},'POST',false)).status,401);
+ const semCredencial=await putInterno('/celcoin/sandbox/provar-acesso',{},'POST');
+ assert.equal(semCredencial.status,503);
+ assert.equal(semCredencial.data.erro,'CELCOIN_CREDENCIAIS_SANDBOX_AUSENTES');
  const fluxoRoute=raiz+'/financeiro/fluxo';
  assert.equal((await get(fluxoRoute,false)).status,401);
  const fluxo=await get(fluxoRoute);
