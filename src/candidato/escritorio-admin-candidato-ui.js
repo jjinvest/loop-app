@@ -1244,6 +1244,7 @@ async function atualizarFluxoFinanceiroAdmin(){
    linha('Roxas / pretas do ciclo',d.roxasNoCiclo+' / '+d.pretasNoCiclo),
    linha('Giros físicos concluídos',d.girosFisicosConcluidos),
    linha('Pedidos com custos congelados',d.pedidosFotografados),
+   linha('Retornos Celcoin fictícios persistidos',d.celcoinHistoricoSimulado?.eventosMockPersistidos??0),
    linha('Pix real liberado','R$ 0,00 (bloqueado)'));
   const cofres=$('fluxoFinanceiroCofres');cofres.replaceChildren();
   const titulos={LOOP_CENTRO:'Centro / participantes',
