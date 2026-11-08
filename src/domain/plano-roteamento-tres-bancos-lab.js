@@ -28,6 +28,7 @@ function planejarRecebimentoTresBancos({fotografia,taxaRealPspCentavos=null}={})
   margem=loja!==null&&custo!==null&&frete!==null&&tributos!==null?
    loja-custo-frete-tributos:null;
  const saldoInsuficiente=compromissoLoop>bruto||limpo!==null&&loja<0;
+ const margemLiberavel=(!saldoInsuficiente&&margem!==null&&margem>=0)?margem:null;
  // O split Asaas para bancos externos nao existe. Sao possiveis
  // transferencias posteriores, quando houver liquidação e autorizações.
  const alerta=saldoInsuficiente?'LIQUIDO_INSUFICIENTE_PARA_SEPARAR_LOOP':
@@ -39,7 +40,8 @@ function planejarRecebimentoTresBancos({fotografia,taxaRealPspCentavos=null}={})
     saldoInsuficiente?null:compromissoLoop,
     contaConectada:false,transferenciaExecutada:false},
   {destino:'LOJA_MERCADO_PAGO',bancoSugerido:'Mercado Pago',
-   montantePrevistoCentavos:loja===null||loja<0?null:loja,
+   // O banco da loja recebe APENAS a margem, nunca as despesas do fornecedor.
+   montantePrevistoCentavos:margemLiberavel,
    contaConectada:false,transferenciaExecutada:false},
   {destino:'COFRES_LATERAIS_TERCEIRO_BANCO',
    bancoSugerido:'Terceiro banco a definir',
@@ -57,6 +59,13 @@ function planejarRecebimentoTresBancos({fotografia,taxaRealPspCentavos=null}={})
   sobraComercialPrevistaCentavos:loja===null||loja<0?null:loja,
   fornecedorAPagarPrevistoCentavos:obrigaFornecedor,
   freteReservarPrevistoCentavos:frete,
+  tributosReservarPrevistoCentavos:tributos,
+  margemParaMercadoPagoPrevistaCentavos:margemLiberavel,
+  obrigacoesComerciaisNaoPagas:[
+   {tipo:'FORNECEDOR',valorPrevistoCentavos:obrigaFornecedor},
+   {tipo:'FRETE',valorPrevistoCentavos:frete},
+   {tipo:'TRIBUTOS',valorPrevistoCentavos:tributos}
+  ],
   fornecedorPagoCentavos:0,margemComercialEstimadaCentavos:margem,
   receptores,alerta,
   liquidacaoPspRealComprovada:false,splitAsaasParaBancoExterno:false,
@@ -66,6 +75,6 @@ function planejarRecebimentoTresBancos({fotografia,taxaRealPspCentavos=null}={})
   caixaCentroSacavelCentavos:0,
   cofreLateralSacavelCentavos:0,
   estado:'PREVISAO_NAO_EXECUTADA',
-  nota:'Asaas split nativo usa contas Asaas, nao Pix para dois bancos externos. Transferencias somente apos liquidacao/conciliacao.'};
+  nota:'Gerenciadora externa a escolher. Inter recebe referencia LOOP; Mercado Pago somente margem; custos/tributos reservados; banco 3 somente apos eventos das luzes e conciliacao. Sem transferencias.'};
 }
 module.exports={planejarRecebimentoTresBancos};
