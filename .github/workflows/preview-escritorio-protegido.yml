@@ -65,6 +65,8 @@ on:
       - 'src/domain/painel-operacional-admin-candidato.js'
       - 'src/domain/livro-luzes-financeiras-candidato-sqlite.js'
       - 'src/domain/plano-roteamento-tres-bancos-lab.js'
+      - 'src/domain/celcoin-fluxo-sandbox-lab.js'
+      - 'test/celcoin-fluxo-sandbox-lab.test.js'
       - 'test/plano-roteamento-tres-bancos-lab.test.js'
       - 'src/domain/custos-produtos-admin-candidato-sqlite.js'
       - 'src/candidato/vitrine-aprovada-candidato.js'
@@ -150,7 +152,7 @@ jobs:
       - name: Verificacao do livro de luzes e custos congelados
         run: node --check src/domain/livro-luzes-financeiras-candidato-sqlite.js && node --check src/candidato/vitrine-aprovada-candidato.js
       - name: Teste da venda R$500 e destinos Banco Inter / Mercado Pago / reserva sem Pix
-        run: node --test test/plano-roteamento-tres-bancos-lab.test.js
+        run: node --test test/plano-roteamento-tres-bancos-lab.test.js test/celcoin-fluxo-sandbox-lab.test.js
       - name: Regra restrita de douradas e cofre exclusivo, sem consumir reserva
         run: node --test test/dourada-manual-auditoria-pontas-loop-v6.test.js test/disponibilidade-caixa2-integracao-v6.test.js
       - run: node --check src/domain/estado-simulacao.js
