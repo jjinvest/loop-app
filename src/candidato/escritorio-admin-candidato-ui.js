@@ -1290,6 +1290,7 @@ async function atualizarFluxoFinanceiroAdmin(){
     ' previsto · não sacável · '+l.prepedidoId;
    luzes.append(item);
   }
+  await atualizarStatusCelcoinSandboxAdmin();
   status.textContent='Luzes e giros reconciliados na mesma base de ensaio. '+
    'A luz registra a previsão; o giro move a pessoa. '+
    'Nenhum banco, fornecedor ou participante recebeu transferência real.';
@@ -1297,6 +1298,31 @@ async function atualizarFluxoFinanceiroAdmin(){
  }catch(e){status.textContent='Fluxo não disponível: '+e.message;return null;}
 }
 $('atualizarFluxoFinanceiroAdmin').addEventListener('click',()=>atualizarFluxoFinanceiroAdmin());
+async function atualizarStatusCelcoinSandboxAdmin(){
+ const estado=$('statusCelcoinSandboxAdmin');
+ const botao=$('provarAcessoCelcoinSandboxAdmin');
+ botao.disabled=true;
+ try{
+  const info=await api('/celcoin/sandbox/estado');
+  estado.textContent=info.credenciaisConfiguradas?
+   'Celcoin Sandbox: credenciais no servidor; autenticação ainda não testada.' :
+   'Celcoin Sandbox: faltam credenciais específicas. Nenhuma conta/Pix conectado.';
+  botao.disabled=!info.credenciaisConfiguradas;
+ }catch(e){estado.textContent='Celcoin Sandbox: estado indisponível ('+e.message+').';}
+}
+$('provarAcessoCelcoinSandboxAdmin').addEventListener('click',async()=>{
+ const estado=$('statusCelcoinSandboxAdmin');
+ const botao=$('provarAcessoCelcoinSandboxAdmin');
+ botao.disabled=true;estado.textContent='Verificando OAuth e lista Pix da Celcoin Sandbox sem transação...';
+ try{
+  const result=await api('/celcoin/sandbox/provar-acesso',{method:'POST'});
+  estado.textContent=result.tokenSandboxAutenticado&&result.listaParticipantesPixConsultada?
+   'Celcoin Sandbox: OAuth e consulta Pix confirmados. Bancos e Pix-out ainda não conectados.' :
+   'Celcoin Sandbox: prova inconclusiva.';
+ }catch(e){estado.textContent='Celcoin Sandbox: prova não concluída ('+e.message+').';}
+ finally{botao.disabled=false;}
+});
+
 async function atualizarMotorContaEnsaio(){
  const r=await api('/motor/estado');
  atualizarListaDouradasAdmin(r);
