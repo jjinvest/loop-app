@@ -409,6 +409,9 @@ class TesourariaModularEnsaioSQLite{
     'WHERE transferencia_id=?'
    ].join(' ')).get(transferenciaId);
    if(!tr)falha('TESOURARIA_ENSAIO_TRANSFERENCIA_INEXISTENTE');
+   if(resultado==='INDETERMINADA')
+    return {repetido:true,estado:tr.estado,
+     aguardandoConsulta:tr.estado==='INDETERMINADA'};
    if(tr.estado===resultado)return {repetido:true,estado:tr.estado};
    if(tr.estado!=='INDETERMINADA')
     falha('TESOURARIA_ENSAIO_RECONCILIACAO_CONTRADITORIA');
@@ -470,6 +473,9 @@ class TesourariaModularEnsaioSQLite{
    ].join(' ')).get(tentativaId);
    if(!tentativa||tentativa.saque_id!==saqueId)
     falha('TESOURARIA_ENSAIO_PIX_TENTATIVA_INEXISTENTE');
+   if(resultado==='INDETERMINADA')
+    return {repetido:true,estado:tentativa.estado,
+     aguardandoConsulta:tentativa.estado==='INDETERMINADA'};
    if(tentativa.estado===resultado)
     return {repetido:true,estado:tentativa.estado};
    if(tentativa.estado!=='INDETERMINADA'||
