@@ -111,3 +111,61 @@ test('sem tabelas/custodia reais ou em producao nao monta observador de ensaio',
   else process.env.NODE_ENV=antigo;
  }
 });
+
+test('estorno e reversao de status exigem revisao mesmo se ultimo GET disser recebido',t=>{
+ const {caixa}=preparar(t);
+ caixa.registrarCompromisso({
+  tipo:'COBRANCA',referencia:'PAY_ASAAS_01',
+  operacaoId:'PEDIDO_10001',valorCentavos:25000
+ });
+ const observar=(id,status)=>caixa.registrarObservacao({
+  tipo:'COBRANCA',referencia:'PAY_ASAAS_01',
+  observacaoId:id,observado:{
+   origem:'ASAAS_SANDBOX',pagamentoId:'PAY_ASAAS_01',
+   valorFicticioCentavos:25000,estadoObservado:status,
+   autorizaPosicao:false,autorizaPedidoReal:false
+  }
+ });
+ observar('OBS_PSP_001','RECEIVED');
+ observar('OBS_PSP_002','PENDING');
+ assert.equal(caixa.consultarCompromisso({
+  tipo:'COBRANCA',referencia:'PAY_ASAAS_01'
+ }).motivoRevisao,'COBRANCA_REGREDIU');
+ observar('OBS_PSP_003','REFUNDED');
+ observar('OBS_PSP_004','RECEIVED');
+ const resumo=caixa.consultarCompromisso({
+  tipo:'COBRANCA',referencia:'PAY_ASAAS_01'
+ });
+ assert.equal(resumo.totalObservacoes,4);
+ assert.equal(resumo.ultimaObservacao,'PSP_SANDBOX_SINALIZOU_RECEBIMENTO');
+ assert.equal(resumo.revisaoManualObrigatoria,true);
+ assert.equal(resumo.motivoRevisao,'ESTORNO_HISTORICO');
+ assert.equal(resumo.pagamentoRealHabilitado,false);
+ assert.equal(resumo.reenviarAutomaticamente,false);
+ assert.equal(caixa.verificar().integridade,'OK');
+});
+test('Pix confirmado e depois falhou mantem quarentena, nunca vira saque real pago',t=>{
+ const {caixa}=preparar(t);
+ caixa.registrarCompromisso({
+  tipo:'PIX',referencia:'PIX_ASAAS_01',
+  operacaoId:'SAQUE_10001',valorCentavos:5000
+ });
+ caixa.registrarObservacao({
+  tipo:'PIX',referencia:'PIX_ASAAS_01',
+  observacaoId:'OBS_PIX_101',observado:pix('PIX_ASAAS_01',
+   'CONFIRMACAO_SOMENTE_SANDBOX')
+ });
+ caixa.registrarObservacao({
+  tipo:'PIX',referencia:'PIX_ASAAS_01',
+  observacaoId:'OBS_PIX_102',observado:pix('PIX_ASAAS_01',
+   'FALHA_NO_SANDBOX')
+ });
+ const resumo=caixa.consultarCompromisso({
+  tipo:'PIX',referencia:'PIX_ASAAS_01'
+ });
+ assert.equal(resumo.revisaoManualObrigatoria,true);
+ assert.equal(resumo.motivoRevisao,'PIX_ESTADOS_CONTRADITORIOS');
+ assert.equal(resumo.pagamentoRealHabilitado,false);
+ assert.equal(resumo.reenviarAutomaticamente,false);
+ assert.equal(caixa.verificar().observacoes,2);
+});

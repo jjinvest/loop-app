@@ -185,13 +185,32 @@ class ObservacoesPSPEnsaioSQLite{
    'WHERE tipo=? AND referencia=?'
   ].join(' ')).get(tipo,referencia);
   if(!comp)return null;
-  const ultimo=this.db.prepare([
+  const historico=this.db.prepare([
    'SELECT estado,criado_em FROM loop_lab_tesouraria_observacoes_psp',
-   'WHERE tipo=? AND referencia=? ORDER BY id DESC LIMIT 1'
-  ].join(' ')).get(tipo,referencia);
+   'WHERE tipo=? AND referencia=? ORDER BY id'
+  ].join(' ')).all(tipo,referencia);
+  const ultimo=historico.at(-1);
+  const vistos=new Set(historico.map(x=>x.estado));
+  let revisaoManualObrigatoria=false,motivoRevisao=null;
+  if(tipo==='COBRANCA'&&vistos.has('ESTORNO_SANDBOX_EXIGE_REVISAO')){
+   revisaoManualObrigatoria=true;motivoRevisao='ESTORNO_HISTORICO';
+  }else if(tipo==='PIX'&&vistos.has('CONFIRMACAO_SOMENTE_SANDBOX')&&
+      (vistos.has('FALHA_SOMENTE_SANDBOX')||
+       vistos.has('CANCELAMENTO_SOMENTE_SANDBOX'))){
+   revisaoManualObrigatoria=true;motivoRevisao='PIX_ESTADOS_CONTRADITORIOS';
+  }else if(ultimo?.estado==='STATUS_DESCONHECIDO_NAO_REENVIAR'){
+   revisaoManualObrigatoria=true;motivoRevisao='PIX_STATUS_INDETERMINADO';
+  }else if(tipo==='COBRANCA'&&
+      historico.some((x,i)=>x.estado==='AGUARDANDO_CONCILIACAO'&&
+       historico.slice(0,i).some(y=>
+        y.estado==='PSP_SANDBOX_SINALIZOU_RECEBIMENTO'))){
+   revisaoManualObrigatoria=true;motivoRevisao='COBRANCA_REGREDIU';
+  }
   return {tipo,referencia,valorCentavos:comp.valor_centavos,
    operacaoId:comp.operacao_id,ultimaObservacao:ultimo?.estado||null,
-   proximaAcao:'RECONCILIACAO_BANCARIA_INDEPENDENTE',
+   totalObservacoes:historico.length,revisaoManualObrigatoria,motivoRevisao,
+   proximaAcao:revisaoManualObrigatoria?'INVESTIGAR_DIVERGENCIA_PSP':
+    'RECONCILIACAO_BANCARIA_INDEPENDENTE',
    pagamentoRealHabilitado:false,reenviarAutomaticamente:false};
  }
  verificar(){
