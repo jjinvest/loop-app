@@ -31,6 +31,12 @@ test('HTML original do cliente é reaproveitado sem script LAB, nova tela ou CPF
  assert.match(html,/id="formCadastro"/);
  assert.match(html,/id="painelConta"/);
  assert.match(html,/id="loop03ShellIntegrado"/);
+ assert.match(html,/id="seletorPosicaoMotor"/);
+ assert.match(html,/id="posicoesPainel"/);
+ assert.match(html,/id="listaEquipe"/);
+ assert.match(html,/id="estadoTabuleiroIntegrado"/);
+ assert.equal((html.match(/id="seletorPosicaoMotor"/g)||[]).length,1);
+ assert.equal((html.match(/id="posicoesPainel"/g)||[]).length,1);
  assert.match(html,/id="conteudoConta"/);
  assert.match(html,/id="cadastroPrivacidade"/);
  assert.match(html,/id="termosCadastroDetalhes"/);
@@ -68,6 +74,11 @@ test('interface aprovada e identidade real servidas da mesma origem protegida',a
  assert.match(js.headers.get('content-type'),/javascript/);
  const script=await js.text();
  assert.match(script,/\/api\/contas/);
+ assert.match(script,/pedidoDeOrigemEnsaio/);
+ assert.match(script,/indicacoesQualificadasEnsaio/);
+ assert.match(script,/COMPRA_ENSAIO_SEM_QUALIFICACAO/);
+ assert.match(script,/seletorPosicaoMotor/);
+ assert.match(script,/catracaClientePodeGirar/);
  assert.match(script,/\.loop03-atalho-loja, \.barra-conta a\.loop03-loja-prata/);
  assert.match(script,/setAttribute\('href','\/loja'\)/);
  assert.doesNotMatch(script,/removeAttribute\('href'\)/);
