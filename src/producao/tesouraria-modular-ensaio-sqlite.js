@@ -16,6 +16,8 @@ const {VinculosContasExternasEnsaioSQLite}=
  require('./vinculos-contas-externas-ensaio-sqlite');
 const {CorrespondenciasExtratoEnsaioSQLite}=
  require('./correspondencias-extrato-ensaio-sqlite');
+const {avaliarProntidaoFinanceiraEnsaio}=
+ require('./prontidao-financeira-ensaio');
 const {planejarRecebimentoTresBancos}=
  require('../domain/plano-roteamento-tres-bancos-lab');
 const {criarPlanoFinanceiro,validarPlanoFinanceiro,planejarTrocaFinanceira}=
@@ -643,6 +645,9 @@ class TesourariaModularEnsaioSQLite{
       'PSP:'+troca.origem),
     saldoMigradoAutomaticamente:false,financeiroReal:false};
   });
+ }
+ diagnosticarProntidaoFinanceiraEnsaio(){
+  return avaliarProntidaoFinanceiraEnsaio({tesouraria:this});
  }
  diagnosticarConvergenciaExternaEnsaio(){
   return Object.freeze({

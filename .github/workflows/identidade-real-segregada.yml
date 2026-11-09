@@ -23,6 +23,8 @@ on:
       - 'src/producao/inbox-extratos-asaas-sandbox-sqlite.js'
       - 'src/producao/vinculos-contas-externas-ensaio-sqlite.js'
       - 'src/producao/correspondencias-extrato-ensaio-sqlite.js'
+      - 'src/producao/prontidao-financeira-ensaio.js'
+      - 'test/prontidao-financeira-ensaio.test.js'
       - 'test/correspondencias-extrato-ensaio-sqlite.test.js'
       - 'test/vinculos-contas-externas-ensaio-sqlite.test.js'
       - 'test/inbox-extratos-asaas-sandbox-sqlite.test.js'
@@ -91,6 +93,7 @@ jobs:
           node --check src/producao/inbox-extratos-asaas-sandbox-sqlite.js
           node --check src/producao/vinculos-contas-externas-ensaio-sqlite.js
           node --check src/producao/correspondencias-extrato-ensaio-sqlite.js
+          node --check src/producao/prontidao-financeira-ensaio.js
           node --check src/producao/conferencia-observacoes-psp.js
           node --check src/producao/observacoes-psp-ensaio-sqlite.js
           node --check src/producao/conciliacao-multibancos-ensaio-sqlite.js
@@ -146,6 +149,8 @@ jobs:
         run: node --test test/observacoes-psp-ensaio-sqlite.test.js
       - name: Convergencia externa de PSP e Pix sandbox, sem credito ou reenvio
         run: node --test test/conferencia-observacoes-psp.test.js
+      - name: Auditoria financeira unica de prontidao com bloqueio incondicional de producao
+        run: node --test test/prontidao-financeira-ensaio.test.js
       - name: Correlacao de IDs extrato Asaas com livro, sinal e valor sem liberar Pix
         run: node --test test/correspondencias-extrato-ensaio-sqlite.test.js
       - name: Vinculos bancarios declarados, titular HMAC, replay e restauracao

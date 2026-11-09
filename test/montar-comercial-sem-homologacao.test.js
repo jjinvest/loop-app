@@ -633,6 +633,15 @@ test('cinco missoes integradas: distribuir, sacar, abastecer, trocar e restaurar
   .PSP_ORIGEM_NAO_CORRESPONDE_A_OBSERVACAO,1);
  assert.equal(convergencia.conciliacaoRealCertificada,false);
  assert.equal(convergencia.saquesReaisLiberados,false);
+ const pronta=teso.diagnosticarProntidaoFinanceiraEnsaio();
+ assert.equal(pronta.integridadeLocal,'OK');
+ assert.equal(pronta.recebimentosFicticios,1);
+ assert.equal(pronta.saquesFicticios,1);
+ assert.equal(pronta.referenciasCruzadasExtrato,1);
+ assert.equal(pronta.provaExternaAutenticada,false);
+ assert.equal(pronta.autorizacaoParaDinheiroReal,false);
+ assert.equal(pronta.prontoParaMarcoZeroComClientes,false);
+ assert.ok(pronta.requisitosExternosPendentes.length>=10);
  assert.equal(caixa.consultarCompromisso({
   tipo:'PIX',referencia:'PIX_FICTICIO_01'
  }).pagamentoRealHabilitado,false);
