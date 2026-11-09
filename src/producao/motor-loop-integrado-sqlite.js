@@ -57,6 +57,16 @@ class MotorLoopIntegradoSQLite{
  _transacao(fn){
   this.banco.exec('BEGIN IMMEDIATE');
   try{
+   if(this.banco.prepare(
+    "SELECT 1 FROM sqlite_master WHERE name='loop_real_promocoes_pedido_ensaio'"
+   ).get()){
+    const cancelada=this.banco.prepare([
+     'SELECT 1 FROM loop_real_promocoes_pedido_ensaio p',
+     'JOIN loop_real_eventos_comerciais e ON e.pedido_id=p.pedido_id',
+     "WHERE e.estado='CANCELADO' LIMIT 1"
+    ].join(' ')).get();
+    if(cancelada)falha('LOOP_PROMOCAO_ESTORNADA_EXIGE_REVISAO');
+   }
    const row=this.banco.prepare(
     'SELECT revisao,snapshot FROM loop_real_motor_estado WHERE id=1').get();
    const sim=restaurar(row?.snapshot);
@@ -88,32 +98,60 @@ class MotorLoopIntegradoSQLite{
    ...sim.tabuleiro.vagas].filter(p=>p&&p.empresa!==true&&
    p.participanteId===id).length;
  }
- // Estes métodos NÃO são expostos por HTTP e SEMPRE falham em produção.
- registrarCompraEnsaio({titularId,pedidoId,valorCentavos=25000}={}){
-  this._ensaio();this._titular(titularId);
+ // Métodos de teste internos. Em produção: nenhum pode criar posições.
+ _registrarCompraEmSim(sim,{titularId,pedidoId,valorCentavos}={}){
   if(typeof pedidoId!=='string'||!ID.test(pedidoId)||
      !Number.isSafeInteger(valorCentavos)||valorCentavos<25000)
    falha('LOOP_COMPRA_ENSAIO_INVALIDA');
-  return this._transacao(sim=>{
-   const anterior=this.banco.prepare(
-    'SELECT titular_id,posicao_id,valor_centavos FROM loop_real_motor_compras WHERE pedido_id=?'
-   ).get(pedidoId);
-   if(anterior){
-    if(anterior.titular_id!==titularId||anterior.valor_centavos!==valorCentavos)
-     falha('LOOP_PEDIDO_DIVERGENTE');
-    return {repetida:true,posicaoId:anterior.posicao_id};
-   }
-   if(this._ativos(sim,titularId)>=LIMITE_POSICOES_ATIVAS)
-    falha('LOOP_MAXIMO_DEZ_POSICOES');
-   const r=sim.registrarPosicaoSimulada({
-    nome:'Posição de ensaio',participanteId:titularId,vendaId:pedidoId
-   });
-   this.banco.prepare([
-    'INSERT INTO loop_real_motor_compras(pedido_id,titular_id,posicao_id,valor_centavos)',
-    'VALUES(?,?,?,?)'
-   ].join(' ')).run(pedidoId,titularId,r.posicao.id,valorCentavos);
-   return {repetida:false,posicaoId:r.posicao.id};
+  const anterior=this.banco.prepare(
+   'SELECT titular_id,posicao_id,valor_centavos FROM loop_real_motor_compras WHERE pedido_id=?'
+  ).get(pedidoId);
+  if(anterior){
+   if(anterior.titular_id!==titularId||anterior.valor_centavos!==valorCentavos)
+    falha('LOOP_PEDIDO_DIVERGENTE');
+   return {repetida:true,posicaoId:anterior.posicao_id};
+  }
+  if(this._ativos(sim,titularId)>=LIMITE_POSICOES_ATIVAS)
+   falha('LOOP_MAXIMO_DEZ_POSICOES');
+  const res=sim.registrarPosicaoSimulada({
+   nome:'Posição de ensaio',participanteId:titularId,vendaId:pedidoId
   });
+  this.banco.prepare([
+   'INSERT INTO loop_real_motor_compras(pedido_id,titular_id,posicao_id,valor_centavos)',
+   'VALUES(?,?,?,?)'
+  ].join(' ')).run(pedidoId,titularId,res.posicao.id,valorCentavos);
+  return {repetida:false,posicaoId:res.posicao.id};
+ }
+ registrarCompraEnsaio({titularId,pedidoId,valorCentavos=25000}={}){
+  this._ensaio();this._titular(titularId);
+  return this._transacao(sim=>this._registrarCompraEmSim(sim,{
+   titularId,pedidoId,valorCentavos
+  }));
+ }
+ // Para a ponte comercial: única transação já aberta no MESMO SQLite.
+ // Se a ponte falhar, o snapshot, a fila e o pedido são revertidos juntos.
+ registrarCompraConciliadaEnsaioEmTransacao({
+  titularId,pedidoId,valorCentavos
+ }={}){
+  this._ensaio();
+  if(this.banco.isTransaction!==true)
+   falha('LOOP_COMPRA_CONCILIADA_REQUER_TRANSACAO');
+  this._titular(titularId);
+  const linha=this.banco.prepare(
+   'SELECT revisao,snapshot FROM loop_real_motor_estado WHERE id=1'
+  ).get();
+  const sim=restaurar(linha?.snapshot);
+  const res=this._registrarCompraEmSim(sim,{
+   titularId,pedidoId,valorCentavos
+  });
+  if(!res.repetida){
+   this.banco.prepare([
+    'INSERT INTO loop_real_motor_estado(id,revisao,snapshot)',
+    'VALUES(1,1,?) ON CONFLICT(id)',
+    'DO UPDATE SET revisao=revisao+1,snapshot=excluded.snapshot'
+   ].join(' ')).run(JSON.stringify(sim.exportarSnapshot()));
+  }
+  return res;
  }
  registrarIndicacaoEnsaio({indicadorId,indicadoId,posicaoId,pedidoIndicado,eventoId}={}){
   this._ensaio();this._titular(indicadorId);this._titular(indicadoId);
