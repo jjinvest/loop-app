@@ -154,3 +154,34 @@ test('não montar projeção em banco diferente ou sem cliente; nenhuma posiçã
  assert.equal(vazio.minhasPosicoesAtivasEmEnsaio,0);
  assert.equal(vazio.posicoesReais,0);
 });
+
+
+test('tabuleiro, seis eventos e giro pertencem ao mesmo motor consultado no Escritorio',async t=>{
+ const x=await fixture(t);
+ for(let i=1;i<=5;i++)
+  x.motor.registrarCompraEnsaio({
+   titularId:x.vera.titularId,
+   pedidoId:'pedido-extra-'+i
+  });
+ x.motor.prepararTabuleiroEnsaio();
+ const pedidos=['pedido-ana','pedido-bia','pedido-vera',
+  'pedido-extra-1','pedido-extra-2','pedido-extra-3'];
+ for(const [i,pedidoId] of pedidos.entries()){
+  const r=x.motor.registrarEventoEnsaio({pedidoId});
+  assert.equal(r.eventosNoCiclo,i+1);
+ }
+ const antes=x.visao.consultarEstado({titularId:x.ana.titularId});
+ assert.equal(antes.tabuleiro.eventosNoCiclo,6);
+ assert.equal(antes.tabuleiro.vagas.length,6);
+ assert.equal(antes.eventosPorCiclo,6);
+ assert.equal(antes.catracaClientePodeGirar,false);
+ assert.equal(antes.posicoesReais,0);
+ x.motor.controlarCatracaEnsaio({acao:'ABRIR'});
+ assert.equal(x.motor.controlarCatracaEnsaio({acao:'GIRAR'}).girou,true);
+ const depois=x.visao.consultarEstado({titularId:x.ana.titularId});
+ assert.equal(depois.catraca.giros,1);
+ assert.equal(depois.tabuleiro.eventosNoCiclo,0);
+ assert.equal(depois.somenteLeitura,true);
+ assert.equal(depois.financeiroReal,false);
+ assert.equal(x.motor.verificar().giros,1);
+});
