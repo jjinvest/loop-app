@@ -31,7 +31,8 @@ const {validarIdentidade,criarBackupIdentidadeReal,
  require('../src/producao/backup-identidade-real');
 const {TesourariaModularEnsaioSQLite}=
  require('../src/producao/tesouraria-modular-ensaio-sqlite');
-const {consultarERegistrarObservacaoAsaasSandbox}=
+const {ObservacoesPSPEnsaioSQLite,
+ consultarERegistrarObservacaoAsaasSandbox}=
  require('../src/producao/observacoes-psp-ensaio-sqlite');
 const DOC='Termos de conta fictícia para exercício sem provedor PSP, sem saques, '+
  'sem dinheiro e sem liberação comercial. Não há posição remunerada.';
@@ -602,7 +603,12 @@ test('cinco missoes integradas: distribuir, sacar, abastecer, trocar e restaurar
   assert.equal(rel.verificar().saques,1);
   assert.equal(rel.plano().revisao,7);
   assert.equal(rel.verificar().integridade,'OK');
-  assert.equal(rel.observacoesPsp?.verificar?.()?.observacoes??2,2);
+  const recuperado=Object.create(ObservacoesPSPEnsaioSQLite.prototype);
+  recuperado.db=db2;
+  assert.equal(recuperado.verificar().observacoes,2);
+  assert.equal(recuperado.consultarCompromisso({
+   tipo:'PIX',referencia:'PIX_FICTICIO_01'
+  }).pagamentoRealHabilitado,false);
   assert.equal(rel.consultarTitularEnsaio({
    titularId:titular
   }).saldoFicticioDisponivelCentavos,7000);
