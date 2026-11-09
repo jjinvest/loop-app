@@ -153,7 +153,7 @@ test('Pix confirmado e depois falhou mantem quarentena, nunca vira saque real pa
  caixa.registrarObservacao({
   tipo:'PIX',referencia:'PIX_ASAAS_01',
   observacaoId:'OBS_PIX_101',observado:pix('PIX_ASAAS_01',
-   'CONFIRMACAO_SOMENTE_SANDBOX')
+   'CONCLUIDO_NO_SANDBOX')
  });
  caixa.registrarObservacao({
   tipo:'PIX',referencia:'PIX_ASAAS_01',
