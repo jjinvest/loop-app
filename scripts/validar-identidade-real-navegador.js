@@ -112,12 +112,26 @@ async function main(){
    assert.equal(await page.locator('#abaTabuleiro').isDisabled(),false);
    assert.equal(await page.locator('#abaPosicoes').isDisabled(),false);
    await page.locator('#loopResumoMotor').filter({hasText:/Fila B: 1/}).waitFor();
+   const geometria=await page.locator('#abaTabuleiro').evaluate(el=>{
+    const rect=el.getBoundingClientRect();
+    const side=document.getElementById('loop03SidebarIntegrado');
+    const box=side.getBoundingClientRect();
+    return {largura:innerWidth,
+     menu:{x:rect.x,y:rect.y,width:rect.width},
+     lateral:{x:box.x,y:box.y,width:box.width},
+     classe:side.className,
+     transform:getComputedStyle(side).transform};
+   });
+   console.log('LOOP_GEOMETRIA_MENU_'+item.nome+'='+JSON.stringify(geometria));
+   if(item.largura<=860)await page.locator('#loop03MenuIntegrado').click();
    await page.locator('#abaTabuleiro').click();
    await page.locator('#conteudoTabuleiroEstadoMotor')
     .filter({hasText:/Eventos do ciclo: 0\/6/}).waitFor();
+   if(item.largura<=860)await page.locator('#loop03MenuIntegrado').click();
    await page.locator('#abaPosicoes').click();
    await page.locator('#conteudoPosicoesEstadoMotor')
     .filter({hasText:/#1 \(FILA_B\)/}).waitFor();
+   if(item.largura<=860)await page.locator('#loop03MenuIntegrado').click();
    await page.locator('#abaConta').click();
    assert.equal(await page.locator('#painelIdentidadeTeste').isHidden(),true);
    await page.screenshot({

@@ -149,6 +149,11 @@
     if(alvo)alvo.hidden=!ativo;
    }
    if(tab.id==='abaTabuleiro'||tab.id==='abaPosicoes')void carregarMotor();
+   const lateral=$('loop03SidebarIntegrado');
+   if(lateral?.classList.contains('loop03-aberto')){
+    lateral.classList.remove('loop03-aberto');
+    $('loop03MenuIntegrado').setAttribute('aria-expanded','false');
+   }
   });
  }
  async function carregarDados(){
@@ -303,7 +308,7 @@
  }
  $('loop03MenuIntegrado').addEventListener('click',()=>{
   const sidebar=$('loop03SidebarIntegrado');
-  const aberto=sidebar.classList.toggle('aberto');
+  const aberto=sidebar.classList.toggle('loop03-aberto');
   $('loop03MenuIntegrado').setAttribute('aria-expanded',String(aberto));
  });
  void requisitar('/me').then(s=>painelConta(s)).catch(()=>mostrarLogin('login'));
