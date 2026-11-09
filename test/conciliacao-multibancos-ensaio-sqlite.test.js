@@ -9,13 +9,14 @@ function banco(t){
  t.after(()=>db.close());
  db.exec([
   'CREATE TABLE loop_lab_tesouraria_movimentos(',
-  'operacao_id TEXT PRIMARY KEY,origem TEXT,destino TEXT,centavos INTEGER);',
-  "INSERT INTO loop_lab_tesouraria_movimentos VALUES('VENDA_1',NULL,'PSP:CELCOIN',49500);",
-  "INSERT INTO loop_lab_tesouraria_movimentos VALUES('LOOP_1','PSP:CELCOIN','LOOP:INTER',25000);",
-  "INSERT INTO loop_lab_tesouraria_movimentos VALUES('LOJA_1','PSP:CELCOIN','LOJA:MERCADO_PAGO',6000);",
-  "INSERT INTO loop_lab_tesouraria_movimentos VALUES('ABAST_1','LOOP:INTER','TRANSITO:ABAST_1',5000);",
-  "INSERT INTO loop_lab_tesouraria_movimentos VALUES('ENTRA_1','TRANSITO:ABAST_1','PAGADOR:ASAAS',5000);",
-  "INSERT INTO loop_lab_tesouraria_movimentos VALUES('PIX_1','PAGADOR:ASAAS',NULL,5000);"
+  'id INTEGER PRIMARY KEY AUTOINCREMENT,',
+  'operacao_id TEXT UNIQUE,origem TEXT,destino TEXT,centavos INTEGER);',
+  "INSERT INTO loop_lab_tesouraria_movimentos(operacao_id,origem,destino,centavos) VALUES('VENDA_1',NULL,'PSP:CELCOIN',49500);",
+  "INSERT INTO loop_lab_tesouraria_movimentos(operacao_id,origem,destino,centavos) VALUES('LOOP_1','PSP:CELCOIN','LOOP:INTER',25000);",
+  "INSERT INTO loop_lab_tesouraria_movimentos(operacao_id,origem,destino,centavos) VALUES('LOJA_1','PSP:CELCOIN','LOJA:MERCADO_PAGO',6000);",
+  "INSERT INTO loop_lab_tesouraria_movimentos(operacao_id,origem,destino,centavos) VALUES('ABAST_1','LOOP:INTER','TRANSITO:ABAST_1',5000);",
+  "INSERT INTO loop_lab_tesouraria_movimentos(operacao_id,origem,destino,centavos) VALUES('ENTRA_1','TRANSITO:ABAST_1','PAGADOR:ASAAS',5000);",
+  "INSERT INTO loop_lab_tesouraria_movimentos(operacao_id,origem,destino,centavos) VALUES('PIX_1','PAGADOR:ASAAS',NULL,5000);"
  ].join(' '));
  return {db,x:new Conciliar({banco:db})};
 }
