@@ -32,8 +32,8 @@ function preparar(t){
  const chaves={chaveEmail:randomBytes(32),chaveCifra:randomBytes(32),
   chaveCodigo:randomBytes(32)};
  const cfg={...chaves,banco,
-  termos:{versao:'TERMO-2026',texto:DOC},
-  privacidade:{versao:'PRIV-2026',texto:DOC},
+  termos:{versao:'LOOP-TERMO-2026',texto:DOC},
+  privacidade:{versao:'LOOP-PRIV-2026',texto:DOC},
   enviarEmail:async()=>true};
  const contas=new IdentidadeClienteLoopReal(cfg);
  let provaStatus='PENDENTE',provaValor=25900,pagamentoId='PAGAMENTO_001';
