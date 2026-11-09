@@ -83,6 +83,34 @@ async function main(){
    {nome:'pc',largura:1440,altura:900},
    {nome:'celular',largura:390,altura:844}
   ]){
+   // Convite público da Loja -> cadastro do Escritório, sem cookie.
+   const novoNick=item.nome==='pc'?'BravoPc':'BravoCelular';
+   const convite=await browser.newContext({
+    viewport:{width:item.largura,height:item.altura},
+    deviceScaleFactor:1
+   });
+   const cadastro=await convite.newPage();
+   cadastro.setDefaultTimeout(15000);
+   await cadastro.goto(base+'/convite/loja?ref='+nick);
+   await cadastro.waitForURL(url=>url.pathname==='/escritorio'&&
+    url.searchParams.get('ref')===nick);
+   await cadastro.locator('#mudarParaCadastro').click();
+   await cadastro.locator('#cadastroIndicadorAviso').filter({
+    hasText:'@'+nick.toLowerCase()
+   }).waitFor({state:'visible'});
+   await cadastro.locator('#cadastroNome').fill('Pessoa Convidada');
+   await cadastro.locator('#cadastroNick').fill(novoNick);
+   await cadastro.locator('#cadastroEmail').fill(
+    novoNick.toLowerCase()+'@example.invalid');
+   await cadastro.locator('#cadastroSenha').fill('SenhaDoEnsaio2026!');
+   await cadastro.locator('#cadastroTermos').waitFor({state:'attached'});
+   await cadastro.locator('#cadastroTermos').check();
+   await cadastro.locator('#cadastroPrivacidade').check();
+   await cadastro.locator('#formCadastro button[type=submit]').click();
+   await cadastro.locator('#painelLogin').waitFor({state:'visible'});
+   assert.equal(contas.listarIndicados(cliente.titularId).total,
+    item.nome==='pc'?1:2);
+   await convite.close();
    const contexto=await browser.newContext({
     viewport:{width:item.largura,height:item.altura},
     deviceScaleFactor:1
@@ -134,6 +162,19 @@ async function main(){
    if(item.largura<=860)await page.locator('#loop03MenuIntegrado').click();
    await page.locator('#abaPosicoes').click();
    await page.locator('#posicoesPainel').filter({hasText:/#1.*FILA_B/}).waitFor();
+   if(item.largura<=860)await page.locator('#loop03MenuIntegrado').click();
+   await page.locator('#abaEquipe').click();
+   await page.locator('#equipeResumo').filter({
+    hasText:/cadastro\(s\) pelo seu link/
+   }).waitFor();
+   assert.match(await page.locator('#listaEquipe').innerText(),
+    new RegExp(novoNick,'i'));
+   if(item.largura<=860)await page.locator('#loop03MenuIntegrado').click();
+   await page.locator('#abaLinks').click();
+   assert.match(await page.locator('#linkLoja').inputValue(),
+    /\/convite\/loja\?ref=dozeletrasab/);
+   assert.match(await page.locator('#linkEscritorio').inputValue(),
+    /\/escritorio\?ref=dozeletrasab/);
    if(item.largura<=860)await page.locator('#loop03MenuIntegrado').click();
    await page.locator('#abaConta').click();
    assert.equal(await page.locator('#perfilCliente').isVisible(),true);
