@@ -92,7 +92,7 @@ function renderizarInterfaceAprovada(){
   '<p id="tesourariaEnsaioStatus" role="status"></p></div>');
  // Filtro de posicoes inserido na tela original (sem duplicar pagina).
  html=trocarExato(html,
-  '    <div id="posicoesPainel" aria-live="polite">Consultando posições…</div>',
+  '   <div id="posicoesPainel" aria-live="polite">Consultando posições…</div>',
   '    <label id="rotuloSeletorPosicaoMotor" for="seletorPosicaoMotor" hidden>'+
   'Visualizar posição em ensaio'+
   '<select id="seletorPosicaoMotor">'+
