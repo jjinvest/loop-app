@@ -10,6 +10,7 @@ on:
       - 'scripts/provar-recuperacao-independente-identidade.js'
       - 'test/identidade-real-isolada.test.js'
       - 'test/motor-loop-integrado-identidade.test.js'
+      - 'test/motor-loop-concorrencia-e-ciclos.test.js'
       - 'test/identidade-real-persistencia.test.js'
       - 'test/api-identidade-real-sem-pagamentos.test.js'
       - 'test/interface-aprovada-identidade-real.test.js'
@@ -86,6 +87,8 @@ jobs:
         run: node --test test/identidade-real-isolada.test.js
       - name: Motor interno com três titulares, giro e reinício do banco
         run: node --test test/motor-loop-integrado-identidade.test.js
+      - name: Multi-processo, contencao de SQLite, 120 eventos e 20 ciclos
+        run: node --test test/motor-loop-concorrencia-e-ciclos.test.js
       - name: SQLite de cadastro persiste após reinicialização
         run: node --test test/identidade-real-persistencia.test.js
       - name: API real não abre dinheiro nem aceita CSRF inválido
