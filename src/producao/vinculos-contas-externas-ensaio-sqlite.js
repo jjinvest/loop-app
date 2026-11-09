@@ -170,7 +170,7 @@ class VinculosContasExternasEnsaioSQLite{
    titularidadeBancariaAutenticada:false,
    contaRealAutenticada:false,
    conformidadeContratualComprovada:false,
-   concilicaoRealCertificada:false,
+   conciliacaoRealCertificada:false,
    dinheiroRealLiberado:false
   });
  }
