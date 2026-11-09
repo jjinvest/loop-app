@@ -70,9 +70,9 @@
   // Preservar a mesma estrutura visual; não permitir navegação para
   // funções que ainda dependem exclusivamente do LAB.
   for(const tab of document.querySelectorAll('[role=tab]')){
-   const ativo=tab.id==='abaConta';
-   const habilitado=ativo||(s.motorLoopInterno===true&&
-    (tab.id==='abaTabuleiro'||tab.id==='abaPosicoes'));
+   const ativo=tab.id===(s.motorLoopInterno===true?'abaResumo':'abaConta');
+   const habilitado=tab.id==='abaConta'||(s.motorLoopInterno===true&&
+    ['abaResumo','abaTabuleiro','abaPosicoes'].includes(tab.id));
    tab.disabled=!habilitado;tab.setAttribute('aria-selected',String(ativo));
    tab.setAttribute('aria-current',ativo?'page':'false');
    tab.tabIndex=ativo?0:-1;
@@ -98,43 +98,87 @@
  function prepararAbasMotor(){
   if(painelMotorPreparado)return;
   painelMotorPreparado=true;
-  for(const [id,etiqueta] of [
-   ['conteudoTabuleiro','Tabuleiro em validação interna'],
-   ['conteudoPosicoes','Minhas posições em validação interna']
-  ]){
-   const area=$(id);
-   if(!area)continue;
-   for(const filho of [...area.children])filho.hidden=true;
-   const titulo=document.createElement('h3');
-   titulo.textContent=etiqueta;
-   const texto=document.createElement('p');
-   texto.id=id+'EstadoMotor';texto.setAttribute('role','status');
-   texto.textContent='Consultando o motor da conta...';
-   area.append(titulo,texto);
+  $('boasVindas').textContent='Sua conta está conectada ao Escritório LOOP e à Loja AKITEMM.';
+  $('resumoPedidos').textContent='—';
+  $('resumoEquipe').textContent='—';
+  for(const id of ['atualizarTabuleiroIntegrado','atualizarPosicoes']){
+   $(id).addEventListener('click',()=>void carregarMotor());
   }
+  $('atualizarResumo').addEventListener('click',()=>{
+   void carregarDados();void carregarMotor();
+  });
+  $('tabuleiroVerPosicoesIntegrado').addEventListener('click',
+   ()=>$('abaPosicoes').click());
+  $('atalhoPosicoes').addEventListener('click',
+   ()=>$('abaPosicoes').click());
+  $('atalhoLoja').addEventListener('click',()=>location.assign('/loja'));
+  $('atalhoPedidos').disabled=true;
+  $('posicoesVerPedidos').disabled=true;
+ }
+ function textoPosicao(p){
+  return p&&Number.isSafeInteger(p.numero)&&p.numero>0?
+   '#'+p.numero:'—';
  }
  async function carregarMotor(){
   try{
-   const m=await fetch('/api/loop/estado',{
+   const r=await fetch('/api/loop/estado',{
     credentials:'same-origin',cache:'no-store'
    });
-   if(!m.ok)throw Error('MOTOR_INDISPONIVEL');
-   const d=await m.json();
+   if(!r.ok)throw Error('MOTOR_INDISPONIVEL');
+   const d=await r.json();
    if(d.fonte!=='IDENTIDADE_E_MOTOR_MESMO_SQLITE'||
-      d.financeiroReal!==false||!Array.isArray(d.minhasPosicoes))
+      d.financeiroReal!==false||!Array.isArray(d.minhasPosicoes)||
+      !d.tabuleiro||!Array.isArray(d.tabuleiro.vagas)||
+      d.tabuleiro.vagas.length!==6)
     throw Error('MOTOR_RESPOSTA_INVALIDA');
    const texto='Fila A: '+d.filaA+' · Fila B: '+d.filaB+
     ' · Giros: '+d.catraca.giros+' · Eventos do ciclo: '+
     d.tabuleiro.eventosNoCiclo+'/6 · Movimentação real indisponível.';
    $('loopResumoMotor').textContent=texto;
-   const tab=$('conteudoTabuleiroEstadoMotor');
-   if(tab)tab.textContent=texto;
-   const pos=$('conteudoPosicoesEstadoMotor');
-   if(pos)pos.textContent=d.minhasPosicoes.length?
-    d.minhasPosicoes.map(x=>'#'+x.numero+' ('+x.local+')').join(' · '):
-    'Nenhuma posição real. O motor interno está em validação.';
+   $('estadoTabuleiroIntegrado').textContent=texto;
+   $('motorFilaA').textContent=d.filaA+' posição(ões) em validação interna';
+   $('motorFilaB').textContent=d.filaB+' posição(ões) em validação interna';
+   $('tabuleiroMotorCentro').textContent=textoPosicao(d.tabuleiro.centro);
+   for(let i=0;i<6;i++){
+    const pos=d.tabuleiro.vagas[i],el=$('tabuleiroMotorVaga'+(i+1));
+    el.textContent=textoPosicao(pos);
+    el.title=pos?.minha?'Minha posição':'Espaço do tabuleiro';
+    const luz=$('motorBolinha'+(i+1));
+    luz.style.opacity=i<d.tabuleiro.eventosNoCiclo?'1':'.25';
+    luz.setAttribute('aria-label','Evento '+(i+1)+
+     (i<d.tabuleiro.eventosNoCiclo?' contabilizado':' aguardando'));
+   }
+   $('motorContadorEventos').textContent=d.tabuleiro.eventosNoCiclo+
+    '/6 eventos de validação interna';
+   $('resumoPosicoes').textContent=String(d.minhasPosicoes.length);
+   const painel=$('posicoesPainel');
+   painel.replaceChildren();
+   if(!d.minhasPosicoes.length){
+    const vazio=document.createElement('p');
+    vazio.textContent='Nenhuma posição ativa. Não há compras nem pagamentos reais habilitados.';
+    painel.appendChild(vazio);
+   }else{
+    const grade=document.createElement('div');
+    grade.className='loop03-grade-posicoes';
+    for(const pos of d.minhasPosicoes){
+     const card=document.createElement('article');
+     card.className='loop03-unidade-posicao';
+     const corpo=document.createElement('div');
+     corpo.className='loop03-cartao-posicao';
+     const id=document.createElement('strong');
+     id.textContent='#'+pos.numero;
+     const etapa=document.createElement('p');
+     etapa.textContent=pos.local+' · '+pos.indicacoesVinculadas+
+      ' indicação(ões) · sem direito financeiro real';
+     corpo.append(id,etapa);card.appendChild(corpo);grade.appendChild(card);
+    }
+    painel.appendChild(grade);
+   }
   }catch{
-   $('loopResumoMotor').textContent='Motor interno indisponível. Não há transações reais.';
+   $('loopResumoMotor').textContent=
+    'Motor interno indisponível. Não há transações reais.';
+   $('estadoTabuleiroIntegrado').textContent='Estado indisponível; nenhum giro autorizado.';
+   $('posicoesPainel').textContent='Posições temporariamente indisponíveis.';
   }
  }
  for(const tab of document.querySelectorAll('[role=tab]')){
@@ -159,6 +203,7 @@
  async function carregarDados(){
   try{
    const dados=await requisitar('/meus-dados');
+   if($('resumoEmail'))$('resumoEmail').textContent=dados.emailVerificado?'Confirmado':'Pendente';
    $('perfilCliente').textContent='Nome: '+dados.nome+' · Nick: '+dados.nick+
     ' · E-mail: '+dados.email+
     (dados.emailVerificado?' (confirmado)':' (pendente)')+

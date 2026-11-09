@@ -102,7 +102,8 @@ async function main(){
    await page.locator('#painelConta').waitFor({state:'visible'});
    assert.equal(await page.locator('#cadastroNick').getAttribute('maxlength'),'12');
    assert.equal(await page.locator('#login').getAttribute('maxlength'),'12');
-   assert.equal(await page.locator('#perfilCliente').isVisible(),true);
+   assert.equal(await page.locator('#conteudoResumo').isVisible(),true);
+   assert.equal(await page.locator('#perfilCliente').isVisible(),false);
    assert.match(await page.locator('#perfilCliente').innerText(),/dozeletrasab/);
    const menuLoja=page.locator('.loop03-atalho-loja');
    const barraLoja=page.locator('.barra-conta a.loop03-loja-prata');
@@ -125,14 +126,17 @@ async function main(){
    console.log('LOOP_GEOMETRIA_MENU_'+item.nome+'='+JSON.stringify(geometria));
    if(item.largura<=860)await page.locator('#loop03MenuIntegrado').click();
    await page.locator('#abaTabuleiro').click();
-   await page.locator('#conteudoTabuleiroEstadoMotor')
+   await page.locator('#estadoTabuleiroIntegrado')
     .filter({hasText:/Eventos do ciclo: 0\/6/}).waitFor();
+   assert.equal(await page.locator('#tabuleiroMotorCentro').innerText(),'—');
+   assert.equal(await page.locator('#motorFilaB').innerText(),
+    '1 posição(ões) em validação interna');
    if(item.largura<=860)await page.locator('#loop03MenuIntegrado').click();
    await page.locator('#abaPosicoes').click();
-   await page.locator('#conteudoPosicoesEstadoMotor')
-    .filter({hasText:/#1 \(FILA_B\)/}).waitFor();
+   await page.locator('#posicoesPainel').filter({hasText:/#1.*FILA_B/}).waitFor();
    if(item.largura<=860)await page.locator('#loop03MenuIntegrado').click();
    await page.locator('#abaConta').click();
+   assert.equal(await page.locator('#perfilCliente').isVisible(),true);
    assert.equal(await page.locator('#painelIdentidadeTeste').isHidden(),true);
    await page.screenshot({
     path:path.join(pasta,'identidade-real-escritorio-'+item.nome+'.png'),
