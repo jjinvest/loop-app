@@ -131,10 +131,10 @@ class ClassificacaoComercialLoopSQLite{
   ].join(' '));
   let neutralizados=0;
   for(const l of linhas){
-   const regra=l.produto_id?this.db.prepare(
+   const regra=l.produto_id?this.db.prepare([
     'SELECT cor,minimo,roxas_por_unidade,revisao',
     'FROM loop_real_regras_cor WHERE produto_id=?'
-   ).get(l.produto_id):null;
+   ].join(' ')).get(l.produto_id):null;
    if(!regra)neutralizados++;
    if(regra?.cor==='DOURADO'&&l.preco_unit_centavos<25000)
     erro('CORES_COMERCIAIS_DOURADO_ABAIXO_PISO');
