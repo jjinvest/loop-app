@@ -95,7 +95,7 @@ class TesourariaModularEnsaioSQLite{
    'CREATE TABLE IF NOT EXISTS loop_lab_tesouraria_migracoes(',
    'migracao_id TEXT PRIMARY KEY,origem TEXT NOT NULL,destino TEXT NOT NULL,',
    'centavos INTEGER NOT NULL CHECK(centavos>0),',
-   "estado TEXT NOT NULL CHECK(estado IN ('INDETERMINADA','CONFIRMADA','DEVOLVIDA')));',
+   "estado TEXT NOT NULL CHECK(estado IN ('INDETERMINADA','CONFIRMADA','DEVOLVIDA')));",
    ...['loop_lab_tesouraria_planos','loop_lab_tesouraria_movimentos',
       'loop_lab_tesouraria_recebimentos','loop_lab_tesouraria_creditos_eventos']
     .flatMap(t=>[
