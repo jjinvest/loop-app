@@ -15,6 +15,8 @@ const {CatalogoMultiDistribuidoresSQLite}=
  require('../src/producao/catalogo-multidistribuidores-sqlite');
 const {ControleEconomicoLojaSQLite}=
  require('../src/producao/controle-economico-loja-sqlite');
+const {SessaoAdminComercialSQLite}=
+ require('../src/producao/sessao-admin-comercial-sqlite');
 const {PedidosComerciaisSQLite}=
  require('../src/producao/pedidos-comerciais-sqlite');
 const {MotorLoopIntegradoSQLite}=
@@ -57,6 +59,10 @@ async function preparar(t){
    banco:db,distribuidorHomologado:()=>false,auditoria,manutencao
   });
   new ControleEconomicoLojaSQLite({banco:db,auditoria,manutencao});
+  new SessaoAdminComercialSQLite({
+   banco:db,chaveAdmin:randomBytes(32),
+   credencialAdmin:'CredencialAdministrativaSomenteTeste2026!'
+  });
   const motor=new MotorLoopIntegradoSQLite({banco:db});
   return {banco:db,contas,auditoria,manutencao,catalogo,motor};
  };
