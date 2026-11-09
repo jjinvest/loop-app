@@ -177,6 +177,9 @@ class MotorLoopIntegradoSQLite{
   });
  }
  verificar(){
+  // Snapshot da auditoria fica consistente enquanto outras conexões escrevem.
+  this.banco.exec('BEGIN');
+  try{
   const row=this.banco.prepare(
    'SELECT snapshot FROM loop_real_motor_estado WHERE id=1').get();
   const sim=restaurar(row?.snapshot);
@@ -203,8 +206,10 @@ class MotorLoopIntegradoSQLite{
   if(process.env.NODE_ENV==='production'&&
      (compras.length>0||eventos.length>0||giros>0))
    falha('LOOP_MOTOR_ENSAIO_PROIBIDO_PRODUCAO');
+  this.banco.exec('COMMIT');
   return {integridade:'OK',compras:compras.length,eventos:eventos.length,
    giros};
+  }catch(e){this.banco.exec('ROLLBACK');throw e;}
  }
  consultar({titularId=null}={}){
   if(titularId!==null)this._titular(titularId);
