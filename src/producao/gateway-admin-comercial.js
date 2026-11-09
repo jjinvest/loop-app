@@ -6,7 +6,7 @@ const {montarAdminComercialAprovado}=
 function erro(c){const e=new Error(c);e.codigo=c;throw e;}
 function montarGatewayAdminComercial(app,{
  sessoes,controle,catalogo,auditoria=null,manutencao=null,
- pedidosComerciais=null,motorLoop=null,origemHttps
+ pedidosComerciais=null,motorLoop=null,classificacaoLoop=null,origemHttps
 }={}){
  if(typeof sessoes?.autenticar!=='function'||
     typeof sessoes?.sessao!=='function'||
@@ -113,7 +113,7 @@ function montarGatewayAdminComercial(app,{
   return res.json({sessaoAdminEncerrada:true});
  });
  montarAdminComercialAprovado(app,{
-  controle,catalogo,auditoria,manutencao,pedidosComerciais,
+  controle,catalogo,auditoria,manutencao,pedidosComerciais,classificacaoLoop,
   autorizarAdministrador:proteger,
   validarCsrfAdmin:validarCsrf,
   obterCsrfAdmin:req=>req.operador?.csrf,

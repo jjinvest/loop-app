@@ -22,6 +22,10 @@ const {CatalogoMultiDistribuidoresSQLite}=
  require('../src/producao/catalogo-multidistribuidores-sqlite');
 const {ControleEconomicoLojaSQLite}=
  require('../src/producao/controle-economico-loja-sqlite');
+const {PedidosComerciaisSQLite}=
+ require('../src/producao/pedidos-comerciais-sqlite');
+const {ClassificacaoComercialLoopSQLite}=
+ require('../src/producao/classificacao-comercial-loop-sqlite');
 const {AuditoriaOperacionalSQLite}=
  require('../src/producao/auditoria-operacional-sqlite');
 const {ManutencaoComercialSQLite}=
@@ -131,6 +135,19 @@ async function iniciar(ambiente=process.env){
    banco,chaveAdmin:config.chaveAdmin,
    credencialAdmin:config.credencialAdmin
   });
+  // Configurações de cores no mesmo banco. Nenhuma prova externa de PSP,
+  // compra ou ativação é disponibilizada por este serviço.
+  let classificacaoLoop=null;
+  if(config.chavePedidos){
+   new PedidosComerciaisSQLite({
+    banco,chavePedidos:config.chavePedidos,manutencao,
+    consultarCotacaoConfiavel:async()=>{throw Error('FORNECEDOR_NAO_HOMOLOGADO');},
+    consultarPagamentoPsp:async()=>{throw Error('PSP_NAO_HOMOLOGADO');}
+   });
+   classificacaoLoop=new ClassificacaoComercialLoopSQLite({
+    banco,auditoria,manutencao
+   });
+  }
   agendador=criarAgendadorBackupIdentidadeReal({
    exigirProvaChaves:true,
    executar:()=>enviarBackupOffsiteIdentidade({
@@ -145,7 +162,7 @@ async function iniciar(ambiente=process.env){
   const app=criarAppIdentidadeLoop({
    contas,motorLoop,origemHttps:config.origemHttps,permitirCadastro:true,
    backupEstado:()=>agendador.estado(),
-   adminComercial:{catalogo,controle,sessoes,auditoria,manutencao}
+   adminComercial:{catalogo,controle,sessoes,auditoria,manutencao,classificacaoLoop}
   });
   const porta=Number(ambiente.PORT||3000);
   if(!Number.isSafeInteger(porta)||porta<1||porta>65535)

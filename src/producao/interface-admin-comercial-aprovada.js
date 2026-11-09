@@ -45,6 +45,26 @@ function renderizarAdminComercialAprovado(){
   '<button id="retomarComercialAdmin" type="button" disabled>Retomar novas operações</button>'+
   '<button id="atualizarManutencaoAdmin" type="button">Atualizar situação</button>'+
   '</div></section>';
+ const classificacaoPainel='<section class="painel" aria-labelledby="tituloClassificacaoAdmin">'+
+  '<h2 id="tituloClassificacaoAdmin">Cores dos produtos · LOOP</h2>'+
+  '<p class="subtexto">Classificação aplicada aos novos pedidos. Alterações não mudam'+
+  ' compras anteriores nem liberam pagamentos ou posições.</p>'+
+  '<label for="corProdutoAdmin">Produto</label>'+
+  '<select id="corProdutoAdmin"></select>'+
+  '<label for="corTipoAdmin">Classificação</label>'+
+  '<select id="corTipoAdmin">'+
+  '<option value="CINZA">Cinza · sem posição</option>'+
+  '<option value="VERDE">Verde · carrinho a partir de R$ 250</option>'+
+  '<option value="DOURADO">Dourado · uma previsão por unidade</option>'+
+  '<option value="ROXO">Roxo · evento especial pendente</option>'+
+  '</select>'+
+  '<label for="corMinimoAdmin">Quantidade mínima do produto</label>'+
+  '<input id="corMinimoAdmin" type="number" min="1" max="50" value="1">'+
+  '<label for="corRoxoAdmin">Posições especiais por unidade (apenas roxo)</label>'+
+  '<input id="corRoxoAdmin" type="number" min="0" max="10" value="0">'+
+  '<button id="salvarCorAdmin" class="primario" type="button" disabled>Salvar regra</button>'+
+  '<p id="estadoCorAdmin" role="status">Consultando regras de cores...</p>'+
+  '</section>';
  const auditoriaPainel='<section class="painel" aria-labelledby="tituloAuditoriaAdmin">'+
   '<div class="linha"><h2 id="tituloAuditoriaAdmin">Auditoria das mudanças</h2>'+
   '<button id="recarregarAuditoriaAdmin" type="button">Verificar histórico</button></div>'+
@@ -59,11 +79,11 @@ function renderizarAdminComercialAprovado(){
   '</section>';
  const destino='<section class="painel" aria-labelledby="tituloContabilidadeAdmin">';
  if(!pagina.includes(destino))throw Error('PAINEL_ADMIN_APROVADO_DESATUALIZADO');
- return pagina.replace(destino,motorPainel+adicao+manutencaoPainel+auditoriaPainel+destino);
+ return pagina.replace(destino,motorPainel+adicao+classificacaoPainel+manutencaoPainel+auditoriaPainel+destino);
 }
 function montarAdminComercialAprovado(app,{
  controle,catalogo,auditoria=null,manutencao=null,
- pedidosComerciais=null,autorizarAdministrador,
+ pedidosComerciais=null,classificacaoLoop=null,autorizarAdministrador,
  validarCsrfAdmin,obterCsrfAdmin,origemHttps
 }={}){
  if(!controle||typeof controle.listarOfertas!=='function'||
@@ -73,7 +93,7 @@ function montarAdminComercialAprovado(app,{
   throw Error('ADMIN_REAL_SEM_SESSAO_SEGURA');
  const html=renderizarAdminComercialAprovado();
  const router=criarRouterAdminEconomiaAkitemm({
-  controle,catalogo,auditoria,manutencao,pedidosComerciais,autorizarAdministrador,
+  controle,catalogo,auditoria,manutencao,pedidosComerciais,classificacaoLoop,autorizarAdministrador,
   validarCsrfAdmin,origemHttps
  });
  const cabe=res=>{

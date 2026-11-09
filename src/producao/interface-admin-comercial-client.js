@@ -19,6 +19,7 @@
   return centavos;
  };
  let csrf=null,selecionado=null,ofertas=[],produtos=[],manutencao=null;
+ let regrasCores=[],classificacaoDisponivel=false;
  const status=msg=>{$('resultadoProdutoAdmin').textContent=msg;};
  function travar(bloqueado){
   const seguro=manutencao?.suspensa===true;
@@ -27,6 +28,7 @@
   $('recarregarProdutos').disabled=bloqueado;
   $('salvarNovoProduto').disabled=bloqueado||seguro||!csrf;
   $('salvarNovaOferta').disabled=bloqueado||seguro||!csrf;
+  $('salvarCorAdmin').disabled=bloqueado||seguro||!csrf||!classificacaoDisponivel||!$('corProdutoAdmin').value;
  }
  function limparSelecao(){
   selecionado=null;
@@ -114,6 +116,64 @@
   }
   if(lista.some(x=>x.produtoId===antes))escolha.value=antes;
  }
+ function mostrarCorSelecionada(){
+  const r=regrasCores.find(x=>x.produtoId===$('corProdutoAdmin').value);
+  if(!r)return;
+  $('corTipoAdmin').value=r.cor;
+  $('corMinimoAdmin').value=String(r.minimo);
+  $('corRoxoAdmin').value=String(r.roxasPorUnidade);
+  $('estadoCorAdmin').textContent='Regra atual: '+r.cor+' · revisão '+r.revisao+
+   (r.regraExplicita?'':' · sem classificação configurada');
+ }
+ async function carregarCores(){
+  try{
+   const d=await pedir('/classificacoes');
+   if(!Array.isArray(d.produtos)||d.ativacaoFinanceira!==false)
+    throw Error('Classificação indisponível.');
+   regrasCores=d.produtos;classificacaoDisponivel=true;
+   const sel=$('corProdutoAdmin'),anterior=sel.value;
+   sel.replaceChildren();
+   for(const r of regrasCores){
+    const opt=document.createElement('option');
+    opt.value=r.produtoId;opt.textContent=r.titulo+' ('+r.produtoId+')';
+    sel.appendChild(opt);
+   }
+   if(regrasCores.some(x=>x.produtoId===anterior))sel.value=anterior;
+   if(regrasCores.length)mostrarCorSelecionada();
+   else $('estadoCorAdmin').textContent='Cadastre um produto antes de definir a cor.';
+  }catch{
+   classificacaoDisponivel=false;
+   $('estadoCorAdmin').textContent='Classificação não habilitada neste ambiente.';
+  }finally{travar(false);}
+ }
+ $('corProdutoAdmin').addEventListener('change',mostrarCorSelecionada);
+ $('salvarCorAdmin').addEventListener('click',()=>{
+  const produtoId=$('corProdutoAdmin').value;
+  const anterior=regrasCores.find(x=>x.produtoId===produtoId);
+  if(!anterior||!csrf)return;
+  const body={cor:$('corTipoAdmin').value,
+   minimo:Number($('corMinimoAdmin').value),
+   roxasPorUnidade:Number($('corRoxoAdmin').value),
+   revisaoEsperada:anterior.revisao};
+  if(!Number.isSafeInteger(body.minimo)||body.minimo<1||body.minimo>50||
+     !Number.isSafeInteger(body.roxasPorUnidade)||
+     body.roxasPorUnidade<0||body.roxasPorUnidade>10){
+   $('estadoCorAdmin').textContent='Confira as quantidades permitidas.';return;
+  }
+  $('salvarCorAdmin').disabled=true;
+  void (async()=>{
+   const result=await pedir('/classificacoes/'+encodeURIComponent(produtoId),{
+    method:'POST',body
+   });
+   if(result.produtoId!==produtoId||result.revisao!==anterior.revisao+1)
+    throw Error('Confirmação da classificação inválida.');
+   await carregarCores();await consultarAuditoria();
+   $('estadoCorAdmin').textContent='Regra salva e auditada. Compras antigas preservadas.';
+  })().catch(async e=>{
+   $('estadoCorAdmin').textContent=e.message;
+   if(e.message.includes('Dados alterados'))await carregarCores();
+  }).finally(()=>travar(false));
+ });
  async function atualizar(){
   const dados=await pedir('/produtos-valores');
   if(dados.dadosPrivados!==true||!Array.isArray(dados.ofertas))
@@ -126,6 +186,7 @@
    throw Error('Resposta do catálogo administrativo inválida.');
   produtos=catalogo.produtos;
   exibirProdutosCadastrados(produtos);
+  await carregarCores();
   if(selecionado){
    const atualizado=ofertas.find(x=>x.produtoId===selecionado.produtoId&&
     x.distribuidorId===selecionado.distribuidorId);
