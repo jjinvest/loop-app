@@ -2,9 +2,15 @@
 // Plano puro de homologacao. NAO executa split, Pix, banco nem entrega.
 // O valor do LOOP e provisionado apos pagamento LIQUIDADO; a parcela
 // ao centro depende das LUZES, nao da compra isolada.
+const {criarPlanoFinanceiro,validarPlanoFinanceiro}=
+ require('../producao/portas-financeiras-modulares');
 function falha(codigo){const e=new Error(codigo);e.codigo=codigo;throw e;}
 const valida=v=>Number.isSafeInteger(v)&&v>=0&&v<=100000000000;
-function planejarRecebimentoTresBancos({fotografia,taxaRealPspCentavos=null}={}){
+function planejarRecebimentoTresBancos({
+ fotografia,taxaRealPspCentavos=null,planoFinanceiro=null
+}={}){
+ const plano=planoFinanceiro===null?criarPlanoFinanceiro():
+  validarPlanoFinanceiro(planoFinanceiro);
  if(!fotografia||typeof fotografia!=='object'||
     !valida(fotografia.totalBrutoCotadoCentavos)||
     !valida(fotografia.referenciaLoopPrevistaCentavos)||
@@ -36,20 +42,28 @@ function planejarRecebimentoTresBancos({fotografia,taxaRealPspCentavos=null}={})
   taxa===null?'TAXA_DESCONHECIDA':margem<0?
   'MARGEM_COMERCIAL_ESTIMADA_NEGATIVA':'PLANO_CONTABIL_CONSISTENTE';
  const receptores=[
-  {destino:'LOOP_INTER',bancoSugerido:'Inter',montantePrevistoCentavos:
+  {destino:'LOOP_INTER',destinoLogico:'CUSTODIA_LOOP',
+   bancoSugerido:plano.rotas.CUSTODIA_LOOP||'Banco do LOOP a definir',
+   montantePrevistoCentavos:
     saldoInsuficiente?null:compromissoLoop,
     contaConectada:false,transferenciaExecutada:false},
-  {destino:'LOJA_MERCADO_PAGO',bancoSugerido:'Mercado Pago',
+  {destino:'LOJA_MERCADO_PAGO',bancoSugerido:
+    plano.rotas.CUSTODIA_LOJA||'Conta da loja a definir',
    // O banco da loja recebe APENAS a margem, nunca as despesas do fornecedor.
    montantePrevistoCentavos:margemLiberavel,
    contaConectada:false,transferenciaExecutada:false},
   {destino:'COFRES_LATERAIS_TERCEIRO_BANCO',
-   bancoSugerido:'Terceiro banco a definir',
+   bancoSugerido:plano.rotas.CUSTODIA_COFRES||'Terceiro banco a definir',
    montantePrevistoCentavos:null,contaConectada:false,
    transferenciaExecutada:false,
    origemFutura:'SOMENTE_LUZES_PRETAS_E_CENTRO_DOURADO_APOS_CONCILIACAO'}
  ];
- return {prepedidoId:fotografia.prepedidoId||null,
+ return {roteamentoFinanceiroRevisao:plano.revisao,
+  captadorPrevisto:plano.rotas.CAPTACAO,
+  distribuidorPrevisto:plano.rotas.DISTRIBUICAO,
+  executorSaquesPrevisto:plano.rotas.EXECUTOR_SAQUE,
+  rotaCadastradaSomenteEmPlano:true,
+  prepedidoId:fotografia.prepedidoId||null,
   produtoId:fotografia.itens?.[0]?.produtoId||null,
   valorBrutoCotadoCentavos:bruto,tarifaPspCentavosParaCalculo:taxa,
   taxaPspInformadaParaSimulacao:taxaRealPspCentavos!==null,
@@ -75,6 +89,6 @@ function planejarRecebimentoTresBancos({fotografia,taxaRealPspCentavos=null}={})
   caixaCentroSacavelCentavos:0,
   cofreLateralSacavelCentavos:0,
   estado:'PREVISAO_NAO_EXECUTADA',
-  nota:'Gerenciadora externa a escolher. Inter recebe referencia LOOP; Mercado Pago somente margem; custos/tributos reservados; banco 3 somente apos eventos das luzes e conciliacao. Sem transferencias.'};
+  nota:'Provedores configuraveis por finalidade, sem contrato ou dinheiro real. Recebimento, custodia e executor Pix sao responsabilidades independentes. O destino historico LOOP_INTER e apenas identificador logico legado, nao uma conta fixa. Custos e tributos reservados; cofres somente apos eventos e conciliacao.'};
 }
 module.exports={planejarRecebimentoTresBancos};
