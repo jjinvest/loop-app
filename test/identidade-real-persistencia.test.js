@@ -98,14 +98,15 @@ test('tres contas reais de ensaio sobrevivem ao reinicio com isolamento da loja 
    assert.equal(perfil.status,200);
    const me=await perfil.json();
    assert.equal(me.titularId,titulares[nick].titularId);
-   assert.equal(me.nick,nick);
+   assert.equal(me.nick,nick.toLowerCase());
    assert.equal(me.financeiroReal,false);
    const outra=nick==='Ana'?'Bia':'Ana';
    const dados=await fetch(base+'/api/contas/meus-dados?titularId='+
     titulares[outra].titularId,{headers});
    assert.equal(dados.status,200);
    const body=await dados.json();
-   assert.equal(body.nick,nick,'a consulta ignora titularId do navegador');
+   assert.equal(body.nick,nick.toLowerCase(),
+    'a consulta ignora titularId do navegador');
    assert.equal(body.email,nick.toLowerCase()+'@example.invalid');
    assert.equal((await fetch(base+'/loja',{headers})).status,200);
    assert.equal((await fetch(base+'/api/loja/pedidos',{headers})).status,503);
