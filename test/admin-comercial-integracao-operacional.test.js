@@ -333,7 +333,7 @@ test('classificação comercial exige administrador, CSRF, revisão e auditoria;
  assert.equal((await get(api+'/classificacoes',{Cookie:cookie})).status,200);
  assert.equal((await get(api+'/classificacoes')).status,401);
  assert.equal(x.banco.prepare(
-  'SELECT COUNT(*) AS n FROM loop_real_motor_compras'
+  'SELECT COUNT(*) AS n FROM loja_real_pedidos'
  ).get()?.n??0,0);
  assert.deepEqual(x.banco.prepare('PRAGMA foreign_key_check').all(),[]);
 });
