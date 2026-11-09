@@ -2,8 +2,6 @@
 // Auditoria pré-homologação do fluxo financeiro simulado. NÃO autoriza
 // operação real, mesmo que todo dado injetado diga que está validado.
 // Bancos reais exigem contratos, certificados e consulta autenticada real.
-const {avaliarConvergenciaUnificadaEnsaio}=
- require('./convergencia-unificada-financeira-ensaio');
 function falha(codigo){const e=new Error(codigo);e.codigo=codigo;throw e;}
 const EXTERNOS=Object.freeze([
  'CNPJ_EMPRESA_ATIVO_E_KYC_VALIDADO',
@@ -31,7 +29,8 @@ function avaliarProntidaoFinanceiraEnsaio({tesouraria}={}){
     typeof tesouraria.correspondenciasExtrato?.diagnosticar!=='function'||
     typeof tesouraria.conciliacaoBancaria?.analisar!=='function'||
     typeof tesouraria.observacoesPsp?.verificar!=='function'||
-    typeof tesouraria.extratosAsaasInbox?.verificar!=='function')
+    typeof tesouraria.extratosAsaasInbox?.verificar!=='function'||
+    typeof tesouraria.diagnosticarConvergenciaExternaEnsaio!=='function')
   falha('PRONTIDAO_ENSAIO_MODULOS_INCOMPLETOS');
  const local=tesouraria.verificar(),plano=tesouraria.plano();
  if(local.integridade!=='OK'||plano.estado!=='PLANEJAMENTO_SEM_HOMOLOGACAO')
@@ -41,7 +40,7 @@ function avaliarProntidaoFinanceiraEnsaio({tesouraria}={}){
  const contas=tesouraria.contasExternas.diagnosticarExtratosDeclarados();
  const corr=tesouraria.correspondenciasExtrato.diagnosticar();
  const bancos=tesouraria.conciliacaoBancaria.analisar();
- const financeiro=avaliarConvergenciaUnificadaEnsaio({tesouraria});
+ const financeiro=tesouraria.diagnosticarConvergenciaExternaEnsaio();
  const avisos=[];
  const avisar=(c,cond)=>{if(cond)avisos.push(c);};
  avisar('RECEBIMENTOS_SEM_ENSAIO',local.recebimentos===0);
@@ -84,7 +83,7 @@ function avaliarProntidaoFinanceiraEnsaio({tesouraria}={}){
   pagamentosReaisLiberados:false,
   recebimentosReaisLiberados:false,
   prontoParaMarcoZeroComClientes:false,
-  prDRAFTSemDeploy:true,
+  servicoNaoExecutaDeploy:true,
   fase:'AGUARDANDO_HOMOLOGACAO_EXTERNA'
  });
 }

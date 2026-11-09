@@ -21,7 +21,10 @@ function criar({falhas=false,saida=true}={}){
    totalDivergencias:falhas?2:0
   })},
   observacoesPsp:{verificar:()=>({observacoes:2})},
-  extratosAsaasInbox:{verificar:()=>({registros:2})}
+  extratosAsaasInbox:{verificar:()=>({registros:2})},
+  diagnosticarConvergenciaExternaEnsaio:()=>({
+   divergenciasPspPix:falhas?2:0
+  })
  };
 }
 test('auditoria técnica pode estar completa mas dinheiro real segue sempre fechado',()=>{
