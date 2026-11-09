@@ -6,6 +6,11 @@
  const $=id=>document.getElementById(id);
  const API='/api/contas';
  let csrf=null,documentos=null,carregando=false,tela='login';
+ const ref=new URLSearchParams(location.search).get('ref');
+ const indicadorNick=typeof ref==='string'&&/^[A-Za-z]{1,12}$/.test(ref)?
+  ref.toLowerCase():null;
+ let titularesIndicados=[];
+ let origemLinks=null;
  const codigos={
   CREDENCIAIS_INVALIDAS:'Confira seu nick e sua senha.',
   SENHA_ATUAL_INCORRETA:'Senha atual incorreta.',
@@ -22,7 +27,10 @@
   CADASTRO_INATIVO:'A abertura do cadastro ainda não foi autorizada.',
   OPERACAO_INDISPONIVEL:'Esta operação ainda não está disponível.',
   ENVIO_EMAIL_NAO_CONFIRMADO:'Não foi possível confirmar o envio do código.',
-  CSRF_INVALIDO:'Sua sessão expirou. Entre novamente.'
+  CSRF_INVALIDO:'Sua sessão expirou. Entre novamente.',
+  INDICADOR_INVALIDO:'O link de convite contém um nick inválido.',
+  INDICADOR_NAO_ENCONTRADO:'Este convite não pertence a uma conta cadastrada.',
+  AUTOINDICACAO_PROIBIDA:'Não é possível indicar a própria conta.'
  };
  const erro=e=>codigos[e?.message]||
   'Não foi possível concluir esta operação. Confira os dados e tente novamente.';
@@ -47,6 +55,13 @@
   $('painelConta').hidden=true;
   document.body.classList.remove('loop03-logado');
   $('erroLogin').hidden=true;$('erroCadastro').hidden=true;
+  const aviso=$('cadastroIndicadorAviso');
+  if(aviso){
+   aviso.hidden=!indicadorNick;
+   aviso.textContent=indicadorNick?
+    'Cadastro pelo convite de @'+indicadorNick+
+    '. A indicação só será válida após uma compra confirmada.':'';
+  }
  }
  function painelConta(s){
   csrf=s.csrf;
@@ -71,8 +86,9 @@
   // funções que ainda dependem exclusivamente do LAB.
   for(const tab of document.querySelectorAll('[role=tab]')){
    const ativo=tab.id===(s.motorLoopInterno===true?'abaResumo':'abaConta');
-   const habilitado=tab.id==='abaConta'||(s.motorLoopInterno===true&&
-    ['abaResumo','abaTabuleiro','abaPosicoes'].includes(tab.id));
+   const habilitado=['abaConta','abaEquipe','abaLinks'].includes(tab.id)||
+    (s.motorLoopInterno===true&&
+    ['abaResumo','abaTabuleiro','abaPosicoes','abaEquipe','abaLinks'].includes(tab.id));
    tab.disabled=!habilitado;tab.setAttribute('aria-selected',String(ativo));
    tab.setAttribute('aria-current',ativo?'page':'false');
    tab.tabIndex=ativo?0:-1;
@@ -81,6 +97,8 @@
    if(!habilitado)tab.title='Disponível após liberação operacional';
    else tab.removeAttribute('title');
   }
+  if($('abaEquipe'))$('abaEquipe').disabled=false;
+  if($('abaLinks'))$('abaLinks').disabled=false;
   const indicators=document.querySelector('.loop03-indicadores');
   if(indicators)indicators.hidden=true;
   // Mesma sessão permite visitar a AKITEMM em modo somente leitura.
@@ -92,7 +110,80 @@
    acessoLoja.removeAttribute('aria-disabled');
    acessoLoja.title='Abrir Loja AKITEMM (compras ainda indisponíveis)';
   }
+  prepararRede();
+  preencherLinks(s.nick);
+  void carregarRede();
   void carregarDados();
+ }
+ let redePreparada=false;
+ function prepararRede(){
+  if(redePreparada)return;
+  redePreparada=true;
+  $('atualizarEquipe').addEventListener('click',()=>void carregarRede());
+  $('buscarEquipe').addEventListener('input',()=>exibirRede());
+  $('equipeVerLinks').addEventListener('click',()=>$('abaLinks').click());
+  for(const [botao,campo] of [
+   ['copiarLinkEscritorio','linkEscritorio'],
+   ['copiarLinkLoja','linkLoja']
+  ]){
+   $(botao).addEventListener('click',async()=>{
+    const valor=$(campo).value;
+    if(!valor)return;
+    try{
+     await navigator.clipboard.writeText(valor);
+     dizer('Link copiado.');
+    }catch{
+     $(campo).focus();$(campo).select();
+     dizer('Link selecionado. Use copiar no seu dispositivo.');
+    }
+   });
+  }
+ }
+ function preencherLinks(nick){
+  const endereco=location.origin,identificador=encodeURIComponent(nick);
+  origemLinks={loja:endereco+'/convite/loja?ref='+identificador,
+   escritorio:endereco+'/escritorio?ref='+identificador};
+  $('linkLoja').value=origemLinks.loja;
+  $('linkEscritorio').value=origemLinks.escritorio;
+  $('linksNick').textContent='Links da conta @'+nick;
+ }
+ function exibirRede(){
+  const alvo=$('listaEquipe');
+  alvo.replaceChildren();
+  const filtro=$('buscarEquipe').value.toLowerCase().trim();
+  const dados=titularesIndicados.filter(p=>
+   p.nick.toLowerCase().includes(filtro));
+  if(!dados.length){
+   const aviso=document.createElement('p');
+   aviso.textContent='Nenhum cadastro encontrado por esse nick.';
+   alvo.appendChild(aviso);return;
+  }
+  for(const p of dados){
+   const item=document.createElement('div');
+   item.className='loop03-equipe-linha';
+   const nick=document.createElement('strong');
+   nick.textContent='@'+p.nick;
+   const estado=document.createElement('span');
+   estado.textContent='Cadastro registrado · aguardando compra confirmada';
+   item.append(nick,estado);alvo.appendChild(item);
+  }
+ }
+ async function carregarRede(){
+  try{
+   const dados=await requisitar('/minha-rede');
+   if(!Array.isArray(dados.indicados)||!Number.isSafeInteger(dados.total)||
+      dados.financeiroReal!==false)throw Error('REDE_DIVERGENTE');
+   titularesIndicados=dados.indicados;
+   $('redeTotalCadastros').textContent=String(dados.total);
+   $('resumoEquipe').textContent=String(dados.total);
+   $('redeAlocadasEnsaio').textContent='0';
+   $('redeADistribuirEnsaio').textContent='—';
+   $('equipeResumo').textContent=dados.total+
+    ' cadastro(s) pelo seu link. Sem bonificação ou posições reais.';
+   exibirRede();
+  }catch{
+   $('equipeResumo').textContent='Sua rede não pôde ser consultada.';
+  }
  }
  let painelMotorPreparado=false;
  function prepararAbasMotor(){
@@ -270,6 +361,7 @@
    const resposta=await requisitar('/cadastrar',{method:'POST',body:{
     nome:$('cadastroNome').value,nick:$('cadastroNick').value,
     email:$('cadastroEmail').value,senha:$('cadastroSenha').value,
+    ...(indicadorNick?{indicadorNick}:{}),
     aceiteTermos:true,aceitePrivacidade:true,
     versaoTermos:documentos.termos.versao,hashTermos:documentos.termos.hash,
     versaoPrivacidade:documentos.privacidade.versao,
@@ -284,7 +376,9 @@
   $('login').value=$('cadastroNick').value;
   $('cadastroSenha').value='';
   mostrarLogin('login');
-  dizer('Cadastro concluído. Entre com seu nick e senha no Escritório LOOP.');
+  dizer('Cadastro concluído'+(indicadorNick?
+   ' pelo link de @'+indicadorNick:'')+
+   '. Entre com seu nick e senha no Escritório LOOP.');
  });
  onForm('formSolicitarRecuperacao',async()=>{
   await requisitar('/senha/solicitar',{method:'POST',

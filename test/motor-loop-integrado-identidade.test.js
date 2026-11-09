@@ -25,12 +25,13 @@ const config=()=>({
  privacidade:{versao:'LOOP-PRIV-2026',texto:DOC},
  enviarEmail:async()=>true
 });
-async function criarTitulares(contas,total){
+async function criarTitulares(contas,total,{vincularSegundoAoPrimeiro=false}={}){
  const doc=contas.documentos(),ids=[];
  for(let i=0;i<total;i++){
   const nick='User'+String.fromCharCode(65+i);
   const r=await contas.cadastrar({
    nome:'Pessoa de Ensaio',nick,email:'user'+i+'@example.invalid',
+   ...(vincularSegundoAoPrimeiro&&i===1?{indicadorNick:'UserA'}:{}),
    senha:SENHA,aceiteTermos:true,aceitePrivacidade:true,
    versaoTermos:doc.termos.versao,hashTermos:doc.termos.hash,
    versaoPrivacidade:doc.privacidade.versao,
@@ -48,7 +49,7 @@ test('compra, indicação, seis eventos e giro sobrevivem ao reinício, sem dinh
  db.exec('PRAGMA foreign_keys=ON;PRAGMA journal_mode=WAL');
  let contas=new IdentidadeClienteLoopReal({...cfg,banco:db});
  let motor=new MotorLoopIntegradoSQLite({banco:db});
- const ids=await criarTitulares(contas,8);
+ const ids=await criarTitulares(contas,8,{vincularSegundoAoPrimeiro:true});
  for(let i=0;i<8;i++){
   assert.equal(motor.registrarCompraEnsaio({
    titularId:ids[i].titularId,pedidoId:'pedido-'+(i+1)

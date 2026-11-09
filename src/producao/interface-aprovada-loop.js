@@ -59,7 +59,7 @@ function renderizarInterfaceAprovada(){
  html=html.replaceAll('minlength="8" maxlength="12" autocomplete="new-password"',
   'minlength="12" maxlength="128" autocomplete="new-password"');
  html=trocarExato(html,'  <form id="formCadastro">',
-  '  <p id="cadastroIndicadorAviso" role="status" hidden></p>\\n  <form id="formCadastro">');
+  '  <p id="cadastroIndicadorAviso" role="status" hidden></p>\n  <form id="formCadastro">');
  const anterior='   <label><input id="cadastroTermos"';
  const privacidade=[
   '   <details id="privacidadeCadastroDetalhes" open>',
