@@ -5,6 +5,9 @@
 const assert=require('node:assert/strict');
 const fs=require('node:fs');
 const path=require('node:path');
+const os=require('node:os');
+const https=require('node:https');
+const {execFileSync}=require('node:child_process');
 const {once}=require('node:events');
 const {randomBytes}=require('node:crypto');
 const {DatabaseSync}=require('node:sqlite');
@@ -66,14 +69,27 @@ async function main(){
  });
  const admin=sessoes.autenticar('CredencialAdministrativaIsolada2026!Teste');
  const login=await contas.entrar({nick,senha:'SenhaDoEnsaio2026!'});
- const app=criarAppIdentidadeLoop({
-  contas,motorLoop,origemHttps:'https://contas.example.invalid',
+ // Testar HTTPS real e Origin idêntico ao configurado, sem reescrever headers.
+ const pastaTls=fs.mkdtempSync(path.join(os.tmpdir(),'loop-navegador-https-'));
+ const arquivoChave=path.join(pastaTls,'chave-teste.pem');
+ const arquivoCert=path.join(pastaTls,'cert-teste.pem');
+ execFileSync('openssl',['req','-x509','-nodes','-newkey','rsa:2048',
+  '-keyout',arquivoChave,'-out',arquivoCert,'-days','1',
+  '-subj','/CN=127.0.0.1','-addext','subjectAltName=IP:127.0.0.1'],
+ {stdio:'ignore'});
+ let app=null;
+ const server=https.createServer({
+  key:fs.readFileSync(arquivoChave),
+  cert:fs.readFileSync(arquivoCert)
+ },(req,res)=>app(req,res));
+ server.listen(0,'127.0.0.1');
+ await once(server,'listening');
+ const base='https://127.0.0.1:'+server.address().port;
+ app=criarAppIdentidadeLoop({
+  contas,motorLoop,origemHttps:base,
   permitirCadastro:true,
   adminComercial:{auditoria,manutencao,catalogo,controle,sessoes}
  });
- const server=app.listen(0,'127.0.0.1');
- await once(server,'listening');
- const base='http://127.0.0.1:'+server.address().port;
  let browser=null;
  try{
   const pasta=path.join(process.cwd(),'artifacts');
@@ -87,7 +103,7 @@ async function main(){
    const novoNick=item.nome==='pc'?'BravoPc':'BravoCelular';
    const convite=await browser.newContext({
     viewport:{width:item.largura,height:item.altura},
-    deviceScaleFactor:1
+    deviceScaleFactor:1,ignoreHTTPSErrors:true
    });
    const cadastro=await convite.newPage();
    cadastro.setDefaultTimeout(15000);
@@ -113,16 +129,16 @@ async function main(){
    await convite.close();
    const contexto=await browser.newContext({
     viewport:{width:item.largura,height:item.altura},
-    deviceScaleFactor:1
+    deviceScaleFactor:1,ignoreHTTPSErrors:true
    });
    // Localhost é HTTP no ensaio; o cookie de prova é injetado SOMENTE
    // no navegador de teste. O login real em produção usa HTTPS+Secure.
    await contexto.addCookies([{
     name:COOKIE,value:login.token,url:base,
-    httpOnly:true,secure:false,sameSite:'Strict'
+    httpOnly:true,secure:true,sameSite:'Strict'
    },{
     name:COOKIE_ADMIN,value:admin.token,url:base,
-    httpOnly:true,secure:false,sameSite:'Strict'
+    httpOnly:true,secure:true,sameSite:'Strict'
    }]);
    const page=await contexto.newPage();
    page.setDefaultTimeout(15000);
@@ -218,6 +234,7 @@ async function main(){
  }finally{
   if(browser)await browser.close();
   await new Promise(resolve=>server.close(resolve));
+  fs.rmSync(pastaTls,{recursive:true,force:true});
   banco.close();
  }
 }
