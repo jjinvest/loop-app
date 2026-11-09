@@ -14,6 +14,8 @@ const {InboxExtratosAsaasSandboxSQLite}=
  require('./inbox-extratos-asaas-sandbox-sqlite');
 const {VinculosContasExternasEnsaioSQLite}=
  require('./vinculos-contas-externas-ensaio-sqlite');
+const {CorrespondenciasExtratoEnsaioSQLite}=
+ require('./correspondencias-extrato-ensaio-sqlite');
 const {planejarRecebimentoTresBancos}=
  require('../domain/plano-roteamento-tres-bancos-lab');
 const {criarPlanoFinanceiro,validarPlanoFinanceiro,planejarTrocaFinanceira}=
@@ -30,7 +32,8 @@ const TABELAS_TESOURARIA_ENSAIO=Object.freeze([
  'loop_lab_tesouraria_extratos_bancarios',
  'loop_lab_tesouraria_lotes_extrato',
  'loop_lab_tesouraria_itens_extrato',
- 'loop_lab_tesouraria_vinculos_contas'
+ 'loop_lab_tesouraria_vinculos_contas',
+ 'loop_lab_tesouraria_correspondencias_extrato'
 ]);
 function falha(codigo){const e=new Error(codigo);e.codigo=codigo;throw e;}
 const ID=/^[A-Za-z0-9_-]{1,120}$/;
@@ -130,6 +133,7 @@ class TesourariaModularEnsaioSQLite{
   this.conciliacaoBancaria=new ConciliacaoMultibancosEnsaioSQLite({banco,agora});
   this.extratosAsaasInbox=new InboxExtratosAsaasSandboxSQLite({banco,agora});
   this.contasExternas=new VinculosContasExternasEnsaioSQLite({banco,agora});
+  this.correspondenciasExtrato=new CorrespondenciasExtratoEnsaioSQLite({banco,agora});
   this.verificar();
  }
  _agora(){
@@ -643,7 +647,8 @@ class TesourariaModularEnsaioSQLite{
  diagnosticarConvergenciaExternaEnsaio(){
   return Object.freeze({
    ...avaliarConvergenciaUnificadaEnsaio({tesouraria:this}),
-   titularidadeDasContas:this.contasExternas.diagnosticarExtratosDeclarados()
+   titularidadeDasContas:this.contasExternas.diagnosticarExtratosDeclarados(),
+   conciliacaoExtratosPorTransacao:this.correspondenciasExtrato.diagnosticar()
   });
  }
  consultarTitularEnsaio({titularId}={}){
@@ -811,6 +816,10 @@ class TesourariaModularEnsaioSQLite{
   vinculos.db=db;
   if(vinculos.verificar().integridade!=='OK')
    falha('TESOURARIA_ENSAIO_VINCULOS_INCONSISTENTES');
+  const correlacoes=Object.create(CorrespondenciasExtratoEnsaioSQLite.prototype);
+  correlacoes.db=db;
+  if(correlacoes.verificar().integridade!=='OK')
+   falha('TESOURARIA_ENSAIO_CORRESPONDENCIAS_INCONSISTENTES');
   const cobertura=this._cobertura();
   return {integridade:'OK',movimentos:seq,
    recebimentos:this.db.prepare(

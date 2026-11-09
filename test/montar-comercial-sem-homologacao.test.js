@@ -43,6 +43,8 @@ const {coletarExtratoReadOnly}=
  require('../src/producao/contrato-extratos-readonly');
 const {VinculosContasExternasEnsaioSQLite}=
  require('../src/producao/vinculos-contas-externas-ensaio-sqlite');
+const {CorrespondenciasExtratoEnsaioSQLite}=
+ require('../src/producao/correspondencias-extrato-ensaio-sqlite');
 const DOC='Termos de conta fictícia para exercício sem provedor PSP, sem saques, '+
  'sem dinheiro e sem liberação comercial. Não há posição remunerada.';
 const ORIGEM='https://contas.example.invalid';
@@ -611,6 +613,16 @@ test('cinco missoes integradas: distribuir, sacar, abastecer, trocar e restaurar
  });
  assert.equal(extratoConsultado.registrado,true);
  assert.equal(armazem.verificar().registros,1);
+ const correspondencia=teso.correspondenciasExtrato.registrarVinculo({
+  ligacaoId:'CORRESPONDENCIA_EXTRATO_ASAAS_01',
+  contaAlias:'PAGADOR:ASAAS',
+  transacaoId:'MOV_FICTICIO_ASAAS_01',
+  operacaoId:'PIX_PIX_FICTICIO_01'
+ });
+ assert.equal(correspondencia.registrado,true);
+ assert.equal(teso.correspondenciasExtrato.diagnosticar().correspondencias,1);
+ assert.equal(teso.correspondenciasExtrato.diagnosticar()
+  .comprovacaoExternaAutenticada,false);
  assert.equal(teso.verificar().integridade,'OK');
  assert.equal(bancos.analisar().conciliacaoRealCertificada,false);
  assert.equal(bancos.analisar().movimentosComDeclaracoesConcordantes>=2,true);
@@ -681,6 +693,10 @@ test('cinco missoes integradas: distribuir, sacar, abastecer, trocar e restaurar
    VinculosContasExternasEnsaioSQLite.prototype);
   vinculosRestaurados.db=db2;
   assert.equal(vinculosRestaurados.verificar().vinculosDeclarados,3);
+  const correspondenciasRestauradas=Object.create(
+   CorrespondenciasExtratoEnsaioSQLite.prototype);
+  correspondenciasRestauradas.db=db2;
+  assert.equal(correspondenciasRestauradas.verificar().correspondencias,1);
   assert.equal(extratosRestaurados.analisar()
    .movimentosComDeclaracoesConcordantes>=2,true);
   assert.equal(extratosRestaurados.analisar().conciliacaoRealCertificada,false);
