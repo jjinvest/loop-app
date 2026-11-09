@@ -8,6 +8,8 @@ const {ObservacoesPSPEnsaioSQLite}=
  require('./observacoes-psp-ensaio-sqlite');
 const {ConciliacaoMultibancosEnsaioSQLite}=
  require('./conciliacao-multibancos-ensaio-sqlite');
+const {avaliarConvergenciaUnificadaEnsaio}=
+ require('./convergencia-unificada-financeira-ensaio');
 const {planejarRecebimentoTresBancos}=
  require('../domain/plano-roteamento-tres-bancos-lab');
 const {criarPlanoFinanceiro,validarPlanoFinanceiro,planejarTrocaFinanceira}=
@@ -628,6 +630,9 @@ class TesourariaModularEnsaioSQLite{
       'PSP:'+troca.origem),
     saldoMigradoAutomaticamente:false,financeiroReal:false};
   });
+ }
+ diagnosticarConvergenciaExternaEnsaio(){
+  return avaliarConvergenciaUnificadaEnsaio({tesouraria:this});
  }
  consultarTitularEnsaio({titularId}={}){
   this._titular(titularId);

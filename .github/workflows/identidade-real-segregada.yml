@@ -24,6 +24,8 @@ on:
       - 'test/conferencia-observacoes-psp.test.js'
       - 'src/producao/observacoes-psp-ensaio-sqlite.js'
       - 'src/producao/conciliacao-multibancos-ensaio-sqlite.js'
+      - 'src/producao/convergencia-unificada-financeira-ensaio.js'
+      - 'test/convergencia-unificada-financeira-ensaio.test.js'
       - 'test/conciliacao-multibancos-ensaio-sqlite.test.js'
       - 'test/observacoes-psp-ensaio-sqlite.test.js'
       - 'test/identidade-real-persistencia.test.js'
@@ -80,6 +82,7 @@ jobs:
           node --check src/producao/conferencia-observacoes-psp.js
           node --check src/producao/observacoes-psp-ensaio-sqlite.js
           node --check src/producao/conciliacao-multibancos-ensaio-sqlite.js
+          node --check src/producao/convergencia-unificada-financeira-ensaio.js
           node --check src/producao/tesouraria-modular-ensaio-sqlite.js
           node --check src/producao/interface-aprovada-contas.js
           node --check src/producao/interface-aprovada-loop.js
@@ -123,6 +126,8 @@ jobs:
         run: node --test test/eventos-comerciais-loop-sqlite.test.js
       - name: Cor da venda congelada, verde/cinza/dourado/roxo e sem ativar motor
         run: node --test test/classificacao-comercial-loop-sqlite.test.js
+      - name: Convergencia PSP, bancos e PIX com origem contratada consistente
+        run: node --test test/convergencia-unificada-financeira-ensaio.test.js
       - name: Conciliação por banco declarado, estorno, duplicação e falha fechada
         run: node --test test/conciliacao-multibancos-ensaio-sqlite.test.js
       - name: Persistencia de observacoes PSP, replay e adulteracao com historico
