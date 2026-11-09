@@ -36,6 +36,10 @@ test('HTML original do cliente é reaproveitado sem script LAB, nova tela ou CPF
  assert.match(html,/id="termosCadastroDetalhes"/);
  assert.match(html,/id="privacidadeCadastroDetalhes"/);
  assert.match(html,/minlength="12" maxlength="128"/);
+ assert.match(html,/Nick \(1 a 12 letras\)/);
+ assert.equal((html.match(/maxlength="12" pattern="\[A-Za-z\]\{1,12\}"/g)||[]).length,2);
+ assert.equal((html.match(/href="\/loja"/g)||[]).length,2);
+ assert.doesNotMatch(html,/href="\/staging\/loja"/);
  assert.match(html,/src="\/identidade\/assets\/cliente.js"/);
  assert.doesNotMatch(html,/src="\/staging\/assets\/cliente.js"/);
  assert.doesNotMatch(html,/<script[^>]*>[^<]*fetch/);
@@ -64,6 +68,9 @@ test('interface aprovada e identidade real servidas da mesma origem protegida',a
  assert.match(js.headers.get('content-type'),/javascript/);
  const script=await js.text();
  assert.match(script,/\/api\/contas/);
+ assert.match(script,/\.loop03-atalho-loja, \.barra-conta a\.loop03-loja-prata/);
+ assert.match(script,/setAttribute\('href','\/loja'\)/);
+ assert.doesNotMatch(script,/removeAttribute\('href'\)/);
  assert.doesNotMatch(script,/fetch\('\/staging/);
  for(const p of ['cliente.css','loop03-aprovado.css','cliente-integrado.css']){
   const res=await get('/identidade/assets/'+p);

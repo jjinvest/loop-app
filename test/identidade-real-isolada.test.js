@@ -72,3 +72,18 @@ test('bootstrap do cadastro real falha fechado sem decisao GO',()=>{
  assert.throws(()=>configurar({NODE_ENV:'production'}),
   /CADASTRO_REAL_BLOQUEADO_ATE_GO_FORMAL/);
 });
+
+test('nick de 12 letras cadastra e autentica; 13 letras não entram',async t=>{
+ const x=setup(t);
+ const nick='DozeLetrasAB';
+ assert.equal(nick.length,12);
+ const conta=await x.contas.cadastrar(x.data(nick,'doze@example.invalid'));
+ const sessao=await x.contas.entrar({nick,senha:'SenhaDoEnsaio2026!'});
+ assert.equal(sessao.titularId,conta.titularId);
+ await assert.rejects(x.contas.cadastrar(
+  x.data('TrezeLetrasAB','treze@example.invalid')),
+  {codigo:'NICK_INVALIDO'});
+ await assert.rejects(x.contas.entrar({
+  nick:'TrezeLetrasAB',senha:'SenhaDoEnsaio2026!'
+ }),{codigo:'CREDENCIAIS_INVALIDAS'});
+});

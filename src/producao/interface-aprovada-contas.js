@@ -12,7 +12,7 @@
   CONTA_BLOQUEADA:'Muitas tentativas. Aguarde 15 minutos.',
   ACESSO_TEMPORARIAMENTE_LIMITADO:'Muitos acessos. Aguarde um momento.',
   CADASTRO_EXISTENTE:'Este nick ou e-mail já está cadastrado.',
-  NICK_INVALIDO:'O nick deve ter de 1 a 9 letras.',
+  NICK_INVALIDO:'O nick deve ter de 1 a 12 letras.',
   NOME_INVALIDO:'Verifique seu nome.',
   EMAIL_INVALIDO:'Verifique o e-mail informado.',
   SENHA_INVALIDA:'Escolha uma senha de 12 a 128 caracteres.',
@@ -74,16 +74,14 @@
   }
   const indicators=document.querySelector('.loop03-indicadores');
   if(indicators)indicators.hidden=true;
-  const acessoLoja=document.querySelector('.loop03-atalho-loja');
-  if(acessoLoja){
-   acessoLoja.removeAttribute('href');
-   acessoLoja.setAttribute('aria-disabled','true');
-   acessoLoja.title='Loja ainda não liberada para vendas reais';
-  }
-  const outroLoja=document.querySelector('.barra-conta a[href]');
-  if(outroLoja){
-   outroLoja.removeAttribute('href');outroLoja.setAttribute('aria-disabled','true');
-   outroLoja.title='Checkout real não autorizado';
+  // Mesma sessão permite visitar a AKITEMM em modo somente leitura.
+  // O backend continua protegendo /loja por cookie e bloqueia checkout.
+  for(const acessoLoja of document.querySelectorAll(
+   '.loop03-atalho-loja, .barra-conta a.loop03-loja-prata'
+  )){
+   acessoLoja.setAttribute('href','/loja');
+   acessoLoja.removeAttribute('aria-disabled');
+   acessoLoja.title='Abrir Loja AKITEMM (compras ainda indisponíveis)';
   }
   void carregarDados();
  }

@@ -6,7 +6,7 @@ const {randomUUID,randomBytes,randomInt,createHash,createHmac,
  timingSafeEqual,createCipheriv,createDecipheriv,scrypt}=require('node:crypto');
 const {promisify}=require('node:util');
 const derivar=promisify(scrypt);
-const NICK=/^[a-zA-Z]{1,9}$/;
+const NICK=/^[a-zA-Z]{1,12}$/;
 const NOME=/^[\p{L}\p{M} .'-]{2,90}$/u;
 const EMAIL=/^[^\s@<>]{1,64}@[^\s@<>]{1,180}$/;
 const VERSAO=/^LOOP-[A-Za-z0-9._-]{5,80}$/;
