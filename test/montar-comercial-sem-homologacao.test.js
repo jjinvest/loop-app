@@ -31,6 +31,8 @@ const {validarIdentidade,criarBackupIdentidadeReal,
  require('../src/producao/backup-identidade-real');
 const {TesourariaModularEnsaioSQLite}=
  require('../src/producao/tesouraria-modular-ensaio-sqlite');
+const {consultarERegistrarObservacaoAsaasSandbox}=
+ require('../src/producao/observacoes-psp-ensaio-sqlite');
 const DOC='Termos de conta fictícia para exercício sem provedor PSP, sem saques, '+
  'sem dinheiro e sem liberação comercial. Não há posição remunerada.';
 const ORIGEM='https://contas.example.invalid';
@@ -507,6 +509,71 @@ test('cinco missoes integradas: distribuir, sacar, abastecer, trocar e restaurar
  });
  assert.equal(volta.revisao,7);
  assert.equal(teso.verificar().saques,1);
+ // Reconsulta PSP só observa estado, nunca confunde GET com saldo real.
+ const comprovante=env.banco.prepare(
+  'SELECT pagamento_id FROM loja_real_pedidos WHERE pedido_id=?'
+ ).get(novo.pedidoId).pagamento_id;
+ const caixa=teso.observacoesPsp;
+ assert.equal(caixa.registrarCompromisso({
+  tipo:'COBRANCA',referencia:comprovante,operacaoId:novo.pedidoId,
+  valorCentavos:51500
+ }).registrado,true);
+ assert.equal(caixa.registrarCompromisso({
+  tipo:'COBRANCA',referencia:comprovante,operacaoId:novo.pedidoId,
+  valorCentavos:51500
+ }).repetido,true);
+ assert.equal(caixa.registrarCompromisso({
+  tipo:'PIX',referencia:'PIX_FICTICIO_01',
+  operacaoId:'SAQUE_FICTICIO_01',valorCentavos:5000
+ }).registrado,true);
+ const fakeAsaas={
+  consultarCobranca:async pagamentoId=>({
+   origem:'ASAAS_SANDBOX',pagamentoId,
+   estadoObservado:'RECEIVED',valorFicticioCentavos:51500,
+   autorizaPosicao:false,autorizaPedidoReal:false
+  }),
+  consultarPix:async transferenciaId=>({
+   origem:'ASAAS_SANDBOX',transferenciaId,
+   estado:'CONCLUIDO_NO_SANDBOX',valorFicticioCentavos:5000,
+   comprovanteRealConciliado:false,saqueRealPago:false,
+   podeReenviarAutomaticamente:false
+  })
+ };
+ const consultar=({tipo,referencia,observacaoId})=>
+  consultarERegistrarObservacaoAsaasSandbox({
+   caixa,adaptador:fakeAsaas,tipo,referencia,observacaoId
+  });
+ assert.equal((await consultar({
+  tipo:'COBRANCA',referencia:comprovante,
+  observacaoId:'OBS_PSP_TESTE_01'
+ })).estado,'PSP_SANDBOX_SINALIZOU_RECEBIMENTO');
+ assert.equal((await consultar({
+  tipo:'COBRANCA',referencia:comprovante,
+  observacaoId:'OBS_PSP_TESTE_01'
+ })).repetido,true);
+ assert.equal((await consultar({
+  tipo:'PIX',referencia:'PIX_FICTICIO_01',
+  observacaoId:'OBS_PIX_TESTE_01'
+ })).estado,'CONFIRMACAO_SOMENTE_SANDBOX');
+ assert.equal(caixa.verificar().observacoes,2);
+ assert.equal(caixa.consultarCompromisso({
+  tipo:'PIX',referencia:'PIX_FICTICIO_01'
+ }).pagamentoRealHabilitado,false);
+ assert.equal(caixa.consultarCompromisso({
+  tipo:'COBRANCA',referencia:comprovante
+ }).reenviarAutomaticamente,false);
+ await assert.rejects(consultarERegistrarObservacaoAsaasSandbox({
+  caixa,adaptador:{
+   consultarPix:async()=>{throw Error('TIMEOUT_FICTICIO');}
+  },tipo:'PIX',referencia:'PIX_FICTICIO_01',
+  observacaoId:'OBS_PIX_TIMEOUT_02'
+ }),/TIMEOUT_FICTICIO/);
+ assert.equal(caixa.verificar().observacoes,2);
+ assert.throws(()=>caixa.registrarObservacao({
+  observacaoId:'OBS_PSP_TESTE_01',tipo:'PIX',
+  referencia:'PIX_FICTICIO_01',
+  observado:await fakeAsaas.consultarPix('PIX_FICTICIO_01')
+ }),{codigo:'OBSERVACOES_ENSAIO_OBSERVACAO_REPLAY_DIVERGENTE'});
  assert.equal(env.motor.consultar().posicoesReais,0);
  assert.equal(env.motor.consultar().tabuleiro.eventosNoCiclo,0);
  assert.equal(validarIdentidade(x.arquivo).integridade,'ok');
@@ -531,6 +598,7 @@ test('cinco missoes integradas: distribuir, sacar, abastecer, trocar e restaurar
   assert.equal(rel.verificar().integridade,'OK');
   assert.equal(rel.verificar().saques,1);
   assert.equal(rel.plano().revisao,7);
+  assert.equal(rel.verificar().integridade,'OK');
   assert.equal(rel.consultarTitularEnsaio({
    titularId:titular
   }).saldoFicticioDisponivelCentavos,7000);

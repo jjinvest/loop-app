@@ -22,6 +22,7 @@ on:
       - 'test/adaptadores-psp-readonly.test.js'
       - 'src/producao/conferencia-observacoes-psp.js'
       - 'test/conferencia-observacoes-psp.test.js'
+      - 'src/producao/observacoes-psp-ensaio-sqlite.js'
       - 'test/identidade-real-persistencia.test.js'
       - 'test/api-identidade-real-sem-pagamentos.test.js'
       - 'test/interface-aprovada-identidade-real.test.js'
@@ -74,6 +75,7 @@ jobs:
           node --check src/producao/portas-financeiras-modulares.js
           node --check src/producao/adaptadores-psp-readonly.js
           node --check src/producao/conferencia-observacoes-psp.js
+          node --check src/producao/observacoes-psp-ensaio-sqlite.js
           node --check src/producao/tesouraria-modular-ensaio-sqlite.js
           node --check src/producao/interface-aprovada-contas.js
           node --check src/producao/interface-aprovada-loop.js

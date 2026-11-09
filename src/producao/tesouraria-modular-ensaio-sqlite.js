@@ -4,6 +4,8 @@
 // Usa o mesmo SQLite da identidade e pedidos, mas nunca abre HTTP nem APIs
 // reais. Nem mesmo NODE_ENV=production pode instanciar este motor de ensaio.
 const {createHash}=require('node:crypto');
+const {ObservacoesPSPEnsaioSQLite}=
+ require('./observacoes-psp-ensaio-sqlite');
 const {planejarRecebimentoTresBancos}=
  require('../domain/plano-roteamento-tres-bancos-lab');
 const {criarPlanoFinanceiro,validarPlanoFinanceiro,planejarTrocaFinanceira}=
@@ -14,7 +16,9 @@ const TABELAS_TESOURARIA_ENSAIO=Object.freeze([
  'loop_lab_tesouraria_creditos','loop_lab_tesouraria_creditos_eventos',
  'loop_lab_tesouraria_saques','loop_lab_tesouraria_transferencias',
  'loop_lab_tesouraria_tentativas',
- 'loop_lab_tesouraria_migracoes'
+ 'loop_lab_tesouraria_migracoes',
+ 'loop_lab_tesouraria_compromissos_psp',
+ 'loop_lab_tesouraria_observacoes_psp'
 ]);
 function falha(codigo){const e=new Error(codigo);e.codigo=codigo;throw e;}
 const ID=/^[A-Za-z0-9_-]{1,120}$/;
@@ -110,6 +114,7 @@ class TesourariaModularEnsaioSQLite{
    banco.prepare('INSERT INTO loop_lab_tesouraria_planos VALUES(?,?,?)')
     .run(p.revisao,JSON.stringify(p.rotas),this._agora());
   }
+  this.observacoesPsp=new ObservacoesPSPEnsaioSQLite({banco,agora});
   this.verificar();
  }
  _agora(){
@@ -769,6 +774,10 @@ class TesourariaModularEnsaioSQLite{
        (this._saldo(saldoTransito(m.migracao_id))===m.centavos))
     falha('TESOURARIA_ENSAIO_MIGRACAO_DIVERGENTE');
   }
+  const observacoes=Object.create(ObservacoesPSPEnsaioSQLite.prototype);
+  observacoes.db=db;
+  if(observacoes.verificar().integridade!=='OK')
+   falha('TESOURARIA_ENSAIO_OBSERVACOES_INCONSISTENTES');
   const cobertura=this._cobertura();
   return {integridade:'OK',movimentos:seq,
    recebimentos:this.db.prepare(
