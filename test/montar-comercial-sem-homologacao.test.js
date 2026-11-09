@@ -572,7 +572,10 @@ test('cinco missoes integradas: distribuir, sacar, abastecer, trocar e restaurar
  assert.throws(()=>caixa.registrarObservacao({
   observacaoId:'OBS_PSP_TESTE_01',tipo:'PIX',
   referencia:'PIX_FICTICIO_01',
-  observado:await fakeAsaas.consultarPix('PIX_FICTICIO_01')
+  observado:{origem:'ASAAS_SANDBOX',transferenciaId:'PIX_FICTICIO_01',
+   estado:'CONCLUIDO_NO_SANDBOX',valorFicticioCentavos:5000,
+   comprovanteRealConciliado:false,saqueRealPago:false,
+   podeReenviarAutomaticamente:false}
  }),{codigo:'OBSERVACOES_ENSAIO_OBSERVACAO_REPLAY_DIVERGENTE'});
  assert.equal(env.motor.consultar().posicoesReais,0);
  assert.equal(env.motor.consultar().tabuleiro.eventosNoCiclo,0);
