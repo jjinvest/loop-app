@@ -424,3 +424,78 @@ test('prova de chaves detecta adulteração HMAC administrativa mesmo com SQLite
   {codigo:'RECUPERACAO_AUDITORIA_HMAC_DIVERGENTE'});
  x.banco.close();
 });
+
+test('vínculo de convite e giro interno sobrevivem ao backup cifrado sem abrir financeiro',async t=>{
+ const x=fixture(t);
+ const {MotorLoopIntegradoSQLite}=
+  require('../src/producao/motor-loop-integrado-sqlite');
+ const alpha=await cadastrar(x,'Alpha','alpha@backup.invalid');
+ const docs=x.identidade.documentos();
+ const bravo=await x.identidade.cadastrar({
+  nome:'Bravo Exemplo',nick:'Bravo',email:'bravo@backup.invalid',
+  indicadorNick:'Alpha',senha:'SenhaFicticiaRobusta2026!',
+  aceiteTermos:true,aceitePrivacidade:true,
+  versaoTermos:docs.termos.versao,hashTermos:docs.termos.hash,
+  versaoPrivacidade:docs.privacidade.versao,
+  hashPrivacidade:docs.privacidade.hash
+ });
+ const login=await x.identidade.entrar({
+  nick:'Bravo',senha:'SenhaFicticiaRobusta2026!'
+ });
+ let motor=new MotorLoopIntegradoSQLite({banco:x.banco});
+ motor.registrarCompraEnsaio({titularId:alpha.titularId,pedidoId:'pedido-alpha'});
+ motor.registrarCompraEnsaio({titularId:bravo.titularId,pedidoId:'pedido-bravo'});
+ const vinculo={indicadorId:alpha.titularId,indicadoId:bravo.titularId,
+  pedidoIndicado:'pedido-bravo',posicaoId:1,eventoId:'convite-bravo'};
+ assert.equal(motor.registrarIndicacaoEnsaio(vinculo).repetida,false);
+ assert.equal(x.identidade.listarIndicados(alpha.titularId).total,1);
+ assert.equal(motor.verificar().compras,2);
+ const arquivo=await criarBackupIdentidadeReal({
+  origem:x.arquivo,destino:x.backup,
+  chaveBackup:x.chaveBackup,autorizado:true
+ });
+ assert.equal(arquivo.contas,2);
+ assert.equal(arquivo.copiaOffsiteConfirmada,false);
+ const restored=await restaurarBackupIdentidadeReal({
+  origem:x.backup,destino:x.restauro,
+  chaveBackup:x.chaveBackup,autorizado:true
+ });
+ assert.equal(restored.sessoesRevogadas,1);
+ const recuperado=new DatabaseSync(x.restauro);
+ try{
+  recuperado.exec('PRAGMA foreign_keys=ON');
+  const contas=new IdentidadeClienteLoopReal({
+   ...x.opcoes,banco:recuperado
+  });
+  motor=new MotorLoopIntegradoSQLite({banco:recuperado});
+  assert.equal(contas.sessao(login.token),null);
+  assert.equal(contas.listarIndicados(alpha.titularId).total,1);
+  assert.equal(contas.listarIndicados(alpha.titularId).indicados[0].nick,'bravo');
+  assert.equal(motor.verificar().compras,2);
+  assert.equal(motor.registrarIndicacaoEnsaio(vinculo).repetida,true);
+  assert.equal(recuperado.prepare(
+   'SELECT COUNT(*) AS n FROM loop_real_motor_qualificacoes'
+  ).get().n,1);
+  assert.equal(motor.consultar({titularId:alpha.titularId}).minhasPosicoes.length,1);
+  assert.equal(motor.consultar().financeiroReal,false);
+  assert.equal(recuperado.prepare('PRAGMA integrity_check').get().integrity_check,'ok');
+  assert.deepEqual(recuperado.prepare('PRAGMA foreign_key_check').all(),[]);
+ }finally{recuperado.close();}
+ x.banco.close();
+});
+test('backup recusa motor parcialmente excluído e não cria arquivo restaurável',async t=>{
+ const x=fixture(t);
+ await cadastrar(x,'Alpha','alpha@backup.invalid');
+ new (require('../src/producao/motor-loop-integrado-sqlite')
+  .MotorLoopIntegradoSQLite)({banco:x.banco});
+ x.banco.exec('DROP TABLE loop_real_motor_qualificacoes');
+ assert.throws(()=>validarIdentidade(x.arquivo),{
+  codigo:'BACKUP_MOTOR_PARCIAL'
+ });
+ await assert.rejects(criarBackupIdentidadeReal({
+  origem:x.arquivo,destino:x.backup,
+  chaveBackup:x.chaveBackup,autorizado:true
+ }),{codigo:'BACKUP_MOTOR_PARCIAL'});
+ assert.equal(fs.existsSync(x.backup),false);
+ x.banco.close();
+});
