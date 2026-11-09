@@ -68,6 +68,7 @@ jobs:
           node --check src/producao/classificacao-comercial-loop-sqlite.js
           node --check src/producao/montar-comercial-sem-homologacao.js
           node --check src/producao/portas-financeiras-modulares.js
+          node --check src/producao/tesouraria-modular-ensaio-sqlite.js
           node --check src/domain/plano-roteamento-tres-bancos-lab.js
           node --check src/producao/motor-loop-integrado-sqlite.js
           node --check src/producao/identidade-cliente-loop-sqlite.js

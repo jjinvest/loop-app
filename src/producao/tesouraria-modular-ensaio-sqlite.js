@@ -18,6 +18,8 @@ const TABELAS_TESOURARIA_ENSAIO=Object.freeze([
 function falha(codigo){const e=new Error(codigo);e.codigo=codigo;throw e;}
 const ID=/^[A-Za-z0-9_-]{1,120}$/;
 const idOk=x=>typeof x==='string'&&ID.test(x);
+const contaOk=x=>typeof x==='string'&&
+ /^(PSP|LOOP|LOJA|COFRES|PAGADOR|TRANSITO):[A-Za-z0-9_-]{1,120}$/.test(x);
 const dinheiro=x=>Number.isSafeInteger(x)&&x>0&&x<=1e12;
 const hash=s=>createHash('sha256').update(s).digest('hex');
 const credor=plano=>plano.rotas.CAPTACAO;
@@ -137,7 +139,7 @@ class TesourariaModularEnsaioSQLite{
   ).get(conta)?.centavos||0;
  }
  _alterar(conta,delta){
-  if(!idOk(conta)||!Number.isSafeInteger(delta))
+  if(!contaOk(conta)||!Number.isSafeInteger(delta))
    falha('TESOURARIA_ENSAIO_CONTA_INVALIDA');
   const atual=this._saldo(conta),novo=atual+delta;
   if(!Number.isSafeInteger(novo)||novo<0||novo>1e12)
@@ -150,8 +152,8 @@ class TesourariaModularEnsaioSQLite{
  _movimento({id,origem=null,destino=null,centavos}){
   checarTransacao(this.db);
   if(!idOk(id)||!dinheiro(centavos)||
-     (origem!==null&&!idOk(origem))||
-     (destino!==null&&!idOk(destino))||
+     (origem!==null&&!contaOk(origem))||
+     (destino!==null&&!contaOk(destino))||
      (!origem&&!destino)||origem===destino)
    falha('TESOURARIA_ENSAIO_MOVIMENTO_INVALIDO');
   if(this.db.prepare(
@@ -209,6 +211,16 @@ class TesourariaModularEnsaioSQLite{
    falha('TESOURARIA_ENSAIO_RECEBIMENTO_INVALIDO');
   return this._transacao(()=>{
    const p=this.plano();
+   const anterior=this.db.prepare(
+    'SELECT * FROM loop_lab_tesouraria_recebimentos WHERE pedido_id=?'
+   ).get(pedidoId);
+   if(anterior){
+    if(anterior.liquidacao_id!==liquidacaoId||
+       anterior.valor_bruto!==fotografia?.totalBrutoCotadoCentavos||
+       anterior.tarifa!==tarifaEnsaioCentavos)
+     falha('TESOURARIA_ENSAIO_REPLAY_DIVERGENTE');
+    return {registrado:false,repetido:true,financeiroReal:false};
+   }
    if(planoRevisao!==p.revisao||!credor(p)||!p.rotas.DISTRIBUICAO||
       !p.rotas.CUSTODIA_LOOP||!p.rotas.CUSTODIA_LOJA)
     falha('TESOURARIA_ENSAIO_ROTA_NAO_DEFINIDA');
@@ -221,17 +233,6 @@ class TesourariaModularEnsaioSQLite{
       pedido.evento!=='AGUARDANDO_CONCILIACAO'||
       pedido.valor_total_centavos!==fotografia?.totalBrutoCotadoCentavos)
     falha('TESOURARIA_ENSAIO_PEDIDO_SEM_EVENTO_CONSISTENTE');
-   const anterior=this.db.prepare(
-    'SELECT * FROM loop_lab_tesouraria_recebimentos WHERE pedido_id=?'
-   ).get(pedidoId);
-   if(anterior){
-    if(anterior.liquidacao_id!==liquidacaoId||
-       anterior.revisao!==p.revisao||
-       anterior.valor_bruto!==pedido.valor_total_centavos||
-       anterior.tarifa!==tarifaEnsaioCentavos)
-     falha('TESOURARIA_ENSAIO_REPLAY_DIVERGENTE');
-    return {registrado:false,repetido:true,financeiroReal:false};
-   }
    const dados=planejarRecebimentoTresBancos({
     fotografia,taxaRealPspCentavos:tarifaEnsaioCentavos,planoFinanceiro:p
    });
@@ -566,7 +567,7 @@ class TesourariaModularEnsaioSQLite{
    'SELECT conta,centavos FROM loop_lab_tesouraria_saldos'
   ).all();
   for(const a of contas){
-   if(!idOk(a.conta)||!Number.isSafeInteger(a.centavos)||a.centavos<0)
+   if(!contaOk(a.conta)||!Number.isSafeInteger(a.centavos)||a.centavos<0)
     falha('TESOURARIA_ENSAIO_CONTA_ADULTERADA');
    saldos.set(a.conta,a.centavos);
   }

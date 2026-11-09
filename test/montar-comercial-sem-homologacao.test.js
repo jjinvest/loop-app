@@ -26,8 +26,11 @@ const {criarAppIdentidadeLoop}=
 const {montarComercialSemHomologacao,
  exigirChaveParaHistoricoComercial}=
  require('../src/producao/montar-comercial-sem-homologacao');
-const {validarIdentidade}=
+const {validarIdentidade,criarBackupIdentidadeReal,
+ restaurarBackupIdentidadeReal}=
  require('../src/producao/backup-identidade-real');
+const {TesourariaModularEnsaioSQLite}=
+ require('../src/producao/tesouraria-modular-ensaio-sqlite');
 const DOC='Termos de conta fictícia para exercício sem provedor PSP, sem saques, '+
  'sem dinheiro e sem liberação comercial. Não há posição remunerada.';
 const ORIGEM='https://contas.example.invalid';
@@ -96,7 +99,7 @@ function criarCotacao(titularId){
   itens:[{sku:'SKU_LIVRO',precoUnitCentavos:25000,quantidade:1}]};
 }
 function pedidosDeEnsaio(x,extras={}){
- const cotacao=criarCotacao(x.usuarios[0].titularId);
+ const cotacao=extras.cotacao||criarCotacao(x.usuarios[0].titularId);
  let status='PENDENTE';
  const pedidos=new PedidosComerciaisSQLite({
   banco:x.env.banco,chavePedidos:x.segredos.pedidos,
@@ -259,4 +262,181 @@ test('reinício com pedidos existentes e sem chave comercial falha fechado',asyn
   banco:y.banco,chavePedidos:x.segredos.pedidos
  }).historicoComercialAutorizado,true);
  assert.equal(y.motor.consultar().posicoesReais,0);
+});
+
+test('cinco missoes integradas: distribuir, sacar, abastecer, trocar e restaurar sem Pix real',async t=>{
+ const x=await preparar(t);
+ t.after(()=>{try{x.encerrar();}catch{}});
+ const env=x.env;
+ const ponte=montarComercialSemHomologacao({
+  banco:env.banco,chavePedidos:x.segredos.pedidos,
+  auditoria:env.auditoria,manutencao:env.manutencao
+ });
+ env.catalogo.criarProduto({produtoId:'livro',titulo:'Livro de Ensaio'});
+ env.catalogo.vincularOferta({
+  produtoId:'livro',distribuidorId:'distribuidorA',
+  sku:'SKU_LIVRO',precoUnitCentavos:50000
+ });
+ ponte.classificacaoLoop.configurarProduto({
+  produtoId:'livro',cor:'VERDE',autorizado:true
+ });
+ const cotacao=criarCotacao(x.usuarios[0].titularId);
+ cotacao.itens=[{sku:'SKU_LIVRO',precoUnitCentavos:50000,quantidade:1}];
+ const sim=pedidosDeEnsaio(x,{
+  cotacao,classificacaoLoop:ponte.classificacaoLoop,
+  eventosComerciais:ponte.eventosComerciais
+ });
+ const novo=await sim.pedidos.criarPedido({
+  titularId:x.usuarios[0].titularId,cotacaoId:cotacao.cotacaoId,
+  chaveIdempotencia:'TESOURARIA_01',enderecoEntrega:END
+ });
+ sim.status('CONFIRMADO');
+ await sim.pedidos.confirmarPagamento({pedidoId:novo.pedidoId});
+ assert.equal(ponte.eventosComerciais.verificar().pendentes,1);
+ const teso=new TesourariaModularEnsaioSQLite({banco:env.banco});
+ let troca;
+ for(const [papel,provedorDestino] of [
+  ['CAPTACAO','CELCOIN'],['DISTRIBUICAO','CELCOIN'],
+  ['EXECUTOR_SAQUE','ASAAS'],['CUSTODIA_COFRES','BANCO_3']
+ ])troca=teso.trocarRotaEnsaio({
+  papel,provedorDestino,motivo:'CONFIGURACAO_INICIAL'
+ });
+ assert.equal(troca.revisao,5);
+ const foto={
+  totalBrutoCotadoCentavos:51500,
+  referenciaLoopPrevistaCentavos:25000,
+  quantidadePosicoesPlanejadas:1,
+  custoFornecedorPrevistoCentavos:17000,fretePrevistoCentavos:1500,
+  tarifaPspPrevistaCentavos:500,reservaTributariaEstimadaCentavos:1000,
+  custosCompletos:true,itens:[]
+ };
+ const receber=()=>teso.registrarRecebimentoEnsaio({
+  pedidoId:novo.pedidoId,liquidacaoId:'LIQUIDACAO_FICTICIA_01',
+  fotografia:foto,tarifaEnsaioCentavos:500,planoRevisao:5
+ });
+ assert.equal(receber().registrado,true);
+ assert.equal(receber().repetido,true);
+ assert.throws(()=>teso.registrarRecebimentoEnsaio({
+  pedidoId:novo.pedidoId,liquidacaoId:'LIQUIDACAO_OUTRA',
+  fotografia:foto,tarifaEnsaioCentavos:500,planoRevisao:5
+ }),{codigo:'TESOURARIA_ENSAIO_REPLAY_DIVERGENTE'});
+ assert.equal(env.banco.prepare(
+  "SELECT centavos FROM loop_lab_tesouraria_saldos WHERE conta='LOOP:INTER'"
+ ).get().centavos,25000);
+ assert.equal(env.banco.prepare(
+  "SELECT centavos FROM loop_lab_tesouraria_saldos WHERE conta='LOJA:MERCADO_PAGO'"
+ ).get().centavos,6500);
+ assert.equal(env.banco.prepare(
+  "SELECT centavos FROM loop_lab_tesouraria_saldos WHERE conta='PSP:CELCOIN'"
+ ).get().centavos,19500);
+ assert.equal(teso.verificar().integridade,'OK');
+ const titular=x.usuarios[0].titularId;
+ assert.equal(teso.registrarCreditoEnsaio({
+  titularId:titular,creditoId:'DIREITO_MANUAL_TESTE_01',valorCentavos:12000
+ }).registrado,true);
+ assert.equal(teso.registrarCreditoEnsaio({
+  titularId:titular,creditoId:'DIREITO_MANUAL_TESTE_01',valorCentavos:12000
+ }).registrado,false);
+ assert.throws(()=>teso.registrarCreditoEnsaio({
+  titularId:x.usuarios[1].titularId,
+  creditoId:'DIREITO_INSUFICIENTE',valorCentavos:15000
+ }),{codigo:'TESOURARIA_ENSAIO_COBERTURA_INSUFICIENTE'});
+ const saque=()=>teso.solicitarSaqueEnsaio({
+  titularId:titular,saqueId:'SAQUE_FICTICIO_01',
+  chaveIdempotencia:'CLIENTE_UMA_VEZ',valorCentavos:5000
+ });
+ assert.equal(saque().estado,'RESERVADO');
+ assert.equal(saque().repetido,true);
+ assert.throws(()=>teso.solicitarSaqueEnsaio({
+  titularId:titular,saqueId:'SAQUE_FICTICIO_02',
+  chaveIdempotencia:'CLIENTE_UMA_VEZ',valorCentavos:5000
+ }),{codigo:'TESOURARIA_ENSAIO_SAQUE_REPLAY_DIVERGENTE'});
+ assert.equal(teso.iniciarAbastecimentoEnsaio({
+  saqueId:'SAQUE_FICTICIO_01',transferenciaId:'TRANSF_FICTICIA_01'
+ }).estado,'INDETERMINADA');
+ assert.equal(teso.iniciarAbastecimentoEnsaio({
+  saqueId:'SAQUE_FICTICIO_01',transferenciaId:'TRANSF_FICTICIA_01'
+ }).repetido,true);
+ assert.throws(()=>teso.iniciarAbastecimentoEnsaio({
+  saqueId:'SAQUE_FICTICIO_01',transferenciaId:'TRANSF_FICTICIA_DUPLA'
+ }),{codigo:'TESOURARIA_ENSAIO_TRANSFERENCIA_DUPLA_BLOQUEADA'});
+ assert.throws(()=>teso.trocarRotaEnsaio({
+  papel:'CUSTODIA_LOOP',provedorDestino:'BANCO_2',
+  motivo:'INCIDENTE_EM_ABERTO'
+ }),{codigo:'TESOURARIA_ENSAIO_TROCA_COM_OPERACOES_PENDENTES'});
+ assert.equal(teso.conciliarAbastecimentoEnsaio({
+  transferenciaId:'TRANSF_FICTICIA_01',resultado:'INDETERMINADA'
+ }).aguardandoConsulta,true);
+ assert.equal(teso.conciliarAbastecimentoEnsaio({
+  transferenciaId:'TRANSF_FICTICIA_01',resultado:'CONFIRMADA'
+ }).estado,'CONFIRMADA');
+ assert.equal(teso.enviarPixEnsaio({
+  saqueId:'SAQUE_FICTICIO_01',tentativaId:'PIX_FICTICIO_01'
+ }).estado,'PIX_INDETERMINADO');
+ assert.throws(()=>teso.enviarPixEnsaio({
+  saqueId:'SAQUE_FICTICIO_01',tentativaId:'PIX_DUPLICADO'
+ }),{codigo:'TESOURARIA_ENSAIO_PIX_DUPLO_BLOQUEADO'});
+ assert.equal(teso.conciliarPixEnsaio({
+  saqueId:'SAQUE_FICTICIO_01',tentativaId:'PIX_FICTICIO_01',
+  resultado:'INDETERMINADA'
+ }).aguardandoConsulta,true);
+ assert.equal(teso.conciliarPixEnsaio({
+  saqueId:'SAQUE_FICTICIO_01',tentativaId:'PIX_FICTICIO_01',
+  resultado:'CONFIRMADA'
+ }).pagoSomenteNoEnsaio,true);
+ assert.equal(teso.conciliarPixEnsaio({
+  saqueId:'SAQUE_FICTICIO_01',tentativaId:'PIX_FICTICIO_01',
+  resultado:'CONFIRMADA'
+ }).repetido,true);
+ assert.throws(()=>teso.conciliarPixEnsaio({
+  saqueId:'SAQUE_FICTICIO_01',tentativaId:'PIX_FICTICIO_01',
+  resultado:'FALHOU'
+ }),{codigo:'TESOURARIA_ENSAIO_PIX_PROVA_CONTRADITORIA'});
+ assert.equal(teso.consultarTitularEnsaio({
+  titularId:titular
+ }).saldoFicticioDisponivelCentavos,7000);
+ assert.equal(teso.consultarTitularEnsaio({
+  titularId:x.usuarios[1].titularId
+ }).saques.length,0);
+ const alternativo=teso.trocarRotaEnsaio({
+  papel:'CUSTODIA_LOOP',provedorDestino:'BANCO_2',
+  motivo:'ROTACAO_SEM_PENDENCIAS'
+ });
+ assert.equal(alternativo.revisao,6);
+ assert.equal(alternativo.saldoMigradoAutomaticamente,false);
+ assert.equal(alternativo.saldoAnteriorSimuladoCentavos,20000);
+ assert.equal(teso.plano().rotas.CUSTODIA_LOOP,'BANCO_2');
+ const volta=teso.trocarRotaEnsaio({
+  papel:'CUSTODIA_LOOP',provedorDestino:'INTER',motivo:'ROTACAO_PROGRAMADA'
+ });
+ assert.equal(volta.revisao,7);
+ assert.equal(teso.verificar().saques,1);
+ assert.equal(env.motor.consultar().posicoesReais,0);
+ assert.equal(env.motor.consultar().tabuleiro.eventosNoCiclo,0);
+ assert.equal(validarIdentidade(x.arquivo).integridade,'ok');
+ const arqBackup=x.arquivo.replace(/\.sqlite$/,'.looprealbak'),
+  arqRestaurado=x.arquivo.replace(/\.sqlite$/,'-restaurado.sqlite');
+ const chaveBackup=randomBytes(32);
+ const backup=await criarBackupIdentidadeReal({
+  origem:x.arquivo,destino:arqBackup,
+  chaveBackup,autorizado:true
+ });
+ assert.equal(backup.integridadeSQLite,'ok');
+ const restauro=await restaurarBackupIdentidadeReal({
+  origem:arqBackup,destino:arqRestaurado,
+  chaveBackup,autorizado:true
+ });
+ assert.equal(restauro.integridadeSQLite,'ok');
+ assert.equal(validarIdentidade(arqRestaurado).integridade,'ok');
+ const db2=new DatabaseSync(arqRestaurado,{readOnly:true});
+ try{
+  const rel=Object.create(TesourariaModularEnsaioSQLite.prototype);
+  rel.db=db2;
+  assert.equal(rel.verificar().integridade,'OK');
+  assert.equal(rel.verificar().saques,1);
+  assert.equal(rel.plano().revisao,7);
+  assert.equal(rel.consultarTitularEnsaio({
+   titularId:titular
+  }).saldoFicticioDisponivelCentavos,7000);
+ }finally{db2.close();}
 });

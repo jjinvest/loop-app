@@ -12,6 +12,8 @@ const {createHash,createCipheriv,createDecipheriv,randomBytes,hkdfSync}=
 const {MotorLoopIntegradoSQLite,TABELAS_MOTOR}=require('./motor-loop-integrado-sqlite');
 const {TABELAS_COMERCIAIS,validarRecuperacaoComercial}=
  require('./validacao-recuperacao-comercial');
+const {TABELAS_TESOURARIA_ENSAIO,TesourariaModularEnsaioSQLite}=
+ require('./tesouraria-modular-ensaio-sqlite');
 const MAGIC=Buffer.from('LOOPREALBKP1','ascii');
 const HEADER=40,TAG=16;
 const TABELAS=Object.freeze([
@@ -67,9 +69,24 @@ function validarIdentidade(arquivo){
    "SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%'"
   ).all().map(x=>x.name);
   if(TABELAS.some(x=>!lista.includes(x)))falha('BACKUP_REAL_ESQUEMA_INCOMPLETO');
-  const todos=[...TABELAS,...TABELAS_ADMIN,...TABELAS_COMERCIAIS,...TABELAS_MOTOR];
+  const todos=[...TABELAS,...TABELAS_ADMIN,...TABELAS_COMERCIAIS,
+   ...TABELAS_MOTOR,...TABELAS_TESOURARIA_ENSAIO];
   if(lista.some(x=>!todos.includes(x)))
    falha('BACKUP_IDENTIDADE_NAO_COBRE_TABELAS_COMERCIAIS');
+  const temEnsaio=TABELAS_TESOURARIA_ENSAIO.some(x=>lista.includes(x));
+  if(temEnsaio){
+   // Jamais promover demonstrativo ficticio como saldo contabil real.
+   if(process.env.NODE_ENV==='production')
+    falha('BACKUP_TESOURARIA_ENSAIO_PROIBIDA_PRODUCAO');
+   if(TABELAS_TESOURARIA_ENSAIO.some(x=>!lista.includes(x)))
+    falha('BACKUP_TESOURARIA_ENSAIO_PARCIAL');
+   try{
+    const ensaio=Object.create(TesourariaModularEnsaioSQLite.prototype);
+    ensaio.db=b;
+    if(ensaio.verificar().integridade!=='OK')
+     falha('BACKUP_TESOURARIA_ENSAIO_DIVERGENTE');
+   }catch{falha('BACKUP_TESOURARIA_ENSAIO_DIVERGENTE');}
+  }
   // O snapshot da fila, eventos e livro de compras pertencem ao mesmo backup.
   const temMotor=TABELAS_MOTOR.some(t=>lista.includes(t));
   if(temMotor){
