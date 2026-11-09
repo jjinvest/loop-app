@@ -20,6 +20,8 @@ on:
       - 'src/domain/plano-roteamento-tres-bancos-lab.js'
       - 'src/producao/adaptadores-psp-readonly.js'
       - 'test/adaptadores-psp-readonly.test.js'
+      - 'src/producao/conferencia-observacoes-psp.js'
+      - 'test/conferencia-observacoes-psp.test.js'
       - 'test/identidade-real-persistencia.test.js'
       - 'test/api-identidade-real-sem-pagamentos.test.js'
       - 'test/interface-aprovada-identidade-real.test.js'
@@ -71,6 +73,7 @@ jobs:
           node --check src/producao/montar-comercial-sem-homologacao.js
           node --check src/producao/portas-financeiras-modulares.js
           node --check src/producao/adaptadores-psp-readonly.js
+          node --check src/producao/conferencia-observacoes-psp.js
           node --check src/producao/tesouraria-modular-ensaio-sqlite.js
           node --check src/producao/interface-aprovada-contas.js
           node --check src/producao/interface-aprovada-loop.js
@@ -114,6 +117,8 @@ jobs:
         run: node --test test/eventos-comerciais-loop-sqlite.test.js
       - name: Cor da venda congelada, verde/cinza/dourado/roxo e sem ativar motor
         run: node --test test/classificacao-comercial-loop-sqlite.test.js
+      - name: Convergencia externa de PSP e Pix sandbox, sem credito ou reenvio
+        run: node --test test/conferencia-observacoes-psp.test.js
       - name: Conectores externos isolados Celcoin e Asaas (somente leitura sandbox)
         run: node --test test/adaptadores-psp-readonly.test.js
       - name: Provedores modulares, troca de banco, contingencia e bloqueio de saque
