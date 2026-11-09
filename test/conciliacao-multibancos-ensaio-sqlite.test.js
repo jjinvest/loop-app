@@ -108,3 +108,16 @@ test('extrato imutável, adulteração do hash, ausência de livro e produção 
   else process.env.NODE_ENV=old;
  }
 });
+
+test('sem lançamentos bancários não existe êxito fictício de conciliação',t=>{
+ const db=new DatabaseSync(':memory:');t.after(()=>db.close());
+ db.exec([
+  'CREATE TABLE loop_lab_tesouraria_movimentos(',
+  'id INTEGER PRIMARY KEY AUTOINCREMENT,operacao_id TEXT UNIQUE,',
+  'origem TEXT,destino TEXT,centavos INTEGER);'
+ ].join(' '));
+ const x=new Conciliar({banco:db});
+ assert.equal(x.analisar().movimentosBancariosEsperados,0);
+ assert.equal(x.analisar().todasDeclaracoesCoincidem,false);
+ assert.equal(x.analisar().conciliacaoRealCertificada,false);
+});

@@ -212,7 +212,7 @@ class ConciliacaoMultibancosEnsaioSQLite{
    totalDivergencias:divergencias,
    divergenciasPorCodigo:Object.fromEntries(codigos),
    amostraDivergencias:amostras,
-   todasDeclaracoesCoincidem:divergencias===0,
+   todasDeclaracoesCoincidem:totais>0&&divergencias===0&&conferidas===totais,
    extratosExternosAutenticados:false,
    titularidadeBancariaComprovada:false,
    dinheiroRealMovimentado:false,
