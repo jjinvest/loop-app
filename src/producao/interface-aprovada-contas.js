@@ -9,7 +9,7 @@
  const ref=new URLSearchParams(location.search).get('ref');
  const indicadorNick=typeof ref==='string'&&/^[A-Za-z]{1,12}$/.test(ref)?
   ref.toLowerCase():null;
- let titularesIndicados=[];
+ let titularesIndicados=[],redePaginando=false;
  let origemLinks=null;
  const codigos={
   CREDENCIAIS_INVALIDAS:'Confira seu nick e sua senha.',
@@ -120,6 +120,7 @@
   if(redePreparada)return;
   redePreparada=true;
   $('atualizarEquipe').addEventListener('click',()=>void carregarRede());
+  $('maisEquipe').addEventListener('click',()=>void carregarRede({mais:true}));
   $('buscarEquipe').addEventListener('input',()=>exibirRede());
   $('equipeVerLinks').addEventListener('click',()=>$('abaLinks').click());
   for(const [botao,campo] of [
@@ -168,12 +169,18 @@
    item.append(nick,estado);alvo.appendChild(item);
   }
  }
- async function carregarRede(){
+ async function carregarRede({mais=false}={}){
+  if(redePaginando)return;
+  redePaginando=true;
+  if(!mais)titularesIndicados=[];
   try{
-   const dados=await requisitar('/minha-rede');
+   const dados=await requisitar('/minha-rede'+(mais?
+    '?offset='+titularesIndicados.length:''));
    if(!Array.isArray(dados.indicados)||!Number.isSafeInteger(dados.total)||
       dados.financeiroReal!==false)throw Error('REDE_DIVERGENTE');
-   titularesIndicados=dados.indicados;
+   titularesIndicados=mais?
+    titularesIndicados.concat(dados.indicados):dados.indicados;
+   $('maisEquipe').hidden=!dados.temMais;
    $('redeTotalCadastros').textContent=String(dados.total);
    $('resumoEquipe').textContent=String(dados.total);
    $('redeAlocadasEnsaio').textContent='0';
@@ -183,7 +190,7 @@
    exibirRede();
   }catch{
    $('equipeResumo').textContent='Sua rede não pôde ser consultada.';
-  }
+  }finally{redePaginando=false;}
  }
  let painelMotorPreparado=false;
  function prepararAbasMotor(){

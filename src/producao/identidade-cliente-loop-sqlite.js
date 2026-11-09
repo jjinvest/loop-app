@@ -374,24 +374,26 @@ class IdentidadeClienteLoopReal{
     reentrarNecessario:true,financeiroReal:false};
   }catch(e){if(aberto)this.banco.exec('ROLLBACK');throw e;}
  }
- listarIndicados(titularId,{limite=50}={}){
+ listarIndicados(titularId,{limite=50,offset=0}={}){
   if(typeof titularId!=='string'||!/^titular-[a-f0-9-]{36}$/.test(titularId)||
-     !Number.isSafeInteger(limite)||limite<1||limite>50)
+     !Number.isSafeInteger(limite)||limite<1||limite>50||
+     !Number.isSafeInteger(offset)||offset<0||offset>100000)
    erro('TITULAR_INVALIDO');
   const rows=this.banco.prepare([
    'SELECT c.nick,v.registrado_em AS registradoEm',
    'FROM loop_real_vinculos_indicacao v',
    'JOIN loop_real_contas c ON c.id=v.indicado_id',
    'WHERE v.indicador_id=?',
-   'ORDER BY v.registrado_em ASC,v.indicado_id ASC LIMIT ?'
-  ].join(' ')).all(titularId,limite);
+   'ORDER BY v.registrado_em ASC,v.indicado_id ASC LIMIT ? OFFSET ?'
+  ].join(' ')).all(titularId,limite,offset);
   const total=this.banco.prepare(
    'SELECT COUNT(*) AS n FROM loop_real_vinculos_indicacao WHERE indicador_id=?'
   ).get(titularId).n;
   return {indicados:rows.map(x=>({
    nick:x.nick,registradoEm:x.registradoEm,
    estado:'CADASTRO_AGUARDANDO_COMPRA'
-  })),total,temMais:total>rows.length,
+  })),total,temMais:total>offset+rows.length,
+   proximoOffset:total>offset+rows.length?offset+rows.length:null,
    remuneracoesConfirmadas:0,financeiroReal:false};
  }
  dadosTitular(titularId){

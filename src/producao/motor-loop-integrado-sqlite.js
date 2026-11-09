@@ -125,7 +125,18 @@ class MotorLoopIntegradoSQLite{
    const visto=this.banco.prepare(
     'SELECT 1 FROM loop_real_motor_eventos WHERE chave=?'
    ).get('i:'+eventoId);
-   if(visto)return {repetida:true};
+   if(visto){
+    const anterior=this.banco.prepare([
+     'SELECT indicado_id,indicador_id,posicao_id,pedido_id',
+     'FROM loop_real_motor_qualificacoes WHERE evento_id=?'
+    ].join(' ')).get('i:'+eventoId);
+    if(!anterior||anterior.indicado_id!==indicadoId||
+       anterior.indicador_id!==indicadorId||
+       anterior.posicao_id!==posicaoId||
+       anterior.pedido_id!==pedidoIndicado)
+     falha('LOOP_INDICACAO_REPLAY_DIVERGENTE');
+    return {repetida:true};
+   }
    const vinculo=this.banco.prepare(
     'SELECT indicador_id FROM loop_real_vinculos_indicacao WHERE indicado_id=?'
    ).get(indicadoId);
@@ -236,7 +247,10 @@ class MotorLoopIntegradoSQLite{
   const indicacoes=this.banco.prepare(
    "SELECT chave FROM loop_real_motor_eventos WHERE tipo='INDICACAO'"
   ).all().map(x=>x.chave);
-  if(qualificacoes.length!==indicacoes.length||
+  const totalIndicacoes=[...sim.filas.indicacoes.values()]
+   .reduce((s,v)=>s+v.quantidade,0);
+  if(totalIndicacoes!==qualificacoes.length||
+     qualificacoes.length!==indicacoes.length||
      qualificacoes.length!==sim.filas.indicacoesProcessadas.size||
      qualificacoes.some(q=>
       q.indicador_id!==q.vinculo_indicador||

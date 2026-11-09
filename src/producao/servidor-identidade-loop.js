@@ -181,7 +181,13 @@ function criarAppIdentidadeLoop({contas,origemHttps,
  });
  // Convite registra somente um cadastro, sem ativar comissão, dinheiro ou posição.
  app.get('/api/contas/minha-rede',protegido,(req,res)=>{
-  try{return res.json(contas.listarIndicados(req.conta.titularId));}
+  const bruto=req.query?.offset;
+  if(bruto!==undefined&&(
+     typeof bruto!=='string'||!/^(0|[1-9][0-9]{0,5})$/.test(bruto)||
+     Number(bruto)>100000))
+   return res.status(400).json({erro:'PAGINACAO_INVALIDA'});
+  const offset=bruto===undefined?0:Number(bruto);
+  try{return res.json(contas.listarIndicados(req.conta.titularId,{offset}));}
   catch{return res.status(503).json({erro:'REDE_INDISPONIVEL'});}
  });
  app.get('/convite/loja',(req,res)=>{

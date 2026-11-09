@@ -81,11 +81,24 @@ test('convite é atribuído uma vez, sem autoindicação nem indicação forjada
  assert.equal(x.motor.registrarIndicacaoEnsaio(valido).repetida,false);
  assert.equal(x.motor.registrarIndicacaoEnsaio(valido).repetida,true);
  assert.throws(()=>x.motor.registrarIndicacaoEnsaio({
+  ...valido,posicaoId:2
+ }),/LOOP_INDICACAO_REPLAY_DIVERGENTE/);
+ assert.throws(()=>x.motor.registrarIndicacaoEnsaio({
   ...valido,eventoId:'requalificacao'
  }),/LOOP_INDICACAO_JA_QUALIFICADA/);
  assert.throws(()=>x.motor.registrarIndicacaoEnsaio({
   ...valido,indicadorId:c.titularId,eventoId:'roubo'
  }),/LOOP_SEM_CONVITE_CADASTRADO/);
+ const d=await x.cadastrar('Delta','Alpha');
+ const e=await x.cadastrar('Echo','Alpha');
+ assert.equal(x.contas.listarIndicados(a.titularId).total,3);
+ assert.deepEqual(
+  x.contas.listarIndicados(a.titularId,{limite:1,offset:1}).indicados
+   .map(p=>p.nick),['delta']);
+ assert.equal(
+  x.contas.listarIndicados(a.titularId,{limite:1,offset:2}).temMais,false);
+ assert.equal(d.vinculoCadastro,true);
+ assert.equal(e.vinculoCadastro,true);
  assert.equal(x.motor.verificar().integridade,'OK');
  assert.equal(x.banco.prepare(
   'SELECT COUNT(*) AS n FROM loop_real_motor_qualificacoes'
@@ -136,5 +149,8 @@ test('API de convites usa sessão e o cadastro atribui pelo nick do link',async 
  assert.equal(l.indicados[0].nick,'bravo');
  assert.equal(JSON.stringify(l).includes('bravo@example.invalid'),false);
  assert.equal(l.remuneracoesConfirmadas,0);
+ assert.equal((await fetch(url+'/api/contas/minha-rede?offset=-2',{
+  headers:{Cookie:'loop_real_s='+login.token}
+ })).status,400);
  assert.equal((await fetch(url+'/api/checkout/finalizar')).status,503);
 });
