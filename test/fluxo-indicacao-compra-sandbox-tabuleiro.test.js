@@ -2,6 +2,9 @@
 const {test}=require('node:test');
 const assert=require('node:assert/strict');
 const {DatabaseSync}=require('node:sqlite');
+const fs=require('node:fs');
+const os=require('node:os');
+const path=require('node:path');
 const {MotorContaUnicaEnsaioSQLite}=require('../src/domain/motor-conta-unica-ensaio-sqlite');
 const {EquipeCandidataSQLite}=require('../src/domain/equipe-candidata-sqlite');
 const tid=n=>'titular-'+String(n).padStart(8,'0')+'-0000-0000-0000-000000000000';
@@ -535,4 +538,52 @@ test('apos cinco mil eventos historicos a catraca ainda encontra compras novas s
   assert.equal(x.motor.consultar().tabuleiro.eventosNoCiclo,2);
   assert.equal(x.db.prepare('PRAGMA integrity_check').get().integrity_check,'ok');
  }finally{x.db.close();}
+});
+
+test('apos cinco luzes, restaurar SQLite isolado preserva evento, titular, fila e giro sem replay',()=>{
+ const x=preparar();
+ const dir=fs.mkdtempSync(path.join(os.tmpdir(),'motor-restaurar-'));
+ const arquivo=path.join(dir,'motor.sqlite');
+ let db2=null;
+ try{
+  for(let i=1;i<=8;i++){
+   x.conta(i,'Titular'+String.fromCharCode(64+i));
+   x.comprar(i,i,true);
+  }
+  x.motor.prepararTabuleiro();
+  const centroAnterior=x.motor.consultar().tabuleiro.centro.numero;
+  for(let i=1;i<=5;i++){
+   assert.equal(x.motor.registrarEvento({prepedidoId:pid(i)}).repetido,false);
+  }
+  assert.equal(x.motor.consultar().tabuleiro.eventosNoCiclo,5);
+  x.db.exec("VACUUM INTO '"+arquivo.replaceAll("'","''")+"'");
+  db2=new DatabaseSync(arquivo);
+  db2.exec('PRAGMA foreign_keys=ON;PRAGMA journal_mode=WAL;');
+  // Os estados PSP externos permanecem em mock; o motor reabre sua fonte
+  // SQLite em arquivo novo sem recorrer a um snapshot em memoria.
+  const sinalizacao={...x.motor.sinalizacao,db:db2};
+  const ponte={...x.motor.ponte,banco:db2};
+  let restaurado=new MotorContaUnicaEnsaioSQLite({
+   banco:db2,sinalizacao,ponte
+  });
+  assert.equal(restaurado.consultar().tabuleiro.eventosNoCiclo,5);
+  assert.equal(restaurado.consultar().tabuleiro.centro.numero,centroAnterior);
+  assert.equal(restaurado.registrarEvento({prepedidoId:pid(1)}).repetido,true);
+  const sexto=restaurado.registrarEvento({prepedidoId:pid(6)});
+  assert.equal(sexto.eventosNoCiclo,6);
+  restaurado.controlarCatraca('ABRIR');
+  assert.equal(restaurado.controlarCatraca('GIRAR').girou,true);
+  restaurado=new MotorContaUnicaEnsaioSQLite({banco:db2,sinalizacao,ponte});
+  assert.equal(restaurado.consultar().catraca.giros,1);
+  assert.equal(restaurado.consultar().tabuleiro.eventosNoCiclo,0);
+  assert.equal(restaurado.registrarEvento({prepedidoId:pid(6)}).repetido,true);
+  assert.equal(restaurado.consultar().catraca.giros,1);
+  assert.equal(restaurado.consultar().dinheiroReal,false);
+  assert.equal(db2.prepare('PRAGMA integrity_check').get().integrity_check,'ok');
+  assert.deepEqual(db2.prepare('PRAGMA foreign_key_check').all(),[]);
+ }finally{
+  if(db2)db2.close();
+  x.db.close();
+  fs.rmSync(dir,{recursive:true,force:true});
+ }
 });

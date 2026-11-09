@@ -21,6 +21,7 @@ on:
       - 'src/domain/plano-posicoes-compra-akitemm.js'
       - 'test/plano-posicoes-compra-akitemm.test.js'
       - 'test/asaas-motor-automatico-sandbox-candidato.test.js'
+      - 'test/fluxo-indicacao-compra-sandbox-tabuleiro.test.js'
       - 'test/asaas-vinculo-motor-recuperacao-candidato.test.js'
       - 'src/domain/prepedidos-checkout-staging-sqlite.js'
       - 'src/routes/prepedidos-checkout-staging.js'
