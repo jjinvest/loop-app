@@ -96,7 +96,9 @@ function criarAppIdentidadeLoop({contas,origemHttps,
      code==='CREDENCIAL_ALTERADA_CONCORRENTEMENTE')
    return res.status(409).json({erro:code});
   if(['NOME_INVALIDO','EMAIL_INVALIDO','NICK_INVALIDO','SENHA_INVALIDA',
-   'CODIGO_INVALIDO','SENHA_NOVA_DEVE_SER_DIFERENTE'].includes(code))
+   'CODIGO_INVALIDO','SENHA_NOVA_DEVE_SER_DIFERENTE',
+   'INDICADOR_INVALIDO','AUTOINDICACAO_PROIBIDA',
+   'INDICADOR_NAO_ENCONTRADO'].includes(code))
    return res.status(400).json({erro:code});
   if(code==='CREDENCIAIS_INVALIDAS'||code==='SENHA_ATUAL_INCORRETA')
    return res.status(401).json({erro:code});
@@ -138,8 +140,10 @@ function criarAppIdentidadeLoop({contas,origemHttps,
  app.post('/api/contas/cadastrar',mutation,async(req,res)=>{
   if(!cadastroLiberado())return res.status(503).json({erro:'CADASTRO_INATIVO'});
   const b=req.body;
-  if(!b||Array.isArray(b)||Object.keys(b).sort().join(',')!==
-    'aceitePrivacidade,aceiteTermos,email,hashPrivacidade,hashTermos,nick,nome,senha,versaoPrivacidade,versaoTermos')
+  if(!b||Array.isArray(b)||![
+    'aceitePrivacidade,aceiteTermos,email,hashPrivacidade,hashTermos,nick,nome,senha,versaoPrivacidade,versaoTermos',
+    'aceitePrivacidade,aceiteTermos,email,hashPrivacidade,hashTermos,indicadorNick,nick,nome,senha,versaoPrivacidade,versaoTermos'
+   ].includes(Object.keys(b).sort().join(',')))
    return res.status(400).json({erro:'CAMPOS_INVALIDOS'});
   if(!limite(res,'cadastro',b.email))return;
   try{
@@ -174,6 +178,17 @@ function criarAppIdentidadeLoop({contas,origemHttps,
  app.get('/api/contas/meus-dados',protegido,(req,res)=>{
   try{return res.json(contas.dadosTitular(req.conta.titularId));}
   catch{return res.status(503).json({erro:'DADOS_INDISPONIVEIS'});}
+ });
+ // Convite registra somente um cadastro, sem ativar comissão, dinheiro ou posição.
+ app.get('/api/contas/minha-rede',protegido,(req,res)=>{
+  try{return res.json(contas.listarIndicados(req.conta.titularId));}
+  catch{return res.status(503).json({erro:'REDE_INDISPONIVEL'});}
+ });
+ app.get('/convite/loja',(req,res)=>{
+  const nick=req.query?.ref;
+  if(typeof nick!=='string'||!(/^[A-Za-z]{1,12}$/).test(nick))
+   return res.status(400).type('text').send('Convite inválido');
+  return res.redirect(303,'/escritorio?ref='+encodeURIComponent(nick)+'&origem=loja');
  });
  app.post('/api/contas/sair',mutation,protegido,csrf,(req,res)=>{
   contas.sair(cookieValor(req));

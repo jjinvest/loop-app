@@ -6,7 +6,8 @@
 const {SimuladorLoop}=require('../domain/simulador-loop');
 const {LIMITE_POSICOES_ATIVAS}=require('../domain/capacidade-posicoes-loop');
 const TABELAS_MOTOR=Object.freeze([
- 'loop_real_motor_estado','loop_real_motor_compras','loop_real_motor_eventos'
+ 'loop_real_motor_estado','loop_real_motor_compras',
+ 'loop_real_motor_eventos','loop_real_motor_qualificacoes'
 ]);
 const ID=/^[a-zA-Z0-9_-]{3,100}$/;
 function falha(c){const e=new Error(c);e.codigo=c;throw e;}
@@ -33,6 +34,18 @@ class MotorLoopIntegradoSQLite{
    'loop_real_contas(id) ON DELETE RESTRICT,',
    'posicao_id INTEGER NOT NULL UNIQUE,valor_centavos INTEGER NOT NULL',
    'CHECK(valor_centavos>=25000));',
+   // A indicação só pode ser qualificada uma vez por cadastro vinculando.
+   'CREATE TABLE IF NOT EXISTS loop_real_motor_qualificacoes(',
+   'indicado_id TEXT PRIMARY KEY REFERENCES',
+   'loop_real_vinculos_indicacao(indicado_id) ON DELETE RESTRICT,',
+   'indicador_id TEXT NOT NULL REFERENCES loop_real_contas(id) ON DELETE RESTRICT,',
+   'pedido_id TEXT NOT NULL UNIQUE REFERENCES loop_real_motor_compras(pedido_id) ON DELETE RESTRICT,',
+   'posicao_id INTEGER NOT NULL,evento_id TEXT NOT NULL UNIQUE,',
+   'qualificado_em INTEGER NOT NULL CHECK(qualificado_em>0));',
+   'CREATE TRIGGER IF NOT EXISTS loop_real_motor_qualificacao_imutavel_update',
+   "BEFORE UPDATE ON loop_real_motor_qualificacoes BEGIN SELECT RAISE(ABORT,'qualificacao imutavel'); END;",
+   'CREATE TRIGGER IF NOT EXISTS loop_real_motor_qualificacao_imutavel_delete',
+   "BEFORE DELETE ON loop_real_motor_qualificacoes BEGIN SELECT RAISE(ABORT,'qualificacao imutavel'); END;",
    'CREATE TABLE IF NOT EXISTS loop_real_motor_eventos(',
    'chave TEXT PRIMARY KEY,tipo TEXT NOT NULL',
    "CHECK(tipo IN ('INDICACAO','EVENTO','GIRO')),",
@@ -113,6 +126,14 @@ class MotorLoopIntegradoSQLite{
     'SELECT 1 FROM loop_real_motor_eventos WHERE chave=?'
    ).get('i:'+eventoId);
    if(visto)return {repetida:true};
+   const vinculo=this.banco.prepare(
+    'SELECT indicador_id FROM loop_real_vinculos_indicacao WHERE indicado_id=?'
+   ).get(indicadoId);
+   if(!vinculo||vinculo.indicador_id!==indicadorId)
+    falha('LOOP_SEM_CONVITE_CADASTRADO');
+   if(this.banco.prepare(
+    'SELECT 1 FROM loop_real_motor_qualificacoes WHERE indicado_id=?'
+   ).get(indicadoId))falha('LOOP_INDICACAO_JA_QUALIFICADA');
    const pedido=this.banco.prepare(
     'SELECT titular_id FROM loop_real_motor_compras WHERE pedido_id=?'
    ).get(pedidoIndicado);
@@ -124,6 +145,12 @@ class MotorLoopIntegradoSQLite{
    this.banco.prepare(
     "INSERT INTO loop_real_motor_eventos(chave,tipo,pedido_id) VALUES(?,'INDICACAO',?)"
    ).run('i:'+eventoId,pedidoIndicado);
+   this.banco.prepare([
+    'INSERT INTO loop_real_motor_qualificacoes',
+    '(indicado_id,indicador_id,pedido_id,posicao_id,evento_id,qualificado_em)',
+    'VALUES(?,?,?,?,?,?)'
+   ].join(' ')).run(indicadoId,indicadorId,pedidoIndicado,posicaoId,
+    'i:'+eventoId,Date.now());
    return {repetida:false,promovidas:r.promovidas.length};
   });
  }
@@ -199,6 +226,24 @@ class MotorLoopIntegradoSQLite{
   if(eventos.length!==sim.tabuleiro.vendasProcessadas.size||
      eventos.some(x=>!sim.tabuleiro.vendasProcessadas.has(x)))
    falha('LOOP_MOTOR_EVENTOS_DIVERGENTES');
+  const qualificacoes=this.banco.prepare([
+   'SELECT q.indicado_id,q.indicador_id,q.pedido_id,q.posicao_id,q.evento_id,',
+   'v.indicador_id AS vinculo_indicador,p.titular_id AS comprador',
+   'FROM loop_real_motor_qualificacoes q',
+   'JOIN loop_real_vinculos_indicacao v ON v.indicado_id=q.indicado_id',
+   'JOIN loop_real_motor_compras p ON p.pedido_id=q.pedido_id'
+  ].join(' ')).all();
+  const indicacoes=this.banco.prepare(
+   "SELECT chave FROM loop_real_motor_eventos WHERE tipo='INDICACAO'"
+  ).all().map(x=>x.chave);
+  if(qualificacoes.length!==indicacoes.length||
+     qualificacoes.length!==sim.filas.indicacoesProcessadas.size||
+     qualificacoes.some(q=>
+      q.indicador_id!==q.vinculo_indicador||
+      q.comprador!==q.indicado_id||
+      !indicacoes.includes(q.evento_id)||
+      !sim.filas.indicacoesProcessadas.has(q.evento_id)))
+   falha('LOOP_MOTOR_INDICACOES_DIVERGENTES');
   const giros=this.banco.prepare(
    "SELECT COUNT(*) AS n FROM loop_real_motor_eventos WHERE tipo='GIRO'"
   ).get().n;

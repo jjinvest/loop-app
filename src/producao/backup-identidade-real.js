@@ -16,7 +16,7 @@ const MAGIC=Buffer.from('LOOPREALBKP1','ascii');
 const HEADER=40,TAG=16;
 const TABELAS=Object.freeze([
  'loop_real_contas','loop_real_sessoes','loop_real_codigos',
- 'loop_real_custodia','loop_real_limites'
+ 'loop_real_custodia','loop_real_limites','loop_real_vinculos_indicacao'
 ]);
 // Administração, cotações, pedidos, custo congelado e outbox são protegidos
 // juntos quando coexistem no MESMO SQLite. Liquidação PSP/banco e tributos

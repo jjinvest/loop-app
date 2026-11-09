@@ -111,6 +111,18 @@ class IdentidadeClienteLoopReal{
    'termos_versao TEXT NOT NULL,termos_hash TEXT NOT NULL,',
    'priv_versao TEXT NOT NULL,priv_hash TEXT NOT NULL,',
    'criado_em INTEGER NOT NULL,email_confirmado_em INTEGER);',
+   // Vínculo de cadastro: não é bonificação nem indicação remunerada.
+   'CREATE TABLE IF NOT EXISTS loop_real_vinculos_indicacao(',
+   'indicado_id TEXT PRIMARY KEY REFERENCES loop_real_contas(id) ON DELETE RESTRICT,',
+   'indicador_id TEXT NOT NULL REFERENCES loop_real_contas(id) ON DELETE RESTRICT,',
+   'registrado_em INTEGER NOT NULL CHECK(registrado_em>0),',
+   'CHECK(indicado_id<>indicador_id));',
+   'CREATE INDEX IF NOT EXISTS idx_loop_real_vinculos_indicador',
+   'ON loop_real_vinculos_indicacao(indicador_id,registrado_em);',
+   'CREATE TRIGGER IF NOT EXISTS loop_real_vinculos_sem_update',
+   "BEFORE UPDATE ON loop_real_vinculos_indicacao BEGIN SELECT RAISE(ABORT,'vinculo imutavel'); END;",
+   'CREATE TRIGGER IF NOT EXISTS loop_real_vinculos_sem_delete',
+   "BEFORE DELETE ON loop_real_vinculos_indicacao BEGIN SELECT RAISE(ABORT,'vinculo imutavel'); END;",
    'CREATE TABLE IF NOT EXISTS loop_real_sessoes(',
    'token_hash TEXT PRIMARY KEY,titular_id TEXT NOT NULL',
    'REFERENCES loop_real_contas(id) ON DELETE RESTRICT,',
@@ -191,8 +203,15 @@ class IdentidadeClienteLoopReal{
  documentos(){return {termos:this.termos,privacidade:this.privacidade,financeiroReal:false};}
  async cadastrar({nome,nick,email,senha,aceiteTermos=false,
   aceitePrivacidade=false,versaoTermos,hashTermos,
+  indicadorNick=null,
   versaoPrivacidade,hashPrivacidade}={}){
   const n=validaNick(nick),mail=validaEmail(email);
+  let indicador=null;
+  if(indicadorNick!==null&&indicadorNick!==undefined){
+   try{indicador=validaNick(indicadorNick);}
+   catch{erro('INDICADOR_INVALIDO');}
+   if(indicador===n)erro('AUTOINDICACAO_PROIBIDA');
+  }
   if(typeof nome!=='string'||!NOME.test(nome.trim()))erro('NOME_INVALIDO');
   if(!senhaValida(senha))erro('SENHA_INVALIDA');
   if(aceiteTermos!==true||aceitePrivacidade!==true||
@@ -206,6 +225,10 @@ class IdentidadeClienteLoopReal{
   const id='titular-'+randomUUID(),ts=this._agora();
   this.banco.exec('BEGIN IMMEDIATE');
   try{
+   const contaIndicadora=indicador?this.banco.prepare(
+    'SELECT id FROM loop_real_contas WHERE nick=?'
+   ).get(indicador):null;
+   if(indicador&&!contaIndicadora)erro('INDICADOR_NAO_ENCONTRADO');
    this.banco.prepare([
     'INSERT INTO loop_real_contas(',
     'id,nick,email_hmac,nome_iv,nome_ct,nome_tag,email_iv,email_ct,email_tag,',
@@ -215,6 +238,10 @@ class IdentidadeClienteLoopReal{
     ...encryptedNome,...encryptedEmail,salt,pass,
     this.termos.versao,this.termos.hash,
     this.privacidade.versao,this.privacidade.hash,ts);
+   if(contaIndicadora)this.banco.prepare([
+    'INSERT INTO loop_real_vinculos_indicacao(indicado_id,indicador_id,registrado_em)',
+    'VALUES(?,?,?)'
+   ].join(' ')).run(id,contaIndicadora.id,ts);
    this.banco.exec('COMMIT');
   }catch(e){
    this.banco.exec('ROLLBACK');
@@ -223,6 +250,7 @@ class IdentidadeClienteLoopReal{
    throw e;
   }
   return {titularId:id,nick:n,contaCriada:true,emailVerificado:false,
+   vinculoCadastro:indicador!==null,
    pagamentoReal:false,participacaoFinanceira:false};
  }
  async entrar({nick,senha}={}){
@@ -345,6 +373,26 @@ class IdentidadeClienteLoopReal{
    return {senhaAlterada:true,sessoesRevogadas:true,
     reentrarNecessario:true,financeiroReal:false};
   }catch(e){if(aberto)this.banco.exec('ROLLBACK');throw e;}
+ }
+ listarIndicados(titularId,{limite=50}={}){
+  if(typeof titularId!=='string'||!/^titular-[a-f0-9-]{36}$/.test(titularId)||
+     !Number.isSafeInteger(limite)||limite<1||limite>50)
+   erro('TITULAR_INVALIDO');
+  const rows=this.banco.prepare([
+   'SELECT c.nick,v.registrado_em AS registradoEm',
+   'FROM loop_real_vinculos_indicacao v',
+   'JOIN loop_real_contas c ON c.id=v.indicado_id',
+   'WHERE v.indicador_id=?',
+   'ORDER BY v.registrado_em ASC,v.indicado_id ASC LIMIT ?'
+  ].join(' ')).all(titularId,limite);
+  const total=this.banco.prepare(
+   'SELECT COUNT(*) AS n FROM loop_real_vinculos_indicacao WHERE indicador_id=?'
+  ).get(titularId).n;
+  return {indicados:rows.map(x=>({
+   nick:x.nick,registradoEm:x.registradoEm,
+   estado:'CADASTRO_AGUARDANDO_COMPRA'
+  })),total,temMais:total>rows.length,
+   remuneracoesConfirmadas:0,financeiroReal:false};
  }
  dadosTitular(titularId){
   // Consulta apenas por ID extraído de uma sessão autenticada pelo servidor;
