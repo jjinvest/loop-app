@@ -10,6 +10,10 @@ const {CatalogoMultiDistribuidoresSQLite}=
  require('../src/producao/catalogo-multidistribuidores-sqlite');
 const {ControleEconomicoLojaSQLite}=
  require('../src/producao/controle-economico-loja-sqlite');
+const {PedidosComerciaisSQLite}=
+ require('../src/producao/pedidos-comerciais-sqlite');
+const {ClassificacaoComercialLoopSQLite}=
+ require('../src/producao/classificacao-comercial-loop-sqlite');
 const {SessaoAdminComercialSQLite}=
  require('../src/producao/sessao-admin-comercial-sqlite');
 const {AuditoriaOperacionalSQLite}=
@@ -41,14 +45,21 @@ function preparar(t){
   banco,distribuidorHomologado:()=>false,auditoria,manutencao
  });
  const controle=new ControleEconomicoLojaSQLite({banco,auditoria,manutencao});
+ new PedidosComerciaisSQLite({banco,chavePedidos:randomBytes(32),
+  consultarCotacaoConfiavel:async()=>null,
+  consultarPagamentoPsp:async()=>null});
+ const classificacaoLoop=new ClassificacaoComercialLoopSQLite({
+  banco,auditoria,manutencao
+ });
  const sessoes=new SessaoAdminComercialSQLite({
   banco,chaveAdmin:randomBytes(32),credencialAdmin:SENHA_OPERADOR
  });
  const app=criarAppIdentidadeLoop({
   contas,origemHttps:ORIGEM,permitirCadastro:true,
-  adminComercial:{catalogo,controle,sessoes,auditoria,manutencao}
+  adminComercial:{catalogo,controle,sessoes,auditoria,manutencao,classificacaoLoop}
  });
- return {banco,app,contas,catalogo,controle,sessoes,auditoria,manutencao};
+ return {banco,app,contas,catalogo,controle,sessoes,auditoria,manutencao,
+  classificacaoLoop};
 }
 async function servir(t,app){
  const server=app.listen(0,'127.0.0.1');await once(server,'listening');
@@ -83,7 +94,8 @@ test('admin aprovado: login distinto, cadastrar produto/oferta, editar preços e
  for(const campo of ['formNovoProduto','formNovaOferta',
   'formEconomiaProduto','salvarPrecoAdmin','salvarCustoAdmin',
   'listaProdutosAdmin','exportarCatalogoAdmin','exportarPedidosAdmin',
-  'suspenderComercialAdmin','retomarComercialAdmin','estadoManutencaoAdmin'])
+  'suspenderComercialAdmin','retomarComercialAdmin','estadoManutencaoAdmin',
+  'corProdutoAdmin','corTipoAdmin','salvarCorAdmin','estadoCorAdmin'])
   assert.match(html,new RegExp('id="'+campo+'"'),campo);
  assert.match(html,/src="\/identidade\/assets\/admin-comercial.js"/);
  assert.doesNotMatch(html,/src="\/staging\/assets\/admin.js"/);
@@ -255,4 +267,73 @@ test('credencial do cliente não é administrativa e falhas de login são limita
  for(let i=0;i<5;i++)assert.equal((await form('senha_errada')).status,401);
  assert.equal((await form(SENHA_OPERADOR)).status,429);
  assert.equal((await fetch(base+'/api/admin/comercial/sessao')).status,401);
+});
+
+test('classificação comercial exige administrador, CSRF, revisão e auditoria; manutenção bloqueia',async t=>{
+ const x=preparar(t),base=await servir(t,x.app);
+ const get=(p,headers={})=>fetch(base+p,{headers,redirect:'manual'});
+ const api='/api/admin/comercial';
+ assert.equal((await get(api+'/classificacoes')).status,401);
+ const login=await fetch(base+'/administrador/entrar',{
+  method:'POST',redirect:'manual',
+  headers:{Origin:ORIGEM,'Content-Type':'application/x-www-form-urlencoded'},
+  body:new URLSearchParams({senha:SENHA_OPERADOR})
+ });
+ assert.equal(login.status,303);
+ const cookie=login.headers.get('set-cookie').split(';')[0];
+ const session=await get(api+'/sessao',{Cookie:cookie});
+ assert.equal(session.status,200);
+ const csrf=(await session.json()).csrfToken;
+ const headers={Cookie:cookie,Origin:ORIGEM,'Content-Type':'application/json',
+  'X-Loop-Admin-Csrf':csrf};
+ const post=(p,body,h=headers)=>fetch(base+api+p,{
+  method:'POST',headers:h,body:JSON.stringify(body)
+ });
+ const created=await post('/produtos-cadastrar',{
+  produtoId:'curso_teste',titulo:'Produto de teste',descricao:'Sem venda real'
+ });
+ assert.equal(created.status,201);
+ let lista=await get(api+'/classificacoes',{Cookie:cookie});
+ assert.equal(lista.status,200);
+ let r=await lista.json();
+ assert.equal(r.produtos.length,1);
+ assert.equal(r.produtos[0].cor,'CINZA');
+ assert.equal(r.produtos[0].revisao,0);
+ assert.equal(r.produtos[0].publicado,false);
+ assert.equal(r.ativacaoFinanceira,false);
+ const cfg={cor:'VERDE',minimo:1,roxasPorUnidade:0,revisaoEsperada:0};
+ assert.equal((await post('/classificacoes/curso_teste',cfg,{
+  Cookie:cookie,Origin:ORIGEM,'Content-Type':'application/json'
+ })).status,403);
+ assert.equal((await post('/classificacoes/curso_teste',cfg)).status,200);
+ assert.equal((await post('/classificacoes/curso_teste',cfg)).status,409);
+ assert.equal((await post('/classificacoes/curso_teste',{
+  ...cfg,cor:'ROXO',revisaoEsperada:1
+ })).status,400);
+ const roxo=await post('/classificacoes/curso_teste',{
+  ...cfg,cor:'ROXO',roxasPorUnidade:2,revisaoEsperada:1
+ });
+ assert.equal(roxo.status,200);
+ assert.equal((await roxo.json()).revisao,2);
+ lista=await get(api+'/classificacoes',{Cookie:cookie});
+ r=await lista.json();
+ assert.equal(r.produtos[0].cor,'ROXO');
+ assert.equal(r.produtos[0].roxasPorUnidade,2);
+ assert.equal(r.produtos[0].revisao,2);
+ assert.equal(x.auditoria.verificar().integra,true);
+ assert.equal(x.auditoria.listar().filter(z=>
+  z.acao==='CLASSIFICACAO_PRODUTO_ALTERADA').length,2);
+ const pausou=await post('/manutencao',{
+  suspensa:true,revisaoEsperada:0,motivo:'CORRECAO_TECNICA'
+ });
+ assert.equal(pausou.status,200);
+ assert.equal((await post('/classificacoes/curso_teste',{
+  cor:'CINZA',minimo:1,roxasPorUnidade:0,revisaoEsperada:2
+ })).status,423);
+ assert.equal((await get(api+'/classificacoes',{Cookie:cookie})).status,200);
+ assert.equal((await get(api+'/classificacoes')).status,401);
+ assert.equal(x.banco.prepare(
+  'SELECT COUNT(*) AS n FROM loop_real_motor_compras'
+ ).get()?.n??0,0);
+ assert.deepEqual(x.banco.prepare('PRAGMA foreign_key_check').all(),[]);
 });
