@@ -10,6 +10,8 @@ on:
       - 'scripts/provar-recuperacao-independente-identidade.js'
       - 'test/identidade-real-isolada.test.js'
       - 'test/motor-loop-integrado-identidade.test.js'
+      - 'src/producao/promocao-pedido-motor-ensaio-sqlite.js'
+      - 'test/promocao-pedido-motor-ensaio-sqlite.test.js'
       - 'src/producao/visao-escritorio-unificada-sqlite.js'
       - 'test/visao-escritorio-unificada-sqlite.test.js'
       - 'test/motor-loop-concorrencia-e-ciclos.test.js'
@@ -106,6 +108,7 @@ jobs:
           node --check src/producao/servidor-identidade-loop.js
           node --check src/domain/plano-roteamento-tres-bancos-lab.js
           node --check src/producao/motor-loop-integrado-sqlite.js
+          node --check src/producao/promocao-pedido-motor-ensaio-sqlite.js
           node --check src/producao/visao-escritorio-unificada-sqlite.js
           node --check src/producao/identidade-cliente-loop-sqlite.js
           node --check src/producao/servidor-identidade-loop.js
@@ -136,6 +139,8 @@ jobs:
         run: node --test test/identidade-real-isolada.test.js
       - name: Posicoes e Minha Equipe unificadas no mesmo SQLite com titularidade
         run: node --test test/visao-escritorio-unificada-sqlite.test.js
+      - name: Compra qualificada vira posição unica na fila em ensaio com rollback e estorno
+        run: node --test test/promocao-pedido-motor-ensaio-sqlite.test.js
       - name: Motor interno com três titulares, giro e reinício do banco
         run: node --test test/motor-loop-integrado-identidade.test.js
       - name: Multi-processo, contencao de SQLite, 120 eventos e 20 ciclos
