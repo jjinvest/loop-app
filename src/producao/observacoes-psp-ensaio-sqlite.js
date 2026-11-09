@@ -79,22 +79,25 @@ class ObservacoesPSPEnsaioSQLite{
      !ID.test(operacaoId||'')||!VALOR(valorCentavos))
    falha('OBSERVACOES_ENSAIO_COMPROMISSO_INVALIDO');
  }
- _origem(tipo,operacaoId){
-  const r=tipo==='COBRANCA'?
-   this.db.prepare([
+ _origem(tipo,operacaoId,referencia){
+  if(tipo==='COBRANCA'){
+   return this.db.prepare([
     'SELECT pagamento_id,valor_total_centavos AS centavos',
     'FROM loja_real_pedidos WHERE pedido_id=?'
-   ].join(' ')).get(operacaoId):
-   this.db.prepare([
-    'SELECT tentativa_id,centavos FROM loop_lab_tesouraria_saques',
-    'WHERE saque_id=?'
    ].join(' ')).get(operacaoId);
-  return r;
+  }
+  // Um saque pode ter uma tentativa FALHOU e outra posterior, sem perder
+  // a referencia anterior. O campo ativo de saque pode virar NULL.
+  return this.db.prepare([
+   'SELECT t.tentativa_id,t.centavos FROM loop_lab_tesouraria_tentativas t',
+   'JOIN loop_lab_tesouraria_saques s ON s.saque_id=t.saque_id',
+   'WHERE s.saque_id=? AND t.tentativa_id=?'
+  ].join(' ')).get(operacaoId,referencia);
  }
  registrarCompromisso({tipo,referencia,operacaoId,valorCentavos}={}){
   this._validar({tipo,referencia,operacaoId,valorCentavos});
   return this._tx(()=>{
-   const origem=this._origem(tipo,operacaoId);
+   const origem=this._origem(tipo,operacaoId,referencia);
    if(!origem||origem.centavos!==valorCentavos||
       (tipo==='COBRANCA'&&origem.pagamento_id!==referencia)||
       (tipo==='PIX'&&origem.tentativa_id!==referencia))
@@ -205,7 +208,7 @@ class ObservacoesPSPEnsaioSQLite{
    totalComp++;
    this._validar({tipo:c.tipo,referencia:c.referencia,
     operacaoId:c.operacao_id,valorCentavos:c.valor_centavos});
-   const origem=this._origem(c.tipo,c.operacao_id);
+   const origem=this._origem(c.tipo,c.operacao_id,c.referencia);
    if(!origem||origem.centavos!==c.valor_centavos||
       (c.tipo==='COBRANCA'&&origem.pagamento_id!==c.referencia)||
       (c.tipo==='PIX'&&origem.tentativa_id!==c.referencia))

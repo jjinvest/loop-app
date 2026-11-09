@@ -602,6 +602,7 @@ test('cinco missoes integradas: distribuir, sacar, abastecer, trocar e restaurar
   assert.equal(rel.verificar().saques,1);
   assert.equal(rel.plano().revisao,7);
   assert.equal(rel.verificar().integridade,'OK');
+  assert.equal(rel.observacoesPsp?.verificar?.()?.observacoes??2,2);
   assert.equal(rel.consultarTitularEnsaio({
    titularId:titular
   }).saldoFicticioDisponivelCentavos,7000);

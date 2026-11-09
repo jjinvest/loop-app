@@ -23,6 +23,7 @@ on:
       - 'src/producao/conferencia-observacoes-psp.js'
       - 'test/conferencia-observacoes-psp.test.js'
       - 'src/producao/observacoes-psp-ensaio-sqlite.js'
+      - 'test/observacoes-psp-ensaio-sqlite.test.js'
       - 'test/identidade-real-persistencia.test.js'
       - 'test/api-identidade-real-sem-pagamentos.test.js'
       - 'test/interface-aprovada-identidade-real.test.js'
@@ -119,6 +120,8 @@ jobs:
         run: node --test test/eventos-comerciais-loop-sqlite.test.js
       - name: Cor da venda congelada, verde/cinza/dourado/roxo e sem ativar motor
         run: node --test test/classificacao-comercial-loop-sqlite.test.js
+      - name: Persistencia de observacoes PSP, replay e adulteracao com historico
+        run: node --test test/observacoes-psp-ensaio-sqlite.test.js
       - name: Convergencia externa de PSP e Pix sandbox, sem credito ou reenvio
         run: node --test test/conferencia-observacoes-psp.test.js
       - name: Conectores externos isolados Celcoin e Asaas (somente leitura sandbox)
