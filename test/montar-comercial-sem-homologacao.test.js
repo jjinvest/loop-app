@@ -465,13 +465,42 @@ test('cinco missoes integradas: distribuir, sacar, abastecer, trocar e restaurar
  assert.equal(teso.consultarTitularEnsaio({
   titularId:x.usuarios[1].titularId
  }).saques.length,0);
+ // Mesmo com dois bancos habilitados, migracao exige comando separado,
+ // prova de destino e espera: uma troca de nome nao cria dinheiro.
+ assert.equal(teso.iniciarMigracaoCustodiaEnsaio({
+  migracaoId:'MIG_LAB_01',bancoOrigem:'INTER',
+  bancoDestino:'BANCO_2',valorCentavos:10000
+ }).estado,'INDETERMINADA');
+ assert.equal(teso.iniciarMigracaoCustodiaEnsaio({
+  migracaoId:'MIG_LAB_01',bancoOrigem:'INTER',
+  bancoDestino:'BANCO_2',valorCentavos:10000
+ }).repetido,true);
+ assert.throws(()=>teso.trocarRotaEnsaio({
+  papel:'CUSTODIA_LOOP',provedorDestino:'BANCO_2',
+  motivo:'CONTINGENCIA_BLOQUEADA'
+ }),{codigo:'TESOURARIA_ENSAIO_TROCA_COM_MIGRACAO_PENDENTE'});
+ assert.equal(teso.conciliarMigracaoCustodiaEnsaio({
+  migracaoId:'MIG_LAB_01',resultado:'INDETERMINADA'
+ }).aguardandoConsulta,true);
+ assert.equal(teso.conciliarMigracaoCustodiaEnsaio({
+  migracaoId:'MIG_LAB_01',resultado:'CONFIRMADA'
+ }).estado,'CONFIRMADA');
+ assert.equal(teso.conciliarMigracaoCustodiaEnsaio({
+  migracaoId:'MIG_LAB_01',resultado:'CONFIRMADA'
+ }).repetido,true);
+ assert.throws(()=>teso.conciliarMigracaoCustodiaEnsaio({
+  migracaoId:'MIG_LAB_01',resultado:'DEVOLVIDA'
+ }),{codigo:'TESOURARIA_ENSAIO_MIGRACAO_PROVA_CONTRADITORIA'});
+ assert.equal(env.banco.prepare(
+  "SELECT centavos FROM loop_lab_tesouraria_saldos WHERE conta='LOOP:BANCO_2'"
+ ).get().centavos,10000);
  const alternativo=teso.trocarRotaEnsaio({
   papel:'CUSTODIA_LOOP',provedorDestino:'BANCO_2',
   motivo:'ROTACAO_SEM_PENDENCIAS'
  });
  assert.equal(alternativo.revisao,6);
  assert.equal(alternativo.saldoMigradoAutomaticamente,false);
- assert.equal(alternativo.saldoAnteriorSimuladoCentavos,20000);
+ assert.equal(alternativo.saldoAnteriorSimuladoCentavos,10000);
  assert.equal(teso.plano().rotas.CUSTODIA_LOOP,'BANCO_2');
  const volta=teso.trocarRotaEnsaio({
   papel:'CUSTODIA_LOOP',provedorDestino:'INTER',motivo:'ROTACAO_PROGRAMADA'

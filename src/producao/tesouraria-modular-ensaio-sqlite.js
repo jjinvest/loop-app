@@ -13,7 +13,8 @@ const TABELAS_TESOURARIA_ENSAIO=Object.freeze([
  'loop_lab_tesouraria_movimentos','loop_lab_tesouraria_recebimentos',
  'loop_lab_tesouraria_creditos','loop_lab_tesouraria_creditos_eventos',
  'loop_lab_tesouraria_saques','loop_lab_tesouraria_transferencias',
- 'loop_lab_tesouraria_tentativas'
+ 'loop_lab_tesouraria_tentativas',
+ 'loop_lab_tesouraria_migracoes'
 ]);
 function falha(codigo){const e=new Error(codigo);e.codigo=codigo;throw e;}
 const ID=/^[A-Za-z0-9_-]{1,120}$/;
@@ -91,6 +92,10 @@ class TesourariaModularEnsaioSQLite{
    'REFERENCES loop_lab_tesouraria_saques(saque_id),',
    "estado TEXT NOT NULL CHECK(estado IN ('INDETERMINADA','CONFIRMADA','FALHOU')),",
    'centavos INTEGER NOT NULL);',
+   'CREATE TABLE IF NOT EXISTS loop_lab_tesouraria_migracoes(',
+   'migracao_id TEXT PRIMARY KEY,origem TEXT NOT NULL,destino TEXT NOT NULL,',
+   'centavos INTEGER NOT NULL CHECK(centavos>0),',
+   "estado TEXT NOT NULL CHECK(estado IN ('INDETERMINADA','CONFIRMADA','DEVOLVIDA')));',
    ...['loop_lab_tesouraria_planos','loop_lab_tesouraria_movimentos',
       'loop_lab_tesouraria_recebimentos','loop_lab_tesouraria_creditos_eventos']
     .flatMap(t=>[
@@ -511,6 +516,73 @@ class TesourariaModularEnsaioSQLite{
     pagoSomenteNoEnsaio:resultado==='CONFIRMADA',financeiroReal:false};
   });
  }
+ // A troca de custodiante exige movimento EXPLICITO. Trocar a rota
+ // nunca transfere os fundos de contas anteriores por conta propria.
+ iniciarMigracaoCustodiaEnsaio({
+  migracaoId,bancoOrigem,bancoDestino,valorCentavos
+ }={}){
+  if(!idOk(migracaoId)||!idOk(bancoOrigem)||!idOk(bancoDestino)||
+     bancoOrigem===bancoDestino||!dinheiro(valorCentavos))
+   falha('TESOURARIA_ENSAIO_MIGRACAO_INVALIDA');
+  return this._transacao(()=>{
+   const anterior=this.db.prepare(
+    'SELECT * FROM loop_lab_tesouraria_migracoes WHERE migracao_id=?'
+   ).get(migracaoId);
+   if(anterior){
+    if(anterior.origem!==bancoOrigem||
+       anterior.destino!==bancoDestino||
+       anterior.centavos!==valorCentavos)
+     falha('TESOURARIA_ENSAIO_MIGRACAO_REPLAY_DIVERGENTE');
+    return {repetido:true,estado:anterior.estado,financeiroReal:false};
+   }
+   if(this.db.prepare([
+    "SELECT COUNT(*) AS n FROM loop_lab_tesouraria_saques",
+    "WHERE estado NOT IN ('PAGO')"
+   ].join(' ')).get().n>0)
+    falha('TESOURARIA_ENSAIO_MIGRACAO_COM_SAQUES_PENDENTES');
+   const e=this.plano();
+   if(!Object.values(e.rotas).includes(bancoOrigem))
+    falha('TESOURARIA_ENSAIO_MIGRACAO_ORIGEM_NAO_CONFIGURADA');
+   this._movimento({
+    id:'MIGRAR_'+migracaoId,origem:saldoLoop(bancoOrigem),
+    destino:saldoTransito(migracaoId),centavos:valorCentavos
+   });
+   this.db.prepare([
+    'INSERT INTO loop_lab_tesouraria_migracoes',
+    "(migracao_id,origem,destino,centavos,estado)",
+    "VALUES(?,?,?,?,'INDETERMINADA')"
+   ].join(' ')).run(migracaoId,bancoOrigem,bancoDestino,valorCentavos);
+   return {repetido:false,estado:'INDETERMINADA',
+    financeiroReal:false,saldoMigradoRealmente:false};
+  });
+ }
+ conciliarMigracaoCustodiaEnsaio({migracaoId,resultado}={}){
+  if(!idOk(migracaoId)||
+     !['CONFIRMADA','DEVOLVIDA','INDETERMINADA'].includes(resultado))
+   falha('TESOURARIA_ENSAIO_MIGRACAO_CONCILIACAO_INVALIDA');
+  return this._transacao(()=>{
+   const m=this.db.prepare(
+    'SELECT * FROM loop_lab_tesouraria_migracoes WHERE migracao_id=?'
+   ).get(migracaoId);
+   if(!m)falha('TESOURARIA_ENSAIO_MIGRACAO_INEXISTENTE');
+   if(resultado==='INDETERMINADA')
+    return {repetido:true,estado:m.estado,
+     aguardandoConsulta:m.estado==='INDETERMINADA'};
+   if(m.estado===resultado)return {repetido:true,estado:m.estado};
+   if(m.estado!=='INDETERMINADA')
+    falha('TESOURARIA_ENSAIO_MIGRACAO_PROVA_CONTRADITORIA');
+   this._movimento({
+    id:'CONCILIAR_MIG_'+migracaoId,
+    origem:saldoTransito(migracaoId),
+    destino:resultado==='CONFIRMADA'?saldoLoop(m.destino):
+     saldoLoop(m.origem),centavos:m.centavos
+   });
+   this.db.prepare(
+    'UPDATE loop_lab_tesouraria_migracoes SET estado=? WHERE migracao_id=?'
+   ).run(resultado,migracaoId);
+   return {estado:resultado,financeiroReal:false};
+  });
+ }
  trocarRotaEnsaio({papel,provedorDestino,motivo='MUDANCA_PLANEJADA'}={}){
   return this._transacao(()=>{
    const pendentes=this.db.prepare([
@@ -521,6 +593,12 @@ class TesourariaModularEnsaioSQLite{
     "SELECT COUNT(*) AS n FROM loop_lab_tesouraria_saques WHERE",
     "estado IN ('ABASTECIMENTO_INDETERMINADO','PIX_INDETERMINADO')"
    ].join(' ')).get().n;
+   const migracoesEmAberto=this.db.prepare([
+    "SELECT COUNT(*) AS n FROM loop_lab_tesouraria_migracoes",
+    "WHERE estado='INDETERMINADA'"
+   ].join(' ')).get().n;
+   if(migracoesEmAberto)
+    falha('TESOURARIA_ENSAIO_TROCA_COM_MIGRACAO_PENDENTE');
    const troca=planejarTrocaFinanceira({
     plano:this.plano(),papel,provedorDestino,motivo,
     operacoesEmAberto:pendentes,operacoesIndeterminadas:indeterminadas
@@ -681,6 +759,15 @@ class TesourariaModularEnsaioSQLite{
       p.evento!=='AGUARDANDO_CONCILIACAO'||
       r.valor_bruto-r.tarifa!==r.loop_centavos+r.margem+r.retido)
     falha('TESOURARIA_ENSAIO_RECEITA_DIVERGENTE');
+  }
+  for(const m of db.prepare(
+   'SELECT * FROM loop_lab_tesouraria_migracoes'
+  ).iterate()){
+   if(!idOk(m.migracao_id)||!idOk(m.origem)||!idOk(m.destino)||
+      m.origem===m.destino||!dinheiro(m.centavos)||
+      (m.estado==='INDETERMINADA')!==
+       (this._saldo(saldoTransito(m.migracao_id))===m.centavos))
+    falha('TESOURARIA_ENSAIO_MIGRACAO_DIVERGENTE');
   }
   const cobertura=this._cobertura();
   return {integridade:'OK',movimentos:seq,
