@@ -82,13 +82,18 @@
    $('loopEstadoIntegrado').hidden=false;
    void carregarMotor();
   }else $('loopEstadoIntegrado').hidden=true;
+  const ensaioAtivo=s.tesourariaEnsaioAtiva===true;
+  const blocoEnsaio=$('tesourariaEnsaioModulo');
+  if(blocoEnsaio)blocoEnsaio.hidden=!ensaioAtivo;
+  if(ensaioAtivo)void carregarFinanceiroEnsaio();
   // Preservar a mesma estrutura visual; não permitir navegação para
   // funções que ainda dependem exclusivamente do LAB.
   for(const tab of document.querySelectorAll('[role=tab]')){
    const ativo=tab.id===(s.motorLoopInterno===true?'abaResumo':'abaConta');
    const habilitado=['abaConta','abaEquipe','abaLinks'].includes(tab.id)||
     (s.motorLoopInterno===true&&
-    ['abaResumo','abaTabuleiro','abaPosicoes','abaEquipe','abaLinks'].includes(tab.id));
+    ['abaResumo','abaTabuleiro','abaPosicoes','abaEquipe','abaLinks'].includes(tab.id))||
+    (ensaioAtivo&&tab.id==='abaFinanceiro');
    tab.disabled=!habilitado;tab.setAttribute('aria-selected',String(ativo));
    tab.setAttribute('aria-current',ativo?'page':'false');
    tab.tabIndex=ativo?0:-1;
@@ -213,6 +218,33 @@
   $('atalhoPedidos').disabled=true;
   $('posicoesVerPedidos').disabled=true;
  }
+ async function carregarFinanceiroEnsaio(){
+  const caixa=$('tesourariaEnsaioSaldo');
+  if(!caixa||$('tesourariaEnsaioModulo')?.hidden)return;
+  try{
+   const r=await fetch('/api/loop/tesouraria-ensaio',{
+    credentials:'same-origin',cache:'no-store'
+   });
+   if(!r.ok)throw Error('ENSAIO_INDISPONIVEL');
+   const d=await r.json();
+   if(d.financeiroReal!==false||d.producaoHabilitada!==false||
+      !Number.isSafeInteger(d.saldoFicticioDisponivelCentavos)||
+      !Number.isSafeInteger(d.saldoFicticioReservadoCentavos))
+    throw Error('ENSAIO_RESPOSTA_INVALIDA');
+   const dinheiro=new Intl.NumberFormat('pt-BR',{
+    style:'currency',currency:'BRL'
+   });
+   caixa.textContent='Disponivel ficticio: '+
+    dinheiro.format(d.saldoFicticioDisponivelCentavos/100)+
+    ' · Reservado ficticio: '+
+    dinheiro.format(d.saldoFicticioReservadoCentavos/100)+
+    ' · Saques simulados: '+d.saques.length;
+   $('estadoFinanceiro').textContent=
+    'SIMULACAO — sem pagamento bancario, sem saldo financeiro real.';
+  }catch{
+   caixa.textContent='Tesouraria de ensaio indisponivel.';
+  }
+ }
  function textoPosicao(p){
   return p&&Number.isSafeInteger(p.numero)&&p.numero>0?
    '#'+p.numero:'—';
@@ -293,6 +325,7 @@
     if(alvo)alvo.hidden=!ativo;
    }
    if(tab.id==='abaTabuleiro'||tab.id==='abaPosicoes')void carregarMotor();
+   if(tab.id==='abaFinanceiro')void carregarFinanceiroEnsaio();
    const lateral=$('loop03SidebarIntegrado');
    if(lateral?.classList.contains('loop03-aberto')){
     lateral.classList.remove('loop03-aberto');
@@ -356,6 +389,38 @@
    }
   });
  }
+ const solicitarEnsaio=$('tesourariaEnsaioSolicitar');
+ if(solicitarEnsaio)solicitarEnsaio.addEventListener('click',async()=>{
+  if(solicitarEnsaio.disabled||$('tesourariaEnsaioModulo')?.hidden)return;
+  const valor=Number($('tesourariaEnsaioValor').value);
+  const centavos=Math.round(valor*100);
+  if(!Number.isSafeInteger(centavos)||centavos<2500||
+     Math.abs(centavos/100-valor)>1e-8){
+   $('tesourariaEnsaioStatus').textContent='Valor ficticio invalido.';
+   return;
+  }
+  solicitarEnsaio.disabled=true;
+  try{
+   const id='ENSAIO_'+crypto.randomUUID().replaceAll('-','');
+   const r=await fetch('/api/loop/tesouraria-ensaio/saques',{
+    method:'POST',credentials:'same-origin',
+    headers:{'Content-Type':'application/json','X-Loop-Csrf':csrf},
+    body:JSON.stringify({
+     saqueId:id,chaveIdempotencia:id,valorCentavos:centavos
+    })
+   });
+   if(!r.ok)throw Error('SIMULACAO_RECUSADA');
+   const dados=await r.json();
+   if(dados.financeiroReal!==false)throw Error('RESPOSTA_INVALIDA');
+   $('tesourariaEnsaioStatus').textContent=
+    'Solicitacao ficticia registrada: '+dados.estado+
+    '. Nenhum Pix real sera executado.';
+   await carregarFinanceiroEnsaio();
+  }catch{
+   $('tesourariaEnsaioStatus').textContent=
+    'Saque ficticio indisponivel. Nenhum dinheiro foi movimentado.';
+  }finally{solicitarEnsaio.disabled=false;}
+ });
  onForm('formLogin',async()=>{
   const login=await requisitar('/entrar',{method:'POST',body:{
    nick:$('login').value,senha:$('senha').value

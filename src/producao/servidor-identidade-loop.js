@@ -8,7 +8,7 @@ const {montarGatewayAdminComercial}=require('./gateway-admin-comercial');
 function criarAppIdentidadeLoop({contas,origemHttps,
  permitirCadastro=false,backupEstado=null,
  pedidosComerciais=null,remessasOutbox=null,adminComercial=null,
- motorLoop=null,eventosComerciais=null}={}){
+ motorLoop=null,eventosComerciais=null,tesourariaEnsaio=null}={}){
  if(!contas||typeof contas.entrar!=='function'||typeof contas.sessao!=='function')
   throw Error('IDENTIDADE_REAL_NAO_CONFIGURADA');
  if(process.env.NODE_ENV==='production'&&permitirCadastro&&
@@ -22,6 +22,13 @@ function criarAppIdentidadeLoop({contas,origemHttps,
     typeof eventosComerciais.verificar!=='function'||
     typeof eventosComerciais.consultarTitular!=='function'))
   throw Error('EVENTOS_COMERCIAIS_INTEGRACAO_INVALIDA');
+ if(tesourariaEnsaio!==null&&(
+  process.env.NODE_ENV==='production'||
+  tesourariaEnsaio.db!==contas.banco||
+  typeof tesourariaEnsaio.consultarTitularEnsaio!=='function'||
+  typeof tesourariaEnsaio.solicitarSaqueEnsaio!=='function'||
+  typeof tesourariaEnsaio.verificar!=='function'))
+  throw Error('TESOURARIA_ENSAIO_NAO_PODE_SER_OPERACAO_REAL');
  if((pedidosComerciais===null)!==(remessasOutbox===null))
   throw Error('PEDIDOS_REAIS_INTEGRACAO_INCOMPLETA');
  if(pedidosComerciais!==null&&(
@@ -166,7 +173,8 @@ function criarAppIdentidadeLoop({contas,origemHttps,
    return res.json({
     titularId:result.titularId,nick:result.nick,csrf:result.csrf,
     expiraEm:result.expiraEm,emailVerificado:result.emailVerificado,
-    pagamentoReal:false,motorLoopInterno:motorLoop!==null
+    pagamentoReal:false,motorLoopInterno:motorLoop!==null,
+    tesourariaEnsaioAtiva:tesourariaEnsaio!==null
    });
   }catch(e){return falha(res,e);}
  });
@@ -175,7 +183,8 @@ function criarAppIdentidadeLoop({contas,origemHttps,
   emailVerificado:req.conta.emailVerificado,
   csrf:req.conta.csrf,expiraEm:req.conta.expiraEm,
   lojaEEscritorioMesmaConta:true,financeiroReal:false,
-  motorLoopInterno:motorLoop!==null
+  motorLoopInterno:motorLoop!==null,
+  tesourariaEnsaioAtiva:tesourariaEnsaio!==null
  }));
  // Direito de acesso: o titular consulta somente os seus próprios dados
  // e a versão dos documentos aceitos. Sem IDs escolhidos pelo navegador.
@@ -263,6 +272,41 @@ function criarAppIdentidadeLoop({contas,origemHttps,
    email:req.body.email,codigo:req.body.codigo,
    novaSenha:req.body.novaSenha,finalidade:'SENHA'
   }));}catch(e){return falha(res,e);}
+ });
+ // Somente no laboratorio EXPLICITAMENTE montado: a propria sessao do
+ // Escritorio consulta creditos ficticios e reserva saques de simulacao.
+ // Sem rota para creditar saldo ou enviar dinheiro a provedores reais.
+ app.get('/api/loop/tesouraria-ensaio',protegido,(req,res)=>{
+  if(!tesourariaEnsaio)return res.status(503).json({
+   erro:'TESOURARIA_ENSAIO_NAO_HABILITADA',financeiroReal:false
+  });
+  try{return res.json(tesourariaEnsaio.consultarTitularEnsaio({
+   titularId:req.conta.titularId
+  }));}catch{return res.status(503).json({erro:'ENSAIO_INDISPONIVEL'});}
+ });
+ app.post('/api/loop/tesouraria-ensaio/saques',mutation,protegido,csrf,
+ (req,res)=>{
+  if(!tesourariaEnsaio)return res.status(503).json({
+   erro:'TESOURARIA_ENSAIO_NAO_HABILITADA',financeiroReal:false
+  });
+  const b=req.body;
+  if(!b||Array.isArray(b)||
+     Object.keys(b).sort().join(',')!==
+     'chaveIdempotencia,saqueId,valorCentavos')
+   return res.status(400).json({erro:'CAMPOS_INVALIDOS'});
+  try{
+   return res.json(tesourariaEnsaio.solicitarSaqueEnsaio({
+    titularId:req.conta.titularId,saqueId:b.saqueId,
+    chaveIdempotencia:b.chaveIdempotencia,
+    valorCentavos:b.valorCentavos
+   }));
+  }catch(e){
+   const codigo=e.codigo||'ENSAIO_INDISPONIVEL';
+   return res.status(
+    codigo.includes('INVALIDO')?400:
+    codigo.includes('INSUFICIENTE')||codigo.includes('REPLAY')?409:503
+   ).json({erro:codigo});
+  }
  });
  // Estado interno do mesmo SQLite: somente leitura, titular da sessão.
  // Nunca receber titularId do navegador. Sem eventos ou posição de produção.

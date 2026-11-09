@@ -78,6 +78,18 @@ function renderizarInterfaceAprovada(){
   '    <h3>Estado do LOOP</h3>'+
   '    <p id="loopResumoMotor" role="status" aria-live="polite"></p>'+
   '   </section>');
+ // Area opcional dentro da aba Financeiro ja aprovada: nao cria portal novo.
+ // Fica escondida quando a tesouraria de ensaio nao esta montada.
+ html=trocarExato(html,
+  '<p id="estadoFinanceiro">Nenhum saldo comercial foi ativado neste ambiente.</p>',
+  '<p id="estadoFinanceiro">Nenhum saldo comercial foi ativado neste ambiente.</p>'+
+  '<div id="tesourariaEnsaioModulo" hidden>'+
+  '<p><strong>SIMULACAO FINANCEIRA — VALORES FICTICIOS</strong></p>'+
+  '<p id="tesourariaEnsaioSaldo" role="status"></p>'+
+  '<label>Valor de saque ficticio (R$)'+
+  '<input id="tesourariaEnsaioValor" type="number" min="25" step="0.01" value="25"></label>'+
+  '<button id="tesourariaEnsaioSolicitar" type="button">Simular solicitacao</button>'+
+  '<p id="tesourariaEnsaioStatus" role="status"></p></div>');
  // Texto da versão de ensaio permanece fora da vista, sem ser reaproveitado
  // como conteúdo comercial. Não expor recursos financeiros incompletos.
  return html;
