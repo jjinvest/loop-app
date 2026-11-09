@@ -10,6 +10,8 @@ const {pipeline}=require('node:stream/promises');
 const {createHash,createCipheriv,createDecipheriv,randomBytes,hkdfSync}=
  require('node:crypto');
 const {MotorLoopIntegradoSQLite,TABELAS_MOTOR}=require('./motor-loop-integrado-sqlite');
+const {PromocaoPedidoMotorEnsaioSQLite,TABELAS_PROMOCAO_ENSAIO}=
+ require('./promocao-pedido-motor-ensaio-sqlite');
 const {TABELAS_COMERCIAIS,validarRecuperacaoComercial}=
  require('./validacao-recuperacao-comercial');
 const {TABELAS_TESOURARIA_ENSAIO,TesourariaModularEnsaioSQLite}=
@@ -70,7 +72,8 @@ function validarIdentidade(arquivo){
   ).all().map(x=>x.name);
   if(TABELAS.some(x=>!lista.includes(x)))falha('BACKUP_REAL_ESQUEMA_INCOMPLETO');
   const todos=[...TABELAS,...TABELAS_ADMIN,...TABELAS_COMERCIAIS,
-   ...TABELAS_MOTOR,...TABELAS_TESOURARIA_ENSAIO];
+   ...TABELAS_MOTOR,...TABELAS_TESOURARIA_ENSAIO,
+   ...TABELAS_PROMOCAO_ENSAIO];
   if(lista.some(x=>!todos.includes(x)))
    falha('BACKUP_IDENTIDADE_NAO_COBRE_TABELAS_COMERCIAIS');
   const temEnsaio=TABELAS_TESOURARIA_ENSAIO.some(x=>lista.includes(x));
@@ -96,6 +99,20 @@ function validarIdentidade(arquivo){
     const motor=Object.create(MotorLoopIntegradoSQLite.prototype);
     motor.banco=b;motor.verificar();
    }catch{falha('BACKUP_MOTOR_INTEGRIDADE_DIVERGENTE');}
+  }
+  // A ativação fictícia qualificada exige o mesmo pedido, evento e motor.
+  // Nunca promover ponte fictícia em um backup de produção.
+  const temPromocao=TABELAS_PROMOCAO_ENSAIO.some(x=>lista.includes(x));
+  if(temPromocao){
+   if(process.env.NODE_ENV==='production')
+    falha('BACKUP_PROMOCAO_ENSAIO_PROIBIDA_PRODUCAO');
+   try{
+    if(!temMotor)falha('BACKUP_PROMOCAO_SEM_MOTOR');
+    const ponte=Object.create(PromocaoPedidoMotorEnsaioSQLite.prototype);
+    ponte.db=b;
+    if(ponte.verificar().integridade!=='OK')
+     falha('BACKUP_PROMOCAO_DIVERGENTE');
+   }catch{falha('BACKUP_PROMOCAO_DIVERGENTE');}
   }
   // Não aceitar snapshot administrativo parcial. Pedidos e remessas
   // são conferidos semanticamente, sem inferir conciliação bancária.
