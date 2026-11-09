@@ -69,6 +69,13 @@ function renderizarInterfaceAprovada(){
   ' Li a política e concordo com o tratamento de dados descrito.</label>'
  ].join('\n');
  html=trocarExato(html,anterior,privacidade+'\n'+anterior);
+ // Estado real do motor na MESMA tela do Escritório, sem segundo portal.
+ html=trocarExato(html,'  <div class="loop03-corpo">',
+  '  <div class="loop03-corpo">\n'+
+  '   <section class="painel" id="loopEstadoIntegrado" hidden>'+
+  '    <h3>Estado do LOOP</h3>'+
+  '    <p id="loopResumoMotor" role="status" aria-live="polite"></p>'+
+  '   </section>');
  // Texto da versão de ensaio permanece fora da vista, sem ser reaproveitado
  // como conteúdo comercial. Não expor recursos financeiros incompletos.
  return html;

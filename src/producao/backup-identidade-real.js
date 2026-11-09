@@ -9,6 +9,7 @@ const {DatabaseSync}=require('node:sqlite');
 const {pipeline}=require('node:stream/promises');
 const {createHash,createCipheriv,createDecipheriv,randomBytes,hkdfSync}=
  require('node:crypto');
+const {MotorLoopIntegradoSQLite,TABELAS_MOTOR}=require('./motor-loop-integrado-sqlite');
 const {TABELAS_COMERCIAIS,validarRecuperacaoComercial}=
  require('./validacao-recuperacao-comercial');
 const MAGIC=Buffer.from('LOOPREALBKP1','ascii');
@@ -66,9 +67,19 @@ function validarIdentidade(arquivo){
    "SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%'"
   ).all().map(x=>x.name);
   if(TABELAS.some(x=>!lista.includes(x)))falha('BACKUP_REAL_ESQUEMA_INCOMPLETO');
-  const todos=[...TABELAS,...TABELAS_ADMIN,...TABELAS_COMERCIAIS];
+  const todos=[...TABELAS,...TABELAS_ADMIN,...TABELAS_COMERCIAIS,...TABELAS_MOTOR];
   if(lista.some(x=>!todos.includes(x)))
    falha('BACKUP_IDENTIDADE_NAO_COBRE_TABELAS_COMERCIAIS');
+  // O snapshot da fila, eventos e livro de compras pertencem ao mesmo backup.
+  const temMotor=TABELAS_MOTOR.some(t=>lista.includes(t));
+  if(temMotor){
+   if(TABELAS_MOTOR.some(t=>!lista.includes(t)))
+    falha('BACKUP_MOTOR_PARCIAL');
+   try{
+    const motor=Object.create(MotorLoopIntegradoSQLite.prototype);
+    motor.banco=b;motor.verificar();
+   }catch{falha('BACKUP_MOTOR_INTEGRIDADE_DIVERGENTE');}
+  }
   // Não aceitar snapshot administrativo parcial. Pedidos e remessas
   // são conferidos semanticamente, sem inferir conciliação bancária.
   const adminPresente=TABELAS_ADMIN.some(x=>lista.includes(x));

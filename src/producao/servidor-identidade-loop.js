@@ -7,12 +7,17 @@ const {montarInterfaceAprovada}=require('./interface-aprovada-loop');
 const {montarGatewayAdminComercial}=require('./gateway-admin-comercial');
 function criarAppIdentidadeLoop({contas,origemHttps,
  permitirCadastro=false,backupEstado=null,
- pedidosComerciais=null,remessasOutbox=null,adminComercial=null}={}){
+ pedidosComerciais=null,remessasOutbox=null,adminComercial=null,
+ motorLoop=null}={}){
  if(!contas||typeof contas.entrar!=='function'||typeof contas.sessao!=='function')
   throw Error('IDENTIDADE_REAL_NAO_CONFIGURADA');
  if(process.env.NODE_ENV==='production'&&permitirCadastro&&
     typeof backupEstado!=='function')
   throw Error('BACKUP_OFFSITE_REAL_NAO_CONFIGURADO');
+ if(motorLoop!==null&&(
+    typeof motorLoop.consultar!=='function'||
+    typeof motorLoop.verificar!=='function'))
+  throw Error('LOOP_MOTOR_INTERNO_INVALIDO');
  if((pedidosComerciais===null)!==(remessasOutbox===null))
   throw Error('PEDIDOS_REAIS_INTEGRACAO_INCOMPLETA');
  if(pedidosComerciais!==null&&(
@@ -69,7 +74,7 @@ function criarAppIdentidadeLoop({contas,origemHttps,
  // Sessão de administrador é completamente separada do login de cliente.
  // Sem credencial e middleware de operador, rotas administrativas não existem.
  if(adminComercial!==null)
-  montarGatewayAdminComercial(app,{...adminComercial,origemHttps});
+  montarGatewayAdminComercial(app,{...adminComercial,origemHttps,motorLoop});
  const mutation=(req,res,next)=>{
   if(!origemOk(req))return res.status(403).json({erro:'ORIGEM_INVALIDA'});
   if(!req.is('application/json'))
@@ -153,7 +158,7 @@ function criarAppIdentidadeLoop({contas,origemHttps,
    return res.json({
     titularId:result.titularId,nick:result.nick,csrf:result.csrf,
     expiraEm:result.expiraEm,emailVerificado:result.emailVerificado,
-    pagamentoReal:false
+    pagamentoReal:false,motorLoopInterno:motorLoop!==null
    });
   }catch(e){return falha(res,e);}
  });
@@ -161,7 +166,8 @@ function criarAppIdentidadeLoop({contas,origemHttps,
   titularId:req.conta.titularId,nick:req.conta.nick,
   emailVerificado:req.conta.emailVerificado,
   csrf:req.conta.csrf,expiraEm:req.conta.expiraEm,
-  lojaEEscritorioMesmaConta:true,financeiroReal:false
+  lojaEEscritorioMesmaConta:true,financeiroReal:false,
+  motorLoopInterno:motorLoop!==null
  }));
  // Direito de acesso: o titular consulta somente os seus próprios dados
  // e a versão dos documentos aceitos. Sem IDs escolhidos pelo navegador.
@@ -232,6 +238,15 @@ function criarAppIdentidadeLoop({contas,origemHttps,
    email:req.body.email,codigo:req.body.codigo,
    novaSenha:req.body.novaSenha,finalidade:'SENHA'
   }));}catch(e){return falha(res,e);}
+ });
+ // Estado interno do mesmo SQLite: somente leitura, titular da sessão.
+ // Nunca receber titularId do navegador. Sem eventos ou posição de produção.
+ app.get('/api/loop/estado',protegido,(req,res)=>{
+  if(!motorLoop)return res.status(503).json({
+   erro:'MOTOR_INTERNO_INDISPONIVEL',financeiroReal:false
+  });
+  try{return res.json(motorLoop.consultar({titularId:req.conta.titularId}));}
+  catch{return res.status(503).json({erro:'MOTOR_INTERNO_INDISPONIVEL'});}
  });
  // Consulta de capacidade da loja vinculada à mesma conta. Sem produto
  // real aprovado ou integração de fornecedor, nenhum carrinho pode pagar.

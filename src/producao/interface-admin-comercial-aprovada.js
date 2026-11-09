@@ -52,9 +52,14 @@ function renderizarAdminComercialAprovado(){
   ' Histórico somente leitura. Não muda valores nem posições.</p>'+
   '<p id="estadoAuditoriaAdmin" class="subtexto" role="status"></p>'+
   '<div id="listaAuditoriaAdmin" aria-live="polite"></div></section>';
+ const motorPainel='<section class="painel" aria-labelledby="tituloMotorInternoAdmin">'+
+  '<h2 id="tituloMotorInternoAdmin">LOOP · estado interno</h2>'+
+  '<p id="loopAdminEstado" role="status">Consultando mesmo motor do cliente...</p>'+
+  '<button id="atualizarLoopAdmin" type="button">Atualizar estado</button>'+
+  '</section>';
  const destino='<section class="painel" aria-labelledby="tituloContabilidadeAdmin">';
  if(!pagina.includes(destino))throw Error('PAINEL_ADMIN_APROVADO_DESATUALIZADO');
- return pagina.replace(destino,adicao+manutencaoPainel+auditoriaPainel+destino);
+ return pagina.replace(destino,motorPainel+adicao+manutencaoPainel+auditoriaPainel+destino);
 }
 function montarAdminComercialAprovado(app,{
  controle,catalogo,auditoria=null,manutencao=null,

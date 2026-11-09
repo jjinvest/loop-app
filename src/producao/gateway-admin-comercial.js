@@ -6,7 +6,7 @@ const {montarAdminComercialAprovado}=
 function erro(c){const e=new Error(c);e.codigo=c;throw e;}
 function montarGatewayAdminComercial(app,{
  sessoes,controle,catalogo,auditoria=null,manutencao=null,
- pedidosComerciais=null,origemHttps
+ pedidosComerciais=null,motorLoop=null,origemHttps
 }={}){
  if(typeof sessoes?.autenticar!=='function'||
     typeof sessoes?.sessao!=='function'||
@@ -98,6 +98,14 @@ function montarGatewayAdminComercial(app,{
     '<a href="/administrador/entrar">Voltar ao login</a></html>'
    );
   }
+ });
+ // Mesmo motor interno que a sessão do cliente; somente consulta agregada.
+ app.get('/api/admin/loop/estado',proteger,(_req,res)=>{
+  if(!motorLoop)return res.status(503).json({
+   erro:'MOTOR_INTERNO_INDISPONIVEL'
+  });
+  try{return res.json(motorLoop.consultar());}
+  catch{return res.status(503).json({erro:'MOTOR_INTERNO_INDISPONIVEL'});}
  });
  app.post('/api/admin/sair',proteger,validarCsrf,(req,res)=>{
   sessoes.sair(req.tokenOperador);

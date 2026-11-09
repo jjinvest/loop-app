@@ -3,6 +3,7 @@
 // primeiro cadastro sem documentação/Resend/volume próprios e GO humano.
 const fs=require('node:fs');
 const {DatabaseSync}=require('node:sqlite');
+const {MotorLoopIntegradoSQLite}=require('../src/producao/motor-loop-integrado-sqlite');
 const {IdentidadeClienteLoopReal}=
  require('../src/producao/identidade-cliente-loop-sqlite');
 const {criarAppIdentidadeLoop}=
@@ -113,6 +114,7 @@ async function iniciar(ambiente=process.env){
  let agendador=null;
  try{
   const contas=new IdentidadeClienteLoopReal({...config,banco});
+  const motorLoop=new MotorLoopIntegradoSQLite({banco});
   // Tabelas comerciais administrativas criadas ANTES do primeiro snapshot.
   // Nenhum fornecedor é homologado automaticamente.
   const auditoria=new AuditoriaOperacionalSQLite({
@@ -141,7 +143,7 @@ async function iniciar(ambiente=process.env){
   // listener; nenhuma conta real é criada sem prova de recuperação.
   await agendador.iniciar();
   const app=criarAppIdentidadeLoop({
-   contas,origemHttps:config.origemHttps,permitirCadastro:true,
+   contas,motorLoop,origemHttps:config.origemHttps,permitirCadastro:true,
    backupEstado:()=>agendador.estado(),
    adminComercial:{catalogo,controle,sessoes,auditoria,manutencao}
   });

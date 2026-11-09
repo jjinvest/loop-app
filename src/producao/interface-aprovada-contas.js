@@ -61,16 +61,25 @@
   $('painelVerificarEmail').hidden=s.emailVerificado;
   $('painelIdentidadeTeste').hidden=true;
   $('conteudoConta').hidden=false;
+  // A fonte é o endpoint autenticado do mesmo SQLite, não dados LAB.
+  if(s.motorLoopInterno===true){
+   prepararAbasMotor();
+   $('loopEstadoIntegrado').hidden=false;
+   void carregarMotor();
+  }else $('loopEstadoIntegrado').hidden=true;
   // Preservar a mesma estrutura visual; não permitir navegação para
   // funções que ainda dependem exclusivamente do LAB.
   for(const tab of document.querySelectorAll('[role=tab]')){
    const ativo=tab.id==='abaConta';
-   tab.disabled=!ativo;tab.setAttribute('aria-selected',String(ativo));
+   const habilitado=ativo||(s.motorLoopInterno===true&&
+    (tab.id==='abaTabuleiro'||tab.id==='abaPosicoes'));
+   tab.disabled=!habilitado;tab.setAttribute('aria-selected',String(ativo));
    tab.setAttribute('aria-current',ativo?'page':'false');
    tab.tabIndex=ativo?0:-1;
    const alvo=tab.getAttribute('aria-controls');
    if(alvo&&$(alvo))$(alvo).hidden=!ativo;
-   if(!ativo)tab.title='Disponível após liberação operacional';
+   if(!habilitado)tab.title='Disponível após liberação operacional';
+   else tab.removeAttribute('title');
   }
   const indicators=document.querySelector('.loop03-indicadores');
   if(indicators)indicators.hidden=true;
@@ -84,6 +93,63 @@
    acessoLoja.title='Abrir Loja AKITEMM (compras ainda indisponíveis)';
   }
   void carregarDados();
+ }
+ let painelMotorPreparado=false;
+ function prepararAbasMotor(){
+  if(painelMotorPreparado)return;
+  painelMotorPreparado=true;
+  for(const [id,etiqueta] of [
+   ['conteudoTabuleiro','Tabuleiro em validação interna'],
+   ['conteudoPosicoes','Minhas posições em validação interna']
+  ]){
+   const area=$(id);
+   if(!area)continue;
+   for(const filho of [...area.children])filho.hidden=true;
+   const titulo=document.createElement('h3');
+   titulo.textContent=etiqueta;
+   const texto=document.createElement('p');
+   texto.id=id+'EstadoMotor';texto.setAttribute('role','status');
+   texto.textContent='Consultando o motor da conta...';
+   area.append(titulo,texto);
+  }
+ }
+ async function carregarMotor(){
+  try{
+   const m=await fetch('/api/loop/estado',{
+    credentials:'same-origin',cache:'no-store'
+   });
+   if(!m.ok)throw Error('MOTOR_INDISPONIVEL');
+   const d=await m.json();
+   if(d.fonte!=='IDENTIDADE_E_MOTOR_MESMO_SQLITE'||
+      d.financeiroReal!==false||!Array.isArray(d.minhasPosicoes))
+    throw Error('MOTOR_RESPOSTA_INVALIDA');
+   const texto='Fila A: '+d.filaA+' · Fila B: '+d.filaB+
+    ' · Giros: '+d.catraca.giros+' · Eventos do ciclo: '+
+    d.tabuleiro.eventosNoCiclo+'/6 · Movimentação real indisponível.';
+   $('loopResumoMotor').textContent=texto;
+   const tab=$('conteudoTabuleiroEstadoMotor');
+   if(tab)tab.textContent=texto;
+   const pos=$('conteudoPosicoesEstadoMotor');
+   if(pos)pos.textContent=d.minhasPosicoes.length?
+    d.minhasPosicoes.map(x=>'#'+x.numero+' ('+x.local+')').join(' · '):
+    'Nenhuma posição real. O motor interno está em validação.';
+  }catch{
+   $('loopResumoMotor').textContent='Motor interno indisponível. Não há transações reais.';
+  }
+ }
+ for(const tab of document.querySelectorAll('[role=tab]')){
+  tab.addEventListener('click',()=>{
+   if(tab.disabled)return;
+   for(const outro of document.querySelectorAll('[role=tab]')){
+    const ativo=outro===tab;
+    outro.setAttribute('aria-selected',String(ativo));
+    outro.setAttribute('aria-current',ativo?'page':'false');
+    outro.tabIndex=ativo?0:-1;
+    const alvo=$(outro.getAttribute('aria-controls'));
+    if(alvo)alvo.hidden=!ativo;
+   }
+   if(tab.id==='abaTabuleiro'||tab.id==='abaPosicoes')void carregarMotor();
+  });
  }
  async function carregarDados(){
   try{
