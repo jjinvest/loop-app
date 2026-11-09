@@ -36,6 +36,11 @@ const {ObservacoesPSPEnsaioSQLite,
  require('../src/producao/observacoes-psp-ensaio-sqlite');
 const {ConciliacaoMultibancosEnsaioSQLite}=
  require('../src/producao/conciliacao-multibancos-ensaio-sqlite');
+const {InboxExtratosAsaasSandboxSQLite,
+ consultarEArquivarExtratoAsaasSandbox}=
+ require('../src/producao/inbox-extratos-asaas-sandbox-sqlite');
+const {coletarExtratoReadOnly}=
+ require('../src/producao/contrato-extratos-readonly');
 const DOC='Termos de conta fictícia para exercício sem provedor PSP, sem saques, '+
  'sem dinheiro e sem liberação comercial. Não há posição remunerada.';
 const ORIGEM='https://contas.example.invalid';
@@ -572,6 +577,23 @@ test('cinco missoes integradas: distribuir, sacar, abastecer, trocar e restaurar
   movimentoId:'LOJA_'+novo.pedidoId,tipo:'CREDITO',valorCentavos:6500
  }).registrado,true);
  assert.equal(bancos.verificar().totalEvidencias,2);
+ const armazem=teso.extratosAsaasInbox;
+ const period={inicio:'2026-11-01',fim:'2026-11-09'};
+ const extratoConsultado=await consultarEArquivarExtratoAsaasSandbox({
+  inbox:armazem,consultaId:'EXTRATO_TESTE_ASAAS_01',
+  contaAlias:'PAGADOR:ASAAS',...period,
+  adaptador:{
+   consultarExtratoPaginado:async args=>coletarExtratoReadOnly({
+    origem:'ASAAS_SANDBOX',...args,
+    consultarPagina:async()=>({hasMore:false,totalCount:1,
+     data:[{id:'MOV_FICTICIO_ASAAS_01',
+      type:'TRANSFER',value:-50}]})
+   })
+  }
+ });
+ assert.equal(extratoConsultado.registrado,true);
+ assert.equal(armazem.verificar().registros,1);
+ assert.equal(teso.verificar().integridade,'OK');
  assert.equal(bancos.analisar().conciliacaoRealCertificada,false);
  assert.equal(bancos.analisar().movimentosComDeclaracoesConcordantes>=2,true);
  const convergencia=teso.diagnosticarConvergenciaExternaEnsaio();
@@ -634,6 +656,9 @@ test('cinco missoes integradas: distribuir, sacar, abastecer, trocar e restaurar
    ConciliacaoMultibancosEnsaioSQLite.prototype);
   extratosRestaurados.db=db2;
   assert.equal(extratosRestaurados.verificar().totalEvidencias,2);
+  const inboxRecuperada=Object.create(InboxExtratosAsaasSandboxSQLite.prototype);
+  inboxRecuperada.db=db2;
+  assert.equal(inboxRecuperada.verificar().registros,1);
   assert.equal(extratosRestaurados.analisar()
    .movimentosComDeclaracoesConcordantes>=2,true);
   assert.equal(extratosRestaurados.analisar().conciliacaoRealCertificada,false);

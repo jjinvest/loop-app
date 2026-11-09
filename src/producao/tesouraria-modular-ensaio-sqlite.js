@@ -10,6 +10,8 @@ const {ConciliacaoMultibancosEnsaioSQLite}=
  require('./conciliacao-multibancos-ensaio-sqlite');
 const {avaliarConvergenciaUnificadaEnsaio}=
  require('./convergencia-unificada-financeira-ensaio');
+const {InboxExtratosAsaasSandboxSQLite}=
+ require('./inbox-extratos-asaas-sandbox-sqlite');
 const {planejarRecebimentoTresBancos}=
  require('../domain/plano-roteamento-tres-bancos-lab');
 const {criarPlanoFinanceiro,validarPlanoFinanceiro,planejarTrocaFinanceira}=
@@ -23,7 +25,9 @@ const TABELAS_TESOURARIA_ENSAIO=Object.freeze([
  'loop_lab_tesouraria_migracoes',
  'loop_lab_tesouraria_compromissos_psp',
  'loop_lab_tesouraria_observacoes_psp',
- 'loop_lab_tesouraria_extratos_bancarios'
+ 'loop_lab_tesouraria_extratos_bancarios',
+ 'loop_lab_tesouraria_lotes_extrato',
+ 'loop_lab_tesouraria_itens_extrato'
 ]);
 function falha(codigo){const e=new Error(codigo);e.codigo=codigo;throw e;}
 const ID=/^[A-Za-z0-9_-]{1,120}$/;
@@ -121,6 +125,7 @@ class TesourariaModularEnsaioSQLite{
   }
   this.observacoesPsp=new ObservacoesPSPEnsaioSQLite({banco,agora});
   this.conciliacaoBancaria=new ConciliacaoMultibancosEnsaioSQLite({banco,agora});
+  this.extratosAsaasInbox=new InboxExtratosAsaasSandboxSQLite({banco,agora});
   this.verificar();
  }
  _agora(){
@@ -791,6 +796,10 @@ class TesourariaModularEnsaioSQLite{
   extratos.db=db;
   if(extratos.verificar().integridade!=='OK')
    falha('TESOURARIA_ENSAIO_EXTRATOS_INCONSISTENTES');
+  const inbox=Object.create(InboxExtratosAsaasSandboxSQLite.prototype);
+  inbox.db=db;
+  if(inbox.verificar().integridade!=='OK')
+   falha('TESOURARIA_ENSAIO_INBOX_ASAAS_INCONSISTENTE');
   const cobertura=this._cobertura();
   return {integridade:'OK',movimentos:seq,
    recebimentos:this.db.prepare(
