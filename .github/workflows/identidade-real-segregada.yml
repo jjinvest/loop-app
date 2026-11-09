@@ -9,6 +9,7 @@ on:
       - 'scripts/iniciar-identidade-real-loop.js'
       - 'scripts/provar-recuperacao-independente-identidade.js'
       - 'test/identidade-real-isolada.test.js'
+      - 'test/motor-loop-integrado-identidade.test.js'
       - 'test/identidade-real-persistencia.test.js'
       - 'test/api-identidade-real-sem-pagamentos.test.js'
       - 'test/interface-aprovada-identidade-real.test.js'
@@ -55,6 +56,7 @@ jobs:
       - run: npm ci --ignore-scripts --no-fund
       - name: Código de conta real deve ser válido
         run: |
+          node --check src/producao/motor-loop-integrado-sqlite.js
           node --check src/producao/identidade-cliente-loop-sqlite.js
           node --check src/producao/servidor-identidade-loop.js
           node --check src/producao/interface-aprovada-loop.js
@@ -82,6 +84,8 @@ jobs:
           node --check scripts/iniciar-identidade-real-loop.js
       - name: Conta, consentimento, senhas e recuperação
         run: node --test test/identidade-real-isolada.test.js
+      - name: Motor interno com três titulares, giro e reinício do banco
+        run: node --test test/motor-loop-integrado-identidade.test.js
       - name: SQLite de cadastro persiste após reinicialização
         run: node --test test/identidade-real-persistencia.test.js
       - name: API real não abre dinheiro nem aceita CSRF inválido

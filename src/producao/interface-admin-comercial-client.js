@@ -306,6 +306,25 @@
    }
   });
  }
+ async function atualizarMotorAdministrativo(){
+  const area=$('loopAdminEstado');
+  try{
+   const r=await fetch('/api/admin/loop/estado',{
+    credentials:'same-origin',cache:'no-store'
+   });
+   if(!r.ok)throw Error('Sem leitura do motor.');
+   const m=await r.json();
+   if(m.fonte!=='IDENTIDADE_E_MOTOR_MESMO_SQLITE'||
+      m.financeiroReal!==false)throw Error('Estado inválido.');
+   area.textContent='Fila A: '+m.filaA+' · Fila B: '+m.filaB+
+    ' · Eventos: '+m.tabuleiro.eventosNoCiclo+'/6'+
+    ' · Giros: '+m.catraca.giros+
+    ' · Operação financeira não habilitada.';
+  }catch{
+   area.textContent='Motor interno indisponível. Sem giro financeiro liberado.';
+  }
+ }
+ $('atualizarLoopAdmin').addEventListener('click',()=>void atualizarMotorAdministrativo());
  (async()=>{
   try{
    const dados=await pedir('/sessao');
@@ -317,6 +336,7 @@
    await atualizar();
    await atualizarManutencao();
    await consultarAuditoria();
+   await atualizarMotorAdministrativo();
   }catch(e){travar(true);status(e.message);}
  })();
 })();
