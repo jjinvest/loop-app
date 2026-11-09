@@ -5,7 +5,7 @@
 function falha(codigo){const erro=new Error(codigo);erro.codigo=codigo;throw erro;}
 const TABELAS_COMERCIAIS=Object.freeze([
  'loja_real_cotacoes','loja_real_pedidos','loja_real_custos_pedido',
- 'loja_real_outbox_fornecedor'
+ 'loja_real_outbox_fornecedor','loop_real_eventos_comerciais'
 ]);
 function validarRecuperacaoComercial(banco,lista){
  const contem=t=>lista.includes(t);
@@ -13,8 +13,9 @@ function validarRecuperacaoComercial(banco,lista){
  const pedidos=contem('loja_real_pedidos');
  const custos=contem('loja_real_custos_pedido');
  const outbox=contem('loja_real_outbox_fornecedor');
+ const eventos=contem('loop_real_eventos_comerciais');
  // A existência parcial não é prova de recuperação completa.
- if(pedidos!==custos||(outbox&&!pedidos))
+ if(pedidos!==custos||(outbox&&!pedidos)||(eventos&&!pedidos))
   falha('BACKUP_IDENTIDADE_NAO_COBRE_TABELAS_COMERCIAIS');
  const exigir=(t,campos)=>{
   const existentes=new Set(banco.prepare('PRAGMA table_info('+t+')')
@@ -77,6 +78,15 @@ function validarRecuperacaoComercial(banco,lista){
    if(!origem||origem.titular_id!==p.titular_id)
     falha('BACKUP_COMERCIAL_COTACAO_TITULAR_DIVERGENTE');
   }
+ }
+ if(eventos){
+  const {EventosComerciaisLoopSQLite}=
+   require('./eventos-comerciais-loop-sqlite');
+  const registro=Object.create(EventosComerciaisLoopSQLite.prototype);
+  registro.db=banco;
+  const ver=registro.verificar();
+  if(ver.integridade!=='OK'||ver.pedidosAprovadosSemEvento>0)
+   falha('BACKUP_COMERCIAL_EVENTOS_PENDENTES_SEM_REGISTRO');
  }
  if(outbox){
   const doPedido=banco.prepare([

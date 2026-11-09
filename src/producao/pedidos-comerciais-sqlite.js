@@ -102,7 +102,8 @@ function decifrar(k,r){
 }
 class PedidosComerciaisSQLite{
  constructor({banco,chavePedidos,consultarCotacaoConfiavel,
-  consultarPagamentoPsp,manutencao=null,agora=()=>Date.now()}={}){
+  consultarPagamentoPsp,manutencao=null,eventosComerciais=null,
+  agora=()=>Date.now()}={}){
   if(typeof banco?.prepare!=='function'||typeof banco?.exec!=='function'||
      !Buffer.isBuffer(chavePedidos)||chavePedidos.length!==32||
      typeof consultarCotacaoConfiavel!=='function'||
@@ -111,7 +112,13 @@ class PedidosComerciaisSQLite{
   if(manutencao!==null&&(manutencao.db!==banco||
     typeof manutencao.garantirOperacaoDisponivel!=='function'))
    erro('MANUTENCAO_PEDIDOS_NAO_CONFIGURADA');
+  if(eventosComerciais!==null&&(
+    eventosComerciais.db!==banco||
+    typeof eventosComerciais.registrarPagamentoConciliadoEmTransacao!=='function'||
+    typeof eventosComerciais.registrarCancelamentoEmTransacao!=='function'))
+   erro('EVENTOS_COMERCIAIS_BANCO_DIVERGENTE');
   this.db=banco;this.key=Buffer.from(chavePedidos);
+  this.eventosComerciais=eventosComerciais;
   this.manutencao=manutencao;
   this.cotacao=consultarCotacaoConfiavel;
   this.psp=consultarPagamentoPsp;
@@ -306,11 +313,21 @@ class PedidosComerciaisSQLite{
   if(!prova||prova.pedidoId!==pedidoId||
      prova.moeda!=='BRL')erro('PAGAMENTO_PSP_NAO_CONCILIADO');
   if(['CANCELADO','ESTORNADO'].includes(prova.status)){
-   this.db.prepare([
-    "UPDATE loja_real_pedidos SET status='CANCELADO',atualizado_em=?",
-    "WHERE pedido_id=? AND status!='CANCELADO'"
-   ].join(' ')).run(this.agora(),pedidoId);
-   return {...this._publico(this._row(pedidoId)),cancelado:true};
+   this.db.exec('BEGIN IMMEDIATE');
+   try{
+    const atual=this._row(pedidoId);
+    if(atual.pagamento_id!==null&&prova.pagamentoId!==atual.pagamento_id)
+     erro('PAGAMENTO_DIVERGENTE');
+    this.db.prepare([
+     "UPDATE loja_real_pedidos SET status='CANCELADO',atualizado_em=?",
+     "WHERE pedido_id=? AND status!='CANCELADO'"
+    ].join(' ')).run(this.agora(),pedidoId);
+    if(this.eventosComerciais)
+     this.eventosComerciais.registrarCancelamentoEmTransacao({pedidoId});
+    const cancelado=this._publico(this._row(pedidoId));
+    this.db.exec('COMMIT');
+    return {...cancelado,cancelado:true};
+   }catch(e){this.db.exec('ROLLBACK');throw e;}
   }
   if(prova.status!=='CONFIRMADO'||!idOk(prova.pagamentoId)||
      prova.valorCentavos!==atual.valor_total_centavos)
@@ -328,6 +345,10 @@ class PedidosComerciaisSQLite{
      "UPDATE loja_real_pedidos SET status='APROVADO_PARA_EXPEDICAO',",
      'pagamento_id=?,atualizado_em=? WHERE pedido_id=?'
     ].join(' ')).run(prova.pagamentoId,this.agora(),pedidoId);
+   if(this.eventosComerciais)
+    this.eventosComerciais.registrarPagamentoConciliadoEmTransacao({
+     pedidoId,pagamentoId:prova.pagamentoId
+    });
    const confirmado=this._row(pedidoId);
    this.db.exec('COMMIT');
    return {...this._publico(confirmado),confirmado:true};

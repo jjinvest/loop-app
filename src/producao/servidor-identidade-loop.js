@@ -8,7 +8,7 @@ const {montarGatewayAdminComercial}=require('./gateway-admin-comercial');
 function criarAppIdentidadeLoop({contas,origemHttps,
  permitirCadastro=false,backupEstado=null,
  pedidosComerciais=null,remessasOutbox=null,adminComercial=null,
- motorLoop=null}={}){
+ motorLoop=null,eventosComerciais=null}={}){
  if(!contas||typeof contas.entrar!=='function'||typeof contas.sessao!=='function')
   throw Error('IDENTIDADE_REAL_NAO_CONFIGURADA');
  if(process.env.NODE_ENV==='production'&&permitirCadastro&&
@@ -18,6 +18,10 @@ function criarAppIdentidadeLoop({contas,origemHttps,
     typeof motorLoop.consultar!=='function'||
     typeof motorLoop.verificar!=='function'))
   throw Error('LOOP_MOTOR_INTERNO_INVALIDO');
+ if(eventosComerciais!==null&&(
+    typeof eventosComerciais.verificar!=='function'||
+    typeof eventosComerciais.consultarTitular!=='function'))
+  throw Error('EVENTOS_COMERCIAIS_INTEGRACAO_INVALIDA');
  if((pedidosComerciais===null)!==(remessasOutbox===null))
   throw Error('PEDIDOS_REAIS_INTEGRACAO_INCOMPLETA');
  if(pedidosComerciais!==null&&(
@@ -268,6 +272,16 @@ function criarAppIdentidadeLoop({contas,origemHttps,
   });
   try{return res.json(motorLoop.consultar({titularId:req.conta.titularId}));}
   catch{return res.status(503).json({erro:'MOTOR_INTERNO_INDISPONIVEL'});}
+ });
+ // Comprovantes comerciais estão no MESMO SQLite da conta e do pedido.
+ // Apenas consulta por titular autenticado; sem criação de posições.
+ app.get('/api/loop/eventos-comerciais',protegido,(req,res)=>{
+  if(!eventosComerciais)return res.status(503).json({
+   erro:'EVENTOS_COMERCIAIS_AINDA_NAO_CONFIGURADOS'
+  });
+  try{return res.json(eventosComerciais.consultarTitular({
+   titularId:req.conta.titularId
+  }));}catch{return res.status(503).json({erro:'EVENTOS_INDISPONIVEIS'});}
  });
  // Consulta de capacidade da loja vinculada à mesma conta. Sem produto
  // real aprovado ou integração de fornecedor, nenhum carrinho pode pagar.
