@@ -7,7 +7,7 @@ const express=require('express');
 function erro(c){const e=new Error(c);e.codigo=c;throw e;}
 function criarRouterAdminEconomiaAkitemm({
  controle,catalogo=null,pedidosComerciais=null,auditoria=null,
- manutencao=null,autorizarAdministrador,validarCsrfAdmin,origemHttps
+ manutencao=null,classificacaoLoop=null,autorizarAdministrador,validarCsrfAdmin,origemHttps
 }={}){
  if(!controle||typeof controle.listarOfertas!=='function'||
     typeof controle.definirCusto!=='function'||
@@ -30,6 +30,11 @@ function criarRouterAdminEconomiaAkitemm({
     typeof manutencao.alterar!=='function'||
     manutencao.db!==controle.db))
   erro('MANUTENCAO_ADMIN_NAO_CONFIGURADA');
+ if(classificacaoLoop!==null&&(
+    classificacaoLoop.db!==controle.db||
+    typeof classificacaoLoop.listarRegras!=='function'||
+    typeof classificacaoLoop.configurarProduto!=='function'))
+  erro('CLASSIFICACAO_ADMIN_NAO_CONFIGURADA');
  if(pedidosComerciais!==null&&
     typeof pedidosComerciais.listarResumoContabil!=='function')
   erro('CONTABILIDADE_PEDIDOS_NAO_CONFIGURADA');
@@ -130,6 +135,38 @@ function criarRouterAdminEconomiaAkitemm({
    return res.status(415).json({erro:'JSON_OBRIGATORIO'});
   next();
  };
+ router.get('/classificacoes',(_req,res)=>{
+  if(!classificacaoLoop)return res.status(503).json({
+   erro:'CLASSIFICACAO_AINDA_NAO_CONFIGURADA'
+  });
+  try{return res.json(classificacaoLoop.listarRegras());}
+  catch{return res.status(503).json({erro:'CLASSIFICACAO_INDISPONIVEL'});}
+ });
+ router.post('/classificacoes/:produtoId',
+  express.json({limit:'2kb',strict:true}),
+  editarCadastro,validarCsrfAdmin,(req,res)=>{
+   if(!classificacaoLoop)return res.status(503).json({
+    erro:'CLASSIFICACAO_AINDA_NAO_CONFIGURADA'
+   });
+   const b=req.body;
+   if(!b||Array.isArray(b)||
+      Object.keys(b).sort().join(',')!==
+      'cor,minimo,revisaoEsperada,roxasPorUnidade')
+    return res.status(400).json({erro:'CAMPOS_INVALIDOS'});
+   try{return res.json(classificacaoLoop.configurarProduto({
+    produtoId:req.params.produtoId,...b,autorizado:true
+   }));}
+   catch(e){
+    if(e.codigo==='CORES_COMERCIAIS_REVISAO_DIVERGENTE')
+     return res.status(409).json({erro:e.codigo});
+    if(['CORES_COMERCIAIS_REGRA_INVALIDA',
+        'CORES_COMERCIAIS_PRODUTO_INEXISTENTE'].includes(e.codigo))
+     return res.status(400).json({erro:e.codigo});
+    if(e.codigo==='OPERACAO_COMERCIAL_EM_MANUTENCAO')
+     return res.status(423).json({erro:e.codigo});
+    return res.status(503).json({erro:'CLASSIFICACAO_INDISPONIVEL'});
+   }
+  });
  router.post('/produtos-cadastrar',express.json({limit:'4kb',strict:true}),
   editarCadastro,validarCsrfAdmin,(req,res)=>{
    if(!catalogo)return res.status(503).json({erro:'CATALOGO_ADMIN_NAO_CONFIGURADO'});

@@ -11,11 +11,18 @@ const TABELAS_CLASSIFICACAO=Object.freeze([
  'loop_real_fotos_regras_pedido'
 ]);
 class ClassificacaoComercialLoopSQLite{
- constructor({banco,agora=()=>Date.now()}={}){
+ constructor({banco,auditoria=null,manutencao=null,agora=()=>Date.now()}={}){
   if(typeof banco?.prepare!=='function'||typeof banco?.exec!=='function'||
      typeof agora!=='function')
    erro('CORES_COMERCIAIS_SEM_BANCO');
-  this.db=banco;this.agora=agora;
+  if(auditoria!==null&&(auditoria.db!==banco||
+     typeof auditoria.registrar!=='function'||typeof auditoria.verificar!=='function'))
+   erro('CORES_COMERCIAIS_AUDITORIA_INVALIDA');
+  if(manutencao!==null&&(!auditoria||manutencao.db!==banco||
+     typeof manutencao.garantirOperacaoDisponivel!=='function'))
+   erro('CORES_COMERCIAIS_MANUTENCAO_INVALIDA');
+  this.db=banco;this.agora=agora;this.auditoria=auditoria;
+  this.manutencao=manutencao;
   for(const tabela of ['loja_real_custos_pedido','loja_real_pedidos',
    'loja_real_produtos']){
    if(!banco.prepare([
@@ -82,11 +89,13 @@ class ClassificacaoComercialLoopSQLite{
    erro('CORES_COMERCIAIS_RELOGIO_INVALIDO');
   this.db.exec('BEGIN IMMEDIATE');
   try{
+   if(this.manutencao)this.manutencao.garantirOperacaoDisponivel();
    if(!this.db.prepare('SELECT 1 FROM loja_real_produtos WHERE produto_id=?')
     .get(produtoId))erro('CORES_COMERCIAIS_PRODUTO_INEXISTENTE');
-   const anterior=this.db.prepare(
-    'SELECT revisao FROM loop_real_regras_cor WHERE produto_id=?'
-   ).get(produtoId);
+   const anterior=this.db.prepare([
+    'SELECT revisao,cor,minimo,roxas_por_unidade',
+    'FROM loop_real_regras_cor WHERE produto_id=?'
+   ].join(' ')).get(produtoId);
    const versao=anterior?.revisao||0;
    if(versao!==revisaoEsperada)erro('CORES_COMERCIAIS_REVISAO_DIVERGENTE');
    const proxima=versao+1;
@@ -102,10 +111,33 @@ class ClassificacaoComercialLoopSQLite{
     '(produto_id,revisao,cor,minimo,roxas_por_unidade,registrado_em)',
     'VALUES(?,?,?,?,?,?)'
    ].join(' ')).run(produtoId,proxima,cor,minimo,roxasPorUnidade,ts);
+   if(this.auditoria)this.auditoria.registrar({
+    acao:'CLASSIFICACAO_PRODUTO_ALTERADA',ator:'ADMIN_COMERCIAL',
+    entidade:produtoId,
+    antes:anterior?{cor:anterior.cor,minimo:anterior.minimo,
+     roxasPorUnidade:anterior.roxas_por_unidade}:{existe:false},
+    depois:{cor,minimo,roxasPorUnidade},
+    revisaoAnterior:versao,revisaoNova:proxima
+   });
    this.db.exec('COMMIT');
    return {produtoId,cor,revisao:proxima,
     nenhumaPosicaoRealCriada:true};
   }catch(e){this.db.exec('ROLLBACK');throw e;}
+ }
+ listarRegras({limite=500}={}){
+  if(!Number.isSafeInteger(limite)||limite<1||limite>500)
+   erro('CORES_COMERCIAIS_LIMITE_INVALIDO');
+  return {produtos:this.db.prepare([
+   'SELECT p.produto_id,p.titulo,p.ativo,r.cor,r.minimo,',
+   'r.roxas_por_unidade,r.revisao',
+   'FROM loja_real_produtos p LEFT JOIN loop_real_regras_cor r',
+   'ON r.produto_id=p.produto_id ORDER BY p.produto_id LIMIT ?'
+  ].join(' ')).all(limite).map(x=>({
+   produtoId:x.produto_id,titulo:x.titulo,publicado:x.ativo===1,
+   cor:x.cor||'CINZA',minimo:x.minimo||1,
+   roxasPorUnidade:x.roxas_por_unidade||0,revisao:x.revisao||0,
+   regraExplicita:x.revisao!==null
+  })),apenasConfiguracao:true,ativacaoFinanceira:false};
  }
  capturarPedidoEmTransacao({pedidoId}={}){
   if(this.db.isTransaction!==true)erro('CORES_COMERCIAIS_EXIGEM_TRANSACAO');
