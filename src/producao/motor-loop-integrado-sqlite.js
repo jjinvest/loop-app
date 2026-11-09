@@ -332,6 +332,25 @@ class MotorLoopIntegradoSQLite{
    comercial={registrados:x.total,aguardandoConciliacao:x.pendentes,
     cancelados:x.cancelados,liberadosParaLoop:0};
   }
+  // O evento aprovado pelo PSP continua aguardando validação FINANCEIRA REAL.
+  // A posição fictícia criada em laboratório aparece em coluna separada.
+  if(this.banco.prepare([
+   "SELECT 1 FROM sqlite_master WHERE type='table'",
+   "AND name='loop_real_promocoes_pedido_ensaio'"
+  ].join(' ')).get()){
+   const filtro=titularId===null?'':'AND p.titular_id=?';
+   const q=this.banco.prepare([
+    'SELECT COUNT(*) AS total,',
+    "COALESCE(SUM(CASE WHEN e.estado='CANCELADO'",
+    'THEN 1 ELSE 0 END),0) AS revisao',
+    'FROM loop_real_promocoes_pedido_ensaio p',
+    'JOIN loop_real_eventos_comerciais e ON e.pedido_id=p.pedido_id',
+    'WHERE 1=1',filtro
+   ].join(' '));
+   const x=titularId===null?q.get():q.get(titularId);
+   comercial={...comercial,promovidasSomenteEmEnsaio:x.total,
+    emRevisaoPorEstornoEnsaio:x.revisao};
+  }
   const visual=p=>p?{
    numero:p.id,minha:p.participanteId===titularId&&p.empresa!==true,
    dourada:p.empresa===true,

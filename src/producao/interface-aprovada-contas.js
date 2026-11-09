@@ -281,6 +281,10 @@
     throw Error('ESCRITORIO_RESPOSTA_INCONSISTENTE');
    const aguardando=d.eventosComerciais?.aguardandoConciliacao??0;
    const texto='Fila A: '+d.filaA+' · Fila B: '+d.filaB+
+    ' · Posições de ensaio por compra: '+
+    (d.eventosComerciais?.promovidasSomenteEmEnsaio??0)+
+    ' · Em revisão por estorno: '+
+    (d.eventosComerciais?.emRevisaoPorEstornoEnsaio??0)+
     ' · Catraca (ensaio): '+d.catraca.estado+
     ' · Giros: '+d.catraca.giros+' · Eventos do ciclo: '+
     d.tabuleiro.eventosNoCiclo+'/6 · Pedidos comerciais pendentes: '+

@@ -28,6 +28,10 @@ const {PromocaoPedidoMotorEnsaioSQLite}=
 const {validarIdentidade,criarBackupIdentidadeReal,
  restaurarBackupIdentidadeReal}=
  require('../src/producao/backup-identidade-real');
+const {criarAppIdentidadeLoop}=
+ require('../src/producao/servidor-identidade-loop');
+const {once}=require('node:events');
+
 const ORIGEM={destinatario:'Pessoa de Ensaio',cep:'27250010',
  logradouro:'Rua de Ensaio',numero:'2',bairro:'Centro',
  cidade:'Volta Redonda',uf:'RJ',complemento:''};
@@ -305,4 +309,62 @@ test('producao e metodo interno sem transacao ficam fechados mesmo com dados de 
   if(old===undefined)delete process.env.NODE_ENV;
   else process.env.NODE_ENV=old;
  }
+});
+
+test('Escritorio HTTP aprovado enxerga automaticamente posicao de compra verde sem permitir criar ou girar',async t=>{
+ const x=await fixture(t);
+ x.produto({nome:'verdeHTTP',preco:25000});
+ const p=await x.criarPedido({nome:'verdeHTTP',preco:25000});
+ await x.confirmar(p);
+ x.producao.aprovarEEnfileirarEmEnsaio(p);
+ const app=criarAppIdentidadeLoop({
+  contas:x.contas,motorLoop:x.motor,eventosComerciais:x.evento,
+  origemHttps:'https://contas.example.invalid',permitirCadastro:true
+ });
+ const server=app.listen(0,'127.0.0.1');
+ await once(server,'listening');
+ t.after(()=>new Promise(resolve=>server.close(resolve)));
+ const base='http://127.0.0.1:'+server.address().port;
+ const cookies=[];
+ for(const nick of ['Comprador','Outro']){
+  const response=await fetch(base+'/api/contas/entrar',{
+   method:'POST',
+   headers:{Origin:'https://contas.example.invalid',
+    'Content-Type':'application/json'},
+   body:JSON.stringify({nick,senha:'SenhaDeEnsaio2026!'})
+  });
+  assert.equal(response.status,200);
+  cookies.push(response.headers.get('set-cookie').split(';')[0]);
+ }
+ const estado=await (await fetch(base+'/api/loop/estado',{
+  headers:{Cookie:cookies[0]}
+ })).json();
+ assert.equal(estado.minhasPosicoes.length,1);
+ assert.equal(estado.minhasPosicoes[0].local,'FILA_B');
+ assert.equal(estado.minhasPosicoes[0].pedidoDeOrigemEnsaio,p.pedidoId);
+ assert.equal(estado.eventosComerciais.promovidasSomenteEmEnsaio,1);
+ assert.equal(estado.eventosComerciais.aguardandoConciliacao,1);
+ assert.equal(estado.eventosComerciais.liberadosParaLoop,0);
+ assert.equal(estado.catracaClientePodeGirar,false);
+ assert.equal(estado.financeiroReal,false);
+ const outro=await (await fetch(base+'/api/loop/estado?titularId='+
+  encodeURIComponent(x.titular.titularId),{
+  headers:{Cookie:cookies[1]}
+ })).json();
+ assert.equal(outro.minhasPosicoes.length,0);
+ assert.equal(outro.eventosComerciais.promovidasSomenteEmEnsaio,0);
+ assert.equal(JSON.stringify(outro).includes(p.pedidoId),false);
+ assert.equal((await fetch(base+'/api/loop/controlar-catraca',{
+  method:'POST',headers:{Cookie:cookies[0],
+   Origin:'https://contas.example.invalid',
+   'Content-Type':'application/json'},
+  body:JSON.stringify({acao:'GIRAR'})
+ })).status,404);
+ assert.equal((await fetch(base+'/api/loop/registrar-compra',{
+  method:'POST',headers:{Cookie:cookies[0],
+   Origin:'https://contas.example.invalid',
+   'Content-Type':'application/json'},
+  body:JSON.stringify({pedidoId:p.pedidoId})
+ })).status,404);
+ assert.equal(x.motor.verificar().compras,1);
 });
