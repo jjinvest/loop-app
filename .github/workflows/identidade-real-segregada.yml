@@ -18,6 +18,8 @@ on:
       - 'test/portas-financeiras-modulares.test.js'
       - 'test/plano-roteamento-tres-bancos-lab.test.js'
       - 'src/domain/plano-roteamento-tres-bancos-lab.js'
+      - 'src/producao/adaptadores-psp-readonly.js'
+      - 'test/adaptadores-psp-readonly.test.js'
       - 'test/identidade-real-persistencia.test.js'
       - 'test/api-identidade-real-sem-pagamentos.test.js'
       - 'test/interface-aprovada-identidade-real.test.js'
@@ -68,6 +70,7 @@ jobs:
           node --check src/producao/classificacao-comercial-loop-sqlite.js
           node --check src/producao/montar-comercial-sem-homologacao.js
           node --check src/producao/portas-financeiras-modulares.js
+          node --check src/producao/adaptadores-psp-readonly.js
           node --check src/producao/tesouraria-modular-ensaio-sqlite.js
           node --check src/producao/interface-aprovada-contas.js
           node --check src/producao/interface-aprovada-loop.js
@@ -111,6 +114,8 @@ jobs:
         run: node --test test/eventos-comerciais-loop-sqlite.test.js
       - name: Cor da venda congelada, verde/cinza/dourado/roxo e sem ativar motor
         run: node --test test/classificacao-comercial-loop-sqlite.test.js
+      - name: Conectores externos isolados Celcoin e Asaas (somente leitura sandbox)
+        run: node --test test/adaptadores-psp-readonly.test.js
       - name: Provedores modulares, troca de banco, contingencia e bloqueio de saque
         run: node --test test/portas-financeiras-modulares.test.js test/plano-roteamento-tres-bancos-lab.test.js
       - name: Inicialização comercial protegida, leitura do pedido e bloqueio de PSP
