@@ -5,6 +5,8 @@ const express=require('express');
 const {COOKIE}=require('./identidade-cliente-loop-sqlite');
 const {montarInterfaceAprovada}=require('./interface-aprovada-loop');
 const {montarGatewayAdminComercial}=require('./gateway-admin-comercial');
+const {VisaoEscritorioUnificadaSQLite}=
+ require('./visao-escritorio-unificada-sqlite');
 function criarAppIdentidadeLoop({contas,origemHttps,
  permitirCadastro=false,backupEstado=null,
  pedidosComerciais=null,remessasOutbox=null,adminComercial=null,
@@ -16,7 +18,8 @@ function criarAppIdentidadeLoop({contas,origemHttps,
   throw Error('BACKUP_OFFSITE_REAL_NAO_CONFIGURADO');
  if(motorLoop!==null&&(
     typeof motorLoop.consultar!=='function'||
-    typeof motorLoop.verificar!=='function'))
+    typeof motorLoop.verificar!=='function'||
+    motorLoop.banco!==contas.banco))
   throw Error('LOOP_MOTOR_INTERNO_INVALIDO');
  if(eventosComerciais!==null&&(
     typeof eventosComerciais.verificar!=='function'||
@@ -35,6 +38,8 @@ function criarAppIdentidadeLoop({contas,origemHttps,
     typeof pedidosComerciais.listarDoTitular!=='function'||
     typeof remessasOutbox.consultar!=='function'))
   throw Error('PEDIDOS_REAIS_INTEGRACAO_INVALIDA');
+ const visaoEscritorio=motorLoop===null?null:
+  new VisaoEscritorioUnificadaSQLite({banco:contas.banco,motor:motorLoop});
  const backupAtual=()=>typeof backupEstado==='function'?
   backupEstado()?.backupAtualEmDia===true:true;
  const cadastroLiberado=()=>permitirCadastro&&backupAtual();
@@ -200,7 +205,9 @@ function criarAppIdentidadeLoop({contas,origemHttps,
      Number(bruto)>100000))
    return res.status(400).json({erro:'PAGINACAO_INVALIDA'});
   const offset=bruto===undefined?0:Number(bruto);
-  try{return res.json(contas.listarIndicados(req.conta.titularId,{offset}));}
+  try{return res.json(visaoEscritorio?
+   visaoEscritorio.listarRede({titularId:req.conta.titularId,offset}):
+   contas.listarIndicados(req.conta.titularId,{offset}));}
   catch{return res.status(503).json({erro:'REDE_INDISPONIVEL'});}
  });
  app.get('/convite/loja',(req,res)=>{
@@ -314,7 +321,9 @@ function criarAppIdentidadeLoop({contas,origemHttps,
   if(!motorLoop)return res.status(503).json({
    erro:'MOTOR_INTERNO_INDISPONIVEL',financeiroReal:false
   });
-  try{return res.json(motorLoop.consultar({titularId:req.conta.titularId}));}
+  try{return res.json(visaoEscritorio.consultarEstado({
+   titularId:req.conta.titularId
+  }));}
   catch{return res.status(503).json({erro:'MOTOR_INTERNO_INDISPONIVEL'});}
  });
  // Comprovantes comerciais estão no MESMO SQLite da conta e do pedido.
