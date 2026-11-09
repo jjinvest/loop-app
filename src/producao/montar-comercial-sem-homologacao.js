@@ -10,6 +10,27 @@ const {EventosComerciaisLoopSQLite}=
  require('./eventos-comerciais-loop-sqlite');
 
 function falhar(codigo){const e=new Error(codigo);e.codigo=codigo;throw e;}
+function exigirChaveParaHistoricoComercial({banco,chavePedidos=null}={}){
+ if(typeof banco?.prepare!=='function'||typeof banco?.exec!=='function')
+  falhar('COMERCIAL_SEGURO_BANCO_INVALIDO');
+ if(chavePedidos!==null){
+  if(!Buffer.isBuffer(chavePedidos)||chavePedidos.length!==32)
+   falhar('COMERCIAL_SEGURO_CHAVE_INVALIDA');
+  return {historicoComercialAutorizado:true};
+ }
+ for(const nome of [
+  'loja_real_pedidos','loja_real_cotacoes',
+  'loja_real_outbox_fornecedor','loop_real_eventos_comerciais',
+  'loop_real_fotos_regras_pedido'
+ ]){
+  if(!banco.prepare(
+   "SELECT 1 FROM sqlite_master WHERE type='table' AND name=?"
+  ).get(nome))continue;
+  if(banco.prepare('SELECT 1 FROM '+nome+' LIMIT 1').get())
+   falhar('COMERCIAL_SEGURO_CHAVE_PEDIDOS_AUSENTE_COM_DADOS');
+ }
+ return {historicoComercialAutorizado:false};
+}
 function montarComercialSemHomologacao({
  banco,chavePedidos,auditoria,manutencao
 }={}){
@@ -53,4 +74,4 @@ function montarComercialSemHomologacao({
   ativacaoPosicoesHabilitada:false
  });
 }
-module.exports={montarComercialSemHomologacao};
+module.exports={montarComercialSemHomologacao,exigirChaveParaHistoricoComercial};

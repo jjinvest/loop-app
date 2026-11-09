@@ -22,7 +22,8 @@ const {CatalogoMultiDistribuidoresSQLite}=
  require('../src/producao/catalogo-multidistribuidores-sqlite');
 const {ControleEconomicoLojaSQLite}=
  require('../src/producao/controle-economico-loja-sqlite');
-const {montarComercialSemHomologacao}=
+const {montarComercialSemHomologacao,
+ exigirChaveParaHistoricoComercial}=
  require('../src/producao/montar-comercial-sem-homologacao');
 const {AuditoriaOperacionalSQLite}=
  require('../src/producao/auditoria-operacional-sqlite');
@@ -135,6 +136,9 @@ async function iniciar(ambiente=process.env){
   });
   // Configurações de cores no mesmo banco. Nenhuma prova externa de PSP,
   // compra ou ativação é disponibilizada por este serviço.
+  exigirChaveParaHistoricoComercial({
+   banco,chavePedidos:config.chavePedidos
+  });
   const comercial=config.chavePedidos?montarComercialSemHomologacao({
    banco,chavePedidos:config.chavePedidos,auditoria,manutencao
   }):null;

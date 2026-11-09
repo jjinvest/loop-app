@@ -23,7 +23,8 @@ const {MotorLoopIntegradoSQLite}=
  require('../src/producao/motor-loop-integrado-sqlite');
 const {criarAppIdentidadeLoop}=
  require('../src/producao/servidor-identidade-loop');
-const {montarComercialSemHomologacao}=
+const {montarComercialSemHomologacao,
+ exigirChaveParaHistoricoComercial}=
  require('../src/producao/montar-comercial-sem-homologacao');
 const {validarIdentidade}=
  require('../src/producao/backup-identidade-real');
@@ -224,4 +225,38 @@ test('comercial não inicia com pedido já pago sem evento no mesmo banco',async
   auditoria:env.auditoria,manutencao:env.manutencao
  }),{codigo:'COMERCIAL_SEGURO_AUDITORIA_DIVERGENTE'});
  assert.equal(env.motor.consultar().posicoesReais,0);
+});
+
+test('reinício com pedidos existentes e sem chave comercial falha fechado',async t=>{
+ const x=await preparar(t);
+ t.after(()=>{try{x.encerrar();}catch{}});
+ const y=x.env;
+ assert.equal(exigirChaveParaHistoricoComercial({
+  banco:y.banco,chavePedidos:null
+ }).historicoComercialAutorizado,false);
+ const ponte=montarComercialSemHomologacao({
+  banco:y.banco,chavePedidos:x.segredos.pedidos,
+  auditoria:y.auditoria,manutencao:y.manutencao
+ });
+ y.catalogo.criarProduto({produtoId:'livro',titulo:'Livro fictício'});
+ y.catalogo.vincularOferta({produtoId:'livro',distribuidorId:'distribuidorA',
+  sku:'SKU_LIVRO',precoUnitCentavos:25000});
+ ponte.classificacaoLoop.configurarProduto({
+  produtoId:'livro',cor:'VERDE',autorizado:true
+ });
+ const simulado=pedidosDeEnsaio(x,{
+  classificacaoLoop:ponte.classificacaoLoop,eventosComerciais:ponte.eventosComerciais
+ });
+ const p=await simulado.pedidos.criarPedido({
+  titularId:x.usuarios[0].titularId,cotacaoId:simulado.cotacao.cotacaoId,
+  chaveIdempotencia:'TESTE_1',enderecoEntrega:END
+ });
+ assert.equal(p.status,'AGUARDANDO_PAGAMENTO');
+ assert.throws(()=>exigirChaveParaHistoricoComercial({
+  banco:y.banco,chavePedidos:null
+ }),{codigo:'COMERCIAL_SEGURO_CHAVE_PEDIDOS_AUSENTE_COM_DADOS'});
+ assert.equal(exigirChaveParaHistoricoComercial({
+  banco:y.banco,chavePedidos:x.segredos.pedidos
+ }).historicoComercialAutorizado,true);
+ assert.equal(y.motor.consultar().posicoesReais,0);
 });
