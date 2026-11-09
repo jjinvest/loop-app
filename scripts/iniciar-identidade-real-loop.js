@@ -22,10 +22,8 @@ const {CatalogoMultiDistribuidoresSQLite}=
  require('../src/producao/catalogo-multidistribuidores-sqlite');
 const {ControleEconomicoLojaSQLite}=
  require('../src/producao/controle-economico-loja-sqlite');
-const {PedidosComerciaisSQLite}=
- require('../src/producao/pedidos-comerciais-sqlite');
-const {ClassificacaoComercialLoopSQLite}=
- require('../src/producao/classificacao-comercial-loop-sqlite');
+const {montarComercialSemHomologacao}=
+ require('../src/producao/montar-comercial-sem-homologacao');
 const {AuditoriaOperacionalSQLite}=
  require('../src/producao/auditoria-operacional-sqlite');
 const {ManutencaoComercialSQLite}=
@@ -137,17 +135,11 @@ async function iniciar(ambiente=process.env){
   });
   // Configurações de cores no mesmo banco. Nenhuma prova externa de PSP,
   // compra ou ativação é disponibilizada por este serviço.
-  let classificacaoLoop=null;
-  if(config.chavePedidos){
-   new PedidosComerciaisSQLite({
-    banco,chavePedidos:config.chavePedidos,manutencao,
-    consultarCotacaoConfiavel:async()=>{throw Error('FORNECEDOR_NAO_HOMOLOGADO');},
-    consultarPagamentoPsp:async()=>{throw Error('PSP_NAO_HOMOLOGADO');}
-   });
-   classificacaoLoop=new ClassificacaoComercialLoopSQLite({
-    banco,auditoria,manutencao
-   });
-  }
+  const comercial=config.chavePedidos?montarComercialSemHomologacao({
+   banco,chavePedidos:config.chavePedidos,auditoria,manutencao
+  }):null;
+  const classificacaoLoop=comercial?.classificacaoLoop||null;
+  const eventosComerciais=comercial?.eventosComerciais||null;
   agendador=criarAgendadorBackupIdentidadeReal({
    exigirProvaChaves:true,
    executar:()=>enviarBackupOffsiteIdentidade({
@@ -160,7 +152,8 @@ async function iniciar(ambiente=process.env){
   // listener; nenhuma conta real é criada sem prova de recuperação.
   await agendador.iniciar();
   const app=criarAppIdentidadeLoop({
-   contas,motorLoop,origemHttps:config.origemHttps,permitirCadastro:true,
+   contas,motorLoop,eventosComerciais,
+   origemHttps:config.origemHttps,permitirCadastro:true,
    backupEstado:()=>agendador.estado(),
    adminComercial:{catalogo,controle,sessoes,auditoria,manutencao,classificacaoLoop}
   });
