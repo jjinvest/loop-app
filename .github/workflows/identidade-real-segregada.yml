@@ -21,6 +21,8 @@ on:
       - 'src/producao/adaptadores-psp-readonly.js'
       - 'src/producao/contrato-extratos-readonly.js'
       - 'src/producao/inbox-extratos-asaas-sandbox-sqlite.js'
+      - 'src/producao/vinculos-contas-externas-ensaio-sqlite.js'
+      - 'test/vinculos-contas-externas-ensaio-sqlite.test.js'
       - 'test/inbox-extratos-asaas-sandbox-sqlite.test.js'
       - 'test/contrato-extratos-readonly.test.js'
       - 'test/adaptadores-psp-readonly.test.js'
@@ -85,6 +87,7 @@ jobs:
           node --check src/producao/adaptadores-psp-readonly.js
           node --check src/producao/contrato-extratos-readonly.js
           node --check src/producao/inbox-extratos-asaas-sandbox-sqlite.js
+          node --check src/producao/vinculos-contas-externas-ensaio-sqlite.js
           node --check src/producao/conferencia-observacoes-psp.js
           node --check src/producao/observacoes-psp-ensaio-sqlite.js
           node --check src/producao/conciliacao-multibancos-ensaio-sqlite.js
@@ -140,6 +143,8 @@ jobs:
         run: node --test test/observacoes-psp-ensaio-sqlite.test.js
       - name: Convergencia externa de PSP e Pix sandbox, sem credito ou reenvio
         run: node --test test/conferencia-observacoes-psp.test.js
+      - name: Vinculos bancarios declarados, titular HMAC, replay e restauracao
+        run: node --test test/vinculos-contas-externas-ensaio-sqlite.test.js
       - name: Arquivo de extrato sandbox no SQLite unificado com replay e restauracao
         run: node --test test/inbox-extratos-asaas-sandbox-sqlite.test.js
       - name: Extrato paginado Asaas com origem fixa, quarentena e bloqueio de paginas incompletas

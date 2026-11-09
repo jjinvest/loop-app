@@ -41,6 +41,8 @@ const {InboxExtratosAsaasSandboxSQLite,
  require('../src/producao/inbox-extratos-asaas-sandbox-sqlite');
 const {coletarExtratoReadOnly}=
  require('../src/producao/contrato-extratos-readonly');
+const {VinculosContasExternasEnsaioSQLite}=
+ require('../src/producao/vinculos-contas-externas-ensaio-sqlite');
 const DOC='Termos de conta fictícia para exercício sem provedor PSP, sem saques, '+
  'sem dinheiro e sem liberação comercial. Não há posição remunerada.';
 const ORIGEM='https://contas.example.invalid';
@@ -577,6 +579,22 @@ test('cinco missoes integradas: distribuir, sacar, abastecer, trocar e restaurar
   movimentoId:'LOJA_'+novo.pedidoId,tipo:'CREDITO',valorCentavos:6500
  }).registrado,true);
  assert.equal(bancos.verificar().totalEvidencias,2);
+ const controle=new VinculosContasExternasEnsaioSQLite({
+  banco:env.banco,segredoHmac:Buffer.alloc(32,23)
+ });
+ for(const [id,alias,provedor] of [
+  ['VINCULO_INTER_01','LOOP:INTER','INTER'],
+  ['VINCULO_MP_01','LOJA:MERCADO_PAGO','MERCADO_PAGO'],
+  ['VINCULO_ASAAS_01','PAGADOR:ASAAS','ASAAS']
+ ])controle.registrarDeclaracao({
+  vinculoId:id,contaAlias:alias,provedor,
+  contaReferencia:'CONTA_TESTE_'+id,
+  documentoTitular:'11111111111111',
+  documentoTitularEsperado:'11111111111111'
+ });
+ assert.equal(controle.verificar().vinculosDeclarados,3);
+ assert.equal(controle.diagnosticarExtratosDeclarados()
+  .titularidadeBancariaAutenticada,false);
  const armazem=teso.extratosAsaasInbox;
  const period={inicio:'2026-11-01',fim:'2026-11-09'};
  const extratoConsultado=await consultarEArquivarExtratoAsaasSandbox({
@@ -659,6 +677,10 @@ test('cinco missoes integradas: distribuir, sacar, abastecer, trocar e restaurar
   const inboxRecuperada=Object.create(InboxExtratosAsaasSandboxSQLite.prototype);
   inboxRecuperada.db=db2;
   assert.equal(inboxRecuperada.verificar().registros,1);
+  const vinculosRestaurados=Object.create(
+   VinculosContasExternasEnsaioSQLite.prototype);
+  vinculosRestaurados.db=db2;
+  assert.equal(vinculosRestaurados.verificar().vinculosDeclarados,3);
   assert.equal(extratosRestaurados.analisar()
    .movimentosComDeclaracoesConcordantes>=2,true);
   assert.equal(extratosRestaurados.analisar().conciliacaoRealCertificada,false);

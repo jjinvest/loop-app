@@ -12,6 +12,8 @@ const {avaliarConvergenciaUnificadaEnsaio}=
  require('./convergencia-unificada-financeira-ensaio');
 const {InboxExtratosAsaasSandboxSQLite}=
  require('./inbox-extratos-asaas-sandbox-sqlite');
+const {VinculosContasExternasEnsaioSQLite}=
+ require('./vinculos-contas-externas-ensaio-sqlite');
 const {planejarRecebimentoTresBancos}=
  require('../domain/plano-roteamento-tres-bancos-lab');
 const {criarPlanoFinanceiro,validarPlanoFinanceiro,planejarTrocaFinanceira}=
@@ -27,7 +29,8 @@ const TABELAS_TESOURARIA_ENSAIO=Object.freeze([
  'loop_lab_tesouraria_observacoes_psp',
  'loop_lab_tesouraria_extratos_bancarios',
  'loop_lab_tesouraria_lotes_extrato',
- 'loop_lab_tesouraria_itens_extrato'
+ 'loop_lab_tesouraria_itens_extrato',
+ 'loop_lab_tesouraria_vinculos_contas'
 ]);
 function falha(codigo){const e=new Error(codigo);e.codigo=codigo;throw e;}
 const ID=/^[A-Za-z0-9_-]{1,120}$/;
@@ -126,6 +129,7 @@ class TesourariaModularEnsaioSQLite{
   this.observacoesPsp=new ObservacoesPSPEnsaioSQLite({banco,agora});
   this.conciliacaoBancaria=new ConciliacaoMultibancosEnsaioSQLite({banco,agora});
   this.extratosAsaasInbox=new InboxExtratosAsaasSandboxSQLite({banco,agora});
+  this.contasExternas=new VinculosContasExternasEnsaioSQLite({banco,agora});
   this.verificar();
  }
  _agora(){
@@ -637,7 +641,10 @@ class TesourariaModularEnsaioSQLite{
   });
  }
  diagnosticarConvergenciaExternaEnsaio(){
-  return avaliarConvergenciaUnificadaEnsaio({tesouraria:this});
+  return Object.freeze({
+   ...avaliarConvergenciaUnificadaEnsaio({tesouraria:this}),
+   titularidadeDasContas:this.contasExternas.diagnosticarExtratosDeclarados()
+  });
  }
  consultarTitularEnsaio({titularId}={}){
   this._titular(titularId);
@@ -800,6 +807,10 @@ class TesourariaModularEnsaioSQLite{
   inbox.db=db;
   if(inbox.verificar().integridade!=='OK')
    falha('TESOURARIA_ENSAIO_INBOX_ASAAS_INCONSISTENTE');
+  const vinculos=Object.create(VinculosContasExternasEnsaioSQLite.prototype);
+  vinculos.db=db;
+  if(vinculos.verificar().integridade!=='OK')
+   falha('TESOURARIA_ENSAIO_VINCULOS_INCONSISTENTES');
   const cobertura=this._cobertura();
   return {integridade:'OK',movimentos:seq,
    recebimentos:this.db.prepare(
