@@ -106,6 +106,7 @@ on:
       - 'src/candidato/escritorio-admin-candidato-ui.html'
       - 'src/laboratorio/checkout-staging-ui.css'
       - 'scripts/validar-conta-unica-candidato-browser.js'
+      - 'scripts/validar-identidade-real-navegador.js'
       - '.github/workflows/preview-escritorio-protegido.yml'
   workflow_dispatch:
     inputs:
@@ -222,6 +223,8 @@ jobs:
       - run: npm install --no-save playwright@1.56.1
       - run: npx playwright install --with-deps chromium
       - run: node scripts/validar-conta-unica-candidato-browser.js
+      - name: Navegacao da identidade definitiva em PC/celular sem checkout
+        run: node scripts/validar-identidade-real-navegador.js
       - name: Guardar capturas reais da mesma interface no PC e celular
         uses: actions/upload-artifact@v4
         with:
@@ -229,5 +232,9 @@ jobs:
           path: |
             artifacts/conta-unica-candidato-pc.png
             artifacts/conta-unica-candidato-celular.png
+            artifacts/identidade-real-escritorio-pc.png
+            artifacts/identidade-real-escritorio-celular.png
+            artifacts/identidade-real-loja-pc.png
+            artifacts/identidade-real-loja-celular.png
           if-no-files-found: error
           retention-days: 20
