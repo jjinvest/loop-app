@@ -45,7 +45,8 @@ async function preparar(t){
   const contas=new IdentidadeClienteLoopReal({
    banco:db,chaveEmail:segredos.email,chaveCifra:segredos.cifra,
    chaveCodigo:segredos.codigo,
-   termos:{versao:'V1',texto:DOC},privacidade:{versao:'V1',texto:DOC},
+   termos:{versao:'LOOP-TERMOS-2026',texto:DOC},
+   privacidade:{versao:'LOOP-PRIVACIDADE-2026',texto:DOC},
    enviarEmail:async()=>true
   });
   const auditoria=new AuditoriaOperacionalSQLite({
