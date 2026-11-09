@@ -34,6 +34,8 @@ const {TesourariaModularEnsaioSQLite}=
 const {ObservacoesPSPEnsaioSQLite,
  consultarERegistrarObservacaoAsaasSandbox}=
  require('../src/producao/observacoes-psp-ensaio-sqlite');
+const {ConciliacaoMultibancosEnsaioSQLite}=
+ require('../src/producao/conciliacao-multibancos-ensaio-sqlite');
 const DOC='Termos de conta fictícia para exercício sem provedor PSP, sem saques, '+
  'sem dinheiro e sem liberação comercial. Não há posição remunerada.';
 const ORIGEM='https://contas.example.invalid';
@@ -557,6 +559,21 @@ test('cinco missoes integradas: distribuir, sacar, abastecer, trocar e restaurar
   observacaoId:'OBS_PIX_TESTE_01'
  })).estado,'CONFIRMACAO_SOMENTE_SANDBOX');
  assert.equal(caixa.verificar().observacoes,2);
+ const bancos=teso.conciliacaoBancaria;
+ const testeBanco=({evidenciaId,banco,conta,movimentoId,tipo,valorCentavos})=>
+  bancos.registrarExtratoDeclarado({evidenciaId,banco,conta,movimentoId,
+   tipo,valorCentavos});
+ assert.equal(testeBanco({
+  evidenciaId:'EXTRATO_INTER_01',banco:'INTER',conta:'LOOP:INTER',
+  movimentoId:'LOOP_'+novo.pedidoId,tipo:'CREDITO',valorCentavos:25000
+ }).registrado,true);
+ assert.equal(testeBanco({
+  evidenciaId:'EXTRATO_MP_01',banco:'MERCADO_PAGO',conta:'LOJA:MERCADO_PAGO',
+  movimentoId:'LOJA_'+novo.pedidoId,tipo:'CREDITO',valorCentavos:6500
+ }).registrado,true);
+ assert.equal(bancos.verificar().totalEvidencias,2);
+ assert.equal(bancos.analisar().conciliacaoRealCertificada,false);
+ assert.equal(bancos.analisar().movimentosComDeclaracoesConcordantes>=2,true);
  assert.equal(caixa.consultarCompromisso({
   tipo:'PIX',referencia:'PIX_FICTICIO_01'
  }).pagamentoRealHabilitado,false);
@@ -606,6 +623,13 @@ test('cinco missoes integradas: distribuir, sacar, abastecer, trocar e restaurar
   const recuperado=Object.create(ObservacoesPSPEnsaioSQLite.prototype);
   recuperado.db=db2;
   assert.equal(recuperado.verificar().observacoes,2);
+  const extratosRestaurados=Object.create(
+   ConciliacaoMultibancosEnsaioSQLite.prototype);
+  extratosRestaurados.db=db2;
+  assert.equal(extratosRestaurados.verificar().totalEvidencias,2);
+  assert.equal(extratosRestaurados.analisar()
+   .movimentosComDeclaracoesConcordantes>=2,true);
+  assert.equal(extratosRestaurados.analisar().conciliacaoRealCertificada,false);
   assert.equal(recuperado.consultarCompromisso({
    tipo:'PIX',referencia:'PIX_FICTICIO_01'
   }).pagamentoRealHabilitado,false);

@@ -6,6 +6,8 @@
 const {createHash}=require('node:crypto');
 const {ObservacoesPSPEnsaioSQLite}=
  require('./observacoes-psp-ensaio-sqlite');
+const {ConciliacaoMultibancosEnsaioSQLite}=
+ require('./conciliacao-multibancos-ensaio-sqlite');
 const {planejarRecebimentoTresBancos}=
  require('../domain/plano-roteamento-tres-bancos-lab');
 const {criarPlanoFinanceiro,validarPlanoFinanceiro,planejarTrocaFinanceira}=
@@ -18,7 +20,8 @@ const TABELAS_TESOURARIA_ENSAIO=Object.freeze([
  'loop_lab_tesouraria_tentativas',
  'loop_lab_tesouraria_migracoes',
  'loop_lab_tesouraria_compromissos_psp',
- 'loop_lab_tesouraria_observacoes_psp'
+ 'loop_lab_tesouraria_observacoes_psp',
+ 'loop_lab_tesouraria_extratos_bancarios'
 ]);
 function falha(codigo){const e=new Error(codigo);e.codigo=codigo;throw e;}
 const ID=/^[A-Za-z0-9_-]{1,120}$/;
@@ -115,6 +118,7 @@ class TesourariaModularEnsaioSQLite{
     .run(p.revisao,JSON.stringify(p.rotas),this._agora());
   }
   this.observacoesPsp=new ObservacoesPSPEnsaioSQLite({banco,agora});
+  this.conciliacaoBancaria=new ConciliacaoMultibancosEnsaioSQLite({banco,agora});
   this.verificar();
  }
  _agora(){
@@ -778,6 +782,10 @@ class TesourariaModularEnsaioSQLite{
   observacoes.db=db;
   if(observacoes.verificar().integridade!=='OK')
    falha('TESOURARIA_ENSAIO_OBSERVACOES_INCONSISTENTES');
+  const extratos=Object.create(ConciliacaoMultibancosEnsaioSQLite.prototype);
+  extratos.db=db;
+  if(extratos.verificar().integridade!=='OK')
+   falha('TESOURARIA_ENSAIO_EXTRATOS_INCONSISTENTES');
   const cobertura=this._cobertura();
   return {integridade:'OK',movimentos:seq,
    recebimentos:this.db.prepare(
