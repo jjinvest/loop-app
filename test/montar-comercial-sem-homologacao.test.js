@@ -341,6 +341,73 @@ test('cinco missoes integradas: distribuir, sacar, abastecer, trocar e restaurar
   titularId:x.usuarios[1].titularId,
   creditoId:'DIREITO_INSUFICIENTE',valorCentavos:15000
  }),{codigo:'TESOURARIA_ENSAIO_COBERTURA_INSUFICIENTE'});
+ // A solicitacao parte do MESMO Escritorio Virtual, com sessao e CSRF.
+ // O operador so injeta CREDITOS FICTICIOS no banco de ensaio; a API HTTP
+ // nao oferece nem creditos, nem transferencias, nem Pix bancario.
+ const appFinanceiro=criarAppIdentidadeLoop({
+  contas:env.contas,motorLoop:env.motor,
+  eventosComerciais:ponte.eventosComerciais,
+  tesourariaEnsaio:teso,origemHttps:ORIGEM,permitirCadastro:true
+ });
+ const servidorFinanceiro=appFinanceiro.listen(0,'127.0.0.1');
+ await once(servidorFinanceiro,'listening');
+ const baseFinanceiro='http://127.0.0.1:'+servidorFinanceiro.address().port;
+ const solicitarApi=async(path,opts={})=>fetch(baseFinanceiro+path,opts);
+ try{
+  const login=await solicitarApi('/api/contas/entrar',{
+   method:'POST',headers:{Origin:ORIGEM,'Content-Type':'application/json'},
+   body:JSON.stringify({nick:'Alice',senha:'SenhaDeEnsaio2026!'})
+  });
+  assert.equal(login.status,200);
+  const sessao=await login.json();
+  assert.equal(sessao.tesourariaEnsaioAtiva,true);
+  const cookie=login.headers.get('set-cookie').split(';')[0];
+  assert.equal((await solicitarApi('/api/loop/tesouraria-ensaio')).status,401);
+  assert.equal((await solicitarApi('/api/loop/tesouraria-ensaio',{
+   headers:{Cookie:cookie}
+  })).status,200);
+  assert.equal((await solicitarApi('/api/saques/solicitar',{
+   method:'POST',headers:{Cookie:cookie,Origin:ORIGEM}
+  })).status,503);
+  const dados={saqueId:'SAQUE_FICTICIO_01',
+   chaveIdempotencia:'CLIENTE_UMA_VEZ',valorCentavos:5000};
+  assert.equal((await solicitarApi('/api/loop/tesouraria-ensaio/saques',{
+   method:'POST',
+   headers:{Origin:ORIGEM,Cookie:cookie,'Content-Type':'application/json'},
+   body:JSON.stringify(dados)
+  })).status,403);
+  assert.equal((await solicitarApi('/api/loop/tesouraria-ensaio/saques',{
+   method:'POST',
+   headers:{Origin:ORIGEM,Cookie:cookie,'Content-Type':'application/json',
+    'X-Loop-Csrf':sessao.csrf},
+   body:JSON.stringify({...dados,titularId:x.usuarios[1].titularId})
+  })).status,400);
+  const aprovado=await solicitarApi('/api/loop/tesouraria-ensaio/saques',{
+   method:'POST',headers:{Origin:ORIGEM,Cookie:cookie,
+    'Content-Type':'application/json','X-Loop-Csrf':sessao.csrf},
+   body:JSON.stringify(dados)
+  });
+  assert.equal(aprovado.status,200);
+  assert.equal((await aprovado.json()).estado,'RESERVADO');
+  const repetir=await solicitarApi('/api/loop/tesouraria-ensaio/saques',{
+   method:'POST',headers:{Origin:ORIGEM,Cookie:cookie,
+    'Content-Type':'application/json','X-Loop-Csrf':sessao.csrf},
+   body:JSON.stringify(dados)
+  });
+  assert.equal((await repetir.json()).repetido,true);
+  const outro=await solicitarApi('/api/contas/entrar',{
+   method:'POST',headers:{Origin:ORIGEM,'Content-Type':'application/json'},
+   body:JSON.stringify({nick:'Bruna',senha:'SenhaDeEnsaio2026!'})
+  });
+  assert.equal(outro.status,200);
+  const cookieOutro=outro.headers.get('set-cookie').split(';')[0];
+  const vistaOutro=await solicitarApi('/api/loop/tesouraria-ensaio',{
+   headers:{Cookie:cookieOutro}
+  });
+  assert.equal((await vistaOutro.json()).saldoFicticioDisponivelCentavos,0);
+ }finally{
+  await new Promise(resolve=>servidorFinanceiro.close(resolve));
+ }
  const saque=()=>teso.solicitarSaqueEnsaio({
   titularId:titular,saqueId:'SAQUE_FICTICIO_01',
   chaveIdempotencia:'CLIENTE_UMA_VEZ',valorCentavos:5000
