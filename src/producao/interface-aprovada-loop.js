@@ -90,6 +90,14 @@ function renderizarInterfaceAprovada(){
   '<input id="tesourariaEnsaioValor" type="number" min="25" step="0.01" value="25"></label>'+
   '<button id="tesourariaEnsaioSolicitar" type="button">Simular solicitacao</button>'+
   '<p id="tesourariaEnsaioStatus" role="status"></p></div>');
+ // Filtro de posicoes inserido na tela original (sem duplicar pagina).
+ html=trocarExato(html,
+  '    <div id="posicoesPainel" aria-live="polite">Consultando posições…</div>',
+  '    <label id="rotuloSeletorPosicaoMotor" for="seletorPosicaoMotor" hidden>'+
+  'Visualizar posição em ensaio'+
+  '<select id="seletorPosicaoMotor">'+
+  '<option value="">Todas as posições</option></select></label>'+
+  '<div id="posicoesPainel" aria-live="polite">Consultando posições…</div>');
  // Texto da versão de ensaio permanece fora da vista, sem ser reaproveitado
  // como conteúdo comercial. Não expor recursos financeiros incompletos.
  return html;

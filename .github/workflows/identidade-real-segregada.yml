@@ -10,6 +10,8 @@ on:
       - 'scripts/provar-recuperacao-independente-identidade.js'
       - 'test/identidade-real-isolada.test.js'
       - 'test/motor-loop-integrado-identidade.test.js'
+      - 'src/producao/visao-escritorio-unificada-sqlite.js'
+      - 'test/visao-escritorio-unificada-sqlite.test.js'
       - 'test/motor-loop-concorrencia-e-ciclos.test.js'
       - 'test/indicacoes-cadastro-real.test.js'
       - 'test/eventos-comerciais-loop-sqlite.test.js'
@@ -104,6 +106,7 @@ jobs:
           node --check src/producao/servidor-identidade-loop.js
           node --check src/domain/plano-roteamento-tres-bancos-lab.js
           node --check src/producao/motor-loop-integrado-sqlite.js
+          node --check src/producao/visao-escritorio-unificada-sqlite.js
           node --check src/producao/identidade-cliente-loop-sqlite.js
           node --check src/producao/servidor-identidade-loop.js
           node --check src/producao/interface-aprovada-loop.js
@@ -131,6 +134,8 @@ jobs:
           node --check scripts/iniciar-identidade-real-loop.js
       - name: Conta, consentimento, senhas e recuperação
         run: node --test test/identidade-real-isolada.test.js
+      - name: Posicoes e Minha Equipe unificadas no mesmo SQLite com titularidade
+        run: node --test test/visao-escritorio-unificada-sqlite.test.js
       - name: Motor interno com três titulares, giro e reinício do banco
         run: node --test test/motor-loop-integrado-identidade.test.js
       - name: Multi-processo, contencao de SQLite, 120 eventos e 20 ciclos

@@ -10,6 +10,7 @@
  const indicadorNick=typeof ref==='string'&&/^[A-Za-z]{1,12}$/.test(ref)?
   ref.toLowerCase():null;
  let titularesIndicados=[],redePaginando=false;
+ let posicaoSelecionada='';
  let origemLinks=null;
  const codigos={
   CREDENCIAIS_INVALIDAS:'Confira seu nick e sua senha.',
@@ -170,7 +171,11 @@
    const nick=document.createElement('strong');
    nick.textContent='@'+p.nick;
    const estado=document.createElement('span');
-   estado.textContent='Cadastro registrado · aguardando compra confirmada';
+   estado.textContent=p.estado==='QUALIFICACAO_ENSAIO'?
+    'Indicação qualificada em ensaio · posição #'+p.posicaoDestinoEnsaio:
+    p.estado==='COMPRA_ENSAIO_SEM_QUALIFICACAO'?
+    'Compra em ensaio · aguardando qualificação':
+    'Cadastro registrado · aguardando compra confirmada';
    item.append(nick,estado);alvo.appendChild(item);
   }
  }
@@ -188,10 +193,14 @@
    $('maisEquipe').hidden=!dados.temMais;
    $('redeTotalCadastros').textContent=String(dados.total);
    $('resumoEquipe').textContent=String(dados.total);
-   $('redeAlocadasEnsaio').textContent='0';
-   $('redeADistribuirEnsaio').textContent='—';
+   $('redeAlocadasEnsaio').textContent=String(
+    dados.resumo?.qualificadasEmEnsaio??0);
+   $('redeADistribuirEnsaio').textContent=String(
+    dados.resumo?.comprasAguardandoQualificacaoEnsaio??0);
    $('equipeResumo').textContent=dados.total+
-    ' cadastro(s) pelo seu link. Sem bonificação ou posições reais.';
+    ' cadastro(s) pelo seu link · '+(dados.resumo?.comprasEmEnsaio??0)+
+    ' compra(s) em ensaio · '+(dados.resumo?.qualificadasEmEnsaio??0)+
+    ' indicação(ões) qualificadas em ensaio. Sem bonificação real.';
    exibirRede();
   }catch{
    $('equipeResumo').textContent='Sua rede não pôde ser consultada.';
@@ -217,6 +226,11 @@
   $('atalhoLoja').addEventListener('click',()=>location.assign('/loja'));
   $('atalhoPedidos').disabled=true;
   $('posicoesVerPedidos').disabled=true;
+  const seletor=$('seletorPosicaoMotor');
+  if(seletor)seletor.addEventListener('change',()=>{
+   posicaoSelecionada=seletor.value;
+   void carregarMotor();
+  });
  }
  async function carregarFinanceiroEnsaio(){
   const caixa=$('tesourariaEnsaioSaldo');
@@ -261,8 +275,13 @@
       !d.tabuleiro||!Array.isArray(d.tabuleiro.vagas)||
       d.tabuleiro.vagas.length!==6)
     throw Error('MOTOR_RESPOSTA_INVALIDA');
+   if(d.somenteLeitura!==true||d.compraRealHabilitada!==false||
+      d.catracaClientePodeGirar!==false||
+      !d.redeResumo||d.redeResumo.financeiroReal!==false)
+    throw Error('ESCRITORIO_RESPOSTA_INCONSISTENTE');
    const aguardando=d.eventosComerciais?.aguardandoConciliacao??0;
    const texto='Fila A: '+d.filaA+' · Fila B: '+d.filaB+
+    ' · Catraca (ensaio): '+d.catraca.estado+
     ' · Giros: '+d.catraca.giros+' · Eventos do ciclo: '+
     d.tabuleiro.eventosNoCiclo+'/6 · Pedidos comerciais pendentes: '+
     aguardando+' · Movimentação real indisponível.';
@@ -283,6 +302,23 @@
    $('motorContadorEventos').textContent=d.tabuleiro.eventosNoCiclo+
     '/6 eventos de validação interna';
    $('resumoPosicoes').textContent=String(d.minhasPosicoes.length);
+   const seletor=$('seletorPosicaoMotor');
+   const seletorRotulo=$('rotuloSeletorPosicaoMotor');
+   if(seletor){
+    const opcoes=d.minhasPosicoes.map(p=>String(p.numero));
+    if(!opcoes.includes(posicaoSelecionada))posicaoSelecionada='';
+    seletor.replaceChildren();
+    const geral=document.createElement('option');
+    geral.value='';geral.textContent='Todas as posições';
+    seletor.appendChild(geral);
+    for(const n of opcoes){
+     const opt=document.createElement('option');
+     opt.value=n;opt.textContent='Posição #'+n;
+     seletor.appendChild(opt);
+    }
+    seletor.value=posicaoSelecionada;
+    if(seletorRotulo)seletorRotulo.hidden=opcoes.length===0;
+   }
    const painel=$('posicoesPainel');
    painel.replaceChildren();
    if(!d.minhasPosicoes.length){
@@ -292,7 +328,8 @@
    }else{
     const grade=document.createElement('div');
     grade.className='loop03-grade-posicoes';
-    for(const pos of d.minhasPosicoes){
+    for(const pos of d.minhasPosicoes.filter(p=>
+     !posicaoSelecionada||String(p.numero)===posicaoSelecionada)){
      const card=document.createElement('article');
      card.className='loop03-unidade-posicao';
      const corpo=document.createElement('div');
@@ -300,8 +337,9 @@
      const id=document.createElement('strong');
      id.textContent='#'+pos.numero;
      const etapa=document.createElement('p');
-     etapa.textContent=pos.local+' · '+pos.indicacoesVinculadas+
-      ' indicação(ões) · sem direito financeiro real';
+     etapa.textContent=pos.local+' · '+pos.indicacoesQualificadasEnsaio+
+      ' indicação(ões) em ensaio · pedido de ensaio '+
+      pos.pedidoDeOrigemEnsaio+' · sem direito financeiro real';
      corpo.append(id,etapa);card.appendChild(corpo);grade.appendChild(card);
     }
     painel.appendChild(grade);
