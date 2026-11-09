@@ -176,12 +176,18 @@ class PedidosComerciaisSQLite{
    "SELECT 1 AS ok FROM sqlite_master",
    "WHERE type='table' AND name='loja_real_custos_ofertas'"
   ].join(' ')).get();
-  const select=(catalogoExiste&&custosExistem)?this.db.prepare([
+  // Produto precisa ser identificado mesmo quando ainda não foi cadastrado
+  // custo no painel administrativo. Nunca transformar SKU desconhecido em verde.
+  const select=catalogoExiste?this.db.prepare(custosExistem?[
    'SELECT o.produto_id,c.custo_unit_centavos,c.revisao',
    'FROM loja_real_ofertas_distribuidores o',
    'LEFT JOIN loja_real_custos_ofertas c ON',
    'c.produto_id=o.produto_id AND c.distribuidor_id=o.distribuidor_id',
    'AND c.sku=o.sku',
+   'WHERE o.distribuidor_id=? AND o.sku=?'
+  ].join(' '):[
+   'SELECT o.produto_id,NULL AS custo_unit_centavos,NULL AS revisao',
+   'FROM loja_real_ofertas_distribuidores o',
    'WHERE o.distribuidor_id=? AND o.sku=?'
   ].join(' ')):null;
   const add=this.db.prepare([

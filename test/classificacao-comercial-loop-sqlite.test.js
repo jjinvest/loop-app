@@ -8,6 +8,14 @@ const {IdentidadeClienteLoopReal}=
  require('../src/producao/identidade-cliente-loop-sqlite');
 const {CatalogoMultiDistribuidoresSQLite}=
  require('../src/producao/catalogo-multidistribuidores-sqlite');
+const {ControleEconomicoLojaSQLite}=
+ require('../src/producao/controle-economico-loja-sqlite');
+const {SessaoAdminComercialSQLite}=
+ require('../src/producao/sessao-admin-comercial-sqlite');
+const {AuditoriaOperacionalSQLite}=
+ require('../src/producao/auditoria-operacional-sqlite');
+const {ManutencaoComercialSQLite}=
+ require('../src/producao/manutencao-comercial-sqlite');
 const {PedidosComerciaisSQLite}=
  require('../src/producao/pedidos-comerciais-sqlite');
 const {ClassificacaoComercialLoopSQLite}=
@@ -46,8 +54,17 @@ async function fixture(t){
  });
  db.prepare('UPDATE loop_real_contas SET email_confirmado_em=? WHERE id=?')
   .run(Date.now(),titular.titularId);
+ const auditoria=new AuditoriaOperacionalSQLite({
+  banco:db,chaveAuditoria:randomBytes(32)
+ });
+ const manutencao=new ManutencaoComercialSQLite({banco:db,auditoria});
  const catalogo=new CatalogoMultiDistribuidoresSQLite({
-  banco:db,distribuidorHomologado:()=>false
+  banco:db,distribuidorHomologado:()=>false,auditoria,manutencao
+ });
+ new ControleEconomicoLojaSQLite({banco:db,auditoria,manutencao});
+ new SessaoAdminComercialSQLite({
+  banco:db,chaveAdmin:randomBytes(32),
+  credencialAdmin:'CredencialAdminDeEnsaio2026!MuitoForte'
  });
  new PedidosComerciaisSQLite({banco:db,chavePedidos:randomBytes(32),
   consultarCotacaoConfiavel:async()=>null,
