@@ -9,6 +9,17 @@ const {once}=require('node:events');
 const {randomBytes}=require('node:crypto');
 const {DatabaseSync}=require('node:sqlite');
 const {chromium}=require('playwright');
+const {MotorLoopIntegradoSQLite}=require('../src/producao/motor-loop-integrado-sqlite');
+const {SessaoAdminComercialSQLite,COOKIE_ADMIN}=
+ require('../src/producao/sessao-admin-comercial-sqlite');
+const {CatalogoMultiDistribuidoresSQLite}=
+ require('../src/producao/catalogo-multidistribuidores-sqlite');
+const {ControleEconomicoLojaSQLite}=
+ require('../src/producao/controle-economico-loja-sqlite');
+const {AuditoriaOperacionalSQLite}=
+ require('../src/producao/auditoria-operacional-sqlite');
+const {ManutencaoComercialSQLite}=
+ require('../src/producao/manutencao-comercial-sqlite');
 const {IdentidadeClienteLoopReal,COOKIE}=
  require('../src/producao/identidade-cliente-loop-sqlite');
 const {criarAppIdentidadeLoop}=
@@ -30,17 +41,35 @@ async function main(){
  });
  const docs=contas.documentos(),nick='DozeLetrasAB';
  assert.equal(nick.length,12);
- await contas.cadastrar({
+ const cliente=await contas.cadastrar({
   nome:'Pessoa de Ensaio',nick,email:'teste@example.invalid',
   senha:'SenhaDoEnsaio2026!',aceiteTermos:true,aceitePrivacidade:true,
   versaoTermos:docs.termos.versao,hashTermos:docs.termos.hash,
   versaoPrivacidade:docs.privacidade.versao,
   hashPrivacidade:docs.privacidade.hash
  });
+ const motorLoop=new MotorLoopIntegradoSQLite({banco});
+ motorLoop.registrarCompraEnsaio({
+  titularId:cliente.titularId,pedidoId:'pedido-browser'
+ });
+ const auditoria=new AuditoriaOperacionalSQLite({
+  banco,chaveAuditoria:randomBytes(32)
+ });
+ const manutencao=new ManutencaoComercialSQLite({banco,auditoria});
+ const catalogo=new CatalogoMultiDistribuidoresSQLite({
+  banco,distribuidorHomologado:()=>false,auditoria,manutencao
+ });
+ const controle=new ControleEconomicoLojaSQLite({banco,auditoria,manutencao});
+ const sessoes=new SessaoAdminComercialSQLite({banco,
+  chaveAdmin:randomBytes(32),
+  credencialAdmin:'CredencialAdministrativaIsolada2026!Teste'
+ });
+ const admin=sessoes.autenticar('CredencialAdministrativaIsolada2026!Teste');
  const login=await contas.entrar({nick,senha:'SenhaDoEnsaio2026!'});
  const app=criarAppIdentidadeLoop({
-  contas,origemHttps:'https://contas.example.invalid',
-  permitirCadastro:true
+  contas,motorLoop,origemHttps:'https://contas.example.invalid',
+  permitirCadastro:true,
+  adminComercial:{auditoria,manutencao,catalogo,controle,sessoes}
  });
  const server=app.listen(0,'127.0.0.1');
  await once(server,'listening');
@@ -63,6 +92,9 @@ async function main(){
    await contexto.addCookies([{
     name:COOKIE,value:login.token,url:base,
     httpOnly:true,secure:false,sameSite:'Strict'
+   },{
+    name:COOKIE_ADMIN,value:admin.token,url:base,
+    httpOnly:true,secure:false,sameSite:'Strict'
    }]);
    const page=await contexto.newPage();
    page.setDefaultTimeout(15000);
@@ -77,7 +109,16 @@ async function main(){
    assert.equal(await menuLoja.getAttribute('href'),'/loja');
    assert.equal(await barraLoja.getAttribute('href'),'/loja');
    assert.equal(await page.locator('#abaFinanceiro').isDisabled(),true);
-   assert.equal(await page.locator('#abaTabuleiro').isDisabled(),true);
+   assert.equal(await page.locator('#abaTabuleiro').isDisabled(),false);
+   assert.equal(await page.locator('#abaPosicoes').isDisabled(),false);
+   await page.locator('#loopResumoMotor').filter({hasText:/Fila B: 1/}).waitFor();
+   await page.locator('#abaTabuleiro').click();
+   await page.locator('#conteudoTabuleiroEstadoMotor')
+    .filter({hasText:/Eventos do ciclo: 0\/6/}).waitFor();
+   await page.locator('#abaPosicoes').click();
+   await page.locator('#conteudoPosicoesEstadoMotor')
+    .filter({hasText:/#1 \(FILA_B\)/}).waitFor();
+   await page.locator('#abaConta').click();
    assert.equal(await page.locator('#painelIdentidadeTeste').isHidden(),true);
    await page.screenshot({
     path:path.join(pasta,'identidade-real-escritorio-'+item.nome+'.png'),
@@ -102,6 +143,15 @@ async function main(){
    await page.locator('a.akitemm-voltar').click();
    await page.waitForURL(url=>url.pathname==='/escritorio');
    await page.locator('#painelConta').waitFor({state:'visible'});
+   // A tela administrativa consulta a MESMA base e exige outro cookie.
+   await page.goto(base+'/administrador',{waitUntil:'domcontentloaded'});
+   await page.locator('#loopAdminEstado')
+    .filter({hasText:/Fila B: 1/}).waitFor();
+   assert.equal(await page.locator('#atualizarLoopAdmin').isVisible(),true);
+   await page.screenshot({
+    path:path.join(pasta,'identidade-real-admin-'+item.nome+'.png'),
+    fullPage:true
+   });
    await contexto.close();
   }
   assert.equal(banco.prepare('PRAGMA integrity_check').get().integrity_check,'ok');

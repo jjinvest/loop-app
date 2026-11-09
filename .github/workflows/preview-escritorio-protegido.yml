@@ -236,5 +236,7 @@ jobs:
             artifacts/identidade-real-escritorio-celular.png
             artifacts/identidade-real-loja-pc.png
             artifacts/identidade-real-loja-celular.png
+            artifacts/identidade-real-admin-pc.png
+            artifacts/identidade-real-admin-celular.png
           if-no-files-found: error
           retention-days: 20
