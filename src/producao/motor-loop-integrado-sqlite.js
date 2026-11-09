@@ -273,6 +273,27 @@ class MotorLoopIntegradoSQLite{
  consultar({titularId=null}={}){
   if(titularId!==null)this._titular(titularId);
   const sim=this._sim(),estado=sim.estado();
+  // Pedido confirmado pelo PSP é apenas um evento comercial pendente.
+  // Não soma luzes, não entra em fila nem abre catraca.
+  let comercial={registrados:0,aguardandoConciliacao:0,
+   cancelados:0,liberadosParaLoop:0};
+  if(this.banco.prepare([
+   "SELECT 1 FROM sqlite_master WHERE type='table'",
+   "AND name='loop_real_eventos_comerciais'"
+  ].join(' ')).get()){
+   const filtro=titularId===null?'':'WHERE titular_id=?';
+   const stmt=this.banco.prepare([
+    'SELECT COUNT(*) AS total,',
+    "COALESCE(SUM(CASE WHEN estado='AGUARDANDO_CONCILIACAO'",
+    'THEN 1 ELSE 0 END),0) AS pendentes,',
+    "COALESCE(SUM(CASE WHEN estado='CANCELADO'",
+    'THEN 1 ELSE 0 END),0) AS cancelados',
+    'FROM loop_real_eventos_comerciais',filtro
+   ].join(' '));
+   const x=titularId===null?stmt.get():stmt.get(titularId);
+   comercial={registrados:x.total,aguardandoConciliacao:x.pendentes,
+    cancelados:x.cancelados,liberadosParaLoop:0};
+  }
   const visual=p=>p?{
    numero:p.id,minha:p.participanteId===titularId&&p.empresa!==true,
    dourada:p.empresa===true,
@@ -289,7 +310,7 @@ class MotorLoopIntegradoSQLite{
    transacoesReais:false,financeiroReal:false,
    limitePosicoesAtivas:LIMITE_POSICOES_ATIVAS,
    limitePorTitularTabuleiro:2,ordemAlimentacao:'3A:1B',
-   eventosPorCiclo:6,catraca:{
+   eventosPorCiclo:6,eventosComerciais:comercial,catraca:{
     estado:estado.catraca.status,giros:sim.giros
    },filaA:sim.filas.filaA.length,filaB:sim.filas.filaB.length,
    tabuleiro:{

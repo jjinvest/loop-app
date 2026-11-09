@@ -229,9 +229,11 @@
       !d.tabuleiro||!Array.isArray(d.tabuleiro.vagas)||
       d.tabuleiro.vagas.length!==6)
     throw Error('MOTOR_RESPOSTA_INVALIDA');
+   const aguardando=d.eventosComerciais?.aguardandoConciliacao??0;
    const texto='Fila A: '+d.filaA+' · Fila B: '+d.filaB+
     ' · Giros: '+d.catraca.giros+' · Eventos do ciclo: '+
-    d.tabuleiro.eventosNoCiclo+'/6 · Movimentação real indisponível.';
+    d.tabuleiro.eventosNoCiclo+'/6 · Pedidos comerciais pendentes: '+
+    aguardando+' · Movimentação real indisponível.';
    $('loopResumoMotor').textContent=texto;
    $('estadoTabuleiroIntegrado').textContent=texto;
    $('motorFilaA').textContent=d.filaA+' posição(ões) em validação interna';

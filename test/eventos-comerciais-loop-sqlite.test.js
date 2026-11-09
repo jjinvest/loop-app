@@ -99,6 +99,11 @@ test('pedido pago alimenta só a fila de revisão; replay é único e estorno é
   .eventos[0].estado,'AGUARDANDO_CONCILIACAO');
  assert.equal(x.motor.consultar().tabuleiro.eventosNoCiclo,0);
  assert.equal(x.motor.consultar().filaB,0);
+ assert.deepEqual(x.motor.consultar({titularId:x.titular.titularId})
+  .eventosComerciais,{
+   registrados:1,aguardandoConciliacao:1,cancelados:0,
+   liberadosParaLoop:0
+  });
  assert.equal(x.motor.consultar().posicoesReais,0);
  assert.equal(x.motor.verificar().integridade,'OK');
  assert.equal(validarIdentidade(x.arquivo).integridade,'ok');
@@ -107,6 +112,9 @@ test('pedido pago alimenta só a fila de revisão; replay é único e estorno é
  assert.equal((await x.pedidos.confirmarPagamento({pedidoId:id})).cancelado,true);
  assert.equal(x.eventos.verificar().cancelados,1);
  assert.equal(x.eventos.verificar().pendentes,0);
+ assert.equal(x.motor.consultar().eventosComerciais.cancelados,1);
+ assert.equal(x.motor.consultar().eventosComerciais.aguardandoConciliacao,0);
+ assert.equal(x.motor.consultar().tabuleiro.eventosNoCiclo,0);
  assert.equal((await x.pedidos.confirmarPagamento({pedidoId:id})).cancelado,true);
  assert.equal(x.eventos.verificar().eventos,1);
  x.pspStatus('CONFIRMADO');

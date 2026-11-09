@@ -319,6 +319,8 @@
    area.textContent='Fila A: '+m.filaA+' · Fila B: '+m.filaB+
     ' · Eventos: '+m.tabuleiro.eventosNoCiclo+'/6'+
     ' · Giros: '+m.catraca.giros+
+    ' · Pedidos comerciais pendentes: '+
+    (m.eventosComerciais?.aguardandoConciliacao??0)+
     ' · Operação financeira não habilitada.';
   }catch{
    area.textContent='Motor interno indisponível. Sem giro financeiro liberado.';
