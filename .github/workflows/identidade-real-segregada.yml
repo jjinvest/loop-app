@@ -19,6 +19,8 @@ on:
       - 'test/plano-roteamento-tres-bancos-lab.test.js'
       - 'src/domain/plano-roteamento-tres-bancos-lab.js'
       - 'src/producao/adaptadores-psp-readonly.js'
+      - 'src/producao/contrato-extratos-readonly.js'
+      - 'test/contrato-extratos-readonly.test.js'
       - 'test/adaptadores-psp-readonly.test.js'
       - 'src/producao/conferencia-observacoes-psp.js'
       - 'test/conferencia-observacoes-psp.test.js'
@@ -79,6 +81,7 @@ jobs:
           node --check src/producao/montar-comercial-sem-homologacao.js
           node --check src/producao/portas-financeiras-modulares.js
           node --check src/producao/adaptadores-psp-readonly.js
+          node --check src/producao/contrato-extratos-readonly.js
           node --check src/producao/conferencia-observacoes-psp.js
           node --check src/producao/observacoes-psp-ensaio-sqlite.js
           node --check src/producao/conciliacao-multibancos-ensaio-sqlite.js
@@ -134,6 +137,8 @@ jobs:
         run: node --test test/observacoes-psp-ensaio-sqlite.test.js
       - name: Convergencia externa de PSP e Pix sandbox, sem credito ou reenvio
         run: node --test test/conferencia-observacoes-psp.test.js
+      - name: Extrato paginado Asaas com origem fixa, quarentena e bloqueio de paginas incompletas
+        run: node --test test/contrato-extratos-readonly.test.js
       - name: Conectores externos isolados Celcoin e Asaas (somente leitura sandbox)
         run: node --test test/adaptadores-psp-readonly.test.js
       - name: Provedores modulares, troca de banco, contingencia e bloqueio de saque

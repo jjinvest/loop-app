@@ -3,6 +3,8 @@
 // Nenhuma criacao de cobranca, split, transferencia ou PIX; nao montados
 // automaticamente em producao nem usados para liberar fundos/posicoes.
 const {verificarPortaCandidata}=require('./portas-financeiras-modulares');
+const {coletarExtratoReadOnly,validarPeriodo}=
+ require('./contrato-extratos-readonly');
 const {provarAcessoCelcoinSandboxReadOnly}=
  require('../integracoes/celcoin-sandbox-prova-readonly');
 const BASE='https://api-sandbox.asaas.com/v3';
@@ -43,11 +45,19 @@ class AsaasSandboxPixOutReadOnly{
  async _obter(recurso,id=null){
   if(process.env.NODE_ENV==='production')
    erro('PORTAS_SANDBOX_PROIBIDA_EM_PRODUCAO');
-  if(!['payments','transfers','balance'].includes(recurso)||
-     (recurso==='balance'&&id!==null)||
-     (recurso!=='balance'&&!identidade(id)))
+  if(!['payments','transfers','balance','extrato'].includes(recurso))
    erro('PORTAS_SANDBOX_RECURSO_NAO_AUTORIZADO');
+  const extrato=recurso==='extrato';
+  if((recurso==='balance'&&id!==null)||
+     (extrato&&(!id||typeof id!=='object'||
+      !Number.isSafeInteger(id.offset)||id.offset<0||id.offset>5000||
+      !Number.isSafeInteger(id.limite)||id.limite<1||id.limite>100))||
+     (!extrato&&recurso!=='balance'&&!identidade(id)))
+   erro('PORTAS_SANDBOX_RECURSO_NAO_AUTORIZADO');
+  if(extrato)validarPeriodo({inicio:id.inicio,fim:id.fim});
   const caminho=recurso==='balance'?'/finance/balance':
+   extrato?'/financialTransactions?offset='+id.offset+
+    '&limit='+id.limite+'&startDate='+id.inicio+'&finishDate='+id.fim:
    '/'+recurso+'/'+id;
   let resposta;
   try{
@@ -82,6 +92,18 @@ class AsaasSandboxPixOutReadOnly{
   if(!dados||typeof dados!=='object'||Array.isArray(dados))
    erro('PORTAS_SANDBOX_RESPOSTA_INVALIDA');
   return dados;
+ }
+ async consultarExtratoPaginado({
+  inicio,fim,limite=50,maxPaginas=10
+ }={}){
+  if(process.env.NODE_ENV==='production')
+   erro('PORTAS_SANDBOX_PROIBIDA_EM_PRODUCAO');
+  validarPeriodo({inicio,fim});
+  return coletarExtratoReadOnly({
+   origem:'ASAAS_SANDBOX',inicio,fim,limite,maxPaginas,
+   consultarPagina:({offset,limite,inicio,fim})=>
+    this._obter('extrato',{offset,limite,inicio,fim})
+  });
  }
  async consultarSaldo(){
   const dados=await this._obter('balance');
@@ -166,6 +188,7 @@ function planoDeIntegracoesPSP(){
   celcoinSplitPixExternoAutomaticoComprovado:false,
   asaasSplitCarteiraExternaComprovado:false,
   moduloAsaasPixReadOnly:'SANDBOX_GET',
+  moduloExtratoAsaasReadOnly:'SANDBOX_GET_PAGINADO',
   moduloCelcoinReadOnly:'SANDBOX_OAUTH_E_GET_PARTICIPANTES',
   homologacaoContratualConcluida:false,
   movimentacaoRealPermitida:false
