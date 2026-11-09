@@ -13,6 +13,7 @@ on:
       - 'test/motor-loop-concorrencia-e-ciclos.test.js'
       - 'test/indicacoes-cadastro-real.test.js'
       - 'test/eventos-comerciais-loop-sqlite.test.js'
+      - 'test/classificacao-comercial-loop-sqlite.test.js'
       - 'test/identidade-real-persistencia.test.js'
       - 'test/api-identidade-real-sem-pagamentos.test.js'
       - 'test/interface-aprovada-identidade-real.test.js'
@@ -60,6 +61,7 @@ jobs:
       - name: Código de conta real deve ser válido
         run: |
           node --check src/producao/eventos-comerciais-loop-sqlite.js
+          node --check src/producao/classificacao-comercial-loop-sqlite.js
           node --check src/producao/motor-loop-integrado-sqlite.js
           node --check src/producao/identidade-cliente-loop-sqlite.js
           node --check src/producao/servidor-identidade-loop.js
@@ -96,6 +98,8 @@ jobs:
         run: node --test test/indicacoes-cadastro-real.test.js
       - name: Evento comercial atomicamente acoplado ao pedido, sem girar LOOP
         run: node --test test/eventos-comerciais-loop-sqlite.test.js
+      - name: Cor da venda congelada, verde/cinza/dourado/roxo e sem ativar motor
+        run: node --test test/classificacao-comercial-loop-sqlite.test.js
       - name: SQLite de cadastro persiste após reinicialização
         run: node --test test/identidade-real-persistencia.test.js
       - name: API real não abre dinheiro nem aceita CSRF inválido

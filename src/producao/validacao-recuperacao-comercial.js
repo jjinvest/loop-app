@@ -5,7 +5,9 @@
 function falha(codigo){const erro=new Error(codigo);erro.codigo=codigo;throw erro;}
 const TABELAS_COMERCIAIS=Object.freeze([
  'loja_real_cotacoes','loja_real_pedidos','loja_real_custos_pedido',
- 'loja_real_outbox_fornecedor','loop_real_eventos_comerciais'
+ 'loja_real_outbox_fornecedor','loop_real_eventos_comerciais',
+ 'loop_real_regras_cor','loop_real_regras_cor_historico',
+ 'loop_real_fotos_regras_pedido'
 ]);
 function validarRecuperacaoComercial(banco,lista){
  const contem=t=>lista.includes(t);
@@ -14,6 +16,13 @@ function validarRecuperacaoComercial(banco,lista){
  const custos=contem('loja_real_custos_pedido');
  const outbox=contem('loja_real_outbox_fornecedor');
  const eventos=contem('loop_real_eventos_comerciais');
+ const cores=[
+  'loop_real_regras_cor','loop_real_regras_cor_historico',
+  'loop_real_fotos_regras_pedido'
+ ];
+ const temCores=cores.some(t=>contem(t));
+ if(temCores&&(!pedidos||cores.some(t=>!contem(t))))
+  falha('BACKUP_COMERCIAL_CORES_INCOMPLETAS');
  // A existência parcial não é prova de recuperação completa.
  if(pedidos!==custos||(outbox&&!pedidos)||(eventos&&!pedidos))
   falha('BACKUP_IDENTIDADE_NAO_COBRE_TABELAS_COMERCIAIS');
@@ -78,6 +87,14 @@ function validarRecuperacaoComercial(banco,lista){
    if(!origem||origem.titular_id!==p.titular_id)
     falha('BACKUP_COMERCIAL_COTACAO_TITULAR_DIVERGENTE');
   }
+ }
+ if(temCores){
+  const {ClassificacaoComercialLoopSQLite}=
+   require('./classificacao-comercial-loop-sqlite');
+  const reg=Object.create(ClassificacaoComercialLoopSQLite.prototype);
+  reg.db=banco;
+  if(reg.verificar().integridade!=='OK')
+   falha('BACKUP_COMERCIAL_CORES_DIVERGENTES');
  }
  if(eventos){
   const {EventosComerciaisLoopSQLite}=

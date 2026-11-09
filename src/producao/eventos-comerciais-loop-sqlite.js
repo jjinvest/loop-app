@@ -7,7 +7,7 @@ const TABELA_EVENTOS_COMERCIAIS='loop_real_eventos_comerciais';
 function falha(c){const e=new Error(c);e.codigo=c;throw e;}
 const idOk=x=>typeof x==='string'&&/^[A-Za-z0-9_-]{1,120}$/.test(x);
 class EventosComerciaisLoopSQLite{
- constructor({banco,agora=()=>Date.now()}={}){
+ constructor({banco,classificacaoLoop=null,agora=()=>Date.now()}={}){
   if(typeof banco?.prepare!=='function'||typeof banco?.exec!=='function'||
      typeof agora!=='function'||!banco.prepare([
       "SELECT 1 FROM sqlite_master WHERE type='table'",
@@ -17,6 +17,11 @@ class EventosComerciaisLoopSQLite{
       "AND name='loja_real_pedidos'"
      ].join(' ')).get())
    falha('EVENTOS_COMERCIAIS_REQUEREM_BANCO_UNICO');
+  if(classificacaoLoop!==null&&(
+    classificacaoLoop.db!==banco||
+    typeof classificacaoLoop.avaliarPedido!=='function'))
+   falha('EVENTO_COMERCIAL_CLASSIFICACAO_DIVERGENTE');
+  this.classificacaoLoop=classificacaoLoop;
   this.db=banco;this.agora=agora;
   banco.exec([
    'CREATE TABLE IF NOT EXISTS loop_real_eventos_comerciais(',
@@ -84,6 +89,10 @@ class EventosComerciaisLoopSQLite{
   if(!idOk(pedidoId)||!idOk(pagamentoId))
    falha('EVENTO_COMERCIAL_REFERENCIA_INVALIDA');
   const p=this._linhaPedido(pedidoId),produtos=this._preco(p);
+  // O retrato do carrinho precisa existir ANTES da validação do PSP.
+  // Isso não ativa nada: somente verifica integridade, cor e frete.
+  if(this.classificacaoLoop)
+   this.classificacaoLoop.avaliarPedido({pedidoId});
   if(p.status!=='APROVADO_PARA_EXPEDICAO'||p.pagamento_id!==pagamentoId)
    falha('EVENTO_COMERCIAL_PAGAMENTO_NAO_APROVADO');
   const anterior=this.db.prepare(

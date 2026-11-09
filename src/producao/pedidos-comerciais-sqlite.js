@@ -103,7 +103,7 @@ function decifrar(k,r){
 class PedidosComerciaisSQLite{
  constructor({banco,chavePedidos,consultarCotacaoConfiavel,
   consultarPagamentoPsp,manutencao=null,eventosComerciais=null,
-  agora=()=>Date.now()}={}){
+  classificacaoLoop=null,agora=()=>Date.now()}={}){
   if(typeof banco?.prepare!=='function'||typeof banco?.exec!=='function'||
      !Buffer.isBuffer(chavePedidos)||chavePedidos.length!==32||
      typeof consultarCotacaoConfiavel!=='function'||
@@ -118,6 +118,11 @@ class PedidosComerciaisSQLite{
     typeof eventosComerciais.registrarCancelamentoEmTransacao!=='function'))
    erro('EVENTOS_COMERCIAIS_BANCO_DIVERGENTE');
   this.db=banco;this.key=Buffer.from(chavePedidos);
+  if(classificacaoLoop!==null&&(
+    classificacaoLoop.db!==banco||
+    typeof classificacaoLoop.capturarPedidoEmTransacao!=='function'))
+   erro('CORES_COMERCIAIS_BANCO_DIVERGENTE');
+  this.classificacaoLoop=classificacaoLoop;
   this.eventosComerciais=eventosComerciais;
   this.manutencao=manutencao;
   this.cotacao=consultarCotacaoConfiavel;
@@ -298,6 +303,8 @@ class PedidosComerciaisSQLite{
     hash,cifrado.iv,cifrado.ct,cifrado.tag,
     preco.freteCentavos,preco.valorTotalCentavos,ts,ts);
    this._capturarCustoDoCarrinho(pedidoId,preco.grupos,ts);
+   if(this.classificacaoLoop)
+    this.classificacaoLoop.capturarPedidoEmTransacao({pedidoId});
    const novo=this._row(pedidoId);
    this.db.exec('COMMIT');
    return {...this._publico(novo),repetido:false};
