@@ -203,20 +203,36 @@ class CatalogoMultiDistribuidoresSQLite{
    "SELECT 1 FROM sqlite_master WHERE type='table'",
    "AND name='loop_real_regras_cor'"
   ].join(' ')).get();
+  const temPedidos=['loja_real_pedidos','loja_real_custos_pedido']
+   .every(nome=>!!this.db.prepare(
+    "SELECT 1 FROM sqlite_master WHERE type='table' AND name=?"
+   ).get(nome));
+  const vendas=temPedidos?this.db.prepare([
+   'SELECT c.produto_id,SUM(c.quantidade) AS unidades',
+   'FROM loja_real_custos_pedido c',
+   'JOIN loja_real_pedidos p ON p.pedido_id=c.pedido_id',
+   "WHERE p.status='APROVADO_PARA_EXPEDICAO'",
+   'AND c.produto_id IS NOT NULL GROUP BY c.produto_id'
+  ].join(' ')).all():[];
+  const porProduto=new Map(vendas.map(x=>[x.produto_id,x.unidades]));
+  const agora=this.agora();
   const rows=this.db.prepare(regrasPresentes?[
-   'SELECT p.produto_id,p.titulo,p.descricao,p.tipo,',
+   'SELECT p.produto_id,p.titulo,p.descricao,p.tipo,p.criado_em,',
    'COALESCE(r.cor,\'CINZA\') AS cor',
    'FROM loja_real_produtos p LEFT JOIN loop_real_regras_cor r',
    'ON r.produto_id=p.produto_id',
    'WHERE p.ativo=1 ORDER BY p.titulo,p.produto_id LIMIT ?'
   ].join(' '):[
-   "SELECT produto_id,titulo,descricao,tipo,'CINZA' AS cor",
+   "SELECT produto_id,titulo,descricao,tipo,criado_em,'CINZA' AS cor",
    'FROM loja_real_produtos WHERE ativo=1',
    'ORDER BY titulo,produto_id LIMIT ?'
   ].join(' ')).all(limite);
   return rows.map(r=>Object.freeze({
    produtoId:r.produto_id,titulo:r.titulo,
    descricao:r.descricao,tipo:r.tipo,cor:r.cor,
+    novidade:Number.isSafeInteger(r.criado_em)&&r.criado_em<=agora&&
+     r.criado_em>=agora-30*86400000,
+    unidadesConfirmadas:porProduto.get(r.produto_id)||0,
    precoCentavos:null,estoqueConfirmado:false,
    compravel:false,checkoutReal:false,
    estado:'AGUARDANDO_HOMOLOGACAO_FORNECEDOR'
