@@ -378,7 +378,9 @@ class MotorLoopIntegradoSQLite{
    },minhasPosicoes:titularId===null?[]:posicoes.filter(p=>
     p.participanteId===titularId&&p.empresa!==true)
     .map(p=>({numero:p.id,local:p.local,
-     indicacoesVinculadas:p.indicacoesVinculadas||0})),
+     indicacoesVinculadas:p.indicacoesVinculadas||0,
+     estadoAdesao:p.statusAdesao||'ATIVA_ENSAIO',
+     aguardandoCpfTermos:p.statusAdesao==='PENDENTE'})),
    posicoesReais:0,saquesReais:0};
  }
 }
