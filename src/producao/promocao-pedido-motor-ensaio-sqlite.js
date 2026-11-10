@@ -206,7 +206,8 @@ class PromocaoPedidoMotorEnsaioSQLite{
   return {integridade:'OK',promocoesEnsaio:total,
    ...auditoriaAzul,
    posicoesEnsaioComEstornoPendente:emRevisao,
-   motorBloqueadoPorEstorno:emRevisao>0,
+   motorBloqueadoPorEstorno:false,
+   revisaoFinanceiraPendente:emRevisao>0,
    comprovantesBancariosReais:0,financeiroReal:false};
  }
  consultarTitularEnsaio({titularId}={}){
