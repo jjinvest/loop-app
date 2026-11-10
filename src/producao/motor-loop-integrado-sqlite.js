@@ -372,7 +372,7 @@ class MotorLoopIntegradoSQLite{
    eventosPorCiclo:6,eventosComerciais:comercial,catraca:{
     estado:estado.catraca.status,giros:sim.giros
    },filaA:sim.filas.filaA.length,
-   filaB:sim.filas.filaB.length-azuis-revisoes,
+   filaB:sim.filas.filaB.length-revisoes,
    posicoesAzuisPendentes:azuis,posicoesEmRevisaoNaFilaB:revisoes,
    tabuleiro:{
     centro:visual(sim.tabuleiro.centro),
@@ -382,8 +382,7 @@ class MotorLoopIntegradoSQLite{
    },minhasPosicoes:titularId===null?[]:posicoes.filter(p=>
     p.participanteId===titularId&&p.empresa!==true)
     .map(p=>({numero:p.id,
-     local:p.statusAdesao==='PENDENTE'?'AGUARDANDO_CPF_TERMOS':
-      p.statusAdesao==='REVISAR_PSP'?'EM_REVISAO_PSP':p.local,
+     local:p.statusAdesao==='REVISAR_PSP'?'EM_REVISAO_PSP':p.local,
      indicacoesVinculadas:p.indicacoesVinculadas||0,
      estadoAdesao:p.statusAdesao||'ATIVA_ENSAIO',
      aguardandoCpfTermos:p.statusAdesao==='PENDENTE'})),
