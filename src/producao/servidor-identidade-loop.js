@@ -426,6 +426,7 @@ function criarAppIdentidadeLoop({contas,origemHttps,
  app.get('/api/loja/estado',protegido,(_req,res)=>res.json({
   titularAutenticado:true,loja:'AKITEMM',contaUnica:true,
   catalogoComercialDisponivel:false,fornecedoresAtivos:0,
+  vitrinePreparacaoConectada:catalogoVitrine!==null,
   checkoutReal:false,financeiroReal:false
  }));
  // "Meus Pedidos" mostra somente registros comerciais existentes e
