@@ -63,7 +63,7 @@ class SincronizadorComercialLoopEnsaioSQLite{
     falha('INTEGRACAO_EVENTO_INCONSISTENTE');
    res.confirmadas++;
    const cor=this.classificacao.avaliarPedido({pedidoId:p.pedido_id});
-   if(this._purezaVerde(c)){
+   if(this._purezaVerde(cor)){
     res.verdesQualificadas++;
     if(this.db.prepare(
      'SELECT 1 FROM loop_real_promocoes_pedido_ensaio WHERE pedido_id=?'
@@ -75,7 +75,7 @@ class SincronizadorComercialLoopEnsaioSQLite{
      "ON ev.chave='e:'||pm.pedido_id",
      'WHERE pm.pedido_id=? AND ev.chave IS NULL'
     ].join(' ')).get(p.pedido_id))res.esperandoSeisEventos++;
-   }else if(this._semPosicao(c))res.naoQualificadas++;
+   }else if(this._semPosicao(cor))res.naoQualificadas++;
    else res.regrasEspeciaisPendentes++;
   }
   const estado=this.motor.consultar();
