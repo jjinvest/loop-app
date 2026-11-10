@@ -264,6 +264,16 @@ async function main(){
    await page.locator('#posicoesPainel').filter({hasText:/#1.*FILA_B/}).waitFor();
    if(item.largura<=860)await page.locator('#loop03MenuIntegrado').click();
    await page.locator('#abaFinanceiro').click();
+   const diagnosticoTesouraria=await page.evaluate(async()=>{
+    const r=await fetch('/api/loop/tesouraria-ensaio',{cache:'no-store'});
+    const d=await r.json().catch(()=>({}));
+    return {http:r.status,erro:d.erro||null,
+     saldo:d.saldoFicticioDisponivelCentavos??null,
+     valor:document.getElementById('tesourariaEnsaioSaldo').textContent,
+     oculto:document.getElementById('tesourariaEnsaioModulo').hidden};
+   });
+   console.log('DIAGNOSTICO_FINANCEIRO_'+item.nome+'='+
+    JSON.stringify(diagnosticoTesouraria));
    await page.locator('#tesourariaEnsaioSaldo').filter({
     hasText:/Disponivel ficticio: R\$ 0,00/
    }).waitFor();
