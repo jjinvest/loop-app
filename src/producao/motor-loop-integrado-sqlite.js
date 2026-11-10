@@ -362,8 +362,10 @@ class MotorLoopIntegradoSQLite{
    ...(sim.tabuleiro.centro?[{...sim.tabuleiro.centro,local:'CENTRO'}]:[]),
    ...sim.tabuleiro.vagas.flatMap((p,i)=>p?[{...p,local:'VAGA_'+(i+1)}]:[])
   ];
-  const azuis=sim.filas.filaB.filter(p=>p.statusAdesao==='PENDENTE').length;
-  const revisoes=sim.filas.filaB.filter(p=>p.statusAdesao==='REVISAR_PSP').length;
+  const azuis=[...sim.filas.filaA,...sim.filas.filaB]
+   .filter(p=>p.statusAdesao==='PENDENTE').length;
+  const revisoesA=sim.filas.filaA.filter(p=>p.statusAdesao==='REVISAR_PSP').length;
+  const revisoesB=sim.filas.filaB.filter(p=>p.statusAdesao==='REVISAR_PSP').length;
   return {status:'FLUXO_INTERNO_EM_VALIDACAO',
    fonte:'IDENTIDADE_E_MOTOR_MESMO_SQLITE',
    transacoesReais:false,financeiroReal:false,
@@ -371,9 +373,10 @@ class MotorLoopIntegradoSQLite{
    limitePorTitularTabuleiro:2,ordemAlimentacao:'3A:1B',
    eventosPorCiclo:6,eventosComerciais:comercial,catraca:{
     estado:estado.catraca.status,giros:sim.giros
-   },filaA:sim.filas.filaA.length,
-   filaB:sim.filas.filaB.length-revisoes,
-   posicoesAzuisPendentes:azuis,posicoesEmRevisaoNaFilaB:revisoes,
+   },filaA:sim.filas.filaA.length-revisoesA,
+   filaB:sim.filas.filaB.length-revisoesB,
+   posicoesAzuisPendentes:azuis,
+   posicoesEmRevisaoNaFilaA:revisoesA,posicoesEmRevisaoNaFilaB:revisoesB,
    tabuleiro:{
     centro:visual(sim.tabuleiro.centro),
     vagas:sim.tabuleiro.vagas.map(visual),
