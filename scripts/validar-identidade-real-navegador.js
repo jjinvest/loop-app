@@ -468,6 +468,23 @@ async function main(){
    await loja.filter({hasText:/capacidade técnica da sua conta/}).waitFor();
    await pagina.waitForFunction(()=>!document.getElementById('akitemmBusca').disabled);
    assert.equal(await pagina.locator('#catalogoLojaLoop .produto-loja-loop').count(),1);
+   await pagina.locator('#catalogoLojaLoop .produto-loja-loop button').click();
+   assert.match(await pagina.locator('#akitemmProdutoInlineConteudo').innerText(),
+    /Sem preço, estoque ou frete homologados/);
+   await pagina.locator('#akitemmVoltarProdutos').click();
+   await pagina.locator('#akitemmBusca').fill('inexistente xyz');
+   await pagina.locator('#akitemmResultadoProdutos').filter({
+    hasText:/Nenhum produto encontrado/
+   }).waitFor();
+   assert.equal(await pagina.locator('#catalogoLojaLoop .produto-loja-loop')
+    .count(),0);
+   await pagina.locator('#akitemmFiltroTodos').click();
+   await pagina.locator('[data-akitemm-cor="DOURADO"]').click();
+   assert.equal(await pagina.locator('#catalogoLojaLoop .produto-loja-loop')
+    .count(),1);
+   await pagina.locator('#atualizarCatalogoLoja').click();
+   assert.equal(await pagina.locator('#catalogoLojaLoop .produto-loja-loop')
+    .count(),1);
    assert.equal(await pagina.locator('#registrarPedidoLoja').isDisabled(),true);
    assert.equal(await pagina.locator('#akitemmBusca').isEnabled(),true);
    await pagina.screenshot({
