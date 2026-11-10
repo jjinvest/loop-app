@@ -457,7 +457,7 @@ async function main(){
    await pagina.goto(base+'/loja');
    await pagina.locator('#pedidosLojaLoop').filter({
     hasText:compra.pedidoId
-   }).waitFor();
+   }).waitFor({state:'attached'});
    assert.equal(await pagina.locator('#pedidosLojaLoop li').count(),1);
    const loja=pagina.locator('#estadoLojaLoop');
    await conferirLayoutReal(pagina,'loja-'+visual.nome,{mobile:visual.mobile});
