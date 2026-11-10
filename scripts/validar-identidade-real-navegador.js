@@ -169,7 +169,7 @@ async function main(){
   permitirCadastro:true,preflightCapacidade,
   pedidosComerciais:leituraComercial.leituraPedidos,
   remessasOutbox:leituraComercial.leituraRemessas,
-  catalogoVitrine:catalogo,
+  catalogoVitrine:{banco,listarVitrinePreparacao:params=>catalogo.listarVitrinePreparacao(params)},
   tesourariaEnsaio,
   aceitePosicaoAzulEnsaio:integradorComercialEnsaio,
   adminComercial:{auditoria,manutencao,catalogo,controle,sessoes,
