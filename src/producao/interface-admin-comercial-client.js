@@ -381,13 +381,14 @@
    const d=await r.json().catch(()=>({}));
    if(!r.ok)throw Error(d.erro||'RECONSULTA_RESERVAS_INDISPONIVEL');
    if(d.checkoutReal!==false||d.liberacaoPorTempo!==false||
-      !Number.isSafeInteger(d.reservasAguardandoPagamento)||
+      !Number.isSafeInteger(d.reservasEmAberto)||
       !Number.isSafeInteger(d.posicoesReservadas)||
       !Number.isSafeInteger(d.elegiveisParaReconsulta))
     throw Error('Informações de reservas inconsistentes.');
    reservasDisponiveis=d.proximaAcao==='RECONSULTAR_PSP';
    $('estadoReservasVencidasAdmin').textContent=
-    'Pedidos aguardando pagamento: '+d.reservasAguardandoPagamento+
+    'Reservas de pedidos sem posição: '+d.reservasEmAberto+
+    ' · Pagos aguardando posição: '+d.reservasConfirmadasSemPosicao+
     ' · Vagas reservadas: '+d.posicoesReservadas+
     ' · Reservas com prazo vencido: '+d.reservasVencidasNaPagina+
     ' · Podem ser reconsultadas: '+d.elegiveisParaReconsulta+
