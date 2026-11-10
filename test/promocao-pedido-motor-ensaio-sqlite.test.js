@@ -985,3 +985,165 @@ test('o aceite especial no endpoint do cliente usa somente titular da sessao',as
  assert.ok(estado.minhasPosicoes.every(p=>p.pedidoDeOrigemEnsaio===pedido.pedidoId));
  assert.equal(validarIdentidade(x.arquivo).integridade,'ok');
 });
+
+
+test('checkout com dez reservas impede 11a posicao ANTES de cobrar e permite venda cinza',async t=>{
+ const x=await fixture(t);
+ x.produto({nome:'preflightVerde',preco:25000,cor:'VERDE'});
+ x.produto({nome:'preflightCinza',preco:29900,cor:'CINZA'});
+ const pedidos=[];
+ for(let i=0;i<10;i++)
+  pedidos.push(await x.criarPedido({nome:'preflightVerde',
+   preco:25000,comPreflight:true}));
+ assert.deepEqual(x.preflight.consultar({titularId:x.titular.titularId}),{
+  maximo:10,ativas:0,reservadas:10,disponiveis:0,
+  comprasReaisHabilitadas:false,naoConstituiPagamento:true
+ });
+ assert.equal(x.motor.verificar().compras,0);
+ assert.equal(x.evento.verificar().eventos,0);
+ await assert.rejects(x.criarPedido({nome:'preflightVerde',
+  preco:25000,comPreflight:true}),{
+  codigo:'CHECKOUT_CAPACIDADE_INSUFICIENTE_ANTES_COBRANCA'
+ });
+ assert.equal(x.db.prepare(
+  'SELECT COUNT(*) AS n FROM loja_real_pedidos'
+ ).get().n,10);
+ assert.equal(x.db.prepare(
+  'SELECT COUNT(*) AS n FROM loop_real_fotos_regras_pedido'
+ ).get().n,10);
+ const gray=await x.criarPedido({nome:'preflightCinza',preco:29900,
+  comPreflight:true});
+ assert.ok(gray.pedidoId);
+ assert.equal(x.db.prepare(
+  'SELECT COUNT(*) AS n FROM loop_real_checkout_reservas_posicoes'
+ ).get().n,10);
+ assert.equal(x.preflight.verificar().posicoesReservadas,10);
+ assert.equal(validarIdentidade(x.arquivo).integridade,'ok');
+});
+test('cancelamento antes do PSP liberar valor desfaz reserva e permite checkout posterior',async t=>{
+ const x=await fixture(t);
+ x.produto({nome:'preflightCancel',preco:25000,cor:'VERDE'});
+ const compras=[];
+ for(let i=0;i<10;i++)
+  compras.push(await x.criarPedido({nome:'preflightCancel',
+   preco:25000,comPreflight:true}));
+ assert.equal(x.preflight.consultar({titularId:x.titular.titularId}).disponiveis,0);
+ x.statusPsp.set(compras[0].pedidoId,{status:'CANCELADO'});
+ const cancelado=await x.pedidosIntegrados.confirmarPagamento({
+  pedidoId:compras[0].pedidoId
+ });
+ assert.equal(cancelado.cancelado,true);
+ assert.equal(cancelado.semPosicaoLoop,true);
+ assert.equal(cancelado.estornoLoopSinalizado,false);
+ assert.equal(x.preflight.consultar({titularId:x.titular.titularId}).disponiveis,1);
+ assert.equal(x.preflight.verificar().posicoesCanceladas,1);
+ assert.equal(x.motor.verificar().compras,0);
+ const nova=await x.criarPedido({nome:'preflightCancel',
+  preco:25000,comPreflight:true});
+ assert.ok(nova.pedidoId);
+ const repetida=await x.pedidosIntegrados.criarPedido({
+  titularId:x.titular.titularId,cotacaoId:nova.cotacaoId,
+  chaveIdempotencia:nova.chaveIdempotencia,enderecoEntrega:ORIGEM
+ });
+ assert.equal(repetida.pedidoId,nova.pedidoId);
+ assert.equal(repetida.repetido,true);
+ assert.equal(x.preflight.verificar().reservas,11);
+ assert.equal(x.preflight.consultar({titularId:x.titular.titularId}).reservadas,10);
+ assert.equal(validarIdentidade(x.arquivo).integridade,'ok');
+});
+test('promocao verde consome reserva no mesmo commit sem dupla contagem de capacidade',async t=>{
+ const x=await fixture(t);
+ x.produto({nome:'preflightConsumir',preco:25000,cor:'VERDE'});
+ const p=await x.criarPedido({nome:'preflightConsumir',preco:25000,
+  comPreflight:true});
+ const inicial=x.preflight.consultar({titularId:x.titular.titularId});
+ assert.equal(inicial.reservadas,1);
+ const c=await x.pedidosIntegrados.confirmarPagamento({pedidoId:p.pedidoId});
+ assert.equal(c.confirmado,true);
+ assert.equal(c.integracaoInternaEnsaio.novasPosicoes,1);
+ const apos=x.preflight.consultar({titularId:x.titular.titularId});
+ assert.equal(apos.ativas,1);
+ assert.equal(apos.reservadas,0);
+ assert.equal(apos.disponiveis,9);
+ assert.equal(x.preflight.verificar().posicoesConsumidas,1);
+ assert.equal(x.preflight.verificar().posicoesReservadas,0);
+ assert.equal(x.db.prepare([
+  'SELECT COUNT(*) AS n FROM loop_real_checkout_reservas_historico',
+  'WHERE pedido_id=?'
+ ].join(' ')).get(p.pedidoId).n,2);
+ await x.pedidosIntegrados.confirmarPagamento({pedidoId:p.pedidoId});
+ assert.equal(x.preflight.verificar().posicoesConsumidas,1);
+ assert.equal(x.db.prepare([
+  'SELECT COUNT(*) AS n FROM loop_real_checkout_reservas_historico',
+  'WHERE pedido_id=?'
+ ].join(' ')).get(p.pedidoId).n,2);
+ assert.equal(validarIdentidade(x.arquivo).integridade,'ok');
+});
+test('checkout misto reserva oito posicoes e rejeita lote extra atomico antes de cobranca',async t=>{
+ const x=await fixture(t);
+ x.produto({nome:'preRoxo',preco:100000,cor:'ROXO',roxasPorUnidade:5});
+ x.produto({nome:'preDourado',preco:25000,cor:'DOURADO'});
+ x.produto({nome:'preVerde',preco:25000,cor:'VERDE'});
+ x.produto({nome:'preCinza',preco:9000,cor:'CINZA'});
+ const primeiro=await x.criarPedido({itens:[
+  {nome:'preRoxo',preco:100000},
+  {nome:'preDourado',preco:25000,quantidade:2},
+  {nome:'preVerde',preco:25000},
+  {nome:'preCinza',preco:9000}
+ ],comPreflight:true});
+ assert.equal(x.preflight.consultar({titularId:x.titular.titularId}).reservadas,8);
+ await assert.rejects(x.criarPedido({itens:[
+  {nome:'preDourado',preco:25000,quantidade:3}
+ ],comPreflight:true}),{
+  codigo:'CHECKOUT_CAPACIDADE_INSUFICIENTE_ANTES_COBRANCA'
+ });
+ assert.equal(x.db.prepare(
+  'SELECT COUNT(*) AS n FROM loja_real_pedidos'
+ ).get().n,1);
+ const pago=await x.pedidosIntegrados.confirmarPagamento({
+  pedidoId:primeiro.pedidoId
+ });
+ assert.equal(pago.integracaoInternaEnsaio.novasPosicoes,8);
+ assert.equal(x.preflight.consultar({titularId:x.titular.titularId}).ativas,8);
+ assert.equal(x.preflight.consultar({titularId:x.titular.titularId}).reservadas,0);
+ assert.equal(x.preflight.verificar().posicoesConsumidas,8);
+ assert.equal(x.lotes.verificar().posicoesEmLote,8);
+ assert.equal(validarIdentidade(x.arquivo).integridade,'ok');
+});
+test('checkout rejeita roxo com 12 posicoes e reverte inclusive fotos da regra',async t=>{
+ const x=await fixture(t);
+ x.produto({nome:'preRoxoExcede',preco:100000,cor:'ROXO',
+  roxasPorUnidade:6});
+ await assert.rejects(x.criarPedido({itens:[
+  {nome:'preRoxoExcede',preco:100000,quantidade:2}
+ ],comPreflight:true}),{
+  codigo:'CHECKOUT_CARRINHO_EXCEDE_DEZ_POSICOES'
+ });
+ assert.equal(x.db.prepare('SELECT COUNT(*) AS n FROM loja_real_pedidos').get().n,0);
+ assert.equal(x.db.prepare('SELECT COUNT(*) AS n FROM loja_real_custos_pedido').get().n,0);
+ assert.equal(x.db.prepare('SELECT COUNT(*) AS n FROM loop_real_fotos_regras_pedido').get().n,0);
+ assert.equal(x.preflight.verificar().reservas,0);
+ assert.equal(x.motor.verificar().compras,0);
+ assert.equal(validarIdentidade(x.arquivo).integridade,'ok');
+});
+test('duas cotacoes concorrentes de seis douradas nao comprometem 12 vagas',async t=>{
+ const x=await fixture(t);
+ x.produto({nome:'preConcorrente',preco:25000,cor:'DOURADO'});
+ const pacote=()=>x.criarPedido({itens:[
+  {nome:'preConcorrente',preco:25000,quantidade:6}
+ ],comPreflight:true});
+ const resultados=await Promise.allSettled([pacote(),pacote()]);
+ assert.equal(resultados.filter(r=>r.status==='fulfilled').length,1);
+ assert.equal(resultados.filter(r=>r.status==='rejected').length,1);
+ assert.equal(resultados.find(r=>r.status==='rejected').reason.codigo,
+  'CHECKOUT_CAPACIDADE_INSUFICIENTE_ANTES_COBRANCA');
+ assert.equal(x.db.prepare('SELECT COUNT(*) AS n FROM loja_real_pedidos').get().n,1);
+ assert.equal(x.preflight.consultar({titularId:x.titular.titularId}).reservadas,6);
+ const outro=await x.criarPedido({itens:[
+  {nome:'preConcorrente',preco:25000,quantidade:4}
+ ],comPreflight:true,cliente:x.outro});
+ assert.ok(outro.pedidoId);
+ assert.equal(x.preflight.consultar({titularId:x.outro.titularId}).reservadas,4);
+ assert.equal(x.preflight.verificar().integridade,'OK');
+ assert.equal(validarIdentidade(x.arquivo).integridade,'ok');
+});
