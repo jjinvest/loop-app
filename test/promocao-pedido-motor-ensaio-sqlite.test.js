@@ -538,6 +538,7 @@ test('compra confirmada aciona integracao interna automaticamente; cinza nao ent
  const cinza=await x.criarPedido({nome:'integracaoCinza',preco:30000});
  const cinzaPsp=await x.pedidosIntegrados.confirmarPagamento({pedidoId:cinza.pedidoId});
  assert.equal(cinzaPsp.confirmado,true);
+ x.integracao.sincronizar(); // verificar erro de sincronizacao sem ocultar motivo
  assert.equal(cinzaPsp.integracaoInternaEnsaio.novasPosicoes,0);
  assert.equal(x.integracao.consultar().naoQualificadas,1);
  assert.equal(x.motor.verificar().compras,0);
