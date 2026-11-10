@@ -702,3 +702,96 @@ test('produto dourado continua sinalizado como especial, nao vira verde silencio
  assert.equal(x.motor.verificar().compras,0);
  assert.equal(validarIdentidade(x.arquivo).integridade,'ok');
 });
+
+test('cliente confirma propria azul pelo Escritório Virtual com CPF/termos e CSRF sem mover a fila',async t=>{
+ const x=await fixture(t),origin='https://contas.example.invalid';
+ x.produto({nome:'azulInterativa',preco:25000,cor:'VERDE'});
+ const p=await x.criarPedido({nome:'azulInterativa',preco:25000});
+ const pago=await x.pedidosIntegrados.confirmarPagamento({pedidoId:p.pedidoId});
+ assert.equal(pago.confirmado,true);
+ const antes=x.motor.consultar({titularId:x.titular.titularId});
+ assert.equal(antes.minhasPosicoes.length,1);
+ const posicaoId=antes.minhasPosicoes[0].numero;
+ assert.equal(antes.minhasPosicoes[0].estadoAdesao,'PENDENTE');
+ const app=criarAppIdentidadeLoop({contas:x.contas,motorLoop:x.motor,
+  eventosComerciais:x.evento,origemHttps:origin,permitirCadastro:true,
+  aceitePosicaoAzulEnsaio:x.producao.aceiteAzul});
+ const server=app.listen(0,'127.0.0.1');
+ await once(server,'listening');
+ t.after(()=>new Promise(resolve=>server.close(resolve)));
+ const base='http://127.0.0.1:'+server.address().port;
+ const js=await (await fetch(base+'/identidade/assets/cliente.js')).text();
+ assert.match(js,/confirmar-ensaio/);
+ assert.match(js,/renderizarAceiteAzulEnsaio/);
+ const buyer=await fetch(base+'/api/contas/entrar',{method:'POST',
+  headers:{Origin:origin,'Content-Type':'application/json'},
+  body:JSON.stringify({nick:'Comprador',senha:'SenhaDeEnsaio2026!'})});
+ assert.equal(buyer.status,200);
+ const buyerData=await buyer.json();
+ const cookie=buyer.headers.get('set-cookie').split(';')[0];
+ const someone=await fetch(base+'/api/contas/entrar',{method:'POST',
+  headers:{Origin:origin,'Content-Type':'application/json'},
+  body:JSON.stringify({nick:'Outro',senha:'SenhaDeEnsaio2026!'})});
+ assert.equal(someone.status,200);
+ const outroData=await someone.json();
+ const outroCookie=someone.headers.get('set-cookie').split(';')[0];
+ const documentos=await (await fetch(base+'/api/contas/documentos')).json();
+ const body={cpf:'52998224725',aceiteExplicito:true,
+  versaoTermos:documentos.termos.versao,hashTermos:documentos.termos.hash};
+ const url=base+'/api/loop/posicoes/'+posicaoId+'/confirmar-ensaio';
+ const enviar=(headers,form=body)=>fetch(url,{method:'POST',headers,
+  body:JSON.stringify(form)});
+ const headers={Origin:origin,'Content-Type':'application/json',
+  Cookie:cookie,'X-Loop-Csrf':buyerData.csrf};
+ assert.equal((await enviar({
+  Origin:origin,'Content-Type':'application/json'
+ })).status,401);
+ assert.equal((await enviar({...headers,'X-Loop-Csrf':'invalido'})).status,403);
+ assert.equal((await enviar({...headers,Origin:'https://evil.example.invalid'})).status,403);
+ assert.equal((await enviar({
+  ...headers,Cookie:outroCookie,'X-Loop-Csrf':outroData.csrf
+ })).status,404);
+ assert.equal((await enviar(headers,{...body,cpf:'11111111111'})).status,400);
+ assert.equal((await enviar(headers,{...body,aceiteExplicito:false})).status,400);
+ assert.equal((await enviar(headers,{...body,hashTermos:'000000'})).status,400);
+ const aceito=await enviar(headers);
+ assert.equal(aceito.status,200);
+ const resultado=await aceito.json();
+ assert.equal(resultado.estado,'ACEITE_ENSAIO');
+ assert.equal(resultado.financeiroReal,false);
+ assert.equal(resultado.identidadeExternaVerificada,false);
+ assert.equal(resultado.repetido,false);
+ assert.equal((await (await enviar(headers)).json()).repetido,true);
+ const estado=await (await fetch(base+'/api/loop/estado',{
+  headers:{Cookie:cookie}
+ })).json();
+ assert.equal(estado.confirmacaoAzulEnsaioDisponivel,true);
+ assert.equal(estado.filaB,1);
+ assert.equal(estado.posicoesAzuisPendentes,0);
+ assert.equal(estado.minhasPosicoes[0].estadoAdesao,'ACEITE_ENSAIO');
+ assert.equal(estado.minhasPosicoes[0].aguardandoCpfTermos,false);
+ assert.equal(estado.minhasPosicoes[0].pedidoDeOrigemEnsaio,p.pedidoId);
+ const alheio=await (await fetch(base+'/api/loop/estado',{
+  headers:{Cookie:outroCookie}
+ })).json();
+ assert.equal(alheio.minhasPosicoes.length,0);
+ assert.equal(JSON.stringify(alheio).includes(p.pedidoId),false);
+ const entrada=x.motor.prepararTabuleiroEnsaio();
+ assert.equal(entrada.centro.id,posicaoId);
+ assert.notEqual(entrada.centro.empresa,true);
+ assert.equal(validarIdentidade(x.arquivo).integridade,'ok');
+});
+test('aceite azul de ensaio nao fica disponivel na API de producao',async t=>{
+ const x=await fixture(t);
+ const old=process.env.NODE_ENV;
+ try{
+  process.env.NODE_ENV='production';
+  assert.throws(()=>criarAppIdentidadeLoop({contas:x.contas,
+   origemHttps:'https://contas.example.invalid',
+   motorLoop:x.motor,aceitePosicaoAzulEnsaio:x.producao.aceiteAzul}),
+   /AZUL_ENSAIO_NAO_PODE_SER_CONFIRMACAO_REAL/);
+ }finally{
+  if(old===undefined)delete process.env.NODE_ENV;
+  else process.env.NODE_ENV=old;
+ }
+});
