@@ -72,7 +72,7 @@ function criarLeituraComercialSegura({banco,pedidos}={}){
   financeiroReal:false});
 }
 function montarComercialSemHomologacao({
- banco,chavePedidos,auditoria,manutencao
+ banco,chavePedidos,auditoria,manutencao,catalogoLeitura=null
 }={}){
  if(typeof banco?.prepare!=='function'||typeof banco?.exec!=='function'||
     !Buffer.isBuffer(chavePedidos)||chavePedidos.length!==32||
@@ -81,6 +81,10 @@ function montarComercialSemHomologacao({
     typeof manutencao?.garantirOperacaoDisponivel!=='function')
   falhar('COMERCIAL_SEGURO_CONFIGURACAO_INVALIDA');
 
+ if(catalogoLeitura!==null&&(
+    catalogoLeitura.db!==banco||
+    typeof catalogoLeitura.listarVitrinePreparacao!=='function'))
+  falhar('COMERCIAL_CATALOGO_NAO_COMPARTILHADO');
  // Banco e esquema único. Primeira construção cria apenas as tabelas.
  const bloqueio={
   banco,chavePedidos,manutencao,
@@ -108,8 +112,14 @@ function montarComercialSemHomologacao({
   falhar('COMERCIAL_SEGURO_AUDITORIA_DIVERGENTE');
  auditoria.verificar();
  const leitura=criarLeituraComercialSegura({banco,pedidos:pedidosInternos});
+ const leituraCatalogo=catalogoLeitura===null?null:Object.freeze({
+  banco,
+  listarVitrinePreparacao({limite=50}={}){
+   return catalogoLeitura.listarVitrinePreparacao({limite});
+  }
+ });
  return Object.freeze({
-  classificacaoLoop,eventosComerciais,...leitura,
+  classificacaoLoop,eventosComerciais,...leitura,leituraCatalogo,
   pedidosComerciaisPublicos:false,
   checkoutHabilitado:false,pspHomologado:false,
   ativacaoPosicoesHabilitada:false
