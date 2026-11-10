@@ -483,3 +483,38 @@ test('compra azul circula e se torna dourada na entrada da vaga 6 sem bloquear c
  assert.equal(x.motor.verificar().integridade,'OK');
  assert.equal(validarIdentidade(x.arquivo).integridade,'ok');
 });
+
+test('seis compras qualificadas ficam registradas na fila com catraca pausada; seis eventos exigem giro do operador',async t=>{
+ const x=await fixture(t);
+ x.produto({nome:'verdeFluxoSeis',preco:25000});
+ assert.equal(x.motor.controlarCatracaEnsaio({acao:'PAUSAR'}).aberta,false);
+ const pedidos=[];
+ for(let i=0;i<6;i++){
+  const pedido=await x.criarPedido({nome:'verdeFluxoSeis',preco:25000});
+  await x.confirmar(pedido);
+  const promovida=x.producao.aprovarEEnfileirarEmEnsaio(pedido);
+  assert.equal(promovida.repetida,false);
+  pedidos.push(pedido);
+ }
+ const fila=x.motor.consultar({titularId:x.titular.titularId});
+ assert.equal(fila.filaB,6);
+ assert.equal(fila.posicoesAzuisPendentes,6);
+ assert.equal(fila.catraca.estado,'PAUSADA');
+ assert.equal(fila.catraca.giros,0);
+ x.motor.prepararTabuleiroEnsaio();
+ for(let i=0;i<6;i++){
+  const evento=x.motor.registrarEventoEnsaio({pedidoId:pedidos[i].pedidoId});
+  assert.equal(evento.repetida,false);
+  assert.equal(evento.eventosNoCiclo,i+1);
+ }
+ assert.equal(x.motor.consultar().tabuleiro.eventosNoCiclo,6);
+ assert.equal(x.motor.controlarCatracaEnsaio({acao:'GIRAR'}).girou,false,
+  'operador pausou somente a passagem, nao a chegada de compras');
+ assert.equal(x.motor.consultar().catraca.giros,0);
+ assert.equal(x.motor.controlarCatracaEnsaio({acao:'ABRIR'}).aberta,true);
+ assert.equal(x.motor.controlarCatracaEnsaio({acao:'GIRAR'}).girou,true);
+ assert.equal(x.motor.consultar().catraca.giros,1);
+ assert.equal(x.motor.consultar().tabuleiro.eventosNoCiclo,0);
+ assert.equal(x.motor.verificar().integridade,'OK');
+ assert.equal(validarIdentidade(x.arquivo).integridade,'ok');
+});
