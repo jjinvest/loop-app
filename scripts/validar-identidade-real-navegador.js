@@ -483,6 +483,13 @@ async function main(){
    assert.equal(await pagina.locator('#catalogoLojaLoop .produto-loja-loop')
     .count(),1);
    await pagina.locator('#atualizarCatalogoLoja').click();
+   await pagina.locator('#akitemmFiltroTodos').click();
+   await pagina.locator('[data-akitemm-categoria="novidades"]').click();
+   assert.equal(await pagina.locator('#catalogoLojaLoop .produto-loja-loop').count(),1);
+   await pagina.locator('#akitemmFiltroTodos').click();
+   await pagina.locator('[data-akitemm-categoria="mais-vendidos"]').click();
+   assert.equal(await pagina.locator('#catalogoLojaLoop .produto-loja-loop').count(),1);
+   await pagina.locator('#akitemmFiltroTodos').click();
    assert.equal(await pagina.locator('#catalogoLojaLoop .produto-loja-loop')
     .count(),1);
    assert.equal(await pagina.locator('#registrarPedidoLoja').isDisabled(),true);
