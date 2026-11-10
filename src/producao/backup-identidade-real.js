@@ -12,6 +12,8 @@ const {createHash,createCipheriv,createDecipheriv,randomBytes,hkdfSync}=
 const {MotorLoopIntegradoSQLite,TABELAS_MOTOR}=require('./motor-loop-integrado-sqlite');
 const {PreflightCapacidadeCheckoutSQLite,TABELAS_PREFLIGHT}=
  require('./preflight-capacidade-checkout-sqlite');
+const {RecuperacaoReservasCheckoutSQLite,TABELAS_RECUPERACAO}=
+ require('./recuperacao-reservas-checkout-sqlite');
 const {OperacaoCatracaAdminSQLite,TABELAS_CATRACA_ADMIN}=
  require('./operacao-catraca-admin-sqlite');
 const {PromocaoPedidoMotorEnsaioSQLite,TABELAS_PROMOCAO_ENSAIO}=
@@ -82,7 +84,7 @@ function validarIdentidade(arquivo){
   const todos=[...TABELAS,...TABELAS_ADMIN,...TABELAS_COMERCIAIS,
    ...TABELAS_MOTOR,...TABELAS_CATRACA_ADMIN,...TABELAS_TESOURARIA_ENSAIO,
    ...TABELAS_PROMOCAO_ENSAIO,...TABELAS_LOTES_ENSAIO,
-   ...TABELAS_PREFLIGHT];
+   ...TABELAS_PREFLIGHT,...TABELAS_RECUPERACAO];
   if(lista.some(x=>!todos.includes(x)))
    falha('BACKUP_IDENTIDADE_NAO_COBRE_TABELAS_COMERCIAIS');
   const temEnsaio=TABELAS_TESOURARIA_ENSAIO.some(x=>lista.includes(x));
@@ -172,6 +174,19 @@ function validarIdentidade(arquivo){
     if(preflight.verificar().integridade!=='OK')
      falha('BACKUP_CAPACIDADE_DIVERGENTE');
    }catch{falha('BACKUP_CAPACIDADE_DIVERGENTE');}
+  }
+  const existeRecuperacao=TABELAS_RECUPERACAO.some(x=>lista.includes(x));
+  if(existeRecuperacao){
+   if(TABELAS_RECUPERACAO.some(x=>!lista.includes(x)))
+    falha('BACKUP_RECUPERACAO_RESERVAS_PARCIAL');
+   if(!TABELAS_PREFLIGHT.every(x=>lista.includes(x)))
+    falha('BACKUP_RECUPERACAO_SEM_PREFLIGHT');
+   try{
+    const recuperacao=Object.create(RecuperacaoReservasCheckoutSQLite.prototype);
+    recuperacao.db=b;
+    if(recuperacao.verificar().integridade!=='OK')
+     falha('BACKUP_RECUPERACAO_RESERVAS_INTEGRA');
+   }catch{falha('BACKUP_RECUPERACAO_RESERVAS_DIVERGENTE');}
   }
   // Não aceitar snapshot administrativo parcial. Pedidos e remessas
   // são conferidos semanticamente, sem inferir conciliação bancária.
