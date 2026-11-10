@@ -3,6 +3,7 @@
 // cotacao confiavel do servidor, e confirma pagamento por RECONSULTA no PSP.
 // Nao emite Pix, nao ativa loop, nao realiza saque e NAO tem rota publica.
 const {createHmac,randomUUID,randomBytes,createCipheriv,createDecipheriv}=require('node:crypto');
+const {PreflightCapacidadeCheckoutSQLite}=require('./preflight-capacidade-checkout-sqlite');
 const SKU=/^[A-Za-z0-9_-]{1,80}$/;
 const ID=/^[A-Za-z0-9_-]{1,120}$/;
 const TITULAR=/^titular-[a-f0-9-]{36}$/;
@@ -104,7 +105,7 @@ class PedidosComerciaisSQLite{
  constructor({banco,chavePedidos,consultarCotacaoConfiavel,
   consultarPagamentoPsp,manutencao=null,eventosComerciais=null,
   classificacaoLoop=null,integradorComercialEnsaio=null,
-  agora=()=>Date.now()}={}){
+  preflightCapacidade=null,agora=()=>Date.now()}={}){
   if(typeof banco?.prepare!=='function'||typeof banco?.exec!=='function'||
      !Buffer.isBuffer(chavePedidos)||chavePedidos.length!==32||
      typeof consultarCotacaoConfiavel!=='function'||
@@ -129,6 +130,12 @@ class PedidosComerciaisSQLite{
     typeof integradorComercialEnsaio.sincronizar!=='function'||
     typeof integradorComercialEnsaio.sinalizarCancelamento!=='function'))
    erro('INTEGRADOR_COMERCIAL_ENSAIO_INVALIDO');
+  if(preflightCapacidade!==null&&(
+      preflightCapacidade.db!==banco||
+      preflightCapacidade.classificacao!==classificacaoLoop||
+      typeof preflightCapacidade.reservarPedidoEmTransacao!=='function'))
+   erro('CHECKOUT_PREFLIGHT_BANCO_OU_REGRAS_DIVERGENTES');
+  this.preflightCapacidade=preflightCapacidade;
   this.integradorComercialEnsaio=integradorComercialEnsaio;
   this.classificacaoLoop=classificacaoLoop;
   this.eventosComerciais=eventosComerciais;
@@ -319,6 +326,10 @@ class PedidosComerciaisSQLite{
    this._capturarCustoDoCarrinho(pedidoId,preco.grupos,ts);
    if(this.classificacaoLoop)
     this.classificacaoLoop.capturarPedidoEmTransacao({pedidoId});
+   // Reserva no MESMO commit do pedido e da fotografia comercial.
+   // Falha de capacidade desfaz integralmente o pedido ANTES da cobrança.
+   if(this.preflightCapacidade)
+    this.preflightCapacidade.reservarPedidoEmTransacao({pedidoId,titularId});
    const novo=this._row(pedidoId);
    this.db.exec('COMMIT');
    return {...this._publico(novo),repetido:false};
@@ -345,6 +356,9 @@ class PedidosComerciaisSQLite{
     ].join(' ')).run(this.agora(),pedidoId);
     if(this.eventosComerciais)
      this.eventosComerciais.registrarCancelamentoEmTransacao({pedidoId});
+    // Libera vagas nao usadas; vagas usadas seguem em revisao individual.
+    if(this.preflightCapacidade)
+     PreflightCapacidadeCheckoutSQLite.cancelarEmTransacao(this.db,{pedidoId});
     const cancelado=this._publico(this._row(pedidoId));
     this.db.exec('COMMIT');
     if(!this.integradorComercialEnsaio)return {...cancelado,cancelado:true};
