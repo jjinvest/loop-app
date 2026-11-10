@@ -84,6 +84,17 @@ function renderizarAdminComercialAprovado(){
   '<button id="prepararTabuleiroLoop" type="button" disabled>Preparar tabuleiro</button>'+
   '<button id="atualizarIntegracaoLoop" type="button">Atualizar integração</button>'+
   '</div>'+
+  '<h3>Loja → PSP → distribuidores</h3>'+
+  '<p id="estadoJornadaComercial" class="subtexto" role="status" aria-live="polite">'+
+  'Verificando ligação técnica dos pedidos e distribuidores...</p>'+
+  '<div class="linha">'+
+  '<label for="pedidoJornadaAdmin">Pedido para reconciliar remessas (somente ensaio)</label>'+
+  '<input id="pedidoJornadaAdmin" maxlength="120" autocomplete="off" '+
+  'placeholder="ID do pedido" disabled>'+
+  '<button id="reprocessarJornadaAdmin" type="button" disabled>'+
+  'Reconciliar remessas do pedido</button>'+
+  '<button id="atualizarJornadaAdmin" type="button">Atualizar situação</button>'+
+  '</div>'+
   '<h3>Controle operacional da catraca</h3>'+
   '<p class="subtexto">As compras qualificadas continuam nas filas A/B mesmo com a catraca pausada. '+
   'São necessários seis eventos por ciclo. Configurações e giros aqui usam o motor interno de ensaio; '+
