@@ -8,7 +8,7 @@ function erro(c){const e=new Error(c);e.codigo=c;throw e;}
 function montarGatewayAdminComercial(app,{
  sessoes,controle,catalogo,auditoria=null,manutencao=null,
  pedidosComerciais=null,motorLoop=null,operacaoCatraca=null,
- classificacaoLoop=null,origemHttps
+ integradorComercialEnsaio=null,classificacaoLoop=null,origemHttps
 }={}){
  if(typeof sessoes?.autenticar!=='function'||
     typeof sessoes?.sessao!=='function'||
@@ -28,6 +28,10 @@ function montarGatewayAdminComercial(app,{
  const catraca=motorLoop===null?null:(operacaoCatraca||
   new OperacaoCatracaAdminSQLite({banco:motorLoop.banco,motor:motorLoop}));
  if(catraca&&catraca.motor!==motorLoop)erro('CATRACA_ADMIN_NAO_E_O_MESMO_MOTOR');
+ if(integradorComercialEnsaio!==null&&(
+   integradorComercialEnsaio.motor!==motorLoop||
+   integradorComercialEnsaio.db!==motorLoop?.banco))
+  erro('INTEGRACAO_ADMIN_NAO_E_O_MESMO_MOTOR');
  const cookieValor=req=>{
   const raw=req.get('cookie')||'';
   if(raw.length>4096)return null;
@@ -137,13 +141,40 @@ function montarGatewayAdminComercial(app,{
      janelaFim:b.janelaFim,limiteDiario:b.limiteDiario,
      revisaoEsperada:b.revisaoEsperada,motivo:b.motivo}):
     catraca.executarGiro({origem:'OPERADOR'});
-   return res.json({...resultado,financeiroReal:false});
+   const proximos=resultado.girou&&integradorComercialEnsaio?
+    integradorComercialEnsaio.sincronizar():null;
+   return res.json({...resultado,financeiroReal:false,
+    ...(proximos?{eventosReabastecidos:proximos.novosEventos}:{})});
   }catch(e){
    const codigo=e.codigo||'CATRACA_OPERACAO_INDISPONIVEL';
    const http=codigo==='CATRACA_ADMIN_REVISAO_DESATUALIZADA'?409:
     codigo.includes('INVALID')?400:
     codigo==='CATRACA_MOTOR_PRODUTIVO_NAO_HOMOLOGADO'?423:503;
    return res.status(http).json({erro:codigo});
+  }
+ });
+ // Projecao real do livro de vendas; comandos de ensaio so com sessao
+ // administrativa, CSRF, e jamais em NODE_ENV=production.
+ app.get('/api/admin/loop/integracao',proteger,(_req,res)=>{
+  if(!integradorComercialEnsaio)
+   return res.status(503).json({erro:'INTEGRACAO_AGUARDANDO_HOMOLOGACAO'});
+  try{return res.json(integradorComercialEnsaio.consultar());}
+  catch{return res.status(503).json({erro:'INTEGRACAO_INDISPONIVEL'});}
+ });
+ app.post('/api/admin/loop/integracao',proteger,validarCsrf,(req,res)=>{
+  if(!integradorComercialEnsaio||process.env.NODE_ENV==='production')
+   return res.status(423).json({erro:'INTEGRACAO_PRODUTIVA_NAO_HOMOLOGADA'});
+  if(!req.is('application/json')||!req.body||
+    Object.keys(req.body).length!==1||
+    !['SINCRONIZAR','PREPARAR_TABULEIRO'].includes(req.body.acao))
+   return res.status(400).json({erro:'INTEGRACAO_ADMIN_ACAO_INVALIDA'});
+  try{
+   const x=req.body.acao==='SINCRONIZAR'?
+    integradorComercialEnsaio.sincronizar():
+    integradorComercialEnsaio.prepararTabuleiro();
+   return res.json(x);
+  }catch(e){
+   return res.status(503).json({erro:e.codigo||'INTEGRACAO_INDISPONIVEL'});
   }
  });
  app.post('/api/admin/sair',proteger,validarCsrf,(req,res)=>{
