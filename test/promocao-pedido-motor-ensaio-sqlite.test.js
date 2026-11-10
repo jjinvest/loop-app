@@ -155,7 +155,9 @@ test('compra verde R$250 sem frete promove uma posição em B no mesmo commit, u
  assert.equal(x.producao.aprovarEEnfileirarEmEnsaio(p).repetida,false);
  const estado=x.motor.consultar({titularId:x.titular.titularId});
  assert.equal(estado.minhasPosicoes.length,1);
- assert.equal(estado.minhasPosicoes[0].local,'FILA_B');
+ assert.equal(estado.minhasPosicoes[0].local,'AGUARDANDO_CPF_TERMOS');
+ assert.equal(estado.filaB,0);
+ assert.equal(estado.posicoesAzuisPendentes,1);
  assert.equal(estado.tabuleiro.eventosNoCiclo,0);
  assert.equal(estado.catraca.giros,0);
  assert.equal(estado.posicoesReais,0);
@@ -341,7 +343,9 @@ test('Escritorio HTTP aprovado enxerga automaticamente posicao de compra verde s
   headers:{Cookie:cookies[0]}
  })).json();
  assert.equal(estado.minhasPosicoes.length,1);
- assert.equal(estado.minhasPosicoes[0].local,'FILA_B');
+ assert.equal(estado.minhasPosicoes[0].local,'AGUARDANDO_CPF_TERMOS');
+ assert.equal(estado.filaB,0);
+ assert.equal(estado.posicoesAzuisPendentes,1);
  assert.equal(estado.minhasPosicoes[0].pedidoDeOrigemEnsaio,p.pedidoId);
  assert.equal(estado.eventosComerciais.promovidasSomenteEmEnsaio,1);
  assert.equal(estado.eventosComerciais.aguardandoConciliacao,1);
