@@ -269,7 +269,7 @@ async function main(){
     /checkout real ainda não foi liberado/i);
    assert.equal(await page.locator('#catalogoLojaLoop').innerText(),'');
    assert.match(await page.locator('#estadoLojaLoop').innerText(),
-    /conta LOOP.*Vendas reais ainda não liberadas/i);
+    /capacidade técnica da sua conta.*Checkout e pagamentos reais ainda não habilitados/i);
    await page.screenshot({
     path:path.join(pasta,'identidade-real-loja-'+item.nome+'.png'),
     fullPage:true
