@@ -36,26 +36,33 @@ class JornadaComercialUnificadaEnsaioSQLite{
   this._ensaio();
   return this.cotacoes.simular({itens,cepDestino});
  }
- async registrarPedido({titularId,itens,cepDestino,servicosFrete,
-  resumoAceito,chaveIdempotencia,enderecoEntrega}={}){
+ async emitirCotacao({titularId,itens,cepDestino,servicosFrete,
+  resumoAceito}={}){
   this._ensaio();
-  if(typeof titularId!=='string'||!TITULAR.test(titularId)||
-     !ID.test(chaveIdempotencia||''))
+  if(typeof titularId!=='string'||!TITULAR.test(titularId))
    falha('JORNADA_COMERCIAL_IDENTIDADE_INVALIDA');
-  const cotacao=await this.cotacoes.emitir({
+  // Uma cotacao autentica com ID permanente e emitida PRIMEIRO.
+  // Repeticoes de checkout usam o MESMO cotacaoId, sem criar outra.
+  const emitida=await this.cotacoes.emitir({
    titularId,itens,cepDestino,servicosFrete,resumoAceito
   });
+  return {...emitida,cobrancaCriada:false,financeiroReal:false};
+ }
+ async registrarPedido({titularId,cotacaoId,chaveIdempotencia,
+  enderecoEntrega}={}){
+  this._ensaio();
+  if(typeof titularId!=='string'||!TITULAR.test(titularId)||
+     !ID.test(chaveIdempotencia||'')||
+     !/^COTACAO_[a-f0-9]{32}$/.test(cotacaoId||''))
+   falha('JORNADA_COMERCIAL_IDENTIDADE_OU_COTACAO_INVALIDA');
   const pedido=await this.pedidos.criarPedido({
-   titularId,cotacaoId:cotacao.cotacaoId,
-   chaveIdempotencia,enderecoEntrega
+   titularId,cotacaoId,chaveIdempotencia,enderecoEntrega
   });
   if(pedido.status!=='AGUARDANDO_PAGAMENTO'||
      !ID.test(pedido.pedidoId))
    falha('JORNADA_COMERCIAL_PEDIDO_INCONSISTENTE');
   const capacidade=this.preflight.consultar({titularId});
-  // A cobranca nunca e criada neste metodo. A seguranca do checkout vem
-  // da transacao de criacao de pedido, nao de um aviso no navegador.
-  return {pedidoId:pedido.pedidoId,
+  return {pedidoId:pedido.pedidoId,repetido:pedido.repetido===true,
    status:pedido.status,valorTotalCentavos:pedido.valorTotalCentavos,
    quantidadeDistribuidores:pedido.quantidadeDistribuidores,
    capacidade,checkoutReal:false,cobrancaCriada:false,
