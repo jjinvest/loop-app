@@ -40,8 +40,9 @@ class SincronizadorComercialLoopEnsaioSQLite{
    c.ultrapassaDezPorCompra===false;
  }
  _semPosicao(c){
-  return c.totalPosicoesMistasPrevistas===0&&
-   c.itensSemRegraExplicita===0;
+  // Produtos sem regra registrada sao cinza por padrao: vendem normalmente
+  // na loja e jamais geram posicao do LOOP.
+  return c.totalPosicoesMistasPrevistas===0;
  }
  _origemUnica(pedidoId,pagamentoId){
   // Identificador opaco deterministicamente derivado dos dois IDs do livro,
