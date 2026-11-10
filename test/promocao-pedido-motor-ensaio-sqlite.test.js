@@ -1175,7 +1175,7 @@ test('loja aprovada apresenta capacidade do proprio titular sem habilitar checko
   return resposta.headers.get('set-cookie').split(';')[0];
  };
  const buyer=await entrar('Comprador'),outro=await entrar('Outro');
- const ver=async cookie,query=''=>fetch(endpoint+query,{
+ const ver=(cookie,query='')=>fetch(endpoint+query,{
   headers:{Cookie:cookie}
  });
  const cap=await (await ver(buyer)).json();
