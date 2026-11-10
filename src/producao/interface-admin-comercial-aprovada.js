@@ -73,10 +73,37 @@ function renderizarAdminComercialAprovado(){
   '<p id="estadoAuditoriaAdmin" class="subtexto" role="status"></p>'+
   '<div id="listaAuditoriaAdmin" aria-live="polite"></div></section>';
  const motorPainel='<section class="painel" aria-labelledby="tituloMotorInternoAdmin">'+
-  '<h2 id="tituloMotorInternoAdmin">LOOP · estado interno</h2>'+
+  '<h2 id="tituloMotorInternoAdmin">LOOP · catraca e filas</h2>'+
   '<p id="loopAdminEstado" role="status">Consultando mesmo motor do cliente...</p>'+
   '<button id="atualizarLoopAdmin" type="button">Atualizar estado</button>'+
-  '</section>';
+  '<h3>Controle operacional da catraca</h3>'+
+  '<p class="subtexto">As compras qualificadas continuam nas filas A/B mesmo com a catraca pausada. '+
+  'São necessários seis eventos por ciclo. Configurações e giros aqui usam o motor interno de ensaio; '+
+  'dinheiro real e saques permanecem desligados até homologação externa.</p>'+
+  '<p id="estadoCatracaAdmin" role="status" aria-live="polite">Consultando política da catraca...</p>'+
+  '<div class="duas-colunas">'+
+  '<div><label for="modoCatracaAdmin">Funcionamento</label>'+
+  '<select id="modoCatracaAdmin" disabled>'+
+  '<option value="PAUSADA">Pausada por decisão do administrador</option>'+
+  '<option value="MANUAL">Manual · administrador gira</option>'+
+  '<option value="AUTOMATICA">Automática · dentro da agenda e seis eventos</option>'+
+  '</select></div>'+
+  '<div><label for="limiteCatracaAdmin">Máximo de giros por dia (vazio = sem limite)</label>'+
+  '<input id="limiteCatracaAdmin" type="number" min="1" max="1000000" inputmode="numeric" placeholder="Sem limite" disabled></div>'+
+  '<div><label for="inicioCatracaAdmin">Início da janela diária · Brasília</label>'+
+  '<input id="inicioCatracaAdmin" type="time" value="00:00" disabled></div>'+
+  '<div><label for="fimCatracaAdmin">Fim da janela diária · Brasília</label>'+
+  '<input id="fimCatracaAdmin" type="time" value="00:00" disabled></div>'+
+  '</div>'+
+  '<label for="motivoCatracaAdmin">Motivo da configuração</label>'+
+  '<input id="motivoCatracaAdmin" maxlength="200" value="AJUSTE_OPERACIONAL" disabled>'+
+  '<div class="linha">'+
+  '<button id="salvarCatracaAdmin" class="primario" type="button" disabled>Salvar e aplicar regras</button>'+
+  '<button id="pausarCatracaAdmin" type="button" disabled>Pausar catraca</button>'+
+  '<button id="liberarCatracaAdmin" type="button" disabled>Liberar modo manual</button>'+
+  '<button id="girarCatracaAdmin" type="button" disabled>Executar próximo giro (6 eventos)</button>'+
+  '<button id="atualizarCatracaAdmin" type="button">Atualizar controle</button>'+
+  '</div></section>';
  const destino='<section class="painel" aria-labelledby="tituloContabilidadeAdmin">';
  if(!pagina.includes(destino))throw Error('PAINEL_ADMIN_APROVADO_DESATUALIZADO');
  return pagina.replace(destino,motorPainel+adicao+classificacaoPainel+manutencaoPainel+auditoriaPainel+destino);
