@@ -341,6 +341,22 @@ class MotorLoopIntegradoSQLite{
    comercial={...comercial,promovidasSomenteEmEnsaio:x.total,
     emRevisaoPorEstornoEnsaio:x.revisao};
   }
+  if(this.banco.prepare([
+   "SELECT 1 FROM sqlite_master WHERE type='table'",
+   "AND name='loop_real_promocoes_lotes_posicoes_ensaio'"
+  ].join(' ')).get()){
+   const filtro=titularId===null?'':'WHERE l.titular_id=?';
+   const stmt=this.banco.prepare([
+    'SELECT COUNT(*) AS n',
+    'FROM loop_real_promocoes_lotes_posicoes_ensaio p',
+    'JOIN loop_real_promocoes_lotes_ensaio l ON l.pedido_id=p.pedido_id',
+    filtro
+   ].join(' '));
+   const total=titularId===null?stmt.get().n:stmt.get(titularId).n;
+   comercial={...comercial,promovidasSomenteEmEnsaio:
+    (comercial.promovidasSomenteEmEnsaio||0)+total,
+    posicoesEspeciaisSomenteEmEnsaio:total};
+  }
   const visual=p=>p?{
    numero:p.id,minha:p.participanteId===titularId&&p.empresa!==true,
    dourada:p.empresa===true,
@@ -377,6 +393,7 @@ class MotorLoopIntegradoSQLite{
     .map(p=>({numero:p.id,
      local:p.statusAdesao==='REVISAR_PSP'?'EM_REVISAO_PSP':p.local,
      indicacoesVinculadas:p.indicacoesVinculadas||0,
+     classeProdutoOrigem:p.classeProdutoOrigem||null,
      estadoAdesao:p.statusAdesao||'ATIVA_ENSAIO',
      aguardandoCpfTermos:p.statusAdesao==='PENDENTE'})),
    posicoesReais:0,saquesReais:0};
