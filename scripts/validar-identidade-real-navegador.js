@@ -466,8 +466,10 @@ async function main(){
    const loja=pagina.locator('#estadoLojaLoop');
    await conferirLayoutReal(pagina,'loja-'+visual.nome,{mobile:visual.mobile});
    await loja.filter({hasText:/capacidade técnica da sua conta/}).waitFor();
+   await pagina.waitForFunction(()=>!document.getElementById('akitemmBusca').disabled);
+   assert.equal(await pagina.locator('#catalogoLojaLoop .produto-loja-loop').count(),1);
    assert.equal(await pagina.locator('#registrarPedidoLoja').isDisabled(),true);
-   assert.equal(await pagina.locator('#akitemmBusca').isDisabled(),true);
+   assert.equal(await pagina.locator('#akitemmBusca').isEnabled(),true);
    await pagina.screenshot({
     path:path.join(pasta,'integrado-loja-'+visual.nome+'.png'),
     fullPage:true
