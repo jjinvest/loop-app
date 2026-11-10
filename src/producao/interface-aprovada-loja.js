@@ -27,10 +27,17 @@
   const normal=x=>String(x||'').normalize('NFD')
    .replace(/[\u0300-\u036f]/g,'').toLocaleLowerCase('pt-BR');
   const itens=produtosPublicados.filter(p=>
-   (!categoria||(categoria==='fisicos'&&p.tipo==='FISICO'))&&
+   (!categoria||(categoria==='fisicos'&&p.tipo==='FISICO')||
+    (categoria==='novidades'&&p.novidade===true)||
+    (categoria==='mais-vendidos'&&p.unidadesConfirmadas>0))&&
    (!cor||p.cor===cor)&&
    (!termo||normal(p.titulo+' '+p.descricao).includes(normal(termo)))
-  );
+  ).sort((a,b)=>categoria==='mais-vendidos'?
+   b.unidadesConfirmadas-a.unidadesConfirmadas||
+    a.titulo.localeCompare(b.titulo,'pt-BR'):
+   categoria==='novidades'?
+    b.criadoEm-a.criadoEm||
+     a.titulo.localeCompare(b.titulo,'pt-BR'):0);
   const lista=$('catalogoLojaLoop');
   lista.replaceChildren();
   $('akitemmVisualizacaoProduto').hidden=true;
@@ -73,6 +80,8 @@
   }
   $('akitemmResultadoProdutos').textContent=itens.length?
    itens.length+' produto(s) publicado(s), sem checkout habilitado.':
+   categoria==='mais-vendidos'?'Ainda não há produtos com vendas confirmadas.':
+   categoria==='novidades'?'Ainda não há novidades publicadas.':
    'Nenhum produto encontrado para esta busca ou filtro.';
   $('akitemmFiltroTodos').setAttribute('aria-pressed',
    String(!categoria&&!cor&&!termo));
@@ -125,6 +134,10 @@
        typeof p.descricao!=='string'||p.compravel!==false||
        p.checkoutReal!==false||p.precoCentavos!==null||
        p.estoqueConfirmado!==false||p.tipo!=='FISICO'||
+       typeof p.novidade!=='boolean'||
+       !Number.isSafeInteger(p.criadoEm)||
+       !Number.isSafeInteger(p.unidadesConfirmadas)||
+       p.unidadesConfirmadas<0||
        !['CINZA','VERDE','DOURADO','ROXO'].includes(p.cor)))
     throw Error('CATALOGO_FORA_DO_CONTRATO');
    produtosPublicados=dados.produtos;
