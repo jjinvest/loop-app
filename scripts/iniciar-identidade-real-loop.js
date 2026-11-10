@@ -29,7 +29,7 @@ const {CatalogoMultiDistribuidoresSQLite}=
 const {ControleEconomicoLojaSQLite}=
  require('../src/producao/controle-economico-loja-sqlite');
 const {montarComercialSemHomologacao,
- exigirChaveParaHistoricoComercial}=
+ exigirChaveParaHistoricoComercial,criarLeituraCatalogoSeguro}=
  require('../src/producao/montar-comercial-sem-homologacao');
 const {AuditoriaOperacionalSQLite}=
  require('../src/producao/auditoria-operacional-sqlite');
@@ -181,7 +181,8 @@ async function iniciar(ambiente=process.env){
   // A fachada nao expõe criarPedido/confirmarPagamento/despachar.
   const pedidosComerciais=comercial?.leituraPedidos||null;
   const remessasOutbox=comercial?.leituraRemessas||null;
-  const catalogoVitrine=comercial?.leituraCatalogo||null;
+  const catalogoVitrine=comercial?.leituraCatalogo||
+   criarLeituraCatalogoSeguro({banco,catalogo});
   const app=criarAppIdentidadeLoop({
    contas,motorLoop,eventosComerciais,preflightCapacidade,
    pedidosComerciais,remessasOutbox,catalogoVitrine,
