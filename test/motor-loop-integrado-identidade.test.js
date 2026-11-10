@@ -272,3 +272,35 @@ test('agenda, limite diario e pausas controlam giros; filas entram mesmo pausada
  assert.equal(catraca.verificar().girosAuditados,2);
  assert.equal(validarIdentidade(arquivo).integridade,'ok');
 });
+
+test('admin em modo produtivo salva horario e teto sem habilitar giro nao homologado',t=>{
+ const banco=new DatabaseSync(':memory:');
+ t.after(()=>banco.close());
+ new IdentidadeClienteLoopReal({...config(),banco});
+ const motor=new MotorLoopIntegradoSQLite({banco});
+ const catraca=new OperacaoCatracaAdminSQLite({banco,motor,
+  agora:()=>new Date('2026-11-10T12:00:00Z')});
+ const anterior=process.env.NODE_ENV;
+ try{
+  process.env.NODE_ENV='production';
+  const result=catraca.configurar({modo:'AUTOMATICA',
+   janelaInicio:'09:00',janelaFim:'17:00',limiteDiario:75,
+   revisaoEsperada:1,motivo:'PARAMETROS_ADMIN_PARA_HOMOLOGACAO'});
+  assert.equal(result.modo,'AUTOMATICA');
+  assert.equal(result.limiteDiario,75);
+  assert.equal(result.habilitadoSomenteEnsaio,false);
+  assert.equal(result.politicaOperacionalConfiguravel,true);
+  assert.equal(result.podeGirar,false);
+  assert.equal(motor.consultar().catraca.estado,'PAUSADA');
+  assert.throws(()=>catraca.executarGiro(),
+   {codigo:'CATRACA_MOTOR_PRODUTIVO_NAO_HOMOLOGADO'});
+  assert.equal(catraca.processarAgenda().girou,false);
+  assert.equal(banco.prepare(
+   'SELECT COUNT(*) AS n FROM loop_real_catraca_admin_giros'
+  ).get().n,0);
+ }finally{
+  if(anterior===undefined)delete process.env.NODE_ENV;
+  else process.env.NODE_ENV=anterior;
+ }
+ assert.equal(catraca.verificar().integridade,'OK');
+});
