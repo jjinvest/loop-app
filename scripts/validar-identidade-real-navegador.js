@@ -275,7 +275,7 @@ async function main(){
    console.log('DIAGNOSTICO_FINANCEIRO_'+item.nome+'='+
     JSON.stringify(diagnosticoTesouraria));
    await page.locator('#tesourariaEnsaioSaldo').filter({
-    hasText:/Disponivel ficticio: R\$ 0,00/
+    hasText:/Disponivel ficticio: R\$\s*0,00/
    }).waitFor();
    assert.match(await page.locator('#estadoFinanceiro').innerText(),
     /SIMULACAO.*sem pagamento bancario/i);
