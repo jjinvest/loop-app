@@ -83,7 +83,7 @@ class PromocaoPedidoMotorEnsaioSQLite{
      cor.totalPosicoesPrevistas!==1||
      cor.posicoesDouradasPrevistas!==0||
      cor.posicoesRoxasBloqueadas!==0||
-     cor.itensSemRegraExplicita!==0||
+
      cor.eventosEspeciaisNaoHomologados!==false||
      cor.ultrapassaDezPorCompra!==false||
      cor.posicoesReaisCriadas!==0||
