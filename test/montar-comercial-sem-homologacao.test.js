@@ -24,7 +24,7 @@ const {MotorLoopIntegradoSQLite}=
 const {criarAppIdentidadeLoop}=
  require('../src/producao/servidor-identidade-loop');
 const {montarComercialSemHomologacao,
- exigirChaveParaHistoricoComercial}=
+ exigirChaveParaHistoricoComercial,criarLeituraCatalogoSeguro}=
  require('../src/producao/montar-comercial-sem-homologacao');
 const {validarIdentidade,criarBackupIdentidadeReal,
  restaurarBackupIdentidadeReal}=
@@ -754,4 +754,48 @@ test('cinco missoes integradas: distribuir, sacar, abastecer, trocar e restaurar
    titularId:titular
   }).saldoFicticioDisponivelCentavos,7000);
  }finally{db2.close();}
+});
+
+
+test('vitrine publicada fica operante sem chave PSP, mas produtos rascunho e compras ficam bloqueados',async t=>{
+ const x=await preparar(t);
+ t.after(()=>{try{x.encerrar();}catch{}});
+ const {banco,contas,catalogo}=x.env;
+ catalogo.criarProduto({produtoId:'em_preparo',
+  titulo:'Produto publicado sem pagamento homologado'});
+ catalogo.ativarProduto({produtoId:'em_preparo',ativo:true});
+ catalogo.criarProduto({produtoId:'rascunho',
+  titulo:'Não publicado ainda'});
+ const leitura=criarLeituraCatalogoSeguro({banco,catalogo});
+ assert.deepEqual(Object.keys(leitura),['banco','listarVitrinePreparacao']);
+ assert.equal(Object.isFrozen(leitura),true);
+ assert.deepEqual(leitura.listarVitrinePreparacao({limite:50}).map(p=>p.produtoId),
+  ['em_preparo']);
+ const app=criarAppIdentidadeLoop({
+  contas,origemHttps:ORIGEM,permitirCadastro:true,catalogoVitrine:leitura
+ });
+ const server=app.listen(0,'127.0.0.1');
+ await once(server,'listening');
+ t.after(()=>new Promise(resolve=>server.close(resolve)));
+ const base='http://127.0.0.1:'+server.address().port;
+ assert.equal((await fetch(base+'/api/loja/catalogo')).status,401);
+ const login=await contas.entrar({
+  nick:'Alice',senha:'SenhaDeEnsaio2026!'
+ });
+ const h={Cookie:COOKIE+'='+login.token};
+ const r=await fetch(base+'/api/loja/catalogo',{headers:h});
+ assert.equal(r.status,200);
+ const d=await r.json();
+ assert.equal(d.produtos.length,1);
+ assert.equal(d.produtos[0].titulo,'Produto publicado sem pagamento homologado');
+ assert.equal(d.produtos[0].precoCentavos,null);
+ assert.equal(d.produtos[0].compravel,false);
+ assert.equal(d.produtos[0].estoqueConfirmado,false);
+ assert.equal(d.checkoutReal,false);
+ assert.equal((await fetch(base+'/api/checkout/finalizar',{
+  method:'POST',headers:{...h,Origin:ORIGEM}
+ })).status,503);
+ assert.equal((await fetch(base+'/api/loja/pedidos',{headers:h})).status,503);
+ assert.equal((await fetch(base+'/api/loja/estado',{headers:h}))
+  .status,200);
 });
