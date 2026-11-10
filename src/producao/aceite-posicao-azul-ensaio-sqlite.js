@@ -62,8 +62,9 @@ class AceitePosicaoAzulEnsaioSQLite{
      pos.participanteId!==titularId||idx.participanteId!==titularId||
      pos.statusAdesao!==anterior||idx.statusAdesao!==anterior)
    falha('AZUL_SNAPSHOT_DIVERGENTE');
-  if(novo==='ACEITE_ENSAIO'&&!s.filas.filaB.some(p=>p.id===posicaoId))
-   falha('AZUL_FORA_DA_ESPERA');
+  if(novo==='ACEITE_ENSAIO'&&
+     ![...s.filas.filaA,...s.filas.filaB].some(p=>p.id===posicaoId))
+   falha('AZUL_PRAZO_DE_CONFIRMACAO_ENCERRADO');
   pos.statusAdesao=novo;idx.statusAdesao=novo;
   if(novo==='REVISAR_PSP')s.catraca.aberta=false;
   this.db.prepare(
@@ -208,9 +209,18 @@ class AceitePosicaoAzulEnsaioSQLite{
        item.statusAdesao!==esperado)
      falha('AZUL_SNAPSHOT_AUDITORIA_DIVERGENTE');
     const atual=presentes.find(x=>x.id===p.posicao_id);
-    if(atual&&(atual.statusAdesao!==esperado||
-       atual.participanteId!==p.titular_id))
+    if(atual){
+    const convertida=esperado==='PENDENTE'&&
+     atual.statusAdesao==='PRAZO_ENCERRADO'&&
+     atual.empresa===true&&
+     atual.titularOperacional==='LOOP_EMPRESA'&&
+     atual.motivoAssuncao==='SEM_CPF_E_TERMOS_NA_ENTRADA_VAGA_6'&&
+     typeof atual.entradaPelaVaga6Em==='string'&&
+     atual.prazoEncerradoEm===atual.entradaPelaVaga6Em;
+    if((atual.statusAdesao!==esperado&&!convertida)||
+       atual.participanteId!==p.titular_id)
      falha('AZUL_SNAPSHOT_AUDITORIA_DIVERGENTE');
+   }
    }
   }
   return {aceitesIndividuaisEnsaio:a.length,reversoesEmQuarentena:r.length};
@@ -219,9 +229,20 @@ class AceitePosicaoAzulEnsaioSQLite{
   if(db.prepare(
    'SELECT 1 FROM loop_real_reversoes_promocao_ensaio WHERE posicao_id=?'
   ).get(posicaoId))return 'REVISAR_PSP';
-  return db.prepare(
+  if(db.prepare(
    'SELECT 1 FROM loop_real_aceites_posicao_ensaio WHERE posicao_id=?'
-  ).get(posicaoId)?'ACEITE_ENSAIO':'PENDENTE';
+  ).get(posicaoId))return 'ACEITE_ENSAIO';
+  const row=db.prepare('SELECT snapshot FROM loop_real_motor_estado WHERE id=1').get();
+  if(row){
+   const s=JSON.parse(row.snapshot);
+   const atuais=[...s.filas.filaA,...s.filas.filaB,s.tabuleiro.centro,
+    ...s.tabuleiro.vagas].filter(Boolean);
+   const antigos=s.tabuleiro.ciclosConcluidos?.map(x=>x.centro)||[];
+   if([...atuais,...antigos].some(x=>x?.id===posicaoId&&
+      x.statusAdesao==='PRAZO_ENCERRADO'&&x.empresa===true))
+    return 'PRAZO_ENCERRADO_DOURADA';
+  }
+  return 'PENDENTE';
  }
 }
 module.exports={AceitePosicaoAzulEnsaioSQLite};
