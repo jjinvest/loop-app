@@ -369,6 +369,76 @@
  }
 
  let politicaCatraca=null,catracaOcupada=false;
+ let integracaoDisponivel=false,integracaoOcupada=false;
+ async function requisitarIntegracao(body){
+  const escrita=body!==undefined;
+  const r=await fetch('/api/admin/loop/integracao',{
+   method:escrita?'POST':'GET',credentials:'same-origin',cache:'no-store',
+   headers:escrita?{'Content-Type':'application/json',
+    'X-Loop-Admin-Csrf':csrf}:{},
+   ...(escrita?{body:JSON.stringify(body)}:{})
+  });
+  const d=await r.json().catch(()=>({}));
+  if(!r.ok)throw Error(d.erro||'INTEGRACAO_LOOP_INDISPONIVEL');
+  return d;
+ }
+ function botoesIntegracao(){
+  const ativo=!!csrf&&integracaoDisponivel&&!integracaoOcupada;
+  $('sincronizarComprasLoop').disabled=!ativo;
+  $('prepararTabuleiroLoop').disabled=!ativo;
+ }
+ async function atualizarIntegracaoLoop(){
+  try{
+   const d=await requisitarIntegracao();
+   if(d.status!=='INTEGRACAO_INTERNA_ENSAIO'||
+      !Number.isSafeInteger(d.enfileiradas)||d.financeiroReal!==false)
+    throw Error('Resposta de integração inválida.');
+   integracaoDisponivel=true;
+   $('integracaoQualificadaEstado').textContent=
+    'Confirmadas: '+d.confirmadas+
+    ' · Verdes na fila: '+d.enfileiradas+
+    ' · Verdes aguardando posição: '+d.aguardandoPromocao+
+    ' · Luzes: '+d.eventosNoCiclo+'/6'+
+    ' · Eventos aguardando ciclo: '+d.esperandoSeisEventos+
+    ' · Cinzas sem posição: '+d.naoQualificadas+
+    ' · Regras especiais pendentes: '+d.regrasEspeciaisPendentes+
+    ' · Estornos: '+d.estornadas+
+    ' · Ligação interna de ensaio (sem dinheiro real).';
+  }catch(e){
+   integracaoDisponivel=false;
+   $('integracaoQualificadaEstado').textContent=
+    'Integração não liberada: '+e.message;
+  }finally{botoesIntegracao();}
+ }
+ async function executarIntegracaoLoop(acao){
+  if(integracaoOcupada||!csrf||!integracaoDisponivel)
+   throw Error('Ação administrativa indisponível.');
+  integracaoOcupada=true;botoesIntegracao();
+  try{
+   const d=await requisitarIntegracao({acao});
+   if(d.financeiroReal!==false)throw Error('Resposta insegura da integração.');
+   await atualizarIntegracaoLoop();
+   await atualizarMotorAdministrativo();
+   await atualizarCatracaAdmin();
+   $('integracaoQualificadaEstado').textContent=
+    'Sincronizado: '+(d.novasPosicoes||0)+' posição(ões), '+
+    (d.novosEventos||0)+' luz(es) nova(s). '+
+    'Filas: '+d.filaA+'/'+d.filaB+
+    ' · Eventos: '+d.eventosNoCiclo+'/6. Sem dinheiro real.';
+  }finally{integracaoOcupada=false;botoesIntegracao();}
+ }
+ for(const [id,acao] of [
+  ['sincronizarComprasLoop','SINCRONIZAR'],
+  ['prepararTabuleiroLoop','PREPARAR_TABULEIRO']
+ ]){
+  $(id).addEventListener('click',()=>{
+   void executarIntegracaoLoop(acao).catch(e=>{
+    $('integracaoQualificadaEstado').textContent=e.message;
+   });
+  });
+ }
+ $('atualizarIntegracaoLoop').addEventListener('click',()=>void atualizarIntegracaoLoop());
+
  async function apiCatraca(body){
   const escrita=body!==undefined;
   const res=await fetch('/api/admin/loop/controle',{
@@ -485,6 +555,7 @@
    await consultarAuditoria();
    await atualizarMotorAdministrativo();
    await atualizarCatracaAdmin();
+   await atualizarIntegracaoLoop();
   }catch(e){travar(true);status(e.message);}
  })();
 })();
