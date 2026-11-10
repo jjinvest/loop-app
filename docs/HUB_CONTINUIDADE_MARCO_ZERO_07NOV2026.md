@@ -707,3 +707,18 @@ A chamada interna `aprovarEEnfileirarEmEnsaio()` cria a posição na **fila B** 
 **Não confundir a conclusão com live:** falta ainda (a) posição AZUL pendente e a confirmação explícita CPF/termos/opt-in de participação, distinta do cadastro básico; (b) promover automaticamente só com **liquidação, titularidade e fundos reais** atestados por adaptadores homologados; (c) efeitos específicos de itens DOURADO e ROXO, que agora são deliberadamente bloqueados neste caminho verde; (d) tratamento compensatório de reversão de uma posição após estorno, com auditoria; (e) regras e autorização operacional para rodar a catraca e saques. Enquanto tais gates não estiverem concluídos, o que foi conectado é um *ensaio atômico* sem cliente financeiro real.
 
 **Próximo bloco recomendado que não depende de API:** posição AZUL pendente por compra elegível ainda não opt-in, consentimento individual/CPF protegido sem duplicação, migração confirmada à fila, e políticas de estorno antes do giro — preservar as cores e o esqueleto aprovado. Não executar produção com flags de laboratório.
+
+
+## Continuidade 311 — posicao azul pendente, aceite individual, reversao e limites mistos (09/11/2026)
+
+**Implementado e testado em ensaio:** compra verde qualificada cria posicao AZUL PENDENTE no mesmo SQLite do motor e do pedido, sem poder ser selecionada pelo tabuleiro/catraca. O cliente visualiza AGUARDANDO_CPF_TERMOS; a fila B ativa nao contabiliza azuis nao confirmadas. O registro interno conserva a ordem sem autorizar circulacao.
+
+Aceite individual por metodo interno, com CPF sintaticamente valido, consentimento explicito, termos hash/versionados, titular correto e e-mail confirmado. Historico imutavel, HMAC-SHA256 de CPF, sem CPF em claro na tabela de aceite; replays identicos nao duplicam. Status ACEITE_ENSAIO, sem KYC externo e sem caixa/saques. Sem interface publica ou endpoint de aceite ate autorizacao, documentacao e infraestrutura de identidade.
+
+Estorno do evento comercial confirmado pelo PSP leva a REVISAO_PSP, bloqueia catraca e preserva pedido, CPF HMAC, aceite e auditoria; procedimento idempotente. Nao significa estorno financeiro bancario efetuado.
+
+Regras especiais: dourado, uma posicao prevista por unidade; roxo, quantidade prevista configurada por unidade, sem multiplicacao pelo preco; verde, no maximo uma por pedido de valor elegivel >= R$250 sem frete; cinza, nenhuma. O novo totalPosicoesMistasPrevistas contabiliza todas e bloqueia combinacoes acima de dez; fotografia do pedido permanece congelada. Roxos/dourados continuam nao promovidos por esta ponte verde, aguardando homologacao e mecanismo de lote financeiro seguro.
+
+**Prova:** GitHub Actions 42735438314 SUCCESS, commit de codigo 8b1829a89c12f8f3f7afb8c1db98e049caefc13b, cobrindo azul/CPF/termos/titular/replay/reversao, contador fila, compra mista e backup. Codigo na branch feature/unificar-escritorio-real-20261105. PR #1 DRAFT continua em outra branch sem merge; sem deploy/dinheiro real.
+
+**Pendencias:** integrar aceite na UI original com KYC e guarda de CPF homologados; criar e testar lotes dourados e roxos com provisao financeira e capacidade; provar liquidacao independente real, conciliar bancos, validar operacao juridica e reversoes compensatorias. Fluxo segue financeiramente bloqueado.
