@@ -25,6 +25,10 @@ const {MotorLoopIntegradoSQLite}=
  require('../src/producao/motor-loop-integrado-sqlite');
 const {PromocaoPedidoMotorEnsaioSQLite}=
  require('../src/producao/promocao-pedido-motor-ensaio-sqlite');
+const {SincronizadorComercialLoopEnsaioSQLite}=
+ require('../src/producao/sincronizador-comercial-loop-ensaio-sqlite');
+const {OperacaoCatracaAdminSQLite}=
+ require('../src/producao/operacao-catraca-admin-sqlite');
 const {validarIdentidade,criarBackupIdentidadeReal,
  restaurarBackupIdentidadeReal}=
  require('../src/producao/backup-identidade-real');
@@ -71,8 +75,8 @@ async function fixture(t){
  const catalogo=new CatalogoMultiDistribuidoresSQLite({
   banco:db,distribuidorHomologado:()=>false,auditoria,manutencao
  });
- new ControleEconomicoLojaSQLite({banco:db,auditoria,manutencao});
- new SessaoAdminComercialSQLite({
+ const controle=new ControleEconomicoLojaSQLite({banco:db,auditoria,manutencao});
+ const sessoes=new SessaoAdminComercialSQLite({
   banco:db,chaveAdmin:randomBytes(32),
   credencialAdmin:'CredencialAdminSomenteEnsaios2026!Complexa'
  });
@@ -98,6 +102,13 @@ async function fixture(t){
  const promocao=new PromocaoPedidoMotorEnsaioSQLite({
   banco:db,motor,classificacaoLoop:classificacao,
   chaveCpfEnsaio:randomBytes(32)
+ });
+ const integracao=new SincronizadorComercialLoopEnsaioSQLite({
+  banco:db,motor,classificacaoLoop:classificacao,promocao
+ });
+ const pedidosIntegrados=new PedidosComerciaisSQLite({
+  ...base(),eventosComerciais:eventos,classificacaoLoop:classificacao,
+  integradorComercialEnsaio:integracao
  });
  const produtos=new Map();
  function produto({nome,preco,cor='VERDE'}){
@@ -138,7 +149,8 @@ async function fixture(t){
   return pedidos.confirmarPagamento({pedidoId:p.pedidoId});
  }
  return {db,arquivo,dir,contas,chaves,catalogo,classificacao,
-  motor,producao:promocao,evento:eventos,pedidos,titular,outro,
+  motor,producao:promocao,evento:eventos,pedidos,pedidosIntegrados,
+  integracao,controle,sessoes,auditoria,manutencao,titular,outro,
   produto,criarPedido,confirmar,statusPsp};
 }
 test('compra verde R$250 sem frete promove uma posição em B no mesmo commit, uma unica vez',async t=>{
