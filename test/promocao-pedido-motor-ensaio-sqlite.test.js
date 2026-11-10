@@ -96,7 +96,8 @@ async function fixture(t){
  const pedidos=new PedidosComerciaisSQLite({...base(),eventosComerciais:eventos,
   classificacaoLoop:classificacao});
  const promocao=new PromocaoPedidoMotorEnsaioSQLite({
-  banco:db,motor,classificacaoLoop:classificacao
+  banco:db,motor,classificacaoLoop:classificacao,
+  chaveCpfEnsaio:randomBytes(32)
  });
  const produtos=new Map();
  function produto({nome,preco,cor='VERDE'}){
@@ -367,4 +368,54 @@ test('Escritorio HTTP aprovado enxerga automaticamente posicao de compra verde s
   body:JSON.stringify({pedidoId:p.pedidoId})
  })).status,404);
  assert.equal(x.motor.verificar().compras,1);
+});
+
+test('azul espera CPF e termos de cada posicao antes de participar da catraca',async t=>{
+ const x=await fixture(t);
+ x.produto({nome:'verdeAzul',preco:25000});
+ const p=await x.criarPedido({nome:'verdeAzul',preco:25000});
+ await x.confirmar(p);
+ const r=x.producao.aprovarEEnfileirarEmEnsaio(p);
+ assert.equal(x.motor.consultar({titularId:x.titular.titularId}).minhasPosicoes[0].estadoAdesao,'PENDENTE');
+ x.motor.prepararTabuleiroEnsaio();
+ assert.equal(x.motor.consultar().tabuleiro.centro,null);
+ const docs=x.contas.documentos();
+ const a={titularId:x.titular.titularId,posicaoId:r.posicaoId,
+  cpf:'52998224725',aceiteExplicito:true,
+  versaoTermos:docs.termos.versao,hashTermos:docs.termos.hash};
+ assert.throws(()=>x.producao.confirmarPosicaoAzulEmEnsaio({...a,cpf:'11111111111'}),
+  {codigo:'AZUL_CPF_OU_ACEITE_INVALIDO'});
+ assert.throws(()=>x.producao.confirmarPosicaoAzulEmEnsaio({...a,aceiteExplicito:false}),
+  {codigo:'AZUL_CPF_OU_ACEITE_INVALIDO'});
+ assert.throws(()=>x.producao.confirmarPosicaoAzulEmEnsaio({...a,titularId:x.outro.titularId}),
+  {codigo:'AZUL_POSICAO_NAO_PERTENCE_A_CONTA'});
+ assert.equal(x.producao.confirmarPosicaoAzulEmEnsaio(a).repetido,false);
+ assert.equal(x.producao.confirmarPosicaoAzulEmEnsaio(a).repetido,true);
+ assert.equal(x.motor.consultar({titularId:x.titular.titularId}).minhasPosicoes[0].estadoAdesao,'ACEITE_ENSAIO');
+ assert.equal(x.producao.verificar().aceitesIndividuaisEnsaio,1);
+ assert.equal(validarIdentidade(x.arquivo).integridade,'ok');
+});
+test('reversao PSP coloca posicao aceita em quarentena sem apagar historico',async t=>{
+ const x=await fixture(t);
+ x.produto({nome:'verdeReversao',preco:25000});
+ const p=await x.criarPedido({nome:'verdeReversao',preco:25000});
+ await x.confirmar(p);
+ const r=x.producao.aprovarEEnfileirarEmEnsaio(p);
+ const docs=x.contas.documentos();
+ x.producao.confirmarPosicaoAzulEmEnsaio({titularId:x.titular.titularId,
+  posicaoId:r.posicaoId,cpf:'52998224725',aceiteExplicito:true,
+  versaoTermos:docs.termos.versao,hashTermos:docs.termos.hash});
+ assert.throws(()=>x.producao.suspenderPromocaoRevertidaEmEnsaio({
+  pedidoId:p.pedidoId,autorizadoEnsaio:true
+ }),{codigo:'AZUL_REVERSAO_SEM_PSP'});
+ x.statusPsp.set(p.pedidoId,{status:'ESTORNADO'});
+ await x.pedidos.confirmarPagamento({pedidoId:p.pedidoId});
+ assert.equal(x.producao.suspenderPromocaoRevertidaEmEnsaio({
+  pedidoId:p.pedidoId,autorizadoEnsaio:true}).repetido,false);
+ assert.equal(x.producao.suspenderPromocaoRevertidaEmEnsaio({
+  pedidoId:p.pedidoId,autorizadoEnsaio:true}).repetido,true);
+ assert.equal(x.motor.consultar({titularId:x.titular.titularId}).minhasPosicoes[0].estadoAdesao,'REVISAR_PSP');
+ assert.equal(x.producao.verificar().reversoesEmQuarentena,1);
+ assert.equal(x.producao.verificar().aceitesIndividuaisEnsaio,1);
+ assert.equal(validarIdentidade(x.arquivo).integridade,'ok');
 });
