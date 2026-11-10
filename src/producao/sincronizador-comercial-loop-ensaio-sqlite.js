@@ -5,17 +5,20 @@
 const {createHash}=require('node:crypto');
 function falha(c){const e=new Error(c);e.codigo=c;throw e;}
 class SincronizadorComercialLoopEnsaioSQLite{
- constructor({banco,motor,classificacaoLoop,promocao}={}){
+ constructor({banco,motor,classificacaoLoop,promocao,lotes=null}={}){
   if(process.env.NODE_ENV==='production')
    falha('INTEGRACAO_LOOP_PRODUTIVA_NAO_HOMOLOGADA');
   if(typeof banco?.prepare!=='function'||typeof banco?.exec!=='function'||
      motor?.banco!==banco||promocao?.db!==banco||
      classificacaoLoop?.db!==banco||
      typeof promocao.aprovarEEnfileirarEmEnsaio!=='function'||
-     typeof motor.registrarEventoEnsaio!=='function')
+     typeof motor.registrarEventoEnsaio!=='function'||
+     (lotes!==null&&(lotes.db!==banco||lotes.motor!==motor||
+      typeof lotes.aprovarEEnfileirarEmEnsaio!=='function'||
+      typeof lotes.suspenderReversao!=='function')))
    falha('INTEGRACAO_COMERCIAL_SQLITE_DIVERGENTE');
   this.db=banco;this.motor=motor;this.classificacao=classificacaoLoop;
-  this.promocao=promocao;
+  this.promocao=promocao;this.lotes=lotes;
  }
  _ensaio(){
   if(process.env.NODE_ENV==='production')
@@ -53,6 +56,7 @@ class SincronizadorComercialLoopEnsaioSQLite{
   const res={confirmadas:0,verdesQualificadas:0,
    enfileiradas:0,aguardandoPromocao:0,
    naoQualificadas:0,regrasEspeciaisPendentes:0,
+   posicoesEspeciaisEnfileiradas:0,pedidosEspeciaisEnfileirados:0,
    estornadas:0,esperandoSeisEventos:0,
    eventosNoCiclo:0,giros:0,financeiroReal:false,
    status:'INTEGRACAO_INTERNA_ENSAIO'};
@@ -76,7 +80,22 @@ class SincronizadorComercialLoopEnsaioSQLite{
      'WHERE pm.pedido_id=? AND ev.chave IS NULL'
     ].join(' ')).get(p.pedido_id))res.esperandoSeisEventos++;
    }else if(this._semPosicao(cor))res.naoQualificadas++;
-   else res.regrasEspeciaisPendentes++;
+   else if(this.lotes){
+    const lote=this.db.prepare(
+     'SELECT posicoes FROM loop_real_promocoes_lotes_ensaio WHERE pedido_id=?'
+    ).get(p.pedido_id);
+    if(lote){
+     res.enfileiradas++;
+     res.posicoesEspeciaisEnfileiradas+=lote.posicoes;
+     res.pedidosEspeciaisEnfileirados++;
+     if(this.db.prepare([
+      'SELECT 1 FROM loop_real_motor_compras m',
+      'LEFT JOIN loop_real_motor_eventos ev',
+      "ON ev.chave='e:'||m.pedido_id",
+      'WHERE m.pedido_id=? AND ev.chave IS NULL'
+     ].join(' ')).get(p.pedido_id))res.esperandoSeisEventos++;
+    }else res.regrasEspeciaisPendentes++;
+   }else res.regrasEspeciaisPendentes++;
   }
   const estado=this.motor.consultar();
   res.eventosNoCiclo=estado.tabuleiro.eventosNoCiclo;
@@ -90,6 +109,7 @@ class SincronizadorComercialLoopEnsaioSQLite{
   if(!Number.isSafeInteger(limite)||limite<1||limite>500)
    falha('INTEGRACAO_LIMITE_INVALIDO');
   let novasPosicoes=0,novosEventos=0,ignoradas=0,especiais=0;
+  let lotesCriados=0,aguardandoCapacidade=0;
   // Cada promocao e atomicamente gravada no mesmo SQLite pelo motor.
   // Se o processo cair, a proxima varredura encontra a mesma prova/posicao.
   let examinadas=0;
@@ -102,29 +122,44 @@ class SincronizadorComercialLoopEnsaioSQLite{
    if(this.db.prepare(
     'SELECT 1 FROM loop_real_promocoes_pedido_ensaio WHERE pedido_id=?'
    ).get(p.pedido_id))continue;
+   if(this.lotes&&this.db.prepare(
+    'SELECT 1 FROM loop_real_promocoes_lotes_ensaio WHERE pedido_id=?'
+   ).get(p.pedido_id))continue;
    const cor=this.classificacao.avaliarPedido({pedidoId:p.pedido_id});
    if(this._semPosicao(cor)){ignoradas++;continue;}
-   if(!this._purezaVerde(cor)){especiais++;continue;}
-   examinadas++;
-   const x=this.promocao.aprovarEEnfileirarEmEnsaio({
-    pedidoId:p.pedido_id,pagamentoId:p.pagamento_id,
+   const args={pedidoId:p.pedido_id,pagamentoId:p.pagamento_id,
     valorCentavos:p.valor_total_centavos,
     provaEnsaioId:this._origemUnica(p.pedido_id,p.pagamento_id),
-    autorizadoEnsaio:true
-   });
-   if(!x.repetida)novasPosicoes++;
+    autorizadoEnsaio:true};
+   if(this._purezaVerde(cor)){
+    examinadas++;
+    const x=this.promocao.aprovarEEnfileirarEmEnsaio(args);
+    if(!x.repetida)novasPosicoes++;
+   }else if(this.lotes){
+    examinadas++;
+    try{
+     const x=this.lotes.aprovarEEnfileirarEmEnsaio(args);
+     if(!x.repetida){novasPosicoes+=x.quantidade;lotesCriados++;}
+    }catch(e){
+     if(e.codigo==='LOTE_EXCEDE_DEZ_POSICOES_ATIVAS'||
+        e.codigo==='LOTE_QUANTIDADE_INVALIDA'){
+      aguardandoCapacidade++;continue;
+     }
+     throw e;
+    }
+   }else{especiais++;continue;}
   }
   // Registrar luzes apenas de posicoes efetivamente enfileiradas.
   // Sem centro, vendas aguardam sem virar ciclo ficticio.
   const s=this.motor.consultar();
   if(s.tabuleiro.centro!==null&&s.tabuleiro.eventosNoCiclo<6){
    const pendentes=this.db.prepare([
-    'SELECT pm.pedido_id FROM loop_real_promocoes_pedido_ensaio pm',
-    'JOIN loop_real_eventos_comerciais e ON e.pedido_id=pm.pedido_id',
+    'SELECT m.pedido_id FROM loop_real_motor_compras m',
+    'JOIN loop_real_eventos_comerciais e ON e.pedido_id=m.pedido_id',
     "WHERE e.estado='AGUARDANDO_CONCILIACAO'",
-    'AND NOT EXISTS(SELECT 1 FROM loop_real_motor_eventos m',
-    "WHERE m.chave='e:'||pm.pedido_id)",
-    'ORDER BY pm.criado_em ASC,pm.pedido_id ASC'
+    'AND NOT EXISTS(SELECT 1 FROM loop_real_motor_eventos ev',
+    "WHERE ev.chave='e:'||m.pedido_id)",
+    'ORDER BY e.registrado_em ASC,m.pedido_id ASC'
    ].join(' ')).all();
    for(const p of pendentes){
     if(this.motor.consultar().tabuleiro.eventosNoCiclo===6)break;
@@ -133,7 +168,7 @@ class SincronizadorComercialLoopEnsaioSQLite{
    }
   }
   return {novasPosicoes,novosEventos,ignoradas,especiais,
-   ...this.consultar()};
+   lotesCriados,aguardandoCapacidade,...this.consultar()};
  }
  prepararTabuleiro(){
   this._ensaio();
@@ -141,6 +176,16 @@ class SincronizadorComercialLoopEnsaioSQLite{
   return {centro:x.centro?.id||null,
    vagasOcupadas:x.vagas.filter(Boolean).length,
    ...this.sincronizar()};
+ }
+ confirmarPosicaoAzulEmEnsaio(dados){
+  this._ensaio();
+  const posicaoId=dados?.posicaoId;
+  if(!Number.isSafeInteger(posicaoId)||posicaoId<1)
+   falha('AZUL_CPF_OU_ACEITE_INVALIDO');
+  if(this.lotes&&this.db.prepare(
+   'SELECT 1 FROM loop_real_promocoes_lotes_posicoes_ensaio WHERE posicao_id=?'
+  ).get(posicaoId))return this.lotes.confirmarAzul(dados);
+  return this.promocao.confirmarPosicaoAzulEmEnsaio(dados);
  }
  sinalizarCancelamento({pedidoId}={}){
   this._ensaio();
@@ -151,6 +196,11 @@ class SincronizadorComercialLoopEnsaioSQLite{
   ).get(pedidoId);
   if(!evento||evento.estado!=='CANCELADO')
    falha('INTEGRACAO_CANCELAMENTO_NAO_CONFIRMADO');
+  if(this.lotes&&this.db.prepare(
+   'SELECT 1 FROM loop_real_promocoes_lotes_ensaio WHERE pedido_id=?'
+  ).get(pedidoId))return this.lotes.suspenderReversao({
+   pedidoId,autorizadoEnsaio:true
+  });
   if(!this.db.prepare(
    'SELECT 1 FROM loop_real_promocoes_pedido_ensaio WHERE pedido_id=?'
   ).get(pedidoId))return {sinalizada:false,semPosicao:true};
