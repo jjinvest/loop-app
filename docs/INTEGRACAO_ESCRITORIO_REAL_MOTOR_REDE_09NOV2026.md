@@ -28,3 +28,18 @@ Foi adicionada `PromocaoPedidoMotorEnsaioSQLite`, uma ponte opcional da camada d
 A promoção consulta snapshot do carrinho, pedido, titular, id nativo de pagamento e `loop_real_eventos_comerciais`; a posição é criada atomicamente no mesmo SQLite com idempotência e trilha imutável. Em estorno posterior, a operação fica em quarentena e bloqueia a catraca de ensaio sem descartar a posição do histórico. A confirmação da compra pelo PSP sozinha permanece `AGUARDANDO_CONCILIACAO` até verificar independência bancária real. A visibilidade do participante é isolada por cookie de sessão e inclui informações rotuladas de ensaio.
 
 O backup cifrado `src/producao/backup-identidade-real.js` passou a incluir e conferir semântica da tabela de promoções, cruzando pedido/evento/motor/posição. O CI `42712589354` foi aprovado, inclusive HTTP da interface original e restauração. Um lote em produção, a liberação de cliente real, a confirmação de CPF/termos para posição azul, produtos dourados/roxos e os pagamentos são pendências distintas; não usar esta suite como autorização para go-live.
+
+
+## Continuacao 311 — azul, CPF/termos, reversao e cores mistas (09/11/2026)
+
+**Azul pendente:** a ponte verde grava PENDENTE na mesma transacao SQLite do pedido e motor. O indice ordenado permanece internamente na fila B, mas PENDENTE nao e elegivel para alimentacao do tabuleiro; a consulta publica informa AGUARDANDO_CPF_TERMOS e o contador da fila B ativa exclui a espera.
+
+**Aceite individual:** o modulo src/producao/aceite-posicao-azul-ensaio-sqlite.js valida CPF sintaticamente, aceite explicito, titular, versao/hash dos termos e e-mail confirmado. Registra somente HMAC-SHA256 do CPF sob chave de ensaio, trilha imutavel e idempotencia por posicao. A confirmacao altera o mesmo registro para ACEITE_ENSAIO, sem criar segundo ID. Nao executa KYC independente nem concede dinheiro. Esta funcao de ensaio nao tem endpoint HTTP publico; nao solicitar CPF real na tela enquanto faltar autorizacao e custodia homologadas.
+
+**Reversoes:** apos evento PSP cancelado, a suspensao grava registro imutavel, muda a posicao para REVISAR_PSP e pausa a catraca. Repeticao nao duplica; historico e aceite sao mantidos. Sem compensacao bancaria ou reativacao automatica.
+
+**Douradas e roxas:** o planejamento congelado separa cinza (zero), verde (uma por pedido >= R$250 elegiveis, sem frete), dourado (uma por unidade) e roxo (quantidade configurada pelo admin por unidade). O total misto inclui roxas para testar limite de 10 mesmo quando continuam BLOQUEADAS de ativacao. O campo legado totalPosicoesPrevistas conserva sua semantica; o novo totalPosicoesMistasPrevistas inclui todos os tipos. Nao ha criacao de especiais no motor ou financeiro real.
+
+**CI comprovado:** https://github.com/jjinvest/loop-app/actions/runs/42735438314 SUCCESS no commit 8b1829a89c12f8f3f7afb8c1db98e049caefc13b. Branch feature/unificar-escritorio-real-20261105 distinta da branch da PR #1 DRAFT. Nenhum merge/deploy.
+
+**Faltam para uso real:** aceite por interface autenticada e KYC externo, custodia de identidade, multi-posicoes especiais com aprovacao financeira, pagamento liquidado e conciliado em banco, compensacao de reversoes e autorizacoes juridicas/PSP/bancos.
