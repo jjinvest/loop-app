@@ -92,14 +92,15 @@ class OperacaoCatracaAdminSQLite{
    girosTotais:motor.catraca.giros,
    filaA:motor.filaA,filaB:motor.filaB,
    pausada:p.modo==='PAUSADA',
-   podeGirar:p.modo!=='PAUSADA'&&dentro&&permitido&&
+   podeGirar:process.env.NODE_ENV!=='production'&&
+    p.modo!=='PAUSADA'&&dentro&&permitido&&
     motor.tabuleiro.eventosNoCiclo===6,
+   politicaOperacionalConfiguravel:true,
    habilitadoSomenteEnsaio:process.env.NODE_ENV!=='production',
    financeiroReal:false};
  }
  configurar({modo,janelaInicio,janelaFim,limiteDiario,revisaoEsperada,
   motivo='AJUSTE_OPERACIONAL'}={}){
-  this._ensaio();
   if(!['PAUSADA','MANUAL','AUTOMATICA'].includes(modo)||
      !horaOk(janelaInicio)||!horaOk(janelaFim)||
      !(limiteDiario===null||
@@ -107,7 +108,7 @@ class OperacaoCatracaAdminSQLite{
      !Number.isSafeInteger(revisaoEsperada)||revisaoEsperada<1||
      typeof motivo!=='string'||motivo.trim().length<3||
      motivo.length>200)falha('CATRACA_ADMIN_CONFIGURACAO_INVALIDA');
-  const result=this.motor._transacao(sim=>{
+  const executar=sim=>{
    const p=this._politica();
    if(p.revisao!==revisaoEsperada)falha('CATRACA_ADMIN_REVISAO_DESATUALIZADA');
    const t=horarioLocal(this.agora);
@@ -115,12 +116,23 @@ class OperacaoCatracaAdminSQLite{
     'UPDATE loop_real_catraca_admin_politica SET revisao=revisao+1,',
     'modo=?,inicio=?,fim=?,limite_diario=?,atualizado_em=? WHERE id=1'
    ].join(' ')).run(modo,janelaInicio,janelaFim,limiteDiario,t.ts);
-   if(modo==='PAUSADA')sim.pausarCatraca();
-   else sim.abrirCatraca();
+   if(sim){
+    if(modo==='PAUSADA')sim.pausarCatraca();
+    else sim.abrirCatraca();
+   }
    this._log('CONFIGURAR',{modo,janelaInicio,janelaFim,
-    limiteDiario,revisaoAnterior:p.revisao,motivo:motivo.trim()},t.ts);
+    limiteDiario,revisaoAnterior:p.revisao,motivo:motivo.trim(),
+    giroProdutivoHabilitado:false},t.ts);
    return {alterado:true};
-  });
+  };
+  let result;
+  if(process.env.NODE_ENV==='production'){
+   // Horarios e quotas sao configuraveis no servidor real, mesmo quando
+   // o giro financeiro permanece fechado por falta de homologacao.
+   this.db.exec('BEGIN IMMEDIATE');
+   try{result=executar(null);this.db.exec('COMMIT');}
+   catch(e){this.db.exec('ROLLBACK');throw e;}
+  }else result=this.motor._transacao(executar);
   return {...result,...this.consultar()};
  }
  executarGiro({origem='OPERADOR'}={}){
