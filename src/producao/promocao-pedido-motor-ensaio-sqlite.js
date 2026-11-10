@@ -1,5 +1,6 @@
 'use strict';
 const {AceitePosicaoAzulEnsaioSQLite}=require('./aceite-posicao-azul-ensaio-sqlite');
+const {PreflightCapacidadeCheckoutSQLite}=require('./preflight-capacidade-checkout-sqlite');
 // PONTE DE HOMOLOGACAO INTERNA: pedido aprovado + evento comercial +
 // fotografia de regra verde + aceite de ensaio -> uma posição no motor.
 // Esse aceite é SIMULADO. Não substitui Pix, liquidação ou KYC reais.
@@ -158,6 +159,10 @@ class PromocaoPedidoMotorEnsaioSQLite{
    indexada[1].statusAdesao='PENDENTE';
    this.db.prepare('UPDATE loop_real_motor_estado SET revisao=revisao+1,snapshot=? WHERE id=1')
     .run(JSON.stringify(foto));
+   // O livro de reserva e o da posicao mudam no mesmo COMMIT.
+   PreflightCapacidadeCheckoutSQLite.consumirEmTransacao(this.db,{
+    pedidoId,quantidade:1
+   });
    this.verificar();
    this.db.exec('COMMIT');
    return {repetida:false,posicaoId:resultado.posicaoId,
