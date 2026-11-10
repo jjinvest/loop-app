@@ -113,7 +113,8 @@ class PromocaoPedidoMotorEnsaioSQLite{
      falha('PROMOCAO_REPLAY_DIVERGENTE');
     this.db.exec('COMMIT');
     return {repetida:true,posicaoId:antigo.posicao_id,
-     entradaNaFilaEnsaio:true,financeiroReal:false};
+     entradaNaFilaEnsaio:false,aguardandoCpfTermos:true,
+     financeiroReal:false};
    }
    if(this.db.prepare([
     'SELECT 1 FROM loop_real_promocoes_pedido_ensaio WHERE prova_ensaio_id=?'
@@ -139,10 +140,23 @@ class PromocaoPedidoMotorEnsaioSQLite{
     "VALUES(?,?,?,?,?,?,?,?,'OPERADOR_ENSAIO_SEM_PROVA_BANCARIA')"
    ].join(' ')).run(pedidoId,e.titular_id,pagamentoId,provaEnsaioId,
     valorCentavos,e.valor_produtos_centavos,resultado.posicaoId,ts);
+   const atual=this.db.prepare('SELECT snapshot FROM loop_real_motor_estado WHERE id=1').get();
+   if(!atual)falha('PROMOCAO_SEM_SNAPSHOT');
+   const foto=JSON.parse(atual.snapshot);
+   const pos=foto.filas.filaB.find(x=>x.id===resultado.posicaoId);
+   const indexada=foto.filas.vendasRegistradas.find(x=>x[0]===pedidoId);
+   if(!pos||!indexada||indexada[1].id!==pos.id||
+      pos.participanteId!==e.titular_id)
+    falha('PROMOCAO_AZUL_DIVERGENTE');
+   pos.statusAdesao='PENDENTE';
+   indexada[1].statusAdesao='PENDENTE';
+   this.db.prepare('UPDATE loop_real_motor_estado SET revisao=revisao+1,snapshot=? WHERE id=1')
+    .run(JSON.stringify(foto));
    this.verificar();
    this.db.exec('COMMIT');
    return {repetida:false,posicaoId:resultado.posicaoId,
-    entradaNaFilaEnsaio:true,compraRealConciliada:false,
+    entradaNaFilaEnsaio:false,aguardandoCpfTermos:true,
+    compraRealConciliada:false,
     pagamentoRealValidado:false,financeiroReal:false,
     catracaRealLiberada:false};
   }catch(err){this.db.exec('ROLLBACK');throw err;}
