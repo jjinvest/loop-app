@@ -94,3 +94,21 @@ test('montagem inicial tambem registra a passagem logica pela vaga 6',()=>{
  assert.equal(restaurado.tabuleiro.centro.entradaPelaVaga6Em,loop.tabuleiro.centro.entradaPelaVaga6Em);
  assert.equal(restaurado.tabuleiro.centro.empresa,true);
 });
+
+test('azul com indicacao sobe para A e vira dourada na entrada sem travar',()=>{
+ const loop=criar();
+ criarCompra(loop,1,true);
+ const indicacao=loop.registrarIndicacaoSimulada({
+  indicadorId:'titular-1',eventoId:'convite-azul-1',posicaoAlvoId:1
+ });
+ assert.equal(indicacao.repetida,false);
+ assert.equal(loop.filas.filaA.length,1);
+ assert.equal(loop.filas.filaA[0].statusAdesao,'PENDENTE');
+ assert.equal(loop.filas.filaB.length,0);
+ const estado=loop.prepararTabuleiro();
+ assert.equal(estado.centro.id,1);
+ assert.equal(estado.centro.empresa,true);
+ assert.equal(estado.centro.statusAdesao,'PRAZO_ENCERRADO');
+ assert.equal(estado.centro.origemFila,'A');
+ assert.equal(loop.filas.filaA.length,0);
+});
