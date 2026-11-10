@@ -3,7 +3,6 @@
 // A venda fornece apenas um evento luminoso, independente das posicoes geradas.
 // Usa o mesmo SQLite e mesmo motor; nenhum credito ou pagamento real.
 const {createHash,createHmac}=require('node:crypto');
-const {AceitePosicaoAzulEnsaioSQLite}=require('./aceite-posicao-azul-ensaio-sqlite');
 const TABELAS_LOTES_ENSAIO=Object.freeze([
  'loop_real_promocoes_lotes_ensaio',
  'loop_real_promocoes_lotes_posicoes_ensaio',
@@ -366,14 +365,17 @@ class PromocaoLotesEnsaioSQLite{
    total+=ps.length;
   }
   for(const a of this.db.prepare([
-   'SELECT a.*,p.pedido_id,l.titular_id,c.termos_versao,c.termos_hash',
+   'SELECT a.*,p.pedido_id,l.titular_id,',
+   'c.termos_versao AS versao_c,c.termos_hash AS hash_c',
    'FROM loop_real_aceites_lotes_ensaio a',
    'JOIN loop_real_promocoes_lotes_posicoes_ensaio p ON p.posicao_id=a.posicao_id',
    'JOIN loop_real_promocoes_lotes_ensaio l ON l.pedido_id=p.pedido_id',
    'JOIN loop_real_contas c ON c.id=l.titular_id'
   ].join(' ')).all()){
-   if(a.termos_versao!==a.termos_versao||
-      a.termos_hash!==a.termos_hash)falha('LOTE_ACEITE_DIVERGENTE');
+   if(a.termos_versao!==a.versao_c||
+      a.termos_hash!==a.hash_c||
+      !/^[a-f0-9]{64}$/.test(a.cpf_hmac))
+    falha('LOTE_ACEITE_DIVERGENTE');
    aceites++;
   }
   return {integridade:'OK',pedidosEmLote:lotes.length,
