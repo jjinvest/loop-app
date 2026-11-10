@@ -440,6 +440,71 @@
  }
  $('atualizarIntegracaoLoop').addEventListener('click',()=>void atualizarIntegracaoLoop());
 
+ let jornadaDisponivel=false,jornadaOcupada=false;
+ function botoesJornada(){
+  const liberado=!!csrf&&jornadaDisponivel&&!jornadaOcupada;
+  $('pedidoJornadaAdmin').disabled=!liberado;
+  $('reprocessarJornadaAdmin').disabled=!liberado||
+   !/^[A-Za-z0-9_-]{3,120}$/.test($('pedidoJornadaAdmin').value.trim());
+ }
+ async function atualizarJornadaAdmin(){
+  try{
+   const r=await fetch('/api/admin/comercial/jornada',{
+    method:'GET',credentials:'same-origin',cache:'no-store'
+   });
+   const d=await r.json().catch(()=>({}));
+   if(!r.ok)throw Error(d.erro||'INTEGRACAO_AINDA_NAO_HOMOLOGADA');
+   if(d.estado!=='PONTE_OPERACIONAL_ENSAIO'||d.dinheiroReal!==false||
+      !Number.isSafeInteger(d.pedidos?.total)||
+      !Number.isSafeInteger(d.remessas?.pendentes))
+    throw Error('Estado dos distribuidores inválido.');
+   jornadaDisponivel=true;
+   $('estadoJornadaComercial').textContent=
+    'Pedidos no SQLite: '+d.pedidos.total+
+    ' · PSP confirmado no ensaio: '+d.pedidos.aprovados+
+    ' · Aguardando PSP: '+d.pedidos.aguardando+
+    ' · Cancelados: '+d.pedidos.cancelados+
+    ' · Remessas preparadas: '+d.remessas.pendentes+
+    ' · Exigem revisão: '+d.remessas.revisar+
+    ' · Enviadas: '+d.remessas.enviadas+
+    ' · Fornecedores e pagamentos reais aguardam homologação.';
+  }catch(e){
+   jornadaDisponivel=false;
+   $('estadoJornadaComercial').textContent=
+    'Ponte PSP e distribuidores indisponível: '+e.message;
+  }finally{botoesJornada();}
+ }
+ $('pedidoJornadaAdmin').addEventListener('input',botoesJornada);
+ $('atualizarJornadaAdmin').addEventListener('click',
+  ()=>void atualizarJornadaAdmin());
+ $('reprocessarJornadaAdmin').addEventListener('click',()=>{
+  const pedidoId=$('pedidoJornadaAdmin').value.trim();
+  if(!csrf||!jornadaDisponivel||jornadaOcupada||
+     !/^[A-Za-z0-9_-]{3,120}$/.test(pedidoId))return;
+  jornadaOcupada=true;botoesJornada();
+  void (async()=>{
+   const r=await fetch('/api/admin/comercial/jornada/reprocessar',{
+    method:'POST',credentials:'same-origin',cache:'no-store',
+    headers:{'Content-Type':'application/json','X-Loop-Admin-Csrf':csrf},
+    body:JSON.stringify({pedidoId})
+   });
+   const d=await r.json().catch(()=>({}));
+   if(!r.ok)throw Error(d.erro||'RECONCILIACAO_INDISPONIVEL');
+   if(d.financeiroReal!==false||d.remessasEnviadas!==0||
+      !Number.isSafeInteger(d.remessasPreparadas))
+    throw Error('Conferência administrativa inconsistente.');
+   await atualizarJornadaAdmin();
+   $('estadoJornadaComercial').textContent=
+    'Pedido '+pedidoId+' · Remessas preparadas: '+d.remessasPreparadas+
+    ' · Repetidas sem novo envio: '+d.remessasJaPreparadas+
+    ' · Pendentes de revisão: '+d.pendentes.length+
+    ' · Nenhum envio ou cobrança efetuado.';
+  })().catch(e=>{
+   $('estadoJornadaComercial').textContent=e.message;
+  }).finally(()=>{jornadaOcupada=false;botoesJornada();});
+ });
+
+
  async function apiCatraca(body){
   const escrita=body!==undefined;
   const res=await fetch('/api/admin/loop/controle',{
@@ -557,6 +622,7 @@
    await atualizarMotorAdministrativo();
    await atualizarCatracaAdmin();
    await atualizarIntegracaoLoop();
+   await atualizarJornadaAdmin();
   }catch(e){travar(true);status(e.message);}
  })();
 })();
