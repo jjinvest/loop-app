@@ -97,6 +97,28 @@
    throw Error('IDENTIDADE_INCOMPATIVEL');
   if($('akitemmNomeTitular'))$('akitemmNomeTitular').textContent=me.nick;
   informar('AKITEMM: loja conectada à sua conta LOOP. Vendas reais ainda não liberadas.');
+  // Apenas estado do servidor, sem habilitar controles de compra desativados.
+  try{
+   const respostaCapacidade=await fetch('/api/loja/capacidade',{
+    credentials:'same-origin',cache:'no-store'
+   });
+   if(respostaCapacidade.ok){
+    const capacidade=await respostaCapacidade.json();
+    if(capacidade.fonte==='MOTOR_E_RESERVAS_SQLITE'&&
+       capacidade.checkoutReal===false&&
+       Number.isSafeInteger(capacidade.ativas)&&
+       Number.isSafeInteger(capacidade.reservadas)&&
+       Number.isSafeInteger(capacidade.disponiveis)&&
+       capacidade.ativas+capacidade.reservadas+capacidade.disponiveis===10)
+     informar('AKITEMM · capacidade técnica da sua conta: '+
+      capacidade.ativas+' posição(ões) ativas, '+
+      capacidade.reservadas+' reservada(s), '+
+      capacidade.disponiveis+' disponível(is) no motor. '+
+      'Checkout e pagamentos reais ainda não habilitados.');
+   }
+  }catch{
+   // Indisponibilidade da leitura nao libera compra nem muda as regras.
+  }
   await atualizarPedidos();
  }catch{
   informar('Não foi possível verificar a conta. Volte ao Escritório LOOP e entre novamente.');
