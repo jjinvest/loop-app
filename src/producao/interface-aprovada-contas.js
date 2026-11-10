@@ -416,7 +416,9 @@
      const id=document.createElement('strong');
      id.textContent='#'+pos.numero;
      const etapa=document.createElement('p');
-     etapa.textContent=pos.local+' · '+pos.indicacoesQualificadasEnsaio+
+     etapa.textContent=pos.local+
+      (pos.classeProdutoOrigem?' · Produto '+pos.classeProdutoOrigem:'')+
+      ' · '+pos.indicacoesQualificadasEnsaio+
       ' indicação(ões) em ensaio · pedido de ensaio '+
       pos.pedidoDeOrigemEnsaio+' · sem direito financeiro real';
      corpo.append(id,etapa);card.appendChild(corpo);
