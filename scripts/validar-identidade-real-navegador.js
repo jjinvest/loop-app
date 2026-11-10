@@ -27,6 +27,22 @@ const {IdentidadeClienteLoopReal,COOKIE}=
  require('../src/producao/identidade-cliente-loop-sqlite');
 const {criarAppIdentidadeLoop}=
  require('../src/producao/servidor-identidade-loop');
+const {PedidosComerciaisSQLite}=
+ require('../src/producao/pedidos-comerciais-sqlite');
+const {PreflightCapacidadeCheckoutSQLite}=
+ require('../src/producao/preflight-capacidade-checkout-sqlite');
+const {ClassificacaoComercialLoopSQLite}=
+ require('../src/producao/classificacao-comercial-loop-sqlite');
+const {EventosComerciaisLoopSQLite}=
+ require('../src/producao/eventos-comerciais-loop-sqlite');
+const {PromocaoPedidoMotorEnsaioSQLite}=
+ require('../src/producao/promocao-pedido-motor-ensaio-sqlite');
+const {PromocaoLotesEnsaioSQLite}=
+ require('../src/producao/promocao-lotes-ensaio-sqlite');
+const {SincronizadorComercialLoopEnsaioSQLite}=
+ require('../src/producao/sincronizador-comercial-loop-ensaio-sqlite');
+const {RecuperacaoReservasCheckoutSQLite}=
+ require('../src/producao/recuperacao-reservas-checkout-sqlite');
 
 const TEXTO='Termos para uma conta de teste de navegação da Loja AKITEMM e do '+
  'Escritório LOOP: os dados deste ensaio são fictícios, os recursos de compras '+
@@ -69,6 +85,47 @@ async function main(){
  });
  const admin=sessoes.autenticar('CredencialAdministrativaIsolada2026!Teste');
  const login=await contas.entrar({nick,senha:'SenhaDoEnsaio2026!'});
+ // O ensaio utiliza o e-mail de teste confirmado; sem enviar mensagens.
+ banco.prepare('UPDATE loop_real_contas SET email_confirmado_em=? WHERE id=?')
+  .run(Date.now(),cliente.titularId);
+ // Mesmas classes e banco das telas reais, com PSP estritamente simulado.
+ const cotacoes=new Map();
+ const chavePedidos=randomBytes(32);
+ const cotacaoConfiavel=async({cotacaoId})=>cotacoes.get(cotacaoId);
+ const pspEnsaio=async({pedidoId})=>{
+  const pedido=banco.prepare(
+   'SELECT valor_total_centavos FROM loja_real_pedidos WHERE pedido_id=?'
+  ).get(pedidoId);
+  return {pedidoId,pagamentoId:'PSP_'+pedidoId,moeda:'BRL',
+   status:'CONFIRMADO',valorCentavos:pedido?.valor_total_centavos};
+ };
+ const basePedidos=()=>({banco,chavePedidos,
+  consultarCotacaoConfiavel:cotacaoConfiavel,
+  consultarPagamentoPsp:pspEnsaio});
+ new PedidosComerciaisSQLite(basePedidos());
+ const classificacaoLoop=new ClassificacaoComercialLoopSQLite({banco});
+ const eventosComerciais=new EventosComerciaisLoopSQLite({
+  banco,classificacaoLoop
+ });
+ const promocao=new PromocaoPedidoMotorEnsaioSQLite({
+  banco,motor:motorLoop,classificacaoLoop,chaveCpfEnsaio:randomBytes(32)
+ });
+ const lotes=new PromocaoLotesEnsaioSQLite({
+  banco,motor:motorLoop,classificacaoLoop,aceiteAzul:promocao.aceiteAzul
+ });
+ const integradorComercialEnsaio=new SincronizadorComercialLoopEnsaioSQLite({
+  banco,motor:motorLoop,classificacaoLoop,promocao,lotes
+ });
+ const preflightCapacidade=new PreflightCapacidadeCheckoutSQLite({
+  banco,motor:motorLoop,classificacaoLoop
+ });
+ const pedidosComerciais=new PedidosComerciaisSQLite({
+  ...basePedidos(),eventosComerciais,classificacaoLoop,
+  integradorComercialEnsaio,preflightCapacidade
+ });
+ const recuperacaoReservas=new RecuperacaoReservasCheckoutSQLite({
+  banco,preflight:preflightCapacidade,pedidos:pedidosComerciais
+ });
  // Testar HTTPS real e Origin idêntico ao configurado, sem reescrever headers.
  const pastaTls=fs.mkdtempSync(path.join(os.tmpdir(),'loop-navegador-https-'));
  const arquivoChave=path.join(pastaTls,'chave-teste.pem');
@@ -87,8 +144,10 @@ async function main(){
  const base='https://127.0.0.1:'+server.address().port;
  app=criarAppIdentidadeLoop({
   contas,motorLoop,origemHttps:base,
-  permitirCadastro:true,
-  adminComercial:{auditoria,manutencao,catalogo,controle,sessoes}
+  permitirCadastro:true,preflightCapacidade,
+  aceitePosicaoAzulEnsaio:integradorComercialEnsaio,
+  adminComercial:{auditoria,manutencao,catalogo,controle,sessoes,
+   classificacaoLoop,integradorComercialEnsaio,recuperacaoReservas}
  });
  let browser=null;
  try{
@@ -229,6 +288,166 @@ async function main(){
    });
    await contexto.close();
   }
+  // Prova de ponta a ponta das FUNCIONALIDADES recentes na mesma UI
+  // aprovada: pedido -> PSP ensaio -> 2 posicoes douradas -> aceite
+  // individual na tela -> admin sincroniza/prepara e consulta reservas.
+  catalogo.criarProduto({
+   produtoId:'produtoBrowserDourado',
+   titulo:'Produto ficticio dourado para prova de navegador'
+  });
+  catalogo.vincularOferta({
+   produtoId:'produtoBrowserDourado',distribuidorId:'DIST_BROWSER',
+   sku:'SKU_BROWSER_DOURADO',precoUnitCentavos:25000
+  });
+  classificacaoLoop.configurarProduto({
+   produtoId:'produtoBrowserDourado',cor:'DOURADO',autorizado:true
+  });
+  const endereco={destinatario:'Pessoa de Ensaio',cep:'27250010',
+   logradouro:'Rua de Ensaio',numero:'2',bairro:'Centro',
+   cidade:'Volta Redonda',uf:'RJ',complemento:''};
+  const cotacaoId='COTACAO_BROWSER_DOURADO_2026';
+  cotacoes.set(cotacaoId,{
+   cotacaoId,titularId:cliente.titularId,cepDestino:endereco.cep,
+   status:'APROVADA',expiraEm:Date.now()+600000,
+   grupos:[{fornecedorId:'DIST_BROWSER',freteCentavos:1000,
+    itens:[{sku:'SKU_BROWSER_DOURADO',precoUnitCentavos:25000,
+     quantidade:2}]}]
+  });
+  const compra=await pedidosComerciais.criarPedido({
+   titularId:cliente.titularId,cotacaoId,
+   chaveIdempotencia:'BROWSER_COMPRA_DOURADA_UNICA_2026',
+   enderecoEntrega:endereco
+  });
+  assert.equal(compra.status,'AGUARDANDO_PAGAMENTO');
+  assert.equal(preflightCapacidade.consultar({
+   titularId:cliente.titularId
+  }).reservadas,2);
+  const confirmado=await pedidosComerciais.confirmarPagamento({
+   pedidoId:compra.pedidoId
+  });
+  assert.equal(confirmado.confirmado,true);
+  assert.equal(confirmado.integracaoInternaEnsaio?.novasPosicoes,2);
+  assert.equal(motorLoop.consultar({
+   titularId:cliente.titularId
+  }).minhasPosicoes.length,3);
+  assert.equal(preflightCapacidade.consultar({
+   titularId:cliente.titularId
+  }).reservadas,0);
+  for(const visual of [
+   {nome:'pc',largura:1440,altura:900,mobile:false},
+   {nome:'celular',largura:390,altura:844,mobile:true}
+  ]){
+   const contexto=await browser.newContext({
+    viewport:{width:visual.largura,height:visual.altura},
+    deviceScaleFactor:1,ignoreHTTPSErrors:true,
+    isMobile:visual.mobile,hasTouch:visual.mobile
+   });
+   await contexto.addCookies([
+    {name:COOKIE,value:login.token,url:base,
+     httpOnly:true,secure:true,sameSite:'Strict'},
+    {name:COOKIE_ADMIN,value:admin.token,url:base,
+     httpOnly:true,secure:true,sameSite:'Strict'}
+   ]);
+   const pagina=await contexto.newPage();
+   pagina.setDefaultTimeout(15000);
+   const erros=[];
+   pagina.on('pageerror',e=>erros.push(e.message));
+   await pagina.goto(base+'/escritorio');
+   await pagina.locator('#loopResumoMotor').filter({
+    hasText:/Fila B: 3/
+   }).waitFor();
+   if(visual.mobile)await pagina.locator('#loop03MenuIntegrado').click();
+   await pagina.locator('#abaPosicoes').click();
+   const confirmarAzul=pagina.locator('#posicoesPainel form.loop03-aceite-posicao');
+   const aguardados=visual.mobile?1:2;
+   await confirmarAzul.first().locator('button[type=submit]').waitFor({
+    state:'visible'
+   });
+   assert.equal(await confirmarAzul.count(),aguardados,
+    'cada posicao pendente precisa ter seu proprio aceite');
+   const form=confirmarAzul.first();
+   await form.locator('details summary').click();
+   await form.locator('input[name=cpf]').fill('52998224725');
+   await form.locator('input[type=checkbox]').check();
+   await form.locator('button[type=submit]').click();
+   await pagina.waitForFunction(quantidade=>
+    document.querySelectorAll(
+     '#posicoesPainel form.loop03-aceite-posicao'
+    ).length===quantidade,aguardados-1);
+   assert.equal(lotes.verificar().aceitesIndividuaisEnsaio,
+    visual.mobile?2:1);
+   const estadoCliente=await pagina.evaluate(async()=>{
+    const r=await fetch('/api/loop/estado',{cache:'no-store'});
+    return r.json();
+   });
+   assert.equal(estadoCliente.minhasPosicoes.length,3);
+   assert.equal(estadoCliente.minhasPosicoes.filter(
+    x=>x.estadoAdesao==='ACEITE_ENSAIO').length,visual.mobile?2:1);
+   await pagina.screenshot({
+    path:path.join(pasta,'integrado-posicoes-azul-'+visual.nome+'.png'),
+    fullPage:true
+   });
+   if(visual.mobile)await pagina.locator('#loop03MenuIntegrado').click();
+   await pagina.locator('#abaTabuleiro').click();
+   await pagina.locator('#estadoTabuleiroIntegrado').filter({
+    hasText:/Fila B: 3/
+   }).waitFor();
+   assert.equal(await pagina.locator('#motorContadorEventos').innerText(),
+    '0/6 eventos de validação interna');
+   await pagina.screenshot({
+    path:path.join(pasta,'integrado-tabuleiro-'+visual.nome+'.png'),
+    fullPage:true
+   });
+   await pagina.goto(base+'/loja');
+   const loja=pagina.locator('#estadoLojaLoop');
+   await loja.filter({hasText:/capacidade técnica da sua conta/}).waitFor();
+   assert.equal(await pagina.locator('#registrarPedidoLoja').isDisabled(),true);
+   assert.equal(await pagina.locator('#akitemmBusca').isDisabled(),true);
+   await pagina.screenshot({
+    path:path.join(pasta,'integrado-loja-'+visual.nome+'.png'),
+    fullPage:true
+   });
+   await pagina.goto(base+'/administrador');
+   const integrado=pagina.locator('#integracaoQualificadaEstado');
+   await integrado.filter({hasText:/Confirmadas: 1/}).waitFor();
+   assert.equal(await pagina.locator('#sincronizarComprasLoop').isEnabled(),true);
+   await pagina.locator('#sincronizarComprasLoop').click();
+   await integrado.filter({hasText:/Sincronizado:/}).waitFor();
+   await pagina.locator('#atualizarReservasVencidasAdmin').click();
+   await pagina.locator('#estadoReservasVencidasAdmin').filter({
+    hasText:/Reservas de pedidos sem posição: 0/
+   }).waitFor();
+   if(visual.nome==='pc'){
+    await pagina.locator('#prepararTabuleiroLoop').click();
+    await integrado.filter({hasText:/Eventos: 1\/6/}).waitFor();
+   }else{
+    await pagina.locator('#atualizarLoopAdmin').click();
+    await pagina.locator('#loopAdminEstado').filter({hasText:/Fila B:/}).waitFor();
+    await pagina.locator('#atualizarJornadaAdmin').click();
+    await pagina.locator('#estadoJornadaComercial').filter({
+     hasText:/aguardam homologação|AGUARDA_PROVEDORES/
+    }).waitFor();
+    assert.equal(await pagina.locator('#reprocessarJornadaAdmin').isDisabled(),
+     true);
+   }
+   const tamanho=await pagina.evaluate(()=>({
+    largura:window.innerWidth,
+    conteudo:document.documentElement.scrollWidth,
+    corpo:document.body.scrollWidth
+   }));
+   assert.ok(tamanho.conteudo<=tamanho.largura+1,
+    'Painel administrativo sem corte horizontal: '+JSON.stringify(tamanho));
+   await pagina.screenshot({
+    path:path.join(pasta,'integrado-admin-'+visual.nome+'.png'),
+    fullPage:true
+   });
+   assert.deepEqual(erros,[],
+    'Nenhuma excecao JavaScript no navegador aprovado '+visual.nome);
+   await contexto.close();
+  }
+  assert.equal(lotes.verificar().aceitesIndividuaisEnsaio,2);
+  assert.equal(motorLoop.consultar().tabuleiro.eventosNoCiclo,1);
+  console.log('NAVEGADOR_REAL_INTEGRADO=PC_E_CELULAR_CONTROLES_COM_PSP_ENSAIO');
   assert.equal(banco.prepare('PRAGMA integrity_check').get().integrity_check,'ok');
   console.log('NAVEGADOR_IDENTIDADE_REAL=PC_E_CELULAR_APROVADOS_SEM_CHECKOUT');
  }finally{
