@@ -47,7 +47,19 @@ class VisaoEscritorioUnificadaSQLite{
   if(d.fonte!=='IDENTIDADE_E_MOTOR_MESMO_SQLITE'||
      d.financeiroReal!==false||!Array.isArray(d.minhasPosicoes))
    falha('ESCRITORIO_MOTOR_NAO_CONFIAVEL');
-  const compras=this.banco.prepare([
+  const lotesPresentes=!!this.banco.prepare([
+   "SELECT 1 FROM sqlite_master WHERE type='table'",
+   "AND name='loop_real_promocoes_lotes_posicoes_ensaio'"
+  ].join(' ')).get();
+  // Cada posicao especial tem chave interna distinta, mas o cliente ve
+  // exclusivamente o pedido comercial ORIGINAL, jamais venda sintetica.
+  const compras=this.banco.prepare(lotesPresentes?[
+   'SELECT m.posicao_id,COALESCE(l.pedido_id,m.pedido_id) AS pedido_id',
+   'FROM loop_real_motor_compras m',
+   'LEFT JOIN loop_real_promocoes_lotes_posicoes_ensaio l',
+   'ON l.venda_interna_id=m.pedido_id',
+   'WHERE m.titular_id=?'
+  ].join(' '):[
    'SELECT posicao_id,pedido_id FROM loop_real_motor_compras',
    'WHERE titular_id=?'
   ].join(' ')).all(titularId);
