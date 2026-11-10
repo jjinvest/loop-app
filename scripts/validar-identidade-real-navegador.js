@@ -43,6 +43,8 @@ const {SincronizadorComercialLoopEnsaioSQLite}=
  require('../src/producao/sincronizador-comercial-loop-ensaio-sqlite');
 const {RecuperacaoReservasCheckoutSQLite}=
  require('../src/producao/recuperacao-reservas-checkout-sqlite');
+const {criarLeituraComercialSegura}=
+ require('../src/producao/montar-comercial-sem-homologacao');
 
 const TEXTO='Termos para uma conta de teste de navegação da Loja AKITEMM e do '+
  'Escritório LOOP: os dados deste ensaio são fictícios, os recursos de compras '+
@@ -137,6 +139,9 @@ async function main(){
   ...basePedidos(),eventosComerciais,classificacaoLoop,
   integradorComercialEnsaio,preflightCapacidade
  });
+ const leituraComercial=criarLeituraComercialSegura({
+  banco,pedidos:pedidosComerciais
+ });
  const recuperacaoReservas=new RecuperacaoReservasCheckoutSQLite({
   banco,preflight:preflightCapacidade,pedidos:pedidosComerciais
  });
@@ -159,6 +164,8 @@ async function main(){
  app=criarAppIdentidadeLoop({
   contas,motorLoop,origemHttps:base,
   permitirCadastro:true,preflightCapacidade,
+  pedidosComerciais:leituraComercial.leituraPedidos,
+  remessasOutbox:leituraComercial.leituraRemessas,
   aceitePosicaoAzulEnsaio:integradorComercialEnsaio,
   adminComercial:{auditoria,manutencao,catalogo,controle,sessoes,
    classificacaoLoop,integradorComercialEnsaio,recuperacaoReservas}
@@ -422,6 +429,10 @@ async function main(){
     fullPage:true
    });
    await pagina.goto(base+'/loja');
+   await pagina.locator('#pedidosLojaLoop').filter({
+    hasText:compra.pedidoId
+   }).waitFor();
+   assert.equal(await pagina.locator('#pedidosLojaLoop li').count(),1);
    const loja=pagina.locator('#estadoLojaLoop');
    await conferirLayoutReal(pagina,'loja-'+visual.nome,{mobile:visual.mobile});
    await loja.filter({hasText:/capacidade técnica da sua conta/}).waitFor();
