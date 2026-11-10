@@ -57,16 +57,6 @@ class MotorLoopIntegradoSQLite{
  _transacao(fn){
   this.banco.exec('BEGIN IMMEDIATE');
   try{
-   if(this.banco.prepare(
-    "SELECT 1 FROM sqlite_master WHERE name='loop_real_promocoes_pedido_ensaio'"
-   ).get()){
-    const cancelada=this.banco.prepare([
-     'SELECT 1 FROM loop_real_promocoes_pedido_ensaio p',
-     'JOIN loop_real_eventos_comerciais e ON e.pedido_id=p.pedido_id',
-     "WHERE e.estado='CANCELADO' LIMIT 1"
-    ].join(' ')).get();
-    if(cancelada)falha('LOOP_PROMOCAO_ESTORNADA_EXIGE_REVISAO');
-   }
    const row=this.banco.prepare(
     'SELECT revisao,snapshot FROM loop_real_motor_estado WHERE id=1').get();
    const sim=restaurar(row?.snapshot);
