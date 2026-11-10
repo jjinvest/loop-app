@@ -455,9 +455,11 @@ async function main(){
     fullPage:true
    });
    await pagina.goto(base+'/loja');
+   await pagina.locator('#akitemmDetalhesPedidos summary').click();
+   await pagina.locator('#atualizarPedidosLoja').click();
    await pagina.locator('#pedidosLojaLoop').filter({
     hasText:compra.pedidoId
-   }).waitFor({state:'attached'});
+   }).waitFor({state:'visible'});
    assert.equal(await pagina.locator('#pedidosLojaLoop li').count(),1);
    const loja=pagina.locator('#estadoLojaLoop');
    await conferirLayoutReal(pagina,'loja-'+visual.nome,{mobile:visual.mobile});
