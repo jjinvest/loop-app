@@ -17,6 +17,8 @@ const {ManutencaoComercialSQLite}=
  require('../src/producao/manutencao-comercial-sqlite');
 const {PedidosComerciaisSQLite}=
  require('../src/producao/pedidos-comerciais-sqlite');
+const {PreflightCapacidadeCheckoutSQLite}=
+ require('../src/producao/preflight-capacidade-checkout-sqlite');
 const {ClassificacaoComercialLoopSQLite}=
  require('../src/producao/classificacao-comercial-loop-sqlite');
 const {EventosComerciaisLoopSQLite}=
@@ -109,12 +111,15 @@ async function fixture(t){
   banco:db,motor,classificacaoLoop:classificacao,
   aceiteAzul:promocao.aceiteAzul
  });
+ const preflight=new PreflightCapacidadeCheckoutSQLite({
+  banco:db,motor,classificacaoLoop:classificacao
+ });
  const integracao=new SincronizadorComercialLoopEnsaioSQLite({
   banco:db,motor,classificacaoLoop:classificacao,promocao,lotes
  });
  const pedidosIntegrados=new PedidosComerciaisSQLite({
   ...base(),eventosComerciais:eventos,classificacaoLoop:classificacao,
-  integradorComercialEnsaio:integracao
+  integradorComercialEnsaio:integracao,preflightCapacidade:preflight
  });
  const produtos=new Map();
  function produto({nome,preco,cor='VERDE',roxasPorUnidade=0}){
@@ -129,7 +134,8 @@ async function fixture(t){
   produtos.set(nome,preco);
  }
  let seq=0;
- async function criarPedido({nome,preco,frete=1000,cliente=titular,itens=null}){
+ async function criarPedido({nome,preco,frete=1000,cliente=titular,
+  itens=null,comPreflight=false}){
   seq++;
   const cotacaoId='COTACAO_ENSAIO_'+seq;
   const carrinho=itens===null?[{nome,preco}]:itens;
@@ -142,12 +148,13 @@ async function fixture(t){
      sku:'SKU_'+i.nome,precoUnitCentavos:i.preco,quantidade:i.quantidade||1
     }))}]
   });
-  const novo=await pedidos.criarPedido({
+  const novo=await (comPreflight?pedidosIntegrados:pedidos).criarPedido({
    titularId:cliente.titularId,cotacaoId,
    chaveIdempotencia:'COMPRA_ENSAIO_'+seq,
    enderecoEntrega:ORIGEM
   });
-  return {pedidoId:novo.pedidoId,
+  return {pedidoId:novo.pedidoId,cotacaoId,
+   chaveIdempotencia:'COMPRA_ENSAIO_'+seq,
    pagamentoId:'PSP_'+novo.pedidoId,
    valorCentavos:produtosCentavos+frete,produtosCentavos,
    provaEnsaioId:'PROVA_ENSAIO_'+seq,
@@ -158,7 +165,7 @@ async function fixture(t){
  }
  return {db,arquivo,dir,contas,chaves,catalogo,classificacao,
   motor,producao:promocao,evento:eventos,pedidos,pedidosIntegrados,
-  integracao,lotes,controle,sessoes,auditoria,manutencao,titular,outro,
+  integracao,lotes,preflight,controle,sessoes,auditoria,manutencao,titular,outro,
   produto,criarPedido,confirmar,statusPsp};
 }
 test('compra verde R$250 sem frete promove uma posição em B no mesmo commit, uma unica vez',async t=>{
