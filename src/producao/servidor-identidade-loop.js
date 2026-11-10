@@ -9,7 +9,8 @@ const {VisaoEscritorioUnificadaSQLite}=
  require('./visao-escritorio-unificada-sqlite');
 function criarAppIdentidadeLoop({contas,origemHttps,
  permitirCadastro=false,backupEstado=null,
- pedidosComerciais=null,remessasOutbox=null,adminComercial=null,
+ pedidosComerciais=null,remessasOutbox=null,catalogoVitrine=null,
+ adminComercial=null,
  motorLoop=null,eventosComerciais=null,tesourariaEnsaio=null,
  aceitePosicaoAzulEnsaio=null,preflightCapacidade=null}={}){
  if(!contas||typeof contas.entrar!=='function'||typeof contas.sessao!=='function')
@@ -50,6 +51,10 @@ function criarAppIdentidadeLoop({contas,origemHttps,
     typeof pedidosComerciais.listarDoTitular!=='function'||
     typeof remessasOutbox.consultar!=='function'))
   throw Error('PEDIDOS_REAIS_INTEGRACAO_INVALIDA');
+ if(catalogoVitrine!==null&&(
+  catalogoVitrine.banco!==contas.banco||
+  typeof catalogoVitrine.listarVitrinePreparacao!=='function'))
+  throw Error('CATALOGO_LOJA_SQLITE_DIVERGENTE');
  const visaoEscritorio=motorLoop===null?null:
   new VisaoEscritorioUnificadaSQLite({banco:contas.banco,motor:motorLoop});
  const backupAtual=()=>typeof backupEstado==='function'?
@@ -394,6 +399,27 @@ function criarAppIdentidadeLoop({contas,origemHttps,
   }catch{return res.status(503).json({
    erro:'CAPACIDADE_CHECKOUT_INDISPONIVEL',checkoutReal:false
   });}
+ });
+ // Pré-vitrine de itens publicados: somente leitura; nenhum preço
+ // estimado, carrinho ou estoque antes de fornecedor homologado.
+ app.get('/api/loja/catalogo',protegido,(_req,res)=>{
+  if(!catalogoVitrine)return res.status(503).json({
+   erro:'CATALOGO_NAO_CONECTADO',checkoutReal:false
+  });
+  try{
+   const produtos=catalogoVitrine.listarVitrinePreparacao({limite:100});
+   if(!Array.isArray(produtos)||produtos.length>100||
+      produtos.some(p=>p.compravel!==false||
+       p.checkoutReal!==false||p.precoCentavos!==null||
+       typeof p.titulo!=='string'||p.titulo.length>150))
+    throw Error('VITRINE_NAO_CONFIAVEL');
+   return res.json({produtos,total:produtos.length,
+    origem:'CATALOGO_ADMINISTRATIVO_PUBLICADO',checkoutReal:false,
+    estoqueConfirmado:false,precosNaoHomologados:true});
+  }catch{
+   return res.status(503).json({erro:'CATALOGO_INDISPONIVEL',
+    checkoutReal:false});
+  }
  });
  // Consulta de capacidade da loja vinculada à mesma conta. Sem produto
  // real aprovado ou integração de fornecedor, nenhum carrinho pode pagar.
