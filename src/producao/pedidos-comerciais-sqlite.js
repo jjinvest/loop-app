@@ -103,7 +103,8 @@ function decifrar(k,r){
 class PedidosComerciaisSQLite{
  constructor({banco,chavePedidos,consultarCotacaoConfiavel,
   consultarPagamentoPsp,manutencao=null,eventosComerciais=null,
-  classificacaoLoop=null,agora=()=>Date.now()}={}){
+  classificacaoLoop=null,integradorComercialEnsaio=null,
+  agora=()=>Date.now()}={}){
   if(typeof banco?.prepare!=='function'||typeof banco?.exec!=='function'||
      !Buffer.isBuffer(chavePedidos)||chavePedidos.length!==32||
      typeof consultarCotacaoConfiavel!=='function'||
@@ -122,6 +123,13 @@ class PedidosComerciaisSQLite{
     classificacaoLoop.db!==banco||
     typeof classificacaoLoop.capturarPedidoEmTransacao!=='function'))
    erro('CORES_COMERCIAIS_BANCO_DIVERGENTE');
+  if(integradorComercialEnsaio!==null&&(
+    process.env.NODE_ENV==='production'||
+    integradorComercialEnsaio.db!==banco||
+    typeof integradorComercialEnsaio.sincronizar!=='function'||
+    typeof integradorComercialEnsaio.sinalizarCancelamento!=='function'))
+   erro('INTEGRADOR_COMERCIAL_ENSAIO_INVALIDO');
+  this.integradorComercialEnsaio=integradorComercialEnsaio;
   this.classificacaoLoop=classificacaoLoop;
   this.eventosComerciais=eventosComerciais;
   this.manutencao=manutencao;
@@ -339,7 +347,13 @@ class PedidosComerciaisSQLite{
      this.eventosComerciais.registrarCancelamentoEmTransacao({pedidoId});
     const cancelado=this._publico(this._row(pedidoId));
     this.db.exec('COMMIT');
-    return {...cancelado,cancelado:true};
+    if(!this.integradorComercialEnsaio)return {...cancelado,cancelado:true};
+    try{
+     const loop=this.integradorComercialEnsaio.sinalizarCancelamento({pedidoId});
+     return {...cancelado,cancelado:true,estornoLoopSinalizado:!!loop};
+    }catch{
+     return {...cancelado,cancelado:true,revisaoLoopPendente:true};
+    }
    }catch(e){this.db.exec('ROLLBACK');throw e;}
   }
   if(prova.status!=='CONFIRMADO'||!idOk(prova.pagamentoId)||
@@ -364,7 +378,18 @@ class PedidosComerciaisSQLite{
     });
    const confirmado=this._row(pedidoId);
    this.db.exec('COMMIT');
-   return {...this._publico(confirmado),confirmado:true};
+   const resposta={...this._publico(confirmado),confirmado:true};
+   if(!this.integradorComercialEnsaio)return resposta;
+   try{
+    const loop=this.integradorComercialEnsaio.sincronizar();
+    return {...resposta,integracaoInternaEnsaio:{
+     novasPosicoes:loop.novasPosicoes,novosEventos:loop.novosEventos,
+     financeiroReal:false}};
+   }catch{
+    // O estado do pedido ja foi confirmado no SQLite: erro da ponte nao
+    // pode transformar o pagamento em nova cobrança ou perder a compra.
+    return {...resposta,integracaoLoopPendenteReprocessamento:true};
+   }
   }catch(e){this.db.exec('ROLLBACK');throw e;}
  }
  // Relatório administrativo SEM nomes, documentos, endereço ou qualquer
