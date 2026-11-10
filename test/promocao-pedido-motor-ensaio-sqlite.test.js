@@ -117,14 +117,14 @@ async function fixture(t){
   integradorComercialEnsaio:integracao
  });
  const produtos=new Map();
- function produto({nome,preco,cor='VERDE'}){
+ function produto({nome,preco,cor='VERDE',roxasPorUnidade=0}){
   catalogo.criarProduto({produtoId:nome,titulo:'Produto '+nome});
   catalogo.vincularOferta({
    produtoId:nome,distribuidorId:'DISTRIBUIDOR_TESTE',
    sku:'SKU_'+nome,precoUnitCentavos:preco
   });
   if(cor!=='CINZA')classificacao.configurarProduto({
-   produtoId:nome,cor,autorizado:true
+   produtoId:nome,cor,roxasPorUnidade,autorizado:true
   });
   produtos.set(nome,preco);
  }
@@ -697,15 +697,20 @@ test('carrinho misto verde R$250 com cinza nao perde a posicao nem duplica luzes
  ).get(p.pedidoId).n,1);
  assert.equal(validarIdentidade(x.arquivo).integridade,'ok');
 });
-test('produto dourado continua sinalizado como especial, nao vira verde silenciosamente',async t=>{
+test('produto dourado cria somente sua posicao propria, sem transformar em verde',async t=>{
  const x=await fixture(t);
  x.produto({nome:'douradoEspecial',preco:25000,cor:'DOURADO'});
  const p=await x.criarPedido({nome:'douradoEspecial',preco:25000});
  const confirmou=await x.pedidosIntegrados.confirmarPagamento({pedidoId:p.pedidoId});
  assert.equal(confirmou.confirmado,true);
- assert.equal(confirmou.integracaoInternaEnsaio.novasPosicoes,0);
- assert.equal(x.integracao.consultar().regrasEspeciaisPendentes,1);
- assert.equal(x.motor.verificar().compras,0);
+ assert.equal(confirmou.integracaoInternaEnsaio.novasPosicoes,1);
+ assert.equal(x.integracao.consultar().regrasEspeciaisPendentes,0);
+ assert.equal(x.integracao.consultar().posicoesEspeciaisEnfileiradas,1);
+ assert.equal(x.motor.verificar().compras,1);
+ const minhas=x.motor.consultar({titularId:x.titular.titularId}).minhasPosicoes;
+ assert.equal(minhas.length,1);
+ assert.equal(minhas[0].classeProdutoOrigem,'DOURADO');
+ assert.equal(minhas[0].estadoAdesao,'PENDENTE');
  assert.equal(validarIdentidade(x.arquivo).integridade,'ok');
 });
 
