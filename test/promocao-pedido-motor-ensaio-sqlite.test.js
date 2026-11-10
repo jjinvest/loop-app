@@ -27,6 +27,8 @@ const {PromocaoPedidoMotorEnsaioSQLite}=
  require('../src/producao/promocao-pedido-motor-ensaio-sqlite');
 const {SincronizadorComercialLoopEnsaioSQLite}=
  require('../src/producao/sincronizador-comercial-loop-ensaio-sqlite');
+const {PromocaoLotesEnsaioSQLite}=
+ require('../src/producao/promocao-lotes-ensaio-sqlite');
 const {OperacaoCatracaAdminSQLite}=
  require('../src/producao/operacao-catraca-admin-sqlite');
 const {validarIdentidade,criarBackupIdentidadeReal,
@@ -103,8 +105,12 @@ async function fixture(t){
   banco:db,motor,classificacaoLoop:classificacao,
   chaveCpfEnsaio:randomBytes(32)
  });
+ const lotes=new PromocaoLotesEnsaioSQLite({
+  banco:db,motor,classificacaoLoop:classificacao,
+  aceiteAzul:promocao.aceiteAzul
+ });
  const integracao=new SincronizadorComercialLoopEnsaioSQLite({
-  banco:db,motor,classificacaoLoop:classificacao,promocao
+  banco:db,motor,classificacaoLoop:classificacao,promocao,lotes
  });
  const pedidosIntegrados=new PedidosComerciaisSQLite({
   ...base(),eventosComerciais:eventos,classificacaoLoop:classificacao,
@@ -152,7 +158,7 @@ async function fixture(t){
  }
  return {db,arquivo,dir,contas,chaves,catalogo,classificacao,
   motor,producao:promocao,evento:eventos,pedidos,pedidosIntegrados,
-  integracao,controle,sessoes,auditoria,manutencao,titular,outro,
+  integracao,lotes,controle,sessoes,auditoria,manutencao,titular,outro,
   produto,criarPedido,confirmar,statusPsp};
 }
 test('compra verde R$250 sem frete promove uma posição em B no mesmo commit, uma unica vez',async t=>{
