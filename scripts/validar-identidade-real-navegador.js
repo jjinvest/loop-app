@@ -45,6 +45,8 @@ const {RecuperacaoReservasCheckoutSQLite}=
  require('../src/producao/recuperacao-reservas-checkout-sqlite');
 const {criarLeituraComercialSegura}=
  require('../src/producao/montar-comercial-sem-homologacao');
+const {TesourariaModularEnsaioSQLite}=
+ require('../src/producao/tesouraria-modular-ensaio-sqlite');
 
 const TEXTO='Termos para uma conta de teste de navegação da Loja AKITEMM e do '+
  'Escritório LOOP: os dados deste ensaio são fictícios, os recursos de compras '+
@@ -142,6 +144,7 @@ async function main(){
  const leituraComercial=criarLeituraComercialSegura({
   banco,pedidos:pedidosComerciais
  });
+ const tesourariaEnsaio=new TesourariaModularEnsaioSQLite({banco});
  const recuperacaoReservas=new RecuperacaoReservasCheckoutSQLite({
   banco,preflight:preflightCapacidade,pedidos:pedidosComerciais
  });
@@ -166,6 +169,7 @@ async function main(){
   permitirCadastro:true,preflightCapacidade,
   pedidosComerciais:leituraComercial.leituraPedidos,
   remessasOutbox:leituraComercial.leituraRemessas,
+  tesourariaEnsaio,
   aceitePosicaoAzulEnsaio:integradorComercialEnsaio,
   adminComercial:{auditoria,manutencao,catalogo,controle,sessoes,
    classificacaoLoop,integradorComercialEnsaio,recuperacaoReservas}
@@ -233,7 +237,7 @@ async function main(){
    const barraLoja=page.locator('.barra-conta a.loop03-loja-prata');
    assert.equal(await menuLoja.getAttribute('href'),'/loja');
    assert.equal(await barraLoja.getAttribute('href'),'/loja');
-   assert.equal(await page.locator('#abaFinanceiro').isDisabled(),true);
+   assert.equal(await page.locator('#abaFinanceiro').isDisabled(),false);
    assert.equal(await page.locator('#abaTabuleiro').isDisabled(),false);
    assert.equal(await page.locator('#abaPosicoes').isDisabled(),false);
    await page.locator('#loopResumoMotor').filter({hasText:/Fila B: 1/}).waitFor();
@@ -258,6 +262,18 @@ async function main(){
    if(item.largura<=860)await page.locator('#loop03MenuIntegrado').click();
    await page.locator('#abaPosicoes').click();
    await page.locator('#posicoesPainel').filter({hasText:/#1.*FILA_B/}).waitFor();
+   if(item.largura<=860)await page.locator('#loop03MenuIntegrado').click();
+   await page.locator('#abaFinanceiro').click();
+   await page.locator('#tesourariaEnsaioSaldo').filter({
+    hasText:/Disponivel ficticio: R\$ 0,00/
+   }).waitFor();
+   assert.match(await page.locator('#estadoFinanceiro').innerText(),
+    /SIMULACAO.*sem pagamento bancario/i);
+   await page.locator('#tesourariaEnsaioSolicitar').click();
+   await page.locator('#tesourariaEnsaioStatus').filter({
+    hasText:/Saque ficticio indisponivel.*Nenhum dinheiro foi movimentado/
+   }).waitFor();
+   assert.equal(tesourariaEnsaio.verificar().integridade,'OK');
    if(item.largura<=860)await page.locator('#loop03MenuIntegrado').click();
    await page.locator('#abaEquipe').click();
    await page.locator('#equipeResumo').filter({
