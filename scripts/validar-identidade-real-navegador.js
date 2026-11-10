@@ -48,6 +48,20 @@ const TEXTO='Termos para uma conta de teste de navegação da Loja AKITEMM e do 
  'Escritório LOOP: os dados deste ensaio são fictícios, os recursos de compras '+
  'e benefícios financeiros reais não estão habilitados, e nenhuma posição real '+
  'nem transferência bancária será realizada. Não é contrato de produção.';
+async function conferirLayoutReal(page,secao,{mobile=false}={}){
+ const original=page.viewportSize();
+ for(const largura of mobile?[320,360,390,412]:[768,1024,1440]){
+  await page.setViewportSize({width:largura,height:844});
+  const m=await page.evaluate(()=>({
+   viewport:innerWidth,html:document.documentElement.scrollWidth,
+   corpo:document.body.scrollWidth
+  }));
+  assert.ok(m.html<=m.viewport+1&&m.corpo<=m.viewport+1,
+   'Tela real '+secao+' em '+largura+'px possui corte horizontal: '+
+   JSON.stringify(m));
+ }
+ await page.setViewportSize(original);
+}
 async function main(){
  const banco=new DatabaseSync(':memory:');
  banco.exec('PRAGMA foreign_keys=ON');
@@ -361,6 +375,7 @@ async function main(){
    });
    console.log('DIAGNOSTICO_ESTADO_CLIENTE_'+visual.nome+'='+
     JSON.stringify(diagnostico));
+   await conferirLayoutReal(pagina,'escritorio-'+visual.nome,{mobile:visual.mobile});
    await pagina.locator('#loopResumoMotor').filter({
     hasText:new RegExp('Fila B: '+diagnostico.filaB)
    }).waitFor();
@@ -408,6 +423,7 @@ async function main(){
    });
    await pagina.goto(base+'/loja');
    const loja=pagina.locator('#estadoLojaLoop');
+   await conferirLayoutReal(pagina,'loja-'+visual.nome,{mobile:visual.mobile});
    await loja.filter({hasText:/capacidade técnica da sua conta/}).waitFor();
    assert.equal(await pagina.locator('#registrarPedidoLoja').isDisabled(),true);
    assert.equal(await pagina.locator('#akitemmBusca').isDisabled(),true);
@@ -438,6 +454,7 @@ async function main(){
     assert.equal(await pagina.locator('#reprocessarJornadaAdmin').isDisabled(),
      true);
    }
+   await conferirLayoutReal(pagina,'admin-'+visual.nome,{mobile:visual.mobile});
    const tamanho=await pagina.evaluate(()=>({
     largura:window.innerWidth,
     conteudo:document.documentElement.scrollWidth,
