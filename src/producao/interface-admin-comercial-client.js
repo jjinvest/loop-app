@@ -396,7 +396,8 @@
    integracaoDisponivel=true;
    $('integracaoQualificadaEstado').textContent=
     'Confirmadas: '+d.confirmadas+
-    ' · Verdes encaminhadas ao LOOP: '+d.enfileiradas+
+    ' · Compras encaminhadas ao LOOP: '+d.enfileiradas+
+    ' · Posições douradas/roxas e mistas: '+d.posicoesEspeciaisEnfileiradas+
     ' · Verdes aguardando posição: '+d.aguardandoPromocao+
     ' · Luzes: '+d.eventosNoCiclo+'/6'+
     ' · Eventos aguardando ciclo: '+d.esperandoSeisEventos+
