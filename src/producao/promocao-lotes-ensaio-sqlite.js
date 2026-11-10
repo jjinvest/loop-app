@@ -3,6 +3,7 @@
 // A venda fornece apenas um evento luminoso, independente das posicoes geradas.
 // Usa o mesmo SQLite e mesmo motor; nenhum credito ou pagamento real.
 const {createHash,createHmac}=require('node:crypto');
+const {PreflightCapacidadeCheckoutSQLite}=require('./preflight-capacidade-checkout-sqlite');
 const TABELAS_LOTES_ENSAIO=Object.freeze([
  'loop_real_promocoes_lotes_ensaio',
  'loop_real_promocoes_lotes_posicoes_ensaio',
@@ -213,6 +214,10 @@ class PromocaoLotesEnsaioSQLite{
    this.db.prepare(
     'UPDATE loop_real_motor_estado SET revisao=revisao+1,snapshot=? WHERE id=1'
    ).run(JSON.stringify(foto));
+   // Um pedido com N posicoes consome a reserva de N exatamente uma vez.
+   PreflightCapacidadeCheckoutSQLite.consumirEmTransacao(this.db,{
+    pedidoId,quantidade:ids.length
+   });
    this.verificar();
    this.db.exec('COMMIT');
    return {repetida:false,posicoes:ids,quantidade:ids.length,
