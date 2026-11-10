@@ -353,6 +353,14 @@ async function main(){
    const erros=[];
    pagina.on('pageerror',e=>erros.push(e.message));
    await pagina.goto(base+'/escritorio');
+   const diagnostico=await pagina.evaluate(async()=>{
+    const resposta=await fetch('/api/loop/estado',{cache:'no-store'});
+    const d=await resposta.json().catch(()=>({}));
+    return {http:resposta.status,erro:d.erro||null,
+     filaB:d.filaB??null,quantidadePosicoes:d.minhasPosicoes?.length??null};
+   });
+   console.log('DIAGNOSTICO_ESTADO_CLIENTE_'+visual.nome+'='+
+    JSON.stringify(diagnostico));
    await pagina.locator('#loopResumoMotor').filter({
     hasText:/Fila B: 3/
    }).waitFor();
