@@ -396,9 +396,9 @@ test('azul pode ser confirmada enquanto aguarda na fila, sem impedir circulacao'
  assert.equal(x.motor.consultar({titularId:x.titular.titularId}).minhasPosicoes[0].estadoAdesao,'ACEITE_ENSAIO');
  assert.equal(x.producao.verificar().aceitesIndividuaisEnsaio,1);
  const preenchido=x.motor.prepararTabuleiroEnsaio();
- assert.equal(preenchido.tabuleiro.centro.id,r.posicaoId);
- assert.equal(preenchido.tabuleiro.centro.empresa,undefined);
- assert.equal(preenchido.tabuleiro.centro.statusAdesao,'ACEITE_ENSAIO');
+ assert.equal(preenchido.centro.id,r.posicaoId);
+ assert.equal(preenchido.centro.empresa,undefined);
+ assert.equal(preenchido.centro.statusAdesao,'ACEITE_ENSAIO');
  assert.equal(validarIdentidade(x.arquivo).integridade,'ok');
 });
 test('reversao PSP coloca posicao aceita em quarentena sem apagar historico',async t=>{
@@ -455,11 +455,11 @@ test('compra azul circula e se torna dourada na entrada da vaga 6 sem bloquear c
  assert.equal(x.motor.consultar({titularId:x.titular.titularId}).filaB,1);
  assert.equal(x.motor.consultar({titularId:x.titular.titularId}).posicoesAzuisPendentes,1);
  const entrada=x.motor.prepararTabuleiroEnsaio();
- assert.equal(entrada.tabuleiro.centro.id,a.posicaoId);
- assert.equal(entrada.tabuleiro.centro.empresa,true);
- assert.equal(entrada.tabuleiro.centro.statusAdesao,'PRAZO_ENCERRADO');
- assert.equal(entrada.tabuleiro.centro.titularOperacional,'LOOP_EMPRESA');
- assert.equal(entrada.tabuleiro.centro.motivoAssuncao,'SEM_CPF_E_TERMOS_NA_ENTRADA_VAGA_6');
+ assert.equal(entrada.centro.id,a.posicaoId);
+ assert.equal(entrada.centro.empresa,true);
+ assert.equal(entrada.centro.statusAdesao,'PRAZO_ENCERRADO');
+ assert.equal(entrada.centro.titularOperacional,'LOOP_EMPRESA');
+ assert.equal(entrada.centro.motivoAssuncao,'SEM_CPF_E_TERMOS_NA_ENTRADA_VAGA_6');
  assert.equal(x.motor.consultar({titularId:x.titular.titularId}).minhasPosicoes.length,0,
   'posicao convertida nao pertence mais a carteira do titular');
  assert.equal(x.producao.consultarTitularEnsaio({titularId:x.titular.titularId})
