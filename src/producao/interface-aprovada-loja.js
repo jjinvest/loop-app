@@ -20,6 +20,136 @@
    elem.setAttribute('aria-disabled','true');
   }
  }
+ // Catálogo publicado pela administração, nunca produtos ou preços de demo.
+ // Ativar somente os filtros de LEITURA, sem fazer carrinho/compra.
+ let produtosPublicados=[],categoria='',cor='',termo='';
+ const filtrar=()=>{
+  const normal=x=>String(x||'').normalize('NFD')
+   .replace(/[\u0300-\u036f]/g,'').toLocaleLowerCase('pt-BR');
+  const itens=produtosPublicados.filter(p=>
+   (!categoria||(categoria==='fisicos'&&p.tipo==='FISICO'))&&
+   (!cor||p.cor===cor)&&
+   (!termo||normal(p.titulo+' '+p.descricao).includes(normal(termo)))
+  );
+  const lista=$('catalogoLojaLoop');
+  lista.replaceChildren();
+  $('akitemmVisualizacaoProduto').hidden=true;
+  for(const p of itens){
+   const card=document.createElement('article');
+   card.className='produto-loja-loop';
+   const tipo=document.createElement('p');
+   tipo.className='tipo-loja-loop';
+   tipo.textContent=p.tipo==='FISICO'?'Produto físico':'Produto';
+   const titulo=document.createElement('h3');
+   titulo.textContent=p.titulo;
+   const descricao=document.createElement('p');
+   descricao.className='akitemm-descricao';
+   descricao.textContent=p.descricao||'Informações comerciais em preparação.';
+   const status=document.createElement('p');
+   status.textContent='Aguardando fornecedor homologado · compra indisponível';
+   const botao=document.createElement('button');
+   botao.type='button';
+   botao.className='botao-secundario-loja';
+   botao.textContent='Ver detalhes';
+   botao.addEventListener('click',()=>{
+    const detalhe=$('akitemmProdutoInlineConteudo');
+    detalhe.replaceChildren();
+    for(const [etiqueta,valor] of [
+     ['Produto: ',p.titulo],
+     ['Descrição: ',p.descricao||'Em preparação'],
+     ['Situação: ','Sem preço, estoque ou frete homologados.'],
+     ['Compra: ','Indisponível até liberação comercial.']
+    ]){
+     const linha=document.createElement('p');
+     const forte=document.createElement('strong');
+     forte.textContent=etiqueta;
+     linha.append(forte,document.createTextNode(valor));
+     detalhe.append(linha);
+    }
+    $('akitemmVisualizacaoProduto').hidden=false;
+   });
+   card.append(tipo,titulo,descricao,status,botao);
+   lista.append(card);
+  }
+  $('akitemmResultadoProdutos').textContent=itens.length?
+   itens.length+' produto(s) publicado(s), sem checkout habilitado.':
+   'Nenhum produto encontrado para esta busca ou filtro.';
+  $('akitemmFiltroTodos').setAttribute('aria-pressed',
+   String(!categoria&&!cor&&!termo));
+  for(const b of document.querySelectorAll('[data-akitemm-cor]'))
+   b.setAttribute('aria-pressed',String(b.dataset.akitemmCor===cor&&!!cor));
+  for(const b of document.querySelectorAll('[data-akitemm-categoria]'))
+   b.setAttribute('aria-pressed',
+    String(b.dataset.akitemmCategoria===categoria&&!!categoria));
+ };
+ const filtroTodos=()=>{
+  categoria='';cor='';termo='';
+  $('akitemmBusca').value='';
+  filtrar();
+ };
+ $('akitemmFiltroTodos').addEventListener('click',filtroTodos);
+ $('akitemmVerTodos').addEventListener('click',filtroTodos);
+ $('akitemmVoltarProdutos').addEventListener('click',()=>{
+  $('akitemmVisualizacaoProduto').hidden=true;
+ });
+ $('akitemmBusca').addEventListener('input',e=>{
+  termo=e.target.value.trim().slice(0,120);filtrar();
+ });
+ for(const b of document.querySelectorAll('[data-akitemm-cor]')){
+  b.addEventListener('click',()=>{
+   cor=cor===b.dataset.akitemmCor?'':b.dataset.akitemmCor;
+   filtrar();
+  });
+ }
+ for(const b of document.querySelectorAll('[data-akitemm-categoria]')){
+  b.addEventListener('click',()=>{
+   categoria=categoria===b.dataset.akitemmCategoria?'':
+    b.dataset.akitemmCategoria;filtrar();
+  });
+ }
+ async function atualizarCatalogo(){
+  const botao=$('atualizarCatalogoLoja');
+  if(botao)botao.disabled=true;
+  try{
+   const r=await fetch('/api/loja/catalogo',{
+    credentials:'same-origin',cache:'no-store'
+   });
+   if(!r.ok)throw Error('CATALOGO_NAO_HOMOLOGADO');
+   const dados=await r.json();
+   if(dados.origem!=='CATALOGO_ADMINISTRATIVO_PUBLICADO'||
+      dados.checkoutReal!==false||dados.estoqueConfirmado!==false||
+      dados.precosNaoHomologados!==true||
+      !Array.isArray(dados.produtos)||dados.produtos.length>100||
+      dados.produtos.some(p=>
+       typeof p.produtoId!=='string'||typeof p.titulo!=='string'||
+       typeof p.descricao!=='string'||p.compravel!==false||
+       p.checkoutReal!==false||p.precoCentavos!==null||
+       p.estoqueConfirmado!==false||p.tipo!=='FISICO'||
+       !['CINZA','VERDE','DOURADO','ROXO'].includes(p.cor)))
+    throw Error('CATALOGO_FORA_DO_CONTRATO');
+   produtosPublicados=dados.produtos;
+   const ativo=produtosPublicados.length>0;
+   for(const node of [
+    $('akitemmBusca'),$('akitemmVerTodos'),
+    ...document.querySelectorAll('[data-akitemm-cor]'),
+    ...document.querySelectorAll('[data-akitemm-categoria]')
+   ]){
+    node.disabled=!ativo;
+    node.setAttribute('aria-disabled',String(!ativo));
+   }
+   $('referenciaLojaLoop').textContent=ativo?
+    'Produtos publicados pela AKITEMM. Preços, estoque e compras dependem de homologação dos fornecedores.':
+    'Nenhum produto publicado. Compras e pagamentos reais indisponíveis.';
+   filtrar();
+  }catch{
+   produtosPublicados=[];filtrar();
+   $('akitemmResultadoProdutos').textContent=
+    'Catálogo indisponível. Nenhum produto fictício será exibido.';
+  }finally{if(botao)botao.disabled=false;}
+ }
+ $('atualizarCatalogoLoja').addEventListener('click',
+  ()=>void atualizarCatalogo());
+
  const progresso=$('progressoMinimoLoop')?.closest('.akitemm-progresso');
  if(progresso)progresso.hidden=true;
  const escolha=$('akitemmEscolhaLoop');
@@ -120,6 +250,7 @@
    // Indisponibilidade da leitura nao libera compra nem muda as regras.
   }
   await atualizarPedidos();
+  await atualizarCatalogo();
  }catch{
   informar('Não foi possível verificar a conta. Volte ao Escritório LOOP e entre novamente.');
   if($('conteudoLojaLoop'))$('conteudoLojaLoop').hidden=true;
