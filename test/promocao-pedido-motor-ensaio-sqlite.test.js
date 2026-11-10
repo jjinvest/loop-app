@@ -1147,3 +1147,111 @@ test('duas cotacoes concorrentes de seis douradas nao comprometem 12 vagas',asyn
  assert.equal(x.preflight.verificar().integridade,'OK');
  assert.equal(validarIdentidade(x.arquivo).integridade,'ok');
 });
+
+
+test('loja aprovada apresenta capacidade do proprio titular sem habilitar checkout ou permitir alteracoes',async t=>{
+ const x=await fixture(t);
+ const origin='https://contas.example.invalid';
+ x.produto({nome:'reservaHTTP',preco:25000,cor:'DOURADO'});
+ const reservado=await x.criarPedido({itens:[
+  {nome:'reservaHTTP',preco:25000,quantidade:3}
+ ],comPreflight:true});
+ const app=criarAppIdentidadeLoop({
+  contas:x.contas,motorLoop:x.motor,preflightCapacidade:x.preflight,
+  origemHttps:origin,permitirCadastro:true
+ });
+ const server=app.listen(0,'127.0.0.1');
+ await once(server,'listening');
+ t.after(()=>new Promise(resolve=>server.close(resolve)));
+ const base='http://127.0.0.1:'+server.address().port;
+ const endpoint=base+'/api/loja/capacidade';
+ assert.equal((await fetch(endpoint)).status,401);
+ const entrar=async nick=>{
+  const resposta=await fetch(base+'/api/contas/entrar',{
+   method:'POST',headers:{Origin:origin,'Content-Type':'application/json'},
+   body:JSON.stringify({nick,senha:'SenhaDeEnsaio2026!'})
+  });
+  assert.equal(resposta.status,200);
+  return resposta.headers.get('set-cookie').split(';')[0];
+ };
+ const buyer=await entrar('Comprador'),outro=await entrar('Outro');
+ const ver=async cookie,query=''=>fetch(endpoint+query,{
+  headers:{Cookie:cookie}
+ });
+ const cap=await (await ver(buyer)).json();
+ assert.equal(cap.fonte,'MOTOR_E_RESERVAS_SQLITE');
+ assert.equal(cap.checkoutReal,false);
+ assert.equal(cap.ativas,0);
+ assert.equal(cap.reservadas,3);
+ assert.equal(cap.disponiveis,7);
+ assert.equal((await (await ver(outro,'?titularId='+
+  encodeURIComponent(x.titular.titularId))).json()).reservadas,0);
+ assert.equal((await fetch(endpoint,{method:'POST',
+  headers:{Cookie:buyer,Origin:origin,'Content-Type':'application/json'},
+  body:JSON.stringify({quantidade:10})})).status,503);
+ const ui=await (await fetch(base+'/identidade/assets/loja.js')).text();
+ assert.match(ui,/api\/loja\/capacidade/);
+ assert.match(ui,/Checkout e pagamentos reais ainda não habilitados/);
+ assert.equal(x.preflight.consultar({titularId:x.titular.titularId}).reservadas,3);
+ await x.pedidosIntegrados.confirmarPagamento({pedidoId:reservado.pedidoId});
+ assert.equal((await (await ver(buyer)).json()).ativas,3);
+ assert.equal((await (await ver(buyer)).json()).reservadas,0);
+ assert.equal(validarIdentidade(x.arquivo).integridade,'ok');
+});
+test('backup cifrado restaura reserva pendente e trilha pre-cobranca sem modificar checkout',async t=>{
+ const x=await fixture(t);
+ x.produto({nome:'backupVagas',preco:25000,cor:'DOURADO'});
+ const compra=await x.criarPedido({itens:[
+  {nome:'backupVagas',preco:25000,quantidade:4}
+ ],comPreflight:true});
+ const destino=path.join(x.dir,'precheckout.looprealbak');
+ const restaurado=path.join(x.dir,'precheckout-restaurado.sqlite');
+ const chave=randomBytes(32);
+ await criarBackupIdentidadeReal({
+  origem:x.arquivo,destino,chaveBackup:chave,autorizado:true
+ });
+ await restaurarBackupIdentidadeReal({
+  origem:destino,destino:restaurado,chaveBackup:chave,autorizado:true
+ });
+ const banco=new DatabaseSync(restaurado,{readOnly:true});
+ try{
+  const preflight=Object.create(PreflightCapacidadeCheckoutSQLite.prototype);
+  preflight.db=banco;
+  const motor=Object.create(MotorLoopIntegradoSQLite.prototype);
+  motor.banco=banco;preflight.motor=motor;
+  const classificacao=Object.create(ClassificacaoComercialLoopSQLite.prototype);
+  classificacao.db=banco;preflight.classificacao=classificacao;
+  assert.equal(preflight.verificar().integridade,'OK');
+  assert.equal(preflight.consultar({titularId:x.titular.titularId}).reservadas,4);
+  assert.equal(banco.prepare([
+   'SELECT quantidade FROM loop_real_checkout_reservas_posicoes',
+   'WHERE pedido_id=?'
+  ].join(' ')).get(compra.pedidoId).quantidade,4);
+  assert.equal(banco.prepare([
+   'SELECT COUNT(*) AS n FROM loop_real_checkout_reservas_historico',
+   'WHERE pedido_id=?'
+  ].join(' ')).get(compra.pedidoId).n,1);
+ }finally{banco.close();}
+ assert.equal(validarIdentidade(restaurado).integridade,'ok');
+});
+test('estorno de posicao ja criada preserva historico de consumo e revisao individual',async t=>{
+ const x=await fixture(t);
+ x.produto({nome:'consumoEstorno',preco:25000,cor:'DOURADO'});
+ const p=await x.criarPedido({itens:[
+  {nome:'consumoEstorno',preco:25000,quantidade:2}
+ ],comPreflight:true});
+ await x.pedidosIntegrados.confirmarPagamento({pedidoId:p.pedidoId});
+ assert.equal(x.preflight.verificar().posicoesConsumidas,2);
+ x.statusPsp.set(p.pedidoId,{status:'ESTORNADO'});
+ const res=await x.pedidosIntegrados.confirmarPagamento({pedidoId:p.pedidoId});
+ assert.equal(res.cancelado,true);
+ assert.equal(res.estornoLoopSinalizado,true);
+ assert.equal(x.preflight.verificar().integridade,'OK');
+ assert.equal(x.preflight.consultar({titularId:x.titular.titularId}).reservadas,0);
+ assert.equal(x.motor.consultar().posicoesEmRevisaoNaFilaB,2);
+ assert.equal(x.db.prepare([
+  'SELECT COUNT(*) AS n FROM loop_real_checkout_reservas_historico',
+  'WHERE pedido_id=?'
+ ].join(' ')).get(p.pedidoId).n,3);
+ assert.equal(validarIdentidade(x.arquivo).integridade,'ok');
+});
