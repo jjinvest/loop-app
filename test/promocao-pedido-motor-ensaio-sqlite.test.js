@@ -216,24 +216,33 @@ test('autorizacao de ensaio, valor da captura, titular e comprovante unico sao o
  assert.equal(x.motor.verificar().compras,1);
  assert.equal(x.producao.verificar().promocoesEnsaio,1);
 });
-test('estorno depois da simulacao permanece em historico e BLOQUEIA todo novo giro',async t=>{
+test('estorno exige revisao individual, sem parar demais compras e controle da catraca',async t=>{
  const x=await fixture(t);
  x.produto({nome:'verdeEstorno',preco:25000});
+ x.produto({nome:'verdeNovo',preco:25000});
  const p=await x.criarPedido({nome:'verdeEstorno',preco:25000});
  await x.confirmar(p);
  x.producao.aprovarEEnfileirarEmEnsaio(p);
  x.statusPsp.set(p.pedidoId,{status:'ESTORNADO'});
  const r=await x.pedidos.confirmarPagamento({pedidoId:p.pedidoId});
  assert.equal(r.cancelado,true);
- assert.equal(x.producao.verificar().posicoesEnsaioComEstornoPendente,1);
- assert.equal(x.producao.verificar().motorBloqueadoPorEstorno,true);
- assert.throws(()=>x.motor.controlarCatracaEnsaio({acao:'ABRIR'}),
-  {codigo:'LOOP_PROMOCAO_ESTORNADA_EXIGE_REVISAO'});
- assert.throws(()=>x.motor.registrarCompraEnsaio({
-  titularId:x.outro.titularId,pedidoId:'pedidoforjado'
- }),{codigo:'LOOP_PROMOCAO_ESTORNADA_EXIGE_REVISAO'});
- assert.equal(x.producao.verificar().promocoesEnsaio,1);
- assert.equal(x.motor.verificar().compras,1);
+ assert.equal(x.producao.verificar().revisaoFinanceiraPendente,true);
+ assert.equal(x.producao.verificar().motorBloqueadoPorEstorno,false);
+ const controle=x.motor.controlarCatracaEnsaio({acao:'PAUSAR'});
+ assert.equal(controle.aberta,false);
+ const novo=await x.criarPedido({nome:'verdeNovo',preco:25000,cliente:x.outro});
+ await x.confirmar(novo);
+ const pos=x.producao.aprovarEEnfileirarEmEnsaio(novo);
+ assert.equal(pos.repetida,false);
+ assert.equal(x.motor.consultar({titularId:x.outro.titularId}).minhasPosicoes[0].local,'FILA_B');
+ assert.equal(x.motor.consultar().catraca.estado,'PAUSADA');
+ assert.equal(x.producao.suspenderPromocaoRevertidaEmEnsaio({
+  pedidoId:p.pedidoId,autorizadoEnsaio:true
+ }).estado,'REVISAR_PSP');
+ assert.equal(x.motor.consultar().catraca.estado,'PAUSADA');
+ assert.equal(x.motor.controlarCatracaEnsaio({acao:'ABRIR'}).aberta,true);
+ assert.equal(x.producao.verificar().reversoesEmQuarentena,1);
+ assert.equal(x.motor.verificar().compras,2);
  assert.equal(validarIdentidade(x.arquivo).integridade,'ok');
 });
 test('estorno ANTES da aprovacao e replay de PSP nao geram posicao',async t=>{
