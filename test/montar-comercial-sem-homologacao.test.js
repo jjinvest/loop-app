@@ -202,6 +202,8 @@ test('serviço sem PSP monta cores+eventos e lê pedido do titular após reiníc
    const publicos=await vit.json();
    assert.equal(publicos.produtos.length,1);
    assert.equal(publicos.produtos[0].precoCentavos,null);
+   assert.equal(publicos.produtos[0].novidade,true);
+   assert.equal(publicos.produtos[0].unidadesConfirmadas,1);
    assert.equal(publicos.produtos[0].compravel,false);
    assert.equal(publicos.produtos.some(p=>p.produtoId==='rascunho'),false);
    assert.equal(publicos.checkoutReal,false);
@@ -790,6 +792,8 @@ test('vitrine publicada fica operante sem chave PSP, mas produtos rascunho e com
  assert.equal(d.produtos[0].titulo,'Produto publicado sem pagamento homologado');
  assert.equal(d.produtos[0].precoCentavos,null);
  assert.equal(d.produtos[0].compravel,false);
+ assert.equal(d.produtos[0].novidade,true);
+ assert.equal(d.produtos[0].unidadesConfirmadas,0);
  assert.equal(d.produtos[0].estoqueConfirmado,false);
  assert.equal(d.checkoutReal,false);
  assert.equal((await fetch(base+'/api/checkout/finalizar',{
