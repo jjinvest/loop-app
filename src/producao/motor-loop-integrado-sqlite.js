@@ -362,6 +362,8 @@ class MotorLoopIntegradoSQLite{
    ...(sim.tabuleiro.centro?[{...sim.tabuleiro.centro,local:'CENTRO'}]:[]),
    ...sim.tabuleiro.vagas.flatMap((p,i)=>p?[{...p,local:'VAGA_'+(i+1)}]:[])
   ];
+  const azuis=sim.filas.filaB.filter(p=>p.statusAdesao==='PENDENTE').length;
+  const revisoes=sim.filas.filaB.filter(p=>p.statusAdesao==='REVISAR_PSP').length;
   return {status:'FLUXO_INTERNO_EM_VALIDACAO',
    fonte:'IDENTIDADE_E_MOTOR_MESMO_SQLITE',
    transacoesReais:false,financeiroReal:false,
@@ -369,7 +371,9 @@ class MotorLoopIntegradoSQLite{
    limitePorTitularTabuleiro:2,ordemAlimentacao:'3A:1B',
    eventosPorCiclo:6,eventosComerciais:comercial,catraca:{
     estado:estado.catraca.status,giros:sim.giros
-   },filaA:sim.filas.filaA.length,filaB:sim.filas.filaB.length,
+   },filaA:sim.filas.filaA.length,
+   filaB:sim.filas.filaB.length-azuis-revisoes,
+   posicoesAzuisPendentes:azuis,posicoesEmRevisaoNaFilaB:revisoes,
    tabuleiro:{
     centro:visual(sim.tabuleiro.centro),
     vagas:sim.tabuleiro.vagas.map(visual),
@@ -377,7 +381,9 @@ class MotorLoopIntegradoSQLite{
     ciclosConcluidos:sim.tabuleiro.ciclosConcluidos.length
    },minhasPosicoes:titularId===null?[]:posicoes.filter(p=>
     p.participanteId===titularId&&p.empresa!==true)
-    .map(p=>({numero:p.id,local:p.local,
+    .map(p=>({numero:p.id,
+     local:p.statusAdesao==='PENDENTE'?'AGUARDANDO_CPF_TERMOS':
+      p.statusAdesao==='REVISAR_PSP'?'EM_REVISAO_PSP':p.local,
      indicacoesVinculadas:p.indicacoesVinculadas||0,
      estadoAdesao:p.statusAdesao||'ATIVA_ENSAIO',
      aguardandoCpfTermos:p.statusAdesao==='PENDENTE'})),
