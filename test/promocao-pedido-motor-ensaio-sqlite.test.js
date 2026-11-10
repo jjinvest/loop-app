@@ -423,3 +423,23 @@ test('reversao PSP coloca posicao aceita em quarentena sem apagar historico',asy
  assert.equal(x.producao.verificar().aceitesIndividuaisEnsaio,1);
  assert.equal(validarIdentidade(x.arquivo).integridade,'ok');
 });
+
+test('auditoria detecta aceite forjado diretamente no snapshot sem livro imutavel',async t=>{
+ const x=await fixture(t);
+ x.produto({nome:'verdeAuditavel',preco:25000});
+ const p=await x.criarPedido({nome:'verdeAuditavel',preco:25000});
+ await x.confirmar(p);
+ const result=x.producao.aprovarEEnfileirarEmEnsaio(p);
+ const linha=x.db.prepare('SELECT snapshot FROM loop_real_motor_estado WHERE id=1').get();
+ const s=JSON.parse(linha.snapshot);
+ const fila=s.filas.filaB.find(x=>x.id===result.posicaoId);
+ const idx=s.filas.vendasRegistradas.find(x=>x[0]===p.pedidoId)[1];
+ fila.statusAdesao='ACEITE_ENSAIO';
+ idx.statusAdesao='ACEITE_ENSAIO';
+ x.db.prepare('UPDATE loop_real_motor_estado SET snapshot=? WHERE id=1')
+  .run(JSON.stringify(s));
+ assert.throws(()=>x.producao.verificar(),
+  {codigo:'AZUL_SNAPSHOT_AUDITORIA_DIVERGENTE'});
+ assert.throws(()=>validarIdentidade(x.arquivo),
+  {codigo:'BACKUP_PROMOCAO_DIVERGENTE'});
+});
