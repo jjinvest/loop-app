@@ -95,7 +95,9 @@ test('admin aprovado: login distinto, cadastrar produto/oferta, editar preços e
   'formEconomiaProduto','salvarPrecoAdmin','salvarCustoAdmin',
   'listaProdutosAdmin','exportarCatalogoAdmin','exportarPedidosAdmin',
   'suspenderComercialAdmin','retomarComercialAdmin','estadoManutencaoAdmin',
-  'corProdutoAdmin','corTipoAdmin','salvarCorAdmin','estadoCorAdmin'])
+  'corProdutoAdmin','corTipoAdmin','salvarCorAdmin','estadoCorAdmin',
+  'estadoJornadaComercial','pedidoJornadaAdmin','reprocessarJornadaAdmin',
+  'atualizarJornadaAdmin'])
   assert.match(html,new RegExp('id="'+campo+'"'),campo);
  assert.match(html,/src="\/identidade\/assets\/admin-comercial.js"/);
  assert.doesNotMatch(html,/src="\/staging\/assets\/admin.js"/);
@@ -109,6 +111,8 @@ test('admin aprovado: login distinto, cadastrar produto/oferta, editar preços e
  assert.match(codigo,/salvarCustoAdmin/);
  assert.match(codigo,/formEconomiaProduto/);
  assert.match(codigo,/alterarManutencao/);
+ assert.match(codigo,/atualizarJornadaAdmin/);
+ assert.match(codigo,/api\/admin\/comercial\/jornada/);
  assert.doesNotMatch(codigo,/require\('node:fs'\)/);
  assert.equal((await get('/identidade/assets/admin-comercial.js')).status,401);
  assert.equal((await get('/api/admin/comercial/produtos-valores')).status,401);
@@ -121,6 +125,22 @@ test('admin aprovado: login distinto, cadastrar produto/oferta, editar preços e
   Cookie:cookieAdmin,Origin:ORIGEM,
   'Content-Type':'application/json','X-Loop-Admin-Csrf':admin.csrfToken
  };
+ // Sem fornecedor/PSP homologados, nenhum clique habilita compra ou envio.
+ assert.equal((await get('/api/admin/comercial/jornada')).status,401);
+ assert.equal((await get('/api/admin/comercial/jornada',{
+  Cookie:cookieAdmin
+ })).status,503);
+ assert.equal((await fetch(base+'/api/admin/comercial/jornada/reprocessar',{
+  method:'POST',headers:{Cookie:cookieAdmin,Origin:ORIGEM,
+   'Content-Type':'application/json'},body:JSON.stringify({
+   pedidoId:'PEDIDO_NAO_HOMOLOGADO'
+  })
+ })).status,403);
+ assert.equal((await fetch(base+'/api/admin/comercial/jornada/reprocessar',{
+  method:'POST',headers:cab,body:JSON.stringify({
+   pedidoId:'PEDIDO_NAO_HOMOLOGADO'
+  })
+ })).status,423);
  const post=(p,body,headers=cab)=>fetch(base+'/api/admin/comercial'+p,{
   method:'POST',headers,body:JSON.stringify(body)
  });
