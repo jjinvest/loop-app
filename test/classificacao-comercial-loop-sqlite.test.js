@@ -221,3 +221,53 @@ test('backup cifrado preserva cores do pedido e barra fotografia parcial',async 
  assert.throws(()=>validarIdentidade(x.file),
   {codigo:'BACKUP_COMERCIAL_CORES_INCOMPLETAS'});
 });
+
+test('pedido misto respeita regras de verde dourado roxo e cinza sem prometer direitos',async t=>{
+ const x=await fixture(t);
+ for(const [nome,preco] of [
+  ['verdeMisto',25000],['ouroMisto',27500],
+  ['roxoMisto',30000],['cinzaMisto',90000]
+ ])x.produto(nome,preco);
+ x.cor.configurarProduto({produtoId:'verdeMisto',cor:'VERDE',autorizado:true});
+ x.cor.configurarProduto({produtoId:'ouroMisto',cor:'DOURADO',autorizado:true});
+ x.cor.configurarProduto({produtoId:'roxoMisto',cor:'ROXO',
+  roxasPorUnidade:4,autorizado:true});
+ const pedidoId=await x.pedido([
+  {produto:'verdeMisto',preco:25000},
+  {produto:'ouroMisto',preco:27500,quantidade:2},
+  {produto:'roxoMisto',preco:30000,quantidade:2},
+  {produto:'cinzaMisto',preco:90000}
+ ],{frete:4500});
+ const r=x.cor.avaliarPedido({pedidoId});
+ assert.equal(r.posicoesVerdesPrevistas,1,'verde por pedido, sem contar frete');
+ assert.equal(r.posicoesDouradasPrevistas,2,'uma dourada por unidade');
+ assert.equal(r.posicoesRoxasConfiguradas,8,'quatro por unidade, nao pelo preco');
+ assert.equal(r.totalPosicoesMistasPrevistas,11);
+ assert.equal(r.ultrapassaDezPorCompra,true);
+ assert.equal(r.eventosEspeciaisNaoHomologados,true);
+ assert.equal(r.posicoesReaisCriadas,0);
+ assert.equal(x.motor.verificar().compras,0);
+ x.cor.configurarProduto({produtoId:'roxoMisto',cor:'ROXO',
+  roxasPorUnidade:1,revisaoEsperada:1,autorizado:true});
+ x.cor.configurarProduto({produtoId:'ouroMisto',cor:'CINZA',
+  revisaoEsperada:1,autorizado:true});
+ const congelado=x.cor.avaliarPedido({pedidoId});
+ assert.equal(congelado.totalPosicoesMistasPrevistas,11,
+  'alterar catalogo nao modifica o pedido antigo');
+ assert.equal(validarIdentidade(x.file).integridade,'ok');
+});
+test('roxo isolado permanece previsto sem ativacao e limitado pela regra configurada',async t=>{
+ const x=await fixture(t);
+ x.produto('roxoIsolado',10000);
+ x.cor.configurarProduto({produtoId:'roxoIsolado',cor:'ROXO',
+  roxasPorUnidade:5,autorizado:true});
+ const pedidoId=await x.pedido([{produto:'roxoIsolado',preco:10000}],{frete:9999});
+ const r=x.cor.avaliarPedido({pedidoId});
+ assert.equal(r.posicoesRoxasConfiguradas,5);
+ assert.equal(r.posicoesVerdesPrevistas,0);
+ assert.equal(r.posicoesDouradasPrevistas,0);
+ assert.equal(r.totalPosicoesMistasPrevistas,5);
+ assert.equal(r.totalPosicoesPrevistas,0,'ponte de motor ainda nao habilita roxo');
+ assert.equal(r.ultrapassaDezPorCompra,false);
+ assert.equal(r.eventosEspeciaisNaoHomologados,true);
+});
