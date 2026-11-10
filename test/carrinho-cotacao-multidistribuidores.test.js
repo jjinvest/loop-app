@@ -250,9 +250,12 @@ test('fluxo unico: estoque/frete de dois fornecedores, cotacao, reserva, PSP rec
  const previa=await j.jornada.simularCarrinho(x.entrada);
  assert.equal(previa.grupos.length,2);
  assert.equal(previa.subtotalProdutosCentavos,28000);
- const pedido=await j.jornada.registrarPedido({
+ const cotacao=await j.jornada.emitirCotacao({
   ...x.entrada,servicosFrete:x.servicos,
-  resumoAceito:previa.resumoHash,
+  resumoAceito:previa.resumoHash
+ });
+ const pedido=await j.jornada.registrarPedido({
+  titularId:x.cliente.titularId,cotacaoId:cotacao.cotacaoId,
   chaveIdempotencia:'TESTE_UNICO_FORNECEDORES_PSP_1',
   enderecoEntrega:ENDERECO
  });
@@ -261,6 +264,16 @@ test('fluxo unico: estoque/frete de dois fornecedores, cotacao, reserva, PSP rec
  assert.equal(pedido.capacidade.reservadas,1);
  assert.equal(pedido.cobrancaCriada,false);
  assert.equal(pedido.checkoutReal,false);
+ const repetido=await j.jornada.registrarPedido({
+  titularId:x.cliente.titularId,cotacaoId:cotacao.cotacaoId,
+  chaveIdempotencia:'TESTE_UNICO_FORNECEDORES_PSP_1',
+  enderecoEntrega:ENDERECO
+ });
+ assert.equal(repetido.repetido,true);
+ assert.equal(repetido.pedidoId,pedido.pedidoId);
+ assert.equal(x.db.prepare(
+  'SELECT COUNT(*) AS n FROM loja_real_pedidos'
+ ).get().n,1);
  assert.equal(j.motor.verificar().compras,0);
  assert.equal(x.enviados.length,0);
  assert.equal(j.jornada.consultarStatus().pedidos.aguardando,1);
@@ -305,9 +318,12 @@ test('fluxo unico: estoque/frete de dois fornecedores, cotacao, reserva, PSP rec
 test('fornecedor exige custo quitado, revalida PSP e envio unico com chave idempotente',async t=>{
  const x=await montar(t),j=montarJornada(x);
  const previa=await j.jornada.simularCarrinho(x.entrada);
- const pedido=await j.jornada.registrarPedido({
+ const cotacao=await j.jornada.emitirCotacao({
   ...x.entrada,servicosFrete:x.servicos,
-  resumoAceito:previa.resumoHash,
+  resumoAceito:previa.resumoHash
+ });
+ const pedido=await j.jornada.registrarPedido({
+  titularId:x.cliente.titularId,cotacaoId:cotacao.cotacaoId,
   chaveIdempotencia:'TESTE_CUSTO_PSP_IDEMPOTENCIA_02',
   enderecoEntrega:ENDERECO
  });
