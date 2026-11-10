@@ -14,6 +14,10 @@ const {OperacaoCatracaAdminSQLite,TABELAS_CATRACA_ADMIN}=
  require('./operacao-catraca-admin-sqlite');
 const {PromocaoPedidoMotorEnsaioSQLite,TABELAS_PROMOCAO_ENSAIO}=
  require('./promocao-pedido-motor-ensaio-sqlite');
+const {PromocaoLotesEnsaioSQLite,TABELAS_LOTES_ENSAIO}=
+ require('./promocao-lotes-ensaio-sqlite');
+const {ClassificacaoComercialLoopSQLite}=
+ require('./classificacao-comercial-loop-sqlite');
 const {TABELAS_COMERCIAIS,validarRecuperacaoComercial}=
  require('./validacao-recuperacao-comercial');
 const {TABELAS_TESOURARIA_ENSAIO,TesourariaModularEnsaioSQLite}=
@@ -75,7 +79,7 @@ function validarIdentidade(arquivo){
   if(TABELAS.some(x=>!lista.includes(x)))falha('BACKUP_REAL_ESQUEMA_INCOMPLETO');
   const todos=[...TABELAS,...TABELAS_ADMIN,...TABELAS_COMERCIAIS,
    ...TABELAS_MOTOR,...TABELAS_CATRACA_ADMIN,...TABELAS_TESOURARIA_ENSAIO,
-   ...TABELAS_PROMOCAO_ENSAIO];
+   ...TABELAS_PROMOCAO_ENSAIO,...TABELAS_LOTES_ENSAIO];
   if(lista.some(x=>!todos.includes(x)))
    falha('BACKUP_IDENTIDADE_NAO_COBRE_TABELAS_COMERCIAIS');
   const temEnsaio=TABELAS_TESOURARIA_ENSAIO.some(x=>lista.includes(x));
@@ -129,6 +133,23 @@ function validarIdentidade(arquivo){
     if(ponte.verificar().integridade!=='OK')
      falha('BACKUP_PROMOCAO_DIVERGENTE');
    }catch{falha('BACKUP_PROMOCAO_DIVERGENTE');}
+  }
+  const temLotes=TABELAS_LOTES_ENSAIO.some(x=>lista.includes(x));
+  if(temLotes){
+   if(process.env.NODE_ENV==='production')
+    falha('BACKUP_LOTES_ENSAIO_PROIBIDOS_PRODUCAO');
+   if(TABELAS_LOTES_ENSAIO.some(x=>!lista.includes(x)))
+    falha('BACKUP_LOTES_ENSAIO_ESQUEMA_PARCIAL');
+   try{
+    if(!temMotor||!temPromocao)falha('BACKUP_LOTE_MOTOR_OU_PROMOCAO_AUSENTE');
+    const modulo=Object.create(PromocaoLotesEnsaioSQLite.prototype);
+    modulo.db=b;
+    const classificacao=Object.create(ClassificacaoComercialLoopSQLite.prototype);
+    classificacao.db=b;
+    modulo.classificacao=classificacao;
+    if(modulo.verificar().integridade!=='OK')
+     falha('BACKUP_LOTES_ENSAIO_DIVERGENTE');
+   }catch{falha('BACKUP_LOTES_ENSAIO_DIVERGENTE');}
   }
   // Não aceitar snapshot administrativo parcial. Pedidos e remessas
   // são conferidos semanticamente, sem inferir conciliação bancária.
