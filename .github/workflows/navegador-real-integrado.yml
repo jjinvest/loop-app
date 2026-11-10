@@ -1,0 +1,64 @@
+name: LOOP - telas reais PC e celular integradas
+
+on:
+  push:
+    branches:
+      - feature/unificar-escritorio-real-20261105
+    paths:
+      - 'scripts/validar-identidade-real-navegador.js'
+      - 'src/producao/**'
+      - '.github/workflows/navegador-real-integrado.yml'
+      - 'test/promocao-pedido-motor-ensaio-sqlite.test.js'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: navegador-real-integrado-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  validar-pc-celular:
+    runs-on: ubuntu-latest
+    timeout-minutes: 18
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+      - name: Instalar dependencias do sistema
+        run: npm ci --ignore-scripts --no-fund
+      - name: Preparar Chromium e sistema grafico de ensaio
+        run: |
+          npm install --no-save --package-lock=false playwright@1.56.1
+          npx playwright install --with-deps chromium
+      - name: Verificar sintaxe do navegador de ponta a ponta
+        run: node --check scripts/validar-identidade-real-navegador.js
+      - name: Navegar PC e celular na interface aprovada e no backend atual
+        run: node scripts/validar-identidade-real-navegador.js
+      - name: Guardar evidencias reais de Chromium sem dados pessoais
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: pc-celular-escritorio-loja-admin-integrados
+          path: |
+            artifacts/identidade-real-escritorio-pc.png
+            artifacts/identidade-real-escritorio-celular.png
+            artifacts/identidade-real-loja-pc.png
+            artifacts/identidade-real-loja-celular.png
+            artifacts/identidade-real-admin-pc.png
+            artifacts/identidade-real-admin-celular.png
+            artifacts/integrado-posicoes-azul-pc.png
+            artifacts/integrado-posicoes-azul-celular.png
+            artifacts/integrado-tabuleiro-pc.png
+            artifacts/integrado-tabuleiro-celular.png
+            artifacts/integrado-loja-pc.png
+            artifacts/integrado-loja-celular.png
+            artifacts/integrado-admin-pc.png
+            artifacts/integrado-admin-celular.png
+          if-no-files-found: warn
+          retention-days: 14
