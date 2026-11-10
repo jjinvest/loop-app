@@ -222,12 +222,20 @@ class ClassificacaoComercialLoopSQLite{
   for(const g of grupos.values())if(g.quantidade>=g.minimo)verde+=g.total;
   const posicoesVerdes=verde>=25000?1:0;
   const previstas=posicoesVerdes+dourado;
+  // O limite por pedido inclui os roxos configurados MESMO quando eles
+  // continuam bloqueados da ativacao. Preco/frete nao multiplica posicoes.
+  if(!Number.isSafeInteger(verde)||!Number.isSafeInteger(dourado)||
+     !Number.isSafeInteger(especiais)||!Number.isSafeInteger(previstas+especiais))
+   erro('CORES_COMERCIAIS_POSICOES_EXCEDIDAS');
+  const totalMisto=previstas+especiais;
   return {pedidoId,resultado:'PREVISAO_SEM_ATIVACAO',
    posicoesVerdesPrevistas:posicoesVerdes,
    posicoesDouradasPrevistas:dourado,
+   posicoesRoxasConfiguradas:especiais,
    posicoesRoxasBloqueadas:especiais,
    totalPosicoesPrevistas:previstas,
-   ultrapassaDezPorCompra:previstas>10,
+   totalPosicoesMistasPrevistas:totalMisto,
+   ultrapassaDezPorCompra:totalMisto>10,
    itensSemRegraExplicita:desconhecidos,
    eventosEspeciaisNaoHomologados:especiais>0,
    aguardandoConciliacaoFinanceira:true,
