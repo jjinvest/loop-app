@@ -1,12 +1,14 @@
 'use strict';
 const express=require('express');
 const {COOKIE_ADMIN}=require('./sessao-admin-comercial-sqlite');
+const {OperacaoCatracaAdminSQLite}=require('./operacao-catraca-admin-sqlite');
 const {montarAdminComercialAprovado}=
  require('./interface-admin-comercial-aprovada');
 function erro(c){const e=new Error(c);e.codigo=c;throw e;}
 function montarGatewayAdminComercial(app,{
  sessoes,controle,catalogo,auditoria=null,manutencao=null,
- pedidosComerciais=null,motorLoop=null,classificacaoLoop=null,origemHttps
+ pedidosComerciais=null,motorLoop=null,operacaoCatraca=null,
+ classificacaoLoop=null,origemHttps
 }={}){
  if(typeof sessoes?.autenticar!=='function'||
     typeof sessoes?.sessao!=='function'||
@@ -23,6 +25,9 @@ function montarGatewayAdminComercial(app,{
    erro('ADMIN_REAL_ORIGEM_INVALIDA');
   origem=u.origin;
  }catch{erro('ADMIN_REAL_ORIGEM_INVALIDA');}
+ const catraca=motorLoop===null?null:(operacaoCatraca||
+  new OperacaoCatracaAdminSQLite({banco:motorLoop.banco,motor:motorLoop}));
+ if(catraca&&catraca.motor!==motorLoop)erro('CATRACA_ADMIN_NAO_E_O_MESMO_MOTOR');
  const cookieValor=req=>{
   const raw=req.get('cookie')||'';
   if(raw.length>4096)return null;
@@ -106,6 +111,40 @@ function montarGatewayAdminComercial(app,{
   });
   try{return res.json(motorLoop.consultar());}
   catch{return res.status(503).json({erro:'MOTOR_INTERNO_INDISPONIVEL'});}
+ });
+ // Controles de operacao da catraca: mesma sessao administrativa, motor e SQLite.
+ // Nunca recebem titularId, pedidoId nem eventos inventados do navegador.
+ app.get('/api/admin/loop/controle',proteger,(_req,res)=>{
+  if(!catraca)return res.status(503).json({erro:'CATRACA_MOTOR_INDISPONIVEL'});
+  try{return res.json(catraca.consultar());}
+  catch{return res.status(503).json({erro:'CATRACA_CONSULTA_INDISPONIVEL'});}
+ });
+ app.post('/api/admin/loop/controle',proteger,validarCsrf,(req,res)=>{
+  if(!catraca)return res.status(503).json({erro:'CATRACA_MOTOR_INDISPONIVEL'});
+  if(!req.is('application/json')||!req.body||
+     Array.isArray(req.body)||typeof req.body!=='object')
+   return res.status(415).json({erro:'CATRACA_JSON_OBRIGATORIO'});
+  const b=req.body;
+  const permitidos=b.acao==='CONFIGURAR'?
+   ['acao','modo','janelaInicio','janelaFim','limiteDiario',
+    'revisaoEsperada','motivo']:
+   b.acao==='GIRAR'?['acao']:null;
+  if(!permitidos||Object.keys(b).some(k=>!permitidos.includes(k)))
+   return res.status(400).json({erro:'CATRACA_ACAO_OU_CAMPOS_INVALIDOS'});
+  try{
+   const resultado=b.acao==='CONFIGURAR'?
+    catraca.configurar({modo:b.modo,janelaInicio:b.janelaInicio,
+     janelaFim:b.janelaFim,limiteDiario:b.limiteDiario,
+     revisaoEsperada:b.revisaoEsperada,motivo:b.motivo}):
+    catraca.executarGiro({origem:'OPERADOR'});
+   return res.json({...resultado,financeiroReal:false});
+  }catch(e){
+   const codigo=e.codigo||'CATRACA_OPERACAO_INDISPONIVEL';
+   const http=codigo==='CATRACA_ADMIN_REVISAO_DESATUALIZADA'?409:
+    codigo.includes('INVALID')?400:
+    codigo==='CATRACA_MOTOR_PRODUTIVO_NAO_HOMOLOGADO'?423:503;
+   return res.status(http).json({erro:codigo});
+  }
  });
  app.post('/api/admin/sair',proteger,validarCsrf,(req,res)=>{
   sessoes.sair(req.tokenOperador);
