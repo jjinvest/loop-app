@@ -123,16 +123,18 @@ async function fixture(t){
   produtos.set(nome,preco);
  }
  let seq=0;
- async function criarPedido({nome,preco,frete=1000,cliente=titular}){
+ async function criarPedido({nome,preco,frete=1000,cliente=titular,itens=null}){
   seq++;
   const cotacaoId='COTACAO_ENSAIO_'+seq;
+  const carrinho=itens===null?[{nome,preco}]:itens;
+  const produtosCentavos=carrinho.reduce((s,i)=>s+i.preco*(i.quantidade||1),0);
   cotacoes.set(cotacaoId,{
    cotacaoId,titularId:cliente.titularId,cepDestino:ORIGEM.cep,
    status:'APROVADA',expiraEm:Date.now()+600000,
    grupos:[{fornecedorId:'DISTRIBUIDOR_TESTE',
-    freteCentavos:frete,itens:[{
-     sku:'SKU_'+nome,precoUnitCentavos:preco,quantidade:1
-    }]}]
+    freteCentavos:frete,itens:carrinho.map(i=>({
+     sku:'SKU_'+i.nome,precoUnitCentavos:i.preco,quantidade:i.quantidade||1
+    }))}]
   });
   const novo=await pedidos.criarPedido({
    titularId:cliente.titularId,cotacaoId,
@@ -141,7 +143,7 @@ async function fixture(t){
   });
   return {pedidoId:novo.pedidoId,
    pagamentoId:'PSP_'+novo.pedidoId,
-   valorCentavos:preco+frete,produtosCentavos:preco,
+   valorCentavos:produtosCentavos+frete,produtosCentavos,
    provaEnsaioId:'PROVA_ENSAIO_'+seq,
    autorizadoEnsaio:true};
  }
@@ -538,7 +540,7 @@ test('compra confirmada aciona integracao interna automaticamente; cinza nao ent
  const cinza=await x.criarPedido({nome:'integracaoCinza',preco:30000});
  const cinzaPsp=await x.pedidosIntegrados.confirmarPagamento({pedidoId:cinza.pedidoId});
  assert.equal(cinzaPsp.confirmado,true);
- x.integracao.sincronizar(); // verificar erro de sincronizacao sem ocultar motivo
+ assert.equal(x.integracao.sincronizar().novasPosicoes,0);
  assert.equal(cinzaPsp.integracaoInternaEnsaio.novasPosicoes,0);
  assert.equal(x.integracao.consultar().naoQualificadas,1);
  assert.equal(x.motor.verificar().compras,0);
@@ -665,5 +667,38 @@ test('estorno PSP integrado fica registrado individualmente sem parar novas comp
  assert.equal(x.motor.consultar().filaB,1);
  assert.equal(x.integracao.consultar().estornadas,1);
  assert.equal(x.motor.verificar().integridade,'OK');
+ assert.equal(validarIdentidade(x.arquivo).integridade,'ok');
+});
+
+test('carrinho misto verde R$250 com cinza nao perde a posicao nem duplica luzes',async t=>{
+ const x=await fixture(t);
+ x.produto({nome:'mistoVerde',preco:25000,cor:'VERDE'});
+ x.produto({nome:'mistoCinza',preco:19000,cor:'CINZA'});
+ const p=await x.criarPedido({itens:[
+  {nome:'mistoVerde',preco:25000},
+  {nome:'mistoCinza',preco:19000}
+ ],frete:1000});
+ const confirmou=await x.pedidosIntegrados.confirmarPagamento({pedidoId:p.pedidoId});
+ assert.equal(confirmou.confirmado,true);
+ assert.equal(confirmou.integracaoInternaEnsaio.novasPosicoes,1);
+ assert.equal(x.integracao.consultar().enfileiradas,1);
+ assert.equal(x.motor.consultar().filaB,1);
+ assert.equal(x.integracao.sincronizar().novasPosicoes,0);
+ assert.equal(x.motor.verificar().compras,1);
+ assert.equal(x.producao.verificar().promocoesEnsaio,1);
+ assert.equal(x.db.prepare(
+  'SELECT COUNT(*) AS n FROM loop_real_motor_compras WHERE pedido_id=?'
+ ).get(p.pedidoId).n,1);
+ assert.equal(validarIdentidade(x.arquivo).integridade,'ok');
+});
+test('produto dourado continua sinalizado como especial, nao vira verde silenciosamente',async t=>{
+ const x=await fixture(t);
+ x.produto({nome:'douradoEspecial',preco:25000,cor:'DOURADO'});
+ const p=await x.criarPedido({nome:'douradoEspecial',preco:25000});
+ const confirmou=await x.pedidosIntegrados.confirmarPagamento({pedidoId:p.pedidoId});
+ assert.equal(confirmou.confirmado,true);
+ assert.equal(confirmou.integracaoInternaEnsaio.novasPosicoes,0);
+ assert.equal(x.integracao.consultar().regrasEspeciaisPendentes,1);
+ assert.equal(x.motor.verificar().compras,0);
  assert.equal(validarIdentidade(x.arquivo).integridade,'ok');
 });
