@@ -169,6 +169,7 @@ async function main(){
   permitirCadastro:true,preflightCapacidade,
   pedidosComerciais:leituraComercial.leituraPedidos,
   remessasOutbox:leituraComercial.leituraRemessas,
+  catalogoVitrine:catalogo,
   tesourariaEnsaio,
   aceitePosicaoAzulEnsaio:integradorComercialEnsaio,
   adminComercial:{auditoria,manutencao,catalogo,controle,sessoes,
@@ -349,6 +350,7 @@ async function main(){
   classificacaoLoop.configurarProduto({
    produtoId:'produtoBrowserDourado',cor:'DOURADO',autorizado:true
   });
+  catalogo.ativarProduto({produtoId:'produtoBrowserDourado',ativo:true});
   const endereco={destinatario:'Pessoa de Ensaio',cep:'27250010',
    logradouro:'Rua de Ensaio',numero:'2',bairro:'Centro',
    cidade:'Volta Redonda',uf:'RJ',complemento:''};
