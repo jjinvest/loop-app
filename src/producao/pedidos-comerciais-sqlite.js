@@ -130,6 +130,8 @@ class PedidosComerciaisSQLite{
     typeof integradorComercialEnsaio.sincronizar!=='function'||
     typeof integradorComercialEnsaio.sinalizarCancelamento!=='function'))
    erro('INTEGRADOR_COMERCIAL_ENSAIO_INVALIDO');
+  if(integradorComercialEnsaio!==null&&preflightCapacidade===null)
+   erro('INTEGRADOR_COMPRA_SEM_PREFLIGHT_PRE_COBRANCA');
   if(preflightCapacidade!==null&&(
       preflightCapacidade.db!==banco||
       preflightCapacidade.classificacao!==classificacaoLoop||
