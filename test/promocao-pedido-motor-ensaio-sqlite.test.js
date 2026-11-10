@@ -806,3 +806,175 @@ test('aceite azul de ensaio nao fica disponivel na API de producao',async t=>{
   else process.env.NODE_ENV=old;
  }
 });
+
+test('tres unidades douradas do mesmo pedido criam tres azuis e apenas uma luz',async t=>{
+ const x=await fixture(t);
+ x.produto({nome:'tresDouradas',preco:25000,cor:'DOURADO'});
+ const p=await x.criarPedido({nome:'tresDouradas',preco:25000,
+  itens:[{nome:'tresDouradas',preco:25000,quantidade:3}]});
+ const pago=await x.pedidosIntegrados.confirmarPagamento({pedidoId:p.pedidoId});
+ assert.equal(pago.confirmado,true);
+ assert.equal(pago.integracaoInternaEnsaio.novasPosicoes,3);
+ assert.equal(x.lotes.verificar().posicoesEmLote,3);
+ const estado=x.motor.consultar({titularId:x.titular.titularId});
+ assert.equal(estado.minhasPosicoes.length,3);
+ assert.equal(estado.filaB,3);
+ assert.ok(estado.minhasPosicoes.every(p=>
+  p.classeProdutoOrigem==='DOURADO'&&p.estadoAdesao==='PENDENTE'));
+ const view=require('../src/producao/visao-escritorio-unificada-sqlite');
+ const visao=new view.VisaoEscritorioUnificadaSQLite({
+  banco:x.db,motor:x.motor
+ }).consultarEstado({titularId:x.titular.titularId});
+ assert.equal(visao.minhasPosicoes.length,3);
+ assert.ok(visao.minhasPosicoes.every(pos=>pos.pedidoDeOrigemEnsaio===p.pedidoId));
+ assert.equal(x.integracao.prepararTabuleiro().eventosNoCiclo,1);
+ assert.equal(x.motor.verificar().eventos,1);
+ assert.equal(x.integracao.sincronizar().novosEventos,0);
+ assert.equal(validarIdentidade(x.arquivo).integridade,'ok');
+});
+test('roxo com cinco posicoes e carrinho verde/dourado/roxo respeitam soma e limite 10',async t=>{
+ const x=await fixture(t);
+ x.produto({nome:'roxo5',preco:100000,cor:'ROXO',roxasPorUnidade:5});
+ x.produto({nome:'dourado2',preco:25000,cor:'DOURADO'});
+ x.produto({nome:'verdeMisto',preco:25000,cor:'VERDE'});
+ x.produto({nome:'cinzaMisto',preco:18000,cor:'CINZA'});
+ const p=await x.criarPedido({itens:[
+  {nome:'roxo5',preco:100000},
+  {nome:'dourado2',preco:25000,quantidade:2},
+  {nome:'verdeMisto',preco:25000},
+  {nome:'cinzaMisto',preco:18000}
+ ]});
+ const r=await x.pedidosIntegrados.confirmarPagamento({pedidoId:p.pedidoId});
+ assert.equal(r.integracaoInternaEnsaio.novasPosicoes,8);
+ const list=x.lotes.consultarPosicoes({titularId:x.titular.titularId});
+ assert.equal(list.length,8);
+ assert.deepEqual(list.map(p=>p.tipo),[
+  'VERDE','DOURADO','DOURADO',
+  'ROXO','ROXO','ROXO','ROXO','ROXO'
+ ]);
+ assert.equal(x.motor.consultar().filaB,8);
+ assert.equal(x.integracao.sincronizar().novasPosicoes,0);
+ const docs=x.contas.documentos();
+ const primeiro=list[0],ultimo=list[7];
+ assert.equal(x.integracao.confirmarPosicaoAzulEmEnsaio({
+  titularId:x.titular.titularId,posicaoId:primeiro.posicaoId,
+  cpf:'52998224725',aceiteExplicito:true,
+  versaoTermos:docs.termos.versao,hashTermos:docs.termos.hash
+ }).estado,'ACEITE_ENSAIO');
+ assert.equal(x.integracao.confirmarPosicaoAzulEmEnsaio({
+  titularId:x.titular.titularId,posicaoId:ultimo.posicaoId,
+  cpf:'52998224725',aceiteExplicito:true,
+  versaoTermos:docs.termos.versao,hashTermos:docs.termos.hash
+ }).estado,'ACEITE_ENSAIO');
+ const s=x.motor.consultar({titularId:x.titular.titularId});
+ assert.equal(s.posicoesAzuisPendentes,6);
+ assert.equal(s.minhasPosicoes.filter(p=>p.estadoAdesao==='ACEITE_ENSAIO').length,2);
+ assert.equal(x.lotes.verificar().aceitesIndividuaisEnsaio,2);
+ assert.equal(x.integracao.prepararTabuleiro().eventosNoCiclo,1);
+ assert.equal(x.motor.verificar().eventos,1);
+ assert.equal(validarIdentidade(x.arquivo).integridade,'ok');
+});
+test('compra com onze posicoes especiais e rejeitada sem inclusao parcial',async t=>{
+ const x=await fixture(t);
+ x.produto({nome:'roxo11',preco:100000,cor:'ROXO',roxasPorUnidade:6});
+ const pedido=await x.criarPedido({itens:[
+  {nome:'roxo11',preco:100000,quantidade:2}
+ ]});
+ const r=await x.pedidosIntegrados.confirmarPagamento({pedidoId:pedido.pedidoId});
+ assert.equal(r.confirmado,true);
+ assert.equal(r.integracaoInternaEnsaio.novasPosicoes,0);
+ assert.equal(x.integracao.consultar().regrasEspeciaisPendentes,1);
+ assert.equal(x.motor.verificar().compras,0);
+ assert.equal(x.lotes.verificar().pedidosEmLote,0);
+ assert.equal(validarIdentidade(x.arquivo).integridade,'ok');
+});
+test('capacidade do titular rejeita lote inteiro acima de dez sem congelar outras vendas',async t=>{
+ const x=await fixture(t);
+ x.produto({nome:'verdeOito',preco:25000,cor:'VERDE'});
+ x.produto({nome:'douradoTres',preco:25000,cor:'DOURADO'});
+ for(let i=0;i<8;i++){
+  const p=await x.criarPedido({nome:'verdeOito',preco:25000});
+  await x.pedidosIntegrados.confirmarPagamento({pedidoId:p.pedidoId});
+ }
+ assert.equal(x.motor.consultar({titularId:x.titular.titularId}).minhasPosicoes.length,8);
+ const lote=await x.criarPedido({itens:[
+  {nome:'douradoTres',preco:25000,quantidade:3}
+ ]});
+ const r=await x.pedidosIntegrados.confirmarPagamento({pedidoId:lote.pedidoId});
+ assert.equal(r.confirmado,true);
+ assert.equal(r.integracaoInternaEnsaio.novasPosicoes,0);
+ assert.equal(x.motor.verificar().compras,8);
+ assert.equal(x.lotes.verificar().pedidosEmLote,0);
+ assert.equal(x.integracao.consultar().regrasEspeciaisPendentes,1);
+ assert.equal(x.integracao.sincronizar().aguardandoCapacidade,1);
+ const outro=await x.criarPedido({nome:'douradoTres',preco:25000,cliente:x.outro});
+ const novo=await x.pedidosIntegrados.confirmarPagamento({pedidoId:outro.pedidoId});
+ assert.equal(novo.integracaoInternaEnsaio.novasPosicoes,1);
+ assert.equal(x.motor.consultar({titularId:x.outro.titularId}).minhasPosicoes.length,1);
+ assert.equal(validarIdentidade(x.arquivo).integridade,'ok');
+});
+test('estorno cancela todas posicoes do lote sem paralisar catraca ou pedidos de terceiros',async t=>{
+ const x=await fixture(t);
+ x.produto({nome:'douradoEstorno',preco:25000,cor:'DOURADO'});
+ const p=await x.criarPedido({itens:[
+  {nome:'douradoEstorno',preco:25000,quantidade:3}
+ ]});
+ await x.pedidosIntegrados.confirmarPagamento({pedidoId:p.pedidoId});
+ assert.equal(x.motor.consultar().filaB,3);
+ x.statusPsp.set(p.pedidoId,{status:'ESTORNADO'});
+ const cancelar=await x.pedidosIntegrados.confirmarPagamento({pedidoId:p.pedidoId});
+ assert.equal(cancelar.cancelado,true);
+ assert.equal(cancelar.estornoLoopSinalizado,true);
+ assert.equal(x.motor.consultar().filaB,0);
+ assert.equal(x.motor.consultar().posicoesEmRevisaoNaFilaB,3);
+ const novo=await x.criarPedido({nome:'douradoEstorno',preco:25000,
+  cliente:x.outro});
+ const confirmado=await x.pedidosIntegrados.confirmarPagamento({pedidoId:novo.pedidoId});
+ assert.equal(confirmado.integracaoInternaEnsaio.novasPosicoes,1);
+ assert.equal(x.motor.verificar().compras,4);
+ assert.equal(x.lotes.verificar().posicoesEmLote,4);
+ assert.equal(x.integracao.consultar().estornadas,1);
+ assert.equal(validarIdentidade(x.arquivo).integridade,'ok');
+});
+test('o aceite especial no endpoint do cliente usa somente titular da sessao',async t=>{
+ const x=await fixture(t),origem='https://contas.example.invalid';
+ x.produto({nome:'roxoHttp',preco:100000,cor:'ROXO',roxasPorUnidade:3});
+ const pedido=await x.criarPedido({nome:'roxoHttp',preco:100000});
+ await x.pedidosIntegrados.confirmarPagamento({pedidoId:pedido.pedidoId});
+ const pos=x.lotes.consultarPosicoes({titularId:x.titular.titularId});
+ assert.equal(pos.length,3);
+ const app=criarAppIdentidadeLoop({contas:x.contas,motorLoop:x.motor,
+  origemHttps:origem,permitirCadastro:true,
+  aceitePosicaoAzulEnsaio:x.integracao});
+ const server=app.listen(0,'127.0.0.1');await once(server,'listening');
+ t.after(()=>new Promise(resolve=>server.close(resolve)));
+ const base='http://127.0.0.1:'+server.address().port;
+ const login=async nick=>{
+  const r=await fetch(base+'/api/contas/entrar',{method:'POST',
+   headers:{Origin:origem,'Content-Type':'application/json'},
+   body:JSON.stringify({nick,senha:'SenhaDeEnsaio2026!'})});
+  assert.equal(r.status,200);
+  return {cookie:r.headers.get('set-cookie').split(';')[0],dados:await r.json()};
+ };
+ const titular=await login('Comprador'),outro=await login('Outro');
+ const docs=await (await fetch(base+'/api/contas/documentos')).json();
+ const body={cpf:'52998224725',aceiteExplicito:true,
+  versaoTermos:docs.termos.versao,hashTermos:docs.termos.hash};
+ const target=base+'/api/loop/posicoes/'+pos[2].posicaoId+'/confirmar-ensaio';
+ const post=identidade=>fetch(target,{method:'POST',headers:{
+  Cookie:identidade.cookie,Origin:origem,'Content-Type':'application/json',
+  'X-Loop-Csrf':identidade.dados.csrf
+ },body:JSON.stringify(body)});
+ assert.equal((await post(outro)).status,404);
+ const confirmacao=await post(titular);
+ assert.equal(confirmacao.status,200);
+ assert.equal((await confirmacao.json()).estado,'ACEITE_ENSAIO');
+ const estado=await (await fetch(base+'/api/loop/estado',{
+  headers:{Cookie:titular.cookie}
+ })).json();
+ assert.equal(estado.minhasPosicoes.length,3);
+ assert.equal(estado.minhasPosicoes.find(p=>
+  p.numero===pos[2].posicaoId).estadoAdesao,'ACEITE_ENSAIO');
+ assert.ok(estado.minhasPosicoes.every(p=>p.pedidoDeOrigemEnsaio===pedido.pedidoId));
+ assert.equal(validarIdentidade(x.arquivo).integridade,'ok');
+});
