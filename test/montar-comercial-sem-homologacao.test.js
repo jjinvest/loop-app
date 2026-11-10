@@ -136,7 +136,8 @@ test('serviço sem PSP monta cores+eventos e lê pedido do titular após reiníc
  let env=x.env;
  const comercial=montarComercialSemHomologacao({
   banco:env.banco,chavePedidos:x.segredos.pedidos,
-  auditoria:env.auditoria,manutencao:env.manutencao
+  auditoria:env.auditoria,manutencao:env.manutencao,
+  catalogoLeitura:env.catalogo
  });
  assert.equal(comercial.pspHomologado,false);
  assert.equal(comercial.checkoutHabilitado,false);
@@ -148,12 +149,16 @@ test('serviço sem PSP monta cores+eventos e lê pedido do titular após reiníc
  assert.equal(comercial.novaCompra,false);
  assert.equal(comercial.novoPagamento,false);
  assert.equal(comercial.envioFornecedor,false);
+ assert.equal(typeof comercial.leituraCatalogo.listarVitrinePreparacao,'function');
  assert.equal(Object.isFrozen(comercial.leituraPedidos),true);
  assert.equal(Object.isFrozen(comercial),true);
  const {classificacaoLoop,eventosComerciais}=comercial;
  env.catalogo.criarProduto({produtoId:'livro',titulo:'Livro PDF fictício'});
  env.catalogo.vincularOferta({produtoId:'livro',distribuidorId:'distribuidorA',
   sku:'SKU_LIVRO',precoUnitCentavos:25000});
+ env.catalogo.ativarProduto({produtoId:'livro',ativo:true});
+ env.catalogo.criarProduto({produtoId:'rascunho',titulo:'Produto não publicado'});
+ assert.deepEqual(comercial.leituraCatalogo.listarVitrinePreparacao({limite:100}).map(p=>p.produtoId),['livro']);
  classificacaoLoop.configurarProduto({
   produtoId:'livro',cor:'VERDE',autorizado:true
  });
@@ -179,6 +184,7 @@ test('serviço sem PSP monta cores+eventos e lê pedido do titular após reiníc
   contas:env.contas,motorLoop:env.motor,eventosComerciais,
   pedidosComerciais:comercial.leituraPedidos,
   remessasOutbox:comercial.leituraRemessas,
+  catalogoVitrine:comercial.leituraCatalogo,
   origemHttps:ORIGEM,permitirCadastro:true
  });
  const server=app.listen(0,'127.0.0.1');
@@ -191,6 +197,14 @@ test('serviço sem PSP monta cores+eventos e lê pedido do titular após reiníc
     nick:i===0?'Alice':'Bruna',senha:'SenhaDeEnsaio2026!'
    });
    const h={Cookie:COOKIE+'='+login.token};
+   const vit=await fetch(base+'/api/loja/catalogo',{headers:h});
+   assert.equal(vit.status,200);
+   const publicos=await vit.json();
+   assert.equal(publicos.produtos.length,1);
+   assert.equal(publicos.produtos[0].precoCentavos,null);
+   assert.equal(publicos.produtos[0].compravel,false);
+   assert.equal(publicos.produtos.some(p=>p.produtoId==='rascunho'),false);
+   assert.equal(publicos.checkoutReal,false);
    const resp=await fetch(base+'/api/loop/eventos-comerciais',{headers:h});
    assert.equal(resp.status,200);
    const body=await resp.json();
