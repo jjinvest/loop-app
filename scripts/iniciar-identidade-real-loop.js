@@ -4,6 +4,8 @@
 const fs=require('node:fs');
 const {DatabaseSync}=require('node:sqlite');
 const {MotorLoopIntegradoSQLite}=require('../src/producao/motor-loop-integrado-sqlite');
+const {OperacaoCatracaAdminSQLite}=
+ require('../src/producao/operacao-catraca-admin-sqlite');
 const {IdentidadeClienteLoopReal}=
  require('../src/producao/identidade-cliente-loop-sqlite');
 const {criarAppIdentidadeLoop}=
@@ -118,6 +120,7 @@ async function iniciar(ambiente=process.env){
  try{
   const contas=new IdentidadeClienteLoopReal({...config,banco});
   const motorLoop=new MotorLoopIntegradoSQLite({banco});
+  const operacaoCatraca=new OperacaoCatracaAdminSQLite({banco,motor:motorLoop});
   // Tabelas comerciais administrativas criadas ANTES do primeiro snapshot.
   // Nenhum fornecedor é homologado automaticamente.
   const auditoria=new AuditoriaOperacionalSQLite({
@@ -159,13 +162,21 @@ async function iniciar(ambiente=process.env){
    contas,motorLoop,eventosComerciais,
    origemHttps:config.origemHttps,permitirCadastro:true,
    backupEstado:()=>agendador.estado(),
-   adminComercial:{catalogo,controle,sessoes,auditoria,manutencao,classificacaoLoop}
+   adminComercial:{catalogo,controle,sessoes,auditoria,manutencao,
+    classificacaoLoop,operacaoCatraca}
   });
   const porta=Number(ambiente.PORT||3000);
   if(!Number.isSafeInteger(porta)||porta<1||porta>65535)
    throw Error('PORTA_INVALIDA');
   const server=app.listen(porta,'0.0.0.0');
+  // Agenda executa somente quando o operador habilitou AUTOMATICA, e apenas em ensaio.
+  const timer=ambiente.NODE_ENV==='production'?null:setInterval(()=>{
+   try{operacaoCatraca.processarAgenda();}
+   catch(e){console.error('CATRACA_AGENDA_ENSAIO_FALHOU',e.codigo||'ERRO');}
+  },60000);
+  timer?.unref?.();
   const encerrar=()=>{
+   if(timer)clearInterval(timer);
    server.close(async()=>{
     try{await agendador.encerrar();}catch{}
     try{banco.exec('PRAGMA wal_checkpoint(TRUNCATE)');}catch{}
