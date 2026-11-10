@@ -8,7 +8,8 @@ function erro(c){const e=new Error(c);e.codigo=c;throw e;}
 function montarGatewayAdminComercial(app,{
  sessoes,controle,catalogo,auditoria=null,manutencao=null,
  pedidosComerciais=null,motorLoop=null,operacaoCatraca=null,
- integradorComercialEnsaio=null,classificacaoLoop=null,origemHttps
+ integradorComercialEnsaio=null,jornadaComercialEnsaio=null,
+ classificacaoLoop=null,origemHttps
 }={}){
  if(typeof sessoes?.autenticar!=='function'||
     typeof sessoes?.sessao!=='function'||
@@ -32,6 +33,13 @@ function montarGatewayAdminComercial(app,{
    integradorComercialEnsaio.motor!==motorLoop||
    integradorComercialEnsaio.db!==motorLoop?.banco))
   erro('INTEGRACAO_ADMIN_NAO_E_O_MESMO_MOTOR');
+ if(jornadaComercialEnsaio!==null&&(
+   process.env.NODE_ENV==='production'||
+   jornadaComercialEnsaio.db!==motorLoop?.banco||
+   jornadaComercialEnsaio.integracao!==integradorComercialEnsaio||
+   typeof jornadaComercialEnsaio.consultarStatus!=='function'||
+   typeof jornadaComercialEnsaio.reprocessarRemessas!=='function'))
+  erro('JORNADA_ADMIN_NAO_E_O_MESMO_MOTOR_DE_ENSAIO');
  const cookieValor=req=>{
   const raw=req.get('cookie')||'';
   if(raw.length>4096)return null;
@@ -177,6 +185,32 @@ function montarGatewayAdminComercial(app,{
    return res.status(503).json({erro:e.codigo||'INTEGRACAO_INDISPONIVEL'});
   }
  });
+ // Status real do SQLite: nao inventa um PSP ou fornecedor homologado.
+ app.get('/api/admin/comercial/jornada',proteger,(_req,res)=>{
+  if(!jornadaComercialEnsaio)return res.status(503).json({
+   erro:'JORNADA_COMERCIAL_AGUARDA_PROVEDORES'
+  });
+  try{return res.json(jornadaComercialEnsaio.consultarStatus());}
+  catch{return res.status(503).json({erro:'JORNADA_COMERCIAL_INDISPONIVEL'});}
+ });
+ // Reprocessar exclusivamente a outbox de um pedido JA aprovado.
+ // Nao gera cobranca, nao realiza giro e nao envia pedido ao fornecedor.
+ app.post('/api/admin/comercial/jornada/reprocessar',
+  proteger,validarCsrf,async(req,res)=>{
+   if(!jornadaComercialEnsaio||process.env.NODE_ENV==='production')
+    return res.status(423).json({erro:'JORNADA_PRODUTIVA_NAO_HOMOLOGADA'});
+   if(!req.is('application/json')||!req.body||
+      Object.keys(req.body).sort().join(',')!=='pedidoId'||
+      typeof req.body.pedidoId!=='string'||
+      !/^[A-Za-z0-9_-]{3,120}$/.test(req.body.pedidoId))
+    return res.status(400).json({erro:'JORNADA_PEDIDO_INVALIDO'});
+   try{return res.json(await jornadaComercialEnsaio.reprocessarRemessas({
+    pedidoId:req.body.pedidoId
+   }));}
+   catch(e){return res.status(409).json({
+    erro:e.codigo||'JORNADA_RECONCILIACAO_INDISPONIVEL'
+   });}
+  });
  app.post('/api/admin/sair',proteger,validarCsrf,(req,res)=>{
   sessoes.sair(req.tokenOperador);
   res.set('Set-Cookie',cookie('',true));
