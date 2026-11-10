@@ -10,7 +10,8 @@ const {VisaoEscritorioUnificadaSQLite}=
 function criarAppIdentidadeLoop({contas,origemHttps,
  permitirCadastro=false,backupEstado=null,
  pedidosComerciais=null,remessasOutbox=null,adminComercial=null,
- motorLoop=null,eventosComerciais=null,tesourariaEnsaio=null}={}){
+ motorLoop=null,eventosComerciais=null,tesourariaEnsaio=null,
+ aceitePosicaoAzulEnsaio=null}={}){
  if(!contas||typeof contas.entrar!=='function'||typeof contas.sessao!=='function')
   throw Error('IDENTIDADE_REAL_NAO_CONFIGURADA');
  if(process.env.NODE_ENV==='production'&&permitirCadastro&&
@@ -32,6 +33,11 @@ function criarAppIdentidadeLoop({contas,origemHttps,
   typeof tesourariaEnsaio.solicitarSaqueEnsaio!=='function'||
   typeof tesourariaEnsaio.verificar!=='function'))
   throw Error('TESOURARIA_ENSAIO_NAO_PODE_SER_OPERACAO_REAL');
+ if(aceitePosicaoAzulEnsaio!==null&&(
+    process.env.NODE_ENV==='production'||motorLoop===null||
+    aceitePosicaoAzulEnsaio.db!==contas.banco||
+    typeof aceitePosicaoAzulEnsaio.confirmar!=='function'))
+  throw Error('AZUL_ENSAIO_NAO_PODE_SER_CONFIRMACAO_REAL');
  if((pedidosComerciais===null)!==(remessasOutbox===null))
   throw Error('PEDIDOS_REAIS_INTEGRACAO_INCOMPLETA');
  if(pedidosComerciais!==null&&(
@@ -315,15 +321,48 @@ function criarAppIdentidadeLoop({contas,origemHttps,
    ).json({erro:codigo});
   }
  });
+ // Aceite individual da AZUL no mesmo SQLite, com titular da sessao e
+ // documentos vigentes. Somente ensaio explicitamente conectado.
+ // O cliente nunca pode escolher titular ou registrar movimentacao.
+ app.post('/api/loop/posicoes/:posicaoId/confirmar-ensaio',
+  mutation,protegido,csrf,(req,res)=>{
+   if(!aceitePosicaoAzulEnsaio||process.env.NODE_ENV==='production')
+    return res.status(404).json({erro:'CONFIRMACAO_AZUL_NAO_HOMOLOGADA'});
+   const id=Number(req.params.posicaoId);
+   if(!Number.isSafeInteger(id)||id<1||
+      !req.body||Array.isArray(req.body)||
+      Object.keys(req.body).sort().join(',')!==
+       'aceiteExplicito,cpf,hashTermos,versaoTermos')
+    return res.status(400).json({erro:'AZUL_CONFIRMACAO_INVALIDA'});
+   try{
+    const resultado=aceitePosicaoAzulEnsaio.confirmar({
+     titularId:req.conta.titularId,posicaoId:id,
+     cpf:req.body.cpf,aceiteExplicito:req.body.aceiteExplicito,
+     versaoTermos:req.body.versaoTermos,
+     hashTermos:req.body.hashTermos
+    });
+    return res.json({...resultado,confirmacaoSomenteEnsaio:true,
+     identidadeExternaVerificada:false,financeiroReal:false});
+   }catch(e){
+    const codigo=e.codigo||'AZUL_CONFIRMACAO_INDISPONIVEL';
+    const http=codigo==='AZUL_POSICAO_NAO_PERTENCE_A_CONTA'?404:
+     codigo==='AZUL_PRAZO_DE_CONFIRMACAO_ENCERRADO'||
+     codigo.includes('REPLAY')||codigo==='AZUL_PSP_EM_REVISAO'?409:
+     codigo==='AZUL_CPF_OU_ACEITE_INVALIDO'||codigo==='AZUL_TERMOS_OU_EMAIL_INVALIDOS'?400:503;
+    return res.status(http).json({erro:codigo});
+   }
+  });
  // Estado interno do mesmo SQLite: somente leitura, titular da sessão.
  // Nunca receber titularId do navegador. Sem eventos ou posição de produção.
  app.get('/api/loop/estado',protegido,(req,res)=>{
   if(!motorLoop)return res.status(503).json({
    erro:'MOTOR_INTERNO_INDISPONIVEL',financeiroReal:false
   });
-  try{return res.json(visaoEscritorio.consultarEstado({
-   titularId:req.conta.titularId
-  }));}
+  try{return res.json({
+   ...visaoEscritorio.consultarEstado({titularId:req.conta.titularId}),
+   confirmacaoAzulEnsaioDisponivel:aceitePosicaoAzulEnsaio!==null&&
+    process.env.NODE_ENV!=='production'
+  });}
   catch{return res.status(503).json({erro:'MOTOR_INTERNO_INDISPONIVEL'});}
  });
  // Comprovantes comerciais estão no MESMO SQLite da conta e do pedido.
