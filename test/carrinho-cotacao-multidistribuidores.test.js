@@ -355,9 +355,10 @@ test('jornada de homologacao recusa habilitacao com objetos de bancos ou motores
    banco:x.db,cotacoes:x.cotacoes,pedidos:j.pedidos,
    preflight:j.preflight,outbox:j.outbox,integracao:j.integracao
   }),{codigo:'JORNADA_COMERCIAL_ENSAIO_PROIBIDA_PRODUCAO'});
-  assert.throws(()=>j.jornada.verificarPagamentoEPrepararRemessas({
-   pedidoId:'PEDIDO_TESTE_NAO_DISPONIVEL'
-  }),{codigo:'JORNADA_COMERCIAL_ENSAIO_PROIBIDA_PRODUCAO'});
+  await assert.rejects(
+   j.jornada.verificarPagamentoEPrepararRemessas({
+    pedidoId:'PEDIDO_TESTE_NAO_DISPONIVEL'
+   }),{codigo:'JORNADA_COMERCIAL_ENSAIO_PROIBIDA_PRODUCAO'});
  }finally{
   if(ambiente===undefined)delete process.env.NODE_ENV;
   else process.env.NODE_ENV=ambiente;
