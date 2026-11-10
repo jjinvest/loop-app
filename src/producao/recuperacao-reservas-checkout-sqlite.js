@@ -69,7 +69,7 @@ class RecuperacaoReservasCheckoutSQLite{
    'FROM loop_real_checkout_reservas_posicoes r',
    'JOIN loja_real_pedidos p ON p.pedido_id=r.pedido_id',
    "WHERE r.estado='RESERVADA' AND r.criado_em<=?",
-   "AND p.status='AGUARDANDO_PAGAMENTO'",
+   "AND p.status IN ('AGUARDANDO_PAGAMENTO','APROVADO_PARA_EXPEDICAO')",
    'ORDER BY r.criado_em ASC,r.pedido_id ASC LIMIT ?'
   ].join(' ')).all(agora-this.idadeMinimaMs,limite);
  }
@@ -84,7 +84,9 @@ class RecuperacaoReservasCheckoutSQLite{
   const aptas=vencidas.filter(x=>x.ultimaReconsulta===null||
    x.ultimaReconsulta<=agora-this.intervaloMinimoMs);
   return {
-   reservasAguardandoPagamento:total.pedidos,
+   reservasEmAberto:total.pedidos,
+   reservasConfirmadasSemPosicao:vencidas.filter(x=>
+    x.statusPedido==='APROVADO_PARA_EXPEDICAO').length,
    posicoesReservadas:total.posicoes,
    reservasVencidasNaPagina:vencidas.length,
    elegiveisParaReconsulta:aptas.length,
