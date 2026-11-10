@@ -350,7 +350,8 @@ class PedidosComerciaisSQLite{
     if(!this.integradorComercialEnsaio)return {...cancelado,cancelado:true};
     try{
      const loop=this.integradorComercialEnsaio.sinalizarCancelamento({pedidoId});
-     return {...cancelado,cancelado:true,estornoLoopSinalizado:!!loop};
+     return {...cancelado,cancelado:true,
+       estornoLoopSinalizado:loop.semPosicao!==true};
     }catch{
      return {...cancelado,cancelado:true,revisaoLoopPendente:true};
     }
