@@ -10,6 +10,8 @@ const {pipeline}=require('node:stream/promises');
 const {createHash,createCipheriv,createDecipheriv,randomBytes,hkdfSync}=
  require('node:crypto');
 const {MotorLoopIntegradoSQLite,TABELAS_MOTOR}=require('./motor-loop-integrado-sqlite');
+const {OperacaoCatracaAdminSQLite,TABELAS_CATRACA_ADMIN}=
+ require('./operacao-catraca-admin-sqlite');
 const {PromocaoPedidoMotorEnsaioSQLite,TABELAS_PROMOCAO_ENSAIO}=
  require('./promocao-pedido-motor-ensaio-sqlite');
 const {TABELAS_COMERCIAIS,validarRecuperacaoComercial}=
@@ -72,7 +74,7 @@ function validarIdentidade(arquivo){
   ).all().map(x=>x.name);
   if(TABELAS.some(x=>!lista.includes(x)))falha('BACKUP_REAL_ESQUEMA_INCOMPLETO');
   const todos=[...TABELAS,...TABELAS_ADMIN,...TABELAS_COMERCIAIS,
-   ...TABELAS_MOTOR,...TABELAS_TESOURARIA_ENSAIO,
+   ...TABELAS_MOTOR,...TABELAS_CATRACA_ADMIN,...TABELAS_TESOURARIA_ENSAIO,
    ...TABELAS_PROMOCAO_ENSAIO];
   if(lista.some(x=>!todos.includes(x)))
    falha('BACKUP_IDENTIDADE_NAO_COBRE_TABELAS_COMERCIAIS');
@@ -99,6 +101,20 @@ function validarIdentidade(arquivo){
     const motor=Object.create(MotorLoopIntegradoSQLite.prototype);
     motor.banco=b;motor.verificar();
    }catch{falha('BACKUP_MOTOR_INTEGRIDADE_DIVERGENTE');}
+  }
+  const temCatracaAdmin=TABELAS_CATRACA_ADMIN.some(x=>lista.includes(x));
+  if(temCatracaAdmin){
+   if(TABELAS_CATRACA_ADMIN.some(x=>!lista.includes(x)))
+    falha('BACKUP_CATRACA_ADMIN_ESQUEMA_PARCIAL');
+   try{
+    if(!temMotor)falha('BACKUP_CATRACA_ADMIN_SEM_MOTOR');
+    const motor=Object.create(MotorLoopIntegradoSQLite.prototype);
+    motor.banco=b;
+    const operacao=Object.create(OperacaoCatracaAdminSQLite.prototype);
+    operacao.db=b;operacao.motor=motor;
+    if(operacao.verificar().integridade!=='OK')
+     falha('BACKUP_CATRACA_ADMIN_DIVERGENTE');
+   }catch{falha('BACKUP_CATRACA_ADMIN_DIVERGENTE');}
   }
   // A ativação fictícia qualificada exige o mesmo pedido, evento e motor.
   // Nunca promover ponte fictícia em um backup de produção.
