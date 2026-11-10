@@ -102,8 +102,6 @@ class MotorFilas {
         (posicaoNoTabuleiro?.id === posicaoAlvoId ? posicaoNoTabuleiro : null);
       if(!alvo || alvo.participanteId !== chave || alvo.empresa === true)
         throw new Error('POSICAO_ALVO_NAO_PERTENCE_A_CONTA');
-      if(alvo.statusAdesao === 'PENDENTE')
-        throw new Error('POSICAO_ALVO_PENDENTE');
     }
     // Em empate no total de indicacoes, ganha quem fez PRIMEIRO o ultimo
     // convite desse total (ex.: o 3o convite, se ambos tiverem tres).
@@ -151,7 +149,7 @@ class MotorFilas {
   liberarEscalonadas(tabuleiro){
     const movidas=[];
     for(const p of [...this.filaB]){
-      if(!(p.indicacoesVinculadas>0)||p.statusAdesao==='PENDENTE'||p.empresa===true)continue;
+      if(!(p.indicacoesVinculadas>0)||p.statusAdesao==='REVISAR_PSP'||p.empresa===true)continue;
       this.filaB.splice(this.filaB.indexOf(p),1);
       p.fila='A';p.promovidoEm=this.relogio();this.filaA.push(p);
       movidas.push(this.copiar(p));
@@ -174,7 +172,6 @@ class MotorFilas {
     const titularesBloqueados=typeof opcoes==='function'?[]:(opcoes.titularesBloqueados||[]);
     const bloqueados=new Set(titularesBloqueados);
     const elegivel=p=>p.statusAdesao!=='REVISAR_PSP'&&
-       p.statusAdesao!=='PENDENTE'&&
       !bloqueados.has(p.participanteId)&&
       (typeof opcoes!=='function'||opcoes(p));
     const indiceA=this.filaA.findIndex(elegivel);
