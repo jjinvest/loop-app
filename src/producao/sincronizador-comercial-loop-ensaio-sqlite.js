@@ -177,6 +177,7 @@ class SincronizadorComercialLoopEnsaioSQLite{
    vagasOcupadas:x.vagas.filter(Boolean).length,
    ...this.sincronizar()};
  }
+ confirmar(dados){return this.confirmarPosicaoAzulEmEnsaio(dados);}
  confirmarPosicaoAzulEmEnsaio(dados){
   this._ensaio();
   const posicaoId=dados?.posicaoId;
