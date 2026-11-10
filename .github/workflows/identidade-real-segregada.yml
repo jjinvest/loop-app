@@ -5,6 +5,11 @@ on:
       - feature/unificar-escritorio-real-20261105
     paths:
       - 'src/producao/**'
+      - 'src/domain/motor-filas.js'
+      - 'src/domain/tabuleiro-loop.js'
+      - 'test/entrada-vaga-6-azul-dourado.test.js'
+      - 'test/motor-filas.test.js'
+      - 'test/caixa-douradas-desistentes-loop.test.js'
       - 'src/integracoes/registro-fornecedores.js'
       - 'scripts/iniciar-identidade-real-loop.js'
       - 'scripts/provar-recuperacao-independente-identidade.js'
@@ -141,6 +146,8 @@ jobs:
         run: node --test test/visao-escritorio-unificada-sqlite.test.js
       - name: Compra qualificada vira posição unica na fila em ensaio com rollback e estorno
         run: node --test test/promocao-pedido-motor-ensaio-sqlite.test.js
+      - name: Regressao da bola azul, fila A/B, vaga 6 e cofre douradas
+        run: node --test test/entrada-vaga-6-azul-dourado.test.js test/motor-filas.test.js test/caixa-douradas-desistentes-loop.test.js
       - name: Motor interno com três titulares, giro e reinício do banco
         run: node --test test/motor-loop-integrado-identidade.test.js
       - name: Multi-processo, contencao de SQLite, 120 eventos e 20 ciclos
