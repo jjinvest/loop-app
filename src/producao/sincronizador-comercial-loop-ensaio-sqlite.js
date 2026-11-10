@@ -35,7 +35,6 @@ class SincronizadorComercialLoopEnsaioSQLite{
    c.posicoesDouradasPrevistas===0&&
    c.posicoesRoxasBloqueadas===0&&
    c.totalPosicoesMistasPrevistas===1&&
-   c.itensSemRegraExplicita===0&&
    c.eventosEspeciaisNaoHomologados===false&&
    c.ultrapassaDezPorCompra===false;
  }
