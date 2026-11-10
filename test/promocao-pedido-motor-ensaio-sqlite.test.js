@@ -530,3 +530,139 @@ test('seis compras qualificadas ficam registradas na fila com catraca pausada; s
  assert.equal(x.motor.verificar().integridade,'OK');
  assert.equal(validarIdentidade(x.arquivo).integridade,'ok');
 });
+
+test('compra confirmada aciona integracao interna automaticamente; cinza nao entra no LOOP, verdes geram posicoes e seis luzes',async t=>{
+ const x=await fixture(t);
+ x.produto({nome:'integracaoCinza',preco:30000,cor:'CINZA'});
+ x.produto({nome:'integracaoVerde',preco:25000,cor:'VERDE'});
+ const cinza=await x.criarPedido({nome:'integracaoCinza',preco:30000});
+ const cinzaPsp=await x.pedidosIntegrados.confirmarPagamento({pedidoId:cinza.pedidoId});
+ assert.equal(cinzaPsp.confirmado,true);
+ assert.equal(cinzaPsp.integracaoInternaEnsaio.novasPosicoes,0);
+ assert.equal(x.integracao.consultar().naoQualificadas,1);
+ assert.equal(x.motor.verificar().compras,0);
+ const pedidos=[];
+ for(let i=0;i<7;i++){
+  const p=await x.criarPedido({nome:'integracaoVerde',preco:25000});
+  const confirmou=await x.pedidosIntegrados.confirmarPagamento({pedidoId:p.pedidoId});
+  assert.equal(confirmou.confirmado,true);
+  assert.equal(confirmou.integracaoInternaEnsaio.novasPosicoes,1);
+  assert.equal(confirmou.integracaoInternaEnsaio.novosEventos,0);
+  pedidos.push(p);
+ }
+ assert.equal(x.integracao.consultar().enfileiradas,7);
+ assert.equal(x.motor.consultar().filaB,7);
+ assert.equal(x.motor.consultar().posicoesAzuisPendentes,7);
+ assert.equal(x.integracao.sincronizar().novasPosicoes,0);
+ const preparado=x.integracao.prepararTabuleiro();
+ assert.ok(preparado.centro>0);
+ assert.equal(preparado.eventosNoCiclo,6);
+ assert.equal(preparado.esperandoSeisEventos,1);
+ assert.equal(x.integracao.sincronizar().novosEventos,0);
+ const catraca=new OperacaoCatracaAdminSQLite({banco:x.db,motor:x.motor});
+ assert.equal(catraca.executarGiro().girou,false);
+ catraca.configurar({modo:'MANUAL',janelaInicio:'00:00',
+  janelaFim:'00:00',limiteDiario:null,revisaoEsperada:1,
+  motivo:'GIRO_AUDITADO_POR_VENDAS'});
+ assert.equal(catraca.executarGiro().girou,true);
+ const recarga=x.integracao.sincronizar();
+ assert.equal(recarga.novosEventos,1);
+ assert.equal(recarga.eventosNoCiclo,1);
+ for(let i=0;i<5;i++){
+  const p=await x.criarPedido({nome:'integracaoVerde',preco:25000,cliente:x.outro});
+  const confirmado=await x.pedidosIntegrados.confirmarPagamento({pedidoId:p.pedidoId});
+  assert.equal(confirmado.integracaoInternaEnsaio.novasPosicoes,1);
+ }
+ assert.equal(x.integracao.consultar().eventosNoCiclo,6);
+ assert.equal(catraca.executarGiro().girou,true);
+ assert.equal(x.motor.verificar().giros,2);
+ assert.equal(x.producao.verificar().promocoesEnsaio,12);
+ assert.equal(x.evento.verificar().eventos,13);
+ assert.equal(x.integracao.sincronizar().novosEventos,0);
+ assert.equal(x.integracao.sincronizar().novasPosicoes,0);
+ assert.equal(validarIdentidade(x.arquivo).integridade,'ok');
+});
+test('admin usa botoes conectados de integracao, cliente ve mesmo SQLite mas nao consegue acionar a ponte',async t=>{
+ const x=await fixture(t);
+ const origin='https://contas.example.invalid';
+ const app=criarAppIdentidadeLoop({contas:x.contas,motorLoop:x.motor,
+  eventosComerciais:x.evento,origemHttps:origin,permitirCadastro:true,
+  adminComercial:{catalogo:x.catalogo,controle:x.controle,sessoes:x.sessoes,
+   auditoria:x.auditoria,manutencao:x.manutencao,
+   classificacaoLoop:x.classificacao,integradorComercialEnsaio:x.integracao}
+ });
+ const server=app.listen(0,'127.0.0.1');
+ await once(server,'listening');
+ t.after(()=>new Promise(resolve=>server.close(resolve)));
+ const base='http://127.0.0.1:'+server.address().port;
+ const url=base+'/api/admin/loop/integracao';
+ assert.equal((await fetch(url)).status,401);
+ const login=await fetch(base+'/administrador/entrar',{
+  method:'POST',redirect:'manual',
+  headers:{Origin:origin,'Content-Type':'application/x-www-form-urlencoded'},
+  body:new URLSearchParams({senha:'CredencialAdminSomenteEnsaios2026!Complexa'})
+ });
+ assert.equal(login.status,303);
+ const cookie=login.headers.get('set-cookie').split(';')[0];
+ const pagina=await (await fetch(base+'/administrador',{headers:{Cookie:cookie}})).text();
+ assert.match(pagina,/id="sincronizarComprasLoop"/);
+ assert.match(pagina,/id="prepararTabuleiroLoop"/);
+ const estado=await fetch(url,{headers:{Cookie:cookie}});
+ assert.equal(estado.status,200);
+ assert.equal((await estado.json()).enfileiradas,0);
+ const token=await (await fetch(base+'/api/admin/comercial/sessao',{
+  headers:{Cookie:cookie}
+ })).json();
+ assert.equal((await fetch(url,{method:'POST',
+  headers:{Cookie:cookie,Origin:origin,'Content-Type':'application/json'},
+  body:JSON.stringify({acao:'SINCRONIZAR'})})).status,403);
+ const headers={Cookie:cookie,Origin:origin,'Content-Type':'application/json',
+  'X-Loop-Admin-Csrf':token.csrfToken};
+ x.produto({nome:'conexaoHTTPVerde',preco:25000});
+ const pedido=await x.criarPedido({nome:'conexaoHTTPVerde',preco:25000});
+ await x.confirmar(pedido);
+ const resposta=await fetch(url,{method:'POST',headers,
+  body:JSON.stringify({acao:'SINCRONIZAR'})});
+ assert.equal(resposta.status,200);
+ assert.equal((await resposta.json()).novasPosicoes,1);
+ assert.equal(x.motor.consultar().filaB,1);
+ assert.equal((await fetch(url,{method:'POST',headers,
+  body:JSON.stringify({acao:'INVENTAR_VENDA'})})).status,400);
+ const cliente=await fetch(base+'/api/contas/entrar',{
+  method:'POST',headers:{Origin:origin,'Content-Type':'application/json'},
+  body:JSON.stringify({nick:'Comprador',senha:'SenhaDeEnsaio2026!'})
+ });
+ const cookieCliente=cliente.headers.get('set-cookie').split(';')[0];
+ assert.equal((await fetch(url,{headers:{Cookie:cookieCliente}})).status,401);
+ assert.equal((await fetch(url,{method:'POST',
+  headers:{Cookie:cookieCliente,Origin:origin,
+   'Content-Type':'application/json','X-Loop-Admin-Csrf':token.csrfToken},
+  body:JSON.stringify({acao:'SINCRONIZAR'})})).status,401);
+ const escritorio=await (await fetch(base+'/api/loop/estado',{
+  headers:{Cookie:cookieCliente}
+ })).json();
+ assert.equal(escritorio.minhasPosicoes[0].pedidoDeOrigemEnsaio,pedido.pedidoId);
+ assert.equal(escritorio.minhasPosicoes[0].local,'FILA_B');
+ assert.equal(escritorio.minhasPosicoes[0].estadoAdesao,'PENDENTE');
+ assert.equal(escritorio.catracaClientePodeGirar,false);
+ assert.equal(validarIdentidade(x.arquivo).integridade,'ok');
+});
+test('estorno PSP integrado fica registrado individualmente sem parar novas compras',async t=>{
+ const x=await fixture(t);
+ x.produto({nome:'integradoEstorno',preco:25000});
+ const p=await x.criarPedido({nome:'integradoEstorno',preco:25000});
+ await x.pedidosIntegrados.confirmarPagamento({pedidoId:p.pedidoId});
+ assert.equal(x.motor.consultar().filaB,1);
+ x.statusPsp.set(p.pedidoId,{status:'ESTORNADO'});
+ const cancelado=await x.pedidosIntegrados.confirmarPagamento({pedidoId:p.pedidoId});
+ assert.equal(cancelado.cancelado,true);
+ assert.equal(cancelado.estornoLoopSinalizado,true);
+ assert.equal(x.producao.verificar().reversoesEmQuarentena,1);
+ const novo=await x.criarPedido({nome:'integradoEstorno',preco:25000,cliente:x.outro});
+ const resposta=await x.pedidosIntegrados.confirmarPagamento({pedidoId:novo.pedidoId});
+ assert.equal(resposta.integracaoInternaEnsaio.novasPosicoes,1);
+ assert.equal(x.motor.consultar().filaB,1);
+ assert.equal(x.integracao.consultar().estornadas,1);
+ assert.equal(x.motor.verificar().integridade,'OK');
+ assert.equal(validarIdentidade(x.arquivo).integridade,'ok');
+});
