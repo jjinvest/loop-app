@@ -9,7 +9,7 @@ function montarGatewayAdminComercial(app,{
  sessoes,controle,catalogo,auditoria=null,manutencao=null,
  pedidosComerciais=null,motorLoop=null,operacaoCatraca=null,
  integradorComercialEnsaio=null,jornadaComercialEnsaio=null,
- classificacaoLoop=null,origemHttps
+ recuperacaoReservas=null,classificacaoLoop=null,origemHttps
 }={}){
  if(typeof sessoes?.autenticar!=='function'||
     typeof sessoes?.sessao!=='function'||
@@ -40,6 +40,11 @@ function montarGatewayAdminComercial(app,{
    typeof jornadaComercialEnsaio.consultarStatus!=='function'||
    typeof jornadaComercialEnsaio.reprocessarRemessas!=='function'))
   erro('JORNADA_ADMIN_NAO_E_O_MESMO_MOTOR_DE_ENSAIO');
+ if(recuperacaoReservas!==null&&(
+   recuperacaoReservas.db!==motorLoop?.banco||
+   typeof recuperacaoReservas.consultar!=='function'||
+   typeof recuperacaoReservas.reconsultarVencidas!=='function'))
+  erro('ADMIN_RECUPERACAO_RESERVAS_MOTOR_DIVERGENTE');
  const cookieValor=req=>{
   const raw=req.get('cookie')||'';
   if(raw.length>4096)return null;
@@ -209,6 +214,30 @@ function montarGatewayAdminComercial(app,{
    }));}
    catch(e){return res.status(409).json({
     erro:e.codigo||'JORNADA_RECONCILIACAO_INDISPONIVEL'
+   });}
+  });
+ // Reservas antigas sao visiveis no admin. A idade nao cancela PSP.
+ app.get('/api/admin/comercial/reservas-vencidas',proteger,(_req,res)=>{
+  if(!recuperacaoReservas)return res.status(503).json({
+   erro:'RECUPERACAO_RESERVAS_NAO_CONFIGURADA'
+  });
+  try{return res.json(recuperacaoReservas.consultar());}
+  catch{return res.status(503).json({erro:'RECUPERACAO_RESERVAS_INDISPONIVEL'});}
+ });
+ app.post('/api/admin/comercial/reservas-vencidas/reconsultar',
+  proteger,validarCsrf,async(req,res)=>{
+   if(!recuperacaoReservas||process.env.NODE_ENV==='production')
+    return res.status(423).json({erro:'RECONSULTA_PSP_NAO_HOMOLOGADA'});
+   if(!req.is('application/json')||!req.body||
+      Object.keys(req.body).sort().join(',')!=='limite'||
+      !Number.isSafeInteger(req.body.limite)||req.body.limite<1||
+      req.body.limite>50)
+    return res.status(400).json({erro:'RECONSULTA_RESERVAS_LIMITE_INVALIDO'});
+   try{return res.json(await recuperacaoReservas.reconsultarVencidas({
+    limite:req.body.limite,autorizadoEnsaio:true
+   }));}
+   catch(e){return res.status(503).json({
+    erro:e.codigo||'RECONSULTA_RESERVAS_INDISPONIVEL'
    });}
   });
  app.post('/api/admin/sair',proteger,validarCsrf,(req,res)=>{
