@@ -7,6 +7,7 @@ const {once}=require('node:events');
 const fs=require('node:fs'),os=require('node:os'),path=require('node:path');
 const {IdentidadeClienteLoopReal}=require('../src/producao/identidade-cliente-loop-sqlite');
 const {MotorLoopIntegradoSQLite}=require('../src/producao/motor-loop-integrado-sqlite');
+const {OperacaoCatracaAdminSQLite}=require('../src/producao/operacao-catraca-admin-sqlite');
 const {validarIdentidade}=require('../src/producao/backup-identidade-real');
 const {criarAppIdentidadeLoop}=require('../src/producao/servidor-identidade-loop');
 const {CatalogoMultiDistribuidoresSQLite}=require('../src/producao/catalogo-multidistribuidores-sqlite');
@@ -173,6 +174,101 @@ test('três contas e administrador veem o mesmo motor, sem acesso cruzado',async
  assert.equal((await fetch(base+'/api/loop/estado',{
   headers:{Cookie:adminCookie}})).status,401);
  const html=await fetch(base+'/administrador',{headers:{Cookie:adminCookie}});
- assert.match(await html.text(),/id="loopAdminEstado"/);
+ const pagina=await html.text();
+ assert.match(pagina,/id="loopAdminEstado"/);
+ for(const id of ['modoCatracaAdmin','limiteCatracaAdmin','inicioCatracaAdmin',
+  'fimCatracaAdmin','pausarCatracaAdmin','liberarCatracaAdmin',
+  'salvarCatracaAdmin','girarCatracaAdmin','estadoCatracaAdmin'])
+  assert.match(pagina,new RegExp('id="'+id+'"'));
+ const ctrl='/api/admin/loop/controle';
+ assert.equal((await fetch(base+ctrl)).status,401);
+ assert.equal((await fetch(base+ctrl,{headers:{Cookie:cookies[0]}})).status,401);
+ const inicial=await fetch(base+ctrl,{headers:{Cookie:adminCookie}});
+ assert.equal(inicial.status,200);
+ const estado=await inicial.json();
+ assert.equal(estado.modo,'PAUSADA');
+ assert.equal(estado.financeiroReal,false);
+ const ses=await (await fetch(base+'/api/admin/comercial/sessao',{
+  headers:{Cookie:adminCookie}
+ })).json();
+ const requisicao={acao:'CONFIGURAR',modo:'MANUAL',janelaInicio:'00:00',
+  janelaFim:'00:00',limiteDiario:3,revisaoEsperada:estado.revisao,
+  motivo:'CONTROLE_EXCLUSIVO_DO_OPERADOR'};
+ const url=base+ctrl;
+ const chamada=(body,headers)=>fetch(url,{method:'POST',headers,
+  body:JSON.stringify(body)});
+ assert.equal((await chamada(requisicao,{Cookie:adminCookie,
+  Origin:ORIGEM,'Content-Type':'application/json'})).status,403);
+ assert.equal((await chamada(requisicao,{Cookie:cookies[0],
+  Origin:ORIGEM,'Content-Type':'application/json',
+  'X-Loop-Admin-Csrf':ses.csrfToken})).status,401);
+ const cab={Cookie:adminCookie,Origin:ORIGEM,
+  'Content-Type':'application/json','X-Loop-Admin-Csrf':ses.csrfToken};
+ const mudou=await chamada(requisicao,cab);
+ assert.equal(mudou.status,200);
+ assert.equal((await mudou.json()).modo,'MANUAL');
+ assert.equal((await chamada(requisicao,cab)).status,409);
+ const naoGira=await chamada({acao:'GIRAR'},cab);
+ assert.equal(naoGira.status,200);
+ assert.equal((await naoGira.json()).girou,false);
+ assert.equal(motor.consultar().catraca.giros,0);
  assert.equal(motor.verificar().compras,3);
+});
+
+test('agenda, limite diario e pausas controlam giros; filas entram mesmo pausada e resistem ao reinicio',async t=>{
+ const dir=fs.mkdtempSync(path.join(os.tmpdir(),'loop-catraca-admin-'));
+ t.after(()=>fs.rmSync(dir,{recursive:true,force:true}));
+ const arquivo=path.join(dir,'contas.sqlite');
+ let banco=new DatabaseSync(arquivo);
+ banco.exec('PRAGMA foreign_keys=ON;PRAGMA journal_mode=WAL');
+ const contas=new IdentidadeClienteLoopReal({...config(),banco});
+ let motor=new MotorLoopIntegradoSQLite({banco});
+ const ids=await criarTitulares(contas,12);
+ let agora=new Date('2026-11-10T12:00:00Z'); // 09:00 America/Sao_Paulo
+ let catraca=new OperacaoCatracaAdminSQLite({banco,motor,agora:()=>agora});
+ assert.equal(catraca.consultar().modo,'PAUSADA');
+ for(let i=0;i<12;i++){
+  motor.registrarCompraEnsaio({titularId:ids[i].titularId,pedidoId:'compra-'+i});
+ }
+ assert.equal(motor.consultar().filaB,12);
+ assert.equal(catraca.consultar().filaB,12,'a fila nao depende da catraca');
+ motor.prepararTabuleiroEnsaio();
+ for(let i=0;i<6;i++)
+  assert.equal(motor.registrarEventoEnsaio({pedidoId:'compra-'+i}).eventosNoCiclo,i+1);
+ assert.equal(catraca.executarGiro().motivo,'PAUSADA_PELO_ADMINISTRADOR');
+ assert.equal(motor.consultar().tabuleiro.eventosNoCiclo,6);
+ const atual=catraca.consultar();
+ assert.throws(()=>catraca.configurar({modo:'MANUAL',
+  janelaInicio:'08:00',janelaFim:'10:00',limiteDiario:1,
+  revisaoEsperada:999,motivo:'CONFLITO_ESPERADO'}),
+  {codigo:'CATRACA_ADMIN_REVISAO_DESATUALIZADA'});
+ assert.equal(catraca.consultar().revisao,atual.revisao);
+ catraca.configurar({modo:'MANUAL',janelaInicio:'08:00',janelaFim:'10:00',
+  limiteDiario:1,revisaoEsperada:atual.revisao,motivo:'LIBERAR_GIROS_DO_DIA'});
+ assert.equal(catraca.executarGiro().girou,true);
+ assert.equal(motor.consultar().catraca.giros,1);
+ for(let i=6;i<12;i++)
+  assert.equal(motor.registrarEventoEnsaio({pedidoId:'compra-'+i}).eventosNoCiclo,i-5);
+ assert.equal(catraca.executarGiro().motivo,'LIMITE_DIARIO_DEFINIDO_PELO_ADMINISTRADOR');
+ assert.equal(motor.consultar().tabuleiro.eventosNoCiclo,6);
+ assert.equal(catraca.verificar().integridade,'OK');
+ assert.equal(validarIdentidade(arquivo).integridade,'ok');
+ catraca.configurar({modo:'AUTOMATICA',janelaInicio:'08:00',janelaFim:'10:00',
+  limiteDiario:1,revisaoEsperada:2,motivo:'AGENDA_SEM_GIRO_FORA_DO_LIMITE'});
+ assert.equal(catraca.processarAgenda().girou,false);
+ agora=new Date('2026-11-11T12:00:00Z');
+ assert.equal(catraca.consultar().girosHoje,0);
+ assert.equal(catraca.processarAgenda().girou,true);
+ assert.equal(catraca.consultar().girosHoje,1);
+ assert.equal(catraca.processarAgenda().girou,false);
+ assert.equal(motor.verificar().giros,2);
+ banco.close();
+ banco=new DatabaseSync(arquivo);banco.exec('PRAGMA foreign_keys=ON');
+ t.after(()=>banco.close());
+ motor=new MotorLoopIntegradoSQLite({banco});
+ catraca=new OperacaoCatracaAdminSQLite({banco,motor,agora:()=>agora});
+ assert.equal(catraca.consultar().modo,'AUTOMATICA');
+ assert.equal(catraca.consultar().girosHoje,1);
+ assert.equal(catraca.verificar().girosAuditados,2);
+ assert.equal(validarIdentidade(arquivo).integridade,'ok');
 });
