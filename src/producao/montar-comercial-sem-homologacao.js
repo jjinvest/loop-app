@@ -71,6 +71,17 @@ function criarLeituraComercialSegura({banco,pedidos}={}){
   novaCompra:false,novoPagamento:false,envioFornecedor:false,
   financeiroReal:false});
 }
+function criarLeituraCatalogoSeguro({banco,catalogo}={}){
+ if(typeof banco?.prepare!=='function'||catalogo?.db!==banco||
+    typeof catalogo.listarVitrinePreparacao!=='function')
+  falhar('LEITURA_CATALOGO_BANCO_DIVERGENTE');
+ return Object.freeze({
+  banco,
+  listarVitrinePreparacao({limite=50}={}){
+   return catalogo.listarVitrinePreparacao({limite});
+  }
+ });
+}
 function montarComercialSemHomologacao({
  banco,chavePedidos,auditoria,manutencao,catalogoLeitura=null
 }={}){
@@ -112,12 +123,8 @@ function montarComercialSemHomologacao({
   falhar('COMERCIAL_SEGURO_AUDITORIA_DIVERGENTE');
  auditoria.verificar();
  const leitura=criarLeituraComercialSegura({banco,pedidos:pedidosInternos});
- const leituraCatalogo=catalogoLeitura===null?null:Object.freeze({
-  banco,
-  listarVitrinePreparacao({limite=50}={}){
-   return catalogoLeitura.listarVitrinePreparacao({limite});
-  }
- });
+ const leituraCatalogo=catalogoLeitura===null?null:
+  criarLeituraCatalogoSeguro({banco,catalogo:catalogoLeitura});
  return Object.freeze({
   classificacaoLoop,eventosComerciais,...leitura,leituraCatalogo,
   pedidosComerciaisPublicos:false,
@@ -126,4 +133,4 @@ function montarComercialSemHomologacao({
  });
 }
 module.exports={montarComercialSemHomologacao,exigirChaveParaHistoricoComercial,
- criarLeituraComercialSegura};
+ criarLeituraComercialSegura,criarLeituraCatalogoSeguro};
