@@ -95,6 +95,16 @@ function renderizarAdminComercialAprovado(){
   'Reconciliar remessas do pedido</button>'+
   '<button id="atualizarJornadaAdmin" type="button">Atualizar situação</button>'+
   '</div>'+
+  '<h3>Reservas de compras pendentes</h3>'+
+  '<p id="estadoReservasVencidasAdmin" class="subtexto" role="status" aria-live="polite">'+
+  'Consultando pedidos sem pagamento esclarecido...</p>'+
+  '<p class="subtexto">Prazo vencido não significa Pix cancelado. Uma vaga só é liberada '+
+  'com cancelamento comprovado pelo PSP.</p>'+
+  '<div class="linha">'+
+  '<button id="reconsultarReservasVencidasAdmin" type="button" disabled>'+
+  'Reconsultar PSP dos pedidos vencidos</button>'+
+  '<button id="atualizarReservasVencidasAdmin" type="button">Atualizar pendências</button>'+
+  '</div>'+
   '<h3>Controle operacional da catraca</h3>'+
   '<p class="subtexto">As compras qualificadas continuam nas filas A/B mesmo com a catraca pausada. '+
   'São necessários seis eventos por ciclo. Configurações e giros aqui usam o motor interno de ensaio; '+
