@@ -176,8 +176,13 @@ async function iniciar(ambiente=process.env){
   // Falha de rede, segredo, bucket, restauração ou dados bloqueia o
   // listener; nenhuma conta real é criada sem prova de recuperação.
   await agendador.iniciar();
+  // Mesmo livro do checkout para a tela aprovada "Meus Pedidos".
+  // A fachada nao expõe criarPedido/confirmarPagamento/despachar.
+  const pedidosComerciais=comercial?.leituraPedidos||null;
+  const remessasOutbox=comercial?.leituraRemessas||null;
   const app=criarAppIdentidadeLoop({
    contas,motorLoop,eventosComerciais,preflightCapacidade,
+   pedidosComerciais,remessasOutbox,
    origemHttps:config.origemHttps,permitirCadastro:true,
    backupEstado:()=>agendador.estado(),
    adminComercial:{catalogo,controle,sessoes,auditoria,manutencao,
