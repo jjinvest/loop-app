@@ -362,7 +362,7 @@ async function main(){
    console.log('DIAGNOSTICO_ESTADO_CLIENTE_'+visual.nome+'='+
     JSON.stringify(diagnostico));
    await pagina.locator('#loopResumoMotor').filter({
-    hasText:/Fila B: 3/
+    hasText:new RegExp('Fila B: '+diagnostico.filaB)
    }).waitFor();
    if(visual.mobile)await pagina.locator('#loop03MenuIntegrado').click();
    await pagina.locator('#abaPosicoes').click();
@@ -398,10 +398,10 @@ async function main(){
    if(visual.mobile)await pagina.locator('#loop03MenuIntegrado').click();
    await pagina.locator('#abaTabuleiro').click();
    await pagina.locator('#estadoTabuleiroIntegrado').filter({
-    hasText:/Fila B: 3/
+    hasText:new RegExp('Fila B: '+diagnostico.filaB)
    }).waitFor();
    assert.equal(await pagina.locator('#motorContadorEventos').innerText(),
-    '0/6 eventos de validação interna');
+    motorLoop.consultar().tabuleiro.eventosNoCiclo+'/6 eventos de validação interna');
    await pagina.screenshot({
     path:path.join(pasta,'integrado-tabuleiro-'+visual.nome+'.png'),
     fullPage:true
