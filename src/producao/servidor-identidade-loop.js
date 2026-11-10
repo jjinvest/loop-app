@@ -411,7 +411,11 @@ function criarAppIdentidadeLoop({contas,origemHttps,
    if(!Array.isArray(produtos)||produtos.length>100||
       produtos.some(p=>p.compravel!==false||
        p.checkoutReal!==false||p.precoCentavos!==null||
-       typeof p.titulo!=='string'||p.titulo.length>150))
+       typeof p.titulo!=='string'||p.titulo.length>150||
+       typeof p.novidade!=='boolean'||
+       !Number.isSafeInteger(p.criadoEm)||p.criadoEm<1||
+       !Number.isSafeInteger(p.unidadesConfirmadas)||
+       p.unidadesConfirmadas<0))
     throw Error('VITRINE_NAO_CONFIAVEL');
    return res.json({produtos,total:produtos.length,
     origem:'CATALOGO_ADMINISTRATIVO_PUBLICADO',checkoutReal:false,
