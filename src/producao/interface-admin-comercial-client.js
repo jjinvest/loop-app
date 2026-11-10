@@ -368,6 +368,65 @@
   });
  }
 
+ let reservasDisponiveis=false,reservasOcupadas=false;
+ function botoesReservasVencidas(){
+  $('reconsultarReservasVencidasAdmin').disabled=
+   !reservasDisponiveis||reservasOcupadas||!csrf;
+ }
+ async function atualizarReservasVencidas(){
+  try{
+   const r=await fetch('/api/admin/comercial/reservas-vencidas',{
+    method:'GET',credentials:'same-origin',cache:'no-store'
+   });
+   const d=await r.json().catch(()=>({}));
+   if(!r.ok)throw Error(d.erro||'RECONSULTA_RESERVAS_INDISPONIVEL');
+   if(d.checkoutReal!==false||d.liberacaoPorTempo!==false||
+      !Number.isSafeInteger(d.reservasAguardandoPagamento)||
+      !Number.isSafeInteger(d.posicoesReservadas)||
+      !Number.isSafeInteger(d.elegiveisParaReconsulta))
+    throw Error('Informações de reservas inconsistentes.');
+   reservasDisponiveis=d.proximaAcao==='RECONSULTAR_PSP';
+   $('estadoReservasVencidasAdmin').textContent=
+    'Pedidos aguardando pagamento: '+d.reservasAguardandoPagamento+
+    ' · Vagas reservadas: '+d.posicoesReservadas+
+    ' · Reservas com prazo vencido: '+d.reservasVencidasNaPagina+
+    ' · Podem ser reconsultadas: '+d.elegiveisParaReconsulta+
+    ' · Ação: '+(reservasDisponiveis?'Reconsultar PSP em ensaio':
+     'Aguardar PSP homologado. Não liberar vagas sem prova bancária.');
+  }catch(e){
+   reservasDisponiveis=false;
+   $('estadoReservasVencidasAdmin').textContent=e.message;
+  }finally{botoesReservasVencidas();}
+ }
+ $('atualizarReservasVencidasAdmin').addEventListener('click',
+  ()=>void atualizarReservasVencidas());
+ $('reconsultarReservasVencidasAdmin').addEventListener('click',()=>{
+  if(!csrf||!reservasDisponiveis||reservasOcupadas)return;
+  reservasOcupadas=true;botoesReservasVencidas();
+  void (async()=>{
+   const r=await fetch('/api/admin/comercial/reservas-vencidas/reconsultar',{
+    method:'POST',credentials:'same-origin',cache:'no-store',
+    headers:{'Content-Type':'application/json','X-Loop-Admin-Csrf':csrf},
+    body:JSON.stringify({limite:20})
+   });
+   const d=await r.json().catch(()=>({}));
+   if(!r.ok)throw Error(d.erro||'RECONSULTA_PSP_INDISPONIVEL');
+   if(d.financeiroReal!==false||d.liberacoesPeloRelogio!==0||
+      !Number.isSafeInteger(d.reconsultadas))
+    throw Error('Reconsulta PSP sem comprovação.');
+   await atualizarReservasVencidas();
+   $('estadoReservasVencidasAdmin').textContent=
+    'Reconsultados: '+d.reconsultadas+
+    ' · Vagas liberadas com PSP cancelado: '+d.liberadas+
+    ' · Reservas convertidas em posições: '+d.consumidas+
+    ' · Pagamentos incertos mantidos: '+(d.pendentes+d.erros)+
+    ' · Aguardando posição: '+d.aguardamPosicao+
+    '. Nenhum cancelamento automático por tempo.';
+  })().catch(e=>{
+   $('estadoReservasVencidasAdmin').textContent=e.message;
+  }).finally(()=>{reservasOcupadas=false;botoesReservasVencidas();});
+ });
+
  let politicaCatraca=null,catracaOcupada=false;
  let integracaoDisponivel=false,integracaoOcupada=false;
  async function requisitarIntegracao(body){
@@ -623,6 +682,7 @@
    await atualizarCatracaAdmin();
    await atualizarIntegracaoLoop();
    await atualizarJornadaAdmin();
+   await atualizarReservasVencidas();
   }catch(e){travar(true);status(e.message);}
  })();
 })();
