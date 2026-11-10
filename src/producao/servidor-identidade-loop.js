@@ -11,7 +11,7 @@ function criarAppIdentidadeLoop({contas,origemHttps,
  permitirCadastro=false,backupEstado=null,
  pedidosComerciais=null,remessasOutbox=null,adminComercial=null,
  motorLoop=null,eventosComerciais=null,tesourariaEnsaio=null,
- aceitePosicaoAzulEnsaio=null}={}){
+ aceitePosicaoAzulEnsaio=null,preflightCapacidade=null}={}){
  if(!contas||typeof contas.entrar!=='function'||typeof contas.sessao!=='function')
   throw Error('IDENTIDADE_REAL_NAO_CONFIGURADA');
  if(process.env.NODE_ENV==='production'&&permitirCadastro&&
@@ -38,6 +38,12 @@ function criarAppIdentidadeLoop({contas,origemHttps,
     aceitePosicaoAzulEnsaio.db!==contas.banco||
     typeof aceitePosicaoAzulEnsaio.confirmar!=='function'))
   throw Error('AZUL_ENSAIO_NAO_PODE_SER_CONFIRMACAO_REAL');
+ if(preflightCapacidade!==null&&(
+   motorLoop===null||preflightCapacidade.db!==contas.banco||
+   preflightCapacidade.motor!==motorLoop||
+   typeof preflightCapacidade.consultar!=='function'||
+   typeof preflightCapacidade.verificar!=='function'))
+  throw Error('CHECKOUT_CAPACIDADE_NAO_VINCULADA_AO_MOTOR');
  if((pedidosComerciais===null)!==(remessasOutbox===null))
   throw Error('PEDIDOS_REAIS_INTEGRACAO_INCOMPLETA');
  if(pedidosComerciais!==null&&(
@@ -374,6 +380,20 @@ function criarAppIdentidadeLoop({contas,origemHttps,
   try{return res.json(eventosComerciais.consultarTitular({
    titularId:req.conta.titularId
   }));}catch{return res.status(503).json({erro:'EVENTOS_INDISPONIVEIS'});}
+ });
+ // Capacidade previa no mesmo SQLite do motor e do pedido. Apenas leitura.
+ // Nunca recebe titularId da URL; nao autoriza cotacao, checkout ou Pix.
+ app.get('/api/loja/capacidade',protegido,(req,res)=>{
+  if(!preflightCapacidade)return res.status(503).json({
+   erro:'CAPACIDADE_CHECKOUT_NAO_CONFIGURADA',checkoutReal:false
+  });
+  try{
+   return res.json({...preflightCapacidade.consultar({
+    titularId:req.conta.titularId
+   }),checkoutReal:false,fonte:'MOTOR_E_RESERVAS_SQLITE'});
+  }catch{return res.status(503).json({
+   erro:'CAPACIDADE_CHECKOUT_INDISPONIVEL',checkoutReal:false
+  });}
  });
  // Consulta de capacidade da loja vinculada à mesma conta. Sem produto
  // real aprovado ou integração de fornecedor, nenhum carrinho pode pagar.
