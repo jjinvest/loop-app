@@ -76,6 +76,14 @@ function renderizarAdminComercialAprovado(){
   '<h2 id="tituloMotorInternoAdmin">LOOP · catraca e filas</h2>'+
   '<p id="loopAdminEstado" role="status">Consultando mesmo motor do cliente...</p>'+
   '<button id="atualizarLoopAdmin" type="button">Atualizar estado</button>'+
+  '<h3>Compras qualificadas · ligação loja e LOOP</h3>'+
+  '<p id="integracaoQualificadaEstado" class="subtexto" role="status">'+
+  'Consultando integração do pedido à posição e às seis luzes...</p>'+
+  '<div class="linha">'+
+  '<button id="sincronizarComprasLoop" type="button" disabled>Sincronizar compras qualificadas</button>'+
+  '<button id="prepararTabuleiroLoop" type="button" disabled>Preparar tabuleiro</button>'+
+  '<button id="atualizarIntegracaoLoop" type="button">Atualizar integração</button>'+
+  '</div>'+
   '<h3>Controle operacional da catraca</h3>'+
   '<p class="subtexto">As compras qualificadas continuam nas filas A/B mesmo com a catraca pausada. '+
   'São necessários seis eventos por ciclo. Configurações e giros aqui usam o motor interno de ensaio; '+
