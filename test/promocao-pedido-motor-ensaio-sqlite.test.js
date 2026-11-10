@@ -19,6 +19,8 @@ const {PedidosComerciaisSQLite}=
  require('../src/producao/pedidos-comerciais-sqlite');
 const {PreflightCapacidadeCheckoutSQLite}=
  require('../src/producao/preflight-capacidade-checkout-sqlite');
+const {RecuperacaoReservasCheckoutSQLite}=
+ require('../src/producao/recuperacao-reservas-checkout-sqlite');
 const {ClassificacaoComercialLoopSQLite}=
  require('../src/producao/classificacao-comercial-loop-sqlite');
 const {EventosComerciaisLoopSQLite}=
@@ -1253,5 +1255,111 @@ test('estorno de posicao ja criada preserva historico de consumo e revisao indiv
   'SELECT COUNT(*) AS n FROM loop_real_checkout_reservas_historico',
   'WHERE pedido_id=?'
  ].join(' ')).get(p.pedidoId).n,3);
+ assert.equal(validarIdentidade(x.arquivo).integridade,'ok');
+});
+
+
+test('pedido abandonado so libera reserva apos cancelamento reconsultado ao PSP',async t=>{
+ const x=await fixture(t);
+ x.produto({nome:'abandonoVerde',preco:25000,cor:'VERDE'});
+ const pendente=await x.criarPedido({nome:'abandonoVerde',
+  preco:25000,comPreflight:true});
+ let horario=Date.now()+17*60*1000;
+ const gestor=new RecuperacaoReservasCheckoutSQLite({
+  banco:x.db,preflight:x.preflight,pedidos:x.pedidosIntegrados,
+  agora:()=>horario,idadeMinimaMs:15*60*1000
+ });
+ x.statusPsp.set(pendente.pedidoId,{status:'PENDENTE'});
+ assert.equal(gestor.consultar().reservasVencidasNaPagina,1);
+ assert.equal(gestor.consultar().elegiveisParaReconsulta,1);
+ const primeira=await gestor.reconsultarVencidas({
+  limite:20,autorizadoEnsaio:true
+ });
+ assert.equal(primeira.reconsultadas,1);
+ assert.equal(primeira.pendentes,1);
+ assert.equal(primeira.liberadas,0);
+ assert.equal(primeira.liberacoesPeloRelogio,0);
+ assert.equal(x.preflight.consultar({titularId:x.titular.titularId}).reservadas,1);
+ assert.equal(x.db.prepare('SELECT status FROM loja_real_pedidos WHERE pedido_id=?')
+  .get(pendente.pedidoId).status,'AGUARDANDO_PAGAMENTO');
+ const replay=await gestor.reconsultarVencidas({
+  limite:20,autorizadoEnsaio:true
+ });
+ assert.equal(replay.reconsultadas,0);
+ assert.equal(replay.ignoradasPorIntervalo,1);
+ assert.equal(gestor.verificar().reconsultas,1);
+ horario+=61000;
+ x.statusPsp.set(pendente.pedidoId,{status:'CANCELADO'});
+ const segunda=await gestor.reconsultarVencidas({
+  limite:20,autorizadoEnsaio:true
+ });
+ assert.equal(segunda.reconsultadas,1);
+ assert.equal(segunda.liberadas,1);
+ assert.equal(x.preflight.consultar({titularId:x.titular.titularId}).reservadas,0);
+ assert.equal(x.preflight.verificar().posicoesCanceladas,1);
+ assert.equal(gestor.consultar().reservasVencidasNaPagina,0);
+ assert.equal(gestor.verificar().reconsultas,2);
+ assert.equal(x.motor.verificar().compras,0);
+ assert.equal(validarIdentidade(x.arquivo).integridade,'ok');
+});
+test('pagamento antigo confirmado consome reserva com uma posicao, sem novo pedido',async t=>{
+ const x=await fixture(t);
+ x.produto({nome:'abandonoPago',preco:25000});
+ const p=await x.criarPedido({nome:'abandonoPago',preco:25000,comPreflight:true});
+ let hora=Date.now()+16*60*1000;
+ const gestor=new RecuperacaoReservasCheckoutSQLite({
+  banco:x.db,preflight:x.preflight,pedidos:x.pedidosIntegrados,
+  agora:()=>hora
+ });
+ x.statusPsp.set(p.pedidoId,{status:'CONFIRMADO'});
+ const r=await gestor.reconsultarVencidas({
+  limite:20,autorizadoEnsaio:true
+ });
+ assert.equal(r.consumidas,1);
+ assert.equal(r.liberadas,0);
+ assert.equal(x.preflight.consultar({titularId:x.titular.titularId}).ativas,1);
+ assert.equal(x.preflight.consultar({titularId:x.titular.titularId}).reservadas,0);
+ assert.equal(x.db.prepare('SELECT COUNT(*) AS n FROM loja_real_pedidos')
+  .get().n,1);
+ assert.equal(x.motor.verificar().compras,1);
+ assert.equal(gestor.verificar().reconsultas,1);
+ assert.equal(validarIdentidade(x.arquivo).integridade,'ok');
+});
+test('reconsulta PSP sem homologacao e falha de provedor preservam vagas e nao criam pagamento',async t=>{
+ const x=await fixture(t);
+ x.produto({nome:'abandonoErro',preco:25000});
+ const p=await x.criarPedido({nome:'abandonoErro',preco:25000,
+  comPreflight:true});
+ let hora=Date.now()+16*60*1000;
+ const gestor=new RecuperacaoReservasCheckoutSQLite({
+  banco:x.db,preflight:x.preflight,pedidos:x.pedidosIntegrados,
+  agora:()=>hora
+ });
+ x.statusPsp.set(p.pedidoId,{status:'STATUS_DESCONHECIDO'});
+ const r=await gestor.reconsultarVencidas({
+  limite:20,autorizadoEnsaio:true
+ });
+ assert.equal(r.pendentes,1);
+ assert.equal(r.liberadas,0);
+ assert.equal(x.preflight.consultar({titularId:x.titular.titularId}).reservadas,1);
+ const bloqueado=new RecuperacaoReservasCheckoutSQLite({
+  banco:x.db,preflight:x.preflight,agora:()=>hora
+ });
+ assert.equal(bloqueado.consultar().proximaAcao,'AGUARDAR_PSP_HOMOLOGADO');
+ await assert.rejects(bloqueado.reconsultarVencidas({
+  limite:20,autorizadoEnsaio:true
+ }),{codigo:'RECUPERACAO_PSP_NAO_HOMOLOGADO'});
+ const antigo=process.env.NODE_ENV;
+ try{
+  process.env.NODE_ENV='production';
+  await assert.rejects(gestor.reconsultarVencidas({
+   limite:20,autorizadoEnsaio:true
+  }),{codigo:'RECUPERACAO_PSP_NAO_HOMOLOGADO'});
+ }finally{
+  if(antigo===undefined)delete process.env.NODE_ENV;
+  else process.env.NODE_ENV=antigo;
+ }
+ assert.equal(x.motor.verificar().compras,0);
+ assert.equal(x.preflight.verificar().posicoesReservadas,1);
  assert.equal(validarIdentidade(x.arquivo).integridade,'ok');
 });
