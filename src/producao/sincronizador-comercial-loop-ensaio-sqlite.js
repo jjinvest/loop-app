@@ -102,10 +102,10 @@ class SincronizadorComercialLoopEnsaioSQLite{
    if(this.db.prepare(
     'SELECT 1 FROM loop_real_promocoes_pedido_ensaio WHERE pedido_id=?'
    ).get(p.pedido_id))continue;
-   examinadas++;
    const cor=this.classificacao.avaliarPedido({pedidoId:p.pedido_id});
-   if(this._semPosicao(c)){ignoradas++;continue;}
-   if(!this._purezaVerde(c)){especiais++;continue;}
+   if(this._semPosicao(cor)){ignoradas++;continue;}
+   if(!this._purezaVerde(cor)){especiais++;continue;}
+   examinadas++;
    const x=this.promocao.aprovarEEnfileirarEmEnsaio({
     pedidoId:p.pedido_id,pagamentoId:p.pagamento_id,
     valorCentavos:p.valor_total_centavos,
