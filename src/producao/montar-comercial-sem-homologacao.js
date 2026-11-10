@@ -31,6 +31,46 @@ function exigirChaveParaHistoricoComercial({banco,chavePedidos=null}={}){
  }
  return {historicoComercialAutorizado:false};
 }
+// A fachada do checkout real continua bloqueada, mas o comprador deve
+// acompanhar seu pedido REAL persistido apos reinicio. Somente os metodos
+// de leitura saem da composicao; nao expor a instancia de escrita.
+function criarLeituraComercialSegura({banco,pedidos}={}){
+ if(pedidos?.db!==banco||
+    typeof pedidos?.listarDoTitular!=='function'||
+    typeof banco?.prepare!=='function')
+  falhar('LEITURA_COMERCIAL_BANCO_OU_PEDIDO_INVALIDO');
+ const temOutbox=()=>!!banco.prepare([
+  "SELECT 1 FROM sqlite_master WHERE type='table'",
+  "AND name='loja_real_outbox_fornecedor'"
+ ].join(' ')).get();
+ const leituraPedidos=Object.freeze({
+  listarDoTitular({titularId,limite=30}={}){
+   return pedidos.listarDoTitular({titularId,limite});
+  },
+  consultarDoTitular({titularId,pedidoId}={}){
+   return pedidos.consultarDoTitular({titularId,pedidoId});
+  }
+ });
+ const leituraRemessas=Object.freeze({
+  consultar({pedidoId,fornecedorId}={}){
+   if(typeof pedidoId!=='string'||!/^[A-Za-z0-9_-]{1,120}$/.test(pedidoId)||
+      typeof fornecedorId!=='string'||!/^[A-Za-z0-9_-]{1,120}$/.test(fornecedorId))
+    falhar('LEITURA_REMESSA_IDENTIFICADOR_INVALIDO');
+   if(!temOutbox())return null;
+   const r=banco.prepare([
+    'SELECT o.estado,o.pedido_parceiro_id FROM loja_real_outbox_fornecedor o',
+    'JOIN loja_real_pedidos p ON p.pedido_id=o.pedido_id',
+    'WHERE o.pedido_id=? AND o.fornecedor_id=?'
+   ].join(' ')).get(pedidoId,fornecedorId);
+   if(r&&!['PENDENTE','INDETERMINADO','ENVIADO'].includes(r.estado))
+    falhar('LEITURA_REMESSA_ESTADO_INCONSISTENTE');
+   return r?{estado:r.estado,pedidoParceiroId:r.pedido_parceiro_id}:null;
+  }
+ });
+ return Object.freeze({leituraPedidos,leituraRemessas,
+  novaCompra:false,novoPagamento:false,envioFornecedor:false,
+  financeiroReal:false});
+}
 function montarComercialSemHomologacao({
  banco,chavePedidos,auditoria,manutencao
 }={}){
@@ -67,11 +107,13 @@ function montarComercialSemHomologacao({
     eventos.pedidosAprovadosSemEvento!==0)
   falhar('COMERCIAL_SEGURO_AUDITORIA_DIVERGENTE');
  auditoria.verificar();
+ const leitura=criarLeituraComercialSegura({banco,pedidos:pedidosInternos});
  return Object.freeze({
-  classificacaoLoop,eventosComerciais,
+  classificacaoLoop,eventosComerciais,...leitura,
   pedidosComerciaisPublicos:false,
   checkoutHabilitado:false,pspHomologado:false,
   ativacaoPosicoesHabilitada:false
  });
 }
-module.exports={montarComercialSemHomologacao,exigirChaveParaHistoricoComercial};
+module.exports={montarComercialSemHomologacao,exigirChaveParaHistoricoComercial,
+ criarLeituraComercialSegura};
