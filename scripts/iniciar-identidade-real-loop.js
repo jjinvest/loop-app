@@ -8,6 +8,8 @@ const {OperacaoCatracaAdminSQLite}=
  require('../src/producao/operacao-catraca-admin-sqlite');
 const {PreflightCapacidadeCheckoutSQLite}=
  require('../src/producao/preflight-capacidade-checkout-sqlite');
+const {RecuperacaoReservasCheckoutSQLite}=
+ require('../src/producao/recuperacao-reservas-checkout-sqlite');
 const {IdentidadeClienteLoopReal}=
  require('../src/producao/identidade-cliente-loop-sqlite');
 const {criarAppIdentidadeLoop}=
@@ -156,6 +158,13 @@ async function iniciar(ambiente=process.env){
     banco,motor:motorLoop,classificacaoLoop
    }):null;
   preflightCapacidade?.verificar();
+  // Painel real somente leitura: sem PSP/fornecedor homologado,
+  // nada e cancelado ou reconsultado automaticamente.
+  const recuperacaoReservas=preflightCapacidade?
+   new RecuperacaoReservasCheckoutSQLite({
+    banco,preflight:preflightCapacidade
+   }):null;
+  recuperacaoReservas?.verificar();
   agendador=criarAgendadorBackupIdentidadeReal({
    exigirProvaChaves:true,
    executar:()=>enviarBackupOffsiteIdentidade({
@@ -172,7 +181,7 @@ async function iniciar(ambiente=process.env){
    origemHttps:config.origemHttps,permitirCadastro:true,
    backupEstado:()=>agendador.estado(),
    adminComercial:{catalogo,controle,sessoes,auditoria,manutencao,
-    classificacaoLoop,operacaoCatraca}
+    classificacaoLoop,operacaoCatraca,recuperacaoReservas}
   });
   const porta=Number(ambiente.PORT||3000);
   if(!Number.isSafeInteger(porta)||porta<1||porta>65535)
