@@ -722,3 +722,6 @@ Regras especiais: dourado, uma posicao prevista por unidade; roxo, quantidade pr
 **Prova:** GitHub Actions 42735438314 SUCCESS, commit de codigo 8b1829a89c12f8f3f7afb8c1db98e049caefc13b, cobrindo azul/CPF/termos/titular/replay/reversao, contador fila, compra mista e backup. Codigo na branch feature/unificar-escritorio-real-20261105. PR #1 DRAFT continua em outra branch sem merge; sem deploy/dinheiro real.
 
 **Pendencias:** integrar aceite na UI original com KYC e guarda de CPF homologados; criar e testar lotes dourados e roxos com provisao financeira e capacidade; provar liquidacao independente real, conciliar bancos, validar operacao juridica e reversoes compensatorias. Fluxo segue financeiramente bloqueado.
+
+
+**Complemento auditado da continuidade 311 (09/11/2026):** a conferencia de integridade do aceite AZUL compara os registros imutaveis de CPF/termos, reversao e o snapshot/indice da mesma posicao. Uma alteracao direta em estado de adesao sem registro de consentimento agora bloqueia a auditoria e o backup. Regressao em test/promocao-pedido-motor-ensaio-sqlite.test.js. Ultima suite da identidade: https://github.com/jjinvest/loop-app/actions/runs/42736127247 SUCCESS, commit f503b326606c0eed1bc509f8f1fa03611a598c9f. Nenhum endpoint publico novo, merge, deploy ou dinheiro real.
