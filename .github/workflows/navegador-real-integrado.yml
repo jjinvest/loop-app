@@ -7,6 +7,10 @@ on:
     paths:
       - 'scripts/validar-identidade-real-navegador.js'
       - 'src/producao/**'
+      - 'src/laboratorio/**'
+      - 'src/domain/**'
+      - 'package.json'
+      - 'package-lock.json'
       - '.github/workflows/navegador-real-integrado.yml'
       - 'test/promocao-pedido-motor-ensaio-sqlite.test.js'
   workflow_dispatch:
