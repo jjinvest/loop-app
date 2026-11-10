@@ -6,6 +6,8 @@ const {DatabaseSync}=require('node:sqlite');
 const {MotorLoopIntegradoSQLite}=require('../src/producao/motor-loop-integrado-sqlite');
 const {OperacaoCatracaAdminSQLite}=
  require('../src/producao/operacao-catraca-admin-sqlite');
+const {PreflightCapacidadeCheckoutSQLite}=
+ require('../src/producao/preflight-capacidade-checkout-sqlite');
 const {IdentidadeClienteLoopReal}=
  require('../src/producao/identidade-cliente-loop-sqlite');
 const {criarAppIdentidadeLoop}=
@@ -147,6 +149,13 @@ async function iniciar(ambiente=process.env){
   }):null;
   const classificacaoLoop=comercial?.classificacaoLoop||null;
   const eventosComerciais=comercial?.eventosComerciais||null;
+  // Consultas de vagas no servidor definitivo usam o mesmo motor e
+  // fotografia das regras comerciais; PSP/checkout continuam fechados.
+  const preflightCapacidade=classificacaoLoop?
+   new PreflightCapacidadeCheckoutSQLite({
+    banco,motor:motorLoop,classificacaoLoop
+   }):null;
+  preflightCapacidade?.verificar();
   agendador=criarAgendadorBackupIdentidadeReal({
    exigirProvaChaves:true,
    executar:()=>enviarBackupOffsiteIdentidade({
@@ -159,7 +168,7 @@ async function iniciar(ambiente=process.env){
   // listener; nenhuma conta real é criada sem prova de recuperação.
   await agendador.iniciar();
   const app=criarAppIdentidadeLoop({
-   contas,motorLoop,eventosComerciais,
+   contas,motorLoop,eventosComerciais,preflightCapacidade,
    origemHttps:config.origemHttps,permitirCadastro:true,
    backupEstado:()=>agendador.estado(),
    adminComercial:{catalogo,controle,sessoes,auditoria,manutencao,
