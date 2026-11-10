@@ -1363,3 +1363,33 @@ test('reconsulta PSP sem homologacao e falha de provedor preservam vagas e nao c
  assert.equal(x.preflight.verificar().posicoesReservadas,1);
  assert.equal(validarIdentidade(x.arquivo).integridade,'ok');
 });
+
+
+test('compra paga cuja ponte sofreu queda retorna a fila pela recuperacao, sem duplo pagamento',async t=>{
+ const x=await fixture(t);
+ x.produto({nome:'pagoSemPosicao',preco:25000});
+ const p=await x.criarPedido({nome:'pagoSemPosicao',preco:25000,
+  comPreflight:true});
+ const normal=x.integracao.sincronizar;
+ x.integracao.sincronizar=()=>{throw Error('QUEDA_TRANSIENTE_ENTRE_PSP_E_MOTOR')};
+ const primeiro=await x.pedidosIntegrados.confirmarPagamento({pedidoId:p.pedidoId});
+ x.integracao.sincronizar=normal;
+ assert.equal(primeiro.confirmado,true);
+ assert.equal(primeiro.integracaoLoopPendenteReprocessamento,true);
+ assert.equal(x.motor.verificar().compras,0);
+ assert.equal(x.preflight.consultar({titularId:x.titular.titularId}).reservadas,1);
+ const gestor=new RecuperacaoReservasCheckoutSQLite({
+  banco:x.db,preflight:x.preflight,pedidos:x.pedidosIntegrados,
+  agora:()=>Date.now()+16*60000
+ });
+ assert.equal(gestor.consultar().reservasConfirmadasSemPosicao,1);
+ const resposta=await gestor.reconsultarVencidas({limite:20,autorizadoEnsaio:true});
+ assert.equal(resposta.consumidas,1);
+ assert.equal(resposta.liberadas,0);
+ assert.equal(x.motor.verificar().compras,1);
+ assert.equal(x.preflight.consultar({titularId:x.titular.titularId}).reservadas,0);
+ assert.equal(x.preflight.consultar({titularId:x.titular.titularId}).ativas,1);
+ assert.equal(x.db.prepare('SELECT COUNT(*) AS n FROM loja_real_pedidos').get().n,1);
+ assert.equal(gestor.verificar().reconsultas,1);
+ assert.equal(validarIdentidade(x.arquivo).integridade,'ok');
+});
