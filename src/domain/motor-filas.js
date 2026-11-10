@@ -174,6 +174,7 @@ class MotorFilas {
     const titularesBloqueados=typeof opcoes==='function'?[]:(opcoes.titularesBloqueados||[]);
     const bloqueados=new Set(titularesBloqueados);
     const elegivel=p=>p.statusAdesao!=='REVISAR_PSP'&&
+       p.statusAdesao!=='PENDENTE'&&
       !bloqueados.has(p.participanteId)&&
       (typeof opcoes!=='function'||opcoes(p));
     const indiceA=this.filaA.findIndex(elegivel);
