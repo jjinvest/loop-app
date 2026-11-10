@@ -66,7 +66,6 @@ class AceitePosicaoAzulEnsaioSQLite{
      ![...s.filas.filaA,...s.filas.filaB].some(p=>p.id===posicaoId))
    falha('AZUL_PRAZO_DE_CONFIRMACAO_ENCERRADO');
   pos.statusAdesao=novo;idx.statusAdesao=novo;
-  if(novo==='REVISAR_PSP')s.catraca.aberta=false;
   this.db.prepare(
    'UPDATE loop_real_motor_estado SET revisao=revisao+1,snapshot=? WHERE id=1'
   ).run(JSON.stringify(s));
