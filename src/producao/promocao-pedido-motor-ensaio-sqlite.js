@@ -1,16 +1,19 @@
 'use strict';
+const {AceitePosicaoAzulEnsaioSQLite}=require('./aceite-posicao-azul-ensaio-sqlite');
 // PONTE DE HOMOLOGACAO INTERNA: pedido aprovado + evento comercial +
 // fotografia de regra verde + aceite de ensaio -> uma posição no motor.
 // Esse aceite é SIMULADO. Não substitui Pix, liquidação ou KYC reais.
 // Não existe rota HTTP, deploy, dinheiro real ou ativação produtiva.
 const TABELAS_PROMOCAO_ENSAIO=Object.freeze([
- 'loop_real_promocoes_pedido_ensaio'
+ 'loop_real_promocoes_pedido_ensaio',
+ ...AceitePosicaoAzulEnsaioSQLite.TABELAS
 ]);
 const ID=/^[A-Za-z0-9_-]{3,120}$/;
 const TITULAR=/^titular-[a-f0-9-]{36}$/;
 function falha(c){const e=new Error(c);e.codigo=c;throw e;}
 class PromocaoPedidoMotorEnsaioSQLite{
- constructor({banco,motor,classificacaoLoop,agora=()=>Date.now()}={}){
+ constructor({banco,motor,classificacaoLoop,
+  chaveCpfEnsaio=null,agora=()=>Date.now()}={}){
   if(process.env.NODE_ENV==='production')
    falha('PROMOCAO_PRODUCAO_NAO_HOMOLOGADA');
   if(!banco||typeof banco.prepare!=='function'||
@@ -47,6 +50,9 @@ class PromocaoPedidoMotorEnsaioSQLite{
    'BEFORE DELETE ON loop_real_promocoes_pedido_ensaio',
    "BEGIN SELECT RAISE(ABORT,'PROMOCAO_ENSAIO_IMUTAVEL'); END;"
   ].join(' '));
+  this.aceiteAzul=new AceitePosicaoAzulEnsaioSQLite({
+   banco,chaveCpfEnsaio,agora
+  });
   this.verificar();
  }
  _validarPedido(pedidoId,pagamentoId,valorCentavos){
@@ -161,6 +167,12 @@ class PromocaoPedidoMotorEnsaioSQLite{
     catracaRealLiberada:false};
   }catch(err){this.db.exec('ROLLBACK');throw err;}
  }
+ confirmarPosicaoAzulEmEnsaio(dados){
+  return this.aceiteAzul.confirmar(dados);
+ }
+ suspenderPromocaoRevertidaEmEnsaio(dados){
+  return this.aceiteAzul.suspenderReversao(dados);
+ }
  verificar(){
   let total=0,emRevisao=0;
   for(const row of this.db.prepare([
@@ -190,7 +202,9 @@ class PromocaoPedidoMotorEnsaioSQLite{
    else if(row.estado!=='AGUARDANDO_CONCILIACAO')
     falha('PROMOCAO_EVENTO_ESTADO_DESCONHECIDO');
   }
+  const auditoriaAzul=AceitePosicaoAzulEnsaioSQLite.verificar(this.db);
   return {integridade:'OK',promocoesEnsaio:total,
+   ...auditoriaAzul,
    posicoesEnsaioComEstornoPendente:emRevisao,
    motorBloqueadoPorEstorno:emRevisao>0,
    comprovantesBancariosReais:0,financeiroReal:false};
@@ -203,7 +217,8 @@ class PromocaoPedidoMotorEnsaioSQLite{
    'WHERE titular_id=? ORDER BY criado_em DESC,pedido_id DESC'
   ].join(' ')).all(titularId);
   return {promocoes:linhas.map(x=>({pedidoId:x.pedido_id,
-   posicaoId:x.posicao_id,registradoEm:x.criado_em})),
+   posicaoId:x.posicao_id,registradoEm:x.criado_em,
+   estadoAdesao:AceitePosicaoAzulEnsaioSQLite.estado(this.db,x.posicao_id)})),
    financeiroReal:false,comprovacaoExternaReal:false};
  }
 }
