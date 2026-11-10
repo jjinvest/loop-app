@@ -10,6 +10,8 @@ const {pipeline}=require('node:stream/promises');
 const {createHash,createCipheriv,createDecipheriv,randomBytes,hkdfSync}=
  require('node:crypto');
 const {MotorLoopIntegradoSQLite,TABELAS_MOTOR}=require('./motor-loop-integrado-sqlite');
+const {PreflightCapacidadeCheckoutSQLite,TABELAS_PREFLIGHT}=
+ require('./preflight-capacidade-checkout-sqlite');
 const {OperacaoCatracaAdminSQLite,TABELAS_CATRACA_ADMIN}=
  require('./operacao-catraca-admin-sqlite');
 const {PromocaoPedidoMotorEnsaioSQLite,TABELAS_PROMOCAO_ENSAIO}=
@@ -79,7 +81,8 @@ function validarIdentidade(arquivo){
   if(TABELAS.some(x=>!lista.includes(x)))falha('BACKUP_REAL_ESQUEMA_INCOMPLETO');
   const todos=[...TABELAS,...TABELAS_ADMIN,...TABELAS_COMERCIAIS,
    ...TABELAS_MOTOR,...TABELAS_CATRACA_ADMIN,...TABELAS_TESOURARIA_ENSAIO,
-   ...TABELAS_PROMOCAO_ENSAIO,...TABELAS_LOTES_ENSAIO];
+   ...TABELAS_PROMOCAO_ENSAIO,...TABELAS_LOTES_ENSAIO,
+   ...TABELAS_PREFLIGHT];
   if(lista.some(x=>!todos.includes(x)))
    falha('BACKUP_IDENTIDADE_NAO_COBRE_TABELAS_COMERCIAIS');
   const temEnsaio=TABELAS_TESOURARIA_ENSAIO.some(x=>lista.includes(x));
@@ -150,6 +153,25 @@ function validarIdentidade(arquivo){
     if(modulo.verificar().integridade!=='OK')
      falha('BACKUP_LOTES_ENSAIO_DIVERGENTE');
    }catch{falha('BACKUP_LOTES_ENSAIO_DIVERGENTE');}
+  }
+  // O saldo de capacidade prometido antes da cobranca tambem e duravel.
+  const temPreflight=TABELAS_PREFLIGHT.some(x=>lista.includes(x));
+  if(temPreflight){
+   if(TABELAS_PREFLIGHT.some(x=>!lista.includes(x)))
+    falha('BACKUP_CAPACIDADE_ESQUEMA_PARCIAL');
+   try{
+    if(!temMotor)falha('BACKUP_CAPACIDADE_SEM_MOTOR');
+    const preflight=Object.create(PreflightCapacidadeCheckoutSQLite.prototype);
+    preflight.db=b;
+    const motor=Object.create(MotorLoopIntegradoSQLite.prototype);
+    motor.banco=b;
+    preflight.motor=motor;
+    const cor=Object.create(ClassificacaoComercialLoopSQLite.prototype);
+    cor.db=b;
+    preflight.classificacao=cor;
+    if(preflight.verificar().integridade!=='OK')
+     falha('BACKUP_CAPACIDADE_DIVERGENTE');
+   }catch{falha('BACKUP_CAPACIDADE_DIVERGENTE');}
   }
   // Não aceitar snapshot administrativo parcial. Pedidos e remessas
   // são conferidos semanticamente, sem inferir conciliação bancária.
