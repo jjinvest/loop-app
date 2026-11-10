@@ -340,7 +340,21 @@ class PromocaoLotesEnsaioSQLite{
   const fila=this.db.prepare(
    'SELECT snapshot FROM loop_real_motor_estado WHERE id=1'
   ).get();
-  const indice=fila?JSON.parse(fila.snapshot).filas.vendasRegistradas:[];
+  const snapshot=fila?JSON.parse(fila.snapshot):null;
+  const indice=new Map(snapshot?.filas?.vendasRegistradas||[]);
+  const vivos=snapshot?[...snapshot.filas.filaA,...snapshot.filas.filaB,
+   snapshot.tabuleiro.centro,...snapshot.tabuleiro.vagas].filter(Boolean):[];
+  const aceitos=new Set(this.db.prepare(
+   'SELECT posicao_id FROM loop_real_aceites_lotes_ensaio'
+  ).all().map(x=>x.posicao_id));
+  const revertidos=new Set();
+  for(const x of this.db.prepare([
+   'SELECT r.pedido_id,e.estado FROM loop_real_reversoes_lotes_ensaio r',
+   'JOIN loop_real_eventos_comerciais e ON e.pedido_id=r.pedido_id'
+  ].join(' ')).all()){
+   if(x.estado!=='CANCELADO')falha('LOTE_REVERSAO_SEM_CANCELAMENTO');
+   revertidos.add(x.pedido_id);
+  }
   let total=0,aceites=0;
   for(const l of lotes){
    const ps=this._posicoes(l.pedido_id);
@@ -358,9 +372,26 @@ class PromocaoLotesEnsaioSQLite{
     const m=this.db.prepare(
      'SELECT titular_id,posicao_id FROM loop_real_motor_compras WHERE pedido_id=?'
     ).get(x.vendaInternaId);
+    const origem=indice.get(x.vendaInternaId);
+    const estadoEsperado=revertidos.has(l.pedido_id)?'REVISAR_PSP':
+     aceitos.has(x.posicaoId)?'ACEITE_ENSAIO':'PENDENTE';
     if(!m||m.posicao_id!==x.posicaoId||m.titular_id!==l.titular_id||
-       indice.find(v=>v[0]===x.vendaInternaId)?.[1]?.id!==x.posicaoId)
+       !origem||origem.id!==x.posicaoId||
+       origem.participanteId!==l.titular_id||
+       origem.classeProdutoOrigem!==x.tipo||
+       origem.statusAdesao!==estadoEsperado)
      falha('LOTE_LIVRO_MOTOR_DIVERGENTE');
+    const vivo=vivos.find(v=>v.id===x.posicaoId);
+    if(vivo){
+     const assumida=vivo.empresa===true&&
+      vivo.statusAdesao==='PRAZO_ENCERRADO'&&
+      vivo.titularOperacional==='LOOP_EMPRESA'&&
+      vivo.motivoAssuncao==='SEM_CPF_E_TERMOS_NA_ENTRADA_VAGA_6';
+     if(vivo.participanteId!==l.titular_id||
+        vivo.classeProdutoOrigem!==x.tipo||
+        (vivo.statusAdesao!==estadoEsperado&&!assumida))
+      falha('LOTE_POSICAO_MOVIMENTO_OU_ACEITE_DIVERGENTE');
+    }
    }
    total+=ps.length;
   }
@@ -378,6 +409,7 @@ class PromocaoLotesEnsaioSQLite{
     falha('LOTE_ACEITE_DIVERGENTE');
    aceites++;
   }
+  if(aceites!==aceitos.size)falha('LOTE_ACEITES_FORA_DO_LIVRO');
   return {integridade:'OK',pedidosEmLote:lotes.length,
    posicoesEmLote:total,aceitesIndividuaisEnsaio:aceites,financeiroReal:false};
  }
