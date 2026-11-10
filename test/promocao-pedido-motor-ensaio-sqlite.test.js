@@ -1393,3 +1393,73 @@ test('compra paga cuja ponte sofreu queda retorna a fila pela recuperacao, sem d
  assert.equal(gestor.verificar().reconsultas,1);
  assert.equal(validarIdentidade(x.arquivo).integridade,'ok');
 });
+
+
+test('botao do administrador reconsulta reservas vencidas; cliente e visitante nao acessam',async t=>{
+ const x=await fixture(t),origin='https://contas.example.invalid';
+ x.produto({nome:'vencidaHttp',preco:25000,cor:'VERDE'});
+ const p=await x.criarPedido({nome:'vencidaHttp',preco:25000,
+  comPreflight:true});
+ x.statusPsp.set(p.pedidoId,{status:'PENDENTE'});
+ let hora=Date.now()+16*60*1000;
+ const recuperacao=new RecuperacaoReservasCheckoutSQLite({
+  banco:x.db,preflight:x.preflight,pedidos:x.pedidosIntegrados,
+  agora:()=>hora
+ });
+ const app=criarAppIdentidadeLoop({
+  contas:x.contas,motorLoop:x.motor,origemHttps:origin,
+  adminComercial:{catalogo:x.catalogo,controle:x.controle,
+   sessoes:x.sessoes,auditoria:x.auditoria,manutencao:x.manutencao,
+   classificacaoLoop:x.classificacao,recuperacaoReservas:recuperacao}
+ });
+ const server=app.listen(0,'127.0.0.1');await once(server,'listening');
+ t.after(()=>new Promise(resolve=>server.close(resolve)));
+ const base='http://127.0.0.1:'+server.address().port;
+ const url=base+'/api/admin/comercial/reservas-vencidas';
+ assert.equal((await fetch(url)).status,401);
+ const login=await fetch(base+'/administrador/entrar',{
+  method:'POST',redirect:'manual',
+  headers:{Origin:origin,'Content-Type':'application/x-www-form-urlencoded'},
+  body:new URLSearchParams({senha:'CredencialAdminSomenteEnsaios2026!Complexa'})
+ });
+ assert.equal(login.status,303);
+ const cookie=login.headers.get('set-cookie').split(';')[0];
+ const painel=await (await fetch(base+'/administrador',{
+  headers:{Cookie:cookie}
+ })).text();
+ assert.match(painel,/id="reconsultarReservasVencidasAdmin"/);
+ const js=await (await fetch(base+'/identidade/assets/admin-comercial.js',{
+  headers:{Cookie:cookie}
+ })).text();
+ assert.match(js,/reconsultarReservasVencidasAdmin/);
+ const estado=await (await fetch(url,{headers:{Cookie:cookie}})).json();
+ assert.equal(estado.reservasEmAberto,1);
+ assert.equal(estado.elegiveisParaReconsulta,1);
+ assert.equal(estado.liberacaoPorTempo,false);
+ const sessao=await (await fetch(base+'/api/admin/comercial/sessao',{
+  headers:{Cookie:cookie}
+ })).json();
+ const body=JSON.stringify({limite:20});
+ const cab={Cookie:cookie,Origin:origin,'Content-Type':'application/json'};
+ assert.equal((await fetch(url+'/reconsultar',{
+  method:'POST',headers:cab,body
+ })).status,403);
+ assert.equal((await fetch(url+'/reconsultar',{
+  method:'POST',headers:{...cab,'X-Loop-Admin-Csrf':sessao.csrfToken},
+  body:JSON.stringify({limite:9999})
+ })).status,400);
+ const resposta=await fetch(url+'/reconsultar',{
+  method:'POST',headers:{...cab,'X-Loop-Admin-Csrf':sessao.csrfToken},
+  body
+ });
+ assert.equal(resposta.status,200);
+ assert.equal((await resposta.json()).pendentes,1);
+ assert.equal(x.preflight.consultar({titularId:x.titular.titularId}).reservadas,1);
+ assert.equal((await fetch(url)).status,401);
+ assert.equal((await fetch(url+'/reconsultar',{
+  method:'POST',headers:{Origin:origin,'Content-Type':'application/json',
+   'X-Loop-Admin-Csrf':sessao.csrfToken},
+  body
+ })).status,401);
+ assert.equal(validarIdentidade(x.arquivo).integridade,'ok');
+});
