@@ -43,3 +43,6 @@ O backup cifrado `src/producao/backup-identidade-real.js` passou a incluir e con
 **CI comprovado:** https://github.com/jjinvest/loop-app/actions/runs/42735438314 SUCCESS no commit 8b1829a89c12f8f3f7afb8c1db98e049caefc13b. Branch feature/unificar-escritorio-real-20261105 distinta da branch da PR #1 DRAFT. Nenhum merge/deploy.
 
 **Faltam para uso real:** aceite por interface autenticada e KYC externo, custodia de identidade, multi-posicoes especiais com aprovacao financeira, pagamento liquidado e conciliado em banco, compensacao de reversoes e autorizacoes juridicas/PSP/bancos.
+
+
+**Complemento auditado da continuidade 311 (09/11/2026):** a conferencia de integridade do aceite AZUL compara os registros imutaveis de CPF/termos, reversao e o snapshot/indice da mesma posicao. Uma alteracao direta em estado de adesao sem registro de consentimento agora bloqueia a auditoria e o backup. Regressao em test/promocao-pedido-motor-ensaio-sqlite.test.js. Ultima suite da identidade: https://github.com/jjinvest/loop-app/actions/runs/42736127247 SUCCESS, commit f503b326606c0eed1bc509f8f1fa03611a598c9f. Nenhum endpoint publico novo, merge, deploy ou dinheiro real.
