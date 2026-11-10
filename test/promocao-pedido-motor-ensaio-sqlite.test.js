@@ -155,8 +155,8 @@ test('compra verde R$250 sem frete promove uma posição em B no mesmo commit, u
  assert.equal(x.producao.aprovarEEnfileirarEmEnsaio(p).repetida,false);
  const estado=x.motor.consultar({titularId:x.titular.titularId});
  assert.equal(estado.minhasPosicoes.length,1);
- assert.equal(estado.minhasPosicoes[0].local,'AGUARDANDO_CPF_TERMOS');
- assert.equal(estado.filaB,0);
+ assert.equal(estado.minhasPosicoes[0].local,'FILA_B');
+ assert.equal(estado.filaB,1);
  assert.equal(estado.posicoesAzuisPendentes,1);
  assert.equal(estado.tabuleiro.eventosNoCiclo,0);
  assert.equal(estado.catraca.giros,0);
@@ -343,8 +343,8 @@ test('Escritorio HTTP aprovado enxerga automaticamente posicao de compra verde s
   headers:{Cookie:cookies[0]}
  })).json();
  assert.equal(estado.minhasPosicoes.length,1);
- assert.equal(estado.minhasPosicoes[0].local,'AGUARDANDO_CPF_TERMOS');
- assert.equal(estado.filaB,0);
+ assert.equal(estado.minhasPosicoes[0].local,'FILA_B');
+ assert.equal(estado.filaB,1);
  assert.equal(estado.posicoesAzuisPendentes,1);
  assert.equal(estado.minhasPosicoes[0].pedidoDeOrigemEnsaio,p.pedidoId);
  assert.equal(estado.eventosComerciais.promovidasSomenteEmEnsaio,1);
@@ -374,15 +374,13 @@ test('Escritorio HTTP aprovado enxerga automaticamente posicao de compra verde s
  assert.equal(x.motor.verificar().compras,1);
 });
 
-test('azul espera CPF e termos de cada posicao antes de participar da catraca',async t=>{
+test('azul pode ser confirmada enquanto aguarda na fila, sem impedir circulacao',async t=>{
  const x=await fixture(t);
  x.produto({nome:'verdeAzul',preco:25000});
  const p=await x.criarPedido({nome:'verdeAzul',preco:25000});
  await x.confirmar(p);
  const r=x.producao.aprovarEEnfileirarEmEnsaio(p);
  assert.equal(x.motor.consultar({titularId:x.titular.titularId}).minhasPosicoes[0].estadoAdesao,'PENDENTE');
- x.motor.prepararTabuleiroEnsaio();
- assert.equal(x.motor.consultar().tabuleiro.centro,null);
  const docs=x.contas.documentos();
  const a={titularId:x.titular.titularId,posicaoId:r.posicaoId,
   cpf:'52998224725',aceiteExplicito:true,
@@ -397,6 +395,10 @@ test('azul espera CPF e termos de cada posicao antes de participar da catraca',a
  assert.equal(x.producao.confirmarPosicaoAzulEmEnsaio(a).repetido,true);
  assert.equal(x.motor.consultar({titularId:x.titular.titularId}).minhasPosicoes[0].estadoAdesao,'ACEITE_ENSAIO');
  assert.equal(x.producao.verificar().aceitesIndividuaisEnsaio,1);
+ const preenchido=x.motor.prepararTabuleiroEnsaio();
+ assert.equal(preenchido.tabuleiro.centro.id,r.posicaoId);
+ assert.equal(preenchido.tabuleiro.centro.empresa,undefined);
+ assert.equal(preenchido.tabuleiro.centro.statusAdesao,'ACEITE_ENSAIO');
  assert.equal(validarIdentidade(x.arquivo).integridade,'ok');
 });
 test('reversao PSP coloca posicao aceita em quarentena sem apagar historico',async t=>{
@@ -442,4 +444,33 @@ test('auditoria detecta aceite forjado diretamente no snapshot sem livro imutave
   {codigo:'AZUL_SNAPSHOT_AUDITORIA_DIVERGENTE'});
  assert.throws(()=>validarIdentidade(x.arquivo),
   {codigo:'BACKUP_PROMOCAO_DIVERGENTE'});
+});
+
+test('compra azul circula e se torna dourada na entrada da vaga 6 sem bloquear catraca',async t=>{
+ const x=await fixture(t);
+ x.produto({nome:'verdeAutoDourada',preco:25000});
+ const p=await x.criarPedido({nome:'verdeAutoDourada',preco:25000});
+ await x.confirmar(p);
+ const a=x.producao.aprovarEEnfileirarEmEnsaio(p);
+ assert.equal(x.motor.consultar({titularId:x.titular.titularId}).filaB,1);
+ assert.equal(x.motor.consultar({titularId:x.titular.titularId}).posicoesAzuisPendentes,1);
+ const entrada=x.motor.prepararTabuleiroEnsaio();
+ assert.equal(entrada.tabuleiro.centro.id,a.posicaoId);
+ assert.equal(entrada.tabuleiro.centro.empresa,true);
+ assert.equal(entrada.tabuleiro.centro.statusAdesao,'PRAZO_ENCERRADO');
+ assert.equal(entrada.tabuleiro.centro.titularOperacional,'LOOP_EMPRESA');
+ assert.equal(entrada.tabuleiro.centro.motivoAssuncao,'SEM_CPF_E_TERMOS_NA_ENTRADA_VAGA_6');
+ assert.equal(x.motor.consultar({titularId:x.titular.titularId}).minhasPosicoes.length,0,
+  'posicao convertida nao pertence mais a carteira do titular');
+ assert.equal(x.producao.consultarTitularEnsaio({titularId:x.titular.titularId})
+  .promocoes[0].estadoAdesao,'PRAZO_ENCERRADO_DOURADA');
+ const d=x.contas.documentos();
+ assert.throws(()=>x.producao.confirmarPosicaoAzulEmEnsaio({
+  titularId:x.titular.titularId,posicaoId:a.posicaoId,
+  cpf:'52998224725',aceiteExplicito:true,
+  versaoTermos:d.termos.versao,hashTermos:d.termos.hash
+ }),{codigo:'AZUL_SNAPSHOT_DIVERGENTE'});
+ assert.equal(x.producao.verificar().integridade,'OK');
+ assert.equal(x.motor.verificar().integridade,'OK');
+ assert.equal(validarIdentidade(x.arquivo).integridade,'ok');
 });
