@@ -107,7 +107,9 @@ class JornadaComercialUnificadaEnsaioSQLite{
   this._ensaio();
   if(!ID.test(pedidoId||''))
    falha('JORNADA_COMERCIAL_PEDIDO_INVALIDO');
-  const p=this.pedidos.consultarPedidoAprovado({pedidoId});
+  const p=this.db.prepare(
+   'SELECT status FROM loja_real_pedidos WHERE pedido_id=?'
+  ).get(pedidoId);
   if(p?.status!=='APROVADO_PARA_EXPEDICAO')
    falha('JORNADA_COMERCIAL_PEDIDO_NAO_APROVADO');
   // Este metodo nao volta a cobrar: prepara apenas remessas pendentes
