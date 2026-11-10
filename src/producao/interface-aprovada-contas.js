@@ -263,6 +263,81 @@
   return p&&Number.isSafeInteger(p.numero)&&p.numero>0?
    '#'+p.numero:'—';
  }
+ // Conecta o aceite individual da posicao azul diretamente a conta autenticada.
+ // O texto completo dos termos e obrigatorio; nunca armazenar CPF na UI.
+ function renderizarAceiteAzulEnsaio(card,pos){
+  const form=document.createElement('form');
+  form.className='loop03-aceite-posicao';
+  form.autocomplete='off';
+  const descricao=document.createElement('p');
+  descricao.textContent='Posição azul pendente · confirmação individual em ensaio. '+
+   'A posição segue na fila mesmo sem confirmar. Não há crédito financeiro real.';
+  const detalhes=document.createElement('details');
+  const sum=document.createElement('summary');
+  sum.textContent='Ler os termos da confirmação';
+  const termosTexto=document.createElement('p');
+  termosTexto.textContent='Carregando termos vigentes...';
+  detalhes.append(sum,termosTexto);
+  const nomeCampo='cpfPosicao'+pos.numero;
+  const label=document.createElement('label');
+  label.textContent='CPF da posição #'+pos.numero+' (11 números)';
+  label.htmlFor=nomeCampo;
+  const cpf=document.createElement('input');
+  cpf.id=nomeCampo;cpf.name='cpf';cpf.type='text';
+  cpf.inputMode='numeric';cpf.pattern='[0-9]{11}';
+  cpf.maxLength=11;cpf.required=true;cpf.autocomplete='off';
+  const confirmar=document.createElement('label');
+  const aceite=document.createElement('input');
+  aceite.type='checkbox';aceite.required=true;
+  confirmar.append(aceite,document.createTextNode(
+   ' Li os termos acima e confirmo somente esta posição em ensaio.'));
+  const botao=document.createElement('button');
+  botao.type='submit';botao.textContent='Confirmar posição azul';
+  botao.disabled=true;
+  const retorno=document.createElement('p');
+  retorno.setAttribute('role','status');
+  let termos=null;
+  form.append(descricao,detalhes,label,cpf,confirmar,botao,retorno);
+  card.appendChild(form);
+  void requisitar('/documentos').then(d=>{
+   if(d.financeiroReal!==false||!d.termos||
+      !/^[a-f0-9]{64}$/.test(d.termos.hash)||
+      typeof d.termos.versao!=='string'||
+      typeof d.termos.texto!=='string'||d.termos.texto.length<100)
+    throw Error('DOCUMENTOS_INVALIDOS');
+   termos=d.termos;
+   termosTexto.textContent='Versão: '+termos.versao+'\n'+termos.texto;
+   botao.disabled=false;
+  }).catch(()=>{
+   detalhes.open=true;termosTexto.textContent='Termos indisponíveis. Tente atualizar a página.';
+   retorno.textContent='Não é possível confirmar sem ler os termos vigentes.';
+  });
+  form.addEventListener('submit',ev=>{
+   ev.preventDefault();
+   if(!termos||!aceite.checked||!csrf)return;
+   botao.disabled=true;
+   retorno.textContent='Registrando confirmação desta posição...';
+   void fetch('/api/loop/posicoes/'+pos.numero+'/confirmar-ensaio',{
+    method:'POST',credentials:'same-origin',cache:'no-store',
+    headers:{'Content-Type':'application/json','X-Loop-Csrf':csrf},
+    body:JSON.stringify({cpf:cpf.value,aceiteExplicito:true,
+     versaoTermos:termos.versao,hashTermos:termos.hash})
+   }).then(async r=>{
+    const d=await r.json().catch(()=>({}));
+    if(!r.ok)throw Error(d.erro||'CONFIRMACAO_AZUL_INDISPONIVEL');
+    if(d.financeiroReal!==false||d.estado!=='ACEITE_ENSAIO')
+     throw Error('CONFIRMACAO_AZUL_RESPOSTA_INVALIDA');
+    cpf.value='';aceite.checked=false;
+    retorno.textContent='Confirmação individual registrada em ensaio; '+
+     'sem validação externa de identidade ou valores reais.';
+    await carregarMotor();
+   }).catch(e=>{
+    cpf.value='';
+    retorno.textContent='Não foi possível confirmar: '+(codigos[e.message]||e.message);
+    botao.disabled=false;
+   });
+  });
+ }
  async function carregarMotor(){
   try{
    const r=await fetch('/api/loop/estado',{
@@ -344,7 +419,10 @@
      etapa.textContent=pos.local+' · '+pos.indicacoesQualificadasEnsaio+
       ' indicação(ões) em ensaio · pedido de ensaio '+
       pos.pedidoDeOrigemEnsaio+' · sem direito financeiro real';
-     corpo.append(id,etapa);card.appendChild(corpo);grade.appendChild(card);
+     corpo.append(id,etapa);card.appendChild(corpo);
+     if(pos.aguardandoCpfTermos&&d.confirmacaoAzulEnsaioDisponivel===true)
+      renderizarAceiteAzulEnsaio(card,pos);
+     grade.appendChild(card);
     }
     painel.appendChild(grade);
    }
