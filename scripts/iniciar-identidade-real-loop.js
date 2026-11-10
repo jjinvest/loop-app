@@ -147,7 +147,8 @@ async function iniciar(ambiente=process.env){
    banco,chavePedidos:config.chavePedidos
   });
   const comercial=config.chavePedidos?montarComercialSemHomologacao({
-   banco,chavePedidos:config.chavePedidos,auditoria,manutencao
+   banco,chavePedidos:config.chavePedidos,auditoria,manutencao,
+   catalogoLeitura:catalogo
   }):null;
   const classificacaoLoop=comercial?.classificacaoLoop||null;
   const eventosComerciais=comercial?.eventosComerciais||null;
@@ -180,9 +181,10 @@ async function iniciar(ambiente=process.env){
   // A fachada nao expõe criarPedido/confirmarPagamento/despachar.
   const pedidosComerciais=comercial?.leituraPedidos||null;
   const remessasOutbox=comercial?.leituraRemessas||null;
+  const catalogoVitrine=comercial?.leituraCatalogo||null;
   const app=criarAppIdentidadeLoop({
    contas,motorLoop,eventosComerciais,preflightCapacidade,
-   pedidosComerciais,remessasOutbox,
+   pedidosComerciais,remessasOutbox,catalogoVitrine,
    origemHttps:config.origemHttps,permitirCadastro:true,
    backupEstado:()=>agendador.estado(),
    adminComercial:{catalogo,controle,sessoes,auditoria,manutencao,
