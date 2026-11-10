@@ -382,13 +382,14 @@
  }
  function botoesCatraca(){
   const ativo=!!csrf&&!!politicaCatraca&&
-   politicaCatraca.habilitadoSomenteEnsaio===true&&!catracaOcupada;
+   politicaCatraca.politicaOperacionalConfiguravel===true&&!catracaOcupada;
   for(const id of ['modoCatracaAdmin','limiteCatracaAdmin','inicioCatracaAdmin',
    'fimCatracaAdmin','motivoCatracaAdmin','salvarCatracaAdmin'])
    $(id).disabled=!ativo;
   $('pausarCatracaAdmin').disabled=!ativo||politicaCatraca.modo==='PAUSADA';
   $('liberarCatracaAdmin').disabled=!ativo||politicaCatraca.modo==='MANUAL';
-  $('girarCatracaAdmin').disabled=!ativo||!politicaCatraca.podeGirar;
+  $('girarCatracaAdmin').disabled=!ativo||
+   politicaCatraca.habilitadoSomenteEnsaio!==true||!politicaCatraca.podeGirar;
  }
  async function atualizarCatracaAdmin(){
   try{
@@ -432,7 +433,9 @@
    $('estadoCatracaAdmin').textContent=body.acao==='GIRAR'?
     (resultado.girou?'Giro efetuado no mesmo motor.':
      'Giro não efetuado: '+resultado.motivo):
-    'Política salva e aplicada ao mesmo motor SQLite.';
+    (politicaCatraca?.habilitadoSomenteEnsaio?
+     'Política salva e aplicada ao motor de ensaio.':
+     'Política administrativa salva. Giro produtivo ainda bloqueado.');
   }finally{catracaOcupada=false;botoesCatraca();}
  }
  for(const [id,acao] of [
