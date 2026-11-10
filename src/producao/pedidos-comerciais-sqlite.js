@@ -354,13 +354,18 @@ class PedidosComerciaisSQLite{
      "UPDATE loja_real_pedidos SET status='CANCELADO',atualizado_em=?",
      "WHERE pedido_id=? AND status!='CANCELADO'"
     ].join(' ')).run(this.agora(),pedidoId);
-    if(this.eventosComerciais)
-     this.eventosComerciais.registrarCancelamentoEmTransacao({pedidoId});
+    const eventoCancelado=this.eventosComerciais?
+     this.eventosComerciais.registrarCancelamentoEmTransacao({pedidoId}):null;
     // Libera vagas nao usadas; vagas usadas seguem em revisao individual.
     if(this.preflightCapacidade)
      PreflightCapacidadeCheckoutSQLite.cancelarEmTransacao(this.db,{pedidoId});
     const cancelado=this._publico(this._row(pedidoId));
     this.db.exec('COMMIT');
+    // Cancelamento antes de pagamento nao possui evento PSP promovido:
+    // nao inventar revisao financeira/posicao inexistente.
+    if(eventoCancelado?.existiaEvento===false)
+     return {...cancelado,cancelado:true,
+      semPosicaoLoop:true,estornoLoopSinalizado:false};
     if(!this.integradorComercialEnsaio)return {...cancelado,cancelado:true};
     try{
      const loop=this.integradorComercialEnsaio.sinalizarCancelamento({pedidoId});
