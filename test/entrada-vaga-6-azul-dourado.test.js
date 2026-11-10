@@ -57,10 +57,8 @@ test('azul espera nas filas ate entrar na vaga 6 e so entao vira dourado',()=>{
   const ev=loop.registrarVendaNoCicloSimulada({vendaId:'centro-dourado-'+i});
   destinos.push(ev.venda.destinoCofre);
  }
- assert.deepEqual(destinos,[
-  'LOOP_DOURADAS','LOOP_ESQUERDA','LOOP_DOURADAS',
-  'LOOP_DIREITA','LOOP_DOURADAS','LOOP_ESQUERDA'
- ]);
+ assert.deepEqual(destinos,Array(6).fill('LOOP_DOURADAS'),
+  'regra dourada integral vigente para todo ciclo novo; historico legado preservado');
  assert.equal(cofreDoEvento({posicaoCentro:loop.tabuleiro.centro,ordem:3}),'LOOP_DOURADAS');
 });
 
