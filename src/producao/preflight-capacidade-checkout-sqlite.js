@@ -196,6 +196,9 @@ class PreflightCapacidadeCheckoutSQLite{
    if(hist.some(h=>h.quantidade!==r.quantidade)||
       !ações.has('RESERVAR')||ações.size!==hist.length)
     falha('CHECKOUT_CAPACIDADE_HISTORICO_DIVERGENTE');
+   if(ações.has('ESTORNO')&&
+      (r.estado!=='CONSUMIDA'||r.estado_pedido!=='CANCELADO'))
+    falha('CHECKOUT_CAPACIDADE_ESTORNO_LIVRO_DIVERGENTE');
    if(r.estado==='RESERVADA'){
     reservadas+=r.quantidade;
     if(r.estado_pedido==='CANCELADO'||ações.has('CANCELAR')||
@@ -203,8 +206,26 @@ class PreflightCapacidadeCheckoutSQLite{
      falha('CHECKOUT_CAPACIDADE_RESERVA_CANCELADA');
    }else if(r.estado==='CONSUMIDA'){
     consumidas+=r.quantidade;
-    if(!ações.has('CONSUMIR')||ações.has('CANCELAR'))
+    if(!ações.has('CONSUMIR')||ações.has('CANCELAR')||
+       !['APROVADO_PARA_EXPEDICAO','CANCELADO'].includes(r.estado_pedido)||
+       (r.estado_pedido==='CANCELADO'&&!ações.has('ESTORNO')))
      falha('CHECKOUT_CAPACIDADE_CONSUMO_SEM_PROVA');
+    // Reservas consumidas so deixam de ser contabilizadas quando a
+    // promocao EXISTE; um simples UPDATE nao pode liberar vagas.
+    const simples=!!this.db.prepare([
+     "SELECT 1 FROM sqlite_master WHERE type='table'",
+     "AND name='loop_real_promocoes_pedido_ensaio'"
+    ].join(' ')).get()&&!!this.db.prepare(
+     'SELECT 1 FROM loop_real_promocoes_pedido_ensaio WHERE pedido_id=?'
+    ).get(r.pedido_id);
+    const lotes=!!this.db.prepare([
+     "SELECT 1 FROM sqlite_master WHERE type='table'",
+     "AND name='loop_real_promocoes_lotes_ensaio'"
+    ].join(' ')).get()?this.db.prepare(
+     'SELECT posicoes FROM loop_real_promocoes_lotes_ensaio WHERE pedido_id=?'
+    ).get(r.pedido_id):null;
+    if((simples?1:0)+(lotes?.posicoes||0)!==r.quantidade)
+     falha('CHECKOUT_CAPACIDADE_CONSUMO_SEM_POSICAO');
    }else{
     canceladas+=r.quantidade;
     if(r.estado_pedido!=='CANCELADO'||!ações.has('CANCELAR')||
