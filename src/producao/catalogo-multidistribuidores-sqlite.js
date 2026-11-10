@@ -194,6 +194,34 @@ class CatalogoMultiDistribuidoresSQLite{
    quantidadeDistribuidores:p.quantidadeDistribuidores
   }));
  }
+ // Pré-vitrine pública somente dos produtos explicitamente publicados
+ // pelo administrador. Nunca pressupor preço, estoque ou frete não homologados.
+ listarVitrinePreparacao({limite=50}={}){
+  if(!Number.isSafeInteger(limite)||limite<1||limite>100)
+   erro('CONSULTA_CATALOGO_INVALIDA');
+  const regrasPresentes=!!this.db.prepare([
+   "SELECT 1 FROM sqlite_master WHERE type='table'",
+   "AND name='loop_real_regras_cor'"
+  ].join(' ')).get();
+  const rows=this.db.prepare(regrasPresentes?[
+   'SELECT p.produto_id,p.titulo,p.descricao,p.tipo,',
+   'COALESCE(r.cor,\'CINZA\') AS cor',
+   'FROM loja_real_produtos p LEFT JOIN loop_real_regras_cor r',
+   'ON r.produto_id=p.produto_id',
+   'WHERE p.ativo=1 ORDER BY p.titulo,p.produto_id LIMIT ?'
+  ].join(' '):[
+   "SELECT produto_id,titulo,descricao,tipo,'CINZA' AS cor",
+   'FROM loja_real_produtos WHERE ativo=1',
+   'ORDER BY titulo,produto_id LIMIT ?'
+  ].join(' ')).all(limite);
+  return rows.map(r=>Object.freeze({
+   produtoId:r.produto_id,titulo:r.titulo,
+   descricao:r.descricao,tipo:r.tipo,cor:r.cor,
+   precoCentavos:null,estoqueConfirmado:false,
+   compravel:false,checkoutReal:false,
+   estado:'AGUARDANDO_HOMOLOGACAO_FORNECEDOR'
+  }));
+ }
  listarVitrine({limite=50}={}){
   if(!Number.isInteger(limite)||limite<1||limite>100)
    erro('CONSULTA_CATALOGO_INVALIDA');
