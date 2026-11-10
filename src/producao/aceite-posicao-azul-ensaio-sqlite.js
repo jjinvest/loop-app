@@ -181,6 +181,38 @@ class AceitePosicaoAzulEnsaioSQLite{
   if(r.some(x=>x.estado!=='CANCELADO'||x.posicao_id!==x.posicao_p||
      x.titular_id!==x.titular_p))
    falha('AZUL_REVERSAO_AUDITORIA_DIVERGENTE');
+  // A auditoria tambem confronta o livro imutavel de aceites/reversoes
+  // com o estado do motor; status no snapshot sozinho nunca vale como aceite.
+  const linha=db.prepare('SELECT snapshot FROM loop_real_motor_estado WHERE id=1').get();
+  const promocao=db.prepare([
+   'SELECT pedido_id,titular_id,posicao_id',
+   'FROM loop_real_promocoes_pedido_ensaio'
+  ].join(' ')).all();
+  if(promocao.length&&!linha)falha('AZUL_SNAPSHOT_AUDITORIA_AUSENTE');
+  if(linha){
+   const s=JSON.parse(linha.snapshot);
+   if(!Array.isArray(s.filas?.vendasRegistradas)||!Array.isArray(s.filas?.filaB)||
+      !Array.isArray(s.filas?.filaA)||!Array.isArray(s.tabuleiro?.vagas))
+    falha('AZUL_SNAPSHOT_AUDITORIA_CORROMPIDO');
+   const index=new Map(s.filas.vendasRegistradas);
+   const presentes=[...s.filas.filaA,...s.filas.filaB,s.tabuleiro.centro,
+    ...s.tabuleiro.vagas].filter(Boolean);
+   const aceitos=new Set(a.map(x=>x.posicao_id));
+   const revertidos=new Set(r.map(x=>x.posicao_id));
+   for(const p of promocao){
+    const item=index.get(p.pedido_id);
+    const esperado=revertidos.has(p.posicao_id)?'REVISAR_PSP':
+     aceitos.has(p.posicao_id)?'ACEITE_ENSAIO':'PENDENTE';
+    if(!item||item.id!==p.posicao_id||
+       item.participanteId!==p.titular_id||
+       item.statusAdesao!==esperado)
+     falha('AZUL_SNAPSHOT_AUDITORIA_DIVERGENTE');
+    const atual=presentes.find(x=>x.id===p.posicao_id);
+    if(atual&&(atual.statusAdesao!==esperado||
+       atual.participanteId!==p.titular_id))
+     falha('AZUL_SNAPSHOT_AUDITORIA_DIVERGENTE');
+   }
+  }
   return {aceitesIndividuaisEnsaio:a.length,reversoesEmQuarentena:r.length};
  }
  static estado(db,posicaoId){
