@@ -230,6 +230,7 @@ class CatalogoMultiDistribuidoresSQLite{
   return rows.map(r=>Object.freeze({
    produtoId:r.produto_id,titulo:r.titulo,
    descricao:r.descricao,tipo:r.tipo,cor:r.cor,
+   criadoEm:r.criado_em,
     novidade:Number.isSafeInteger(r.criado_em)&&r.criado_em<=agora&&
      r.criado_em>=agora-30*86400000,
     unidadesConfirmadas:porProduto.get(r.produto_id)||0,
