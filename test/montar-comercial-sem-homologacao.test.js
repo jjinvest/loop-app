@@ -142,6 +142,13 @@ test('serviço sem PSP monta cores+eventos e lê pedido do titular após reiníc
  assert.equal(comercial.checkoutHabilitado,false);
  assert.equal(comercial.ativacaoPosicoesHabilitada,false);
  assert.equal(Object.hasOwn(comercial,'pedidosComerciais'),false);
+ assert.deepEqual(Object.keys(comercial.leituraPedidos),
+  ['listarDoTitular','consultarDoTitular']);
+ assert.deepEqual(Object.keys(comercial.leituraRemessas),['consultar']);
+ assert.equal(comercial.novaCompra,false);
+ assert.equal(comercial.novoPagamento,false);
+ assert.equal(comercial.envioFornecedor,false);
+ assert.equal(Object.isFrozen(comercial.leituraPedidos),true);
  assert.equal(Object.isFrozen(comercial),true);
  const {classificacaoLoop,eventosComerciais}=comercial;
  env.catalogo.criarProduto({produtoId:'livro',titulo:'Livro PDF fictício'});
@@ -170,6 +177,8 @@ test('serviço sem PSP monta cores+eventos e lê pedido do titular após reiníc
  assert.equal(validarIdentidade(x.arquivo).integridade,'ok');
  const app=criarAppIdentidadeLoop({
   contas:env.contas,motorLoop:env.motor,eventosComerciais,
+  pedidosComerciais:comercial.leituraPedidos,
+  remessasOutbox:comercial.leituraRemessas,
   origemHttps:ORIGEM,permitirCadastro:true
  });
  const server=app.listen(0,'127.0.0.1');
@@ -188,6 +197,21 @@ test('serviço sem PSP monta cores+eventos e lê pedido do titular após reiníc
    assert.equal(body.eventos.length,i===0?1:0);
    assert.equal(body.financeiroReal,false);
    if(i===0)assert.equal(body.eventos[0].pedidoId,pedido.pedidoId);
+   // Endpoint efetivamente montado na conta unificada: nunca aceita
+   // titularId do cliente para alterar a leitura de outro pedido.
+   const meus=await fetch(base+'/api/loja/pedidos?titularId='+
+    x.usuarios[1].titularId,{headers:h});
+   assert.equal(meus.status,200);
+   const dadosMeus=await meus.json();
+   assert.equal(dadosMeus.fonte,'PEDIDOS_COMERCIAIS_DO_TITULAR');
+   assert.equal(dadosMeus.pedidos.length,i===0?1:0);
+   if(i===0){
+    assert.equal(dadosMeus.pedidos[0].pedidoId,pedido.pedidoId);
+    assert.equal(dadosMeus.pedidos[0].status,'APROVADO_PARA_EXPEDICAO');
+    assert.equal(dadosMeus.pedidos[0].remessas.length,1);
+    assert.equal(dadosMeus.pedidos[0].remessas[0].estado,'AGUARDANDO_SEPARACAO');
+   }
+   assert.equal(dadosMeus.checkoutRealHabilitadoPorEstaConsulta,false);
    assert.equal((await fetch(base+'/api/checkout/finalizar',{
     method:'POST',headers:{...h,Origin:ORIGEM}
    })).status,503);
