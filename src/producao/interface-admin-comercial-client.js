@@ -367,6 +367,87 @@
    }
   });
  }
+
+ let politicaCatraca=null,catracaOcupada=false;
+ async function apiCatraca(body){
+  const escrita=body!==undefined;
+  const res=await fetch('/api/admin/loop/controle',{
+   method:escrita?'POST':'GET',cache:'no-store',credentials:'same-origin',
+   headers:escrita?{'Content-Type':'application/json','X-Loop-Admin-Csrf':csrf}:{},
+   ...(escrita?{body:JSON.stringify(body)}:{})
+  });
+  const dados=await res.json().catch(()=>({}));
+  if(!res.ok)throw Error(dados.erro||'CATRACA_INDISPONIVEL');
+  return dados;
+ }
+ function botoesCatraca(){
+  const ativo=!!csrf&&!!politicaCatraca&&
+   politicaCatraca.habilitadoSomenteEnsaio===true&&!catracaOcupada;
+  for(const id of ['modoCatracaAdmin','limiteCatracaAdmin','inicioCatracaAdmin',
+   'fimCatracaAdmin','motivoCatracaAdmin','salvarCatracaAdmin'])
+   $(id).disabled=!ativo;
+  $('pausarCatracaAdmin').disabled=!ativo||politicaCatraca.modo==='PAUSADA';
+  $('liberarCatracaAdmin').disabled=!ativo||politicaCatraca.modo==='MANUAL';
+  $('girarCatracaAdmin').disabled=!ativo||!politicaCatraca.podeGirar;
+ }
+ async function atualizarCatracaAdmin(){
+  try{
+   const d=await apiCatraca();
+   if(!Number.isSafeInteger(d.revisao)||
+      !['PAUSADA','MANUAL','AUTOMATICA'].includes(d.modo)||
+      d.financeiroReal!==false)throw Error('Estado administrativo inválido.');
+   politicaCatraca=d;
+   $('modoCatracaAdmin').value=d.modo;
+   $('inicioCatracaAdmin').value=d.janelaInicio;
+   $('fimCatracaAdmin').value=d.janelaFim;
+   $('limiteCatracaAdmin').value=d.limiteDiario===null?'':String(d.limiteDiario);
+   $('estadoCatracaAdmin').textContent='Modo: '+d.modo+
+    ' · Horário: '+d.horaLocal+' · Giros hoje: '+d.girosHoje+
+    (d.limiteDiario===null?' (livre)':' / '+d.limiteDiario)+
+    ' · Eventos: '+d.eventosNoCiclo+'/6 · Filas: '+d.filaA+'/'+d.filaB+
+    (d.habilitadoSomenteEnsaio?' · Motor conectado em ensaio':
+     ' · Comandos aguardando homologação produtiva');
+  }catch(e){
+   politicaCatraca=null;
+   $('estadoCatracaAdmin').textContent='Controle indisponível: '+e.message;
+  }finally{botoesCatraca();}
+ }
+ function configurarCatraca(modo){
+  if(!politicaCatraca)throw Error('Atualize a catraca.');
+  const raw=$('limiteCatracaAdmin').value.trim();
+  if(raw!==''&&(!/^[1-9]\d*$/.test(raw)||Number(raw)>1000000))
+   throw Error('Limite diário inválido.');
+  return {acao:'CONFIGURAR',modo,janelaInicio:$('inicioCatracaAdmin').value,
+   janelaFim:$('fimCatracaAdmin').value,
+   limiteDiario:raw===''?null:Number(raw),
+   revisaoEsperada:politicaCatraca.revisao,
+   motivo:$('motivoCatracaAdmin').value.trim()||'AJUSTE_OPERACIONAL'};
+ }
+ async function alterarCatraca(body){
+  if(!csrf||catracaOcupada)throw Error('Comando indisponível.');
+  catracaOcupada=true;botoesCatraca();
+  try{
+   const resultado=await apiCatraca(body);
+   await atualizarCatracaAdmin();await atualizarMotorAdministrativo();
+   $('estadoCatracaAdmin').textContent=body.acao==='GIRAR'?
+    (resultado.girou?'Giro efetuado no mesmo motor.':
+     'Giro não efetuado: '+resultado.motivo):
+    'Política salva e aplicada ao mesmo motor SQLite.';
+  }finally{catracaOcupada=false;botoesCatraca();}
+ }
+ for(const [id,acao] of [
+  ['salvarCatracaAdmin',()=>configurarCatraca($('modoCatracaAdmin').value)],
+  ['pausarCatracaAdmin',()=>configurarCatraca('PAUSADA')],
+  ['liberarCatracaAdmin',()=>configurarCatraca('MANUAL')],
+  ['girarCatracaAdmin',()=>({acao:'GIRAR'})]
+ ]){
+  $(id).addEventListener('click',()=>{
+   try{void alterarCatraca(acao()).catch(e=>{
+    $('estadoCatracaAdmin').textContent=e.message;
+   });}catch(e){$('estadoCatracaAdmin').textContent=e.message;}
+  });
+ }
+ $('atualizarCatracaAdmin').addEventListener('click',()=>void atualizarCatracaAdmin());
  async function atualizarMotorAdministrativo(){
   const area=$('loopAdminEstado');
   try{
@@ -400,6 +481,7 @@
    await atualizarManutencao();
    await consultarAuditoria();
    await atualizarMotorAdministrativo();
+   await atualizarCatracaAdmin();
   }catch(e){travar(true);status(e.message);}
  })();
 })();
