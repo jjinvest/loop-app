@@ -1671,7 +1671,10 @@ if(worker){
     identidadeExternaVerificada:false,
     cpfDeclaradoNoEnsaio:cpf?Boolean(cpf.consultar({titularId:p.titularId})):false
    }));
+   const quarentenaAdmin=inbox?inbox.resumoAntecipados():null;
    return res.json({...rel,pedidos,
+    quarentenaAguardandoVinculo:quarentenaAdmin?.aguardandoVinculo??null,
+    quarentenaDivergente:quarentenaAdmin?.divergentes??null,
     entregasFicticias:banco.prepare([
      'SELECT COUNT(*) AS n FROM akitemm_prepedido_entregas_sandbox_staging'
     ].join(' ')).get().n,
