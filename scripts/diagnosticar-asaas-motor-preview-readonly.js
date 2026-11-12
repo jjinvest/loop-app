@@ -4,6 +4,7 @@
 const {assinaturaMotor}=require('./provar-persistencia-reinicio-preview-railway');
 const ORIGEM='https://akitemm-escritorio-preview-homologacao.up.railway.app';
 const DOMINIO='akitemm-escritorio-preview-homologacao.up.railway.app';
+const DOMINIOS_PUBLICOS_PERMITIDOS=new Set([DOMINIO,'akitemmloop.com.br']);
 function erro(codigo){const e=new Error(codigo);e.codigo=codigo;throw e;}
 const rotas=new Set(['/readyz',
  '/staging/escritorio-unificado/monitor-psp',
@@ -11,7 +12,8 @@ const rotas=new Set(['/readyz',
 function validarConfig(env){
  if(env.LOOP_PREVIEW_EXCLUSIVO!=='SIM'||
     env.LOOP_PREVIEW_ASAAS_HABILITADO!=='SIM'||
-    env.RAILWAY_PUBLIC_DOMAIN!==DOMINIO||
+    (env.RAILWAY_PUBLIC_DOMAIN&&
+     !DOMINIOS_PUBLICOS_PERMITIDOS.has(env.RAILWAY_PUBLIC_DOMAIN))||
     typeof env.LOOP_PREVIEW_SENHA_ACESSO!=='string'||
     env.LOOP_PREVIEW_SENHA_ACESSO.length<24||
     typeof env.LOOP_PREVIEW_SENHA_ADMIN!=='string'||
