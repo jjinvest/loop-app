@@ -167,6 +167,12 @@ test('12 departamentos operam no SQLite compartilhado sem inventar dados comerci
  assert.equal(fotoAntiga.custoFornecedorPrevistoCentavos,null);
  // A segunda compra utiliza a cotacao REAL do catalogo compartilhado, ja
  // com preco 500 e classificacao DOURADA (uma posicao de referencia R$250).
+ // PDF editado no catálogo passa a exigir arquivo de verdade.
+ await ctx.materialPdf.salvar({
+  produtoId:produtoAlvo,
+  bytes:require('../src/domain/material-pdf-teste').criarMaterialPDFTeste(),
+  revisaoEsperada:0
+ });
  const entradaNova={itens:[{produtoId:produtoAlvo,quantidade:1}]};
  const cotacaoNova=await cotarCheckoutPublico({
   repositorio:ctx.catalogo,entrada:entradaNova
