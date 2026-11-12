@@ -177,9 +177,19 @@
 </select>
 <label for="sinalizacaoMinimo">Quantidade mínima de unidades (sinalização da oferta)</label>
 <input id="sinalizacaoMinimo" type="number" step="1" min="1" max="50" value="1" required>
-<label for="sinalizacaoPosicoesRoxo">Posições por unidade ROXA (evento em ensaio; zero = ainda não configurado)</label>
-<input id="sinalizacaoPosicoesRoxo" type="number" step="1" min="0" max="10" value="0" disabled>
-<p class="subtexto">A quantidade de posições é apenas plano de homologação. Não ativa pagamentos nem posições comerciais.</p>
+<div id="regrasRoxoAdmin" class="config-roxo-admin" hidden>
+<label for="sinalizacaoModoRoxo">Como o evento roxo gera posições</label>
+<select id="sinalizacaoModoRoxo">
+<option value="POR_UNIDADE">Por unidade comprada (ex.: 1 carro = 5 posições)</option>
+<option value="POR_PEDIDO">Por pedido com quantidade mínima (ex.: 5 tênis = 1 posição)</option>
+</select>
+<label for="sinalizacaoQuantidadeMinimaRoxo" id="sinalizacaoQuantidadeMinimaRoxoRotulo" hidden>Quantidade mínima do mesmo produto no pedido
+<input id="sinalizacaoQuantidadeMinimaRoxo" type="number" step="1" min="1" max="50" value="5" inputmode="numeric"></label>
+<label for="sinalizacaoPosicoesRoxo" id="sinalizacaoPosicoesRoxoRotulo">Posições por unidade ROXA (zero = evento ainda não configurado)</label>
+<input id="sinalizacaoPosicoesRoxo" type="number" step="1" min="0" max="10" value="0" inputmode="numeric">
+<p class="subtexto" id="sinalizacaoRegraRoxoResumo">Escolha a regra antes de salvar. No modo por pedido, cinco ou mais unidades do mesmo produto geram apenas a quantidade fixada de posições, uma única vez por pedido.</p>
+</div>
+<p class="subtexto">Cada evento roxo é calculado e fotografado no pedido, preservando o histórico quando a regra mudar. Apenas homologação, sem pagamentos ou posições reais.</p>
 <button type="submit" class="primario">Salvar cor da vitrine</button>
 </form>
 <p id="resultadoSinalizacaoAdmin" class="subtexto" role="status"></p>
