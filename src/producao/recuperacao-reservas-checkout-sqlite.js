@@ -57,10 +57,10 @@ class RecuperacaoReservasCheckoutSQLite{
    falha('RECUPERACAO_RESERVAS_RELOGIO_INVALIDO');
   return ts;
  }
- _vencidas(limite=100){
+ _vencidas(limite=100,{somenteAptas=false,instante=null}={}){
   if(!Number.isSafeInteger(limite)||limite<1||limite>500)
    falha('RECUPERACAO_RESERVAS_LIMITE_INVALIDO');
-  const agora=this._ts();
+  const agora=instante===null?this._ts():instante;
   return this.db.prepare([
    'SELECT r.pedido_id AS pedidoId,r.titular_id AS titularId,',
    'r.quantidade,r.criado_em AS criadoEm,p.status AS statusPedido,',
@@ -70,26 +70,52 @@ class RecuperacaoReservasCheckoutSQLite{
    'JOIN loja_real_pedidos p ON p.pedido_id=r.pedido_id',
    "WHERE r.estado='RESERVADA' AND r.criado_em<=?",
    "AND p.status IN ('AGUARDANDO_PAGAMENTO','APROVADO_PARA_EXPEDICAO')",
+   ...(somenteAptas?[
+    'AND NOT EXISTS (SELECT 1 FROM loop_real_checkout_reconsultas_pendentes q',
+    'WHERE q.pedido_id=r.pedido_id AND q.registrado_em>?)'
+   ]:[]),
    'ORDER BY r.criado_em ASC,r.pedido_id ASC LIMIT ?'
-  ].join(' ')).all(agora-this.idadeMinimaMs,limite);
+  ].join(' ')).all(
+   agora-this.idadeMinimaMs,
+   ...(somenteAptas?[agora-this.intervaloMinimoMs]:[]),
+   limite
+  );
+ }
+ _resumoVencidas(agora){
+  // Contagem completa e sem limitar aos 500 pedidos mais antigos:
+  // reservas em cooldown nao podem esconder pagamentos posteriores.
+  return this.db.prepare([
+   'SELECT COUNT(*) AS totalVencidas,',
+   "COALESCE(SUM(CASE WHEN p.status='APROVADO_PARA_EXPEDICAO'",
+   'THEN 1 ELSE 0 END),0) AS confirmadasSemPosicao,',
+   'COALESCE(SUM(CASE WHEN EXISTS (',
+   'SELECT 1 FROM loop_real_checkout_reconsultas_pendentes q',
+   'WHERE q.pedido_id=r.pedido_id AND q.registrado_em>?',
+   ') THEN 1 ELSE 0 END),0) AS emIntervalo',
+   'FROM loop_real_checkout_reservas_posicoes r',
+   'JOIN loja_real_pedidos p ON p.pedido_id=r.pedido_id',
+   "WHERE r.estado='RESERVADA' AND r.criado_em<=?",
+   "AND p.status IN ('AGUARDANDO_PAGAMENTO','APROVADO_PARA_EXPEDICAO')"
+  ].join(' ')).get(
+   agora-this.intervaloMinimoMs,agora-this.idadeMinimaMs
+  );
  }
  consultar({limite=100}={}){
-  const vencidas=this._vencidas(limite);
+  if(!Number.isSafeInteger(limite)||limite<1||limite>500)
+   falha('RECUPERACAO_RESERVAS_LIMITE_INVALIDO');
+  const agora=this._ts();
+  const resumo=this._resumoVencidas(agora);
   const total=this.db.prepare([
    'SELECT COUNT(*) AS pedidos,COALESCE(SUM(quantidade),0) AS posicoes',
    'FROM loop_real_checkout_reservas_posicoes',
    "WHERE estado='RESERVADA'"
   ].join(' ')).get();
-  const agora=this._ts();
-  const aptas=vencidas.filter(x=>x.ultimaReconsulta===null||
-   x.ultimaReconsulta<=agora-this.intervaloMinimoMs);
   return {
    reservasEmAberto:total.pedidos,
-   reservasConfirmadasSemPosicao:vencidas.filter(x=>
-    x.statusPedido==='APROVADO_PARA_EXPEDICAO').length,
+   reservasConfirmadasSemPosicao:resumo.confirmadasSemPosicao,
    posicoesReservadas:total.posicoes,
-   reservasVencidasNaPagina:vencidas.length,
-   elegiveisParaReconsulta:aptas.length,
+   reservasVencidasNaPagina:Math.min(limite,resumo.totalVencidas),
+   elegiveisParaReconsulta:resumo.totalVencidas-resumo.emIntervalo,
    intervaloMinimoReconsultaMs:this.intervaloMinimoMs,
    proximaAcao:this.pedidos&&process.env.NODE_ENV!=='production'?
     'RECONSULTAR_PSP':'AGUARDAR_PSP_HOMOLOGADO',
@@ -103,14 +129,13 @@ class RecuperacaoReservasCheckoutSQLite{
   if(!Number.isSafeInteger(limite)||limite<1||limite>50)
    falha('RECUPERACAO_RESERVAS_LIMITE_INVALIDO');
   let reconsultadas=0,liberadas=0,consumidas=0,
-   pendentes=0,erros=0,aguardamPosicao=0,ignoradasPorIntervalo=0;
+   pendentes=0,erros=0,aguardamPosicao=0;
   const agora=this._ts();
-  for(const pedido of this._vencidas(500)){
-   if(reconsultadas>=limite)break;
-   if(pedido.ultimaReconsulta!==null&&
-      pedido.ultimaReconsulta>agora-this.intervaloMinimoMs){
-    ignoradasPorIntervalo++;continue;
-   }
+  const ignoradasPorIntervalo=this._resumoVencidas(agora).emIntervalo;
+  // Cooldown filtrado ANTES do LIMIT: evita starvation apos 500+ pedidos.
+  for(const pedido of this._vencidas(limite,{
+   somenteAptas:true,instante:agora
+  })){
    reconsultadas++;
    let resultado='ERRO_PSP';
    try{
