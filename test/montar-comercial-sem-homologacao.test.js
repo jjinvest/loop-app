@@ -144,7 +144,7 @@ test('serviço sem PSP monta cores+eventos e lê pedido do titular após reiníc
  assert.equal(comercial.ativacaoPosicoesHabilitada,false);
  assert.equal(Object.hasOwn(comercial,'pedidosComerciais'),false);
  assert.deepEqual(Object.keys(comercial.leituraPedidos),
-  ['listarDoTitular','consultarDoTitular']);
+  ['listarDoTitular','contarDoTitular','consultarDoTitular']);
  assert.deepEqual(Object.keys(comercial.leituraRemessas),['consultar']);
  assert.equal(comercial.novaCompra,false);
  assert.equal(comercial.novoPagamento,false);
