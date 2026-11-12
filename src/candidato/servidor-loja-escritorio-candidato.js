@@ -1352,9 +1352,12 @@ if(worker){
    (_req,res)=>{
     if(!operacoesSandboxAutorizadas)return res.status(403)
      .json({erro:'OPERACAO_SANDBOX_DESATIVADA'});
+    const quarentena=inbox.resumoAntecipados();
     const resumo={...worker.resumoPendencias(),
      vinculosMotorAusentes:contarVinculosMotorAusentes(),
-     reversoesMotorPendentes:contarReversoesMotorPendentes()};
+     reversoesMotorPendentes:contarReversoesMotorPendentes(),
+     quarentenaAguardandoVinculo:quarentena.aguardandoVinculo,
+     quarentenaDivergente:quarentena.divergentes};
     const recuperacaoPSP=statusRecuperacaoPSP();
     const fila=worker.pendencias({limite:30});
     return res.json({
