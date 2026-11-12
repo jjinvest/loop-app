@@ -251,7 +251,8 @@ async function atualizarIdentidadeTeste(){
   if(!termos.disponivel||!termos.termosTexto||!termos.termosVersao)
    throw Error('TERMOS_NAO_CONFIGURADOS');
   area.hidden=false;
-  $('termosCpfTexto').textContent='Versão '+termos.termosVersao+': '+termos.termosTexto;
+  // Preserva validação de termos no backend, sem renderizar o aviso LAB.
+  $('termosCpfTexto').textContent='';
   form.hidden=identidade.registrado===true;
   $('situacaoCpfTeste').textContent=identidade.registrado?
    'CPF fictício registrado (final '+identidade.cpfFinal+'). Aceite armazenado.':
