@@ -66,9 +66,50 @@ function planejado(meta,agenda,agoraMs){
   fuso:horario.fuso
  };
 }
+
+// A grade distribui seis janelas por ciclo, sem gerar venda ou prometer saldo.
+// O minuto final pertence ao turno, nao ao minuto seguinte ao fechamento.
+function janelasDeLuz(meta,agenda,agoraMs){
+ const p=planejado(meta,agenda,agoraMs);
+ if(!p.abertoParaMeta)return null;
+ const inicio=minutos(agenda.abertura);
+ const comeco=meta.ativadaDia===p.dia?
+  Math.max(0,Math.min(meta.ativadaMinuto-inicio,
+   p.minutoNoTurno+p.duracaoMinutos)):
+  0;
+ const duracao=p.duracaoMinutos;
+ if(duracao<1||meta.quantidade<1)return null;
+ const total=BigInt(meta.quantidade)*6n;
+ const periodo=BigInt(duracao);
+ const percorrido=BigInt(Math.min(duracao,
+  Math.max(0,p.minutoNoTurno-comeco+1)));
+ const aprovadasBig=percorrido*total/periodo;
+ const aprovadas=Number(aprovadasBig>BigInt(Number.MAX_SAFE_INTEGER)?
+  BigInt(Number.MAX_SAFE_INTEGER):aprovadasBig);
+ const proximo=aprovadasBig+1n;
+ let proximaJanelaEmMs=null;
+ if(proximo<=total){
+  const indiceMinuto=(proximo*periodo+total-1n)/total-1n;
+  const diferenca=Number(indiceMinuto)-
+   (p.minutoNoTurno-comeco);
+  // O servidor e a fonte de tempo; cliente nao depende do fuso do aparelho.
+  const segundos=new Date(agoraMs).getSeconds()*1000+
+   new Date(agoraMs).getMilliseconds();
+  proximaJanelaEmMs=agoraMs+diferenca*60000-segundos;
+ }
+ return {
+  janelasAutorizadasAteAgora:aprovadas,
+  proximaJanelaEmMs,
+  intervaloLuzSegundos:Math.max(1,Math.round(duracao*60/
+   (meta.quantidade*6))),
+  intervaloCicloSegundos:Math.max(1,Math.round(duracao*60/meta.quantidade)),
+  marcoEstimado:true,dependeDeCompraConciliada:true
+ };
+}
+
 function dadosAtivacao(agoraMs){
  const a=agoraLocal(agoraMs);
  return {ativadaDia:a.dia,
   ativadaMinuto:minutos(a.horario)};
 }
-module.exports={validarMeta,planejado,dadosAtivacao};
+module.exports={validarMeta,planejado,janelasDeLuz,dadosAtivacao};
