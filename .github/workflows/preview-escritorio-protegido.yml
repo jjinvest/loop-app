@@ -22,6 +22,8 @@ on:
       - 'test/plano-posicoes-compra-akitemm.test.js'
       - 'test/asaas-motor-automatico-sandbox-candidato.test.js'
       - 'test/webhook-antecipado-monitor-integrado.test.js'
+      - 'src/domain/reconsulta-webhook-prepedido-asaas-staging.js'
+      - 'test/recuperacao-automatica-reconsulta-interrompida-sandbox.test.js'
       - 'test/webhook-idempotencia-multiconexao-sqlite.test.js'
       - 'test/webhook-sigkill-rollback-sqlite.test.js'
       - 'test/admin-manutencao-reparacao-segura.test.js'
@@ -209,6 +211,8 @@ jobs:
       - run: node --test test/backup-conta-unica-restauracao-segura.test.js
       - run: node --test test/asaas-motor-automatico-sandbox-candidato.test.js
       - run: node --test test/webhook-antecipado-monitor-integrado.test.js test/diagnosticar-asaas-motor-preview-readonly.test.js
+      - name: Recuperacao conservadora de checkpoints PSP sem tempo valido
+        run: node --test test/recuperacao-automatica-reconsulta-interrompida-sandbox.test.js
       - run: node --test test/webhook-idempotencia-multiconexao-sqlite.test.js
       - run: node --test test/webhook-sigkill-rollback-sqlite.test.js
       - run: node --test test/admin-manutencao-reparacao-segura.test.js
