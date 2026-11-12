@@ -63,6 +63,11 @@
 <textarea id="produtoDescricaoAdmin" maxlength="2000" rows="3" required></textarea>
 <label for="produtoPrecoAdmin">Preço da simulação (R$)</label>
 <input id="produtoPrecoAdmin" type="number" inputmode="decimal" min="0.01" max="1000000" step="0.01" required>
+<label for="pdfProdutoArquivoAdmin">Arquivo do curso PDF (até 5 MB, somente PDF válido)
+<input id="pdfProdutoArquivoAdmin" type="file" accept=".pdf,application/pdf"></label>
+<p class="subtexto">Selecione o PDF ao cadastrar ou editar o produto. O arquivo fica protegido no mesmo SQLite e só é entregue ao comprador após confirmação do pagamento. Para substituir o PDF de um produto já salvo, selecione o arquivo e use o botão abaixo.</p>
+<div class="linha"><button id="pdfProdutoEnviarAdmin" type="button" disabled>Enviar ou substituir PDF deste produto</button></div>
+<p id="pdfProdutoEstadoAdmin" class="subtexto" role="status">Nenhum curso PDF selecionado.</p>
 <div class="linha"><button id="salvarProdutoAdmin" type="submit" class="primario">Salvar produto</button>
 <button id="cancelarEdicaoProduto" type="button">Novo produto</button></div>
 </form>
