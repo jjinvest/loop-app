@@ -374,6 +374,16 @@
 <div id="listaMissoes"></div>
 <div class="linha"><button id="missoesAnterior" type="button">Anterior</button><button id="missoesProximo" type="button">Próximas missões</button></div>
 </section>
+<section class="painel" aria-labelledby="tituloManutencaoSegura">
+<h2 id="tituloManutencaoSegura">Manutenção e reparação segura</h2>
+<p class="subtexto">Confira a integridade do mesmo SQLite do cliente, loja, posições e catraca. Reparos automáticos ficam limitados à conciliação de laboratório, com confirmação do operador; inconsistências estruturais exigem revisão humana e recuperação controlada.</p>
+<div class="linha"><button type="button" id="manutencaoDiagnosticar" class="primario">Diagnosticar sistema</button><button type="button" id="manutencaoCriarMissao">Registrar reparação para análise</button></div>
+<p id="manutencaoEstado" role="status" aria-live="polite" class="subtexto">Diagnóstico não executado nesta sessão.</p>
+<div id="manutencaoMetricas" class="indicadores"></div>
+<label class="subtexto" for="manutencaoConfirmarSandbox"><input type="checkbox" id="manutencaoConfirmarSandbox"> Confirmo que a conciliação é somente do Asaas Sandbox e não autoriza dinheiro real.</label>
+<button type="button" id="manutencaoRepararSandbox" disabled>Reparar pendências conciliáveis no Sandbox</button>
+<p class="subtexto">Esse botão usa a mesma ação de conciliação já existente abaixo. Não edita valores, apaga pedidos, altera titularidade nem cria créditos manualmente. Para outros reparos, abra uma missão auditável.</p>
+</section>
 <section class="painel"><h2>Operações Sandbox controladas</h2>
 <p class="subtexto">Somente quando habilitadas no servidor. Reconsulta e entrega fictícia não movimentam dinheiro real.</p>
 <form id="reconsultar"><label for="eventoId">Evento Asaas Sandbox</label><input id="eventoId" pattern="[A-Za-z0-9_&-]{5,150}" required><button>Reconsultar pagamento de teste</button></form>
