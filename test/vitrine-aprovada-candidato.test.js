@@ -199,3 +199,35 @@ test('vitrine em produção é proibida, inclusive sinalização',()=>{
  try{assert.throws(()=>new SinalizacaoVitrineCandidatoSQLite(),/SINALIZACAO_LAB_PROIBIDA_PRODUCAO/);}
  finally{if(old===undefined)delete process.env.NODE_ENV;else process.env.NODE_ENV=old;}
 });
+
+test('admin salva quantidade escolhida em cinza verde roxo e dourado',async t=>{
+ const db=new DatabaseSync(':memory:');db.exec('PRAGMA foreign_keys=ON');
+ const {sinalizacaoVitrine}=criarAppLojaEscritorioCandidato({
+  banco:db,repositorioCatalogo:catalogoFicticioCheckout(),
+  chaveEmail:randomBytes(32),chaveCifra:randomBytes(32),segredoOperador:ADMIN,
+  termosVersao:'LAB-pacotes-cores-2026',
+  termosTexto:'Ensaio sem pagamentos, giros ou posicoes reais.'
+ });
+ t.after(()=>db.close());
+ const id='curso-homologacao-250';
+ let revisao=0;
+ for(const cor of ['CINZA','VERDE','ROXO','DOURADO']){
+  const extra=cor==='ROXO'?
+   {modoRoxo:'POR_PEDIDO',quantidadeMinimaRoxo:5,posicoesPorPedidoRoxo:1}:
+   cor==='DOURADO'?{modoDourado:'POR_PEDIDO',posicoesPorPedidoDourado:1}:{};
+  const atual=await sinalizacaoVitrine.atualizar(id,{
+   classificacao:cor,quantidadeMinimaLoop:5,revisaoEsperada:revisao,...extra});
+  assert.equal(atual.classificacao,cor);
+  assert.equal(atual.quantidadeMinimaLoop,5);
+  assert.equal(atual.revisao,++revisao);
+ }
+ const dourado=sinalizacaoVitrine.consultar(id);
+ assert.equal(dourado.modoDourado,'POR_PEDIDO');
+ assert.equal(dourado.posicoesPorPedidoDourado,1);
+ assert.equal(sinalizacaoVitrine.historico(id).length,4);
+ await assert.rejects(sinalizacaoVitrine.atualizar(id,{
+  classificacao:'CINZA',quantidadeMinimaLoop:0,revisaoEsperada:4
+ }),/QUANTIDADE_MINIMA_INVALIDA/);
+ assert.equal(db.prepare('PRAGMA integrity_check').get().integrity_check,'ok');
+ assert.deepEqual(db.prepare('PRAGMA foreign_key_check').all(),[]);
+});
