@@ -37,6 +37,8 @@ test('HTML original do cliente é reaproveitado sem script LAB, nova tela ou CPF
  assert.match(html,/id="estadoTabuleiroIntegrado"/);
  assert.match(html,/id="atualizarTabuleiroIntegrado"/);
  assert.match(html,/id="relogioTabuleiroIntegrado"/);
+ assert.match(html,/src="\/identidade\/assets\/catraca-visor.js"/);
+ assert.equal((html.match(/src="\/identidade\/assets\/catraca-visor.js"/g)||[]).length,1);
  assert.doesNotMatch(html,/Mesmo motor V6 e mesmo SQLite da conta e da loja/);
  assert.equal((html.match(/id="seletorPosicaoMotor"/g)||[]).length,1);
  assert.equal((html.match(/id="posicoesPainel"/g)||[]).length,1);
@@ -76,7 +78,13 @@ test('interface aprovada e identidade real servidas da mesma origem protegida',a
  assert.match(page.headers.get('content-security-policy'),/script-src 'self'/);
  assert.match(page.headers.get('content-security-policy'),/connect-src 'self'/);
  assert.match(await page.text(),/src="\/identidade\/assets\/cliente.js"/);
+ assert.match(await page.text(),/src="\/identidade\/assets\/catraca-visor.js"/);
  assert.equal((await get('/minha-conta')).status,200);
+ const visor=await get('/identidade/assets/catraca-visor.js');
+ assert.equal(visor.status,200);
+ const visorCode=await visor.text();
+ assert.match(visorCode,/function festejarGiroCatraca/);
+ assert.match(visorCode,/function atualizarMarcadorCatraca/);
  const js=await get('/identidade/assets/cliente.js');
  assert.equal(js.status,200);
  assert.match(js.headers.get('content-type'),/javascript/);
@@ -87,7 +95,7 @@ test('interface aprovada e identidade real servidas da mesma origem protegida',a
  assert.match(script,/COMPRA_ENSAIO_SEM_QUALIFICACAO/);
  assert.match(script,/seletorPosicaoMotor/);
  assert.match(script,/catracaClientePodeGirar/);
- assert.match(script,/iniciarRelogioTabuleiro/);
+ assert.match(script,/LoopVisorCatraca\.criar/);
  assert.doesNotMatch(script,/termosCpfTexto'\)\.textContent='Versão'/);
  assert.match(script,/\.loop03-atalho-loja, \.barra-conta a\.loop03-loja-prata/);
  assert.match(script,/setAttribute\('href','\/loja'\)/);
