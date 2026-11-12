@@ -184,7 +184,14 @@ const {once}=require('node:events');
     'escritorio-resumo-acima-aba-'+item.nome+'.png'),fullPage:true});
    await page.screenshot({path:path.join(__dirname,'../artifacts',
     'aba-escritorio-prioritaria-'+item.nome+'.png'),fullPage:true});
-   assert.match(await page.locator('#termosCpfTexto').innerText(),/LAB-navegador-2026/);
+   // A versão LAB permanece no backend, mas o aviso antigo não é mais exibido.
+   // Verificar o contrato autenticado em vez de exigir texto removido da UI.
+   const termosIdentidade=await page.request.get(base+'/staging/contas/termos-identidade');
+   assert.equal(termosIdentidade.status(),200);
+   const dadosTermos=await termosIdentidade.json();
+   assert.equal(dadosTermos.termosVersao,'LAB-navegador-2026');
+   assert.match(dadosTermos.termosTexto,/Prévia apenas para teste de acesso e pedido/);
+   assert.equal(await page.locator('#termosCpfTexto').isHidden(),true);
    await page.locator('#cpfTeste').fill(
     item.nome==='pc'?'529.982.247-25':'111.444.777-35');
    await page.locator('#aceiteCpfTeste').check();
