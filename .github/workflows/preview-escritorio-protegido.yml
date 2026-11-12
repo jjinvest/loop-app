@@ -21,6 +21,9 @@ on:
       - 'src/domain/plano-posicoes-compra-akitemm.js'
       - 'test/plano-posicoes-compra-akitemm.test.js'
       - 'test/asaas-motor-automatico-sandbox-candidato.test.js'
+      - 'test/webhook-antecipado-monitor-integrado.test.js'
+      - 'src/domain/inbox-webhook-prepedido-asaas-staging.js'
+      - 'scripts/diagnosticar-asaas-motor-preview-readonly.js'
       - 'test/fluxo-indicacao-compra-sandbox-tabuleiro.test.js'
       - 'test/asaas-vinculo-motor-recuperacao-candidato.test.js'
       - 'src/domain/prepedidos-checkout-staging-sqlite.js'
@@ -197,6 +200,7 @@ jobs:
       - run: node --test test/cadastro-indicacao-rejeicao-http.test.js
       - run: node --test test/backup-conta-unica-restauracao-segura.test.js
       - run: node --test test/asaas-motor-automatico-sandbox-candidato.test.js
+      - run: node --test test/webhook-antecipado-monitor-integrado.test.js test/diagnosticar-asaas-motor-preview-readonly.test.js
       - run: node --check src/domain/auditoria-integridade-motor-candidato-sqlite.js
       # Cada fluxo tem limite proprio: diagnostica o bloqueio com precisão
       # e evita repetir a suite integral ou deixar um processo pendurado.
