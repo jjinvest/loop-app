@@ -73,10 +73,13 @@ class ReconsultaWebhookPrepedidoAsaasStaging{
     "WHERE estado='PROCESSANDO' ORDER BY iniciado_em,evento_id LIMIT ?"
    ].join(' ')).all(limite);
    const recuperados=[],reinterrompidos=[];
+   let datasInvalidas=0;
    for(const item of candidatos){
     const inicio=Date.parse(item.iniciado_em);
-    if(!Number.isFinite(inicio)||inicio>instante||
-       instante-inicio<idadeMinimaMs)continue;
+    // Data invalida ou futura nao pode ficar eternamente PROCESSANDO:
+    // exigir revisao sem reconsulta PSP automatica.
+    const dataInvalida=!Number.isFinite(inicio)||inicio>instante;
+    if(!dataInvalida&&instante-inicio<idadeMinimaMs)continue;
     // Segunda queda no mesmo evento nunca inicia terceira consulta
     // automaticamente. Requer revisao independente pelo operador.
     const anterior=banco.prepare([
@@ -84,8 +87,8 @@ class ReconsultaWebhookPrepedidoAsaasStaging{
      'WHERE evento_id=?'
     ].join(' ')).get(item.evento_id);
     const reinterrupcao=Boolean(anterior)||item.codigo==='RECONSULTA_RETOMADA';
-    const codigo=reinterrupcao?
-     'RETOMADA_REINTERROMPIDA_EXIGE_REVISAO':
+    const codigo=dataInvalida?'DATA_RECONSULTA_INVALIDA_EXIGE_REVISAO':
+     reinterrupcao?'RETOMADA_REINTERROMPIDA_EXIGE_REVISAO':
      'PROCESSAMENTO_INTERROMPIDO_REVISAR';
     const mudou=banco.prepare([
      'UPDATE akitemm_prepedido_webhook_reconsulta_staging',
@@ -93,6 +96,10 @@ class ReconsultaWebhookPrepedidoAsaasStaging{
      "finalizado_em=? WHERE evento_id=? AND estado='PROCESSANDO'"
     ].join(' ')).run(codigo,this.agora(),item.evento_id).changes;
     if(!mudou)continue;
+    if(dataInvalida){
+     datasInvalidas++;
+     continue;
+    }
     if(reinterrupcao){
      reinterrompidos.push(item.evento_id);
      continue;
@@ -106,6 +113,7 @@ class ReconsultaWebhookPrepedidoAsaasStaging{
    banco.exec('COMMIT');
    return {recuperados:recuperados.length,eventos:recuperados,
     reinterrompidos:reinterrompidos.length,
+    datasInvalidas,
     reenvioWebhook:false,novaCobranca:false,
     reconsultaRemotaExecutada:false,exigeRevisaoManual:true,
     pagamentoReal:false,posicoesCriadas:0};
