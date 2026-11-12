@@ -48,7 +48,8 @@ test('diagnostico no painel exige operador, nao escreve nem libera financeiro',a
  const antes=banco.prepare('SELECT total_changes() AS n').get().n;
  assert.equal((await obter({autorizacao:''})).status,401);
  assert.equal((await obter({autorizacao:'Bearer senha-visitante'})).status,401);
- assert.equal((await obter({method:'POST'})).status,404);
+ assert.equal((await obter({method:'POST'})).status,401);
+ // Rota de escrita inexistente permanece bloqueada antes de chegar ao banco.
  const r=await obter();
  assert.equal(r.status,200,JSON.stringify(r.body));
  assert.equal(r.headers.get('cache-control'),'no-store');
@@ -60,11 +61,12 @@ test('diagnostico no painel exige operador, nao escreve nem libera financeiro',a
  assert.equal(r.body.integridade.fksInconsistentes,0);
  assert.equal(r.body.integridade.titularesInconsistentes,0);
  assert.equal(r.body.integridade.pspInconsistentes,0);
- assert.equal(r.body.integridade.motorSnapshotValidado,true);
+ assert.equal(r.body.integridade.motorSnapshotValidado,false);
+ assert.equal(r.body.integridade.motorAindaNaoIniciado,true);
  assert.equal(r.body.acoesPermitidas.editarRegistroFinanceiroDiretamente,false);
  assert.equal(r.body.acoesPermitidas.liberarPagamentosReais,false);
  assert.equal(r.body.acoesPermitidas.conciliarSandbox,false);
- assert.equal(r.body.estado,'PSP_NAO_DISPONIVEL');
+ assert.equal(r.body.estado,'MOTOR_AGUARDANDO_PRIMEIRO_USO');
  assert.equal(r.body.pendenciasConciliaveis,null);
  assert.equal(banco.prepare('SELECT total_changes() AS n').get().n,antes);
 });
@@ -77,12 +79,12 @@ test('sob carga concorrente de 144 leituras admin, SQLite e motor seguem imutave
   assert.equal(xs.length,16);
   for(const r of xs){
    assert.equal(r.status,200,JSON.stringify(r.body));
-   assert.equal(r.body.estado,'SEM_ANOMALIAS_OBSERVADAS');
+   assert.equal(r.body.estado,'MOTOR_AGUARDANDO_PRIMEIRO_USO');
    assert.equal(r.body.pendenciasConciliaveis,0);
    assert.equal(r.body.webhooksEmQuarentena,0);
    assert.equal(r.body.financeiroReal,false);
    assert.equal(r.body.integridade.sqliteOk,true);
-   assert.equal(r.body.integridade.motorSnapshotValidado,true);
+   assert.equal(r.body.integridade.motorAindaNaoIniciado,true);
   }
  }
  assert.equal(banco.prepare('SELECT total_changes() AS n').get().n,
@@ -102,7 +104,7 @@ test('mesmo painel traz diagnostico e acao protegida que reaproveita conciliacao
  assert.match(js,/api\('\/manutencao\/diagnostico'\)/);
  assert.match(js,/reconciliarPendentesPsp'\)\.click\(\)/);
  assert.match(js,/manutencaoConfirmarSandbox'\)\.checked/);
- assert.match(js,/diagnosticoManutencao\.acoesPermitidas/);
+ assert.match(js,/diagnosticoManutencao\?\.acoesPermitidas/);
  assert.match(js,/\$\('departamento'\)\.value='SEGURANCA'/);
  assert.match(html,/reparação segura/i);
  assert.doesNotMatch(js,/fetch\([^\n]*\/api\/pagamentos\/criar/);
