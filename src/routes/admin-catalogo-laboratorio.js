@@ -51,8 +51,18 @@ function criarAutorizacao({ segredo }) {
     const apagarImagem = somenteImagem && req.method === 'DELETE' &&
       !req.get('content-type') &&
       (!req.get('content-length') || req.get('content-length') === '0');
+    // Upload binario somente nas rotas da midiateca do produto,
+    // mantida a mesma autorizacao Bearer/loopback, sem liberar outros POST.
+    const rotaProduto=/^\/staging\/escritorio-unificado\/produtos\/[a-z0-9-]{3,80}\/(pdf|video|fotos\/(?:10|[1-9]))$/.exec(req.path);
+    const tipoBinario=req.get('content-type')?.split(';')[0];
+    const uploadProduto=req.method==='POST'&&rotaProduto&&(
+      (rotaProduto[1]==='pdf'&&tipoBinario==='application/pdf')||
+      (rotaProduto[1]==='video'&&tipoBinario==='video/mp4')||
+      (rotaProduto[1].startsWith('fotos/')&&
+       ['image/png','image/jpeg','image/webp'].includes(tipoBinario))
+    );
     if (['POST','PATCH','PUT','DELETE'].includes(req.method) &&
-        !req.is('application/json') && !uploadImagem && !apagarImagem) {
+        !req.is('application/json') && !uploadImagem && !apagarImagem && !uploadProduto) {
       return res.status(415).json({ erro: 'USE_APPLICATION_JSON' });
     }
     next();
