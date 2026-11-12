@@ -87,9 +87,9 @@ function createVitrineCandidata({app,banco,catalogo,contas,intencoes,prePedidos,
    "video.src='/staging/vitrine/loja/produtos/'+encodeURIComponent(p.produtoId)+'/video';"+
    "galeria.append(video);}"+
    "const informacoes=document.createElement('div');informacoes.className='akitemm-detalhe-informacoes';")
-  .replace(String.raw\`  /^\/imagens\/catalogo\/[a-zA-Z0-9_-]+\.(?:png|jpe?g|webp)$/.test(src);\`,
-   String.raw\`  (/^\/imagens\/catalogo\/[a-zA-Z0-9_-]+\.(?:png|jpe?g|webp)$/.test(src)||\`+
-   String.raw\`/^\/staging\/vitrine\/loja\/produtos\/[a-z0-9-]{3,80}\/foto\/(?:10|[1-9])$/.test(src));\`)
+  .replace(String.raw`  /^\/imagens\/catalogo\/[a-zA-Z0-9_-]+\.(?:png|jpe?g|webp)$/.test(src);`,
+   String.raw`  (/^\/imagens\/catalogo\/[a-zA-Z0-9_-]+\.(?:png|jpe?g|webp)$/.test(src)||`+
+   String.raw`/^\/staging\/vitrine\/loja\/produtos\/[a-z0-9-]{3,80}\/foto\/(?:10|[1-9])$/.test(src));`)
   .replace("const caminho='/api/laboratorio/participante/loja/avaliacoes/'+",
    "const caminho='/staging/vitrine/loja/avaliacoes/'+")
   .replace("'X-AKITEMM-MIDIA-TIPO':tipo},body:arquivo});",
