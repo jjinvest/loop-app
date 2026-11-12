@@ -178,7 +178,7 @@
     <div id="comunicadosCliente" aria-live="polite"></div>
   </section>
   <section class="painel" id="conteudoTabuleiro" role="tabpanel" aria-labelledby="abaTabuleiro" hidden>
-   <div class="linha"><h2>Tabuleiro LOOP 3.0</h2><button type="button" id="atualizarTabuleiroIntegrado" aria-label="Relógio; toque para atualizar o tabuleiro" title="Toque para atualizar o tabuleiro"><time id="relogioTabuleiroIntegrado" aria-label="Hora atual">--:--:--</time></button></div>
+   <div class="linha"><h2>Tabuleiro LOOP 3.0</h2><button type="button" id="atualizarTabuleiroIntegrado" aria-label="Próxima janela de luz; toque para atualizar o tabuleiro" title="Toque para atualizar o estado da catraca"><small id="tituloRelogioTabuleiro">PRÓXIMA LUZ · PREVISÃO</small><strong id="relogioTabuleiroIntegrado" role="timer" aria-label="Tempo até a próxima janela prevista de luz">--:--</strong><small id="estadoRelogioTabuleiro">Aguardando programação</small></button></div>
    <div class="loop03-mapa-grade" id="tabuleiroMotorIntegrado">
     <section class="bloco-fila-participante" aria-label="Fila A de ensaio">
      <h3><span class="loop03-icone-cabecalho">◉</span> FILA A</h3>
@@ -217,7 +217,8 @@
        </div>
       </div>
       <div class="loop03-marcadores-motor" aria-label="Seis eventos do ciclo"><span class="loop03-evento-cliente" id="motorBolinha1" aria-label="Evento 1 cliente"></span><span class="loop03-evento-empresa" id="motorBolinha2" aria-label="Evento 2 empresa"></span><span class="loop03-evento-cliente" id="motorBolinha3" aria-label="Evento 3 cliente"></span><span class="loop03-evento-empresa" id="motorBolinha4" aria-label="Evento 4 empresa"></span><span class="loop03-evento-cliente" id="motorBolinha5" aria-label="Evento 5 cliente"></span><span class="loop03-evento-empresa" id="motorBolinha6" aria-label="Evento 6 empresa"></span></div>
-      <p id="motorContadorEventos" class="subtexto">0/6 eventos válidos de ensaio</p>
+      <div id="celebracaoGiroCatraca" class="loop03-festa-catraca" aria-hidden="true"></div>
+       <p id="motorContadorEventos" class="subtexto">0/6 eventos válidos de ensaio</p>
       <p class="subtexto">A catraca avança após 6 eventos válidos. A entrada acontece pela vaga 6.</p>
      </div>
     </section>
