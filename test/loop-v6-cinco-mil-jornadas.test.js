@@ -31,9 +31,10 @@ test('LOOP V6 stress: 5000 compradores distintos, 2500 PDFs R$250 e 2500 físico
   assert.equal(r.financeiro.valorAlocadoCiclosCompletosCentavos,62400000);
   assert.equal(r.financeiro.valorPendenteProximoCicloReferencialCentavos,100000);
   assert.equal(saldo.LOOP_CENTRO,29700000);
-  assert.equal(saldo.LOOP_DOURADAS,1500000);
-  assert.equal(saldo.LOOP_ESQUERDA,20800000);
-  assert.equal(saldo.LOOP_DIREITA,10400000);
+  // Todos os seis eventos de cada centro dourado vao ao cofre dedicado.
+   assert.equal(saldo.LOOP_DOURADAS,r.contemplacoesPosicoesDouradas*6*25000);
+  assert.equal(saldo.LOOP_ESQUERDA,(416-r.contemplacoesPosicoesDouradas)*2*25000);
+  assert.equal(saldo.LOOP_DIREITA,(416-r.contemplacoesPosicoesDouradas)*25000);
   assert.equal(r.financeiro.pagamentoRealCentavos,0);
   assert.equal(r.financeiro.saquesReaisCentavos,0);
   assert.equal(r.financeiro.contemplacoesPagasCentavos,0);
