@@ -479,7 +479,13 @@ async function main(){
    }).waitFor();
    assert.equal(await pagina.locator('#motorContadorEventos').innerText(),
     motorLoop.consultar().tabuleiro.eventosNoCiclo+'/6 eventos de validação interna');
-   assert.equal(await pagina.locator('#tabuleiroMotorCentro').innerText(),'#0000');
+   const centroPersistido=estadoCliente.tabuleiro?.centro;
+   const centroEsperado=centroPersistido?
+    (centroPersistido.dourada? 
+     (centroPersistido.numeroVisual?'#'+centroPersistido.numeroVisual:'●'):
+     '#'+centroPersistido.numero):'#0000';
+   assert.equal(await pagina.locator('#tabuleiroMotorCentro').innerText(),
+    centroEsperado,'centro segue o estado do motor, nao um valor fixo');
    assert.equal(await pagina.locator('#motorBolinha6')
     .evaluate(el=>el.classList.contains('loop03-marcador-aceso')),false);
    assert.equal(await pagina.locator('#motorFilaB .loop03-linha-fila').count(),1);
