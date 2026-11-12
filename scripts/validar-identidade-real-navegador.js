@@ -268,9 +268,15 @@ async function main(){
     'Mesmo motor V6 e mesmo SQLite',{exact:false}).count(),0);
    await page.locator('#estadoTabuleiroIntegrado')
     .filter({hasText:/Eventos do ciclo: 0\/6/}).waitFor();
-   assert.equal(await page.locator('#tabuleiroMotorCentro').innerText(),'—');
-   assert.equal(await page.locator('#motorFilaB').innerText(),
-    '1 posição(ões) em validação interna');
+   assert.equal(await page.locator('#tabuleiroMotorCentro').innerText(),'#0000');
+   assert.equal(await page.locator('#motorFilaB .loop03-linha-fila').count(),1);
+   assert.match(await page.locator('#motorFilaB').innerText(),
+    /1 posição\\(ões\\) em validação interna/);
+   assert.equal(await page.locator('#motorFilaB .loop03-inicial-fila').innerText(),'B');
+   assert.equal(await page.locator('#motorBolinha1').getAttribute('aria-label'),
+    'Evento 1 aguardando');
+   assert.equal(await page.locator('#motorBolinha6')
+    .evaluate(el=>el.classList.contains('loop03-marcador-aceso')),false);
    if(item.largura<=860)await page.locator('#loop03MenuIntegrado').click();
    await page.locator('#abaPosicoes').click();
    await page.locator('#posicoesPainel').filter({hasText:/#1.*FILA_B/}).waitFor();
@@ -469,6 +475,10 @@ async function main(){
    }).waitFor();
    assert.equal(await pagina.locator('#motorContadorEventos').innerText(),
     motorLoop.consultar().tabuleiro.eventosNoCiclo+'/6 eventos de validação interna');
+   assert.equal(await pagina.locator('#tabuleiroMotorCentro').innerText(),'#0000');
+   assert.equal(await pagina.locator('#motorBolinha6')
+    .evaluate(el=>el.classList.contains('loop03-marcador-aceso')),false);
+   assert.equal(await pagina.locator('#motorFilaB .loop03-linha-fila').count(),1);
    await pagina.screenshot({
     path:path.join(pasta,'integrado-tabuleiro-'+visual.nome+'.png'),
     fullPage:true
