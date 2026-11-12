@@ -12,6 +12,7 @@ const {criarAppLojaEscritorioCandidato}=
  require('../src/candidato/servidor-loja-escritorio-candidato');
 const {catalogoFicticioCheckout}=
  require('../src/laboratorio/servidor-checkout-staging-local');
+const {criarMaterialPDFTeste}=require('../src/domain/material-pdf-teste');
 const {once}=require('node:events');
 (async()=>{
  const dir=fs.mkdtempSync(path.join(os.tmpdir(),'akitemm-candidato-browser-'));
@@ -435,8 +436,20 @@ const {once}=require('node:events');
     'Material digital de laboratório, sem compra ou pagamento real.');
    await admin.locator('#produtoEstadoAdmin').selectOption('PUBLICADO');
    await admin.locator('#produtoPrecoAdmin').fill('99.00');
+   // O produto digital precisa ter MATERIAL REAL antes do checkout. Subir
+   // pelo formulario aprovado, nao injetar BLOB diretamente em SQLite.
+   await admin.locator('#pdfProdutoArquivoAdmin').setInputFiles({
+    name:'curso-ensaio-upload.pdf',mimeType:'application/pdf',
+    buffer:criarMaterialPDFTeste()
+   });
    await admin.locator('#formProduto button[type=submit]').click();
    await admin.locator('#resultadoProdutoAdmin').filter({hasText:/Produto salvo/}).waitFor();
+   assert.match(await admin.locator('#resultadoProdutoAdmin').innerText(),/PDF versão 1/);
+   const arquivoResposta=await admin.request.get(
+    base+'/staging/escritorio-unificado/produtos/'+novoProdutoId+'/pdf',
+    {headers:{Authorization:'Bearer '+'somente-teste-do-navegador-'+('x'.repeat(40))}});
+   assert.equal(arquivoResposta.status(),200);
+   assert.equal((await arquivoResposta.json()).arquivoAnexado,true);
    // Custos internos usam o MESMO produto: não vazam para o cliente
    // nem autorizam transferência, lucro ou saque real.
    await admin.locator('#custosProdutoSelecionadoAdmin')
