@@ -29,6 +29,18 @@ test('auditoria somente GET reconhece configuracao unica correta sem afirmar ent
  });
  assert.equal(JSON.stringify(r).includes(env.LOOP_PREVIEW_ASAAS_SANDBOX_API_KEY),false);
 });
+test('dominio oficial do LOOP nao altera o destino fixo e auditado do webhook',async()=>{
+ const oficial={...env,RAILWAY_PUBLIC_DOMAIN:'akitemmloop.com.br'};
+ let consultas=0;
+ const resultado=await auditarWebhooksSandbox({
+  env:oficial,fetchImpl:fetchComDados([
+   {url:base,enabled:true,interrupted:false,events:['PAYMENT_RECEIVED']}
+  ],()=>{consultas++;})
+ });
+ assert.equal(consultas,1);
+ assert.equal(resultado.configuracaoOperacional,true);
+ assert.equal(resultado.entregaExternaComprovada,false);
+});
 test('ausente, fila pausada, duplicada e sem PAYMENT_RECEIVED nao sao aprovados',async()=>{
  for(const data of [
   [],
