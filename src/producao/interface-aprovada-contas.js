@@ -208,6 +208,7 @@
  }
  let painelMotorPreparado=false;
  const visorCatraca=window.LoopVisorCatraca.criar({elemento:$});
+ const visualTabuleiro=window.LoopTabuleiroVisual.criar({elemento:$});
  let consultaPedidosEmCurso=0;
  async function carregarPedidos(){
   const token=++consultaPedidosEmCurso;
@@ -321,10 +322,6 @@
    caixa.textContent='Tesouraria de ensaio indisponivel.';
   }
  }
- function textoPosicao(p){
-  return p&&Number.isSafeInteger(p.numero)&&p.numero>0?
-   '#'+p.numero:'—';
- }
  // Conecta o aceite individual da posicao azul diretamente a conta autenticada.
  // O texto completo dos termos e obrigatorio; nunca armazenar CPF na UI.
  function renderizarAceiteAzulEnsaio(card,pos){
@@ -428,18 +425,26 @@
     aguardando+' · Movimentação real indisponível.';
    $('loopResumoMotor').textContent=texto;
    $('estadoTabuleiroIntegrado').textContent=texto;
-   $('motorFilaA').textContent=d.filaA+' posição(ões) em validação interna';
-   $('motorFilaB').textContent=d.filaB+' posição(ões) em validação interna';
-   $('tabuleiroMotorCentro').textContent=textoPosicao(d.tabuleiro.centro);
-   for(let i=0;i<6;i++){
-    const pos=d.tabuleiro.vagas[i],el=$('tabuleiroMotorVaga'+(i+1));
-    el.textContent=textoPosicao(pos);
-    el.title=pos?.minha?'Minha posição':'Espaço do tabuleiro';
-    const luz=$('motorBolinha'+(i+1));
-    luz.style.opacity=i<d.tabuleiro.eventosNoCiclo?'1':'.25';
-    luz.setAttribute('aria-label','Evento '+(i+1)+
-     (i<d.tabuleiro.eventosNoCiclo?' contabilizado':' aguardando'));
-   }
+   // Mesmo componente de fila, círculo e luzes usado pelo laboratório.
+   // O backend definitivo expõe somente contagens de terceiros.
+   visualTabuleiro.preencherFila('motorFilaA',d.filaA,'A');
+   visualTabuleiro.preencherFila('motorFilaB',d.filaB,'B');
+   const titularPorNumero=new Map(
+    d.minhasPosicoes.map(p=>[p.numero,p])
+   );
+   const visao=p=>{
+    if(!p||p.minha!==true)return p;
+    const propria=titularPorNumero.get(p.numero);
+    return {...p,
+     pendente:propria?.estadoAdesao==='PENDENTE',
+     aceiteEnsaio:propria?.estadoAdesao==='ACEITE_ENSAIO'};
+   };
+   visualTabuleiro.preencherVaga('tabuleiroMotorCentro',
+    visao(d.tabuleiro.centro),true);
+   for(let i=0;i<6;i++)
+    visualTabuleiro.preencherVaga('tabuleiroMotorVaga'+(i+1),
+     visao(d.tabuleiro.vagas[i]));
+   visualTabuleiro.preencherLuzes(d.tabuleiro.eventosNoCiclo);
    visorCatraca.registrarAgenda(d.agenda);
    visorCatraca.observar(d.catraca.giros,d.tabuleiro.eventosNoCiclo);
    $('motorContadorEventos').textContent=d.tabuleiro.eventosNoCiclo+
