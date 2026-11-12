@@ -40,7 +40,7 @@ test('webhook antecipado aparece como pendente e some apenas quando chega ao liv
   banco.close();
  });
  const titular=await app.contas.cadastrar({
-  nome:'Cliente Teste Quarentena',nick:'Quarentena',
+  nome:'Cliente Teste Quarentena',nick:'Quarent',
   email:'quarentena@example.invalid',senha:'SenhaTesteQuarentena2026#',
   termosVersao:'LAB-quarentena-2026',
   termosTexto:'Apenas teste interno ficticio, sem dinheiro, pagamentos reais ou saque.',
