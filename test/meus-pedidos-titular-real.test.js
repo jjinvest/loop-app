@@ -33,7 +33,11 @@ test('Meus Pedidos usa o ID da sessão e nunca aceita pedido de outro titular',a
  }
  const spy=[];
  const pedidosComerciais={
-  listarDoTitular({titularId,limite}){
+  contarDoTitular({titularId}){
+   return Object.values(clientes).some(x=>x.titularId===titularId)?1:0;
+  },
+  listarDoTitular({titularId,limite,offset}){
+   assert.equal(offset,0);
    spy.push({titularId,limite});
    const cliente=Object.values(clientes).find(x=>x.titularId===titularId);
    if(!cliente)return [];
@@ -89,8 +93,8 @@ test('Meus Pedidos usa o ID da sessão e nunca aceita pedido de outro titular',a
  const dadosBia=await bia.json();
  assert.equal(dadosBia.pedidos[0].pedidoId,'PEDIDO_bia');
  assert.deepEqual(spy,[
-  {titularId:clientes.Ana.titularId,limite:30},
-  {titularId:clientes.Bia.titularId,limite:30}
+  {titularId:clientes.Ana.titularId,limite:20},
+  {titularId:clientes.Bia.titularId,limite:20}
  ]);
  assert.equal(banco.prepare('PRAGMA integrity_check').get().integrity_check,'ok');
 });
