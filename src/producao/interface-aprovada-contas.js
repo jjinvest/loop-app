@@ -91,7 +91,7 @@
   // funções que ainda dependem exclusivamente do LAB.
   for(const tab of document.querySelectorAll('[role=tab]')){
    const ativo=tab.id===(s.motorLoopInterno===true?'abaResumo':'abaConta');
-   const habilitado=['abaConta','abaEquipe','abaLinks'].includes(tab.id)||
+   const habilitado=['abaConta','abaEquipe','abaLinks','abaMeusPedidos'].includes(tab.id)||
     (s.motorLoopInterno===true&&
     ['abaResumo','abaTabuleiro','abaPosicoes','abaEquipe','abaLinks'].includes(tab.id))||
     (ensaioAtivo&&tab.id==='abaFinanceiro');
@@ -208,6 +208,63 @@
  }
  let painelMotorPreparado=false;
  const visorCatraca=window.LoopVisorCatraca.criar({elemento:$});
+ let consultaPedidosEmCurso=0;
+ async function carregarPedidos(){
+  const token=++consultaPedidosEmCurso;
+  const painel=$('listaPedidos');painel.textContent='Consultando seu histórico...';
+  $('pedidosAnterior').disabled=true;$('pedidosProximo').disabled=true;
+  try{
+   const resposta=await fetch('/api/loja/pedidos',{
+    credentials:'same-origin',cache:'no-store'
+   });
+   if(!resposta.ok)throw Error('HISTORICO_INDISPONIVEL');
+   const d=await resposta.json();
+   if(d.fonte!=='PEDIDOS_COMERCIAIS_DO_TITULAR'||
+      d.checkoutRealHabilitadoPorEstaConsulta!==false||
+      !Array.isArray(d.pedidos)||d.pedidos.length>30)
+    throw Error('PEDIDOS_ORIGEM_INVALIDA');
+   if(token!==consultaPedidosEmCurso)return;
+   painel.replaceChildren();
+   $('resumoPedidos').textContent=String(d.pedidos.length);
+   $('pedidosPaginacao').textContent='Últimos '+d.pedidos.length+
+    ' pedido(s) · somente leitura';
+   if(!d.pedidos.length){
+    painel.textContent='Nenhum pedido comercial nesta conta.';
+    return;
+   }
+   const real=new Intl.NumberFormat('pt-BR',{style:'currency',currency:'BRL'});
+   for(const pedido of d.pedidos){
+    if(typeof pedido.pedidoId!=='string'||typeof pedido.status!=='string'||
+       !Array.isArray(pedido.remessas)||pedido.remessas.length>25)
+     throw Error('PEDIDO_INVALIDO');
+    const card=document.createElement('article');
+    card.className='pedido';
+    const titulo=document.createElement('h3');
+    titulo.textContent='Pedido '+pedido.pedidoId;
+    const texto=document.createElement('p');
+    texto.className='subtexto';
+    const valor=Number.isSafeInteger(pedido.valorTotalCentavos)&&
+     pedido.valorTotalCentavos>=0?
+     real.format(pedido.valorTotalCentavos/100):'Valor em revisão';
+    texto.textContent=pedido.status+' · '+valor;
+    card.append(titulo,texto);
+    for(const envio of pedido.remessas){
+     const linha=document.createElement('p');
+     linha.className='subtexto';
+     linha.textContent='Remessa '+String(envio.fornecedorId||'—')+
+      ' · '+String(envio.estado||'AGUARDANDO_SEPARACAO');
+     card.append(linha);
+    }
+    painel.append(card);
+   }
+  }catch{
+   if(token!==consultaPedidosEmCurso)return;
+   painel.textContent='Histórico comercial indisponível. A consulta '+
+    'não realiza compras nem pagamentos.';
+   $('resumoPedidos').textContent='—';
+   $('pedidosPaginacao').textContent='Consulta indisponível';
+  }
+ }
  function prepararAbasMotor(){
   if(painelMotorPreparado)return;
   painelMotorPreparado=true;
@@ -230,8 +287,7 @@
   $('atalhoPosicoes').addEventListener('click',
    ()=>$('abaPosicoes').click());
   $('atalhoLoja').addEventListener('click',()=>location.assign('/loja'));
-  $('atalhoPedidos').disabled=true;
-  $('posicoesVerPedidos').disabled=true;
+  // A aba de pedidos usa o livro comercial deste titular, nunca o LAB.
   const seletor=$('seletorPosicaoMotor');
   if(seletor)seletor.addEventListener('change',()=>{
    posicaoSelecionada=seletor.value;
@@ -455,6 +511,7 @@
     if(alvo)alvo.hidden=!ativo;
    }
    if(tab.id==='abaTabuleiro'||tab.id==='abaPosicoes')void carregarMotor();
+   if(tab.id==='abaMeusPedidos')void carregarPedidos();
    if(tab.id==='abaFinanceiro')void carregarFinanceiroEnsaio();
    const lateral=$('loop03SidebarIntegrado');
    if(lateral?.classList.contains('loop03-aberto')){
@@ -647,6 +704,12 @@
    if(!campo)return;
    const mostrar=campo.type==='password';campo.type=mostrar?'text':'password';
    botao.setAttribute('aria-pressed',String(mostrar));
+  });
+ }
+ $('atualizarPedidos').addEventListener('click',()=>void carregarPedidos());
+ for(const id of ['atalhoPedidos','posicoesVerPedidos','financeiroVerPedidos']){
+  const botao=$(id);if(botao)botao.addEventListener('click',()=>{
+   const aba=$('abaMeusPedidos');if(!aba.disabled)aba.click();
   });
  }
  $('loop03MenuIntegrado').addEventListener('click',()=>{
