@@ -1345,7 +1345,7 @@ $('formSinalizacaoAdmin').addEventListener('submit',async e=>{
     sinalizacaoAtual.classificacao==='VERDE'?
      'Verde mantém referência R$ 250 e até uma posição por compra.':
      'Cinza mantém compra comum, sem posições.';
-  $('resultadoSinalizacaoAdmin').textContent='Oferta salva. Quantidade mínima: '+
+  $('resultadoSinalizacaoAdmin').textContent='Cor salva. Oferta configurada. Quantidade mínima: '+
    sinalizacaoAtual.quantidadeMinimaLoop+'. '+regra+
    ' Pedidos anteriores mantêm a regra. Nenhum direito real criado.';
  }catch(err){$('resultadoSinalizacaoAdmin').textContent='Não foi possível salvar a cor: '+err.message;}
