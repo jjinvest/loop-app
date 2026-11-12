@@ -394,7 +394,7 @@ const {once}=require('node:events');
    await admin.locator('#criarDouradaManualEnsaio').click();
    await admin.locator('#statusCriarDouradaAdmin')
     .filter({hasText:/Bola dourada criada.*fila B/}).waitFor();
-   assert.match(await admin.locator('#douradasAtivasAdmin').innerText(),/ID interno #/);
+   await admin.locator('#douradasAtivasAdmin').filter({hasText:/ID interno #/}).waitFor();
    assert.match(await admin.locator('#motorEnsaioResumo').innerText(),/Douradas manuais criadas/);
    assert.equal(await admin.locator('#criarDouradaCiencia').isChecked(),false);
    await admin.locator('#departamentoOperacionalAcoes')
