@@ -259,14 +259,22 @@ class PedidosComerciaisSQLite{
   ].join(' ')).get(pedidoId,titularId);
   return r?this._publico(r):null;
  }
- listarDoTitular({titularId,limite=30}={}){
+ contarDoTitular({titularId}={}){
+  if(typeof titularId!=='string'||!TITULAR.test(titularId))
+   erro('PEDIDO_INVALIDO');
+  return this.db.prepare([
+   'SELECT COUNT(*) AS total FROM loja_real_pedidos WHERE titular_id=?'
+  ].join(' ')).get(titularId).total;
+ }
+ listarDoTitular({titularId,limite=30,offset=0}={}){
   if(typeof titularId!=='string'||!TITULAR.test(titularId)||
-     !Number.isInteger(limite)||limite<1||limite>50)
+     !Number.isInteger(limite)||limite<1||limite>50||
+     !Number.isSafeInteger(offset)||offset<0)
    erro('PEDIDO_INVALIDO');
   return this.db.prepare([
    'SELECT * FROM loja_real_pedidos WHERE titular_id=?',
-   'ORDER BY criado_em DESC,rowid DESC LIMIT ?'
-  ].join(' ')).all(titularId,limite).map(x=>this._publico(x));
+   'ORDER BY criado_em DESC,rowid DESC LIMIT ? OFFSET ?'
+  ].join(' ')).all(titularId,limite,offset).map(x=>this._publico(x));
  }
  async criarPedido({titularId,cotacaoId,chaveIdempotencia,enderecoEntrega}={}){
   if(typeof titularId!=='string'||!TITULAR.test(titularId)||
