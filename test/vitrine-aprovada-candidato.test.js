@@ -189,7 +189,7 @@ test('vitrine aprovada usa mesmo catálogo SQLite e Meus Pedidos, sem financeiro
   prepedidoId:primeiro.json.pedido.pedidoId}).eventoPendente,true);
  assert.equal((await json('/staging/checkout/finalizar',{method:'POST',body:{}})).status,503);
  assert.equal((await json('/staging/vitrine/loja/entrega',
-  {method:'POST',cookie:ana.cookie,body:{}})).status,409);
+  {method:'POST',cookie:ana.cookie,body:{}})).status,403);
  assert.equal(db.prepare('PRAGMA integrity_check').get().integrity_check,'ok');
  assert.deepEqual(db.prepare('PRAGMA foreign_key_check').all(),[]);
 });
