@@ -286,7 +286,53 @@ test('produto completo com foto PDF e video 30s; download e reviews isolados por
  assert.equal(publicas.data.avaliacoes[0].midias.length,2);
  assert.equal((await call(midia,{cookie:b.cookie})).status,200);
  assert.equal((await anexo(a,'FOTO','image/jpeg',foto)).status,409);
- assert.equal(posts,2);assert.equal(gets,2);
+ // Produto fisico ROXO da mesma loja: 5 tenis em UM pedido = UMA posicao.
+ const configuracao=await call(ROOT+'/sinalizacao/'+fisico,{
+  method:'PATCH',admin:true,body:{
+   classificacao:'ROXO',quantidadeMinimaLoop:1,revisaoEsperada:0,
+   modoRoxo:'POR_PEDIDO',quantidadeMinimaRoxo:5,posicoesPorPedidoRoxo:1
+  }
+ });
+ assert.equal(configuracao.status,200,JSON.stringify(configuracao.data));
+ assert.equal(configuracao.data.modoRoxo,'POR_PEDIDO');
+ const produtoLoja=(await call('/staging/vitrine/loja/catalogo',{cookie:a.cookie}))
+  .data.produtos.find(p=>p.produtoId===fisico);
+ assert.equal(produtoLoja.quantidadeMinimaRoxo,5);
+ assert.equal(produtoLoja.modoRoxo,'POR_PEDIDO');
+ const novoPedidoTenis=(n,key)=>call('/staging/vitrine/loja/pedidos',{
+  method:'POST',cookie:a.cookie,csrf:a.csrf,
+  extra:{'X-LOOP-LAB':'participante'},key,
+  body:{itens:[{produtoId:fisico,quantidade:n}]}
+ });
+ const quatro=await novoPedidoTenis(4,'roxo-fisico-4-tenis-0001');
+ const cinco=await novoPedidoTenis(5,'roxo-fisico-5-tenis-0001');
+ const dez=await novoPedidoTenis(10,'roxo-fisico-10-tenis-0001');
+ for(const x of [quatro,cinco,dez])assert.equal(x.status,201,JSON.stringify(x.data));
+ const fotografia=id=>ctx.sinalizacaoVitrine.consultarFotografiaPrepedido({prepedidoId:id});
+ const id4=quatro.data.pedido.pedidoId,id5=cinco.data.pedido.pedidoId,
+  id10=dez.data.pedido.pedidoId;
+ assert.equal(fotografia(id4).planejamentoPosicoes.quantidadePosicoesPrevistas,0);
+ assert.equal(fotografia(id5).planejamentoPosicoes.quantidadePosicoesPrevistas,1);
+ assert.equal(fotografia(id10).planejamentoPosicoes.quantidadePosicoesPrevistas,1);
+ const vinculo=await call(ROOT+'/motor/vincular-pedido',{
+  method:'POST',admin:true,body:{prepedidoId:id5,aceiteEnsaio:true}
+ });
+ assert.equal(vinculo.status,201,JSON.stringify(vinculo.data));
+ assert.equal(vinculo.data.quantidadePosicoes,1);
+ const replay=await call(ROOT+'/motor/vincular-pedido',{
+  method:'POST',admin:true,body:{prepedidoId:id5,aceiteEnsaio:true}
+ });
+ assert.equal(replay.status,200);
+ assert.deepEqual(replay.data.posicoesIds,vinculo.data.posicoesIds);
+ const novaRegra=await call(ROOT+'/sinalizacao/'+fisico,{
+  method:'PATCH',admin:true,body:{classificacao:'ROXO',
+   quantidadeMinimaLoop:1,revisaoEsperada:1,posicoesPorUnidadeRoxo:3}
+ });
+ assert.equal(novaRegra.status,200,JSON.stringify(novaRegra.data));
+ assert.equal(novaRegra.data.modoRoxo,'POR_UNIDADE');
+ assert.equal(fotografia(id5).planejamentoPosicoes.quantidadePosicoesPrevistas,1);
+ assert.equal(fotografia(id10).planejamentoPosicoes.quantidadePosicoesPrevistas,1);
+  assert.equal(posts,2);assert.equal(gets,2);
  assert.equal(banco.prepare('PRAGMA integrity_check').get().integrity_check,'ok');
  assert.deepEqual(banco.prepare('PRAGMA foreign_key_check').all(),[]);
 });
