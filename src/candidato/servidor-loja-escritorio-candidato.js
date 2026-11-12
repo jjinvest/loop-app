@@ -136,7 +136,7 @@ function criarAppLojaEscritorioCandidato({banco,repositorioCatalogo,
   res.set({
    'Cache-Control':'no-store','X-Content-Type-Options':'nosniff',
    'Referrer-Policy':'no-referrer','X-Frame-Options':'DENY',
-   'Content-Security-Policy':"default-src 'none'; script-src 'self'; style-src 'self'; connect-src 'self'; img-src 'self'; form-action 'self'; frame-ancestors 'none'; base-uri 'none'"
+   'Content-Security-Policy':"default-src 'none'; script-src 'self'; style-src 'self'; connect-src 'self'; img-src 'self' blob:; media-src 'self' blob:; form-action 'self'; frame-ancestors 'none'; base-uri 'none'"
   });
   if(process.env.NODE_ENV==='production')
    return res.status(503).json({erro:'CANDIDATO_NAO_HOMOLOGADO'});
