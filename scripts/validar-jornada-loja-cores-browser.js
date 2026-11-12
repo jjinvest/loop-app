@@ -103,18 +103,29 @@ const png=Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAIAAAACCAIAAAD91JpzAAAAEklEQVR4n
    await page.goto(base+'/loja/Ana',{waitUntil:'domcontentloaded'});
    const convite=(await context.cookies()).find(c=>c.name==='akitemm_preview_ref');
    assert.ok(convite,'link precisa fixar indicador assinado no navegador');
-   const registrar=await context.request.post(base+'/staging/contas/cadastrar',{
-    headers:{Authorization:basic,'Content-Type':'application/json'},
-    data:{nome:device.nick+' Cliente',nick:device.nick,
-     email:device.nick.toLowerCase()+'@example.invalid',
-     senha:SENHA,aceiteExplicito:true}
-   });
-   assert.equal(registrar.status(),201,await registrar.text());
-   const login=await context.request.post(base+'/staging/contas/entrar',{
-    headers:{Authorization:basic,'Content-Type':'application/json'},
-    data:{nick:device.nick,senha:SENHA}
-   });
-   assert.equal(login.status(),200,await login.text());
+   // Registro e login devem sair do NAVEGADOR que recebeu o convite;
+   // APIRequestContext nao envia o cookie Secure no HTTP de loopback.
+   const registrar=await page.evaluate(async dados=>{
+    const r=await fetch('/staging/contas/cadastrar',{
+     method:'POST',credentials:'same-origin',
+     headers:{'Content-Type':'application/json'},body:JSON.stringify(dados)});
+    return {status:r.status,body:await r.text()};
+   },{nome:device.nick+' Cliente',nick:device.nick,
+    email:device.nick.toLowerCase()+'@example.invalid',
+    senha:SENHA,aceiteExplicito:true});
+   assert.equal(registrar.status,201,registrar.body);
+   const titularAna=db.prepare(
+    "SELECT id FROM akitemm_conta_unica_candidata WHERE nick='Ana'"
+   ).get().id;
+   assert.equal(ctx.equipe.listar({titularId:titularAna}).total,
+    device.nome==='pc'?1:2,'link nao vinculou o cadastro no navegador real');
+   const login=await page.evaluate(async dados=>{
+    const r=await fetch('/staging/contas/entrar',{
+     method:'POST',credentials:'same-origin',
+     headers:{'Content-Type':'application/json'},body:JSON.stringify(dados)});
+    return {status:r.status,body:await r.text()};
+   },{nick:device.nick,senha:SENHA});
+   assert.equal(login.status,200,login.body);
    await page.goto(base+'/staging/loja',{waitUntil:'domcontentloaded'});
    await page.locator('#catalogoLojaLoop article.produto-loja-loop').first()
     .waitFor({state:'visible'});
