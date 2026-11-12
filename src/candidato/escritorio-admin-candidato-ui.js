@@ -53,6 +53,99 @@ async function api(path,{method='GET',body,idempotencia}={}){
  if(!r.ok)throw Error(out.erro||'SERVICO_INDISPONIVEL');
  return out;
 }
+
+async function enviarArquivoProdutoAdmin(id,arquivo,{tipo,posicao=1}){
+ if(!arquivo)throw Error('Selecione um arquivo antes de enviar.');
+ const prefixo='/produtos/'+encodeURIComponent(id);
+ let rota,versao,chave,mime;
+ if(tipo==='PDF'){
+  if(arquivo.size<50||arquivo.size>5*1024*1024||!/\.pdf$/i.test(arquivo.name))
+   throw Error('O PDF deve ter até 5 MB e extensão .pdf.');
+  const estado=await api(prefixo+'/pdf');
+  rota=prefixo+'/pdf';versao=estado.versao;chave='X-PDF-Versao-Esperada';
+  mime='application/pdf';
+ }else if(tipo==='VIDEO'){
+  if(arquivo.size<128||arquivo.size>20*1024*1024||!/\.mp4$/i.test(arquivo.name))
+   throw Error('O vídeo MP4 deve ter até 20 MB e no máximo 30 segundos.');
+  const estado=await api(prefixo+'/video');
+  rota=prefixo+'/video';versao=estado.versao;chave='X-Video-Versao-Esperada';
+  mime='video/mp4';
+ }else if(tipo==='FOTO'){
+  if(arquivo.size<40||arquivo.size>3*1024*1024||
+     !['image/jpeg','image/png','image/webp'].includes(arquivo.type))
+   throw Error('A foto deve ser JPEG, PNG ou WebP, até 3 MB.');
+  if(posicao<1||posicao>10)throw Error('Limite de dez fotos por produto.');
+  const estado=await api(prefixo+'/fotos');
+  const foto=estado.fotos.find(f=>f.posicao===posicao);
+  rota=prefixo+'/fotos/'+posicao;versao=foto?.versao||0;
+  chave='X-Foto-Versao-Esperada';mime=arquivo.type;
+ }else throw Error('Tipo de arquivo inválido.');
+ const resp=await fetch('/staging/escritorio-unificado'+rota,{
+  method:'POST',cache:'no-store',credentials:'omit',
+  headers:{Authorization:'Bearer '+auth,'Content-Type':mime,[chave]:String(versao)},
+  body:arquivo
+ });
+ const resultado=await resp.json().catch(()=>({}));
+ if(!resp.ok)throw Error(resultado.erro||'Arquivo não enviado.');
+ return resultado;
+}
+async function enviarArquivosSelecionadosAdmin(id,tipo,{pdf=null,video=null,fotos=[]}={}){
+ const a=[];
+ if(pdf&&tipo==='PDF'){
+  const r=await enviarArquivoProdutoAdmin(id,pdf,{tipo:'PDF'});
+  a.push('PDF versão '+r.versao);
+ }
+ for(let i=0;i<fotos.length;i++){
+  const r=await enviarArquivoProdutoAdmin(id,fotos[i],{tipo:'FOTO',posicao:i+1});
+  a.push('foto '+r.posicao);
+ }
+ if(video){
+  const r=await enviarArquivoProdutoAdmin(id,video,{tipo:'VIDEO'});
+  a.push('vídeo de 30 segundos (versão '+r.versao+')');
+ }
+ return a;
+}
+async function atualizarMidiasProdutoAdmin(id,tipo){
+ if(edicaoProduto?.id!==id)return;
+ $('pdfProdutoEnviarAdmin').disabled=tipo!=='PDF';
+ $('fotoProdutoEnviarAdmin').disabled=false;
+ $('videoProdutoEnviarAdmin').disabled=false;
+ const trabalhos=[api('/produtos/'+encodeURIComponent(id)+'/fotos'),
+  api('/produtos/'+encodeURIComponent(id)+'/video')];
+ if(tipo==='PDF')trabalhos.push(api('/produtos/'+encodeURIComponent(id)+'/pdf'));
+ try{
+  const [fotos,video,pdf]=await Promise.all(trabalhos);
+  if(edicaoProduto?.id!==id)return;
+  $('fotoProdutoEstadoAdmin').textContent=fotos.fotos.length+
+   ' foto(s) cadastrada(s) · limite 10.';
+  $('videoProdutoEstadoAdmin').textContent=video.arquivoAnexado?
+   'Vídeo salvo · '+(video.duracaoMs/1000).toFixed(1)+' segundos.':
+   'Nenhum vídeo anexado ao produto.';
+  $('pdfProdutoEstadoAdmin').textContent=tipo!=='PDF'?
+   'Produto físico não requer PDF.':
+   pdf.arquivoAnexado?'PDF salvo · versão '+pdf.versao+'.':
+   'PDF ainda NÃO anexado. Anexe antes de simular uma compra.';
+ }catch(e){$('pdfProdutoEstadoAdmin').textContent='Arquivos: '+e.message;}
+}
+async function enviarTipoProdutoAdmin(tipo){
+ const id=edicaoProduto?.id;
+ if(!id)throw Error('Salve ou escolha um produto antes.');
+ const inputs={PDF:'pdfProdutoArquivoAdmin',VIDEO:'videoProdutoArquivoAdmin',
+  FOTO:'fotoProdutoArquivoAdmin'};
+ const campo=$(inputs[tipo]),arquivos=[...campo.files];
+ if(!arquivos.length)throw Error('Selecione o arquivo para enviar.');
+ if(tipo==='PDF'&&$('produtoTipoAdmin').value!=='PDF')
+  throw Error('Somente produtos PDF aceitam o arquivo do curso.');
+ const a=await enviarArquivosSelecionadosAdmin(id,$('produtoTipoAdmin').value,{
+  pdf:tipo==='PDF'?arquivos[0]:null,
+  video:tipo==='VIDEO'?arquivos[0]:null,
+  fotos:tipo==='FOTO'?arquivos:[]
+ });
+ campo.value='';
+ await atualizarMidiasProdutoAdmin(id,$('produtoTipoAdmin').value);
+ return a.join(', ');
+}
+
 function linha(rotulo,valor){const a=elem('div');a.className='indicador';a.append(elem('strong',String(valor)),elem('span',rotulo));return a;}
 
 
@@ -222,6 +315,8 @@ function limparProduto(){
  edicaoProduto=null;chaveProduto=null;$('formProduto').reset();
  $('produtoIdAdmin').readOnly=false;$('produtoTipoAdmin').disabled=false;
  $('tituloFormularioProduto').textContent='Cadastrar produto fictício';
+ for(const t of ['pdf','foto','video'])$(''+t+'ProdutoEnviarAdmin').disabled=true;
+ $('pdfProdutoEstadoAdmin').textContent='Salve o produto para anexar os arquivos.';
  limparCustosProduto();
  $('salvarProdutoAdmin').textContent='Salvar produto';
 }
@@ -236,6 +331,8 @@ function preencherProduto(item){
   (item.produto.precoCentavos/100).toFixed(2)
  );
  $('tituloFormularioProduto').textContent='Editar produto · revisão '+item.revisao;
+ for(const t of ['pdf','foto','video'])$(''+t+'ProdutoArquivoAdmin').value='';
+ atualizarMidiasProdutoAdmin(item.produto.id,item.produto.tipo);
  $('salvarProdutoAdmin').textContent='Atualizar catálogo do laboratório';
  abrirCustosProduto(item.produto.id).catch(e=>
   $('statusCustosProdutoAdmin').textContent='Erro ao consultar custos: '+e.message);
@@ -1145,6 +1242,19 @@ $('produtosProximo').addEventListener('click',()=>{
  paginaProdutos++;atualizarProdutos().catch(e=>dizer(e.message));
 });
 $('formProduto').addEventListener('input',()=>{chaveProduto=null;});
+for(const [tipo,botao,campo] of [
+ ['PDF','pdfProdutoEnviarAdmin','pdfProdutoEstadoAdmin'],
+ ['FOTO','fotoProdutoEnviarAdmin','fotoProdutoEstadoAdmin'],
+ ['VIDEO','videoProdutoEnviarAdmin','videoProdutoEstadoAdmin']
+]){
+ $(botao).addEventListener('click',async()=>{
+  const btn=$(botao);btn.disabled=true;$(campo).textContent='Enviando arquivo...';
+  try{$(campo).textContent='Enviado: '+await enviarTipoProdutoAdmin(tipo);}
+  catch(e){$(campo).textContent='Erro ao enviar: '+e.message;}
+  finally{btn.disabled=tipo==='PDF'&&$('produtoTipoAdmin').value!=='PDF';}
+ });
+}
+
 $('formProduto').addEventListener('submit',async event=>{
  event.preventDefault();
  const botao=event.submitter;botao.disabled=true;
@@ -1156,6 +1266,12 @@ $('formProduto').addEventListener('submit',async event=>{
  }
  try{
   const id=$('produtoIdAdmin').value,nome=$('produtoNomeAdmin').value;
+  const tipo=$('produtoTipoAdmin').value;
+  const pdf=$('pdfProdutoArquivoAdmin').files[0]||null;
+  const video=$('videoProdutoArquivoAdmin').files[0]||null;
+  const fotos=[...$('fotoProdutoArquivoAdmin').files];
+  if(pdf&&tipo!=='PDF')throw Error('Arquivo PDF apenas para curso digital.');
+  if(fotos.length>10)throw Error('Limite de dez fotos por produto.');
   const descricao=$('produtoDescricaoAdmin').value,estado=$('produtoEstadoAdmin').value;
   if(edicaoProduto){
    await api('/produtos/'+encodeURIComponent(edicaoProduto.id),{
@@ -1164,15 +1280,22 @@ $('formProduto').addEventListener('submit',async event=>{
    });
   }else{
    if(!chaveProduto)chaveProduto='produto-ui-'+crypto.randomUUID();
-   const tipo=$('produtoTipoAdmin').value;
    await api('/produtos',{method:'POST',idempotencia:chaveProduto,
     body:{produto:{id,nome,descricao,tipo,estado,precoCentavos:centavos,
      entrega:tipo==='PDF'?'DOWNLOAD_APOS_CONFIRMACAO':'FORNECEDOR_INTEGRADO',
      fotos:[],detalhes:[],videoApresentacaoUrl:null}}});
   }
+  let arquivoStatus='',arquivoErro=null;
+  try{
+   const salvos=await enviarArquivosSelecionadosAdmin(id,tipo,{pdf,video,fotos});
+   arquivoStatus=salvos.length?' · Arquivos: '+salvos.join(', '):'';
+  }catch(e){arquivoErro=e;}
   limparProduto();await atualizar();
   preencherProduto(await api('/produtos/'+encodeURIComponent(id)));
-  $('resultadoProdutoAdmin').textContent='Produto salvo; confira e salve os custos internos abaixo.';
+  $('resultadoProdutoAdmin').textContent=arquivoErro?
+   'Produto salvo, mas arquivo falhou: '+arquivoErro.message+
+    '. Selecione novamente o arquivo e clique em enviar.':
+   'Produto salvo'+arquivoStatus+'. Confira seus custos internos.';
  }catch(e){$('resultadoProdutoAdmin').textContent='Produto não salvo: '+e.message;}
  finally{botao.disabled=false;}
 });
