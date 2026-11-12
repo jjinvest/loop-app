@@ -92,6 +92,24 @@ test('sob carga concorrente de 144 leituras admin, SQLite e motor seguem imutave
  assert.equal(banco.prepare('PRAGMA integrity_check').get().integrity_check,'ok');
  assert.equal(banco.prepare('PRAGMA foreign_key_check').all().length,0);
 });
+test('snapshot semanticamente adulterado bloqueia reparo apesar do SQLite íntegro',async t=>{
+ const {obter,banco}=await preparar(t,{sandbox:true});
+ banco.prepare([
+  'INSERT INTO akitemm_motor_conta_ensaio_estado',
+  '(id,revisao,snapshot,atualizado_em) VALUES(1,1,?,?)'
+ ].join(' ')).run('{not-json',Date.now());
+ assert.equal(banco.prepare('PRAGMA integrity_check').get().integrity_check,'ok');
+ const antes=banco.prepare('SELECT total_changes() AS n').get().n;
+ const r=await obter();
+ assert.equal(r.status,200,JSON.stringify(r.body));
+ assert.equal(r.body.estado,'BLOQUEADO_INTEGRIDADE');
+ assert.ok(r.body.divergencias.includes('MOTOR_INTEGRIDADE'));
+ assert.equal(r.body.acoesPermitidas.conciliarSandbox,false);
+ assert.equal(r.body.acoesPermitidas.editarRegistroFinanceiroDiretamente,false);
+ assert.equal(r.body.integridade.sqliteOk,true);
+ assert.equal(r.body.integridade.motorSnapshotValidado,false);
+ assert.equal(banco.prepare('SELECT total_changes() AS n').get().n,antes);
+});
 test('mesmo painel traz diagnostico e acao protegida que reaproveita conciliacao',()=>{
  const html=readFileSync(path.resolve(__dirname,
   '../src/candidato/escritorio-admin-candidato-ui.html'),'utf8');
