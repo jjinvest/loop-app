@@ -50,7 +50,7 @@ function criarGateway({portaInterna,senhaAcesso,senhaAdmin,segredoOperador,
    .filter(x=>x.startsWith(indicacaoCookie+'='));
   if(p.length!==1)return null;
   const v=p[0].slice(indicacaoCookie.length+1);
-  const m=v.match(/^v1\.([a-z]{1,9})\.(\d{13})\.([a-f0-9]{64})$/);
+  const m=v.match(/^v1\.([a-z]{1,12})\.(\d{13})\.([a-f0-9]{64})$/);
   if(!m)return null;
   const ts=Number(m[2]);
   if(ts>Date.now()||Date.now()-ts>prazoIndicacao||
@@ -208,7 +208,7 @@ function criarGateway({portaInterna,senhaAcesso,senhaAdmin,segredoOperador,
    res.writeHead(302,{...cabecalhosBase,Location:'/minha-conta',...(novoCookie?{'Set-Cookie':novoCookie}:{})});
    return res.end();
   }
-  const caminhoConvite=url.pathname.match(/^\/(loja|escritorio)\/([A-Za-z]{1,9})$/);
+  const caminhoConvite=url.pathname.match(/^\/(loja|escritorio)\/([A-Za-z]{1,12})$/);
   if(caminhoConvite){
    if(req.method!=='GET')return negar(405,'Método não permitido');
    const nick=caminhoConvite[2].toLowerCase();
