@@ -55,6 +55,7 @@ on:
       - 'test/pedido-multidistribuidores-akitemm.test.js'
       - 'test/catalogo-multidistribuidores-akitemm.test.js'
       - 'test/carrinho-cotacao-multidistribuidores.test.js'
+      - 'test/recuperacao-reservas-psp-paginacao.test.js'
       - 'test/backup-identidade-real-restauracao.test.js'
       - 'test/backup-identidade-real-offsite.test.js'
       - 'test/recuperacao-independente-offsite.test.js'
@@ -202,6 +203,8 @@ jobs:
         run: node --test test/catalogo-multidistribuidores-akitemm.test.js
       - name: Cotacao de preco estoque frete e uma compra com remessas por distribuidor
         run: node --test test/carrinho-cotacao-multidistribuidores.test.js
+      - name: Reconsulta PSP sem starvation de reservas apos 500 pedidos
+        run: node --test test/recuperacao-reservas-psp-paginacao.test.js
       - name: Backup cifrado de identidade e restauração sem reativar sessões
         run: node --test test/backup-identidade-real-restauracao.test.js
       - name: Cópia offsite da identidade cifrada, GET e restauração independente
