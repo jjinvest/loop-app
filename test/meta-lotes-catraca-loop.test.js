@@ -1,7 +1,7 @@
 'use strict';
 const {test}=require('node:test');
 const assert=require('node:assert/strict');
-const {planejado,validarMeta,dadosAtivacao}=
+const {planejado,validarMeta,janelasDeLuz,dadosAtivacao}=
  require('../src/domain/meta-lotes-catraca-loop');
 const {PADRAO}=require('../src/domain/agenda-catraca-loop');
 const when=h=>Date.parse('2026-11-06T'+h+':00-03:00');
@@ -52,4 +52,34 @@ test('um milhao de ciclos distribuidos no tempo sem arredondamento que estoura t
  assert.equal(planejado(meta,a,when('09:01')).ciclosAutorizadosAteAgora,3703);
  assert.equal(planejado(meta,a,when('17:59')).ciclosAutorizadosAteAgora,1000000);
  assert.doesNotThrow(()=>validarMeta({...original,quantidade:1000000}));
+});
+
+// Meta de dez ciclos nao transforma relogio em dinheiro ou compra criada.
+// Turno 09–18 tem 540 minutos: 54/ciclo e cerca de 9/luz (60 luzes).
+test('marcador do turno apresenta janelas ate a sexta luz e o giro',()=>{
+ const agenda={...PADRAO,ativo:true},m=original;
+ const primeira=janelasDeLuz(m,agenda,when('09:00'));
+ assert.equal(primeira.janelasAutorizadasAteAgora,0);
+ assert.equal(primeira.intervaloLuzSegundos,540);
+ assert.equal(primeira.intervaloCicloSegundos,3240);
+ assert.equal(primeira.marcoEstimado,true);
+ assert.equal(primeira.dependeDeCompraConciliada,true);
+ assert.equal(primeira.proximaJanelaEmMs,when('09:09'));
+ assert.equal(janelasDeLuz(m,agenda,when('09:08')).janelasAutorizadasAteAgora,0);
+ assert.equal(janelasDeLuz(m,agenda,when('09:09')).janelasAutorizadasAteAgora,1);
+ assert.equal(janelasDeLuz(m,agenda,when('09:53')).janelasAutorizadasAteAgora,5);
+ assert.equal(janelasDeLuz(m,agenda,when('09:54')).janelasAutorizadasAteAgora,6);
+ assert.equal(janelasDeLuz(m,agenda,when('17:59')).janelasAutorizadasAteAgora,60);
+ assert.equal(janelasDeLuz(m,agenda,when('17:59')).proximaJanelaEmMs,null);
+ assert.equal(janelasDeLuz(m,agenda,when('18:00')),null);
+});
+test('meta ligada ao meio do turno recalcula intervalo sem retroagir',()=>{
+ const agenda={...PADRAO,ativo:true};
+ const m={...original,ativadaMinuto:12*60};
+ const inicio=janelasDeLuz(m,agenda,when('12:00'));
+ assert.equal(inicio.intervaloLuzSegundos,360);
+ assert.equal(inicio.intervaloCicloSegundos,2160);
+ assert.equal(inicio.janelasAutorizadasAteAgora,0);
+ assert.equal(inicio.proximaJanelaEmMs,when('12:06'));
+ assert.equal(janelasDeLuz(m,agenda,when('11:59')),null);
 });
