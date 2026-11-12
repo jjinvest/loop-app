@@ -951,7 +951,8 @@ async function diagnosticarManutencao(){
  try{
   const r=await api('/manutencao/diagnostico');
   const permitidos=['SEM_ANOMALIAS_OBSERVADAS','PENDENCIAS_A_CONCILIAR',
-   'REVISAO_HUMANA','BLOQUEADO_INTEGRIDADE','PSP_NAO_DISPONIVEL'];
+   'REVISAO_HUMANA','BLOQUEADO_INTEGRIDADE','PSP_NAO_DISPONIVEL',
+   'MOTOR_AGUARDANDO_PRIMEIRO_USO'];
   if(!permitidos.includes(r.estado)||r.consultaSomenteLeitura!==true||
      r.escritasExecutadas!==0||r.financeiroReal!==false||
      !Array.isArray(r.divergencias)||!r.integridade||
@@ -975,7 +976,8 @@ async function diagnosticarManutencao(){
    PENDENCIAS_A_CONCILIAR:'Há pendências no Sandbox. Ação segura disponível após confirmação.',
    REVISAO_HUMANA:'Há divergências ou revisões que exigem análise humana.',
    BLOQUEADO_INTEGRIDADE:'Integridade inconsistente. Reparação automática bloqueada.',
-   PSP_NAO_DISPONIVEL:'PSP não habilitado nesta sessão de laboratório.'
+   PSP_NAO_DISPONIVEL:'PSP não habilitado nesta sessão de laboratório.',
+   MOTOR_AGUARDANDO_PRIMEIRO_USO:'Motor ainda sem primeira operação. Não há dados de giro para restaurar.'
   };
   estado.textContent=destinos[r.estado]+
    (r.divergencias.length?' Códigos: '+r.divergencias.join(', ')+'.':'')+
