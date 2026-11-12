@@ -1,7 +1,7 @@
 'use strict';
 // Vinculo de CADASTRO de laboratorio: nao prova compra, indicacao qualificada
 // ou comissao. Nunca alimentar fila comercial ou extrato financeiro a partir daqui.
-const NICK=/^[A-Za-z]{1,9}$/;
+const NICK=/^[A-Za-z]{1,12}$/;
 class EquipeCandidataSQLite{
  constructor({banco}={}){
   if(!banco||typeof banco.prepare!=='function')throw new TypeError('SQLite obrigatorio');
