@@ -96,6 +96,9 @@ test('interface aprovada e identidade real servidas da mesma origem protegida',a
  assert.match(script,/seletorPosicaoMotor/);
  assert.match(script,/catracaClientePodeGirar/);
  assert.match(script,/LoopVisorCatraca\.criar/);
+ assert.match(script,/carregarPedidos/);
+ assert.match(script,/\/api\/loja\/pedidos/);
+ assert.match(script,/abaMeusPedidos/);
  assert.doesNotMatch(script,/termosCpfTexto'\)\.textContent='Versão'/);
  assert.match(script,/\.loop03-atalho-loja, \.barra-conta a\.loop03-loja-prata/);
  assert.match(script,/setAttribute\('href','\/loja'\)/);
@@ -108,6 +111,7 @@ test('interface aprovada e identidade real servidas da mesma origem protegida',a
  }
  assert.equal((await get('/loja')).status,401,'a vitrine exige titular autenticado');
  assert.equal((await get('/api/loja/estado')).status,401);
+ assert.equal((await get('/api/loja/pedidos')).status,401);
  const documentos=titular.documentos();
  const nick='Ana',senha='SenhaFicticia2026!';
  await titular.cadastrar({
@@ -141,6 +145,10 @@ test('interface aprovada e identidade real servidas da mesma origem protegida',a
  assert.equal(descricao.contaUnica,true);
  assert.equal(descricao.catalogoComercialDisponivel,false);
  assert.equal(descricao.checkoutReal,false);
+ const historico=await fetch(base+'/api/loja/pedidos',{
+  headers:{Cookie:cookie}
+ });
+ assert.equal(historico.status,503,'sem livros homologados não inventar pedidos');
  assert.equal((await get('/api/contas/me')).status,401);
  const proibido=await fetch(base+'/api/loja/pedidos',{
   method:'POST',headers:{Origin:ORIGEM,'Content-Type':'application/json',Cookie:cookie},
