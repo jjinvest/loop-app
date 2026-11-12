@@ -3,6 +3,7 @@
 // Código original de loja preservado; apenas a cópia de laboratório usa SQLite
 // das mesmas contas, produtos, pré-pedidos e Escritórios.
 const fs=require('node:fs'),path=require('node:path');
+const express=require('express');
 const {entradaValida,cotarCheckoutPublico}=require('../domain/cotacao-checkout-publico');
 const {SinalizacaoVitrineCandidatoSQLite}=require('../domain/sinalizacao-vitrine-candidato-sqlite');
 const {CustosProdutoAdminCandidatoSQLite}=require('../domain/custos-produtos-admin-candidato-sqlite');
@@ -11,7 +12,7 @@ const {simularQualificacaoCandidato}=require('../domain/simulador-qualificacao-c
 const {consultarPedido}=require('../domain/relatorio-homologacao-checkout-staging');
 const DIR=path.join(__dirname,'../laboratorio');
 function fail(codigo){const e=new Error(codigo);e.codigo=codigo;throw e;}
-function createVitrineCandidata({app,banco,catalogo,contas,intencoes,prePedidos,autorizarOperador,novidades,enderecoEntrega,configLoja,materialPdf,videoProduto,fotosProduto}={}){
+function createVitrineCandidata({app,banco,catalogo,contas,intencoes,prePedidos,autorizarOperador,novidades,enderecoEntrega,configLoja,materialPdf,videoProduto,fotosProduto,avaliacoes}={}){
  if(process.env.NODE_ENV==='production')fail('VITRINE_LAB_NAO_HOMOLOGADA');
  if(!app?.get||!app?.post||!app?.patch||catalogo?.db!==banco||
     typeof contas?.sessao!=='function'||typeof prePedidos?.preparar!=='function'||
@@ -89,6 +90,10 @@ function createVitrineCandidata({app,banco,catalogo,contas,intencoes,prePedidos,
   .replace(String.raw\`  /^\/imagens\/catalogo\/[a-zA-Z0-9_-]+\.(?:png|jpe?g|webp)$/.test(src);\`,
    String.raw\`  (/^\/imagens\/catalogo\/[a-zA-Z0-9_-]+\.(?:png|jpe?g|webp)$/.test(src)||\`+
    String.raw\`/^\/staging\/vitrine\/loja\/produtos\/[a-z0-9-]{3,80}\/foto\/(?:10|[1-9])$/.test(src));\`)
+  .replace("const caminho='/api/laboratorio/participante/loja/avaliacoes/'+",
+   "const caminho='/staging/vitrine/loja/avaliacoes/'+")
+  .replace("'X-AKITEMM-MIDIA-TIPO':tipo},body:arquivo});",
+   "'X-AKITEMM-MIDIA-TIPO':tipo,'X-Checkout-Csrf':csrfCandidato||''},body:arquivo});")
   .replace('if(quantidade<100)','if(quantidade<50)')
   .replace('if(qtd>=100)','if(qtd>=50)')
   .replace('Máximo de 100 unidades por produto.','Máximo de 50 unidades por produto neste laboratório.')
@@ -256,7 +261,7 @@ function createVitrineCandidata({app,banco,catalogo,contas,intencoes,prePedidos,
    }
   });
  app.get('/staging/vitrine/loja/avaliacoes/pendentes',
-  autorizarCliente,(_req,res)=>res.json({itens:[]}));
+  autorizarCliente,(req,res)=>res.json(avaliacoes.itensAvaliaveis(req.titularVitrine)));
  app.get('/staging/vitrine/loja/entrega',autorizarCliente,(req,res)=>{
   try{return res.json(enderecoEntrega.consultar(req.titularVitrine));}
   catch{return res.status(503).json({erro:'ENDERECO_CONSULTA_INDISPONIVEL'});}
@@ -286,8 +291,67 @@ function createVitrineCandidata({app,banco,catalogo,contas,intencoes,prePedidos,
     apenasEnsaio:true,semOfertasComerciais:true});
   }catch{return res.status(503).json({erro:'CONFIG_LOJA_INDISPONIVEL'});}
  });
+ app.get('/staging/vitrine/loja/avaliacoes/midias/:id',
+  autorizarCliente,(req,res)=>{
+   try{
+    const x=avaliacoes.abrirMidia({
+     id:Number(req.params.id),titularId:req.titularVitrine
+    });
+    return res.set({'Cache-Control':'private, no-store',
+     'X-Robots-Tag':'noindex, nofollow'}).type(x.mime).send(x.bytes);
+   }catch{return res.status(404).json({erro:'MIDIA_NAO_ENCONTRADA'});}
+  });
+ app.get('/staging/vitrine/loja/avaliacoes/:produtoId',
+  autorizarCliente,async(req,res)=>{
+   const p=await catalogo.buscar(req.params.produtoId);
+   if(!p||p.estado!=='PUBLICADO')
+    return res.status(404).json({erro:'PRODUTO_NAO_ENCONTRADO'});
+   try{return res.json(avaliacoes.publicadas(p.id));}
+   catch{return res.status(400).json({erro:'AVALIACOES_INDISPONIVEIS'});}
+  });
  app.post('/staging/vitrine/loja/avaliacoes',
-  autorizarCliente,(_req,res)=>res.status(403).json({erro:'AVALIACOES_NAO_HOMOLOGADAS'}));
+  autorizarCliente,(req,res)=>{
+   if(req.get('x-loop-lab')!=='participante'||!csrf(req))
+    return res.status(403).json({erro:'MUTACAO_NAO_AUTORIZADA'});
+   if(!req.is('application/json')||!req.body||
+      Object.keys(req.body).sort().join(',')!=='comentario,nota,pedidoId,produtoId')
+    return res.status(400).json({erro:'AVALIACAO_INVALIDA'});
+   try{
+    const r=avaliacoes.criar({
+     titularId:req.titularVitrine,...req.body
+    });
+    return res.status(201).json(r);
+   }catch(e){return res.status(e.codigo==='AVALIACAO_INVALIDA'?400:409)
+    .json({erro:e.codigo||'AVALIACAO_INDISPONIVEL'});}
+  });
+ app.post('/staging/vitrine/loja/avaliacoes/:pedidoId/:produtoId/midias',
+  autorizarCliente,
+  express.raw({type:['image/jpeg','image/png','image/webp','video/mp4'],
+   limit:'25mb',inflate:false}),
+  (req,res)=>{
+   if(req.get('x-loop-lab')!=='participante'||!csrf(req))
+    return res.status(403).json({erro:'MUTACAO_NAO_AUTORIZADA'});
+   if(!Buffer.isBuffer(req.body)||!
+      ['image/jpeg','image/png','image/webp','video/mp4'].includes(req.get('content-type')))
+    return res.status(415).json({erro:'MIDIA_MIME_INVALIDO'});
+   try{
+    const r=avaliacoes.anexar({
+     titularId:req.titularVitrine,
+     pedidoId:req.params.pedidoId,produtoId:req.params.produtoId,
+     tipo:req.get('x-akitemm-midia-tipo'),mime:req.get('content-type'),
+     bytes:req.body
+    });
+    return res.status(201).json(r);
+   }catch(e){return res.status(e.codigo==='MIDIA_INVALIDA'||
+     e.codigo==='VIDEO_DURACAO_INVALIDA'||e.codigo==='FOTO_INVALIDA'?400:409)
+    .json({erro:e.codigo||'MIDIA_INDISPONIVEL'});}
+  });
+ app.use((err,req,res,next)=>{
+  if(req.path?.startsWith('/staging/vitrine/loja/avaliacoes/')&&
+     req.path.endsWith('/midias')&&err.type==='entity.too.large')
+   return res.status(413).json({erro:'MIDIA_GRANDE_DEMAIS'});
+  next(err);
+ });
  app.get('/staging/escritorio-unificado/sinalizacao/:id',
   autorizarOperador,(req,res)=>{
    try{return res.json(sinalizacao.consultar(req.params.id));}
