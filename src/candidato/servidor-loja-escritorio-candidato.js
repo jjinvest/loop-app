@@ -1659,6 +1659,75 @@ if(worker){
    });
   }catch{return res.status(404).json({erro:'PREPEDIDO_NAO_ENCONTRADO'});}
  });
+ // Diagnostico de manutencao do painel aprovado: somente GET,
+ // fonte unica SQLite. Nunca corrige registros sem reconsulta PSP.
+ app.get('/staging/escritorio-unificado/manutencao/diagnostico',
+  autorizarOperador,(_req,res)=>{
+   res.set('Cache-Control','no-store');
+   try{
+    const sqlite=banco.prepare('PRAGMA quick_check').get().quick_check;
+    const fk=banco.prepare('PRAGMA foreign_key_check').all().length;
+    const titulares=integridade.auditar();
+    const relacoes=auditarRelacoesPspCandidato({banco});
+    let motor=null,motorErro=null;
+    try{motor=auditarIntegridadeMotorCandidato({
+     banco,exigirMotor:true
+    });}catch(e){motorErro=e.codigo||'MOTOR_AUDITORIA_INCONCLUSIVA';}
+    const psp=worker?worker.resumoPendencias():null;
+    const quarentena=inbox?inbox.resumoAntecipados():null;
+    const recuperacao=worker?statusRecuperacaoPSP():null;
+    const divergencias=[
+     ...(sqlite==='ok'?[]:['SQLITE_INTEGRIDADE']),
+     ...(fk===0?[]:['SQLITE_CHAVES_ESTRANGEIRAS']),
+     ...(titulares.totalInconsistencias===0?[]:['TITULARIDADE']),
+     ...(relacoes.totalInconsistencias===0?[]:['PSP_RELACOES']),
+     ...(motorErro?['MOTOR_INTEGRIDADE']:[]),
+     ...(motor&&!motor.snapshotValidado?['MOTOR_SNAPSHOT_AUSENTE']:[]),
+     ...(psp?.exigeRevisao>0?['PSP_REVISAO_HUMANA']:[]),
+     ...(quarentena?.divergentes>0?['WEBHOOK_DIVERGENTE']:[]),
+     ...(recuperacao?.segundaFalha>0?['PSP_REINCIDENCIA']:[])
+    ];
+    const pendenciasConciliaveis=psp===null?null:
+     psp.pendentes+psp.processando+
+     (quarentena?.aguardandoVinculo||0)+
+     contarVinculosMotorAusentes()+contarReversoesMotorPendentes();
+    const estrutural=divergencias.some(x=>[
+     'SQLITE_INTEGRIDADE','SQLITE_CHAVES_ESTRANGEIRAS',
+     'TITULARIDADE','PSP_RELACOES','MOTOR_INTEGRIDADE',
+     'MOTOR_SNAPSHOT_AUSENTE'].includes(x));
+    return res.json({
+     ambiente:'HOMOLOGACAO_SEM_FINANCEIRO_REAL',
+     consultaSomenteLeitura:true,pspReconsultadoNestaLeitura:false,
+     escritasExecutadas:0,financeiroReal:false,
+     estado:estrutural?'BLOQUEADO_INTEGRIDADE':
+      divergencias.length?'REVISAO_HUMANA':
+      pendenciasConciliaveis===null?'PSP_NAO_DISPONIVEL':
+      pendenciasConciliaveis>0?'PENDENCIAS_A_CONCILIAR':'SEM_ANOMALIAS_OBSERVADAS',
+     integridade:{sqliteOk:sqlite==='ok',fksInconsistentes:fk,
+      titularesInconsistentes:titulares.totalInconsistencias,
+      pspInconsistentes:relacoes.totalInconsistencias,
+      motorSnapshotValidado:motor?.snapshotValidado===true},
+     divergencias,
+     pendenciasConciliaveis,webhooksEmQuarentena:
+      quarentena?.aguardandoVinculo??null,
+     reconsultasEmRevisao:psp?.exigeRevisao??null,
+     acoesPermitidas:{
+      consultarBackup:true,
+      consultarDetalhes:true,
+      conciliarSandbox:operacoesSandboxAutorizadas===true&&
+       !estrutural&&psp!==null,
+      criarMissaoHumana:true,
+      editarRegistroFinanceiroDiretamente:false,
+      liberarPagamentosReais:false
+     }
+    });
+   }catch(e){
+    return res.status(503).json({
+     erro:'MANUTENCAO_DIAGNOSTICO_INDISPONIVEL',
+     financeiroReal:false
+    });
+   }
+  });
  app.get('/staging/escritorio-unificado',autorizarOperador,(_req,res)=>{
   try{
    const rel=consultarEscritorioHomologacao({banco});
