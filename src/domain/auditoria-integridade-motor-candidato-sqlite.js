@@ -80,7 +80,7 @@ function auditarIntegridadeMotorCandidato({banco,exigirMotor=false}={}){
    'ON c.prepedido_id=v.prepedido_id',
    'LEFT JOIN akitemm_vitrine_fotografia_classificacao_prepedido f',
    'ON f.prepedido_id=v.prepedido_id'
-  ].join(' ')).all();
+  ].join(' ')).iterate();
   for(const x of reservas){
    reservasAuditadas++;
    if(x.pspPedido!==x.pedidoId||x.checkoutPedido!==x.pedidoId||
@@ -151,15 +151,13 @@ function auditarIntegridadeMotorCandidato({banco,exigirMotor=false}={}){
  // O livro de criacao de douradas e imutavel e deve corresponder a cada
  // posicao efetivamente existente no snapshot do mesmo motor.
  const tabelaDouradas='akitemm_motor_douradas_manuais_lab';
- const registrosDouradas=presentes.has(tabelaDouradas)?banco.prepare([
-  'SELECT evento_id AS eventoId,numero_posicao AS posicaoId',
-  'FROM akitemm_motor_douradas_manuais_lab'
- ].join(' ')).all():[];
+ const totalDouradas=presentes.has(tabelaDouradas)?contar(
+  'SELECT COUNT(*) AS n FROM akitemm_motor_douradas_manuais_lab'):0;
  const operacoesDouradas=contar([
   'SELECT COUNT(*) AS n FROM akitemm_motor_conta_ensaio_operacoes',
   "WHERE tipo='CRIAR_DOURADA_MANUAL'"
  ].join(' '));
- if(registrosDouradas.length!==operacoesDouradas)
+ if(totalDouradas!==operacoesDouradas)
   falha('MOTOR_DOURADAS_LIVRO_OPERACAO_DIVERGENTE');
  if(presentes.has(tabelaDouradas)){
   const duplicadas=banco.prepare([
@@ -175,7 +173,11 @@ function auditarIntegridadeMotorCandidato({banco,exigirMotor=false}={}){
   'WHERE id=1'
  ].join(' ')).get();
  const temLotes=contar('SELECT COUNT(*) AS n FROM akitemm_motor_ensaio_lotes_pedido')>0;
- if(!row&&(temLotes||registrosDouradas.length))falha('MOTOR_SQLITE_SNAPSHOT_AUSENTE');
+ // Mesmo sem lote ou dourada, agenda/luzes/giro deixam operacoes duraveis.
+ // Nao declarar "primeiro uso" se o snapshot se perdeu e restou historico.
+ const temOperacoes=contar('SELECT COUNT(*) AS n FROM akitemm_motor_conta_ensaio_operacoes')>0;
+ if(!row&&(temLotes||temOperacoes||totalDouradas>0))
+  falha('MOTOR_SQLITE_SNAPSHOT_AUSENTE');
  if(row){
   if(!Number.isSafeInteger(row.revisao)||row.revisao<1||
      typeof row.snapshot!=='string'||row.snapshot.length>32*1024*1024)
@@ -191,7 +193,12 @@ function auditarIntegridadeMotorCandidato({banco,exigirMotor=false}={}){
    ...restaurado.tabuleiro.ciclosConcluidos.map(x=>x.centro)]
    .filter(Boolean);
   const porId=new Map(posicoes.map(p=>[p.id,p]));
-  for(const d of registrosDouradas){
+  // Percorrer o livro sem carregar todos os registros no heap.
+  const livrosDouradas=presentes.has(tabelaDouradas)?banco.prepare([
+   'SELECT evento_id AS eventoId,numero_posicao AS posicaoId',
+   'FROM akitemm_motor_douradas_manuais_lab'
+  ].join(' ')).iterate():[];
+  for(const d of livrosDouradas){
    const p=porId.get(d.posicaoId);
    if(!p||p.empresa!==true||p.participanteId!=='LOOP_EMPRESA'||
       p.titularOperacional!=='LOOP_EMPRESA'||
@@ -207,7 +214,7 @@ function auditarIntegridadeMotorCandidato({banco,exigirMotor=false}={}){
  }
  return {presente:true,totalInconsistencias:0,
   snapshotValidado:Boolean(row),lotesOrfaos:0,aceitesOrfaos:0,
-  operacoesOrfas:0,douradasManuaisAuditadas:registrosDouradas.length,
+  operacoesOrfas:0,douradasManuaisAuditadas:totalDouradas,
   reservasAuditadas,checkpointsAuditados,
   valorRealProvado:false};
 }
