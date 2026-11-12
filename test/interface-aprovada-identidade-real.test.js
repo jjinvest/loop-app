@@ -35,6 +35,9 @@ test('HTML original do cliente é reaproveitado sem script LAB, nova tela ou CPF
  assert.match(html,/id="posicoesPainel"/);
  assert.match(html,/id="listaEquipe"/);
  assert.match(html,/id="estadoTabuleiroIntegrado"/);
+ assert.match(html,/id="atualizarTabuleiroIntegrado"/);
+ assert.match(html,/id="relogioTabuleiroIntegrado"/);
+ assert.doesNotMatch(html,/Mesmo motor V6 e mesmo SQLite da conta e da loja/);
  assert.equal((html.match(/id="seletorPosicaoMotor"/g)||[]).length,1);
  assert.equal((html.match(/id="posicoesPainel"/g)||[]).length,1);
  assert.match(html,/id="conteudoConta"/);
@@ -79,6 +82,7 @@ test('interface aprovada e identidade real servidas da mesma origem protegida',a
  assert.match(script,/COMPRA_ENSAIO_SEM_QUALIFICACAO/);
  assert.match(script,/seletorPosicaoMotor/);
  assert.match(script,/catracaClientePodeGirar/);
+ assert.match(script,/iniciarRelogioTabuleiro/);
  assert.match(script,/\.loop03-atalho-loja, \.barra-conta a\.loop03-loja-prata/);
  assert.match(script,/setAttribute\('href','\/loja'\)/);
  assert.doesNotMatch(script,/removeAttribute\('href'\)/);
