@@ -36,6 +36,7 @@ test('1000 azuis pendentes convertem em douradas somente ao cruzar vaga 6, sem d
  assert.equal(new Set([...atuais,...concluidas].map(p=>p.id)).size,1007);
  const douradasConcluidas=concluidas.filter(p=>p.empresa===true).length;
  assert.equal(douradasConcluidas,993);
- assert.equal(entradasNoCofreDouradas,douradasConcluidas*750);
+ // Regra V2: a dourada central contabiliza seis, nao tres, eventos.
+  assert.equal(entradasNoCofreDouradas,douradasConcluidas*1500);
  console.log('RELATORIO_DOURADAS_1000='+JSON.stringify({douradasCriadas,giros,douradasConcluidas,douradasNoTabuleiro:7,entradasNoCofreDouradas,conservacaoPosicoes:1007}));
 });
