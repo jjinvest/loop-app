@@ -37,7 +37,6 @@ function renderizarInterfaceAprovada(){
  ['Nesta homologação, use dados fictícios. Não informe CPF nem senha pessoal.',
   'Leia e aceite os termos e a política de privacidade antes de criar sua conta.'],
  ['Nome fictício','Nome'],
- ['Nick (1 a 9 letras)','Nick (1 a 12 letras)'],
  ['E-mail fictício','E-mail'],
  ['Senha de teste (8 a 12 caracteres)','Senha (mínimo 12 caracteres)'],
  ['SEM VENDAS REAIS','SEM COMPRAS OU PAGAMENTOS REAIS'],
@@ -50,11 +49,9 @@ function renderizarInterfaceAprovada(){
  }
  // Nick é uma identidade única entre loja e escritório. Alterar apenas a
  // instância real da tela aprovada, sem mudar o laboratório histórico.
- const nickAnterior='minlength="1" maxlength="9" pattern="[A-Za-z]{1,9}"';
- if(html.split(nickAnterior).length!==3)
+ const nickAtual='minlength="1" maxlength="12" pattern="[A-Za-z]{1,12}"';
+ if(html.split(nickAtual).length!==3)
   throw Error('INTERFACE_NICK_APROVADO_DESATUALIZADA');
- html=html.replaceAll(nickAnterior,
-  'minlength="1" maxlength="12" pattern="[A-Za-z]{1,12}"');
  if(html.split('href="/staging/loja"').length!==3)
   throw Error('INTERFACE_LOJA_APROVADA_DESATUALIZADA');
  html=html.replaceAll('href="/staging/loja"','href="/loja"');
