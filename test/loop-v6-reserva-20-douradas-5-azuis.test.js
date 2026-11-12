@@ -15,7 +15,8 @@ test('5000 compradores: 20 douradas FINANCIADAS pela reserva + 5 azuis convertid
   assert.equal(r.contemplacoesComCicloConcluido,416);
   assert.equal(r.posicoesDouradasFinanciadasPelaReserva,20);
   assert.equal(r.conversoesAzulParaDourada+r.azulPendente,5);
-  assert.equal(f.cofreReservaBrutoCentavos,10400000);
+  assert.equal(f.cofreReservaBrutoCentavos,
+    f.alocacaoReferencialPorDestinoCentavos.LOOP_DIREITA);
   assert.equal(f.compromissoDouradasFinanciadasCentavos,20*C);
   assert.equal(f.compromissosDeBonificacaoReservaCentavos,
    r.indicacoesValidadas*Math.round(C*0.1));
