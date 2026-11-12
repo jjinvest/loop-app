@@ -11,7 +11,11 @@ async function auditarWebhooksSandbox({env=process.env,fetchImpl=globalThis.fetc
  const chave=env.LOOP_PREVIEW_ASAAS_SANDBOX_API_KEY;
  if(typeof chave!=='string'||!chave.startsWith('$aact_hmlg_')||
     chave.length<25||/\s/.test(chave))falha('AUDITORIA_WEBHOOK_CHAVE_INVALIDA');
- if(env.RAILWAY_PUBLIC_DOMAIN&&env.RAILWAY_PUBLIC_DOMAIN!==DOMINIO)
+ // O Railway pode anunciar o dominio oficial do site como RAILWAY_PUBLIC_DOMAIN.
+// O webhook validado continua fixo na URL original do servico, tambem ativa.
+const DOMINIOS_PUBLICOS_PERMITIDOS=new Set([DOMINIO,'akitemmloop.com.br']);
+if(env.RAILWAY_PUBLIC_DOMAIN&&
+    !DOMINIOS_PUBLICOS_PERMITIDOS.has(env.RAILWAY_PUBLIC_DOMAIN))
   falha('AUDITORIA_WEBHOOK_DOMINIO_DIVERGENTE');
  if(typeof fetchImpl!=='function')falha('AUDITORIA_WEBHOOK_TRANSPORTE_INVALIDO');
  let resposta;
