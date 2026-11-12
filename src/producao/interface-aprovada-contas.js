@@ -209,26 +209,34 @@
  let painelMotorPreparado=false;
  const visorCatraca=window.LoopVisorCatraca.criar({elemento:$});
  const visualTabuleiro=window.LoopTabuleiroVisual.criar({elemento:$});
- let consultaPedidosEmCurso=0;
- async function carregarPedidos(){
+ let consultaPedidosEmCurso=0,paginaPedidosReal=0,totalPedidosReal=null;
+ async function carregarPedidos(pagina=paginaPedidosReal){
+  if(!Number.isSafeInteger(pagina)||pagina<0)return;
   const token=++consultaPedidosEmCurso;
   const painel=$('listaPedidos');painel.textContent='Consultando seu histórico...';
   $('pedidosAnterior').disabled=true;$('pedidosProximo').disabled=true;
   try{
-   const resposta=await fetch('/api/loja/pedidos',{
+   const resposta=await fetch('/api/loja/pedidos?pagina='+pagina,{
     credentials:'same-origin',cache:'no-store'
    });
    if(!resposta.ok)throw Error('HISTORICO_INDISPONIVEL');
-   const d=await resposta.json();
+   const d=await resposta.json(),p=d.paginacao;
    if(d.fonte!=='PEDIDOS_COMERCIAIS_DO_TITULAR'||
       d.checkoutRealHabilitadoPorEstaConsulta!==false||
-      !Array.isArray(d.pedidos)||d.pedidos.length>30)
+      !Array.isArray(d.pedidos)||d.pedidos.length>20||
+      !p||p.pagina!==pagina||p.tamanho!==20||
+      !Number.isSafeInteger(p.total)||p.total<0||
+      typeof p.haAnterior!=='boolean'||typeof p.haMais!=='boolean')
     throw Error('PEDIDOS_ORIGEM_INVALIDA');
    if(token!==consultaPedidosEmCurso)return;
+   paginaPedidosReal=pagina;
+   totalPedidosReal=p.total;
+   $('pedidosAnterior').disabled=!p.haAnterior;
+   $('pedidosProximo').disabled=!p.haMais;
    painel.replaceChildren();
-   $('resumoPedidos').textContent=String(d.pedidos.length);
-   $('pedidosPaginacao').textContent='Últimos '+d.pedidos.length+
-    ' pedido(s) · somente leitura';
+   $('resumoPedidos').textContent=String(totalPedidosReal);
+   $('pedidosPaginacao').textContent='Página '+(pagina+1)+
+    ' · '+totalPedidosReal+' pedido(s) no histórico';
    if(!d.pedidos.length){
     painel.textContent='Nenhum pedido comercial nesta conta.';
     return;
@@ -712,6 +720,14 @@
   });
  }
  $('atualizarPedidos').addEventListener('click',()=>void carregarPedidos());
+ $('pedidosAnterior').addEventListener('click',()=>{
+  if(paginaPedidosReal>0)void carregarPedidos(paginaPedidosReal-1);
+ });
+ $('pedidosProximo').addEventListener('click',()=>{
+  if(totalPedidosReal!==null&&
+     (paginaPedidosReal+1)*20<totalPedidosReal)
+   void carregarPedidos(paginaPedidosReal+1);
+ });
  for(const id of ['atalhoPedidos','posicoesVerPedidos','financeiroVerPedidos']){
   const botao=$(id);if(botao)botao.addEventListener('click',()=>{
    const aba=$('abaMeusPedidos');if(!aba.disabled)aba.click();
