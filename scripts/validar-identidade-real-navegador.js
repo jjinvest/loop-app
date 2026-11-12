@@ -241,6 +241,7 @@ async function main(){
    assert.equal(await page.locator('#abaFinanceiro').isDisabled(),false);
    assert.equal(await page.locator('#abaTabuleiro').isDisabled(),false);
    assert.equal(await page.locator('#abaPosicoes').isDisabled(),false);
+   assert.equal(await page.locator('#abaMeusPedidos').isDisabled(),false);
    await page.locator('#loopResumoMotor').filter({hasText:/Fila B: 1/}).waitFor();
    const geometria=await page.locator('#abaTabuleiro').evaluate(el=>{
     const rect=el.getBoundingClientRect();
@@ -424,6 +425,12 @@ async function main(){
    await pagina.locator('#loopResumoMotor').filter({
     hasText:new RegExp('Fila B: '+diagnostico.filaB)
    }).waitFor();
+   if(visual.mobile)await pagina.locator('#loop03MenuIntegrado').click();
+   await pagina.locator('#abaMeusPedidos').click();
+   await pagina.locator('#listaPedidos').filter({hasText:compra.pedidoId}).waitFor();
+   assert.match(await pagina.locator('#listaPedidos').innerText(),
+    /APROVADO_PARA_EXPEDICAO/);
+   assert.equal(await pagina.locator('#resumoPedidos').innerText(),'1');
    if(visual.mobile)await pagina.locator('#loop03MenuIntegrado').click();
    await pagina.locator('#abaPosicoes').click();
    const confirmarAzul=pagina.locator('#posicoesPainel form.loop03-aceite-posicao');
