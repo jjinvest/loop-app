@@ -437,8 +437,8 @@ async function main(){
    assert.match(await pagina.locator('#listaPedidos').innerText(),
     /APROVADO_PARA_EXPEDICAO/);
    assert.equal(await pagina.locator('#resumoPedidos').innerText(),'1');
-   assert.match(await pagina.locator('#pedidosPaginacao').innerText(),
-    /Página 1 · 1 pedido\\(s\\) no histórico/);
+   assert.ok((await pagina.locator('#pedidosPaginacao').innerText())
+    .includes('Página 1 · 1 pedido(s) no histórico'));
    assert.equal(await pagina.locator('#pedidosAnterior').isDisabled(),true);
    assert.equal(await pagina.locator('#pedidosProximo').isDisabled(),true);
    if(visual.mobile)await pagina.locator('#loop03MenuIntegrado').click();
