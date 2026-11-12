@@ -441,12 +441,24 @@ function criarAppIdentidadeLoop({contas,origemHttps,
    return res.status(503).json({
     erro:'PEDIDOS_REAIS_AINDA_NAO_INTEGRADOS',checkoutReal:false
    });
+  const paginaBruta=req.query?.pagina;
+  if(paginaBruta!==undefined&&
+     (typeof paginaBruta!=='string'||!/^(0|[1-9][0-9]*)$/.test(paginaBruta)||
+      !Number.isSafeInteger(Number(paginaBruta))))
+   return res.status(400).json({erro:'PAGINA_INVALIDA'});
+  const pagina=paginaBruta===undefined?0:Number(paginaBruta);
+  const tamanho=20,offset=pagina*tamanho;
+  if(!Number.isSafeInteger(offset))
+   return res.status(400).json({erro:'PAGINA_INVALIDA'});
   try{
+   const titularId=req.conta.titularId;
+   const total=pedidosComerciais.contarDoTitular({titularId});
    const base=pedidosComerciais.listarDoTitular({
-    titularId:req.conta.titularId,limite:30
+    titularId,limite:tamanho,offset
    });
-   if(!Array.isArray(base)||base.length>30)
-    throw Error('PEDIDOS_FORA_DA_QUOTA');
+   if(!Number.isSafeInteger(total)||total<0||
+      !Array.isArray(base)||base.length>tamanho)
+    throw Error('PEDIDOS_PAGINACAO_INCONSISTENTE');
    const pedidos=base.map(pedido=>{
     const fornecedores=Array.isArray(pedido.fornecedores)?
      pedido.fornecedores:
@@ -466,6 +478,8 @@ function criarAppIdentidadeLoop({contas,origemHttps,
      quantidadeDistribuidores:fornecedores.length,remessas};
    });
    return res.json({pedidos,totalExibido:pedidos.length,
+    paginacao:{pagina,tamanho,total,
+     haAnterior:pagina>0,haMais:offset+pedidos.length<total},
     fonte:'PEDIDOS_COMERCIAIS_DO_TITULAR',
     checkoutRealHabilitadoPorEstaConsulta:false});
   }catch{return res.status(503).json({erro:'PEDIDOS_INDISPONIVEIS'});}
