@@ -281,16 +281,83 @@ body.loop03-logado main>.mensagem-pagina{margin:0 0 .75rem}
  .cliente-integrado .loop03-loja-prata-texto{font-size:1.05rem}
 }
 
-/* Apenas o relógio da catraca; mantém o botão como atualização manual. */
+/* Marcador sincronizado com o agendador: não é relógio de horas. */
 .cliente-integrado #conteudoTabuleiro #atualizarTabuleiroIntegrado{
- display:inline-flex;align-items:center;justify-content:center;
- gap:8px;min-width:156px;
- font-variant-numeric:tabular-nums;
+ display:inline-flex;flex-direction:column;align-items:center;
+ justify-content:center;gap:3px;min-width:168px;min-height:82px;
  background:linear-gradient(145deg,#27231b,#30281d);
  border-color:#ab8b57;color:#f4d78f;
+ text-align:center;font-variant-numeric:tabular-nums;
+}
+.cliente-integrado #conteudoTabuleiro #tituloRelogioTabuleiro{
+ font-size:.69rem;letter-spacing:.08em;font-weight:700;
 }
 .cliente-integrado #conteudoTabuleiro #relogioTabuleiroIntegrado{
- display:inline-block;font-size:clamp(1.2rem,3.2vw,1.55rem);
- font-weight:700;line-height:1.15;letter-spacing:.09em;
+ display:block;font-size:clamp(1.5rem,3.7vw,1.95rem);
+ font-weight:800;line-height:1.1;letter-spacing:.08em;
  font-variant-numeric:tabular-nums;
+}
+.cliente-integrado #conteudoTabuleiro #estadoRelogioTabuleiro{
+ color:#e2d5b4;font-size:.65rem;line-height:1.2;
+ max-width:18rem;
+}
+.cliente-integrado #conteudoTabuleiro .painel-tabuleiro-imersivo{
+ position:relative;
+}
+.cliente-integrado #conteudoTabuleiro .loop03-festa-catraca{
+ position:absolute;inset:0;overflow:hidden;pointer-events:none;
+ z-index:3;
+}
+.cliente-integrado #conteudoTabuleiro .loop03-festa-catraca:empty{
+ display:none;
+}
+.cliente-integrado #conteudoTabuleiro .loop03-festa-catraca .confete{
+ position:absolute;top:44%;left:50%;width:7px;height:11px;
+ background:var(--cor);border-radius:3px;
+ box-shadow:0 0 9px var(--cor);
+ animation:loop03-confete-vitoria 1250ms ease-out forwards;
+}
+.cliente-integrado #conteudoTabuleiro .loop03-festa-catraca .selo{
+ position:absolute;top:37%;left:50%;
+ transform:translate(-50%,-50%);
+ border:1px solid #f5d58e;border-radius:25px;
+ padding:7px 11px;min-width:160px;max-width:80%;
+ background:linear-gradient(130deg,#201825ee,#59432eeb);
+ color:#ffedb3;text-align:center;font-size:.76rem;font-weight:700;
+ box-shadow:0 0 20px #c1a4ff73;
+ animation:loop03-selo-vitoria 1400ms ease-out forwards;
+}
+.cliente-integrado #conteudoTabuleiro .loop03-pulso-luz{
+ animation:loop03-pulso-luz 900ms ease-out;
+}
+@keyframes loop03-confete-vitoria{
+ 0%{opacity:0;transform:translate(-50%,-50%) scale(.3) rotate(0deg)}
+ 15%{opacity:1}
+ 100%{opacity:0;transform:translate(calc(-50% + var(--dx)),
+  calc(-50% + var(--dy))) rotate(var(--giro))}
+}
+@keyframes loop03-selo-vitoria{
+ 0%{opacity:0;transform:translate(-50%,-50%) scale(.7)}
+ 22%{opacity:1;transform:translate(-50%,-50%) scale(1.06)}
+ 65%{opacity:1;transform:translate(-50%,-50%) scale(1)}
+ 100%{opacity:0;transform:translate(-50%,-50%) scale(1)}
+}
+@keyframes loop03-pulso-luz{
+ 0%,100%{filter:none;transform:scale(1)}
+ 40%{filter:drop-shadow(0 0 12px #f5b7ff);transform:scale(1.35)}
+}
+@media(prefers-reduced-motion:reduce){
+ .cliente-integrado #conteudoTabuleiro .loop03-festa-catraca .confete,
+ .cliente-integrado #conteudoTabuleiro .loop03-festa-catraca .selo,
+ .cliente-integrado #conteudoTabuleiro .loop03-pulso-luz{
+  animation:none;
+ }
+}
+@media(max-width:520px){
+ .cliente-integrado #conteudoTabuleiro #atualizarTabuleiroIntegrado{
+  min-width:150px;min-height:72px;padding:7px 9px;
+ }
+ .cliente-integrado #conteudoTabuleiro #relogioTabuleiroIntegrado{
+  font-size:1.55rem;
+ }
 }
