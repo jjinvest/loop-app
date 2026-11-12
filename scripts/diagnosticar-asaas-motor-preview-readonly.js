@@ -23,7 +23,8 @@ function validarConfig(env){
 }
 function validarMonitor(m){
  const campos=['pendentes','processando','exigeRevisao','total',
-  'vinculosMotorAusentes','reversoesMotorPendentes'];
+  'vinculosMotorAusentes','reversoesMotorPendentes',
+  'quarentenaAguardandoVinculo','quarentenaDivergente'];
  if(m?.ambiente!=='ASAAS_SANDBOX_EXCLUSIVO'||
     m.somenteLaboratorio!==true||
     m.consultaPSPExecutadaNestaLeitura!==false||
@@ -39,6 +40,8 @@ function validarMonitor(m){
  if(m.resumo.total!==m.resumo.pendentes+
    m.resumo.processando+m.resumo.exigeRevisao)
   erro('SONDA_CONTADORES_INCONSISTENTES');
+ if(m.resumo.quarentenaDivergente>m.resumo.quarentenaAguardandoVinculo)
+  erro('SONDA_QUARENTENA_INCONSISTENTE');
  const recuperacao={};
  for(const campo of ['processando','retomaveis','segundaFalha']){
   const n=m.recuperacaoPSP[campo];
@@ -87,7 +90,8 @@ async function diagnosticarCadeia({
  const estadoMotor=assinaturaMotor(motor);
  const bloqueios=resumo.pendentes+resumo.processando+
   resumo.exigeRevisao+resumo.vinculosMotorAusentes+
-  resumo.reversoesMotorPendentes+recuperacao.segundaFalha;
+  resumo.reversoesMotorPendentes+
+  resumo.quarentenaAguardandoVinculo+recuperacao.segundaFalha;
  return {
   ambiente:'ASAAS_SANDBOX_EXCLUSIVO',
   leituraSomenteGet:true,
@@ -103,6 +107,8 @@ async function diagnosticarCadeia({
   exigemRevisaoPSP:resumo.exigeRevisao,
   pedidosSemVinculoMotor:resumo.vinculosMotorAusentes,
   reversoesMotorPendentes:resumo.reversoesMotorPendentes,
+  quarentenaAguardandoVinculo:resumo.quarentenaAguardandoVinculo,
+  quarentenaDivergente:resumo.quarentenaDivergente,
   retornadasDeInterrupcao:recuperacao.retomaveis,
   reincidenciasInterrupcao:recuperacao.segundaFalha,
   estado:bloqueios>0?'PENDENCIAS_OPERACIONAIS_REVISAR':'SEM_PENDENCIAS_OBSERVADAS',
