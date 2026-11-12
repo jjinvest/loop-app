@@ -8,7 +8,8 @@ function fail(codigo){const e=new Error(codigo);e.codigo=codigo;throw e;}
 function validar(x){
  if(!x||typeof x!=='object'||Array.isArray(x)||
   !['classificacao,quantidadeMinimaLoop,revisaoEsperada',
-   'classificacao,posicoesPorUnidadeRoxo,quantidadeMinimaLoop,revisaoEsperada']
+   'classificacao,posicoesPorUnidadeRoxo,quantidadeMinimaLoop,revisaoEsperada',
+   'classificacao,modoRoxo,posicoesPorPedidoRoxo,quantidadeMinimaLoop,quantidadeMinimaRoxo,revisaoEsperada']
    .includes(Object.keys(x).sort().join(',')))
   fail('CAMPOS_SINALIZACAO_INVALIDOS');
  if(!CLASSES.has(x.classificacao))fail('COR_VITRINE_INVALIDA');
@@ -26,6 +27,14 @@ function validar(x){
    !Number.isSafeInteger(x.posicoesPorUnidadeRoxo)||
    x.posicoesPorUnidadeRoxo<0||x.posicoesPorUnidadeRoxo>10))
   fail('CONFIGURACAO_ROXO_INVALIDA');
+ if(x.modoRoxo!==undefined&&
+   (!['ROXO','EVENTO'].includes(x.classificacao)||
+    x.modoRoxo!=='POR_PEDIDO'||
+    !Number.isSafeInteger(x.quantidadeMinimaRoxo)||
+    x.quantidadeMinimaRoxo<1||x.quantidadeMinimaRoxo>50||
+    !Number.isSafeInteger(x.posicoesPorPedidoRoxo)||
+    x.posicoesPorPedidoRoxo<0||x.posicoesPorPedidoRoxo>10))
+  fail('CONFIGURACAO_ROXO_POR_PEDIDO_INVALIDA');
  return x;
 }
 class SinalizacaoVitrineCandidatoSQLite{
@@ -51,6 +60,13 @@ class SinalizacaoVitrineCandidatoSQLite{
    'produto_id TEXT PRIMARY KEY REFERENCES akitemm_vitrine_sinalizacao_staging(produto_id)',
    'ON DELETE RESTRICT,posicoes_por_unidade INTEGER NOT NULL',
    'CHECK(posicoes_por_unidade BETWEEN 1 AND 10),revisao INTEGER NOT NULL);',
+   // V3 separada para preservar eventos roxos legados POR_UNIDADE.
+   'CREATE TABLE IF NOT EXISTS akitemm_vitrine_roxo_pedido_staging(',
+   'produto_id TEXT PRIMARY KEY REFERENCES akitemm_vitrine_sinalizacao_staging(produto_id)',
+   'ON DELETE RESTRICT,quantidade_minima INTEGER NOT NULL',
+   'CHECK(quantidade_minima BETWEEN 1 AND 50),',
+   'posicoes_por_pedido INTEGER NOT NULL CHECK(posicoes_por_pedido BETWEEN 0 AND 10),',
+   'revisao INTEGER NOT NULL CHECK(revisao>=1));',
    'CREATE TABLE IF NOT EXISTS akitemm_vitrine_sinalizacao_historico_staging(',
    'id INTEGER PRIMARY KEY AUTOINCREMENT,produto_id TEXT NOT NULL',
    'REFERENCES akitemm_vitrine_sinalizacao_staging(produto_id),',
@@ -84,8 +100,17 @@ class SinalizacaoVitrineCandidatoSQLite{
   if(nova&&nova.revisao!==row.revisao)fail('REVISAO_COR_V2_INCONSISTENTE');
   const classe=nova?.classificacao||(row?.classificacao==='EVENTO'?'ROXO':row?.classificacao)||'CINZA';
   const evento=classe==='ROXO'?this.db.prepare('SELECT posicoes_por_unidade AS quantidade,revisao FROM akitemm_vitrine_evento_roxo_staging WHERE produto_id=?').get(id):null;
-  if(evento&&evento.revisao!==row.revisao)fail('REVISAO_EVENTO_INCONSISTENTE');
+  const pedido=classe==='ROXO'?this.db.prepare([
+   'SELECT quantidade_minima AS minimo,posicoes_por_pedido AS posicoes,',
+   'revisao FROM akitemm_vitrine_roxo_pedido_staging WHERE produto_id=?'
+  ].join(' ')).get(id):null;
+  if((evento&&evento.revisao!==row.revisao)||
+     (pedido&&pedido.revisao!==row.revisao)||
+     (evento&&pedido))fail('REVISAO_EVENTO_INCONSISTENTE');
   return {produtoId:id,classificacao:classe,
+   modoRoxo:pedido?'POR_PEDIDO':'POR_UNIDADE',
+   quantidadeMinimaRoxo:pedido?.minimo||1,
+   posicoesPorPedidoRoxo:pedido?.posicoes||0,
    posicoesPorUnidadeRoxo:evento?.quantidade||0,
    quantidadeMinimaLoop:row?.quantidadeMinimaLoop||1,
    revisao:row?.revisao||0,atualizadoEm:row?.atualizadoEm||null,
@@ -101,6 +126,10 @@ class SinalizacaoVitrineCandidatoSQLite{
   const antigo=this.consultar(id);
   if(antigo.revisao!==entrada.revisaoEsperada)fail('CONFLITO_REVISAO');
   const novo={produtoId:id,classificacao:classe,
+   modoRoxo:classe==='ROXO'&&entrada.modoRoxo==='POR_PEDIDO'?
+    'POR_PEDIDO':'POR_UNIDADE',
+   quantidadeMinimaRoxo:entrada.quantidadeMinimaRoxo||1,
+   posicoesPorPedidoRoxo:entrada.posicoesPorPedidoRoxo||0,
    posicoesPorUnidadeRoxo:classe==='ROXO'?(entrada.posicoesPorUnidadeRoxo||0):0,
    quantidadeMinimaLoop:entrada.quantidadeMinimaLoop};
   const legado=classe==='ROXO'?'EVENTO':classe==='DOURADO'?'VERDE':classe;
@@ -128,9 +157,17 @@ class SinalizacaoVitrineCandidatoSQLite{
     'ON CONFLICT(produto_id) DO UPDATE SET classificacao=excluded.classificacao,revisao=excluded.revisao'
    ].join(' ')).run(id,classe,rev);
    db.prepare('DELETE FROM akitemm_vitrine_evento_roxo_staging WHERE produto_id=?').run(id);
-   if(classe==='ROXO'&&novo.posicoesPorUnidadeRoxo>0)
+   db.prepare('DELETE FROM akitemm_vitrine_roxo_pedido_staging WHERE produto_id=?').run(id);
+   if(classe==='ROXO'&&novo.modoRoxo==='POR_UNIDADE'&&novo.posicoesPorUnidadeRoxo>0)
     db.prepare('INSERT INTO akitemm_vitrine_evento_roxo_staging(produto_id,posicoes_por_unidade,revisao) VALUES(?,?,?)')
      .run(id,novo.posicoesPorUnidadeRoxo,rev);
+   if(classe==='ROXO'&&novo.modoRoxo==='POR_PEDIDO')
+    db.prepare([
+     'INSERT INTO akitemm_vitrine_roxo_pedido_staging',
+     '(produto_id,quantidade_minima,posicoes_por_pedido,revisao)',
+     'VALUES(?,?,?,?)'
+    ].join(' ')).run(id,novo.quantidadeMinimaRoxo,
+     novo.posicoesPorPedidoRoxo,rev);
    db.prepare([
     'INSERT INTO akitemm_vitrine_sinalizacao_historico_staging',
     '(produto_id,revisao,antes_json,depois_json,criado_em)',
@@ -175,7 +212,9 @@ class SinalizacaoVitrineCandidatoSQLite{
     precoUnitarioCentavos:p.precoUnitarioCentavos,
     subtotalCentavos:p.subtotalCentavos,classificacao:s.classificacao,
     minimo:s.quantidadeMinimaLoop,revisao:s.revisao,verdeApto:apto,
-    posicoesPorUnidadeRoxo:s.posicoesPorUnidadeRoxo});
+    posicoesPorUnidadeRoxo:s.posicoesPorUnidadeRoxo,
+    modoRoxo:s.modoRoxo,quantidadeMinimaRoxo:s.quantidadeMinimaRoxo,
+    posicoesPorPedidoRoxo:s.posicoesPorPedidoRoxo});
   }
   if(total!==totalCentavos)fail('FOTOGRAFIA_TOTAL_DIVERGENTE');
   const planejamentoPosicoes=planejarPosicoesCompraAkitemm(fotografiaItens);
@@ -212,7 +251,10 @@ class SinalizacaoVitrineCandidatoSQLite{
    quantidadeMinimaLoop:s.quantidadeMinimaLoop,
    // ROXO é apenas decoração local até regras, datas e autorização formal.
    // Não inventar quantidade de posições nem evento no motor.
-   eventoId:null,posicoesPorPedidoLoop:classe==='ROXO'?s.posicoesPorUnidadeRoxo:0,
+   eventoId:null,posicoesPorPedidoLoop:classe==='ROXO'?
+    (s.modoRoxo==='POR_PEDIDO'?s.posicoesPorPedidoRoxo:s.posicoesPorUnidadeRoxo):0,
+   modoRoxo:s.modoRoxo,quantidadeMinimaRoxo:s.quantidadeMinimaRoxo,
+   posicoesPorPedidoRoxo:s.posicoesPorPedidoRoxo,
    classeVisual:classe,
    fotoSomenteSeAutorizada:true,somenteLaboratorio:true};
  }
