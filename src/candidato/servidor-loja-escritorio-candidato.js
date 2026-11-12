@@ -541,6 +541,42 @@ function criarAppLojaEscritorioCandidato({banco,repositorioCatalogo,
  });
  const autorizarOperador=criarAutorizacao({segredo:segredoOperador});
 
+
+ // A entrega de produto fisico so pode ser marcada pelo operador depois
+ // da prova PSP. Avaliacao e midias nunca sao publicadas sem moderacao.
+ app.get('/staging/escritorio-unificado/avaliacoes',autorizarOperador,(_req,res)=>{
+  try{return res.json(avaliacoes.pendentesAdmin());}
+  catch{return res.status(503).json({erro:'AVALIACOES_INDISPONIVEIS'});}
+ });
+ app.post('/staging/escritorio-unificado/avaliacoes/entregas',
+  autorizarOperador,(req,res)=>{
+   if(!req.is('application/json')||
+      Object.keys(req.body||{}).join(',')!=='prepedidoId')
+    return res.status(400).json({erro:'ENTREGA_CAMPOS_INVALIDOS'});
+   try{return res.json(avaliacoes.entregarEnsaio(req.body.prepedidoId));}
+   catch(e){return res.status(e.codigo==='PEDIDO_NAO_ENCONTRADO'?404:409)
+    .json({erro:e.codigo||'ENTREGA_NAO_CONFIRMADA'});}
+  });
+ app.post('/staging/escritorio-unificado/avaliacoes/:id/moderar',
+  autorizarOperador,(req,res)=>{
+   if(!req.is('application/json')||
+      Object.keys(req.body||{}).join(',')!=='status')
+    return res.status(400).json({erro:'MODERACAO_CAMPOS_INVALIDOS'});
+   try{return res.json(avaliacoes.moderar({
+    id:Number(req.params.id),status:req.body.status
+   }));}catch(e){return res.status(409).json({
+    erro:e.codigo||'MODERACAO_NAO_EFETUADA'
+   });}
+  });
+ app.get('/staging/escritorio-unificado/avaliacoes/midias/:id',
+  autorizarOperador,(req,res)=>{
+   try{
+    const x=avaliacoes.abrirMidia({id:Number(req.params.id),admin:true});
+    return res.set({'Cache-Control':'no-store','X-Robots-Tag':'noindex'})
+     .type(x.mime).send(x.bytes);
+   }catch{return res.status(404).json({erro:'MIDIA_NAO_ENCONTRADA'});}
+  });
+
  // Material PDF efetivo, exclusivamente laboratório e operador autenticado.
  // BLOB imutavel no MESMO SQLite do catalogo/checkout: sem URL externa nem
  // upload publico. Antes de enviar e necessario cadastrar o produto PDF.
