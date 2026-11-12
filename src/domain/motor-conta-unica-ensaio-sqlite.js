@@ -6,7 +6,7 @@ const {SimuladorLoop}=require('./simulador-loop');
 const {LivroLuzesFinanceirasCandidatoSQLite}=
  require('./livro-luzes-financeiras-candidato-sqlite');
 const {PADRAO,validarAgenda,avaliarAgenda}=require('./agenda-catraca-loop');
-const {planejado,dadosAtivacao,validarMeta}=require('./meta-lotes-catraca-loop');
+const {planejado,dadosAtivacao,validarMeta,janelasDeLuz}=require('./meta-lotes-catraca-loop');
 const {LIMITE_POSICOES_ATIVAS}=require('./capacidade-posicoes-loop');
 const {planejarPosicoesCompraAkitemm}=require('./plano-posicoes-compra-akitemm');
 const {consultarPedido}=require('./relatorio-homologacao-checkout-staging');
@@ -655,6 +655,8 @@ class MotorContaUnicaEnsaioSQLite{
   const meta=this._meta();
   const planejamento=meta.quantidade>0?
    planejado(meta,config,agoraMs):null;
+  const grade=this._modoCatraca()==='AGENDADA'&&meta.quantidade>0?
+   janelasDeLuz(meta,config,agoraMs):null;
   const realizados=meta.ultimoDia===planejamento?.dia?
    Math.max(0,sim.giros-meta.baseGiros):0;
   return {...config,...horario,
@@ -665,7 +667,12 @@ class MotorContaUnicaEnsaioSQLite{
     realizadosNoDia:realizados,
     ciclosAutorizadosAteAgora:planejamento?.ciclosAutorizadosAteAgora||0,
     restantes:Math.max(0,meta.quantidade-realizados),
-    horarioLivre:true,liberacaoDependeDePSP:true
+    horarioLivre:true,liberacaoDependeDePSP:true,
+    proximaLuzPrevistaEmMs:grade?.proximaJanelaEmMs??null,
+    intervaloLuzSegundos:grade?.intervaloLuzSegundos??null,
+    intervaloCicloSegundos:grade?.intervaloCicloSegundos??null,
+    janelasAutorizadasAteAgora:grade?.janelasAutorizadasAteAgora??0,
+    previsaoNaoERecebimento:true
    },
    aguardandoContabilizacao:this._pedidosAguardando(sim).length,
    luzesAcesas:sim.tabuleiro.vendasDoCiclo.length,
@@ -675,6 +682,7 @@ class MotorContaUnicaEnsaioSQLite{
     v.destinoPrevisto==='PARTICIPANTE').length,
    luzesPretasAcesas:sim.tabuleiro.vendasDoCiclo.filter(v=>
     v.destinoPrevisto!=='PARTICIPANTE').length,
+   agoraServidorMs:agoraMs,
    catracaEstado:sim.catracaAberta?'ABERTA':'PAUSADA',
    giros:sim.giros,comprasNaoInventadas:true,
    dinheiroReal:false};
@@ -821,25 +829,24 @@ class MotorContaUnicaEnsaioSQLite{
  // de que existirao seis compras PSP para cada ciclo. Uma transacao
  // reiniciavel usa lote tecnico limitado, sem teto de meta nem um giro/min.
  _processarMetaAgenda({agoraMs=Date.now()}={}){
-  const config=this._agenda();
-  const meta=this._meta();
-  const p=planejado(meta,config,agoraMs);
-  if(!p.abertoParaMeta||config.pausaManual){
+  const config=this._agenda(),meta=this._meta();
+  const plano=planejado(meta,config,agoraMs);
+  if(!plano.abertoParaMeta||config.pausaManual){
    const sim=this._simulador();
-   if(!sim.catracaAberta)
-    return {acao:config.pausaManual?'PAUSA_MANUAL':'META_FORA_HORARIO',
-     meta:meta.quantidade,executados:0,somenteEnsaio:true};
+   if(!sim.catracaAberta)return {
+    acao:config.pausaManual?'PAUSA_MANUAL':'META_FORA_HORARIO',
+    somenteEnsaio:true};
    return this._transacao(s=>{
-    s.pausarCatraca();
-    this._evento('PAUSAR_CATRACA_META');
+    s.pausarCatraca();this._evento('PAUSAR_CATRACA_META');
     return {acao:'META_PAUSADA',somenteEnsaio:true};
    });
   }
   return this._transacao(sim=>{
-   const atual=this._meta();
-   const janela=planejado(atual,this._agenda(),agoraMs);
-   if(!janela.abertoParaMeta)return {acao:'META_FORA_HORARIO',
-    somenteEnsaio:true};
+   const atual=this._meta(),cfg=this._agenda();
+   const janela=planejado(atual,cfg,agoraMs);
+   const grade=janelasDeLuz(atual,cfg,agoraMs);
+   if(!janela.abertoParaMeta||!grade)
+    return {acao:'META_FORA_HORARIO',somenteEnsaio:true};
    if(atual.ultimoDia!==janela.dia){
     this.banco.prepare([
      'UPDATE akitemm_motor_catraca_meta_lab',
@@ -849,29 +856,81 @@ class MotorContaUnicaEnsaioSQLite{
     atual.ultimoMinuto=-1;
     atual.baseGiros=sim.giros;
    }
-   // Nenhum limite arbitrario de UM giro por minuto: se a meta
-   // autorizar multiplos, liberar o numero de ciclos ja comprovados.
-   // Uma transacao processa um lote tecnico finito (ate 100 giros).
-   // Os proximos ticks continuam o restante, sem teto comercial.
-   // SQLite + vendasProcessadas impedem replays apos reinicio.
-   const feitos=Math.max(0,sim.giros-atual.baseGiros);
-   const falta=janela.ciclosAutorizadosAteAgora-feitos;
-   if(falta<=0)return {acao:'META_AGUARDANDO_PROXIMA_LIBERACAO',
-    solicitados:atual.quantidade,realizados:feitos,
-    autorizados:janela.ciclosAutorizadosAteAgora,
-    somenteEnsaio:true,dinheiroReal:false};
-   this.banco.prepare([
-    'UPDATE akitemm_motor_catraca_meta_lab',
-    'SET ultimo_minuto=? WHERE id=1'
-   ].join(' ')).run(janela.minutoNoTurno);
-   const result=this._liberarLoteNaTransacao(sim,falta);
-   const realizados=feitos+result.liberados;
-   this._evento('META_CATRACA_AVALIADA');
-   return {acao:result.liberados?'GIRO_META_AGENDADA':'META_AGUARDANDO_PSP',
-    solicitados:atual.quantidade,realizados,
-    autorizados:janela.ciclosAutorizadosAteAgora,
-    liberadosAgora:result.liberados,eventoPSPValidado:true,
-    motivo:result.motivo,restantes:Math.max(0,atual.quantidade-realizados),
+   const realizados=Math.max(0,sim.giros-atual.baseGiros);
+   const luzesNoCiclo=sim.tabuleiro.vendasDoCiclo.length;
+   const eventosContabilizados=realizados*6+luzesNoCiclo;
+   const autorizados=grade.janelasAutorizadasAteAgora;
+   // Uma janela de luz não é uma compra: apenas o PSP conciliado
+   // alimenta o evento. Com atraso, jamais acender em rajada.
+   if(eventosContabilizados>=autorizados&&luzesNoCiclo!==6)
+    return {acao:'META_AGUARDANDO_PROXIMA_LIBERACAO',
+     realizados,autorizados,previsao:true,dinheiroReal:false};
+   const intervaloMinimo=Math.max(1,Math.floor(
+    janela.duracaoMinutos/(atual.quantidade*6)));
+   if(luzesNoCiclo!==6&&atual.ultimoDia===janela.dia&&
+      atual.ultimoMinuto>=0&&
+      janela.minutoNoTurno-atual.ultimoMinuto<intervaloMinimo)
+    return {acao:'META_AGUARDANDO_INTERVALO',
+     realizados,autorizados,dinheiroReal:false};
+   if(!sim.tabuleiro.centro&&
+      sim.filas.filaA.length+sim.filas.filaB.length+
+      sim.tabuleiro.vagas.filter(Boolean).length>=7){
+    sim.prepararTabuleiro();
+    this._evento('PREPARAR_TABULEIRO_META');
+   }
+   if(!sim.tabuleiro.centro)return {
+    acao:'META_AGUARDANDO_CENTRO',realizados,dinheiroReal:false};
+   if(!sim.catracaAberta)sim.abrirCatraca();
+   // O sexto evento comprovado encerra o ciclo na própria janela.
+   if(luzesNoCiclo<6){
+    const origem=this._pedidosAguardando(sim,1)[0];
+    if(!origem)return {acao:'META_AGUARDANDO_PSP',
+     realizados,luzesAcesas:luzesNoCiclo,dinheiroReal:false};
+    const r=sim.registrarVendaNoCicloSimulada({
+     vendaId:'ensaio:'+origem.prepedidoId
+    });
+    if(r.repetida)falha('AGENDA_DUPLICACAO_INTERNA');
+    this._evento('EVENTO_CICLO',{
+     prepedidoId:origem.prepedidoId,titularId:origem.titularId
+    });
+    this.banco.prepare([
+     'UPDATE akitemm_motor_catraca_meta_lab',
+     'SET ultimo_minuto=? WHERE id=1'
+    ].join(' ')).run(janela.minutoNoTurno);
+    if(sim.tabuleiro.vendasDoCiclo.length<6)
+     return {acao:'LUZ_DO_CICLO',ordem:r.venda.ordem,
+      destino:r.venda.destinoPrevisto,luzesAcesas:r.estado.vendasNoCiclo,
+      realizados,dinheiroReal:false,somenteEnsaio:true};
+   }
+   for(const evento of sim.tabuleiro.vendasDoCiclo){
+    const id=evento.vendaId?.startsWith('ensaio:')?
+     evento.vendaId.slice(7):null;
+    const origem=id&&this.banco.prepare([
+     'SELECT titular_id AS titularId',
+     'FROM akitemm_motor_conta_ensaio_operacoes',
+     "WHERE tipo='VINCULAR_PEDIDO' AND prepedido_id=? LIMIT 1"
+    ].join(' ')).get(id);
+    try{
+     if(!origem)falha('EVENTO_SEM_TITULAR');
+     this._conferirPedidoEventoPSPSandbox(id,origem.titularId);
+    }catch{
+     this.banco.prepare([
+      'UPDATE akitemm_motor_agenda_catraca_lab',
+      'SET pausa_manual=1 WHERE id=1'
+     ].join(' ')).run();
+     sim.pausarCatraca();
+     this._evento('AGENDA_META_PSP_REVISAO');
+     return {acao:'BLOQUEADA_PSP_EXIGE_REVISAO',
+      luzesAcesas:6,dinheiroReal:false};
+    }
+   }
+   const giro=sim.tentarGiro();
+   if(!giro.girou)return {
+    acao:'META_GIRO_NAO_EXECUTADO',motivo:giro.motivo,
+    luzesAcesas:6,dinheiroReal:false};
+   this._evento('GIRO');
+   return {acao:'GIRO_META_AGENDADA',realizados:realizados+1,
+    liberadosAgora:1,luzesAcesas:0,
     dinheiroReal:false,somenteEnsaio:true};
   });
  }
