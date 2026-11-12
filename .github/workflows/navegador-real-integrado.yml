@@ -11,6 +11,7 @@ on:
       - 'src/candidato/checkout-candidato-ui.js'
       - 'src/shared/**'
       - 'test/visor-catraca-unico.test.js'
+      - 'test/tabuleiro-visual-unico.test.js'
       - 'src/laboratorio/**'
       - 'src/domain/**'
       - 'package.json'
@@ -45,7 +46,7 @@ jobs:
           npm install --no-save --package-lock=false playwright@1.56.1
           npx playwright install --with-deps chromium
       - name: Exigir frontend unico e aba de pedidos por titular
-        run: node --test test/visor-catraca-unico.test.js test/interface-aprovada-identidade-real.test.js
+        run: node --test test/visor-catraca-unico.test.js test/tabuleiro-visual-unico.test.js test/interface-aprovada-identidade-real.test.js
       - name: Verificar sintaxe do navegador de ponta a ponta
         run: node --check scripts/validar-identidade-real-navegador.js
       - name: Navegar PC e celular na interface aprovada e no backend atual
