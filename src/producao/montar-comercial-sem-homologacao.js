@@ -37,6 +37,7 @@ function exigirChaveParaHistoricoComercial({banco,chavePedidos=null}={}){
 function criarLeituraComercialSegura({banco,pedidos}={}){
  if(pedidos?.db!==banco||
     typeof pedidos?.listarDoTitular!=='function'||
+    typeof pedidos?.contarDoTitular!=='function'||
     typeof banco?.prepare!=='function')
   falhar('LEITURA_COMERCIAL_BANCO_OU_PEDIDO_INVALIDO');
  const temOutbox=()=>!!banco.prepare([
@@ -44,8 +45,11 @@ function criarLeituraComercialSegura({banco,pedidos}={}){
   "AND name='loja_real_outbox_fornecedor'"
  ].join(' ')).get();
  const leituraPedidos=Object.freeze({
-  listarDoTitular({titularId,limite=30}={}){
-   return pedidos.listarDoTitular({titularId,limite});
+  listarDoTitular({titularId,limite=30,offset=0}={}){
+   return pedidos.listarDoTitular({titularId,limite,offset});
+  },
+  contarDoTitular({titularId}={}){
+   return pedidos.contarDoTitular({titularId});
   },
   consultarDoTitular({titularId,pedidoId}={}){
    return pedidos.consultarDoTitular({titularId,pedidoId});
