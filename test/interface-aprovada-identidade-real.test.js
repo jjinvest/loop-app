@@ -38,6 +38,7 @@ test('HTML original do cliente é reaproveitado sem script LAB, nova tela ou CPF
  assert.match(html,/id="atualizarTabuleiroIntegrado"/);
  assert.match(html,/id="relogioTabuleiroIntegrado"/);
  assert.match(html,/src="\/identidade\/assets\/catraca-visor.js"/);
+ assert.match(html,/src="\/identidade\/assets\/tabuleiro-visual.js"/);
  assert.equal((html.match(/src="\/identidade\/assets\/catraca-visor.js"/g)||[]).length,1);
  assert.doesNotMatch(html,/Mesmo motor V6 e mesmo SQLite da conta e da loja/);
  assert.equal((html.match(/id="seletorPosicaoMotor"/g)||[]).length,1);
@@ -80,12 +81,16 @@ test('interface aprovada e identidade real servidas da mesma origem protegida',a
  const paginaHtml=await page.text();
  assert.match(paginaHtml,/src="\/identidade\/assets\/cliente.js"/);
  assert.match(paginaHtml,/src="\/identidade\/assets\/catraca-visor.js"/);
+ assert.match(paginaHtml,/src="\/identidade\/assets\/tabuleiro-visual.js"/);
  assert.equal((await get('/minha-conta')).status,200);
  const visor=await get('/identidade/assets/catraca-visor.js');
  assert.equal(visor.status,200);
  const visorCode=await visor.text();
  assert.match(visorCode,/function festejarGiroCatraca/);
  assert.match(visorCode,/function atualizarMarcadorCatraca/);
+ const board=await get('/identidade/assets/tabuleiro-visual.js');
+ assert.equal(board.status,200);
+ assert.match(await board.text(),/function preencherLuzes/);
  const js=await get('/identidade/assets/cliente.js');
  assert.equal(js.status,200);
  assert.match(js.headers.get('content-type'),/javascript/);
