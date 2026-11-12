@@ -84,6 +84,16 @@ test('mesma identidade da loja entra no Escritorio LOOP sem novo cadastro',async
  assert.match(html,/<h1>Escritório Virtual LOOP<\/h1>/);
  assert.match(html,/<section class="painel" id="painelLogin" aria-labelledby="tituloLogin">/);
  assert.match(html,/<section class="painel" id="painelCadastro" aria-labelledby="tituloCadastro" hidden>/);
+ assert.match(html,/src="\/staging\/assets\/catraca-visor.js" defer/);
+ assert.match(html,/src="\/staging\/assets\/tabuleiro-visual.js" defer/);
+ const visor=await x.consultar('/staging/assets/catraca-visor.js');
+ assert.equal(visor.status,200);
+ assert.match(await visor.text(),/LoopVisorCatraca/);
+ const visual=await x.consultar('/staging/assets/tabuleiro-visual.js');
+ assert.equal(visual.status,200);
+ assert.match(await visual.text(),/LoopTabuleiroVisual/);
+ const anonimo=await fetch(x.base+'/staging/assets/tabuleiro-visual.js');
+ assert.equal(anonimo.status,401,'nem assets do escritorio sao publicos');
  const js=await x.consultar('/staging/assets/cliente.js');
  assert.match(await js.text(),/let telaAcesso='login'/);
  const criar=await x.consultar('/staging/contas/cadastrar',{
