@@ -994,7 +994,8 @@ async function atualizar(){
 }
 $('formAcesso').addEventListener('submit',async e=>{
  e.preventDefault();auth=$('token').value;$('token').value='';
- try{await atualizar();$('acesso').hidden=true;$('administracao').hidden=false;}
+ try{await atualizar();$('acesso').hidden=true;$('administracao').hidden=false;
+  atualizarAvaliacoesAdmin().catch(()=>{});}
  catch(err){auth=null;dizer('Acesso não autorizado: '+err.message);}
 });
 $('sair').addEventListener('click',()=>{
