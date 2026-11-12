@@ -7,10 +7,11 @@ const {criarAppLojaEscritorioCandidato}=
 const {catalogoFicticioCheckout}=
  require('../src/laboratorio/servidor-checkout-staging-local');
 const {COOKIE}=require('../src/domain/conta-unica-candidata-sqlite');
+const {criarMaterialPDFTeste}=require('../src/domain/material-pdf-teste');
 const ADMIN='vitrine-operador-'+('Z'.repeat(48)),SENHA='SenhaApenasParaVitrine2026!';
 test('vitrine aprovada usa mesmo catálogo SQLite e Meus Pedidos, sem financeiro',async t=>{
  const db=new DatabaseSync(':memory:');db.exec('PRAGMA foreign_keys=ON');
- const {app,catalogo,sinalizacaoVitrine}=criarAppLojaEscritorioCandidato({
+ const {app,catalogo,sinalizacaoVitrine,materialPdf}=criarAppLojaEscritorioCandidato({
   banco:db,repositorioCatalogo:catalogoFicticioCheckout(),
   chaveEmail:randomBytes(32),chaveCifra:randomBytes(32),segredoOperador:ADMIN,
   termosVersao:'LAB-vitrine-aprovada-2026',
@@ -144,6 +145,10 @@ test('vitrine aprovada usa mesmo catálogo SQLite e Meus Pedidos, sem financeiro
  'historico não deve usar preços nem cores atuais');
  const depois=await json(rota,{cookie:ana.cookie});
  assert.equal(depois.json.pedidos[0].totalCentavos,50000);
+ // Depois que o operador editou o PDF de demonstração, deve anexar
+ // material de verdade antes de aceitar nova venda.
+ await materialPdf.salvar({produtoId:'curso-homologacao-250',
+  bytes:criarMaterialPDFTeste(),revisaoEsperada:0});
  const novo=await json(rota,{...options,key:'vitrine-prepedido-idempotente-002'});
  assert.equal(novo.status,201,JSON.stringify(novo.json));
  assert.equal(novo.json.pedido.totalCentavos,60000);
