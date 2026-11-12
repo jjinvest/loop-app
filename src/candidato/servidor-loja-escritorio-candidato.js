@@ -211,6 +211,9 @@ function criarAppLojaEscritorioCandidato({banco,repositorioCatalogo,
  app.get('/staging/cliente',(_req,res)=>res.sendFile(
   path.join(__dirname,'checkout-candidato-ui.html')
  ));
+ app.get('/staging/assets/catraca-visor.js',(_req,res)=>res.type('js').sendFile(
+  path.join(__dirname,'../shared/visor-catraca.js')
+ ));
  app.get('/staging/assets/cliente.js',(_req,res)=>res.type('js').sendFile(
   path.join(__dirname,'checkout-candidato-ui.js')
  ));
