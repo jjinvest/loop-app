@@ -11,7 +11,7 @@ const {simularQualificacaoCandidato}=require('../domain/simulador-qualificacao-c
 const {consultarPedido}=require('../domain/relatorio-homologacao-checkout-staging');
 const DIR=path.join(__dirname,'../laboratorio');
 function fail(codigo){const e=new Error(codigo);e.codigo=codigo;throw e;}
-function createVitrineCandidata({app,banco,catalogo,contas,intencoes,prePedidos,autorizarOperador,novidades,enderecoEntrega,configLoja}={}){
+function createVitrineCandidata({app,banco,catalogo,contas,intencoes,prePedidos,autorizarOperador,novidades,enderecoEntrega,configLoja,materialPdf}={}){
  if(process.env.NODE_ENV==='production')fail('VITRINE_LAB_NAO_HOMOLOGADA');
  if(!app?.get||!app?.post||!app?.patch||catalogo?.db!==banco||
     typeof contas?.sessao!=='function'||typeof prePedidos?.preparar!=='function'||
@@ -33,6 +33,8 @@ function createVitrineCandidata({app,banco,catalogo,contas,intencoes,prePedidos,
   // Congela custos e referencia das posicoes no MESMO COMMIT do checkout.
   // Mudancas futuras do cadastro nao reescrevem pedidos antigos.
   livroLuzes.congelarCustosPedido({...args,fotografia});
+  // Mesmo COMMIT: cada PDF entregue fica vinculado a versao imutavel.
+  materialPdf.vincularPedido(args);
   return fotografia;
  });
  const sessao=req=>contas.sessao(req);
