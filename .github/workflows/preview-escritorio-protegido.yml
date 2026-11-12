@@ -19,6 +19,8 @@ on:
       - 'src/domain/motor-conta-unica-ensaio-sqlite.js'
       - 'test/motor-conta-unica-ensaio-sqlite.test.js'
       - 'src/domain/plano-posicoes-compra-akitemm.js'
+      - 'src/domain/sinalizacao-vitrine-candidato-sqlite.js'
+      - 'scripts/validar-jornada-loja-cores-browser.js'
       - 'test/plano-posicoes-compra-akitemm.test.js'
       - 'test/asaas-motor-automatico-sandbox-candidato.test.js'
       - 'test/webhook-antecipado-monitor-integrado.test.js'
@@ -270,6 +272,9 @@ jobs:
       - run: npm install --no-save playwright@1.56.1
       - run: npx playwright install --with-deps chromium
       - run: node scripts/validar-conta-unica-candidato-browser.js
+      - name: Jornada cliente por link 12 produtos 4 cores carrinho e mobile
+        timeout-minutes: 5
+        run: node scripts/validar-jornada-loja-cores-browser.js
       - name: Navegacao da identidade definitiva em PC/celular sem checkout
         run: node scripts/validar-identidade-real-navegador.js
       - name: Guardar capturas reais da mesma interface no PC e celular
@@ -279,6 +284,8 @@ jobs:
           path: |
             artifacts/conta-unica-candidato-pc.png
             artifacts/conta-unica-candidato-celular.png
+            artifacts/jornada-carrinho-roxo-pc.png
+            artifacts/jornada-carrinho-roxo-celular.png
             artifacts/identidade-real-escritorio-pc.png
             artifacts/identidade-real-escritorio-celular.png
             artifacts/identidade-real-loja-pc.png
