@@ -701,7 +701,15 @@ $('formNovidadesAdmin').addEventListener('submit',async e=>{
 let ultimaLeituraCor=0;
 function atualizarCamposRoxo(){
  const roxo=$('sinalizacaoClasse').value==='ROXO';
+ const dourado=$('sinalizacaoClasse').value==='DOURADO';
  const pedido=$('sinalizacaoModoRoxo').value==='POR_PEDIDO';
+ const pacoteDourado=$('sinalizacaoModoDourado').value==='POR_PEDIDO';
+ $('regrasDouradoAdmin').hidden=!dourado;
+ $('sinalizacaoPosicoesDouradoRotulo').hidden=!dourado||!pacoteDourado;
+ $('sinalizacaoPosicoesDourado').disabled=!dourado||!pacoteDourado;
+ $('sinalizacaoRegraDouradoResumo').textContent=pacoteDourado?
+  'Exemplo: cinco tênis no dourado podem prever uma posição por pedido com valor total mínimo R$ 250.':
+  'Cada unidade qualificada mantém uma posição prevista.';
  $('regrasRoxoAdmin').hidden=!roxo;
  $('sinalizacaoQuantidadeMinimaRoxoRotulo').hidden=!roxo||!pedido;
  $('sinalizacaoQuantidadeMinimaRoxo').disabled=!roxo||!pedido;
@@ -727,6 +735,9 @@ async function editarCor(id){
   $('sinalizacaoClasse').value=r.classificacao;
   $('sinalizacaoMinimo').value=String(r.quantidadeMinimaLoop);
   $('sinalizacaoModoRoxo').value=r.modoRoxo||'POR_UNIDADE';
+  $('sinalizacaoModoDourado').value=r.modoDourado||'POR_UNIDADE';
+  $('sinalizacaoPosicoesDourado').value=String(
+   r.modoDourado==='POR_PEDIDO'?r.posicoesPorPedidoDourado:1);
   $('sinalizacaoQuantidadeMinimaRoxo').value=String(r.quantidadeMinimaRoxo||5);
   $('sinalizacaoPosicoesRoxo').value=String(
    r.modoRoxo==='POR_PEDIDO'?(r.posicoesPorPedidoRoxo||0):
@@ -1286,12 +1297,9 @@ $('formPreAdesao').addEventListener('submit',async e=>{
 
 
 $('recarregarProdutos').addEventListener('click',()=>atualizarProdutos().catch(e=>dizer(e.message)));
-$('sinalizacaoClasse').addEventListener('change',()=>{
- const classe=$('sinalizacaoClasse').value;
- if(classe!=='VERDE')$('sinalizacaoMinimo').value='1';
- atualizarCamposRoxo();
-});
+$('sinalizacaoClasse').addEventListener('change',atualizarCamposRoxo);
 $('sinalizacaoModoRoxo').addEventListener('change',atualizarCamposRoxo);
+$('sinalizacaoModoDourado').addEventListener('change',atualizarCamposRoxo);
 $('formSinalizacaoAdmin').addEventListener('submit',async e=>{
  e.preventDefault();
  const botao=e.submitter;botao.disabled=true;
@@ -1303,6 +1311,10 @@ $('formSinalizacaoAdmin').addEventListener('submit',async e=>{
    quantidadeMinimaLoop:Number($('sinalizacaoMinimo').value),
    revisaoEsperada:sinalizacaoAtual.revisao
   };
+  if(data.classificacao==='DOURADO'&&$('sinalizacaoModoDourado').value==='POR_PEDIDO'){
+   data.modoDourado='POR_PEDIDO';
+   data.posicoesPorPedidoDourado=Number($('sinalizacaoPosicoesDourado').value);
+  }
   if(data.classificacao==='ROXO'){
    if($('sinalizacaoModoRoxo').value==='POR_PEDIDO'){
     data.modoRoxo='POR_PEDIDO';
@@ -1313,18 +1325,29 @@ $('formSinalizacaoAdmin').addEventListener('submit',async e=>{
   sinalizacaoAtual=await api('/sinalizacao/'+encodeURIComponent(sinalizacaoAtual.produtoId),{
    method:'PATCH',body:data
   });
+  $('sinalizacaoPosicoesDourado').value=String(
+   sinalizacaoAtual.modoDourado==='POR_PEDIDO'?
+    sinalizacaoAtual.posicoesPorPedidoDourado:1);
   $('sinalizacaoPosicoesRoxo').value=String(
    sinalizacaoAtual.modoRoxo==='POR_PEDIDO'?
    sinalizacaoAtual.posicoesPorPedidoRoxo||0:
    sinalizacaoAtual.posicoesPorUnidadeRoxo||0);
   atualizarCamposRoxo();
-  $('resultadoSinalizacaoAdmin').textContent='Cor salva. Regra registrada no mesmo catálogo e motor. '+
+  const regra=sinalizacaoAtual.classificacao==='ROXO'?
    (sinalizacaoAtual.modoRoxo==='POR_PEDIDO'?
-    'Pedido com pelo menos '+sinalizacaoAtual.quantidadeMinimaRoxo+
-    ' unidades gera '+sinalizacaoAtual.posicoesPorPedidoRoxo+
-    ' posição(ões) uma vez por compra.':
-    'Posições por unidade: '+sinalizacaoAtual.posicoesPorUnidadeRoxo)+
-   ' Pedidos anteriores mantêm a regra gravada.';
+    'Roxo por pedido: '+sinalizacaoAtual.quantidadeMinimaRoxo+
+    ' unidades e '+sinalizacaoAtual.posicoesPorPedidoRoxo+' posição(ões) previstas.':
+    'Roxo por unidade: '+sinalizacaoAtual.posicoesPorUnidadeRoxo+' posição(ões) previstas.'):
+   sinalizacaoAtual.classificacao==='DOURADO'?
+    (sinalizacaoAtual.modoDourado==='POR_PEDIDO'?
+     'Dourado por pedido: '+sinalizacaoAtual.posicoesPorPedidoDourado+
+     ' posição(ões) previstas.':'Dourado por unidade conforme regra anterior.'):
+    sinalizacaoAtual.classificacao==='VERDE'?
+     'Verde mantém referência R$ 250 e até uma posição por compra.':
+     'Cinza mantém compra comum, sem posições.';
+  $('resultadoSinalizacaoAdmin').textContent='Oferta salva. Quantidade mínima: '+
+   sinalizacaoAtual.quantidadeMinimaLoop+'. '+regra+
+   ' Pedidos anteriores mantêm a regra. Nenhum direito real criado.';
  }catch(err){$('resultadoSinalizacaoAdmin').textContent='Não foi possível salvar a cor: '+err.message;}
  finally{botao.disabled=false;}
 });
