@@ -207,6 +207,6 @@ test('template administrativo: segundo caixa, reservas e capacidade estimada nao
  }
  // O modelo atual de douradas nao usa a reserva como capacidade de criacao.
   assert.match(js,/Sem desconto da reserva para novas douradas/);
- assert.match(html,/não autorização/);
+ assert.match(html,/sem registrar receita ou pagamento bancário/);
  assert.match(js,/Sem banco|Nenhum dinheiro bancário/);
 });
