@@ -1126,3 +1126,16 @@ Código e testes principais nos commits `30c3e626`, `5037038c`, `fa094268`, `16b
 **Evidência:** [GitHub Actions #43284483368 — SUCCESS](https://github.com/jjinvest/loop-app/actions/runs/43284483368), HEAD testado d3836933b59df699d3aa72de1bfd0bab8fbd7371. Novo teste A-Z SUCCESS, navegação de PC/celular SUCCESS, identidade SUCCESS e capturas SUCCESS. **A suíte integral opt-in ainda foi SKIPPED**, portanto não confundir com sistema liberado comercialmente. PR #1 DRAFT, sem merge e sem deploy.
 
 **Estado:** upload de produtos e avaliações vinculadas à compra **APROVADOS EM LABORATÓRIO**, não em produção/Railway atual nem com provedor de pagamento ou entrega real. Não reabrir trabalho concluído sem falha reproduzível.
+
+
+## Continuidade 342 — check-up integral de regressão após uploads (12/11/2026)
+
+**Frente INTERNA:** acionada a prova geral completa Node em workflow protegido mediante marca intencional `[suite-integral]`, sem executar em cada push. Primeiro check-up [43285576489](https://github.com/jjinvest/loop-app/actions/runs/43285576489): **1.311 testes, 1.300 aprovados e 11 reprovados**. O bloco de upload PDF/fotos/vídeos/avaliações já tinha passado; a bateria expôs testes antigos fora dos critérios atualizados de douradas e contratos de pedidos.
+
+**Divergências classificadas e ajustadas em testes, sem enfraquecer o motor financeiro:**
+- Catraca e snapshot V6 histórico: roteamento novo DOURADA_INTEGRAL_V2 envia os **seis** eventos da dourada ao cofre próprio. Antes as regressões esperavam apenas 3/6 para douradas e 3/6 para reserva/investimento. Ensaios de 1.000 e 5.000 compradores corrigidos para invariantes da regra V2; testes de snapshot continuam detectando adulteração dos destinos.
+- Caixa 2: texto/contagem de capacidade por reserva não se aplica às novas douradas, que não descontam da reserva. Teste de interface e sinal de bloqueio conservador da catraca ajustados à regra atual, sem autorizar pagamento.
+- Gateway Meus Pedidos: contracto atual tem contagem de registros por titular e paginação 20; mocks/asserções legadas ainda esperavam apenas listagem 30. Ajustados sem relaxar isolamento.
+- Vitrine aprovada: após EDITAR um PDF do catálogo, o prepedido exige upload de arquivo antes da venda. Teste antigo cadastra agora material de fato, preservando o bloqueio de arquivo faltante.
+
+**Próximo passo obrigatório:** novo check-up integral [suite-integral] depois das alterações, registrar resultado e NÃO declarar essa auditoria concluída se houver mais regressões. O GitHub mantém branch feature/unificar-escritorio-real-20261105 e PR #1 DRAFT, sem deploy ou cobrança real.
