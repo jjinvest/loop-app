@@ -270,8 +270,8 @@ async function main(){
     .filter({hasText:/Eventos do ciclo: 0\/6/}).waitFor();
    assert.equal(await page.locator('#tabuleiroMotorCentro').innerText(),'#0000');
    assert.equal(await page.locator('#motorFilaB .loop03-linha-fila').count(),1);
-   assert.match(await page.locator('#motorFilaB').innerText(),
-    /1 posição\\(ões\\) em validação interna/);
+   assert.ok((await page.locator('#motorFilaB').innerText())
+    .includes('1 posição(ões) em validação interna'));
    assert.equal(await page.locator('#motorFilaB .loop03-inicial-fila').innerText(),'B');
    assert.equal(await page.locator('#motorBolinha1').getAttribute('aria-label'),
     'Evento 1 aguardando');
