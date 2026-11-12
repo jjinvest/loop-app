@@ -31,7 +31,23 @@ function planejarPosicoesCompraAkitemm(itens,{limiteAtivas=MAXIMO_ATIVAS}={}){
    if(precoUnitarioCentavos<PISO_VERDE)falha('DOURADO_SEM_PISO_UNITARIO');
    douradas+=quantidade;quantidadePosicoes=quantidade;
   }
-  if(cor==='ROXO'){
+  if(cor==='ROXO'&&item.modoRoxo==='POR_PEDIDO'){
+   const minimoPedido=item.quantidadeMinimaRoxo;
+   const posicoesPedido=item.posicoesPorPedidoRoxo;
+   if(!Number.isSafeInteger(minimoPedido)||minimoPedido<1||minimoPedido>50||
+      !Number.isSafeInteger(posicoesPedido)||posicoesPedido<0||
+      posicoesPedido>MAXIMO_ATIVAS)
+    falha('REGRA_ROXO_POR_PEDIDO_INVALIDA');
+   // Uma compra de 5 ou 10 tenis qualifica UMA vez, nao por unidade.
+   // Um pedido com 4 tenis e compra comum: nao cria posicao nem pendencia.
+   if(posicoesPedido===0)pendenciasRoxo+=quantidade;
+   else if(quantidade>=minimoPedido){
+    quantidadePosicoes=posicoesPedido;
+    roxas+=quantidadePosicoes;
+   }
+  }else if(cor==='ROXO'){
+   if(item.modoRoxo!==undefined&&item.modoRoxo!=='POR_UNIDADE')
+    falha('MODO_ROXO_INVALIDO');
    const configuradas=item.posicoesPorUnidadeRoxo??0;
    if(!Number.isSafeInteger(configuradas)||configuradas<0||configuradas>MAXIMO_ATIVAS)
     falha('POSICOES_ROXO_INVALIDAS');
@@ -39,7 +55,10 @@ function planejarPosicoesCompraAkitemm(itens,{limiteAtivas=MAXIMO_ATIVAS}={}){
    else {quantidadePosicoes=configuradas*quantidade;roxas+=quantidadePosicoes;}
   }
   detalhamento.push({produtoId,classificacao:cor,quantidade,
-   subtotalCentavos,quantidadePosicoes,consideradoVerdeCentavos:
+   subtotalCentavos,quantidadePosicoes,
+   ...(cor==='ROXO'?{modoRoxo:item.modoRoxo||'POR_UNIDADE',
+    quantidadeMinimaRoxo:item.modoRoxo==='POR_PEDIDO'?item.quantidadeMinimaRoxo:1}:{}),
+   consideradoVerdeCentavos:
    cor==='VERDE'&&quantidade>=minimo?subtotalCentavos:0});
  }
  const verdes=valorVerde>=PISO_VERDE?1:0;
