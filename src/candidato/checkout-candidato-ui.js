@@ -140,6 +140,19 @@ function exibirPedidos(pedidos){
   const status=document.createElement('p');status.className='estado';
   status.textContent=estados[pedido.statusHomologacao]||'Status em verificação (laboratório)';
   artigo.append(titulo,resumo,data,status);
+  // O backend anuncia apenas PDFs vinculados a ESTE pedido, apos GET PSP
+  // de ensaio conferido e sem reversao. Nenhum PDF tem URL publica.
+  for(const produtoId of pedido.pdfProdutosDisponiveis||[]){
+   const material=(pedido.itens||[]).find(x=>x.produtoId===produtoId&&x.tipo==='PDF');
+   if(!material)continue;
+   const link=document.createElement('a');
+   link.href='/staging/meus-pedidos/'+encodeURIComponent(pedido.prepedidoId)+
+    '/pdf/'+encodeURIComponent(produtoId);
+   link.textContent='Baixar PDF: '+material.nome;
+   link.setAttribute('download','curso-'+produtoId+'.pdf');
+   link.className='botao';
+   artigo.append(link);
+  }
   if(pedido.compraSemNovaPosicao===true){
    const aviso=document.createElement('p');aviso.className='aviso';
    aviso.textContent=pedido.modalidadeDeParticipacao==='SEM_POSICOES_LIMITE'?
