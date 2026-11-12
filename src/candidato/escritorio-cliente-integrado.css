@@ -361,3 +361,16 @@ body.loop03-logado main>.mensagem-pagina{margin:0 0 .75rem}
   font-size:1.55rem;
  }
 }
+/* Compactacao do rodape da identificacao em celulares, sem alterar campos. */
+@media(max-width:600px){
+ .cliente-integrado #painelIdentidadeTeste{
+  padding-bottom:14px;
+  margin-bottom:10px;
+ }
+ .cliente-integrado #formCpfTeste{margin-bottom:0}
+ .cliente-integrado #formCpfTeste label{margin-top:10px}
+ .cliente-integrado #formCpfTeste button{
+  max-width:100%;
+  white-space:normal;
+ }
+}
