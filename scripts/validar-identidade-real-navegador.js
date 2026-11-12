@@ -257,13 +257,14 @@ async function main(){
    await page.locator('#abaTabuleiro').click();
    const relogio=page.locator('#relogioTabuleiroIntegrado');
    await relogio.waitFor({state:'visible'});
-   const horaInicial=await relogio.innerText();
-   assert.match(horaInicial,/^\d{2}:\d{2}:\d{2}$/);
+   assert.equal(await relogio.innerText(),'--:--',
+    'sem agenda homologada nao anunciar contagem ficticia');
+   assert.match(await page.locator('#tituloRelogioTabuleiro').innerText(),
+    /AGUARDANDO AGENDA/);
+   assert.equal(await page.locator('#celebracaoGiroCatraca').count(),1);
+   assert.equal(await page.locator('#celebracaoGiroCatraca').locator('.confete').count(),0);
    assert.equal(await page.locator('#conteudoTabuleiro').getByText(
     'Mesmo motor V6 e mesmo SQLite',{exact:false}).count(),0);
-   await page.waitForFunction(horaAnterior=>
-    document.getElementById('relogioTabuleiroIntegrado')?.textContent!==
-     horaAnterior,horaInicial,{timeout:4000});
    await page.locator('#estadoTabuleiroIntegrado')
     .filter({hasText:/Eventos do ciclo: 0\/6/}).waitFor();
    assert.equal(await page.locator('#tabuleiroMotorCentro').innerText(),'—');
