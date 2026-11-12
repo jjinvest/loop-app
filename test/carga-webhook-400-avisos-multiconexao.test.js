@@ -47,6 +47,9 @@ function spawn(input){
  let readyResolve,readyReject,doneResolve,doneReject;
  const ready=new Promise((a,b)=>{readyResolve=a;readyReject=b;});
  const done=new Promise((a,b)=>{doneResolve=a;doneReject=b;});
+ const finished=new Promise((resolve,reject)=>{
+  worker.on('exit',code=>code===0?resolve():reject(new Error('WORKER_SAIU_'+code)));
+ });
  worker.on('message',d=>{
   if(d.pronto)readyResolve();
   else if(d.erro)doneReject(new Error(d.erro));
@@ -59,7 +62,7 @@ function spawn(input){
    readyReject(e);doneReject(e);
   }
  });
- return {worker,ready,done};
+ return {worker,ready,done,finished};
 }
 test('400 entregas em quatro conexoes deixam exatamente 200 eventos, sem posicao extra',async t=>{
  const volume=mkdtempSync(path.join(tmpdir(),'loop-webhooks-carga-'));
@@ -96,6 +99,7 @@ test('400 entregas em quatro conexoes deixam exatamente 200 eventos, sem posicao
  const start=Date.now();
  for(const w of workers)w.worker.postMessage('go');
  const result=await Promise.all(workers.map(x=>x.done));
+ await Promise.all(workers.map(x=>x.finished));
  const duracao=Date.now()-start;
  assert.equal(result.reduce((n,x)=>n+x.registrados,0),200);
  assert.equal(result.reduce((n,x)=>n+x.repetidos,0),200);
