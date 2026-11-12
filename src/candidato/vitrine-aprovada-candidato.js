@@ -11,7 +11,7 @@ const {simularQualificacaoCandidato}=require('../domain/simulador-qualificacao-c
 const {consultarPedido}=require('../domain/relatorio-homologacao-checkout-staging');
 const DIR=path.join(__dirname,'../laboratorio');
 function fail(codigo){const e=new Error(codigo);e.codigo=codigo;throw e;}
-function createVitrineCandidata({app,banco,catalogo,contas,intencoes,prePedidos,autorizarOperador,novidades,enderecoEntrega,configLoja,materialPdf,videoProduto}={}){
+function createVitrineCandidata({app,banco,catalogo,contas,intencoes,prePedidos,autorizarOperador,novidades,enderecoEntrega,configLoja,materialPdf,videoProduto,fotosProduto}={}){
  if(process.env.NODE_ENV==='production')fail('VITRINE_LAB_NAO_HOMOLOGADA');
  if(!app?.get||!app?.post||!app?.patch||catalogo?.db!==banco||
     typeof contas?.sessao!=='function'||typeof prePedidos?.preparar!=='function'||
@@ -86,6 +86,9 @@ function createVitrineCandidata({app,banco,catalogo,contas,intencoes,prePedidos,
    "video.src='/staging/vitrine/loja/produtos/'+encodeURIComponent(p.produtoId)+'/video';"+
    "galeria.append(video);}"+
    "const informacoes=document.createElement('div');informacoes.className='akitemm-detalhe-informacoes';")
+  .replace(String.raw\`  /^\/imagens\/catalogo\/[a-zA-Z0-9_-]+\.(?:png|jpe?g|webp)$/.test(src);\`,
+   String.raw\`  (/^\/imagens\/catalogo\/[a-zA-Z0-9_-]+\.(?:png|jpe?g|webp)$/.test(src)||\`+
+   String.raw\`/^\/staging\/vitrine\/loja\/produtos\/[a-z0-9-]{3,80}\/foto\/(?:10|[1-9])$/.test(src));\`)
   .replace('if(quantidade<100)','if(quantidade<50)')
   .replace('if(qtd>=100)','if(qtd>=50)')
   .replace('Máximo de 100 unidades por produto.','Máximo de 50 unidades por produto neste laboratório.')
@@ -123,10 +126,26 @@ function createVitrineCandidata({app,banco,catalogo,contas,intencoes,prePedidos,
    try{
     const lista=(await catalogo.listar()).filter(p=>p.estado==='PUBLICADO');
     return res.json({produtos:lista.map(p=>({...sinalizacao.decorar(p),
+     fotos:[...fotosProduto.listar(p.id).fotos.map(x=>
+      '/staging/vitrine/loja/produtos/'+p.id+'/foto/'+x.posicao),...p.fotos],
      videoApresentacaoLocal:videoProduto.estado(p.id).arquivoAnexado})),
      referenciaLoopCentavos:25000,conviteLoopCheckoutAtivo:false,
      laboratorio:true,posicoesReais:0});
    }catch{return res.status(503).json({erro:'VITRINE_INDISPONIVEL'});}
+  });
+
+
+ app.get('/staging/vitrine/loja/produtos/:id/foto/:posicao',
+  autorizarCliente,async(req,res)=>{
+   try{
+    const p=await catalogo.buscar(req.params.id);
+    if(!p||p.estado!=='PUBLICADO')
+     return res.status(404).json({erro:'FOTO_NAO_DISPONIVEL'});
+    const img=fotosProduto.abrir(p.id,Number(req.params.posicao));
+    return res.set({'Cache-Control':'private, no-store',
+     'X-Robots-Tag':'noindex, nofollow'}).type(img.mime).send(img.dados);
+   }catch(e){return res.status(e.codigo==='FOTO_INTEGRIDADE_INVALIDA'?503:404)
+    .json({erro:'FOTO_NAO_DISPONIVEL'});}
   });
 
  app.get('/staging/vitrine/loja/produtos/:id/video',
