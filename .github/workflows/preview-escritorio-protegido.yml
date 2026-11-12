@@ -49,6 +49,11 @@ on:
       - 'src/candidato/escritorio-admin-candidato-ui.html'
       - 'src/candidato/escritorio-admin-candidato-ui.js'
       - 'test/motor-conta-unica-ensaio-sqlite.test.js'
+      - 'src/shared/visor-catraca.js'
+      - 'src/producao/interface-aprovada-contas.js'
+      - 'src/producao/interface-aprovada-loop.js'
+      - 'test/visor-catraca-unico.test.js'
+      - 'test/interface-aprovada-identidade-real.test.js'
       - 'src/candidato/checkout-candidato-ui.html'
       - 'src/candidato/checkout-candidato-ui.js'
       - 'src/candidato/escritorio-cliente-integrado.css'
@@ -143,6 +148,8 @@ jobs:
       - run: node --check test/servidor-escritorio-preview-railway.test.js
       - run: node --check src/domain/equipe-candidata-sqlite.js
       - run: node --check src/candidato/servidor-loja-escritorio-candidato.js
+      - name: Verificar modulo unico entre laboratorio e identidade
+        run: node --check src/shared/visor-catraca.js && node --test test/visor-catraca-unico.test.js test/interface-aprovada-identidade-real.test.js
       - run: node --check src/candidato/checkout-candidato-ui.js
       - run: node --check src/domain/motor-conta-unica-ensaio-sqlite.js
       - run: node --test test/motor-conta-unica-ensaio-sqlite.test.js
