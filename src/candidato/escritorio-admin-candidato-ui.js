@@ -829,6 +829,11 @@ $('formAcesso').addEventListener('submit',async e=>{
 });
 $('sair').addEventListener('click',()=>{
  auth=null;$('acesso').hidden=false;$('administracao').hidden=true;
+ diagnosticoManutencao=null;
+ $('manutencaoConfirmarSandbox').checked=false;
+ $('manutencaoMetricas').replaceChildren();
+ $('manutencaoEstado').textContent='Diagnóstico encerrado com a sessão.';
+ atualizarBotaoReparoManutencao();
  cursoresPosicoes=[null];indicePosicoes=0;proximoCursorPosicoes=null;
  $('historicoPosicoes').replaceChildren();$('resumoHistoricoPosicoes').textContent='';
  $('listaMissoes').replaceChildren();
