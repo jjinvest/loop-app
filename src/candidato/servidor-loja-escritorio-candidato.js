@@ -531,6 +531,77 @@ function criarAppLojaEscritorioCandidato({banco,repositorioCatalogo,
   }catch(e){return res.status(400).json({erro:e.codigo||'COTACAO_INVALIDA'});}
  });
  const autorizarOperador=criarAutorizacao({segredo:segredoOperador});
+
+ // Material PDF efetivo, exclusivamente laboratório e operador autenticado.
+ // BLOB imutavel no MESMO SQLite do catalogo/checkout: sem URL externa nem
+ // upload publico. Antes de enviar e necessario cadastrar o produto PDF.
+ app.get('/staging/escritorio-unificado/produtos/:id/pdf',
+  autorizarOperador,async(req,res)=>{
+   const p=await catalogo.buscar(req.params.id);
+   if(!p)return res.status(404).json({erro:'PDF_PRODUTO_NAO_ENCONTRADO'});
+   if(p.tipo!=='PDF')return res.status(409).json({erro:'PDF_PRODUTO_NAO_DIGITAL'});
+   try{return res.json(materialPdf.estado(p.id));}
+   catch(e){return res.status(400).json({erro:e.codigo||'PDF_ESTADO_INVALIDO'});}
+  });
+ app.post('/staging/escritorio-unificado/produtos/:id/pdf',
+  autorizarOperador,
+  express.raw({type:'application/pdf',limit:'5mb',inflate:false}),
+  async(req,res)=>{
+   if(!req.is('application/pdf')||!Buffer.isBuffer(req.body))
+    return res.status(415).json({erro:'PDF_MIME_INVALIDO'});
+   const revisao=req.get('x-pdf-versao-esperada');
+   if(typeof revisao!=='string'||!/^(0|[1-9][0-9]*)$/.test(revisao)||
+      revisao.length>9)
+    return res.status(400).json({erro:'PDF_REVISAO_INVALIDA'});
+   try{
+    const r=await materialPdf.salvar({produtoId:req.params.id,
+     bytes:req.body,revisaoEsperada:Number(revisao)});
+    return res.status(r.repetido?200:201).json(r);
+   }catch(e){
+    const codigo=e.codigo||'PDF_GRAVACAO_INDISPONIVEL';
+    return res.status(codigo==='PDF_PRODUTO_NAO_ENCONTRADO'?404:
+     codigo==='PDF_CONFLITO_REVISAO'?409:
+     codigo==='PDF_PRODUTO_NAO_DIGITAL'?409:
+     codigo==='PDF_GRAVACAO_INDISPONIVEL'?503:400).json({erro:codigo});
+   }
+  });
+ app.use((err,req,res,next)=>{
+  if(req.path?.startsWith('/staging/escritorio-unificado/produtos/')&&
+     req.path.endsWith('/pdf')&&err.type==='entity.too.large')
+   return res.status(413).json({erro:'PDF_TAMANHO_INVALIDO'});
+  next(err);
+ });
+ // O pedido e o titular precisam coincidir; download so apos GET PSP
+ // Sandbox independente RECEIVED, sem reversao nem revisao manual.
+ // Os arquivos nunca sao publicados em uma rota de arquivos estaticos.
+ app.get('/staging/meus-pedidos/:prepedidoId/pdf/:produtoId',(req,res)=>{
+  const sessao=contas.sessao(req);
+  if(!sessao)return res.status(401).json({erro:'SESSAO_AUSENTE'});
+  const prepedidoId=req.params.prepedidoId,produtoId=req.params.produtoId;
+  try{
+   const pedido=prePedidos.consultar({titularId:sessao.titularId,prepedidoId});
+   if(!pedido)return res.status(404).json({erro:'PREPEDIDO_NAO_ENCONTRADO'});
+   if(!pedido.itens.some(i=>i.produtoId===produtoId&&i.tipo==='PDF'))
+    return res.status(404).json({erro:'PDF_PEDIDO_NAO_ENCONTRADO'});
+   const auditoria=consultarPedido({banco,prepedidoId,titularId:sessao.titularId});
+   if(!auditoria?.conferenciaPSPConcluida||auditoria.exigeRevisaoManual)
+    return res.status(403).json({erro:'PDF_AGUARDA_PAGAMENTO_CONFERIDO'});
+   const material=materialPdf.abrirPedido({
+    prepedidoId,titularId:sessao.titularId,produtoId
+   });
+   res.set('X-PDF-Versao',String(material.versao));
+   res.set('X-Robots-Tag','noindex, nofollow');
+   res.type('application/pdf');
+   res.attachment('curso-'+produtoId+'.pdf');
+   return res.send(material.conteudo);
+  }catch(e){
+   return res.status(e.codigo==='PDF_PEDIDO_NAO_ENCONTRADO'||
+    e.codigo==='PREPEDIDO_NAO_ENCONTRADO'?404:
+    e.codigo==='PDF_INTEGRIDADE_INVALIDA'?503:400)
+    .json({erro:e.codigo||'PDF_DOWNLOAD_INDISPONIVEL'});
+  }
+ });
+
  app.get('/staging/escritorio-unificado/posicoes-historico',autorizarOperador,(req,res)=>{
   res.set('Cache-Control','no-store');
   try{return res.json(projecaoFilas.consultarPagina({cursor:req.query.cursor??null}));}
