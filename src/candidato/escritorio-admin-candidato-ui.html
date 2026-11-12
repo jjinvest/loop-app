@@ -196,6 +196,19 @@
 
 
 </section>
+<section class="painel" aria-labelledby="avaliacoesAdminTitulo">
+<h2 id="avaliacoesAdminTitulo">Avaliações de compradores · fotos e vídeos</h2>
+<p class="subtexto">Um produto físico só pode ser avaliado pelo comprador após pagamento Sandbox conferido e registro de entrega fictícia pelo operador. Nada aqui comprova entrega real. Fotos e vídeos ficam privados até moderação.</p>
+<form id="formMarcarEntregaAvaliacao">
+<label for="prepedidoEntregaAvaliacao">Pedido físico para marcar entrega de ensaio</label>
+<input id="prepedidoEntregaAvaliacao" pattern="hom-[a-f0-9-]{36}" required placeholder="hom-...">
+<button type="submit">Marcar entrega de ensaio</button>
+</form>
+<p id="estadoEntregaAvaliacao" role="status"></p>
+<div class="linha"><button id="recarregarAvaliacoesAdmin" type="button">Atualizar avaliações pendentes</button></div>
+<div id="listaAvaliacoesAdmin" aria-live="polite"></div>
+<p id="estadoAvaliacoesAdmin" role="status"></p>
+</section>
 <section class="painel"><h2>Pedidos no Escritório</h2><div id="pedidos"></div></section>
 <section class="painel" aria-labelledby="tituloPixUnificado">
 <h2 id="tituloPixUnificado">Asaas Sandbox · loja e motor no mesmo banco</h2>
