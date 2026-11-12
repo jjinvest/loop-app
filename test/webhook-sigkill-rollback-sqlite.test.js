@@ -51,7 +51,8 @@ async function matarEmCheckpoint({arquivo,modo,body}){
  });
  let stdout='',stderr='';
  const esperado=modo==='pre-commit'?'READY_PRECOMMIT':'READY_COMMITTED';
- const result=await new Promise((resolve,reject)=>{
+ const saida=new Promise(resolve=>child.once('exit',(codigo,sinal)=>resolve({codigo,sinal})));
+ await new Promise((resolve,reject)=>{
   const timer=setTimeout(()=>{
    child.kill('SIGKILL');reject(new Error('CHECKPOINT_NAO_ATINGIDO'));
   },12000);
@@ -73,15 +74,15 @@ async function matarEmCheckpoint({arquivo,modo,body}){
    }
   });
  });
- await result;
- await new Promise(resolve=>child.once('exit',resolve));
+ const final=await saida;
+ if(final.sinal!=='SIGKILL')
+  throw new Error('CHECKPOINT_SEM_SIGKILL');
 }
 test('SIGKILL antes do COMMIT desfaz evento; depois do COMMIT preserva um replay',async t=>{
  const pasta=mkdtempSync(path.join(tmpdir(),'loop-sigkill-'));
- t.after(()=>rmSync(pasta,{recursive:true,force:true}));
  const arquivo=path.join(pasta,'receptor.sqlite');
  const banco=new DatabaseSync(arquivo);
- t.after(()=>banco.close());
+ t.after(()=>{banco.close();rmSync(pasta,{recursive:true,force:true});});
  banco.exec('PRAGMA journal_mode=WAL;PRAGMA foreign_keys=ON;PRAGMA busy_timeout=5000;');
  banco.exec([
   'CREATE TABLE akitemm_prepedido_asaas_sandbox_staging(',
