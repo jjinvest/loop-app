@@ -207,9 +207,25 @@
   }finally{redePaginando=false;}
  }
  let painelMotorPreparado=false;
+ function iniciarRelogioTabuleiro(){
+  const visor=$('relogioTabuleiroIntegrado');
+  if(!visor)return;
+  const atualizarHora=()=>{
+   const agora=new Date();
+   const hora=new Intl.DateTimeFormat('pt-BR',{
+    hour:'2-digit',minute:'2-digit',second:'2-digit',hour12:false
+   }).format(agora);
+   visor.textContent=hora;
+   visor.dateTime=agora.toISOString();
+  };
+  atualizarHora();
+  // Hora local do dispositivo, sem contagem regressiva ou giro automático.
+  window.setInterval(atualizarHora,1000);
+ }
  function prepararAbasMotor(){
   if(painelMotorPreparado)return;
   painelMotorPreparado=true;
+  iniciarRelogioTabuleiro();
   $('boasVindas').textContent='Sua conta está conectada ao Escritório LOOP e à Loja AKITEMM.';
   $('resumoPedidos').textContent='—';
   $('resumoEquipe').textContent='—';
