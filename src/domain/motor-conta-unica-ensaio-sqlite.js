@@ -657,10 +657,30 @@ class MotorContaUnicaEnsaioSQLite{
    planejado(meta,config,agoraMs):null;
   const grade=this._modoCatraca()==='AGENDADA'&&meta.quantidade>0?
    janelasDeLuz(meta,config,agoraMs):null;
+  // Agenda sem meta: exibicao do proximo slot fixo sem criar eventos.
+  let proximaLuzPorIntervalo=null;
+  if(this._modoCatraca()==='AGENDADA'&&meta.quantidade===0&&
+     horario.dentroDoHorario&&!horario.pausaManual){
+   const aberturaMin=Number(config.abertura.slice(0,2))*60+
+    Number(config.abertura.slice(3,5));
+   let agoraMin=Number(horario.horarioLocal.slice(0,2))*60+
+    Number(horario.horarioLocal.slice(3,5));
+   if(agoraMin<aberturaMin)agoraMin+=1440;
+   let fimMin=Number(horario.fechamentoAplicado.slice(0,2))*60+
+    Number(horario.fechamentoAplicado.slice(3,5));
+   if(fimMin<=aberturaMin)fimMin+=1440;
+   if(horario.proximaLuzNoMinuto<fimMin){
+    const segundos=new Date(agoraMs).getSeconds()*1000+
+     new Date(agoraMs).getMilliseconds();
+    proximaLuzPorIntervalo=agoraMs+
+     (horario.proximaLuzNoMinuto-agoraMin)*60000-segundos;
+   }
+  }
   const realizados=meta.ultimoDia===planejamento?.dia?
    Math.max(0,sim.giros-meta.baseGiros):0;
   return {...config,...horario,
    modoExecucao:this._modoCatraca(),
+   proximaLuzPrevistaEmMs:grade?.proximaJanelaEmMs??proximaLuzPorIntervalo,
    metaLotes:{
     ativa:meta.quantidade>0&&this._modoCatraca()==='AGENDADA',
     quantidade:meta.quantidade,dataAlvo:meta.dataAlvo,
