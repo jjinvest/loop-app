@@ -69,9 +69,12 @@ function planejarPosicoesCompraAkitemm(itens,{limiteAtivas=MAXIMO_ATIVAS}={}){
    }
   }
   detalhamento.push({produtoId,classificacao:cor,quantidade,
-   subtotalCentavos,quantidadePosicoes,quantidadeMinimaLoop:minimo,
-   ...(cor==='DOURADO'?{modoDourado:item.modoDourado||'POR_UNIDADE',
-    posicoesPorPedidoDourado:item.posicoesPorPedidoDourado??0}:{}),
+   subtotalCentavos,quantidadePosicoes,
+   // Preservar assinatura dos planejamentos antigos: o motor compara
+   // JSON historico byte a byte antes de vincular qualquer pedido.
+   ...(cor==='DOURADO'&&item.modoDourado==='POR_PEDIDO'?
+    {modoDourado:'POR_PEDIDO',
+     posicoesPorPedidoDourado:item.posicoesPorPedidoDourado}:{}),
    ...(cor==='ROXO'?{modoRoxo:item.modoRoxo||'POR_UNIDADE',
     quantidadeMinimaRoxo:item.modoRoxo==='POR_PEDIDO'?item.quantidadeMinimaRoxo:1}:{}),
    consideradoVerdeCentavos:
