@@ -97,7 +97,9 @@ test('vendas continuam entrando com catraca pausada, e caixa central so comprome
  data='2026-10-20T14:00:00.000Z';
  const antes=circuito.resumo();
  assert.throws(()=>liberar('cb-ritmo-sem-cobertura-central'),
-  {codigo:'SALDO_CENTRAL_SIMULADO_INSUFICIENTE'});
+  // A conciliacao atual bloqueia primeiro a falta de fonte dourada;
+   // impedir giro indevido e proteger as compras segue obrigatorio.
+   {codigo:'DOURADA_FONTE_NAO_CONCILIADA'});
  const depois=circuito.resumo();
  assert.equal(depois.girosConcluidos,antes.girosConcluidos);
  assert.equal(depois.comprasPendentes,antes.comprasPendentes);
