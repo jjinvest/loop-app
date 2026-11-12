@@ -199,11 +199,15 @@ const png=Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAIAAAACCAIAAAD91JpzAAAAEklEQVR4n
     .waitFor({state:'visible',timeout:5000});
    await page.locator('#registrarPedidoLoja').click();
    await page.locator('#statusPedidoLoja').filter({hasText:/Pedido hom-/}).waitFor();
-   const meus=await context.request.get(base+'/staging/vitrine/loja/pedidos',{
-    headers:{Authorization:basic}
+   // A APIRequestContext nao reproduz a excecao de cookies Secure do
+   // Chromium em HTTP loopback; consultar na sessao REAL do navegador.
+   const meus=await page.evaluate(async()=>{
+    const resposta=await fetch('/staging/vitrine/loja/pedidos',{
+     credentials:'same-origin',cache:'no-store'});
+    return {status:resposta.status,body:await resposta.json()};
    });
-   assert.equal(meus.status(),200);
-   const pedidos=(await meus.json()).pedidos;
+   assert.equal(meus.status,200,JSON.stringify(meus.body));
+   const pedidos=meus.body.pedidos;
    assert.equal(pedidos.length,1);
    const pedido=pedidos[0];
    assert.equal(pedido.itens[0].quantidade,5);
