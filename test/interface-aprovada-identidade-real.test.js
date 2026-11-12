@@ -77,8 +77,9 @@ test('interface aprovada e identidade real servidas da mesma origem protegida',a
  assert.match(page.headers.get('content-type'),/text\/html/);
  assert.match(page.headers.get('content-security-policy'),/script-src 'self'/);
  assert.match(page.headers.get('content-security-policy'),/connect-src 'self'/);
- assert.match(await page.text(),/src="\/identidade\/assets\/cliente.js"/);
- assert.match(await page.text(),/src="\/identidade\/assets\/catraca-visor.js"/);
+ const paginaHtml=await page.text();
+ assert.match(paginaHtml,/src="\/identidade\/assets\/cliente.js"/);
+ assert.match(paginaHtml,/src="\/identidade\/assets\/catraca-visor.js"/);
  assert.equal((await get('/minha-conta')).status,200);
  const visor=await get('/identidade/assets/catraca-visor.js');
  assert.equal(visor.status,200);
