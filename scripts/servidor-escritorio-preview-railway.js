@@ -30,7 +30,8 @@ function validarSegredos({senhaAcesso,segredoRaiz}){
   falha('SEGREDOS_PREVIA_NAO_CONFIGURADOS');
 }
 function criarGateway({portaInterna,senhaAcesso,senhaAdmin,segredoOperador,
- validarNickIndicador=()=>false,permitirWebhookSandbox=false}={}){
+ validarNickIndicador=()=>false,permitirWebhookSandbox=false,
+ permitirOrigemHttpLoopback=false}={}){
  if(!Number.isSafeInteger(portaInterna)||portaInterna<1||portaInterna>65535||
     typeof senhaAcesso!=='string'||senhaAcesso.length<24||
     typeof segredoOperador!=='string'||segredoOperador.length<32||
@@ -195,7 +196,13 @@ function criarGateway({portaInterna,senhaAcesso,senhaAdmin,segredoOperador,
    let origemOk=false;
    try{
     const u=new URL(origem);
-    origemOk=(u.protocol==='https:'&&u.host===req.headers.host);
+    origemOk=(u.protocol==='https:'&&u.host===req.headers.host)||
+      // Apenas no ensaio HTTP local: nunca na previa HTTPS publica.
+      (permitirOrigemHttpLoopback===true&&process.env.NODE_ENV!=='production'&&
+       u.protocol==='http:'&&u.hostname==='127.0.0.1'&&
+       u.host===req.headers.host&&
+       req.socket.localAddress==='127.0.0.1'&&
+       req.socket.remoteAddress==='127.0.0.1');
    }catch{}
    if(!origemOk)return negar(403,'Origem não autorizada');
   }

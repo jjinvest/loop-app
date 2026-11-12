@@ -32,7 +32,8 @@ const png=Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAIAAAACCAIAAAD91JpzAAAAEklEQVR4n
  await once(backend,'listening');
  const gateway=criarGateway({portaInterna:backend.address().port,
   senhaAcesso:GATE,senhaAdmin:GATE_ADMIN,segredoOperador:ADMIN,
-  validarNickIndicador:nick=>ctx.equipe.existeNick(nick)});
+  validarNickIndicador:nick=>ctx.equipe.existeNick(nick),
+  permitirOrigemHttpLoopback:true});
  gateway.listen(0,'127.0.0.1');
  await once(gateway,'listening');
  const base='http://127.0.0.1:'+gateway.address().port;

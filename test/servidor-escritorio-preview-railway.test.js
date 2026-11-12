@@ -16,7 +16,7 @@ const operador='OPERADOR_FICTICIO_NAO_COMERCIAL_2026_1234567890';
 const auth='Basic '+Buffer.from('acesso:'+senha).toString('base64');
 const senhaAdmin='SenhaAdministrativaFicticiaExclusiva2026';
 const authAdmin='Basic '+Buffer.from('operador:'+senhaAdmin).toString('base64');
-async function preparar(t){
+async function preparar(t,{permitirOrigemHttpLoopback=false}={}){
  const db=new DatabaseSync(':memory:');
  db.exec('PRAGMA foreign_keys=ON;PRAGMA journal_mode=WAL;');
  const {app,equipe}=criarAppLojaEscritorioCandidato({
@@ -29,7 +29,8 @@ async function preparar(t){
  await once(backend,'listening');
  const gateway=criarGateway({portaInterna:backend.address().port,
   senhaAcesso:senha,senhaAdmin,segredoOperador:operador,
-  validarNickIndicador:nick=>equipe.existeNick(nick)});
+  validarNickIndicador:nick=>equipe.existeNick(nick),
+  permitirOrigemHttpLoopback});
  gateway.listen(0,'127.0.0.1');
  await once(gateway,'listening');
  t.after(async()=>{
@@ -232,6 +233,20 @@ test('origem remota forjada bloqueada, sem abrir financeiro',async t=>{
  });
  assert.equal(r.status,403);
  assert.equal((await x.consultar('/healthz')).status,200);
+});
+test('origem HTTP local exige opt-in de teste e preserva bloqueio externo',async t=>{
+ const padrao=await preparar(t);
+ const pedido={method:'POST',headers:{'Content-Type':'application/json'},body:'{}'};
+ assert.equal((await padrao.consultar('/staging/contas/cadastrar',{
+  ...pedido,headers:{...pedido.headers,Origin:padrao.base}
+ })).status,403,'HTTPS segue obrigatorio por padrao');
+ const local=await preparar(t,{permitirOrigemHttpLoopback:true});
+ assert.equal((await local.consultar('/staging/contas/cadastrar',{
+  ...pedido,headers:{...pedido.headers,Origin:local.base}
+ })).status,400,'HTTP em loopback chega ao backend com JSON invalido');
+ assert.equal((await local.consultar('/staging/contas/cadastrar',{
+  ...pedido,headers:{...pedido.headers,Origin:'https://invasor.invalid'}
+ })).status,403,'origem externa segue bloqueada');
 });
 test('convite por link registra cadastro correto, rejeita fraude e nao libera comissao',async t=>{
  const x=await preparar(t);
