@@ -258,7 +258,7 @@ async function main(){
    const relogio=page.locator('#relogioTabuleiroIntegrado');
    await relogio.waitFor({state:'visible'});
    const horaInicial=await relogio.innerText();
-   assert.match(horaInicial,/^\\d{2}:\\d{2}:\\d{2}$/);
+   assert.match(horaInicial,/^\d{2}:\d{2}:\d{2}$/);
    assert.equal(await page.locator('#conteudoTabuleiro').getByText(
     'Mesmo motor V6 e mesmo SQLite',{exact:false}).count(),0);
    await page.waitForFunction(horaAnterior=>
