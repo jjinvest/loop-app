@@ -230,3 +230,37 @@ test('fecha e reabre SQLite em disco apos PROCESSANDO e recupera sem duplicar ev
   fs.rmSync(dir,{recursive:true,force:true});
  }
 });
+
+
+test('timestamp invalido nao fica PROCESSANDO nem gera reconsulta automatica',async()=>{
+ for(const iniciadoEm of ['data-impossivel',
+  new Date(agoraMs+86400000).toISOString()]){
+  const x=laboratorio();
+  try{
+   inserirCheckpoint(x.db);
+   x.db.prepare([
+    'UPDATE akitemm_prepedido_webhook_reconsulta_staging',
+    'SET iniciado_em=? WHERE evento_id=?'
+   ].join(' ')).run(iniciadoEm,evento);
+   const r=x.worker.recuperarTravados({
+    execucaoLiberada:true,idadeMinimaMs:120000,limite:5
+   });
+   assert.equal(r.datasInvalidas,1);
+   assert.equal(r.recuperados,0);
+   assert.equal(r.reinterrompidos,0);
+   assert.equal(r.novaCobranca,false);
+   assert.equal(r.reconsultaRemotaExecutada,false);
+   const estado=x.worker.consultar(evento);
+   assert.equal(estado.estado,'EXIGE_REVISAO');
+   assert.equal(estado.codigo,'DATA_RECONSULTA_INVALIDA_EXIGE_REVISAO');
+   assert.equal(x.worker.resumoPendencias().exigeRevisao,1);
+   const repetido=await x.worker.processar({
+    eventoId:evento,provedor:x.provedor,
+    execucaoLiberada:true,retomadaSegura:true
+   });
+   assert.equal(repetido.repetido,true);
+   assert.equal(x.consultas,0);
+   assert.equal(x.db.prepare('PRAGMA integrity_check').get().integrity_check,'ok');
+  }finally{x.db.close();}
+ }
+});
