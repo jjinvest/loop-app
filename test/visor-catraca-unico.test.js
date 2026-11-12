@@ -47,7 +47,9 @@ test('visor nao celebra sem giro confirmado nem inventa venda',()=>{
   conteudoTabuleiro:{hidden:false}
  };
  let intervalos=0;
- const context={window:{matchMedia:()=>({matches:true})},
+ const context={window:{matchMedia:()=>({matches:true}),
+  setInterval:()=>{intervalos++;return 1;},
+  setTimeout:()=>1,clearTimeout:()=>{}} ,
   document:{hidden:false,createElement:()=>({className:'',textContent:'',
    style:{setProperty(){}},classList:{add(){},remove(){}}})},
   setInterval:()=>{intervalos++;return 1;},
