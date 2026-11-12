@@ -146,6 +146,79 @@ async function enviarTipoProdutoAdmin(tipo){
  return a.join(', ');
 }
 
+
+let visualizacoesAvaliacoesAdmin=[];
+async function atualizarAvaliacoesAdmin(){
+ const area=$('listaAvaliacoesAdmin'),estado=$('estadoAvaliacoesAdmin');
+ for(const u of visualizacoesAvaliacoesAdmin)URL.revokeObjectURL(u);
+ visualizacoesAvaliacoesAdmin=[];
+ area.replaceChildren();
+ try{
+  const dados=await api('/avaliacoes');
+  estado.textContent=dados.pendentes.length+' avaliação(ões) aguardando moderação.';
+  for(const item of dados.pendentes){
+   const bloco=elem('article');bloco.className='produto-admin-item';
+   bloco.append(elem('strong','Pedido '+item.pedidoId+' · produto '+item.produtoId),
+    elem('p','Nota '+item.nota+'/5 · '+item.comentario));
+   const midias=elem('div');
+   for(const midia of item.midias){
+    const botao=elem('button','Ver '+(midia.tipo==='FOTO'?'foto':'vídeo'));
+    botao.type='button';
+    botao.addEventListener('click',async()=>{
+     botao.disabled=true;
+     try{
+      const response=await fetch('/staging/escritorio-unificado/avaliacoes/midias/'+midia.id,{
+       cache:'no-store',credentials:'omit',headers:{Authorization:'Bearer '+auth}
+      });
+      if(!response.ok)throw Error('Mídia indisponível.');
+      const url=URL.createObjectURL(await response.blob());
+      visualizacoesAvaliacoesAdmin.push(url);
+      const visual=elem(midia.tipo==='FOTO'?'img':'video');
+      visual.src=url;
+      visual.style.maxWidth='280px';
+      visual.style.maxHeight='230px';
+      if(midia.tipo==='VIDEO'){visual.controls=true;visual.preload='metadata';}
+      visual.alt='Mídia enviada na avaliação de compra';
+      midias.append(visual);botao.remove();
+     }catch(e){estado.textContent='Mídia não aberta: '+e.message;}
+     finally{botao.disabled=false;}
+    });
+    midias.append(botao);
+   }
+   bloco.append(midias);
+   for(const situacao of ['APROVADA','REJEITADA']){
+    const botao=elem('button',situacao==='APROVADA'?'Aprovar avaliação':'Rejeitar avaliação');
+    botao.type='button';
+    botao.addEventListener('click',async()=>{
+     botao.disabled=true;
+     try{
+      await api('/avaliacoes/'+item.id+'/moderar',{method:'POST',body:{status:situacao}});
+      await atualizarAvaliacoesAdmin();
+     }catch(e){estado.textContent='Moderação não gravada: '+e.message;}
+     finally{botao.disabled=false;}
+    });
+    bloco.append(botao);
+   }
+   area.append(bloco);
+  }
+ }catch(e){estado.textContent='Avaliações indisponíveis: '+e.message;}
+}
+$('recarregarAvaliacoesAdmin').addEventListener('click',atualizarAvaliacoesAdmin);
+$('formMarcarEntregaAvaliacao').addEventListener('submit',async e=>{
+ e.preventDefault();
+ const botao=e.submitter,estado=$('estadoEntregaAvaliacao');
+ botao.disabled=true;
+ try{
+  const r=await api('/avaliacoes/entregas',{method:'POST',body:{
+   prepedidoId:$('prepedidoEntregaAvaliacao').value.trim()
+  }});
+  estado.textContent=r.repetido?'Entrega de ensaio já registrada.':
+   'Entrega fictícia registrada. O comprador poderá avaliar na loja.';
+  await atualizarAvaliacoesAdmin();
+ }catch(err){estado.textContent='Entrega não registrada: '+err.message;}
+ finally{botao.disabled=false;}
+});
+
 function linha(rotulo,valor){const a=elem('div');a.className='indicador';a.append(elem('strong',String(valor)),elem('span',rotulo));return a;}
 
 
