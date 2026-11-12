@@ -71,11 +71,7 @@
      contagem+' posição(ões) em validação interna':
      numero(p).replace('\n',' · ');
     conteudo.append(identificacao);
-    if(contagem!==null){
-     const privado=document.createElement('small');
-     privado.textContent='Identidade de terceiros protegida';
-     conteudo.append(privado);
-    }else if(p?.minha===true){
+    if(contagem===null&&p?.minha===true){
      const minha=document.createElement('small');
      minha.textContent='Minha posição · ensaio';
      conteudo.append(minha);
