@@ -14,6 +14,22 @@ const {catalogoFicticioCheckout}=
  require('../src/laboratorio/servidor-checkout-staging-local');
 const {criarMaterialPDFTeste}=require('../src/domain/material-pdf-teste');
 const {once}=require('node:events');
+// Arquivos visuais enviados pelo proprio painel aprovado; bytes completos,
+// sem insercao direta no SQLite do teste de navegador.
+const fotoPng=Buffer.from(
+ 'iVBORw0KGgoAAAANSUhEUgAAAAIAAAACCAIAAAD91JpzAAAAEklEQVR4nGP4z8DAAMIM/4EAAB/uBfsL2WiLAAAAAElFTkSuQmCC','base64');
+function blocoMp4(tipo,conteudo){
+ const head=Buffer.alloc(8);head.writeUInt32BE(conteudo.length+8,0);head.write(tipo,4);
+ return Buffer.concat([head,conteudo]);
+}
+function mp4TrintaSegundos(){
+ const h=Buffer.alloc(12);h.write('vide',8);
+ const dur=Buffer.alloc(20);dur.writeUInt32BE(1000,12);dur.writeUInt32BE(30000,16);
+ return Buffer.concat([blocoMp4('ftyp',Buffer.from('isom0000iso2')),
+  blocoMp4('moov',Buffer.concat([
+   blocoMp4('mvhd',dur),blocoMp4('trak',blocoMp4('mdia',blocoMp4('hdlr',h)))
+  ])),blocoMp4('mdat',Buffer.alloc(2048,0x6b))]);
+}
 (async()=>{
  const dir=fs.mkdtempSync(path.join(os.tmpdir(),'akitemm-candidato-browser-'));
  const db=new DatabaseSync(path.join(dir,'candidato.sqlite'));
@@ -450,6 +466,28 @@ const {once}=require('node:events');
     {headers:{Authorization:'Bearer '+'somente-teste-do-navegador-'+('x'.repeat(40))}});
    assert.equal(arquivoResposta.status(),200);
    assert.equal((await arquivoResposta.json()).arquivoAnexado,true);
+   // O mesmo formulario deve gravar foto real e video MP4 de 30 segundos,
+   // observaveis no catalogo do cliente sem link externo.
+   await admin.locator('#fotoProdutoArquivoAdmin').setInputFiles({
+    name:'foto-produto-ensaio.png',mimeType:'image/png',buffer:fotoPng
+   });
+   await admin.locator('#fotoProdutoEnviarAdmin').click();
+   await admin.locator('#fotoProdutoEstadoAdmin').filter({hasText:/Enviado: foto 1/}).waitFor();
+   await admin.locator('#videoProdutoArquivoAdmin').setInputFiles({
+    name:'video-30-segundos.mp4',mimeType:'video/mp4',buffer:mp4TrintaSegundos()
+   });
+   await admin.locator('#videoProdutoEnviarAdmin').click();
+   await admin.locator('#videoProdutoEstadoAdmin').filter({hasText:/Enviado: vídeo de 30 segundos/}).waitFor();
+   const fotoHttp=await admin.request.get(
+    base+'/staging/escritorio-unificado/produtos/'+novoProdutoId+'/fotos',
+    {headers:{Authorization:'Bearer '+'somente-teste-do-navegador-'+('x'.repeat(40))}});
+   assert.equal(fotoHttp.status(),200);
+   assert.equal((await fotoHttp.json()).fotos.length,1);
+   const videoHttp=await admin.request.get(
+    base+'/staging/escritorio-unificado/produtos/'+novoProdutoId+'/video',
+    {headers:{Authorization:'Bearer '+'somente-teste-do-navegador-'+('x'.repeat(40))}});
+   assert.equal(videoHttp.status(),200);
+   assert.equal((await videoHttp.json()).duracaoMs,30000);
    // Custos internos usam o MESMO produto: não vazam para o cliente
    // nem autorizam transferência, lucro ou saque real.
    await admin.locator('#custosProdutoSelecionadoAdmin')
