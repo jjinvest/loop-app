@@ -164,7 +164,7 @@
 <p id="configResultadoAdmin" role="status" aria-live="polite" class="subtexto"></p>
 </details>
 <h3 id="tituloSinalizacaoAdmin">Cores dos produtos na vitrine</h3>
-<p class="subtexto">Cinza = compra comum; verde = produto elegível; dourado = produto individual de R$ 250 ou mais; roxo = evento especial sujeito a regras próprias. Estas são cores da LOJA, não das posições/filas do LOOP. Nesta prévia, nenhuma cor cria direitos financeiros.</p>
+<p class="subtexto">Os quatro quadrados aceitam produtos e quantidades definidos pelo administrador. Cinza = compra comum; verde = produto elegível; dourado = por unidade ou pacote; roxo = oferta configurável, com ou sem evento. São cores da loja, não das filas. Esta prévia não cria direitos financeiros.</p>
 <form id="formSinalizacaoAdmin">
 <label for="sinalizacaoProdutoId">Produto do catálogo</label>
 <input id="sinalizacaoProdutoId" readonly required placeholder="Clique em Cor na loja acima">
@@ -173,12 +173,23 @@
 <option value="CINZA">Cinza — Compra comum (sem LOOP)</option>
 <option value="VERDE">Verde — Elegível para compra qualificada (laboratório)</option>
 <option value="DOURADO">Dourado — Produto integral a partir de R$ 250 (laboratório)</option>
-<option value="ROXO">Roxo — Evento especial a configurar (laboratório)</option>
+<option value="ROXO">Roxo — Oferta ou evento configurável (laboratório)</option>
 </select>
-<label for="sinalizacaoMinimo">Quantidade mínima de unidades (sinalização da oferta)</label>
+<label for="sinalizacaoMinimo">Quantidade mínima deste produto por pedido (qualquer cor)</label>
 <input id="sinalizacaoMinimo" type="number" step="1" min="1" max="50" value="1" required>
+<p class="subtexto">O administrador pode escolher 2, 3, 4, 5 ou outra quantidade válida. Para juntar SKUs diferentes num único pacote será necessária uma oferta composta.</p>
+<div id="regrasDouradoAdmin" class="config-roxo-admin" hidden>
+<label for="sinalizacaoModoDourado">Como o dourado conta posições previstas</label>
+<select id="sinalizacaoModoDourado">
+<option value="POR_UNIDADE">Por unidade qualificada (regra anterior)</option>
+<option value="POR_PEDIDO">Por pedido com quantidade mínima</option>
+</select>
+<label for="sinalizacaoPosicoesDourado" id="sinalizacaoPosicoesDouradoRotulo" hidden>Posições previstas por pedido
+<input id="sinalizacaoPosicoesDourado" type="number" step="1" min="0" max="10" value="1" inputmode="numeric"></label>
+<p id="sinalizacaoRegraDouradoResumo" class="subtexto">Por pedido permite, por exemplo, cinco tênis para uma posição prevista.</p>
+</div>
 <div id="regrasRoxoAdmin" class="config-roxo-admin" hidden>
-<label for="sinalizacaoModoRoxo">Como o evento roxo gera posições</label>
+<label for="sinalizacaoModoRoxo">Como a oferta roxa prevê posições</label>
 <select id="sinalizacaoModoRoxo">
 <option value="POR_UNIDADE">Por unidade comprada (ex.: 1 carro = 5 posições)</option>
 <option value="POR_PEDIDO">Por pedido com quantidade mínima (ex.: 5 tênis = 1 posição)</option>
@@ -189,7 +200,7 @@
 <input id="sinalizacaoPosicoesRoxo" type="number" step="1" min="0" max="10" value="0" inputmode="numeric">
 <p class="subtexto" id="sinalizacaoRegraRoxoResumo">Escolha a regra antes de salvar. No modo por pedido, cinco ou mais unidades do mesmo produto geram apenas a quantidade fixada de posições, uma única vez por pedido.</p>
 </div>
-<p class="subtexto">Cada evento roxo é calculado e fotografado no pedido, preservando o histórico quando a regra mudar. Apenas homologação, sem pagamentos ou posições reais.</p>
+<p class="subtexto">As regras da oferta ficam congeladas em cada pedido. Apenas homologação, sem pagamentos ou posições reais.</p>
 <button type="submit" class="primario">Salvar cor da vitrine</button>
 </form>
 <p id="resultadoSinalizacaoAdmin" class="subtexto" role="status"></p>
