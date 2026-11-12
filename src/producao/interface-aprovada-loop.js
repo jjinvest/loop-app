@@ -12,6 +12,7 @@ const ARQUIVOS=Object.freeze({
  '/identidade/assets/cliente.css':'../laboratorio/checkout-staging-ui.css',
  '/identidade/assets/loop03-aprovado.css':'../laboratorio/loop-03-shell.css',
  '/identidade/assets/cliente-integrado.css':'../candidato/escritorio-cliente-integrado.css',
+ '/identidade/assets/catraca-visor.js':'../shared/visor-catraca.js',
  '/identidade/assets/cliente.js':'./interface-aprovada-contas.js',
  '/identidade/assets/loja.css':'../laboratorio/loja-cliente-demo.css',
  '/identidade/assets/loja.js':'./interface-aprovada-loja.js'
@@ -27,6 +28,7 @@ function renderizarInterfaceAprovada(){
  ['/staging/assets/cliente.css','/identidade/assets/cliente.css'],
  ['/staging/assets/loop03-aprovado.css','/identidade/assets/loop03-aprovado.css'],
  ['/staging/assets/cliente-integrado.css','/identidade/assets/cliente-integrado.css'],
+ ['/staging/assets/catraca-visor.js','/identidade/assets/catraca-visor.js'],
  ['/staging/assets/cliente.js','/identidade/assets/cliente.js'],
  ['LOOP 3.0 · Escritório Virtual (prévia)','LOOP 3.0 · Escritório Virtual'],
  ['Criar conta de homologação','Criar minha conta'],
