@@ -886,7 +886,7 @@ class MotorContaUnicaEnsaioSQLite{
     return {acao:'META_AGUARDANDO_PROXIMA_LIBERACAO',
      realizados,autorizados,previsao:true,dinheiroReal:false};
    const intervaloMinimo=Math.max(1,Math.floor(
-    janela.duracaoMinutos/(atual.quantidade*6)));
+    Math.max(1,janela.duracaoMinutos-1)/(atual.quantidade*6)));
    if(luzesNoCiclo!==6&&atual.ultimoDia===janela.dia&&
       atual.ultimoMinuto>=0&&
       janela.minutoNoTurno-atual.ultimoMinuto<intervaloMinimo)
