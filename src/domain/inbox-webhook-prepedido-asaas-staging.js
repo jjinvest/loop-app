@@ -264,6 +264,37 @@ class InboxWebhookPrepedidoAsaasStaging{
     posicoesCriadas:0,bonusGerados:0,saquesLiberados:0};
   }catch(e){b.exec('ROLLBACK');throw e;}
  }
+ // Sem consulta PSP e sem expor IDs: todos os callbacks que chegaram
+ // antes da associação do Pix devem contar como pendência operacional.
+ resumoAntecipados(){
+  if(process.env.NODE_ENV==='production')
+   throw falha('WEBHOOK_STAGING_PROIBIDO_EM_PRODUCAO');
+  const b=this.banco;
+  const aguardando=b.prepare([
+   'SELECT COUNT(*) AS n FROM akitemm_prepedido_webhook_antecipados_staging a',
+   'LEFT JOIN akitemm_prepedido_webhook_inbox_staging i',
+   'ON i.evento_id=a.evento_id WHERE i.evento_id IS NULL'
+  ].join(' ')).get().n;
+  const divergentes=b.prepare([
+   'SELECT COUNT(*) AS n FROM akitemm_prepedido_webhook_antecipados_staging a',
+   'JOIN akitemm_prepedido_asaas_sandbox_staging p',
+   'ON p.prepedido_id=a.prepedido_id',
+   'LEFT JOIN akitemm_prepedido_webhook_inbox_staging i',
+   'ON i.evento_id=a.evento_id',
+   'WHERE i.evento_id IS NULL AND p.pagamento_id IS NOT NULL AND',
+   '(p.pagamento_id<>a.pagamento_id OR',
+   'p.external_ref<>a.referencia_informada OR',
+   '(a.valor_avisado_centavos<>0 AND',
+   'a.valor_avisado_centavos<>p.valor_centavos))'
+  ].join(' ')).get().n;
+  if(!Number.isSafeInteger(aguardando)||aguardando<0||
+     !Number.isSafeInteger(divergentes)||divergentes<0||
+     divergentes>aguardando)
+   throw falha('QUARENTENA_WEBHOOK_CONTAGEM_INVALIDA');
+  return {aguardandoVinculo:aguardando,divergentes,
+   somenteLeitura:true,pspReconsultadoNestaLeitura:false,
+   posicoesCriadas:0,financeiroReal:false};
+ }
  consultarEvento(eventoId){
   if(typeof eventoId!=='string'||!ID.test(eventoId))
    throw falha('EVENTO_INVALIDO');
