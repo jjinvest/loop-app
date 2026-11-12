@@ -87,6 +87,14 @@ test('webhook antecipado aparece como pendente e some apenas quando chega ao liv
  const antes=await lerMonitor();
  assert.equal(antes.resumo.total,0,'sem inbox nao mascarar quarentena');
  assert.equal(antes.resumo.quarentenaAguardandoVinculo,1);
+ const respostaAdmin=await fetch(
+  base+'/staging/escritorio-unificado',{
+   headers:{Authorization:'Bearer '+OPERADOR}
+  });
+ assert.equal(respostaAdmin.status,200);
+ const quadro=await respostaAdmin.json();
+ assert.equal(quadro.quarentenaAguardandoVinculo,1);
+ assert.equal(quadro.quarentenaDivergente,0);
  assert.equal(antes.resumo.quarentenaDivergente,0);
  assert.equal(antes.pagamentosReais,0);
  assert.equal(app.inbox.resumoAntecipados().aguardandoVinculo,1);
@@ -103,6 +111,10 @@ test('webhook antecipado aparece como pendente e some apenas quando chega ao liv
  assert.equal(resultado.aguardandoVinculo,0);
  const depois=await lerMonitor();
  assert.equal(depois.resumo.quarentenaAguardandoVinculo,0);
+ const quadroDepois=await fetch(base+'/staging/escritorio-unificado',{
+  headers:{Authorization:'Bearer '+OPERADOR}
+ });
+ assert.equal((await quadroDepois.json()).quarentenaAguardandoVinculo,0);
  assert.equal(depois.resumo.pendentes,1,
   'evento aguarda GET PSP; nao declarar tudo conciliado');
  assert.equal(depois.resumo.total,1);
