@@ -35,6 +35,8 @@ const {MissoesOperacionaisCandidatoSQLite}=require('../domain/missoes-operaciona
 const {DepartamentosAdministradorCandidato}=require('../domain/escritorio-admin-departamentos-candidato');
 const {criarPaginaOperacional}=require('../domain/painel-operacional-admin-candidato');
 const {CatalogoAdminCandidatoSQLite}=require('../domain/catalogo-admin-candidato-sqlite');
+const {MaterialPdfProdutoCandidatoSQLite,LIMITE_PDF}=
+ require('../domain/material-pdf-produto-candidato-sqlite');
 const {NovidadesLojaCandidatoSQLite,MAX_IMAGEM}=require('../domain/novidades-loja-candidato-sqlite');
 const {EnderecoEntregaEnsaioSQLite}=require('../domain/endereco-entrega-ensaio-sqlite');
 const {AkitemmConfigLojaDemoSQLite}=require('../domain/akitemm-config-loja-demo-sqlite');
@@ -96,6 +98,7 @@ function criarAppLojaEscritorioCandidato({banco,repositorioCatalogo,
  const integridade=new IntegridadeTitularCandidatoSQLite({banco});
  const missoes=new MissoesOperacionaisCandidatoSQLite({banco});
  const catalogo=new CatalogoAdminCandidatoSQLite({banco,repositorioBase:repositorioCatalogo});
+ const materialPdf=new MaterialPdfProdutoCandidatoSQLite({banco,catalogo});
  const novidades=new NovidadesLojaCandidatoSQLite({banco});
  const configLoja=new AkitemmConfigLojaDemoSQLite({banco});
  const enderecoEntrega=new EnderecoEntregaEnsaioSQLite({banco,chaveCifra});
@@ -545,7 +548,7 @@ function criarAppLojaEscritorioCandidato({banco,repositorioCatalogo,
   try{return res.json(projecaoFilas.consultar({titularId:s.titularId}));}
   catch(e){return res.status(503).json({erro:e.codigo||'PROJECAO_INDISPONIVEL'});}
  });
- const sinalizacaoVitrine=createVitrineCandidata({app,banco,catalogo,contas,intencoes,prePedidos,autorizarOperador,novidades,enderecoEntrega,configLoja});
+ const sinalizacaoVitrine=createVitrineCandidata({app,banco,catalogo,contas,intencoes,prePedidos,autorizarOperador,novidades,enderecoEntrega,configLoja,materialPdf});
  const custosProduto=sinalizacaoVitrine.custosProduto; // objeto do MESMO catálogo usado na foto do prepedido
  // Mesmo SQLite/operador autorizado: alteração editorial, sem pagamento.
  app.get('/staging/escritorio-unificado/loja/config',autorizarOperador,(_req,res)=>{
@@ -1788,6 +1791,7 @@ if(worker){
   repositorioCatalogo:catalogo,prePedidos,identificarTitular:titular,
   autorizarMutacao:autorizacao,ponteAsaasSandbox:ponte,
   consultarEntregaSimulada:args=>entregas.consultar(args),
+  materialPdf,
   consultarPosicaoPendente:posicoes?args=>posicoes.consultar(args):null
  }));
  app.use((_req,res)=>res.status(404).json({erro:'ROTA_INEXISTENTE'}));
@@ -1795,6 +1799,6 @@ if(worker){
   erro:'CANDIDATO_INDISPONIVEL',financeiroReal:false
  }));
  return {app,contas,cpf,provasEmail,intencoes,prePedidos,ponte,
-  inbox,worker,executarConciliacaoSandbox,posicoes,projecaoFilas,preAdesao,diagnosticoAtivacao,entregas,integridade,missoes,catalogo,sinalizacaoVitrine,departamentosAdmin,equipe,motorConta,banco};
+  inbox,worker,executarConciliacaoSandbox,posicoes,projecaoFilas,preAdesao,diagnosticoAtivacao,entregas,integridade,missoes,catalogo,materialPdf,sinalizacaoVitrine,departamentosAdmin,equipe,motorConta,banco};
 }
 module.exports={criarAppLojaEscritorioCandidato};
