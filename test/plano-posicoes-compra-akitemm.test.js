@@ -80,3 +80,43 @@ test('ROXO legado continua por unidade: um carro com cinco posicoes',()=>{
   modoRoxo:'POR_UNIDADE',posicoesPorUnidadeRoxo:5})]);
  assert.equal(p.quantidadePosicoesPrevistas,5);
 });
+
+test('qualquer cor aceita quantidade minima definida pelo administrador',()=>{
+ const cinza=plano([item('tenis-cinza','CINZA',12000,5,{quantidadeMinimaLoop:5})]);
+ assert.equal(cinza.quantidadePosicoesPrevistas,0,'cinza nao vira qualificado');
+ const verde=plano([item('tenis-verde','VERDE',5000,5,{quantidadeMinimaLoop:5})]);
+ assert.equal(verde.posicoesVerde,1);
+ assert.equal(plano([item('tenis-verde','VERDE',5000,4,
+  {quantidadeMinimaLoop:5})]).posicoesVerde,0);
+ const dourado=plano([item('geladeira-dourada','DOURADO',30000,5,
+  {quantidadeMinimaLoop:5})]);
+ assert.equal(dourado.posicoesDourado,5,'modo por unidade permanece disponivel');
+ assert.equal(plano([item('geladeira-dourada','DOURADO',30000,4,
+  {quantidadeMinimaLoop:5})]).posicoesDourado,0);
+ const roxo=plano([item('tenis-roxo','ROXO',12000,5,{
+  quantidadeMinimaLoop:5,modoRoxo:'POR_PEDIDO',
+  quantidadeMinimaRoxo:2,posicoesPorPedidoRoxo:1})]);
+ assert.equal(roxo.posicoesRoxo,1);
+ assert.equal(plano([item('tenis-roxo','ROXO',12000,4,{
+  quantidadeMinimaLoop:5,modoRoxo:'POR_PEDIDO',
+  quantidadeMinimaRoxo:2,posicoesPorPedidoRoxo:1})]).posicoesRoxo,0);
+});
+test('dourado opcional por pacote gera uma posicao por cinco tenis',()=>{
+ const pacote=n=>item('tenis-dourado','DOURADO',12000,n,{
+  quantidadeMinimaLoop:5,modoDourado:'POR_PEDIDO',
+  posicoesPorPedidoDourado:1});
+ for(const [q,esperado] of [[4,0],[5,1],[10,1]]){
+  const p=plano([pacote(q)]);
+  assert.equal(p.posicoesDourado,esperado);
+  assert.equal(p.direitosReaisCriados,0);
+ }
+ assert.throws(()=>plano([item('pacote-baixo','DOURADO',4000,5,{
+  quantidadeMinimaLoop:5,modoDourado:'POR_PEDIDO',
+  posicoesPorPedidoDourado:1})]),/DOURADO_PACOTE_SEM_PISO/);
+});
+test('planejamentos antigos sem campo de pacote mantem JSON historico estavel',()=>{
+ const antigo=plano([item('legado-dourado','DOURADO',25000,2)]);
+ assert.equal(antigo.posicoesDourado,2);
+ assert.equal(Object.hasOwn(antigo.detalhamento[0],'modoDourado'),false);
+ assert.equal(Object.hasOwn(antigo.detalhamento[0],'quantidadeMinimaLoop'),false);
+});
