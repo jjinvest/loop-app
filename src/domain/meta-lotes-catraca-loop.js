@@ -80,16 +80,18 @@ function janelasDeLuz(meta,agenda,agoraMs){
  const duracao=p.duracaoMinutos;
  if(duracao<1||meta.quantidade<1)return null;
  const total=BigInt(meta.quantidade)*6n;
- const periodo=BigInt(duracao);
- const percorrido=BigInt(Math.min(duracao,
-  Math.max(0,p.minutoNoTurno-comeco+1)));
+ // Ultima janela e agendada NO ultimo minuto aberto do turno.
+ // 09:00–18:00 com 10 ciclos: primeira luz 09:09, sexto evento 09:54.
+ const periodo=BigInt(Math.max(1,duracao-1));
+ const percorrido=BigInt(Math.min(duracao-1,
+  Math.max(0,p.minutoNoTurno-comeco)));
  const aprovadasBig=percorrido*total/periodo;
  const aprovadas=Number(aprovadasBig>BigInt(Number.MAX_SAFE_INTEGER)?
   BigInt(Number.MAX_SAFE_INTEGER):aprovadasBig);
  const proximo=aprovadasBig+1n;
  let proximaJanelaEmMs=null;
  if(proximo<=total){
-  const indiceMinuto=(proximo*periodo+total-1n)/total-1n;
+  const indiceMinuto=(proximo*periodo+total-1n)/total;
   const diferenca=Number(indiceMinuto)-
    (p.minutoNoTurno-comeco);
   // O servidor e a fonte de tempo; cliente nao depende do fuso do aparelho.
