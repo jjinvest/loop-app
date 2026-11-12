@@ -127,3 +127,80 @@ test('mesmo painel traz diagnostico e acao protegida que reaproveita conciliacao
  assert.match(html,/reparação segura/i);
  assert.doesNotMatch(js,/fetch\([^\n]*\/api\/pagamentos\/criar/);
 });
+
+
+test('historico operacional sem snapshot bloqueia a manutencao mesmo com SQLite integro',async t=>{
+ const {obter,banco}=await preparar(t,{sandbox:true});
+ // Simula perda seletiva do snapshot: uma operacao duravel continua no
+ // mesmo SQLite, mas nao houve pedido/lote/dourada para denunciar a perda.
+ banco.prepare([
+  'INSERT INTO akitemm_motor_conta_ensaio_operacoes',
+  '(tipo,prepedido_id,titular_id,numero_posicao,criado_em)',
+  "VALUES('ALTERAR_AGENDA',NULL,NULL,NULL,?)"
+ ].join(' ')).run(Date.now());
+ assert.equal(banco.prepare('SELECT COUNT(*) AS n FROM akitemm_motor_ensaio_lotes_pedido').get().n,0);
+ assert.equal(banco.prepare('PRAGMA integrity_check').get().integrity_check,'ok');
+ assert.deepEqual(banco.prepare('PRAGMA foreign_key_check').all(),[]);
+ const antes=banco.prepare('SELECT total_changes() AS n').get().n;
+ const r=await obter();
+ assert.equal(r.status,200,JSON.stringify(r.body));
+ assert.equal(r.body.estado,'BLOQUEADO_INTEGRIDADE');
+ assert.ok(r.body.divergencias.includes('MOTOR_INTEGRIDADE'));
+ assert.equal(r.body.acoesPermitidas.conciliarSandbox,false);
+ assert.equal(r.body.integridade.motorAindaNaoIniciado,false);
+ assert.equal(banco.prepare('SELECT total_changes() AS n').get().n,antes);
+});
+
+test('auditoria percorre reservas numerosas sem carregar toda tabela no heap',()=>{
+ const {auditarIntegridadeMotorCandidato}=
+  require('../src/domain/auditoria-integridade-motor-candidato-sqlite');
+ const db=new DatabaseSync(':memory:');
+ try{
+  db.exec([
+   'CREATE TABLE akitemm_motor_conta_ensaio_estado(id INTEGER,revisao INTEGER,snapshot TEXT);',
+   'CREATE TABLE akitemm_motor_conta_ensaio_operacoes(tipo TEXT,prepedido_id TEXT,titular_id TEXT,numero_posicao INTEGER);',
+   'CREATE TABLE akitemm_motor_ensaio_lotes_pedido(prepedido_id TEXT,titular_id TEXT,numero_posicao INTEGER,ordinal INTEGER);',
+   'CREATE TABLE akitemm_motor_ensaio_aceites_posicao(numero_posicao INTEGER,prepedido_id TEXT,titular_id TEXT);',
+   'CREATE TABLE akitemm_checkout_prepedidos_staging(prepedido_id TEXT PRIMARY KEY,titular_id TEXT);',
+   'CREATE TABLE akitemm_conta_unica_candidata(id TEXT PRIMARY KEY);',
+   'CREATE TABLE akitemm_prepedido_asaas_sandbox_staging(prepedido_id TEXT PRIMARY KEY,titular_id TEXT);',
+   'CREATE TABLE akitemm_vitrine_fotografia_classificacao_prepedido(prepedido_id TEXT PRIMARY KEY,titular_id TEXT,fotografia_json TEXT);',
+   'CREATE TABLE akitemm_prepedido_asaas_reserva_posicoes_staging(prepedido_id TEXT PRIMARY KEY,titular_id TEXT,posicoes_previstas INTEGER,posicoes_reservadas INTEGER,modalidade TEXT);'
+  ].join(' '));
+  const cliente=db.prepare('INSERT INTO akitemm_conta_unica_candidata(id) VALUES(?)');
+  const pedido=db.prepare('INSERT INTO akitemm_checkout_prepedidos_staging VALUES(?,?)');
+  const psp=db.prepare('INSERT INTO akitemm_prepedido_asaas_sandbox_staging VALUES(?,?)');
+  const foto=db.prepare('INSERT INTO akitemm_vitrine_fotografia_classificacao_prepedido VALUES(?,?,?)');
+  const reserva=db.prepare('INSERT INTO akitemm_prepedido_asaas_reserva_posicoes_staging VALUES(?,?,?,?,?)');
+  db.exec('BEGIN IMMEDIATE');
+  for(let i=0;i<1250;i++){
+   const id='p'+i,titular='t'+i;
+   cliente.run(titular);pedido.run(id,titular);psp.run(id,titular);
+   foto.run(id,titular,JSON.stringify({
+    prepedidoId:id,titularId:titular,
+    planejamentoPosicoes:{quantidadePosicoesPrevistas:1}
+   }));
+   reserva.run(id,titular,1,1,'COM_POSICOES');
+  }
+  db.exec('COMMIT');
+  const banco={
+   prepare(sql){
+    const st=db.prepare(sql);
+    if(!sql.includes('SELECT v.prepedido_id AS pedidoId'))return st;
+    // Um auditor que usar all() nesta consulta falha explicitamente;
+    // o teste exige cursor SQLite, inclusive em base acima de mil itens.
+    return new Proxy(st,{get(target,prop){
+     if(prop==='all')return ()=>{throw Error('AUDITORIA_CARREGA_TUDO_NO_HEAP');};
+     const valor=Reflect.get(target,prop,target);
+     return typeof valor==='function'?valor.bind(target):valor;
+    }});
+   }
+  };
+  const antes=db.prepare('SELECT total_changes() AS n').get().n;
+  const r=auditarIntegridadeMotorCandidato({banco,exigirMotor:true});
+  assert.equal(r.reservasAuditadas,1250);
+  assert.equal(r.snapshotValidado,false);
+  assert.equal(r.totalInconsistencias,0);
+  assert.equal(db.prepare('SELECT total_changes() AS n').get().n,antes);
+ }finally{db.close();}
+});
