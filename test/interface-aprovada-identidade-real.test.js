@@ -55,6 +55,11 @@ test('HTML original do cliente é reaproveitado sem script LAB, nova tela ou CPF
  assert.doesNotMatch(html,/Criar conta de homologação/);
  assert.doesNotMatch(html,/Nome fictício/);
  assert.doesNotMatch(html,/E-mail fictício/);
+ assert.doesNotMatch(html,/Para uma venda real ainda são necessárias/);
+ assert.match(html,/id="termosCpfTexto" class="subtexto" hidden/);
+ assert.match(html,/id="cpfTeste"/);
+ assert.match(html,/id="aceiteCpfTeste"/);
+ assert.match(html,/id="formCpfTeste"/);
 });
 test('interface aprovada e identidade real servidas da mesma origem protegida',async t=>{
  const titular=contas(t);
@@ -83,6 +88,7 @@ test('interface aprovada e identidade real servidas da mesma origem protegida',a
  assert.match(script,/seletorPosicaoMotor/);
  assert.match(script,/catracaClientePodeGirar/);
  assert.match(script,/iniciarRelogioTabuleiro/);
+ assert.doesNotMatch(script,/termosCpfTexto'\)\.textContent='Versão'/);
  assert.match(script,/\.loop03-atalho-loja, \.barra-conta a\.loop03-loja-prata/);
  assert.match(script,/setAttribute\('href','\/loja'\)/);
  assert.doesNotMatch(script,/removeAttribute\('href'\)/);
