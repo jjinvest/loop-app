@@ -930,6 +930,89 @@ async function conferirBackupOffsite(){
  }catch(e){el.textContent='Conferência do backup indisponível: '+e.message;}
  finally{botao.disabled=false;}
 }
+let diagnosticoManutencao=null;
+function podeRepararManutencao(){
+ return Boolean(auth&&diagnosticoManutencao?.acoesPermitidas?.conciliarSandbox===true&&
+  diagnosticoManutencao.pendenciasConciliaveis>0&&
+  $('manutencaoConfirmarSandbox').checked&&
+  !$('reconciliarPendentesPsp').disabled);
+}
+function atualizarBotaoReparoManutencao(){
+ $('manutencaoRepararSandbox').disabled=!podeRepararManutencao();
+}
+async function diagnosticarManutencao(){
+ const botao=$('manutencaoDiagnosticar'),estado=$('manutencaoEstado');
+ botao.disabled=true;
+ diagnosticoManutencao=null;
+ $('manutencaoConfirmarSandbox').checked=false;
+ $('manutencaoMetricas').replaceChildren();
+ atualizarBotaoReparoManutencao();
+ estado.textContent='Auditando o SQLite e os vínculos do motor, sem alterar registros...';
+ try{
+  const r=await api('/manutencao/diagnostico');
+  const permitidos=['SEM_ANOMALIAS_OBSERVADAS','PENDENCIAS_A_CONCILIAR',
+   'REVISAO_HUMANA','BLOQUEADO_INTEGRIDADE','PSP_NAO_DISPONIVEL'];
+  if(!permitidos.includes(r.estado)||r.consultaSomenteLeitura!==true||
+     r.escritasExecutadas!==0||r.financeiroReal!==false||
+     !Array.isArray(r.divergencias)||!r.integridade||
+     !r.acoesPermitidas||r.acoesPermitidas.liberarPagamentosReais!==false)
+   throw Error('DIAGNOSTICO_SEM_CONTRATO_SEGURO');
+  diagnosticoManutencao=r;
+  const metricas=$('manutencaoMetricas');
+  const m=r.integridade;
+  metricas.append(
+   linha('SQLite íntegro',m.sqliteOk===true?'SIM':'NÃO'),
+   linha('Chaves estrangeiras inconsistentes',m.fksInconsistentes),
+   linha('Titulares inconsistentes',m.titularesInconsistentes),
+   linha('Relações PSP inconsistentes',m.pspInconsistentes),
+   linha('Snapshot do motor validado',m.motorSnapshotValidado===true?'SIM':'NÃO'),
+   linha('Webhooks em quarentena',r.webhooksEmQuarentena??'Indisponível'),
+   linha('Pendências conciliáveis',r.pendenciasConciliaveis??'Indisponível'),
+   linha('Revisões que exigem operador',r.reconsultasEmRevisao??'Indisponível')
+  );
+  const destinos={
+   SEM_ANOMALIAS_OBSERVADAS:'Nenhuma anomalia observada nos itens verificados.',
+   PENDENCIAS_A_CONCILIAR:'Há pendências no Sandbox. Ação segura disponível após confirmação.',
+   REVISAO_HUMANA:'Há divergências ou revisões que exigem análise humana.',
+   BLOQUEADO_INTEGRIDADE:'Integridade inconsistente. Reparação automática bloqueada.',
+   PSP_NAO_DISPONIVEL:'PSP não habilitado nesta sessão de laboratório.'
+  };
+  estado.textContent=destinos[r.estado]+
+   (r.divergencias.length?' Códigos: '+r.divergencias.join(', ')+'.':'')+
+   ' Consulta somente leitura; dinheiro real bloqueado.';
+  atualizarBotaoReparoManutencao();
+ }catch(e){
+  diagnosticoManutencao=null;
+  estado.textContent='Diagnóstico indisponível: '+e.message+
+   '. Não executar reparação automática.';
+  atualizarBotaoReparoManutencao();
+ }finally{botao.disabled=false;}
+}
+$('manutencaoDiagnosticar').addEventListener('click',diagnosticarManutencao);
+$('manutencaoConfirmarSandbox').addEventListener('change',
+ atualizarBotaoReparoManutencao);
+$('manutencaoCriarMissao').addEventListener('click',()=>{
+ $('departamento').value='SEGURANCA';
+ $('titulo').value='Revisão técnica do LOOP';
+ $('descricao').value='Diagnóstico: '+
+  (diagnosticoManutencao?.estado||'NÃO_EXECUTADO')+
+  '. Verificar evidências, identificar causa e registrar correção auditável. '+
+  'Não alterar dados financeiros diretamente.';
+ $('prioridade').value='ALTA';
+ $('criarMissao').scrollIntoView({behavior:'smooth',block:'center'});
+ $('manutencaoEstado').textContent='Missão preparada. Confira e envie no formulário '+
+  'de missões; nenhuma alteração foi feita automaticamente.';
+});
+$('manutencaoRepararSandbox').addEventListener('click',()=>{
+ if(!podeRepararManutencao())return;
+ // Um único caminho de escrita: a conciliação autorizada já aprovada.
+ diagnosticoManutencao=null;
+ $('manutencaoConfirmarSandbox').checked=false;
+ atualizarBotaoReparoManutencao();
+ $('manutencaoEstado').textContent='Conciliação de laboratório encaminhada à '+
+  'ação já existente. Execute Diagnosticar novamente para conferir o resultado.';
+ $('reconciliarPendentesPsp').click();
+});
 $('conferirBackupOffsite').addEventListener('click',conferirBackupOffsite);
 $('consultarCoberturaAkitemm').addEventListener('click',conferirCoberturaAkitemm);
 $('atualizar').addEventListener('click',()=>atualizar().catch(e=>dizer(e.message)));
