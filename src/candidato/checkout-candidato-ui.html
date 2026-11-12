@@ -27,7 +27,7 @@
   <p id="erroLogin" class="erro-formulario" role="alert" tabindex="-1" hidden></p>
   <form id="formLogin">
    <label for="login">Nick</label>
-   <input id="login" name="nick" autocomplete="username" minlength="1" maxlength="9" pattern="[A-Za-z]{1,9}" required>
+   <input id="login" name="nick" autocomplete="username" minlength="1" maxlength="12" pattern="[A-Za-z]{1,12}" required>
    <label for="senha">Senha</label>
    <div class="envoltorio-senha"><input id="senha" name="senha" type="password" autocomplete="current-password" required><button type="button" class="alternar-visibilidade" data-senha="senha" aria-label="Mostrar senha" aria-pressed="false" title="Mostrar senha"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M2.2 12S5.7 6.5 12 6.5 21.8 12 21.8 12 18.3 17.5 12 17.5 2.2 12 2.2 12Z"/><circle cx="12" cy="12" r="2.7"/><path class="traco-senha-oculta" d="M4.5 19.5 19.5 4.5"/></svg></button></div>
    <button type="submit" class="primario">Entrar</button>
@@ -43,9 +43,9 @@
   <form id="formCadastro">
    <label for="cadastroNome">Nome fictício</label>
    <input id="cadastroNome" name="nome" maxlength="90" autocomplete="off" required>
-   <label for="cadastroNick">Nick (1 a 9 letras)</label>
+   <label for="cadastroNick">Nick (1 a 12 letras)</label>
    <p class="subtexto">Nome e nick aceitam maiúsculas e minúsculas.</p>
-   <input id="cadastroNick" name="nick" minlength="1" maxlength="9" pattern="[A-Za-z]{1,9}" required>
+   <input id="cadastroNick" name="nick" minlength="1" maxlength="12" pattern="[A-Za-z]{1,12}" required>
    <label for="cadastroEmail">E-mail fictício</label>
    <input id="cadastroEmail" name="email" type="email" maxlength="254" autocomplete="off" required>
    <label for="cadastroSenha">Senha de teste (8 a 12 caracteres)</label>
