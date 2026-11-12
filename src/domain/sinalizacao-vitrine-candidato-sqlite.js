@@ -70,7 +70,7 @@ class SinalizacaoVitrineCandidatoSQLite{
    'ON DELETE RESTRICT,posicoes_por_pedido INTEGER NOT NULL',
    'CHECK(posicoes_por_pedido BETWEEN 0 AND 10),',
    'revisao INTEGER NOT NULL CHECK(revisao>=1));',
-   'CREATE TABLE IF NOT EXISTS akitemm_vitrine_roxo_pedido_staging('
+   'CREATE TABLE IF NOT EXISTS akitemm_vitrine_roxo_pedido_staging(',
    'produto_id TEXT PRIMARY KEY REFERENCES akitemm_vitrine_sinalizacao_staging(produto_id)',
    'ON DELETE RESTRICT,quantidade_minima INTEGER NOT NULL',
    'CHECK(quantidade_minima BETWEEN 1 AND 50),',
