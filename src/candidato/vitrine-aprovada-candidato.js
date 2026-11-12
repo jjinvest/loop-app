@@ -11,7 +11,7 @@ const {simularQualificacaoCandidato}=require('../domain/simulador-qualificacao-c
 const {consultarPedido}=require('../domain/relatorio-homologacao-checkout-staging');
 const DIR=path.join(__dirname,'../laboratorio');
 function fail(codigo){const e=new Error(codigo);e.codigo=codigo;throw e;}
-function createVitrineCandidata({app,banco,catalogo,contas,intencoes,prePedidos,autorizarOperador,novidades,enderecoEntrega,configLoja,materialPdf}={}){
+function createVitrineCandidata({app,banco,catalogo,contas,intencoes,prePedidos,autorizarOperador,novidades,enderecoEntrega,configLoja,materialPdf,videoProduto}={}){
  if(process.env.NODE_ENV==='production')fail('VITRINE_LAB_NAO_HOMOLOGADA');
  if(!app?.get||!app?.post||!app?.patch||catalogo?.db!==banco||
     typeof contas?.sessao!=='function'||typeof prePedidos?.preparar!=='function'||
@@ -78,6 +78,14 @@ function createVitrineCandidata({app,banco,catalogo,contas,intencoes,prePedidos,
   .replace('const data=await response.json();',
    "const data=await response.json();\n  if(caminho==='minha-conta'&&response.ok){csrfCandidato=data.csrf||null;atualizarPreviaQualificacao();}\n  if(caminho==='loja/pedidos'&&(response.ok||[400,409].includes(response.status)))chavePedidoCandidato=null;")
   .replace('function atualizarCarrinho(){',"let seqPrevia=0;\n async function atualizarPreviaQualificacao(){\n  const id=++seqPrevia;\n  const campo=el('akitemmAnaliseQualificacao');\n  if(!campo)return;\n  if(!carrinho.size){campo.textContent='Prévia de laboratório. Adicione produtos; nenhuma posição será criada.';return;}\n  if(!csrfCandidato){campo.textContent='Conferindo sessão para simulação...';return;}\n  try{\n   const response=await fetch('/staging/vitrine/simular-qualificacao',{\n    method:'POST',credentials:'same-origin',cache:'no-store',\n    headers:{'Content-Type':'application/json','X-LOOP-LAB':'participante',\n     'X-Checkout-Csrf':csrfCandidato},\n    body:JSON.stringify({itens:[...carrinho].map(([produtoId,quantidade])=>({produtoId,quantidade}))})\n   });\n   const dados=await response.json();\n   if(id!==seqPrevia)return;\n   campo.textContent=response.ok?dados.mensagem:\n    'Prévia não disponível: '+(dados.erro||response.status)+'. Nenhum benefício foi criado.';\n  }catch{if(id===seqPrevia)campo.textContent='Prévia temporariamente indisponível. Nenhum benefício foi criado.';}\n }\n function atualizarCarrinho(){atualizarPreviaQualificacao();")
+  .replace("const informacoes=document.createElement('div');informacoes.className='akitemm-detalhe-informacoes';",
+   "if(p.videoApresentacaoLocal===true){const video=document.createElement('video');"+
+   "video.controls=true;video.preload='metadata';video.playsInline=true;"+
+   "video.setAttribute('aria-label','Vídeo de apresentação do produto');"+
+   "video.style.width='100%';video.style.maxHeight='360px';"+
+   "video.src='/staging/vitrine/loja/produtos/'+encodeURIComponent(p.produtoId)+'/video';"+
+   "galeria.append(video);}"+
+   "const informacoes=document.createElement('div');informacoes.className='akitemm-detalhe-informacoes';")
   .replace('if(quantidade<100)','if(quantidade<50)')
   .replace('if(qtd>=100)','if(qtd>=50)')
   .replace('Máximo de 100 unidades por produto.','Máximo de 50 unidades por produto neste laboratório.')
@@ -114,11 +122,41 @@ function createVitrineCandidata({app,banco,catalogo,contas,intencoes,prePedidos,
   async(req,res)=>{
    try{
     const lista=(await catalogo.listar()).filter(p=>p.estado==='PUBLICADO');
-    return res.json({produtos:lista.map(p=>sinalizacao.decorar(p)),
+    return res.json({produtos:lista.map(p=>({...sinalizacao.decorar(p),
+     videoApresentacaoLocal:videoProduto.estado(p.id).arquivoAnexado})),
      referenciaLoopCentavos:25000,conviteLoopCheckoutAtivo:false,
      laboratorio:true,posicoesReais:0});
    }catch{return res.status(503).json({erro:'VITRINE_INDISPONIVEL'});}
   });
+
+ app.get('/staging/vitrine/loja/produtos/:id/video',
+  autorizarCliente,async(req,res)=>{
+   try{
+    const p=await catalogo.buscar(req.params.id);
+    if(!p||p.estado!=='PUBLICADO')
+     return res.status(404).json({erro:'VIDEO_NAO_DISPONIVEL'});
+    const arquivo=videoProduto.abrir(p.id);
+    const bytes=arquivo.conteudo;
+    const faixa=req.get('range');
+    res.set({'Content-Type':'video/mp4','Accept-Ranges':'bytes',
+     'Cache-Control':'private, no-store','X-Robots-Tag':'noindex, nofollow',
+     'Content-Disposition':'inline'});
+    if(faixa){
+     const m=/^bytes=(\d+)-(\d*)$/.exec(faixa);
+     if(!m)return res.status(416).set('Content-Range','bytes */'+bytes.length).end();
+     const inicio=Number(m[1]),fim=m[2]?Number(m[2]):bytes.length-1;
+     if(!Number.isSafeInteger(inicio)||!Number.isSafeInteger(fim)||
+        inicio>=bytes.length||fim<inicio||fim>=bytes.length)
+      return res.status(416).set('Content-Range','bytes */'+bytes.length).end();
+     res.status(206).set('Content-Range',
+      'bytes '+inicio+'-'+fim+'/'+bytes.length);
+     return res.send(bytes.subarray(inicio,fim+1));
+    }
+    return res.send(bytes);
+   }catch(e){return res.status(e.codigo==='VIDEO_INTEGRIDADE_INVALIDA'?503:404)
+    .json({erro:'VIDEO_NAO_DISPONIVEL'});}
+  });
+
  const simular=async(req,res)=>{
   if(!req.is('application/json')||!req.body||Array.isArray(req.body))
    return res.status(415).json({erro:'JSON_OBRIGATORIO'});
