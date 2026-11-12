@@ -1726,7 +1726,7 @@ if(worker){
       consultarBackup:true,
       consultarDetalhes:true,
       conciliarSandbox:operacoesSandboxAutorizadas===true&&
-       !estrutural&&psp!==null,
+       !estrutural&&divergencias.length===0&&psp!==null,
       criarMissaoHumana:true,
       editarRegistroFinanceiroDiretamente:false,
       liberarPagamentosReais:false
