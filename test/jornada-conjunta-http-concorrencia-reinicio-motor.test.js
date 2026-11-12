@@ -87,7 +87,7 @@ test('jornada HTTP concorrente em duas instancias: pedidos, callbacks, reinicio,
    ...(cookie?{Cookie:COOKIE+'='+cookie}:{}),
    ...(csrf?{'X-Checkout-Csrf':csrf}:{}),
    ...(admin?{Authorization:'Bearer '+ADMIN}:{}),
-   ...(data?{'Content-Type':'application/json'}:{}),
+   ...(data?{'Content-Type':'application/json','X-LOOP-LAB':'participante'}:{}),
    ...(key?{'Idempotency-Key':key}:{})
   },...(data?{body:JSON.stringify(data)}:{})});
   return {status:response.status,body:await response.json(),
