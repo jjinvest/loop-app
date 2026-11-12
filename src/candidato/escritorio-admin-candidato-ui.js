@@ -745,6 +745,10 @@ async function atualizar(){
   linha('Pré-pedidos',e.resumo.prepedidosStaging),
   linha('PSP conciliados',e.resumo.recebimentosPSPConciliados),
   linha('PSP sem posição — revisar',e.vinculosMotorAusentes),
+  linha('Webhooks antecipados aguardando Pix',
+   e.quarentenaAguardandoVinculo??'—'),
+  linha('Webhooks antecipados divergentes — revisar',
+   e.quarentenaDivergente??'—'),
   linha('Estornos sem suspensão — revisar',e.reversoesMotorPendentes),
   linha('Reconsultas PSP em andamento',e.recuperacaoPSP?.processando??0),
   linha('Interrupções PSP em recuperação',e.recuperacaoPSP?.retomaveis??0),
@@ -1127,6 +1131,8 @@ $('reconciliarPendentesPsp').addEventListener('click',async()=>{
    r.lotesPendentesCriados+' lotes de posições pendentes, '+
    r.lotesSuspensos+' lotes suspensos por reversão, '+
    r.pendentesRestantes+' avisos aguardando, '+
+   (r.quarentenaAguardandoVinculo??0)+' webhooks antecipados aguardando Pix, '+
+   (r.quarentenaDivergente??0)+' webhooks antecipados divergentes, '+
    r.vinculosMotorAusentes+' eventos de pagamento sandbox sem vínculo no motor, '+
    r.reversoesMotorPendentes+' reversões PSP aguardando suspensão do motor, '+
    r.revisaoNecessaria+' casos desta rodada exigindo revisão, '+
