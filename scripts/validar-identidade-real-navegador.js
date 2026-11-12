@@ -255,6 +255,15 @@ async function main(){
    console.log('LOOP_GEOMETRIA_MENU_'+item.nome+'='+JSON.stringify(geometria));
    if(item.largura<=860)await page.locator('#loop03MenuIntegrado').click();
    await page.locator('#abaTabuleiro').click();
+   const relogio=page.locator('#relogioTabuleiroIntegrado');
+   await relogio.waitFor({state:'visible'});
+   const horaInicial=await relogio.innerText();
+   assert.match(horaInicial,/^\\d{2}:\\d{2}:\\d{2}$/);
+   assert.equal(await page.locator('#conteudoTabuleiro').getByText(
+    'Mesmo motor V6 e mesmo SQLite',{exact:false}).count(),0);
+   await page.waitForFunction(horaAnterior=>
+    document.getElementById('relogioTabuleiroIntegrado')?.textContent!==
+     horaAnterior,horaInicial,{timeout:4000});
    await page.locator('#estadoTabuleiroIntegrado')
     .filter({hasText:/Eventos do ciclo: 0\/6/}).waitFor();
    assert.equal(await page.locator('#tabuleiroMotorCentro').innerText(),'—');
