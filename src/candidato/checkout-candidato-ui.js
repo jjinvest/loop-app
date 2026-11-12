@@ -903,6 +903,23 @@ $('pedidosProximo').addEventListener('click',()=>{
  paginaPedidos++;atualizarPedidos();
 });
 $('sair').addEventListener('click',sair);
+// O visor informa a hora LOCAL, nunca contagem regressiva da catraca.
+function iniciarRelogioTabuleiro(){
+ const visor=$('relogioTabuleiroIntegrado');
+ if(!visor)return;
+ const formatter=new Intl.DateTimeFormat('pt-BR',{
+  hour:'2-digit',minute:'2-digit',second:'2-digit',hour12:false
+ });
+ const atualizar=()=>{
+  const agora=new Date();
+  visor.textContent=formatter.format(agora);
+  visor.dateTime=agora.toISOString();
+ };
+ atualizar();
+ window.setInterval(atualizar,1000);
+}
+iniciarRelogioTabuleiro();
+
 $('atualizarTabuleiroIntegrado').addEventListener('click',atualizarTabuleiroIntegrado);
 // Ao abrir o tabuleiro, mostrar luzes e filas que mudaram por venda
 // conciliada e agendamento. Polling e somente GET, sem evento financeiro.
