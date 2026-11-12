@@ -169,20 +169,49 @@ test('jornada HTTP concorrente em duas instancias: pedidos, callbacks, reinicio,
   // Interrupcao controlada DE AMBOS OS SERVIDORES; fechar conexoes e
   // reconstruir runtime/contas/motor sobre exatamente o mesmo arquivo WAL.
   await parar(a);await parar(b);
-  const c=await iniciar(),d=await iniciar();
+  let c=await iniciar(),d=await iniciar();
+  // Provocar falha uma unica vez ENTRE GET PSP confirmado e escrita no
+  // motor; a reparacao precisa sobreviver a novo boot sem novo GET/POST.
+  const original=c.r.motorConta.vincularPedidoConferidoSandbox
+   .bind(c.r.motorConta);
+  let falhouUmaVez=false;
+  c.r.motorConta.vincularPedidoConferidoSandbox=(args)=>{
+   if(args.prepedidoId===clientes[0].prepedidoId&&!falhouUmaVez){
+    falhouUmaVez=true;
+    throw Object.assign(new Error('falha ensaio entre PSP e motor'),
+     {codigo:'INTERRUPCAO_ENTRE_PSP_E_MOTOR'});
+   }
+   return original(args);
+  };
   // Reconsultas e motor atravessam duas instancias em paralelo.
   const reconciliados=await Promise.all(clientes.map((u,index)=>
    req(index%2?d:c,'/staging/escritorio-unificado/reconsultar-psp',{
     method:'POST',admin:true,data:{eventoId:u.eventoId}
    })));
-  for(const r of reconciliados){
+  for(const [index,r] of reconciliados.entries()){
    assert.equal(r.status,200,JSON.stringify(r.body));
    assert.equal(r.body.estado,'CONCLUIDO');
-   assert.ok(['PENDENTES_GERADAS','JA_VINCULADO']
-    .includes(r.body.vinculoMotorEnsaio?.estado),JSON.stringify(r.body));
+   assert.ok(index===0?r.body.vinculoMotorEnsaio?.estado==='BLOQUEADO':
+    ['PENDENTES_GERADAS','JA_VINCULADO']
+     .includes(r.body.vinculoMotorEnsaio?.estado),JSON.stringify(r.body));
   }
+  assert.equal(falhouUmaVez,true);
+  assert.equal(c.banco.prepare(
+   'SELECT COUNT(*) AS n FROM akitemm_motor_ensaio_lotes_pedido').get().n,7);
   assert.equal(gets,8);
   assert.equal(posts,8);
+  // Todos os servicos caem apos confirmar o PSP, mas antes de salvar
+  // o oitavo lote no motor. Retomar usando unica fonte SQLite duravel.
+  await parar(c);await parar(d);
+  c=await iniciar();d=await iniciar();
+  const reparo=await req(d,'/staging/escritorio-unificado/reconciliar-pendentes-sandbox',{
+   method:'POST',admin:true,data:{limite:20}
+  });
+  assert.equal(reparo.status,200,JSON.stringify(reparo.body));
+  assert.equal(reparo.body.lotesPendentesCriados,1,JSON.stringify(reparo.body));
+  assert.equal(reparo.body.vinculosMotorAusentes,0,JSON.stringify(reparo.body));
+  assert.equal(gets,8,'reparo do motor nao faz novo GET PSP concluido');
+  assert.equal(posts,8,'reparo do motor nao gera nova cobranca');
   const m=c.r.motorConta.consultar();
   assert.equal(m.posicoesAtivasDoTitular??0,0,'visao admin nao assume titular');
   assert.equal(c.banco.prepare(
