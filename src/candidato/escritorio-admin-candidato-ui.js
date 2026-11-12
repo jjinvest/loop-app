@@ -1318,7 +1318,7 @@ $('formSinalizacaoAdmin').addEventListener('submit',async e=>{
    sinalizacaoAtual.posicoesPorPedidoRoxo||0:
    sinalizacaoAtual.posicoesPorUnidadeRoxo||0);
   atualizarCamposRoxo();
-  $('resultadoSinalizacaoAdmin').textContent='Regra salva no mesmo catálogo e motor. '+
+  $('resultadoSinalizacaoAdmin').textContent='Cor salva. Regra registrada no mesmo catálogo e motor. '+
    (sinalizacaoAtual.modoRoxo==='POR_PEDIDO'?
     'Pedido com pelo menos '+sinalizacaoAtual.quantidadeMinimaRoxo+
     ' unidades gera '+sinalizacaoAtual.posicoesPorPedidoRoxo+
