@@ -174,9 +174,28 @@ const png=Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAIAAAACCAIAAAD91JpzAAAAEklEQVR4n
     numero:'10',bairro:'Centro',cidade:'Volta Redonda',telefone:'21999999999'
    }))await entrega.locator('[name="'+campo+'"]').fill(valor);
    await entrega.locator('[name="uf"]').selectOption('RJ');
+   // Se o navegador nao gravar, informar se falhou validacao HTML,
+   // sessao/CSRF ou API, sem repetir toda a jornada as cegas.
+   const requisicaoEntrega=page.waitForResponse(r=>
+    r.url().includes('/staging/vitrine/loja/entrega')&&
+    r.request().method()==='POST',{timeout:10000}).catch(()=>null);
    await entrega.locator('button[type=submit]').click();
-   await page.locator('#akitemmStatusEntrega')
-    .filter({hasText:/Endereço de ensaio gravado/}).waitFor();
+   const respostaEntrega=await requisicaoEntrega;
+   const estadoEntrega=page.locator('#akitemmStatusEntrega');
+   if(!respostaEntrega||respostaEntrega.status()!==200){
+    const diagnostico={dispositivo:device.nome,
+     http:respostaEntrega?.status()||null,
+     resposta:respostaEntrega?await respostaEntrega.text().catch(()=>null):null,
+     mensagem:await estadoEntrega.textContent(),
+     formularioValido:await entrega.evaluate(f=>f.checkValidity()),
+     camposInvalidos:await entrega.evaluate(f=>
+      [...f.elements].filter(c=>c.willValidate&&!c.checkValidity())
+       .map(c=>c.name||c.type)),
+     painelAberto:await page.locator('#akitemmEntrega').evaluate(d=>d.open)};
+    assert.fail('ENDERECO_BROWSER_NAO_GRAVADO '+JSON.stringify(diagnostico));
+   }
+   await estadoEntrega.filter({hasText:/Endereço de ensaio gravado/})
+    .waitFor({state:'visible',timeout:5000});
    await page.locator('#registrarPedidoLoja').click();
    await page.locator('#statusPedidoLoja').filter({hasText:/Pedido hom-/}).waitFor();
    const meus=await context.request.get(base+'/staging/vitrine/loja/pedidos',{
