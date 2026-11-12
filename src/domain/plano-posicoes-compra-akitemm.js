@@ -28,8 +28,20 @@ function planejarPosicoesCompraAkitemm(itens,{limiteAtivas=MAXIMO_ATIVAS}={}){
   let quantidadePosicoes=0;
   if(cor==='VERDE'&&quantidade>=minimo)valorVerde+=subtotalCentavos;
   if(cor==='DOURADO'){
-   if(precoUnitarioCentavos<PISO_VERDE)falha('DOURADO_SEM_PISO_UNITARIO');
-   douradas+=quantidade;quantidadePosicoes=quantidade;
+   const modo=item.modoDourado??'POR_UNIDADE';
+   if(!['POR_UNIDADE','POR_PEDIDO'].includes(modo))
+    falha('MODO_DOURADO_INVALIDO');
+   if(modo==='POR_PEDIDO'){
+    const porPedido=item.posicoesPorPedidoDourado;
+    if(!Number.isSafeInteger(porPedido)||porPedido<0||porPedido>MAXIMO_ATIVAS)
+     falha('REGRA_DOURADO_POR_PEDIDO_INVALIDA');
+    if(BigInt(precoUnitarioCentavos)*BigInt(minimo)<BigInt(PISO_VERDE))
+     falha('DOURADO_PACOTE_SEM_PISO');
+    if(quantidade>=minimo){douradas+=porPedido;quantidadePosicoes=porPedido;}
+   }else{
+    if(precoUnitarioCentavos<PISO_VERDE)falha('DOURADO_SEM_PISO_UNITARIO');
+    if(quantidade>=minimo){douradas+=quantidade;quantidadePosicoes=quantidade;}
+   }
   }
   if(cor==='ROXO'&&item.modoRoxo==='POR_PEDIDO'){
    const minimoPedido=item.quantidadeMinimaRoxo;
@@ -41,7 +53,7 @@ function planejarPosicoesCompraAkitemm(itens,{limiteAtivas=MAXIMO_ATIVAS}={}){
    // Uma compra de 5 ou 10 tenis qualifica UMA vez, nao por unidade.
    // Um pedido com 4 tenis e compra comum: nao cria posicao nem pendencia.
    if(posicoesPedido===0)pendenciasRoxo+=quantidade;
-   else if(quantidade>=minimoPedido){
+   else if(quantidade>=Math.max(minimo,minimoPedido)){
     quantidadePosicoes=posicoesPedido;
     roxas+=quantidadePosicoes;
    }
@@ -52,10 +64,14 @@ function planejarPosicoesCompraAkitemm(itens,{limiteAtivas=MAXIMO_ATIVAS}={}){
    if(!Number.isSafeInteger(configuradas)||configuradas<0||configuradas>MAXIMO_ATIVAS)
     falha('POSICOES_ROXO_INVALIDAS');
    if(configuradas===0)pendenciasRoxo+=quantidade;
-   else {quantidadePosicoes=configuradas*quantidade;roxas+=quantidadePosicoes;}
+   else if(quantidade>=minimo){
+    quantidadePosicoes=configuradas*quantidade;roxas+=quantidadePosicoes;
+   }
   }
   detalhamento.push({produtoId,classificacao:cor,quantidade,
-   subtotalCentavos,quantidadePosicoes,
+   subtotalCentavos,quantidadePosicoes,quantidadeMinimaLoop:minimo,
+   ...(cor==='DOURADO'?{modoDourado:item.modoDourado||'POR_UNIDADE',
+    posicoesPorPedidoDourado:item.posicoesPorPedidoDourado??0}:{}),
    ...(cor==='ROXO'?{modoRoxo:item.modoRoxo||'POR_UNIDADE',
     quantidadeMinimaRoxo:item.modoRoxo==='POR_PEDIDO'?item.quantidadeMinimaRoxo:1}:{}),
    consideradoVerdeCentavos:

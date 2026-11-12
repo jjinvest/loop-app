@@ -9,7 +9,8 @@ function validar(x){
  if(!x||typeof x!=='object'||Array.isArray(x)||
   !['classificacao,quantidadeMinimaLoop,revisaoEsperada',
    'classificacao,posicoesPorUnidadeRoxo,quantidadeMinimaLoop,revisaoEsperada',
-   'classificacao,modoRoxo,posicoesPorPedidoRoxo,quantidadeMinimaLoop,quantidadeMinimaRoxo,revisaoEsperada']
+   'classificacao,modoRoxo,posicoesPorPedidoRoxo,quantidadeMinimaLoop,quantidadeMinimaRoxo,revisaoEsperada',
+   'classificacao,modoDourado,posicoesPorPedidoDourado,quantidadeMinimaLoop,revisaoEsperada']
    .includes(Object.keys(x).sort().join(',')))
   fail('CAMPOS_SINALIZACAO_INVALIDOS');
  if(!CLASSES.has(x.classificacao))fail('COR_VITRINE_INVALIDA');
@@ -18,10 +19,12 @@ function validar(x){
   fail('QUANTIDADE_MINIMA_INVALIDA');
  if(!Number.isSafeInteger(x.revisaoEsperada)||x.revisaoEsperada<0)
   fail('REVISAO_INVALIDA');
- if(x.classificacao==='CINZA'&&x.quantidadeMinimaLoop!==1)
-  fail('COR_NEUTRA_SEM_REGRAS_LOOP');
- if(['DOURADO','ROXO','EVENTO'].includes(x.classificacao)&&x.quantidadeMinimaLoop!==1)
-  fail('PRODUTO_ESPECIAL_QUANTIDADE_MINIMA_UM');
+ // Todas as cores aceitam quantidade minima de oferta independente da tinta.
+ if(x.modoDourado!==undefined&&
+   (x.classificacao!=='DOURADO'||x.modoDourado!=='POR_PEDIDO'||
+    !Number.isSafeInteger(x.posicoesPorPedidoDourado)||
+    x.posicoesPorPedidoDourado<0||x.posicoesPorPedidoDourado>10))
+  fail('CONFIGURACAO_DOURADO_POR_PEDIDO_INVALIDA');
  if(x.posicoesPorUnidadeRoxo!==undefined&&
   (!['ROXO','EVENTO'].includes(x.classificacao)||
    !Number.isSafeInteger(x.posicoesPorUnidadeRoxo)||
@@ -61,7 +64,13 @@ class SinalizacaoVitrineCandidatoSQLite{
    'ON DELETE RESTRICT,posicoes_por_unidade INTEGER NOT NULL',
    'CHECK(posicoes_por_unidade BETWEEN 1 AND 10),revisao INTEGER NOT NULL);',
    // V3 separada para preservar eventos roxos legados POR_UNIDADE.
-   'CREATE TABLE IF NOT EXISTS akitemm_vitrine_roxo_pedido_staging(',
+   // V3: pacote dourado opcional, sem reinterpretar a modalidade legada.
+   'CREATE TABLE IF NOT EXISTS akitemm_vitrine_dourado_pedido_staging(',
+   'produto_id TEXT PRIMARY KEY REFERENCES akitemm_vitrine_sinalizacao_staging(produto_id)',
+   'ON DELETE RESTRICT,posicoes_por_pedido INTEGER NOT NULL',
+   'CHECK(posicoes_por_pedido BETWEEN 0 AND 10),',
+   'revisao INTEGER NOT NULL CHECK(revisao>=1));',
+   'CREATE TABLE IF NOT EXISTS akitemm_vitrine_roxo_pedido_staging('
    'produto_id TEXT PRIMARY KEY REFERENCES akitemm_vitrine_sinalizacao_staging(produto_id)',
    'ON DELETE RESTRICT,quantidade_minima INTEGER NOT NULL',
    'CHECK(quantidade_minima BETWEEN 1 AND 50),',
@@ -104,14 +113,21 @@ class SinalizacaoVitrineCandidatoSQLite{
    'SELECT quantidade_minima AS minimo,posicoes_por_pedido AS posicoes,',
    'revisao FROM akitemm_vitrine_roxo_pedido_staging WHERE produto_id=?'
   ].join(' ')).get(id):null;
+  const pacoteDourado=classe==='DOURADO'?this.db.prepare([
+   'SELECT posicoes_por_pedido AS posicoes,revisao',
+   'FROM akitemm_vitrine_dourado_pedido_staging WHERE produto_id=?'
+  ].join(' ')).get(id):null;
   if((evento&&evento.revisao!==row.revisao)||
      (pedido&&pedido.revisao!==row.revisao)||
+     (pacoteDourado&&pacoteDourado.revisao!==row.revisao)||
      (evento&&pedido))fail('REVISAO_EVENTO_INCONSISTENTE');
   return {produtoId:id,classificacao:classe,
    modoRoxo:pedido?'POR_PEDIDO':'POR_UNIDADE',
    quantidadeMinimaRoxo:pedido?.minimo||1,
    posicoesPorPedidoRoxo:pedido?.posicoes||0,
    posicoesPorUnidadeRoxo:evento?.quantidade||0,
+   modoDourado:pacoteDourado?'POR_PEDIDO':'POR_UNIDADE',
+   posicoesPorPedidoDourado:pacoteDourado?.posicoes||0,
    quantidadeMinimaLoop:row?.quantidadeMinimaLoop||1,
    revisao:row?.revisao||0,atualizadoEm:row?.atualizadoEm||null,
    apenasSinalizacao:true,beneficioRealHabilitado:false};
@@ -122,7 +138,12 @@ class SinalizacaoVitrineCandidatoSQLite{
   const p=await this.catalogo.buscar(id);
   if(!p)fail('PRODUTO_NAO_ENCONTRADO');
   const classe=entrada.classificacao==='EVENTO'?'ROXO':entrada.classificacao;
-  if(classe==='DOURADO'&&p.precoCentavos<25000)fail('DOURADO_EXIGE_VALOR_MINIMO_DO_PRODUTO');
+  // O piso para o DOURADO por pacote incide no total minimo do pacote.
+  if(classe==='DOURADO'&&(
+    entrada.modoDourado==='POR_PEDIDO'?
+     BigInt(p.precoCentavos)*BigInt(entrada.quantidadeMinimaLoop)<25000n:
+     p.precoCentavos<25000))
+   fail('DOURADO_EXIGE_VALOR_MINIMO_DO_PRODUTO');
   const antigo=this.consultar(id);
   if(antigo.revisao!==entrada.revisaoEsperada)fail('CONFLITO_REVISAO');
   const novo={produtoId:id,classificacao:classe,
@@ -131,6 +152,10 @@ class SinalizacaoVitrineCandidatoSQLite{
    quantidadeMinimaRoxo:entrada.quantidadeMinimaRoxo||1,
    posicoesPorPedidoRoxo:entrada.posicoesPorPedidoRoxo||0,
    posicoesPorUnidadeRoxo:classe==='ROXO'?(entrada.posicoesPorUnidadeRoxo||0):0,
+   modoDourado:classe==='DOURADO'&&entrada.modoDourado==='POR_PEDIDO'?
+    'POR_PEDIDO':'POR_UNIDADE',
+   posicoesPorPedidoDourado:classe==='DOURADO'?
+    (entrada.posicoesPorPedidoDourado||0):0,
    quantidadeMinimaLoop:entrada.quantidadeMinimaLoop};
   const legado=classe==='ROXO'?'EVENTO':classe==='DOURADO'?'VERDE':classe;
   const now=Date.now(),db=this.db;
@@ -158,6 +183,12 @@ class SinalizacaoVitrineCandidatoSQLite{
    ].join(' ')).run(id,classe,rev);
    db.prepare('DELETE FROM akitemm_vitrine_evento_roxo_staging WHERE produto_id=?').run(id);
    db.prepare('DELETE FROM akitemm_vitrine_roxo_pedido_staging WHERE produto_id=?').run(id);
+   db.prepare('DELETE FROM akitemm_vitrine_dourado_pedido_staging WHERE produto_id=?').run(id);
+   if(classe==='DOURADO'&&novo.modoDourado==='POR_PEDIDO')
+    db.prepare([
+     'INSERT INTO akitemm_vitrine_dourado_pedido_staging',
+     '(produto_id,posicoes_por_pedido,revisao) VALUES(?,?,?)'
+    ].join(' ')).run(id,novo.posicoesPorPedidoDourado,rev);
    if(classe==='ROXO'&&novo.modoRoxo==='POR_UNIDADE'&&novo.posicoesPorUnidadeRoxo>0)
     db.prepare('INSERT INTO akitemm_vitrine_evento_roxo_staging(produto_id,posicoes_por_unidade,revisao) VALUES(?,?,?)')
      .run(id,novo.posicoesPorUnidadeRoxo,rev);
@@ -214,7 +245,9 @@ class SinalizacaoVitrineCandidatoSQLite{
     minimo:s.quantidadeMinimaLoop,revisao:s.revisao,verdeApto:apto,
     posicoesPorUnidadeRoxo:s.posicoesPorUnidadeRoxo,
     modoRoxo:s.modoRoxo,quantidadeMinimaRoxo:s.quantidadeMinimaRoxo,
-    posicoesPorPedidoRoxo:s.posicoesPorPedidoRoxo});
+    posicoesPorPedidoRoxo:s.posicoesPorPedidoRoxo,
+    modoDourado:s.modoDourado,
+    posicoesPorPedidoDourado:s.posicoesPorPedidoDourado});
   }
   if(total!==totalCentavos)fail('FOTOGRAFIA_TOTAL_DIVERGENTE');
   const planejamentoPosicoes=planejarPosicoesCompraAkitemm(fotografiaItens);
@@ -249,12 +282,14 @@ class SinalizacaoVitrineCandidatoSQLite{
    detalhes:p.detalhes,novidade:false,quantidadeVendida:0,
    elegivelLoop:classe==='VERDE'||classe==='DOURADO',
    quantidadeMinimaLoop:s.quantidadeMinimaLoop,
-   // ROXO é apenas decoração local até regras, datas e autorização formal.
+   // ROXO permite oferta por unidade ou por pedido, sem exigir evento.
    // Não inventar quantidade de posições nem evento no motor.
    eventoId:null,posicoesPorPedidoLoop:classe==='ROXO'?
     (s.modoRoxo==='POR_PEDIDO'?s.posicoesPorPedidoRoxo:s.posicoesPorUnidadeRoxo):0,
    modoRoxo:s.modoRoxo,quantidadeMinimaRoxo:s.quantidadeMinimaRoxo,
    posicoesPorPedidoRoxo:s.posicoesPorPedidoRoxo,
+   modoDourado:s.modoDourado,
+   posicoesPorPedidoDourado:s.posicoesPorPedidoDourado,
    classeVisual:classe,
    fotoSomenteSeAutorizada:true,somenteLaboratorio:true};
  }
