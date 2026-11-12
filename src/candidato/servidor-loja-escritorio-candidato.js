@@ -1673,6 +1673,14 @@ if(worker){
     try{motor=auditarIntegridadeMotorCandidato({
      banco,exigirMotor:true
     });}catch(e){motorErro=e.codigo||'MOTOR_AUDITORIA_INCONCLUSIVA';}
+    // Ausencia de snapshot e normal antes da primeira operacao. Mas
+    // qualquer rastro persistido sem snapshot deve bloquear manutencao.
+    const tabelasMotor=['akitemm_motor_ensaio_lotes_pedido',
+     'akitemm_motor_ensaio_aceites_posicao',
+     'akitemm_motor_conta_ensaio_operacoes'];
+    const motorNuncaIniciado=Boolean(motor&&!motor.snapshotValidado&&
+     tabelasMotor.every(t=>banco.prepare(
+      'SELECT COUNT(*) AS n FROM '+t).get().n===0));
     const psp=worker?worker.resumoPendencias():null;
     const quarentena=inbox?inbox.resumoAntecipados():null;
     const recuperacao=worker?statusRecuperacaoPSP():null;
@@ -1682,7 +1690,8 @@ if(worker){
      ...(titulares.totalInconsistencias===0?[]:['TITULARIDADE']),
      ...(relacoes.totalInconsistencias===0?[]:['PSP_RELACOES']),
      ...(motorErro?['MOTOR_INTEGRIDADE']:[]),
-     ...(motor&&!motor.snapshotValidado?['MOTOR_SNAPSHOT_AUSENTE']:[]),
+     ...(motor&&!motor.snapshotValidado&&!motorNuncaIniciado?
+      ['MOTOR_SNAPSHOT_AUSENTE']:[]),
      ...(psp?.exigeRevisao>0?['PSP_REVISAO_HUMANA']:[]),
      ...(quarentena?.divergentes>0?['WEBHOOK_DIVERGENTE']:[]),
      ...(recuperacao?.segundaFalha>0?['PSP_REINCIDENCIA']:[])
@@ -1701,12 +1710,14 @@ if(worker){
      escritasExecutadas:0,financeiroReal:false,
      estado:estrutural?'BLOQUEADO_INTEGRIDADE':
       divergencias.length?'REVISAO_HUMANA':
+      motorNuncaIniciado?'MOTOR_AGUARDANDO_PRIMEIRO_USO':
       pendenciasConciliaveis===null?'PSP_NAO_DISPONIVEL':
       pendenciasConciliaveis>0?'PENDENCIAS_A_CONCILIAR':'SEM_ANOMALIAS_OBSERVADAS',
      integridade:{sqliteOk:sqlite==='ok',fksInconsistentes:fk,
       titularesInconsistentes:titulares.totalInconsistencias,
       pspInconsistentes:relacoes.totalInconsistencias,
-      motorSnapshotValidado:motor?.snapshotValidado===true},
+      motorSnapshotValidado:motor?.snapshotValidado===true,
+      motorAindaNaoIniciado:motorNuncaIniciado},
      divergencias,
      pendenciasConciliaveis,webhooksEmQuarentena:
       quarentena?.aguardandoVinculo??null,
