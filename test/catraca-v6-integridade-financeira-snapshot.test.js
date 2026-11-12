@@ -4,8 +4,8 @@ const {test}=require('node:test');
 const {SimuladorLoop}=require('../src/domain/simulador-loop');
 const {cofreDoEvento,origemDoCentro}=require('../src/domain/destino-financeiro-centro-loop');
 const copiar=s=>JSON.parse(JSON.stringify(s));
-const DESTINO_DOURADA=['LOOP_DOURADAS','LOOP_ESQUERDA','LOOP_DOURADAS',
- 'LOOP_DIREITA','LOOP_DOURADAS','LOOP_ESQUERDA'];
+// V2: os seis eventos do centro da empresa pertencem ao cofre dourado.
+const DESTINO_DOURADA=Array(6).fill('LOOP_DOURADAS');
 const DESTINO_REAL=['LOOP_CENTRO','LOOP_ESQUERDA','LOOP_CENTRO',
  'LOOP_DIREITA','LOOP_CENTRO','LOOP_ESQUERDA'];
 
@@ -73,7 +73,7 @@ test('desistencia no centro persiste e protege todos os seis destinos apos resta
  assert.deepEqual(snapshot.tabuleiro.vendasDoCiclo.map(v=>v.destinoCofre),DESTINO_DOURADA);
  assert.deepEqual(restaurar(snapshot).exportarSnapshot(),snapshot);
  alterar(snapshot,s=>{s.tabuleiro.vendasDoCiclo[4].destinoCofre='LOOP_CENTRO';});
- alterar(snapshot,s=>{s.tabuleiro.vendasDoCiclo[5].destinoCofre='LOOP_DOURADAS';});
+ alterar(snapshot,s=>{s.tabuleiro.vendasDoCiclo[5].destinoCofre='LOOP_ESQUERDA';});
 });
 test('ciclos concluidos V6 tambem sao validados ao reabrir snapshot',()=>{
  const sim=preparar('dourada');
