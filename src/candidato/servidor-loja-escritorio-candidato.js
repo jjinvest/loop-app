@@ -574,6 +574,43 @@ function criarAppLojaEscritorioCandidato({banco,repositorioCatalogo,
    return res.status(413).json({erro:'PDF_TAMANHO_INVALIDO'});
   next(err);
  });
+
+ // Video comercial CURTO (30s) do produto, sem CDN ou rota estatica.
+ // Somente operador cadastra; cliente logado visualiza o publicado.
+ app.get('/staging/escritorio-unificado/produtos/:id/video',
+  autorizarOperador,async(req,res)=>{
+   const p=await catalogo.buscar(req.params.id);
+   if(!p)return res.status(404).json({erro:'VIDEO_PRODUTO_NAO_ENCONTRADO'});
+   try{return res.json(videoProduto.estado(p.id));}
+   catch(e){return res.status(400).json({erro:e.codigo||'VIDEO_ESTADO_INVALIDO'});}
+  });
+ app.post('/staging/escritorio-unificado/produtos/:id/video',
+  autorizarOperador,express.raw({type:'video/mp4',limit:'20mb',inflate:false}),
+  async(req,res)=>{
+   if(!req.is('video/mp4')||!Buffer.isBuffer(req.body))
+    return res.status(415).json({erro:'VIDEO_MIME_INVALIDO'});
+   const revisao=req.get('x-video-versao-esperada');
+   if(typeof revisao!=='string'||!/^(0|[1-9][0-9]*)$/.test(revisao)||
+      revisao.length>9)
+    return res.status(400).json({erro:'VIDEO_REVISAO_INVALIDA'});
+   try{
+    const r=await videoProduto.salvar({produtoId:req.params.id,
+     bytes:req.body,revisaoEsperada:Number(revisao)});
+    return res.status(r.repetido?200:201).json(r);
+   }catch(e){
+    const codigo=e.codigo||'VIDEO_GRAVACAO_INDISPONIVEL';
+    return res.status(codigo==='VIDEO_PRODUTO_NAO_ENCONTRADO'?404:
+     codigo==='VIDEO_CONFLITO_REVISAO'?409:
+     codigo==='VIDEO_GRAVACAO_INDISPONIVEL'?503:400).json({erro:codigo});
+   }
+  });
+ app.use((err,req,res,next)=>{
+  if(req.path?.startsWith('/staging/escritorio-unificado/produtos/')&&
+     req.path.endsWith('/video')&&err.type==='entity.too.large')
+   return res.status(413).json({erro:'VIDEO_TAMANHO_INVALIDO'});
+  next(err);
+ });
+
  // O pedido e o titular precisam coincidir; download so apos GET PSP
  // Sandbox independente RECEIVED, sem reversao nem revisao manual.
  // Os arquivos nunca sao publicados em uma rota de arquivos estaticos.
