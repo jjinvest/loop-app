@@ -15,7 +15,8 @@ const monitor=(alteracoes={})=>({
  somenteLaboratorio:true,consultaPSPExecutadaNestaLeitura:false,
  pagamentosReais:0,saquesReais:0,posicoesReais:0,
  resumo:{pendentes:0,processando:0,exigeRevisao:0,
-  total:0,vinculosMotorAusentes:0,reversoesMotorPendentes:0},
+  total:0,vinculosMotorAusentes:0,reversoesMotorPendentes:0,
+  quarentenaAguardandoVinculo:0,quarentenaDivergente:0},
  recuperacaoPSP:{processando:0,retomaveis:0,segundaFalha:0},
  fila:[{eventoId:'NAO_PUBLICAR'}],...alteracoes
 });
@@ -91,4 +92,20 @@ test('monitor 401 e JSON inconsistente bloqueiam prova sem expor credencial',asy
   url.endsWith('/monitor-psp')?monitor({posicoesReais:9}):estado()});
  await assert.rejects(diagnosticarCadeia({env,fetchImpl:invalido}),
   /SONDA_MONITOR_FONTE_INVALIDA/);
+});
+
+test('webhook antecipado nao desaparece de relatorio sem pendencias',async()=>{
+ const remote=async url=>({status:200,json:async()=>url.endsWith('/readyz')?
+  {estado:'BANCO_DE_ENSAIO_APTO',marcoZeroLiberado:false,financeiroReal:false}:
+  url.endsWith('/monitor-psp')?monitor({
+   resumo:{...monitor().resumo,quarentenaAguardandoVinculo:1}
+  }):estado()});
+ const x=await diagnosticarCadeia({env,fetchImpl:remote});
+ assert.equal(x.estado,'PENDENCIAS_OPERACIONAIS_REVISAR');
+ assert.equal(x.quarentenaAguardandoVinculo,1);
+ assert.equal(x.quarentenaDivergente,0);
+ const inconsistente=monitor({resumo:{...monitor().resumo,
+  quarentenaAguardandoVinculo:1,quarentenaDivergente:2}});
+ assert.throws(()=>validarMonitor(inconsistente),
+  /SONDA_QUARENTENA_INCONSISTENTE/);
 });
