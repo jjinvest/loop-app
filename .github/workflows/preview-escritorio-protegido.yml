@@ -259,9 +259,11 @@ jobs:
       - name: Grade responsiva de posicoes
         timeout-minutes: 3
         run: node --test test/grade-posicoes-ensaios-unificada.test.js
-      # Suite integral permanece obrigatoria antes de liberar versao; somente
-      # workflow_dispatch com opt-in para nao duplicar auditoria em cada push.
-      - if: ${{ github.event_name == 'workflow_dispatch' && inputs.suite_integral == true }}
+      # Regressao completa: manual com opt-in ou commit intencional marcado.
+      # A suite NAO roda em push comum; [suite-integral] ativa um check-up.
+      - if: ${{ (github.event_name == 'workflow_dispatch' && inputs.suite_integral == true) || (github.event_name == 'push' && contains(github.event.head_commit.message, '[suite-integral]')) }}
+        name: Check-up integral de todos os testes Node
+        timeout-minutes: 12
         run: node --test --test-concurrency=8
       - run: npm install --no-save playwright@1.56.1
       - run: npx playwright install --with-deps chromium
