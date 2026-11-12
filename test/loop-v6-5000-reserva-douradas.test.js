@@ -31,7 +31,9 @@ test('LOOP: 5000 compradores, 100 azuis-douradas + douradas financiadas por rese
   assert.equal(r.douradasConvertidasAoLongoDosGiros.length,r.conversoesAzulParaDourada);
   assert.ok(r.douradasConvertidasAoLongoDosGiros.every(x=>
     x.azulAntes&&x.douradaDepois&&x.giro>=1));
-  assert.equal(r.financeiro.cofreReservaBrutoCentavos,416*25000);
+  // Sob dourada integral, apenas ciclos com centro NAO dourado alimentam DIREITA.
+   assert.equal(r.financeiro.cofreReservaBrutoCentavos,
+    r.financeiro.alocacaoReferencialPorDestinoCentavos.LOOP_DIREITA);
   assert.equal(r.financeiro.compromissoDouradasFinanciadasCentavos,100*25000);
   assert.ok(r.financeiro.cofreReservaLivreDemonstrativoCentavos>=0);
   assert.equal(r.financeiro.extratoDouradasDaReserva.length,100);
