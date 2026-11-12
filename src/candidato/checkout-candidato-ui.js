@@ -336,56 +336,7 @@ async function atualizarResumo(){
   $('linksNick').textContent='Seu nick: @'+perfil.nick;
  }catch(e){dizer('Não foi possível atualizar a visão geral: '+e.message);}
 }
-function rotuloVisualDourada(p){
- if(!p?.dourada)return '';
- const n=typeof p.numeroVisual==='string'&&/^[0-9]{1,8}$/.test(p.numeroVisual)?
-  '#'+p.numeroVisual:'';
- const nome=typeof p.nomeVisual==='string'&&p.nomeVisual.length<=24?
-  p.nomeVisual:'';
- return [n,nome].filter(Boolean).join('\n');
-}
-function preencherVagaMotor(id,p,centro=false){
- const numero=$(id),bolinha=numero.closest('.espaco-tabuleiro-demo');
- numero.textContent=p?.dourada?rotuloVisualDourada(p):
-  p?'#'+p.numero:(centro?'#0000':'—');
- numero.classList.toggle('posicao-dourado',Boolean(p?.dourada));
- numero.classList.toggle('posicao-azul',Boolean(p?.pendente));
- numero.classList.toggle('posicao-verde',Boolean(p?.aceiteEnsaio));
- numero.classList.toggle('loop03-iluminada',Boolean(p?.minha));
- bolinha.setAttribute('aria-label',(centro?'Centro':'Vaga do tabuleiro')+
-  ': '+(p?.dourada?('bola dourada'+
-   (rotuloVisualDourada(p)?' · '+rotuloVisualDourada(p).replace('\n',' · '):'')):
-   p?('#'+p.numero+' · '+p.status):'vazio')+
-  (p?.minha?' · minha posição':''));
-}
-function preencherFilaMotor(id,itens,tipo){
- const area=$(id);area.replaceChildren();
- if(!itens.length){
-  const vazio=document.createElement('p');vazio.className='subtexto';
-  vazio.textContent='Fila vazia';area.append(vazio);return;
- }
- for(const p of itens){
-  const linha=document.createElement('div');
-  linha.className='loop03-linha-fila';
-  const inicial=document.createElement('span');
-  inicial.className='loop03-inicial-fila '+(p.dourada?'loop03-dourada':
-   p.pendente?'loop03-azul':p.aceiteEnsaio?'loop03-verde':tipo==='A'?'loop03-a':'loop03-b');
-  inicial.textContent=p.dourada?'':tipo;
-  const conteudo=document.createElement('span');
-  conteudo.className='loop03-fila-identificacao';
-  const numero=document.createElement('span');
-  numero.className='loop03-numero-titular';
-  numero.textContent=p.dourada?rotuloVisualDourada(p).replace('\n',' · '):
-   '#'+p.numero;
-  conteudo.append(numero);
-  if(p.minha){
-   const minha=document.createElement('small');minha.textContent='Minha posição · ensaio';
-   conteudo.append(minha);
-  }
-  linha.append(inicial,conteudo);
-  area.append(linha);
- }
-}
+const visualTabuleiro=window.LoopTabuleiroVisual.criar({elemento:$});
 async function atualizarTabuleiroIntegrado(){
  const estado=$('estadoTabuleiroIntegrado');
  try{
@@ -393,13 +344,12 @@ async function atualizarTabuleiroIntegrado(){
   if(motor.origem!=='MOTOR_LOOP_EXISTENTE_COM_SQLITE_DA_CONTA'||
      motor.autorizacaoComercial!==false||motor.dinheiroReal!==false)
    throw Error('FONTE_MOTOR_INCOMPATIVEL');
-  preencherFilaMotor('motorFilaA',motor.filaA,'A');
-  preencherFilaMotor('motorFilaB',motor.filaB,'B');
-  preencherVagaMotor('tabuleiroMotorCentro',motor.tabuleiro.centro,true);
+  visualTabuleiro.preencherFila('motorFilaA',motor.filaA,'A');
+  visualTabuleiro.preencherFila('motorFilaB',motor.filaB,'B');
+  visualTabuleiro.preencherVaga('tabuleiroMotorCentro',motor.tabuleiro.centro,true);
   motor.tabuleiro.vagas.forEach((p,i)=>
-   preencherVagaMotor('tabuleiroMotorVaga'+(i+1),p));
-  for(let i=1;i<=6;i++)$('motorBolinha'+i).classList.toggle(
-   'loop03-marcador-aceso',i<=motor.tabuleiro.eventosNoCiclo);
+   visualTabuleiro.preencherVaga('tabuleiroMotorVaga'+(i+1),p));
+  visualTabuleiro.preencherLuzes(motor.tabuleiro.eventosNoCiclo);
   $('motorContadorEventos').textContent=motor.tabuleiro.eventosNoCiclo+
    '/6 eventos válidos de ensaio';
   $('loop03Giros24Integrado').textContent=String(motor.catraca.giros24h);
