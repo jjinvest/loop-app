@@ -52,6 +52,7 @@ on:
       - 'src/shared/visor-catraca.js'
       - 'src/shared/tabuleiro-visual-loop.js'
       - 'test/tabuleiro-visual-unico.test.js'
+      - 'test/historico-comercial-paginado.test.js'
       - 'src/producao/interface-aprovada-contas.js'
       - 'src/producao/interface-aprovada-loop.js'
       - 'test/visor-catraca-unico.test.js'
@@ -151,7 +152,7 @@ jobs:
       - run: node --check src/domain/equipe-candidata-sqlite.js
       - run: node --check src/candidato/servidor-loja-escritorio-candidato.js
       - name: Verificar modulo unico entre laboratorio e identidade
-        run: node --check src/shared/visor-catraca.js && node --test test/visor-catraca-unico.test.js test/tabuleiro-visual-unico.test.js test/interface-aprovada-identidade-real.test.js
+        run: node --check src/shared/visor-catraca.js && node --test test/visor-catraca-unico.test.js test/tabuleiro-visual-unico.test.js test/interface-aprovada-identidade-real.test.js test/historico-comercial-paginado.test.js
       - run: node --check src/candidato/checkout-candidato-ui.js
       - run: node --check src/domain/motor-conta-unica-ensaio-sqlite.js
       - run: node --test test/motor-conta-unica-ensaio-sqlite.test.js
