@@ -1055,9 +1055,9 @@ Para encerrar a pendência de **prova real de navegador** após as unificações
 **Limites abertos:** esta correção resolve a regressão de CI, não certifica consentimento contratual público, termos comerciais, segurança independente, escalabilidade multi-host, RPO/RTO definitivo, nem homologação financeira/jurídica/PSP/bancos/fornecedor. A intervenção de reparação continua confinada ao painel ADMIN protegido da homologação, com bloqueio para integridade comprometida e sem edição arbitrária de dinheiro.
 
 
-## Continuidade 338 — fechamento de três falhas internas de integridade, escala e reconsulta (12/11/2026)
+## Continuidade 338 — quatro melhorias internas de integridade, escala e reconsulta (12/11/2026)
 
-**Escopo estritamente interno, sem redesenhar telas ou ativar dinheiro:** após o fechamento do navegador na continuidade 337, três pontos internos foram investigados e corrigidos na branch `feature/unificar-escritorio-real-20261105`, preservando PR #1 DRAFT.
+**Escopo estritamente interno, sem redesenhar telas ou ativar dinheiro:** após o fechamento do navegador na continuidade 337, quatro pontos internos foram investigados e corrigidos na branch `feature/unificar-escritorio-real-20261105`, preservando PR #1 DRAFT.
 
 1. **P1 — operações persistidas sem snapshot do motor eram falsamente classificáveis como primeiro uso.** `src/domain/auditoria-integridade-motor-candidato-sqlite.js` já bloqueava ausência de snapshot com lotes ou douradas, mas não quando restava apenas histórico de operações como agenda/luzes/giro. Agora o diagnóstico exige snapshot sempre que houver qualquer operação persistida, mesmo sem pedidos/lotes, retornando `MOTOR_SQLITE_SNAPSHOT_AUSENTE`; a manutenção do Admin recusa reparação automática. Prova no teste `historico operacional sem snapshot bloqueia a manutencao` com `PRAGMA integrity_check=ok` e nenhuma foreign key violada, mas estado administrativo `BLOQUEADO_INTEGRIDADE`.
 2. **P2 — auditoria de grandes históricos consumia heap proporcional a todas as reservas e douradas.** A leitura de reservas e o livro das douradas manuais passaram de `.all()` para cursores `StatementSync.iterate()`, mantendo verificação semântica, contagem completa e sem novos limites de clientes/pedidos. Teste instrumentado com **1.250 reservas** proíbe `.all()` e confirma contagem exata sem mutação.
