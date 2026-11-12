@@ -578,6 +578,45 @@ function criarAppLojaEscritorioCandidato({banco,repositorioCatalogo,
   next(err);
  });
 
+
+ // Galeria de até 10 fotos, operador protegido. MIME e bytes
+ // validados/sanitizados (EXIF removido) antes de gravar em SQLite.
+ app.get('/staging/escritorio-unificado/produtos/:id/fotos',
+  autorizarOperador,async(req,res)=>{
+   if(!await catalogo.buscar(req.params.id))
+    return res.status(404).json({erro:'FOTO_PRODUTO_NAO_ENCONTRADO'});
+   try{return res.json(fotosProduto.listar(req.params.id));}
+   catch(e){return res.status(400).json({erro:e.codigo||'FOTOS_INDISPONIVEIS'});}
+  });
+ app.post('/staging/escritorio-unificado/produtos/:id/fotos/:posicao',
+  autorizarOperador,
+  express.raw({type:['image/jpeg','image/png','image/webp'],limit:'3mb',inflate:false}),
+  async(req,res)=>{
+   if(!['image/jpeg','image/png','image/webp'].includes(req.get('content-type'))||
+      !Buffer.isBuffer(req.body))
+    return res.status(415).json({erro:'FOTO_MIME_INVALIDO'});
+   const rev=req.get('x-foto-versao-esperada');
+   if(typeof rev!=='string'||!/^(0|[1-9][0-9]*)$/.test(rev)||rev.length>9||
+      !/^(10|[1-9])$/.test(req.params.posicao))
+    return res.status(400).json({erro:'FOTO_PARAMETROS_INVALIDOS'});
+   try{
+    const r=await fotosProduto.salvar({produtoId:req.params.id,
+     posicao:Number(req.params.posicao),bytes:req.body,
+     mime:req.get('content-type'),revisaoEsperada:Number(rev)});
+    return res.status(r.repetido?200:201).json(r);
+   }catch(e){
+    return res.status(e.codigo==='FOTO_PRODUTO_NAO_ENCONTRADO'?404:
+     e.codigo==='FOTO_CONFLITO_REVISAO'?409:400)
+     .json({erro:e.codigo||'FOTO_GRAVACAO_INDISPONIVEL'});
+   }
+  });
+ app.use((err,req,res,next)=>{
+  if(req.path?.startsWith('/staging/escritorio-unificado/produtos/')&&
+     req.path.includes('/fotos/')&&err.type==='entity.too.large')
+   return res.status(413).json({erro:'FOTO_GRANDE_DEMAIS'});
+  next(err);
+ });
+
  // Video comercial CURTO (30s) do produto, sem CDN ou rota estatica.
  // Somente operador cadastra; cliente logado visualiza o publicado.
  app.get('/staging/escritorio-unificado/produtos/:id/video',
