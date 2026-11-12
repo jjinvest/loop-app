@@ -1,7 +1,7 @@
 'use strict';
 // Jornada simulada do operador ao comprador na MESMA loja: 12 produtos,
 // 4 cores, indicacao via link assinado, fotos, filtros, scroll PC/celular,
-// compra de 5 tenis ROXOS e fotografia imutavel para o motor.
+// compra de cinco tenis NO QUADRADO ROXO, sem supor a cor do calcado.
 // Banco e pagamentos produtivos nao sao usados.
 const assert=require('node:assert/strict');
 const {randomBytes}=require('node:crypto');
@@ -62,7 +62,7 @@ const png=Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAIAAAACCAIAAAD91JpzAAAAEklEQVR4n
   for(const cor of ['CINZA','VERDE','DOURADO','ROXO']){
    for(let i=0;i<3;i++){
     const id='jornada-'+cor.toLowerCase()+'-'+i;
-    const nome=cor==='ROXO'&&i===0?'Tênis Roxo — pacote de cinco':
+    const nome=cor==='ROXO'&&i===0?'Tênis — pacote de cinco':
      'Jornada '+cor+' produto '+(i+1);
     const precoCentavos=cor==='DOURADO'?30000:cor==='ROXO'?12000:10000;
     const produto={id,nome,tipo:'FISICO',estado:'PUBLICADO',
@@ -173,7 +173,7 @@ const png=Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAIAAAACCAIAAAD91JpzAAAAEklEQVR4n
    }
    // Botao de detalhes e carrinho DA PROPRIA VITRINE, nao mock de UI.
    const tenis=page.locator('#catalogoLojaLoop article.produto-loja-loop')
-    .filter({hasText:'Tênis Roxo — pacote de cinco'});
+    .filter({hasText:'Tênis — pacote de cinco'});
    await tenis.locator('button.akitemm-ver-detalhes').click();
    await page.locator('#akitemmVisualizacaoProduto').waitFor({state:'visible'});
    await page.locator('#akitemmVoltarProdutos').click();

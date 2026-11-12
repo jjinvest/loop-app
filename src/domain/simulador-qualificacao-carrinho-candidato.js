@@ -28,13 +28,26 @@ async function simularQualificacaoCandidato({entrada,catalogo,sinalizacao}={}){
   let situacao;
   if(s.classificacao==='CINZA')situacao='COMPRA_COMUM_NAO_CONTA';
   else if(s.classificacao==='ROXO'){
-   if(!s.posicoesPorUnidadeRoxo)eventoPendente=true;
-   situacao='EVENTO_APENAS_PLANEJADO_SEM_DIREITOS';
+   const posicoes=s.modoRoxo==='POR_PEDIDO'?
+    s.posicoesPorPedidoRoxo:s.posicoesPorUnidadeRoxo;
+   if(!posicoes)eventoPendente=true;
+   if(quantidade<Math.max(s.quantidadeMinimaLoop,
+      s.modoRoxo==='POR_PEDIDO'?s.quantidadeMinimaRoxo:1))
+    limiarPendente=true;
+   situacao='OFERTA_ROXA_APENAS_PLANEJADO_SEM_DIREITOS';
   }else if(s.classificacao==='DOURADO'){
-   situacao=p.precoCentavos>=REFERENCIA_CENTAVOS?
-    'UNIDADE_DOURADA_PLANEJADA_SEM_DIREITOS':'DOURADO_PRECO_INSUFICIENTE';
+   const pacote=s.modoDourado==='POR_PEDIDO';
+   const pisoOk=pacote?
+    p.precoCentavos*s.quantidadeMinimaLoop>=REFERENCIA_CENTAVOS:
+    p.precoCentavos>=REFERENCIA_CENTAVOS;
+   if(quantidade<s.quantidadeMinimaLoop){
+    limiarPendente=true;situacao='QUANTIDADE_MINIMA_NAO_ATINGIDA';
+   }else situacao=pisoOk?
+    (pacote?'PACOTE_DOURADO_PLANEJADO_SEM_DIREITOS':
+     'UNIDADE_DOURADA_PLANEJADA_SEM_DIREITOS'):
+    'DOURADO_PRECO_INSUFICIENTE';
   }else if(s.classificacao==='VERDE'){
-   if(quantidade<s.quantidadeMinimaLoop||(s.classificacao==='DOURADO'&&p.precoCentavos<REFERENCIA_CENTAVOS)){
+   if(quantidade<s.quantidadeMinimaLoop){
     limiarPendente=true;situacao='QUANTIDADE_MINIMA_NAO_ATINGIDA';
    }else{
     valorVerde+=subtotal;quantidadeProdutosVerdes++;
@@ -47,7 +60,11 @@ async function simularQualificacaoCandidato({entrada,catalogo,sinalizacao}={}){
    quantidadeMinimaLoop:s.quantidadeMinimaLoop,
    revisaoClassificacao:s.revisao,situacao,
    minimo:s.quantidadeMinimaLoop,
-   posicoesPorUnidadeRoxo:s.posicoesPorUnidadeRoxo||0
+   posicoesPorUnidadeRoxo:s.posicoesPorUnidadeRoxo||0,
+   modoRoxo:s.modoRoxo,quantidadeMinimaRoxo:s.quantidadeMinimaRoxo,
+   posicoesPorPedidoRoxo:s.posicoesPorPedidoRoxo||0,
+   modoDourado:s.modoDourado,
+   posicoesPorPedidoDourado:s.posicoesPorPedidoDourado||0
   });
  }
  const planejamentoPosicoes=planejarPosicoesCompraAkitemm(detalhes);
@@ -62,7 +79,7 @@ async function simularQualificacaoCandidato({entrada,catalogo,sinalizacao}={}){
  const mensagem=planejamentoPosicoes.excedeLimitePorPedido?
   'A compra prevê mais de dez posições; deverá ser bloqueada ou revisada antes de qualquer cobrança. Nenhuma posição real criada.':
   planejamentoPosicoes.posicoesDourado>0||planejamentoPosicoes.posicoesRoxo>0?
-  'Compra com produtos especiais: posição dourada por unidade e roxa por quantidade configurada. A parcela verde gera no máximo uma posição se atingir R$ 250. Prévia sem direitos comerciais.':
+  'Compra com ofertas configuradas: dourada por unidade ou pacote, roxa por quantidade definida. Verde mantém no máximo uma posição ao atingir R$ 250. Prévia sem direitos comerciais.':
   referenciaAtingida?
   'O carrinho atinge a referência com produtos elegíveis em simulação. Nenhuma posição foi criada. Ainda seriam necessárias compra confirmada, CPF, termos e todas as demais verificações.':
   eventoPendente?
