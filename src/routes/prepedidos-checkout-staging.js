@@ -8,7 +8,7 @@ const {consultarPedido}=require('../domain/relatorio-homologacao-checkout-stagin
 function criarRouterPrePedidosCheckoutStaging({
  prePedidos,repositorioCatalogo,identificarTitular,autorizarMutacao,
  ponteAsaasSandbox=null,consultarPosicaoPendente=null,
- consultarEntregaSimulada=null
+ consultarEntregaSimulada=null,materialPdf=null
 }={}){
  if(typeof prePedidos?.preparar!=='function'||
   typeof prePedidos?.consultar!=='function'||
@@ -22,6 +22,8 @@ function criarRouterPrePedidosCheckoutStaging({
   throw new TypeError('Leitura de posicao pendente invalida');
  if(consultarEntregaSimulada!==null&&typeof consultarEntregaSimulada!=='function')
   throw new TypeError('Leitura de entrega simulada invalida');
+ if(materialPdf!==null&&typeof materialPdf.listarPedido!=='function')
+  throw new TypeError('Leitura de PDF por pedido invalida');
  if(ponteAsaasSandbox!==null&&typeof ponteAsaasSandbox.consultar!=='function')
   throw new TypeError('Ponte Asaas Sandbox de somente leitura invalida');
  const r=express.Router();
@@ -112,6 +114,10 @@ function criarRouterPrePedidosCheckoutStaging({
      contaEscritorioVinculada:auditoria?.contaEscritorioVinculada===true,
      revisaoManualObrigatoria:andamento?.revisaoManualObrigatoria===true||
        auditoria?.exigeRevisaoManual===true,
+     pdfProdutosDisponiveis:auditoria?.conferenciaPSPConcluida===true&&
+      auditoria?.exigeRevisaoManual!==true?
+      (materialPdf?.listarPedido({prepedidoId:p.prepedidoId,titularId})||[])
+       .map(x=>x.produtoId):[],
      compraReal:false,comprovanteFinanceiro:false,
      posicaoPendenteLaboratorio:consultarPosicaoPendente?.({
       titularId,prepedidoId:p.prepedidoId
