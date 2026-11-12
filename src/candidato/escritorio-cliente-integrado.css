@@ -280,3 +280,17 @@ body.loop03-logado main>.mensagem-pagina{margin:0 0 .75rem}
  .cliente-integrado .barra-conta a.loop03-loja-prata{padding:6px 9px}
  .cliente-integrado .loop03-loja-prata-texto{font-size:1.05rem}
 }
+
+/* Apenas o relógio da catraca; mantém o botão como atualização manual. */
+.cliente-integrado #conteudoTabuleiro #atualizarTabuleiroIntegrado{
+ display:inline-flex;align-items:center;justify-content:center;
+ gap:8px;min-width:156px;
+ font-variant-numeric:tabular-nums;
+ background:linear-gradient(145deg,#27231b,#30281d);
+ border-color:#ab8b57;color:#f4d78f;
+}
+.cliente-integrado #conteudoTabuleiro #relogioTabuleiroIntegrado{
+ display:inline-block;font-size:clamp(1.2rem,3.2vw,1.55rem);
+ font-weight:700;line-height:1.15;letter-spacing:.09em;
+ font-variant-numeric:tabular-nums;
+}
