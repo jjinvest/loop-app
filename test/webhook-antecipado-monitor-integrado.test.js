@@ -122,3 +122,55 @@ test('webhook antecipado aparece como pendente e some apenas quando chega ao liv
  assert.equal(chamadas,1);
  assert.equal(banco.prepare('PRAGMA integrity_check').get().integrity_check,'ok');
 });
+
+
+test('fotografia unica para contagens da quarentena evita falso alarme entre processos',()=>{
+ const {InboxWebhookPrepedidoAsaasStaging}=
+  require('../src/domain/inbox-webhook-prepedido-asaas-staging');
+ const db=new DatabaseSync(':memory:');
+ try{
+  db.exec([
+   'PRAGMA foreign_keys=ON;',
+   'CREATE TABLE akitemm_prepedido_asaas_sandbox_staging(',
+   'prepedido_id TEXT PRIMARY KEY,pagamento_id TEXT,',
+   'external_ref TEXT,valor_centavos INTEGER);'
+  ].join(' '));
+  const inbox=new InboxWebhookPrepedidoAsaasStaging({banco:db,token:TOKEN});
+  let consultas=0;
+  // Instrumentar a leitura para impedir duas fotografias em conexoes
+  // concorrentes; a regra vale igualmente com zero e com muitos eventos.
+  inbox.banco={prepare(sql){consultas++;return db.prepare(sql);}};
+  const vazio=inbox.resumoAntecipados();
+  assert.equal(consultas,1);
+  assert.equal(vazio.aguardandoVinculo,0);
+  assert.equal(vazio.divergentes,0);
+  const ponte=db.prepare([
+   'INSERT INTO akitemm_prepedido_asaas_sandbox_staging',
+   '(prepedido_id,pagamento_id,external_ref,valor_centavos)',
+   'VALUES(?,?,?,?)'
+  ].join(' '));
+  ponte.run('p-alfa','pay_certo','LOOPLAB-p-alfa',25000);
+  ponte.run('p-beta',null,'LOOPLAB-p-beta',25000);
+  const inserir=db.prepare([
+   'INSERT INTO akitemm_prepedido_webhook_antecipados_staging',
+   '(evento_id,prepedido_id,pagamento_id,tipo,status_avisado,',
+   'valor_avisado_centavos,referencia_informada,hash_semantico,recebido_em)',
+   'VALUES(?,?,?,?,?,?,?,?,?)'
+  ].join(' '));
+  inserir.run('evt_diferente_alfa','p-alfa','pay_errado',
+   'PAYMENT_RECEIVED','RECEIVED',25000,'LOOPLAB-p-alfa',
+   'a'.repeat(64),'2026-11-12T12:00:00.000Z');
+  inserir.run('evt_aguardando_beta','p-beta','pay_ainda_sem_resposta',
+   'PAYMENT_RECEIVED','RECEIVED',25000,'LOOPLAB-p-beta',
+   'b'.repeat(64),'2026-11-12T12:00:01.000Z');
+  const antes=db.prepare('SELECT total_changes() AS n').get().n;
+  consultas=0;
+  const resumo=inbox.resumoAntecipados();
+  assert.equal(consultas,1,'ambos os indicadores devem usar a mesma consulta');
+  assert.equal(resumo.aguardandoVinculo,2);
+  assert.equal(resumo.divergentes,1);
+  assert.equal(resumo.pspReconsultadoNestaLeitura,false);
+  assert.equal(db.prepare('SELECT total_changes() AS n').get().n,antes);
+  assert.equal(db.prepare('PRAGMA integrity_check').get().integrity_check,'ok');
+ }finally{db.close();}
+});
