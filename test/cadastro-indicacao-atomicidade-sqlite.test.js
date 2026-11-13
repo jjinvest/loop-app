@@ -48,7 +48,7 @@ test('cadastro + indicacao: falha de vinculo desfaz ambos e permite tentar novam
  const equipeAna=equipe.listar({titularId:indicador.titularId});
  assert.equal(equipeAna.total,1);
  assert.equal(equipeAna.cadastros[0].indicadoId,indicado.titularId);
- assert.equal(equipeAna.cadastros[0].nick,'bia');
+ assert.equal(equipeAna.cadastros[0].nick,'Bia');
  assert.equal(banco.prepare(
   'SELECT COUNT(*) AS n FROM akitemm_conta_unica_candidata'
  ).get().n,2);
