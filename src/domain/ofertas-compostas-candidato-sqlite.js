@@ -109,15 +109,6 @@ class OfertasCompostasCandidatoSQLite{
   try{
    const antiga=this.consultar(id),revisao=antiga?.revisao||0;
    if(revisao!==entrada.revisaoEsperada)erro('CONFLITO_REVISAO');
-   if(dados.estado==='PUBLICADO'){
-    const ids=new Set(dados.itens.map(x=>x.produtoId));
-    // Pacotes publicados nao compartilham SKUs. Evita dupla aplicacao
-    // e torna o resultado deterministico independente da ordem de criacao.
-    for(const outra of this.listar({publicadas:true})){
-     if(outra.id!==id&&outra.itens.some(x=>ids.has(x.produtoId)))
-      erro('OFERTAS_COMPOSTAS_SOBREPOSTAS');
-    }
-   }
    const agora=Date.now(),nova=revisao+1;
    db.prepare([
     'INSERT INTO akitemm_ofertas_compostas_staging',
@@ -161,13 +152,29 @@ class OfertasCompostasCandidatoSQLite{
  }
  // Chamado dentro da transacao IMEDIATA do prepedido.
  // Usa apenas os itens ja cotados; nunca confia em precos do navegador.
- fotografar(itens){
+ fotografar(itens,{ofertaId=undefined,revisaoEsperada=null}={}){
   if(!Array.isArray(itens))erro('OFERTA_COMPOSTA_PEDIDO_INVALIDO');
+  if(ofertaId!==undefined&&ofertaId!==null&&
+     (typeof ofertaId!=='string'||!ID.test(ofertaId)))
+   erro('OFERTA_COMPOSTA_ID_INVALIDO');
+  if(revisaoEsperada!==null&&(!Number.isSafeInteger(revisaoEsperada)||
+    revisaoEsperada<1||ofertaId===undefined||ofertaId===null))
+   erro('OFERTA_COMPOSTA_REVISAO_INVALIDA');
+  // null = carrinho normal, nao aplica kit; undefined = compatibilidade
+  // com API antiga: unico pacote elegivel aplica automaticamente.
+  if(ofertaId===null)return [];
   const mapa=new Map(itens.map(i=>[i.produtoId,i]));
+  const candidatas=this.listar({publicadas:true}).filter(o=>
+   (ofertaId===undefined||o.id===ofertaId)&&
+   o.itens.every(x=>mapa.has(x.produtoId)&&
+    mapa.get(x.produtoId).quantidade>=x.quantidade));
+  if(ofertaId!==undefined&&candidatas.length!==1)
+   erro('OFERTA_COMPOSTA_NAO_DISPONIVEL_NO_CARRINHO');
+  if(ofertaId===undefined&&candidatas.length>1)return [];
   const pacotes=[];
-  for(const oferta of this.listar({publicadas:true})){
-   if(!oferta.itens.every(x=>mapa.has(x.produtoId)&&
-      mapa.get(x.produtoId).quantidade>=x.quantidade))continue;
+  for(const oferta of candidatas){
+   if(revisaoEsperada!==null&&oferta.revisao!==revisaoEsperada)
+    erro('OFERTA_COMPOSTA_ALTERADA_REFAZER_COTACAO');
    const componentes=oferta.itens.map(x=>{
     const item=mapa.get(x.produtoId);
     if(!Number.isSafeInteger(item.precoUnitarioCentavos)||item.precoUnitarioCentavos<=0)

@@ -183,7 +183,11 @@ class PrePedidosCheckoutStagingSQLite{
    if(this.fotografiaClassificacao){
     const foto=this.fotografiaClassificacao({prepedidoId:id,titularId,
      itens:cotacaoAtual.itens,totalCentavos:cotacaoAtual.totalCentavos,
-     criadoEm:data});
+     criadoEm:data,
+     // Identificador e revisao foram cotados no servidor e persistidos
+     // no rascunho imutavel; revalidar tudo dentro desta transacao.
+     ...(Object.hasOwn(antigo,'ofertaCompostaCotada')?
+      {ofertaCompostaCotada:antigo.ofertaCompostaCotada}:{})});
     if(!foto||typeof foto.then==='function')
      throw falha('FOTOGRAFIA_CLASSIFICACAO_NAO_GRAVADA');
    }

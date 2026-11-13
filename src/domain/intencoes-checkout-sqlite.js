@@ -19,8 +19,18 @@ function hashChave(chave){
  return createHash('sha256').update('AKITEMM_PREPARACAO_V1\0'+chave).digest('hex');
 }
 function itensCanonicos(entrada){
- return entradaValida(entrada).map(({produtoId,quantidade})=>
+ return entradaValida({itens:entrada?.itens}).map(({produtoId,quantidade})=>
   ({produtoId,quantidade})).sort((a,b)=>a.produtoId.localeCompare(b.produtoId));
+}
+// A escolha do pacote faz parte da assinatura da chave de idempotencia.
+// Linhas historicas sem pacote conservam a serializacao original do array.
+function assinaturaEntrada(entrada){
+ const itens=itensCanonicos(entrada);
+ if(!Object.hasOwn(entrada,'ofertaCompostaId'))return JSON.stringify(itens);
+ const id=entrada.ofertaCompostaId;
+ if(id!==null&&(typeof id!=='string'||!/^[a-z0-9-]{3,80}$/.test(id)))
+  throw falha('OFERTA_COMPOSTA_ID_INVALIDO');
+ return JSON.stringify({itens,ofertaCompostaId:id});
 }
 function validarCotacao(cotacao,itens){
  if(!cotacao||cotacao.modo!=='COTACAO_INFORMATIVA_SEM_PEDIDO'||
@@ -78,7 +88,7 @@ class IntencoesCheckoutSQLite{
  consultarPorChave({titularId,chaveIdempotencia,entrada}={}){
   validarTitular(titularId);
   const hash=hashChave(chaveIdempotencia);
-  const itens=JSON.stringify(itensCanonicos(entrada));
+  const itens=assinaturaEntrada(entrada);
   const existente=this._porChave(titularId,hash);
   if(existente&&existente.itens_canonicos_json!==itens)
    throw falha('CHAVE_IDEMPOTENCIA_CONFLITANTE');
@@ -88,7 +98,7 @@ class IntencoesCheckoutSQLite{
   validarTitular(titularId);
   const hash=hashChave(chaveIdempotencia);
   const itens=itensCanonicos(entrada);
-  const itensJson=JSON.stringify(itens);
+  const itensJson=assinaturaEntrada(entrada);
   validarCotacao(cotacao,itens);
   const data=this.agora();
   if(typeof data!=='string'||!Number.isFinite(Date.parse(data)))
