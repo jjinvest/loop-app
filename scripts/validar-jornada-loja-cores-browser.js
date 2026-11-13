@@ -87,6 +87,17 @@ const png=Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAIAAAACCAIAAAD91JpzAAAAEklEQVR4n
     produtos.push({id,cor,nome});
    }
   }
+  // Pacote da loja: um item DOURADO e dois itens VERDES,
+  // com regra ROXA unica e sem acumular posicoes por componente.
+  const kit=await apiAdmin('/ofertas-compostas/kit-jornada-misto',{
+   method:'PUT',body:{
+    nome:'Kit misto dourado e verde',cor:'ROXO',estado:'PUBLICADO',
+    itens:[{produtoId:'jornada-dourado-1',quantidade:1},
+     {produtoId:'jornada-verde-1',quantidade:2}],
+    posicoesPorPedido:1,revisaoEsperada:0
+   }
+  });
+  assert.equal(kit.oferta.revisao,1);
   browser=await chromium.launch({headless:true,args:['--no-sandbox']});
   fs.mkdirSync(path.join(__dirname,'../artifacts'),{recursive:true});
   for(const device of [
@@ -227,11 +238,44 @@ const png=Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAIAAAACCAIAAAD91JpzAAAAEklEQVR4n
    assert.equal(foto.planejamentoPosicoes.posicoesRoxo,1);
    assert.equal(foto.planejamentoPosicoes.quantidadePosicoesPrevistas,1);
    assert.equal(foto.direitosCriados,0,'nao afirmar pagamento real');
+   // A oferta composta deve funcionar no MESMO navegador e carrinho.
+   const oferta=page.locator('#akitemmGradePacotes [data-akitemm-pacote="kit-jornada-misto"]');
+   await oferta.waitFor({state:'visible'});
+   await oferta.click();
+   assert.equal(await page.locator('#akitemmTotalItens').innerText(),'3');
+   await page.locator('#akitemmAnaliseQualificacao')
+    .filter({hasText:/Pacote composto completo no carrinho/})
+    .waitFor({state:'visible',timeout:15000});
+   await page.locator('#registrarPedidoLoja').click();
+   await page.locator('#statusPedidoLoja')
+    .filter({hasText:/Pedido hom-/}).waitFor({state:'visible'});
+   const meusKits=await page.evaluate(async()=>{
+    const r=await fetch('/staging/vitrine/loja/pedidos',{
+     credentials:'same-origin',cache:'no-store'});
+    return {status:r.status,body:await r.json()};
+   });
+   assert.equal(meusKits.status,200);
+   assert.equal(meusKits.body.pedidos.length,2);
+   const pKit=meusKits.body.pedidos.find(p=>p.pedidoId!==pedido.pedidoId);
+   assert.ok(pKit,'pedido distinto do anterior');
+   assert.equal(pKit.totalCentavos,50000);
+   assert.deepEqual(pKit.itens.map(i=>({id:i.produtoId,q:i.quantidade})),
+    [{id:'jornada-dourado-1',q:1},{id:'jornada-verde-1',q:2}]);
+   const fotoKit=ctx.sinalizacaoVitrine.consultarFotografiaPrepedido({
+    prepedidoId:pKit.pedidoId});
+   assert.equal(fotoKit.ofertasCompostas.length,1);
+   assert.equal(fotoKit.ofertasCompostas[0].id,'kit-jornada-misto');
+   assert.equal(fotoKit.planejamentoPosicoes.posicoesRoxo,1);
+   assert.equal(fotoKit.planejamentoPosicoes.posicoesDourado,0,
+    'nao duplicar o dourado individual');
+   assert.equal(fotoKit.planejamentoPosicoes.posicoesVerde,0);
+   assert.equal(fotoKit.planejamentoPosicoes.quantidadePosicoesPrevistas,1);
+   assert.equal(fotoKit.direitosCriados,0);
    await page.screenshot({path:path.join(__dirname,'../artifacts',
     'jornada-carrinho-roxo-'+device.nome+'.png'),fullPage:true});
    assert.deepEqual(errors,[]);
    console.log('AKITEMM_JORNADA_'+device.nome.toUpperCase()+
-    '=LINK_PRODUTOS_4_CORES_FOTOS_SCROLL_5_TENIS_1_POSICAO_PREVISTA');
+    '=LINK_4_CORES_FOTOS_5_TENIS_E_PACOTE_MISTO_1_POSICAO_CADA');
    await context.close();
   }
   // Duas pessoas indicadas, ambas entraram pelo mesmo link assinado.
