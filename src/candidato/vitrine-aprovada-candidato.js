@@ -6,6 +6,7 @@ const fs=require('node:fs'),path=require('node:path');
 const express=require('express');
 const {entradaValida,cotarCheckoutPublico}=require('../domain/cotacao-checkout-publico');
 const {SinalizacaoVitrineCandidatoSQLite}=require('../domain/sinalizacao-vitrine-candidato-sqlite');
+const {OfertasCompostasCandidatoSQLite}=require('../domain/ofertas-compostas-candidato-sqlite');
 const {CustosProdutoAdminCandidatoSQLite}=require('../domain/custos-produtos-admin-candidato-sqlite');
 const {LivroLuzesFinanceirasCandidatoSQLite}=require('../domain/livro-luzes-financeiras-candidato-sqlite');
 const {simularQualificacaoCandidato}=require('../domain/simulador-qualificacao-carrinho-candidato');
@@ -21,6 +22,8 @@ function createVitrineCandidata({app,banco,catalogo,contas,intencoes,prePedidos,
     configLoja?.banco!==banco)
   fail('INTEGRACAO_VITRINE_INCOMPLETA');
  const sinalizacao=new SinalizacaoVitrineCandidatoSQLite({banco,catalogo});
+ const ofertasCompostas=new OfertasCompostasCandidatoSQLite({banco,catalogo});
+ sinalizacao.ofertasCompostas=ofertasCompostas;
  // Mesma base de checkout, catálogo, custos internos, fila e escritorio.
  const custosProduto=new CustosProdutoAdminCandidatoSQLite({banco,catalogo,sinalizacao});
  const livroLuzes=new LivroLuzesFinanceirasCandidatoSQLite({banco});
@@ -29,7 +32,9 @@ function createVitrineCandidata({app,banco,catalogo,contas,intencoes,prePedidos,
  // Todas as novas rotas de pré-pedido usam o mesmo registro transacional.
  prePedidos.definirFotografiaClassificacao(args=>{
   // Mesmo COMMIT do prepedido: classificação + endereço físico cifrado.
-  const fotografia=sinalizacao.gravarFotografiaPrepedido(args);
+  const fotografia=sinalizacao.gravarFotografiaPrepedido({
+   ...args,ofertasCompostas:ofertasCompostas.fotografar(args.itens)
+  });
   enderecoEntrega.vincularPrepedido(args);
   // Congela custos e referencia das posicoes no MESMO COMMIT do checkout.
   // Mudancas futuras do cadastro nao reescrevem pedidos antigos.
@@ -130,10 +135,12 @@ function createVitrineCandidata({app,banco,catalogo,contas,intencoes,prePedidos,
   async(req,res)=>{
    try{
     const lista=(await catalogo.listar()).filter(p=>p.estado==='PUBLICADO');
+    const pacotes=await ofertasCompostas.publicas();
     return res.json({produtos:lista.map(p=>({...sinalizacao.decorar(p),
      fotos:[...fotosProduto.listar(p.id).fotos.map(x=>
       '/staging/vitrine/loja/produtos/'+p.id+'/foto/'+x.posicao),...p.fotos],
      videoApresentacaoLocal:videoProduto.estado(p.id).arquivoAnexado})),
+     ofertasCompostas:pacotes,
      referenciaLoopCentavos:25000,conviteLoopCheckoutAtivo:false,
      laboratorio:true,posicoesReais:0});
    }catch{return res.status(503).json({erro:'VITRINE_INDISPONIVEL'});}
@@ -185,7 +192,7 @@ function createVitrineCandidata({app,banco,catalogo,contas,intencoes,prePedidos,
   if(!req.is('application/json')||!req.body||Array.isArray(req.body))
    return res.status(415).json({erro:'JSON_OBRIGATORIO'});
   try{return res.json(await simularQualificacaoCandidato({
-   entrada:req.body,catalogo,sinalizacao}));
+   entrada:req.body,catalogo,sinalizacao,ofertasCompostas}));
   }catch(e){return res.status(e.codigo==='PRODUTO_INDISPONIVEL_PARA_COTACAO'?404:400)
    .json({erro:e.codigo||'SIMULACAO_INVALIDA'});}
  };
@@ -352,6 +359,31 @@ function createVitrineCandidata({app,banco,catalogo,contas,intencoes,prePedidos,
    return res.status(413).json({erro:'MIDIA_GRANDE_DEMAIS'});
   next(err);
  });
+ // Cadastro de pacotes por varios SKUs: o operador configura sem alterar
+ // a identidade de cada item nem gerar pagamento ou estoque ficticio.
+ app.get('/staging/escritorio-unificado/ofertas-compostas',
+  autorizarOperador,(_req,res)=>{
+   try{return res.json({ofertas:ofertasCompostas.listar(),apenasEnsaio:true});}
+   catch(e){return res.status(503).json({erro:e.codigo||'OFERTAS_INDISPONIVEIS'});}
+  });
+ app.get('/staging/escritorio-unificado/ofertas-compostas/:id/historico',
+  autorizarOperador,(req,res)=>{
+   try{return res.json({historico:ofertasCompostas.historico(req.params.id)});}
+   catch(e){return res.status(400).json({erro:e.codigo||'OFERTA_INVALIDA'});}
+  });
+ app.put('/staging/escritorio-unificado/ofertas-compostas/:id',
+  autorizarOperador,async(req,res)=>{
+   if(!req.is('application/json'))
+    return res.status(415).json({erro:'JSON_OBRIGATORIO'});
+   try{
+    const oferta=await ofertasCompostas.salvar(req.params.id,req.body);
+    return res.json({oferta,apenasEnsaio:true,posicoesReais:0});
+   }catch(e){
+    return res.status(e.codigo==='CONFLITO_REVISAO'||e.codigo==='OFERTAS_COMPOSTAS_SOBREPOSTAS'?409:
+     e.codigo==='OFERTA_COMPOSTA_PRODUTO_INDISPONIVEL'?404:400)
+     .json({erro:e.codigo||'OFERTA_INVALIDA',pagamentoReal:false});
+   }
+  });
  app.get('/staging/escritorio-unificado/sinalizacao/:id',
   autorizarOperador,(req,res)=>{
    try{return res.json(sinalizacao.consultar(req.params.id));}

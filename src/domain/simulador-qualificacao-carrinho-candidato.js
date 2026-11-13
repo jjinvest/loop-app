@@ -6,7 +6,8 @@ const {entradaValida}=require('./cotacao-checkout-publico');
 const {planejarPosicoesCompraAkitemm}=require('./plano-posicoes-compra-akitemm');
 const REFERENCIA_CENTAVOS=25000;
 function erro(codigo){const e=new Error(codigo);e.codigo=codigo;throw e;}
-async function simularQualificacaoCandidato({entrada,catalogo,sinalizacao}={}){
+async function simularQualificacaoCandidato({entrada,catalogo,sinalizacao,
+ ofertasCompostas=null}={}){
  if(process.env.NODE_ENV==='production')erro('SIMULADOR_NAO_HOMOLOGADO');
  if(typeof catalogo?.buscar!=='function'||typeof sinalizacao?.consultar!=='function'||
    catalogo.db!==sinalizacao.db)
@@ -67,7 +68,9 @@ async function simularQualificacaoCandidato({entrada,catalogo,sinalizacao}={}){
    posicoesPorPedidoDourado:s.posicoesPorPedidoDourado||0
   });
  }
- const planejamentoPosicoes=planejarPosicoesCompraAkitemm(detalhes);
+ const pacotes=ofertasCompostas?ofertasCompostas.fotografar(detalhes):[];
+ const planejamentoPosicoes=planejarPosicoesCompraAkitemm(detalhes,
+  {ofertasCompostas:pacotes});
  const referenciaAtingida=valorVerde>=REFERENCIA_CENTAVOS;
  const faltamCentavos=Math.max(0,REFERENCIA_CENTAVOS-valorVerde);
  const status=referenciaAtingida?'REFERENCIA_VERDE_ATINGIDA_EM_SIMULACAO':
@@ -79,7 +82,9 @@ async function simularQualificacaoCandidato({entrada,catalogo,sinalizacao}={}){
  const mensagem=planejamentoPosicoes.excedeLimitePorPedido?
   'A compra prevê mais de dez posições; deverá ser bloqueada ou revisada antes de qualquer cobrança. Nenhuma posição real criada.':
   planejamentoPosicoes.posicoesDourado>0||planejamentoPosicoes.posicoesRoxo>0?
-  'Compra com ofertas configuradas: dourada por unidade ou pacote, roxa por quantidade definida. Verde mantém no máximo uma posição ao atingir R$ 250. Prévia sem direitos comerciais.':
+  (pacotes.length?
+   'Pacote composto completo no carrinho: vale a regra do pacote e nao se somam beneficios individuais dos itens. Nenhum direito real.':
+   'Compra com ofertas configuradas: dourada por unidade ou pacote, roxa por quantidade definida. Verde mantém no máximo uma posição ao atingir R$ 250. Prévia sem direitos comerciais.'):
   referenciaAtingida?
   'O carrinho atinge a referência com produtos elegíveis em simulação. Nenhuma posição foi criada. Ainda seriam necessárias compra confirmada, CPF, termos e todas as demais verificações.':
   eventoPendente?
@@ -91,7 +96,8 @@ async function simularQualificacaoCandidato({entrada,catalogo,sinalizacao}={}){
   referenciaLoopCentavos:REFERENCIA_CENTAVOS,
   totalPedidoCentavos:total,valorVerdeConsideradoCentavos:valorVerde,
   faltamCentavos,referenciaAtingida,
-  itens:detalhes,planejamentoPosicoes,eventoPendente,validacaoEspecialAutomatica:false,
+  itens:detalhes,planejamentoPosicoes,ofertasCompostas:pacotes,
+  eventoPendente,validacaoEspecialAutomatica:false,
   direitosCriados:0,posicoesCriadas:0,pagamentosCriados:0,saquesCriados:0,
   autorizacaoReal:false,chequeCpfETermosExecutado:false,
   pagamentoConfirmado:false,mensagem};
