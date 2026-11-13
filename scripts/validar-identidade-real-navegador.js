@@ -284,7 +284,7 @@ async function main(){
     'a aba mostra os dez espaços, mesmo com uma só posição');
    assert.equal(await page.locator('#posicoesPainel .loop03-posicao-vazia').count(),9);
    assert.match(await page.locator('#posicoesPainel .loop03-unidade-posicao').last().innerText(),
-    /Posição 10.*Sem posição/);
+    /Posição 10[\n\r\s\S]*Sem posição/);
    if(item.largura<=860)await page.locator('#loop03MenuIntegrado').click();
    await page.locator('#abaFinanceiro').click();
    const diagnosticoTesouraria=await page.evaluate(async()=>{
