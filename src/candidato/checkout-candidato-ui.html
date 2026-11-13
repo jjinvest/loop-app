@@ -34,28 +34,32 @@
   </form>
   <button type="button" class="alternar-acesso" id="abrirRecuperacao">Esqueci minha senha</button>
   <button type="button" class="alternar-acesso" id="mudarParaCadastro">Primeiro acesso? Criar cadastro</button>
+  <a href="/loja" class="alternar-acesso" id="irParaLoja">Acessar Loja AKITEMM</a>
  </section>
  <section class="painel" id="painelCadastro" aria-labelledby="tituloCadastro" hidden>
-  <h2 id="tituloCadastro">Criar conta de homologação</h2>
+  <h2 id="tituloCadastro">Criar conta</h2>
   <p class="subtexto">Preencha seus dados para criar uma conta. Depois, entre apenas com seu nick e senha.</p>
-  <p class="subtexto">Nesta homologação, use dados fictícios. Não informe CPF nem senha pessoal.</p>
   <p id="erroCadastro" class="erro-formulario" role="alert" tabindex="-1" hidden></p>
   <form id="formCadastro">
-   <label for="cadastroNome">Nome fictício</label>
+   <label for="cadastroNome">Nome</label>
    <input id="cadastroNome" name="nome" maxlength="90" autocomplete="off" required>
    <label for="cadastroNick">Nick (1 a 12 letras)</label>
-   <p class="subtexto">Nome e nick aceitam maiúsculas e minúsculas.</p>
+   <p class="subtexto">O nick aparece exatamente como você escrever, inclusive maiúsculas e minúsculas. Use a mesma grafia ao entrar.</p>
    <input id="cadastroNick" name="nick" minlength="1" maxlength="12" pattern="[A-Za-z]{1,12}" required>
-   <label for="cadastroEmail">E-mail fictício</label>
+   <label for="cadastroEmail">E-mail</label>
    <input id="cadastroEmail" name="email" type="email" maxlength="254" autocomplete="off" required>
-   <label for="cadastroSenha">Senha de teste (8 a 12 caracteres)</label>
+   <label for="cadastroSenha">Senha (8 a 12 caracteres)</label>
    <div class="envoltorio-senha"><input id="cadastroSenha" name="senha" type="password" minlength="8" maxlength="12" autocomplete="new-password" required><button type="button" class="alternar-visibilidade" data-senha="cadastroSenha" aria-label="Mostrar senha" aria-pressed="false" title="Mostrar senha"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M2.2 12S5.7 6.5 12 6.5 21.8 12 21.8 12 18.3 17.5 12 17.5 2.2 12 2.2 12Z"/><circle cx="12" cy="12" r="2.7"/><path class="traco-senha-oculta" d="M4.5 19.5 19.5 4.5"/></svg></button></div>
-   <details id="termosCadastroDetalhes" open>
-    <summary>Leia os termos desta conta antes de aceitar</summary>
-    <p id="versaoTermosCadastro" class="subtexto">Carregando versão dos termos...</p>
+   <label for="cadastroTelefone">Telefone</label>
+   <input id="cadastroTelefone" name="telefone" type="tel" maxlength="20" autocomplete="tel" required>
+   <label for="cadastroConfirmarSenha">Confirmar senha</label>
+   <div class="envoltorio-senha"><input id="cadastroConfirmarSenha" name="confirmarSenha" type="password" minlength="8" maxlength="12" autocomplete="new-password" required><button type="button" class="alternar-visibilidade" data-senha="cadastroConfirmarSenha" aria-label="Mostrar confirmação de senha" aria-pressed="false" title="Mostrar confirmação de senha"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M2.2 12S5.7 6.5 12 6.5 21.8 12 21.8 12 18.3 17.5 12 17.5 2.2 12 2.2 12Z"/><circle cx="12" cy="12" r="2.7"/><path class="traco-senha-oculta" d="M4.5 19.5 19.5 4.5"/></svg></button></div>
+   <details id="termosCadastroDetalhes">
+    <summary>Termos e condições do cadastro</summary>
+    <p id="versaoTermosCadastro" class="subtexto" hidden></p>
     <p id="textoTermosCadastro" class="subtexto">Aguardando os termos oficiais deste ambiente.</p>
    </details>
-   <label><input id="cadastroTermos" type="checkbox" required disabled> Li os termos apresentados acima e aceito criar uma conta somente de demonstração.</label>
+   <label><input id="cadastroTermos" type="checkbox" required disabled> Li e aceito os termos de cadastro apresentados acima.</label>
    <button type="submit" class="primario" disabled>Concluir meu cadastro</button>
   </form>
   <button type="button" class="alternar-acesso" id="mudarParaLogin">Já tenho cadastro · Entrar</button>

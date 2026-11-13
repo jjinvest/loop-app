@@ -31,19 +31,9 @@ function renderizarInterfaceAprovada(){
  ['/staging/assets/cliente-integrado.css','/identidade/assets/cliente-integrado.css'],
  ['/staging/assets/catraca-visor.js','/identidade/assets/catraca-visor.js'],
  ['/staging/assets/tabuleiro-visual.js','/identidade/assets/tabuleiro-visual.js'],
- ['/staging/assets/cliente.js','/identidade/assets/cliente.js'],
- ['Criar conta de homologação','Criar minha conta'],
- ['Nesta homologação, use dados fictícios. Não informe CPF nem senha pessoal.',
-  'Leia e aceite os termos e a política de privacidade antes de criar sua conta.'],
- ['Nome fictício','Nome'],
- ['E-mail fictício','E-mail'],
- ['Senha de teste (8 a 12 caracteres)','Senha (mínimo 12 caracteres)'],
- ['SEM VENDAS REAIS','SEM COMPRAS OU PAGAMENTOS REAIS'],
+ ['/staging/assets/cliente.js','/identidade/assets/cliente.js'], ['SEM VENDAS REAIS','SEM COMPRAS OU PAGAMENTOS REAIS'],
  ['DEMONSTRAÇÃO · SEM PAGAMENTOS REAIS',
-  'CADASTRO REAL EM PREPARAÇÃO · SEM PAGAMENTOS REAIS'],
- ['Li os termos apresentados acima e aceito criar uma conta somente de demonstração.',
-  'Li e aceito os termos apresentados acima.'],
- ]){
+  'CADASTRO REAL EM PREPARAÇÃO · SEM PAGAMENTOS REAIS'], ]){
   html=trocarExato(html,antes,depois);
  }
  // Nick é uma identidade única entre loja e escritório. Alterar apenas a
@@ -58,6 +48,8 @@ function renderizarInterfaceAprovada(){
  html=html.replaceAll('Nova senha (8 a 12 caracteres)','Nova senha (mínimo 12 caracteres)');
  html=html.replaceAll('minlength="8" maxlength="12" autocomplete="new-password"',
   'minlength="12" maxlength="128" autocomplete="new-password"');
+ html=trocarExato(html,'<label for="cadastroSenha">Senha (8 a 12 caracteres)</label>',
+ '<label for="cadastroSenha">Senha (mínimo 12 caracteres)</label>');
  html=trocarExato(html,'  <form id="formCadastro">',
   '  <p id="cadastroIndicadorAviso" role="status" hidden></p>\n  <form id="formCadastro">');
  const anterior='   <label><input id="cadastroTermos"';
