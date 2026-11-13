@@ -152,42 +152,82 @@ class OfertasCompostasCandidatoSQLite{
  }
  // Chamado dentro da transacao IMEDIATA do prepedido.
  // Usa apenas os itens ja cotados; nunca confia em precos do navegador.
- fotografar(itens,{ofertaId=undefined,revisaoEsperada=null}={}){
+ fotografar(itens,{ofertaId=undefined,revisaoEsperada=null,selecoes=undefined}={}){
   if(!Array.isArray(itens))erro('OFERTA_COMPOSTA_PEDIDO_INVALIDO');
-  if(ofertaId!==undefined&&ofertaId!==null&&
-     (typeof ofertaId!=='string'||!ID.test(ofertaId)))
-   erro('OFERTA_COMPOSTA_ID_INVALIDO');
-  if(revisaoEsperada!==null&&(!Number.isSafeInteger(revisaoEsperada)||
-    revisaoEsperada<1||ofertaId===undefined||ofertaId===null))
-   erro('OFERTA_COMPOSTA_REVISAO_INVALIDA');
-  // null = carrinho normal, nao aplica kit; undefined = compatibilidade
-  // com API antiga: unico pacote elegivel aplica automaticamente.
-  if(ofertaId===null)return [];
   const mapa=new Map(itens.map(i=>[i.produtoId,i]));
-  const candidatas=this.listar({publicadas:true}).filter(o=>
-   (ofertaId===undefined||o.id===ofertaId)&&
-   o.itens.every(x=>mapa.has(x.produtoId)&&
-    mapa.get(x.produtoId).quantidade>=x.quantidade));
-  if(ofertaId!==undefined&&candidatas.length!==1)
-   erro('OFERTA_COMPOSTA_NAO_DISPONIVEL_NO_CARRINHO');
-  if(ofertaId===undefined&&candidatas.length>1)return [];
-  const pacotes=[];
-  for(const oferta of candidatas){
-   if(revisaoEsperada!==null&&oferta.revisao!==revisaoEsperada)
-    erro('OFERTA_COMPOSTA_ALTERADA_REFAZER_COTACAO');
-   const componentes=oferta.itens.map(x=>{
-    const item=mapa.get(x.produtoId);
-    if(!Number.isSafeInteger(item.precoUnitarioCentavos)||item.precoUnitarioCentavos<=0)
-     erro('OFERTA_COMPOSTA_COTACAO_INVALIDA');
-    return {...x,precoUnitarioCentavos:item.precoUnitarioCentavos,
-     subtotalCentavos:x.quantidade*item.precoUnitarioCentavos};
+  const quantidadeUtilizada=new Map();
+  // V2: lista explicita de pacotes com multiplicidade. O mesmo SKU
+  // pode participar de mais de um pacote, mas cada unidade so uma vez.
+  // V1: preservar comportamento de fotografia antiga e escolha unica.
+  let candidatas;
+  if(selecoes!==undefined){
+   if(!Array.isArray(selecoes)||selecoes.length>20)
+    erro('OFERTAS_COMPOSTAS_SELECAO_INVALIDA');
+   const vistos=new Set();
+   candidatas=selecoes.map(sel=>{
+    if(!sel||typeof sel!=='object'||Array.isArray(sel)||
+       Object.keys(sel).sort().join(',')!=='id,quantidade,revisao'||
+       typeof sel.id!=='string'||!ID.test(sel.id)||
+       !Number.isSafeInteger(sel.revisao)||sel.revisao<1||
+       !Number.isSafeInteger(sel.quantidade)||sel.quantidade<1||
+       sel.quantidade>50||vistos.has(sel.id))
+     erro('OFERTAS_COMPOSTAS_SELECAO_INVALIDA');
+    vistos.add(sel.id);
+    const oferta=this.consultar(sel.id);
+    if(!oferta||oferta.estado!=='PUBLICADO')
+     erro('OFERTA_COMPOSTA_NAO_DISPONIVEL_NO_CARRINHO');
+    if(oferta.revisao!==sel.revisao)
+     erro('OFERTA_COMPOSTA_ALTERADA_REFAZER_COTACAO');
+    return {oferta,mult:sel.quantidade};
    });
-   const total=componentes.reduce((s,x)=>s+x.subtotalCentavos,0);
+  }else{
+   if(ofertaId!==undefined&&ofertaId!==null&&
+      (typeof ofertaId!=='string'||!ID.test(ofertaId)))
+    erro('OFERTA_COMPOSTA_ID_INVALIDO');
+   if(revisaoEsperada!==null&&(!Number.isSafeInteger(revisaoEsperada)||
+      revisaoEsperada<1||ofertaId===undefined||ofertaId===null))
+    erro('OFERTA_COMPOSTA_REVISAO_INVALIDA');
+   if(ofertaId===null)return [];
+   const lista=this.listar({publicadas:true}).filter(o=>
+    (ofertaId===undefined||o.id===ofertaId)&&
+    o.itens.every(x=>mapa.has(x.produtoId)&&
+     mapa.get(x.produtoId).quantidade>=x.quantidade));
+   if(ofertaId!==undefined&&lista.length!==1)
+    erro('OFERTA_COMPOSTA_NAO_DISPONIVEL_NO_CARRINHO');
+   if(ofertaId===undefined&&lista.length>1)return [];
+   candidatas=lista.map(oferta=>({oferta,mult:1}));
+  }
+  const pacotes=[];
+  for(const {oferta,mult} of candidatas){
+   if(selecoes===undefined&&revisaoEsperada!==null&&
+      oferta.revisao!==revisaoEsperada)
+    erro('OFERTA_COMPOSTA_ALTERADA_REFAZER_COTACAO');
+   let total=0;
+   const componentes=oferta.itens.map(x=>{
+    const item=mapa.get(x.produtoId),qtd=x.quantidade*mult;
+    if(!item||!Number.isSafeInteger(qtd)||qtd<1||
+       !Number.isSafeInteger(item.quantidade)||item.quantidade<qtd||
+       !Number.isSafeInteger(item.precoUnitarioCentavos)||
+       item.precoUnitarioCentavos<=0)
+     erro('OFERTA_COMPOSTA_NAO_DISPONIVEL_NO_CARRINHO');
+    const novoTotal=(quantidadeUtilizada.get(x.produtoId)||0)+qtd;
+    if(novoTotal>item.quantidade)
+     erro('OFERTA_COMPOSTA_QUANTIDADE_EXCEDIDA');
+    quantidadeUtilizada.set(x.produtoId,novoTotal);
+    const subtotalCentavos=qtd*item.precoUnitarioCentavos;
+    if(!Number.isSafeInteger(subtotalCentavos)||subtotalCentavos>100000000)
+     erro('OFERTA_COMPOSTA_VALOR_INVALIDO');
+    total+=subtotalCentavos;
+    return {...x,quantidade:qtd,
+     precoUnitarioCentavos:item.precoUnitarioCentavos,subtotalCentavos};
+   });
    if(!Number.isSafeInteger(total)||total<=0||
-      (oferta.cor==='DOURADO'&&oferta.posicoesPorPedido>0&&total<25000))
+      (oferta.cor==='DOURADO'&&oferta.posicoesPorPedido>0&&
+       total/mult<25000))
     erro('OFERTA_COMPOSTA_VALOR_INVALIDO');
    pacotes.push({id:oferta.id,nome:oferta.nome,cor:oferta.cor,
     revisao:oferta.revisao,posicoesPorPedido:oferta.posicoesPorPedido,
+    ...(selecoes!==undefined?{quantidadePacotes:mult}:{}),
     itens:componentes,totalPacoteCentavos:total});
   }
   return pacotes;
