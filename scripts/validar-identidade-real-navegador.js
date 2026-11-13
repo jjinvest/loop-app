@@ -280,6 +280,11 @@ async function main(){
    if(item.largura<=860)await page.locator('#loop03MenuIntegrado').click();
    await page.locator('#abaPosicoes').click();
    await page.locator('#posicoesPainel').filter({hasText:/#1.*FILA_B/}).waitFor();
+   assert.equal(await page.locator('#posicoesPainel .loop03-unidade-posicao').count(),10,
+    'a aba mostra os dez espaços, mesmo com uma só posição');
+   assert.equal(await page.locator('#posicoesPainel .loop03-posicao-vazia').count(),9);
+   assert.match(await page.locator('#posicoesPainel .loop03-unidade-posicao').last().innerText(),
+    /Posição 10.*Sem posição/);
    if(item.largura<=860)await page.locator('#loop03MenuIntegrado').click();
    await page.locator('#abaFinanceiro').click();
    const diagnosticoTesouraria=await page.evaluate(async()=>{
@@ -448,6 +453,10 @@ async function main(){
    await confirmarAzul.first().locator('button[type=submit]').waitFor({
     state:'visible'
    });
+   assert.equal(await pagina.locator('#posicoesPainel .loop03-unidade-posicao').count(),10,
+    'a lista mista mantém todos os espaços disponíveis');
+   assert.equal(await pagina.locator('#posicoesPainel .loop03-posicao-vazia').count(),7,
+    'três posições ocupadas não escondem sete vagas');
    assert.equal(await confirmarAzul.count(),aguardados,
     'cada posicao pendente precisa ter seu proprio aceite');
    const form=confirmarAzul.first();
