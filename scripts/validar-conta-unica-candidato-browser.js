@@ -104,6 +104,8 @@ function mp4TrintaSegundos(){
    assert.equal(await page.locator('#cadastroSenha').getAttribute('minlength'),'8');
    assert.equal(await page.locator('#cadastroSenha').getAttribute('maxlength'),'12');
    await page.locator('#cadastroSenha').fill('Abc123xy');
+   await page.locator('#cadastroConfirmarSenha').fill('Abc123xy');
+   await page.locator('#cadastroTelefone').fill('21988887777');
    await page.locator('[data-senha="cadastroSenha"]').click();
    assert.equal(await page.locator('#cadastroSenha').getAttribute('type'),'text');
    await page.locator('[data-senha="cadastroSenha"]').click();
@@ -270,8 +272,8 @@ function mp4TrintaSegundos(){
    assert.match(await page.locator('#posicoesPainel').innerText(),/Acompanhe suas posições nesta área/);
    await abrirAba('#abaLinks');
    await page.waitForFunction(()=>document.getElementById('linkLoja').value.includes('/loja/'));
-   assert.ok((await page.locator('#linkLoja').inputValue()).endsWith('/loja/'+item.nick.toLowerCase()));
-   assert.ok((await page.locator('#linkEscritorio').inputValue()).endsWith('/escritorio/'+item.nick.toLowerCase()));
+   assert.ok((await page.locator('#linkLoja').inputValue()).endsWith('/loja/'+item.nick));
+   assert.ok((await page.locator('#linkEscritorio').inputValue()).endsWith('/escritorio/'+item.nick));
    await abrirAba('#abaEquipe');
    await page.locator('#equipeResumo').filter({hasText:'0 cadastro(s)'}).waitFor();
    assert.match(await page.locator('#listaEquipe').innerText(),/ainda não possui cadastros/);
