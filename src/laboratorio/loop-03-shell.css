@@ -758,3 +758,56 @@ body.loop03-logado{
  #loop03-home .loop03-banner-loja-texto strong{font-size:1.18rem}
  #loop03-home #secaoAkitemmEscritorio .loop03-loja-acesso{width:100%;margin-top:10px}
 }
+
+
+/* Acabamento aprovado: o CENTRO e sempre verde metalico.
+   Cor de empresa (dourada) nao deve transformar o centro em ouro.
+   Na periferia: empresa dourada, pendente azul, cliente vermelho,
+   fila A amarela, fila B branca, demais cinza e entrada vaga 6 vermelha.
+   Prioridade visual documentada e independente de CSS legado. */
+.loop03-roda .espaco-tabuleiro-demo:not(.tabuleiro-centro){
+ background:radial-gradient(circle at 26% 18%,#d3d7dc,#777e89 56%,#343b46);
+ border-color:#a5aeb9;color:#101924;
+}
+.loop03-roda .espaco-tabuleiro-demo:not(.tabuleiro-centro) .selo-posicao-demo,
+.loop03-roda .espaco-tabuleiro-demo:not(.tabuleiro-centro) .titulo-espaco-tabuleiro-demo{
+ color:#15202b;
+}
+.loop03-roda .espaco-tabuleiro-demo.tabuleiro-centro,
+.loop03-roda .espaco-tabuleiro-demo.tabuleiro-centro:has(.posicao-dourado){
+ background:radial-gradient(circle at 25% 18%,#d6ffe9,#54c695 57%,#116647 82%);
+ border:3px solid #edc983;
+ box-shadow:0 0 20px #50eaa17a,inset -5px -7px 12px #06432f90;
+ color:#082e21;
+}
+.loop03-roda .espaco-tabuleiro-demo.tabuleiro-centro .titulo-espaco-tabuleiro-demo,
+.loop03-roda .espaco-tabuleiro-demo.tabuleiro-centro .selo-posicao-demo{
+ color:#082e21;
+}
+.loop03-roda .espaco-tabuleiro-demo:not(.tabuleiro-centro):has(.posicao-fila-a){
+ background:radial-gradient(circle at 25% 19%,#fff9ae,#ebc44f 58%,#9b7113);
+ border-color:#ffeb91;
+}
+.loop03-roda .espaco-tabuleiro-demo:not(.tabuleiro-centro):has(.posicao-fila-b){
+ background:radial-gradient(circle at 25% 19%,#fff,#dce4eb 58%,#828e9d);
+ border-color:#f0f6f9;
+}
+.loop03-roda .espaco-tabuleiro-demo.tabuleiro-vaga-6:not(:has(.posicao-dourado)):not(:has(.posicao-azul)),
+.loop03-roda .espaco-tabuleiro-demo:not(.tabuleiro-centro):has(.posicao-cliente):not(:has(.posicao-dourado)):not(:has(.posicao-azul)){
+ background:radial-gradient(circle at 25% 19%,#ffc7c7,#e94c55 58%,#7a162c);
+ border-color:#ffb1b6;
+ color:#fff;
+}
+.loop03-roda .espaco-tabuleiro-demo:not(.tabuleiro-centro):has(.posicao-dourado){
+ background:radial-gradient(circle at 25% 19%,#ffedac,#d5a43e 59%,#835414);
+ border-color:#fff0b2;color:#4d350b;
+}
+.loop03-roda .espaco-tabuleiro-demo:not(.tabuleiro-centro):has(.posicao-azul){
+ background:radial-gradient(circle at 25% 19%,#a5d4ff,#377cc4 60%,#173d75);
+ border-color:#bcddff;color:#fff;
+}
+.loop03-roda .espaco-tabuleiro-demo:not(.tabuleiro-centro):has(.posicao-azul) .selo-posicao-demo,
+.loop03-roda .espaco-tabuleiro-demo:not(.tabuleiro-centro):has(.posicao-cliente):not(:has(.posicao-dourado)):not(:has(.posicao-azul)) .selo-posicao-demo,
+.loop03-roda .espaco-tabuleiro-demo.tabuleiro-vaga-6:not(:has(.posicao-dourado)):not(:has(.posicao-azul)) .selo-posicao-demo{
+ color:#fff;
+}

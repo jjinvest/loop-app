@@ -83,6 +83,12 @@ test('tabuleiro circular respeita azul verde dourada e 6 eventos',()=>{
  const {visual,el}=fake();
  visual.preencherVaga('tabuleiroMotorCentro',null,true);
  assert.equal(el.tabuleiroMotorCentro.textContent,'#0000');
+ const css=ler('laboratorio/loop-03-shell.css');
+ assert.match(css,/tabuleiro-centro:has\\(\\.posicao-dourado\\)/,
+  'centro verde mesmo se ocupado pela empresa');
+ assert.match(css,/espaco-tabuleiro-demo:not\\(\\.tabuleiro-centro\\):has\\(\\.posicao-azul\\)/);
+ assert.match(css,/espaco-tabuleiro-demo:not\\(\\.tabuleiro-centro\\):has\\(\\.posicao-cliente\\)/);
+ assert.match(css,/tabuleiro-vaga-6:not\\(:has\\(\\.posicao-dourado\\)\\)/);
  visual.preencherVaga('tabuleiroMotorVaga1',{
   numero:12,minha:true,estadoAdesao:'PENDENTE'
  });
@@ -92,6 +98,13 @@ test('tabuleiro circular respeita azul verde dourada e 6 eventos',()=>{
  visual.preencherVaga('tabuleiroMotorVaga2',{
   numero:13,estadoAdesao:'ACEITE_ENSAIO'});
  assert.equal(el.tabuleiroMotorVaga2.classList.contains('posicao-verde'),true);
+ visual.preencherVaga('tabuleiroMotorVaga2',{
+  numero:13,fila:'B',estadoAdesao:'ACEITE_ENSAIO'});
+ assert.equal(el.tabuleiroMotorVaga2.classList.contains('posicao-fila-b'),true);
+ visual.preencherVaga('tabuleiroMotorVaga2',{numero:13,minha:true});
+ assert.equal(el.tabuleiroMotorVaga2.classList.contains('posicao-cliente'),true);
+ visual.preencherVaga('tabuleiroMotorVaga2',null);
+ assert.equal(el.tabuleiroMotorVaga2.classList.contains('posicao-vazia'),true);
  visual.preencherVaga('tabuleiroMotorVaga3',{
   numero:14,dourada:true,numeroVisual:'88',nomeVisual:'Empresa'});
  assert.equal(el.tabuleiroMotorVaga3.textContent,'#88\nEmpresa');

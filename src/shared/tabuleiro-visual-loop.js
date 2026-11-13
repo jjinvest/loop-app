@@ -35,6 +35,13 @@
    area.classList.toggle('posicao-dourado',dourada(p));
    area.classList.toggle('posicao-azul',pendente(p));
    area.classList.toggle('posicao-verde',aceito(p));
+   // A classe ACEITE indica estado de adesao, NAO que uma vaga
+   // periferica seja o centro verde. As cores visuais do tabuleiro
+   // seguem titularidade/filas/pendencia/empresa.
+   area.classList.toggle('posicao-cliente',p?.minha===true);
+   area.classList.toggle('posicao-fila-a',p?.fila==='A');
+   area.classList.toggle('posicao-fila-b',p?.fila==='B');
+   area.classList.toggle('posicao-vazia',!p);
    area.classList.toggle('loop03-iluminada',p?.minha===true);
    esfera.setAttribute('aria-label',(centro?'Centro':'Vaga do tabuleiro')+
     ': '+(p?(dourada(p)?'dourada · ':'')+numero(p).replace('\n',' · '):
