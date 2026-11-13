@@ -603,6 +603,29 @@ function mp4TrintaSegundos(){
    await page.locator('#estadoTabuleiroIntegrado').filter({hasText:/de 6 eventos neste ciclo/}).waitFor();
    assert.equal(await page.locator('#tabuleiroMotorCentro').innerText(),'#0000');
    assert.equal(await page.locator('#tabuleiroMotorIntegrado .espaco-tabuleiro-demo').count(),7);
+   // Conferencia no Chromium REAL: mesmo com estado empresa no centro,
+   // a bola central conserva o verde metalico, nunca o dourado.
+   const cores=await page.evaluate(()=>{
+    const centro=document.getElementById('tabuleiroMotorCentro');
+    const esfera=centro.closest('.espaco-tabuleiro-demo');
+    const original=centro.classList.contains('posicao-dourado');
+    centro.classList.add('posicao-dourado');
+    const verde=getComputedStyle(esfera).backgroundImage;
+    if(!original)centro.classList.remove('posicao-dourado');
+    const entrada=document.getElementById('tabuleiroMotorVaga6');
+    const esferaEntrada=entrada.closest('.espaco-tabuleiro-demo');
+    const dourada=entrada.classList.contains('posicao-dourado');
+    const azul=entrada.classList.contains('posicao-azul');
+    entrada.classList.remove('posicao-dourado','posicao-azul');
+    const vermelho=getComputedStyle(esferaEntrada).backgroundImage;
+    if(dourada)entrada.classList.add('posicao-dourado');
+    if(azul)entrada.classList.add('posicao-azul');
+    return {verde,vermelho};
+   });
+   assert.match(cores.verde,/rgb\\(84, 198, 149\\)/,
+    'centro continua VERDE METALICO mesmo com companhia no centro');
+   assert.match(cores.vermelho,/rgb\\(233, 76, 85\\)/,
+    'entrada da vaga 6 aparece VERMELHA na ausencia de prioridade azul/dourada');
    await page.locator('#tabuleiroVerPosicoesIntegrado').click();
    await page.locator('#conteudoPosicoes').waitFor({state:'visible'});
    if(item.nome==='celular')await page.locator('#loop03MenuIntegrado').click();
