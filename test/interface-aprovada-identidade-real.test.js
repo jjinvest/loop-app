@@ -50,7 +50,7 @@ test('HTML original do cliente é reaproveitado sem script LAB, nova tela ou CPF
  assert.match(html,/minlength="12" maxlength="128"/);
  assert.match(html,/Nick \(1 a 12 letras\)/);
  assert.equal((html.match(/maxlength="12" pattern="\[A-Za-z\]\{1,12\}"/g)||[]).length,2);
- assert.equal((html.match(/href="\/loja"/g)||[]).length,2);
+ assert.equal((html.match(/href="\/loja"/g)||[]).length,3);
  assert.doesNotMatch(html,/href="\/staging\/loja"/);
  assert.match(html,/src="\/identidade\/assets\/cliente.js"/);
  assert.doesNotMatch(html,/src="\/staging\/assets\/cliente.js"/);
