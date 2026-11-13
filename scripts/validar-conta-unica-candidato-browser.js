@@ -174,8 +174,10 @@ function mp4TrintaSegundos(){
     if(item.isMobile){
      await page.waitForFunction(()=>{
       const titulo=document.querySelector('.cliente-integrado .loop03-boasvindas');
-      return Math.abs(titulo.getBoundingClientRect().top)<28;
-     },null,{timeout:3000});
+      const r=titulo.getBoundingClientRect();
+      // Layout compacto: pode nao haver altura rolavel para chegar ao topo exato.
+      return r.top>=-5&&r.top<window.innerHeight*.60&&r.bottom>0;
+     },null,{timeout:5000});
     }
    }
    const geom=await page.evaluate(()=>{
