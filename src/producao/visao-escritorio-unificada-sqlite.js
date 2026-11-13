@@ -88,7 +88,7 @@ class VisaoEscritorioUnificadaSQLite{
  }
  listarRede({titularId,offset=0,limite=50}={}){
   this._titular(titularId);
-  if(!Number.isSafeInteger(offset)||offset<0||offset>100000||
+  if(!Number.isSafeInteger(offset)||offset<0||
      !Number.isSafeInteger(limite)||limite<1||limite>50)
    falha('ESCRITORIO_PAGINACAO_INVALIDA');
   const rows=this.banco.prepare([

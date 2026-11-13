@@ -218,8 +218,8 @@ function criarAppIdentidadeLoop({contas,origemHttps,
  app.get('/api/contas/minha-rede',protegido,(req,res)=>{
   const bruto=req.query?.offset;
   if(bruto!==undefined&&(
-     typeof bruto!=='string'||!/^(0|[1-9][0-9]{0,5})$/.test(bruto)||
-     Number(bruto)>100000))
+     typeof bruto!=='string'||!/^(0|[1-9][0-9]*)$/.test(bruto)||
+     !Number.isSafeInteger(Number(bruto))))
    return res.status(400).json({erro:'PAGINACAO_INVALIDA'});
   const offset=bruto===undefined?0:Number(bruto);
   try{return res.json(visaoEscritorio?

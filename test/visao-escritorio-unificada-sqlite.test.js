@@ -77,6 +77,13 @@ test('Uma leitura une posição, compra, fila e indicação do mesmo titular sem
  assert.equal(x.visao.listarRede({
   titularId:x.ana.titularId,limite:1
  }).temMais,true);
+ // Paginação é técnica: não pode impor teto de 100 mil indicações.
+ assert.deepEqual(x.visao.listarRede({
+  titularId:x.ana.titularId,offset:100001
+ }).indicados,[]);
+ assert.deepEqual(x.contas.listarIndicados(x.ana.titularId,{
+  offset:100001
+ }).indicados,[]);
  assert.throws(()=>x.visao.listarRede({
   titularId:x.ana.titularId,offset:-1
  }),{codigo:'ESCRITORIO_PAGINACAO_INVALIDA'});
@@ -121,6 +128,17 @@ test('HTTP mesmo Escritório: sessão de outra conta não lê pedidos ou equipe 
  assert.deepEqual(lista.indicados.map(i=>i.nick),['bia','caio']);
  assert.equal(lista.resumo.qualificadasEmEnsaio,1);
  assert.equal(lista.indicados[0].posicaoDestinoEnsaio,1);
+ const acimaDoTetoAntigo=await fetch(
+  base+'/api/contas/minha-rede?offset=100001',{
+   headers:{Cookie:cookies[0]}
+  });
+ assert.equal(acimaDoTetoAntigo.status,200);
+ assert.equal((await acimaDoTetoAntigo.json()).indicados.length,0);
+ for(const offset of ['01','-1','9007199254740992','1e9']){
+  assert.equal((await fetch(base+'/api/contas/minha-rede?offset='+offset,{
+   headers:{Cookie:cookies[0]}
+  })).status,400,offset);
+ }
  const vazia=await (await fetch(base+'/api/contas/minha-rede',{
   headers:{Cookie:cookies[1]}
  })).json();

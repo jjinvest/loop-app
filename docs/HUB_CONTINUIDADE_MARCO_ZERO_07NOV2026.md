@@ -1363,3 +1363,8 @@ Detectada diferença entre o HEAD aprovado e a prévia Railway: serviço `akitem
 ## Continuidade 360 — pilar interno: capacidade real refletida integralmente na tela aprovada (13/11/2026)
 
 Corrigido descompasso entre motor SQLite e a aba de posições do Escritório real: até então o frontend exibia **somente cartões ocupados** e ocultava os espaços vagos. A mesma interface aprovada agora lê o limite `limitePosicoesAtivas` retornado pelo motor (10 atualmente), mostra cada espaço sem posição como `Sem posição · Espaço disponível`, mantém IDs reais e filtro de posição ocupada, e rejeita resposta inconsistente/duplicada sem inventar compra. Não habilita cadastro, pedidos, Pix, bônus ou saques. Teste de regressão em `test/interface-aprovada-identidade-real.test.js`. Conferir CI do commit antes de classificar como validado. Código somente na branch de integração até novo deploy autorizado.
+
+
+## Continuidade 361 — pilar interno: paginação sem limite artificial de indicados (13/11/2026)
+
+Eliminado limite oculto de 100.000 registros na paginação da rede do próprio cliente (`/api/contas/minha-rede`), na projeção do Escritório e na identidade SQLite, preservando limite técnico por página, autorização exclusiva do titular e validação de inteiro seguro sem zeros à esquerda. Testes HTTP de página superior a 100 mil, tentativas inválidas e chamadas diretas das duas fontes. Não abre integração externa, comissão ou cadastro. A operação usa o mesmo SQLite e telas aprovadas. Conferir resultado CI do HEAD antes de declarar PASS.

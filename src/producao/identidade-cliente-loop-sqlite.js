@@ -377,7 +377,7 @@ class IdentidadeClienteLoopReal{
  listarIndicados(titularId,{limite=50,offset=0}={}){
   if(typeof titularId!=='string'||!/^titular-[a-f0-9-]{36}$/.test(titularId)||
      !Number.isSafeInteger(limite)||limite<1||limite>50||
-     !Number.isSafeInteger(offset)||offset<0||offset>100000)
+     !Number.isSafeInteger(offset)||offset<0)
    erro('TITULAR_INVALIDO');
   const rows=this.banco.prepare([
    'SELECT c.nick,v.registrado_em AS registradoEm',
