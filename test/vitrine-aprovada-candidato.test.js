@@ -50,7 +50,7 @@ test('vitrine aprovada usa mesmo catálogo SQLite e Meus Pedidos, sem financeiro
  assert.equal(html.status,200);
  for(const s of ['akitemm-grade-pagina','akitemm-legenda-cores',
   'akitemmFiltroTodos','catalogoLojaLoop','registrarPedidoLoja',
-  '/staging/assets/loja-aprovada.js','Cinza · Compra comum','Dourado · Integral','Roxo · Evento especial'])
+  '/staging/assets/loja-aprovada.js','Cinza · Compra comum','Dourado · Integral','Roxo · Ofertas'])
   assert.ok(html.body.includes(s),'interface aprovada: '+s);
  assert.ok(!html.body.includes('src="/laboratorio/loja.js"'));
  const s=await get('/staging/assets/loja-aprovada.js');
@@ -58,6 +58,17 @@ test('vitrine aprovada usa mesmo catálogo SQLite e Meus Pedidos, sem financeiro
  assert.ok(s.body.includes("especial=classe==='ROXO'"));
  assert.ok(s.body.includes("X-Checkout-Csrf"));
  assert.ok(s.body.includes("fetch('/staging/vitrine/'+caminho"));
+ assert.ok(s.body.includes('akitemm-card-pacote-'), 'cards de pacotes seguem quatro quadrados');
+ assert.ok(s.body.includes('pacotesVisiveis>0'), 'busca considera pacotes e nao acusa produto inexistente');
+ assert.ok(s.body.includes("Selecionados no carrinho:"), 'quantidade escolhida aparece na vitrine');
+ const css=await get('/staging/assets/loja-aprovada.css');
+ assert.equal(css.status,200);
+ for(const classe of ['akitemm-card-pacote-verde','akitemm-card-pacote-dourado',
+  'akitemm-card-pacote-roxo','akitemm-card-pacote.tem-selecao',
+  'akitemmAvisoPacoteInvalido','akitemmAreaProdutos[data-modo="detalhe"] #akitemmPacotesCompostos'])
+  assert.ok(css.body.includes(classe),'acabamento nos cards e no celular: '+classe);
+ assert.ok(!html.body.includes('Roxo · Evento especial'),
+  'roxo e quadrado de ofertas, nao exclusivo de eventos');
  const catalog='/staging/vitrine/loja/catalogo';
  assert.equal((await json(catalog)).status,401);
  const inicial=await json(catalog,{cookie:ana.cookie});
