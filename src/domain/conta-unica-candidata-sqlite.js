@@ -41,7 +41,7 @@ function comparar(a,b){
 }
 function nickValido(nick){
  if(typeof nick!=='string'||!NICK.test(nick))falha('NICK_INVALIDO');
- return nick.toLowerCase();
+ return nick;
 }
 function emailValido(email){
  if(typeof email!=='string'||email.length>254||!EMAIL.test(email)||
@@ -138,6 +138,14 @@ class ContaUnicaCandidataSQLite{
    'BEFORE DELETE ON akitemm_candidato_custodia_chaves',
    "BEGIN SELECT RAISE(ABORT,'custodia imutavel'); END;"
   ].join(' '));
+  const colunas=new Set(banco.prepare(
+   'PRAGMA table_info(akitemm_conta_unica_candidata)'
+  ).all().map(c=>c.name));
+  for(const col of ['telefone_iv','telefone_cifra','telefone_tag']){
+   if(!colunas.has(col))banco.exec(
+    'ALTER TABLE akitemm_conta_unica_candidata ADD COLUMN '+col+' TEXT'
+   );
+  }
   this._iniciarCustodia();
   if(this.recuperacaoKey){
    banco.exec([
@@ -217,13 +225,22 @@ class ContaUnicaCandidataSQLite{
   if(!Number.isSafeInteger(t)||t<0)falha('RELOGIO_INVALIDO');
   return t;
  }
- async cadastrar({nome,nick,email,senha,aceiteExplicito=false,
-  termosVersao,termosTexto,onCriada=null}={}){
+ async cadastrar({nome,nick,email,telefone=null,senha,confirmarSenha=null,
+  aceiteExplicito=false,termosVersao,termosTexto,onCriada=null}={}){
   if(process.env.NODE_ENV==='production')falha('CANDIDATO_NAO_HOMOLOGADO');
   const nickMin=nickValido(nick),emailMin=emailValido(email);
   if(typeof nome!=='string'||!NOME.test(nome.trim()))
    falha('NOME_INVALIDO');
   if(!senhaValida(senha))falha('SENHA_INVALIDA');
+  if((telefone===null)!==(confirmarSenha===null))falha('CAMPOS_INVALIDOS');
+  if(telefone!==null&&(
+     confirmarSenha!==senha||Buffer.byteLength(senha,'utf8')>12))
+   falha('CONFIRMACAO_SENHA_INVALIDA');
+  const telefoneDigitos=telefone===null?null:
+   (typeof telefone==='string'?telefone.replace(/[^0-9]/g,''):null);
+  if(telefone!==null&&(!telefoneDigitos||
+     !/^(?:[0-9]{10,11}|55[0-9]{10,11})$/.test(telefoneDigitos)))
+   falha('TELEFONE_INVALIDO');
   if(onCriada!==null&&typeof onCriada!=='function')
    falha('CADASTRO_HOOK_INVALIDO');
   if(aceiteExplicito!==true||!VERSAO.test(termosVersao||'')||
@@ -235,6 +252,8 @@ class ContaUnicaCandidataSQLite{
   const senhaHash=await hashSenha(senha,salt);
   const nomeEnc=cifrar(this.cipherKey,nome.trim());
   const emailEnc=cifrar(this.cipherKey,emailMin);
+  const telefoneEnc=telefoneDigitos===null?[null,null,null]:
+   cifrar(this.cipherKey,telefoneDigitos);
   const titularId='titular-'+randomUUID(),ts=this._agora();
   // Checagem previa so melhora a mensagem. UNIQUE no SQLite e a trava
   // definitiva contra cadastros concorrentes com o mesmo nick ou e-mail.
@@ -252,10 +271,12 @@ class ContaUnicaCandidataSQLite{
     'INSERT INTO akitemm_conta_unica_candidata',
     '(id,nick,email_hmac,nome_iv,nome_cifra,nome_tag,',
     'email_iv,email_cifra,email_tag,senha_salt,senha_hash,',
-    'termos_versao,termos_hash,criado_em)',
-    'VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?)'
+    'termos_versao,termos_hash,criado_em,',
+    'telefone_iv,telefone_cifra,telefone_tag)',
+    'VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)'
    ].join(' ')).run(titularId,nickMin,emailHmac,...nomeEnc,...emailEnc,
-    salt,senhaHash,termosVersao,sha256(termosTexto),ts);
+    salt,senhaHash,termosVersao,sha256(termosTexto),ts,
+    ...telefoneEnc);
    if(onCriada)onCriada({titularId,nick:nickMin});
    this.banco.exec('COMMIT');
   }catch(e){
@@ -276,7 +297,7 @@ class ContaUnicaCandidataSQLite{
   // scrypt e assincrono. Nao usar a fotografia anterior ao await
   // para emitir sessao ou sobrescrever tentativas de outros logins.
   const anterior=this.banco.prepare(
-   'SELECT * FROM akitemm_conta_unica_candidata WHERE nick=?'
+   'SELECT * FROM akitemm_conta_unica_candidata WHERE nick=? COLLATE BINARY'
   ).get(n);
   const hash=await hashSenha(senha,anterior?.senha_salt||
    'abcdabcdabcdabcdabcdabcdabcdabcd');
@@ -288,7 +309,7 @@ class ContaUnicaCandidataSQLite{
   try{
    // Toda decisao usa a credencial atual sob o lock SQLite, sem await.
    const atual=this.banco.prepare(
-    'SELECT * FROM akitemm_conta_unica_candidata WHERE nick=?'
+    'SELECT * FROM akitemm_conta_unica_candidata WHERE nick=? COLLATE BINARY'
    ).get(n);
    const vigente=Boolean(anterior&&atual&&
     anterior.id===atual.id&&
