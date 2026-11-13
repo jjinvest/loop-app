@@ -469,35 +469,56 @@
     seletor.value=posicaoSelecionada;
     if(seletorRotulo)seletorRotulo.hidden=opcoes.length===0;
    }
+   // A quantidade de cartões deriva do MESMO limite enviado pelo motor;
+   // não esconder vagas vazias nem fabricar posições/pedidos.
+   const capacidade=d.limitePosicoesAtivas;
+   if(!Number.isSafeInteger(capacidade)||capacidade<1||
+      capacidade>1000||d.minhasPosicoes.length>capacidade)
+    throw Error('CAPACIDADE_MOTOR_INVALIDA');
+   const ordenadas=[...d.minhasPosicoes].sort((a,b)=>a.numero-b.numero);
+   if(ordenadas.some((p,i)=>!Number.isSafeInteger(p.numero)||
+       p.numero<1||(i>0&&p.numero===ordenadas[i-1].numero)))
+    throw Error('POSICAO_REPETIDA_OU_INVALIDA');
    const painel=$('posicoesPainel');
    painel.replaceChildren();
-   if(!d.minhasPosicoes.length){
-    const vazio=document.createElement('p');
-    vazio.textContent='Nenhuma posição ativa. Não há compras nem pagamentos reais habilitados.';
-    painel.appendChild(vazio);
-   }else{
-    const grade=document.createElement('div');
-    grade.className='loop03-grade-posicoes';
-    for(const pos of d.minhasPosicoes.filter(p=>
-     !posicaoSelecionada||String(p.numero)===posicaoSelecionada)){
-     const card=document.createElement('article');
-     card.className='loop03-unidade-posicao';
-     const corpo=document.createElement('div');
-     corpo.className='loop03-cartao-posicao';
+   const grade=document.createElement('div');
+   grade.className='loop03-grade-posicoes';
+   // Só mostrar um cartão quando o titular selecionar sua posição;
+   // na visão geral renderizar todos os espaços disponíveis até o limite.
+   const slots=posicaoSelecionada?
+    ordenadas.filter(p=>String(p.numero)===posicaoSelecionada):
+    Array.from({length:capacidade},(_,i)=>ordenadas[i]||null);
+   for(let i=0;i<slots.length;i++){
+    const pos=slots[i];
+    const card=document.createElement('article');
+    card.className='loop03-unidade-posicao';
+    const corpo=document.createElement('div');
+    corpo.className='loop03-cartao-posicao';
+    const rotulo=document.createElement('strong');
+    const vaga=posicaoSelecionada?
+     ordenadas.findIndex(p=>p.numero===pos.numero)+1:i+1;
+    rotulo.textContent='Posição '+vaga;
+    corpo.appendChild(rotulo);
+    const detalhe=document.createElement('p');
+    if(!pos){
+     corpo.classList.add('loop03-posicao-vazia');
+     detalhe.textContent='Sem posição · Espaço disponível';
+    }else{
      const id=document.createElement('strong');
      id.textContent='#'+pos.numero;
-     const etapa=document.createElement('p');
-     etapa.textContent=pos.local+
+     corpo.appendChild(id);
+     detalhe.textContent=pos.local+
       (pos.classeProdutoOrigem?' · Produto '+pos.classeProdutoOrigem:'')+
       ' · '+pos.indicacoesQualificadasEnsaio+
       ' indicação(ões) em verificação. Sem crédito financeiro disponível.';
-     corpo.append(id,etapa);card.appendChild(corpo);
-     if(pos.aguardandoCpfTermos&&d.confirmacaoAzulEnsaioDisponivel===true)
-      renderizarAceiteAzulEnsaio(card,pos);
-     grade.appendChild(card);
     }
-    painel.appendChild(grade);
+    corpo.appendChild(detalhe);card.appendChild(corpo);
+    if(pos&&pos.aguardandoCpfTermos&&
+       d.confirmacaoAzulEnsaioDisponivel===true)
+     renderizarAceiteAzulEnsaio(card,pos);
+    grade.appendChild(card);
    }
+   painel.appendChild(grade);
   }catch{
    $('loopResumoMotor').textContent=
     'Não foi possível carregar as posições. Tente atualizar.';

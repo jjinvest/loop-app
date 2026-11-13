@@ -107,6 +107,11 @@ test('interface aprovada e identidade real servidas da mesma origem protegida',a
  assert.match(script,/indicacoesQualificadasEnsaio/);
  assert.match(script,/COMPRA_ENSAIO_SEM_QUALIFICACAO/);
  assert.match(script,/seletorPosicaoMotor/);
+ assert.match(script,/const capacidade=d\.limitePosicoesAtivas/);
+ assert.match(script,/Array\.from\(\{length:capacidade\}/);
+ assert.match(script,/Sem posição · Espaço disponível/);
+ assert.match(script,/POSICAO_REPETIDA_OU_INVALIDA/);
+ assert.doesNotMatch(script,/if\(!d\.minhasPosicoes\.length\)\{/);
  assert.match(script,/catracaClientePodeGirar/);
  assert.match(script,/LoopVisorCatraca\.criar/);
  assert.match(script,/carregarPedidos/);
