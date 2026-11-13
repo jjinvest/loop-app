@@ -201,3 +201,143 @@ test('controle de pacotes rejeita quantidades invalidas sem saldo real',async()=
   assert.equal(banco.prepare('PRAGMA integrity_check').get().integrity_check,'ok');
  }finally{banco.close();}
 });
+
+test('varios pacotes no mesmo pedido alocam SKUs compartilhados por unidade, multiplicidade e sobra',async t=>{
+ const banco=new DatabaseSync(':memory:');banco.exec('PRAGMA foreign_keys=ON');
+ const {app,catalogo,sinalizacaoVitrine}=criarAppLojaEscritorioCandidato({
+  banco,repositorioCatalogo:catalogoFicticioCheckout(),
+  chaveEmail:randomBytes(32),chaveCifra:randomBytes(32),
+  segredoOperador:ADMIN,termosVersao:'LAB-multipacotes-2026',
+  termosTexto:'Pacotes ficticios, sem pagamento ou direitos financeiros.'
+ });
+ const servidor=app.listen(0,'127.0.0.1');await once(servidor,'listening');
+ t.after(async()=>{await new Promise(ok=>servidor.close(ok));banco.close();});
+ const base='http://127.0.0.1:'+servidor.address().port;
+ const call=async(rota,{method='GET',body,admin=false,cookie,csrf,key,lab=false}={})=>{
+  const resposta=await fetch(base+rota,{method,headers:{
+   ...(admin?{Authorization:'Bearer '+ADMIN}:{}),
+   ...(body?{'Content-Type':'application/json'}:{}),
+   ...(cookie?{Cookie:COOKIE+'='+cookie}:{}),
+   ...(csrf?{'X-Checkout-Csrf':csrf}:{}),
+   ...(key?{'Idempotency-Key':key}:{}),
+   ...(lab?{'X-LOOP-LAB':'participante'}:{})
+  },...(body?{body:JSON.stringify(body)}:{})});
+  return {status:resposta.status,body:await resposta.json(),headers:resposta.headers};
+ };
+ const a='tenis-composto',b='camisa-composta',c='caderno-composto';
+ for(const [id,preco] of [[a,30000],[b,10000],[c,3000]]){
+  await catalogo.criar({produto:produto(id,preco),
+   chaveIdempotencia:'criar-pacotes-multiplos-'+id});
+ }
+ await sinalizacaoVitrine.atualizar(a,{
+  classificacao:'DOURADO',quantidadeMinimaLoop:1,revisaoEsperada:0});
+ await sinalizacaoVitrine.atualizar(b,{
+  classificacao:'VERDE',quantidadeMinimaLoop:1,revisaoEsperada:0});
+ const rota='/staging/escritorio-unificado/ofertas-compostas';
+ const oferta1={nome:'Tênis e camisa',cor:'ROXO',estado:'PUBLICADO',
+  itens:[{produtoId:a,quantidade:1},{produtoId:b,quantidade:1}],
+  posicoesPorPedido:1,revisaoEsperada:0};
+ const oferta2={nome:'Tênis e caderno',cor:'DOURADO',estado:'PUBLICADO',
+  itens:[{produtoId:a,quantidade:1},{produtoId:c,quantidade:1}],
+  posicoesPorPedido:2,revisaoEsperada:0};
+ for(const [id,regra] of [['kit-roxo-casa',oferta1],['kit-dourado-casa',oferta2]]){
+  const salvo=await call(rota+'/'+id,{method:'PUT',admin:true,body:regra});
+  assert.equal(salvo.status,200,JSON.stringify(salvo.body));
+ }
+ const loginName='MultiKitA';
+ const registro=await call('/staging/contas/cadastrar',{method:'POST',body:{
+  nome:'Cliente Multikit',nick:loginName,email:'multikit@example.invalid',
+  senha,aceiteExplicito:true}});
+ assert.equal(registro.status,201,JSON.stringify(registro.body));
+ const login=await call('/staging/contas/entrar',{method:'POST',
+  body:{nick:loginName,senha}});
+ assert.equal(login.status,200);
+ const cookie=login.headers.get('set-cookie')
+  .match(new RegExp(COOKIE+'=([a-f0-9]{64})'))[1];
+ const csrf=login.body.csrf;
+ const addr=await call('/staging/vitrine/loja/entrega',{
+  method:'POST',body:endereco,cookie,csrf,lab:true});
+ assert.equal(addr.status,200);
+ const selections=[
+  {id:'kit-roxo-casa',revisao:1,quantidade:1},
+  {id:'kit-dourado-casa',revisao:1,quantidade:1}
+ ];
+ const itens=[{produtoId:a,quantidade:2},{produtoId:b,quantidade:1},
+  {produtoId:c,quantidade:1}];
+ const quote=async items=>call('/staging/vitrine/simular-qualificacao',{
+  method:'POST',body:{itens:items,ofertasCompostasSelecionadas:selections},
+  cookie,csrf,lab:true});
+ const previa=await quote(itens);
+ assert.equal(previa.status,200,JSON.stringify(previa.body));
+ assert.equal(previa.body.planejamentoPosicoes.posicoesRoxo,1);
+ assert.equal(previa.body.planejamentoPosicoes.posicoesDourado,2);
+ assert.equal(previa.body.planejamentoPosicoes.posicoesVerde,0);
+ assert.equal(previa.body.planejamentoPosicoes.quantidadePosicoesPrevistas,3);
+ assert.equal(previa.body.planejamentoPosicoes.valorVerdeConsideradoCentavos,0);
+ const enviar=async(key,body)=>call('/staging/vitrine/loja/pedidos',{
+  method:'POST',body,cookie,csrf,key,lab:true});
+ const body={itens,ofertasCompostasSelecionadas:selections};
+ const p=await enviar('multikit-pedido-conjunto-0001',body);
+ assert.equal(p.status,201,JSON.stringify(p.body));
+ assert.equal(p.body.posicoesCriadas,0);
+ const id=p.body.pedido.pedidoId;
+ const foto=sinalizacaoVitrine.consultarFotografiaPrepedido({prepedidoId:id});
+ assert.equal(foto.ofertasCompostas.length,2);
+ assert.deepEqual(foto.ofertasCompostas.map(x=>x.id),
+  ['kit-roxo-casa','kit-dourado-casa']);
+ assert.equal(foto.planejamentoPosicoes.quantidadePosicoesPrevistas,3);
+ assert.equal(foto.planejamentoPosicoes.posicoesDourado,2);
+ assert.equal(foto.planejamentoPosicoes.posicoesRoxo,1);
+ assert.equal(foto.planejamentoPosicoes.direitosReaisCriados,0);
+ assert.equal((await enviar('multikit-pedido-conjunto-0001',body)).status,200);
+ assert.equal((await enviar('multikit-pedido-conjunto-0001',{
+  itens,ofertasCompostasSelecionadas:[selections[0]]})).status,409);
+ const falta=await enviar('multikit-falta-unidades-0002',{
+  itens:[{produtoId:a,quantidade:1},{produtoId:b,quantidade:1},
+   {produtoId:c,quantidade:1}],ofertasCompostasSelecionadas:selections});
+ assert.equal(falta.status,409,JSON.stringify(falta.body));
+ assert.equal(falta.body.erro,'OFERTA_COMPOSTA_QUANTIDADE_EXCEDIDA');
+ const repeticoes=[
+  {id:'kit-roxo-casa',revisao:1,quantidade:2},
+  {id:'kit-dourado-casa',revisao:1,quantidade:1}
+ ];
+ const q=await enviar('multikit-repeticao-00003',{
+  itens:[{produtoId:a,quantidade:3},{produtoId:b,quantidade:2},
+   {produtoId:c,quantidade:1}],
+  ofertasCompostasSelecionadas:repeticoes});
+ assert.equal(q.status,201,JSON.stringify(q.body));
+ const fotoQ=sinalizacaoVitrine.consultarFotografiaPrepedido({
+  prepedidoId:q.body.pedido.pedidoId});
+ assert.equal(fotoQ.planejamentoPosicoes.quantidadePosicoesPrevistas,4);
+ assert.equal(fotoQ.planejamentoPosicoes.posicoesRoxo,2);
+ assert.equal(fotoQ.planejamentoPosicoes.posicoesDourado,2);
+ assert.equal(fotoQ.ofertasCompostas[0].quantidadePacotes,2);
+ assert.equal(fotoQ.ofertasCompostas[0].itens[0].quantidade,2);
+ // Uma unidade adicional nao reservada por kits: aplica regra individual
+ // do SKU uma vez, nao duplica as unidades ja usadas pelos kits.
+ const sobra=await enviar('multikit-com-sobra-00004',{
+  itens:[{produtoId:a,quantidade:3},{produtoId:b,quantidade:1},
+   {produtoId:c,quantidade:1}],
+  ofertasCompostasSelecionadas:selections});
+ assert.equal(sobra.status,201,JSON.stringify(sobra.body));
+ const fotoS=sinalizacaoVitrine.consultarFotografiaPrepedido({
+  prepedidoId:sobra.body.pedido.pedidoId});
+ assert.equal(fotoS.planejamentoPosicoes.quantidadePosicoesPrevistas,4);
+ assert.equal(fotoS.planejamentoPosicoes.posicoesDourado,3,
+  'duas previstas pelos kits e uma da unidade dourada livre');
+ const trocar=await call(rota+'/kit-roxo-casa',{method:'PUT',admin:true,
+  body:{...oferta1,cor:'CINZA',posicoesPorPedido:0,revisaoEsperada:1}});
+ assert.equal(trocar.status,200);
+ assert.deepEqual(sinalizacaoVitrine.consultarFotografiaPrepedido({
+  prepedidoId:id}),foto,'fotografia historica imutavel');
+ const stale=await enviar('multikit-versao-antiga-05',body);
+ assert.equal(stale.status,409,'mudanca exige nova revisao do pacote');
+ const cp=await enviar('multikit-corpo-duplicado-06',{
+  itens,ofertasCompostasSelecionadas:[selections[0],selections[0]]});
+ assert.equal(cp.status,400);
+ assert.equal(banco.prepare('PRAGMA integrity_check').get().integrity_check,'ok');
+ assert.deepEqual(banco.prepare('PRAGMA foreign_key_check').all(),[]);
+ assert.equal(banco.prepare(
+  'SELECT COUNT(*) AS n FROM akitemm_checkout_prepedidos_staging'
+ ).get().n,3);
+});
