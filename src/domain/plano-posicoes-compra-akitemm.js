@@ -14,8 +14,12 @@ function planejarPosicoesCompraAkitemm(itens,{limiteAtivas=MAXIMO_ATIVAS,
  // As ofertas estao congeladas no prepedido pelo servidor, com preco por SKU.
  // Prevenir dupla contagem de um SKU em mais de um pacote e de cada pacote
  // com a classificacao individual de seus componentes.
- const usados=new Set(),pacotes=[];
+ const usados=new Set(),pacotes=[],alocados=new Map();
  const mapa=new Map(itens.map(x=>[x?.produtoId,x]));
+ const modoAlocacao=ofertasCompostas.some(x=>Object.hasOwn(x,'quantidadePacotes'));
+ if(modoAlocacao&&ofertasCompostas.some(x=>
+    !Object.hasOwn(x,'quantidadePacotes')))
+  falha('OFERTAS_COMPOSTAS_VERSOES_MISTURADAS');
  for(const pacote of ofertasCompostas){
   if(!pacote||typeof pacote!=='object'||!['CINZA','VERDE','DOURADO','ROXO'].includes(pacote.cor)||
      typeof pacote.id!=='string'||!/^[a-z0-9-]{3,80}$/.test(pacote.id)||
@@ -24,22 +28,30 @@ function planejarPosicoesCompraAkitemm(itens,{limiteAtivas=MAXIMO_ATIVAS,
      pacote.posicoesPorPedido>MAXIMO_ATIVAS||
      (pacote.cor==='CINZA'&&pacote.posicoesPorPedido!==0)||
      (pacote.cor==='VERDE'&&pacote.posicoesPorPedido!==1)||
-     !Array.isArray(pacote.itens)||pacote.itens.length<2||pacote.itens.length>20)
+     !Array.isArray(pacote.itens)||pacote.itens.length<2||pacote.itens.length>20||
+     (modoAlocacao&&(!Number.isSafeInteger(pacote.quantidadePacotes)||
+       pacote.quantidadePacotes<1||pacote.quantidadePacotes>50)))
    falha('OFERTA_COMPOSTA_FOTOGRAFIA_INVALIDA');
   let subtotal=0;
   for(const parte of pacote.itens){
    const item=mapa.get(parte?.produtoId);
-   if(!item||usados.has(parte.produtoId)||
+   if(!item||(!modoAlocacao&&usados.has(parte.produtoId))||
       !Number.isSafeInteger(parte.quantidade)||parte.quantidade<1||
       parte.quantidade>50||item.quantidade<parte.quantidade||
+      (modoAlocacao&&parte.quantidade%pacote.quantidadePacotes!==0)||
       item.precoUnitarioCentavos!==parte.precoUnitarioCentavos||
       parte.subtotalCentavos!==parte.quantidade*parte.precoUnitarioCentavos)
     falha('OFERTA_COMPOSTA_COMPONENTE_INVALIDO');
+   const acumulado=(alocados.get(parte.produtoId)||0)+parte.quantidade;
+   if(acumulado>item.quantidade)
+    falha('OFERTA_COMPOSTA_QUANTIDADE_EXCEDIDA');
+   alocados.set(parte.produtoId,acumulado);
    usados.add(parte.produtoId);
    subtotal+=parte.subtotalCentavos;
   }
   if(!Number.isSafeInteger(subtotal)||subtotal!==pacote.totalPacoteCentavos||
-     (pacote.cor==='DOURADO'&&pacote.posicoesPorPedido>0&&subtotal<PISO_VERDE))
+     (pacote.cor==='DOURADO'&&pacote.posicoesPorPedido>0&&
+      subtotal/(pacote.quantidadePacotes||1)<PISO_VERDE))
    falha('OFERTA_COMPOSTA_VALOR_INVALIDO');
   pacotes.push(pacote);
  }
@@ -47,9 +59,10 @@ function planejarPosicoesCompraAkitemm(itens,{limiteAtivas=MAXIMO_ATIVAS,
  const detalhamento=[];
  for(const pacote of pacotes){
   if(pacote.cor==='VERDE')valorVerde+=pacote.totalPacoteCentavos;
-  if(pacote.cor==='DOURADO')douradas+=pacote.posicoesPorPedido;
+  const repeticoes=pacote.quantidadePacotes||1;
+  if(pacote.cor==='DOURADO')douradas+=pacote.posicoesPorPedido*repeticoes;
   if(pacote.cor==='ROXO'){
-   roxas+=pacote.posicoesPorPedido;
+   roxas+=pacote.posicoesPorPedido*repeticoes;
    if(pacote.posicoesPorPedido===0)pendenciasRoxo++;
   }
  }
@@ -69,9 +82,13 @@ function planejarPosicoesCompraAkitemm(itens,{limiteAtivas=MAXIMO_ATIVAS,
   valorTotal+=subtotalCentavos;
   if(!Number.isSafeInteger(valorTotal))falha('TOTAL_PLANEJAMENTO_EXCEDIDO');
   let quantidadePosicoes=0;
-  if(!usados.has(produtoId)&&cor==='VERDE'&&quantidade>=minimo)
-   valorVerde+=subtotalCentavos;
-  if(!usados.has(produtoId)&&cor==='DOURADO'){
+  const quantidadeLivre=modoAlocacao?
+   quantidade-(alocados.get(produtoId)||0):(!usados.has(produtoId)?quantidade:0);
+  const subtotalLivre=quantidadeLivre*precoUnitarioCentavos;
+  const calcularLivre=quantidadeLivre>0;
+  if(calcularLivre&&cor==='VERDE'&&quantidadeLivre>=minimo)
+   valorVerde+=subtotalLivre;
+  if(calcularLivre&&cor==='DOURADO'){
    const modo=item.modoDourado??'POR_UNIDADE';
    if(!['POR_UNIDADE','POR_PEDIDO'].includes(modo))
     falha('MODO_DOURADO_INVALIDO');
@@ -81,13 +98,13 @@ function planejarPosicoesCompraAkitemm(itens,{limiteAtivas=MAXIMO_ATIVAS,
      falha('REGRA_DOURADO_POR_PEDIDO_INVALIDA');
     if(BigInt(precoUnitarioCentavos)*BigInt(minimo)<BigInt(PISO_VERDE))
      falha('DOURADO_PACOTE_SEM_PISO');
-    if(quantidade>=minimo){douradas+=porPedido;quantidadePosicoes=porPedido;}
+    if(quantidadeLivre>=minimo){douradas+=porPedido;quantidadePosicoes=porPedido;}
    }else{
     if(precoUnitarioCentavos<PISO_VERDE)falha('DOURADO_SEM_PISO_UNITARIO');
-    if(quantidade>=minimo){douradas+=quantidade;quantidadePosicoes=quantidade;}
+    if(quantidadeLivre>=minimo){douradas+=quantidadeLivre;quantidadePosicoes=quantidadeLivre;}
    }
   }
-  if(!usados.has(produtoId)&&cor==='ROXO'&&item.modoRoxo==='POR_PEDIDO'){
+  if(calcularLivre&&cor==='ROXO'&&item.modoRoxo==='POR_PEDIDO'){
    const minimoPedido=item.quantidadeMinimaRoxo;
    const posicoesPedido=item.posicoesPorPedidoRoxo;
    if(!Number.isSafeInteger(minimoPedido)||minimoPedido<1||minimoPedido>50||
@@ -96,25 +113,28 @@ function planejarPosicoesCompraAkitemm(itens,{limiteAtivas=MAXIMO_ATIVAS,
     falha('REGRA_ROXO_POR_PEDIDO_INVALIDA');
    // Uma compra de 5 ou 10 tenis qualifica UMA vez, nao por unidade.
    // Um pedido com 4 tenis e compra comum: nao cria posicao nem pendencia.
-   if(posicoesPedido===0)pendenciasRoxo+=quantidade;
-   else if(quantidade>=Math.max(minimo,minimoPedido)){
+   if(posicoesPedido===0)pendenciasRoxo+=quantidadeLivre;
+   else if(quantidadeLivre>=Math.max(minimo,minimoPedido)){
     quantidadePosicoes=posicoesPedido;
     roxas+=quantidadePosicoes;
    }
-  }else if(!usados.has(produtoId)&&cor==='ROXO'){
+  }else if(calcularLivre&&cor==='ROXO'){
    if(item.modoRoxo!==undefined&&item.modoRoxo!=='POR_UNIDADE')
     falha('MODO_ROXO_INVALIDO');
    const configuradas=item.posicoesPorUnidadeRoxo??0;
    if(!Number.isSafeInteger(configuradas)||configuradas<0||configuradas>MAXIMO_ATIVAS)
     falha('POSICOES_ROXO_INVALIDAS');
-   if(configuradas===0)pendenciasRoxo+=quantidade;
-   else if(quantidade>=minimo){
-    quantidadePosicoes=configuradas*quantidade;roxas+=quantidadePosicoes;
+   if(configuradas===0)pendenciasRoxo+=quantidadeLivre;
+   else if(quantidadeLivre>=minimo){
+    quantidadePosicoes=configuradas*quantidadeLivre;roxas+=quantidadePosicoes;
    }
   }
   detalhamento.push({produtoId,classificacao:cor,quantidade,
    subtotalCentavos,quantidadePosicoes,
    ...(usados.has(produtoId)?{componentePacoteComposto:true}:{}),
+   ...(modoAlocacao&&usados.has(produtoId)?
+    {quantidadeAlocadaPacotes:alocados.get(produtoId),
+     quantidadeLivre}:{}),
    // Preservar assinatura dos planejamentos antigos: o motor compara
    // JSON historico byte a byte antes de vincular qualquer pedido.
    ...(cor==='DOURADO'&&item.modoDourado==='POR_PEDIDO'?
@@ -123,8 +143,8 @@ function planejarPosicoesCompraAkitemm(itens,{limiteAtivas=MAXIMO_ATIVAS,
    ...(cor==='ROXO'?{modoRoxo:item.modoRoxo||'POR_UNIDADE',
     quantidadeMinimaRoxo:item.modoRoxo==='POR_PEDIDO'?item.quantidadeMinimaRoxo:1}:{}),
    consideradoVerdeCentavos:
-   !usados.has(produtoId)&&cor==='VERDE'&&quantidade>=minimo?
-    subtotalCentavos:0});
+   calcularLivre&&cor==='VERDE'&&quantidadeLivre>=minimo?
+    subtotalLivre:0});
  }
  const verdes=valorVerde>=PISO_VERDE?1:0;
  const quantidadePosicoesPrevistas=verdes+douradas+roxas;
@@ -139,6 +159,7 @@ function planejarPosicoesCompraAkitemm(itens,{limiteAtivas=MAXIMO_ATIVAS,
   detalhamento,
   ...(pacotes.length?{ofertasCompostasPlanejadas:pacotes.map(x=>({
    id:x.id,revisao:x.revisao,cor:x.cor,posicoesPorPedido:x.posicoesPorPedido,
+   ...(modoAlocacao?{quantidadePacotes:x.quantidadePacotes}:{}),
    totalPacoteCentavos:x.totalPacoteCentavos
   }))}:{}),
   direitosReaisCriados:0,pagamentoConfirmado:false};
