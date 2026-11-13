@@ -289,6 +289,9 @@ test('varios pacotes no mesmo pedido alocam SKUs compartilhados por unidade, mul
  assert.equal(foto.planejamentoPosicoes.posicoesDourado,2);
  assert.equal(foto.planejamentoPosicoes.posicoesRoxo,1);
  assert.equal(foto.planejamentoPosicoes.direitosReaisCriados,0);
+ assert.equal(foto.valorVerdeConsideradoCentavos,0);
+ assert.equal(foto.referenciaVerdeAtingida,false,
+  'itens verdes inteiros consumidos em kits nao atingem referencia separada');
  assert.equal((await enviar('multikit-pedido-conjunto-0001',body)).status,200);
  assert.equal((await enviar('multikit-pedido-conjunto-0001',{
   itens,ofertasCompostasSelecionadas:[selections[0]]})).status,409);

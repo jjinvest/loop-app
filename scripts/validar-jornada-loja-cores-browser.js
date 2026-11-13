@@ -289,6 +289,9 @@ const png=Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAIAAAACCAIAAAD91JpzAAAAEklEQVR4n
     '#akitemmGradePacotes [data-akitemm-pacote="kit-jornada-misto"]');
    await addRoxo.click();
    await addRoxo.click();
+   // O filtro ROXO esconde o pacote DOURADO: trocar para Todos
+   // antes de incluir a segunda oferta no MESMO carrinho.
+   await page.locator('#akitemmFiltroTodos').click();
    const addDourado=page.locator(
     '#akitemmGradePacotes [data-akitemm-pacote="kit-jornada-concorrente"]');
    await addDourado.click();

@@ -253,8 +253,14 @@ class SinalizacaoVitrineCandidatoSQLite{
   if(total!==totalCentavos)fail('FOTOGRAFIA_TOTAL_DIVERGENTE');
   const planejamentoPosicoes=planejarPosicoesCompraAkitemm(fotografiaItens,
    {ofertasCompostas});
+  // Nas compras com multiplos pacotes a referencia VERDE pertence ao
+  // planejamento efetivo apos alocar cada SKU, nunca ao bruto dos itens.
+  // Fotografia V1 antiga permanece identica para o motor historico.
+  const v2=ofertasCompostas.some(p=>Number.isSafeInteger(p.quantidadePacotes));
+  const verdeEfetivo=v2?planejamentoPosicoes.valorVerdeConsideradoCentavos:verde;
   const snap={prepedidoId,titularId,criadoEm,totalCentavos,
-   valorVerdeConsideradoCentavos:verde,referenciaVerdeAtingida:verde>=25000,
+   valorVerdeConsideradoCentavos:verdeEfetivo,
+   referenciaVerdeAtingida:verdeEfetivo>=25000,
    eventoPendente:evento&&planejamentoPosicoes.pendenciasConfiguracaoRoxo>0,
    podeSimularFilaBAzul:planejamentoPosicoes.podeVincularEnsaio,
    planejamentoPosicoes,
