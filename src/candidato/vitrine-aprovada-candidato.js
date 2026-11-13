@@ -142,9 +142,9 @@ async function atualizarPreviaQualificacao(){
 }
 function atualizarCarrinho(){
  validarEscolhasPacotes();
- const assinatura=JSON.stringify([[...carrinho],escolhasPacotes()]);
- if(assinatura!==assinaturaPedidoAnterior){
-  assinaturaPedidoAnterior=assinatura;
+ const assinaturaPacotes=JSON.stringify([[...carrinho],escolhasPacotes()]);
+ if(assinaturaPacotes!==assinaturaPedidoAnterior){
+  assinaturaPedidoAnterior=assinaturaPacotes;
   if(!pedidoEmAndamento)chavePedidoCandidato=null;
  }
  atualizarPreviaQualificacao();
