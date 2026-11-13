@@ -82,6 +82,7 @@ function createVitrineCandidata({app,banco,catalogo,contas,intencoes,prePedidos,
  if(!origemJs.includes(ant)||!origemJs.includes(marcador)||
     !origemJs.includes('const catalogo=[],carrinho=new Map();')||
     !origemJs.includes('const data=await response.json();')||
+    !origemJs.includes('    {itens,participarLoop}:{itens});')||
     !origemJs.includes("const classe=corDoProduto(p),especial=classe==='ROXO';"))
   fail('CONTRATO_JS_VITRINE_MUDOU_REVISAR_ADAPTADOR');
  const js=origemJs
@@ -120,7 +121,7 @@ function createVitrineCandidata({app,banco,catalogo,contas,intencoes,prePedidos,
    'const assinatura=JSON.stringify([[...carrinho],pacoteEscolhido?.id||null,pacoteEscolhido?.revisao||null]);')
   .replace('if(assinatura!==assinaturaCarrinhoAnterior){',
    'if(assinatura!==assinaturaCarrinhoAnterior){chavePedidoCandidato=null;')
-  .replace('     {itens,participarLoop}:{itens});',
+  .replace('    {itens,participarLoop}:{itens});',
    '     {itens,participarLoop,ofertaCompostaId:pacoteEscolhido?.id||null,...(pacoteEscolhido?{ofertaCompostaRevisao:pacoteEscolhido.revisao}:{})}:{itens,ofertaCompostaId:pacoteEscolhido?.id||null,...(pacoteEscolhido?{ofertaCompostaRevisao:pacoteEscolhido.revisao}:{})});')
   .replace('carrinho.clear();atualizarCarrinho();await carregarPedidos();',
    'carrinho.clear();pacoteEscolhido=null;atualizarCarrinho();await carregarPedidos();')
