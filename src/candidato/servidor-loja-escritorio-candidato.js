@@ -265,9 +265,10 @@ function criarAppLojaEscritorioCandidato({banco,repositorioCatalogo,
   const chaves=Object.keys(body).sort().join(',');
   const antiga='aceiteExplicito,email,nick,nome,senha';
   const atual='aceiteExplicito,email,nick,nome,senha,termosHashAceito,termosVersaoAceita';
-  if(chaves!==antiga&&chaves!==atual)
+   const novo='aceiteExplicito,confirmarSenha,email,nick,nome,senha,telefone,termosHashAceito,termosVersaoAceita';
+  if(chaves!==antiga&&chaves!==atual&&chaves!==novo)
    return res.status(400).json({erro:'CAMPOS_INVALIDOS'});
-  if(chaves===atual&&(body.termosVersaoAceita!==termosVersao||
+  if((chaves===atual||chaves===novo)&&(body.termosVersaoAceita!==termosVersao||
      body.termosHashAceito!==termosHashCadastro))
    return res.status(409).json({erro:'TERMOS_ALTERADOS_RELER'});
   try{
@@ -276,7 +277,9 @@ function criarAppLojaEscritorioCandidato({banco,repositorioCatalogo,
    const indicadorNick=req.get('x-akitemm-preview-indicador');
    const conta=await contas.cadastrar({
     nome:body.nome,nick:body.nick,email:body.email,
-    senha:body.senha,aceiteExplicito:body.aceiteExplicito,
+    telefone:body.telefone??null,senha:body.senha,
+     confirmarSenha:body.confirmarSenha??null,
+     aceiteExplicito:body.aceiteExplicito,
     termosVersao,termosTexto,
     onCriada:indicadorNick?({titularId})=>{
      const vinculo=equipe.registrarCadastro({
@@ -296,6 +299,7 @@ function criarAppLojaEscritorioCandidato({banco,repositorioCatalogo,
    if(e.codigo==='INDICACAO_ORIGEM_NAO_CONFIRMADA')
     return res.status(409).json({erro:e.codigo});
    if(['NICK_INVALIDO','NOME_INVALIDO','EMAIL_INVALIDO','SENHA_INVALIDA',
+       'TELEFONE_INVALIDO','CONFIRMACAO_SENHA_INVALIDA',
       'TERMOS_LAB_NAO_ACEITOS'].includes(e.codigo))
     return res.status(400).json({erro:e.codigo});
    return res.status(503).json({erro:'CADASTRO_INDISPONIVEL'});

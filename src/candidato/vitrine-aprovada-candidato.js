@@ -274,7 +274,7 @@ function atualizarCarrinho(){
   .replace("termoBusca?filtrados.length+' produto(s) encontrado(s) para",
    "termoBusca?(filtrados.length+pacotesVisiveis)+' resultado(s) encontrado(s) para");
  app.get('/staging/loja',(req,res)=>{
-  if(!sessao(req))return res.redirect(302,'/staging/cliente');
+  if(!sessao(req))return res.redirect(302,'/staging/cliente?destino=loja');
   return res.type('html').send(html);
  });
  app.get('/staging/assets/loja-aprovada.css',(_req,res)=>
