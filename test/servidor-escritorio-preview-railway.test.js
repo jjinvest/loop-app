@@ -126,10 +126,10 @@ test('mesma identidade da loja entra no Escritorio LOOP sem novo cadastro',async
   'loja abre ao seguir o atalho com mesma sessao de titular existente');
  const perfilLoja=await x.consultar('/staging/vitrine/minha-conta',{headers});
  assert.equal(perfilLoja.status,200);
- assert.equal((await perfilLoja.json()).conta.nick,'marta');
+ assert.equal((await perfilLoja.json()).conta.nick,'Marta');
  const perfilEscritorio=await x.consultar('/staging/contas/me',{headers});
  assert.equal(perfilEscritorio.status,200);
- assert.equal((await perfilEscritorio.json()).nick,'marta');
+ assert.equal((await perfilEscritorio.json()).nick,'Marta');
  assert.equal((await x.consultar('/staging/vitrine/minha-conta')).status,401,
   'navegador sem sessao nao herda identidade de outro titular');
  const atalho=await x.consultar('/loja?origem=escritorio');
@@ -290,7 +290,7 @@ test('convite por link registra cadastro correto, rejeita fraude e nao libera co
  assert.equal(resposta.status,200);
  const equipe=await resposta.json();
  assert.equal(equipe.total,1);
- assert.deepEqual(equipe.cadastros.map(p=>p.nick),['bruna']);
+ assert.deepEqual(equipe.cadastros.map(p=>p.nick),['Bruna']);
  assert.equal(equipe.proximaPagina,null);
  assert.equal(equipe.bonificacoesReais,0);
  assert.equal(equipe.indicacoesQualificadas,0);
