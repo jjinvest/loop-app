@@ -95,6 +95,12 @@ test('interface aprovada e identidade real servidas da mesma origem protegida',a
  assert.equal(js.status,200);
  assert.match(js.headers.get('content-type'),/javascript/);
  const script=await js.text();
+ assert.match(script,/Ciclo atual:/);
+ assert.match(script,/de 6 eventos neste ciclo/);
+ assert.doesNotMatch(script,/Posições de ensaio por compra:/);
+ assert.doesNotMatch(script,/Indicação qualificada em ensaio/);
+ assert.doesNotMatch(script,/Motor interno indisponível/);
+ assert.match(script,/Bonificações somente após confirmação comercial/);
  assert.match(script,/\/api\/contas/);
  assert.match(script,/pedidoDeOrigemEnsaio/);
  assert.match(script,/indicacoesQualificadasEnsaio/);
