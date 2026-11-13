@@ -274,6 +274,18 @@
   </section>
 
   
+      <section id="ajustarGrafiaNick">
+    <h3>Definir a grafia exata do meu nick</h3>
+    <p class="subtexto" id="avisoGrafiaNick">Para contas antigas, confirme como seu nick deve aparecer e ser digitado no acesso.</p>
+    <form id="formGrafiaNick">
+     <label for="novoNickGrafia">Meu nick, com as letras maiúsculas e minúsculas exatas</label>
+     <input id="novoNickGrafia" name="novoNick" minlength="1" maxlength="12" pattern="[A-Za-z]{1,12}" autocomplete="off" required>
+     <label for="senhaNickGrafia">Minha senha atual</label>
+     <div class="envoltorio-senha"><input id="senhaNickGrafia" type="password" autocomplete="current-password" required><button type="button" class="alternar-visibilidade" data-senha="senhaNickGrafia" aria-label="Mostrar senha" aria-pressed="false" title="Mostrar senha"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M2.2 12S5.7 6.5 12 6.5 21.8 12 21.8 12 18.3 17.5 12 17.5 2.2 12 2.2 12Z"/><circle cx="12" cy="12" r="2.7"/><path class="traco-senha-oculta" d="M4.5 19.5 19.5 4.5"/></svg></button></div>
+     <button type="submit" class="primario">Salvar grafia do nick</button>
+    </form>
+    <p id="estadoGrafiaNick" role="status" aria-live="polite"></p>
+   </section>
    <h3>Trocar minha senha</h3>
    <form id="formTrocarSenha">
     <label for="senhaAtual">Senha atual</label>

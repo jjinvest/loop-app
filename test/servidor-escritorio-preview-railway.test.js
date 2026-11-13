@@ -557,3 +557,43 @@ test('cadastro completo: telefone cifrado, senha confirmada e nick com grafia ex
  assert.equal(publico.status,302);
  assert.equal(publico.headers.get('location'),'/staging/loja');
 });
+
+test('nick legado: apenas grafia muda com senha e CSRF, mesma conta e login exato',async t=>{
+ const x=await preparar(t);
+ const novo=await x.consultar('/staging/contas/cadastrar',{
+  method:'POST',headers:{'Content-Type':'application/json'},
+  body:JSON.stringify({nome:'Usuario Antigo',nick:'exemplo',
+   email:'nick-legado@example.invalid',senha:'SenhaDoCliente123!',
+   aceiteExplicito:true})
+ });
+ assert.equal(novo.status,201);
+ const criado=await novo.json(),id=criado.titularId;
+ x.db.prepare('UPDATE akitemm_conta_unica_candidata SET nick_grafia_confirmada=0 WHERE id=?').run(id);
+ const login=nick=>x.consultar('/staging/contas/entrar',{
+  method:'POST',headers:{'Content-Type':'application/json'},
+  body:JSON.stringify({nick,senha:'SenhaDoCliente123!'})
+ });
+ const antes=await login('exemplo');
+ assert.equal(antes.status,200);
+ const sessao=await antes.json();
+ const cookie=antes.headers.getSetCookie().find(v=>v.startsWith('loop_candidato_s=')).split(';')[0];
+ const mudar=(novoNick,senhaAtual,csrf=sessao.csrf)=>x.consultar('/staging/contas/nick/grafia',{
+  method:'POST',headers:{'Content-Type':'application/json',
+   Cookie:cookie,'X-Checkout-Csrf':csrf},
+  body:JSON.stringify({novoNick,senhaAtual})
+ });
+ assert.equal((await mudar('ExempLo','senhaErrada')).status,401);
+ assert.equal((await mudar('OutraPessoa','SenhaDoCliente123!')).status,400);
+ assert.equal((await mudar('ExempLo','SenhaDoCliente123!','0'.repeat(64))).status,403);
+ const correto=await mudar('ExempLo','SenhaDoCliente123!');
+ assert.equal(correto.status,200);
+ assert.equal((await correto.json()).nick,'ExempLo');
+ const perfil=await x.consultar('/staging/contas/me',{headers:{Cookie:cookie}});
+ assert.equal((await perfil.json()).nickGrafiaConfirmada,true);
+ const dados=x.db.prepare('SELECT nick,nick_grafia_confirmada FROM akitemm_conta_unica_candidata WHERE id=?').get(id);
+ assert.equal(dados.nick,'ExempLo');assert.equal(dados.nick_grafia_confirmada,1);
+ assert.equal(x.db.prepare('SELECT COUNT(*) AS n FROM akitemm_conta_unica_candidata').get().n,1);
+ assert.equal((await login('exemplo')).status,401);
+ assert.equal((await login('EXEMPLO')).status,401);
+ assert.equal((await login('ExempLo')).status,200);
+});

@@ -644,7 +644,33 @@ async function atualizarConta(){
    ' · Nick: @'+perfil.nick+
    ' · E-mail: '+(perfil.emailVerificado?'confirmado':'não confirmado')+
    '. Identidade comercial: pendente.';
+   $('novoNickGrafia').value=perfil.nick;
+   $('avisoGrafiaNick').textContent=perfil.nickGrafiaConfirmada?
+    'Grafia confirmada. Para alterar somente as letras maiúsculas e minúsculas, informe sua senha.':
+    'Conta antiga: confirme como seu nick deve aparecer e ser digitado no próximo acesso.';
  }catch(e){$('perfilCliente').textContent='Perfil indisponível: '+e.message;}
+}
+async function confirmarGrafiaNick(e){
+ e.preventDefault();
+ const botao=$('formGrafiaNick').querySelector('button[type=submit]');
+ botao.disabled=true;
+ const status=$('estadoGrafiaNick');
+ status.textContent='';
+ try{
+  const resposta=await requisitar('/contas/nick/grafia',{
+   method:'POST',mutacao:true,
+   body:{novoNick:$('novoNickGrafia').value,
+    senhaAtual:$('senhaNickGrafia').value}
+  });
+  if(resposta.grafiaConfirmada!==true)throw Error('NICK_NAO_CONFIRMADO');
+  $('senhaNickGrafia').value='';
+  await Promise.all([atualizarConta(),atualizarResumo(),atualizarLinks()]);
+  status.textContent='Nick confirmado: @'+resposta.nick+
+   '. Nos próximos acessos, use exatamente esta grafia.';
+ }catch(err){
+  $('senhaNickGrafia').value='';
+  status.textContent='Não foi possível confirmar o nick: '+explicarErro(err);
+ }finally{botao.disabled=false;}
 }
 async function trocarSenha(e){
  e.preventDefault();
@@ -893,6 +919,7 @@ $('financeiroVerPedidos').addEventListener('click',()=>mostrarAba('conteudoMeusP
 $('copiarLinkLoja').addEventListener('click',()=>copiarLink('linkLoja'));
 $('copiarLinkEscritorio').addEventListener('click',()=>copiarLink('linkEscritorio'));
 $('formTrocarSenha').addEventListener('submit',trocarSenha);
+$('formGrafiaNick').addEventListener('submit',confirmarGrafiaNick);
 for(const [btn,section] of ABAS){
  $(btn).addEventListener('click',()=>mostrarAba(section));
 }
