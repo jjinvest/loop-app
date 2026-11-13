@@ -251,8 +251,19 @@ const png=Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAIAAAACCAIAAAD91JpzAAAAEklEQVR4n
    // A oferta composta deve funcionar no MESMO navegador e carrinho.
    const oferta=page.locator('#akitemmGradePacotes [data-akitemm-pacote="kit-jornada-misto"]');
    await oferta.waitFor({state:'visible'});
+   assert.equal(await page.locator('#akitemmGradePacotes .akitemm-card-pacote-roxo').count(),1,
+    'pacote roxo nao depende de evento');
+   await page.locator('#akitemmBusca').fill('KIT MISTO DOURADO E VERDE');
+   await page.locator('#akitemmResultadoProdutos')
+    .filter({hasText:/1 resultado\\(s\\) encontrado/})
+    .waitFor({state:'visible',timeout:15000});
+   await page.locator('#akitemmBusca').fill('');
+   await oferta.waitFor({state:'visible'});
    await oferta.click();
    assert.equal(await page.locator('#akitemmTotalItens').innerText(),'3');
+   await page.locator('#akitemmGradePacotes .akitemm-card-pacote-roxo.tem-selecao')
+    .filter({hasText:/Selecionados no carrinho: 1/})
+    .waitFor({state:'visible',timeout:15000});
    await page.locator('#akitemmAnaliseQualificacao')
     .filter({hasText:/Pacote composto completo no carrinho/})
     .waitFor({state:'visible',timeout:15000});
