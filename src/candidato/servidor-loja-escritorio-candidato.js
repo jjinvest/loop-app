@@ -454,6 +454,33 @@ function criarAppLojaEscritorioCandidato({banco,repositorioCatalogo,
    }
   });
  }
+ app.post('/staging/contas/nick/grafia',async(req,res)=>{
+  if(!contas.sessao(req))return res.status(401).json({erro:'SESSAO_AUSENTE'});
+  if(!contas.autorizarMutacao(req))
+   return res.status(403).json({erro:'CSRF_INVALIDO'});
+  if(!req.is('application/json'))
+   return res.status(415).json({erro:'JSON_OBRIGATORIO'});
+  if(!req.body||Array.isArray(req.body)||
+     Object.keys(req.body).sort().join(',')!=='novoNick,senhaAtual')
+   return res.status(400).json({erro:'CAMPOS_INVALIDOS'});
+  try{
+   return res.json(await contas.confirmarGrafiaNick({
+    req,novoNick:req.body.novoNick,senhaAtual:req.body.senhaAtual
+   }));
+  }catch(e){
+   if(e.codigo==='SENHA_ATUAL_INCORRETA')
+    return res.status(401).json({erro:e.codigo});
+   if(e.codigo==='CONTA_TEMPORARIAMENTE_BLOQUEADA'||
+      e.codigo==='AUTENTICACAO_TEMPORARIAMENTE_OCUPADA')
+    return res.status(429).json({erro:e.codigo});
+   if(['NICK_INVALIDO','NICK_SOMENTE_GRAFIA',
+       'CREDENCIAIS_INVALIDAS'].includes(e.codigo))
+    return res.status(400).json({erro:e.codigo});
+   if(e.codigo==='CONCORRENCIA_CREDENCIAL')
+    return res.status(409).json({erro:e.codigo});
+   return res.status(503).json({erro:'NICK_GRAFIA_INDISPONIVEL'});
+  }
+ });
  app.post('/staging/contas/senha',async(req,res)=>{
   if(!contas.sessao(req))
    return res.status(401).json({erro:'SESSAO_AUSENTE'});

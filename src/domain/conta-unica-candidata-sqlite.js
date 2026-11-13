@@ -146,6 +146,30 @@ class ContaUnicaCandidataSQLite{
     'ALTER TABLE akitemm_conta_unica_candidata ADD COLUMN '+col+' TEXT'
    );
   }
+  // Migrar sem perder titular, pedidos, links ou hashes de credenciais.
+  banco.exec('BEGIN IMMEDIATE');
+  try{
+   banco.exec([
+    'DROP TRIGGER IF EXISTS conta_candidata_identidade_imutavel;',
+    'CREATE TRIGGER conta_candidata_identidade_imutavel',
+    'BEFORE UPDATE OF id,email_hmac,nome_iv,nome_cifra,nome_tag,',
+    'email_iv,email_cifra,email_tag,termos_versao,termos_hash',
+    'ON akitemm_conta_unica_candidata',
+    "BEGIN SELECT RAISE(ABORT,'identidade candidata imutavel'); END;",
+    'CREATE TRIGGER IF NOT EXISTS conta_candidata_nick_mesmas_letras',
+    'BEFORE UPDATE OF nick ON akitemm_conta_unica_candidata',
+    'WHEN NEW.nick <> OLD.nick COLLATE NOCASE',
+    "BEGIN SELECT RAISE(ABORT,'nick nao pode trocar letras'); END;"
+   ].join(' '));
+   const cols=new Set(banco.prepare(
+    'PRAGMA table_info(akitemm_conta_unica_candidata)'
+   ).all().map(c=>c.name));
+   if(!cols.has('nick_grafia_confirmada'))
+    banco.exec('ALTER TABLE akitemm_conta_unica_candidata '+
+     'ADD COLUMN nick_grafia_confirmada INTEGER NOT NULL DEFAULT 0 '+
+     'CHECK(nick_grafia_confirmada IN (0,1))');
+   banco.exec('COMMIT');
+  }catch(e){banco.exec('ROLLBACK');throw e;}
   this._iniciarCustodia();
   if(this.recuperacaoKey){
    banco.exec([
@@ -272,11 +296,11 @@ class ContaUnicaCandidataSQLite{
     '(id,nick,email_hmac,nome_iv,nome_cifra,nome_tag,',
     'email_iv,email_cifra,email_tag,senha_salt,senha_hash,',
     'termos_versao,termos_hash,criado_em,',
-    'telefone_iv,telefone_cifra,telefone_tag)',
-    'VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)'
+    'telefone_iv,telefone_cifra,telefone_tag,nick_grafia_confirmada)',
+    'VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)'
    ].join(' ')).run(titularId,nickMin,emailHmac,...nomeEnc,...emailEnc,
     salt,senhaHash,termosVersao,sha256(termosTexto),ts,
-    ...telefoneEnc);
+    ...telefoneEnc,1);
    if(onCriada)onCriada({titularId,nick:nickMin});
    this.banco.exec('COMMIT');
   }catch(e){
@@ -375,6 +399,60 @@ class ContaUnicaCandidataSQLite{
  autorizarMutacao(req){
   const s=this.sessao(req),x=req.get('x-checkout-csrf');
   return Boolean(s&&typeof x==='string'&&x.length===64&&comparar(s.csrf,x));
+ }
+ async confirmarGrafiaNick({req,novoNick,senhaAtual}={}){
+  if(process.env.NODE_ENV==='production')falha('CANDIDATO_NAO_HOMOLOGADO');
+  const sessao=this.sessao(req);
+  if(!sessao||!this.autorizarMutacao(req))
+   falha('SESSAO_OU_CSRF_INVALIDO');
+  const novo=nickValido(novoNick);
+  if(typeof senhaAtual!=='string'||senhaAtual.length<1||
+     senhaAtual.length>256)falha('CREDENCIAIS_INVALIDAS');
+  const original=this.banco.prepare([
+   'SELECT nick,senha_salt,senha_hash,bloqueado_ate',
+   'FROM akitemm_conta_unica_candidata WHERE id=?'
+  ].join(' ')).get(sessao.titularId);
+  if(!original)falha('SESSAO_OU_CSRF_INVALIDO');
+  if(novo.toLowerCase()!==original.nick.toLowerCase())
+   falha('NICK_SOMENTE_GRAFIA');
+  if(original.bloqueado_ate>this._agora())
+   falha('CONTA_TEMPORARIAMENTE_BLOQUEADA');
+  const verificado=await hashSenha(senhaAtual,original.senha_salt);
+  let erro=null,resultado=null;
+  this.banco.exec('BEGIN IMMEDIATE');
+  try{
+   const atual=this.banco.prepare([
+    'SELECT nick,senha_salt,senha_hash,bloqueado_ate,tentativas',
+    'FROM akitemm_conta_unica_candidata WHERE id=?'
+   ].join(' ')).get(sessao.titularId);
+   if(!atual||atual.senha_salt!==original.senha_salt||
+      atual.senha_hash!==original.senha_hash||
+      atual.nick!==original.nick)
+    falha('CONCORRENCIA_CREDENCIAL');
+   const ts=this._agora();
+   if(atual.bloqueado_ate>ts)
+    falha('CONTA_TEMPORARIAMENTE_BLOQUEADA');
+   if(!comparar(verificado,atual.senha_hash)){
+    const tentativas=Math.min(atual.tentativas+1,5);
+    this.banco.prepare([
+     'UPDATE akitemm_conta_unica_candidata',
+     'SET tentativas=?,bloqueado_ate=? WHERE id=?'
+    ].join(' ')).run(tentativas,tentativas>=5?ts+BLOQUEIO_MS:
+     atual.bloqueado_ate,sessao.titularId);
+    erro='SENHA_ATUAL_INCORRETA';
+   }else{
+    this.banco.prepare([
+     'UPDATE akitemm_conta_unica_candidata',
+     'SET nick=?,nick_grafia_confirmada=1,',
+     'tentativas=0,bloqueado_ate=0 WHERE id=?'
+    ].join(' ')).run(novo,sessao.titularId);
+    resultado={nick:novo,grafiaConfirmada:true,
+     titularId:sessao.titularId,pagamentosReais:false};
+   }
+   this.banco.exec('COMMIT');
+  }catch(e){this.banco.exec('ROLLBACK');throw e;}
+  if(erro)falha(erro);
+  return resultado;
  }
  async trocarSenha({req,senhaAtual,novaSenha}={}){
   if(process.env.NODE_ENV==='production')falha('CANDIDATO_NAO_HOMOLOGADO');
@@ -609,6 +687,7 @@ class ContaUnicaCandidataSQLite{
    'WHERE titular_id=?'
   ].join(' ')).get(titularId));
   return {titularId:a.id,nick:a.nick,nome,
+   nickGrafiaConfirmada:a.nick_grafia_confirmada===1,
    emailVerificado,identidadeValidadaExternamente:false,
    termosVersao:a.termos_versao,termosHash:a.termos_hash,
    pagamentosReaisPermitidos:false};
