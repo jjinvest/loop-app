@@ -668,6 +668,9 @@ async function autenticarConta(nick,senha){
  const dados=await requisitar('/contas/entrar',{method:'POST',
   body:{nick,senha}});
  csrf=dados.csrf;mostrarSessao(true);$('senha').value='';
+ if(new URLSearchParams(location.search).get('destino')==='loja'){
+  location.assign('/loja');return;
+ }
  await atualizarVerificacaoEmail();
  await atualizarIdentidadeTeste();
  mostrarAba('conteudoResumo');
@@ -717,7 +720,7 @@ async function carregarTermosCadastro(){
       typeof dados.termosTexto!=='string'||dados.termosTexto.length<40||
       typeof dados.termosHash!=='string'||!/^[a-f0-9]{64}$/.test(dados.termosHash))
     throw Error('TERMOS_NAO_CONFIGURADOS');
-   $('versaoTermosCadastro').textContent='Versão: '+dados.termosVersao;
+   $('versaoTermosCadastro').textContent='';
    $('textoTermosCadastro').textContent=dados.termosTexto;
    termosCadastroLidos={versao:dados.termosVersao,hash:dados.termosHash};
    $('cadastroTermos').disabled=false;
@@ -738,13 +741,24 @@ async function cadastrar(e){
   return;
  }
  const botao=$('formCadastro').querySelector('button');
+ const senha=$('cadastroSenha').value;
+ const confirmacao=$('cadastroConfirmarSenha').value;
+ const telefone=$('cadastroTelefone').value.replace(/[^0-9]/g,'');
+ if(senha!==confirmacao){
+  mostrarErroAcesso('cadastro','A confirmação da senha deve ser idêntica.');
+  return;
+ }
+ if(!/^(?:[0-9]{10,11}|55[0-9]{10,11})$/.test(telefone)){
+  mostrarErroAcesso('cadastro','Informe um telefone válido com DDD.');
+  return;
+ }
  botao.disabled=true;
  try{
   const nick=$('cadastroNick').value;
   const r=await requisitar('/contas/cadastrar',{method:'POST',
    body:{
     nome:$('cadastroNome').value,
-    nick,email:$('cadastroEmail').value,senha:$('cadastroSenha').value,
+    nick,email:$('cadastroEmail').value,telefone,senha,confirmarSenha:confirmacao,
     aceiteExplicito:$('cadastroTermos').checked,
     termosVersaoAceita:termosCadastroLidos.versao,
     termosHashAceito:termosCadastroLidos.hash
@@ -753,7 +767,7 @@ async function cadastrar(e){
   if(r.contaCriada!==true||r.pagamentoPermitido!==false)
    throw Error('CADASTRO_INCOMPATIVEL');
   $('login').value=nick;
-  $('cadastroSenha').value='';
+  $('cadastroSenha').value='';$('cadastroConfirmarSenha').value='';
   selecionarTelaAcesso('login');
   dizer('Cadastro concluído. Agora entre com seu nick e a senha que você escolheu.');
  }catch(e){
