@@ -229,7 +229,8 @@ class MotorContaUnicaEnsaioSQLite{
    // legado: uma posição verde; nunca reinterpretar pedidos antigos.
    let quantidade=1;
    if(foto?.planejamentoPosicoes){
-    const plano=planejarPosicoesCompraAkitemm(foto.itens);
+    const plano=planejarPosicoesCompraAkitemm(foto.itens,
+     {ofertasCompostas:foto.ofertasCompostas||[]});
     if(JSON.stringify(plano)!==JSON.stringify(foto.planejamentoPosicoes)||
        !plano.podeVincularEnsaio||
        plano.valorTotalCentavos!==pedido.totalCentavos)

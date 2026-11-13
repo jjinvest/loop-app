@@ -217,7 +217,8 @@ class SinalizacaoVitrineCandidatoSQLite{
   ].join(' ')).all(id).map(r=>({revisao:r.revisao,criadoEm:r.criadoEm,
    antes:JSON.parse(r.antesJson),depois:JSON.parse(r.depoisJson)}));
  }
- gravarFotografiaPrepedido({prepedidoId,titularId,itens,totalCentavos,criadoEm}={}){
+ gravarFotografiaPrepedido({prepedidoId,titularId,itens,totalCentavos,
+  criadoEm,ofertasCompostas=[]}={}){
   if(process.env.NODE_ENV==='production')fail('FOTOGRAFIA_NAO_HOMOLOGADA');
   if(typeof prepedidoId!=='string'||!/^hom-[a-f0-9-]{36}$/.test(prepedidoId)||
      typeof titularId!=='string'||!/^[A-Za-z0-9_-]{6,80}$/.test(titularId)||
@@ -250,12 +251,14 @@ class SinalizacaoVitrineCandidatoSQLite{
     posicoesPorPedidoDourado:s.posicoesPorPedidoDourado});
   }
   if(total!==totalCentavos)fail('FOTOGRAFIA_TOTAL_DIVERGENTE');
-  const planejamentoPosicoes=planejarPosicoesCompraAkitemm(fotografiaItens);
+  const planejamentoPosicoes=planejarPosicoesCompraAkitemm(fotografiaItens,
+   {ofertasCompostas});
   const snap={prepedidoId,titularId,criadoEm,totalCentavos,
    valorVerdeConsideradoCentavos:verde,referenciaVerdeAtingida:verde>=25000,
    eventoPendente:evento&&planejamentoPosicoes.pendenciasConfiguracaoRoxo>0,
    podeSimularFilaBAzul:planejamentoPosicoes.podeVincularEnsaio,
    planejamentoPosicoes,
+   ...(ofertasCompostas.length?{ofertasCompostas}:{}),
    itens:fotografiaItens,somenteLaboratorio:true,direitosCriados:0};
   this.db.prepare([
    'INSERT INTO akitemm_vitrine_fotografia_classificacao_prepedido',

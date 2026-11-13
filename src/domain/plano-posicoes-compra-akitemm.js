@@ -4,12 +4,55 @@
 const PISO_VERDE=25000;
 const MAXIMO_ATIVAS=10;
 function falha(codigo){const e=new Error(codigo);e.codigo=codigo;throw e;}
-function planejarPosicoesCompraAkitemm(itens,{limiteAtivas=MAXIMO_ATIVAS}={}){
+function planejarPosicoesCompraAkitemm(itens,{limiteAtivas=MAXIMO_ATIVAS,
+ ofertasCompostas=[]}={}){
  if(!Array.isArray(itens)||itens.length<1||itens.length>20||
   !Number.isInteger(limiteAtivas)||limiteAtivas<1||limiteAtivas>MAXIMO_ATIVAS)
   falha('ITENS_PLANEJAMENTO_INVALIDOS');
+ if(!Array.isArray(ofertasCompostas)||ofertasCompostas.length>20)
+  falha('OFERTAS_COMPOSTAS_INVALIDAS');
+ // As ofertas estao congeladas no prepedido pelo servidor, com preco por SKU.
+ // Prevenir dupla contagem de um SKU em mais de um pacote e de cada pacote
+ // com a classificacao individual de seus componentes.
+ const usados=new Set(),pacotes=[];
+ const mapa=new Map(itens.map(x=>[x?.produtoId,x]));
+ for(const pacote of ofertasCompostas){
+  if(!pacote||typeof pacote!=='object'||!['CINZA','VERDE','DOURADO','ROXO'].includes(pacote.cor)||
+     typeof pacote.id!=='string'||!/^[a-z0-9-]{3,80}$/.test(pacote.id)||
+     !Number.isSafeInteger(pacote.revisao)||pacote.revisao<1||
+     !Number.isSafeInteger(pacote.posicoesPorPedido)||pacote.posicoesPorPedido<0||
+     pacote.posicoesPorPedido>MAXIMO_ATIVAS||
+     (pacote.cor==='CINZA'&&pacote.posicoesPorPedido!==0)||
+     (pacote.cor==='VERDE'&&pacote.posicoesPorPedido!==1)||
+     !Array.isArray(pacote.itens)||pacote.itens.length<2||pacote.itens.length>20)
+   falha('OFERTA_COMPOSTA_FOTOGRAFIA_INVALIDA');
+  let subtotal=0;
+  for(const parte of pacote.itens){
+   const item=mapa.get(parte?.produtoId);
+   if(!item||usados.has(parte.produtoId)||
+      !Number.isSafeInteger(parte.quantidade)||parte.quantidade<1||
+      parte.quantidade>50||item.quantidade<parte.quantidade||
+      item.precoUnitarioCentavos!==parte.precoUnitarioCentavos||
+      parte.subtotalCentavos!==parte.quantidade*parte.precoUnitarioCentavos)
+    falha('OFERTA_COMPOSTA_COMPONENTE_INVALIDO');
+   usados.add(parte.produtoId);
+   subtotal+=parte.subtotalCentavos;
+  }
+  if(!Number.isSafeInteger(subtotal)||subtotal!==pacote.totalPacoteCentavos||
+     (pacote.cor==='DOURADO'&&pacote.posicoesPorPedido>0&&subtotal<PISO_VERDE))
+   falha('OFERTA_COMPOSTA_VALOR_INVALIDO');
+  pacotes.push(pacote);
+ }
  let valorVerde=0,valorTotal=0,douradas=0,roxas=0,pendenciasRoxo=0;
  const detalhamento=[];
+ for(const pacote of pacotes){
+  if(pacote.cor==='VERDE')valorVerde+=pacote.totalPacoteCentavos;
+  if(pacote.cor==='DOURADO')douradas+=pacote.posicoesPorPedido;
+  if(pacote.cor==='ROXO'){
+   roxas+=pacote.posicoesPorPedido;
+   if(pacote.posicoesPorPedido===0)pendenciasRoxo++;
+  }
+ }
  for(const item of itens){
   const {produtoId,quantidade,precoUnitarioCentavos,subtotalCentavos}=item||{};
   if(typeof produtoId!=='string'||!/^[a-z0-9-]{3,80}$/.test(produtoId)||
@@ -26,8 +69,9 @@ function planejarPosicoesCompraAkitemm(itens,{limiteAtivas=MAXIMO_ATIVAS}={}){
   valorTotal+=subtotalCentavos;
   if(!Number.isSafeInteger(valorTotal))falha('TOTAL_PLANEJAMENTO_EXCEDIDO');
   let quantidadePosicoes=0;
-  if(cor==='VERDE'&&quantidade>=minimo)valorVerde+=subtotalCentavos;
-  if(cor==='DOURADO'){
+  if(!usados.has(produtoId)&&cor==='VERDE'&&quantidade>=minimo)
+   valorVerde+=subtotalCentavos;
+  if(!usados.has(produtoId)&&cor==='DOURADO'){
    const modo=item.modoDourado??'POR_UNIDADE';
    if(!['POR_UNIDADE','POR_PEDIDO'].includes(modo))
     falha('MODO_DOURADO_INVALIDO');
@@ -43,7 +87,7 @@ function planejarPosicoesCompraAkitemm(itens,{limiteAtivas=MAXIMO_ATIVAS}={}){
     if(quantidade>=minimo){douradas+=quantidade;quantidadePosicoes=quantidade;}
    }
   }
-  if(cor==='ROXO'&&item.modoRoxo==='POR_PEDIDO'){
+  if(!usados.has(produtoId)&&cor==='ROXO'&&item.modoRoxo==='POR_PEDIDO'){
    const minimoPedido=item.quantidadeMinimaRoxo;
    const posicoesPedido=item.posicoesPorPedidoRoxo;
    if(!Number.isSafeInteger(minimoPedido)||minimoPedido<1||minimoPedido>50||
@@ -57,7 +101,7 @@ function planejarPosicoesCompraAkitemm(itens,{limiteAtivas=MAXIMO_ATIVAS}={}){
     quantidadePosicoes=posicoesPedido;
     roxas+=quantidadePosicoes;
    }
-  }else if(cor==='ROXO'){
+  }else if(!usados.has(produtoId)&&cor==='ROXO'){
    if(item.modoRoxo!==undefined&&item.modoRoxo!=='POR_UNIDADE')
     falha('MODO_ROXO_INVALIDO');
    const configuradas=item.posicoesPorUnidadeRoxo??0;
@@ -70,6 +114,7 @@ function planejarPosicoesCompraAkitemm(itens,{limiteAtivas=MAXIMO_ATIVAS}={}){
   }
   detalhamento.push({produtoId,classificacao:cor,quantidade,
    subtotalCentavos,quantidadePosicoes,
+   ...(usados.has(produtoId)?{componentePacoteComposto:true}:{}),
    // Preservar assinatura dos planejamentos antigos: o motor compara
    // JSON historico byte a byte antes de vincular qualquer pedido.
    ...(cor==='DOURADO'&&item.modoDourado==='POR_PEDIDO'?
@@ -78,7 +123,8 @@ function planejarPosicoesCompraAkitemm(itens,{limiteAtivas=MAXIMO_ATIVAS}={}){
    ...(cor==='ROXO'?{modoRoxo:item.modoRoxo||'POR_UNIDADE',
     quantidadeMinimaRoxo:item.modoRoxo==='POR_PEDIDO'?item.quantidadeMinimaRoxo:1}:{}),
    consideradoVerdeCentavos:
-   cor==='VERDE'&&quantidade>=minimo?subtotalCentavos:0});
+   !usados.has(produtoId)&&cor==='VERDE'&&quantidade>=minimo?
+    subtotalCentavos:0});
  }
  const verdes=valorVerde>=PISO_VERDE?1:0;
  const quantidadePosicoesPrevistas=verdes+douradas+roxas;
@@ -90,6 +136,11 @@ function planejarPosicoesCompraAkitemm(itens,{limiteAtivas=MAXIMO_ATIVAS}={}){
   excedeLimitePorPedido:quantidadePosicoesPrevistas>limiteAtivas,
   podeVincularEnsaio:quantidadePosicoesPrevistas>0&&pendenciasRoxo===0&&
    quantidadePosicoesPrevistas<=limiteAtivas,
-  detalhamento,direitosReaisCriados:0,pagamentoConfirmado:false};
+  detalhamento,
+  ...(pacotes.length?{ofertasCompostasPlanejadas:pacotes.map(x=>({
+   id:x.id,revisao:x.revisao,cor:x.cor,posicoesPorPedido:x.posicoesPorPedido,
+   totalPacoteCentavos:x.totalPacoteCentavos
+  }))}:{}),
+  direitosReaisCriados:0,pagamentoConfirmado:false};
 }
 module.exports={planejarPosicoesCompraAkitemm,PISO_VERDE,MAXIMO_ATIVAS};
