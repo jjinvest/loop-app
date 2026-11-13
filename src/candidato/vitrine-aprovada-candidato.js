@@ -62,6 +62,11 @@ function createVitrineCandidata({app,banco,catalogo,contas,intencoes,prePedidos,
   .replace('src="/laboratorio/loja.js"','src="/staging/assets/loja-aprovada.js"')
   .replace('<main class="loja-loop">',
    '<main class="loja-loop"><p class="akitemm-estado">PRÉVIA LOCAL: sem pagamentos, posições, bônus, entregas ou giros reais. As cores são demonstrativas.</p>')
+  .replace('<div id="catalogoLojaLoop" class="produtos-loja-loop"></div>',
+   '<section id="akitemmPacotesCompostos" aria-label="Pacotes com vários produtos" hidden>'+
+   '<h3>Pacotes combinados</h3><p>Escolha o conjunto de produtos configurado pela loja, sem cobrança real.</p>'+
+   '<div id="akitemmGradePacotes" class="produtos-loja-loop"></div></section>'+
+   '<div id="catalogoLojaLoop" class="produtos-loja-loop"></div>')
   .replace('<p id="orientacaoMinimoLoop" role="status"></p>',
    '<p id="orientacaoMinimoLoop" role="status"></p><p id="akitemmAnaliseQualificacao" role="status" class="akitemm-regra-referencia">Simulação sem benefícios financeiros; adicione itens para conferir.</p>');
  if(original===html||html.includes('src="/laboratorio/loja.js"'))
@@ -79,7 +84,7 @@ function createVitrineCandidata({app,banco,catalogo,contas,intencoes,prePedidos,
   .replace("fetch('/api/laboratorio/participante/'+caminho,{",
    "fetch('/staging/vitrine/'+caminho,{")
   .replace('const catalogo=[],carrinho=new Map();',
-   'const catalogo=[],carrinho=new Map();let csrfCandidato=null,chavePedidoCandidato=null;')
+   'const catalogo=[],carrinho=new Map();let csrfCandidato=null,chavePedidoCandidato=null,ofertasCompostas=[];')
   .replace(ant,novo)
   .replace('const data=await response.json();',
    "const data=await response.json();\n  if(caminho==='minha-conta'&&response.ok){csrfCandidato=data.csrf||null;atualizarPreviaQualificacao();}\n  if(caminho==='loja/pedidos'&&(response.ok||[400,409].includes(response.status)))chavePedidoCandidato=null;")
@@ -102,8 +107,59 @@ function createVitrineCandidata({app,banco,catalogo,contas,intencoes,prePedidos,
   .replace('if(quantidade<100)','if(quantidade<50)')
   .replace('if(qtd>=100)','if(qtd>=50)')
   .replace('Máximo de 100 unidades por produto.','Máximo de 50 unidades por produto neste laboratório.')
+  .replace("tarja.textContent='EVENTO ESPECIAL'","tarja.textContent='OFERTA ROXA'")
   .replace(marcador,
-   "adicional.textContent='Evento visual de laboratório · sem posições ou benefícios reais';");
+   "adicional.textContent='Oferta ROXA configurável · sem posições ou benefícios reais';")
+  .replace('catalogo.splice(0,catalogo.length,...dados.produtos);',
+   'catalogo.splice(0,catalogo.length,...dados.produtos);ofertasCompostas=dados.ofertasCompostas||[];')
+  .replace('function mostrarCatalogo(){',`
+ function renderizarPacotesCompostos(){
+  const secao=el('akitemmPacotesCompostos'),grade=el('akitemmGradePacotes');
+  grade.replaceChildren();
+  const busca=el('akitemmBusca').value.trim().toLowerCase();
+  const pacotes=ofertasCompostas.filter(o=>
+   (!corFiltro||o.cor===corFiltro)&&
+   (filtro==='todos'||filtro==='ofertas'||!!corFiltro)&&
+   (!busca||(o.nome+' '+o.itens.map(i=>i.nome).join(' ')).toLowerCase().includes(busca)));
+  secao.hidden=pacotes.length===0;
+  for(const oferta of pacotes){
+   const card=document.createElement('article');
+   card.className='produto-loja-loop';
+   const corpo=document.createElement('div');corpo.className='akitemm-dados-produto';
+   const titulo=document.createElement('h3');titulo.textContent=oferta.nome;
+   const resumo=document.createElement('p');resumo.textContent=oferta.itens.map(i=>
+    i.quantidade+' × '+i.nome).join(' + ');
+   const cor=document.createElement('small');cor.textContent=
+    'Quadrado '+oferta.cor+' · '+oferta.posicoesPorPedido+
+    ' posição(ões) previstas por pedido qualificado (laboratório)';
+   const preco=document.createElement('p');preco.className='preco-loja-loop';
+   preco.textContent=dinheiro(oferta.precoPacoteCentavos);
+   const botao=document.createElement('button');botao.type='button';
+   botao.className='akitemm-adicionar';botao.textContent='Adicionar pacote';
+   botao.dataset.akitemmPacote=oferta.id;
+   botao.addEventListener('click',()=>{
+    const proximo=new Map(carrinho);
+    for(const parte of oferta.itens){
+     if(!produto(parte.produtoId)){
+      el('statusPedidoLoja').textContent='Produto do pacote indisponível; atualize a loja.';return;
+     }
+     const atual=proximo.get(parte.produtoId)||0;
+     if(atual+parte.quantidade>50||(!atual&&proximo.size>=20)){
+      el('statusPedidoLoja').textContent='O pacote excede o limite do carrinho; ajuste as quantidades.';return;
+     }
+     proximo.set(parte.produtoId,atual+parte.quantidade);
+    }
+    carrinho.clear();
+    for(const [id,qtd] of proximo)carrinho.set(id,qtd);
+    el('statusPedidoLoja').textContent=oferta.nome+' adicionado com todos os produtos.';
+    atualizarCarrinho();
+   });
+   corpo.append(titulo,resumo,cor,preco,botao);card.append(corpo);grade.append(card);
+  }
+ }
+ function mostrarCatalogo(){`)
+  .replace("const destino=el('catalogoLojaLoop');destino.replaceChildren();",
+   "const destino=el('catalogoLojaLoop');destino.replaceChildren();renderizarPacotesCompostos();");
  app.get('/staging/loja',(req,res)=>{
   if(!sessao(req))return res.redirect(302,'/staging/cliente');
   return res.type('html').send(html);
