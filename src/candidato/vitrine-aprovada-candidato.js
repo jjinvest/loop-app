@@ -72,6 +72,9 @@ function createVitrineCandidata({app,banco,catalogo,contas,intencoes,prePedidos,
    '<section id="akitemmPacotesCompostos" aria-label="Pacotes com vários produtos" hidden>'+
    '<h3>Pacotes combinados</h3><p>Escolha o conjunto de produtos configurado pela loja, sem cobrança real.</p>'+
    '<div id="akitemmGradePacotes" class="produtos-loja-loop"></div></section>'+
+   '<div id="akitemmAvisoPacoteInvalido" hidden role="alert">'+
+   '<p>Os pacotes selecionados deixaram de corresponder aos produtos do carrinho. Selecione novamente os pacotes ou confirme uma compra somente dos produtos avulsos.</p>'+
+   '<button id="akitemmConfirmarAvulso" type="button">Continuar sem pacote</button></div>'+
    '<div id="catalogoLojaLoop" class="produtos-loja-loop"></div>')
   .replace('<p id="orientacaoMinimoLoop" role="status"></p>',
    '<p id="orientacaoMinimoLoop" role="status"></p><p id="akitemmAnaliseQualificacao" role="status" class="akitemm-regra-referencia">Simulação sem benefícios financeiros; adicione itens para conferir.</p>');
@@ -91,7 +94,7 @@ function createVitrineCandidata({app,banco,catalogo,contas,intencoes,prePedidos,
   .replace("fetch('/api/laboratorio/participante/'+caminho,{",
    "fetch('/staging/vitrine/'+caminho,{")
   .replace('const catalogo=[],carrinho=new Map();',
-   'const catalogo=[],carrinho=new Map();let csrfCandidato=null,chavePedidoCandidato=null,ofertasCompostas=[],pacotesEscolhidos=new Map(),assinaturaPedidoAnterior=null;')
+   'const catalogo=[],carrinho=new Map();let csrfCandidato=null,chavePedidoCandidato=null,ofertasCompostas=[],pacotesEscolhidos=new Map(),assinaturaPedidoAnterior=null,selecaoPacotesInvalida=false;')
   .replace(ant,novo)
   .replace('const data=await response.json();',
    "const data=await response.json();\n  if(caminho==='minha-conta'&&response.ok){csrfCandidato=data.csrf||null;atualizarPreviaQualificacao();}\n  if(caminho==='loja/pedidos'&&(response.ok||[400,409].includes(response.status)))chavePedidoCandidato=null;")
@@ -104,18 +107,20 @@ function escolhasPacotes(){
 }
 function validarEscolhasPacotes(){
  if(!pacotesEscolhidos.size)return;
- const usados=new Map();
+ const usados=new Map();let invalido=false;
  for(const sel of pacotesEscolhidos.values()){
   const o=ofertasCompostas.find(p=>p.id===sel.id);
-  if(!o||o.revisao!==sel.revisao){pacotesEscolhidos.clear();break;}
+  if(!o||o.revisao!==sel.revisao){invalido=true;break;}
   for(const item of o.itens)
    usados.set(item.produtoId,(usados.get(item.produtoId)||0)+
     item.quantidade*sel.quantidade);
  }
- if([...usados].some(([id,qtd])=>qtd>(carrinho.get(id)||0))){
+ if(invalido||[...usados].some(([id,qtd])=>qtd>(carrinho.get(id)||0))){
   pacotesEscolhidos.clear();
+  selecaoPacotesInvalida=true;
+  el('akitemmAvisoPacoteInvalido').hidden=false;
   el('statusPedidoLoja').textContent=
-   'O carrinho mudou; escolha novamente os pacotes para evitar regra incorreta.';
+   'Pacote alterado: escolha novamente ou confirme a compra avulsa antes de finalizar.';
  }
 }
 async function atualizarPreviaQualificacao(){
@@ -123,6 +128,10 @@ async function atualizarPreviaQualificacao(){
  if(!campo)return;
  if(!carrinho.size){
   campo.textContent='Prévia de laboratório. Adicione produtos; nenhuma posição será criada.';return;
+ }
+ if(selecaoPacotesInvalida){
+  campo.textContent='Compra suspensa: é necessário escolher os pacotes novamente ou confirmar compra avulsa.';
+  return;
  }
  if(!csrfCandidato){campo.textContent='Conferindo sessão para simulação...';return;}
  try{
@@ -175,7 +184,11 @@ function atualizarCarrinho(){
   .replace('    {itens,participarLoop}:{itens});',
    '    {itens,participarLoop,ofertasCompostasSelecionadas:escolhasPacotes()}:{itens,ofertasCompostasSelecionadas:escolhasPacotes()});')
   .replace('carrinho.clear();atualizarCarrinho();await carregarPedidos();',
-   'carrinho.clear();pacotesEscolhidos.clear();atualizarCarrinho();await carregarPedidos();')
+   'carrinho.clear();pacotesEscolhidos.clear();selecaoPacotesInvalida=false;el("akitemmAvisoPacoteInvalido").hidden=true;atualizarCarrinho();await carregarPedidos();')
+  .replace('if(!carrinho.size||pedidoEmAndamento)return;',
+   'if(!carrinho.size||pedidoEmAndamento)return;validarEscolhasPacotes();if(selecaoPacotesInvalida){el("akitemmAvisoPacoteInvalido").hidden=false;el("statusPedidoLoja").textContent="Confirme os pacotes ou uma compra avulsa antes de continuar.";el("akitemmConfirmarAvulso").focus();return;}')
+  .replace(' inicializar();',
+   ' el("akitemmConfirmarAvulso").addEventListener("click",()=>{selecaoPacotesInvalida=false;el("akitemmAvisoPacoteInvalido").hidden=true;el("statusPedidoLoja").textContent="Compra avulsa confirmada. Nenhuma regra de pacote será aplicada.";atualizarCarrinho();});\n inicializar();')
   .replace('function mostrarCatalogo(){',`
  function renderizarPacotesCompostos(){
   const secao=el('akitemmPacotesCompostos'),grade=el('akitemmGradePacotes');
@@ -218,6 +231,8 @@ function atualizarCarrinho(){
     const anterior=pacotesEscolhidos.get(oferta.id);
     pacotesEscolhidos.set(oferta.id,{
      id:oferta.id,revisao:oferta.revisao,quantidade:(anterior?.quantidade||0)+1});
+    selecaoPacotesInvalida=false;
+    el('akitemmAvisoPacoteInvalido').hidden=true;
     el('statusPedidoLoja').textContent=oferta.nome+' incluído. Agora há '+
      escolhasPacotes().reduce((n,p)=>n+p.quantidade,0)+' pacote(s) neste pedido.';
     atualizarCarrinho();mostrarCatalogo();
