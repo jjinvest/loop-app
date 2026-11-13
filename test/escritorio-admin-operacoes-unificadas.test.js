@@ -64,7 +64,7 @@ test('12 departamentos operam no SQLite compartilhado sem inventar dados comerci
  }
  const clientes=(await get(raiz+'/departamentos/CLIENTES/operacao')).data;
  assert.equal(clientes.total,2,'cliente sem compra tambem precisa aparecer');
- assert.deepEqual(new Set(clientes.registros.map(x=>x.titulo)),new Set(['ana','beatriz']));
+ assert.deepEqual(new Set(clientes.registros.map(x=>x.titulo)),new Set(['Ana','Beatriz']));
  assert.equal(clientes.registros.some(x=>JSON.stringify(x).includes('example.invalid')),false);
  const pedidos=(await get(raiz+'/departamentos/PEDIDOS/operacao')).data;
  assert.equal(pedidos.total,1);assert.equal(pedidos.registros[0].prepedidoId,pid);
