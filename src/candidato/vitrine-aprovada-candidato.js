@@ -32,8 +32,12 @@ function createVitrineCandidata({app,banco,catalogo,contas,intencoes,prePedidos,
  // Todas as novas rotas de pré-pedido usam o mesmo registro transacional.
  prePedidos.definirFotografiaClassificacao(args=>{
   // Mesmo COMMIT do prepedido: classificação + endereço físico cifrado.
+  const escolha=args.ofertaCompostaCotada;
+  const opcoes=escolha===undefined?{}:
+   escolha===null?{ofertaId:null}:
+   {ofertaId:escolha.id,revisaoEsperada:escolha.revisao};
   const fotografia=sinalizacao.gravarFotografiaPrepedido({
-   ...args,ofertasCompostas:ofertasCompostas.fotografar(args.itens)
+   ...args,ofertasCompostas:ofertasCompostas.fotografar(args.itens,opcoes)
   });
   enderecoEntrega.vincularPrepedido(args);
   // Congela custos e referencia das posicoes no MESMO COMMIT do checkout.
@@ -290,22 +294,33 @@ function createVitrineCandidata({app,banco,catalogo,contas,intencoes,prePedidos,
    if(req.get('x-loop-lab')!=='participante'||!csrf(req))
     return res.status(403).json({erro:'MUTACAO_NAO_AUTORIZADA'});
    if(!req.is('application/json')||!req.body||Array.isArray(req.body)||
-      typeof req.body!=='object'||Object.keys(req.body).some(k=>k!=='itens'))
+      typeof req.body!=='object'||Object.keys(req.body).some(k=>
+       !['itens','ofertaCompostaId'].includes(k)))
     return res.status(400).json({erro:'CORPO_PEDIDO_INVALIDO'});
    const key=req.get('idempotency-key');
    if(typeof key!=='string'||!/^[a-zA-Z0-9_-]{16,128}$/.test(key))
     return res.status(400).json({erro:'CHAVE_IDEMPOTENCIA_OBRIGATORIA'});
    try{
-    const entrada={itens:entradaValida(req.body).map(x=>({
+    const entrada={itens:entradaValida({itens:req.body.itens}).map(x=>({
      produtoId:x.produtoId,quantidade:x.quantidade
-    }))};
+    })),
+     ...(Object.hasOwn(req.body,'ofertaCompostaId')?
+      {ofertaCompostaId:req.body.ofertaCompostaId}:{})};
     let intent=intencoes.consultarPorChave({
      titularId:req.titularVitrine,chaveIdempotencia:key,entrada});
     if(!intent){
-     const cotacao=await cotarCheckoutPublico({repositorio:catalogo,entrada});
+     const cotacao=await cotarCheckoutPublico({
+      repositorio:catalogo,entrada:{itens:entrada.itens}});
+     const pacotes=ofertasCompostas.fotografar(cotacao.itens,{
+      ofertaId:entrada.ofertaCompostaId});
+     // O servidor persiste a escolha/revisao na cotacao imutavel,
+     // nao apenas na sessao nem em estado mutavel da vitrine.
+     const cotacaoComEscolha={...cotacao,
+      ofertaCompostaCotada:pacotes.length?
+       {id:pacotes[0].id,revisao:pacotes[0].revisao}:null};
      intent=intencoes.criar({
       titularId:req.titularVitrine,chaveIdempotencia:key,
-      entrada,cotacao
+      entrada,cotacao:cotacaoComEscolha
      }).intencao;
     }
     const r=await prePedidos.preparar({
@@ -318,7 +333,9 @@ function createVitrineCandidata({app,banco,catalogo,contas,intencoes,prePedidos,
      posicoesCriadas:0,semCompraReal:true});
    }catch(e){
     return res.status(['CHAVE_IDEMPOTENCIA_CONFLITANTE',
-     'CATALOGO_ALTERADO_REFAZER_COTACAO'].includes(e.codigo)?409:
+     'CATALOGO_ALTERADO_REFAZER_COTACAO',
+     'OFERTA_COMPOSTA_ALTERADA_REFAZER_COTACAO'].includes(e.codigo)?409:
+     e.codigo==='OFERTA_COMPOSTA_NAO_DISPONIVEL_NO_CARRINHO'?409:
      e.codigo==='PRODUTO_INDISPONIVEL_PARA_COTACAO'?404:400)
      .json({erro:e.codigo||'PEDIDO_INVALIDO',pagamentoReal:false});
    }
@@ -435,7 +452,7 @@ function createVitrineCandidata({app,banco,catalogo,contas,intencoes,prePedidos,
     const oferta=await ofertasCompostas.salvar(req.params.id,req.body);
     return res.json({oferta,apenasEnsaio:true,posicoesReais:0});
    }catch(e){
-    return res.status(e.codigo==='CONFLITO_REVISAO'||e.codigo==='OFERTAS_COMPOSTAS_SOBREPOSTAS'?409:
+    return res.status(e.codigo==='CONFLITO_REVISAO'?409:
      e.codigo==='OFERTA_COMPOSTA_PRODUTO_INDISPONIVEL'?404:400)
      .json({erro:e.codigo||'OFERTA_INVALIDA',pagamentoReal:false});
    }

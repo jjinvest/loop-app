@@ -12,7 +12,10 @@ async function simularQualificacaoCandidato({entrada,catalogo,sinalizacao,
  if(typeof catalogo?.buscar!=='function'||typeof sinalizacao?.consultar!=='function'||
    catalogo.db!==sinalizacao.db)
   erro('FONTE_UNICA_OBRIGATORIA');
- const itens=entradaValida(entrada);
+ if(!entrada||typeof entrada!=='object'||Array.isArray(entrada)||
+    Object.keys(entrada).some(k=>!['itens','ofertaCompostaId'].includes(k)))
+  erro('CAMPOS_SIMULACAO_INVALIDOS');
+ const itens=entradaValida({itens:entrada.itens});
  let total=0,valorVerde=0,quantidadeProdutosVerdes=0;
  let eventoPendente=false,limiarPendente=false;
  const detalhes=[];
@@ -68,7 +71,8 @@ async function simularQualificacaoCandidato({entrada,catalogo,sinalizacao,
    posicoesPorPedidoDourado:s.posicoesPorPedidoDourado||0
   });
  }
- const pacotes=ofertasCompostas?ofertasCompostas.fotografar(detalhes):[];
+ const pacotes=ofertasCompostas?ofertasCompostas.fotografar(detalhes,
+  {ofertaId:entrada.ofertaCompostaId}):[];
  const planejamentoPosicoes=planejarPosicoesCompraAkitemm(detalhes,
   {ofertasCompostas:pacotes});
  const referenciaAtingida=valorVerde>=REFERENCIA_CENTAVOS;
