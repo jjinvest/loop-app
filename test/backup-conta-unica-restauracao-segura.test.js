@@ -93,7 +93,7 @@ test('restauração isolada preserva titular/pedido, mas REVOCA cookies e códig
   assert.equal(recovered.integridade.auditar().totalInconsistencias,0);
   assert.equal(recovered.contas.sessao(cookieReq),null,
    'sessão antiga não pode renascer após desastre');
-  assert.equal(recovered.contas.perfil(alice.titularId).nick,'alice');
+  assert.equal(recovered.contas.perfil(alice.titularId).nick,'Alice');
   assert.equal(recovered.contas.perfil(bia.titularId).nick,'bia');
   assert.equal(recovered.contas.perfil(depois.titularId),null,
    'não pode prometer RPO zero quando novo cadastro ocorreu após snapshot');
