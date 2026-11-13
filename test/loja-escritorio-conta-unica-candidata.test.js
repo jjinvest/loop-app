@@ -76,7 +76,7 @@ test('conta única prepara checkout e Escritório com o MESMO titular, sem Pix',
   method:'POST',data:{nick:'Alice',senha:'errada'}
  })).status,401);
  const la=await enviar(base,'/staging/contas/entrar',{
-  method:'POST',data:{nick:'ALICE',senha:'SenhaFicticiaDemonstracao2026!'}
+  method:'POST',data:{nick:'Alice',senha:'SenhaFicticiaDemonstracao2026!'}
  });
  const lb=await enviar(base,'/staging/contas/entrar',{
   method:'POST',data:{nick:'Bia',senha:'SenhaFicticiaDemonstracao2026!'}
@@ -214,7 +214,7 @@ test('conta candidata persiste no SQLite e não é montada em producao',async t=
  const two=await iniciar(app2.app);
  t.after(()=>new Promise(done=>two.server.close(done)));
  const login=await enviar(two.base,'/staging/contas/entrar',{
-  method:'POST',data:{nick:'LIA',senha:'SenhaFicticiaDemonstracao2026!'}
+  method:'POST',data:{nick:'Lia',senha:'SenhaFicticiaDemonstracao2026!'}
  });
  assert.equal(login.status,200);
  assert.equal(login.body.titularId,newAccount.body.titularId);
