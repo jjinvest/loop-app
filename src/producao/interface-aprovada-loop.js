@@ -39,7 +39,7 @@ function renderizarInterfaceAprovada(){
  // Nick é uma identidade única entre loja e escritório. Alterar apenas a
  // instância real da tela aprovada, sem mudar o laboratório histórico.
  const nickAtual='minlength="1" maxlength="12" pattern="[A-Za-z]{1,12}"';
- if(html.split(nickAtual).length!==3)
+ if(html.split(nickAtual).length!==4)
   throw Error('INTERFACE_NICK_APROVADO_DESATUALIZADA');
  if(html.split('href="/staging/loja"').length!==3)
   throw Error('INTERFACE_LOJA_APROVADA_DESATUALIZADA');
