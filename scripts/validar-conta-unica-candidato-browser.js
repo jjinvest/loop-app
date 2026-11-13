@@ -137,8 +137,18 @@ function mp4TrintaSegundos(){
    assert.equal(await page.locator('#painelLogin').isHidden(),true);
    assert.equal(await page.locator('#abaResumo').getAttribute('aria-selected'),'true');
    await page.locator('#resumoPedidos').filter({hasText:'0'}).waitFor();
-   await page.locator('#painelIdentidadeTeste').waitFor({state:'visible'});
-   // O conteúdo da aba precisa VIR ANTES de e-mail, CPF e resumos auxiliares.
+   assert.equal(await page.locator('#painelIdentidadeTeste').isHidden(),true,
+    'CPF pertence a Minha Conta, nunca à primeira aba');
+   assert.equal(await page.locator('#painelVerificarEmail').isHidden(),true,
+    'confirmação de e-mail pertence a Minha Conta');
+   assert.equal(await page.locator('.cliente-integrado .loop03-corpo>.loop03-indicadores>.loop03-indicador').count(),3);
+   const conteudoInicial=await page.locator('#conteudoResumo').innerText();
+   assert.match(conteudoInicial,/seis eventos válidos/i);
+   assert.match(conteudoInicial,/contemplação/i);
+   assert.doesNotMatch(conteudoInicial,/SQLite|históricos PSP|motor de ensaio|homologação/i);
+   assert.match(await page.locator('.cliente-integrado .loop03-banner-topo').innerText(),
+    /SEM PAGAMENTOS REAIS/, 'aviso de demonstração continua visível');
+   // Só a aba ativa ocupa a área de leitura; configuração e identidade ficam em Minha Conta.
    for(const [abaTeste,conteudoTeste] of [
     ['#abaTabuleiro','#conteudoTabuleiro'],
     ['#abaPosicoes','#conteudoPosicoes'],
@@ -208,6 +218,11 @@ function mp4TrintaSegundos(){
    const dadosTermos=await termosIdentidade.json();
    assert.equal(dadosTermos.termosVersao,'LAB-navegador-2026');
    assert.match(dadosTermos.termosTexto,/Prévia apenas para teste de acesso e pedido/);
+   await abrirAba('#abaConta');
+   await page.locator('#conteudoConta').waitFor({state:'visible'});
+   await page.locator('#painelIdentidadeTeste').waitFor({state:'visible'});
+   assert.equal(await page.locator('#painelIdentidadeTeste').evaluate(el=>
+    el.closest('#conteudoConta')!==null),true);
    assert.equal(await page.locator('#termosCpfTexto').isHidden(),true);
    await page.locator('#cpfTeste').fill(
     item.nome==='pc'?'529.982.247-25':'111.444.777-35');
@@ -217,6 +232,9 @@ function mp4TrintaSegundos(){
     .filter({hasText:/CPF fictício registrado/}).waitFor();
    assert.equal(await page.locator('#formCpfTeste').isHidden(),true);
    assert.equal(await page.locator('#cpfTeste').inputValue(),'');
+   await abrirAba('#abaResumo');
+   await page.locator('#conteudoResumo').waitFor({state:'visible'});
+   assert.equal(await page.locator('#painelIdentidadeTeste').isHidden(),true);
    // Compras sao testadas SOMENTE na loja AKITEMM, nao em aba duplicada do LOOP.
    assert.equal(await page.locator('#abaPreparar').count(),0);
    const lojaPrimeiro=await context.newPage();
