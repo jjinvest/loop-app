@@ -319,10 +319,11 @@ const png=Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAIAAAACCAIAAAD91JpzAAAAEklEQVR4n
     [{id:'jornada-dourado-1',q:3},{id:'jornada-verde-1',q:6}]);
    const fotoMultipla=ctx.sinalizacaoVitrine.consultarFotografiaPrepedido({
     prepedidoId:terceiro.pedidoId});
+   // O checkout canoniza os IDs em ordem alfabetica, nao de cliques.
    assert.deepEqual(fotoMultipla.ofertasCompostas.map(x=>({
-    id:x.id,vezes:x.quantidadePacotes})),[
-    {id:'kit-jornada-misto',vezes:2},
-    {id:'kit-jornada-concorrente',vezes:1}
+    id:x.id,vezes:x.quantidadePacotes})).sort((a,b)=>a.id.localeCompare(b.id)),[
+    {id:'kit-jornada-concorrente',vezes:1},
+    {id:'kit-jornada-misto',vezes:2}
    ]);
    assert.equal(fotoMultipla.planejamentoPosicoes.posicoesRoxo,2);
    assert.equal(fotoMultipla.planejamentoPosicoes.posicoesDourado,2);
