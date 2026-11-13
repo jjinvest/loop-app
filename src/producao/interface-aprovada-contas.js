@@ -171,10 +171,11 @@
    const nick=document.createElement('strong');
    nick.textContent='@'+p.nick;
    const estado=document.createElement('span');
+   // Nunca anunciar qualificação de ensaio como compra real.
    estado.textContent=p.estado==='QUALIFICACAO_ENSAIO'?
-    'Indicação qualificada em ensaio · posição #'+p.posicaoDestinoEnsaio:
+    'Cadastro vinculado · sem confirmação comercial':
     p.estado==='COMPRA_ENSAIO_SEM_QUALIFICACAO'?
-    'Compra em ensaio · aguardando qualificação':
+    'Cadastro vinculado · participação em análise':
     'Cadastro registrado · aguardando compra confirmada';
    item.append(nick,estado);alvo.appendChild(item);
   }
@@ -198,9 +199,7 @@
    $('redeADistribuirEnsaio').textContent=String(
     dados.resumo?.comprasAguardandoQualificacaoEnsaio??0);
    $('equipeResumo').textContent=dados.total+
-    ' cadastro(s) pelo seu link · '+(dados.resumo?.comprasEmEnsaio??0)+
-    ' compra(s) em ensaio · '+(dados.resumo?.qualificadasEmEnsaio??0)+
-    ' indicação(ões) qualificadas em ensaio. Sem bonificação real.';
+    ' cadastro(s) pelo seu link. Bonificações somente após confirmação comercial.';
    exibirRede();
   }catch{
    $('equipeResumo').textContent='Sua rede não pôde ser consultada.';
@@ -423,14 +422,9 @@
     throw Error('ESCRITORIO_RESPOSTA_INCONSISTENTE');
    const aguardando=d.eventosComerciais?.aguardandoConciliacao??0;
    const texto='Fila A: '+d.filaA+' · Fila B: '+d.filaB+
-    ' · Posições de ensaio por compra: '+
-    (d.eventosComerciais?.promovidasSomenteEmEnsaio??0)+
-    ' · Em revisão por estorno: '+
-    (d.eventosComerciais?.emRevisaoPorEstornoEnsaio??0)+
-    ' · Catraca (ensaio): '+d.catraca.estado+
-    ' · Giros: '+d.catraca.giros+' · Eventos do ciclo: '+
-    d.tabuleiro.eventosNoCiclo+'/6 · Pedidos comerciais pendentes: '+
-    aguardando+' · Movimentação real indisponível.';
+    ' · Ciclo atual: '+d.tabuleiro.eventosNoCiclo+
+    ' de 6 eventos. Acompanhe suas posições e o tabuleiro.'+
+    (aguardando>0?' Pedidos em análise: '+aguardando+'.':'');
    $('loopResumoMotor').textContent=texto;
    $('estadoTabuleiroIntegrado').textContent=texto;
    // Mesmo componente de fila, círculo e luzes usado pelo laboratório.
@@ -456,7 +450,7 @@
    visorCatraca.registrarAgenda(d.agenda);
    visorCatraca.observar(d.catraca.giros,d.tabuleiro.eventosNoCiclo);
    $('motorContadorEventos').textContent=d.tabuleiro.eventosNoCiclo+
-    '/6 eventos de validação interna';
+    ' de 6 eventos neste ciclo';
    $('resumoPosicoes').textContent=String(d.minhasPosicoes.length);
    const seletor=$('seletorPosicaoMotor');
    const seletorRotulo=$('rotuloSeletorPosicaoMotor');
@@ -496,8 +490,7 @@
      etapa.textContent=pos.local+
       (pos.classeProdutoOrigem?' · Produto '+pos.classeProdutoOrigem:'')+
       ' · '+pos.indicacoesQualificadasEnsaio+
-      ' indicação(ões) em ensaio · pedido de ensaio '+
-      pos.pedidoDeOrigemEnsaio+' · sem direito financeiro real';
+      ' indicação(ões) em verificação. Sem crédito financeiro disponível.';
      corpo.append(id,etapa);card.appendChild(corpo);
      if(pos.aguardandoCpfTermos&&d.confirmacaoAzulEnsaioDisponivel===true)
       renderizarAceiteAzulEnsaio(card,pos);
@@ -507,8 +500,9 @@
    }
   }catch{
    $('loopResumoMotor').textContent=
-    'Motor interno indisponível. Não há transações reais.';
-   $('estadoTabuleiroIntegrado').textContent='Estado indisponível; nenhum giro autorizado.';
+    'Não foi possível carregar as posições. Tente atualizar.';
+   $('estadoTabuleiroIntegrado').textContent=
+    'Não foi possível atualizar o tabuleiro. Tente novamente.';
    $('posicoesPainel').textContent='Posições temporariamente indisponíveis.';
   }
  }
