@@ -252,8 +252,11 @@ function mp4TrintaSegundos(){
    await page.locator('#atualizarPedidos').click();
    await page.locator('#listaPedidos article.pedido').first().waitFor();
    assert.equal(await page.locator('#listaPedidos article.pedido').count(),1);
-   await page.locator('#listaPedidos').getByRole('button',{name:'Ver requisitos de ativação'}).click();
-   await page.locator('#listaPedidos').filter({hasText:/BLOQUEADA_PARA_ATIVACAO_DEFINITIVA/}).waitFor();
+   assert.equal(await page.locator('#listaPedidos')
+    .getByRole('button',{name:'Ver requisitos de ativação'}).count(),0,
+    'códigos internos do pedido não pertencem à tela do cliente');
+   assert.doesNotMatch(await page.locator('#listaPedidos').innerText(),
+    /BLOQUEADA_PARA_ATIVACAO_DEFINITIVA|Sandbox|PSP/);
    assert.match(await page.locator('#listaPedidos').innerText(),/R\$\s?250,00/);
    await abrirAba('#abaResumo');
    await page.locator('#resumoPedidos').filter({hasText:'1'}).waitFor();

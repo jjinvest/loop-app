@@ -117,17 +117,17 @@ function mostrarAba(alvo){
 function exibirPedidos(pedidos){
  const area=$('listaPedidos');area.replaceChildren();
  if(!Array.isArray(pedidos)||pedidos.length===0){
-  const p=document.createElement('p');p.textContent='Nenhum pré-pedido nesta conta de teste.';
+  const p=document.createElement('p');p.textContent='Você ainda não tem pedidos.';
   area.append(p);return;
  }
  const estados={
-  SEM_COBRANCA_SANDBOX:'Pré-pedido preparado, sem cobrança',
-  PREPARADA:'Preparado para homologação, sem Pix',
-  CRIACAO_INDETERMINADA:'Cobrança indeterminada: revisão necessária',
-  PENDENTE_SANDBOX:'Cobrança de teste pendente no Sandbox',
-  RECEBIMENTO_INFORMADO_SANDBOX:'Recebimento informado pelo Sandbox (não é pagamento real)',
-  REVERSAO_INFORMADA_SANDBOX:'Reversão de teste: revisão necessária',
-  EXIGE_REVISAO:'Revisão de homologação necessária'
+  SEM_COBRANCA_SANDBOX:'Pedido registrado · sem cobrança',
+  PREPARADA:'Pedido preparado · sem cobrança',
+  CRIACAO_INDETERMINADA:'Confirmação do pedido em análise',
+  PENDENTE_SANDBOX:'Confirmação da simulação pendente',
+  RECEBIMENTO_INFORMADO_SANDBOX:'Recebimento simulado informado · sem pagamento real',
+  REVERSAO_INFORMADA_SANDBOX:'Pedido em revisão',
+  EXIGE_REVISAO:'Pedido em análise'
  };
  for(const pedido of pedidos){
   const artigo=document.createElement('article');artigo.className='pedido';
@@ -138,7 +138,7 @@ function exibirPedidos(pedidos){
   const data=document.createElement('p');data.className='subtexto';
   data.textContent='Registrado em '+new Date(pedido.criadoEm).toLocaleString('pt-BR');
   const status=document.createElement('p');status.className='estado';
-  status.textContent=estados[pedido.statusHomologacao]||'Status em verificação (laboratório)';
+  status.textContent=estados[pedido.statusHomologacao]||'Acompanhamento do pedido em atualização';
   artigo.append(titulo,resumo,data,status);
   // O backend anuncia apenas PDFs vinculados a ESTE pedido, apos GET PSP
   // de ensaio conferido e sem reversao. Nenhum PDF tem URL publica.
@@ -162,44 +162,29 @@ function exibirPedidos(pedidos){
   }else if(Number.isSafeInteger(pedido.posicoesReservadas)&&
            pedido.posicoesReservadas>0){
    const detalhe=document.createElement('p');detalhe.className='subtexto';
-   detalhe.textContent='Reserva de homologação: '+pedido.posicoesReservadas+
-    ' posição(ões) prevista(s), ainda não criada(s) nem ativada(s).';
+   detalhe.textContent='Previsão: '+pedido.posicoesReservadas+
+    ' posição(ões) pendente(s), ainda não ativada(s).';
    artigo.append(detalhe);
   }
   if(pedido.conferenciaPSPConcluida===true){
    const selo=document.createElement('p');selo.className='subtexto';
-   selo.textContent='Pagamento fictício conferido por consulta independente ao Asaas Sandbox.';
+   selo.textContent='Recebimento conferido na simulação. Não representa pagamento real.';
    artigo.append(selo);
   }else if(pedido.situacaoOperacional==='WEBHOOK_RECEBIDO_AGUARDANDO_RECONSULTA'){
    const aviso=document.createElement('p');aviso.className='aviso';
-   aviso.textContent='Aviso do Asaas recebido. A confirmação por consulta independente ainda está pendente.';
+   aviso.textContent='Atualização recebida. A confirmação do pedido ainda está em análise.';
    artigo.append(aviso);
   }
   if(pedido.revisaoManualObrigatoria){
    const aviso=document.createElement('p');aviso.className='aviso';
-   aviso.textContent='Revisão manual obrigatória. Nenhum benefício será liberado.';
+   aviso.textContent='Este pedido precisa de revisão antes de avançar.';
    artigo.append(aviso);
   }
   if(pedido.posicaoPendenteLaboratorio){
    const posicao=document.createElement('p');posicao.className='aviso';
-   posicao.textContent='1 posição pendente fictícia de homologação · nenhuma posição real criada.';
+   posicao.textContent='1 posição em análise na demonstração · nenhuma posição real criada.';
    artigo.append(posicao);
   }
-  const diagnosticar=document.createElement('button');
-  diagnosticar.type='button';diagnosticar.textContent='Ver requisitos de ativação';
-  const detalhe=document.createElement('p');detalhe.className='subtexto';
-  detalhe.setAttribute('role','status');
-  diagnosticar.addEventListener('click',async()=>{
-   diagnosticar.disabled=true;
-   try{
-    const d=await requisitar('/meu-diagnostico-ativacao/'+
-     encodeURIComponent(pedido.prepedidoId));
-    detalhe.textContent='Situação: '+d.estado+
-     '. Pendências: '+d.bloqueios.join(', ')+'.';
-   }catch(e){detalhe.textContent='Consulta indisponível: '+e.message;}
-   finally{diagnosticar.disabled=false;}
-  });
-  artigo.append(diagnosticar,detalhe);
   area.append(artigo);
  }
 }
@@ -218,24 +203,23 @@ async function atualizarPedidos(){
   const previa=await requisitar('/minha-previa-filas');
   const resumo=$('minhaPreviaFilas');resumo.replaceChildren();
   const info=document.createElement('p');
-  info.textContent='Posições fictícias anteriores: '+(previa.meusPendentesHistoricos||0)+
-   ' · Hipótese na Fila B: '+(previa.meusSimuladosNaFilaB||0)+
-   ' · Posições reais: 0. '+previa.motivo;
+  info.textContent='Registros anteriores: '+(previa.meusPendentesHistoricos||0)+
+   ' · Estimativa na Fila B: '+(previa.meusSimuladosNaFilaB||0);
   resumo.append(info);
   const pre=await requisitar('/minhas-pre-adesoes');
   const historico=$('minhasPreAdesoes');historico.replaceChildren();
   if(!pre.registros.length){
    const aviso=document.createElement('p');
-   aviso.textContent='Nenhuma pré-adesão fictícia registrada.';
+   aviso.textContent='Nenhuma solicitação anterior.';
    historico.append(aviso);
   }
   for(const registro of pre.registros){
    const artigo=document.createElement('article');artigo.className='pedido';
    const nome=document.createElement('strong'),descricao=document.createElement('p');
    nome.textContent=registro.prepedidoId;
-   descricao.textContent='Pré-adesão de laboratório: '+registro.estado+
-    '. Posições reais: 0. '+(registro.motivos.length?
-     'Exige revisão: '+registro.motivos.join(', '):'Nenhuma revisão de ensaio pendente.');
+   descricao.textContent=(registro.motivos.length?
+     'Solicitação em análise. Consulte o pedido correspondente.':
+     'Solicitação registrada para acompanhamento.');
    artigo.append(nome,descricao);historico.append(artigo);
   }
 
@@ -251,8 +235,8 @@ async function atualizarPedidos(){
    const mensagem=document.createElement('p');mensagem.textContent=c.mensagem;
    item.append(id,mensagem);area.append(item);
   }
-  dizer('Pedidos e comunicados atualizados. Nenhuma compra ou pagamento real.');
- }catch(e){dizer('Não foi possível consultar os pedidos: '+e.message);}
+  dizer('Pedidos e comunicados atualizados.');
+ }catch(e){dizer('Não foi possível carregar seus pedidos. Tente atualizar.');}
 }
 async function atualizarIdentidadeTeste(){
  const area=$('painelIdentidadeTeste'),form=$('formCpfTeste');
