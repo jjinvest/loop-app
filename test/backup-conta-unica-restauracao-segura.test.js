@@ -116,7 +116,7 @@ test('restauração isolada preserva titular/pedido, mas REVOCA cookies e códig
   assert.throws(()=>recovered.provasEmail.confirmar({
    titularId:alice.titularId,codigo:capturados[0].codigo,autorizado:true
   }),/PROVA_EMAIL_EXPIRADA_OU_INVALIDA/);
-  const novoLogin=await recovered.contas.entrar({nick:'ALICE',senha:SENHA_CONTA});
+  const novoLogin=await recovered.contas.entrar({nick:'Alice',senha:SENHA_CONTA});
   assert.equal(novoLogin.titularId,alice.titularId);
   assert.notEqual(novoLogin.token,sessao.token);
   assert.equal(rdb.prepare('PRAGMA integrity_check').get().integrity_check,'ok');
