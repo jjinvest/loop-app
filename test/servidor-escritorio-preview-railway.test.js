@@ -515,3 +515,45 @@ test('readiness rejeita lote orfao sem violacao explicita de foreign key',async 
  assert.deepEqual(x.db.prepare('PRAGMA foreign_key_check').all(),[]);
  assert.equal((await x.consultar('/readyz')).status,503);
 });
+
+test('cadastro completo: telefone cifrado, senha confirmada e nick com grafia exata',async t=>{
+ const x=await preparar(t);
+ const termos=await (await x.consultar('/staging/contas/termos-cadastro')).json();
+ const senhaCliente='SenhaAbc123!';
+ const body={nome:'Pessoa de Exemplo',nick:'JoAo',email:'joao@example.invalid',
+  telefone:'21999998888',senha:senhaCliente,confirmarSenha:senhaCliente,
+  aceiteExplicito:true,termosVersaoAceita:termos.termosVersao,
+  termosHashAceito:termos.termosHash};
+ const post=b=>x.consultar('/staging/contas/cadastrar',{
+  method:'POST',headers:{'Content-Type':'application/json'},
+  body:JSON.stringify(b)
+ });
+ const divergente=await post({...body,confirmarSenha:'outraSenha2026'});
+ assert.equal(divergente.status,400,'senha divergente jamais grava cadastro');
+ assert.equal(x.db.prepare('SELECT COUNT(*) AS n FROM akitemm_conta_unica_candidata').get().n,0);
+ const invalido=await post({...body,telefone:'123'});
+ assert.equal(invalido.status,400,'telefone invalido nao pode gravar cadastro');
+ const criado=await post(body);
+ assert.equal(criado.status,201);
+ const created=await criado.json();
+ assert.equal(created.nick,'JoAo');
+ const row=x.db.prepare('SELECT nick,telefone_iv,telefone_cifra,telefone_tag FROM akitemm_conta_unica_candidata WHERE id=?').get(created.titularId);
+ assert.equal(row.nick,'JoAo');
+ assert.match(row.telefone_cifra,/^[a-f0-9]+$/);
+ assert.equal(JSON.stringify(row).includes(body.telefone),false);
+ const login=nick=>x.consultar('/staging/contas/entrar',{
+  method:'POST',headers:{'Content-Type':'application/json'},
+  body:JSON.stringify({nick,senha:senhaCliente})
+ });
+ assert.equal((await login('joao')).status,401);
+ assert.equal((await login('JOAO')).status,401);
+ const certo=await login('JoAo');
+ assert.equal(certo.status,200);
+ assert.equal((await certo.json()).nick,'JoAo');
+ const cookie=certo.headers.getSetCookie().find(s=>s.startsWith('loop_candidato_s=')).split(';')[0];
+ const loja=await x.consultar('/staging/loja',{headers:{Cookie:cookie}});
+ assert.equal(loja.status,200,'mesma credencial autenticada abre a loja');
+ const publico=await x.consultar('/loja');
+ assert.equal(publico.status,302);
+ assert.equal(publico.headers.get('location'),'/staging/loja');
+});

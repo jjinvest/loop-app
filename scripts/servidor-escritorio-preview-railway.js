@@ -432,7 +432,7 @@ async function iniciar({env=process.env}={}){
   enviarEmailDeVerificacao:enviarVerificacao,
   // CPF de ensaio desabilitado para não incentivar dados pessoais em prévia.
   segredoOperador:tokenOperador,termosVersao:'LAB-escritorio-preview-2026',
-  termosTexto:'Este cadastro e apenas para experimentar as telas da AKITEMM. Use nome e email ficticios, sem CPF ou dados reais. Nenhuma compra ou participacao e ativada.'
+  termosTexto:'Ao criar uma conta, voce escolhe um nick exclusivo e senha de acesso ao Escritorio Virtual LOOP e a Loja AKITEMM. Nome, e-mail e telefone sao informados para comunicacao, verificacao cadastral e suporte. Este ambiente permanece uma previa tecnica, sem autorizacao para cadastrar clientes reais nem realizar transacoes financeiras. Termos e politica definitivos dependem de aprovacao antes da abertura publica.'
  });
  c.app.locals.backupOffsite=backupOffsite;
  const interno=c.app.listen(0,'127.0.0.1');
