@@ -1368,3 +1368,8 @@ Corrigido descompasso entre motor SQLite e a aba de posições do Escritório re
 ## Continuidade 361 — pilar interno: paginação sem limite artificial de indicados (13/11/2026)
 
 Eliminado limite oculto de 100.000 registros na paginação da rede do próprio cliente (`/api/contas/minha-rede`), na projeção do Escritório e na identidade SQLite, preservando limite técnico por página, autorização exclusiva do titular e validação de inteiro seguro sem zeros à esquerda. Testes HTTP de página superior a 100 mil, tentativas inválidas e chamadas diretas das duas fontes. Não abre integração externa, comissão ou cadastro. A operação usa o mesmo SQLite e telas aprovadas. Conferir resultado CI do HEAD antes de declarar PASS.
+
+
+## Continuidade 362 — prova ativa do storage real sem dados pessoais (13/11/2026)
+
+Foi acrescentado um probe independente de bucket S3 **próprio**, com bytes aleatórios descartáveis e validação rigorosa: PUT exclusivo em `preparacao/<uuid>.probe`, GET com comparação constante de 48 bytes, DELETE assinado limitado a esse prefixo. A assinatura de DELETE jamais aceita caminho `clientes/` de backup e a rotina falha fechada em divergências; não libera conta ou pagamentos. Arquivos: `src/producao/prova-storage-preparacao-real.js`, `scripts/provar-storage-real-preparacao.js`, signer restrito e testes de prova/erro/limpeza. Pode ser aplicado como predeploy do serviço privado no Railway, usando SOMENTE referências S3 existentes. **Ainda não afirmar prova real do bucket antes da execução Railway**. Registrar SHA de CI e resultado do predeploy após validar.

@@ -37,8 +37,14 @@ function assinarObjetoS3Real({
  config,key,method,agora=new Date(),segundos=600
 }={}){
  const {host,accessKeyId,secretAccessKey,region}=validarConfig(config);
- if(!['PUT','GET'].includes(method)||typeof key!=='string'||
-    !/^clientes\/\d{4}-\d{2}-\d{2}\/[0-9a-f-]{36}\.looprealbak$/.test(key)||
+ // Provas vazias de armazenamento usam prefixo isolado e autorizam limpeza.
+ // A exclusão NUNCA pode atingir objetos reais de backup de clientes.
+ const backup=typeof key==='string'&&
+  /^clientes\\/\\d{4}-\\d{2}-\\d{2}\\/[0-9a-f-]{36}\\.looprealbak$/.test(key);
+ const preparacao=typeof key==='string'&&
+  /^preparacao\\/[0-9a-f-]{36}\\.probe$/.test(key);
+ if(!(backup&&['PUT','GET'].includes(method)||
+      preparacao&&['PUT','GET','DELETE'].includes(method))||
     !(agora instanceof Date)||!Number.isFinite(agora.getTime())||
     !Number.isSafeInteger(segundos)||segundos<30||segundos>900)
   falha('OFFSITE_REAL_CHAVE_INVALIDA');
