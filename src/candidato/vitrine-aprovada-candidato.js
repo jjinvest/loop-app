@@ -94,7 +94,7 @@ function createVitrineCandidata({app,banco,catalogo,contas,intencoes,prePedidos,
   .replace("fetch('/api/laboratorio/participante/'+caminho,{",
    "fetch('/staging/vitrine/'+caminho,{")
   .replace('const catalogo=[],carrinho=new Map();',
-   'const catalogo=[],carrinho=new Map();let csrfCandidato=null,chavePedidoCandidato=null,ofertasCompostas=[],pacotesEscolhidos=new Map(),assinaturaPedidoAnterior=null,selecaoPacotesInvalida=false;')
+   'const catalogo=[],carrinho=new Map();let csrfCandidato=null,chavePedidoCandidato=null,ofertasCompostas=[],pacotesEscolhidos=new Map(),assinaturaPedidoAnterior=null,selecaoPacotesInvalida=false,pacotesVisiveis=0;')
   .replace(ant,novo)
   .replace('const data=await response.json();',
    "const data=await response.json();\n  if(caminho==='minha-conta'&&response.ok){csrfCandidato=data.csrf||null;atualizarPreviaQualificacao();}\n  if(caminho==='loja/pedidos'&&(response.ok||[400,409].includes(response.status)))chavePedidoCandidato=null;")
@@ -193,22 +193,29 @@ function atualizarCarrinho(){
  function renderizarPacotesCompostos(){
   const secao=el('akitemmPacotesCompostos'),grade=el('akitemmGradePacotes');
   grade.replaceChildren();
-  const busca=el('akitemmBusca').value.trim().toLowerCase();
+  const busca=el('akitemmBusca').value.trim().normalize('NFD')
+   .replace(/[\u0300-\u036f]/g,'').toLocaleLowerCase('pt-BR');
   const pacotes=ofertasCompostas.filter(o=>
    (!corFiltro||o.cor===corFiltro)&&
    (filtro==='todos'||filtro==='ofertas'||!!corFiltro)&&
-   (!busca||(o.nome+' '+o.itens.map(i=>i.nome).join(' ')).toLowerCase().includes(busca)));
+   (!busca||(o.nome+' '+o.itens.map(i=>i.nome).join(' ')).normalize('NFD')
+    .replace(/[\u0300-\u036f]/g,'').toLocaleLowerCase('pt-BR').includes(busca)));
+  pacotesVisiveis=pacotes.length;
   secao.hidden=pacotes.length===0;
   for(const oferta of pacotes){
    const card=document.createElement('article');
-   card.className='produto-loja-loop';
+   card.className='produto-loja-loop akitemm-card-pacote akitemm-card-pacote-'+oferta.cor.toLowerCase();
+   if(pacotesEscolhidos.has(oferta.id))card.classList.add('tem-selecao');
    const corpo=document.createElement('div');corpo.className='akitemm-dados-produto';
+   const selo=document.createElement('small');selo.className='akitemm-pacote-categoria';
+   selo.textContent='PACOTE · QUADRADO '+oferta.cor;
    const titulo=document.createElement('h3');titulo.textContent=oferta.nome;
-   const resumo=document.createElement('p');resumo.textContent=oferta.itens.map(i=>
+   const resumo=document.createElement('p');resumo.className='akitemm-pacote-componentes';
+   resumo.textContent=oferta.itens.map(i=>
     i.quantidade+' × '+i.nome).join(' + ');
-   const cor=document.createElement('small');cor.textContent=
-    'Quadrado '+oferta.cor+' · '+oferta.posicoesPorPedido+
-    ' posição(ões) previstas por pedido qualificado (laboratório)';
+   const cor=document.createElement('small');cor.className='akitemm-pacote-previsao';
+   cor.textContent=oferta.posicoesPorPedido+
+    ' posição(ões) previstas por pacote qualificado · simulação';
    const preco=document.createElement('p');preco.className='preco-loja-loop';
    preco.textContent=dinheiro(oferta.precoPacoteCentavos);
    const botao=document.createElement('button');botao.type='button';
@@ -253,15 +260,19 @@ function atualizarCarrinho(){
     else pacotesEscolhidos.delete(oferta.id);
     atualizarCarrinho();mostrarCatalogo();
    });
-   const contador=document.createElement('small');
-   contador.textContent='Neste carrinho: '+(pacotesEscolhidos.get(oferta.id)?.quantidade||0);
-   corpo.append(titulo,resumo,cor,preco,contador,botao,retirar);
+   const contador=document.createElement('small');contador.className='akitemm-pacote-contador';
+   contador.textContent='Selecionados no carrinho: '+(pacotesEscolhidos.get(oferta.id)?.quantidade||0);
+   corpo.append(selo,titulo,resumo,cor,preco,contador,botao,retirar);
    card.append(corpo);grade.append(card);
   }
  }
  function mostrarCatalogo(){`)
   .replace("const destino=el('catalogoLojaLoop');destino.replaceChildren();",
-   "const destino=el('catalogoLojaLoop');destino.replaceChildren();renderizarPacotesCompostos();");
+   "const destino=el('catalogoLojaLoop');destino.replaceChildren();renderizarPacotesCompostos();")
+  .replace('const haPublicacoes=filtradoNovidadePublicada();',
+   'const haPublicacoes=filtradoNovidadePublicada()||pacotesVisiveis>0;')
+  .replace("termoBusca?filtrados.length+' produto(s) encontrado(s) para",
+   "termoBusca?(filtrados.length+pacotesVisiveis)+' resultado(s) encontrado(s) para");
  app.get('/staging/loja',(req,res)=>{
   if(!sessao(req))return res.redirect(302,'/staging/cliente');
   return res.type('html').send(html);
