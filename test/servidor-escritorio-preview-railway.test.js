@@ -83,6 +83,8 @@ test('mesma identidade da loja entra no Escritorio LOOP sem novo cadastro',async
  const html=await pagina.text();
  assert.match(html,/<title>LOOP 3\.0 · Escritório Virtual/);
  assert.match(html,/<h1>Escritório Virtual LOOP<\/h1>/);
+ assert.match(html,/<p class="explicacao">Acompanhe sua conta, pedidos e posições\.<\/p>/);
+ assert.doesNotMatch(html,/Neste ambiente, as operações são de teste e não movimentam dinheiro/);
  assert.match(html,/<section class="painel" id="painelLogin" aria-labelledby="tituloLogin">/);
  assert.match(html,/<section class="painel" id="painelCadastro" aria-labelledby="tituloCadastro" hidden>/);
  assert.match(html,/src="\/staging\/assets\/catraca-visor.js" defer/);
