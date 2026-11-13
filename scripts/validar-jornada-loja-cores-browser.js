@@ -282,11 +282,57 @@ const png=Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAIAAAACCAIAAAD91JpzAAAAEklEQVR4n
    assert.equal(fotoKit.planejamentoPosicoes.posicoesVerde,0);
    assert.equal(fotoKit.planejamentoPosicoes.quantidadePosicoesPrevistas,1);
    assert.equal(fotoKit.direitosCriados,0);
+   // Tres pacotes na mesma compra: dois ROXOS e um DOURADO, com
+   // os mesmos SKUs em ambos. Nove unidades, quatro posicoes
+   // previstas, cada unidade e cada regra contabilizada uma so vez.
+   const addRoxo=page.locator(
+    '#akitemmGradePacotes [data-akitemm-pacote="kit-jornada-misto"]');
+   await addRoxo.click();
+   await addRoxo.click();
+   const addDourado=page.locator(
+    '#akitemmGradePacotes [data-akitemm-pacote="kit-jornada-concorrente"]');
+   await addDourado.click();
+   assert.equal(await page.locator('#akitemmTotalItens').innerText(),'9');
+   assert.equal(await page.locator('#akitemmGradePacotes [data-akitemm-retirar-pacote="kit-jornada-misto"]')
+    .count(),1);
+   await page.locator('#akitemmAnaliseQualificacao')
+    .filter({hasText:/Pacote composto completo no carrinho/})
+    .waitFor({state:'visible',timeout:15000});
+   await page.locator('#registrarPedidoLoja').click();
+   await page.locator('#statusPedidoLoja').filter({hasText:/Pedido hom-/})
+    .waitFor({state:'visible'});
+   const multiplos=await page.evaluate(async()=>{
+    const resposta=await fetch('/staging/vitrine/loja/pedidos',{
+     credentials:'same-origin',cache:'no-store'});
+    return {status:resposta.status,dados:await resposta.json()};
+   });
+   assert.equal(multiplos.status,200);
+   assert.equal(multiplos.dados.pedidos.length,3);
+   const terceiro=multiplos.dados.pedidos.find(p=>
+    p.pedidoId!==pedido.pedidoId&&p.pedidoId!==pKit.pedidoId);
+   assert.ok(terceiro);
+   assert.equal(terceiro.totalCentavos,150000);
+   assert.deepEqual(terceiro.itens.map(i=>({id:i.produtoId,q:i.quantidade})),
+    [{id:'jornada-dourado-1',q:3},{id:'jornada-verde-1',q:6}]);
+   const fotoMultipla=ctx.sinalizacaoVitrine.consultarFotografiaPrepedido({
+    prepedidoId:terceiro.pedidoId});
+   assert.deepEqual(fotoMultipla.ofertasCompostas.map(x=>({
+    id:x.id,vezes:x.quantidadePacotes})),[
+    {id:'kit-jornada-misto',vezes:2},
+    {id:'kit-jornada-concorrente',vezes:1}
+   ]);
+   assert.equal(fotoMultipla.planejamentoPosicoes.posicoesRoxo,2);
+   assert.equal(fotoMultipla.planejamentoPosicoes.posicoesDourado,2);
+   assert.equal(fotoMultipla.planejamentoPosicoes.posicoesVerde,0);
+   assert.equal(fotoMultipla.planejamentoPosicoes.quantidadePosicoesPrevistas,4);
+   assert.equal(fotoMultipla.direitosCriados,0);
+   await page.screenshot({path:path.join(__dirname,'../artifacts',
+    'jornada-pacotes-multiplos-'+device.nome+'.png'),fullPage:true});
    await page.screenshot({path:path.join(__dirname,'../artifacts',
     'jornada-carrinho-roxo-'+device.nome+'.png'),fullPage:true});
    assert.deepEqual(errors,[]);
    console.log('AKITEMM_JORNADA_'+device.nome.toUpperCase()+
-    '=LINK_4_CORES_FOTOS_5_TENIS_E_PACOTE_MISTO_1_POSICAO_CADA');
+    '=LINK_4_CORES_FOTOS_5_TENIS_E_3_PACOTES_MULTISSKU_SEM_DUPLICACAO');
    await context.close();
   }
   // Duas pessoas indicadas, ambas entraram pelo mesmo link assinado.
