@@ -91,11 +91,64 @@ function createVitrineCandidata({app,banco,catalogo,contas,intencoes,prePedidos,
   .replace("fetch('/api/laboratorio/participante/'+caminho,{",
    "fetch('/staging/vitrine/'+caminho,{")
   .replace('const catalogo=[],carrinho=new Map();',
-   'const catalogo=[],carrinho=new Map();let csrfCandidato=null,chavePedidoCandidato=null,ofertasCompostas=[],pacoteEscolhido=null;')
+   'const catalogo=[],carrinho=new Map();let csrfCandidato=null,chavePedidoCandidato=null,ofertasCompostas=[],pacotesEscolhidos=new Map(),assinaturaPedidoAnterior=null;')
   .replace(ant,novo)
   .replace('const data=await response.json();',
    "const data=await response.json();\n  if(caminho==='minha-conta'&&response.ok){csrfCandidato=data.csrf||null;atualizarPreviaQualificacao();}\n  if(caminho==='loja/pedidos'&&(response.ok||[400,409].includes(response.status)))chavePedidoCandidato=null;")
-  .replace('function atualizarCarrinho(){',"let seqPrevia=0;\n async function atualizarPreviaQualificacao(){\n  const id=++seqPrevia;\n  const campo=el('akitemmAnaliseQualificacao');\n  if(!campo)return;\n  if(!carrinho.size){campo.textContent='Prévia de laboratório. Adicione produtos; nenhuma posição será criada.';return;}\n  if(!csrfCandidato){campo.textContent='Conferindo sessão para simulação...';return;}\n  try{\n   const response=await fetch('/staging/vitrine/simular-qualificacao',{\n    method:'POST',credentials:'same-origin',cache:'no-store',\n    headers:{'Content-Type':'application/json','X-LOOP-LAB':'participante',\n     'X-Checkout-Csrf':csrfCandidato},\n    body:JSON.stringify({itens:[...carrinho].map(([produtoId,quantidade])=>({produtoId,quantidade})),\n     ofertaCompostaId:pacoteEscolhido?.id||null,\n     ...(pacoteEscolhido?{ofertaCompostaRevisao:pacoteEscolhido.revisao}:{})})\n   });\n   const dados=await response.json();\n   if(id!==seqPrevia)return;\n   campo.textContent=response.ok?dados.mensagem:\n    'Prévia não disponível: '+(dados.erro||response.status)+'. Nenhum benefício foi criado.';\n  }catch{if(id===seqPrevia)campo.textContent='Prévia temporariamente indisponível. Nenhum benefício foi criado.';}\n }\n function atualizarCarrinho(){\n  if(pacoteEscolhido){\n   const escolhido=ofertasCompostas.find(o=>o.id===pacoteEscolhido.id);\n   if(!escolhido||escolhido.revisao!==pacoteEscolhido.revisao||\n      !escolhido.itens.every(i=>(carrinho.get(i.produtoId)||0)>=i.quantidade))\n    pacoteEscolhido=null;\n  }\n  atualizarPreviaQualificacao();")
+  .replace('function atualizarCarrinho(){',`
+let seqPrevia=0;
+function escolhasPacotes(){
+ return [...pacotesEscolhidos.values()].map(p=>({
+  id:p.id,revisao:p.revisao,quantidade:p.quantidade
+ })).sort((a,b)=>a.id.localeCompare(b.id));
+}
+function validarEscolhasPacotes(){
+ if(!pacotesEscolhidos.size)return;
+ const usados=new Map();
+ for(const sel of pacotesEscolhidos.values()){
+  const o=ofertasCompostas.find(p=>p.id===sel.id);
+  if(!o||o.revisao!==sel.revisao){pacotesEscolhidos.clear();break;}
+  for(const item of o.itens)
+   usados.set(item.produtoId,(usados.get(item.produtoId)||0)+
+    item.quantidade*sel.quantidade);
+ }
+ if([...usados].some(([id,qtd])=>qtd>(carrinho.get(id)||0))){
+  pacotesEscolhidos.clear();
+  el('statusPedidoLoja').textContent=
+   'O carrinho mudou; escolha novamente os pacotes para evitar regra incorreta.';
+ }
+}
+async function atualizarPreviaQualificacao(){
+ const token=++seqPrevia,campo=el('akitemmAnaliseQualificacao');
+ if(!campo)return;
+ if(!carrinho.size){
+  campo.textContent='Prévia de laboratório. Adicione produtos; nenhuma posição será criada.';return;
+ }
+ if(!csrfCandidato){campo.textContent='Conferindo sessão para simulação...';return;}
+ try{
+  const resposta=await fetch('/staging/vitrine/simular-qualificacao',{
+   method:'POST',credentials:'same-origin',cache:'no-store',
+   headers:{'Content-Type':'application/json','X-LOOP-LAB':'participante',
+    'X-Checkout-Csrf':csrfCandidato},
+   body:JSON.stringify({itens:[...carrinho].map(([produtoId,quantidade])=>({produtoId,quantidade})),
+    ofertasCompostasSelecionadas:escolhasPacotes()})
+  });
+  const dados=await resposta.json();
+  if(token!==seqPrevia)return;
+  campo.textContent=resposta.ok?dados.mensagem:
+   'Prévia indisponível: '+(dados.erro||resposta.status)+'. Nenhum direito criado.';
+ }catch{if(token===seqPrevia)
+  campo.textContent='Prévia temporariamente indisponível.';}
+}
+function atualizarCarrinho(){
+ validarEscolhasPacotes();
+ const assinatura=JSON.stringify([[...carrinho],escolhasPacotes()]);
+ if(assinatura!==assinaturaPedidoAnterior){
+  assinaturaPedidoAnterior=assinatura;
+  if(!pedidoEmAndamento)chavePedidoCandidato=null;
+ }
+ atualizarPreviaQualificacao();
+`)
   .replace("const informacoes=document.createElement('div');informacoes.className='akitemm-detalhe-informacoes';",
    "if(p.videoApresentacaoLocal===true){const video=document.createElement('video');"+
    "video.controls=true;video.preload='metadata';video.playsInline=true;"+
@@ -119,14 +172,10 @@ function createVitrineCandidata({app,banco,catalogo,contas,intencoes,prePedidos,
    "adicional.textContent='Oferta ROXA configurável · sem posições ou benefícios reais';")
   .replace('catalogo.splice(0,catalogo.length,...dados.produtos);',
    'catalogo.splice(0,catalogo.length,...dados.produtos);ofertasCompostas=dados.ofertasCompostas||[];')
-  .replace('const assinatura=JSON.stringify([...carrinho]);',
-   'const assinatura=JSON.stringify([[...carrinho],pacoteEscolhido?.id||null,pacoteEscolhido?.revisao||null]);')
-  .replace('if(assinatura!==assinaturaCarrinhoAnterior){',
-   'if(assinatura!==assinaturaCarrinhoAnterior){chavePedidoCandidato=null;')
   .replace('    {itens,participarLoop}:{itens});',
-   '     {itens,participarLoop,ofertaCompostaId:pacoteEscolhido?.id||null,...(pacoteEscolhido?{ofertaCompostaRevisao:pacoteEscolhido.revisao}:{})}:{itens,ofertaCompostaId:pacoteEscolhido?.id||null,...(pacoteEscolhido?{ofertaCompostaRevisao:pacoteEscolhido.revisao}:{})});')
+   '    {itens,participarLoop,ofertasCompostasSelecionadas:escolhasPacotes()}:{itens,ofertasCompostasSelecionadas:escolhasPacotes()});')
   .replace('carrinho.clear();atualizarCarrinho();await carregarPedidos();',
-   'carrinho.clear();pacoteEscolhido=null;atualizarCarrinho();await carregarPedidos();')
+   'carrinho.clear();pacotesEscolhidos.clear();atualizarCarrinho();await carregarPedidos();')
   .replace('function mostrarCatalogo(){',`
  function renderizarPacotesCompostos(){
   const secao=el('akitemmPacotesCompostos'),grade=el('akitemmGradePacotes');
@@ -150,7 +199,7 @@ function createVitrineCandidata({app,banco,catalogo,contas,intencoes,prePedidos,
    const preco=document.createElement('p');preco.className='preco-loja-loop';
    preco.textContent=dinheiro(oferta.precoPacoteCentavos);
    const botao=document.createElement('button');botao.type='button';
-   botao.className='akitemm-adicionar';botao.textContent='Escolher este pacote';
+   botao.className='akitemm-adicionar';botao.textContent='Adicionar pacote ao carrinho';
    botao.dataset.akitemmPacote=oferta.id;
    botao.addEventListener('click',()=>{
     const proximo=new Map(carrinho);
@@ -166,11 +215,33 @@ function createVitrineCandidata({app,banco,catalogo,contas,intencoes,prePedidos,
     }
     carrinho.clear();
     for(const [id,qtd] of proximo)carrinho.set(id,qtd);
-    pacoteEscolhido={id:oferta.id,revisao:oferta.revisao};
-    el('statusPedidoLoja').textContent=oferta.nome+' selecionado. Esta oferta define a regra do pacote no pedido.';
-    atualizarCarrinho();
+    const anterior=pacotesEscolhidos.get(oferta.id);
+    pacotesEscolhidos.set(oferta.id,{
+     id:oferta.id,revisao:oferta.revisao,quantidade:(anterior?.quantidade||0)+1});
+    el('statusPedidoLoja').textContent=oferta.nome+' incluído. Agora há '+
+     escolhasPacotes().reduce((n,p)=>n+p.quantidade,0)+' pacote(s) neste pedido.';
+    atualizarCarrinho();mostrarCatalogo();
    });
-   corpo.append(titulo,resumo,cor,preco,botao);card.append(corpo);grade.append(card);
+   const retirar=document.createElement('button');retirar.type='button';
+   retirar.textContent='Retirar um pacote';retirar.dataset.akitemmRetirarPacote=oferta.id;
+   retirar.disabled=!pacotesEscolhidos.has(oferta.id);
+   retirar.addEventListener('click',()=>{
+    const escolhido=pacotesEscolhidos.get(oferta.id);
+    if(!escolhido)return;
+    for(const parte of oferta.itens){
+     const restante=(carrinho.get(parte.produtoId)||0)-parte.quantidade;
+     if(restante>0)carrinho.set(parte.produtoId,restante);
+     else carrinho.delete(parte.produtoId);
+    }
+    if(escolhido.quantidade>1)
+     pacotesEscolhidos.set(oferta.id,{...escolhido,quantidade:escolhido.quantidade-1});
+    else pacotesEscolhidos.delete(oferta.id);
+    atualizarCarrinho();mostrarCatalogo();
+   });
+   const contador=document.createElement('small');
+   contador.textContent='Neste carrinho: '+(pacotesEscolhidos.get(oferta.id)?.quantidade||0);
+   corpo.append(titulo,resumo,cor,preco,contador,botao,retirar);
+   card.append(corpo);grade.append(card);
   }
  }
  function mostrarCatalogo(){`)
