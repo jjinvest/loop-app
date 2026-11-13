@@ -255,7 +255,7 @@ const png=Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAIAAAACCAIAAAD91JpzAAAAEklEQVR4n
     'pacote roxo nao depende de evento');
    await page.locator('#akitemmBusca').fill('KIT MISTO DOURADO E VERDE');
    await page.locator('#akitemmResultadoProdutos')
-    .filter({hasText:/1 resultado\\(s\\) encontrado/})
+    .filter({hasText:/1 resultado/})
     .waitFor({state:'visible',timeout:15000});
    await page.locator('#akitemmBusca').fill('');
    await oferta.waitFor({state:'visible'});
