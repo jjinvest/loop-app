@@ -583,9 +583,11 @@ function mp4TrintaSegundos(){
     'escritorio-admin-candidato-'+item.nome+'.png'),fullPage:true});
    await page.locator('#atualizarPedidos').click();
    await page.locator('#minhaPreviaFilas')
-    .filter({hasText:/Posições reais: 0/}).waitFor();
+    .filter({hasText:/Registros anteriores:/}).waitFor();
    await page.locator('#minhasPreAdesoes')
-    .filter({hasText:/Nenhuma pré-adesão fictícia registrada/}).waitFor();
+    .filter({hasText:/Nenhuma solicitação anterior/}).waitFor();
+   assert.doesNotMatch(await page.locator('#minhaPreviaFilas').innerText(),
+    /PSP|Posições reais:|SQL|SQLite|homologação/i);
    await page.locator('#comunicadosCliente').filter({
     hasText:/Registro de acompanhamento de laboratório/
    }).waitFor();
