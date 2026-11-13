@@ -478,7 +478,7 @@ async function main(){
     hasText:new RegExp('Fila B: '+diagnostico.filaB)
    }).waitFor();
    assert.equal(await pagina.locator('#motorContadorEventos').innerText(),
-    motorLoop.consultar().tabuleiro.eventosNoCiclo+'/6 eventos de validação interna');
+    motorLoop.consultar().tabuleiro.eventosNoCiclo+' de 6 eventos neste ciclo');
    const centroPersistido=estadoCliente.tabuleiro?.centro;
    const centroEsperado=centroPersistido?
     (centroPersistido.dourada? 
