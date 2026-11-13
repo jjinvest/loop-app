@@ -12,8 +12,8 @@ const {randomBytes,randomUUID}=require('node:crypto');
 function conferirInfra(ambiente=process.env,{pasta='/dados-reais',io=fs}={}){
  if(ambiente.NODE_ENV!=='production'||
     ambiente.LOOP_REAL_PREPARACAO_INTERNA!=='SIM'||
-    ambiente.LOOP_REAL_CADASTRO_GO==='SIM'||
-    ambiente.LOOP_REAL_APROVACAO_DOCUMENTOS==='SIM'||
+    ambiente.LOOP_REAL_CADASTRO_GO!=='NAO'||
+    ambiente.LOOP_REAL_APROVACAO_DOCUMENTOS!=='NAO'||
     ambiente.LOOP_REAL_DADOS_SEPARADOS!=='SIM')
   throw Error('PREPARACAO_REAL_EXIGE_CADASTRO_BLOQUEADO');
  if(ambiente.LOOP_CLIENTES_LAB==='SIM'||
@@ -46,6 +46,16 @@ function criarServidorPreparacao({ambiente=process.env,pasta='/dados-reais',io=f
   res.setHeader('X-Frame-Options','DENY');
   // Health de infraestrutura diferente de readiness para clientes.
   if(req.method==='GET'&&req.url==='/healthz'){
+   // Revalidar volume em cada probe: o startup aprovado não prova
+   // que o armazenamento continue disponível depois de uma falha.
+   try{conferirInfra(ambiente,{pasta,io});}catch{
+    res.writeHead(503);
+    return res.end(JSON.stringify({
+     estado:'INFRAESTRUTURA_REAL_INDISPONIVEL',
+     volumeDedicado:false,cadastroReal:false,
+     checkoutReal:false,financeiroReal:false
+    }));
+   }
    res.writeHead(200);
    return res.end(JSON.stringify({
     estado:'INFRAESTRUTURA_REAL_INICIADA',

@@ -28,7 +28,11 @@ test('preparacao recusa GO comercial, documentos aprovados e modos de laboratori
  const {pasta,ambiente}=setup(t);
  for(const alteracao of [
   {LOOP_REAL_CADASTRO_GO:'SIM'},
+  {LOOP_REAL_CADASTRO_GO:undefined},
+  {LOOP_REAL_CADASTRO_GO:'PENDENTE'},
   {LOOP_REAL_APROVACAO_DOCUMENTOS:'SIM'},
+  {LOOP_REAL_APROVACAO_DOCUMENTOS:undefined},
+  {LOOP_REAL_APROVACAO_DOCUMENTOS:'PENDENTE'},
   {LOOP_REAL_PREPARACAO_INTERNA:'NAO'},
   {LOOP_REAL_DADOS_SEPARADOS:'NAO'},
   {NODE_ENV:'development'},
@@ -75,4 +79,26 @@ test('infra health 200; readiness, cadastro, login, checkout e admin 503',async 
  assert.equal(cadastro.status,503);
  assert.equal(cadastro.body.cadastroReal,false);
  assert.deepEqual(fs.readdirSync(pasta),[]);
+});
+
+// Um volume perdido após o boot jamais pode continuar parecendo healthy.
+test('healthz falha fechado se o volume real some após inicializar',async t=>{
+ const {pasta,ambiente}=setup(t);
+ const server=criarServidorPreparacao({pasta,ambiente});
+ server.listen(0,'127.0.0.1');await once(server,'listening');
+ t.after(()=>new Promise(resolve=>server.close(resolve)));
+ const base='http://127.0.0.1:'+server.address().port;
+ assert.equal((await fetch(base+'/healthz')).status,200);
+ const movida=pasta+'-temporariamente-ausente';
+ fs.renameSync(pasta,movida);
+ try{
+  const resposta=await fetch(base+'/healthz');
+  assert.equal(resposta.status,503);
+  const json=await resposta.json();
+  assert.equal(json.estado,'INFRAESTRUTURA_REAL_INDISPONIVEL');
+  assert.equal(json.cadastroReal,false);
+  assert.equal(resposta.headers.get('set-cookie'),null);
+  assert.equal((await fetch(base+'/readyz')).status,503);
+ }finally{fs.renameSync(movida,pasta);}
+ assert.equal((await fetch(base+'/healthz')).status,200);
 });
