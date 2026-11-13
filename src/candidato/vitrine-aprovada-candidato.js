@@ -33,7 +33,9 @@ function createVitrineCandidata({app,banco,catalogo,contas,intencoes,prePedidos,
  prePedidos.definirFotografiaClassificacao(args=>{
   // Mesmo COMMIT do prepedido: classificação + endereço físico cifrado.
   const escolha=args.ofertaCompostaCotada;
-  const opcoes=escolha===undefined?{}:
+  const opcoes=Object.hasOwn(args,'ofertasCompostasCotadas')?
+   {selecoes:args.ofertasCompostasCotadas}:
+   escolha===undefined?{}:
    escolha===null?{ofertaId:null}:
    {ofertaId:escolha.id,revisaoEsperada:escolha.revisao};
   const fotografia=sinalizacao.gravarFotografiaPrepedido({
@@ -305,7 +307,8 @@ function createVitrineCandidata({app,banco,catalogo,contas,intencoes,prePedidos,
     return res.status(403).json({erro:'MUTACAO_NAO_AUTORIZADA'});
    if(!req.is('application/json')||!req.body||Array.isArray(req.body)||
       typeof req.body!=='object'||Object.keys(req.body).some(k=>
-       !['itens','ofertaCompostaId','ofertaCompostaRevisao'].includes(k)))
+       !['itens','ofertaCompostaId','ofertaCompostaRevisao',
+        'ofertasCompostasSelecionadas'].includes(k)))
     return res.status(400).json({erro:'CORPO_PEDIDO_INVALIDO'});
    const key=req.get('idempotency-key');
    if(typeof key!=='string'||!/^[a-zA-Z0-9_-]{16,128}$/.test(key))
@@ -317,19 +320,25 @@ function createVitrineCandidata({app,banco,catalogo,contas,intencoes,prePedidos,
      ...(Object.hasOwn(req.body,'ofertaCompostaId')?
       {ofertaCompostaId:req.body.ofertaCompostaId}:{}),
      ...(Object.hasOwn(req.body,'ofertaCompostaRevisao')?
-      {ofertaCompostaRevisao:req.body.ofertaCompostaRevisao}:{})};
+      {ofertaCompostaRevisao:req.body.ofertaCompostaRevisao}:{}),
+     ...(Object.hasOwn(req.body,'ofertasCompostasSelecionadas')?
+      {ofertasCompostasSelecionadas:req.body.ofertasCompostasSelecionadas}:{})};
     let intent=intencoes.consultarPorChave({
      titularId:req.titularVitrine,chaveIdempotencia:key,entrada});
     if(!intent){
      const cotacao=await cotarCheckoutPublico({
       repositorio:catalogo,entrada:{itens:entrada.itens}});
-     const pacotes=ofertasCompostas.fotografar(cotacao.itens,{
-      ofertaId:entrada.ofertaCompostaId,
-      revisaoEsperada:entrada.ofertaCompostaRevisao??null});
+     const pacotes=ofertasCompostas.fotografar(cotacao.itens,
+      Object.hasOwn(entrada,'ofertasCompostasSelecionadas')?
+       {selecoes:entrada.ofertasCompostasSelecionadas}:
+       {ofertaId:entrada.ofertaCompostaId,
+        revisaoEsperada:entrada.ofertaCompostaRevisao??null});
      // O servidor persiste a escolha/revisao na cotacao imutavel,
      // nao apenas na sessao nem em estado mutavel da vitrine.
-     const cotacaoComEscolha={...cotacao,
-      ofertaCompostaCotada:pacotes.length?
+     const cotacaoComEscolha=Object.hasOwn(entrada,'ofertasCompostasSelecionadas')?
+      {...cotacao,ofertasCompostasCotadas:pacotes.map(p=>({
+       id:p.id,revisao:p.revisao,quantidade:p.quantidadePacotes}))}:
+      {...cotacao,ofertaCompostaCotada:pacotes.length?
        {id:pacotes[0].id,revisao:pacotes[0].revisao}:null};
      intent=intencoes.criar({
       titularId:req.titularVitrine,chaveIdempotencia:key,
@@ -347,7 +356,8 @@ function createVitrineCandidata({app,banco,catalogo,contas,intencoes,prePedidos,
    }catch(e){
     return res.status(['CHAVE_IDEMPOTENCIA_CONFLITANTE',
      'CATALOGO_ALTERADO_REFAZER_COTACAO',
-     'OFERTA_COMPOSTA_ALTERADA_REFAZER_COTACAO'].includes(e.codigo)?409:
+     'OFERTA_COMPOSTA_ALTERADA_REFAZER_COTACAO',
+     'OFERTA_COMPOSTA_QUANTIDADE_EXCEDIDA'].includes(e.codigo)?409:
      e.codigo==='OFERTA_COMPOSTA_NAO_DISPONIVEL_NO_CARRINHO'?409:
      e.codigo==='PRODUTO_INDISPONIVEL_PARA_COTACAO'?404:400)
      .json({erro:e.codigo||'PEDIDO_INVALIDO',pagamentoReal:false});

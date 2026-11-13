@@ -187,7 +187,9 @@ class PrePedidosCheckoutStagingSQLite{
      // Identificador e revisao foram cotados no servidor e persistidos
      // no rascunho imutavel; revalidar tudo dentro desta transacao.
      ...(Object.hasOwn(antigo,'ofertaCompostaCotada')?
-      {ofertaCompostaCotada:antigo.ofertaCompostaCotada}:{})});
+      {ofertaCompostaCotada:antigo.ofertaCompostaCotada}:{}),
+     ...(Object.hasOwn(antigo,'ofertasCompostasCotadas')?
+      {ofertasCompostasCotadas:antigo.ofertasCompostasCotadas}:{})});
     if(!foto||typeof foto.then==='function')
      throw falha('FOTOGRAFIA_CLASSIFICACAO_NAO_GRAVADA');
    }

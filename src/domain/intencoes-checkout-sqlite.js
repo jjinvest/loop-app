@@ -26,6 +26,25 @@ function itensCanonicos(entrada){
 // Linhas historicas sem pacote conservam a serializacao original do array.
 function assinaturaEntrada(entrada){
  const itens=itensCanonicos(entrada);
+ if(Object.hasOwn(entrada,'ofertasCompostasSelecionadas')){
+  if(Object.hasOwn(entrada,'ofertaCompostaId')||
+     Object.hasOwn(entrada,'ofertaCompostaRevisao'))
+   throw falha('OFERTAS_COMPOSTAS_CONTRATOS_INCOMPATIVEIS');
+  const selecoes=entrada.ofertasCompostasSelecionadas;
+  if(!Array.isArray(selecoes)||selecoes.length>20)
+   throw falha('OFERTAS_COMPOSTAS_SELECAO_INVALIDA');
+  const vistos=new Set(),canonicas=selecoes.map(s=>{
+   if(!s||typeof s!=='object'||Array.isArray(s)||
+      Object.keys(s).sort().join(',')!=='id,quantidade,revisao'||
+      typeof s.id!=='string'||!/^[a-z0-9-]{3,80}$/.test(s.id)||
+      !Number.isSafeInteger(s.quantidade)||s.quantidade<1||s.quantidade>50||
+      !Number.isSafeInteger(s.revisao)||s.revisao<1||vistos.has(s.id))
+    throw falha('OFERTAS_COMPOSTAS_SELECAO_INVALIDA');
+   vistos.add(s.id);
+   return {id:s.id,revisao:s.revisao,quantidade:s.quantidade};
+  }).sort((a,b)=>a.id.localeCompare(b.id));
+  return JSON.stringify({itens,ofertasCompostasSelecionadas:canonicas});
+ }
  const idPresente=Object.hasOwn(entrada,'ofertaCompostaId');
  const revPresente=Object.hasOwn(entrada,'ofertaCompostaRevisao');
  if(!idPresente){

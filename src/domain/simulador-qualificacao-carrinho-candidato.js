@@ -14,7 +14,8 @@ async function simularQualificacaoCandidato({entrada,catalogo,sinalizacao,
   erro('FONTE_UNICA_OBRIGATORIA');
  if(!entrada||typeof entrada!=='object'||Array.isArray(entrada)||
     Object.keys(entrada).some(k=>
-     !['itens','ofertaCompostaId','ofertaCompostaRevisao'].includes(k)))
+     !['itens','ofertaCompostaId','ofertaCompostaRevisao',
+       'ofertasCompostasSelecionadas'].includes(k)))
   erro('CAMPOS_SIMULACAO_INVALIDOS');
  const itens=entradaValida({itens:entrada.itens});
  let total=0,valorVerde=0,quantidadeProdutosVerdes=0;
@@ -73,8 +74,10 @@ async function simularQualificacaoCandidato({entrada,catalogo,sinalizacao,
   });
  }
  const pacotes=ofertasCompostas?ofertasCompostas.fotografar(detalhes,
-  {ofertaId:entrada.ofertaCompostaId,
-   revisaoEsperada:entrada.ofertaCompostaRevisao??null}):[];
+  Object.hasOwn(entrada,'ofertasCompostasSelecionadas')?
+   {selecoes:entrada.ofertasCompostasSelecionadas}:
+   {ofertaId:entrada.ofertaCompostaId,
+    revisaoEsperada:entrada.ofertaCompostaRevisao??null}):[];
  const planejamentoPosicoes=planejarPosicoesCompraAkitemm(detalhes,
   {ofertasCompostas:pacotes});
  // A qualificacao valida vem da regra efetiva do pedido, nao do total
