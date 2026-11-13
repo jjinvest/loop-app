@@ -336,18 +336,18 @@ async function atualizarResumo(){
   $('boasVindas').textContent='Bem-vindo, '+perfil.nome+' · @'+perfil.nick;
   $('loop03NickIntegrado').textContent='@'+perfil.nick;
   $('loop03TotalIntegrado').textContent=String(motor.posicoesAtivasDoTitular)+' / '+
-   String(motor.limitePosicoesAtivas)+' (ensaio)';
+   String(motor.limitePosicoesAtivas);
   $('loop03Giros24Integrado').textContent=String(motor.catraca.giros24h);
   const selecionada=motor.minhasPosicoes.find(x=>x.numero===posicaoSelecionadaMotor);
   if(!selecionada)posicaoSelecionadaMotor=null;
-  $('loop03NumeroIntegrado').textContent=selecionada?'#'+selecionada.numero:'#0000';
+  $('loop03NumeroIntegrado').textContent=selecionada?'#'+selecionada.numero:'—';
   $('resumoPedidos').textContent=String(pedidos.totalPedidos??pedidos.pedidos?.length??0);
   $('resumoPosicoes').textContent=String(motor.posicoesAtivasDoTitular)+
-   ' no motor de ensaio; '+String(filas.meusPendentesHistoricos||0)+' históricos PSP';
+   ' ativa(s) · '+String(filas.meusPendentesHistoricos||0)+' registros de pedidos anteriores';
   $('resumoEmail').textContent=perfil.emailVerificado?'Confirmado':'Pendente';
   $('resumoEquipe').textContent=String(equipe.total);
   $('linksNick').textContent='Seu nick: @'+perfil.nick;
- }catch(e){dizer('Não foi possível atualizar a visão geral: '+e.message);}
+ }catch(e){dizer('Não foi possível atualizar seus dados. Tente novamente.');}
 }
 const visualTabuleiro=window.LoopTabuleiroVisual.criar({elemento:$});
 async function atualizarTabuleiroIntegrado(){
@@ -364,30 +364,20 @@ async function atualizarTabuleiroIntegrado(){
    visualTabuleiro.preencherVaga('tabuleiroMotorVaga'+(i+1),p));
   visualTabuleiro.preencherLuzes(motor.tabuleiro.eventosNoCiclo);
   $('motorContadorEventos').textContent=motor.tabuleiro.eventosNoCiclo+
-   '/6 eventos válidos de ensaio';
+   ' de 6 eventos neste ciclo';
   $('loop03Giros24Integrado').textContent=String(motor.catraca.giros24h);
   visorCatraca.registrarAgenda(motor.agenda);
   visorCatraca.observar(motor.catraca.giros,
    motor.tabuleiro.eventosNoCiclo);
-  estado.textContent='Motor V6 conectado ao SQLite desta conta · '+motor.ordemAlimentacao+
-   ' · '+motor.catraca.estado+' · '+motor.catraca.giros+
-   ' giros de ensaio. '+
-   (motor.agenda?.modoExecucao==='NATURAL'?
-    'Modo natural: vendas confirmadas alimentam o movimento sem horário. ':
-    motor.agenda?.modoExecucao==='AGENDADA'?
-    'Controle de horário: '+motor.agenda.abertura+'–'+
-     motor.agenda.fechamentoAplicado+', intervalo '+motor.agenda.intervaloMinutos+
-     ' min. ':
-    motor.agenda?.modoExecucao==='STOP'?
-    'STOP do administrador: a catraca não se move; vendas e filas continuam. ':
-    'Catraca sob comando manual de laboratório. ')+
-   'Compras Sandbox confirmadas aguardando luz: '+
-   (motor.agenda?.aguardandoContabilizacao??0)+
-   '. Luzes representam vendas anteriores, nunca compras inventadas. '+
-   'Posições e valores comerciais continuam bloqueados.';
+  const movimento=motor.agenda?.modoExecucao==='STOP'?
+   'Movimentos pausados conforme a programação.':
+   motor.agenda?.modoExecucao==='AGENDADA'?
+    'Movimentos conforme os horários programados.':
+    'Acompanhe os movimentos da catraca.';
+  estado.textContent=motor.tabuleiro.eventosNoCiclo+
+   ' de 6 eventos neste ciclo. '+movimento;
  }catch(e){
-  estado.textContent='Leitura do motor indisponível: '+e.message+
-   '. Não foram apresentados ocupantes ou giros não verificados.';
+  estado.textContent='Não foi possível carregar o tabuleiro. Tente novamente.';
  }
 }
 function fecharMenuIntegrado(){
@@ -416,19 +406,19 @@ async function atualizarPosicoes(){
    !ativas.some(p=>p.prepedidoId&&p.prepedidoId===h.prepedidoId));
   const resumo=document.createElement('p');
   resumo.className='subtexto';
-  resumo.textContent='Ativas no motor de ensaio: '+ativas.length+
-   '/10 · Registros históricos PSP de laboratório: '+historicos.length+
-   ' · Posicoes comerciais ativas: 0.';
+  resumo.textContent='Posições em acompanhamento: '+ativas.length+
+   '/10 · Pedidos anteriores: '+historicos.length+
+   '.';
   const grade=document.createElement('div');
   grade.className='loop03-grade-posicoes-ensaio';
   grade.setAttribute('role','list');
   grade.setAttribute('aria-label','Dez espaços de posições da própria conta');
   const estados={
-   APENAS_PREVIA_FILA_B_AZUL:'Pendente de confirmação · hipótese Fila B',
-   EXIGE_REVISAO_PSP:'Pagamento de teste exige revisão',
-   SEM_FOTOGRAFIA_HISTORICA:'Falta fotografia histórica',
-   OFERTA_HISTORICA_NAO_QUALIFICADA:'Oferta não qualificada',
-   ACIMA_DEZ_APENAS_PARA_PLANEJAMENTO:'Acima do limite para planejamento'
+   APENAS_PREVIA_FILA_B_AZUL:'Aguardando confirmação · Fila B',
+   EXIGE_REVISAO_PSP:'Pedido em análise',
+   SEM_FOTOGRAFIA_HISTORICA:'Informações do pedido em análise',
+   OFERTA_HISTORICA_NAO_QUALIFICADA:'Pedido sem posição',
+   ACIMA_DEZ_APENAS_PARA_PLANEJAMENTO:'Limite de posições atingido'
   };
   for(let i=0;i<10;i++){
    const posicao=ativas[i]||null,registro=posicao?null:historicosExtras[i-ativas.length]||null;
@@ -442,17 +432,17 @@ async function atualizarPosicoes(){
    nome.textContent='Posição '+(i+1);
    const numero=document.createElement('strong');
    numero.textContent=posicao?'#'+posicao.numero:
-    registro?'PENDENTE · TESTE':'Espaço disponível';
+    registro?'AGUARDANDO':'Espaço disponível';
    const status=document.createElement('p');
-   status.textContent=posicao?('Motor de ensaio · '+posicao.local+
+   status.textContent=posicao?('Local: '+posicao.local+
     (posicao.fila?' '+posicao.fila:'')+
-    ' · indicações nesta posição: '+(posicao.indicacoesVinculadas||0)+
+    ' · Indicações: '+(posicao.indicacoesVinculadas||0)+
     (posicao.pendente?' · aguardando confirmação':'')):
     registro?(estados[registro.estado]||'Registro em revisão'):'Sem posição vinculada';
    cartao.append(nome,numero,status);
    if(posicao?.aceiteIndividualRegistrado){
     const aceite=document.createElement('small');
-    aceite.textContent='Aceite desta posição registrado no ensaio · identidade externa não verificada.';
+    aceite.textContent='Termos confirmados · verificação externa ainda pendente.';
     cartao.append(aceite);
    }
    if(posicao?.pendente){
@@ -468,9 +458,9 @@ async function atualizarPosicoes(){
      const caixa=document.createElement('input');
      caixa.type='checkbox';caixa.required=true;
      rotulo.append(caixa,document.createTextNode(
-      ' Aceito nesta posição os termos de ensaio '+termos.termosVersao+' (sem direitos reais).'));
+      ' Li e aceito os termos desta posição (versão '+termos.termosVersao+').'));
      const botaoAceite=document.createElement('button');
-     botaoAceite.type='submit';botaoAceite.textContent='Confirmar esta posição (ensaio)';
+     botaoAceite.type='submit';botaoAceite.textContent='Confirmar termos desta posição';
      formulario.append(rotulo,botaoAceite);
      formulario.addEventListener('submit',async ev=>{
       ev.preventDefault();
@@ -483,7 +473,7 @@ async function atualizarPosicoes(){
          aceiteExplicito:true}
        });
        if(resultado.aceiteIndividualRegistrado!==true)throw Error('ACEITE_NAO_REGISTRADO');
-       dizer('Aceite de ensaio registrado para a posição #'+posicao.numero+'.');
+       dizer('Termos confirmados para a posição #'+posicao.numero+'.');
        await atualizarPosicoes();
        if(aba==='conteudoTabuleiro')await atualizarTabuleiroIntegrado();
       }catch(e){dizer('Não foi possível confirmar a posição #'+posicao.numero+': '+e.message);
@@ -494,7 +484,7 @@ async function atualizarPosicoes(){
    }
    if(posicao){
     const botao=document.createElement('button');botao.type='button';
-    botao.textContent='Selecionar esta posição de ensaio';
+    botao.textContent='Selecionar esta posição';
     botao.addEventListener('click',()=>{
      posicaoSelecionadaMotor=posicao.numero;
      $('loop03NumeroIntegrado').textContent='#'+posicao.numero;
@@ -503,7 +493,7 @@ async function atualizarPosicoes(){
     cartao.append(botao);
    }else if(registro){
     const origem=document.createElement('small');
-    origem.textContent='Pedido de ensaio: '+String(registro.prepedidoId||'Não identificado');
+    origem.textContent='Pedido de origem: '+String(registro.prepedidoId||'Não identificado');
     cartao.append(origem);
    }
    grade.append(cartao);
@@ -512,7 +502,7 @@ async function atualizarPosicoes(){
   const fora=Math.max(0,historicosExtras.length-(10-ativas.length));
   aviso.textContent=fora?
    'Outros '+fora+' registros permanecem no histórico de pedidos. O limite de 10 aplica-se a posições ativas, não aos pedidos passados.':
-   'Nenhum cartão permite ativar, girar ou receber valores reais nesta homologação.';
+   'Acompanhe suas posições nesta área.';
   area.replaceChildren(resumo,grade,aviso);
  }catch(e){
   area.replaceChildren();
@@ -629,11 +619,11 @@ async function atualizarEquipe(pagina=0){
    dados.totalFiltrado+' resultado(s) encontrados · '+dados.total+
    ' cadastro(s) na sua rede.':
    dados.total+' cadastro(s) pelo seu link · '+dados.indicacoesQualificadas+
-   ' indicação(ões) alocada(s) no ensaio · comissões reais: 0.';
+   ' indicação(ões) vinculada(s).';
   if(pagina===0&&dados.totalFiltrado===0){
    const vazio=elementoEquipe('p','loop03-rede-vazia',busca?
     'Nenhum cadastro encontrado. Procure por nick ou número do cadastro.':
-    'Sua rede ainda não possui cadastros de teste. Compartilhe o link em Meus Links.');
+    'Sua rede ainda não possui cadastros. Compartilhe o link em Meus Links.');
    $('listaEquipe').append(vazio);
   }
   for(const pessoa of dados.cadastros)$('listaEquipe').append(renderizarIndicadoNaRede(pessoa));
@@ -641,7 +631,7 @@ async function atualizarEquipe(pagina=0){
   $('maisEquipe').hidden=proximaPaginaEquipe===null;
  }catch(e){
   if(tentativa!==sequenciaEquipe)return;
-  $('equipeResumo').textContent='Não foi possível consultar sua rede: '+e.message;
+  $('equipeResumo').textContent='Não foi possível carregar sua equipe. Tente novamente.';
  }
 }
 async function atualizarLinks(){
