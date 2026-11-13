@@ -45,11 +45,11 @@ test('dez cartoes integrados e origem de pedido inserida somente como texto',asy
  const [,grade]=area.children;
  assert.equal(grade.children.length,10);
  assert.equal(grade.attributes.role,'list');
- assert.match(grade.children[0].children[1].textContent,/PENDENTE/);
+ assert.match(grade.children[0].children[1].textContent,/AGUARDANDO/);
  assert.equal(grade.children[0].children[3].textContent,
-  'Pedido de ensaio: hom-<img src=x onerror=alert(1)>');
+  'Pedido de origem: hom-<img src=x onerror=alert(1)>');
  assert.match(grade.children[1].children[1].textContent,/Espaço disponível/);
- assert.match(area.children[0].textContent,/comerciais ativas: 0/);
+ assert.match(area.children[0].textContent,/Posições em acompanhamento/);
 });
 test('mesma grade mostra posicoes vindas do motor sem confundir com dinheiro',async()=>{
  const area=await desenhar({meusPendentesHistoricos:0,pendencias:[]},{
@@ -57,10 +57,10 @@ test('mesma grade mostra posicoes vindas do motor sem confundir com dinheiro',as
  });
  assert.equal(area.children[1].children.length,10);
  assert.equal(area.children[1].children[0].children[1].textContent,'#42');
- assert.match(area.children[1].children[0].children[2].textContent,/Motor de ensaio/);
+ assert.match(area.children[1].children[0].children[2].textContent,/Local: FILA/);
  assert.equal(area.children[1].children[0].children[3].tag,'form');
  assert.equal(area.children[1].children[0].children[4].tag,'button');
- assert.match(area.children[0].textContent,/comerciais ativas: 0/);
+ assert.match(area.children[0].textContent,/Posições em acompanhamento/);
 });
 test('historico acima de dez permanece indicado sem confundir limite de pedidos',async()=>{
  const pendencias=Array.from({length:12},(_,i)=>({
@@ -73,5 +73,6 @@ test('historico acima de dez permanece indicado sem confundir limite de pedidos'
 test('falha em qualquer fonte nao reaproveita cartoes',async()=>{
  const area=await desenhar(null,{falha:true});
  assert.equal(area.children.length,1);
- assert.match(area.children[0].textContent,/Consulta indisponível/);
+ assert.match(area.children[0].textContent,/Não foi possível carregar suas posições/);
+ assert.doesNotMatch(area.children[0].textContent,/SQLITE_INDISPONIVEL/);
 });

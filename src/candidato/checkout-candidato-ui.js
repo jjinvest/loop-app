@@ -507,7 +507,7 @@ async function atualizarPosicoes(){
  }catch(e){
   area.replaceChildren();
   const erro=document.createElement('p');
-  erro.textContent='Consulta indisponível: '+e.message;
+  erro.textContent='Não foi possível carregar suas posições. Tente atualizar.';
   area.append(erro);
  }
 }
