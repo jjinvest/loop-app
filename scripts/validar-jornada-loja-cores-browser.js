@@ -330,6 +330,33 @@ const png=Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAIAAAACCAIAAAD91JpzAAAAEklEQVR4n
    assert.equal(fotoMultipla.planejamentoPosicoes.posicoesVerde,0);
    assert.equal(fotoMultipla.planejamentoPosicoes.quantidadePosicoesPrevistas,4);
    assert.equal(fotoMultipla.direitosCriados,0);
+   // Uma alteracao manual de quantidade invalida o contrato do kit.
+   // Sem uma decisao expressa, nao e permitido converter silenciosamente
+   // a compra em produtos avulsos com outras regras de posicoes.
+   await page.locator(
+    '#akitemmGradePacotes [data-akitemm-pacote="kit-jornada-misto"]').click();
+   assert.equal(await page.locator('#akitemmTotalItens').innerText(),'3');
+   await page.locator('#itensLojaLoop .item-carrinho-loja').nth(1)
+    .locator('button[aria-label^="Diminuir quantidade de"]').click();
+   await page.locator('#akitemmAvisoPacoteInvalido')
+    .waitFor({state:'visible'});
+   await page.locator('#registrarPedidoLoja').click();
+   await page.locator('#statusPedidoLoja')
+    .filter({hasText:/Confirme os pacotes ou uma compra avulsa/})
+    .waitFor({state:'visible'});
+   const confirmacao=await page.evaluate(async()=>{
+    const r=await fetch('/staging/vitrine/loja/pedidos',{
+     credentials:'same-origin',cache:'no-store'});
+    return (await r.json()).pedidos.length;
+   });
+   assert.equal(confirmacao,3,
+    'nenhum novo pedido pode escapar da confirmacao de perda do kit');
+   await page.locator('#akitemmConfirmarAvulso').click();
+   await page.locator('#akitemmAvisoPacoteInvalido')
+    .waitFor({state:'hidden'});
+   await page.locator('#akitemmAnaliseQualificacao')
+    .filter({hasNotText:/Compra suspensa/})
+    .waitFor({state:'visible',timeout:15000});
    await page.screenshot({path:path.join(__dirname,'../artifacts',
     'jornada-pacotes-multiplos-'+device.nome+'.png'),fullPage:true});
    await page.screenshot({path:path.join(__dirname,'../artifacts',
