@@ -685,3 +685,83 @@ body.akitemm-loja{background:#071018;color:#f0f2f6;font-family:system-ui,-apple-
  .akitemm-loja .akitemm-categorias button strong{font-size:12px}
  .akitemm-loja .akitemm-categorias button small{font-size:10px}
 }
+
+/* Acabamento da oferta composta na MESMA vitrine aprovada.
+   A cor identifica o QUADRADO comercial, nunca a cor fisica do produto. */
+.akitemm-loja #akitemmPacotesCompostos{
+ margin:14px 0 19px;padding:14px;
+ border:1px solid #8b724f;border-radius:14px;
+ background:linear-gradient(145deg,#17232d,#121b26 64%,#1c1a22);
+}
+.akitemm-loja #akitemmPacotesCompostos>h3{
+ margin:0 0 5px;color:#f2cf90;font-size:clamp(1rem,2.4vw,1.22rem);
+}
+.akitemm-loja #akitemmPacotesCompostos>p{
+ margin:0 0 13px;color:#c9d1da;font-size:.83rem;line-height:1.4;
+}
+.akitemm-loja #akitemmGradePacotes{grid-template-columns:repeat(auto-fill,minmax(min(100%,225px),1fr));gap:12px}
+.akitemm-loja #akitemmGradePacotes .akitemm-card-pacote{
+ --pacote-acento:#a7b2bf;
+ border:1px solid var(--pacote-acento);
+ border-radius:12px;
+ background:linear-gradient(150deg,#182530,#111a24 70%);
+ box-shadow:inset 3px 0 0 var(--pacote-acento);
+ overflow:hidden;
+}
+.akitemm-loja #akitemmGradePacotes .akitemm-card-pacote-verde{--pacote-acento:#5ad29c}
+.akitemm-loja #akitemmGradePacotes .akitemm-card-pacote-dourado{--pacote-acento:#e4bb72}
+.akitemm-loja #akitemmGradePacotes .akitemm-card-pacote-roxo{--pacote-acento:#bb92e9}
+.akitemm-loja #akitemmGradePacotes .akitemm-card-pacote.tem-selecao{
+ box-shadow:inset 3px 0 0 var(--pacote-acento),0 0 0 1px var(--pacote-acento);
+ background:linear-gradient(135deg,#243340,#121c26 75%);
+}
+.akitemm-loja .akitemm-card-pacote .akitemm-dados-produto{
+ gap:9px;padding:12px;min-height:0;
+}
+.akitemm-loja .akitemm-pacote-categoria{
+ display:block;color:var(--pacote-acento);font-size:10px;
+ font-weight:800;letter-spacing:.075em;line-height:1.3;
+}
+.akitemm-loja .akitemm-card-pacote h3{font-size:14px;line-height:1.35;min-height:0}
+.akitemm-loja .akitemm-pacote-componentes{
+ color:#dee3ea;font-size:11px;line-height:1.45;overflow-wrap:anywhere;
+}
+.akitemm-loja .akitemm-pacote-previsao{
+ color:#aebdce;font-size:10px;line-height:1.4;
+}
+.akitemm-loja .akitemm-pacote-contador{
+ display:block;color:#f5d9a5;font-size:11px;font-weight:750;line-height:1.4;
+}
+.akitemm-loja #akitemmGradePacotes .akitemm-card-pacote button{
+ width:100%;min-height:42px;padding:9px 10px;border-radius:8px;
+ white-space:normal;line-height:1.25;font-weight:750;font-size:11px;
+}
+.akitemm-loja #akitemmGradePacotes [data-akitemm-retirar-pacote]{
+ background:transparent!important;border:1px solid #788491!important;color:#f0f3f7!important;
+}
+.akitemm-loja #akitemmGradePacotes [data-akitemm-retirar-pacote]:disabled{opacity:.42;cursor:not-allowed}
+.akitemm-loja #akitemmGradePacotes button:focus-visible{
+ outline:3px solid #f2ce8a;outline-offset:3px;
+}
+.akitemm-loja #akitemmAvisoPacoteInvalido{
+ margin:12px 0;padding:13px 15px;border:2px solid #e6bf76;
+ border-radius:11px;background:linear-gradient(120deg,#342719,#201b19);
+ color:#fff1d1;
+}
+.akitemm-loja #akitemmAvisoPacoteInvalido p{
+ margin:0 0 10px;line-height:1.45;overflow-wrap:anywhere;
+}
+.akitemm-loja #akitemmConfirmarAvulso{
+ min-height:44px;padding:9px 13px;border:1px solid #e4bc72;
+ border-radius:8px;color:#211914;background:#f2ce8a;
+ font-weight:800;white-space:normal;
+}
+/* O detalhe de um produto substitui a lista, nao se mistura com os kits. */
+.akitemm-loja #akitemmAreaProdutos[data-modo="detalhe"] #akitemmPacotesCompostos{
+ display:none!important;
+}
+@media(max-width:520px){
+ .akitemm-loja #akitemmPacotesCompostos{padding:10px;margin:12px 0 15px}
+ .akitemm-loja #akitemmGradePacotes{grid-template-columns:minmax(0,1fr)}
+ .akitemm-loja .akitemm-card-pacote .akitemm-dados-produto{padding:12px}
+}
