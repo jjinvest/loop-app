@@ -259,10 +259,10 @@ function mp4TrintaSegundos(){
    await page.locator('#resumoPedidos').filter({hasText:'1'}).waitFor();
    assert.match(await page.locator('#boasVindas').innerText(),new RegExp(item.nick,'i'));
    await page.locator('#atalhoPosicoes').click();
-   await page.locator('#posicoesPainel').filter({hasText:/Posicoes comerciais ativas: 0/}).waitFor();
+   await page.locator('#posicoesPainel').filter({hasText:/Posições em acompanhamento/}).waitFor();
    assert.equal(await page.locator('#posicoesPainel .loop03-cartao-posicao-ensaio').count(),10);
    assert.equal(await page.locator('#posicoesPainel .loop03-cartao-posicao-pendente').count(),0);
-   assert.match(await page.locator('#posicoesPainel').innerText(),/Nenhum cartão permite ativar/);
+   assert.match(await page.locator('#posicoesPainel').innerText(),/Acompanhe suas posições nesta área/);
    await abrirAba('#abaLinks');
    await page.waitForFunction(()=>document.getElementById('linkLoja').value.includes('/loja/'));
    assert.ok((await page.locator('#linkLoja').inputValue()).endsWith('/loja/'+item.nick.toLowerCase()));
@@ -593,7 +593,7 @@ function mp4TrintaSegundos(){
     assert.equal(await page.locator('#loop03MenuIntegrado').getAttribute('aria-expanded'),'true');
    }
    await abrirAba('#abaTabuleiro');
-   await page.locator('#estadoTabuleiroIntegrado').filter({hasText:/Motor V6 conectado ao SQLite/}).waitFor();
+   await page.locator('#estadoTabuleiroIntegrado').filter({hasText:/de 6 eventos neste ciclo/}).waitFor();
    assert.equal(await page.locator('#tabuleiroMotorCentro').innerText(),'#0000');
    assert.equal(await page.locator('#tabuleiroMotorIntegrado .espaco-tabuleiro-demo').count(),7);
    await page.locator('#tabuleiroVerPosicoesIntegrado').click();
