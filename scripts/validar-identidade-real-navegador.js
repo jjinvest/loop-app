@@ -204,6 +204,8 @@ async function main(){
    await cadastro.locator('#cadastroEmail').fill(
     novoNick.toLowerCase()+'@example.invalid');
    await cadastro.locator('#cadastroSenha').fill('SenhaDoEnsaio2026!');
+   await cadastro.locator('#cadastroConfirmarSenha').fill('SenhaDoEnsaio2026!');
+   await cadastro.locator('#cadastroTelefone').fill('21988887777');
    await cadastro.locator('#cadastroTermos').waitFor({state:'attached'});
    await cadastro.locator('#cadastroTermos').check();
    await cadastro.locator('#cadastroPrivacidade').check();
