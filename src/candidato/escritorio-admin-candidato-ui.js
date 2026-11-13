@@ -434,6 +434,83 @@ function renderizarProdutos(r){
  $('produtosProximo').disabled=!r.haMais;
 }
 async function atualizarProdutos(){renderizarProdutos(await api('/produtos?pagina='+paginaProdutos));}
+
+let ofertaCompostaEmEdicao=null;
+function atualizarCorOfertaComposta(){
+ const cor=$('ofertaCompostaCor').value,campo=$('ofertaCompostaPosicoes');
+ campo.disabled=cor==='CINZA'||cor==='VERDE';
+ if(cor==='CINZA')campo.value='0';
+ else if(cor==='VERDE')campo.value='1';
+ else if(!Number.isInteger(Number(campo.value))||Number(campo.value)<1)
+  campo.value='1';
+}
+function limparOfertaComposta(){
+ ofertaCompostaEmEdicao=null;
+ $('formOfertasCompostasAdmin').reset();
+ $('ofertaCompostaId').readOnly=false;
+ atualizarCorOfertaComposta();
+}
+function editarOfertaComposta(o){
+ ofertaCompostaEmEdicao=o;
+ $('ofertaCompostaId').value=o.id;
+ $('ofertaCompostaId').readOnly=true;
+ $('ofertaCompostaNome').value=o.nome;
+ $('ofertaCompostaCor').value=o.cor;
+ $('ofertaCompostaEstado').value=o.estado;
+ $('ofertaCompostaItens').value=o.itens.map(i=>
+  i.produtoId+':'+i.quantidade).join('\n');
+ atualizarCorOfertaComposta();
+ $('ofertaCompostaPosicoes').value=String(o.posicoesPorPedido);
+ $('formOfertasCompostasAdmin').scrollIntoView({block:'center',behavior:'smooth'});
+}
+async function atualizarOfertasCompostasAdmin(){
+ const r=await api('/ofertas-compostas');
+ const area=$('listaOfertasCompostasAdmin');area.replaceChildren();
+ if(!r.ofertas.length)area.append(elem('p','Nenhum pacote criado ainda.'));
+ for(const o of r.ofertas){
+  const linha=elem('article');linha.className='produto-admin-item';
+  const resumo=elem('strong',o.nome+' · '+o.cor+' · '+o.estado);
+  const partes=elem('small',o.itens.map(i=>i.quantidade+' × '+i.produtoId).join(' + ')+
+   ' · '+o.posicoesPorPedido+' posição(ões) previstas · revisão '+o.revisao);
+  const editar=elem('button','Editar pacote');editar.type='button';
+  editar.addEventListener('click',()=>editarOfertaComposta(o));
+  linha.append(resumo,partes,editar);area.append(linha);
+ }
+}
+$('ofertaCompostaCor').addEventListener('change',atualizarCorOfertaComposta);
+$('atualizarOfertasCompostasAdmin').addEventListener('click',()=>
+ atualizarOfertasCompostasAdmin().catch(e=>
+  $('resultadoOfertasCompostasAdmin').textContent='Consulta falhou: '+e.message));
+$('novaOfertaCompostaAdmin').addEventListener('click',limparOfertaComposta);
+$('formOfertasCompostasAdmin').addEventListener('submit',async e=>{
+ e.preventDefault();
+ const botao=e.submitter;botao.disabled=true;
+ try{
+  const id=$('ofertaCompostaId').value.trim();
+  const linhas=$('ofertaCompostaItens').value.split(/\r?\n/).map(x=>x.trim()).filter(Boolean);
+  const itens=linhas.map(linha=>{
+   const limite=linha.lastIndexOf(':');
+   if(limite<1)throw Error('Informe produto:quantidade em cada linha.');
+   const produtoId=linha.slice(0,limite).trim();
+   const valor=linha.slice(limite+1).trim();
+   if(!/^[1-9][0-9]*$/.test(valor))throw Error('Quantidade inválida: '+linha);
+   return {produtoId,quantidade:Number(valor)};
+  });
+  const dados={nome:$('ofertaCompostaNome').value.trim(),
+   cor:$('ofertaCompostaCor').value,
+   estado:$('ofertaCompostaEstado').value,
+   itens,posicoesPorPedido:Number($('ofertaCompostaPosicoes').value),
+   revisaoEsperada:ofertaCompostaEmEdicao?.revisao||0};
+  const resultado=await api('/ofertas-compostas/'+encodeURIComponent(id),{
+   method:'PUT',body:dados});
+  ofertaCompostaEmEdicao=resultado.oferta;
+  $('resultadoOfertasCompostasAdmin').textContent=
+   'Pacote salvo e auditado no catálogo. Sem pagamento real.';
+  await atualizarOfertasCompostasAdmin();
+ }catch(err){
+  $('resultadoOfertasCompostasAdmin').textContent='Pacote não salvo: '+err.message;
+ }finally{botao.disabled=false;}
+});
 let configLojaAtual=null;
 function atualizarNumeracaoBanners(){
  for(const [indice,bloco] of [...$('configBannersAdmin').children].entries()){

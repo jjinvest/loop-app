@@ -163,6 +163,32 @@
 </form>
 <p id="configResultadoAdmin" role="status" aria-live="polite" class="subtexto"></p>
 </details>
+<section class="config-roxo-admin" aria-labelledby="tituloOfertasCompostasAdmin">
+<h3 id="tituloOfertasCompostasAdmin">Pacotes com produtos diferentes</h3>
+<p class="subtexto">Monte uma oferta com dois ou mais produtos do catálogo, cada um com a quantidade escolhida. Selecione livremente o quadrado CINZA, VERDE, DOURADO ou ROXO. O pedido mantém preço e fornecedor de cada produto. A regra do pacote prevalece sobre as regras individuais dos seus componentes, sem duplicação.</p>
+<div class="linha"><button id="atualizarOfertasCompostasAdmin" type="button">Atualizar pacotes</button></div>
+<div id="listaOfertasCompostasAdmin" aria-live="polite"></div>
+<form id="formOfertasCompostasAdmin">
+<label>Identificador único do pacote
+<input id="ofertaCompostaId" pattern="[a-z0-9-]{3,80}" maxlength="80" required placeholder="kit-casa"></label>
+<label>Nome para a loja
+<input id="ofertaCompostaNome" maxlength="120" required placeholder="Pacote casa equipada"></label>
+<div class="duas-colunas">
+<label>Quadrado da loja
+<select id="ofertaCompostaCor"><option value="CINZA">Cinza</option><option value="VERDE">Verde</option><option value="DOURADO">Dourado</option><option value="ROXO">Roxo</option></select></label>
+<label>Situação da oferta
+<select id="ofertaCompostaEstado"><option value="RASCUNHO">Rascunho</option><option value="PUBLICADO">Publicado no laboratório</option></select></label>
+</div>
+<label>Produtos e quantidades (uma linha por produto: identificador:quantidade)
+<textarea id="ofertaCompostaItens" rows="5" required placeholder="tenis-modelo-a:2&#10;camiseta-modelo-b:3"></textarea></label>
+<label>Posições previstas por pedido com o pacote completo
+<input id="ofertaCompostaPosicoes" type="number" min="0" max="10" step="1" value="0" required></label>
+<p class="subtexto">Cinza: 0. Verde: até 1 por compra que atinja R$ 250. Dourado: pacote com mínimo R$ 250; roxo: quantidade configurada. O mesmo produto não pode participar de dois pacotes publicados. Não existem cobranças, envios ou posições reais nesta prévia.</p>
+<div class="linha"><button class="primario" type="submit">Salvar pacote</button>
+<button id="novaOfertaCompostaAdmin" type="button">Novo pacote</button></div>
+</form>
+<p id="resultadoOfertasCompostasAdmin" role="status" class="subtexto"></p>
+</section>
 <h3 id="tituloSinalizacaoAdmin">Cores dos produtos na vitrine</h3>
 <p class="subtexto">Os quatro quadrados aceitam produtos e quantidades definidos pelo administrador. Cinza = compra comum; verde = produto elegível; dourado = por unidade ou pacote; roxo = oferta configurável, com ou sem evento. São cores da loja, não das filas. Esta prévia não cria direitos financeiros.</p>
 <form id="formSinalizacaoAdmin">
