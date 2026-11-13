@@ -12,6 +12,8 @@ on:
       - 'test/caixa-douradas-desistentes-loop.test.js'
       - 'src/integracoes/registro-fornecedores.js'
       - 'scripts/iniciar-identidade-real-loop.js'
+      - 'scripts/iniciar-identidade-real-preparacao.js'
+      - 'test/identidade-real-preparacao.test.js'
       - 'scripts/provar-recuperacao-independente-identidade.js'
       - 'test/identidade-real-isolada.test.js'
       - 'test/motor-loop-integrado-identidade.test.js'
@@ -141,6 +143,9 @@ jobs:
           node --check scripts/provar-recuperacao-independente-identidade.js
           node --check src/producao/agendador-backup-identidade-real.js
           node --check scripts/iniciar-identidade-real-loop.js
+          node --check scripts/iniciar-identidade-real-preparacao.js
+      - name: Provisão operacional segura sem cadastrar cliente ou aceitar dinheiro
+        run: node --test test/identidade-real-preparacao.test.js
       - name: Conta, consentimento, senhas e recuperação
         run: node --test test/identidade-real-isolada.test.js
       - name: Posicoes e Minha Equipe unificadas no mesmo SQLite com titularidade

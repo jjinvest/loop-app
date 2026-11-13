@@ -1,0 +1,92 @@
+'use strict';
+// Preparacao de INFRAESTRUTURA REAL, nao de contas.
+// Entra em operacao antes da aprovacao documental sem aceitar NENHUM dado pessoal.
+// Na liberacao definitiva, remover esta modalidade e usar
+// scripts/iniciar-identidade-real-loop.js com healthcheck /readyz.
+const fs=require('node:fs');
+const os=require('node:os');
+const http=require('node:http');
+const path=require('node:path');
+const {randomBytes,randomUUID}=require('node:crypto');
+
+function conferirInfra(ambiente=process.env,{pasta='/dados-reais',io=fs}={}){
+ if(ambiente.NODE_ENV!=='production'||
+    ambiente.LOOP_REAL_PREPARACAO_INTERNA!=='SIM'||
+    ambiente.LOOP_REAL_CADASTRO_GO==='SIM'||
+    ambiente.LOOP_REAL_APROVACAO_DOCUMENTOS==='SIM'||
+    ambiente.LOOP_REAL_DADOS_SEPARADOS!=='SIM')
+  throw Error('PREPARACAO_REAL_EXIGE_CADASTRO_BLOQUEADO');
+ if(ambiente.LOOP_CLIENTES_LAB==='SIM'||
+    ambiente.LOOP_MODO_SIMULACAO==='1'||
+    ambiente.LOOP_PREVIEW_EXCLUSIVO==='SIM')
+  throw Error('PREPARACAO_REAL_NAO_ACEITA_LAB');
+ if(ambiente.LOOP_REAL_SQLITE!==path.join(pasta,'clientes.sqlite')||
+    !io.existsSync(pasta)||!io.statSync(pasta).isDirectory()||
+    io.realpathSync(pasta)!==pasta)
+  throw Error('PREPARACAO_REAL_VOLUME_SEPARADO_AUSENTE');
+ // Prova de volume gravavel; so bytes aleatorios, nunca registros de clientes.
+ const teste=path.join(pasta,'.probe-'+randomUUID());
+ const dados=randomBytes(24);
+ try{
+  io.writeFileSync(teste,dados,{flag:'wx',mode:0o600});
+  if(!io.readFileSync(teste).equals(dados))
+   throw Error('PREPARACAO_REAL_VOLUME_DIVERGENTE');
+ }finally{
+  if(io.existsSync(teste))io.unlinkSync(teste);
+ }
+ return Object.freeze({volumeDedicado:true});
+}
+
+function criarServidorPreparacao({ambiente=process.env,pasta='/dados-reais',io=fs}={}){
+ conferirInfra(ambiente,{pasta,io});
+ return http.createServer((req,res)=>{
+  res.setHeader('Content-Type','application/json; charset=utf-8');
+  res.setHeader('Cache-Control','no-store');
+  res.setHeader('X-Content-Type-Options','nosniff');
+  res.setHeader('X-Frame-Options','DENY');
+  // Health de infraestrutura diferente de readiness para clientes.
+  if(req.method==='GET'&&req.url==='/healthz'){
+   res.writeHead(200);
+   return res.end(JSON.stringify({
+    estado:'INFRAESTRUTURA_REAL_INICIADA',
+    volumeDedicado:true,cadastroReal:false,
+    checkoutReal:false,financeiroReal:false
+   }));
+  }
+  if(req.method==='GET'&&req.url==='/readyz'){
+   res.writeHead(503);
+   return res.end(JSON.stringify({
+    estado:'CADASTRO_REAL_AINDA_NAO_AUTORIZADO',
+    cadastroReal:false,checkoutReal:false,financeiroReal:false
+   }));
+  }
+  // Qualquer rota de conta, vitrine, admin, API ou webhook permanece indisponivel.
+  res.writeHead(503);
+  return res.end(JSON.stringify({
+   erro:'SERVICO_REAL_EM_PREPARACAO',cadastroReal:false,
+   checkoutReal:false,financeiroReal:false
+  }));
+ });
+}
+
+function iniciarPreparacao(ambiente=process.env){
+ const server=criarServidorPreparacao({ambiente});
+ const porta=Number(ambiente.PORT||3000);
+ if(!Number.isSafeInteger(porta)||porta<1||porta>65535)
+  throw Error('PORTA_REAL_INVALIDA');
+ server.listen(porta,'0.0.0.0');
+ const finalizar=()=>server.close();
+ process.once('SIGTERM',finalizar);
+ process.once('SIGINT',finalizar);
+ return server;
+}
+if(require.main===module){
+ try{iniciarPreparacao();}catch(e){
+  const code=typeof e?.message==='string'&&
+   /^PREPARACAO_REAL_[A-Z_]+$/.test(e.message)?e.message:
+   'PREPARACAO_REAL_NAO_INICIOU';
+  console.error(code);
+  process.exitCode=1;
+ }
+}
+module.exports={conferirInfra,criarServidorPreparacao,iniciarPreparacao};
