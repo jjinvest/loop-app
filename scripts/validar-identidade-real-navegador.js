@@ -267,7 +267,7 @@ async function main(){
    assert.equal(await page.locator('#conteudoTabuleiro').getByText(
     'Mesmo motor V6 e mesmo SQLite',{exact:false}).count(),0);
    await page.locator('#estadoTabuleiroIntegrado')
-    .filter({hasText:/Eventos do ciclo: 0\/6/}).waitFor();
+    .filter({hasText:/Ciclo atual: 0 de 6 eventos/}).waitFor();
    assert.equal(await page.locator('#tabuleiroMotorCentro').innerText(),'#0000');
    assert.equal(await page.locator('#motorFilaB .loop03-linha-fila').count(),1);
    assert.ok((await page.locator('#motorFilaB').innerText())
