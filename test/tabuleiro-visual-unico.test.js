@@ -83,12 +83,13 @@ test('tabuleiro circular respeita azul verde dourada e 6 eventos',()=>{
  const {visual,el}=fake();
  visual.preencherVaga('tabuleiroMotorCentro',null,true);
  assert.equal(el.tabuleiroMotorCentro.textContent,'#0000');
- const css=ler('laboratorio/loop-03-shell.css');
- assert.match(css,/tabuleiro-centro:has\\(\\.posicao-dourado\\)/,
-  'centro verde mesmo se ocupado pela empresa');
- assert.match(css,/espaco-tabuleiro-demo:not\\(\\.tabuleiro-centro\\):has\\(\\.posicao-azul\\)/);
- assert.match(css,/espaco-tabuleiro-demo:not\\(\\.tabuleiro-centro\\):has\\(\\.posicao-cliente\\)/);
- assert.match(css,/tabuleiro-vaga-6:not\\(:has\\(\\.posicao-dourado\\)\\)/);
+  const css=ler('laboratorio/loop-03-shell.css');
+  for(const regra of [
+   'tabuleiro-centro:has(.posicao-dourado)',
+   'espaco-tabuleiro-demo:not(.tabuleiro-centro):has(.posicao-azul)',
+   'espaco-tabuleiro-demo:not(.tabuleiro-centro):has(.posicao-cliente)',
+   'tabuleiro-vaga-6:not(:has(.posicao-dourado))'
+  ]) assert.ok(css.includes(regra),'cor do tabuleiro: '+regra);
  visual.preencherVaga('tabuleiroMotorVaga1',{
   numero:12,minha:true,estadoAdesao:'PENDENTE'
  });
