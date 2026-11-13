@@ -26,11 +26,20 @@ function itensCanonicos(entrada){
 // Linhas historicas sem pacote conservam a serializacao original do array.
 function assinaturaEntrada(entrada){
  const itens=itensCanonicos(entrada);
- if(!Object.hasOwn(entrada,'ofertaCompostaId'))return JSON.stringify(itens);
+ const idPresente=Object.hasOwn(entrada,'ofertaCompostaId');
+ const revPresente=Object.hasOwn(entrada,'ofertaCompostaRevisao');
+ if(!idPresente){
+  if(revPresente)throw falha('OFERTA_COMPOSTA_REVISAO_INVALIDA');
+  return JSON.stringify(itens);
+ }
  const id=entrada.ofertaCompostaId;
  if(id!==null&&(typeof id!=='string'||!/^[a-z0-9-]{3,80}$/.test(id)))
   throw falha('OFERTA_COMPOSTA_ID_INVALIDO');
- return JSON.stringify({itens,ofertaCompostaId:id});
+ const rev=entrada.ofertaCompostaRevisao;
+ if(revPresente&&(id===null||!Number.isSafeInteger(rev)||rev<1))
+  throw falha('OFERTA_COMPOSTA_REVISAO_INVALIDA');
+ return JSON.stringify({itens,ofertaCompostaId:id,
+  ...(revPresente?{ofertaCompostaRevisao:rev}:{})});
 }
 function validarCotacao(cotacao,itens){
  if(!cotacao||cotacao.modo!=='COTACAO_INFORMATIVA_SEM_PEDIDO'||

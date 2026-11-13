@@ -295,7 +295,7 @@ function createVitrineCandidata({app,banco,catalogo,contas,intencoes,prePedidos,
     return res.status(403).json({erro:'MUTACAO_NAO_AUTORIZADA'});
    if(!req.is('application/json')||!req.body||Array.isArray(req.body)||
       typeof req.body!=='object'||Object.keys(req.body).some(k=>
-       !['itens','ofertaCompostaId'].includes(k)))
+       !['itens','ofertaCompostaId','ofertaCompostaRevisao'].includes(k)))
     return res.status(400).json({erro:'CORPO_PEDIDO_INVALIDO'});
    const key=req.get('idempotency-key');
    if(typeof key!=='string'||!/^[a-zA-Z0-9_-]{16,128}$/.test(key))
@@ -305,14 +305,17 @@ function createVitrineCandidata({app,banco,catalogo,contas,intencoes,prePedidos,
      produtoId:x.produtoId,quantidade:x.quantidade
     })),
      ...(Object.hasOwn(req.body,'ofertaCompostaId')?
-      {ofertaCompostaId:req.body.ofertaCompostaId}:{})};
+      {ofertaCompostaId:req.body.ofertaCompostaId}:{}),
+     ...(Object.hasOwn(req.body,'ofertaCompostaRevisao')?
+      {ofertaCompostaRevisao:req.body.ofertaCompostaRevisao}:{})};
     let intent=intencoes.consultarPorChave({
      titularId:req.titularVitrine,chaveIdempotencia:key,entrada});
     if(!intent){
      const cotacao=await cotarCheckoutPublico({
       repositorio:catalogo,entrada:{itens:entrada.itens}});
      const pacotes=ofertasCompostas.fotografar(cotacao.itens,{
-      ofertaId:entrada.ofertaCompostaId});
+      ofertaId:entrada.ofertaCompostaId,
+      revisaoEsperada:entrada.ofertaCompostaRevisao??null});
      // O servidor persiste a escolha/revisao na cotacao imutavel,
      // nao apenas na sessao nem em estado mutavel da vitrine.
      const cotacaoComEscolha={...cotacao,

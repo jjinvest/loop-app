@@ -13,7 +13,8 @@ async function simularQualificacaoCandidato({entrada,catalogo,sinalizacao,
    catalogo.db!==sinalizacao.db)
   erro('FONTE_UNICA_OBRIGATORIA');
  if(!entrada||typeof entrada!=='object'||Array.isArray(entrada)||
-    Object.keys(entrada).some(k=>!['itens','ofertaCompostaId'].includes(k)))
+    Object.keys(entrada).some(k=>
+     !['itens','ofertaCompostaId','ofertaCompostaRevisao'].includes(k)))
   erro('CAMPOS_SIMULACAO_INVALIDOS');
  const itens=entradaValida({itens:entrada.itens});
  let total=0,valorVerde=0,quantidadeProdutosVerdes=0;
@@ -72,7 +73,8 @@ async function simularQualificacaoCandidato({entrada,catalogo,sinalizacao,
   });
  }
  const pacotes=ofertasCompostas?ofertasCompostas.fotografar(detalhes,
-  {ofertaId:entrada.ofertaCompostaId}):[];
+  {ofertaId:entrada.ofertaCompostaId,
+   revisaoEsperada:entrada.ofertaCompostaRevisao??null}):[];
  const planejamentoPosicoes=planejarPosicoesCompraAkitemm(detalhes,
   {ofertasCompostas:pacotes});
  const referenciaAtingida=valorVerde>=REFERENCIA_CENTAVOS;
