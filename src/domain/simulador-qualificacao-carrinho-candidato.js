@@ -77,12 +77,20 @@ async function simularQualificacaoCandidato({entrada,catalogo,sinalizacao,
    revisaoEsperada:entrada.ofertaCompostaRevisao??null}):[];
  const planejamentoPosicoes=planejarPosicoesCompraAkitemm(detalhes,
   {ofertasCompostas:pacotes});
- const referenciaAtingida=valorVerde>=REFERENCIA_CENTAVOS;
- const faltamCentavos=Math.max(0,REFERENCIA_CENTAVOS-valorVerde);
+ // A qualificacao valida vem da regra efetiva do pedido, nao do total
+ // individual de produtos que foram consumidos por um pacote.
+ const valorVerdeAplicavel=planejamentoPosicoes.valorVerdeConsideradoCentavos;
+ const referenciaAtingida=valorVerdeAplicavel>=REFERENCIA_CENTAVOS;
+ const faltamCentavos=Math.max(0,REFERENCIA_CENTAVOS-valorVerdeAplicavel);
+ const eventoPendenteAplicavel=planejamentoPosicoes.pendenciasConfiguracaoRoxo>0;
+ const componentesPacote=new Set(pacotes.flatMap(p=>p.itens.map(i=>i.produtoId)));
+ const limiarPendenteAplicavel=pacotes.length?
+  detalhes.some(d=>!componentesPacote.has(d.produtoId)&&
+   d.situacao==='QUANTIDADE_MINIMA_NAO_ATINGIDA'):limiarPendente;
  const status=referenciaAtingida?'REFERENCIA_VERDE_ATINGIDA_EM_SIMULACAO':
   planejamentoPosicoes.posicoesDourado>0?'DOURADO_PLANEJADO_SEM_DIREITOS':
-  eventoPendente?'EVENTO_PENDENTE_DE_APROVACAO':
-  limiarPendente?'QUANTIDADE_MINIMA_PENDENTE':
+  eventoPendenteAplicavel?'EVENTO_PENDENTE_DE_APROVACAO':
+  limiarPendenteAplicavel?'QUANTIDADE_MINIMA_PENDENTE':
   quantidadeProdutosVerdes?'VALOR_VERDE_INSUFICIENTE':
   'SEM_PRODUTO_VERDE_APTO';
  const mensagem=planejamentoPosicoes.excedeLimitePorPedido?
@@ -93,17 +101,17 @@ async function simularQualificacaoCandidato({entrada,catalogo,sinalizacao,
    'Compra com ofertas configuradas: dourada por unidade ou pacote, roxa por quantidade definida. Verde mantém no máximo uma posição ao atingir R$ 250. Prévia sem direitos comerciais.'):
   referenciaAtingida?
   'O carrinho atinge a referência com produtos elegíveis em simulação. Nenhuma posição foi criada. Ainda seriam necessárias compra confirmada, CPF, termos e todas as demais verificações.':
-  eventoPendente?
+  eventoPendenteAplicavel?
    'Produtos de evento não entram na qualificação comum. O administrador ainda deve homologar regras, quantidade de posições e autorizações do evento.':
-  limiarPendente?
+  limiarPendenteAplicavel?
    'Há produto elegível abaixo da quantidade mínima ou dourado com valor insuficiente. Só a quantidade qualificada poderá ser considerada.':
   'A compra ainda não atinge a referência de R$ 250 em produtos elegíveis neste pedido.';
  return {modo:'SIMULACAO_QUALIFICACAO_SEM_DIREITOS',status,
   referenciaLoopCentavos:REFERENCIA_CENTAVOS,
-  totalPedidoCentavos:total,valorVerdeConsideradoCentavos:valorVerde,
+  totalPedidoCentavos:total,valorVerdeConsideradoCentavos:valorVerdeAplicavel,
   faltamCentavos,referenciaAtingida,
   itens:detalhes,planejamentoPosicoes,ofertasCompostas:pacotes,
-  eventoPendente,validacaoEspecialAutomatica:false,
+  eventoPendente:eventoPendenteAplicavel,validacaoEspecialAutomatica:false,
   direitosCriados:0,posicoesCriadas:0,pagamentosCriados:0,saquesCriados:0,
   autorizacaoReal:false,chequeCpfETermosExecutado:false,
   pagamentoConfirmado:false,mensagem};
