@@ -98,6 +98,16 @@ const png=Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAIAAAACCAIAAAD91JpzAAAAEklEQVR4n
    }
   });
   assert.equal(kit.oferta.revisao,1);
+  const outroKit=await apiAdmin('/ofertas-compostas/kit-jornada-concorrente',{
+   method:'PUT',body:{
+    nome:'Pacote alternativo com os mesmos produtos',cor:'DOURADO',
+    estado:'PUBLICADO',
+    itens:[{produtoId:'jornada-dourado-1',quantidade:1},
+     {produtoId:'jornada-verde-1',quantidade:2}],
+    posicoesPorPedido:2,revisaoEsperada:0
+   }
+  });
+  assert.equal(outroKit.oferta.revisao,1);
   browser=await chromium.launch({headless:true,args:['--no-sandbox']});
   fs.mkdirSync(path.join(__dirname,'../artifacts'),{recursive:true});
   for(const device of [
@@ -265,6 +275,7 @@ const png=Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAIAAAACCAIAAAD91JpzAAAAEklEQVR4n
     prepedidoId:pKit.pedidoId});
    assert.equal(fotoKit.ofertasCompostas.length,1);
    assert.equal(fotoKit.ofertasCompostas[0].id,'kit-jornada-misto');
+   assert.equal(fotoKit.ofertasCompostas[0].revisao,1);
    assert.equal(fotoKit.planejamentoPosicoes.posicoesRoxo,1);
    assert.equal(fotoKit.planejamentoPosicoes.posicoesDourado,0,
     'nao duplicar o dourado individual');

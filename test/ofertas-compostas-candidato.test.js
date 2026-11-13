@@ -72,9 +72,12 @@ test('kit multissku: admin salva, loja monta pedido, snapshot impede beneficio d
   admin:true,body:regra});
  assert.equal(conflito.status,409,'revisao antiga nao sobrescreve a atual');
  const igual=await call(prefix+'/kit-concorrente',{method:'PUT',admin:true,
-  body:{...regra,revisaoEsperada:0,itens:[{produtoId:a,quantidade:1},
-   {produtoId:b,quantidade:1}]}});
- assert.equal(igual.status,409,'um mesmo SKU nao participa de dois kits publicados');
+  body:{...regra,nome:'Outro kit com os mesmos itens',cor:'DOURADO',
+   posicoesPorPedido:2,revisaoEsperada:0}});
+ assert.equal(igual.status,200,JSON.stringify(igual.data));
+ assert.equal(igual.data.oferta.revisao,1);
+ assert.equal((await call(prefix,{admin:true})).data.ofertas.length,2,
+  'os mesmos SKUs podem estar em varios kits');
  const criar=async nick=>{
   const registro=await call('/staging/contas/cadastrar',{method:'POST',body:{
    nome:'Cliente '+nick,nick,email:nick.toLowerCase()+'@example.invalid',
@@ -93,11 +96,14 @@ test('kit multissku: admin salva, loja monta pedido, snapshot impede beneficio d
  const pessoa=await criar('KitAna'),outro=await criar('KitBia');
  const vitrine=await call(comprador+'/catalogo',{cookie:pessoa.cookie});
  assert.equal(vitrine.status,200);
- assert.equal(vitrine.data.ofertasCompostas.length,1);
- assert.equal(vitrine.data.ofertasCompostas[0].precoPacoteCentavos,42000);
- assert.deepEqual(vitrine.data.ofertasCompostas[0].itens.map(x=>x.produtoId),[a,b]);
+ assert.equal(vitrine.data.ofertasCompostas.length,2);
+ const publicado=vitrine.data.ofertasCompostas.find(o=>o.id==='kit-misto-a');
+ assert.equal(publicado.precoPacoteCentavos,42000);
+ assert.deepEqual(publicado.itens.map(x=>x.produtoId),[a,b]);
  const simulacao=await call('/staging/vitrine/simular-qualificacao',{
-  method:'POST',body:{itens},cookie:pessoa.cookie,csrf:pessoa.csrf,lab:true});
+  method:'POST',body:{itens,ofertaCompostaId:'kit-misto-a',
+   ofertaCompostaRevisao:1},
+  cookie:pessoa.cookie,csrf:pessoa.csrf,lab:true});
  assert.equal(simulacao.status,200,JSON.stringify(simulacao.data));
  assert.equal(simulacao.data.planejamentoPosicoes.quantidadePosicoesPrevistas,1);
  assert.equal(simulacao.data.planejamentoPosicoes.posicoesRoxo,1);
@@ -107,9 +113,11 @@ test('kit multissku: admin salva, loja monta pedido, snapshot impede beneficio d
   cookie:pessoa.cookie,csrf:pessoa.csrf,lab:true});
  assert.equal(parcial.status,200);
  assert.equal(parcial.data.ofertasCompostas.length,0);
- const pedido=async (usuario,key,items)=>call(comprador+'/pedidos',{
-  method:'POST',body:{itens:items},cookie:usuario.cookie,csrf:usuario.csrf,
-  key,lab:true});
+ const pedido=async (usuario,key,items,id='kit-misto-a',rev=1)=>
+  call(comprador+'/pedidos',{
+   method:'POST',body:{itens:items,ofertaCompostaId:id,
+    ofertaCompostaRevisao:rev},
+   cookie:usuario.cookie,csrf:usuario.csrf,key,lab:true});
  const primeiro=await pedido(pessoa,'kit-completo-primeiro-0001',itens);
  assert.equal(primeiro.status,201,JSON.stringify(primeiro.data));
  assert.equal(primeiro.data.pagamentoReal,false);
@@ -128,13 +136,31 @@ test('kit multissku: admin salva, loja monta pedido, snapshot impede beneficio d
  const repetido=await pedido(pessoa,'kit-completo-primeiro-0001',itens);
  assert.equal(repetido.status,200);
  assert.equal(repetido.data.pedido.pedidoId,pedidoId);
+ const conflitoEscolha=await pedido(pessoa,'kit-completo-primeiro-0001',
+  itens,'kit-concorrente',1);
+ assert.equal(conflitoEscolha.status,409,
+  'chave idempotente nao pode aplicar outra oferta com SKUs iguais');
  assert.equal((await call(comprador+'/pedidos',{cookie:outro.cookie})).data.pedidos.length,0);
+ const alternativa=await pedido(outro,'kit-dourado-alternativo-0003',
+  itens,'kit-concorrente',1);
+ assert.equal(alternativa.status,201,JSON.stringify(alternativa.data));
+ const fotoAlternativa=sinalizacaoVitrine.consultarFotografiaPrepedido({
+  prepedidoId:alternativa.data.pedido.pedidoId});
+ assert.equal(fotoAlternativa.ofertasCompostas[0].id,'kit-concorrente');
+ assert.equal(fotoAlternativa.planejamentoPosicoes.posicoesDourado,2);
+ assert.equal(fotoAlternativa.planejamentoPosicoes.posicoesRoxo,0);
+ assert.equal(fotoAlternativa.planejamentoPosicoes.quantidadePosicoesPrevistas,2);
+ assert.equal(fotoAlternativa.direitosCriados,0);
  const substituido=await call(prefix+'/kit-misto-a',{method:'PUT',admin:true,
   body:{...regra,cor:'CINZA',posicoesPorPedido:0,revisaoEsperada:1}});
  assert.equal(substituido.status,200);
  const antiga=sinalizacaoVitrine.consultarFotografiaPrepedido({prepedidoId:pedidoId});
  assert.deepEqual(antiga,foto,'revisao nao muda fotografia anterior');
- const segundo=await pedido(outro,'kit-cinza-segundo-0002',itens);
+ const obsoleto=await pedido(outro,'kit-revisao-antiga-0004',itens,
+  'kit-misto-a',1);
+ assert.equal(obsoleto.status,409,'regra obsoleta nao gera pedido');
+ const segundo=await pedido(outro,'kit-cinza-segundo-0002',itens,
+  'kit-misto-a',2);
  assert.equal(segundo.status,201,JSON.stringify(segundo.data));
  const novaFoto=sinalizacaoVitrine.consultarFotografiaPrepedido({
   prepedidoId:segundo.data.pedido.pedidoId});
@@ -148,7 +174,7 @@ test('kit multissku: admin salva, loja monta pedido, snapshot impede beneficio d
  assert.deepEqual(banco.prepare('PRAGMA foreign_key_check').all(),[]);
  assert.equal(banco.prepare(
   'SELECT COUNT(*) AS n FROM akitemm_checkout_prepedidos_staging'
- ).get().n,2);
+ ).get().n,3);
 });
 test('controle de pacotes rejeita quantidades invalidas sem saldo real',async()=>{
  const {OfertasCompostasCandidatoSQLite}=require(
