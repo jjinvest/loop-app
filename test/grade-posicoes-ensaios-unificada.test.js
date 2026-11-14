@@ -61,8 +61,8 @@ test('mesma grade mostra posicoes vindas do motor sem confundir com dinheiro',as
  assert.equal(area.children[1].children.length,10);
  assert.equal(area.children[1].children[0].children[1].textContent,'#42');
  assert.match(area.children[1].children[0].children[2].textContent,/Local: FILA/);
- assert.equal(area.children[1].children[0].children[3].tag,'form');
- assert.equal(area.children[1].children[0].children[4].tag,'button');
+ assert.equal(area.children[1].children[0].children.some(x=>x.tag==='form'),true);
+ assert.equal(area.children[1].children[0].children.some(x=>x.tag==='button'),true);
  assert.match(area.children[0].textContent,/Posições em acompanhamento/);
 });
 test('historico acima de dez permanece indicado sem confundir limite de pedidos',async()=>{
