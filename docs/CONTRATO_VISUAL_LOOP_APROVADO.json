@@ -1,11 +1,11 @@
 {
   "schema": 1,
   "política": "Toda alteração de HTML/CSS exige pedido visual explícito, escopo isolado e revisão do proprietário; é proibido atualizar hashes para esconder mudanças.",
-  "autorizaçãoAtual": "14/11/2026 — no RESUMO do Escritório remover só a linha dos três quadradinhos duplicados ABAIXO do banner, preservar três indicadores superiores e quatro botões, sem redesenho.",
+  "autorizaçãoAtual": "14/11/2026: seletor pequeno no quadrado Minhas Posições, sem trocar primeira aba; estado e histórico individual abaixo do banner. Segundo banner e retirada de textos ainda dependem da foto que proprietário anunciou.",
   "arquivos": [
     {
       "path": "src/candidato/checkout-candidato-ui.html",
-      "sha": "34dff88163af161e3085140a2ae9044b92d832bb"
+      "sha": "92ec9993c5790959826d128d17a85fae935ffd04"
     },
     {
       "path": "src/candidato/escritorio-admin-candidato-ui.css",
@@ -77,7 +77,7 @@
     },
     {
       "path": "src/laboratorio/loop-03-shell.css",
-      "sha": "6728ab8c2fffa5812d53298e794cd0c5867e80a4"
+      "sha": "4e3332a9030d1cf2d6c24e1776e0366000e203e5"
     },
     {
       "path": "src/laboratorio/loop-30-cosmos.css",
