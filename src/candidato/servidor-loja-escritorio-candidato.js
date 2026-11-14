@@ -1045,11 +1045,11 @@ function criarAppLojaEscritorioCandidato({banco,repositorioCatalogo,
   if(!contas.autorizarMutacao(req))
    return res.status(403).json({erro:'CSRF_INVALIDO'});
   if(!req.is('application/json')||!req.body||Array.isArray(req.body)||
-     Object.keys(req.body).sort().join(',')!=='aceiteExplicito,posicaoId,versaoTermos')
+     Object.keys(req.body).sort().join(',')!=='aceiteExplicito,cpf,posicaoId,versaoTermos')
    return res.status(400).json({erro:'CAMPOS_INVALIDOS'});
   try{
    const resultado=motorConta.registrarAceitePosicaoEnsaio({
-    titularId:s.titularId,posicaoId:req.body.posicaoId,
+    titularId:s.titularId,posicaoId:req.body.posicaoId,cpf:req.body.cpf,
     aceiteExplicito:req.body.aceiteExplicito,
     versaoTermos:req.body.versaoTermos
    });
@@ -1057,7 +1057,7 @@ function criarAppLojaEscritorioCandidato({banco,repositorioCatalogo,
   }catch(e){
    const codigo=e.codigo||'ACEITE_POSICAO_ENSAIO_INDISPONIVEL';
    return res.status(codigo==='POSICAO_NAO_PERTENCE_A_CONTA'?404:
-    codigo==='ACEITE_POSICAO_DADOS_INVALIDOS'?400:409).json({erro:codigo});
+    ['ACEITE_POSICAO_DADOS_INVALIDOS','CPF_INVALIDO'].includes(codigo)?400:409).json({erro:codigo});
   }
  });
  // Prova REMOTA independente de credencial: apenas GET de uma pagina vazia/limitada.
