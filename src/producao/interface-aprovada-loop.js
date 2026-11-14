@@ -41,7 +41,7 @@ function renderizarInterfaceAprovada(){
  const nickAtual='minlength="1" maxlength="12" pattern="[A-Za-z]{1,12}"';
  if(html.split(nickAtual).length!==4)
   throw Error('INTERFACE_NICK_APROVADO_DESATUALIZADA');
- if(html.split('href="/staging/loja"').length!==3)
+ if(html.split('href="/staging/loja"').length!==5)
   throw Error('INTERFACE_LOJA_APROVADA_DESATUALIZADA');
  html=html.replaceAll('href="/staging/loja"','href="/loja"');
  // Os campos de senha e as descrições de recuperação/conta seguem o mesmo padrão de segurança.
