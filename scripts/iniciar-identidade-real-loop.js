@@ -194,7 +194,8 @@ async function iniciar(ambiente=process.env){
   const porta=Number(ambiente.PORT||3000);
   if(!Number.isSafeInteger(porta)||porta<1||porta>65535)
    throw Error('PORTA_INVALIDA');
-  const server=app.listen(porta,'0.0.0.0');
+  // Private Networking Railway: IPv6 + IPv4 para health/load balancer.
+  const server=app.listen({port:porta,host:'::',ipv6Only:false});
   // Agenda executa somente quando o operador habilitou AUTOMATICA, e apenas em ensaio.
   const timer=ambiente.NODE_ENV==='production'?null:setInterval(()=>{
    try{operacaoCatraca.processarAgenda();}

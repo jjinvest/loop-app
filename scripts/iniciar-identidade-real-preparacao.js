@@ -139,7 +139,8 @@ function iniciarPreparacao(ambiente=process.env){
  const porta=Number(ambiente.PORT||3000);
  if(!Number.isSafeInteger(porta)||porta<1||porta>65535)
   throw Error('PORTA_REAL_INVALIDA');
- server.listen(porta,'0.0.0.0');
+ // Rede privada Railway usa IPv6; dual-stack tambem atende health IPv4.
+ server.listen({port:porta,host:'::',ipv6Only:false});
  const finalizar=()=>server.close();
  process.once('SIGTERM',finalizar);
  process.once('SIGINT',finalizar);
