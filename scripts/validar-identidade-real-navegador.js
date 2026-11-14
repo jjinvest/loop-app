@@ -229,6 +229,7 @@ async function main(){
    }]);
    const page=await contexto.newPage();
    page.setDefaultTimeout(15000);
+   page.on('pageerror',e=>console.log('E2E_PAGE_ERROR='+e.message));
    await page.goto(base+'/escritorio',{waitUntil:'domcontentloaded'});
    await page.locator('#painelConta').waitFor({state:'visible'});
    assert.equal(await page.locator('#cadastroNick').getAttribute('maxlength'),'12');
