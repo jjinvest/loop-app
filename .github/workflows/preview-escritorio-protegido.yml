@@ -76,6 +76,7 @@ on:
       - 'test/interface-aprovada-identidade-real.test.js'
       - 'test/contrato-visual-escritorio-aprovado.test.js'
       - 'test/loja-escritorio-conta-unica-candidata.test.js'
+      - 'test/ensaio-tres-clientes-acesso-unificado-preview.test.js'
       - 'src/candidato/checkout-candidato-ui.html'
       - 'src/candidato/checkout-candidato-ui.js'
       - 'src/candidato/escritorio-cliente-integrado.css'
