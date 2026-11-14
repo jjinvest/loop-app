@@ -23,7 +23,8 @@ const errosTraduzidos={
  CREDENCIAIS_INVALIDAS:'Nick ou senha incorretos. Confira os dados e tente novamente.',
  CONTA_TEMPORARIAMENTE_BLOQUEADA:'Muitas tentativas incorretas. Aguarde 15 minutos e tente novamente.',
  AUTENTICACAO_TEMPORARIAMENTE_OCUPADA:'Muitos acessos simultâneos. Aguarde um momento e tente novamente.',
- NICK_INVALIDO:'Seu nick deve ter apenas letras, com até 12 caracteres.',
+ NICK_INVALIDO:'Seu nick novo deve ter de 1 a 9 caracteres: letras, números ou espaços entre palavras.',
+ NICK_RESERVADO:'Este nick é exclusivo e não está disponível.',
  NOME_INVALIDO:'Confira o nome informado.',
  EMAIL_INVALIDO:'Confira o e-mail informado.',
  SENHA_INVALIDA:'Confira a senha informada.',
@@ -1098,8 +1099,8 @@ async function carregarIndicadorCadastro(){
   const res=await fetch('/staging/indicacao/atual',{credentials:'same-origin',cache:'no-store'});
   if(!res.ok)return;
   const dados=await res.json(),campo=$('cadastroIndicador');
-  if(campo)campo.value=typeof dados.nick==='string'&&/^[A-Za-z]{1,12}$/.test(dados.nick)?
-   dados.nick:'';
+  if(campo)campo.value=typeof dados.nick==='string'&&
+   dados.nick.length<=12?dados.nick:'';
   // Campo apenas informativo. O backend vincula a indicação somente a partir
   // do cookie assinado; nunca confia em texto enviado pelo navegador.
  }catch{/* Sem convite, o cadastro segue normalmente. */}
