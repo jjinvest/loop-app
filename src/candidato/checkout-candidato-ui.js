@@ -845,11 +845,11 @@ async function carregarIndicadorCadastro(){
  try{
   const res=await fetch('/staging/indicacao/atual',{credentials:'same-origin',cache:'no-store'});
   if(!res.ok)return;
-  const dados=await res.json(),campo=$('avisoIndicadorCadastro');
-  if(campo&&typeof dados.nick==='string'&&/^[A-Za-z]{1,12}$/.test(dados.nick)){
-   campo.textContent='Indicado por: '+dados.nick;
-   campo.hidden=false;
-  }
+  const dados=await res.json(),campo=$('cadastroIndicador');
+  if(campo)campo.value=typeof dados.nick==='string'&&/^[A-Za-z]{1,12}$/.test(dados.nick)?
+   dados.nick:'';
+  // Campo apenas informativo. O backend vincula a indicação somente a partir
+  // do cookie assinado; nunca confia em texto enviado pelo navegador.
  }catch{/* Sem convite, o cadastro segue normalmente. */}
 }
 async function restaurarSessao(){

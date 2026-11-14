@@ -40,8 +40,9 @@
   <h2 id="tituloCadastro">Criar conta</h2>
   <p class="subtexto">Preencha seus dados para criar uma conta. Depois, entre apenas com seu nick e senha.</p>
   <p id="erroCadastro" class="erro-formulario" role="alert" tabindex="-1" hidden></p>
-  <p id="avisoIndicadorCadastro" class="subtexto" aria-live="polite" hidden></p>
   <form id="formCadastro">
+   <label for="cadastroIndicador">Indicado por</label>
+   <input id="cadastroIndicador" class="campo-indicador-cadastro" type="text" value="" maxlength="12" readonly autocomplete="off" aria-label="Nick do indicador, preenchido automaticamente pelo link">
    <label for="cadastroNome">Nome</label>
    <input id="cadastroNome" name="nome" maxlength="90" autocomplete="off" required>
    <label for="cadastroNick">Nick (1 a 12 letras)</label>

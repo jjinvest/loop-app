@@ -7,6 +7,7 @@ main{width:min(900px,100%);padding:1.4rem 1rem 3rem;margin:auto}h1{font-size:cla
 p{line-height:1.55}.explicacao,.subtexto,.rodape{color:#beb8aa}.subtexto{font-size:.9rem}.rodape{font-size:.82rem;margin-top:2rem}
 .painel{padding:1.3rem;margin:1.2rem 0;border:1px solid #66542d;border-radius:14px;background:#191919}
 label{display:block;margin:.9rem 0 .3rem;font-weight:600}input{width:100%;padding:.8rem;color:#fff;background:#282828;border:1px solid #766b4e;border-radius:8px;font-size:1rem}
+#cadastroIndicador.campo-indicador-cadastro{color:#bdb8ab;background:#22211e;border-color:#645a46;cursor:default;opacity:1}
 button{border:1px solid #8e7847;border-radius:9px;padding:.7rem .95rem;color:#eee2c5;background:#27231b;font:inherit;cursor:pointer;min-height:44px}
 button:hover:not(:disabled),button:focus-visible{border-color:#d6b66a;outline:2px solid #947b37;outline-offset:1px}
 button:disabled{opacity:.5;cursor:not-allowed}.primario{background:linear-gradient(110deg,#0f583e,#268660);color:#fff;border-color:#41856d;font-weight:bold}

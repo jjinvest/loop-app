@@ -87,6 +87,9 @@ test('mesma identidade da loja entra no Escritorio LOOP sem novo cadastro',async
  assert.doesNotMatch(html,/Criar conta de homologação|Nome fictício|E-mail fictício|Senha de teste/);
  assert.match(html,/id="cadastroTelefone"/);
  assert.match(html,/id="cadastroConfirmarSenha"/);
+ assert.match(html,/<label for="cadastroIndicador">Indicado por<\/label>\s*<input id="cadastroIndicador"[^>]*readonly[^>]*>/,
+  'nick do indicador sempre visivel, somente leitura e antes de Nome');
+ assert.ok(html.indexOf('id="cadastroIndicador"')<html.indexOf('id="cadastroNome"'));
  assert.match(html,/id="irParaLoja"/);
  assert.match(html,/<p class="explicacao">Acompanhe sua conta, pedidos e posições\.<\/p>/);
  assert.doesNotMatch(html,/Neste ambiente, as operações são de teste e não movimentam dinheiro/);
@@ -272,6 +275,12 @@ test('convite por link registra cadastro correto, rejeita fraude e nao libera co
   .find(s=>s.startsWith('akitemm_preview_ref='));
  assert.ok(cookie,'cookie de vinculo existe');
  assert.match(cookie,/HttpOnly/);assert.match(cookie,/Secure/);
+ const indicador=await x.consultar('/staging/indicacao/atual',
+  {headers:{Cookie:cookie.split(';')[0]}});
+ assert.equal(indicador.status,200);
+ assert.deepEqual(await indicador.json(),{nick:'Alice'});
+ assert.deepEqual(await (await x.consultar('/staging/indicacao/atual')).json(),
+  {nick:null},'sem link o campo fica em branco');
  assert.equal((await cadastrar('Bruna',{Cookie:cookie.split(';')[0],
   'X-Akitemm-Preview-Indicador':'Mallory'})).status,201);
  assert.equal((await cadastrar('Clara',{Cookie:
