@@ -704,7 +704,7 @@ function mp4TrintaSegundos(){
    });
    assert.match(cores.verde,/rgb\(81, 213, 152\)/,
     'centro continua VERDE METALICO mesmo com companhia no centro');
-   assert.match(cores.vermelho,/rgb\(233, 76, 85\)/,
+   assert.match(cores.vermelho,/rgb\(239, 83, 92\)/,
     'entrada da vaga 6 aparece VERMELHA na ausencia de prioridade azul/dourada');
    await page.locator('#tabuleiroVerPosicoesIntegrado').click();
    await page.locator('#conteudoPosicoes').waitFor({state:'visible'});
