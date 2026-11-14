@@ -171,3 +171,15 @@ test('tabuleiro circular respeita azul verde dourada e 6 eventos',()=>{
  assert.equal(el.motorBolinha6.classList.contains('loop03-marcador-aceso'),true);
  assert.throws(()=>visual.preencherLuzes(7),/EVENTOS_TABULEIRO_INVALIDOS/);
 });
+
+test('painel exibe 10 lugares por fila, expansao em 30 sem usar IDs como ranking',()=>{
+ const client=ler('candidato/checkout-candidato-ui.js');
+ const real=ler('producao/interface-aprovada-contas.js');
+ assert.match(client,/validas\.slice\(0,10\)/);
+ assert.match(client,/paginasFilasTabuleiro\[fila\]\*30/);
+ assert.match(client,/for\(let inicio=0;inicio<limite;inicio\+=30\)/);
+ assert.match(client,/filaAbertaNoTabuleiro===fila/);
+ assert.match(real,/desdeInicio=1/);
+ assert.match(real,/d\.janela\.length>10/);
+ assert.match(real,/d\.pagina\.length>30/);
+});
