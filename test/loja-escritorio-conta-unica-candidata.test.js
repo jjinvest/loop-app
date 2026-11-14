@@ -295,7 +295,7 @@ test('nick reservado VILELA nao aceita imitacoes, e variantes distintas sao inde
  const link=await enviar(base,'/staging/vitrine/meus-links',{
   cookie:login.cookie.match(new RegExp(COOKIE+'=([a-f0-9]{64})'))?.[1]});
  assert.equal(link.status,200,JSON.stringify(link.body));
- assert.equal(link.body.linkLoja,'/loja/JOSÉ');
+ assert.equal(link.body.linkLoja,'/loja/JOS%C3%89');
 });
 
 test('migracao de NOCASE para nick exato preserva titular legado de 12 caracteres e sessao',async()=>{
