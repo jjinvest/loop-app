@@ -61,11 +61,18 @@ function createVitrineCandidata({app,banco,catalogo,contas,intencoes,prePedidos,
  // Não altera HTML nem CSS do site comercial. URLs só da cópia de teste.
  const original=fs.readFileSync(path.join(DIR,'loja-cliente-demo.html'),'utf8');
  const html=original
-  .replace('href="/escritorio"','href="/staging/cliente"')
+  .replace('href="/escritorio"','href="/minha-conta?cadastro=1&destino=loja"')
   .replace('href="/laboratorio/loja.css"','href="/staging/assets/loja-aprovada.css"')
   .replace('src="/laboratorio/educacao-carrinho.js"',
    'src="/staging/assets/educacao-carrinho.js"')
   .replace('src="/laboratorio/loja.js"','src="/staging/assets/loja-aprovada.js"')
+  .replace('<form id="akitemmFormEntrega"',
+   '<form id="akitemmConsultaCep" class="akitemm-form-entrega">'+
+   '<p>Consulte pelo CEP sem criar uma conta. O valor exato dependerá da transportadora.</p>'+
+   '<label>CEP<input name="cep" inputmode="numeric" pattern="[0-9]{5}-?[0-9]{3}" placeholder="00000-000" required></label>'+
+   '<button type="submit">Consultar frete</button>'+
+   '<p id="akitemmResultadoConsultaCep" role="status"></p></form>'+
+   '<form id="akitemmFormEntrega"')
   .replace('<main class="loja-loop">',
    '<main class="loja-loop"><p class="akitemm-estado">PRÉVIA LOCAL: sem pagamentos, posições, bônus, entregas ou giros reais. As cores são demonstrativas.</p>')
   .replace('<div id="catalogoLojaLoop" class="produtos-loja-loop"></div>',
@@ -94,10 +101,24 @@ function createVitrineCandidata({app,banco,catalogo,contas,intencoes,prePedidos,
   .replace("fetch('/api/laboratorio/participante/'+caminho,{",
    "fetch('/staging/vitrine/'+caminho,{")
   .replace('const catalogo=[],carrinho=new Map();',
-   'const catalogo=[],carrinho=new Map();let csrfCandidato=null,chavePedidoCandidato=null,ofertasCompostas=[],pacotesEscolhidos=new Map(),assinaturaPedidoAnterior=null,selecaoPacotesInvalida=false,pacotesVisiveis=0;')
+   'const catalogo=[],carrinho=new Map();let csrfCandidato=null,chavePedidoCandidato=null,visitanteSemConta=true,ofertasCompostas=[],pacotesEscolhidos=new Map(),assinaturaPedidoAnterior=null,selecaoPacotesInvalida=false,pacotesVisiveis=0;')
   .replace(ant,novo)
   .replace('const data=await response.json();',
    "const data=await response.json();\n  if(caminho==='minha-conta'&&response.ok){csrfCandidato=data.csrf||null;atualizarPreviaQualificacao();}\n  if(caminho==='loja/pedidos'&&(response.ok||[400,409].includes(response.status)))chavePedidoCandidato=null;")
+  .replace('function adicionar(p){',
+   "function adicionar(p){if(visitanteSemConta){location.assign('/minha-conta?cadastro=1&destino=loja');return;}")
+  .replace('const proximo=new Map(carrinho);',
+   "if(visitanteSemConta){location.assign('/minha-conta?cadastro=1&destino=loja');return;}const proximo=new Map(carrinho);")
+  .replace('async function inicializar(){\n  try{\n   await Promise.all([carregarCatalogo(),carregarPedidos(),carregarLinkDivulgacaoLoja(),carregarPerfil(),carregarEntrega()]);',
+   "async function inicializar(){\n  try{\n   await carregarCatalogo();\n"+
+   "   try{await carregarPerfil();visitanteSemConta=false;}catch{visitanteSemConta=true;}\n"+
+   "   el('akitemmNomeTitular').textContent=visitanteSemConta?'Visitante':el('akitemmNomeTitular').textContent;\n"+
+   "   el('akitemmDetalhesPedidos').hidden=visitanteSemConta;\n"+
+   "   el('akitemmFormEntrega').hidden=visitanteSemConta;\n"+
+   "   el('akitemmConsultaCep').hidden=!visitanteSemConta;\n"+
+   "   if(!visitanteSemConta)await Promise.allSettled([carregarPedidos(),carregarLinkDivulgacaoLoja(),carregarEntrega()]);")
+  .replace(" el(\"akitemmConfirmarAvulso\").addEventListener(\"click\"",
+   " el('akitemmConsultaCep').addEventListener('submit',ev=>{ev.preventDefault();const f=ev.currentTarget;if(!f.reportValidity())return;const cep=new FormData(f).get('cep');el('akitemmResultadoConsultaCep').textContent='CEP '+cep+': preço do frete depende da integração com a transportadora. Nenhum cadastro é necessário para consultar.';});\n el(\"akitemmConfirmarAvulso\").addEventListener(\"click\"")
   .replace('function atualizarCarrinho(){',`
 let seqPrevia=0;
 function escolhasPacotes(){
@@ -273,10 +294,7 @@ function atualizarCarrinho(){
    'const haPublicacoes=filtradoNovidadePublicada()||pacotesVisiveis>0;')
   .replace("termoBusca?filtrados.length+' produto(s) encontrado(s) para",
    "termoBusca?(filtrados.length+pacotesVisiveis)+' resultado(s) encontrado(s) para");
- app.get('/staging/loja',(req,res)=>{
-  if(!sessao(req))return res.redirect(302,'/staging/cliente?destino=loja');
-  return res.type('html').send(html);
- });
+ app.get('/staging/loja',(_req,res)=>res.type('html').send(html));
  app.get('/staging/assets/loja-aprovada.css',(_req,res)=>
   res.type('css').sendFile(path.join(DIR,'loja-cliente-demo.css')));
  app.get('/staging/assets/educacao-carrinho.js',(_req,res)=>
@@ -289,19 +307,18 @@ function atualizarCarrinho(){
    conta:{nick:p.nick},csrf:sessao(req).csrf,laboratorio:true});
  });
  // Mesmo site original. Publicações opcionais da seção Novidades.
- app.get('/staging/vitrine/novidades',autorizarCliente,(_req,res)=>{
+ app.get('/staging/vitrine/novidades',(_req,res)=>{
   try{return res.json({itens:novidades.listar({publicadas:true}),
    semBeneficioAutomatico:true});}
   catch(e){return res.status(503).json({erro:e.codigo||'NOVIDADES_INDISPONIVEIS'});}
  });
- app.get('/staging/vitrine/novidades/:id/imagem',autorizarCliente,(req,res)=>{
+ app.get('/staging/vitrine/novidades/:id/imagem',(req,res)=>{
   try{
    const r=novidades.imagem({id:Number(req.params.id),publicada:true});
    return res.type(r.mime).set('Cache-Control','private, no-store').send(r.bytes);
   }catch(e){return res.status(404).json({erro:'NOVIDADE_IMAGEM_INDISPONIVEL'});}
  });
- app.get('/staging/vitrine/loja/catalogo',autorizarCliente,
-  async(req,res)=>{
+ app.get('/staging/vitrine/loja/catalogo',async(req,res)=>{
    try{
     const lista=(await catalogo.listar()).filter(p=>p.estado==='PUBLICADO');
     const pacotes=await ofertasCompostas.publicas();
@@ -317,7 +334,7 @@ function atualizarCarrinho(){
 
 
  app.get('/staging/vitrine/loja/produtos/:id/foto/:posicao',
-  autorizarCliente,async(req,res)=>{
+  async(req,res)=>{
    try{
     const p=await catalogo.buscar(req.params.id);
     if(!p||p.estado!=='PUBLICADO')
@@ -330,7 +347,7 @@ function atualizarCarrinho(){
   });
 
  app.get('/staging/vitrine/loja/produtos/:id/video',
-  autorizarCliente,async(req,res)=>{
+  async(req,res)=>{
    try{
     const p=await catalogo.buscar(req.params.id);
     if(!p||p.estado!=='PUBLICADO')
@@ -484,7 +501,7 @@ function atualizarCarrinho(){
     apenasEnsaio:true,indicadoQualificado:false,semComissaoReal:true});
   }catch{return res.status(503).json({erro:'LINK_INDICACAO_INDISPONIVEL'});}
  });
- app.get('/staging/vitrine/loja/config',autorizarCliente,(_req,res)=>{
+ app.get('/staging/vitrine/loja/config',(_req,res)=>{
   try{
    const c=configLoja.consultarComRevisao();
    return res.json({config:c.config,revisao:c.revisao,

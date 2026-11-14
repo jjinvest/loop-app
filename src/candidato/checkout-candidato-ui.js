@@ -841,6 +841,17 @@ async function sair(){
  mostrarSessao(false);$('listaPedidos').replaceChildren();$('comunicadosCliente').replaceChildren();$('minhaPreviaFilas').replaceChildren();$('minhasPreAdesoes').replaceChildren();
  dizer('Sessão de homologação encerrada.');
 }
+async function carregarIndicadorCadastro(){
+ try{
+  const res=await fetch('/staging/indicacao/atual',{credentials:'same-origin',cache:'no-store'});
+  if(!res.ok)return;
+  const dados=await res.json(),campo=$('avisoIndicadorCadastro');
+  if(campo&&typeof dados.nick==='string'&&/^[A-Za-z]{1,12}$/.test(dados.nick)){
+   campo.textContent='Indicado por: '+dados.nick;
+   campo.hidden=false;
+  }
+ }catch{/* Sem convite, o cadastro segue normalmente. */}
+}
 async function restaurarSessao(){
  try{
   const s=await requisitar('/contas/me');csrf=s.csrf;
@@ -849,7 +860,14 @@ async function restaurarSessao(){
   await atualizarIdentidadeTeste();
   dizer('Sua sessão foi restaurada.');
   mostrarAba('conteudoResumo');
- }catch(e){mostrarSessao(false);dizer('');}
+  }catch(e){
+  mostrarSessao(false);dizer('');
+  const params=new URLSearchParams(location.search);
+  if(params.get('cadastro')==='1'||params.get('destino')==='loja'){
+   selecionarTelaAcesso('cadastro');
+   void carregarTermosCadastro();
+  }
+ }
 }
 async function carregarTermosCadastro(){
  if(carregandoTermosCadastro)return carregandoTermosCadastro;
@@ -1084,4 +1102,5 @@ $('formGrafiaNick').addEventListener('submit',confirmarGrafiaNick);
 for(const [btn,section] of ABAS){
  $(btn).addEventListener('click',()=>mostrarAba(section));
 }
+void carregarIndicadorCadastro();
 restaurarSessao();

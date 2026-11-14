@@ -33,7 +33,7 @@ test('vitrine aprovada usa mesmo catálogo SQLite e Meus Pedidos, sem financeiro
   return {status:r.status,body:await r.text(),headers:r.headers};
  };
  const json=async(rota,args)=>{const r=await get(rota,args);return {...r,json:JSON.parse(r.body)};};
- assert.equal((await get('/staging/loja')).status,302);
+ assert.equal((await get('/staging/loja')).status,200);
  const register=async nick=>{
   const cad=await json('/staging/contas/cadastrar',{method:'POST',body:{
    nome:'Cliente '+nick,nick,email:nick.toLowerCase()+'@example.invalid',
@@ -70,7 +70,7 @@ test('vitrine aprovada usa mesmo catálogo SQLite e Meus Pedidos, sem financeiro
  assert.ok(!html.body.includes('Roxo · Evento especial'),
   'roxo e quadrado de ofertas, nao exclusivo de eventos');
  const catalog='/staging/vitrine/loja/catalogo';
- assert.equal((await json(catalog)).status,401);
+ assert.equal((await json(catalog)).status,200,'catalogo publicado tem leitura publica');
  const inicial=await json(catalog,{cookie:ana.cookie});
  assert.equal(inicial.status,200);
  assert.equal(inicial.json.produtos.length,1);

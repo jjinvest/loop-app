@@ -101,7 +101,7 @@ test('mesma identidade da loja entra no Escritorio LOOP sem novo cadastro',async
  assert.equal(visual.status,200);
  assert.match(await visual.text(),/LoopTabuleiroVisual/);
  const anonimo=await fetch(x.base+'/staging/assets/tabuleiro-visual.js');
- assert.equal(anonimo.status,401,'nem assets do escritorio sao publicos');
+ assert.equal(anonimo.status,200,'scripts da tela de cadastro sao publicos; APIs continuam privadas');
  const js=await x.consultar('/staging/assets/cliente.js');
  assert.match(await js.text(),/let telaAcesso='login'/);
  const criar=await x.consultar('/staging/contas/cadastrar',{
@@ -136,8 +136,8 @@ test('mesma identidade da loja entra no Escritorio LOOP sem novo cadastro',async
  assert.equal(atalho.status,302);
  assert.equal(atalho.headers.get('location'),'/staging/loja?origem=escritorio',
   'atalho comercial deve atravessar Path=/staging sem perder o cookie');
- assert.equal((await x.consultar('/staging/loja')).status,302,
-  'loja continua protegida e exige login, mesmo acessada diretamente');
+ assert.equal((await x.consultar('/staging/loja')).status,200,
+  'visitante pode consultar produtos sem login');
  assert.equal((await x.consultar('/staging/loja',{headers})).status,200,
   'apos o redirecionamento o navegador envia a sessao do titular');
 });
@@ -207,8 +207,8 @@ test('gateway exige acesso antes de HTML e rotas administrativas',async t=>{
  assert.equal(loja.status,302,'vitrine redireciona para rota local da vitrine');
  const alvo=loja.headers.get('location');
  assert.equal(alvo,'/staging/loja');
- assert.equal((await x.consultar(alvo)).status,302,
-  'navegador sem sessao de cliente nao abre loja apos atalho');
+ assert.equal((await x.consultar(alvo)).status,200,
+  'visitante navega na loja sem criar conta');
 });
 test('cadastro de ensaio cria conta no mesmo SQLite e financeiros permanecem bloqueados',async t=>{
  const x=await preparar(t);

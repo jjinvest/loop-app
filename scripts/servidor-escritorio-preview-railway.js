@@ -180,10 +180,35 @@ function criarGateway({portaInterna,senhaAcesso,senhaAdmin,segredoOperador,
    return negar(401,'Operador autorizado necessário',{
     'WWW-Authenticate':'Basic realm="AKITEMM - Administrador", charset="UTF-8"'
    });
-  if(!basicaValida&&!sessaoValida&&!webhookUnificado&&!adminValido)
+  const leitura=req.method==='GET'||req.method==='HEAD';
+  const publico=leitura&&(
+   /^\/(?:|minha-conta|loja|staging\/cliente|staging\/loja)$/.test(url.pathname)||
+   /^\/(?:loja|escritorio)\/[A-Za-z]{1,12}$/.test(url.pathname)||
+   /^\/staging\/assets\/(?:cliente\.js|cliente\.css|cliente-integrado\.css|loop03-aprovado\.css|catraca-visor\.js|tabuleiro-visual\.js|loja-aprovada\.js|loja-aprovada\.css|educacao-carrinho\.js)$/.test(url.pathname)||
+   /^\/staging\/vitrine\/(?:loja\/(?:catalogo|config|produtos\/[a-zA-Z0-9-]+\/(?:foto\/(?:10|[1-9])|video))|novidades(?:\/[0-9]+\/imagem)?)$/.test(url.pathname)||
+   url.pathname==='/staging/contas/termos-cadastro'||
+   url.pathname==='/staging/contas/me'||
+   url.pathname==='/staging/indicacao/atual');
+  const acessoConta= req.method==='POST'&&[
+   '/staging/contas/cadastrar','/staging/contas/entrar',
+   '/staging/contas/recuperar-senha','/staging/contas/redefinir-senha'
+  ].includes(url.pathname);
+  // O cookie de conta nao concede poder administrativo. O backend verifica
+  // assinatura e titularidade a cada operacao; a regra de admin acima vence.
+  const cookieConta=/(?:^|;\s*)loop_candidato_s=[a-f0-9]{64}(?:;|$)/.test(req.headers.cookie||'');
+  const acessoTitular=cookieConta&&url.pathname.startsWith('/staging/')&&
+   !rotaAdmin(url.pathname)&&!url.pathname.startsWith('/staging/asaas/');
+  if(!basicaValida&&!sessaoValida&&!webhookUnificado&&!adminValido&&
+     !publico&&!acessoConta&&!acessoTitular)
    return negar(401,'Acesso exclusivo para homologação',{
     'WWW-Authenticate':'Basic realm="AKITEMM - Acesso de teste", charset="UTF-8"'
    });
+  if(url.pathname==='/staging/indicacao/atual'){
+   if(req.method!=='GET'&&req.method!=='HEAD')return negar(405,'Método não permitido');
+   const nick=lerIndicacao(req);
+   res.writeHead(200,{...cabecalhosBase,'Content-Type':'application/json; charset=utf-8'});
+   return res.end(JSON.stringify({nick:nick||null}));
+  }
   const agora=String(Date.now());
   const novoAdminCookie=exigeOperador&&operadorBasicoValido&&!lerAdmin(req)?
    adminCookie+'=v2.'+agora+'.'+assinarAdmin(agora)+
@@ -225,7 +250,7 @@ function criarGateway({portaInterna,senhaAcesso,senhaAdmin,segredoOperador,
     assinarIndicacao(nick,ts)+
     '; HttpOnly; Secure; SameSite=Lax; Path=/; Max-Age=2592000';
    res.writeHead(302,{...cabecalhosBase,
-    Location:caminhoConvite[1]==='loja'?'/loja':'/minha-conta',
+    Location:caminhoConvite[1]==='loja'?'/loja':'/minha-conta?cadastro=1',
     'Set-Cookie':[...(novoCookie?[novoCookie]:[]),refCookie]});
    return res.end();
   }

@@ -148,8 +148,8 @@ test('ensaio de tres titulares: lojas, escritorios, links e admin isolados',asyn
  assert.equal(duploCookie.status,401,
   'dois cookies de contas distintas nunca elegem titular arbitrario');
  assert.equal((await chamar('/staging/minha-equipe')).status,401);
- assert.equal((await chamar('/staging/loja')).status,302,
-  'sem sessao, nao abre o carrinho de outra conta');
+ assert.equal((await chamar('/staging/loja')).status,200,
+  'sem sessao abre somente a vitrine publica; pedidos seguem isolados');
  assert.equal((await chamar('/staging/escritorio-unificado')).status,401);
  for(const u of Object.values(usuarios)){
   const resp=await chamar('/staging/checkout/finalizar',{metodo:'POST',
