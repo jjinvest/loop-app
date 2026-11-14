@@ -50,11 +50,20 @@ function renderizarInterfaceAprovada(){
  const fimFoto=inicioFoto<0?-1:html.indexOf('   </form>',inicioFoto);
  if(inicioFoto<0||fimFoto<0)throw Error('INTERFACE_FOTO_PERFIL_DESATUALIZADA');
  html=trocarExato(html,html.slice(inicioFoto,fimFoto+'   </form>\n'.length),'');
- // Nick é uma identidade única entre loja e escritório. Alterar apenas a
- // instância real da tela aprovada, sem mudar o laboratório histórico.
- const nickAtual='minlength="1" maxlength="12" pattern="[A-Za-z]{1,12}"';
- if(html.split(nickAtual).length!==4)
+ // A tela compartilhada da prévia passou a aceitar nicks de 1-9.
+ // Esta instancia REAL tem mecanismo de identidade separado, ainda com
+ // contrato legado de 1-12 ASCII. Adaptar somente o HTML emitido aqui;
+ // nao alterar nem migrar o banco de identidades reais nesta tarefa.
+ const nickNovo='[A-Za-zÀ-ÖØ-öø-ÿ0-9]+(?: [A-Za-zÀ-ÖØ-öø-ÿ0-9]+)*';
+ const loginNovo='minlength="1" maxlength="12" pattern="'+nickNovo+'"';
+ const cadastroNovo='minlength="1" maxlength="9" pattern="'+nickNovo+'"';
+ const nickLegado='minlength="1" maxlength="12" pattern="[A-Za-z]{1,12}"';
+ if(html.split(loginNovo).length!==3||
+    html.split(cadastroNovo).length!==2)
   throw Error('INTERFACE_NICK_APROVADO_DESATUALIZADA');
+ html=html.replaceAll(loginNovo,nickLegado);
+ html=html.replace(cadastroNovo,nickLegado);
+ html=trocarExato(html,'Nick (1 a 9 caracteres)','Nick (1 a 12 letras)');
  if(html.split('href="/staging/loja"').length!==5)
   throw Error('INTERFACE_LOJA_APROVADA_DESATUALIZADA');
  html=html.replaceAll('href="/staging/loja"','href="/loja"');
