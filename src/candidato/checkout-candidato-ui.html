@@ -47,6 +47,9 @@
    <label for="cadastroNick">Nick (1 a 12 letras)</label>
    <p class="subtexto">O nick aparece exatamente como você escrever, inclusive maiúsculas e minúsculas. Use a mesma grafia ao entrar.</p>
    <input id="cadastroNick" name="nick" minlength="1" maxlength="12" pattern="[A-Za-z]{1,12}" required>
+   <label for="cadastroCpf">CPF</label>
+   <input id="cadastroCpf" name="cpf" type="text" inputmode="numeric" maxlength="14" pattern="[0-9.\\-]{11,14}" autocomplete="off" aria-describedby="cadastroCpfAviso" required>
+   <small id="cadastroCpfAviso" class="subtexto">Nesta prévia de homologação, utilize apenas CPF fictício.</small>
    <label for="cadastroEmail">E-mail</label>
    <input id="cadastroEmail" name="email" type="email" maxlength="254" autocomplete="off" required>
    <label for="cadastroTelefone">Telefone</label>
