@@ -150,7 +150,8 @@ function mp4TrintaSegundos(){
    assert.equal(await page.locator('#conteudoResumo').isVisible(),true);
    await page.locator('#loop03AbrirPerfil').click();
    assert.equal(await page.locator('#loop03DadosRapidos').isHidden(),true);
-   if(item.isMobile)await page.locator('#loop03MenuIntegrado').click();
+   // No celular, o menu continua aberto: a proxima aba fecha-o sozinha.
+   // O hamburguer fica atras do menu e nao deve ser clicado nesse estado.
    await abrirAba('#abaConta');
    await page.locator('#arquivoFotoPerfil').setInputFiles({
     name:'foto-perfil.png',mimeType:'image/png',buffer:fotoPng
