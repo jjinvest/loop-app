@@ -1315,6 +1315,22 @@ class MotorContaUnicaEnsaioSQLite{
     revisao,semAlteracao:false,identificadorInternoPreservado:true};
   }catch(e){this.banco.exec('ROLLBACK');throw e;}
  }
+ consultarHistoricoPosicao({titularId,numero}={}){
+  validarAmbiente();
+  if(!Number.isSafeInteger(numero)||numero<1)falha('POSICAO_INVALIDA');
+  const visao=this.consultar({titularId});
+  const atual=visao.minhasPosicoes.find(p=>p.numero===numero);
+  if(!atual)falha('POSICAO_NAO_PERTENCE_A_CONTA');
+  const eventos=this.banco.prepare([
+   'SELECT tipo,criado_em FROM akitemm_motor_conta_ensaio_operacoes',
+   'WHERE titular_id=? AND numero_posicao=?',
+   'ORDER BY criado_em DESC,id DESC LIMIT 30'
+  ].join(' ')).all(titularId,numero);
+  return {numero,local:atual.local,fila:atual.fila,
+   indicacoesVinculadas:atual.indicacoesVinculadas,pendente:atual.pendente,
+   aceiteIndividualRegistrado:atual.aceiteIndividualRegistrado,
+   eventos:eventos.map(e=>({tipo:e.tipo,criadoEm:e.criado_em}))};
+ }
  consultar({titularId=null}={}){
   validarAmbiente();
   if(titularId!==null){
