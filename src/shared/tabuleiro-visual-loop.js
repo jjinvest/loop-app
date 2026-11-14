@@ -74,7 +74,8 @@
     ': '+(p?(dourada(p)?'dourada · ':'')+numero(p).replace('\n',' · '):
     'vazio')+(p?.minha?' · minha posição':''));
   }
-  function preencherFila(id,itens,tipo){
+  function preencherFila(id,itens,tipo,{inicio=0}={}){
+   if(!Number.isSafeInteger(inicio)||inicio<0)throw Error('FILA_INICIO_INVALIDO');
    if(tipo!=='A'&&tipo!=='B')throw Error('FILA_INVALIDA');
    const area=$(id);
    if(!area)throw Error('FILA_VISUAL_NAO_EXISTE');
@@ -89,7 +90,11 @@
     area.append(vazio);return;
    }
    const lista=contagem===null?itens:[{resumo:contagem}];
-   for(const p of lista){
+   for(const [indice,p] of lista.entries()){
+    // Os números da fila indicam ORDEM de atendimento (1º, 2º, 3º),
+    // nunca o ID da posição. A fonte do servidor preserva a sequência.
+    const ordem=Number.isSafeInteger(p?.ordem)&&p.ordem>0?
+     p.ordem:inicio+indice+1;
     const linha=document.createElement('div');
     linha.className='loop03-linha-fila';
     const inicial=document.createElement('span');
@@ -102,12 +107,12 @@
     const identificacao=document.createElement('span');
     identificacao.className='loop03-numero-titular';
     identificacao.textContent=contagem!==null?
-     contagem+' posição(ões) em validação interna':
-     numero(p).replace('\n',' · ');
+     contagem+' posição(ões) na fila · abra para ver a ordem':
+     ordem+'º na fila';
     conteudo.append(identificacao);
     if(contagem===null&&p?.minha===true){
      const minha=document.createElement('small');
-     minha.textContent='Minha posição';
+     minha.textContent='Minha posição nesta ordem';
      conteudo.append(minha);
     }
     linha.append(inicial,conteudo);
