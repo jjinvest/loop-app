@@ -410,13 +410,10 @@ async function atualizarTabuleiroIntegrado(){
   visorCatraca.registrarAgenda(motor.agenda);
   visorCatraca.observar(motor.catraca.giros,
    motor.tabuleiro.eventosNoCiclo);
-  const movimento=motor.agenda?.modoExecucao==='STOP'?
-   'Movimentos pausados conforme a programação.':
-   motor.agenda?.modoExecucao==='AGENDADA'?
-    'Movimentos conforme os horários programados.':
-    'Acompanhe os movimentos da catraca.';
-  estado.textContent=motor.tabuleiro.eventosNoCiclo+
-   ' de 6 eventos neste ciclo. '+movimento;
+  // O contador ja esta dentro da roda; o rodape fica livre de repeticao.
+  // Esta area e reservada exclusivamente a falhas reais de leitura.
+  estado.textContent='';
+  estado.hidden=true;
  }catch(e){
   // Remover apenas fotografia antiga da visualizacao: ela nao pode
   // continuar mostrando ensaio como real apos falha de leitura do motor.
@@ -428,6 +425,7 @@ async function atualizarTabuleiroIntegrado(){
   visualTabuleiro.preencherLuzes(0);
   $('motorContadorEventos').textContent='—';
   estado.textContent='Tabuleiro operacional ainda indisponível: serviço real não ativado. Nenhuma posição de teste será exibida como real.';
+  estado.hidden=false;
  }
 }
 function fecharMenuIntegrado(){
