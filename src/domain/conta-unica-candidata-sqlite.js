@@ -11,12 +11,35 @@ const derivar=promisify(scrypt);
 const NICK_NOVO=/^[A-Za-zÀ-ÖØ-öø-ÿ0-9]+(?: [A-Za-zÀ-ÖØ-öø-ÿ0-9]+)*$/u;
 const NICK_LEGADO=/^[A-Za-z]{1,12}$/;
 function nickReservado(nick){
+ // Proteger a identidade VILELA contra caixa, acento, espacamento,
+ // confusoes comuns de digitos e ate uma alteracao de caractere.
  const base=nick.normalize('NFD').replace(/\p{M}/gu,'')
   .toLowerCase().replace(/ /g,'');
- const traduz=s=>s.replace(/3/g,'e').replace(/4/g,'a')
-  .replace(/8/g,'e');
- return [base,traduz(base.replace(/1/g,'i')),
-  traduz(base.replace(/1/g,'l'))].some(x=>x.includes('vilela'));
+ const alternativas={0:['o'],1:['i','l'],2:['z'],3:['e'],4:['a'],
+  5:['s'],6:['g'],7:['t'],8:['i','e'],9:['g']};
+ const alvo='vilela';
+ const equivalentes=[''];
+ for(const c of base){
+  const opcoes=alternativas[c]||[c];
+  const novos=[];
+  for(const p of equivalentes)for(const o of opcoes)novos.push(p+o);
+  if(novos.length>256)return base.includes(alvo);
+  equivalentes.splice(0,equivalentes.length,...novos);
+ }
+ const distanciaUm=v=>{
+  if(v.includes(alvo))return true;
+  if(Math.abs(v.length-alvo.length)>1)return false;
+  let i=0,j=0,edicoes=0;
+  while(i<v.length&&j<alvo.length){
+   if(v[i]===alvo[j]){i++;j++;continue;}
+   if(++edicoes>1)return false;
+   if(v.length>alvo.length)i++;
+   else if(v.length<alvo.length)j++;
+   else {i++;j++;}
+  }
+  return edicoes+(v.length-i)+(alvo.length-j)<=1;
+ };
+ return equivalentes.some(distanciaUm);
 }
 const NOME=/^[\p{L}\p{M} .'-]{2,90}$/u;
 const EMAIL=/^[^\s@]{1,64}@[^\s@]{1,180}$/;
