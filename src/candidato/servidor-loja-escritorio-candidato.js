@@ -835,6 +835,23 @@ function criarAppLojaEscritorioCandidato({banco,repositorioCatalogo,
   try{return res.json(motorConta.consultar({titularId:s.titularId}));}
   catch(e){return res.status(503).json({erro:e.codigo||'MOTOR_ENSAIO_INDISPONIVEL'});}
  });
+ // Histórico estritamente do titular autenticado; apenas leitura.
+ app.get('/staging/motor/posicoes/:numero/historico',(req,res)=>{
+  const s=contas.sessao(req);
+  if(!s)return res.status(401).json({erro:'SESSAO_AUSENTE'});
+  const numero=Number(req.params.numero);
+  if(!/^[1-9][0-9]*$/.test(req.params.numero)||
+     !Number.isSafeInteger(numero))
+   return res.status(400).json({erro:'POSICAO_INVALIDA'});
+  res.set('Cache-Control','private, no-store');
+  try{return res.json(motorConta.consultarHistoricoPosicao({
+   titularId:s.titularId,numero
+  }));}catch(e){
+   return res.status(e.codigo==='POSICAO_NAO_PERTENCE_A_CONTA'?404:503)
+    .json({erro:e.codigo==='POSICAO_NAO_PERTENCE_A_CONTA'?
+     'POSICAO_NAO_ENCONTRADA':'HISTORICO_INDISPONIVEL'});
+  }
+ });
  // Livro imutavel das luzes, no mesmo SQLite das compras/filas.
  // A luz autoriza previsao contábil; nao transfere nem libera Pix real.
  app.get('/staging/escritorio-unificado/financeiro/fluxo',
