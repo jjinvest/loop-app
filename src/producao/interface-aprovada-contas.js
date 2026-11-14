@@ -111,8 +111,9 @@
   }
   if($('abaEquipe'))$('abaEquipe').disabled=false;
   if($('abaLinks'))$('abaLinks').disabled=false;
+  // O placar superior aprovado deve permanecer visivel no PC e no celular.
   const indicators=document.querySelector('.loop03-indicadores');
-  if(indicators)indicators.hidden=true;
+  if(indicators)indicators.hidden=false;
   // Mesma sessão permite visitar a AKITEMM em modo somente leitura.
   // O backend continua protegendo /loja por cookie e bloqueia checkout.
   for(const acessoLoja of document.querySelectorAll(
