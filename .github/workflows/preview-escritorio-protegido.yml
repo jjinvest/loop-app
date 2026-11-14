@@ -74,6 +74,8 @@ on:
       - 'src/producao/interface-aprovada-loop.js'
       - 'test/visor-catraca-unico.test.js'
       - 'test/interface-aprovada-identidade-real.test.js'
+      - 'test/contrato-visual-escritorio-aprovado.test.js'
+      - 'test/loja-escritorio-conta-unica-candidata.test.js'
       - 'src/candidato/checkout-candidato-ui.html'
       - 'src/candidato/checkout-candidato-ui.js'
       - 'src/candidato/escritorio-cliente-integrado.css'
@@ -164,6 +166,8 @@ jobs:
           node-version: '24'
           cache: npm
       - run: npm ci --ignore-scripts --no-fund
+      - name: Bloquear alteracoes visuais nao autorizadas
+        run: node --test test/contrato-visual-escritorio-aprovado.test.js
       - run: node --check scripts/servidor-escritorio-preview-railway.js
       - run: node --check src/domain/agendador-conciliacao-asaas-sandbox.js
       - run: node --check src/domain/s3-url-assinada-backup-lab.js
