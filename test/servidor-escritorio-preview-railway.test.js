@@ -839,7 +839,8 @@ test('rodape Minha conta consulta dados do titular e sincroniza foto, sem CPF na
   headers:{Cookie:cookie.split(';')[0]}
  });
  assert.equal(perfil.status,200);
- assert.equal(perfil.headers.get('cache-control'),'private, no-store');
+ assert.match(perfil.headers.get('cache-control')||'',/\bno-store\b/);
+ assert.match(perfil.headers.get('cache-control')||'',/\bprivate\b/);
  assert.deepEqual(await perfil.json(),{
   nome:'Pessoa Conta',nick:'ContaRodape',email:'contarodape@example.invalid',
   cpfConfirmado:false,cpfExibicao:null
