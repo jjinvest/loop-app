@@ -106,6 +106,8 @@ test('mesma identidade da loja entra no Escritorio LOOP sem novo cadastro',async
  assert.match(await visor.text(),/LoopVisorCatraca/);
  const visual=await x.consultar('/staging/assets/tabuleiro-visual.js');
  assert.equal(visual.status,200);
+ const anonOperacional=await x.consultar('/staging/motor/estado-operacional');
+ assert.equal(anonOperacional.status,401,'motor real nunca e leitura anonima');
  assert.match(await visual.text(),/LoopTabuleiroVisual/);
  const anonimo=await fetch(x.base+'/staging/assets/tabuleiro-visual.js');
  assert.equal(anonimo.status,200,'scripts da tela de cadastro sao publicos; APIs continuam privadas');
@@ -137,6 +139,9 @@ test('mesma identidade da loja entra no Escritorio LOOP sem novo cadastro',async
  const perfilEscritorio=await x.consultar('/staging/contas/me',{headers});
  assert.equal(perfilEscritorio.status,200);
  assert.equal((await perfilEscritorio.json()).nick,'Marta');
+ const fonteReal=await x.consultar('/staging/motor/estado-operacional',{headers});
+ assert.equal(fonteReal.status,503,'sem servico real nao devolver dados lab como reais');
+ assert.equal((await fonteReal.json()).erro,'MOTOR_REAL_NAO_CONECTADO');
  const rotaFoto='/staging/contas/foto-perfil';
  assert.equal((await x.consultar(rotaFoto)).status,401,'foto requer sessao');
  assert.equal((await x.consultar(rotaFoto,{headers})).status,404);

@@ -859,6 +859,33 @@ function criarAppLojaEscritorioCandidato({banco,repositorioCatalogo,
    saquesReaisHabilitados:false,checkoutComercialHabilitado:false
   }));
 
+ // O TABULEIRO do cliente consulta exclusivamente o serviço de motor real.
+ // Não transformar dados de ensaio em ocupação real, nem fabricar vazio.
+ app.get('/staging/motor/estado-operacional',async(req,res)=>{
+  const s=contas.sessao(req);
+  if(!s)return res.status(401).json({erro:'SESSAO_AUSENTE'});
+  const url=process.env.LOOP_PREVIEW_URL_TABULEIRO_REAL;
+  const token=process.env.LOOP_PREVIEW_TOKEN_TABULEIRO_REAL;
+  if(typeof url!=='string'||!/^http:\/\/[a-z0-9-]+\.railway\.internal(?::[0-9]{2,5})?\/internal\/loop\/tabuleiro$/.test(url)||
+     typeof token!=='string'||!/^[a-f0-9]{64}$/.test(token))
+   return res.status(503).json({erro:'MOTOR_REAL_NAO_CONECTADO'});
+  try{
+   const upstream=await fetch(url,{method:'GET',cache:'no-store',
+    signal:AbortSignal.timeout(2500),
+    headers:{'x-loop-interservice-token':token}});
+   const corpo=await upstream.json();
+   if(!upstream.ok)return res.status(503).json({
+    erro:typeof corpo.erro==='string'?corpo.erro:'MOTOR_REAL_INDISPONIVEL'
+   });
+   if(corpo.origem!=='MOTOR_REAL_SQLITE_DA_IDENTIDADE'||
+      corpo.operacional!==true||corpo.financeiroReal!==false||
+      !Array.isArray(corpo.filaA)||!Array.isArray(corpo.filaB)||
+      !Array.isArray(corpo.tabuleiro?.vagas)||corpo.tabuleiro.vagas.length!==6||
+      !Number.isSafeInteger(corpo.tabuleiro.eventosNoCiclo))
+    return res.status(503).json({erro:'FONTE_REAL_SEM_CONTRATO'});
+   return res.set('Cache-Control','private, no-store').json(corpo);
+  }catch{return res.status(503).json({erro:'MOTOR_REAL_NAO_RESPONDE'});}
+ });
  app.get('/staging/motor/estado',(req,res)=>{
   const s=contas.sessao(req);
   if(!s)return res.status(401).json({erro:'SESSAO_AUSENTE'});

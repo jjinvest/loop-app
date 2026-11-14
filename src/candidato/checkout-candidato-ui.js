@@ -437,10 +437,11 @@ const visualTabuleiro=window.LoopTabuleiroVisual.criar({elemento:$});
 async function atualizarTabuleiroIntegrado(){
  const estado=$('estadoTabuleiroIntegrado');
  try{
-  const motor=await requisitar('/motor/estado');
-  if(motor.origem!=='MOTOR_LOOP_EXISTENTE_COM_SQLITE_DA_CONTA'||
-     motor.autorizacaoComercial!==false||motor.dinheiroReal!==false)
-   throw Error('FONTE_MOTOR_INCOMPATIVEL');
+  const motor=await requisitar('/motor/estado-operacional');
+  if(motor.origem!=='MOTOR_REAL_SQLITE_DA_IDENTIDADE'||
+     motor.operacional!==true||motor.financeiroReal!==false||
+     !Array.isArray(motor.tabuleiro?.vagas)||motor.tabuleiro.vagas.length!==6)
+   throw Error('FONTE_MOTOR_REAL_INCOMPATIVEL');
   visualTabuleiro.preencherFila('motorFilaA',motor.filaA,'A');
   visualTabuleiro.preencherFila('motorFilaB',motor.filaB,'B');
   visualTabuleiro.preencherVaga('tabuleiroMotorCentro',motor.tabuleiro.centro,true);
@@ -449,7 +450,8 @@ async function atualizarTabuleiroIntegrado(){
   visualTabuleiro.preencherLuzes(motor.tabuleiro.eventosNoCiclo);
   $('motorContadorEventos').textContent=motor.tabuleiro.eventosNoCiclo+
    ' de 6 eventos neste ciclo';
-  $('loop03Giros24Integrado').textContent=String(motor.catraca.giros24h);
+  // Nao copiar contagens de ensaio para o indicador da catraca real.
+  $('loop03Giros24Integrado').textContent='—';
   visorCatraca.registrarAgenda(motor.agenda);
   visorCatraca.observar(motor.catraca.giros,
    motor.tabuleiro.eventosNoCiclo);
@@ -461,7 +463,16 @@ async function atualizarTabuleiroIntegrado(){
   estado.textContent=motor.tabuleiro.eventosNoCiclo+
    ' de 6 eventos neste ciclo. '+movimento;
  }catch(e){
-  estado.textContent='Não foi possível carregar o tabuleiro. Tente novamente.';
+  // Remover apenas fotografia antiga da visualizacao: ela nao pode
+  // continuar mostrando ensaio como real apos falha de leitura do motor.
+  visualTabuleiro.preencherFila('motorFilaA',[],'A');
+  visualTabuleiro.preencherFila('motorFilaB',[],'B');
+  visualTabuleiro.preencherVaga('tabuleiroMotorCentro',null,true);
+  for(let i=1;i<=6;i++)
+   visualTabuleiro.preencherVaga('tabuleiroMotorVaga'+i,null);
+  visualTabuleiro.preencherLuzes(0);
+  $('motorContadorEventos').textContent='—';
+  estado.textContent='Tabuleiro operacional ainda indisponível: serviço real não ativado. Nenhuma posição de teste será exibida como real.';
  }
 }
 function fecharMenuIntegrado(){

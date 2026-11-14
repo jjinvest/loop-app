@@ -102,3 +102,41 @@ test('healthz falha fechado se o volume real some após inicializar',async t=>{
  }finally{fs.renameSync(movida,pasta);}
  assert.equal((await fetch(base+'/healthz')).status,200);
 });
+
+test('API privada do tabuleiro nao fabrica vazio quando motor real nao existe',async t=>{
+ const {pasta,ambiente}=setup(t);
+ ambiente.LOOP_REAL_TABULEIRO_INTERSERVICE_TOKEN='a'.repeat(64);
+ const servidor=criarServidorPreparacao({pasta,ambiente});
+ servidor.listen(0,'127.0.0.1');await once(servidor,'listening');
+ t.after(()=>new Promise(resolve=>servidor.close(resolve)));
+ const url='http://127.0.0.1:'+servidor.address().port+'/internal/loop/tabuleiro';
+ const anon=await fetch(url);
+ assert.equal(anon.status,401);
+ const autenticado=await fetch(url,{headers:{
+  'x-loop-interservice-token':'a'.repeat(64)}});
+ assert.equal(autenticado.status,503);
+ assert.equal((await autenticado.json()).erro,'MOTOR_REAL_NAO_ATIVO');
+ assert.equal(fs.existsSync(ambiente.LOOP_REAL_SQLITE),false,
+  'consulta nao inicializa nem falsifica SQLite real');
+});
+test('projecao real exige livro de vendas para exibir posicao',t=>{
+ const {pasta,ambiente}=setup(t);
+ const {DatabaseSync}=require('node:sqlite');
+ const {projetarTabuleiroOperacional}=require('../src/producao/leitura-tabuleiro-operacional-real');
+ const {SimuladorLoop}=require('../src/domain/simulador-loop');
+ const db=new DatabaseSync(ambiente.LOOP_REAL_SQLITE);
+ t.after(()=>db.close());
+ db.exec("CREATE TABLE loop_real_contas(id TEXT PRIMARY KEY);"+
+  "CREATE TABLE loop_real_motor_estado(id INTEGER PRIMARY KEY,snapshot TEXT);"+
+  "CREATE TABLE loop_real_motor_compras(posicao_id INTEGER PRIMARY KEY);"+
+  "CREATE TABLE loop_real_motor_eventos(chave TEXT PRIMARY KEY);");
+ const vazio=projetarTabuleiroOperacional({banco:db});
+ assert.equal(vazio.origem,'MOTOR_REAL_SQLITE_DA_IDENTIDADE');
+ assert.equal(vazio.tabuleiro.centro,null);
+ assert.deepEqual(vazio.tabuleiro.vagas,[null,null,null,null,null,null]);
+ const sim=new SimuladorLoop();
+ sim.registrarPosicaoSimulada({nome:'Teste não auditado',participanteId:'titular-falso'});
+ db.prepare('INSERT INTO loop_real_motor_estado(id,snapshot) VALUES(1,?)')
+  .run(JSON.stringify(sim.exportarSnapshot()));
+ assert.throws(()=>projetarTabuleiroOperacional({banco:db}),/POSICAO_REAL_SEM_PEDIDO/);
+});

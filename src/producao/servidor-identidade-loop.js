@@ -7,6 +7,8 @@ const {montarInterfaceAprovada}=require('./interface-aprovada-loop');
 const {montarGatewayAdminComercial}=require('./gateway-admin-comercial');
 const {VisaoEscritorioUnificadaSQLite}=
  require('./visao-escritorio-unificada-sqlite');
+const {autorizarInterno,projetarTabuleiroOperacional}=
+ require('./leitura-tabuleiro-operacional-real');
 function criarAppIdentidadeLoop({contas,origemHttps,
  permitirCadastro=false,backupEstado=null,
  pedidosComerciais=null,remessasOutbox=null,catalogoVitrine=null,
@@ -363,6 +365,15 @@ function criarAppIdentidadeLoop({contas,origemHttps,
     return res.status(http).json({erro:codigo});
    }
   });
+ // Fonte operacional privada e auditavel, utilizada tambem pelo servidor
+ // de preparacao. Sem consulta ao SQLite de homologacao e sem titular forjado.
+ app.get('/internal/loop/tabuleiro',(req,res)=>{
+  if(!autorizarInterno(req.get('x-loop-interservice-token'),
+    process.env.LOOP_REAL_TABULEIRO_INTERSERVICE_TOKEN))
+   return res.status(401).json({erro:'ACESSO_INTERNO_NEGADO'});
+  try{return res.json(projetarTabuleiroOperacional({banco:contas.banco}));}
+  catch(e){return res.status(503).json({erro:e.codigo||'FONTE_REAL_INDISPONIVEL'});}
+ });
  // Estado interno do mesmo SQLite: somente leitura, titular da sessão.
  // Nunca receber titularId do navegador. Sem eventos ou posição de produção.
  app.get('/api/loop/estado',protegido,(req,res)=>{

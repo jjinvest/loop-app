@@ -8,6 +8,8 @@ const os=require('node:os');
 const http=require('node:http');
 const path=require('node:path');
 const {randomBytes,randomUUID}=require('node:crypto');
+const {autorizarInterno,consultarArquivoReal}=
+ require('../src/producao/leitura-tabuleiro-operacional-real');
 
 function conferirInfra(ambiente=process.env,{pasta='/dados-reais',io=fs}={}){
  if(ambiente.NODE_ENV!=='production'||
@@ -44,6 +46,25 @@ function criarServidorPreparacao({ambiente=process.env,pasta='/dados-reais',io=f
   res.setHeader('Cache-Control','no-store');
   res.setHeader('X-Content-Type-Options','nosniff');
   res.setHeader('X-Frame-Options','DENY');
+  // API privada SOMENTE GET da fonte real; nao ativa cadastro ou motor.
+  // Se o banco definitivo ainda nao tem schema, devolve 503, nao zero falso.
+  if(req.url==='/internal/loop/tabuleiro'){
+   if(req.method!=='GET'){
+    res.writeHead(405);return res.end(JSON.stringify({erro:'METODO_INVALIDO'}));
+   }
+   if(!autorizarInterno(req.headers['x-loop-interservice-token'],
+     ambiente.LOOP_REAL_TABULEIRO_INTERSERVICE_TOKEN)){
+    res.writeHead(401);return res.end(JSON.stringify({erro:'ACESSO_INTERNO_NEGADO'}));
+   }
+   try{
+    const estado=consultarArquivoReal({arquivo:ambiente.LOOP_REAL_SQLITE});
+    res.writeHead(200);return res.end(JSON.stringify(estado));
+   }catch(e){
+    res.writeHead(503);return res.end(JSON.stringify({
+     erro:e.codigo||'FONTE_REAL_INDISPONIVEL',operacional:false
+    }));
+   }
+  }
   // Health de infraestrutura diferente de readiness para clientes.
   if(req.method==='GET'&&req.url==='/healthz'){
    // Revalidar volume em cada probe: o startup aprovado não prova
