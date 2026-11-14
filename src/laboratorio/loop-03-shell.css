@@ -826,3 +826,31 @@ body.loop03-logado{
 .loop03-historico-posicao h3{margin:0 0 12px;color:#efc17d}
 .loop03-historico-posicao p{margin:6px 0;overflow-wrap:anywhere}
 .loop03-historico-posicao ul{padding-left:21px;margin:8px 0}
+
+/* 14/11/2026 — banners deslizantes SOMENTE da primeira aba do Escritório */
+#conteudoResumo .loop03-banners-resumo{width:100%;min-width:0;overflow:hidden}
+#conteudoResumo .loop03-banners-pista{display:flex;flex-wrap:nowrap;width:100%;overflow-x:auto;overscroll-behavior-x:contain;scroll-snap-type:x mandatory;scroll-behavior:smooth;scrollbar-width:none;touch-action:pan-x}
+#conteudoResumo .loop03-banners-pista::-webkit-scrollbar{display:none}
+#conteudoResumo .loop03-banner-item{display:block;min-width:0;flex:0 0 100%;scroll-snap-align:start;text-decoration:none;color:inherit;outline-offset:-6px}
+#conteudoResumo .loop03-banner-item .loop03-hero-escritorio,#conteudoResumo .loop03-banner-anuncio{box-sizing:border-box;width:100%;aspect-ratio:16/8.5;min-height:300px;max-height:490px}
+#conteudoResumo .loop03-banner-item .loop03-hero-escritorio{height:100%}
+#conteudoResumo .loop03-banner-item:focus-visible{outline:3px solid #86d4ba}
+#conteudoResumo .loop03-banner-anuncio{display:grid;place-items:center;text-align:center;overflow:hidden;border-radius:22px;border:2px solid #dfb565;background:radial-gradient(ellipse at 60% 95%,#6038a795,transparent 45%),radial-gradient(ellipse at 32% 30%,#bc903e55,transparent 52%),linear-gradient(140deg,#10111c,#111e34 55%,#090d17);box-shadow:inset 0 0 0 3px #5a432c,0 0 25px #c59e7152}
+#conteudoResumo .loop03-banner-anuncio-conteudo{display:flex;flex-direction:column;align-items:center;gap:clamp(13px,2vw,25px);padding:24px;max-width:85%}
+#conteudoResumo .loop03-banner-anuncio-conteudo small{color:#e2bd7b;letter-spacing:.28em;font-size:clamp(.62rem,1.3vw,.94rem)}
+#conteudoResumo .loop03-banner-anuncio-conteudo strong{font-weight:1000;font-size:clamp(2.3rem,7vw,5.6rem);letter-spacing:.08em;color:#d7dde9;text-shadow:0 2px #545d70,0 0 17px #fff8}
+#conteudoResumo .loop03-banner-anuncio-conteudo p{font-size:clamp(.88rem,1.9vw,1.2rem);color:#f6e8cb;line-height:1.5}
+#conteudoResumo .loop03-banner-anuncio-conteudo span{border:1px solid #d5b072;border-radius:999px;padding:12px 20px;color:#f9e1aa;background:#251d2b;font-weight:800;letter-spacing:.06em}
+#conteudoResumo .loop03-banners-pontos{display:flex;justify-content:center;gap:9px;padding:12px 0 15px}
+#conteudoResumo .loop03-banners-pontos button{width:11px;height:11px;border:1px solid #cdab76;border-radius:50%;padding:0;background:#392b43;cursor:pointer}
+#conteudoResumo .loop03-banners-pontos button[aria-current="true"]{background:#e8be74;box-shadow:0 0 8px #e8be7499}
+#conteudoResumo .loop03-atalho-unico{display:block;width:100%;margin-top:14px}
+#conteudoResumo .loop03-atalho-unico #atalhoLoja{display:block;width:100%;min-height:66px;max-width:none;background:linear-gradient(100deg,#0c7253,#218a65);border:1px solid #409d7b;color:#fff;border-radius:17px;font-weight:900;font-size:1.2rem}
+@media(max-width:600px){
+ #conteudoResumo .loop03-banner-item .loop03-hero-escritorio,#conteudoResumo .loop03-banner-anuncio{aspect-ratio:3/4;min-height:0;max-height:none;border-radius:17px}
+ #conteudoResumo .loop03-banner-item .loop03-hero-escritorio{padding:24px 13px}
+ #conteudoResumo .loop03-banner-anuncio-conteudo{max-width:92%;padding:13px;gap:15px}
+ #conteudoResumo .loop03-banner-anuncio-conteudo strong{font-size:clamp(1.7rem,8.4vw,3rem)}
+ #conteudoResumo .loop03-banner-anuncio-conteudo span{font-size:.72rem;padding:10px 13px}
+}
+@media(prefers-reduced-motion:reduce){#conteudoResumo .loop03-banners-pista{scroll-behavior:auto}}
