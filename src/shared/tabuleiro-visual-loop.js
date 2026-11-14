@@ -32,6 +32,11 @@
    const esfera=area.closest('.espaco-tabuleiro-demo');
    if(!esfera)throw Error('ESTRUTURA_TABULEIRO_DIVERGENTE');
    area.textContent=numero(p,centro);
+   // Exibir nick somente quando o backend já tiver fornecido dado autorizado.
+   // Sem identidade disponível, o espaço reservado permanece vazio.
+   const nickArea=esfera.querySelector?.('.nick-posicao-tabuleiro');
+   if(nickArea)nickArea.textContent=typeof p?.nickVisual==='string'&&
+    /^[A-Za-z]{1,12}$/.test(p.nickVisual)?p.nickVisual:'';
    area.classList.toggle('posicao-dourado',dourada(p));
    area.classList.toggle('posicao-azul',pendente(p));
    area.classList.toggle('posicao-verde',aceito(p));

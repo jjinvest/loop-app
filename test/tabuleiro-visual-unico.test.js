@@ -27,6 +27,9 @@ function fake(){
  for(const n of ['tabuleiroMotorCentro',...Array.from({length:6},(_,i)=>
   'tabuleiroMotorVaga'+(i+1))]){
   elementos[n]=elemento();elementos[n].esfera=elemento();
+  elementos[n].esfera.nick=elemento();
+  elementos[n].esfera.querySelector=(selector)=>
+   selector==='.nick-posicao-tabuleiro'?elementos[n].esfera.nick:null;
  }
  for(const id of ['motorFilaA','motorFilaB',...Array.from({length:6},
   (_,i)=>'motorBolinha'+(i+1))])elementos[id]=elemento();
@@ -78,6 +81,30 @@ test('filas exibem numero real ou contagem sem inventar identidades',()=>{
  assert.equal(el.motorFilaB.children[0].textContent,'Fila vazia');
  assert.throws(()=>visual.preencherFila('motorFilaB',-1,'B'),
   /FILA_FONTE_INVALIDA/);
+});
+test('roda usa centro verde, periferia branca, sexta vermelha e dourada permanente',()=>{
+ const html=ler('candidato/checkout-candidato-ui.html');
+ const css=ler('candidato/escritorio-cliente-integrado.css');
+ for(let i=1;i<=6;i++){
+  assert.match(html,new RegExp('<span class="titulo-espaco-tabuleiro-demo">'+i+
+   '<\\/span>\\s*<strong class="selo-posicao-demo" id="tabuleiroMotorVaga'+i+'">'));
+  assert.match(html,new RegExp('id="nickTabuleiroVaga'+i+'"'));
+ }
+ assert.match(html,/id="nickTabuleiroCentro"/);
+ assert.ok(css.includes('.mapa-tabuleiro-posicoes-demo > .tabuleiro-vaga-6'));
+ assert.ok(css.includes('.mapa-tabuleiro-posicoes-demo > .tabuleiro-centro'));
+ assert.ok(css.includes('espaco-tabuleiro-demo:has(> .selo-posicao-demo.posicao-dourado)'));
+ const {visual,el}=fake();
+ visual.preencherVaga('tabuleiroMotorVaga2',null);
+ assert.equal(el.tabuleiroMotorVaga2.esfera.nick.textContent,'');
+ visual.preencherVaga('tabuleiroMotorVaga2',{numero:23,nickVisual:'Vilela'});
+ assert.equal(el.tabuleiroMotorVaga2.esfera.nick.textContent,'Vilela');
+ visual.preencherVaga('tabuleiroMotorVaga2',{numero:24,nickVisual:'<script>'});
+ assert.equal(el.tabuleiroMotorVaga2.esfera.nick.textContent,'');
+ visual.preencherVaga('tabuleiroMotorVaga6',{numero:25,dourada:true});
+ assert.equal(el.tabuleiroMotorVaga6.classList.contains('posicao-dourado'),true);
+ visual.preencherVaga('tabuleiroMotorCentro',{numero:26,dourada:true},true);
+ assert.equal(el.tabuleiroMotorCentro.classList.contains('posicao-dourado'),true);
 });
 test('tabuleiro circular respeita azul verde dourada e 6 eventos',()=>{
  const {visual,el}=fake();

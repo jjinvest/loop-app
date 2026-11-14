@@ -536,3 +536,70 @@ body.loop03-logado main>.mensagem-pagina{margin:0 0 .75rem}
   transition:none!important;
  }
 }
+
+/* Identidade visual aprovada para a aba Tabuleiro.
+   Não altera a cor ou estado das posições do motor: somente a aparência
+   das esferas. Douradas permanecem douradas em TODA a roda, até no centro. */
+.cliente-integrado #conteudoTabuleiro .loop03-roda
+ .mapa-tabuleiro-posicoes-demo > .espaco-tabuleiro-demo{
+ display:flex;flex-direction:column;align-items:center;justify-content:center;
+ gap:0;position:absolute;
+ background:radial-gradient(circle at 28% 17%,#fff 0%,#f6f8fa 37%,#dce4ec 77%,#a5b0c1 100%);
+ border:2px solid #f6f9ff;color:#263645;
+ box-shadow:0 4px 13px #0008,inset -5px -8px 12px #8897a640;
+}
+.cliente-integrado #conteudoTabuleiro .loop03-roda
+ .mapa-tabuleiro-posicoes-demo > .tabuleiro-vaga-6{
+ background:radial-gradient(circle at 28% 17%,#ffb8bd 0%,#ef535c 47%,#ba2439 80%,#761528 100%);
+ border-color:#ffbec3;color:white;
+ box-shadow:0 4px 13px #0008,inset -5px -8px 12px #72162a70;
+}
+.cliente-integrado #conteudoTabuleiro .loop03-roda
+ .mapa-tabuleiro-posicoes-demo > .tabuleiro-centro{
+ background:radial-gradient(circle at 28% 17%,#caffdf 0%,#51d598 42%,#138658 77%,#075237 100%);
+ border:3px solid #dbf2db;color:#103a29;
+ box-shadow:0 0 18px #4fdb9880,inset -5px -8px 12px #07523780;
+}
+/* A exceção dourada é a ÚLTIMA regra de cor e tem precedência sobre
+   branco, vermelho, verde, azul, posição própria e estado de aceite. */
+.cliente-integrado #conteudoTabuleiro .loop03-roda
+ .mapa-tabuleiro-posicoes-demo > .espaco-tabuleiro-demo:has(> .selo-posicao-demo.posicao-dourado){
+ background:radial-gradient(circle at 28% 17%,#fff2b5 0%,#ebc35d 43%,#d29d28 76%,#8b570e 100%);
+ border:3px solid #fff0ae;color:#573a0b;
+ box-shadow:0 4px 14px #0008,inset -5px -8px 13px #8b570d70;
+}
+.cliente-integrado #conteudoTabuleiro .loop03-roda
+ .mapa-tabuleiro-posicoes-demo > .espaco-tabuleiro-demo > .titulo-espaco-tabuleiro-demo{
+ position:absolute;left:0;right:0;top:11%;
+ display:block;visibility:visible!important;
+ font-size:clamp(9px,1.5vw,12px);font-weight:800;
+ line-height:1.05;letter-spacing:.01em;text-align:center;color:#2b3b4c;
+}
+.cliente-integrado #conteudoTabuleiro .loop03-roda
+ .mapa-tabuleiro-posicoes-demo > .tabuleiro-vaga-6 > .titulo-espaco-tabuleiro-demo{
+ color:#fff;
+}
+.cliente-integrado #conteudoTabuleiro .loop03-roda
+ .mapa-tabuleiro-posicoes-demo > .espaco-tabuleiro-demo:has(> .selo-posicao-demo.posicao-dourado) > .titulo-espaco-tabuleiro-demo{
+ color:#573a0b;
+}
+.cliente-integrado #conteudoTabuleiro .loop03-roda
+ .mapa-tabuleiro-posicoes-demo > .espaco-tabuleiro-demo > .selo-posicao-demo{
+ display:block;max-width:92%;
+ font-size:clamp(10px,1.8vw,15px);line-height:1.05;
+ color:#283a4a;text-align:center;white-space:pre-line;
+ overflow-wrap:anywhere;
+}
+.cliente-integrado #conteudoTabuleiro .loop03-roda
+ .mapa-tabuleiro-posicoes-demo > .tabuleiro-vaga-6 > .selo-posicao-demo{color:white}
+.cliente-integrado #conteudoTabuleiro .loop03-roda
+ .mapa-tabuleiro-posicoes-demo > .tabuleiro-centro > .selo-posicao-demo{color:#103a29}
+.cliente-integrado #conteudoTabuleiro .loop03-roda
+ .mapa-tabuleiro-posicoes-demo > .espaco-tabuleiro-demo > .selo-posicao-demo.posicao-dourado{color:#573a0b}
+.cliente-integrado #conteudoTabuleiro .loop03-roda
+ .mapa-tabuleiro-posicoes-demo > .espaco-tabuleiro-demo > .nick-posicao-tabuleiro{
+ position:absolute;bottom:12%;left:3%;right:3%;
+ min-height:1.05em;font-size:clamp(8px,1.5vw,11px);
+ font-weight:650;line-height:1.05;text-align:center;
+ color:inherit;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+}
