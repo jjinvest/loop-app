@@ -622,28 +622,16 @@
    selecionarQuadroFila(fila);
   });
  }
- async function atualizarFilasAncoradas(posicoes,totais){
+ async function atualizarFilasAncoradas(_posicoes,_totais){
+  // Fila em ordem real: 1º ao 10º visíveis e páginas de 30 ao abrir.
+  // A prioridade A/B é calculada exclusivamente pelo motor.
   const sequencia=++sequenciaLeituraFilas;
   await Promise.all(['A','B'].map(async fila=>{
    const id='motorFila'+fila,area=$(id);
    const painel=$('motorFila'+fila+'Detalhes');
    carregarPaginaFila[fila]=null;
    painel.replaceChildren();
-   const candidatas=posicoes.filter(p=>p.local==='FILA_'+fila&&
-    Number.isSafeInteger(p.numero));
-   const escolhida=candidatas.find(p=>String(p.numero)===posicaoSelecionada)||
-    candidatas[0];
-   if(!escolhida){
-    // Fila vazia ou conta sem posição: o cabeçalho permanece selecionável.
-    const mensagem=document.createElement('p');
-    mensagem.className='subtexto';
-    mensagem.textContent=totais[fila]===0?
-     'Fila vazia. Quando houver posições, elas aparecerão aqui.':
-     'Você ainda não possui posição nesta fila. Quando entrar, verá sua posição e as vizinhas.';
-    painel.append(mensagem);
-    return;
-   }
-   const base='/api/loop/fila?fila='+fila+'&posicaoId='+escolhida.numero;
+   const base='/api/loop/fila?fila='+fila+'&desdeInicio=1';
    const consultar=async pagina=>{
     const r=await fetch(base+'&pagina='+pagina,{
      credentials:'same-origin',cache:'no-store'
@@ -651,8 +639,11 @@
     if(!r.ok)throw Error('FILA_INDISPONIVEL');
     const d=await r.json();
     if(d.fonte!=='IDENTIDADE_E_MOTOR_MESMO_SQLITE'||d.fila!==fila||
-       d.ancora?.numero!==escolhida.numero||
-       !Array.isArray(d.janela)||!Array.isArray(d.pagina))
+       !Number.isSafeInteger(d.total)||d.total<0||
+       !Array.isArray(d.janela)||d.janela.length>10||
+       !Array.isArray(d.pagina)||d.pagina.length>30||
+       d.janela.some((p,i)=>p.ordem!==i+1)||
+       d.pagina.some((p,i)=>p.ordem!==pagina*30+i+1))
      throw Error('FILA_RESPOSTA_INVALIDA');
     return d;
    };
@@ -660,14 +651,19 @@
     const visao=await consultar(0);
     if(sequencia!==sequenciaLeituraFilas)return;
     visualTabuleiro.preencherFila(id,visao.janela,fila);
+    if(visao.total===0){
+     const vazio=document.createElement('p');
+     vazio.className='subtexto';vazio.textContent='Fila vazia.';
+     painel.append(vazio);return;
+    }
     const situacao=document.createElement('p');
     situacao.className='loop03-fila-ordem-propria';
-    situacao.textContent='Sua posição: '+visao.ancora.ordem+
-     ' de '+visao.total;
+    situacao.textContent='Primeiros '+Math.min(10,visao.total)+
+     ' lugares · total '+visao.total+' na Fila '+fila;
     area.append(situacao);
     const titulo=document.createElement('p');
     titulo.className='subtexto';
-    titulo.textContent='Fila completa a partir da sua posição:';
+    titulo.textContent='Fila '+fila+' na ordem de espera (30 lugares por página):';
     const paginas=document.createElement('div');
     const mais=document.createElement('button');
     mais.type='button';mais.className='loop03-fila-expandir';
@@ -679,18 +675,25 @@
     const carregarPagina=async()=>{
      if(emCurso||proxima===null)return;
      emCurso=true;mais.disabled=true;
-     estado.textContent='Consultando posições…';
+     estado.textContent='Consultando sequência da Fila '+fila+'…';
      try{
       const paginaAtual=proxima,d=paginaAtual===0?visao:
        await consultar(paginaAtual);
       if(sequencia!==sequenciaLeituraFilas)return;
       const paginaDiv=document.createElement('div');
       paginaDiv.id='paginaFila'+fila+'Numero'+paginaAtual;
+      const cabecalho=document.createElement('p');
+      cabecalho.className='loop03-fila-ordem-propria';
+      cabecalho.textContent='Página '+(paginaAtual+1)+' · lugares '+
+       (paginaAtual*30+1)+' a '+Math.min((paginaAtual+1)*30,d.total);
+      const linhas=document.createElement('div');
+      linhas.id='paginaFila'+fila+'Linhas'+paginaAtual;
+      paginaDiv.append(cabecalho,linhas);
       paginas.append(paginaDiv);
-      if(d.pagina.length)visualTabuleiro.preencherFila(paginaDiv.id,d.pagina,fila);
+      if(d.pagina.length)visualTabuleiro.preencherFila(linhas.id,d.pagina,fila);
       proxima=d.proximaPagina;
       mais.hidden=proxima===null;
-      estado.textContent=proxima===null?'Fim da fila.':'Exibindo mais posições.';
+      estado.textContent=proxima===null?'Fim da fila.':'Página '+(paginaAtual+1)+' carregada.';
      }catch{
       estado.textContent='Não foi possível carregar esta página. Tente novamente.';
      }finally{emCurso=false;mais.disabled=false;}
@@ -702,7 +705,7 @@
     if(sequencia!==sequenciaLeituraFilas)return;
     const aviso=document.createElement('p');
     aviso.className='subtexto';
-    aviso.textContent='Detalhes da fila temporariamente indisponíveis.';
+    aviso.textContent='Ordem da Fila '+fila+' temporariamente indisponível.';
     painel.append(aviso);
    }
   }));
