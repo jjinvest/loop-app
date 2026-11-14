@@ -723,7 +723,9 @@ test('Financeiro da conta real: privado, responsivo e sem saldos ou saques ficti
  assert.match(html,/id="finIndicadosValidos"/);
  assert.match(html,/id="finSaldoBonus"/);
  assert.match(html,/id="finSaldoPosicoes"/);
- assert.match(html,/id="finMinimoSaque">R\$ 25,00/);
+ assert.match(html,/id="finSaldoSelecionado"/);
+ assert.match(html,/id="finSaldoPosicoes"/);
+ assert.match(html,/Valor mínimo para saque: R\$ 25,00 \(fixo\)/);
  assert.match(html,/id="finEscolherBonus"/);
  assert.match(html,/id="finEscolherPosicoes"/);
  assert.match(html,/id="finFormSaque"/);
@@ -763,7 +765,8 @@ test('Financeiro da conta real: privado, responsivo e sem saldos ou saques ficti
  const dados=await saldo.json();
  assert.equal(dados.origem,'FINANCEIRO_SEM_LIVRO_REAL_HOMOLOGADO');
  assert.equal(dados.saldoBonusCentavos,null);
- assert.equal(dados.saldoPosicoesCentavos,null);
+ assert.equal(dados.saldoTotalPosicoesCentavos,null);
+ assert.equal(dados.saldoPosicaoSelecionadaCentavos,null);
  assert.equal(dados.indicadosValidos,null);
  assert.equal(dados.minimoSaqueCentavos,2500);
  assert.equal(dados.taxaSaquePercentual,0);
@@ -786,4 +789,20 @@ test('Financeiro da conta real: privado, responsivo e sem saldos ou saques ficti
  assert.equal((await postar({origem:'POSICOES',valorCentavos:5000},csrf)).status,503);
  // O sistema não cria registros artificiais para satisfazer a tela.
  assert.equal(x.db.prepare("SELECT name FROM sqlite_master WHERE type='table' AND name LIKE 'fin_saque_%'").all().length,0);
+});
+
+test('Financeiro diferencia saldo selecionado do total, mantendo valor minimo no saque',()=>{
+ const fs=require('node:fs'),path=require('node:path');
+ const html=fs.readFileSync(path.join(__dirname,
+  '../src/candidato/checkout-candidato-ui.html'),'utf8');
+ const js=fs.readFileSync(path.join(__dirname,
+  '../src/candidato/checkout-candidato-ui.js'),'utf8');
+ assert.match(html,/Saldo da posição selecionada<\/small><strong id="finSaldoSelecionado"/);
+ assert.match(html,/Saldo total das posições<\/small><strong id="finSaldoPosicoes"/);
+ assert.doesNotMatch(html,/id="finMinimoSaque"/);
+ assert.match(html,/Valor mínimo para saque: R\$ 25,00 \(fixo\)/);
+ assert.match(js,/\$\('finSaldoSelecionado'\)\.textContent=/);
+ assert.match(js,/\$\('finSaldoPosicoes'\)\.textContent=/);
+ assert.match(js,/if\(aba==='conteudoFinanceiro'\)void finAtualizar\(\)/);
+ assert.match(js,/posicaoSelecionadaMotor=pos\.numero/);
 });

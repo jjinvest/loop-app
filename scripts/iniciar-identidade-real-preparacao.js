@@ -13,6 +13,8 @@ const {prepararEstruturaIdentidadeReal}=
  require('../src/producao/identidade-cliente-loop-sqlite');
 const {MotorLoopIntegradoSQLite}=
  require('../src/producao/motor-loop-integrado-sqlite');
+const {LivroFinanceiroRealSQLite}=
+ require('../src/producao/livro-financeiro-real-sqlite');
 const {autorizarInterno,consultarArquivoReal}=
  require('../src/producao/leitura-tabuleiro-operacional-real');
 
@@ -67,6 +69,8 @@ function iniciarMotorRealSemCadastro({ambiente=process.env}={}){
    chaveCodigo:key('LOOP_REAL_CHAVE_CODIGO')
   });
   new MotorLoopIntegradoSQLite({banco});
+  // Mesmo volume e mesma custodia; nenhum saldo e liberado sem fonte externa.
+  new LivroFinanceiroRealSQLite({banco});
   if(banco.prepare('SELECT COUNT(*) AS n FROM loop_real_contas').get().n!==0)
    throw Error('MOTOR_REAL_PREPARACAO_NAO_E_VAZIA');
   return true;

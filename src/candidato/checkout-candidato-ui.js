@@ -96,18 +96,31 @@ async function finAtualizar(){
  const estado=$('estadoFinanceiro');
  estado.textContent='Consultando a disponibilidade financeira…';
  for(const campo of ['finIndicadosValidos','finSaldoBonus',
-  'finSaldoPosicoes','finBonusSaque','finPosicoesSaque'])
+  'finSaldoSelecionado','finSaldoPosicoes','finBonusSaque','finPosicoesSaque'])
   $(campo).textContent='—';
  try{
-  const dados=await requisitar('/financeiro/me');
-  if(dados.origem!=='FINANCEIRO_SEM_LIVRO_REAL_HOMOLOGADO'||
+  // Seleção é apenas visual: jamais enviar titularId do navegador.
+  const pos=posicoesDisponiveisResumo.find(x=>x.numero===posicaoSelecionadaMotor);
+  const query=pos?'?posicaoId='+encodeURIComponent(pos.numero):'';
+  const dados=await requisitar('/financeiro/me'+query);
+  if(!['FINANCEIRO_SEM_LIVRO_REAL_HOMOLOGADO',
+       'LIVRO_FINANCEIRO_REAL'].includes(dados.origem)||
      dados.saqueRealHabilitado!==false||
-     dados.saldoBonusCentavos!==null||dados.saldoPosicoesCentavos!==null||
-     dados.historicoDisponivel!==false||
      dados.minimoSaqueCentavos!==2500||dados.taxaSaquePercentual!==0)
    throw Error('CONTRATO_FINANCEIRO_INCOMPATIVEL');
-  $('finMinimoSaque').textContent=moeda(dados.minimoSaqueCentavos);
-  estado.textContent='Saldos e saques ainda indisponíveis: aguardando confirmação do livro financeiro real.';
+  if(dados.origem==='LIVRO_FINANCEIRO_REAL'&&dados.saldosLiberados===true){
+   const dinheiro=x=>Number.isSafeInteger(x)&&x>=0?moeda(x):'—';
+   $('finIndicadosValidos').textContent=String(dados.indicadosValidos);
+   $('finSaldoBonus').textContent=dinheiro(dados.saldoBonusCentavos);
+   $('finSaldoSelecionado').textContent=dados.posicaoSelecionadaId===pos?.numero?
+    dinheiro(dados.saldoPosicaoSelecionadaCentavos):'—';
+   $('finSaldoPosicoes').textContent=dinheiro(dados.saldoTotalPosicoesCentavos);
+   $('finBonusSaque').textContent=dinheiro(dados.saldoBonusCentavos);
+   $('finPosicoesSaque').textContent=dinheiro(dados.saldoTotalPosicoesCentavos);
+   estado.textContent='Saldos confirmados no livro financeiro.';
+  }else{
+   estado.textContent='Livro financeiro preparado. Saldos e bônus serão exibidos apenas após comprovação das operações reais.';
+  }
  }catch{
   estado.textContent='Não foi possível verificar o financeiro real. Nenhum saldo será apresentado sem confirmação.';
  }
@@ -462,6 +475,7 @@ function preencherOpcoesPopupResumo(){
    fecharPopupResumo();
    // Atualiza o placar no lugar, sem atualizar a rota ou abrir outra aba.
    atualizarIndicadorSelecionadoResumo();
+   if(aba==='conteudoFinanceiro')void finAtualizar();
   });
   opcoes.append(botao);
  });

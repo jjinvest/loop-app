@@ -9,6 +9,8 @@ const {VisaoEscritorioUnificadaSQLite}=
  require('./visao-escritorio-unificada-sqlite');
 const {autorizarInterno,projetarTabuleiroOperacional}=
  require('./leitura-tabuleiro-operacional-real');
+const {LivroFinanceiroRealSQLite}=
+ require('./livro-financeiro-real-sqlite');
 function criarAppIdentidadeLoop({contas,origemHttps,
  permitirCadastro=false,backupEstado=null,
  pedidosComerciais=null,remessasOutbox=null,catalogoVitrine=null,
@@ -59,6 +61,8 @@ function criarAppIdentidadeLoop({contas,origemHttps,
   throw Error('CATALOGO_LOJA_SQLITE_DIVERGENTE');
  const visaoEscritorio=motorLoop===null?null:
   new VisaoEscritorioUnificadaSQLite({banco:contas.banco,motor:motorLoop});
+ const livroFinanceiro=motorLoop===null?null:
+  new LivroFinanceiroRealSQLite({banco:contas.banco});
  const backupAtual=()=>typeof backupEstado==='function'?
   backupEstado()?.backupAtualEmDia===true:true;
  const cadastroLiberado=()=>permitirCadastro&&backupAtual();
@@ -376,6 +380,33 @@ function criarAppIdentidadeLoop({contas,origemHttps,
  });
  // Estado interno do mesmo SQLite: somente leitura, titular da sessão.
  // Nunca receber titularId do navegador. Sem eventos ou posição de produção.
+ // Contabilizacao operacional: somente livro real do titular autenticado.
+ // Enquanto nao ha provas financeiras externas, saldo e movimento nunca
+ // sao declarados DISPONIVEIS. Nenhuma rota HTTP posta creditos ou saques.
+ app.get('/api/financeiro/me',protegido,(req,res)=>{
+  if(!livroFinanceiro)return res.status(503).json({
+   erro:'LIVRO_FINANCEIRO_NAO_CONECTADO'});
+  const raw=req.query.posicaoId;
+  if(Object.keys(req.query).some(x=>x!=='posicaoId')||
+     (raw!==undefined&&(!/^[1-9][0-9]*$/.test(raw)||
+      !Number.isSafeInteger(Number(raw)))))
+   return res.status(400).json({erro:'POSICAO_INVALIDA'});
+  try{return res.json(livroFinanceiro.consultar({
+   titularId:req.conta.titularId,posicaoId:raw?Number(raw):null
+  }));}catch(e){return res.status(
+    e.codigo==='FIN_POSICAO_NAO_PERTENCE_A_TITULAR'?404:503
+   ).json({erro:e.codigo||'LIVRO_FINANCEIRO_INDISPONIVEL'});}
+ });
+ app.get('/api/financeiro/historico',protegido,(req,res)=>{
+  if(!livroFinanceiro)return res.status(503).json({
+   erro:'LIVRO_FINANCEIRO_NAO_CONECTADO'});
+  try{return res.json(livroFinanceiro.historico({
+   titularId:req.conta.titularId
+  }));}catch{return res.status(503).json({
+   erro:'LIVRO_FINANCEIRO_INDISPONIVEL'});}
+ });
+ app.post('/api/financeiro/saques',mutation,protegido,csrf,(_req,res)=>
+  res.status(503).json({erro:'SAQUE_REAL_NAO_HOMOLOGADO'}));
  app.get('/api/loop/estado',protegido,(req,res)=>{
   if(!motorLoop)return res.status(503).json({
    erro:'MOTOR_INTERNO_INDISPONIVEL',financeiroReal:false

@@ -267,14 +267,14 @@
    <div class="fin-resumo" aria-label="Indicadores financeiros">
     <div class="fin-indicador"><small>Indicados válidos</small><strong id="finIndicadosValidos">—</strong></div>
     <div class="fin-indicador"><small>Saldo de bônus</small><strong id="finSaldoBonus">—</strong></div>
-    <div class="fin-indicador"><small>Saldo das minhas posições</small><strong id="finSaldoPosicoes">—</strong></div>
-    <div class="fin-indicador"><small>Mínimo para saque</small><strong id="finMinimoSaque">R$ 25,00</strong></div>
+    <div class="fin-indicador"><small>Saldo da posição selecionada</small><strong id="finSaldoSelecionado">—</strong></div>
+    <div class="fin-indicador"><small>Saldo total das posições</small><strong id="finSaldoPosicoes">—</strong></div>
    </div>
    <div class="fin-operacao">
     <h3>Solicitação de saque</h3>
     <div class="fin-fontes" role="group" aria-label="Origem do saque">
      <button type="button" id="finEscolherBonus" class="fin-fonte" aria-pressed="true"><span>Bônus por indicação</span><strong id="finBonusSaque">—</strong></button>
-     <button type="button" id="finEscolherPosicoes" class="fin-fonte" aria-pressed="false"><span>Saldo das minhas posições</span><strong id="finPosicoesSaque">—</strong></button>
+     <button type="button" id="finEscolherPosicoes" class="fin-fonte" aria-pressed="false"><span>Saldo total das posições</span><strong id="finPosicoesSaque">—</strong></button>
     </div>
     <form id="finFormSaque" autocomplete="off">
      <label for="finValorSaque">Valor para sacar (R$)</label>
@@ -283,7 +283,7 @@
       <button type="submit" id="finSolicitarSaque" class="primario">Solicitar saque</button>
      </div>
     </form>
-    <p class="fin-nota">Valor mínimo: R$ 25,00 · Taxa do participante: 0%. Saques dependem de saldo confirmado e integração bancária habilitada.</p>
+    <p class="fin-nota">Valor mínimo para saque: R$ 25,00 (fixo) · Taxa do participante: 0%. Saques dependem de saldo confirmado e integração bancária habilitada.</p>
     <p id="finSaqueResposta" role="status" aria-live="polite"></p>
    </div>
    <button type="button" id="finAbrirHistorico" class="fin-historico-botao" aria-controls="finHistorico" aria-expanded="false">Histórico de ganhos / saques</button>

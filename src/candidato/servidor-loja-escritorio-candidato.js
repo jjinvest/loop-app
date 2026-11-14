@@ -891,11 +891,17 @@ function criarAppLojaEscritorioCandidato({banco,repositorioCatalogo,
  // de ensaio nem mentir que houve zero ganhos reais.
  app.get('/staging/financeiro/me',(req,res)=>{
   if(!sessao(req))return res.status(401).json({erro:'SESSAO_AUSENTE'});
+  const posicao=req.query.posicaoId;
+  if(Object.keys(req.query).some(k=>k!=='posicaoId')||
+     (posicao!==undefined&&(!/^[1-9][0-9]*$/.test(posicao)||
+      !Number.isSafeInteger(Number(posicao)))))
+   return res.status(400).json({erro:'POSICAO_INVALIDA'});
   return res.set('Cache-Control','private, no-store').json({
    origem:'FINANCEIRO_SEM_LIVRO_REAL_HOMOLOGADO',
    disponivel:false,saqueRealHabilitado:false,
    indicadosValidos:null,saldoBonusCentavos:null,
-   saldoPosicoesCentavos:null,minimoSaqueCentavos:2500,
+   saldoPosicaoSelecionadaCentavos:null,saldoTotalPosicoesCentavos:null,
+   posicaoSelecionadaId:null,minimoSaqueCentavos:2500,
    taxaSaquePercentual:0,historicoDisponivel:false
   });
  });
