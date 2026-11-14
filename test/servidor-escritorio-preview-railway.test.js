@@ -901,3 +901,15 @@ test('abas consultam dados automaticamente sem botoes Atualizar redundantes',asy
  assert.ok(html.includes('id="relogioTabuleiroIntegrado"'));
  assert.ok(js.includes('setInterval('));
 });
+
+test('links divulgam dominio oficial com nick dinamico da conta, nao da previa',async t=>{
+ const x=await preparar(t);
+ const response=await x.consultar('/staging/assets/cliente.js');
+ assert.equal(response.status,200);
+ const codigo=await response.text();
+ assert.match(codigo,/const dominioOficial='https:\/\/akitemmloop\.com\.br'/);
+ assert.match(codigo,/const nick=encodeURIComponent\(perfil\.nick\)/);
+ assert.match(codigo,/dominioOficial\+'\/loja\/'\+nick/);
+ assert.match(codigo,/dominioOficial\+'\/escritorio\/'\+nick/);
+ assert.doesNotMatch(codigo,/location\.origin\+'\/loja\/'/);
+});
