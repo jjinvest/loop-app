@@ -67,7 +67,8 @@ function mp4TrintaSegundos(){
    }
    const failures=[];
    page.on('pageerror',e=>failures.push(e.message));
-   await page.goto(base+'/staging/cliente',{waitUntil:'networkidle'});
+   await page.goto(base+'/staging/cliente',{waitUntil:'domcontentloaded'});
+   await page.locator('#painelLogin').waitFor({state:'visible'});
    // Cliente existente entra diretamente; cadastro so no primeiro acesso.
    assert.equal(await page.locator('#painelLogin').isVisible(),true);
    assert.equal(await page.locator('#painelCadastro').isHidden(),true);
