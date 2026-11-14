@@ -93,3 +93,24 @@ test('primeira aba: dois banners, AKITEMM prateado e pontos circulares',()=>{
  assert.match(css,/\.loop03-banners-pontos button::before\{[^\n]*border-radius:50%/);
  assert.match(css,/\.loop03-banners-pontos button\{[^\n]*aspect-ratio:1/);
 });
+
+test('cadastro: Nome, Nick, E-mail, Telefone, Senha e Confirmar senha',()=>{
+ const html=ler('src/candidato/checkout-candidato-ui.html');
+ const ids=['cadastroNome','cadastroNick','cadastroEmail',
+  'cadastroTelefone','cadastroSenha','cadastroConfirmarSenha'];
+ let anterior=-1;
+ for(const id of ids){
+  const i=html.indexOf('id="'+id+'"');
+  assert.ok(i>anterior,'ORDEM_CADASTRO_INCORRETA: '+id);
+  anterior=i;
+ }
+});
+test('resumo da posicao: titular, fila e indicacoes no terceiro quadro',()=>{
+ const ui=ler('src/candidato/checkout-candidato-ui.js');
+ const real=ler('src/producao/interface-aprovada-contas.js');
+ assert.match(ui,/nickAtualResumo=perfil\.nick/);
+ assert.match(ui,/'@'\+nickAtualResumo/);
+ assert.match(ui,/pos\.indicacoesVinculadas\|\|0/);
+ assert.match(real,/nickResumoReal=s\.nick/);
+ assert.match(real,/selecionadaResumo\.indicacoesVinculadas\|\|0/);
+});

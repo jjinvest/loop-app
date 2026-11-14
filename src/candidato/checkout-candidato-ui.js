@@ -10,6 +10,7 @@ let termosCadastroLidos=null,carregandoTermosCadastro=null;
 let posicaoSelecionadaMotor=null;
 let posicoesDisponiveisResumo=[],revisaoHistoricoResumo=0;
 let popupPosicoesAberto=false;
+let nickAtualResumo='';
 let somentePosicoesPeloQuadrado=false;
 const ABAS=[['abaResumo','conteudoResumo'],['abaTabuleiro','conteudoTabuleiro'],
  ['abaMeusPedidos','conteudoMeusPedidos'],['abaPosicoes','conteudoPosicoes'],
@@ -321,7 +322,8 @@ async function atualizarResumo(){
    requisitar('/minha-previa-filas'),requisitar('/minha-equipe'),
    requisitar('/motor/estado')
   ]);
-    $('loop03NickIntegrado').textContent='@'+perfil.nick;
+    nickAtualResumo=perfil.nick;
+   $('loop03NickIntegrado').textContent='@'+perfil.nick;
   $('loop03TotalIntegrado').textContent=String(motor.posicoesAtivasDoTitular)+' / '+
    String(motor.limitePosicoesAtivas);
   $('loop03Giros24Integrado').textContent=String(motor.catraca.giros24h);
@@ -343,8 +345,10 @@ function atualizarIndicadorSelecionadoResumo(){
  const pos=indice>=0?posicoesDisponiveisResumo[indice]:null;
  $('loop03NumeroIntegrado').textContent=pos?'#'+(indice+1):'—';
  $('loop03StatusPosicao').textContent=pos?
-  ((pos.fila==='A'||pos.fila==='B'?'Fila '+pos.fila+' · ':'')+
-   (pos.local==='FILA'?'Na fila':pos.local==='CENTRO'?'No centro':
+  ('@'+nickAtualResumo+
+   ' · Fila '+(pos.fila==='A'||pos.fila==='B'?pos.fila:'não definida')+
+   ' · Indicações: '+(pos.indicacoesVinculadas||0)+
+   ' · '+(pos.local==='FILA'?'Na fila':pos.local==='CENTRO'?'No centro':
     pos.local?.startsWith('VAGA_')?'No tabuleiro':'Em acompanhamento')+
    ' · ID #'+pos.numero):'Escolha uma posição';
 }

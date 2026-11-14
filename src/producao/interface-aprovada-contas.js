@@ -11,6 +11,7 @@
   ref.toLowerCase():null;
  let titularesIndicados=[],redePaginando=false;
  let posicaoSelecionada='';
+ let nickResumoReal='';
  let somentePosicoesPeloQuadrado=false,proximaAbaVemDoQuadrado=false;
  let origemLinks=null;
  const codigos={
@@ -72,6 +73,7 @@
   $('painelRecuperacao').hidden=true;
   $('painelConta').hidden=false;
   document.body.classList.add('loop03-logado');
+  nickResumoReal=s.nick;
   $('loop03NickIntegrado').textContent=s.nick;
   $('perfilCliente').textContent='Nick: '+s.nick+
    (s.emailVerificado?' · E-mail confirmado':' · Confirme seu e-mail');
@@ -466,8 +468,18 @@
     }
     seletor.value=posicaoSelecionada;
     if(seletorRotulo)seletorRotulo.hidden=opcoes.length===0;
+    const selecionadaResumo=d.minhasPosicoes.find(p=>
+     String(p.numero)===posicaoSelecionada);
     $('loop03NumeroIntegrado').textContent=
-     posicaoSelecionada?'#'+posicaoSelecionada:'—';
+     selecionadaResumo?'#'+posicaoSelecionada:'—';
+    $('loop03StatusPosicao').textContent=selecionadaResumo?
+     ('@'+nickResumoReal+
+      ' · Fila '+(selecionadaResumo.fila==='A'||selecionadaResumo.fila==='B'?
+       selecionadaResumo.fila:'não definida')+
+      ' · Indicações: '+(selecionadaResumo.indicacoesVinculadas||0)+
+      ' · '+(selecionadaResumo.local||'Em acompanhamento')+
+      ' · ID #'+selecionadaResumo.numero):
+     'Escolha uma posição';
    }
    // A quantidade de cartões deriva do MESMO limite enviado pelo motor;
    // não esconder vagas vazias nem fabricar posições/pedidos.

@@ -1,11 +1,11 @@
 {
   "schema": 1,
   "política": "Toda alteração de HTML/CSS exige pedido visual explícito, escopo isolado e revisão do proprietário; é proibido atualizar hashes para esconder mudanças.",
-  "autorizaçãoAtual": "14/11/2026: só remover botão verde AKITEMM inferior da primeira aba (preservar prateado superior), e corrigir duas bolinhas do carrossel para círculos reais. Nenhum outro elemento, layout, aba ou operação alterados.",
+  "autorizaçãoAtual": "14/11/2026: somente (1) Telefone acima de Senha e Confirmar senha no cadastro, (2) nick do titular e quantidade de indicações no indicador da posição selecionada, mantendo número, fila, localização, histórico e demais telas.",
   "arquivos": [
     {
       "path": "src/candidato/checkout-candidato-ui.html",
-      "sha": "2ce75fe5cdc62d75443cfd48f8d791251da4f414"
+      "sha": "451f9b7696ab170da510c3b7fde7506704274e58"
     },
     {
       "path": "src/candidato/escritorio-admin-candidato-ui.css",
