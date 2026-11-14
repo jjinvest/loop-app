@@ -60,3 +60,16 @@ test('quadradinho superior lista somente posições existentes e demonstração 
  assert.match(real,/proximaAbaVemDoQuadrado=true/);
  assert.match(real,/data-exemplo-visual/);
 });
+
+test('quadrado abre opções de posições na primeira aba e histórico somente após escolha',()=>{
+ const html=ler('src/candidato/checkout-candidato-ui.html');
+ const js=ler('src/candidato/checkout-candidato-ui.js');
+ assert.match(html,/id="seletorPosicoesResumo"/);
+ assert.match(html,/id="historicoPosicaoResumo"/);
+ assert.match(html,/id="loop03StatusPosicao"/);
+ assert.match(js,/addEventListener\('click',abrirPopupResumo\)/);
+ assert.match(js,/async function renderizarHistoricoResumo/);
+ assert.match(js,/posicoesDisponiveisResumo\.forEach/);
+ assert.match(js,/\/motor\/posicoes\//);
+ assert.doesNotMatch(js,/loop03IrPosicoesIntegrado'\)\.addEventListener\('click',\(\)=>mostrarAba/);
+});
