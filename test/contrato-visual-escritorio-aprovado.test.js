@@ -53,7 +53,7 @@ test('quadradinho superior lista somente posições existentes e demonstração 
  const ui=ler('src/candidato/checkout-candidato-ui.js');
  const real=ler('src/producao/interface-aprovada-contas.js');
  assert.match(ui,/somentePosicoesPeloQuadrado\?ativas\.length:10/);
- assert.match(ui,/mostrarAba\('conteudoPosicoes',\{somenteMinhas:true\}\)/);
+ assert.match(ui,/addEventListener\('click',abrirPopupResumo\)/);
  assert.match(ui,/data-exemplo-visual/);
  assert.match(ui,/Fila B · Aguardando confirmação · Indicações: 0/);
  assert.match(real,/const slots=somentePosicoesPeloQuadrado\?ordenadas:/);
