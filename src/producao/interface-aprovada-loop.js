@@ -31,11 +31,25 @@ function renderizarInterfaceAprovada(){
  ['/staging/assets/cliente-integrado.css','/identidade/assets/cliente-integrado.css'],
  ['/staging/assets/catraca-visor.js','/identidade/assets/catraca-visor.js'],
  ['/staging/assets/tabuleiro-visual.js','/identidade/assets/tabuleiro-visual.js'],
- ['/staging/assets/cliente.js','/identidade/assets/cliente.js'], ['SEM VENDAS REAIS','SEM COMPRAS OU PAGAMENTOS REAIS'],
- ['DEMONSTRAÇÃO · SEM PAGAMENTOS REAIS',
-  'CADASTRO REAL EM PREPARAÇÃO · SEM PAGAMENTOS REAIS'], ]){
+ ['/staging/assets/cliente.js','/identidade/assets/cliente.js'], ]){
   html=trocarExato(html,antes,depois);
  }
+ // As faixas de homologacao continuam na instancia real, sem aparecer na
+ // vitrine e no Escritorio da previa que o cliente ve.
+ html=trocarExato(html,'<header class="cabecalho">',
+  '<header class="cabecalho">\n <span class="ambiente">SEM COMPRAS OU PAGAMENTOS REAIS</span>');
+ const antigaFoto=['    <button type="button" id="loop03AlterarFotoTopo" class="loop03-foto-topo" aria-label="Escolher minha foto de perfil" title="Escolher foto de perfil">',
+  '     <img id="loop03ImagemFotoTopo" alt="Sua foto de perfil" hidden>',
+  '     <span id="loop03FotoSemImagem" aria-hidden="true">👤</span>',
+  '    </button>'].join('\n');
+ html=trocarExato(html,antigaFoto,
+  '    <span class="ambiente">CADASTRO REAL EM PREPARAÇÃO · SEM PAGAMENTOS REAIS</span>');
+ // A instancia real usa seu servico de identidade proprio, que ainda nao
+ // tem foto de perfil: nao exibir upload inerte nessa instancia.
+ const inicioFoto=html.indexOf('   <form id="formFotoPerfil"');
+ const fimFoto=inicioFoto<0?-1:html.indexOf('   </form>',inicioFoto);
+ if(inicioFoto<0||fimFoto<0)throw Error('INTERFACE_FOTO_PERFIL_DESATUALIZADA');
+ html=trocarExato(html,html.slice(inicioFoto,fimFoto+'   </form>\n'.length),'');
  // Nick é uma identidade única entre loja e escritório. Alterar apenas a
  // instância real da tela aprovada, sem mudar o laboratório histórico.
  const nickAtual='minlength="1" maxlength="12" pattern="[A-Za-z]{1,12}"';
