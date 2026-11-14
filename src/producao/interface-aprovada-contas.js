@@ -12,6 +12,8 @@
  let titularesIndicados=[],redePaginando=false;
  let posicaoSelecionada='';
  let nickResumoReal='';
+ let posicoesResumoReal=[],popupPosicoesRealAberto=false;
+ let finOrigemReal='BONUS_INDICACAO',ensaioFinanceiroAtivo=false;
  let somentePosicoesPeloQuadrado=false,proximaAbaVemDoQuadrado=false;
  let origemLinks=null;
  const codigos={
@@ -87,6 +89,7 @@
    void carregarMotor();
   }else $('loopEstadoIntegrado').hidden=true;
   const ensaioAtivo=s.tesourariaEnsaioAtiva===true;
+  ensaioFinanceiroAtivo=ensaioAtivo;
   const blocoEnsaio=$('tesourariaEnsaioModulo');
   if(blocoEnsaio)blocoEnsaio.hidden=!ensaioAtivo;
   if(ensaioAtivo)void carregarFinanceiroEnsaio();
@@ -97,7 +100,7 @@
    const habilitado=['abaConta','abaEquipe','abaLinks','abaMeusPedidos'].includes(tab.id)||
     (s.motorLoopInterno===true&&
     ['abaResumo','abaTabuleiro','abaPosicoes','abaEquipe','abaLinks'].includes(tab.id))||
-    (ensaioAtivo&&tab.id==='abaFinanceiro');
+    tab.id==='abaFinanceiro';
    tab.disabled=!habilitado;tab.setAttribute('aria-selected',String(ativo));
    tab.setAttribute('aria-current',ativo?'page':'false');
    tab.tabIndex=ativo?0:-1;
@@ -273,6 +276,146 @@
    $('pedidosPaginacao').textContent='Consulta indisponível';
   }
  }
+
+ function fecharPopupReal(){
+  popupPosicoesRealAberto=false;
+  $('seletorPosicoesResumo').hidden=true;
+  $('loop03IrPosicoesIntegrado').setAttribute('aria-expanded','false');
+ }
+ function atualizarTopoPosicaoReal(){
+  const i=posicoesResumoReal.findIndex(p=>String(p.numero)===posicaoSelecionada);
+  const p=i<0?null:posicoesResumoReal[i];
+  $('loop03NumeroIntegrado').textContent=p?'#'+(i+1):'—';
+  $('loop03StatusPosicao').textContent=p?
+   ('@'+nickResumoReal+' · Fila '+(p.fila==='A'||p.fila==='B'?p.fila:'não definida')+
+    ' · Indicações: '+(p.indicacoesVinculadas||0)+
+    ' · '+(p.local||'Em acompanhamento')+' · ID #'+p.numero):'';
+ }
+ function preencherPopupReal(){
+  if(!popupPosicoesRealAberto)return;
+  const lista=$('opcoesPosicoesResumo');lista.replaceChildren();
+  $('avisoPosicoesResumo').textContent=posicoesResumoReal.length?
+   'Escolha a posição que aparecerá no placar superior.':
+   'Você ainda não possui posições para selecionar.';
+  posicoesResumoReal.forEach((p,i)=>{
+   const botao=document.createElement('button');
+   botao.type='button';botao.textContent=String(i+1);
+   botao.setAttribute('aria-label','Posição '+(i+1)+' · ID #'+p.numero);
+   botao.setAttribute('aria-pressed',String(String(p.numero)===posicaoSelecionada));
+   botao.addEventListener('click',()=>{
+    posicaoSelecionada=String(p.numero);
+    fecharPopupReal();
+    atualizarTopoPosicaoReal();
+    if($('conteudoFinanceiro').hidden===false&&!ensaioFinanceiroAtivo)
+     void carregarFinanceiroReal();
+   });
+   lista.appendChild(botao);
+  });
+ }
+ const formatarDinheiroReal=centavos=>
+  new Intl.NumberFormat('pt-BR',{style:'currency',currency:'BRL'}).format(centavos/100);
+ function finSelecionarOrigemReal(origem){
+  finOrigemReal=origem;
+  $('finEscolherBonus').setAttribute('aria-pressed',String(origem==='BONUS_INDICACAO'));
+  $('finEscolherPosicoes').setAttribute('aria-pressed',String(origem==='POSICOES'));
+  $('finSaqueResposta').textContent='';
+ }
+ async function carregarFinanceiroReal(){
+  for(const id of ['finIndicadosValidos','finSaldoBonus','finSaldoSelecionado',
+   'finSaldoPosicoes','finBonusSaque','finPosicoesSaque'])
+   $(id).textContent='—';
+  $('estadoFinanceiro').textContent='Consultando livro financeiro…';
+  try{
+   const pos=posicoesResumoReal.find(p=>String(p.numero)===posicaoSelecionada);
+   const url='/api/financeiro/me'+(pos?'?posicaoId='+encodeURIComponent(pos.numero):'');
+   const resposta=await fetch(url,{credentials:'same-origin',cache:'no-store'});
+   if(!resposta.ok)throw Error('FIN_LIVRO_NAO_DISPONIVEL');
+   const d=await resposta.json();
+   if(d.origem!=='LIVRO_FINANCEIRO_REAL'||d.saqueRealHabilitado!==false||
+      d.minimoSaqueCentavos!==2500||d.taxaSaquePercentual!==0)
+    throw Error('FIN_RESPOSTA_DIVERGENTE');
+   if(d.saldosLiberados!==true){
+    $('estadoFinanceiro').textContent=
+     'Livro financeiro preparado. Valores serão apresentados somente após comprovação externa.';
+    return;
+   }
+   const valor=v=>Number.isSafeInteger(v)&&v>=0?formatarDinheiroReal(v):'—';
+   $('finIndicadosValidos').textContent=Number.isSafeInteger(d.indicadosValidos)?
+    String(d.indicadosValidos):'—';
+   $('finSaldoBonus').textContent=valor(d.saldoBonusCentavos);
+   $('finSaldoSelecionado').textContent=pos&&d.posicaoSelecionadaId===pos.numero?
+    valor(d.saldoPosicaoSelecionadaCentavos):'—';
+   $('finSaldoPosicoes').textContent=valor(d.saldoTotalPosicoesCentavos);
+   $('finBonusSaque').textContent=valor(d.saldoBonusCentavos);
+   $('finPosicoesSaque').textContent=valor(d.saldoTotalPosicoesCentavos);
+   $('estadoFinanceiro').textContent='Saldos provenientes do livro financeiro real.';
+  }catch{
+   $('estadoFinanceiro').textContent=
+    'Livro financeiro indisponível; não é possível exibir valores não comprovados.';
+  }
+ }
+ async function finHistoricoReal(){
+  const painel=$('finHistorico'),btn=$('finAbrirHistorico');
+  if(!painel.hidden){
+   painel.hidden=true;btn.setAttribute('aria-expanded','false');return;
+  }
+  painel.hidden=false;btn.setAttribute('aria-expanded','true');
+  $('finHistoricoMensagem').textContent='Consultando lançamentos…';
+  $('finHistoricoItens').replaceChildren();
+  try{
+   const r=await fetch('/api/financeiro/historico',{
+    credentials:'same-origin',cache:'no-store'});
+   if(!r.ok)throw Error('FIN_HISTORICO_INDISPONIVEL');
+   const d=await r.json();
+   if(d.origem!=='LIVRO_FINANCEIRO_REAL'||!Array.isArray(d.registros))
+    throw Error('FIN_HISTORICO_INVALIDO');
+   const ul=document.createElement('ul');
+   for(const x of d.registros){
+    if(typeof x.descricao!=='string'||!Number.isSafeInteger(x.valorCentavos))
+     throw Error('FIN_LANCAMENTO_INVALIDO');
+    const li=document.createElement('li');
+    li.textContent=x.descricao+' · '+formatarDinheiroReal(x.valorCentavos);
+    ul.append(li);
+   }
+   $('finHistoricoItens').append(ul);
+   $('finHistoricoMensagem').textContent=d.registros.length?
+    'Lançamentos confirmados:':'Sem lançamentos financeiros comprovados.';
+  }catch{
+   $('finHistoricoMensagem').textContent=
+    'Histórico indisponível. Nenhuma movimentação será inventada.';
+  }
+ }
+ async function finSaqueReal(e){
+  e.preventDefault();
+  const resposta=$('finSaqueResposta'),campo=$('finValorSaque');
+  const valor=Number(campo.value);
+  if(!Number.isFinite(valor)||valor<25||valor>100000000||
+     Math.abs(valor*100-Math.round(valor*100))>0.000001){
+   resposta.textContent='Informe um valor válido de pelo menos R$ 25,00.';
+   return;
+  }
+  const botao=$('finSolicitarSaque');
+  botao.disabled=true;
+  try{
+   const r=await fetch('/api/financeiro/saques',{
+    method:'POST',credentials:'same-origin',cache:'no-store',
+    headers:{'Content-Type':'application/json','X-Loop-Csrf':csrf},
+    body:JSON.stringify({origem:finOrigemReal,
+     valorCentavos:Math.round(valor*100)})
+   });
+   if(!r.ok){
+    resposta.textContent='Saque indisponível até a homologação bancária. Nenhum Pix foi enviado.';
+    return;
+   }
+   // Só aceitar confirmação assinada do livro real, nunca "200" isolado.
+   const d=await r.json();
+   resposta.textContent=d.saqueConfirmado===true&&
+    typeof d.comprovanteId==='string'&&d.comprovanteId.length>0?
+    'Saque registrado: '+d.comprovanteId:
+    'Nenhum pagamento confirmado.';
+  }catch{resposta.textContent='Saque indisponível. Nenhum Pix foi enviado.';}
+  finally{botao.disabled=false;}
+ }
  function prepararAbasMotor(){
   if(painelMotorPreparado)return;
   painelMotorPreparado=true;
@@ -287,9 +430,22 @@
     $('tabuleiroVerPosicoesIntegrado').addEventListener('click',
    ()=>$('abaPosicoes').click());
       // A aba de pedidos usa o livro comercial deste titular, nunca o LAB.
-  $('loop03IrPosicoesIntegrado').addEventListener('click',()=>{
-   proximaAbaVemDoQuadrado=true;
-   $('abaPosicoes').click();
+  // O placar superior seleciona uma posição sem mudar a aba atual.
+  const abrir=$('loop03IrPosicoesIntegrado'),popup=$('seletorPosicoesResumo');
+  abrir.addEventListener('click',()=>{
+   popupPosicoesRealAberto=!popupPosicoesRealAberto;
+   popup.hidden=!popupPosicoesRealAberto;
+   abrir.setAttribute('aria-expanded',String(popupPosicoesRealAberto));
+   if(popupPosicoesRealAberto)preencherPopupReal();
+  });
+  document.addEventListener('click',e=>{
+   if(popupPosicoesRealAberto&&!popup.contains(e.target)&&
+      !abrir.contains(e.target))fecharPopupReal();
+  });
+  document.addEventListener('keydown',e=>{
+   if(popupPosicoesRealAberto&&e.key==='Escape'){
+    fecharPopupReal();abrir.focus();
+   }
   });
   const seletor=$('seletorPosicaoMotor');
   if(seletor)seletor.addEventListener('change',()=>{
@@ -457,6 +613,9 @@
    const seletor=$('seletorPosicaoMotor');
    const seletorRotulo=$('rotuloSeletorPosicaoMotor');
    if(seletor){
+    posicoesResumoReal=d.minhasPosicoes.filter(p=>
+     Number.isSafeInteger(p.numero)).sort((a,b)=>a.numero-b.numero);
+    if(popupPosicoesRealAberto)preencherPopupReal();
     const opcoes=d.minhasPosicoes.map(p=>String(p.numero));
     if(!opcoes.includes(posicaoSelecionada))posicaoSelecionada='';
     seletor.replaceChildren();
@@ -577,7 +736,10 @@
    }
    if(tab.id==='abaTabuleiro'||tab.id==='abaPosicoes')void carregarMotor();
    if(tab.id==='abaMeusPedidos')void carregarPedidos();
-   if(tab.id==='abaFinanceiro')void carregarFinanceiroEnsaio();
+   if(tab.id==='abaFinanceiro'){
+    if(ensaioFinanceiroAtivo)void carregarFinanceiroEnsaio();
+    else void carregarFinanceiroReal();
+   }
    const lateral=$('loop03SidebarIntegrado');
    if(lateral?.classList.contains('loop03-aberto')){
     lateral.classList.remove('loop03-aberto');
@@ -780,7 +942,13 @@
      (paginaPedidosReal+1)*20<totalPedidosReal)
    void carregarPedidos(paginaPedidosReal+1);
  });
- for(const id of ['posicoesVerPedidos','financeiroVerPedidos']){
+ // Financeiro real: botão de escolha, pedido protegido e histórico de
+ // lançamentos do próprio titular. Sem integração Pix, nenhum saque ocorre.
+ $('finEscolherBonus').addEventListener('click',()=>finSelecionarOrigemReal('BONUS_INDICACAO'));
+ $('finEscolherPosicoes').addEventListener('click',()=>finSelecionarOrigemReal('POSICOES'));
+ $('finAbrirHistorico').addEventListener('click',()=>void finHistoricoReal());
+ $('finFormSaque').addEventListener('submit',e=>void finSaqueReal(e));
+ for(const id of ['posicoesVerPedidos']){
   const botao=$(id);if(botao)botao.addEventListener('click',()=>{
    const aba=$('abaMeusPedidos');if(!aba.disabled)aba.click();
   });
