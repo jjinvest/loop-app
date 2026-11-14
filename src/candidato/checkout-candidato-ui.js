@@ -10,6 +10,7 @@ let fotoPerfilUrl=null,versaoCarregamentoFoto=0;
 let termosCadastroLidos=null,carregandoTermosCadastro=null;
 let posicaoSelecionadaMotor=null;
 let posicoesDisponiveisResumo=[],revisaoHistoricoResumo=0;
+let popupPosicoesAberto=false;
 let nickAtualResumo='';
 let somentePosicoesPeloQuadrado=false;
 const ABAS=[['abaResumo','conteudoResumo'],['abaTabuleiro','conteudoTabuleiro'],
@@ -97,6 +98,7 @@ function mostrarAba(alvo,{somenteMinhas=false}={}){
   faixaResumo.insertAdjacentElement('afterend',selecionado);
  }
  aba=alvo;
+ if(popupPosicoesAberto)fecharPopupResumo();
  for(const [id,painel] of ABAS){
   const ativo=painel===alvo,botao=$(id);
   botao.setAttribute('aria-selected',String(ativo));
@@ -352,6 +354,44 @@ function atualizarIndicadorSelecionadoResumo(){
    ' · '+(pos.local==='FILA'?'Na fila':pos.local==='CENTRO'?'No centro':
     pos.local?.startsWith('VAGA_')?'No tabuleiro':'Em acompanhamento')+
    ' · ID #'+pos.numero):'';
+}
+// O seletor do primeiro placar e comum as abas Escritorio e Tabuleiro.
+// Nenhuma escolha muda de aba, movimenta a catraca ou filtra o tabuleiro.
+function fecharPopupResumo(){
+ popupPosicoesAberto=false;
+ $('seletorPosicoesResumo').hidden=true;
+ $('loop03IrPosicoesIntegrado').setAttribute('aria-expanded','false');
+}
+function preencherOpcoesPopupResumo(){
+ if(!popupPosicoesAberto)return;
+ const opcoes=$('opcoesPosicoesResumo');opcoes.replaceChildren();
+ $('avisoPosicoesResumo').textContent=posicoesDisponiveisResumo.length?
+  'Escolha qual das suas posições aparecerá no placar superior.':
+  'Você ainda não possui posições para selecionar.';
+ posicoesDisponiveisResumo.forEach((pos,indice)=>{
+  const botao=document.createElement('button');
+  botao.type='button';botao.textContent=String(indice+1);
+  botao.setAttribute('aria-label','Posição '+(indice+1)+' · ID #'+pos.numero);
+  botao.setAttribute('aria-pressed',String(pos.numero===posicaoSelecionadaMotor));
+  botao.addEventListener('click',()=>{
+   posicaoSelecionadaMotor=pos.numero;
+   fecharPopupResumo();
+   // Atualiza o placar no lugar, sem atualizar a rota ou abrir outra aba.
+   atualizarIndicadorSelecionadoResumo();
+   // Detalhamento abaixo existe somente no Escritório, jamais no Tabuleiro.
+   if(aba==='conteudoResumo')void renderizarHistoricoResumo(pos);
+  });
+  opcoes.append(botao);
+ });
+}
+function abrirPopupResumo(){
+ if(popupPosicoesAberto){fecharPopupResumo();return;}
+ popupPosicoesAberto=true;
+ $('seletorPosicoesResumo').hidden=false;
+ $('loop03IrPosicoesIntegrado').setAttribute('aria-expanded','true');
+ preencherOpcoesPopupResumo();
+ // Reconfirma as posições da própria conta antes de disponibilizar a escolha.
+ void atualizarResumo().then(preencherOpcoesPopupResumo);
 }
 async function renderizarHistoricoResumo(pos){
  const revisao=++revisaoHistoricoResumo;
@@ -1114,7 +1154,16 @@ function iniciarCarrosselResumo(){
 
 iniciarCarrosselResumo();
 $('tabuleiroVerPosicoesIntegrado').addEventListener('click',()=>mostrarAba('conteudoPosicoes'));
-$('loop03IrPosicoesIntegrado').addEventListener('click',()=>mostrarAba('conteudoPosicoes'));
+$('loop03IrPosicoesIntegrado').addEventListener('click',abrirPopupResumo);
+document.addEventListener('click',e=>{
+ if(popupPosicoesAberto&&!$('seletorPosicoesResumo').contains(e.target)&&
+    !$('loop03IrPosicoesIntegrado').contains(e.target))fecharPopupResumo();
+});
+document.addEventListener('keydown',e=>{
+ if(e.key==='Escape'&&popupPosicoesAberto){
+  fecharPopupResumo();$('loop03IrPosicoesIntegrado').focus();
+ }
+});
 $('loop03MenuIntegrado').addEventListener('click',alternarMenuIntegrado);
 document.addEventListener('keydown',e=>{if(e.key==='Escape')fecharMenuIntegrado();});
 $('atualizarPosicoes').addEventListener('click',atualizarPosicoes);
