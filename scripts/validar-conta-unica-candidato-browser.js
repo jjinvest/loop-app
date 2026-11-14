@@ -734,11 +734,11 @@ function mp4TrintaSegundos(){
     const campo=document.getElementById('enderecoDivulgarLojaLoop');
     const botao=document.getElementById('copiarDivulgarLojaLoop');
     return campo?.value.endsWith('/loja/'+nick)&&botao?.disabled===false;
-   },item.nick.toLowerCase(),{timeout:10000});
+   },item.nick,{timeout:10000});
    assert.match(await loja.locator('#statusDivulgarLojaLoop').textContent(),
     /Sem compras ou comissões reais/);
    assert.equal(await loja.locator('#enderecoDivulgarLojaLoop').inputValue(),
-    base+'/loja/'+item.nick.toLowerCase());
+    base+'/loja/'+item.nick);
    // Os quatro botoes originais continuam na MESMA pagina e exibem conteudo
    // consistente com produtos/publicacoes confirmados, tambem no celular.
    assert.equal(await loja.locator('[data-akitemm-categoria]').count(),4);
