@@ -267,7 +267,7 @@ test('convite por link registra cadastro correto, rejeita fraude e nao libera co
  assert.equal((await x.consultar('/escritorio/Ghost')).status,404);
  const refLink=await x.consultar('/escritorio/Alice');
  assert.equal(refLink.status,302);
- assert.equal(refLink.headers.get('location'),'/minha-conta');
+ assert.equal(refLink.headers.get('location'),'/minha-conta?cadastro=1');
  const cookie=refLink.headers.getSetCookie()
   .find(s=>s.startsWith('akitemm_preview_ref='));
  assert.ok(cookie,'cookie de vinculo existe');
