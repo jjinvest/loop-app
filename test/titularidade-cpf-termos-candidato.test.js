@@ -32,6 +32,9 @@ test('custodia cifrada, termo imutavel, consentimento e identidade sem privilegi
  assert.equal(one.permitidoSacar,false);
  assert.equal(cad.registrar(params).repetido,true);
  assert.equal(cad.consultar({titularId:a.titularId}).identidadeExternaVerificada,false);
+ assert.equal(cad.conferirCpfTitular({titularId:a.titularId,cpf:'529.982.247-25'}).corresponde,true);
+ assert.throws(()=>cad.conferirCpfTitular({titularId:a.titularId,cpf:'11144477735'}),/CPF_TITULAR_DIVERGENTE/);
+ assert.throws(()=>cad.conferirCpfTitular({titularId:b.titularId,cpf:'529.982.247-25'}),/CPF_TITULAR_NAO_REGISTRADO/);
  assert.equal(cad.consultar({titularId:b.titularId}),null);
  assert.throws(()=>cad.registrar({...params,titularId:b.titularId}),/CPF_OU_TITULAR_JA_VINCULADO/);
  const raw=db.prepare('SELECT * FROM akitemm_candidato_titularidade_laboratorio').get();
