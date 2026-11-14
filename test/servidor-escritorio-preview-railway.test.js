@@ -866,7 +866,7 @@ test('abrir loja nao solicita outra senha pelos recursos auxiliares',async t=>{
  const favicon=await x.consultar('/favicon.ico');
  assert.equal(favicon.status,204);
  assert.equal(favicon.headers.get('www-authenticate'),null);
- const aux=await x.consultar('/api/laboratorio/loop03/publicacoes');
+ const aux=await fetch(x.base+'/api/laboratorio/loop03/publicacoes');
  assert.equal(aux.status,401);
  assert.equal(aux.headers.get('www-authenticate'),null);
  assert.equal((await x.consultar('/staging/loja')).status,200);
