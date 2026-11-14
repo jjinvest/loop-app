@@ -31,6 +31,9 @@ const errosTraduzidos={
  TERMOS_LAB_NAO_ACEITOS:'Marque a confirmação dos termos para continuar.',
  TERMOS_ALTERADOS_RELER:'Os termos foram atualizados. Leia a versão atual e confirme novamente.',
  CADASTRO_INDISPONIVEL:'O cadastro está indisponível. Tente novamente.',
+ CPF_INVALIDO:'Informe um CPF válido.',
+ CPF_OU_TITULAR_JA_VINCULADO:'Este CPF já está vinculado a outra conta.',
+ CPF_STAGING_INDISPONIVEL:'Cadastro com CPF temporariamente indisponível neste ambiente.',
  RECUPERACAO_EMAIL_INDISPONIVEL:'A recuperação por e-mail ainda não está configurada neste ambiente. Nenhuma senha foi alterada.',
  RECUPERACAO_CODIGO_OU_SENHA_INVALIDOS:'Código incorreto, expirado ou senha inválida. Confira os dados.'
 };
@@ -1152,6 +1155,7 @@ async function cadastrar(e){
  const senha=$('cadastroSenha').value;
  const confirmacao=$('cadastroConfirmarSenha').value;
  const telefone=$('cadastroTelefone').value.replace(/[^0-9]/g,'');
+ const cpfCadastro=$('cadastroCpf').value.trim();
  if(senha!==confirmacao){
   mostrarErroAcesso('cadastro','A confirmação da senha deve ser idêntica.');
   return;
@@ -1166,7 +1170,7 @@ async function cadastrar(e){
   const r=await requisitar('/contas/cadastrar',{method:'POST',
    body:{
     nome:$('cadastroNome').value,
-    nick,email:$('cadastroEmail').value,telefone,senha,confirmarSenha:confirmacao,
+    nick,cpf:cpfCadastro,email:$('cadastroEmail').value,telefone,senha,confirmarSenha:confirmacao,
     aceiteExplicito:$('cadastroTermos').checked,
     termosVersaoAceita:termosCadastroLidos.versao,
     termosHashAceito:termosCadastroLidos.hash
@@ -1175,7 +1179,7 @@ async function cadastrar(e){
   if(r.contaCriada!==true||r.pagamentoPermitido!==false)
    throw Error('CADASTRO_INCOMPATIVEL');
   $('login').value=nick;
-  $('cadastroSenha').value='';$('cadastroConfirmarSenha').value='';
+  $('cadastroSenha').value='';$('cadastroConfirmarSenha').value='';$('cadastroCpf').value='';
   selecionarTelaAcesso('login');
   dizer('Cadastro concluído. Agora entre com seu nick e a senha que você escolheu.');
  }catch(e){
