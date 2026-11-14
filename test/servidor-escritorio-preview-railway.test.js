@@ -663,8 +663,7 @@ test('Escritorio e Tabuleiro: AKITEMM ampliada; posicao escolhida apenas em Minh
  assert.match(js,/\$\('tabuleiroVerPosicoesIntegrado'\)\.addEventListener\('click',\(\)=>mostrarAba\('conteudoPosicoes'\)\)/);
  assert.match(js,/const quantidade= somentePosicoesPeloQuadrado\?ativas\.length:10/);
  assert.match(js,/posicaoSelecionadaMotor=posicao\.numero;[\s\S]*?atualizarIndicadorSelecionadoResumo\(\);/);
- assert.match(js,/if\(aba==='conteudoResumo'\)void renderizarHistoricoResumo\(pos\)/);
- assert.doesNotMatch(js,/if\(aba==='conteudoTabuleiro'\)void renderizarHistoricoResumo\(pos\)/);
+ assert.doesNotMatch(js,/renderizarHistoricoResumo|historicoPosicaoResumo/);
 });
 
 test('selecionar posicao no placar nao navega, so mostra resumo no topo',()=>{
@@ -676,6 +675,21 @@ test('selecionar posicao no placar nao navega, so mostra resumo no topo',()=>{
  assert.match(bloco,/posicaoSelecionadaMotor=pos\.numero/);
  assert.match(bloco,/atualizarIndicadorSelecionadoResumo\(\)/);
  assert.doesNotMatch(bloco,/mostrarAba\(|location\.reload|atualizarTabuleiroIntegrado\(/);
- assert.match(bloco,/if\(aba==='conteudoResumo'\)void renderizarHistoricoResumo\(pos\)/);
+ assert.doesNotMatch(bloco,/renderizarHistoricoResumo|historicoPosicaoResumo/);
  assert.match(js,/\$\('tabuleiroVerPosicoesIntegrado'\)\.addEventListener\('click',\(\)=>mostrarAba\('conteudoPosicoes'\)\)/);
+});
+
+test('Escritorio Virtual nao duplica no rodape os dados do placar superior',()=>{
+ const fs=require('node:fs'),path=require('node:path');
+ const html=fs.readFileSync(path.join(__dirname,
+  '../src/candidato/checkout-candidato-ui.html'),'utf8');
+ const js=fs.readFileSync(path.join(__dirname,
+  '../src/candidato/checkout-candidato-ui.js'),'utf8');
+ assert.doesNotMatch(html,/id="historicoPosicaoResumo"|id="historicoDetalhesResumo"|id="historicoEventosResumo"/);
+ assert.doesNotMatch(js,/renderizarHistoricoResumo|historicoTituloResumo|historicoDetalhesResumo|historicoEventosResumo/);
+ assert.match(js,/posicaoSelecionadaMotor=pos\.numero;\s*fecharPopupResumo\(\);\s*[^\n]*\n\s*atualizarIndicadorSelecionadoResumo\(\);/);
+ assert.match(html,/id="loop03NumeroIntegrado"/);
+ assert.match(html,/id="loop03StatusPosicao"/);
+ assert.match(html,/id="seletorPosicoesResumo"/);
+ assert.match(html,/id="tabuleiroVerPosicoesIntegrado"/);
 });

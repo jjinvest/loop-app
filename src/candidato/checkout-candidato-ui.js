@@ -9,7 +9,7 @@ let telaAcesso='login';
 let fotoPerfilUrl=null,versaoCarregamentoFoto=0;
 let termosCadastroLidos=null,carregandoTermosCadastro=null;
 let posicaoSelecionadaMotor=null;
-let posicoesDisponiveisResumo=[],revisaoHistoricoResumo=0;
+let posicoesDisponiveisResumo=[];
 let popupPosicoesAberto=false;
 let nickAtualResumo='';
 let somentePosicoesPeloQuadrado=false;
@@ -335,9 +335,6 @@ async function atualizarResumo(){
   posicoesDisponiveisResumo=[...motor.minhasPosicoes]
    .filter(p=>Number.isSafeInteger(p.numero)).sort((a,b)=>a.numero-b.numero);
   atualizarIndicadorSelecionadoResumo();
-  if(!$('historicoPosicaoResumo').hidden&&selecionada)
-   void renderizarHistoricoResumo(selecionada);
-  if(!selecionada)$('historicoPosicaoResumo').hidden=true;
   $('resumoEmail').textContent=perfil.emailVerificado?'Confirmado':'Pendente';
   $('linksNick').textContent='Seu nick: @'+perfil.nick;
  }catch(e){dizer('Não foi possível atualizar seus dados. Tente novamente.');}
@@ -378,8 +375,6 @@ function preencherOpcoesPopupResumo(){
    fecharPopupResumo();
    // Atualiza o placar no lugar, sem atualizar a rota ou abrir outra aba.
    atualizarIndicadorSelecionadoResumo();
-   // Detalhamento abaixo existe somente no Escritório, jamais no Tabuleiro.
-   if(aba==='conteudoResumo')void renderizarHistoricoResumo(pos);
   });
   opcoes.append(botao);
  });
@@ -392,55 +387,6 @@ function abrirPopupResumo(){
  preencherOpcoesPopupResumo();
  // Reconfirma as posições da própria conta antes de disponibilizar a escolha.
  void atualizarResumo().then(preencherOpcoesPopupResumo);
-}
-async function renderizarHistoricoResumo(pos){
- const revisao=++revisaoHistoricoResumo;
- const area=$('historicoPosicaoResumo');area.hidden=false;
- $('historicoTituloResumo').textContent='Histórico da posição #'+pos.numero;
- const detalhes=$('historicoDetalhesResumo');
- const eventos=$('historicoEventosResumo');
- detalhes.replaceChildren();eventos.replaceChildren();
- for(const item of [
-  'Posição ID #'+pos.numero,
-  'Fila: '+(pos.fila==='A'||pos.fila==='B'?pos.fila:'fora das filas A/B'),
-  'Localização: '+(pos.local||'Não informada'),
-  'Indicações vinculadas: '+(pos.indicacoesVinculadas||0),
-  'Situação: '+(pos.pendente?'Aguardando confirmação':
-   pos.aceiteIndividualRegistrado?'Termos confirmados':'Em acompanhamento')
- ]){
-  const p=document.createElement('p');p.textContent=item;detalhes.append(p);
- }
- const aviso=document.createElement('p');
- aviso.textContent='Consultando eventos registrados desta posição…';
- eventos.append(aviso);
- try{
-  const h=await requisitar('/motor/posicoes/'+pos.numero+'/historico');
-  if(revisao!==revisaoHistoricoResumo||posicaoSelecionadaMotor!==pos.numero)return;
-  eventos.replaceChildren();
-  const registros=Array.isArray(h.eventos)?h.eventos:[];
-  if(!registros.length){
-   const vazio=document.createElement('p');
-   vazio.textContent='Nenhum evento individual registrado para esta posição.';
-   eventos.append(vazio);return;
-  }
-  const titulo=document.createElement('h4');titulo.textContent='Eventos registrados';
-  const lista=document.createElement('ul');
-  const nomes={VINCULAR_PEDIDO:'Posição vinculada ao pedido',
-   ACEITE_POSICAO_ENSAIO:'Termos confirmados',
-   INDICACAO_QUALIFICADA_ENSAIO:'Indicação vinculada',
-   EVENTO_CICLO:'Evento de ciclo registrado'};
-  for(const e of registros){
-   const li=document.createElement('li');
-   const data=Number.isFinite(e.criadoEm)?
-    new Date(e.criadoEm).toLocaleString('pt-BR'):'Data indisponível';
-   li.textContent=(nomes[e.tipo]||'Evento registrado')+' · '+data;
-   lista.append(li);
-  }
-  eventos.append(titulo,lista);
- }catch(e){
-  if(revisao!==revisaoHistoricoResumo)return;
-  eventos.textContent='Histórico individual temporariamente indisponível.';
- }
 }
 const visualTabuleiro=window.LoopTabuleiroVisual.criar({elemento:$});
 async function atualizarTabuleiroIntegrado(){
