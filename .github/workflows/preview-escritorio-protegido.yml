@@ -78,6 +78,7 @@ on:
       - 'test/visor-catraca-unico.test.js'
       - 'test/interface-aprovada-identidade-real.test.js'
       - 'test/contrato-visual-escritorio-aprovado.test.js'
+      - 'test/grade-posicoes-ensaios-unificada.test.js'
       - 'test/loja-escritorio-conta-unica-candidata.test.js'
       - 'test/ensaio-tres-clientes-acesso-unificado-preview.test.js'
       - 'src/candidato/checkout-candidato-ui.html'
