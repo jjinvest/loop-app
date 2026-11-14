@@ -29,6 +29,8 @@ async function desenhar(dados,{motor={minhasPosicoes:[]},falha=false,somenteMinh
    if(falha)throw Error('SQLITE_INDISPONIVEL');
    if(rota==='/minha-previa-filas')return dados;
    if(rota==='/motor/estado')return motor;
+   if(rota==='/contas/identidade')return {registrado:true,cpfFinal:'25'};
+   if(rota==='/contas/termos-identidade')return {disponivel:true,termosVersao:'LAB-2026'};
    throw Error('FONTE_NAO_AUTORIZADA:'+rota);
   }
  };
@@ -96,4 +98,22 @@ test('somente quadrado superior filtra ocupadas e usa exemplo marcado se zerado'
  assert.match(amostra[0].children[0].textContent,/DEMONSTRAÇÃO/);
  assert.match(amostra[0].children[2].textContent,/Fila B/);
  assert.match(amostra[0].children[3].textContent,/0 posições reais/);
+});
+
+test('cada posicao pendente tem CPF e aceite independentes; somente a aceita fica verde',async()=>{
+ const area=await desenhar({pendencias:[]},{
+  motor:{minhasPosicoes:[
+   {numero:42,local:'FILA',fila:'B',pendente:false,aceiteIndividualRegistrado:true},
+   {numero:43,local:'FILA',fila:'B',pendente:true,aceiteIndividualRegistrado:false}
+  ]}
+ });
+ const [confirmada,pendente]=area.children[1].children;
+ assert.match(confirmada.children[0].children[1].className,/loop03-posicao-luz-verde/);
+ assert.doesNotMatch(pendente.children[0].children[1].className,/loop03-posicao-luz-verde/);
+ const form=pendente.children.find(el=>el.tag==='form');
+ assert.ok(form);
+ const rotuloCpf=form.children.find(el=>el.tag==='label'&&el.children.some(child=>child.tag==='input'&&child.name==='cpf'));
+ assert.ok(rotuloCpf,'CPF exigido individualmente no card pendente');
+ assert.equal(form.children.filter(el=>el.tag==='label').length,2,'CPF e aceite no mesmo card');
+ assert.doesNotMatch(JSON.stringify(confirmada),/cpfDigitado/);
 });
