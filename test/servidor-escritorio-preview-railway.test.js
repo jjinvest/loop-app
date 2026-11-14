@@ -883,3 +883,21 @@ test('cadastro de convite tem CPF depois do nick antes do e-mail',async t=>{
  assert.ok(pos.every((n,i)=>n>=0&&(i===0||n>pos[i-1])),JSON.stringify(pos));
  assert.match(html,/<input id="cadastroCpf"[^>]*required>/);
 });
+
+
+test('abas consultam dados automaticamente sem botoes Atualizar redundantes',async t=>{
+ const x=await preparar(t);
+ const html=await (await x.consultar('/minha-conta')).text();
+ const js=await (await x.consultar('/staging/assets/cliente.js')).text();
+ for(const id of ['atualizarPedidos','atualizarPosicoes','atualizarEquipe']){
+  assert.doesNotMatch(html,new RegExp('id="'+id+'"'));
+  assert.doesNotMatch(js,new RegExp("\\$\\('"+id+"'\\)"));
+ }
+ assert.match(js,/if\\(alvo==='conteudoMeusPedidos'\\)atualizarPedidos\\(\\)/);
+ assert.match(js,/if\\(alvo==='conteudoPosicoes'\\)atualizarPosicoes\\(\\)/);
+ assert.match(js,/if\\(alvo==='conteudoEquipe'\\)atualizarEquipe\\(0\\)/);
+ // O relogio nao e um simples botao Atualizar: manter a previsao de luz.
+ assert.match(html,/id="atualizarTabuleiroIntegrado"/);
+ assert.match(html,/id="relogioTabuleiroIntegrado"/);
+ assert.match(js,/setInterval\\(\\(\\)=>\\{/);
+});
