@@ -331,7 +331,7 @@ function mp4TrintaSegundos(){
     'o indicador não navega para outra aba');
    assert.equal(await page.locator('#opcoesPosicoesResumo button').count(),0);
    assert.match(await page.locator('#avisoPosicoesResumo').innerText(),
-    /ainda não tem posições/);
+    /ainda não (?:tem|possui) posições/);
    assert.equal(await page.locator('#historicoPosicaoResumo').count(),0,
     'historico duplicado foi removido da primeira aba');
    assert.equal(await page.locator('#loop03TotalIntegrado').innerText(),'0 / 10');
