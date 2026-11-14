@@ -102,6 +102,8 @@
      'loop03-dourada':pendente(p)?'loop03-azul':
      aceito(p)?'loop03-verde':tipo==='A'?'loop03-a':'loop03-b');
     inicial.textContent=contagem!==null?tipo:String(ordem);
+    if(contagem===null&&ordem>=1000)
+     inicial.classList.add('loop03-ordem-longa');
     const conteudo=document.createElement('span');
     conteudo.className='loop03-fila-identificacao';
     const identificacao=document.createElement('span');
