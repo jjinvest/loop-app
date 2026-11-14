@@ -11,6 +11,7 @@
   ref.toLowerCase():null;
  let titularesIndicados=[],redePaginando=false;
  let posicaoSelecionada='';
+ let somentePosicoesPeloQuadrado=false,proximaAbaVemDoQuadrado=false;
  let origemLinks=null;
  const codigos={
   CREDENCIAIS_INVALIDAS:'Confira seu nick e sua senha.',
@@ -291,8 +292,10 @@
    ()=>$('abaPosicoes').click());
   $('atalhoLoja').addEventListener('click',()=>location.assign('/loja'));
   // A aba de pedidos usa o livro comercial deste titular, nunca o LAB.
-  $('loop03IrPosicoesIntegrado').addEventListener('click',
-   ()=>$('abaPosicoes').click());
+  $('loop03IrPosicoesIntegrado').addEventListener('click',()=>{
+   proximaAbaVemDoQuadrado=true;
+   $('abaPosicoes').click();
+  });
   const seletor=$('seletorPosicaoMotor');
   if(seletor)seletor.addEventListener('change',()=>{
    posicaoSelecionada=seletor.value;
@@ -489,8 +492,8 @@
    grade.className='loop03-grade-posicoes';
    // Só mostrar um cartão quando o titular selecionar sua posição;
    // na visão geral renderizar todos os espaços disponíveis até o limite.
-   const slots=posicaoSelecionada?
-    ordenadas.filter(p=>String(p.numero)===posicaoSelecionada):
+   const slots=somentePosicoesPeloQuadrado?ordenadas:
+    posicaoSelecionada?ordenadas.filter(p=>String(p.numero)===posicaoSelecionada):
     Array.from({length:capacidade},(_,i)=>ordenadas[i]||null);
    for(let i=0;i<slots.length;i++){
     const pos=slots[i];
@@ -499,7 +502,7 @@
     const corpo=document.createElement('div');
     corpo.className='loop03-cartao-posicao';
     const rotulo=document.createElement('strong');
-    const vaga=posicaoSelecionada?
+    const vaga=somentePosicoesPeloQuadrado||posicaoSelecionada?
      ordenadas.findIndex(p=>p.numero===pos.numero)+1:i+1;
     rotulo.textContent='Posição '+vaga;
     corpo.appendChild(rotulo);
@@ -512,6 +515,7 @@
      id.textContent='#'+pos.numero;
      corpo.appendChild(id);
      detalhe.textContent=pos.local+
+      (pos.fila==='A'||pos.fila==='B'?' · Fila '+pos.fila:'')+
       (pos.classeProdutoOrigem?' · Produto '+pos.classeProdutoOrigem:'')+
       ' · '+pos.indicacoesQualificadasEnsaio+
       ' indicação(ões) em verificação. Sem crédito financeiro disponível.';
@@ -521,6 +525,23 @@
        d.confirmacaoAzulEnsaioDisponivel===true)
      renderizarAceiteAzulEnsaio(card,pos);
     grade.appendChild(card);
+   }
+   if(somentePosicoesPeloQuadrado&&ordenadas.length===0){
+    const exemplo=document.createElement('article');
+    exemplo.className='loop03-unidade-posicao';
+    exemplo.setAttribute('data-exemplo-visual','true');
+    const corpo=document.createElement('div');
+    corpo.className='loop03-cartao-posicao';
+    const titulo=document.createElement('strong');
+    titulo.textContent='DEMONSTRAÇÃO — posição fictícia';
+    const numero=document.createElement('p');
+    numero.textContent='#EXEMPLO (não é sua posição)';
+    const dados=document.createElement('p');
+    dados.textContent='Fila B · Aguardando confirmação · Indicações: 0';
+    const aviso=document.createElement('small');
+    aviso.textContent='Exemplo visual. Você tem 0 posições reais. Nenhuma compra ou giro foi criado.';
+    corpo.append(titulo,numero,dados,aviso);
+    exemplo.append(corpo);grade.appendChild(exemplo);
    }
    painel.appendChild(grade);
   }catch{
@@ -541,6 +562,10 @@
     outro.tabIndex=ativo?0:-1;
     const alvo=$(outro.getAttribute('aria-controls'));
     if(alvo)alvo.hidden=!ativo;
+   }
+   if(tab.id==='abaPosicoes'){
+    somentePosicoesPeloQuadrado=proximaAbaVemDoQuadrado;
+    proximaAbaVemDoQuadrado=false;
    }
    if(tab.id==='abaTabuleiro'||tab.id==='abaPosicoes')void carregarMotor();
    if(tab.id==='abaMeusPedidos')void carregarPedidos();

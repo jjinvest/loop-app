@@ -267,6 +267,11 @@ function mp4TrintaSegundos(){
    assert.equal(await page.locator('#atalhoPedidos').isVisible(),true);
    assert.equal(await page.locator('.indicadores-cliente').count(),0);
    assert.match(await page.locator('#boasVindas').innerText(),new RegExp(item.nick,'i'));
+   await page.locator('#loop03IrPosicoesIntegrado').click();
+   await page.locator('#posicoesPainel [data-exemplo-visual="true"]').waitFor();
+   assert.equal(await page.locator('#posicoesPainel .loop03-cartao-posicao-ensaio').count(),1);
+   assert.match(await page.locator('#posicoesPainel').innerText(),/DEMONSTRAÇÃO[\s\S]*Fila B/);
+   assert.equal(await page.locator('#loop03TotalIntegrado').innerText(),'0 / 10');
    await page.locator('#atalhoPosicoes').click();
    await page.locator('#posicoesPainel').filter({hasText:/Posições em acompanhamento/}).waitFor();
    assert.equal(await page.locator('#posicoesPainel .loop03-cartao-posicao-ensaio').count(),10);

@@ -8,6 +8,7 @@ let csrf=null,aba='conteudoResumo',proximaPaginaEquipe=null,
 let telaAcesso='login';
 let termosCadastroLidos=null,carregandoTermosCadastro=null;
 let posicaoSelecionadaMotor=null;
+let somentePosicoesPeloQuadrado=false;
 const ABAS=[['abaResumo','conteudoResumo'],['abaTabuleiro','conteudoTabuleiro'],
  ['abaMeusPedidos','conteudoMeusPedidos'],['abaPosicoes','conteudoPosicoes'],
  ['abaEquipe','conteudoEquipe'],['abaLinks','conteudoLinks'],['abaFinanceiro','conteudoFinanceiro'],
@@ -78,7 +79,8 @@ function mostrarSessao(ativa){
  if(!ativa){csrf=null;
   $('senha').value='';proximaPaginaEquipe=null;paginaPedidos=0;}
 }
-function mostrarAba(alvo){
+function mostrarAba(alvo,{somenteMinhas=false}={}){
+ if(alvo==='conteudoPosicoes')somentePosicoesPeloQuadrado=somenteMinhas;
  // Prioriza a seção escolhida na ordem REAL do documento, não apenas
  // em CSS: teclado, leitor de tela, PC e celular seguem o mesmo fluxo.
  const selecionado=$(alvo);
@@ -392,7 +394,8 @@ async function atualizarPosicoes(){
   const grade=document.createElement('div');
   grade.className='loop03-grade-posicoes-ensaio';
   grade.setAttribute('role','list');
-  grade.setAttribute('aria-label','Dez espaços de posições da própria conta');
+  grade.setAttribute('aria-label',somentePosicoesPeloQuadrado?
+   'Posições da própria conta':'Dez espaços de posições da própria conta');
   const estados={
    APENAS_PREVIA_FILA_B_AZUL:'Aguardando confirmação · Fila B',
    EXIGE_REVISAO_PSP:'Pedido em análise',
@@ -400,8 +403,11 @@ async function atualizarPosicoes(){
    OFERTA_HISTORICA_NAO_QUALIFICADA:'Pedido sem posição',
    ACIMA_DEZ_APENAS_PARA_PLANEJAMENTO:'Limite de posições atingido'
   };
-  for(let i=0;i<10;i++){
-   const posicao=ativas[i]||null,registro=posicao?null:historicosExtras[i-ativas.length]||null;
+  const quantidade= somentePosicoesPeloQuadrado?ativas.length:10;
+  for(let i=0;i<quantidade;i++){
+   const posicao=ativas[i]||null;
+   const registro=somentePosicoesPeloQuadrado?
+    null:posicao?null:historicosExtras[i-ativas.length]||null;
    const cartao=document.createElement('article');
    cartao.className='loop03-cartao-posicao-ensaio'+
     (posicao?.pendente||registro?' loop03-cartao-posicao-pendente':'')+
@@ -415,7 +421,7 @@ async function atualizarPosicoes(){
     registro?'AGUARDANDO':'Espaço disponível';
    const status=document.createElement('p');
    status.textContent=posicao?('Local: '+posicao.local+
-    (posicao.fila?' '+posicao.fila:'')+
+    (posicao.fila?' · Fila '+posicao.fila:'')+
     ' · Indicações: '+(posicao.indicacoesVinculadas||0)+
     (posicao.pendente?' · aguardando confirmação':'')):
     registro?(estados[registro.estado]||'Registro em revisão'):'Sem posição vinculada';
@@ -478,10 +484,28 @@ async function atualizarPosicoes(){
    }
    grade.append(cartao);
   }
+  if(somentePosicoesPeloQuadrado&&ativas.length===0){
+   const exemplo=document.createElement('article');
+   exemplo.className='loop03-cartao-posicao-ensaio';
+   exemplo.setAttribute('data-exemplo-visual','true');
+   exemplo.setAttribute('role','listitem');
+   const titulo=document.createElement('h3');
+   titulo.textContent='DEMONSTRAÇÃO — posição fictícia';
+   const numero=document.createElement('strong');
+   numero.textContent='#EXEMPLO (não é sua posição)';
+   const detalhes=document.createElement('p');
+   detalhes.textContent='Fila B · Aguardando confirmação · Indicações: 0';
+   const avisoExemplo=document.createElement('small');
+   avisoExemplo.textContent='Exemplo visual. Você tem 0 posições reais. Nenhuma compra ou giro foi criado.';
+   exemplo.append(titulo,numero,detalhes,avisoExemplo);
+   grade.append(exemplo);
+  }
   const aviso=document.createElement('p');aviso.className='subtexto';
   const fora=Math.max(0,historicosExtras.length-(10-ativas.length));
-  aviso.textContent=fora?
-   'Outros '+fora+' registros permanecem no histórico de pedidos. O limite de 10 aplica-se a posições ativas, não aos pedidos passados.':
+  aviso.textContent=somentePosicoesPeloQuadrado?
+   (ativas.length?'Mostrando apenas suas '+ativas.length+' posição(ões) reais.':
+    'Você ainda não possui posições; o cartão acima é só uma demonstração.'):
+   fora?'Outros '+fora+' registros permanecem no histórico de pedidos. O limite de 10 aplica-se a posições ativas, não aos pedidos passados.':
    'Acompanhe suas posições nesta área.';
   area.replaceChildren(resumo,grade,aviso);
  }catch(e){
@@ -893,7 +917,7 @@ setInterval(()=>{
 },15000);
 
 $('tabuleiroVerPosicoesIntegrado').addEventListener('click',()=>mostrarAba('conteudoPosicoes'));
-$('loop03IrPosicoesIntegrado').addEventListener('click',()=>mostrarAba('conteudoPosicoes'));
+$('loop03IrPosicoesIntegrado').addEventListener('click',()=>mostrarAba('conteudoPosicoes',{somenteMinhas:true}));
 $('loop03MenuIntegrado').addEventListener('click',alternarMenuIntegrado);
 document.addEventListener('keydown',e=>{if(e.key==='Escape')fecharMenuIntegrado();});
 $('atualizarResumo').addEventListener('click',atualizarResumo);
