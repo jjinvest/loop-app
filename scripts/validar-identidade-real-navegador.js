@@ -443,7 +443,10 @@ async function main(){
    await pagina.locator('#listaPedidos').filter({hasText:compra.pedidoId}).waitFor();
    assert.match(await pagina.locator('#listaPedidos').innerText(),
     /APROVADO_PARA_EXPEDICAO/);
-   assert.equal(await pagina.locator('#resumoPedidos').innerText(),'1');
+   assert.equal(await pagina.locator('.indicadores-cliente').count(),0);
+   assert.equal(await pagina.locator('.loop03-indicadores .loop03-indicador').count(),3);
+   assert.equal(await pagina.locator('#loop03TotalIntegrado').innerText(),
+    String(diagnostico.quantidadePosicoes)+' / 10');
    assert.ok((await pagina.locator('#pedidosPaginacao').innerText())
     .includes('Página 1 · 1 pedido(s) no histórico'));
    assert.equal(await pagina.locator('#pedidosAnterior').isDisabled(),true);
