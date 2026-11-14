@@ -39,7 +39,7 @@ test('card superior de posições abre as dez vagas e terceiro acompanha seleç�
  assert.match(js,/motor\.limitePosicoesAtivas/);
  assert.match(js,/motor\.catraca\.giros24h/);
  assert.match(motor,/const giros24h=/);
- assert.match(js,/for\(let i=0;i<10;i\+\+\)/);
+ assert.match(js,/const quantidade= somentePosicoesPeloQuadrado\?ativas\.length:10/);
  assert.match(js,/posicaoSelecionadaMotor=posicao\.numero/);
  assert.match(js,/\$\('loop03NumeroIntegrado'\)\.textContent='#'\+posicao\.numero/);
  assert.match(js,/\$\('loop03IrPosicoesIntegrado'\)\.addEventListener/);
