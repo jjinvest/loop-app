@@ -603,3 +603,11 @@ body.loop03-logado main>.mensagem-pagina{margin:0 0 .75rem}
  font-weight:650;line-height:1.05;text-align:center;
  color:inherit;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
 }
+
+/* Evitar que o sinal vazio (#0000 ou travessão) ocupe a esfera;
+   os números 1 a 6 continuam visíveis no topo. */
+.cliente-integrado #conteudoTabuleiro
+ .mapa-tabuleiro-posicoes-demo > .espaco-tabuleiro-demo
+ > .selo-posicao-demo.posicao-vazia{
+ visibility:hidden!important;
+}

@@ -31,6 +31,28 @@
    if(!area)throw Error('VAGA_VISUAL_NAO_EXISTE');
    const esfera=area.closest('.espaco-tabuleiro-demo');
    if(!esfera)throw Error('ESTRUTURA_TABULEIRO_DIVERGENTE');
+   // Cor efetiva no próprio círculo: não depende da prioridade de CSS
+   // antigo (estado, fila, aceite ou posicao pessoal).
+   const aparencia=dourada(p)?{
+    fundo:'radial-gradient(circle at 28% 17%,#fff2b5 0%,#ebc35d 43%,#d29d28 76%,#8b570e 100%)',
+    borda:'#fff0ae'
+   }:centro?{
+    fundo:'radial-gradient(circle at 28% 17%,#caffdf 0%,#51d598 42%,#138658 77%,#075237 100%)',
+    borda:'#dbf2db'
+   }:id==='tabuleiroMotorVaga6'?{
+    fundo:'radial-gradient(circle at 28% 17%,#ffb8bd 0%,#ef535c 47%,#ba2439 80%,#761528 100%)',
+    borda:'#ffbec3'
+   }:{
+    fundo:'radial-gradient(circle at 28% 17%,#fff 0%,#f6f8fa 37%,#dce4ec 77%,#a5b0c1 100%)',
+    borda:'#f6f9ff'
+   };
+   if(typeof esfera.style?.setProperty==='function'){
+    esfera.style.setProperty('background',aparencia.fundo,'important');
+    esfera.style.setProperty('border-color',aparencia.borda,'important');
+   }else if(esfera.style){
+    esfera.style.background=aparencia.fundo;
+    esfera.style.borderColor=aparencia.borda;
+   }
    area.textContent=numero(p,centro);
    // Exibir nick somente quando o backend já tiver fornecido dado autorizado.
    // Sem identidade disponível, o espaço reservado permanece vazio.

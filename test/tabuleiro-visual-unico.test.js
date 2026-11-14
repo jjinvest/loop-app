@@ -97,14 +97,25 @@ test('roda usa centro verde, periferia branca, sexta vermelha e dourada permanen
  const {visual,el}=fake();
  visual.preencherVaga('tabuleiroMotorVaga2',null);
  assert.equal(el.tabuleiroMotorVaga2.esfera.nick.textContent,'');
+ assert.match(el.tabuleiroMotorVaga2.esfera.style.background,/#f6f8fa/);
+ visual.preencherVaga('tabuleiroMotorVaga6',null);
+ assert.match(el.tabuleiroMotorVaga6.esfera.style.background,/#ef535c/);
+ visual.preencherVaga('tabuleiroMotorCentro',null,true);
+ assert.match(el.tabuleiroMotorCentro.esfera.style.background,/#51d598/);
  visual.preencherVaga('tabuleiroMotorVaga2',{numero:23,nickVisual:'Vilela'});
  assert.equal(el.tabuleiroMotorVaga2.esfera.nick.textContent,'Vilela');
  visual.preencherVaga('tabuleiroMotorVaga2',{numero:24,nickVisual:'<script>'});
  assert.equal(el.tabuleiroMotorVaga2.esfera.nick.textContent,'');
  visual.preencherVaga('tabuleiroMotorVaga6',{numero:25,dourada:true});
  assert.equal(el.tabuleiroMotorVaga6.classList.contains('posicao-dourado'),true);
+ assert.match(el.tabuleiroMotorVaga6.esfera.style.background,/#ebc35d/);
+ visual.preencherVaga('tabuleiroMotorVaga6',{numero:29,dourada:false});
+ assert.match(el.tabuleiroMotorVaga6.esfera.style.background,/#ef535c/);
  visual.preencherVaga('tabuleiroMotorCentro',{numero:26,dourada:true},true);
  assert.equal(el.tabuleiroMotorCentro.classList.contains('posicao-dourado'),true);
+ assert.match(el.tabuleiroMotorCentro.esfera.style.background,/#ebc35d/);
+ visual.preencherVaga('tabuleiroMotorCentro',{numero:27},true);
+ assert.match(el.tabuleiroMotorCentro.esfera.style.background,/#51d598/);
 });
 test('tabuleiro circular respeita azul verde dourada e 6 eventos',()=>{
  const {visual,el}=fake();
