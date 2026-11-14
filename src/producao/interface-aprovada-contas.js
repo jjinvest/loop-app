@@ -279,18 +279,12 @@
    if(!document.hidden&&$('conteudoTabuleiro')?.hidden===false)
     void carregarMotor();
   },15000);
-  $('boasVindas').textContent='Sua conta está conectada ao Escritório LOOP e à Loja AKITEMM.';
-  for(const id of ['atualizarTabuleiroIntegrado','atualizarPosicoes']){
+    for(const id of ['atualizarTabuleiroIntegrado','atualizarPosicoes']){
    $(id).addEventListener('click',()=>void carregarMotor());
   }
-  $('atualizarResumo').addEventListener('click',()=>{
-   void carregarDados();void carregarMotor();
-  });
-  $('tabuleiroVerPosicoesIntegrado').addEventListener('click',
+    $('tabuleiroVerPosicoesIntegrado').addEventListener('click',
    ()=>$('abaPosicoes').click());
-  $('atalhoPosicoes').addEventListener('click',
-   ()=>$('abaPosicoes').click());
-  $('atalhoLoja').addEventListener('click',()=>location.assign('/loja'));
+    $('atalhoLoja').addEventListener('click',()=>location.assign('/loja'));
   // A aba de pedidos usa o livro comercial deste titular, nunca o LAB.
   $('loop03IrPosicoesIntegrado').addEventListener('click',()=>{
    proximaAbaVemDoQuadrado=true;
@@ -772,7 +766,7 @@
      (paginaPedidosReal+1)*20<totalPedidosReal)
    void carregarPedidos(paginaPedidosReal+1);
  });
- for(const id of ['atalhoPedidos','posicoesVerPedidos','financeiroVerPedidos']){
+ for(const id of ['posicoesVerPedidos','financeiroVerPedidos']){
   const botao=$(id);if(botao)botao.addEventListener('click',()=>{
    const aba=$('abaMeusPedidos');if(!aba.disabled)aba.click();
   });
