@@ -180,3 +180,146 @@ test('bootstrap utiliza esquema real, devolve tabuleiro sem compras e bloqueia c
  }finally{db.close();}
  assert.equal((await fetch(url+'/api/contas/cadastrar',{method:'POST'})).status,503);
 });
+
+test('livro real: bonus 10% exige verde+PSP, credito unico, consolidacao e Pix por posicao',()=>{
+ const {randomUUID}=require('node:crypto');
+ const {DatabaseSync}=require('node:sqlite');
+ const {LivroFinanceiroRealSQLite}=
+  require('../src/producao/livro-financeiro-real-sqlite');
+ const db=new DatabaseSync(':memory:');
+ try{
+  db.exec([
+   'PRAGMA foreign_keys=ON;',
+   'CREATE TABLE loop_real_contas(id TEXT PRIMARY KEY);',
+   'CREATE TABLE loop_real_vinculos_indicacao(',
+   'indicado_id TEXT PRIMARY KEY,indicador_id TEXT NOT NULL);',
+   'CREATE TABLE loop_real_motor_compras(',
+   'pedido_id TEXT PRIMARY KEY,titular_id TEXT NOT NULL,',
+   'posicao_id INTEGER NOT NULL UNIQUE,valor_centavos INTEGER NOT NULL);',
+   'CREATE TABLE loop_real_motor_qualificacoes(',
+   'indicado_id TEXT PRIMARY KEY,indicador_id TEXT NOT NULL,',
+   'pedido_id TEXT NOT NULL,posicao_id INTEGER NOT NULL,',
+   'evento_id TEXT NOT NULL);',
+   'CREATE TABLE loop_real_motor_eventos(chave TEXT PRIMARY KEY,tipo TEXT NOT NULL);'
+  ].join(' '));
+  const indicador='titular-'+randomUUID();
+  const indicado='titular-'+randomUUID();
+  const estranho='titular-'+randomUUID();
+  const conta=db.prepare('INSERT INTO loop_real_contas(id) VALUES(?)');
+  for(const id of [indicador,indicado,estranho])conta.run(id);
+  db.prepare('INSERT INTO loop_real_vinculos_indicacao VALUES(?,?)')
+   .run(indicado,indicador);
+  const compra=db.prepare(
+   'INSERT INTO loop_real_motor_compras VALUES(?,?,?,?)');
+  compra.run('pedido-indicador-1',indicador,4,25000);
+  compra.run('pedido-indicador-2',indicador,5,25000);
+  compra.run('pedido-indicado',indicado,7,25000);
+  db.prepare('INSERT INTO loop_real_motor_qualificacoes VALUES(?,?,?,?,?)')
+   .run(indicado,indicador,'pedido-indicado',4,'i:indicacao0001');
+  db.prepare('INSERT INTO loop_real_motor_eventos VALUES(?,?)')
+   .run('g:1','GIRO');
+  db.prepare('INSERT INTO loop_real_motor_eventos VALUES(?,?)')
+   .run('g:2','GIRO');
+  const semProvas=new LivroFinanceiroRealSQLite({banco:db});
+  assert.throws(()=>semProvas.registrarBonusPorIndicadoVerde({indicadoId:indicado}),
+   /FIN_COMPROVACAO_EXTERNA_NAO_HOMOLOGADA/);
+  const vazio=semProvas.consultar({titularId:indicador,posicaoId:4});
+  assert.equal(vazio.saldosLiberados,false);
+  assert.equal(vazio.saldoBonusCentavos,0);
+  assert.equal(vazio.saldoTotalPosicoesCentavos,0);
+  assert.equal(vazio.saldoPosicaoSelecionadaCentavos,0);
+  assert.equal(semProvas.historico({titularId:indicador}).registros.length,0);
+  let verde=false;
+  const provas={
+   confirmarIndicacaoVerde:args=>verde&&args.indicadoId===indicado?
+    {ambiente:'PRODUCAO',estado:'PSP_LIQUIDADO_E_INDICADO_VERDE',
+     comprovanteId:'liquidacao-real-indicacao'}:null,
+   confirmarContemplacao:args=>({
+    ambiente:'PRODUCAO',estado:'POSICAO_CONTEMPLADA_E_CAIXA_CONFIRMADO',
+    comprovanteId:'centro-psp-'+args.posicaoId
+   }),
+   confirmarPixPago:args=>({
+    ambiente:'PRODUCAO',estado:'PIX_LIQUIDADO_REAL',
+    comprovanteId:'pix-pago-'+args.saqueId
+   })
+  };
+  const livro=new LivroFinanceiroRealSQLite({banco:db,provas});
+  assert.throws(()=>livro.registrarBonusPorIndicadoVerde({indicadoId:indicado}),
+   /FIN_COMPROVANTE_EXTERNO_NAO_CONFIRMADO/);
+  assert.equal(livro.consultar({titularId:indicador}).saldoBonusCentavos,0);
+  verde=true;
+  const bonus=livro.registrarBonusPorIndicadoVerde({indicadoId:indicado});
+  assert.equal(bonus.repetido,false);
+  assert.equal(livro.registrarBonusPorIndicadoVerde({indicadoId:indicado}).repetido,true);
+  assert.equal(livro.consultar({titularId:indicador}).saldoBonusCentavos,2500);
+  livro.registrarContemplacaoComprovada({posicaoId:4,giroChave:'g:1'});
+  livro.registrarContemplacaoComprovada({posicaoId:5,giroChave:'g:2'});
+  assert.equal(livro.registrarContemplacaoComprovada({
+   posicaoId:4,giroChave:'g:1'}).repetido,true);
+  const completo=livro.consultar({titularId:indicador,posicaoId:4});
+  assert.equal(completo.saldoPosicaoSelecionadaCentavos,75000);
+  assert.equal(completo.saldoTotalPosicoesCentavos,150000);
+  assert.equal(completo.indicadosValidos,1);
+  assert.equal(completo.minimoSaqueCentavos,2500);
+  assert.equal(completo.taxaSaquePercentual,0);
+  assert.equal(completo.posicoes.length,2);
+  assert.equal(livro.consultar({titularId:indicador,posicaoId:5})
+   .saldoPosicaoSelecionadaCentavos,75000);
+  assert.throws(()=>livro.consultar({titularId:estranho,posicaoId:4}),
+   /FIN_POSICAO_NAO_PERTENCE_A_TITULAR/);
+  assert.equal(livro.consultar({titularId:estranho})
+   .saldoTotalPosicoesCentavos,0);
+  assert.throws(()=>livro.registrarPixPago({
+   saqueId:'saque-maior-que-saldo',titularId:indicador,
+   grupo:'POSICAO',valorCentavos:150001}),/FIN_SALDO_INSUFICIENTE/);
+  assert.equal(livro.registrarPixPago({
+   saqueId:'saque-posicoes-001',titularId:indicador,
+   grupo:'POSICAO',valorCentavos:80000}).repetido,false);
+  assert.equal(livro.registrarPixPago({
+   saqueId:'saque-posicoes-001',titularId:indicador,
+   grupo:'POSICAO',valorCentavos:80000}).repetido,true);
+  assert.equal(livro.consultar({titularId:indicador,posicaoId:4})
+   .saldoPosicaoSelecionadaCentavos,0);
+  assert.equal(livro.consultar({titularId:indicador,posicaoId:5})
+   .saldoPosicaoSelecionadaCentavos,70000);
+  assert.equal(livro.consultar({titularId:indicador})
+   .saldoTotalPosicoesCentavos,70000);
+  livro.registrarPixPago({saqueId:'saque-bonus-001',
+   titularId:indicador,grupo:'BONUS',valorCentavos:2500});
+  assert.equal(livro.consultar({titularId:indicador}).saldoBonusCentavos,0);
+  assert.throws(()=>livro.registrarPixPago({
+   saqueId:'saque-bonus-001',titularId:indicador,
+   grupo:'BONUS',valorCentavos:2501}),/FIN_REPLAY_DIVERGENTE/);
+  assert.equal(livro.historico({titularId:indicador}).registros.length,6);
+  assert.deepEqual(livro.historico({titularId:estranho}).registros,[]);
+  assert.equal(livro.verificar().integridade,'OK');
+  assert.throws(()=>db.prepare(
+   "UPDATE loop_real_fin_lancamentos SET valor_centavos=1 WHERE grupo='BONUS'"
+  ).run(),/lancamento imutavel/);
+  assert.throws(()=>db.prepare('DELETE FROM loop_real_fin_lancamentos').run(),
+   /lancamento imutavel/);
+  assert.equal(db.prepare(
+   'SELECT COUNT(*) AS n FROM loop_real_fin_saques_pagos'
+  ).get().n,2);
+ }finally{db.close();}
+});
+
+test('qualificacao de ensaio sozinha nao gera credito real nem cria saldo',()=>{
+ const {DatabaseSync}=require('node:sqlite');
+ const {randomUUID}=require('node:crypto');
+ const {LivroFinanceiroRealSQLite}=
+  require('../src/producao/livro-financeiro-real-sqlite');
+ const db=new DatabaseSync(':memory:');
+ try{
+  db.exec('CREATE TABLE loop_real_contas(id TEXT PRIMARY KEY);'+
+   'CREATE TABLE loop_real_motor_compras('+
+   'pedido_id TEXT PRIMARY KEY,titular_id TEXT,posicao_id INTEGER);'+
+   'CREATE TABLE loop_real_motor_qualificacoes(indicado_id TEXT PRIMARY KEY);');
+  const dono='titular-'+randomUUID();
+  db.prepare('INSERT INTO loop_real_contas VALUES(?)').run(dono);
+  const livro=new LivroFinanceiroRealSQLite({banco:db});
+  assert.deepEqual(livro.historico({titularId:dono}).registros,[]);
+  assert.equal(livro.consultar({titularId:dono}).saldosLiberados,false);
+  assert.equal(livro.consultar({titularId:dono}).saldoTotalPosicoesCentavos,0);
+ }finally{db.close();}
+});
