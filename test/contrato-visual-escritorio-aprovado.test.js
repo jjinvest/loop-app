@@ -27,7 +27,7 @@ test('somente tres indicadores superiores e quatro botões no resumo inicial',()
   assert.doesNotMatch(html,new RegExp('id="'+id+'"'));
  for(const id of ['loop03IrPosicoesIntegrado','loop03TotalIntegrado',
   'loop03Giros24Integrado','loop03NumeroIntegrado',
-  'atalhoLoja'])
+  'barra-conta'])
   assert.match(html,new RegExp('id="'+id+'"'));
  assert.match(html,/class="loop03-hero-escritorio"/);
 });
@@ -74,14 +74,15 @@ test('quadrado abre opções de posições na primeira aba e histórico somente 
  assert.doesNotMatch(js,/loop03IrPosicoesIntegrado'\)\.addEventListener\('click',\(\)=>mostrarAba/);
 });
 
-test('primeira aba autorizada: dois banners e somente botão AKITEMM',()=>{
+test('primeira aba: dois banners, AKITEMM prateado e pontos circulares',()=>{
  const html=ler('src/candidato/checkout-candidato-ui.html');
  const js=ler('src/candidato/checkout-candidato-ui.js');
  const css=ler('src/laboratorio/loop-03-shell.css');
  assert.doesNotMatch(html,/id="boasVindas"/);
  for(const id of ['atalhoPedidos','atalhoPosicoes','atualizarResumo'])
   assert.doesNotMatch(html,new RegExp('id="'+id+'"'));
- assert.match(html,/<button type="button" id="atalhoLoja" class="primario">AKITEMM<\/button>/);
+ assert.doesNotMatch(html,/id="atalhoLoja"/);
+ assert.match(html,/class="primario loop03-loja-prata"/);
  assert.equal((html.match(/class="loop03-banner-item/g)||[]).length,2);
  assert.equal((html.match(/data-banner-resumo=/g)||[]).length,2);
  assert.match(html,/id="historicoPosicaoResumo"/);
@@ -90,4 +91,6 @@ test('primeira aba autorizada: dois banners e somente botão AKITEMM',()=>{
  assert.match(css,/aspect-ratio:3\/4/);
  assert.match(css,/aspect-ratio:16\/8\.5/);
  assert.match(css,/scroll-snap-type:x mandatory/);
+ assert.match(css,/\.loop03-banners-pontos button::before\{[^\n]*border-radius:50%/);
+ assert.match(css,/\.loop03-banners-pontos button\{[^\n]*aspect-ratio:1/);
 });

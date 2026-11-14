@@ -842,8 +842,9 @@ body.loop03-logado{
 #conteudoResumo .loop03-banner-anuncio-conteudo p{font-size:clamp(.88rem,1.9vw,1.2rem);color:#f6e8cb;line-height:1.5}
 #conteudoResumo .loop03-banner-anuncio-conteudo span{border:1px solid #d5b072;border-radius:999px;padding:12px 20px;color:#f9e1aa;background:#251d2b;font-weight:800;letter-spacing:.06em}
 #conteudoResumo .loop03-banners-pontos{display:flex;justify-content:center;gap:9px;padding:12px 0 15px}
-#conteudoResumo .loop03-banners-pontos button{width:11px;height:11px;border:1px solid #cdab76;border-radius:50%;padding:0;background:#392b43;cursor:pointer}
-#conteudoResumo .loop03-banners-pontos button[aria-current="true"]{background:#e8be74;box-shadow:0 0 8px #e8be7499}
+#conteudoResumo .loop03-banners-pontos button{display:grid;place-items:center;flex:0 0 32px;width:32px;height:32px;min-width:32px;min-height:32px;padding:0;box-sizing:border-box;aspect-ratio:1;border:0;border-radius:50%;background:transparent;box-shadow:none;cursor:pointer}
+#conteudoResumo .loop03-banners-pontos button::before{content:"";display:block;width:13px;height:13px;box-sizing:border-box;aspect-ratio:1;border:1px solid #cdab76;border-radius:50%;background:#392b43}
+#conteudoResumo .loop03-banners-pontos button[aria-current="true"]::before{background:#e8be74;box-shadow:0 0 8px #e8be7499}
 #conteudoResumo .loop03-atalho-unico{display:block;width:100%;margin-top:14px}
 #conteudoResumo .loop03-atalho-unico #atalhoLoja{display:block;width:100%;min-height:66px;max-width:none;background:linear-gradient(100deg,#0c7253,#218a65);border:1px solid #409d7b;color:#fff;border-radius:17px;font-weight:900;font-size:1.2rem}
 @media(max-width:600px){

@@ -284,8 +284,7 @@
   }
     $('tabuleiroVerPosicoesIntegrado').addEventListener('click',
    ()=>$('abaPosicoes').click());
-    $('atalhoLoja').addEventListener('click',()=>location.assign('/loja'));
-  // A aba de pedidos usa o livro comercial deste titular, nunca o LAB.
+      // A aba de pedidos usa o livro comercial deste titular, nunca o LAB.
   $('loop03IrPosicoesIntegrado').addEventListener('click',()=>{
    proximaAbaVemDoQuadrado=true;
    $('abaPosicoes').click();

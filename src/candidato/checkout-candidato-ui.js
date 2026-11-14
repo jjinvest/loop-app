@@ -1071,7 +1071,6 @@ $('maisEquipe').addEventListener('click',()=>{
  if(proximaPaginaEquipe!==null)atualizarEquipe(proximaPaginaEquipe);
 });
 $('equipeVerLinks').addEventListener('click',()=>mostrarAba('conteudoLinks'));
-$('atalhoLoja').addEventListener('click',()=>{location.href='/staging/loja';});
 $('posicoesVerPedidos').addEventListener('click',()=>mostrarAba('conteudoMeusPedidos'));
 $('financeiroVerPedidos').addEventListener('click',()=>mostrarAba('conteudoMeusPedidos'));
 $('copiarLinkLoja').addEventListener('click',()=>copiarLink('linkLoja'));

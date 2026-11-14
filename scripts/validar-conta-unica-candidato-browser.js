@@ -264,7 +264,21 @@ function mp4TrintaSegundos(){
     /BLOQUEADA_PARA_ATIVACAO_DEFINITIVA|Sandbox|PSP/);
    assert.match(await page.locator('#listaPedidos').innerText(),/R\$\s?250,00/);
    await abrirAba('#abaResumo');
-   assert.equal(await page.locator('#atalhoLoja').innerText(),'AKITEMM');
+   assert.equal(await page.locator('#atalhoLoja').count(),0);
+   assert.equal(await page.locator('.barra-conta .loop03-loja-prata').innerText(),'AKITEMM');
+   const circulos=await page.locator('[data-banner-resumo]').evaluateAll(items=>
+    items.map(b=>{
+     const hit=b.getBoundingClientRect();
+     const ponto=getComputedStyle(b,'::before');
+     return {largura:hit.width,altura:hit.height,l:ponto.width,a:ponto.height,r:ponto.borderRadius};
+    })
+   );
+   assert.equal(circulos.length,2);
+   for(const c of circulos){
+    assert.ok(Math.abs(c.largura-c.altura)<1,'botão deve ser quadrado');
+    assert.equal(c.l,c.a,'bolinha não pode ser oval');
+    assert.equal(c.r,'50%');
+   }
    assert.equal(await page.locator('.indicadores-cliente').count(),0);
    assert.equal(await page.locator('#boasVindas').count(),0);
    assert.equal(await page.locator('#atalhoPedidos').count(),0);
