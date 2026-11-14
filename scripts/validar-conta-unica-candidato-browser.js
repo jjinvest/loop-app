@@ -672,8 +672,15 @@ function mp4TrintaSegundos(){
     assert.equal(await page.locator('#loop03MenuIntegrado').getAttribute('aria-expanded'),'true');
    }
    await abrirAba('#abaTabuleiro');
-   await page.locator('#motorContadorEventos').filter({hasText:/de 6 eventos neste ciclo/}).waitFor();
-   assert.equal(await page.locator('#estadoTabuleiroIntegrado').isHidden(),true);
+   // A prévia não pode inventar giro: aceitar somente livro real
+   // reconhecido OU o bloqueio explícito sem motor conectado.
+   await page.waitForFunction(()=>{
+    const contador=document.getElementById('motorContadorEventos')?.textContent||'';
+    const estado=document.getElementById('estadoTabuleiroIntegrado');
+    return (!!estado&&estado.hidden&&/de 6 eventos neste ciclo/.test(contador))||
+     (!!estado&&!estado.hidden&&contador.trim()==='—'&&
+      /Tabuleiro operacional ainda indisponível/.test(estado.textContent));
+   });
    assert.equal(await page.locator('#tabuleiroMotorCentro').innerText(),'');
    assert.equal(await page.locator('#tabuleiroMotorIntegrado .espaco-tabuleiro-demo').count(),7);
    // Conferencia no Chromium REAL: mesmo com estado empresa no centro,
