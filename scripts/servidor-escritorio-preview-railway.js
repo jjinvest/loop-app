@@ -481,7 +481,7 @@ async function iniciar({env=process.env}={}){
    try{
     const url=env.LOOP_PREVIEW_URL_TABULEIRO_REAL;
     const token=env.LOOP_PREVIEW_TOKEN_TABULEIRO_REAL;
-    if(typeof url==='string'&&url.includes('.railway.internal/')&&
+    if(typeof url==='string'&&/^http:\/\/[a-z0-9-]+\.railway\.internal(?::[0-9]{2,5})?\/internal\/loop\/tabuleiro$/.test(url)&&
        typeof token==='string'&&/^[a-f0-9]{64}$/.test(token)){
      const resposta=await fetch(url,{method:'GET',
       signal:AbortSignal.timeout(3500),
