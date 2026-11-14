@@ -811,3 +811,18 @@ body.loop03-logado{
 .loop03-roda .espaco-tabuleiro-demo.tabuleiro-vaga-6:not(:has(.posicao-dourado)):not(:has(.posicao-azul)) .selo-posicao-demo{
  color:#fff;
 }
+
+/* 14/11/2026: seletor compacto exclusivo do primeiro quadradinho do resumo. */
+.loop03-indicadores{position:relative}
+.loop03-popup-posicoes[hidden],.loop03-historico-posicao[hidden]{display:none!important}
+.loop03-popup-posicoes{position:absolute;z-index:22;top:calc(100% + 8px);left:0;width:min(305px,95vw);max-width:calc(100vw - 38px);padding:15px;background:linear-gradient(145deg,#171a30,#080e1f);color:#f9e5ba;border:1px solid #bb965c;border-radius:17px;box-shadow:0 12px 35px #000b;text-align:left}
+.loop03-popup-posicoes>strong{display:block;margin-bottom:12px}
+.loop03-popup-opcoes{display:flex;flex-wrap:wrap;gap:8px}
+.loop03-popup-opcoes button{min-width:42px;height:42px;border-radius:10px;border:1px solid #d4b374;background:#151d32;color:#ffeac1;font-weight:800;cursor:pointer}
+.loop03-popup-opcoes button[aria-pressed="true"]{background:#186e50;color:#fff}
+.loop03-popup-opcoes button:focus-visible{outline:3px solid #83dbbc;outline-offset:2px}
+.loop03-popup-posicoes p{font-size:.78rem;color:#d1c6bd}
+.loop03-historico-posicao{margin:15px 0;padding:16px;border-radius:17px;border:1px solid #b08c56;background:linear-gradient(150deg,#121b2f,#0f101d);color:#f6e8d0}
+.loop03-historico-posicao h3{margin:0 0 12px;color:#efc17d}
+.loop03-historico-posicao p{margin:6px 0;overflow-wrap:anywhere}
+.loop03-historico-posicao ul{padding-left:21px;margin:8px 0}
