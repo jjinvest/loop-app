@@ -1,7 +1,9 @@
 'use strict';
 // Vinculo de CADASTRO de laboratorio: nao prova compra, indicacao qualificada
 // ou comissao. Nunca alimentar fila comercial ou extrato financeiro a partir daqui.
-const NICK=/^[A-Za-z]{1,12}$/;
+// Links antigos ASCII ate doze letras continuam validos; nicks novos
+// com espacos, digitos e acentos sao aceitos por grafia exata.
+const NICK=/^(?:[A-Za-z]{1,12}|[A-Za-zÀ-ÖØ-öø-ÿ0-9]+(?: [A-Za-zÀ-ÖØ-öø-ÿ0-9]+)*)$/u;
 class EquipeCandidataSQLite{
  constructor({banco}={}){
   if(!banco||typeof banco.prepare!=='function')throw new TypeError('SQLite obrigatorio');
@@ -23,14 +25,14 @@ class EquipeCandidataSQLite{
  }
  existeNick(nick){
   return typeof nick==='string'&&NICK.test(nick)&&Boolean(this.banco.prepare(
-   'SELECT 1 FROM akitemm_conta_unica_candidata WHERE nick=? COLLATE NOCASE'
+   'SELECT 1 FROM akitemm_conta_unica_candidata WHERE nick=? COLLATE BINARY'
   ).get(nick));
  }
  registrarCadastro({indicadoId,indicadorNick}={}){
   if(typeof indicadoId!=='string'||!/^titular-[a-f0-9-]{36}$/.test(indicadoId)||
      !this.existeNick(indicadorNick))return {registrado:false};
   const indicador=this.banco.prepare(
-   'SELECT id FROM akitemm_conta_unica_candidata WHERE nick=? COLLATE NOCASE'
+   'SELECT id FROM akitemm_conta_unica_candidata WHERE nick=? COLLATE BINARY'
   ).get(indicadorNick);
   if(indicador.id===indicadoId)return {registrado:false};
   const r=this.banco.prepare([
