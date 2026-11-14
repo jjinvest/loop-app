@@ -138,7 +138,8 @@ function mp4TrintaSegundos(){
    await page.locator('#conteudoResumo').waitFor({state:'visible'});
    assert.equal(await page.locator('#painelLogin').isHidden(),true);
    assert.equal(await page.locator('#abaResumo').getAttribute('aria-selected'),'true');
-   await page.locator('#resumoPedidos').filter({hasText:'0'}).waitFor();
+   await page.locator('#loop03TotalIntegrado').filter({hasText:'0 / 10'}).waitFor();
+   assert.equal(await page.locator('.indicadores-cliente').count(),0);
    assert.equal(await page.locator('#painelIdentidadeTeste').isHidden(),true,
     'CPF pertence a Minha Conta, nunca à primeira aba');
    assert.equal(await page.locator('#painelVerificarEmail').isHidden(),true,
@@ -263,7 +264,8 @@ function mp4TrintaSegundos(){
     /BLOQUEADA_PARA_ATIVACAO_DEFINITIVA|Sandbox|PSP/);
    assert.match(await page.locator('#listaPedidos').innerText(),/R\$\s?250,00/);
    await abrirAba('#abaResumo');
-   await page.locator('#resumoPedidos').filter({hasText:'1'}).waitFor();
+   assert.equal(await page.locator('#atalhoPedidos').isVisible(),true);
+   assert.equal(await page.locator('.indicadores-cliente').count(),0);
    assert.match(await page.locator('#boasVindas').innerText(),new RegExp(item.nick,'i'));
    await page.locator('#atalhoPosicoes').click();
    await page.locator('#posicoesPainel').filter({hasText:/Posições em acompanhamento/}).waitFor();
