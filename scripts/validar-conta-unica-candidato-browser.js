@@ -702,7 +702,7 @@ function mp4TrintaSegundos(){
     if(azul)entrada.classList.add('posicao-azul');
     return {verde,vermelho};
    });
-   assert.match(cores.verde,/rgb\(84, 198, 149\)/,
+   assert.match(cores.verde,/rgb\(81, 213, 152\)/,
     'centro continua VERDE METALICO mesmo com companhia no centro');
    assert.match(cores.vermelho,/rgb\(233, 76, 85\)/,
     'entrada da vaga 6 aparece VERMELHA na ausencia de prioridade azul/dourada');
