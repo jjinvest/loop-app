@@ -421,7 +421,9 @@
     ' de 6 eventos. Acompanhe suas posições e o tabuleiro.'+
     (aguardando>0?' Pedidos em análise: '+aguardando+'.':'');
    $('loopResumoMotor').textContent=texto;
-   $('estadoTabuleiroIntegrado').textContent=texto;
+   // O contador ja aparece na roda; nao repetir indicadores no rodape.
+   $('estadoTabuleiroIntegrado').textContent='';
+   $('estadoTabuleiroIntegrado').hidden=true;
    // Mesmo componente de fila, círculo e luzes usado pelo laboratório.
    // O backend definitivo expõe somente contagens de terceiros.
    visualTabuleiro.preencherFila('motorFilaA',d.filaA,'A');
@@ -554,6 +556,7 @@
     'Não foi possível carregar as posições. Tente atualizar.';
    $('estadoTabuleiroIntegrado').textContent=
     'Não foi possível atualizar o tabuleiro. Tente novamente.';
+   $('estadoTabuleiroIntegrado').hidden=false;
    $('posicoesPainel').textContent='Posições temporariamente indisponíveis.';
   }
  }
