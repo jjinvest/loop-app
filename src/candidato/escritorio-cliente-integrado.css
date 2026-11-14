@@ -903,3 +903,9 @@ body.loop03-logado main>.mensagem-pagina{margin:0 0 .75rem}
   grid-template-columns:minmax(0,1fr)
  }
 }
+
+/* Ordem da fila: circulos permanecem legiveis com 1000+ lugares.
+   Nao modifica paleta, layout do tabuleiro nem identificador permanente. */
+.cliente-integrado #conteudoTabuleiro .loop03-inicial-fila.loop03-ordem-longa{
+ font-size:.68rem;letter-spacing:-.04em;font-variant-numeric:tabular-nums
+}
