@@ -347,7 +347,9 @@ test('convite por link registra cadastro correto, rejeita fraude e nao libera co
  assert.equal((await x.consultar('/staging/minha-equipe')).status,401);
  assert.equal((await x.consultar('/staging/minha-equipe?pagina=NaN',
   {headers:{Cookie:a}})).status,400);
- const loja=await x.consultar('/loja/alice');
+ assert.equal((await x.consultar('/loja/alice')).status,404,
+  'link de outra grafia nao pode assumir indicador Alice');
+ const loja=await x.consultar('/loja/Alice');
  assert.equal(loja.status,302);
  assert.equal(loja.headers.get('location'),'/loja');
  assert.deepEqual(x.db.prepare('PRAGMA foreign_key_check').all(),[]);
