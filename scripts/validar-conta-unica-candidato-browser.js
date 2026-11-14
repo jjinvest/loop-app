@@ -139,6 +139,32 @@ function mp4TrintaSegundos(){
    await page.locator('#conteudoResumo').waitFor({state:'visible'});
    assert.equal(await page.locator('#painelLogin').isHidden(),true);
    assert.equal(await page.locator('#abaResumo').getAttribute('aria-selected'),'true');
+   // Rodape so informa dados autenticados, sem navegar.
+   if(item.isMobile)await page.locator('#loop03MenuIntegrado').click();
+   await page.locator('#loop03AbrirPerfil').click();
+   await page.locator('#loop03PerfilNome').filter({hasText:item.nick+' Exemplo'}).waitFor();
+   assert.equal(await page.locator('#loop03PerfilNick').innerText(),item.nick);
+   assert.equal(await page.locator('#loop03PerfilEmail').innerText(),
+    item.nick.toLowerCase()+'@example.invalid');
+   assert.equal(await page.locator('#loop03PerfilLinhaCpf').isHidden(),true);
+   assert.equal(await page.locator('#conteudoResumo').isVisible(),true);
+   await page.locator('#loop03AbrirPerfil').click();
+   assert.equal(await page.locator('#loop03DadosRapidos').isHidden(),true);
+   if(item.isMobile)await page.locator('#loop03MenuIntegrado').click();
+   await abrirAba('#abaConta');
+   await page.locator('#arquivoFotoPerfil').setInputFiles({
+    name:'foto-perfil.png',mimeType:'image/png',buffer:fotoPng
+   });
+   await page.locator('#statusFotoPerfil').filter({hasText:/Foto atualizada/}).waitFor();
+   assert.equal(await page.locator('#loop03ImagemFotoRodape').isHidden(),false);
+   assert.equal(await page.locator('#loop03AvatarRodapeVazio').isHidden(),true);
+   const fotos=await page.evaluate(()=>({
+    topo:document.getElementById('loop03ImagemFotoTopo').src,
+    rodape:document.getElementById('loop03ImagemFotoRodape').src
+   }));
+   assert.ok(fotos.topo.startsWith('blob:'));
+   assert.equal(fotos.rodape,fotos.topo);
+   await abrirAba('#abaResumo');
    await page.locator('#loop03TotalIntegrado').filter({hasText:'0 / 10'}).waitFor();
    assert.equal(await page.locator('.indicadores-cliente').count(),0);
    assert.equal(await page.locator('#painelIdentidadeTeste').isHidden(),true,
@@ -150,8 +176,8 @@ function mp4TrintaSegundos(){
    assert.match(conteudoInicial,/seis eventos válidos/i);
    assert.match(conteudoInicial,/contemplação/i);
    assert.doesNotMatch(conteudoInicial,/SQLite|históricos PSP|motor de ensaio|homologação/i);
-   assert.match(await page.locator('.cliente-integrado .loop03-banner-topo').innerText(),
-    /SEM PAGAMENTOS REAIS/, 'aviso de demonstração continua visível');
+   assert.doesNotMatch(await page.locator('.cliente-integrado .loop03-banner-topo').innerText(),
+    /SEM PAGAMENTOS REAIS/, 'capa aprovada nao mostra aviso antigo');
    // Só a aba ativa ocupa a área de leitura; configuração e identidade ficam em Minha Conta.
    for(const [abaTeste,conteudoTeste] of [
     ['#abaTabuleiro','#conteudoTabuleiro'],
@@ -306,8 +332,8 @@ function mp4TrintaSegundos(){
    assert.equal(await page.locator('#opcoesPosicoesResumo button').count(),0);
    assert.match(await page.locator('#avisoPosicoesResumo').innerText(),
     /ainda não tem posições/);
-   assert.equal(await page.locator('#historicoPosicaoResumo').isHidden(),true,
-    'sem escolha, nenhum histórico aparece');
+   assert.equal(await page.locator('#historicoPosicaoResumo').count(),0,
+    'historico duplicado foi removido da primeira aba');
    assert.equal(await page.locator('#loop03TotalIntegrado').innerText(),'0 / 10');
    await abrirAba('#abaPosicoes');
    await page.locator('#posicoesPainel').filter({hasText:/Posições em acompanhamento/}).waitFor();
@@ -371,7 +397,7 @@ function mp4TrintaSegundos(){
    await page.locator('#equipeVerLinks').click();
    assert.equal(await page.locator('#abaLinks').getAttribute('aria-selected'),'true');
    await abrirAba('#abaFinanceiro');
-   assert.match(await page.locator('#estadoFinanceiro').innerText(),/Nenhum saldo comercial/);
+   await page.locator('#estadoFinanceiro').filter({hasText:/Livro financeiro preparado|saldo/i}).waitFor();
    await abrirAba('#abaConta');
    await page.locator('#perfilCliente').filter({hasText:new RegExp(item.nick,'i')}).waitFor();
    assert.match(await page.locator('#perfilCliente').innerText(),new RegExp(item.nick,'i'));
@@ -379,7 +405,7 @@ function mp4TrintaSegundos(){
    // Também verificar o Escritório do Administrador no MESMO SQLite.
    const admin=await context.newPage();
    admin.on('pageerror',e=>failures.push(e.message));
-   await admin.goto(base+'/staging/escritorio-admin',{waitUntil:'networkidle'});
+   await admin.goto(base+'/staging/escritorio-admin',{waitUntil:'domcontentloaded'});
    await admin.locator('#token').fill('somente-teste-do-navegador-'+('x'.repeat(40)));
    await admin.locator('#formAcesso button').click();
    await admin.locator('#administracao').waitFor({state:'visible'});
@@ -646,8 +672,9 @@ function mp4TrintaSegundos(){
     assert.equal(await page.locator('#loop03MenuIntegrado').getAttribute('aria-expanded'),'true');
    }
    await abrirAba('#abaTabuleiro');
-   await page.locator('#estadoTabuleiroIntegrado').filter({hasText:/de 6 eventos neste ciclo/}).waitFor();
-   assert.equal(await page.locator('#tabuleiroMotorCentro').innerText(),'#0000');
+   await page.locator('#motorContadorEventos').filter({hasText:/de 6 eventos neste ciclo/}).waitFor();
+   assert.equal(await page.locator('#estadoTabuleiroIntegrado').isHidden(),true);
+   assert.equal(await page.locator('#tabuleiroMotorCentro').innerText(),'');
    assert.equal(await page.locator('#tabuleiroMotorIntegrado .espaco-tabuleiro-demo').count(),7);
    // Conferencia no Chromium REAL: mesmo com estado empresa no centro,
    // a bola central conserva o verde metalico, nunca o dourado.
@@ -680,7 +707,7 @@ function mp4TrintaSegundos(){
    const screenshot=path.join(__dirname,'../artifacts',
     'conta-unica-candidato-'+item.nome+'.png');
    await page.screenshot({path:screenshot,fullPage:true});
-   await page.reload({waitUntil:'networkidle'});
+   await page.reload({waitUntil:'domcontentloaded'});
    await page.locator('#painelConta').waitFor({state:'visible'});
    await abrirAba('#abaMeusPedidos');
    await page.locator('#listaPedidos article.pedido').first().waitFor();
@@ -704,7 +731,7 @@ function mp4TrintaSegundos(){
    assert.match(await page.locator('#listaPedidos').innerText(),/R\$\s?198,00/);
    await page.screenshot({path:path.join(__dirname,'../artifacts',
     'cliente-pedidos-da-loja-'+item.nome+'.png'),fullPage:true});
-   await page.reload({waitUntil:'networkidle'});
+   await page.reload({waitUntil:'domcontentloaded'});
    await abrirAba('#abaMeusPedidos');
    await page.locator('#listaPedidos article.pedido').nth(1).waitFor();
    assert.equal(await page.locator('#listaPedidos article.pedido').count(),2);
