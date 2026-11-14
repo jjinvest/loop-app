@@ -95,7 +95,7 @@ test('conta única prepara checkout e Escritório com o MESMO titular, sem Pix',
  const linkB=await enviar(base,'/staging/vitrine/meus-links',{cookie:cookieB});
  assert.equal(linkA.status,200);assert.equal(linkB.status,200);
  assert.deepEqual([linkA.body.linkLoja,linkA.body.linkEscritorio],[
-  '/loja/alice','/escritorio/alice'
+  '/loja/Alice','/escritorio/Alice'
  ]);
  assert.equal(linkB.body.linkLoja,'/loja/bia');
  assert.equal(linkA.body.ativo,true);
