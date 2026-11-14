@@ -140,10 +140,21 @@ test('mesma identidade da loja entra no Escritorio LOOP sem novo cadastro',async
  assert.equal(perfilEscritorio.status,200);
  assert.equal((await perfilEscritorio.json()).nick,'Marta');
  const fonteReal=await x.consultar('/staging/motor/estado-operacional',{headers});
- assert.equal(fonteReal.status,503,'sem servico real nao devolver dados lab como reais');
- assert.ok(['MOTOR_REAL_NAO_CONECTADO','MOTOR_REAL_NAO_RESPONDE',
-  'MOTOR_REAL_NAO_ATIVO'].includes((await fonteReal.json()).erro),
-  'quando o motor real nao esta ativo nunca devolver snapshot de homologacao');
+ const estadoReal=await fonteReal.json();
+ if(process.env.LOOP_PREVIEW_URL_TABULEIRO_REAL){
+  // Com a fonte real configurada, a prova E2E deve comprovar ligacao real;
+  // uma resposta 503 nao pode ser mascarada como teste aprovado.
+  assert.equal(fonteReal.status,200,'ligacao HTTP ao motor real deve funcionar');
+  assert.equal(estadoReal.origem,'MOTOR_REAL_SQLITE_DA_IDENTIDADE');
+  assert.equal(estadoReal.operacional,true);
+  assert.equal(estadoReal.fonteValidada,'ESTADO_E_LIVRO_NO_MESMO_SQLITE_REAL');
+  assert.equal(estadoReal.financeiroReal,false);
+  assert.equal(Array.isArray(estadoReal.tabuleiro.vagas),true);
+  assert.equal(estadoReal.tabuleiro.vagas.length,6);
+ }else{
+  assert.equal(fonteReal.status,503,'sem serviço real não inventar tabuleiro');
+  assert.equal(estadoReal.erro,'MOTOR_REAL_NAO_CONECTADO');
+ }
  const rotaFoto='/staging/contas/foto-perfil';
  assert.equal((await x.consultar(rotaFoto)).status,401,'foto requer sessao');
  assert.equal((await x.consultar(rotaFoto,{headers})).status,404);
