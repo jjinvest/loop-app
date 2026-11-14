@@ -421,7 +421,7 @@ async function atualizarPosicoes(){
     registro?'AGUARDANDO':'Espaço disponível';
    const status=document.createElement('p');
    status.textContent=posicao?('Local: '+posicao.local+
-    (posicao.fila?' · Fila '+posicao.fila:'')+
+    (posicao.fila?(somentePosicoesPeloQuadrado?' · Fila ':' ')+posicao.fila:'')+
     ' · Indicações: '+(posicao.indicacoesVinculadas||0)+
     (posicao.pendente?' · aguardando confirmação':'')):
     registro?(estados[registro.estado]||'Registro em revisão'):'Sem posição vinculada';
