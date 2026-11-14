@@ -62,25 +62,40 @@ test('mesmo desenho das filas e bolinhas nas duas interfaces',()=>{
   assert.doesNotMatch(code,/style\.opacity=i<d\.tabuleiro/);
  }
 });
-test('filas exibem numero real ou contagem sem inventar identidades',()=>{
+test('filas mostram ordinal da espera e nao o numero unico do titular',()=>{
  const {visual,el}=fake();
  visual.preencherFila('motorFilaA',[{numero:9,minha:true,
   estadoAdesao:'PENDENTE'}],'A');
  assert.equal(el.motorFilaA.children.length,1);
  const row=el.motorFilaA.children[0];
- assert.equal(row.children[1].children[0].textContent,'#9');
+ assert.equal(row.children[1].children[0].textContent,'1º lugar');
+ assert.equal(row.children[0].textContent,'1');
+ assert.doesNotMatch(row.children[1].children[0].textContent,/#9/);
  assert.match(row.children[1].children[1].textContent,/Minha posição/);
  assert.equal(row.children[0].className,'loop03-inicial-fila loop03-azul');
  visual.preencherFila('motorFilaB',21,'B');
  assert.equal(el.motorFilaB.children.length,1);
  assert.equal(el.motorFilaB.children[0].children[1].children[0].textContent,
-  '21 posição(ões) em validação interna');
+  '21 posição(ões) na fila · abra para ver a ordem');
  assert.equal(el.motorFilaB.children[0].children[1].children.length,1,
   'nao inventar titulares ou numeros individuais');
  visual.preencherFila('motorFilaB',0,'B');
  assert.equal(el.motorFilaB.children[0].textContent,'Fila vazia');
  assert.throws(()=>visual.preencherFila('motorFilaB',-1,'B'),
   /FILA_FONTE_INVALIDA/);
+});
+test('mil IDs distintos podem ocupar ordem 1 a 1000 sem mostrar numero permanente',()=>{
+ const {visual,el}=fake();
+ const itens=Array.from({length:30},(_,i)=>({
+  numero:10000+i*17,ordem:971+i,minha:i===18
+ }));
+ visual.preencherFila('motorFilaA',itens,'A');
+ assert.equal(el.motorFilaA.children.length,30);
+ assert.equal(el.motorFilaA.children[0].children[0].textContent,'971');
+ assert.equal(el.motorFilaA.children[29].children[1].children[0].textContent,'1000º lugar');
+ assert.equal(el.motorFilaA.children[18].children[0].textContent,'989');
+ assert.doesNotMatch(el.motorFilaA.children.map(x=>
+  x.children[1].children[0].textContent).join(' '),/#/);
 });
 test('roda usa centro verde, periferia branca, sexta vermelha e dourada permanente',()=>{
  const html=ler('candidato/checkout-candidato-ui.html');
