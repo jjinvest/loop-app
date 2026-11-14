@@ -178,7 +178,7 @@ test('conta única prepara checkout e Escritório com o MESMO titular, sem Pix',
  });
  assert.equal(office.status,200,JSON.stringify(office.body));
  assert.equal(office.body.escritorioFonteUnica,true);
- assert.equal(office.body.contasCandidatas,2);
+ assert.equal(office.body.contasCandidatas,3,'Alice, Bia e ALICE sao contas distintas');
  assert.equal(office.body.resumo.prepedidosStaging,1);
  assert.equal(office.body.pedidos[0].nick,'Alice');
  assert.equal(office.body.pedidos[0].cpfDeclaradoNoEnsaio,true);
