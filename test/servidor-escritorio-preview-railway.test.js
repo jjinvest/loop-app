@@ -826,14 +826,14 @@ test('rodape Minha conta consulta dados do titular e sincroniza foto, sem CPF na
  assert.equal((await x.consultar('/staging/contas/resumo-rodape')).status,401);
  const reg=await x.consultar('/staging/contas/cadastrar',{
   method:'POST',headers:{'Content-Type':'application/json'},
-  body:JSON.stringify({nome:'Pessoa Conta',nick:'ContaRodape',
-   email:'contarodape@example.invalid',senha:'SenhaContaRodape2026!',
+  body:JSON.stringify({nome:'Pessoa Conta',nick:'ContaRoda',
+   email:'contarodape@example.invalid',senha:'SenhaContaRoda2026!',
    aceiteExplicito:true})
  });
  assert.equal(reg.status,201);
  const login=await x.consultar('/staging/contas/entrar',{
   method:'POST',headers:{'Content-Type':'application/json'},
-  body:JSON.stringify({nick:'ContaRodape',senha:'SenhaContaRodape2026!'})
+  body:JSON.stringify({nick:'ContaRoda',senha:'SenhaContaRoda2026!'})
  });
  assert.equal(login.status,200);
  const cookie=login.headers.getSetCookie().find(z=>z.startsWith('loop_candidato_s='));
@@ -844,7 +844,7 @@ test('rodape Minha conta consulta dados do titular e sincroniza foto, sem CPF na
  assert.match(perfil.headers.get('cache-control')||'',/\bno-store\b/);
  assert.match(perfil.headers.get('cache-control')||'',/\bprivate\b/);
  assert.deepEqual(await perfil.json(),{
-  nome:'Pessoa Conta',nick:'ContaRodape',email:'contarodape@example.invalid',
+  nome:'Pessoa Conta',nick:'ContaRoda',email:'contarodape@example.invalid',
   cpfConfirmado:false,cpfExibicao:null
  });
 });
