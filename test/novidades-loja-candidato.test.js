@@ -73,7 +73,7 @@ test('bloqueios: tipo de imagem, campo desconhecido, tamanho e status transacion
   {codigo:'NOVIDADE_CONFLITO_REVISAO'});
  assert.equal(n.listar()[0].temImagem,false);
 });
-test('mesma loja e admin: autenticação, publicação, imagem e nenhum Pix/posição',async t=>{
+test('admin protegido, Novidades publicas somente apos publicacao e sem Pix/posicao',async t=>{
  const db=preparar(t);
  const {app}=criarAppLojaEscritorioCandidato({
   banco:db,repositorioCatalogo:catalogoFicticioCheckout(),
@@ -99,7 +99,12 @@ test('mesma loja e admin: autenticação, publicação, imagem e nenhum Pix/posi
   texto:'Oferta ilustrativa, sem brinde ou preco automaticos',ordem:2,estado:'RASCUNHO'});
  assert.equal(criado.status,201);
  let r=await criado.json();
- assert.equal((await fetch(base+'/staging/vitrine/novidades')).status,401);
+ // A vitrine e pública. Rascunhos não são publicados nem visíveis.
+ const vitrineAntes=await fetch(base+'/staging/vitrine/novidades');
+ assert.equal(vitrineAntes.status,200);
+ assert.deepEqual((await vitrineAntes.json()).itens,[]);
+ const imagemRascunho=await fetch(base+'/staging/vitrine/novidades/'+r.id+'/imagem');
+ assert.equal(imagemRascunho.status,404);
  const imagem=await acesso(rota+'/'+r.id+'/imagem',{
   method:'PUT',headers:{'Content-Type':'image/png','X-Novidade-Revisao':String(r.revisao)},
   body:PNG
@@ -133,6 +138,14 @@ test('mesma loja e admin: autenticação, publicação, imagem e nenhum Pix/posi
  assert.equal(foto.status,200);
  assert.equal(foto.headers.get('content-type'),'image/png');
  assert.deepEqual(Buffer.from(await foto.arrayBuffer()),PNG);
+ const imagemVisitante=await fetch(base+'/staging/vitrine/novidades/'+r.id+'/imagem');
+ assert.equal(imagemVisitante.status,200,
+  'imagem de Novidade publicada acessivel ao visitante sem login');
+ assert.equal(imagemVisitante.headers.get('content-type'),'image/png');
+ assert.deepEqual(Buffer.from(await imagemVisitante.arrayBuffer()),PNG);
+ const vitrinePublica=await fetch(base+'/staging/vitrine/novidades');
+ assert.equal(vitrinePublica.status,200);
+ assert.equal((await vitrinePublica.json()).itens.length,1);
  const html=await fetch(base+'/staging/loja',{headers:{Cookie:cookie}});
  assert.equal(html.status,200);
  assert.match(await html.text(),/id="novidadesVitrineAkitemm"/);
@@ -146,6 +159,8 @@ test('mesma loja e admin: autenticação, publicação, imagem e nenhum Pix/posi
   {headers:{Cookie:cookie}})).json()).itens,[]);
  const agora=await fetch(base+'/staging/vitrine/novidades/'+r.id+'/imagem',{headers:{Cookie:cookie}});
  assert.equal(agora.status,404);
+ assert.equal((await fetch(base+'/staging/vitrine/novidades/'+r.id+'/imagem')).status,404,
+  'imagem arquivada nao e mais publica para visitantes');
  assert.equal(db.prepare('SELECT COUNT(*) AS n FROM akitemm_motor_conta_ensaio_operacoes').get().n,0);
 });
 
