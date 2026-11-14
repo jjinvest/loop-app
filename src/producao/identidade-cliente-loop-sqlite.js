@@ -72,22 +72,18 @@ function documento(d){
   erro('DOCUMENTOS_REAIS_NAO_APROVADOS');
  return Object.freeze({versao:d.versao,texto:d.texto,hash:hex(d.texto)});
 }
-class IdentidadeClienteLoopReal{
- constructor({banco,chaveEmail,chaveCifra,chaveCodigo,termos,privacidade,
-  enviarEmail,agora=()=>Date.now(),somenteTeste=false}={}){
-  if(typeof banco?.prepare!=='function'||typeof banco?.exec!=='function')
-   erro('BANCO_REAL_OBRIGATORIO');
-  if(![chaveEmail,chaveCifra,chaveCodigo].every(k=>Buffer.isBuffer(k)&&k.length===32)||
-     igual(chaveEmail.toString('hex'),chaveCifra.toString('hex'))||
-     igual(chaveEmail.toString('hex'),chaveCodigo.toString('hex'))||
-     igual(chaveCifra.toString('hex'),chaveCodigo.toString('hex')))
-   erro('CUSTODIA_REAL_INDEPENDENTE_OBRIGATORIA');
-  if(typeof enviarEmail!=='function'||typeof agora!=='function')
-   erro('EMAIL_REAL_E_RELOGIO_OBRIGATORIOS');
-  this.termos=documento(termos);this.privacidade=documento(privacidade);
-  this.banco=banco;this.keyEmail=Buffer.from(chaveEmail);
-  this.keyCipher=Buffer.from(chaveCifra);this.keyCodigo=Buffer.from(chaveCodigo);
-  this.enviarEmail=enviarEmail;this.agora=agora;
+// A DDL e a prova de custodia sao as mesmas para o aplicativo definitivo
+// e para a preparacao interna SEM CADASTRO: sem segunda copia das tabelas.
+function prepararEstruturaIdentidadeReal({
+ banco,chaveEmail,chaveCifra,chaveCodigo,somenteTeste=false
+}={}){
+ if(typeof banco?.prepare!=='function'||typeof banco?.exec!=='function')
+  erro('BANCO_REAL_OBRIGATORIO');
+ if(![chaveEmail,chaveCifra,chaveCodigo].every(k=>Buffer.isBuffer(k)&&k.length===32)||
+    igual(chaveEmail.toString('hex'),chaveCifra.toString('hex'))||
+    igual(chaveEmail.toString('hex'),chaveCodigo.toString('hex'))||
+    igual(chaveCifra.toString('hex'),chaveCodigo.toString('hex')))
+  erro('CUSTODIA_REAL_INDEPENDENTE_OBRIGATORIA');
   // Banco real próprio. Em produção, proibir memória, caminho do laboratório
   // e reutilização de qualquer tabela akitemm_* de ensaio.
   const local=banco.prepare('PRAGMA database_list').all().find(x=>x.name==='main')?.file||'';
@@ -149,7 +145,7 @@ class IdentidadeClienteLoopReal{
    'ON loop_real_limites(janela_inicio);'
   ].join(' '));
   // Impossibilita reabrir banco existente com uma chave diferente.
-  const provas=[this.keyEmail,this.keyCipher,this.keyCodigo]
+  const provas=[chaveEmail,chaveCifra,chaveCodigo]
    .map((k,i)=>assinar(k,'LOOP-REAL-CUSTODIA-'+i,'VERSAO-1'));
   const achado=banco.prepare('SELECT * FROM loop_real_custodia WHERE id=1').get();
   if(achado){
@@ -163,6 +159,26 @@ class IdentidadeClienteLoopReal{
     '(id,email_prova,cifra_prova,codigo_prova) VALUES(1,?,?,?)'
    ].join(' ')).run(...provas);
   }
+ return {tabelasPreparadas:true,semCadastro:true};
+}
+class IdentidadeClienteLoopReal{
+ constructor({banco,chaveEmail,chaveCifra,chaveCodigo,termos,privacidade,
+  enviarEmail,agora=()=>Date.now(),somenteTeste=false}={}){
+  if(typeof banco?.prepare!=='function'||typeof banco?.exec!=='function')
+   erro('BANCO_REAL_OBRIGATORIO');
+  if(![chaveEmail,chaveCifra,chaveCodigo].every(k=>Buffer.isBuffer(k)&&k.length===32)||
+     igual(chaveEmail.toString('hex'),chaveCifra.toString('hex'))||
+     igual(chaveEmail.toString('hex'),chaveCodigo.toString('hex'))||
+     igual(chaveCifra.toString('hex'),chaveCodigo.toString('hex')))
+   erro('CUSTODIA_REAL_INDEPENDENTE_OBRIGATORIA');
+  if(typeof enviarEmail!=='function'||typeof agora!=='function')
+   erro('EMAIL_REAL_E_RELOGIO_OBRIGATORIOS');
+  this.termos=documento(termos);this.privacidade=documento(privacidade);
+  this.banco=banco;this.keyEmail=Buffer.from(chaveEmail);
+  this.keyCipher=Buffer.from(chaveCifra);this.keyCodigo=Buffer.from(chaveCodigo);
+  this.enviarEmail=enviarEmail;this.agora=agora;
+  prepararEstruturaIdentidadeReal({banco,chaveEmail,chaveCifra,
+   chaveCodigo,somenteTeste});
  }
  _agora(){const n=this.agora();if(!Number.isSafeInteger(n)||n<=0)erro('RELOGIO_INVALIDO');return n;}
  limitar(acao,identificador){
@@ -526,4 +542,4 @@ class IdentidadeClienteLoopReal{
   }
  }
 }
-module.exports={IdentidadeClienteLoopReal,COOKIE};
+module.exports={IdentidadeClienteLoopReal,prepararEstruturaIdentidadeReal,COOKIE};

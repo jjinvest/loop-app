@@ -8,6 +8,11 @@ const os=require('node:os');
 const http=require('node:http');
 const path=require('node:path');
 const {randomBytes,randomUUID}=require('node:crypto');
+const {DatabaseSync}=require('node:sqlite');
+const {prepararEstruturaIdentidadeReal}=
+ require('../src/producao/identidade-cliente-loop-sqlite');
+const {MotorLoopIntegradoSQLite}=
+ require('../src/producao/motor-loop-integrado-sqlite');
 const {autorizarInterno,consultarArquivoReal}=
  require('../src/producao/leitura-tabuleiro-operacional-real');
 
@@ -39,8 +44,37 @@ function conferirInfra(ambiente=process.env,{pasta='/dados-reais',io=fs}={}){
  return Object.freeze({volumeDedicado:true});
 }
 
+function iniciarMotorRealSemCadastro({ambiente=process.env}={}){
+ if(ambiente.LOOP_REAL_BOOTSTRAP_MOTOR_INTERNO!=='SIM')return false;
+ const key=n=>{
+  const raw=ambiente[n];
+  if(typeof raw!=='string'||!/^[a-f0-9]{64}$/.test(raw))
+   throw Error('CHAVE_CUSTODIA_REAL_AUSENTE_'+n);
+  return Buffer.from(raw,'hex');
+ };
+ const banco=new DatabaseSync(ambiente.LOOP_REAL_SQLITE);
+ try{
+  banco.exec('PRAGMA journal_mode=WAL;PRAGMA busy_timeout=5000;PRAGMA foreign_keys=ON;');
+  if(banco.prepare(
+    "SELECT 1 FROM sqlite_master WHERE type='table' AND name='loop_real_contas'"
+   ).get()){
+   const x=banco.prepare('SELECT COUNT(*) AS n FROM loop_real_contas').get();
+   if(x.n>0)throw Error('MOTOR_REAL_EXIGE_INICIALIZACAO_FORMAL_COM_CLIENTES');
+  }
+  prepararEstruturaIdentidadeReal({
+   banco,chaveEmail:key('LOOP_REAL_CHAVE_EMAIL'),
+   chaveCifra:key('LOOP_REAL_CHAVE_CIFRA'),
+   chaveCodigo:key('LOOP_REAL_CHAVE_CODIGO')
+  });
+  new MotorLoopIntegradoSQLite({banco});
+  if(banco.prepare('SELECT COUNT(*) AS n FROM loop_real_contas').get().n!==0)
+   throw Error('MOTOR_REAL_PREPARACAO_NAO_E_VAZIA');
+  return true;
+ }finally{banco.close();}
+}
 function criarServidorPreparacao({ambiente=process.env,pasta='/dados-reais',io=fs}={}){
  conferirInfra(ambiente,{pasta,io});
+ iniciarMotorRealSemCadastro({ambiente});
  return http.createServer((req,res)=>{
   res.setHeader('Content-Type','application/json; charset=utf-8');
   res.setHeader('Cache-Control','no-store');
@@ -120,4 +154,4 @@ if(require.main===module){
   process.exitCode=1;
  }
 }
-module.exports={conferirInfra,criarServidorPreparacao,iniciarPreparacao};
+module.exports={conferirInfra,iniciarMotorRealSemCadastro,criarServidorPreparacao,iniciarPreparacao};

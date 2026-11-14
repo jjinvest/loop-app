@@ -140,3 +140,39 @@ test('projecao real exige livro de vendas para exibir posicao',t=>{
   .run(JSON.stringify(sim.exportarSnapshot()));
  assert.throws(()=>projetarTabuleiroOperacional({banco:db}),/POSICAO_REAL_SEM_PEDIDO/);
 });
+
+test('bootstrap utiliza esquema real, devolve tabuleiro sem compras e bloqueia cadastro',async t=>{
+ const {pasta,ambiente}=setup(t);
+ ambiente.LOOP_REAL_BOOTSTRAP_MOTOR_INTERNO='SIM';
+ ambiente.LOOP_REAL_TABULEIRO_INTERSERVICE_TOKEN='c'.repeat(64);
+ ambiente.LOOP_REAL_CHAVE_EMAIL='1'.repeat(64);
+ ambiente.LOOP_REAL_CHAVE_CIFRA='2'.repeat(64);
+ ambiente.LOOP_REAL_CHAVE_CODIGO='3'.repeat(64);
+ const anterior=process.env.NODE_ENV;
+ process.env.NODE_ENV='test';
+ let servidor;
+ try{servidor=criarServidorPreparacao({pasta,ambiente});}
+ finally{
+  if(anterior===undefined)delete process.env.NODE_ENV;
+  else process.env.NODE_ENV=anterior;
+ }
+ servidor.listen(0,'127.0.0.1');await once(servidor,'listening');
+ t.after(()=>new Promise(resolve=>servidor.close(resolve)));
+ const url='http://127.0.0.1:'+servidor.address().port;
+ const resposta=await fetch(url+'/internal/loop/tabuleiro',{headers:{
+  'x-loop-interservice-token':'c'.repeat(64)}});
+ assert.equal(resposta.status,200);
+ const dados=await resposta.json();
+ assert.equal(dados.origem,'MOTOR_REAL_SQLITE_DA_IDENTIDADE');
+ assert.equal(dados.operacional,true);
+ assert.equal(dados.tabuleiro.centro,null);
+ assert.deepEqual(dados.tabuleiro.vagas,[null,null,null,null,null,null]);
+ assert.deepEqual(dados.filaA,[]);assert.deepEqual(dados.filaB,[]);
+ const {DatabaseSync}=require('node:sqlite');
+ const db=new DatabaseSync(ambiente.LOOP_REAL_SQLITE,{readOnly:true});
+ try{
+  assert.equal(db.prepare('SELECT COUNT(*) AS n FROM loop_real_contas').get().n,0);
+  assert.equal(db.prepare('SELECT COUNT(*) AS n FROM loop_real_motor_compras').get().n,0);
+ }finally{db.close();}
+ assert.equal((await fetch(url+'/api/contas/cadastrar',{method:'POST'})).status,503);
+});
