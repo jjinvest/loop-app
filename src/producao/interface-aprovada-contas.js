@@ -14,6 +14,8 @@
  let nickResumoReal='';
  let posicoesResumoReal=[],popupPosicoesRealAberto=false;
  let sequenciaLeituraFilas=0;
+ let filaSelecionada=null;
+ const carregarPaginaFila={A:null,B:null};
  let finOrigemReal='BONUS_INDICACAO',ensaioFinanceiroAtivo=false;
  let somentePosicoesPeloQuadrado=false,proximaAbaVemDoQuadrado=false;
  let origemLinks=null;
@@ -344,7 +346,7 @@
     posicaoSelecionada=String(p.numero);
     fecharPopupReal();
     atualizarTopoPosicaoReal();
-    void atualizarFilasAncoradas(posicoesResumoReal);
+    void carregarMotor();
     if($('conteudoFinanceiro').hidden===false&&!ensaioFinanceiroAtivo)
      void carregarFinanceiroReal();
    });
@@ -597,15 +599,50 @@
 
  // A mesma caixa de Fila A/B aprovada recebe somente números reais,
  // sem nomes de terceiros e sem trocar o formato ou a paleta.
- async function atualizarFilasAncoradas(posicoes){
+
+ // O quadro aprovado é o controle: clicável mesmo com zero posições.
+ // Selecionar é apenas leitura. Nunca cria fila, número, compra ou giro.
+ function selecionarQuadroFila(fila){
+  filaSelecionada=filaSelecionada===fila?null:fila;
+  for(const tipo of ['A','B']){
+   const ativa=filaSelecionada===tipo;
+   $('quadroMotorFila'+tipo).classList.toggle('loop03-fila-selecionada',ativa);
+   $('abrirMotorFila'+tipo).setAttribute('aria-expanded',String(ativa));
+   $('motorFila'+tipo+'Detalhes').hidden=!ativa;
+  }
+  if(filaSelecionada&&typeof carregarPaginaFila[filaSelecionada]==='function')
+   void carregarPaginaFila[filaSelecionada]();
+ }
+ for(const fila of ['A','B']){
+  $('abrirMotorFila'+fila).addEventListener('click',()=>selecionarQuadroFila(fila));
+  $('quadroMotorFila'+fila).addEventListener('click',evento=>{
+   // Clique fora dos controles, em qualquer área livre da caixa.
+   if(evento.target.closest('button')||
+      evento.target.closest('.loop03-fila-paginada'))return;
+   selecionarQuadroFila(fila);
+  });
+ }
+ async function atualizarFilasAncoradas(posicoes,totais){
   const sequencia=++sequenciaLeituraFilas;
   await Promise.all(['A','B'].map(async fila=>{
    const id='motorFila'+fila,area=$(id);
+   const painel=$('motorFila'+fila+'Detalhes');
+   carregarPaginaFila[fila]=null;
+   painel.replaceChildren();
    const candidatas=posicoes.filter(p=>p.local==='FILA_'+fila&&
     Number.isSafeInteger(p.numero));
    const escolhida=candidatas.find(p=>String(p.numero)===posicaoSelecionada)||
     candidatas[0];
-   if(!escolhida)return; // Sem posição própria: permanece a contagem real.
+   if(!escolhida){
+    // Fila vazia ou conta sem posição: o cabeçalho permanece selecionável.
+    const mensagem=document.createElement('p');
+    mensagem.className='subtexto';
+    mensagem.textContent=totais[fila]===0?
+     'Fila vazia. Quando houver posições, elas aparecerão aqui.':
+     'Você ainda não possui posição nesta fila. Quando entrar, verá sua posição e as vizinhas.';
+    painel.append(mensagem);
+    return;
+   }
    const base='/api/loop/fila?fila='+fila+'&posicaoId='+escolhida.numero;
    const consultar=async pagina=>{
     const r=await fetch(base+'&pagina='+pagina,{
@@ -627,20 +664,17 @@
     situacao.className='loop03-fila-ordem-propria';
     situacao.textContent='Sua posição: '+visao.ancora.ordem+
      ' de '+visao.total;
-    const abrir=document.createElement('button');
-    abrir.type='button';abrir.className='loop03-fila-expandir';
-    abrir.textContent='Ver fila completa';
-    abrir.setAttribute('aria-expanded','false');
-    const painel=document.createElement('div');
-    painel.className='loop03-fila-paginada';painel.hidden=true;
+    area.append(situacao);
+    const titulo=document.createElement('p');
+    titulo.className='subtexto';
+    titulo.textContent='Fila completa a partir da sua posição:';
     const paginas=document.createElement('div');
     const mais=document.createElement('button');
     mais.type='button';mais.className='loop03-fila-expandir';
     mais.textContent='Carregar mais posições';
     const estado=document.createElement('small');
     estado.setAttribute('role','status');
-    painel.append(paginas,mais,estado);
-    area.append(situacao,abrir,painel);
+    painel.append(titulo,paginas,mais,estado);
     let proxima=0,emCurso=false;
     const carregarPagina=async()=>{
      if(emCurso||proxima===null)return;
@@ -661,20 +695,15 @@
       estado.textContent='Não foi possível carregar esta página. Tente novamente.';
      }finally{emCurso=false;mais.disabled=false;}
     };
-    abrir.addEventListener('click',()=>{
-     const abrirAgora=painel.hidden;
-     painel.hidden=!abrirAgora;
-     abrir.setAttribute('aria-expanded',String(abrirAgora));
-     abrir.textContent=abrirAgora?'Fechar fila completa':'Ver fila completa';
-     if(abrirAgora&&proxima===0)void carregarPagina();
-    });
+    carregarPaginaFila[fila]=carregarPagina;
     mais.addEventListener('click',()=>void carregarPagina());
+    if(filaSelecionada===fila)void carregarPagina();
    }catch{
     if(sequencia!==sequenciaLeituraFilas)return;
     const aviso=document.createElement('p');
     aviso.className='subtexto';
     aviso.textContent='Detalhes da fila temporariamente indisponíveis.';
-    area.append(aviso);
+    painel.append(aviso);
    }
   }));
  }
@@ -833,7 +862,7 @@
     exemplo.append(corpo);grade.appendChild(exemplo);
    }
    painel.appendChild(grade);
-   void atualizarFilasAncoradas(d.minhasPosicoes);
+   void atualizarFilasAncoradas(d.minhasPosicoes,{A:d.filaA,B:d.filaB});
   }catch{
    $('loopResumoMotor').textContent=
     'Não foi possível carregar as posições. Tente atualizar.';

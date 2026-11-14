@@ -193,9 +193,10 @@
   <section class="painel" id="conteudoTabuleiro" role="tabpanel" aria-labelledby="abaTabuleiro" hidden>
    <div class="linha"><h2>Tabuleiro LOOP 3.0</h2><button type="button" id="atualizarTabuleiroIntegrado" aria-label="Próxima janela de luz; toque para atualizar o tabuleiro" title="Toque para atualizar o estado da catraca"><small id="tituloRelogioTabuleiro">PRÓXIMA LUZ · PREVISÃO</small><strong id="relogioTabuleiroIntegrado" role="timer" aria-label="Tempo até a próxima janela prevista de luz">--:--</strong><small id="estadoRelogioTabuleiro">Aguardando programação</small></button></div>
    <div class="loop03-mapa-grade" id="tabuleiroMotorIntegrado">
-    <section class="bloco-fila-participante" aria-label="Fila A de ensaio">
-     <h3><span class="loop03-icone-cabecalho">◉</span> FILA A</h3>
+    <section class="bloco-fila-participante" id="quadroMotorFilaA" aria-label="Fila A">
+     <h3><button type="button" class="loop03-fila-cabecalho-acao" id="abrirMotorFilaA" aria-expanded="false" aria-controls="motorFilaADetalhes"><span class="loop03-icone-cabecalho">◉</span> FILA A <span class="loop03-fila-seta" aria-hidden="true">⌄</span></button></h3>
      <div id="motorFilaA" aria-live="polite"></div>
+     <div id="motorFilaADetalhes" class="loop03-fila-paginada" hidden></div>
     </section>
     <section class="loop03-roda" aria-label="Roda do motor LOOP em ensaio">
      <div class="painel-tabuleiro-imersivo">
@@ -242,9 +243,10 @@
       <p class="subtexto">A catraca completa um ciclo a cada 6 eventos válidos. As posições entram pela vaga 6.</p>
      </div>
     </section>
-    <section class="bloco-fila-participante" aria-label="Fila B de ensaio">
-     <h3><span class="loop03-icone-cabecalho">◉</span> FILA B</h3>
+    <section class="bloco-fila-participante" id="quadroMotorFilaB" aria-label="Fila B">
+     <h3><button type="button" class="loop03-fila-cabecalho-acao" id="abrirMotorFilaB" aria-expanded="false" aria-controls="motorFilaBDetalhes"><span class="loop03-icone-cabecalho">◉</span> FILA B <span class="loop03-fila-seta" aria-hidden="true">⌄</span></button></h3>
      <div id="motorFilaB" aria-live="polite"></div>
+     <div id="motorFilaBDetalhes" class="loop03-fila-paginada" hidden></div>
     </section>
    </div>
    <p id="estadoTabuleiroIntegrado" role="alert" hidden></p>

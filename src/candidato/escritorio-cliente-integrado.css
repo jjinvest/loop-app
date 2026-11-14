@@ -766,3 +766,25 @@ body.loop03-logado main>.mensagem-pagina{margin:0 0 .75rem}
 .cliente-integrado #conteudoTabuleiro .loop03-linha-fila:has(.loop03-fila-identificacao small){
  border-color:#dfbb76!important;box-shadow:inset 0 0 0 1px #e3c18b
 }
+
+/* Os quadros A/B aprovados são tocáveis mesmo vazios.
+   Somente estado de foco/seleção: sem mudar cor ou formato padrão. */
+.cliente-integrado #conteudoTabuleiro .loop03-fila-cabecalho-acao{
+ display:flex;align-items:center;gap:.45em;width:100%;margin:0;padding:0;
+ border:0;border-radius:0;background:transparent;color:inherit;box-shadow:none;
+ font:inherit;font-weight:inherit;text-align:left;cursor:pointer
+}
+.cliente-integrado #conteudoTabuleiro .loop03-fila-cabecalho-acao .loop03-fila-seta{
+ margin-left:auto;font-size:1.2em;transition:transform .15s ease
+}
+.cliente-integrado #conteudoTabuleiro .loop03-fila-cabecalho-acao[aria-expanded=true] .loop03-fila-seta{
+ transform:rotate(180deg)
+}
+.cliente-integrado #conteudoTabuleiro .bloco-fila-participante{cursor:pointer}
+.cliente-integrado #conteudoTabuleiro .bloco-fila-participante.loop03-fila-selecionada{
+ outline:2px solid #bb9d69;outline-offset:1px;
+ box-shadow:inset 0 0 0 1px #bb9d6938
+}
+.cliente-integrado #conteudoTabuleiro .loop03-fila-cabecalho-acao:focus-visible{
+ outline:2px solid #f4db9a;outline-offset:5px
+}

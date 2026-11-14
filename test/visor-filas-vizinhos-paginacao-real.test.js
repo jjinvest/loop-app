@@ -64,3 +64,18 @@ test('a expansão usa a caixa aprovada e controla páginas no cliente real',()=>
  assert.match(ui,/Carregar mais posições/);
  assert.match(css,/\.loop03-fila-paginada/);
 });
+
+test('quadros A/B clicáveis e acessíveis mesmo quando estão vazios',()=>{
+ const html=fs.readFileSync(path.join(__dirname,
+  '../src/candidato/checkout-candidato-ui.html'),'utf8');
+ const js=fs.readFileSync(path.join(__dirname,
+  '../src/producao/interface-aprovada-contas.js'),'utf8');
+ for(const fila of ['A','B']){
+  assert.match(html,new RegExp('id="abrirMotorFila'+fila+'".*aria-expanded="false"'));
+  assert.match(html,new RegExp('id="motorFila'+fila+'Detalhes"'));
+  assert.match(js,new RegExp("selecionarQuadroFila\\(fila\\)"));
+ }
+ assert.match(js,/Fila vazia\. Quando houver posições/);
+ assert.match(js,/Você ainda não possui posição nesta fila/);
+ assert.match(js,/filaSelecionada===fila/);
+});
