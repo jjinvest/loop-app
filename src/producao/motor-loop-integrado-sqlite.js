@@ -298,6 +298,43 @@ class MotorLoopIntegradoSQLite{
    giros};
   }catch(e){this.banco.exec('ROLLBACK');throw e;}
  }
+
+ // Visor somente-leitura: âncora pertence obrigatoriamente à sessão.
+ // Responde com cinco vizinhos e no máximo 30 entradas por página.
+ consultarFilaPaginada({titularId,fila,posicaoId=null,pagina=0}={}){
+  this._titular(titularId);
+  if(fila!=='A'&&fila!=='B')falha('FILA_INVALIDA');
+  if(!Number.isSafeInteger(pagina)||pagina<0||pagina>1000000)
+   falha('FILA_PAGINA_INVALIDA');
+  if(posicaoId!==null&&(!Number.isSafeInteger(posicaoId)||posicaoId<1))
+   falha('FILA_POSICAO_INVALIDA');
+  const sim=this._sim();
+  const pessoas=(fila==='A'?sim.filas.filaA:sim.filas.filaB)
+   .filter(p=>p.statusAdesao!=='REVISAR_PSP');
+  const minhas=pessoas.filter(p=>p.empresa!==true&&
+   p.participanteId===titularId);
+  const alvo=posicaoId===null?minhas[0]?.id??null:posicaoId;
+  if(posicaoId!==null&&!minhas.some(p=>p.id===posicaoId))
+   falha('FILA_POSICAO_NAO_PERTENCE_A_TITULAR');
+  const indice=alvo===null?-1:pessoas.findIndex(p=>p.id===alvo);
+  const linha=(p,i)=>({
+   numero:p.id,ordem:i+1,minha:p.empresa!==true&&
+    p.participanteId===titularId,
+   dourada:p.empresa===true,pendente:p.statusAdesao==='PENDENTE'
+  });
+  const tamanho=30,inicio=indice<0?0:indice+pagina*tamanho;
+  const itens=indice<0?[]:pessoas.slice(inicio,inicio+tamanho);
+  const janelaInicio=Math.max(0,indice-2);
+  return {
+   fonte:'IDENTIDADE_E_MOTOR_MESMO_SQLITE',fila,total:pessoas.length,
+   ancora:indice<0?null:{numero:alvo,ordem:indice+1},
+   janela:indice<0?[]:pessoas.slice(janelaInicio,indice+3)
+    .map((p,i)=>linha(p,janelaInicio+i)),
+   pagina:itens.map((p,i)=>linha(p,inicio+i)),
+   proximaPagina:indice>=0&&inicio+itens.length<pessoas.length?
+    pagina+1:null
+  };
+ }
  consultar({titularId=null}={}){
   if(titularId!==null)this._titular(titularId);
   const sim=this._sim(),estado=sim.estado();

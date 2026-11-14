@@ -744,3 +744,25 @@ body.loop03-logado main>.mensagem-pagina{margin:0 0 .75rem}
  margin:3px 0 0;color:#fff4d9;font-size:.88rem;
  overflow-wrap:anywhere;word-break:break-word;
 }
+
+/* Expansão das filas existentes: sem alterar cores, quadros ou roda. */
+.cliente-integrado #conteudoTabuleiro .loop03-fila-ordem-propria{
+ margin:7px 0;color:#e9dcc3;font-size:.78rem;font-variant-numeric:tabular-nums
+}
+.cliente-integrado #conteudoTabuleiro .loop03-fila-expandir{
+ display:block;width:100%;margin:9px 0 0;padding:9px 6px;
+ border:1px solid #b99a65;border-radius:10px;
+ background:linear-gradient(130deg,#30291d,#1d1b1a);
+ color:#f3deb0;font:inherit;font-size:.77rem;cursor:pointer
+}
+.cliente-integrado #conteudoTabuleiro .loop03-fila-paginada{
+ max-height:60vh;overflow-y:auto;overscroll-behavior:contain;
+ margin-top:8px;padding:3px;scrollbar-color:#a98b59 #101822
+}
+.cliente-integrado #conteudoTabuleiro .loop03-fila-paginada[hidden]{display:none}
+.cliente-integrado #conteudoTabuleiro .loop03-fila-paginada [role=status]{
+ display:block;margin-top:8px;font-size:.71rem;color:#dbc7a4
+}
+.cliente-integrado #conteudoTabuleiro .loop03-linha-fila:has(.loop03-fila-identificacao small){
+ border-color:#dfbb76!important;box-shadow:inset 0 0 0 1px #e3c18b
+}

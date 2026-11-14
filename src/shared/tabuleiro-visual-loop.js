@@ -107,7 +107,7 @@
     conteudo.append(identificacao);
     if(contagem===null&&p?.minha===true){
      const minha=document.createElement('small');
-     minha.textContent='Minha posição · ensaio';
+     minha.textContent='Minha posição';
      conteudo.append(minha);
     }
     linha.append(inicial,conteudo);

@@ -13,6 +13,7 @@
  let posicaoSelecionada='';
  let nickResumoReal='';
  let posicoesResumoReal=[],popupPosicoesRealAberto=false;
+ let sequenciaLeituraFilas=0;
  let finOrigemReal='BONUS_INDICACAO',ensaioFinanceiroAtivo=false;
  let somentePosicoesPeloQuadrado=false,proximaAbaVemDoQuadrado=false;
  let origemLinks=null;
@@ -343,6 +344,7 @@
     posicaoSelecionada=String(p.numero);
     fecharPopupReal();
     atualizarTopoPosicaoReal();
+    void atualizarFilasAncoradas(posicoesResumoReal);
     if($('conteudoFinanceiro').hidden===false&&!ensaioFinanceiroAtivo)
      void carregarFinanceiroReal();
    });
@@ -592,6 +594,90 @@
    });
   });
  }
+
+ // A mesma caixa de Fila A/B aprovada recebe somente números reais,
+ // sem nomes de terceiros e sem trocar o formato ou a paleta.
+ async function atualizarFilasAncoradas(posicoes){
+  const sequencia=++sequenciaLeituraFilas;
+  await Promise.all(['A','B'].map(async fila=>{
+   const id='motorFila'+fila,area=$(id);
+   const candidatas=posicoes.filter(p=>p.local==='FILA_'+fila&&
+    Number.isSafeInteger(p.numero));
+   const escolhida=candidatas.find(p=>String(p.numero)===posicaoSelecionada)||
+    candidatas[0];
+   if(!escolhida)return; // Sem posição própria: permanece a contagem real.
+   const base='/api/loop/fila?fila='+fila+'&posicaoId='+escolhida.numero;
+   const consultar=async pagina=>{
+    const r=await fetch(base+'&pagina='+pagina,{
+     credentials:'same-origin',cache:'no-store'
+    });
+    if(!r.ok)throw Error('FILA_INDISPONIVEL');
+    const d=await r.json();
+    if(d.fonte!=='IDENTIDADE_E_MOTOR_MESMO_SQLITE'||d.fila!==fila||
+       d.ancora?.numero!==escolhida.numero||
+       !Array.isArray(d.janela)||!Array.isArray(d.pagina))
+     throw Error('FILA_RESPOSTA_INVALIDA');
+    return d;
+   };
+   try{
+    const visao=await consultar(0);
+    if(sequencia!==sequenciaLeituraFilas)return;
+    visualTabuleiro.preencherFila(id,visao.janela,fila);
+    const situacao=document.createElement('p');
+    situacao.className='loop03-fila-ordem-propria';
+    situacao.textContent='Sua posição: '+visao.ancora.ordem+
+     ' de '+visao.total;
+    const abrir=document.createElement('button');
+    abrir.type='button';abrir.className='loop03-fila-expandir';
+    abrir.textContent='Ver fila completa';
+    abrir.setAttribute('aria-expanded','false');
+    const painel=document.createElement('div');
+    painel.className='loop03-fila-paginada';painel.hidden=true;
+    const paginas=document.createElement('div');
+    const mais=document.createElement('button');
+    mais.type='button';mais.className='loop03-fila-expandir';
+    mais.textContent='Carregar mais posições';
+    const estado=document.createElement('small');
+    estado.setAttribute('role','status');
+    painel.append(paginas,mais,estado);
+    area.append(situacao,abrir,painel);
+    let proxima=0,emCurso=false;
+    const carregarPagina=async()=>{
+     if(emCurso||proxima===null)return;
+     emCurso=true;mais.disabled=true;
+     estado.textContent='Consultando posições…';
+     try{
+      const paginaAtual=proxima,d=paginaAtual===0?visao:
+       await consultar(paginaAtual);
+      if(sequencia!==sequenciaLeituraFilas)return;
+      const paginaDiv=document.createElement('div');
+      paginaDiv.id='paginaFila'+fila+'Numero'+paginaAtual;
+      paginas.append(paginaDiv);
+      if(d.pagina.length)visualTabuleiro.preencherFila(paginaDiv.id,d.pagina,fila);
+      proxima=d.proximaPagina;
+      mais.hidden=proxima===null;
+      estado.textContent=proxima===null?'Fim da fila.':'Exibindo mais posições.';
+     }catch{
+      estado.textContent='Não foi possível carregar esta página. Tente novamente.';
+     }finally{emCurso=false;mais.disabled=false;}
+    };
+    abrir.addEventListener('click',()=>{
+     const abrirAgora=painel.hidden;
+     painel.hidden=!abrirAgora;
+     abrir.setAttribute('aria-expanded',String(abrirAgora));
+     abrir.textContent=abrirAgora?'Fechar fila completa':'Ver fila completa';
+     if(abrirAgora&&proxima===0)void carregarPagina();
+    });
+    mais.addEventListener('click',()=>void carregarPagina());
+   }catch{
+    if(sequencia!==sequenciaLeituraFilas)return;
+    const aviso=document.createElement('p');
+    aviso.className='subtexto';
+    aviso.textContent='Detalhes da fila temporariamente indisponíveis.';
+    area.append(aviso);
+   }
+  }));
+ }
  async function carregarMotor(){
   try{
    const r=await fetch('/api/loop/estado',{
@@ -747,6 +833,7 @@
     exemplo.append(corpo);grade.appendChild(exemplo);
    }
    painel.appendChild(grade);
+   void atualizarFilasAncoradas(d.minhasPosicoes);
   }catch{
    $('loopResumoMotor').textContent=
     'Não foi possível carregar as posições. Tente atualizar.';
