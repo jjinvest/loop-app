@@ -866,3 +866,40 @@ body.loop03-logado main>.mensagem-pagina{margin:0 0 .75rem}
  }
  .cliente-integrado #conteudoPosicoes .loop03-posicao-dados{grid-template-columns:minmax(0,1fr)}
 }
+
+/* Mesmo status luminoso nos dez cartões da prévia aprovada. */
+.cliente-integrado #conteudoPosicoes .loop03-cartao-posicao-ensaio .loop03-posicao-cabecalho{
+ display:flex;align-items:center;justify-content:space-between;gap:5px;min-width:0
+}
+.cliente-integrado #conteudoPosicoes .loop03-cartao-posicao-ensaio .loop03-posicao-cabecalho h3{
+ margin:0;font-size:clamp(.75rem,1.5vw,.98rem)
+}
+.cliente-integrado #conteudoPosicoes .loop03-cartao-posicao-ensaio.loop03-status-pendente{
+ border-color:#b64b5c;box-shadow:inset 0 0 0 2px #521f29,0 0 10px #c94a5433
+}
+.cliente-integrado #conteudoPosicoes .loop03-cartao-posicao-ensaio .loop03-posicao-detalhes{
+ margin:9px 0;min-width:0;border-top:1px solid #755b75;padding-top:8px
+}
+.cliente-integrado #conteudoPosicoes .loop03-cartao-posicao-ensaio .loop03-posicao-detalhes summary{
+ color:#e9c989;font-size:.76rem;font-weight:750;cursor:pointer
+}
+.cliente-integrado #conteudoPosicoes .loop03-grade-posicoes-ensaio:has(.loop03-posicao-detalhes[open]) .loop03-cartao-posicao-ensaio:has(.loop03-posicao-detalhes[open]){
+ grid-column:1/-1
+}
+.cliente-integrado #conteudoPosicoes .loop03-cartao-posicao-ensaio .loop03-posicao-dados{
+ grid-template-columns:repeat(2,minmax(0,1fr));margin-top:8px
+}
+.cliente-integrado #conteudoPosicoes .loop03-cartao-posicao-ensaio .loop03-posicao-detalhe-linha{
+ display:flex;flex-direction:column;gap:5px
+}
+.cliente-integrado #conteudoPosicoes .loop03-cartao-posicao-ensaio .loop03-posicao-detalhe-linha strong{
+ font-size:.75rem;color:#f1d69d
+}
+.cliente-integrado #conteudoPosicoes .loop03-cartao-posicao-ensaio .loop03-posicao-detalhe-linha small{
+ font-size:.8rem;overflow-wrap:anywhere;color:#eee
+}
+@media(max-width:520px){
+ .cliente-integrado #conteudoPosicoes .loop03-cartao-posicao-ensaio .loop03-posicao-dados{
+  grid-template-columns:minmax(0,1fr)
+ }
+}

@@ -604,11 +604,22 @@ async function atualizarPosicoes(){
    const cartao=document.createElement('article');
    cartao.className='loop03-cartao-posicao-ensaio'+
     (posicao?.pendente||registro?' loop03-cartao-posicao-pendente':'')+
-    (posicao?.aceiteIndividualRegistrado?' loop03-cartao-posicao-aceito':'')+
+    (posicao?' loop03-status-pendente':'')+
     (posicao?.numero===posicaoSelecionadaMotor?' loop03-cartao-motor-selecionado':'');
    cartao.setAttribute('role','listitem');
+   const cabecalho=document.createElement('div');
+   cabecalho.className='loop03-posicao-cabecalho';
    const nome=document.createElement('h3');
    nome.textContent='Posição '+(i+1);
+   const luz=document.createElement('span');
+   // Aceite de ensaio NÃO é confirmação externa; luz verde é reservada
+   // para validação real, nunca para o sandbox.
+   luz.className='loop03-posicao-luz '+(posicao||registro?
+    'loop03-posicao-luz-vermelha':'loop03-posicao-luz-inativa');
+   luz.setAttribute('role','img');
+   luz.setAttribute('aria-label',posicao||registro?
+    'Luz vermelha: confirmação pendente':'Luz apagada: posição disponível');
+   cabecalho.append(nome,luz);
    const numero=document.createElement('strong');
    numero.textContent=posicao?'#'+posicao.numero:
     registro?'AGUARDANDO':'Espaço disponível';
@@ -618,7 +629,59 @@ async function atualizarPosicoes(){
     ' · Indicações: '+(posicao.indicacoesVinculadas||0)+
     (posicao.pendente?' · aguardando confirmação':'')):
     registro?(estados[registro.estado]||'Registro em revisão'):'Sem posição vinculada';
-   cartao.append(nome,numero,status);
+   cartao.append(cabecalho,numero,status);
+   if(posicao){
+    const detalhes=document.createElement('details');
+    detalhes.className='loop03-posicao-detalhes';
+    const abrir=document.createElement('summary');
+    abrir.textContent='Ver detalhes';
+    const dados=document.createElement('div');
+    dados.className='loop03-posicao-dados';
+    dados.textContent='Toque para consultar o pedido de origem.';
+    detalhes.append(abrir,dados);
+    let carregado=false,ocupado=false;
+    detalhes.addEventListener('toggle',async()=>{
+     if(!detalhes.open||carregado||ocupado)return;
+     ocupado=true;dados.textContent='Consultando produto e valores…';
+     try{
+      const d=await requisitar('/motor/posicoes/'+posicao.numero+'/detalhes');
+      if(d.origem!=='SNAPSHOT_PEDIDO_SANDBOX_TITULAR'||
+         d.numero!==posicao.numero||
+         d.confirmacaoExternaVerificada!==false||
+         !Array.isArray(d.itens))
+       throw Error('ORIGEM_INCOMPATIVEL');
+      dados.replaceChildren();
+      const linha=(rotulo,valor)=>{
+       const div=document.createElement('div');
+       div.className='loop03-posicao-detalhe-linha';
+       const a=document.createElement('strong');a.textContent=rotulo;
+       const b=document.createElement('small');b.textContent=valor;
+       div.append(a,b);dados.append(div);
+      };
+      linha('Pedido de origem',d.prepedidoId);
+      for(const item of d.itens){
+       linha('Produto que gerou o pedido',
+        (item.nome||'Produto sem nome')+' · '+item.quantidade+
+        ' unidade(s) · '+(Number.isSafeInteger(item.subtotalCentavos)?
+         moeda(item.subtotalCentavos):'Valor em conferência'));
+      }
+      linha('Valor do pedido (sandbox)',
+       Number.isSafeInteger(d.totalCentavos)?
+        moeda(d.totalCentavos):'Valor em conferência');
+      linha('Fila / localização',posicao.local+
+       (posicao.fila?' · Fila '+posicao.fila:''));
+      linha('Indicações vinculadas (ensaio)',String(posicao.indicacoesVinculadas||0));
+      linha('Status da confirmação',posicao.aceiteIndividualRegistrado?
+       'Aceite registrado no ensaio; verificação externa pendente':
+       'Aguardando CPF/termos e verificação');
+      linha('Créditos / saques','Sem crédito financeiro disponível');
+      carregado=true;
+     }catch{
+      dados.textContent='Detalhes indisponíveis nesta consulta. Tente novamente.';
+     }finally{ocupado=false;}
+    });
+    cartao.append(detalhes);
+   }
    if(posicao?.aceiteIndividualRegistrado){
     const aceite=document.createElement('small');
     aceite.textContent='Termos confirmados · verificação externa ainda pendente.';

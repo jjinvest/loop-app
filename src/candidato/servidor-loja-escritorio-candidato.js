@@ -942,6 +942,47 @@ function criarAppLojaEscritorioCandidato({banco,repositorioCatalogo,
   try{return res.json(motorConta.consultar({titularId:s.titularId}));}
   catch(e){return res.status(503).json({erro:e.codigo||'MOTOR_ENSAIO_INDISPONIVEL'});}
  });
+
+ // Dados do produto e do valor de origem, vinculados a uma posição
+ // da própria sessão e ao snapshot imutável do pedido. Somente leitura.
+ app.get('/staging/motor/posicoes/:numero/detalhes',(req,res)=>{
+  const s=contas.sessao(req);
+  if(!s)return res.status(401).json({erro:'SESSAO_AUSENTE'});
+  const numero=Number(req.params.numero);
+  if(!/^[1-9][0-9]*$/.test(req.params.numero)||
+     !Number.isSafeInteger(numero))
+   return res.status(400).json({erro:'POSICAO_INVALIDA'});
+  try{
+   const posicao=motorConta.consultar({titularId:s.titularId})
+    .minhasPosicoes.find(p=>p.numero===numero);
+   if(!posicao)return res.status(404).json({erro:'POSICAO_NAO_ENCONTRADA'});
+   const vinculo=banco.prepare([
+    'SELECT prepedido_id AS prepedidoId FROM akitemm_motor_ensaio_lotes_pedido',
+    'WHERE numero_posicao=? AND titular_id=?'
+   ].join(' ')).get(numero,s.titularId);
+   if(!vinculo)return res.status(503).json({erro:'ORIGEM_POSICAO_INDISPONIVEL'});
+   const pedido=prePedidos.consultar({
+    titularId:s.titularId,prepedidoId:vinculo.prepedidoId
+   });
+   if(!pedido||!Array.isArray(pedido.itens))
+    return res.status(503).json({erro:'PEDIDO_ORIGEM_INDISPONIVEL'});
+   return res.set('Cache-Control','private, no-store').json({
+    origem:'SNAPSHOT_PEDIDO_SANDBOX_TITULAR',
+    numero,prepedidoId:vinculo.prepedidoId,
+    totalCentavos:pedido.totalCentavos,
+    itens:pedido.itens.map(item=>({
+     produtoId:item.produtoId,nome:item.nome,
+     quantidade:item.quantidade,
+     precoUnitarioCentavos:item.precoUnitarioCentavos,
+     subtotalCentavos:item.subtotalCentavos
+    })),
+    pendente:posicao.pendente,
+    aceiteIndividualRegistrado:posicao.aceiteIndividualRegistrado,
+    confirmacaoExternaVerificada:false,
+    creditoReal:false,saqueReal:false
+   });
+  }catch{return res.status(503).json({erro:'DETALHES_POSICAO_INDISPONIVEIS'});}
+ });
  // Histórico estritamente do titular autenticado; apenas leitura.
  app.get('/staging/motor/posicoes/:numero/historico',(req,res)=>{
   const s=contas.sessao(req);

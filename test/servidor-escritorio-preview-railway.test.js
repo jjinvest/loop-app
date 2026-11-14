@@ -846,3 +846,17 @@ test('rodape Minha conta consulta dados do titular e sincroniza foto, sem CPF na
   cpfConfirmado:false,cpfExibicao:null
  });
 });
+
+test('cartões de Minha Posições na prévia mostram luz pendente e detalhes protegidos',async t=>{
+ const x=await preparar(t);
+ const cliente=await x.consultar('/staging/assets/cliente.js');
+ const js=await cliente.text();
+ assert.match(js,/loop03-posicao-luz-vermelha/);
+ assert.match(js,/Ver detalhes/);
+ assert.match(js,/SNAPSHOT_PEDIDO_SANDBOX_TITULAR/);
+ assert.match(js,/Sem crédito financeiro disponível/);
+ const semLogin=await x.consultar('/staging/motor/posicoes/1/detalhes');
+ assert.equal(semLogin.status,401);
+ const css=await x.consultar('/staging/assets/cliente-integrado.css');
+ assert.match(await css.text(),/loop03-cartao-posicao-ensaio\.loop03-status-pendente/);
+});
