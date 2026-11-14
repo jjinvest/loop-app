@@ -479,7 +479,7 @@
       ' · Indicações: '+(selecionadaResumo.indicacoesVinculadas||0)+
       ' · '+(selecionadaResumo.local||'Em acompanhamento')+
       ' · ID #'+selecionadaResumo.numero):
-     'Escolha uma posição';
+     '';
    }
    // A quantidade de cartões deriva do MESMO limite enviado pelo motor;
    // não esconder vagas vazias nem fabricar posições/pedidos.

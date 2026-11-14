@@ -644,3 +644,24 @@ test('nick legado: apenas grafia muda com senha e CSRF, mesma conta e login exat
  assert.equal((await login('EXEMPLO')).status,401);
  assert.equal((await login('ExempLo')).status,200);
 });
+
+test('Escritorio e Tabuleiro: AKITEMM ampliada; posicao escolhida apenas em Minhas Posicoes',()=>{
+ const fs=require('node:fs');
+ const path=require('node:path');
+ const html=fs.readFileSync(path.join(__dirname,
+  '../src/candidato/checkout-candidato-ui.html'),'utf8');
+ const js=fs.readFileSync(path.join(__dirname,
+  '../src/candidato/checkout-candidato-ui.js'),'utf8');
+ const css=fs.readFileSync(path.join(__dirname,
+  '../src/candidato/escritorio-cliente-integrado.css'),'utf8');
+ assert.doesNotMatch(html,/Loja e Escritório no mesmo acesso|Escolha uma posição/);
+ assert.match(html,/<div class="barra-conta"><a href="\/staging\/loja" class="primario loop03-loja-prata"/);
+ assert.match(html,/<strong id="loop03NumeroIntegrado">—<\/strong><span id="loop03StatusPosicao"><\/span>/);
+ assert.doesNotMatch(html,/id="seletorPosicoesResumo"/);
+ assert.match(css,/\.barra-conta a\.loop03-loja-prata\{[\s\S]*?width:100%;flex:1 1 100%/);
+ assert.match(js,/\$\('loop03IrPosicoesIntegrado'\)\.addEventListener\('click',\(\)=>mostrarAba\('conteudoPosicoes'\)\)/);
+ assert.match(js,/\$\('tabuleiroVerPosicoesIntegrado'\)\.addEventListener\('click',\(\)=>mostrarAba\('conteudoPosicoes'\)\)/);
+ assert.match(js,/const quantidade= somentePosicoesPeloQuadrado\?ativas\.length:10/);
+ assert.match(js,/posicaoSelecionadaMotor=posicao\.numero;[\s\S]*?atualizarIndicadorSelecionadoResumo\(\);/);
+ assert.doesNotMatch(js,/abrirPopupResumo|fecharPopupResumo/);
+});

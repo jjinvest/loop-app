@@ -10,7 +10,6 @@ let fotoPerfilUrl=null,versaoCarregamentoFoto=0;
 let termosCadastroLidos=null,carregandoTermosCadastro=null;
 let posicaoSelecionadaMotor=null;
 let posicoesDisponiveisResumo=[],revisaoHistoricoResumo=0;
-let popupPosicoesAberto=false;
 let nickAtualResumo='';
 let somentePosicoesPeloQuadrado=false;
 const ABAS=[['abaResumo','conteudoResumo'],['abaTabuleiro','conteudoTabuleiro'],
@@ -352,37 +351,7 @@ function atualizarIndicadorSelecionadoResumo(){
    ' · Indicações: '+(pos.indicacoesVinculadas||0)+
    ' · '+(pos.local==='FILA'?'Na fila':pos.local==='CENTRO'?'No centro':
     pos.local?.startsWith('VAGA_')?'No tabuleiro':'Em acompanhamento')+
-   ' · ID #'+pos.numero):'Escolha uma posição';
-}
-function fecharPopupResumo(){
- popupPosicoesAberto=false;
- $('seletorPosicoesResumo').hidden=true;
- $('loop03IrPosicoesIntegrado').setAttribute('aria-expanded','false');
-}
-function abrirPopupResumo(){
- popupPosicoesAberto=!popupPosicoesAberto;
- const painel=$('seletorPosicoesResumo');
- painel.hidden=!popupPosicoesAberto;
- $('loop03IrPosicoesIntegrado').setAttribute('aria-expanded',
-  String(popupPosicoesAberto));
- if(!popupPosicoesAberto)return;
- const opcoes=$('opcoesPosicoesResumo');opcoes.replaceChildren();
- $('avisoPosicoesResumo').textContent=posicoesDisponiveisResumo.length?
-  'Escolha um número para consultar somente essa posição.':
-  'Você ainda não tem posições para selecionar.';
- posicoesDisponiveisResumo.forEach((pos,indice)=>{
-  const botao=document.createElement('button');
-  botao.type='button';botao.textContent=String(indice+1);
-  botao.setAttribute('aria-label','Posição '+(indice+1)+' · ID #'+pos.numero);
-  botao.setAttribute('aria-pressed',String(pos.numero===posicaoSelecionadaMotor));
-  botao.addEventListener('click',()=>{
-   posicaoSelecionadaMotor=pos.numero;
-   fecharPopupResumo();
-   atualizarIndicadorSelecionadoResumo();
-   void renderizarHistoricoResumo(pos);
-  });
-  opcoes.append(botao);
- });
+   ' · ID #'+pos.numero):'';
 }
 async function renderizarHistoricoResumo(pos){
  const revisao=++revisaoHistoricoResumo;
@@ -585,9 +554,11 @@ async function atualizarPosicoes(){
     const botao=document.createElement('button');botao.type='button';
     botao.textContent='Selecionar esta posição';
     botao.addEventListener('click',()=>{
+     // Selecao altera SOMENTE o placar superior; nao troca a aba.
      posicaoSelecionadaMotor=posicao.numero;
-     $('loop03NumeroIntegrado').textContent='#'+posicao.numero;
-     atualizarPosicoes();
+     posicoesDisponiveisResumo=[...ativas]
+      .filter(p=>Number.isSafeInteger(p.numero)).sort((a,b)=>a.numero-b.numero);
+     atualizarIndicadorSelecionadoResumo();
     });
     cartao.append(botao);
    }else if(registro){
@@ -1143,16 +1114,7 @@ function iniciarCarrosselResumo(){
 
 iniciarCarrosselResumo();
 $('tabuleiroVerPosicoesIntegrado').addEventListener('click',()=>mostrarAba('conteudoPosicoes'));
-$('loop03IrPosicoesIntegrado').addEventListener('click',abrirPopupResumo);
-document.addEventListener('click',e=>{
- if(popupPosicoesAberto&&!$('seletorPosicoesResumo').contains(e.target)&&
-    !$('loop03IrPosicoesIntegrado').contains(e.target))fecharPopupResumo();
-});
-document.addEventListener('keydown',e=>{
- if(e.key==='Escape'&&popupPosicoesAberto){
-  fecharPopupResumo();$('loop03IrPosicoesIntegrado').focus();
- }
-});
+$('loop03IrPosicoesIntegrado').addEventListener('click',()=>mostrarAba('conteudoPosicoes'));
 $('loop03MenuIntegrado').addEventListener('click',alternarMenuIntegrado);
 document.addEventListener('keydown',e=>{if(e.key==='Escape')fecharMenuIntegrado();});
 $('atualizarPosicoes').addEventListener('click',atualizarPosicoes);

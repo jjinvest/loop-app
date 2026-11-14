@@ -611,3 +611,14 @@ body.loop03-logado main>.mensagem-pagina{margin:0 0 .75rem}
  > .selo-posicao-demo.posicao-vazia{
  visibility:hidden!important;
 }
+
+/* Atalho AKITEMM: remover texto lateral e utilizar largura integral
+   do espaco compartilhado pelas abas Escritorio e Tabuleiro. */
+.cliente-integrado .loop03-corpo .barra-conta{
+ display:flex;align-items:stretch;justify-content:stretch;
+ width:100%;margin:0 0 9px;padding:4px 0;
+}
+.cliente-integrado .loop03-corpo .barra-conta a.loop03-loja-prata{
+ display:flex;width:100%;flex:1 1 100%;min-width:0;min-height:44px;
+ align-items:center;justify-content:center;
+}
