@@ -474,6 +474,28 @@ async function iniciar({env=process.env}={}){
  let temporizadorCatraca=null;
  gateway.listen(port,'0.0.0.0',()=>{
   process.stdout.write('AKITEMM_PREVIA_PROTEGIDA=PRONTA_SEM_PAGAMENTOS_REAIS\\n');
+  // Prova de rede entre servicos REAL no ambiente publicado, não no
+  // predeploy isolado. Consulta somente GET com token privado.
+  void (async()=>{
+   let resultado='SEM_CONFIGURACAO';
+   try{
+    const url=env.LOOP_PREVIEW_URL_TABULEIRO_REAL;
+    const token=env.LOOP_PREVIEW_TOKEN_TABULEIRO_REAL;
+    if(typeof url==='string'&&url.includes('.railway.internal/')&&
+       typeof token==='string'&&/^[a-f0-9]{64}$/.test(token)){
+     const resposta=await fetch(url,{method:'GET',
+      signal:AbortSignal.timeout(3500),
+      headers:{'x-loop-interservice-token':token}});
+     const dados=await resposta.json().catch(()=>({}));
+     resultado=resposta.status===200&&
+       dados.origem==='MOTOR_REAL_SQLITE_DA_IDENTIDADE'?
+       'OPERACIONAL_RECONHECIDO':
+       resposta.status===503&&dados.erro==='MOTOR_REAL_NAO_ATIVO'?
+       'REDE_OK_MOTOR_NAO_INICIADO':'HTTP_'+resposta.status;
+    }
+   }catch{resultado='REDE_NAO_COMPROVADA';}
+   process.stdout.write('LOOP_TABULEIRO_REAL_CONEXAO='+resultado+'\\n');
+  })();
   if(agendador){
    agendador.iniciar();
    process.stdout.write('LOOP_CONCILIACAO_SANDBOX_AUTOMATICA=ATIVA_EM_ENSAIO\\n');
