@@ -496,8 +496,8 @@ function atualizarCarrinho(){
   // Só atribui cadastros de LAB pelo gateway assinado, nunca bonificação real.
   try{
    const perfil=contas.perfil(req.titularVitrine);
-   return res.json({ativo:true,linkLoja:'/loja/'+perfil.nick,
-    linkEscritorio:'/escritorio/'+perfil.nick,apelido:perfil.nick,
+   return res.json({ativo:true,linkLoja:'/loja/'+encodeURIComponent(perfil.nick),
+    linkEscritorio:'/escritorio/'+encodeURIComponent(perfil.nick),apelido:perfil.nick,
     apenasEnsaio:true,indicadoQualificado:false,semComissaoReal:true});
   }catch{return res.status(503).json({erro:'LINK_INDICACAO_INDISPONIVEL'});}
  });
