@@ -311,7 +311,7 @@ function criarAppLojaEscritorioCandidato({banco,repositorioCatalogo,
     return res.status(409).json({erro:'CADASTRO_JA_EXISTENTE'});
    if(['INDICACAO_ORIGEM_NAO_CONFIRMADA','CPF_OU_TITULAR_JA_VINCULADO'].includes(e.codigo))
     return res.status(409).json({erro:e.codigo});
-   if(['NICK_INVALIDO','NOME_INVALIDO','EMAIL_INVALIDO','SENHA_INVALIDA',
+   if(['NICK_INVALIDO','NICK_RESERVADO','NOME_INVALIDO','EMAIL_INVALIDO','SENHA_INVALIDA',
        'TELEFONE_INVALIDO','CONFIRMACAO_SENHA_INVALIDA','CPF_INVALIDO',
       'TERMOS_LAB_NAO_ACEITOS'].includes(e.codigo))
     return res.status(400).json({erro:e.codigo});
@@ -526,7 +526,7 @@ function criarAppLojaEscritorioCandidato({banco,repositorioCatalogo,
    if(e.codigo==='CONTA_TEMPORARIAMENTE_BLOQUEADA'||
       e.codigo==='AUTENTICACAO_TEMPORARIAMENTE_OCUPADA')
     return res.status(429).json({erro:e.codigo});
-   if(['NICK_INVALIDO','NICK_SOMENTE_GRAFIA',
+   if(['NICK_INVALIDO','NICK_RESERVADO','NICK_SOMENTE_GRAFIA',
        'CREDENCIAIS_INVALIDAS'].includes(e.codigo))
     return res.status(400).json({erro:e.codigo});
    if(e.codigo==='CONCORRENCIA_CREDENCIAL')
