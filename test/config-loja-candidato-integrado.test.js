@@ -53,7 +53,12 @@ test('banners, suporte, redes e informações são ligados ao admin e loja no me
  const bia=await login(base,'Bia');
  const area='/staging/escritorio-unificado/loja/config';
  const vitrine='/staging/vitrine/loja/config';
- assert.equal((await request(base,vitrine)).status,401);
+ // A configuração editorial da vitrine é pública; só o painel de
+ // edição exige autenticação administrativa.
+ const configVisitante=await request(base,vitrine);
+ assert.equal(configVisitante.status,200);
+ assert.deepEqual(configVisitante.body.config.banners,[]);
+ assert.equal(configVisitante.body.apenasEnsaio,true);
  assert.equal((await request(base,area)).status,401);
  const inicial=await request(base,area,{admin:true});
  assert.equal(inicial.status,200);
@@ -83,6 +88,8 @@ test('banners, suporte, redes e informações são ligados ao admin e loja no me
  assert.equal(visible.body.apenasEnsaio,true);
  assert.equal(visible.body.semOfertasComerciais,true);
  assert.deepEqual((await request(base,vitrine,{cookie:bia})).body.config,config);
+ assert.deepEqual((await request(base,vitrine)).body.config,config,
+  'visitante vê só a configuração editorial pública');
  assert.equal((await request(base,area,{admin:true})).body.revisao,1);
  assert.equal((await request(base,area,{method:'PUT',admin:true,
   body:{config,revisaoEsperada:0}})).status,409,
