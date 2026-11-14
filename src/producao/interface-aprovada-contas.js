@@ -776,5 +776,40 @@
   const aberto=sidebar.classList.toggle('loop03-aberto');
   $('loop03MenuIntegrado').setAttribute('aria-expanded',String(aberto));
  });
+ // Mesmo carrossel de banners da primeira aba na interface protegida.
+ const pistaResumo=$('loop03PistaBanners');
+ const pontosResumo=[...document.querySelectorAll('[data-banner-resumo]')];
+ if(pistaResumo&&pontosResumo.length===2){
+  let indice=0,interagindo=false;
+  const marcar=i=>{
+   indice=i;
+   pontosResumo.forEach((b,j)=>b.setAttribute('aria-current',String(i===j)));
+  };
+  const mover=i=>{
+   marcar(i);
+   pistaResumo.scrollTo({left:pistaResumo.clientWidth*i,
+    behavior:matchMedia('(prefers-reduced-motion:reduce)').matches?'instant':'smooth'});
+  };
+  pontosResumo.forEach((b,i)=>b.addEventListener('click',()=>{
+   interagindo=true;mover(i);
+  }));
+  pistaResumo.addEventListener('scroll',()=>{
+   if(pistaResumo.clientWidth>0)
+    marcar(Math.min(1,Math.max(0,Math.round(
+     pistaResumo.scrollLeft/pistaResumo.clientWidth))));
+  },{passive:true});
+  pistaResumo.addEventListener('pointerdown',()=>{interagindo=true;});
+  pistaResumo.addEventListener('focusin',()=>{interagindo=true;});
+  pistaResumo.addEventListener('focusout',()=>{interagindo=false;});
+  pistaResumo.addEventListener('pointerleave',()=>{interagindo=false;});
+  setInterval(()=>{
+   if(document.hidden||$('conteudoResumo').hidden||interagindo||
+    matchMedia('(prefers-reduced-motion:reduce)').matches)return;
+   mover((indice+1)%2);
+  },6500);
+  addEventListener('resize',()=>pistaResumo.scrollTo({
+   left:pistaResumo.clientWidth*indice,behavior:'instant'
+  }));
+ }
  void requisitar('/me').then(s=>painelConta(s)).catch(()=>mostrarLogin('login'));
 })();
