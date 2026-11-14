@@ -45,7 +45,7 @@ test('card superior de posições abre as dez vagas e terceiro acompanha seleç�
  assert.match(real,/\$\('loop03IrPosicoesIntegrado'\)\.addEventListener/);
  assert.match(real,/\$\('loop03TotalIntegrado'\)\.textContent/);
  assert.match(real,/Number\.isSafeInteger\(giros24h\)/);
- assert.match(real,/posicaoSelecionada\?'#'\+posicaoSelecionada:'—'/);
+ assert.match(real,/selecionadaResumo\?'#'\+posicaoSelecionada:'—'/);
 });
 
 test('quadradinho superior lista somente posições existentes e demonstração sem persistência',()=>{
