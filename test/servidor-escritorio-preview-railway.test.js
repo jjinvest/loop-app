@@ -704,8 +704,8 @@ test('Tabuleiro preserva a contagem junto da roda e remove duplicacao do rodape'
  const conta=fs.readFileSync(path.join(__dirname,
   '../src/producao/interface-aprovada-contas.js'),'utf8');
  assert.match(html,/id="motorContadorEventos"/);
- assert.match(html,/<p id="estadoTabuleiroIntegrado" role="alert" hidden><\\/p>/);
- assert.match(html,/id="tabuleiroVerPosicoesIntegrado">Ver minhas posições<\\/button>/);
+ assert.match(html,/<p id="estadoTabuleiroIntegrado" role="alert" hidden><\/p>/);
+ assert.match(html,/id="tabuleiroVerPosicoesIntegrado">Ver minhas posições<\/button>/);
  assert.match(cliente,/\$\('motorContadorEventos'\)\.textContent=motor\.tabuleiro\.eventosNoCiclo\+/);
  assert.doesNotMatch(cliente,/estado\.textContent=motor\.tabuleiro\.eventosNoCiclo\+/);
  assert.match(cliente,/estado\.textContent='';\s*estado\.hidden=true/);
