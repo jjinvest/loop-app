@@ -196,10 +196,22 @@ class ContaUnicaCandidataSQLite{
    if(fkAtiva)banco.exec('PRAGMA foreign_keys=OFF');
    try{
     banco.exec('BEGIN IMMEDIATE');
+    // Na base persistente, outros modulos possuem gatilhos e visoes que
+    // consultam a conta. Remover essas dependencias apenas DENTRO da
+    // transacao e restaurar seu SQL identico antes do COMMIT, evitando
+    // erro de ALTER TABLE por trigger temporariamente sem tabela.
     const dependencias=banco.prepare([
-     "SELECT sql FROM sqlite_schema WHERE tbl_name='akitemm_conta_unica_candidata'",
-     "AND type IN ('index','trigger') AND sql IS NOT NULL ORDER BY name"
-    ].join(' ')).all().map(x=>x.sql);
+     "SELECT type,name,sql FROM sqlite_schema",
+     "WHERE type IN ('trigger','view') AND sql IS NOT NULL",
+     "AND (tbl_name='akitemm_conta_unica_candidata'",
+     "OR instr(lower(sql),'akitemm_conta_unica_candidata')>0)",
+     "ORDER BY CASE type WHEN 'view' THEN 1 ELSE 0 END,name"
+    ].join(' ')).all();
+    for(const objeto of dependencias){
+     const nome='"'+objeto.name.replace(/"/g,'""')+'"';
+     banco.exec('DROP '+(objeto.type==='view'?'VIEW':'TRIGGER')+
+      ' IF EXISTS '+nome);
+    }
     const antigo=/^CREATE TABLE(?: IF NOT EXISTS)?\s+("?akitemm_conta_unica_candidata"?)/i;
     if(!antigo.test(sqlNick))falha('ESTRUTURA_CONTA_INCOMPATIVEL');
     const sqlNovo=sqlNick.replace(antigo,
@@ -215,7 +227,7 @@ class ContaUnicaCandidataSQLite{
     banco.exec('DROP TABLE akitemm_conta_unica_candidata');
     banco.exec('ALTER TABLE akitemm_conta_unica_nick_migrando '+
      'RENAME TO akitemm_conta_unica_candidata');
-    for(const sql of dependencias)banco.exec(sql);
+    for(const objeto of dependencias)banco.exec(objeto.sql);
     if(banco.prepare('PRAGMA foreign_key_check').all().length)
      falha('MIGRACAO_NICK_VIOLA_REFERENCIAS');
     banco.exec('COMMIT');
