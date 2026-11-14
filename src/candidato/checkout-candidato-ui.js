@@ -325,11 +325,7 @@ async function atualizarResumo(){
   const selecionada=motor.minhasPosicoes.find(x=>x.numero===posicaoSelecionadaMotor);
   if(!selecionada)posicaoSelecionadaMotor=null;
   $('loop03NumeroIntegrado').textContent=selecionada?'#'+selecionada.numero:'—';
-  $('resumoPedidos').textContent=String(pedidos.totalPedidos??pedidos.pedidos?.length??0);
-  $('resumoPosicoes').textContent=String(motor.posicoesAtivasDoTitular)+
-   ' ativa(s) · '+String(filas.meusPendentesHistoricos||0)+' registros de pedidos anteriores';
   $('resumoEmail').textContent=perfil.emailVerificado?'Confirmado':'Pendente';
-  $('resumoEquipe').textContent=String(equipe.total);
   $('linksNick').textContent='Seu nick: @'+perfil.nick;
  }catch(e){dizer('Não foi possível atualizar seus dados. Tente novamente.');}
 }

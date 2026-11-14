@@ -193,7 +193,6 @@
     titularesIndicados.concat(dados.indicados):dados.indicados;
    $('maisEquipe').hidden=!dados.temMais;
    $('redeTotalCadastros').textContent=String(dados.total);
-   $('resumoEquipe').textContent=String(dados.total);
    $('redeAlocadasEnsaio').textContent=String(
     dados.resumo?.qualificadasEmEnsaio??0);
    $('redeADistribuirEnsaio').textContent=String(
@@ -233,7 +232,6 @@
    $('pedidosAnterior').disabled=!p.haAnterior;
    $('pedidosProximo').disabled=!p.haMais;
    painel.replaceChildren();
-   $('resumoPedidos').textContent=String(totalPedidosReal);
    $('pedidosPaginacao').textContent='Página '+(pagina+1)+
     ' · '+totalPedidosReal+' pedido(s) no histórico';
    if(!d.pedidos.length){
@@ -269,7 +267,6 @@
    if(token!==consultaPedidosEmCurso)return;
    painel.textContent='Histórico comercial indisponível. A consulta '+
     'não realiza compras nem pagamentos.';
-   $('resumoPedidos').textContent='—';
    $('pedidosPaginacao').textContent='Consulta indisponível';
   }
  }
@@ -282,8 +279,6 @@
     void carregarMotor();
   },15000);
   $('boasVindas').textContent='Sua conta está conectada ao Escritório LOOP e à Loja AKITEMM.';
-  $('resumoPedidos').textContent='—';
-  $('resumoEquipe').textContent='—';
   for(const id of ['atualizarTabuleiroIntegrado','atualizarPosicoes']){
    $(id).addEventListener('click',()=>void carregarMotor());
   }
@@ -296,6 +291,8 @@
    ()=>$('abaPosicoes').click());
   $('atalhoLoja').addEventListener('click',()=>location.assign('/loja'));
   // A aba de pedidos usa o livro comercial deste titular, nunca o LAB.
+  $('loop03IrPosicoesIntegrado').addEventListener('click',
+   ()=>$('abaPosicoes').click());
   const seletor=$('seletorPosicaoMotor');
   if(seletor)seletor.addEventListener('change',()=>{
    posicaoSelecionada=seletor.value;
@@ -451,7 +448,12 @@
    visorCatraca.observar(d.catraca.giros,d.tabuleiro.eventosNoCiclo);
    $('motorContadorEventos').textContent=d.tabuleiro.eventosNoCiclo+
     ' de 6 eventos neste ciclo';
-   $('resumoPosicoes').textContent=String(d.minhasPosicoes.length);
+   $('loop03TotalIntegrado').textContent=String(d.minhasPosicoes.length)+
+    ' / '+String(d.limitePosicoesAtivas);
+   // So exibir giros das ultimas 24h quando a fonte realmente os informar.
+   const giros24h=d.catraca?.giros24h;
+   $('loop03Giros24Integrado').textContent=
+    Number.isSafeInteger(giros24h)&&giros24h>=0?String(giros24h):'—';
    const seletor=$('seletorPosicaoMotor');
    const seletorRotulo=$('rotuloSeletorPosicaoMotor');
    if(seletor){
@@ -468,6 +470,8 @@
     }
     seletor.value=posicaoSelecionada;
     if(seletorRotulo)seletorRotulo.hidden=opcoes.length===0;
+    $('loop03NumeroIntegrado').textContent=
+     posicaoSelecionada?'#'+posicaoSelecionada:'—';
    }
    // A quantidade de cartões deriva do MESMO limite enviado pelo motor;
    // não esconder vagas vazias nem fabricar posições/pedidos.
