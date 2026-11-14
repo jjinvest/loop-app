@@ -1268,7 +1268,6 @@ $('solicitarCodigoEmail').addEventListener('click',solicitarCodigoEmail);
 $('formConfirmarEmail').addEventListener('submit',confirmarCodigoEmail);
 $('formLogin').addEventListener('submit',entrar);
 $('formCpfTeste').addEventListener('submit',registrarIdentidadeTeste);
-$('atualizarPedidos').addEventListener('click',()=>atualizarPedidos());
 $('pedidosAnterior').addEventListener('click',()=>{
  if(paginaPedidos>0){paginaPedidos--;atualizarPedidos();}
 });
@@ -1337,8 +1336,6 @@ document.addEventListener('keydown',e=>{
 });
 $('loop03MenuIntegrado').addEventListener('click',alternarMenuIntegrado);
 document.addEventListener('keydown',e=>{if(e.key==='Escape')fecharMenuIntegrado();});
-$('atualizarPosicoes').addEventListener('click',atualizarPosicoes);
-$('atualizarEquipe').addEventListener('click',()=>atualizarEquipe(0));
 $('buscarEquipe').addEventListener('input',()=>{
  clearTimeout(temporizadorBuscaEquipe);
  temporizadorBuscaEquipe=setTimeout(()=>atualizarEquipe(0),220);
