@@ -860,3 +860,26 @@ test('cartões de Minha Posições na prévia mostram luz pendente e detalhes pr
  const css=await x.consultar('/staging/assets/cliente-integrado.css');
  assert.match(await css.text(),/loop03-cartao-posicao-ensaio\.loop03-status-pendente/);
 });
+
+test('abrir loja nao solicita outra senha pelos recursos auxiliares',async t=>{
+ const x=await preparar(t);
+ const favicon=await x.consultar('/favicon.ico');
+ assert.equal(favicon.status,204);
+ assert.equal(favicon.headers.get('www-authenticate'),null);
+ const aux=await x.consultar('/api/laboratorio/loop03/publicacoes');
+ assert.equal(aux.status,401);
+ assert.equal(aux.headers.get('www-authenticate'),null);
+ assert.equal((await x.consultar('/staging/loja')).status,200);
+ const admin=await fetch(x.base+'/escritorio');
+ assert.equal(admin.status,401);
+ assert.match(admin.headers.get('www-authenticate'),/Basic/);
+});
+test('cadastro de convite tem CPF depois do nick antes do e-mail',async t=>{
+ const x=await preparar(t);
+ const html=await (await x.consultar('/minha-conta?cadastro=1')).text();
+ const ids=['cadastroIndicador','cadastroNome','cadastroNick',
+  'cadastroCpf','cadastroEmail','cadastroTelefone','cadastroSenha','cadastroConfirmarSenha'];
+ const pos=ids.map(id=>html.indexOf('id="'+id+'"'));
+ assert.ok(pos.every((n,i)=>n>=0&&(i===0||n>pos[i-1])),JSON.stringify(pos));
+ assert.match(html,/<input id="cadastroCpf"[^>]*required>/);
+});
