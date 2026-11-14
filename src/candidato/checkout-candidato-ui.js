@@ -928,9 +928,15 @@ async function atualizarEquipe(pagina=0){
 async function atualizarLinks(){
  try{
   const perfil=await requisitar('/contas/me');
+  // Links de divulgacao usam o dominio oficial independentemente da origem
+  // onde o titular acessou o Escritorio. O nick vem da sessao autenticada.
+  if(typeof perfil.nick!=='string'||perfil.nick.length<1)
+   throw Error('NICK_TITULAR_INVALIDO');
+  const dominioOficial='https://akitemmloop.com.br';
+  const nick=encodeURIComponent(perfil.nick);
   $('linksNick').textContent='Seu nick: @'+perfil.nick;
-  $('linkLoja').value=location.origin+'/loja/'+perfil.nick;
-  $('linkEscritorio').value=location.origin+'/escritorio/'+perfil.nick;
+  $('linkLoja').value=dominioOficial+'/loja/'+nick;
+  $('linkEscritorio').value=dominioOficial+'/escritorio/'+nick;
  }catch(e){dizer('Não foi possível consultar seus links: '+e.message);}
 }
 async function copiarLink(id){
