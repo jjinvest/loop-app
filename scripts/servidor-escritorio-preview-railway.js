@@ -118,6 +118,12 @@ function criarGateway({portaInterna,senhaAcesso,senhaAdmin,segredoOperador,
   let url;
   try{url=new URL(req.url,'http://gateway.invalid');}
   catch{return negar(400,'Requisição inválida');}
+  // Navegadores consultam o favicon da loja automaticamente;
+  // um desafio Basic neste recurso provoca janela de senha extra.
+  if((req.method==='GET'||req.method==='HEAD')&&url.pathname==='/favicon.ico'){
+   res.writeHead(204,{...cabecalhosBase,'Content-Length':'0'});
+   return res.end();
+  }
   const auth=req.headers.authorization||'';
   let decodificado='';
   if(/^Basic [A-Za-z0-9+/=]+$/.test(auth)){
@@ -200,9 +206,9 @@ function criarGateway({portaInterna,senhaAcesso,senhaAdmin,segredoOperador,
    !rotaAdmin(url.pathname)&&!url.pathname.startsWith('/staging/asaas/');
   if(!basicaValida&&!sessaoValida&&!webhookUnificado&&!adminValido&&
      !publico&&!acessoConta&&!acessoTitular)
-   return negar(401,'Acesso exclusivo para homologação',{
-    'WWW-Authenticate':'Basic realm="AKITEMM - Acesso de teste", charset="UTF-8"'
-   });
+   // APIs e recursos restritos mantem 401, SEM desafiar o browser a abrir
+   // a janela de senha da homologacao (admin continua Basic separado).
+   return negar(401,'Acesso exclusivo para homologação');
   if(url.pathname==='/staging/indicacao/atual'){
    if(req.method!=='GET'&&req.method!=='HEAD')return negar(405,'Método não permitido');
    const nick=lerIndicacao(req);
