@@ -87,8 +87,8 @@ function renderizarInterfaceAprovada(){
  // Area opcional dentro da aba Financeiro ja aprovada: nao cria portal novo.
  // Fica escondida quando a tesouraria de ensaio nao esta montada.
  html=trocarExato(html,
-  '<p id="estadoFinanceiro">Nenhum saldo comercial foi ativado neste ambiente.</p>',
-  '<p id="estadoFinanceiro">Nenhum saldo comercial foi ativado neste ambiente.</p>'+
+  '<p id="estadoFinanceiro" role="status">Consultando a disponibilidade financeira…</p>',
+  '<p id="estadoFinanceiro" role="status">Consultando a disponibilidade financeira…</p>'+
   '<div id="tesourariaEnsaioModulo" hidden>'+
   '<p><strong>SIMULACAO FINANCEIRA — VALORES FICTICIOS</strong></p>'+
   '<p id="tesourariaEnsaioSaldo" role="status"></p>'+
