@@ -124,22 +124,36 @@
     </div>
     <div class="barra-conta"><span>Loja e Escritório no mesmo acesso</span><a href="/staging/loja" class="primario loop03-loja-prata" aria-label="Abrir loja AKITEMM"><span class="loop03-loja-prata-texto">AKITEMM</span></a></div>
   <section class="painel" id="conteudoResumo" role="tabpanel" aria-labelledby="abaResumo">
-   <div class="loop03-hero-escritorio">
-    <div class="loop03-hero-titulo">ESCRITÓRIO <span>VIRTUAL</span></div>
-    <p class="loop03-hero-subtitulo">ACOMPANHE <b>·</b> PARTICIPE <b>·</b> EVOLUA</p>
-    <div class="loop03-hero-conteudo"><p>Encontre suas posições, acompanhe o tabuleiro e veja sua equipe.</p><p>A catraca completa um ciclo a cada seis eventos válidos. A contemplação ocorre quando sua posição chega ao centro.</p></div>
+   <div class="loop03-banners-resumo" aria-label="Banners do Escritório Virtual">
+    <div id="loop03PistaBanners" class="loop03-banners-pista" role="region" aria-roledescription="carrossel" aria-label="Dois banners que deslizam horizontalmente" tabindex="0">
+     <a class="loop03-banner-item" href="/staging/loja" aria-label="Conhecer AKITEMM a partir do banner Escritório Virtual">
+     <div class="loop03-hero-escritorio">
+      <div class="loop03-hero-titulo">ESCRITÓRIO <span>VIRTUAL</span></div>
+      <p class="loop03-hero-subtitulo">ACOMPANHE <b>·</b> PARTICIPE <b>·</b> EVOLUA</p>
+      <div class="loop03-hero-conteudo"><p>Encontre suas posições, acompanhe o tabuleiro e veja sua equipe.</p><p>A catraca completa um ciclo a cada seis eventos válidos. A contemplação ocorre quando sua posição chega ao centro.</p></div>
+     </div>
+     </a>
+     <a class="loop03-banner-item loop03-banner-anuncio" href="/staging/loja" aria-label="Acessar AKITEMM pelo segundo banner">
+      <div class="loop03-banner-anuncio-conteudo">
+       <small>UM SÓ ACESSO</small>
+       <strong>AKITEMM</strong>
+       <p>Produtos e novidades em um só lugar.</p>
+       <span>CONHEÇA A AKITEMM</span>
+      </div>
+     </a>
+    </div>
+    <div class="loop03-banners-pontos" role="group" aria-label="Navegar entre os dois banners">
+     <button type="button" data-banner-resumo="0" aria-label="Mostrar primeiro banner" aria-current="true"></button>
+     <button type="button" data-banner-resumo="1" aria-label="Mostrar segundo banner" aria-current="false"></button>
+    </div>
    </div>
    <section id="historicoPosicaoResumo" class="loop03-historico-posicao" aria-live="polite" hidden>
      <h3 id="historicoTituloResumo">Histórico da posição</h3>
      <div id="historicoDetalhesResumo"></div>
      <div id="historicoEventosResumo"></div>
     </section>
-    <p id="boasVindas" role="status">Consultando sua conta…</p>
-   <div class="atalhos-cliente">
-    <button type="button" id="atalhoPedidos" class="primario">Meus pedidos</button>
-    <button type="button" id="atalhoPosicoes">Minhas posições</button>
-    <button type="button" id="atalhoLoja">Loja AKITEMM</button>
-    <button type="button" id="atualizarResumo">Atualizar</button>
+   <div class="atalhos-cliente loop03-atalho-unico">
+    <button type="button" id="atalhoLoja" class="primario">AKITEMM</button>
    </div>
   </section>
   <section class="painel" id="conteudoMeusPedidos" role="tabpanel" aria-labelledby="abaMeusPedidos" hidden>
