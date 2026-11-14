@@ -229,3 +229,34 @@ test('conta candidata persiste no SQLite e não é montada em producao',async t=
  });
  assert.equal(res.status,404);
 });
+
+test('cadastro com CPF e indicacao guarda identificacao sem plaintext, com rollback de duplicado',async t=>{
+ const db=new DatabaseSync(':memory:');
+ db.exec('PRAGMA foreign_keys=ON');
+ const impl=criarAppLojaEscritorioCandidato({
+  ...config(db,randomBytes(32),randomBytes(32)),
+  chaveCpfHmac:randomBytes(32),chaveCpfCifra:randomBytes(32)
+ });
+ const {server,base}=await iniciar(impl.app);
+ t.after(async()=>{await new Promise(done=>server.close(done));db.close();});
+ const senha='SenhaAbc123!';
+ const hash=require('node:crypto').createHash('sha256').update(termosTexto).digest('hex');
+ const cadastrar=(nick,email,cpf)=>enviar(base,'/staging/contas/cadastrar',{
+  method:'POST',data:{nome:nick+' Sobrenome',nick,cpf,email,telefone:'21999998888',
+   senha,confirmarSenha:senha,aceiteExplicito:true,
+   termosVersaoAceita:termosVersao,termosHashAceito:hash}
+ });
+ const invalido=await cadastrar('Testa','testa@example.invalid','12345678900');
+ assert.equal(invalido.status,400,JSON.stringify(invalido.body));
+ assert.equal(db.prepare('SELECT COUNT(*) AS n FROM akitemm_conta_unica_candidata').get().n,0);
+ const criado=await cadastrar('Olivia','olivia@example.invalid','529.982.247-25');
+ assert.equal(criado.status,201,JSON.stringify(criado.body));
+ const custodia=impl.cpf.consultar({titularId:criado.body.titularId});
+ assert.equal(custodia.cpfFinal,'25');
+ assert.equal(custodia.identidadeExternaVerificada,false);
+ const duplicado=await cadastrar('Outra','outra@example.invalid','529.982.247-25');
+ assert.equal(duplicado.status,409,JSON.stringify(duplicado.body));
+ assert.equal(db.prepare('SELECT COUNT(*) AS n FROM akitemm_conta_unica_candidata').get().n,1);
+ assert.doesNotMatch(JSON.stringify(db.prepare('SELECT * FROM akitemm_candidato_titularidade_unificada').all()),/52998224725|529\\.982\\.247-25/);
+ assert.equal(db.prepare('PRAGMA integrity_check').get().integrity_check,'ok');
+});
