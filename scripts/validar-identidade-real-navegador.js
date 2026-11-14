@@ -534,9 +534,11 @@ async function main(){
    });
    if(visual.mobile)await pagina.locator('#loop03MenuIntegrado').click();
    await pagina.locator('#abaTabuleiro').click();
-   await pagina.locator('#estadoTabuleiroIntegrado').filter({
-    hasText:new RegExp('Fila B: '+diagnostico.filaB)
+   await pagina.locator('#motorContadorEventos').filter({
+    hasText:/de 6 eventos neste ciclo/
    }).waitFor();
+   assert.equal(await pagina.locator('#estadoTabuleiroIntegrado').isHidden(),true,
+    'mensagem do rodapé só reaparece diante de erro real');
    assert.equal(await pagina.locator('#motorContadorEventos').innerText(),
     motorLoop.consultar().tabuleiro.eventosNoCiclo+' de 6 eventos neste ciclo');
    const centroPersistido=estadoCliente.tabuleiro?.centro;
