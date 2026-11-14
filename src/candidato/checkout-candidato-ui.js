@@ -604,7 +604,8 @@ async function atualizarPosicoes(){
    const cartao=document.createElement('article');
    cartao.className='loop03-cartao-posicao-ensaio'+
     (posicao?.pendente||registro?' loop03-cartao-posicao-pendente':'')+
-    (posicao?' loop03-status-pendente':'')+
+    (posicao?.pendente?' loop03-status-pendente':'')+
+    (posicao?.aceiteIndividualRegistrado?' loop03-cartao-posicao-aceito':'')+
     (posicao?.numero===posicaoSelecionadaMotor?' loop03-cartao-motor-selecionado':'');
    cartao.setAttribute('role','listitem');
    const cabecalho=document.createElement('div');
@@ -612,13 +613,16 @@ async function atualizarPosicoes(){
    const nome=document.createElement('h3');
    nome.textContent='Posição '+(i+1);
    const luz=document.createElement('span');
-   // Aceite de ensaio NÃO é confirmação externa; luz verde é reservada
-   // para validação real, nunca para o sandbox.
-   luz.className='loop03-posicao-luz '+(posicao||registro?
+   // O LED verde confirma APENAS CPF e termos desta posicao;
+   // nao certifica identidade externa, pagamento ou saldo disponivel.
+   const aceiteDaPosicao=posicao?.aceiteIndividualRegistrado===true;
+   luz.className='loop03-posicao-luz '+(aceiteDaPosicao?
+    'loop03-posicao-luz-verde':posicao||registro?
     'loop03-posicao-luz-vermelha':'loop03-posicao-luz-inativa');
    luz.setAttribute('role','img');
-   luz.setAttribute('aria-label',posicao||registro?
-    'Luz vermelha: confirmação pendente':'Luz apagada: posição disponível');
+   luz.setAttribute('aria-label',aceiteDaPosicao?
+    'Luz verde: CPF e termos aceitos nesta posição (ensaio)':posicao||registro?
+    'Luz vermelha: CPF e termos pendentes nesta posição':'Luz apagada: posição disponível');
    cabecalho.append(nome,luz);
    const numero=document.createElement('strong');
    numero.textContent=posicao?'#'+posicao.numero:
@@ -684,43 +688,65 @@ async function atualizarPosicoes(){
    }
    if(posicao?.aceiteIndividualRegistrado){
     const aceite=document.createElement('small');
-    aceite.textContent='Termos confirmados · verificação externa ainda pendente.';
+    aceite.textContent='CPF e termos confirmados nesta posição · validação externa ainda pendente.';
     cartao.append(aceite);
    }
    if(posicao?.pendente){
     const formulario=document.createElement('form');
     formulario.className='loop03-form-aceite-posicao';
     const explicacao=document.createElement('small');
-    explicacao.textContent=identidade.registrado?
-     'CPF já vinculado à conta (final '+identidade.cpfFinal+'). Confirme os termos desta posição.':
-     'Cadastre primeiro um CPF fictício na área Minha Conta para habilitar o aceite desta posição.';
+    explicacao.textContent='Cada posição exige CPF e aceite próprios. Use apenas CPF fictício nesta prévia.';
     formulario.append(explicacao);
-    if(identidade.registrado&&termos.disponivel){
+    if(termos.disponivel){
+     const rotuloCpf=document.createElement('label');
+     const campoCpf=document.createElement('input');
+     campoCpf.type='text';campoCpf.inputMode='numeric';
+     campoCpf.name='cpf';campoCpf.required=true;campoCpf.maxLength=14;
+     campoCpf.autocomplete='off';campoCpf.pattern='[0-9.\\-]{11,14}';
+     campoCpf.id='cpfPosicao'+posicao.numero;
+     rotuloCpf.append(document.createTextNode('CPF desta posição'),campoCpf);
      const rotulo=document.createElement('label');
      const caixa=document.createElement('input');
      caixa.type='checkbox';caixa.required=true;
      rotulo.append(caixa,document.createTextNode(
       ' Li e aceito os termos desta posição (versão '+termos.termosVersao+').'));
      const botaoAceite=document.createElement('button');
-     botaoAceite.type='submit';botaoAceite.textContent='Confirmar termos desta posição';
-     formulario.append(rotulo,botaoAceite);
+     botaoAceite.type='submit';botaoAceite.textContent='Confirmar CPF e termos';
+     formulario.append(rotuloCpf,rotulo,botaoAceite);
      formulario.addEventListener('submit',async ev=>{
       ev.preventDefault();
-      if(!caixa.checked)return;
+      if(!caixa.checked||!campoCpf.value.trim())return;
       botaoAceite.disabled=true;
+      const cpfDigitado=campoCpf.value.trim();
       try{
+       // Primeiro card pode cadastrar a custodia da conta, sem confirmar
+       // automaticamente qualquer outra posicao.
+       if(!identidade.registrado){
+        await requisitar('/contas/identidade',{
+         method:'POST',mutacao:true,
+         body:{cpf:cpfDigitado,aceiteExplicito:true}
+        });
+       }
        const resultado=await requisitar('/motor/posicoes/confirmar-ensaio',{
         method:'POST',mutacao:true,
-        body:{posicaoId:posicao.numero,versaoTermos:termos.termosVersao,
-         aceiteExplicito:true}
+        body:{posicaoId:posicao.numero,cpf:cpfDigitado,
+         versaoTermos:termos.termosVersao,aceiteExplicito:true}
        });
        if(resultado.aceiteIndividualRegistrado!==true)throw Error('ACEITE_NAO_REGISTRADO');
-       dizer('Termos confirmados para a posição #'+posicao.numero+'.');
+       campoCpf.value='';
+       dizer('CPF e termos confirmados para a posição #'+posicao.numero+'.');
        await atualizarPosicoes();
        if(aba==='conteudoTabuleiro')await atualizarTabuleiroIntegrado();
-      }catch(e){dizer('Não foi possível confirmar a posição #'+posicao.numero+': '+e.message);
-       botaoAceite.disabled=false;}
+      }catch(e){
+       campoCpf.value='';
+       dizer('Não foi possível confirmar a posição #'+posicao.numero+': '+e.message);
+       botaoAceite.disabled=false;
+      }
      });
+    }else{
+     const aviso=document.createElement('small');
+     aviso.textContent='Termos indisponíveis para confirmação desta posição.';
+     formulario.append(aviso);
     }
     cartao.append(formulario);
    }
