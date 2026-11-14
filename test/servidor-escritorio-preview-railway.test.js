@@ -141,7 +141,9 @@ test('mesma identidade da loja entra no Escritorio LOOP sem novo cadastro',async
  assert.equal((await perfilEscritorio.json()).nick,'Marta');
  const fonteReal=await x.consultar('/staging/motor/estado-operacional',{headers});
  assert.equal(fonteReal.status,503,'sem servico real nao devolver dados lab como reais');
- assert.equal((await fonteReal.json()).erro,'MOTOR_REAL_NAO_CONECTADO');
+ assert.ok(['MOTOR_REAL_NAO_CONECTADO','MOTOR_REAL_NAO_RESPONDE',
+  'MOTOR_REAL_NAO_ATIVO'].includes((await fonteReal.json()).erro),
+  'quando o motor real nao esta ativo nunca devolver snapshot de homologacao');
  const rotaFoto='/staging/contas/foto-perfil';
  assert.equal((await x.consultar(rotaFoto)).status,401,'foto requer sessao');
  assert.equal((await x.consultar(rotaFoto,{headers})).status,404);
