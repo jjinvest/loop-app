@@ -6,7 +6,18 @@ const {randomUUID,randomBytes,randomInt,createHash,createHmac,timingSafeEqual,
  createCipheriv,createDecipheriv,scrypt}=require('node:crypto');
 const {promisify}=require('node:util');
 const derivar=promisify(scrypt);
-const NICK=/^[A-Za-z]{1,12}$/;
+// Nicks novos: 1 a 9 caracteres. Login e links legados ASCII de ate 12
+// permanecem validos; nao truncar ou renomear identidades existentes.
+const NICK_NOVO=/^[A-Za-zÀ-ÖØ-öø-ÿ0-9]+(?: [A-Za-zÀ-ÖØ-öø-ÿ0-9]+)*$/u;
+const NICK_LEGADO=/^[A-Za-z]{1,12}$/;
+function nickReservado(nick){
+ const base=nick.normalize('NFD').replace(/\p{M}/gu,'')
+  .toLowerCase().replace(/ /g,'');
+ const traduz=s=>s.replace(/3/g,'e').replace(/4/g,'a')
+  .replace(/8/g,'e');
+ return [base,traduz(base.replace(/1/g,'i')),
+  traduz(base.replace(/1/g,'l'))].some(x=>x.includes('vilela'));
+}
 const NOME=/^[\p{L}\p{M} .'-]{2,90}$/u;
 const EMAIL=/^[^\s@]{1,64}@[^\s@]{1,180}$/;
 const SESSAO=/^[a-f0-9]{64}$/;
@@ -39,8 +50,11 @@ function comparar(a,b){
     !/^[a-f0-9]+$/.test(a)||!/^[a-f0-9]+$/.test(b))return false;
  return timingSafeEqual(Buffer.from(a,'hex'),Buffer.from(b,'hex'));
 }
-function nickValido(nick){
- if(typeof nick!=='string'||!NICK.test(nick))falha('NICK_INVALIDO');
+function nickValido(nick,{novo=false}={}){
+ if(typeof nick!=='string'||nick!==nick.normalize('NFC')||
+    !(NICK_NOVO.test(nick)&&nick.length<=9) &&
+    !(novo===false&&NICK_LEGADO.test(nick)))
+  falha('NICK_INVALIDO');
  return nick;
 }
 function emailValido(email){
@@ -104,7 +118,7 @@ class ContaUnicaCandidataSQLite{
   banco.exec([
    'CREATE TABLE IF NOT EXISTS akitemm_conta_unica_candidata(',
    'id TEXT PRIMARY KEY NOT NULL,',
-   'nick TEXT NOT NULL UNIQUE COLLATE NOCASE,',
+   'nick TEXT NOT NULL UNIQUE COLLATE BINARY,',
    'email_hmac TEXT NOT NULL UNIQUE,',
    'nome_iv TEXT NOT NULL,nome_cifra TEXT NOT NULL,nome_tag TEXT NOT NULL,',
    'email_iv TEXT NOT NULL,email_cifra TEXT NOT NULL,email_tag TEXT NOT NULL,',
@@ -145,6 +159,47 @@ class ContaUnicaCandidataSQLite{
    if(!colunas.has(col))banco.exec(
     'ALTER TABLE akitemm_conta_unica_candidata ADD COLUMN '+col+' TEXT'
    );
+  }
+  // A versao anterior tinha UNIQUE NOCASE: isso impediria JoSe/Jose
+  // como contas distintas. Recriar APENAS a tabela de contas, dentro
+  // de uma transacao, copiando todos os campos antigos sem perder
+  // titular, sessoes, pedidos, links, senhas ou triggers.
+  const sqlNick=this.banco.prepare(
+   "SELECT sql FROM sqlite_schema WHERE type='table' AND name='akitemm_conta_unica_candidata'"
+  ).get()?.sql;
+  if(typeof sqlNick!=='string')falha('ESTRUTURA_CONTA_INCOMPATIVEL');
+  if(sqlNick.includes('nick TEXT NOT NULL UNIQUE COLLATE NOCASE')){
+   const fkAtiva=banco.prepare('PRAGMA foreign_keys').get().foreign_keys===1;
+   if(fkAtiva)banco.exec('PRAGMA foreign_keys=OFF');
+   try{
+    banco.exec('BEGIN IMMEDIATE');
+    const dependencias=banco.prepare([
+     "SELECT sql FROM sqlite_schema WHERE tbl_name='akitemm_conta_unica_candidata'",
+     "AND type IN ('index','trigger') AND sql IS NOT NULL ORDER BY name"
+    ].join(' ')).all().map(x=>x.sql);
+    const antigo=/^CREATE TABLE(?: IF NOT EXISTS)?\s+("?akitemm_conta_unica_candidata"?)/i;
+    if(!antigo.test(sqlNick))falha('ESTRUTURA_CONTA_INCOMPATIVEL');
+    const sqlNovo=sqlNick.replace(antigo,
+     'CREATE TABLE akitemm_conta_unica_nick_migrando')
+     .replace('nick TEXT NOT NULL UNIQUE COLLATE NOCASE',
+      'nick TEXT NOT NULL UNIQUE COLLATE BINARY');
+    banco.exec(sqlNovo);
+    const colunas=banco.prepare(
+     "PRAGMA table_info('akitemm_conta_unica_candidata')"
+    ).all().map(x=>'"'+x.name.replace(/"/g,'""')+'"').join(',');
+    banco.exec('INSERT INTO akitemm_conta_unica_nick_migrando ('+
+     colunas+') SELECT '+colunas+' FROM akitemm_conta_unica_candidata');
+    banco.exec('DROP TABLE akitemm_conta_unica_candidata');
+    banco.exec('ALTER TABLE akitemm_conta_unica_nick_migrando '+
+     'RENAME TO akitemm_conta_unica_candidata');
+    for(const sql of dependencias)banco.exec(sql);
+    if(banco.prepare('PRAGMA foreign_key_check').all().length)
+     falha('MIGRACAO_NICK_VIOLA_REFERENCIAS');
+    banco.exec('COMMIT');
+   }catch(err){banco.exec('ROLLBACK');throw err;}
+   finally{if(fkAtiva)banco.exec('PRAGMA foreign_keys=ON');}
+  }else if(!sqlNick.includes('nick TEXT NOT NULL UNIQUE COLLATE BINARY')){
+   falha('ESTRUTURA_NICK_INCOMPATIVEL');
   }
   // Migrar sem perder titular, pedidos, links ou hashes de credenciais.
   banco.exec('BEGIN IMMEDIATE');
@@ -252,7 +307,8 @@ class ContaUnicaCandidataSQLite{
  async cadastrar({nome,nick,email,telefone=null,senha,confirmarSenha=null,
   aceiteExplicito=false,termosVersao,termosTexto,onCriada=null}={}){
   if(process.env.NODE_ENV==='production')falha('CANDIDATO_NAO_HOMOLOGADO');
-  const nickMin=nickValido(nick),emailMin=emailValido(email);
+  const nickMin=nickValido(nick,{novo:true}),emailMin=emailValido(email);
+  if(nickReservado(nickMin))falha('NICK_RESERVADO');
   if(typeof nome!=='string'||!NOME.test(nome.trim()))
    falha('NOME_INVALIDO');
   if(!senhaValida(senha))falha('SENHA_INVALIDA');
@@ -283,7 +339,7 @@ class ContaUnicaCandidataSQLite{
   // definitiva contra cadastros concorrentes com o mesmo nick ou e-mail.
   if(this.banco.prepare([
     'SELECT 1 FROM akitemm_conta_unica_candidata',
-    'WHERE nick=? COLLATE NOCASE OR email_hmac=? LIMIT 1'
+    'WHERE nick=? COLLATE BINARY OR email_hmac=? LIMIT 1'
    ].join(' ')).get(nickMin,emailHmac))
    falha('CADASTRO_JA_EXISTENTE');
   // Cadastro e origem da indicacao sao UMA operacao: se vincular equipe
@@ -415,6 +471,9 @@ class ContaUnicaCandidataSQLite{
   if(!original)falha('SESSAO_OU_CSRF_INVALIDO');
   if(novo.toLowerCase()!==original.nick.toLowerCase())
    falha('NICK_SOMENTE_GRAFIA');
+  // VILELA so pode variar de caixa na conta que ja possui esse nick.
+  if(nickReservado(novo)&&!nickReservado(original.nick))
+   falha('NICK_RESERVADO');
   if(original.bloqueado_ate>this._agora())
    falha('CONTA_TEMPORARIAMENTE_BLOQUEADA');
   const verificado=await hashSenha(senhaAtual,original.senha_salt);
