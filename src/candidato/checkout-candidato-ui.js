@@ -71,9 +71,35 @@ async function requisitar(rota,{method='GET',body,chave,mutacao=false}={}){
  }
  return dados;
 }
+function fecharDadosRodape(){
+ $('loop03DadosRapidos').hidden=true;
+ $('loop03AbrirPerfil').setAttribute('aria-expanded','false');
+ for(const id of ['loop03PerfilNome','loop03PerfilNick',
+  'loop03PerfilEmail','loop03PerfilCpf'])$(id).textContent='—';
+ $('loop03PerfilLinhaCpf').hidden=true;
+}
+async function alternarDadosRodape(){
+ const painel=$('loop03DadosRapidos'),btn=$('loop03AbrirPerfil');
+ if(!painel.hidden){fecharDadosRodape();return;}
+ painel.hidden=false;btn.setAttribute('aria-expanded','true');
+ try{
+  const d=await requisitar('/contas/resumo-rodape');
+  if(painel.hidden)return;
+  for(const [id,chave] of [['loop03PerfilNome','nome'],
+   ['loop03PerfilNick','nick'],['loop03PerfilEmail','email']])
+    $(id).textContent=typeof d[chave]==='string'?d[chave]:'—';
+  const ok=d.cpfConfirmado===true&&
+   typeof d.cpfExibicao==='string'&&d.cpfExibicao.length>0;
+  $('loop03PerfilLinhaCpf').hidden=!ok;
+  $('loop03PerfilCpf').textContent=ok?d.cpfExibicao:'—';
+ }catch{
+  if(!painel.hidden)$('loop03PerfilNome').textContent='Dados indisponíveis.';
+ }
+}
 function mostrarSessao(ativa){
  document.body.classList.toggle('loop03-logado',ativa);
  if(!ativa)limparFotoPerfil();
+ if(!ativa)fecharDadosRodape();
  if(!ativa)fecharMenuIntegrado();
  if(!ativa){$('painelVerificarEmail').hidden=true;$('painelIdentidadeTeste').hidden=true;
    $('cpfTeste').value='';$('aceiteCpfTeste').checked=false;}
@@ -883,8 +909,11 @@ function limparFotoPerfil(){
  versaoCarregamentoFoto++;
  if(fotoPerfilUrl){URL.revokeObjectURL(fotoPerfilUrl);fotoPerfilUrl=null;}
  const imagem=$('loop03ImagemFotoTopo'),vazio=$('loop03FotoSemImagem');
+ const rodape=$('loop03ImagemFotoRodape'),icone=$('loop03AvatarRodapeVazio');
  if(imagem){imagem.hidden=true;imagem.removeAttribute('src');}
+ if(rodape){rodape.hidden=true;rodape.removeAttribute('src');}
  if(vazio)vazio.hidden=false;
+ if(icone)icone.hidden=false;
 }
 async function atualizarFotoPerfil(){
  const ordem=++versaoCarregamentoFoto;
@@ -902,6 +931,9 @@ async function atualizarFotoPerfil(){
   $('loop03ImagemFotoTopo').src=url;
   $('loop03ImagemFotoTopo').hidden=false;
   $('loop03FotoSemImagem').hidden=true;
+  $('loop03ImagemFotoRodape').src=url;
+  $('loop03ImagemFotoRodape').hidden=false;
+  $('loop03AvatarRodapeVazio').hidden=true;
  }catch{/* Sem foto, o topo continua com o ícone neutro. */}
 }
 async function salvarFotoPerfil(e){
@@ -1120,6 +1152,7 @@ $('arquivoFotoPerfil').addEventListener('change',ev=>{
  if(ev.target.files?.length)void salvarFotoPerfil({preventDefault(){}});
 });
 $('loop03AlterarFotoTopo').addEventListener('click',()=>$('arquivoFotoPerfil').click());
+$('loop03AbrirPerfil').addEventListener('click',()=>void alternarDadosRodape());
 $('mudarParaLogin').addEventListener('click',()=>selecionarTelaAcesso('login'));
 $('abrirRecuperacao').addEventListener('click',()=>{
  $('formConcluirRecuperacao').hidden=true;

@@ -410,6 +410,19 @@ function criarAppLojaEscritorioCandidato({banco,repositorioCatalogo,
    temFotoPerfil:fotoPerfil.existe(s.titularId),
    confirmacaoEmailDisponivel:provasEmail!==null});
  });
+ app.get('/staging/contas/resumo-rodape',(req,res)=>{
+  const s=sessao(req);
+  if(!s)return res.status(401).json({erro:'SESSAO_AUSENTE'});
+  try{
+   const p=contas.perfil(s.titularId);
+   const email=contas.emailParaEntrega(s.titularId);
+   if(!p||typeof email!=='string')throw Error('DADOS_INDISPONIVEIS');
+   // CPF anterior de identificacao da conta NAO e prova de posicao verde.
+   return res.set('Cache-Control','private, no-store').json({
+    nome:p.nome,nick:p.nick,email,cpfConfirmado:false,cpfExibicao:null
+   });
+  }catch{return res.status(503).json({erro:'DADOS_INDISPONIVEIS'});}
+ });
  app.get('/staging/contas/foto-perfil',(req,res)=>{
   const s=sessao(req);
   if(!s)return res.status(401).json({erro:'SESSAO_AUSENTE'});

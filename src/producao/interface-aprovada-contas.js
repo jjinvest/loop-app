@@ -59,6 +59,7 @@
   $('painelRecuperacao').hidden=t!=='recuperacao';
   $('painelConta').hidden=true;
   document.body.classList.remove('loop03-logado');
+  fecharDadosRodapeReal();
   $('erroLogin').hidden=true;$('erroCadastro').hidden=true;
   const aviso=$('cadastroIndicadorAviso');
   if(aviso){
@@ -68,6 +69,37 @@
     '. A indicação só será válida após uma compra confirmada.':'';
   }
  }
+ function fecharDadosRodapeReal(){
+  $('loop03DadosRapidos').hidden=true;
+  $('loop03AbrirPerfil').setAttribute('aria-expanded','false');
+  for(const id of ['loop03PerfilNome','loop03PerfilNick',
+   'loop03PerfilEmail','loop03PerfilCpf'])$(id).textContent='—';
+  $('loop03PerfilLinhaCpf').hidden=true;
+ }
+ async function alternarDadosRodapeReal(){
+  const painel=$('loop03DadosRapidos');
+  if(!painel.hidden){fecharDadosRodapeReal();return;}
+  painel.hidden=false;$('loop03AbrirPerfil').setAttribute('aria-expanded','true');
+  try{
+   const d=await requisitar('/meus-dados');
+   if(painel.hidden)return;
+   for(const [id,chave] of [['loop03PerfilNome','nome'],
+    ['loop03PerfilNick','nick'],['loop03PerfilEmail','email']])
+    $(id).textContent=typeof d[chave]==='string'?d[chave]:'—';
+   const ok=d.cpfConfirmado===true&&
+    typeof d.cpfExibicao==='string'&&d.cpfExibicao.length>0;
+   $('loop03PerfilLinhaCpf').hidden=!ok;
+   $('loop03PerfilCpf').textContent=ok?d.cpfExibicao:'—';
+  }catch{
+   if(!painel.hidden)$('loop03PerfilNome').textContent='Dados indisponíveis.';
+  }
+ }
+ function sincronizarFotoRodapeReal(){
+  const topo=$('loop03ImagemFotoTopo'),rodape=$('loop03ImagemFotoRodape');
+  const ok=!topo.hidden&&!!topo.getAttribute('src');
+  if(ok)rodape.src=topo.src;else rodape.removeAttribute('src');
+  rodape.hidden=!ok;$('loop03AvatarRodapeVazio').hidden=ok;
+ }
  function painelConta(s){
   csrf=s.csrf;
   $('painelLogin').hidden=true;
@@ -75,6 +107,8 @@
   $('painelRecuperacao').hidden=true;
   $('painelConta').hidden=false;
   document.body.classList.add('loop03-logado');
+  fecharDadosRodapeReal();
+  sincronizarFotoRodapeReal();
   nickResumoReal=s.nick;
   $('loop03NickIntegrado').textContent=s.nick;
   $('perfilCliente').textContent='Nick: '+s.nick+
@@ -901,6 +935,11 @@
  $('mudarParaLogin').addEventListener('click',()=>mostrarLogin('login'));
  $('abrirRecuperacao').addEventListener('click',()=>mostrarLogin('recuperacao'));
  $('voltarLogin').addEventListener('click',()=>mostrarLogin('login'));
+ $('loop03AbrirPerfil').addEventListener('click',()=>void alternarDadosRodapeReal());
+ new MutationObserver(sincronizarFotoRodapeReal).observe($('loop03ImagemFotoTopo'),{
+  attributes:true,attributeFilter:['src','hidden']
+ });
+ sincronizarFotoRodapeReal();
  $('sair').addEventListener('click',async()=>{
   try{
    await requisitar('/sair',{method:'POST',body:{},csrfObrigatorio:true});

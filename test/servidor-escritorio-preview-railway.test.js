@@ -806,3 +806,42 @@ test('Financeiro diferencia saldo selecionado do total, mantendo valor minimo no
  assert.match(js,/if\(aba==='conteudoFinanceiro'\)void finAtualizar\(\)/);
  assert.match(js,/posicaoSelecionadaMotor=pos\.numero/);
 });
+
+test('rodape Minha conta consulta dados do titular e sincroniza foto, sem CPF nao confirmado',async t=>{
+ const x=await preparar(t);
+ const pagina=await x.consultar('/minha-conta');
+ const html=await pagina.text();
+ for(const id of ['loop03AbrirPerfil','loop03ImagemFotoRodape',
+  'loop03DadosRapidos','loop03PerfilNome','loop03PerfilNick',
+  'loop03PerfilEmail','loop03PerfilLinhaCpf'])
+  assert.match(html,new RegExp('id="'+id+'"'));
+ assert.match(html,/id="loop03DadosRapidos"[^>]*hidden>/);
+ assert.match(html,/id="loop03PerfilLinhaCpf" hidden>/);
+ const script=await (await x.consultar('/staging/assets/cliente.js')).text();
+ assert.match(script,/alternarDadosRodape/);
+ assert.match(script,/requisitar\('\/contas\/resumo-rodape'\)/);
+ assert.match(script,/\$\('loop03ImagemFotoRodape'\)\.src=url/);
+ assert.equal((await x.consultar('/staging/contas/resumo-rodape')).status,401);
+ const reg=await x.consultar('/staging/contas/cadastrar',{
+  method:'POST',headers:{'Content-Type':'application/json'},
+  body:JSON.stringify({nome:'Pessoa Conta',nick:'ContaRodape',
+   email:'contarodape@example.invalid',senha:'SenhaContaRodape2026!',
+   aceiteExplicito:true})
+ });
+ assert.equal(reg.status,201);
+ const login=await x.consultar('/staging/contas/entrar',{
+  method:'POST',headers:{'Content-Type':'application/json'},
+  body:JSON.stringify({nick:'ContaRodape',senha:'SenhaContaRodape2026!'})
+ });
+ assert.equal(login.status,200);
+ const cookie=login.headers.getSetCookie().find(z=>z.startsWith('loop_candidato_s='));
+ const perfil=await x.consultar('/staging/contas/resumo-rodape',{
+  headers:{Cookie:cookie.split(';')[0]}
+ });
+ assert.equal(perfil.status,200);
+ assert.equal(perfil.headers.get('cache-control'),'private, no-store');
+ assert.deepEqual(await perfil.json(),{
+  nome:'Pessoa Conta',nick:'ContaRodape',email:'contarodape@example.invalid',
+  cpfConfirmado:false,cpfExibicao:null
+ });
+});

@@ -105,9 +105,28 @@
 <button type="button" role="tab" id="abaLinks" aria-controls="conteudoLinks" aria-selected="false" tabindex="-1">Meus Links</button>
 <button type="button" role="tab" id="abaConta" aria-controls="conteudoConta" aria-selected="false" tabindex="-1">Minha Conta</button>
 </nav>
-    <div class="loop03-identidade" aria-live="polite">
-     <span class="loop03-avatar" aria-hidden="true">👤</span>
-     <span><strong>Minha conta</strong><small id="loop03NickIntegrado">Conta autenticada</small></span>
+    <div class="loop03-identidade">
+     <button type="button" id="loop03AbrirPerfil" class="loop03-perfil-atalho"
+      aria-controls="loop03DadosRapidos" aria-expanded="false"
+      aria-label="Ver meus dados cadastrados">
+      <span class="loop03-avatar" aria-hidden="true">
+       <img id="loop03ImagemFotoRodape" alt="" hidden>
+       <span id="loop03AvatarRodapeVazio">👤</span>
+      </span>
+      <span class="loop03-perfil-legenda"><strong>Minha conta</strong>
+       <small id="loop03NickIntegrado">Conta autenticada</small></span>
+     </button>
+     <section id="loop03DadosRapidos" class="loop03-dados-rapidos"
+       aria-label="Resumo dos meus dados" hidden>
+      <dl>
+       <div><dt>Nome</dt><dd id="loop03PerfilNome">—</dd></div>
+       <div><dt>Nick</dt><dd id="loop03PerfilNick">—</dd></div>
+       <div><dt>E-mail</dt><dd id="loop03PerfilEmail">—</dd></div>
+       <div id="loop03PerfilLinhaCpf" hidden>
+        <dt>CPF confirmado</dt><dd id="loop03PerfilCpf">—</dd>
+       </div>
+      </dl>
+     </section>
     </div>
     <button type="button" id="sair" class="loop03-sair">Encerrar sessão</button>
    </aside>

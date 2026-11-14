@@ -704,3 +704,43 @@ body.loop03-logado main>.mensagem-pagina{margin:0 0 .75rem}
   font-size:.84rem;
  }
 }
+
+/* Rodapé Minha Conta: resumo privado e foto sincronizada ao topo. */
+.cliente-integrado .loop03-sidebar .loop03-identidade{
+ display:flex;flex-direction:column;align-items:stretch;gap:10px;min-width:0;
+}
+.cliente-integrado .loop03-perfil-atalho{
+ display:flex;align-items:center;gap:12px;width:100%;min-width:0;
+ padding:5px 3px;border:0;box-shadow:none;background:transparent;
+ text-align:left;color:inherit;cursor:pointer;border-radius:12px;
+}
+.cliente-integrado .loop03-perfil-atalho:focus-visible{
+ outline:2px solid #f0cd83;outline-offset:3px;
+}
+.cliente-integrado .loop03-perfil-legenda{min-width:0;overflow-wrap:anywhere}
+.cliente-integrado .loop03-perfil-atalho .loop03-avatar{
+ width:64px;height:64px;flex:0 0 64px;border:2px solid #c7a363;
+ border-radius:50%;overflow:hidden;display:grid;place-items:center;
+ background:#302c39;
+}
+.cliente-integrado .loop03-perfil-atalho .loop03-avatar img{
+ width:100%;height:100%;display:block;object-fit:cover;border-radius:50%;
+}
+.cliente-integrado .loop03-perfil-atalho .loop03-avatar img[hidden],
+.cliente-integrado .loop03-perfil-atalho .loop03-avatar span[hidden]{display:none}
+.cliente-integrado .loop03-dados-rapidos{
+ width:100%;min-width:0;max-width:100%;border:1px solid #a18551;
+ border-radius:13px;padding:12px;background:linear-gradient(130deg,#242038,#131923);
+}
+.cliente-integrado .loop03-dados-rapidos[hidden]{display:none}
+.cliente-integrado .loop03-dados-rapidos dl{
+ margin:0;display:grid;gap:10px;
+}
+.cliente-integrado .loop03-dados-rapidos dl>div{min-width:0}
+.cliente-integrado .loop03-dados-rapidos dt{
+ color:#e7c887;font-size:.75rem;font-weight:700;
+}
+.cliente-integrado .loop03-dados-rapidos dd{
+ margin:3px 0 0;color:#fff4d9;font-size:.88rem;
+ overflow-wrap:anywhere;word-break:break-word;
+}
