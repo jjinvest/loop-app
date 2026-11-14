@@ -542,6 +542,14 @@ async function iniciar({env=process.env}={}){
  return {gateway,interno,db,agendador,backupOffsite,encerrar};
 }
 if(require.main===module)iniciar().catch(e=>{
+ // Diagnostico restrito: local do erro e categoria SQL, sem dados de clientes.
+ const origem=String(e.stack||'').split('\n').slice(1,3)
+  .map(x=>x.trim().replace(/\/app\//g,'')).join(' | ');
+ const msg=String(e.message||'');
+ const categoria=msg.match(/(?:no such (?:table|column)|foreign key mismatch|database is locked|cannot start a transaction|already exists|syntax error|trigger|constraint failed|malformed database schema|SQL logic error|readonly|not an error)/i)?.[0]||'OUTRO';
+ process.stderr.write('AKITEMM_INIT_TIPO='+String(e.name||'ERRO').slice(0,48)+'\n');
+ process.stderr.write('AKITEMM_INIT_CATEGORIA='+categoria+'\n');
+ process.stderr.write('AKITEMM_INIT_ORIGEM='+origem.slice(0,180)+'\n');
  process.stderr.write('AKITEMM_PREVIA_BLOQUEADA='+
   String(e.codigo||'ERRO_DE_INICIALIZACAO')+'\n');
  process.exitCode=1;
