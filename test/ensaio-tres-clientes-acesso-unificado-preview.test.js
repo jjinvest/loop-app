@@ -78,6 +78,7 @@ test('ensaio de tres titulares: lojas, escritorios, links e admin isolados',asyn
  const usuarios={ana:await entrar('Ana'),bia:await entrar('Bia'),
   ceci:await entrar('Ceci')};
  const ids={ana:ana.titularId,bia:bia.titularId,ceci:ceci.titularId};
+ const grafias={ana:'Ana',bia:'Bia',ceci:'Ceci'};
  for(const [nick,u] of Object.entries(usuarios)){
   assert.equal(u.id,ids[nick]);
   const headers={Cookie:u.cookie};
@@ -85,10 +86,10 @@ test('ensaio de tres titulares: lojas, escritorios, links e admin isolados',asyn
   assert.equal(office.status,200);
   const identidade=await office.json();
   assert.equal(identidade.titularId,ids[nick]);
-  assert.equal(identidade.nick,nick);
+  assert.equal(identidade.nick,grafias[nick]);
   const loja=await chamar('/staging/vitrine/minha-conta',{headers});
   assert.equal(loja.status,200);
-  assert.equal((await loja.json()).conta.nick,nick);
+  assert.equal((await loja.json()).conta.nick,grafias[nick]);
   const atalho=await chamar('/loja',{headers});
   assert.equal(atalho.status,302);
   assert.equal(atalho.headers.get('location'),'/staging/loja');
@@ -102,7 +103,7 @@ test('ensaio de tres titulares: lojas, escritorios, links e admin isolados',asyn
  };
  const equipeAna=await consultarEquipe(usuarios.ana);
  assert.equal(equipeAna.total,2,'dois links do mesmo indicador unificam equipe');
- assert.deepEqual(equipeAna.cadastros.map(p=>p.nick).sort(),['bia','ceci']);
+ assert.deepEqual(equipeAna.cadastros.map(p=>p.nick).sort(),['Bia','Ceci']);
  assert.equal((await consultarEquipe(usuarios.bia)).total,0);
  assert.equal((await consultarEquipe(usuarios.ceci)).total,0);
  // Um pedido ficticio de Ana nao pode aparecer em "Meus Pedidos" de Bia
