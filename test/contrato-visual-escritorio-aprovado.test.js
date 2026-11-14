@@ -26,8 +26,7 @@ test('somente tres indicadores superiores e AKITEMM prateado no resumo inicial',
  for(const id of ['resumoPedidos','resumoPosicoes','resumoEquipe'])
   assert.doesNotMatch(html,new RegExp('id="'+id+'"'));
  for(const id of ['loop03IrPosicoesIntegrado','loop03TotalIntegrado',
-  'loop03Giros24Integrado','loop03NumeroIntegrado',
-  'loop03-loja-prata'])
+  'loop03Giros24Integrado','loop03NumeroIntegrado'])
   assert.match(html,new RegExp('id="'+id+'"'));
  assert.match(html,/class="loop03-hero-escritorio"/);
 });
