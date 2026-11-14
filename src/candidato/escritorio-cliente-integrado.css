@@ -114,7 +114,7 @@ body.loop03-logado main>.mensagem-pagina{margin:0 0 .75rem}
 }
 
 /* Foto pessoal no antigo aro decorativo do topo; restante da capa aprovado. */
-.cliente-integrado .loop03-banner-topo::before{display:none}
+.cliente-integrado .loop03-banner-topo:has(.loop03-foto-topo)::before{display:none}
 .cliente-integrado .loop03-foto-topo{
  position:relative;flex:0 0 auto;display:grid;place-items:center;
  width:clamp(78px,15vw,128px);height:clamp(78px,15vw,128px);
