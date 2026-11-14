@@ -95,7 +95,9 @@ class TitularidadeCpfTermosCandidato{
   if(typeof now!=='string'||!Number.isFinite(Date.parse(now)))
    falha('RELOGIO_INVALIDO');
   const hash=digestCpf(normalized,this.hmac);
-  this.banco.exec('BEGIN IMMEDIATE');
+  // Se o cadastro ja abriu transacao, participa dela sem COMMIT parcial.
+  const jaEmTransacao=this.banco.isTransaction===true;
+  if(!jaEmTransacao)this.banco.exec('BEGIN IMMEDIATE');
   try{
    const old=this.banco.prepare([
     'SELECT titular_id,cpf_hmac,termos_versao,termos_sha256',
@@ -107,7 +109,7 @@ class TitularidadeCpfTermosCandidato{
       old[0].cpf_hmac!==hash||old[0].termos_versao!==termosVersao||
       old[0].termos_sha256!==termosSha)
      falha('CPF_OU_TITULAR_JA_VINCULADO');
-    this.banco.exec('COMMIT');
+    if(!jaEmTransacao)this.banco.exec('COMMIT');
     return {repetido:true,estado:'NAO_VERIFICADA_EXTERNAMENTE',
      permitidoCriarPosicoes:false,permitidoSacar:false,
      termosVersao,termosSha256:termosSha};
@@ -123,11 +125,11 @@ class TitularidadeCpfTermosCandidato{
    ].join(' ')).run('identidade-'+randomUUID(),titularId,hash,
     encrypted.iv,encrypted.ciphertext,encrypted.tag,
     termosVersao,termosSha,now);
-   this.banco.exec('COMMIT');
+   if(!jaEmTransacao)this.banco.exec('COMMIT');
    return {repetido:false,estado:'NAO_VERIFICADA_EXTERNAMENTE',
     permitidoCriarPosicoes:false,permitidoSacar:false,
     termosVersao,termosSha256:termosSha};
-  }catch(e){this.banco.exec('ROLLBACK');throw e;}
+  }catch(e){if(!jaEmTransacao)this.banco.exec('ROLLBACK');throw e;}
  }
  conferirCpfTitular({titularId,cpf}={}){
   if(typeof titularId!=='string'||!ID.test(titularId))
