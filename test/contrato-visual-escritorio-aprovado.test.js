@@ -19,7 +19,7 @@ test('TRAVA: os 24 HTML/CSS aprovados não mudam sem renovar autorização',()=>
    'ALTERACAO_VISUAL_NAO_AUTORIZADA: '+p);
  }
 });
-test('somente tres indicadores superiores e quatro botões no resumo inicial',()=>{
+test('somente tres indicadores superiores e AKITEMM prateado no resumo inicial',()=>{
  const html=ler('src/candidato/checkout-candidato-ui.html');
  assert.equal((html.match(/class="loop03-indicador"/g)||[]).length,3);
  assert.doesNotMatch(html,/class="indicadores-cliente"/);
@@ -27,7 +27,7 @@ test('somente tres indicadores superiores e quatro botões no resumo inicial',()
   assert.doesNotMatch(html,new RegExp('id="'+id+'"'));
  for(const id of ['loop03IrPosicoesIntegrado','loop03TotalIntegrado',
   'loop03Giros24Integrado','loop03NumeroIntegrado',
-  'barra-conta'])
+  'loop03-loja-prata'])
   assert.match(html,new RegExp('id="'+id+'"'));
  assert.match(html,/class="loop03-hero-escritorio"/);
 });
