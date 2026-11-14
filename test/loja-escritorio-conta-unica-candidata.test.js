@@ -333,6 +333,15 @@ test('migracao de NOCASE para nick exato preserva titular legado de 12 caractere
   db.exec('COMMIT');
  }catch(e){db.exec('ROLLBACK');throw e;}
  finally{db.exec('PRAGMA foreign_keys=ON');}
+ // A previa persistida tem dependencias externas, ausentes na base vazia.
+ // Elas precisam continuar funcionando apos a migracao nao destrutiva.
+ db.exec([
+  'CREATE TRIGGER checagem_externa_conta AFTER UPDATE ON',
+  'akitemm_sessoes_candidatas BEGIN SELECT id',
+  'FROM akitemm_conta_unica_candidata LIMIT 1; END;'
+ ].join(' '));
+ db.exec('CREATE VIEW visao_externa_conta AS SELECT id,nick '+
+  'FROM akitemm_conta_unica_candidata');
  const novo=mk();
  const atual=novo.perfil(criada.titularId);
  assert.equal(atual.nick,'Alessandrita','mantem 12 caracteres legados');
@@ -350,5 +359,11 @@ test('migracao de NOCASE para nick exato preserva titular legado de 12 caractere
   /NICK_INVALIDO/);
  assert.deepEqual(db.prepare('PRAGMA foreign_key_check').all(),[]);
  assert.equal(db.prepare('PRAGMA integrity_check').get().integrity_check,'ok');
+ assert.equal(db.prepare('SELECT nick FROM visao_externa_conta WHERE id=?').get(
+  criada.titularId).nick,'Alessandrita');
+ const gatilho=db.prepare(
+  "SELECT COUNT(*) AS n FROM sqlite_schema WHERE name='checagem_externa_conta'"
+ ).get();
+ assert.equal(gatilho.n,1,'trigger externa restaurada integralmente');
  db.close();
 });
