@@ -97,7 +97,7 @@ test('conta única prepara checkout e Escritório com o MESMO titular, sem Pix',
  assert.deepEqual([linkA.body.linkLoja,linkA.body.linkEscritorio],[
   '/loja/Alice','/escritorio/Alice'
  ]);
- assert.equal(linkB.body.linkLoja,'/loja/bia');
+ assert.equal(linkB.body.linkLoja,'/loja/Bia');
  assert.equal(linkA.body.ativo,true);
  assert.equal(linkA.body.apenasEnsaio,true);
  assert.equal(linkA.body.semComissaoReal,true);
@@ -128,7 +128,7 @@ test('conta única prepara checkout e Escritório com o MESMO titular, sem Pix',
  assert.equal(cpfA.body.cpfFinal,'25');
  assert.equal(JSON.stringify(cpfA.body).includes('52998224725'),false);
 
- assert.equal(me.body.nick,'alice');
+ assert.equal(me.body.nick,'Alice');
  assert.equal(me.body.emailVerificado,false);
  assert.equal((await enviar(base,'/staging/checkout/finalizar',{
   method:'POST',cookie:cookieA
@@ -177,7 +177,7 @@ test('conta única prepara checkout e Escritório com o MESMO titular, sem Pix',
  assert.equal(office.body.escritorioFonteUnica,true);
  assert.equal(office.body.contasCandidatas,2);
  assert.equal(office.body.resumo.prepedidosStaging,1);
- assert.equal(office.body.pedidos[0].nick,'alice');
+ assert.equal(office.body.pedidos[0].nick,'Alice');
  assert.equal(office.body.pedidos[0].cpfDeclaradoNoEnsaio,true);
  assert.equal(office.body.pedidos[0].identidadeExternaVerificada,false);
  assert.equal(office.body.pedidos[0].titularId,alice.body.titularId);
