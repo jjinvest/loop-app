@@ -297,3 +297,58 @@ test('nick reservado VILELA nao aceita imitacoes, e variantes distintas sao inde
  assert.equal(link.status,200,JSON.stringify(link.body));
  assert.equal(link.body.linkLoja,'/loja/JOSÉ');
 });
+
+test('migracao de NOCASE para nick exato preserva titular legado de 12 caracteres e sessao',async()=>{
+ const {ContaUnicaCandidataSQLite}=require('../src/domain/conta-unica-candidata-sqlite');
+ const db=new DatabaseSync(':memory:');
+ db.exec('PRAGMA foreign_keys=ON');
+ const chaveEmail=randomBytes(32),chaveCifra=randomBytes(32);
+ const mk=()=>new ContaUnicaCandidataSQLite({banco:db,chaveEmail,chaveCifra});
+ const contas=mk(),senha='SenhaFicticiaDemonstracao2026!';
+ const criada=await contas.cadastrar({nome:'Titular Antigo',
+  nick:'Alessandr',email:'legacy@example.invalid',senha,
+  termosVersao,termosTexto,aceiteExplicito:true});
+ const login=await contas.entrar({nick:'Alessandr',senha});
+ // Simula restauracao de uma versao anterior com coluna UNIQUE NOCASE
+ // e titular longo, preservando todos os campos criptografados/sessoes.
+ db.exec('PRAGMA foreign_keys=OFF; BEGIN IMMEDIATE');
+ try{
+  db.exec('DROP TRIGGER IF EXISTS conta_candidata_nick_mesmas_letras');
+  db.prepare('UPDATE akitemm_conta_unica_candidata SET nick=? WHERE id=?')
+   .run('Alessandrita',criada.titularId);
+  const sql=db.prepare(
+   "SELECT sql FROM sqlite_schema WHERE type='table' AND name='akitemm_conta_unica_candidata'"
+  ).get().sql;
+  db.exec(sql.replace('akitemm_conta_unica_candidata(',
+   'akitemm_conta_legado_teste(').replace(
+   'nick TEXT NOT NULL UNIQUE COLLATE BINARY',
+   'nick TEXT NOT NULL UNIQUE COLLATE NOCASE'));
+  const campos=db.prepare(
+   'PRAGMA table_info(akitemm_conta_unica_candidata)'
+  ).all().map(x=>'"'+x.name+'"').join(',');
+  db.exec('INSERT INTO akitemm_conta_legado_teste('+campos+') SELECT '+
+   campos+' FROM akitemm_conta_unica_candidata');
+  db.exec('DROP TABLE akitemm_conta_unica_candidata');
+  db.exec('ALTER TABLE akitemm_conta_legado_teste RENAME TO akitemm_conta_unica_candidata');
+  db.exec('COMMIT');
+ }catch(e){db.exec('ROLLBACK');throw e;}
+ finally{db.exec('PRAGMA foreign_keys=ON');}
+ const novo=mk();
+ const atual=novo.perfil(criada.titularId);
+ assert.equal(atual.nick,'Alessandrita','mantem 12 caracteres legados');
+ assert.equal(atual.titularId,criada.titularId);
+ assert.equal((await novo.entrar({nick:'Alessandrita',senha})).titularId,criada.titularId);
+ const sessao=novo.banco.prepare(
+  'SELECT titular_id FROM akitemm_sessoes_candidatas WHERE token_hash=?'
+ ).get(require('node:crypto').createHash('sha256').update(login.token).digest('hex'));
+ assert.equal(sessao.titular_id,criada.titularId,'sessao antiga preservada');
+ const distinta=await novo.cadastrar({nome:'Outra Pessoa',nick:'alessandr',
+  email:'outro@example.invalid',senha,termosVersao,termosTexto,aceiteExplicito:true});
+ assert.notEqual(distinta.titularId,criada.titularId);
+ await assert.rejects(novo.cadastrar({nome:'Pelo Novo',nick:'Alessandrita',
+  email:'terceiro@example.invalid',senha,termosVersao,termosTexto,aceiteExplicito:true}),
+  /NICK_INVALIDO/);
+ assert.deepEqual(db.prepare('PRAGMA foreign_key_check').all(),[]);
+ assert.equal(db.prepare('PRAGMA integrity_check').get().integrity_check,'ok');
+ db.close();
+});
