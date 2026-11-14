@@ -202,3 +202,29 @@ test('cadastro real fecha quando backup externo fica vencido',async t=>{
  assert.equal((await enviar()).status,503,'falha posterior suspende o cadastro');
  assert.equal((await fetch(url+'/readyz')).status,503);
 });
+
+test('minhas posicoes mantém dez espaços e detalhe individual com luz vermelha/verde',()=>{
+ const fs=require('node:fs');
+ const path=require('node:path');
+ const js=fs.readFileSync(path.join(__dirname,
+  '../src/producao/interface-aprovada-contas.js'),'utf8');
+ const css=fs.readFileSync(path.join(__dirname,
+  '../src/candidato/escritorio-cliente-integrado.css'),'utf8');
+ const visao=fs.readFileSync(path.join(__dirname,
+  '../src/producao/visao-escritorio-unificada-sqlite.js'),'utf8');
+ assert.match(js,/Array\.from\(\{length:capacidade\}/);
+ assert.match(js,/loop03-posicao-luz-vermelha/);
+ assert.match(js,/loop03-posicao-luz-verde/);
+ assert.match(js,/confirmacaoExternaVerificada===true/);
+ assert.match(js,/estadoAdesao==='CONFIRMADA'/);
+ assert.match(js,/Ver detalhes/);
+ assert.match(js,/valorTotalPedidoCentavos/);
+ assert.match(js,/valorBaseMotorEnsaioCentavos/);
+ assert.match(js,/api\/financeiro\/me\?posicaoId/);
+ assert.match(visao,/loja_real_custos_pedido/);
+ assert.match(visao,/loja_real_motor_compras|loop_real_motor_compras/);
+ assert.match(visao,/confirmacaoExternaVerificada:false/);
+ assert.match(css,/loop03-status-confirmada/);
+ assert.match(css,/loop03-status-pendente/);
+ assert.match(css,/\.loop03-unidade-posicao:has\(\.loop03-posicao-detalhes\[open\]\)/);
+});

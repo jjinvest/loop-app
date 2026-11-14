@@ -788,3 +788,81 @@ body.loop03-logado main>.mensagem-pagina{margin:0 0 .75rem}
 .cliente-integrado #conteudoTabuleiro .loop03-fila-cabecalho-acao:focus-visible{
  outline:2px solid #f4db9a;outline-offset:5px
 }
+
+/* Minhas Posições: dez quadros originais e estados luminosos reais.
+   O cartão inteiro fica verde apenas após validação externa comprovada;
+   vermelho enquanto a posição exige confirmação. Nada de luz fictícia. */
+.cliente-integrado #conteudoPosicoes .loop03-posicao-cabecalho{
+ display:flex;align-items:center;justify-content:space-between;gap:5px;min-width:0
+}
+.cliente-integrado #conteudoPosicoes .loop03-posicao-cabecalho>strong{
+ overflow-wrap:anywhere;font-size:clamp(.78rem,1.5vw,1rem);color:#f1ddaf
+}
+.cliente-integrado #conteudoPosicoes .loop03-posicao-luz{
+ display:block;flex:none;width:15px;height:15px;border-radius:50%;
+ border:2px solid #565c69;background:#222b34;
+ box-shadow:inset 0 1px 2px #0009
+}
+.cliente-integrado #conteudoPosicoes .loop03-posicao-luz-vermelha{
+ border-color:#ffb1b5;background:radial-gradient(circle at 30% 22%,#ffd1d3,#f03e53 55%,#a71533);
+ box-shadow:0 0 13px #e6294f99,0 0 3px #ffbdc5
+}
+.cliente-integrado #conteudoPosicoes .loop03-posicao-luz-verde{
+ border-color:#bdffe0;background:radial-gradient(circle at 30% 22%,#edfff3,#32d891 55%,#087c4a);
+ box-shadow:0 0 13px #23dd9188,0 0 3px #bdffe0
+}
+.cliente-integrado #conteudoPosicoes .loop03-grade-posicoes .loop03-cartao-posicao.loop03-status-pendente{
+ border-color:#b64b5c!important;box-shadow:inset 0 0 0 2px #55202b,0 0 12px #b33d4a33!important
+}
+.cliente-integrado #conteudoPosicoes .loop03-grade-posicoes .loop03-cartao-posicao.loop03-status-confirmada{
+ border-color:#26c786!important;box-shadow:inset 0 0 0 2px #135336,0 0 14px #23c98855!important
+}
+.cliente-integrado #conteudoPosicoes .loop03-posicao-id{
+ display:block;font-size:clamp(.93rem,1.7vw,1.33rem);color:#fff;
+ overflow-wrap:anywhere;font-variant-numeric:tabular-nums
+}
+.cliente-integrado #conteudoPosicoes .loop03-posicao-situacao,
+.cliente-integrado #conteudoPosicoes .loop03-posicao-resumo-curto{
+ display:block;font-size:.75rem;line-height:1.35;overflow-wrap:anywhere;color:#dcd4e6
+}
+.cliente-integrado #conteudoPosicoes .loop03-posicao-detalhes{
+ margin-top:auto;min-width:0;border-top:1px solid #55496a;padding-top:8px
+}
+.cliente-integrado #conteudoPosicoes .loop03-posicao-detalhes summary{
+ color:#f0ce86;font-size:.77rem;font-weight:750;cursor:pointer;
+ outline-offset:3px;list-style-position:inside
+}
+.cliente-integrado #conteudoPosicoes .loop03-posicao-detalhes[open] summary{margin-bottom:12px}
+.cliente-integrado #conteudoPosicoes .loop03-unidade-posicao:has(.loop03-posicao-detalhes[open]){
+ grid-column:1/-1
+}
+.cliente-integrado #conteudoPosicoes .loop03-posicao-dados{
+ display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px 13px;
+ margin:0;min-width:0
+}
+.cliente-integrado #conteudoPosicoes .loop03-posicao-detalhe-linha{
+ min-width:0;padding:9px;border:1px solid #6d5b75;border-radius:9px;background:#171c29
+}
+.cliente-integrado #conteudoPosicoes .loop03-posicao-detalhe-linha dt{
+ color:#dec895;font-weight:700;font-size:.75rem
+}
+.cliente-integrado #conteudoPosicoes .loop03-posicao-detalhe-linha dd{
+ margin:5px 0 0;color:#eee8f5;font-size:.82rem;overflow-wrap:anywhere
+}
+.cliente-integrado #conteudoPosicoes .loop03-posicao-saldo{
+ grid-column:1/-1;font-size:.82rem;color:#b4ecc9;padding:9px 0
+}
+@media(max-width:520px){
+ .cliente-integrado #conteudoPosicoes .loop03-posicao-luz{
+  width:11px;height:11px;border-width:1px
+ }
+ .cliente-integrado #conteudoPosicoes .loop03-posicao-cabecalho>strong{font-size:.62rem}
+ .cliente-integrado #conteudoPosicoes .loop03-posicao-id{font-size:.87rem}
+ .cliente-integrado #conteudoPosicoes .loop03-posicao-situacao,
+ .cliente-integrado #conteudoPosicoes .loop03-posicao-resumo-curto{font-size:.57rem}
+ .cliente-integrado #conteudoPosicoes .loop03-posicao-detalhes summary{font-size:.62rem}
+ .cliente-integrado #conteudoPosicoes .loop03-unidade-posicao:has(.loop03-posicao-detalhes[open]) .loop03-cartao-posicao{
+  min-height:0!important
+ }
+ .cliente-integrado #conteudoPosicoes .loop03-posicao-dados{grid-template-columns:minmax(0,1fr)}
+}

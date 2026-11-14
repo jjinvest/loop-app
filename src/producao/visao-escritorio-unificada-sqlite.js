@@ -54,16 +54,35 @@ class VisaoEscritorioUnificadaSQLite{
   // Cada posicao especial tem chave interna distinta, mas o cliente ve
   // exclusivamente o pedido comercial ORIGINAL, jamais venda sintetica.
   const compras=this.banco.prepare(lotesPresentes?[
-   'SELECT m.posicao_id,COALESCE(l.pedido_id,m.pedido_id) AS pedido_id',
+   'SELECT m.posicao_id,COALESCE(l.pedido_id,m.pedido_id) AS pedido_id,',
+   'm.valor_centavos AS valor_base_posicao_centavos',
    'FROM loop_real_motor_compras m',
    'LEFT JOIN loop_real_promocoes_lotes_posicoes_ensaio l',
    'ON l.venda_interna_id=m.pedido_id',
    'WHERE m.titular_id=?'
   ].join(' '):[
-   'SELECT posicao_id,pedido_id FROM loop_real_motor_compras',
+   'SELECT posicao_id,pedido_id,',
+   'valor_centavos AS valor_base_posicao_centavos FROM loop_real_motor_compras',
    'WHERE titular_id=?'
   ].join(' ')).all(titularId);
-  const porPosicao=new Map(compras.map(x=>[x.posicao_id,x.pedido_id]));
+  const porPosicao=new Map(compras.map(x=>[x.posicao_id,x]));
+  const tabelaExiste=nome=>!!this.banco.prepare(
+   "SELECT 1 FROM sqlite_master WHERE type='table' AND name=?"
+  ).get(nome);
+  const temPedidos=tabelaExiste('loja_real_pedidos');
+  const temItens=tabelaExiste('loja_real_custos_pedido');
+  const temProdutos=tabelaExiste('loja_real_produtos');
+  const buscarPedido=temPedidos?this.banco.prepare([
+   'SELECT pedido_id,status,valor_total_centavos FROM loja_real_pedidos',
+   'WHERE pedido_id=? AND titular_id=?'
+  ].join(' ')):null;
+  const buscarItens=temItens?this.banco.prepare([
+   'SELECT i.sku,i.produto_id,i.quantidade,i.preco_unit_centavos,',
+   temProdutos?'p.titulo AS titulo':'NULL AS titulo',
+   'FROM loja_real_custos_pedido i',
+   ...(temProdutos?['LEFT JOIN loja_real_produtos p ON p.produto_id=i.produto_id']:[]),
+   'WHERE i.pedido_id=? ORDER BY i.fornecedor_id,i.sku LIMIT 100'
+  ].join(' ')):null;
   const vinculos=this.banco.prepare([
    'SELECT posicao_id,COUNT(*) AS total',
    'FROM loop_real_motor_qualificacoes WHERE indicador_id=?',
@@ -76,7 +95,30 @@ class VisaoEscritorioUnificadaSQLite{
    const qualificadas=count.get(p.numero)||0;
    if(qualificadas!==(p.indicacoesVinculadas||0))
     falha('ESCRITORIO_INDICACOES_FORA_DO_MOTOR');
-   return {...p,pedidoDeOrigemEnsaio:porPosicao.get(p.numero),
+   const registro=porPosicao.get(p.numero);
+   const pedido=buscarPedido?.get(registro.pedido_id,titularId)||null;
+   const itens=pedido&&buscarItens?
+    buscarItens.all(pedido.pedido_id).map(item=>({
+     titulo:typeof item.titulo==='string'&&item.titulo.trim()?
+      item.titulo:null,
+     produtoId:item.produto_id||null,sku:item.sku,
+     quantidade:item.quantidade,
+     precoUnitarioCentavos:item.preco_unit_centavos
+    })):[];
+   if(itens.some(x=>!Number.isSafeInteger(x.quantidade)||x.quantidade<1||
+     !Number.isSafeInteger(x.precoUnitarioCentavos)||x.precoUnitarioCentavos<1))
+    falha('ESCRITORIO_ITENS_PEDIDO_INVALIDOS');
+   // O valor da base do motor não prova que houve pagamento externo.
+   // A cor verde exige um registro REAL de identidade validada, que
+   // ainda não existe nesta integração; ACEITE_ENSAIO nunca é verde.
+   return {...p,pedidoDeOrigemEnsaio:registro.pedido_id,
+    origemComercial:{
+     pedidoId:registro.pedido_id,
+     valorBaseMotorEnsaioCentavos:registro.valor_base_posicao_centavos,
+     valorTotalPedidoCentavos:pedido?.valor_total_centavos??null,
+     statusPedido:pedido?.status??null,itens
+    },
+    confirmacaoExternaVerificada:false,
     indicacoesQualificadasEnsaio:qualificadas,
     posicaoRemuneradaReal:false,movimentacaoRealAutorizada:false};
   });

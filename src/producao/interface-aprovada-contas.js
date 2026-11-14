@@ -796,6 +796,7 @@
    }
    // A quantidade de cartões deriva do MESMO limite enviado pelo motor;
    // não esconder vagas vazias nem fabricar posições/pedidos.
+   // Sem posição · Espaço disponível é o estado neutro dos dez quadros.
    const capacidade=d.limitePosicoesAtivas;
    if(!Number.isSafeInteger(capacidade)||capacidade<1||
       capacidade>1000||d.minhasPosicoes.length>capacidade)
@@ -813,32 +814,132 @@
    const slots=somentePosicoesPeloQuadrado?ordenadas:
     posicaoSelecionada?ordenadas.filter(p=>String(p.numero)===posicaoSelecionada):
     Array.from({length:capacidade},(_,i)=>ordenadas[i]||null);
+   const criarLinhaDetalhe=(pai,rotulo,valor)=>{
+    const linha=document.createElement('div');
+    linha.className='loop03-posicao-detalhe-linha';
+    const nome=document.createElement('dt');nome.textContent=rotulo;
+    const texto=document.createElement('dd');texto.textContent=valor;
+    linha.append(nome,texto);pai.append(linha);
+   };
+   const moedaPosicao=centavos=>Number.isSafeInteger(centavos)&&centavos>=0?
+    formatarDinheiroReal(centavos):'Aguardando dados comprovados';
    for(let i=0;i<slots.length;i++){
     const pos=slots[i];
+
     const card=document.createElement('article');
     card.className='loop03-unidade-posicao';
     const corpo=document.createElement('div');
     corpo.className='loop03-cartao-posicao';
+    const confirmado=pos?.confirmacaoExternaVerificada===true&&
+     pos?.estadoAdesao==='CONFIRMADA';
+    const pendente=Boolean(pos)&&!confirmado;
+    corpo.classList.add(!pos?'loop03-posicao-vazia':
+     confirmado?'loop03-status-confirmada':'loop03-status-pendente');
+    const cabecalho=document.createElement('div');
+    cabecalho.className='loop03-posicao-cabecalho';
     const rotulo=document.createElement('strong');
     const vaga=somentePosicoesPeloQuadrado||posicaoSelecionada?
      ordenadas.findIndex(p=>p.numero===pos.numero)+1:i+1;
     rotulo.textContent='Posição '+vaga;
-    corpo.appendChild(rotulo);
-    const detalhe=document.createElement('p');
-    if(!pos){
-     corpo.classList.add('loop03-posicao-vazia');
-     detalhe.textContent='Sem posição · Espaço disponível';
-    }else{
-     const id=document.createElement('strong');
-     id.textContent='#'+pos.numero;
-     corpo.appendChild(id);
-     detalhe.textContent=pos.local+
-      (somentePosicoesPeloQuadrado&&(pos.fila==='A'||pos.fila==='B')?' · Fila '+pos.fila:'')+
-      (pos.classeProdutoOrigem?' · Produto '+pos.classeProdutoOrigem:'')+
-      ' · '+pos.indicacoesQualificadasEnsaio+
-      ' indicação(ões) em verificação. Sem crédito financeiro disponível.';
+    const luz=document.createElement('span');
+    luz.className='loop03-posicao-luz '+(!pos?'loop03-posicao-luz-inativa':
+     confirmado?'loop03-posicao-luz-verde':'loop03-posicao-luz-vermelha');
+    luz.setAttribute('role','img');
+    luz.setAttribute('aria-label',!pos?'Espaço disponível, luz apagada':
+     confirmado?'Luz verde, posição confirmada':'Luz vermelha, confirmação pendente');
+    cabecalho.append(rotulo,luz);
+    corpo.append(cabecalho);
+    const id=document.createElement('strong');
+    id.className='loop03-posicao-id';
+    id.textContent=pos?'#'+pos.numero:'Espaço disponível';
+    corpo.append(id);
+    const status=document.createElement('small');
+    status.className='loop03-posicao-situacao';
+    if(!pos)status.textContent='Sem posição vinculada';
+    else if(confirmado)status.textContent='Confirmada';
+    else if(pos.estadoAdesao==='REVISAR_PSP'||pos.local==='EM_REVISAO_PSP')
+     status.textContent='Pedido em revisão';
+    else if(pos.estadoAdesao==='ACEITE_ENSAIO')
+     status.textContent='Aceite registrado · validação pendente';
+    else status.textContent='Aguardando confirmação';
+    corpo.append(status);
+    if(pos){
+     const resumo=document.createElement('small');
+     resumo.className='loop03-posicao-resumo-curto';
+     resumo.textContent=(pos.local?.startsWith('FILA_')?
+      'Fila '+pos.local.slice(-1):pos.local||'Local a confirmar')+
+      ' · '+pos.indicacoesQualificadasEnsaio+' indicação(ões)';
+     corpo.append(resumo);
+     const detalhes=document.createElement('details');
+     detalhes.className='loop03-posicao-detalhes';
+     const abrir=document.createElement('summary');
+     abrir.textContent='Ver detalhes';
+     detalhes.append(abrir);
+     const dados=document.createElement('dl');
+     dados.className='loop03-posicao-dados';
+     criarLinhaDetalhe(dados,'Número da posição','#'+pos.numero);
+     criarLinhaDetalhe(dados,'Local no LOOP',pos.local?.startsWith('FILA_')?
+      'Fila '+pos.local.slice(-1):String(pos.local||'Em acompanhamento'));
+     criarLinhaDetalhe(dados,'Situação da confirmação',status.textContent);
+     const origem=pos.origemComercial||{};
+     criarLinhaDetalhe(dados,'Pedido de origem',typeof origem.pedidoId==='string'?
+      origem.pedidoId:'Não identificado');
+     const produtos=Array.isArray(origem.itens)?origem.itens:[];
+     if(produtos.length){
+      for(const item of produtos){
+       const titulo=typeof item.titulo==='string'&&item.titulo.trim()?
+        item.titulo:'Produto sem nome vinculado'+
+        (item.sku?' (SKU '+item.sku+')':'');
+       const qtd=Number.isSafeInteger(item.quantidade)?item.quantidade:0;
+       criarLinhaDetalhe(dados,'Produto que gerou a compra',
+        titulo+' · '+qtd+' unidade(s)'+
+        (Number.isSafeInteger(item.precoUnitarioCentavos)?
+         ' · '+moedaPosicao(item.precoUnitarioCentavos)+' cada':''));
+      }
+     }else criarLinhaDetalhe(dados,'Produto que gerou a posição',
+      'Ainda não identificado no livro do pedido');
+     criarLinhaDetalhe(dados,'Valor do pedido',
+      moedaPosicao(origem.valorTotalPedidoCentavos));
+     criarLinhaDetalhe(dados,'Base registrada no motor (ensaio)',
+      moedaPosicao(origem.valorBaseMotorEnsaioCentavos));
+     criarLinhaDetalhe(dados,'Indicações qualificadas (ensaio)',
+      String(pos.indicacoesQualificadasEnsaio));
+     criarLinhaDetalhe(dados,'Movimentação financeira',
+      'Sem crédito financeiro disponível');
+     const saldo=document.createElement('div');
+     saldo.className='loop03-posicao-saldo';
+     saldo.textContent='Saldo individual: aguardando comprovação.';
+     dados.append(saldo);
+     detalhes.append(dados);
+     let saldoConsultado=false;
+     detalhes.addEventListener('toggle',async()=>{
+      if(!detalhes.open||saldoConsultado)return;
+      saldoConsultado=true;
+      try{
+       const r=await fetch('/api/financeiro/me?posicaoId='+pos.numero,{
+        credentials:'same-origin',cache:'no-store'
+       });
+       if(!r.ok)throw Error('SALDO_NAO_DISPONIVEL');
+       const d=await r.json();
+       if(d.origem!=='LIVRO_FINANCEIRO_REAL'||
+          d.posicaoSelecionadaId!==pos.numero)
+        throw Error('SALDO_FONTE_INVALIDA');
+       if(d.saldosLiberados===true&&
+          Number.isSafeInteger(d.saldoPosicaoSelecionadaCentavos)&&
+          d.saldoPosicaoSelecionadaCentavos>=0)
+        saldo.textContent='Saldo individual confirmado: '+
+         moedaPosicao(d.saldoPosicaoSelecionadaCentavos);
+       else saldo.textContent='Saldo individual: aguardando liberação financeira.';
+      }catch{
+       saldoConsultado=false;
+       saldo.textContent='Saldo individual indisponível nesta consulta.';
+      }
+     });
+     corpo.append(detalhes);
     }
-    corpo.appendChild(detalhe);card.appendChild(corpo);
+    // O aceite azul já existente permanece aqui: não altera a cor
+    // para verde, pois a identidade externa continua não verificada.
+    card.append(corpo);
     if(pos&&pos.aguardandoCpfTermos&&
        d.confirmacaoAzulEnsaioDisponivel===true)
      renderizarAceiteAzulEnsaio(card,pos);
