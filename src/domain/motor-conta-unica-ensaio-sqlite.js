@@ -361,10 +361,10 @@ class MotorContaUnicaEnsaioSQLite{
  // Confirmacao INDIVIDUAL em ensaio da posicao PENDENTE (azul).
  // Exige CPF ja protegido por titular, aceite explicito na posicao,
  // versao vigente dos termos e prova PSP reconsultada; nao valida KYC externo.
- registrarAceitePosicaoEnsaio({titularId,posicaoId,versaoTermos,aceiteExplicito=false}={}){
+ registrarAceitePosicaoEnsaio({titularId,posicaoId,cpf,versaoTermos,aceiteExplicito=false}={}){
   if(typeof titularId!=='string'||!TITULAR.test(titularId)||
      !Number.isSafeInteger(posicaoId)||posicaoId<1||
-     aceiteExplicito!==true||
+     aceiteExplicito!==true||typeof cpf!=='string'||cpf.length>18||
      typeof versaoTermos!=='string'||versaoTermos!==this.termosVersao)
    falha('ACEITE_POSICAO_DADOS_INVALIDOS');
   if(!this.cpf||!this.ponte||!this.termosVersao)
@@ -390,6 +390,7 @@ class MotorContaUnicaEnsaioSQLite{
    if(!identidade||identidade.termosVersao!==this.termosVersao||
       identidade.estado!=='NAO_VERIFICADA_EXTERNAMENTE')
     falha('CPF_E_TERMOS_TITULAR_AUSENTES_OU_DIVERGENTES');
+   this.cpf.conferirCpfTitular({titularId,cpf});
    const r=this.banco.prepare([
     'SELECT cpf_hmac AS cpfHash,termos_versao AS versao,',
     'termos_sha256 AS hashTermos',
