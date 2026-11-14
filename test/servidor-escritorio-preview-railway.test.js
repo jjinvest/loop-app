@@ -890,14 +890,14 @@ test('abas consultam dados automaticamente sem botoes Atualizar redundantes',asy
  const html=await (await x.consultar('/minha-conta')).text();
  const js=await (await x.consultar('/staging/assets/cliente.js')).text();
  for(const id of ['atualizarPedidos','atualizarPosicoes','atualizarEquipe']){
-  assert.doesNotMatch(html,new RegExp('id="'+id+'"'));
-  assert.doesNotMatch(js,new RegExp("\\$\\('"+id+"'\\)"));
+  assert.equal(html.includes('id="'+id+'"'),false,'botao removido '+id);
+  assert.equal(js.includes("$('"+id+"')"),false,'listener removido '+id);
  }
- assert.match(js,/if\\(alvo==='conteudoMeusPedidos'\\)atualizarPedidos\\(\\)/);
- assert.match(js,/if\\(alvo==='conteudoPosicoes'\\)atualizarPosicoes\\(\\)/);
- assert.match(js,/if\\(alvo==='conteudoEquipe'\\)atualizarEquipe\\(0\\)/);
+ assert.ok(js.includes("if(alvo==='conteudoMeusPedidos')atualizarPedidos()"));
+ assert.ok(js.includes("if(alvo==='conteudoPosicoes')atualizarPosicoes()"));
+ assert.ok(js.includes("if(alvo==='conteudoEquipe')atualizarEquipe(0)"));
  // O relogio nao e um simples botao Atualizar: manter a previsao de luz.
- assert.match(html,/id="atualizarTabuleiroIntegrado"/);
- assert.match(html,/id="relogioTabuleiroIntegrado"/);
- assert.match(js,/setInterval\\(\\(\\)=>\\{/);
+ assert.ok(html.includes('id="atualizarTabuleiroIntegrado"'));
+ assert.ok(html.includes('id="relogioTabuleiroIntegrado"'));
+ assert.ok(js.includes('setInterval('));
 });
