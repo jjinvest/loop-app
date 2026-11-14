@@ -10,6 +10,8 @@ const {pipeline}=require('node:stream/promises');
 const {createHash,createCipheriv,createDecipheriv,randomBytes,hkdfSync}=
  require('node:crypto');
 const {MotorLoopIntegradoSQLite,TABELAS_MOTOR}=require('./motor-loop-integrado-sqlite');
+const {LivroFinanceiroRealSQLite,TABELAS_LIVRO}=
+ require('./livro-financeiro-real-sqlite');
 const {PreflightCapacidadeCheckoutSQLite,TABELAS_PREFLIGHT}=
  require('./preflight-capacidade-checkout-sqlite');
 const {RecuperacaoReservasCheckoutSQLite,TABELAS_RECUPERACAO}=
@@ -84,7 +86,7 @@ function validarIdentidade(arquivo){
   const todos=[...TABELAS,...TABELAS_ADMIN,...TABELAS_COMERCIAIS,
    ...TABELAS_MOTOR,...TABELAS_CATRACA_ADMIN,...TABELAS_TESOURARIA_ENSAIO,
    ...TABELAS_PROMOCAO_ENSAIO,...TABELAS_LOTES_ENSAIO,
-   ...TABELAS_PREFLIGHT,...TABELAS_RECUPERACAO];
+   ...TABELAS_PREFLIGHT,...TABELAS_RECUPERACAO,...TABELAS_LIVRO];
   if(lista.some(x=>!todos.includes(x)))
    falha('BACKUP_IDENTIDADE_NAO_COBRE_TABELAS_COMERCIAIS');
   const temEnsaio=TABELAS_TESOURARIA_ENSAIO.some(x=>lista.includes(x));
@@ -110,6 +112,19 @@ function validarIdentidade(arquivo){
     const motor=Object.create(MotorLoopIntegradoSQLite.prototype);
     motor.banco=b;motor.verificar();
    }catch{falha('BACKUP_MOTOR_INTEGRIDADE_DIVERGENTE');}
+  }
+  // Livro real pertence ao mesmo backup que identidade e motor.
+  // Recusar tabela ausente e saldos negativos; nenhum ensaio vira saldo.
+  const temLivro=TABELAS_LIVRO.some(x=>lista.includes(x));
+  if(temLivro){
+   if(!temMotor||TABELAS_LIVRO.some(x=>!lista.includes(x)))
+    falha('BACKUP_LIVRO_FINANCEIRO_INCOMPLETO');
+   try{
+    const livro=Object.create(LivroFinanceiroRealSQLite.prototype);
+    livro.banco=b;livro.provas=null;
+    if(livro.verificar().integridade!=='OK')
+     falha('BACKUP_LIVRO_FINANCEIRO_DIVERGENTE');
+   }catch{falha('BACKUP_LIVRO_FINANCEIRO_DIVERGENTE');}
   }
   const temCatracaAdmin=TABELAS_CATRACA_ADMIN.some(x=>lista.includes(x));
   if(temCatracaAdmin){

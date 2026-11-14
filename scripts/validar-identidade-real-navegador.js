@@ -272,7 +272,8 @@ async function main(){
     .filter({hasText:/0 de 6 eventos neste ciclo/}).waitFor();
    assert.equal(await page.locator('#estadoTabuleiroIntegrado').isHidden(),true,
     'sem mensagens duplicadas no rodapé do tabuleiro');
-   assert.equal(await page.locator('#tabuleiroMotorCentro').innerText(),'#0000');
+   assert.equal(await page.locator('#tabuleiroMotorCentro').innerText(),'',
+    'esfera vazia não mostra marcador fictício');
    assert.equal(await page.locator('#motorFilaB .loop03-linha-fila').count(),1);
    assert.ok((await page.locator('#motorFilaB').innerText())
     .includes('1 posição(ões) em validação interna'));
@@ -542,7 +543,7 @@ async function main(){
    const centroEsperado=centroPersistido?
     (centroPersistido.dourada? 
      (centroPersistido.numeroVisual?'#'+centroPersistido.numeroVisual:'●'):
-     '#'+centroPersistido.numero):'#0000';
+     '#'+centroPersistido.numero):'';
    assert.equal(await pagina.locator('#tabuleiroMotorCentro').innerText(),
     centroEsperado,'centro segue o estado do motor, nao um valor fixo');
    assert.equal(await pagina.locator('#motorBolinha6')

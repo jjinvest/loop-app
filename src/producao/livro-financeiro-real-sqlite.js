@@ -5,6 +5,9 @@
 // Em producao, sem adaptadores PSP/adesao/Pix homologados, o livro
 // existe e e auditavel, mas nenhum credito nem debito e habilitado.
 const LIMITE=1_000_000_000_000,MINIMO=2500,BASE=25000,RETORNO=75000;
+const TABELAS_LIVRO=Object.freeze([
+ 'loop_real_fin_lancamentos','loop_real_fin_saques_pagos'
+]);
 const TITULAR=/^titular-[a-f0-9-]{36}$/;
 const REF=/^[A-Za-z0-9:_-]{3,120}$/;
 function falha(codigo){const e=new Error(codigo);e.codigo=codigo;throw e;}
@@ -310,4 +313,4 @@ class LivroFinanceiroRealSQLite{
   return {integridade:'OK',contasAuditadas:ids.length};
  }
 }
-module.exports={LivroFinanceiroRealSQLite};
+module.exports={LivroFinanceiroRealSQLite,TABELAS_LIVRO};

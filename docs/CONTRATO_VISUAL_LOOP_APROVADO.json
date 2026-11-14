@@ -1,11 +1,11 @@
 {
   "schema": 1,
   "política": "Toda alteração de HTML/CSS exige pedido visual explícito, escopo isolado e revisão do proprietário; é proibido atualizar hashes para esconder mudanças.",
-  "autorizaçãoAtual": "14/11/2026: somente (1) Telefone acima de Senha e Confirmar senha no cadastro, (2) nick do titular e quantidade de indicações no indicador da posição selecionada, mantendo número, fila, localização, histórico e demais telas.",
+  "autorizaçãoAtual": "14/11/2026: ajustes expressamente aprovados na interface única: ordem de cadastro; seletor de posição no placar sem navegação; remoção de resumos duplicados no Escritório e Tabuleiro; texto do cabeçalho; Financeiro responsivo com quatro indicadores, saldo por posição e total, solicitação de saque e histórico. Apenas três arquivos visuais alterados frente à fotografia anterior; os 21 demais seguem congelados.",
   "arquivos": [
     {
       "path": "src/candidato/checkout-candidato-ui.html",
-      "sha": "451f9b7696ab170da510c3b7fde7506704274e58"
+      "sha": "c6ea5484330128f9d2eaafdd49bdeaaf3e38d84f"
     },
     {
       "path": "src/candidato/escritorio-admin-candidato-ui.css",
@@ -17,7 +17,7 @@
     },
     {
       "path": "src/candidato/escritorio-cliente-integrado.css",
-      "sha": "178740160155b8aeb135d61ea73f51db57520367"
+      "sha": "c01ec4d12ec83ad12edc14f14e4e42bc0d57fb73"
     },
     {
       "path": "src/laboratorio/admin-loop03.css",
@@ -37,7 +37,7 @@
     },
     {
       "path": "src/laboratorio/checkout-staging-ui.css",
-      "sha": "f23236dace5a87277685bc348d0e104b002c363b"
+      "sha": "fccb120cfe2a7668b3e7811664dc7f8c99609d79"
     },
     {
       "path": "src/laboratorio/checkout-staging-ui.html",
