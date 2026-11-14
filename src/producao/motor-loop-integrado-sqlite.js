@@ -301,11 +301,11 @@ class MotorLoopIntegradoSQLite{
 
  // Visor somente-leitura: âncora pertence obrigatoriamente à sessão.
  // Responde com cinco vizinhos e no máximo 30 entradas por página.
- consultarFilaPaginada({titularId,fila,posicaoId=null,pagina=0}={}){
+ consultarFilaPaginada({titularId,fila,posicaoId=null,pagina=0,desdeInicio=false}={}){
   this._titular(titularId);
   if(fila!=='A'&&fila!=='B')falha('FILA_INVALIDA');
-  if(!Number.isSafeInteger(pagina)||pagina<0||pagina>1000000)
-   falha('FILA_PAGINA_INVALIDA');
+  if(!Number.isSafeInteger(pagina)||pagina<0||pagina>1000000||
+     typeof desdeInicio!=='boolean')falha('FILA_PAGINA_INVALIDA');
   if(posicaoId!==null&&(!Number.isSafeInteger(posicaoId)||posicaoId<1))
    falha('FILA_POSICAO_INVALIDA');
   const sim=this._sim();
@@ -322,16 +322,20 @@ class MotorLoopIntegradoSQLite{
     p.participanteId===titularId,
    dourada:p.empresa===true,pendente:p.statusAdesao==='PENDENTE'
   });
-  const tamanho=30,inicio=indice<0?0:indice+pagina*tamanho;
-  const itens=indice<0?[]:pessoas.slice(inicio,inicio+tamanho);
+  // Modo visual: começar do primeiro lugar; o antigo modo ancorado
+  // permanece disponível. Somente leitura, sem alterar prioridade 3A:1B.
+  const tamanho=30,inicio=desdeInicio?pagina*tamanho:
+   indice<0?0:indice+pagina*tamanho;
+  const itens=desdeInicio||indice>=0?pessoas.slice(inicio,inicio+tamanho):[];
   const janelaInicio=Math.max(0,indice-2);
   return {
    fonte:'IDENTIDADE_E_MOTOR_MESMO_SQLITE',fila,total:pessoas.length,
    ancora:indice<0?null:{numero:alvo,ordem:indice+1},
-   janela:indice<0?[]:pessoas.slice(janelaInicio,indice+3)
+   janela:desdeInicio?pessoas.slice(0,10).map(linha):
+    indice<0?[]:pessoas.slice(janelaInicio,indice+3)
     .map((p,i)=>linha(p,janelaInicio+i)),
    pagina:itens.map((p,i)=>linha(p,inicio+i)),
-   proximaPagina:indice>=0&&inicio+itens.length<pessoas.length?
+   proximaPagina:(desdeInicio||indice>=0)&&inicio+itens.length<pessoas.length?
     pagina+1:null
   };
  }
