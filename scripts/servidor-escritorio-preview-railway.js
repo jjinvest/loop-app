@@ -51,12 +51,15 @@ function criarGateway({portaInterna,senhaAcesso,senhaAdmin,segredoOperador,
    .filter(x=>x.startsWith(indicacaoCookie+'='));
   if(p.length!==1)return null;
   const v=p[0].slice(indicacaoCookie.length+1);
-  const m=v.match(/^v1\.([A-Za-z]{1,12})\.(\d{13})\.([a-f0-9]{64})$/);
+  const m=v.match(/^v1\.([A-Za-z0-9%]{1,128})\.(\d{13})\.([a-f0-9]{64})$/);
   if(!m)return null;
+  let nick;
+  try{nick=decodeURIComponent(m[1]);}catch{return null;}
+  if(encodeURIComponent(nick)!==m[1])return null;
   const ts=Number(m[2]);
   if(ts>Date.now()||Date.now()-ts>prazoIndicacao||
-     !seguro(m[3],assinarIndicacao(m[1],m[2])))return null;
-  return m[1];
+     !seguro(m[3],assinarIndicacao(nick,m[2])))return null;
+  return nick;
  };
  const assinar=ts=>createHmac('sha256',senhaAcesso).update('preview:'+ts).digest('hex');
  const assinarAdmin=ts=>createHmac('sha256',segredoOperador)
@@ -246,13 +249,16 @@ function criarGateway({portaInterna,senhaAcesso,senhaAdmin,segredoOperador,
    res.writeHead(302,{...cabecalhosBase,Location:'/minha-conta',...(novoCookie?{'Set-Cookie':novoCookie}:{})});
    return res.end();
   }
-  const caminhoConvite=url.pathname.match(/^\/(loja|escritorio)\/([A-Za-z]{1,12})$/);
+  const caminhoConvite=url.pathname.match(/^\/(loja|escritorio)\/([^/]{1,128})$/);
   if(caminhoConvite){
    if(req.method!=='GET')return negar(405,'Método não permitido');
-   const nick=caminhoConvite[2];
-   if(!validarNickIndicador(nick))return negar(404,'Link de ensaio inexistente');
+   let nick;
+   try{nick=decodeURIComponent(caminhoConvite[2]);}
+   catch{return negar(404,'Link de ensaio inexistente');}
+   if(encodeURIComponent(nick)!==caminhoConvite[2]||
+      !validarNickIndicador(nick))return negar(404,'Link de ensaio inexistente');
    const ts=String(Date.now());
-   const refCookie=indicacaoCookie+'=v1.'+nick+'.'+ts+'.'+
+   const refCookie=indicacaoCookie+'=v1.'+encodeURIComponent(nick)+'.'+ts+'.'+
     assinarIndicacao(nick,ts)+
     '; HttpOnly; Secure; SameSite=Lax; Path=/; Max-Age=2592000';
    res.writeHead(302,{...cabecalhosBase,
