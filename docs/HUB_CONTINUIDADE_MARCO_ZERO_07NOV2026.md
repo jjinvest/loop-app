@@ -1,5 +1,7 @@
 # HUB DE CONTINUIDADE — LOOP 3.0 / AKITEMM — 07/11/2026
 
+> **ORDEM DIRETA DO PROPRIETÁRIO — 14/11/2026, PERMANENTE:** **“PARAR DE MASCARAR AS COISAS. RESOLVER PROBLEMA. NÃO VOU CONTORNAR, VOU RESOLVER.”** Não esconder falhas ou registros de teste só para melhorar a imagem, não inventar tabuleiro vazio, não tratar CSS como substituto de conexão real, não declarar que está pronto com base apenas em CI/preview. Diagnosticar e corrigir a causa na ligação **tela aprovada ↔ API ↔ motor ↔ SQLite operacional** e comprovar funcionamento efetivo. Se existir bloqueio externo/operacional, registrar objetivamente, sem maquiar. Preservar dados e telas aprovadas; não ativar movimentação financeira antes da homologação. Observação do momento: `akitemmloop.com.br` ainda utiliza o endpoint `/staging/motor/estado` de homologação, enquanto `loop-identidade-real` está executando o servidor de preparação; **integração operacional não concluída**.
+
 > **LEITURA INICIAL PARA QUALQUER CHAT, IA, DEV OU AUDITOR:** a fonte oficial é o GitHub, **não** memória isolada do chat. Antes de mexer, consultar o **HEAD mais recente** da branch `feature/unificar-escritorio-real-20261105` em `jjinvest/loop-app`, todas as alterações posteriores, o índice vigente e o documento mestre. Este arquivo é um mapa do momento, **não** substitui leitura do código atual. O projeto NÃO deve ser reiniciado.
 
 ## Missão, objetivo e limites
