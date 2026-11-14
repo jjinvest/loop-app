@@ -713,3 +713,77 @@ test('Tabuleiro preserva a contagem junto da roda e remove duplicacao do rodape'
  assert.match(conta,/\$\('estadoTabuleiroIntegrado'\)\.hidden=true/);
  assert.match(conta,/\$\('estadoTabuleiroIntegrado'\)\.hidden=false/);
 });
+
+test('Financeiro da conta real: privado, responsivo e sem saldos ou saques ficticios',async t=>{
+ const x=await preparar(t);
+ const pagina=await x.consultar('/minha-conta');
+ const html=await pagina.text();
+ const js=await (await x.consultar('/staging/assets/cliente.js')).text();
+ const css=await (await x.consultar('/staging/assets/cliente-integrado.css')).text();
+ assert.match(html,/id="finIndicadosValidos"/);
+ assert.match(html,/id="finSaldoBonus"/);
+ assert.match(html,/id="finSaldoPosicoes"/);
+ assert.match(html,/id="finMinimoSaque">R\$ 25,00/);
+ assert.match(html,/id="finEscolherBonus"/);
+ assert.match(html,/id="finEscolherPosicoes"/);
+ assert.match(html,/id="finFormSaque"/);
+ assert.match(html,/id="finSolicitarSaque"/);
+ assert.match(html,/id="finAbrirHistorico"/);
+ assert.match(html,/id="finHistorico"/);
+ assert.doesNotMatch(html,/id="financeiroVerPedidos"|Consultar meus pedidos/);
+ assert.match(js,/finEscolher\('BONUS_INDICACAO'\)/);
+ assert.match(js,/finEscolher\('POSICOES'\)/);
+ assert.match(js,/requisitar\('\/financeiro\/saques'/);
+ assert.match(js,/requisitar\('\/financeiro\/historico'/);
+ assert.match(css,/@media\(max-width:480px\)/);
+ assert.equal((await x.consultar('/staging/financeiro/me')).status,401);
+ assert.equal((await x.consultar('/staging/financeiro/historico')).status,401);
+ assert.equal((await x.consultar('/staging/financeiro/saques',{
+  method:'POST',headers:{'Content-Type':'application/json'},
+  body:JSON.stringify({origem:'BONUS_INDICACAO',valorCentavos:2500})
+ })).status,401);
+ const reg=await x.consultar('/staging/contas/cadastrar',{
+  method:'POST',headers:{'Content-Type':'application/json'},
+  body:JSON.stringify({nome:'Teste Financeiro',nick:'FinReal',
+   email:'financeiro@example.invalid',senha:'SenhaForteFinanceiro2026!',
+   aceiteExplicito:true})
+ });
+ assert.equal(reg.status,201);
+ const login=await x.consultar('/staging/contas/entrar',{
+  method:'POST',headers:{'Content-Type':'application/json'},
+  body:JSON.stringify({nick:'FinReal',senha:'SenhaForteFinanceiro2026!'})
+ });
+ assert.equal(login.status,200);
+ const cookie=login.headers.getSetCookie().find(s=>s.startsWith('loop_candidato_s='));
+ const headers={Cookie:cookie.split(';')[0]};
+ const perfil=await x.consultar('/staging/contas/me',{headers});
+ const csrf=(await perfil.json()).csrf;
+ const saldo=await x.consultar('/staging/financeiro/me',{headers});
+ assert.equal(saldo.status,200);
+ const dados=await saldo.json();
+ assert.equal(dados.origem,'FINANCEIRO_SEM_LIVRO_REAL_HOMOLOGADO');
+ assert.equal(dados.saldoBonusCentavos,null);
+ assert.equal(dados.saldoPosicoesCentavos,null);
+ assert.equal(dados.indicadosValidos,null);
+ assert.equal(dados.minimoSaqueCentavos,2500);
+ assert.equal(dados.taxaSaquePercentual,0);
+ assert.equal(dados.saqueRealHabilitado,false);
+ const historico=await x.consultar('/staging/financeiro/historico',{headers});
+ assert.equal(historico.status,503);
+ assert.equal((await historico.json()).erro,'HISTORICO_REAL_NAO_HOMOLOGADO');
+ const pedido={origem:'BONUS_INDICACAO',valorCentavos:2500};
+ const postar=(body,csrfHeader)=>x.consultar('/staging/financeiro/saques',{
+  method:'POST',headers:{...headers,'Content-Type':'application/json',
+   'X-Checkout-Csrf':csrfHeader},
+  body:JSON.stringify(body)
+ });
+ assert.equal((await postar(pedido,'invalid')).status,403);
+ assert.equal((await postar({...pedido,valorCentavos:2499},csrf)).status,400);
+ assert.equal((await postar({...pedido,origem:'INVALIDA'},csrf)).status,400);
+ const bloqueio=await postar(pedido,csrf);
+ assert.equal(bloqueio.status,503);
+ assert.equal((await bloqueio.json()).erro,'SAQUE_REAL_NAO_HOMOLOGADO');
+ assert.equal((await postar({origem:'POSICOES',valorCentavos:5000},csrf)).status,503);
+ // O sistema não cria registros artificiais para satisfazer a tela.
+ assert.equal(x.db.prepare("SELECT name FROM sqlite_master WHERE type='table' AND name LIKE 'fin_saque_%'").all().length,0);
+});

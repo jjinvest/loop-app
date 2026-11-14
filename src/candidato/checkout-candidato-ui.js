@@ -84,6 +84,92 @@ function mostrarSessao(ativa){
  if(!ativa){csrf=null;
   $('senha').value='';proximaPaginaEquipe=null;paginaPedidos=0;}
 }
+// Fonte unica: nenhum saldo, saque ou historico provem do motor de ensaio.
+let finOrigem='BONUS_INDICACAO';
+function finEscolher(origem){
+ finOrigem=origem;
+ $('finEscolherBonus').setAttribute('aria-pressed',String(origem==='BONUS_INDICACAO'));
+ $('finEscolherPosicoes').setAttribute('aria-pressed',String(origem==='POSICOES'));
+ $('finSaqueResposta').textContent='';
+}
+async function finAtualizar(){
+ const estado=$('estadoFinanceiro');
+ estado.textContent='Consultando a disponibilidade financeira…';
+ for(const campo of ['finIndicadosValidos','finSaldoBonus',
+  'finSaldoPosicoes','finBonusSaque','finPosicoesSaque'])
+  $(campo).textContent='—';
+ try{
+  const dados=await requisitar('/financeiro/me');
+  if(dados.origem!=='FINANCEIRO_SEM_LIVRO_REAL_HOMOLOGADO'||
+     dados.saqueRealHabilitado!==false||
+     dados.saldoBonusCentavos!==null||dados.saldoPosicoesCentavos!==null||
+     dados.historicoDisponivel!==false||
+     dados.minimoSaqueCentavos!==2500||dados.taxaSaquePercentual!==0)
+   throw Error('CONTRATO_FINANCEIRO_INCOMPATIVEL');
+  $('finMinimoSaque').textContent=moeda(dados.minimoSaqueCentavos);
+  estado.textContent='Saldos e saques ainda indisponíveis: aguardando confirmação do livro financeiro real.';
+ }catch{
+  estado.textContent='Não foi possível verificar o financeiro real. Nenhum saldo será apresentado sem confirmação.';
+ }
+}
+async function finSolicitar(e){
+ e.preventDefault();
+ const resposta=$('finSaqueResposta');
+ const valor=Number($('finValorSaque').value);
+ if(!Number.isFinite(valor)||valor<25||valor>100000000||
+    Math.abs(valor*100-Math.round(valor*100))>0.000001){
+  resposta.textContent='Informe um valor válido de pelo menos R$ 25,00.';
+  return;
+ }
+ const botao=$('finSolicitarSaque');
+ botao.disabled=true;
+ resposta.textContent='Verificando disponibilidade do saque…';
+ try{
+  const dados=await requisitar('/financeiro/saques',{
+   method:'POST',mutacao:true,
+   body:{origem:finOrigem,valorCentavos:Math.round(valor*100)}
+  });
+  // Nao exibir sucesso sem comprovante, registro e saldo real validados.
+  resposta.textContent=dados.saqueConfirmado===true&&
+   typeof dados.comprovanteId==='string'&&dados.comprovanteId.length>0?
+   'Solicitação recebida. Comprovante: '+dados.comprovanteId:
+   'Solicitação não confirmada; nenhum saque foi registrado.';
+ }catch(e){
+  resposta.textContent=e.message==='SAQUE_REAL_NAO_HOMOLOGADO'?
+   'Saque indisponível: o saldo e a integração bancária ainda não estão homologados. Nenhum Pix foi enviado.':
+   'Não foi possível solicitar saque. Nenhum pagamento foi confirmado.';
+ }finally{botao.disabled=false;}
+}
+async function finAlternarHistorico(){
+ const painel=$('finHistorico'),botao=$('finAbrirHistorico');
+ if(!painel.hidden){
+  painel.hidden=true;botao.setAttribute('aria-expanded','false');return;
+ }
+ painel.hidden=false;botao.setAttribute('aria-expanded','true');
+ $('finHistoricoItens').replaceChildren();
+ $('finHistoricoMensagem').textContent='Consultando histórico financeiro…';
+ try{
+  const dados=await requisitar('/financeiro/historico');
+  if(dados.origem!=='LIVRO_FINANCEIRO_REAL'||
+     !Array.isArray(dados.registros))throw Error('HISTORICO_SEM_ORIGEM_REAL');
+  const lista=document.createElement('ul');
+  for(const item of dados.registros){
+   if(!Number.isSafeInteger(item.valorCentavos)||typeof item.descricao!=='string')
+    throw Error('LANCAMENTO_INCONSISTENTE');
+   const li=document.createElement('li');
+   li.textContent=item.descricao+' · '+moeda(item.valorCentavos);
+   lista.append(li);
+  }
+  $('finHistoricoItens').append(lista);
+  $('finHistoricoMensagem').textContent=dados.registros.length?
+   'Lançamentos confirmados no livro financeiro.':
+   'Nenhum lançamento confirmado no livro financeiro.';
+ }catch{
+  $('finHistoricoMensagem').textContent=
+   'Histórico indisponível: ganhos e saques ainda não estão ligados ao livro financeiro real.';
+ }
+}
+
 function mostrarAba(alvo,{somenteMinhas=false}={}){
  if(alvo==='conteudoPosicoes')somentePosicoesPeloQuadrado=somenteMinhas;
  // Prioriza a seção escolhida na ordem REAL do documento, não apenas
@@ -114,6 +200,7 @@ function mostrarAba(alvo,{somenteMinhas=false}={}){
     boasVindas.scrollIntoView({block:'start',behavior:'instant'});
   });
  }
+ if(alvo==='conteudoFinanceiro')void finAtualizar();
  if(alvo==='conteudoTabuleiro')atualizarTabuleiroIntegrado();
  if(alvo==='conteudoMeusPedidos')atualizarPedidos();
  if(alvo==='conteudoResumo')atualizarResumo();
@@ -1121,7 +1208,10 @@ $('maisEquipe').addEventListener('click',()=>{
 });
 $('equipeVerLinks').addEventListener('click',()=>mostrarAba('conteudoLinks'));
 $('posicoesVerPedidos').addEventListener('click',()=>mostrarAba('conteudoMeusPedidos'));
-$('financeiroVerPedidos').addEventListener('click',()=>mostrarAba('conteudoMeusPedidos'));
+$('finEscolherBonus').addEventListener('click',()=>finEscolher('BONUS_INDICACAO'));
+$('finEscolherPosicoes').addEventListener('click',()=>finEscolher('POSICOES'));
+$('finFormSaque').addEventListener('submit',finSolicitar);
+$('finAbrirHistorico').addEventListener('click',finAlternarHistorico);
 $('copiarLinkLoja').addEventListener('click',()=>copiarLink('linkLoja'));
 $('copiarLinkEscritorio').addEventListener('click',()=>copiarLink('linkEscritorio'));
 $('formTrocarSenha').addEventListener('submit',trocarSenha);

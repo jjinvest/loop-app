@@ -886,6 +886,37 @@ function criarAppLojaEscritorioCandidato({banco,repositorioCatalogo,
    return res.set('Cache-Control','private, no-store').json(corpo);
   }catch{return res.status(503).json({erro:'MOTOR_REAL_NAO_RESPONDE'});}
  });
+ // Dados do Financeiro da própria conta, autenticados. Sem ledger
+ // comercial homologado, NULO significa desconhecido; nunca usar saldo
+ // de ensaio nem mentir que houve zero ganhos reais.
+ app.get('/staging/financeiro/me',(req,res)=>{
+  if(!sessao(req))return res.status(401).json({erro:'SESSAO_AUSENTE'});
+  return res.set('Cache-Control','private, no-store').json({
+   origem:'FINANCEIRO_SEM_LIVRO_REAL_HOMOLOGADO',
+   disponivel:false,saqueRealHabilitado:false,
+   indicadosValidos:null,saldoBonusCentavos:null,
+   saldoPosicoesCentavos:null,minimoSaqueCentavos:2500,
+   taxaSaquePercentual:0,historicoDisponivel:false
+  });
+ });
+ app.get('/staging/financeiro/historico',(req,res)=>{
+  if(!sessao(req))return res.status(401).json({erro:'SESSAO_AUSENTE'});
+  return res.status(503).json({erro:'HISTORICO_REAL_NAO_HOMOLOGADO'});
+ });
+ app.post('/staging/financeiro/saques',(req,res)=>{
+  if(!sessao(req))return res.status(401).json({erro:'SESSAO_AUSENTE'});
+  if(!autorizacao(req))return res.status(403).json({erro:'CSRF_INVALIDO'});
+  const b=req.body;
+  if(!b||Array.isArray(b)||Object.keys(b).sort().join(',')!==
+     'origem,valorCentavos'||
+     !['BONUS_INDICACAO','POSICOES'].includes(b.origem)||
+     !Number.isSafeInteger(b.valorCentavos)||b.valorCentavos<2500||
+     b.valorCentavos>10000000000)
+   return res.status(400).json({erro:'SAQUE_DADOS_INVALIDOS'});
+  // Sem livros de saldo/comprometimento e sem PSP pagador:
+  // nenhuma solicitação persiste e nenhum PIX é disparado.
+  return res.status(503).json({erro:'SAQUE_REAL_NAO_HOMOLOGADO'});
+ });
  app.get('/staging/motor/estado',(req,res)=>{
   const s=contas.sessao(req);
   if(!s)return res.status(401).json({erro:'SESSAO_AUSENTE'});

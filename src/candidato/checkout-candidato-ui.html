@@ -262,10 +262,35 @@
    <p class="subtexto">Compartilhe seus links. Os novos cadastros poderão ser acompanhados em Minha Equipe.</p>
   </section>
   <section class="painel" id="conteudoFinanceiro" role="tabpanel" aria-labelledby="abaFinanceiro" hidden>
-   <h2>Painel Financeiro</h2>
-   <p id="estadoFinanceiro">Nenhum saldo comercial foi ativado neste ambiente.</p>
-   <p class="subtexto">Valores e saques só serão exibidos quando estiverem disponíveis e confirmados.</p>
-   <button type="button" id="financeiroVerPedidos">Consultar meus pedidos</button>
+   <h2>Financeiro</h2>
+   <p id="estadoFinanceiro" role="status">Consultando a disponibilidade financeira…</p>
+   <div class="fin-resumo" aria-label="Indicadores financeiros">
+    <div class="fin-indicador"><small>Indicados válidos</small><strong id="finIndicadosValidos">—</strong></div>
+    <div class="fin-indicador"><small>Saldo de bônus</small><strong id="finSaldoBonus">—</strong></div>
+    <div class="fin-indicador"><small>Saldo das minhas posições</small><strong id="finSaldoPosicoes">—</strong></div>
+    <div class="fin-indicador"><small>Mínimo para saque</small><strong id="finMinimoSaque">R$ 25,00</strong></div>
+   </div>
+   <div class="fin-operacao">
+    <h3>Solicitação de saque</h3>
+    <div class="fin-fontes" role="group" aria-label="Origem do saque">
+     <button type="button" id="finEscolherBonus" class="fin-fonte" aria-pressed="true"><span>Bônus por indicação</span><strong id="finBonusSaque">—</strong></button>
+     <button type="button" id="finEscolherPosicoes" class="fin-fonte" aria-pressed="false"><span>Saldo das minhas posições</span><strong id="finPosicoesSaque">—</strong></button>
+    </div>
+    <form id="finFormSaque" autocomplete="off">
+     <label for="finValorSaque">Valor para sacar (R$)</label>
+     <div class="fin-linha-saque">
+      <input id="finValorSaque" type="number" inputmode="decimal" min="25" step="0.01" placeholder="0,00" required>
+      <button type="submit" id="finSolicitarSaque" class="primario">Solicitar saque</button>
+     </div>
+    </form>
+    <p class="fin-nota">Valor mínimo: R$ 25,00 · Taxa do participante: 0%. Saques dependem de saldo confirmado e integração bancária habilitada.</p>
+    <p id="finSaqueResposta" role="status" aria-live="polite"></p>
+   </div>
+   <button type="button" id="finAbrirHistorico" class="fin-historico-botao" aria-controls="finHistorico" aria-expanded="false">Histórico de ganhos / saques</button>
+   <section id="finHistorico" class="fin-historico" aria-label="Histórico de ganhos e saques" hidden>
+    <p id="finHistoricoMensagem" role="status">Consultando histórico financeiro...</p>
+    <div id="finHistoricoItens"></div>
+   </section>
   </section>
   <section class="painel" id="conteudoConta" role="tabpanel" aria-labelledby="abaConta" hidden>
    <h2>Minha Conta</h2>
