@@ -19,10 +19,11 @@ function elemento(tag){
   replaceChildren(...filhos){this.children=[...filhos];}
  };
 }
-async function desenhar(dados,{motor={minhasPosicoes:[]},falha=false}={}){
+async function desenhar(dados,{motor={minhasPosicoes:[]},falha=false,somenteMinhas=false}={}){
  const area=elemento('div'),numero=elemento('strong');
  const context={
   document:{createElement:elemento},posicaoSelecionadaMotor:null,
+  somentePosicoesPeloQuadrado:somenteMinhas,
   $:id=>id==='posicoesPainel'?area:id==='loop03NumeroIntegrado'?numero:null,
   requisitar:async rota=>{
    if(falha)throw Error('SQLITE_INDISPONIVEL');
@@ -75,4 +76,24 @@ test('falha em qualquer fonte nao reaproveita cartoes',async()=>{
  assert.equal(area.children.length,1);
  assert.match(area.children[0].textContent,/Não foi possível carregar suas posições/);
  assert.doesNotMatch(area.children[0].textContent,/SQLITE_INDISPONIVEL/);
+});
+
+test('somente quadrado superior filtra ocupadas e usa exemplo marcado se zerado',async()=>{
+ const uma=await desenhar({pendencias:[]},{
+  motor:{minhasPosicoes:[{numero:42,local:'FILA',fila:'B',
+   indicacoesVinculadas:2,pendente:false}]},somenteMinhas:true
+ });
+ assert.equal(uma.children.length,3);
+ const grade=uma.children[1];
+ assert.equal(grade.children.length,1);
+ assert.equal(grade.children[0].children[1].textContent,'#42');
+ assert.match(grade.children[0].children[2].textContent,/Fila B/);
+ assert.equal(grade.children[0].attributes['data-exemplo-visual'],undefined);
+ const vazio=await desenhar({pendencias:[]},{somenteMinhas:true});
+ const amostra=vazio.children[1].children;
+ assert.equal(amostra.length,1);
+ assert.equal(amostra[0].attributes['data-exemplo-visual'],'true');
+ assert.match(amostra[0].children[0].textContent,/DEMONSTRAÇÃO/);
+ assert.match(amostra[0].children[2].textContent,/Fila B/);
+ assert.match(amostra[0].children[3].textContent,/0 posições reais/);
 });
