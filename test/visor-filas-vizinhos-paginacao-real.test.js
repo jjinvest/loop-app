@@ -60,7 +60,9 @@ test('a expansão usa a caixa aprovada e controla páginas no cliente real',()=>
  const ui=fs.readFileSync(path.join(__dirname,'../src/producao/interface-aprovada-contas.js'),'utf8');
  const css=fs.readFileSync(path.join(__dirname,'../src/candidato/escritorio-cliente-integrado.css'),'utf8');
  assert.match(ui,/atualizarFilasAncoradas/);
- assert.match(ui,/Ver fila completa/);
+ assert.match(ui,/desdeInicio=1/);
+ assert.match(ui,/d\.janela\.length>10/);
+ assert.match(ui,/d\.pagina\.length>30/);
  assert.match(ui,/Carregar mais posições/);
  assert.match(css,/\.loop03-fila-paginada/);
 });
@@ -75,7 +77,48 @@ test('quadros A/B clicáveis e acessíveis mesmo quando estão vazios',()=>{
   assert.match(html,new RegExp('id="motorFila'+fila+'Detalhes"'));
   assert.match(js,new RegExp("selecionarQuadroFila\\(fila\\)"));
  }
- assert.match(js,/Fila vazia\. Quando houver posições/);
- assert.match(js,/Você ainda não possui posição nesta fila/);
+ assert.match(js,/Fila vazia\./);
+ assert.match(js,/ordem de espera/);
  assert.match(js,/filaSelecionada===fila/);
+});
+
+test('exibicao global tem 10 no painel e 30 por pagina desde 1, sem reordenar o motor',()=>{
+ const {motor,titular}=montar();
+ const primeira=motor.consultarFilaPaginada({titularId:titular,fila:'A',desdeInicio:true});
+ assert.equal(primeira.total,95);
+ assert.deepEqual(primeira.janela.map(p=>p.ordem),Array.from({length:10},(_,i)=>i+1));
+ assert.equal(primeira.pagina.length,30);
+ assert.deepEqual(primeira.pagina.map(p=>p.ordem),Array.from({length:30},(_,i)=>i+1));
+ assert.equal(primeira.pagina[0].numero,1);
+ assert.equal(primeira.proximaPagina,1);
+ const segunda=motor.consultarFilaPaginada({titularId:titular,fila:'A',desdeInicio:true,pagina:1});
+ assert.equal(segunda.pagina[0].ordem,31);
+ assert.equal(segunda.pagina[29].ordem,60);
+ const ultima=motor.consultarFilaPaginada({titularId:titular,fila:'A',desdeInicio:true,pagina:3});
+ assert.deepEqual(ultima.pagina.map(p=>p.ordem),[91,92,93,94,95]);
+ assert.equal(ultima.proximaPagina,null);
+ const b=motor.consultarFilaPaginada({titularId:titular,fila:'B',desdeInicio:true});
+ assert.deepEqual(b.janela.map(p=>p.ordem),[1,2,3]);
+ assert.deepEqual(b.pagina.map(p=>p.numero),[201,202,203]);
+ assert.equal(b.proximaPagina,null);
+ const estado=motor._sim().filas.filaA;
+ assert.deepEqual(estado.slice(0,3).map(p=>p.id),[1,2,3]);
+});
+test('mil lugares permitem 34 paginas sem mudar o ID unico',()=>{
+ const {motor,titular}=montar();
+ const fila=Array.from({length:1000},(_,i)=>({
+  id:15000+i*10,participanteId:i===490?titular:
+   'titular-bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb',empresa:false
+ }));
+ motor._sim=()=>({filas:{filaA:fila,filaB:[]}});
+ const primeira=motor.consultarFilaPaginada({titularId:titular,fila:'A',desdeInicio:true});
+ assert.deepEqual(primeira.janela.map(p=>p.ordem),[1,2,3,4,5,6,7,8,9,10]);
+ assert.equal(primeira.janela[0].numero,15000);
+ const ultima=motor.consultarFilaPaginada({titularId:titular,fila:'A',pagina:33,desdeInicio:true});
+ assert.equal(ultima.pagina.length,10);
+ assert.equal(ultima.pagina[0].ordem,991);
+ assert.equal(ultima.pagina[9].ordem,1000);
+ assert.equal(ultima.pagina[9].numero,24990);
+ assert.equal(ultima.proximaPagina,null);
+ assert.equal(fila[999].id,24990);
 });
