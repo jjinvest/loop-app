@@ -353,18 +353,18 @@ test('convite por link registra cadastro correto, rejeita fraude e nao libera co
  assert.deepEqual(x.db.prepare('PRAGMA foreign_key_check').all(),[]);
 });
 
-test('nick de 12 letras abre link de loja e registra indicacao no mesmo SQLite',async t=>{
- const x=await preparar(t),nick='Alessandrita';
+test('nick novo de 9 caracteres abre link de loja e registra indicacao no mesmo SQLite',async t=>{
+ const x=await preparar(t),nick='Alessandr';
  const cadastrar=(n,headers={})=>x.consultar('/staging/contas/cadastrar',{
   method:'POST',headers:{'Content-Type':'application/json',...headers},
   body:JSON.stringify({nome:n+' Cliente',nick:n,
    email:n.toLowerCase()+'@example.invalid',
    senha:'SenhaFicticiaForte2026!',aceiteExplicito:true})
  });
- assert.equal(nick.length,12);
+ assert.equal(nick.length,9);
  assert.equal((await cadastrar(nick)).status,201);
- assert.equal((await cadastrar('Alessandritas')).status,400,
-  '13 letras devem ser rejeitadas, sem link orfao');
+ assert.equal((await cadastrar('Alessandra')).status,400,
+  '10 caracteres novos devem ser rejeitados, sem link orfao');
  const link=await x.consultar('/loja/'+nick);
  assert.equal(link.status,302);
  assert.equal(link.headers.get('location'),'/loja');
@@ -381,7 +381,7 @@ test('nick de 12 letras abre link de loja e registra indicacao no mesmo SQLite',
  const equipe=await x.consultar('/staging/minha-equipe',{headers:{Cookie:sessao}});
  assert.equal((await equipe.json()).total,1);
  const tela=await x.consultar('/minha-conta');
- assert.match(await tela.text(),/maxlength="12" pattern="\[A-Za-z\]\{1,12\}"/);
+ assert.match(await tela.text(),/id="cadastroNick"[^>]*maxlength="9"/);
 });
 test('escritorio com interface aprovada compartilha a mesma sessao e APIs',async t=>{
  const x=await preparar(t);
