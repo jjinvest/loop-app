@@ -520,6 +520,76 @@ function abrirPopupResumo(){
  void atualizarResumo().then(preencherOpcoesPopupResumo);
 }
 const visualTabuleiro=window.LoopTabuleiroVisual.criar({elemento:$});
+let filaAbertaNoTabuleiro=null;
+const filasTabuleiroVisiveis={A:[],B:[]};
+const paginasFilasTabuleiro={A:1,B:1};
+// A API operacional já devolve a sequência; jamais ordenar pelo número
+// único da posição. Cada fila tem sua contagem de espera independente.
+function preencherFilaOrdemTabuleiro(fila,filas){
+ if(!Array.isArray(filas))throw Error('FILAS_TABULEIRO_INVALIDAS');
+ const validas=filas.map((p,i)=>{
+  if(!p||typeof p!=='object'||!Number.isSafeInteger(p.numero)||p.numero<1)
+   throw Error('FILA_POSICAO_INVALIDA');
+  return {...p,ordem:i+1};
+ });
+ filasTabuleiroVisiveis[fila]=validas;
+ visualTabuleiro.preencherFila('motorFila'+fila,validas.slice(0,10),fila);
+ const painel=$('motorFila'+fila+'Detalhes');
+ painel.replaceChildren();
+ const aberta=filaAbertaNoTabuleiro===fila;
+ painel.hidden=!aberta;
+ $('quadroMotorFila'+fila).classList.toggle('loop03-fila-selecionada',aberta);
+ $('abrirMotorFila'+fila).setAttribute('aria-expanded',String(aberta));
+ if(!aberta)return;
+ if(!validas.length){
+  const vazio=document.createElement('p');
+  vazio.className='subtexto';vazio.textContent='Fila vazia.';
+  painel.append(vazio);return;
+ }
+ const titulo=document.createElement('p');
+ titulo.className='subtexto';
+ titulo.textContent='Fila '+fila+' · ordem de espera (30 por página)';
+ painel.append(titulo);
+ const paginas=document.createElement('div');painel.append(paginas);
+ const limite=Math.min(validas.length,paginasFilasTabuleiro[fila]*30);
+ for(let inicio=0;inicio<limite;inicio+=30){
+  const pagina=document.createElement('div');
+  const cabecalho=document.createElement('p');
+  cabecalho.className='loop03-fila-ordem-propria';
+  cabecalho.textContent='Página '+(Math.floor(inicio/30)+1)+
+   ' · lugares '+(inicio+1)+' a '+Math.min(inicio+30,validas.length);
+  const linhas=document.createElement('div');
+  linhas.id='motorFila'+fila+'Pagina'+inicio;
+  pagina.append(cabecalho,linhas);paginas.append(pagina);
+  visualTabuleiro.preencherFila(linhas.id,validas.slice(inicio,inicio+30),
+   fila,{inicio});
+ }
+ if(limite<validas.length){
+  const mais=document.createElement('button');
+  mais.type='button';mais.className='loop03-fila-expandir';
+  mais.textContent='Carregar mais 30 lugares';
+  mais.addEventListener('click',()=>{
+   paginasFilasTabuleiro[fila]++;
+   preencherFilaOrdemTabuleiro(fila,filasTabuleiroVisiveis[fila]);
+  });
+  painel.append(mais);
+ }else{
+  const fim=document.createElement('small');
+  fim.textContent='Fim da Fila '+fila+' · '+validas.length+' lugares.';
+  painel.append(fim);
+ }
+}
+for(const fila of ['A','B']){
+ $('abrirMotorFila'+fila).addEventListener('click',()=>{
+  filaAbertaNoTabuleiro=filaAbertaNoTabuleiro===fila?null:fila;
+  for(const tipo of ['A','B'])
+   preencherFilaOrdemTabuleiro(tipo,filasTabuleiroVisiveis[tipo]);
+ });
+ $('quadroMotorFila'+fila).addEventListener('click',ev=>{
+  if(ev.target.closest('button')||ev.target.closest('.loop03-fila-paginada'))return;
+  $('abrirMotorFila'+fila).click();
+ });
+}
 async function atualizarTabuleiroIntegrado(){
  const estado=$('estadoTabuleiroIntegrado');
  try{
@@ -528,8 +598,8 @@ async function atualizarTabuleiroIntegrado(){
      motor.operacional!==true||motor.financeiroReal!==false||
      !Array.isArray(motor.tabuleiro?.vagas)||motor.tabuleiro.vagas.length!==6)
    throw Error('FONTE_MOTOR_REAL_INCOMPATIVEL');
-  visualTabuleiro.preencherFila('motorFilaA',motor.filaA,'A');
-  visualTabuleiro.preencherFila('motorFilaB',motor.filaB,'B');
+  preencherFilaOrdemTabuleiro('A',motor.filaA);
+  preencherFilaOrdemTabuleiro('B',motor.filaB);
   visualTabuleiro.preencherVaga('tabuleiroMotorCentro',motor.tabuleiro.centro,true);
   motor.tabuleiro.vagas.forEach((p,i)=>
    visualTabuleiro.preencherVaga('tabuleiroMotorVaga'+(i+1),p));
@@ -548,8 +618,8 @@ async function atualizarTabuleiroIntegrado(){
  }catch(e){
   // Remover apenas fotografia antiga da visualizacao: ela nao pode
   // continuar mostrando ensaio como real apos falha de leitura do motor.
-  visualTabuleiro.preencherFila('motorFilaA',[],'A');
-  visualTabuleiro.preencherFila('motorFilaB',[],'B');
+  preencherFilaOrdemTabuleiro('A',[]);
+  preencherFilaOrdemTabuleiro('B',[]);
   visualTabuleiro.preencherVaga('tabuleiroMotorCentro',null,true);
   for(let i=1;i<=6;i++)
    visualTabuleiro.preencherVaga('tabuleiroMotorVaga'+i,null);
