@@ -96,7 +96,9 @@
  }
  function sincronizarFotoRodapeReal(){
   const topo=$('loop03ImagemFotoTopo'),rodape=$('loop03ImagemFotoRodape');
-  const ok=!topo.hidden&&!!topo.getAttribute('src');
+  // O serviço real ainda não possui custódia de fotos. Não depender
+  // de elemento removido do HTML por esse adaptador.
+  const ok=!!topo&&!topo.hidden&&!!topo.getAttribute('src');
   if(ok)rodape.src=topo.src;else rodape.removeAttribute('src');
   rodape.hidden=!ok;$('loop03AvatarRodapeVazio').hidden=ok;
  }
@@ -936,7 +938,8 @@
  $('abrirRecuperacao').addEventListener('click',()=>mostrarLogin('recuperacao'));
  $('voltarLogin').addEventListener('click',()=>mostrarLogin('login'));
  $('loop03AbrirPerfil').addEventListener('click',()=>void alternarDadosRodapeReal());
- new MutationObserver(sincronizarFotoRodapeReal).observe($('loop03ImagemFotoTopo'),{
+ const fotoTopoReal=$('loop03ImagemFotoTopo');
+ if(fotoTopoReal)new MutationObserver(sincronizarFotoRodapeReal).observe(fotoTopoReal,{
   attributes:true,attributeFilter:['src','hidden']
  });
  sincronizarFotoRodapeReal();
