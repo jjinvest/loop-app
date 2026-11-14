@@ -1,0 +1,103 @@
+{
+  "schema": 1,
+  "política": "Toda alteração de HTML/CSS exige pedido visual explícito, escopo isolado e revisão do proprietário; é proibido atualizar hashes para esconder mudanças.",
+  "autorizaçãoAtual": "14/11/2026 — no RESUMO do Escritório remover só a linha dos três quadradinhos duplicados ABAIXO do banner, preservar três indicadores superiores e quatro botões, sem redesenho.",
+  "arquivos": [
+    {
+      "path": "src/candidato/checkout-candidato-ui.html",
+      "sha": "34dff88163af161e3085140a2ae9044b92d832bb"
+    },
+    {
+      "path": "src/candidato/escritorio-admin-candidato-ui.css",
+      "sha": "a3b20d06e6f65fd9ee3da382d41e8bafdc8b9673"
+    },
+    {
+      "path": "src/candidato/escritorio-admin-candidato-ui.html",
+      "sha": "9e60af73b531bc82d8081674f4fed68df390ed99"
+    },
+    {
+      "path": "src/candidato/escritorio-cliente-integrado.css",
+      "sha": "178740160155b8aeb135d61ea73f51db57520367"
+    },
+    {
+      "path": "src/laboratorio/admin-loop03.css",
+      "sha": "b3e5eb008f95b9f6796f78f21cec3c79e8557ec7"
+    },
+    {
+      "path": "src/laboratorio/admin-loop03.html",
+      "sha": "38b961ce2354e4469b19fe7537a0298ffa9a6ed0"
+    },
+    {
+      "path": "src/laboratorio/cadastro-participantes-demo.css",
+      "sha": "544bef196fd1a429f983d7e44ee78e77875b25a1"
+    },
+    {
+      "path": "src/laboratorio/cadastro-participantes-demo.html",
+      "sha": "b40c900ef96bd0708bb53b56b4fca3873db8af85"
+    },
+    {
+      "path": "src/laboratorio/checkout-staging-ui.css",
+      "sha": "f23236dace5a87277685bc348d0e104b002c363b"
+    },
+    {
+      "path": "src/laboratorio/checkout-staging-ui.html",
+      "sha": "aa9c3d037f25b9abf5aac0feaa3f5c3bbaad0da0"
+    },
+    {
+      "path": "src/laboratorio/circuit-break-v6-demo.html",
+      "sha": "f046f12b63e8b8ded604ece9ddc8c892969e61d8"
+    },
+    {
+      "path": "src/laboratorio/convite-cliente-demo.html",
+      "sha": "adce97d47edd6a81a894534bb48b48e76581f924"
+    },
+    {
+      "path": "src/laboratorio/escritorio-demo.css",
+      "sha": "ae2bfdc5d078f28f45de03cb59f6ff2068c85230"
+    },
+    {
+      "path": "src/laboratorio/escritorio-demo.html",
+      "sha": "14fa18525a700a860fb7b3f1c4fe4bbbbffe3966"
+    },
+    {
+      "path": "src/laboratorio/financeiro-admin-demo.css",
+      "sha": "d066ff833b510df06e58b860c9cd7a3e540cacc2"
+    },
+    {
+      "path": "src/laboratorio/financeiro-admin-demo.html",
+      "sha": "644b6914d6c7d5bc553c3faafa66de63817e86a6"
+    },
+    {
+      "path": "src/laboratorio/loja-cliente-demo.css",
+      "sha": "1817b5a15eb2bedcbe3f4d398fe20cc9def89c14"
+    },
+    {
+      "path": "src/laboratorio/loja-cliente-demo.html",
+      "sha": "cff1bcace6644f96f2eb262744480590d6cc290f"
+    },
+    {
+      "path": "src/laboratorio/loop-03-shell.css",
+      "sha": "6728ab8c2fffa5812d53298e794cd0c5867e80a4"
+    },
+    {
+      "path": "src/laboratorio/loop-30-cosmos.css",
+      "sha": "c727cb6fb1541672493adca0dba972cd16fc15b1"
+    },
+    {
+      "path": "src/laboratorio/painel-catalogo.css",
+      "sha": "956a6fed511953a137bc1ee3cad385de05b6935d"
+    },
+    {
+      "path": "src/laboratorio/painel-catalogo.html",
+      "sha": "a005bf9b8fcfd1269ea460a6028f3f48c584e8f4"
+    },
+    {
+      "path": "src/laboratorio/participante-demo.css",
+      "sha": "8a7f62c4865155a7641bce7623d6276250137178"
+    },
+    {
+      "path": "src/laboratorio/participante-demo.html",
+      "sha": "3999bd755b52fb96bbdd0e287e1d1fd9cc5e4387"
+    }
+  ]
+}

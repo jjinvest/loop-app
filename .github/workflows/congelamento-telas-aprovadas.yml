@@ -1,0 +1,39 @@
+name: LOOP - Bloqueio de alteracoes visuais nao autorizadas
+
+on:
+  push:
+    branches:
+      - feature/unificar-escritorio-real-20261105
+      - fix/teste-escrita-catraca-20261014
+    paths:
+      - 'src/candidato/**'
+      - 'src/laboratorio/**'
+      - 'src/producao/interface-aprovada-*'
+      - 'docs/CONTRATO_VISUAL_LOOP_APROVADO.json'
+      - 'docs/REGRA_IMUTABILIDADE_TELAS_LOOP.md'
+      - 'test/contrato-visual-escritorio-aprovado.test.js'
+      - '.github/workflows/congelamento-telas-aprovadas.yml'
+  pull_request:
+    paths:
+      - 'src/candidato/**'
+      - 'src/laboratorio/**'
+      - 'src/producao/interface-aprovada-*'
+      - 'docs/CONTRATO_VISUAL_LOOP_APROVADO.json'
+      - 'docs/REGRA_IMUTABILIDADE_TELAS_LOOP.md'
+      - 'test/contrato-visual-escritorio-aprovado.test.js'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  proteger-telas-aprovadas:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 3
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Validar contrato visual imutavel
+        run: node --test test/contrato-visual-escritorio-aprovado.test.js
