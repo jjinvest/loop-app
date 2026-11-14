@@ -129,6 +129,20 @@ class TitularidadeCpfTermosCandidato{
     termosVersao,termosSha256:termosSha};
   }catch(e){this.banco.exec('ROLLBACK');throw e;}
  }
+ conferirCpfTitular({titularId,cpf}={}){
+  if(typeof titularId!=='string'||!ID.test(titularId))
+   falha('TITULAR_INVALIDO');
+  const normalizado=normalizarCpf(cpf);
+  const registro=this.banco.prepare(
+   'SELECT cpf_hmac FROM '+this.tabelaRegistro+' WHERE titular_id=?'
+  ).get(titularId);
+  if(!registro)falha('CPF_TITULAR_NAO_REGISTRADO');
+  const informado=Buffer.from(digestCpf(normalizado,this.hmac),'hex');
+  const esperado=Buffer.from(registro.cpf_hmac,'hex');
+  if(informado.length!==esperado.length||!timingSafeEqual(informado,esperado))
+   falha('CPF_TITULAR_DIVERGENTE');
+  return {corresponde:true};
+ }
  consultar({titularId}={}){
   if(typeof titularId!=='string'||!ID.test(titularId))
    falha('TITULAR_INVALIDO');
