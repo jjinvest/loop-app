@@ -22,7 +22,7 @@ function elemento(tag){
 async function desenhar(dados,{motor={minhasPosicoes:[]},falha=false,somenteMinhas=false}={}){
  const area=elemento('div'),numero=elemento('strong');
  const context={
-  document:{createElement:elemento},posicaoSelecionadaMotor:null,
+  document:{createElement:elemento,createTextNode:texto=>({tag:'text',textContent:texto})},posicaoSelecionadaMotor:null,
   somentePosicoesPeloQuadrado:somenteMinhas,
   $:id=>id==='posicoesPainel'?area:id==='loop03NumeroIntegrado'?numero:null,
   requisitar:async rota=>{
