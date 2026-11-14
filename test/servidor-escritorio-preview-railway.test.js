@@ -693,3 +693,23 @@ test('Escritorio Virtual nao duplica no rodape os dados do placar superior',()=>
  assert.match(html,/id="seletorPosicoesResumo"/);
  assert.match(html,/id="tabuleiroVerPosicoesIntegrado"/);
 });
+
+// Contagem permanece na roda, mas nunca duplicada antes de "Ver minhas posições".
+test('Tabuleiro preserva a contagem junto da roda e remove duplicacao do rodape',()=>{
+ const fs=require('node:fs'),path=require('node:path');
+ const html=fs.readFileSync(path.join(__dirname,
+  '../src/candidato/checkout-candidato-ui.html'),'utf8');
+ const cliente=fs.readFileSync(path.join(__dirname,
+  '../src/candidato/checkout-candidato-ui.js'),'utf8');
+ const conta=fs.readFileSync(path.join(__dirname,
+  '../src/producao/interface-aprovada-contas.js'),'utf8');
+ assert.match(html,/id="motorContadorEventos"/);
+ assert.match(html,/<p id="estadoTabuleiroIntegrado" role="alert" hidden><\\/p>/);
+ assert.match(html,/id="tabuleiroVerPosicoesIntegrado">Ver minhas posições<\\/button>/);
+ assert.match(cliente,/\$\('motorContadorEventos'\)\.textContent=motor\.tabuleiro\.eventosNoCiclo\+/);
+ assert.doesNotMatch(cliente,/estado\.textContent=motor\.tabuleiro\.eventosNoCiclo\+/);
+ assert.match(cliente,/estado\.textContent='';\s*estado\.hidden=true/);
+ assert.match(cliente,/estado\.hidden=false/);
+ assert.match(conta,/\$\('estadoTabuleiroIntegrado'\)\.hidden=true/);
+ assert.match(conta,/\$\('estadoTabuleiroIntegrado'\)\.hidden=false/);
+});
