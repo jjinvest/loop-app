@@ -62,7 +62,10 @@ test('conta única prepara checkout e Escritório com o MESMO titular, sem Pix',
  assert.notEqual(alice.body.titularId,bob.body.titularId);
  assert.equal((await enviar(base,'/staging/contas/cadastrar',{
   method:'POST',data:form('ALICE','outra@example.invalid')
- })).status,409,'nick insensível a maiúsculas');
+ })).status,201,'maiúsculas e minúsculas distinguem titulares');
+ assert.equal((await enviar(base,'/staging/contas/cadastrar',{
+  method:'POST',data:form('Alice','outra2@example.invalid')
+ })).status,409,'grafia exata continua exclusiva');
  assert.equal((await enviar(base,'/staging/contas/cadastrar',{
   method:'POST',data:form('Carol','alice@example.invalid')
  })).status,409,'email nao duplica');
@@ -259,4 +262,38 @@ test('cadastro com CPF e indicacao guarda identificacao sem plaintext, com rollb
  assert.equal(db.prepare('SELECT COUNT(*) AS n FROM akitemm_conta_unica_candidata').get().n,1);
  assert.doesNotMatch(JSON.stringify(db.prepare('SELECT * FROM akitemm_candidato_titularidade_unificada').all()),/52998224725|529\\.982\\.247-25/);
  assert.equal(db.prepare('PRAGMA integrity_check').get().integrity_check,'ok');
+});
+
+test('nick reservado VILELA nao aceita imitacoes, e variantes distintas sao independentes',async t=>{
+ const db=new DatabaseSync(':memory:');
+ db.exec('PRAGMA foreign_keys=ON');
+ const impl=criarAppLojaEscritorioCandidato({...config(db,randomBytes(32),randomBytes(32))});
+ const {server,base}=await iniciar(impl.app);
+ t.after(async()=>{await new Promise(done=>server.close(done));db.close();});
+ const senha='SenhaFicticiaDemonstracao2026!';
+ const form=(nick,i)=>({nome:'Pessoa Teste',nick,email:'var'+i+'@example.invalid',
+  senha,aceiteExplicito:true});
+ const tentar=(nick,i)=>enviar(base,'/staging/contas/cadastrar',{
+  method:'POST',data:form(nick,i)});
+ for(const [i,nick] of ['Vilela','vilela','VILELA','ViLeLa','Vilela8','V1L3L4','V8lela'].entries()){
+  const r=await tentar(nick,i);
+  assert.equal(r.status,400,nick+' '+JSON.stringify(r.body));
+  assert.equal(r.body.erro,'NICK_RESERVADO');
+ }
+ const nicks=['José','JOSÉ','josé','Jose','Jose1','Jose 2'];
+ for(const [i,nick] of nicks.entries()){
+  const r=await tentar(nick,i+10);
+  assert.equal(r.status,201,nick+' '+JSON.stringify(r.body));
+ }
+ assert.equal((await tentar('José',60)).status,409);
+ assert.equal((await tentar('José Silva',61)).status,400,
+  '10 caracteres novos continuam proibidos');
+ const login=await enviar(base,'/staging/contas/entrar',{
+  method:'POST',data:{nick:'JOSÉ',senha}});
+ assert.equal(login.status,200,JSON.stringify(login.body));
+ assert.equal(login.body.nick,'JOSÉ');
+ const link=await enviar(base,'/staging/vitrine/meus-links',{
+  cookie:login.cookie.match(new RegExp(COOKIE+'=([a-f0-9]{64})'))?.[1]});
+ assert.equal(link.status,200,JSON.stringify(link.body));
+ assert.equal(link.body.linkLoja,'/loja/JOSÉ');
 });
