@@ -423,23 +423,25 @@ function criarAppIdentidadeLoop({contas,origemHttps,
  // comprovada pelo motor contra a sessão, nunca por um ID arbitrário.
  app.get('/api/loop/fila',protegido,(req,res)=>{
   if(!motorLoop)return res.status(503).json({erro:'MOTOR_INTERNO_INDISPONIVEL'});
-  if(Object.keys(req.query).some(k=>!['fila','posicaoId','pagina'].includes(k))||
+  if(Object.keys(req.query).some(k=>!['fila','posicaoId','pagina','desdeInicio'].includes(k))||
      !['A','B'].includes(req.query.fila)||
      (req.query.posicaoId!==undefined&&
       (typeof req.query.posicaoId!=='string'||
        !/^[1-9][0-9]*$/.test(req.query.posicaoId)))||
      (req.query.pagina!==undefined&&
       (typeof req.query.pagina!=='string'||
-       !/^(0|[1-9][0-9]*)$/.test(req.query.pagina))))
+       !/^(0|[1-9][0-9]*)$/.test(req.query.pagina)))||
+     (req.query.desdeInicio!==undefined&&req.query.desdeInicio!=='1'))
    return res.status(400).json({erro:'PARAMETROS_FILA_INVALIDOS'});
   const posicaoId=req.query.posicaoId===undefined?null:Number(req.query.posicaoId);
   const pagina=req.query.pagina===undefined?0:Number(req.query.pagina);
+  const desdeInicio=req.query.desdeInicio==='1';
   if((posicaoId!==null&&!Number.isSafeInteger(posicaoId))||
      !Number.isSafeInteger(pagina)||pagina>1000000)
    return res.status(400).json({erro:'PARAMETROS_FILA_INVALIDOS'});
   try{return res.set('Cache-Control','private, no-store').json(
    motorLoop.consultarFilaPaginada({
-    titularId:req.conta.titularId,fila:req.query.fila,posicaoId,pagina
+    titularId:req.conta.titularId,fila:req.query.fila,posicaoId,pagina,desdeInicio
    }));}
   catch(e){return res.status(
    e.codigo==='FILA_POSICAO_NAO_PERTENCE_A_TITULAR'?404:503
