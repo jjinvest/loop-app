@@ -321,8 +321,7 @@ async function atualizarResumo(){
    requisitar('/minha-previa-filas'),requisitar('/minha-equipe'),
    requisitar('/motor/estado')
   ]);
-  $('boasVindas').textContent='Bem-vindo, '+perfil.nome+' · @'+perfil.nick;
-  $('loop03NickIntegrado').textContent='@'+perfil.nick;
+    $('loop03NickIntegrado').textContent='@'+perfil.nick;
   $('loop03TotalIntegrado').textContent=String(motor.posicoesAtivasDoTitular)+' / '+
    String(motor.limitePosicoesAtivas);
   $('loop03Giros24Integrado').textContent=String(motor.catraca.giros24h);
@@ -1013,6 +1012,42 @@ setInterval(()=>{
   void atualizarTabuleiroIntegrado();
 },15000);
 
+
+function iniciarCarrosselResumo(){
+ const pista=$('loop03PistaBanners');
+ const pontos=[...document.querySelectorAll('[data-banner-resumo]')];
+ if(!pista||pontos.length!==2)return;
+ let atual=0,emInteracao=false;
+ const reduz=()=>window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+ function marcar(indice){
+  atual=indice;
+  pontos.forEach((p,i)=>p.setAttribute('aria-current',String(i===indice)));
+ }
+ function mover(indice){
+  marcar(indice);
+  pista.scrollTo({left:pista.clientWidth*indice,behavior:reduz()?'instant':'smooth'});
+ }
+ pontos.forEach((p,i)=>p.addEventListener('click',()=>{
+  emInteracao=true;mover(i);
+ }));
+ pista.addEventListener('scroll',()=>{
+  if(pista.clientWidth>0)marcar(Math.min(1,Math.max(0,
+   Math.round(pista.scrollLeft/pista.clientWidth))));
+ },{passive:true});
+ pista.addEventListener('pointerdown',()=>{emInteracao=true;});
+ pista.addEventListener('focusin',()=>{emInteracao=true;});
+ pista.addEventListener('focusout',()=>{emInteracao=false;});
+ pista.addEventListener('pointerleave',()=>{emInteracao=false;});
+ window.setInterval(()=>{
+  if(document.hidden||aba!=='conteudoResumo'||emInteracao||reduz())return;
+  mover((atual+1)%2);
+ },6500);
+ window.addEventListener('resize',()=>pista.scrollTo({
+  left:pista.clientWidth*atual,behavior:'instant'
+ }));
+}
+
+iniciarCarrosselResumo();
 $('tabuleiroVerPosicoesIntegrado').addEventListener('click',()=>mostrarAba('conteudoPosicoes'));
 $('loop03IrPosicoesIntegrado').addEventListener('click',abrirPopupResumo);
 document.addEventListener('click',e=>{
@@ -1026,7 +1061,6 @@ document.addEventListener('keydown',e=>{
 });
 $('loop03MenuIntegrado').addEventListener('click',alternarMenuIntegrado);
 document.addEventListener('keydown',e=>{if(e.key==='Escape')fecharMenuIntegrado();});
-$('atualizarResumo').addEventListener('click',atualizarResumo);
 $('atualizarPosicoes').addEventListener('click',atualizarPosicoes);
 $('atualizarEquipe').addEventListener('click',()=>atualizarEquipe(0));
 $('buscarEquipe').addEventListener('input',()=>{
@@ -1037,8 +1071,6 @@ $('maisEquipe').addEventListener('click',()=>{
  if(proximaPaginaEquipe!==null)atualizarEquipe(proximaPaginaEquipe);
 });
 $('equipeVerLinks').addEventListener('click',()=>mostrarAba('conteudoLinks'));
-$('atalhoPedidos').addEventListener('click',()=>mostrarAba('conteudoMeusPedidos'));
-$('atalhoPosicoes').addEventListener('click',()=>mostrarAba('conteudoPosicoes'));
 $('atalhoLoja').addEventListener('click',()=>{location.href='/staging/loja';});
 $('posicoesVerPedidos').addEventListener('click',()=>mostrarAba('conteudoMeusPedidos'));
 $('financeiroVerPedidos').addEventListener('click',()=>mostrarAba('conteudoMeusPedidos'));
