@@ -515,7 +515,7 @@
      id.textContent='#'+pos.numero;
      corpo.appendChild(id);
      detalhe.textContent=pos.local+
-      (pos.fila==='A'||pos.fila==='B'?' · Fila '+pos.fila:'')+
+      (somentePosicoesPeloQuadrado&&(pos.fila==='A'||pos.fila==='B')?' · Fila '+pos.fila:'')+
       (pos.classeProdutoOrigem?' · Produto '+pos.classeProdutoOrigem:'')+
       ' · '+pos.indicacoesQualificadasEnsaio+
       ' indicação(ões) em verificação. Sem crédito financeiro disponível.';
