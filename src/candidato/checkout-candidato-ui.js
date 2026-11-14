@@ -8,6 +8,8 @@ let csrf=null,aba='conteudoResumo',proximaPaginaEquipe=null,
 let telaAcesso='login';
 let termosCadastroLidos=null,carregandoTermosCadastro=null;
 let posicaoSelecionadaMotor=null;
+let posicoesDisponiveisResumo=[],revisaoHistoricoResumo=0;
+let popupPosicoesAberto=false;
 let somentePosicoesPeloQuadrado=false;
 const ABAS=[['abaResumo','conteudoResumo'],['abaTabuleiro','conteudoTabuleiro'],
  ['abaMeusPedidos','conteudoMeusPedidos'],['abaPosicoes','conteudoPosicoes'],
@@ -326,10 +328,105 @@ async function atualizarResumo(){
   $('loop03Giros24Integrado').textContent=String(motor.catraca.giros24h);
   const selecionada=motor.minhasPosicoes.find(x=>x.numero===posicaoSelecionadaMotor);
   if(!selecionada)posicaoSelecionadaMotor=null;
-  $('loop03NumeroIntegrado').textContent=selecionada?'#'+selecionada.numero:'—';
+  posicoesDisponiveisResumo=[...motor.minhasPosicoes]
+   .filter(p=>Number.isSafeInteger(p.numero)).sort((a,b)=>a.numero-b.numero);
+  atualizarIndicadorSelecionadoResumo();
+  if(!$('historicoPosicaoResumo').hidden&&selecionada)
+   void renderizarHistoricoResumo(selecionada);
+  if(!selecionada)$('historicoPosicaoResumo').hidden=true;
   $('resumoEmail').textContent=perfil.emailVerificado?'Confirmado':'Pendente';
   $('linksNick').textContent='Seu nick: @'+perfil.nick;
  }catch(e){dizer('Não foi possível atualizar seus dados. Tente novamente.');}
+}
+
+function atualizarIndicadorSelecionadoResumo(){
+ const indice=posicoesDisponiveisResumo.findIndex(p=>p.numero===posicaoSelecionadaMotor);
+ const pos=indice>=0?posicoesDisponiveisResumo[indice]:null;
+ $('loop03NumeroIntegrado').textContent=pos?'#'+(indice+1):'—';
+ $('loop03StatusPosicao').textContent=pos?
+  ((pos.fila==='A'||pos.fila==='B'?'Fila '+pos.fila+' · ':'')+
+   (pos.local==='FILA'?'Na fila':pos.local==='CENTRO'?'No centro':
+    pos.local?.startsWith('VAGA_')?'No tabuleiro':'Em acompanhamento')+
+   ' · ID #'+pos.numero):'Escolha uma posição';
+}
+function fecharPopupResumo(){
+ popupPosicoesAberto=false;
+ $('seletorPosicoesResumo').hidden=true;
+ $('loop03IrPosicoesIntegrado').setAttribute('aria-expanded','false');
+}
+function abrirPopupResumo(){
+ popupPosicoesAberto=!popupPosicoesAberto;
+ const painel=$('seletorPosicoesResumo');
+ painel.hidden=!popupPosicoesAberto;
+ $('loop03IrPosicoesIntegrado').setAttribute('aria-expanded',
+  String(popupPosicoesAberto));
+ if(!popupPosicoesAberto)return;
+ const opcoes=$('opcoesPosicoesResumo');opcoes.replaceChildren();
+ $('avisoPosicoesResumo').textContent=posicoesDisponiveisResumo.length?
+  'Escolha um número para consultar somente essa posição.':
+  'Você ainda não tem posições para selecionar.';
+ posicoesDisponiveisResumo.forEach((pos,indice)=>{
+  const botao=document.createElement('button');
+  botao.type='button';botao.textContent=String(indice+1);
+  botao.setAttribute('aria-label','Posição '+(indice+1)+' · ID #'+pos.numero);
+  botao.setAttribute('aria-pressed',String(pos.numero===posicaoSelecionadaMotor));
+  botao.addEventListener('click',()=>{
+   posicaoSelecionadaMotor=pos.numero;
+   fecharPopupResumo();
+   atualizarIndicadorSelecionadoResumo();
+   void renderizarHistoricoResumo(pos);
+  });
+  opcoes.append(botao);
+ });
+}
+async function renderizarHistoricoResumo(pos){
+ const revisao=++revisaoHistoricoResumo;
+ const area=$('historicoPosicaoResumo');area.hidden=false;
+ $('historicoTituloResumo').textContent='Histórico da posição #'+pos.numero;
+ const detalhes=$('historicoDetalhesResumo');
+ const eventos=$('historicoEventosResumo');
+ detalhes.replaceChildren();eventos.replaceChildren();
+ for(const item of [
+  'Posição ID #'+pos.numero,
+  'Fila: '+(pos.fila==='A'||pos.fila==='B'?pos.fila:'fora das filas A/B'),
+  'Localização: '+(pos.local||'Não informada'),
+  'Indicações vinculadas: '+(pos.indicacoesVinculadas||0),
+  'Situação: '+(pos.pendente?'Aguardando confirmação':
+   pos.aceiteIndividualRegistrado?'Termos confirmados':'Em acompanhamento')
+ ]){
+  const p=document.createElement('p');p.textContent=item;detalhes.append(p);
+ }
+ const aviso=document.createElement('p');
+ aviso.textContent='Consultando eventos registrados desta posição…';
+ eventos.append(aviso);
+ try{
+  const h=await requisitar('/motor/posicoes/'+pos.numero+'/historico');
+  if(revisao!==revisaoHistoricoResumo||posicaoSelecionadaMotor!==pos.numero)return;
+  eventos.replaceChildren();
+  const registros=Array.isArray(h.eventos)?h.eventos:[];
+  if(!registros.length){
+   const vazio=document.createElement('p');
+   vazio.textContent='Nenhum evento individual registrado para esta posição.';
+   eventos.append(vazio);return;
+  }
+  const titulo=document.createElement('h4');titulo.textContent='Eventos registrados';
+  const lista=document.createElement('ul');
+  const nomes={VINCULAR_PEDIDO:'Posição vinculada ao pedido',
+   ACEITE_POSICAO_ENSAIO:'Termos confirmados',
+   INDICACAO_QUALIFICADA_ENSAIO:'Indicação vinculada',
+   EVENTO_CICLO:'Evento de ciclo registrado'};
+  for(const e of registros){
+   const li=document.createElement('li');
+   const data=Number.isFinite(e.criadoEm)?
+    new Date(e.criadoEm).toLocaleString('pt-BR'):'Data indisponível';
+   li.textContent=(nomes[e.tipo]||'Evento registrado')+' · '+data;
+   lista.append(li);
+  }
+  eventos.append(titulo,lista);
+ }catch(e){
+  if(revisao!==revisaoHistoricoResumo)return;
+  eventos.textContent='Histórico individual temporariamente indisponível.';
+ }
 }
 const visualTabuleiro=window.LoopTabuleiroVisual.criar({elemento:$});
 async function atualizarTabuleiroIntegrado(){
@@ -917,7 +1014,16 @@ setInterval(()=>{
 },15000);
 
 $('tabuleiroVerPosicoesIntegrado').addEventListener('click',()=>mostrarAba('conteudoPosicoes'));
-$('loop03IrPosicoesIntegrado').addEventListener('click',()=>mostrarAba('conteudoPosicoes',{somenteMinhas:true}));
+$('loop03IrPosicoesIntegrado').addEventListener('click',abrirPopupResumo);
+document.addEventListener('click',e=>{
+ if(popupPosicoesAberto&&!$('seletorPosicoesResumo').contains(e.target)&&
+    !$('loop03IrPosicoesIntegrado').contains(e.target))fecharPopupResumo();
+});
+document.addEventListener('keydown',e=>{
+ if(e.key==='Escape'&&popupPosicoesAberto){
+  fecharPopupResumo();$('loop03IrPosicoesIntegrado').focus();
+ }
+});
 $('loop03MenuIntegrado').addEventListener('click',alternarMenuIntegrado);
 document.addEventListener('keydown',e=>{if(e.key==='Escape')fecharMenuIntegrado();});
 $('atualizarResumo').addEventListener('click',atualizarResumo);
