@@ -384,7 +384,7 @@ const png=Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAIAAAACCAIAAAD91JpzAAAAEklEQVR4n
   const rede=ctx.equipe.listar({titularId:titularAna});
   assert.equal(rede.total,2,'link tem que vincular ambos os compradores');
   assert.deepEqual(new Set(rede.cadastros.map(p=>p.nick)),
-   new Set(['bruna','celia']));
+   new Set(['Bruna','Celia']));
   assert.equal(db.prepare('PRAGMA integrity_check').get().integrity_check,'ok');
   assert.deepEqual(db.prepare('PRAGMA foreign_key_check').all(),[]);
  }finally{
