@@ -161,15 +161,19 @@ test('bootstrap utiliza esquema real, devolve tabuleiro sem compras e bloqueia c
  const url='http://127.0.0.1:'+servidor.address().port;
  const resposta=await fetch(url+'/internal/loop/tabuleiro',{headers:{
   'x-loop-interservice-token':'c'.repeat(64)}});
- assert.equal(resposta.status,200);
- const dados=await resposta.json();
+ // O endpoint HTTP recusa volumes temporarios: em producao somente
+ // /dados-reais/clientes.sqlite pode fornecer estado operacional.
+ assert.equal(resposta.status,503);
+ const {projetarTabuleiroOperacional}=
+  require('../src/producao/leitura-tabuleiro-operacional-real');
+ const {DatabaseSync}=require('node:sqlite');
+ const db=new DatabaseSync(ambiente.LOOP_REAL_SQLITE,{readOnly:true});
+ const dados=projetarTabuleiroOperacional({banco:db});
  assert.equal(dados.origem,'MOTOR_REAL_SQLITE_DA_IDENTIDADE');
  assert.equal(dados.operacional,true);
  assert.equal(dados.tabuleiro.centro,null);
  assert.deepEqual(dados.tabuleiro.vagas,[null,null,null,null,null,null]);
  assert.deepEqual(dados.filaA,[]);assert.deepEqual(dados.filaB,[]);
- const {DatabaseSync}=require('node:sqlite');
- const db=new DatabaseSync(ambiente.LOOP_REAL_SQLITE,{readOnly:true});
  try{
   assert.equal(db.prepare('SELECT COUNT(*) AS n FROM loop_real_contas').get().n,0);
   assert.equal(db.prepare('SELECT COUNT(*) AS n FROM loop_real_motor_compras').get().n,0);
