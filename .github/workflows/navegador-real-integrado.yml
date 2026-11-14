@@ -61,6 +61,8 @@ jobs:
           path: |
             artifacts/identidade-real-escritorio-pc.png
             artifacts/identidade-real-escritorio-celular.png
+            artifacts/identidade-real-financeiro-pc.png
+            artifacts/identidade-real-financeiro-celular.png
             artifacts/identidade-real-loja-pc.png
             artifacts/identidade-real-loja-celular.png
             artifacts/identidade-real-admin-pc.png

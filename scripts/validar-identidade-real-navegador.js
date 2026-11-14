@@ -268,8 +268,10 @@ async function main(){
    assert.equal(await page.locator('#celebracaoGiroCatraca').locator('.confete').count(),0);
    assert.equal(await page.locator('#conteudoTabuleiro').getByText(
     'Mesmo motor V6 e mesmo SQLite',{exact:false}).count(),0);
-   await page.locator('#estadoTabuleiroIntegrado')
-    .filter({hasText:/Ciclo atual: 0 de 6 eventos/}).waitFor();
+   await page.locator('#motorContadorEventos')
+    .filter({hasText:/0 de 6 eventos neste ciclo/}).waitFor();
+   assert.equal(await page.locator('#estadoTabuleiroIntegrado').isHidden(),true,
+    'sem mensagens duplicadas no rodapé do tabuleiro');
    assert.equal(await page.locator('#tabuleiroMotorCentro').innerText(),'#0000');
    assert.equal(await page.locator('#motorFilaB .loop03-linha-fila').count(),1);
    assert.ok((await page.locator('#motorFilaB').innerText())
@@ -289,6 +291,49 @@ async function main(){
     /Posição 10[\n\r\s\S]*Sem posição/);
    if(item.largura<=860)await page.locator('#loop03MenuIntegrado').click();
    await page.locator('#abaFinanceiro').click();
+   assert.equal(await page.locator('#conteudoFinanceiro').isVisible(),true);
+   assert.equal(await page.locator('#finSaldoSelecionado').innerText(),'—');
+   assert.equal(await page.locator('#finSaldoPosicoes').innerText(),'—');
+   const minimo=await page.locator('#conteudoFinanceiro .fin-nota').innerText();
+   assert.match(minimo,/Valor mínimo para saque: R\$ 25,00 \(fixo\)/);
+   const blocoTopo=page.locator('#loop03IrPosicoesIntegrado');
+   await blocoTopo.click();
+   assert.equal(await page.locator('#seletorPosicoesResumo').isVisible(),true,
+    'seletor de posições abre sem sair do Financeiro');
+   await page.locator('#opcoesPosicoesResumo button').first().click();
+   assert.equal(await page.locator('#conteudoFinanceiro').isVisible(),true,
+    'seletor superior não muda de aba');
+   assert.equal(await page.locator('#loop03NumeroIntegrado').innerText(),'#1');
+   assert.equal(await page.locator('#seletorPosicoesResumo').isHidden(),true);
+   await page.locator('#finEscolherPosicoes').click();
+   assert.equal(await page.locator('#finEscolherPosicoes').getAttribute('aria-pressed'),'true');
+   assert.equal(await page.locator('#finEscolherBonus').getAttribute('aria-pressed'),'false');
+   await page.locator('#finAbrirHistorico').click();
+   assert.equal(await page.locator('#finHistorico').isVisible(),true);
+   await page.locator('#finHistoricoMensagem').filter({
+    hasText:/Sem lançamentos financeiros comprovados/
+   }).waitFor();
+   await page.locator('#finAbrirHistorico').click();
+   assert.equal(await page.locator('#finHistorico').isHidden(),true);
+   await page.locator('#finValorSaque').fill('25');
+   await page.locator('#finSolicitarSaque').click();
+   await page.locator('#finSaqueResposta').filter({
+    hasText:/Saque indisponível até a homologação bancária/
+   }).waitFor();
+   await conferirLayoutReal(page,'financeiro-'+item.nome,{
+    mobile:item.largura<=860
+   });
+   const finGeometria=await page.evaluate(()=>({
+    viewport:innerWidth,html:document.documentElement.scrollWidth,
+    campos:[...document.querySelectorAll('#conteudoFinanceiro .fin-indicador')]
+     .map(e=>({largura:Math.round(e.getBoundingClientRect().width),
+      visivel:e.getBoundingClientRect().width>0}))
+   }));
+   assert.equal(finGeometria.campos.length,4);
+   assert.equal(finGeometria.campos.every(x=>x.visivel),true);
+   assert.ok(finGeometria.html<=finGeometria.viewport+1);
+   await page.screenshot({path:path.join(
+    pasta,'identidade-real-financeiro-'+item.nome+'.png'),fullPage:true});
    const diagnosticoTesouraria=await page.evaluate(async()=>{
     const r=await fetch('/api/loop/tesouraria-ensaio',{cache:'no-store'});
     const d=await r.json().catch(()=>({}));
