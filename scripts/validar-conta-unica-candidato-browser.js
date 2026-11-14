@@ -264,9 +264,26 @@ function mp4TrintaSegundos(){
     /BLOQUEADA_PARA_ATIVACAO_DEFINITIVA|Sandbox|PSP/);
    assert.match(await page.locator('#listaPedidos').innerText(),/R\$\s?250,00/);
    await abrirAba('#abaResumo');
-   assert.equal(await page.locator('#atalhoPedidos').isVisible(),true);
+   assert.equal(await page.locator('#atalhoLoja').innerText(),'AKITEMM');
    assert.equal(await page.locator('.indicadores-cliente').count(),0);
-   assert.match(await page.locator('#boasVindas').innerText(),new RegExp(item.nick,'i'));
+   assert.equal(await page.locator('#boasVindas').count(),0);
+   assert.equal(await page.locator('#atalhoPedidos').count(),0);
+   assert.equal(await page.locator('#atalhoPosicoes').count(),0);
+   assert.equal(await page.locator('#atualizarResumo').count(),0);
+   const banners=page.locator('#loop03PistaBanners .loop03-banner-item');
+   assert.equal(await banners.count(),2);
+   const proporcao=await page.evaluate(()=>{
+    const r=document.querySelector('#loop03PistaBanners .loop03-hero-escritorio')
+     .getBoundingClientRect();
+    return r.height/r.width;
+   });
+   assert.ok(item.isMobile?proporcao>1.2:proporcao<1,
+    'banner vertical no celular e horizontal no computador');
+   await page.locator('[data-banner-resumo="1"]').click();
+   await page.waitForFunction(()=>{
+    const pista=document.getElementById('loop03PistaBanners');
+    return Math.abs(pista.scrollLeft-pista.clientWidth)<10;
+   });
    await page.locator('#loop03IrPosicoesIntegrado').click();
    await page.locator('#seletorPosicoesResumo').waitFor({state:'visible'});
    assert.equal(await page.locator('#conteudoResumo').isVisible(),true,
