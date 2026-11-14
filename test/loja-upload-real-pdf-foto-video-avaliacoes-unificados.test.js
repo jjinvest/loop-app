@@ -158,14 +158,35 @@ test('produto completo com foto PDF e video 30s; download e reviews isolados por
  assert.equal(produtoFisico.videoApresentacaoLocal,true);
  assert.ok(produtoFisico.fotos.some(x=>x.includes('/foto/1')));
  const fotoUrl=produtoFisico.fotos[0];
- assert.equal((await call(fotoUrl)).status,401);
+ // Foto de produto PUBLICADO e vitrine publica, nao dado da conta.
+ // Antes o teste exigia 401 por engano; isso quebraria as fotos para visitantes.
+ const visitante=await call(fotoUrl);
+ assert.equal(visitante.status,200,'foto publicada acessivel sem login');
+ assert.match(visitante.headers.get('content-type')||'',/^image\/jpeg/);
+ assert.equal(visitante.headers.get('x-robots-tag'),'noindex, nofollow');
+ assert.equal(visitante.headers.get('cache-control'),'private, no-store');
+ assert.equal(Buffer.from(visitante.data).includes(Buffer.from('GPS_SEGREDO')),false,
+  'metadados EXIF/GPS nunca chegam ao visitante');
  const visual=await call(fotoUrl,{cookie:a.cookie});
  assert.equal(visual.status,200);
- assert.equal(Buffer.from(visual.data).includes(Buffer.from('GPS_SEGREDO')),false);
+ assert.deepEqual(Buffer.from(visual.data),Buffer.from(visitante.data),
+  'visitante e titular recebem a mesma foto higienizada');
+ const fotoInexistente=await call(
+  '/staging/vitrine/loja/produtos/produto-inexistente/foto/1');
+ assert.equal(fotoInexistente.status,404,
+  'foto de produto não publicado não pode ser exibida');
+ const posicaoInvalida=await call(
+  '/staging/vitrine/loja/produtos/'+fisico+'/foto/99');
+ assert.equal(posicaoInvalida.status,404);
  const vidUrl='/staging/vitrine/loja/produtos/'+fisico+'/video';
- const faixa=await call(vidUrl,{cookie:a.cookie,extra:{Range:'bytes=0-99'}});
- assert.equal(faixa.status,206);
+ const faixa=await call(vidUrl,{extra:{Range:'bytes=0-99'}});
+ assert.equal(faixa.status,206,
+  'video de demonstracao publicado pode ser visualizado sem login');
+ assert.match(faixa.headers.get('content-type')||'',/^video\/mp4/);
+ assert.equal(faixa.headers.get('x-robots-tag'),'noindex, nofollow');
  assert.equal(Buffer.from(faixa.data).length,100);
+ const faixaInvalida=await call(vidUrl,{extra:{Range:'bytes=999999999-'}});
+ assert.equal(faixaInvalida.status,416,'limite da faixa de vídeo validado');
  const endereco={destinatario:'Pessoa destinatária fictícia',cep:'27260000',
   logradouro:'Rua Exemplo',numero:'12',complemento:'',
   bairro:'Centro',cidade:'Volta Redonda',uf:'RJ',
