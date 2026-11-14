@@ -15,7 +15,6 @@
 <body>
 <header class="cabecalho">
  <div><span class="marca">LOOP 3.0</span><span class="submarca">Escritório Virtual · conta compartilhada com a loja AKITEMM</span></div>
- <span class="ambiente">SEM VENDAS REAIS</span>
 </header>
 <main>
  <h1>Escritório Virtual LOOP</h1>
@@ -88,7 +87,10 @@
   <div class="loop03-shell" id="loop03ShellIntegrado">
    <div class="loop03-banner-topo">
     <div><div class="loop03-logomarca">LOOP <span>3.0</span></div><p>PLATAFORMA DE CICLOS INTELIGENTES</p><small>ESTRATÉGIA · ORGANIZAÇÃO · RESULTADOS</small></div>
-    <span class="ambiente">DEMONSTRAÇÃO · SEM PAGAMENTOS REAIS</span>
+    <button type="button" id="loop03AlterarFotoTopo" class="loop03-foto-topo" aria-label="Escolher minha foto de perfil" title="Escolher foto de perfil">
+     <img id="loop03ImagemFotoTopo" alt="Sua foto de perfil" hidden>
+     <span id="loop03FotoSemImagem" aria-hidden="true">👤</span>
+    </button>
    </div>
    <aside class="loop03-sidebar" id="loop03SidebarIntegrado" aria-label="Menu do Escritório Virtual">
     <div class="loop03-marca">LOOP <span>3.0</span></div>
@@ -266,6 +268,13 @@
   <section class="painel" id="conteudoConta" role="tabpanel" aria-labelledby="abaConta" hidden>
    <h2>Minha Conta</h2>
    <p id="perfilCliente" aria-live="polite">Consultando perfil…</p>
+   <form id="formFotoPerfil" aria-label="Foto de perfil" class="loop03-form-foto-perfil">
+    <label for="arquivoFotoPerfil">Minha foto de perfil</label>
+    <input id="arquivoFotoPerfil" type="file" accept="image/jpeg,image/png,image/webp" aria-describedby="avisoFotoPerfil">
+    <p id="avisoFotoPerfil" class="subtexto">JPEG, PNG ou WebP, até 3 MB. Toque na foto redonda do topo para escolher também.</p>
+    <button type="submit">Salvar minha foto</button>
+    <p id="statusFotoPerfil" role="status" aria-live="polite"></p>
+   </form>
    <p class="loop03-email-conta">E-mail: <strong id="resumoEmail">—</strong></p>
 <section class="painel" id="painelVerificarEmail" hidden aria-label="Confirmar e-mail de ensaio">
    <h2>Confirmar meu e-mail</h2>

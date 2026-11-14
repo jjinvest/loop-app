@@ -84,6 +84,10 @@ test('mesma identidade da loja entra no Escritorio LOOP sem novo cadastro',async
  assert.match(html,/<title>LOOP 3\.0 · Escritório Virtual/);
  assert.match(html,/<h1>Escritório Virtual LOOP<\/h1>/);
  assert.match(html,/<h2 id="tituloCadastro">Criar conta<\/h2>/);
+ assert.doesNotMatch(html,/SEM VENDAS REAIS|DEMONSTRAÇÃO · SEM PAGAMENTOS REAIS/,
+  'avisos visuais removidos, sem liberar pagamento real');
+ assert.match(html,/id="loop03ImagemFotoTopo"/);
+ assert.match(html,/id="arquivoFotoPerfil"/);
  assert.doesNotMatch(html,/Criar conta de homologação|Nome fictício|E-mail fictício|Senha de teste/);
  assert.match(html,/id="cadastroTelefone"/);
  assert.match(html,/id="cadastroConfirmarSenha"/);
@@ -133,6 +137,22 @@ test('mesma identidade da loja entra no Escritorio LOOP sem novo cadastro',async
  const perfilEscritorio=await x.consultar('/staging/contas/me',{headers});
  assert.equal(perfilEscritorio.status,200);
  assert.equal((await perfilEscritorio.json()).nick,'Marta');
+ const rotaFoto='/staging/contas/foto-perfil';
+ assert.equal((await x.consultar(rotaFoto)).status,401,'foto requer sessao');
+ assert.equal((await x.consultar(rotaFoto,{headers})).status,404);
+ const png=Buffer.from(
+  'iVBORw0KGgoAAAANSUhEUgAAAAIAAAACCAYAAABytg0kAAAAFUlEQVR4nGO8syXgPwMDAwMTAxQAACy0AuM2p9QGAAAAAElFTkSuQmCC','base64');
+ assert.equal((await x.consultar(rotaFoto,{method:'POST',headers:{
+  ...headers,'Content-Type':'image/png'},body:png})).status,403,'CSRF obrigatorio');
+ const perfilCreds=await (await x.consultar('/staging/contas/me',{headers})).json();
+ const upload=await x.consultar(rotaFoto,{method:'POST',headers:{
+  ...headers,'Content-Type':'image/png','X-Checkout-Csrf':perfilCreds.csrf},body:png});
+ assert.equal(upload.status,201,'foto propria salva');
+ const fotoObtida=await x.consultar(rotaFoto,{headers});
+ assert.equal(fotoObtida.status,200);
+ assert.equal(fotoObtida.headers.get('content-type'),'image/png');
+ assert.deepEqual(Buffer.from(await fotoObtida.arrayBuffer()),png);
+ assert.equal((await x.consultar(rotaFoto)).status,401,'foto privada nao vaza');
  assert.equal((await x.consultar('/staging/vitrine/minha-conta')).status,401,
   'navegador sem sessao nao herda identidade de outro titular');
  const atalho=await x.consultar('/loja?origem=escritorio');

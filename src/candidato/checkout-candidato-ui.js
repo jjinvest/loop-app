@@ -6,6 +6,7 @@ const $=id=>document.getElementById(id);
 let csrf=null,aba='conteudoResumo',proximaPaginaEquipe=null,
  paginaPedidos=0,carregamentoPedidos=0;
 let telaAcesso='login';
+let fotoPerfilUrl=null,versaoCarregamentoFoto=0;
 let termosCadastroLidos=null,carregandoTermosCadastro=null;
 let posicaoSelecionadaMotor=null;
 let posicoesDisponiveisResumo=[],revisaoHistoricoResumo=0;
@@ -72,6 +73,7 @@ async function requisitar(rota,{method='GET',body,chave,mutacao=false}={}){
 }
 function mostrarSessao(ativa){
  document.body.classList.toggle('loop03-logado',ativa);
+ if(!ativa)limparFotoPerfil();
  if(!ativa)fecharMenuIntegrado();
  if(!ativa){$('painelVerificarEmail').hidden=true;$('painelIdentidadeTeste').hidden=true;
    $('cpfTeste').value='';$('aceiteCpfTeste').checked=false;}
@@ -810,10 +812,63 @@ async function trocarSenha(e){
   dizer('Não foi possível alterar a senha: '+err.message);
  }finally{botao.disabled=false;}
 }
+function limparFotoPerfil(){
+ versaoCarregamentoFoto++;
+ if(fotoPerfilUrl){URL.revokeObjectURL(fotoPerfilUrl);fotoPerfilUrl=null;}
+ const imagem=$('loop03ImagemFotoTopo'),vazio=$('loop03FotoSemImagem');
+ if(imagem){imagem.hidden=true;imagem.removeAttribute('src');}
+ if(vazio)vazio.hidden=false;
+}
+async function atualizarFotoPerfil(){
+ const ordem=++versaoCarregamentoFoto;
+ try{
+  const resposta=await fetch('/staging/contas/foto-perfil',{
+   credentials:'same-origin',cache:'no-store'});
+  if(ordem!==versaoCarregamentoFoto)return;
+  if(resposta.status===404){limparFotoPerfil();return;}
+  if(!resposta.ok)return;
+  const arquivo=await resposta.blob();
+  if(ordem!==versaoCarregamentoFoto)return;
+  const url=URL.createObjectURL(arquivo);
+  if(fotoPerfilUrl)URL.revokeObjectURL(fotoPerfilUrl);
+  fotoPerfilUrl=url;
+  $('loop03ImagemFotoTopo').src=url;
+  $('loop03ImagemFotoTopo').hidden=false;
+  $('loop03FotoSemImagem').hidden=true;
+ }catch{/* Sem foto, o topo continua com o ícone neutro. */}
+}
+async function salvarFotoPerfil(e){
+ e.preventDefault();
+ const campo=$('arquivoFotoPerfil'),status=$('statusFotoPerfil');
+ const arquivo=campo.files?.[0];
+ if(!arquivo){status.textContent='Escolha uma foto primeiro.';return;}
+ if(!['image/jpeg','image/png','image/webp'].includes(arquivo.type)||
+    arquivo.size>3*1024*1024||arquivo.size===0){
+  status.textContent='Escolha JPEG, PNG ou WebP com até 3 MB.';return;
+ }
+ const botao=$('formFotoPerfil').querySelector('button[type=submit]');
+ botao.disabled=true;status.textContent='Salvando sua foto…';
+ try{
+  const resposta=await fetch('/staging/contas/foto-perfil',{
+   method:'POST',credentials:'same-origin',cache:'no-store',
+   headers:{'Content-Type':arquivo.type,'X-Checkout-Csrf':csrf||''},
+   body:arquivo
+  });
+  if(!resposta.ok){
+   const dados=await resposta.json().catch(()=>({}));
+   throw Error(dados.erro||'FOTO_INDISPONIVEL');
+  }
+  campo.value='';
+  await atualizarFotoPerfil();
+  status.textContent='Foto atualizada no Escritório.';
+ }catch(e){status.textContent='Não foi possível salvar a foto: '+e.message;}
+ finally{botao.disabled=false;}
+}
 async function autenticarConta(nick,senha){
  const dados=await requisitar('/contas/entrar',{method:'POST',
   body:{nick,senha}});
  csrf=dados.csrf;mostrarSessao(true);$('senha').value='';
+ void atualizarFotoPerfil();
  if(new URLSearchParams(location.search).get('destino')==='loja'){
   location.assign('/loja');return;
  }
@@ -856,6 +911,7 @@ async function restaurarSessao(){
  try{
   const s=await requisitar('/contas/me');csrf=s.csrf;
   mostrarSessao(true);
+  void atualizarFotoPerfil();
   await atualizarVerificacaoEmail();
   await atualizarIdentidadeTeste();
   dizer('Sua sessão foi restaurada.');
@@ -992,6 +1048,11 @@ async function confirmarRecuperacao(e){
  }finally{botao.disabled=false;}
 }
 
+$('formFotoPerfil').addEventListener('submit',salvarFotoPerfil);
+$('arquivoFotoPerfil').addEventListener('change',ev=>{
+ if(ev.target.files?.length)void salvarFotoPerfil({preventDefault(){}});
+});
+$('loop03AlterarFotoTopo').addEventListener('click',()=>$('arquivoFotoPerfil').click());
 $('mudarParaLogin').addEventListener('click',()=>selecionarTelaAcesso('login'));
 $('abrirRecuperacao').addEventListener('click',()=>{
  $('formConcluirRecuperacao').hidden=true;

@@ -41,6 +41,8 @@ const {VideoProdutoCandidatoSQLite}=
  require('../domain/video-produto-candidato-sqlite');
 const {FotosProdutoCandidatoSQLite}=
  require('../domain/fotos-produto-candidato-sqlite');
+const {FotoPerfilCandidatoSQLite}=
+ require('../domain/foto-perfil-candidato-sqlite');
 const {AvaliacoesCompraCandidatoSQLite}=
  require('../domain/avaliacoes-compra-candidato-sqlite');
 const {NovidadesLojaCandidatoSQLite,MAX_IMAGEM}=require('../domain/novidades-loja-candidato-sqlite');
@@ -79,6 +81,7 @@ function criarAppLojaEscritorioCandidato({banco,repositorioCatalogo,
  const contas=new ContaUnicaCandidataSQLite({
   banco,chaveEmail,chaveCifra,chaveRecuperacao,enviarRecuperacao
  });
+ const fotoPerfil=new FotoPerfilCandidatoSQLite({banco});
  const equipe=new EquipeCandidataSQLite({banco});
  if((chaveCpfHmac===null)!==(chaveCpfCifra===null))
   erro('CPF_CUSTODIA_INCOMPLETA');
@@ -404,7 +407,34 @@ function criarAppLojaEscritorioCandidato({banco,repositorioCatalogo,
   if(!s)return res.status(401).json({erro:'SESSAO_AUSENTE'});
   const profile=contas.perfil(s.titularId);
   return res.json({...profile,csrf:s.csrf,expiraEm:s.expiraEm,
+   temFotoPerfil:fotoPerfil.existe(s.titularId),
    confirmacaoEmailDisponivel:provasEmail!==null});
+ });
+ app.get('/staging/contas/foto-perfil',(req,res)=>{
+  const s=sessao(req);
+  if(!s)return res.status(401).json({erro:'SESSAO_AUSENTE'});
+  const foto=fotoPerfil.consultar(s.titularId);
+  if(!foto)return res.status(404).json({erro:'FOTO_PERFIL_AUSENTE'});
+  return res.set('Cache-Control','private, no-store').type(foto.mime).send(foto.dados);
+ });
+ app.post('/staging/contas/foto-perfil',
+  express.raw({type:['image/jpeg','image/png','image/webp'],
+   limit:'3mb',inflate:false}), (req,res)=>{
+   const s=sessao(req);
+   if(!s)return res.status(401).json({erro:'SESSAO_AUSENTE'});
+   if(!autorizacao(req))return res.status(403).json({erro:'CSRF_INVALIDO'});
+   if(!['image/jpeg','image/png','image/webp'].includes(req.get('content-type'))||
+      !Buffer.isBuffer(req.body))
+    return res.status(415).json({erro:'TIPO_FOTO_INVALIDO'});
+   try{
+    fotoPerfil.salvar(s.titularId,{dados:req.body,mime:req.get('content-type')});
+    return res.status(201).json({fotoAtualizada:true});
+   }catch(e){return res.status(400).json({erro:e.codigo||'FOTO_PERFIL_INVALIDA'});}
+  });
+ app.use((err,req,res,next)=>{
+  if(req.path==='/staging/contas/foto-perfil'&&err.type==='entity.too.large')
+   return res.status(413).json({erro:'FOTO_PERFIL_GRANDE_DEMAIS'});
+  next(err);
  });
  // A entrega de e-mail é opcional e só funciona com transportador real
  // injetado pelo operador. Sem ele estas rotas NEM são montadas.
