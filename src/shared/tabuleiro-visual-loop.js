@@ -101,20 +101,22 @@
     inicial.className='loop03-inicial-fila '+(dourada(p)?
      'loop03-dourada':pendente(p)?'loop03-azul':
      aceito(p)?'loop03-verde':tipo==='A'?'loop03-a':'loop03-b');
-    inicial.textContent=dourada(p)?'':tipo;
+    inicial.textContent=contagem!==null?tipo:String(ordem);
     const conteudo=document.createElement('span');
     conteudo.className='loop03-fila-identificacao';
     const identificacao=document.createElement('span');
     identificacao.className='loop03-numero-titular';
     identificacao.textContent=contagem!==null?
      contagem+' posição(ões) na fila · abra para ver a ordem':
-     ordem+'º na fila';
+     ordem+'º lugar';
     conteudo.append(identificacao);
     if(contagem===null&&p?.minha===true){
      const minha=document.createElement('small');
      minha.textContent='Minha posição nesta ordem';
      conteudo.append(minha);
     }
+    if(contagem===null)linha.setAttribute('aria-label',
+     'Fila '+tipo+' · '+ordem+'º lugar'+(p?.minha===true?' · meu lugar':''));
     linha.append(inicial,conteudo);
     area.append(linha);
    }
