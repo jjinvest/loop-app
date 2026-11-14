@@ -269,9 +269,12 @@ function criarAppLojaEscritorioCandidato({banco,repositorioCatalogo,
   const antiga='aceiteExplicito,email,nick,nome,senha';
   const atual='aceiteExplicito,email,nick,nome,senha,termosHashAceito,termosVersaoAceita';
    const novo='aceiteExplicito,confirmarSenha,email,nick,nome,senha,telefone,termosHashAceito,termosVersaoAceita';
-  if(chaves!==antiga&&chaves!==atual&&chaves!==novo)
+   const novoComCpf='aceiteExplicito,confirmarSenha,cpf,email,nick,nome,senha,telefone,termosHashAceito,termosVersaoAceita';
+  if(chaves!==antiga&&chaves!==atual&&chaves!==novo&&chaves!==novoComCpf)
    return res.status(400).json({erro:'CAMPOS_INVALIDOS'});
-  if((chaves===atual||chaves===novo)&&(body.termosVersaoAceita!==termosVersao||
+  if(chaves===novoComCpf&&!cpf)
+   return res.status(503).json({erro:'CPF_STAGING_INDISPONIVEL'});
+  if((chaves===atual||chaves===novo||chaves===novoComCpf)&&(body.termosVersaoAceita!==termosVersao||
      body.termosHashAceito!==termosHashCadastro))
    return res.status(409).json({erro:'TERMOS_ALTERADOS_RELER'});
   try{
@@ -284,14 +287,21 @@ function criarAppLojaEscritorioCandidato({banco,repositorioCatalogo,
      confirmarSenha:body.confirmarSenha??null,
      aceiteExplicito:body.aceiteExplicito,
     termosVersao,termosTexto,
-    onCriada:indicadorNick?({titularId})=>{
-     const vinculo=equipe.registrarCadastro({
-      indicadoId:titularId,indicadorNick
+    onCriada:indicadorNick||chaves===novoComCpf?({titularId})=>{
+     // CPF, conta e indicacao em UM commit; sem aceitar outras posicoes.
+     if(chaves===novoComCpf)cpf.registrar({
+      titularId,cpf:body.cpf,termosVersao,termosTexto,
+      aceiteExplicito:body.aceiteExplicito,autorizado:true
      });
-     if(vinculo.registrado!==true){
-      const e=new Error('INDICACAO_ORIGEM_NAO_CONFIRMADA');
-      e.codigo='INDICACAO_ORIGEM_NAO_CONFIRMADA';
-      throw e;
+     if(indicadorNick){
+      const vinculo=equipe.registrarCadastro({
+       indicadoId:titularId,indicadorNick
+      });
+      if(vinculo.registrado!==true){
+       const e=new Error('INDICACAO_ORIGEM_NAO_CONFIRMADA');
+       e.codigo='INDICACAO_ORIGEM_NAO_CONFIRMADA';
+       throw e;
+      }
      }
     }:null
    });
@@ -299,10 +309,10 @@ function criarAppLojaEscritorioCandidato({banco,repositorioCatalogo,
   }catch(e){
    if(e.codigo==='CADASTRO_JA_EXISTENTE')
     return res.status(409).json({erro:'CADASTRO_JA_EXISTENTE'});
-   if(e.codigo==='INDICACAO_ORIGEM_NAO_CONFIRMADA')
+   if(['INDICACAO_ORIGEM_NAO_CONFIRMADA','CPF_OU_TITULAR_JA_VINCULADO'].includes(e.codigo))
     return res.status(409).json({erro:e.codigo});
    if(['NICK_INVALIDO','NOME_INVALIDO','EMAIL_INVALIDO','SENHA_INVALIDA',
-       'TELEFONE_INVALIDO','CONFIRMACAO_SENHA_INVALIDA',
+       'TELEFONE_INVALIDO','CONFIRMACAO_SENHA_INVALIDA','CPF_INVALIDO',
       'TERMOS_LAB_NAO_ACEITOS'].includes(e.codigo))
     return res.status(400).json({erro:e.codigo});
    return res.status(503).json({erro:'CADASTRO_INDISPONIVEL'});
