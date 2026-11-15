@@ -7,14 +7,15 @@ const fs=require('node:fs');
 const path=require('node:path');
 const {ContaUnicaCandidataSQLite}=require('../src/domain/conta-unica-candidata-sqlite');
 const {EquipeCandidataSQLite}=require('../src/domain/equipe-candidata-sqlite');
-const termosTexto='Cadastro de ensaio do LOOP com permissão separada e facultativa de contato, sem operação financeira.';
-const dados=(nick,contato=false)=>({
+
+const termosTexto='O cadastro feito por link de indicação permite que o titular daquele link visualize somente o telefone do indicado na Minha Equipe, para contato sobre o LOOP; terceiros não têm acesso. Este ensaio não permite operação financeira.';
+const dados=(nick,telefone='21999998888')=>({
  nome:'Pessoa '+nick,nick,email:nick.toLowerCase()+'@example.invalid',
- telefone:'21999998888',senha:'SenhaAbc123',confirmarSenha:'SenhaAbc123',
- termosVersao:'LAB-privacidade-2026',termosTexto,aceiteExplicito:true,
- compartilharTelefoneIndicador:contato
+ telefone,senha:'SenhaAbc123',confirmarSenha:'SenhaAbc123',
+ termosVersao:'LAB-contato-link-2026',termosTexto,aceiteExplicito:true
 });
-test('telefone permanece cifrado e só aparece ao indicador direto após aceite expresso, com revogação',async()=>{
+
+test('telefone aparece automaticamente somente ao indicador direto vinculado, sem cadastro novo',async()=>{
  const db=new DatabaseSync(':memory:');
  db.exec('PRAGMA foreign_keys=ON');
  try{
@@ -39,40 +40,46 @@ test('telefone permanece cifrado e só aparece ao indicador direto após aceite 
   assert.equal(primeira.cadastros[0].numeroCadastro,1);
   assert.equal(primeira.cadastros[0].filaCadastro,'B');
   assert.equal(primeira.cadastros[0].filaMotorConfirmada,false);
-  assert.equal(primeira.cadastros[0].telefone,null);
-  assert.equal(contas.perfil(pessoa.titularId).compartilhaTelefoneComIndicador,false);
+  assert.equal(primeira.cadastros[0].telefone,'21999998888');
+  assert.equal(primeira.cadastros[0].nick,'Indicado');
   const bruto=JSON.stringify(db.prepare('SELECT * FROM akitemm_conta_unica_candidata').all());
   assert.ok(!bruto.includes('21999998888'),'telefone nunca em claro no banco');
-  assert.equal(contas.alterarCompartilhamentoTelefone({
-   titularId:pessoa.titularId,permitir:true
-  }).compartilhaTelefoneComIndicador,true);
-  assert.equal(equipe.listar({titularId:indicador.titularId}).cadastros[0].telefone,'21999998888');
   assert.equal(contas.telefoneAutorizadoParaIndicador({
    indicadoId:pessoa.titularId,indicadorId:outro.titularId
-  }),null,'não expor contato a um titular sem vínculo');
+  }),null,'outro titular não pode ler contato do indicado');
   assert.equal(equipe.listar({titularId:outro.titularId}).cadastros.length,0);
-  assert.equal(contas.alterarCompartilhamentoTelefone({
-   titularId:pessoa.titularId,permitir:false
-  }).compartilhaTelefoneComIndicador,false);
-  assert.equal(equipe.listar({titularId:indicador.titularId}).cadastros[0].telefone,null);
-  const opt=await contas.cadastrar({
-   ...dados('Optin',true),
+  assert.equal(contas.telefoneAutorizadoParaIndicador({
+   indicadoId:pessoa.titularId,indicadorId:pessoa.titularId
+  }),null,'indicado não pode falsificar vínculo');
+  const segundo=await contas.cadastrar({
+   ...dados('Contato2','11988887777'),
    onCriada:({titularId})=>equipe.registrarCadastro({
     indicadoId:titularId,indicadorNick:'Indicador'
    })
   });
-  assert.equal(contas.perfil(opt.titularId).compartilhaTelefoneComIndicador,true);
   assert.equal(equipe.listar({titularId:indicador.titularId}).cadastros.find(
-   p=>p.nick==='Optin').telefone,'21999998888');
+   p=>p.nick==='Contato2').telefone,'11988887777');
+  assert.equal(contas.perfil(segundo.titularId).nick,'Contato2');
+  assert.equal(equipe.listar({titularId:indicador.titularId}).total,2);
+  // Simula cadastro antigo com telefone cifrado e convite, sem opt-in salvo.
+  const permissaoAntiga=db.prepare(
+   "SELECT name FROM sqlite_master WHERE name='akitemm_contato_indicador_permissoes'"
+  ).get();
+  assert.equal(permissaoAntiga,undefined);
+  assert.equal(equipe.listar({titularId:indicador.titularId}).cadastros[1].telefone,
+   '21999998888');
  }finally{db.close();}
 });
-test('minha equipe exibe data e hora sem expor CPF e sem teto de quatro dígitos',()=>{
+test('ficha mostra data/hora, fila B e numeração aberta sem textos de laboratório',()=>{
  const src=fs.readFileSync(path.join(__dirname,'../src/candidato/checkout-candidato-ui.js'),'utf8');
+ const html=fs.readFileSync(path.join(__dirname,'../src/candidato/checkout-candidato-ui.html'),'utf8');
  assert.match(src,/String\(numero\)\.padStart\(4,'0'\)/);
  assert.equal(String(1000000).padStart(4,'0'),'1000000');
- assert.match(src,/Hora|Horário/);
+ assert.match(src,/Horário/);
  assert.match(src,/America\/Sao_Paulo/);
  assert.match(src,/Aguardando confirmação de ativação no LOOP\./);
+ assert.match(html,/Li e aceito os termos de cadastro/);
+ assert.doesNotMatch(html,/cadastroCompartilharTelefoneIndicador|formCompartilharTelefoneIndicador/);
  assert.doesNotMatch(src,/Nome civil e telefone exigem autorização de compartilhamento/);
  assert.doesNotMatch(src,/Telefone: não disponibilizado nesta prévia/);
  assert.doesNotMatch(src,/Aguardando compra elegível e conciliação Sandbox do indicado/);
