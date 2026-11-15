@@ -50,6 +50,16 @@ async function preparar(t,{permitirOrigemHttpLoopback=false}={}){
  };
  return {base,consultar,db};
 }
+async function desafioLogin(x){
+ const r=await x.consultar('/staging/contas/captcha-login');
+ assert.equal(r.status,200);
+ const p=await r.json();
+ const svg=Buffer.from(p.captchaImagem.split(',')[1],'base64').toString();
+ const resposta=[...svg.matchAll(/<text\s[^>]*>([A-Z0-9])<\/text>/g)]
+  .map(z=>z[1]).join('');
+ assert.equal(resposta.length,6);
+ return {captchaId:p.captchaId,captchaResposta:resposta};
+}
 test('gateway nao aceita administrador ausente nem senha do visitante',()=>{
  const args={portaInterna:43210,senhaAcesso:senha,segredoOperador:operador};
  for(const adminInvalido of [undefined,null,'curta',senha]){
@@ -595,8 +605,14 @@ test('cadastro completo: telefone cifrado, senha confirmada e nick com grafia ex
   body:JSON.stringify({nick,senha:senhaCliente})
  });
  assert.equal((await login('joao')).status,401);
- assert.equal((await login('JOAO')).status,401);
- const certo=await login('JoAo');
+ assert.equal((await login('JOAO')).status,403,
+  'segunda tentativa com mesma grafia ignorando caixa exige CAPTCHA');
+ assert.equal((await login('JoAo')).status,403);
+ const prova=await desafioLogin(x);
+ const certo=await x.consultar('/staging/contas/entrar',{
+  method:'POST',headers:{'Content-Type':'application/json'},
+  body:JSON.stringify({nick:'JoAo',senha:senhaCliente,...prova})
+ });
  assert.equal(certo.status,200);
  assert.equal((await certo.json()).nick,'JoAo');
  const cookie=certo.headers.getSetCookie().find(s=>s.startsWith('loop_candidato_s=')).split(';')[0];
@@ -643,8 +659,13 @@ test('nick legado: apenas grafia muda com senha e CSRF, mesma conta e login exat
  assert.equal(dados.nick,'ExempLo');assert.equal(dados.nick_grafia_confirmada,1);
  assert.equal(x.db.prepare('SELECT COUNT(*) AS n FROM akitemm_conta_unica_candidata').get().n,1);
  assert.equal((await login('exemplo')).status,401);
- assert.equal((await login('EXEMPLO')).status,401);
- assert.equal((await login('ExempLo')).status,200);
+ assert.equal((await login('EXEMPLO')).status,403);
+ const prova=await desafioLogin(x);
+ const comCaptcha=await x.consultar('/staging/contas/entrar',{
+  method:'POST',headers:{'Content-Type':'application/json'},
+  body:JSON.stringify({nick:'ExempLo',senha:'SenhaDoCliente123!',...prova})
+ });
+ assert.equal(comCaptcha.status,200);
 });
 
 test('Escritorio e Tabuleiro: AKITEMM ampliada; posicao escolhida apenas em Minhas Posicoes',()=>{
