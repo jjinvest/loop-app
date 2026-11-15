@@ -63,6 +63,29 @@ test('dominio da loja encaminha convite real sem reusar staging ou perder loja a
  });
  const base='http://127.0.0.1:'+gateway.address().port;
  const get=(url,opt={})=>fetch(base+url,{redirect:'manual',...opt});
+ const convidadoEstado=await (await get('/api/operador/estado')).json();
+ assert.deepEqual(convidadoEstado,{operador:false},
+  'visitante não vê o + nem permissões admin');
+ const painel=await get('/escritorio',{headers:{
+  Authorization:'Basic '+Buffer.from('operador:'+ADMIN).toString('base64')
+ }});
+ assert.equal(painel.status,200);
+ const adminCookie=painel.headers.get('set-cookie')?.split(';')[0];
+ assert.match(adminCookie,/^akitemm_preview_admin_v2=/);
+ const estadoReal=await get('/api/operador/estado',{
+  headers:{Cookie:adminCookie}});
+ assert.equal(estadoReal.status,200);
+ assert.deepEqual(await estadoReal.json(),{operador:true},
+  'o mesmo operador é reconhecido em toda tela via gateway');
+ assert.equal((await get('/api/operador/estado',{
+  headers:{Cookie:'akitemm_preview_access=v1.1234.0000'}
+ })).status,200);
+ assert.deepEqual(await (await get('/api/operador/estado',{
+  headers:{Cookie:'akitemm_preview_access=v1.1234.0000'}
+ })).json(),{operador:false});
+ assert.equal((await get('/api/operador/estado',{method:'POST'})).status,405);
+ assert.ok(!reais.some(y=>y.path==='/api/operador/estado'),
+  'identidade não recebe cookie administrativo nem consulta de permissão');
  const convite=await get('/escritorio/VILELA');
  assert.equal(convite.status,303);
  assert.equal(convite.headers.get('location'),'/cadastro-real?ref=VILELA');
