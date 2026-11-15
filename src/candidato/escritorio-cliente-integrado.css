@@ -973,14 +973,16 @@ body.loop03-logado main>.mensagem-pagina{margin:0 0 .75rem}
  text-shadow:0 1px 1px #123321,0 0 7px #ffe8a077;
 }
 .cliente-integrado .loop03-banner-topo .loop03-logomarca > span{
- display:inline-block;
- font-weight:900;font-size:.9em;letter-spacing:.035em;
- color:#e7eef8;
- /* Prata fria: sem quaisquer reflexos, contornos ou brilho dourados. */
- background:linear-gradient(180deg,#ffffff 0%,#eef3fb 19%,#b0bdcf 41%,#fbfdff 54%,#cad4e3 74%,#7a899e 100%);
+ /* 3.0 prata: o brilho dourado era herdado do LOOP no text-shadow.
+    Tamanho apenas ligeiramente maior que o original, sem ampliar banner. */
+ display:inline-block;vertical-align:baseline;
+ font-weight:900;font-size:.8em;letter-spacing:.025em;
+ color:#e5ebf4;
+ background:linear-gradient(180deg,#ffffff 0%,#e9eef6 28%,#adb9ca 47%,#f8fbff 62%,#b7c3d3 82%,#8796ab 100%);
  background-clip:text;-webkit-background-clip:text;
  -webkit-text-fill-color:transparent;
- -webkit-text-stroke:.35px #cbd6e6;
- filter:drop-shadow(0 2px 1px #040713)
-  drop-shadow(0 0 6px #dce9ff7d);
+ -webkit-text-stroke:.25px #d7e1ef;
+ /* Sobrescrever explicitamente o text-shadow dourado herdado do LOOP. */
+ text-shadow:none;
+ filter:drop-shadow(0 1px 1px #182231);
 }
