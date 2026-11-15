@@ -6,6 +6,8 @@ on:
     paths:
       - '.github/workflows/liberacao-cadastro-seguro.yml'
       - 'scripts/iniciar-identidade-cadastro-real.js'
+      - 'scripts/iniciar-cadastro-publico-release.js'
+      - 'test/cadastro-release-entrada-producao.test.js'
       - 'test/cadastro-real-isolado-go-gates.test.js'
       - 'src/producao/identidade-cliente-loop-sqlite.js'
       - 'src/producao/servidor-identidade-loop.js'
@@ -28,9 +30,9 @@ jobs:
           cache: npm
       - run: npm ci --ignore-scripts --no-fund
       - name: Validar sintaxe da entrada do cadastro real
-        run: node --check scripts/iniciar-identidade-cadastro-real.js
+        run: node --check scripts/iniciar-identidade-cadastro-real.js && node --check scripts/iniciar-cadastro-publico-release.js
       - name: Bloquear cadastro sem backup, consentimento, dominio e chaves
-        run: node --test test/cadastro-real-isolado-go-gates.test.js
+        run: node --test test/cadastro-real-isolado-go-gates.test.js test/cadastro-release-entrada-producao.test.js
       - name: Cadastro, indicacao, senha, e-mail, privacidade e criptografia
         run: |
           node --test \
