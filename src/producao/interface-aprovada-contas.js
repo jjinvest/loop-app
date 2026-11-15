@@ -4,6 +4,21 @@
 // homologadas ficam inativas, sem exibir saldos ou posições fictícias.
 (()=>{
  const $=id=>document.getElementById(id);
+ // A credencial de operador nunca é inferida pelo nick do cliente.
+ // O gateway verifica a sessão administrativa isolada antes de revelar +.
+ void (async()=>{
+  const atalho=$('loopOperadorMais');
+  if(!atalho)return;
+  try{
+   const r=await fetch('/staging/operador/estado',{
+    credentials:'same-origin',cache:'no-store'
+   });
+   const d=r.ok?await r.json():null;
+   if(d?.operador===true){
+    atalho.hidden=false;atalho.style.display='inline-flex';
+   }
+  }catch{}
+ })();
  const API='/api/contas';
  let csrf=null,documentos=null,carregando=false,tela='login';
  let captchaCadastroId=null,captchaObrigatorio=false;
