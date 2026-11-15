@@ -70,7 +70,7 @@ test('troca de senha invalida todas as sessoes mesmo em duas abas/usuarios do me
  assert.equal(semCaptcha.status,403);
  const desafio=(await req('/staging/contas/captcha-login')).data;
  const svg=Buffer.from(desafio.captchaImagem.split(',')[1],'base64').toString();
- const codigo=[...svg.matchAll(/<text\\s[^>]*>([A-Z0-9])<\\/text>/g)]
+ const codigo=[...svg.matchAll(/<text[^>]*>([A-Z0-9])</g)]
   .map(x=>x[1]).join('');
  assert.equal(codigo.length,6);
  const novo=await req('/staging/contas/entrar',{body:{
