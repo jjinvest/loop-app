@@ -141,12 +141,14 @@ function consultarNucleoComercialRealFechado({arquivo,permitirTeste=false}={}){
   const p=db.prepare(
    'SELECT modo FROM loop_real_catraca_admin_politica WHERE id=1'
   ).get();
-  if(contas!==0||pedidos!==0||giros!==0||lancamentos!==0||
-     p?.modo!=='PAUSADA')
+  const legado=contas===0?0:tabelas.has('loop_real_migracoes_preview')?
+   contar('loop_real_migracoes_preview'):-1;
+ if((contas!==0&&legado!==contas)||pedidos!==0||giros!==0||
+    lancamentos!==0||p?.modo!=='PAUSADA')
    falha('NUCLEO_REAL_PREPARACAO_NAO_E_VAZIA_OU_PAUSADA');
   return Object.freeze({
    origem:'SQLITE_OPERACIONAL_REAL',estruturaIntegra:true,
-   componentes:necessarias.length,contas:0,pedidos:0,
+   componentes:necessarias.length,contas,contasMigradas:legado,pedidos:0,
    giros:0,lancamentosFinanceiros:0,catracaPausada:true,
    cadastroAberto:false,checkoutAberto:false,
    pagamentosHabilitados:false,saquesHabilitados:false
