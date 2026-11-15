@@ -1979,7 +1979,7 @@ async function main(){
   }
 
 
-  // Fotografia do layout 3x4 com DADOS FICTÍCIOS DO TESTE, sem produtos
+  // Fotografia do layout 2x4 com DADOS FICTÍCIOS DO TESTE, sem produtos
   // inventados no catálogo real da empresa. Evita confundir prévia e produção.
   for(let i=1;i<=9;i++){
    const n=String(i).padStart(2,'0');
@@ -1988,10 +1988,10 @@ async function main(){
     revisaoEsperada:0
    });
   }
+  await page.setViewportSize({width:1366,height:850});
   await page.goto(base+'/laboratorio/loja',{waitUntil:'networkidle'});
   await page.locator('#conteudoLojaLoop').waitFor({state:'visible'});
-  await page.setViewportSize({width:1366,height:850});
-  assert.equal(await page.locator('.produto-loja-loop').count(),12);
+  assert.equal(await page.locator('#catalogoLojaLoop .produto-loja-loop').count(),8);
   assert.equal(await page.locator('#akitemmCarregarMais').isVisible(),true);
   const grade=await page.locator('#catalogoLojaLoop').evaluate(x=>{
    const cs=getComputedStyle(x);
@@ -2002,7 +2002,7 @@ async function main(){
   assert.equal(grade.colunas,4);
   assert.ok(grade.primeiro<grade.ultimo,'Primeira fileira levemente mais compacta');
   await page.screenshot({
-   path:path.join(pasta,'AKITEMM_GRADE_3_FILEIRAS_X_4_PC_TESTE_REAL.png'),fullPage:true
+   path:path.join(pasta,'AKITEMM_GRADE_2_FILEIRAS_X_4_PC_TESTE_REAL.png'),fullPage:true
   });
   const totais=await page.evaluate(async()=>{
    const r=await fetch('/api/laboratorio/participante/loja/catalogo',{credentials:'same-origin'});
