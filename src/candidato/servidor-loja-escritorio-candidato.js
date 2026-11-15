@@ -51,6 +51,7 @@ const {BannersEscritorioCandidatoSQLite,LIMITE_IMAGEM:LIMITE_BANNER}=
 const {EnderecoEntregaEnsaioSQLite}=require('../domain/endereco-entrega-ensaio-sqlite');
 const {AkitemmConfigLojaDemoSQLite}=require('../domain/akitemm-config-loja-demo-sqlite');
 const {createVitrineCandidata}=require('./vitrine-aprovada-candidato');
+const {instalarPonteCatalogoReal}=require('../producao/ponte-catalogo-real-preview');
 const {ProjecaoFilasCandidatoSandbox}=require('../domain/projecao-filas-candidato-sandbox');
 const {PreAdesaoSandboxCandidatoSQLite}=require('../domain/pre-adesao-sandbox-candidato-sqlite');
 const {DiagnosticoAtivacaoCandidato}=require('../domain/diagnostico-ativacao-candidato');
@@ -627,6 +628,12 @@ function criarAppLojaEscritorioCandidato({banco,repositorioCatalogo,
   }catch(e){return res.status(400).json({erro:e.codigo||'COTACAO_INVALIDA'});}
  });
  const autorizarOperador=criarAutorizacao({segredo:segredoOperador});
+ // Opt-in apenas quando o banco comercial REAL estiver preparado e validado.
+ // Em falha, nao cair silenciosamente no catalogo ficticio de laboratorio.
+ const ponteCatalogoReal=instalarPonteCatalogoReal({
+  app,autorizarOperador,env:process.env
+ });
+
 
 
  // A entrega de produto fisico so pode ser marcada pelo operador depois
