@@ -111,8 +111,67 @@
   if(ok)rodape.src=topo.src;else rodape.removeAttribute('src');
   rodape.hidden=!ok;$('loop03AvatarRodapeVazio').hidden=ok;
  }
+ async function apresentarAceiteMigrado(s){
+  document.getElementById('loopAceiteMigrado')?.remove();
+  if(s.aceiteDocumentosDefinitivosPendente!==true)return;
+  const area=document.createElement('section');
+  area.id='loopAceiteMigrado';
+  area.setAttribute('role','dialog');
+  area.setAttribute('aria-modal','true');
+  area.setAttribute('aria-label','Atualização dos documentos da sua conta');
+  Object.assign(area.style,{position:'fixed',inset:'0',zIndex:'9999',
+   overflowY:'auto',padding:'24px',background:'#11141d',color:'#f7f1da'});
+  const titulo=document.createElement('h2');
+  titulo.textContent='Atualização dos documentos do LOOP';
+  const msg=document.createElement('p');
+  msg.textContent='Seu cadastro e sua indicação foram preservados. Leia e confirme os documentos oficiais para continuar. Não é necessário se cadastrar novamente.';
+  const status=document.createElement('p');
+  status.setAttribute('role','status');
+  area.append(titulo,msg,status);
+  document.body.append(area);
+  try{
+   const docs=await requisitar('/documentos');
+   for(const tipo of ['termos','privacidade']){
+    const bloco=document.createElement('details');bloco.open=true;
+    const resumo=document.createElement('summary');
+    resumo.textContent=tipo==='termos'?'Termos de Uso':'Política de Privacidade';
+    const texto=document.createElement('p');
+    texto.textContent=docs[tipo].texto;
+    texto.style.whiteSpace='pre-wrap';
+    bloco.append(resumo,texto);area.append(bloco);
+   }
+   const form=document.createElement('form');
+   const labels=[];
+   for(const nome of ['Li e aceito os Termos de Uso.','Li a Política de Privacidade e concordo com o tratamento descrito.']){
+    const label=document.createElement('label');
+    const cb=document.createElement('input');cb.type='checkbox';cb.required=true;
+    label.append(cb,document.createTextNode(' '+nome));
+    labels.push(cb);form.append(label);
+   }
+   const btn=document.createElement('button');btn.type='submit';
+   btn.textContent='Confirmar documentos e entrar';
+   form.append(btn);area.append(form);
+   form.addEventListener('submit',async ev=>{
+    ev.preventDefault();
+    if(labels.some(x=>!x.checked))return;
+    btn.disabled=true;
+    try{
+     const resp=await requisitar('/aceitar-documentos',{
+      method:'POST',csrfObrigatorio:true,
+      body:{aceiteTermos:true,aceitePrivacidade:true,
+       versaoTermos:docs.termos.versao,hashTermos:docs.termos.hash,
+       versaoPrivacidade:docs.privacidade.versao,
+       hashPrivacidade:docs.privacidade.hash}
+     });
+     if(resp.documentosConfirmados!==true)throw Error('DOCUMENTOS_ALTERADOS_RELER');
+     area.remove();dizer('Documentos confirmados. Sua conta original foi preservada.');
+    }catch(e){status.textContent=erro(e);btn.disabled=false;}
+   });
+  }catch(e){status.textContent='Não foi possível carregar os documentos. '+erro(e);}
+ }
  function painelConta(s){
   csrf=s.csrf;
+  void apresentarAceiteMigrado(s);
   $('painelLogin').hidden=true;
   $('painelCadastro').hidden=true;
   $('painelRecuperacao').hidden=true;
