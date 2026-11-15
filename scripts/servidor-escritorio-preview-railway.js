@@ -135,6 +135,15 @@ function criarGateway({portaInterna,senhaAcesso,senhaAdmin,segredoOperador,
   let url;
   try{url=new URL(req.url,'http://gateway.invalid');}
   catch{return negar(400,'Requisição inválida');}
+  // Controle do operador: uma rota pública de leitura, sem acesso ao
+  // SQLite real e sem credenciais no navegador. Mesmo nome nas duas UIs.
+  // Sempre no gateway, antes de qualquer proxy /api/ para a identidade.
+  if(url.pathname==='/api/operador/estado'){
+   if(req.method!=='GET')return negar(405,'Método não permitido');
+   res.writeHead(200,{...cabecalhosBase,
+    'Content-Type':'application/json; charset=utf-8'});
+   return res.end(JSON.stringify({operador:lerAdmin(req)}));
+  }
   // O site público continua no mesmo domínio. Somente os caminhos
   // de IDENTIDADE e seus assets são proxied ao serviço real com volume
   // independente. A loja anterior permanece intacta para usuários antigos.
