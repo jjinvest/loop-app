@@ -15,6 +15,7 @@ const {SessaoAdminComercialSQLite}=require('./sessao-admin-comercial-sqlite');
 const {montarComercialSemHomologacao}=require('./montar-comercial-sem-homologacao');
 const {PreflightCapacidadeCheckoutSQLite}=require('./preflight-capacidade-checkout-sqlite');
 const {RecuperacaoReservasCheckoutSQLite}=require('./recuperacao-reservas-checkout-sqlite');
+const {DatabaseSync}=require('node:sqlite');
 function falha(c){const e=new Error(c);e.codigo=c;throw e;}
 function prepararNucleoComercialRealFechado({banco,ambiente=process.env}={}){
  if(!banco||typeof banco.prepare!=='function'||typeof banco.exec!=='function')
@@ -94,4 +95,50 @@ function prepararNucleoComercialRealFechado({banco,ambiente=process.env}={}){
   pedidosReais:comercial.leituraPedidos.contarDoTitular?0:null
  });
 }
-module.exports={prepararNucleoComercialRealFechado};
+// Prova read-only no volume REAL. Não aceita IDs fornecidos pelo navegador.
+function consultarNucleoComercialRealFechado({arquivo}={}){
+ if(arquivo!=='/dados-reais/clientes.sqlite'&&
+    !(process.env.NODE_ENV==='test'&&
+      typeof arquivo==='string'&&arquivo.endsWith('.sqlite')))
+  falha('NUCLEO_REAL_DIAGNOSTICO_ORIGEM_INVALIDA');
+ const db=new DatabaseSync(arquivo,{readOnly:true});
+ try{
+  const necessarias=[
+   'loop_real_contas','loop_real_motor_estado',
+   'loop_real_fin_lancamentos','loop_real_catraca_admin_politica',
+   'loja_real_auditoria_admin','loja_real_manutencao_comercial',
+   'loja_real_sessoes_admin','loja_real_produtos',
+   'loja_real_ofertas_distribuidores','loja_real_custos_ofertas',
+   'loja_real_pedidos','loja_real_custos_pedido',
+   'loja_real_outbox_fornecedor','loop_real_eventos_comerciais',
+   'loop_real_regras_cor','loop_real_checkout_reservas_posicoes',
+   'loop_real_checkout_reconsultas_pendentes'
+  ];
+  const tabelas=new Set(db.prepare(
+   "SELECT name FROM sqlite_master WHERE type='table'"
+  ).all().map(x=>x.name));
+  if(necessarias.some(t=>!tabelas.has(t))||
+     db.prepare('PRAGMA quick_check').get().quick_check!=='ok')
+   falha('NUCLEO_REAL_ESQUEMA_OU_INTEGRIDADE_DIVERGENTE');
+  const contar=t=>db.prepare('SELECT COUNT(*) AS n FROM '+t).get().n;
+  const contas=contar('loop_real_contas'),
+        pedidos=contar('loja_real_pedidos'),
+        giros=contar('loop_real_catraca_admin_giros'),
+        lancamentos=contar('loop_real_fin_lancamentos');
+  const p=db.prepare(
+   'SELECT modo FROM loop_real_catraca_admin_politica WHERE id=1'
+  ).get();
+  if(contas!==0||pedidos!==0||giros!==0||lancamentos!==0||
+     p?.modo!=='PAUSADA')
+   falha('NUCLEO_REAL_PREPARACAO_NAO_E_VAZIA_OU_PAUSADA');
+  return Object.freeze({
+   origem:'SQLITE_OPERACIONAL_REAL',estruturaIntegra:true,
+   componentes:necessarias.length,contas:0,pedidos:0,
+   giros:0,lancamentosFinanceiros:0,catracaPausada:true,
+   cadastroAberto:false,checkoutAberto:false,
+   pagamentosHabilitados:false,saquesHabilitados:false
+  });
+ }finally{db.close();}
+}
+
+module.exports={prepararNucleoComercialRealFechado,consultarNucleoComercialRealFechado};
