@@ -138,12 +138,27 @@ function criarGateway({portaInterna,senhaAcesso,senhaAdmin,segredoOperador,
    );
    if(redirect){
     const nick=redirect[2];
-    if(!validarNickIndicador(nick))
-     return negar(404,'Link de indicação inexistente');
-    res.writeHead(303,{...cabecalhosBase,
-     Location:'/cadastro-real?ref='+encodeURIComponent(nick)+
-      (redirect[1]==='loja'?'&origem=loja':'')});
-    return res.end();
+    // Validar o indicador no banco REAL, e não na antiga prévia.
+    const check=http.get({
+     hostname:realAlvo.hostname,port:Number(realAlvo.port||80),
+     path:'/escritorio/'+encodeURIComponent(nick),timeout:7000
+    },resp=>{
+     resp.resume();
+     if(res.headersSent)return;
+     if(resp.statusCode!==303){
+      return negar(resp.statusCode===404?404:503,
+       resp.statusCode===404?'Link de indicação inexistente':
+        'Validação do link indisponível');
+     }
+     res.writeHead(303,{...cabecalhosBase,
+      Location:'/cadastro-real?ref='+encodeURIComponent(nick)+
+       (redirect[1]==='loja'?'&origem=loja':'')});
+     res.end();
+    });
+    check.on('timeout',()=>check.destroy());
+    check.on('error',()=>negar(503,'Validação do link indisponível'));
+    req.on('aborted',()=>check.destroy());
+    return;
    }
    const temSessaoReal=/(?:^|;\s*)loop_real_s=[a-f0-9]{64}(?:;|$)/
     .test(req.headers.cookie||'');
