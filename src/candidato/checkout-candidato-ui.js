@@ -1097,30 +1097,11 @@ async function atualizarConta(){
    ' · Nick: @'+perfil.nick+
    ' · E-mail: '+(perfil.emailVerificado?'confirmado':'não confirmado')+
    '. Identidade comercial: pendente.';
-   $('compartilharTelefoneIndicador').checked=
-    perfil.compartilhaTelefoneComIndicador===true;
    $('novoNickGrafia').value=perfil.nick;
    $('avisoGrafiaNick').textContent=perfil.nickGrafiaConfirmada?
     'Grafia confirmada. Para alterar somente as letras maiúsculas e minúsculas, informe sua senha.':
     'Conta antiga: confirme como seu nick deve aparecer e ser digitado no próximo acesso.';
  }catch(e){$('perfilCliente').textContent='Perfil indisponível: '+e.message;}
-}
-async function salvarCompartilhamentoTelefone(e){
- e.preventDefault();
- const formulario=$('formCompartilharTelefoneIndicador');
- const botao=formulario.querySelector('button[type=submit]');
- botao.disabled=true;
- try{
-  const r=await requisitar('/contas/telefone/compartilhamento',{
-   method:'POST',mutacao:true,
-   body:{permitir:$('compartilharTelefoneIndicador').checked}
-  });
-  $('estadoCompartilharTelefone').textContent=r.compartilhaTelefoneComIndicador?
-   'Seu telefone poderá ser visto somente por quem indicou você.':
-   'Seu telefone não será exibido na Minha Equipe de seu indicador.';
- }catch(e){
-  $('estadoCompartilharTelefone').textContent='Não foi possível salvar: '+e.message;
- }finally{botao.disabled=false;}
 }
 async function confirmarGrafiaNick(e){
  e.preventDefault();
@@ -1336,7 +1317,6 @@ async function cadastrar(e){
    body:{
     nome:$('cadastroNome').value,
     nick,cpf:cpfCadastro,email:$('cadastroEmail').value,telefone,senha,confirmarSenha:confirmacao,
-    compartilharTelefoneIndicador:$('cadastroCompartilharTelefoneIndicador').checked,
     aceiteExplicito:$('cadastroTermos').checked,
     termosVersaoAceita:termosCadastroLidos.versao,
     termosHashAceito:termosCadastroLidos.hash
@@ -1519,7 +1499,6 @@ $('copiarLinkLoja').addEventListener('click',()=>copiarLink('linkLoja'));
 $('copiarLinkEscritorio').addEventListener('click',()=>copiarLink('linkEscritorio'));
 $('formTrocarSenha').addEventListener('submit',trocarSenha);
 $('formGrafiaNick').addEventListener('submit',confirmarGrafiaNick);
-$('formCompartilharTelefoneIndicador').addEventListener('submit',salvarCompartilhamentoTelefone);
 for(const [btn,section] of ABAS){
  $(btn).addEventListener('click',()=>mostrarAba(section));
 }
