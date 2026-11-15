@@ -306,3 +306,24 @@ test('saque por posição usa saldo da posição atual e mantém total agregado 
   }
  }
 });
+
+test('marca LOOP 3.0 premium apenas no menu lateral, sem retocar banner aprovado',()=>{
+ const css=ler('src/candidato/escritorio-cliente-integrado.css');
+ const html=ler('src/candidato/checkout-candidato-ui.html');
+ const {renderizarInterfaceAprovada}=require('../src/producao/interface-aprovada-loop');
+ const marca='<div class="loop03-marca">LOOP <span>3.0</span></div>';
+ assert.ok(html.includes(marca));
+ assert.ok(renderizarInterfaceAprovada().includes(marca));
+ const rule=css.split('/* Acabamento exclusivo da marca no TOPO do menu lateral.')[1];
+ assert.ok(rule,'estilo localizado no menu');
+ assert.match(rule,/\.cliente-integrado \.loop03-sidebar > \.loop03-marca\{/);
+ assert.match(rule,/font-size:clamp\(1\.55rem,2vw,1\.85rem\)!important/);
+ assert.match(rule,/background:linear-gradient\(180deg,#fff2c8/);
+ assert.match(rule,/\.loop03-sidebar > \.loop03-marca > span\{/);
+ assert.match(rule,/background:linear-gradient\(180deg,#fff 0%,#e2eaf6/);
+ assert.match(rule,/text-shadow:none/);
+ assert.match(rule,/\.loop03-sidebar > \.loop03-marca::after\{/);
+ assert.doesNotMatch(rule,/\.loop03-banner-topo/);
+ assert.ok(css.includes('.cliente-integrado .loop03-banner-topo .loop03-logomarca > span{'),
+  'banner principal preservado');
+});
