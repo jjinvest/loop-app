@@ -445,10 +445,22 @@ class IdentidadeClienteLoopReal{
   if(typeof indicadorId!=='string'||typeof indicadoId!=='string'||
      !/^titular-[a-f0-9-]{36}$/.test(indicadorId)||
      !/^titular-[a-f0-9-]{36}$/.test(indicadoId))return null;
+  // Contato original (CPF + telefone) ou telefone legado migrado
+  // separadamente: nunca inventar CPF nem perder o contato do indicado.
+  const legado=!!this.banco.prepare([
+   "SELECT 1 FROM sqlite_master WHERE type='table'",
+   "AND name='loop_real_telefones_legados'"
+  ].join(' ')).get();
   const row=this.banco.prepare([
-   'SELECT k.telefone_iv,k.telefone_ct,k.telefone_tag',
-   'FROM loop_real_contatos_cadastro k',
-   'JOIN loop_real_vinculos_indicacao v ON v.indicado_id=k.titular_id',
+   'SELECT COALESCE(k.telefone_iv,'+
+    (legado?'l.telefone_iv':'NULL')+') AS telefone_iv,',
+   'COALESCE(k.telefone_ct,'+
+    (legado?'l.telefone_ct':'NULL')+') AS telefone_ct,',
+   'COALESCE(k.telefone_tag,'+
+    (legado?'l.telefone_tag':'NULL')+') AS telefone_tag',
+   'FROM loop_real_vinculos_indicacao v',
+   'LEFT JOIN loop_real_contatos_cadastro k ON k.titular_id=v.indicado_id',
+   ...(legado?['LEFT JOIN loop_real_telefones_legados l ON l.titular_id=v.indicado_id']:[]),
    'WHERE v.indicado_id=? AND v.indicador_id=?'
   ].join(' ')).get(indicadoId,indicadorId);
   if(!row?.telefone_iv||!row.telefone_ct||!row.telefone_tag)return null;
@@ -500,8 +512,15 @@ class IdentidadeClienteLoopReal{
   const contato=this.banco.prepare(
    'SELECT * FROM loop_real_contatos_cadastro WHERE titular_id=?'
   ).get(titularId);
-  const telefone=contato?decifrar(this.keyCipher,contato.telefone_iv,
-   contato.telefone_ct,contato.telefone_tag):null;
+  const legado=contato?null:this.banco.prepare([
+   "SELECT name FROM sqlite_master WHERE type='table'",
+   "AND name='loop_real_telefones_legados'"
+  ].join(' ')).get()?this.banco.prepare(
+   'SELECT * FROM loop_real_telefones_legados WHERE titular_id=?'
+  ).get(titularId):null;
+  const fonteTelefone=contato||legado;
+  const telefone=fonteTelefone?decifrar(this.keyCipher,fonteTelefone.telefone_iv,
+   fonteTelefone.telefone_ct,fonteTelefone.telefone_tag):null;
   const cpf=contato?decifrar(this.keyCipher,contato.cpf_iv,
    contato.cpf_ct,contato.cpf_tag):null;
   return {
@@ -515,6 +534,13 @@ class IdentidadeClienteLoopReal{
     privacidade:{versao:row.priv_versao,hash:row.priv_hash}
    },
    registradoEm:row.criado_em,emailVerificado:row.email_confirmado_em!==null,
+   aceiteDocumentosDefinitivosPendente:!!this.banco.prepare([
+    "SELECT name FROM sqlite_master WHERE type='table'",
+    "AND name='loop_real_migracoes_preview'"
+   ].join(' ')).get()&&!!this.banco.prepare([
+    'SELECT 1 FROM loop_real_migracoes_preview',
+    'WHERE titular_id=? AND documentos_definitivos_pendentes=1'
+   ].join(' ')).get(titularId),
    // CPF exibido somente mascarado; KYC bancario/financeiro nao realizado.
    nenhumPagamentoRealNesteServico:true
   };
