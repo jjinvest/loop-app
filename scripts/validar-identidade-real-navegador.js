@@ -295,7 +295,7 @@ async function main(){
     'esfera vazia não mostra marcador fictício');
    assert.equal(await page.locator('#motorFilaB .loop03-linha-fila').count(),1);
    assert.ok((await page.locator('#motorFilaB').innerText())
-    .includes('1 posição(ões) em validação interna'));
+    .includes('1 posição(ões) na fila · abra para ver a ordem'));
    assert.equal(await page.locator('#motorFilaB .loop03-inicial-fila').innerText(),'B');
    assert.equal(await page.locator('#motorBolinha1').getAttribute('aria-label'),
     'Evento 1 aguardando');
