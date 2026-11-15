@@ -109,8 +109,8 @@ const PRODUTOS=['ROXO','DOURADO','VERDE','CINZA'].map(cor=>({
    await pagina.reload({waitUntil:'domcontentloaded'});
    await pagina.locator('#conteudoLojaLoop').waitFor({state:'visible'});
    await pagina.locator('[data-akitemm-cor="ROXO"]').click();
-   assert.equal(await cards().count(),dispositivo.nome==='celular'?2:3,
-    'cor segue disposição alterada pelo administrador');
+   assert.equal(await cards().count(),3,
+    'mesmo filtro mostra os três slots roxos do administrador em ambas as telas');
    await pagina.locator('#akitemmFiltroTodos').click();
 
    // Produtos reais no teste local: uma cor classifica um só produto;
