@@ -9,6 +9,7 @@ let telaAcesso='login';
 let fotoPerfilUrl=null,versaoCarregamentoFoto=0;
 let versaoLeituraBannersEscritorio=0;
 let termosCadastroLidos=null,carregandoTermosCadastro=null;
+let captchaLoginAtivo=false,captchaLoginId=null;
 let posicaoSelecionadaMotor=null;
 let posicoesDisponiveisResumo=[];
 let popupPosicoesAberto=false;
@@ -22,6 +23,9 @@ const moeda=v=>new Intl.NumberFormat('pt-BR',{style:'currency',currency:'BRL'}).
 const dizer=msg=>{$('mensagem').textContent=msg;};
 const errosTraduzidos={
  CREDENCIAIS_INVALIDAS:'Nick ou senha incorretos. Confira os dados e tente novamente.',
+ CAPTCHA_LOGIN_OBRIGATORIO:'Para tentar entrar novamente, confirme o código de segurança.',
+ CAPTCHA_INVALIDO:'Código de segurança incorreto ou vencido. Digite o próximo código.',
+ CAPTCHA_OCUPADO:'Proteção temporariamente ocupada. Tente novamente.',
  CONTA_TEMPORARIAMENTE_BLOQUEADA:'Muitas tentativas incorretas. Aguarde 15 minutos e tente novamente.',
  AUTENTICACAO_TEMPORARIAMENTE_OCUPADA:'Muitos acessos simultâneos. Aguarde um momento e tente novamente.',
  NICK_INVALIDO:'Seu nick novo deve ter de 1 a 9 caracteres: letras, números ou espaços entre palavras.',
@@ -1202,8 +1206,16 @@ async function salvarFotoPerfil(e){
  finally{botao.disabled=false;}
 }
 async function autenticarConta(nick,senha){
- const dados=await requisitar('/contas/entrar',{method:'POST',
-  body:{nick,senha}});
+ const body={nick,senha};
+ if(captchaLoginAtivo){
+  if(!captchaLoginId||!/^[A-Za-z2-9]{6}$/.test($('captchaLoginResposta').value.trim()))
+   throw Error('CAPTCHA_LOGIN_OBRIGATORIO');
+  body.captchaId=captchaLoginId;
+  body.captchaResposta=$('captchaLoginResposta').value.trim().toUpperCase();
+ }
+ const dados=await requisitar('/contas/entrar',{method:'POST',body});
+ captchaLoginAtivo=false;captchaLoginId=null;
+ $('captchaLoginArea').hidden=true;$('captchaLoginResposta').value='';
  csrf=dados.csrf;mostrarSessao(true);$('senha').value='';
  void atualizarFotoPerfil();
  if(new URLSearchParams(location.search).get('destino')==='loja'){
@@ -1215,6 +1227,24 @@ async function autenticarConta(nick,senha){
  return dados;
 }
 
+async function atualizarCaptchaLogin(){
+ captchaLoginAtivo=true;captchaLoginId=null;
+ $('captchaLoginArea').hidden=false;
+ $('captchaLoginResposta').value='';
+ $('captchaLoginImagem').removeAttribute('src');
+ $('captchaLoginEstado').textContent='Carregando código de segurança...';
+ try{
+  const r=await requisitar('/contas/captcha-login');
+  if(!/^[a-f0-9]{48}$/.test(r.captchaId)||
+     !/^data:image\/svg\+xml;base64,[A-Za-z0-9+/=]+$/.test(r.captchaImagem))
+   throw Error('CAPTCHA_INVALIDO');
+  captchaLoginId=r.captchaId;
+  $('captchaLoginImagem').src=r.captchaImagem;
+  $('captchaLoginEstado').textContent='Digite o código para a próxima tentativa.';
+ }catch{
+  $('captchaLoginEstado').textContent='Não foi possível carregar o código. Toque em Outro código.';
+ }
+}
 async function entrar(e){
  e.preventDefault();
  const botao=$('formLogin').querySelector('button[type=submit]');
@@ -1223,7 +1253,12 @@ async function entrar(e){
   await autenticarConta($('login').value,$('senha').value);
   mostrarErroAcesso('login','');
   dizer('Bem-vindo ao seu Escritório. Seus dados estão disponíveis nas abas.');
- }catch(err){mostrarErroAcesso('login',explicarErro(err));}
+ }catch(err){
+  if(['CREDENCIAIS_INVALIDAS','CAPTCHA_LOGIN_OBRIGATORIO',
+      'CAPTCHA_INVALIDO'].includes(err.message))
+   await atualizarCaptchaLogin();
+  mostrarErroAcesso('login',explicarErro(err));
+ }
  finally{botao.disabled=false;}
 }
 
@@ -1413,6 +1448,7 @@ $('formCadastro').addEventListener('submit',cadastrar);
 $('solicitarCodigoEmail').addEventListener('click',solicitarCodigoEmail);
 $('formConfirmarEmail').addEventListener('submit',confirmarCodigoEmail);
 $('formLogin').addEventListener('submit',entrar);
+$('captchaLoginAtualizar').addEventListener('click',()=>void atualizarCaptchaLogin());
 $('formCpfTeste').addEventListener('submit',registrarIdentidadeTeste);
 $('pedidosAnterior').addEventListener('click',()=>{
  if(paginaPedidos>0){paginaPedidos--;atualizarPedidos();}
