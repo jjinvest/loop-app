@@ -1,7 +1,7 @@
 {
   "schema": 1,
   "política": "Toda alteração de HTML/CSS exige pedido visual explícito, escopo isolado e revisão do proprietário; é proibido atualizar hashes para esconder mudanças.",
-  "autorizaçãoAtual": "15/11/2026: autorização expressa para três mudanças pontuais: palavra CENTRO dourada sobre a esfera verde metálica intacta; acabamento metálico mais bonito apenas no '3.0' do banner LOOP; na Solicitação de saque, segundo botão mostra 'Saldo total da posição atual' associado exclusivamente ao valor da posição selecionada no quadro superior, enquanto o indicador agregado 'Saldo total das posições' permanece. Navegação, foto, menu, motor, cores das posições e regras financeiras/saques não são alterados.",
+  "autorizaçãoAtual": "15/11/2026: ajuste expressamente autorizado APENAS no texto '3.0' do banner superior LOOP: tamanho discretamente maior, acabamento prata frio metálico sem reflexos dourados. A palavra LOOP permanece dourada, o CENTRO mantém fundo verde e texto dourado, o financeiro e todos os outros elementos/fluxos continuam exatamente aprovados.",
   "arquivos": [
     {
       "path": "src/candidato/checkout-candidato-ui.html",
@@ -17,7 +17,7 @@
     },
     {
       "path": "src/candidato/escritorio-cliente-integrado.css",
-      "sha": "e722529e3e764382a06d09b5bf49c6b52a8d7f9b"
+      "sha": "2779a7f28f8c313be0252cb80e179624355fcac3"
     },
     {
       "path": "src/laboratorio/admin-loop03.css",
@@ -103,6 +103,7 @@
   "históricoAutorizações": [
     "14/11/2026: pedido explicito do proprietário para corrigir o teste de navegacao, abrir os dados nome/nick/email no rodape Minha conta, sincronizar a foto com o topo e mostrar CPF apenas se posicao confirmada; HTML e CSS da interface unica atualizados sem alterar outras telas.",
     "14/11/2026: autorização explícita do proprietário para refinar EXCLUSIVAMENTE os ícones do menu lateral compartilhado: casa dourada, tabuleiro dourado levemente maior, grade de posições dourada, equipe dourada, financeiro verde, loja AKITEMM roxa, carrinho dourado, links dourados, conta dourada. IDs, links, abas, motor, textos e navegação preservados. As edições anteriores aprovadas no HTML/CSS compartilhados também permanecem (CPF no cadastro, controles, filas, links e rodapé).",
-    "15/11/2026: proprietário autorizou exclusivamente retirar a inscrição 'Minha conta' sob a foto no rodapé do menu e apresentar o nick autenticado com a localização da posição selecionada: Fila A, Fila B ou ícone de coroa quando no Tabuleiro. Número da posição, indicações e detalhes permanecem no placar superior. Foto, botão de dados, menu e demais ajustes visuais aprovados foram preservados."
+    "15/11/2026: proprietário autorizou exclusivamente retirar a inscrição 'Minha conta' sob a foto no rodapé do menu e apresentar o nick autenticado com a localização da posição selecionada: Fila A, Fila B ou ícone de coroa quando no Tabuleiro. Número da posição, indicações e detalhes permanecem no placar superior. Foto, botão de dados, menu e demais ajustes visuais aprovados foram preservados.",
+    "15/11/2026: autorização expressa para três mudanças pontuais: palavra CENTRO dourada sobre a esfera verde metálica intacta; acabamento metálico mais bonito apenas no '3.0' do banner LOOP; na Solicitação de saque, segundo botão mostra 'Saldo total da posição atual' associado exclusivamente ao valor da posição selecionada no quadro superior, enquanto o indicador agregado 'Saldo total das posições' permanece. Navegação, foto, menu, motor, cores das posições e regras financeiras/saques não são alterados."
   ]
 }
