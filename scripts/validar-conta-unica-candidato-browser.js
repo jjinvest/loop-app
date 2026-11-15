@@ -106,6 +106,7 @@ function mp4TrintaSegundos(){
    assert.equal(await page.locator('#cadastroSenha').getAttribute('maxlength'),'12');
    await page.locator('#cadastroSenha').fill('Abc123xy');
    await page.locator('#cadastroConfirmarSenha').fill('Abc123xy');
+   await page.locator('#cadastroCpf').fill(item.nome==='pc'?'52998224725':'11144477735');
    await page.locator('#cadastroTelefone').fill('21988887777');
    await page.locator('[data-senha="cadastroSenha"]').click();
    assert.equal(await page.locator('#cadastroSenha').getAttribute('type'),'text');
