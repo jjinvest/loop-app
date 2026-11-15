@@ -1,7 +1,7 @@
 {
   "schema": 1,
   "política": "Toda alteração de HTML/CSS exige pedido visual explícito, escopo isolado e revisão do proprietário; é proibido atualizar hashes para esconder mudanças.",
-  "autorizaçãoAtual": "15/11/2026: proprietário pediu quatro banners no Escritório Virtual em vez de dois e capacidade de subir ele mesmo fotos manualmente pela interface administrativa para testar o caminho completo. Preservados os dois banners originais, completados dois slots extras, quatro pontos de navegação e fotos opcionais por slot, com envio/substituição/remoção restritos ao operador, armazenamento SQLite e visualização autenticada no cliente. Nenhuma alteração no motor, nas filas, no financeiro, no cabeçalho aprovado ou nas permissões. O CSS do painel administrativo foi ajustado apenas para os quatro seletores de arquivo e consta neste contrato. Novo formulário de quatro fotos também registrado no HTML administrativo, sem modificar as seções anteriores.",
+  "autorizaçãoAtual": "15/11/2026: proprietário pediu que a moldura dourada fique ACIMA das fotos carregadas nos quatro banners, acompanhando cantos arredondados, e que as fotos sejam enquadradas na hora do upload. Somente mudanças no carrossel de banners: contorno visível como camada superior, modo padrão INTEIRA sem cortar nem deformar e modo opcional PREENCHER com recorte central; o operador escolhe na miniatura antes de enviar, configuração persiste junto à foto e fotos antigas são preservadas. Na loja AKITEMM, confirmado enquadramento pré-existente scale-down dentro dos cartões, e os botões dourados serão tratados quando o proprietário avaliar a tela. Os demais módulos e identidade visual previamente aprovados permanecem inalterados.",
   "arquivos": [
     {
       "path": "src/candidato/checkout-candidato-ui.html",
@@ -17,7 +17,7 @@
     },
     {
       "path": "src/candidato/escritorio-cliente-integrado.css",
-      "sha": "a76af70e0655a1fb2967e0c84e398db4a95c6b33"
+      "sha": "3fe8eef5820f261e6c2f19f3b50f16e0b898da22"
     },
     {
       "path": "src/laboratorio/admin-loop03.css",
@@ -107,6 +107,7 @@
     "15/11/2026: autorização expressa para três mudanças pontuais: palavra CENTRO dourada sobre a esfera verde metálica intacta; acabamento metálico mais bonito apenas no '3.0' do banner LOOP; na Solicitação de saque, segundo botão mostra 'Saldo total da posição atual' associado exclusivamente ao valor da posição selecionada no quadro superior, enquanto o indicador agregado 'Saldo total das posições' permanece. Navegação, foto, menu, motor, cores das posições e regras financeiras/saques não são alterados.",
     "15/11/2026: ajuste expressamente autorizado APENAS no texto '3.0' do banner superior LOOP: tamanho discretamente maior, acabamento prata frio metálico sem reflexos dourados. A palavra LOOP permanece dourada, o CENTRO mantém fundo verde e texto dourado, o financeiro e todos os outros elementos/fluxos continuam exatamente aprovados.",
     "15/11/2026: última correção solicitada explicitamente apenas no texto '3.0' do banner: prata frio com sombra dourada herdada neutralizada, fonte 0.8em proporcional e sem ampliação do banner nem modificação do LOOP dourado. Todo o restante da interface, motor, finanças, centro verde e abas aprovado permanece imutável.",
-    "15/11/2026: proprietário rejeitou aparência da marca 'LOOP 3.0' localizada NO TOPO DO MENU LATERAL e autorizou somente seu refinamento visual: LOOP dourado metalizado, 3.0 prata, proporções equilibradas e filete ornamental discreto. Banner principal não alterado; demais menus, cores de ícones, foto e nick, motor, tabuleiro e financeiro inalterados."
+    "15/11/2026: proprietário rejeitou aparência da marca 'LOOP 3.0' localizada NO TOPO DO MENU LATERAL e autorizou somente seu refinamento visual: LOOP dourado metalizado, 3.0 prata, proporções equilibradas e filete ornamental discreto. Banner principal não alterado; demais menus, cores de ícones, foto e nick, motor, tabuleiro e financeiro inalterados.",
+    "15/11/2026: proprietário pediu quatro banners no Escritório Virtual em vez de dois e capacidade de subir ele mesmo fotos manualmente pela interface administrativa para testar o caminho completo. Preservados os dois banners originais, completados dois slots extras, quatro pontos de navegação e fotos opcionais por slot, com envio/substituição/remoção restritos ao operador, armazenamento SQLite e visualização autenticada no cliente. Nenhuma alteração no motor, nas filas, no financeiro, no cabeçalho aprovado ou nas permissões. O CSS do painel administrativo foi ajustado apenas para os quatro seletores de arquivo e consta neste contrato. Novo formulário de quatro fotos também registrado no HTML administrativo, sem modificar as seções anteriores."
   ]
 }
