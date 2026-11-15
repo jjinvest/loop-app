@@ -180,13 +180,15 @@ const PRODUTOS=['ROXO','DOURADO','VERDE','CINZA'].map(cor=>({
    await admin.locator('#comunicadoCorpoAdmin').fill('Um banner textual de recado, sem produtos.');
    await admin.locator('#comunicadoEstadoAdmin').selectOption('PUBLICADO');
    await admin.locator('#comunicadoSalvarAdmin').click();
-   await admin.locator('#comunicadoResultadoAdmin').getByText('PUBLICADO',{exact:false})
-    .waitFor({state:'visible',timeout:12000});
+   await admin.waitForFunction(()=>
+    document.getElementById('comunicadoResultadoAdmin')?.textContent.includes('PUBLICADO'),
+    {timeout:12000});
    await pagina.reload({waitUntil:'domcontentloaded'});
    await pagina.locator('#conteudoLojaLoop').waitFor({state:'visible'});
    await pagina.locator('#akitemmSino').click();
-   await pagina.locator('#akitemmNotificacoesConteudo')
-    .getByText(tituloTeste,{exact:false}).waitFor({state:'visible'});
+   await pagina.waitForFunction(titulo=>
+    document.getElementById('akitemmNotificacoesConteudo')?.textContent.includes(titulo),
+    tituloTeste,{timeout:12000});
    const geometriaAdmin=await admin.evaluate(()=>({
     total:document.documentElement.scrollWidth,largura:window.innerWidth
    }));
