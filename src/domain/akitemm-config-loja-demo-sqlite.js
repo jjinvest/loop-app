@@ -1,4 +1,6 @@
 'use strict';
+const {randomBytes}=require('node:crypto');
+const {dimensoesImagem}=require('./novidades-loja-candidato-sqlite');
 // Configuracoes da vitrine AKITEMM, administradas apenas no laboratorio local.
 // Nada vem de produto inventado; links e banners exigem cadastro manual.
 const URLS={
@@ -7,7 +9,7 @@ const URLS={
  facebook:/^https:\/\/(?:www\.)?facebook\.com\/[a-zA-Z0-9_.?=&\/-]+$/,
  whatsapp:/^https:\/\/(?:wa\.me|api\.whatsapp\.com)\/[a-zA-Z0-9?=&\/-]+$/
 };
-const IMG=/^\/imagens\/catalogo\/[a-zA-Z0-9_-]+\.(?:png|jpe?g|webp)$/;
+const IMG=/^(?:\/imagens\/catalogo\/[a-zA-Z0-9_-]+\.(?:png|jpe?g|webp)|\/staging\/vitrine\/loja\/banner-arquivo\/[a-f0-9]{32})$/;
 const ID=/^[a-z0-9-]{3,80}$/;
 const CORES_VITRINE=['ROXO','DOURADO','VERDE','CINZA'];
 const PADRAO_VITRINE=['ROXO','DOURADO','VERDE','CINZA','CINZA','VERDE','DOURADO','ROXO'];
@@ -77,7 +79,46 @@ class AkitemmConfigLojaDemoSQLite{
    CREATE TRIGGER IF NOT EXISTS admin_akitemm_config_audit_no_delete
     BEFORE DELETE ON admin_akitemm_config_loja_auditoria
     BEGIN SELECT RAISE(ABORT,'historico configuracao imutavel'); END;
+   CREATE TABLE IF NOT EXISTS admin_akitemm_banner_arquivos_v1(
+    id TEXT PRIMARY KEY CHECK(length(id)=32),
+    mime TEXT NOT NULL,
+    imagem BLOB NOT NULL,
+    criado_em INTEGER NOT NULL
+   );
   `);
+ }
+ salvarImagemBanner({mime,bytes}={}){
+  if(!['image/jpeg','image/png','image/webp'].includes(mime)||
+     !Buffer.isBuffer(bytes)||bytes.length<40||bytes.length>4*1024*1024||
+     !dimensoesImagem(bytes,mime))
+   throw Error('BANNER_IMAGEM_INVALIDA');
+  const png=mime==='image/png'&&bytes.subarray(0,8).equals(
+   Buffer.from('89504e470d0a1a0a','hex'));
+  const jpg=mime==='image/jpeg'&&
+   bytes.subarray(0,3).equals(Buffer.from('ffd8ff','hex'))&&
+   bytes.subarray(-2).equals(Buffer.from('ffd9','hex'));
+  const webp=mime==='image/webp'&&bytes.toString('ascii',0,4)==='RIFF'&&
+   bytes.toString('ascii',8,12)==='WEBP'&&
+   bytes.readUInt32LE(4)===bytes.length-8;
+  if(!png&&!jpg&&!webp)throw Error('BANNER_IMAGEM_INVALIDA');
+  const id=randomBytes(16).toString('hex');
+  this.banco.prepare([
+   'INSERT INTO admin_akitemm_banner_arquivos_v1',
+   '(id,mime,imagem,criado_em) VALUES(?,?,?,?)'
+  ].join(' ')).run(id,mime,bytes,Date.now());
+  return {id,imagemCaminho:'/staging/vitrine/loja/banner-arquivo/'+id};
+ }
+ abrirImagemBanner(id,{publico=false}={}){
+  if(typeof id!=='string'||!/^[a-f0-9]{32}$/.test(id))
+   throw Error('BANNER_IMAGEM_INVALIDA');
+  const caminho='/staging/vitrine/loja/banner-arquivo/'+id;
+  if(publico&&!this.consultar().banners.some(b=>b.imagemCaminho===caminho))
+   throw Error('BANNER_NAO_PUBLICADO');
+  const img=this.banco.prepare(
+   'SELECT mime,imagem FROM admin_akitemm_banner_arquivos_v1 WHERE id=?'
+  ).get(id);
+  if(!img?.imagem)throw Error('BANNER_IMAGEM_INEXISTENTE');
+  return {mime:img.mime,bytes:Buffer.from(img.imagem)};
  }
  consultar(){
   const r=this.banco.prepare(
