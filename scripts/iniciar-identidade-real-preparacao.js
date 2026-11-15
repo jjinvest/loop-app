@@ -15,6 +15,8 @@ const {MotorLoopIntegradoSQLite}=
  require('../src/producao/motor-loop-integrado-sqlite');
 const {LivroFinanceiroRealSQLite}=
  require('../src/producao/livro-financeiro-real-sqlite');
+const {prepararNucleoComercialRealFechado,consultarNucleoComercialRealFechado}=
+ require('../src/producao/preparar-nucleo-comercial-real-fechado');
 const {autorizarInterno,consultarArquivoReal}=
  require('../src/producao/leitura-tabuleiro-operacional-real');
 const {criarCatalogoMercadoriasReal}=
@@ -70,9 +72,13 @@ function iniciarMotorRealSemCadastro({ambiente=process.env}={}){
    chaveCifra:key('LOOP_REAL_CHAVE_CIFRA'),
    chaveCodigo:key('LOOP_REAL_CHAVE_CODIGO')
   });
-  new MotorLoopIntegradoSQLite({banco});
-  // Mesmo volume e mesma custodia; nenhum saldo e liberado sem fonte externa.
-  new LivroFinanceiroRealSQLite({banco});
+  if(ambiente.LOOP_REAL_NUCLEO_COMERCIAL_INTERNO==='SIM'){
+   prepararNucleoComercialRealFechado({banco,ambiente});
+  }else{
+   new MotorLoopIntegradoSQLite({banco});
+   // Sem as chaves comerciais definitivas não criar schema parcial.
+   new LivroFinanceiroRealSQLite({banco});
+  }
   if(banco.prepare('SELECT COUNT(*) AS n FROM loop_real_contas').get().n!==0)
    throw Error('MOTOR_REAL_PREPARACAO_NAO_E_VAZIA');
   return true;
@@ -109,6 +115,26 @@ function criarServidorPreparacao({ambiente=process.env,pasta='/dados-reais',io=f
     }
    }
    return;
+  }
+  if(req.url==='/internal/loop/nucleo'){
+   if(req.method!=='GET'){
+    res.writeHead(405);return res.end(JSON.stringify({erro:'METODO_INVALIDO'}));
+   }
+   if(!autorizarInterno(req.headers['x-loop-interservice-token'],
+     ambiente.LOOP_REAL_TABULEIRO_INTERSERVICE_TOKEN)){
+    res.writeHead(401);return res.end(JSON.stringify({erro:'ACESSO_INTERNO_NEGADO'}));
+   }
+   if(ambiente.LOOP_REAL_NUCLEO_COMERCIAL_INTERNO!=='SIM'){
+    res.writeHead(503);return res.end(JSON.stringify({erro:'NUCLEO_REAL_NAO_CONFIGURADO'}));
+   }
+   try{
+    const diagnostico=consultarNucleoComercialRealFechado({
+     arquivo:ambiente.LOOP_REAL_SQLITE
+    });
+    res.writeHead(200);return res.end(JSON.stringify(diagnostico));
+   }catch{
+    res.writeHead(503);return res.end(JSON.stringify({erro:'NUCLEO_REAL_NAO_COMPROVADO'}));
+   }
   }
   if(req.url==='/internal/loop/tabuleiro'){
    if(req.method!=='GET'){
@@ -171,6 +197,13 @@ function iniciarPreparacao(ambiente=process.env){
  server.listen({port:porta,host:'::',ipv6Only:false},()=>{
   const a=server.address();
   process.stdout.write('LOOP_REAL_PORTA_ESCUTA='+String(a?.port||0)+';PROTOCOLO='+String(a?.family||'')+'\n');
+  if(ambiente.LOOP_REAL_NUCLEO_COMERCIAL_INTERNO==='SIM'){
+   const prova=consultarNucleoComercialRealFechado({arquivo:ambiente.LOOP_REAL_SQLITE});
+   if(prova.estruturaIntegra!==true)
+    throw Error('NUCLEO_REAL_NAO_COMPROVADO');
+   process.stdout.write('LOOP_NUCLEO_OPERACIONAL_REAL=COMPROVADO'+
+    ';COMPONENTES='+prova.componentes+';SEM_CLIENTES_OU_PAGAMENTOS=SIM\n');
+  }
  });
  const finalizar=()=>server.close();
  process.once('SIGTERM',finalizar);
