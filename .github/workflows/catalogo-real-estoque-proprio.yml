@@ -14,6 +14,7 @@ on:
       - 'src/candidato/servidor-loja-escritorio-candidato.js'
       - 'src/laboratorio/loja-cliente-demo.js'
       - 'test/catalogo-mercadorias-real-e2e.test.js'
+      - 'test/ponte-catalogo-real-preview.test.js'
       - '.github/workflows/catalogo-real-estoque-proprio.yml'
   workflow_dispatch:
 permissions:
@@ -34,7 +35,7 @@ jobs:
       - name: Verificar sintaxe de servicos e ponte
         run: node --check src/producao/catalogo-mercadorias-real.js && node --check src/producao/ponte-catalogo-real-preview.js && node --check scripts/iniciar-identidade-real-preparacao.js && node --check src/candidato/servidor-loja-escritorio-candidato.js
       - name: Provar catalogo real isolado sem cobranca
-        run: node --test test/catalogo-mercadorias-real-e2e.test.js
+        run: node --test test/catalogo-mercadorias-real-e2e.test.js test/ponte-catalogo-real-preview.test.js
       - name: Provar preservacao do catalogo do proprietario
         run: node --test test/estoque-proprio-caracteristicas-catalogo.test.js test/akitemm-slots-vitrine-editaveis.test.js
       - name: Imutabilidade visual preservada
