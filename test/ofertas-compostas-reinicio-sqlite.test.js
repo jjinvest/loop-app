@@ -62,7 +62,7 @@ test('reiniciar e restaurar SQLite preserva multi-kits, revisoes, preco e pedido
  assert.equal((await antes.ofertas.salvar('kit-reinicio-um',r1)).revisao,1);
  assert.equal((await antes.ofertas.salvar('kit-reinicio-dois',r2)).revisao,1);
  const cliente=await antes.app.contas.cadastrar({
-  nome:'Pessoa de Ensaio',nick:'ReinicioKit',
+  nome:'Pessoa de Ensaio',nick:'ReinicioK',
   email:'reiniciokit@example.invalid',senha:'SenhaFicticiaTeste2026!',
   aceiteExplicito:true,termosVersao:'LAB-pacotes-reinicio-2026',
   termosTexto:'Termos ficticios de integridade de pacotes e pedidos em restauracao sem cobranca.'
