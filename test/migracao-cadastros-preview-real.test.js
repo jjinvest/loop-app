@@ -42,7 +42,9 @@ test('migrar duas contas reais de ensaio para identidade definitiva conserva sen
   })
  });
  const token=randomBytes(32).toString('hex');
- const snap=exportarPreview({banco:src,contas:previa});
+ const snap=exportarPreview({
+  banco:src,contas:previa,raizNick:'Indica',primeiroNick:'Filha'
+ });
  assert.equal(snap.contas.length,2);assert.equal(snap.vinculos.length,1);
  const pacote=empacotar(snap,token);
  assert.ok(!JSON.stringify(pacote).includes('11988887777'));
