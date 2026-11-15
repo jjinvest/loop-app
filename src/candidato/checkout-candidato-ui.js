@@ -146,11 +146,14 @@ async function finAtualizar(){
    const dinheiro=x=>Number.isSafeInteger(x)&&x>=0?moeda(x):'—';
    $('finIndicadosValidos').textContent=String(dados.indicadosValidos);
    $('finSaldoBonus').textContent=dinheiro(dados.saldoBonusCentavos);
-   $('finSaldoSelecionado').textContent=dados.posicaoSelecionadaId===pos?.numero?
+   // O botão de saque por posição acompanha a posição selecionada no
+   // placar, nunca o saldo agregado das outras posições do titular.
+   const saldoPosicaoAtual=dados.posicaoSelecionadaId===pos?.numero?
     dinheiro(dados.saldoPosicaoSelecionadaCentavos):'—';
+   $('finSaldoSelecionado').textContent=saldoPosicaoAtual;
    $('finSaldoPosicoes').textContent=dinheiro(dados.saldoTotalPosicoesCentavos);
    $('finBonusSaque').textContent=dinheiro(dados.saldoBonusCentavos);
-   $('finPosicoesSaque').textContent=dinheiro(dados.saldoTotalPosicoesCentavos);
+   $('finPosicoesSaque').textContent=saldoPosicaoAtual;
    estado.textContent='Saldos confirmados no livro financeiro.';
   }else{
    estado.textContent='Livro financeiro preparado. Saldos e bônus serão exibidos apenas após comprovação das operações reais.';
