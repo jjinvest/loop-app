@@ -26,7 +26,8 @@ function validarProduto(produto) {
   if (typeof produto.descricao !== 'string' || !produto.descricao.trim() || produto.descricao.length > 2000) {
     throw new Error('Descricao do produto invalida');
   }
-  if (produto.entrega !== TIPOS_ENTREGA[produto.tipo]) {
+  if (produto.entrega !== TIPOS_ENTREGA[produto.tipo] &&
+       !(produto.tipo === 'FISICO' && produto.entrega === 'ESTOQUE_PROPRIO')) {
     throw new Error('Tipo de entrega nao corresponde ao produto');
   }
   const preco = produto.precoCentavos;
