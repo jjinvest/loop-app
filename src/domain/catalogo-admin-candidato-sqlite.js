@@ -6,7 +6,7 @@ const {validarProduto,TIPOS_ENTREGA}=require('./catalogo');
 const ID=/^[a-z0-9-]{3,80}$/;
 const KEY=/^[a-zA-Z0-9-]{12,80}$/;
 const CAMPOS=new Set(['id','nome','tipo','estado','descricao','precoCentavos','entrega','fotos','videoApresentacaoUrl','detalhes']);
-const EDITAVEIS=new Set(['nome','descricao','precoCentavos','estado']);
+const EDITAVEIS=new Set(['nome','descricao','precoCentavos','estado','detalhes','entrega']);
 function erro(codigo){const e=new Error(codigo);e.codigo=codigo;throw e;}
 function forma(x,permitidos){
  if(!x||typeof x!=='object'||Array.isArray(x)||
