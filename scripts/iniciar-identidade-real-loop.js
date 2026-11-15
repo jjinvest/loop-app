@@ -190,6 +190,7 @@ async function iniciar(ambiente=process.env){
    contas,motorLoop,eventosComerciais,preflightCapacidade,
    pedidosComerciais,remessasOutbox,catalogoVitrine,
    origemHttps:config.origemHttps,permitirCadastro:true,
+   captchaCadastroObrigatorio:true,
    backupEstado:()=>agendador.estado(),
    adminComercial:{catalogo,controle,sessoes,auditoria,manutencao,
     classificacaoLoop,operacaoCatraca,recuperacaoReservas}
