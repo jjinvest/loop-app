@@ -189,7 +189,7 @@ function criarCatalogoMercadoriasReal({arquivo,tokenRaiz}={}){
    if(arquivoFoto&&req.method==='POST'){
     const mime=req.headers['content-type'];
     const versao=req.headers['x-foto-versao-esperada'];
-    if(!FOTO_MIME.has(mime)||!typeof versao==='string'||
+    if(!FOTO_MIME.has(mime)||typeof versao!=='string'||
       !/^(0|[1-9][0-9]{0,8})$/.test(versao))
      throw Error('FOTO_PARAMETROS_INVALIDOS');
     const bytes=await corpo(req,MAX_FOTO);
