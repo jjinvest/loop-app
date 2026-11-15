@@ -58,12 +58,24 @@
    <div class="envoltorio-senha"><input id="cadastroSenha" name="senha" type="password" minlength="8" maxlength="12" autocomplete="new-password" required><button type="button" class="alternar-visibilidade" data-senha="cadastroSenha" aria-label="Mostrar senha" aria-pressed="false" title="Mostrar senha"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M2.2 12S5.7 6.5 12 6.5 21.8 12 21.8 12 18.3 17.5 12 17.5 2.2 12 2.2 12Z"/><circle cx="12" cy="12" r="2.7"/><path class="traco-senha-oculta" d="M4.5 19.5 19.5 4.5"/></svg></button></div>
    <label for="cadastroConfirmarSenha">Confirmar senha</label>
    <div class="envoltorio-senha"><input id="cadastroConfirmarSenha" name="confirmarSenha" type="password" minlength="8" maxlength="12" autocomplete="new-password" required><button type="button" class="alternar-visibilidade" data-senha="cadastroConfirmarSenha" aria-label="Mostrar confirmação de senha" aria-pressed="false" title="Mostrar confirmação de senha"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M2.2 12S5.7 6.5 12 6.5 21.8 12 21.8 12 18.3 17.5 12 17.5 2.2 12 2.2 12Z"/><circle cx="12" cy="12" r="2.7"/><path class="traco-senha-oculta" d="M4.5 19.5 19.5 4.5"/></svg></button></div>
-   <details id="termosCadastroDetalhes">
-    <summary>Termos e condições do cadastro</summary>
+   <details id="documentosCadastroDetalhes">
+    <summary>Política de Privacidade e Termos de Uso (abrir para ler)</summary>
+    <h3>Política de Privacidade</h3>
+    <p id="versaoPrivacidadeCadastro" class="subtexto" hidden></p>
+    <p id="textoPrivacidadeCadastro" class="subtexto" style="white-space:pre-wrap">Aguardando documento.</p>
+    <h3>Termos de Uso</h3>
     <p id="versaoTermosCadastro" class="subtexto" hidden></p>
-    <p id="textoTermosCadastro" class="subtexto">Aguardando os termos oficiais deste ambiente.</p>
+    <p id="textoTermosCadastro" class="subtexto" style="white-space:pre-wrap">Aguardando documento.</p>
    </details>
-   <label><input id="cadastroTermos" type="checkbox" required disabled> Li e aceito os termos de cadastro apresentados acima. Se entrei pelo link de alguém, meu telefone poderá ser visto apenas por essa pessoa, na Minha Equipe, para contato sobre o LOOP.</label>
+   <label><input id="cadastroTermos" type="checkbox" required disabled> Li e aceito a Política de Privacidade e os Termos de Uso apresentados acima, incluindo a informação de que o indicador do meu link poderá ver meu telefone na Minha Equipe.</label>
+   <div id="captchaCadastroArea" hidden>
+    <p class="subtexto">Verificação de segurança: digite as seis letras e números da imagem.</p>
+    <img id="captchaCadastroImagem" alt="Código de verificação com seis caracteres" width="268" height="72">
+    <button id="captchaCadastroAtualizar" type="button" class="alternar-acesso">Outro código</button>
+    <label for="captchaCadastroResposta">Código da imagem</label>
+    <input id="captchaCadastroResposta" type="text" maxlength="6" minlength="6" pattern="[A-Za-z2-9]{6}" autocomplete="off" autocapitalize="characters" spellcheck="false">
+    <p id="captchaCadastroEstado" class="subtexto" role="status"></p>
+   </div>
    <button type="submit" class="primario" disabled>Concluir meu cadastro</button>
   </form>
   <button type="button" class="alternar-acesso" id="mudarParaLogin">Já tenho cadastro · Entrar</button>
