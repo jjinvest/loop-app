@@ -25,6 +25,8 @@ on:
       - 'test/ponte-catalogo-real-preview.test.js'
       - 'test/identidade-real-catalogo-isolado.test.js'
       - 'test/estoque-proprio-caracteristicas-catalogo.test.js'
+      - 'src/candidato/escritorio-admin-candidato-ui.js'
+      - 'test/loja-upload-real-pdf-foto-video-avaliacoes-unificados.test.js'
       - '.github/workflows/catalogo-real-estoque-proprio.yml'
   workflow_dispatch:
 permissions:
