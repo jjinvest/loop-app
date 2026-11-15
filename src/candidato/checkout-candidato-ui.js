@@ -9,6 +9,7 @@ let telaAcesso='login';
 let fotoPerfilUrl=null,versaoCarregamentoFoto=0;
 let versaoLeituraBannersEscritorio=0;
 let termosCadastroLidos=null,carregandoTermosCadastro=null;
+let captchaCadastroAtivo=false,captchaCadastroId=null;
 let captchaLoginAtivo=false,captchaLoginId=null;
 let posicaoSelecionadaMotor=null;
 let posicoesDisponiveisResumo=[];
@@ -1297,10 +1298,30 @@ async function restaurarSessao(){
   }
  }
 }
+async function atualizarCaptchaCadastro(){
+ captchaCadastroId=null;
+ $('captchaCadastroResposta').value='';
+ $('captchaCadastroImagem').removeAttribute('src');
+ if(!captchaCadastroAtivo)return;
+ $('captchaCadastroEstado').textContent='Gerando código de segurança...';
+ try{
+  const r=await requisitar('/contas/captcha-cadastro');
+  if(!/^[a-f0-9]{48}$/.test(r.captchaId)||
+     !/^data:image\/svg\+xml;base64,[A-Za-z0-9+/=]+$/.test(r.captchaImagem))
+   throw Error('CAPTCHA_INVALIDO');
+  captchaCadastroId=r.captchaId;
+  $('captchaCadastroImagem').src=r.captchaImagem;
+  $('captchaCadastroEstado').textContent='Digite o código antes de concluir seu cadastro.';
+ }catch{
+  $('captchaCadastroEstado').textContent='Não foi possível gerar o código. Toque em Outro código.';
+ }
+}
 async function carregarTermosCadastro(){
  if(carregandoTermosCadastro)return carregandoTermosCadastro;
  const botao=$('formCadastro').querySelector('button[type=submit]');
  termosCadastroLidos=null;
+ captchaCadastroAtivo=false;captchaCadastroId=null;
+ $('captchaCadastroArea').hidden=true;
  $('cadastroTermos').checked=false;
  $('cadastroTermos').disabled=true;
  botao.disabled=true;
@@ -1310,17 +1331,27 @@ async function carregarTermosCadastro(){
    if(dados.somenteEnsaio!==true||dados.cadastroRealHabilitado!==false||
       typeof dados.termosVersao!=='string'||!dados.termosVersao.startsWith('LAB-')||
       typeof dados.termosTexto!=='string'||dados.termosTexto.length<40||
-      typeof dados.termosHash!=='string'||!/^[a-f0-9]{64}$/.test(dados.termosHash))
+      typeof dados.termosHash!=='string'||!/^[a-f0-9]{64}$/.test(dados.termosHash)||
+      typeof dados.privacidadeVersao!=='string'||
+      typeof dados.privacidadeTexto!=='string'||dados.privacidadeTexto.length<100||
+      typeof dados.privacidadeHash!=='string'||!/^[a-f0-9]{64}$/.test(dados.privacidadeHash))
     throw Error('TERMOS_NAO_CONFIGURADOS');
-   $('versaoTermosCadastro').textContent='';
+   $('versaoPrivacidadeCadastro').textContent='Versão: '+dados.privacidadeVersao;
+   $('textoPrivacidadeCadastro').textContent=dados.privacidadeTexto;
+   $('versaoTermosCadastro').textContent='Versão: '+dados.termosVersao;
    $('textoTermosCadastro').textContent=dados.termosTexto;
-   termosCadastroLidos={versao:dados.termosVersao,hash:dados.termosHash};
+   termosCadastroLidos={versao:dados.termosVersao,hash:dados.termosHash,
+    privacidadeVersao:dados.privacidadeVersao,privacidadeHash:dados.privacidadeHash};
+   captchaCadastroAtivo=dados.captchaObrigatorio===true;
+   $('captchaCadastroArea').hidden=!captchaCadastroAtivo;
+   if(captchaCadastroAtivo)await atualizarCaptchaCadastro();
    $('cadastroTermos').disabled=false;
    botao.disabled=false;
   }catch{
    $('versaoTermosCadastro').textContent='Termos indisponíveis';
    $('textoTermosCadastro').textContent=
     'Não é possível concluir o cadastro sem apresentar os termos. Tente abrir o cadastro novamente.';
+   $('textoPrivacidadeCadastro').textContent='Política de Privacidade indisponível.';
   }finally{carregandoTermosCadastro=null;}
  })();
  return carregandoTermosCadastro;
@@ -1329,7 +1360,12 @@ async function carregarTermosCadastro(){
 async function cadastrar(e){
  e.preventDefault();
  if(!termosCadastroLidos||!$('cadastroTermos').checked){
-  mostrarErroAcesso('cadastro','Leia e confirme os termos exibidos para criar a conta.');
+  mostrarErroAcesso('cadastro','Leia e confirme a Política e os Termos para criar a conta.');
+  return;
+ }
+ if(captchaCadastroAtivo&&(!captchaCadastroId||
+   !/^[A-Za-z2-9]{6}$/.test($('captchaCadastroResposta').value.trim()))){
+  mostrarErroAcesso('cadastro','Informe o código da imagem para concluir o cadastro.');
   return;
  }
  const botao=$('formCadastro').querySelector('button');
@@ -1354,7 +1390,11 @@ async function cadastrar(e){
     nick,cpf:cpfCadastro,email:$('cadastroEmail').value,telefone,senha,confirmarSenha:confirmacao,
     aceiteExplicito:$('cadastroTermos').checked,
     termosVersaoAceita:termosCadastroLidos.versao,
-    termosHashAceito:termosCadastroLidos.hash
+    termosHashAceito:termosCadastroLidos.hash,
+    privacidadeVersaoAceita:termosCadastroLidos.privacidadeVersao,
+    privacidadeHashAceito:termosCadastroLidos.privacidadeHash,
+    ...(captchaCadastroAtivo?{captchaId:captchaCadastroId,
+     captchaResposta:$('captchaCadastroResposta').value.trim().toUpperCase()}:{}),
    }
   });
   if(r.contaCriada!==true||r.pagamentoPermitido!==false)
@@ -1368,7 +1408,7 @@ async function cadastrar(e){
   if(e.message==='TERMOS_ALTERADOS_RELER'){
    $('cadastroTermos').checked=false;
    void carregarTermosCadastro();
-  }
+  }else if(captchaCadastroAtivo)await atualizarCaptchaCadastro();
  }finally{botao.disabled=!termosCadastroLidos;}
 }
 
@@ -1449,6 +1489,7 @@ $('solicitarCodigoEmail').addEventListener('click',solicitarCodigoEmail);
 $('formConfirmarEmail').addEventListener('submit',confirmarCodigoEmail);
 $('formLogin').addEventListener('submit',entrar);
 $('captchaLoginAtualizar').addEventListener('click',()=>void atualizarCaptchaLogin());
+$('captchaCadastroAtualizar').addEventListener('click',()=>void atualizarCaptchaCadastro());
 $('formCpfTeste').addEventListener('submit',registrarIdentidadeTeste);
 $('pedidosAnterior').addEventListener('click',()=>{
  if(paginaPedidos>0){paginaPedidos--;atualizarPedidos();}
