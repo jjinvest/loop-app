@@ -278,13 +278,15 @@ function criarAppLojaEscritorioCandidato({banco,repositorioCatalogo,
   const atual='aceiteExplicito,email,nick,nome,senha,termosHashAceito,termosVersaoAceita';
    const novo='aceiteExplicito,confirmarSenha,email,nick,nome,senha,telefone,termosHashAceito,termosVersaoAceita';
    const novoComCpf='aceiteExplicito,confirmarSenha,cpf,email,nick,nome,senha,telefone,termosHashAceito,termosVersaoAceita';
-  const novoComCpfContato='aceiteExplicito,compartilharTelefoneIndicador,confirmarSenha,cpf,email,nick,nome,senha,telefone,termosHashAceito,termosVersaoAceita';
-  const comCpf=chaves===novoComCpf||chaves===novoComCpfContato;
+  // Aceita por compatibilidade o formulário anterior já aberto no celular;
+  // o antigo campo de opt-in não controla o acesso à rede.
+  const legadoComCpfContato='aceiteExplicito,compartilharTelefoneIndicador,confirmarSenha,cpf,email,nick,nome,senha,telefone,termosHashAceito,termosVersaoAceita';
+  const comCpf=chaves===novoComCpf||chaves===legadoComCpfContato;
   if(chaves!==antiga&&chaves!==atual&&chaves!==novo&&!comCpf)
    return res.status(400).json({erro:'CAMPOS_INVALIDOS'});
   if(comCpf&&!cpf)
    return res.status(503).json({erro:'CPF_STAGING_INDISPONIVEL'});
-  if((chaves===atual||chaves===novo||chaves===novoComCpf)&&(body.termosVersaoAceita!==termosVersao||
+  if((chaves===atual||chaves===novo||comCpf)&&(body.termosVersaoAceita!==termosVersao||
      body.termosHashAceito!==termosHashCadastro))
    return res.status(409).json({erro:'TERMOS_ALTERADOS_RELER'});
   try{
@@ -295,7 +297,6 @@ function criarAppLojaEscritorioCandidato({banco,repositorioCatalogo,
     nome:body.nome,nick:body.nick,email:body.email,
     telefone:body.telefone??null,senha:body.senha,
      confirmarSenha:body.confirmarSenha??null,
-     compartilharTelefoneIndicador:body.compartilharTelefoneIndicador??false,
      aceiteExplicito:body.aceiteExplicito,
     termosVersao,termosTexto,
     onCriada:indicadorNick||comCpf?({titularId})=>{
@@ -424,26 +425,6 @@ function criarAppLojaEscritorioCandidato({banco,repositorioCatalogo,
    const codigo=e.codigo||'INDICACAO_NAO_QUALIFICADA';
    return res.status(codigo==='INDICACAO_DADOS_INVALIDOS'?400:409)
     .json({erro:codigo});
-  }
- });
- app.post('/staging/contas/telefone/compartilhamento',(req,res)=>{
-  const s=contas.sessao(req);
-  if(!s)return res.status(401).json({erro:'SESSAO_AUSENTE'});
-  if(!contas.autorizarMutacao(req))
-   return res.status(403).json({erro:'CSRF_INVALIDO'});
-  if(!req.is('application/json')||!req.body||Array.isArray(req.body)||
-     Object.keys(req.body).join(',')!=='permitir'||
-     typeof req.body.permitir!=='boolean')
-   return res.status(400).json({erro:'PERMISSAO_CONTATO_INVALIDA'});
-  try{
-   return res.set('Cache-Control','private, no-store').json(
-    contas.alterarCompartilhamentoTelefone({
-     titularId:s.titularId,permitir:req.body.permitir
-    })
-   );
-  }catch(e){
-   return res.status(e.codigo==='TELEFONE_NAO_CADASTRADO'?409:503)
-    .json({erro:e.codigo||'CONTATO_INDISPONIVEL'});
   }
  });
  app.get('/staging/contas/me',(req,res)=>{
