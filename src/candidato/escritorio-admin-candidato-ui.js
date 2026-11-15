@@ -387,7 +387,8 @@ $('formCustosProdutoAdmin').addEventListener('submit',async e=>{
 function limparProduto(){
  edicaoProduto=null;chaveProduto=null;$('formProduto').reset();
  $('produtoIdAdmin').readOnly=false;$('produtoTipoAdmin').disabled=false;
- $('tituloFormularioProduto').textContent='Cadastrar produto fictício';
+ $('produtoEntregaAdmin').value='ESTOQUE_PROPRIO';
+ $('tituloFormularioProduto').textContent='Cadastrar produto';
  for(const t of ['pdf','foto','video'])$(''+t+'ProdutoEnviarAdmin').disabled=true;
  $('pdfProdutoEstadoAdmin').textContent='Salve o produto para anexar os arquivos.';
  limparCustosProduto();
@@ -400,13 +401,16 @@ function preencherProduto(item){
  $('produtoEstadoAdmin').value=item.produto.estado;
  $('produtoNomeAdmin').value=item.produto.nome;
  $('produtoDescricaoAdmin').value=item.produto.descricao;
+ $('produtoDetalhesAdmin').value=(item.produto.detalhes||[]).join('\n');
+ $('produtoEntregaAdmin').value=item.produto.entrega==='ESTOQUE_PROPRIO'?
+  'ESTOQUE_PROPRIO':'FORNECEDOR_INTEGRADO';
  $('produtoPrecoAdmin').value=item.produto.precoCentavos===null?'':String(
   (item.produto.precoCentavos/100).toFixed(2)
  );
  $('tituloFormularioProduto').textContent='Editar produto · revisão '+item.revisao;
  for(const t of ['pdf','foto','video'])$(''+t+'ProdutoArquivoAdmin').value='';
  atualizarMidiasProdutoAdmin(item.produto.id,item.produto.tipo);
- $('salvarProdutoAdmin').textContent='Atualizar catálogo do laboratório';
+ $('salvarProdutoAdmin').textContent='Atualizar produto';
  abrirCustosProduto(item.produto.id).catch(e=>
   $('statusCustosProdutoAdmin').textContent='Erro ao consultar custos: '+e.message);
  $('formProduto').scrollIntoView({behavior:'smooth',block:'start'});
@@ -1634,17 +1638,20 @@ $('formProduto').addEventListener('submit',async event=>{
   if(pdf&&tipo!=='PDF')throw Error('Arquivo PDF apenas para curso digital.');
   if(fotos.length>10)throw Error('Limite de dez fotos por produto.');
   const descricao=$('produtoDescricaoAdmin').value,estado=$('produtoEstadoAdmin').value;
+  const detalhes=$('produtoDetalhesAdmin').value.split(/\r?\n/).map(x=>x.trim()).filter(Boolean);
+  if(detalhes.length>12||detalhes.some(x=>x.length>180))
+   throw Error('Informe até 12 características, com até 180 caracteres cada.');
+  const entrega=tipo==='PDF'?'DOWNLOAD_APOS_CONFIRMACAO':$('produtoEntregaAdmin').value;
   if(edicaoProduto){
    await api('/produtos/'+encodeURIComponent(edicaoProduto.id),{
     method:'PATCH',body:{revisaoEsperada:edicaoProduto.revisao,
-     alteracoes:{nome,descricao,estado,precoCentavos:centavos}}
+     alteracoes:{nome,descricao,estado,precoCentavos:centavos,detalhes,entrega}}
    });
   }else{
    if(!chaveProduto)chaveProduto='produto-ui-'+crypto.randomUUID();
    await api('/produtos',{method:'POST',idempotencia:chaveProduto,
     body:{produto:{id,nome,descricao,tipo,estado,precoCentavos:centavos,
-     entrega:tipo==='PDF'?'DOWNLOAD_APOS_CONFIRMACAO':'FORNECEDOR_INTEGRADO',
-     fotos:[],detalhes:[],videoApresentacaoUrl:null}}});
+     entrega,fotos:[],detalhes,videoApresentacaoUrl:null}}});
   }
   let arquivoStatus='',arquivoErro=null;
   try{
