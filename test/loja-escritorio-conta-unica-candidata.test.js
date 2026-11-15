@@ -88,7 +88,7 @@ test('conta única prepara checkout e Escritório com o MESMO titular, sem Pix',
  const challenge=await enviar(base,'/staging/contas/captcha-login');
  assert.equal(challenge.status,200);
  const svg=Buffer.from(challenge.body.captchaImagem.split(',')[1],'base64').toString();
- const codigo=[...svg.matchAll(/<text\s[^>]*>([A-Z0-9])<\/text>/g)].map(x=>x[1]).join('');
+ const codigo=[...svg.matchAll(/<text[^>]*>([A-Z0-9])</g)].map(x=>x[1]).join('');
  assert.equal(codigo.length,6);
  const la=await enviar(base,'/staging/contas/entrar',{
   method:'POST',data:{nick:'Alice',senha:'SenhaFicticiaDemonstracao2026!',
