@@ -76,6 +76,8 @@ test('filas mostram ordinal da espera e nao o numero unico do titular',()=>{
  visual.preencherFila('motorFilaB',21,'B');
  assert.equal(el.motorFilaB.children.length,21,
   'cada lugar existente deve aparecer, nao reduzir fila a um resumo');
+ assert.equal(el.motorFilaB.children[0].children[0].textContent,'1');
+ assert.equal(el.motorFilaB.children[20].children[0].textContent,'21');
  assert.equal(el.motorFilaB.children[0].children[1].children[0].textContent,
   '1º lugar · identidade protegida');
  assert.equal(el.motorFilaB.children[20].children[1].children[0].textContent,
