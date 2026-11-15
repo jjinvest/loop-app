@@ -423,6 +423,8 @@ function mp4TrintaSegundos(){
    await admin.locator('#formAcesso button').click();
    await admin.locator('#administracao').waitFor({state:'visible'});
    async function abrirControleAdmin(seletor){
+    // Áreas de lista podem estar vazias; não esperar item inexistente.
+    if(await admin.locator(seletor).count()===0)return;
     const aba=await admin.locator(seletor).first().evaluate(
      el=>el.closest('[data-admin-aba]')?.dataset.adminAba||null);
     if(aba&&await admin.locator('#admin-aba-'+aba).getAttribute('aria-selected')!=='true')
