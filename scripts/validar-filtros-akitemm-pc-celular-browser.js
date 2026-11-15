@@ -75,6 +75,13 @@ const PRODUTOS=['ROXO','DOURADO','VERDE','CINZA'].map(cor=>({
    };
    const cards=()=>pagina.locator('#catalogoLojaLoop article.produto-loja-loop');
    await abrir();
+   const cursos=pagina.locator('#akitemmMeusCursos');
+   assert.equal(await cursos.count(),1,'Meus Cursos deve ser o mesmo componente em ambos');
+   await cursos.locator('summary').click();
+   await pagina.locator('#akitemmListaMeusCursos li').first().waitFor({state:'visible'});
+   assert.equal(await pagina.locator('#akitemmListaMeusCursos a[href*="/pdf/"]').count(),0,
+    'sem confirmação e compra, não pode surgir link de download');
+   await cursos.locator('summary').click();
    assert.equal(await cards().count(),dispositivo.inicial);
    assert.equal(await pagina.locator('#catalogoLojaLoop .akitemm-slot-vazio').count(),
     dispositivo.inicial,'vitrine sem mercadoria tem apenas quadrinhos vazios');
