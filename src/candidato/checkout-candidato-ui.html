@@ -90,10 +90,16 @@
   <div class="loop03-shell" id="loop03ShellIntegrado">
    <div class="loop03-banner-topo">
     <div><div class="loop03-logomarca">LOOP <span>3.0</span></div><p>PLATAFORMA DE CICLOS INTELIGENTES</p><small>ESTRATÉGIA · ORGANIZAÇÃO · RESULTADOS</small></div>
-    <button type="button" id="loop03AlterarFotoTopo" class="loop03-foto-topo" aria-label="Escolher minha foto de perfil" title="Escolher foto de perfil">
-     <img id="loop03ImagemFotoTopo" alt="Sua foto de perfil" hidden>
-     <span id="loop03FotoSemImagem" aria-hidden="true">👤</span>
-    </button>
+    <div class="loop03-acoes-topo">
+     <button id="loop03Sino" type="button" class="loop03-sino" aria-controls="loop03PainelAvisos" aria-expanded="false" aria-label="Ver comunicados do LOOP">🔔 <small id="loop03TotalAvisos" hidden></small></button>
+     <button type="button" id="loop03AlterarFotoTopo" class="loop03-foto-topo" aria-label="Escolher minha foto de perfil" title="Escolher foto de perfil">
+      <img id="loop03ImagemFotoTopo" alt="Sua foto de perfil" hidden>
+      <span id="loop03FotoSemImagem" aria-hidden="true">👤</span>
+     </button>
+     <section id="loop03PainelAvisos" class="loop03-painel-avisos" aria-label="Mensagens oficiais do LOOP" hidden>
+      <strong>Recados do LOOP</strong><div id="loop03ListaAvisos" aria-live="polite">Consulte os recados do seu escritório.</div>
+     </section>
+    </div>
    </div>
    <aside class="loop03-sidebar" id="loop03SidebarIntegrado" aria-label="Menu do Escritório Virtual">
     <div class="loop03-marca">LOOP <span>3.0</span></div>
