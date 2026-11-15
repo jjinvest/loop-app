@@ -6,7 +6,7 @@
  const $=id=>document.getElementById(id);
  // A credencial de operador nunca é inferida pelo nick do cliente.
  // O gateway verifica a sessão administrativa isolada antes de revelar +.
- void (async()=>{
+ async function atualizarAtalhoOperadorReal(){
   const atalho=$('loopOperadorMais');
   if(!atalho)return;
   try{
@@ -16,9 +16,12 @@
    const d=r.ok?await r.json():null;
    if(d?.operador===true){
     atalho.hidden=false;atalho.style.display='inline-flex';
-   }
-  }catch{}
- })();
+   }else{atalho.hidden=true;atalho.style.display='none';}
+  }catch{atalho.hidden=true;atalho.style.display='none';}
+ }
+ void atualizarAtalhoOperadorReal();
+ addEventListener('pageshow',()=>void atualizarAtalhoOperadorReal());
+ addEventListener('focus',()=>void atualizarAtalhoOperadorReal());
  const API='/api/contas';
  let csrf=null,documentos=null,carregando=false,tela='login';
  let captchaCadastroId=null,captchaObrigatorio=false;
