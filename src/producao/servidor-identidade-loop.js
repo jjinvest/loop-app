@@ -137,7 +137,8 @@ function criarAppIdentidadeLoop({contas,origemHttps,
   if(['NOME_INVALIDO','EMAIL_INVALIDO','NICK_INVALIDO','SENHA_INVALIDA',
    'CODIGO_INVALIDO','SENHA_NOVA_DEVE_SER_DIFERENTE',
    'INDICADOR_INVALIDO','AUTOINDICACAO_PROIBIDA',
-   'INDICADOR_NAO_ENCONTRADO'].includes(code))
+   'INDICADOR_NAO_ENCONTRADO','CPF_INVALIDO','TELEFONE_INVALIDO',
+   'CONTATO_CADASTRO_INCOMPLETO'].includes(code))
    return res.status(400).json({erro:code});
   if(code==='CREDENCIAIS_INVALIDAS'||code==='SENHA_ATUAL_INCORRETA')
    return res.status(401).json({erro:code});
@@ -181,7 +182,9 @@ function criarAppIdentidadeLoop({contas,origemHttps,
   const b=req.body;
   if(!b||Array.isArray(b)||![
     'aceitePrivacidade,aceiteTermos,email,hashPrivacidade,hashTermos,nick,nome,senha,versaoPrivacidade,versaoTermos',
-    'aceitePrivacidade,aceiteTermos,email,hashPrivacidade,hashTermos,indicadorNick,nick,nome,senha,versaoPrivacidade,versaoTermos'
+    'aceitePrivacidade,aceiteTermos,email,hashPrivacidade,hashTermos,indicadorNick,nick,nome,senha,versaoPrivacidade,versaoTermos',
+    'aceitePrivacidade,aceiteTermos,cpf,email,hashPrivacidade,hashTermos,nick,nome,senha,telefone,versaoPrivacidade,versaoTermos',
+    'aceitePrivacidade,aceiteTermos,cpf,email,hashPrivacidade,hashTermos,indicadorNick,nick,nome,senha,telefone,versaoPrivacidade,versaoTermos'
    ].includes(Object.keys(b).sort().join(',')))
    return res.status(400).json({erro:'CAMPOS_INVALIDOS'});
   if(!limite(res,'cadastro',b.email))return;
