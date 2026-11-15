@@ -76,17 +76,13 @@ function renderizarInterfaceAprovada(){
  '<label for="cadastroSenha">Senha (mínimo 12 caracteres)</label>');
  html=trocarExato(html,'  <form id="formCadastro">',
   '  <p id="cadastroIndicadorAviso" role="status" hidden></p>\n  <form id="formCadastro">');
- const anterior='   <label><input id="cadastroTermos"';
- const privacidade=[
-  '   <details id="privacidadeCadastroDetalhes" open>',
-  '    <summary>Política de privacidade e proteção de dados</summary>',
-  '    <p id="versaoPrivacidadeCadastro" class="subtexto">Consultando documento...</p>',
-  '    <p id="textoPrivacidadeCadastro" class="subtexto">Aguardando política aprovada.</p>',
-  '   </details>',
-  '   <label><input id="cadastroPrivacidade" type="checkbox" required disabled>',
-  ' Li a política e concordo com o tratamento de dados descrito.</label>'
- ].join('\n');
- html=trocarExato(html,anterior,privacidade+'\n'+anterior);
+ // Os dois documentos já estão no mesmo painel da interface aprovada.
+ // Uma única confirmação visual preserva duas versões/hashes distintos.
+ for(const id of ['documentosCadastroDetalhes','versaoPrivacidadeCadastro',
+  'textoPrivacidadeCadastro','versaoTermosCadastro','textoTermosCadastro',
+  'cadastroTermos','captchaCadastroArea'])
+  if(!html.includes('id="'+id+'"'))
+   throw Error('DOCUMENTOS_UNIFICADOS_NAO_ENCONTRADOS');
  // Estado real do motor na MESMA tela do Escritório, sem segundo portal.
  html=trocarExato(html,'  <div class="loop03-corpo">',
   '  <div class="loop03-corpo">\n'+
