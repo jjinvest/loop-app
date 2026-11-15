@@ -496,6 +496,55 @@ class IdentidadeClienteLoopReal{
    proximoOffset:total>offset+rows.length?offset+rows.length:null,
    remuneracoesConfirmadas:0,financeiroReal:false};
  }
+ documentosPendentes(titularId){
+  if(typeof titularId!=='string'||!/^titular-[a-f0-9-]{36}$/.test(titularId))
+   erro('TITULAR_INVALIDO');
+  const row=this.banco.prepare([
+   'SELECT termos_versao,termos_hash,priv_versao,priv_hash',
+   'FROM loop_real_contas WHERE id=?'
+  ].join(' ')).get(titularId);
+  if(!row)erro('TITULAR_INEXISTENTE');
+  return row.termos_versao!==this.termos.versao||
+   row.termos_hash!==this.termos.hash||
+   row.priv_versao!==this.privacidade.versao||
+   row.priv_hash!==this.privacidade.hash;
+ }
+ aceitarDocumentos({titularId,aceiteTermos=false,aceitePrivacidade=false,
+  versaoTermos,hashTermos,versaoPrivacidade,hashPrivacidade}={}){
+  if(aceiteTermos!==true||aceitePrivacidade!==true||
+     versaoTermos!==this.termos.versao||
+     hashTermos!==this.termos.hash||
+     versaoPrivacidade!==this.privacidade.versao||
+     hashPrivacidade!==this.privacidade.hash)
+   erro('DOCUMENTOS_ALTERADOS_RELER');
+  if(!this.documentosPendentes(titularId))
+   return {documentosConfirmados:true,aceiteRepetido:true};
+  this.banco.exec([
+   'CREATE TABLE IF NOT EXISTS loop_real_aceites_documentos(',
+   'id TEXT PRIMARY KEY,titular_id TEXT NOT NULL',
+   ' REFERENCES loop_real_contas(id) ON DELETE RESTRICT,',
+   'termos_versao TEXT NOT NULL,termos_hash TEXT NOT NULL,',
+   'priv_versao TEXT NOT NULL,priv_hash TEXT NOT NULL,',
+   'aceito_em INTEGER NOT NULL);'
+  ].join(' '));
+  this.banco.exec('BEGIN IMMEDIATE');
+  try{
+   this.banco.prepare([
+    'UPDATE loop_real_contas',
+    'SET termos_versao=?,termos_hash=?,priv_versao=?,priv_hash=?',
+    'WHERE id=?'
+   ].join(' ')).run(this.termos.versao,this.termos.hash,
+    this.privacidade.versao,this.privacidade.hash,titularId);
+   this.banco.prepare([
+    'INSERT INTO loop_real_aceites_documentos',
+    '(id,titular_id,termos_versao,termos_hash,priv_versao,priv_hash,aceito_em)',
+    'VALUES(?,?,?,?,?,?,?)'
+   ].join(' ')).run(randomUUID(),titularId,this.termos.versao,this.termos.hash,
+    this.privacidade.versao,this.privacidade.hash,this._agora());
+   this.banco.exec('COMMIT');
+   return {documentosConfirmados:true,aceiteRepetido:false};
+  }catch(e){this.banco.exec('ROLLBACK');throw e;}
+ }
  dadosTitular(titularId){
   // Consulta apenas por ID extraído de uma sessão autenticada pelo servidor;
   // nunca aceitar titularId arbitrário de query/body do navegador.
@@ -534,13 +583,7 @@ class IdentidadeClienteLoopReal{
     privacidade:{versao:row.priv_versao,hash:row.priv_hash}
    },
    registradoEm:row.criado_em,emailVerificado:row.email_confirmado_em!==null,
-   aceiteDocumentosDefinitivosPendente:!!this.banco.prepare([
-    "SELECT name FROM sqlite_master WHERE type='table'",
-    "AND name='loop_real_migracoes_preview'"
-   ].join(' ')).get()&&!!this.banco.prepare([
-    'SELECT 1 FROM loop_real_migracoes_preview',
-    'WHERE titular_id=? AND documentos_definitivos_pendentes=1'
-   ].join(' ')).get(titularId),
+   aceiteDocumentosDefinitivosPendente:this.documentosPendentes(titularId),
    // CPF exibido somente mascarado; KYC bancario/financeiro nao realizado.
    nenhumPagamentoRealNesteServico:true
   };
