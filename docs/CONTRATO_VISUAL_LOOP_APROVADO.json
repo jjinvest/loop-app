@@ -1,7 +1,7 @@
 {
   "schema": 1,
   "política": "Toda alteração de HTML/CSS exige pedido visual explícito, escopo isolado e revisão do proprietário; é proibido atualizar hashes para esconder mudanças.",
-  "autorizaçãoAtual": "15/11/2026: proprietário pediu quatro banners no Escritório Virtual em vez de dois e capacidade de subir ele mesmo fotos manualmente pela interface administrativa para testar o caminho completo. Preservados os dois banners originais, completados dois slots extras, quatro pontos de navegação e fotos opcionais por slot, com envio/substituição/remoção restritos ao operador, armazenamento SQLite e visualização autenticada no cliente. Nenhuma alteração no motor, nas filas, no financeiro, no cabeçalho aprovado ou nas permissões.",
+  "autorizaçãoAtual": "15/11/2026: proprietário pediu quatro banners no Escritório Virtual em vez de dois e capacidade de subir ele mesmo fotos manualmente pela interface administrativa para testar o caminho completo. Preservados os dois banners originais, completados dois slots extras, quatro pontos de navegação e fotos opcionais por slot, com envio/substituição/remoção restritos ao operador, armazenamento SQLite e visualização autenticada no cliente. Nenhuma alteração no motor, nas filas, no financeiro, no cabeçalho aprovado ou nas permissões. O CSS do painel administrativo foi ajustado apenas para os quatro seletores de arquivo e consta neste contrato.",
   "arquivos": [
     {
       "path": "src/candidato/checkout-candidato-ui.html",
@@ -9,7 +9,7 @@
     },
     {
       "path": "src/candidato/escritorio-admin-candidato-ui.css",
-      "sha": "a3b20d06e6f65fd9ee3da382d41e8bafdc8b9673"
+      "sha": "589fc5599f6c9bb12ebcfc84f63df6de1df87d7e"
     },
     {
       "path": "src/candidato/escritorio-admin-candidato-ui.html",
