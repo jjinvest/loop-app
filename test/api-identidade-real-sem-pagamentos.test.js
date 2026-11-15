@@ -79,6 +79,27 @@ test('API compartilha login entre paginas e rejeita compra, cookies falsos e CSR
  const segundaConsulta=await req('/api/contas/meus-dados?titularId='+proprio.nick,
   {headers:{Cookie:cookieBia}});
  assert.equal((await segundaConsulta.json()).nick,'bia');
+ // Segundo login do mesmo nick deve exigir CAPTCHA, mesmo com senha válida.
+ const ruim=await req('/api/contas/entrar',{method:'POST',body:{
+  nick:'Ana',senha:'senha errada'
+ },headers:{Origin:ORIGIN}});
+ assert.equal(ruim.status,401);
+ assert.equal((await ruim.json()).captchaObrigatorio,true);
+ const segundaSemCodigo=await req('/api/contas/entrar',{method:'POST',body:{
+  nick:'Ana',senha:data.senha
+ },headers:{Origin:ORIGIN}});
+ assert.equal(segundaSemCodigo.status,403);
+ assert.equal((await segundaSemCodigo.json()).erro,'CAPTCHA_LOGIN_OBRIGATORIO');
+ const prova=await (await req('/api/contas/captcha-login')).json();
+ const svg=Buffer.from(prova.captchaImagem.split(',')[1],'base64').toString();
+ const codigo=[...svg.matchAll(/<text\s[^>]*>([A-Z0-9])<\/text>/g)]
+  .map(x=>x[1]).join('');
+ assert.equal(codigo.length,6);
+ const loginComCaptcha=await req('/api/contas/entrar',{method:'POST',body:{
+  nick:'Ana',senha:data.senha,captchaId:prova.captchaId,captchaResposta:codigo
+ },headers:{Origin:ORIGIN}});
+ assert.equal(loginComCaptcha.status,200);
+ assert.equal((await loginComCaptcha.json()).nick,'ana');
  assert.equal((await req('/api/checkout/finalizar',{method:'POST'})).status,503);
  assert.equal((await req('/api/saques/solicitar',{method:'POST'})).status,503);
  assert.equal((await req('/api/contas/sair',{method:'POST',
