@@ -46,7 +46,7 @@ function desempacotar(pacote,token){
  catch{erro('MIGRACAO_ASSINATURA_INVALIDA');}
  try{return JSON.parse(text);}catch{erro('MIGRACAO_JSON_INVALIDO');}
 }
-function exportarPreview({banco,contas}={}){
+function exportarPreview({banco,contas,raizNick='VILELA',primeiroNick='Taisaassi'}={}){
  if(process.env.NODE_ENV==='production'||!banco||!contas?.cipherKey||
     typeof contas.emailParaEntrega!=='function'||
     typeof contas.perfil!=='function')erro('MIGRACAO_FONTE_INVALIDA');
@@ -60,7 +60,36 @@ function exportarPreview({banco,contas}={}){
   'FROM akitemm_conta_unica_candidata ORDER BY criado_em,id'
  ].join(' ')).all();
  if(rows.length>10000)erro('MIGRACAO_CAPACIDADE_EXCEDIDA');
- const contasExportadas=rows.map(r=>{
+ // Migrar apenas a rede real inaugurada pelo proprietário, NUNCA contas
+ // avulsas de laboratório ou usuários de simulações antigas.
+ const tabelas=new Set(banco.prepare(
+  "SELECT name FROM sqlite_master WHERE type='table'"
+ ).all().map(x=>x.name));
+ const todosVinculos=tabelas.has('akitemm_convites_candidatos_lab')?
+  banco.prepare([
+   'SELECT indicado_id AS indicadoId,indicador_id AS indicadorId,',
+   'criado_em AS registradoEm FROM akitemm_convites_candidatos_lab',
+   'ORDER BY criado_em,indicado_id'
+  ].join(' ')).all():[];
+ const raiz=rows.find(x=>x.nick.toLowerCase()===raizNick.toLowerCase());
+ if(!raiz)erro('MIGRACAO_RAIZ_VILELA_NAO_ENCONTRADA');
+ const primeira=todosVinculos.find(v=>v.indicadorId===raiz.id);
+ const primeiraConta=rows.find(x=>x.id===primeira?.indicadoId);
+ if(!primeiraConta||primeiraConta.nick.toLowerCase()!==primeiroNick.toLowerCase())
+  erro('MIGRACAO_PRIMEIRA_INDICACAO_NAO_CONFIRMADA');
+ const idsDaRede=new Set([raiz.id]);
+ for(let i=0;i<rows.length;i++){
+  let mudou=false;
+  for(const v of todosVinculos)
+   if(idsDaRede.has(v.indicadorId)&&!idsDaRede.has(v.indicadoId)){
+    idsDaRede.add(v.indicadoId);mudou=true;
+   }
+  if(!mudou)break;
+ }
+ const rowsFiltradas=rows.filter(x=>idsDaRede.has(x.id));
+ const vinculos=todosVinculos.filter(v=>
+  idsDaRede.has(v.indicadorId)&&idsDaRede.has(v.indicadoId));
+ const contasExportadas=rowsFiltradas.map(r=>{
   if(!ID.test(r.id)||!/^[a-f0-9]{32}$/.test(r.senha_salt)||!H128.test(r.senha_hash)||
      !HEX.test(r.termos_hash)||!Number.isSafeInteger(r.criado_em)||
      r.criado_em<=0)erro('MIGRACAO_CADASTRO_INVALIDO');
@@ -78,15 +107,6 @@ function exportarPreview({banco,contas}={}){
    termosVersao:r.termos_versao,termosHash:r.termos_hash,
    criadoEm:r.criado_em};
  });
- const tabelas=new Set(banco.prepare(
-  "SELECT name FROM sqlite_master WHERE type='table'"
- ).all().map(x=>x.name));
- const vinculos=tabelas.has('akitemm_convites_candidatos_lab')?
-  banco.prepare([
-   'SELECT indicado_id AS indicadoId,indicador_id AS indicadorId,',
-   'criado_em AS registradoEm FROM akitemm_convites_candidatos_lab',
-   'ORDER BY criado_em,indicado_id'
-  ].join(' ')).all():[];
  const ids=new Set(contasExportadas.map(x=>x.id));
  const nickCaso=new Set();
  for(const a of contasExportadas){
@@ -104,6 +124,7 @@ function exportarPreview({banco,contas}={}){
   erro('MIGRACAO_VINCULOS_DIVERGENTES');
  return {version:1,contas:contasExportadas,vinculos,
   conferencias:{contas:contasExportadas.length,vinculos:vinculos.length,
+   contasAvulsasIgnoradas:rows.length-contasExportadas.length,
    provaIds:digest(contasExportadas.map(x=>x.id).sort().join('|')),
    provaVinculos:digest(vinculos.map(x=>x.indicadoId+':'+x.indicadorId).sort().join('|'))}};
 }
