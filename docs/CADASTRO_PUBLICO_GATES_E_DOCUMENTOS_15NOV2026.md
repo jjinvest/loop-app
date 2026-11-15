@@ -49,13 +49,13 @@
 
 ## Dependências concretas para ativar entrada de dados pessoais de verdade
 - **Identidade do controlador:** nome completo ou razão social de quem responde pelos dados; não deduzir de nome de usuário ou marca.
-- **Contato oficial de privacidade:** e-mail válido de atendimento dos titulares (não inventar endereço nem presumir que remetente Resend recebe respostas).
+- **Contatos oficiais informados pelo proprietário:** LOOP `jjinvest2024oficial@gmail.com`, AKITEMM `akitemmoficiall@gmail.com`. Não confundir com remetente técnico do Resend. Validar que ambos recebem mensagens antes de publicar documentos; os canais não substituem a identificação do controlador.
 - **Termos de uso e aviso de privacidade definitivos:** textos baseados no cadastro real, incluindo identificação, finalidade, compartilhamentos, retenção, direitos e contato. A aprovação dos documentos deve vir do responsável; templates técnicos não constituem autorização jurídica.
 - **Backup offsite de identidade — PRIMEIRA PROVA CONCLUÍDA:** comprovado no serviço real em 15/11/2026 por PUT + GET + SHA-256 + restauração isolada + leitura das chaves. O agendamento e a integridade das cópias futuras devem continuar monitorados; não liberar `GO` se a cópia mais recente falhar.
 - **Teste do link de indicação na identidade real:** conta do indicador deve existir no SQLite real; um nick presente apenas no banco de laboratório não vale como indicador real. Validar primeiro cadastro e depois cadastro pelo link, sem dados de teste em conta real.
 
 ## Minuta — Termos básicos de uso (NÃO PUBLICAR COMO APROVADOS)
-**Responsável:** [RAZÃO SOCIAL OU NOME DO CONTROLADOR] — **Contato:** [E-MAIL OFICIAL].
+**Responsável:** [RAZÃO SOCIAL OU NOME DO CONTROLADOR — A CONFIRMAR] — **Atendimento LOOP:** jjinvest2024oficial@gmail.com.
 
 O LOOP 3.0 permite criar e acessar uma conta pessoal e utilizar funções de perfil e convite. A criação exige nome, nick, CPF, telefone, e-mail, senha e concordância com as condições informadas. Cada pessoa é responsável pela confidencialidade de sua senha e pela exatidão de suas informações. Nicks são públicos para permitir convites; documentos e dados de contato não devem aparecer a terceiros.
 
@@ -64,7 +64,7 @@ A abertura de conta e o registro de convites **não garantem remuneração, posi
 **Este texto é apenas uma minuta.** Depende de revisão e aprovação explícita do responsável.
 
 ## Minuta — Política de privacidade do cadastro (NÃO PUBLICAR COMO APROVADA)
-**Controlador:** [RAZÃO SOCIAL OU NOME DO CONTROLADOR] — **Contato para LGPD:** [E-MAIL OFICIAL].
+**Controlador:** [RAZÃO SOCIAL OU NOME DO CONTROLADOR — A CONFIRMAR] — **Contato oficial LOOP para dúvidas de privacidade:** jjinvest2024oficial@gmail.com.
 
 São tratados nome, nick, CPF, telefone, e-mail, senha protegida por derivação criptográfica, histórico de aceite, dados de login, códigos temporários de verificação e registros de convite. A finalidade é criar conta, validar a posse do e-mail, permitir recuperação de acesso, registrar indicação, proteger o serviço e atender solicitações. O CPF e telefone ficam cifrados no banco da identidade; CPF é indexado por HMAC, e os dados não são destinados à vitrine pública.
 
