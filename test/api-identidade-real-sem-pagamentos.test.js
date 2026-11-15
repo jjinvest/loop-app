@@ -92,7 +92,7 @@ test('API compartilha login entre paginas e rejeita compra, cookies falsos e CSR
  assert.equal((await segundaSemCodigo.json()).erro,'CAPTCHA_LOGIN_OBRIGATORIO');
  const prova=await (await req('/api/contas/captcha-login')).json();
  const svg=Buffer.from(prova.captchaImagem.split(',')[1],'base64').toString();
- const codigo=[...svg.matchAll(/<text\s[^>]*>([A-Z0-9])<\/text>/g)]
+ const codigo=[...svg.matchAll(/<text[^>]*>([A-Z0-9])</g)]
   .map(x=>x[1]).join('');
  assert.equal(codigo.length,6);
  const loginComCaptcha=await req('/api/contas/entrar',{method:'POST',body:{
