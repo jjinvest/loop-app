@@ -36,8 +36,10 @@ function prepararNucleoComercialRealFechado({banco,ambiente=process.env}={}){
  };
  const chaveAuditoria=segredo('LOOP_REAL_CHAVE_AUDITORIA');
  const chavePedidos=segredo('LOOP_REAL_CHAVE_PEDIDOS');
+ const chaveCotacoes=segredo('LOOP_REAL_CHAVE_COTACOES');
+ const chaveOutbox=segredo('LOOP_REAL_CHAVE_OUTBOX');
  const chaveAdmin=segredo('LOOP_REAL_CHAVE_ADMIN');
- const segredos=[chaveAuditoria,chavePedidos,chaveAdmin,
+ const segredos=[chaveAuditoria,chavePedidos,chaveCotacoes,chaveOutbox,chaveAdmin,
   segredo('LOOP_REAL_CHAVE_EMAIL'),segredo('LOOP_REAL_CHAVE_CIFRA'),
   segredo('LOOP_REAL_CHAVE_CODIGO'),segredo('LOOP_REAL_CHAVE_BACKUP')];
  for(let i=0;i<segredos.length;i++)
@@ -71,7 +73,7 @@ function prepararNucleoComercialRealFechado({banco,ambiente=process.env}={}){
  // Persistir a outbox definitiva com respostas externas fechadas.
  // Nenhum adaptador ou transporte de fornecedor pode sair deste bootstrap.
  new PedidosFornecedorOutbox({
-  banco,chavePedidos,
+  banco,chavePedidos:chaveOutbox,
   registro:{obter:()=>null},
   consultarPagamentoConciliado:async()=>null,
   consultarPedidoAprovado:async()=>null,
