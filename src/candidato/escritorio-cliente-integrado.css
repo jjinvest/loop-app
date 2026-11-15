@@ -941,3 +941,25 @@ body.loop03-logado main>.mensagem-pagina{margin:0 0 .75rem}
 .cliente-integrado .loop03-sidebar .loop03-menu-integrado > a:hover .loop03-menu-cor-dourado{
  color:#ffe0a4;
 }
+
+
+/* Rodapé de identidade (aprovado 15/11/2026): apenas nick e
+   localização da posição de referência. Sem ID nem título repetido. */
+.cliente-integrado .loop03-perfil-legenda #loop03NickIntegrado{
+ display:block;color:#f7e5c4;font-weight:750;font-size:1.03rem;line-height:1.25;
+}
+.cliente-integrado .loop03-perfil-legenda .loop03-rodape-situacao{
+ display:block;margin-top:6px;color:#eac781;font-size:.9rem;
+ line-height:1.25;font-weight:650;
+}
+.cliente-integrado .loop03-perfil-legenda .loop03-rodape-coroa{
+ display:inline-flex;margin-top:5px;align-items:center;justify-content:center;
+ width:25px;height:25px;color:#e9bd67;
+}
+.cliente-integrado .loop03-perfil-legenda .loop03-rodape-coroa svg{
+ display:block;width:24px;height:24px;stroke:currentColor;
+}
+.cliente-integrado .loop03-perfil-legenda .loop03-rodape-situacao[hidden],
+.cliente-integrado .loop03-perfil-legenda .loop03-rodape-coroa[hidden]{
+ display:none;
+}
