@@ -80,8 +80,8 @@
    const area=$(id);
    if(!area)throw Error('FILA_VISUAL_NAO_EXISTE');
    area.replaceChildren();
-   // Na conta definitiva, o servidor entrega contagem, não IDs de terceiros.
-   // Não reconstruir posições de outras pessoas a partir de números supostos.
+   // Contagem da origem real: cada linha é SOMENTE um lugar ordinal
+   // anônimo. Nunca inferir ou inventar identidade, ID ou estado de terceiros.
    const contagem=Number.isSafeInteger(itens)&&itens>=0?itens:null;
    if(contagem===null&&!Array.isArray(itens))throw Error('FILA_FONTE_INVALIDA');
    if(contagem===0||Array.isArray(itens)&&itens.length===0){
@@ -89,38 +89,59 @@
     vazio.className='subtexto';vazio.textContent='Fila vazia';
     area.append(vazio);return;
    }
-   const lista=contagem===null?itens:[{resumo:contagem}];
-   for(const [indice,p] of lista.entries()){
-    // Os números da fila indicam ORDEM de atendimento (1º, 2º, 3º),
-    // nunca o ID da posição. A fonte do servidor preserva a sequência.
+   const adicionar=(p,indice)=>{
     const ordem=Number.isSafeInteger(p?.ordem)&&p.ordem>0?
      p.ordem:inicio+indice+1;
     const linha=document.createElement('div');
     linha.className='loop03-linha-fila';
     const inicial=document.createElement('span');
-    inicial.className='loop03-inicial-fila '+(dourada(p)?
-     'loop03-dourada':pendente(p)?'loop03-azul':
+    inicial.className='loop03-inicial-fila '+(contagem!==null?
+     (tipo==='A'?'loop03-a':'loop03-b'):
+     dourada(p)?'loop03-dourada':pendente(p)?'loop03-azul':
      aceito(p)?'loop03-verde':tipo==='A'?'loop03-a':'loop03-b');
     inicial.textContent=contagem!==null?tipo:String(ordem);
-    inicial.classList.toggle('loop03-ordem-longa',contagem===null&&ordem>=1000);
+    inicial.classList.toggle('loop03-ordem-longa',ordem>=1000);
     const conteudo=document.createElement('span');
     conteudo.className='loop03-fila-identificacao';
     const identificacao=document.createElement('span');
     identificacao.className='loop03-numero-titular';
-    identificacao.textContent=contagem!==null?
-     contagem+' posição(ões) na fila · abra para ver a ordem':
-     ordem+'º lugar';
+    identificacao.textContent=ordem+'º lugar'+
+     (contagem!==null?' · identidade protegida':'');
     conteudo.append(identificacao);
     if(contagem===null&&p?.minha===true){
      const minha=document.createElement('small');
      minha.textContent='Minha posição nesta ordem';
      conteudo.append(minha);
     }
-    if(contagem===null)linha.setAttribute('aria-label',
-     'Fila '+tipo+' · '+ordem+'º lugar'+(p?.minha===true?' · meu lugar':''));
+    linha.setAttribute('aria-label','Fila '+tipo+' · '+ordem+'º lugar'+
+     (contagem!==null?' · identificação protegida':
+      p?.minha===true?' · meu lugar':''));
     linha.append(inicial,conteudo);
     area.append(linha);
+   };
+   if(contagem===null){
+    itens.forEach((p,i)=>adicionar(p,i));
+    return;
    }
+   // Lotes visuais progressivos: nenhum teto de fila escondido,
+   // sem congelar o navegador criando milhares de nós em uma operação.
+   const LOTE=50;
+   let exibidos=0;
+   const proximo=document.createElement('button');
+   proximo.type='button';
+   proximo.className='alternar-acesso loop03-fila-ver-proximas';
+   const adicionarLote=()=>{
+    const fim=Math.min(contagem,exibidos+LOTE);
+    for(let i=exibidos;i<fim;i++)adicionar({ordem:inicio+i+1},i);
+    exibidos=fim;
+    proximo.remove();
+    if(exibidos<contagem){
+     proximo.textContent='Ver próximas posições ('+(contagem-exibidos)+' restantes)';
+     area.append(proximo);
+    }
+   };
+   proximo.addEventListener('click',adicionarLote);
+   adicionarLote();
   }
   function preencherLuzes(eventos){
    if(!Number.isSafeInteger(eventos)||eventos<0||eventos>6)
