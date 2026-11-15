@@ -801,3 +801,27 @@ body.akitemm-loja{background:#071018;color:#f0f2f6;font-family:system-ui,-apple-
 .akitemm-loja #akitemmGradePacotes .akitemm-card-pacote [data-akitemm-retirar-pacote]{
  margin-top:0;min-height:44px;
 }
+/* Grid AKITEMM autorizado em 15/11/2026: legenda 2x2 e catálogo 4x2 PC / 2x2 celular.
+   Usar ordem de DOM: CINZA VERDE / DOURADO ROXO. Mantém cliques e cores.
+   São cartões de produtos publicados, nunca itens fictícios acrescentados via CSS. */
+.akitemm-loja .akitemm-legenda-cores{
+ display:grid;grid-template-columns:repeat(2,minmax(0,1fr));
+ gap:4px 10px;align-items:stretch;
+ flex:1 0 100%;width:100%;max-width:580px;margin:0;
+}
+.akitemm-loja .akitemm-legenda-cores button{
+ display:flex;align-items:center;justify-content:flex-start;
+ min-width:0;width:100%;min-height:44px;box-sizing:border-box;
+ padding:7px 5px;line-height:1.3;
+ white-space:normal;overflow-wrap:anywhere;
+}
+.akitemm-loja #catalogoLojaLoop{
+ display:grid;grid-template-columns:repeat(4,minmax(0,1fr));
+ align-items:stretch;gap:13px;
+}
+@media(max-width:800px){
+ .akitemm-loja #catalogoLojaLoop{
+  grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;
+ }
+ .akitemm-loja .akitemm-legenda-cores{max-width:100%;gap:4px 6px}
+}
