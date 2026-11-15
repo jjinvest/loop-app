@@ -1030,5 +1030,7 @@
   }catch{}
  }
  void atualizarAtalhoOperador();
+ addEventListener('pageshow',()=>void atualizarAtalhoOperador());
+ addEventListener('focus',()=>void atualizarAtalhoOperador());
  inicializar();
 })();
