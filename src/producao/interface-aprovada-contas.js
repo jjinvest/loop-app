@@ -404,11 +404,14 @@
    $('finIndicadosValidos').textContent=Number.isSafeInteger(d.indicadosValidos)?
     String(d.indicadosValidos):'—';
    $('finSaldoBonus').textContent=valor(d.saldoBonusCentavos);
-   $('finSaldoSelecionado').textContent=pos&&d.posicaoSelecionadaId===pos.numero?
+   // No saque por posição, usar somente o saldo individual do mesmo
+   // ID confirmado pelo livro financeiro, nunca o agregado da conta.
+   const saldoPosicaoAtual=pos&&d.posicaoSelecionadaId===pos.numero?
     valor(d.saldoPosicaoSelecionadaCentavos):'—';
+   $('finSaldoSelecionado').textContent=saldoPosicaoAtual;
    $('finSaldoPosicoes').textContent=valor(d.saldoTotalPosicoesCentavos);
    $('finBonusSaque').textContent=valor(d.saldoBonusCentavos);
-   $('finPosicoesSaque').textContent=valor(d.saldoTotalPosicoesCentavos);
+   $('finPosicoesSaque').textContent=saldoPosicaoAtual;
    $('estadoFinanceiro').textContent='Saldos provenientes do livro financeiro real.';
   }catch{
    $('estadoFinanceiro').textContent=
