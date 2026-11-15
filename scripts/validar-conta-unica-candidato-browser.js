@@ -503,6 +503,7 @@ function mp4TrintaSegundos(){
     hasText:/faltam credenciais específicas do Asaas Sandbox/
    }).waitFor();
    assert.equal(await admin.locator('#reconciliarPendentesPsp').isDisabled(),true);
+   await abrirControleAdmin('#quadroDepartamentos button');
    await admin.locator('#quadroDepartamentos button').filter({hasText:'Pedidos'}).click();
    assert.equal(await admin.locator('#filtrarDepartamento').inputValue(),'PEDIDOS');
    // Agora os departamentos devem abrir dados e controles reais, nao apenas missões.
@@ -511,6 +512,7 @@ function mp4TrintaSegundos(){
    await admin.locator('#departamentoOperacionalEstado')
     .filter({hasText:/Página 1/}).waitFor();
    assert.match(await admin.locator('#departamentoOperacionalRegistros').innerText(),/hom-/);
+   await abrirControleAdmin('#quadroDepartamentos button');
    await admin.locator('#quadroDepartamentos button').filter({hasText:'Tabuleiro'}).click();
    await admin.locator('#departamentoOperacionalTitulo')
     .filter({hasText:'Tabuleiro · operação'}).waitFor();
@@ -543,9 +545,11 @@ function mp4TrintaSegundos(){
    await admin.locator('#departamentoOperacionalAcoes')
     .getByRole('button',{name:'Configurar horários da catraca'}).click();
    assert.equal(await admin.locator('#formAgendaMotor').isVisible(),true);
+   await abrirControleAdmin('#quadroDepartamentos button');
    await admin.locator('#quadroDepartamentos button').filter({hasText:'Cofres'}).click();
    await admin.locator('#departamentoOperacionalEstado')
     .filter({hasText:/Operação comercial não habilitada/}).waitFor();
+   await abrirControleAdmin('#quadroDepartamentos button');
    await admin.locator('#quadroDepartamentos button').filter({hasText:'Pedidos'}).click();
    await admin.locator('#departamentoOperacionalTitulo')
     .filter({hasText:'Pedidos · operação'}).waitFor();
