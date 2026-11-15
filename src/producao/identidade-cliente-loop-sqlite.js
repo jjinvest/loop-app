@@ -439,13 +439,32 @@ class IdentidadeClienteLoopReal{
     reentrarNecessario:true,financeiroReal:false};
   }catch(e){if(aberto)this.banco.exec('ROLLBACK');throw e;}
  }
+ // Acesso direto ao contato só para a conta INDICADORA autenticada.
+ // O indicador informado é extraído da sessão pela rota, nunca da URL.
+ telefoneIndicadoVinculado({indicadorId,indicadoId}={}){
+  if(typeof indicadorId!=='string'||typeof indicadoId!=='string'||
+     !/^titular-[a-f0-9-]{36}$/.test(indicadorId)||
+     !/^titular-[a-f0-9-]{36}$/.test(indicadoId))return null;
+  const row=this.banco.prepare([
+   'SELECT k.telefone_iv,k.telefone_ct,k.telefone_tag',
+   'FROM loop_real_contatos_cadastro k',
+   'JOIN loop_real_vinculos_indicacao v ON v.indicado_id=k.titular_id',
+   'WHERE v.indicado_id=? AND v.indicador_id=?'
+  ].join(' ')).get(indicadoId,indicadorId);
+  if(!row?.telefone_iv||!row.telefone_ct||!row.telefone_tag)return null;
+  const telefone=decifrar(this.keyCipher,row.telefone_iv,
+   row.telefone_ct,row.telefone_tag);
+  if(!/^[1-9][0-9][0-9]{8,9}$/.test(telefone))
+   erro('INTEGRIDADE_CONTATO_INVALIDA');
+  return telefone;
+ }
  listarIndicados(titularId,{limite=50,offset=0}={}){
   if(typeof titularId!=='string'||!/^titular-[a-f0-9-]{36}$/.test(titularId)||
      !Number.isSafeInteger(limite)||limite<1||limite>50||
      !Number.isSafeInteger(offset)||offset<0)
    erro('TITULAR_INVALIDO');
   const rows=this.banco.prepare([
-   'SELECT c.nick,v.registrado_em AS registradoEm',
+   'SELECT v.indicado_id AS indicadoId,c.nick,v.registrado_em AS registradoEm',
    'FROM loop_real_vinculos_indicacao v',
    'JOIN loop_real_contas c ON c.id=v.indicado_id',
    'WHERE v.indicador_id=?',
@@ -456,7 +475,11 @@ class IdentidadeClienteLoopReal{
   ).get(titularId).n;
   return {indicados:rows.map(x=>({
    nick:x.nick,registradoEm:x.registradoEm,
-   estado:'CADASTRO_AGUARDANDO_COMPRA'
+   numeroCadastro:offset+rows.indexOf(x)+1,filaCadastro:'B',
+   telefone:this.telefoneIndicadoVinculado({
+    indicadorId:titularId,indicadoId:x.indicadoId
+   }),
+   estado:'CADASTRO_AGUARDANDO_ATIVACAO'
   })),total,temMais:total>offset+rows.length,
    proximoOffset:total>offset+rows.length?offset+rows.length:null,
    remuneracoesConfirmadas:0,financeiroReal:false};
