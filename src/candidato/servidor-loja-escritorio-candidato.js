@@ -631,7 +631,7 @@ function criarAppLojaEscritorioCandidato({banco,repositorioCatalogo,
  // Opt-in apenas quando o banco comercial REAL estiver preparado e validado.
  // Em falha, nao cair silenciosamente no catalogo ficticio de laboratorio.
  const ponteCatalogoReal=instalarPonteCatalogoReal({
-  app,autorizarOperador,env:process.env
+  app,autorizarOperador,contas,env:process.env
  });
 
 
