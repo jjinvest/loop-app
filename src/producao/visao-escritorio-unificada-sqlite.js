@@ -4,15 +4,17 @@
 const TITULAR=/^titular-[a-f0-9-]{36}$/;
 function falha(c){const e=new Error(c);e.codigo=c;throw e;}
 class VisaoEscritorioUnificadaSQLite{
- constructor({banco,motor}={}){
+ constructor({banco,motor,consultarTelefone=()=>null}={}){
   if(!banco||typeof banco.prepare!=='function'||
      !motor||motor.banco!==banco||
      typeof motor.consultar!=='function'||
      typeof motor.verificar!=='function'||
+     typeof consultarTelefone!=='function'||
      !banco.prepare("SELECT 1 FROM sqlite_master WHERE name='loop_real_motor_qualificacoes'").get()||
      !banco.prepare("SELECT 1 FROM sqlite_master WHERE name='loop_real_vinculos_indicacao'").get())
    falha('ESCRITORIO_UNIFICADO_EXIGE_MESMO_SQLITE');
   this.banco=banco;this.motor=motor;
+  this.consultarTelefone=consultarTelefone;
  }
  _titular(id){
   if(typeof id!=='string'||!TITULAR.test(id)||
@@ -134,7 +136,8 @@ class VisaoEscritorioUnificadaSQLite{
      !Number.isSafeInteger(limite)||limite<1||limite>50)
    falha('ESCRITORIO_PAGINACAO_INVALIDA');
   const rows=this.banco.prepare([
-   'SELECT c.nick,v.registrado_em AS registradoEm,',
+   'SELECT v.indicado_id AS indicadoId,c.nick,',
+   'v.registrado_em AS registradoEm,',
    'q.posicao_id AS posicaoDestinoEnsaio,',
    'EXISTS(SELECT 1 FROM loop_real_motor_compras m',
    'WHERE m.titular_id=v.indicado_id) AS compraEmEnsaio',
@@ -147,8 +150,12 @@ class VisaoEscritorioUnificadaSQLite{
    'LIMIT ? OFFSET ?'
   ].join(' ')).all(titularId,limite,offset);
   const resumo=this._resumoRede(titularId);
-  return {indicados:rows.map(x=>({
+  return {indicados:rows.map((x,i)=>({
    nick:x.nick,registradoEm:x.registradoEm,
+   numeroCadastro:offset+i+1,filaCadastro:'B',
+   telefone:this.consultarTelefone({
+    indicadorId:titularId,indicadoId:x.indicadoId
+   }),
    estado:x.posicaoDestinoEnsaio!==null?'QUALIFICACAO_ENSAIO':
     x.compraEmEnsaio?'COMPRA_ENSAIO_SEM_QUALIFICACAO':
     'CADASTRO_AGUARDANDO_COMPRA',
