@@ -1,11 +1,11 @@
 {
   "schema": 1,
   "política": "Toda alteração de HTML/CSS exige pedido visual explícito, escopo isolado e revisão do proprietário; é proibido atualizar hashes para esconder mudanças.",
-  "autorizaçãoAtual": "15/11/2026: proprietário autorizou exclusivamente retirar a inscrição 'Minha conta' sob a foto no rodapé do menu e apresentar o nick autenticado com a localização da posição selecionada: Fila A, Fila B ou ícone de coroa quando no Tabuleiro. Número da posição, indicações e detalhes permanecem no placar superior. Foto, botão de dados, menu e demais ajustes visuais aprovados foram preservados.",
+  "autorizaçãoAtual": "15/11/2026: autorização expressa para três mudanças pontuais: palavra CENTRO dourada sobre a esfera verde metálica intacta; acabamento metálico mais bonito apenas no '3.0' do banner LOOP; na Solicitação de saque, segundo botão mostra 'Saldo total da posição atual' associado exclusivamente ao valor da posição selecionada no quadro superior, enquanto o indicador agregado 'Saldo total das posições' permanece. Navegação, foto, menu, motor, cores das posições e regras financeiras/saques não são alterados.",
   "arquivos": [
     {
       "path": "src/candidato/checkout-candidato-ui.html",
-      "sha": "7c8d9352b65789db7c174377e712e1e9df6aa9b1"
+      "sha": "dc6fc21b10cce381430c59dae00e766939f329f3"
     },
     {
       "path": "src/candidato/escritorio-admin-candidato-ui.css",
@@ -17,7 +17,7 @@
     },
     {
       "path": "src/candidato/escritorio-cliente-integrado.css",
-      "sha": "047de421cd536a66d1cf9dd32147479eb6a58a31"
+      "sha": "e722529e3e764382a06d09b5bf49c6b52a8d7f9b"
     },
     {
       "path": "src/laboratorio/admin-loop03.css",
@@ -102,6 +102,7 @@
   ],
   "históricoAutorizações": [
     "14/11/2026: pedido explicito do proprietário para corrigir o teste de navegacao, abrir os dados nome/nick/email no rodape Minha conta, sincronizar a foto com o topo e mostrar CPF apenas se posicao confirmada; HTML e CSS da interface unica atualizados sem alterar outras telas.",
-    "14/11/2026: autorização explícita do proprietário para refinar EXCLUSIVAMENTE os ícones do menu lateral compartilhado: casa dourada, tabuleiro dourado levemente maior, grade de posições dourada, equipe dourada, financeiro verde, loja AKITEMM roxa, carrinho dourado, links dourados, conta dourada. IDs, links, abas, motor, textos e navegação preservados. As edições anteriores aprovadas no HTML/CSS compartilhados também permanecem (CPF no cadastro, controles, filas, links e rodapé)."
+    "14/11/2026: autorização explícita do proprietário para refinar EXCLUSIVAMENTE os ícones do menu lateral compartilhado: casa dourada, tabuleiro dourado levemente maior, grade de posições dourada, equipe dourada, financeiro verde, loja AKITEMM roxa, carrinho dourado, links dourados, conta dourada. IDs, links, abas, motor, textos e navegação preservados. As edições anteriores aprovadas no HTML/CSS compartilhados também permanecem (CPF no cadastro, controles, filas, links e rodapé).",
+    "15/11/2026: proprietário autorizou exclusivamente retirar a inscrição 'Minha conta' sob a foto no rodapé do menu e apresentar o nick autenticado com a localização da posição selecionada: Fila A, Fila B ou ícone de coroa quando no Tabuleiro. Número da posição, indicações e detalhes permanecem no placar superior. Foto, botão de dados, menu e demais ajustes visuais aprovados foram preservados."
   ]
 }
