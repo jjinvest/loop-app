@@ -542,6 +542,7 @@ function mp4TrintaSegundos(){
    await admin.locator('#douradasAtivasAdmin').filter({hasText:/ID interno #/}).waitFor();
    assert.match(await admin.locator('#motorEnsaioResumo').innerText(),/Douradas manuais criadas/);
    assert.equal(await admin.locator('#criarDouradaCiencia').isChecked(),false);
+   await abrirControleAdmin('#departamentoOperacionalAcoes');
    await admin.locator('#departamentoOperacionalAcoes')
     .getByRole('button',{name:'Configurar horários da catraca'}).click();
    assert.equal(await admin.locator('#formAgendaMotor').isVisible(),true);
