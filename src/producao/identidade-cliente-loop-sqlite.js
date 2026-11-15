@@ -66,6 +66,32 @@ function senhaValida(s){
  return typeof s==='string'&&Buffer.byteLength(s,'utf8')>=12&&
   Buffer.byteLength(s,'utf8')<=128;
 }
+// Identidade de cadastro: CPF validado, cifrado sob AES-GCM e indexado apenas
+// por HMAC com dominio próprio. Não confundir coleta com verificação de KYC.
+function validarCpfCadastro(raw){
+ if(typeof raw!=='string'||raw.length<11||raw.length>14||
+    !/^[0-9.-]+$/.test(raw))erro('CPF_INVALIDO');
+ const cpf=raw.replace(/[^0-9]/g,'');
+ if(!/^[0-9]{11}$/.test(cpf)||/^(\d)\1{10}$/.test(cpf))
+  erro('CPF_INVALIDO');
+ const digito=tamanho=>{
+  let soma=0;
+  for(let i=0;i<tamanho;i++)soma+=Number(cpf[i])*(tamanho+1-i);
+  return (soma*10)%11%10;
+ };
+ if(digito(9)!==Number(cpf[9])||digito(10)!==Number(cpf[10]))
+  erro('CPF_INVALIDO');
+ return cpf;
+}
+function validarTelefoneCadastro(raw){
+ if(typeof raw!=='string'||raw.length<10||raw.length>24||
+    !/^[+()0-9 .-]+$/.test(raw))erro('TELEFONE_INVALIDO');
+ let tel=raw.replace(/[^0-9]/g,'');
+ if((tel.length===12||tel.length===13)&&tel.startsWith('55'))
+  tel=tel.slice(2);
+ if(!/^[1-9][0-9][0-9]{8,9}$/.test(tel))erro('TELEFONE_INVALIDO');
+ return tel;
+}
 function documento(d){
  if(typeof d?.versao!=='string'||!VERSAO.test(d.versao)||
     typeof d?.texto!=='string'||d.texto.length<100||d.texto.length>50000)
@@ -107,6 +133,14 @@ function prepararEstruturaIdentidadeReal({
    'termos_versao TEXT NOT NULL,termos_hash TEXT NOT NULL,',
    'priv_versao TEXT NOT NULL,priv_hash TEXT NOT NULL,',
    'criado_em INTEGER NOT NULL,email_confirmado_em INTEGER);',
+   // Tabela aditiva: migra sem alterar os IDs nem reescrever contas existentes.
+   // CPF e telefone não entram nos logs, URLs ou índices em texto legível.
+   'CREATE TABLE IF NOT EXISTS loop_real_contatos_cadastro(',
+   'titular_id TEXT PRIMARY KEY REFERENCES loop_real_contas(id) ON DELETE RESTRICT,',
+   'cpf_hmac TEXT UNIQUE NOT NULL,',
+   'cpf_iv TEXT NOT NULL,cpf_ct TEXT NOT NULL,cpf_tag TEXT NOT NULL,',
+   'telefone_iv TEXT NOT NULL,telefone_ct TEXT NOT NULL,telefone_tag TEXT NOT NULL,',
+   'registrado_em INTEGER NOT NULL);',
    // Vínculo de cadastro: não é bonificação nem indicação remunerada.
    'CREATE TABLE IF NOT EXISTS loop_real_vinculos_indicacao(',
    'indicado_id TEXT PRIMARY KEY REFERENCES loop_real_contas(id) ON DELETE RESTRICT,',
@@ -217,10 +251,15 @@ class IdentidadeClienteLoopReal{
   return true;
  }
  documentos(){return {termos:this.termos,privacidade:this.privacidade,financeiroReal:false};}
- async cadastrar({nome,nick,email,senha,aceiteTermos=false,
+ async cadastrar({nome,nick,email,senha,cpf=null,telefone=null,aceiteTermos=false,
   aceitePrivacidade=false,versaoTermos,hashTermos,
   indicadorNick=null,
   versaoPrivacidade,hashPrivacidade}={}){
+  // Contas legadas continuam utilizáveis; novos formulários enviam ambos.
+  if((cpf===null)!==(telefone===null))erro('CONTATO_CADASTRO_INCOMPLETO');
+  const contato=cpf===null?null:{
+   cpf:validarCpfCadastro(cpf),telefone:validarTelefoneCadastro(telefone)
+  };
   const n=validaNick(nick),mail=validaEmail(email);
   let indicador=null;
   if(indicadorNick!==null&&indicadorNick!==undefined){
@@ -238,6 +277,8 @@ class IdentidadeClienteLoopReal{
   const salt=randomBytes(16).toString('hex'),pass=await hashSenha(senha,salt);
   const encryptedNome=cifrar(this.keyCipher,nome.trim());
   const encryptedEmail=cifrar(this.keyCipher,mail);
+  const encryptedCpf=contato?cifrar(this.keyCipher,contato.cpf):null;
+  const encryptedTelefone=contato?cifrar(this.keyCipher,contato.telefone):null;
   const id='titular-'+randomUUID(),ts=this._agora();
   this.banco.exec('BEGIN IMMEDIATE');
   try{
@@ -254,6 +295,13 @@ class IdentidadeClienteLoopReal{
     ...encryptedNome,...encryptedEmail,salt,pass,
     this.termos.versao,this.termos.hash,
     this.privacidade.versao,this.privacidade.hash,ts);
+   if(contato)this.banco.prepare([
+    'INSERT INTO loop_real_contatos_cadastro(',
+    'titular_id,cpf_hmac,cpf_iv,cpf_ct,cpf_tag,',
+    'telefone_iv,telefone_ct,telefone_tag,registrado_em)',
+    'VALUES(?,?,?,?,?,?,?,?,?)'
+   ].join(' ')).run(id,assinar(this.keyEmail,'CPF-CADASTRO',contato.cpf),
+    ...encryptedCpf,...encryptedTelefone,ts);
    if(contaIndicadora)this.banco.prepare([
     'INSERT INTO loop_real_vinculos_indicacao(indicado_id,indicador_id,registrado_em)',
     'VALUES(?,?,?)'
@@ -267,6 +315,7 @@ class IdentidadeClienteLoopReal{
   }
   return {titularId:id,nick:n,contaCriada:true,emailVerificado:false,
    vinculoCadastro:indicador!==null,
+   cadastroCpfRecebido:contato!==null,identidadeExternaVerificada:false,
    pagamentoReal:false,participacaoFinanceira:false};
  }
  async entrar({nick,senha}={}){
@@ -425,8 +474,17 @@ class IdentidadeClienteLoopReal{
    'FROM loop_real_contas WHERE id=?'
   ].join(' ')).get(titularId);
   if(!row)erro('TITULAR_INEXISTENTE');
+  const contato=this.banco.prepare(
+   'SELECT * FROM loop_real_contatos_cadastro WHERE titular_id=?'
+  ).get(titularId);
+  const telefone=contato?decifrar(this.keyCipher,contato.telefone_iv,
+   contato.telefone_ct,contato.telefone_tag):null;
+  const cpf=contato?decifrar(this.keyCipher,contato.cpf_iv,
+   contato.cpf_ct,contato.cpf_tag):null;
   return {
    nick:row.nick,
+   telefone,cpfRecebido:!!contato,cpfConfirmado:false,
+   cpfExibicao:cpf?'***.***.***-'+cpf.slice(-2):null,
    nome:decifrar(this.keyCipher,row.nome_iv,row.nome_ct,row.nome_tag),
    email:decifrar(this.keyCipher,row.email_iv,row.email_ct,row.email_tag),
    documentosAceitos:{
@@ -434,7 +492,7 @@ class IdentidadeClienteLoopReal{
     privacidade:{versao:row.priv_versao,hash:row.priv_hash}
    },
    registradoEm:row.criado_em,emailVerificado:row.email_confirmado_em!==null,
-   // Sem CPF, endereço, saldos ou dados da loja em outro domínio.
+   // CPF exibido somente mascarado; KYC bancario/financeiro nao realizado.
    nenhumPagamentoRealNesteServico:true
   };
  }
