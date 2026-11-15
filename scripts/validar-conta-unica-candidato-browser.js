@@ -384,8 +384,8 @@ function mp4TrintaSegundos(){
    assert.match(await indicado.first().innerText(),new RegExp('@'+nickIndicado,'i'));
    assert.match(await indicado.first().innerText(),/#0001/);
    assert.match(await indicado.first().innerText(),/Telefone: contato reservado/);
-   assert.match(await indicado.first().innerText(),/Cadastro: \\d{2}\\/\\d{2}\\/\\d{4}/);
-   assert.match(await indicado.first().innerText(),/Horário: \\d{2}:\\d{2} \\(Brasília\\)/);
+   assert.match(await indicado.first().innerText(),/Cadastro: [0-9]{2}[/][0-9]{2}[/][0-9]{4}/);
+   assert.match(await indicado.first().innerText(),/Horário: [0-9]{2}:[0-9]{2} [(]Brasília[)]/);
    assert.match(await indicado.first().innerText(),/Fila: B/);
    assert.match(await indicado.first().innerText(),/Cadastro realizado/);
    assert.doesNotMatch(await indicado.first().innerText(),/conciliação Sandbox|telefone exigem autorização/);
