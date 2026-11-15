@@ -159,3 +159,13 @@ test('migracao adiciona modo de enquadramento e preserva imagens antigas',()=>{
   assert.deepEqual(outra.imagem(1).bytes,FOTO);
  }finally{db.close();}
 });
+
+
+test('AKITEMM preserva fotos de produto dentro de suas molduras sem esticar imagem',()=>{
+ const css=fs.readFileSync(require.resolve('../src/laboratorio/loja-cliente-demo.css'),'utf8');
+ assert.match(css,/\.akitemm-loja \.akitemm-imagem-produto img,\s*\.akitemm-loja \.akitemm-miniatura-carrinho img,/);
+ assert.match(css,/\.akitemm-loja \.akitemm-detalhe-foto-principal img,/);
+ assert.match(css,/\.akitemm-loja \.akitemm-detalhe-miniaturas img\{\s*object-fit:scale-down;object-position:center;/);
+ assert.match(css,/\.akitemm-imagem-produto\{height:111px;overflow:hidden;/);
+ assert.match(css,/\.akitemm-loja \.produto-loja-loop\{[^\n]*overflow:hidden;border-radius:10px;border:1px solid/);
+});
