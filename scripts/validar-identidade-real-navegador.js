@@ -215,6 +215,22 @@ async function main(){
    await cadastro.locator('#painelLogin').waitFor({state:'visible'});
    assert.equal(contas.listarIndicados(cliente.titularId).total,
     item.nome==='pc'?1:2);
+   // Prova real tela -> API -> SQLite cifrado, nao apenas formulario valido.
+   const contato=banco.prepare([
+    'SELECT c.id AS titularId,k.cpf_hmac AS cpfHmac,',
+    'k.cpf_ct AS cpfCifra,k.telefone_ct AS telefoneCifra',
+    'FROM loop_real_contas c',
+    'JOIN loop_real_contatos_cadastro k ON k.titular_id=c.id',
+    'WHERE c.nick=?'
+   ].join(' ')).get(novoNick);
+   assert.ok(contato&&contato.cpfHmac.length===64,
+    'CPF e telefone devem persistir no SQLite real da conta '+novoNick);
+   assert.ok(!JSON.stringify(contato).includes('52998224725')&&
+    !JSON.stringify(contato).includes('11144477735')&&
+    !JSON.stringify(contato).includes('21988887777'),
+    'Contato em claro nao pode ficar gravado no banco');
+   assert.equal(contas.dadosTitular(contato.titularId).telefone,'21988887777');
+   assert.equal(contas.dadosTitular(contato.titularId).cpfConfirmado,false);
    await convite.close();
    const contexto=await browser.newContext({
     viewport:{width:item.largura,height:item.altura},
