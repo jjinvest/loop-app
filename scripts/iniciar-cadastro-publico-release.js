@@ -50,7 +50,11 @@ async function provarPrimeiraCopiaPreparacao(ambiente=process.env){
    chavesRecuperacao:{
     chaveEmail:chave('LOOP_REAL_CHAVE_EMAIL'),
     chaveCifra:chave('LOOP_REAL_CHAVE_CIFRA'),
-    chaveCodigo:chave('LOOP_REAL_CHAVE_CODIGO')
+    chaveCodigo:chave('LOOP_REAL_CHAVE_CODIGO'),
+    ...(ambiente.LOOP_REAL_NUCLEO_COMERCIAL_INTERNO==='SIM'?{
+     chaveAuditoria:chave('LOOP_REAL_CHAVE_AUDITORIA'),
+     chavePedidos:chave('LOOP_REAL_CHAVE_PEDIDOS')
+    }:{})
    }
   });
   if(prova.copiaExternaConfirmada!==true||
