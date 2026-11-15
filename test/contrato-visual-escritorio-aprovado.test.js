@@ -228,13 +228,15 @@ test('CENTRO ganha texto dourado sem trocar a esfera verde; 3.0 recebe acabament
  assert.match(html,/<div class="loop03-logomarca">LOOP <span>3\.0<\/span><\/div>/);
  assert.match(css,/\.mapa-tabuleiro-posicoes-demo > \.tabuleiro-centro > \.titulo-espaco-tabuleiro-demo\s*\{\s*color:#f5c968!important;/);
  assert.match(css,/\.cliente-integrado \.loop03-banner-topo \.loop03-logomarca > span\s*\{/);
- assert.match(css,/font-weight:900;font-size:\.9em;letter-spacing:\.035em/);
- assert.match(css,/background:linear-gradient\(180deg,#ffffff 0%,#eef3fb 19%,#b0bdcf 41%,#fbfdff 54%,#cad4e3 74%,#7a899e 100%\)/);
- assert.match(css,/-webkit-text-stroke:\.35px #cbd6e6/);
+ assert.match(css,/font-weight:900;font-size:\.8em;letter-spacing:\.025em/);
+ assert.match(css,/background:linear-gradient\(180deg,#ffffff 0%,#e9eef6 28%,#adb9ca 47%,#f8fbff 62%,#b7c3d3 82%,#8796ab 100%\)/);
+ assert.match(css,/-webkit-text-stroke:\.25px #d7e1ef/);
  // Isolar a regra 3.0: verificar que nao sobraram reflexos quentes.
  const trecho=css.split('.cliente-integrado .loop03-banner-topo .loop03-logomarca > span{')[1]?.split('}')[0];
  assert.ok(trecho);
  assert.doesNotMatch(trecho,/#(?:f6e2b2|eed19a|d0b478|a97dc8|f5c968)/i);
+ assert.match(trecho,/text-shadow:none/,'3.0 nao pode herdar a sombra dourada do LOOP');
+ assert.match(trecho,/font-size:\.8em/,'3.0 mantem tamanho proporcional');
  assert.match(css,/-webkit-text-fill-color:transparent/);
  // O acabamento novo nao altera a cor do centro nem a classe de status.
  assert.match(css,/\.mapa-tabuleiro-posicoes-demo > \.tabuleiro-centro\{\s*background:radial-gradient\(circle at 28% 17%,#caffdf/);
