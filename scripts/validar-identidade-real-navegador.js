@@ -298,7 +298,8 @@ async function main(){
    assert.ok(resumoFilaB.includes('1º lugar')&&
     resumoFilaB.includes('total 1 na Fila B'),
     'fila B mostra ordinal paginado real, sem inventar IDs: '+resumoFilaB);
-   assert.equal(await page.locator('#motorFilaB .loop03-inicial-fila').innerText(),'B');
+   assert.equal(await page.locator('#motorFilaB .loop03-inicial-fila').innerText(),'1',
+    'fila paginada exibe ordinal 1, nunca ID interno ou titular alheio');
    assert.equal(await page.locator('#motorBolinha1').getAttribute('aria-label'),
     'Evento 1 aguardando');
    assert.equal(await page.locator('#motorBolinha6')
