@@ -1,7 +1,7 @@
 {
   "schema": 1,
   "política": "Toda alteração de HTML/CSS exige pedido visual explícito, escopo isolado e revisão do proprietário; é proibido atualizar hashes para esconder mudanças.",
-  "autorizaçãoAtual": "15/11/2026: proprietário quer cadastrar produtos reais próprios (por exemplo, tênis de estoque próprio), subir fotografias e informar características, sem depender inicialmente de fornecedores externos. Autorizado acrescentar campos de características editáveis (até 12), origem de entrega estoque próprio/parceiro, e validação de persistência e revisões no cadastro administrativo. Não é autorização para ativar pagamentos, ocultar o estado de homologação ou misturar dados fictícios com catálogo real. O domínio público ainda usa gateway de prévia; a separação operacional de banco/serviço comercial definitivo permanece bloqueio de publicação. Mantidas as 8 molduras mutáveis já aprovadas e as demais telas imutáveis. No cadastro de teste, rótulos laboratoriais devem ser preservados até existir implantação comercial real.",
+  "autorizaçãoAtual": "15/11/2026: usuário exigiu catálogo real de produtos próprios, com fotos, características e preços, sem textos de produtos fictícios ou simulação. Alteração estritamente autorizada na seção Produtos do painel administrativo: rótulo 'Produtos · catálogo AKITEMM', 'Cadastrar produto', 'Publicado na vitrine' e texto de orientação fiel à publicação efetiva da mercadoria. A publicação dos produtos é persistida no SQLite comercial real segregado; checkout/PSP e cadastro de clientes reais permanecem bloqueados até homologação. Demais telas/cadastro/financeiro inalterados, sem merge da PR #1.",
   "arquivos": [
     {
       "path": "src/candidato/checkout-candidato-ui.html",
@@ -13,7 +13,7 @@
     },
     {
       "path": "src/candidato/escritorio-admin-candidato-ui.html",
-      "sha": "72fe681f2fea9dcacf3f9af661ed8a300237ba5e"
+      "sha": "a46f7a19f2421c5b1b0662cfc02c38c60c2c531d"
     },
     {
       "path": "src/candidato/escritorio-cliente-integrado.css",
@@ -112,6 +112,7 @@
     "15/11/2026: com o Escritório Virtual conferido visualmente e aprovado, proprietário retomou o acabamento da Que Tem/AKITEMM: alinhar botões dourados. Escopo estrito: src/laboratorio/loja-cliente-demo.css, layout responsivo dos dois comandos de cartões e ações de pacotes; nova proteção estática test/akitemm-alinhamento-botoes-dourados.test.js. Resta validação visual efetiva PC/celular e homologação antes de publicação. A trava visual foi renovada somente para o blob CSS modificado.",
     "15/11/2026: usuário aprovou explicitamente o modelo 4x2 do PC e 2x2 do celular. Ajustes visuais limitados à loja AKITEMM: legenda em grade 2 colunas (cinza/verde; dourado/roxo), nomenclatura de cores e paginação 8/4 por viewport. A proteção de alterações HTML/CSS conserva os 22 demais arquivos aprovados sem modificação.",
     "15/11/2026: novo pedido expresso: NÃO criar produtos; deixar os oito QUADRINHOS prontos com ordem ROXO/DOURADO/VERDE/CINZA e CINZA/VERDE/DOURADO/ROXO no PC, quatro primeiros no celular, e assegurar mutabilidade por operador. Espaços exibidos vazios com bordas por cor, sem operações de compra; opções de cor dos oito slots persistem em banco auditável e podem ser reeditadas. Renova apenas os hashes dos 3 arquivos visuais envolvidos nesta alteração.",
-    "15/11/2026: suporte técnico iniciado para estoque próprio e características de produtos (tênis, fotos, preços, marca/tamanho/cor/material), com alteração restrita ao formulário do administrador, validação do catálogo, edição auditada e testes. Corrigida fixture de teste que usava nick com 10 caracteres apesar da validação vigente de 9. Site ainda não homologado para venda ou cadastro comercial definitivo; não remover avisos honestos."
+    "15/11/2026: suporte técnico iniciado para estoque próprio e características de produtos (tênis, fotos, preços, marca/tamanho/cor/material), com alteração restrita ao formulário do administrador, validação do catálogo, edição auditada e testes. Corrigida fixture de teste que usava nick com 10 caracteres apesar da validação vigente de 9. Site ainda não homologado para venda ou cadastro comercial definitivo; não remover avisos honestos.",
+    "15/11/2026: renova apenas o hash de src/candidato/escritorio-admin-candidato-ui.html para corrigir os rótulos de laboratório da seção de produto para catálogo comercial próprio, solicitado explicitamente. Reforçado mecanismo de foto antes da publicação e monitoramento privado de conexões dos dois serviços Railway. Produto real nunca entra em checkout de ensaio."
   ]
 }
