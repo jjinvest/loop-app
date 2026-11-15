@@ -34,6 +34,8 @@ const TABELAS=Object.freeze([
  'loop_real_contas','loop_real_sessoes','loop_real_codigos',
  'loop_real_custodia','loop_real_limites','loop_real_vinculos_indicacao'
 ]);
+// Presente em cadastros novos; backups anteriores à migração permanecem recuperáveis.
+const TABELAS_CONTATO=Object.freeze(['loop_real_contatos_cadastro']);
 // Administração, cotações, pedidos, custo congelado e outbox são protegidos
 // juntos quando coexistem no MESMO SQLite. Liquidação PSP/banco e tributos
 // externos NÃO são cobertos nem autorizados por este backup.
@@ -83,7 +85,7 @@ function validarIdentidade(arquivo){
    "SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%'"
   ).all().map(x=>x.name);
   if(TABELAS.some(x=>!lista.includes(x)))falha('BACKUP_REAL_ESQUEMA_INCOMPLETO');
-  const todos=[...TABELAS,...TABELAS_ADMIN,...TABELAS_COMERCIAIS,
+  const todos=[...TABELAS,...TABELAS_CONTATO,...TABELAS_ADMIN,...TABELAS_COMERCIAIS,
    ...TABELAS_MOTOR,...TABELAS_CATRACA_ADMIN,...TABELAS_TESOURARIA_ENSAIO,
    ...TABELAS_PROMOCAO_ENSAIO,...TABELAS_LOTES_ENSAIO,
    ...TABELAS_PREFLIGHT,...TABELAS_RECUPERACAO,...TABELAS_LIVRO];
