@@ -74,11 +74,14 @@ test('filas mostram ordinal da espera e nao o numero unico do titular',()=>{
  assert.match(row.children[1].children[1].textContent,/Minha posição/);
  assert.equal(row.children[0].className,'loop03-inicial-fila loop03-azul');
  visual.preencherFila('motorFilaB',21,'B');
- assert.equal(el.motorFilaB.children.length,1);
+ assert.equal(el.motorFilaB.children.length,21,
+  'cada lugar existente deve aparecer, nao reduzir fila a um resumo');
  assert.equal(el.motorFilaB.children[0].children[1].children[0].textContent,
-  '21 posição(ões) na fila · abra para ver a ordem');
+  '1º lugar · identidade protegida');
+ assert.equal(el.motorFilaB.children[20].children[1].children[0].textContent,
+  '21º lugar · identidade protegida');
  assert.equal(el.motorFilaB.children[0].children[1].children.length,1,
-  'nao inventar titulares ou numeros individuais');
+  'nenhum nick ou ID de terceiro pode ser inferido');
  visual.preencherFila('motorFilaB',0,'B');
  assert.equal(el.motorFilaB.children[0].textContent,'Fila vazia');
  assert.throws(()=>visual.preencherFila('motorFilaB',-1,'B'),
