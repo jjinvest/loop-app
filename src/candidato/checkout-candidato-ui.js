@@ -976,15 +976,16 @@ function renderizarIndicadoNaRede(pessoa){
  const validada=pessoa.qualificadaEnsaio===true;
  const possuiPosicao=pessoa.possuiPosicaoDeEnsaio===true;
  const cor=validada?'verde':possuiPosicao?'azul':'vermelho';
- const status=validada?'Vinculada no ensaio':possuiPosicao?
-  'Posição em teste':'Cadastro realizado';
+ const status=validada?'Vinculação registrada':possuiPosicao?
+  'Ativação em análise':'Cadastro realizado';
  const cartao=elementoEquipe('article','loop03-rede-pessoa');
  cartao.dataset.estado=cor;
  if(numero!==null)cartao.dataset.numeroCadastro=String(numero);
  const cabecalho=elementoEquipe('div','loop03-rede-pessoa-cabecalho');
+ // Largura mínima de quatro dígitos, nunca um teto (ex.: #1000000).
  const marca=elementoEquipe('span','loop03-rede-pessoa-numero',
   numero!==null?'#'+String(numero).padStart(4,'0'):'#—');
- marca.title='Ordem de cadastro na sua rede, não é o ID da posição.';
+ marca.title='Ordem cronológica de cadastro na sua equipe.';
  const luz=elementoEquipe('span','loop03-rede-pessoa-luz');
  luz.setAttribute('aria-hidden','true');
  const nome=elementoEquipe('strong','loop03-rede-pessoa-nick','@'+pessoa.nick);
@@ -1006,24 +1007,30 @@ function renderizarIndicadoNaRede(pessoa){
  botao.addEventListener('click',detalhar);
  cabecalho.append(marca,luz,nome,statusTxt,botao);
  const info=elementoEquipe('div','loop03-rede-pessoa-info');
+ const telefone=typeof pessoa.telefone==='string'&&
+  /^(?:[0-9]{10,11}|55[0-9]{10,11})$/.test(pessoa.telefone)?
+  pessoa.telefone:null;
+ if(telefone){
+  const span=elementoEquipe('span',null,'Telefone: ');
+  const ligar=elementoEquipe('a',null,telefone);
+  ligar.href='tel:+'+(telefone.startsWith('55')?'':'55')+telefone;
+  ligar.setAttribute('aria-label','Ligar para @'+pessoa.nick);
+  span.append(ligar);info.append(span);
+ }else info.append(elementoEquipe('span',null,'Telefone: contato reservado'));
+ const registro=new Date(pessoa.registradoEm);
+ const dataValida=Number.isFinite(registro.getTime());
+ const opcoes={timeZone:'America/Sao_Paulo'};
+ const data=dataValida?registro.toLocaleDateString('pt-BR',opcoes):'não informada';
+ const hora=dataValida?registro.toLocaleTimeString('pt-BR',{
+  ...opcoes,hour:'2-digit',minute:'2-digit',hour12:false
+ }):'não informada';
  info.append(
-  elementoEquipe('span',null,'Telefone: não disponibilizado nesta prévia'),
-  elementoEquipe('span',null,'Cadastro: '+new Date(pessoa.registradoEm).toLocaleDateString('pt-BR')),
-  elementoEquipe('span',null,'Fila: não informada')
+  elementoEquipe('span',null,'Cadastro: '+data),
+  elementoEquipe('span',null,'Horário: '+hora+' (Brasília)'),
+  elementoEquipe('span',null,'Fila: '+(pessoa.filaCadastro==='B'?'B':'não informada'))
  );
- conteudo.append(elementoEquipe('p','subtexto',
-  'Nome civil e telefone exigem autorização de compartilhamento. '+
-  'Este cadastro foi feito por seu link e não comprova uma venda comercial.'));
- if(validada){
-  conteudo.append(elementoEquipe('p','loop03-rede-pessoa-vinculo',
-   'Atribuída à posição de ensaio #'+pessoa.posicaoAlvoId+
-   ' · nenhuma comissão real.'));
- }else if(possuiPosicao){
-  conteudo.append(criarBotaoAlocacao(pessoa));
- }else{
-  conteudo.append(elementoEquipe('p','subtexto',
-   'Aguardando compra elegível e conciliação Sandbox do indicado.'));
- }
+ conteudo.append(elementoEquipe('p','loop03-rede-pessoa-vinculo',
+  'Aguardando confirmação de ativação no LOOP.'));
  cartao.append(cabecalho,info,conteudo);
  return cartao;
 }
@@ -1090,11 +1097,30 @@ async function atualizarConta(){
    ' · Nick: @'+perfil.nick+
    ' · E-mail: '+(perfil.emailVerificado?'confirmado':'não confirmado')+
    '. Identidade comercial: pendente.';
+   $('compartilharTelefoneIndicador').checked=
+    perfil.compartilhaTelefoneComIndicador===true;
    $('novoNickGrafia').value=perfil.nick;
    $('avisoGrafiaNick').textContent=perfil.nickGrafiaConfirmada?
     'Grafia confirmada. Para alterar somente as letras maiúsculas e minúsculas, informe sua senha.':
     'Conta antiga: confirme como seu nick deve aparecer e ser digitado no próximo acesso.';
  }catch(e){$('perfilCliente').textContent='Perfil indisponível: '+e.message;}
+}
+async function salvarCompartilhamentoTelefone(e){
+ e.preventDefault();
+ const formulario=$('formCompartilharTelefoneIndicador');
+ const botao=formulario.querySelector('button[type=submit]');
+ botao.disabled=true;
+ try{
+  const r=await requisitar('/contas/telefone/compartilhamento',{
+   method:'POST',mutacao:true,
+   body:{permitir:$('compartilharTelefoneIndicador').checked}
+  });
+  $('estadoCompartilharTelefone').textContent=r.compartilhaTelefoneComIndicador?
+   'Seu telefone poderá ser visto somente por quem indicou você.':
+   'Seu telefone não será exibido na Minha Equipe de seu indicador.';
+ }catch(e){
+  $('estadoCompartilharTelefone').textContent='Não foi possível salvar: '+e.message;
+ }finally{botao.disabled=false;}
 }
 async function confirmarGrafiaNick(e){
  e.preventDefault();
@@ -1310,6 +1336,7 @@ async function cadastrar(e){
    body:{
     nome:$('cadastroNome').value,
     nick,cpf:cpfCadastro,email:$('cadastroEmail').value,telefone,senha,confirmarSenha:confirmacao,
+    compartilharTelefoneIndicador:$('cadastroCompartilharTelefoneIndicador').checked,
     aceiteExplicito:$('cadastroTermos').checked,
     termosVersaoAceita:termosCadastroLidos.versao,
     termosHashAceito:termosCadastroLidos.hash
@@ -1492,6 +1519,7 @@ $('copiarLinkLoja').addEventListener('click',()=>copiarLink('linkLoja'));
 $('copiarLinkEscritorio').addEventListener('click',()=>copiarLink('linkEscritorio'));
 $('formTrocarSenha').addEventListener('submit',trocarSenha);
 $('formGrafiaNick').addEventListener('submit',confirmarGrafiaNick);
+$('formCompartilharTelefoneIndicador').addEventListener('submit',salvarCompartilhamentoTelefone);
 for(const [btn,section] of ABAS){
  $(btn).addEventListener('click',()=>mostrarAba(section));
 }
