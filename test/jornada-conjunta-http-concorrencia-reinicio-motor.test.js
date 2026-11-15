@@ -238,7 +238,7 @@ test('jornada HTTP concorrente em duas instancias: pedidos, callbacks, reinicio,
     data:{cpf:gerarCpf(u.n),aceiteExplicito:true}
    });
    assert.equal(identidade.status,201,JSON.stringify(identidade.body));
-   const body={posicaoId:u.posicaoId,versaoTermos:TERMOS,aceiteExplicito:true};
+   const body={posicaoId:u.posicaoId,cpf:gerarCpf(u.n),versaoTermos:TERMOS,aceiteExplicito:true};
    const [x,y]=await Promise.all([
     req(c,'/staging/motor/posicoes/confirmar-ensaio',{
      method:'POST',cookie:u.cookie,csrf:u.csrf,data:body}),
