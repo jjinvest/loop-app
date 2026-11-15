@@ -7,18 +7,21 @@
 </head>
 <body class="akitemm-loja">
  <header class="cabecalho-loja-loop">
-  <a href="/escritorio" class="akitemm-voltar" aria-label="Voltar ao Escritório Virtual do LOOP 3.0">
-   <span aria-hidden="true" class="akitemm-seta">←</span>
+  <a href="/escritorio" class="akitemm-voltar" aria-label="Abrir Escritório Virtual do LOOP 3.0">
    <span aria-hidden="true" class="akitemm-marca-loop"><span class="akitemm-anel">◎</span> LOOP <em>3.0</em></span>
   </a>
   <div class="akitemm-topo-direito">
    <button id="akitemmSino" class="akitemm-sino" type="button" aria-expanded="false" aria-controls="akitemmNotificacoes" aria-label="Notificações"><svg viewBox="0 0 24 24" width="25" height="25" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" ><path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9"/><path d="M10 21h4"/></svg><span id="akitemmContagemSino" hidden></span></button>
-   <div class="akitemm-conta" aria-label="Identidade da conta, alterável somente no Escritório Virtual">
+   <button id="akitemmAbrirConta" class="akitemm-conta" type="button" aria-label="Ver dados da minha conta" aria-expanded="false" aria-controls="akitemmDadosConta">
     <span class="akitemm-avatar" aria-hidden="true"><img id="akitemmFotoTitular" alt="" hidden></span>
     <span id="akitemmNomeTitular" class="akitemm-nome" title="">Conta</span>
-   </div>
+   </button>
   </div>
-  <div id="akitemmNotificacoes" class="akitemm-menu-notificacoes" hidden><strong>Notificações</strong><p id="akitemmNotificacoesConteudo">Nenhuma notificação por enquanto.</p><button id="akitemmAbrirAvaliacoes" type="button" hidden>Avaliar produtos entregues</button></div>
+  <div id="akitemmNotificacoes" class="akitemm-menu-notificacoes" hidden><strong>Avisos da AKITEMM</strong><p id="akitemmNotificacoesConteudo">Nenhuma notificação por enquanto.</p><button id="akitemmAbrirAvaliacoes" type="button" hidden>Avaliar produtos entregues</button></div>
+  <div id="akitemmDadosConta" class="akitemm-menu-notificacoes akitemm-dados-conta" hidden>
+   <strong>Minha conta</strong><p id="akitemmDadosContaConteudo">Consultando os dados cadastrados…</p>
+   <a href="/minha-conta" id="akitemmEditarConta">Abrir meus dados no LOOP</a>
+  </div>
  </header>
  <main class="loja-loop">
   <p id="estadoLojaLoop" class="akitemm-estado" role="status" aria-live="polite">Consultando catálogo e sua conta…</p>
@@ -107,7 +110,10 @@
         <button type="submit">Salvar dados para este pedido</button><p id="akitemmStatusEntrega" role="status"></p>
        </form>
       </details>
-      <details id="akitemmSuporte" class="akitemm-painel-retratil"><summary><span class="akitemm-apoio-icone" aria-hidden="true"><svg viewBox="0 0 24 24" width="25" height="25" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" ><path d="M3 13v-2a9 9 0 0 1 18 0v2M3 13h4v6H5a2 2 0 0 1-2-2v-4ZM17 13h4v4a2 2 0 0 1-2 2h-2v-6ZM17 19c0 2-2 3-5 3h-2"/></svg></span><span><strong>Suporte</strong><small>Atendimento e dúvidas</small></span><span aria-hidden="true">›</span></summary><p id="akitemmTextoSuporte">Os canais de atendimento serão publicados pela administração.</p></details>
+      <details id="akitemmSuporte" class="akitemm-painel-retratil"><summary><span class="akitemm-apoio-icone" aria-hidden="true"><svg viewBox="0 0 24 24" width="25" height="25" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" ><path d="M3 13v-2a9 9 0 0 1 18 0v2M3 13h4v6H5a2 2 0 0 1-2-2v-4ZM17 13h4v4a2 2 0 0 1-2 2h-2v-6ZM17 19c0 2-2 3-5 3h-2"/></svg></span><span><strong>Suporte</strong><small>Atendimento e dúvidas</small></span><span aria-hidden="true">›</span></summary><p id="akitemmTextoSuporte">Os canais de atendimento serão publicados pela administração.</p>
+<p id="akitemmStatusChatbot" role="status">Canal de chatbot reservado para integração futura. Atendimento automático ainda não habilitado.</p>
+<button id="akitemmAbrirChatbot" type="button" disabled aria-describedby="akitemmStatusChatbot">Chatbot indisponível</button>
+</details>
      </section>
     </aside>
    </div>
