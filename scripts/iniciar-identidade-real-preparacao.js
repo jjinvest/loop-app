@@ -21,6 +21,10 @@ const {autorizarInterno,consultarArquivoReal}=
  require('../src/producao/leitura-tabuleiro-operacional-real');
 const {criarCatalogoMercadoriasReal}=
  require('../src/producao/catalogo-mercadorias-real');
+const {desempacotar,importarNoReal,prepararEsquemaImportacao}=
+ require('../src/producao/migracao-cadastros-preview-real');
+const {enviarBackupOffsiteIdentidade}=
+ require('../src/producao/backup-identidade-offsite');
 
 function conferirInfra(ambiente=process.env,{pasta='/dados-reais',io=fs}={}){
  if(ambiente.NODE_ENV!=='production'||
@@ -65,21 +69,36 @@ function iniciarMotorRealSemCadastro({ambiente=process.env}={}){
     "SELECT 1 FROM sqlite_master WHERE type='table' AND name='loop_real_contas'"
    ).get()){
    const x=banco.prepare('SELECT COUNT(*) AS n FROM loop_real_contas').get();
-   if(x.n>0)throw Error('MOTOR_REAL_EXIGE_INICIALIZACAO_FORMAL_COM_CLIENTES');
+   if(x.n>0){
+    const total=banco.prepare([
+     "SELECT name FROM sqlite_master WHERE type='table'",
+     "AND name='loop_real_migracoes_preview'"
+    ].join(' ')).get()?banco.prepare(
+     'SELECT COUNT(*) AS n FROM loop_real_migracoes_preview'
+    ).get().n:-1;
+    if(ambiente.LOOP_REAL_MIGRAR_IDENTIDADE!=='SIM'||total!==x.n)
+     throw Error('MOTOR_REAL_IDENTIDADE_SEM_MIGRACAO_VALIDADA');
+   }
   }
   prepararEstruturaIdentidadeReal({
    banco,chaveEmail:key('LOOP_REAL_CHAVE_EMAIL'),
    chaveCifra:key('LOOP_REAL_CHAVE_CIFRA'),
    chaveCodigo:key('LOOP_REAL_CHAVE_CODIGO')
   });
-  if(ambiente.LOOP_REAL_NUCLEO_COMERCIAL_INTERNO==='SIM'){
+  const contasLegadas=banco.prepare('SELECT COUNT(*) AS n FROM loop_real_contas').get().n;
+  if(ambiente.LOOP_REAL_NUCLEO_COMERCIAL_INTERNO==='SIM'&&contasLegadas===0){
    prepararNucleoComercialRealFechado({banco,ambiente});
+  }else if(ambiente.LOOP_REAL_NUCLEO_COMERCIAL_INTERNO==='SIM'&&contasLegadas>0){
+   if(ambiente.LOOP_REAL_MIGRAR_IDENTIDADE!=='SIM')
+    throw Error('MOTOR_REAL_LEGADO_SEM_AUTORIZACAO');
+   consultarNucleoComercialRealFechado({arquivo:ambiente.LOOP_REAL_SQLITE});
   }else{
    new MotorLoopIntegradoSQLite({banco});
    // Sem as chaves comerciais definitivas não criar schema parcial.
    new LivroFinanceiroRealSQLite({banco});
   }
-  if(banco.prepare('SELECT COUNT(*) AS n FROM loop_real_contas').get().n!==0)
+  const q=banco.prepare('SELECT COUNT(*) AS n FROM loop_real_contas').get().n;
+  if(q>0&&ambiente.LOOP_REAL_MIGRAR_IDENTIDADE!=='SIM')
    throw Error('MOTOR_REAL_PREPARACAO_NAO_E_VAZIA');
   return true;
  }finally{banco.close();}
@@ -113,6 +132,78 @@ function criarServidorPreparacao({ambiente=process.env,pasta='/dados-reais',io=f
     if(!res.writableEnded){
      res.writeHead(503);res.end(JSON.stringify({erro:'CATALOGO_REAL_INDISPONIVEL'}));
     }
+   }
+   return;
+  }
+  // Migração de identidade: exclusivamente transporte autenticado,
+  // banco fechado a clientes e com backup externo restaurado após cada lote.
+  if(req.url==='/internal/loop/migracao-identidade'){
+   if(req.method!=='POST'){res.writeHead(405);res.end();return;}
+   if(ambiente.LOOP_REAL_MIGRAR_IDENTIDADE!=='SIM'||
+      ambiente.LOOP_REAL_CADASTRO_GO!=='NAO'||
+      ambiente.LOOP_REAL_APROVACAO_DOCUMENTOS!=='NAO'){
+    res.writeHead(503);res.end(JSON.stringify({erro:'MIGRACAO_REAL_BLOQUEADA'}));return;
+   }
+   const blocos=[];let bytes=0;
+   try{
+    for await(const parte of req){
+     bytes+=parte.length;
+     if(bytes>4200000)throw Error('MIGRACAO_CORPO_EXCEDIDO');
+     blocos.push(parte);
+    }
+    const pacote=JSON.parse(Buffer.concat(blocos).toString('utf8'));
+    const dados=desempacotar(pacote,ambiente.LOOP_REAL_TABULEIRO_INTERSERVICE_TOKEN);
+    const db=new DatabaseSync(ambiente.LOOP_REAL_SQLITE);
+    let resultado;
+    try{
+     db.exec('PRAGMA foreign_keys=ON;PRAGMA journal_mode=WAL;PRAGMA busy_timeout=10000;');
+     const key=n=>{
+      const v=ambiente[n];if(typeof v!=='string'||!/^[0-9a-f]{64}$/.test(v))
+       throw Error('MIGRACAO_CUSTODIA_AUSENTE');
+      return Buffer.from(v,'hex');
+     };
+     resultado=importarNoReal({
+      banco:db,payload:dados,chaveEmail:key('LOOP_REAL_CHAVE_EMAIL'),
+      chaveCifra:key('LOOP_REAL_CHAVE_CIFRA')
+     });
+    }finally{db.close();}
+    const key=n=>Buffer.from(ambiente[n],'hex');
+    const copia=await enviarBackupOffsiteIdentidade({
+     fonteSqlite:ambiente.LOOP_REAL_SQLITE,
+     chaveBackup:key('LOOP_REAL_CHAVE_BACKUP'),
+     config:{
+      endpoint:ambiente.LOOP_REAL_S3_ENDPOINT,bucket:ambiente.LOOP_REAL_S3_BUCKET,
+      accessKeyId:ambiente.LOOP_REAL_S3_ACCESS_KEY_ID,
+      secretAccessKey:ambiente.LOOP_REAL_S3_SECRET_ACCESS_KEY,
+      region:ambiente.LOOP_REAL_S3_REGION||'auto'
+     },
+     exigirProvaChaves:true,chavesRecuperacao:{
+      chaveEmail:key('LOOP_REAL_CHAVE_EMAIL'),
+      chaveCifra:key('LOOP_REAL_CHAVE_CIFRA'),
+      chaveCodigo:key('LOOP_REAL_CHAVE_CODIGO'),
+      chaveAuditoria:key('LOOP_REAL_CHAVE_AUDITORIA'),
+      chavePedidos:key('LOOP_REAL_CHAVE_PEDIDOS'),
+      chaveCotacoes:key('LOOP_REAL_CHAVE_COTACOES'),
+      chaveOutbox:key('LOOP_REAL_CHAVE_OUTBOX')
+     }
+    });
+    if(copia.restauracaoIsoladaConfirmada!==true||
+       copia.copiaExternaConfirmada!==true||
+       copia.integridadeSQLite!=='ok')
+     throw Error('MIGRACAO_BACKUP_POS_IMPORTACAO_FALHOU');
+    process.stdout.write('LOOP_MIGRACAO_REAL=CONFIRMADA;CONTAS='+
+     resultado.contasImportadas+';VINCULOS='+resultado.vinculosImportados+
+     ';PRIMEIRA_INDICACAO_VILELA='+String(resultado.primeiraIndicacaoVilelaConferida)+
+     ';BACKUP_OFFSITE_RESTAURADO=SIM\n');
+    res.writeHead(200);res.end(JSON.stringify({
+     estado:'MIGRACAO_REAL_BACKUP_COMPROVADO',...resultado
+    }));
+   }catch(e){
+    const erro=typeof e?.codigo==='string'?e.codigo:
+     typeof e?.message==='string'&&/^[A-Z_]{5,100}$/.test(e.message)?
+     e.message:'MIGRACAO_NAO_COMPROVADA';
+    process.stderr.write('LOOP_MIGRACAO_REAL=NAO_COMPROVADA;CODIGO='+erro+'\n');
+    res.writeHead(503);res.end(JSON.stringify({erro}));
    }
    return;
   }
@@ -202,7 +293,8 @@ function iniciarPreparacao(ambiente=process.env){
    if(prova.estruturaIntegra!==true)
     throw Error('NUCLEO_REAL_NAO_COMPROVADO');
    process.stdout.write('LOOP_NUCLEO_OPERACIONAL_REAL=COMPROVADO'+
-    ';COMPONENTES='+prova.componentes+';SEM_CLIENTES_OU_PAGAMENTOS=SIM\n');
+    ';COMPONENTES='+prova.componentes+';CONTAS_MIGRADAS='+prova.contasMigradas+
+    ';SEM_PAGAMENTOS=SIM\n');
   }
  });
  const finalizar=()=>server.close();
