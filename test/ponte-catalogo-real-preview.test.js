@@ -9,6 +9,7 @@ const {criarCatalogoMercadoriasReal,tokenCatalogo}=
  require('../src/producao/catalogo-mercadorias-real');
 const {instalarPonteCatalogoReal}=
  require('../src/producao/ponte-catalogo-real-preview');
+const {criarMaterialPDFTeste}=require('../src/domain/material-pdf-teste');
 
 const raiz='b'.repeat(64);
 const png=Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAIAAAACCAIAAAD91JpzAAAAEklEQVR4nGP4z8DAAMIM/4EAAB/uBfsL2WiLAAAAAElFTkSuQmCC','base64');
@@ -49,7 +50,9 @@ test('ponte REAL liga cadastro, foto e vitrine sem conta de teste e sem checkout
   const r=await antigoFetch(base+rota,{method,headers:{
    ...(admin?{Authorization:'Bearer operador'}:{}),
    ...(json?{'content-type':'application/json'}:{}),
-   ...(bytes?{'content-type':mime,'x-foto-versao-esperada':String(revision)}:{})
+   ...(bytes?{'content-type':mime,
+    [mime==='application/pdf'?'x-pdf-versao-esperada':'x-foto-versao-esperada']:
+     String(revision)}:{})
   },body:json?JSON.stringify(json):bytes});
   const tipo=r.headers.get('content-type')||'';
   return {status:r.status,body:tipo.startsWith('image/')?
@@ -87,4 +90,38 @@ test('ponte REAL liga cadastro, foto e vitrine sem conta de teste e sem checkout
  assert.equal((await call('/staging/vitrine/loja/pedidos',{method:'POST',json:{itens:[]}})).status,503);
  assert.equal((await call('/staging/escritorio-unificado/produtos/tenis-azul-43/fotos',{
   admin:true})).body.fotos.length,1);
+ const curso={id:'curso-pdf-profissional',nome:'Curso PDF da AKITEMM',
+  tipo:'PDF',estado:'RASCUNHO',
+  descricao:'Arquivo digital do proprietário, sem venda real.',
+  precoCentavos:25000,entrega:'DOWNLOAD_APOS_CONFIRMACAO',
+  detalhes:['Material em PDF'],fotos:[],videoApresentacaoUrl:null};
+ assert.equal((await call('/staging/escritorio-unificado/produtos',{
+  method:'POST',admin:true,json:{produto:curso}})).status,201);
+ assert.equal((await call('/staging/escritorio-unificado/produtos/'+curso.id+'/pdf',{
+  admin:false})).status,401);
+ const antes=await call('/staging/escritorio-unificado/produtos/'+curso.id+'/pdf',{
+  admin:true});
+ assert.equal(antes.status,200);
+ assert.equal(antes.body.arquivoAnexado,false);
+ const pdf=criarMaterialPDFTeste();
+ const salvo=await call('/staging/escritorio-unificado/produtos/'+curso.id+'/pdf',{
+  method:'POST',admin:true,bytes:pdf,mime:'application/pdf',revision:0});
+ assert.equal(salvo.status,201,JSON.stringify(salvo.body));
+ assert.equal(salvo.body.versao,1);
+ const estado=await call('/staging/escritorio-unificado/produtos/'+curso.id+'/pdf',{
+  admin:true});
+ assert.equal(estado.status,200);
+ assert.equal(estado.body.arquivoAnexado,true);
+ assert.equal(estado.body.armazenamento,'SQLITE_COMERCIAL_REAL');
+ assert.equal((await call('/staging/escritorio-unificado/produtos/'+curso.id,{
+  method:'PATCH',admin:true,json:{revisaoEsperada:1,alteracoes:{estado:'PUBLICADO'}}})).status,200);
+ const catalogo=await call('/staging/vitrine/loja/catalogo');
+ assert.equal(catalogo.status,200);
+ assert.equal(catalogo.body.produtos.filter(p=>p.tipo==='PDF').length,1);
+ assert.equal(catalogo.body.checkoutReal,false);
+ assert.ok(!JSON.stringify(catalogo.body).includes('%PDF-'));
+ assert.equal((await call('/staging/vitrine/loja/meus-cursos')).status,401,
+  'sessão de visitante não pode ler biblioteca');
+ assert.equal((await call('/staging/vitrine/loja/pedidos',{
+  method:'POST',json:{itens:[{produtoId:curso.id,quantidade:1}]}})).status,503);
 });
