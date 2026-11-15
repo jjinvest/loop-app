@@ -9,7 +9,7 @@ const html=ler('src/laboratorio/loja-cliente-demo.html');
 const css=ler('src/laboratorio/loja-cliente-demo.css');
 const js=ler('src/laboratorio/loja-cliente-demo.js');
 const regra=(seletor,origem=css)=>{
- const i=origem.lastIndexOf(seletor+'{');
+ const i=origem.indexOf(seletor+'{');
  assert.ok(i>=0,'regra ausente '+seletor);
  return origem.slice(i+seletor.length+1,origem.indexOf('}',i));
 };
