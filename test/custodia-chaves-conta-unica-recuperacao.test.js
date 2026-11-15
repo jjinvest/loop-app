@@ -25,7 +25,7 @@ test('chaves divergentes impedem abrir SQLite existente antes de login ou cadast
  const contas=new ContaUnicaCandidataSQLite({banco:db,chaveEmail,chaveCifra});
  const a=await cadastro(contas);
  assert.equal(contas.verificarCustodia(),true);
- assert.equal(contas.perfil(a.titularId).nick,'alice');
+ assert.equal(contas.perfil(a.titularId).nick,'Alice');
  assert.equal(new ContaUnicaCandidataSQLite({
   banco:db,chaveEmail,chaveCifra
  }).verificarCustodia(),true);
@@ -35,7 +35,7 @@ test('chaves divergentes impedem abrir SQLite existente antes de login ou cadast
  assert.throws(()=>new ContaUnicaCandidataSQLite({
   banco:db,chaveEmail,chaveCifra:randomBytes(32)
  }),/CHAVES_CONTA_INCOMPATIVEIS_COM_SQLITE/);
- assert.equal(contas.perfil(a.titularId).nick,'alice');
+ assert.equal(contas.perfil(a.titularId).nick,'Alice');
  assert.equal(db.prepare('SELECT COUNT(*) AS n FROM akitemm_candidato_custodia_chaves').get().n,1);
  assert.deepEqual(db.prepare('PRAGMA foreign_key_check').all(),[]);
  db.close();
