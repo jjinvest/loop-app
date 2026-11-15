@@ -765,3 +765,39 @@ body.akitemm-loja{background:#071018;color:#f0f2f6;font-family:system-ui,-apple-
  .akitemm-loja #akitemmGradePacotes{grid-template-columns:minmax(0,1fr)}
  .akitemm-loja .akitemm-card-pacote .akitemm-dados-produto{padding:12px}
 }
+/* AKITEMM: alinhamento final dos comandos dourados da vitrine aprovada.
+   O texto extra de evento vem depois dos botoes no DOM por compatibilidade
+   com o script existente, mas fica ACIMA das acoes na ordem visual.
+   Apenas layout: nenhuma mudanca em carrinho, cor ou regra comercial. */
+.akitemm-loja #catalogoLojaLoop > .produto-loja-loop{
+ display:flex;flex-direction:column;min-height:100%;
+}
+.akitemm-loja #catalogoLojaLoop > .produto-loja-loop > .akitemm-dados-produto{
+ display:flex;flex:1 1 auto;flex-direction:column;min-width:0;
+}
+.akitemm-loja #catalogoLojaLoop .akitemm-dados-produto > .datas-promocao-especial-loop{
+ order:1;margin-top:4px;
+}
+.akitemm-loja #catalogoLojaLoop .akitemm-dados-produto > .akitemm-acoes-produto{
+ order:2;margin-top:auto;padding-top:8px;align-items:stretch;
+}
+.akitemm-loja #catalogoLojaLoop .akitemm-acoes-produto > button{
+ display:flex;align-items:center;justify-content:center;
+ min-height:44px;height:100%;margin-top:0;
+ white-space:normal!important;text-overflow:clip!important;
+ overflow-wrap:break-word;line-height:1.2;text-align:center;
+}
+/* Pacotes dourados, roxos e verdes seguem alinhados na mesma fileira,
+   com a acao principal embaixo e o comando retirar logo apos ela. */
+.akitemm-loja #akitemmGradePacotes > .akitemm-card-pacote{
+ display:flex;flex-direction:column;min-height:100%;
+}
+.akitemm-loja #akitemmGradePacotes .akitemm-card-pacote > .akitemm-dados-produto{
+ display:flex;flex:1 1 auto;flex-direction:column;min-width:0;
+}
+.akitemm-loja #akitemmGradePacotes .akitemm-card-pacote [data-akitemm-pacote]{
+ margin-top:auto;min-height:44px;
+}
+.akitemm-loja #akitemmGradePacotes .akitemm-card-pacote [data-akitemm-retirar-pacote]{
+ margin-top:0;min-height:44px;
+}
