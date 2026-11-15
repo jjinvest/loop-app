@@ -4,6 +4,8 @@
 const http=require('node:http');
 const fs=require('node:fs');
 const path=require('node:path');
+const {exportarPreview,empacotar}=
+ require('../src/producao/migracao-cadastros-preview-real');
 const {createHash,createHmac,hkdfSync,timingSafeEqual}=require('node:crypto');
 const {DatabaseSync}=require('node:sqlite');
 const {criarAppLojaEscritorioCandidato}=
@@ -483,7 +485,40 @@ async function iniciar({env=process.env}={}){
   executar:c.executarConciliacaoSandbox,limite:20,intervaloMs:30000,
   onErro:codigo=>process.stderr.write('LOOP_CONCILIACAO_ENSAIO='+codigo+'\\n')
  }):null;
- let temporizadorCatraca=null;
+ let temporizadorCatraca=null,temporizadorMigracao=null;
+ let migracaoEmCurso=false;
+ async function sincronizarContasLegitimas(){
+  if(migracaoEmCurso)return;
+  migracaoEmCurso=true;
+  try{
+   const url=env.LOOP_PREVIEW_URL_TABULEIRO_REAL;
+   const token=env.LOOP_PREVIEW_TOKEN_TABULEIRO_REAL;
+   if(typeof url!=='string'||!/^http:\/\/[a-z0-9-]+\.railway\.internal(?::[0-9]{2,5})?\/internal\/loop\/tabuleiro$/.test(url)||
+      typeof token!=='string'||!/^[a-f0-9]{64}$/.test(token))
+    throw Error('MIGRACAO_REDE_PRIVADA_NAO_CONFIGURADA');
+   const dados=exportarPreview({banco:db,contas:c.contas});
+   const pacote=empacotar(dados,token);
+   const res=await fetch(url.replace('/internal/loop/tabuleiro',
+    '/internal/loop/migracao-identidade'),{
+    method:'POST',headers:{'Content-Type':'application/json'},
+    body:JSON.stringify(pacote),signal:AbortSignal.timeout(180000)
+   });
+   const retorno=await res.json().catch(()=>({}));
+   if(res.status!==200||retorno.estado!=='MIGRACAO_REAL_BACKUP_COMPROVADO'||
+      retorno.contasImportadas!==dados.contas.length||
+      retorno.vinculosImportados!==dados.vinculos.length)
+    throw Error(typeof retorno.erro==='string'&&/^[A-Z_]{5,100}$/.test(retorno.erro)?
+     retorno.erro:'MIGRACAO_DESTINO_NAO_CONFIRMADO');
+   process.stdout.write('LOOP_MIGRACAO_IDENTIDADES=COMPROVADA;CONTAS='+
+    retorno.contasImportadas+';VINCULOS='+retorno.vinculosImportados+
+    ';PRIMEIRA_INDICACAO_VILELA='+String(retorno.primeiraIndicacaoVilelaConferida)+
+    ';BACKUP_REAL_RESTAURADO=SIM\\n');
+  }catch(e){
+   const cod=typeof e?.message==='string'&&/^[A-Z_]{5,100}$/.test(e.message)?
+    e.message:'MIGRACAO_REQUER_REPETICAO_SEGURA';
+   process.stderr.write('LOOP_MIGRACAO_IDENTIDADES=INCONCLUSIVA;CODIGO='+cod+'\\n');
+  }finally{migracaoEmCurso=false;}
+ }
  gateway.listen(port,'0.0.0.0',()=>{
   process.stdout.write('AKITEMM_PREVIA_PROTEGIDA=PRONTA_SEM_PAGAMENTOS_REAIS\\n');
   // Prova de rede entre servicos REAL no ambiente publicado, não no
@@ -553,6 +588,11 @@ async function iniciar({env=process.env}={}){
    }
   },15000);
   temporizadorCatraca.unref?.();
+  if(env.LOOP_PREVIEW_MIGRAR_REAL==='SIM'){
+   void sincronizarContasLegitimas();
+   temporizadorMigracao=setInterval(()=>void sincronizarContasLegitimas(),90000);
+   temporizadorMigracao.unref?.();
+  }
   if(backupOffsite){
    backupOffsite.iniciar();
    process.stdout.write('LOOP_BACKUP_OFFSITE_AGENDADO=ATIVO_ENSAIO_SEM_PROVA_ANTECIPADA\\n');
@@ -560,8 +600,10 @@ async function iniciar({env=process.env}={}){
  });
  const encerrar=criarEncerramentoPreview({gateway,interno,banco:db,
   agendador,backupOffsite,
-  pararTemporizadorCatraca:()=>{if(temporizadorCatraca!==null)
-   clearInterval(temporizadorCatraca);}
+  pararTemporizadorCatraca:()=>{
+   if(temporizadorCatraca!==null)clearInterval(temporizadorCatraca);
+   if(temporizadorMigracao!==null)clearInterval(temporizadorMigracao);
+  }
  });
  process.once('SIGTERM',()=>{void encerrar();});
  process.once('SIGINT',()=>{void encerrar();});
