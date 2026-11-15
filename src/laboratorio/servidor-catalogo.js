@@ -12,6 +12,7 @@ const {criarRouterAdminAkitemmAvaliacoesDemo}=require('../routes/admin-akitemm-a
 const {criarRouterAdminAkitemmConfigDemo}=require('../routes/admin-akitemm-config-demo');
 const { criarRouterCatalogo } = require('../routes/catalogo');
 const { criarRouterAdminCatalogo, localSeguro } = require('../routes/admin-catalogo-laboratorio');
+const {criarRouterAtalhoOperadorLab}=require('../routes/atalho-operador-lab');
 const { VinculosFornecedoresSQLite } = require('../domain/vinculos-fornecedores-sqlite');
 const { criarRouterVinculosLaboratorio } = require('../routes/admin-vinculos-laboratorio');
 const { criarFornecedoresDemonstrativos } = require('./fornecedores-demo');
@@ -104,6 +105,8 @@ function criarAppAdminLaboratorio({ repositorio, segredo, webhookDemo, webhookAs
   // Apenas a rota autenticada de perfil recebe JPEG comprimido (ate 180 KB).
   app.use('/api/laboratorio/participante/perfil',express.json({limit:'260kb',strict:true}));
   app.use(express.json({limit:'16kb',strict:true}));
+  // A mesma chave administra as duas telas, sem mudar sessoes de clientes.
+  app.use('/api/admin',criarRouterAtalhoOperadorLab({segredo}));
 
   function somenteLocal(req, res, next) {
     if (!localSeguro(req) || process.env.NODE_ENV === 'production') {
@@ -463,6 +466,9 @@ function criarAppAdminLaboratorio({ repositorio, segredo, webhookDemo, webhookAs
   });
   app.get('/laboratorio/participante.css', somenteLocal, (req, res) => {
     res.type('text/css').sendFile(path.join(__dirname,'participante-demo.css'));
+  });
+  app.get('/laboratorio/atalho-operador-lab.js',somenteLocal,(_req,res)=>{
+    res.type('application/javascript').sendFile(path.join(__dirname,'atalho-operador-lab.js'));
   });
   app.get('/laboratorio/loop-03-shell.js',somenteLocal,(_req,res)=>{
     res.type('application/javascript').sendFile(path.join(__dirname,'loop-03-shell.js'));

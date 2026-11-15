@@ -40,7 +40,13 @@ function criarAutorizacao({ segredo }) {
     const prefixo = 'Bearer ';
     const token = cabecalho.startsWith(prefixo) ? cabecalho.slice(prefixo.length) : '';
     const recebido = Buffer.from(token);
-    if (!token || recebido.length !== esperado.length || !timingSafeEqual(recebido, esperado)) {
+    const chaveValida=Boolean(token)&&recebido.length===esperado.length&&
+      timingSafeEqual(recebido, esperado);
+    // A mesma chave administrativa autoriza uma sessao temporaria local.
+    // Em mutacoes com cookie, um cabecalho proprio protege contra CSRF.
+    const sessaoValida=req.operadorAutenticadoLab===true&&
+      (['GET','HEAD'].includes(req.method)||req.get('X-LOOP-OPERADOR')==='1');
+    if(!chaveValida&&(!sessaoValida||Boolean(token))){
       return res.status(401).json({ erro: 'CREDENCIAL_ADMIN_INVALIDA' });
     }
     if (['POST','PATCH','PUT','DELETE'].includes(req.method) && !req.is('application/json')) {

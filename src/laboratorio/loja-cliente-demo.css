@@ -568,3 +568,13 @@ body.akitemm-loja{background:#071018;color:#f0f2f6;font-family:system-ui,-apple-
 .akitemm-legenda-cores .akitemm-cor-evento{border-color:#e8bc58;background:linear-gradient(135deg,#e8bc58,#ab75e8)}
 .akitemm-legenda-ressalva{color:#aab2ba;font-size:11px;margin:-7px 0 12px;line-height:1.35}
 @media(max-width:900px){.akitemm-legenda-cores{width:100%;margin-left:0}.akitemm-legenda-cores span{white-space:normal}}
+
+/* Atalho de operador fica escondido ate sessao comprovada pelo servidor. */
+.akitemm-loja .akitemm-atalho-operador[hidden]{display:none!important}
+.akitemm-loja .akitemm-atalho-operador{
+ display:inline-flex;align-items:center;justify-content:center;
+ width:39px;min-width:39px;height:39px;border-radius:50%;
+ background:#221c25;border:1px solid #dbb76c;color:#fbe5b7;
+ text-decoration:none;font:bold 26px/1 system-ui;box-shadow:0 0 10px #a87b3555;
+}
+.akitemm-loja .akitemm-atalho-operador:focus-visible{outline:3px solid #fff;outline-offset:2px}

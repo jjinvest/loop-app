@@ -758,3 +758,13 @@ body.loop03-logado{
  #loop03-home .loop03-banner-loja-texto strong{font-size:1.18rem}
  #loop03-home #secaoAkitemmEscritorio .loop03-loja-acesso{width:100%;margin-top:10px}
 }
+
+/* Atalho autenticado da central existente; sem menu administrativo duplicado. */
+#loop03Shell .loop03-atalho-operador[hidden]{display:none!important}
+#loop03Shell .loop03-atalho-operador{
+ display:inline-flex;align-items:center;justify-content:center;
+ width:39px;min-width:39px;height:39px;flex:none;border-radius:50%;
+ background:#24202a;border:1px solid #e3c17d;color:#ffe6a5;
+ text-decoration:none;font:bold 26px/1 system-ui;box-shadow:0 0 12px #b98c3944;
+}
+#loop03Shell .loop03-atalho-operador:focus-visible{outline:3px solid #fff;outline-offset:2px}

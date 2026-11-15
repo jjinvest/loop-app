@@ -13,7 +13,8 @@
  async function post(caminho,body){
   const r=await fetch('/api/admin/circuit-break-v6-demo'+caminho,{
    method:'POST',cache:'no-store',
-   headers:{Authorization:'Bearer '+token,'Content-Type':'application/json'},
+   headers:{Authorization:'Bearer '+token,'Content-Type':'application/json',
+    'X-LOOP-OPERADOR':'1'},
    body:JSON.stringify(body)});
   const d=await r.json();
   if(!r.ok)throw Error(d.erro||'Alteração recusada');
@@ -517,14 +518,37 @@
    ?'Nenhuma função encontrada. Tente outro termo.'
    :visiveis+' função(ões) disponível(is).';
  });
+ async function criarSessaoAtalho(){
+  const r=await fetch('/api/admin/operador-sessao',{
+   method:'POST',credentials:'same-origin',cache:'no-store',
+   headers:{Authorization:'Bearer '+token,'Content-Type':'application/json'},
+   body:'{}'
+  });
+  if(!r.ok)throw Error('Sessao do operador indisponivel');
+ }
+ async function encerrarSessaoAtalho(){
+  await fetch('/api/admin/operador-sessao',{
+   method:'DELETE',credentials:'same-origin',cache:'no-store',
+   headers:{'X-LOOP-OPERADOR':'1'}
+  });
+ }
  $('formAcessoAdminLoop03').addEventListener('submit',async ev=>{
   ev.preventDefault();token=$('chaveAdminLoop03').value;$('chaveAdminLoop03').value='';
-  try{await carregar();$('mensagemAcessoAdminLoop03').textContent='Acesso administrativo ao laboratório autorizado.';}
+  try{
+   await carregar();
+   try{
+    await criarSessaoAtalho();
+    $('mensagemAcessoAdminLoop03').textContent='Operador autenticado: atalhos disponíveis no LOOP e na AKITEMM.';
+   }catch{
+    $('mensagemAcessoAdminLoop03').textContent='Painel autorizado; atalho entre telas indisponível.';
+   }
+  }
   catch(err){versaoFichaCliente++;token='';config=null;configRelogio=null;$('dadosAdminLoop03').hidden=true;
    $('situacaoPainel').textContent='SEM AUTENTICAÇÃO';
    $('mensagemAcessoAdminLoop03').textContent='Acesso recusado: '+err.message;}
  });
  $('sairAdminLoop03').addEventListener('click',()=>{
+  encerrarSessaoAtalho().catch(()=>{});
   token='';config=null;configRelogio=null;$('chaveAdminLoop03').value='';
   versaoFichaCliente++;clientesDiretorio=[];$('listaClientesAdmin').replaceChildren();
   $('detalheClienteAdmin').replaceChildren();
@@ -571,6 +595,19 @@
   try{await carregar();}catch(err){$('statusResumoDirecaoAdmin').textContent='Atualização indisponível: '+err.message;}
   finally{botao.disabled=false;}
  });
+ // Entradas pelo '+' reutilizam a sessao existente do operador.
+ fetch('/api/admin/operador-sessao',{credentials:'same-origin',cache:'no-store'})
+  .then(r=>r.ok?r.json():{operador:false})
+  .then(async d=>{
+   if(!d.operador)return;
+   try{
+    await carregar();
+    $('mensagemAcessoAdminLoop03').textContent='Operador autenticado.';
+   }catch{
+    $('dadosAdminLoop03').hidden=true;
+    $('situacaoPainel').textContent='SEM AUTENTICAÇÃO';
+   }
+  }).catch(()=>{});
  $('atualizarAdminLoop03').addEventListener('click',async()=>{
   try{await carregar();$('statusRegrasAdminLoop03').textContent='Painel atualizado.';}
   catch(err){$('statusRegrasAdminLoop03').textContent=err.message;}

@@ -56,6 +56,7 @@
      <button class="loop03-hamburguer" id="loop03Menu" type="button" aria-expanded="false" aria-controls="loop03Sidebar" aria-label="Abrir menu">☰</button>
      <div><h2 id="loop03BoasVindas">Bem-vindo!</h2><p>Disciplina hoje, liberdade amanhã.</p></div>
      <div class="loop03-acoes-perfil">
+      <a class="loop03-atalho-operador" data-atalho-operador href="/admin/loop03" aria-label="Abrir central administrativa" title="Central do operador" hidden>+</a>
       <button class="loop03-sino" id="loop03NotificacoesBotao" type="button"
        aria-haspopup="true" aria-expanded="false" aria-controls="loop03PainelNotificacoes"
        title="Notificações" aria-label="Abrir notificações">
