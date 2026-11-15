@@ -17,6 +17,9 @@ on:
       - 'docs/CONTRATO_VISUAL_LOOP_APROVADO.json'
       - 'src/candidato/servidor-loja-escritorio-candidato.js'
       - 'src/laboratorio/loja-cliente-demo.js'
+      - 'src/domain/comunicados-canais-admin-sqlite.js'
+      - 'src/candidato/checkout-candidato-ui.js'
+      - 'test/akitemm-abas-recados-por-canal.test.js'
       - 'test/catalogo-mercadorias-real-e2e.test.js'
       - 'test/catalogo-cursos-pdf-real-e2e.test.js'
       - 'test/loja-upload-real-pdf-foto-video-avaliacoes-unificados.test.js'
@@ -47,11 +50,13 @@ jobs:
           cache: npm
       - run: npm ci --ignore-scripts --no-fund
       - name: Verificar sintaxe de servicos e ponte
-        run: node --check src/producao/catalogo-mercadorias-real.js && node --check src/producao/material-pdf-cursos-real.js && node --check src/producao/ponte-catalogo-real-preview.js && node --check scripts/iniciar-identidade-real-preparacao.js && node --check src/candidato/servidor-loja-escritorio-candidato.js
+        run: node --check src/producao/catalogo-mercadorias-real.js && node --check src/producao/material-pdf-cursos-real.js && node --check src/producao/ponte-catalogo-real-preview.js && node --check scripts/iniciar-identidade-real-preparacao.js && node --check src/candidato/servidor-loja-escritorio-candidato.js && node --check src/candidato/escritorio-admin-candidato-ui.js && node --check src/candidato/checkout-candidato-ui.js && node --check src/laboratorio/loja-cliente-demo.js
       - name: Provar catalogo real isolado sem cobranca
         run: node --test test/catalogo-mercadorias-real-e2e.test.js test/catalogo-cursos-pdf-real-e2e.test.js test/ponte-catalogo-real-preview.test.js test/identidade-real-catalogo-isolado.test.js
       - name: Provar preservacao do catalogo do proprietario
         run: node --test test/estoque-proprio-caracteristicas-catalogo.test.js test/akitemm-slots-vitrine-editaveis.test.js
+      - name: Separacao de comunicados, permissoes e abas do administrador
+        run: node --test test/akitemm-abas-recados-por-canal.test.js
       - name: Biblioteca digital e administracao de PDFs com protecao por comprador
         run: node --test test/loja-upload-real-pdf-foto-video-avaliacoes-unificados.test.js test/akitemm-cursos-admin-integrado.test.js
       - name: Imutabilidade visual preservada
