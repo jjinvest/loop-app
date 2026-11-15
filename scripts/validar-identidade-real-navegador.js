@@ -306,7 +306,7 @@ async function main(){
     .evaluate(el=>el.classList.contains('loop03-marcador-aceso')),false);
    if(item.largura<=860)await page.locator('#loop03MenuIntegrado').click();
    await page.locator('#abaPosicoes').click();
-   await page.locator('#posicoesPainel').filter({hasText:/#1.*FILA_B/}).waitFor();
+   await page.locator('#posicoesPainel').filter({hasText:/#1[\s\S]*Fila B/}).waitFor();
    assert.equal(await page.locator('#posicoesPainel .loop03-unidade-posicao').count(),10,
     'a aba mostra os dez espaços, mesmo com uma só posição');
    assert.equal(await page.locator('#posicoesPainel .loop03-posicao-vazia').count(),9);
