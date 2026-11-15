@@ -7,7 +7,6 @@ let csrf=null,aba='conteudoResumo',proximaPaginaEquipe=null,
  paginaPedidos=0,carregamentoPedidos=0;
 let telaAcesso='login';
 let fotoPerfilUrl=null,versaoCarregamentoFoto=0;
-const urlsBannersEscritorio=new Map();
 let versaoLeituraBannersEscritorio=0;
 let termosCadastroLidos=null,carregandoTermosCadastro=null;
 let posicaoSelecionadaMotor=null;
@@ -105,10 +104,8 @@ async function alternarDadosRodape(){
 // Carregar apenas apos login; upload nao existe na interface do cliente.
 function limparFotosBannersEscritorio(){
  versaoLeituraBannersEscritorio++;
- for(const url of urlsBannersEscritorio.values())URL.revokeObjectURL(url);
- urlsBannersEscritorio.clear();
  for(const img of document.querySelectorAll('[data-banner-imagem]')){
-  img.hidden=true;img.removeAttribute('src');
+  img.hidden=true;img.onerror=null;img.removeAttribute('src');
  }
 }
 async function carregarFotosBannersEscritorio(){
@@ -124,20 +121,14 @@ async function carregarFotosBannersEscritorio(){
   for(const b of dados.slots){
    const img=document.querySelector('[data-banner-imagem="'+b.slot+'"]');
    if(!img)continue;
-   const anterior=urlsBannersEscritorio.get(b.slot);
-   if(anterior){URL.revokeObjectURL(anterior);urlsBannersEscritorio.delete(b.slot);}
    img.hidden=true;img.removeAttribute('src');
    if(!b.temImagem)continue;
-   const resposta=await fetch('/staging/banners-escritorio/'+b.slot+'/imagem',{
-    credentials:'same-origin',cache:'no-store'
-   });
-   if(!resposta.ok)continue;
-   const foto=await resposta.blob();
-   if(versao!==versaoLeituraBannersEscritorio)return;
-   if(!['image/png','image/jpeg','image/webp'].includes(foto.type))continue;
-   const url=URL.createObjectURL(foto);
-   urlsBannersEscritorio.set(b.slot,url);
-   img.src=url;img.hidden=false;
+   // Lazy loading nativo: baixar a foto apenas ao aproximar-se do slide,
+   // sem carregar quatro arquivos grandes no login nem criar blob URLs.
+   img.loading='lazy';img.decoding='async';
+   img.onerror=()=>{img.hidden=true;img.removeAttribute('src');};
+   img.src='/staging/banners-escritorio/'+b.slot+'/imagem';
+   img.hidden=false;
   }
  }catch{/* Sem fotos ou rede, continua usando os banners originais. */}
 }
