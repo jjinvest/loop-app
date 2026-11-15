@@ -53,7 +53,7 @@ test('núcleo real integra motor, catraca, pedidos, regras e auditoria sem criar
  // Bootstrap idempotente: não altera nenhuma das regras iniciais.
  assert.equal(prepararNucleoComercialRealFechado({banco,ambiente:env})
   .nucleoRealPersistente,true);
- const prova=consultarNucleoComercialRealFechado({arquivo});
+ const prova=consultarNucleoComercialRealFechado({arquivo,permitirTeste:true});
  assert.equal(prova.origem,'SQLITE_OPERACIONAL_REAL');
  assert.equal(prova.componentes,17);
  assert.equal(prova.estruturaIntegra,true);
