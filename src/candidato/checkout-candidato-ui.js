@@ -135,6 +135,8 @@ async function carregarFotosBannersEscritorio(){
 }
 function mostrarSessao(ativa){
  document.body.classList.toggle('loop03-logado',ativa);
+ if(ativa)void carregarAvisosLoop();
+ else fecharAvisosLoop();
  if(!ativa)limparFotoPerfil();
  if(!ativa)limparFotosBannersEscritorio();
  if(ativa)void carregarFotosBannersEscritorio();
@@ -1495,3 +1497,53 @@ for(const [btn,section] of ABAS){
 }
 void carregarIndicadorCadastro();
 restaurarSessao();
+
+
+function fecharAvisosLoop(){
+ const painel=$('loop03PainelAvisos');
+ if(!painel)return;
+ painel.hidden=true;
+ $('loop03Sino').setAttribute('aria-expanded','false');
+ $('loop03TotalAvisos').hidden=true;
+ $('loop03TotalAvisos').textContent='';
+ $('loop03ListaAvisos').replaceChildren();
+}
+async function carregarAvisosLoop(){
+ const area=$('loop03ListaAvisos');
+ if(!area)return;
+ try{
+  const dados=await requisitar('/contas/avisos-loop');
+  if(dados.canal!=='LOOP'||!Array.isArray(dados.itens))
+   throw Error('CANAL_INVALIDO');
+  const itens=dados.itens.filter(x=>x.canal==='LOOP'&&x.estado==='PUBLICADO');
+  $('loop03TotalAvisos').hidden=!itens.length;
+  $('loop03TotalAvisos').textContent=String(itens.length);
+  area.replaceChildren();
+  if(!itens.length){
+   const p=document.createElement('p');p.textContent='Nenhum recado do LOOP.';area.append(p);
+  }
+  for(const aviso of itens){
+   const card=document.createElement('article');
+   const titulo=document.createElement('strong');
+   titulo.textContent=(aviso.formato==='BANNER'?'Aviso: ':'')+aviso.titulo;
+   const corpo=document.createElement('p');corpo.textContent=aviso.corpo;
+   card.append(titulo,corpo);area.append(card);
+  }
+ }catch{
+  if(!document.body.classList.contains('loop03-logado'))return;
+  area.textContent='Não foi possível consultar os recados do LOOP.';
+ }
+}
+$('loop03Sino').addEventListener('click',async()=>{
+ const painel=$('loop03PainelAvisos'),aberto=painel.hidden;
+ painel.hidden=!aberto;
+ $('loop03Sino').setAttribute('aria-expanded',String(aberto));
+ if(aberto)await carregarAvisosLoop();
+});
+document.addEventListener('keydown',e=>{
+ if(e.key==='Escape'&&!$('loop03PainelAvisos').hidden){
+  $('loop03PainelAvisos').hidden=true;
+  $('loop03Sino').setAttribute('aria-expanded','false');
+  $('loop03Sino').focus();
+ }
+});
