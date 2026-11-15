@@ -57,7 +57,9 @@ test('molduras vazias não são mercadorias nem oferecem compra',()=>{
  assert.match(trecho,/Aguardando produto cadastrado/);
  assert.doesNotMatch(trecho,/createElement\('button'\)|adicionar\(|precoCentavos|pedidoId/);
  assert.match(codigo,/if\(!item\.produto\)\{destino\.append\(criarSlotVazio\(item\)\);continue;\}/);
- assert.match(codigo,/const geral=filtro==='todos'&&!corFiltro&&!termoBusca/);
+ assert.match(codigo,/const exibirMolduras=filtro==='todos'&&!termoBusca/);
+ assert.match(codigo,/gradeVitrineMontada\(filtrados\)\.filter\(item=>!corFiltro\|\|item\.cor===corFiltro\)/);
+ assert.match(codigo,/Nenhum quadrinho desta cor/);
  assert.match(codigo,/const encontrado=livres\.findIndex\(p=>corDoProduto\(p\)===cor\)/);
  assert.match(codigo,/\.\.\.livres\.map\(produto=>/);
  assert.match(css,/\.akitemm-slot-roxo\{--ak-slot-cor:#bd88f6\}/);
