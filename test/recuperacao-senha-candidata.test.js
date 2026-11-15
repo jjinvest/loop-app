@@ -88,7 +88,7 @@ test('recuperacao por e-mail usa codigo unico, prazo, tentativas e revoga sessoe
  assert.equal(protegido.status,403,'segunda tentativa exige prova');
  const desafio=(await req('/staging/contas/captcha-login')).data;
  const svg=Buffer.from(desafio.captchaImagem.split(',')[1],'base64').toString();
- const codigo=[...svg.matchAll(/<text\\s[^>]*>([A-Z0-9])<\\/text>/g)]
+ const codigo=[...svg.matchAll(/<text[^>]*>([A-Z0-9])</g)]
   .map(x=>x[1]).join('');
  assert.equal(codigo.length,6);
  assert.equal((await req('/staging/contas/entrar',
