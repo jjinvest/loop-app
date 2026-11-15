@@ -54,6 +54,7 @@
    <input id="cadastroEmail" name="email" type="email" maxlength="254" autocomplete="off" required>
    <label for="cadastroTelefone">Telefone</label>
    <input id="cadastroTelefone" name="telefone" type="tel" maxlength="20" autocomplete="tel" required>
+   <label><input id="cadastroCompartilharTelefoneIndicador" type="checkbox"> Permito que a pessoa que me indicou veja meu telefone para contato sobre o LOOP. Posso retirar esta permissão em Minha Conta.</label>
    <label for="cadastroSenha">Senha (8 a 12 caracteres)</label>
    <div class="envoltorio-senha"><input id="cadastroSenha" name="senha" type="password" minlength="8" maxlength="12" autocomplete="new-password" required><button type="button" class="alternar-visibilidade" data-senha="cadastroSenha" aria-label="Mostrar senha" aria-pressed="false" title="Mostrar senha"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M2.2 12S5.7 6.5 12 6.5 21.8 12 21.8 12 18.3 17.5 12 17.5 2.2 12 2.2 12Z"/><circle cx="12" cy="12" r="2.7"/><path class="traco-senha-oculta" d="M4.5 19.5 19.5 4.5"/></svg></button></div>
    <label for="cadastroConfirmarSenha">Confirmar senha</label>
@@ -356,6 +357,11 @@
     <p id="statusFotoPerfil" role="status" aria-live="polite"></p>
    </form>
    <p class="loop03-email-conta">E-mail: <strong id="resumoEmail">—</strong></p>
+   <form id="formCompartilharTelefoneIndicador" aria-label="Contato com quem me indicou">
+    <label><input id="compartilharTelefoneIndicador" type="checkbox"> Permitir que somente quem me indicou veja meu telefone na Minha Equipe para entrar em contato.</label>
+    <button type="submit">Salvar preferência de contato</button>
+    <p id="estadoCompartilharTelefone" role="status" aria-live="polite"></p>
+   </form>
 <section class="painel" id="painelVerificarEmail" hidden aria-label="Confirmar e-mail de ensaio">
    <h2>Confirmar meu e-mail</h2>
    <p class="subtexto">Confirme seu contato com um código enviado ao e-mail cadastrado.</p>
