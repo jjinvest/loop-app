@@ -5,6 +5,7 @@
 const express=require('express');
 const path=require('node:path');
 const {createHash}=require('node:crypto');
+const {CaptchaCadastroSQLite}=require('../shared/captcha-cadastro-sqlite');
 const {ContaUnicaCandidataSQLite,COOKIE,DURACAO_MS}=
  require('../domain/conta-unica-candidata-sqlite');
 const {TitularidadeCpfTermosCandidato}=
@@ -73,7 +74,9 @@ function criarAppLojaEscritorioCandidato({banco,repositorioCatalogo,
  transporteResend=null,
  webhookHomologacaoToken=null,provedorReconsultaSandbox=null,
  operacoesSandboxAutorizadas=false,conciliacaoAutomaticaConfigurada=false,
- segredoOperador,termosVersao,termosTexto}={}){
+ segredoOperador,termosVersao,termosTexto,
+ privacidadeTexto=null,privacidadeVersao='LAB-PRIV-2026',
+ captchaCadastroObrigatorio=false}={}){
  if(process.env.NODE_ENV==='production')erro('CANDIDATO_NAO_HOMOLOGADO');
  if(typeof repositorioCatalogo?.buscar!=='function')
   throw new TypeError('Catalogo obrigatorio');
@@ -85,6 +88,9 @@ function criarAppLojaEscritorioCandidato({banco,repositorioCatalogo,
  const contas=new ContaUnicaCandidataSQLite({
   banco,chaveEmail,chaveCifra,chaveRecuperacao,enviarRecuperacao
  });
+ const captcha=captchaCadastroObrigatorio?new CaptchaCadastroSQLite({
+  banco,segredo:contas.cipherKey,contexto:'PREVIA'
+ }):null;
  const fotoPerfil=new FotoPerfilCandidatoSQLite({banco});
  const equipe=new EquipeCandidataSQLite({banco,
   consultarTelefoneAutorizado:args=>contas.telefoneAutorizadoParaIndicador(args)
@@ -260,10 +266,21 @@ function criarAppLojaEscritorioCandidato({banco,repositorioCatalogo,
  // exato e a impressao SHA-256 que o backend guardara no cadastro.
  const termosHashCadastro=createHash('sha256')
   .update(termosTexto,'utf8').digest('hex');
+ const privTexto=typeof privacidadeTexto==='string'&&
+  privacidadeTexto.length>=100?privacidadeTexto:
+  'A loja e o LOOP usam dados de cadastro, telefone e vínculo de indicação somente para acesso, prevenção de fraude e contato direto do indicador. Dados de CPF, e-mail, senha e nome civil não aparecem na Minha Equipe. O ambiente é de ensaio sem pagamentos reais.';
+ const privHash=createHash('sha256').update(privTexto,'utf8').digest('hex');
  app.get('/staging/contas/termos-cadastro',(_req,res)=>res.json({
   termosVersao,termosTexto,termosHash:termosHashCadastro,
+  privacidadeVersao,privacidadeTexto:privTexto,privacidadeHash:privHash,
+  captchaObrigatorio:captcha!==null,
   somenteEnsaio:true,cadastroRealHabilitado:false
  }));
+ app.get('/staging/contas/captcha-cadastro',(_req,res)=>{
+  if(!captcha)return res.status(503).json({erro:'CAPTCHA_INDISPONIVEL'});
+  try{return res.set('Cache-Control','no-store').json(captcha.emitir());}
+  catch{return res.status(429).json({erro:'CAPTCHA_OCUPADO'});}
+ });
  app.post('/staging/contas/cadastrar',async(req,res)=>{
   if(!req.is('application/json'))
    return res.status(415).json({erro:'JSON_OBRIGATORIO'});
@@ -274,6 +291,9 @@ function criarAppLojaEscritorioCandidato({banco,repositorioCatalogo,
   // A interface nova envia ambas as evidencias de leitura e aceita
   // somente a versao exata apresentada antes de preencher o formulario.
   const chaves=Object.keys(body).sort().join(',');
+  const semCaptcha=captcha?Object.fromEntries(Object.entries(body).filter(
+   ([k])=>k!=='captchaId'&&k!=='captchaResposta')):body;
+  const chavesCadastro=Object.keys(semCaptcha).sort().join(',');
   const antiga='aceiteExplicito,email,nick,nome,senha';
   const atual='aceiteExplicito,email,nick,nome,senha,termosHashAceito,termosVersaoAceita';
    const novo='aceiteExplicito,confirmarSenha,email,nick,nome,senha,telefone,termosHashAceito,termosVersaoAceita';
@@ -281,15 +301,21 @@ function criarAppLojaEscritorioCandidato({banco,repositorioCatalogo,
   // Aceita por compatibilidade o formulário anterior já aberto no celular;
   // o antigo campo de opt-in não controla o acesso à rede.
   const legadoComCpfContato='aceiteExplicito,compartilharTelefoneIndicador,confirmarSenha,cpf,email,nick,nome,senha,telefone,termosHashAceito,termosVersaoAceita';
-  const comCpf=chaves===novoComCpf||chaves===legadoComCpfContato;
-  if(chaves!==antiga&&chaves!==atual&&chaves!==novo&&!comCpf)
+  const comCpf=chavesCadastro===novoComCpf||
+   chavesCadastro===legadoComCpfContato;
+  if(chavesCadastro!==antiga&&chavesCadastro!==atual&&
+     chavesCadastro!==novo&&!comCpf)
    return res.status(400).json({erro:'CAMPOS_INVALIDOS'});
   if(comCpf&&!cpf)
    return res.status(503).json({erro:'CPF_STAGING_INDISPONIVEL'});
-  if((chaves===atual||chaves===novo||comCpf)&&(body.termosVersaoAceita!==termosVersao||
+  if((chavesCadastro===atual||chavesCadastro===novo||comCpf)&&
+     (body.termosVersaoAceita!==termosVersao||
      body.termosHashAceito!==termosHashCadastro))
    return res.status(409).json({erro:'TERMOS_ALTERADOS_RELER'});
   try{
+   if(captcha)captcha.verificar({
+    captchaId:body.captchaId,captchaResposta:body.captchaResposta
+   });
    // Recebida apenas do gateway assinado. Criacao da conta + vinculo
    // de indicacao ocorrem no MESMO COMMIT, nunca apos confirmar cadastro.
    const indicadorNick=req.get('x-akitemm-preview-indicador');
@@ -319,6 +345,8 @@ function criarAppLojaEscritorioCandidato({banco,repositorioCatalogo,
    });
    return res.status(201).json(conta);
   }catch(e){
+   if(e.codigo==='CAPTCHA_INVALIDO')
+    return res.status(400).json({erro:'CAPTCHA_INVALIDO'});
    if(e.codigo==='CADASTRO_JA_EXISTENTE')
     return res.status(409).json({erro:'CADASTRO_JA_EXISTENTE'});
    if(['INDICACAO_ORIGEM_NAO_CONFIRMADA','CPF_OU_TITULAR_JA_VINCULADO'].includes(e.codigo))
