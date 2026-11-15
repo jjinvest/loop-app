@@ -77,8 +77,8 @@ test('migrar duas contas reais de ensaio para identidade definitiva conserva sen
  }),null);
  assert.equal(real.listarIndicados(pai.titularId).indicados[0].numeroCadastro,1);
  assert.equal(real.listarIndicados(pai.titularId).indicados[0].telefone,'11988887777');
- assert.equal(real.perfil(filha.titularId).aceiteDocumentosDefinitivosPendente,true);
- assert.equal(real.perfil(filha.titularId).cpfRecebido,false);
+ assert.equal(real.dadosTitular(filha.titularId).aceiteDocumentosDefinitivosPendente,true);
+ assert.equal(real.dadosTitular(filha.titularId).cpfRecebido,false);
  assert.equal(dst.prepare('PRAGMA foreign_key_check').all().length,0);
  assert.equal(validarIdentidade(path.join(dir,'clientes.sqlite')).contas,2);
  const serialized=JSON.stringify(dst.prepare('SELECT * FROM loop_real_contas').all());
