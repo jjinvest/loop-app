@@ -2,6 +2,7 @@
 // Serviço REAL isolado. Não importar o app de homologação; não permitir
 // primeiro cadastro sem documentação/Resend/volume próprios e GO humano.
 const fs=require('node:fs');
+const http=require('node:http');
 const {DatabaseSync}=require('node:sqlite');
 const {MotorLoopIntegradoSQLite}=require('../src/producao/motor-loop-integrado-sqlite');
 const {OperacaoCatracaAdminSQLite}=
@@ -10,6 +11,8 @@ const {PreflightCapacidadeCheckoutSQLite}=
  require('../src/producao/preflight-capacidade-checkout-sqlite');
 const {RecuperacaoReservasCheckoutSQLite}=
  require('../src/producao/recuperacao-reservas-checkout-sqlite');
+const {criarCatalogoMercadoriasReal}=
+ require('../src/producao/catalogo-mercadorias-real');
 const {IdentidadeClienteLoopReal}=
  require('../src/producao/identidade-cliente-loop-sqlite');
 const {criarAppIdentidadeLoop}=
@@ -120,7 +123,7 @@ async function iniciar(ambiente=process.env){
  const config=configurar(ambiente);
  const banco=new DatabaseSync(config.arquivo);
  banco.exec('PRAGMA journal_mode=WAL;PRAGMA busy_timeout=5000;PRAGMA foreign_keys=ON;');
- let agendador=null;
+ let agendador=null,catalogoMidia=null;
  try{
   const contas=new IdentidadeClienteLoopReal({...config,banco});
   const motorLoop=new MotorLoopIntegradoSQLite({banco});
@@ -191,11 +194,27 @@ async function iniciar(ambiente=process.env){
    adminComercial:{catalogo,controle,sessoes,auditoria,manutencao,
     classificacaoLoop,operacaoCatraca,recuperacaoReservas}
   });
+  // Mantém catálogo, fotos e PDFs NO MESMO volume comercial persistente,
+  // sem trocar a origem aprovada durante a mudança do cadastro/administrador.
+  if(ambiente.LOOP_REAL_CATALOGO_EDITAVEL==='SIM')
+   catalogoMidia=criarCatalogoMercadoriasReal({
+    arquivo:'/dados-reais/catalogo-produtos.sqlite',
+    tokenRaiz:ambiente.LOOP_REAL_TABULEIRO_INTERSERVICE_TOKEN
+   });
   const porta=Number(ambiente.PORT||3000);
   if(!Number.isSafeInteger(porta)||porta<1||porta>65535)
    throw Error('PORTA_INVALIDA');
   // Private Networking Railway: IPv6 + IPv4 para health/load balancer.
-  const server=app.listen({port:porta,host:'::',ipv6Only:false});
+  const server=http.createServer((req,res)=>{
+   if(req.url?.startsWith('/internal/catalogo/')){
+    if(!catalogoMidia){res.writeHead(503);res.end();return;}
+    void Promise.resolve(catalogoMidia.atender(req,res)).catch(()=>{
+     if(!res.writableEnded){res.writeHead(503);res.end();}
+    });return;
+   }
+   app(req,res);
+  });
+  server.listen({port:porta,host:'::',ipv6Only:false});
   // Agenda executa somente quando o operador habilitou AUTOMATICA, e apenas em ensaio.
   const timer=ambiente.NODE_ENV==='production'?null:setInterval(()=>{
    try{operacaoCatraca.processarAgenda();}
@@ -206,6 +225,7 @@ async function iniciar(ambiente=process.env){
    if(timer)clearInterval(timer);
    server.close(async()=>{
     try{await agendador.encerrar();}catch{}
+    try{catalogoMidia?.fechar();}catch{}
     try{banco.exec('PRAGMA wal_checkpoint(TRUNCATE)');}catch{}
     banco.close();
    });
@@ -214,6 +234,7 @@ async function iniciar(ambiente=process.env){
   return {server,banco,agendador};
  }catch(e){
   if(agendador)await agendador.encerrar();
+  catalogoMidia?.fechar();
   banco.close();
   throw e;
  }
