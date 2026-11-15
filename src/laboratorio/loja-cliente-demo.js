@@ -347,6 +347,41 @@
   if(filtro!=='novidades')return false;
   return !!el('novidadesVitrineAkitemm').childElementCount;
  }
+ const CORES_PADRAO_VITRINE=['ROXO','DOURADO','VERDE','CINZA',
+  'CINZA','VERDE','DOURADO','ROXO'];
+ function coresVitrine(){
+  const lista=configLoja?.vitrineSlots;
+  return Array.isArray(lista)&&lista.length===8&&
+   lista.every(cor=>['ROXO','DOURADO','VERDE','CINZA'].includes(cor))?
+   lista:CORES_PADRAO_VITRINE;
+ }
+ function gradeVitrineMontada(produtos){
+  const livres=[...produtos];
+  const slots=coresVitrine().map((cor,indice)=>{
+   const encontrado=livres.findIndex(p=>corDoProduto(p)===cor);
+   const produto=encontrado<0?null:livres.splice(encontrado,1)[0];
+   return {cor,indice:indice+1,produto};
+  });
+  // Produtos restantes continuam acessíveis pela paginação; nada é apagado.
+  return [...slots,...livres.map(produto=>({cor:corDoProduto(produto),produto}))];
+ }
+ function criarSlotVazio({cor,indice}){
+  const card=document.createElement('article');
+  card.className='produto-loja-loop akitemm-slot-vazio akitemm-slot-'+cor.toLowerCase();
+  card.dataset.akitemmSlot=String(indice);
+  card.setAttribute('aria-label','Quadrinho '+indice+' '+cor.toLowerCase()+
+   ', disponível para cadastro de produto');
+  const imagem=document.createElement('div');imagem.className='akitemm-imagem-produto';
+  const sim=document.createElement('span');sim.className='akitemm-slot-icone';
+  sim.textContent='+';sim.setAttribute('aria-hidden','true');
+  imagem.append(sim);
+  const dados=document.createElement('div');dados.className='akitemm-dados-produto';
+  const titulo=document.createElement('strong');titulo.textContent='Espaço disponível';
+  const estado=document.createElement('small');estado.textContent='Aguardando produto cadastrado';
+  dados.append(titulo,estado);
+  card.append(imagem,dados);
+  return card; // Sem id de produto, preço, botão, checkout ou evento.
+ }
  function mostrarCatalogo(){
   fecharDetalhes();
   const destino=el('catalogoLojaLoop');destino.replaceChildren();
@@ -361,8 +396,15 @@
     catalogo.length?'Nenhum produto encontrado neste filtro.':'Nenhum produto publicado ainda.');
   el('referenciaLojaLoop').textContent='Referência do LOOP para compras elegíveis: '+dinheiro(referenciaCentavos)+
    '. Produtos físicos e digitais podem ou não participar, conforme autorização do administrador.';
-  el('akitemmCarregarMais').hidden=filtrados.length<=quantidadeVitrine;
-  for(const p of filtrados.slice(0,quantidadeVitrine)){
+  // Só na vitrine geral: oito molduras pré-montadas, sem produtos fictícios.
+  // Busca e filtros exibem apenas os produtos reais encontrados.
+  const geral=filtro==='todos'&&!corFiltro&&!termoBusca;
+  const itens=geral?gradeVitrineMontada(filtrados):
+   filtrados.map(produto=>({cor:corDoProduto(produto),produto}));
+  el('akitemmCarregarMais').hidden=itens.length<=quantidadeVitrine;
+  for(const item of itens.slice(0,quantidadeVitrine)){
+   if(!item.produto){destino.append(criarSlotVazio(item));continue;}
+   const p=item.produto;
    const card=document.createElement('article');
    const classe=corDoProduto(p),especial=classe==='ROXO';
    card.className='produto-loja-loop '+(especial?
