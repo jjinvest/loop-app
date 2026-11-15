@@ -1012,5 +1012,23 @@
  });
  el('atualizarPedidosLoja').addEventListener('click',()=>carregarPedidos().catch(e=>inform(e.message)));
  el('atualizarCatalogoLoja').addEventListener('click',()=>carregarCatalogo().catch(e=>inform(e.message)));
+ // Mesmo operador em AKITEMM e LOOP: apenas consulta do cookie
+ // assinado no gateway, sem duplicar senha nem liberar endpoints.
+ async function atualizarAtalhoOperador(){
+  const a=el('akitemmOperadorMais');
+  if(!a)return;
+  a.hidden=true;a.style.display='none';
+  try{
+   const r=await fetch('/staging/operador/estado',{
+    method:'GET',credentials:'same-origin',cache:'no-store'
+   });
+   if(!r.ok)return;
+   const d=await r.json();
+   if(d.operador===true){
+    a.hidden=false;a.style.display='inline-flex';
+   }
+  }catch{}
+ }
+ void atualizarAtalhoOperador();
  inicializar();
 })();
