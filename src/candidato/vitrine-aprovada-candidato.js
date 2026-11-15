@@ -13,7 +13,7 @@ const {simularQualificacaoCandidato}=require('../domain/simulador-qualificacao-c
 const {consultarPedido}=require('../domain/relatorio-homologacao-checkout-staging');
 const DIR=path.join(__dirname,'../laboratorio');
 function fail(codigo){const e=new Error(codigo);e.codigo=codigo;throw e;}
-function createVitrineCandidata({app,banco,catalogo,contas,intencoes,prePedidos,autorizarOperador,novidades,enderecoEntrega,configLoja,materialPdf,videoProduto,fotosProduto,avaliacoes}={}){
+function createVitrineCandidata({app,banco,catalogo,contas,intencoes,prePedidos,autorizarOperador,novidades,comunicados,fotoPerfil,enderecoEntrega,configLoja,materialPdf,videoProduto,fotosProduto,avaliacoes}={}){
  if(process.env.NODE_ENV==='production')fail('VITRINE_LAB_NAO_HOMOLOGADA');
  if(!app?.get||!app?.post||!app?.patch||catalogo?.db!==banco||
     typeof contas?.sessao!=='function'||typeof prePedidos?.preparar!=='function'||
@@ -303,8 +303,13 @@ function atualizarCarrinho(){
   res.type('js').send(js));
  app.get('/staging/vitrine/minha-conta',autorizarCliente,(req,res)=>{
   const p=contas.perfil(req.titularVitrine);
-  return res.json({perfil:{nome:p.nome,temFoto:false},
+  return res.json({perfil:{nome:p.nome,temFoto:fotoPerfil.existe(req.titularVitrine)},
    conta:{nick:p.nick},csrf:sessao(req).csrf,laboratorio:true});
+ });
+ app.get('/staging/vitrine/loja/comunicados',(_req,res)=>{
+  try{return res.set('Cache-Control','public, max-age=30').json({
+   canal:'AKITEMM',itens:comunicados.listar({canal:'AKITEMM',publicados:true})
+  });}catch{return res.status(503).json({erro:'COMUNICADOS_LOJA_INDISPONIVEIS'});}
  });
  // Mesmo site original. Publicações opcionais da seção Novidades.
  app.get('/staging/vitrine/novidades',(_req,res)=>{
