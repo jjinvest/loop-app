@@ -1,23 +1,23 @@
 {
   "schema": 1,
   "política": "Toda alteração de HTML/CSS exige pedido visual explícito, escopo isolado e revisão do proprietário; é proibido atualizar hashes para esconder mudanças.",
-  "autorizaçãoAtual": "15/11/2026: usuário exigiu catálogo real de produtos próprios, com fotos, características e preços, sem textos de produtos fictícios ou simulação. Alteração estritamente autorizada na seção Produtos do painel administrativo: rótulo 'Produtos · catálogo AKITEMM', 'Cadastrar produto', 'Publicado na vitrine' e texto de orientação fiel à publicação efetiva da mercadoria. A publicação dos produtos é persistida no SQLite comercial real segregado; checkout/PSP e cadastro de clientes reais permanecem bloqueados até homologação. Demais telas/cadastro/financeiro inalterados, sem merge da PR #1.",
+  "autorizaçãoAtual": "15/11/2026: navegação funcional por abas no mesmo Escritório Admin, recados independentes AKITEMM/LOOP e correções pontuais no cabeçalho/atalhos da loja; publicação e download financeiro ainda protegidos. Preservar as demais telas e funcionalidades, sem merge PR #1.",
   "arquivos": [
     {
       "path": "src/candidato/checkout-candidato-ui.html",
-      "sha": "70ef3c89d674040db0570e86f804882834dcdf8d"
+      "sha": "8777f24e2e56241cf7422894d07af4c6d8a7b314"
     },
     {
       "path": "src/candidato/escritorio-admin-candidato-ui.css",
-      "sha": "4083b71400af2e7e4ef2095151c72512bbdfb52c"
+      "sha": "3b28135c2c6a3f923b0e671d23ed8435f3e3d1eb"
     },
     {
       "path": "src/candidato/escritorio-admin-candidato-ui.html",
-      "sha": "5216c255cfb28c127c9452af9c898da79a6ea1b7"
+      "sha": "d7eafe9560cb1b8dd586e73d6ec04cdeeed83cbf"
     },
     {
       "path": "src/candidato/escritorio-cliente-integrado.css",
-      "sha": "3fe8eef5820f261e6c2f19f3b50f16e0b898da22"
+      "sha": "87ef5d01f6d07f7c88f163c85cb8c106dd12799c"
     },
     {
       "path": "src/laboratorio/admin-loop03.css",
@@ -69,11 +69,11 @@
     },
     {
       "path": "src/laboratorio/loja-cliente-demo.css",
-      "sha": "f56a347104fcf544a8c52181ae93731f05885443"
+      "sha": "6a98489840e201ee19f2f98540ecdd6f5dd6d615"
     },
     {
       "path": "src/laboratorio/loja-cliente-demo.html",
-      "sha": "8166d2324c1ef0081500aaca6d80fcd1832b137a"
+      "sha": "6142f5593eaf42c144195b5848244e09eb85391a"
     },
     {
       "path": "src/laboratorio/loop-03-shell.css",
@@ -101,6 +101,7 @@
     }
   ],
   "históricoAutorizações": [
+    "15/11/2026: proprietário autorizou expressamente os dois ajustes na loja AKITEMM (marca LOOP maior e sem seta, perfil com foto e dados da mesma conta, sino com recados próprios, botão Ofertas dourado, categorias funcionais e remoção dos avisos redundantes de prévia); sininho LOOP recebe apenas recados LOOP. Na terceira missão, exigiu abas funcionais no mesmo Escritório do Administrador, com separação de operações, e criação da aba Mensagens e banners para recados, rascunhos e publicações por canal, sem embelezamento ou duplicação de interface. Caminho de chatbot reservado e rodapé informativo preservado para posterior conclusão. Mudanças visuais limitadas aos seis arquivos aprovados e autorizados nesta data.",
     "15/11/2026: proprietário exigiu que o novo fluxo de cursos PDF esteja representado no escritório do administrador da AKITEMM. Alteração restrita à seção de Produtos do HTML administrativo: lista de cursos PDF por página do catálogo, botão Gerenciar curso e PDF, instruções de armazenamento real e download por comprador autorizado. Preserva os controles existentes para fotos, vídeos, mercadorias físicas, motor, financeiro e todas as demais telas. JS administrativo passa a mostrar versão, tamanho e origem persistente do PDF.",
     "15/11/2026: usuário solicitou explicitamente preparar o caminho de venda e entrega de cursos PDF: seção Meus Cursos adicionada exclusivamente dentro da loja AKITEMM original, com status e link de download protegido após confirmação de pagamento. O original persiste no servidor. Interface visual previamente aprovada, sem mudanças em cores, molduras, pagamento, tabuleiro, financeiro ou escritório.",
     "14/11/2026: pedido explicito do proprietário para corrigir o teste de navegacao, abrir os dados nome/nick/email no rodape Minha conta, sincronizar a foto com o topo e mostrar CPF apenas se posicao confirmada; HTML e CSS da interface unica atualizados sem alterar outras telas.",
