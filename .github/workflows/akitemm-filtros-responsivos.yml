@@ -1,0 +1,40 @@
+name: AKITEMM - filtros identicos PC e celular
+on:
+  push:
+    branches:
+      - feature/unificar-escritorio-real-20261105
+    paths:
+      - 'src/laboratorio/loja-cliente-demo.js'
+      - 'src/laboratorio/loja-cliente-demo.css'
+      - 'src/laboratorio/loja-cliente-demo.html'
+      - 'src/candidato/vitrine-aprovada-candidato.js'
+      - 'src/domain/akitemm-config-loja-demo-sqlite.js'
+      - 'scripts/validar-filtros-akitemm-pc-celular-browser.js'
+      - 'test/filtros-cor-loja-candidato.test.js'
+      - 'test/akitemm-slots-vitrine-editaveis.test.js'
+      - 'test/akitemm-grade-2x2-4x2-aprovada.test.js'
+      - '.github/workflows/akitemm-filtros-responsivos.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  filtros-pc-celular:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 9
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+      - run: npm ci --ignore-scripts --no-fund
+      - name: Contrato de filtros de cores, Todos, Ofertas e molduras mutaveis
+        run: node --test test/filtros-cor-loja-candidato.test.js test/akitemm-slots-vitrine-editaveis.test.js test/akitemm-grade-2x2-4x2-aprovada.test.js test/contrato-visual-escritorio-aprovado.test.js
+      - name: Sintaxe da vitrine e simulador de navegador
+        run: node --check src/laboratorio/loja-cliente-demo.js && node --check scripts/validar-filtros-akitemm-pc-celular-browser.js
+      - run: npm install --no-save playwright@1.56.1
+      - run: npx playwright install --with-deps chromium
+      - name: Mesmos cliques e comportamento no computador e celular
+        run: node scripts/validar-filtros-akitemm-pc-celular-browser.js
