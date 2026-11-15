@@ -105,6 +105,10 @@ function mostrarSessao(ativa){
  if(!ativa)limparFotoPerfil();
  if(!ativa)fecharDadosRodape();
  if(!ativa)fecharMenuIntegrado();
+ if(!ativa){
+  $('loop03RodapeFilaIntegrado').hidden=true;
+  $('loop03RodapeCoroaIntegrado').hidden=true;
+ }
  if(!ativa){$('painelVerificarEmail').hidden=true;$('painelIdentidadeTeste').hidden=true;
    $('cpfTeste').value='';$('aceiteCpfTeste').checked=false;}
  $('painelLogin').hidden=ativa||telaAcesso!=='login';
@@ -448,6 +452,22 @@ async function confirmarCodigoEmail(e){
  finally{botao.disabled=false;}
 }
 
+// Rodapé mostra a localização da posição selecionada, ou da primeira
+// posição ativa quando o titular ainda não escolheu uma no placar.
+// O ID e a quantidade de indicações ficam somente no quadro superior.
+function atualizarSituacaoRodape(posicoes=posicoesDisponiveisResumo){
+ const lista=Array.isArray(posicoes)?posicoes:[];
+ const pos=lista.find(p=>p.numero===posicaoSelecionadaMotor)||
+  [...lista].sort((a,b)=>a.numero-b.numero)[0];
+ const local=typeof pos?.local==='string'?pos.local:'';
+ const noTabuleiro=local==='CENTRO'||/^VAGA_[1-6]$/.test(local);
+ const tipoFila=local==='FILA'&&(pos?.fila==='A'||pos?.fila==='B')?
+  pos.fila:local==='FILA_A'?'A':local==='FILA_B'?'B':null;
+ const fila=$('loop03RodapeFilaIntegrado'),coroa=$('loop03RodapeCoroaIntegrado');
+ fila.textContent=tipoFila?'Fila '+tipoFila:'';
+ fila.hidden=!tipoFila;
+ coroa.hidden=!noTabuleiro;
+}
 async function atualizarResumo(){
  try{
   const [perfil,pedidos,filas,equipe,motor]=await Promise.all([
@@ -481,6 +501,7 @@ function atualizarIndicadorSelecionadoResumo(){
    ' · '+(pos.local==='FILA'?'Na fila':pos.local==='CENTRO'?'No centro':
     pos.local?.startsWith('VAGA_')?'No tabuleiro':'Em acompanhamento')+
    ' · ID #'+pos.numero):'';
+ atualizarSituacaoRodape();
 }
 // O seletor do primeiro placar e comum as abas Escritorio e Tabuleiro.
 // Nenhuma escolha muda de aba, movimenta a catraca ou filtra o tabuleiro.
@@ -651,6 +672,7 @@ async function atualizarPosicoes(){
   ]);
   const historicos=Array.isArray(dados.pendencias)?dados.pendencias:[];
   const ativas=Array.isArray(motor.minhasPosicoes)?motor.minhasPosicoes:[];
+  atualizarSituacaoRodape(ativas);
   const historicosExtras=historicos.filter(h=>
    !ativas.some(p=>p.prepedidoId&&p.prepedidoId===h.prepedidoId));
   const resumo=document.createElement('p');
