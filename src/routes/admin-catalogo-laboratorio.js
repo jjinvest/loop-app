@@ -69,9 +69,15 @@ function criarAutorizacao({ segredo }) {
       (rotaProduto[1].startsWith('fotos/')&&
        ['image/png','image/jpeg','image/webp'].includes(tipoBinario))
     );
+    // Envio de arte do carrossel AKITEMM: somente URL fixa POST,
+    // mídia binária validada posteriormente (limite 4 MB).
+    const uploadBannerLoja=req.path===
+      '/staging/escritorio-unificado/loja/banner-arquivo'&&
+      req.method==='POST'&&
+      ['image/png','image/jpeg','image/webp'].includes(tipoBinario);
     if (['POST','PATCH','PUT','DELETE'].includes(req.method) &&
         !req.is('application/json') && !uploadImagem && !apagarImagem &&
-        !uploadBanner && !apagarBanner && !uploadProduto) {
+        !uploadBanner && !apagarBanner && !uploadProduto && !uploadBannerLoja) {
       return res.status(415).json({ erro: 'USE_APPLICATION_JSON' });
     }
     next();
