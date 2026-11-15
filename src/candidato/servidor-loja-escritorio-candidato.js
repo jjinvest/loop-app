@@ -790,6 +790,10 @@ function criarAppLojaEscritorioCandidato({banco,repositorioCatalogo,
  // Sandbox independente RECEIVED, sem reversao nem revisao manual.
  // Os arquivos nunca sao publicados em uma rota de arquivos estaticos.
  app.get('/staging/meus-pedidos/:prepedidoId/pdf/:produtoId',(req,res)=>{
+  // Na vitrine comercial REAL nenhuma compra de ensaio pode virar entrega.
+  // Esta rota de homologação continua disponível só nos testes isolados.
+  if(ponteCatalogoReal.ativo)
+   return res.status(503).json({erro:'PDF_COMERCIAL_AGUARDANDO_PAGAMENTO_REAL'});
   const sessao=contas.sessao(req);
   if(!sessao)return res.status(401).json({erro:'SESSAO_AUSENTE'});
   const prepedidoId=req.params.prepedidoId,produtoId=req.params.produtoId;
