@@ -395,9 +395,9 @@ async function main(){
    if(item.largura<=860)await page.locator('#loop03MenuIntegrado').click();
    await page.locator('#abaLinks').click();
    assert.match(await page.locator('#linkLoja').inputValue(),
-    /\/convite\/loja\?ref=dozeletrasab/);
+    /\/loja\/dozeletrasab/);
    assert.match(await page.locator('#linkEscritorio').inputValue(),
-    /\/escritorio\?ref=dozeletrasab/);
+    /\/escritorio\/dozeletrasab/);
    if(item.largura<=860)await page.locator('#loop03MenuIntegrado').click();
    await page.locator('#abaConta').click();
    assert.equal(await page.locator('#perfilCliente').isVisible(),true);
