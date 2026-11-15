@@ -23,9 +23,10 @@ const PRODUTOS=['ROXO','DOURADO','VERDE','CINZA'].map(cor=>({
 (async()=>{
  const banco=new DatabaseSync(':memory:');
  banco.exec('PRAGMA foreign_keys=ON');
+ const senhaOperador='filtro-browser-'+randomBytes(28).toString('hex');
  const contexto=criarAppLojaEscritorioCandidato({
   banco,repositorioCatalogo:catalogoFicticioCheckout(),
-  segredoOperador:'filtro-browser-'+randomBytes(28).toString('hex'),
+  segredoOperador:senhaOperador,
   chaveEmail:randomBytes(32),chaveCifra:randomBytes(32),
   termosVersao:'LAB-FILTROS_BROWSER_TEMPORARIO',
   termosTexto:'Somente teste isolado, sem cobrança, sem conta comercial.'
@@ -53,6 +54,7 @@ const PRODUTOS=['ROXO','DOURADO','VERDE','CINZA'].map(cor=>({
      status:200,contentType:'application/json',headers:{'cache-control':'no-store'}
     };
     const responder=body=>rota.fulfill({...options,body:JSON.stringify(body)});
+    if(p==='/staging/vitrine/loja/comunicados')return rota.continue();
     if(p==='/staging/vitrine/loja/catalogo')return responder({
      produtos,ofertasCompostas:[],catalogoComercialReal:true,checkoutReal:false,
      referenciaLoopCentavos:25000,conviteLoopCheckoutAtivo:false
@@ -153,6 +155,45 @@ const PRODUTOS=['ROXO','DOURADO','VERDE','CINZA'].map(cor=>({
    }));
    assert.ok(geometria.total<=geometria.largura+4,
     'rolagem horizontal indevida no '+dispositivo.nome+': '+JSON.stringify(geometria));
+
+   // A mesma UI de administrador mostra somente a aba escolhida e publica
+   // recados reais no SQLite local, sem tocar em Railway nem em clientes.
+   const admin=await contextoPagina.newPage();
+   const errosAdmin=[];
+   admin.on('pageerror',e=>errosAdmin.push(e.message));
+   await admin.goto(base+'/staging/escritorio-admin',{waitUntil:'domcontentloaded'});
+   assert.equal(await admin.locator('#abasServicosAdmin [role="tab"]').count(),8);
+   await admin.locator('#token').fill(senhaOperador);
+   await admin.locator('#formAcesso button[type="submit"],#formAcesso button').click();
+   await admin.locator('#administracao').waitFor({state:'visible',timeout:12000});
+   assert.equal(await admin.locator('#admin-painel-geral').isVisible(),true);
+   await admin.locator('#admin-aba-produtos').click();
+   assert.equal(await admin.locator('#formProduto').isVisible(),true);
+   assert.equal(await admin.locator('#admin-painel-geral').isVisible(),false);
+   await admin.locator('#admin-aba-mensagens').click();
+   assert.equal(await admin.locator('#formComunicadoAdmin').isVisible(),true);
+   assert.equal(await admin.locator('#formProduto').isVisible(),false);
+   const tituloTeste='Aviso exclusivo AKITEMM '+dispositivo.nome;
+   await admin.locator('#comunicadoCanalAdmin').selectOption('AKITEMM');
+   await admin.locator('#comunicadoFormatoAdmin').selectOption('BANNER');
+   await admin.locator('#comunicadoTituloAdmin').fill(tituloTeste);
+   await admin.locator('#comunicadoCorpoAdmin').fill('Um banner textual de recado, sem produtos.');
+   await admin.locator('#comunicadoEstadoAdmin').selectOption('PUBLICADO');
+   await admin.locator('#comunicadoSalvarAdmin').click();
+   await admin.locator('#comunicadoResultadoAdmin').getByText('PUBLICADO',{exact:false})
+    .waitFor({state:'visible',timeout:12000});
+   await pagina.reload({waitUntil:'domcontentloaded'});
+   await pagina.locator('#conteudoLojaLoop').waitFor({state:'visible'});
+   await pagina.locator('#akitemmSino').click();
+   await pagina.locator('#akitemmNotificacoesConteudo')
+    .getByText(tituloTeste,{exact:false}).waitFor({state:'visible'});
+   const geometriaAdmin=await admin.evaluate(()=>({
+    total:document.documentElement.scrollWidth,largura:window.innerWidth
+   }));
+   assert.ok(geometriaAdmin.total<=geometriaAdmin.largura+4,
+    'painel deve caber na tela '+dispositivo.nome+': '+JSON.stringify(geometriaAdmin));
+   assert.deepEqual(errosAdmin,[],'sem erro JS administrativo em '+dispositivo.nome);
+   await admin.close();
    assert.deepEqual(erros,[],'sem erro JavaScript no '+dispositivo.nome);
    console.log('AKITEMM_FILTROS_'+dispositivo.nome.toUpperCase()+
     '=TODOS_OFERTAS_CINZA_VERDE_DOURADO_ROXO_8_SLOTS_REAIS_SEM_CHECKOUT_OK');
