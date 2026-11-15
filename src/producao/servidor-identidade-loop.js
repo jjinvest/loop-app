@@ -123,6 +123,13 @@ function criarAppIdentidadeLoop({contas,origemHttps,
  };
  // HTML/CSS já aprovados; loja requer a mesma sessão da conta.
  montarInterfaceAprovada(app,{protegerLoja:protegido});
+ // A logo da AKITEMM volta ao acesso de cliente, nunca ao operador.
+ // Na identidade real, /escritorio é a rota canônica da mesma conta.
+ app.get('/minha-conta',(req,res)=>{
+  const raw=typeof req.originalUrl==='string'?req.originalUrl:'';
+  const qs=raw.includes('?')?raw.slice(raw.indexOf('?')):'';
+  return res.redirect(303,'/escritorio'+qs);
+ });
  // Sessão de administrador é completamente separada do login de cliente.
  // Sem credencial e middleware de operador, rotas administrativas não existem.
  if(adminComercial!==null)
