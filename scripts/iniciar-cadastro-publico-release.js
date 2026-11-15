@@ -54,7 +54,9 @@ async function provarPrimeiraCopiaPreparacao(ambiente=process.env){
     chaveCodigo:chave('LOOP_REAL_CHAVE_CODIGO'),
     ...(ambiente.LOOP_REAL_NUCLEO_COMERCIAL_INTERNO==='SIM'?{
      chaveAuditoria:chave('LOOP_REAL_CHAVE_AUDITORIA'),
-     chavePedidos:chave('LOOP_REAL_CHAVE_PEDIDOS')
+     chavePedidos:chave('LOOP_REAL_CHAVE_PEDIDOS'),
+     chaveCotacoes:chave('LOOP_REAL_CHAVE_COTACOES'),
+     chaveOutbox:chave('LOOP_REAL_CHAVE_OUTBOX')
     }:{})
    }
   });
