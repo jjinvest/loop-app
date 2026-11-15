@@ -10,8 +10,31 @@
 <p class="explicacao">Painel operacional conectado ao mesmo banco da loja e do cliente. Missões não criam pagamento, posição, giro nem benefício.</p>
 <section class="painel" id="acesso"><h2>Acesso do operador</h2><form id="formAcesso"><label for="token">Credencial de laboratório</label><input type="password" id="token" required minlength="32" autocomplete="off"><p class="subtexto">A credencial é mantida só nesta aba e nunca salva no navegador.</p><button class="primario">Acessar</button></form></section>
 <section id="administracao" hidden>
-<div class="barra-conta"><span>Operador autenticado · apenas acesso local</span><button type="button" id="sair">Encerrar acesso</button></div>
+<div class="barra-conta"><span>Operador autenticado · acesso protegido</span><button type="button" id="sair">Encerrar acesso</button></div>
+<nav id="abasServicosAdmin" class="abas-servicos-admin" role="tablist" aria-label="Serviços do administrador"></nav>
+<div id="conteudoServicosAdmin" aria-live="off"></div>
 <section class="painel"><div class="linha"><h2>Visão geral</h2><button type="button" id="atualizar">Atualizar</button></div><div id="indicadores" class="indicadores"></div></section>
+<section class="painel" aria-labelledby="tituloComunicadosAdmin">
+<h2 id="tituloComunicadosAdmin">Mensagens e banners de recados</h2>
+<p class="subtexto">Envie recados para o sininho da AKITEMM ou para o sininho do LOOP. Cada canal é independente. Banner de recado é um destaque de texto, não imagem de produto ou banner de compras.</p>
+<form id="formComunicadoAdmin">
+<div class="duas-colunas">
+<label for="comunicadoCanalAdmin">Destinatários
+<select id="comunicadoCanalAdmin" required><option value="AKITEMM">Loja AKITEMM</option><option value="LOOP">Escritório LOOP</option></select></label>
+<label for="comunicadoFormatoAdmin">Apresentação
+<select id="comunicadoFormatoAdmin" required><option value="RECADO">Recado no sininho</option><option value="BANNER">Banner de aviso</option></select></label>
+</div>
+<label for="comunicadoTituloAdmin">Título do recado</label>
+<input id="comunicadoTituloAdmin" maxlength="120" required placeholder="Ex.: Aviso importante">
+<label for="comunicadoCorpoAdmin">Mensagem</label>
+<textarea id="comunicadoCorpoAdmin" rows="4" maxlength="1500" required></textarea>
+<label for="comunicadoEstadoAdmin">Situação
+<select id="comunicadoEstadoAdmin"><option value="RASCUNHO">Salvar rascunho</option><option value="PUBLICADO">Publicar agora</option><option value="ARQUIVADO">Arquivar</option></select></label>
+<div class="linha"><button type="submit" class="primario" id="comunicadoSalvarAdmin">Salvar mensagem</button><button type="button" id="comunicadoNovoAdmin">Nova mensagem</button><button type="button" id="comunicadosAtualizarAdmin">Atualizar lista</button></div>
+<p id="comunicadoResultadoAdmin" role="status" aria-live="polite"></p>
+</form>
+<div id="listaComunicadosAdmin" aria-live="polite"></div>
+</section>
 <section class="painel" aria-labelledby="tituloBannersEscritorioAdmin">
 <details id="bannersEscritorioPainelAdmin">
 <summary id="tituloBannersEscritorioAdmin"><strong>Banners do Escritório Virtual · subir fotos manualmente (4)</strong></summary>
