@@ -29,6 +29,10 @@
   NOME_INVALIDO:'Verifique seu nome.',
   EMAIL_INVALIDO:'Verifique o e-mail informado.',
   SENHA_INVALIDA:'Escolha uma senha de 12 a 128 caracteres.',
+  CONFIRMACAO_SENHA_INVALIDA:'Confirme a senha escolhida.',
+  CPF_INVALIDO:'Confira o CPF informado.',
+  TELEFONE_INVALIDO:'Confira o telefone com DDD.',
+  CONTATO_CADASTRO_INCOMPLETO:'Informe CPF e telefone.'
   DOCUMENTOS_ALTERADOS_RELER:'Documentos atualizados. Leia e aceite a versão atual.',
   CODIGO_INVALIDO:'Código inválido ou expirado.',
   SENHA_NOVA_DEVE_SER_DIFERENTE:'A nova senha deve ser diferente.',
@@ -1126,9 +1130,12 @@
  onForm('formCadastro',async()=>{
   if(!documentos||!$('cadastroTermos').checked||
      !$('cadastroPrivacidade').checked)throw Error('DOCUMENTOS_ALTERADOS_RELER');
+  if($('cadastroSenha').value!==$('cadastroConfirmarSenha').value)
+   throw Error('CONFIRMACAO_SENHA_INVALIDA');
   try{
    const resposta=await requisitar('/cadastrar',{method:'POST',body:{
     nome:$('cadastroNome').value,nick:$('cadastroNick').value,
+    cpf:$('cadastroCpf').value,telefone:$('cadastroTelefone').value,
     email:$('cadastroEmail').value,senha:$('cadastroSenha').value,
     ...(indicadorNick?{indicadorNick}:{}),
     aceiteTermos:true,aceitePrivacidade:true,
@@ -1143,7 +1150,8 @@
    throw e;
   }
   $('login').value=$('cadastroNick').value;
-  $('cadastroSenha').value='';
+  for(const id of ['cadastroSenha','cadastroConfirmarSenha','cadastroCpf',
+   'cadastroTelefone'])$(id).value='';
   mostrarLogin('login');
   dizer('Cadastro concluído'+(indicadorNick?
    ' pelo link de @'+indicadorNick:'')+
