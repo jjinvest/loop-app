@@ -6,6 +6,7 @@
  const $=id=>document.getElementById(id);
  const API='/api/contas';
  let csrf=null,documentos=null,carregando=false,tela='login';
+ let captchaCadastroId=null,captchaObrigatorio=false;
  const ref=new URLSearchParams(location.search).get('ref');
  const indicadorNick=typeof ref==='string'&&/^[A-Za-z]{1,12}$/.test(ref)?
   ref.toLowerCase():null;
@@ -34,6 +35,8 @@
   TELEFONE_INVALIDO:'Confira o telefone com DDD.',
   CONTATO_CADASTRO_INCOMPLETO:'Informe CPF e telefone.',
   DOCUMENTOS_ALTERADOS_RELER:'Documentos atualizados. Leia e aceite a versão atual.',
+  CAPTCHA_INVALIDO:'Confira o código de verificação e tente outro.',
+  CAPTCHA_OCUPADO:'Proteção contra robôs temporariamente ocupada. Atualize o código.',
   CODIGO_INVALIDO:'Código inválido ou expirado.',
   SENHA_NOVA_DEVE_SER_DIFERENTE:'A nova senha deve ser diferente.',
   CADASTRO_INATIVO:'A abertura do cadastro ainda não foi autorizada.',
@@ -1135,16 +1138,38 @@
  }
  function documentosHabilitados(ok){
   $('cadastroTermos').disabled=!ok;
-  $('cadastroPrivacidade').disabled=!ok;
+
   $('formCadastro').querySelector('button[type=submit]').disabled=!ok;
   if(!ok){
    $('cadastroTermos').checked=false;
-   $('cadastroPrivacidade').checked=false;
+
+  }
+ }
+ async function atualizarCaptchaCadastro(){
+  captchaCadastroId=null;
+  $('captchaCadastroResposta').value='';
+  $('captchaCadastroImagem').removeAttribute('src');
+  if(!captchaObrigatorio)return;
+  $('captchaCadastroEstado').textContent='Gerando verificação...';
+  try{
+   const dados=await requisitar('/captcha-cadastro');
+   if(typeof dados.captchaId!=='string'||
+      !/^[a-f0-9]{48}$/.test(dados.captchaId)||
+      typeof dados.captchaImagem!=='string'||
+      !/^data:image\/svg\+xml;base64,[A-Za-z0-9+/=]+$/.test(dados.captchaImagem))
+    throw Error('CAPTCHA_INVALIDO');
+   captchaCadastroId=dados.captchaId;
+   $('captchaCadastroImagem').src=dados.captchaImagem;
+   $('captchaCadastroEstado').textContent='Digite o código exibido. Ele expira em 2 minutos e 30 segundos.';
+  }catch{
+   $('captchaCadastroEstado').textContent='Não foi possível gerar o código. Toque em Outro código.';
   }
  }
  async function carregarDocumentos(){
   if(carregando)return;
   carregando=true;documentos=null;documentosHabilitados(false);
+  captchaCadastroId=null;captchaObrigatorio=false;
+  $('captchaCadastroArea').hidden=true;
   $('textoTermosCadastro').textContent='Consultando termos...';
   $('textoPrivacidadeCadastro').textContent='Consultando política...';
   try{
@@ -1158,7 +1183,11 @@
    $('textoTermosCadastro').textContent=dados.termos.texto;
    $('versaoPrivacidadeCadastro').textContent='Versão: '+dados.privacidade.versao;
    $('textoPrivacidadeCadastro').textContent=dados.privacidade.texto;
-   documentos=dados;documentosHabilitados(true);
+   documentos=dados;
+   captchaObrigatorio=dados.captchaObrigatorio===true;
+   $('captchaCadastroArea').hidden=!captchaObrigatorio;
+   if(captchaObrigatorio)await atualizarCaptchaCadastro();
+   documentosHabilitados(true);
   }catch(e){
    $('textoTermosCadastro').textContent='Termos indisponíveis.';
    $('textoPrivacidadeCadastro').textContent='Política de privacidade indisponível.';
@@ -1217,9 +1246,13 @@
   $('senha').value='';
   painelConta(login);dizer('Bem-vindo ao Escritório LOOP.');
  });
+ $('captchaCadastroAtualizar').addEventListener('click',()=>void atualizarCaptchaCadastro());
  onForm('formCadastro',async()=>{
-  if(!documentos||!$('cadastroTermos').checked||
-     !$('cadastroPrivacidade').checked)throw Error('DOCUMENTOS_ALTERADOS_RELER');
+  if(!documentos||!$('cadastroTermos').checked)
+   throw Error('DOCUMENTOS_ALTERADOS_RELER');
+  if(captchaObrigatorio&&(!captchaCadastroId||
+     !/^[A-Za-z2-9]{6}$/.test($('captchaCadastroResposta').value.trim())))
+   throw Error('CAPTCHA_INVALIDO');
   if($('cadastroSenha').value!==$('cadastroConfirmarSenha').value)
    throw Error('CONFIRMACAO_SENHA_INVALIDA');
   try{
@@ -1231,12 +1264,17 @@
     aceiteTermos:true,aceitePrivacidade:true,
     versaoTermos:documentos.termos.versao,hashTermos:documentos.termos.hash,
     versaoPrivacidade:documentos.privacidade.versao,
-    hashPrivacidade:documentos.privacidade.hash
+    hashPrivacidade:documentos.privacidade.hash,
+    ...(captchaObrigatorio?{
+     captchaId:captchaCadastroId,
+     captchaResposta:$('captchaCadastroResposta').value.trim().toUpperCase()
+    }:{})
    }});
    if(resposta.contaCriada!==true||resposta.pagamentoReal!==false)
     throw Error('OPERACAO_INDISPONIVEL');
   }catch(e){
    if(e.message==='DOCUMENTOS_ALTERADOS_RELER')await carregarDocumentos();
+   if(captchaObrigatorio)await atualizarCaptchaCadastro();
    throw e;
   }
   $('login').value=$('cadastroNick').value;
