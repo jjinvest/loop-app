@@ -12,6 +12,17 @@
 <section id="administracao" hidden>
 <div class="barra-conta"><span>Operador autenticado · apenas acesso local</span><button type="button" id="sair">Encerrar acesso</button></div>
 <section class="painel"><div class="linha"><h2>Visão geral</h2><button type="button" id="atualizar">Atualizar</button></div><div id="indicadores" class="indicadores"></div></section>
+<section class="painel" aria-labelledby="tituloBannersEscritorioAdmin">
+<details id="bannersEscritorioPainelAdmin">
+<summary id="tituloBannersEscritorioAdmin"><strong>Banners do Escritório Virtual · subir fotos manualmente (4)</strong></summary>
+<p class="subtexto">Escolha o banner de 1 a 4, selecione sua imagem JPG, PNG ou WebP (até 4 MB) e clique em <strong>Enviar foto</strong>. A imagem será salva no mesmo banco e aparecerá no Escritório Virtual ao atualizar a página. A apresentação original fica preservada quando o banner estiver sem foto.</p>
+<p class="subtexto">São quatro espaços independentes; cada foto pode ser substituída ou removida. O envio não cria posição, saldo ou movimento no motor.</p>
+<div class="linha"><button type="button" id="bannersEscritorioRecarregarAdmin">Conferir fotos salvas</button>
+<a href="/minha-conta" target="_blank" rel="noopener noreferrer">Abrir Escritório Virtual para conferir</a></div>
+<div id="bannersEscritorioSlotsAdmin" class="banners-escritorio-slots-admin" aria-live="polite"></div>
+<p id="bannersEscritorioResultadoAdmin" role="status" aria-live="polite" class="subtexto">Abra esta seção para visualizar os quatro espaços.</p>
+</details>
+</section>
 <section class="painel" aria-labelledby="tituloPesquisaAdmin">
 <h2 id="tituloPesquisaAdmin">Pesquisa administrativa · mesmo SQLite</h2>
 <p class="subtexto">Consulte clientes, pedidos, produtos e missões por nick, nome ou identificador, inclusive sem pedidos. Consulta protegida, sem operações financeiras.</p>
