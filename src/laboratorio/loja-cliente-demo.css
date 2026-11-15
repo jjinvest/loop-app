@@ -825,3 +825,34 @@ body.akitemm-loja{background:#071018;color:#f0f2f6;font-family:system-ui,-apple-
  }
  .akitemm-loja .akitemm-legenda-cores{max-width:100%;gap:4px 6px}
 }
+/* Molduras pre-montadas do catálogo: posição e cor editorial, sem mercadoria. */
+.akitemm-loja #catalogoLojaLoop > .akitemm-slot-vazio{
+ --ak-slot-cor:#8996a7;
+ border:2px solid var(--ak-slot-cor)!important;
+ background:linear-gradient(160deg,#172430,#0e1822 75%)!important;
+ box-shadow:inset 0 0 18px #0005,0 0 7px color-mix(in srgb,var(--ak-slot-cor),transparent 65%)!important;
+ cursor:default;user-select:none;
+}
+.akitemm-loja #catalogoLojaLoop > .akitemm-slot-roxo{--ak-slot-cor:#bd88f6}
+.akitemm-loja #catalogoLojaLoop > .akitemm-slot-dourado{--ak-slot-cor:#e4bd6b}
+.akitemm-loja #catalogoLojaLoop > .akitemm-slot-verde{--ak-slot-cor:#65cfa0}
+.akitemm-loja #catalogoLojaLoop > .akitemm-slot-cinza{--ak-slot-cor:#a0a9b2}
+.akitemm-loja #catalogoLojaLoop > .akitemm-slot-vazio .akitemm-imagem-produto{
+ border-bottom:1px solid var(--ak-slot-cor);
+ background:linear-gradient(130deg,#1e2d39,#111a23);
+}
+.akitemm-loja #catalogoLojaLoop > .akitemm-slot-vazio .akitemm-slot-icone{
+ display:grid;place-items:center;width:47px;height:47px;
+ border:1px dashed var(--ak-slot-cor);border-radius:50%;
+ color:var(--ak-slot-cor);font-size:28px;font-weight:350;opacity:.8;
+}
+.akitemm-loja #catalogoLojaLoop > .akitemm-slot-vazio .akitemm-dados-produto{
+ align-items:center;justify-content:center;gap:10px;
+ color:#e0e7ec;text-align:center;
+}
+.akitemm-loja #catalogoLojaLoop > .akitemm-slot-vazio .akitemm-dados-produto strong{
+ color:var(--ak-slot-cor);font-size:12px;
+}
+.akitemm-loja #catalogoLojaLoop > .akitemm-slot-vazio .akitemm-dados-produto small{
+ color:#aebbc7;font-size:11px;line-height:1.45;
+}
