@@ -1018,3 +1018,24 @@ body.loop03-logado main>.mensagem-pagina{margin:0 0 .75rem}
  background:linear-gradient(90deg,#c98f3a 0%,#f2d694 47%,#a784c9 78%,transparent 100%);
  border-radius:2px;opacity:.72;
 }
+
+
+/* Os quatro banners do Escritório preservam o layout original.
+   Foto manual vem do mesmo banco; sem foto, a arte aprovada permanece. */
+.cliente-integrado #conteudoResumo .loop03-banner-item{
+ position:relative;overflow:hidden;isolation:isolate;
+}
+.cliente-integrado #conteudoResumo .loop03-banner-foto-manual{
+ display:block;position:absolute;inset:0;width:100%;height:100%;
+ object-fit:contain;background:#0c111c;z-index:2;
+}
+.cliente-integrado #conteudoResumo .loop03-banner-foto-manual[hidden]{
+ display:none!important;
+}
+.cliente-integrado #conteudoResumo .loop03-banner-reserva{
+ background:radial-gradient(ellipse at 40% 25%,#2f3656,transparent 65%),
+  linear-gradient(125deg,#13151e,#1a1328 65%,#15151d);
+}
+.cliente-integrado #conteudoResumo .loop03-banner-reserva .loop03-banner-anuncio-conteudo strong{
+ font-size:clamp(1.9rem,5vw,3.4rem);color:#d7dbe4;
+}
