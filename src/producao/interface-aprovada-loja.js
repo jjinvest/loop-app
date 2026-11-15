@@ -6,7 +6,7 @@
  const informar=msg=>{$('estadoLojaLoop').textContent=msg;};
  // Quando a vitrine real está no domínio principal, o mesmo cookie
  // de operador do gateway permite exibir o + sem duplicar permissões.
- void (async()=>{
+ async function atualizarAtalhoOperadorReal(){
   const atalho=$('akitemmOperadorMais');
   if(!atalho)return;
   try{
@@ -16,9 +16,12 @@
    const d=r.ok?await r.json():null;
    if(d?.operador===true){
     atalho.hidden=false;atalho.style.display='inline-flex';
-   }
-  }catch{}
- })();
+   }else{atalho.hidden=true;atalho.style.display='none';}
+  }catch{atalho.hidden=true;atalho.style.display='none';}
+ }
+ void atualizarAtalhoOperadorReal();
+ addEventListener('pageshow',()=>void atualizarAtalhoOperadorReal());
+ addEventListener('focus',()=>void atualizarAtalhoOperadorReal());
  // Nenhuma operação de compra pode ser ativada por código do navegador
  // enquanto não houver backend comercial com fornecedor e PSP homologados.
  for(const seletor of [
