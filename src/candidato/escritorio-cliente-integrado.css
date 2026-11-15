@@ -1032,6 +1032,14 @@ body.loop03-logado main>.mensagem-pagina{margin:0 0 .75rem}
 .cliente-integrado #conteudoResumo .loop03-banner-foto-manual[hidden]{
  display:none!important;
 }
+/* A imagem inteira é o padrão seguro para artes com texto; quem preferir
+   preencher pode escolher no upload, sem esticar as proporções da foto. */
+.cliente-integrado #conteudoResumo .loop03-banner-foto-manual[data-enquadramento="PREENCHER"]{
+ object-fit:cover;object-position:center center;
+}
+.cliente-integrado #conteudoResumo .loop03-banner-foto-manual[data-enquadramento="INTEIRA"]{
+ object-fit:contain;object-position:center center;
+}
 /* Foto manual sempre ATRAS da moldura dourada. O acabamento fica sobre a
    imagem sem bloquear toques e nao aparece nos banners sem foto. */
 .cliente-integrado #conteudoResumo .loop03-banner-item:has(> .loop03-banner-foto-manual:not([hidden])){
