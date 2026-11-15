@@ -563,6 +563,7 @@ function mp4TrintaSegundos(){
    assert.match(await admin.locator('#pedidos').innerText(),/hom-/);
    await admin.locator('#pedidos')
     .getByRole('button',{name:'Conferir pré-adesão'}).first().click();
+   await abrirControleAdmin('#preAdesaoStatus');
    await admin.locator('#preAdesaoStatus')
     .filter({hasText:/Revisão pendente/}).waitFor();
    assert.match(await admin.locator('#preAdesaoId').inputValue(),/^hom-/);
