@@ -24,6 +24,8 @@ async function desenhar(dados,{motor={minhasPosicoes:[]},falha=false,somenteMinh
  const context={
   document:{createElement:elemento,createTextNode:texto=>({tag:'text',textContent:texto})},posicaoSelecionadaMotor:null,
   somentePosicoesPeloQuadrado:somenteMinhas,
+  // A grade tem teste isolado; o rodape e validado em contrato visual.
+  atualizarSituacaoRodape(){},
   $:id=>id==='posicoesPainel'?area:id==='loop03NumeroIntegrado'?numero:null,
   requisitar:async rota=>{
    if(falha)throw Error('SQLITE_INDISPONIVEL');
