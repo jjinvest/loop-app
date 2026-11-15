@@ -37,7 +37,7 @@ const TABELAS=Object.freeze([
 // Presente em cadastros novos; backups anteriores à migração permanecem recuperáveis.
 const TABELAS_CONTATO=Object.freeze([
  'loop_real_contatos_cadastro','loop_real_telefones_legados',
- 'loop_real_migracoes_preview'
+ 'loop_real_migracoes_preview','loop_real_aceites_documentos'
 ]);
 // Administração, cotações, pedidos, custo congelado e outbox são protegidos
 // juntos quando coexistem no MESMO SQLite. Liquidação PSP/banco e tributos
