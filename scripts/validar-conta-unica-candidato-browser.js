@@ -258,14 +258,23 @@ function mp4TrintaSegundos(){
    assert.equal(await page.locator('#painelIdentidadeTeste').evaluate(el=>
     el.closest('#conteudoConta')!==null),true);
    assert.equal(await page.locator('#termosCpfTexto').isHidden(),true);
-   await page.locator('#cpfTeste').fill(
-    item.nome==='pc'?'529.982.247-25':'111.444.777-35');
-   await page.locator('#aceiteCpfTeste').check();
-   await page.locator('#formCpfTeste button[type=submit]').click();
-   await page.locator('#situacaoCpfTeste')
-    .filter({hasText:/CPF fictício registrado/}).waitFor();
-   assert.equal(await page.locator('#formCpfTeste').isHidden(),true);
-   assert.equal(await page.locator('#cpfTeste').inputValue(),'');
+   // Se o CPF já entrou pelo cadastro, não pedir o mesmo dado outra vez.
+   // Se a conta é legada, validar o fluxo antigo de confirmação individual.
+   if(await page.locator('#formCpfTeste').isVisible()){
+    await page.locator('#cpfTeste').fill(
+     item.nome==='pc'?'529.982.247-25':'111.444.777-35');
+    await page.locator('#aceiteCpfTeste').check();
+    await page.locator('#formCpfTeste button[type=submit]').click();
+    await page.locator('#situacaoCpfTeste')
+     .filter({hasText:/CPF fictício registrado/}).waitFor();
+    assert.equal(await page.locator('#formCpfTeste').isHidden(),true);
+    assert.equal(await page.locator('#cpfTeste').inputValue(),'');
+   }else{
+    const resumo=await page.request.get(base+'/staging/contas/resumo-rodape');
+    assert.equal(resumo.status(),200);
+    assert.equal((await resumo.json()).cpfConfirmado,true,
+     'formulario CPF so pode ficar oculto com identidade já cadastrada');
+   }
    await abrirAba('#abaResumo');
    await page.locator('#conteudoResumo').waitFor({state:'visible'});
    assert.equal(await page.locator('#painelIdentidadeTeste').isHidden(),true);
@@ -283,7 +292,7 @@ function mp4TrintaSegundos(){
    await lojaPrimeiro.locator('#statusPedidoLoja').filter({hasText:/Pedido hom-/}).waitFor();
    await lojaPrimeiro.close();
    await abrirAba('#abaMeusPedidos');
-   await page.locator('#atualizarPedidos').click();
+   await abrirAba('#abaMeusPedidos');
    await page.locator('#listaPedidos article.pedido').first().waitFor();
    assert.equal(await page.locator('#listaPedidos article.pedido').count(),1);
    assert.equal(await page.locator('#listaPedidos')
@@ -366,7 +375,7 @@ function mp4TrintaSegundos(){
     })
    });
    assert.equal(inscricao.status,201,await inscricao.text());
-   await page.locator('#atualizarEquipe').click();
+   await abrirAba('#abaEquipe');
    const indicado=page.locator('#listaEquipe article.loop03-rede-pessoa');
    await indicado.first().waitFor();
    assert.equal(await indicado.count(),1);
@@ -655,7 +664,7 @@ function mp4TrintaSegundos(){
    assert.ok(configAdmin.revisao>=1);
    await admin.screenshot({path:path.join(__dirname,'../artifacts',
     'escritorio-admin-candidato-'+item.nome+'.png'),fullPage:true});
-   await page.locator('#atualizarPedidos').click();
+   await abrirAba('#abaMeusPedidos');
    await page.locator('#minhaPreviaFilas')
     .filter({hasText:/Registros anteriores:/}).waitFor();
    await page.locator('#minhasPreAdesoes')
@@ -734,7 +743,7 @@ function mp4TrintaSegundos(){
    await lojaCotacao.locator('#registrarPedidoLoja').click();
    await lojaCotacao.locator('#statusPedidoLoja').filter({hasText:/Pedido hom-/}).waitFor();
    await lojaCotacao.close();
-   await page.locator('#atualizarPedidos').click();
+   await abrirAba('#abaMeusPedidos');
    await page.locator('#listaPedidos article.pedido').nth(1).waitFor();
    assert.equal(await page.locator('#listaPedidos article.pedido').count(),2);
    assert.match(await page.locator('#listaPedidos').innerText(),/R\$\s?198,00/);
@@ -879,7 +888,7 @@ function mp4TrintaSegundos(){
     'vitrine-aprovada-candidato-'+item.nome+'.png'),fullPage:true});
    await loja.close();
    await abrirAba('#abaMeusPedidos');
-   await page.locator('#atualizarPedidos').click();
+   await abrirAba('#abaMeusPedidos');
    await page.locator('#listaPedidos article.pedido').nth(2).waitFor();
    assert.equal(await page.locator('#listaPedidos article.pedido').count(),3);
    assert.deepEqual(failures,[]);
