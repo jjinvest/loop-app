@@ -6,6 +6,7 @@ const express=require('express');
 const path=require('node:path');
 const {createHash}=require('node:crypto');
 const {CaptchaCadastroSQLite}=require('../shared/captcha-cadastro-sqlite');
+const {CaptchaLoginSQLite}=require('../shared/captcha-login-sqlite');
 const {ContaUnicaCandidataSQLite,COOKIE,DURACAO_MS}=
  require('../domain/conta-unica-candidata-sqlite');
 const {TitularidadeCpfTermosCandidato}=
@@ -94,6 +95,9 @@ function criarAppLojaEscritorioCandidato({banco,repositorioCatalogo,
  const captcha=captchaCadastroObrigatorio?new CaptchaCadastroSQLite({
   banco,segredo:captchaSegredo,contexto:'PREVIA'
  }):null;
+ const captchaLogin=new CaptchaLoginSQLite({
+  banco,segredo:chaveEmail,contexto:'PREVIA'
+ });
  const fotoPerfil=new FotoPerfilCandidatoSQLite({banco});
  const equipe=new EquipeCandidataSQLite({banco,
   consultarTelefoneAutorizado:args=>contas.telefoneAutorizadoParaIndicador(args)
@@ -379,15 +383,28 @@ function criarAppLojaEscritorioCandidato({banco,repositorioCatalogo,
    return res.status(503).json({erro:'CADASTRO_INDISPONIVEL'});
   }
  });
+ app.get('/staging/contas/captcha-login',(_req,res)=>{
+  try{return res.set('Cache-Control','no-store').json(captchaLogin.emitir());}
+  catch{return res.status(429).json({erro:'CAPTCHA_OCUPADO'});}
+ });
  app.post('/staging/contas/entrar',async(req,res)=>{
   if(!req.is('application/json'))
    return res.status(415).json({erro:'JSON_OBRIGATORIO'});
   const body=req.body;
   if(!body||Array.isArray(body)||typeof body!=='object'||
-     Object.keys(body).sort().join(',')!=='nick,senha')
+     !['nick,senha',
+      'captchaId,captchaResposta,nick,senha'].includes(Object.keys(body).sort().join(',')))
    return res.status(400).json({erro:'CAMPOS_INVALIDOS'});
   try{
-   const x=await contas.entrar(body);
+   captchaLogin.verificarAntes(body.nick,body);
+  }catch(e){
+   return res.status(403).json({
+    erro:e.codigo||'CAPTCHA_INVALIDO',captchaObrigatorio:true
+   });
+  }
+  try{
+   const x=await contas.entrar({nick:body.nick,senha:body.senha});
+   captchaLogin.concluirSucesso(body.nick);
    res.set('Set-Cookie',cookie(x.token));
    return res.json({titularId:x.titularId,nick:x.nick,
     csrf:x.csrf,expiraEm:x.expiraEm,
@@ -397,7 +414,9 @@ function criarAppLojaEscritorioCandidato({banco,repositorioCatalogo,
     return res.status(429).json({erro:e.codigo});
    if(e.codigo==='CONTA_TEMPORARIAMENTE_BLOQUEADA')
     return res.status(429).json({erro:e.codigo});
-   return res.status(401).json({erro:'CREDENCIAIS_INVALIDAS'});
+   try{captchaLogin.registrarErro(body.nick);}
+   catch{return res.status(429).json({erro:'CAPTCHA_OCUPADO'});}
+   return res.status(401).json({erro:'CREDENCIAIS_INVALIDAS',captchaObrigatorio:true});
   }
  });
  // Solicitação anônima: nunca revela se o e-mail pertence a uma conta.
