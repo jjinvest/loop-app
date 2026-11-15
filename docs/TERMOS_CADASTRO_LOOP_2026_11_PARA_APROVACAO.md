@@ -1,8 +1,8 @@
 # Termos de Uso — Cadastro e convites LOOP 3.0
 **Versão proposta:** LOOP-TERMOS-CADASTRO-2026-11-v1
-**Status:** MINUTA PARA APROVAÇÃO DO RESPONSÁVEL. NÃO PUBLICAR COMO APROVADA.
+**Escopo da versão:** cadastro e convites, sem habilitar transações comerciais, créditos ou pagamentos.
 
-**Operação e atendimento:** LOOP 3.0 (Escritório Virtual) e loja AKITEMM (Aqui Tem), com atendimento LOOP em jjinvest2024oficial@gmail.com e atendimento da loja AKITEMM em akitemmoficiall@gmail.com. **A identificação formal do responsável/controlador e os dados cadastrais aplicáveis devem ser inseridos e conferidos antes da publicação.**
+**Responsável pelo serviço digital nesta etapa de cadastro:** Jonathan Vilela da Silva, pessoa natural. Identificação dos serviços: LOOP 3.0 (Escritório Virtual) e AKITEMM (Aqui Tem). Atendimento LOOP: jjinvest2024oficial@gmail.com. Atendimento da loja: akitemmoficiall@gmail.com. Nenhuma informação deste documento constitui comprovação de situação cadastral ativa de empresa ou autorização para atividade de pagamento.
 
 ## 1. Escopo
 Estes Termos disciplinam a criação de conta pessoal no LOOP 3.0 e o uso dos links de convite. O cadastro compartilha a identidade de acesso entre o Escritório Virtual LOOP e a loja AKITEMM. A conta é individual; o titular deve fornecer dados próprios e verdadeiros, proteger sua senha e manter seus meios de contato atualizados.
@@ -25,4 +25,4 @@ Contas legítimas criadas antes da ativação definitiva podem ter identidade, s
 ## 7. Atendimento, atualizações e vigência
 Dúvidas e solicitações podem ser enviadas ao e-mail oficial do LOOP. Alterações relevantes dos Termos serão apresentadas com versão atualizada e nova manifestação de aceite quando necessário. Estes Termos não afastam direitos legais do consumidor ou do titular de dados.
 
-**A publicação desta versão exige a identificação formal do operador e a aprovação do responsável pelo LOOP 3.0.**
+**Esta versão se aplica exclusivamente ao cadastro, acesso e convites. Operações financeiras continuam indisponíveis até habilitação própria.**
