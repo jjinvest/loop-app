@@ -209,8 +209,16 @@ async function main(){
    await cadastro.locator('#cadastroConfirmarSenha').fill('SenhaDoEnsaio2026!');
    await cadastro.locator('#cadastroTelefone').fill('21988887777');
    await cadastro.locator('#cadastroTermos').waitFor({state:'attached'});
+   await cadastro.locator('#documentosCadastroDetalhes').waitFor({state:'attached'});
+   assert.equal(await cadastro.locator('#cadastroTermos').count(),1);
    await cadastro.locator('#cadastroTermos').check();
-   await cadastro.locator('#cadastroPrivacidade').check();
+   if(await cadastro.locator('#captchaCadastroArea').isVisible()){
+    const codigo=await cadastro.locator('#captchaCadastroImagem').evaluate(img=>{
+     const svg=atob(img.src.split(',')[1]);
+     return [...svg.matchAll(/<text[^>]*>([A-Z0-9])</g)].map(x=>x[1]).join('');
+    });
+    await cadastro.locator('#captchaCadastroResposta').fill(codigo);
+   }
    await cadastro.locator('#formCadastro button[type=submit]').click();
    await cadastro.locator('#painelLogin').waitFor({state:'visible'});
    assert.equal(contas.listarIndicados(cliente.titularId).total,
