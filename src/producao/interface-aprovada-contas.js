@@ -32,7 +32,7 @@
   CONFIRMACAO_SENHA_INVALIDA:'Confirme a senha escolhida.',
   CPF_INVALIDO:'Confira o CPF informado.',
   TELEFONE_INVALIDO:'Confira o telefone com DDD.',
-  CONTATO_CADASTRO_INCOMPLETO:'Informe CPF e telefone.'
+  CONTATO_CADASTRO_INCOMPLETO:'Informe CPF e telefone.',
   DOCUMENTOS_ALTERADOS_RELER:'Documentos atualizados. Leia e aceite a versão atual.',
   CODIGO_INVALIDO:'Código inválido ou expirado.',
   SENHA_NOVA_DEVE_SER_DIFERENTE:'A nova senha deve ser diferente.',
