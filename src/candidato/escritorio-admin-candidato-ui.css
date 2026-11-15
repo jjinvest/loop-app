@@ -36,7 +36,7 @@
 .config-loja-admin>summary:focus-visible{outline:2px solid #d0ac64;outline-offset:2px}
 .config-loja-admin form{display:grid;gap:11px;margin-top:13px}
 .config-loja-admin h4{margin:14px 0 2px;color:#edcf92}
-.config-loja-admin input,.config-loja-admin textarea{
+.config-loja-admin input,.config-loja-admin textarea,.config-loja-admin select{
  box-sizing:border-box;width:100%;min-width:0;max-width:100%;
 }
 .config-loja-admin #configBannersAdmin{display:grid;gap:10px}
