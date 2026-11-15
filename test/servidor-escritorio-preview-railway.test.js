@@ -55,7 +55,7 @@ async function desafioLogin(x){
  assert.equal(r.status,200);
  const p=await r.json();
  const svg=Buffer.from(p.captchaImagem.split(',')[1],'base64').toString();
- const resposta=[...svg.matchAll(/<text\s[^>]*>([A-Z0-9])<\/text>/g)]
+ const resposta=[...svg.matchAll(/<text[^>]*>([A-Z0-9])</g)]
   .map(z=>z[1]).join('');
  assert.equal(resposta.length,6);
  return {captchaId:p.captchaId,captchaResposta:resposta};
