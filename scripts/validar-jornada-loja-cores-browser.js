@@ -150,10 +150,23 @@ const png=Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAIAAAACCAIAAAD91JpzAAAAEklEQVR4n
    await page.goto(base+'/staging/loja',{waitUntil:'domcontentloaded'});
    await page.locator('#catalogoLojaLoop article.produto-loja-loop').first()
     .waitFor({state:'visible'});
-   // Primeira pagina com doze produtos, mais um PDF legado e paginacao funcional.
-   assert.equal(await page.locator('#catalogoLojaLoop article.produto-loja-loop').count(),12);
-   assert.ok(await page.locator('#akitemmCarregarMais').isVisible());
-   await page.locator('#akitemmCarregarMais').click();
+   // Quantidade inicial aprovada: 8 itens PC; 4 itens celular.
+   const inicial=device.nome==='pc'?8:4;
+   assert.equal(await page.locator('#catalogoLojaLoop article.produto-loja-loop').count(),inicial);
+   const cols=await page.locator('#catalogoLojaLoop').evaluate(el=>
+    getComputedStyle(el).gridTemplateColumns.split(' ').length);
+   assert.equal(cols,device.nome==='pc'?4:2);
+   const legenda=await page.locator('.akitemm-legenda-cores').evaluate(el=>{
+    const caixas=[...el.querySelectorAll('[data-akitemm-cor]')].map(x=>x.getBoundingClientRect());
+    return {cols:getComputedStyle(el).gridTemplateColumns.split(' ').length,
+     primeira:Math.abs(caixas[0].top-caixas[1].top)<2,
+     segunda:Math.abs(caixas[2].top-caixas[3].top)<2,
+     sequencia:caixas[2].top>caixas[0].top};
+   });
+   assert.equal(legenda.cols,2);
+   assert.ok(legenda.primeira&&legenda.segunda&&legenda.sequencia);
+   for(let i=0;i<4&&await page.locator('#akitemmCarregarMais').isVisible();i++)
+    await page.locator('#akitemmCarregarMais').click();
    assert.equal(await page.locator('#catalogoLojaLoop article.produto-loja-loop').count(),13);
    await page.evaluate(()=>window.scrollTo(0,document.body.scrollHeight));
    await page.evaluate(()=>window.scrollTo(0,0));
