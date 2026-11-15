@@ -33,13 +33,19 @@ function validarSegredos({senhaAcesso,segredoRaiz}){
 }
 function criarGateway({portaInterna,senhaAcesso,senhaAdmin,segredoOperador,
  validarNickIndicador=()=>false,permitirWebhookSandbox=false,
- permitirOrigemHttpLoopback=false}={}){
+ permitirOrigemHttpLoopback=false,
+ publicarCadastroReal=false,urlIdentidadeReal=null}={}){
  if(!Number.isSafeInteger(portaInterna)||portaInterna<1||portaInterna>65535||
     typeof senhaAcesso!=='string'||senhaAcesso.length<24||
     typeof segredoOperador!=='string'||segredoOperador.length<32||
     typeof senhaAdmin!=='string'||senhaAdmin.length<24||
     senhaAdmin===senhaAcesso)
   falha('GATEWAY_PREVIA_INVALIDO');
+ if(publicarCadastroReal===true&&(
+   typeof urlIdentidadeReal!=='string'||
+   !/^http:\/\/[a-z0-9-]+\.railway\.internal(?::[0-9]{2,5})?\/internal\/loop\/tabuleiro$/.test(urlIdentidadeReal)))
+  falha('IDENTIDADE_REAL_PRIVADA_NAO_CONFIGURADA');
+ const realAlvo=publicarCadastroReal?new URL(urlIdentidadeReal):null;
  const backend='127.0.0.1:'+portaInterna;
  const sessaoNome='akitemm_preview_access';
  const indicacaoCookie='akitemm_preview_ref';
@@ -123,6 +129,60 @@ function criarGateway({portaInterna,senhaAcesso,senhaAdmin,segredoOperador,
   let url;
   try{url=new URL(req.url,'http://gateway.invalid');}
   catch{return negar(400,'Requisição inválida');}
+  // O site público continua no mesmo domínio. Somente os caminhos
+  // de IDENTIDADE e seus assets são proxied ao serviço real com volume
+  // independente. A loja anterior permanece intacta para usuários antigos.
+  if(publicarCadastroReal){
+   const redirect=req.method==='GET'&&url.pathname.match(
+    /^\/(escritorio|loja)\/([A-Za-z]{1,12})$/
+   );
+   if(redirect){
+    const nick=redirect[2];
+    if(!validarNickIndicador(nick))
+     return negar(404,'Link de indicação inexistente');
+    res.writeHead(303,{...cabecalhosBase,
+     Location:'/cadastro-real?ref='+encodeURIComponent(nick)+
+      (redirect[1]==='loja'?'&origem=loja':'')});
+    return res.end();
+   }
+   const temSessaoReal=/(?:^|;\s*)loop_real_s=[a-f0-9]{64}(?:;|$)/
+    .test(req.headers.cookie||'');
+   const realPath=url.pathname==='/cadastro-real'||
+    url.pathname.startsWith('/identidade/assets/')||
+    url.pathname.startsWith('/api/')||
+    url.pathname==='/convite/loja'||
+    (url.pathname==='/loja'&&temSessaoReal);
+   if(realPath){
+    // O proxy não aceita redirecionamentos arbitrários, nem URLs
+    // externas. Port/hostname resultam apenas da rede privada Railway.
+    const rota=url.pathname==='/cadastro-real'?
+     '/minha-conta'+url.search:req.url;
+    const headers={...req.headers,
+     host:realAlvo.host};
+    for(const k of Object.keys(headers))
+     if(k.startsWith('x-forwarded-')||['forwarded','proxy-authorization',
+      'connection','transfer-encoding','authorization'].includes(k))
+      delete headers[k];
+    const upstream=http.request({
+     hostname:realAlvo.hostname,port:Number(realAlvo.port||80),
+     method:req.method,path:rota,headers,timeout:45000
+    },resp=>{
+     const h={...resp.headers,...cabecalhosBase};
+     delete h['transfer-encoding'];
+     delete h['connection'];
+     res.writeHead(resp.statusCode||502,h);
+     resp.pipe(res);
+    });
+    upstream.on('timeout',()=>upstream.destroy());
+    upstream.on('error',()=>{
+     if(!res.headersSent)negar(502,'Identidade real temporariamente indisponível');
+     else res.destroy();
+    });
+    req.on('aborted',()=>upstream.destroy());
+    req.pipe(upstream);
+    return;
+   }
+  }
   // Navegadores consultam o favicon da loja automaticamente;
   // um desafio Basic neste recurso provoca janela de senha extra.
   if((req.method==='GET'||req.method==='HEAD')&&url.pathname==='/favicon.ico'){
@@ -484,7 +544,11 @@ async function iniciar({env=process.env}={}){
   senhaAcesso,senhaAdmin:env.LOOP_PREVIEW_SENHA_ADMIN,
   segredoOperador:tokenOperador,
   validarNickIndicador:nick=>c.equipe.existeNick(nick),
-  permitirWebhookSandbox:sandboxAtivo});
+  permitirWebhookSandbox:sandboxAtivo,
+  publicarCadastroReal:env.LOOP_PREVIEW_PUBLICO_CADASTRO_REAL==='SIM',
+  urlIdentidadeReal:env.LOOP_PREVIEW_PUBLICO_CADASTRO_REAL==='SIM'?
+   env.LOOP_PREVIEW_URL_TABULEIRO_REAL:null
+ });
  const agendador=autoAtivo?criarAgendadorConciliacaoSandbox({
   executar:c.executarConciliacaoSandbox,limite:20,intervaloMs:30000,
   onErro:codigo=>process.stderr.write('LOOP_CONCILIACAO_ENSAIO='+codigo+'\\n')
