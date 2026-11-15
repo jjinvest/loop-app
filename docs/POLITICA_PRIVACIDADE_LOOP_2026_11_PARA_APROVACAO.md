@@ -1,8 +1,8 @@
 # Política de Privacidade — Cadastro LOOP 3.0 / AKITEMM
 **Versão proposta:** LOOP-PRIVACIDADE-CADASTRO-2026-11-v1
-**Status:** MINUTA PARA APROVAÇÃO DO RESPONSÁVEL. NÃO PUBLICAR COMO APROVADA.
+**Escopo da versão:** tratamento de dados de cadastro e indicação, sem operações financeiras.
 
-**Operação:** LOOP 3.0, com loja AKITEMM. Canal de privacidade e atendimento do LOOP: jjinvest2024oficial@gmail.com. Canal de atendimento da loja: akitemmoficiall@gmail.com. **A razão social/nome do controlador e identificação legal aplicável devem ser conferidos e incluídos antes da publicação.**
+**Controlador de dados para a etapa de cadastro:** Jonathan Vilela da Silva, pessoa natural responsável pelas decisões sobre o tratamento de dados na plataforma digital LOOP 3.0 / AKITEMM. Contato para privacidade e direitos dos titulares: jjinvest2024oficial@gmail.com. Atendimento da loja: akitemmoficiall@gmail.com. O cadastro não habilita pagamentos, saques ou compras.
 
 ## 1. Dados tratados
 No cadastro e no funcionamento da conta podem ser tratados nome, nick, telefone, e-mail, CPF quando solicitado, senha protegida por derivação criptográfica, confirmações de e-mail, tentativas de acesso, cookies de sessão, versões de Termos/Política aceitas, data/hora dos registros, origem do convite e vínculo entre indicador e indicado. Dados necessários à prevenção de fraude, auditoria e continuidade podem ser mantidos em registros técnicos minimizados.
@@ -25,4 +25,4 @@ Os dados são conservados enquanto necessários para manutenção da conta, cump
 ## 7. Cadastros anteriores e atualização da política
 Registros legítimos feitos antes da abertura definitiva podem ser migrados com seus vínculos e datas, mediante controles técnicos e sem importar movimentações financeiras simuladas. **O aceite de uma versão de ensaio não substitui automaticamente o aceite da Política definitiva.** Alterações relevantes serão identificadas por versão e comunicadas aos usuários quando cabível.
 
-**A publicação desta versão exige a identificação formal do controlador, validação da operação de dados e aprovação do responsável.**
+**Esta versão cobre exclusivamente criação/uso da conta, comunicação, proteção de dados e indicação. O titular será informado das atualizações relevantes em nova versão.**
