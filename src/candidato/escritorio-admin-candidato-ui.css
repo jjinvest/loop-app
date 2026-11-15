@@ -101,3 +101,21 @@
 #bannersEscritorioSlotsAdmin .banners-escritorio-item-admin small{
  overflow-wrap:anywhere;color:#e7c38b;
 }
+
+/* Navegação operacional, sem redesenhar componentes aprovados. */
+.abas-servicos-admin{display:flex;gap:6px;overflow-x:auto;max-width:100%;
+ padding:8px 0 12px;margin:10px 0 18px;scrollbar-width:thin}
+.abas-servicos-admin button{flex:0 0 auto;white-space:nowrap;min-height:44px;
+ border:1px solid #877049;border-radius:7px;background:#25231f;color:#eae0cd;
+ padding:10px 14px;font:inherit;font-weight:650}
+.abas-servicos-admin button[aria-selected="true"]{background:#d5ad5c;color:#171510}
+.abas-servicos-admin button:focus-visible{outline:3px solid #f5cf7c;outline-offset:2px}
+#conteudoServicosAdmin>[hidden]{display:none!important}
+#conteudoServicosAdmin>[data-admin-aba]{min-width:0;max-width:100%}
+#listaComunicadosAdmin{display:grid;gap:10px;margin:15px 0}
+#formComunicadoAdmin{display:grid;gap:10px}
+#formComunicadoAdmin input,#formComunicadoAdmin textarea{width:100%;max-width:100%}
+@media(max-width:520px){
+ .abas-servicos-admin{gap:5px}
+ .abas-servicos-admin button{padding:9px 11px;font-size:.88rem}
+}
