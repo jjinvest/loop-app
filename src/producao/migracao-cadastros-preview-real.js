@@ -61,7 +61,7 @@ function exportarPreview({banco,contas}={}){
  ].join(' ')).all();
  if(rows.length>10000)erro('MIGRACAO_CAPACIDADE_EXCEDIDA');
  const contasExportadas=rows.map(r=>{
-  if(!ID.test(r.id)||!HEX.test(r.senha_salt)||!H128.test(r.senha_hash)||
+  if(!ID.test(r.id)||!/^[a-f0-9]{32}$/.test(r.senha_salt)||!H128.test(r.senha_hash)||
      !HEX.test(r.termos_hash)||!Number.isSafeInteger(r.criado_em)||
      r.criado_em<=0)erro('MIGRACAO_CADASTRO_INVALIDO');
   const nome=contas.perfil(r.id).nome;
@@ -140,7 +140,7 @@ function importarNoReal({banco,payload,chaveEmail,chaveCifra,agora=()=>Date.now(
   if(!ID.test(x.id)||!NICK.test(x.nick)||ids.has(x.id)||
      typeof x.nome!=='string'||x.nome.length<2||
      typeof x.email!=='string'||!/^([^\s@<>]+)@([^\s@<>]+)$/.test(x.email)||
-     !HEX.test(x.senhaSalt)||!H128.test(x.senhaHash)||
+     !/^[a-f0-9]{32}$/.test(x.senhaSalt)||!H128.test(x.senhaHash)||
      !HEX.test(x.termosHash)||typeof x.termosVersao!=='string'||
      x.termosVersao.length>90||!Number.isSafeInteger(x.criadoEm)||
      x.criadoEm<=0||!(x.telefone===null||
