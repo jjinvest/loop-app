@@ -511,6 +511,107 @@ $('formOfertasCompostasAdmin').addEventListener('submit',async e=>{
   $('resultadoOfertasCompostasAdmin').textContent='Pacote não salvo: '+err.message;
  }finally{botao.disabled=false;}
 });
+// Quatro fotos dos banners do Escritório. Só o operador autenticado
+// usa este painel: upload binário manual e controle otimista de revisão.
+const urlsTemporariasBanners=[];
+let carregandoBannersEscritorio=false;
+async function gerenciarBannerFotoAdmin(slot,arquivo,revisao,remover=false){
+ if(!auth)throw Error('Entre no painel administrativo primeiro.');
+ if(!remover&&(!arquivo||!['image/jpeg','image/png','image/webp'].includes(arquivo.type)||
+   arquivo.size<40||arquivo.size>4*1024*1024))
+  throw Error('Escolha JPG, PNG ou WebP com até 4 MB.');
+ const response=await fetch(
+  '/staging/escritorio-unificado/banners-escritorio/'+slot+'/imagem',{
+   method:remover?'DELETE':'PUT',credentials:'same-origin',
+   headers:{Authorization:'Bearer '+auth,
+    'X-Banner-Revisao-Esperada':String(revisao),
+    ...(!remover?{'Content-Type':arquivo.type}:{})},
+   ...(!remover?{body:arquivo}:{})
+  });
+ const dados=await response.json().catch(()=>({}));
+ if(!response.ok)throw Error(dados.erro||'FALHA_AO_SALVAR_BANNER');
+ return dados;
+}
+async function miniaturaBannerAdmin(slot,img){
+ if(!auth)return;
+ const response=await fetch(
+  '/staging/escritorio-unificado/banners-escritorio/'+slot+'/imagem',{
+   credentials:'same-origin',cache:'no-store',
+   headers:{Authorization:'Bearer '+auth}
+  });
+ if(!response.ok)return;
+ const foto=await response.blob();
+ if(!['image/jpeg','image/png','image/webp'].includes(foto.type))return;
+ const url=URL.createObjectURL(foto);
+ urlsTemporariasBanners.push(url);
+ if(img.isConnected){img.src=url;img.hidden=false;}
+}
+async function atualizarBannersEscritorioAdmin(){
+ if(carregandoBannersEscritorio)return;
+ carregandoBannersEscritorio=true;
+ const estado=$('bannersEscritorioResultadoAdmin');
+ const area=$('bannersEscritorioSlotsAdmin');
+ estado.textContent='Consultando os quatro banners salvos...';
+ try{
+  const dados=await api('/banners-escritorio');
+  if(dados.quantidadeMaxima!==4||!Array.isArray(dados.slots)||
+    dados.slots.length!==4)throw Error('BANNERS_RESPOSTA_INVALIDA');
+  for(const url of urlsTemporariasBanners.splice(0))URL.revokeObjectURL(url);
+  area.replaceChildren();
+  for(const b of dados.slots){
+   if(!Number.isSafeInteger(b.slot)||b.slot<1||b.slot>4)throw Error('SLOT_INVALIDO');
+   const secao=elem('section');secao.className='banners-escritorio-item-admin';
+   secao.append(elem('h4','Banner '+b.slot));
+   const foto=elem('img');foto.hidden=true;
+   foto.alt='Foto atual do banner '+b.slot;
+   foto.loading='lazy';
+   secao.append(foto);
+   secao.append(elem('p',b.temImagem?
+    'Foto cadastrada · revisão '+b.revisao:
+    'Sem foto · permanece a apresentação padrão.'));
+   const input=elem('input');input.type='file';
+   input.accept='image/jpeg,image/png,image/webp';
+   input.id='bannerArquivoAdmin'+b.slot;
+   const rotulo=elem('label','Selecionar foto do banner '+b.slot);
+   rotulo.htmlFor=input.id;rotulo.append(input);secao.append(rotulo);
+   const botoes=elem('div');botoes.className='linha';
+   const enviar=elem('button','Enviar foto');enviar.type='button';
+   const apagar=elem('button','Remover foto');apagar.type='button';
+   apagar.disabled=!b.temImagem;
+   const aviso=elem('small');aviso.setAttribute('role','status');
+   const acionar=async remover=>{
+    const arquivo=input.files?.[0];
+    if(!remover&&!arquivo){
+     aviso.textContent='Selecione uma imagem primeiro.';return;
+    }
+    enviar.disabled=true;apagar.disabled=true;
+    aviso.textContent=remover?'Removendo a foto...':'Enviando e salvando a foto...';
+    try{
+     await gerenciarBannerFotoAdmin(b.slot,arquivo,b.revisao,remover);
+     await atualizarBannersEscritorioAdmin();
+     estado.textContent=remover?'Foto removida do banner '+b.slot+'.':
+      'Foto do banner '+b.slot+' salva. Abra o Escritório Virtual para conferir.';
+    }catch(e){
+     aviso.textContent='Falha: '+e.message+'. Atualize os banners e tente novamente.';
+     enviar.disabled=false;apagar.disabled=!b.temImagem;
+    }
+   };
+   enviar.addEventListener('click',()=>void acionar(false));
+   apagar.addEventListener('click',()=>void acionar(true));
+   botoes.append(enviar,apagar);secao.append(botoes,aviso);area.append(secao);
+   if(b.temImagem)void miniaturaBannerAdmin(b.slot,foto);
+  }
+  estado.textContent='Quatro banners disponíveis. Escolha uma foto e clique em Enviar foto.';
+ }catch(e){estado.textContent='Banners indisponíveis: '+e.message;}
+ finally{carregandoBannersEscritorio=false;}
+}
+$('bannersEscritorioPainelAdmin').addEventListener('toggle',()=>{
+ if($('bannersEscritorioPainelAdmin').open&&auth)
+  void atualizarBannersEscritorioAdmin();
+});
+$('bannersEscritorioRecarregarAdmin').addEventListener('click',
+ ()=>void atualizarBannersEscritorioAdmin());
+
 let configLojaAtual=null;
 function atualizarNumeracaoBanners(){
  for(const [indice,bloco] of [...$('configBannersAdmin').children].entries()){
