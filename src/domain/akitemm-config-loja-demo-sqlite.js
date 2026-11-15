@@ -9,16 +9,24 @@ const URLS={
 };
 const IMG=/^\/imagens\/catalogo\/[a-zA-Z0-9_-]+\.(?:png|jpe?g|webp)$/;
 const ID=/^[a-z0-9-]{3,80}$/;
+const CORES_VITRINE=['ROXO','DOURADO','VERDE','CINZA'];
+const PADRAO_VITRINE=['ROXO','DOURADO','VERDE','CINZA','CINZA','VERDE','DOURADO','ROXO'];
 const DEFAULT=()=>({
  banners:[],redes:{instagram:'',youtube:'',facebook:'',whatsapp:''},
  informacoes:{sobre:'',privacidade:'',trocas:'',contato:'',suporte:''},
- ofertas:[]
+ ofertas:[],vitrineSlots:[...PADRAO_VITRINE]
 });
 function validar(dados){
  if(!dados||typeof dados!=='object'||Array.isArray(dados)||
-  Object.keys(dados).sort().join(',')!=='banners,informacoes,ofertas,redes')
+  !['banners,informacoes,ofertas,redes',
+    'banners,informacoes,ofertas,redes,vitrineSlots'].includes(
+      Object.keys(dados).sort().join(',')))
   throw Error('CONFIG_LOJA_INVALIDA');
  const {banners,redes,informacoes,ofertas}=dados;
+ const slots=dados.vitrineSlots===undefined?[...PADRAO_VITRINE]:dados.vitrineSlots;
+ if(!Array.isArray(slots)||slots.length!==8||
+    !slots.every(cor=>CORES_VITRINE.includes(cor)))
+  throw Error('VITRINE_SLOTS_INVALIDOS');
  if(!Array.isArray(banners)||banners.length>8||!Array.isArray(ofertas)||ofertas.length>50||
    !redes||!informacoes||Object.keys(redes).sort().join(',')!=='facebook,instagram,whatsapp,youtube'||
    Object.keys(informacoes).sort().join(',')!=='contato,privacidade,sobre,suporte,trocas')
@@ -41,7 +49,7 @@ function validar(dados){
     throw Error('BANNER_INVALIDO');
  }
  return {banners:banners.map(b=>({...b})),redes:{...redes},
-  informacoes:{...informacoes},ofertas:[...ofertas]};
+  informacoes:{...informacoes},ofertas:[...ofertas],vitrineSlots:[...slots]};
 }
 class AkitemmConfigLojaDemoSQLite{
  constructor({banco}={}){
@@ -75,7 +83,10 @@ class AkitemmConfigLojaDemoSQLite{
   const r=this.banco.prepare(
    'SELECT dados_json AS dados FROM admin_akitemm_config_loja_demo WHERE id=1'
   ).get();
-  return r?JSON.parse(r.dados):DEFAULT();
+  const dados=r?JSON.parse(r.dados):DEFAULT();
+  // Bancos anteriores não tinham disposição de cartões: migração sem perda.
+  return dados.vitrineSlots===undefined?
+   {...dados,vitrineSlots:[...PADRAO_VITRINE]}:dados;
  }
  revisao(){
   return this.banco.prepare(
