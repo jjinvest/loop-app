@@ -1,0 +1,49 @@
+name: LOOP - portao tecnico de cadastro publico sem pagamentos
+on:
+  push:
+    branches:
+      - feature/unificar-escritorio-real-20261105
+    paths:
+      - '.github/workflows/liberacao-cadastro-seguro.yml'
+      - 'scripts/iniciar-identidade-cadastro-real.js'
+      - 'test/cadastro-real-isolado-go-gates.test.js'
+      - 'src/producao/identidade-cliente-loop-sqlite.js'
+      - 'src/producao/servidor-identidade-loop.js'
+      - 'src/producao/backup-identidade-offsite.js'
+      - 'src/producao/agendador-backup-identidade-real.js'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  cadastro-real-sem-pagamentos:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 18
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+      - run: npm ci --ignore-scripts --no-fund
+      - name: Validar sintaxe da entrada do cadastro real
+        run: node --check scripts/iniciar-identidade-cadastro-real.js
+      - name: Bloquear cadastro sem backup, consentimento, dominio e chaves
+        run: node --test test/cadastro-real-isolado-go-gates.test.js
+      - name: Cadastro, indicacao, senha, e-mail, privacidade e criptografia
+        run: |
+          node --test \
+            test/identidade-real-isolada.test.js \
+            test/identidade-real-persistencia.test.js \
+            test/identidade-real-contato-cifrado-fim-a-fim.test.js \
+            test/indicacoes-cadastro-real.test.js \
+            test/troca-senha-identidade-real-sqlite.test.js
+      - name: Restauracao cifrada, integridade offsite e falha fechada
+        run: |
+          node --test \
+            test/backup-identidade-real-offsite.test.js \
+            test/backup-identidade-real-restauracao.test.js \
+            test/agendador-backup-identidade-real.test.js
+      - name: Garantir que cadastro nao habilita pagamentos e saques
+        run: node --test test/api-identidade-real-sem-pagamentos.test.js
