@@ -4,6 +4,21 @@
 (async()=>{
  const $=id=>document.getElementById(id);
  const informar=msg=>{$('estadoLojaLoop').textContent=msg;};
+ // Quando a vitrine real está no domínio principal, o mesmo cookie
+ // de operador do gateway permite exibir o + sem duplicar permissões.
+ void (async()=>{
+  const atalho=$('akitemmOperadorMais');
+  if(!atalho)return;
+  try{
+   const r=await fetch('/staging/operador/estado',{
+    credentials:'same-origin',cache:'no-store'
+   });
+   const d=r.ok?await r.json():null;
+   if(d?.operador===true){
+    atalho.hidden=false;atalho.style.display='inline-flex';
+   }
+  }catch{}
+ })();
  // Nenhuma operação de compra pode ser ativada por código do navegador
  // enquanto não houver backend comercial com fornecedor e PSP homologados.
  for(const seletor of [
