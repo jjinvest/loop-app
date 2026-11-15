@@ -26,6 +26,16 @@
 - Roteador de execução `scripts/iniciar-cadastro-publico-release.js`: permanece em preparação enquanto `LOOP_REAL_CADASTRO_GO=NAO`; muda para serviço real somente com `GO=SIM` **e** `LOOP_REAL_APROVACAO_DOCUMENTOS=SIM`.
 - Conjunto de testes de liberação aprovado: [GitHub Actions 43736675399](https://github.com/jjinvest/loop-app/actions/runs/43736675399).
 
+## Cadastro inaugural por convite — preservar conta existente e vínculo
+
+**Decisão do proprietário em 15/11/2026:** os participantes que já criaram conta válida no endereço `akitemmloop.com.br` por link de indicação **não devem ser obrigados a repetir o cadastro** quando o sistema comercial real for ativado. Caso inaugural: uma convidada cadastrou-se no link `/escritorio/VILELA`, com intenção de permanecer como **primeira indicada do titular VILELA**. Não publicar nome, CPF, e-mail, telefone ou senha dela nesta documentação.
+
+**Evidência operacional** (Railway `akitemm-escritorio-preview`, horários de Brasília): GET `/escritorio/VILELA` 302 às 14:18:05; POST `/staging/contas/cadastrar` 201 às 14:19:48; POST `/staging/contas/entrar` 200 às 14:20:14. O gateway assina o cookie de indicação e injeta `x-akitemm-preview-indicador` apenas ao backend; `EquipeCandidataSQLite.registrarCadastro` registra o vínculo na mesma transação da criação de conta, ou a operação falha. **Ainda não se confirmou por consulta autenticada que esses pedidos pertencem à mesma sessão/titular**, nem que ela ocupa ordinal 1 da rede VILELA. Validar antes de afirmar isso.
+
+**Regra da transição:** preservar o registro original e o vínculo histórico, incluindo indicador, cronologia e eventual ordinal #1, mediante mecanismo auditável de transição. Não apagar, sobrescrever ou recriar conta incompatível; não importar automaticamente dados fictícios de laboratório para produção, senhas em texto claro, sessões de ensaio nem saldos/posições/pagamentos simulados. No cadastro real, exigir apenas verificação de posse da conta, aceite dos documentos oficiais e eventual regularização dos dados estritamente necessários, sem refazer todo o formulário; a migração de dados pessoais depende de autorização/consentimento da titular e controles LGPD. Distinguir cadastro por convite de indicação **qualificada** por compra real. Aguardar validação do vínculo por consulta autenticada antes de atribuir ordinal de primeira indicada.
+
+**Critério de conclusão:** a titular entra na conta recuperada/transferida no domínio definitivo sem segundo cadastro completo; a rede VILELA mostra o vínculo original exatamente uma vez e na ordem de origem correta; nenhum vínculo com outra conta ou crédito comercial é criado; os dados continuam segregados do laboratório até a transição autorizada. Este mecanismo **ainda não foi implementado nem executado**, e é bloqueio de migração dos primeiros cadastrados antes de declarar lançamento definitivo.
+
 ## Dependências concretas para ativar entrada de dados pessoais de verdade
 - **Identidade do controlador:** nome completo ou razão social de quem responde pelos dados; não deduzir de nome de usuário ou marca.
 - **Contato oficial de privacidade:** e-mail válido de atendimento dos titulares (não inventar endereço nem presumir que remetente Resend recebe respostas).
