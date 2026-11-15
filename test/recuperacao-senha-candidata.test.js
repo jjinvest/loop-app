@@ -83,8 +83,17 @@ test('recuperacao por e-mail usa codigo unico, prazo, tentativas e revoga sessoe
  assert.equal((await req('/staging/contas/me',null,cookie)).status,401);
  assert.equal((await req('/staging/contas/entrar',
   {nick:'Alice',senha:'Abc123xy'})).status,401);
+ const protegido=await req('/staging/contas/entrar',
+  {nick:'Alice',senha:'NovaAbc123'});
+ assert.equal(protegido.status,403,'segunda tentativa exige prova');
+ const desafio=(await req('/staging/contas/captcha-login')).data;
+ const svg=Buffer.from(desafio.captchaImagem.split(',')[1],'base64').toString();
+ const codigo=[...svg.matchAll(/<text\\s[^>]*>([A-Z0-9])<\\/text>/g)]
+  .map(x=>x[1]).join('');
+ assert.equal(codigo.length,6);
  assert.equal((await req('/staging/contas/entrar',
-  {nick:'Alice',senha:'NovaAbc123'})).status,200);
+  {nick:'Alice',senha:'NovaAbc123',
+   captchaId:desafio.captchaId,captchaResposta:codigo})).status,200);
  assert.equal((await req('/staging/contas/redefinir-senha',{
   email:'alice@example.invalid',codigo:enviados[0].codigo,
   novaSenha:'OutraAbc12'
