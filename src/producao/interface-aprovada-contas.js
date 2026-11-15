@@ -136,7 +136,7 @@
   document.body.append(area);
   try{
    const docs=await requisitar('/documentos');
-   for(const tipo of ['termos','privacidade']){
+   for(const tipo of ['privacidade','termos']){
     const bloco=document.createElement('details');bloco.open=true;
     const resumo=document.createElement('summary');
     resumo.textContent=tipo==='termos'?'Termos de Uso':'Política de Privacidade';
@@ -147,7 +147,7 @@
    }
    const form=document.createElement('form');
    const labels=[];
-   for(const nome of ['Li e aceito os Termos de Uso.','Li a Política de Privacidade e concordo com o tratamento descrito.']){
+   for(const nome of ['Li e aceito a Política de Privacidade e os Termos de Uso.']){
     const label=document.createElement('label');
     const cb=document.createElement('input');cb.type='checkbox';cb.required=true;
     label.append(cb,document.createTextNode(' '+nome));
