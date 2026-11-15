@@ -25,7 +25,9 @@ on:
       - 'test/ponte-catalogo-real-preview.test.js'
       - 'test/identidade-real-catalogo-isolado.test.js'
       - 'test/estoque-proprio-caracteristicas-catalogo.test.js'
+      - 'test/akitemm-cursos-admin-integrado.test.js'
       - 'src/candidato/escritorio-admin-candidato-ui.js'
+      - 'src/candidato/escritorio-admin-candidato-ui.html'
       - 'test/loja-upload-real-pdf-foto-video-avaliacoes-unificados.test.js'
       - '.github/workflows/catalogo-real-estoque-proprio.yml'
   workflow_dispatch:
@@ -50,7 +52,7 @@ jobs:
         run: node --test test/catalogo-mercadorias-real-e2e.test.js test/catalogo-cursos-pdf-real-e2e.test.js test/ponte-catalogo-real-preview.test.js test/identidade-real-catalogo-isolado.test.js
       - name: Provar preservacao do catalogo do proprietario
         run: node --test test/estoque-proprio-caracteristicas-catalogo.test.js test/akitemm-slots-vitrine-editaveis.test.js
-      - name: Biblioteca digital por comprador com download protegido apos conciliacao
-        run: node --test test/loja-upload-real-pdf-foto-video-avaliacoes-unificados.test.js
+      - name: Biblioteca digital e administracao de PDFs com protecao por comprador
+        run: node --test test/loja-upload-real-pdf-foto-video-avaliacoes-unificados.test.js test/akitemm-cursos-admin-integrado.test.js
       - name: Imutabilidade visual preservada
         run: node --test test/contrato-visual-escritorio-aprovado.test.js
