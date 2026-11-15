@@ -81,6 +81,19 @@ test('migrar duas contas reais de ensaio para identidade definitiva conserva sen
  assert.equal(real.listarIndicados(pai.titularId).indicados[0].telefone,'11988887777');
  assert.equal(real.dadosTitular(filha.titularId).aceiteDocumentosDefinitivosPendente,true);
  assert.equal(real.dadosTitular(filha.titularId).cpfRecebido,false);
+ const dc=real.documentos();
+ assert.throws(()=>real.aceitarDocumentos({
+  titularId:filha.titularId,aceiteTermos:true,aceitePrivacidade:false,
+  versaoTermos:dc.termos.versao,hashTermos:dc.termos.hash,
+  versaoPrivacidade:dc.privacidade.versao,hashPrivacidade:dc.privacidade.hash
+ }),/DOCUMENTOS_ALTERADOS_RELER/);
+ assert.equal(real.aceitarDocumentos({
+  titularId:filha.titularId,aceiteTermos:true,aceitePrivacidade:true,
+  versaoTermos:dc.termos.versao,hashTermos:dc.termos.hash,
+  versaoPrivacidade:dc.privacidade.versao,hashPrivacidade:dc.privacidade.hash
+ }).documentosConfirmados,true);
+ assert.equal(real.dadosTitular(filha.titularId).aceiteDocumentosDefinitivosPendente,false);
+ assert.equal(dst.prepare('SELECT COUNT(*) AS n FROM loop_real_aceites_documentos').get().n,1);
  assert.equal(dst.prepare('PRAGMA foreign_key_check').all().length,0);
  assert.equal(validarIdentidade(path.join(dir,'clientes.sqlite')).contas,2);
  const serialized=JSON.stringify(dst.prepare('SELECT * FROM loop_real_contas').all());
