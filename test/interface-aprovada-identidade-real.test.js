@@ -107,7 +107,7 @@ test('interface aprovada e identidade real servidas da mesma origem protegida',a
  assert.doesNotMatch(script,/pedido de ensaio /);
  assert.match(script,/Sem crédito financeiro disponível/);
  assert.match(script,/indicacoesQualificadasEnsaio/);
- assert.match(script,/COMPRA_ENSAIO_SEM_QUALIFICACAO/);
+ assert.doesNotMatch(script,/COMPRA_ENSAIO_SEM_QUALIFICACAO/);
  assert.match(script,/seletorPosicaoMotor/);
  assert.match(script,/const capacidade=d\.limitePosicoesAtivas/);
  assert.match(script,/Array\.from\(\{length:capacidade\}/);
