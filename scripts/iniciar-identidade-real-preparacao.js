@@ -17,6 +17,8 @@ const {LivroFinanceiroRealSQLite}=
  require('../src/producao/livro-financeiro-real-sqlite');
 const {autorizarInterno,consultarArquivoReal}=
  require('../src/producao/leitura-tabuleiro-operacional-real');
+const {criarCatalogoMercadoriasReal}=
+ require('../src/producao/catalogo-mercadorias-real');
 
 function conferirInfra(ambiente=process.env,{pasta='/dados-reais',io=fs}={}){
  if(ambiente.NODE_ENV!=='production'||
@@ -79,13 +81,35 @@ function iniciarMotorRealSemCadastro({ambiente=process.env}={}){
 function criarServidorPreparacao({ambiente=process.env,pasta='/dados-reais',io=fs}={}){
  conferirInfra(ambiente,{pasta,io});
  iniciarMotorRealSemCadastro({ambiente});
- return http.createServer((req,res)=>{
+ // Banco comercial segregado no volume real, sem tocar no banco dos clientes.
+ const catalogoReal=ambiente.LOOP_REAL_CATALOGO_EDITAVEL==='SIM'?
+  criarCatalogoMercadoriasReal({
+   arquivo:path.join(pasta,'catalogo-produtos.sqlite'),
+   tokenRaiz:ambiente.LOOP_REAL_TABULEIRO_INTERSERVICE_TOKEN
+  }):null;
+ return http.createServer(async(req,res)=>{
   res.setHeader('Content-Type','application/json; charset=utf-8');
   res.setHeader('Cache-Control','no-store');
   res.setHeader('X-Content-Type-Options','nosniff');
   res.setHeader('X-Frame-Options','DENY');
   // API privada SOMENTE GET da fonte real; nao ativa cadastro ou motor.
   // Se o banco definitivo ainda nao tem schema, devolve 503, nao zero falso.
+  // Produtos reais: rota exclusivamente interna e autenticada,
+  // sem checkout, PIX, cliente, saque ou posicao.
+  if(req.url?.startsWith('/internal/catalogo/')){
+   if(!catalogoReal){
+    res.writeHead(503);return res.end(JSON.stringify({
+     erro:'CATALOGO_COMERCIAL_AINDA_NAO_ATIVO',checkoutReal:false
+    }));
+   }
+   try{await catalogoReal.atender(req,res);}
+   catch{
+    if(!res.writableEnded){
+     res.writeHead(503);res.end(JSON.stringify({erro:'CATALOGO_REAL_INDISPONIVEL'}));
+    }
+   }
+   return;
+  }
   if(req.url==='/internal/loop/tabuleiro'){
    if(req.method!=='GET'){
     res.writeHead(405);return res.end(JSON.stringify({erro:'METODO_INVALIDO'}));
