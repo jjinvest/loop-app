@@ -575,8 +575,10 @@ function mp4TrintaSegundos(){
    await admin.locator('#resultadoGateAtivacao').filter({hasText:/Missão de regularização criada/}).waitFor();
    await abrirControleAdmin('#listaMissoes');
    await admin.locator('#listaMissoes').filter({hasText:/Regularizar requisitos de ativação/}).waitFor();
+   await abrirControleAdmin('#criarMissaoGateAtivacao');
    await admin.locator('#criarMissaoGateAtivacao').click();
    await admin.locator('#resultadoGateAtivacao').filter({hasText:/já registrada/}).waitFor();
+   await abrirControleAdmin('#titulo');
    await admin.locator('#titulo').fill('Revisar pedido do cliente');
    await admin.locator('#descricao').fill('Registrar o atendimento manual deste pré-pedido fictício.');
    await admin.locator('#pedido').selectOption({index:1});
