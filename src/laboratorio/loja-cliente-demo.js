@@ -17,6 +17,9 @@
  const inform=msg=>{el('estadoLojaLoop').textContent=msg;};
  const fotoPermitida=src=>typeof src==='string'&&
   /^\/imagens\/catalogo\/[a-zA-Z0-9_-]+\.(?:png|jpe?g|webp)$/.test(src);
+ const fotoBannerPermitida=src=>fotoPermitida(src)||
+  typeof src==='string'&&
+  /^\/staging\/vitrine\/loja\/banner-arquivo\/[a-f0-9]{32}$/.test(src);
  async function api(caminho,body){
   const response=await fetch('/api/laboratorio/participante/'+caminho,{
    method:body===undefined?'GET':'POST',credentials:'same-origin',cache:'no-store',
@@ -687,7 +690,7 @@
   const h=document.createElement('h1');h.textContent=b.titulo;
   const descr=document.createElement('p');descr.textContent=b.descricao;
   titulo.append(h,descr);container.append(titulo);
-  if(fotoPermitida(b.imagemCaminho)){
+  if(fotoBannerPermitida(b.imagemCaminho)){
    const imagem=document.createElement('div');imagem.className='akitemm-banner-arte';
    const img=document.createElement('img');img.src=b.imagemCaminho;img.alt=b.titulo;
    img.style.maxWidth='100%';img.style.maxHeight='185px';img.style.objectFit='contain';
