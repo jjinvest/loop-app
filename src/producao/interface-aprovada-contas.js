@@ -10,7 +10,7 @@
   const atalho=$('loopOperadorMais');
   if(!atalho)return;
   try{
-   const r=await fetch('/staging/operador/estado',{
+   const r=await fetch('/api/operador/estado',{
     credentials:'same-origin',cache:'no-store'
    });
    const d=r.ok?await r.json():null;
