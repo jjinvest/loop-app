@@ -73,7 +73,7 @@
     },
     {
       "path": "src/laboratorio/loja-cliente-demo.html",
-      "sha": "e148f3891220cc3c62f04cf7882e4136663eec86"
+      "sha": "8166d2324c1ef0081500aaca6d80fcd1832b137a"
     },
     {
       "path": "src/laboratorio/loop-03-shell.css",
@@ -101,6 +101,7 @@
     }
   ],
   "históricoAutorizações": [
+    "15/11/2026: usuário solicitou explicitamente preparar o caminho de venda e entrega de cursos PDF: seção Meus Cursos adicionada exclusivamente dentro da loja AKITEMM original, com status e link de download protegido após confirmação de pagamento. O original persiste no servidor. Interface visual previamente aprovada, sem mudanças em cores, molduras, pagamento, tabuleiro, financeiro ou escritório.",
     "14/11/2026: pedido explicito do proprietário para corrigir o teste de navegacao, abrir os dados nome/nick/email no rodape Minha conta, sincronizar a foto com o topo e mostrar CPF apenas se posicao confirmada; HTML e CSS da interface unica atualizados sem alterar outras telas.",
     "14/11/2026: autorização explícita do proprietário para refinar EXCLUSIVAMENTE os ícones do menu lateral compartilhado: casa dourada, tabuleiro dourado levemente maior, grade de posições dourada, equipe dourada, financeiro verde, loja AKITEMM roxa, carrinho dourado, links dourados, conta dourada. IDs, links, abas, motor, textos e navegação preservados. As edições anteriores aprovadas no HTML/CSS compartilhados também permanecem (CPF no cadastro, controles, filas, links e rodapé).",
     "15/11/2026: proprietário autorizou exclusivamente retirar a inscrição 'Minha conta' sob a foto no rodapé do menu e apresentar o nick autenticado com a localização da posição selecionada: Fila A, Fila B ou ícone de coroa quando no Tabuleiro. Número da posição, indicações e detalhes permanecem no placar superior. Foto, botão de dados, menu e demais ajustes visuais aprovados foram preservados.",
