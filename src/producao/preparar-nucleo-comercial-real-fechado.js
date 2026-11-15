@@ -15,6 +15,7 @@ const {SessaoAdminComercialSQLite}=require('./sessao-admin-comercial-sqlite');
 const {montarComercialSemHomologacao}=require('./montar-comercial-sem-homologacao');
 const {PreflightCapacidadeCheckoutSQLite}=require('./preflight-capacidade-checkout-sqlite');
 const {RecuperacaoReservasCheckoutSQLite}=require('./recuperacao-reservas-checkout-sqlite');
+const {PedidosFornecedorOutbox}=require('./pedidos-fornecedor-outbox');
 const {DatabaseSync}=require('node:sqlite');
 function falha(c){const e=new Error(c);e.codigo=c;throw e;}
 function prepararNucleoComercialRealFechado({banco,ambiente=process.env}={}){
@@ -66,6 +67,15 @@ function prepararNucleoComercialRealFechado({banco,ambiente=process.env}={}){
  });
  const comercial=montarComercialSemHomologacao({
   banco,chavePedidos,auditoria,manutencao,catalogoLeitura:catalogo
+ });
+ // Persistir a outbox definitiva com respostas externas fechadas.
+ // Nenhum adaptador ou transporte de fornecedor pode sair deste bootstrap.
+ new PedidosFornecedorOutbox({
+  banco,chavePedidos,
+  registro:{obter:()=>null},
+  consultarPagamentoConciliado:async()=>null,
+  consultarPedidoAprovado:async()=>null,
+  consultarLiberacaoCustoFornecedor:async()=>null
  });
  const preflight=new PreflightCapacidadeCheckoutSQLite({
   banco,motor,classificacaoLoop:comercial.classificacaoLoop
