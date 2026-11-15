@@ -1062,3 +1062,20 @@ body.loop03-logado main>.mensagem-pagina{margin:0 0 .75rem}
 .cliente-integrado #conteudoResumo .loop03-banner-reserva .loop03-banner-anuncio-conteudo strong{
  font-size:clamp(1.9rem,5vw,3.4rem);color:#d7dbe4;
 }
+
+/* Sininho integrado ao topo do LOOP: recados, sem reorganizar o banner. */
+.cliente-integrado .loop03-acoes-topo{display:flex;align-items:center;gap:8px;
+ justify-content:flex-end;flex-shrink:0;position:relative;z-index:3}
+.cliente-integrado .loop03-acoes-topo .loop03-sino{position:relative;
+ flex-shrink:0;min-width:44px;min-height:44px}
+.cliente-integrado .loop03-acoes-topo #loop03TotalAvisos{display:inline-flex;
+ align-items:center;justify-content:center;background:#dec078;color:#19171b;
+ border-radius:14px;min-width:16px;padding:0 4px;font-size:11px}
+.cliente-integrado .loop03-acoes-topo #loop03TotalAvisos[hidden]{display:none}
+.cliente-integrado .loop03-painel-avisos{position:fixed;top:95px;right:16px;
+ z-index:100;width:min(370px,calc(100vw - 32px));max-height:65vh;
+ overflow:auto;background:#1b1c20;color:#f2ebde;border:1px solid #ae8a4c;
+ border-radius:10px;padding:14px;box-shadow:0 10px 25px #0009}
+.cliente-integrado .loop03-painel-avisos[hidden]{display:none!important}
+.cliente-integrado .loop03-painel-avisos article{border-top:1px solid #5c5141;padding:8px 0}
+.cliente-integrado .loop03-painel-avisos p{font-size:.9rem;margin:6px 0;overflow-wrap:anywhere}
