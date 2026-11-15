@@ -909,3 +909,35 @@ body.loop03-logado main>.mensagem-pagina{margin:0 0 .75rem}
 .cliente-integrado #conteudoTabuleiro .loop03-inicial-fila.loop03-ordem-longa{
  font-size:.68rem;letter-spacing:-.04em;font-variant-numeric:tabular-nums
 }
+
+
+/* Menu do Escritório Virtual, aprovado em 14/11/2026:
+   apenas os ícones mudam; links, abas, cor dos textos e navegação permanecem.
+   Dourado em todas as áreas, exceto Financeiro verde e AKITEMM roxo. */
+.cliente-integrado .loop03-sidebar .loop03-menu-integrado > button,
+.cliente-integrado .loop03-sidebar .loop03-menu-integrado > a{
+ display:flex;align-items:center;gap:12px;line-height:1.3;
+}
+.cliente-integrado .loop03-sidebar .loop03-menu-integrado .loop03-menu-icone{
+ display:inline-flex;align-items:center;justify-content:center;
+ flex:0 0 26px;width:26px;height:28px;min-width:26px;
+ color:#e9bc6a;
+}
+.cliente-integrado .loop03-sidebar .loop03-menu-integrado .loop03-menu-icone svg{
+ display:block;width:22px;height:22px;fill:none;
+ stroke:currentColor;stroke-width:1.9;
+ stroke-linecap:round;stroke-linejoin:round;
+}
+.cliente-integrado .loop03-sidebar .loop03-menu-integrado .loop03-menu-icone-board svg{
+ width:25px;height:25px;stroke-width:2.05;
+}
+.cliente-integrado .loop03-sidebar .loop03-menu-integrado .loop03-menu-cor-verde{
+ color:#6de7a9;
+}
+.cliente-integrado .loop03-sidebar .loop03-menu-integrado .loop03-menu-cor-roxo{
+ color:#c295ff;
+}
+.cliente-integrado .loop03-sidebar .loop03-menu-integrado > button:hover .loop03-menu-cor-dourado,
+.cliente-integrado .loop03-sidebar .loop03-menu-integrado > a:hover .loop03-menu-cor-dourado{
+ color:#ffe0a4;
+}
