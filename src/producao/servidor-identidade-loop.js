@@ -60,7 +60,10 @@ function criarAppIdentidadeLoop({contas,origemHttps,
   typeof catalogoVitrine.listarVitrinePreparacao!=='function'))
   throw Error('CATALOGO_LOJA_SQLITE_DIVERGENTE');
  const visaoEscritorio=motorLoop===null?null:
-  new VisaoEscritorioUnificadaSQLite({banco:contas.banco,motor:motorLoop});
+  new VisaoEscritorioUnificadaSQLite({
+   banco:contas.banco,motor:motorLoop,
+   consultarTelefone:args=>contas.telefoneIndicadoVinculado(args)
+  });
  const livroFinanceiro=motorLoop===null?null:
   new LivroFinanceiroRealSQLite({banco:contas.banco});
  const backupAtual=()=>typeof backupEstado==='function'?
@@ -231,7 +234,7 @@ function criarAppIdentidadeLoop({contas,origemHttps,
      !Number.isSafeInteger(Number(bruto))))
    return res.status(400).json({erro:'PAGINACAO_INVALIDA'});
   const offset=bruto===undefined?0:Number(bruto);
-  try{return res.json(visaoEscritorio?
+  try{return res.set('Cache-Control','private, no-store').json(visaoEscritorio?
    visaoEscritorio.listarRede({titularId:req.conta.titularId,offset}):
    contas.listarIndicados(req.conta.titularId,{offset}));}
   catch{return res.status(503).json({erro:'REDE_INDISPONIVEL'});}
