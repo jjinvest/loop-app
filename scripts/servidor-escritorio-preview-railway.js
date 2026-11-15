@@ -507,6 +507,32 @@ async function iniciar({env=process.env}={}){
     }
    }catch{resultado='REDE_NAO_COMPROVADA';}
    process.stdout.write('LOOP_TABULEIRO_REAL_CONEXAO='+resultado+'\\n');
+   // Verificacao privada de ponta a ponta: a loja publicada e o banco
+   // comercial persistente real devem compartilhar a custodia interservicos.
+   if(env.LOOP_PREVIEW_CATALOGO_REAL==='SIM'){
+    let estadoCatalogo='NAO_COMPROVADO';
+    try{
+     const alvo=env.LOOP_PREVIEW_URL_TABULEIRO_REAL;
+     const raiz=env.LOOP_PREVIEW_TOKEN_TABULEIRO_REAL;
+     if(typeof alvo==='string'&&
+       /^http:\/\/[a-z0-9-]+\.railway\.internal(?::[0-9]{2,5})?\/internal\/loop\/tabuleiro$/.test(alvo)&&
+       typeof raiz==='string'&&/^[a-f0-9]{64}$/.test(raiz)){
+      const tokenCat=createHmac('sha256',Buffer.from(raiz,'hex'))
+       .update('AKITEMM_CATALOGO_REAL_V1','utf8').digest('hex');
+      const resposta=await fetch(alvo.replace('/internal/loop/tabuleiro',
+       '/internal/catalogo/status'),{
+       method:'GET',signal:AbortSignal.timeout(3500),
+       headers:{'x-loop-catalogo-token':tokenCat}
+      });
+      const dados=await resposta.json().catch(()=>({}));
+      estadoCatalogo=resposta.status===200&&
+       dados.estado==='CATALOGO_REAL_PERSISTENTE'&&
+       dados.sqliteIntegro===true&&dados.checkoutReal===false?
+       'PERSISTENTE_VERIFICADO_SEM_CHECKOUT':'HTTP_'+resposta.status;
+     }
+    }catch{estadoCatalogo='INACESSIVEL';}
+    process.stdout.write('AKITEMM_CATALOGO_REAL_STATUS='+estadoCatalogo+'\n');
+   }
   })();
   if(agendador){
    agendador.iniciar();
