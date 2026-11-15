@@ -131,6 +131,13 @@ function mp4TrintaSegundos(){
    assert.equal(await page.locator('#formConcluirRecuperacao').isHidden(),true);
    await page.locator('#voltarLogin').click();
    await page.locator('#painelLogin').waitFor({state:'visible'});
+   await page.locator('#captchaLoginArea').waitFor({state:'visible'});
+   const codigoLogin=await page.locator('#captchaLoginImagem').evaluate(img=>{
+    const svg=atob(img.src.split(',')[1]);
+    return [...svg.matchAll(/<text[^>]*>([A-Z0-9])</g)].map(x=>x[1]).join('');
+   });
+   assert.equal(codigoLogin.length,6);
+   await page.locator('#captchaLoginResposta').fill(codigoLogin);
    await page.locator('#senha').fill('Abc123xy');
    await page.locator('[data-senha="senha"]').click();
    assert.equal(await page.locator('#senha').getAttribute('type'),'text');
