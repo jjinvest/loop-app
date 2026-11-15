@@ -44,9 +44,11 @@ test('HTML original do cliente é reaproveitado sem script LAB, nova tela ou CPF
  assert.equal((html.match(/id="seletorPosicaoMotor"/g)||[]).length,1);
  assert.equal((html.match(/id="posicoesPainel"/g)||[]).length,1);
  assert.match(html,/id="conteudoConta"/);
- assert.match(html,/id="cadastroPrivacidade"/);
- assert.match(html,/id="termosCadastroDetalhes"/);
- assert.match(html,/id="privacidadeCadastroDetalhes"/);
+ assert.match(html,/id="documentosCadastroDetalhes"/);
+ assert.match(html,/id="textoPrivacidadeCadastro"/);
+ assert.match(html,/id="textoTermosCadastro"/);
+ assert.match(html,/id="captchaLoginArea"/);
+ assert.equal((html.match(/id="cadastroTermos"/g)||[]).length,1);
  assert.match(html,/minlength="12" maxlength="128"/);
  assert.match(html,/Nick \(1 a 12 letras\)/);
  assert.equal((html.match(/maxlength="12" pattern="\[A-Za-z\]\{1,12\}"/g)||[]).length,3);
