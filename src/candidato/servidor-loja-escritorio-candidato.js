@@ -46,6 +46,7 @@ const {FotoPerfilCandidatoSQLite}=
 const {AvaliacoesCompraCandidatoSQLite}=
  require('../domain/avaliacoes-compra-candidato-sqlite');
 const {NovidadesLojaCandidatoSQLite,MAX_IMAGEM}=require('../domain/novidades-loja-candidato-sqlite');
+const {ComunicadosCanaisAdminSQLite}=require('../domain/comunicados-canais-admin-sqlite');
 const {BannersEscritorioCandidatoSQLite,LIMITE_IMAGEM:LIMITE_BANNER}=
  require('../domain/banners-escritorio-candidato-sqlite');
 const {EnderecoEntregaEnsaioSQLite}=require('../domain/endereco-entrega-ensaio-sqlite');
@@ -115,6 +116,7 @@ function criarAppLojaEscritorioCandidato({banco,repositorioCatalogo,
  const fotosProduto=new FotosProdutoCandidatoSQLite({banco,catalogo});
  const avaliacoes=new AvaliacoesCompraCandidatoSQLite({banco,prePedidos,consultarPedido});
  const novidades=new NovidadesLojaCandidatoSQLite({banco});
+ const comunicados=new ComunicadosCanaisAdminSQLite({banco});
  const bannersEscritorio=new BannersEscritorioCandidatoSQLite({banco});
  const configLoja=new AkitemmConfigLojaDemoSQLite({banco});
  const enderecoEntrega=new EnderecoEntregaEnsaioSQLite({banco,chaveCifra});
@@ -838,7 +840,7 @@ function criarAppLojaEscritorioCandidato({banco,repositorioCatalogo,
   try{return res.json(projecaoFilas.consultar({titularId:s.titularId}));}
   catch(e){return res.status(503).json({erro:e.codigo||'PROJECAO_INDISPONIVEL'});}
  });
- const sinalizacaoVitrine=createVitrineCandidata({app,banco,catalogo,contas,intencoes,prePedidos,autorizarOperador,novidades,enderecoEntrega,configLoja,materialPdf,videoProduto,fotosProduto,avaliacoes});
+ const sinalizacaoVitrine=createVitrineCandidata({app,banco,catalogo,contas,intencoes,prePedidos,autorizarOperador,novidades,comunicados,fotoPerfil,enderecoEntrega,configLoja,materialPdf,videoProduto,fotosProduto,avaliacoes});
  const custosProduto=sinalizacaoVitrine.custosProduto; // objeto do MESMO catálogo usado na foto do prepedido
  // Mesmo SQLite/operador autorizado: alteração editorial, sem pagamento.
  app.get('/staging/escritorio-unificado/loja/config',autorizarOperador,(_req,res)=>{
@@ -1411,6 +1413,33 @@ function criarAppLojaEscritorioCandidato({banco,repositorioCatalogo,
  // Campos de catálogo aplicam-se apenas às próximas cotações e rascunhos.
  // Pedidos anteriores preservam a fotografia; produção não é montada.
  // Controles editoriais dentro do MESMO painel de produtos: operador apenas.
+ // Recados operacionais: o mesmo banco do Escritório. A publicação
+ // tem canal fixo; cliente LOOP não recebe recados da AKITEMM, e vice-versa.
+ app.get('/staging/escritorio-unificado/comunicados',autorizarOperador,(_req,res)=>{
+  try{return res.set('Cache-Control','no-store').json({itens:comunicados.listar()});}
+  catch{return res.status(503).json({erro:'COMUNICADOS_INDISPONIVEIS'});}
+ });
+ app.post('/staging/escritorio-unificado/comunicados',autorizarOperador,(req,res)=>{
+  try{return res.status(201).json(comunicados.criar(req.body));}
+  catch(e){return res.status(400).json({erro:e.codigo||'COMUNICADO_INVALIDO'});}
+ });
+ app.patch('/staging/escritorio-unificado/comunicados/:id',autorizarOperador,(req,res)=>{
+  try{
+   const dados=req.body;
+   if(!dados||Object.keys(dados).sort().join(',')!=='dados,revisaoEsperada')
+    return res.status(400).json({erro:'COMUNICADO_DADOS_INVALIDOS'});
+   return res.json(comunicados.atualizar({
+    id:Number(req.params.id),revisaoEsperada:dados.revisaoEsperada,dados:dados.dados
+   }));
+  }catch(e){return res.status(e.codigo==='COMUNICADO_CONFLITO_REVISAO'?409:400)
+   .json({erro:e.codigo||'COMUNICADO_INVALIDO'});}
+ });
+ app.get('/staging/contas/avisos-loop',(req,res)=>{
+  if(!contas.sessao(req))return res.status(401).json({erro:'SESSAO_AUSENTE'});
+  try{return res.set('Cache-Control','private, no-store').json({
+   canal:'LOOP',itens:comunicados.listar({canal:'LOOP',publicados:true})
+  });}catch{return res.status(503).json({erro:'AVISOS_INDISPONIVEIS'});}
+ });
  app.get('/staging/escritorio-unificado/novidades',autorizarOperador,(_req,res)=>{
   res.set('Cache-Control','no-store');
   try{return res.json({itens:novidades.listar()});}
