@@ -295,6 +295,22 @@ function criarAppIdentidadeLoop({contas,origemHttps,
    contas.listarIndicados(req.conta.titularId,{offset}));}
   catch{return res.status(503).json({erro:'REDE_INDISPONIVEL'});}
  });
+ // Convite público definitivo com os mesmos links curtos do LOOP.
+ // Não habilita cadastro nem benefício sem os gates oficiais do serviço.
+ const redirecionarLinkDireto=origemLoja=>(req,res)=>{
+  const raw=req.params.nick;
+  if(typeof raw!=='string'||!/^[A-Za-z]{1,12}$/.test(raw))
+   return res.status(404).type('text').send('Convite inválido');
+  const nick=raw.toLowerCase();
+  const existe=contas.banco.prepare(
+   'SELECT 1 FROM loop_real_contas WHERE nick=?'
+  ).get(nick);
+  if(!existe)return res.status(404).type('text').send('Convite inexistente');
+  return res.set('Cache-Control','no-store').redirect(303,
+   '/escritorio?ref='+encodeURIComponent(nick)+(origemLoja?'&origem=loja':''));
+ };
+ app.get('/escritorio/:nick',redirecionarLinkDireto(false));
+ app.get('/loja/:nick',redirecionarLinkDireto(true));
  app.get('/convite/loja',(req,res)=>{
   const nick=req.query?.ref;
   if(typeof nick!=='string'||!(/^[A-Za-z]{1,12}$/).test(nick))
