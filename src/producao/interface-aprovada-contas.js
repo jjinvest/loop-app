@@ -7,6 +7,7 @@
  const API='/api/contas';
  let csrf=null,documentos=null,carregando=false,tela='login';
  let captchaCadastroId=null,captchaObrigatorio=false;
+ let captchaLoginAtivo=false,captchaLoginId=null;
  const ref=new URLSearchParams(location.search).get('ref');
  const indicadorNick=typeof ref==='string'&&/^[A-Za-z]{1,12}$/.test(ref)?
   ref.toLowerCase():null;
@@ -36,6 +37,7 @@
   CONTATO_CADASTRO_INCOMPLETO:'Informe CPF e telefone.',
   DOCUMENTOS_ALTERADOS_RELER:'Documentos atualizados. Leia e aceite a versão atual.',
   CAPTCHA_INVALIDO:'Confira o código de verificação e tente outro.',
+  CAPTCHA_LOGIN_OBRIGATORIO:'Confirme o código de segurança para entrar novamente.',
   CAPTCHA_OCUPADO:'Proteção contra robôs temporariamente ocupada. Atualize o código.',
   CODIGO_INVALIDO:'Código inválido ou expirado.',
   SENHA_NOVA_DEVE_SER_DIFERENTE:'A nova senha deve ser diferente.',
@@ -1239,13 +1241,45 @@
     'Saque ficticio indisponivel. Nenhum dinheiro foi movimentado.';
   }finally{solicitarEnsaio.disabled=false;}
  });
+ async function atualizarCaptchaLogin(){
+  captchaLoginAtivo=true;captchaLoginId=null;
+  $('captchaLoginArea').hidden=false;
+  $('captchaLoginResposta').value='';
+  $('captchaLoginImagem').removeAttribute('src');
+  $('captchaLoginEstado').textContent='Gerando código para a próxima tentativa...';
+  try{
+   const r=await requisitar('/captcha-login');
+   if(!/^[a-f0-9]{48}$/.test(r.captchaId)||
+      !/^data:image\/svg\+xml;base64,[A-Za-z0-9+/=]+$/.test(r.captchaImagem))
+    throw Error('CAPTCHA_INVALIDO');
+   captchaLoginId=r.captchaId;
+   $('captchaLoginImagem').src=r.captchaImagem;
+   $('captchaLoginEstado').textContent='Digite o código antes de tentar entrar.';
+  }catch{
+   $('captchaLoginEstado').textContent='Não foi possível carregar o código. Toque em Outro código.';
+  }
+ }
  onForm('formLogin',async()=>{
-  const login=await requisitar('/entrar',{method:'POST',body:{
-   nick:$('login').value,senha:$('senha').value
-  }});
-  $('senha').value='';
-  painelConta(login);dizer('Bem-vindo ao Escritório LOOP.');
+  const body={nick:$('login').value,senha:$('senha').value};
+  if(captchaLoginAtivo){
+   if(!captchaLoginId||!/^[A-Za-z2-9]{6}$/.test($('captchaLoginResposta').value.trim()))
+    throw Error('CAPTCHA_LOGIN_OBRIGATORIO');
+   body.captchaId=captchaLoginId;
+   body.captchaResposta=$('captchaLoginResposta').value.trim().toUpperCase();
+  }
+  try{
+   const login=await requisitar('/entrar',{method:'POST',body});
+   captchaLoginAtivo=false;captchaLoginId=null;
+   $('captchaLoginArea').hidden=true;$('captchaLoginResposta').value='';
+   $('senha').value='';
+   painelConta(login);dizer('Bem-vindo ao Escritório LOOP.');
+  }catch(e){
+   if(['CREDENCIAIS_INVALIDAS','CAPTCHA_LOGIN_OBRIGATORIO',
+     'CAPTCHA_INVALIDO'].includes(e.message))await atualizarCaptchaLogin();
+   throw e;
+  }
  });
+ $('captchaLoginAtualizar').addEventListener('click',()=>void atualizarCaptchaLogin());
  $('captchaCadastroAtualizar').addEventListener('click',()=>void atualizarCaptchaCadastro());
  onForm('formCadastro',async()=>{
   if(!documentos||!$('cadastroTermos').checked)
