@@ -415,6 +415,34 @@ function atualizarCarrinho(){
    return res.json({pedidos,laboratorio:true,pagamentoReal:false});
   }catch{return res.status(503).json({erro:'PEDIDOS_INDISPONIVEIS'});}
  });
+ // Biblioteca digital de ensaio: os vínculos são do mesmo pedido e do
+ // mesmo titular, mas não representam comercialização real.
+ app.get('/staging/vitrine/loja/meus-cursos',autorizarCliente,(req,res)=>{
+  try{
+   const titularId=req.titularVitrine,cursos=[];
+   for(const pedido of prePedidos.listar({titularId})){
+    const auditoria=consultarPedido({banco,prepedidoId:pedido.prepedidoId,titularId});
+    if(!auditoria)continue;
+    const permitido=auditoria.conferenciaPSPConcluida&&
+     !auditoria.exigeRevisaoManual;
+    for(const material of materialPdf.listarPedido({
+     prepedidoId:pedido.prepedidoId,titularId
+    })){
+     const item=pedido.itens.find(i=>i.produtoId===material.produtoId&&i.tipo==='PDF');
+     if(!item)continue;
+     cursos.push({pedidoId:pedido.prepedidoId,produtoId:material.produtoId,
+      titulo:item.nome||'Curso digital',versao:material.versao,
+      situacao:permitido?'DISPONIVEL':'AGUARDANDO_CONFIRMACAO',
+      urlDownload:permitido?
+       '/staging/meus-pedidos/'+pedido.prepedidoId+'/pdf/'+material.produtoId:null,
+      pagamentoReal:false});
+    }
+   }
+   return res.json({cursos,laboratorio:true,checkoutReal:false,
+    mensagem:cursos.length?'Cursos associados aos seus pedidos de ensaio.':
+     'Você ainda não possui cursos vinculados a pedidos.'});
+  }catch{return res.status(503).json({erro:'MEUS_CURSOS_INDISPONIVEIS'});}
+ });
  app.post('/staging/vitrine/loja/pedidos',autorizarCliente,
   async(req,res)=>{
    if(req.get('x-loop-lab')!=='participante'||!csrf(req))
