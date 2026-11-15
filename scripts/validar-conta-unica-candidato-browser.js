@@ -422,7 +422,14 @@ function mp4TrintaSegundos(){
    await admin.locator('#token').fill('somente-teste-do-navegador-'+('x'.repeat(40)));
    await admin.locator('#formAcesso button').click();
    await admin.locator('#administracao').waitFor({state:'visible'});
+   async function abrirControleAdmin(seletor){
+    const aba=await admin.locator(seletor).first().evaluate(
+     el=>el.closest('[data-admin-aba]')?.dataset.adminAba||null);
+    if(aba&&await admin.locator('#admin-aba-'+aba).getAttribute('aria-selected')!=='true')
+     await admin.locator('#admin-aba-'+aba).click();
+   }
    // Busca administrativa real também no navegador PC/celular.
+   await abrirControleAdmin('#pesquisaTipoAdmin');
    await admin.locator('#pesquisaTipoAdmin').selectOption('pedidos');
    await admin.locator('#pesquisaTermoAdmin').fill(item.nick);
    await admin.locator('#pesquisaExecutarAdmin').click();
@@ -436,6 +443,7 @@ function mp4TrintaSegundos(){
    await admin.locator('#pesquisaResultadosAdmin').getByRole('button',{name:'Editar no catálogo'}).first().click();
    await admin.waitForFunction(() => document.getElementById('produtoIdAdmin').value==='curso-homologacao-250');
    await admin.locator('#cancelarEdicaoProduto').click();
+   await abrirControleAdmin('#pesquisaTermoAdmin');
    await admin.locator('#pesquisaTermoAdmin').fill('produto-inexistente-zz88');
    await admin.locator('#pesquisaExecutarAdmin').click();
    await admin.locator('#pesquisaResultadosAdmin').filter({hasText:'Nenhum registro encontrado.'}).waitFor();
@@ -444,6 +452,7 @@ function mp4TrintaSegundos(){
 
    // Provar a operação REAL dos controles editoriais sem redesenhar o admin.
    assert.equal(await admin.locator('#formNovidadesAdmin').count(),1);
+   await abrirControleAdmin('#novidadeTituloAdmin');
    await admin.locator('#novidadeTituloAdmin').fill('LANÇAMENTO '+item.nick);
    await admin.locator('#novidadeTextoAdmin').fill(
     'Comunicado editorial de ensaio: nenhuma gratuidade ou pagamento é ativado.');
