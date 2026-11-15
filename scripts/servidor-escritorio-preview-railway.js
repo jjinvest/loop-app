@@ -41,10 +41,16 @@ function criarGateway({portaInterna,senhaAcesso,senhaAdmin,segredoOperador,
     typeof senhaAdmin!=='string'||senhaAdmin.length<24||
     senhaAdmin===senhaAcesso)
   falha('GATEWAY_PREVIA_INVALIDO');
- if(publicarCadastroReal===true&&(
-   typeof urlIdentidadeReal!=='string'||
-   !/^http:\/\/[a-z0-9-]+\.railway\.internal(?::[0-9]{2,5})?\/internal\/loop\/tabuleiro$/.test(urlIdentidadeReal)))
-  falha('IDENTIDADE_REAL_PRIVADA_NAO_CONFIGURADA');
+ if(publicarCadastroReal===true){
+  const railway=typeof urlIdentidadeReal==='string'&&
+   /^http:\/\/[a-z0-9-]+\.railway\.internal(?::[0-9]{2,5})?\/internal\/loop\/tabuleiro$/.test(urlIdentidadeReal);
+  const somenteTeste=permitirOrigemHttpLoopback===true&&
+   process.env.NODE_ENV!=='production'&&
+   typeof urlIdentidadeReal==='string'&&
+   /^http:\/\/127\.0\.0\.1:[0-9]{2,5}\/internal\/loop\/tabuleiro$/.test(urlIdentidadeReal);
+  if(!railway&&!somenteTeste)
+   falha('IDENTIDADE_REAL_PRIVADA_NAO_CONFIGURADA');
+ }
  const realAlvo=publicarCadastroReal?new URL(urlIdentidadeReal):null;
  const backend='127.0.0.1:'+portaInterna;
  const sessaoNome='akitemm_preview_access';
