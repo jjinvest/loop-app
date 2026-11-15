@@ -175,6 +175,8 @@ jobs:
         run: node --test test/contrato-visual-escritorio-aprovado.test.js
       - name: Validar oito quadrinhos AKITEMM mutaveis e alinhados
         run: node --test test/akitemm-grade-2x2-4x2-aprovada.test.js test/akitemm-slots-vitrine-editaveis.test.js test/akitemm-alinhamento-botoes-dourados.test.js
+      - name: Validar cadastro de estoque proprio e caracteristicas
+        run: node --test test/estoque-proprio-caracteristicas-catalogo.test.js
       - run: node --check scripts/servidor-escritorio-preview-railway.js
       - run: node --check src/domain/agendador-conciliacao-asaas-sandbox.js
       - run: node --check src/domain/s3-url-assinada-backup-lab.js
