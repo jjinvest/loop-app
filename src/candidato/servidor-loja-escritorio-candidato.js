@@ -875,6 +875,17 @@ function criarAppLojaEscritorioCandidato({banco,repositorioCatalogo,
    res.set('Cache-Control','no-store');
    return res.json(bannersEscritorio.listar());
   });
+ app.get('/staging/escritorio-unificado/banners-escritorio/:slot/imagem',
+  autorizarOperador,(req,res)=>{
+   const slot=numeroBanner(req);
+   if(slot===null)return res.status(404).json({erro:'BANNER_SLOT_INVALIDO'});
+   try{
+    const foto=bannersEscritorio.imagem(slot);
+    res.set({'Cache-Control':'private, no-store',
+     'X-Content-Type-Options':'nosniff','Content-Disposition':'inline'});
+    return res.type(foto.mime).send(foto.bytes);
+   }catch{return res.status(404).json({erro:'BANNER_SEM_IMAGEM'});}
+  });
  app.put('/staging/escritorio-unificado/banners-escritorio/:slot/imagem',
   autorizarOperador,async(req,res)=>{
    const slot=numeroBanner(req);
