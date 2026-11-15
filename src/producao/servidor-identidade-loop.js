@@ -4,6 +4,7 @@
 const express=require('express');
 const {COOKIE}=require('./identidade-cliente-loop-sqlite');
 const {CaptchaCadastroSQLite}=require('../shared/captcha-cadastro-sqlite');
+const {CaptchaLoginSQLite}=require('../shared/captcha-login-sqlite');
 const {montarInterfaceAprovada}=require('./interface-aprovada-loop');
 const {montarGatewayAdminComercial}=require('./gateway-admin-comercial');
 const {VisaoEscritorioUnificadaSQLite}=
@@ -72,6 +73,9 @@ function criarAppIdentidadeLoop({contas,origemHttps,
  const captcha=captchaCadastroObrigatorio?new CaptchaCadastroSQLite({
   banco:contas.banco,segredo:contas.keyCodigo,contexto:'REAL'
  }):null;
+ const captchaLogin=new CaptchaLoginSQLite({
+  banco:contas.banco,segredo:contas.keyCodigo,contexto:'REAL'
+ });
  const backupAtual=()=>typeof backupEstado==='function'?
   backupEstado()?.backupAtualEmDia===true:true;
  const cadastroLiberado=()=>permitirCadastro&&backupAtual();
@@ -216,13 +220,26 @@ function criarAppIdentidadeLoop({contas,origemHttps,
    return res.status(201).json(result);
   }catch(e){return falha(res,e);}
  });
+ // CAPTCHA é solicitado somente após a primeira credencial incorreta.
+ app.get('/api/contas/captcha-login',(_req,res)=>{
+  try{return res.set('Cache-Control','no-store').json(captchaLogin.emitir());}
+  catch{return res.status(429).json({erro:'CAPTCHA_OCUPADO'});}
+ });
  app.post('/api/contas/entrar',mutation,async(req,res)=>{
   const b=req.body;
-  if(!b||Array.isArray(b)||Object.keys(b).sort().join(',')!=='nick,senha')
+  if(!b||Array.isArray(b)||!['nick,senha',
+     'captchaId,captchaResposta,nick,senha'].includes(Object.keys(b).sort().join(',')))
    return res.status(400).json({erro:'CAMPOS_INVALIDOS'});
   if(!limite(res,'login',b.nick))return;
   try{
-   const result=await contas.entrar(b);
+   captchaLogin.verificarAntes(b.nick,b);
+  }catch(e){
+   return res.status(403).json({erro:e.codigo||'CAPTCHA_INVALIDO',
+    captchaObrigatorio:true});
+  }
+  try{
+   const result=await contas.entrar({nick:b.nick,senha:b.senha});
+   captchaLogin.concluirSucesso(b.nick);
    res.set('Set-Cookie',cookie(result.token));
    return res.json({
     titularId:result.titularId,nick:result.nick,csrf:result.csrf,
@@ -231,7 +248,13 @@ function criarAppIdentidadeLoop({contas,origemHttps,
     pagamentoReal:false,motorLoopInterno:motorLoop!==null,
     tesourariaEnsaioAtiva:tesourariaEnsaio!==null
    });
-  }catch(e){return falha(res,e);}
+  }catch(e){
+   if(e.codigo==='CREDENCIAIS_INVALIDAS'){
+    try{captchaLogin.registrarErro(b.nick);}catch{return res.status(429).json({erro:'CAPTCHA_OCUPADO'});}
+    return res.status(401).json({erro:'CREDENCIAIS_INVALIDAS',captchaObrigatorio:true});
+   }
+   return falha(res,e);
+  }
  });
  app.get('/api/contas/me',protegido,(req,res)=>res.json({
   titularId:req.conta.titularId,nick:req.conta.nick,
