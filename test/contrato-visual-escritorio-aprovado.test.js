@@ -67,7 +67,7 @@ test('Financeiro real e a prévia usam os mesmos cartões e protegem o saque',()
  assert.ok(real.includes("Saque indisponível até a homologação bancária"));
 });
 
-test('primeira aba: dois banners, AKITEMM prateado e pontos circulares',()=>{
+test('primeira aba: quatro banners, AKITEMM prateado e pontos circulares',()=>{
  const html=ler('src/candidato/checkout-candidato-ui.html');
  const js=ler('src/candidato/checkout-candidato-ui.js');
  const css=ler('src/laboratorio/loop-03-shell.css');
@@ -76,8 +76,8 @@ test('primeira aba: dois banners, AKITEMM prateado e pontos circulares',()=>{
   assert.doesNotMatch(html,new RegExp('id="'+id+'"'));
  assert.doesNotMatch(html,/id="atalhoLoja"/);
  assert.match(html,/class="primario loop03-loja-prata"/);
- assert.equal((html.match(/class="loop03-banner-item/g)||[]).length,2);
- assert.equal((html.match(/data-banner-resumo=/g)||[]).length,2);
+ assert.equal((html.match(/class="loop03-banner-item/g)||[]).length,4);
+ assert.equal((html.match(/data-banner-resumo=/g)||[]).length,4);
  assert.doesNotMatch(html,/id="historicoPosicaoResumo"/);
  assert.match(js,/function iniciarCarrosselResumo/);
  assert.match(js,/pista\.scrollTo/);
