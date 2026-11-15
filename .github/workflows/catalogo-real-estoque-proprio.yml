@@ -5,6 +5,7 @@ on:
       - feature/unificar-escritorio-real-20261105
     paths:
       - 'src/producao/catalogo-mercadorias-real.js'
+      - 'src/producao/material-pdf-cursos-real.js'
       - 'src/producao/ponte-catalogo-real-preview.js'
       - 'src/domain/repositorio-catalogo-sqlite.js'
       - 'src/domain/catalogo.js'
@@ -17,6 +18,10 @@ on:
       - 'src/candidato/servidor-loja-escritorio-candidato.js'
       - 'src/laboratorio/loja-cliente-demo.js'
       - 'test/catalogo-mercadorias-real-e2e.test.js'
+      - 'test/catalogo-cursos-pdf-real-e2e.test.js'
+      - 'test/loja-upload-real-pdf-foto-video-avaliacoes-unificados.test.js'
+      - 'src/laboratorio/loja-cliente-demo.html'
+      - 'test/filtros-cor-loja-candidato.test.js'
       - 'test/ponte-catalogo-real-preview.test.js'
       - 'test/identidade-real-catalogo-isolado.test.js'
       - 'test/estoque-proprio-caracteristicas-catalogo.test.js'
@@ -38,10 +43,12 @@ jobs:
           cache: npm
       - run: npm ci --ignore-scripts --no-fund
       - name: Verificar sintaxe de servicos e ponte
-        run: node --check src/producao/catalogo-mercadorias-real.js && node --check src/producao/ponte-catalogo-real-preview.js && node --check scripts/iniciar-identidade-real-preparacao.js && node --check src/candidato/servidor-loja-escritorio-candidato.js
+        run: node --check src/producao/catalogo-mercadorias-real.js && node --check src/producao/material-pdf-cursos-real.js && node --check src/producao/ponte-catalogo-real-preview.js && node --check scripts/iniciar-identidade-real-preparacao.js && node --check src/candidato/servidor-loja-escritorio-candidato.js
       - name: Provar catalogo real isolado sem cobranca
-        run: node --test test/catalogo-mercadorias-real-e2e.test.js test/ponte-catalogo-real-preview.test.js test/identidade-real-catalogo-isolado.test.js
+        run: node --test test/catalogo-mercadorias-real-e2e.test.js test/catalogo-cursos-pdf-real-e2e.test.js test/ponte-catalogo-real-preview.test.js test/identidade-real-catalogo-isolado.test.js
       - name: Provar preservacao do catalogo do proprietario
         run: node --test test/estoque-proprio-caracteristicas-catalogo.test.js test/akitemm-slots-vitrine-editaveis.test.js
+      - name: Biblioteca digital por comprador com download protegido apos conciliacao
+        run: node --test test/loja-upload-real-pdf-foto-video-avaliacoes-unificados.test.js
       - name: Imutabilidade visual preservada
         run: node --test test/contrato-visual-escritorio-aprovado.test.js
