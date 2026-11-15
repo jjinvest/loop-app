@@ -1579,6 +1579,21 @@ $('formGrafiaNick').addEventListener('submit',confirmarGrafiaNick);
 for(const [btn,section] of ABAS){
  $(btn).addEventListener('click',()=>mostrarAba(section));
 }
+// O + é só um atalho: a proteção real segue no gateway do operador.
+async function atualizarAtalhoOperadorLoop(){
+ const a=document.getElementById('loopOperadorMais');
+ if(!a)return;
+ a.hidden=true;a.style.display='none';
+ try{
+  const r=await fetch('/staging/operador/estado',{
+   credentials:'same-origin',cache:'no-store'
+  });
+  if(!r.ok)return;
+  const d=await r.json();
+  if(d.operador===true){a.hidden=false;a.style.display='inline-flex';}
+ }catch{}
+}
+void atualizarAtalhoOperadorLoop();
 void carregarIndicadorCadastro();
 restaurarSessao();
 
