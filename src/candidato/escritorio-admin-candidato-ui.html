@@ -55,19 +55,19 @@
 </div>
 </section>
 <section class="painel" aria-labelledby="tituloProdutosAdmin">
-<div class="linha"><h2 id="tituloProdutosAdmin">Produtos · edição de laboratório</h2>
+<div class="linha"><h2 id="tituloProdutosAdmin">Produtos · catálogo AKITEMM</h2>
 <button id="recarregarProdutos" type="button">Atualizar catálogo</button></div>
-<p class="subtexto">Campos efetivos na loja e nas novas cotações. Pedidos já preparados preservam seus preços; nenhum produto é vendido de verdade.</p>
+<p class="subtexto">Cadastre mercadorias próprias com fotos, características e preço de venda. A publicação na vitrine é real; o checkout permanece indisponível até homologação dos pagamentos.</p>
 <div id="listaProdutosAdmin" aria-live="polite"></div>
 <div class="linha"><button id="produtosAnterior" type="button">Anterior</button>
 <button id="produtosProximo" type="button">Próximos produtos</button></div>
-<h3 id="tituloFormularioProduto">Cadastrar produto fictício</h3>
+<h3 id="tituloFormularioProduto">Cadastrar produto</h3>
 <form id="formProduto">
 <label for="produtoIdAdmin">Identificador (3 a 80 caracteres: letras minúsculas, números e hífen)</label>
 <input id="produtoIdAdmin" pattern="[a-z0-9-]{3,80}" maxlength="80" required>
 <div class="duas-colunas">
 <div><label for="produtoTipoAdmin">Tipo</label><select id="produtoTipoAdmin"><option value="PDF">Curso PDF</option><option value="FISICO">Produto físico</option></select></div>
-<div><label for="produtoEstadoAdmin">Situação</label><select id="produtoEstadoAdmin"><option value="RASCUNHO">Rascunho</option><option value="PUBLICADO">Publicado no laboratório</option><option value="DEMONSTRACAO">Demonstração</option></select></div>
+<div><label for="produtoEstadoAdmin">Situação</label><select id="produtoEstadoAdmin"><option value="RASCUNHO">Rascunho</option><option value="PUBLICADO">Publicado na vitrine</option><option value="DEMONSTRACAO">Demonstração</option></select></div>
 </div>
 <label for="produtoNomeAdmin">Nome do produto</label><input id="produtoNomeAdmin" maxlength="150" required>
 <label for="produtoDescricaoAdmin">Descrição do produto</label>
