@@ -515,7 +515,7 @@ $('formOfertasCompostasAdmin').addEventListener('submit',async e=>{
 // usa este painel: upload binário manual e controle otimista de revisão.
 const urlsTemporariasBanners=[];
 let carregandoBannersEscritorio=false;
-async function gerenciarBannerFotoAdmin(slot,arquivo,revisao,remover=false){
+async function gerenciarBannerFotoAdmin(slot,arquivo,revisao,remover=false,enquadramento='INTEIRA'){
  if(!auth)throw Error('Entre no painel administrativo primeiro.');
  if(!remover&&(!arquivo||!['image/jpeg','image/png','image/webp'].includes(arquivo.type)||
    arquivo.size<40||arquivo.size>4*1024*1024))
@@ -525,7 +525,8 @@ async function gerenciarBannerFotoAdmin(slot,arquivo,revisao,remover=false){
    method:remover?'DELETE':'PUT',credentials:'same-origin',
    headers:{Authorization:'Bearer '+auth,
     'X-Banner-Revisao-Esperada':String(revisao),
-    ...(!remover?{'Content-Type':arquivo.type}:{})},
+    ...(!remover?{'Content-Type':arquivo.type,
+     'X-Banner-Enquadramento':enquadramento}:{})},
    ...(!remover?{body:arquivo}:{})
   });
  const dados=await response.json().catch(()=>({}));
@@ -565,6 +566,7 @@ async function atualizarBannersEscritorioAdmin(){
    const foto=elem('img');foto.hidden=true;
    foto.alt='Foto atual do banner '+b.slot;
    foto.loading='lazy';
+   foto.style.objectFit=b.enquadramento==='PREENCHER'?'cover':'contain';
    secao.append(foto);
    secao.append(elem('p',b.temImagem?
     'Foto cadastrada · revisão '+b.revisao:
@@ -574,6 +576,33 @@ async function atualizarBannersEscritorioAdmin(){
    input.id='bannerArquivoAdmin'+b.slot;
    const rotulo=elem('label','Selecionar foto do banner '+b.slot);
    rotulo.htmlFor=input.id;rotulo.append(input);secao.append(rotulo);
+   // O operador pode escolher mostrar a arte inteira ou preencher
+   // a moldura. O arquivo original e sempre guardado sem cortes.
+   const encaixe=elem('select');
+   encaixe.id='bannerEnquadramentoAdmin'+b.slot;
+   const inteira=elem('option','Mostrar imagem inteira · sem cortes');
+   inteira.value='INTEIRA';
+   const preencher=elem('option','Preencher moldura · corta as bordas');
+   preencher.value='PREENCHER';
+   encaixe.append(inteira,preencher);
+   encaixe.value=b.enquadramento==='PREENCHER'?'PREENCHER':'INTEIRA';
+   const tituloEncaixe=elem('label','Enquadramento na moldura');
+   tituloEncaixe.htmlFor=encaixe.id;tituloEncaixe.append(encaixe);
+   secao.append(tituloEncaixe);
+   encaixe.addEventListener('change',()=>{
+    foto.style.objectFit=encaixe.value==='PREENCHER'?'cover':'contain';
+   });
+   input.addEventListener('change',()=>{
+    const arquivo=input.files?.[0];
+    if(!arquivo)return;
+    if(!['image/jpeg','image/png','image/webp'].includes(arquivo.type)){
+     foto.hidden=true;return;
+    }
+    const url=URL.createObjectURL(arquivo);
+    urlsTemporariasBanners.push(url);
+    foto.style.objectFit=encaixe.value==='PREENCHER'?'cover':'contain';
+    foto.src=url;foto.hidden=false;
+   });
    const botoes=elem('div');botoes.className='linha';
    const enviar=elem('button','Enviar foto');enviar.type='button';
    const apagar=elem('button','Remover foto');apagar.type='button';
@@ -587,7 +616,7 @@ async function atualizarBannersEscritorioAdmin(){
     enviar.disabled=true;apagar.disabled=true;
     aviso.textContent=remover?'Removendo a foto...':'Enviando e salvando a foto...';
     try{
-     await gerenciarBannerFotoAdmin(b.slot,arquivo,b.revisao,remover);
+     await gerenciarBannerFotoAdmin(b.slot,arquivo,b.revisao,remover,encaixe.value);
      await atualizarBannersEscritorioAdmin();
      estado.textContent=remover?'Foto removida do banner '+b.slot+'.':
       'Foto do banner '+b.slot+' salva. Abra o Escritório Virtual para conferir.';
