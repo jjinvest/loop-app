@@ -52,14 +52,14 @@ test('telefone aparece automaticamente somente ao indicador direto vinculado, se
    indicadoId:pessoa.titularId,indicadorId:pessoa.titularId
   }),null,'indicado não pode falsificar vínculo');
   const segundo=await contas.cadastrar({
-   ...dados('Contato2','11988887777'),
+   ...dados('Segunda','11988887777'),
    onCriada:({titularId})=>equipe.registrarCadastro({
     indicadoId:titularId,indicadorNick:'Indicador'
    })
   });
   assert.equal(equipe.listar({titularId:indicador.titularId}).cadastros.find(
-   p=>p.nick==='Contato2').telefone,'11988887777');
-  assert.equal(contas.perfil(segundo.titularId).nick,'Contato2');
+   p=>p.nick==='Segunda').telefone,'11988887777');
+  assert.equal(contas.perfil(segundo.titularId).nick,'Segunda');
   assert.equal(equipe.listar({titularId:indicador.titularId}).total,2);
   // Simula cadastro antigo com telefone cifrado e convite, sem opt-in salvo.
   const permissaoAntiga=db.prepare(
