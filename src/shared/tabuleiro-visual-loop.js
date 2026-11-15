@@ -126,6 +126,10 @@
    // Lotes visuais progressivos: nenhum teto de fila escondido,
    // sem congelar o navegador criando milhares de nós em uma operação.
    const LOTE=50;
+   if(contagem<=LOTE){
+    for(let i=0;i<contagem;i++)adicionar({ordem:inicio+i+1},i);
+    return;
+   }
    let exibidos=0;
    const proximo=document.createElement('button');
    proximo.type='button';
