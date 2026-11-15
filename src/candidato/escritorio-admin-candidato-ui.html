@@ -72,7 +72,11 @@
 <label for="produtoNomeAdmin">Nome do produto</label><input id="produtoNomeAdmin" maxlength="150" required>
 <label for="produtoDescricaoAdmin">Descrição do produto</label>
 <textarea id="produtoDescricaoAdmin" maxlength="2000" rows="3" required></textarea>
-<label for="produtoPrecoAdmin">Preço da simulação (R$)</label>
+<label for="produtoDetalhesAdmin">Características do produto (até 12 linhas, uma informação por linha)</label>
+<textarea id="produtoDetalhesAdmin" maxlength="2160" rows="5" placeholder="Marca: ...&#10;Tamanho: ...&#10;Cor: ...&#10;Material: ..."></textarea>
+<div class="duas-colunas"><label for="produtoEntregaAdmin">Origem do produto físico
+<select id="produtoEntregaAdmin"><option value="ESTOQUE_PROPRIO">Estoque próprio</option><option value="FORNECEDOR_INTEGRADO">Fornecedor parceiro (futuro)</option></select></label></div>
+<label for="produtoPrecoAdmin">Preço de venda (R$)</label>
 <input id="produtoPrecoAdmin" type="number" inputmode="decimal" min="0.01" max="1000000" step="0.01" required>
 <label for="pdfProdutoArquivoAdmin">Arquivo do curso PDF (até 5 MB, somente PDF válido)
 <input id="pdfProdutoArquivoAdmin" type="file" accept=".pdf,application/pdf"></label>
