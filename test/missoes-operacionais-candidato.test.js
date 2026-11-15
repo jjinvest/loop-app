@@ -93,7 +93,7 @@ test('legenda da loja separa quatro classes sem confundir estados do LOOP',()=>{
  const ui=fs.readFileSync(path.join(__dirname,'../src/laboratorio/loja-cliente-demo.html'),'utf8');
  for(const s of ['akitemm-cor-cinza','akitemm-cor-verde','akitemm-cor-dourado',
   'akitemm-cor-roxo','Cinza · Compra comum','Verde · Qualificado',
-  'Dourado · Integral','Roxo · Evento especial']){
+  'Dourado · Qualificado','Roxo · Ofertas especiais']){
   assert.ok(ui.includes(s),s);
  }
  assert.ok(!ui.includes('onclick="'));
