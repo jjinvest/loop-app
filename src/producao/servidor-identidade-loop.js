@@ -3,6 +3,7 @@
 // src/candidato e nunca monta as rotas de laboratório ou dinheiro.
 const express=require('express');
 const {COOKIE}=require('./identidade-cliente-loop-sqlite');
+const {CaptchaCadastroSQLite}=require('../shared/captcha-cadastro-sqlite');
 const {montarInterfaceAprovada}=require('./interface-aprovada-loop');
 const {montarGatewayAdminComercial}=require('./gateway-admin-comercial');
 const {VisaoEscritorioUnificadaSQLite}=
@@ -12,7 +13,7 @@ const {autorizarInterno,projetarTabuleiroOperacional}=
 const {LivroFinanceiroRealSQLite}=
  require('./livro-financeiro-real-sqlite');
 function criarAppIdentidadeLoop({contas,origemHttps,
- permitirCadastro=false,backupEstado=null,
+ permitirCadastro=false,backupEstado=null,captchaCadastroObrigatorio=false,
  pedidosComerciais=null,remessasOutbox=null,catalogoVitrine=null,
  adminComercial=null,
  motorLoop=null,eventosComerciais=null,tesourariaEnsaio=null,
@@ -66,6 +67,11 @@ function criarAppIdentidadeLoop({contas,origemHttps,
   });
  const livroFinanceiro=motorLoop===null?null:
   new LivroFinanceiroRealSQLite({banco:contas.banco});
+ if(typeof captchaCadastroObrigatorio!=='boolean')
+  throw Error('CAPTCHA_CONFIGURACAO_INVALIDA');
+ const captcha=captchaCadastroObrigatorio?new CaptchaCadastroSQLite({
+  banco:contas.banco,segredo:contas.keyCodigo,contexto:'REAL'
+ }):null;
  const backupAtual=()=>typeof backupEstado==='function'?
   backupEstado()?.backupAtualEmDia===true:true;
  const cadastroLiberado=()=>permitirCadastro&&backupAtual();
@@ -178,21 +184,35 @@ function criarAppIdentidadeLoop({contas,origemHttps,
  });
  app.get('/api/contas/documentos',(_req,res)=>{
   if(!cadastroLiberado())return res.status(503).json({erro:'CADASTRO_INATIVO'});
-  res.json(contas.documentos());
+  res.json({...contas.documentos(),
+   ...(captcha?{captchaObrigatorio:true}:{})});
+ });
+ app.get('/api/contas/captcha-cadastro',(_req,res)=>{
+  if(!cadastroLiberado()||!captcha)
+   return res.status(503).json({erro:'CADASTRO_INATIVO'});
+  try{return res.set('Cache-Control','no-store').json(captcha.emitir());}
+  catch{return res.status(429).json({erro:'CAPTCHA_OCUPADO'});}
  });
  app.post('/api/contas/cadastrar',mutation,async(req,res)=>{
   if(!cadastroLiberado())return res.status(503).json({erro:'CADASTRO_INATIVO'});
   const b=req.body;
-  if(!b||Array.isArray(b)||![
+  if(!b||Array.isArray(b)||typeof b!=='object')
+   return res.status(400).json({erro:'CAMPOS_INVALIDOS'});
+  const dadosCadastro=captcha?Object.fromEntries(Object.entries(b).filter(
+   ([k])=>k!=='captchaId'&&k!=='captchaResposta')):b;
+  if(![
     'aceitePrivacidade,aceiteTermos,email,hashPrivacidade,hashTermos,nick,nome,senha,versaoPrivacidade,versaoTermos',
     'aceitePrivacidade,aceiteTermos,email,hashPrivacidade,hashTermos,indicadorNick,nick,nome,senha,versaoPrivacidade,versaoTermos',
     'aceitePrivacidade,aceiteTermos,cpf,email,hashPrivacidade,hashTermos,nick,nome,senha,telefone,versaoPrivacidade,versaoTermos',
     'aceitePrivacidade,aceiteTermos,cpf,email,hashPrivacidade,hashTermos,indicadorNick,nick,nome,senha,telefone,versaoPrivacidade,versaoTermos'
-   ].includes(Object.keys(b).sort().join(',')))
+   ].includes(Object.keys(dadosCadastro).sort().join(',')))
    return res.status(400).json({erro:'CAMPOS_INVALIDOS'});
   if(!limite(res,'cadastro',b.email))return;
   try{
-   const result=await contas.cadastrar(b);
+   if(captcha)captcha.verificar({
+    captchaId:b.captchaId,captchaResposta:b.captchaResposta
+   });
+   const result=await contas.cadastrar(dadosCadastro);
    return res.status(201).json(result);
   }catch(e){return falha(res,e);}
  });
