@@ -99,6 +99,6 @@ test('layout da fila e tabuleiro no celular preserva centro, seis vagas e filas 
  assert.match(css,/\.atalhos-participante/);
  const loja=arq('loja-cliente-demo.html');
  // AKITEMM tem visual próprio; clicar no LOGO LOOP retorna ao escritório virtual.
- assert.match(loja,/href="\/escritorio" class="akitemm-voltar"/);
+ assert.match(loja,/href="\/minha-conta" class="akitemm-voltar"/);
  assert.doesNotMatch(loja,/href="\/escritorio#tituloMapaParticipante"/);
 });
