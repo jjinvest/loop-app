@@ -493,7 +493,7 @@
     void carregarMotor();
   },15000);
     for(const id of ['atualizarTabuleiroIntegrado','atualizarPosicoes']){
-   $(id).addEventListener('click',()=>void carregarMotor());
+   $(id)?.addEventListener('click',()=>void carregarMotor());
   }
     $('tabuleiroVerPosicoesIntegrado').addEventListener('click',
    ()=>$('abaPosicoes').click());
