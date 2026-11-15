@@ -36,6 +36,7 @@ async function fixture(t){
    versaoTermos:docs.termos.versao,hashTermos:docs.termos.hash,
    versaoPrivacidade:docs.privacidade.versao,
    hashPrivacidade:docs.privacidade.hash,
+   ...(nick==='Bia'?{cpf:'529.982.247-25',telefone:'11987654321'}:{}),
    ...(indicadorNick?{indicadorNick}:{})
   });
  }
@@ -48,7 +49,10 @@ async function fixture(t){
   indicadorId:ana.titularId,indicadoId:bia.titularId,
   posicaoId:1,pedidoIndicado:'pedido-bia',eventoId:'convite-bia'
  });
- const visao=new VisaoEscritorioUnificadaSQLite({banco,motor});
+ const visao=new VisaoEscritorioUnificadaSQLite({
+  banco,motor,
+  consultarTelefone:args=>contas.telefoneIndicadoVinculado(args)
+ });
  return {banco,contas,motor,visao,ana,bia,caio,vera};
 }
 test('Uma leitura une posição, compra, fila e indicação do mesmo titular sem remuneração',async t=>{
@@ -74,6 +78,14 @@ test('Uma leitura une posição, compra, fila e indicação do mesmo titular sem
   'QUALIFICACAO_ENSAIO,CADASTRO_AGUARDANDO_COMPRA');
  assert.equal(x.visao.listarRede({titularId:x.ana.titularId})
   .remuneracoesConfirmadas,0);
+ const rede=x.visao.listarRede({titularId:x.ana.titularId}).indicados;
+ assert.equal(rede[0].telefone,'11987654321');
+ assert.equal(rede[0].numeroCadastro,1);
+ assert.equal(rede[0].filaCadastro,'B');
+ assert.equal(rede[1].telefone,null);
+ assert.equal(x.contas.telefoneIndicadoVinculado({
+  indicadorId:x.vera.titularId,indicadoId:x.bia.titularId
+ }),null,'sem vínculo direto não há acesso');
  assert.equal(x.visao.listarRede({
   titularId:x.ana.titularId,limite:1
  }).temMais,true);
@@ -128,6 +140,9 @@ test('HTTP mesmo Escritório: sessão de outra conta não lê pedidos ou equipe 
  assert.deepEqual(lista.indicados.map(i=>i.nick),['bia','caio']);
  assert.equal(lista.resumo.qualificadasEmEnsaio,1);
  assert.equal(lista.indicados[0].posicaoDestinoEnsaio,1);
+ assert.equal(lista.indicados[0].telefone,'11987654321');
+ assert.equal(lista.indicados[0].numeroCadastro,1);
+ assert.equal(lista.indicados[1].telefone,null);
  const acimaDoTetoAntigo=await fetch(
   base+'/api/contas/minha-rede?offset=100001',{
    headers:{Cookie:cookies[0]}
@@ -144,6 +159,7 @@ test('HTTP mesmo Escritório: sessão de outra conta não lê pedidos ou equipe 
  })).json();
  assert.equal(vazia.total,0);
  assert.equal(JSON.stringify(vazia).includes('bia'),false);
+ assert.equal(JSON.stringify(vazia).includes('11987654321'),false);
  assert.equal((await fetch(base+'/api/loop/registrar-compra',{
   method:'POST',headers:{Cookie:cookies[0],Origin:ORIGEM,
    'Content-Type':'application/json'},
