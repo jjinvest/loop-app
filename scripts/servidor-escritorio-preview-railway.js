@@ -470,6 +470,8 @@ async function iniciar({env=process.env}={}){
   chaveProvaEmail:temEnvio?derivar(segredoRaiz,'prova-posse-email'):null,
   enviarEmailDeVerificacao:enviarVerificacao,
   // CPF de ensaio desabilitado para não incentivar dados pessoais em prévia.
+  captchaCadastroObrigatorio:true,
+  captchaSegredo:derivar(segredoRaiz,'captcha-cadastro'),
   segredoOperador:tokenOperador,termosVersao:'LAB-escritorio-contato-nov2026',
   termosTexto:'Ao criar uma conta, você escolhe um nick exclusivo e senha de acesso ao Escritório Virtual LOOP e à Loja AKITEMM. Nome, e-mail e telefone são informados para comunicação, verificação cadastral e suporte. Se você acessar o cadastro por um link de indicação, seu telefone ficará visível somente para o titular daquele link, na área Minha Equipe, para contato sobre o LOOP. Pessoas sem vínculo de indicação não terão acesso a esse telefone. CPF, e-mail, senha e nome civil não serão exibidos na ficha de indicações.'
  });
