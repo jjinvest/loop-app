@@ -1,11 +1,11 @@
 {
   "schema": 1,
   "política": "Toda alteração de HTML/CSS exige pedido visual explícito, escopo isolado e revisão do proprietário; é proibido atualizar hashes para esconder mudanças.",
-  "autorizaçãoAtual": "14/11/2026: pedido explicito do proprietário para corrigir o teste de navegacao, abrir os dados nome/nick/email no rodape Minha conta, sincronizar a foto com o topo e mostrar CPF apenas se posicao confirmada; HTML e CSS da interface unica atualizados sem alterar outras telas.",
+  "autorizaçãoAtual": "14/11/2026: autorização explícita do proprietário para refinar EXCLUSIVAMENTE os ícones do menu lateral compartilhado: casa dourada, tabuleiro dourado levemente maior, grade de posições dourada, equipe dourada, financeiro verde, loja AKITEMM roxa, carrinho dourado, links dourados, conta dourada. IDs, links, abas, motor, textos e navegação preservados. As edições anteriores aprovadas no HTML/CSS compartilhados também permanecem (CPF no cadastro, controles, filas, links e rodapé).",
   "arquivos": [
     {
       "path": "src/candidato/checkout-candidato-ui.html",
-      "sha": "cea94a84839146106fd10775895955554231480d"
+      "sha": "64d34c119ccb963633da549e7c8e80aae1d353fe"
     },
     {
       "path": "src/candidato/escritorio-admin-candidato-ui.css",
@@ -17,7 +17,7 @@
     },
     {
       "path": "src/candidato/escritorio-cliente-integrado.css",
-      "sha": "372eed7e4140a80e8ceeb91720acc1f2c370bd8d"
+      "sha": "aeeee40c21a2994f7ff987614b5e4b3267889e21"
     },
     {
       "path": "src/laboratorio/admin-loop03.css",
@@ -99,5 +99,8 @@
       "path": "src/laboratorio/participante-demo.html",
       "sha": "3999bd755b52fb96bbdd0e287e1d1fd9cc5e4387"
     }
+  ],
+  "históricoAutorizações": [
+    "14/11/2026: pedido explicito do proprietário para corrigir o teste de navegacao, abrir os dados nome/nick/email no rodape Minha conta, sincronizar a foto com o topo e mostrar CPF apenas se posicao confirmada; HTML e CSS da interface unica atualizados sem alterar outras telas."
   ]
 }
