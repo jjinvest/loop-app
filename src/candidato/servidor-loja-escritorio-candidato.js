@@ -919,6 +919,46 @@ function criarAppLojaEscritorioCandidato({banco,repositorioCatalogo,
  });
  const sinalizacaoVitrine=createVitrineCandidata({app,banco,catalogo,contas,intencoes,prePedidos,autorizarOperador,novidades,comunicados,fotoPerfil,enderecoEntrega,configLoja,materialPdf,videoProduto,fotosProduto,avaliacoes});
  const custosProduto=sinalizacaoVitrine.custosProduto; // objeto do MESMO catálogo usado na foto do prepedido
+ // Arte do carrossel AKITEMM: armazenamento no SQLite persistente da loja.
+ // O arquivo só é público quando seu id está referenciado em banner salvo.
+ app.get('/staging/vitrine/loja/banner-arquivo/:id',(req,res)=>{
+  try{
+   const f=configLoja.abrirImagemBanner(req.params.id,{publico:true});
+   return res.set({'Cache-Control':'public, max-age=60',
+    'X-Content-Type-Options':'nosniff'}).type(f.mime).send(f.bytes);
+  }catch{return res.status(404).json({erro:'BANNER_NAO_PUBLICADO'});}
+ });
+ app.get('/staging/escritorio-unificado/loja/banner-arquivo/:id',
+  autorizarOperador,(req,res)=>{
+   try{
+    const f=configLoja.abrirImagemBanner(req.params.id);
+    return res.set({'Cache-Control':'private, no-store',
+     'X-Content-Type-Options':'nosniff'}).type(f.mime).send(f.bytes);
+   }catch{return res.status(404).json({erro:'BANNER_IMAGEM_INEXISTENTE'});}
+  });
+ app.post('/staging/escritorio-unificado/loja/banner-arquivo',
+  autorizarOperador,async(req,res)=>{
+   const mime=req.get('content-type')?.split(';')[0];
+   if(!['image/jpeg','image/png','image/webp'].includes(mime))
+    return res.status(415).json({erro:'BANNER_FORMATO_INVALIDO'});
+   if(Number(req.get('content-length')||0)>4*1024*1024)
+    return res.status(413).json({erro:'BANNER_GRANDE_DEMAIS'});
+   let bytes=0;const partes=[];
+   try{
+    for await(const chunk of req){
+     bytes+=chunk.length;
+     if(bytes>4*1024*1024)
+      return res.status(413).json({erro:'BANNER_GRANDE_DEMAIS'});
+     partes.push(chunk);
+    }
+    const resultado=configLoja.salvarImagemBanner({
+     mime,bytes:Buffer.concat(partes)
+    });
+    return res.set('Cache-Control','no-store').status(201).json(resultado);
+   }catch(e){return res.status(400).json({
+    erro:e.message==='BANNER_IMAGEM_INVALIDA'?e.message:'BANNER_UPLOAD_INDISPONIVEL'
+   });}
+  });
  // Mesmo SQLite/operador autorizado: alteração editorial, sem pagamento.
  app.get('/staging/escritorio-unificado/loja/config',autorizarOperador,(_req,res)=>{
   try{return res.json(configLoja.consultarComRevisao());}
