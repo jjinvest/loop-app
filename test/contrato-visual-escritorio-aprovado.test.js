@@ -136,3 +136,84 @@ test('menu unico preserva nove destinos, com icones vetoriais dourados/verde/rox
  assert.match(css,/\.loop03-menu-icone-board svg[\s\S]*?width:25px/);
  assert.doesNotMatch(html,/># Minhas Posições</);
 });
+
+
+test('rodape do menu mostra apenas nick e situacao da posicao sem mexer no placar',()=>{
+ const vm=require('node:vm');
+ const html=ler('src/candidato/checkout-candidato-ui.html');
+ const realHtml=require('../src/producao/interface-aprovada-loop').renderizarInterfaceAprovada();
+ const css=ler('src/candidato/escritorio-cliente-integrado.css');
+ const previa=ler('src/candidato/checkout-candidato-ui.js');
+ const real=ler('src/producao/interface-aprovada-contas.js');
+ for(const fonte of [html,realHtml]){
+  const inicio=fonte.indexOf('<button type="button" id="loop03AbrirPerfil"');
+  const fim=fonte.indexOf('</button>',inicio);
+  assert.ok(inicio>=0&&fim>inicio);
+  const rodape=fonte.slice(inicio,fim);
+  assert.doesNotMatch(rodape,/<strong>Minha conta<\/strong>/i);
+  assert.match(rodape,/<strong id="loop03NickIntegrado">/);
+  assert.match(rodape,/id="loop03RodapeFilaIntegrado"/);
+  assert.match(rodape,/id="loop03RodapeCoroaIntegrado"/);
+  assert.match(rodape,/aria-label="No Tabuleiro"/);
+  assert.match(rodape,/id="loop03ImagemFotoRodape"/);
+  assert.match(rodape,/id="loop03AbrirPerfil"/);
+ }
+ assert.match(css,/\.loop03-rodape-situacao\[hidden\]/);
+ assert.match(css,/\.loop03-rodape-coroa\[hidden\]/);
+ // Verificar a logica efetiva, nao so a presenca dos elementos.
+ const recortar=(codigo,primeiro,depois)=>{
+  const i=codigo.indexOf('function '+primeiro+'(');
+  const j=codigo.indexOf('function '+depois+'(',i+10);
+  assert.ok(i>=0&&j>i);
+  return codigo.slice(i,j);
+ };
+ const funcoes=[
+  {codigo:recortar(previa,'atualizarSituacaoRodape','atualizarResumo'),nome:'atualizarSituacaoRodape',tipo:'previa'},
+  {codigo:recortar(real,'atualizarSituacaoRodapeReal','atualizarTopoPosicaoReal'),nome:'atualizarSituacaoRodapeReal',tipo:'real'}
+ ];
+ for(const f of funcoes){
+  function simular(posicoes,selecionada){
+   const elementos={
+    loop03RodapeFilaIntegrado:{textContent:'',hidden:true},
+    loop03RodapeCoroaIntegrado:{hidden:true}
+   };
+   const contexto={$:id=>elementos[id],
+    posicoesDisponiveisResumo:posicoes,
+    posicoesResumoReal:posicoes,
+    posicaoSelecionadaMotor:selecionada,
+    posicaoSelecionada:selecionada===null?'':String(selecionada)};
+   vm.runInNewContext(f.codigo+'\n'+f.nome+'();',contexto);
+   return elementos;
+  }
+  const exemplos=[
+   {numero:101,local:f.tipo==='real'?'FILA_A':'FILA',fila:'A'},
+   {numero:209,local:f.tipo==='real'?'FILA_B':'FILA',fila:'B'},
+   {numero:315,local:'VAGA_6',fila:'A'},
+   {numero:420,local:'CENTRO',fila:'B'}
+  ];
+  let estado=simular(exemplos,101);
+  assert.equal(estado.loop03RodapeFilaIntegrado.textContent,'Fila A');
+  assert.equal(estado.loop03RodapeCoroaIntegrado.hidden,true);
+  estado=simular(exemplos,209);
+  assert.equal(estado.loop03RodapeFilaIntegrado.textContent,'Fila B');
+  assert.equal(estado.loop03RodapeCoroaIntegrado.hidden,true);
+  for(const numero of [315,420]){
+   estado=simular(exemplos,numero);
+   assert.equal(estado.loop03RodapeFilaIntegrado.hidden,true);
+   assert.equal(estado.loop03RodapeCoroaIntegrado.hidden,false);
+  }
+  estado=simular(exemplos,null);
+  assert.equal(estado.loop03RodapeFilaIntegrado.textContent,'Fila A','primeira posicao sem selecao');
+  estado=simular([],null);
+  assert.equal(estado.loop03RodapeFilaIntegrado.hidden,true);
+  assert.equal(estado.loop03RodapeCoroaIntegrado.hidden,true);
+  const naoConfirmada=simular([{numero:90,local:'EM_REVISAO_PSP',fila:'B'}],90);
+  assert.equal(naoConfirmada.loop03RodapeFilaIntegrado.hidden,true);
+  assert.equal(naoConfirmada.loop03RodapeCoroaIntegrado.hidden,true);
+ }
+ // O numero unico e as indicacoes continuam no topo, nao na legenda.
+ assert.ok(previa.includes("' · ID #'+pos.numero"));
+ assert.ok(real.includes("' · ID #'+p.numero"));
+ assert.match(previa,/atualizarIndicadorSelecionadoResumo\(\)/);
+ assert.match(real,/atualizarTopoPosicaoReal\(\)/);
+});
