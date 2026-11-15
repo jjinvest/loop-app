@@ -39,6 +39,6 @@ test('pagina inicial com 8 PC e 4 celular e paginacao usa produtos reais',()=>{
  assert.match(js,/const tamanhoPaginaVitrine=\(\)=>window\.matchMedia\('\(max-width:800px\)'\)\.matches\?4:8/);
  assert.match(js,/quantidadeVitrine=tamanhoPaginaVitrine\(\)/);
  assert.match(js,/quantidadeVitrine\+=tamanhoPaginaVitrine\(\)/);
- assert.match(js,/filtrados\.slice\(0,quantidadeVitrine\)/);
+ assert.match(js,/itens\.slice\(0,quantidadeVitrine\)/);
  assert.match(js,/destino\.append\(card\)/);
 });
