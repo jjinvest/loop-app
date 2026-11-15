@@ -51,6 +51,14 @@ function criarAutorizacao({ segredo }) {
     const apagarImagem = somenteImagem && req.method === 'DELETE' &&
       !req.get('content-type') &&
       (!req.get('content-length') || req.get('content-length') === '0');
+    // Quatro slots de banners do Escritorio: upload binario SOMENTE
+    // para operador autorizado e limitado a PNG/JPEG/WebP.
+    const rotaBanner=/^\\/staging\\/escritorio-unificado\\/banners-escritorio\\/[1-4]\\/imagem$/.test(req.path);
+    const uploadBanner=rotaBanner&&req.method==='PUT'&&
+      ['image/png','image/jpeg','image/webp'].includes(req.get('content-type')?.split(';')[0]);
+    const apagarBanner=rotaBanner&&req.method==='DELETE'&&
+      !req.get('content-type')&&
+      (!req.get('content-length')||req.get('content-length')==='0');
     // Upload binario somente nas rotas da midiateca do produto,
     // mantida a mesma autorizacao Bearer/loopback, sem liberar outros POST.
     const rotaProduto=/^\/staging\/escritorio-unificado\/produtos\/[a-z0-9-]{3,80}\/(pdf|video|fotos\/(?:10|[1-9]))$/.exec(req.path);
@@ -62,7 +70,8 @@ function criarAutorizacao({ segredo }) {
        ['image/png','image/jpeg','image/webp'].includes(tipoBinario))
     );
     if (['POST','PATCH','PUT','DELETE'].includes(req.method) &&
-        !req.is('application/json') && !uploadImagem && !apagarImagem && !uploadProduto) {
+        !req.is('application/json') && !uploadImagem && !apagarImagem &&
+        !uploadBanner && !apagarBanner && !uploadProduto) {
       return res.status(415).json({ erro: 'USE_APPLICATION_JSON' });
     }
     next();
