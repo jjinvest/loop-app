@@ -907,7 +907,8 @@ function criarAppLojaEscritorioCandidato({banco,repositorioCatalogo,
      partes.push(chunk);
     }
     const resultado=bannersEscritorio.salvar({
-     slot,mime,bytes:Buffer.concat(partes),revisaoEsperada:revisao
+     slot,mime,bytes:Buffer.concat(partes),revisaoEsperada:revisao,
+     enquadramento:req.get('x-banner-enquadramento')||'INTEIRA'
     });
     res.set('Cache-Control','no-store');
     return res.json(resultado);
