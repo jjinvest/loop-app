@@ -39,17 +39,22 @@ class BannersEscritorioCandidatoSQLite{
    'CHECK((mime IS NULL AND imagem IS NULL) OR',
    '(mime IS NOT NULL AND imagem IS NOT NULL)));'
   ].join(' '));
+  // Migracao aditiva: preservar fotos ja enviadas em instancias existentes.
+  const colunas=banco.prepare('PRAGMA table_info(loop_banner_escritorio_manual)').all();
+  if(!colunas.some(c=>c.name==='enquadramento'))
+   banco.exec("ALTER TABLE loop_banner_escritorio_manual ADD COLUMN enquadramento "+
+    "TEXT NOT NULL DEFAULT 'INTEIRA' CHECK(enquadramento IN ('INTEIRA','PREENCHER'))");
   const preparar=banco.prepare(
    'INSERT OR IGNORE INTO loop_banner_escritorio_manual(slot) VALUES(?)');
   for(let slot=1;slot<=4;slot++)preparar.run(slot);
  }
  listar(){
   return {quantidadeMaxima:4,slots:this.banco.prepare(
-   'SELECT slot,mime,imagem IS NOT NULL AS temImagem,revisao,atualizado_em '+
+   'SELECT slot,mime,imagem IS NOT NULL AS temImagem,revisao,atualizado_em,enquadramento '+
    'FROM loop_banner_escritorio_manual ORDER BY slot'
   ).all().map(r=>({
    slot:r.slot,temImagem:!!r.temImagem,revisao:r.revisao,
-   mime:r.temImagem?r.mime:null,
+   mime:r.temImagem?r.mime:null,enquadramento:r.enquadramento,
    atualizadoEm:r.atualizado_em||null
   }))};
  }
@@ -59,15 +64,17 @@ class BannersEscritorioCandidatoSQLite{
   if(!r?.imagem)falha('BANNER_SEM_IMAGEM');
   return {mime:r.mime,bytes:Buffer.from(r.imagem),revisao:r.revisao};
  }
- salvar({slot,mime,bytes,revisaoEsperada}={}){
+ salvar({slot,mime,bytes,revisaoEsperada,enquadramento='INTEIRA'}={}){
   slotValido(slot);
   validarFoto(mime,bytes);
+  if(!['INTEIRA','PREENCHER'].includes(enquadramento))
+   falha('BANNER_ENQUADRAMENTO_INVALIDO');
   if(!Number.isSafeInteger(revisaoEsperada)||revisaoEsperada<0)
    falha('BANNER_REVISAO_INVALIDA');
   const r=this.banco.prepare(
-   'UPDATE loop_banner_escritorio_manual SET imagem=?,mime=?,revisao=revisao+1,'+
+   'UPDATE loop_banner_escritorio_manual SET imagem=?,mime=?,enquadramento=?,revisao=revisao+1,'+
    'atualizado_em=? WHERE slot=? AND revisao=?'
-  ).run(bytes,mime,this.agora(),slot,revisaoEsperada);
+  ).run(bytes,mime,enquadramento,this.agora(),slot,revisaoEsperada);
   if(r.changes!==1)falha('BANNER_CONFLITO_REVISAO');
   return this.listar();
  }
@@ -76,7 +83,7 @@ class BannersEscritorioCandidatoSQLite{
   if(!Number.isSafeInteger(revisaoEsperada)||revisaoEsperada<0)
    falha('BANNER_REVISAO_INVALIDA');
   const r=this.banco.prepare(
-   'UPDATE loop_banner_escritorio_manual SET imagem=NULL,mime=NULL,'+
+   'UPDATE loop_banner_escritorio_manual SET imagem=NULL,mime=NULL,enquadramento=\'INTEIRA\','+
    'revisao=revisao+1,atualizado_em=? WHERE slot=? AND revisao=?'
   ).run(this.agora(),slot,revisaoEsperada);
   if(r.changes!==1)falha('BANNER_CONFLITO_REVISAO');
