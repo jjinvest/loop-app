@@ -2,6 +2,12 @@
 
 **Estado verificado em 15/11/2026:** o executável de release controlado foi publicado no serviço Railway `loop-identidade-real`, commit `dbf8c8a8b39fcc0c932c93822604e7b878d31800`. O deploy `0831493b-1c11-4d56-b5fb-e6b893287980` terminou **SUCCESS**. O processo está em modo **PREPARACAO_SEGURA**: conta nova, CPF e email não são aceitos ainda.
 
+## STATUS ATUAL — migração e aceite de documentos publicados, abertura ainda bloqueada
+**Railway:** commit `9cc28543af9ecc0acf609f544be913b362ab579b`, deploy definitivo `fab58890-3224-42db-af3e-01fdd07f393e` **SUCCESS**, serviço `loop-identidade-real` online sem alertas. O reinício confirmou `CONTAS_MIGRADAS=2` e recuperação cifrada offsite de `CONTAS=2` (409656 bytes). Nenhum pagamento, giro ou saque habilitado.
+**Código publicado:** conta migrada aceita Termos + Política definitivos no primeiro login, com sessão autenticada, CSRF, versões/hashes, prova auditável em `loop_real_aceites_documentos`; não se refaz cadastro nem se altera indicação. Testes GitHub Actions [#43762793989](https://github.com/jjinvest/loop-app/actions/runs/43762793989): regressão completa, bloqueios e navegação PC/celular **SUCCESS**.
+**Impedimento que resta para abrir o cadastro público:** minutas em `docs/TERMOS_CADASTRO_LOOP_2026_11_PARA_APROVACAO.md` e `docs/POLITICA_PRIVACIDADE_LOOP_2026_11_PARA_APROVACAO.md` requerem identificação jurídica do controlador e aprovação explícita do proprietário; quatro variáveis de documentos definitivos ainda não estão no Railway. `LOOP_REAL_CADASTRO_GO` e `LOOP_REAL_APROVACAO_DOCUMENTOS` continuam fechados; `akitemmloop.com.br` ainda aponta à prévia. NÃO autorizar divulgação externa nem troca de domínio antes do GO com documentos identificados/aprovados e prova pública da nova origem.
+**Nota:** esta seção é mais recente que os trechos históricos abaixo. Não relatar migração como pendente.
+
 ## ATUALIZAÇÃO VIGENTE — migração real concluída, cadastro público ainda fechado
 **Data:** 15/11/2026, ~18h10 de Brasília (21h10 UTC).
 **Rede migrada:** 2 identidades reais originadas na prévia, 1 vínculo de indicação, com `@Taisaassi` na posição ordinal **#0001** da rede do titular `VILELA`, verificado por consulta SQL no serviço de identidade real (log só registra booleano, sem divulgar telefone/e-mail). Senhas scrypt/salts, IDs originais, telefone cifrado, datas e vínculo preservados. Nenhum saldo, pedido, CPF fictício, giro, posição ou crédito de Sandbox foi importado. Outras contas avulsas da prévia não foram importadas automaticamente.
