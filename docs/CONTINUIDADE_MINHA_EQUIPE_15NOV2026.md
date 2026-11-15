@@ -17,7 +17,11 @@
 
 ## Ponto de continuidade imediatamente posterior — instrução de 15/11/2026
 
-O proprietário corrigiu a exigência: **o telefone deve aparecer automaticamente para o indicador direto a partir do vínculo de cadastro originado em seu link**, sem caixa adicional de autorização na ficha ou Minha Conta. O vínculo deve ser conferido *no servidor* e nenhuma outra conta pode consultar o telefone. Não se deve exigir que indicados existentes refaçam cadastro. Implementar isto em alteração posterior e verificar/publicar em novo deploy; não confundir este registro do primeiro deploy com a implementação da correção posterior.
+O proprietário corrigiu a exigência: **o telefone deve aparecer automaticamente para o indicador direto a partir do vínculo de cadastro originado em seu link**, sem caixa adicional de autorização na ficha ou Minha Conta. O vínculo é conferido *no servidor* e nenhuma outra conta pode consultar o telefone. Indicados existentes NÃO refazem cadastro.
+
+**Código da correção adicional:** na prévia, `src/domain/conta-unica-candidata-sqlite.js` agora consulta o telefone cifrado somente após verificar `akitemm_convites_candidatos_lab.indicador_id` e `indicado_id` ligados; a tabela opcional de permissões não é consultada e o checkbox extra foi removido de `src/candidato/checkout-candidato-ui.html` e `.js`. `scripts/servidor-escritorio-preview-railway.js` explicita no texto apresentado para aceite que o telefone ficará disponível somente ao indicador que compartilhou o link, com versão nova de termo de cadastro. Novos cadastros usam o mesmo checkbox de aceite dos termos, sem outro.
+**Código preparado para a identidade definitiva:** `src/producao/identidade-cliente-loop-sqlite.js` decripta exclusivamente o telefone do indicado após conferir `loop_real_vinculos_indicacao`, a visão unificada recebe callback privado do servidor e a `interface-aprovada-contas.js` mostra número ordinal, contato, data, hora de Brasília, fila de entrada B e mensagem curta de ativação. Sem qualquer exibição de CPF/e-mail ou nome civil de terceiros.
+**Auditoria e deploy da correção adicional:** consultar a CI do commit `268081cd7ced545cb31fdfc2542fe05113f6093f` e o próximo deployment. NÃO confundir o deployment da primeira publicação com o da correção automática, que ainda exigia confirmação no momento deste registro.
 
 ## Fora deste escopo
 
