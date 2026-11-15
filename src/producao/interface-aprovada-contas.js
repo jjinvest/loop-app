@@ -1248,7 +1248,7 @@
  // Mesmo carrossel de banners da primeira aba na interface protegida.
  const pistaResumo=$('loop03PistaBanners');
  const pontosResumo=[...document.querySelectorAll('[data-banner-resumo]')];
- if(pistaResumo&&pontosResumo.length===2){
+ if(pistaResumo&&pontosResumo.length===4){
   let indice=0,interagindo=false;
   const marcar=i=>{
    indice=i;
@@ -1264,7 +1264,7 @@
   }));
   pistaResumo.addEventListener('scroll',()=>{
    if(pistaResumo.clientWidth>0)
-    marcar(Math.min(1,Math.max(0,Math.round(
+    marcar(Math.min(pontosResumo.length-1,Math.max(0,Math.round(
      pistaResumo.scrollLeft/pistaResumo.clientWidth))));
   },{passive:true});
   pistaResumo.addEventListener('pointerdown',()=>{interagindo=true;});
@@ -1274,7 +1274,7 @@
   setInterval(()=>{
    if(document.hidden||$('conteudoResumo').hidden||interagindo||
     matchMedia('(prefers-reduced-motion:reduce)').matches)return;
-   mover((indice+1)%2);
+   mover((indice+1)%pontosResumo.length);
   },6500);
   addEventListener('resize',()=>pistaResumo.scrollTo({
    left:pistaResumo.clientWidth*indice,behavior:'instant'
