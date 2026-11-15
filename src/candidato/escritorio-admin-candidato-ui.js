@@ -1292,7 +1292,10 @@ async function atualizar(){
 $('formAcesso').addEventListener('submit',async e=>{
  e.preventDefault();auth=$('token').value;$('token').value='';
  try{await atualizar();$('acesso').hidden=true;$('administracao').hidden=false;
-  atualizarAvaliacoesAdmin().catch(()=>{});}
+  atualizarAvaliacoesAdmin().catch(()=>{});
+  carregarComunicadosAdmin().catch(e=>{
+   $('comunicadoResultadoAdmin').textContent='Recados indisponíveis: '+e.message;
+  });}
  catch(err){auth=null;dizer('Acesso não autorizado: '+err.message);}
 });
 $('sair').addEventListener('click',()=>{
