@@ -268,6 +268,15 @@ function criarGateway({portaInterna,senhaAcesso,senhaAdmin,segredoOperador,
   // O Basic do operador e convertido em cookie de administrador distinto.
   const exigeOperador=rotaAdmin(url.pathname);
   const adminValido=operadorBasicoValido||lerAdmin(req);
+  // Consulta de presença do operador. Só o cookie assinado e válido conta;
+  // Basic não autentica silenciosamente nem gera prompt para cliente.
+  // A resposta não fornece token, identificação nem permissões de escrita.
+  if(url.pathname==='/staging/operador/estado'){
+   if(req.method!=='GET')return negar(405,'Método não permitido');
+   res.writeHead(200,{...cabecalhosBase,
+    'Content-Type':'application/json; charset=utf-8'});
+   return res.end(JSON.stringify({operador:lerAdmin(req)}));
+  }
   if(exigeOperador&&!adminValido)
    return negar(401,'Operador autorizado necessário',{
     'WWW-Authenticate':'Basic realm="AKITEMM - Administrador", charset="UTF-8"'
