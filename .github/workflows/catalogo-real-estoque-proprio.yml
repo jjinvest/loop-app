@@ -1,0 +1,41 @@
+name: AKITEMM - catalogo real sem checkout
+on:
+  push:
+    branches:
+      - feature/unificar-escritorio-real-20261105
+    paths:
+      - 'src/producao/catalogo-mercadorias-real.js'
+      - 'src/producao/ponte-catalogo-real-preview.js'
+      - 'src/domain/repositorio-catalogo-sqlite.js'
+      - 'src/domain/catalogo.js'
+      - 'src/domain/fotos-produto-candidato-sqlite.js'
+      - 'src/domain/akitemm-config-loja-demo-sqlite.js'
+      - 'scripts/iniciar-identidade-real-preparacao.js'
+      - 'src/candidato/servidor-loja-escritorio-candidato.js'
+      - 'src/laboratorio/loja-cliente-demo.js'
+      - 'test/catalogo-mercadorias-real-e2e.test.js'
+      - '.github/workflows/catalogo-real-estoque-proprio.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  catalogo-real:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 6
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+      - run: npm ci --ignore-scripts --no-fund
+      - name: Verificar sintaxe de servicos e ponte
+        run: node --check src/producao/catalogo-mercadorias-real.js && node --check src/producao/ponte-catalogo-real-preview.js && node --check scripts/iniciar-identidade-real-preparacao.js && node --check src/candidato/servidor-loja-escritorio-candidato.js
+      - name: Provar catalogo real isolado sem cobranca
+        run: node --test test/catalogo-mercadorias-real-e2e.test.js
+      - name: Provar preservacao do catalogo do proprietario
+        run: node --test test/estoque-proprio-caracteristicas-catalogo.test.js test/akitemm-slots-vitrine-editaveis.test.js
+      - name: Imutabilidade visual preservada
+        run: node --test test/contrato-visual-escritorio-aprovado.test.js
