@@ -183,6 +183,14 @@ class ContaUnicaCandidataSQLite{
     'ALTER TABLE akitemm_conta_unica_candidata ADD COLUMN '+col+' TEXT'
    );
   }
+  // Opt-in independente dos termos gerais; pré-cadastros antigos iniciam sem
+  // compartilhar o telefone. A permissão pode ser revogada pelo titular.
+  banco.exec([
+   'CREATE TABLE IF NOT EXISTS akitemm_contato_indicador_permissoes(',
+   'titular_id TEXT PRIMARY KEY REFERENCES akitemm_conta_unica_candidata(id)',
+   'ON DELETE RESTRICT,permitido INTEGER NOT NULL CHECK(permitido IN (0,1)),',
+   'atualizado_em INTEGER NOT NULL CHECK(atualizado_em>0));'
+  ].join(' '));
   // A versao anterior tinha UNIQUE NOCASE: isso impediria JoSe/Jose
   // como contas distintas. Recriar APENAS a tabela de contas, dentro
   // de uma transacao, copiando todos os campos antigos sem perder
@@ -340,7 +348,8 @@ class ContaUnicaCandidataSQLite{
   return t;
  }
  async cadastrar({nome,nick,email,telefone=null,senha,confirmarSenha=null,
-  aceiteExplicito=false,termosVersao,termosTexto,onCriada=null}={}){
+  aceiteExplicito=false,compartilharTelefoneIndicador=false,
+  termosVersao,termosTexto,onCriada=null}={}){
   if(process.env.NODE_ENV==='production')falha('CANDIDATO_NAO_HOMOLOGADO');
   const nickMin=nickValido(nick,{novo:true}),emailMin=emailValido(email);
   if(nickReservado(nickMin))falha('NICK_RESERVADO');
@@ -358,6 +367,10 @@ class ContaUnicaCandidataSQLite{
    falha('TELEFONE_INVALIDO');
   if(onCriada!==null&&typeof onCriada!=='function')
    falha('CADASTRO_HOOK_INVALIDO');
+  if(typeof compartilharTelefoneIndicador!=='boolean')
+   falha('PERMISSAO_CONTATO_INVALIDA');
+  if(compartilharTelefoneIndicador===true&&telefoneDigitos===null)
+   falha('TELEFONE_INVALIDO');
   if(aceiteExplicito!==true||!VERSAO.test(termosVersao||'')||
     typeof termosTexto!=='string'||termosTexto.length<40||
     termosTexto.length>20000)
@@ -392,6 +405,10 @@ class ContaUnicaCandidataSQLite{
    ].join(' ')).run(titularId,nickMin,emailHmac,...nomeEnc,...emailEnc,
     salt,senhaHash,termosVersao,sha256(termosTexto),ts,
     ...telefoneEnc,1);
+   if(compartilharTelefoneIndicador===true)this.banco.prepare([
+    'INSERT INTO akitemm_contato_indicador_permissoes(',
+    'titular_id,permitido,atualizado_em) VALUES(?,1,?)'
+   ].join(' ')).run(titularId,ts);
    if(onCriada)onCriada({titularId,nick:nickMin});
    this.banco.exec('COMMIT');
   }catch(e){
@@ -764,6 +781,54 @@ class ContaUnicaCandidataSQLite{
    falha('INTEGRIDADE_CONTA_INVALIDA');
   return email;
  }
+ compartilhaTelefoneComIndicador(titularId){
+  if(typeof titularId!=='string'||!/^titular-[a-f0-9-]{36}$/.test(titularId))
+   falha('TITULAR_INVALIDO');
+  return this.banco.prepare(
+   'SELECT permitido FROM akitemm_contato_indicador_permissoes WHERE titular_id=?'
+  ).get(titularId)?.permitido===1;
+ }
+ alterarCompartilhamentoTelefone({titularId,permitir}={}){
+  if(typeof permitir!=='boolean'||typeof titularId!=='string'||
+     !/^titular-[a-f0-9-]{36}$/.test(titularId))
+   falha('PERMISSAO_CONTATO_INVALIDA');
+  this.banco.exec('BEGIN IMMEDIATE');
+  try{
+   const conta=this.banco.prepare(
+    'SELECT telefone_iv,telefone_cifra,telefone_tag FROM akitemm_conta_unica_candidata WHERE id=?'
+   ).get(titularId);
+   if(!conta)falha('SESSAO_OU_CSRF_INVALIDO');
+   if(permitir&&(!conta.telefone_iv||!conta.telefone_cifra||!conta.telefone_tag))
+    falha('TELEFONE_NAO_CADASTRADO');
+   this.banco.prepare([
+    'INSERT INTO akitemm_contato_indicador_permissoes',
+    '(titular_id,permitido,atualizado_em) VALUES(?,?,?)',
+    'ON CONFLICT(titular_id) DO UPDATE SET',
+    'permitido=excluded.permitido,atualizado_em=excluded.atualizado_em'
+   ].join(' ')).run(titularId,permitir?1:0,this._agora());
+   this.banco.exec('COMMIT');
+   return {compartilhaTelefoneComIndicador:permitir};
+  }catch(e){this.banco.exec('ROLLBACK');throw e;}
+ }
+ telefoneAutorizadoParaIndicador({indicadoId,indicadorId}={}){
+  if(typeof indicadoId!=='string'||typeof indicadorId!=='string'||
+     !/^titular-[a-f0-9-]{36}$/.test(indicadoId)||
+     !/^titular-[a-f0-9-]{36}$/.test(indicadorId))return null;
+  // Duplo bloqueio: vínculo direto + permissão específica não revogada.
+  const conta=this.banco.prepare([
+   'SELECT c.telefone_iv,c.telefone_cifra,c.telefone_tag',
+   'FROM akitemm_conta_unica_candidata c',
+   'JOIN akitemm_convites_candidatos_lab v ON v.indicado_id=c.id',
+   'JOIN akitemm_contato_indicador_permissoes p ON p.titular_id=c.id',
+   'WHERE c.id=? AND v.indicador_id=? AND p.permitido=1'
+  ].join(' ')).get(indicadoId,indicadorId);
+  if(!conta?.telefone_iv||!conta.telefone_cifra||!conta.telefone_tag)return null;
+  const telefone=decifrar(this.cipherKey,conta.telefone_iv,
+   conta.telefone_cifra,conta.telefone_tag);
+  if(!/^(?:[0-9]{10,11}|55[0-9]{10,11})$/.test(telefone))
+   falha('INTEGRIDADE_CONTATO_INVALIDA');
+  return telefone;
+ }
  perfil(titularId){
   const a=this.banco.prepare(
    'SELECT * FROM akitemm_conta_unica_candidata WHERE id=?'
@@ -781,6 +846,7 @@ class ContaUnicaCandidataSQLite{
    'WHERE titular_id=?'
   ].join(' ')).get(titularId));
   return {titularId:a.id,nick:a.nick,nome,
+   compartilhaTelefoneComIndicador:this.compartilhaTelefoneComIndicador(a.id),
    nickGrafiaConfirmada:a.nick_grafia_confirmada===1,
    emailVerificado,identidadeValidadaExternamente:false,
    termosVersao:a.termos_versao,termosHash:a.termos_hash,
