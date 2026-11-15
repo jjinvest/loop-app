@@ -5,9 +5,11 @@
 // com espacos, digitos e acentos sao aceitos por grafia exata.
 const NICK=/^(?:[A-Za-z]{1,12}|[A-Za-zÀ-ÖØ-öø-ÿ0-9]+(?: [A-Za-zÀ-ÖØ-öø-ÿ0-9]+)*)$/u;
 class EquipeCandidataSQLite{
- constructor({banco}={}){
+ constructor({banco,consultarTelefoneAutorizado=()=>null}={}){
   if(!banco||typeof banco.prepare!=='function')throw new TypeError('SQLite obrigatorio');
+  if(typeof consultarTelefoneAutorizado!=='function')throw new TypeError('Leitura de contato invalida');
   this.banco=banco;
+  this.consultarTelefoneAutorizado=consultarTelefoneAutorizado;
   banco.exec([
    'CREATE TABLE IF NOT EXISTS akitemm_convites_candidatos_lab(',
    'indicado_id TEXT PRIMARY KEY NOT NULL',
@@ -45,7 +47,7 @@ class EquipeCandidataSQLite{
  listar({titularId,pagina=0,busca=''}={}){
   if(typeof titularId!=='string'||!/^titular-[a-f0-9-]{36}$/.test(titularId))
    throw new TypeError('Titular invalido');
-  if(!Number.isSafeInteger(pagina)||pagina<0||pagina>10000)
+  if(!Number.isSafeInteger(pagina)||pagina<0||pagina>100000000)
    throw new RangeError('Pagina invalida');
   if(typeof busca!=='string'||busca.length>50||!/^[a-zA-Z0-9#]*$/.test(busca.trim()))
    throw new RangeError('Busca invalida');
@@ -55,7 +57,8 @@ class EquipeCandidataSQLite{
   ).get(titularId).total;
   // A numeração de exibição não altera o ID imutável de cada cadastro.
   // A busca por #n usa o ordinal cronológico, não a posição no motor.
-  const somenteNumero=/^#?[0-9]{1,7}$/.test(termo)&&Number(termo.replace('#',''))>0;
+  const somenteNumero=/^#?[0-9]{1,15}$/.test(termo)&&
+   Number.isSafeInteger(Number(termo.replace('#','')))&&Number(termo.replace('#',''))>0;
   const n=Number(termo.replace('#',''));
   const filtro=termo?(somenteNumero?[
    'AND i.indicado_id=(SELECT antigo.indicado_id',
@@ -109,6 +112,12 @@ class EquipeCandidataSQLite{
   ].join(' ')).all(...parametros,pagina*20).map(x=>({
    indicadoId:x.indicadoId,nick:x.nick,registradoEm:x.registradoEm,
    numeroCadastro:x.numeroCadastro,
+   // A faixa B indica apenas entrada padrão no cadastro, não uma posição
+   // comercial alocada ao motor (depende da qualificação real).
+   filaCadastro:'B',filaMotorConfirmada:false,
+   telefone:this.consultarTelefoneAutorizado({
+    indicadoId:x.indicadoId,indicadorId:titularId
+   }),
    posicaoAlvoId:x.posicaoAlvoId,
    qualificadaEnsaio:x.qualificadaEnsaio===1,
    possuiPosicaoDeEnsaio:x.possuiPosicaoDeEnsaio===1
