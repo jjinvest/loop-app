@@ -64,7 +64,8 @@ function renderizarInterfaceAprovada(){
  html=html.replaceAll(loginNovo,nickLegado);
  html=html.replace(cadastroNovo,nickLegado);
  html=trocarExato(html,'Nick (1 a 9 caracteres)','Nick (1 a 12 letras)');
- if(html.split('href="/staging/loja"').length!==5)
+ // Quatro banners do Escritório acrescentam dois links internos para a loja.
+ if(html.split('href="/staging/loja"').length!==7)
   throw Error('INTERFACE_LOJA_APROVADA_DESATUALIZADA');
  html=html.replaceAll('href="/staging/loja"','href="/loja"');
  // Os campos de senha e as descrições de recuperação/conta seguem o mesmo padrão de segurança.
