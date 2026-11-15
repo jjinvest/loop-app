@@ -1,7 +1,7 @@
 {
   "schema": 1,
   "política": "Toda alteração de HTML/CSS exige pedido visual explícito, escopo isolado e revisão do proprietário; é proibido atualizar hashes para esconder mudanças.",
-  "autorizaçãoAtual": "15/11/2026: depois de aprovar a amostra visual 4x2 PC e 2x2 celular, o proprietário autorizou alinhar exclusivamente a legenda de filtros da AKITEMM em duas colunas fixas (CINZA e VERDE na primeira linha; DOURADO e ROXO na segunda), alterar os rótulos para Cinza · Compra comum, Verde · Qualificado, Dourado · Qualificado, Roxo · Ofertas especiais, e apresentar por página no catálogo 8 produtos (quatro por fileira, duas fileiras) no PC e 4 produtos (dois por fileira, duas fileiras) no celular. Produtos extras só por paginação real do catálogo; não fabricar produtos. Restante da vitrine, fotos, bordas, carrinho, pedidos e identidade visual intactos. Somente loja-cliente-demo.html/css/js e testes correspondentes autorizados, sem deploy nem pagamentos reais.",
+  "autorizaçãoAtual": "15/11/2026: proprietário especificou oito quadrinhos VAZIOS pré-montados na vitrine AKITEMM, sem cadastrar ou gerar produtos de teste. Padrão visual (PC): primeira fileira ROXO, DOURADO, VERDE, CINZA; segunda CINZA, VERDE, DOURADO, ROXO. No celular, dois por fileira com primeira sequência ROXO, DOURADO, VERDE, CINZA. Cada um dos oito quadrinhos deve ser mutável posteriormente pelo próprio administrador. Implantada configuração editável/revisionada no SQLite existente em 'Vitrine e atendimento' (um seletor de cor por quadrinho), migração conservadora dos registros antigos, e slots sem produto, preço ou botão de compra. Produtos reais só ocupam slots da mesma cor segundo sua classificação no banco; demais aparecem na paginação, sem atribuir benefícios por CSS. Busca e filtros mostram produtos reais, não slots vazios. Escopo aprovado: interface loja CSS/JS, painel administrativo HTML/CSS/JS, configuração SQLite e testes; sem dados inventados, alterações financeiras, merge ou deploy comercial.",
   "arquivos": [
     {
       "path": "src/candidato/checkout-candidato-ui.html",
@@ -9,11 +9,11 @@
     },
     {
       "path": "src/candidato/escritorio-admin-candidato-ui.css",
-      "sha": "589fc5599f6c9bb12ebcfc84f63df6de1df87d7e"
+      "sha": "4083b71400af2e7e4ef2095151c72512bbdfb52c"
     },
     {
       "path": "src/candidato/escritorio-admin-candidato-ui.html",
-      "sha": "0db659d7e5df5d71d5eeb69ee032963c7a39ecb9"
+      "sha": "490fddc5aab85838b164f73f7fdeb1ea18023078"
     },
     {
       "path": "src/candidato/escritorio-cliente-integrado.css",
@@ -69,7 +69,7 @@
     },
     {
       "path": "src/laboratorio/loja-cliente-demo.css",
-      "sha": "ca7337d7d39bab09ce2c7be6b4efdc572f4f2a30"
+      "sha": "f56a347104fcf544a8c52181ae93731f05885443"
     },
     {
       "path": "src/laboratorio/loja-cliente-demo.html",
@@ -110,6 +110,7 @@
     "15/11/2026: proprietário rejeitou aparência da marca 'LOOP 3.0' localizada NO TOPO DO MENU LATERAL e autorizou somente seu refinamento visual: LOOP dourado metalizado, 3.0 prata, proporções equilibradas e filete ornamental discreto. Banner principal não alterado; demais menus, cores de ícones, foto e nick, motor, tabuleiro e financeiro inalterados.",
     "15/11/2026: proprietário pediu quatro banners no Escritório Virtual em vez de dois e capacidade de subir ele mesmo fotos manualmente pela interface administrativa para testar o caminho completo. Preservados os dois banners originais, completados dois slots extras, quatro pontos de navegação e fotos opcionais por slot, com envio/substituição/remoção restritos ao operador, armazenamento SQLite e visualização autenticada no cliente. Nenhuma alteração no motor, nas filas, no financeiro, no cabeçalho aprovado ou nas permissões. O CSS do painel administrativo foi ajustado apenas para os quatro seletores de arquivo e consta neste contrato. Novo formulário de quatro fotos também registrado no HTML administrativo, sem modificar as seções anteriores.",
     "15/11/2026: com o Escritório Virtual conferido visualmente e aprovado, proprietário retomou o acabamento da Que Tem/AKITEMM: alinhar botões dourados. Escopo estrito: src/laboratorio/loja-cliente-demo.css, layout responsivo dos dois comandos de cartões e ações de pacotes; nova proteção estática test/akitemm-alinhamento-botoes-dourados.test.js. Resta validação visual efetiva PC/celular e homologação antes de publicação. A trava visual foi renovada somente para o blob CSS modificado.",
-    "15/11/2026: usuário aprovou explicitamente o modelo 4x2 do PC e 2x2 do celular. Ajustes visuais limitados à loja AKITEMM: legenda em grade 2 colunas (cinza/verde; dourado/roxo), nomenclatura de cores e paginação 8/4 por viewport. A proteção de alterações HTML/CSS conserva os 22 demais arquivos aprovados sem modificação."
+    "15/11/2026: usuário aprovou explicitamente o modelo 4x2 do PC e 2x2 do celular. Ajustes visuais limitados à loja AKITEMM: legenda em grade 2 colunas (cinza/verde; dourado/roxo), nomenclatura de cores e paginação 8/4 por viewport. A proteção de alterações HTML/CSS conserva os 22 demais arquivos aprovados sem modificação.",
+    "15/11/2026: novo pedido expresso: NÃO criar produtos; deixar os oito QUADRINHOS prontos com ordem ROXO/DOURADO/VERDE/CINZA e CINZA/VERDE/DOURADO/ROXO no PC, quatro primeiros no celular, e assegurar mutabilidade por operador. Espaços exibidos vazios com bordas por cor, sem operações de compra; opções de cor dos oito slots persistem em banco auditável e podem ser reeditadas. Renova apenas os hashes dos 3 arquivos visuais envolvidos nesta alteração."
   ]
 }
