@@ -78,8 +78,21 @@ test('conta única prepara checkout e Escritório com o MESMO titular, sem Pix',
  assert.equal((await enviar(base,'/staging/contas/entrar',{
   method:'POST',data:{nick:'Alice',senha:'errada'}
  })).status,401);
- const la=await enviar(base,'/staging/contas/entrar',{
+ // Primeiro erro arma CAPTCHA. A senha correta SEM a prova não entra
+ // na segunda tentativa; uma prova válida e de uso único permite login.
+ const semCaptcha=await enviar(base,'/staging/contas/entrar',{
   method:'POST',data:{nick:'Alice',senha:'SenhaFicticiaDemonstracao2026!'}
+ });
+ assert.equal(semCaptcha.status,403);
+ assert.equal(semCaptcha.body.erro,'CAPTCHA_LOGIN_OBRIGATORIO');
+ const challenge=await enviar(base,'/staging/contas/captcha-login');
+ assert.equal(challenge.status,200);
+ const svg=Buffer.from(challenge.body.captchaImagem.split(',')[1],'base64').toString();
+ const codigo=[...svg.matchAll(/<text\s[^>]*>([A-Z0-9])<\/text>/g)].map(x=>x[1]).join('');
+ assert.equal(codigo.length,6);
+ const la=await enviar(base,'/staging/contas/entrar',{
+  method:'POST',data:{nick:'Alice',senha:'SenhaFicticiaDemonstracao2026!',
+   captchaId:challenge.body.captchaId,captchaResposta:codigo}
  });
  const lb=await enviar(base,'/staging/contas/entrar',{
   method:'POST',data:{nick:'Bia',senha:'SenhaFicticiaDemonstracao2026!'}
