@@ -543,6 +543,48 @@
    lista.append(li);
   }
  }
+ async function carregarMeusCursos(){
+  const lista=el('akitemmListaMeusCursos');
+  lista.replaceChildren();
+  const linha=texto=>{
+   const li=document.createElement('li');li.textContent=texto;
+   lista.append(li);return li;
+  };
+  try{
+   const dados=await api('loja/meus-cursos');
+   const cursos=Array.isArray(dados.cursos)?dados.cursos:[];
+   if(!cursos.length){
+    linha(dados.mensagem||'Nenhum curso adquirido disponível nesta conta.');
+    return;
+   }
+   for(const curso of cursos){
+    const li=document.createElement('li');
+    const nome=document.createElement('strong');
+    nome.textContent=curso.titulo;
+    const status=document.createElement('small');
+    const liberado=curso.situacao==='DISPONIVEL'&&
+     typeof curso.urlDownload==='string'&&
+     /^\/staging\/meus-pedidos\/hom-[a-f0-9-]{36}\/pdf\/[a-z0-9-]{3,80}$/.test(curso.urlDownload);
+    status.textContent=liberado?
+     'Arquivo disponível para download.':
+     'Aguardando confirmação do pagamento e autorização da entrega.';
+    li.append(nome,status);
+    if(liberado){
+     const baixar=document.createElement('a');
+     baixar.href=curso.urlDownload;
+     baixar.textContent='Baixar PDF';
+     baixar.setAttribute('download','');
+     baixar.className='akitemm-atualizar';
+     baixar.setAttribute('aria-label','Baixar o curso '+curso.titulo);
+     li.append(baixar);
+    }
+    lista.append(li);
+   }
+  }catch(e){
+   linha(e.status===401?'Entre na sua conta para consultar seus cursos.':
+    'Não foi possível consultar seus cursos neste momento.');
+  }
+ }
  async function carregarPedidos(){
   const [pedidos,avaliacoes]=await Promise.all([
    api('loja/pedidos'),api('loja/avaliacoes/pendentes')
@@ -701,7 +743,7 @@
  async function inicializar(){
   try{
    await Promise.all([carregarCatalogo(),carregarPedidos(),carregarLinkDivulgacaoLoja(),carregarPerfil(),carregarEntrega()]);
-   await Promise.allSettled([carregarConfig(),carregarNotificacoes(),carregarNovidadesEditorais()]);
+   await Promise.allSettled([carregarConfig(),carregarNotificacoes(),carregarNovidadesEditorais(),carregarMeusCursos()]);
    el('conteudoLojaLoop').hidden=false;
    inform(catalogoRealSemCheckout?
     'Catálogo comercial real. Compras ainda indisponíveis até homologação dos pagamentos.':
@@ -714,6 +756,7 @@
   botao.addEventListener('click',()=>escolherCor(botao.dataset.akitemmCor));
  el('akitemmFiltroTodos').addEventListener('click',()=>escolherFiltro('todos'));
  el('akitemmFiltroOfertas').addEventListener('click',()=>escolherFiltro('ofertas'));
+ el('akitemmAtualizarMeusCursos').addEventListener('click',()=>carregarMeusCursos());
  el('akitemmBusca').addEventListener('input',()=>{
   if(el('akitemmBusca').value.trim()){
    // Busca global não apaga o texto digitado nem herda filtros anteriores.
