@@ -73,8 +73,7 @@ function createVitrineCandidata({app,banco,catalogo,contas,intencoes,prePedidos,
    '<button type="submit">Consultar frete</button>'+
    '<p id="akitemmResultadoConsultaCep" role="status"></p></form>'+
    '<form id="akitemmFormEntrega"')
-  .replace('<main class="loja-loop">',
-   '<main class="loja-loop"><p class="akitemm-estado">PRÉVIA LOCAL: sem pagamentos, posições, bônus, entregas ou giros reais. As cores são demonstrativas.</p>')
+  // O checkout continua bloqueado no backend; sem faixas de laboratório na vitrine.
   .replace('<div id="catalogoLojaLoop" class="produtos-loja-loop"></div>',
    '<section id="akitemmPacotesCompostos" aria-label="Pacotes com vários produtos" hidden>'+
    '<h3>Pacotes combinados</h3><p>Escolha o conjunto de produtos configurado pela loja, sem cobrança real.</p>'+
