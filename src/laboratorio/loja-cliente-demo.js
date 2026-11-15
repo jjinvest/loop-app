@@ -7,7 +7,8 @@
  const catalogo=[],carrinho=new Map();
  let referenciaCentavos=25000,pedidoEmAndamento=false,filtro='todos',corFiltro=null,configLoja=null,bannerIndice=-1;
  let conviteLoopCheckoutAtivo=false;
- let timerBanner=null,enderecoEntrega=null,quantidadeVitrine=12;
+ const tamanhoPaginaVitrine=()=>window.matchMedia('(max-width:800px)').matches?4:8;
+ let timerBanner=null,enderecoEntrega=null,quantidadeVitrine=tamanhoPaginaVitrine();
  let assinaturaCarrinhoAnterior='';
  let novidadesVitrine=[];
  let avaliacoesDisponiveis=[],avisosGerais=[];
@@ -48,7 +49,7 @@
  function escolherCor(cor){
   if(!['CINZA','VERDE','DOURADO','ROXO'].includes(cor))return;
   corFiltro=corFiltro===cor?null:cor;
-  quantidadeVitrine=12;
+  quantidadeVitrine=tamanhoPaginaVitrine();
   atualizarFiltroCor();mostrarCatalogo();
  }
  function fotoDo(p){
@@ -326,7 +327,7 @@
  }
  function escolherFiltro(novo){
   fecharDetalhes();
-  filtro=novo;quantidadeVitrine=12;
+  filtro=novo;quantidadeVitrine=tamanhoPaginaVitrine();
   if(novo==='todos'){corFiltro=null;atualizarFiltroCor();}
   el('akitemmFiltroTodos').classList.toggle('selecionado',novo==='todos');
   el('akitemmFiltroTodos').setAttribute('aria-pressed',String(novo==='todos'));
@@ -644,7 +645,7 @@
   el('akitemmAreaProdutos').scrollIntoView({block:'start',behavior:'instant'});
  });
  el('akitemmCarregarMais').addEventListener('click',()=>{
-  quantidadeVitrine+=12;mostrarCatalogo();
+  quantidadeVitrine+=tamanhoPaginaVitrine();mostrarCatalogo();
  });
  el('akitemmAbrirAvaliacoes').addEventListener('click',()=>{
   el('akitemmNotificacoes').hidden=true;
