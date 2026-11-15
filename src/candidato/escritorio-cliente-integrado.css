@@ -963,3 +963,22 @@ body.loop03-logado main>.mensagem-pagina{margin:0 0 .75rem}
 .cliente-integrado .loop03-perfil-legenda .loop03-rodape-coroa[hidden]{
  display:none;
 }
+
+
+/* Ajustes pontuais aprovados em 15/11/2026: somente o TEXTO Centro
+   em dourado, mantendo a esfera verde, e o 3.0 com acabamento metalizado. */
+.cliente-integrado #conteudoTabuleiro .loop03-roda
+ .mapa-tabuleiro-posicoes-demo > .tabuleiro-centro > .titulo-espaco-tabuleiro-demo{
+ color:#f5c968!important;
+ text-shadow:0 1px 1px #123321,0 0 7px #ffe8a077;
+}
+.cliente-integrado .loop03-banner-topo .loop03-logomarca > span{
+ display:inline-block;
+ font-weight:900;font-size:.75em;letter-spacing:.045em;
+ background:linear-gradient(180deg,#fffdf1 0%,#f6e2b2 20%,#c5d2e1 42%,#f5f8ff 56%,#8795aa 81%,#eed19a 100%);
+ background-clip:text;-webkit-background-clip:text;
+ -webkit-text-fill-color:transparent;
+ -webkit-text-stroke:.35px #d0b478;
+ filter:drop-shadow(0 2px 1px #040713)
+  drop-shadow(0 0 6px #a97dc859);
+}
