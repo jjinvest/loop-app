@@ -7,6 +7,8 @@ let csrf=null,aba='conteudoResumo',proximaPaginaEquipe=null,
  paginaPedidos=0,carregamentoPedidos=0;
 let telaAcesso='login';
 let fotoPerfilUrl=null,versaoCarregamentoFoto=0;
+const urlsBannersEscritorio=new Map();
+let versaoLeituraBannersEscritorio=0;
 let termosCadastroLidos=null,carregandoTermosCadastro=null;
 let posicaoSelecionadaMotor=null;
 let posicoesDisponiveisResumo=[];
@@ -100,9 +102,50 @@ async function alternarDadosRodape(){
   if(!painel.hidden)$('loop03PerfilNome').textContent='Dados indisponíveis.';
  }
 }
+// Carregar apenas apos login; upload nao existe na interface do cliente.
+function limparFotosBannersEscritorio(){
+ versaoLeituraBannersEscritorio++;
+ for(const url of urlsBannersEscritorio.values())URL.revokeObjectURL(url);
+ urlsBannersEscritorio.clear();
+ for(const img of document.querySelectorAll('[data-banner-imagem]')){
+  img.hidden=true;img.removeAttribute('src');
+ }
+}
+async function carregarFotosBannersEscritorio(){
+ const versao=++versaoLeituraBannersEscritorio;
+ try{
+  const r=await fetch('/staging/banners-escritorio',{
+   credentials:'same-origin',cache:'no-store'
+  });
+  if(!r.ok)return;
+  const dados=await r.json();
+  if(versao!==versaoLeituraBannersEscritorio||
+    dados.quantidadeMaxima!==4||!Array.isArray(dados.slots))return;
+  for(const b of dados.slots){
+   const img=document.querySelector('[data-banner-imagem="'+b.slot+'"]');
+   if(!img)continue;
+   const anterior=urlsBannersEscritorio.get(b.slot);
+   if(anterior){URL.revokeObjectURL(anterior);urlsBannersEscritorio.delete(b.slot);}
+   img.hidden=true;img.removeAttribute('src');
+   if(!b.temImagem)continue;
+   const resposta=await fetch('/staging/banners-escritorio/'+b.slot+'/imagem',{
+    credentials:'same-origin',cache:'no-store'
+   });
+   if(!resposta.ok)continue;
+   const foto=await resposta.blob();
+   if(versao!==versaoLeituraBannersEscritorio)return;
+   if(!['image/png','image/jpeg','image/webp'].includes(foto.type))continue;
+   const url=URL.createObjectURL(foto);
+   urlsBannersEscritorio.set(b.slot,url);
+   img.src=url;img.hidden=false;
+  }
+ }catch{/* Sem fotos ou rede, continua usando os banners originais. */}
+}
 function mostrarSessao(ativa){
  document.body.classList.toggle('loop03-logado',ativa);
  if(!ativa)limparFotoPerfil();
+ if(!ativa)limparFotosBannersEscritorio();
+ if(ativa)void carregarFotosBannersEscritorio();
  if(!ativa)fecharDadosRodape();
  if(!ativa)fecharMenuIntegrado();
  if(!ativa){
@@ -1393,7 +1436,7 @@ setInterval(()=>{
 function iniciarCarrosselResumo(){
  const pista=$('loop03PistaBanners');
  const pontos=[...document.querySelectorAll('[data-banner-resumo]')];
- if(!pista||pontos.length!==2)return;
+ if(!pista||pontos.length!==4)return;
  let atual=0,emInteracao=false;
  const reduz=()=>window.matchMedia('(prefers-reduced-motion: reduce)').matches;
  function marcar(indice){
@@ -1408,7 +1451,7 @@ function iniciarCarrosselResumo(){
   emInteracao=true;mover(i);
  }));
  pista.addEventListener('scroll',()=>{
-  if(pista.clientWidth>0)marcar(Math.min(1,Math.max(0,
+  if(pista.clientWidth>0)marcar(Math.min(pontos.length-1,Math.max(0,
    Math.round(pista.scrollLeft/pista.clientWidth))));
  },{passive:true});
  pista.addEventListener('pointerdown',()=>{emInteracao=true;});
@@ -1417,7 +1460,7 @@ function iniciarCarrosselResumo(){
  pista.addEventListener('pointerleave',()=>{emInteracao=false;});
  window.setInterval(()=>{
   if(document.hidden||aba!=='conteudoResumo'||emInteracao||reduz())return;
-  mover((atual+1)%2);
+  mover((atual+1)%pontos.length);
  },6500);
  window.addEventListener('resize',()=>pista.scrollTo({
   left:pista.clientWidth*atual,behavior:'instant'
