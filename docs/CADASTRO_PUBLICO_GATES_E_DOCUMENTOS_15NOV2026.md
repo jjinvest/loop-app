@@ -2,6 +2,16 @@
 
 **Estado verificado em 15/11/2026:** o executável de release controlado foi publicado no serviço Railway `loop-identidade-real`, commit `dbf8c8a8b39fcc0c932c93822604e7b878d31800`. O deploy `0831493b-1c11-4d56-b5fb-e6b893287980` terminou **SUCCESS**. O processo está em modo **PREPARACAO_SEGURA**: conta nova, CPF e email não são aceitos ainda.
 
+## Integração do núcleo definitivo — PUBLICADA E COMPROVADA NO RAILWAY
+**Data:** 15/11/2026, aproximadamente 16h04 em Brasília (19h04 UTC).
+**Serviço:** `loop-identidade-real`, volume permanente `/dados-reais/clientes.sqlite`, Railway ambiente técnico denominado `homologacao`, mas sem usar banco do ensaio.
+**Publicação efetiva:** deploy `a1af3742-f017-40be-b3d7-b52b5dfb8a26` **SUCCESS**, commit `9d338d3674782e642e75eaf6d43c5a198c2da468`, código do núcleo fechado no repositório. Não marcar como mera preparação em GitHub: a migração das TABELAS efetivamente rodou no volume definitivo.
+**Prova emitida pelo container ativo:** `LOOP_NUCLEO_OPERACIONAL_REAL=COMPROVADO;COMPONENTES=17;SEM_CLIENTES_OU_PAGAMENTOS=SIM`. A conferência read-only exige 17 tabelas, SQLite íntegro, catraca PAUSADA, 0 contas, 0 pedidos, 0 giros e 0 lançamentos; a rota de diagnóstico é privada e exige token interserviços.
+**Nova recuperação externa:** `LOOP_BACKUP_IDENTIDADE_PRIMEIRA_COPIA=COMPROVADA;PUT_GET_HASH_RESTORE_CHAVES=SIM;BYTES=393272;CONTAS=0;SHA256=ffc6e76af946fb06c6ee61e92cca1de6742c2c17608bd9e82e0650573237526d`. Outras bases (mídias do catálogo e prévia) possuem backups separados e NÃO são cobertas por essa cópia.
+**Componentes operacionalmente instalados no banco definitivo:** motor, livro financeiro, operação da catraca, auditoria HMAC, manutenção, catálogo e custos multidistribuidor, autenticação administrativa, pedidos e eventos comerciais, regras de cores, outbox de fornecedores, reservas de capacidade e reconsulta de reservas. Os adapters externos da outbox permanecem fechados, sem qualquer envio.
+**Não está liberado:** novo cadastro comercial, loja com checkout, PSP, PIX, saques, giros reais ou distribuição de recompensa. A simples existência do banco e dos serviços não prova operação comercial.
+**Pendências para retirada da prévia:** termos/privacidade oficiais e aprovação; transição auditável das contas e indicações já criadas em `akitemmloop.com.br` (em especial `/escritorio/VILELA`) sem refazer cadastro; mudar o domínio somente após provar a interface e APIs definitivas. No momento, o domínio `akitemmloop.com.br` ainda usa `akitemm-escritorio-preview`. Não remover volume/cópia da prévia nem alterar DNS até a preservação dos dados ser comprovada.
+
 ## Primeira copia offsite da identidade real — COMPROVADA
 **Data da prova:** 15/11/2026 às 14:13 (America/Sao_Paulo).
 **Ambiente:** Railway `homologacao`, serviço de identidade **real** `loop-identidade-real`, banco persistente `/dados-reais/clientes.sqlite` (não é o SQLite da prévia).
