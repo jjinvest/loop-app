@@ -395,7 +395,7 @@ function limparProduto(){
  $('salvarProdutoAdmin').textContent='Salvar produto';
 }
 function preencherProduto(item){
- edicaoProduto={id:item.produto.id,revisao:item.revisao};
+ edicaoProduto={id:item.produto.id,revisao:item.revisao,estado:item.produto.estado};
  $('produtoIdAdmin').value=item.produto.id;$('produtoIdAdmin').readOnly=true;
  $('produtoTipoAdmin').value=item.produto.tipo;$('produtoTipoAdmin').disabled=true;
  $('produtoEstadoAdmin').value=item.produto.estado;
@@ -1642,15 +1642,22 @@ $('formProduto').addEventListener('submit',async event=>{
   if(detalhes.length>12||detalhes.some(x=>x.length>180))
    throw Error('Informe até 12 características, com até 180 caracteres cada.');
   const entrega=tipo==='PDF'?'DOWNLOAD_APOS_CONFIRMACAO':$('produtoEntregaAdmin').value;
+  if(!edicaoProduto&&estado==='PUBLICADO'&&!fotos.length)
+   throw Error('Para publicar um novo produto, selecione pelo menos uma fotografia.');
+  // Primeiro grava o rascunho, depois os bytes e só então publica. Uma
+  // falha de upload não deixa produto vazio anunciado aos compradores.
+  const publicarAposFoto=estado==='PUBLICADO'&&fotos.length>0&&
+   (!edicaoProduto||edicaoProduto.estado!=='PUBLICADO');
+  const estadoParaSalvar=publicarAposFoto?'RASCUNHO':estado;
   if(edicaoProduto){
    await api('/produtos/'+encodeURIComponent(edicaoProduto.id),{
     method:'PATCH',body:{revisaoEsperada:edicaoProduto.revisao,
-     alteracoes:{nome,descricao,estado,precoCentavos:centavos,detalhes,entrega}}
+     alteracoes:{nome,descricao,estado:estadoParaSalvar,precoCentavos:centavos,detalhes,entrega}}
    });
   }else{
    if(!chaveProduto)chaveProduto='produto-ui-'+crypto.randomUUID();
    await api('/produtos',{method:'POST',idempotencia:chaveProduto,
-    body:{produto:{id,nome,descricao,tipo,estado,precoCentavos:centavos,
+    body:{produto:{id,nome,descricao,tipo,estado:estadoParaSalvar,precoCentavos:centavos,
      entrega,fotos:[],detalhes,videoApresentacaoUrl:null}}});
   }
   let arquivoStatus='',arquivoErro=null;
@@ -1658,6 +1665,13 @@ $('formProduto').addEventListener('submit',async event=>{
    const salvos=await enviarArquivosSelecionadosAdmin(id,tipo,{pdf,video,fotos});
    arquivoStatus=salvos.length?' · Arquivos: '+salvos.join(', '):'';
   }catch(e){arquivoErro=e;}
+  if(publicarAposFoto&&!arquivoErro){
+   const atual=await api('/produtos/'+encodeURIComponent(id));
+   await api('/produtos/'+encodeURIComponent(id),{
+    method:'PATCH',body:{revisaoEsperada:atual.revisao,
+     alteracoes:{estado:'PUBLICADO'}}
+   });
+  }
   limparProduto();await atualizar();
   preencherProduto(await api('/produtos/'+encodeURIComponent(id)));
   $('resultadoProdutoAdmin').textContent=arquivoErro?
