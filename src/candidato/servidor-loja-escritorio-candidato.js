@@ -395,8 +395,11 @@ function criarAppLojaEscritorioCandidato({banco,repositorioCatalogo,
    return res.status(400).json({erro:'PAGINACAO_INVALIDA'});
   const pagina=req.query.pagina===undefined?0:Number(req.query.pagina);
   const busca=req.query.busca===undefined?'':req.query.busca;
-  try{return res.json(equipe.listar({titularId:s.titularId,pagina,busca}));}
-  catch{return res.status(400).json({erro:'PAGINACAO_INVALIDA'});}
+  try{
+   return res.set('Cache-Control','private, no-store').json(
+    equipe.listar({titularId:s.titularId,pagina,busca})
+   );
+  }catch{return res.status(400).json({erro:'PAGINACAO_INVALIDA'});}
  });
  // Qualificacao de ensaio: somente o titular logado aloca a uma posicao
  // propria confirmada. Compra do indicado exige PSP Sandbox reconsultado.
