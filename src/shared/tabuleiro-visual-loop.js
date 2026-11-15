@@ -99,7 +99,7 @@
      (tipo==='A'?'loop03-a':'loop03-b'):
      dourada(p)?'loop03-dourada':pendente(p)?'loop03-azul':
      aceito(p)?'loop03-verde':tipo==='A'?'loop03-a':'loop03-b');
-    inicial.textContent=contagem!==null?tipo:String(ordem);
+    inicial.textContent=String(ordem);
     inicial.classList.toggle('loop03-ordem-longa',ordem>=1000);
     const conteudo=document.createElement('span');
     conteudo.className='loop03-fila-identificacao';
