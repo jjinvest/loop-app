@@ -295,7 +295,6 @@ function mp4TrintaSegundos(){
    await lojaPrimeiro.locator('#statusPedidoLoja').filter({hasText:/Pedido hom-/}).waitFor();
    await lojaPrimeiro.close();
    await abrirAba('#abaMeusPedidos');
-   await abrirAba('#abaMeusPedidos');
    await page.locator('#listaPedidos article.pedido').first().waitFor();
    assert.equal(await page.locator('#listaPedidos article.pedido').count(),1);
    assert.equal(await page.locator('#listaPedidos')
@@ -314,7 +313,7 @@ function mp4TrintaSegundos(){
      return {largura:hit.width,altura:hit.height,l:ponto.width,a:ponto.height,r:ponto.borderRadius};
     })
    );
-   assert.equal(circulos.length,2);
+   assert.equal(circulos.length,4,'quatro pontos para os quatro banners aprovados');
    for(const c of circulos){
     assert.ok(Math.abs(c.largura-c.altura)<1,'botão deve ser quadrado');
     assert.equal(c.l,c.a,'bolinha não pode ser oval');
@@ -326,7 +325,7 @@ function mp4TrintaSegundos(){
    assert.equal(await page.locator('#atalhoPosicoes').count(),0);
    assert.equal(await page.locator('#atualizarResumo').count(),0);
    const banners=page.locator('#loop03PistaBanners .loop03-banner-item');
-   assert.equal(await banners.count(),2);
+   assert.equal(await banners.count(),4,'quatro banners aprovados PC/celular');
    const proporcao=await page.evaluate(()=>{
     const r=document.querySelector('#loop03PistaBanners .loop03-hero-escritorio')
      .getBoundingClientRect();
