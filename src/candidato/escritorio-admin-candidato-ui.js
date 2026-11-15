@@ -696,8 +696,7 @@ function criarBannerConfig(dados={}){
  const campos=[
   ['titulo','Título',90,true,false],
   ['descricao','Descrição',250,false,true],
-  ['produtoId','ID de produto publicado (opcional)',80,false,false],
-  ['imagemCaminho','Caminho local da imagem (opcional)',250,false,false]
+  ['produtoId','ID de produto publicado (opcional)',80,false,false]
  ];
  for(const [nome,rotulo,maximo,obrigatorio,multilinha] of campos){
   const label=document.createElement('label');
@@ -708,10 +707,38 @@ function criarBannerConfig(dados={}){
   if(multilinha)input.rows=2;
   input.value=dados[nome]||'';
   if(nome==='produtoId')input.pattern='[a-z0-9-]{3,80}';
-  if(nome==='imagemCaminho')
-   input.placeholder='/imagens/catalogo/arquivo.webp';
+
   label.append(input);bloco.append(label);
  }
+ const caminho=document.createElement('input');
+ caminho.type='hidden';caminho.name='imagemCaminho';
+ caminho.value=dados.imagemCaminho||'';
+ bloco.append(caminho);
+ const labelFoto=document.createElement('label');
+ labelFoto.textContent='Carregar imagem do banner (JPG, PNG ou WebP · até 4 MB)';
+ const arquivo=document.createElement('input');
+ arquivo.type='file';arquivo.accept='image/jpeg,image/png,image/webp';
+ arquivo.name='novoBannerArquivo';
+ labelFoto.append(arquivo);bloco.append(labelFoto);
+ const foto=document.createElement('img');
+ foto.alt='Prévia da imagem do banner';
+ foto.loading='lazy';foto.style.maxWidth='100%';
+ foto.style.maxHeight='160px';foto.style.objectFit='contain';
+ foto.hidden=!dados.imagemCaminho;
+ if(dados.imagemCaminho)foto.src=dados.imagemCaminho;
+ bloco.append(foto);
+ let urlTemporaria=null;
+ arquivo.addEventListener('change',()=>{
+  if(urlTemporaria){URL.revokeObjectURL(urlTemporaria);urlTemporaria=null;}
+  const f=arquivo.files?.[0];
+  if(f){
+   urlTemporaria=URL.createObjectURL(f);foto.src=urlTemporaria;
+   foto.hidden=false;
+  }else{
+   foto.hidden=!caminho.value;
+   if(caminho.value)foto.src=caminho.value;
+  }
+ });
  const botoes=document.createElement('div');botoes.className='linha';
  const subir=elem('button','Subir');subir.type='button';
  subir.addEventListener('click',()=>{
@@ -805,11 +832,37 @@ $('configAtualizarAdmin').addEventListener('click',()=>
  carregarConfigLojaAdmin().catch(e=>
   $('configResultadoAdmin').textContent='Configuração indisponível: '+e.message));
 $('configAdicionarBannerAdmin').addEventListener('click',()=>criarBannerConfig());
+async function enviarArteBannerLoja(arquivo){
+ if(!['image/png','image/jpeg','image/webp'].includes(arquivo.type)||
+    arquivo.size<40||arquivo.size>4*1024*1024)
+  throw Error('BANNER_IMAGEM_INVALIDA');
+ const r=await fetch('/staging/escritorio-unificado/loja/banner-arquivo',{
+  method:'POST',credentials:'omit',cache:'no-store',
+  headers:{Authorization:'Bearer '+auth,'Content-Type':arquivo.type},
+  body:arquivo
+ });
+ const data=await r.json().catch(()=>({}));
+ if(!r.ok)throw Error(data.erro||'BANNER_UPLOAD_INDISPONIVEL');
+ if(typeof data.imagemCaminho!=='string'||
+    !/^\/staging\/vitrine\/loja\/banner-arquivo\/[a-f0-9]{32}$/.test(data.imagemCaminho))
+  throw Error('BANNER_RESPOSTA_INVALIDA');
+ return data.imagemCaminho;
+}
 $('formConfigLojaAdmin').addEventListener('submit',async e=>{
  e.preventDefault();
  const btn=$('configSalvarAdmin');btn.disabled=true;
  try{
   const body=colherConfigLojaAdmin();
+  const banners=[...$('configBannersAdmin').children];
+  for(const [i,bloco] of banners.entries()){
+   const input=bloco.querySelector('[name="novoBannerArquivo"]');
+   const arquivo=input?.files?.[0];
+   if(!arquivo)continue;
+   const rota=await enviarArteBannerLoja(arquivo);
+   body.config.banners[i].imagemCaminho=rota;
+   bloco.querySelector('[name="imagemCaminho"]').value=rota;
+   input.value='';
+  }
   const atualizado=await api('/loja/config',{method:'PUT',body});
   preencherConfigLojaAdmin(atualizado);
   $('configResultadoAdmin').textContent=
