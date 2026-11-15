@@ -473,9 +473,9 @@ class IdentidadeClienteLoopReal{
   const total=this.banco.prepare(
    'SELECT COUNT(*) AS n FROM loop_real_vinculos_indicacao WHERE indicador_id=?'
   ).get(titularId).n;
-  return {indicados:rows.map(x=>({
+  return {indicados:rows.map((x,i)=>({
    nick:x.nick,registradoEm:x.registradoEm,
-   numeroCadastro:offset+rows.indexOf(x)+1,filaCadastro:'B',
+   numeroCadastro:offset+i+1,filaCadastro:'B',
    telefone:this.telefoneIndicadoVinculado({
     indicadorId:titularId,indicadoId:x.indicadoId
    }),
