@@ -61,6 +61,12 @@
 <div id="listaProdutosAdmin" aria-live="polite"></div>
 <div class="linha"><button id="produtosAnterior" type="button">Anterior</button>
 <button id="produtosProximo" type="button">Próximos produtos</button></div>
+<section aria-labelledby="tituloCursosPdfAdmin">
+<h3 id="tituloCursosPdfAdmin">Cursos PDF · administração</h3>
+<p class="subtexto">Gerencie aqui os cursos digitais já cadastrados. O PDF original fica armazenado na AKITEMM, com histórico de versões. Cada comprador autorizado poderá baixar uma cópia na área Meus Cursos, após confirmação do pagamento.</p>
+<p id="resumoCursosPdfAdmin" class="subtexto" role="status"></p>
+<div id="listaCursosPdfAdmin" aria-live="polite"></div>
+</section>
 <h3 id="tituloFormularioProduto">Cadastrar produto</h3>
 <form id="formProduto">
 <label for="produtoIdAdmin">Identificador (3 a 80 caracteres: letras minúsculas, números e hífen)</label>
@@ -80,7 +86,7 @@
 <input id="produtoPrecoAdmin" type="number" inputmode="decimal" min="0.01" max="1000000" step="0.01" required>
 <label for="pdfProdutoArquivoAdmin">Arquivo do curso PDF (até 5 MB, somente PDF válido)
 <input id="pdfProdutoArquivoAdmin" type="file" accept=".pdf,application/pdf"></label>
-<p class="subtexto">Selecione o PDF ao cadastrar ou editar o produto. O arquivo fica protegido no mesmo SQLite e só é entregue ao comprador após confirmação do pagamento. Para substituir o PDF de um produto já salvo, selecione o arquivo e use o botão abaixo.</p>
+<p class="subtexto">O arquivo original fica salvo na AKITEMM, não no aparelho do cliente. Use Enviar ou substituir PDF depois de selecionar um curso. O acesso pago permanece bloqueado até a homologação dos pagamentos.</p>
 <div class="linha"><button id="pdfProdutoEnviarAdmin" type="button" disabled>Enviar ou substituir PDF deste produto</button></div>
 <p id="pdfProdutoEstadoAdmin" class="subtexto" role="status">Nenhum curso PDF selecionado.</p>
 <label for="fotoProdutoArquivoAdmin">Fotos do produto (até 10, JPEG, PNG ou WebP, 3 MB cada)
