@@ -423,7 +423,7 @@ async function main(){
     fullPage:true
    });
    await page.locator('a.akitemm-voltar').click();
-   await page.waitForURL(url=>url.pathname==='/escritorio');
+   await page.waitForURL(url=>url.pathname==='/minha-conta');
    await page.locator('#painelConta').waitFor({state:'visible'});
    // A tela administrativa consulta a MESMA base e exige outro cookie.
    await page.goto(base+'/administrador',{waitUntil:'domcontentloaded'});
