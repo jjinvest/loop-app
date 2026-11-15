@@ -5,7 +5,7 @@
   "arquivos": [
     {
       "path": "src/candidato/checkout-candidato-ui.html",
-      "sha": "28d3e245cc432b4c195deab236c412b1b1129e4d"
+      "sha": "fa1fafc1ac22bc02d93aad8283f038a87889fb2b"
     },
     {
       "path": "src/candidato/escritorio-admin-candidato-ui.css",
@@ -73,7 +73,7 @@
     },
     {
       "path": "src/laboratorio/loja-cliente-demo.html",
-      "sha": "2742367d9822958bde7a0c58659794ae34074f03"
+      "sha": "c69bfc690a93922baec4aa16fe3e0e306220331b"
     },
     {
       "path": "src/laboratorio/loop-03-shell.css",
