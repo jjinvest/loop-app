@@ -1594,6 +1594,8 @@ async function atualizarAtalhoOperadorLoop(){
  }catch{}
 }
 void atualizarAtalhoOperadorLoop();
+addEventListener('pageshow',()=>void atualizarAtalhoOperadorLoop());
+addEventListener('focus',()=>void atualizarAtalhoOperadorLoop());
 void carregarIndicadorCadastro();
 restaurarSessao();
 
