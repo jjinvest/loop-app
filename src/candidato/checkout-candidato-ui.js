@@ -122,6 +122,7 @@ async function carregarFotosBannersEscritorio(){
    const img=document.querySelector('[data-banner-imagem="'+b.slot+'"]');
    if(!img)continue;
    img.hidden=true;img.removeAttribute('src');
+   img.dataset.enquadramento=b.enquadramento==='PREENCHER'?'PREENCHER':'INTEIRA';
    if(!b.temImagem)continue;
    // Lazy loading nativo: baixar a foto apenas ao aproximar-se do slide,
    // sem carregar quatro arquivos grandes no login nem criar blob URLs.
