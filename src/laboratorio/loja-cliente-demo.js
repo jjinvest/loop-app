@@ -15,6 +15,25 @@
  let produtoAberto=null,versaoDetalhe=0;
  const vazio=document.createElement.bind(document);
  const inform=msg=>{el('estadoLojaLoop').textContent=msg;};
+ // Atalho visivel apenas com sessao administrativa autenticada no gateway.
+ async function atualizarAtalhoOperadorAkitemm(){
+  const atalho=el('akitemmOperadorMais');
+  if(!atalho)return;
+  atalho.hidden=true;atalho.style.display='none';
+  try{
+   const resposta=await fetch('/api/operador/estado',{
+    credentials:'same-origin',cache:'no-store'
+   });
+   if(!resposta.ok)return;
+   const estado=await resposta.json();
+   if(estado?.operador===true){
+    atalho.hidden=false;atalho.style.display='inline-flex';
+   }
+  }catch{}
+ }
+ void atualizarAtalhoOperadorAkitemm();
+ addEventListener('pageshow',()=>void atualizarAtalhoOperadorAkitemm());
+ addEventListener('focus',()=>void atualizarAtalhoOperadorAkitemm());
  const fotoPermitida=src=>typeof src==='string'&&
   /^\/imagens\/catalogo\/[a-zA-Z0-9_-]+\.(?:png|jpe?g|webp)$/.test(src);
  const fotoBannerPermitida=src=>fotoPermitida(src)||
