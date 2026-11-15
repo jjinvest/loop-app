@@ -76,7 +76,7 @@ function criarAppLojaEscritorioCandidato({banco,repositorioCatalogo,
  operacoesSandboxAutorizadas=false,conciliacaoAutomaticaConfigurada=false,
  segredoOperador,termosVersao,termosTexto,
  privacidadeTexto=null,privacidadeVersao='LAB-PRIV-2026',
- captchaCadastroObrigatorio=false}={}){
+ captchaCadastroObrigatorio=false,captchaSegredo=null}={}){
  if(process.env.NODE_ENV==='production')erro('CANDIDATO_NAO_HOMOLOGADO');
  if(typeof repositorioCatalogo?.buscar!=='function')
   throw new TypeError('Catalogo obrigatorio');
@@ -88,8 +88,11 @@ function criarAppLojaEscritorioCandidato({banco,repositorioCatalogo,
  const contas=new ContaUnicaCandidataSQLite({
   banco,chaveEmail,chaveCifra,chaveRecuperacao,enviarRecuperacao
  });
+ if(captchaCadastroObrigatorio===true&&
+   (!Buffer.isBuffer(captchaSegredo)||captchaSegredo.length!==32))
+  erro('CAPTCHA_SEGREDO_INDEPENDENTE_OBRIGATORIO');
  const captcha=captchaCadastroObrigatorio?new CaptchaCadastroSQLite({
-  banco,segredo:contas.cipherKey,contexto:'PREVIA'
+  banco,segredo:captchaSegredo,contexto:'PREVIA'
  }):null;
  const fotoPerfil=new FotoPerfilCandidatoSQLite({banco});
  const equipe=new EquipeCandidataSQLite({banco,
@@ -270,6 +273,12 @@ function criarAppLojaEscritorioCandidato({banco,repositorioCatalogo,
   privacidadeTexto.length>=100?privacidadeTexto:
   'A loja e o LOOP usam dados de cadastro, telefone e vínculo de indicação somente para acesso, prevenção de fraude e contato direto do indicador. Dados de CPF, e-mail, senha e nome civil não aparecem na Minha Equipe. O ambiente é de ensaio sem pagamentos reais.';
  const privHash=createHash('sha256').update(privTexto,'utf8').digest('hex');
+ banco.exec([
+  'CREATE TABLE IF NOT EXISTS akitemm_aceites_privacidade_candidatos(',
+  'titular_id TEXT PRIMARY KEY REFERENCES akitemm_conta_unica_candidata(id)',
+  'ON DELETE RESTRICT,versao TEXT NOT NULL,hash TEXT NOT NULL,',
+  'aceito_em INTEGER NOT NULL);'
+ ].join(' '));
  app.get('/staging/contas/termos-cadastro',(_req,res)=>res.json({
   termosVersao,termosTexto,termosHash:termosHashCadastro,
   privacidadeVersao,privacidadeTexto:privTexto,privacidadeHash:privHash,
@@ -290,10 +299,15 @@ function criarAppLojaEscritorioCandidato({banco,repositorioCatalogo,
   // Compatibilidade exclusiva com os ensaios legados sem snapshot.
   // A interface nova envia ambas as evidencias de leitura e aceita
   // somente a versao exata apresentada antes de preencher o formulario.
-  const chaves=Object.keys(body).sort().join(',');
   const semCaptcha=captcha?Object.fromEntries(Object.entries(body).filter(
    ([k])=>k!=='captchaId'&&k!=='captchaResposta')):body;
-  const chavesCadastro=Object.keys(semCaptcha).sort().join(',');
+  const privacidadeCampos=['privacidadeHashAceito','privacidadeVersaoAceita'];
+  const temPrivacidade=privacidadeCampos.every(k=>Object.hasOwn(semCaptcha,k));
+  if(privacidadeCampos.some(k=>Object.hasOwn(semCaptcha,k))&&!temPrivacidade)
+   return res.status(400).json({erro:'CAMPOS_INVALIDOS'});
+  const semDocumentos=Object.fromEntries(Object.entries(semCaptcha).filter(
+   ([k])=>!privacidadeCampos.includes(k)));
+  const chavesCadastro=Object.keys(semDocumentos).sort().join(',');
   const antiga='aceiteExplicito,email,nick,nome,senha';
   const atual='aceiteExplicito,email,nick,nome,senha,termosHashAceito,termosVersaoAceita';
    const novo='aceiteExplicito,confirmarSenha,email,nick,nome,senha,telefone,termosHashAceito,termosVersaoAceita';
@@ -312,6 +326,9 @@ function criarAppLojaEscritorioCandidato({banco,repositorioCatalogo,
      (body.termosVersaoAceita!==termosVersao||
      body.termosHashAceito!==termosHashCadastro))
    return res.status(409).json({erro:'TERMOS_ALTERADOS_RELER'});
+  if(temPrivacidade&&(body.privacidadeVersaoAceita!==privacidadeVersao||
+     body.privacidadeHashAceito!==privHash))
+   return res.status(409).json({erro:'TERMOS_ALTERADOS_RELER'});
   try{
    if(captcha)captcha.verificar({
     captchaId:body.captchaId,captchaResposta:body.captchaResposta
@@ -325,8 +342,12 @@ function criarAppLojaEscritorioCandidato({banco,repositorioCatalogo,
      confirmarSenha:body.confirmarSenha??null,
      aceiteExplicito:body.aceiteExplicito,
     termosVersao,termosTexto,
-    onCriada:indicadorNick||comCpf?({titularId})=>{
-     // CPF, conta e indicacao em UM commit; sem aceitar outras posicoes.
+    onCriada:indicadorNick||comCpf||temPrivacidade?({titularId})=>{
+     // CPF, conta, versões aceitas e vínculo no MESMO COMMIT.
+     if(temPrivacidade)banco.prepare([
+      'INSERT INTO akitemm_aceites_privacidade_candidatos',
+      '(titular_id,versao,hash,aceito_em) VALUES(?,?,?,?)'
+     ].join(' ')).run(titularId,privacidadeVersao,privHash,Date.now());
      if(comCpf)cpf.registrar({
       titularId,cpf:body.cpf,termosVersao,termosTexto,
       aceiteExplicito:body.aceiteExplicito,autorizado:true
