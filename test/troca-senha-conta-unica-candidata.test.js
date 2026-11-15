@@ -64,8 +64,18 @@ test('troca de senha invalida todas as sessoes mesmo em duas abas/usuarios do me
  assert.equal((await req('/staging/contas/me',{cookie:cookieA})).status,401);
  assert.equal((await req('/staging/contas/me',{cookie:cookieB})).status,401);
  assert.equal((await login()).status,401);
- const novo=await req('/staging/contas/entrar',{body:{
+ const semCaptcha=await req('/staging/contas/entrar',{body:{
   nick:'Rui',senha:body.novaSenha
+ }});
+ assert.equal(semCaptcha.status,403);
+ const desafio=(await req('/staging/contas/captcha-login')).data;
+ const svg=Buffer.from(desafio.captchaImagem.split(',')[1],'base64').toString();
+ const codigo=[...svg.matchAll(/<text\\s[^>]*>([A-Z0-9])<\\/text>/g)]
+  .map(x=>x[1]).join('');
+ assert.equal(codigo.length,6);
+ const novo=await req('/staging/contas/entrar',{body:{
+  nick:'Rui',senha:body.novaSenha,
+  captchaId:desafio.captchaId,captchaResposta:codigo
  }});
  assert.equal(novo.status,200);
  const raw=JSON.stringify(banco.prepare(
