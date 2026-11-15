@@ -1,11 +1,11 @@
 {
   "schema": 1,
   "política": "Toda alteração de HTML/CSS exige pedido visual explícito, escopo isolado e revisão do proprietário; é proibido atualizar hashes para esconder mudanças.",
-  "autorizaçãoAtual": "14/11/2026: autorização explícita do proprietário para refinar EXCLUSIVAMENTE os ícones do menu lateral compartilhado: casa dourada, tabuleiro dourado levemente maior, grade de posições dourada, equipe dourada, financeiro verde, loja AKITEMM roxa, carrinho dourado, links dourados, conta dourada. IDs, links, abas, motor, textos e navegação preservados. As edições anteriores aprovadas no HTML/CSS compartilhados também permanecem (CPF no cadastro, controles, filas, links e rodapé).",
+  "autorizaçãoAtual": "15/11/2026: proprietário autorizou exclusivamente retirar a inscrição 'Minha conta' sob a foto no rodapé do menu e apresentar o nick autenticado com a localização da posição selecionada: Fila A, Fila B ou ícone de coroa quando no Tabuleiro. Número da posição, indicações e detalhes permanecem no placar superior. Foto, botão de dados, menu e demais ajustes visuais aprovados foram preservados.",
   "arquivos": [
     {
       "path": "src/candidato/checkout-candidato-ui.html",
-      "sha": "64d34c119ccb963633da549e7c8e80aae1d353fe"
+      "sha": "7c8d9352b65789db7c174377e712e1e9df6aa9b1"
     },
     {
       "path": "src/candidato/escritorio-admin-candidato-ui.css",
@@ -17,7 +17,7 @@
     },
     {
       "path": "src/candidato/escritorio-cliente-integrado.css",
-      "sha": "aeeee40c21a2994f7ff987614b5e4b3267889e21"
+      "sha": "047de421cd536a66d1cf9dd32147479eb6a58a31"
     },
     {
       "path": "src/laboratorio/admin-loop03.css",
@@ -101,6 +101,7 @@
     }
   ],
   "históricoAutorizações": [
-    "14/11/2026: pedido explicito do proprietário para corrigir o teste de navegacao, abrir os dados nome/nick/email no rodape Minha conta, sincronizar a foto com o topo e mostrar CPF apenas se posicao confirmada; HTML e CSS da interface unica atualizados sem alterar outras telas."
+    "14/11/2026: pedido explicito do proprietário para corrigir o teste de navegacao, abrir os dados nome/nick/email no rodape Minha conta, sincronizar a foto com o topo e mostrar CPF apenas se posicao confirmada; HTML e CSS da interface unica atualizados sem alterar outras telas.",
+    "14/11/2026: autorização explícita do proprietário para refinar EXCLUSIVAMENTE os ícones do menu lateral compartilhado: casa dourada, tabuleiro dourado levemente maior, grade de posições dourada, equipe dourada, financeiro verde, loja AKITEMM roxa, carrinho dourado, links dourados, conta dourada. IDs, links, abas, motor, textos e navegação preservados. As edições anteriores aprovadas no HTML/CSS compartilhados também permanecem (CPF no cadastro, controles, filas, links e rodapé)."
   ]
 }
