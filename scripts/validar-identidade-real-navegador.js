@@ -572,7 +572,8 @@ async function main(){
     centroEsperado,'centro segue o estado do motor, nao um valor fixo');
    assert.equal(await pagina.locator('#motorBolinha6')
     .evaluate(el=>el.classList.contains('loop03-marcador-aceso')),false);
-   assert.equal(await pagina.locator('#motorFilaB .loop03-linha-fila').count(),1);
+   assert.equal(await pagina.locator('#motorFilaB .loop03-linha-fila').count(),
+    estadoCliente.filaB,'fila deve refletir a contagem real, sem limite fixo de uma pessoa');
    await pagina.screenshot({
     path:path.join(pasta,'integrado-tabuleiro-'+visual.nome+'.png'),
     fullPage:true
