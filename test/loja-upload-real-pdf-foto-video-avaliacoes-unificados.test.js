@@ -226,10 +226,24 @@ test('produto completo com foto PDF e video 30s; download e reviews isolados por
   assert.equal(confirm.data.estado,'CONCLUIDO');
  }
  const pedidoPdf=await compra(pdfid,'pedido-pdf-completo-0001');
+ const meuAntes=await call('/staging/vitrine/loja/meus-cursos',{cookie:a.cookie});
+ assert.equal(meuAntes.status,200);
+ assert.equal(meuAntes.data.cursos.length,1);
+ assert.equal(meuAntes.data.cursos[0].situacao,'AGUARDANDO_CONFIRMACAO');
+ assert.equal(meuAntes.data.cursos[0].urlDownload,null);
+ assert.equal((await call('/staging/vitrine/loja/meus-cursos',{cookie:b.cookie})).data.cursos.length,0);
+ assert.equal((await call('/staging/vitrine/loja/meus-cursos')).status,401);
  const bloqueado=await call('/staging/meus-pedidos/'+pedidoPdf+'/pdf/'+pdfid,
   {cookie:a.cookie});
  assert.equal(bloqueado.status,403);
  await pagar(pedidoPdf,1);
+ const meuDepois=await call('/staging/vitrine/loja/meus-cursos',{cookie:a.cookie});
+ assert.equal(meuDepois.status,200);
+ assert.equal(meuDepois.data.cursos.length,1);
+ assert.equal(meuDepois.data.cursos[0].situacao,'DISPONIVEL');
+ assert.equal(meuDepois.data.cursos[0].urlDownload,
+  '/staging/meus-pedidos/'+pedidoPdf+'/pdf/'+pdfid);
+ assert.equal(meuDepois.data.cursos[0].versao,1);
  const meus=await call('/staging/meus-pedidos',{cookie:a.cookie});
  assert.equal(meus.status,200);
  assert.ok(meus.data.pedidos.find(x=>x.prepedidoId===pedidoPdf)
@@ -252,6 +266,8 @@ test('produto completo com foto PDF e video 30s; download e reviews isolados por
  });
  assert.equal(versao2.status,201,JSON.stringify(versao2.data));
  assert.equal(versao2.data.versao,2);
+ assert.equal((await call('/staging/vitrine/loja/meus-cursos',{cookie:a.cookie}))
+  .data.cursos[0].versao,1,'compra mantém sua versão original');
  assert.deepEqual(Buffer.from((await call(url,{cookie:a.cookie})).data),pdf,
   'o pedido antigo conserva versão um do curso');
  const pedidoFisico=await compra(fisico,'pedido-fisico-completo-0002');
