@@ -179,7 +179,7 @@
  function prepararRede(){
   if(redePreparada)return;
   redePreparada=true;
-  $('atualizarEquipe').addEventListener('click',()=>void carregarRede());
+  $('atualizarEquipe')?.addEventListener('click',()=>void carregarRede());
   $('maisEquipe').addEventListener('click',()=>void carregarRede({mais:true}));
   $('buscarEquipe').addEventListener('input',()=>exibirRede());
   $('equipeVerLinks').addEventListener('click',()=>$('abaLinks').click());
@@ -1228,7 +1228,7 @@
    botao.setAttribute('aria-pressed',String(mostrar));
   });
  }
- $('atualizarPedidos').addEventListener('click',()=>void carregarPedidos());
+ $('atualizarPedidos')?.addEventListener('click',()=>void carregarPedidos());
  $('pedidosAnterior').addEventListener('click',()=>{
   if(paginaPedidosReal>0)void carregarPedidos(paginaPedidosReal-1);
  });
