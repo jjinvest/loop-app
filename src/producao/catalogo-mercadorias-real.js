@@ -7,10 +7,11 @@ const {createHmac,timingSafeEqual}=require('node:crypto');
 const {RepositorioCatalogoSQLite}=require('../domain/repositorio-catalogo-sqlite');
 const {FotosProdutoCandidatoSQLite}=require('../domain/fotos-produto-candidato-sqlite');
 const {AkitemmConfigLojaDemoSQLite}=require('../domain/akitemm-config-loja-demo-sqlite');
+const {MaterialPdfCursosReal}=require('./material-pdf-cursos-real');
 const ID=/^[a-z0-9-]{3,80}$/;
 const FOTO_MIME=new Set(['image/jpeg','image/png','image/webp']);
 const CAMPOS=new Set(['nome','descricao','estado','precoCentavos','detalhes','entrega']);
-const MAX_JSON=16*1024,MAX_FOTO=3*1024*1024;
+const MAX_JSON=16*1024,MAX_FOTO=3*1024*1024,MAX_PDF=5*1024*1024;
 
 function tokenCatalogo(tokenRaiz){
  if(typeof tokenRaiz!=='string'||!/^[a-f0-9]{64}$/.test(tokenRaiz))
@@ -65,6 +66,7 @@ function criarCatalogoMercadoriasReal({arquivo,tokenRaiz}={}){
   banco:repo.banco,catalogo:{buscar:async id=>repo.buscar(id)}
  });
  const config=new AkitemmConfigLojaDemoSQLite({banco:repo.banco});
+ const pdf=new MaterialPdfCursosReal({banco:repo.banco,catalogo:repo});
  function listarPublicos(){
   return repo.listar().filter(p=>p.estado==='PUBLICADO').map(p=>({
    produtoId:p.id,nome:p.nome,descricao:p.descricao,tipo:p.tipo,
@@ -96,7 +98,9 @@ function criarCatalogoMercadoriasReal({arquivo,tokenRaiz}={}){
     if(chk!=='ok')throw Error('CATALOGO_SQLITE_INCONSISTENTE');
     responder(res,200,{
      estado:'CATALOGO_REAL_PERSISTENTE',sqliteIntegro:true,
-     quantidadeProdutos:repo.listar().length,checkoutReal:false,
+     quantidadeProdutos:repo.listar().length,
+     cursosPdfArmazenados:repo.banco.prepare('SELECT COUNT(*) AS n FROM akitemm_curso_pdf_atual_real').get().n,
+     checkoutReal:false,
      pagamentoReal:false,semItensInseridosAutomaticamente:true
     });return true;
    }
@@ -168,11 +172,35 @@ function criarCatalogoMercadoriasReal({arquivo,tokenRaiz}={}){
      if(atual.revisao!==d.revisaoEsperada){
       responder(res,409,{erro:'CONFLITO_REVISAO'});return true;
      }
-     if(d.alteracoes.estado==='PUBLICADO'&&!fotos.listar(id).fotos.length){
-      responder(res,409,{erro:'PUBLICACAO_EXIGE_FOTO'});return true;
+     if(d.alteracoes.estado==='PUBLICADO'){
+      if(atual.produto.tipo==='PDF'&&!pdf.estado(id).arquivoAnexado){
+       responder(res,409,{erro:'PUBLICACAO_EXIGE_PDF'});return true;
+      }
+      if(atual.produto.tipo==='FISICO'&&!fotos.listar(id).fotos.length){
+       responder(res,409,{erro:'PUBLICACAO_EXIGE_FOTO'});return true;
+      }
      }
      repo.atualizar({id,revisaoEsperada:d.revisaoEsperada,alteracoes:d.alteracoes});
      responder(res,200,repo.buscarRegistro(id));return true;
+    }
+   }
+   const pdfRota=rota.match(/^\/produtos\/([a-z0-9-]{3,80})\/pdf$/);
+   if(pdfRota){
+    const id=pdfRota[1],item=repo.buscar(id);
+    if(!item){responder(res,404,{erro:'PDF_PRODUTO_NAO_ENCONTRADO'});return true;}
+    if(item.tipo!=='PDF'){responder(res,409,{erro:'PDF_PRODUTO_NAO_DIGITAL'});return true;}
+    if(req.method==='GET'){
+     responder(res,200,pdf.estado(id));return true;
+    }
+    if(req.method==='POST'){
+     const revisao=req.headers['x-pdf-versao-esperada'];
+     if(req.headers['content-type']!=='application/pdf'||
+        typeof revisao!=='string'||!/^(0|[1-9][0-9]{0,8})$/.test(revisao)){
+      responder(res,415,{erro:'PDF_PARAMETROS_INVALIDOS'});return true;
+     }
+     const bytes=await corpo(req,MAX_PDF);
+     const salvo=await pdf.salvar({produtoId:id,bytes,revisaoEsperada:Number(revisao)});
+     responder(res,salvo.repetido?200:201,salvo);return true;
     }
    }
    const galeria=rota.match(/^\/produtos\/([a-z0-9-]{3,80})\/fotos$/);
@@ -213,12 +241,12 @@ function criarCatalogoMercadoriasReal({arquivo,tokenRaiz}={}){
   }catch(e){
    const erro=erroCodigo(e);
    const status=erro==='CORPO_GRANDE_DEMAIS'?413:
-    erro==='CONFLITO_REVISAO'||erro==='CONFIG_CONFLITO_REVISAO'?409:
+    ['CONFLITO_REVISAO','CONFIG_CONFLITO_REVISAO','PDF_CONFLITO_REVISAO'].includes(erro)?409:
     /INTEGRIDADE|SQLITE/.test(erro)?503:400;
    if(!res.headersSent&&!res.writableEnded)responder(res,status,{erro});
    return true;
   }
  }
- return {atender,repo,fotos,config,fechar:()=>repo.fechar()};
+ return {atender,repo,fotos,config,pdf,fechar:()=>repo.fechar()};
 }
 module.exports={criarCatalogoMercadoriasReal,tokenCatalogo};
