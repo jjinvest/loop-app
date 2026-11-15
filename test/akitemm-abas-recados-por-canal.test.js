@@ -105,4 +105,11 @@ test('administrador por abas mantém um único painel e os mesmos IDs funcionais
  assert.match(loja,/id="akitemmSino"/);
  assert.match(loop,/id="loop03Sino"/);
  assert.match(loop,/id="loop03PainelAvisos"/);
+ const gateway=fs.readFileSync(path.resolve(__dirname,
+  '../scripts/servidor-escritorio-preview-railway.js'),'utf8');
+ assert.match(gateway,/catalogo\|config\|comunicados/);
+ const lojaJs=fs.readFileSync(path.resolve(__dirname,
+  '../src/laboratorio/loja-cliente-demo.js'),'utf8');
+ assert.match(lojaJs,/\/staging\/vitrine\/loja\/comunicados/);
+ assert.match(lojaJs,/\['PDF','VIDEO'\]/);
 });
