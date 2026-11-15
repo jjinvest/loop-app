@@ -5,6 +5,7 @@
 // funcional para catalogo interno e leitura do tabuleiro.
 const {iniciarPreparacao}=require('./iniciar-identidade-real-preparacao');
 const {iniciar:iniciarCadastroReal}=require('./iniciar-identidade-cadastro-real');
+const {iniciar:iniciarPlataformaRealUnificada}=require('./iniciar-identidade-real-loop');
 
 function selecionar(ambiente=process.env){
  if(ambiente.NODE_ENV!=='production'||
@@ -80,7 +81,8 @@ function iniciar(ambiente=process.env){
  // Nenhum erro de operacao deve ser tratado como sucesso nem ocultar
  // falhas de bootstrap real, inclusive backup S3 e restauracao isolada.
  if(selecionado.modo==='CADASTRO_REAL')
-  return iniciarCadastroReal(ambiente);
+  return ambiente.LOOP_REAL_NUCLEO_COMERCIAL_INTERNO==='SIM'?
+   iniciarPlataformaRealUnificada(ambiente):iniciarCadastroReal(ambiente);
  const server=iniciarPreparacao(ambiente);
  // Prova offsite real não bloqueia a preparação, nem ativa o cadastro.
  void provarPrimeiraCopiaPreparacao(ambiente);
