@@ -295,8 +295,9 @@ async function main(){
     'esfera vazia não mostra marcador fictício');
    assert.equal(await page.locator('#motorFilaB .loop03-linha-fila').count(),1);
    const resumoFilaB=await page.locator('#motorFilaB').textContent();
-   assert.ok(resumoFilaB.includes('1 posição(ões) na fila · abra para ver a ordem'),
-    'fila B deve conservar resumo do servidor sem inventar IDs: '+resumoFilaB);
+   assert.ok(resumoFilaB.includes('1º lugar')&&
+    resumoFilaB.includes('total 1 na Fila B'),
+    'fila B mostra ordinal paginado real, sem inventar IDs: '+resumoFilaB);
    assert.equal(await page.locator('#motorFilaB .loop03-inicial-fila').innerText(),'B');
    assert.equal(await page.locator('#motorBolinha1').getAttribute('aria-label'),
     'Evento 1 aguardando');
