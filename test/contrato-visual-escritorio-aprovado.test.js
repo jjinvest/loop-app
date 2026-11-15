@@ -219,3 +219,82 @@ test('rodape do menu mostra apenas nick e situacao da posicao sem mexer no placa
  assert.match(previa,/atualizarIndicadorSelecionadoResumo\(\)/);
  assert.match(real,/atualizarTopoPosicaoReal\(\)/);
 });
+
+
+test('CENTRO ganha texto dourado sem trocar a esfera verde; 3.0 recebe acabamento proprio',()=>{
+ const html=ler('src/candidato/checkout-candidato-ui.html');
+ const css=ler('src/candidato/escritorio-cliente-integrado.css');
+ assert.match(html,/<span class="titulo-espaco-tabuleiro-demo">CENTRO<\/span>/);
+ assert.match(html,/<div class="loop03-logomarca">LOOP <span>3\.0<\/span><\/div>/);
+ assert.match(css,/\.mapa-tabuleiro-posicoes-demo > \.tabuleiro-centro > \.titulo-espaco-tabuleiro-demo\s*\{\s*color:#f5c968!important;/);
+ assert.match(css,/\.cliente-integrado \.loop03-banner-topo \.loop03-logomarca > span\s*\{/);
+ assert.match(css,/background:linear-gradient\(180deg,#fffdf1/);
+ assert.match(css,/-webkit-text-fill-color:transparent/);
+ // O acabamento novo nao altera a cor do centro nem a classe de status.
+ assert.match(css,/\.mapa-tabuleiro-posicoes-demo > \.tabuleiro-centro\{\s*background:radial-gradient\(circle at 28% 17%,#caffdf/);
+});
+
+test('saque por posição usa saldo da posição atual e mantém total agregado separado',async()=>{
+ const vm=require('node:vm');
+ const html=ler('src/candidato/checkout-candidato-ui.html');
+ const previa=ler('src/candidato/checkout-candidato-ui.js');
+ const real=ler('src/producao/interface-aprovada-contas.js');
+ const {renderizarInterfaceAprovada}=require('../src/producao/interface-aprovada-loop');
+ for(const pagina of [html,renderizarInterfaceAprovada()]){
+  assert.match(pagina,/id="finEscolherPosicoes"[^>]*><span>Saldo total da posição atual<\/span>/);
+  assert.match(pagina,/Saldo total das posições<\/small><strong id="finSaldoPosicoes"/);
+  assert.match(pagina,/Saldo da posição selecionada<\/small><strong id="finSaldoSelecionado"/);
+ }
+ const extrair=(codigo,inicio,fim,nome)=>{
+  const a=codigo.indexOf(inicio),b=codigo.indexOf(fim,a+inicio.length);
+  assert.ok(a>=0&&b>a,'extracao funcional '+nome);
+  return codigo.slice(a,b)+'\n;'+nome+';';
+ };
+ const fontes=[
+  {nome:'finAtualizar',codigo:extrair(previa,'async function finAtualizar(){','async function finSolicitar(','finAtualizar'),tipo:'previa'},
+  {nome:'carregarFinanceiroReal',codigo:extrair(real,'async function carregarFinanceiroReal(){','async function finHistoricoReal(){','carregarFinanceiroReal'),tipo:'real'}
+ ];
+ const base={
+  origem:'LIVRO_FINANCEIRO_REAL',saqueRealHabilitado:false,
+  minimoSaqueCentavos:2500,taxaSaquePercentual:0,saldosLiberados:true,
+  indicadosValidos:3,saldoBonusCentavos:3000,
+  posicaoSelecionadaId:101,saldoPosicaoSelecionadaCentavos:2400,
+  saldoTotalPosicoesCentavos:9900
+ };
+ for(const {codigo,tipo} of fontes){
+  for(const [escolhida,servidorId,saldosLiberados,esperado] of [
+   [101,101,true,'R$ 24,00'],[101,999,true,'—'],[null,null,true,'—'],
+   [101,101,false,'—']
+  ]){
+   const dados={...base,posicaoSelecionadaId:servidorId,saldosLiberados};
+   const ids=['finIndicadosValidos','finSaldoBonus','finSaldoSelecionado',
+    'finSaldoPosicoes','finBonusSaque','finPosicoesSaque','estadoFinanceiro'];
+   const elementos=Object.fromEntries(ids.map(id=>[id,{textContent:''}]));
+   const contexto={
+    $:id=>{assert.ok(elementos[id],'elemento '+id);return elementos[id];},
+    posicoesDisponiveisResumo:[{numero:101}],
+    posicaoSelecionadaMotor:escolhida,
+    posicoesResumoReal:[{numero:101}],
+    posicaoSelecionada:escolhida===null?'':String(escolhida),
+    moeda:v=>'R$ '+(v/100).toFixed(2).replace('.',','),
+    formatarDinheiroReal:v=>'R$ '+(v/100).toFixed(2).replace('.',','),
+    requisitar:async rota=>{
+     assert.equal(rota,escolhida===null?'/financeiro/me':'/financeiro/me?posicaoId=101');
+     return dados;
+    },
+    fetch:async rota=>{
+     assert.equal(rota,escolhida===null?'/api/financeiro/me':'/api/financeiro/me?posicaoId=101');
+     return {ok:true,json:async()=>dados};
+    }
+   };
+   const fn=vm.runInNewContext(codigo,contexto);
+   await fn();
+   assert.equal(elementos.finPosicoesSaque.textContent,esperado,tipo+' saldo botao');
+   assert.equal(elementos.finSaldoSelecionado.textContent,esperado,tipo+' saldo atual');
+   assert.equal(elementos.finSaldoPosicoes.textContent,
+    saldosLiberados?'R$ 99,00':'—',tipo+' agregado preservado');
+   assert.equal(elementos.finBonusSaque.textContent,
+    saldosLiberados?'R$ 30,00':'—',tipo+' bonus preservado');
+  }
+ }
+});
