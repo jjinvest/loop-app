@@ -75,7 +75,8 @@ function prepararNucleoComercialRealFechado({banco,ambiente=process.env}={}){
   motor:motor.verificar(),
   financeiro:financeiro.verificar(),
   catraca:catraca.verificar(),
-  auditoria:auditoria.verificar(),
+  auditoria:(()=>{const r=auditoria.verificar();return {
+   integridade:r.integra===true?'OK':'DIVERGENTE'};})(),
   cores:comercial.classificacaoLoop.verificar(),
   eventos:comercial.eventosComerciais.verificar(),
   preflight:preflight.verificar(),
