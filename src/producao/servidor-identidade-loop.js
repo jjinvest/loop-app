@@ -207,6 +207,7 @@ function criarAppIdentidadeLoop({contas,origemHttps,
    return res.json({
     titularId:result.titularId,nick:result.nick,csrf:result.csrf,
     expiraEm:result.expiraEm,emailVerificado:result.emailVerificado,
+    aceiteDocumentosDefinitivosPendente:contas.documentosPendentes(result.titularId),
     pagamentoReal:false,motorLoopInterno:motorLoop!==null,
     tesourariaEnsaioAtiva:tesourariaEnsaio!==null
    });
@@ -217,9 +218,21 @@ function criarAppIdentidadeLoop({contas,origemHttps,
   emailVerificado:req.conta.emailVerificado,
   csrf:req.conta.csrf,expiraEm:req.conta.expiraEm,
   lojaEEscritorioMesmaConta:true,financeiroReal:false,
+  aceiteDocumentosDefinitivosPendente:contas.documentosPendentes(req.conta.titularId),
   motorLoopInterno:motorLoop!==null,
   tesourariaEnsaioAtiva:tesourariaEnsaio!==null
  }));
+ // Conta migrada: confirma a política vigente sem refazer cadastro.
+ app.post('/api/contas/aceitar-documentos',protegido,mutation,csrf,(req,res)=>{
+  const b=req.body;
+  if(!b||Array.isArray(b)||
+     Object.keys(b).sort().join(',')!==
+      'aceitePrivacidade,aceiteTermos,hashPrivacidade,hashTermos,versaoPrivacidade,versaoTermos')
+   return res.status(400).json({erro:'CAMPOS_INVALIDOS'});
+  try{return res.set('Cache-Control','private, no-store').json(
+   contas.aceitarDocumentos({titularId:req.conta.titularId,...b})
+  );}catch(e){return falha(res,e);}
+ });
  // Direito de acesso: o titular consulta somente os seus próprios dados
  // e a versão dos documentos aceitos. Sem IDs escolhidos pelo navegador.
  app.get('/api/contas/meus-dados',protegido,(req,res)=>{
