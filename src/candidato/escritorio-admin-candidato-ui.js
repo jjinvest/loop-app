@@ -123,8 +123,16 @@ async function atualizarMidiasProdutoAdmin(id,tipo){
    'Nenhum vídeo anexado ao produto.';
   $('pdfProdutoEstadoAdmin').textContent=tipo!=='PDF'?
    'Produto físico não requer PDF.':
-   pdf.arquivoAnexado?'PDF salvo · versão '+pdf.versao+'.':
-   'PDF ainda NÃO anexado. Anexe antes de simular uma compra.';
+   pdf.arquivoAnexado?
+    'PDF armazenado · versão '+pdf.versao+
+     (Number.isInteger(pdf.bytes)?' · '+(pdf.bytes/1024).toFixed(1)+' KB':'')+
+     (pdf.criadoEm?' · enviado em '+
+      new Date(pdf.criadoEm).toLocaleDateString('pt-BR'):'')+
+     (pdf.armazenamento==='SQLITE_COMERCIAL_REAL'?
+      ' · armazenamento comercial persistente':
+      ' · ambiente de homologação')+
+     ' · download do comprador somente após pagamento confirmado.':
+    'PDF não anexado. Envie um arquivo para publicar este curso.';
  }catch(e){$('pdfProdutoEstadoAdmin').textContent='Arquivos: '+e.message;}
 }
 async function enviarTipoProdutoAdmin(tipo){
@@ -415,6 +423,28 @@ function preencherProduto(item){
   $('statusCustosProdutoAdmin').textContent='Erro ao consultar custos: '+e.message);
  $('formProduto').scrollIntoView({behavior:'smooth',block:'start'});
 }
+function renderizarCursosPdfAdmin(r){
+ const area=$('listaCursosPdfAdmin');area.replaceChildren();
+ const cursos=r.registros.filter(item=>item.produto.tipo==='PDF');
+ $('resumoCursosPdfAdmin').textContent='Cursos nesta página: '+cursos.length+
+  '. Os arquivos são administrados no mesmo cadastro de produtos.';
+ if(!cursos.length){
+  area.append(elem('p','Nenhum curso PDF nesta página do catálogo.'));
+  return;
+ }
+ for(const item of cursos){
+  const card=elem('article');card.className='produto-admin-item';
+  const descricao=elem('div');
+  descricao.append(elem('strong',item.produto.nome),
+   elem('small',item.produto.estado+' · versão do cadastro '+
+    item.revisao+' · Identificador: '+item.produto.id));
+  const gerenciar=elem('button','Gerenciar curso e PDF');
+  gerenciar.type='button';
+  gerenciar.setAttribute('aria-label','Gerenciar PDF do curso '+item.produto.nome);
+  gerenciar.addEventListener('click',()=>preencherProduto(item));
+  card.append(descricao,gerenciar);area.append(card);
+ }
+}
 function renderizarProdutos(r){
  const area=$('listaProdutosAdmin');area.replaceChildren();
  if(!r.registros.length)area.append(elem('p','Nenhum produto nesta página.'));
@@ -434,6 +464,7 @@ function renderizarProdutos(r){
   const botoes=elem('div');botoes.append(editar,cor);
   card.append(info,botoes);area.append(card);
  }
+ renderizarCursosPdfAdmin(r);
  $('produtosAnterior').disabled=paginaProdutos===0;
  $('produtosProximo').disabled=!r.haMais;
 }
@@ -1614,7 +1645,10 @@ for(const [tipo,botao,campo] of [
 ]){
  $(botao).addEventListener('click',async()=>{
   const btn=$(botao);btn.disabled=true;$(campo).textContent='Enviando arquivo...';
-  try{$(campo).textContent='Enviado: '+await enviarTipoProdutoAdmin(tipo);}
+  try{
+   const resultado=await enviarTipoProdutoAdmin(tipo);
+   if(tipo!=='PDF')$(campo).textContent='Enviado: '+resultado;
+  }
   catch(e){$(campo).textContent='Erro ao enviar: '+e.message;}
   finally{btn.disabled=tipo==='PDF'&&$('produtoTipoAdmin').value!=='PDF';}
  });
