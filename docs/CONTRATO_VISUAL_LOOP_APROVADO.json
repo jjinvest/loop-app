@@ -13,7 +13,7 @@
     },
     {
       "path": "src/candidato/escritorio-admin-candidato-ui.html",
-      "sha": "a46f7a19f2421c5b1b0662cfc02c38c60c2c531d"
+      "sha": "5216c255cfb28c127c9452af9c898da79a6ea1b7"
     },
     {
       "path": "src/candidato/escritorio-cliente-integrado.css",
@@ -101,6 +101,7 @@
     }
   ],
   "históricoAutorizações": [
+    "15/11/2026: proprietário exigiu que o novo fluxo de cursos PDF esteja representado no escritório do administrador da AKITEMM. Alteração restrita à seção de Produtos do HTML administrativo: lista de cursos PDF por página do catálogo, botão Gerenciar curso e PDF, instruções de armazenamento real e download por comprador autorizado. Preserva os controles existentes para fotos, vídeos, mercadorias físicas, motor, financeiro e todas as demais telas. JS administrativo passa a mostrar versão, tamanho e origem persistente do PDF.",
     "15/11/2026: usuário solicitou explicitamente preparar o caminho de venda e entrega de cursos PDF: seção Meus Cursos adicionada exclusivamente dentro da loja AKITEMM original, com status e link de download protegido após confirmação de pagamento. O original persiste no servidor. Interface visual previamente aprovada, sem mudanças em cores, molduras, pagamento, tabuleiro, financeiro ou escritório.",
     "14/11/2026: pedido explicito do proprietário para corrigir o teste de navegacao, abrir os dados nome/nick/email no rodape Minha conta, sincronizar a foto com o topo e mostrar CPF apenas se posicao confirmada; HTML e CSS da interface unica atualizados sem alterar outras telas.",
     "14/11/2026: autorização explícita do proprietário para refinar EXCLUSIVAMENTE os ícones do menu lateral compartilhado: casa dourada, tabuleiro dourado levemente maior, grade de posições dourada, equipe dourada, financeiro verde, loja AKITEMM roxa, carrinho dourado, links dourados, conta dourada. IDs, links, abas, motor, textos e navegação preservados. As edições anteriores aprovadas no HTML/CSS compartilhados também permanecem (CPF no cadastro, controles, filas, links e rodapé).",
