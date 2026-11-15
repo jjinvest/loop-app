@@ -183,14 +183,6 @@ class ContaUnicaCandidataSQLite{
     'ALTER TABLE akitemm_conta_unica_candidata ADD COLUMN '+col+' TEXT'
    );
   }
-  // Opt-in independente dos termos gerais; pré-cadastros antigos iniciam sem
-  // compartilhar o telefone. A permissão pode ser revogada pelo titular.
-  banco.exec([
-   'CREATE TABLE IF NOT EXISTS akitemm_contato_indicador_permissoes(',
-   'titular_id TEXT PRIMARY KEY REFERENCES akitemm_conta_unica_candidata(id)',
-   'ON DELETE RESTRICT,permitido INTEGER NOT NULL CHECK(permitido IN (0,1)),',
-   'atualizado_em INTEGER NOT NULL CHECK(atualizado_em>0));'
-  ].join(' '));
   // A versao anterior tinha UNIQUE NOCASE: isso impediria JoSe/Jose
   // como contas distintas. Recriar APENAS a tabela de contas, dentro
   // de uma transacao, copiando todos os campos antigos sem perder
@@ -268,6 +260,14 @@ class ContaUnicaCandidataSQLite{
      'CHECK(nick_grafia_confirmada IN (0,1))');
    banco.exec('COMMIT');
   }catch(e){banco.exec('ROLLBACK');throw e;}
+  // Opt-in independente dos termos gerais; pré-cadastros antigos iniciam sem
+  // compartilhar o telefone. A permissão pode ser revogada pelo titular.
+  banco.exec([
+   'CREATE TABLE IF NOT EXISTS akitemm_contato_indicador_permissoes(',
+   'titular_id TEXT PRIMARY KEY REFERENCES akitemm_conta_unica_candidata(id)',
+   'ON DELETE RESTRICT,permitido INTEGER NOT NULL CHECK(permitido IN (0,1)),',
+   'atualizado_em INTEGER NOT NULL CHECK(atualizado_em>0));'
+  ].join(' '));
   this._iniciarCustodia();
   if(this.recuperacaoKey){
    banco.exec([
