@@ -203,6 +203,8 @@ async function main(){
    await cadastro.locator('#cadastroNick').fill(novoNick);
    await cadastro.locator('#cadastroEmail').fill(
     novoNick.toLowerCase()+'@example.invalid');
+   await cadastro.locator('#cadastroCpf').fill(item.nome==='pc'?'52998224725':'11144477735');
+   await cadastro.locator('#cadastroTelefone').fill('21988887777');
    await cadastro.locator('#cadastroSenha').fill('SenhaDoEnsaio2026!');
    await cadastro.locator('#cadastroConfirmarSenha').fill('SenhaDoEnsaio2026!');
    await cadastro.locator('#cadastroTelefone').fill('21988887777');
