@@ -13,12 +13,28 @@ function faixa(inicio,fim){
  return js.slice(a,b);
 }
 function executar(){
- const botoes=['CINZA','VERDE','DOURADO','ROXO'].map(cor=>({
-  dataset:{akitemmCor:cor},attributes:{},classList:{
-   toggle(classe,ativo){assert.equal(classe,'selecionado');this.ativo=ativo;}
+ const controle=(dataset={})=>({
+  dataset,attributes:{},classes:new Set(),
+  classList:{
+   toggle(classe,ativo){if(ativo)this.classes?.add(classe);else this.classes?.delete(classe);},
   },
   setAttribute(nome,valor){this.attributes[nome]=valor;}
- }));
+ });
+ function botao(dataset){
+  const item=controle(dataset);
+  item.classList={toggle(classe,ativo){if(ativo)item.classes.add(classe);else item.classes.delete(classe);}};
+  return item;
+ }
+ const botoes=['CINZA','VERDE','DOURADO','ROXO'].map(cor=>
+  botao({akitemmCor:cor}));
+ const categorias=['cursos','fisicos','novidades','mais-vendidos']
+  .map(categoria=>botao({akitemmCategoria:categoria}));
+ const elementos={
+  akitemmBusca:{value:''},
+  akitemmFiltroTodos:botao(),
+  akitemmFiltroOfertas:botao(),
+  tituloCatalogoLoja:{textContent:''}
+ };
  const produtos=[
   {produtoId:'normal',classeVisual:'CINZA',nome:'Curso cinza',tipo:'PDF',descricao:'Básico',detalhes:[]},
   {produtoId:'verde',classeVisual:'VERDE',nome:'Curso verde',tipo:'PDF',descricao:'Qualificado',detalhes:[]},
@@ -27,21 +43,29 @@ function executar(){
  ];
  const contexto={
   document:{querySelectorAll:seletor=>{
-   assert.equal(seletor,'[data-akitemm-cor]');return botoes;
+   if(seletor==='[data-akitemm-cor]')return botoes;
+   if(seletor==='[data-akitemm-categoria]')return categorias;
+   throw Error('Seletor desconhecido: '+seletor);
   }},
-  catalogo:produtos,
-  el:id=>{assert.equal(id,'akitemmBusca');return {value:''};},
-  configLoja:null,mostrarCatalogo(){},
+  catalogo:produtos,el:id=>elementos[id],
+  configLoja:{ofertas:['verde']},
+  mostrarCatalogo(){},fecharDetalhes(){},
+  tamanhoPaginaVitrine(){return 4}
  };
  const codigo=[
   "let corFiltro=null,filtro='todos',quantidadeVitrine=99;",
   faixa('function corDoProduto(p){','function fotoDo(p){'),
-  faixa('function produtosFiltrados(){','function escolherFiltro(novo){'),
-  '({corDoProduto,escolherCor,produtosFiltrados,consultarFiltro:()=>corFiltro})'
+  faixa('function produtosFiltrados(){',
+   'function escolherFiltro(novo,{preservarBusca=false}={}){'),
+  faixa('function escolherFiltro(novo,{preservarBusca=false}={}){',
+   'function filtradoNovidadePublicada(){'),
+  '({corDoProduto,escolherCor,escolherFiltro,produtosFiltrados,'+
+   'consultarFiltro:()=>corFiltro,consultarPrincipal:()=>filtro})'
  ].join('\n');
  const funcoes=vm.runInNewContext(codigo,contexto);
- return {...funcoes,botoes,produtos,contexto};
+ return {...funcoes,botoes,categorias,produtos,contexto,elementos};
 }
+
 test('os quatro quadradinhos permanecem na loja com nome e estado de selecao',()=>{
  assert.equal((html.match(/data-akitemm-cor="(?:CINZA|VERDE|DOURADO|ROXO)"/g)||[]).length,4);
  assert.match(html,/role="group" aria-label="Filtrar produtos por cor"/);
@@ -71,6 +95,38 @@ test('clicar nas cores filtra a vitrine, alterna selecao e desmarca quando repet
  assert.equal(l.consultarFiltro(),null);
  assert.equal(l.produtosFiltrados().length,4);
  assert.equal(l.botoes[3].attributes['aria-pressed'],'false');
+});
+test('Todos e Ofertas são exclusivos, reagem ao toque e removem filtros antigos',()=>{
+ const l=executar();
+ l.escolherCor('ROXO');
+ assert.equal(l.elementos.akitemmFiltroTodos.attributes['aria-pressed'],'false');
+ assert.equal(l.elementos.tituloCatalogoLoja.textContent,'Quadrinhos roxos');
+ l.escolherFiltro('ofertas');
+ assert.equal(l.consultarFiltro(),null);
+ assert.equal(l.consultarPrincipal(),'ofertas');
+ assert.equal(l.elementos.akitemmFiltroOfertas.attributes['aria-pressed'],'true');
+ assert.equal(l.elementos.akitemmFiltroTodos.attributes['aria-pressed'],'false');
+ assert.deepEqual(Array.from(l.produtosFiltrados(),p=>p.produtoId),['verde']);
+ l.elementos.akitemmBusca.value='procurar';
+ l.escolherFiltro('todos');
+ assert.equal(l.elementos.akitemmBusca.value,'');
+ assert.equal(l.elementos.akitemmFiltroTodos.attributes['aria-pressed'],'true');
+ assert.equal(l.elementos.akitemmFiltroOfertas.attributes['aria-pressed'],'false');
+ assert.equal(l.produtosFiltrados().length,4);
+ l.escolherFiltro('cursos');
+ l.elementos.akitemmBusca.value='verde';
+ l.escolherCor('DOURADO');
+ assert.equal(l.consultarPrincipal(),'todos');
+ assert.equal(l.elementos.akitemmBusca.value,'');
+ assert.equal(l.categorias[0].attributes['aria-pressed'],'false');
+ assert.deepEqual(Array.from(l.produtosFiltrados(),p=>p.produtoId),['dourado']);
+});
+test('busca digitada é preservada ao resetar para Todos',()=>{
+ const l=executar();
+ l.elementos.akitemmBusca.value='integral';
+ l.escolherFiltro('todos',{preservarBusca:true});
+ assert.equal(l.elementos.akitemmBusca.value,'integral');
+ assert.deepEqual(Array.from(l.produtosFiltrados(),p=>p.produtoId),['dourado']);
 });
 test('a cor do evento tem prioridade sobre verde e nao representa pagamento ou posicao',()=>{
  const l=executar();
