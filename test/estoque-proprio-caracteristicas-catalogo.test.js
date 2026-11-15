@@ -48,7 +48,9 @@ test('formulário administrativo envia características no cadastro e edição',
  assert.match(html,/id="produtoDetalhesAdmin"/);
  assert.match(html,/id="produtoEntregaAdmin"/);
  assert.match(html,/Estoque próprio/);
- assert.match(js,/alteracoes:\{nome,descricao,estado,precoCentavos:centavos,detalhes,entrega\}/);
+ assert.match(js,/alteracoes:\{nome,descricao,estado:estadoParaSalvar,precoCentavos:centavos,detalhes,entrega\}/);
+ assert.match(js,/if\(publicarAposFoto&&!arquivoErro\)/);
+ assert.match(js,/alteracoes:\{estado:'PUBLICADO'\}/);
  assert.match(js,/entrega,fotos:\[\],detalhes,videoApresentacaoUrl:null/);
  assert.match(js,/\$\('produtoDetalhesAdmin'\)\.value=\(item\.produto\.detalhes\|\|\[\]\)\.join/);
 });
