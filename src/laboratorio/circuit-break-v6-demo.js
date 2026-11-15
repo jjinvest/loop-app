@@ -379,6 +379,11 @@
     el('chaveCBV6').value='';
     try{
       await carregar();
+      await fetch('/api/admin/operador-sessao',{
+        method:'POST',credentials:'same-origin',cache:'no-store',
+        headers:{Authorization:'Bearer '+token,'Content-Type':'application/json'},
+        body:'{}'
+      }).catch(()=>{});
       el('statusCBV6').textContent='Controle administrativo fictício conectado ao banco local.';
     }catch(e){
       token='';estado=null;
@@ -387,6 +392,9 @@
     }
   });
   el('limparCBV6').addEventListener('click',()=>{
+    fetch('/api/admin/operador-sessao',{
+     method:'DELETE',credentials:'same-origin',headers:{'X-LOOP-OPERADOR':'1'}
+    }).catch(()=>{});
     token='';estado=null;el('chaveCBV6').value='';
     el('conteudoCBV6').hidden=true;
     el('statusCBV6').textContent='Chave descartada desta página.';
@@ -465,4 +473,15 @@
     try{await carregarHistorico();}
     catch(e){el('resultadoCBV6').textContent=e.message;}
   });
+  (async()=>{
+   try{
+    const r=await fetch('/api/admin/operador-sessao',{
+     credentials:'same-origin',cache:'no-store'
+    });
+    if(!r.ok||(await r.json()).operador!==true)return;
+    token='__OPERADOR_SESSAO_LOCAL__';
+    await carregar();
+    el('statusCBV6').textContent='Operador autenticado na central existente.';
+   }catch{token='';el('conteudoCBV6').hidden=true;}
+  })();
 })();

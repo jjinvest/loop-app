@@ -37,6 +37,12 @@ test('sessao operador e temporaria, HttpOnly, sem mudar sessao cliente e resiste
  const cookie=cookieSet.split(';')[0];
  assert.equal((await pedir('/api/admin/operador-sessao',{headers:{Cookie:cookie}}).then(r=>r.json())).operador,true);
  assert.equal((await pedir('/api/admin/protegido',{headers:{Cookie:cookie}})).status,200);
+ assert.equal((await pedir('/api/admin/protegido',{headers:{Authorization:'Bearer __OPERADOR_SESSAO_LOCAL__'}})).status,401);
+ assert.equal((await pedir('/api/admin/protegido',{headers:{Cookie:cookie,Authorization:'Bearer __OPERADOR_SESSAO_LOCAL__'}})).status,200);
+ assert.equal((await pedir('/api/admin/protegido',{
+  method:'POST',headers:{Cookie:cookie,Authorization:'Bearer __OPERADOR_SESSAO_LOCAL__','Content-Type':'application/json'},
+  body:'{}'
+ })).status,200);
  assert.equal((await pedir('/api/admin/protegido',{
   method:'POST',headers:{Cookie:cookie,'Content-Type':'application/json'},body:'{}'
  })).status,401);

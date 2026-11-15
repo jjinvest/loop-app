@@ -18,7 +18,7 @@
  }
  async function api(caminho,opcoes={}){
   const r=await fetch('/api/admin/contas-participantes-demo'+caminho,{
-   ...opcoes,credentials:'omit',cache:'no-store',
+   ...opcoes,credentials:'same-origin',cache:'no-store',
    headers:{Authorization:'Bearer '+token,
     ...(opcoes.body?{'Content-Type':'application/json'}:{})}
   });
@@ -29,7 +29,7 @@
  }
  async function consultarTaxa({method='GET',body}={}){
   const r=await fetch('/api/admin/indicacoes-taxa-demo',{
-   method,credentials:'omit',cache:'no-store',
+   method,credentials:'same-origin',cache:'no-store',
    headers:{Authorization:'Bearer '+token,...(body?{'Content-Type':'application/json'}:{})},
    ...(body?{body:JSON.stringify(body)}:{})
   });
@@ -39,14 +39,14 @@
  }
  async function lerPonte(){
   const resposta=await fetch('/api/admin/ponte-compras-convites-demo',{
-   headers:{Authorization:'Bearer '+token},cache:'no-store',credentials:'omit'
+   headers:{Authorization:'Bearer '+token},cache:'no-store',credentials:'same-origin'
   });
   if(!resposta.ok)throw new Error('Não foi possível consultar compras e convites do teste.');
   return resposta.json();
  }
  async function lerAuditoria(){
   const resposta=await fetch('/api/admin/auditoria-acessos-participante-demo',{
-   headers:{Authorization:'Bearer '+token},cache:'no-store',credentials:'omit'
+   headers:{Authorization:'Bearer '+token},cache:'no-store',credentials:'same-origin'
   });
   if(!resposta.ok)throw new Error('Não foi possível consultar a auditoria local.');
   return resposta.json();
@@ -144,12 +144,19 @@
   try{
    await atualizar();
    area.hidden=false;
+   await fetch('/api/admin/operador-sessao',{
+    method:'POST',credentials:'same-origin',cache:'no-store',
+    headers:{Authorization:'Bearer '+token,'Content-Type':'application/json'},body:'{}'
+   }).catch(()=>{});
    status.textContent='Laboratório local aberto. Nenhuma sessão de cliente real.';
   }catch(e){
    limpar();status.textContent=e.message;
   }
  });
  el('sairCadastroDemo').addEventListener('click',()=>{
+  fetch('/api/admin/operador-sessao',{
+   method:'DELETE',credentials:'same-origin',headers:{'X-LOOP-OPERADOR':'1'}
+  }).catch(()=>{});
   limpar();status.textContent='Credencial local descartada desta página.';
  });
  el('formContaDemo').addEventListener('submit',async e=>{
@@ -215,7 +222,7 @@
   botao.disabled=true;
   try{
    const resposta=await fetch('/api/admin/ponte-compras-convites-demo/preparar-tabuleiro',{
-    method:'POST',credentials:'omit',cache:'no-store',
+    method:'POST',credentials:'same-origin',cache:'no-store',
     headers:{Authorization:'Bearer '+token,'Content-Type':'application/json'},
     body:'{}'
    });
@@ -234,4 +241,15 @@
   try{await atualizar();status.textContent='Contas fictícias atualizadas.';}
   catch(e){status.textContent=e.message;}
  });
+ (async()=>{
+  try{
+   const r=await fetch('/api/admin/operador-sessao',{
+    credentials:'same-origin',cache:'no-store'
+   });
+   if(!r.ok||(await r.json()).operador!==true)return;
+   token='__OPERADOR_SESSAO_LOCAL__';
+   await atualizar();area.hidden=false;
+   status.textContent='Operador autenticado.';
+  }catch{limpar();}
+ })();
 })();

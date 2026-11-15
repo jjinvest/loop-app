@@ -600,10 +600,12 @@
   .then(r=>r.ok?r.json():{operador:false})
   .then(async d=>{
    if(!d.operador)return;
+   token='__OPERADOR_SESSAO_LOCAL__';
    try{
     await carregar();
     $('mensagemAcessoAdminLoop03').textContent='Operador autenticado.';
    }catch{
+    token='';
     $('dadosAdminLoop03').hidden=true;
     $('situacaoPainel').textContent='SEM AUTENTICAÇÃO';
    }

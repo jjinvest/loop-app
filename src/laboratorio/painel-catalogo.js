@@ -240,11 +240,12 @@ async function atualizarProdutos() {
 
 async function conectar() {
   const texto = $('adminToken').value;
-  if (texto.length < 32) {
+  const porSessao=chaveTemporaria==='__OPERADOR_SESSAO_LOCAL__'&&!texto;
+  if(!porSessao&&texto.length<32){
     mensagem('Informe a chave local de pelo menos 32 caracteres.');
     return;
   }
-  chaveTemporaria = texto;
+  if(!porSessao)chaveTemporaria=texto;
   $('adminToken').value = '';
   try {
     await atualizarProdutos();
@@ -257,6 +258,13 @@ async function conectar() {
     try { await carregarDistribuidoresDemo(); }
     catch (erro) { $('statusImportacao').textContent = erro.message; }
     mensagem('Painel de teste aberto. Compras continuam desativadas.');
+    if(!porSessao){
+      await fetch('/api/admin/operador-sessao',{
+        method:'POST',cache:'no-store',credentials:'same-origin',
+        headers:{Authorization:'Bearer '+chaveTemporaria,'Content-Type':'application/json'},
+        body:'{}'
+      }).catch(()=>{});
+    }
   } catch (erro) {
     chaveTemporaria = '';
     $('navAdminCentral').hidden = true;
@@ -446,6 +454,9 @@ for(const botao of document.querySelectorAll('[data-aba-admin]')){
 }
 $('conectarAdmin').addEventListener('click', conectar);
 $('sairAdmin').addEventListener('click', () => {
+  fetch('/api/admin/operador-sessao',{
+    method:'DELETE',credentials:'same-origin',headers:{'X-LOOP-OPERADOR':'1'}
+  }).catch(()=>{});
   chaveTemporaria = '';
   registroEditando = null;
   $('adminToken').value = '';
@@ -559,3 +570,15 @@ for(const id of ['precoProduto','quantidadeCalcAdmin','custoUnitarioCalcAdmin'])
  $(id).addEventListener('input',atualizarCalculadoraAdmin);
 }
 
+
+/* A credencial da central e compartilhada entre LOOP e AKITEMM. */
+(async()=>{
+ try{
+  const r=await fetch('/api/admin/operador-sessao',{
+   credentials:'same-origin',cache:'no-store'
+  });
+  if(!r.ok||(await r.json()).operador!==true)return;
+  chaveTemporaria='__OPERADOR_SESSAO_LOCAL__';
+  await conectar();
+ }catch{chaveTemporaria='';}
+})();

@@ -44,9 +44,13 @@ function criarAutorizacao({ segredo }) {
       timingSafeEqual(recebido, esperado);
     // A mesma chave administrativa autoriza uma sessao temporaria local.
     // Em mutacoes com cookie, um cabecalho proprio protege contra CSRF.
+    // Marcador publico NAO autentica sozinho: requer o cookie HttpOnly
+    // validado pelo servidor. Cabecalho Authorization personalizado impede
+    // submissao cross-site de formulario; sem marcador, exigir protecao CSRF.
     const sessaoValida=req.operadorAutenticadoLab===true&&
-      (['GET','HEAD'].includes(req.method)||req.get('X-LOOP-OPERADOR')==='1');
-    if(!chaveValida&&(!sessaoValida||Boolean(token))){
+      (token==='__OPERADOR_SESSAO_LOCAL__'||(!token&&
+      (['GET','HEAD'].includes(req.method)||req.get('X-LOOP-OPERADOR')==='1')));
+    if(!chaveValida&&!sessaoValida){
       return res.status(401).json({ erro: 'CREDENCIAL_ADMIN_INVALIDA' });
     }
     if (['POST','PATCH','PUT','DELETE'].includes(req.method) && !req.is('application/json')) {

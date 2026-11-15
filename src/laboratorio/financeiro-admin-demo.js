@@ -259,7 +259,7 @@
     const resposta=await fetch('/api/admin/'+recurso,{
       ...opcoes,
       cache:'no-store',
-      credentials:'omit',
+      credentials:'same-origin',
       headers:{
         Authorization:'Bearer '+token,
         ...(opcoes.body?{'Content-Type':'application/json'}:{})
@@ -388,7 +388,7 @@
     aviso.textContent='Solicitando PDF fictício autorizado ao laboratório...';
     try{
       const resposta=await fetch('/api/admin/pedidos-pdf-demo/'+encodeURIComponent(pedidoId)+'/material-teste.pdf',{
-        headers:{Authorization:'Bearer '+token},cache:'no-store',credentials:'omit'
+        headers:{Authorization:'Bearer '+token},cache:'no-store',credentials:'same-origin'
       });
       if(!resposta.ok)throw new Error('Material de teste não autorizado ('+resposta.status+').');
       if(!String(resposta.headers.get('content-type')).startsWith('application/pdf')){
@@ -1762,10 +1762,15 @@
       el('salvarAparenciaCofreDemo').disabled=false;
     }
   }
-  el('abrirFinanceiroDemo').addEventListener('click',()=>{
+  el('abrirFinanceiroDemo').addEventListener('click',async()=>{
     token=tokenInput.value;
     tokenInput.value='';
-    buscar();
+    await buscar();
+    if(token)await fetch('/api/admin/operador-sessao',{
+      method:'POST',credentials:'same-origin',cache:'no-store',
+      headers:{Authorization:'Bearer '+token,'Content-Type':'application/json'},
+      body:'{}'
+    }).catch(()=>{});
   });
   modo.addEventListener('change',buscar);
   selecionar.addEventListener('change',()=>{
@@ -1822,6 +1827,9 @@
   el('verConciliacaoDemo').addEventListener('click',carregarConciliacao);
   tipoCentro.addEventListener('change',()=>{if(token)buscar();});
   el('limparFinanceiroDemo').addEventListener('click',()=>{
+    fetch('/api/admin/operador-sessao',{
+     method:'DELETE',credentials:'same-origin',headers:{'X-LOOP-OPERADOR':'1'}
+    }).catch(()=>{});
     ++versao;
     ++versaoHistorico;
     token='';
@@ -1829,4 +1837,14 @@
     limpar();
     status.textContent='Chave descartada da página. Nenhuma operação financeira.';
   });
+  (async()=>{
+   try{
+    const r=await fetch('/api/admin/operador-sessao',{
+     credentials:'same-origin',cache:'no-store'
+    });
+    if(!r.ok||(await r.json()).operador!==true)return;
+    token='__OPERADOR_SESSAO_LOCAL__';
+    await buscar();
+   }catch{token='';limpar();}
+  })();
 })();

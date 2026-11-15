@@ -31,7 +31,7 @@
     const resposta=await fetch(recurso,{
       headers:{Authorization:'Bearer '+segredo},
       cache:'no-store',
-      credentials:'omit'
+      credentials:'same-origin'
     });
     if(!resposta.ok) throw new Error(
       resposta.status===401?'Chave de laboratório inválida.':
@@ -128,7 +128,7 @@
   }
   async function enviarPublicacao(rota,corpo){
     const resposta=await fetch('/api/admin/escritorio-demo/publicacoes'+rota,{
-      method:'POST',cache:'no-store',credentials:'omit',
+      method:'POST',cache:'no-store',credentials:'same-origin',
       headers:{Authorization:'Bearer '+segredo,'Content-Type':'application/json'},
       body:JSON.stringify(corpo)
     });
@@ -272,9 +272,9 @@
       }
     }
   }
-  byId('entrarEscritorioDemo').addEventListener('click',async()=>{
+  async function abrirEscritorioDemo({viaSessao=false}={}){
     ++versaoSolicitacao;
-    segredo=tokenInput.value;
+    if(!viaSessao)segredo=tokenInput.value;
     tokenInput.value='';
     limparDados();
     mensagem.textContent='Abrindo laboratório...';
@@ -292,15 +292,24 @@
       abrirAba('home');
       await carregarConta();
       await atualizarPublicacoesHome();
+      if(!viaSessao)await fetch('/api/admin/operador-sessao',{
+       method:'POST',credentials:'same-origin',cache:'no-store',
+       headers:{Authorization:'Bearer '+segredo,'Content-Type':'application/json'},
+       body:'{}'
+      }).catch(()=>{});
     }catch(erro){
       if(esta!==versaoSolicitacao)return;
       segredo='';
       limparDados();
       mensagem.textContent=erro.message;
     }
-  });
+  }
+  byId('entrarEscritorioDemo').addEventListener('click',()=>abrirEscritorioDemo());
   byId('sairMenuEscritorioDemo').addEventListener('click',()=>byId('sairEscritorioDemo').click());
   byId('sairEscritorioDemo').addEventListener('click',()=>{
+    fetch('/api/admin/operador-sessao',{
+     method:'DELETE',credentials:'same-origin',headers:{'X-LOOP-OPERADOR':'1'}
+    }).catch(()=>{});
     ++versaoSolicitacao;
     segredo='';
     tokenInput.value='';
@@ -310,4 +319,14 @@
   selecao.addEventListener('change',carregarConta);
   origem.addEventListener('change',carregarConta);
   byId('atualizarEscritorioDemo').addEventListener('click',carregarConta);
+  (async()=>{
+   try{
+    const r=await fetch('/api/admin/operador-sessao',{
+     credentials:'same-origin',cache:'no-store'
+    });
+    if(!r.ok||(await r.json()).operador!==true)return;
+    segredo='__OPERADOR_SESSAO_LOCAL__';
+    await abrirEscritorioDemo({viaSessao:true});
+   }catch{segredo='';limparDados();}
+  })();
 })();
