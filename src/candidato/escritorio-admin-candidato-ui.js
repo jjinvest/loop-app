@@ -1642,13 +1642,16 @@ $('formProduto').addEventListener('submit',async event=>{
   if(detalhes.length>12||detalhes.some(x=>x.length>180))
    throw Error('Informe até 12 características, com até 180 caracteres cada.');
   const entrega=tipo==='PDF'?'DOWNLOAD_APOS_CONFIRMACAO':$('produtoEntregaAdmin').value;
-  if(!edicaoProduto&&estado==='PUBLICADO'&&!fotos.length)
-   throw Error('Para publicar um novo produto, selecione pelo menos uma fotografia.');
+  if(!edicaoProduto&&estado==='PUBLICADO'&&tipo==='FISICO'&&!fotos.length)
+   throw Error('Para publicar um produto físico, selecione pelo menos uma fotografia.');
+  if(!edicaoProduto&&estado==='PUBLICADO'&&tipo==='PDF'&&!pdf)
+   throw Error('Para publicar um curso, anexe o arquivo PDF.');
   // Primeiro grava o rascunho, depois os bytes e só então publica. Uma
   // falha de upload não deixa produto vazio anunciado aos compradores.
-  const publicarAposFoto=estado==='PUBLICADO'&&fotos.length>0&&
+  const publicarAposArquivo=estado==='PUBLICADO'&&
+   (fotos.length>0||(tipo==='PDF'&&!!pdf))&&
    (!edicaoProduto||edicaoProduto.estado!=='PUBLICADO');
-  const estadoParaSalvar=publicarAposFoto?'RASCUNHO':estado;
+  const estadoParaSalvar=publicarAposArquivo?'RASCUNHO':estado;
   if(edicaoProduto){
    await api('/produtos/'+encodeURIComponent(edicaoProduto.id),{
     method:'PATCH',body:{revisaoEsperada:edicaoProduto.revisao,
@@ -1665,7 +1668,7 @@ $('formProduto').addEventListener('submit',async event=>{
    const salvos=await enviarArquivosSelecionadosAdmin(id,tipo,{pdf,video,fotos});
    arquivoStatus=salvos.length?' · Arquivos: '+salvos.join(', '):'';
   }catch(e){arquivoErro=e;}
-  if(publicarAposFoto&&!arquivoErro){
+  if(publicarAposArquivo&&!arquivoErro){
    const atual=await api('/produtos/'+encodeURIComponent(id));
    await api('/produtos/'+encodeURIComponent(id),{
     method:'PATCH',body:{revisaoEsperada:atual.revisao,
