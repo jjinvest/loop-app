@@ -127,6 +127,7 @@ async function iniciar(ambiente=process.env){
   });
   const app=criarAppIdentidadeLoop({
    contas,origemHttps:cfg.origemHttps,permitirCadastro:true,
+   captchaCadastroObrigatorio:true,
    backupEstado:()=>agendador.estado()
   });
   const server=http.createServer((req,res)=>{
