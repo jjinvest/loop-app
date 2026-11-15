@@ -231,7 +231,7 @@
   }
   const informacoes=document.createElement('div');informacoes.className='akitemm-detalhe-informacoes';
   const preco=document.createElement('strong');preco.className='akitemm-detalhe-preco';preco.textContent=dinheiro(p.precoCentavos);
-  const tipo=document.createElement('p');tipo.textContent=p.tipo==='PDF'?'Curso / material digital':'Produto físico';
+  const tipo=document.createElement('p');tipo.textContent=p.tipo==='PDF'?'Curso em PDF':p.tipo==='VIDEO'?'Curso em vídeo':'Produto físico';
   const descricao=document.createElement('section');
   const descH=document.createElement('h3');descH.textContent='Descrição completa';
   const desc=document.createElement('p');desc.textContent=p.descricao||'Descrição ainda não cadastrada.';
@@ -346,7 +346,7 @@
   return catalogo.filter(p=>{
    if(corFiltro&&corDoProduto(p)!==corFiltro)return false;
    if(filtro==='ofertas'&&!(cfg.ofertas||[]).includes(p.produtoId))return false;
-   if(filtro==='cursos'&&p.tipo!=='PDF')return false;
+   if(filtro==='cursos'&&!['PDF','VIDEO'].includes(p.tipo))return false;
    if(filtro==='fisicos'&&p.tipo!=='FISICO')return false;
    if(filtro==='novidades'&&!p.novidade)return false;
    if(filtro==='mais-vendidos'&&!(p.quantidadeVendida>0))return false;
