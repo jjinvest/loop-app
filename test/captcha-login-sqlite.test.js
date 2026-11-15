@@ -23,7 +23,7 @@ test('login sem desafio na primeira tentativa, exige na segunda e limpa após su
   assert.ok(!JSON.stringify(desafio).includes(segredo.toString('hex')));
   const imagem=Buffer.from(desafio.captchaImagem.split(',')[1],'base64')
    .toString('utf8');
-  const letras=[...imagem.matchAll(/<text\s[^>]*>([A-Z0-9])<\/text>/g)]
+  const letras=[...imagem.matchAll(/<text[^>]*>([A-Z0-9])</g)]
    .map(x=>x[1]).join('');
   assert.equal(letras.length,6);
   assert.equal(login.verificarAntes('VILELA',{
