@@ -46,6 +46,8 @@ const {FotoPerfilCandidatoSQLite}=
 const {AvaliacoesCompraCandidatoSQLite}=
  require('../domain/avaliacoes-compra-candidato-sqlite');
 const {NovidadesLojaCandidatoSQLite,MAX_IMAGEM}=require('../domain/novidades-loja-candidato-sqlite');
+const {BannersEscritorioCandidatoSQLite,LIMITE_IMAGEM:LIMITE_BANNER}=
+ require('../domain/banners-escritorio-candidato-sqlite');
 const {EnderecoEntregaEnsaioSQLite}=require('../domain/endereco-entrega-ensaio-sqlite');
 const {AkitemmConfigLojaDemoSQLite}=require('../domain/akitemm-config-loja-demo-sqlite');
 const {createVitrineCandidata}=require('./vitrine-aprovada-candidato');
@@ -112,6 +114,7 @@ function criarAppLojaEscritorioCandidato({banco,repositorioCatalogo,
  const fotosProduto=new FotosProdutoCandidatoSQLite({banco,catalogo});
  const avaliacoes=new AvaliacoesCompraCandidatoSQLite({banco,prePedidos,consultarPedido});
  const novidades=new NovidadesLojaCandidatoSQLite({banco});
+ const bannersEscritorio=new BannersEscritorioCandidatoSQLite({banco});
  const configLoja=new AkitemmConfigLojaDemoSQLite({banco});
  const enderecoEntrega=new EnderecoEntregaEnsaioSQLite({banco,chaveCifra});
  const departamentosAdmin=new DepartamentosAdministradorCandidato({banco,missoes,catalogo});
@@ -844,6 +847,78 @@ function criarAppLojaEscritorioCandidato({banco,repositorioCatalogo,
    return res.status(400).json({erro:'CONFIG_LOJA_INVALIDA'});
   }
  });
+
+ // Quatro banners de foto manuais do escritorio. Nenhuma URL arbitraria
+ // ou arquivo externo: somente imagem validada no mesmo SQLite. A leitura
+ // do cliente exige sessao e a alteracao exige operador autorizado.
+ const numeroBanner=req=>/^[1-4]$/.test(req.params.slot)?
+  Number(req.params.slot):null;
+ app.get('/staging/banners-escritorio',(req,res)=>{
+  if(!contas.sessao(req))return res.status(401).json({erro:'SESSAO_AUSENTE'});
+  res.set('Cache-Control','private, no-store');
+  return res.json(bannersEscritorio.listar());
+ });
+ app.get('/staging/banners-escritorio/:slot/imagem',(req,res)=>{
+  if(!contas.sessao(req))return res.status(401).json({erro:'SESSAO_AUSENTE'});
+  const slot=numeroBanner(req);
+  if(slot===null)return res.status(404).json({erro:'BANNER_NAO_ENCONTRADO'});
+  try{
+   const foto=bannersEscritorio.imagem(slot);
+   res.set({'Cache-Control':'private, no-store',
+    'X-Content-Type-Options':'nosniff',
+    'Content-Disposition':'inline'});
+   return res.type(foto.mime).send(foto.bytes);
+  }catch{return res.status(404).json({erro:'BANNER_SEM_IMAGEM'});}
+ });
+ app.get('/staging/escritorio-unificado/banners-escritorio',
+  autorizarOperador,(_req,res)=>{
+   res.set('Cache-Control','no-store');
+   return res.json(bannersEscritorio.listar());
+  });
+ app.put('/staging/escritorio-unificado/banners-escritorio/:slot/imagem',
+  autorizarOperador,async(req,res)=>{
+   const slot=numeroBanner(req);
+   if(slot===null)return res.status(404).json({erro:'BANNER_SLOT_INVALIDO'});
+   const mime=req.get('content-type')?.split(';')[0];
+   if(!['image/jpeg','image/png','image/webp'].includes(mime))
+    return res.status(415).json({erro:'BANNER_ARQUIVO_INVALIDO'});
+   const revisao=Number(req.get('x-banner-revisao-esperada'));
+   if(!Number.isSafeInteger(revisao)||revisao<0)
+    return res.status(400).json({erro:'BANNER_REVISAO_INVALIDA'});
+   if(Number(req.get('content-length')||0)>LIMITE_BANNER)
+    return res.status(413).json({erro:'BANNER_ARQUIVO_EXCESSIVO'});
+   let size=0;const partes=[];
+   try{
+    for await(const chunk of req){
+     size+=chunk.length;
+     if(size>LIMITE_BANNER)
+      return res.status(413).json({erro:'BANNER_ARQUIVO_EXCESSIVO'});
+     partes.push(chunk);
+    }
+    const resultado=bannersEscritorio.salvar({
+     slot,mime,bytes:Buffer.concat(partes),revisaoEsperada:revisao
+    });
+    res.set('Cache-Control','no-store');
+    return res.json(resultado);
+   }catch(err){
+    return res.status(err.codigo==='BANNER_CONFLITO_REVISAO'?409:400)
+     .json({erro:err.codigo||'BANNER_UPLOAD_INVALIDO'});
+   }
+  });
+ app.delete('/staging/escritorio-unificado/banners-escritorio/:slot/imagem',
+  autorizarOperador,(req,res)=>{
+   const slot=numeroBanner(req);
+   if(slot===null)return res.status(404).json({erro:'BANNER_SLOT_INVALIDO'});
+   try{
+    const resultado=bannersEscritorio.remover({
+     slot,revisaoEsperada:Number(req.get('x-banner-revisao-esperada'))
+    });
+    return res.json(resultado);
+   }catch(err){
+    return res.status(err.codigo==='BANNER_CONFLITO_REVISAO'?409:400)
+     .json({erro:err.codigo||'BANNER_EXCLUSAO_INVALIDA'});
+   }
+  });
  const preAdesao=new PreAdesaoSandboxCandidatoSQLite({
   banco,posicoes,sinalizacao:sinalizacaoVitrine,cpf,termosVersao
  });
@@ -2197,6 +2272,7 @@ if(worker){
   erro:'CANDIDATO_INDISPONIVEL',financeiroReal:false
  }));
  return {app,contas,cpf,provasEmail,intencoes,prePedidos,ponte,
-  inbox,worker,executarConciliacaoSandbox,posicoes,projecaoFilas,preAdesao,diagnosticoAtivacao,entregas,integridade,missoes,catalogo,materialPdf,videoProduto,fotosProduto,avaliacoes,sinalizacaoVitrine,departamentosAdmin,equipe,motorConta,banco};
+  inbox,worker,executarConciliacaoSandbox,posicoes,projecaoFilas,preAdesao,diagnosticoAtivacao,entregas,integridade,missoes,catalogo,materialPdf,videoProduto,fotosProduto,avaliacoes,sinalizacaoVitrine,departamentosAdmin,equipe,motorConta,
+  bannersEscritorio,banco};
 }
 module.exports={criarAppLojaEscritorioCandidato};
