@@ -108,3 +108,31 @@ test('resumo da posicao: titular, fila e indicacoes no terceiro quadro',()=>{
  assert.match(real,/nickResumoReal=s\.nick/);
  assert.match(real,/selecionadaResumo\.indicacoesVinculadas\|\|0/);
 });
+
+test('menu unico preserva nove destinos, com icones vetoriais dourados/verde/roxo',()=>{
+ const html=ler('src/candidato/checkout-candidato-ui.html');
+ const css=ler('src/candidato/escritorio-cliente-integrado.css');
+ const {renderizarInterfaceAprovada}=require('../src/producao/interface-aprovada-loop');
+ const real=renderizarInterfaceAprovada();
+ const ids=['abaResumo','abaTabuleiro','abaPosicoes','abaEquipe','abaFinanceiro',
+  'abaMeusPedidos','abaLinks','abaConta'];
+ const nomes=['Escritório Virtual','Tabuleiro','Minhas Posições','Minha Equipe',
+  'Financeiro','Meus Pedidos','Meus Links','Minha Conta'];
+ const icones=['house','board','positions','team','finance','cart','link','account'];
+ for(let i=0;i<ids.length;i++){
+  const rx=new RegExp('<button[^>]*id="'+ids[i]+'"[^>]*>\\s*<span class="loop03-menu-icone loop03-menu-icone-'+icones[i]+' loop03-menu-cor-'+(ids[i]==='abaFinanceiro'?'verde':'dourado')+'"[^>]*><svg[\\s\\S]*?<\\/svg><\\/span> '+nomes[i]+'<\\/button>');
+  assert.match(html,rx,'menu de homologacao '+ids[i]);
+  assert.match(real,rx,'menu real '+ids[i]);
+ }
+ for(const pagina of [html,real]){
+  const nav=pagina.match(/<nav role="tablist"[^>]*>([\s\S]*?)<\/nav>/)?.[1];
+  assert.ok(nav);
+  assert.equal((nav.match(/<button /g)||[]).length,8,'oito abas do cliente');
+  assert.equal((nav.match(/<a href=/g)||[]).length,1,'somente o link da loja');
+  assert.match(nav,/class="loop03-atalho-loja"><span class="loop03-menu-icone loop03-menu-icone-shop loop03-menu-cor-roxo"/);
+ }
+ assert.match(css,/\.loop03-menu-cor-verde[\s\S]*?color:#6de7a9/);
+ assert.match(css,/\.loop03-menu-cor-roxo[\s\S]*?color:#c295ff/);
+ assert.match(css,/\.loop03-menu-icone-board svg[\s\S]*?width:25px/);
+ assert.doesNotMatch(html,/># Minhas Posições</);
+});
