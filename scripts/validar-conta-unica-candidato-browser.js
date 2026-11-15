@@ -270,10 +270,13 @@ function mp4TrintaSegundos(){
     assert.equal(await page.locator('#formCpfTeste').isHidden(),true);
     assert.equal(await page.locator('#cpfTeste').inputValue(),'');
    }else{
-    const resumo=await page.request.get(base+'/staging/contas/resumo-rodape');
-    assert.equal(resumo.status(),200);
-    assert.equal((await resumo.json()).cpfConfirmado,true,
-     'formulario CPF so pode ficar oculto com identidade já cadastrada');
+    const identidade=await page.request.get(base+'/staging/contas/identidade');
+    assert.equal(identidade.status(),200);
+    const dado=await identidade.json();
+    assert.equal(dado.registrado,true,
+     'formulario CPF so pode ficar oculto com CPF protegido ja cadastrado');
+    assert.equal(dado.identidadeExternaVerificada,false,
+     'CPF do ensaio nao e identidade externa verificada');
    }
    await abrirAba('#abaResumo');
    await page.locator('#conteudoResumo').waitFor({state:'visible'});
