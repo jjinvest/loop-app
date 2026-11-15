@@ -211,27 +211,58 @@
  function exibirRede(){
   const alvo=$('listaEquipe');
   alvo.replaceChildren();
-  const filtro=$('buscarEquipe').value.toLowerCase().trim();
+  const filtro=$('buscarEquipe').value.toLowerCase().trim().replace(/^@/,'');
   const dados=titularesIndicados.filter(p=>
-   p.nick.toLowerCase().includes(filtro));
+   p.nick.toLowerCase().includes(filtro)||
+   (Number.isSafeInteger(p.numeroCadastro)&&
+    String(p.numeroCadastro)===filtro.replace(/^#/,''))
+  );
   if(!dados.length){
    const aviso=document.createElement('p');
-   aviso.textContent='Nenhum cadastro encontrado por esse nick.';
+   aviso.textContent='Nenhum cadastro encontrado por esse nick ou número.';
    alvo.appendChild(aviso);return;
   }
+  const texto=(tag,cls,value)=>{
+   const el=document.createElement(tag);
+   if(cls)el.className=cls;
+   el.textContent=value;return el;
+  };
   for(const p of dados){
-   const item=document.createElement('div');
-   item.className='loop03-equipe-linha';
-   const nick=document.createElement('strong');
-   nick.textContent='@'+p.nick;
-   const estado=document.createElement('span');
-   // Nunca anunciar qualificação de ensaio como compra real.
-   estado.textContent=p.estado==='QUALIFICACAO_ENSAIO'?
-    'Cadastro vinculado · sem confirmação comercial':
-    p.estado==='COMPRA_ENSAIO_SEM_QUALIFICACAO'?
-    'Cadastro vinculado · participação em análise':
-    'Cadastro registrado · aguardando compra confirmada';
-   item.append(nick,estado);alvo.appendChild(item);
+   const card=texto('article','loop03-rede-pessoa','');
+   card.dataset.estado='vermelho';
+   const cab=texto('div','loop03-rede-pessoa-cabecalho','');
+   const n=Number.isSafeInteger(p.numeroCadastro)&&p.numeroCadastro>0?
+    '#'+String(p.numeroCadastro).padStart(4,'0'):'#—';
+   cab.append(
+    texto('span','loop03-rede-pessoa-numero',n),
+    texto('span','loop03-rede-pessoa-luz',''),
+    texto('strong','loop03-rede-pessoa-nick','@'+p.nick),
+    texto('span','loop03-rede-pessoa-status','Cadastro realizado')
+   );
+   const infos=texto('div','loop03-rede-pessoa-info','');
+   const tel=typeof p.telefone==='string'&&/^[1-9][0-9][0-9]{8,9}$/.test(p.telefone)?
+    p.telefone:null;
+   if(tel){
+    const span=texto('span',null,'Telefone: ');
+    const a=texto('a',null,tel);
+    a.href='tel:+55'+tel;
+    a.setAttribute('aria-label','Ligar para @'+p.nick);
+    span.append(a);infos.append(span);
+   }else infos.append(texto('span',null,'Telefone: contato não informado'));
+   const registro=new Date(p.registradoEm);
+   const valido=Number.isFinite(registro.getTime());
+   infos.append(
+    texto('span',null,'Cadastro: '+(valido?
+     registro.toLocaleDateString('pt-BR',{timeZone:'America/Sao_Paulo'}):'não informado')),
+    texto('span',null,'Horário: '+(valido?
+     registro.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit',
+      hour12:false,timeZone:'America/Sao_Paulo'}):'não informado')+' (Brasília)'),
+    texto('span',null,'Fila: '+(p.filaCadastro==='B'?'B':'não informada'))
+   );
+   const mensagem=texto('p','loop03-rede-pessoa-vinculo',
+    'Aguardando confirmação de ativação no LOOP.');
+   card.append(cab,infos,mensagem);
+   alvo.append(card);
   }
  }
  async function carregarRede({mais=false}={}){
@@ -252,7 +283,7 @@
    $('redeADistribuirEnsaio').textContent=String(
     dados.resumo?.comprasAguardandoQualificacaoEnsaio??0);
    $('equipeResumo').textContent=dados.total+
-    ' cadastro(s) pelo seu link. Bonificações somente após confirmação comercial.';
+    ' cadastro(s) pelo seu link.';
    exibirRede();
   }catch{
    $('equipeResumo').textContent='Sua rede não pôde ser consultada.';
