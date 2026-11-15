@@ -635,8 +635,29 @@
   el('akitemmNomeTitular').title=nome;
   const img=el('akitemmFotoTitular');
   img.hidden=!visao.perfil?.temFoto;
-  if(!img.hidden)img.src='/api/laboratorio/participante/foto-perfil';
+  if(!img.hidden)img.src=window.location.pathname.startsWith('/staging/')?
+   '/staging/contas/foto-perfil':'/api/laboratorio/participante/foto-perfil';
   else img.removeAttribute('src');
+ }
+ async function mostrarDadosConta(){
+  const painel=el('akitemmDadosConta'),botao=el('akitemmAbrirConta');
+  painel.hidden=!painel.hidden;botao.setAttribute('aria-expanded',String(!painel.hidden));
+  if(painel.hidden)return;
+  el('akitemmNotificacoes').hidden=true;
+  el('akitemmSino').setAttribute('aria-expanded','false');
+  const alvo=el('akitemmDadosContaConteudo');
+  alvo.textContent='Consultando os dados cadastrados…';
+  try{
+   const r=await fetch('/staging/contas/resumo-rodape',{
+    cache:'no-store',credentials:'same-origin'});
+   if(r.status===401){
+    alvo.textContent='Você ainda não entrou na sua conta.';
+    return;
+   }
+   if(!r.ok)throw Error('DADOS_INDISPONIVEIS');
+   const d=await r.json();
+   alvo.textContent='Nome: '+d.nome+'\nNick: @'+d.nick+'\nE-mail: '+d.email;
+  }catch{alvo.textContent='Dados indisponíveis. Consulte Minha Conta no LOOP.';}
  }
  async function carregarEntrega(){
   const r=await api('loja/entrega');enderecoEntrega=r.entrega;
@@ -730,11 +751,14 @@
  }
  async function carregarNotificacoes(){
   try{
-   const r=await fetch('/api/laboratorio/loop03/publicacoes',{credentials:'same-origin',cache:'no-store'});
+   const r=await fetch('/staging/vitrine/loja/comunicados',{
+    credentials:'same-origin',cache:'no-store'});
    if(!r.ok)throw Error('indisponível');
    const d=await r.json();
-   const lista=Array.isArray(d.publicacoes)?d.publicacoes.filter(x=>x.tipo==='AKITEMM'):[];
-   avisosGerais=lista.map(x=>x.titulo+': '+x.descricao);
+   const lista=Array.isArray(d.itens)&&d.canal==='AKITEMM'?
+    d.itens.filter(x=>x.canal==='AKITEMM'&&x.estado==='PUBLICADO'):[];
+   avisosGerais=lista.map(x=>
+    (x.formato==='BANNER'?'[BANNER] ':'')+x.titulo+': '+x.corpo);
    atualizarSinoAvaliacoes();
   }catch{
    avisosGerais=[];atualizarSinoAvaliacoes();
@@ -745,9 +769,10 @@
    await Promise.all([carregarCatalogo(),carregarPedidos(),carregarLinkDivulgacaoLoja(),carregarPerfil(),carregarEntrega()]);
    await Promise.allSettled([carregarConfig(),carregarNotificacoes(),carregarNovidadesEditorais(),carregarMeusCursos()]);
    el('conteudoLojaLoop').hidden=false;
-   inform(catalogoRealSemCheckout?
-    'Catálogo comercial real. Compras ainda indisponíveis até homologação dos pagamentos.':
-    'Loja AKITEMM em laboratório: pedidos de teste, sem cobrança ou entrega real.');
+   inform(''); // Avisos de laboratório não são conteúdo da vitrine.
+   if(catalogoRealSemCheckout)
+    el('statusPedidoLoja').textContent=
+     'As compras ainda estão indisponíveis até a liberação do pagamento.';
   }catch(e){
    el('conteudoLojaLoop').hidden=true;inform(e.message);
   }
@@ -916,7 +941,11 @@
  el('akitemmLimparCarrinho').addEventListener('click',()=>{carrinho.clear();atualizarCarrinho();});
  el('akitemmBannerAnterior').addEventListener('click',()=>selecionarBanner(bannerIndice-1));
  el('akitemmBannerProximo').addEventListener('click',()=>selecionarBanner(bannerIndice+1));
+ el('akitemmAbrirConta').addEventListener('click',mostrarDadosConta);
  el('akitemmSino').addEventListener('click',()=>{
+  el('akitemmDadosConta').hidden=true;
+  el('akitemmAbrirConta').setAttribute('aria-expanded','false');
+  void carregarNotificacoes();
   const painel=el('akitemmNotificacoes');painel.hidden=!painel.hidden;
   el('akitemmSino').setAttribute('aria-expanded',String(!painel.hidden));
  });
