@@ -74,3 +74,30 @@
  #departamentoOperacionalAcoes button{flex:1 1 100%;min-width:0}
  #departamentoOperacionalRegistros .produto-admin-item>button{width:100%}
 }
+
+
+/* Upload manual dos quatro banners: controles exclusivos de operador. */
+#bannersEscritorioPainelAdmin>summary{cursor:pointer;padding:9px 3px;color:#f1cc83}
+#bannersEscritorioSlotsAdmin{
+ display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
+ gap:13px;margin:13px 0;
+}
+#bannersEscritorioSlotsAdmin .banners-escritorio-item-admin{
+ background:#151a22;border:1px solid #987541;border-radius:12px;
+ padding:12px;min-width:0;display:grid;gap:7px;align-content:start;
+}
+#bannersEscritorioSlotsAdmin .banners-escritorio-item-admin h4{margin:0;color:#f2d39a}
+#bannersEscritorioSlotsAdmin .banners-escritorio-item-admin img{
+ width:100%;height:130px;object-fit:contain;
+ background:#070c15;border:1px solid #76654d;border-radius:8px;
+}
+#bannersEscritorioSlotsAdmin .banners-escritorio-item-admin img[hidden]{display:none}
+#bannersEscritorioSlotsAdmin .banners-escritorio-item-admin label{
+ display:grid;gap:7px;color:#eddbb9;font-size:.9rem;
+}
+#bannersEscritorioSlotsAdmin .banners-escritorio-item-admin input[type=file]{
+ max-width:100%;min-width:0;font-size:.8rem;
+}
+#bannersEscritorioSlotsAdmin .banners-escritorio-item-admin small{
+ overflow-wrap:anywhere;color:#e7c38b;
+}
