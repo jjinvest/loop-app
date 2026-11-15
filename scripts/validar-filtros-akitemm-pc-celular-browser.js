@@ -27,7 +27,7 @@ const PRODUTOS=['ROXO','DOURADO','VERDE','CINZA'].map(cor=>({
   banco,repositorioCatalogo:catalogoFicticioCheckout(),
   segredoOperador:'filtro-browser-'+randomBytes(28).toString('hex'),
   chaveEmail:randomBytes(32),chaveCifra:randomBytes(32),
-  termosVersao:'FILTROS_BROWSER_TEMPORARIO',
+  termosVersao:'LAB-FILTROS_BROWSER_TEMPORARIO',
   termosTexto:'Somente teste isolado, sem cobrança, sem conta comercial.'
  });
  const server=contexto.app.listen(0,'127.0.0.1');
