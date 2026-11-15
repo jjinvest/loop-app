@@ -63,6 +63,8 @@
   $('painelConta').hidden=true;
   document.body.classList.remove('loop03-logado');
   fecharDadosRodapeReal();
+  $('loop03RodapeFilaIntegrado').hidden=true;
+  $('loop03RodapeCoroaIntegrado').hidden=true;
   $('erroLogin').hidden=true;$('erroCadastro').hidden=true;
   const aviso=$('cadastroIndicadorAviso');
   if(aviso){
@@ -115,7 +117,9 @@
   fecharDadosRodapeReal();
   sincronizarFotoRodapeReal();
   nickResumoReal=s.nick;
-  $('loop03NickIntegrado').textContent=s.nick;
+  $('loop03NickIntegrado').textContent='@'+s.nick;
+  posicoesResumoReal=[];posicaoSelecionada='';
+  atualizarSituacaoRodapeReal();
   $('perfilCliente').textContent='Nick: '+s.nick+
    (s.emailVerificado?' · E-mail confirmado':' · Confirme seu e-mail');
   $('painelVerificarEmail').hidden=s.emailVerificado;
@@ -322,6 +326,21 @@
   $('seletorPosicoesResumo').hidden=true;
   $('loop03IrPosicoesIntegrado').setAttribute('aria-expanded','false');
  }
+ // Rodapé da mesma tela: nick e localização da posição selecionada
+ // (ou a primeira ativa), sem transferir ID/indicações do placar superior.
+ function atualizarSituacaoRodapeReal(posicoes=posicoesResumoReal){
+  const lista=Array.isArray(posicoes)?posicoes:[];
+  const pos=lista.find(p=>String(p.numero)===posicaoSelecionada)||
+   [...lista].sort((a,b)=>a.numero-b.numero)[0];
+  const local=typeof pos?.local==='string'?pos.local:'';
+  const dentro=local==='CENTRO'||/^VAGA_[1-6]$/.test(local);
+  const fila=local==='FILA_A'?'A':local==='FILA_B'?'B':
+   local==='FILA'&&(pos?.fila==='A'||pos?.fila==='B')?pos.fila:null;
+  const rotulo=$('loop03RodapeFilaIntegrado');
+  rotulo.textContent=fila?'Fila '+fila:'';
+  rotulo.hidden=!fila;
+  $('loop03RodapeCoroaIntegrado').hidden=!dentro;
+ }
  function atualizarTopoPosicaoReal(){
   const i=posicoesResumoReal.findIndex(p=>String(p.numero)===posicaoSelecionada);
   const p=i<0?null:posicoesResumoReal[i];
@@ -330,6 +349,7 @@
    ('@'+nickResumoReal+' · Fila '+(p.fila==='A'||p.fila==='B'?p.fila:'não definida')+
     ' · Indicações: '+(p.indicacoesVinculadas||0)+
     ' · '+(p.local||'Em acompanhamento')+' · ID #'+p.numero):'';
+  atualizarSituacaoRodapeReal();
  }
  function preencherPopupReal(){
   if(!popupPosicoesRealAberto)return;
@@ -773,6 +793,7 @@
     if(popupPosicoesRealAberto)preencherPopupReal();
     const opcoes=d.minhasPosicoes.map(p=>String(p.numero));
     if(!opcoes.includes(posicaoSelecionada))posicaoSelecionada='';
+    atualizarSituacaoRodapeReal(posicoesResumoReal);
     seletor.replaceChildren();
     const geral=document.createElement('option');
     geral.value='';geral.textContent='Todas as posições';
