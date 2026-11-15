@@ -6,7 +6,7 @@
  const dinheiro=centavos=>new Intl.NumberFormat('pt-BR',{style:'currency',currency:'BRL'}).format(centavos/100);
  const catalogo=[],carrinho=new Map();
  let referenciaCentavos=25000,pedidoEmAndamento=false,filtro='todos',corFiltro=null,configLoja=null,bannerIndice=-1;
- let conviteLoopCheckoutAtivo=false;
+ let conviteLoopCheckoutAtivo=false,catalogoRealSemCheckout=false;
  const tamanhoPaginaVitrine=()=>window.matchMedia('(max-width:800px)').matches?4:8;
  let timerBanner=null,enderecoEntrega=null,quantidadeVitrine=tamanhoPaginaVitrine();
  let assinaturaCarrinhoAnterior='';
@@ -148,9 +148,12 @@
     opcao.checked=false;
   }
   escolha.hidden=!qualificado;
-  el('registrarPedidoLoja').disabled=!carrinho.size||pedidoEmAndamento;
+  el('registrarPedidoLoja').disabled=catalogoRealSemCheckout||!carrinho.size||pedidoEmAndamento;
  }
  function adicionar(p){
+  if(catalogoRealSemCheckout){
+   el('statusPedidoLoja').textContent='Compra disponível após homologação do pagamento.';return;
+  }
   const qtd=carrinho.get(p.produtoId)||0;
   if(!qtd&&carrinho.size>=20){el('statusPedidoLoja').textContent='Máximo de 20 produtos diferentes por pedido.';return;}
   if(qtd>=100){el('statusPedidoLoja').textContent='Máximo de 100 unidades por produto.';return;}
@@ -426,6 +429,8 @@
    ver.addEventListener('click',()=>abrirDetalhes(p));
    const adicionarBotao=document.createElement('button');adicionarBotao.type='button';
    adicionarBotao.className='akitemm-adicionar';adicionarBotao.textContent='Adicionar';adicionarBotao.setAttribute('aria-label','Adicionar ao carrinho');
+   adicionarBotao.disabled=catalogoRealSemCheckout;
+   if(catalogoRealSemCheckout)adicionarBotao.textContent='Em breve';
    adicionarBotao.addEventListener('click',()=>adicionar(p));
    acoes.append(ver,adicionarBotao);dados.append(titulo,descricao,preco,acoes);
    if(especial){
@@ -544,6 +549,8 @@
  async function carregarCatalogo(){
   const dados=await api('loja/catalogo');
   catalogo.splice(0,catalogo.length,...dados.produtos);
+  catalogoRealSemCheckout=dados.catalogoComercialReal===true&&dados.checkoutReal===false;
+  if(catalogoRealSemCheckout)carrinho.clear();
   referenciaCentavos=dados.referenciaLoopCentavos;
   conviteLoopCheckoutAtivo=dados.conviteLoopCheckoutAtivo===true;
   mostrarCatalogo();
@@ -666,7 +673,9 @@
    await Promise.all([carregarCatalogo(),carregarPedidos(),carregarLinkDivulgacaoLoja(),carregarPerfil(),carregarEntrega()]);
    await Promise.allSettled([carregarConfig(),carregarNotificacoes(),carregarNovidadesEditorais()]);
    el('conteudoLojaLoop').hidden=false;
-   inform('Loja AKITEMM em laboratório: pedidos de teste, sem cobrança ou entrega real.');
+   inform(catalogoRealSemCheckout?
+    'Catálogo comercial real. Compras ainda indisponíveis até homologação dos pagamentos.':
+    'Loja AKITEMM em laboratório: pedidos de teste, sem cobrança ou entrega real.');
   }catch(e){
    el('conteudoLojaLoop').hidden=true;inform(e.message);
   }
@@ -861,6 +870,9 @@
   }
  });
  el('registrarPedidoLoja').addEventListener('click',async()=>{
+  if(catalogoRealSemCheckout){
+   el('statusPedidoLoja').textContent='Checkout real ainda não homologado.';return;
+  }
   if(!carrinho.size||pedidoEmAndamento)return;
   const escolha=el('akitemmEscolhaLoop');
   const opcao=escolha.querySelector('input[name="akitemmParticiparLoop"]:checked');
