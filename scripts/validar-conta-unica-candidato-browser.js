@@ -453,6 +453,7 @@ function mp4TrintaSegundos(){
    // Provar a operação REAL dos controles editoriais sem redesenhar o admin.
    assert.equal(await admin.locator('#formNovidadesAdmin').count(),1);
    await abrirControleAdmin('#novidadeTituloAdmin');
+   await abrirControleAdmin('#novidadeTituloAdmin');
    await admin.locator('#novidadeTituloAdmin').fill('LANÇAMENTO '+item.nick);
    await admin.locator('#novidadeTextoAdmin').fill(
     'Comunicado editorial de ensaio: nenhuma gratuidade ou pagamento é ativado.');
@@ -470,13 +471,16 @@ function mp4TrintaSegundos(){
     new RegExp('LANÇAMENTO '+item.nick));
    assert.equal(await admin.locator('#formPreAdesao').count(),1);
    assert.equal(await admin.locator('#conferirPreAdesao').count(),1);
+   await abrirControleAdmin('#resumoPreviaFilas');
    await admin.locator('#resumoPreviaFilas')
     .filter({hasText:/Fictícias históricas/}).waitFor();
    assert.match(await admin.locator('#resumoPreviaFilas').innerText(),
     /Projeção de posições fictícias indisponível/);
+   await abrirControleAdmin('#quadroDepartamentos button');
    assert.equal(await admin.locator('#quadroDepartamentos button').count(),12);
    // Auditoria financeira conserva a tela aprovada e nao libera saldo:
    // mesmo quando nao ha alertas, custos externos seguem pendentes.
+   await abrirControleAdmin('#consultarCoberturaAkitemm');
    await admin.locator('#consultarCoberturaAkitemm').click();
    await admin.locator('#resumoCoberturaAkitemm')
     .filter({hasText:/Marco Zero financeiro: NÃO APROVADO/}).waitFor();
@@ -485,6 +489,7 @@ function mp4TrintaSegundos(){
    assert.equal(await admin.locator('#listaCoberturaAkitemm')
     .getByRole('button',{name:'Página anterior'}).isDisabled(),true);
    assert.equal(await admin.locator('#consultarCoberturaAkitemm').isDisabled(),false);
+   await abrirControleAdmin('#conferirBackupOffsite');
    await admin.locator('#conferirBackupOffsite').click();
    await admin.locator('#estadoBackupOffsite').filter({
     hasText:/Backup externo ainda não comprovado neste serviço/
@@ -492,6 +497,7 @@ function mp4TrintaSegundos(){
    // Sem credencial Asaas nesta previa: nao permitir falsa conciliacao
    // nem habilitar o botao de lote como se o PSP externo estivesse ligado.
    assert.equal(await admin.locator('#reconciliarPendentesPsp').isDisabled(),true);
+   await abrirControleAdmin('#consultarPixUnificado');
    await admin.locator('#consultarPixUnificado').click();
    await admin.locator('#estadoPixUnificado').filter({
     hasText:/faltam credenciais específicas do Asaas Sandbox/
@@ -510,6 +516,7 @@ function mp4TrintaSegundos(){
     .filter({hasText:'Tabuleiro · operação'}).waitFor();
    // Verificar a catraca financeira distinta do giro fisico e o plano
    // de tres bancos nao conectados, nos mesmos painéis PC/celular.
+   await abrirControleAdmin('#atualizarFluxoFinanceiroAdmin');
    await admin.locator('#atualizarFluxoFinanceiroAdmin').click();
    await admin.locator('#fluxoFinanceiroEstado')
     .filter({hasText:/Luzes e giros reconciliados/}).waitFor();
@@ -522,8 +529,10 @@ function mp4TrintaSegundos(){
 
    // Apos abrir Tabuleiro, operador cria UMA dourada no mesmo motor,
    // sem tocar em saldo e sem abrir interface paralela.
+   await abrirControleAdmin('#departamentoOperacionalAcoes');
    await admin.locator('#departamentoOperacionalAcoes')
     .getByRole('button',{name:'Criar 1 bola dourada'}).click();
+   await abrirControleAdmin('#criarDouradaCiencia');
    await admin.locator('#criarDouradaCiencia').check();
    await admin.locator('#criarDouradaManualEnsaio').click();
    await admin.locator('#statusCriarDouradaAdmin')
@@ -541,17 +550,22 @@ function mp4TrintaSegundos(){
    await admin.locator('#departamentoOperacionalTitulo')
     .filter({hasText:'Pedidos · operação'}).waitFor();
 
+   await abrirControleAdmin('#alertasOperacionais article.alerta-operacional');
    assert.equal(await admin.locator('#alertasOperacionais article.alerta-operacional').count(),0);
+   await abrirControleAdmin('#pedidos');
    assert.match(await admin.locator('#pedidos').innerText(),/hom-/);
    await admin.locator('#pedidos')
     .getByRole('button',{name:'Conferir pré-adesão'}).first().click();
    await admin.locator('#preAdesaoStatus')
     .filter({hasText:/Revisão pendente/}).waitFor();
    assert.match(await admin.locator('#preAdesaoId').inputValue(),/^hom-/);
+   await abrirControleAdmin('#conferirGateAtivacao');
    await admin.locator('#conferirGateAtivacao').click();
    await admin.locator('#resultadoGateAtivacao').filter({hasText:/BLOQUEADA_PARA_ATIVACAO_DEFINITIVA/}).waitFor();
+   await abrirControleAdmin('#criarMissaoGateAtivacao');
    await admin.locator('#criarMissaoGateAtivacao').click();
    await admin.locator('#resultadoGateAtivacao').filter({hasText:/Missão de regularização criada/}).waitFor();
+   await abrirControleAdmin('#listaMissoes');
    await admin.locator('#listaMissoes').filter({hasText:/Regularizar requisitos de ativação/}).waitFor();
    await admin.locator('#criarMissaoGateAtivacao').click();
    await admin.locator('#resultadoGateAtivacao').filter({hasText:/já registrada/}).waitFor();
@@ -563,6 +577,7 @@ function mp4TrintaSegundos(){
    await admin.locator('#estado').filter({hasText:/Missão criada/}).waitFor();
    assert.ok(await admin.locator('#listaMissoes article.pedido').count()>0);
    const novoProdutoId='curso-extra-'+item.nick.toLowerCase();
+   await abrirControleAdmin('#produtoIdAdmin');
    await admin.locator('#produtoIdAdmin').fill(novoProdutoId);
    await admin.locator('#produtoNomeAdmin').fill('Curso adicional fictício '+item.nick);
    await admin.locator('#produtoDescricaoAdmin').fill(
@@ -649,6 +664,7 @@ function mp4TrintaSegundos(){
    assert.equal(confAdmin.status(),200);
    assert.equal((await confAdmin.json()).classificacao,'VERDE','Admin deveria persistir a cor');
    // Configuração editorial na tela de administração REAL, ligada à loja.
+   await abrirControleAdmin('#configLojaPainelAdmin summary');
    await admin.locator('#configLojaPainelAdmin summary').click();
    await admin.locator('#configResultadoAdmin').filter({hasText:/carregada/}).waitFor();
    await admin.locator('#configSuporteAdmin').fill(
