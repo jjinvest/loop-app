@@ -80,7 +80,7 @@
    aviso.hidden=!indicadorNick;
    aviso.textContent=indicadorNick?
     'Cadastro pelo convite de @'+indicadorNick+
-    '. A indicação só será válida após uma compra confirmada.':'';
+    '. Seu vínculo de indicação será registrado no momento do cadastro.':'';
   }
  }
  function fecharDadosRodapeReal(){
@@ -266,8 +266,8 @@
  }
  function preencherLinks(nick){
   const endereco=location.origin,identificador=encodeURIComponent(nick);
-  origemLinks={loja:endereco+'/convite/loja?ref='+identificador,
-   escritorio:endereco+'/escritorio?ref='+identificador};
+  origemLinks={loja:endereco+'/loja/'+identificador,
+   escritorio:endereco+'/escritorio/'+identificador};
   $('linkLoja').value=origemLinks.loja;
   $('linkEscritorio').value=origemLinks.escritorio;
   $('linksNick').textContent='Links da conta @'+nick;
