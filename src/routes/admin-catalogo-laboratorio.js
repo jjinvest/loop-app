@@ -53,7 +53,7 @@ function criarAutorizacao({ segredo }) {
       (!req.get('content-length') || req.get('content-length') === '0');
     // Quatro slots de banners do Escritorio: upload binario SOMENTE
     // para operador autorizado e limitado a PNG/JPEG/WebP.
-    const rotaBanner=/^\\/staging\\/escritorio-unificado\\/banners-escritorio\\/[1-4]\\/imagem$/.test(req.path);
+    const rotaBanner=/^\/staging\/escritorio-unificado\/banners-escritorio\/[1-4]\/imagem$/.test(req.path);
     const uploadBanner=rotaBanner&&req.method==='PUT'&&
       ['image/png','image/jpeg','image/webp'].includes(req.get('content-type')?.split(';')[0]);
     const apagarBanner=rotaBanner&&req.method==='DELETE'&&
