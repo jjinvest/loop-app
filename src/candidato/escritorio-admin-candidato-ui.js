@@ -403,6 +403,7 @@ function limparProduto(){
  $('salvarProdutoAdmin').textContent='Salvar produto';
 }
 function preencherProduto(item){
+ selecionarAbaAdmin('produtos');
  edicaoProduto={id:item.produto.id,revisao:item.revisao,estado:item.produto.estado};
  $('produtoIdAdmin').value=item.produto.id;$('produtoIdAdmin').readOnly=true;
  $('produtoTipoAdmin').value=item.produto.tipo;$('produtoTipoAdmin').disabled=true;
@@ -1039,6 +1040,8 @@ const destinosOperacionais=Object.freeze({
 function navegarParaControle(id){
  const destino=$(id);
  if(!destino)throw Error('CONTROLE_NAO_ENCONTRADO');
+ const aba=destino.closest('[data-admin-aba]');
+ if(aba)selecionarAbaAdmin(aba.dataset.adminAba);
  destino.scrollIntoView({behavior:'smooth',block:'center'});
  if(destino.matches('input,select,button,textarea'))destino.focus({preventScroll:true});
 }
@@ -2152,4 +2155,154 @@ $('formPixUnificado').addEventListener('submit',async ev=>{
   await atualizar();
  }catch(e){estado.textContent='Cobrança não preparada: '+e.message;}
  finally{await conferirPixUnificado();}
+});
+
+
+// Navegação única por serviços. Reagrupa os painéis já existentes, sem
+// recriar formulários, estado, SQLite ou endpoints administrativos.
+const gruposAdmin=[
+ ['geral','Visão geral'],
+ ['produtos','Produtos e cursos'],
+ ['mensagens','Mensagens e banners'],
+ ['pedidos','Pedidos e clientes'],
+ ['financeiro','Financeiro'],
+ ['motor','Motor e filas'],
+ ['operacoes','Missões e manutenção'],
+ ['config','Configurações e fotos']
+];
+const idsServicosAdmin={
+ geral:['indicadores','formPesquisaAdmin','quadroDepartamentos'],
+ produtos:['formProduto'],
+ mensagens:['formComunicadoAdmin'],
+ pedidos:['avaliacoesAdminTitulo','pedidos','tituloPixUnificado','alertasTitulo','reconsultar'],
+ financeiro:['tituloAuditoriaCobertura','painelFluxoFinanceiroAdmin'],
+ motor:['motorEnsaioTitulo','previaFilaTitulo'],
+ operacoes:['criarMissao','listaMissoes','tituloManutencaoSegura'],
+ config:['bannersEscritorioPainelAdmin']
+};
+function selecionarAbaAdmin(id,{foco=false}={}){
+ const painel=$('conteudoServicosAdmin');
+ if(!painel)return;
+ const alvo=gruposAdmin.some(x=>x[0]===id)?id:'geral';
+ for(const item of painel.children)item.hidden=item.dataset.adminAba!==alvo;
+ for(const botao of $('abasServicosAdmin').querySelectorAll('[role=tab]')){
+  const ativo=botao.dataset.aba===alvo;
+  botao.setAttribute('aria-selected',String(ativo));
+  botao.tabIndex=ativo?0:-1;
+  if(ativo&&foco)botao.focus();
+ }
+}
+function iniciarAbasAdmin(){
+ const nav=$('abasServicosAdmin'),pai=$('conteudoServicosAdmin');
+ if(!nav||!pai)return;
+ const destino=new Map();
+ for(const [id,nome] of gruposAdmin){
+  const sec=document.createElement('div');
+  sec.id='admin-painel-'+id;sec.dataset.adminAba=id;
+  sec.setAttribute('role','tabpanel');sec.setAttribute('aria-labelledby','admin-aba-'+id);
+  sec.hidden=id!=='geral';pai.append(sec);destino.set(id,sec);
+  const btn=document.createElement('button');btn.type='button';
+  btn.id='admin-aba-'+id;btn.dataset.aba=id;
+  btn.setAttribute('role','tab');btn.setAttribute('aria-controls',sec.id);
+  btn.setAttribute('aria-selected',String(id==='geral'));
+  btn.tabIndex=id==='geral'?0:-1;btn.textContent=nome;
+  btn.addEventListener('click',()=>selecionarAbaAdmin(id));
+  nav.append(btn);
+ }
+ let total=0;
+ for(const section of [...$('administracao').children]){
+  if(!section.matches('section.painel'))continue;
+  const grupo=gruposAdmin.find(([id])=>idsServicosAdmin[id].some(marcador=>
+   section.id===marcador||section.querySelector('#'+marcador)));
+  const id=grupo?.[0]||'operacoes';
+  destino.get(id).append(section);total++;
+ }
+ if(!total)throw Error('ABAS_ADMIN_SEM_SECOES');
+ nav.addEventListener('keydown',e=>{
+  if(!['ArrowLeft','ArrowRight','Home','End'].includes(e.key))return;
+  const ativos=[...nav.querySelectorAll('[role=tab]')];
+  const i=ativos.indexOf(document.activeElement);
+  if(i<0)return;
+  e.preventDefault();
+  const proximo=e.key==='Home'?0:e.key==='End'?ativos.length-1:
+   (i+(e.key==='ArrowLeft'?-1:1)+ativos.length)%ativos.length;
+  selecionarAbaAdmin(ativos[proximo].dataset.aba,{foco:true});
+ });
+ selecionarAbaAdmin('geral');
+}
+iniciarAbasAdmin();
+
+// Publicações de recados, totalmente independentes do conteúdo de produtos.
+let comunicadoAdminEditando=null;
+function limparComunicadoAdmin(){
+ comunicadoAdminEditando=null;
+ $('formComunicadoAdmin').reset();
+ $('comunicadoCanalAdmin').disabled=false;
+ $('comunicadoEstadoAdmin').value='RASCUNHO';
+ $('comunicadoSalvarAdmin').textContent='Salvar mensagem';
+ $('comunicadoResultadoAdmin').textContent='Nova mensagem pronta para cadastrar.';
+}
+function preencherComunicadoAdmin(item){
+ selecionarAbaAdmin('mensagens');
+ comunicadoAdminEditando=item;
+ $('comunicadoCanalAdmin').value=item.canal;
+ $('comunicadoCanalAdmin').disabled=true;
+ $('comunicadoFormatoAdmin').value=item.formato;
+ $('comunicadoTituloAdmin').value=item.titulo;
+ $('comunicadoCorpoAdmin').value=item.corpo;
+ $('comunicadoEstadoAdmin').value=item.estado;
+ $('comunicadoSalvarAdmin').textContent='Atualizar mensagem';
+ $('formComunicadoAdmin').scrollIntoView({block:'start'});
+}
+async function carregarComunicadosAdmin(){
+ const r=await api('/comunicados');
+ const lista=$('listaComunicadosAdmin');lista.replaceChildren();
+ for(const canal of ['AKITEMM','LOOP']){
+  const titulo=elem('h3','Canal '+canal);lista.append(titulo);
+  const itens=r.itens.filter(x=>x.canal===canal);
+  if(!itens.length){lista.append(elem('p','Nenhum recado cadastrado neste canal.'));continue;}
+  for(const item of itens){
+   const card=elem('article');card.className='produto-admin-item';
+   const info=elem('div');
+   info.append(elem('strong',item.titulo),
+    elem('small',item.formato+' · '+item.estado+' · versão '+item.revisao),
+    elem('p',item.corpo));
+   const editar=elem('button','Editar / publicar');editar.type='button';
+   editar.addEventListener('click',()=>preencherComunicadoAdmin(item));
+   card.append(info,editar);lista.append(card);
+  }
+ }
+ return r.itens.length;
+}
+$('comunicadoNovoAdmin').addEventListener('click',limparComunicadoAdmin);
+$('comunicadosAtualizarAdmin').addEventListener('click',()=>carregarComunicadosAdmin()
+ .then(n=>$('comunicadoResultadoAdmin').textContent=n+' mensagem(ns) consultada(s).')
+ .catch(e=>$('comunicadoResultadoAdmin').textContent='Consulta indisponível: '+e.message));
+$('formComunicadoAdmin').addEventListener('submit',async e=>{
+ e.preventDefault();
+ const botao=$('comunicadoSalvarAdmin');botao.disabled=true;
+ const status=$('comunicadoResultadoAdmin');
+ const dados={canal:$('comunicadoCanalAdmin').value,
+  formato:$('comunicadoFormatoAdmin').value,
+  titulo:$('comunicadoTituloAdmin').value.trim(),
+  corpo:$('comunicadoCorpoAdmin').value.trim(),
+  estado:$('comunicadoEstadoAdmin').value};
+ try{
+  let salvo;
+  if(comunicadoAdminEditando){
+   salvo=await api('/comunicados/'+comunicadoAdminEditando.id,{
+    method:'PATCH',body:{dados,revisaoEsperada:comunicadoAdminEditando.revisao}});
+  }else{
+   salvo=await api('/comunicados',{method:'POST',body:{...dados,estado:'RASCUNHO'}});
+   if(dados.estado!=='RASCUNHO')
+    salvo=await api('/comunicados/'+salvo.id,{method:'PATCH',
+     body:{dados,revisaoEsperada:salvo.revisao}});
+  }
+  limparComunicadoAdmin();
+  await carregarComunicadosAdmin();
+  status.textContent='Recado '+salvo.id+' · canal '+salvo.canal+
+   ' · '+salvo.estado+'. '+(salvo.estado==='PUBLICADO'?
+    'O sininho deste canal receberá a mensagem ao atualizar.':'Não visível ao cliente.');
+ }catch(err){status.textContent='Não foi possível salvar: '+err.message;}
+ finally{botao.disabled=false;}
 });
