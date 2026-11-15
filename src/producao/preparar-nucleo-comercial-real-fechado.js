@@ -96,9 +96,9 @@ function prepararNucleoComercialRealFechado({banco,ambiente=process.env}={}){
  });
 }
 // Prova read-only no volume REAL. Não aceita IDs fornecidos pelo navegador.
-function consultarNucleoComercialRealFechado({arquivo}={}){
+function consultarNucleoComercialRealFechado({arquivo,permitirTeste=false}={}){
  if(arquivo!=='/dados-reais/clientes.sqlite'&&
-    !(process.env.NODE_ENV==='test'&&
+    !(permitirTeste===true&&process.env.NODE_ENV!=='production'&&
       typeof arquivo==='string'&&arquivo.endsWith('.sqlite')))
   falha('NUCLEO_REAL_DIAGNOSTICO_ORIGEM_INVALIDA');
  const db=new DatabaseSync(arquivo,{readOnly:true});
