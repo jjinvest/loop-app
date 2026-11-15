@@ -856,3 +856,17 @@ body.akitemm-loja{background:#071018;color:#f0f2f6;font-family:system-ui,-apple-
 .akitemm-loja #catalogoLojaLoop > .akitemm-slot-vazio .akitemm-dados-produto small{
  color:#aebbc7;font-size:11px;line-height:1.45;
 }
+
+/* Ajustes solicitados no cabeçalho, sem redesenhar a loja. */
+.akitemm-loja .akitemm-anel{font-size:33px}
+.akitemm-loja .akitemm-marca-loop{font-size:1.06em}
+.akitemm-loja #akitemmFiltroOfertas{background:linear-gradient(#ffe0a1,#e8af4a);
+ color:#11161b;border-color:#d7a249}
+.akitemm-loja #akitemmFiltroOfertas[aria-pressed="true"]{outline:2px solid #ffd77c;outline-offset:2px}
+.akitemm-loja .akitemm-conta{border:0;background:transparent;color:inherit;
+ padding:3px;min-height:40px;border-radius:8px;cursor:pointer;text-align:left}
+.akitemm-loja .akitemm-conta:hover{background:#23303b}
+.akitemm-loja .akitemm-dados-conta{right:18px;top:57px}
+.akitemm-loja #akitemmDadosContaConteudo,
+.akitemm-loja #akitemmNotificacoesConteudo{white-space:pre-line;overflow-wrap:anywhere}
+.akitemm-loja #akitemmEditarConta{color:#f4cb79}
