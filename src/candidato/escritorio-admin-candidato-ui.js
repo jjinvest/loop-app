@@ -697,6 +697,23 @@ function criarBannerConfig(dados={}){
 function preencherConfigLojaAdmin(dados){
  configLojaAtual=dados;
  const config=dados.config;
+ const slots=$('configVitrineSlotsAdmin');slots.replaceChildren();
+ const padrao=['ROXO','DOURADO','VERDE','CINZA','CINZA','VERDE','DOURADO','ROXO'];
+ const cores=['ROXO','DOURADO','VERDE','CINZA'];
+ for(let indice=0;indice<8;indice++){
+  const rotulo=elem('label');
+  rotulo.textContent='Quadrinho '+(indice+1)+' · '+(indice<4?'primeira':'segunda')+' fileira';
+  const campo=elem('select');
+  campo.name='vitrineSlotCor';
+  campo.setAttribute('aria-label','Cor do quadrinho '+(indice+1));
+  for(const cor of cores){
+   const opcao=elem('option',cor.charAt(0)+cor.slice(1).toLowerCase());
+   opcao.value=cor;campo.append(opcao);
+  }
+  campo.value=(config.vitrineSlots||padrao)[indice];
+  rotulo.append(campo);slots.append(rotulo);
+ }
+
  const textos={
   configSuporteAdmin:'suporte',configContatoAdmin:'contato',
   configSobreAdmin:'sobre',configPrivacidadeAdmin:'privacidade',
@@ -733,6 +750,9 @@ function colherConfigLojaAdmin(){
  const config=structuredClone(configLojaAtual.config);
  for(const [id,chave] of Object.entries(textos))config.informacoes[chave]=$(id).value;
  for(const [id,chave] of Object.entries(redes))config.redes[chave]=$(id).value;
+ config.vitrineSlots=[...$('configVitrineSlotsAdmin').querySelectorAll('[name="vitrineSlotCor"]')]
+  .map(select=>select.value);
+ if(config.vitrineSlots.length!==8)throw Error('VITRINE_SLOTS_INCOMPLETOS');
  config.banners=[...$('configBannersAdmin').children].map(bloco=>{
   const get=nome=>bloco.querySelector('[name="'+nome+'"]').value.trim();
   return {titulo:get('titulo'),descricao:get('descricao'),
