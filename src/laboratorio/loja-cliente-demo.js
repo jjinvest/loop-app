@@ -46,11 +46,38 @@
    botao.setAttribute('aria-pressed',String(ativo));
   }
  }
+ function atualizarBotoesDeFiltro(){
+  const todos=filtro==='todos'&&!corFiltro;
+  const ofertas=filtro==='ofertas'&&!corFiltro;
+  for(const [id,ativo] of [
+   ['akitemmFiltroTodos',todos],['akitemmFiltroOfertas',ofertas]
+  ]){
+   const botao=el(id);
+   botao.classList.toggle('selecionado',ativo);
+   botao.setAttribute('aria-pressed',String(ativo));
+  }
+  for(const botao of document.querySelectorAll('[data-akitemm-categoria]')){
+   const ativo=!corFiltro&&botao.dataset.akitemmCategoria===filtro;
+   botao.classList.toggle('ativo',ativo);
+   botao.setAttribute('aria-pressed',String(ativo));
+  }
+  el('tituloCatalogoLoja').textContent=corFiltro?
+   ({CINZA:'Quadrinhos cinzas',VERDE:'Quadrinhos verdes',
+     DOURADO:'Quadrinhos dourados',ROXO:'Quadrinhos roxos'})[corFiltro]:
+   ({todos:'Produtos em destaque',ofertas:'Ofertas',cursos:'Cursos',
+     fisicos:'Produtos físicos',novidades:'Novidades',
+     'mais-vendidos':'Mais vendidos'})[filtro]||'Produtos em destaque';
+ }
  function escolherCor(cor){
   if(!['CINZA','VERDE','DOURADO','ROXO'].includes(cor))return;
-  corFiltro=corFiltro===cor?null:cor;
+  // Cada cor substitui a categoria, oferta e busca anterior.
+  const proximaCor=corFiltro===cor?null:cor;
+  fecharDetalhes();
+  filtro='todos';corFiltro=proximaCor;
+  el('akitemmBusca').value='';
   quantidadeVitrine=tamanhoPaginaVitrine();
-  atualizarFiltroCor();mostrarCatalogo();
+  atualizarFiltroCor();atualizarBotoesDeFiltro();
+  mostrarCatalogo();
  }
  function fotoDo(p){
   const src=p?.fotos?.find(fotoPermitida);
@@ -328,22 +355,13 @@
    return !termo||texto.includes(termo);
   }).sort((a,b)=>filtro==='mais-vendidos'?(b.quantidadeVendida||0)-(a.quantidadeVendida||0):0);
  }
- function escolherFiltro(novo){
+ function escolherFiltro(novo,{preservarBusca=false}={}){
   fecharDetalhes();
-  filtro=novo;quantidadeVitrine=tamanhoPaginaVitrine();
-  if(novo==='todos'){corFiltro=null;atualizarFiltroCor();}
-  el('akitemmFiltroTodos').classList.toggle('selecionado',novo==='todos');
-  el('akitemmFiltroTodos').setAttribute('aria-pressed',String(novo==='todos'));
-  el('akitemmFiltroOfertas').classList.toggle('selecionado',novo==='ofertas');
-  el('akitemmFiltroOfertas').setAttribute('aria-pressed',String(novo==='ofertas'));
-  for(const b of document.querySelectorAll('[data-akitemm-categoria]')){
-   b.classList.toggle('ativo',b.dataset.akitemmCategoria===novo);
-   b.setAttribute('aria-pressed',String(b.dataset.akitemmCategoria===novo));
-  }
-  el('tituloCatalogoLoja').textContent=({
-   todos:'Produtos em destaque',ofertas:'Ofertas',cursos:'Cursos',
-   fisicos:'Produtos físicos',novidades:'Novidades', 'mais-vendidos':'Mais vendidos'
-  })[novo]||'Produtos em destaque';
+  // "Todos", "Ofertas" e categorias não herdam uma cor antiga.
+  filtro=novo;corFiltro=null;
+  if(!preservarBusca)el('akitemmBusca').value='';
+  quantidadeVitrine=tamanhoPaginaVitrine();
+  atualizarFiltroCor();atualizarBotoesDeFiltro();
   mostrarCatalogo();
  }
  function filtradoNovidadePublicada(){
@@ -399,11 +417,23 @@
     catalogo.length?'Nenhum produto encontrado neste filtro.':'Nenhum produto publicado ainda.');
   el('referenciaLojaLoop').textContent='Referência do LOOP para compras elegíveis: '+dinheiro(referenciaCentavos)+
    '. Produtos físicos e digitais podem ou não participar, conforme autorização do administrador.';
-  // Só na vitrine geral: oito molduras pré-montadas, sem produtos fictícios.
-  // Busca e filtros exibem apenas os produtos reais encontrados.
-  const geral=filtro==='todos'&&!corFiltro&&!termoBusca;
-  const itens=geral?gradeVitrineMontada(filtrados):
+  // Os oito espaços editáveis continuam visíveis quando uma cor é filtrada.
+  // Uma cor mostra apenas os slots correspondentes e seus produtos reais.
+  // A busca, categorias e ofertas mostram só mercadorias publicadas.
+  const exibirMolduras=filtro==='todos'&&!termoBusca;
+  const itens=exibirMolduras?
+   gradeVitrineMontada(filtrados).filter(item=>!corFiltro||item.cor===corFiltro):
    filtrados.map(produto=>({cor:corDoProduto(produto),produto}));
+  if(corFiltro&&exibirMolduras){
+   const livres=itens.filter(item=>!item.produto).length;
+   el('akitemmResultadoProdutos').textContent=itens.length?
+    itens.length+' quadrinho(s) '+corFiltro.toLowerCase()+
+    ' · '+(itens.length-livres)+' produto(s) cadastrado(s) · '+
+    livres+' espaço(s) disponível(is).':
+    'Nenhum quadrinho desta cor. Altere as cores no painel administrativo.';
+  }else if(filtro==='ofertas'&&!filtrados.length&&!haPublicacoes){
+   el('akitemmResultadoProdutos').textContent='Nenhuma oferta publicada por enquanto.';
+  }
   el('akitemmCarregarMais').hidden=itens.length<=quantidadeVitrine;
   for(const item of itens.slice(0,quantidadeVitrine)){
    if(!item.produto){destino.append(criarSlotVazio(item));continue;}
@@ -686,8 +716,8 @@
  el('akitemmFiltroOfertas').addEventListener('click',()=>escolherFiltro('ofertas'));
  el('akitemmBusca').addEventListener('input',()=>{
   if(el('akitemmBusca').value.trim()){
-   // Busca é global, nunca fica presa ao filtro escolhido antes.
-   escolherFiltro('todos');
+   // Busca global não apaga o texto digitado nem herda filtros anteriores.
+   escolherFiltro('todos',{preservarBusca:true});
   }else mostrarCatalogo();
  });
  el('akitemmVoltarProdutos').addEventListener('click',()=>{
