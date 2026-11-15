@@ -167,7 +167,7 @@ test('rodape do menu mostra apenas nick e situacao da posicao sem mexer no placa
   assert.ok(i>=0&&j>i);
   // A funcao seguinte na previa e 'async function'; nao incluir o
   // modificador async solto ao avaliar somente a funcao do rodape.
-  return codigo.slice(i,j).replace(/\\s+async\\s*$/,'');
+  return codigo.slice(i,j).replace(/\s+async\s*$/,'');
  };
  const funcoes=[
   {codigo:recortar(previa,'atualizarSituacaoRodape','atualizarResumo'),nome:'atualizarSituacaoRodape',tipo:'previa'},
