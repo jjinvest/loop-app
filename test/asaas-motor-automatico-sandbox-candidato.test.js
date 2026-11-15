@@ -147,7 +147,7 @@ test('webhook bruto nao gera posicoes; PSP reconsultado cria lote ROXO pendente 
  assert.equal(r.motorConta.consultar({titularId}).posicoesAtivasDoTitular,5);
  const primeiraPosicao=r.motorConta.consultar({titularId}).minhasPosicoes[0].numero;
  const versaoTermos='LAB-auto-conciliacao-2026';
- const bodyAceite={posicaoId:primeiraPosicao,versaoTermos,aceiteExplicito:true};
+ const bodyAceite={posicaoId:primeiraPosicao,cpf:'52998224725',versaoTermos,aceiteExplicito:true};
  const rotaAceite='/staging/motor/posicoes/confirmar-ensaio';
  assert.equal((await call(rotaAceite,{method:'POST',cookie,csrf,body:bodyAceite})).status,409,
   'sem CPF ainda nao ha aceite individual');
