@@ -486,7 +486,7 @@ async function iniciar({env=process.env}={}){
   onErro:codigo=>process.stderr.write('LOOP_CONCILIACAO_ENSAIO='+codigo+'\\n')
  }):null;
  let temporizadorCatraca=null,temporizadorMigracao=null;
- let migracaoEmCurso=false;
+ let migracaoEmCurso=false,ultimaMigracaoComprovada=null;
  async function sincronizarContasLegitimas(){
   if(migracaoEmCurso)return;
   migracaoEmCurso=true;
@@ -497,6 +497,9 @@ async function iniciar({env=process.env}={}){
       typeof token!=='string'||!/^[a-f0-9]{64}$/.test(token))
     throw Error('MIGRACAO_REDE_PRIVADA_NAO_CONFIGURADA');
    const dados=exportarPreview({banco:db,contas:c.contas});
+   const revisao=dados.conferencias.provaIds+':'+
+    dados.conferencias.provaVinculos;
+   if(revisao===ultimaMigracaoComprovada)return;
    const pacote=empacotar(dados,token);
    const res=await fetch(url.replace('/internal/loop/tabuleiro',
     '/internal/loop/migracao-identidade'),{
@@ -509,6 +512,7 @@ async function iniciar({env=process.env}={}){
       retorno.vinculosImportados!==dados.vinculos.length)
     throw Error(typeof retorno.erro==='string'&&/^[A-Z_]{5,100}$/.test(retorno.erro)?
      retorno.erro:'MIGRACAO_DESTINO_NAO_CONFIRMADO');
+   ultimaMigracaoComprovada=revisao;
    process.stdout.write('LOOP_MIGRACAO_IDENTIDADES=COMPROVADA;CONTAS='+
     retorno.contasImportadas+';VINCULOS='+retorno.vinculosImportados+
     ';PRIMEIRA_INDICACAO_VILELA='+String(retorno.primeiraIndicacaoVilelaConferida)+
