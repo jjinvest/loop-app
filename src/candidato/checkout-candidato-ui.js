@@ -1229,6 +1229,7 @@ async function autenticarConta(nick,senha){
  csrf=dados.csrf;mostrarSessao(true);$('senha').value='';
  void atualizarFotoPerfil();
  if(new URLSearchParams(location.search).get('destino')==='loja'){
+  await terminarModoOperador();
   location.assign('/loja');return;
  }
  await atualizarVerificacaoEmail();
@@ -1256,6 +1257,8 @@ async function atualizarCaptchaLogin(){
  }
 }
 async function terminarModoOperador(){
+ const estado=await fetch('/api/operador/estado',{credentials:'same-origin',cache:'no-store'});
+ if(!estado.ok||(await estado.json()).operador!==true)return;
  const resposta=await fetch('/staging/operador/sair',{
   method:'POST',credentials:'same-origin',cache:'no-store'
  });
@@ -1315,8 +1318,8 @@ async function entrar(e){
   modoOperadorSemCliente=false;
   for(const [id] of ABAS){const b=$(id);if(b){b.disabled=false;b.removeAttribute('title');}}
   $('loop03IrPosicoesIntegrado').disabled=false;
-  await terminarModoOperador();
   await autenticarConta($('login').value,$('senha').value);
+  await terminarModoOperador();
   mostrarErroAcesso('login','');
   dizer('Bem-vindo ao seu Escritório. Seus dados estão disponíveis nas abas.');
  }catch(err){
