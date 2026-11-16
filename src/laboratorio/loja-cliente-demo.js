@@ -400,9 +400,9 @@
   'CINZA','VERDE','DOURADO','ROXO'];
  function coresVitrine(){
   const lista=configLoja?.vitrineSlots;
-  return Array.isArray(lista)&&lista.length===8&&
+  return Array.isArray(lista)&&lista.length===200&&
    lista.every(cor=>['ROXO','DOURADO','VERDE','CINZA'].includes(cor))?
-   lista:CORES_PADRAO_VITRINE;
+   lista:Array.from({length:200},(_,i)=>CORES_PADRAO_VITRINE[i%8]);
  }
  function gradeVitrineMontada(produtos){
   const livres=[...produtos];
