@@ -14,7 +14,7 @@
  const TOTAL_ABAS=5,COLUNAS_FAIXA=10,LINHAS_ABA=4,VAGAS_ABA=40;
  let abaProdutos=0;
  const abasExpandidas=new Set();
- const modoVitrineHorizontal=()=>filtro==='todos'&&!corFiltro&&!el('akitemmBusca').value.trim();
+ const modoVitrineHorizontal=()=>filtro==='todos'&&!el('akitemmBusca').value.trim();
  let operadorVitrine=false;
  let assinaturaCarrinhoAnterior='';
  let novidadesVitrine=[];
@@ -443,7 +443,7 @@
   card.addEventListener('click',()=>abrirCadastroOperador(null));
   return card; // Sem id de produto, preço, botão, checkout ou evento.
  }
- function prepararAbasVitrine(){
+ function prepararAbasVitrine(totalAbas=TOTAL_ABAS){
   let nav=el('akitemmAbasProdutos');
   if(!nav){
    nav=document.createElement('nav');
@@ -452,10 +452,10 @@
    el('akitemmCarregarMais').after(nav);
   }
   nav.replaceChildren();
-  for(let n=0;n<TOTAL_ABAS;n++){
+  for(let n=0;n<totalAbas;n++){
    const b=document.createElement('button');
    b.type='button';b.textContent=String(n+1);
-   b.setAttribute('aria-label','Página '+(n+1)+' de '+TOTAL_ABAS);
+   b.setAttribute('aria-label','Página '+(n+1)+' de '+totalAbas);
    if(n===abaProdutos)b.setAttribute('aria-current','page');
    b.addEventListener('click',()=>{
     if(abaProdutos===n)return;
@@ -498,7 +498,9 @@
    el('akitemmResultadoProdutos').textContent='Nenhuma oferta publicada por enquanto.';
   }
   const horizontal=modoVitrineHorizontal();
-  const nav=prepararAbasVitrine();nav.hidden=!horizontal;
+  const totalAbas=corFiltro?Math.max(1,Math.ceil(itens.length/VAGAS_ABA)):TOTAL_ABAS;
+  if(abaProdutos>=totalAbas)abaProdutos=0;
+  const nav=prepararAbasVitrine(totalAbas);nav.hidden=!horizontal;
   destino.classList.toggle('ak-vitrine-horizontal',horizontal);
   let faixas=[];
   let itensExibidos;
@@ -506,7 +508,8 @@
    const expandida=abasExpandidas.has(abaProdutos);
    const linhas=expandida?LINHAS_ABA:2;
    const cores=coresVitrine();
-   itensExibidos=Array.from({length:linhas*COLUNAS_FAIXA},(_,i)=>{
+   const total=corFiltro?Math.min(linhas*COLUNAS_FAIXA,Math.max(0,itens.length-abaProdutos*VAGAS_ABA)):linhas*COLUNAS_FAIXA;
+   itensExibidos=Array.from({length:total},(_,i)=>{
     const indice=abaProdutos*VAGAS_ABA+i;
     return itens[indice]||{indice:indice+1,cor:cores[indice%cores.length],produto:null};
    });
@@ -518,11 +521,12 @@
      ', dez espaços. Arraste para o lado.');
     destino.append(faixa);faixas.push(faixa);
    }
-   el('akitemmCarregarMais').hidden=false;
+   el('akitemmCarregarMais').hidden=!!corFiltro&&itens.length<=abaProdutos*VAGAS_ABA+2*COLUNAS_FAIXA;
    el('akitemmCarregarMais').textContent=expandida?'Mostrar menos produtos ↑':'Mostrar mais produtos ↓';
-   el('akitemmResultadoProdutos').textContent=filtrados.length?
-    filtrados.length+' produto(s) publicado(s) · cinco abas com quarenta espaços cada.':
-    'Vitrine com cinco abas e capacidade para duzentos produtos.';
+   el('akitemmResultadoProdutos').textContent=corFiltro?
+    itens.length+' quadrinho(s) '+corFiltro.toLowerCase()+' · navegue pelas abas e arraste as fileiras.':
+    (filtrados.length?filtrados.length+' produto(s) publicado(s) · cinco abas com quarenta espaços cada.':
+    'Vitrine com cinco abas e capacidade para duzentos produtos.');
   }else{
    itensExibidos=itens.slice(0,quantidadeVitrine);
    el('akitemmCarregarMais').hidden=itens.length<=quantidadeVitrine;
