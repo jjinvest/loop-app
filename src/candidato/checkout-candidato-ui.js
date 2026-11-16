@@ -1,4 +1,5 @@
 'use strict';
+// Exibir orientacoes de indicacao e CPF antes da ativacao, sem criar registros.
 // Interface de HOMOLOGACAO LOCAL. Nao existe pagamento, cadastro, CPF ou
 // posicao verdadeira. Nunca inserir valores da API via innerHTML.
 const API='/staging';
