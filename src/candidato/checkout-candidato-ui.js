@@ -1315,8 +1315,8 @@ async function entrar(e){
   modoOperadorSemCliente=false;
   for(const [id] of ABAS){const b=$(id);if(b){b.disabled=false;b.removeAttribute('title');}}
   $('loop03IrPosicoesIntegrado').disabled=false;
-  await autenticarConta($('login').value,$('senha').value);
   await terminarModoOperador();
+  await autenticarConta($('login').value,$('senha').value);
   mostrarErroAcesso('login','');
   dizer('Bem-vindo ao seu Escritório. Seus dados estão disponíveis nas abas.');
  }catch(err){
@@ -1375,10 +1375,7 @@ async function restaurarSessao(){
   mostrarAba('conteudoResumo');
   }catch(e){
   mostrarSessao(false);dizer('');
-  try{
-   const r=await fetch('/api/operador/estado',{credentials:'same-origin',cache:'no-store'});
-   if(r.ok&&(await r.json()).operador===true){abrirModoOperadorNaTela();return;}
-  }catch{}
+  // Sem pedido explicito de operador, a caixa permanece de cliente.
   const params=new URLSearchParams(location.search);
   if(params.get('cadastro')==='1'||params.get('destino')==='loja'){
    selecionarTelaAcesso('cadastro');
