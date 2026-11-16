@@ -1,7 +1,7 @@
 {
   "schema": 1,
   "política": "Toda alteração de HTML/CSS exige pedido visual explícito, escopo isolado e revisão do proprietário; é proibido atualizar hashes para esconder mudanças.",
-  "autorizaçãoAtual": "16/11/2026: proprietário autorizou acabamento fino dos botões AKITEMM, correção de Minha conta, remoção de textos técnicos e atalho Ver todos, centralização do sino e símbolo circular LOOP no cabeçalho; demais 23 arquivos visuais permanecem protegidos.",
+  "autorizaçãoAtual": "16/11/2026: padronização solicitada da marca LOOP 3.0 prateada na loja AKITEMM e na tela compartilhada de login/cadastro; demais arquivos protegidos.",
   "arquivos": [
     {
       "path": "src/candidato/checkout-candidato-ui.html",
@@ -37,7 +37,7 @@
     },
     {
       "path": "src/laboratorio/checkout-staging-ui.css",
-      "sha": "fccb120cfe2a7668b3e7811664dc7f8c99609d79"
+      "sha": "3b8e3303d314488ef98e18d36eb2b4f0968766b8"
     },
     {
       "path": "src/laboratorio/checkout-staging-ui.html",
@@ -69,7 +69,7 @@
     },
     {
       "path": "src/laboratorio/loja-cliente-demo.css",
-      "sha": "17de1a4801142b0ea259a9cfaf88f177b3140c10"
+      "sha": "561d46359063c90521230adad1fab16c6ff98df4"
     },
     {
       "path": "src/laboratorio/loja-cliente-demo.html",
@@ -117,6 +117,7 @@
     "15/11/2026: novo pedido expresso: NÃO criar produtos; deixar os oito QUADRINHOS prontos com ordem ROXO/DOURADO/VERDE/CINZA e CINZA/VERDE/DOURADO/ROXO no PC, quatro primeiros no celular, e assegurar mutabilidade por operador. Espaços exibidos vazios com bordas por cor, sem operações de compra; opções de cor dos oito slots persistem em banco auditável e podem ser reeditadas. Renova apenas os hashes dos 3 arquivos visuais envolvidos nesta alteração.",
     "15/11/2026: suporte técnico iniciado para estoque próprio e características de produtos (tênis, fotos, preços, marca/tamanho/cor/material), com alteração restrita ao formulário do administrador, validação do catálogo, edição auditada e testes. Corrigida fixture de teste que usava nick com 10 caracteres apesar da validação vigente de 9. Site ainda não homologado para venda ou cadastro comercial definitivo; não remover avisos honestos.",
     "15/11/2026: renova apenas o hash de src/candidato/escritorio-admin-candidato-ui.html para corrigir os rótulos de laboratório da seção de produto para catálogo comercial próprio, solicitado explicitamente. Reforçado mecanismo de foto antes da publicação e monitoramento privado de conexões dos dois serviços Railway. Produto real nunca entra em checkout de ensaio.",
-    "16/11/2026: pedido explícito em fotos e mensagens para refinar botões usando Ofertas como referência, corrigir sobreposição de Minha conta, remover Ver todos e capacidade da vitrine, alinhar sino e restaurar círculos LOOP no topo da AKITEMM. Hash renovado exclusivamente para src/laboratorio/loja-cliente-demo.css, após revisão do escopo."
+    "16/11/2026: pedido explícito em fotos e mensagens para refinar botões usando Ofertas como referência, corrigir sobreposição de Minha conta, remover Ver todos e capacidade da vitrine, alinhar sino e restaurar círculos LOOP no topo da AKITEMM. Hash renovado exclusivamente para src/laboratorio/loja-cliente-demo.css, após revisão do escopo.",
+    "16/11/2026: proprietário solicitou explicitamente uniformizar LOOP 3.0 prateado da tela aprovada na loja e no cadastro/login. Autorização restrita aos dois CSS respectivos, sem mudar fluxo de autenticação."
   ]
 }
