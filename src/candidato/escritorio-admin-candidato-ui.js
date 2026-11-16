@@ -1358,9 +1358,23 @@ async function atualizar(){
  }
  dizer('Escritório atualizado a partir do mesmo SQLite dos clientes.');
 }
+async function abrirProdutoSolicitadoPelaLoja(){
+ const id=new URLSearchParams(location.search).get('produtoEditar');
+ if(!id)return;
+ if(id==='novo'){
+  selecionarAbaAdmin('produtos');limparProduto();
+  $('formProduto').scrollIntoView({behavior:'smooth',block:'start'});
+  return;
+ }
+ try{
+  const item=await api('/produtos/'+encodeURIComponent(id));
+  preencherProduto(item);
+ }catch(e){$('resultadoProdutoAdmin').textContent='Não foi possível abrir o produto: '+e.message;}
+}
 $('formAcesso').addEventListener('submit',async e=>{
  e.preventDefault();auth=$('token').value;$('token').value='';
  try{await atualizar();$('acesso').hidden=true;$('administracao').hidden=false;
+  await abrirProdutoSolicitadoPelaLoja();
   atualizarAvaliacoesAdmin().catch(()=>{});
   carregarComunicadosAdmin().catch(e=>{
    $('comunicadoResultadoAdmin').textContent='Recados indisponíveis: '+e.message;
