@@ -405,11 +405,12 @@
    lista:Array.from({length:200},(_,i)=>CORES_PADRAO_VITRINE[i%8]);
  }
  function gradeVitrineMontada(produtos){
+  // Cadastro sequencial: cada produto ocupa o próximo quadrinho livre,
+  // independentemente da cor. A classificação acompanha o produto.
   const livres=[...produtos];
   const slots=coresVitrine().map((cor,indice)=>{
-   const encontrado=livres.findIndex(p=>corDoProduto(p)===cor);
-   const produto=encontrado<0?null:livres.splice(encontrado,1)[0];
-   return {cor,indice:indice+1,produto};
+   const produto=livres.shift()||null;
+   return {cor:produto?corDoProduto(produto):cor,indice:indice+1,produto};
   });
   // Produtos restantes continuam acessíveis pela paginação; nada é apagado.
   return [...slots,...livres.map(produto=>({cor:corDoProduto(produto),produto}))];
