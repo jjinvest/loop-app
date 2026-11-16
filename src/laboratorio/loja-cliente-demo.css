@@ -919,3 +919,6 @@ body.akitemm-loja{background:#071018;color:#f0f2f6;font-family:system-ui,-apple-
 .akitemm-loja #akitemmEditarConta:focus-visible{
  outline:none;box-shadow:0 0 0 2px #17212b,0 0 0 4px #ffe0a1;
 }
+
+/* Remover atalho redundante 'Ver todos' da vitrine; filtro Todos permanece. */
+.akitemm-loja #akitemmVerTodos{display:none!important}
