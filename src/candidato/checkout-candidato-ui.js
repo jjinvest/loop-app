@@ -739,6 +739,11 @@ async function atualizarPosicoes(){
   grade.setAttribute('role','list');
   grade.setAttribute('aria-label',somentePosicoesPeloQuadrado?
    'Posições da própria conta':'Dez espaços de posições da própria conta');
+  const painelConfirmacoes=document.createElement('section');
+  painelConfirmacoes.className='loop03-confirmacoes-posicoes';
+  const tituloConfirmacoes=document.createElement('h3');
+  tituloConfirmacoes.textContent='CPF e aceite dos termos das posições';
+  painelConfirmacoes.append(tituloConfirmacoes);
   const estados={
    APENAS_PREVIA_FILA_B_AZUL:'Aguardando confirmação · Fila B',
    EXIGE_REVISAO_PSP:'Pedido em análise',
@@ -898,7 +903,7 @@ async function atualizarPosicoes(){
      aviso.textContent='Termos indisponíveis para confirmação desta posição.';
      formulario.append(aviso);
     }
-    cartao.append(formulario);
+    painelConfirmacoes.append(formulario);
    }
    if(posicao){
     const botao=document.createElement('button');botao.type='button';
@@ -941,7 +946,14 @@ async function atualizarPosicoes(){
     'Você ainda não possui posições; o cartão acima é só uma demonstração.'):
    fora?'Outros '+fora+' registros permanecem no histórico de pedidos. O limite de 10 aplica-se a posições ativas, não aos pedidos passados.':
    'Acompanhe suas posições nesta área.';
-  area.replaceChildren(resumo,grade,aviso);
+  if(!painelConfirmacoes.querySelector('form')){
+   const informacao=document.createElement('p');informacao.className='subtexto';
+   informacao.textContent=ativas.length?
+    'Não há posições aguardando confirmação de CPF e termos.':
+    'Quando uma compra qualificada criar sua posição, o campo de CPF e o aceite dos termos aparecerão aqui.';
+   painelConfirmacoes.append(informacao);
+  }
+  area.replaceChildren(resumo,grade,painelConfirmacoes,aviso);
  }catch(e){
   area.replaceChildren();
   const erro=document.createElement('p');
