@@ -153,7 +153,18 @@
   try{const r=await fetch('/staging/operador/estado',{credentials:'same-origin',cache:'no-store'});
    if(r.ok)ok=(await r.json()).operador===true;}catch{}
   operador=ok;document.body.classList.toggle('operador-na-tela',ok);
-  const acesso=document.querySelector('.akitemm-acesso-operador');
+  // O atalho deve existir mesmo quando o HTML da loja nao o inclui.
+  // Permissao continua validada no gateway; esconder o link nao e seguranca.
+  let acesso=document.querySelector('.akitemm-acesso-operador');
+  if(ok&&!acesso){
+   acesso=document.createElement('a');
+   acesso.className='akitemm-acesso-operador';
+   acesso.href='/operador';
+   acesso.textContent='Central do operador';
+   acesso.style.cssText='display:inline-flex;align-items:center;justify-content:center;margin:12px auto;padding:9px 16px;border:1px solid #c5a15e;border-radius:9px;color:#dfbf76;text-decoration:none;font-weight:700';
+   const rodape=document.querySelector('footer,[role="contentinfo"],#rodape,.rodape');
+   (rodape||document.body).append(acesso);
+  }
   if(acesso){acesso.hidden=!ok;acesso.style.display=ok?'inline-flex':'none';}
   document.getElementById('akitemmOperadorMais')?.remove();
   document.getElementById('loopOperadorMais')?.remove();
