@@ -894,3 +894,28 @@ body.akitemm-loja{background:#071018;color:#f0f2f6;font-family:system-ui,-apple-
 .akitemm-loja button:active{
  filter:brightness(1.05);
 }
+
+/* Menu Minha conta: texto e link nunca se sobrepoem, inclusive no PC. */
+.akitemm-loja #akitemmDadosConta{
+ display:flex;flex-direction:column;align-items:stretch;gap:10px;
+ width:min(390px,calc(100vw - 24px));max-width:calc(100vw - 24px);
+ min-width:0;box-sizing:border-box;overflow-wrap:anywhere;
+}
+.akitemm-loja #akitemmDadosConta[hidden]{display:none!important}
+.akitemm-loja #akitemmDadosContaConteudo{
+ display:block;margin:0;min-width:0;max-width:100%;
+ white-space:pre-line;overflow-wrap:anywhere;word-break:break-word;
+ line-height:1.55;
+}
+.akitemm-loja #akitemmEditarConta{
+ display:flex;align-items:center;justify-content:center;
+ position:static;min-width:0;max-width:100%;width:100%;
+ margin:0;padding:10px 12px;box-sizing:border-box;
+ border:1px solid #c8a25e;border-radius:12px;
+ background:linear-gradient(145deg,#263647,#15242e);
+ color:#f4cb79;text-decoration:none;text-align:center;
+ white-space:normal;overflow-wrap:anywhere;line-height:1.35;
+}
+.akitemm-loja #akitemmEditarConta:focus-visible{
+ outline:none;box-shadow:0 0 0 2px #17212b,0 0 0 4px #ffe0a1;
+}
