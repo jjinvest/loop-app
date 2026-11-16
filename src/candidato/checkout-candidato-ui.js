@@ -845,27 +845,45 @@ async function atualizarPosicoes(){
    if(!posicao){
     const orientacao=document.createElement('div');
     orientacao.className='loop03-form-aceite-posicao';
+    orientacao.style.cssText='display:flex;flex-direction:column;gap:8px;min-width:0;width:100%;box-sizing:border-box';
     const cpf=document.createElement('label');
     cpf.textContent='CPF desta posição';
+    cpf.style.cssText='display:flex;flex-direction:column;gap:5px;min-width:0;width:100%';
     const campo=document.createElement('input');
     campo.type='text';campo.inputMode='numeric';campo.placeholder='CPF após ativação';
-    campo.disabled=true;
+    campo.disabled=true;campo.style.cssText='width:100%;max-width:100%;min-width:0;box-sizing:border-box';
     cpf.append(campo);
+    const termosDetalhes=document.createElement('details');
+    termosDetalhes.style.cssText='width:100%;min-width:0;max-width:100%;box-sizing:border-box;overflow-wrap:anywhere';
+    const abrirTermos=document.createElement('summary');
+    abrirTermos.textContent='Ler os termos ▾';
+    abrirTermos.style.cssText='cursor:pointer;padding:8px 0;font-weight:600;white-space:normal';
+    const textoTermos=document.createElement('div');
+    textoTermos.textContent=termos.disponivel&&typeof termos.termosTexto==='string'?
+     termos.termosTexto:'Termos temporariamente indisponíveis.';
+    textoTermos.style.cssText='white-space:pre-wrap;overflow-wrap:anywhere;max-height:180px;overflow:auto;font-size:0.85em';
+    termosDetalhes.append(abrirTermos,textoTermos);
     const aceite=document.createElement('label');
+    aceite.style.cssText='display:flex;align-items:center;gap:8px;min-width:0;white-space:normal;overflow-wrap:anywhere';
     const caixa=document.createElement('input');
-    caixa.type='checkbox';caixa.disabled=true;
-    aceite.append(caixa,document.createTextNode(' Li e aceito os termos desta posição'));
+    caixa.type='checkbox';caixa.disabled=true;caixa.style.cssText='flex:0 0 auto;width:18px;height:18px';
+    const legenda=document.createElement('span');
+    legenda.textContent='Aceito os termos desta posição';
+    legenda.style.cssText='min-width:0;white-space:normal;overflow-wrap:anywhere';
+    aceite.append(caixa,legenda);
     const confirmar=document.createElement('button');
     confirmar.type='button';confirmar.disabled=true;
     confirmar.textContent='Confirmar CPF e termos';
+    confirmar.style.cssText='width:100%;max-width:100%;box-sizing:border-box';
     const aviso=document.createElement('small');
-    aviso.textContent='Campos disponíveis após adquirir esta posição.';
-    orientacao.append(cpf,aceite,confirmar,aviso);
+    aviso.textContent='Confirmação liberada após adquirir esta posição.';
+    orientacao.append(cpf,termosDetalhes,aceite,confirmar,aviso);
     cartao.append(orientacao);
    }
    if(posicao?.pendente){
     const formulario=document.createElement('form');
     formulario.className='loop03-form-aceite-posicao';
+    formulario.style.cssText='display:flex;flex-direction:column;gap:8px;min-width:0;width:100%;box-sizing:border-box';
     const explicacao=document.createElement('small');
     explicacao.textContent='Cada posição exige CPF e aceite próprios. Use apenas CPF fictício nesta prévia.';
     formulario.append(explicacao);
@@ -877,14 +895,30 @@ async function atualizarPosicoes(){
      campoCpf.autocomplete='off';campoCpf.pattern='[0-9.\\-]{11,14}';
      campoCpf.id='cpfPosicao'+posicao.numero;
      rotuloCpf.append(document.createTextNode('CPF desta posição'),campoCpf);
+     rotuloCpf.style.cssText='display:flex;flex-direction:column;gap:5px;min-width:0;width:100%';
+     campoCpf.style.cssText='width:100%;max-width:100%;min-width:0;box-sizing:border-box';
      const rotulo=document.createElement('label');
      const caixa=document.createElement('input');
      caixa.type='checkbox';caixa.required=true;
-     rotulo.append(caixa,document.createTextNode(
-      ' Li e aceito os termos desta posição (versão '+termos.termosVersao+').'));
+     rotulo.style.cssText='display:flex;align-items:center;gap:8px;min-width:0;white-space:normal;overflow-wrap:anywhere';
+     caixa.style.cssText='flex:0 0 auto;width:18px;height:18px';
+     const textoAceite=document.createElement('span');
+     textoAceite.textContent='Aceito os termos desta posição (versão '+termos.termosVersao+')';
+     textoAceite.style.cssText='min-width:0;white-space:normal;overflow-wrap:anywhere';
+     rotulo.append(caixa,textoAceite);
+     const termosDetalhes=document.createElement('details');
+     termosDetalhes.style.cssText='min-width:0;width:100%;box-sizing:border-box;overflow-wrap:anywhere';
+     const abrirTermos=document.createElement('summary');
+     abrirTermos.textContent='Ler os termos ▾';
+     abrirTermos.style.cssText='cursor:pointer;padding:8px 0;font-weight:600;white-space:normal';
+     const textoTermos=document.createElement('div');
+     textoTermos.textContent=typeof termos.termosTexto==='string'?termos.termosTexto:'Termos indisponíveis';
+     textoTermos.style.cssText='white-space:pre-wrap;overflow-wrap:anywhere;max-height:180px;overflow:auto;font-size:0.85em';
+     termosDetalhes.append(abrirTermos,textoTermos);
      const botaoAceite=document.createElement('button');
      botaoAceite.type='submit';botaoAceite.textContent='Confirmar CPF e termos';
-     formulario.append(rotuloCpf,rotulo,botaoAceite);
+     botaoAceite.style.cssText='width:100%;max-width:100%;box-sizing:border-box';
+     formulario.append(rotuloCpf,termosDetalhes,rotulo,botaoAceite);
      formulario.addEventListener('submit',async ev=>{
       ev.preventDefault();
       if(!caixa.checked||!campoCpf.value.trim())return;
