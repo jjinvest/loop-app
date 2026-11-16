@@ -51,10 +51,14 @@ function configurar(ambiente=process.env,{pasta='/dados-reais',io=fs}={}){
  for(let i=0;i<keys.length;i++)
   for(let j=i+1;j<keys.length;j++)
    if(keys[i].equals(keys[j]))throw Error('CADASTRO_CHAVES_NAO_INDEPENDENTES');
- const termos={versao:ambiente.LOOP_REAL_TERMOS_VERSAO,
-  texto:ambiente.LOOP_REAL_TERMOS_TEXTO};
- const privacidade={versao:ambiente.LOOP_REAL_PRIVACIDADE_VERSAO,
-  texto:ambiente.LOOP_REAL_PRIVACIDADE_TEXTO};
+ // Documentos integrais versionados no repositorio; variaveis explicitas prevalecem.
+ // A leitura nao altera os gates de aprovacao ou de abertura do cadastro.
+ const documento=(nome,versao,arquivo)=>({
+  versao:ambiente[nome+'_VERSAO']||versao,
+  texto:ambiente[nome+'_TEXTO']||fs.readFileSync(path.join(__dirname,'../docs',arquivo),'utf8')
+ });
+ const termos=documento('LOOP_REAL_TERMOS','LOOP-TERMOS-CADASTRO-2026-11-v1','TERMOS_CADASTRO_LOOP_2026_11_PARA_APROVACAO.md');
+ const privacidade=documento('LOOP_REAL_PRIVACIDADE','LOOP-PRIVACIDADE-CADASTRO-2026-11-v1','POLITICA_PRIVACIDADE_LOOP_2026_11_PARA_APROVACAO.md');
  // Não criar documentos implícitos nem apresentar texto de laboratório.
  for(const doc of [termos,privacidade]){
   if(typeof doc.versao!=='string'||!/^[A-Z0-9][A-Z0-9._-]{3,79}$/.test(doc.versao)||
