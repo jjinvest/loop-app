@@ -248,13 +248,16 @@ function criarAppLojaEscritorioCandidato({banco,repositorioCatalogo,
  app.get('/staging/cliente',(_req,res)=>{
   const html=fs.readFileSync(path.join(__dirname,'checkout-candidato-ui.html'),'utf8');
   return res.type('html').send(html.replace('</head>',
-   '<script src="/staging/assets/operador-em-tela.js" defer></script></head>'));
+   '<script src="/staging/assets/operador-em-tela.js" defer></script><script src="/staging/assets/acabamento-loop.js" defer></script></head>'));
  });
  app.get('/staging/assets/catraca-visor.js',(_req,res)=>res.type('js').sendFile(
   path.join(__dirname,'../shared/visor-catraca.js')
  ));
  app.get('/staging/assets/tabuleiro-visual.js',(_req,res)=>res.type('js').sendFile(
   path.join(__dirname,'../shared/tabuleiro-visual-loop.js')
+ ));
+ app.get('/staging/assets/acabamento-loop.js',(_req,res)=>res.type('js').sendFile(
+  path.join(__dirname,'../shared/acabamento-visual-loop.js')
  ));
  app.get('/staging/assets/operador-em-tela.js',(_req,res)=>res.type('js').sendFile(
   path.join(__dirname,'operador-em-tela.js')

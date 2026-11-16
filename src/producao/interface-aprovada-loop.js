@@ -16,7 +16,8 @@ const ARQUIVOS=Object.freeze({
  '/identidade/assets/tabuleiro-visual.js':'../shared/tabuleiro-visual-loop.js',
  '/identidade/assets/cliente.js':'./interface-aprovada-contas.js',
  '/identidade/assets/loja.css':'../laboratorio/loja-cliente-demo.css',
- '/identidade/assets/loja.js':'./interface-aprovada-loja.js'
+ '/identidade/assets/loja.js':'./interface-aprovada-loja.js',
+ '/identidade/assets/acabamento-loop.js':'../shared/acabamento-visual-loop.js'
 });
 function trocarExato(texto,antes,depois){
  const partes=texto.split(antes);
@@ -110,6 +111,8 @@ function renderizarInterfaceAprovada(){
   '<select id="seletorPosicaoMotor">'+
   '<option value="">Todas as posições</option></select></label>'+
   '<div id="posicoesPainel" aria-live="polite">Consultando posições…</div>');
+ html=trocarExato(html,'</head>',
+  '<script src="/identidade/assets/acabamento-loop.js" defer></script></head>');
  // Texto da versão de ensaio permanece fora da vista, sem ser reaproveitado
  // como conteúdo comercial. Não expor recursos financeiros incompletos.
  return html;
@@ -124,6 +127,8 @@ function renderizarLojaAprovada(){
  html=trocarExato(html,
   '<script src="/laboratorio/loja.js" defer></script>',
   '<script src="/identidade/assets/loja.js" defer></script>');
+ html=trocarExato(html,'</head>',
+  '<script src="/identidade/assets/acabamento-loop.js" defer></script></head>');
  return html;
 }
 function montarInterfaceAprovada(app,{protegerLoja}={}){
