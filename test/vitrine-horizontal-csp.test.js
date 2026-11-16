@@ -1,0 +1,20 @@
+'use strict';
+const {test}=require('node:test');
+const assert=require('node:assert/strict');
+const fs=require('node:fs');
+const path=require('node:path');
+const ler=p=>fs.readFileSync(path.join(__dirname,'..',p),'utf8');
+test('CSS horizontal carrega de arquivo same-origin sob politica style-src self',()=>{
+ const html=ler('src/candidato/vitrine-aprovada-candidato.js');
+ const server=ler('src/candidato/servidor-loja-escritorio-candidato.js');
+ const gate=ler('scripts/servidor-escritorio-preview-railway.js');
+ const loja=ler('src/laboratorio/loja-cliente-demo.js');
+ const css=ler('src/candidato/vitrine-horizontal.css');
+ assert.match(html,/href=\\"\/staging\/assets\/vitrine-horizontal\.css\\"/);
+ assert.match(server,/app\.get\('\/staging\/assets\/vitrine-horizontal\.css'/);
+ assert.match(gate,/vitrine-horizontal\\\.css/);
+ assert.doesNotMatch(loja,/style\.textContent=/);
+ assert.match(css,/scroll-snap-type:x proximity/);
+ assert.match(css,/flex:0 0 calc\(25% - 9\.75px\)/);
+ assert.match(css,/flex-basis:calc\(50% - 4px\)/);
+});

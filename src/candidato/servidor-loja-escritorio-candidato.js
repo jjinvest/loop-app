@@ -262,6 +262,9 @@ function criarAppLojaEscritorioCandidato({banco,repositorioCatalogo,
  app.get('/staging/assets/operador-em-tela.js',(_req,res)=>res.type('js').sendFile(
   path.join(__dirname,'operador-em-tela.js')
  ));
+ app.get('/staging/assets/vitrine-horizontal.css',(_req,res)=>res.type('css').sendFile(
+  path.join(__dirname,'vitrine-horizontal.css')
+ ));
  app.get('/staging/assets/cliente.js',(_req,res)=>res.type('js').sendFile(
   path.join(__dirname,'checkout-candidato-ui.js')
  ));

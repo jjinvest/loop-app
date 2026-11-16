@@ -66,6 +66,7 @@ function createVitrineCandidata({app,banco,catalogo,contas,intencoes,prePedidos,
   .replace('src="/laboratorio/educacao-carrinho.js"',
    'src="/staging/assets/educacao-carrinho.js"')
   .replace('src="/laboratorio/loja.js"','src="/staging/assets/loja-aprovada.js"')
+  .replace('</head>','<link rel="stylesheet" href="/staging/assets/vitrine-horizontal.css"></head>')
   .replace('</head>','<script src="/staging/assets/operador-em-tela.js" defer></script></head>')
   .replace('</head>','<script src="/staging/assets/acabamento-loop.js" defer></script></head>')
   .replace('class="akitemm-acesso-operador"','class="akitemm-acesso-operador" hidden style="display:none"')

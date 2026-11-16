@@ -384,7 +384,7 @@ function criarGateway({portaInterna,senhaAcesso,senhaAdmin,segredoOperador,
   const publico=leitura&&(
    /^\/(?:|minha-conta|loja|staging\/cliente|staging\/loja)$/.test(url.pathname)||
    /^\/(?:loja|escritorio)\/[A-Za-z]{1,12}$/.test(url.pathname)||
-   /^\/staging\/assets\/(?:cliente\.js|cliente\.css|cliente-integrado\.css|loop03-aprovado\.css|catraca-visor\.js|tabuleiro-visual\.js|operador-em-tela\.js|acabamento-loop\.js|loja-aprovada\.js|loja-aprovada\.css|educacao-carrinho\.js)$/.test(url.pathname)||
+   /^\/staging\/assets\/(?:cliente\.js|cliente\.css|cliente-integrado\.css|loop03-aprovado\.css|catraca-visor\.js|tabuleiro-visual\.js|operador-em-tela\.js|acabamento-loop\.js|vitrine-horizontal\.css|loja-aprovada\.js|loja-aprovada\.css|educacao-carrinho\.js)$/.test(url.pathname)||
    /^\/staging\/vitrine\/(?:loja\/(?:catalogo|config|comunicados|banner-arquivo\/[a-f0-9]{32}|produtos\/[a-zA-Z0-9-]+\/(?:foto\/(?:10|[1-9])|video))|novidades(?:\/[0-9]+\/imagem)?)$/.test(url.pathname)||
    url.pathname==='/staging/contas/termos-cadastro'||
    url.pathname==='/staging/contas/captcha-login'||
