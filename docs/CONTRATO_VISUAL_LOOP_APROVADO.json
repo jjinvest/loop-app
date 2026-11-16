@@ -1,7 +1,7 @@
 {
   "schema": 1,
   "política": "Toda alteração de HTML/CSS exige pedido visual explícito, escopo isolado e revisão do proprietário; é proibido atualizar hashes para esconder mudanças.",
-  "autorizaçãoAtual": "16/11/2026: padronização solicitada da marca LOOP 3.0 prateada na loja AKITEMM e na tela compartilhada de login/cadastro; demais arquivos protegidos.",
+  "autorizaçãoAtual": "16/11/2026: pedido explícito para manter somente ESCRITÓRIO DO ADMINISTRADOR no cabeçalho do painel e remover o aviso LABORATÓRIO · SEM VENDAS REAIS; demais arquivos protegidos.",
   "arquivos": [
     {
       "path": "src/candidato/checkout-candidato-ui.html",
@@ -13,7 +13,7 @@
     },
     {
       "path": "src/candidato/escritorio-admin-candidato-ui.html",
-      "sha": "d7eafe9560cb1b8dd586e73d6ec04cdeeed83cbf"
+      "sha": "3e5c9e088c4d769f659d285cd6cba86d8821fc50"
     },
     {
       "path": "src/candidato/escritorio-cliente-integrado.css",
