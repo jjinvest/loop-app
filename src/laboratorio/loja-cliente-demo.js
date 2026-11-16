@@ -15,6 +15,7 @@
  let abaProdutos=0;
  const abasExpandidas=new Set();
  const modoVitrineHorizontal=()=>filtro==='todos'&&!corFiltro&&!el('akitemmBusca').value.trim();
+ let operadorVitrine=false;
  let assinaturaCarrinhoAnterior='';
  let novidadesVitrine=[];
  let avaliacoesDisponiveis=[],avisosGerais=[];
@@ -33,6 +34,7 @@
    if(!resposta.ok)return;
    const estado=await resposta.json();
    if(estado?.operador===true){
+    operadorVitrine=true;
     atalho.hidden=false;atalho.style.display='inline-flex';
    }
   }catch{}
@@ -415,6 +417,14 @@
   // Produtos restantes continuam acessíveis pela paginação; nada é apagado.
   return [...slots,...livres.map(produto=>({cor:corDoProduto(produto),produto}))];
  }
+ function abrirCadastroOperador(id){
+  if(!operadorVitrine)return;
+  const atalho=el('akitemmOperadorMais');
+  if(!atalho||!atalho.href)return;
+  const destino=new URL(atalho.href,location.href);
+  destino.searchParams.set('produtoEditar',id||'novo');
+  location.assign(destino.href);
+ }
  function criarSlotVazio({cor,indice}){
   const card=document.createElement('article');
   card.className='produto-loja-loop akitemm-slot-vazio akitemm-slot-'+cor.toLowerCase();
@@ -430,6 +440,7 @@
   const estado=document.createElement('small');estado.textContent='Aguardando produto cadastrado';
   dados.append(titulo,estado);
   card.append(imagem,dados);
+  card.addEventListener('click',()=>abrirCadastroOperador(null));
   return card; // Sem id de produto, preço, botão, checkout ou evento.
  }
  function prepararAbasVitrine(){
@@ -556,11 +567,15 @@
    card.tabIndex=0;card.setAttribute('role','group');
    card.setAttribute('aria-label','Produto '+p.nome+'. Clique para ver detalhes');
    card.addEventListener('click',ev=>{
-    if(!ev.target.closest('button'))abrirDetalhes(p);
+    if(!ev.target.closest('button')){
+     if(operadorVitrine)abrirCadastroOperador(p.produtoId);
+     else abrirDetalhes(p);
+    }
    });
    card.addEventListener('keydown',ev=>{
     if(ev.target===card&&(ev.key==='Enter'||ev.key===' ')){
-     ev.preventDefault();abrirDetalhes(p);
+     ev.preventDefault();if(operadorVitrine)abrirCadastroOperador(p.produtoId);
+     else abrirDetalhes(p);
     }
    });
    card.append(imagem,dados);alvo.append(card);
@@ -1110,6 +1125,7 @@
    if(!r.ok)return;
    const d=await r.json();
    if(d.operador===true){
+    operadorVitrine=true;
     a.hidden=false;a.style.display='inline-flex';
    }
   }catch{}
