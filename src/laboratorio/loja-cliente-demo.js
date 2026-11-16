@@ -523,10 +523,7 @@
    }
    el('akitemmCarregarMais').hidden=!!corFiltro&&itens.length<=abaProdutos*VAGAS_ABA+2*COLUNAS_FAIXA;
    el('akitemmCarregarMais').textContent=expandida?'Mostrar menos produtos ↑':'Mostrar mais produtos ↓';
-   el('akitemmResultadoProdutos').textContent=corFiltro?
-    itens.length+' quadrinho(s) '+corFiltro.toLowerCase()+' · navegue pelas abas e arraste as fileiras.':
-    (filtrados.length?filtrados.length+' produto(s) publicado(s) · cinco abas com quarenta espaços cada.':
-    'Vitrine com cinco abas e capacidade para duzentos produtos.');
+   el('akitemmResultadoProdutos').textContent='';
   }else{
    itensExibidos=itens.slice(0,quantidadeVitrine);
    el('akitemmCarregarMais').hidden=itens.length<=quantidadeVitrine;
