@@ -9,9 +9,9 @@
  let conviteLoopCheckoutAtivo=false,catalogoRealSemCheckout=false;
  const tamanhoPaginaVitrine=()=>window.matchMedia('(max-width:800px)').matches?4:8;
  let timerBanner=null,enderecoEntrega=null,quantidadeVitrine=tamanhoPaginaVitrine();
- // Vitrine horizontal: 10 abas * 4 fileiras * 10 espaços = 400 posições.
+ // Vitrine horizontal: 5 abas * 4 fileiras * 10 espaços = 200 posições.
  // Somente duas fileiras são montadas até o usuário expandir a aba.
- const TOTAL_ABAS=10,COLUNAS_FAIXA=10,LINHAS_ABA=4,VAGAS_ABA=40;
+ const TOTAL_ABAS=5,COLUNAS_FAIXA=10,LINHAS_ABA=4,VAGAS_ABA=40;
  let abaProdutos=0;
  const abasExpandidas=new Set();
  const modoVitrineHorizontal=()=>filtro==='todos'&&!corFiltro&&!el('akitemmBusca').value.trim();
@@ -509,8 +509,8 @@
    el('akitemmCarregarMais').hidden=false;
    el('akitemmCarregarMais').textContent=expandida?'Mostrar menos produtos ↑':'Mostrar mais produtos ↓';
    el('akitemmResultadoProdutos').textContent=filtrados.length?
-    filtrados.length+' produto(s) publicado(s) · dez abas com quarenta espaços cada.':
-    'Vitrine com dez abas e capacidade para quatrocentos produtos.';
+    filtrados.length+' produto(s) publicado(s) · cinco abas com quarenta espaços cada.':
+    'Vitrine com cinco abas e capacidade para duzentos produtos.';
   }else{
    itensExibidos=itens.slice(0,quantidadeVitrine);
    el('akitemmCarregarMais').hidden=itens.length<=quantidadeVitrine;
