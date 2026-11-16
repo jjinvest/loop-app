@@ -788,21 +788,10 @@ function criarBannerConfig(dados={}){
 function preencherConfigLojaAdmin(dados){
  configLojaAtual=dados;
  const config=dados.config;
- const slots=$('configVitrineSlotsAdmin');slots.replaceChildren();
- const padrao=['ROXO','DOURADO','VERDE','CINZA','CINZA','VERDE','DOURADO','ROXO'];
- const cores=['ROXO','DOURADO','VERDE','CINZA'];
- for(let indice=0;indice<200;indice++){
-  const rotulo=elem('label');
-  rotulo.textContent='Aba '+(Math.floor(indice/40)+1)+' · fileira '+(Math.floor(indice%40/10)+1)+' · quadrinho '+(indice%10+1);
-  const campo=elem('select');
-  campo.name='vitrineSlotCor';
-  campo.setAttribute('aria-label','Cor do quadrinho '+(indice+1));
-  for(const cor of cores){
-   const opcao=elem('option',cor.charAt(0)+cor.slice(1).toLowerCase());
-   opcao.value=cor;campo.append(opcao);
-  }
-  campo.value=(config.vitrineSlots||padrao)[indice]||padrao[indice%8];
-  rotulo.append(campo);slots.append(rotulo);
+ const slots=$('configVitrineSlotsAdmin');
+ if(slots){
+  slots.replaceChildren();
+  slots.hidden=true; // Cores definidas no cadastro do produto, não por 200 seletores.
  }
 
  const textos={
@@ -841,9 +830,8 @@ function colherConfigLojaAdmin(){
  const config=structuredClone(configLojaAtual.config);
  for(const [id,chave] of Object.entries(textos))config.informacoes[chave]=$(id).value;
  for(const [id,chave] of Object.entries(redes))config.redes[chave]=$(id).value;
- config.vitrineSlots=[...$('configVitrineSlotsAdmin').querySelectorAll('[name="vitrineSlotCor"]')]
-  .map(select=>select.value);
- if(config.vitrineSlots.length!==200)throw Error('VITRINE_SLOTS_INCOMPLETOS');
+ // Preserva os espaços existentes sem exigir 200 controles no escritório.
+ config.vitrineSlots=configLojaAtual.config.vitrineSlots;
  config.banners=[...$('configBannersAdmin').children].map(bloco=>{
   const get=nome=>bloco.querySelector('[name="'+nome+'"]').value.trim();
   return {titulo:get('titulo'),descricao:get('descricao'),
