@@ -392,8 +392,33 @@ $('formCustosProdutoAdmin').addEventListener('submit',async e=>{
   ' (reabra o produto em caso de revisão concorrente).';}
  finally{botao.disabled=false;}
 });
+function prepararCorCadastro(){
+ const form=$('formProduto'),botao=$('salvarProdutoAdmin');
+ if(!form||!botao||$('corCadastroProdutoAdmin'))return;
+ const label=elem('label','Cor do produto na loja');
+ const sel=elem('select');sel.id='corCadastroProdutoAdmin';
+ for(const cor of ['CINZA','VERDE','DOURADO','ROXO']){
+  const op=elem('option',cor);op.value=cor;sel.append(op);
+ }
+ label.append(sel);botao.parentNode.insertBefore(label,botao);
+}
+prepararCorCadastro();
+async function salvarCorCadastro(id,cor){
+ const atual=await api('/sinalizacao/'+encodeURIComponent(id));
+ if(atual.classificacao===cor)return;
+ const dados={classificacao:cor,quantidadeMinimaLoop:atual.quantidadeMinimaLoop,revisaoEsperada:atual.revisao};
+ if(cor==='ROXO'){
+  dados.modoRoxo=atual.modoRoxo||'POR_UNIDADE';
+  if(dados.modoRoxo==='POR_PEDIDO'){
+   dados.quantidadeMinimaRoxo=atual.quantidadeMinimaRoxo||5;
+   dados.posicoesPorPedidoRoxo=atual.posicoesPorPedidoRoxo||0;
+  }else dados.posicoesPorUnidadeRoxo=atual.posicoesPorUnidadeRoxo||0;
+ }
+ return api('/sinalizacao/'+encodeURIComponent(id),{method:'PATCH',body:dados});
+}
 function limparProduto(){
  edicaoProduto=null;chaveProduto=null;$('formProduto').reset();
+ $('corCadastroProdutoAdmin').value='CINZA';
  $('produtoIdAdmin').readOnly=false;$('produtoTipoAdmin').disabled=false;
  $('produtoEntregaAdmin').value='ESTOQUE_PROPRIO';
  $('tituloFormularioProduto').textContent='Cadastrar produto';
@@ -404,6 +429,9 @@ function limparProduto(){
 }
 function preencherProduto(item){
  selecionarAbaAdmin('produtos');
+ api('/sinalizacao/'+encodeURIComponent(item.produto.id)).then(r=>{
+  if(edicaoProduto?.id===item.produto.id)$('corCadastroProdutoAdmin').value=r.classificacao;
+ }).catch(()=>{});
  edicaoProduto={id:item.produto.id,revisao:item.revisao,estado:item.produto.estado};
  $('produtoIdAdmin').value=item.produto.id;$('produtoIdAdmin').readOnly=true;
  $('produtoTipoAdmin').value=item.produto.tipo;$('produtoTipoAdmin').disabled=true;
@@ -1768,9 +1796,13 @@ $('formProduto').addEventListener('submit',async event=>{
      alteracoes:{estado:'PUBLICADO'}}
    });
   }
+  const corEscolhida=$('corCadastroProdutoAdmin').value;
+  let erroCor=null;
+  try{await salvarCorCadastro(id,corEscolhida);}catch(e){erroCor=e;}
   limparProduto();await atualizar();
-  preencherProduto(await api('/produtos/'+encodeURIComponent(id)));
-  $('resultadoProdutoAdmin').textContent=arquivoErro?
+  $('resultadoProdutoAdmin').textContent=erroCor?
+   'Produto salvo, mas cor não aplicada: '+erroCor.message:
+   arquivoErro?
    'Produto salvo, mas arquivo falhou: '+arquivoErro.message+
     '. Selecione novamente o arquivo e clique em enviar.':
    'Produto salvo'+arquivoStatus+'. Confira seus custos internos.';
