@@ -50,13 +50,13 @@ test('configuração SQLite antiga sem slots migra sem perder os dados',()=>{
 
 test('molduras vazias não são mercadorias nem oferecem compra',()=>{
  const comeco=codigo.indexOf('function criarSlotVazio(');
- const fim=codigo.indexOf('function mostrarCatalogo(',comeco);
+ const fim=codigo.indexOf('function prepararAbasVitrine(',comeco);
  assert.ok(comeco>0&&fim>comeco);
  const trecho=codigo.slice(comeco,fim);
  assert.match(trecho,/card\.className='produto-loja-loop akitemm-slot-vazio/);
  assert.match(trecho,/Aguardando produto cadastrado/);
  assert.doesNotMatch(trecho,/createElement\('button'\)|adicionar\(|precoCentavos|pedidoId/);
- assert.match(codigo,/if\(!item\.produto\)\{destino\.append\(criarSlotVazio\(item\)\);continue;\}/);
+ assert.match(codigo,/if\(!item\.produto\)\{alvo\.append\(criarSlotVazio\(item\)\);continue;\}/);
  assert.match(codigo,/const exibirMolduras=filtro==='todos'&&!termoBusca/);
  assert.match(codigo,/gradeVitrineMontada\(filtrados\)\.filter\(item=>!corFiltro\|\|item\.cor===corFiltro\)/);
  assert.match(codigo,/Nenhum quadrinho desta cor/);

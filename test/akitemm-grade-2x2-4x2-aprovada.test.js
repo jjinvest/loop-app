@@ -35,10 +35,12 @@ test('legenda em duas colunas no PC e celular; 4 colunas PC e 2 no celular',()=>
  assert.match(css,/@media\(max-width:800px\)\{\s*\.akitemm-loja #catalogoLojaLoop\{\s*grid-template-columns:repeat\(2,minmax\(0,1fr\)\)/);
 });
 
-test('pagina inicial com 8 PC e 4 celular e paginacao usa produtos reais',()=>{
- assert.match(js,/const tamanhoPaginaVitrine=\(\)=>window\.matchMedia\('\(max-width:800px\)'\)\.matches\?4:8/);
- assert.match(js,/quantidadeVitrine=tamanhoPaginaVitrine\(\)/);
+test('dez abas de 40 espacos em fileiras horizontais; filtros continuam com layout anterior',()=>{
+ assert.match(js,/TOTAL_ABAS=10,COLUNAS_FAIXA=10,LINHAS_ABA=4,VAGAS_ABA=40/);
+ assert.match(js,/const linhas=expandida\?LINHAS_ABA:2/);
+ assert.match(js,/const indice=abaProdutos\*VAGAS_ABA\+i/);
+ assert.match(js,/el\('akitemmCarregarMais'\)\.textContent=expandida/);
  assert.match(js,/quantidadeVitrine\+=tamanhoPaginaVitrine\(\)/);
- assert.match(js,/itens\.slice\(0,quantidadeVitrine\)/);
- assert.match(js,/destino\.append\(card\)/);
+ assert.match(js,/itensExibidos=itens\.slice\(0,quantidadeVitrine\)/);
+ assert.match(js,/alvo\.append\(card\)/);
 });
