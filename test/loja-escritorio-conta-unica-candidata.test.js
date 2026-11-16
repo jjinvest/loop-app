@@ -18,7 +18,9 @@ const termosTexto='Estes termos são exclusivamente de laboratório; não config
 function config(banco,keyA,keyB){
  return {banco,chaveEmail:keyA,chaveCifra:keyB,
   repositorioCatalogo:catalogoFicticioCheckout(),
-  segredoOperador:ADMIN,termosVersao,termosTexto};
+  segredoOperador:ADMIN,termosVersao,termosTexto,
+  termosIdentidadeVersao:'LAB-identidade-cpf-2026',
+  termosIdentidadeTexto:'Documento ficticio exclusivo do teste automatizado de identificacao por CPF. Nao autoriza pagamentos, beneficios, saques ou posicoes e nao representa termos aprovados para clientes.'};
 }
 async function iniciar(app){
  const server=app.listen(0,'127.0.0.1');await once(server,'listening');
