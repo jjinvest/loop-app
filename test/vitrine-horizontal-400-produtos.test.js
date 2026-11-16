@@ -13,7 +13,7 @@ test('10 abas com 40 quadrinhos: 4 fileiras de 10, 2 exibidas inicialmente',()=>
  assert.match(src,/abasExpandidas\.has\(abaProdutos\)/);
  assert.match(src,/Página '\+\(n\+1\)\+' de '\+TOTAL_ABAS/);
  assert.match(src,/scroll-snap-type:x proximity/);
- assert.match(src,/grid-auto-columns:calc\(\(100% - 8px\)\/2\)/);
+ assert.match(src,/grid-auto-columns:calc\(50% - 4px\)/);
 });
 test('oito cores configuradas e produtos reais continuam conectados, vazio sem checkout',()=>{
  assert.match(src,/coresVitrine\(\)\.map\(\(cor,indice\)=>/);
