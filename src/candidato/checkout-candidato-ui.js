@@ -739,11 +739,6 @@ async function atualizarPosicoes(){
   grade.setAttribute('role','list');
   grade.setAttribute('aria-label',somentePosicoesPeloQuadrado?
    'Posições da própria conta':'Dez espaços de posições da própria conta');
-  const painelConfirmacoes=document.createElement('section');
-  painelConfirmacoes.className='loop03-confirmacoes-posicoes';
-  const tituloConfirmacoes=document.createElement('h3');
-  tituloConfirmacoes.textContent='CPF e aceite dos termos das posições';
-  painelConfirmacoes.append(tituloConfirmacoes);
   const estados={
    APENAS_PREVIA_FILA_B_AZUL:'Aguardando confirmação · Fila B',
    EXIGE_REVISAO_PSP:'Pedido em análise',
@@ -903,7 +898,7 @@ async function atualizarPosicoes(){
      aviso.textContent='Termos indisponíveis para confirmação desta posição.';
      formulario.append(aviso);
     }
-    painelConfirmacoes.append(formulario);
+    cartao.append(formulario);
    }
    if(posicao){
     const botao=document.createElement('button');botao.type='button';
@@ -946,14 +941,829 @@ async function atualizarPosicoes(){
     'Você ainda não possui posições; o cartão acima é só uma demonstração.'):
    fora?'Outros '+fora+' registros permanecem no histórico de pedidos. O limite de 10 aplica-se a posições ativas, não aos pedidos passados.':
    'Acompanhe suas posições nesta área.';
-  if(!painelConfirmacoes.querySelector('form')){
-   const informacao=document.createElement('p');informacao.className='subtexto';
-   informacao.textContent=ativas.length?
-    'Não há posições aguardando confirmação de CPF e termos.':
-    'Quando uma compra qualificada criar sua posição, o campo de CPF e o aceite dos termos aparecerão aqui.';
-   painelConfirmacoes.append(informacao);
+  area.replaceChildren(resumo,grade,aviso);
+ }catch(e){
+  area.replaceChildren();
+  const erro=document.createElement('p');
+  erro.textContent='Não foi possível carregar suas posições. Tente atualizar.';
+  area.append(erro);
+ }
+}
+let sequenciaEquipe=0,temporizadorBuscaEquipe=null;
+function elementoEquipe(tag,classe,texto){
+ const el=document.createElement(tag);
+ if(classe)el.className=classe;
+ if(texto!==undefined)el.textContent=texto;
+ return el;
+}
+function criarBotaoAlocacao(pessoa){
+ const botao=elementoEquipe('button','loop03-rede-acao-alocar',
+  'Alocar indicação à posição selecionada');
+ botao.type='button';
+ botao.addEventListener('click',async()=>{
+  if(!Number.isSafeInteger(posicaoSelecionadaMotor)){
+   dizer('Abra Minhas Posições e escolha qual posição receberá a indicação.');
+   return;
   }
-  area.replaceChildren(resumo,grade,painelConfirmacoes,aviso);
+  botao.disabled=true;
+  try{
+   const resultado=await requisitar('/minha-equipe/indicacoes/qualificar-ensaio',{
+    method:'POST',mutacao:true,
+    body:{indicadoId:pessoa.indicadoId,posicaoAlvoId:posicaoSelecionadaMotor}
+   });
+   if(resultado.qualificada!==true)throw Error('INDICACAO_NAO_QUALIFICADA');
+   dizer('Indicação de ensaio atribuída à posição #'+
+    posicaoSelecionadaMotor+' · consulte a fila A no tabuleiro.');
+   await atualizarEquipe(0);await atualizarPosicoes();
+   if(aba==='conteudoTabuleiro')await atualizarTabuleiroIntegrado();
+  }catch(e){
+   dizer('Indicação não atribuída: '+e.message+
+    '. Confirme o aceite da posição e a compra Pix Sandbox do indicado.');
+   botao.disabled=false;
+  }
+ });
+ return botao;
+}
+function renderizarIndicadoNaRede(pessoa){
+ const numero=Number.isSafeInteger(pessoa.numeroCadastro)&&pessoa.numeroCadastro>0?
+  pessoa.numeroCadastro:null;
+ const validada=pessoa.qualificadaEnsaio===true;
+ const possuiPosicao=pessoa.possuiPosicaoDeEnsaio===true;
+ const cor=validada?'verde':possuiPosicao?'azul':'vermelho';
+ const status=validada?'Vinculação registrada':possuiPosicao?
+  'Ativação em análise':'Cadastro realizado';
+ const cartao=elementoEquipe('article','loop03-rede-pessoa');
+ cartao.dataset.estado=cor;
+ if(numero!==null)cartao.dataset.numeroCadastro=String(numero);
+ const cabecalho=elementoEquipe('div','loop03-rede-pessoa-cabecalho');
+ // Largura mínima de quatro dígitos, nunca um teto (ex.: #1000000).
+ const marca=elementoEquipe('span','loop03-rede-pessoa-numero',
+  numero!==null?'#'+String(numero).padStart(4,'0'):'#—');
+ marca.title='Ordem cronológica de cadastro na sua equipe.';
+ const luz=elementoEquipe('span','loop03-rede-pessoa-luz');
+ luz.setAttribute('aria-hidden','true');
+ const nome=elementoEquipe('strong','loop03-rede-pessoa-nick','@'+pessoa.nick);
+ const statusTxt=elementoEquipe('span','loop03-rede-pessoa-status',status);
+ const botao=elementoEquipe('button','loop03-rede-pessoa-menu','⋮');
+ botao.type='button';botao.setAttribute('aria-label','Detalhes de @'+pessoa.nick);
+ botao.setAttribute('aria-expanded','false');
+ const conteudo=elementoEquipe('div','loop03-rede-pessoa-detalhes');
+ conteudo.hidden=true;
+ const detalhar=()=>{
+  const abrir=conteudo.hidden;
+  for(const outro of $('listaEquipe').querySelectorAll('.loop03-rede-pessoa-detalhes')){
+   outro.hidden=true;
+   const toggle=outro.parentElement.querySelector('.loop03-rede-pessoa-menu');
+   if(toggle)toggle.setAttribute('aria-expanded','false');
+  }
+  conteudo.hidden=!abrir;botao.setAttribute('aria-expanded',String(abrir));
+ };
+ botao.addEventListener('click',detalhar);
+ cabecalho.append(marca,luz,nome,statusTxt,botao);
+ const info=elementoEquipe('div','loop03-rede-pessoa-info');
+ const telefone=typeof pessoa.telefone==='string'&&
+  /^(?:[0-9]{10,11}|55[0-9]{10,11})$/.test(pessoa.telefone)?
+  pessoa.telefone:null;
+ if(telefone){
+  const span=elementoEquipe('span',null,'Telefone: ');
+  const ligar=elementoEquipe('a',null,telefone);
+  ligar.href='tel:+'+(telefone.startsWith('55')?'':'55')+telefone;
+  ligar.setAttribute('aria-label','Ligar para @'+pessoa.nick);
+  span.append(ligar);info.append(span);
+ }else info.append(elementoEquipe('span',null,'Telefone: contato reservado'));
+ const registro=new Date(pessoa.registradoEm);
+ const dataValida=Number.isFinite(registro.getTime());
+ const opcoes={timeZone:'America/Sao_Paulo'};
+ const data=dataValida?registro.toLocaleDateString('pt-BR',opcoes):'não informada';
+ const hora=dataValida?registro.toLocaleTimeString('pt-BR',{
+  ...opcoes,hour:'2-digit',minute:'2-digit',hour12:false
+ }):'não informada';
+ info.append(
+  elementoEquipe('span',null,'Cadastro: '+data),
+  elementoEquipe('span',null,'Horário: '+hora+' (Brasília)'),
+  elementoEquipe('span',null,'Fila: '+(pessoa.filaCadastro==='B'?'B':'não informada'))
+ );
+ if(validada){
+  conteudo.append(elementoEquipe('p','loop03-rede-pessoa-vinculo','Indicação já vinculada.'));
+ }else if(!possuiPosicao){
+  conteudo.append(elementoEquipe('p','loop03-rede-pessoa-vinculo','Aguardando confirmação de ativação no LOOP.'));
+ }else{
+  conteudo.append(elementoEquipe('p','loop03-rede-pessoa-vinculo','Escolha uma das suas posições confirmadas:'));
+  const grade=elementoEquipe('div','loop03-rede-alocar-posicoes');
+  grade.style.display='grid';grade.style.gridTemplateColumns='repeat(5,minmax(0,1fr))';grade.style.gap='8px';
+  for(let n=1;n<=10;n++){
+   const escolha=elementoEquipe('button',null,String(n));escolha.type='button';
+   const pos=posicoesDisponiveisResumo.find(p=>p.numero===n);
+   escolha.disabled=!pos||pos.aceiteIndividualRegistrado!==true;
+   escolha.title=!pos?'Posição não adquirida':pos.aceiteIndividualRegistrado!==true?
+    'Confirme CPF e termos desta posição':'Vincular à posição '+n;
+   escolha.addEventListener('click',async()=>{
+    escolha.disabled=true;
+    try{
+     const resultado=await requisitar('/minha-equipe/indicacoes/qualificar-ensaio',{
+      method:'POST',mutacao:true,body:{indicadoId:pessoa.indicadoId,posicaoAlvoId:n}
+     });
+     if(resultado.qualificada!==true)throw Error('INDICACAO_NAO_QUALIFICADA');
+     dizer('Indicação vinculada à posição '+n+'.');
+     await atualizarPosicoes();await atualizarEquipe(0);
+    }catch(e){dizer('Vinculação não realizada: '+e.message);escolha.disabled=false;}
+   });
+   grade.append(escolha);
+  }
+  conteudo.append(grade);
+ }
+ cartao.append(cabecalho,info,conteudo);
+ return cartao;
+}
+async function atualizarEquipe(pagina=0){
+ const tentativa=++sequenciaEquipe;
+ const busca=$('buscarEquipe').value.trim().replace(/^@/,'');
+ try{
+  const rota='/minha-equipe?pagina='+pagina+(busca?'&busca='+encodeURIComponent(busca):'');
+  const dados=await requisitar(rota);
+  if(tentativa!==sequenciaEquipe)return;
+  if(pagina===0)$('listaEquipe').replaceChildren();
+  $('redeTotalCadastros').textContent=String(dados.total);
+  $('redeAlocadasEnsaio').textContent=String(dados.indicacoesQualificadas);
+  // Não representar pessoas sem pedido conciliado como "a distribuir".
+  $('redeADistribuirEnsaio').textContent='—';
+  $('equipeResumo').textContent=busca?
+   dados.totalFiltrado+' resultado(s) encontrados · '+dados.total+
+   ' cadastro(s) na sua rede.':
+   dados.total+' cadastro(s) pelo seu link · '+dados.indicacoesQualificadas+
+   ' indicação(ões) vinculada(s).';
+  if(pagina===0&&dados.totalFiltrado===0){
+   const vazio=elementoEquipe('p','loop03-rede-vazia',busca?
+    'Nenhum cadastro encontrado. Procure por nick ou número do cadastro.':
+    'Sua rede ainda não possui cadastros. Compartilhe o link em Meus Links.');
+   $('listaEquipe').append(vazio);
+  }
+  for(const pessoa of dados.cadastros)$('listaEquipe').append(renderizarIndicadoNaRede(pessoa));
+  proximaPaginaEquipe=dados.proximaPagina;
+  $('maisEquipe').hidden=proximaPaginaEquipe===null;
+ }catch(e){
+  if(tentativa!==sequenciaEquipe)return;
+  $('equipeResumo').textContent='Não foi possível carregar sua equipe. Tente novamente.';
+ }
+}
+async function atualizarLinks(){
+ try{
+  const perfil=await requisitar('/contas/me');
+  // Links de divulgacao usam o dominio oficial independentemente da origem
+  // onde o titular acessou o Escritorio. O nick vem da sessao autenticada.
+  if(typeof perfil.nick!=='string'||perfil.nick.length<1)
+   throw Error('NICK_TITULAR_INVALIDO');
+  const dominioOficial='https://akitemmloop.com.br';
+  const nick=encodeURIComponent(perfil.nick);
+  $('linksNick').textContent='Seu nick: @'+perfil.nick;
+  $('linkLoja').value=dominioOficial+'/loja/'+nick;
+  $('linkEscritorio').value=dominioOficial+'/escritorio/'+nick;
+ }catch(e){dizer('Não foi possível consultar seus links: '+e.message);}
+}
+async function copiarLink(id){
+ const campo=$(id);
+ try{
+  if(!campo.value)throw Error('LINK_NAO_DISPONIVEL');
+  await navigator.clipboard.writeText(campo.value);
+  dizer('Link copiado.');
+ }catch{
+  campo.focus();campo.select();
+  dizer('Selecione e copie o link mostrado.');
+ }
+}
+async function atualizarConta(){
+ try{
+  const perfil=await requisitar('/contas/me');
+  $('perfilCliente').textContent='Nome: '+perfil.nome+
+   ' · Nick: @'+perfil.nick+
+   ' · E-mail: '+(perfil.emailVerificado?'confirmado':'não confirmado')+
+   '. Identidade comercial: pendente.';
+   $('novoNickGrafia').value=perfil.nick;
+   $('avisoGrafiaNick').textContent=perfil.nickGrafiaConfirmada?
+    'Grafia confirmada. Para alterar somente as letras maiúsculas e minúsculas, informe sua senha.':
+    'Conta antiga: confirme como seu nick deve aparecer e ser digitado no próximo acesso.';
+ }catch(e){$('perfilCliente').textContent='Perfil indisponível: '+e.message;}
+}
+async function confirmarGrafiaNick(e){
+ e.preventDefault();
+ const botao=$('formGrafiaNick').querySelector('button[type=submit]');
+ botao.disabled=true;
+ const status=$('estadoGrafiaNick');
+ status.textContent='';
+ try{
+  const resposta=await requisitar('/contas/nick/grafia',{
+   method:'POST',mutacao:true,
+   body:{novoNick:$('novoNickGrafia').value,
+    senhaAtual:$('senhaNickGrafia').value}
+  });
+  if(resposta.grafiaConfirmada!==true)throw Error('NICK_NAO_CONFIRMADO');
+  $('senhaNickGrafia').value='';
+  await Promise.all([atualizarConta(),atualizarResumo(),atualizarLinks()]);
+  status.textContent='Nick confirmado: @'+resposta.nick+
+   '. Nos próximos acessos, use exatamente esta grafia.';
+ }catch(err){
+  $('senhaNickGrafia').value='';
+  status.textContent='Não foi possível confirmar o nick: '+explicarErro(err);
+ }finally{botao.disabled=false;}
+}
+async function trocarSenha(e){
+ e.preventDefault();
+ const botao=$('formTrocarSenha').querySelector('button');
+ botao.disabled=true;
+ try{
+  const anterior=$('senhaAtual').value,nova=$('novaSenha').value;
+  const resultado=await requisitar('/contas/senha',{method:'POST',
+   body:{senhaAtual:anterior,novaSenha:nova},mutacao:true});
+  if(resultado.senhaAlterada!==true||resultado.todasSessoesRevogadas!==true)
+   throw Error('TROCA_SENHA_NAO_CONFIRMADA');
+  $('senhaAtual').value='';$('novaSenha').value='';
+  mostrarSessao(false);
+  dizer('Senha alterada. Todas as sessões foram encerradas; entre com sua nova senha.');
+ }catch(err){
+  $('senhaAtual').value='';$('novaSenha').value='';
+  dizer('Não foi possível alterar a senha: '+err.message);
+ }finally{botao.disabled=false;}
+}
+function limparFotoPerfil(){
+ versaoCarregamentoFoto++;
+ if(fotoPerfilUrl){URL.revokeObjectURL(fotoPerfilUrl);fotoPerfilUrl=null;}
+ const imagem=$('loop03ImagemFotoTopo'),vazio=$('loop03FotoSemImagem');
+ const rodape=$('loop03ImagemFotoRodape'),icone=$('loop03AvatarRodapeVazio');
+ if(imagem){imagem.hidden=true;imagem.removeAttribute('src');}
+ if(rodape){rodape.hidden=true;rodape.removeAttribute('src');}
+ if(vazio)vazio.hidden=false;
+ if(icone)icone.hidden=false;
+}
+async function atualizarFotoPerfil(){
+ const ordem=++versaoCarregamentoFoto;
+ try{
+  const resposta=await fetch('/staging/contas/foto-perfil',{
+   credentials:'same-origin',cache:'no-store'});
+  if(ordem!==versaoCarregamentoFoto)return;
+  if(resposta.status===404){limparFotoPerfil();return;}
+  if(!resposta.ok)return;
+  const arquivo=await resposta.blob();
+  if(ordem!==versaoCarregamentoFoto)return;
+  const url=URL.createObjectURL(arquivo);
+  if(fotoPerfilUrl)URL.revokeObjectURL(fotoPerfilUrl);
+  fotoPerfilUrl=url;
+  $('loop03ImagemFotoTopo').src=url;
+  $('loop03ImagemFotoTopo').hidden=false;
+  $('loop03FotoSemImagem').hidden=true;
+  $('loop03ImagemFotoRodape').src=url;
+  $('loop03ImagemFotoRodape').hidden=false;
+  $('loop03AvatarRodapeVazio').hidden=true;
+ }catch{/* Sem foto, o topo continua com o ícone neutro. */}
+}
+async function salvarFotoPerfil(e){
+ e.preventDefault();
+ const campo=$('arquivoFotoPerfil'),status=$('statusFotoPerfil');
+ const arquivo=campo.files?.[0];
+ if(!arquivo){status.textContent='Escolha uma foto primeiro.';return;}
+ if(!['image/jpeg','image/png','image/webp'].includes(arquivo.type)||
+    arquivo.size>3*1024*1024||arquivo.size===0){
+  status.textContent='Escolha JPEG, PNG ou WebP com até 3 MB.';return;
+ }
+ const botao=$('formFotoPerfil').querySelector('button[type=submit]');
+ botao.disabled=true;status.textContent='Salvando sua foto…';
+ try{
+  const resposta=await fetch('/staging/contas/foto-perfil',{
+   method:'POST',credentials:'same-origin',cache:'no-store',
+   headers:{'Content-Type':arquivo.type,'X-Checkout-Csrf':csrf||''},
+   body:arquivo
+  });
+  if(!resposta.ok){
+   const dados=await resposta.json().catch(()=>({}));
+   throw Error(dados.erro||'FOTO_INDISPONIVEL');
+  }
+  campo.value='';
+  await atualizarFotoPerfil();
+  status.textContent='Foto atualizada no Escritório.';
+ }catch(e){status.textContent='Não foi possível salvar a foto: '+e.message;}
+ finally{botao.disabled=false;}
+}
+async function autenticarConta(nick,senha){
+ const body={nick,senha};
+ if(captchaLoginAtivo){
+  if(!captchaLoginId||!/^[A-Za-z2-9]{6}$/.test($('captchaLoginResposta').value.trim()))
+   throw Error('CAPTCHA_LOGIN_OBRIGATORIO');
+  body.captchaId=captchaLoginId;
+  body.captchaResposta=$('captchaLoginResposta').value.trim().toUpperCase();
+ }
+ const dados=await requisitar('/contas/entrar',{method:'POST',body});
+ captchaLoginAtivo=false;captchaLoginId=null;
+ $('captchaLoginArea').hidden=true;$('captchaLoginResposta').value='';
+ csrf=dados.csrf;mostrarSessao(true);$('senha').value='';
+ void atualizarFotoPerfil();
+ if(new URLSearchParams(location.search).get('destino')==='loja'){
+  await terminarModoOperador();
+  location.assign('/loja');return;
+ }
+ await atualizarVerificacaoEmail();
+ await atualizarIdentidadeTeste();
+ mostrarAba('conteudoResumo');
+ return dados;
+}
+
+async function atualizarCaptchaLogin(){
+ captchaLoginAtivo=true;captchaLoginId=null;
+ $('captchaLoginArea').hidden=false;
+ $('captchaLoginResposta').value='';
+ $('captchaLoginImagem').removeAttribute('src');
+ $('captchaLoginEstado').textContent='Carregando código de segurança...';
+ try{
+  const r=await requisitar('/contas/captcha-login');
+  if(!/^[a-f0-9]{48}$/.test(r.captchaId)||
+     !/^data:image\/svg\+xml;base64,[A-Za-z0-9+/=]+$/.test(r.captchaImagem))
+   throw Error('CAPTCHA_INVALIDO');
+  captchaLoginId=r.captchaId;
+  $('captchaLoginImagem').src=r.captchaImagem;
+  $('captchaLoginEstado').textContent='Digite o código para a próxima tentativa.';
+ }catch{
+  $('captchaLoginEstado').textContent='Não foi possível carregar o código. Toque em Outro código.';
+ }
+}
+async function terminarModoOperador(){
+ const estado=await fetch('/api/operador/estado',{credentials:'same-origin',cache:'no-store'});
+ if(!estado.ok||(await estado.json()).operador!==true)return;
+ const resposta=await fetch('/staging/operador/sair',{
+  method:'POST',credentials:'same-origin',cache:'no-store'
+ });
+ if(resposta.status===404)return; // identidade em dominio independente
+ if(!resposta.ok)throw Error('FALHA_AO_ENCERRAR_OPERADOR');
+ dispatchEvent(new Event('loop:operador-saiu'));
+}
+async function autenticarOperadorFormulario(nick,senha){
+ const resposta=await fetch('/api/operador/entrar',{
+  method:'POST',credentials:'same-origin',cache:'no-store',
+  headers:{'Content-Type':'application/json'},
+  body:JSON.stringify({nick,senha})
+ });
+ if(!resposta.ok){
+  if(resposta.status===401)throw Error('CREDENCIAIS_INVALIDAS');
+  if(resposta.status===429)throw Error('CONTA_TEMPORARIAMENTE_BLOQUEADA');
+  throw Error('ACESSO_OPERADOR_INDISPONIVEL');
+ }
+ const dados=await resposta.json();
+ if(dados.operador!==true)throw Error('ACESSO_OPERADOR_INDISPONIVEL');
+}
+function abrirModoOperadorNaTela(){
+ // O operador utiliza o visual aprovado, mas nao assume nenhuma conta de cliente.
+ modoOperadorSemCliente=true;
+ csrf=null;
+ mostrarSessao(true);
+ $('senha').value='';
+ $('loop03NickIntegrado').textContent='@operador';
+ $('loop03TotalIntegrado').textContent='—';
+ $('loop03Giros24Integrado').textContent='—';
+ $('loop03NumeroIntegrado').textContent='—';
+ $('loop03StatusPosicao').textContent='';
+ $('perfilCliente').textContent='Operador · Edição diretamente nas telas';
+ $('painelVerificarEmail').hidden=true;
+ $('painelIdentidadeTeste').hidden=true;
+ for(const [id] of ABAS){
+  const botao=$(id);if(!botao)continue;
+  botao.disabled=!['abaResumo','abaTabuleiro'].includes(id);
+  if(botao.disabled)botao.title='Dados pessoais exigem login de cliente';
+ }
+ $('loop03IrPosicoesIntegrado').disabled=true;
+ mostrarAba('conteudoResumo');
+ dizer('Modo operador ativado. Toque no banner ou no relógio para editar.');
+ dispatchEvent(new Event('loop:operador-entrou'));
+}
+async function entrar(e){
+ e.preventDefault();
+ const botao=$('formLogin').querySelector('button[type=submit]');
+ botao.disabled=true;dizer('Validando conta de homologação...');
+ try{
+  if($('login').value.trim().toLowerCase()==='operador'){
+   await autenticarOperadorFormulario($('login').value.trim(),$('senha').value);
+   $('senha').value='';
+   location.assign('/staging/cliente?modo=operador');
+   return;
+  }
+  modoOperadorSemCliente=false;
+  for(const [id] of ABAS){const b=$(id);if(b){b.disabled=false;b.removeAttribute('title');}}
+  $('loop03IrPosicoesIntegrado').disabled=false;
+  await autenticarConta($('login').value,$('senha').value);
+  await terminarModoOperador();
+  mostrarErroAcesso('login','');
+  dizer('Bem-vindo ao seu Escritório. Seus dados estão disponíveis nas abas.');
+ }catch(err){
+  if(['CREDENCIAIS_INVALIDAS','CAPTCHA_LOGIN_OBRIGATORIO',
+      'CAPTCHA_INVALIDO'].includes(err.message))
+   await atualizarCaptchaLogin();
+  mostrarErroAcesso('login',explicarErro(err));
+ }
+ finally{botao.disabled=false;}
+}
+
+async function sair(){
+ if(modoOperadorSemCliente){
+  try{await terminarModoOperador();}catch(e){dizer('Falha ao encerrar: '+e.message);return;}
+  modoOperadorSemCliente=false;
+  mostrarSessao(false);
+  for(const [id] of ABAS){const b=$(id);if(b){b.disabled=false;b.removeAttribute('title');}}
+  $('loop03IrPosicoesIntegrado').disabled=false;
+  dizer('Sessão de operador encerrada.');
+  history.replaceState(null,'','/staging/cliente');
+  return;
+ }
+ try{
+  await terminarModoOperador();
+  await requisitar('/contas/sair',{method:'POST',mutacao:true});
+ }
+ catch(e){dizer('Falha ao encerrar: '+e.message);return;}
+ mostrarSessao(false);$('listaPedidos').replaceChildren();$('comunicadosCliente').replaceChildren();$('minhaPreviaFilas').replaceChildren();$('minhasPreAdesoes').replaceChildren();
+ dizer('Sessão de homologação encerrada.');
+}
+async function carregarIndicadorCadastro(){
+ try{
+  const res=await fetch('/staging/indicacao/atual',{credentials:'same-origin',cache:'no-store'});
+  if(!res.ok)return;
+  const dados=await res.json(),campo=$('cadastroIndicador');
+  if(campo)campo.value=typeof dados.nick==='string'&&
+   dados.nick.length<=12?dados.nick:'';
+  // Campo apenas informativo. O backend vincula a indicação somente a partir
+  // do cookie assinado; nunca confia em texto enviado pelo navegador.
+ }catch{/* Sem convite, o cadastro segue normalmente. */}
+}
+async function restaurarSessao(){
+ if(new URLSearchParams(location.search).get('modo')==='operador'){
+  try{
+   const r=await fetch('/api/operador/estado',{credentials:'same-origin',cache:'no-store'});
+   if(r.ok&&(await r.json()).operador===true){abrirModoOperadorNaTela();return;}
+  }catch{}
+ }
+ try{
+  const s=await requisitar('/contas/me');csrf=s.csrf;
+  mostrarSessao(true);
+  void atualizarFotoPerfil();
+  await atualizarVerificacaoEmail();
+  await atualizarIdentidadeTeste();
+  dizer('Sua sessão foi restaurada.');
+  mostrarAba('conteudoResumo');
+  }catch(e){
+  mostrarSessao(false);dizer('');
+  // Sem pedido explicito de operador, a caixa permanece de cliente.
+  const params=new URLSearchParams(location.search);
+  if(params.get('cadastro')==='1'||params.get('destino')==='loja'){
+   selecionarTelaAcesso('cadastro');
+   void carregarTermosCadastro();
+  }
+ }
+}
+async function atualizarCaptchaCadastro(){
+ captchaCadastroId=null;
+ $('captchaCadastroResposta').value='';
+ $('captchaCadastroImagem').removeAttribute('src');
+ if(!captchaCadastroAtivo)return;
+ $('captchaCadastroEstado').textContent='Gerando código de segurança...';
+ try{
+  const r=await requisitar('/contas/captcha-cadastro');
+  if(!/^[a-f0-9]{48}$/.test(r.captchaId)||
+     !/^data:image\/svg\+xml;base64,[A-Za-z0-9+/=]+$/.test(r.captchaImagem))
+   throw Error('CAPTCHA_INVALIDO');
+  captchaCadastroId=r.captchaId;
+  $('captchaCadastroImagem').src=r.captchaImagem;
+  $('captchaCadastroEstado').textContent='Digite o código antes de concluir seu cadastro.';
+ }catch{
+  $('captchaCadastroEstado').textContent='Não foi possível gerar o código. Toque em Outro código.';
+ }
+}
+async function carregarTermosCadastro(){
+ if(carregandoTermosCadastro)return carregandoTermosCadastro;
+ const botao=$('formCadastro').querySelector('button[type=submit]');
+ termosCadastroLidos=null;
+ captchaCadastroAtivo=false;captchaCadastroId=null;
+ $('captchaCadastroArea').hidden=true;
+ $('cadastroTermos').checked=false;
+ $('cadastroTermos').disabled=true;
+ botao.disabled=true;
+ carregandoTermosCadastro=(async()=>{
+  try{
+   const dados=await requisitar('/contas/termos-cadastro');
+   if(dados.somenteEnsaio!==true||dados.cadastroRealHabilitado!==false||
+      typeof dados.termosVersao!=='string'||!dados.termosVersao.startsWith('LAB-')||
+      typeof dados.termosTexto!=='string'||dados.termosTexto.length<40||
+      typeof dados.termosHash!=='string'||!/^[a-f0-9]{64}$/.test(dados.termosHash)||
+      typeof dados.privacidadeVersao!=='string'||
+      typeof dados.privacidadeTexto!=='string'||dados.privacidadeTexto.length<100||
+      typeof dados.privacidadeHash!=='string'||!/^[a-f0-9]{64}$/.test(dados.privacidadeHash))
+    throw Error('TERMOS_NAO_CONFIGURADOS');
+   $('versaoPrivacidadeCadastro').textContent='Versão: '+dados.privacidadeVersao;
+   $('textoPrivacidadeCadastro').textContent=dados.privacidadeTexto;
+   $('versaoTermosCadastro').textContent='Versão: '+dados.termosVersao;
+   $('textoTermosCadastro').textContent=dados.termosTexto;
+   termosCadastroLidos={versao:dados.termosVersao,hash:dados.termosHash,
+    privacidadeVersao:dados.privacidadeVersao,privacidadeHash:dados.privacidadeHash};
+   captchaCadastroAtivo=dados.captchaObrigatorio===true;
+   $('captchaCadastroArea').hidden=!captchaCadastroAtivo;
+   if(captchaCadastroAtivo)await atualizarCaptchaCadastro();
+   $('cadastroTermos').disabled=false;
+   botao.disabled=false;
+  }catch{
+   $('versaoTermosCadastro').textContent='Termos indisponíveis';
+   $('textoTermosCadastro').textContent=
+    'Não é possível concluir o cadastro sem apresentar os termos. Tente abrir o cadastro novamente.';
+   $('textoPrivacidadeCadastro').textContent='Política de Privacidade indisponível.';
+  }finally{carregandoTermosCadastro=null;}
+ })();
+ return carregandoTermosCadastro;
+}
+
+async function cadastrar(e){
+ e.preventDefault();
+ if(!termosCadastroLidos||!$('cadastroTermos').checked){
+  mostrarErroAcesso('cadastro','Leia e confirme a Política e os Termos para criar a conta.');
+  return;
+ }
+ if(captchaCadastroAtivo&&(!captchaCadastroId||
+   !/^[A-Za-z2-9]{6}$/.test($('captchaCadastroResposta').value.trim()))){
+  mostrarErroAcesso('cadastro','Informe o código da imagem para concluir o cadastro.');
+  return;
+ }
+ const botao=$('formCadastro').querySelector('button');
+ const senha=$('cadastroSenha').value;
+ const confirmacao=$('cadastroConfirmarSenha').value;
+ const telefone=$('cadastroTelefone').value.replace(/[^0-9]/g,'');
+ const cpfCadastro=$('cadastroCpf').value.trim();
+ if(senha!==confirmacao){
+  mostrarErroAcesso('cadastro','A confirmação da senha deve ser idêntica.');
+  return;
+ }
+ if(!/^(?:[0-9]{10,11}|55[0-9]{10,11})$/.test(telefone)){
+  mostrarErroAcesso('cadastro','Informe um telefone válido com DDD.');
+  return;
+ }
+ botao.disabled=true;
+ try{
+  const nick=$('cadastroNick').value;
+  const r=await requisitar('/contas/cadastrar',{method:'POST',
+   body:{
+    nome:$('cadastroNome').value,
+    nick,cpf:cpfCadastro,email:$('cadastroEmail').value,telefone,senha,confirmarSenha:confirmacao,
+    aceiteExplicito:$('cadastroTermos').checked,
+    termosVersaoAceita:termosCadastroLidos.versao,
+    termosHashAceito:termosCadastroLidos.hash,
+    privacidadeVersaoAceita:termosCadastroLidos.privacidadeVersao,
+    privacidadeHashAceito:termosCadastroLidos.privacidadeHash,
+    ...(captchaCadastroAtivo?{captchaId:captchaCadastroId,
+     captchaResposta:$('captchaCadastroResposta').value.trim().toUpperCase()}:{}),
+   }
+  });
+  if(r.contaCriada!==true||r.pagamentoPermitido!==false)
+   throw Error('CADASTRO_INCOMPATIVEL');
+  $('login').value=nick;
+  $('cadastroSenha').value='';$('cadastroConfirmarSenha').value='';$('cadastroCpf').value='';
+  selecionarTelaAcesso('login');
+  dizer('Cadastro concluído. Agora entre com seu nick e a senha que você escolheu.');
+ }catch(e){
+  mostrarErroAcesso('cadastro',explicarErro(e));
+  if(e.message==='TERMOS_ALTERADOS_RELER'){
+   $('cadastroTermos').checked=false;
+   void carregarTermosCadastro();
+  }else if(captchaCadastroAtivo)await atualizarCaptchaCadastro();
+ }finally{botao.disabled=!termosCadastroLidos;}
+}
+
+function alternarVisibilidade(botao){
+ const campo=$(botao.dataset.senha);
+ if(!campo)return;
+ const visivel=campo.type==='password';
+ campo.type=visivel?'text':'password';
+ botao.setAttribute('aria-pressed',String(visivel));
+ botao.setAttribute('aria-label',visivel?'Ocultar senha':'Mostrar senha');
+ botao.title=visivel?'Ocultar senha':'Mostrar senha';
+ campo.focus({preventScroll:true});
+}
+async function solicitarRecuperacao(e){
+ e.preventDefault();
+ const botao=$('formSolicitarRecuperacao').querySelector('button[type=submit]');
+ botao.disabled=true;
+ const estado=$('estadoRecuperacao');
+ estado.textContent='Solicitando envio de código...';
+ try{
+  await requisitar('/contas/recuperar-senha',{method:'POST',
+   body:{email:$('emailRecuperacao').value}});
+  estado.textContent='Se o e-mail estiver cadastrado, você receberá um código. Confira também a caixa de spam.';
+  $('formConcluirRecuperacao').hidden=false;
+ }catch(err){
+  estado.textContent=explicarErro(err);
+  $('formConcluirRecuperacao').hidden=true;
+ }finally{botao.disabled=false;estado.focus();}
+}
+async function confirmarRecuperacao(e){
+ e.preventDefault();
+ const botao=$('formConcluirRecuperacao').querySelector('button[type=submit]');
+ botao.disabled=true;
+ const estado=$('estadoRecuperacao');
+ try{
+  const resultado=await requisitar('/contas/redefinir-senha',{method:'POST',
+   body:{email:$('emailRecuperacao').value,codigo:$('codigoRecuperacao').value,
+    novaSenha:$('senhaRecuperacao').value}});
+  if(resultado.senhaRedefinida!==true||resultado.todasSessoesRevogadas!==true)
+   throw Error('RECUPERACAO_CODIGO_OU_SENHA_INVALIDOS');
+  $('codigoRecuperacao').value='';$('senhaRecuperacao').value='';
+  $('formConcluirRecuperacao').hidden=true;
+  selecionarTelaAcesso('login');
+  dizer('Senha redefinida. Entre com seu nick e sua nova senha.');
+ }catch(err){
+  $('codigoRecuperacao').value='';
+  $('senhaRecuperacao').value='';
+  estado.textContent=explicarErro(err);
+  estado.focus();
+ }finally{botao.disabled=false;}
+}
+
+$('formFotoPerfil').addEventListener('submit',salvarFotoPerfil);
+$('arquivoFotoPerfil').addEventListener('change',ev=>{
+ if(ev.target.files?.length)void salvarFotoPerfil({preventDefault(){}});
+});
+$('loop03AlterarFotoTopo').addEventListener('click',()=>$('arquivoFotoPerfil').click());
+$('loop03AbrirPerfil').addEventListener('click',()=>void alternarDadosRodape());
+$('mudarParaLogin').addEventListener('click',()=>selecionarTelaAcesso('login'));
+$('abrirRecuperacao').addEventListener('click',()=>{
+ $('formConcluirRecuperacao').hidden=true;
+ $('estadoRecuperacao').textContent='';
+ selecionarTelaAcesso('recuperacao');
+});
+$('voltarLogin').addEventListener('click',()=>selecionarTelaAcesso('login'));
+$('formSolicitarRecuperacao').addEventListener('submit',solicitarRecuperacao);
+$('formConcluirRecuperacao').addEventListener('submit',confirmarRecuperacao);
+for(const botao of document.querySelectorAll('[data-senha]'))
+ botao.addEventListener('click',()=>alternarVisibilidade(botao));
+$('mudarParaCadastro').addEventListener('click',()=>{
+ selecionarTelaAcesso('cadastro');
+ if(!termosCadastroLidos)void carregarTermosCadastro();
+});
+$('formLogin').addEventListener('input',()=>mostrarErroAcesso('login',''));
+$('formCadastro').addEventListener('input',()=>mostrarErroAcesso('cadastro',''));
+$('formCadastro').addEventListener('submit',cadastrar);
+$('solicitarCodigoEmail').addEventListener('click',solicitarCodigoEmail);
+$('formConfirmarEmail').addEventListener('submit',confirmarCodigoEmail);
+$('formLogin').addEventListener('submit',entrar);
+$('captchaLoginAtualizar').addEventListener('click',()=>void atualizarCaptchaLogin());
+$('captchaCadastroAtualizar').addEventListener('click',()=>void atualizarCaptchaCadastro());
+$('formCpfTeste').addEventListener('submit',registrarIdentidadeTeste);
+$('pedidosAnterior').addEventListener('click',()=>{
+ if(paginaPedidos>0){paginaPedidos--;atualizarPedidos();}
+});
+$('pedidosProximo').addEventListener('click',()=>{
+ paginaPedidos++;atualizarPedidos();
+});
+$('sair').addEventListener('click',sair);
+const visorCatraca=window.LoopVisorCatraca.criar({elemento:$});
+visorCatraca.iniciar();
+
+
+$('atualizarTabuleiroIntegrado').addEventListener('click',atualizarTabuleiroIntegrado);
+// Ao abrir o tabuleiro, mostrar luzes e filas que mudaram por venda
+// conciliada e agendamento. Polling e somente GET, sem evento financeiro.
+setInterval(()=>{
+ if(aba==='conteudoTabuleiro'&&csrf!==null&&!document.hidden)
+  void atualizarTabuleiroIntegrado();
+},15000);
+
+
+function iniciarCarrosselResumo(){
+ const pista=$('loop03PistaBanners');
+ const pontos=[...document.querySelectorAll('[data-banner-resumo]')];
+ if(!pista||pontos.length!==4)return;
+ let atual=0,emInteracao=false;
+ const reduz=()=>window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+ function marcar(indice){
+  atual=indice;
+  pontos.forEach((p,i)=>p.setAttribute('aria-current',String(i===indice)));
+ }
+ function mover(indice){
+  marcar(indice);
+  pista.scrollTo({left:pista.clientWidth*indice,behavior:reduz()?'instant':'smooth'});
+ }
+ pontos.forEach((p,i)=>p.addEventListener('click',()=>{
+  emInteracao=true;mover(i);
+ }));
+ pista.addEventListener('scroll',()=>{
+  if(pista.clientWidth>0)marcar(Math.min(pontos.length-1,Math.max(0,
+   Math.round(pista.scrollLeft/pista.clientWidth))));
+ },{passive:true});
+ pista.addEventListener('pointerdown',()=>{emInteracao=true;});
+ pista.addEventListener('focusin',()=>{emInteracao=true;});
+ pista.addEventListener('focusout',()=>{emInteracao=false;});
+ pista.addEventListener('pointerleave',()=>{emInteracao=false;});
+ window.setInterval(()=>{
+  if(document.hidden||aba!=='conteudoResumo'||emInteracao||reduz())return;
+  mover((atual+1)%pontos.length);
+ },6500);
+ window.addEventListener('resize',()=>pista.scrollTo({
+  left:pista.clientWidth*atual,behavior:'instant'
+ }));
+}
+
+iniciarCarrosselResumo();
+$('tabuleiroVerPosicoesIntegrado').addEventListener('click',()=>mostrarAba('conteudoPosicoes'));
+$('loop03IrPosicoesIntegrado').addEventListener('click',abrirPopupResumo);
+document.addEventListener('click',e=>{
+ if(popupPosicoesAberto&&!$('seletorPosicoesResumo').contains(e.target)&&
+    !$('loop03IrPosicoesIntegrado').contains(e.target))fecharPopupResumo();
+});
+document.addEventListener('keydown',e=>{
+ if(e.key==='Escape'&&popupPosicoesAberto){
+  fecharPopupResumo();$('loop03IrPosicoesIntegrado').focus();
+ }
+});
+$('loop03MenuIntegrado').addEventListener('click',alternarMenuIntegrado);
+document.addEventListener('keydown',e=>{if(e.key==='Escape')fecharMenuIntegrado();});
+$('buscarEquipe').addEventListener('input',()=>{
+ clearTimeout(temporizadorBuscaEquipe);
+ temporizadorBuscaEquipe=setTimeout(()=>atualizarEquipe(0),220);
+});
+$('maisEquipe').addEventListener('click',()=>{
+ if(proximaPaginaEquipe!==null)atualizarEquipe(proximaPaginaEquipe);
+});
+$('equipeVerLinks').addEventListener('click',()=>mostrarAba('conteudoLinks'));
+$('posicoesVerPedidos').addEventListener('click',()=>mostrarAba('conteudoMeusPedidos'));
+$('finEscolherBonus').addEventListener('click',()=>finEscolher('BONUS_INDICACAO'));
+$('finEscolherPosicoes').addEventListener('click',()=>finEscolher('POSICOES'));
+$('finFormSaque').addEventListener('submit',finSolicitar);
+$('finAbrirHistorico').addEventListener('click',finAlternarHistorico);
+$('copiarLinkLoja').addEventListener('click',()=>copiarLink('linkLoja'));
+$('copiarLinkEscritorio').addEventListener('click',()=>copiarLink('linkEscritorio'));
+$('formTrocarSenha').addEventListener('submit',trocarSenha);
+$('formGrafiaNick').addEventListener('submit',confirmarGrafiaNick);
+for(const [btn,section] of ABAS){
+ $(btn).addEventListener('click',()=>mostrarAba(section));
+}
+// O + é só um atalho: a proteção real segue no gateway do operador.
+async function atualizarAtalhoOperadorLoop(){
+ const a=document.getElementById('loopOperadorMais');
+ if(!a)return;
+ a.hidden=true;a.style.display='none';
+ try{
+  const r=await fetch('/staging/operador/estado',{
+   credentials:'same-origin',cache:'no-store'
+  });
+  if(!r.ok)return;
+  const d=await r.json();
+  if(d.operador===true){a.hidden=false;a.style.display='inline-flex';}
+ }catch{}
+}
+void atualizarAtalhoOperadorLoop();
+addEventListener('pageshow',()=>void atualizarAtalhoOperadorLoop());
+addEventListener('focus',()=>void atualizarAtalhoOperadorLoop());
+void carregarIndicadorCadastro();
+restaurarSessao();
+
+
+function fecharAvisosLoop(){
+ const painel=$('loop03PainelAvisos');
+ if(!painel)return;
+ painel.hidden=true;
+ $('loop03Sino').setAttribute('aria-expanded','false');
+ $('loop03TotalAvisos').hidden=true;
+ $('loop03TotalAvisos').textContent='';
+ $('loop03ListaAvisos').replaceChildren();
+}
+async function carregarAvisosLoop(){
+ const area=$('loop03ListaAvisos');
+ if(!area)return;
+ try{
+  const dados=await requisitar('/contas/avisos-loop');
+  if(dados.canal!=='LOOP'||!Array.isArray(dados.itens))
+   throw Error('CANAL_INVALIDO');
+  const itens=dados.itens.filter(x=>x.canal==='LOOP'&&x.estado==='PUBLICADO');
+  $('loop03TotalAvisos').hidden=!itens.length;
+  $('loop03TotalAvisos').textContent=String(itens.length);
+  area.replaceChildren();
+  if(!itens.length){
+   const p=document.createElement('p');p.textContent='Nenhum recado do LOOP.';area.append(p);
+  }
+  for(const aviso of itens){
+   const card=document.createElement('article');
+   const titulo=document.createElement('strong');
+   titulo.textContent=(aviso.formato==='BANNER'?'Aviso: ':'')+aviso.titulo;
+   const corpo=document.createElement('p');corpo.textContent=aviso.corpo;
+   card.append(titulo,corpo);area.append(card);
+  }
+ }catch{
+  if(!document.body.classList.contains('loop03-logado'))return;
+  area.textContent='Não foi possível consultar os recados do LOOP.';
+ }
+}
+$('loop03Sino').addEventListener('click',async()=>{
+ const painel=$('loop03PainelAvisos'),aberto=painel.hidden;
+ painel.hidden=!aberto;
+ $('loop03Sino').setAttribute('aria-expanded',String(aberto));
+ if(aberto)await carregarAvisosLoop();
+});
+document.addEventListener('keydown',e=>{
+ if(e.key==='Escape'&&!$('loop03PainelAvisos').hidden){
+  $('loop03PainelAvisos').hidden=true;
+  $('loop03Sino').setAttribute('aria-expanded','false');
+  $('loop03Sino').focus();
+ }
+});
+
  }catch(e){
   area.replaceChildren();
   const erro=document.createElement('p');
