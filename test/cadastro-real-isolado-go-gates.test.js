@@ -72,3 +72,20 @@ test('cadastro falha fechado diante de chaves repetidas e operacao laboratorial'
   LOOP_REAL_TABULEIRO_INTERSERVICE_TOKEN:''}),
   /CADASTRO_NAO_PODE_INTERROMPER_CATALOGO/);
 });
+
+test('documentos versionados do cadastro sao integrais e nao confundem aceite CPF',t=>{
+ const x=fixture(t);
+ const ambiente={...x.ambiente};
+ delete ambiente.LOOP_REAL_TERMOS_VERSAO;
+ delete ambiente.LOOP_REAL_TERMOS_TEXTO;
+ delete ambiente.LOOP_REAL_PRIVACIDADE_VERSAO;
+ delete ambiente.LOOP_REAL_PRIVACIDADE_TEXTO;
+ const cfg=x.conf(ambiente);
+ const termos=fs.readFileSync(path.join(__dirname,'../docs/TERMOS_CADASTRO_LOOP_2026_11_PARA_APROVACAO.md'),'utf8');
+ const privacidade=fs.readFileSync(path.join(__dirname,'../docs/POLITICA_PRIVACIDADE_LOOP_2026_11_PARA_APROVACAO.md'),'utf8');
+ assert.equal(cfg.termos.texto,termos);
+ assert.equal(cfg.privacidade.texto,privacidade);
+ assert.match(cfg.termos.versao,/^LOOP-TERMOS-CADASTRO-/);
+ assert.match(cfg.privacidade.versao,/^LOOP-PRIVACIDADE-CADASTRO-/);
+ assert.notEqual(cfg.termos.texto,cfg.privacidade.texto);
+});
