@@ -1,0 +1,16 @@
+# Registro obrigatório de execução e continuidade — 16/11/2026
+
+## Determinação do proprietário (prioridade máxima do fluxo de trabalho)
+Não abrir novas frentes enquanto a tarefa ativa estiver incompleta. Para cada solicitação: **criar → testar → corrigir → integrar → publicar no ambiente real correto → conferir a função operando de ponta a ponta**. Não confundir código commitado, testes, homologação, deploy SUCCESS e operação comprovada. Só declarar "concluído" após evidência verificável da função real. Se houver bloqueio externo ou dependência, registrar como **pendente**, sem mascarar. Preservar telas aprovadas e não substituir a interface real por prévias. Não deixar pedaços soltos. Registrar commits, deploys, provas e pendências neste repositório, para continuidade entre conversas e agentes.
+
+## Estado verificado nesta conversa
+- Documentos de cadastro: 7 tópicos de Termos e 7 de Privacidade, arquivos `docs/TERMOS_CADASTRO_LOOP_2026_11_PARA_APROVACAO.md` e `docs/POLITICA_PRIVACIDADE_LOOP_2026_11_PARA_APROVACAO.md`. Integração de fallback versionado nos scripts de identidade. Teste de documentos completos e separados acrescentado em `test/cadastro-real-isolado-go-gates.test.js`, commit `258b3ada9305ef43f76b85b680470d28b5c6938b`.
+- Railway serviço `loop-identidade-real`, ambiente `homologacao`: deploy `41d9053f-362f-4d45-aa19-011df498098c` **SUCCESS**. Isso **não comprova** cadastro público habilitado, jornada de usuário nem aprovação jurídica.
+- Documento original de **30 tópicos** de confirmação CPF/termos por posição: **não recuperado**. Não substituir pelos 14 tópicos do cadastro, não inventar o texto.
+- Operador: usuário informou que consegue autenticar como operador, porém **não consegue administrar AKITEMM**. Integração real de permissões LOOP/AKITEMM **pendente e não concluída**. Acordo: operador autenticado pode administrar os dois módulos, sem duplicar centrais, com controles restritos ao operador.
+- Catraca: nova solicitação **ainda não implementada**. Janela padrão 09:00–18:00, segunda a sexta; sábado/domingo apenas por comando explícito do operador/evento; operação sempre controlada por iniciar/parar. Meta diária de N centros distribuída pela janela com **6 movimentos de luz por centro**; 10 centros = 60 movimentos em 540 minutos = 9 minutos por movimento; 5 centros = 30 movimentos = 18 minutos por movimento. O intervalo manual deve permanecer. Não exigir seis novas vendas durante cada ciclo se já existem posições/saldo, mas preservar todas as regras e travas do motor. Preservar painel de agenda aprovado.
+- Produtos AKITEMM: dez abas, cada uma com 40 espaços (4 fileiras de 10; 2 visíveis e 8 via rolagem horizontal em cada fileira), total 400. Exigir confirmação no real, não presumir entrega.
+- O proprietário exige registro contínuo no GitHub, sem perda de decisões ou avanços entre conversas.
+
+## Regra de passagem
+Antes de informar conclusão de qualquer item, anexar: caminho de implementação; commit SHA; teste e resultado; ambiente e deployment ID; verificação funcional real; eventuais limitações. Se faltar qualquer prova, dizer exatamente o que falta. Não promover mudanças não aprovadas nem abrir cadastro/PSP/saques por conta própria.
