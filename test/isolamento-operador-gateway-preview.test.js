@@ -165,9 +165,8 @@ test('atalho /operador leva somente operador autenticado ao painel administrativ
  try{
   const visitante=await fetch(x.url+'/operador',{redirect:'manual'});
   assert.equal(visitante.status,401);
-  const login=await fetch(x.url+'/api/operador/entrar',{
-   method:'POST',headers:{'Content-Type':'application/json',
-    Origin:x.url},body:JSON.stringify({nick:'operador',senha:D})
+  const login=await fetch(x.url+'/escritorio',{
+   headers:{Authorization:basica('operador',D)}
   });
   assert.equal(login.status,200);
   const ck=cookie(login,'akitemm_preview_admin_v2');
