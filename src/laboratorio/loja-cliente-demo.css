@@ -870,3 +870,27 @@ body.akitemm-loja{background:#071018;color:#f0f2f6;font-family:system-ui,-apple-
 .akitemm-loja #akitemmDadosContaConteudo,
 .akitemm-loja #akitemmNotificacoesConteudo{white-space:pre-line;overflow-wrap:anywhere}
 .akitemm-loja #akitemmEditarConta{color:#f4cb79}
+
+/* Acabamento aprovado AKITEMM: Ofertas e a referencia visual.
+   Preservar geometria, cores, dimensoes e acao dos demais botoes. */
+.akitemm-loja button{
+ background-clip:padding-box;
+ transition:box-shadow .16s ease,border-color .16s ease,filter .16s ease;
+}
+.akitemm-loja .akitemm-chip{
+ border-radius:999px!important;
+ overflow:hidden;
+ background-clip:padding-box;
+}
+.akitemm-loja .akitemm-chip:focus-visible,
+.akitemm-loja .akitemm-chip[aria-pressed="true"]:focus-visible{
+ outline:none!important;
+ box-shadow:0 0 0 2px #17212c,0 0 0 4px #ffe0a1;
+}
+.akitemm-loja button:not(.akitemm-chip):focus-visible{
+ outline:none!important;
+ box-shadow:0 0 0 2px #15232e,0 0 0 4px #ffe0a1;
+}
+.akitemm-loja button:active{
+ filter:brightness(1.05);
+}
