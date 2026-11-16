@@ -96,14 +96,14 @@ function configurar(ambiente=process.env){
   region:ambiente.LOOP_REAL_S3_REGION||'auto'
  };
  validarBackupS3(configS3);
- const termos={
-  versao:ambiente.LOOP_REAL_TERMOS_VERSAO,
-  texto:ambiente.LOOP_REAL_TERMOS_TEXTO
- };
- const privacidade={
-  versao:ambiente.LOOP_REAL_PRIVACIDADE_VERSAO,
-  texto:ambiente.LOOP_REAL_PRIVACIDADE_TEXTO
- };
+ // Documentos integrais versionados no repositorio; variaveis explicitas prevalecem.
+ // A leitura nao altera os gates de aprovacao ou de abertura do cadastro.
+ const documento=(nome,versao,arquivo)=>({
+  versao:ambiente[nome+'_VERSAO']||versao,
+  texto:ambiente[nome+'_TEXTO']||fs.readFileSync(path.join(__dirname,'../docs',arquivo),'utf8')
+ });
+ const termos=documento('LOOP_REAL_TERMOS','LOOP-TERMOS-CADASTRO-2026-11-v1','TERMOS_CADASTRO_LOOP_2026_11_PARA_APROVACAO.md');
+ const privacidade=documento('LOOP_REAL_PRIVACIDADE','LOOP-PRIVACIDADE-CADASTRO-2026-11-v1','POLITICA_PRIVACIDADE_LOOP_2026_11_PARA_APROVACAO.md');
  const origemHttps=ambiente.LOOP_REAL_ORIGEM;
  if(typeof origemHttps!=='string'||!/^https:\/\/[^/]+\/?$/.test(origemHttps))
   throw Error('DOMINIO_REAL_HTTPS_OBRIGATORIO');
