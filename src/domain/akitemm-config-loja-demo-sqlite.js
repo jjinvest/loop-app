@@ -126,8 +126,8 @@ class AkitemmConfigLojaDemoSQLite{
   ).get();
   const dados=r?JSON.parse(r.dados):DEFAULT();
   // Bancos anteriores não tinham disposição de cartões: migração sem perda.
-  return dados.vitrineSlots===undefined?
-   {...dados,vitrineSlots:Array.from({length:200},(_,i)=>PADRAO_VITRINE[i%8])}:dados;
+  const anteriores=Array.isArray(dados.vitrineSlots)?dados.vitrineSlots:PADRAO_VITRINE;
+  return {...dados,vitrineSlots:Array.from({length:200},(_,i)=>anteriores[i]||anteriores[i%8]||PADRAO_VITRINE[i%8])};
  }
  revisao(){
   return this.banco.prepare(
