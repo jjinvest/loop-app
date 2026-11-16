@@ -77,6 +77,7 @@ function criarAppLojaEscritorioCandidato({banco,repositorioCatalogo,
  webhookHomologacaoToken=null,provedorReconsultaSandbox=null,
  operacoesSandboxAutorizadas=false,conciliacaoAutomaticaConfigurada=false,
  segredoOperador,termosVersao,termosTexto,
+ termosIdentidadeVersao=null,termosIdentidadeTexto=null,
  privacidadeTexto=null,privacidadeVersao='LAB-PRIV-2026',
  captchaCadastroObrigatorio=false,captchaSegredo=null}={}){
  if(process.env.NODE_ENV==='production')erro('CANDIDATO_NAO_HOMOLOGADO');
@@ -668,11 +669,13 @@ function criarAppLojaEscritorioCandidato({banco,repositorioCatalogo,
   app.get('/staging/contas/termos-identidade',(req,res)=>{
    if(!contas.sessao(req))return res.status(401).json({erro:'SESSAO_AUSENTE'});
    res.set('Cache-Control','no-store');
-   return res.json({disponivel:true,termosVersao,termosTexto});
+   return res.json({disponivel:typeof termosIdentidadeTexto==='string'&&termosIdentidadeTexto.length>=100,termosVersao:termosIdentidadeVersao,termosTexto:termosIdentidadeTexto});
   });
   app.post('/staging/contas/identidade',(req,res)=>{
    const sessao=contas.sessao(req);
    if(!sessao)return res.status(401).json({erro:'SESSAO_AUSENTE'});
+   if(typeof termosIdentidadeTexto!=='string'||termosIdentidadeTexto.length<100||!termosIdentidadeVersao)
+    return res.status(503).json({erro:'TERMOS_IDENTIDADE_NAO_CONFIGURADOS'});
    if(!contas.autorizarMutacao(req))
     return res.status(403).json({erro:'CSRF_INVALIDO'});
    if(!req.is('application/json'))
@@ -682,7 +685,7 @@ function criarAppLojaEscritorioCandidato({banco,repositorioCatalogo,
     return res.status(400).json({erro:'CAMPOS_INVALIDOS'});
    try{
     const r=cpf.registrar({titularId:sessao.titularId,
-     cpf:req.body.cpf,termosVersao,termosTexto,
+     cpf:req.body.cpf,termosVersao:termosIdentidadeVersao,termosTexto:termosIdentidadeTexto,
      aceiteExplicito:req.body.aceiteExplicito,autorizado:true});
     return res.status(r.repetido?200:201).json({
      ...r,identidadeExternaVerificada:false,pagamentosReais:false
