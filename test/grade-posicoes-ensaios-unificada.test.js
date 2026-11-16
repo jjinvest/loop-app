@@ -51,7 +51,7 @@ test('dez cartoes integrados e origem de pedido inserida somente como texto',asy
  assert.equal(grade.children.length,10);
  assert.equal(grade.attributes.role,'list');
  assert.match(grade.children[0].children[1].textContent,/AGUARDANDO/);
- assert.equal(grade.children[0].children[3].textContent,
+ assert.equal(grade.children[0].children.find(x=>x.tag==='small'&&x.textContent.startsWith('Pedido de origem:')).textContent,
   'Pedido de origem: hom-<img src=x onerror=alert(1)>');
  assert.match(grade.children[1].children[1].textContent,/Espaço disponível/);
  assert.match(area.children[0].textContent,/Posições em acompanhamento/);
