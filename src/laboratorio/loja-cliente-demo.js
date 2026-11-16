@@ -780,6 +780,13 @@
    'Link de cadastro de ensaio ativo. Sem compras ou comissões reais.':
    (l.ativo?'Link AKITEMM ativo.':'Link disponível após primeira compra confirmada.');
  }
+ function prepararFundoBannerDesktop(){
+  if(document.getElementById('akitemmBannerDesktopResponsivo'))return;
+  const folha=document.createElement('style');folha.id='akitemmBannerDesktopResponsivo';
+  folha.textContent='@media (min-width: 801px){.akitemm-banner-arte{position:relative;overflow:hidden;isolation:isolate;min-width:0;width:100%;display:flex;align-items:center;justify-content:center;background:#101016}.akitemm-banner-fundo-desktop{position:absolute;inset:-24px;background-size:cover;background-position:center;filter:blur(22px) brightness(.52);transform:scale(1.06);pointer-events:none;z-index:-1}.akitemm-banner-arte>img{position:relative;z-index:1;display:block;max-width:100%;height:auto;object-fit:contain}}@media (max-width:800px){.akitemm-banner-fundo-desktop{display:none}}';
+  document.head.append(folha);
+ }
+ prepararFundoBannerDesktop();
  function mostrarBanner(){
   const bann=configLoja?.banners||[];
   if(!bann.length)return;
@@ -794,7 +801,11 @@
    const imagem=document.createElement('div');imagem.className='akitemm-banner-arte';
    const img=document.createElement('img');img.src=b.imagemCaminho;img.alt=b.titulo;
    img.style.maxWidth='100%';img.style.maxHeight='185px';img.style.objectFit='contain';
-   imagem.append(img);container.append(imagem);
+   // Em telas largas, a própria arte preenche suavemente as laterais sem cortar o original.
+   const fundo=document.createElement('div');fundo.className='akitemm-banner-fundo-desktop';
+   fundo.style.backgroundImage='url('+JSON.stringify(b.imagemCaminho)+')';
+   fundo.setAttribute('aria-hidden','true');
+   imagem.append(fundo,img);container.append(imagem);
   }
   const p=produto(b.produtoId);
   if(p&&b.produtoId){
