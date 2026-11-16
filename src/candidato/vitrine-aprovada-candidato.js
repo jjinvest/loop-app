@@ -66,6 +66,8 @@ function createVitrineCandidata({app,banco,catalogo,contas,intencoes,prePedidos,
   .replace('src="/laboratorio/educacao-carrinho.js"',
    'src="/staging/assets/educacao-carrinho.js"')
   .replace('src="/laboratorio/loja.js"','src="/staging/assets/loja-aprovada.js"')
+  .replace('</head>','<script src="/staging/assets/operador-em-tela.js" defer></script></head>')
+  .replace('class="akitemm-acesso-operador"','class="akitemm-acesso-operador" hidden style="display:none"')
   .replace('<form id="akitemmFormEntrega"',
    '<form id="akitemmConsultaCep" class="akitemm-form-entrega">'+
    '<p>Consulte pelo CEP sem criar uma conta. O valor exato dependerá da transportadora.</p>'+

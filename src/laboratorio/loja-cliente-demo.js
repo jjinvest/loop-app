@@ -466,6 +466,7 @@
     'produto-loja-loop-especial':classe==='DOURADO'?
     'produto-loja-loop-dourado':classe==='VERDE'?
      'produto-loja-loop-elegivel':'produto-loja-loop-nao-elegivel');
+   card.dataset.produtoId=p.produtoId;
    const imagem=miniatura(p,'akitemm-imagem-produto');
    if(especial){
     const tarja=document.createElement('strong');tarja.className='tarja-promocao-especial-loop';tarja.textContent='EVENTO ESPECIAL';

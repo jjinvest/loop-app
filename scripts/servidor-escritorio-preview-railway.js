@@ -98,7 +98,7 @@ function criarGateway({portaInterna,senhaAcesso,senhaAdmin,segredoOperador,
   catch{return true;}
   // Express aceita a barra final nas rotas fixas. Sem a mesma
   // normalizacao, um visitante poderia obter HTML/assets administrativos.
-  return p==='/escritorio'||p==='/staging/escritorio-admin'||
+  return p==='/operador'||p==='/escritorio'||p==='/staging/escritorio-admin'||
    p==='/staging/escritorio-unificado'||
    p.startsWith('/staging/escritorio-unificado/')||
    p==='/staging/assets/admin.js'||
@@ -294,7 +294,7 @@ function criarGateway({portaInterna,senhaAcesso,senhaAdmin,segredoOperador,
   const publico=leitura&&(
    /^\/(?:|minha-conta|loja|staging\/cliente|staging\/loja)$/.test(url.pathname)||
    /^\/(?:loja|escritorio)\/[A-Za-z]{1,12}$/.test(url.pathname)||
-   /^\/staging\/assets\/(?:cliente\.js|cliente\.css|cliente-integrado\.css|loop03-aprovado\.css|catraca-visor\.js|tabuleiro-visual\.js|loja-aprovada\.js|loja-aprovada\.css|educacao-carrinho\.js)$/.test(url.pathname)||
+   /^\/staging\/assets\/(?:cliente\.js|cliente\.css|cliente-integrado\.css|loop03-aprovado\.css|catraca-visor\.js|tabuleiro-visual\.js|operador-em-tela\.js|loja-aprovada\.js|loja-aprovada\.css|educacao-carrinho\.js)$/.test(url.pathname)||
    /^\/staging\/vitrine\/(?:loja\/(?:catalogo|config|comunicados|banner-arquivo\/[a-f0-9]{32}|produtos\/[a-zA-Z0-9-]+\/(?:foto\/(?:10|[1-9])|video))|novidades(?:\/[0-9]+\/imagem)?)$/.test(url.pathname)||
    url.pathname==='/staging/contas/termos-cadastro'||
    url.pathname==='/staging/contas/captcha-login'||
@@ -348,6 +348,12 @@ function criarGateway({portaInterna,senhaAcesso,senhaAdmin,segredoOperador,
   // O webhook remoto e exclusivo; jamais oferecer a rota interna ao browser.
   if(url.pathname.startsWith('/staging/asaas/'))
    return negar(404,'Rota interna não disponível');
+  if(url.pathname==='/operador'){
+   if(req.method!=='GET')return negar(405,'Método não permitido');
+   res.writeHead(302,{...cabecalhosBase,Location:'/minha-conta',
+    ...(novoAdminCookie?{'Set-Cookie':novoAdminCookie}:{})});
+   return res.end();
+  }
   if(url.pathname==='/'){
    res.writeHead(302,{...cabecalhosBase,Location:'/minha-conta',...(novoCookie?{'Set-Cookie':novoCookie}:{})});
    return res.end();

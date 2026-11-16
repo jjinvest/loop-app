@@ -4,6 +4,7 @@
 // NUNCA montar em src/server.js; nao expor em Railway publico.
 const express=require('express');
 const path=require('node:path');
+const fs=require('node:fs');
 const {createHash}=require('node:crypto');
 const {CaptchaCadastroSQLite}=require('../shared/captcha-cadastro-sqlite');
 const {CaptchaLoginSQLite}=require('../shared/captcha-login-sqlite');
@@ -244,14 +245,19 @@ function criarAppLojaEscritorioCandidato({banco,repositorioCatalogo,
  });
  // Mesmas abas e paleta aprovadas no staging, com campo de cadastro
  // específico para identidade unificada, sem abrir checkout comercial.
- app.get('/staging/cliente',(_req,res)=>res.sendFile(
-  path.join(__dirname,'checkout-candidato-ui.html')
- ));
+ app.get('/staging/cliente',(_req,res)=>{
+  const html=fs.readFileSync(path.join(__dirname,'checkout-candidato-ui.html'),'utf8');
+  return res.type('html').send(html.replace('</head>',
+   '<script src="/staging/assets/operador-em-tela.js" defer></script></head>'));
+ });
  app.get('/staging/assets/catraca-visor.js',(_req,res)=>res.type('js').sendFile(
   path.join(__dirname,'../shared/visor-catraca.js')
  ));
  app.get('/staging/assets/tabuleiro-visual.js',(_req,res)=>res.type('js').sendFile(
   path.join(__dirname,'../shared/tabuleiro-visual-loop.js')
+ ));
+ app.get('/staging/assets/operador-em-tela.js',(_req,res)=>res.type('js').sendFile(
+  path.join(__dirname,'operador-em-tela.js')
  ));
  app.get('/staging/assets/cliente.js',(_req,res)=>res.type('js').sendFile(
   path.join(__dirname,'checkout-candidato-ui.js')
