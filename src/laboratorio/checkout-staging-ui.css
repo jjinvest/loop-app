@@ -96,3 +96,7 @@ button:disabled{opacity:.5;cursor:not-allowed}.primario{background:linear-gradie
 }
 .envoltorio-senha .traco-senha-oculta{display:none}
 .envoltorio-senha .alternar-visibilidade[aria-pressed="true"] .traco-senha-oculta{display:block}
+
+/* Marca prateada LOOP 3.0 no login e cadastro; escritorio aprovado preservado. */
+body>.cabecalho .marca{display:inline-block;font-family:system-ui,Arial,sans-serif;font-weight:900!important;font-size:clamp(24px,3vw,34px)!important;letter-spacing:.045em!important;line-height:1.2;color:#e5e9f1!important;text-shadow:0 1px 0 #fff8,0 3px 5px #000a}
+body>.cabecalho .submarca{color:#cbd0dc}
