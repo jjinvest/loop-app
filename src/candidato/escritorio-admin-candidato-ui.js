@@ -763,9 +763,9 @@ function preencherConfigLojaAdmin(dados){
  const slots=$('configVitrineSlotsAdmin');slots.replaceChildren();
  const padrao=['ROXO','DOURADO','VERDE','CINZA','CINZA','VERDE','DOURADO','ROXO'];
  const cores=['ROXO','DOURADO','VERDE','CINZA'];
- for(let indice=0;indice<8;indice++){
+ for(let indice=0;indice<200;indice++){
   const rotulo=elem('label');
-  rotulo.textContent='Quadrinho '+(indice+1)+' · '+(indice<4?'primeira':'segunda')+' fileira';
+  rotulo.textContent='Aba '+(Math.floor(indice/40)+1)+' · fileira '+(Math.floor(indice%40/10)+1)+' · quadrinho '+(indice%10+1);
   const campo=elem('select');
   campo.name='vitrineSlotCor';
   campo.setAttribute('aria-label','Cor do quadrinho '+(indice+1));
@@ -773,7 +773,7 @@ function preencherConfigLojaAdmin(dados){
    const opcao=elem('option',cor.charAt(0)+cor.slice(1).toLowerCase());
    opcao.value=cor;campo.append(opcao);
   }
-  campo.value=(config.vitrineSlots||padrao)[indice];
+  campo.value=(config.vitrineSlots||padrao)[indice]||padrao[indice%8];
   rotulo.append(campo);slots.append(rotulo);
  }
 
@@ -815,7 +815,7 @@ function colherConfigLojaAdmin(){
  for(const [id,chave] of Object.entries(redes))config.redes[chave]=$(id).value;
  config.vitrineSlots=[...$('configVitrineSlotsAdmin').querySelectorAll('[name="vitrineSlotCor"]')]
   .map(select=>select.value);
- if(config.vitrineSlots.length!==8)throw Error('VITRINE_SLOTS_INCOMPLETOS');
+ if(config.vitrineSlots.length!==200)throw Error('VITRINE_SLOTS_INCOMPLETOS');
  config.banners=[...$('configBannersAdmin').children].map(bloco=>{
   const get=nome=>bloco.querySelector('[name="'+nome+'"]').value.trim();
   return {titulo:get('titulo'),descricao:get('descricao'),
