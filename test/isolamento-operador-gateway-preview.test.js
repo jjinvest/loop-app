@@ -159,3 +159,29 @@ test('variantes administrativas com barra final nao atravessam o gateway visitan
   assert.equal(admin.status,200);
  }finally{await x.fechar();}
 });
+
+test('atalho /operador leva somente operador autenticado ao painel administrativo existente',async()=>{
+ const x=await montar();
+ try{
+  const visitante=await fetch(x.url+'/operador',{redirect:'manual'});
+  assert.equal(visitante.status,401);
+  const login=await fetch(x.url+'/api/operador/entrar',{
+   method:'POST',headers:{'Content-Type':'application/json',
+    Origin:x.url},body:JSON.stringify({nick:'operador',senha:D})
+  });
+  assert.equal(login.status,200);
+  const ck=cookie(login,'akitemm_preview_admin_v2');
+  assert.ok(ck);
+  const atalho=await fetch(x.url+'/operador',{
+   redirect:'manual',headers:{Cookie:ck}});
+  assert.equal(atalho.status,302);
+  assert.equal(atalho.headers.get('location'),'/escritorio');
+  const painel=await fetch(x.url+'/escritorio',{headers:{Cookie:ck}});
+  assert.equal(painel.status,200);
+  assert.equal(x.chamadas.at(-1).path,'/staging/escritorio-admin');
+  const api=await fetch(x.url+'/staging/escritorio-unificado/motor/estado',
+   {headers:{Cookie:ck}});
+  assert.equal(api.status,200);
+  assert.equal(x.chamadas.at(-1).authorization,'Bearer '+SECRET);
+ }finally{await x.fechar();}
+});
