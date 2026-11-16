@@ -926,3 +926,17 @@ body.akitemm-loja{background:#071018;color:#f0f2f6;font-family:system-ui,-apple-
 /* Ajuste fino: centralizar verticalmente o sino de notificacoes no cabecalho. */
 .akitemm-loja #akitemmSino{display:inline-flex!important;align-items:center!important;justify-content:center!important;align-self:center!important;vertical-align:middle;line-height:1!important;min-height:40px;min-width:40px;box-sizing:border-box;transform:translateY(5px)}
 .akitemm-loja #akitemmSino svg{display:block;flex:none;margin:0}
+
+/* Simbolo de aneis LOOP sempre visivel no topo, inclusive desktop. */
+.akitemm-loja .akitemm-marca-loop{display:inline-flex!important;align-items:center;gap:8px}
+.akitemm-loja .akitemm-marca-loop .akitemm-anel{
+ display:inline-flex!important;visibility:visible!important;opacity:1!important;
+ flex:0 0 auto;align-items:center;justify-content:center;
+ width:34px;height:34px;min-width:34px;
+ font-size:0!important;line-height:1;
+}
+.akitemm-loja .akitemm-marca-loop .akitemm-anel::before{
+ content:'◎';font-size:34px;font-weight:800;line-height:1;
+ color:#eec36a;text-shadow:0 0 6px #a97535;
+}
+@media(max-width:800px){.akitemm-loja .akitemm-marca-loop .akitemm-anel{width:25px;height:25px;min-width:25px}.akitemm-loja .akitemm-marca-loop .akitemm-anel::before{font-size:25px}}
