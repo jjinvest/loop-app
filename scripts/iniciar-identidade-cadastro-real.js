@@ -54,8 +54,8 @@ function configurar(ambiente=process.env,{pasta='/dados-reais',io=fs}={}){
  // Documentos integrais versionados no repositorio; variaveis explicitas prevalecem.
  // A leitura nao altera os gates de aprovacao ou de abertura do cadastro.
  const documento=(nome,versao,arquivo)=>({
-  versao:ambiente[nome+'_VERSAO']||versao,
-  texto:ambiente[nome+'_TEXTO']||fs.readFileSync(path.join(__dirname,'../docs',arquivo),'utf8')
+  versao:ambiente[nome+'_VERSAO']===undefined?versao:ambiente[nome+'_VERSAO'],
+  texto:ambiente[nome+'_TEXTO']===undefined?fs.readFileSync(path.join(__dirname,'../docs',arquivo),'utf8'):ambiente[nome+'_TEXTO']
  });
  const termos=documento('LOOP_REAL_TERMOS','LOOP-TERMOS-CADASTRO-2026-11-V1','TERMOS_CADASTRO_LOOP_2026_11_PARA_APROVACAO.md');
  const privacidade=documento('LOOP_REAL_PRIVACIDADE','LOOP-PRIVACIDADE-CADASTRO-2026-11-V1','POLITICA_PRIVACIDADE_LOOP_2026_11_PARA_APROVACAO.md');
