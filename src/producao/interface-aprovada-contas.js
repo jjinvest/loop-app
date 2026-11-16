@@ -30,6 +30,20 @@
   if(!resposta.ok)throw Error('FALHA_AO_ENCERRAR_OPERADOR');
   dispatchEvent(new Event('loop:operador-saiu'));
  }
+ async function autenticarOperadorFormulario(nick,senha){
+  const resposta=await fetch('/api/operador/entrar',{
+   method:'POST',credentials:'same-origin',cache:'no-store',
+   headers:{'Content-Type':'application/json'},
+   body:JSON.stringify({nick,senha})
+  });
+  if(!resposta.ok){
+   if(resposta.status===401)throw Error('CREDENCIAIS_INVALIDAS');
+   if(resposta.status===429)throw Error('CONTA_TEMPORARIAMENTE_BLOQUEADA');
+   throw Error('ACESSO_OPERADOR_INDISPONIVEL');
+  }
+  const dados=await resposta.json();
+  if(dados.operador!==true)throw Error('ACESSO_OPERADOR_INDISPONIVEL');
+ }
  const API='/api/contas';
  let csrf=null,documentos=null,carregando=false,tela='login';
  let captchaCadastroId=null,captchaObrigatorio=false;
@@ -1286,6 +1300,12 @@
   }
  }
  onForm('formLogin',async()=>{
+  if($('login').value.trim().toLowerCase()==='operador'){
+   await autenticarOperadorFormulario($('login').value.trim(),$('senha').value);
+   $('senha').value='';
+   location.assign('/staging/cliente?modo=operador');
+   return;
+  }
   const body={nick:$('login').value,senha:$('senha').value};
   if(captchaLoginAtivo){
    if(!captchaLoginId||!/^[A-Za-z2-9]{6}$/.test($('captchaLoginResposta').value.trim()))

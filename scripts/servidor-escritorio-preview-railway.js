@@ -57,6 +57,7 @@ function criarGateway({portaInterna,senhaAcesso,senhaAdmin,segredoOperador,
  const indicacaoCookie='akitemm_preview_ref';
  const adminCookie='akitemm_preview_admin_v2';
  const revogadosOperador=new Map();
+ const tentativasOperador=new Map();
  const duracao=12*60*60*1000;
  const prazoIndicacao=30*24*60*60*1000;
  const assinarIndicacao=(nick,ts)=>createHmac('sha256',segredoOperador)
@@ -140,6 +141,68 @@ function criarGateway({portaInterna,senhaAcesso,senhaAdmin,segredoOperador,
   // Controle do operador: uma rota pública de leitura, sem acesso ao
   // SQLite real e sem credenciais no navegador. Mesmo nome nas duas UIs.
   // Sempre no gateway, antes de qualquer proxy /api/ para a identidade.
+  // Nick e senha de operador entram pela MESMA caixa do cliente.
+  // A senha administrativa e verificada somente neste gateway.
+  if(url.pathname==='/api/operador/entrar'){
+   if(req.method!=='POST')return negar(405,'Método não permitido');
+   let origemOk=false;
+   if(typeof req.headers.origin==='string'){
+    try{
+     const u=new URL(req.headers.origin);
+     origemOk=(u.protocol==='https:'&&u.host===req.headers.host)||
+      (permitirOrigemHttpLoopback===true&&process.env.NODE_ENV!=='production'&&
+       u.protocol==='http:'&&u.hostname==='127.0.0.1'&&u.host===req.headers.host);
+    }catch{}
+   }else origemOk=req.headers['sec-fetch-site']==='same-origin';
+   if(!origemOk)return negar(403,'Origem não autorizada');
+   if(!/^application\/json(?:\s*;.*)?$/i.test(req.headers['content-type']||''))
+    return negar(415,'JSON obrigatório');
+   const chave=req.socket.remoteAddress||'desconhecido';
+   const agora=Date.now();
+   for(const [k,registro] of tentativasOperador)
+    if(registro.ate<=agora)tentativasOperador.delete(k);
+   const tentativa=tentativasOperador.get(chave);
+   if(tentativa&&tentativa.erros>=20&&tentativa.ate>agora)
+    return negar(429,'Muitas tentativas. Tente novamente mais tarde.',{
+     'Retry-After':String(Math.ceil((tentativa.ate-agora)/1000))});
+   let blocos=[],total=0,excedeu=false;
+   req.on('data',bloco=>{
+    total+=bloco.length;
+    if(total>2048){excedeu=true;blocos=[];}
+    else if(!excedeu)blocos.push(bloco);
+   });
+   req.on('end',()=>{
+    if(excedeu)return negar(413,'Dados de acesso muito extensos');
+    let dados;
+    try{dados=JSON.parse(Buffer.concat(blocos).toString('utf8'));}catch{
+     return negar(400,'Dados de acesso inválidos');
+    }
+    if(!dados||typeof dados!=='object'||Array.isArray(dados)||
+       Object.keys(dados).sort().join(',')!=='nick,senha'||
+       typeof dados.nick!=='string'||typeof dados.senha!=='string'||
+       dados.nick.length>12||dados.senha.length>256)
+     return negar(400,'Dados de acesso inválidos');
+    const valido=seguro(dados.nick.toLowerCase(),'operador')&&
+     seguro(dados.senha,senhaAdmin);
+    if(!valido){
+     const antigo=tentativasOperador.get(chave);
+     tentativasOperador.set(chave,{erros:(antigo?.erros||0)+1,
+      ate:agora+15*60*1000});
+     return negar(401,'Usuário ou senha incorretos');
+    }
+    tentativasOperador.delete(chave);
+    const ts=String(Date.now());
+    const valor='v2.'+ts+'.'+assinarAdmin(ts);
+    revogadosOperador.delete(valor);
+    res.writeHead(200,{...cabecalhosBase,
+     'Content-Type':'application/json; charset=utf-8',
+     'Set-Cookie':adminCookie+'='+valor+
+      '; HttpOnly; Secure; SameSite=Strict; Path=/; Max-Age=43200'});
+    return res.end(JSON.stringify({operador:true}));
+   });
+   req.on('error',()=>{if(!res.headersSent)negar(400,'Requisição inválida');});
+   return;
+  }
   if(url.pathname==='/api/operador/estado'){
    if(req.method!=='GET')return negar(405,'Método não permitido');
    res.writeHead(200,{...cabecalhosBase,

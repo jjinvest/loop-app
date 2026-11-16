@@ -162,7 +162,7 @@
   if(!operador||dialogo?.contains(e.target))return;
   const prod=e.target.closest('.produto-loja-loop[data-produto-id]');
   const loja=e.target.closest('#akitemmBannerConteudo');
-  const horario=e.target.closest('#atualizarTabuleiroIntegrado');
+  const horario=e.target.closest('#atualizarTabuleiroIntegrado,#relogioTabuleiroIntegrado');
   const banner=e.target.closest('.loop03-banner-item');
   if(!prod&&!loja&&!horario&&!banner)return;
   e.preventDefault();e.stopImmediatePropagation();
@@ -170,6 +170,7 @@
    bannerLoop([...document.querySelectorAll('.loop03-banner-item')].indexOf(banner)+1);
   void processo.catch(err=>{const s=dialogo?.querySelector('.mensagem-operador');if(s)s.textContent='Não foi possível abrir: '+err.message;});
  },true);
+ addEventListener('loop:operador-entrou',()=>void verificar());
  addEventListener('loop:operador-saiu',()=>{
   operador=false;document.body.classList.remove('operador-na-tela');
   const link=document.querySelector('.akitemm-acesso-operador');

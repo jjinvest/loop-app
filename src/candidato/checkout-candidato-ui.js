@@ -6,6 +6,7 @@ const $=id=>document.getElementById(id);
 let csrf=null,aba='conteudoResumo',proximaPaginaEquipe=null,
  paginaPedidos=0,carregamentoPedidos=0;
 let telaAcesso='login';
+let modoOperadorSemCliente=false;
 let fotoPerfilUrl=null,versaoCarregamentoFoto=0;
 let versaoLeituraBannersEscritorio=0;
 let termosCadastroLidos=null,carregandoTermosCadastro=null;
@@ -140,7 +141,7 @@ async function carregarFotosBannersEscritorio(){
 }
 function mostrarSessao(ativa){
  document.body.classList.toggle('loop03-logado',ativa);
- if(ativa)void carregarAvisosLoop();
+ if(ativa&&!modoOperadorSemCliente)void carregarAvisosLoop();
  else fecharAvisosLoop();
  if(!ativa)limparFotoPerfil();
  if(!ativa)limparFotosBannersEscritorio();
@@ -263,6 +264,7 @@ async function finAlternarHistorico(){
 }
 
 function mostrarAba(alvo,{somenteMinhas=false}={}){
+ if(modoOperadorSemCliente&&!['conteudoResumo','conteudoTabuleiro'].includes(alvo))return;
  if(alvo==='conteudoPosicoes')somentePosicoesPeloQuadrado=somenteMinhas;
  // Prioriza a seção escolhida na ordem REAL do documento, não apenas
  // em CSS: teclado, leitor de tela, PC e celular seguem o mesmo fluxo.
@@ -291,6 +293,13 @@ function mostrarAba(alvo,{somenteMinhas=false}={}){
    if(aba===alvo&&!selecionado.hidden&&boasVindas)
     boasVindas.scrollIntoView({block:'start',behavior:'instant'});
   });
+ }
+ if(modoOperadorSemCliente){
+  const estado=$('estadoTabuleiroIntegrado');
+  if(alvo==='conteudoTabuleiro'&&estado){
+   estado.hidden=false;estado.textContent='Modo operador: toque no relógio para controlar a catraca.';
+  }
+  return; // Nao abrir APIs de dados pessoais de cliente sem login do titular.
  }
  if(alvo==='conteudoFinanceiro')void finAtualizar();
  if(alvo==='conteudoTabuleiro')atualizarTabuleiroIntegrado();
@@ -1254,11 +1263,58 @@ async function terminarModoOperador(){
  if(!resposta.ok)throw Error('FALHA_AO_ENCERRAR_OPERADOR');
  dispatchEvent(new Event('loop:operador-saiu'));
 }
+async function autenticarOperadorFormulario(nick,senha){
+ const resposta=await fetch('/api/operador/entrar',{
+  method:'POST',credentials:'same-origin',cache:'no-store',
+  headers:{'Content-Type':'application/json'},
+  body:JSON.stringify({nick,senha})
+ });
+ if(!resposta.ok){
+  if(resposta.status===401)throw Error('CREDENCIAIS_INVALIDAS');
+  if(resposta.status===429)throw Error('CONTA_TEMPORARIAMENTE_BLOQUEADA');
+  throw Error('ACESSO_OPERADOR_INDISPONIVEL');
+ }
+ const dados=await resposta.json();
+ if(dados.operador!==true)throw Error('ACESSO_OPERADOR_INDISPONIVEL');
+}
+function abrirModoOperadorNaTela(){
+ // O operador utiliza o visual aprovado, mas nao assume nenhuma conta de cliente.
+ modoOperadorSemCliente=true;
+ csrf=null;
+ mostrarSessao(true);
+ $('senha').value='';
+ $('loop03NickIntegrado').textContent='@operador';
+ $('loop03TotalIntegrado').textContent='—';
+ $('loop03Giros24Integrado').textContent='—';
+ $('loop03NumeroIntegrado').textContent='—';
+ $('loop03StatusPosicao').textContent='';
+ $('perfilCliente').textContent='Operador · Edição diretamente nas telas';
+ $('painelVerificarEmail').hidden=true;
+ $('painelIdentidadeTeste').hidden=true;
+ for(const [id] of ABAS){
+  const botao=$(id);if(!botao)continue;
+  botao.disabled=!['abaResumo','abaTabuleiro'].includes(id);
+  if(botao.disabled)botao.title='Dados pessoais exigem login de cliente';
+ }
+ $('loop03IrPosicoesIntegrado').disabled=true;
+ mostrarAba('conteudoResumo');
+ dizer('Modo operador ativado. Toque no banner ou no relógio para editar.');
+ dispatchEvent(new Event('loop:operador-entrou'));
+}
 async function entrar(e){
  e.preventDefault();
  const botao=$('formLogin').querySelector('button[type=submit]');
  botao.disabled=true;dizer('Validando conta de homologação...');
  try{
+  if($('login').value.trim().toLowerCase()==='operador'){
+   await autenticarOperadorFormulario($('login').value.trim(),$('senha').value);
+   $('senha').value='';
+   location.assign('/staging/cliente?modo=operador');
+   return;
+  }
+  modoOperadorSemCliente=false;
+  for(const [id] of ABAS){const b=$(id);if(b){b.disabled=false;b.removeAttribute('title');}}
+  $('loop03IrPosicoesIntegrado').disabled=false;
   await autenticarConta($('login').value,$('senha').value);
   await terminarModoOperador();
   mostrarErroAcesso('login','');
@@ -1273,6 +1329,16 @@ async function entrar(e){
 }
 
 async function sair(){
+ if(modoOperadorSemCliente){
+  try{await terminarModoOperador();}catch(e){dizer('Falha ao encerrar: '+e.message);return;}
+  modoOperadorSemCliente=false;
+  mostrarSessao(false);
+  for(const [id] of ABAS){const b=$(id);if(b){b.disabled=false;b.removeAttribute('title');}}
+  $('loop03IrPosicoesIntegrado').disabled=false;
+  dizer('Sessão de operador encerrada.');
+  history.replaceState(null,'','/staging/cliente');
+  return;
+ }
  try{
   await terminarModoOperador();
   await requisitar('/contas/sair',{method:'POST',mutacao:true});
@@ -1293,6 +1359,12 @@ async function carregarIndicadorCadastro(){
  }catch{/* Sem convite, o cadastro segue normalmente. */}
 }
 async function restaurarSessao(){
+ if(new URLSearchParams(location.search).get('modo')==='operador'){
+  try{
+   const r=await fetch('/api/operador/estado',{credentials:'same-origin',cache:'no-store'});
+   if(r.ok&&(await r.json()).operador===true){abrirModoOperadorNaTela();return;}
+  }catch{}
+ }
  try{
   const s=await requisitar('/contas/me');csrf=s.csrf;
   mostrarSessao(true);
@@ -1303,6 +1375,10 @@ async function restaurarSessao(){
   mostrarAba('conteudoResumo');
   }catch(e){
   mostrarSessao(false);dizer('');
+  try{
+   const r=await fetch('/api/operador/estado',{credentials:'same-origin',cache:'no-store'});
+   if(r.ok&&(await r.json()).operador===true){abrirModoOperadorNaTela();return;}
+  }catch{}
   const params=new URLSearchParams(location.search);
   if(params.get('cadastro')==='1'||params.get('destino')==='loja'){
    selecionarTelaAcesso('cadastro');
