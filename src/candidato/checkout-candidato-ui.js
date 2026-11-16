@@ -841,6 +841,27 @@ async function atualizarPosicoes(){
     aceite.textContent='CPF e termos confirmados nesta posição · validação externa ainda pendente.';
     cartao.append(aceite);
    }
+   if(!posicao){
+    const orientacao=document.createElement('div');
+    orientacao.className='loop03-form-aceite-posicao';
+    const cpf=document.createElement('label');
+    cpf.textContent='CPF desta posição';
+    const campo=document.createElement('input');
+    campo.type='text';campo.inputMode='numeric';campo.placeholder='CPF após ativação';
+    campo.disabled=true;
+    cpf.append(campo);
+    const aceite=document.createElement('label');
+    const caixa=document.createElement('input');
+    caixa.type='checkbox';caixa.disabled=true;
+    aceite.append(caixa,document.createTextNode(' Li e aceito os termos desta posição'));
+    const confirmar=document.createElement('button');
+    confirmar.type='button';confirmar.disabled=true;
+    confirmar.textContent='Confirmar CPF e termos';
+    const aviso=document.createElement('small');
+    aviso.textContent='Campos disponíveis após adquirir esta posição.';
+    orientacao.append(cpf,aceite,confirmar,aviso);
+    cartao.append(orientacao);
+   }
    if(posicao?.pendente){
     const formulario=document.createElement('form');
     formulario.className='loop03-form-aceite-posicao';
@@ -1045,17 +1066,17 @@ function renderizarIndicadoNaRede(pessoa){
  );
  if(validada){
   conteudo.append(elementoEquipe('p','loop03-rede-pessoa-vinculo','Indicação já vinculada.'));
- }else if(!possuiPosicao){
-  conteudo.append(elementoEquipe('p','loop03-rede-pessoa-vinculo','Aguardando confirmação de ativação no LOOP.'));
  }else{
-  conteudo.append(elementoEquipe('p','loop03-rede-pessoa-vinculo','Escolha uma das suas posições confirmadas:'));
+  conteudo.append(elementoEquipe('p','loop03-rede-pessoa-vinculo',
+   possuiPosicao?'Escolha uma das suas posições confirmadas:':
+   'Escolha uma posição para visualizar. A vinculação será liberada após ativação.'));
   const grade=elementoEquipe('div','loop03-rede-alocar-posicoes');
   grade.style.display='grid';grade.style.gridTemplateColumns='repeat(5,minmax(0,1fr))';grade.style.gap='8px';
   for(let n=1;n<=10;n++){
    const escolha=elementoEquipe('button',null,String(n));escolha.type='button';
    const pos=posicoesDisponiveisResumo.find(p=>p.numero===n);
-   escolha.disabled=!pos||pos.aceiteIndividualRegistrado!==true;
-   escolha.title=!pos?'Posição não adquirida':pos.aceiteIndividualRegistrado!==true?
+   escolha.disabled=!possuiPosicao||!pos||pos.aceiteIndividualRegistrado!==true;
+   escolha.title=!possuiPosicao?'Aguardando ativação da indicação':!pos?'Posição não adquirida':pos.aceiteIndividualRegistrado!==true?
     'Confirme CPF e termos desta posição':'Vincular à posição '+n;
    escolha.addEventListener('click',async()=>{
     escolha.disabled=true;
