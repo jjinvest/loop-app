@@ -1043,8 +1043,35 @@ function renderizarIndicadoNaRede(pessoa){
   elementoEquipe('span',null,'Horário: '+hora+' (Brasília)'),
   elementoEquipe('span',null,'Fila: '+(pessoa.filaCadastro==='B'?'B':'não informada'))
  );
- conteudo.append(elementoEquipe('p','loop03-rede-pessoa-vinculo',
-  'Aguardando confirmação de ativação no LOOP.'));
+ if(validada){
+  conteudo.append(elementoEquipe('p','loop03-rede-pessoa-vinculo','Indicação já vinculada.'));
+ }else if(!possuiPosicao){
+  conteudo.append(elementoEquipe('p','loop03-rede-pessoa-vinculo','Aguardando confirmação de ativação no LOOP.'));
+ }else{
+  conteudo.append(elementoEquipe('p','loop03-rede-pessoa-vinculo','Escolha uma das suas posições confirmadas:'));
+  const grade=elementoEquipe('div','loop03-rede-alocar-posicoes');
+  grade.style.display='grid';grade.style.gridTemplateColumns='repeat(5,minmax(0,1fr))';grade.style.gap='8px';
+  for(let n=1;n<=10;n++){
+   const escolha=elementoEquipe('button',null,String(n));escolha.type='button';
+   const pos=posicoesDisponiveisResumo.find(p=>p.numero===n);
+   escolha.disabled=!pos||pos.aceiteIndividualRegistrado!==true;
+   escolha.title=!pos?'Posição não adquirida':pos.aceiteIndividualRegistrado!==true?
+    'Confirme CPF e termos desta posição':'Vincular à posição '+n;
+   escolha.addEventListener('click',async()=>{
+    escolha.disabled=true;
+    try{
+     const resultado=await requisitar('/minha-equipe/indicacoes/qualificar-ensaio',{
+      method:'POST',mutacao:true,body:{indicadoId:pessoa.indicadoId,posicaoAlvoId:n}
+     });
+     if(resultado.qualificada!==true)throw Error('INDICACAO_NAO_QUALIFICADA');
+     dizer('Indicação vinculada à posição '+n+'.');
+     await atualizarPosicoes();await atualizarEquipe(0);
+    }catch(e){dizer('Vinculação não realizada: '+e.message);escolha.disabled=false;}
+   });
+   grade.append(escolha);
+  }
+  conteudo.append(grade);
+ }
  cartao.append(cabecalho,info,conteudo);
  return cartao;
 }
