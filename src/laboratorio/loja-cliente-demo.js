@@ -9,6 +9,12 @@
  let conviteLoopCheckoutAtivo=false,catalogoRealSemCheckout=false;
  const tamanhoPaginaVitrine=()=>window.matchMedia('(max-width:800px)').matches?4:8;
  let timerBanner=null,enderecoEntrega=null,quantidadeVitrine=tamanhoPaginaVitrine();
+ // Vitrine horizontal: 10 abas * 4 fileiras * 10 espaços = 400 posições.
+ // Somente duas fileiras são montadas até o usuário expandir a aba.
+ const TOTAL_ABAS=10,COLUNAS_FAIXA=10,LINHAS_ABA=4,VAGAS_ABA=40;
+ let abaProdutos=0;
+ const abasExpandidas=new Set();
+ const modoVitrineHorizontal=()=>filtro==='todos'&&!corFiltro&&!el('akitemmBusca').value.trim();
  let assinaturaCarrinhoAnterior='';
  let novidadesVitrine=[];
  let avaliacoesDisponiveis=[],avisosGerais=[];
@@ -97,7 +103,7 @@
   fecharDetalhes();
   filtro='todos';corFiltro=proximaCor;
   el('akitemmBusca').value='';
-  quantidadeVitrine=tamanhoPaginaVitrine();
+  quantidadeVitrine=tamanhoPaginaVitrine();abaProdutos=0;
   atualizarFiltroCor();atualizarBotoesDeFiltro();
   mostrarCatalogo();
  }
@@ -382,7 +388,7 @@
   // "Todos", "Ofertas" e categorias não herdam uma cor antiga.
   filtro=novo;corFiltro=null;
   if(!preservarBusca)el('akitemmBusca').value='';
-  quantidadeVitrine=tamanhoPaginaVitrine();
+  quantidadeVitrine=tamanhoPaginaVitrine();abaProdutos=0;
   atualizarFiltroCor();atualizarBotoesDeFiltro();
   mostrarCatalogo();
  }
@@ -425,6 +431,35 @@
   card.append(imagem,dados);
   return card; // Sem id de produto, preço, botão, checkout ou evento.
  }
+ function prepararAbasVitrine(){
+  if(!document.getElementById('akitemmCssVitrineHorizontal')){
+   const style=document.createElement('style');
+   style.id='akitemmCssVitrineHorizontal';
+   style.textContent=".akitemm-loja #catalogoLojaLoop.ak-vitrine-horizontal{display:flex!important;flex-direction:column;align-items:stretch;gap:13px;width:100%;min-width:0}.akitemm-loja #catalogoLojaLoop .ak-faixa-horizontal{display:grid!important;grid-template-columns:none!important;grid-auto-flow:column;grid-template-rows:1fr;grid-auto-columns:calc((100% - 39px)/4);gap:13px;max-width:100%;min-width:0;overflow-x:auto;overflow-y:hidden;scroll-snap-type:x proximity;overscroll-behavior-x:contain;-webkit-overflow-scrolling:touch;scrollbar-width:thin;scrollbar-color:#c9a76d #15242e;padding:2px 2px 10px;box-sizing:border-box}.akitemm-loja #catalogoLojaLoop .ak-faixa-horizontal>.produto-loja-loop{display:flex;flex-direction:column;min-width:0;height:100%;box-sizing:border-box;scroll-snap-align:start}.akitemm-loja #catalogoLojaLoop .ak-faixa-horizontal>.produto-loja-loop>.akitemm-dados-produto{display:flex;flex:1 1 auto;flex-direction:column;min-width:0}.akitemm-loja #catalogoLojaLoop .ak-faixa-horizontal>.produto-loja-loop .akitemm-acoes-produto{margin-top:auto}.akitemm-loja #catalogoLojaLoop .ak-faixa-horizontal>.akitemm-slot-vazio{--ak-slot-cor:#8996a7;border:2px solid var(--ak-slot-cor)!important;background:linear-gradient(160deg,#172430,#0e1822 75%)!important;box-shadow:inset 0 0 18px #0005,0 0 7px color-mix(in srgb,var(--ak-slot-cor),transparent 65%)!important;cursor:default;user-select:none}.akitemm-loja #catalogoLojaLoop .ak-faixa-horizontal>.akitemm-slot-roxo{--ak-slot-cor:#bd88f6}.akitemm-loja #catalogoLojaLoop .ak-faixa-horizontal>.akitemm-slot-dourado{--ak-slot-cor:#e4bd6b}.akitemm-loja #catalogoLojaLoop .ak-faixa-horizontal>.akitemm-slot-verde{--ak-slot-cor:#65cfa0}.akitemm-loja #catalogoLojaLoop .ak-faixa-horizontal>.akitemm-slot-cinza{--ak-slot-cor:#a0a9b2}.akitemm-loja #catalogoLojaLoop .ak-faixa-horizontal>.akitemm-slot-vazio .akitemm-imagem-produto{border-bottom:1px solid var(--ak-slot-cor);background:linear-gradient(130deg,#1e2d39,#111a23)}.akitemm-loja #catalogoLojaLoop .ak-faixa-horizontal>.akitemm-slot-vazio .akitemm-slot-icone{display:grid;place-items:center;width:47px;height:47px;border:1px dashed var(--ak-slot-cor);border-radius:50%;color:var(--ak-slot-cor);font-size:28px;font-weight:350;opacity:.8}.akitemm-loja #catalogoLojaLoop .ak-faixa-horizontal>.akitemm-slot-vazio .akitemm-dados-produto{align-items:center;justify-content:center;gap:10px;color:#e0e7ec;text-align:center}.akitemm-loja #catalogoLojaLoop .ak-faixa-horizontal>.akitemm-slot-vazio .akitemm-dados-produto strong{color:var(--ak-slot-cor);font-size:12px}.akitemm-loja #catalogoLojaLoop .ak-faixa-horizontal>.akitemm-slot-vazio .akitemm-dados-produto small{color:#aebbc7;font-size:11px;line-height:1.45}.akitemm-loja #akitemmAbasProdutos{display:flex;flex-wrap:nowrap;gap:4px;width:max-content;max-width:100%;overflow-x:auto;box-sizing:border-box;padding:5px 2px 10px;margin:8px 0 12px;scrollbar-width:thin}.akitemm-loja #akitemmAbasProdutos[hidden]{display:none!important}.akitemm-loja #akitemmAbasProdutos button{flex:0 0 34px;min-width:34px;min-height:38px;padding:4px;border:1px solid #76654e;border-radius:8px;background:linear-gradient(#243440,#131e28);color:#f1e2c8;font-weight:800;cursor:pointer}.akitemm-loja #akitemmAbasProdutos button[aria-current=\"page\"]{background:linear-gradient(#ffe0a1,#e8af4a);border-color:#d7a249;color:#11161b;box-shadow:0 0 0 2px #c7a4647a}.akitemm-loja #akitemmAbasProdutos button:focus-visible{outline:2px solid #ffe4a2;outline-offset:2px}@media(max-width:800px){.akitemm-loja #catalogoLojaLoop.ak-vitrine-horizontal{gap:8px}.akitemm-loja #catalogoLojaLoop .ak-faixa-horizontal{grid-auto-columns:calc((100% - 8px)/2);gap:8px}}";
+   document.head.append(style);
+  }
+  let nav=el('akitemmAbasProdutos');
+  if(!nav){
+   nav=document.createElement('nav');
+   nav.id='akitemmAbasProdutos';
+   nav.setAttribute('aria-label','Páginas dos produtos');
+   el('akitemmCarregarMais').after(nav);
+  }
+  nav.replaceChildren();
+  for(let n=0;n<TOTAL_ABAS;n++){
+   const b=document.createElement('button');
+   b.type='button';b.textContent=String(n+1);
+   b.setAttribute('aria-label','Página '+(n+1)+' de '+TOTAL_ABAS);
+   if(n===abaProdutos)b.setAttribute('aria-current','page');
+   b.addEventListener('click',()=>{
+    if(abaProdutos===n)return;
+    abaProdutos=n;mostrarCatalogo();
+    el('akitemmAreaProdutos').scrollIntoView({block:'start',behavior:'auto'});
+   });
+   nav.append(b);
+  }
+  return nav;
+ }
  function mostrarCatalogo(){
   fecharDetalhes();
   const destino=el('catalogoLojaLoop');destino.replaceChildren();
@@ -456,9 +491,40 @@
   }else if(filtro==='ofertas'&&!filtrados.length&&!haPublicacoes){
    el('akitemmResultadoProdutos').textContent='Nenhuma oferta publicada por enquanto.';
   }
-  el('akitemmCarregarMais').hidden=itens.length<=quantidadeVitrine;
-  for(const item of itens.slice(0,quantidadeVitrine)){
-   if(!item.produto){destino.append(criarSlotVazio(item));continue;}
+  const horizontal=modoVitrineHorizontal();
+  const nav=prepararAbasVitrine();nav.hidden=!horizontal;
+  destino.classList.toggle('ak-vitrine-horizontal',horizontal);
+  let faixas=[];
+  let itensExibidos;
+  if(horizontal){
+   const expandida=abasExpandidas.has(abaProdutos);
+   const linhas=expandida?LINHAS_ABA:2;
+   const cores=coresVitrine();
+   itensExibidos=Array.from({length:linhas*COLUNAS_FAIXA},(_,i)=>{
+    const indice=abaProdutos*VAGAS_ABA+i;
+    return itens[indice]||{indice:indice+1,cor:cores[indice%cores.length],produto:null};
+   });
+   for(let linha=0;linha<linhas;linha++){
+    const faixa=document.createElement('div');
+    faixa.className='ak-faixa-horizontal';
+    faixa.tabIndex=0;faixa.setAttribute('role','group');
+    faixa.setAttribute('aria-label','Fileira '+(linha+1)+' da aba '+(abaProdutos+1)+
+     ', dez espaços. Arraste para o lado.');
+    destino.append(faixa);faixas.push(faixa);
+   }
+   el('akitemmCarregarMais').hidden=false;
+   el('akitemmCarregarMais').textContent=expandida?'Mostrar menos produtos ↑':'Mostrar mais produtos ↓';
+   el('akitemmResultadoProdutos').textContent=filtrados.length?
+    filtrados.length+' produto(s) publicado(s) · dez abas com quarenta espaços cada.':
+    'Vitrine com dez abas e capacidade para quatrocentos produtos.';
+  }else{
+   itensExibidos=itens.slice(0,quantidadeVitrine);
+   el('akitemmCarregarMais').hidden=itens.length<=quantidadeVitrine;
+   el('akitemmCarregarMais').textContent='Mostrar mais produtos ↓';
+  }
+  for(const [i,item] of itensExibidos.entries()){
+   const alvo=horizontal?faixas[Math.floor(i/COLUNAS_FAIXA)]:destino;
+   if(!item.produto){alvo.append(criarSlotVazio(item));continue;}
    const p=item.produto;
    const card=document.createElement('article');
    const classe=corDoProduto(p),especial=classe==='ROXO';
@@ -502,7 +568,7 @@
      ev.preventDefault();abrirDetalhes(p);
     }
    });
-   card.append(imagem,dados);destino.append(card);
+   card.append(imagem,dados);alvo.append(card);
   }
   atualizarCarrinho();
  }
@@ -817,7 +883,11 @@
   el('akitemmAreaProdutos').scrollIntoView({block:'start',behavior:'instant'});
  });
  el('akitemmCarregarMais').addEventListener('click',()=>{
-  quantidadeVitrine+=tamanhoPaginaVitrine();mostrarCatalogo();
+  if(modoVitrineHorizontal()){
+   if(abasExpandidas.has(abaProdutos))abasExpandidas.delete(abaProdutos);
+   else abasExpandidas.add(abaProdutos);
+  }else quantidadeVitrine+=tamanhoPaginaVitrine();
+  mostrarCatalogo();
  });
  el('akitemmAbrirAvaliacoes').addEventListener('click',()=>{
   el('akitemmNotificacoes').hidden=true;
