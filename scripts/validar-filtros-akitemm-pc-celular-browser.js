@@ -38,8 +38,8 @@ const PRODUTOS=['ROXO','DOURADO','VERDE','CINZA'].map(cor=>({
  try{
   browser=await chromium.launch({headless:true,args:['--no-sandbox']});
   for(const dispositivo of [
-   {nome:'computador',viewport:{width:1366,height:810},mobile:false,cols:4,inicial:8},
-   {nome:'celular',viewport:{width:390,height:844},mobile:true,cols:2,inicial:4}
+   {nome:'computador',viewport:{width:1366,height:810},mobile:false,cols:4,inicial:20},
+   {nome:'celular',viewport:{width:390,height:844},mobile:true,cols:2,inicial:20}
   ]){
    const contextoPagina=await browser.newContext({
     viewport:dispositivo.viewport,isMobile:dispositivo.mobile,deviceScaleFactor:1
@@ -86,10 +86,37 @@ const PRODUTOS=['ROXO','DOURADO','VERDE','CINZA'].map(cor=>({
    await cursos.locator('summary').click();
    assert.equal(await cards().count(),dispositivo.inicial);
    assert.equal(await pagina.locator('#catalogoLojaLoop .akitemm-slot-vazio').count(),
-    dispositivo.inicial,'vitrine sem mercadoria tem apenas quadrinhos vazios');
-   const cols=await pagina.locator('#catalogoLojaLoop').evaluate(e=>
-    getComputedStyle(e).gridTemplateColumns.split(' ').length);
-   assert.equal(cols,dispositivo.cols);
+    dispositivo.inicial,'espaços vazios não são anúncios nem compras');
+   assert.equal(await pagina.locator('#akitemmAbasProdutos button').count(),10);
+   assert.equal(await pagina.locator('#catalogoLojaLoop .ak-faixa-horizontal').count(),2);
+   assert.equal(await pagina.locator('#catalogoLojaLoop .ak-faixa-horizontal').first()
+    .locator('article').count(),10);
+   const geometriaLinha=await pagina.locator('#catalogoLojaLoop .ak-faixa-horizontal')
+    .first().evaluate(el=>{
+     const card=el.querySelector('article');
+     const gap=parseFloat(getComputedStyle(el).columnGap)||0;
+     return {
+      visiveis:Math.round((el.clientWidth+gap)/(card.getBoundingClientRect().width+gap)),
+      desliza:el.scrollWidth>el.clientWidth,
+      primeiro:card.dataset.akitemmSlot
+     };
+    });
+   assert.equal(geometriaLinha.visiveis,dispositivo.cols);
+   assert.equal(geometriaLinha.desliza,true,'dez cartões devem rolar na horizontal');
+   assert.equal(geometriaLinha.primeiro,'1');
+   await pagina.locator('#akitemmCarregarMais').click();
+   assert.equal(await cards().count(),40,'expansão revela 4 fileiras de 10');
+   assert.equal(await pagina.locator('#catalogoLojaLoop .ak-faixa-horizontal').count(),4);
+   await pagina.locator('#akitemmAbasProdutos button').nth(1).click();
+   assert.equal(await cards().count(),20,'a segunda aba começa com 2 fileiras');
+   assert.equal(await pagina.locator('#catalogoLojaLoop .ak-faixa-horizontal').first()
+    .locator('article').first().getAttribute('data-akitemm-slot'),'41');
+   assert.equal(await pagina.locator('#akitemmAbasProdutos button').nth(1)
+    .getAttribute('aria-current'),'page');
+   await pagina.locator('#akitemmAbasProdutos button').first().click();
+   assert.equal(await cards().count(),40,'voltar mantém expansão da primeira aba');
+   await pagina.locator('#akitemmCarregarMais').click();
+   assert.equal(await cards().count(),20,'recolher restaura 2 fileiras');
    const legenda=await pagina.locator('.akitemm-legenda-cores').evaluate(e=>
     getComputedStyle(e).gridTemplateColumns.split(' ').length);
    assert.equal(legenda,2,'filtros em duas colunas nos dois dispositivos');
@@ -198,7 +225,7 @@ const PRODUTOS=['ROXO','DOURADO','VERDE','CINZA'].map(cor=>({
    await admin.close();
    assert.deepEqual(erros,[],'sem erro JavaScript no '+dispositivo.nome);
    console.log('AKITEMM_FILTROS_'+dispositivo.nome.toUpperCase()+
-    '=TODOS_OFERTAS_CINZA_VERDE_DOURADO_ROXO_8_SLOTS_REAIS_SEM_CHECKOUT_OK');
+    '=TODOS_OFERTAS_CINZA_VERDE_DOURADO_ROXO_10_ABAS_400_ESPACOS_SEM_CHECKOUT_OK');
    await contextoPagina.close();
   }
  }finally{
