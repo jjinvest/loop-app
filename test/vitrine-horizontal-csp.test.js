@@ -10,7 +10,7 @@ test('CSS horizontal carrega de arquivo same-origin sob politica style-src self'
  const gate=ler('scripts/servidor-escritorio-preview-railway.js');
  const loja=ler('src/laboratorio/loja-cliente-demo.js');
  const css=ler('src/candidato/vitrine-horizontal.css');
- assert.match(html,/href=\\"\/staging\/assets\/vitrine-horizontal\.css\\"/);
+ assert.match(html,/href="\/staging\/assets\/vitrine-horizontal\.css"/);
  assert.match(server,/app\.get\('\/staging\/assets\/vitrine-horizontal\.css'/);
  assert.match(gate,/vitrine-horizontal\\\.css/);
  assert.doesNotMatch(loja,/style\.textContent=/);
