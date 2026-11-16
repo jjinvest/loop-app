@@ -940,3 +940,8 @@ body.akitemm-loja{background:#071018;color:#f0f2f6;font-family:system-ui,-apple-
  color:#eec36a;text-shadow:0 0 6px #a97535;
 }
 @media(max-width:800px){.akitemm-loja .akitemm-marca-loop .akitemm-anel{width:25px;height:25px;min-width:25px}.akitemm-loja .akitemm-marca-loop .akitemm-anel::before{font-size:25px}}
+
+/* Marca LOOP 3.0 prateada padronizada com o escritorio. */
+.akitemm-loja .akitemm-marca-loop{font-family:system-ui,Arial,sans-serif;font-weight:900!important;letter-spacing:.045em;color:#e5e9f1!important;font-size:clamp(19px,2.3vw,29px)!important;text-shadow:0 1px 0 #fff8,0 3px 5px #000a;line-height:1.2}
+.akitemm-loja .akitemm-marca-loop em{font-size:1em!important;font-weight:900!important;color:#e5e9f1!important;font-style:normal}
+.akitemm-loja .akitemm-marca-loop .akitemm-anel::before{content:'◎';color:#e5e9f1!important;text-shadow:0 1px 0 #fff8,0 2px 6px #0009}
