@@ -13,7 +13,7 @@ assert.ok(inicio>=0&&fim>inicio);
 const funcao=js.slice(inicio,fim);
 assert.doesNotMatch(funcao,/innerHTML|insertAdjacentHTML|localStorage|sessionStorage/);
 function elemento(tag){
- return {tag,children:[],attributes:{},className:'',textContent:'',
+ return {tag,children:[],attributes:{},style:{},className:'',textContent:'',
   addEventListener(){},querySelector(tag){return this.children.find(x=>x.tag===tag)||null;},setAttribute(k,v){this.attributes[k]=v;},
   append(...filhos){this.children.push(...filhos);},
   replaceChildren(...filhos){this.children=[...filhos];}
