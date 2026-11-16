@@ -147,7 +147,7 @@ function criarGateway({portaInterna,senhaAcesso,senhaAdmin,segredoOperador,
    return res.end(JSON.stringify({operador:lerAdmin(req)}));
   }
   // Logout administrativo: cliente e operador sao papeis separados.
-  if(url.pathname==='/staging/operador/sair'){
+  if(url.pathname==='/staging/operador/sair'||url.pathname==='/api/operador/sair'){
    if(req.method!=='POST')return negar(405,'Método não permitido');
    let origemOk=false;
    if(typeof req.headers.origin==='string'){

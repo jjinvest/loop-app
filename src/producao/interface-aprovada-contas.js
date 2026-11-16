@@ -23,7 +23,7 @@
  addEventListener('pageshow',()=>void atualizarAtalhoOperadorReal());
  addEventListener('focus',()=>void atualizarAtalhoOperadorReal());
  async function terminarModoOperador(){
-  const resposta=await fetch('/staging/operador/sair',{
+  const resposta=await fetch('/api/operador/sair',{
    method:'POST',credentials:'same-origin',cache:'no-store'
   });
   if(resposta.status===404)return; // identidade em dominio independente

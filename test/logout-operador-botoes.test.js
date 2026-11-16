@@ -35,10 +35,12 @@ test('cliente continua cliente, operador nao reaparece apos sair',async t=>{
 });
 test('ambos logins pessoais encerram modo operador e botoes recebem acabamento',()=>{
  const ler=p=>fs.readFileSync(path.join(__dirname,'..',p),'utf8');
- for(const p of ['src/candidato/checkout-candidato-ui.js','src/producao/interface-aprovada-contas.js']){
-  assert.match(ler(p),/terminarModoOperador/);
-  assert.match(ler(p),/\/staging\/operador\/sair/);
- }
+ const candidate=ler('src/candidato/checkout-candidato-ui.js');
+ const real=ler('src/producao/interface-aprovada-contas.js');
+ assert.match(candidate,/terminarModoOperador/);
+ assert.match(candidate,/\/staging\/operador\/sair/);
+ assert.match(real,/terminarModoOperador/);
+ assert.match(real,/\/api\/operador\/sair/);
  assert.match(ler('src/candidato/operador-em-tela.js'),/loop:operador-saiu/);
  const css=ler('src/shared/acabamento-visual-loop.js');
  assert.match(css,/button:not\(:disabled\):active/);
