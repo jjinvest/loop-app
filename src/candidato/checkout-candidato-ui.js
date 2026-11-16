@@ -117,9 +117,9 @@ function limparFotosBannersEscritorio(){
 async function carregarFotosBannersEscritorio(){
  const versao=++versaoLeituraBannersEscritorio;
  try{
-  const r=await fetch('/staging/banners-escritorio',{
-   credentials:'same-origin',cache:'no-store'
-  });
+  const baseBanners=modoOperadorSemCliente?
+   '/staging/escritorio-unificado/banners-escritorio':'/staging/banners-escritorio';
+  const r=await fetch(baseBanners,{credentials:'same-origin',cache:'no-store'});
   if(!r.ok)return;
   const dados=await r.json();
   if(versao!==versaoLeituraBannersEscritorio||
@@ -134,7 +134,7 @@ async function carregarFotosBannersEscritorio(){
    // sem carregar quatro arquivos grandes no login nem criar blob URLs.
    img.loading='lazy';img.decoding='async';
    img.onerror=()=>{img.hidden=true;img.removeAttribute('src');};
-   img.src='/staging/banners-escritorio/'+b.slot+'/imagem';
+   img.src=baseBanners+'/'+b.slot+'/imagem';
    img.hidden=false;
   }
  }catch{/* Sem fotos ou rede, continua usando os banners originais. */}
