@@ -1,7 +1,7 @@
 {
   "schema": 1,
   "política": "Toda alteração de HTML/CSS exige pedido visual explícito, escopo isolado e revisão do proprietário; é proibido atualizar hashes para esconder mudanças.",
-  "autorizaçãoAtual": "15/11/2026: navegação funcional por abas no mesmo Escritório Admin, recados independentes AKITEMM/LOOP e correções pontuais no cabeçalho/atalhos da loja; publicação e download financeiro ainda protegidos. Preservar as demais telas e funcionalidades, sem merge PR #1.",
+  "autorizaçãoAtual": "16/11/2026: proprietário autorizou acabamento fino dos botões AKITEMM, correção de Minha conta, remoção de textos técnicos e atalho Ver todos, centralização do sino e símbolo circular LOOP no cabeçalho; demais 23 arquivos visuais permanecem protegidos.",
   "arquivos": [
     {
       "path": "src/candidato/checkout-candidato-ui.html",
@@ -69,7 +69,7 @@
     },
     {
       "path": "src/laboratorio/loja-cliente-demo.css",
-      "sha": "6a98489840e201ee19f2f98540ecdd6f5dd6d615"
+      "sha": "17de1a4801142b0ea259a9cfaf88f177b3140c10"
     },
     {
       "path": "src/laboratorio/loja-cliente-demo.html",
@@ -116,6 +116,7 @@
     "15/11/2026: usuário aprovou explicitamente o modelo 4x2 do PC e 2x2 do celular. Ajustes visuais limitados à loja AKITEMM: legenda em grade 2 colunas (cinza/verde; dourado/roxo), nomenclatura de cores e paginação 8/4 por viewport. A proteção de alterações HTML/CSS conserva os 22 demais arquivos aprovados sem modificação.",
     "15/11/2026: novo pedido expresso: NÃO criar produtos; deixar os oito QUADRINHOS prontos com ordem ROXO/DOURADO/VERDE/CINZA e CINZA/VERDE/DOURADO/ROXO no PC, quatro primeiros no celular, e assegurar mutabilidade por operador. Espaços exibidos vazios com bordas por cor, sem operações de compra; opções de cor dos oito slots persistem em banco auditável e podem ser reeditadas. Renova apenas os hashes dos 3 arquivos visuais envolvidos nesta alteração.",
     "15/11/2026: suporte técnico iniciado para estoque próprio e características de produtos (tênis, fotos, preços, marca/tamanho/cor/material), com alteração restrita ao formulário do administrador, validação do catálogo, edição auditada e testes. Corrigida fixture de teste que usava nick com 10 caracteres apesar da validação vigente de 9. Site ainda não homologado para venda ou cadastro comercial definitivo; não remover avisos honestos.",
-    "15/11/2026: renova apenas o hash de src/candidato/escritorio-admin-candidato-ui.html para corrigir os rótulos de laboratório da seção de produto para catálogo comercial próprio, solicitado explicitamente. Reforçado mecanismo de foto antes da publicação e monitoramento privado de conexões dos dois serviços Railway. Produto real nunca entra em checkout de ensaio."
+    "15/11/2026: renova apenas o hash de src/candidato/escritorio-admin-candidato-ui.html para corrigir os rótulos de laboratório da seção de produto para catálogo comercial próprio, solicitado explicitamente. Reforçado mecanismo de foto antes da publicação e monitoramento privado de conexões dos dois serviços Railway. Produto real nunca entra em checkout de ensaio.",
+    "16/11/2026: pedido explícito em fotos e mensagens para refinar botões usando Ofertas como referência, corrigir sobreposição de Minha conta, remover Ver todos e capacidade da vitrine, alinhar sino e restaurar círculos LOOP no topo da AKITEMM. Hash renovado exclusivamente para src/laboratorio/loja-cliente-demo.css, após revisão do escopo."
   ]
 }
