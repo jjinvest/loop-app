@@ -16,7 +16,7 @@ const PADRAO_VITRINE=['ROXO','DOURADO','VERDE','CINZA','CINZA','VERDE','DOURADO'
 const DEFAULT=()=>({
  banners:[],redes:{instagram:'',youtube:'',facebook:'',whatsapp:''},
  informacoes:{sobre:'',privacidade:'',trocas:'',contato:'',suporte:''},
- ofertas:[],vitrineSlots:[...PADRAO_VITRINE]
+ ofertas:[],vitrineSlots:Array.from({length:200},(_,i)=>PADRAO_VITRINE[i%8])
 });
 function validar(dados){
  if(!dados||typeof dados!=='object'||Array.isArray(dados)||
@@ -26,7 +26,7 @@ function validar(dados){
   throw Error('CONFIG_LOJA_INVALIDA');
  const {banners,redes,informacoes,ofertas}=dados;
  const slots=dados.vitrineSlots===undefined?[...PADRAO_VITRINE]:dados.vitrineSlots;
- if(!Array.isArray(slots)||slots.length!==8||
+ if(!Array.isArray(slots)||![8,200].includes(slots.length)||
     !slots.every(cor=>CORES_VITRINE.includes(cor)))
   throw Error('VITRINE_SLOTS_INVALIDOS');
  if(!Array.isArray(banners)||banners.length>8||!Array.isArray(ofertas)||ofertas.length>50||
@@ -51,7 +51,7 @@ function validar(dados){
     throw Error('BANNER_INVALIDO');
  }
  return {banners:banners.map(b=>({...b})),redes:{...redes},
-  informacoes:{...informacoes},ofertas:[...ofertas],vitrineSlots:[...slots]};
+  informacoes:{...informacoes},ofertas:[...ofertas],vitrineSlots:Array.from({length:200},(_,i)=>slots[i]||slots[i%8])};
 }
 class AkitemmConfigLojaDemoSQLite{
  constructor({banco}={}){
@@ -127,7 +127,7 @@ class AkitemmConfigLojaDemoSQLite{
   const dados=r?JSON.parse(r.dados):DEFAULT();
   // Bancos anteriores não tinham disposição de cartões: migração sem perda.
   return dados.vitrineSlots===undefined?
-   {...dados,vitrineSlots:[...PADRAO_VITRINE]}:dados;
+   {...dados,vitrineSlots:Array.from({length:200},(_,i)=>PADRAO_VITRINE[i%8])}:dados;
  }
  revisao(){
   return this.banco.prepare(
