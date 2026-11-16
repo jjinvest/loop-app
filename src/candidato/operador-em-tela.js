@@ -170,5 +170,11 @@
    bannerLoop([...document.querySelectorAll('.loop03-banner-item')].indexOf(banner)+1);
   void processo.catch(err=>{const s=dialogo?.querySelector('.mensagem-operador');if(s)s.textContent='Não foi possível abrir: '+err.message;});
  },true);
+ addEventListener('loop:operador-saiu',()=>{
+  operador=false;document.body.classList.remove('operador-na-tela');
+  const link=document.querySelector('.akitemm-acesso-operador');
+  if(link){link.hidden=true;link.style.display='none';}
+  if(dialogo?.open)dialogo.close();
+ });
  void verificar();addEventListener('pageshow',()=>void verificar());addEventListener('focus',()=>void verificar());
 })();

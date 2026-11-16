@@ -56,6 +56,7 @@ function criarGateway({portaInterna,senhaAcesso,senhaAdmin,segredoOperador,
  const sessaoNome='akitemm_preview_access';
  const indicacaoCookie='akitemm_preview_ref';
  const adminCookie='akitemm_preview_admin_v2';
+ const revogadosOperador=new Map();
  const duracao=12*60*60*1000;
  const prazoIndicacao=30*24*60*60*1000;
  const assinarIndicacao=(nick,ts)=>createHmac('sha256',segredoOperador)
@@ -82,8 +83,9 @@ function criarGateway({portaInterna,senhaAcesso,senhaAdmin,segredoOperador,
   const matches=(req.headers.cookie||'').split(';').map(x=>x.trim())
    .filter(x=>x.startsWith(adminCookie+'='));
   if(matches.length!==1)return false;
-  const m=matches[0].slice(adminCookie.length+1)
-   .match(/^v2\.(\d{13})\.([a-f0-9]{64})$/);
+  const token=matches[0].slice(adminCookie.length+1);
+  if(revogadosOperador.has(token))return false;
+  const m=token.match(/^v2\.(\d{13})\.([a-f0-9]{64})$/);
   if(!m)return false;
   const ts=Number(m[1]);
   return ts<=Date.now()&&Date.now()-ts<duracao&&
@@ -143,6 +145,31 @@ function criarGateway({portaInterna,senhaAcesso,senhaAdmin,segredoOperador,
    res.writeHead(200,{...cabecalhosBase,
     'Content-Type':'application/json; charset=utf-8'});
    return res.end(JSON.stringify({operador:lerAdmin(req)}));
+  }
+  // Logout administrativo: cliente e operador sao papeis separados.
+  if(url.pathname==='/staging/operador/sair'){
+   if(req.method!=='POST')return negar(405,'Método não permitido');
+   let origemOk=false;
+   if(typeof req.headers.origin==='string'){
+    try{
+     const u=new URL(req.headers.origin);
+     origemOk=(u.protocol==='https:'&&u.host===req.headers.host)||
+      (permitirOrigemHttpLoopback===true&&process.env.NODE_ENV!=='production'&&
+       u.protocol==='http:'&&u.hostname==='127.0.0.1'&&u.host===req.headers.host);
+    }catch{}
+   }else origemOk=req.headers['sec-fetch-site']==='same-origin';
+   if(!origemOk)return negar(403,'Origem não autorizada');
+   if(lerAdmin(req)){
+    const token=(req.headers.cookie||'').split(';').map(x=>x.trim())
+     .find(x=>x.startsWith(adminCookie+'='))?.slice(adminCookie.length+1);
+    if(token)revogadosOperador.set(token,Number(token.split('.')[1])+duracao);
+   }
+   for(const [token,expira] of revogadosOperador)
+    if(expira<=Date.now())revogadosOperador.delete(token);
+   res.writeHead(200,{...cabecalhosBase,'Content-Type':'application/json; charset=utf-8',
+    'Cache-Control':'no-store',
+    'Set-Cookie':adminCookie+'=; HttpOnly; Secure; SameSite=Strict; Path=/; Max-Age=0'});
+   return res.end(JSON.stringify({operador:false}));
   }
   // O site público continua no mesmo domínio. Somente os caminhos
   // de IDENTIDADE e seus assets são proxied ao serviço real com volume

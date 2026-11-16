@@ -22,6 +22,14 @@
  void atualizarAtalhoOperadorReal();
  addEventListener('pageshow',()=>void atualizarAtalhoOperadorReal());
  addEventListener('focus',()=>void atualizarAtalhoOperadorReal());
+ async function terminarModoOperador(){
+  const resposta=await fetch('/staging/operador/sair',{
+   method:'POST',credentials:'same-origin',cache:'no-store'
+  });
+  if(resposta.status===404)return; // identidade em dominio independente
+  if(!resposta.ok)throw Error('FALHA_AO_ENCERRAR_OPERADOR');
+  dispatchEvent(new Event('loop:operador-saiu'));
+ }
  const API='/api/contas';
  let csrf=null,documentos=null,carregando=false,tela='login';
  let captchaCadastroId=null,captchaObrigatorio=false;
@@ -1287,6 +1295,7 @@
   }
   try{
    const login=await requisitar('/entrar',{method:'POST',body});
+   await terminarModoOperador();
    captchaLoginAtivo=false;captchaLoginId=null;
    $('captchaLoginArea').hidden=true;$('captchaLoginResposta').value='';
    $('senha').value='';
@@ -1377,6 +1386,7 @@
  sincronizarFotoRodapeReal();
  $('sair').addEventListener('click',async()=>{
   try{
+   await terminarModoOperador();
    await requisitar('/sair',{method:'POST',body:{},csrfObrigatorio:true});
    csrf=null;mostrarLogin('login');dizer('Sessão encerrada.');
   }catch(e){dizer(erro(e));}

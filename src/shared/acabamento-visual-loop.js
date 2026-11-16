@@ -3,6 +3,11 @@
 (()=>{
  const css=document.createElement('style');
  css.textContent=[
+  ':where(.akitemm-loja,.cliente-integrado,#painelLogin,#painelCadastro,#painelRecuperacao) button:not(:disabled){transition:filter .16s ease,transform .16s ease,box-shadow .16s ease;-webkit-tap-highlight-color:transparent;touch-action:manipulation}',
+  ':where(.akitemm-loja,.cliente-integrado,#painelLogin,#painelCadastro,#painelRecuperacao) button:not(:disabled):hover{filter:brightness(1.11) saturate(1.07);box-shadow:inset 0 1px 0 #fff3,0 4px 12px #0005}',
+  ':where(.akitemm-loja,.cliente-integrado,#painelLogin,#painelCadastro,#painelRecuperacao) button:not(:disabled):active{transform:translateY(1px) scale(.975);filter:brightness(1.19) saturate(1.1);box-shadow:inset 0 2px 5px #0005,0 0 0 1px #f5d28b80}',
+  ':where(.akitemm-loja,.cliente-integrado,#painelLogin,#painelCadastro,#painelRecuperacao) button:not(:disabled):focus-visible{outline:2px solid #ffe4ab;outline-offset:3px}',
+  '@media(prefers-reduced-motion:reduce){:where(.akitemm-loja,.cliente-integrado,#painelLogin,#painelCadastro,#painelRecuperacao) button{transition:none!important}}',
   '.akitemm-loja #akitemmFiltroTodos{background:linear-gradient(#ffe0a1,#e8af4a);color:#11161b;border-color:#d7a249}',
   '.akitemm-loja #akitemmFiltroTodos[aria-pressed="true"]{outline:2px solid #ffd77c;outline-offset:2px}',
   '.akitemm-loja #akitemmSino{color:#eec16b!important}',
@@ -26,6 +31,8 @@
  }
  decorar(document.querySelector('.akitemm-loja .akitemm-marca-loop'));
  decorar(document.querySelector('.cabecalho .marca'));
+ document.getElementById('akitemmOperadorMais')?.remove();
+ document.getElementById('loopOperadorMais')?.remove();
  // A foto permanece na linha de cima; o sino fica na linha de
  // "Meu Escritório Virtual", abaixo da foto e alinhado à direita.
  const boas=document.querySelector('#painelConta .loop03-boasvindas');

@@ -1246,12 +1246,21 @@ async function atualizarCaptchaLogin(){
   $('captchaLoginEstado').textContent='Não foi possível carregar o código. Toque em Outro código.';
  }
 }
+async function terminarModoOperador(){
+ const resposta=await fetch('/staging/operador/sair',{
+  method:'POST',credentials:'same-origin',cache:'no-store'
+ });
+ if(resposta.status===404)return; // identidade em dominio independente
+ if(!resposta.ok)throw Error('FALHA_AO_ENCERRAR_OPERADOR');
+ dispatchEvent(new Event('loop:operador-saiu'));
+}
 async function entrar(e){
  e.preventDefault();
  const botao=$('formLogin').querySelector('button[type=submit]');
  botao.disabled=true;dizer('Validando conta de homologação...');
  try{
   await autenticarConta($('login').value,$('senha').value);
+  await terminarModoOperador();
   mostrarErroAcesso('login','');
   dizer('Bem-vindo ao seu Escritório. Seus dados estão disponíveis nas abas.');
  }catch(err){
@@ -1264,7 +1273,10 @@ async function entrar(e){
 }
 
 async function sair(){
- try{await requisitar('/contas/sair',{method:'POST',mutacao:true});}
+ try{
+  await terminarModoOperador();
+  await requisitar('/contas/sair',{method:'POST',mutacao:true});
+ }
  catch(e){dizer('Falha ao encerrar: '+e.message);return;}
  mostrarSessao(false);$('listaPedidos').replaceChildren();$('comunicadosCliente').replaceChildren();$('minhaPreviaFilas').replaceChildren();$('minhasPreAdesoes').replaceChildren();
  dizer('Sessão de homologação encerrada.');
