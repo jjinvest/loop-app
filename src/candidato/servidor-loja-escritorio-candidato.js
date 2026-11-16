@@ -674,10 +674,10 @@ function criarAppLojaEscritorioCandidato({banco,repositorioCatalogo,
   app.post('/staging/contas/identidade',(req,res)=>{
    const sessao=contas.sessao(req);
    if(!sessao)return res.status(401).json({erro:'SESSAO_AUSENTE'});
-   if(typeof termosIdentidadeTexto!=='string'||termosIdentidadeTexto.length<100||!termosIdentidadeVersao)
-    return res.status(503).json({erro:'TERMOS_IDENTIDADE_NAO_CONFIGURADOS'});
    if(!contas.autorizarMutacao(req))
     return res.status(403).json({erro:'CSRF_INVALIDO'});
+   if(typeof termosIdentidadeTexto!=='string'||termosIdentidadeTexto.length<100||!termosIdentidadeVersao)
+    return res.status(503).json({erro:'TERMOS_IDENTIDADE_NAO_CONFIGURADOS'});
    if(!req.is('application/json'))
     return res.status(415).json({erro:'JSON_OBRIGATORIO'});
    if(!req.body||Array.isArray(req.body)||
