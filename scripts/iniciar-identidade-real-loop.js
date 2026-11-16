@@ -102,8 +102,8 @@ function configurar(ambiente=process.env){
   versao:ambiente[nome+'_VERSAO']||versao,
   texto:ambiente[nome+'_TEXTO']||fs.readFileSync(path.join(__dirname,'../docs',arquivo),'utf8')
  });
- const termos=documento('LOOP_REAL_TERMOS','LOOP-TERMOS-CADASTRO-2026-11-v1','TERMOS_CADASTRO_LOOP_2026_11_PARA_APROVACAO.md');
- const privacidade=documento('LOOP_REAL_PRIVACIDADE','LOOP-PRIVACIDADE-CADASTRO-2026-11-v1','POLITICA_PRIVACIDADE_LOOP_2026_11_PARA_APROVACAO.md');
+ const termos=documento('LOOP_REAL_TERMOS','LOOP-TERMOS-CADASTRO-2026-11-V1','TERMOS_CADASTRO_LOOP_2026_11_PARA_APROVACAO.md');
+ const privacidade=documento('LOOP_REAL_PRIVACIDADE','LOOP-PRIVACIDADE-CADASTRO-2026-11-V1','POLITICA_PRIVACIDADE_LOOP_2026_11_PARA_APROVACAO.md');
  const origemHttps=ambiente.LOOP_REAL_ORIGEM;
  if(typeof origemHttps!=='string'||!/^https:\/\/[^/]+\/?$/.test(origemHttps))
   throw Error('DOMINIO_REAL_HTTPS_OBRIGATORIO');
