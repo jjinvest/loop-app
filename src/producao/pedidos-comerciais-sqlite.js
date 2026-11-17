@@ -105,7 +105,7 @@ class PedidosComerciaisSQLite{
  constructor({banco,chavePedidos,consultarCotacaoConfiavel,
   consultarPagamentoPsp,manutencao=null,eventosComerciais=null,
   classificacaoLoop=null,integradorComercialEnsaio=null,
-  preflightCapacidade=null,agora=()=>Date.now()}={}){
+  preflightCapacidade=null,outboxCompraLoop=null,agora=()=>Date.now()}={}){
   if(typeof banco?.prepare!=='function'||typeof banco?.exec!=='function'||
      !Buffer.isBuffer(chavePedidos)||chavePedidos.length!==32||
      typeof consultarCotacaoConfiavel!=='function'||
@@ -137,6 +137,10 @@ class PedidosComerciaisSQLite{
       preflightCapacidade.classificacao!==classificacaoLoop||
       typeof preflightCapacidade.reservarPedidoEmTransacao!=='function'))
    erro('CHECKOUT_PREFLIGHT_BANCO_OU_REGRAS_DIVERGENTES');
+  if(outboxCompraLoop!==null&&(outboxCompraLoop.db!==banco||
+     typeof outboxCompraLoop.registrarConfirmacaoEmTransacao!=='function'))
+   erro('OUTBOX_COMPRA_BANCO_DIVERGENTE');
+  this.outboxCompraLoop=outboxCompraLoop;
   this.preflightCapacidade=preflightCapacidade;
   this.integradorComercialEnsaio=integradorComercialEnsaio;
   this.classificacaoLoop=classificacaoLoop;
