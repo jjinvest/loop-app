@@ -83,3 +83,28 @@ test('meta ligada ao meio do turno recalcula intervalo sem retroagir',()=>{
  assert.equal(inicio.proximaJanelaEmMs,when('12:06'));
  assert.equal(janelasDeLuz(m,agenda,when('11:59')),null);
 });
+
+test('meta de centros calcula seis luzes no turno sem alterar o expediente',()=>{
+ const {calcularIntervaloMeta}=require('../src/domain/meta-lotes-catraca-loop');
+ const b={abertura:'09:00',fechamento:'18:00'};
+ for(const [quantidade,luzes,intervalo] of [[1,'6',90],[3,'18',30],
+  [5,'30',18],[10,'60',9]]){
+  const r=calcularIntervaloMeta({...b,quantidade});
+  assert.equal(r.duracaoMinutos,540);
+  assert.equal(r.luzesPlanejadas,luzes);
+  assert.equal(r.intervaloMinutos,intervalo);
+  assert.equal(r.intervaloLuzSegundos,intervalo*60);
+ }
+ assert.equal(calcularIntervaloMeta({...b,quantidade:0}).intervaloMinutos,null,
+  'meta zero devolve o intervalo ao controle manual');
+ const estendido=calcularIntervaloMeta({abertura:'10:00',
+  fechamento:'19:00',quantidade:5});
+ assert.equal(estendido.intervaloMinutos,18);
+ assert.equal(calcularIntervaloMeta({abertura:'09:00',
+  fechamento:'00:00',quantidade:5}).intervaloMinutos,30);
+ assert.equal(calcularIntervaloMeta({abertura:'09:00',
+  fechamento:'18:00',quantidade:4}).intervaloLuzSegundos,1350,
+  'intervalo real admite 22 minutos e 30 segundos em média');
+ assert.throws(()=>calcularIntervaloMeta({...b,quantidade:-1}),
+  /META_LOTES_CONFIG_INVALIDA/);
+});
