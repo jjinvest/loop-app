@@ -46,7 +46,10 @@ function desempacotar(pacote,token){
  catch{erro('MIGRACAO_ASSINATURA_INVALIDA');}
  try{return JSON.parse(text);}catch{erro('MIGRACAO_JSON_INVALIDO');}
 }
-function exportarPreview({banco,contas,raizNick='VILELA',primeiroNick='Taisaassi'}={}){
+function exportarPreview({banco,contas,raizNick='VILELA',primeiroNick='Taisaassi',
+ incluirContasRegistradasSemRede=false}={}){
+ if(typeof incluirContasRegistradasSemRede!=='boolean')
+  erro('MIGRACAO_OPCAO_INVALIDA');
  if(process.env.NODE_ENV==='production'||!banco||!contas?.cipherKey||
     typeof contas.emailParaEntrega!=='function'||
     typeof contas.perfil!=='function')erro('MIGRACAO_FONTE_INVALIDA');
@@ -86,7 +89,11 @@ function exportarPreview({banco,contas,raizNick='VILELA',primeiroNick='Taisaassi
    }
   if(!mudou)break;
  }
- const rowsFiltradas=rows.filter(x=>idsDaRede.has(x.id));
+ // Opcionalmente preserva TODAS as identidades registradas na origem,
+ // sem presumir que fazem parte da rede de VILELA ou que compraram.
+ // Vínculos só são importados se já constam do livro imutável de cadastro.
+ const rowsFiltradas=incluirContasRegistradasSemRede?
+  rows:rows.filter(x=>idsDaRede.has(x.id));
  const avulsasRows=rows.filter(x=>!idsDaRede.has(x.id));
  const avulsasIds=new Set(avulsasRows.map(x=>x.id));
  const avulsasComIndicacao=new Set(todosVinculos.filter(x=>
@@ -99,8 +106,9 @@ function exportarPreview({banco,contas,raizNick='VILELA',primeiroNick='Taisaassi
   indicacaoForaDaRedeValidada:avulsasComIndicacao.size,
   semIndicacaoRegistrada:avulsasRows.length-avulsasComIndicacao.size
  };
+ const idsSelecionados=new Set(rowsFiltradas.map(x=>x.id));
  const vinculos=todosVinculos.filter(v=>
-  idsDaRede.has(v.indicadorId)&&idsDaRede.has(v.indicadoId));
+  idsSelecionados.has(v.indicadorId)&&idsSelecionados.has(v.indicadoId));
  const contasExportadas=rowsFiltradas.map(r=>{
   if(!ID.test(r.id)||!/^[a-f0-9]{32}$/.test(r.senha_salt)||!H128.test(r.senha_hash)||
      !HEX.test(r.termos_hash)||!Number.isSafeInteger(r.criado_em)||
@@ -137,6 +145,8 @@ function exportarPreview({banco,contas,raizNick='VILELA',primeiroNick='Taisaassi
  return {version:1,contas:contasExportadas,vinculos,
   conferencias:{contas:contasExportadas.length,vinculos:vinculos.length,
    contasAvulsasIgnoradas:rows.length-contasExportadas.length,
+   contasAvulsasOrigem:avulsasRows.length,
+   contasNaRedeComprovada:idsDaRede.size,
    perfilAvulsas,
    provaIds:digest(contasExportadas.map(x=>x.id).sort().join('|')),
    provaVinculos:digest(vinculos.map(x=>x.indicadoId+':'+x.indicadorId).sort().join('|'))}};
