@@ -85,4 +85,5 @@ class OutboxCompraLoopSQLite {
   ].join(' ')).all(limite);
  }
 }
-module.exports={OutboxCompraLoopSQLite};
+const TABELAS_OUTBOX_COMPRA=Object.freeze(['loop_real_outbox_compra_confirmada']);
+module.exports={OutboxCompraLoopSQLite,TABELAS_OUTBOX_COMPRA};
