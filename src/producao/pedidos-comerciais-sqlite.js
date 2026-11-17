@@ -138,7 +138,8 @@ class PedidosComerciaisSQLite{
       typeof preflightCapacidade.reservarPedidoEmTransacao!=='function'))
    erro('CHECKOUT_PREFLIGHT_BANCO_OU_REGRAS_DIVERGENTES');
   if(outboxCompraLoop!==null&&(outboxCompraLoop.db!==banco||
-     typeof outboxCompraLoop.registrarConfirmacaoEmTransacao!=='function'))
+     (typeof outboxCompraLoop.registrarConfirmacaoEmTransacao!=='function'||
+      typeof outboxCompraLoop.cancelarEmTransacao!=='function')))
    erro('OUTBOX_COMPRA_BANCO_DIVERGENTE');
   this.outboxCompraLoop=outboxCompraLoop;
   this.preflightCapacidade=preflightCapacidade;
