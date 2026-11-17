@@ -43,7 +43,8 @@ async function criarContexto(t,{ativo=true,comCpf=false}={}){
    segredoOperador:ADMIN,webhookHomologacaoToken:TOKEN,
    provedorReconsultaSandbox:provedor,
    operacoesSandboxAutorizadas:ativo,
-   termosVersao:'LAB-candidato-psp-2026',termosTexto:TERMOS
+   termosVersao:'LAB-candidato-psp-2026',termosTexto:TERMOS,
+   termosIdentidadeVersao:'LAB-candidato-psp-2026',termosIdentidadeTexto:TERMOS
   });
  const server=app.listen(0,'127.0.0.1');await once(server,'listening');
  t.after(async()=>{await new Promise(done=>server.close(done));banco.close();});
