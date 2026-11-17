@@ -68,6 +68,12 @@ function montarGatewayAdminComercial(app,{
   req.operador=sessao;req.tokenOperador=token;
   next();
  };
+ // A loja e o Escritorio consultam a MESMA sessao de operador real.
+ // Nunca promove a sessao do cliente a privilegio administrativo.
+ app.get('/api/operador/estado',(req,res)=>{
+  res.set('Cache-Control','no-store');
+  return res.json({operador:Boolean(sessoes.sessao(cookieValor(req)))});
+ });
  const validarCsrf=(req,res,next)=>{
   if(req.get('origin')!==origem||
      typeof req.operador?.csrf!=='string'||
