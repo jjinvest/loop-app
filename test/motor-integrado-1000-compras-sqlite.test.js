@@ -11,11 +11,11 @@ test('1000 compras qualificadas no mesmo SQLite: sem duplicacao e com limite por
  const banco=new DatabaseSync(':memory:');
  banco.exec('PRAGMA foreign_keys=ON');
  try{
-  const termos={versao:'ENSAIO-1000',texto:'Termos técnicos para ensaio isolado da Loja AKITEMM e Escritório LOOP. Nenhuma transação financeira, posição remunerada ou promessa de ganho real existe aqui.'};
+  const termos={versao:'LOOP-ENSAIO-1000',texto:'Termos técnicos para ensaio isolado da Loja AKITEMM e Escritório LOOP. Nenhuma transação financeira, posição remunerada ou promessa de ganho real existe aqui.'};
   const contas=new IdentidadeClienteLoopReal({
    banco,chaveEmail:randomBytes(32),chaveCifra:randomBytes(32),
    chaveCodigo:randomBytes(32),termos,
-   privacidade:{...termos,versao:'PRIV-ENSAIO-1000'},enviarEmail:async()=>true
+   privacidade:{...termos,versao:'LOOP-PRIV-ENSAIO-1000'},enviarEmail:async()=>true
   });
   const motor=new MotorLoopIntegradoSQLite({banco});
   const doc=contas.documentos();
