@@ -186,7 +186,7 @@ function montarGatewayAdminComercial(app,{
   const b=req.body;
   const permitidos=b.acao==='CONFIGURAR'?
    ['acao','modo','janelaInicio','janelaFim','limiteDiario',
-    'revisaoEsperada','motivo']:
+    'metaCentrosDia','metaDataAlvo','revisaoEsperada','motivo']:
    b.acao==='GIRAR'?['acao']:null;
   if(!permitidos||Object.keys(b).some(k=>!permitidos.includes(k)))
    return res.status(400).json({erro:'CATRACA_ACAO_OU_CAMPOS_INVALIDOS'});
@@ -194,6 +194,7 @@ function montarGatewayAdminComercial(app,{
    const resultado=b.acao==='CONFIGURAR'?
     catraca.configurar({modo:b.modo,janelaInicio:b.janelaInicio,
      janelaFim:b.janelaFim,limiteDiario:b.limiteDiario,
+     metaCentrosDia:b.metaCentrosDia,metaDataAlvo:b.metaDataAlvo,
      revisaoEsperada:b.revisaoEsperada,motivo:b.motivo}):
     catraca.executarGiro({origem:'OPERADOR'});
    const proximos=resultado.girou&&integradorComercialEnsaio?
