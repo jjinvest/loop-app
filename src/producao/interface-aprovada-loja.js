@@ -8,16 +8,22 @@
  // de operador do gateway permite exibir o + sem duplicar permissões.
  async function atualizarAtalhoOperadorReal(){
   const atalho=$('akitemmOperadorMais');
-  if(!atalho)return;
+  const linkRodape=document.querySelector('.akitemm-acesso-operador');
+  if(!atalho&&!linkRodape)return;
+  const exibir=permitido=>{
+   for(const link of [atalho,linkRodape]){
+    if(!link)continue;
+    link.hidden=!permitido;
+    link.style.display=permitido?'inline-flex':'none';
+   }
+  };
   try{
    const r=await fetch('/api/operador/estado',{
     credentials:'same-origin',cache:'no-store'
    });
    const d=r.ok?await r.json():null;
-   if(d?.operador===true){
-    atalho.hidden=false;atalho.style.display='inline-flex';
-   }else{atalho.hidden=true;atalho.style.display='none';}
-  }catch{atalho.hidden=true;atalho.style.display='none';}
+   exibir(d?.operador===true);
+  }catch{exibir(false);}
  }
  void atualizarAtalhoOperadorReal();
  addEventListener('pageshow',()=>void atualizarAtalhoOperadorReal());
