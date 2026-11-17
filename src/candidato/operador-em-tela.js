@@ -176,7 +176,7 @@
    explicacao.textContent=n+' centros × 6 luzes = '+total.toString()+
     ' luzes em '+duracao+' minutos. Intervalo médio: '+
     ritmoMin+' min'+(ritmoSeg?' '+ritmoSeg+' s':'')+
-    ' por luz. O motor distribui os horários; nenhuma luz acende sem compra válida.';
+    ' por luz. Cronograma calculado; a liberação dos giros exige caixa real previamente comprovado.';
    return true;
   };
   for(const campoHorario of [meta,inicio,fim])
