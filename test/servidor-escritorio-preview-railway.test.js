@@ -217,7 +217,8 @@ test('gateway exige acesso antes de HTML e rotas administrativas',async t=>{
  const js=await x.consultar('/staging/assets/admin.js');
  assert.equal(js.status,200);
  const codigo=await js.text();
- assert.match(codigo,/PREVIA_OPERADOR/);
+ assert.doesNotMatch(codigo,/PREVIA_OPERADOR/);
+ assert.match(codigo,/entrarComSessaoOperador/);
  assert.match(codigo,/credentials:'same-origin'/);
  assert.equal(codigo.includes(operador),false,'segredo nunca vai ao navegador');
  const cookieGate=certo.headers.get('set-cookie')?.split(';')[0];
