@@ -44,7 +44,7 @@ async function navegarHistoricoPosicoes(destino){
 }
 async function api(path,{method='GET',body,idempotencia}={}){
  const r=await fetch('/staging/escritorio-unificado'+path,{
-  method,cache:'no-store',credentials:'omit',
+  method,cache:'no-store',credentials:'same-origin',
   headers:{Authorization:'Bearer '+auth,...(body?{'Content-Type':'application/json'}:{}),
    ...(idempotencia?{'Idempotency-Key':idempotencia}:{})},
   ...(body?{body:JSON.stringify(body)}:{})
@@ -1371,6 +1371,19 @@ async function abrirProdutoSolicitadoPelaLoja(){
   preencherProduto(item);
  }catch(e){$('resultadoProdutoAdmin').textContent='Não foi possível abrir o produto: '+e.message;}
 }
+// A sessao assinada no gateway habilita a central sem pedir segunda senha.
+async function entrarComSessaoOperador(){
+ try{
+  const resposta=await fetch('/api/operador/estado',{credentials:'same-origin',cache:'no-store'});
+  if(!resposta.ok||(await resposta.json()).operador!==true)return;
+  await atualizar();
+  $('acesso').hidden=true;$('administracao').hidden=false;
+  await abrirProdutoSolicitadoPelaLoja();
+  atualizarAvaliacoesAdmin().catch(()=>{});
+  carregarComunicadosAdmin().catch(()=>{});
+ }catch(err){dizer('Nao foi possivel carregar a central: '+err.message);}
+}
+void entrarComSessaoOperador();
 $('formAcesso').addEventListener('submit',async e=>{
  e.preventDefault();auth=$('token').value;$('token').value='';
  try{await atualizar();$('acesso').hidden=true;$('administracao').hidden=false;
