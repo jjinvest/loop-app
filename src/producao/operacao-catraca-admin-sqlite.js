@@ -1,7 +1,9 @@
 'use strict';
 // Comandos duraveis do operador para a catraca do MESMO motor SQLite.
 // Sem liberar creditos ou pagamentos; o motor de ensaio e vedado em producao.
+const {calcularIntervaloMeta}=require('../domain/meta-lotes-catraca-loop');
 const TABELAS_CATRACA_ADMIN=Object.freeze([
+ 'loop_real_catraca_admin_meta',
  'loop_real_catraca_admin_politica',
  'loop_real_catraca_admin_giros',
  'loop_real_catraca_admin_historico'
@@ -9,6 +11,12 @@ const TABELAS_CATRACA_ADMIN=Object.freeze([
 function falha(c){const e=new Error(c);e.codigo=c;throw e;}
 const FUSO='America/Sao_Paulo';
 function horaOk(h){return typeof h==='string'&&/^(?:[01][0-9]|2[0-3]):[0-5][0-9]$/.test(h);}
+function dataOk(d){
+ if(d===null)return true;
+ if(typeof d!=='string'||!/^\\d{4}-\\d{2}-\\d{2}$/.test(d))return false;
+ const time=Date.parse(d+'T12:00:00Z');
+ return Number.isFinite(time)&&new Date(time).toISOString().slice(0,10)===d;
+}
 function horarioLocal(agora){
  const data=agora();
  if(!(data instanceof Date)||Number.isNaN(data.valueOf()))falha('CATRACA_RELOGIO_INVALIDO');
@@ -36,6 +44,10 @@ class OperacaoCatracaAdminSQLite{
    "modo TEXT NOT NULL CHECK(modo IN ('PAUSADA','MANUAL','AUTOMATICA')),",
    'inicio TEXT NOT NULL,fim TEXT NOT NULL,limite_diario INTEGER,',
    'atualizado_em INTEGER NOT NULL);',
+   'CREATE TABLE IF NOT EXISTS loop_real_catraca_admin_meta(',
+   'id INTEGER PRIMARY KEY CHECK(id=1),',
+   'centros_dia INTEGER NOT NULL CHECK(centros_dia BETWEEN 0 AND 1000000),',
+   'data_alvo TEXT,atualizado_em INTEGER NOT NULL);',
    'CREATE TABLE IF NOT EXISTS loop_real_catraca_admin_giros(',
    'giro INTEGER PRIMARY KEY CHECK(giro>0),',
    'chave_evento TEXT NOT NULL UNIQUE REFERENCES loop_real_motor_eventos(chave),',
@@ -47,6 +59,11 @@ class OperacaoCatracaAdminSQLite{
    'id INTEGER PRIMARY KEY AUTOINCREMENT,',
    'acao TEXT NOT NULL,detalhes TEXT NOT NULL,executado_em INTEGER NOT NULL);'
   ].join(' '));
+  banco.prepare([
+   'INSERT OR IGNORE INTO loop_real_catraca_admin_meta',
+   '(id,centros_dia,data_alvo,atualizado_em)',
+   'VALUES(1,0,NULL,1)'
+  ].join(' ')).run();
   banco.prepare([
    'INSERT OR IGNORE INTO loop_real_catraca_admin_politica',
    "(id,revisao,modo,inicio,fim,limite_diario,atualizado_em)",
@@ -68,6 +85,15 @@ class OperacaoCatracaAdminSQLite{
    falha('CATRACA_ADMIN_POLITICA_CORROMPIDA');
   return p;
  }
+ _meta(){
+  const m=this.db.prepare(
+   'SELECT centros_dia AS centrosDia,data_alvo AS dataAlvo FROM loop_real_catraca_admin_meta WHERE id=1'
+  ).get();
+  if(!m||!Number.isSafeInteger(m.centrosDia)||m.centrosDia<0||
+     m.centrosDia>1000000||!dataOk(m.dataAlvo))
+   falha('CATRACA_ADMIN_META_CORROMPIDA');
+  return m;
+ }
  _girosDia(dia){return this.db.prepare(
   'SELECT COUNT(*) AS n FROM loop_real_catraca_admin_giros WHERE dia=?'
  ).get(dia).n;}
@@ -79,11 +105,30 @@ class OperacaoCatracaAdminSQLite{
  }
  consultar(){
   const p=this._politica(),tempo=horarioLocal(this.agora);
+  const meta=this._meta();
+  const metaAplicavel=meta.dataAlvo===null||meta.dataAlvo===tempo.dia;
+  const calculo=calcularIntervaloMeta({
+   abertura:p.inicio,fechamento:p.fim,
+   quantidade:metaAplicavel?meta.centrosDia:0
+  });
   const girosDia=this._girosDia(tempo.dia);
   const motor=this.motor.consultar();
   const dentro=dentroJanela(tempo.hora,p.inicio,p.fim);
   const permitido=p.limite_diario===null||girosDia<p.limite_diario;
   return {modo:p.modo,janelaInicio:p.inicio,janelaFim:p.fim,
+   metaCentrosDia:meta.centrosDia,metaDataAlvo:meta.dataAlvo,
+   metaAplicavelHoje:metaAplicavel,
+   luzesPlanejadas:Number(calculo.luzesPlanejadas),
+   intervaloLuzSegundos:calculo.intervaloLuzSegundos,
+   duracaoTurnoMinutos:calculo.duracaoMinutos,
+   intervaloLuzMinutos:calculo.intervaloLuzSegundos===null?null:
+    calculo.intervaloLuzSegundos/60,
+   programacaoIndependenteDeVendasNovas:true,
+   // O horario controla o ritmo; liberacao financeira continua
+   // bloqueada ate prova PSP/banco real, sem usar saldos de ensaio.
+   caixaConciliadoParaMeta:false,
+   autorizacaoFinanceiraDosGiros:false,
+   bloqueioFinanceiro:'CAIXA_REAL_NAO_PROVISIONADO_E_HOMOLOGADO',
    limiteDiario:p.limite_diario,revisao:p.revisao,
    girosHoje:girosDia,hoje:tempo.dia,horaLocal:tempo.hora,
    fuso:FUSO,horarioPermitido:dentro,
@@ -100,6 +145,7 @@ class OperacaoCatracaAdminSQLite{
    financeiroReal:false};
  }
  configurar({modo,janelaInicio,janelaFim,limiteDiario,revisaoEsperada,
+  metaCentrosDia=undefined,metaDataAlvo=undefined,
   motivo='AJUSTE_OPERACIONAL'}={}){
   if(!['PAUSADA','MANUAL','AUTOMATICA'].includes(modo)||
      !horaOk(janelaInicio)||!horaOk(janelaFim)||
@@ -107,21 +153,33 @@ class OperacaoCatracaAdminSQLite{
       (Number.isSafeInteger(limiteDiario)&&limiteDiario>=1&&limiteDiario<=1000000))||
      !Number.isSafeInteger(revisaoEsperada)||revisaoEsperada<1||
      typeof motivo!=='string'||motivo.trim().length<3||
-     motivo.length>200)falha('CATRACA_ADMIN_CONFIGURACAO_INVALIDA');
+     motivo.length>200||
+     (metaCentrosDia!==undefined&&(!Number.isSafeInteger(metaCentrosDia)||
+       metaCentrosDia<0||metaCentrosDia>1000000))||
+     (metaDataAlvo!==undefined&&!dataOk(metaDataAlvo)))
+    falha('CATRACA_ADMIN_CONFIGURACAO_INVALIDA');
   const executar=sim=>{
-   const p=this._politica();
+   const p=this._politica(),anterior=this._meta();
    if(p.revisao!==revisaoEsperada)falha('CATRACA_ADMIN_REVISAO_DESATUALIZADA');
    const t=horarioLocal(this.agora);
+   const novaMeta=metaCentrosDia===undefined?anterior.centrosDia:metaCentrosDia;
+   const novaData=metaDataAlvo===undefined?anterior.dataAlvo:metaDataAlvo;
    this.db.prepare([
     'UPDATE loop_real_catraca_admin_politica SET revisao=revisao+1,',
     'modo=?,inicio=?,fim=?,limite_diario=?,atualizado_em=? WHERE id=1'
    ].join(' ')).run(modo,janelaInicio,janelaFim,limiteDiario,t.ts);
+   this.db.prepare([
+    'UPDATE loop_real_catraca_admin_meta',
+    'SET centros_dia=?,data_alvo=?,atualizado_em=? WHERE id=1'
+   ].join(' ')).run(novaMeta,novaData,t.ts);
    if(sim){
     if(modo==='PAUSADA')sim.pausarCatraca();
     else sim.abrirCatraca();
    }
    this._log('CONFIGURAR',{modo,janelaInicio,janelaFim,
-    limiteDiario,revisaoAnterior:p.revisao,motivo:motivo.trim(),
+    limiteDiario,metaCentrosDia:novaMeta,metaDataAlvo:novaData,
+    luzesPlanejadas:novaMeta*6,
+    revisaoAnterior:p.revisao,motivo:motivo.trim(),
     giroProdutivoHabilitado:false},t.ts);
    return {alterado:true};
   };
