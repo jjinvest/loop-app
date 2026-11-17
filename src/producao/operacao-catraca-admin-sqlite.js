@@ -2,6 +2,7 @@
 // Comandos duraveis do operador para a catraca do MESMO motor SQLite.
 // Sem liberar creditos ou pagamentos; o motor de ensaio e vedado em producao.
 const {calcularIntervaloMeta}=require('../domain/meta-lotes-catraca-loop');
+const {ControleCaixaCatracaLoopSQLite}=require('./controle-caixa-catraca-loop-sqlite');
 const TABELAS_CATRACA_ADMIN=Object.freeze([
  'loop_real_catraca_admin_meta',
  'loop_real_catraca_admin_politica',
@@ -32,11 +33,20 @@ function dentroJanela(hora,inicio,fim){
  return inicio<fim?hora>=inicio&&hora<=fim:hora>=inicio||hora<=fim;
 }
 class OperacaoCatracaAdminSQLite{
- constructor({banco,motor,agora=()=>new Date()}={}){
+ constructor({banco,motor,agora=()=>new Date(),controleCaixa=null}={}){
   if(typeof banco?.prepare!=='function'||typeof banco?.exec!=='function'||
      motor?.banco!==banco||typeof motor._transacao!=='function'||
      typeof agora!=='function')falha('CATRACA_ADMIN_MOTOR_NAO_COMPARTILHADO');
+  if(controleCaixa!==null&&(
+     controleCaixa.banco!==banco||
+     typeof controleCaixa.consultar!=='function'))
+   falha('CATRACA_CAIXA_NAO_COMPARTILHA_BANCO');
   this.db=banco;this.motor=motor;this.agora=agora;
+  // O livro de reservas fica no MESMO SQLite. Sem prova externa
+  // ele só permite LEITURA e permanece vazio e bloqueado.
+  this.controleCaixa=controleCaixa||new ControleCaixaCatracaLoopSQLite({
+   banco,provas:null,agora:()=>this.agora().getTime()
+  });
   banco.exec([
    'CREATE TABLE IF NOT EXISTS loop_real_catraca_admin_politica(',
    'id INTEGER PRIMARY KEY CHECK(id=1),',
@@ -112,6 +122,11 @@ class OperacaoCatracaAdminSQLite{
    quantidade:metaAplicavel?meta.centrosDia:0
   });
   const girosDia=this._girosDia(tempo.dia);
+  const caixa=this.controleCaixa.consultar({dia:tempo.dia});
+  const caixaMetaCompatível=caixa.programada===true&&
+   caixa.estado==='AUTORIZADA'&&metaAplicavel&&meta.centrosDia>0&&
+   caixa.metaCentros===meta.centrosDia&&caixa.abertura===p.inicio&&
+   caixa.fechamento===p.fim;
   const motor=this.motor.consultar();
   const dentro=dentroJanela(tempo.hora,p.inicio,p.fim);
   const dentroDaMeta=metaAplicavel&&meta.centrosDia>0&&
@@ -129,9 +144,14 @@ class OperacaoCatracaAdminSQLite{
    programacaoIndependenteDeVendasNovas:true,
    // O horario controla o ritmo; liberacao financeira continua
    // bloqueada ate prova PSP/banco real, sem usar saldos de ensaio.
-   caixaConciliadoParaMeta:false,
+   caixaConciliadoParaMeta:caixaMetaCompatível,
+   caixaReservadoCentavos:caixaMetaCompatível?caixa.reservaTotalCentavos:null,
+   luzesAutorizadasPorCaixa:caixaMetaCompatível?caixa.luzesAutorizadas:0,
+   caixaEProgramacaoConferidos:caixaMetaCompatível,
    autorizacaoFinanceiraDosGiros:false,
-   bloqueioFinanceiro:'CAIXA_REAL_NAO_PROVISIONADO_E_HOMOLOGADO',
+   bloqueioFinanceiro:caixaMetaCompatível?
+    'MOTOR_REAL_AINDA_NAO_CONSOME_RESERVA_PROVISIONADA':
+    'CAIXA_REAL_NAO_PROVISIONADO_E_HOMOLOGADO',
    limiteDiario:p.limite_diario,revisao:p.revisao,
    girosHoje:girosDia,hoje:tempo.dia,horaLocal:tempo.hora,
    fuso:FUSO,horarioPermitido:dentro,
