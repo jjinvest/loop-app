@@ -1817,7 +1817,9 @@ $('formProduto').addEventListener('submit',async event=>{
   const corEscolhida=$('corCadastroProdutoAdmin').value;
   let erroCor=null;
   try{await salvarCorCadastro(id,corEscolhida);}catch(e){erroCor=e;}
-  limparProduto();await atualizar();
+  chaveProduto=null;
+  await atualizar();
+  preencherProduto(await api('/produtos/'+encodeURIComponent(id)));
   $('resultadoProdutoAdmin').textContent=erroCor?
    'Produto salvo, mas cor não aplicada: '+erroCor.message:
    arquivoErro?
