@@ -74,6 +74,42 @@ function montarGatewayAdminComercial(app,{
   res.set('Cache-Control','no-store');
   return res.json({operador:Boolean(sessoes.sessao(cookieValor(req)))});
  });
+ // Entrada única: o login do escritório usa a mesma sessão administrativa
+ // que /administrador/entrar; nunca cria operador numa conta de cliente.
+ app.post('/api/operador/entrar',(req,res)=>{
+  res.set('Cache-Control','no-store');
+  if(req.get('origin')!==origem)
+   return res.status(403).json({erro:'ORIGEM_ADMIN_INVALIDA'});
+  if(!req.is('application/json')||
+     !req.body||Array.isArray(req.body)||
+     Object.keys(req.body).sort().join(',')!=='nick,senha'||
+     typeof req.body.nick!=='string'||
+     req.body.nick.trim().toLowerCase()!=='operador'||
+     typeof req.body.senha!=='string')
+   return res.status(400).json({erro:'CAMPOS_OPERADOR_INVALIDOS'});
+  try{
+   const sessao=sessoes.autenticar(req.body.senha);
+   res.set('Set-Cookie',cookie(sessao.token));
+   return res.json({operador:true});
+  }catch(e){
+   const bloqueado=e.codigo==='LOGIN_ADMIN_TEMPORARIAMENTE_BLOQUEADO';
+   return res.status(bloqueado?429:401).json({
+    erro:bloqueado?'LOGIN_ADMIN_TEMPORARIAMENTE_BLOQUEADO':
+     'CREDENCIAIS_INVALIDAS'
+   });
+  }
+ });
+ // O cliente encerra sessão de operador de forma idempotente durante login
+ // e logout. Exigir origem para impedir logout CSRF em navegador externo.
+ app.post('/api/operador/sair',(req,res)=>{
+  res.set('Cache-Control','no-store');
+  if(req.get('origin')!==origem)
+   return res.status(403).json({erro:'ORIGEM_ADMIN_INVALIDA'});
+  const token=cookieValor(req);
+  if(token&&sessoes.sessao(token))sessoes.sair(token);
+  res.set('Set-Cookie',cookie('',true));
+  return res.json({operador:false});
+ });
  const validarCsrf=(req,res,next)=>{
   if(req.get('origin')!==origem||
      typeof req.operador?.csrf!=='string'||
