@@ -17,6 +17,8 @@ const {ManutencaoComercialSQLite}=
  require('../src/producao/manutencao-comercial-sqlite');
 const {PedidosComerciaisSQLite}=
  require('../src/producao/pedidos-comerciais-sqlite');
+const {OutboxCompraLoopSQLite}=
+ require('../src/producao/outbox-compra-loop-sqlite');
 const {PreflightCapacidadeCheckoutSQLite}=
  require('../src/producao/preflight-capacidade-checkout-sqlite');
 const {RecuperacaoReservasCheckoutSQLite}=
@@ -103,7 +105,8 @@ async function fixture(t){
   banco:db,classificacaoLoop:classificacao
  });
  const motor=new MotorLoopIntegradoSQLite({banco:db});
- const pedidos=new PedidosComerciaisSQLite({...base(),eventosComerciais:eventos,
+ const outbox=new OutboxCompraLoopSQLite({banco:db});
+ const pedidos=new PedidosComerciaisSQLite({...base(),outboxCompraLoop:outbox,eventosComerciais:eventos,
   classificacaoLoop:classificacao});
  const promocao=new PromocaoPedidoMotorEnsaioSQLite({
   banco:db,motor,classificacaoLoop:classificacao,
@@ -120,7 +123,7 @@ async function fixture(t){
   banco:db,motor,classificacaoLoop:classificacao,promocao,lotes
  });
  const pedidosIntegrados=new PedidosComerciaisSQLite({
-  ...base(),eventosComerciais:eventos,classificacaoLoop:classificacao,
+  ...base(),outboxCompraLoop:outbox,eventosComerciais:eventos,classificacaoLoop:classificacao,
   integradorComercialEnsaio:integracao,preflightCapacidade:preflight
  });
  const produtos=new Map();
@@ -168,7 +171,7 @@ async function fixture(t){
  return {db,arquivo,dir,contas,chaves,catalogo,classificacao,
   motor,producao:promocao,evento:eventos,pedidos,pedidosIntegrados,
   integracao,lotes,preflight,controle,sessoes,auditoria,manutencao,titular,outro,
-  produto,criarPedido,confirmar,statusPsp};
+  produto,criarPedido,confirmar,statusPsp,outbox};
 }
 test('compra verde R$250 sem frete promove uma posição em B no mesmo commit, uma unica vez',async t=>{
  const x=await fixture(t);
@@ -1462,4 +1465,25 @@ test('botao do administrador reconsulta reservas vencidas; cliente e visitante n
   body
  })).status,401);
  assert.equal(validarIdentidade(x.arquivo).integridade,'ok');
+});
+
+test('outbox: loja confirma compras sem giro, persiste fila de eventos e ignora canceladas',async t=>{
+ const x=await fixture(t);
+ x.produto({nome:'verdeOutbox',preco:25000});
+ x.produto({nome:'cinzaOutbox',preco:30000,cor:'CINZA'});
+ const a=await x.criarPedido({nome:'verdeOutbox',preco:25000});
+ const b=await x.criarPedido({nome:'cinzaOutbox',preco:30000});
+ assert.equal(x.outbox.listarPendentes().length,0);
+ x.motor.controlarCatracaEnsaio({acao:'PAUSAR'});
+ await x.confirmar(a);
+ await x.confirmar(b);
+ assert.deepEqual(x.outbox.listarPendentes().map(p=>p.pedido_id),[a.pedidoId,b.pedidoId]);
+ assert.equal(x.motor.consultar({titularId:x.titular.titularId}).catraca.giros,0);
+ await x.confirmar(a);
+ assert.equal(x.outbox.listarPendentes().length,2,'reconsulta PSP nao duplica evento');
+ x.statusPsp.set(b.pedidoId,{status:'ESTORNADO'});
+ const estorno=await x.confirmar(b);
+ assert.equal(estorno.cancelado,true);
+ assert.deepEqual(x.outbox.listarPendentes().map(p=>p.pedido_id),[a.pedidoId]);
+ assert.equal(x.motor.consultar({titularId:x.titular.titularId}).catraca.giros,0);
 });
