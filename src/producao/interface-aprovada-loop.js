@@ -129,6 +129,14 @@ function renderizarLojaAprovada(){
   '<script src="/identidade/assets/loja.js" defer></script>');
  html=trocarExato(html,'</head>',
   '<script src="/identidade/assets/acabamento-loop.js" defer></script></head>');
+ // Manter o visual aprovado: atualizar somente o destino dos acessos
+ // administrativos e ocultar o link ate a sessao real ser confirmada.
+ html=trocarExato(html,
+  '<a id="akitemmOperadorMais" href="/escritorio"',
+  '<a id="akitemmOperadorMais" href="/administrador"');
+ html=trocarExato(html,
+  '<a href="/escritorio" class="akitemm-acesso-operador"',
+  '<a href="/administrador" class="akitemm-acesso-operador" hidden style="display:none"');
  return html;
 }
 function montarInterfaceAprovada(app,{protegerLoja}={}){
