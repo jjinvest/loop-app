@@ -157,6 +157,18 @@ function validarIdentidade(arquivo){
      falha('BACKUP_CATRACA_ADMIN_DIVERGENTE');
    }catch{falha('BACKUP_CATRACA_ADMIN_DIVERGENTE');}
   }
+  // Reserva e autorizacoes do relogio devem sobreviver INTEGRAS ao backup.
+  const temCaixaCatraca=TABELAS_CATRACA_CAIXA.some(x=>lista.includes(x));
+  if(temCaixaCatraca){
+   if(TABELAS_CATRACA_CAIXA.some(x=>!lista.includes(x)))
+    falha('BACKUP_CATRACA_CAIXA_ESQUEMA_PARCIAL');
+   try{
+    const controle=Object.create(ControleCaixaCatracaLoopSQLite.prototype);
+    controle.banco=b;
+    if(controle.verificar().integridade!=='OK')
+     falha('BACKUP_CATRACA_CAIXA_DIVERGENTE');
+   }catch{falha('BACKUP_CATRACA_CAIXA_DIVERGENTE');}
+  }
   // A ativação fictícia qualificada exige o mesmo pedido, evento e motor.
   // Nunca promover ponte fictícia em um backup de produção.
   const temPromocao=TABELAS_PROMOCAO_ENSAIO.some(x=>lista.includes(x));
