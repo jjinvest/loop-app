@@ -118,11 +118,7 @@ function criarGateway({portaInterna,senhaAcesso,senhaAdmin,segredoOperador,
  };
  const corpoAdmin=fs.readFileSync(path.join(__dirname,
   '../src/candidato/escritorio-admin-candidato-ui.js'),'utf8')
-  .replaceAll("credentials:'omit'","credentials:'same-origin'")+
-  "\n// Na previa privada, o proxy autentica o operador no servidor.\n"+
-  "auth='PREVIA_OPERADOR';\n"+
-  "atualizar().then(()=>{$('acesso').hidden=true;"+
-  "$('administracao').hidden=false;}).catch(e=>dizer(e.message));\n";
+  .replaceAll("credentials:'omit'","credentials:'same-origin'");
  return http.createServer((req,res)=>{
   const cabecalhosBase={
    'Cache-Control':'no-store',
