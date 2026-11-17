@@ -1,0 +1,16 @@
+name: Prova isolada 1000 pessoas catraca cofres
+on:
+  push:
+    branches: [feature/unificar-escritorio-real-20261105]
+  workflow_dispatch:
+jobs:
+  simular:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Executar catraca e auditar cofres
+        run: node --test test/simulacao-1000-pessoas-catraca-cofres-20261117.test.js
