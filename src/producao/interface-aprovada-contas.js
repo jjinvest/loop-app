@@ -1303,7 +1303,7 @@
   if($('login').value.trim().toLowerCase()==='operador'){
    await autenticarOperadorFormulario($('login').value.trim(),$('senha').value);
    $('senha').value='';
-   location.assign('/staging/cliente?modo=operador');
+   location.assign('/administrador');
    return;
   }
   const body={nick:$('login').value,senha:$('senha').value};
