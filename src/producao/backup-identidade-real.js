@@ -19,6 +19,8 @@ const {RecuperacaoReservasCheckoutSQLite,TABELAS_RECUPERACAO}=
  require('./recuperacao-reservas-checkout-sqlite');
 const {OperacaoCatracaAdminSQLite,TABELAS_CATRACA_ADMIN}=
  require('./operacao-catraca-admin-sqlite');
+const {ControleCaixaCatracaLoopSQLite,TABELAS_CATRACA_CAIXA}=
+ require('./controle-caixa-catraca-loop-sqlite');
 const {PromocaoPedidoMotorEnsaioSQLite,TABELAS_PROMOCAO_ENSAIO}=
  require('./promocao-pedido-motor-ensaio-sqlite');
 const {PromocaoLotesEnsaioSQLite,TABELAS_LOTES_ENSAIO}=
@@ -91,7 +93,8 @@ function validarIdentidade(arquivo){
   ).all().map(x=>x.name);
   if(TABELAS.some(x=>!lista.includes(x)))falha('BACKUP_REAL_ESQUEMA_INCOMPLETO');
   const todos=[...TABELAS,...TABELAS_CONTATO,...TABELAS_ADMIN,...TABELAS_COMERCIAIS,
-   ...TABELAS_MOTOR,...TABELAS_CATRACA_ADMIN,...TABELAS_TESOURARIA_ENSAIO,
+   ...TABELAS_MOTOR,...TABELAS_CATRACA_ADMIN,...TABELAS_CATRACA_CAIXA,
+   ...TABELAS_TESOURARIA_ENSAIO,
    ...TABELAS_PROMOCAO_ENSAIO,...TABELAS_LOTES_ENSAIO,
    ...TABELAS_PREFLIGHT,...TABELAS_RECUPERACAO,...TABELAS_LIVRO,
    ...TABELAS_OUTBOX_COMPRA];
