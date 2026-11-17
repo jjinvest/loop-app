@@ -7,6 +7,7 @@ on:
     paths:
       - 'scripts/servidor-escritorio-preview-railway.js'
       - 'test/servidor-escritorio-preview-railway.test.js'
+      - 'test/akitemm-slots-vitrine-editaveis.test.js'
       - 'test/isolamento-operador-gateway-preview.test.js'
       - 'src/domain/equipe-candidata-sqlite.js'
       - 'src/domain/endereco-entrega-ensaio-sqlite.js'
