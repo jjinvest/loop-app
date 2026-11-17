@@ -153,9 +153,10 @@ const png=Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAIAAAACCAIAAAD91JpzAAAAEklEQVR4n
    // Vitrine horizontal aprovada: duas fileiras de dez quadrinhos em PC e celular.
    const inicial=20;
    assert.equal(await page.locator('#catalogoLojaLoop article.produto-loja-loop').count(),inicial);
-   const cols=await page.locator('#catalogoLojaLoop').evaluate(el=>
-    getComputedStyle(el).gridTemplateColumns.split(' ').length);
-   assert.equal(cols,device.nome==='pc'?4:2);
+   const faixas=page.locator('#catalogoLojaLoop .ak-faixa-horizontal');
+   assert.equal(await faixas.count(),2);
+   for(let linha=0;linha<2;linha++)
+    assert.equal(await faixas.nth(linha).locator('article.produto-loja-loop').count(),10);
    const legenda=await page.locator('.akitemm-legenda-cores').evaluate(el=>{
     const caixas=[...el.querySelectorAll('[data-akitemm-cor]')].map(x=>x.getBoundingClientRect());
     return {cols:getComputedStyle(el).gridTemplateColumns.split(' ').length,
