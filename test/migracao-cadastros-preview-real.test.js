@@ -41,11 +41,17 @@ test('migrar duas contas reais de ensaio para identidade definitiva conserva sen
    indicadoId:titularId,indicadorNick:'Indica'
   })
  });
+ // Cadastros desconectados do vínculo legítimo não podem entrar sem revisão.
+ const avulsa=await previa.cadastrar(dados('Avulsa','21988887766'));
  const token=randomBytes(32).toString('hex');
  const snap=exportarPreview({
   banco:src,contas:previa,raizNick:'Indica',primeiroNick:'Filha'
  });
  assert.equal(snap.contas.length,2);assert.equal(snap.vinculos.length,1);
+ assert.equal(snap.conferencias.contasAvulsasIgnoradas,1);
+ assert.ok(!snap.contas.some(c=>c.id===avulsa.titularId),
+  'conta sem proveniencia de convite fica preservada na origem');
+ assert.equal(src.prepare('SELECT COUNT(*) AS n FROM akitemm_conta_unica_candidata').get().n,3);
  const pacote=empacotar(snap,token);
  assert.ok(!JSON.stringify(pacote).includes('11988887777'));
  assert.throws(()=>desempacotar(pacote,randomBytes(32).toString('hex')),
