@@ -47,6 +47,12 @@ test('atalho + só é exibível ao operador autenticado; sessão cliente não au
  assert.equal(admin.status,200);
  const cookieAdmin=admin.headers.get('set-cookie')?.split(';')[0];
  assert.match(cookieAdmin,/^akitemm_preview_admin_v2=/);
+ const novoProduto=await get('/operador?produtoEditar=novo',{Cookie:cookieAdmin});
+ assert.equal(novoProduto.status,302);
+ assert.equal(novoProduto.headers.get('location'),'/escritorio?produtoEditar=novo');
+ const editarProduto=await get('/operador?produtoEditar=produto-123',{Cookie:cookieAdmin});
+ assert.equal(editarProduto.status,302);
+ assert.equal(editarProduto.headers.get('location'),'/escritorio?produtoEditar=produto-123');
  const estadoAdmin=await get('/staging/operador/estado',{Cookie:cookieAdmin});
  assert.equal(estadoAdmin.status,200);
  assert.deepEqual(await estadoAdmin.json(),{operador:true});
