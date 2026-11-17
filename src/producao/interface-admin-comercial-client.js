@@ -580,13 +580,39 @@
   const ativo=!!csrf&&!!politicaCatraca&&
    politicaCatraca.politicaOperacionalConfiguravel===true&&!catracaOcupada;
   for(const id of ['modoCatracaAdmin','limiteCatracaAdmin','inicioCatracaAdmin',
-   'fimCatracaAdmin','motivoCatracaAdmin','salvarCatracaAdmin'])
+   'fimCatracaAdmin','metaCentrosDiaAdmin','metaDataAlvoAdmin',
+   'motivoCatracaAdmin','salvarCatracaAdmin'])
    $(id).disabled=!ativo;
   $('pausarCatracaAdmin').disabled=!ativo||politicaCatraca.modo==='PAUSADA';
   $('liberarCatracaAdmin').disabled=!ativo||politicaCatraca.modo==='MANUAL';
   $('girarCatracaAdmin').disabled=!ativo||
    politicaCatraca.habilitadoSomenteEnsaio!==true||!politicaCatraca.podeGirar;
  }
+ function atualizarPrevisaoLuzesAdmin(){
+  const n=Number($('metaCentrosDiaAdmin').value);
+  const abre=$('inicioCatracaAdmin').value;
+  const fecha=$('fimCatracaAdmin').value;
+  const transformar=h=>/^(?:[01][0-9]|2[0-3]):[0-5][0-9]$/.test(h)?
+   Number(h.slice(0,2))*60+Number(h.slice(3)):null;
+  const a=transformar(abre),b=transformar(fecha);
+  const saida=$('previsaoLuzesAdmin');
+  if(a===null||b===null||!Number.isSafeInteger(n)||n<0||n>1000000){
+   saida.textContent='Horários ou meta inválidos.';return false;
+  }
+  if(n===0){
+   saida.textContent='Sem meta de centros: nenhuma luz programada automaticamente.';
+   return true;
+  }
+  const minutos=((b-a+1440)%1440)||1440;
+  const segundos=Math.max(1,Math.round(minutos*60/(n*6)));
+  saida.textContent=n+' centro(s) × 6 luzes = '+(n*6)+
+   ' luzes distribuídas em '+minutos+' minutos. Intervalo médio: '+
+   Math.floor(segundos/60)+' min'+(segundos%60?' '+(segundos%60)+' s':'')+
+   '. Comprovante de caixa real obrigatório antes de qualquer giro.';
+  return true;
+ }
+ for(const id of ['metaCentrosDiaAdmin','inicioCatracaAdmin','fimCatracaAdmin'])
+  $(id).addEventListener('input',atualizarPrevisaoLuzesAdmin);
  async function atualizarCatracaAdmin(){
   try{
    const d=await apiCatraca();
@@ -598,9 +624,13 @@
    $('inicioCatracaAdmin').value=d.janelaInicio;
    $('fimCatracaAdmin').value=d.janelaFim;
    $('limiteCatracaAdmin').value=d.limiteDiario===null?'':String(d.limiteDiario);
+   $('metaCentrosDiaAdmin').value=String(d.metaCentrosDia||0);
+   $('metaDataAlvoAdmin').value=d.metaDataAlvo||'';
+   atualizarPrevisaoLuzesAdmin();
    $('estadoCatracaAdmin').textContent='Modo: '+d.modo+
     ' · Horário: '+d.horaLocal+' · Giros hoje: '+d.girosHoje+
     (d.limiteDiario===null?' (livre)':' / '+d.limiteDiario)+
+    ' · Meta: '+(d.metaCentrosDia||0)+' centros, '+(d.luzesPlanejadas||0)+' luzes'+
     ' · Eventos: '+d.eventosNoCiclo+'/6 · Filas: '+d.filaA+'/'+d.filaB+
     (d.habilitadoSomenteEnsaio?' · Motor conectado em ensaio':
      ' · Comandos aguardando homologação produtiva');
@@ -614,9 +644,15 @@
   const raw=$('limiteCatracaAdmin').value.trim();
   if(raw!==''&&(!/^[1-9]\d*$/.test(raw)||Number(raw)>1000000))
    throw Error('Limite diário inválido.');
+  if(!atualizarPrevisaoLuzesAdmin())throw Error('Meta ou horário inválido.');
+  const meta=$('metaCentrosDiaAdmin').value.trim();
+  if(!/^\d+$/.test(meta)||Number(meta)>1000000)
+   throw Error('Meta diária inválida.');
   return {acao:'CONFIGURAR',modo,janelaInicio:$('inicioCatracaAdmin').value,
    janelaFim:$('fimCatracaAdmin').value,
    limiteDiario:raw===''?null:Number(raw),
+   metaCentrosDia:Number(meta),
+   metaDataAlvo:$('metaDataAlvoAdmin').value||null,
    revisaoEsperada:politicaCatraca.revisao,
    motivo:$('motivoCatracaAdmin').value.trim()||'AJUSTE_OPERACIONAL'};
  }
