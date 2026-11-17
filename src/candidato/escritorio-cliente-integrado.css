@@ -1079,3 +1079,23 @@ body.loop03-logado main>.mensagem-pagina{margin:0 0 .75rem}
 .cliente-integrado .loop03-painel-avisos[hidden]{display:none!important}
 .cliente-integrado .loop03-painel-avisos article{border-top:1px solid #5c5141;padding:8px 0}
 .cliente-integrado .loop03-painel-avisos p{font-size:.9rem;margin:6px 0;overflow-wrap:anywhere}
+
+/* Marca da ENTRADA (login/cadastro): mesmo dourado e prata do menu
+   aprovado. Nao altera o banner, as abas ou o escritorio logado. */
+body:not(.loop03-logado) > .cabecalho .marca.loop03-marca-entrada{
+ color:#eec47a!important;
+ background:linear-gradient(180deg,#fff2c8 0%,#edbf68 26%,#a97127 46%,#ffe1a1 59%,#c8913e 80%,#8b5b23 100%);
+ background-clip:text;-webkit-background-clip:text;
+ -webkit-text-fill-color:transparent;
+ text-shadow:none;
+ filter:drop-shadow(0 2px 1px #070914);
+}
+body:not(.loop03-logado) > .cabecalho .marca.loop03-marca-entrada .loop03-marca-versao{
+ display:inline-block;vertical-align:baseline;
+ color:#e3eaf4!important;
+ background:linear-gradient(180deg,#fff 0%,#e2eaf6 25%,#8c9aae 46%,#f9fcff 58%,#aebcce 82%,#7b8a9d 100%);
+ background-clip:text;-webkit-background-clip:text;
+ -webkit-text-fill-color:transparent;
+ -webkit-text-stroke:.18px #d6e1ef;
+ text-shadow:none;
+}
