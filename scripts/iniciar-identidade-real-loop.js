@@ -12,6 +12,8 @@ const {PreflightCapacidadeCheckoutSQLite}=
  require('../src/producao/preflight-capacidade-checkout-sqlite');
 const {RecuperacaoReservasCheckoutSQLite}=
  require('../src/producao/recuperacao-reservas-checkout-sqlite');
+const {atenderMigracaoIdentidadeReal}=
+ require('../src/producao/receber-migracao-identidade-real');
 const {criarCatalogoMercadoriasReal}=
  require('../src/producao/catalogo-mercadorias-real');
 const {IdentidadeClienteLoopReal}=
@@ -216,6 +218,14 @@ async function iniciar(ambiente=process.env,opcoes={}){
    throw Error('PORTA_INVALIDA');
   // Private Networking Railway: IPv6 + IPv4 para health/load balancer.
   const server=http.createServer((req,res)=>{
+   // A migração autenticada usa o banco REAL já aberto, o mesmo receptor
+   // da preparação e o mesmo backup offsite com restauração comprovada.
+   // Não cria outro SQLite nem aceita contas fora do pacote autenticado.
+   if(req.url==='/internal/loop/migracao-identidade'){
+    void atenderMigracaoIdentidadeReal(req,res,{ambiente,banco}).catch(()=>{
+     if(!res.writableEnded){res.writeHead(503);res.end();}
+    });return;
+   }
    if(req.url?.startsWith('/internal/catalogo/')){
     if(!catalogoMidia){res.writeHead(503);res.end();return;}
     void Promise.resolve(catalogoMidia.atender(req,res)).catch(()=>{
