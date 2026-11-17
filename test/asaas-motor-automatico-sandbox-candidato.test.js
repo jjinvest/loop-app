@@ -38,7 +38,9 @@ test('webhook bruto nao gera posicoes; PSP reconsultado cria lote ROXO pendente 
   webhookHomologacaoToken:TOKEN,provedorReconsultaSandbox:provedor,
   operacoesSandboxAutorizadas:true,
   segredoOperador:OP,termosVersao:'LAB-auto-conciliacao-2026',
-  termosTexto:'Termos de homologacao sem dinheiro, saques, premios, saldos nem creditos reais.'
+  termosTexto:'Termos de homologacao sem dinheiro, saques, premios, saldos nem creditos reais.',
+  termosIdentidadeVersao:'LAB-IDENTIDADE-2026',
+  termosIdentidadeTexto:'Termos de identidade exclusivos do teste automatizado. O CPF ficticio e o aceite sao registrados apenas no banco temporario da simulacao, sem verificacao externa, movimentacao financeira, premio ou direito real.'
  });
  const server=r.app.listen(0,'127.0.0.1');await once(server,'listening');
  t.after(async()=>{await new Promise(ok=>server.close(ok));db.close()});
