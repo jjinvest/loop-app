@@ -2414,3 +2414,9 @@ $('formComunicadoAdmin').addEventListener('submit',async e=>{
  }catch(err){status.textContent='Não foi possível salvar: '+err.message;}
  finally{botao.disabled=false;}
 });
+
+// Navegação do operador: reaproveita a sessão assinada do gateway.
+// Não altera o HTML/CSS aprovado nem concede sessão de cliente.
+for(const link of document.querySelectorAll('a.botao-voltar-loop[href="/minha-conta"]')){
+ link.href='/operador?destino=loop';
+}
