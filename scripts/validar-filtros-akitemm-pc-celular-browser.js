@@ -123,9 +123,9 @@ const PRODUTOS=['ROXO','DOURADO','VERDE','CINZA'].map(cor=>({
 
    for(const cor of ['ROXO','DOURADO','VERDE','CINZA']){
     await pagina.locator('[data-akitemm-cor="'+cor+'"]').click();
-    assert.equal(await cards().count(),2,
-     dispositivo.nome+': só dois quadrinhos '+cor);
-    assert.equal(await pagina.locator('#catalogoLojaLoop .akitemm-slot-'+cor.toLowerCase()).count(),2);
+    assert.equal(await cards().count(),20,
+     dispositivo.nome+': filtro exibe vinte quadrinhos da cor '+cor);
+    assert.equal(await pagina.locator('#catalogoLojaLoop .akitemm-slot-'+cor.toLowerCase()).count(),20);
     assert.equal(await pagina.locator('[data-akitemm-cor="'+cor+'"]').getAttribute('aria-pressed'),'true');
     assert.equal(await pagina.locator('#akitemmFiltroTodos').getAttribute('aria-pressed'),'false');
     assert.equal(await pagina.locator('#catalogoLojaLoop button').count(),0,
@@ -145,8 +145,8 @@ const PRODUTOS=['ROXO','DOURADO','VERDE','CINZA'].map(cor=>({
    await pagina.reload({waitUntil:'domcontentloaded'});
    await pagina.locator('#conteudoLojaLoop').waitFor({state:'visible'});
    await pagina.locator('[data-akitemm-cor="ROXO"]').click();
-   assert.equal(await cards().count(),3,
-    'mesmo filtro mostra os três slots roxos do administrador em ambas as telas');
+   assert.equal(await cards().count(),20,
+    'mesmo filtro mostra vinte slots roxos na primeira pagina em ambas as telas');
    await pagina.locator('#akitemmFiltroTodos').click();
 
    // Produtos reais no teste local: uma cor classifica um só produto;
@@ -156,8 +156,8 @@ const PRODUTOS=['ROXO','DOURADO','VERDE','CINZA'].map(cor=>({
    await pagina.locator('#conteudoLojaLoop').waitFor({state:'visible'});
    for(const cor of ['ROXO','DOURADO','VERDE','CINZA']){
     await pagina.locator('[data-akitemm-cor="'+cor+'"]').click();
-    assert.equal(await cards().count(),2);
-    assert.equal(await pagina.locator('#catalogoLojaLoop .akitemm-slot-vazio').count(),1);
+    assert.equal(await cards().count(),20);
+    assert.equal(await pagina.locator('#catalogoLojaLoop .akitemm-slot-vazio').count(),19);
     assert.equal(await pagina.locator('#catalogoLojaLoop .produto-loja-loop h3')
      .allTextContents().then(a=>a.join('')),'Produto '+cor.toLowerCase());
     const botao=pagina.locator('#catalogoLojaLoop .akitemm-adicionar');
