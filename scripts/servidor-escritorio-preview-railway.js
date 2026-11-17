@@ -698,9 +698,19 @@ async function iniciar({env=process.env}={}){
       typeof token!=='string'||!/^[a-f0-9]{64}$/.test(token))
     throw Error('MIGRACAO_REDE_PRIVADA_NAO_CONFIGURADA');
    const dados=exportarPreview({banco:db,contas:c.contas});
+   // Inventário agregado: o titular não aparece em logs e contas sem origem
+   // comprovada não são importadas automaticamente para o banco definitivo.
+   // Emitir apenas na mudança de revisão ou primeira inicialização.
    const revisao=dados.conferencias.provaIds+':'+
     dados.conferencias.provaVinculos;
    if(revisao===ultimaMigracaoComprovada)return;
+   const cfa=dados.conferencias;
+   const avulsas=cfa.contasAvulsasIgnoradas;
+   process.stdout.write('LOOP_RECONCILIACAO_CONTAS_ORIGEM='+
+    (cfa.contas+avulsas)+';REDE_VALIDADA='+cfa.contas+
+    ';SEM_VINCULO_COMPROVADO='+avulsas+
+    ';VINCULOS_VALIDOS='+cfa.vinculos+
+    ';STATUS='+ (avulsas>0?'PENDENTE_CLASSIFICACAO':'SEM_AVULSAS_DETECTADAS')+'\\n');
    const pacote=empacotar(dados,token);
    const res=await fetch(url.replace('/internal/loop/tabuleiro',
     '/internal/loop/migracao-identidade'),{
