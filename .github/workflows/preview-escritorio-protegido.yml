@@ -24,6 +24,7 @@ on:
       - 'scripts/validar-jornada-loja-cores-browser.js'
       - 'test/plano-posicoes-compra-akitemm.test.js'
       - 'test/asaas-motor-automatico-sandbox-candidato.test.js'
+      - 'test/candidato-psp-posicao-entrega-escritorio-unificados.test.js'
       - 'test/webhook-antecipado-monitor-integrado.test.js'
       - 'src/domain/reconsulta-webhook-prepedido-asaas-staging.js'
       - 'test/recuperacao-automatica-reconsulta-interrompida-sandbox.test.js'
