@@ -114,7 +114,10 @@ class OperacaoCatracaAdminSQLite{
   const girosDia=this._girosDia(tempo.dia);
   const motor=this.motor.consultar();
   const dentro=dentroJanela(tempo.hora,p.inicio,p.fim);
-  const permitido=p.limite_diario===null||girosDia<p.limite_diario;
+  const dentroDaMeta=metaAplicavel&&meta.centrosDia>0&&
+   girosDia<meta.centrosDia;
+  const permitido=(p.limite_diario===null||girosDia<p.limite_diario)&&
+   (p.modo!=='AUTOMATICA'||dentroDaMeta);
   return {modo:p.modo,janelaInicio:p.inicio,janelaFim:p.fim,
    metaCentrosDia:meta.centrosDia,metaDataAlvo:meta.dataAlvo,
    metaAplicavelHoje:metaAplicavel,
@@ -133,6 +136,7 @@ class OperacaoCatracaAdminSQLite{
    girosHoje:girosDia,hoje:tempo.dia,horaLocal:tempo.hora,
    fuso:FUSO,horarioPermitido:dentro,
    limiteNaoAtingido:permitido,
+   metaNaoAtingida:metaAplicavel&&meta.centrosDia>girosDia,
    eventosNoCiclo:motor.tabuleiro.eventosNoCiclo,
    girosTotais:motor.catraca.giros,
    filaA:motor.filaA,filaB:motor.filaB,
@@ -206,6 +210,12 @@ class OperacaoCatracaAdminSQLite{
     return {girou:false,motivo:'FORA_DO_HORARIO_ADMINISTRATIVO'};
    if(p.limite_diario!==null&&this._girosDia(t.dia)>=p.limite_diario)
     return {girou:false,motivo:'LIMITE_DIARIO_DEFINIDO_PELO_ADMINISTRADOR'};
+   const meta=this._meta();
+   if(origem==='AGENDA'&&
+      (meta.centrosDia===0||
+       (meta.dataAlvo!==null&&meta.dataAlvo!==t.dia)||
+       this._girosDia(t.dia)>=meta.centrosDia))
+    return {girou:false,motivo:'META_DIARIA_NAO_AUTORIZADA'};
    const vendas=sim.tabuleiro.vendasDoCiclo;
    if(vendas.length!==6)return {girou:false,motivo:'AGUARDANDO_SEIS_VENDAS'};
    for(const venda of vendas){
@@ -236,6 +246,10 @@ class OperacaoCatracaAdminSQLite{
   if(process.env.NODE_ENV==='production')return {girou:false,motivo:'NAO_HOMOLOGADO'};
   if(this._politica().modo!=='AUTOMATICA')
    return {girou:false,motivo:'AGENDA_NAO_HABILITADA'};
+  const meta=this._meta();
+  const dia=horarioLocal(this.agora).dia;
+  if(meta.centrosDia===0||(meta.dataAlvo!==null&&meta.dataAlvo!==dia))
+   return {girou:false,motivo:'META_DIARIA_NAO_CONFIGURADA'};
   return this.executarGiro({origem:'AGENDA'});
  }
  verificar(){
