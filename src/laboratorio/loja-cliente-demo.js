@@ -419,9 +419,9 @@
  }
  function abrirCadastroOperador(id){
   if(!operadorVitrine)return;
-  const atalho=el('akitemmOperadorMais');
-  if(!atalho||!atalho.href)return;
-  const destino=new URL(atalho.href,location.href);
+  // O atalho antigo pode ser removido pelo modo operador; a rota protegida
+  // continua sendo o destino de cadastro/edicao de produtos.
+  const destino=new URL('/operador',location.origin);
   destino.searchParams.set('produtoEditar',id||'novo');
   location.assign(destino.href);
  }
