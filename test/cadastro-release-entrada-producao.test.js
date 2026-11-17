@@ -30,3 +30,22 @@ test('release rejeita laboratorio e nao depende de pagamento ou credencial comer
  assert.equal(selecionar(prod).modo,'CADASTRO_REAL');
  assert.ok(!('LOOP_REAL_CHAVE_ADMIN' in prod));
 });
+
+test('operacao interna real nao libera cadastro e exige nucleo definitivo',()=>{
+ const ambiente={...base,LOOP_REAL_CADASTRO_GO:'NAO',
+  LOOP_REAL_APROVACAO_DOCUMENTOS:'NAO',
+  LOOP_REAL_PREPARACAO_INTERNA:'SIM',LOOP_REAL_NUCLEO_COMERCIAL_INTERNO:'SIM',
+  LOOP_REAL_OPERACAO_INTERNA:'SIM'};
+ assert.deepEqual(selecionar(ambiente),{
+  modo:'OPERACAO_INTERNA_REAL',cadastroDisponivelSobBackup:false
+ });
+ assert.deepEqual(selecionar({...ambiente,LOOP_REAL_OPERACAO_INTERNA:'NAO'}),{
+  modo:'PREPARACAO_SEGURA',cadastroDisponivelSobBackup:false
+ });
+ assert.throws(()=>selecionar({...ambiente,LOOP_REAL_NUCLEO_COMERCIAL_INTERNO:'NAO'}),
+  /OPERACAO_INTERNA_NUCLEO_INCOMPLETO/);
+ assert.throws(()=>selecionar({...ambiente,LOOP_REAL_APROVACAO_DOCUMENTOS:'SIM'}),
+  /CADASTRO_RELEASE_GO_E_DOCUMENTOS_INCONSISTENTES/);
+ assert.throws(()=>selecionar({...ambiente,LOOP_CLIENTES_LAB:'SIM'}),
+  /CADASTRO_RELEASE_AMBIENTE_INVALIDO/);
+});
