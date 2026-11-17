@@ -169,6 +169,33 @@ function validarIdentidade(arquivo){
      falha('BACKUP_CATRACA_CAIXA_DIVERGENTE');
    }catch{falha('BACKUP_CATRACA_CAIXA_DIVERGENTE');}
   }
+  // Programacao de caixa e autorizacoes de luz precisam viajar juntas
+  // no backup. Nenhum saldo bancario e inferido do SQLite.
+  const temCaixa=TABELAS_CATRACA_CAIXA.some(x=>lista.includes(x));
+  if(temCaixa){
+   if(TABELAS_CATRACA_CAIXA.some(x=>!lista.includes(x)))
+    falha('BACKUP_CATRACA_CAIXA_PARCIAL');
+   try{
+    const controle=Object.create(ControleCaixaCatracaLoopSQLite.prototype);
+    controle.banco=b;
+    const dias=b.prepare(
+     'SELECT dia FROM loop_real_catraca_caixa_programacao'
+    ).all();
+    for(const {dia} of dias){
+     const p=controle.consultar({dia});
+     if(!p.programada||!p.caixaComprovado||
+        p.luzesAutorizadas>p.luzesPlanejadas||
+        p.reservaTotalCentavos<1)
+      falha('BACKUP_CATRACA_CAIXA_INCONSISTENTE');
+    }
+    const soltas=b.prepare([
+     'SELECT COUNT(*) AS n FROM loop_real_catraca_caixa_autorizacoes a',
+     'LEFT JOIN loop_real_catraca_caixa_programacao p ON p.dia=a.dia',
+     'WHERE p.dia IS NULL OR a.indice_luz>p.meta_centros*6'
+    ].join(' ')).get().n;
+    if(soltas!==0)falha('BACKUP_CATRACA_CAIXA_INCONSISTENTE');
+   }catch{falha('BACKUP_CATRACA_CAIXA_INCONSISTENTE');}
+  }
   // A ativação fictícia qualificada exige o mesmo pedido, evento e motor.
   // Nunca promover ponte fictícia em um backup de produção.
   const temPromocao=TABELAS_PROMOCAO_ENSAIO.some(x=>lista.includes(x));
