@@ -385,3 +385,33 @@ test('3 luzes roxas e 3 pretas permanecem no quadro mesmo com centro dourado, se
   assert.equal(reiniciado.consultarAgenda().luzesPretasAcesas,3);
  }finally{db.close();}
 });
+
+test('motor persiste intervalo calculado pela meta sem alterar abertura ou fechamento',()=>{
+ const {db,motor}=preparar();
+ try{
+  const dia=Date.parse('2026-11-06T09:00:00-03:00');
+  motor.configurarAgenda({modoExecucao:'MANUAL',ativo:false,
+   abertura:'09:00',fechamento:'18:00',intervaloMinutos:10,
+   metaQuantidade:5,metaDataAlvo:null,agoraMs:dia});
+  const calculada=motor.consultarAgenda({agoraMs:dia});
+  assert.equal(calculada.abertura,'09:00');
+  assert.equal(calculada.fechamento,'18:00');
+  assert.equal(calculada.metaLotes.quantidade,5);
+  assert.equal(calculada.intervaloMinutos,18);
+  assert.equal(calculada.modoExecucao,'MANUAL',
+   'programar meta nao liga a catraca sem comando');
+  motor.configurarAgenda({modoExecucao:'MANUAL',ativo:false,
+   abertura:'10:00',fechamento:'19:00',intervaloMinutos:99,
+   metaQuantidade:5,metaDataAlvo:null,agoraMs:dia});
+  const novo=motor.consultarAgenda({agoraMs:dia});
+  assert.equal(novo.intervaloMinutos,18);
+  assert.equal(novo.abertura,'10:00');
+  assert.equal(novo.fechamento,'19:00');
+  motor.configurarAgenda({modoExecucao:'MANUAL',ativo:false,
+   abertura:'10:00',fechamento:'19:00',intervaloMinutos:7,
+   metaQuantidade:0,metaDataAlvo:null,agoraMs:dia});
+  assert.equal(motor.consultarAgenda({agoraMs:dia}).intervaloMinutos,7);
+  assert.equal(motor.consultarAgenda({agoraMs:dia}).metaLotes.quantidade,0);
+  assert.equal(motor.consultar().dinheiroReal,false);
+ }finally{db.close();}
+});
