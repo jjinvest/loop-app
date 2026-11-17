@@ -47,3 +47,16 @@ O produto público deve continuar com **um único acesso principal**, `https://a
 O código vigente tem portas fechadas deliberadamente para cadastro público/checkout/saques. Não marcar como concluído aquilo que está apenas testado; ciclo: corrigir -> verificar -> publicar no serviço existente -> conferir funcionalidade e banco reais. Se falhar, reverter ativação sem alterar dados. Não alterar `docs/CONTRATO_VISUAL_LOOP_APROVADO.json` sem autorização visual específica.
 
 **Atenção:** os serviços estão atualmente pinados a commits específicos no Railway; commits posteriores na branch podem não ser publicados automaticamente. Atualizar os serviços existentes explicitamente quando necessário.
+
+
+## Correção de regra — catraca comandada pelo relógio e por caixa previamente provisionado
+
+**Decisão do proprietário em 17/11/2026, às 20h18 UTC — prevalece sobre a hipótese anterior de exigir seis vendas novas por centro no dia.**
+
+- **Vendas:** geram receita e posições válidas; compra/indicação alimenta filas A/B e habilita qualificação. A compra não é disparador temporal obrigatório de cada luz futura.
+- **Acumulação:** de **01/12/2026 a 01/01/2027** prevê-se aceitar vendas e posições habilitadas, **com a catraca parada**, enquanto o caixa é formado (somente após ativação e comprovação das integrações comerciais externas). Filas podem receber posições durante a pausa.
+- **Programação diária, definida pelo operador:** o operador avalia o caixa efetivamente disponível e decide a **meta de centros por dia**. O número de janelas de luz é **seis vezes a meta**, distribuído ao longo de abertura/fechamento escolhidos, que **não mudam automaticamente**. A data é opcional. Meta zero mantém controle livre/sem meta. Exemplos para 09h–18h: 1 centro=6 luzes=90 min; 5 centros=30 luzes=18 min; 10 centros=60 luzes=9 min.
+- **Regra financeira obrigatória de implementação:** uma luz/um giro **não pode inventar venda, receita, crédito nem saldo**. As liberações devem depender de **reserva/caixa real já conciliado e provisionado**, com disponibilidade rastreável, idempotência, livro-razão, travas de saldo/contingência e auditoria. O relógio determina **quando** progredir, não cria dinheiro, não opera em saldo descoberto e não contorna as exigências de parceiros externos. Se a provisão não for suficiente, o processamento bloqueia/pausa com motivo explícito; meta não é garantia incondicional de pagamento.
+- **Correção técnica pendente:** o motor de ensaio em src/domain/motor-conta-unica-ensaio-sqlite.js, na função _processarMetaAgenda, **ainda condiciona cada luz a pedidos aguardando e à confirmação PSP individual**, o que **não atende** à decisão acima. Exige separar **entrada de novas vendas** da **autorização de ciclos já financiados**, desenhando uma nova ligação auditável ao livro financeiro real; **não publicar/ativar uma catraca que destrave pagamentos sem esta provisão real**. O ajuste de cálculo do intervalo na branch, isoladamente, **não conclui essa mudança de regra**.
+
+**Estado de publicação neste registro:** a versão com apenas o cálculo da meta não foi promovida ao Railway por causa dessa divergência. A entrada comercial pública e pagamentos continuam bloqueados nas etapas externas.
