@@ -117,13 +117,13 @@ test('admin aprovado: login distinto, cadastrar produto/oferta, editar preços e
   'login de cliente pode encerrar modo operador mesmo sem cookie');
  const {renderizarInterfaceAprovada}=require('../src/producao/interface-aprovada-loop');
  const telaReal=renderizarInterfaceAprovada();
- assert.match(telaReal,/id="loopOperadorMais" href="\\/administrador"/);
- assert.doesNotMatch(telaReal,/id="loopOperadorMais" href="\\/escritorio"/);
+ assert.ok(telaReal.includes('id="loopOperadorMais" href="/administrador"'));
+ assert.ok(!telaReal.includes('id="loopOperadorMais" href="/escritorio"'));
  const fsReal=require('node:fs');
  const fonteContaReal=fsReal.readFileSync(
   require('node:path').join(__dirname,'../src/producao/interface-aprovada-contas.js'),'utf8');
- assert.match(fonteContaReal,/location\\.assign\\('\\/administrador'\\)/);
- assert.doesNotMatch(fonteContaReal,/location\\.assign\\('\\/staging\\/cliente/);
+ assert.ok(fonteContaReal.includes("location.assign('/administrador')"));
+ assert.ok(!fonteContaReal.includes("location.assign('/staging/cliente"));
  const adminPagina=await get('/administrador');
  assert.equal(adminPagina.status,303);
  assert.equal(adminPagina.headers.get('location'),'/administrador/entrar');
