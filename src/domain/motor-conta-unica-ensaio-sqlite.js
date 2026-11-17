@@ -6,7 +6,7 @@ const {SimuladorLoop}=require('./simulador-loop');
 const {LivroLuzesFinanceirasCandidatoSQLite}=
  require('./livro-luzes-financeiras-candidato-sqlite');
 const {PADRAO,validarAgenda,avaliarAgenda}=require('./agenda-catraca-loop');
-const {planejado,dadosAtivacao,validarMeta,janelasDeLuz}=require('./meta-lotes-catraca-loop');
+const {planejado,dadosAtivacao,validarMeta,janelasDeLuz,calcularIntervaloMeta}=require('./meta-lotes-catraca-loop');
 const {LIMITE_POSICOES_ATIVAS}=require('./capacidade-posicoes-loop');
 const {planejarPosicoesCompraAkitemm}=require('./plano-posicoes-compra-akitemm');
 const {consultarPedido}=require('./relatorio-homologacao-checkout-staging');
@@ -719,8 +719,17 @@ class MotorContaUnicaEnsaioSQLite{
   if(!['MANUAL','STOP','NATURAL','AGENDADA'].includes(modo))
    falha('MODO_CATRACA_INVALIDO');
   const local=avaliarAgenda(velho,agoraMs);
+  const quantidadeSolicitada=metaQuantidade===undefined?
+   this._meta().quantidade:metaQuantidade;
+  // Metas positivas sempre comandam o intervalo gravado, inclusive em
+  // chamadas diretas à API. Zero devolve o controle ao intervalo manual.
+  const intervaloMeta=calcularIntervaloMeta({
+   abertura,fechamento,quantidade:quantidadeSolicitada
+  });
+  const intervaloEfetivo=intervaloMeta.intervaloMinutos??intervaloMinutos;
   const novo=validarAgenda({
-   ...velho,ativo:modo==='AGENDADA',abertura,fechamento,intervaloMinutos,
+   ...velho,ativo:modo==='AGENDADA',abertura,fechamento,
+   intervaloMinutos:intervaloEfetivo,
    excecaoData,excecaoFechamento,
    pausaManual:false,
    // Uma nova configuracao comecara no proximo horario escolhido,
@@ -730,7 +739,7 @@ class MotorContaUnicaEnsaioSQLite{
     (Number(local.horarioLocal.slice(0,2))*60+
      Number(local.horarioLocal.slice(3,5)))-
     (Number(abertura?.slice(0,2))*60+Number(abertura?.slice(3,5)))
-   )/intervaloMinutos))
+   )/intervaloEfetivo))
   });
   if(novo.ativo&&!this.ponte)
    falha('AGENDA_AUTOMATICA_REQUER_ASAAS_SANDBOX');
