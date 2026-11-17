@@ -7,6 +7,8 @@ on:
       - 'scripts/servidor-escritorio-preview-railway.js'
       - 'test/atalho-operador-unico-ambas-telas.test.js'
       - 'test/catalogo-admin-candidato-unificado.test.js'
+      - 'test/vitrine-horizontal-400-produtos.test.js'
+      - 'test/loja-upload-real-pdf-foto-video-avaliacoes-unificados.test.js'
       - 'test/fotos-produto-candidato-sqlite.test.js'
       - '.github/workflows/prova-operador-akitemm.yml'
   workflow_dispatch:
