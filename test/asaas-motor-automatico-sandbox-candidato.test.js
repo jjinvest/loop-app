@@ -37,7 +37,7 @@ test('webhook bruto nao gera posicoes; PSP reconsultado cria lote ROXO pendente 
   chaveCpfHmac:randomBytes(32),chaveCpfCifra:randomBytes(32),
   webhookHomologacaoToken:TOKEN,provedorReconsultaSandbox:provedor,
   operacoesSandboxAutorizadas:true,
-  segredoOperador:OP,termosVersao:'LAB-auto-conciliacao-2026',
+  segredoOperador:OP,termosVersao:'LAB-IDENTIDADE-2026',
   termosTexto:'Termos de homologacao sem dinheiro, saques, premios, saldos nem creditos reais.',
   termosIdentidadeVersao:'LAB-IDENTIDADE-2026',
   termosIdentidadeTexto:'Termos de identidade exclusivos do teste automatizado. O CPF ficticio e o aceite sao registrados apenas no banco temporario da simulacao, sem verificacao externa, movimentacao financeira, premio ou direito real.'
