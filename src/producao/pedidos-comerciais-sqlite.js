@@ -369,6 +369,8 @@ class PedidosComerciaisSQLite{
      "UPDATE loja_real_pedidos SET status='CANCELADO',atualizado_em=?",
      "WHERE pedido_id=? AND status!='CANCELADO'"
     ].join(' ')).run(this.agora(),pedidoId);
+    if(this.outboxCompraLoop)
+     this.outboxCompraLoop.cancelarEmTransacao({pedidoId});
     const eventoCancelado=this.eventosComerciais?
      this.eventosComerciais.registrarCancelamentoEmTransacao({pedidoId}):null;
     // Libera vagas nao usadas; vagas usadas seguem em revisao individual.
@@ -411,6 +413,8 @@ class PedidosComerciaisSQLite{
     this.eventosComerciais.registrarPagamentoConciliadoEmTransacao({
      pedidoId,pagamentoId:prova.pagamentoId
     });
+   if(this.outboxCompraLoop)
+    this.outboxCompraLoop.registrarConfirmacaoEmTransacao({pedidoId});
    const confirmado=this._row(pedidoId);
    this.db.exec('COMMIT');
    const resposta={...this._publico(confirmado),confirmado:true};
