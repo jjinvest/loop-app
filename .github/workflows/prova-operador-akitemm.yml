@@ -4,6 +4,7 @@ on:
     branches: [feature/unificar-escritorio-real-20261105]
     paths:
       - 'src/laboratorio/loja-cliente-demo.js'
+      - 'src/candidato/escritorio-admin-candidato-ui.js'
       - 'scripts/servidor-escritorio-preview-railway.js'
       - 'test/atalho-operador-unico-ambas-telas.test.js'
       - 'test/catalogo-admin-candidato-unificado.test.js'
