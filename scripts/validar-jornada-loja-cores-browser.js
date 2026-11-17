@@ -150,8 +150,8 @@ const png=Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAIAAAACCAIAAAD91JpzAAAAEklEQVR4n
    await page.goto(base+'/staging/loja',{waitUntil:'domcontentloaded'});
    await page.locator('#catalogoLojaLoop article.produto-loja-loop').first()
     .waitFor({state:'visible'});
-   // Quantidade inicial aprovada: 8 itens PC; 4 itens celular.
-   const inicial=device.nome==='pc'?8:4;
+   // Vitrine horizontal aprovada: duas fileiras de dez quadrinhos em PC e celular.
+   const inicial=20;
    assert.equal(await page.locator('#catalogoLojaLoop article.produto-loja-loop').count(),inicial);
    const cols=await page.locator('#catalogoLojaLoop').evaluate(el=>
     getComputedStyle(el).gridTemplateColumns.split(' ').length);
@@ -165,9 +165,8 @@ const png=Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAIAAAACCAIAAAD91JpzAAAAEklEQVR4n
    });
    assert.equal(legenda.cols,2);
    assert.ok(legenda.primeira&&legenda.segunda&&legenda.sequencia);
-   for(let i=0;i<4&&await page.locator('#akitemmCarregarMais').isVisible();i++)
-    await page.locator('#akitemmCarregarMais').click();
-   assert.equal(await page.locator('#catalogoLojaLoop article.produto-loja-loop').count(),13);
+   await page.locator('#akitemmCarregarMais').click();
+   assert.equal(await page.locator('#catalogoLojaLoop article.produto-loja-loop').count(),40);
    await page.evaluate(()=>window.scrollTo(0,document.body.scrollHeight));
    await page.evaluate(()=>window.scrollTo(0,0));
    const medidas=await page.evaluate(()=>({
