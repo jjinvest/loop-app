@@ -1,0 +1,19 @@
+name: Prova 1000 compras motor integrado SQLite
+on:
+  push:
+    branches: [feature/unificar-escritorio-real-20261105]
+    paths:
+      - 'test/motor-integrado-1000-compras-sqlite.test.js'
+      - '.github/workflows/prova-motor-integrado-1000.yml'
+  workflow_dispatch:
+jobs:
+  motor-integrado:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - run: npm ci --ignore-scripts
+      - run: node --test test/motor-integrado-1000-compras-sqlite.test.js
