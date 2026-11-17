@@ -7,6 +7,7 @@ const {DatabaseSync}=require('node:sqlite');
 const {randomBytes}=require('node:crypto');
 const {IdentidadeClienteLoopReal}=require('../src/producao/identidade-cliente-loop-sqlite');
 const {MotorLoopIntegradoSQLite}=require('../src/producao/motor-loop-integrado-sqlite');
+const {OperacaoCatracaAdminSQLite}=require('../src/producao/operacao-catraca-admin-sqlite');
 test('1000 compras qualificadas no mesmo SQLite: sem duplicacao e com limite por titular', {timeout:900000},async()=>{
  const banco=new DatabaseSync(':memory:');
  banco.exec('PRAGMA foreign_keys=ON');
@@ -44,9 +45,24 @@ test('1000 compras qualificadas no mesmo SQLite: sem duplicacao e com limite por
    }),/LOOP_MAXIMO_DEZ_POSICOES/);
   }
   assert.equal(total,1000);
+  const catraca=new OperacaoCatracaAdminSQLite({banco,motor,
+   agora:()=>new Date('2026-11-10T12:00:00Z')});
+  motor.prepararTabuleiroEnsaio();
+  for(let i=0;i<6;i++)assert.equal(motor.registrarEventoEnsaio({
+   pedidoId:'ensaio-1000-'+i+'-0'
+  }).eventosNoCiclo,i+1);
+  assert.equal(catraca.executarGiro().girou,false);
+  const estado=catraca.consultar();
+  catraca.configurar({modo:'MANUAL',janelaInicio:'09:00',
+   janelaFim:'18:00',limiteDiario:10,revisaoEsperada:estado.revisao,
+   motivo:'ENSAIO_CATRACA_INTEGRADA'});
+  assert.equal(catraca.executarGiro().girou,true);
+  assert.equal(catraca.executarGiro().girou,false);
+  assert.equal(catraca.verificar().girosAuditados,1);
   const prova=motor.verificar();
   assert.equal(prova.compras,1000);
-  assert.equal(prova.giros,0);
+  assert.equal(prova.giros,1);
+  assert.equal(prova.eventos,6);
   assert.equal(banco.prepare('SELECT COUNT(*) AS n FROM loop_real_motor_compras').get().n,1000);
   assert.equal(banco.prepare('PRAGMA integrity_check').get().integrity_check,'ok');
   assert.deepEqual(banco.prepare('PRAGMA foreign_key_check').all(),[]);
