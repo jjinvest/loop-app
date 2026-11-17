@@ -1,11 +1,11 @@
 {
   "schema": 1,
   "política": "Toda alteração de HTML/CSS exige pedido visual explícito, escopo isolado e revisão do proprietário; é proibido atualizar hashes para esconder mudanças.",
-  "autorizaçãoAtual": "17/11/2026: proprietário autorizou especificamente os filtros Todos amarelos acesos com seleção somente por borda e o acesso LOOP do operador sem alterar o HTML/CSS já aprovado das demais telas; somente src/laboratorio/loja-cliente-demo.css tem hash renovado para os 22 linhas de CSS dos filtros.",
+  "autorizaçãoAtual": "17/11/2026, pedido visual explícito: alterar SOMENTE a marca LOOP 3.0 no topo da tela de login/cadastro de akitemmloop.com.br, copiando o dourado metálico do LOOP e prata do 3.0 da segunda foto do Escritório Virtual; manter subtítulo, layout, campos, logo do banner e telas logadas intactos. Renovados apenas os hashes do HTML compartilhado e CSS integrado, sem alterar identidade, autenticação ou pagamentos.",
   "arquivos": [
     {
       "path": "src/candidato/checkout-candidato-ui.html",
-      "sha": "fa1fafc1ac22bc02d93aad8283f038a87889fb2b"
+      "sha": "fa7c4ed5f74db469944b53cad935d64d5bfb341f"
     },
     {
       "path": "src/candidato/escritorio-admin-candidato-ui.css",
@@ -17,7 +17,7 @@
     },
     {
       "path": "src/candidato/escritorio-cliente-integrado.css",
-      "sha": "87ef5d01f6d07f7c88f163c85cb8c106dd12799c"
+      "sha": "8d277e4d1c694d7eb4e998278412b4ad2bc981b5"
     },
     {
       "path": "src/laboratorio/admin-loop03.css",
@@ -119,6 +119,7 @@
     "15/11/2026: renova apenas o hash de src/candidato/escritorio-admin-candidato-ui.html para corrigir os rótulos de laboratório da seção de produto para catálogo comercial próprio, solicitado explicitamente. Reforçado mecanismo de foto antes da publicação e monitoramento privado de conexões dos dois serviços Railway. Produto real nunca entra em checkout de ensaio.",
     "16/11/2026: pedido explícito em fotos e mensagens para refinar botões usando Ofertas como referência, corrigir sobreposição de Minha conta, remover Ver todos e capacidade da vitrine, alinhar sino e restaurar círculos LOOP no topo da AKITEMM. Hash renovado exclusivamente para src/laboratorio/loja-cliente-demo.css, após revisão do escopo.",
     "16/11/2026: proprietário solicitou explicitamente uniformizar LOOP 3.0 prateado da tela aprovada na loja e no cadastro/login. Autorização restrita aos dois CSS respectivos, sem mudar fluxo de autenticação.",
-    "17/11/2026: pedido explícito para manter Todos amarelo aceso e Ofertas dourado em todos os estados, destacando seleção só pela borda. Diferença visual auditada: commit 51f04214 acrescentou exclusivamente regras de #akitemmFiltroTodos e #akitemmFiltroOfertas ao final de src/laboratorio/loja-cliente-demo.css. Os outros 23 arquivos protegidos preservados; hash do único CSS alterado atualizado por autorização expressa, mantendo a trava visual. Navegação operador corrigida exclusivamente no JS do admin e no gateway, não no HTML aprovado."
+    "17/11/2026: pedido explícito para manter Todos amarelo aceso e Ofertas dourado em todos os estados, destacando seleção só pela borda. Diferença visual auditada: commit 51f04214 acrescentou exclusivamente regras de #akitemmFiltroTodos e #akitemmFiltroOfertas ao final de src/laboratorio/loja-cliente-demo.css. Os outros 23 arquivos protegidos preservados; hash do único CSS alterado atualizado por autorização expressa, mantendo a trava visual. Navegação operador corrigida exclusivamente no JS do admin e no gateway, não no HTML aprovado.",
+    "17/11/2026, 19h54 UTC: proprietário enviou duas fotos, pediu expressamente para igualar a cor do título LOOP 3.0 do topo da primeira tela ao dourado LOOP e prata 3.0 da segunda tela, depois confirmou 'Faz'. Alterados somente span da marca no header e regras CSS estritamente escopadas ao cabeçalho não logado. Os demais 22 arquivos e funcionalidades permanecem protegidos."
   ]
 }
