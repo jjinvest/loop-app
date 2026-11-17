@@ -14,7 +14,7 @@ const {COOKIE}=require('../src/domain/conta-unica-candidata-sqlite');
 const ADMIN='operador-catraca-unificada-'+('Q'.repeat(50));
 const TOKEN='TokenMockSomenteLaboratorio'+('T'.repeat(50));
 const SENHA='SenhaFicticiaSomenteLaboratorio2026!';
-const TERMOS='Registro puramente de laboratorio sem pagamentos, posicoes, saques ou beneficios reais.';
+const TERMOS='Registro puramente de laboratorio sem pagamentos, posicoes, saques ou beneficios reais. O CPF e o aceite de identidade ficticios ficam apenas no banco temporario da simulacao e nao representam verificacao externa nem direitos financeiros.';
 async function criarContexto(t,{ativo=true,comCpf=false}={}){
  const banco=new DatabaseSync(':memory:');
  banco.exec('PRAGMA foreign_keys=ON;PRAGMA busy_timeout=5000');
