@@ -20,6 +20,14 @@ O produto público deve continuar com **um único acesso principal**, `https://a
 3. `scripts/iniciar-cadastro-publico-release.js` e `scripts/iniciar-identidade-real-loop.js`: modo `OPERACAO_INTERNA_REAL` separado do `CADASTRO_REAL`. Flag `LOOP_REAL_OPERACAO_INTERNA=SIM` no serviço original. Mesmo motor, contas, SQLite, backup e admin; `permitirCadastro:false`. Não liga checkout, saques, créditos ou pagamentos.
 4. Testes adicionados para seleção segura do modo interno e autenticação do operador da loja.
 
+## Atualização de integração de operador — 17/11/2026, 16h44 UTC
+
+- Publicado **no mesmo serviço** `loop-identidade-real` o commit `1a2ff2eb4ebb58c407b709db66c7834780161587` (Railway **SUCCESS**). O gateway original passou a aceitar `POST /api/operador/entrar`, `GET /api/operador/estado` e `POST /api/operador/sair` com a **mesma sessão administrativa** e permissões existentes. Login do escritório definitivo direciona a `/administrador`, sem retorno a `/staging/cliente?modo=operador`.
+- O teste `test/entrada-unificada-operador.test.js` foi alinhado: exige rota definitiva no sistema real e preserva apenas no serviço legado o caminho de homologação, enquanto o domínio público não migra. A alteração não alterou HTML/CSS aprovados nem cadastrou novos titulares.
+- Auditoria integral GitHub **1.444 / 1.444 testes aprovados**, `0` falhas no run `44128764244`; navegação PC/celular e verificações de dependências aprovadas.
+- Railway: três serviços online, zero falhas ativas, versão original `1a2ff2eb` aplicada. **Não está confirmado o uso autenticado no domínio principal**; `akitemmloop.com.br` continua ligado ao serviço legado. Cadastro público, checkout e saques reais permanecem bloqueados.
+- Próxima fase é unificar a **entrada pública já existente** com a fonte única de contas e o catálogo originais, sem trocar domínio precipitadamente nem simular titularidade. Atenção: no Railway há pinagem por commit; uma alteração posterior no GitHub não é publicação automática.
+
 ## Evidência mais recente
 
 - Em 17/11/2026 foi aplicado ao serviço **original** o commit `9a02d1547b74e81d636b9af1cf560864567f26ef` com a flag de modo interno ativada. O Railway informou **SUCCESS**, réplica online, zero alertas/falhas ativas; implantação e código conferidos.
