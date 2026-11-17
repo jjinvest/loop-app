@@ -51,8 +51,8 @@ test('1000 pessoas: compras AKITEMM, fila, catraca, 20 azuis, 80 desistencias e 
   if(qualificados===7){
    sim.prepararTabuleiro();
    assert.equal(sim.tabuleiro.vagas.filter(Boolean).length,6);
-   for(const venda of vendas)registrarEvento(venda);
-  }else if(qualificados>7)registrarEvento('pedido-'+n);
+   for(const venda of vendas.slice(0,5))registrarEvento(venda);
+  }else if(qualificados===8){for(const venda of vendas.slice(5))registrarEvento(venda)}else if(qualificados>8)registrarEvento('pedido-'+n);
   if(qualificados>30&&qualificados%10===0){
    const alvo=sim.filas.filaB.find(p=>p.statusAdesao!=='PENDENTE');
    if(alvo){
