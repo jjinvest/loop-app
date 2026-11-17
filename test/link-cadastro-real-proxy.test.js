@@ -5,117 +5,109 @@ const http=require('node:http');
 const {once}=require('node:events');
 const {criarGateway}=require('../scripts/servidor-escritorio-preview-railway');
 const SENHA='A'.repeat(64),ADMIN='B'.repeat(64),OPERADOR='C'.repeat(64);
-const abrir=async fn=>{
- const s=http.createServer(fn);s.listen(0,'127.0.0.1');
- await once(s,'listening');return s;
-};
-test('dominio da loja encaminha convite real sem reusar staging ou perder loja anterior',async t=>{
- const reais=[],previas=[];
+async function abrir(handler){
+ const s=http.createServer(handler);
+ s.listen(0,'127.0.0.1');await once(s,'listening');
+ return s;
+}
+test('entrada publica usa somente identidade definitiva, inclusive operador, sem cadastrar na previa',async t=>{
+ const realChamadas=[],legadoChamadas=[];
  const real=await abrir((req,res)=>{
-  reais.push({path:req.url,method:req.method,host:req.headers.host,
+  realChamadas.push({path:req.url,method:req.method,host:req.headers.host,
    authorization:req.headers.authorization,
-   origin:req.headers.origin});
-  if(req.url==='/escritorio/VILELA'){
-   res.writeHead(303,{Location:'/escritorio?ref=vilela'});res.end();return;
+   tokenInterno:req.headers['x-loop-interservice-token'],
+   origin:req.headers.origin,cookie:req.headers.cookie});
+  if(req.url==='/healthz'){
+   res.writeHead(200,{'Content-Type':'application/json'});
+   return res.end(JSON.stringify({estado:'SERVICO_IDENTIDADE_SEPARADO'}));
   }
-  if(req.url.startsWith('/escritorio/')){res.writeHead(404);res.end();return;}
-  if(req.url.startsWith('/minha-conta')){
+  if(req.url==='/readyz'){
+   res.writeHead(503);return res.end('CADASTRO_REAL_INATIVO');
+  }
+  if(req.url==='/escritorio/VILELA'||req.url==='/loja/VILELA'){
+   res.writeHead(303,{Location:'/escritorio?ref=vilela'});
+   return res.end();
+  }
+  if(['/minha-conta','/escritorio','/loja'].includes(req.url)||req.url.startsWith('/minha-conta?')){
    res.writeHead(200,{'Content-Type':'text/html'});
-   res.end('CADASTRO_DEFINITIVO '+req.url);return;
+   return res.end('MESMA_INTERFACE_REAL '+req.url);
+  }
+  if(req.url==='/administrador'){
+   res.writeHead(303,{Location:'/administrador/entrar'});
+   return res.end();
   }
   if(req.url==='/identidade/assets/cliente.js'){
    res.writeHead(200,{'Content-Type':'application/javascript'});
-   res.end('window.servico="real"');return;
+   return res.end('window.identidade="real"');
   }
-  if(req.url==='/api/contas/documentos'){
+  if(req.url==='/api/operador/estado'){
    res.writeHead(200,{'Content-Type':'application/json'});
-   res.end(JSON.stringify({documentos:'REAIS'}));return;
+   return res.end(JSON.stringify({operador:false}));
   }
-  if(req.url==='/api/contas/cadastrar'){
-   const data=[];req.on('data',b=>data.push(b));req.on('end',()=>{
-    const body=JSON.parse(Buffer.concat(data).toString());
-    res.writeHead(201,{'Content-Type':'application/json'});
-    res.end(JSON.stringify({contaCriada:true,
-     indicadorNick:body.indicadorNick}));});return;
+  if(req.url==='/api/contas/me'){
+   res.writeHead(401);return res.end();
   }
-  if(req.url==='/loja'){
-   res.writeHead(200);res.end('LOJA_REAL_MESMA_SESSAO');return;
+  if(['/api/contas/cadastrar','/api/checkout/finalizar'].includes(req.url)){
+   res.writeHead(503,{'Content-Type':'application/json'});
+   return res.end(JSON.stringify({erro:'CADASTRO_OU_FINANCEIRO_INATIVO'}));
   }
   res.writeHead(404);res.end();
  });
- const previa=await abrir((req,res)=>{
-  previas.push(req.url);
-  res.writeHead(200);res.end('PREVIA '+req.url);
+ const legado=await abrir((req,res)=>{
+  legadoChamadas.push(req.url);res.writeHead(200);res.end('ANTIGO');
  });
  const gateway=criarGateway({
-  portaInterna:previa.address().port,
+  portaInterna:legado.address().port,
   senhaAcesso:SENHA,senhaAdmin:ADMIN,segredoOperador:OPERADOR,
-  validarNickIndicador:nick=>nick.toLowerCase()==='vilela',
   publicarCadastroReal:true,permitirOrigemHttpLoopback:true,
   urlIdentidadeReal:'http://127.0.0.1:'+real.address().port+
-    '/internal/loop/tabuleiro'
+   '/internal/loop/tabuleiro'
  });
  gateway.listen(0,'127.0.0.1');await once(gateway,'listening');
  t.after(async()=>{
   await new Promise(ok=>gateway.close(ok));
-  await new Promise(ok=>previa.close(ok));
+  await new Promise(ok=>legado.close(ok));
   await new Promise(ok=>real.close(ok));
  });
  const base='http://127.0.0.1:'+gateway.address().port;
- const get=(url,opt={})=>fetch(base+url,{redirect:'manual',...opt});
- const convidadoEstado=await (await get('/api/operador/estado')).json();
- assert.deepEqual(convidadoEstado,{operador:false},
-  'visitante não vê o + nem permissões admin');
- const painel=await get('/escritorio',{headers:{
-  Authorization:'Basic '+Buffer.from('operador:'+ADMIN).toString('base64')
- }});
- assert.equal(painel.status,200);
- const adminCookie=painel.headers.get('set-cookie')?.split(';')[0];
- assert.match(adminCookie,/^akitemm_preview_admin_v2=/);
- const estadoReal=await get('/api/operador/estado',{
-  headers:{Cookie:adminCookie}});
- assert.equal(estadoReal.status,200);
- assert.deepEqual(await estadoReal.json(),{operador:true},
-  'o mesmo operador é reconhecido em toda tela via gateway');
- assert.equal((await get('/api/operador/estado',{
-  headers:{Cookie:'akitemm_preview_access=v1.1234.0000'}
- })).status,200);
- assert.deepEqual(await (await get('/api/operador/estado',{
-  headers:{Cookie:'akitemm_preview_access=v1.1234.0000'}
- })).json(),{operador:false});
- assert.equal((await get('/api/operador/estado',{method:'POST'})).status,405);
- assert.ok(!reais.some(y=>y.path==='/api/operador/estado'),
-  'identidade não recebe cookie administrativo nem consulta de permissão');
- const convite=await get('/escritorio/VILELA');
- assert.equal(convite.status,303);
- assert.equal(convite.headers.get('location'),'/cadastro-real?ref=VILELA');
- assert.equal((await get('/escritorio/NAOEXISTE')).status,404);
- const page=await get(convite.headers.get('location'));
- assert.equal(page.status,200);
- assert.match(await page.text(),/CADASTRO_DEFINITIVO \/minha-conta\?ref=VILELA/);
+ const get=(p,o={})=>fetch(base+p,{redirect:'manual',...o});
+ assert.equal((await get('/')).headers.get('location'),'/minha-conta');
+ assert.match(await (await get('/minha-conta')).text(),/MESMA_INTERFACE_REAL/);
+ assert.match(await (await get('/escritorio')).text(),/MESMA_INTERFACE_REAL/);
+ assert.match(await (await get('/loja')).text(),/MESMA_INTERFACE_REAL/);
+ assert.equal((await get('/cadastro-real?ref=VILELA')).status,200);
+ assert.equal((await get('/escritorio/VILELA')).headers.get('location'),'/escritorio?ref=vilela');
+ assert.equal((await get('/loja/VILELA')).status,303);
+ assert.equal((await get('/administrador')).headers.get('location'),'/administrador/entrar');
+ assert.deepEqual(await (await get('/api/operador/estado')).json(),{operador:false});
  assert.equal((await get('/identidade/assets/cliente.js')).status,200);
- const docs=await get('/api/contas/documentos');
- assert.equal((await docs.json()).documentos,'REAIS');
- const create=await get('/api/contas/cadastrar',{
-  method:'POST',headers:{Origin:'https://akitemmloop.com.br',
-   Authorization:'Basic INSEGURA','Content-Type':'application/json'},
-  body:JSON.stringify({indicadorNick:'vilela'})});
- assert.equal(create.status,201);
- assert.equal((await create.json()).indicadorNick,'vilela');
- assert.equal(reais.at(-1).authorization,undefined,
-  'credenciais de visitantes ou operadores não seguem para a identidade');
- assert.equal(reais.at(-1).origin,'https://akitemmloop.com.br');
- const l=await get('/loja',{headers:{Cookie:'loop_real_s='+('a'.repeat(64))}});
- assert.equal(l.status,200);assert.equal(await l.text(),'LOJA_REAL_MESMA_SESSAO');
- assert.equal((await get('/loja')).headers.get('location'),'/staging/loja');
- assert.equal((await get('/staging/vitrine/loja/config')).status,200);
- assert.equal((await get('/escritorio')).status,401,'admin legado não é liberado');
- assert.equal((await get('/loja/VILELA')).headers.get('location'),
-  '/cadastro-real?ref=VILELA&origem=loja');
- assert.ok(!previas.some(p=>p.includes('api/contas/cadastrar')));
- assert.ok(!previas.some(p=>p.includes('cadastro-real')));
+ assert.equal((await get('/api/contas/me')).status,401);
+ assert.equal((await get('/healthz')).status,200);
+ assert.equal((await get('/readyz')).status,503);
+ const cadastro=await get('/api/contas/cadastrar',{method:'POST',headers:{
+  Origin:'https://akitemmloop.com.br',
+  Authorization:'Basic CREDENCIAL_NAO_REPASSAR',
+  'X-Loop-Interservice-Token':'segredo-forjado',
+  'Content-Type':'application/json'
+ },body:JSON.stringify({nome:'Visitante'})});
+ assert.equal(cadastro.status,503,'cadastro verdadeiro permanece fechado sem GO');
+ const chamada=realChamadas.at(-1);
+ assert.equal(chamada.path,'/api/contas/cadastrar');
+ assert.equal(chamada.origin,'https://akitemmloop.com.br');
+ assert.equal(chamada.authorization,undefined);
+ assert.equal(chamada.tokenInterno,undefined);
+ assert.equal((await get('/staging/contas/cadastrar',{method:'POST'})).status,410);
+ assert.equal((await get('/staging/contas/entrar',{method:'POST'})).status,410);
+ assert.equal((await get('/staging/vitrine/loja/config')).status,410);
+ assert.equal((await get('/staging/escritorio-unificado')).status,410);
+ assert.equal((await get('/staging/cliente')).headers.get('location'),'/minha-conta');
+ assert.equal((await get('/staging/loja')).headers.get('location'),'/loja');
+ assert.equal((await get('/webhooks/asaas-sandbox-unificado',{method:'POST'})).status,410);
+ assert.equal((await get('/internal/loop/migracao-identidade')).status,404);
+ assert.equal((await get('/api/checkout/finalizar')).status,503);
+ assert.deepEqual(legadoChamadas,[],'nenhuma rota publica deve chegar ao SQLite legado');
 });
-test('proxy não habilita serviço remoto arbitrário em produção',()=>{
+test('corte publico nunca admite origem remota arbitraria',()=>{
  assert.throws(()=>criarGateway({
   portaInterna:3333,senhaAcesso:SENHA,senhaAdmin:ADMIN,
   segredoOperador:OPERADOR,publicarCadastroReal:true,
