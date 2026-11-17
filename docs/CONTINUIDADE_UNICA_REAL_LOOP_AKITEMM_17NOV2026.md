@@ -1,5 +1,11 @@
 # Continuidade da unificação interna LOOP / AKITEMM — 17/11/2026
 
+## MARCO ZERO — contratos atuais prioritários (17/11/2026)
+
+- [ESSÊNCIA DEFINITIVA — fluxo de venda, fintech, caixa, seis luzes, cofres e modos PAUSADO/LIVRE/PROGRAMADO](./ESSENCIA_DEFINITIVA_LOOP_FINANCEIRO_CATRACA_MARCO_ZERO.md). **Prevalece sobre hipóteses anteriores contraditórias; não implica ativação bancária.**
+- [PROTOCOLO — como entregar uma cópia limpa e auditável do código do MARCO ZERO para outra IA](./PROTOCOLO_PACOTE_LIMPO_MARCO_ZERO_AUDITORIA_IA.md). O snapshot final será extraído somente do commit realmente concluído e verificado; o histórico original permanece preservado.
+
+
 ## Regra central (não negociar)
 
 O produto público deve continuar com **um único acesso principal**, `https://akitemmloop.com.br`, e a mesma experiência aprovada de AKITEMM e Escritório LOOP. Não abrir novas prévias, novas contas paralelas, novo painel administrativo ou nova fonte de verdade. Não alterar HTML/CSS aprovados para contornar falha de navegação. Não trocar DNS/domínios sem disponibilidade comprovada.
