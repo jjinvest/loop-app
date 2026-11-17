@@ -69,6 +69,16 @@ async function servir(t,app){
 test('admin aprovado: login distinto, cadastrar produto/oferta, editar preços e custos, CSV e sair',async t=>{
  const x=preparar(t),base=await servir(t,x.app);
  const get=(p,h={})=>fetch(base+p,{headers:h,redirect:'manual'});
+ const estadoAnonimo=await get('/api/operador/estado');
+ assert.equal(estadoAnonimo.status,200);
+ assert.deepEqual(await estadoAnonimo.json(),{operador:false});
+ assert.deepEqual(await (await get('/api/operador/estado',{
+  Cookie:'akitemm_real_admin_v1='+ '0'.repeat(64)
+ })).json(),{operador:false});
+ const {renderizarLojaAprovada}=require('../src/producao/interface-aprovada-loop');
+ const lojaOriginalSemAlteracao=renderizarLojaAprovada();
+ assert.match(lojaOriginalSemAlteracao,/id="akitemmOperadorMais" href="\/administrador"/);
+ assert.match(lojaOriginalSemAlteracao,/class="akitemm-acesso-operador" hidden style="display:none"/);
  const adminPagina=await get('/administrador');
  assert.equal(adminPagina.status,303);
  assert.equal(adminPagina.headers.get('location'),'/administrador/entrar');
@@ -88,6 +98,10 @@ test('admin aprovado: login distinto, cadastrar produto/oferta, editar preços e
  assert.match(setCookie,/akitemm_real_admin_v1=/);
  assert.match(setCookie,/HttpOnly; Secure; SameSite=Strict; Path=\//);
  const cookieAdmin=setCookie.split(';')[0];
+ const estadoOperador=await get('/api/operador/estado',{Cookie:cookieAdmin});
+ assert.equal(estadoOperador.status,200);
+ assert.equal(estadoOperador.headers.get('cache-control'),'no-store');
+ assert.deepEqual(await estadoOperador.json(),{operador:true});
  const htmlRes=await get('/administrador',{Cookie:cookieAdmin});
  assert.equal(htmlRes.status,200);
  const html=await htmlRes.text();
