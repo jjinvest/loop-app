@@ -49,6 +49,10 @@ test('migrar duas contas reais de ensaio para identidade definitiva conserva sen
  });
  assert.equal(snap.contas.length,2);assert.equal(snap.vinculos.length,1);
  assert.equal(snap.conferencias.contasAvulsasIgnoradas,1);
+ assert.deepEqual(snap.conferencias.perfilAvulsas,{
+  nickCompativelReal:1,nickIncompativelReal:0,
+  indicacaoForaDaRedeValidada:0,semIndicacaoRegistrada:1
+ });
  assert.ok(!snap.contas.some(c=>c.id===avulsa.titularId),
   'conta sem proveniencia de convite fica preservada na origem');
  assert.equal(src.prepare('SELECT COUNT(*) AS n FROM akitemm_conta_unica_candidata').get().n,3);
