@@ -96,7 +96,8 @@ test('operador da previa recebe cookie proprio e pode usar APIs autenticadas',as
    {headers:{Cookie:cookieAdmin}});
   assert.equal(tela.status,200);
   const js=await tela.text();
-  assert.ok(js.includes('PREVIA_OPERADOR'));
+  assert.ok(!js.includes('PREVIA_OPERADOR'));
+  assert.ok(js.includes('entrarComSessaoOperador'));
   const forjado=await fetch(x.url+'/staging/escritorio-unificado/motor/estado',
    {headers:{Cookie:'akitemm_preview_admin_v2=v1.1234567890123.'+'0'.repeat(64)}});
   assert.equal(forjado.status,401);
