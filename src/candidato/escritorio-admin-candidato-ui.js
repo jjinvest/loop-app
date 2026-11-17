@@ -1376,8 +1376,11 @@ async function entrarComSessaoOperador(){
  try{
   const resposta=await fetch('/api/operador/estado',{credentials:'same-origin',cache:'no-store'});
   if(!resposta.ok||(await resposta.json()).operador!==true)return;
-  await atualizar();
   $('acesso').hidden=true;$('administracao').hidden=false;
+  // O editor de produtos nao depende de indicadores ou auditorias de outros modulos.
+  try{await atualizar();}catch(erro){
+   dizer('Painel parcial: '+erro.message+'. O cadastro de produtos permanece disponivel.');
+  }
   await abrirProdutoSolicitadoPelaLoja();
   atualizarAvaliacoesAdmin().catch(()=>{});
   carregarComunicadosAdmin().catch(()=>{});
