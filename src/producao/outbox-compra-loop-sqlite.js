@@ -16,7 +16,7 @@ class OutboxCompraLoopSQLite {
    'titular_id TEXT NOT NULL REFERENCES loop_real_contas(id) ON DELETE RESTRICT,',
    'pagamento_id TEXT NOT NULL UNIQUE,',
    'valor_total_centavos INTEGER NOT NULL CHECK(valor_total_centavos>0),',
-   "estado TEXT NOT NULL DEFAULT 'PENDENTE' CHECK(estado IN ('PENDENTE','PROCESSADO','REVISAO')),",
+   "estado TEXT NOT NULL DEFAULT 'PENDENTE' CHECK(estado IN ('PENDENTE','PROCESSADO','REVISAO','CANCELADO')),",
    'criado_em INTEGER NOT NULL CHECK(criado_em>0),',
    'processado_em INTEGER,',
    'CHECK((estado=\'PROCESSADO\')=(processado_em IS NOT NULL)));',
@@ -55,6 +55,25 @@ class OutboxCompraLoopSQLite {
   ].join(' ')).run(pedidoId,p.titular_id,p.pagamento_id,
    p.valor_total_centavos,ts);
   return {repetido:false,estado:'PENDENTE'};
+ }
+ cancelarEmTransacao({pedidoId}={}){
+  if(this.db.isTransaction!==true)falha('OUTBOX_COMPRA_TRANSACAO_OBRIGATORIA');
+  if(typeof pedidoId!=='string'||!ID.test(pedidoId))
+   falha('OUTBOX_COMPRA_PEDIDO_INVALIDO');
+  const p=this.db.prepare('SELECT status FROM loja_real_pedidos WHERE pedido_id=?')
+   .get(pedidoId);
+  if(!p||p.status!=='CANCELADO')
+   falha('OUTBOX_COMPRA_CANCELAMENTO_NAO_COMPROVADO');
+  const r=this.db.prepare(
+   'SELECT estado FROM loop_real_outbox_compra_confirmada WHERE pedido_id=?'
+  ).get(pedidoId);
+  if(!r)return {semEvento:true};
+  if(r.estado==='PROCESSADO')return {revisaoNecessaria:true};
+  if(r.estado==='CANCELADO')return {repetido:true};
+  this.db.prepare(
+   "UPDATE loop_real_outbox_compra_confirmada SET estado='CANCELADO' WHERE pedido_id=?"
+  ).run(pedidoId);
+  return {cancelado:true};
  }
  listarPendentes({limite=100}={}){
   if(!Number.isInteger(limite)||limite<1||limite>500)
