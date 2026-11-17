@@ -1,0 +1,22 @@
+name: Prova operador AKITEMM cadastro e fotos
+on:
+  push:
+    branches: [feature/unificar-escritorio-real-20261105]
+    paths:
+      - 'src/laboratorio/loja-cliente-demo.js'
+      - 'scripts/servidor-escritorio-preview-railway.js'
+      - 'test/atalho-operador-unico-ambas-telas.test.js'
+      - 'test/catalogo-admin-candidato-unificado.test.js'
+      - 'test/fotos-produto-candidato-sqlite.test.js'
+      - '.github/workflows/prova-operador-akitemm.yml'
+  workflow_dispatch:
+jobs:
+  operador:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - run: npm ci --ignore-scripts
+      - run: node --test test/atalho-operador-unico-ambas-telas.test.js test/catalogo-admin-candidato-unificado.test.js test/vitrine-horizontal-400-produtos.test.js
