@@ -9,9 +9,9 @@
  let conviteLoopCheckoutAtivo=false,catalogoRealSemCheckout=false;
  const tamanhoPaginaVitrine=()=>window.matchMedia('(max-width:800px)').matches?4:8;
  let timerBanner=null,enderecoEntrega=null,quantidadeVitrine=tamanhoPaginaVitrine();
- // Vitrine horizontal: 5 abas * 4 fileiras * 10 espaços = 200 posições.
+ // Vitrine horizontal: 10 abas * 4 fileiras * 10 espaços = 400 posições.
  // Somente duas fileiras são montadas até o usuário expandir a aba.
- const TOTAL_ABAS=5,COLUNAS_FAIXA=10,LINHAS_ABA=4,VAGAS_ABA=40;
+ const TOTAL_ABAS=10,COLUNAS_FAIXA=10,LINHAS_ABA=4,VAGAS_ABA=40;
  let abaProdutos=0;
  const abasExpandidas=new Set();
  const modoVitrineHorizontal=()=>filtro==='todos'&&!el('akitemmBusca').value.trim();
