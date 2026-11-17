@@ -35,6 +35,11 @@ function renderizarInterfaceAprovada(){
  ['/staging/assets/cliente.js','/identidade/assets/cliente.js'], ]){
   html=trocarExato(html,antes,depois);
  }
+ // O + da tela aprovada vai à administração protegida original,
+ // nunca a um segundo Escritório nem ao serviço de homologação.
+ html=trocarExato(html,
+  '<a id="loopOperadorMais" href="/escritorio"',
+  '<a id="loopOperadorMais" href="/administrador"');
  // As faixas de homologacao continuam na instancia real, sem aparecer na
  // vitrine e no Escritorio da previa que o cliente ve.
  html=trocarExato(html,'<header class="cabecalho">',
