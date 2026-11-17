@@ -108,8 +108,8 @@ function renderizarAdminComercialAprovado(){
   '</div>'+
   '<h3>Controle operacional da catraca</h3>'+
   '<p class="subtexto">As compras qualificadas continuam nas filas A/B mesmo com a catraca pausada. '+
-  'São necessários seis eventos por ciclo. Configurações e giros aqui usam o motor interno de ensaio; '+
-  'dinheiro real e saques permanecem desligados até homologação externa.</p>'+
+  'O operador define quantos centros serão concluídos por dia; o horário distribui seis luzes por centro. '+
+  'A meta não gera vendas e a liberação financeira permanece bloqueada até a comprovação do caixa real.</p>'+
   '<p id="estadoCatracaAdmin" role="status" aria-live="polite">Consultando política da catraca...</p>'+
   '<div class="duas-colunas">'+
   '<div><label for="modoCatracaAdmin">Funcionamento</label>'+
@@ -118,7 +118,12 @@ function renderizarAdminComercialAprovado(){
   '<option value="MANUAL">Manual · administrador gira</option>'+
   '<option value="AUTOMATICA">Automática · dentro da agenda e seis eventos</option>'+
   '</select></div>'+
-  '<div><label for="limiteCatracaAdmin">Máximo de giros por dia (vazio = sem limite)</label>'+
+  '<div><label for="metaCentrosDiaAdmin">Meta diária de centros (0 = sem meta)</label>'+
+  '<input id="metaCentrosDiaAdmin" type="number" min="0" max="1000000" step="1" value="0" inputmode="numeric" disabled></div>'+
+  '<div><label for="metaDataAlvoAdmin">Data da meta (opcional)</label>'+
+  '<input id="metaDataAlvoAdmin" type="date" disabled></div>'+
+  '<p id="previsaoLuzesAdmin" class="subtexto" role="status">Informe uma meta para calcular o intervalo entre luzes.</p>'+
+  '<div><label for="limiteCatracaAdmin">Limite de segurança de giros (vazio = sem limite adicional)</label>'+
   '<input id="limiteCatracaAdmin" type="number" min="1" max="1000000" inputmode="numeric" placeholder="Sem limite" disabled></div>'+
   '<div><label for="inicioCatracaAdmin">Início da janela diária · Brasília</label>'+
   '<input id="inicioCatracaAdmin" type="time" value="00:00" disabled></div>'+
