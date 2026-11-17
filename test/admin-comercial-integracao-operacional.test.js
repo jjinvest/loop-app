@@ -79,6 +79,51 @@ test('admin aprovado: login distinto, cadastrar produto/oferta, editar preços e
  const lojaOriginalSemAlteracao=renderizarLojaAprovada();
  assert.match(lojaOriginalSemAlteracao,/id="akitemmOperadorMais" href="\/administrador"/);
  assert.match(lojaOriginalSemAlteracao,/class="akitemm-acesso-operador" hidden style="display:none"/);
+ // Entrada única do operador: usa o cookie existente, sem conta cliente.
+ const loginOperador=async(nick,senha,origin=ORIGEM)=>fetch(
+  base+'/api/operador/entrar',{
+   method:'POST',redirect:'manual',
+   headers:{Origin:origin,'Content-Type':'application/json'},
+   body:JSON.stringify({nick,senha})
+  });
+ assert.equal((await loginOperador('operador',SENHA_OPERADOR,
+  'https://dominio-externo.invalid')).status,403);
+ assert.equal((await loginOperador('cliente',SENHA_OPERADOR)).status,400);
+ assert.equal((await loginOperador('operador','errada')).status,401);
+ const operadorAutenticado=await loginOperador('Operador',SENHA_OPERADOR);
+ assert.equal(operadorAutenticado.status,200);
+ assert.deepEqual(await operadorAutenticado.json(),{operador:true});
+ const cookieOperador=operadorAutenticado.headers.get('set-cookie').split(';')[0];
+ assert.match(cookieOperador,/^akitemm_real_admin_v1=/);
+ assert.deepEqual(await (await get('/api/operador/estado',{
+  Cookie:cookieOperador
+ })).json(),{operador:true});
+ assert.equal((await get('/administrador',{Cookie:cookieOperador})).status,200);
+ const sairOperador=({cookie=undefined,origin=ORIGEM}={})=>fetch(
+  base+'/api/operador/sair',{
+   method:'POST',
+   headers:{Origin:origin,...(cookie?{Cookie:cookie}:{})}
+  });
+ assert.equal((await sairOperador({
+  cookie:cookieOperador,origin:'https://dominio-externo.invalid'
+ })).status,403);
+ const operadorEncerrado=await sairOperador({cookie:cookieOperador});
+ assert.equal(operadorEncerrado.status,200);
+ assert.deepEqual(await operadorEncerrado.json(),{operador:false});
+ assert.deepEqual(await (await get('/api/operador/estado',{
+  Cookie:cookieOperador
+ })).json(),{operador:false});
+ assert.equal((await sairOperador()).status,200,
+  'login de cliente pode encerrar modo operador mesmo sem cookie');
+ const {renderizarInterfaceAprovada}=require('../src/producao/interface-aprovada-loop');
+ const telaReal=renderizarInterfaceAprovada();
+ assert.match(telaReal,/id="loopOperadorMais" href="\\/administrador"/);
+ assert.doesNotMatch(telaReal,/id="loopOperadorMais" href="\\/escritorio"/);
+ const fsReal=require('node:fs');
+ const fonteContaReal=fsReal.readFileSync(
+  require('node:path').join(__dirname,'../src/producao/interface-aprovada-contas.js'),'utf8');
+ assert.match(fonteContaReal,/location\\.assign\\('\\/administrador'\\)/);
+ assert.doesNotMatch(fonteContaReal,/location\\.assign\\('\\/staging\\/cliente/);
  const adminPagina=await get('/administrador');
  assert.equal(adminPagina.status,303);
  assert.equal(adminPagina.headers.get('location'),'/administrador/entrar');
