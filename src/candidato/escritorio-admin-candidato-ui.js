@@ -81,7 +81,7 @@ async function enviarArquivoProdutoAdmin(id,arquivo,{tipo,posicao=1}){
   chave='X-Foto-Versao-Esperada';mime=arquivo.type;
  }else throw Error('Tipo de arquivo inválido.');
  const resp=await fetch('/staging/escritorio-unificado'+rota,{
-  method:'POST',cache:'no-store',credentials:'omit',
+  method:'POST',cache:'no-store',credentials:'same-origin',
   headers:{Authorization:'Bearer '+auth,'Content-Type':mime,[chave]:String(versao)},
   body:arquivo
  });
