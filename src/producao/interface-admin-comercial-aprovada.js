@@ -12,12 +12,13 @@ function renderizarAdminComercialAprovado(){
  if(inicio<0)throw Error('TEMPLATE_ADMIN_APROVADO_DESATUALIZADO');
  let base=original.slice(0,inicio);
  for(const [antes,depois] of [
-  ['AKITEMM · Escritório do Administrador (laboratório)',
-   'AKITEMM · Escritório do Administrador'],
+  ['<title>Escritório do Administrador</title>',
+   '<title>AKITEMM · Escritório do Administrador</title>'],
   ['/staging/assets/cliente.css','/identidade/assets/cliente.css'],
   ['/staging/assets/admin.css','/identidade/assets/admin.css'],
   ['/staging/assets/admin.js','/identidade/assets/admin-comercial.js'],
-  ['LABORATÓRIO · SEM VENDAS REAIS','GESTÃO COMERCIAL · ACESSO RESTRITO'],
+  ['<span class="marca">ESCRITÓRIO DO ADMINISTRADOR</span>',
+   '<span class="marca">GESTÃO COMERCIAL · ACESSO RESTRITO</span>'],
   ['Painel operacional conectado ao mesmo banco da loja e do cliente. Missões não criam pagamento, posição, giro nem benefício.',
    'Preços e custos por distribuidor com histórico e relatórios para contabilidade.']
  ]){
