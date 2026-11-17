@@ -68,6 +68,16 @@ test('email e recuperacao limitados ao proprio titular',async t=>{
  assert.equal(x.contas.sessao(a.token),null);
  assert.ok(x.contas.sessao(b.token));
 });
+test('entrypoint real importa path para documentos versionados',()=>{
+ const fs=require('node:fs');
+ const path=require('node:path');
+ const fonte=fs.readFileSync(
+  path.join(__dirname,'../scripts/iniciar-identidade-real-loop.js'),'utf8');
+ assert.match(fonte,/const path=require\('node:path'\)/,
+  'o serviço real precisa carregar node:path antes de montar documentos');
+ assert.match(fonte,/fs\.readFileSync\(path\.join\(__dirname,'\.\.\/docs',arquivo\),'utf8'\)/,
+  'documentos definitivos são carregados de arquivos versionados');
+});
 test('bootstrap do cadastro real falha fechado sem decisao GO',()=>{
  assert.throws(()=>configurar({NODE_ENV:'production'}),
   /CADASTRO_REAL_BLOQUEADO_ATE_GO_FORMAL/);
