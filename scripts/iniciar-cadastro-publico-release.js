@@ -19,8 +19,16 @@ function selecionar(ambiente=process.env){
  if(go==='SIM'&&documentos==='SIM')
   return {modo:'CADASTRO_REAL',cadastroDisponivelSobBackup:true};
  if(go==='NAO'&&documentos==='NAO'&&
-    ambiente.LOOP_REAL_PREPARACAO_INTERNA==='SIM')
+    ambiente.LOOP_REAL_PREPARACAO_INTERNA==='SIM'){
+  // Núcleo operacional definitivo, com acesso aos clientes já migrados e
+  // administrador real; abertura de cadastro, checkout e Pix continuam fechados.
+  if(ambiente.LOOP_REAL_OPERACAO_INTERNA==='SIM'){
+   if(ambiente.LOOP_REAL_NUCLEO_COMERCIAL_INTERNO!=='SIM')
+    throw Error('OPERACAO_INTERNA_NUCLEO_INCOMPLETO');
+   return {modo:'OPERACAO_INTERNA_REAL',cadastroDisponivelSobBackup:false};
+  }
   return {modo:'PREPARACAO_SEGURA',cadastroDisponivelSobBackup:false};
+ }
  throw Error('CADASTRO_RELEASE_GO_E_DOCUMENTOS_INCONSISTENTES');
 }
 
@@ -85,6 +93,8 @@ function iniciar(ambiente=process.env){
  if(selecionado.modo==='CADASTRO_REAL')
   return ambiente.LOOP_REAL_NUCLEO_COMERCIAL_INTERNO==='SIM'?
    iniciarPlataformaRealUnificada(ambiente):iniciarCadastroReal(ambiente);
+ if(selecionado.modo==='OPERACAO_INTERNA_REAL')
+  return iniciarPlataformaRealUnificada(ambiente,{cadastroPublico:false});
  const server=iniciarPreparacao(ambiente);
  // Prova offsite real não bloqueia a preparação, nem ativa o cadastro.
  void provarPrimeiraCopiaPreparacao(ambiente);
