@@ -77,7 +77,7 @@ test('ficha mostra data/hora, fila B e numeração aberta sem textos de laborat�
  assert.equal(String(1000000).padStart(4,'0'),'1000000');
  assert.match(src,/Horário/);
  assert.match(src,/America\/Sao_Paulo/);
- assert.match(src,/Aguardando confirmação de ativação no LOOP\./);
+ assert.match(src,/Aguardando confirmação · Fila B/);
  assert.match(html,/Li e aceito a Política de Privacidade e os Termos de Uso/);
  assert.doesNotMatch(html,/cadastroCompartilharTelefoneIndicador|formCompartilharTelefoneIndicador/);
  assert.doesNotMatch(src,/Nome civil e telefone exigem autorização de compartilhamento/);
