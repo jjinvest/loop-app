@@ -145,7 +145,7 @@
   let ultimoManual=Number(a.intervaloMinutos)||10;
   let eraMeta=Number(meta.value)>0;
   const minutosHorario=valor=>{
-   if(!/^(?:[01]\\d|2[0-3]):[0-5]\\d$/.test(valor))return null;
+   if(!/^(?:[01]\d|2[0-3]):[0-5]\d$/.test(valor))return null;
    const [h,m]=valor.split(':').map(Number);
    return h*60+m;
   };
