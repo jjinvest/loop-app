@@ -945,3 +945,25 @@ body.akitemm-loja{background:#071018;color:#f0f2f6;font-family:system-ui,-apple-
 .akitemm-loja .akitemm-marca-loop{font-family:system-ui,Arial,sans-serif;font-weight:900!important;letter-spacing:.045em;color:#e5e9f1!important;font-size:clamp(19px,2.3vw,29px)!important;text-shadow:0 1px 0 #fff8,0 3px 5px #000a;line-height:1.2}
 .akitemm-loja .akitemm-marca-loop em{font-size:1em!important;font-weight:900!important;color:#e5e9f1!important;font-style:normal}
 .akitemm-loja .akitemm-marca-loop .akitemm-anel::before{content:'◎';color:#e5e9f1!important;text-shadow:0 1px 0 #fff8,0 2px 6px #0009}
+
+/* Identidade fixa dos filtros: selecao somente pelo contorno. */
+.akitemm-loja #akitemmFiltroTodos,
+.akitemm-loja #akitemmFiltroTodos.selecionado,
+.akitemm-loja #akitemmFiltroTodos[aria-pressed="true"],
+.akitemm-loja #akitemmFiltroTodos[aria-pressed="false"]{
+ background:linear-gradient(135deg,#fff5ac 0%,#ffe35c 48%,#e6ac24 100%)!important;
+ color:#2c2107!important;border:2px solid #d8ad38!important;
+ text-shadow:none!important;opacity:1!important;
+ box-shadow:0 0 12px rgba(255,216,75,.42)!important;
+}
+.akitemm-loja #akitemmFiltroOfertas,
+.akitemm-loja #akitemmFiltroOfertas.selecionado,
+.akitemm-loja #akitemmFiltroOfertas[aria-pressed="true"],
+.akitemm-loja #akitemmFiltroOfertas[aria-pressed="false"]{
+ background:linear-gradient(135deg,#fff0a5,#e7af49)!important;
+ color:#25200f!important;opacity:1!important;text-shadow:none!important;
+}
+.akitemm-loja #akitemmFiltroTodos[aria-pressed="true"],
+.akitemm-loja #akitemmFiltroOfertas[aria-pressed="true"]{
+ outline:3px solid #fff1bb!important;outline-offset:3px!important;
+}
