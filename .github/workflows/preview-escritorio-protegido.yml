@@ -294,6 +294,7 @@ jobs:
         timeout-minutes: 5
         run: node scripts/validar-jornada-loja-cores-browser.js
       - name: Navegacao da identidade definitiva em PC/celular sem checkout
+        timeout-minutes: 8
         run: node scripts/validar-identidade-real-navegador.js
       - name: Guardar capturas reais da mesma interface no PC e celular
         uses: actions/upload-artifact@v4
