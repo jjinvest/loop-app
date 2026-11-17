@@ -87,6 +87,18 @@ function exportarPreview({banco,contas,raizNick='VILELA',primeiroNick='Taisaassi
   if(!mudou)break;
  }
  const rowsFiltradas=rows.filter(x=>idsDaRede.has(x.id));
+ const avulsasRows=rows.filter(x=>!idsDaRede.has(x.id));
+ const avulsasIds=new Set(avulsasRows.map(x=>x.id));
+ const avulsasComIndicacao=new Set(todosVinculos.filter(x=>
+  avulsasIds.has(x.indicadoId)).map(x=>x.indicadoId));
+ const avulsasAscii=avulsasRows.filter(x=>NICK.test(x.nick)).length;
+ // Somente quantidades: nunca revelar nick, email, telefone ou titular em log.
+ const perfilAvulsas={
+  nickCompativelReal:avulsasAscii,
+  nickIncompativelReal:avulsasRows.length-avulsasAscii,
+  indicacaoForaDaRedeValidada:avulsasComIndicacao.size,
+  semIndicacaoRegistrada:avulsasRows.length-avulsasComIndicacao.size
+ };
  const vinculos=todosVinculos.filter(v=>
   idsDaRede.has(v.indicadorId)&&idsDaRede.has(v.indicadoId));
  const contasExportadas=rowsFiltradas.map(r=>{
@@ -125,6 +137,7 @@ function exportarPreview({banco,contas,raizNick='VILELA',primeiroNick='Taisaassi
  return {version:1,contas:contasExportadas,vinculos,
   conferencias:{contas:contasExportadas.length,vinculos:vinculos.length,
    contasAvulsasIgnoradas:rows.length-contasExportadas.length,
+   perfilAvulsas,
    provaIds:digest(contasExportadas.map(x=>x.id).sort().join('|')),
    provaVinculos:digest(vinculos.map(x=>x.indicadoId+':'+x.indicadorId).sort().join('|'))}};
 }
