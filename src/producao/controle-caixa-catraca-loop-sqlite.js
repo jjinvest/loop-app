@@ -139,13 +139,19 @@ class ControleCaixaCatracaLoopSQLite{
    falha('CATRACA_CAIXA_LUZ_INVALIDA');
   const ts=this.agora();
   const horario=agoraLocal(ts);
-  if(horario.dia!==dia)falha('CATRACA_CAIXA_FORA_DO_DIA');
   return this._transacao(()=>{
    const p=this._ler(dia);
    if(!p||p.estado!=='AUTORIZADA')
     falha('CATRACA_CAIXA_PAUSADA_OU_SEM_RESERVA');
    const ritmo=calcularIntervaloMeta({abertura:p.abertura,
     fechamento:p.fechamento,quantidade:p.metaCentros});
+   const inicioDia=minutos(p.abertura),fimDia=minutos(p.fechamento);
+   const atualDia=minutos(horario.horario);
+   const cruzaMeiaNoite=fimDia<=inicioDia;
+   const diaTurno=cruzaMeiaNoite&&atualDia<inicioDia?
+    new Date(Date.parse(horario.dia+'T12:00:00Z')-86400000)
+     .toISOString().slice(0,10):horario.dia;
+   if(diaTurno!==dia)falha('CATRACA_CAIXA_FORA_DO_DIA');
    const total=Number(ritmo.luzesPlanejadas);
    if(indiceLuz>total)falha('CATRACA_CAIXA_META_EXCEDIDA');
    const velha=this.banco.prepare([
@@ -154,10 +160,14 @@ class ControleCaixaCatracaLoopSQLite{
    ].join(' ')).get(dia,indiceLuz);
    if(velha)return {autorizada:true,repetida:true,
     chave:velha.chave,indiceLuz,movimentoFinanceiro:false};
-   const emitidas=this.banco.prepare([
-    'SELECT COUNT(*) AS n FROM loop_real_catraca_caixa_autorizacoes',
-    'WHERE dia=?'
-   ].join(' ')).get(dia).n;
+   const ultimo=this.banco.prepare([
+    'SELECT COUNT(*) AS n,MAX(emitida_em) AS ultimoEm',
+    'FROM loop_real_catraca_caixa_autorizacoes WHERE dia=?'
+   ].join(' ')).get(dia);
+   const emitidas=ultimo.n;
+   if(ultimo.ultimoEm!==null&&
+      ts-ultimo.ultimoEm<ritmo.intervaloLuzSegundos*1000)
+    falha('CATRACA_CAIXA_AGUARDANDO_INTERVALO_ENTRE_LUZES');
    if(indiceLuz!==emitidas+1)
     falha('CATRACA_CAIXA_LUZ_FORA_DE_ORDEM');
    const inicio=minutos(p.abertura),fim=minutos(p.fechamento);
@@ -180,8 +190,9 @@ class ControleCaixaCatracaLoopSQLite{
  }
  // A reserva fica segura mesmo apos configurada: nao comeca sozinha.
  // Apenas chamada protegida do operador pode alternar PAUSADA/AUTORIZADA.
- definirAtivacao({dia,ativa}={}){
-  if(!diaValido(dia)||typeof ativa!=='boolean')
+ definirAtivacao({dia,ativa,autorizacaoOperador=false}={}){
+  if(!diaValido(dia)||typeof ativa!=='boolean'||
+     autorizacaoOperador!==true)
    falha('CATRACA_CAIXA_ATIVACAO_INVALIDA');
   return this._transacao(()=>{
    if(!this._ler(dia))falha('CATRACA_CAIXA_SEM_RESERVA');
