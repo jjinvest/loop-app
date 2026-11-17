@@ -697,6 +697,14 @@ async function iniciar({env=process.env}={}){
    if(revisao===ultimaMigracaoComprovada)return;
    const cfa=dados.conferencias;
    const avulsas=cfa.contasAvulsasIgnoradas;
+   const perfil=cfa.perfilAvulsas;
+   if(!perfil||Object.values(perfil).some(n=>
+      !Number.isSafeInteger(n)||n<0))throw Error('MIGRACAO_PERFIL_INVALIDO');
+   process.stdout.write('LOOP_AVULSAS_PERFIL='+
+    'NICK_REAL_COMPATIVEL='+perfil.nickCompativelReal+
+    ';NICK_INCOMPATIVEL='+perfil.nickIncompativelReal+
+    ';VINCULO_ISOLADO='+perfil.indicacaoForaDaRedeValidada+
+    ';SEM_INDICACAO='+perfil.semIndicacaoRegistrada+'\n');
    process.stdout.write('LOOP_RECONCILIACAO_CONTAS_ORIGEM='+
     (cfa.contas+avulsas)+';REDE_VALIDADA='+cfa.contas+
     ';SEM_VINCULO_COMPROVADO='+avulsas+
