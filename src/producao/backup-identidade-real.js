@@ -139,7 +139,13 @@ function validarIdentidade(arquivo){
   }
   const temCatracaAdmin=TABELAS_CATRACA_ADMIN.some(x=>lista.includes(x));
   if(temCatracaAdmin){
-   if(TABELAS_CATRACA_ADMIN.some(x=>!lista.includes(x)))
+   // Backups anteriores a programacao por meta tinham tres tabelas.
+   // Conserva a recuperacao sem permitir um esquema novo incompleto.
+   const legadas=TABELAS_CATRACA_ADMIN.filter(x=>
+    x!=='loop_real_catraca_admin_meta');
+   if(legadas.some(x=>!lista.includes(x))||
+      (lista.includes('loop_real_catraca_admin_meta')&&
+       TABELAS_CATRACA_ADMIN.some(x=>!lista.includes(x))))
     falha('BACKUP_CATRACA_ADMIN_ESQUEMA_PARCIAL');
    try{
     if(!temMotor)falha('BACKUP_CATRACA_ADMIN_SEM_MOTOR');
