@@ -176,7 +176,9 @@ class ControleCaixaCatracaLoopSQLite{
    const corrido=(atual-inicio+1440)%1440;
    const vencimento=Math.ceil(indiceLuz*(duracao*60)/(total));
    const transcorrido=corrido*60+new Date(ts).getUTCSeconds();
-   if(corrido>=duracao||transcorrido<vencimento)
+   // A ultima luz pertence ao minuto de fechamento (18:00 incluido),
+   // sem liberar minutos posteriores nem ultrapassar a meta.
+   if(corrido>duracao||transcorrido<vencimento)
     falha('CATRACA_CAIXA_LUZ_FORA_DO_INTERVALO');
    const chave='caixa:'+dia+':'+String(indiceLuz);
    this.banco.prepare([
