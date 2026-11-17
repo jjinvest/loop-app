@@ -184,7 +184,7 @@ const png=Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAIAAAACCAIAAAD91JpzAAAAEklEQVR4n
     assert.equal(await page.locator('[data-akitemm-cor="'+cor+'"]')
      .getAttribute('aria-pressed'),'true');
     const n=await page.locator('#catalogoLojaLoop article.produto-loja-loop').count();
-    assert.equal(n,cor==='CINZA'?4:3,'filtro '+cor+' no '+device.nome);
+    assert.equal(n,40,'filtro '+cor+' na aba horizontal expandida '+device.nome);
     const classe={
      CINZA:'produto-loja-loop-nao-elegivel',
      VERDE:'produto-loja-loop-elegivel',
