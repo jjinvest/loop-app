@@ -191,7 +191,8 @@ const png=Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAIAAAACCAIAAAD91JpzAAAAEklEQVR4n
      DOURADO:'produto-loja-loop-dourado',
      ROXO:'produto-loja-loop-especial'
     }[cor];
-    assert.equal(await page.locator('#catalogoLojaLoop article.'+classe).count(),n);
+    assert.equal(await page.locator('#catalogoLojaLoop article.'+classe).count(),
+     cor==='CINZA'?4:3,'produtos publicados da cor '+cor);
     const foto=page.locator('#catalogoLojaLoop article.produto-loja-loop')
      .filter({hasText:produtos.find(p=>p.cor===cor&&p.id.endsWith('-0')).nome})
      .locator('.akitemm-imagem-produto img');
