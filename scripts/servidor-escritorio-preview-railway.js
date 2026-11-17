@@ -34,7 +34,8 @@ function validarSegredos({senhaAcesso,segredoRaiz}){
 function criarGateway({portaInterna,senhaAcesso,senhaAdmin,segredoOperador,
  validarNickIndicador=()=>false,permitirWebhookSandbox=false,
  permitirOrigemHttpLoopback=false,
- publicarCadastroReal=false,urlIdentidadeReal=null}={}){
+ publicarCadastroReal=false,urlIdentidadeReal=null,
+ fecharCadastroAntigo=false}={}){
  if(!Number.isSafeInteger(portaInterna)||portaInterna<1||portaInterna>65535||
     typeof senhaAcesso!=='string'||senhaAcesso.length<24||
     typeof segredoOperador!=='string'||segredoOperador.length<32||
@@ -194,6 +195,11 @@ function criarGateway({portaInterna,senhaAcesso,senhaAdmin,segredoOperador,
    req.pipe(upstream);
    return;
   }
+  // Mesmo antes do corte total, nao aceitar mais cadastros provisorios.
+  // Contas antigas continuam acessiveis e seu SQLite nao e apagado.
+  if(fecharCadastroAntigo===true&&
+     url.pathname==='/staging/contas/cadastrar')
+   return negar(503,'Cadastro antigo encerrado; apenas o definitivo sera liberado');
   // Controle do operador: uma rota pública de leitura, sem acesso ao
   // SQLite real e sem credenciais no navegador. Mesmo nome nas duas UIs.
   // Sempre no gateway, antes de qualquer proxy /api/ para a identidade.
@@ -670,6 +676,7 @@ async function iniciar({env=process.env}={}){
   validarNickIndicador:nick=>c.equipe.existeNick(nick),
   permitirWebhookSandbox:sandboxAtivo,
   publicarCadastroReal:env.LOOP_PREVIEW_PUBLICO_CADASTRO_REAL==='SIM',
+  fecharCadastroAntigo:env.LOOP_PREVIEW_CADASTRO_ANTIGO_FECHADO==='SIM',
   urlIdentidadeReal:env.LOOP_PREVIEW_PUBLICO_CADASTRO_REAL==='SIM'?
    env.LOOP_PREVIEW_URL_TABULEIRO_REAL:null
  });
