@@ -631,6 +631,8 @@
     ' · Horário: '+d.horaLocal+' · Giros hoje: '+d.girosHoje+
     (d.limiteDiario===null?' (livre)':' / '+d.limiteDiario)+
     ' · Meta: '+(d.metaCentrosDia||0)+' centros, '+(d.luzesPlanejadas||0)+' luzes'+
+    (d.caixaConciliadoParaMeta?' · Caixa segregado comprovado':
+     ' · Sem reserva bancária comprovada para esta meta')+
     ' · Eventos: '+d.eventosNoCiclo+'/6 · Filas: '+d.filaA+'/'+d.filaB+
     (d.habilitadoSomenteEnsaio?' · Motor conectado em ensaio':
      ' · Comandos aguardando homologação produtiva');
