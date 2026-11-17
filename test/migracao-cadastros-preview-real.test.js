@@ -110,4 +110,35 @@ test('migrar duas contas reais de ensaio para identidade definitiva conserva sen
  assert.ok(!serialized.includes('11988887777'));
  assert.ok(!serialized.includes('filha@example.invalid'));
  assert.ok(!serialized.includes('Senha123456'));
+ // Reconciliacao ampliada: uma identidade antiga sem indicacao permanece
+ // a MESMA conta no definitivo, mas nunca ganha indicador, pedido ou saldo.
+ const todas=exportarPreview({banco:src,contas:previa,
+  raizNick:'Indica',primeiroNick:'Filha',
+  incluirContasRegistradasSemRede:true});
+ assert.equal(todas.contas.length,3);
+ assert.equal(todas.vinculos.length,1);
+ assert.equal(todas.conferencias.contasNaRedeComprovada,2);
+ assert.equal(todas.conferencias.contasAvulsasOrigem,1);
+ assert.equal(todas.conferencias.contasAvulsasIgnoradas,0);
+ const ampliacao=importarNoReal({
+  banco:dst,payload:todas,chaveEmail:emailReal,chaveCifra:cipherReal
+ });
+ assert.equal(ampliacao.contasImportadas,3);
+ assert.equal(ampliacao.vinculosImportados,1);
+ assert.equal(ampliacao.adicionadas,1);
+ assert.equal((await real.entrar({
+  nick:'Avulsa',senha:'Senha123456'
+ })).titularId,avulsa.titularId);
+ assert.equal(dst.prepare(
+  'SELECT COUNT(*) AS n FROM loop_real_vinculos_indicacao WHERE indicado_id=?'
+ ).get(avulsa.titularId).n,0);
+ assert.equal(real.dadosTitular(avulsa.titularId)
+  .aceiteDocumentosDefinitivosPendente,true);
+ assert.equal(importarNoReal({
+  banco:dst,payload:todas,chaveEmail:emailReal,chaveCifra:cipherReal
+ }).adicionadas,0);
+ assert.equal(src.prepare(
+  'SELECT COUNT(*) AS n FROM akitemm_conta_unica_candidata'
+ ).get().n,3,'origem intacta depois da migracao');
+ assert.equal(validarIdentidade(path.join(dir,'clientes.sqlite')).contas,3);
 });
