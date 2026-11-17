@@ -109,9 +109,25 @@ function janelasDeLuz(meta,agenda,agoraMs){
  };
 }
 
+// Calculo exibido na configuracao do operador. O motor continua a
+// distribuir cada uma das seis janelas por ciclo pelo relogio do servidor.
+function calcularIntervaloMeta({abertura,fechamento,quantidade}={}){
+ if(!Number.isSafeInteger(quantidade)||quantidade<0)
+  throw Error('META_LOTES_CONFIG_INVALIDA');
+ const inicio=minutos(abertura),fim=minutos(fechamento);
+ const duracao=((fim-inicio+1440)%1440)||1440;
+ if(quantidade===0)return {duracaoMinutos:duracao,
+  luzesPlanejadas:0,intervaloMinutos:null,intervaloLuzSegundos:null};
+ const luzes=BigInt(quantidade)*6n;
+ const segundos=Math.max(1,Math.round((duracao*60)/(quantidade*6)));
+ return {duracaoMinutos:duracao,
+  luzesPlanejadas:luzes.toString(),
+  intervaloMinutos:Math.max(1,Math.ceil(duracao/(quantidade*6))),
+  intervaloLuzSegundos:segundos};
+}
 function dadosAtivacao(agoraMs){
  const a=agoraLocal(agoraMs);
  return {ativadaDia:a.dia,
   ativadaMinuto:minutos(a.horario)};
 }
-module.exports={validarMeta,planejado,janelasDeLuz,dadosAtivacao};
+module.exports={validarMeta,planejado,janelasDeLuz,dadosAtivacao,calcularIntervaloMeta};
