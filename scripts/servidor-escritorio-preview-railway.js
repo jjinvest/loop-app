@@ -710,7 +710,7 @@ async function iniciar({env=process.env}={}){
     (cfa.contas+avulsas)+';REDE_VALIDADA='+cfa.contas+
     ';SEM_VINCULO_COMPROVADO='+avulsas+
     ';VINCULOS_VALIDOS='+cfa.vinculos+
-    ';STATUS='+ (avulsas>0?'PENDENTE_CLASSIFICACAO':'SEM_AVULSAS_DETECTADAS')+'\\n');
+    ';STATUS='+ (avulsas>0?'PENDENTE_CLASSIFICACAO':'SEM_AVULSAS_DETECTADAS')+String.fromCharCode(10));
    const pacote=empacotar(dados,token);
    const res=await fetch(url.replace('/internal/loop/tabuleiro',
     '/internal/loop/migracao-identidade'),{
