@@ -2,6 +2,7 @@
 // Serviço REAL isolado. Não importar o app de homologação; não permitir
 // primeiro cadastro sem documentação/Resend/volume próprios e GO humano.
 const fs=require('node:fs');
+const path=require('node:path');
 const http=require('node:http');
 const {DatabaseSync}=require('node:sqlite');
 const {MotorLoopIntegradoSQLite}=require('../src/producao/motor-loop-integrado-sqlite');
