@@ -2085,7 +2085,7 @@ function atualizarRitmoAgendaMotor(){
  const campoMeta=$('agendaMotorMetaQuantidade');
  const intervalo=$('agendaMotorIntervalo');
  const n=Number(campoMeta.value);
- const minutosDoCampo=h=>/^(?:[01]\\d|2[0-3]):[0-5]\\d$/.test(h)?
+ const minutosDoCampo=h=>/^(?:[01]\d|2[0-3]):[0-5]\d$/.test(h)?
   Number(h.slice(0,2))*60+Number(h.slice(3)):null;
  const ini=minutosDoCampo(abertura),fim=minutosDoCampo(fechamento);
  if(ini===null||fim===null||!Number.isSafeInteger(n)||n<0){
