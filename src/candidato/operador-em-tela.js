@@ -133,10 +133,61 @@
    [['MANUAL','Manual'],['AGENDADA','Agendada'],['NATURAL','Livre'],['STOP','Parada']]);
   const inicio=campo(form,'Abertura','time',a.abertura||'09:00');
   const fim=campo(form,'Fechamento','time',a.fechamento||'18:00');
-  const intervalo=campo(form,'Intervalo (minutos)','number',a.intervaloMinutos||10);
+  const intervalo=campo(form,'Intervalo entre luzes (minutos)','number',a.intervaloMinutos||10);
+  intervalo.min='1';intervalo.step='1';
   const meta=campo(form,'Meta diária de centros (0 = sem meta)','number',a.metaLotes?.quantidade||0);
+  meta.min='0';meta.step='1';
   const data=campo(form,'Data da meta (opcional)','date',a.metaLotes?.dataAlvo||'');
+  const explicacao=document.createElement('p');
+  explicacao.setAttribute('role','status');
+  explicacao.className='mensagem-operador';
+  form.append(explicacao);
+  let ultimoManual=Number(a.intervaloMinutos)||10;
+  let eraMeta=Number(meta.value)>0;
+  const minutosHorario=valor=>{
+   if(!/^(?:[01]\\d|2[0-3]):[0-5]\\d$/.test(valor))return null;
+   const [h,m]=valor.split(':').map(Number);
+   return h*60+m;
+  };
+  const atualizarRitmo=()=>{
+   const n=Number(meta.value),abrir=minutosHorario(inicio.value);
+   const fechar=minutosHorario(fim.value);
+   if(!Number.isSafeInteger(n)||n<0||abrir===null||fechar===null){
+    explicacao.textContent='Informe horários válidos e uma meta inteira não negativa.';
+    intervalo.readOnly=n>0;return false;
+   }
+   if(n===0){
+    if(eraMeta)intervalo.value=String(ultimoManual);
+    intervalo.readOnly=false;eraMeta=false;
+    explicacao.textContent='Sem meta: escolha manualmente o intervalo entre luzes.';
+    return true;
+   }
+   if(!eraMeta){
+    const manual=Number(intervalo.value);
+    if(Number.isSafeInteger(manual)&&manual>0)ultimoManual=manual;
+   }
+   eraMeta=true;
+   const duracao=((fechar-abrir+1440)%1440)||1440;
+   const total=BigInt(n)*6n;
+   const segundos=Math.max(1,Math.round(duracao*60/(n*6)));
+   const ritmoMin=Math.floor(segundos/60),ritmoSeg=segundos%60;
+   intervalo.value=String(Math.max(1,Math.ceil(duracao/(n*6))));
+   intervalo.readOnly=true;
+   explicacao.textContent=n+' centros × 6 luzes = '+total.toString()+
+    ' luzes em '+duracao+' minutos. Intervalo médio: '+
+    ritmoMin+' min'+(ritmoSeg?' '+ritmoSeg+' s':'')+
+    ' por luz. O motor distribui os horários; nenhuma luz acende sem compra válida.';
+   return true;
+  };
+  for(const campoHorario of [meta,inicio,fim])
+   campoHorario.addEventListener('input',atualizarRitmo);
+  intervalo.addEventListener('input',()=>{
+   if(Number(meta.value)===0&&Number.isSafeInteger(Number(intervalo.value))&&
+      Number(intervalo.value)>0)ultimoManual=Number(intervalo.value);
+  });
+  atualizarRitmo();
   comando(form,'Salvar programação',async()=>{
+   if(!atualizarRitmo())throw Error('Horário ou meta inválidos.');
    const salvo=await api('/motor/agenda',{method:'POST',json:{
     ativo:modo.value==='AGENDADA',modoExecucao:modo.value,
     abertura:inicio.value,fechamento:fim.value,
