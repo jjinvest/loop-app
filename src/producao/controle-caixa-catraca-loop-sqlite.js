@@ -94,12 +94,23 @@ class ControleCaixaCatracaLoopSQLite{
   if(totalBig>BigInt(Number.MAX_SAFE_INTEGER))
    falha('CATRACA_CAIXA_VALOR_EXCESSIVO');
   const reservaTotalCentavos=Number(totalBig);
+  const anterior=this._ler(dia);
+  if(anterior){
+   if(anterior.abertura!==abertura||anterior.fechamento!==fechamento||
+      anterior.metaCentros!==metaCentros||
+      anterior.reservaPorCentroCentavos!==reservaPorCentroCentavos)
+    falha('CATRACA_CAIXA_DIA_JA_PROGRAMADO');
+   return {...this.consultar({dia}),repetido:true};
+  }
   if(typeof this.provas?.confirmarReservaCentros!=='function')
    falha('CATRACA_CAIXA_COMPROVACAO_EXTERNA_INDISPONIVEL');
   // Chamada ocorre no servidor, nunca no navegador e sem receber saldo
   // declarado por cliente/operador. Deve validar conciliacao e segregacao.
   const prova=this.provas.confirmarReservaCentros(Object.freeze({
-   dia,metaCentros,reservaPorCentroCentavos,reservaTotalCentavos
+   dia,metaCentros,reservaPorCentroCentavos,reservaTotalCentavos,
+   // Cada nova tentativa concorrente envia a MESMA chave ao provedor.
+   // O adaptador de banco deve executar a segregacao de forma idempotente.
+   chaveIdempotencia:'loop-reserva-centros:'+dia
   }));
   if(!prova||prova.ambiente!=='PRODUCAO'||
      prova.estado!=='RESERVA_SEGREGADA'||
