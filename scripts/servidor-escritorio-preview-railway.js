@@ -134,6 +134,66 @@ function criarGateway({portaInterna,senhaAcesso,senhaAdmin,segredoOperador,
   let url;
   try{url=new URL(req.url,'http://gateway.invalid');}
   catch{return negar(400,'Requisição inválida');}
+  // Corte da entrada publica: a mesma origem HTTPS passa a falar APENAS
+  // com o servico de identidade e o banco definitivos. O SQLite antigo
+  // permanece intocado para custodia/migracao, mas nao recebe cadastros,
+  // logins, rotas do operador nem transacoes por este dominio.
+  if(publicarCadastroReal){
+   if((req.method==='GET'||req.method==='HEAD')&&url.pathname==='/'){
+    res.writeHead(302,{...cabecalhosBase,Location:'/minha-conta'});
+    return res.end();
+   }
+   if(url.pathname.startsWith('/staging/')||
+      url.pathname==='/webhooks/asaas-sandbox-unificado'){
+    if((req.method==='GET'||req.method==='HEAD')&&
+       ['/staging/cliente','/staging/loja'].includes(url.pathname)){
+     res.writeHead(303,{...cabecalhosBase,
+      Location:(url.pathname==='/staging/loja'?'/loja':'/minha-conta')+url.search});
+     return res.end();
+    }
+    return negar(410,'Rota antiga encerrada; utilize o acesso definitivo');
+   }
+   const identidadePublica=url.pathname==='/minha-conta'||
+    url.pathname==='/escritorio'||url.pathname==='/loja'||
+    url.pathname==='/cadastro-real'||
+    url.pathname==='/convite/loja'||
+    url.pathname==='/administrador'||
+    url.pathname.startsWith('/administrador/')||
+    url.pathname.startsWith('/identidade/assets/')||
+    url.pathname.startsWith('/api/')||
+    /^\/(?:escritorio|loja)\/[A-Za-z]{1,12}$/.test(url.pathname)||
+    url.pathname==='/healthz'||url.pathname==='/readyz';
+   // Fail closed: caminho antigo ou interno nunca vira alternativa quando
+   // a identidade real esta indisponivel.
+   if(!identidadePublica)return negar(404,'Rota não disponível');
+   const destino=url.pathname==='/cadastro-real'?
+    '/minha-conta'+url.search:url.pathname+url.search;
+   const headers={...req.headers,host:realAlvo.host};
+   for(const key of Object.keys(headers)){
+    if(key.startsWith('x-forwarded-')||
+       ['forwarded','proxy-authorization','connection','transfer-encoding',
+        'authorization','x-loop-interservice-token',
+        'x-loop-catalogo-token'].includes(key))delete headers[key];
+   }
+   const upstream=http.request({
+    hostname:realAlvo.hostname,port:Number(realAlvo.port||80),
+    method:req.method,path:destino,headers,timeout:45000
+   },retorno=>{
+    const respostaHeaders={...retorno.headers,...cabecalhosBase};
+    delete respostaHeaders.connection;
+    delete respostaHeaders['transfer-encoding'];
+    res.writeHead(retorno.statusCode||502,respostaHeaders);
+    retorno.pipe(res);
+   });
+   upstream.on('timeout',()=>upstream.destroy());
+   upstream.on('error',()=>{
+    if(!res.headersSent)negar(502,'Identidade definitiva indisponível');
+    else res.destroy();
+   });
+   req.on('aborted',()=>upstream.destroy());
+   req.pipe(upstream);
+   return;
+  }
   // Controle do operador: uma rota pública de leitura, sem acesso ao
   // SQLite real e sem credenciais no navegador. Mesmo nome nas duas UIs.
   // Sempre no gateway, antes de qualquer proxy /api/ para a identidade.
@@ -229,75 +289,6 @@ function criarGateway({portaInterna,senhaAcesso,senhaAdmin,segredoOperador,
     'Cache-Control':'no-store',
     'Set-Cookie':adminCookie+'=; HttpOnly; Secure; SameSite=Strict; Path=/; Max-Age=0'});
    return res.end(JSON.stringify({operador:false}));
-  }
-  // O site público continua no mesmo domínio. Somente os caminhos
-  // de IDENTIDADE e seus assets são proxied ao serviço real com volume
-  // independente. A loja anterior permanece intacta para usuários antigos.
-  if(publicarCadastroReal){
-   const redirect=req.method==='GET'&&url.pathname.match(
-    /^\/(escritorio|loja)\/([A-Za-z]{1,12})$/
-   );
-   if(redirect){
-    const nick=redirect[2];
-    // Validar o indicador no banco REAL, e não na antiga prévia.
-    const check=http.get({
-     hostname:realAlvo.hostname,port:Number(realAlvo.port||80),
-     path:'/escritorio/'+encodeURIComponent(nick),timeout:7000
-    },resp=>{
-     resp.resume();
-     if(res.headersSent)return;
-     if(resp.statusCode!==303){
-      return negar(resp.statusCode===404?404:503,
-       resp.statusCode===404?'Link de indicação inexistente':
-        'Validação do link indisponível');
-     }
-     res.writeHead(303,{...cabecalhosBase,
-      Location:'/cadastro-real?ref='+encodeURIComponent(nick)+
-       (redirect[1]==='loja'?'&origem=loja':'')});
-     res.end();
-    });
-    check.on('timeout',()=>check.destroy());
-    check.on('error',()=>negar(503,'Validação do link indisponível'));
-    req.on('aborted',()=>check.destroy());
-    return;
-   }
-   const temSessaoReal=/(?:^|;\s*)loop_real_s=[a-f0-9]{64}(?:;|$)/
-    .test(req.headers.cookie||'');
-   const realPath=url.pathname==='/cadastro-real'||
-    url.pathname.startsWith('/identidade/assets/')||
-    url.pathname.startsWith('/api/')||
-    url.pathname==='/convite/loja'||
-    (url.pathname==='/loja'&&temSessaoReal);
-   if(realPath){
-    // O proxy não aceita redirecionamentos arbitrários, nem URLs
-    // externas. Port/hostname resultam apenas da rede privada Railway.
-    const rota=url.pathname==='/cadastro-real'?
-     '/minha-conta'+url.search:req.url;
-    const headers={...req.headers,
-     host:realAlvo.host};
-    for(const k of Object.keys(headers))
-     if(k.startsWith('x-forwarded-')||['forwarded','proxy-authorization',
-      'connection','transfer-encoding','authorization'].includes(k))
-      delete headers[k];
-    const upstream=http.request({
-     hostname:realAlvo.hostname,port:Number(realAlvo.port||80),
-     method:req.method,path:rota,headers,timeout:45000
-    },resp=>{
-     const h={...resp.headers,...cabecalhosBase};
-     delete h['transfer-encoding'];
-     delete h['connection'];
-     res.writeHead(resp.statusCode||502,h);
-     resp.pipe(res);
-    });
-    upstream.on('timeout',()=>upstream.destroy());
-    upstream.on('error',()=>{
-     if(!res.headersSent)negar(502,'Identidade real temporariamente indisponível');
-     else res.destroy();
-    });
-    req.on('aborted',()=>upstream.destroy());
-    req.pipe(upstream);
-    return;
-   }
   }
   // Navegadores consultam o favicon da loja automaticamente;
   // um desafio Basic neste recurso provoca janela de senha extra.
