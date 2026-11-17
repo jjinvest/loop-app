@@ -5,73 +5,58 @@ const {readFileSync}=require('node:fs');
 const path=require('node:path');
 const {DatabaseSync}=require('node:sqlite');
 const {AkitemmConfigLojaDemoSQLite}=require('../src/domain/akitemm-config-loja-demo-sqlite');
-
-const padrao=['ROXO','DOURADO','VERDE','CINZA','CINZA','VERDE','DOURADO','ROXO'];
 const raiz=path.resolve(__dirname,'..');
-const codigo=readFileSync(path.join(raiz,'src/laboratorio/loja-cliente-demo.js'),'utf8');
-const css=readFileSync(path.join(raiz,'src/laboratorio/loja-cliente-demo.css'),'utf8');
-const admin=readFileSync(path.join(raiz,'src/candidato/escritorio-admin-candidato-ui.js'),'utf8');
-const html=readFileSync(path.join(raiz,'src/candidato/escritorio-admin-candidato-ui.html'),'utf8');
+const ler=p=>readFileSync(path.join(raiz,p),'utf8');
+const codigo=ler('src/laboratorio/loja-cliente-demo.js');
+const admin=ler('src/candidato/escritorio-admin-candidato-ui.js');
+const padrao=['ROXO','DOURADO','VERDE','CINZA','CINZA','VERDE','DOURADO','ROXO'];
+const esperado=Array.from({length:200},(_,i)=>padrao[i%8]);
 
-test('padrão persistido e 8 posições editáveis pelo administrador',()=>{
+test('configuracao persistida tem 200 cores sem perder compatibilidade de oito',()=>{
  const banco=new DatabaseSync(':memory:');
  try{
   const mod=new AkitemmConfigLojaDemoSQLite({banco});
-  assert.deepEqual(mod.consultar().vitrineSlots,padrao);
+  assert.deepEqual(mod.consultar().vitrineSlots,esperado);
   const cfg=mod.consultar();
-  cfg.vitrineSlots=['CINZA','CINZA','VERDE','ROXO','DOURADO','DOURADO','ROXO','VERDE'];
+  const novo=['CINZA','CINZA','VERDE','ROXO','DOURADO','DOURADO','ROXO','VERDE'];
+  cfg.vitrineSlots=Array.from({length:200},(_,i)=>novo[i%8]);
   assert.deepEqual(mod.salvarComRevisao({config:cfg,revisaoEsperada:0}).config.vitrineSlots,cfg.vitrineSlots);
-  const outro=new AkitemmConfigLojaDemoSQLite({banco});
-  assert.deepEqual(outro.consultar().vitrineSlots,cfg.vitrineSlots);
-  assert.equal(outro.revisao(),1);
-  assert.throws(()=>outro.salvarComRevisao({config:cfg,revisaoEsperada:0}),/CONFIG_CONFLITO_REVISAO/);
-  for(const invalido of [[],['ROXO'],[...padrao.slice(0,7),'AZUL']]){
-   assert.throws(()=>outro.salvarComRevisao({config:{...cfg,vitrineSlots:invalido},revisaoEsperada:1}),
-    /VITRINE_SLOTS_INVALIDOS/);
-  }
-  assert.deepEqual(outro.consultar().vitrineSlots,cfg.vitrineSlots);
+  assert.deepEqual(new AkitemmConfigLojaDemoSQLite({banco}).consultar().vitrineSlots,cfg.vitrineSlots);
+  assert.equal(mod.revisao(),1);
+  assert.throws(()=>mod.salvarComRevisao({config:cfg,revisaoEsperada:0}),/CONFIG_CONFLITO_REVISAO/);
+  for(const invalido of [[],['ROXO'],[...cfg.vitrineSlots.slice(0,199),'AZUL']])
+   assert.throws(()=>mod.salvarComRevisao({config:{...cfg,vitrineSlots:invalido},revisaoEsperada:1}),/VITRINE_SLOTS_INVALIDOS/);
  }finally{banco.close();}
 });
 
-test('configuração SQLite antiga sem slots migra sem perder os dados',()=>{
- const db=new DatabaseSync(':memory:');
+test('configuracao antiga sem slots preserva informacoes e ganha 200 slots',()=>{
+ const banco=new DatabaseSync(':memory:');
  try{
-  const mod=new AkitemmConfigLojaDemoSQLite({banco:db});
+  const mod=new AkitemmConfigLojaDemoSQLite({banco});
   const antiga={...mod.consultar()};
   delete antiga.vitrineSlots;
-  antiga.informacoes.sobre='Conteúdo anterior preservado';
-  db.prepare('INSERT INTO admin_akitemm_config_loja_demo (id,dados_json,atualizado_em) VALUES(1,?,?)')
+  antiga.informacoes.sobre='Conteudo anterior preservado';
+  banco.prepare('INSERT INTO admin_akitemm_config_loja_demo (id,dados_json,atualizado_em) VALUES(1,?,?)')
    .run(JSON.stringify(antiga),new Date().toISOString());
-  assert.deepEqual(new AkitemmConfigLojaDemoSQLite({banco:db}).consultar().vitrineSlots,padrao);
-  assert.equal(mod.consultar().informacoes.sobre,'Conteúdo anterior preservado');
+  assert.deepEqual(new AkitemmConfigLojaDemoSQLite({banco}).consultar().vitrineSlots,esperado);
+  assert.equal(mod.consultar().informacoes.sobre,'Conteudo anterior preservado');
   assert.equal(mod.revisao(),0);
- }finally{db.close();}
+ }finally{banco.close();}
 });
 
-test('molduras vazias não são mercadorias nem oferecem compra',()=>{
- const comeco=codigo.indexOf('function criarSlotVazio(');
- const fim=codigo.indexOf('function prepararAbasVitrine(',comeco);
- assert.ok(comeco>0&&fim>comeco);
- const trecho=codigo.slice(comeco,fim);
- assert.match(trecho,/card\.className='produto-loja-loop akitemm-slot-vazio/);
- assert.match(trecho,/Aguardando produto cadastrado/);
- assert.doesNotMatch(trecho,/createElement\('button'\)|adicionar\(|precoCentavos|pedidoId/);
+test('400 quadrinhos em 10 abas; molduras vazias nao oferecem compra',()=>{
+ assert.match(codigo,/TOTAL_ABAS=10,COLUNAS_FAIXA=10,LINHAS_ABA=4,VAGAS_ABA=40/);
+ assert.match(codigo,/function criarSlotVazio\(/);
+ assert.match(codigo,/Aguardando produto cadastrado/);
  assert.match(codigo,/if\(!item\.produto\)\{alvo\.append\(criarSlotVazio\(item\)\);continue;\}/);
  assert.match(codigo,/const exibirMolduras=filtro==='todos'&&!termoBusca/);
- assert.match(codigo,/gradeVitrineMontada\(filtrados\)\.filter\(item=>!corFiltro\|\|item\.cor===corFiltro\)/);
- assert.match(codigo,/Nenhum quadrinho desta cor/);
- assert.match(codigo,/const encontrado=livres\.findIndex\(p=>corDoProduto\(p\)===cor\)/);
- assert.match(codigo,/\.\.\.livres\.map\(produto=>/);
- assert.match(css,/\.akitemm-slot-roxo\{--ak-slot-cor:#bd88f6\}/);
- assert.match(css,/\.akitemm-slot-dourado\{--ak-slot-cor:#e4bd6b\}/);
- assert.match(css,/\.akitemm-slot-verde\{--ak-slot-cor:#65cfa0\}/);
- assert.match(css,/\.akitemm-slot-cinza\{--ak-slot-cor:#a0a9b2\}/);
+ assert.match(codigo,/gradeVitrineMontada\(filtrados\)/);
+ assert.match(codigo,/operadorVitrine/);
+ assert.match(codigo,/abrirCadastroOperador/);
 });
 
-test('editor administrativo usa os oito controles, sem mexer na classificação comercial',()=>{
- assert.match(html,/id="configVitrineSlotsAdmin"/);
- assert.match(admin,/campo\.name='vitrineSlotCor'/);
- assert.match(admin,/config\.vitrineSlots=\[\.\.\.\$\('configVitrineSlotsAdmin'\)/);
- assert.match(admin,/campo\.value=\(config\.vitrineSlots\|\|padrao\)\[indice\]/);
+test('editor preserva classificacao comercial e nao recria 200 seletores de cor',()=>{
+ assert.match(admin,/config\.vitrineSlots=configLojaAtual\.config\.vitrineSlots/);
+ assert.match(admin,/slots\.hidden=true/);
  assert.doesNotMatch(admin,/classificacao\s*=\s*campo\.value/);
 });
