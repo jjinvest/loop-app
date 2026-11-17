@@ -25,16 +25,16 @@
  // Atalho visivel apenas com sessao administrativa autenticada no gateway.
  async function atualizarAtalhoOperadorAkitemm(){
   const atalho=el('akitemmOperadorMais');
-  if(!atalho)return;
-  atalho.hidden=true;atalho.style.display='none';
+  operadorVitrine=false;
+  if(atalho){atalho.hidden=true;atalho.style.display='none';}
   try{
    const resposta=await fetch('/api/operador/estado',{
     credentials:'same-origin',cache:'no-store'
    });
    if(!resposta.ok)return;
    const estado=await resposta.json();
-   if(estado?.operador===true){
-    operadorVitrine=true;
+   operadorVitrine=estado?.operador===true;
+   if(operadorVitrine&&atalho){
     atalho.hidden=false;atalho.style.display='inline-flex';
    }
   }catch{}
