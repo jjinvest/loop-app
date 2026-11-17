@@ -254,7 +254,8 @@ test('agenda, limite diario e pausas controlam giros; filas entram mesmo pausada
  assert.equal(catraca.verificar().integridade,'OK');
  assert.equal(validarIdentidade(arquivo).integridade,'ok');
  catraca.configurar({modo:'AUTOMATICA',janelaInicio:'08:00',janelaFim:'10:00',
-  limiteDiario:1,revisaoEsperada:2,motivo:'AGENDA_SEM_GIRO_FORA_DO_LIMITE'});
+  limiteDiario:1,metaCentrosDia:1,metaDataAlvo:null,
+  revisaoEsperada:2,motivo:'AGENDA_SEM_GIRO_FORA_DO_LIMITE'});
  assert.equal(catraca.processarAgenda().girou,false);
  agora=new Date('2026-11-11T12:00:00Z');
  assert.equal(catraca.consultar().girosHoje,0);
