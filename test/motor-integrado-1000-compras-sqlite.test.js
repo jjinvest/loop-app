@@ -22,7 +22,7 @@ test('1000 compras qualificadas no mesmo SQLite: sem duplicacao e com limite por
   let total=0;
   for(let i=0;i<100;i++){
    const titular=await contas.cadastrar({
-    nome:'Titular de ensaio',nick:'Teste'+i,
+    nome:'Titular de ensaio',nick:'Teste'+String.fromCharCode(65+Math.floor(i/26))+String.fromCharCode(65+i%26),
     email:'teste'+i+'@example.invalid',senha:'SenhaDeEnsaioReal2026!',
     aceiteTermos:true,aceitePrivacidade:true,
     versaoTermos:doc.termos.versao,hashTermos:doc.termos.hash,
