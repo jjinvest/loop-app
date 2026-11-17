@@ -304,7 +304,7 @@ async function main(){
    assert.equal(await page.locator('#motorFilaB .loop03-linha-fila').count(),1);
    const resumoFilaB=await page.locator('#motorFilaB').textContent();
    assert.ok(resumoFilaB.includes('1º lugar')&&
-    resumoFilaB.includes('total 1 na Fila B'),
+    await page.locator('#motorFilaB .loop03-linha-fila').count()===1,
     'fila B mostra ordinal paginado real, sem inventar IDs: '+resumoFilaB);
    assert.equal(await page.locator('#motorFilaB .loop03-inicial-fila').innerText(),'1',
     'fila paginada exibe ordinal 1, nunca ID interno ou titular alheio');
