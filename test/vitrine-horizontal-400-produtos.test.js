@@ -8,8 +8,9 @@ const css=fs.readFileSync(path.join(__dirname,'../src/candidato/vitrine-horizont
 test('10 abas com 40 quadrinhos: 4 fileiras de 10, 2 exibidas inicialmente',()=>{
  assert.match(src,/TOTAL_ABAS=10,COLUNAS_FAIXA=10,LINHAS_ABA=4,VAGAS_ABA=40/);
  assert.match(src,/const linhas=expandida\?LINHAS_ABA:2/);
- assert.match(src,/length:linhas\*COLUNAS_FAIXA/);
+ assert.match(src,/Array.from\(\{length:total\}/);
  assert.match(src,/const indice=abaProdutos\*VAGAS_ABA\+i/);
+ assert.match(src,/length:TOTAL_ABAS\*VAGAS_ABA/);
  assert.match(src,/faixas\[Math\.floor\(i\/COLUNAS_FAIXA\)\]/);
  assert.match(src,/abasExpandidas\.has\(abaProdutos\)/);
  assert.match(src,/Página '\+\(n\+1\)\+' de '\+TOTAL_ABAS/);
