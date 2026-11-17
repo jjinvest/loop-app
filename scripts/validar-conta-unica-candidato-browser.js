@@ -404,7 +404,7 @@ function mp4TrintaSegundos(){
    await botaoDetalhes.click();
    assert.equal(await botaoDetalhes.getAttribute('aria-expanded'),'true');
    assert.equal(await indicado.first().locator('.loop03-rede-pessoa-detalhes').isVisible(),true);
-   assert.match(await indicado.first().innerText(),/Aguardando confirmação de ativação no LOOP/);
+   assert.match(await indicado.first().innerText(),/A vinculação será liberada após ativação/);
    await botaoDetalhes.click();
    assert.equal(await botaoDetalhes.getAttribute('aria-expanded'),'false');
    const busca=page.locator('#buscarEquipe');
