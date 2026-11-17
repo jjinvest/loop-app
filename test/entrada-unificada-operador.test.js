@@ -41,8 +41,12 @@ test('dois logins aceitam operador e exibem interface sem fingir conta de client
  for(const fonte of [real,candidato]){
   assert.match(fonte,/api\/operador\/entrar/);
   assert.match(fonte,/toLowerCase\(\)==='operador'/);
-  assert.match(fonte,/location\.assign\('\/staging\/cliente\?modo=operador'\)/);
  }
+ // O servico definitivo usa o mesmo administrador; a antiga instancia
+ // protegida ainda tem seu proprio fluxo enquanto o dominio nao migrou.
+ assert.ok(real.includes("location.assign('/administrador')"));
+ assert.ok(!real.includes("location.assign('/staging/cliente?modo=operador')"));
+ assert.ok(candidato.includes("location.assign('/staging/cliente?modo=operador')"));
  assert.match(candidato,/abrirModoOperadorNaTela/);
  assert.match(candidato,/modoOperadorSemCliente/);
  assert.match(candidato,/Nao abrir APIs de dados pessoais/);
