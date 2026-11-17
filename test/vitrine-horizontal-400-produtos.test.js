@@ -13,7 +13,7 @@ test('10 abas com 40 quadrinhos: 4 fileiras de 10, 2 exibidas inicialmente',()=>
  assert.match(src,/length:TOTAL_ABAS\*VAGAS_ABA/);
  assert.match(src,/faixas\[Math\.floor\(i\/COLUNAS_FAIXA\)\]/);
  assert.match(src,/abasExpandidas\.has\(abaProdutos\)/);
- assert.match(src,/Página '\+\(n\+1\)\+' de '\+TOTAL_ABAS/);
+ assert.match(src,/Página '\+\(n\+1\)\+' de '\+totalAbas/);
  assert.match(css,/scroll-snap-type:x proximity/);
  assert.match(css,/flex-basis:calc\(50% - 4px\)/);
 });
