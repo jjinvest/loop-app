@@ -688,7 +688,9 @@ async function iniciar({env=process.env}={}){
    if(typeof url!=='string'||!/^http:\/\/[a-z0-9-]+\.railway\.internal(?::[0-9]{2,5})?\/internal\/loop\/tabuleiro$/.test(url)||
       typeof token!=='string'||!/^[a-f0-9]{64}$/.test(token))
     throw Error('MIGRACAO_REDE_PRIVADA_NAO_CONFIGURADA');
-   const dados=exportarPreview({banco:db,contas:c.contas});
+   const dados=exportarPreview({banco:db,contas:c.contas,
+    incluirContasRegistradasSemRede:
+     env.LOOP_PREVIEW_RECUPERAR_CONTAS_SEM_REFERENCIA==='SIM'});
    // Inventário agregado: o titular não aparece em logs e contas sem origem
    // comprovada não são importadas automaticamente para o banco definitivo.
    // Emitir apenas na mudança de revisão ou primeira inicialização.
@@ -697,6 +699,11 @@ async function iniciar({env=process.env}={}){
    if(revisao===ultimaMigracaoComprovada)return;
    const cfa=dados.conferencias;
    const avulsas=cfa.contasAvulsasIgnoradas;
+   if(!Number.isSafeInteger(cfa.contasAvulsasOrigem)||
+      !Number.isSafeInteger(cfa.contasNaRedeComprovada)||
+      cfa.contasAvulsasOrigem<0||cfa.contasNaRedeComprovada<2||
+      cfa.contasAvulsasOrigem+cfa.contasNaRedeComprovada!==
+       cfa.contas+avulsas)throw Error('MIGRACAO_REDE_DIVERGENTE');
    const perfil=cfa.perfilAvulsas;
    if(!perfil||Object.values(perfil).some(n=>
       !Number.isSafeInteger(n)||n<0))throw Error('MIGRACAO_PERFIL_INVALIDO');
@@ -706,10 +713,12 @@ async function iniciar({env=process.env}={}){
     ';VINCULO_ISOLADO='+perfil.indicacaoForaDaRedeValidada+
     ';SEM_INDICACAO='+perfil.semIndicacaoRegistrada+'\n');
    process.stdout.write('LOOP_RECONCILIACAO_CONTAS_ORIGEM='+
-    (cfa.contas+avulsas)+';REDE_VALIDADA='+cfa.contas+
-    ';SEM_VINCULO_COMPROVADO='+avulsas+
-    ';VINCULOS_VALIDOS='+cfa.vinculos+
-    ';STATUS='+ (avulsas>0?'PENDENTE_CLASSIFICACAO':'SEM_AVULSAS_DETECTADAS')+String.fromCharCode(10));
+    (cfa.contas+avulsas)+';REDE_VALIDADA='+cfa.contasNaRedeComprovada+
+    ';SEM_VINCULO_COM_A_REDE_PRINCIPAL='+cfa.contasAvulsasOrigem+
+    ';CONTAS_PRESERVADAS_NO_DESTINO='+cfa.contas+
+    ';VINCULOS_CADASTRAIS_TRANSFERIDOS='+cfa.vinculos+
+    ';STATUS='+(avulsas>0?'ORIGEM_PRESERVADA_AUDITORIA_PENDENTE':
+      'IDENTIDADES_PRESERVADAS_SEM_DIREITOS_FINANCEIROS')+'\n');
    const pacote=empacotar(dados,token);
    const res=await fetch(url.replace('/internal/loop/tabuleiro',
     '/internal/loop/migracao-identidade'),{
