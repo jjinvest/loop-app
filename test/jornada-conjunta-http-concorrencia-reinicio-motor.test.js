@@ -69,7 +69,9 @@ test('jornada HTTP concorrente em duas instancias: pedidos, callbacks, reinicio,
    banco,repositorioCatalogo:catalogoFicticioCheckout(),...chaves,
    webhookHomologacaoToken:TOKEN,provedorReconsultaSandbox:provedor,
    operacoesSandboxAutorizadas:true,
-   segredoOperador:ADMIN,termosVersao:TERMOS,termosTexto:TERMO_TEXTO
+   segredoOperador:ADMIN,termosVersao:TERMOS,termosTexto:TERMO_TEXTO,
+   termosIdentidadeVersao:TERMOS,
+   termosIdentidadeTexto:'Aceite de identidade ficticio exclusivo do teste de jornada conjunta. O CPF e os termos sao registrados somente no banco temporario de ensaio, sem validacao externa, pagamento real, premio, saque ou direito financeiro.'
   });
   const servidor=r.app.listen(0,'127.0.0.1');
   await once(servidor,'listening');
