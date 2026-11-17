@@ -40,7 +40,9 @@ function mp4TrintaSegundos(){
   chaveCpfHmac:randomBytes(32),chaveCpfCifra:randomBytes(32),
   segredoOperador:'somente-teste-do-navegador-'+('x'.repeat(40)),
   termosVersao:'LAB-navegador-2026',
-  termosTexto:'Prévia apenas para teste de acesso e pedido, sem pagamento ou posição real.'
+  termosTexto:'Prévia apenas para teste de acesso e pedido, sem pagamento ou posição real.',
+  termosIdentidadeVersao:'LAB-navegador-2026',
+  termosIdentidadeTexto:'Prévia apenas para teste de acesso e pedido. O CPF e o aceite são dados fictícios guardados somente na simulação temporária, sem confirmação externa, pagamento, prêmio, saque ou posição real.'
  });
  const server=app.listen(0,'127.0.0.1');
  await once(server,'listening');
