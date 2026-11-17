@@ -402,9 +402,11 @@
   'CINZA','VERDE','DOURADO','ROXO'];
  function coresVitrine(){
   const lista=configLoja?.vitrineSlots;
-  return Array.isArray(lista)&&lista.length===200&&
-   lista.every(cor=>['ROXO','DOURADO','VERDE','CINZA'].includes(cor))?
-   lista:Array.from({length:200},(_,i)=>CORES_PADRAO_VITRINE[i%8]);
+  const validas=Array.isArray(lista)&&[200,400].includes(lista.length)&&
+   lista.every(cor=>['ROXO','DOURADO','VERDE','CINZA'].includes(cor));
+  // Preservar as cores dos 200 quadrinhos ja cadastrados ao ampliar para 400.
+  return Array.from({length:TOTAL_ABAS*VAGAS_ABA},(_,i)=>
+   validas&&i<lista.length?lista[i]:CORES_PADRAO_VITRINE[i%8]);
  }
  function gradeVitrineMontada(produtos){
   // Cadastro sequencial: cada produto ocupa o próximo quadrinho livre,
