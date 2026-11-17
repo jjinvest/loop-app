@@ -114,3 +114,29 @@ test('corte publico nunca admite origem remota arbitraria',()=>{
   urlIdentidadeReal:'https://example.com/internal/loop/tabuleiro'
  }),/IDENTIDADE_REAL_PRIVADA_NAO_CONFIGURADA/);
 });
+
+test('fechamento de cadastro antigo nao apaga contas nem ativa rota real',async t=>{
+ const legado=[];
+ const antigo=await abrir((req,res)=>{
+  legado.push(req.url);res.writeHead(200);res.end('LEGADO_CONSERVADO');
+ });
+ const gateway=criarGateway({
+  portaInterna:antigo.address().port,
+  senhaAcesso:SENHA,senhaAdmin:ADMIN,segredoOperador:OPERADOR,
+  fecharCadastroAntigo:true
+ });
+ gateway.listen(0,'127.0.0.1');await once(gateway,'listening');
+ t.after(async()=>{
+  await new Promise(ok=>gateway.close(ok));
+  await new Promise(ok=>antigo.close(ok));
+ });
+ const base='http://127.0.0.1:'+gateway.address().port;
+ const tentativa=await fetch(base+'/staging/contas/cadastrar',{
+  method:'POST',headers:{'Content-Type':'application/json'},body:'{}'
+ });
+ assert.equal(tentativa.status,503);
+ assert.equal(legado.length,0,'cadastro antigo nao escreve em SQLite');
+ const estado=await fetch(base+'/api/operador/estado');
+ assert.equal(estado.status,200);
+ assert.deepEqual(await estado.json(),{operador:false});
+});
