@@ -81,7 +81,7 @@ class OutboxCompraLoopSQLite {
   return this.db.prepare([
    'SELECT pedido_id,titular_id,pagamento_id,valor_total_centavos,criado_em',
    'FROM loop_real_outbox_compra_confirmada',
-   "WHERE estado='PENDENTE' ORDER BY criado_em,pedido_id LIMIT ?"
+   "WHERE estado='PENDENTE' ORDER BY criado_em,rowid LIMIT ?"
   ].join(' ')).all(limite);
  }
 }
