@@ -201,6 +201,45 @@ class ControleCaixaCatracaLoopSQLite{
     movimentoFinanceiro:false};
   });
  }
+ // Conferencia sem escrita para backup e auditoria da mesma base SQLite.
+ verificar(){
+  let programacoes=0,luzes=0;
+  const contagem=new Map(),anteriores=new Map();
+  for(const p of this.banco.prepare([
+   'SELECT dia,abertura,fechamento,meta_centros AS meta,',
+   'reserva_por_centro_centavos AS unidade,',
+   'reserva_total_centavos AS total,comprovante_reserva AS comprovante,',
+   'estado,criado_em AS criadoEm',
+   'FROM loop_real_catraca_caixa_programacao ORDER BY dia'
+  ].join(' ')).iterate()){
+   if(!diaValido(p.dia)||!Number.isSafeInteger(p.meta)||p.meta<1||
+      !Number.isSafeInteger(p.unidade)||p.unidade<1||
+      !Number.isSafeInteger(p.total)||p.total<1||
+      BigInt(p.meta)*BigInt(p.unidade)!==BigInt(p.total)||
+      !REF.test(p.comprovante)||
+      !['PAUSADA','AUTORIZADA'].includes(p.estado)||
+      !Number.isSafeInteger(p.criadoEm)||p.criadoEm<1)
+    falha('CATRACA_CAIXA_BACKUP_PROGRAMACAO_DIVERGENTE');
+   try{calcularIntervaloMeta({abertura:p.abertura,
+    fechamento:p.fechamento,quantidade:p.meta});}
+   catch{falha('CATRACA_CAIXA_BACKUP_HORARIO_INVALIDO');}
+   programacoes++;contagem.set(p.dia,{max:p.meta*6,emitidas:0});
+  }
+  for(const a of this.banco.prepare([
+   'SELECT dia,indice_luz AS indice,chave,emitida_em AS em',
+   'FROM loop_real_catraca_caixa_autorizacoes',
+   'ORDER BY dia,indice_luz'
+  ].join(' ')).iterate()){
+   const ref=contagem.get(a.dia);
+   if(!ref||!Number.isSafeInteger(a.indice)||a.indice!==ref.emitidas+1||
+      a.indice>ref.max||a.chave!=='caixa:'+a.dia+':'+a.indice||
+      !Number.isSafeInteger(a.em)||a.em<1||
+      (anteriores.get(a.dia)??0)>=a.em)
+    falha('CATRACA_CAIXA_BACKUP_LUZES_DIVERGENTES');
+   ref.emitidas++;anteriores.set(a.dia,a.em);luzes++;
+  }
+  return {integridade:'OK',programacoes,luzes};
+ }
  // A reserva fica segura mesmo apos configurada: nao comeca sozinha.
  // Apenas chamada protegida do operador pode alternar PAUSADA/AUTORIZADA.
  definirAtivacao({dia,ativa,autorizacaoOperador=false}={}){
