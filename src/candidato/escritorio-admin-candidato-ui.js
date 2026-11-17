@@ -45,7 +45,7 @@ async function navegarHistoricoPosicoes(destino){
 async function api(path,{method='GET',body,idempotencia}={}){
  const r=await fetch('/staging/escritorio-unificado'+path,{
   method,cache:'no-store',credentials:'same-origin',
-  headers:{Authorization:'Bearer '+auth,...(body?{'Content-Type':'application/json'}:{}),
+  headers:{...(auth?{Authorization:'Bearer '+auth}:{}),...(body?{'Content-Type':'application/json'}:{}),
    ...(idempotencia?{'Idempotency-Key':idempotencia}:{})},
   ...(body?{body:JSON.stringify(body)}:{})
  });
@@ -82,7 +82,7 @@ async function enviarArquivoProdutoAdmin(id,arquivo,{tipo,posicao=1}){
  }else throw Error('Tipo de arquivo inválido.');
  const resp=await fetch('/staging/escritorio-unificado'+rota,{
   method:'POST',cache:'no-store',credentials:'same-origin',
-  headers:{Authorization:'Bearer '+auth,'Content-Type':mime,[chave]:String(versao)},
+  headers:{...(auth?{Authorization:'Bearer '+auth}:{}),'Content-Type':mime,[chave]:String(versao)},
   body:arquivo
  });
  const resultado=await resp.json().catch(()=>({}));
@@ -176,7 +176,7 @@ async function atualizarAvaliacoesAdmin(){
      botao.disabled=true;
      try{
       const response=await fetch('/staging/escritorio-unificado/avaliacoes/midias/'+midia.id,{
-       cache:'no-store',credentials:'omit',headers:{Authorization:'Bearer '+auth}
+       cache:'no-store',credentials:'omit',headers:{...(auth?{Authorization:'Bearer '+auth}:{})}
       });
       if(!response.ok)throw Error('Mídia indisponível.');
       const url=URL.createObjectURL(await response.blob());
@@ -587,7 +587,7 @@ async function gerenciarBannerFotoAdmin(slot,arquivo,revisao,remover=false,enqua
  const response=await fetch(
   '/staging/escritorio-unificado/banners-escritorio/'+slot+'/imagem',{
    method:remover?'DELETE':'PUT',credentials:'same-origin',
-   headers:{Authorization:'Bearer '+auth,
+   headers:{...(auth?{Authorization:'Bearer '+auth}:{}),
     'X-Banner-Revisao-Esperada':String(revisao),
     ...(!remover?{'Content-Type':arquivo.type,
      'X-Banner-Enquadramento':enquadramento}:{})},
@@ -602,7 +602,7 @@ async function miniaturaBannerAdmin(slot,img){
  const response=await fetch(
   '/staging/escritorio-unificado/banners-escritorio/'+slot+'/imagem',{
    credentials:'same-origin',cache:'no-store',
-   headers:{Authorization:'Bearer '+auth}
+   headers:{...(auth?{Authorization:'Bearer '+auth}:{})}
   });
  if(!response.ok)return;
  const foto=await response.blob();
@@ -854,7 +854,7 @@ async function enviarArteBannerLoja(arquivo){
   throw Error('BANNER_IMAGEM_INVALIDA');
  const r=await fetch('/staging/escritorio-unificado/loja/banner-arquivo',{
   method:'POST',credentials:'omit',cache:'no-store',
-  headers:{Authorization:'Bearer '+auth,'Content-Type':arquivo.type},
+  headers:{...(auth?{Authorization:'Bearer '+auth}:{}),'Content-Type':arquivo.type},
   body:arquivo
  });
  const data=await r.json().catch(()=>({}));
@@ -941,7 +941,7 @@ async function enviarImagemNovidade(id,revisao,arquivo){
   throw Error('IMAGEM_FORMATO_OU_TAMANHO_INVALIDO');
  const r=await fetch('/staging/escritorio-unificado/novidades/'+id+'/imagem',{
   method:'PUT',credentials:'omit',cache:'no-store',
-  headers:{Authorization:'Bearer '+auth,'Content-Type':arquivo.type,
+  headers:{...(auth?{Authorization:'Bearer '+auth}:{}),'Content-Type':arquivo.type,
    'X-Novidade-Revisao':String(revisao)},body:arquivo
  });
  const obj=await r.json().catch(()=>({}));
@@ -981,7 +981,7 @@ $('novidadeRemoverImagemAdmin').addEventListener('click',async e=>{
   if(!novidadeEmEdicao?.temImagem)throw Error('SEM_IMAGEM');
   const r=await fetch('/staging/escritorio-unificado/novidades/'+novidadeEmEdicao.id+'/imagem',{
    method:'DELETE',credentials:'omit',cache:'no-store',
-   headers:{Authorization:'Bearer '+auth,
+   headers:{...(auth?{Authorization:'Bearer '+auth}:{}),
     'X-Novidade-Revisao':String(novidadeEmEdicao.revisao)}
   });
   const dados=await r.json().catch(()=>({}));
