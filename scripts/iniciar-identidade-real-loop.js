@@ -39,10 +39,18 @@ const {AuditoriaOperacionalSQLite}=
  require('../src/producao/auditoria-operacional-sqlite');
 const {ManutencaoComercialSQLite}=
  require('../src/producao/manutencao-comercial-sqlite');
-function configurar(ambiente=process.env){
- if(ambiente.NODE_ENV!=='production'||ambiente.LOOP_REAL_CADASTRO_GO!=='SIM'||
+function configurar(ambiente=process.env,{cadastroPublico=true}={}){
+ const autorizacaoCadastro=ambiente.LOOP_REAL_CADASTRO_GO==='SIM'&&
+  ambiente.LOOP_REAL_APROVACAO_DOCUMENTOS==='SIM';
+ const autorizacaoInterna=cadastroPublico===false&&
+  ambiente.LOOP_REAL_OPERACAO_INTERNA==='SIM'&&
+  ambiente.LOOP_REAL_PREPARACAO_INTERNA==='SIM'&&
+  ambiente.LOOP_REAL_NUCLEO_COMERCIAL_INTERNO==='SIM'&&
+  ambiente.LOOP_REAL_CADASTRO_GO==='NAO'&&
+  ambiente.LOOP_REAL_APROVACAO_DOCUMENTOS==='NAO';
+ if(ambiente.NODE_ENV!=='production'||
     ambiente.LOOP_REAL_DADOS_SEPARADOS!=='SIM'||
-    ambiente.LOOP_REAL_APROVACAO_DOCUMENTOS!=='SIM')
+    !(cadastroPublico===true&&autorizacaoCadastro||autorizacaoInterna))
   throw Error('CADASTRO_REAL_BLOQUEADO_ATE_GO_FORMAL');
  if(ambiente.LOOP_CLIENTES_LAB==='SIM'||ambiente.LOOP_MODO_SIMULACAO==='1'||
     ambiente.LOOP_PREVIEW_EXCLUSIVO==='SIM')
@@ -120,8 +128,8 @@ function configurar(ambiente=process.env){
   chavesRecuperacao:{chaveEmail,chaveCifra,chaveCodigo,chaveAuditoria,
    chaveCotacoes,chavePedidos,chaveOutbox}};
 }
-async function iniciar(ambiente=process.env){
- const config=configurar(ambiente);
+async function iniciar(ambiente=process.env,opcoes={}){
+ const config=configurar(ambiente,opcoes);
  const banco=new DatabaseSync(config.arquivo);
  banco.exec('PRAGMA journal_mode=WAL;PRAGMA busy_timeout=5000;PRAGMA foreign_keys=ON;');
  let agendador=null,catalogoMidia=null;
@@ -190,7 +198,7 @@ async function iniciar(ambiente=process.env){
   const app=criarAppIdentidadeLoop({
    contas,motorLoop,eventosComerciais,preflightCapacidade,
    pedidosComerciais,remessasOutbox,catalogoVitrine,
-   origemHttps:config.origemHttps,permitirCadastro:true,
+   origemHttps:config.origemHttps,permitirCadastro:opcoes.cadastroPublico!==false,
    captchaCadastroObrigatorio:true,
    backupEstado:()=>agendador.estado(),
    adminComercial:{catalogo,controle,sessoes,auditoria,manutencao,
