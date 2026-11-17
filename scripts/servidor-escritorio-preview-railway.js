@@ -438,7 +438,7 @@ function criarGateway({portaInterna,senhaAcesso,senhaAdmin,segredoOperador,
    if(req.method!=='GET')return negar(405,'Método não permitido');
    // Operador autenticado entra no painel administrativo existente,
    // sem criar uma segunda central nem cair na conta de cliente.
-   res.writeHead(302,{...cabecalhosBase,Location:'/escritorio'+url.search,
+   res.writeHead(302,{...cabecalhosBase,Location:url.searchParams.get('destino')==='loop'?'/staging/cliente?modo=operador':'/escritorio'+url.search,
     ...(novoAdminCookie?{'Set-Cookie':novoAdminCookie}:{})});
    return res.end();
   }
