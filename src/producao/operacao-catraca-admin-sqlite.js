@@ -13,7 +13,7 @@ const FUSO='America/Sao_Paulo';
 function horaOk(h){return typeof h==='string'&&/^(?:[01][0-9]|2[0-3]):[0-5][0-9]$/.test(h);}
 function dataOk(d){
  if(d===null)return true;
- if(typeof d!=='string'||!/^\\d{4}-\\d{2}-\\d{2}$/.test(d))return false;
+ if(typeof d!=='string'||!/^\d{4}-\d{2}-\d{2}$/.test(d))return false;
  const time=Date.parse(d+'T12:00:00Z');
  return Number.isFinite(time)&&new Date(time).toISOString().slice(0,10)===d;
 }
