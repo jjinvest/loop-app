@@ -2072,6 +2072,58 @@ $('provarAcessoCelcoinSandboxAdmin').addEventListener('click',async()=>{
  finally{botao.disabled=false;}
 });
 
+// O painel administrativo e o popup do relogio usam a mesma conta:
+ // 6 luzes por centro, dentro do horario que o operador escolher.
+let intervaloManualAntesMeta=10,metaAnteriorAtiva=false;
+const infoRitmoAgenda=document.createElement('small');
+infoRitmoAgenda.id='agendaMotorPrevisaoLuzes';
+infoRitmoAgenda.setAttribute('role','status');
+$('agendaMotorMetaQuantidade').parentElement.append(infoRitmoAgenda);
+function atualizarRitmoAgendaMotor(){
+ const abertura=$('agendaMotorInicio').value;
+ const fechamento=$('agendaMotorFim').value;
+ const campoMeta=$('agendaMotorMetaQuantidade');
+ const intervalo=$('agendaMotorIntervalo');
+ const n=Number(campoMeta.value);
+ const minutosDoCampo=h=>/^(?:[01]\\d|2[0-3]):[0-5]\\d$/.test(h)?
+  Number(h.slice(0,2))*60+Number(h.slice(3)):null;
+ const ini=minutosDoCampo(abertura),fim=minutosDoCampo(fechamento);
+ if(ini===null||fim===null||!Number.isSafeInteger(n)||n<0){
+  infoRitmoAgenda.textContent='Informe horários e meta válidos.';
+  return false;
+ }
+ if(n===0){
+  if(metaAnteriorAtiva)intervalo.value=String(intervaloManualAntesMeta);
+  intervalo.readOnly=false;metaAnteriorAtiva=false;
+  infoRitmoAgenda.textContent='Sem meta: intervalo ajustável manualmente.';
+  return true;
+ }
+ if(!metaAnteriorAtiva){
+  const anterior=Number(intervalo.value);
+  if(Number.isSafeInteger(anterior)&&anterior>0)
+   intervaloManualAntesMeta=anterior;
+ }
+ metaAnteriorAtiva=true;
+ const duracao=((fim-ini+1440)%1440)||1440;
+ const segundos=Math.max(1,Math.round((duracao*60)/(n*6)));
+ const total=BigInt(n)*6n;
+ intervalo.value=String(Math.max(1,Math.ceil(duracao/(n*6))));
+ intervalo.readOnly=true;
+ infoRitmoAgenda.textContent=n+' centros × 6 = '+total.toString()+
+  ' luzes em '+duracao+' minutos. Média de '+Math.floor(segundos/60)+
+  ' min'+(segundos%60?' '+(segundos%60)+' s':'')+
+  ' entre luzes. A realização depende das compras conciliadas.';
+ return true;
+}
+for(const id of ['agendaMotorInicio','agendaMotorFim','agendaMotorMetaQuantidade'])
+ $(id).addEventListener('input',atualizarRitmoAgendaMotor);
+$('agendaMotorIntervalo').addEventListener('input',()=>{
+ const campo=$('agendaMotorIntervalo');
+ const valor=Number(campo.value);
+ if(Number($('agendaMotorMetaQuantidade').value)===0&&
+    Number.isSafeInteger(valor)&&valor>0)
+  intervaloManualAntesMeta=valor;
+});
 async function atualizarMotorContaEnsaio(){
  const r=await api('/motor/estado');
  atualizarListaDouradasAdmin(r);
@@ -2113,6 +2165,7 @@ async function atualizarMotorContaEnsaio(){
  $('agendaMotorMetaQuantidade').value=String(
   r.agenda.metaLotes?.quantidade||0);
  $('agendaMotorMetaDia').value=r.agenda.metaLotes?.dataAlvo||'';
+ atualizarRitmoAgendaMotor();
  agendaHojeLocal=r.agenda.dia;
  await atualizarFluxoFinanceiroAdmin();
  return r;
@@ -2150,6 +2203,7 @@ $('formAgendaMotor').addEventListener('submit',async e=>{
  try{
   if(Boolean(data)!==Boolean(hora))
    throw Error('A exceção precisa ter data e horário.');
+  if(!atualizarRitmoAgendaMotor())throw Error('Horário ou meta inválidos.');
   const r=await api('/motor/agenda',{method:'POST',body:{
    ativo:$('agendaMotorModo').value==='AGENDADA',
    modoExecucao:$('agendaMotorModo').value,
