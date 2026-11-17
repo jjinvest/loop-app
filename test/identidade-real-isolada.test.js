@@ -83,6 +83,21 @@ test('bootstrap do cadastro real falha fechado sem decisao GO',()=>{
   /CADASTRO_REAL_BLOQUEADO_ATE_GO_FORMAL/);
 });
 
+test('modo interno aceita apenas banco real protegido sem abrir registro',()=>{
+ const ambiente={NODE_ENV:'production',LOOP_REAL_DADOS_SEPARADOS:'SIM',
+  LOOP_REAL_CADASTRO_GO:'NAO',LOOP_REAL_APROVACAO_DOCUMENTOS:'NAO',
+  LOOP_REAL_OPERACAO_INTERNA:'SIM',LOOP_REAL_PREPARACAO_INTERNA:'SIM',
+  LOOP_REAL_NUCLEO_COMERCIAL_INTERNO:'SIM',LOOP_REAL_SQLITE:'/tmp/nao-e-real.sqlite'};
+ assert.throws(()=>configurar(ambiente,{cadastroPublico:false}),
+  /VOLUME_SQLITE_REAL_DEDICADO_OBRIGATORIO/,
+  'modo interno so prossegue com volume real dedicado');
+ assert.throws(()=>configurar(ambiente),/CADASTRO_REAL_BLOQUEADO_ATE_GO_FORMAL/,
+  'cadastro publico continua fechado');
+ assert.throws(()=>configurar({...ambiente,LOOP_REAL_OPERACAO_INTERNA:'NAO'},
+  {cadastroPublico:false}),/CADASTRO_REAL_BLOQUEADO_ATE_GO_FORMAL/);
+ assert.throws(()=>configurar({...ambiente,LOOP_REAL_APROVACAO_DOCUMENTOS:'SIM'},
+  {cadastroPublico:false}),/CADASTRO_REAL_BLOQUEADO_ATE_GO_FORMAL/);
+});
 test('nick de 12 letras cadastra e autentica; 13 letras não entram',async t=>{
  const x=setup(t);
  const nick='DozeLetrasAB';
