@@ -80,21 +80,14 @@ function exportarPreview({banco,contas,raizNick='VILELA',primeiroNick='Taisaassi
  const primeiraConta=rows.find(x=>x.id===primeira?.indicadoId);
  if(!primeiraConta||primeiraConta.nick.toLowerCase()!==primeiroNick.toLowerCase())
   erro('MIGRACAO_PRIMEIRA_INDICACAO_NAO_CONFIRMADA');
- const idsDaRede=new Set([raiz.id]);
- for(let i=0;i<rows.length;i++){
-  let mudou=false;
-  for(const v of todosVinculos)
-   if(idsDaRede.has(v.indicadorId)&&!idsDaRede.has(v.indicadoId)){
-    idsDaRede.add(v.indicadoId);mudou=true;
-   }
-  if(!mudou)break;
- }
- // Opcionalmente preserva TODAS as identidades registradas na origem,
- // sem presumir que fazem parte da rede de VILELA ou que compraram.
- // Vínculos só são importados se já constam do livro imutável de cadastro.
- // A ideia original prevalece sobre um banco antigo: a migracao nao tem
- // autorizacao para transformar contas avulsas de ensaio em clientes reais.
- // Mesmo uma flag antiga SIM deve falhar, nunca ampliar a rede validada.
+ // Antes do lançamento o proprietário reconheceu exatamente DUAS
+ // identidades para custódia: a raiz e a primeira indicação. Um convite
+ // de ensaio, mesmo tecnicamente válido, NÃO autoriza outras contas.
+ // Este código é uma migração de legado de execução única; novos clientes
+ // futuramente usarão o cadastro oficial, nunca esta ponte de homologação.
+ const idsDaRede=new Set([raiz.id,primeiraConta.id]);
+ // A opção legada de importar todas as contas NÃO pode sobrescrever o
+ // consentimento de custódia do proprietário, nem ampliar o grafo.
  const avulsasRows=rows.filter(x=>!idsDaRede.has(x.id));
  if(incluirContasRegistradasSemRede===true&&avulsasRows.length>0)
   erro('MIGRACAO_CONTAS_FORA_REDE_PROIBIDA');
@@ -113,6 +106,10 @@ function exportarPreview({banco,contas,raizNick='VILELA',primeiroNick='Taisaassi
  const idsSelecionados=new Set(rowsFiltradas.map(x=>x.id));
  const vinculos=todosVinculos.filter(v=>
   idsSelecionados.has(v.indicadorId)&&idsSelecionados.has(v.indicadoId));
+ if(rowsFiltradas.length!==2||vinculos.length!==1||
+    vinculos[0].indicadoId!==primeiraConta.id||
+    vinculos[0].indicadorId!==raiz.id)
+  erro('MIGRACAO_CUSTODIA_DUAS_CONTAS_NAO_COMPROVADA');
  const contasExportadas=rowsFiltradas.map(r=>{
   if(!ID.test(r.id)||!/^[a-f0-9]{32}$/.test(r.senha_salt)||!H128.test(r.senha_hash)||
      !HEX.test(r.termos_hash)||!Number.isSafeInteger(r.criado_em)||
@@ -186,8 +183,9 @@ function importarNoReal({banco,payload,chaveEmail,chaveCifra,agora=()=>Date.now(
  // Segunda catraca de seguranca no DESTINO. Um payload autenticado com
  // registros fora da rede validada nao pode ser importado, mesmo que o
  // exportador anterior ainda esteja publicado ou tenha flag permissiva.
- if(!Number.isSafeInteger(chk.contasNaRedeComprovada)||
-    chk.contasNaRedeComprovada!==payload.contas.length||
+ if(payload.contas.length!==2||payload.vinculos.length!==1||
+    !Number.isSafeInteger(chk.contasNaRedeComprovada)||
+    chk.contasNaRedeComprovada!==2||
     !Number.isSafeInteger(chk.contasAvulsasOrigem)||
     chk.contasAvulsasOrigem<0||
     chk.contasAvulsasIgnoradas!==chk.contasAvulsasOrigem)
