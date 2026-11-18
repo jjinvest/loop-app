@@ -31,8 +31,12 @@ test('mesmo operador real sobe foto versionada; cliente so ve publicada, sem alt
  const pasta=fs.mkdtempSync(path.join(os.tmpdir(),'akitemm-operador-fotos-'));
  const banco=new DatabaseSync(':memory:');
  banco.exec('PRAGMA foreign_keys=ON');
+ let catalogoPrincipal=null;
  const midia=criarCatalogoMercadoriasReal({
-  arquivo:path.join(pasta,'catalogo-real.sqlite'),tokenRaiz:'a'.repeat(64)
+  arquivo:path.join(pasta,'catalogo-real.sqlite'),
+  tokenRaiz:'a'.repeat(64),
+  buscarProdutoCompartilhado:id=>catalogoPrincipal?.
+   buscarProdutoAdministrativo({produtoId:id})||null
  });
  t.after(()=>{
   midia.fechar();banco.close();
@@ -52,6 +56,9 @@ test('mesmo operador real sobe foto versionada; cliente so ve publicada, sem alt
  const catalogo=new CatalogoMultiDistribuidoresSQLite({
   banco,distribuidorHomologado:()=>false,auditoria,manutencao
  });
+ catalogoPrincipal=catalogo;
+ catalogo.criarProduto({produtoId:'bone-cinza',titulo:'Boné Cinza'});
+ catalogo.ativarProduto({produtoId:'bone-cinza',ativo:true});
  const controle=new ControleEconomicoLojaSQLite({banco,auditoria,manutencao});
  const sessoes=new SessaoAdminComercialSQLite({
   banco,chaveAdmin:randomBytes(32),credencialAdmin:SENHA
@@ -67,6 +74,8 @@ test('mesmo operador real sobe foto versionada; cliente so ve publicada, sem alt
   catalogoMidiaLeitura:{
    banco:midia.repo.banco,
    listarVitrinePreparacao:args=>midia.listarVitrinePreparacao(args),
+   listarFotosProdutoCompartilhado:args=>
+    midia.listarFotosProdutoCompartilhado(args),
    abrirFotoPublicada:args=>midia.abrirFotoPublicada(args)
   },
   adminComercial:{
@@ -124,6 +133,24 @@ test('mesmo operador real sobe foto versionada; cliente so ve publicada, sem alt
  assert.equal(metas.fotos[0].posicao,1);
  assert.equal(metas.fotos[0].url,adminFoto+'/foto/1');
  assert.equal((await get(adminFoto+'/foto/1',{Cookie:cookie})).status,200);
+ // O produto no banco comercial principal usa o MESMO armazenamento de
+ // fotos: não recriar outro registro para guardar sua imagem.
+ const produtoPrincipal='/api/admin/catalogo-midia/produtos/bone-cinza';
+ assert.equal(midia.repo.buscar('bone-cinza'),null);
+ const subirPrincipal=await fetch(base+produtoPrincipal+'/fotos/10',{
+  method:'POST',headers:{Cookie:cookie,Origin:ORIGEM,
+   'X-Loop-Admin-Csrf':csrf,'X-Foto-Versao-Esperada':'0',
+   'Content-Type':'image/png'},body:FOTO
+ });
+ assert.equal(subirPrincipal.status,201);
+ assert.equal(midia.repo.buscar('bone-cinza'),null);
+ const produtosAdmin=await get('/api/admin/catalogo-midia/produtos',
+  {Cookie:cookie});
+ assert.equal(produtosAdmin.status,200);
+ const visaoAdmin=await produtosAdmin.json();
+ assert.equal(visaoAdmin.produtos.length,2);
+ assert.equal(visaoAdmin.produtos.find(p=>p.produtoId==='bone-cinza')
+  .quantidadeFotos,1);
  assert.equal((await get(vitrineFoto,{Cookie:cookie})).status,401,
   'cookie operador nao e sessao de cliente');
  // A loja continua sem acesso publico e sem foto de rascunho.
@@ -147,10 +174,17 @@ test('mesmo operador real sobe foto versionada; cliente so ve publicada, sem alt
  const vitrine=await get('/api/loja/catalogo',{Cookie:cookieCliente});
  assert.equal(vitrine.status,200);
  const dados=await vitrine.json();
- assert.equal(dados.produtos.length,1);
- assert.equal(dados.produtos[0].fotos[0].url,vitrineFoto);
- assert.equal(dados.produtos[0].compravel,false);
- assert.equal(dados.produtos[0].precoCentavos,null);
+ assert.equal(dados.produtos.length,2);
+ assert.equal(dados.produtos.find(p=>p.produtoId===produto.id)
+  .fotos[0].url,vitrineFoto);
+ const bone=dados.produtos.find(p=>p.produtoId==='bone-cinza');
+ assert.equal(bone.fotos.length,1);
+ assert.equal(bone.fotos[0].posicao,10);
+ const fotoBone=await get(bone.fotos[0].url,{Cookie:cookieCliente});
+ assert.equal(fotoBone.status,200);
+ assert.match(fotoBone.headers.get('content-type'),/^image\/png/);
+ assert.ok(dados.produtos.every(p=>p.compravel===false));
+ assert.ok(dados.produtos.every(p=>p.precoCentavos===null));
  const visivel=await get(vitrineFoto,{Cookie:cookieCliente});
  assert.equal(visivel.status,200);
  assert.match(visivel.headers.get('content-type'),/^image\/png/);
