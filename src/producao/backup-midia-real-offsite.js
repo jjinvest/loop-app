@@ -136,11 +136,17 @@ async function provarBackupMidiaOffsite({fonteSqlite,chaveBackup,config,
   const put=assinarObjetoS3Real({config,key,method:'PUT',agora:data});
   const get=assinarObjetoS3Real({config,key,method:'GET',agora:data});
   let res;
+  // O PUT pode falhar antes de consumir o corpo. Fecha o descritor sempre,
+  // impedindo abertura de stream após o diretório temporário ser removido.
+  const envio=fs.createReadStream(cifrado,{
+   fd:fs.openSync(cifrado,'r'),autoClose:true
+  });
   try{res=await buscar(put,{method:'PUT',redirect:'error',duplex:'half',
    headers:{'Content-Type':'application/octet-stream',
     'Content-Length':String(tamanho),'If-None-Match':'*'},
-   body:fs.createReadStream(cifrado),signal:AbortSignal.timeout(120000)});
+   body:envio,signal:AbortSignal.timeout(120000)});
   }catch{falha('BACKUP_MIDIA_UPLOAD_INDETERMINADO');}
+  finally{envio.destroy();}
   if(!res||![200,201,204].includes(res.status))
    falha('BACKUP_MIDIA_UPLOAD_NAO_COMPROVADO');
   try{res=await buscar(get,{method:'GET',redirect:'error',
