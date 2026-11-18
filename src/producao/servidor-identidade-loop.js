@@ -74,7 +74,8 @@ function criarAppIdentidadeLoop({contas,origemHttps,
   typeof catalogoMidiaLeitura.abrirFotoPublicada!=='function'))
   throw Error('CATALOGO_MIDIA_LEITURA_NAO_ISOLADA');
  const posicoesVitrine=(catalogoVitrine||catalogoMidiaLeitura)?
-  new PosicoesVitrineRealSQLite({banco:contas.banco}):null;
+  new PosicoesVitrineRealSQLite({banco:contas.banco,
+   auditoria:adminComercial?.auditoria||null}):null;
  const visaoEscritorio=motorLoop===null?null:
   new VisaoEscritorioUnificadaSQLite({
    banco:contas.banco,motor:motorLoop,
