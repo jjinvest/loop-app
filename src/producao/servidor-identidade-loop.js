@@ -599,14 +599,14 @@ function criarAppIdentidadeLoop({contas,origemHttps,
      })
     })):central;
    const midia=catalogoMidiaLeitura?
-    catalogoMidiaLeitura.listarVitrinePreparacao({limite:100}):[];
+    catalogoMidiaLeitura.listarVitrinePreparacao({limite:400}):[];
    if(!Array.isArray(principal)||!Array.isArray(midia))
     throw Error('CATALOGO_ORIGEM_NAO_CONFIAVEL');
    const produtos=[...principal,...midia];
    const ids=new Set(produtos.map(p=>p.produtoId));
    // Conflito entre bancos não pode ser mascarado por sobrescrita.
    if(ids.size!==produtos.length)throw Error('CATALOGO_IDS_DUPLICADOS');
-   if(!Array.isArray(produtos)||produtos.length>100||
+   if(!Array.isArray(produtos)||produtos.length>400||
       produtos.some(p=>p.compravel!==false||
        p.checkoutReal!==false||p.precoCentavos!==null||
        typeof p.titulo!=='string'||p.titulo.length>150||
