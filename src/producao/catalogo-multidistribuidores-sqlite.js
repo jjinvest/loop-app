@@ -183,12 +183,48 @@ class CatalogoMultiDistribuidoresSQLite{
  buscarProdutoAdministrativo({produtoId}={}){
   if(!id(produtoId))erro('PRODUTO_COMERCIAL_INVALIDO');
   const row=this.db.prepare([
-   'SELECT produto_id AS produtoId,titulo,descricao,tipo,ativo',
+   'SELECT produto_id AS produtoId,titulo,descricao,tipo,ativo,',
+   'atualizado_em AS revisao',
    'FROM loja_real_produtos WHERE produto_id=?'
   ].join(' ')).get(produtoId);
   return row?Object.freeze({
    ...row,ativo:row.ativo===1
   }):null;
+ }
+ atualizarDescricaoProduto({produtoId,titulo,descricao='',revisaoEsperada}={}){
+  if(!id(produtoId)||typeof titulo!=='string'||titulo.trim().length<2||
+     titulo.length>150||typeof descricao!=='string'||descricao.length>2000||
+     !Number.isSafeInteger(revisaoEsperada)||revisaoEsperada<1)
+   erro('PRODUTO_COMERCIAL_INVALIDO');
+  if(this.auditoria)this.db.exec('BEGIN IMMEDIATE');
+  try{
+   if(this.manutencao)this.manutencao.garantirOperacaoDisponivel();
+   const antes=this.buscarProdutoAdministrativo({produtoId});
+   if(!antes)erro('PRODUTO_COMERCIAL_NAO_EXISTE');
+   if(antes.revisao!==revisaoEsperada)
+    erro('PRODUTO_COMERCIAL_CONFLITO_REVISAO');
+   const novoTitulo=titulo.trim(),novaDescricao=descricao.trim();
+   const revisao=Math.max(this.agora(),antes.revisao+1);
+   const x=this.db.prepare([
+    'UPDATE loja_real_produtos SET titulo=?,descricao=?,atualizado_em=?',
+    'WHERE produto_id=? AND atualizado_em=?'
+   ].join(' ')).run(novoTitulo,novaDescricao,revisao,produtoId,revisaoEsperada);
+   if(x.changes!==1)erro('PRODUTO_COMERCIAL_CONFLITO_REVISAO');
+   if(this.auditoria){
+    this.auditoria.registrar({
+     acao:'PRODUTO_DESCRICAO_ALTERADA',ator:'ADMIN_COMERCIAL',
+     entidade:'PRODUTO_'+produtoId,
+     antes:{titulo:antes.titulo,descricao:antes.descricao},
+     depois:{titulo:novoTitulo,descricao:novaDescricao}
+    });
+    this.db.exec('COMMIT');
+   }
+   return {produtoId,titulo:novoTitulo,descricao:novaDescricao,
+    revisao,ativo:antes.ativo};
+  }catch(e){
+   if(this.auditoria)this.db.exec('ROLLBACK');
+   throw e;
+  }
  }
  listarProdutosAdministrativos({limite=500}={}){
   if(!Number.isInteger(limite)||limite<1||limite>500)
