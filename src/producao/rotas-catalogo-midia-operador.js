@@ -2,7 +2,8 @@
 // Edicao de fotos do catalogo persistente REAL pela mesma sessao
 // administrativa do escritorio. Nenhum HTML, CSS, simulado ou checkout.
 const express=require('express');
-const ID=/^[a-z0-9-]{3,80}$/;
+const ID=/^[A-Za-z0-9_-]{1,80}$/;
+const ID_MIDIA=/^[a-z0-9-]{3,80}$/;
 const POS=/^(?:10|[1-9])$/;
 const MIME=new Set(['image/jpeg','image/png','image/webp']);
 function montarRotasCatalogoMidiaOperador({
@@ -27,7 +28,7 @@ function montarRotasCatalogoMidiaOperador({
   throw Error('OPERADOR_CATALOGO_REAL_NAO_INTEGRADO');
  const urlFoto=(id,posicao)=>'/api/admin/catalogo-midia/produtos/'+
   id+'/foto/'+posicao;
- const existe=id=>catalogoMidia.repo.buscar(id)||
+ const existe=id=>(ID_MIDIA.test(id)?catalogoMidia.repo.buscar(id):null)||
   catalogoMidia.buscarProdutoCompartilhado?.(id);
  const corpoImagem=express.raw({
   type:['image/jpeg','image/png','image/webp'],
@@ -61,7 +62,7 @@ function montarRotasCatalogoMidiaOperador({
        !Number.isSafeInteger(b.revisaoEsperada)||b.revisaoEsperada<0)
      return res.status(400).json({erro:'SLOT_ATRIBUICAO_INVALIDA'});
     try{
-     const local=ID.test(b.produtoId)?
+     const local=ID_MIDIA.test(b.produtoId)?
       catalogoMidia.repo.buscar(b.produtoId):null;
      const central=catalogoPrincipal?.
       buscarProdutoAdministrativo({produtoId:b.produtoId});
@@ -116,7 +117,8 @@ function montarRotasCatalogoMidiaOperador({
   autorizarOperador,verificarId,(req,res)=>{
    const id=req.params.produtoId;
    try{
-    const local=catalogoMidia.repo.buscarRegistro(id);
+    const local=ID_MIDIA.test(id)?
+     catalogoMidia.repo.buscarRegistro(id):null;
     const principal=catalogoPrincipal?.
      buscarProdutoAdministrativo({produtoId:id});
     if(local&&principal)
@@ -149,7 +151,8 @@ function montarRotasCatalogoMidiaOperador({
       b.revisaoEsperada<1)
     return res.status(400).json({erro:'PRODUTO_CAMPOS_INVALIDOS'});
    try{
-    const local=catalogoMidia.repo.buscarRegistro(id);
+    const local=ID_MIDIA.test(id)?
+     catalogoMidia.repo.buscarRegistro(id):null;
     const principal=catalogoPrincipal?.
      buscarProdutoAdministrativo({produtoId:id});
     if(local&&principal)
