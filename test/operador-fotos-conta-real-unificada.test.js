@@ -71,6 +71,9 @@ test('mesmo operador real sobe foto versionada; cliente so ve publicada, sem alt
  midia.repo.salvar({produto,revisaoEsperada:0});
  const app=criarAppIdentidadeLoop({
   contas,origemHttps:ORIGEM,permitirCadastro:false,
+  catalogoVitrine:{
+   banco, listarVitrinePreparacao:args=>catalogo.listarVitrinePreparacao(args)
+  },
   catalogoMidiaLeitura:{
    banco:midia.repo.banco,
    listarVitrinePreparacao:args=>midia.listarVitrinePreparacao(args),
