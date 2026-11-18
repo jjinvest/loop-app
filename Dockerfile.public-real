@@ -1,0 +1,10 @@
+# Entrada publica definitiva AKITEMM → LOOP real.
+# Imagem minima: nao inclui banco, laboratorio, sandbox, dependencias
+# de pagamentos, UI duplicada nem qualquer arquivo de usuario.
+FROM node:24-bookworm-slim
+ENV NODE_ENV=production
+WORKDIR /app
+COPY --chown=node:node scripts/iniciar-gateway-publico-real-loop.js scripts/provar-ligacao-privada-loop.js ./scripts/
+USER node
+EXPOSE 8080
+CMD ["node","scripts/iniciar-gateway-publico-real-loop.js"]
