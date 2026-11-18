@@ -78,6 +78,7 @@ test('loja real sem cadastro de produtos: zero catalogados e 400 espaços, sem c
  // Sessão de operador não representa comprador e não produz pedido/posição.
  assert.equal((await requisitar('/api/loja/pedidos',cookie)).status,401);
  assert.equal((await requisitar('/api/contas/me',cookie)).status,401);
- assert.equal((await requisitar('/api/loja/produtos/curso-ficticio/foto/1',cookie)).status,404);
+ assert.equal((await requisitar('/api/loja/produtos/curso-ficticio/foto/1',cookie)).status,503,
+  'sem banco de midia nao pode fabricar foto nem fingir disponibilidade');
  assert.equal(banco.prepare('PRAGMA quick_check').get().quick_check,'ok');
 });
