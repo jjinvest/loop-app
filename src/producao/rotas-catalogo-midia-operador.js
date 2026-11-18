@@ -6,7 +6,7 @@ const ID=/^[a-z0-9-]{3,80}$/;
 const POS=/^(?:10|[1-9])$/;
 const MIME=new Set(['image/jpeg','image/png','image/webp']);
 function montarRotasCatalogoMidiaOperador({
- app,catalogoMidia,autorizarOperador,validarCsrf
+ app,catalogoMidia,catalogoPrincipal=null,autorizarOperador,validarCsrf
 }={}){
  if(typeof app?.get!=='function'||typeof app?.post!=='function'||
     !catalogoMidia||typeof catalogoMidia.repo?.buscar!=='function'||
@@ -15,10 +15,13 @@ function montarRotasCatalogoMidiaOperador({
     typeof catalogoMidia.fotos?.listar!=='function'||
     typeof catalogoMidia.fotos?.abrir!=='function'||
     catalogoMidia.fotos.banco!==catalogoMidia.repo.banco||
+    (catalogoPrincipal!==null&&typeof catalogoPrincipal?.listarProdutosAdministrativos!=='function')||
     typeof autorizarOperador!=='function'||typeof validarCsrf!=='function')
   throw Error('OPERADOR_CATALOGO_REAL_NAO_INTEGRADO');
  const urlFoto=(id,posicao)=>'/api/admin/catalogo-midia/produtos/'+
   id+'/foto/'+posicao;
+ const existe=id=>catalogoMidia.repo.buscar(id)||
+  catalogoMidia.buscarProdutoCompartilhado?.(id);
  const corpoImagem=express.raw({
   type:['image/jpeg','image/png','image/webp'],
   limit:'3mb',inflate:false
@@ -32,13 +35,24 @@ function montarRotasCatalogoMidiaOperador({
  };
  app.get('/api/admin/catalogo-midia/produtos',autorizarOperador,(_req,res)=>{
   try{
-   const lista=catalogoMidia.repo.listar();
-   if(!Array.isArray(lista)||lista.length>10000)
+   const locais=catalogoMidia.repo.listar();
+   const central=catalogoPrincipal?
+    catalogoPrincipal.listarProdutosAdministrativos({limite:500}):[];
+   if(!Array.isArray(locais)||!Array.isArray(central)||
+      locais.length+central.length>10000)
     throw Error('CATALOGO_INCONSISTENTE');
-   return res.json({produtos:lista.map(p=>({
-    produtoId:p.id,nome:p.nome,descricao:p.descricao||'',
-    tipo:p.tipo,estado:p.estado,
-    quantidadeFotos:catalogoMidia.fotos.listar(p.id).fotos.length
+   const combinados=[
+    ...locais.map(p=>({produtoId:p.id,nome:p.nome,
+     descricao:p.descricao||'',tipo:p.tipo,estado:p.estado,
+     fonte:'MIDIA_REAL'})),
+    ...central.map(p=>({produtoId:p.produtoId,nome:p.titulo,
+     descricao:p.descricao||'',tipo:p.tipo,
+     estado:p.ativo?'PUBLICADO':'RASCUNHO',fonte:'COMERCIAL_PRINCIPAL'}))
+   ];
+   if(new Set(combinados.map(p=>p.produtoId)).size!==combinados.length)
+    return res.status(409).json({erro:'CATALOGO_IDS_DUPLICADOS'});
+   return res.json({produtos:combinados.map(p=>({
+    ...p,quantidadeFotos:catalogoMidia.fotos.listar(p.produtoId).fotos.length
    })),origem:'CATALOGO_REAL_PERSISTENTE',checkoutReal:false});
   }catch{return res.status(503).json({erro:'CATALOGO_REAL_INDISPONIVEL'});}
  });
@@ -46,7 +60,7 @@ function montarRotasCatalogoMidiaOperador({
   autorizarOperador,verificarId,(req,res)=>{
    const id=req.params.produtoId;
    try{
-    if(!catalogoMidia.repo.buscar(id))
+    if(!existe(id))
      return res.status(404).json({erro:'PRODUTO_NAO_ENCONTRADO'});
     const atual=catalogoMidia.fotos.listar(id);
     return res.json({
@@ -61,7 +75,7 @@ function montarRotasCatalogoMidiaOperador({
  app.get('/api/admin/catalogo-midia/produtos/:produtoId/foto/:posicao',
   autorizarOperador,verificarId,(req,res)=>{
    try{
-    if(!catalogoMidia.repo.buscar(req.params.produtoId))
+    if(!existe(req.params.produtoId))
      return res.status(404).json({erro:'PRODUTO_NAO_ENCONTRADO'});
     const imagem=catalogoMidia.fotos.abrir(req.params.produtoId,
      Number(req.params.posicao));
@@ -81,7 +95,7 @@ function montarRotasCatalogoMidiaOperador({
       typeof revisao!=='string'||!/^(?:0|[1-9][0-9]{0,8})$/.test(revisao))
     return res.status(415).json({erro:'FOTO_PARAMETROS_INVALIDOS'});
    try{
-    if(!catalogoMidia.repo.buscar(id))
+    if(!existe(id))
      return res.status(404).json({erro:'PRODUTO_NAO_ENCONTRADO'});
     const salva=await catalogoMidia.fotos.salvar({
      produtoId:id,posicao,bytes:req.body,mime,
