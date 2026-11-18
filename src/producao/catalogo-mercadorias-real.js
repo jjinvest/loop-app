@@ -141,8 +141,10 @@ function criarCatalogoMercadoriasReal({
   return imagem;
  }
  function listarFotosProdutoCompartilhado({produtoId}={}){
-  if(typeof produtoId!=='string'||!ID.test(produtoId))
-   throw Error('FOTO_PRODUTO_INVALIDO');
+  // Identificadores legados podem conter maiuscula/sublinhado. Eles
+  // permanecem validos no catalogo comercial; apenas a galeria de midia
+  // exige slug canonico ate a migracao explicita e auditada do acervo.
+  if(typeof produtoId!=='string'||!ID.test(produtoId))return [];
   return fotos.listar(produtoId).fotos.map(x=>Object.freeze({
    posicao:x.posicao,versao:x.versao,
    url:'/api/loja/produtos/'+produtoId+'/foto/'+x.posicao
