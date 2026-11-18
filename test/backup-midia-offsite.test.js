@@ -71,6 +71,37 @@ test('backup cifrado e restore local preservam histórico de fotos antigas e nã
    .get().n,1);
  }finally{b.close();}
 });
+test('backup ativo conserva banners do acervo e recusa banner inválido',async t=>{
+ const f=fixture(t),db=f.cat.repo.banco;
+ db.exec([
+  'CREATE TABLE admin_akitemm_banner_arquivos_v1(',
+  'id TEXT PRIMARY KEY,mime TEXT NOT NULL,imagem BLOB NOT NULL);'
+ ].join(' '));
+ db.prepare('INSERT INTO admin_akitemm_banner_arquivos_v1(id,mime,imagem) VALUES(?,?,?)')
+  .run('banner-principal','image/png',Buffer.alloc(100,17));
+ f.cat.fechar();
+ const antes=validarAcervoMidia(f.origem);
+ assert.equal(antes.bannersAtuais,1);
+ const copia=path.join(f.pasta,'banner.loopmidiabak');
+ await criarBackupMidiaReal({
+  origem:f.origem,destino:copia,chaveBackup:f.chave
+ });
+ const recuperado=path.join(f.pasta,'banners-recuperados.sqlite');
+ const prova=await restaurarBackupMidiaReal({
+  origem:copia,destino:recuperado,chaveBackup:f.chave
+ });
+ assert.equal(prova.bannersAtuais,1);
+ const b=new DatabaseSync(recuperado,{readOnly:true});
+ try{
+  assert.equal(b.prepare('SELECT length(imagem) AS bytes FROM admin_akitemm_banner_arquivos_v1').get().bytes,100);
+ }finally{b.close();}
+ const aberto=new DatabaseSync(f.origem);
+ try{
+  aberto.exec("UPDATE admin_akitemm_banner_arquivos_v1 SET imagem=X'01'");
+ }finally{aberto.close();}
+ assert.throws(()=>validarAcervoMidia(f.origem),/BACKUP_MIDIA_BANNER_INVALIDO/);
+});
+
 test('restauração com chave errada ou arquivo alterado nunca promove dados',async t=>{
  const f=fixture(t);f.cat.fechar();
  const bk=path.join(f.pasta,'origem.loopmidiabak');
