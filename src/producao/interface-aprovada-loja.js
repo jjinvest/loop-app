@@ -113,8 +113,14 @@
    lista.append(faixa);faixas.push(faixa);
   }
   const inicio=abaVitrine*40,ate=inicio+linhas*10;
+  const posicoesFixas=new Map(itens.filter(p=>
+   Number.isSafeInteger(p.posicaoVitrine)&&
+   p.posicaoVitrine>=1&&p.posicaoVitrine<=400).map(p=>
+   [p.posicaoVitrine,p]));
   for(let indice=inicio;indice<ate;indice++){
-   const p=itens[indice],alvo=faixas[Math.floor((indice-inicio)/10)];
+   const p=filtrada?itens[indice]:
+    posicoesFixas.get(indice+1);
+   const alvo=faixas[Math.floor((indice-inicio)/10)];
    if(!p){
     if(filtrada)continue;
     const corSlot=CORES[indice%CORES.length];
