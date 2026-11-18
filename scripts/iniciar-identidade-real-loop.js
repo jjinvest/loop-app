@@ -30,6 +30,10 @@ const {validarConfig:validarBackupS3,enviarBackupOffsiteIdentidade}=
  require('../src/producao/backup-identidade-offsite');
 const {criarAgendadorBackupIdentidadeReal}=
  require('../src/producao/agendador-backup-identidade-real');
+const {provarBackupMidiaOffsite}=
+ require('../src/producao/backup-midia-offsite');
+const {criarAgendadorBackupMidiaReal}=
+ require('../src/producao/agendador-backup-midia-real');
 const {SessaoAdminComercialSQLite}=
  require('../src/producao/sessao-admin-comercial-sqlite');
 const {CatalogoMultiDistribuidoresSQLite}=
@@ -136,7 +140,7 @@ async function iniciar(ambiente=process.env,opcoes={}){
  const config=configurar(ambiente,opcoes);
  const banco=new DatabaseSync(config.arquivo);
  banco.exec('PRAGMA journal_mode=WAL;PRAGMA busy_timeout=5000;PRAGMA foreign_keys=ON;');
- let agendador=null,catalogoMidia=null;
+ let agendador=null,agendadorMidia=null,catalogoMidia=null;
  try{
   const contas=new IdentidadeClienteLoopReal({...config,banco});
   const motorLoop=new MotorLoopIntegradoSQLite({banco});
@@ -209,6 +213,24 @@ async function iniciar(ambiente=process.env,opcoes={}){
      produtoId:id
     })
    });
+  // A cópia da conta não inclui o SQLite separado das fotos/PDFs.
+  // Quando a custódia da mídia estiver habilitada, exigir PUT, GET,
+  // hash e restauração ANTES de subir o listener real.
+  const backupMidiaAtivo=
+   ambiente.LOOP_REAL_BACKUP_MIDIA_OFFSITE_AUTO==='SIM';
+  if(backupMidiaAtivo){
+   if(!catalogoMidia)
+    throw Error('BACKUP_MIDIA_CATALOGO_REAL_OBRIGATORIO');
+   agendadorMidia=criarAgendadorBackupMidiaReal({
+    executar:()=>provarBackupMidiaOffsite({
+     fonteSqlite:'/dados-reais/catalogo-produtos.sqlite',
+     chaveBackup:config.chaveBackup,config:config.configS3
+    })
+   });
+   await agendadorMidia.iniciar();
+   console.log('LOOP_BACKUP_MIDIA_OFFSITE=COMPROVADO;'+
+    'PUT_GET_HASH_RESTORE=SIM;SEM_DINHEIRO=SIM');
+  }
   const catalogoMidiaLeitura=catalogoMidia?Object.freeze({
    banco:catalogoMidia.repo.banco,
    listarVitrinePreparacao:args=>catalogoMidia.listarVitrinePreparacao(args),
@@ -240,7 +262,8 @@ async function iniciar(ambiente=process.env,opcoes={}){
     ';FOTOS_ATUAIS='+acervo.fotosAtuais+
     ';FOTOS_VERIFICADAS='+acervo.fotosVerificadas+
     ';FOTOS_PENDENTES='+acervo.fotosPendentes+
-    ';BACKUP_MIDIA_OFFSITE=NAO_COMPROVADO');
+    ';BACKUP_MIDIA_OFFSITE='+(agendadorMidia?.estado().backupAtualEmDia?
+     'COMPROVADO':'NAO_COMPROVADO'));
   }catch{
    console.error('LOOP_ACERVO_REAL=INVENTARIO_NAO_COMPROVADO');
   }
@@ -275,6 +298,7 @@ async function iniciar(ambiente=process.env,opcoes={}){
   const encerrar=()=>{
    if(timer)clearInterval(timer);
    server.close(async()=>{
+    try{await agendadorMidia?.encerrar();}catch{}
     try{await agendador.encerrar();}catch{}
     try{catalogoMidia?.fechar();}catch{}
     try{banco.exec('PRAGMA wal_checkpoint(TRUNCATE)');}catch{}
@@ -282,8 +306,9 @@ async function iniciar(ambiente=process.env,opcoes={}){
    });
   };
   process.once('SIGTERM',encerrar);process.once('SIGINT',encerrar);
-  return {server,banco,agendador};
+  return {server,banco,agendador,agendadorMidia};
  }catch(e){
+  if(agendadorMidia)await agendadorMidia.encerrar();
   if(agendador)await agendador.encerrar();
   catalogoMidia?.fechar();
   banco.close();
