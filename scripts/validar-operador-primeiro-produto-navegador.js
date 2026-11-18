@@ -92,6 +92,8 @@ async function principal(){
    isMobile:true,hasTouch:true
   });
   const page=await ctx.newPage();
+  const errosNavegador=[];
+  page.on('pageerror',erro=>errosNavegador.push(erro.message));
   page.setDefaultTimeout(12000);
   await page.goto(base+'/escritorio',{waitUntil:'domcontentloaded'});
   const token=await page.evaluate(async senha=>{
@@ -105,7 +107,24 @@ async function principal(){
   assert.equal(token,true);
   await page.goto(base+'/loja',{waitUntil:'domcontentloaded'});
   await page.locator('#conteudoLojaLoop').waitFor({state:'visible'});
-  await page.locator('#akitemmOperadorMais').waitFor({state:'visible'});
+  const estadoOperador=await page.evaluate(async()=>{
+   const r=await fetch('/api/operador/estado',{
+    credentials:'same-origin',cache:'no-store'
+   });
+   return {status:r.status,corpo:r.ok?await r.json():null};
+  });
+  assert.equal(estadoOperador.status,200);
+  assert.equal(estadoOperador.corpo?.operador,true,
+   'o cookie de operador precisa persistir no mesmo dominio da loja');
+  assert.equal(await page.locator('#akitemmOperadorMais').count(),1,
+   'a loja aprovada deve ter o acesso protegido do operador');
+  await page.locator('#akitemmOperadorMais').waitFor({
+   state:'visible',timeout:12000
+  }).catch(e=>{
+   throw Error('OPERADOR_ICONE_OCULTO_COM_SESSAO_VALIDA: '+
+    JSON.stringify({errosNavegador,iconeContagem:1,operador:true,
+     endereco:page.url()})+' '+e.message);
+  });
   const vazio=await page.evaluate(async()=>{
    const res=await fetch('/api/loja/catalogo',{credentials:'same-origin'});
    if(!res.ok)throw Error('CATALOGO_INDISPONIVEL_'+res.status);
