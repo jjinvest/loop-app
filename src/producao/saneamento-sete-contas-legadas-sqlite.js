@@ -46,7 +46,7 @@ function planejarSaneamentoLegados({banco}={}){
   ['vilela','taisaassi'].includes(x.nick.toLowerCase()));
  if(reconhecidas.length!==2||
     new Set(reconhecidas.map(x=>x.nick.toLowerCase())).size!==2)
-  falha('SANEAMENTO_DUAS_IDENTIDADES_NAO_CONFIRMDAS');
+  falha('SANEAMENTO_DUAS_IDENTIDADES_NAO_CONFIRMADAS');
  const ids=new Set(reconhecidas.map(x=>x.id));
  const adicionais=contas.filter(x=>!ids.has(x.id)).map(x=>x.id);
  if(adicionais.length!==7||new Set(adicionais).size!==7)
@@ -68,10 +68,14 @@ function planejarSaneamentoLegados({banco}={}){
  if(typeof trigger!=='string'||
     !/^CREATE TRIGGER(?: IF NOT EXISTS)? loop_real_vinculos_sem_delete BEFORE DELETE ON loop_real_vinculos_indicacao BEGIN SELECT RAISE\(ABORT,'vinculo imutavel'\); END;?$/i.test(trigger.trim()))
   falha('SANEAMENTO_TRIGGER_IMUTAVEL_DIVERGENTE');
- return {estado:'APTO',apto:true,remover:7,vinculos:3,migracoes:7,
-  depuracaoExecutada:false,
-  // Campos internos nao devem ser serializados em logs.
-  _ids:Object.freeze(adicionais),_trigger:trigger};
+ const plano={estado:'APTO',apto:true,remover:7,vinculos:3,
+  migracoes:7,depuracaoExecutada:false};
+ // Identificadores de titulares nunca entram em JSON.stringify(plano).
+ Object.defineProperties(plano,{
+  _ids:{value:Object.freeze(adicionais),enumerable:false},
+  _trigger:{value:trigger,enumerable:false}
+ });
+ return Object.freeze(plano);
 }
 function aplicarSaneamentoLegados({banco,backupAnteriorComprovado=false,
  autorizacaoOperador=false}={}){
