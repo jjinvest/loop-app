@@ -67,6 +67,7 @@ function criarAppIdentidadeLoop({contas,origemHttps,
   typeof catalogoMidiaLeitura.banco?.prepare!=='function'||
   catalogoMidiaLeitura.banco===contas.banco||
   typeof catalogoMidiaLeitura.listarVitrinePreparacao!=='function'||
+  typeof catalogoMidiaLeitura.listarFotosProdutoCompartilhado!=='function'||
   typeof catalogoMidiaLeitura.abrirFotoPublicada!=='function'))
   throw Error('CATALOGO_MIDIA_LEITURA_NAO_ISOLADA');
  const visaoEscritorio=motorLoop===null?null:
@@ -564,8 +565,14 @@ function criarAppIdentidadeLoop({contas,origemHttps,
    erro:'CATALOGO_NAO_CONECTADO',checkoutReal:false
   });
   try{
-   const principal=catalogoVitrine?
+   const central=catalogoVitrine?
     catalogoVitrine.listarVitrinePreparacao({limite:100}):[];
+   const principal=catalogoMidiaLeitura&&Array.isArray(central)?
+    central.map(p=>Object.freeze({
+     ...p,fotos:catalogoMidiaLeitura.listarFotosProdutoCompartilhado({
+      produtoId:p.produtoId
+     })
+    })):central;
    const midia=catalogoMidiaLeitura?
     catalogoMidiaLeitura.listarVitrinePreparacao({limite:100}):[];
    if(!Array.isArray(principal)||!Array.isArray(midia))
