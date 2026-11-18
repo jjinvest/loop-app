@@ -100,6 +100,7 @@
   const botaoMais=$('akitemmCarregarMais');
   botaoMais.hidden=filtrada?itens.length<=abaVitrine*40+20:false;
   botaoMais.disabled=false;
+  botaoMais.setAttribute('aria-disabled','false');
   botaoMais.textContent=expandida?
    'Mostrar menos produtos ↑':'Mostrar mais produtos ↓';
   const faixas=[];
