@@ -1,7 +1,10 @@
 name: LOOP - Navegador celular e computador
 
 on:
+  # Navegador legado do LAB: validar PRs contra main, nao tratar
+  # fixture de laboratorio como certificacao do site real.
   pull_request:
+    branches: [main]
   push:
     branches: [main]
   workflow_dispatch:
