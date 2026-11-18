@@ -59,6 +59,8 @@ test('mesmo operador real sobe foto versionada; cliente so ve publicada, sem alt
  catalogoPrincipal=catalogo;
  catalogo.criarProduto({produtoId:'bone-cinza',titulo:'Boné Cinza'});
  catalogo.ativarProduto({produtoId:'bone-cinza',ativo:true});
+ catalogo.criarProduto({produtoId:'SKU_ANTIGO',titulo:'Código Comercial Antigo'});
+ catalogo.ativarProduto({produtoId:'SKU_ANTIGO',ativo:true});
  const controle=new ControleEconomicoLojaSQLite({banco,auditoria,manutencao});
  const sessoes=new SessaoAdminComercialSQLite({
   banco,chaveAdmin:randomBytes(32),credencialAdmin:SENHA
@@ -151,9 +153,11 @@ test('mesmo operador real sobe foto versionada; cliente so ve publicada, sem alt
   {Cookie:cookie});
  assert.equal(produtosAdmin.status,200);
  const visaoAdmin=await produtosAdmin.json();
- assert.equal(visaoAdmin.produtos.length,2);
+ assert.equal(visaoAdmin.produtos.length,3);
  assert.equal(visaoAdmin.produtos.find(p=>p.produtoId==='bone-cinza')
   .quantidadeFotos,1);
+ assert.equal(visaoAdmin.produtos.find(p=>p.produtoId==='SKU_ANTIGO')
+  .quantidadeFotos,0);
  assert.equal((await get(vitrineFoto,{Cookie:cookie})).status,401,
   'cookie operador nao e sessao de cliente');
  // A loja continua sem acesso publico e sem foto de rascunho.
@@ -177,7 +181,8 @@ test('mesmo operador real sobe foto versionada; cliente so ve publicada, sem alt
  const vitrine=await get('/api/loja/catalogo',{Cookie:cookieCliente});
  assert.equal(vitrine.status,200);
  const dados=await vitrine.json();
- assert.equal(dados.produtos.length,2);
+ assert.equal(dados.produtos.length,3);
+ assert.deepEqual(dados.produtos.find(p=>p.produtoId==='SKU_ANTIGO').fotos,[]);
  assert.equal(dados.produtos.find(p=>p.produtoId===produto.id)
   .fotos[0].url,vitrineFoto);
  const bone=dados.produtos.find(p=>p.produtoId==='bone-cinza');
