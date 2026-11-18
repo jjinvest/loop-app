@@ -9,6 +9,7 @@ const {FotosProdutoCandidatoSQLite}=require('../domain/fotos-produto-candidato-s
 const {AkitemmConfigLojaDemoSQLite}=require('../domain/akitemm-config-loja-demo-sqlite');
 const {MaterialPdfCursosReal}=require('./material-pdf-cursos-real');
 const ID=/^[a-z0-9-]{3,80}$/;
+const ID_COMERCIAL=/^[A-Za-z0-9_-]{1,80}$/;
 const FOTO_MIME=new Set(['image/jpeg','image/png','image/webp']);
 const CAMPOS=new Set(['nome','descricao','estado','precoCentavos','detalhes','entrega']);
 const MAX_JSON=16*1024,MAX_FOTO=3*1024*1024,MAX_PDF=5*1024*1024;
@@ -67,10 +68,11 @@ function criarCatalogoMercadoriasReal({
     !fs.statSync(path.dirname(arquivo)).isDirectory())
   throw Error('CATALOGO_VOLUME_REAL_AUSENTE');
  const repo=new RepositorioCatalogoSQLite({caminho:arquivo});
- const buscarProduto=id=>repo.buscar(id)||
+ const buscarProduto=id=>(ID.test(id)?repo.buscar(id):null)||
   (buscarProdutoCompartilhado?buscarProdutoCompartilhado(id):null);
  const fotos=new FotosProdutoCandidatoSQLite({
-  banco:repo.banco,catalogo:{buscar:async id=>buscarProduto(id)}
+  banco:repo.banco,catalogo:{buscar:async id=>buscarProduto(id)},
+  permitirIdComercial:true
  });
  const config=new AkitemmConfigLojaDemoSQLite({banco:repo.banco});
  const pdf=new MaterialPdfCursosReal({banco:repo.banco,catalogo:repo});
@@ -121,10 +123,10 @@ function criarCatalogoMercadoriasReal({
  // A origem publica nunca aceita ID de arquivo, URLs externas ou
  // caminhos do disco fornecidos pelo cliente. Somente foto publicada.
  function abrirFotoPublicada({produtoId,posicao}={}){
-  if(typeof produtoId!=='string'||!ID.test(produtoId)||
+  if(typeof produtoId!=='string'||!ID_COMERCIAL.test(produtoId)||
      !Number.isSafeInteger(posicao)||posicao<1||posicao>10)
    throw Error('FOTO_PUBLICA_IDENTIFICADOR_INVALIDO');
-  const local=repo.buscar(produtoId);
+  const local=ID.test(produtoId)?repo.buscar(produtoId):null;
   if(local){
    if(local.estado!=='PUBLICADO'||local.tipo!=='FISICO')
     throw Error('FOTO_NAO_PUBLICADA');
@@ -141,10 +143,9 @@ function criarCatalogoMercadoriasReal({
   return imagem;
  }
  function listarFotosProdutoCompartilhado({produtoId}={}){
-  // Identificadores legados podem conter maiuscula/sublinhado. Eles
-  // permanecem validos no catalogo comercial; apenas a galeria de midia
-  // exige slug canonico ate a migracao explicita e auditada do acervo.
-  if(typeof produtoId!=='string'||!ID.test(produtoId))return [];
+  // IDs do cadastro comercial principal são preservados sem normalizar,
+  // migrar, duplicar ou alterar os produtos que já existem.
+  if(typeof produtoId!=='string'||!ID_COMERCIAL.test(produtoId))return [];
   return fotos.listar(produtoId).fotos.map(x=>Object.freeze({
    posicao:x.posicao,versao:x.versao,
    url:'/api/loja/produtos/'+produtoId+'/foto/'+x.posicao
