@@ -138,6 +138,8 @@ test('mesmo operador real sobe foto versionada; cliente so ve publicada, sem alt
  assert.equal(slots.length,1);
  assert.equal(slots[0].posicao,361);
  assert.equal(slots[0].produtoId,'bone-cinza');
+ assert.equal(auditoria.listar({limite:50}).some(e=>
+  e.acao==='VITRINE_PRODUTO_VINCULADO'&&e.entidade==='SLOT_361'),true);
  assert.equal((await atribuirQuadradinho({
   posicao:1,produtoId:'bone-cinza'
  })).status,409,'um produto nao pode ocupar dois quadradinhos');
