@@ -1,0 +1,46 @@
+name: LOOP - Operador real / primeiro produto sem checkout
+on:
+  push:
+    branches:
+      - work/loop-integracao-acoplada-20261118
+    paths:
+      - 'scripts/validar-operador-primeiro-produto-navegador.js'
+      - 'src/producao/operador-loja-fotos-real.js'
+      - 'src/producao/rotas-catalogo-midia-operador.js'
+      - 'src/producao/interface-aprovada-loja.js'
+      - '.github/workflows/bloco-b-operador-vitrine-real.yml'
+  pull_request:
+    paths:
+      - 'scripts/validar-operador-primeiro-produto-navegador.js'
+      - 'src/producao/operador-loja-fotos-real.js'
+      - 'src/producao/rotas-catalogo-midia-operador.js'
+      - 'src/producao/interface-aprovada-loja.js'
+      - '.github/workflows/bloco-b-operador-vitrine-real.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: loop-operador-primeiro-produto-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  operador:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+      - name: Instalar dependencias do projeto
+        run: npm ci --ignore-scripts --no-fund
+      - name: Instalar navegador de teste
+        run: |
+          npm install --no-save --package-lock=false playwright@1.56.1
+          npx playwright install --with-deps chromium
+      - name: Verificar sintaxe
+        run: node --check scripts/validar-operador-primeiro-produto-navegador.js
+      - name: Verificar zero produtos - cadastrar - foto - publicar sem checkout
+        run: node scripts/validar-operador-primeiro-produto-navegador.js
