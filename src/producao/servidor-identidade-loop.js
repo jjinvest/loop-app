@@ -3,6 +3,7 @@
 // src/candidato e nunca monta as rotas de laboratório ou dinheiro.
 const express=require('express');
 const {COOKIE}=require('./identidade-cliente-loop-sqlite');
+const {COOKIE_ADMIN}=require('./sessao-admin-comercial-sqlite');
 const {CaptchaCadastroSQLite}=require('../shared/captcha-cadastro-sqlite');
 const {CaptchaLoginSQLite}=require('../shared/captcha-login-sqlite');
 const {montarInterfaceAprovada}=require('./interface-aprovada-loop');
@@ -130,8 +131,32 @@ function criarAppIdentidadeLoop({contas,origemHttps,
   if(!s)return res.status(401).json({erro:'LOGIN_OBRIGATORIO'});
   req.conta=s;next();
  };
- // HTML/CSS já aprovados; loja requer a mesma sessão da conta.
- montarInterfaceAprovada(app,{protegerLoja:protegido});
+ // Operador tem SOMENTE a leitura da vitrine autenticada e o
+ // middleware de edicao de midia separado, nunca acesso a dados do
+ // cliente, pedidos, saques, compras ou sessao de um titular.
+ const sessaoOperador=req=>{
+  if(!adminComercial?.sessoes?.sessao)return null;
+  const raw=req.get('cookie')||'';
+  if(raw.length>4096)return null;
+  const cookies=raw.split(';').map(x=>x.trim())
+   .filter(x=>x.startsWith(COOKIE_ADMIN+'='));
+  if(cookies.length!==1)return null;
+  const valor=cookies[0].slice(COOKIE_ADMIN.length+1);
+  return /^[a-f0-9]{64}$/.test(valor)?
+   adminComercial.sessoes.sessao(valor):null;
+ };
+ const protegidoLoja=(req,res,next)=>{
+  const titular=sessao(req);
+  if(titular){req.conta=titular;return next();}
+  const operador=sessaoOperador(req);
+  if(operador?.role==='ADMIN_COMERCIAL'){
+   req.lojaSomenteOperador=true;return next();
+  }
+  return res.status(401).json({erro:'LOGIN_OBRIGATORIO'});
+ };
+ // Mantem exatamente a interface aprovada, sem exigir cadastro extra
+ // do operador para consultar o catalogo.
+ montarInterfaceAprovada(app,{protegerLoja:protegidoLoja});
  // Sessão de administrador é completamente separada do login de cliente.
  // Sem credencial e middleware de operador, rotas administrativas não existem.
  if(adminComercial!==null)
@@ -560,7 +585,7 @@ function criarAppIdentidadeLoop({contas,origemHttps,
  });
  // Pré-vitrine de itens publicados: somente leitura; nenhum preço
  // estimado, carrinho ou estoque antes de fornecedor homologado.
- app.get('/api/loja/catalogo',protegido,(_req,res)=>{
+ app.get('/api/loja/catalogo',protegidoLoja,(_req,res)=>{
   if(!catalogoVitrine&&!catalogoMidiaLeitura)return res.status(503).json({
    erro:'CATALOGO_NAO_CONECTADO',checkoutReal:false
   });
@@ -601,7 +626,7 @@ function criarAppIdentidadeLoop({contas,origemHttps,
  // A foto de produto publicado usa a MESMA sessão cliente da loja.
  // Nunca encaminha cookies para o banco de imagens e não expõe rascunhos.
  app.get('/api/loja/produtos/:produtoId/foto/:posicao',
-  protegido,(req,res)=>{
+  protegidoLoja,(req,res)=>{
    const id=req.params.produtoId,indice=req.params.posicao;
    if(!/^[a-z0-9-]{3,80}$/.test(id)||
       !/^(?:10|[1-9])$/.test(indice))
