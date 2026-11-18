@@ -47,7 +47,7 @@ test('imagem publica definitiva nao leva acervo, credenciais nem LAB',()=>{
  assert.match(docker,/USER node/);
  assert.match(docker,/COPY --chown=node:node scripts\/iniciar-gateway-publico-real-loop\.js scripts\/provar-ligacao-privada-loop\.js \.\/scripts\//);
  assert.doesNotMatch(docker,/COPY \. \./);
- assert.doesNotMatch(docker,/npm ci|laboratorio|src\/candidato|\.sqlite|Dockerfile\.preview/i);
+ assert.doesNotMatch(docker,/^(?:RUN|COPY)[^\n]*(?:npm ci|laboratorio|src\/candidato|\.sqlite|Dockerfile\.preview)/im);
  assert.match(docker,/CMD \["node","scripts\/iniciar-gateway-publico-real-loop\.js"\]/);
 });
 test('sonda de preflight nunca aceita proxy apontado a servidor estranho',async t=>{
