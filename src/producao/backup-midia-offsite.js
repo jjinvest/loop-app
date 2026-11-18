@@ -224,7 +224,7 @@ async function provarBackupMidiaOffsite({
   if(!resposta||resposta.status!==200||!resposta.body)
    falha('OFFSITE_MIDIA_DOWNLOAD_FALHOU');
   const informado=resposta.headers?.get?.('content-length');
-  if(informado!=null&&(!/^\\d+$/.test(informado)||
+  if(informado!=null&&(!/^\d+$/.test(informado)||
     Number(informado)>maxBytes))
    falha('OFFSITE_MIDIA_DOWNLOAD_EXCESSIVO');
   let total=0;
