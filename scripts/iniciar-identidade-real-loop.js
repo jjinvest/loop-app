@@ -16,6 +16,8 @@ const {auditarAcervoReal}=
  require('../src/producao/auditoria-acervo-real-sqlite');
 const {emitirAuditoriaCustodiaReadOnly}=
  require('../src/producao/emitir-auditoria-custodia-readonly');
+const {planejarSaneamentoLegados,aplicarSaneamentoLegados}=
+ require('../src/producao/saneamento-sete-contas-legadas-sqlite');
 const {atenderMigracaoIdentidadeReal}=
  require('../src/producao/receber-migracao-identidade-real');
 const {criarCatalogoMercadoriasReal}=
@@ -199,6 +201,53 @@ async function iniciar(ambiente=process.env,opcoes={}){
   // Falha de rede, segredo, bucket, restauração ou dados bloqueia o
   // listener; nenhuma conta real é criada sem prova de recuperação.
   await agendador.iniciar();
+  // Janela de depuracao pre-lancamento: SOMENTE duas identidades
+  // reconhecidas podem continuar. Backup unico restaurado antes de entrar.
+  // Default NAO nunca modifica contas; AUDITAR so calcula; EXECUTAR exige
+  // modo de operacao interna, sinal duplo do proprietario e backup de
+  // antes e depois. Nenhum erro pode abrir um banco parcialmente limpo.
+  const modo=ambiente.LOOP_REAL_SANEAMENTO_LEGADOS||'NAO';
+  if(!['NAO','AUDITAR','EXECUTAR'].includes(modo))
+   throw Error('SANEAMENTO_MODO_DESCONHECIDO');
+  if(modo!=='NAO'){
+   const fechado=opcoes.cadastroPublico===false&&
+    ambiente.LOOP_REAL_CADASTRO_GO==='NAO'&&
+    ambiente.LOOP_REAL_APROVACAO_DOCUMENTOS==='NAO'&&
+    ambiente.LOOP_REAL_OPERACAO_INTERNA==='SIM';
+   if(!fechado)throw Error('SANEAMENTO_CADASTRO_PRECISA_ESTAR_FECHADO');
+   const plano=planejarSaneamentoLegados({banco});
+   if(modo==='AUDITAR'){
+    console.log('LOOP_SANEAMENTO_PRELANCAMENTO='+
+     JSON.stringify({estado:plano.estado,remover:plano.remover,
+      vinculos:plano.vinculos,migracoes:plano.migracoes,
+      aplicou:false}));
+   }else{
+    if(ambiente.LOOP_REAL_SANEAMENTO_ACK!==
+       'VILELA_TAISA_SETE_PRELANCAMENTO_20261118')
+     throw Error('SANEAMENTO_REQUER_ACK_EXATO');
+    const statusBackup=agendador.estado();
+    if(statusBackup.backupAtualEmDia!==true||
+       statusBackup.chavesDeLeituraVerificadas!==true||
+       statusBackup.emExecucao===true)
+     throw Error('SANEAMENTO_BACKUP_ANTES_NAO_COMPROVADO');
+    const resultado=aplicarSaneamentoLegados({banco,
+     autorizacaoOperador:true,backupAnteriorComprovado:true});
+    // Objeto PRE-DEPURACAO possui UUID unico, nunca e sobrescrito.
+    // Esta chamada cria novo UUID imutavel e RESTAURA o banco depurado.
+    const pos=await agendador.executarUmaVez();
+    if(pos.copiaExternaConfirmada!==true||
+       pos.restauracaoIsoladaConfirmada!==true||
+       agendador.estado().chavesDeLeituraVerificadas!==true)
+     throw Error('SANEAMENTO_BACKUP_DEPOIS_NAO_COMPROVADO');
+    const fim=planejarSaneamentoLegados({banco});
+    if(fim.estado!=='JA_SANEADO')
+     throw Error('SANEAMENTO_FINAL_NAO_COMPROVADO');
+    console.log('LOOP_SANEAMENTO_PRELANCAMENTO='+
+     JSON.stringify({estado:resultado.estado,removidas:resultado.remover,
+      contasAtuais:2,primeiraIndicacaoPreservada:true,
+      backupsAntesDepoisRestaurados:true,exclusaoConcluida:true}));
+   }
+  }
   // Mesmo livro do checkout para a tela aprovada "Meus Pedidos".
   // A fachada nao expõe criarPedido/confirmarPagamento/despachar.
   const pedidosComerciais=comercial?.leituraPedidos||null;
