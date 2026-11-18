@@ -146,9 +146,48 @@ test('mesmo operador real sobe foto versionada; cliente so ve publicada, sem alt
  assert.equal(metas.fotos[0].posicao,1);
  assert.equal(metas.fotos[0].url,adminFoto+'/foto/1');
  assert.equal((await get(adminFoto+'/foto/1',{Cookie:cookie})).status,200);
+ const primeiro=await get('/api/admin/catalogo-midia/produtos/'+produto.id,
+  {Cookie:cookie});
+ assert.equal(primeiro.status,200);
+ const detalheLocal=await primeiro.json();
+ assert.equal(detalheLocal.nome,produto.nome);
+ const editarLocal=await fetch(base+'/api/admin/catalogo-midia/produtos/'+produto.id,{
+  method:'PATCH',headers:{Cookie:cookie,Origin:ORIGEM,
+   'X-Loop-Admin-Csrf':csrf,'Content-Type':'application/json'},
+  body:JSON.stringify({titulo:'Tênis Preto Atualizado',
+   descricao:'Descrição atualizada por operador autenticado',
+   revisaoEsperada:detalheLocal.revisao})
+ });
+ assert.equal(editarLocal.status,200);
+ assert.equal((await editarLocal.json()).nome,'Tênis Preto Atualizado');
+ assert.equal((await get('/api/admin/catalogo-midia/produtos/'+produto.id)).status,401);
  // O produto no banco comercial principal usa o MESMO armazenamento de
  // fotos: não recriar outro registro para guardar sua imagem.
  const produtoPrincipal='/api/admin/catalogo-midia/produtos/bone-cinza';
+ const principalDados=await get(produtoPrincipal,{Cookie:cookie});
+ assert.equal(principalDados.status,200);
+ const principalOriginal=await principalDados.json();
+ assert.equal(principalOriginal.nome,'Boné Cinza');
+ const bodyPrincipal=JSON.stringify({
+  titulo:'Boné Cinza Original',descricao:'Descrição do produto no banco central',
+  revisaoEsperada:principalOriginal.revisao
+ });
+ const salvarPrincipal=(csrfValor=csrf)=>fetch(base+produtoPrincipal,{
+  method:'PATCH',headers:{Cookie:cookie,Origin:ORIGEM,
+   'X-Loop-Admin-Csrf':csrfValor,'Content-Type':'application/json'},
+  body:bodyPrincipal
+ });
+ assert.equal((await salvarPrincipal('errado')).status,403);
+ const sucessoPrincipal=await salvarPrincipal();
+ assert.equal(sucessoPrincipal.status,200);
+ const atualizadoPrincipal=await sucessoPrincipal.json();
+ assert.equal(atualizadoPrincipal.nome,'Boné Cinza Original');
+ assert.equal(atualizadoPrincipal.descricao,'Descrição do produto no banco central');
+ assert.equal((await salvarPrincipal()).status,409,
+  'edicao antiga nao sobrescreve cadastro central');
+ assert.equal(catalogo.buscarProdutoAdministrativo({
+  produtoId:'bone-cinza'
+ }).titulo,'Boné Cinza Original');
  assert.equal(midia.repo.buscar('bone-cinza'),null);
  const subirPrincipal=await fetch(base+produtoPrincipal+'/fotos/10',{
   method:'POST',headers:{Cookie:cookie,Origin:ORIGEM,
