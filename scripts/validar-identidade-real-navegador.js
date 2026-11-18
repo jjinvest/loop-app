@@ -613,8 +613,8 @@ async function main(){
    await conferirLayoutReal(pagina,'loja-'+visual.nome,{mobile:visual.mobile});
    await loja.filter({hasText:/capacidade técnica da sua conta/}).waitFor();
    await pagina.waitForFunction(()=>!document.getElementById('akitemmBusca').disabled);
-   assert.equal(await pagina.locator('#catalogoLojaLoop .produto-loja-loop').count(),1);
-   await pagina.locator('#catalogoLojaLoop .produto-loja-loop button').click();
+   assert.equal(await pagina.locator('#catalogoLojaLoop .produto-loja-loop[data-produto-id]').count(),1);
+   await pagina.locator('#catalogoLojaLoop .produto-loja-loop[data-produto-id] button').click();
    assert.match(await pagina.locator('#akitemmProdutoInlineConteudo').innerText(),
     /Sem preço, estoque ou frete homologados/);
    await pagina.locator('#akitemmVoltarProdutos').click();
@@ -622,21 +622,21 @@ async function main(){
    await pagina.locator('#akitemmResultadoProdutos').filter({
     hasText:/Nenhum produto encontrado/
    }).waitFor();
-   assert.equal(await pagina.locator('#catalogoLojaLoop .produto-loja-loop')
+   assert.equal(await pagina.locator('#catalogoLojaLoop .produto-loja-loop[data-produto-id]')
     .count(),0);
    await pagina.locator('#akitemmFiltroTodos').click();
    await pagina.locator('[data-akitemm-cor="DOURADO"]').click();
-   assert.equal(await pagina.locator('#catalogoLojaLoop .produto-loja-loop')
+   assert.equal(await pagina.locator('#catalogoLojaLoop .produto-loja-loop[data-produto-id]')
     .count(),1);
    await pagina.locator('#atualizarCatalogoLoja').click();
    await pagina.locator('#akitemmFiltroTodos').click();
    await pagina.locator('[data-akitemm-categoria="novidades"]').click();
-   assert.equal(await pagina.locator('#catalogoLojaLoop .produto-loja-loop').count(),1);
+   assert.equal(await pagina.locator('#catalogoLojaLoop .produto-loja-loop[data-produto-id]').count(),1);
    await pagina.locator('#akitemmFiltroTodos').click();
    await pagina.locator('[data-akitemm-categoria="mais-vendidos"]').click();
-   assert.equal(await pagina.locator('#catalogoLojaLoop .produto-loja-loop').count(),1);
+   assert.equal(await pagina.locator('#catalogoLojaLoop .produto-loja-loop[data-produto-id]').count(),1);
    await pagina.locator('#akitemmFiltroTodos').click();
-   assert.equal(await pagina.locator('#catalogoLojaLoop .produto-loja-loop')
+   assert.equal(await pagina.locator('#catalogoLojaLoop .produto-loja-loop[data-produto-id]')
     .count(),1);
    assert.equal(await pagina.locator('#registrarPedidoLoja').isDisabled(),true);
    assert.equal(await pagina.locator('#akitemmBusca').isEnabled(),true);
