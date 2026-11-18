@@ -209,12 +209,18 @@ async function provarBackupMidiaOffsite({
   });
   if(local.bytes>maxBytes)falha('OFFSITE_MIDIA_CAPACIDADE_EXCEDIDA');
   let resposta;
+  // Abrir o descritor antes do fetch evita abertura tardia após limpar /tmp.
+  // Um provedor que recusa o PUT sem consumir body também deve fechar o stream.
+  const envio=fs.createReadStream(copia,{
+   fd:fs.openSync(copia,'r'),autoClose:true
+  });
   try{
    resposta=await buscar(put,{method:'PUT',redirect:'error',duplex:'half',
     headers:{'Content-Type':'application/octet-stream',
      'Content-Length':String(local.bytes),'If-None-Match':'*'},
-    body:fs.createReadStream(copia),signal:AbortSignal.timeout(120000)});
+    body:envio,signal:AbortSignal.timeout(120000)});
   }catch{falha('OFFSITE_MIDIA_UPLOAD_FALHOU');}
+  finally{envio.destroy();}
   if(!resposta||![200,201,204].includes(resposta.status))
    falha('OFFSITE_MIDIA_UPLOAD_NAO_COMPROVADO');
   try{
