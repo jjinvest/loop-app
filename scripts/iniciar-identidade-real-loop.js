@@ -12,6 +12,8 @@ const {PreflightCapacidadeCheckoutSQLite}=
  require('../src/producao/preflight-capacidade-checkout-sqlite');
 const {RecuperacaoReservasCheckoutSQLite}=
  require('../src/producao/recuperacao-reservas-checkout-sqlite');
+const {auditarAcervoReal}=
+ require('../src/producao/auditoria-acervo-real-sqlite');
 const {atenderMigracaoIdentidadeReal}=
  require('../src/producao/receber-migracao-identidade-real');
 const {criarCatalogoMercadoriasReal}=
@@ -223,6 +225,25 @@ async function iniciar(ambiente=process.env,opcoes={}){
    adminComercial:{catalogo,controle,sessoes,auditoria,manutencao,
     catalogoMidia,classificacaoLoop,operacaoCatraca,recuperacaoReservas}
   });
+  // Sonda informativa de somente leitura: nenhum dado pessoal ou produto
+  // aparece no log. Falha não modifica contas, fotos nem reinicia o banco.
+  // Integridade local NÃO comprova backup offsite do banco de imagens.
+  try{
+   const acervo=auditarAcervoReal({
+    bancoIdentidade:banco,bancoMidia:catalogoMidia?.repo?.banco||null
+   });
+   console.log('LOOP_ACERVO_REAL='+acervo.estado+
+    ';CONTAS='+acervo.contas+';VINCULOS='+acervo.vinculos+
+    ';PRODUTOS_PRINCIPAIS='+acervo.produtosPrincipais+
+    ';PRODUTOS_MIDIA='+(acervo.produtosMidia??0)+
+    ';QUADRADINHOS='+acervo.quadradinhos+
+    ';FOTOS_ATUAIS='+acervo.fotosAtuais+
+    ';FOTOS_VERIFICADAS='+acervo.fotosVerificadas+
+    ';FOTOS_PENDENTES='+acervo.fotosPendentes+
+    ';BACKUP_MIDIA_OFFSITE=NAO_COMPROVADO');
+  }catch{
+   console.error('LOOP_ACERVO_REAL=INVENTARIO_NAO_COMPROVADO');
+  }
   const porta=Number(ambiente.PORT||3000);
   if(!Number.isSafeInteger(porta)||porta<1||porta>65535)
    throw Error('PORTA_INVALIDA');
