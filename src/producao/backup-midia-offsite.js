@@ -56,7 +56,11 @@ function validarAcervoMidia(arquivo){
    fotosHistoricas:numero('akitemm_fotos_produto_versoes_lab'),
    fotosAtuais:numero('akitemm_fotos_produto_atuais_lab'),
    pdfHistoricos:numero('akitemm_curso_pdf_versoes_real'),
-   pdfAtuais:numero('akitemm_curso_pdf_atual_real')
+   pdfAtuais:numero('akitemm_curso_pdf_atual_real'),
+   // Banners persistidos neste mesmo SQLite também integram o snapshot.
+   // Em acervos antigos sem a tabela, ela não deve ser criada pelo backup.
+   bannersAtuais:tabelas.has('admin_akitemm_banner_arquivos_v1')?
+    numero('admin_akitemm_banner_arquivos_v1'):0
   };
   if(totais.fotosAtuais>totais.fotosHistoricas||
      totais.pdfAtuais>totais.pdfHistoricos)
@@ -85,6 +89,15 @@ function validarAcervoMidia(arquivo){
         !Number.isSafeInteger(x.posicao)||x.posicao<1||x.posicao>10))||
        hash(x.conteudo)!==x.sha256)
      falha('BACKUP_MIDIA_HASH_DIVERGENTE');
+   }
+  }
+  if(tabelas.has('admin_akitemm_banner_arquivos_v1')){
+   for(const b of banco.prepare(
+    'SELECT mime,imagem FROM admin_akitemm_banner_arquivos_v1'
+   ).iterate()){
+    if(!FOTOS.has(b.mime)||!(b.imagem instanceof Uint8Array)||
+       b.imagem.length<40||b.imagem.length>4*1024*1024)
+     falha('BACKUP_MIDIA_BANNER_INVALIDO');
    }
   }
   return Object.freeze({...totais,integridadeSQLite:'ok'});
