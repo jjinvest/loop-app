@@ -79,6 +79,32 @@ function criarCatalogoMercadoriasReal({arquivo,tokenRaiz}={}){
    videoApresentacaoLocal:false
   }));
  }
+ // A loja definitiva consulta esta fonte pelo MESMO processo, sem
+ // trocar o banco de clientes e sem passar por qualquer rota de ensaio.
+ // Apenas produtos fisicos explicitamente publicados, sem preco/checkout.
+ function listarVitrinePreparacao({limite=100}={}){
+  if(!Number.isSafeInteger(limite)||limite<1||limite>100)
+   throw Error('CATALOGO_REAL_LIMITE_INVALIDO');
+  const publicos=repo.listar().filter(p=>
+   p.estado==='PUBLICADO'&&p.tipo==='FISICO');
+  // Nao truncar silenciosamente produtos visiveis no acervo real.
+  if(publicos.length>limite)throw Error('CATALOGO_REAL_PAGINACAO_NECESSARIA');
+  const agora=Date.now();
+  return publicos.map(p=>{
+   const primeiro=repo.historico(p.id)[0]?.ocorridoEm;
+   const criadoEm=Date.parse(primeiro||'');
+   if(!Number.isSafeInteger(criadoEm)||criadoEm<1||criadoEm>agora+86400000)
+    throw Error('CATALOGO_REAL_HISTORICO_INVALIDO');
+   return Object.freeze({
+    produtoId:p.id,titulo:p.nome,descricao:p.descricao||'',
+    tipo:'FISICO',cor:'CINZA',criadoEm,
+    novidade:criadoEm>=agora-30*86400000,unidadesConfirmadas:0,
+    precoCentavos:null,estoqueConfirmado:false,
+    compravel:false,checkoutReal:false,
+    estado:'AGUARDANDO_HOMOLOGACAO_FORNECEDOR'
+   });
+  });
+ }
  async function atender(req,res){
   const url=new URL(req.url,'http://internal.catalogo');
   if(!url.pathname.startsWith('/internal/catalogo/'))return false;
@@ -247,6 +273,7 @@ function criarCatalogoMercadoriasReal({arquivo,tokenRaiz}={}){
    return true;
   }
  }
- return {atender,repo,fotos,config,pdf,fechar:()=>repo.fechar()};
+ return {atender,repo,fotos,config,pdf,listarVitrinePreparacao,
+  fechar:()=>repo.fechar()};
 }
 module.exports={criarCatalogoMercadoriasReal,tokenCatalogo};
