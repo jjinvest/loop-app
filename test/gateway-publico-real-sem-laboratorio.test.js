@@ -43,10 +43,10 @@ test('rotas reais sem ensaio, alias de cadastro e path traversal bloqueados',()=
   assert.equal(caminhoSeguro(p).status,410,p);
  }
  for(const p of ['/internal/loop/migracao-identidade',
-  '/api/checkout/finalizar','/api/loop/posicoes/123/confirmar-ensaio',
-  '/preview','/operador-duplicado']){
+  '/api/checkout/finalizar','/preview','/operador-duplicado']){
   assert.equal(caminhoSeguro(p).status,404,p);
  }
+ assert.equal(caminhoSeguro('/api/loop/posicoes/123/confirmar-ensaio').status,410);
  assert.deepEqual(caminhoSeguro('/cadastro-real'),{path:'/minha-conta'});
  assert.deepEqual(caminhoSeguro('/'),{status:302,location:'/minha-conta'});
  assert.equal(caminhoSeguro('/loja/VILELA').path,'/loja/VILELA');
@@ -194,8 +194,8 @@ test('proxy de mesma origem: login, consulta e foto com conta real; sem PSP nem 
  assert.equal((await get('/api/operador/entrar',{method:'POST',
   headers:{'Content-Type':'application/json'},body:'{}'})).status,403);
  assert.equal((await get('/api/operador/entrar',{method:'POST',
-  headers:{Origin:base,'Content-Length':'4500000'},
-  body:Buffer.alloc(0)})).status,413);
+  headers:{Origin:base,'Content-Type':'application/json'},
+  body:Buffer.alloc(4*1024*1024+1)})).status,413);
  assert.equal(chamadas.length,chamadasValidas);
 });
 test('falha do servidor real nunca retorna ao banco legado',async t=>{
