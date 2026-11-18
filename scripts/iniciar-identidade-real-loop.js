@@ -206,7 +206,8 @@ async function iniciar(ambiente=process.env,opcoes={}){
    });
   const catalogoMidiaLeitura=catalogoMidia?Object.freeze({
    banco:catalogoMidia.repo.banco,
-   listarVitrinePreparacao:args=>catalogoMidia.listarVitrinePreparacao(args)
+   listarVitrinePreparacao:args=>catalogoMidia.listarVitrinePreparacao(args),
+   abrirFotoPublicada:args=>catalogoMidia.abrirFotoPublicada(args)
   }):null;
   const app=criarAppIdentidadeLoop({
    contas,motorLoop,eventosComerciais,preflightCapacidade,
@@ -215,7 +216,7 @@ async function iniciar(ambiente=process.env,opcoes={}){
    captchaCadastroObrigatorio:true,
    backupEstado:()=>agendador.estado(),
    adminComercial:{catalogo,controle,sessoes,auditoria,manutencao,
-    classificacaoLoop,operacaoCatraca,recuperacaoReservas}
+    catalogoMidia,classificacaoLoop,operacaoCatraca,recuperacaoReservas}
   });
   const porta=Number(ambiente.PORT||3000);
   if(!Number.isSafeInteger(porta)||porta<1||porta>65535)
