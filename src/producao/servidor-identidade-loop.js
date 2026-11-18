@@ -636,7 +636,9 @@ function criarAppIdentidadeLoop({contas,origemHttps,
  app.get('/api/loja/produtos/:produtoId/foto/:posicao',
   protegidoLoja,(req,res)=>{
    const id=req.params.produtoId,indice=req.params.posicao;
-   if(!/^[a-z0-9-]{3,80}$/.test(id)||
+   // Mesma regra de identificador do catalogo comercial definitivo:
+   // IDs legados preservam maiusculas e _ sem publicar rascunhos.
+   if(!/^[A-Za-z0-9_-]{1,80}$/.test(id)||
       !/^(?:10|[1-9])$/.test(indice))
     return res.status(404).json({erro:'FOTO_NAO_ENCONTRADA'});
    if(!catalogoMidiaLeitura)
