@@ -178,6 +178,18 @@ class CatalogoMultiDistribuidoresSQLite{
   return {produtoId:p.produto_id,titulo:p.titulo,tipo:p.tipo,
    ofertas,compravel:ofertas.length>0};
  }
+ // A foto armazenada no acervo de mídia pode pertencer a um produto
+ // administrativo deste mesmo titular comercial, sem duplicar seu cadastro.
+ buscarProdutoAdministrativo({produtoId}={}){
+  if(!id(produtoId))erro('PRODUTO_COMERCIAL_INVALIDO');
+  const row=this.db.prepare([
+   'SELECT produto_id AS produtoId,titulo,descricao,tipo,ativo',
+   'FROM loja_real_produtos WHERE produto_id=?'
+  ].join(' ')).get(produtoId);
+  return row?Object.freeze({
+   ...row,ativo:row.ativo===1
+  }):null;
+ }
  listarProdutosAdministrativos({limite=500}={}){
   if(!Number.isInteger(limite)||limite<1||limite>500)
    erro('CONSULTA_CATALOGO_INVALIDA');
