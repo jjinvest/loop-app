@@ -47,3 +47,12 @@
 
 - Arquitetura e testes do gateway em desenvolvimento na branch ativa; o **serviço público atual continua no entrypoint legado** até os gates acima serem efetivamente comprovados. Não confundir arquivo novo com deploy.
 - `loop-identidade-real` continua a fonte única definitiva no Railway, com dados/backup próprios. A troca futura não deve exigir DNS novo nem expor chaves de fintech a clientes.
+
+## Resultado da atualização interna protegida — 18/11/2026
+
+- **Serviço interno real:** Railway `loop-identidade-real` implantado na versão verificada, com deployment `40db64bd-9c16-4a09-a793-20503830e21c` SUCCESS. Os três serviços ficaram online, sem falhas ativas. Serviço público AKITEMM e volumes preservados.
+- **Backup real da mídia:** ativado `LOOP_REAL_BACKUP_MIDIA_OFFSITE_AUTO=SIM`; log de início: `LOOP_BACKUP_MIDIA_OFFSITE=COMPROVADO;PUT_GET_HASH_RESTORE=SIM;SEM_DINHEIRO=SIM`. Foi feita cópia cifrada externa, download, verificação de integridade e restauração isolada, sem alteração no SQLite ativo. Código do backup valida os banners presentes no banco, fotos e PDFs.
+- **Contagem atual do serviço real:** 9 contas, 4 vínculos, zero produtos principais, zero produtos de mídia, zero espaços ocupados e zero fotos atuais. O backup foi comprovado, mas esse inventário vazio NÃO comprova migração de fotos/produtos antigos. Inventariar a loja antiga antes de afirmar reconciliação.
+- **CI:** 1.489 testes na regressão integral da revisão publicada; zero falhas. Job de bloqueios e segurança também aprovado.
+- **Domínios:** `akitemmloop.com.br` verificado, certificado válido; `loop.com.br` ainda sem verificação de propriedade e registro CNAME marcado para atualização. Não trocar a origem canônica sem DNS comprovado.
+- **Restam:** prova HTTP interna da entrada pública até a identidade real, inventário comparativo da loja antiga, revisão de fotos/produtos, corte seguro do gateway público. Não liberar pagamentos, saques ou dados simulados; preservar interfaces aprovadas.
