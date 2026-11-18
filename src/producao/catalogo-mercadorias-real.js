@@ -99,11 +99,31 @@ function criarCatalogoMercadoriasReal({arquivo,tokenRaiz}={}){
     produtoId:p.id,titulo:p.nome,descricao:p.descricao||'',
     tipo:'FISICO',cor:'CINZA',criadoEm,
     novidade:criadoEm>=agora-30*86400000,unidadesConfirmadas:0,
+    // Referencia apenas fotos persistidas deste produto publicado.
+    // Nao trafega BLOB nem credenciais de catalogo para o cliente.
+    fotos:fotos.listar(p.id).fotos.map(x=>Object.freeze({
+     posicao:x.posicao,versao:x.versao,
+     url:'/api/loja/produtos/'+p.id+'/foto/'+x.posicao
+    })),
     precoCentavos:null,estoqueConfirmado:false,
     compravel:false,checkoutReal:false,
     estado:'AGUARDANDO_HOMOLOGACAO_FORNECEDOR'
    });
   });
+ }
+ // A origem publica nunca aceita ID de arquivo, URLs externas ou
+ // caminhos do disco fornecidos pelo cliente. Somente foto publicada.
+ function abrirFotoPublicada({produtoId,posicao}={}){
+  if(typeof produtoId!=='string'||!ID.test(produtoId)||
+     !Number.isSafeInteger(posicao)||posicao<1||posicao>10)
+   throw Error('FOTO_PUBLICA_IDENTIFICADOR_INVALIDO');
+  const produto=repo.buscar(produtoId);
+  if(!produto||produto.estado!=='PUBLICADO'||produto.tipo!=='FISICO')
+   throw Error('FOTO_NAO_PUBLICADA');
+  const imagem=fotos.abrir(produtoId,posicao);
+  if(!FOTO_MIME.has(imagem.mime)||!Buffer.isBuffer(imagem.dados))
+   throw Error('FOTO_INTEGRIDADE_INVALIDA');
+  return imagem;
  }
  async function atender(req,res){
   const url=new URL(req.url,'http://internal.catalogo');
@@ -274,6 +294,6 @@ function criarCatalogoMercadoriasReal({arquivo,tokenRaiz}={}){
   }
  }
  return {atender,repo,fotos,config,pdf,listarVitrinePreparacao,
-  fechar:()=>repo.fechar()};
+  abrirFotoPublicada,fechar:()=>repo.fechar()};
 }
 module.exports={criarCatalogoMercadoriasReal,tokenCatalogo};
