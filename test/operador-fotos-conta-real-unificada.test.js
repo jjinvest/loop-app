@@ -264,7 +264,8 @@ test('mesmo operador real sobe foto versionada; cliente so ve publicada, sem alt
   .fotos[0].url,vitrineFoto);
  const bone=dados.produtos.find(p=>p.produtoId==='bone-cinza');
  assert.equal(bone.posicaoVitrine,361);
- assert.equal(dados.produtos.find(p=>p.produtoId===produto.id).posicaoVitrine,1);
+ assert.equal(dados.produtos.find(p=>p.produtoId===produto.id).posicaoVitrine,2);
+ assert.equal(dados.produtos.find(p=>p.produtoId==='SKU_ANTIGO').posicaoVitrine,1);
  assert.equal(new Set(dados.produtos.map(p=>p.posicaoVitrine)).size,3);
  assert.equal(bone.fotos.length,1);
  assert.equal(bone.fotos[0].posicao,10);
