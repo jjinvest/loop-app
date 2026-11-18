@@ -77,8 +77,46 @@
    botao.type='button';botao.textContent='Editar fotos do produto';
    botao.addEventListener('click',()=>{dialogo.close();void abrirProduto(escolha.s.value);});
    corpo.append(escolha.label,botao);
-   corpo.append(linha('Os produtos publicados aparecem na primeira posição '+
-    'livre. O vínculo a um quadrinho específico ainda está em integração.'));
+   corpo.append(linha('Ou cadastre uma mercadoria sem sair da loja:'));
+   const idLabel=document.createElement('label');
+   idLabel.textContent='Código do novo produto (letras minúsculas e hífen)';
+   const idNovo=document.createElement('input');
+   idNovo.type='text';idNovo.placeholder='produto-exemplo';
+   idNovo.maxLength=80;idLabel.append(idNovo);
+   const nomeLabel=document.createElement('label');
+   nomeLabel.textContent='Nome do produto';
+   const nomeNovo=document.createElement('input');
+   nomeNovo.type='text';nomeNovo.maxLength=150;nomeLabel.append(nomeNovo);
+   const descricaoLabel=document.createElement('label');
+   descricaoLabel.textContent='Descrição';
+   const descNova=document.createElement('textarea');
+   descNova.maxLength=2000;descricaoLabel.append(descNova);
+   const criar=document.createElement('button');
+   criar.type='button';criar.textContent='Cadastrar produto';
+   criar.addEventListener('click',async()=>{
+    const codigo=idNovo.value.trim(),titulo=nomeNovo.value.trim();
+    if(!ID.test(codigo)||titulo.length<2||titulo.length>150){
+     estado.textContent='Confira o código e o nome do produto.';return;
+    }
+    criar.disabled=true;
+    try{
+     const sessao=await fetchJson('/api/admin/comercial/sessao');
+     const x=await fetchJson('/api/admin/comercial/produtos-cadastrar',{
+      method:'POST',headers:{'Content-Type':'application/json',
+       'X-Loop-Admin-Csrf':sessao.csrfToken},
+      body:JSON.stringify({produtoId:codigo,titulo,
+       descricao:descNova.value.trim()})
+     });
+     if(x.produtoId!==codigo||x.ativo!==false)
+      throw Error('CADASTRO_NAO_CONFIRMADO');
+     dialogo.close();void abrirProduto(codigo);
+    }catch(e){estado.textContent='Não foi possível cadastrar: '+e.message;}
+    finally{criar.disabled=false;}
+   });
+   corpo.append(idLabel,nomeLabel,descricaoLabel,criar);
+   corpo.append(linha('O produto começa como rascunho. A publicação '+
+    'continua pela central, após revisão. O vínculo ao quadrinho '+
+    'específico ainda está em integração.'));
   }catch(e){estado.textContent='Não foi possível listar produtos: '+e.message;}
  }
  async function abrirProduto(id){
@@ -89,7 +127,19 @@
     'auditada para aceitar fotos, sem alterar o cadastro antigo.';
    return;
   }
-  const {corpo,estado}=modal('Editar fotos · '+id);
+  const {corpo,estado}=modal('Editar produto · '+id);
+  const nomeLabel=document.createElement('label');
+  nomeLabel.textContent='Nome do produto';
+  const nome=document.createElement('input');nome.type='text';
+  nome.maxLength=150;nomeLabel.append(nome);
+  const descLabel=document.createElement('label');
+  descLabel.textContent='Descrição';
+  const descricao=document.createElement('textarea');
+  descricao.maxLength=2000;descLabel.append(descricao);
+  const salvarDados=document.createElement('button');
+  salvarDados.type='button';salvarDados.textContent='Salvar nome e descrição';
+  salvarDados.disabled=true;
+  corpo.append(nomeLabel,descLabel,salvarDados);
   const campo=select('Posição da foto (1 a 10)',Array.from({length:10},(_,i)=>[
    String(i+1),'Foto '+(i+1)
   ]));
@@ -104,12 +154,41 @@
   botao.disabled=true;
   corpo.append(campo.label,label,lista,botao);
   try{
-   const [sessao,galeria]=await Promise.all([
+   const [sessao,galeria,dados]=await Promise.all([
     fetchJson('/api/admin/comercial/sessao'),
-    fetchJson('/api/admin/catalogo-midia/produtos/'+id+'/fotos')
+    fetchJson('/api/admin/catalogo-midia/produtos/'+id+'/fotos'),
+    fetchJson('/api/admin/catalogo-midia/produtos/'+id)
    ]);
    if(typeof sessao.csrfToken!=='string'||sessao.csrfToken.length<24||
-      !Array.isArray(galeria.fotos))throw Error('OPERADOR_SESSAO_INVALIDA');
+      !Array.isArray(galeria.fotos)||
+      !Number.isSafeInteger(dados.revisao)||dados.revisao<1)
+    throw Error('OPERADOR_SESSAO_INVALIDA');
+   nome.value=dados.nome;descricao.value=dados.descricao;
+   let revisaoAtual=dados.revisao;
+   salvarDados.disabled=false;
+   salvarDados.addEventListener('click',async()=>{
+    if(aberto)return;
+    const titulo=nome.value.trim();
+    if(titulo.length<2||titulo.length>150||descricao.value.length>2000){
+     estado.textContent='Confira o nome e a descrição.';return;
+    }
+    aberto=true;salvarDados.disabled=true;
+    try{
+     const res=await fetchJson(
+      '/api/admin/catalogo-midia/produtos/'+id,{
+       method:'PATCH',headers:{'Content-Type':'application/json',
+        'X-Loop-Admin-Csrf':sessao.csrfToken},
+       body:JSON.stringify({titulo,descricao:descricao.value.trim(),
+        revisaoEsperada:revisaoAtual})
+      });
+     if(res.produtoId!==id||!Number.isSafeInteger(res.revisao))
+      throw Error('PRODUTO_NAO_CONFIRMADO');
+     revisaoAtual=res.revisao;
+     estado.textContent='Nome e descrição salvos no catálogo real.';
+     document.getElementById('atualizarCatalogoLoja')?.click();
+    }catch(e){estado.textContent='Não foi possível salvar: '+e.message;}
+    finally{aberto=false;salvarDados.disabled=false;}
+   });
    lista.textContent=galeria.fotos.length+' foto(s) gravada(s). '+
     'Escolha a posição para acrescentar ou substituir com revisão segura.';
    botao.disabled=false;
