@@ -102,11 +102,24 @@ function criarGatewayPublicoReal(opcoes={}){
   let origemPublica=host&&'https://'+host;
   const hostLocal=local&&typeof host==='string'&&
    /^127\.0\.0\.1:[0-9]{2,5}$/.test(host);
-  if(!hostLocal&&!origensPublicas.has(origemPublica))
+  const checkHealth=['/healthz','/readyz'].includes(req.url)&&
+   (req.method==='GET'||req.method==='HEAD')&&!req.headers.origin;
+  if(!hostLocal&&!origensPublicas.has(origemPublica)&&!checkHealth)
    return responder(421,'Domínio não autorizado');
   if(hostLocal)origemPublica='http://'+host;
+  else if(checkHealth&&!origensPublicas.has(origemPublica))
+   origemPublica=origensPublicas.values().next().value;
   if(typeof req.url!=='string'||req.url.length>3000)
    return responder(414,'URL muito longa');
+  // Rejeitar segmentos perigosos ANTES de URL normalizar /../ e %2e.
+  const rawPath=req.url.split('?')[0];
+  if(!rawPath.startsWith('/')||rawPath.includes('%')||
+     rawPath.includes('\\')||rawPath.includes('//')||
+     /(?:^|\/)\.{1,2}(?:\/|$)/.test(rawPath))
+   return responder(400,'Caminho não autorizado');
+  if(rawPath==='/favicon.ico'){
+   res.writeHead(204,base);return res.end();
+  }
   let url;
   try{url=new URL(req.url,origemPublica);}
   catch{return responder(400,'URL inválida');}
