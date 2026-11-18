@@ -55,6 +55,8 @@ test('entrada real exibe mercadoria publicada do acervo de fotos pelo mesmo logi
   catalogoMidiaLeitura:{
    banco:midia.repo.banco,
    listarVitrinePreparacao:opts=>midia.listarVitrinePreparacao(opts),
+   listarFotosProdutoCompartilhado:opts=>
+    midia.listarFotosProdutoCompartilhado(opts),
    abrirFotoPublicada:opts=>midia.abrirFotoPublicada(opts)
   }
  });
