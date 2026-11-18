@@ -54,7 +54,12 @@ function erroCodigo(e){
   typeof e?.message==='string'&&/^[A-Z0-9_]+$/.test(e.message)?
    e.message:'REQUISICAO_INVALIDA';
 }
-function criarCatalogoMercadoriasReal({arquivo,tokenRaiz}={}){
+function criarCatalogoMercadoriasReal({
+ arquivo,tokenRaiz,buscarProdutoCompartilhado=null
+}={}){
+ if(buscarProdutoCompartilhado!==null&&
+    typeof buscarProdutoCompartilhado!=='function')
+  throw Error('CATALOGO_PRODUTO_COMPARTILHADO_INVALIDO');
  if(typeof arquivo!=='string'||!path.isAbsolute(arquivo))
   throw Error('CATALOGO_ARQUIVO_REAL_OBRIGATORIO');
  const esperado=tokenCatalogo(tokenRaiz);
@@ -62,8 +67,10 @@ function criarCatalogoMercadoriasReal({arquivo,tokenRaiz}={}){
     !fs.statSync(path.dirname(arquivo)).isDirectory())
   throw Error('CATALOGO_VOLUME_REAL_AUSENTE');
  const repo=new RepositorioCatalogoSQLite({caminho:arquivo});
+ const buscarProduto=id=>repo.buscar(id)||
+  (buscarProdutoCompartilhado?buscarProdutoCompartilhado(id):null);
  const fotos=new FotosProdutoCandidatoSQLite({
-  banco:repo.banco,catalogo:{buscar:async id=>repo.buscar(id)}
+  banco:repo.banco,catalogo:{buscar:async id=>buscarProduto(id)}
  });
  const config=new AkitemmConfigLojaDemoSQLite({banco:repo.banco});
  const pdf=new MaterialPdfCursosReal({banco:repo.banco,catalogo:repo});
@@ -117,13 +124,29 @@ function criarCatalogoMercadoriasReal({arquivo,tokenRaiz}={}){
   if(typeof produtoId!=='string'||!ID.test(produtoId)||
      !Number.isSafeInteger(posicao)||posicao<1||posicao>10)
    throw Error('FOTO_PUBLICA_IDENTIFICADOR_INVALIDO');
-  const produto=repo.buscar(produtoId);
-  if(!produto||produto.estado!=='PUBLICADO'||produto.tipo!=='FISICO')
-   throw Error('FOTO_NAO_PUBLICADA');
+  const local=repo.buscar(produtoId);
+  if(local){
+   if(local.estado!=='PUBLICADO'||local.tipo!=='FISICO')
+    throw Error('FOTO_NAO_PUBLICADA');
+  }else{
+   // Foto de produto do catalogo comercial principal: produto ativo
+   // e tipo fisico, sem gravar uma segunda copia de seu cadastro.
+   const outro=buscarProdutoCompartilhado?.(produtoId);
+   if(!outro||outro.ativo!==true||outro.tipo!=='FISICO')
+    throw Error('FOTO_NAO_PUBLICADA');
+  }
   const imagem=fotos.abrir(produtoId,posicao);
   if(!FOTO_MIME.has(imagem.mime)||!Buffer.isBuffer(imagem.dados))
    throw Error('FOTO_INTEGRIDADE_INVALIDA');
   return imagem;
+ }
+ function listarFotosProdutoCompartilhado({produtoId}={}){
+  if(typeof produtoId!=='string'||!ID.test(produtoId))
+   throw Error('FOTO_PRODUTO_INVALIDO');
+  return fotos.listar(produtoId).fotos.map(x=>Object.freeze({
+   posicao:x.posicao,versao:x.versao,
+   url:'/api/loja/produtos/'+produtoId+'/foto/'+x.posicao
+  }));
  }
  async function atender(req,res){
   const url=new URL(req.url,'http://internal.catalogo');
@@ -251,7 +274,7 @@ function criarCatalogoMercadoriasReal({arquivo,tokenRaiz}={}){
    }
    const galeria=rota.match(/^\/produtos\/([a-z0-9-]{3,80})\/fotos$/);
    if(galeria&&req.method==='GET'){
-    if(!repo.buscar(galeria[1])){
+    if(!buscarProduto(galeria[1])){
      responder(res,404,{erro:'PRODUTO_NAO_ENCONTRADO'});return true;
     }
     const dados=fotos.listar(galeria[1]);
@@ -274,11 +297,12 @@ function criarCatalogoMercadoriasReal({arquivo,tokenRaiz}={}){
    }
    const publicada=rota.match(/^\/foto\/([a-z0-9-]{3,80})\/(10|[1-9])$/);
    if(publicada&&req.method==='GET'){
-    const p=repo.buscar(publicada[1]);
-    if(!p||p.estado!=='PUBLICADO'){
+    let img;
+    try{img=abrirFotoPublicada({
+     produtoId:publicada[1],posicao:Number(publicada[2])
+    });}catch{
      responder(res,404,{erro:'FOTO_NAO_PUBLICADA'});return true;
     }
-    const img=fotos.abrir(publicada[1],Number(publicada[2]));
     res.statusCode=200;res.setHeader('Content-Type',img.mime);
     res.setHeader('X-Robots-Tag','noindex, nofollow');
     res.end(img.dados);return true;
@@ -294,6 +318,7 @@ function criarCatalogoMercadoriasReal({arquivo,tokenRaiz}={}){
   }
  }
  return {atender,repo,fotos,config,pdf,listarVitrinePreparacao,
+  buscarProdutoCompartilhado,listarFotosProdutoCompartilhado,
   abrirFotoPublicada,fechar:()=>repo.fechar()};
 }
 module.exports={criarCatalogoMercadoriasReal,tokenCatalogo};
