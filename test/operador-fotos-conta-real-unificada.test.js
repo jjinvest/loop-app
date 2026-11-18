@@ -234,6 +234,36 @@ test('mesmo operador real sobe foto versionada; cliente so ve publicada, sem alt
   .quantidadeFotos,1);
  assert.equal(visaoAdmin.produtos.find(p=>p.produtoId==='SKU_ANTIGO')
   .quantidadeFotos,0);
+ const legado='/api/admin/catalogo-midia/produtos/SKU_ANTIGO';
+ const legadoDetalhe=await get(legado,{Cookie:cookie});
+ assert.equal(legadoDetalhe.status,200,
+  'produto antigo com underscore continua editavel sem renomear ID');
+ assert.equal((await legadoDetalhe.json()).nome,'Código Comercial Antigo');
+ assert.equal((await atribuirQuadradinho({
+  posicao:400,produtoId:'SKU_ANTIGO'
+ })).status,201,'quadradinho 400 aceita ID original da conta comercial');
+ const subirLegado=()=>fetch(base+legado+'/fotos/2',{
+  method:'POST',headers:{Cookie:cookie,Origin:ORIGEM,
+   'X-Loop-Admin-Csrf':csrf,'X-Foto-Versao-Esperada':'0',
+   'Content-Type':'image/png'},body:FOTO
+ });
+ const fotoLegada=await subirLegado();
+ assert.equal(fotoLegada.status,201,
+  'mesma sessão de operador grava foto do ID antigo original');
+ assert.equal((await fotoLegada.json()).produtoId,'SKU_ANTIGO');
+ assert.equal((await subirLegado()).status,409,
+  'revisão evita sobrescrever foto antiga');
+ const galeriaLegada=await get(legado+'/fotos',{Cookie:cookie});
+ assert.equal(galeriaLegada.status,200);
+ assert.equal((await galeriaLegada.json()).fotos.length,1);
+ assert.equal(midia.repo.listar().some(x=>x.id==='SKU_ANTIGO'),false,
+  'não duplicar o produto no cadastro de mídia');
+ const adminAtual=await get('/api/admin/catalogo-midia/produtos',
+  {Cookie:cookie});
+ assert.equal((await adminAtual.json()).produtos
+  .find(p=>p.produtoId==='SKU_ANTIGO').quantidadeFotos,1);
+ assert.equal((await get('/api/loja/produtos/SKU_ANTIGO/foto/2')).status,
+  401,'foto antiga segue exigindo autenticação');
  assert.equal((await get(vitrineFoto,{Cookie:cookie})).status,404,
   'nem o operador visualiza foto de produto nao publicado');
  // A loja continua sem acesso publico e sem foto de rascunho.
@@ -259,13 +289,17 @@ test('mesmo operador real sobe foto versionada; cliente so ve publicada, sem alt
  assert.equal(vitrine.status,200);
  const dados=await vitrine.json();
  assert.equal(dados.produtos.length,3);
- assert.deepEqual(dados.produtos.find(p=>p.produtoId==='SKU_ANTIGO').fotos,[]);
+ const antigo=dados.produtos.find(p=>p.produtoId==='SKU_ANTIGO');
+ assert.equal(antigo.fotos.length,1);
+ assert.equal(antigo.fotos[0].posicao,2);
+ assert.equal(antigo.fotos[0].url,'/api/loja/produtos/SKU_ANTIGO/foto/2');
+ assert.equal((await get(antigo.fotos[0].url,{Cookie:cookieCliente})).status,200);
  assert.equal(dados.produtos.find(p=>p.produtoId===produto.id)
   .fotos[0].url,vitrineFoto);
  const bone=dados.produtos.find(p=>p.produtoId==='bone-cinza');
  assert.equal(bone.posicaoVitrine,361);
  assert.equal(dados.produtos.find(p=>p.produtoId===produto.id).posicaoVitrine,2);
- assert.equal(dados.produtos.find(p=>p.produtoId==='SKU_ANTIGO').posicaoVitrine,1);
+ assert.equal(antigo.posicaoVitrine,400);
  assert.equal(new Set(dados.produtos.map(p=>p.posicaoVitrine)).size,3);
  assert.equal(bone.fotos.length,1);
  assert.equal(bone.fotos[0].posicao,10);
