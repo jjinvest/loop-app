@@ -92,9 +92,13 @@ function exportarPreview({banco,contas,raizNick='VILELA',primeiroNick='Taisaassi
  // Opcionalmente preserva TODAS as identidades registradas na origem,
  // sem presumir que fazem parte da rede de VILELA ou que compraram.
  // Vínculos só são importados se já constam do livro imutável de cadastro.
- const rowsFiltradas=incluirContasRegistradasSemRede?
-  rows:rows.filter(x=>idsDaRede.has(x.id));
+ // A ideia original prevalece sobre um banco antigo: a migracao nao tem
+ // autorizacao para transformar contas avulsas de ensaio em clientes reais.
+ // Mesmo uma flag antiga SIM deve falhar, nunca ampliar a rede validada.
  const avulsasRows=rows.filter(x=>!idsDaRede.has(x.id));
+ if(incluirContasRegistradasSemRede===true&&avulsasRows.length>0)
+  erro('MIGRACAO_CONTAS_FORA_REDE_PROIBIDA');
+ const rowsFiltradas=rows.filter(x=>idsDaRede.has(x.id));
  const avulsasIds=new Set(avulsasRows.map(x=>x.id));
  const avulsasComIndicacao=new Set(todosVinculos.filter(x=>
   avulsasIds.has(x.indicadoId)).map(x=>x.indicadoId));
@@ -179,6 +183,15 @@ function importarNoReal({banco,payload,chaveEmail,chaveCifra,agora=()=>Date.now(
     chk.provaIds!==digest(payload.contas.map(x=>x.id).sort().join('|'))||
     chk.provaVinculos!==digest(payload.vinculos.map(x=>x.indicadoId+':'+x.indicadorId).sort().join('|')))
   erro('MIGRACAO_CONTAGEM_DIVERGENTE');
+ // Segunda catraca de seguranca no DESTINO. Um payload autenticado com
+ // registros fora da rede validada nao pode ser importado, mesmo que o
+ // exportador anterior ainda esteja publicado ou tenha flag permissiva.
+ if(!Number.isSafeInteger(chk.contasNaRedeComprovada)||
+    chk.contasNaRedeComprovada!==payload.contas.length||
+    !Number.isSafeInteger(chk.contasAvulsasOrigem)||
+    chk.contasAvulsasOrigem<0||
+    chk.contasAvulsasIgnoradas!==chk.contasAvulsasOrigem)
+  erro('MIGRACAO_FORA_REDE_BLOQUEADA_NO_DESTINO');
  const ids=new Set(),nickset=new Set(),emails=new Set();
  for(const x of payload.contas){
   if(!ID.test(x.id)||!NICK.test(x.nick)||ids.has(x.id)||
