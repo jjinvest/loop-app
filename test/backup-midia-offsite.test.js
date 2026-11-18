@@ -77,7 +77,7 @@ test('backup ativo conserva banners do acervo e recusa banner inválido',async t
  db.prepare([
   'INSERT INTO admin_akitemm_banner_arquivos_v1',
   '(id,mime,imagem,criado_em) VALUES(?,?,?,?)'
- ].join(' ')).run('banner-principal','image/png',Buffer.alloc(100,17),
+ ].join(' ')).run('b'.repeat(32),'image/png',Buffer.alloc(100,17),
   Date.now());
  f.cat.fechar();
  const antes=validarAcervoMidia(f.origem);
