@@ -430,6 +430,8 @@ async function main(){
    assert.equal(await page.locator('#akitemmAbasProdutos button[aria-current="page"]')
     .innerText(),'10');
    await page.locator('#akitemmAbasProdutos button').first().click();
+   await page.locator('#akitemmCarregarMais').click();
+   assert.equal(await page.locator('#catalogoLojaLoop .akitemm-slot-vazio').count(),20);
    assert.match(await page.locator('#estadoLojaLoop').innerText(),
     /capacidade técnica da sua conta.*Checkout e pagamentos reais ainda não habilitados/i);
    await page.screenshot({
