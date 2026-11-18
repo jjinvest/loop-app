@@ -62,6 +62,20 @@ test('sonda de preflight nunca aceita proxy apontado a servidor estranho',async 
   origemReal:CANONICO
  }),/PROVA_PRIVADA_NAO_E_IDENTIDADE_REAL/);
 });
+test('sonda impede corte quando identidade real declara prontidao inconsistente',async t=>{
+ const alvo=await abrir((req,res)=>{
+  res.writeHead(req.url==='/healthz'?200:503,
+   {'Content-Type':'application/json'});
+  res.end(JSON.stringify(req.url==='/healthz'?
+   {estado:'SERVICO_IDENTIDADE_SEPARADO',financeiroReal:false}:
+   {estado:'IDENTIDADE_NAO_PRONTA',financeiroReal:false}));
+ });
+ t.after(()=>new Promise(ok=>alvo.close(ok)));
+ await assert.rejects(provarLigacaoPrivada({
+  alvo:new URL('http://127.0.0.1:'+alvo.address().port),
+  origemReal:CANONICO
+ }),/PROVA_PRIVADA_READINESS_INCONSISTENTE/);
+});
 test('rotas reais sem ensaio, alias de cadastro e path traversal bloqueados',()=>{
  for(const p of ['/staging/cliente','/staging/contas/entrar',
   '/laboratorio/compras','/api/loop/tesouraria-ensaio']){
