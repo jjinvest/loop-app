@@ -139,4 +139,22 @@ test('migrar duas contas reais de ensaio para identidade definitiva conserva sen
  ).get().n,3,'origem intacta, sem exclusao automatica');
  assert.equal(dst.prepare('PRAGMA foreign_key_check').all().length,0);
  assert.equal(validarIdentidade(path.join(dir,'clientes.sqlite')).contas,2);
+ // Mesmo um vinculo válido de ensaio com a primeira indicada NAO autoriza
+ // uma terceira identidade antes do lançamento. O cadastro oficial é outro.
+ assert.equal(equipe.registrarCadastro({
+  indicadoId:avulsa.titularId,indicadorNick:'Filha'
+ }).registrado,true);
+ const redeAmpliada=exportarPreview({
+  banco:src,contas:previa,raizNick:'Indica',primeiroNick:'Filha'
+ });
+ assert.equal(redeAmpliada.contas.length,2);
+ assert.equal(redeAmpliada.vinculos.length,1);
+ assert.equal(redeAmpliada.conferencias.contasAvulsasIgnoradas,1);
+ assert.equal(redeAmpliada.conferencias.perfilAvulsas.indicacaoForaDaRedeValidada,1);
+ assert.ok(redeAmpliada.contas.every(x=>x.id!==avulsa.titularId));
+ assert.throws(()=>exportarPreview({
+  banco:src,contas:previa,raizNick:'Indica',primeiroNick:'Filha',
+  incluirContasRegistradasSemRede:true
+ }),/MIGRACAO_CONTAS_FORA_REDE_PROIBIDA/);
+ assert.equal(validarIdentidade(path.join(dir,'clientes.sqlite')).contas,2);
 });
