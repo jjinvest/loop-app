@@ -5,6 +5,7 @@
 // fotos, backup e aprovacao; importar este modulo nao publica nada.
 const http=require('node:http');
 const {URL}=require('node:url');
+const {provarLigacaoPrivada}=require('./provar-ligacao-privada-loop');
 const MUTACOES=new Set(['POST','PATCH','PUT','DELETE']);
 const METODOS=new Set(['GET','HEAD',...MUTACOES]);
 const MAX_BODY=4*1024*1024;
@@ -205,20 +206,32 @@ function iniciar(ambiente=process.env){
  const porta=Number(ambiente.PORT||8080);
  if(!Number.isSafeInteger(porta)||porta<1||porta>65535)
   falha('GATEWAY_PUBLICO_PORTA_INVALIDA');
- const servidor=criarGatewayPublicoReal({
+ const opcoes={
   urlIdentidadeReal:ambiente.LOOP_PUBLICO_URL_IDENTIDADE_INTERNA,
   origemReal:ambiente.LOOP_PUBLICO_ORIGEM_IDENTIDADE_REAL
- });
- servidor.listen(porta,'0.0.0.0',()=>{
-  process.stdout.write('LOOP_GATEWAY_PUBLICO=REAL_SEM_LAB_SEM_FINANCEIRO\n');
- });
- return servidor;
+ };
+ const ligacao=validarConfiguracao(opcoes);
+ const servidor=criarGatewayPublicoReal(opcoes);
+ // Nunca aceitar trafego publico antes de provar a origem REAL,
+ // sessao isolada, loja fechada, tela aprovada e edição de fotos.
+ // Falha impede nova instancia de subir (sem retorno ao SQLite antigo).
+ return provarLigacaoPrivada(ligacao).then(()=>new Promise((resolve,reject)=>{
+  servidor.once('error',reject);
+  servidor.listen(porta,'0.0.0.0',()=>{
+   servidor.off('error',reject);
+   process.stdout.write('LOOP_GATEWAY_PUBLICO=REAL_SEM_LAB_SEM_FINANCEIRO\n');
+   resolve(servidor);
+  });
+ }));
 }
 if(require.main===module){
- try{iniciar();}catch(e){
-  process.stderr.write(String(e.codigo||'GATEWAY_PUBLICO_REAL_INDISPONIVEL')+'\n');
+ Promise.resolve().then(()=>iniciar()).catch(e=>{
+  const bruto=e?.codigo||e?.message||'GATEWAY_PUBLICO_REAL_INDISPONIVEL';
+  const codigo=/^[A-Z0-9_]{5,100}$/.test(bruto)?
+   bruto:'GATEWAY_PUBLICO_REAL_INDISPONIVEL';
+  process.stderr.write(codigo+'\n');
   process.exitCode=1;
- }
+ });
 }
 module.exports={validarConfiguracao,caminhoSeguro,cookiesReais,
  criarGatewayPublicoReal,iniciar};
