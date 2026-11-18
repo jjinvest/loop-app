@@ -4,6 +4,7 @@
 (async()=>{
  const $=id=>document.getElementById(id);
  const informar=msg=>{$('estadoLojaLoop').textContent=msg;};
+ let operadorAtivo=false;
  // Quando a vitrine real está no domínio principal, o mesmo cookie
  // de operador do gateway permite exibir o + sem duplicar permissões.
  async function atualizarAtalhoOperadorReal(){
@@ -11,6 +12,7 @@
   const linkRodape=document.querySelector('.akitemm-acesso-operador');
   if(!atalho&&!linkRodape)return;
   const exibir=permitido=>{
+   operadorAtivo=permitido;
    for(const link of [atalho,linkRodape]){
     if(!link)continue;
     link.hidden=!permitido;
@@ -206,7 +208,7 @@
   filtrar();
  });
  const filtroTodos=()=>{
-  categoria='';cor='';termo='';
+  categoria='';cor='';termo='';abaVitrine=0;
   $('akitemmBusca').value='';
   filtrar();
  };
@@ -216,18 +218,18 @@
   $('akitemmVisualizacaoProduto').hidden=true;
  });
  $('akitemmBusca').addEventListener('input',e=>{
-  termo=e.target.value.trim().slice(0,120);filtrar();
+  termo=e.target.value.trim().slice(0,120);abaVitrine=0;filtrar();
  });
  for(const b of document.querySelectorAll('[data-akitemm-cor]')){
   b.addEventListener('click',()=>{
    cor=cor===b.dataset.akitemmCor?'':b.dataset.akitemmCor;
-   filtrar();
+   abaVitrine=0;filtrar();
   });
  }
  for(const b of document.querySelectorAll('[data-akitemm-categoria]')){
   b.addEventListener('click',()=>{
    categoria=categoria===b.dataset.akitemmCategoria?'':
-    b.dataset.akitemmCategoria;filtrar();
+    b.dataset.akitemmCategoria;abaVitrine=0;filtrar();
   });
  }
  async function atualizarCatalogo(){
@@ -242,7 +244,7 @@
    if(dados.origem!=='CATALOGO_ADMINISTRATIVO_PUBLICADO'||
       dados.checkoutReal!==false||dados.estoqueConfirmado!==false||
       dados.precosNaoHomologados!==true||
-      !Array.isArray(dados.produtos)||dados.produtos.length>100||
+      !Array.isArray(dados.produtos)||dados.produtos.length>400||
       dados.produtos.some(p=>
        typeof p.produtoId!=='string'||typeof p.titulo!=='string'||
        typeof p.descricao!=='string'||p.compravel!==false||
@@ -347,13 +349,20 @@
   const res=await fetch('/api/contas/me',{
    credentials:'same-origin',cache:'no-store'
   });
-  if(res.status===401){location.replace('/escritorio');return;}
-  if(!res.ok)throw Error('IDENTIDADE_INDISPONIVEL');
-  const me=await res.json();
-  if(typeof me.nick!=='string'||me.financeiroReal!==false)
-   throw Error('IDENTIDADE_INCOMPATIVEL');
-  if($('akitemmNomeTitular'))$('akitemmNomeTitular').textContent=me.nick;
-  informar('AKITEMM: loja conectada à sua conta LOOP. Vendas reais ainda não liberadas.');
+  const somenteOperador=res.status===401;
+  if(somenteOperador){
+   await atualizarAtalhoOperadorReal();
+   if(!operadorAtivo){location.replace('/escritorio');return;}
+   if($('akitemmNomeTitular'))$('akitemmNomeTitular').textContent='Operador';
+   informar('AKITEMM: catálogo do operador. Pagamentos e pedidos de clientes bloqueados.');
+  }else{
+   if(!res.ok)throw Error('IDENTIDADE_INDISPONIVEL');
+   const me=await res.json();
+   if(typeof me.nick!=='string'||me.financeiroReal!==false)
+    throw Error('IDENTIDADE_INCOMPATIVEL');
+   if($('akitemmNomeTitular'))$('akitemmNomeTitular').textContent=me.nick;
+   informar('AKITEMM: loja conectada à sua conta LOOP. Vendas reais ainda não liberadas.');
+  }
   // Apenas estado do servidor, sem habilitar controles de compra desativados.
   try{
    const respostaCapacidade=await fetch('/api/loja/capacidade',{
@@ -376,7 +385,8 @@
   }catch{
    // Indisponibilidade da leitura nao libera compra nem muda as regras.
   }
-  await atualizarPedidos();
+  if(!somenteOperador)await atualizarPedidos();
+  else $('pedidosLojaLoop')?.replaceChildren();
   await atualizarCatalogo();
  }catch{
   informar('Não foi possível verificar a conta. Volte ao Escritório LOOP e entre novamente.');
