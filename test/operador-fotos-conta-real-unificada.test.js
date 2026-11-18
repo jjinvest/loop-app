@@ -223,7 +223,8 @@ test('mesmo operador real sobe foto versionada; cliente so ve publicada, sem alt
  const cookieCliente=cliente.headers.get('set-cookie').split(';')[0];
  assert.equal((await get(vitrineFoto,{Cookie:cookieCliente})).status,404);
  assert.equal((await get(adminFoto+'/fotos',{Cookie:cookieCliente})).status,401);
- midia.repo.atualizar({id:produto.id,revisaoEsperada:1,
+ midia.repo.atualizar({id:produto.id,
+  revisaoEsperada:midia.repo.buscarRegistro(produto.id).revisao,
   alteracoes:{estado:'PUBLICADO'}});
  const vitrine=await get('/api/loja/catalogo',{Cookie:cookieCliente});
  assert.equal(vitrine.status,200);
