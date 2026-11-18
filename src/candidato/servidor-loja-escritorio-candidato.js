@@ -248,7 +248,15 @@ function criarAppLojaEscritorioCandidato({banco,repositorioCatalogo,
  // específico para identidade unificada, sem abrir checkout comercial.
  app.get('/staging/cliente',(_req,res)=>{
   const html=fs.readFileSync(path.join(__dirname,'checkout-candidato-ui.html'),'utf8');
-  return res.type('html').send(html.replace('</head>',
+  // Atualiza os recursos CSS no navegador sem modificar o HTML visual aprovado.
+  // Importante no celular: estilos antigos em cache quebram a grade e as fotos.
+  const versaoEstilos='?v=20261118-restaurar-css-cliente';
+  const htmlComEstilosAtuais=['cliente.css','loop03-aprovado.css','cliente-integrado.css']
+   .reduce((documento,arquivo)=>documento.replace(
+    'href="/staging/assets/'+arquivo+'"',
+    'href="/staging/assets/'+arquivo+versaoEstilos+'"' ),html);
+  return res.type('html').set('Cache-Control','no-store').send(
+   htmlComEstilosAtuais.replace('</head>',
    '<script src="/staging/assets/operador-em-tela.js" defer></script><script src="/staging/assets/acabamento-loop.js" defer></script></head>'));
  });
  app.get('/staging/assets/catraca-visor.js',(_req,res)=>res.type('js').sendFile(
