@@ -52,7 +52,8 @@ function montarRotasCatalogoMidiaOperador({
    if(new Set(combinados.map(p=>p.produtoId)).size!==combinados.length)
     return res.status(409).json({erro:'CATALOGO_IDS_DUPLICADOS'});
    return res.json({produtos:combinados.map(p=>({
-    ...p,quantidadeFotos:catalogoMidia.fotos.listar(p.produtoId).fotos.length
+    ...p,quantidadeFotos:ID.test(p.produtoId)?
+     catalogoMidia.fotos.listar(p.produtoId).fotos.length:0
    })),origem:'CATALOGO_REAL_PERSISTENTE',checkoutReal:false});
   }catch{return res.status(503).json({erro:'CATALOGO_REAL_INDISPONIVEL'});}
  });
