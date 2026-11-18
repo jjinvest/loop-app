@@ -9,7 +9,8 @@ const {montarRotasCatalogoMidiaOperador}=
 function erro(c){const e=new Error(c);e.codigo=c;throw e;}
 function montarGatewayAdminComercial(app,{
  sessoes,controle,catalogo,auditoria=null,manutencao=null,
- catalogoMidia=null,pedidosComerciais=null,motorLoop=null,operacaoCatraca=null,
+ catalogoMidia=null,posicoesVitrine=null,pedidosComerciais=null,
+ motorLoop=null,operacaoCatraca=null,
  integradorComercialEnsaio=null,jornadaComercialEnsaio=null,
  recuperacaoReservas=null,classificacaoLoop=null,origemHttps
 }={}){
@@ -122,7 +123,7 @@ function montarGatewayAdminComercial(app,{
  // O mesmo login administrativo da loja e do escritorio grava fotos na
  // fonte comercial persistente, sem criar permissao paralela ou pagina nova.
  if(catalogoMidia!==null)montarRotasCatalogoMidiaOperador({
-  app,catalogoMidia,catalogoPrincipal:catalogo,
+  app,catalogoMidia,catalogoPrincipal:catalogo,posicoesVitrine,
   autorizarOperador:proteger,validarCsrf
  });
  app.get('/administrador/entrar',(req,res)=>{
