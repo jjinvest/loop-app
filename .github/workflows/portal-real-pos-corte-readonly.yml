@@ -1,0 +1,39 @@
+name: LOOP - Portal publico real pos-corte (SOMENTE LEITURA)
+on:
+  push:
+    branches:
+      - work/loop-pos-corte-auditoria-real-20261118
+    paths:
+      - 'scripts/provar-portal-publico-real-readonly.js'
+      - 'test/portal-publico-real-readonly.test.js'
+      - '.github/workflows/portal-real-pos-corte-readonly.yml'
+  pull_request:
+    branches:
+      - feature/unificar-escritorio-real-20261105
+    paths:
+      - 'scripts/provar-portal-publico-real-readonly.js'
+      - 'test/portal-publico-real-readonly.test.js'
+      - '.github/workflows/portal-real-pos-corte-readonly.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: portal-real-readonly-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  provar-exterior:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Sintaxe e contratos SEM rede
+        run: |
+          node --check scripts/provar-portal-publico-real-readonly.js
+          node --test test/portal-publico-real-readonly.test.js
+      - name: Provar DOMINIO PUBLICADO - apenas GET sem cookies ou segredos
+        run: node scripts/provar-portal-publico-real-readonly.js
