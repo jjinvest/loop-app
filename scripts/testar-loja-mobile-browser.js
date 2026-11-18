@@ -405,17 +405,21 @@ async function main(){
   assert.equal(await page.locator('.produto-loja-loop').count(),0,
    'Nenhum produto fisico ficticio deve ser fabricado na vitrine');
   await page.locator('#akitemmFiltroTodos').click();
+  // O ambiente LOCAL DE TESTE cria quatro fixtures artificiais; a loja
+  // verdadeira do proprietario ainda tem ZERO produtos cadastrados.
   // A vitrine horizontal preserva 20 espaços na primeira metade da aba:
-  // quatro produtos realmente publicados + dezesseis molduras vazias.
+  // quatro fixtures exclusivamente no SQLite descartavel + 16 molduras.
   // Contar espaços como produtos era a expectativa legada incorreta.
   assert.equal(await page.locator('.produto-loja-loop').count(),20);
   assert.equal(await page.locator('.produto-loja-loop[data-produto-id]').count(),4);
   assert.equal(await page.locator('.akitemm-slot-vazio').count(),16);
+  // Somente FIXTURES do navegador local: nao sao produtos publicados
+  // pelo proprietario na AKITEMM e nunca devem ir ao banco definitivo.
   await page.locator('.produto-loja-loop[data-produto-id]').first().getByRole('button',{name:'Ver detalhes'}).click();
-  assert.equal(await page.locator('#akitemmModalDetalhes').isVisible(),true);
-  assert.match(await page.locator('#akitemmDetalhesConteudo').innerText(),/R\$\s*[0-9]/);
-  await page.locator('#akitemmModalDetalhes .akitemm-modal-fechar').click();
-  assert.equal(await page.locator('#akitemmModalDetalhes').isVisible(),false);
+  assert.equal(await page.locator('#akitemmVisualizacaoProduto').isVisible(),true);
+  assert.match(await page.locator('#akitemmProdutoInlineConteudo').innerText(),/R\$\s*[0-9]/);
+  await page.locator('#akitemmVoltarProdutos').click();
+  assert.equal(await page.locator('#akitemmVisualizacaoProduto').isVisible(),false);
   // Endereco individual editavel, salvo no SQLite, sem mudar perfil/cadastro.
   await page.locator('#akitemmEntrega summary').click();
   const entrega=page.locator('#akitemmFormEntrega');
