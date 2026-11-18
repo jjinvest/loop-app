@@ -209,7 +209,7 @@ class CatalogoMultiDistribuidoresSQLite{
  // Pré-vitrine pública somente dos produtos explicitamente publicados
  // pelo administrador. Nunca pressupor preço, estoque ou frete não homologados.
  listarVitrinePreparacao({limite=50}={}){
-  if(!Number.isSafeInteger(limite)||limite<1||limite>100)
+  if(!Number.isSafeInteger(limite)||limite<1||limite>400)
    erro('CONSULTA_CATALOGO_INVALIDA');
   const regrasPresentes=!!this.db.prepare([
    "SELECT 1 FROM sqlite_master WHERE type='table'",
