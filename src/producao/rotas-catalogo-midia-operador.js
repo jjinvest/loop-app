@@ -15,7 +15,10 @@ function montarRotasCatalogoMidiaOperador({
     typeof catalogoMidia.fotos?.listar!=='function'||
     typeof catalogoMidia.fotos?.abrir!=='function'||
     catalogoMidia.fotos.banco!==catalogoMidia.repo.banco||
-    (catalogoPrincipal!==null&&typeof catalogoPrincipal?.listarProdutosAdministrativos!=='function')||
+    (catalogoPrincipal!==null&&(
+     typeof catalogoPrincipal?.listarProdutosAdministrativos!=='function'||
+     typeof catalogoPrincipal?.buscarProdutoAdministrativo!=='function'||
+     typeof catalogoPrincipal?.atualizarDescricaoProduto!=='function'))||
     typeof autorizarOperador!=='function'||typeof validarCsrf!=='function')
   throw Error('OPERADOR_CATALOGO_REAL_NAO_INTEGRADO');
  const urlFoto=(id,posicao)=>'/api/admin/catalogo-midia/produtos/'+
@@ -57,6 +60,80 @@ function montarRotasCatalogoMidiaOperador({
    })),origem:'CATALOGO_REAL_PERSISTENTE',checkoutReal:false});
   }catch{return res.status(503).json({erro:'CATALOGO_REAL_INDISPONIVEL'});}
  });
+ // Nome e descrição do quadrinho continuam no cadastro primário.
+ // Não edita custos, preço, fornecedor, cor nem status de publicação.
+ app.get('/api/admin/catalogo-midia/produtos/:produtoId',
+  autorizarOperador,verificarId,(req,res)=>{
+   const id=req.params.produtoId;
+   try{
+    const local=catalogoMidia.repo.buscarRegistro(id);
+    const principal=catalogoPrincipal?.
+     buscarProdutoAdministrativo({produtoId:id});
+    if(local&&principal)
+     return res.status(409).json({erro:'CATALOGO_IDS_DUPLICADOS'});
+    if(!local&&!principal)
+     return res.status(404).json({erro:'PRODUTO_NAO_ENCONTRADO'});
+    return res.json(local?{
+     produtoId:id,nome:local.produto.nome,
+     descricao:local.produto.descricao||'',
+     estado:local.produto.estado,revisao:local.revisao,
+     fonte:'MIDIA_REAL'
+    }:{
+     produtoId:id,nome:principal.titulo,
+     descricao:principal.descricao||'',
+     estado:principal.ativo?'PUBLICADO':'RASCUNHO',
+     revisao:principal.revisao,fonte:'COMERCIAL_PRINCIPAL'
+    });
+   }catch{return res.status(503).json({erro:'PRODUTO_REAL_INDISPONIVEL'});}
+  });
+ app.patch('/api/admin/catalogo-midia/produtos/:produtoId',
+  autorizarOperador,validarCsrf,verificarId,async(req,res)=>{
+   if(!req.is('application/json')||!req.body||
+      Array.isArray(req.body)||typeof req.body!=='object')
+    return res.status(415).json({erro:'PRODUTO_JSON_OBRIGATORIO'});
+   const b=req.body,id=req.params.produtoId;
+   if(Object.keys(b).sort().join(',')!=='descricao,revisaoEsperada,titulo'||
+      typeof b.titulo!=='string'||b.titulo.trim().length<2||
+      b.titulo.length>150||typeof b.descricao!=='string'||
+      b.descricao.length>2000||!Number.isSafeInteger(b.revisaoEsperada)||
+      b.revisaoEsperada<1)
+    return res.status(400).json({erro:'PRODUTO_CAMPOS_INVALIDOS'});
+   try{
+    const local=catalogoMidia.repo.buscarRegistro(id);
+    const principal=catalogoPrincipal?.
+     buscarProdutoAdministrativo({produtoId:id});
+    if(local&&principal)
+     return res.status(409).json({erro:'CATALOGO_IDS_DUPLICADOS'});
+    if(!local&&!principal)
+     return res.status(404).json({erro:'PRODUTO_NAO_ENCONTRADO'});
+    let novo;
+    if(local){
+     await catalogoMidia.repo.atualizar({
+      id,revisaoEsperada:b.revisaoEsperada,
+      alteracoes:{nome:b.titulo.trim(),descricao:b.descricao.trim()}
+     });
+     const x=catalogoMidia.repo.buscarRegistro(id);
+     novo={produtoId:id,nome:x.produto.nome,
+      descricao:x.produto.descricao,revisao:x.revisao};
+    }else{
+     const x=catalogoPrincipal.atualizarDescricaoProduto({
+      produtoId:id,titulo:b.titulo,descricao:b.descricao,
+      revisaoEsperada:b.revisaoEsperada
+     });
+     novo={produtoId:id,nome:x.titulo,
+      descricao:x.descricao,revisao:x.revisao};
+    }
+    return res.json({...novo,checkoutReal:false});
+   }catch(e){
+    const erro=e?.codigo||e?.message||'PRODUTO_REAL_INDISPONIVEL';
+    const status=erro.includes('CONFLITO')?409:
+     erro.includes('NAO_EXISTE')?404:
+     erro.includes('MANUTENCAO')?423:
+     erro.includes('INVALID')?400:503;
+    return res.status(status).json({erro:status===503?
+     'PRODUTO_REAL_INDISPONIVEL':erro});
+   }
+  });
  app.get('/api/admin/catalogo-midia/produtos/:produtoId/fotos',
   autorizarOperador,verificarId,(req,res)=>{
    const id=req.params.produtoId;
