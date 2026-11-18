@@ -192,7 +192,8 @@
    card.append(imagem,detalhes);alvo.append(card);
   }
   $('akitemmResultadoProdutos').textContent=filtrada?
-   itens.length+' resultado(s) para os filtros selecionados.':
+   (itens.length?itens.length+' resultado(s) para os filtros selecionados.':
+    'Nenhum produto encontrado para esta busca ou filtro.'):
    itens.length+' produto(s) publicado(s); dez abas com quarenta espaços cada.';
   $('akitemmFiltroTodos').setAttribute('aria-pressed',
    String(!categoria&&!cor&&!termo));
