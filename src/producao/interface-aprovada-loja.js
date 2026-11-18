@@ -57,7 +57,7 @@
   'CINZA','VERDE','DOURADO','ROXO'];
  const filtrar=()=>{
   const normal=x=>String(x||'').normalize('NFD')
-   .replace(/[\\u0300-\\u036f]/g,'').toLocaleLowerCase('pt-BR');
+   .replace(/[\u0300-\u036f]/g,'').toLocaleLowerCase('pt-BR');
   const itens=produtosPublicados.filter(p=>
    (!categoria||(categoria==='fisicos'&&p.tipo==='FISICO')||
     (categoria==='novidades'&&p.novidade===true)||
