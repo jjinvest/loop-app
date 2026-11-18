@@ -6,6 +6,8 @@ const {randomBytes}=require('node:crypto');
 const {DatabaseSync}=require('node:sqlite');
 const {criarGatewayPublicoReal}=
  require('../scripts/iniciar-gateway-publico-real-loop');
+const {provarLigacaoPrivada}=
+ require('../scripts/provar-ligacao-privada-loop');
 const {IdentidadeClienteLoopReal}=
  require('../src/producao/identidade-cliente-loop-sqlite');
 const {SessaoAdminComercialSQLite}=
@@ -57,6 +59,15 @@ test('gateway e identidade reais end-to-end: mesmas telas, cookies, CSRF e opera
  });
  const real=app.listen(0,'127.0.0.1');
  await once(real,'listening');
+ const alvo=new URL('http://127.0.0.1:'+real.address().port);
+ const prova=await provarLigacaoPrivada({alvo,origemReal:REAL});
+ assert.equal(prova.identidadeReal,true);
+ assert.equal(prova.origemConfirmada,true);
+ assert.equal(prova.uploadOperador,true);
+ await assert.rejects(
+  provarLigacaoPrivada({alvo,origemReal:'https://origem-falsa.invalid'}),
+  /PROVA_PRIVADA_ORIGEM_NAO_CONFERE/
+ );
  const gateway=criarGatewayPublicoReal({
   urlIdentidadeReal:'http://127.0.0.1:'+real.address().port,
   origemReal:REAL,testeLoopback:true
