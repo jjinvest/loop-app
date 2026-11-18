@@ -43,7 +43,12 @@ function assinarObjetoS3Real({
   /^clientes\/\d{4}-\d{2}-\d{2}\/[0-9a-f-]{36}\.looprealbak$/.test(key);
  const preparacao=typeof key==='string'&&
   /^preparacao\/[0-9a-f-]{36}\.probe$/.test(key);
+ // Catálogo de mídia usa o mesmo S3 privado, mas prefixo e formato próprios.
+ // Nunca permitir DELETE ou misturar a custódia com a identidade.
+ const midia=typeof key==='string'&&
+  /^midia\/\d{4}-\d{2}-\d{2}\/[0-9a-f-]{36}\.loopmidiabak$/.test(key);
  if(!(backup&&['PUT','GET'].includes(method)||
+      midia&&['PUT','GET'].includes(method)||
       preparacao&&['PUT','GET','DELETE'].includes(method))||
     !(agora instanceof Date)||!Number.isFinite(agora.getTime())||
     !Number.isSafeInteger(segundos)||segundos<30||segundos>900)
