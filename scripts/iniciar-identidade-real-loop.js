@@ -202,11 +202,16 @@ async function iniciar(ambiente=process.env,opcoes={}){
   if(ambiente.LOOP_REAL_CATALOGO_EDITAVEL==='SIM')
    catalogoMidia=criarCatalogoMercadoriasReal({
     arquivo:'/dados-reais/catalogo-produtos.sqlite',
-    tokenRaiz:ambiente.LOOP_REAL_TABULEIRO_INTERSERVICE_TOKEN
+    tokenRaiz:ambiente.LOOP_REAL_TABULEIRO_INTERSERVICE_TOKEN,
+    buscarProdutoCompartilhado:id=>catalogo.buscarProdutoAdministrativo({
+     produtoId:id
+    })
    });
   const catalogoMidiaLeitura=catalogoMidia?Object.freeze({
    banco:catalogoMidia.repo.banco,
    listarVitrinePreparacao:args=>catalogoMidia.listarVitrinePreparacao(args),
+   listarFotosProdutoCompartilhado:args=>
+    catalogoMidia.listarFotosProdutoCompartilhado(args),
    abrirFotoPublicada:args=>catalogoMidia.abrirFotoPublicada(args)
   }):null;
   const app=criarAppIdentidadeLoop({
