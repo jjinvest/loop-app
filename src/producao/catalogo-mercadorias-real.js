@@ -90,7 +90,7 @@ function criarCatalogoMercadoriasReal({
  // trocar o banco de clientes e sem passar por qualquer rota de ensaio.
  // Apenas produtos fisicos explicitamente publicados, sem preco/checkout.
  function listarVitrinePreparacao({limite=100}={}){
-  if(!Number.isSafeInteger(limite)||limite<1||limite>100)
+  if(!Number.isSafeInteger(limite)||limite<1||limite>400)
    throw Error('CATALOGO_REAL_LIMITE_INVALIDO');
   const publicos=repo.listar().filter(p=>
    p.estado==='PUBLICADO'&&p.tipo==='FISICO');
