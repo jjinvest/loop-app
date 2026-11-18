@@ -66,7 +66,8 @@ function criarAppIdentidadeLoop({contas,origemHttps,
  if(catalogoMidiaLeitura!==null&&(
   typeof catalogoMidiaLeitura.banco?.prepare!=='function'||
   catalogoMidiaLeitura.banco===contas.banco||
-  typeof catalogoMidiaLeitura.listarVitrinePreparacao!=='function'))
+  typeof catalogoMidiaLeitura.listarVitrinePreparacao!=='function'||
+  typeof catalogoMidiaLeitura.abrirFotoPublicada!=='function'))
   throw Error('CATALOGO_MIDIA_LEITURA_NAO_ISOLADA');
  const visaoEscritorio=motorLoop===null?null:
   new VisaoEscritorioUnificadaSQLite({
@@ -590,6 +591,31 @@ function criarAppIdentidadeLoop({contas,origemHttps,
     checkoutReal:false});
   }
  });
+ // A foto de produto publicado usa a MESMA sessão cliente da loja.
+ // Nunca encaminha cookies para o banco de imagens e não expõe rascunhos.
+ app.get('/api/loja/produtos/:produtoId/foto/:posicao',
+  protegido,(req,res)=>{
+   const id=req.params.produtoId,indice=req.params.posicao;
+   if(!/^[a-z0-9-]{3,80}$/.test(id)||
+      !/^(?:10|[1-9])$/.test(indice))
+    return res.status(404).json({erro:'FOTO_NAO_ENCONTRADA'});
+   if(!catalogoMidiaLeitura)
+    return res.status(503).json({erro:'CATALOGO_MIDIA_INDISPONIVEL'});
+   try{
+    const imagem=catalogoMidiaLeitura.abrirFotoPublicada({
+     produtoId:id,posicao:Number(indice)
+    });
+    if(!Buffer.isBuffer(imagem?.dados)||
+       !['image/jpeg','image/png','image/webp'].includes(imagem?.mime))
+     throw Error('FOTO_INTEGRIDADE_INVALIDA');
+    return res.set('Cache-Control','private, no-store')
+     .type(imagem.mime).send(imagem.dados);
+   }catch(e){
+    if(['FOTO_NAO_ENCONTRADA','FOTO_NAO_PUBLICADA'].includes(e?.message))
+     return res.status(404).json({erro:'FOTO_NAO_ENCONTRADA'});
+    return res.status(503).json({erro:'FOTO_PUBLICA_INDISPONIVEL'});
+   }
+  });
  // Consulta de capacidade da loja vinculada à mesma conta. Sem produto
  // real aprovado ou integração de fornecedor, nenhum carrinho pode pagar.
  app.get('/api/loja/estado',protegido,(_req,res)=>res.json({
