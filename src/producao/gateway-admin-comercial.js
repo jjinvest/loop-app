@@ -4,10 +4,12 @@ const {COOKIE_ADMIN}=require('./sessao-admin-comercial-sqlite');
 const {OperacaoCatracaAdminSQLite}=require('./operacao-catraca-admin-sqlite');
 const {montarAdminComercialAprovado}=
  require('./interface-admin-comercial-aprovada');
+const {montarRotasCatalogoMidiaOperador}=
+ require('./rotas-catalogo-midia-operador');
 function erro(c){const e=new Error(c);e.codigo=c;throw e;}
 function montarGatewayAdminComercial(app,{
  sessoes,controle,catalogo,auditoria=null,manutencao=null,
- pedidosComerciais=null,motorLoop=null,operacaoCatraca=null,
+ catalogoMidia=null,pedidosComerciais=null,motorLoop=null,operacaoCatraca=null,
  integradorComercialEnsaio=null,jornadaComercialEnsaio=null,
  recuperacaoReservas=null,classificacaoLoop=null,origemHttps
 }={}){
@@ -117,6 +119,11 @@ function montarGatewayAdminComercial(app,{
    return res.status(403).json({erro:'CSRF_ADMIN_INVALIDO'});
   next();
  };
+ // O mesmo login administrativo da loja e do escritorio grava fotos na
+ // fonte comercial persistente, sem criar permissao paralela ou pagina nova.
+ if(catalogoMidia!==null)montarRotasCatalogoMidiaOperador({
+  app,catalogoMidia,autorizarOperador:proteger,validarCsrf
+ });
  app.get('/administrador/entrar',(req,res)=>{
   if(sessoes.sessao(cookieValor(req)))
    return res.redirect(303,'/administrador');
