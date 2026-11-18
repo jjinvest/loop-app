@@ -1,0 +1,37 @@
+name: AKITEMM - gateway real sem laboratório
+on:
+  push:
+    branches:
+      - feature/unificar-escritorio-real-20261105
+    paths:
+      - '.github/workflows/gateway-publico-real.yml'
+      - 'Dockerfile.public-real'
+      - 'scripts/iniciar-gateway-publico-real-loop.js'
+      - 'scripts/provar-ligacao-privada-loop.js'
+      - 'test/gateway-publico-real-sem-laboratorio.test.js'
+      - 'test/gateway-publico-real-integracao-conta-operador.test.js'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  gateway-real-isolado:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+      - run: npm ci --ignore-scripts --no-fund
+      - name: Provar separação e integração com identidade real sem pagamento
+        run: node --test test/gateway-publico-real-sem-laboratorio.test.js test/gateway-publico-real-integracao-conta-operador.test.js
+      - name: Construir somente a entrada pública limpa
+        run: docker build -f Dockerfile.public-real -t akitemm-gateway-real:ci .
+      - name: Verificar a imagem em modo somente-leitura sem internet
+        run: |
+          docker run --rm --network none --read-only akitemm-gateway-real:ci node --check scripts/iniciar-gateway-publico-real-loop.js
+          docker run --rm --network none --read-only akitemm-gateway-real:ci node --check scripts/provar-ligacao-privada-loop.js
+          docker run --rm --network none --read-only akitemm-gateway-real:ci node -e "const fs=require('node:fs');const raiz=fs.readdirSync('/app');const scripts=fs.readdirSync('/app/scripts').sort();if(raiz.length!==1||raiz[0]!=='scripts'||scripts.join(',')!=='iniciar-gateway-publico-real-loop.js,provar-ligacao-privada-loop.js')process.exit(1)"
