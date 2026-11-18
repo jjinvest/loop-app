@@ -54,7 +54,8 @@ test('entrada real exibe mercadoria publicada do acervo de fotos pelo mesmo logi
   contas,origemHttps:ORIGEM,permitirCadastro:false,
   catalogoMidiaLeitura:{
    banco:midia.repo.banco,
-   listarVitrinePreparacao:opts=>midia.listarVitrinePreparacao(opts)
+   listarVitrinePreparacao:opts=>midia.listarVitrinePreparacao(opts),
+   abrirFotoPublicada:opts=>midia.abrirFotoPublicada(opts)
   }
  });
  const server=app.listen(0,'127.0.0.1');
@@ -97,6 +98,15 @@ test('entrada real exibe mercadoria publicada do acervo de fotos pelo mesmo logi
  assert.equal(d.checkoutReal,false);
  assert.equal(d.produtos[0].unidadesConfirmadas,0);
  assert.equal(d.produtos[0].compravel,false);
+ assert.equal(d.produtos[0].fotos.length,1);
+ assert.equal(d.produtos[0].fotos[0].url,
+  '/api/loja/produtos/camiseta-preta/foto/1');
+ assert.equal((await get(d.produtos[0].fotos[0].url)).status,401);
+ const imagem=await get(d.produtos[0].fotos[0].url,params);
+ assert.equal(imagem.status,200);
+ assert.match(imagem.headers.get('content-type'),/^image\/png/);
+ assert.ok((await imagem.arrayBuffer()).byteLength>60);
+ assert.equal((await get('/api/loja/produtos/camiseta-preta/foto/11',params)).status,404);
  assert.equal(JSON.stringify(d).includes('STAGING'),false);
  assert.equal((await get('/api/loja/estado',params)).status,200);
  assert.equal((await get('/api/loja/pedidos',params)).status,503);
