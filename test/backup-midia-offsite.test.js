@@ -73,12 +73,12 @@ test('backup cifrado e restore local preservam histórico de fotos antigas e nã
 });
 test('backup ativo conserva banners do acervo e recusa banner inválido',async t=>{
  const f=fixture(t),db=f.cat.repo.banco;
- db.exec([
-  'CREATE TABLE admin_akitemm_banner_arquivos_v1(',
-  'id TEXT PRIMARY KEY,mime TEXT NOT NULL,imagem BLOB NOT NULL);'
- ].join(' '));
- db.prepare('INSERT INTO admin_akitemm_banner_arquivos_v1(id,mime,imagem) VALUES(?,?,?)')
-  .run('banner-principal','image/png',Buffer.alloc(100,17));
+ // O esquema oficial de banners já é criado pelo catálogo; não o recriar.
+ db.prepare([
+  'INSERT INTO admin_akitemm_banner_arquivos_v1',
+  '(id,mime,imagem,criado_em) VALUES(?,?,?,?)'
+ ].join(' ')).run('banner-principal','image/png',Buffer.alloc(100,17),
+  Date.now());
  f.cat.fechar();
  const antes=validarAcervoMidia(f.origem);
  assert.equal(antes.bannersAtuais,1);
