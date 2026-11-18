@@ -17,7 +17,7 @@ const ORIGEM='https://contas.example.invalid';
 const DOC='Termos de uso de conta unica LOOP AKITEMM com finalidade identificada '+
  'e restricao a recursos financeiros externos ate a homologacao oficial.';
 const PNG=Buffer.from(
- 'iVBORw0KGgoAAAANSUhEUgAAAAIAAAACCAIAAAD91JpzAAAAEklEQVR4z8DAAMIM/4EAAB/uBfsL2WiLAAAAAElFTkSuQmCC',
+ 'iVBORw0KGgoAAAANSUhEUgAAAAIAAAACCAIAAAD91JpzAAAAEklEQVR4nGP4z8DAAMIM/4EAAB/uBfsL2WiLAAAAAElFTkSuQmCC',
  'base64');
 
 test('entrada real exibe mercadoria publicada do acervo de fotos pelo mesmo login e nao habilita venda',async t=>{
@@ -64,7 +64,6 @@ test('entrada real exibe mercadoria publicada do acervo de fotos pelo mesmo logi
  const get=(p,headers={})=>fetch(base+p,{headers});
  assert.equal((await get('/api/loja/catalogo')).status,401);
  assert.equal((await get('/loja')).status,401);
- assert.equal(await (await get('/loja')).status,401);
  assert.equal(await (await get('/escritorio')).status,200);
  const documentos=contas.documentos();
  await contas.cadastrar({
