@@ -443,7 +443,7 @@ async function main(){
   assert.equal(await cinzaCard.getAttribute('class'),'produto-loja-loop produto-loja-loop-nao-elegivel');
   assert.equal(await verdeCard.getAttribute('class'),'produto-loja-loop produto-loja-loop-elegivel');
   assert.equal(await eventoCard.getAttribute('class'),'produto-loja-loop produto-loja-loop-especial');
-  assert.equal(await eventoCard.locator('.tarja-promocao-especial-loop').innerText(),'PROMOÇÃO ESPECIAL');
+  assert.equal(await eventoCard.locator('.tarja-promocao-especial-loop').innerText(),'EVENTO ESPECIAL');
   assert.match(await eventoCard.locator('.datas-promocao-especial-loop').innerText(),
    /De \d{4}-\d{2}-\d{2} até \d{4}-\d{2}-\d{2}.*2 posições/);
   const cores=await eventoCard.evaluate(node=>{
