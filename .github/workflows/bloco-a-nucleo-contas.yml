@@ -1,0 +1,52 @@
+name: LOOP - Bloco A (nucleo original e custodia, SEM deploy)
+on:
+  push:
+    branches:
+      - work/loop-integracao-acoplada-20261118
+    paths:
+      - 'src/producao/migracao-cadastros-preview-real.js'
+      - 'src/producao/auditoria-contas-migradas-readonly.js'
+      - 'scripts/auditar-contas-migradas-readonly.js'
+      - 'test/migracao-cadastros-preview-real.test.js'
+      - 'test/auditoria-contas-migradas-readonly.test.js'
+      - 'test/loja-real-zero-produtos-antes-cadastro.test.js'
+      - 'docs/NUCLEO_ORIGINAL_LINHA_DE_RACIOCINIO_LOOP_20261118.md'
+      - '.github/workflows/bloco-a-nucleo-contas.yml'
+  pull_request:
+    paths:
+      - 'src/producao/migracao-cadastros-preview-real.js'
+      - 'src/producao/auditoria-contas-migradas-readonly.js'
+      - 'scripts/auditar-contas-migradas-readonly.js'
+      - 'test/migracao-cadastros-preview-real.test.js'
+      - 'test/auditoria-contas-migradas-readonly.test.js'
+      - 'test/loja-real-zero-produtos-antes-cadastro.test.js'
+      - '.github/workflows/bloco-a-nucleo-contas.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: loop-bloco-a-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  custodia:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+      - run: npm ci --ignore-scripts --no-fund
+      - name: Syntax sem interagir com bancos reais
+        run: |
+          node --check src/producao/migracao-cadastros-preview-real.js
+          node --check src/producao/auditoria-contas-migradas-readonly.js
+          node --check scripts/auditar-contas-migradas-readonly.js
+      - name: Somente rede reconhecida e auditoria sem mutacao
+        run: |
+          node --test test/migracao-cadastros-preview-real.test.js test/auditoria-contas-migradas-readonly.test.js test/loja-real-zero-produtos-antes-cadastro.test.js
+      - name: Visual aprovado permanece congelado
+        run: node --test test/contrato-visual-escritorio-aprovado.test.js

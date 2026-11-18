@@ -1,6 +1,11 @@
 name: LOOP - telas reais PC e celular integradas
 
 on:
+  # Toda PR que altera o ramo de integracao precisa validar a interface
+  # definitiva no navegador, sem contaminar o banco real com fixtures.
+  pull_request:
+    branches:
+      - feature/unificar-escritorio-real-20261105
   push:
     branches:
       - feature/unificar-escritorio-real-20261105

@@ -1,7 +1,10 @@
 name: LOOP - Navegador celular e computador
 
 on:
+  # Navegador legado do LAB: validar PRs contra main, nao tratar
+  # fixture de laboratorio como certificacao do site real.
   pull_request:
+    branches: [main]
   push:
     branches: [main]
   workflow_dispatch:
@@ -11,13 +14,13 @@ permissions:
 
 jobs:
   testar-mobile:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: '22'
+          node-version: '24'
           cache: npm
       - name: Instalar dependencias do projeto
         run: npm ci

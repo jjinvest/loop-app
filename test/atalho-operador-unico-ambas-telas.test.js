@@ -80,4 +80,10 @@ test('atalho + só é exibível ao operador autenticado; sessão cliente não au
  assert.match(escritorio,/operador===true/);
  assert.match(loja,/\/staging\/operador\/estado/);
  assert.match(escritorio,/\/staging\/operador\/estado/);
+ // A regra visual nao pode apagar o atalho antes da autorizacao da API:
+ // isso fazia o + desaparecer inclusive para operador autenticado.
+ const acabamento=fs.readFileSync(path.join(__dirname,
+  '../src/shared/acabamento-visual-loop.js'),'utf8');
+ assert.doesNotMatch(acabamento,
+  /getElementById\(['"](?:akitemmOperadorMais|loopOperadorMais)['"]\)\?\.remove\(\)/);
 });

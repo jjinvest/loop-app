@@ -44,6 +44,10 @@ test('ambos logins pessoais encerram modo operador e botoes recebem acabamento',
  assert.match(ler('src/candidato/operador-em-tela.js'),/loop:operador-saiu/);
  const css=ler('src/shared/acabamento-visual-loop.js');
  assert.match(css,/button:not\(:disabled\):active/);
- assert.match(css,/akitemmOperadorMais/);
- assert.match(css,/loopOperadorMais/);
+ // O acabamento nunca pode APAGAR os atalhos do operador. A sessao
+ // autorizada e responsavel por mostra-los; o logout volta a oculta-los.
+ assert.doesNotMatch(css,
+  /getElementById\(['"](?:akitemmOperadorMais|loopOperadorMais)['"]\)\?\.remove\(\)/);
+ assert.match(ler('src/producao/interface-aprovada-loja.js'),/akitemmOperadorMais/);
+ assert.match(real,/loopOperadorMais/);
 });

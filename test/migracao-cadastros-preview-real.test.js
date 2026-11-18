@@ -110,35 +110,51 @@ test('migrar duas contas reais de ensaio para identidade definitiva conserva sen
  assert.ok(!serialized.includes('11988887777'));
  assert.ok(!serialized.includes('filha@example.invalid'));
  assert.ok(!serialized.includes('Senha123456'));
- // Reconciliacao ampliada: uma identidade antiga sem indicacao permanece
- // a MESMA conta no definitivo, mas nunca ganha indicador, pedido ou saldo.
- const todas=exportarPreview({banco:src,contas:previa,
+ // Regressao da ideia original: ninguem autorizou que cadastros avulsos
+ // de laboratorio se tornem clientes. A flag antiga nao pode contornar isso.
+ assert.throws(()=>exportarPreview({banco:src,contas:previa,
   raizNick:'Indica',primeiroNick:'Filha',
-  incluirContasRegistradasSemRede:true});
- assert.equal(todas.contas.length,3);
- assert.equal(todas.vinculos.length,1);
- assert.equal(todas.conferencias.contasNaRedeComprovada,2);
- assert.equal(todas.conferencias.contasAvulsasOrigem,1);
- assert.equal(todas.conferencias.contasAvulsasIgnoradas,0);
- const ampliacao=importarNoReal({
-  banco:dst,payload:todas,chaveEmail:emailReal,chaveCifra:cipherReal
- });
- assert.equal(ampliacao.contasImportadas,3);
- assert.equal(ampliacao.vinculosImportados,1);
- assert.equal(ampliacao.adicionadas,1);
- assert.equal((await real.entrar({
-  nick:'Avulsa',senha:'Senha123456'
- })).titularId,avulsa.titularId);
+  incluirContasRegistradasSemRede:true}),
+ /MIGRACAO_CONTAS_FORA_REDE_PROIBIDA/);
+ // Defesa no destino para pacote legado autenticado, mesmo se um emissor
+ // antigo tentar inserir uma terceira conta com provas recalculadas.
+ const {createHash}=require('node:crypto');
+ const ampliar={...snap,contas:[...snap.contas,{
+  ...snap.contas[0],id:avulsa.titularId,
+  nick:'Avulsa',email:'avulsa@example.invalid'
+ }]};
+ const hashIds=createHash('sha256').update(
+  ampliar.contas.map(x=>x.id).sort().join('|')).digest('hex');
+ ampliar.conferencias={...snap.conferencias,contas:3,
+  contasAvulsasIgnoradas:0,provaIds:hashIds};
+ assert.throws(()=>importarNoReal({
+  banco:dst,payload:ampliar,chaveEmail:emailReal,chaveCifra:cipherReal
+ }),/MIGRACAO_FORA_REDE_BLOQUEADA_NO_DESTINO/);
+ assert.equal(dst.prepare('SELECT COUNT(*) AS n FROM loop_real_contas').get().n,2);
  assert.equal(dst.prepare(
-  'SELECT COUNT(*) AS n FROM loop_real_vinculos_indicacao WHERE indicado_id=?'
- ).get(avulsa.titularId).n,0);
- assert.equal(real.dadosTitular(avulsa.titularId)
-  .aceiteDocumentosDefinitivosPendente,true);
- assert.equal(importarNoReal({
-  banco:dst,payload:todas,chaveEmail:emailReal,chaveCifra:cipherReal
- }).adicionadas,0);
+  'SELECT COUNT(*) AS n FROM loop_real_vinculos_indicacao'
+ ).get().n,1);
  assert.equal(src.prepare(
   'SELECT COUNT(*) AS n FROM akitemm_conta_unica_candidata'
- ).get().n,3,'origem intacta depois da migracao');
- assert.equal(validarIdentidade(path.join(dir,'clientes.sqlite')).contas,3);
+ ).get().n,3,'origem intacta, sem exclusao automatica');
+ assert.equal(dst.prepare('PRAGMA foreign_key_check').all().length,0);
+ assert.equal(validarIdentidade(path.join(dir,'clientes.sqlite')).contas,2);
+ // Mesmo um vinculo válido de ensaio com a primeira indicada NAO autoriza
+ // uma terceira identidade antes do lançamento. O cadastro oficial é outro.
+ assert.equal(equipe.registrarCadastro({
+  indicadoId:avulsa.titularId,indicadorNick:'Filha'
+ }).registrado,true);
+ const redeAmpliada=exportarPreview({
+  banco:src,contas:previa,raizNick:'Indica',primeiroNick:'Filha'
+ });
+ assert.equal(redeAmpliada.contas.length,2);
+ assert.equal(redeAmpliada.vinculos.length,1);
+ assert.equal(redeAmpliada.conferencias.contasAvulsasIgnoradas,1);
+ assert.equal(redeAmpliada.conferencias.perfilAvulsas.indicacaoForaDaRedeValidada,1);
+ assert.ok(redeAmpliada.contas.every(x=>x.id!==avulsa.titularId));
+ assert.throws(()=>exportarPreview({
+  banco:src,contas:previa,raizNick:'Indica',primeiroNick:'Filha',
+  incluirContasRegistradasSemRede:true
+ }),/MIGRACAO_CONTAS_FORA_REDE_PROIBIDA/);
+ assert.equal(validarIdentidade(path.join(dir,'clientes.sqlite')).contas,2);
 });
