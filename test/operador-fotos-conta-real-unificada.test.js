@@ -179,8 +179,8 @@ test('mesmo operador real sobe foto versionada; cliente so ve publicada, sem alt
  });
  assert.equal((await salvarPrincipal('errado')).status,403);
  const sucessoPrincipal=await salvarPrincipal();
- assert.equal(sucessoPrincipal.status,200);
  const atualizadoPrincipal=await sucessoPrincipal.json();
+ assert.equal(sucessoPrincipal.status,200,JSON.stringify(atualizadoPrincipal));
  assert.equal(atualizadoPrincipal.nome,'Boné Cinza Original');
  assert.equal(atualizadoPrincipal.descricao,'Descrição do produto no banco central');
  assert.equal((await salvarPrincipal()).status,409,
