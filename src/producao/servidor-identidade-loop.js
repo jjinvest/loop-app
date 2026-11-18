@@ -591,7 +591,7 @@ function criarAppIdentidadeLoop({contas,origemHttps,
   });
   try{
    const central=catalogoVitrine?
-    catalogoVitrine.listarVitrinePreparacao({limite:100}):[];
+    catalogoVitrine.listarVitrinePreparacao({limite:400}):[];
    const principal=catalogoMidiaLeitura&&Array.isArray(central)?
     central.map(p=>Object.freeze({
      ...p,fotos:catalogoMidiaLeitura.listarFotosProdutoCompartilhado({
