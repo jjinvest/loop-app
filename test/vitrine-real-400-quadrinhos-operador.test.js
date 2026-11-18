@@ -23,7 +23,7 @@ const SENHA='CredencialPrivadaSomenteTeste2026!Segredo';
 const DOC='Texto de termos e privacidade necessário para ensaio isolado '+
  'de contas e catálogo real sem pagamentos, sem benefício e sem compra.';
 
-test('400 itens visiveis, 10 abas x 40 e operador sem herdar dados do cliente',async t=>{
+test('400 fixtures tecnicas em banco descartavel, 10 abas x 40 e operador isolado',async t=>{
  const db=new DatabaseSync(':memory:');
  db.exec('PRAGMA foreign_keys=ON');
  t.after(()=>db.close());
@@ -42,6 +42,7 @@ test('400 itens visiveis, 10 abas x 40 e operador sem herdar dados do cliente',a
   banco:db,chaveAdmin:randomBytes(32),credencialAdmin:SENHA
  });
  const agora=Date.now();
+ // Volume artificial EXCLUSIVAMENTE deste teste, NAO catalogo publicado do proprietario.
  const produtos=Array.from({length:400},(_,i)=>({
   produtoId:'produto-'+String(i+1).padStart(3,'0'),
   titulo:'Produto '+(i+1),descricao:'Mercadoria em catálogo',
