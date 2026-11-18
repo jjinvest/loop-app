@@ -5,6 +5,8 @@ const http=require('node:http');
 const {once}=require('node:events');
 const {criarGatewayPublicoReal,validarConfiguracao,caminhoSeguro,
  cookiesReais,iniciar}=require('../scripts/iniciar-gateway-publico-real-loop');
+const {provarLigacaoPrivada}=
+ require('../scripts/provar-ligacao-privada-loop');
 const PUBLICO='https://akitemmloop.com.br';
 const CANONICO='https://loop.com.br';
 async function abrir(handler){
@@ -36,6 +38,18 @@ test('gateway real nao carrega o LAB e so aceita destino Railway interno',()=>{
  }).alvo.hostname,'loop-identidade-real.railway.internal');
  assert.throws(()=>iniciar({NODE_ENV:'production',PORT:'8080'}),
   /GATEWAY_PUBLICO_REAL_NAO_AUTORIZADO/);
+});
+test('sonda de preflight nunca aceita proxy apontado a servidor estranho',async t=>{
+ const outro=await abrir((req,res)=>{
+  res.writeHead(200,{'Content-Type':'application/json'});
+  res.end(JSON.stringify({estado:'LABORATORIO',
+   financeiroReal:false}));
+ });
+ t.after(()=>new Promise(ok=>outro.close(ok)));
+ await assert.rejects(provarLigacaoPrivada({
+  alvo:new URL('http://127.0.0.1:'+outro.address().port),
+  origemReal:CANONICO
+ }),/PROVA_PRIVADA_NAO_E_IDENTIDADE_REAL/);
 });
 test('rotas reais sem ensaio, alias de cadastro e path traversal bloqueados',()=>{
  for(const p of ['/staging/cliente','/staging/contas/entrar',
