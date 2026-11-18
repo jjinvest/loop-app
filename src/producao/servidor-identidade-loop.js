@@ -14,6 +14,8 @@ const {autorizarInterno,projetarTabuleiroOperacional}=
  require('./leitura-tabuleiro-operacional-real');
 const {LivroFinanceiroRealSQLite}=
  require('./livro-financeiro-real-sqlite');
+const {PosicoesVitrineRealSQLite}=
+ require('./posicoes-vitrine-real-sqlite');
 function criarAppIdentidadeLoop({contas,origemHttps,
  permitirCadastro=false,backupEstado=null,captchaCadastroObrigatorio=false,
  pedidosComerciais=null,remessasOutbox=null,catalogoVitrine=null,
@@ -71,6 +73,8 @@ function criarAppIdentidadeLoop({contas,origemHttps,
   typeof catalogoMidiaLeitura.listarFotosProdutoCompartilhado!=='function'||
   typeof catalogoMidiaLeitura.abrirFotoPublicada!=='function'))
   throw Error('CATALOGO_MIDIA_LEITURA_NAO_ISOLADA');
+ const posicoesVitrine=(catalogoVitrine||catalogoMidiaLeitura)?
+  new PosicoesVitrineRealSQLite({banco:contas.banco}):null;
  const visaoEscritorio=motorLoop===null?null:
   new VisaoEscritorioUnificadaSQLite({
    banco:contas.banco,motor:motorLoop,
@@ -160,7 +164,8 @@ function criarAppIdentidadeLoop({contas,origemHttps,
  // Sessão de administrador é completamente separada do login de cliente.
  // Sem credencial e middleware de operador, rotas administrativas não existem.
  if(adminComercial!==null)
-  montarGatewayAdminComercial(app,{...adminComercial,origemHttps,motorLoop});
+  montarGatewayAdminComercial(app,{...adminComercial,origemHttps,
+   posicoesVitrine,motorLoop});
  const mutation=(req,res,next)=>{
   if(!origemOk(req))return res.status(403).json({erro:'ORIGEM_INVALIDA'});
   if(!req.is('application/json'))
@@ -615,7 +620,9 @@ function criarAppIdentidadeLoop({contas,origemHttps,
        !Number.isSafeInteger(p.unidadesConfirmadas)||
        p.unidadesConfirmadas<0))
     throw Error('VITRINE_NAO_CONFIAVEL');
-   return res.json({produtos,total:produtos.length,
+   const posicoes=posicoesVitrine?
+    posicoesVitrine.projetar(produtos):produtos;
+   return res.json({produtos:posicoes,total:posicoes.length,
     origem:'CATALOGO_ADMINISTRATIVO_PUBLICADO',checkoutReal:false,
     estoqueConfirmado:false,precosNaoHomologados:true});
   }catch{
