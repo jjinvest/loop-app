@@ -9,6 +9,7 @@ on:
       - 'scripts/auditar-contas-migradas-readonly.js'
       - 'test/migracao-cadastros-preview-real.test.js'
       - 'test/auditoria-contas-migradas-readonly.test.js'
+      - 'test/loja-real-zero-produtos-antes-cadastro.test.js'
       - 'docs/NUCLEO_ORIGINAL_LINHA_DE_RACIOCINIO_LOOP_20261118.md'
       - '.github/workflows/bloco-a-nucleo-contas.yml'
   pull_request:
@@ -18,6 +19,7 @@ on:
       - 'scripts/auditar-contas-migradas-readonly.js'
       - 'test/migracao-cadastros-preview-real.test.js'
       - 'test/auditoria-contas-migradas-readonly.test.js'
+      - 'test/loja-real-zero-produtos-antes-cadastro.test.js'
       - '.github/workflows/bloco-a-nucleo-contas.yml'
   workflow_dispatch:
 permissions:
@@ -45,6 +47,6 @@ jobs:
           node --check scripts/auditar-contas-migradas-readonly.js
       - name: Somente rede reconhecida e auditoria sem mutacao
         run: |
-          node --test test/migracao-cadastros-preview-real.test.js test/auditoria-contas-migradas-readonly.test.js
+          node --test test/migracao-cadastros-preview-real.test.js test/auditoria-contas-migradas-readonly.test.js test/loja-real-zero-produtos-antes-cadastro.test.js
       - name: Visual aprovado permanece congelado
         run: node --test test/contrato-visual-escritorio-aprovado.test.js
