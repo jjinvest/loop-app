@@ -105,6 +105,14 @@ test('mesmo operador real sobe foto versionada; cliente so ve publicada, sem alt
  const cookie=op.headers.get('set-cookie').split(';')[0];
  const estado=await get('/api/operador/estado',{Cookie:cookie});
  assert.deepEqual(await estado.json(),{operador:true});
+ // Operador pode visualizar a mesma loja, mas não assume identidade
+ // de titular para consultar pedidos, saldo ou finalizar compras.
+ const lojaOperador=await get('/loja',{Cookie:cookie});
+ assert.equal(lojaOperador.status,200);
+ assert.match(await lojaOperador.text(),/identidade\/assets\/operador-fotos\.js/);
+ assert.equal((await get('/api/loja/catalogo',{Cookie:cookie})).status,200);
+ assert.equal((await get('/api/loja/pedidos',{Cookie:cookie})).status,401);
+ assert.equal((await get('/api/contas/me',{Cookie:cookie})).status,401);
  const sessao=await get('/api/admin/comercial/sessao',{Cookie:cookie});
  assert.equal(sessao.status,200);
  const csrf=(await sessao.json()).csrfToken;
