@@ -80,7 +80,8 @@ test('gateway e identidade reais end-to-end: mesmas telas, cookies, CSRF e opera
  const tela=await get('/escritorio');
  assert.equal(tela.status,200);
  assert.equal(await tela.text(),renderizarInterfaceAprovada());
- assert.equal((await get('/api/contas/documentos')).status,200);
+ assert.equal((await get('/api/contas/documentos')).status,503,
+  'cadastro publico continua fechado em operacao interna real');
  assert.equal((await get('/api/contas/captcha-cadastro')).status,503);
  assert.equal((await post('/api/contas/cadastrar',{})).status,503);
  const criar=await contas.cadastrar({
