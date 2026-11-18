@@ -8,11 +8,13 @@ const ID=/^[A-Za-z0-9_-]{1,80}$/;
 const TABELAS_POSICOES_VITRINE=Object.freeze(['loja_real_vitrine_posicoes']);
 function falha(codigo){const e=new Error(codigo);e.codigo=codigo;throw e;}
 class PosicoesVitrineRealSQLite{
- constructor({banco,agora=()=>Date.now()}={}){
+ constructor({banco,agora=()=>Date.now(),auditoria=null}={}){
   if(typeof banco?.prepare!=='function'||typeof banco?.exec!=='function'||
-     typeof agora!=='function')
+     typeof agora!=='function'||
+     (auditoria!==null&&(auditoria.db!==banco||
+      typeof auditoria.registrar!=='function')))
    falha('VITRINE_REAL_BANCO_INVALIDO');
-  this.banco=banco;this.agora=agora;
+  this.banco=banco;this.agora=agora;this.auditoria=auditoria;
   banco.exec([
    'CREATE TABLE IF NOT EXISTS loja_real_vitrine_posicoes(',
    'posicao INTEGER PRIMARY KEY CHECK(posicao BETWEEN 1 AND 400),',
@@ -74,6 +76,13 @@ class PosicoesVitrineRealSQLite{
     'INSERT INTO loja_real_vitrine_posicoes',
     '(posicao,produto_id,revisao,atualizado_em) VALUES(?,?,1,?)'
    ].join(' ')).run(posicao,produtoId,ts);
+   if(this.auditoria){
+    this.auditoria.registrar({
+     acao:'VITRINE_PRODUTO_VINCULADO',ator:'ADMIN_COMERCIAL',
+     entidade:'SLOT_'+posicao,
+     antes:{ocupado:false},depois:{posicao,produtoId},revisaoNova:1
+    });
+   }
    this.banco.exec('COMMIT');
    return {posicao,produtoId,revisao:1,jaVinculado:false};
   }catch(e){this.banco.exec('ROLLBACK');throw e;}
