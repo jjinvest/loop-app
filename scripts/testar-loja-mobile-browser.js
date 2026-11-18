@@ -376,7 +376,10 @@ async function main(){
   await page.goto(base+'/laboratorio/loja',{waitUntil:'networkidle'});
   await page.locator('#conteudoLojaLoop').waitFor({state:'visible'});
   // AKITEMM: loja própria, não duplicar a sidebar do LOOP e não mostrar nick.
-  assert.equal(await page.locator('.akitemm-voltar').getAttribute('href'),'/escritorio');
+  // O retorno do cliente é /minha-conta. /escritorio é a entrada do operador.
+  // Não trocar a UI aprovada para fazer um teste legado passar.
+  assert.equal(await page.locator('.akitemm-voltar').getAttribute('href'),'/minha-conta');
+  assert.equal(await page.locator('.akitemm-acesso-operador').getAttribute('href'),'/escritorio');
   assert.equal((await page.locator('.akitemm-marca-loop').innerText()).replace(/\s+/g,' ').trim(),'◎ LOOP 3.0');
   assert.equal(await page.locator('.loop03-sidebar').count(),0);
   assert.equal(await page.locator('#akitemmNomeTitular').getAttribute('title'),titular.nome);
