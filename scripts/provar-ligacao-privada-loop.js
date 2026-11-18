@@ -51,6 +51,19 @@ async function provarLigacaoPrivada({alvo,origemReal,timeoutMs=5000}={}){
  if(health.status!==200||
     h.estado!=='SERVICO_IDENTIDADE_SEPARADO'||h.financeiroReal!==false)
   falha('PROVA_PRIVADA_NAO_E_IDENTIDADE_REAL');
+ // O cadastro pode ficar fechado na operação real interna: 503 esperado
+ // não equivale a erro de rede nem a autorização para abrir clientes.
+ const prontidao=await pedir({alvo,path:'/readyz',timeoutMs});
+ const estadoProntidao=jsonResposta(prontidao);
+ const cadastroFechado=prontidao.status===503&&
+  estadoProntidao.estado==='CADASTRO_REAL_INATIVO'&&
+  estadoProntidao.financeiroReal===false;
+ const cadastroPronto=prontidao.status===200&&
+  estadoProntidao.estado==='CADASTRO_REAL_PRONTO_SEM_FINANCEIRO'&&
+  estadoProntidao.financeiroReal===false&&
+  estadoProntidao.cadastroAtivo===true;
+ if(!cadastroFechado&&!cadastroPronto)
+  falha('PROVA_PRIVADA_READINESS_INCONSISTENTE');
  const titular=await pedir({alvo,path:'/api/contas/me',timeoutMs});
  if(titular.status!==401)
   falha('PROVA_PRIVADA_CLIENTE_SESSAO_ABERTA');
@@ -71,6 +84,22 @@ async function provarLigacaoPrivada({alvo,origemReal,timeoutMs=5000}={}){
     !pagina.body.includes('id="formCadastro"')||
     !pagina.body.includes('id="formLogin"'))
   falha('PROVA_PRIVADA_INTERFACE_REAL_AUSENTE');
+ // Não trocar a origem pública por um gateway que carrega login,
+ // mas perdeu o Escritório, o tabuleiro ou a vitrine horizontal aprovados.
+ const escritorio=await pedir({alvo,path:'/escritorio',timeoutMs});
+ if(escritorio.status!==200||
+    !escritorio.body.includes('/identidade/assets/tabuleiro-visual.js'))
+  falha('PROVA_PRIVADA_ESCRITORIO_APROVADO_AUSENTE');
+ for(const [rota,codigo] of [
+  ['/identidade/assets/tabuleiro-visual.js',
+   'PROVA_PRIVADA_TABULEIRO_VISUAL_AUSENTE'],
+  ['/identidade/assets/vitrine-horizontal.css',
+   'PROVA_PRIVADA_VITRINE_HORIZONTAL_AUSENTE']
+ ]){
+  const arquivo=await pedir({alvo,path:rota,timeoutMs});
+  if(arquivo.status!==200||arquivo.body.length<40)
+   falha(codigo);
+ }
  const fotos=await pedir({alvo,
   path:'/identidade/assets/operador-fotos.js',timeoutMs});
  if(fotos.status!==200||
@@ -78,7 +107,8 @@ async function provarLigacaoPrivada({alvo,origemReal,timeoutMs=5000}={}){
   falha('PROVA_PRIVADA_FOTOS_OPERADOR_AUSENTES');
  return Object.freeze({identidadeReal:true,financeiroReal:false,
   contaFechadaSemLogin:true,operadorIsolado:true,origemConfirmada:true,
-  interfaceAprovada:true,uploadOperador:true});
+  cadastroFechado,interfaceAprovada:true,visuaisAprovados:true,
+  uploadOperador:true});
 }
 async function executar(ambiente=process.env){
  const {validarConfiguracao}=
