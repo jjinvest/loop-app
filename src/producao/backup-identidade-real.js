@@ -21,6 +21,8 @@ const {OperacaoCatracaAdminSQLite,TABELAS_CATRACA_ADMIN}=
  require('./operacao-catraca-admin-sqlite');
 const {ControleCaixaCatracaLoopSQLite,TABELAS_CATRACA_CAIXA}=
  require('./controle-caixa-catraca-loop-sqlite');
+const {TABELAS_POSICOES_VITRINE}=
+ require('./posicoes-vitrine-real-sqlite');
 const {PromocaoPedidoMotorEnsaioSQLite,TABELAS_PROMOCAO_ENSAIO}=
  require('./promocao-pedido-motor-ensaio-sqlite');
 const {PromocaoLotesEnsaioSQLite,TABELAS_LOTES_ENSAIO}=
@@ -94,6 +96,7 @@ function validarIdentidade(arquivo){
   if(TABELAS.some(x=>!lista.includes(x)))falha('BACKUP_REAL_ESQUEMA_INCOMPLETO');
   const todos=[...TABELAS,...TABELAS_CONTATO,...TABELAS_ADMIN,...TABELAS_COMERCIAIS,
    ...TABELAS_MOTOR,...TABELAS_CATRACA_ADMIN,...TABELAS_CATRACA_CAIXA,
+   ...TABELAS_POSICOES_VITRINE,
    ...TABELAS_TESOURARIA_ENSAIO,
    ...TABELAS_PROMOCAO_ENSAIO,...TABELAS_LOTES_ENSAIO,
    ...TABELAS_PREFLIGHT,...TABELAS_RECUPERACAO,...TABELAS_LIVRO,
@@ -156,6 +159,22 @@ function validarIdentidade(arquivo){
     if(operacao.verificar().integridade!=='OK')
      falha('BACKUP_CATRACA_ADMIN_DIVERGENTE');
    }catch{falha('BACKUP_CATRACA_ADMIN_DIVERGENTE');}
+  }
+  // A posicao do produto no quadradinho integra o backup de
+  // identidade/comercio. Backups anteriores à tabela continuam legíveis.
+  if(lista.includes('loja_real_vitrine_posicoes')){
+   const pos=b.prepare([
+    'SELECT posicao,produto_id,revisao,atualizado_em',
+    'FROM loja_real_vitrine_posicoes'
+   ].join(' ')).all();
+   const idValido=/^[A-Za-z0-9_-]{1,80}$/;
+   if(pos.length>400||pos.some(x=>
+      !Number.isSafeInteger(x.posicao)||x.posicao<1||x.posicao>400||
+      !idValido.test(x.produto_id)||
+      !Number.isSafeInteger(x.revisao)||x.revisao<1||
+      !Number.isSafeInteger(x.atualizado_em)||x.atualizado_em<1)||
+      new Set(pos.map(x=>x.produto_id)).size!==pos.length)
+    falha('BACKUP_POSICOES_VITRINE_INCONSISTENTES');
   }
   // Reserva e autorizacoes do relogio devem sobreviver INTEGRAS ao backup.
   const temCaixaCatraca=TABELAS_CATRACA_CAIXA.some(x=>lista.includes(x));
