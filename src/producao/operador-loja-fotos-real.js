@@ -3,7 +3,9 @@
 // Este script nao muda layout, CSS, cores ou cadastro de clientes.
 // Mesmo cookie de operador da central real; CSRF em cada escrita.
 (()=>{
- const ID=/^[a-z0-9-]{3,80}$/;
+ // IDs legados do catálogo central conservam letras maiúsculas e _.
+ const ID=/^[A-Za-z0-9_-]{1,80}$/;
+ const ID_NOVO=/^[a-z0-9-]{3,80}$/;
  let operador=false,dialogo=null,aberto=false;
  const fetchJson=async(rota,opcoes={})=>{
   const res=await fetch(rota,{
@@ -132,7 +134,7 @@
    criar.type='button';criar.textContent='Cadastrar produto';
    criar.addEventListener('click',async()=>{
     const codigo=idNovo.value.trim(),titulo=nomeNovo.value.trim();
-    if(!ID.test(codigo)||titulo.length<2||titulo.length>150){
+    if(!ID_NOVO.test(codigo)||titulo.length<2||titulo.length>150){
      estado.textContent='Confira o código e o nome do produto.';return;
     }
     criar.disabled=true;
