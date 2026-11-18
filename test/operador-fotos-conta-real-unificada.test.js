@@ -298,7 +298,8 @@ test('mesmo operador real sobe foto versionada; cliente so ve publicada, sem alt
   .fotos[0].url,vitrineFoto);
  const bone=dados.produtos.find(p=>p.produtoId==='bone-cinza');
  assert.equal(bone.posicaoVitrine,361);
- assert.equal(dados.produtos.find(p=>p.produtoId===produto.id).posicaoVitrine,2);
+ // IDs fixados ocupam 361 e 400; o produto sem vínculo usa o primeiro espaço livre.
+ assert.equal(dados.produtos.find(p=>p.produtoId===produto.id).posicaoVitrine,1);
  assert.equal(antigo.posicaoVitrine,400);
  assert.equal(new Set(dados.produtos.map(p=>p.posicaoVitrine)).size,3);
  assert.equal(bone.fotos.length,1);
