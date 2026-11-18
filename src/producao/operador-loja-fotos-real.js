@@ -66,17 +66,17 @@
    if(!Array.isArray(r.produtos)||r.checkoutReal!==false)
     throw Error('CATALOGO_ADMIN_INCONSISTENTE');
    const itens=r.produtos.filter(p=>ID.test(p.produtoId));
-   if(!itens.length){
-    estado.textContent='Nenhum produto apto para foto. Cadastre pela central.';
-    return;
-   }
-   const escolha=select('Produto existente',itens.map(p=>[
-    p.produtoId,p.nome+' ('+p.produtoId+')'
-   ]));
-   const botao=document.createElement('button');
-   botao.type='button';botao.textContent='Editar fotos do produto';
-   botao.addEventListener('click',()=>{dialogo.close();void abrirProduto(escolha.s.value);});
-   corpo.append(escolha.label,botao);
+   if(itens.length){
+    const escolha=select('Produto existente',itens.map(p=>[
+     p.produtoId,p.nome+' ('+p.produtoId+')'
+    ]));
+    const botao=document.createElement('button');
+    botao.type='button';botao.textContent='Editar produto';
+    botao.addEventListener('click',()=>{
+     dialogo.close();void abrirProduto(escolha.s.value);
+    });
+    corpo.append(escolha.label,botao);
+   }else estado.textContent='Nenhum produto cadastrado: crie o primeiro abaixo.';
    corpo.append(linha('Ou cadastre uma mercadoria sem sair da loja:'));
    const idLabel=document.createElement('label');
    idLabel.textContent='Código do novo produto (letras minúsculas e hífen)';
