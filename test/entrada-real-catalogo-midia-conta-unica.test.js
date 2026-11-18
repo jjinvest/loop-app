@@ -33,8 +33,8 @@ test('entrada real exibe mercadoria publicada do acervo de fotos pelo mesmo logi
  const contas=new IdentidadeClienteLoopReal({
   banco,chaveEmail:randomBytes(32),chaveCifra:randomBytes(32),
   chaveCodigo:randomBytes(32),
-  termos:{versao:'TERMO-ATUAL',texto:DOC},
-  privacidade:{versao:'PRIV-ATUAL',texto:DOC},
+  termos:{versao:'LOOP-TERMO-ATUAL',texto:DOC},
+  privacidade:{versao:'LOOP-PRIV-ATUAL',texto:DOC},
   enviarEmail:async()=>true
  });
  const produto={
