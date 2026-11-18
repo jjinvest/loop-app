@@ -122,7 +122,8 @@ function montarGatewayAdminComercial(app,{
  // O mesmo login administrativo da loja e do escritorio grava fotos na
  // fonte comercial persistente, sem criar permissao paralela ou pagina nova.
  if(catalogoMidia!==null)montarRotasCatalogoMidiaOperador({
-  app,catalogoMidia,autorizarOperador:proteger,validarCsrf
+  app,catalogoMidia,catalogoPrincipal:catalogo,
+  autorizarOperador:proteger,validarCsrf
  });
  app.get('/administrador/entrar',(req,res)=>{
   if(sessoes.sessao(cookieValor(req)))
