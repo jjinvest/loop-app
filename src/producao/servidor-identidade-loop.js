@@ -16,7 +16,7 @@ const {LivroFinanceiroRealSQLite}=
 function criarAppIdentidadeLoop({contas,origemHttps,
  permitirCadastro=false,backupEstado=null,captchaCadastroObrigatorio=false,
  pedidosComerciais=null,remessasOutbox=null,catalogoVitrine=null,
- adminComercial=null,
+ catalogoMidiaLeitura=null,adminComercial=null,
  motorLoop=null,eventosComerciais=null,tesourariaEnsaio=null,
  aceitePosicaoAzulEnsaio=null,preflightCapacidade=null}={}){
  if(!contas||typeof contas.entrar!=='function'||typeof contas.sessao!=='function')
@@ -61,6 +61,13 @@ function criarAppIdentidadeLoop({contas,origemHttps,
   catalogoVitrine.banco!==contas.banco||
   typeof catalogoVitrine.listarVitrinePreparacao!=='function'))
   throw Error('CATALOGO_LOJA_SQLITE_DIVERGENTE');
+ // Catálogo de fotos/PDFs é um banco comercial separado no mesmo volume,
+ // nunca outra fonte de identidade, pedido, posição ou sessão.
+ if(catalogoMidiaLeitura!==null&&(
+  typeof catalogoMidiaLeitura.banco?.prepare!=='function'||
+  catalogoMidiaLeitura.banco===contas.banco||
+  typeof catalogoMidiaLeitura.listarVitrinePreparacao!=='function'))
+  throw Error('CATALOGO_MIDIA_LEITURA_NAO_ISOLADA');
  const visaoEscritorio=motorLoop===null?null:
   new VisaoEscritorioUnificadaSQLite({
    banco:contas.banco,motor:motorLoop,
@@ -552,11 +559,20 @@ function criarAppIdentidadeLoop({contas,origemHttps,
  // Pré-vitrine de itens publicados: somente leitura; nenhum preço
  // estimado, carrinho ou estoque antes de fornecedor homologado.
  app.get('/api/loja/catalogo',protegido,(_req,res)=>{
-  if(!catalogoVitrine)return res.status(503).json({
+  if(!catalogoVitrine&&!catalogoMidiaLeitura)return res.status(503).json({
    erro:'CATALOGO_NAO_CONECTADO',checkoutReal:false
   });
   try{
-   const produtos=catalogoVitrine.listarVitrinePreparacao({limite:100});
+   const principal=catalogoVitrine?
+    catalogoVitrine.listarVitrinePreparacao({limite:100}):[];
+   const midia=catalogoMidiaLeitura?
+    catalogoMidiaLeitura.listarVitrinePreparacao({limite:100}):[];
+   if(!Array.isArray(principal)||!Array.isArray(midia))
+    throw Error('CATALOGO_ORIGEM_NAO_CONFIAVEL');
+   const produtos=[...principal,...midia];
+   const ids=new Set(produtos.map(p=>p.produtoId));
+   // Conflito entre bancos não pode ser mascarado por sobrescrita.
+   if(ids.size!==produtos.length)throw Error('CATALOGO_IDS_DUPLICADOS');
    if(!Array.isArray(produtos)||produtos.length>100||
       produtos.some(p=>p.compravel!==false||
        p.checkoutReal!==false||p.precoCentavos!==null||
@@ -579,7 +595,8 @@ function criarAppIdentidadeLoop({contas,origemHttps,
  app.get('/api/loja/estado',protegido,(_req,res)=>res.json({
   titularAutenticado:true,loja:'AKITEMM',contaUnica:true,
   catalogoComercialDisponivel:false,fornecedoresAtivos:0,
-  vitrinePreparacaoConectada:catalogoVitrine!==null,
+  vitrinePreparacaoConectada:catalogoVitrine!==null||
+   catalogoMidiaLeitura!==null,
   checkoutReal:false,financeiroReal:false
  }));
  // "Meus Pedidos" mostra somente registros comerciais existentes e
