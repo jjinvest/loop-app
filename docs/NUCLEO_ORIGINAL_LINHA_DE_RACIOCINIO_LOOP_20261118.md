@@ -1,6 +1,8 @@
 # NÚCLEO ORIGINAL DO LOOP 3.0 + AKITEMM
 **Versão de continuidade: 18/11/2026 — interpretação operacional da ideia aprovada pelo proprietário, não um desenho de outra plataforma.**
 
+**ESTADO PUBLICADO APÓS CORTE E SANEAMENTO:** ler [ESTADO_OPERACIONAL_APOS_CORTE_PUBLICO_20261118.md](./ESTADO_OPERACIONAL_APOS_CORTE_PUBLICO_20261118.md) ANTES de usar qualquer situação técnica descrita abaixo. As tabelas antigas são histórico, não o estado vivo. A ideia original permanece acima de ambas.
+
 ## A regra acima do código
 **A ideia original do proprietário é a fonte de verdade do produto.** Código, telas, registros, documentos antigos, testes e ambiente publicado são apenas implementações e evidências que PRECISAM SER CONFRONTADAS com ela; não se deve tomar o que está implementado como correto só porque já existe. Quando algo divergir, separar de modo explícito: **REGRA DO PROPRIETÁRIO** / **IMPLEMENTAÇÃO EXISTENTE** / **DIVERGÊNCIA** / **CORREÇÃO** / **EVIDÊNCIA**. Nunca reinterpretar regra para combinar com a implementação atual.
 
@@ -59,8 +61,8 @@ PESSOA ENTRA POR LINK / LOJA AKITEMM
 - Visual **PREVIAMENTE APROVADO está congelado** (24 HTML/CSS sob proteção Git/CI). O defeito visual visto em 18/11 foi recuperado ao restabelecer os estilos; não retocar layout para corrigir falha de backend ou de carregamento. A marca oficial é LOOP 3.0, paleta preto/dourado/roxo/prata/verde, sem elementos de laboratório na operação de clientes.
 - A abertura ao público precisa conferir em celular real o mesmo layout e dados que no computador, além das permissões e percurso de compra. Uma tela bonita e um teste verde não certificam operação financeira.
 
-### 5. Verdade atual, não confundir com intenção nem com simulador
-**Estado verificado nos arquivos da branch de integração e no Railway em 18/11/2026:**
+### 5. Registro histórico ANTERIOR ao corte público — não usar como situação atual
+**Registro de 18/11/2026, anterior à publicação do gateway real e à exclusão das sete contas. Seu conteúdo está SUPERADO para fins de status.** A regra de negócio acima permanece vigente; conferir sempre o documento pós-corte.
 | Conexão necessária | Evidência no código | Situação com base nos registros disponíveis |
 |---|---|---|
 | Site público → mesma identidade definitiva | `scripts/servidor-escritorio-preview-railway.js` tem opção `LOOP_PREVIEW_PUBLICO_CADASTRO_REAL`, porém domínio atual `akitemmloop.com.br` serve o gateway que ainda monta `src/candidato/servidor-loja-escritorio-candidato.js` com SQLite `/dados-preview` | **PENDENTE de corte comprovado**, ainda que os dois serviços estejam online |
@@ -73,9 +75,10 @@ PESSOA ENTRA POR LINK / LOJA AKITEMM
 
 **A tabela registra ESTADO/PROVA, não um plano de recomeço.** Em cada execução, conferir HEAD, implementação e estado efetivo do Railway; atualizar a situação sem trocar a regra original.
 
-### 6. Proteção de dados do estágio atual
+### 6. Custódia — registro anterior ao saneamento
 - Vilela e Taísa são os dois **únicos cadastros reconhecidos como legítimos pelo proprietário** na fase pré-lançamento. Nove linhas no banco não são nove clientes. Registros antigos podem ter dados de pessoa, mas isso não comprova legitimidade comercial.
-- Há importação anterior de sete registros fora da rede reconhecida. Desligar a migração `LOOP_PREVIEW_MIGRAR_REAL` e `LOOP_PREVIEW_RECUPERAR_CONTAS_SEM_REFERENCIA` no Railway impede novos envios pelo mecanismo antigo; isso **não remove as sete linhas já importadas**.
+- **ATUALIZAÇÃO:** as sete contas indevidas foram removidas com prova de backup e integridade às 22:17 UTC de 18/11/2026. O texto a seguir documenta as cautelas aplicadas ANTES da exclusão, não pendência atual.
+- Havia importação anterior de sete registros fora da rede reconhecida. Desligar a migração `LOOP_PREVIEW_MIGRAR_REAL` e `LOOP_PREVIEW_RECUPERAR_CONTAS_SEM_REFERENCIA` no Railway impede novos envios pelo mecanismo antigo; isso **não remove as sete linhas já importadas**.
 - A migração de destino deve falhar fechada se tentar importar identificações avulsas. Antes da limpeza, identificar todas as dependências dos sete IDs, fazer backup criptografado restaurável, comprovar a primeira indicação, e só então executar remoção transacional auditada. **Nunca apagar por contagem, por suposição ou afetar Vilela/Taísa.**
 - Sem acesso confirmado ao banco real, não alegar exclusão. Auditoria não destrutiva é a única ação segura enquanto faltar evidência.
 
