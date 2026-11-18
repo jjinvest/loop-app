@@ -6,6 +6,16 @@
 - [PROTOCOLO — como entregar uma cópia limpa e auditável do código do MARCO ZERO para outra IA](./PROTOCOLO_PACOTE_LIMPO_MARCO_ZERO_AUDITORIA_IA.md). O snapshot final será extraído somente do commit realmente concluído e verificado; o histórico original permanece preservado.
 
 
+## Avanço da unificação real da vitrine — 18/11/2026
+
+- A **aparência do LOOP/AKITEMM permanece absolutamente igual**: nenhuma edição nos HTML, CSS, JS visual, molduras ou artes aprovadas. Modificadas apenas as ligações internas de leitura entre fonte real de identidade e catálogo de mídia, o bootstrap e teste novo.
+- `src/producao/catalogo-mercadorias-real.js`: adicionada leitura **somente dos itens FISICO explicitamente publicados**, projetados com `precoCentavos:null`, `compravel:false`, `checkoutReal:false` e cor neutra, sem promoções ou créditos simulados. Os arquivos de fotos/PDF continuam persistidos no banco comercial separado, sem mover dados.
+- `src/producao/servidor-identidade-loop.js`: a rota autenticada `/api/loja/catalogo` pode consolidar a vitrine da conta real com a leitura segura do catálogo persistente. Banco de identidade continua única fonte da sessão; IDs duplicados entre catálogos causam falha explícita, nunca sobrescrita silenciosa. Respostas continuam bloqueando checkout.
+- `scripts/iniciar-identidade-real-loop.js`: a leitura de mídia é montada **antes do app** na mesma instância real, sem importar o antigo servidor de laboratório. Registro de catálogo do banco comercial central permanece preservado.
+- Prova da branch de código `79a1d628e78bb4d034ab1aba9f7eccbd6ee9a4a3`: workflow de regressão integral `44215482564` **1.457/1.457 testes aprovados**, dependências e navegação PC/celular `SUCCESS`. Inclui contrato novo `test/entrada-real-catalogo-midia-conta-unica.test.js` para mesma sessão de loja, API autenticada, preço não inventado, pagamentos fechados e HTML aprovado idêntico.
+- Publicado **somente** em `loop-identidade-real` Railway (serviço `ac28edec-50ad-4187-99e2-8f7014735b63`), deployment `b3c008c6-8781-4a16-97b9-ba335ee4f0e7` **SUCCESS**. Entrada pública `akitemmloop.com.br`/serviço `akitemm-escritorio-preview` permaneceu pinado em `cbcc615bc3e7788f3b1d361ff7dfd9ac4353013e`, sem corte público nem alteração visual.
+- **Ainda pendente:** comprovar navegação autenticada diretamente no deployment real com contas migradas e inventário completo de mídia; alinhar entrega de fotos pelo domínio definitivo e o contrato de edição do operador; conciliar catálogos se houver IDs duplicados, ampliar paginação além de 100 produtos; não promover o gateway público sem essas provas. Cadastro, pagamentos, repasses, saques e giros financeiros permanecem bloqueados até os requisitos externos.
+
 ## Regra central (não negociar)
 
 O produto público deve continuar com **um único acesso principal**, `https://akitemmloop.com.br`, e a mesma experiência aprovada de AKITEMM e Escritório LOOP. Não abrir novas prévias, novas contas paralelas, novo painel administrativo ou nova fonte de verdade. Não alterar HTML/CSS aprovados para contornar falha de navegação. Não trocar DNS/domínios sem disponibilidade comprovada.
