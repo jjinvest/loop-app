@@ -166,8 +166,8 @@ test('mesmo operador real sobe foto versionada; cliente so ve publicada, sem alt
   .quantidadeFotos,1);
  assert.equal(visaoAdmin.produtos.find(p=>p.produtoId==='SKU_ANTIGO')
   .quantidadeFotos,0);
- assert.equal((await get(vitrineFoto,{Cookie:cookie})).status,401,
-  'cookie operador nao e sessao de cliente');
+ assert.equal((await get(vitrineFoto,{Cookie:cookie})).status,404,
+  'nem o operador visualiza foto de produto nao publicado');
  // A loja continua sem acesso publico e sem foto de rascunho.
  const docs=contas.documentos();
  await contas.cadastrar({nome:'Ana Exemplo',nick:'Ana',
@@ -203,6 +203,8 @@ test('mesmo operador real sobe foto versionada; cliente so ve publicada, sem alt
  assert.ok(dados.produtos.every(p=>p.precoCentavos===null));
  const visivel=await get(vitrineFoto,{Cookie:cookieCliente});
  assert.equal(visivel.status,200);
+ assert.equal((await get(vitrineFoto,{Cookie:cookie})).status,200,
+  'operador pode consultar foto publicada sem sessao de cliente');
  assert.match(visivel.headers.get('content-type'),/^image\/png/);
  assert.ok((await visivel.arrayBuffer()).byteLength>60);
  assert.equal((await get('/api/checkout/finalizar',{Cookie:cookieCliente})).status,503);
