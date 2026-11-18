@@ -56,24 +56,61 @@
   }
   label.append(s);return {label,s};
  };
+ async function vincularQuadradinho(indice,id){
+  if(!Number.isSafeInteger(indice)||indice<1||indice>400||!ID.test(id))
+   throw Error('QUADRINHO_INVALIDO');
+  const [sessao,slots]=await Promise.all([
+   fetchJson('/api/admin/comercial/sessao'),
+   fetchJson('/api/admin/catalogo-midia/slots')
+  ]);
+  if(!Array.isArray(slots.slots)||slots.total!==400)
+   throw Error('QUADRINHOS_INDISPONIVEIS');
+  const atual=slots.slots.find(x=>x.posicao===indice);
+  const resposta=await fetchJson(
+   '/api/admin/catalogo-midia/slots/'+indice,{
+    method:'POST',headers:{'Content-Type':'application/json',
+     'X-Loop-Admin-Csrf':sessao.csrfToken},
+    body:JSON.stringify({produtoId:id,revisaoEsperada:atual?.revisao||0})
+   });
+  if(resposta.produtoId!==id||resposta.posicao!==indice)
+   throw Error('QUADRINHO_NAO_CONFIRMADO');
+  return resposta;
+ }
  async function escolherProduto(indice){
   const {corpo,estado}=modal('Espaço '+indice+' da AKITEMM');
   corpo.append(linha('Toque no produto que deseja fotografar. '+
    'Seu cadastro fica na central única; nenhuma venda é criada.'));
   corpo.append(admin());
   try{
-   const r=await fetchJson('/api/admin/catalogo-midia/produtos');
-   if(!Array.isArray(r.produtos)||r.checkoutReal!==false)
+   const [r,slots]=await Promise.all([
+    fetchJson('/api/admin/catalogo-midia/produtos'),
+    fetchJson('/api/admin/catalogo-midia/slots')
+   ]);
+   if(!Array.isArray(r.produtos)||r.checkoutReal!==false||
+      !Array.isArray(slots.slots)||slots.total!==400)
     throw Error('CATALOGO_ADMIN_INCONSISTENTE');
-   const itens=r.produtos.filter(p=>ID.test(p.produtoId));
+   const ocupado=slots.slots.find(x=>x.posicao===indice);
+   if(ocupado){
+    dialogo.close();void abrirProduto(ocupado.produtoId);return;
+   }
+   const vinculados=new Set(slots.slots.map(x=>x.produtoId));
+   const itens=r.produtos.filter(p=>
+    ID.test(p.produtoId)&&!vinculados.has(p.produtoId));
    if(itens.length){
     const escolha=select('Produto existente',itens.map(p=>[
      p.produtoId,p.nome+' ('+p.produtoId+')'
     ]));
     const botao=document.createElement('button');
     botao.type='button';botao.textContent='Editar produto';
-    botao.addEventListener('click',()=>{
-     dialogo.close();void abrirProduto(escolha.s.value);
+    botao.addEventListener('click',async()=>{
+     botao.disabled=true;
+     try{
+      const id=escolha.s.value;
+      await vincularQuadradinho(indice,id);
+      dialogo.close();void abrirProduto(id);
+     }catch(e){
+      estado.textContent='Não foi possível vincular o quadradinho: '+e.message;
+     }finally{botao.disabled=false;}
     });
     corpo.append(escolha.label,botao);
    }else estado.textContent='Nenhum produto cadastrado: crie o primeiro abaixo.';
@@ -109,14 +146,14 @@
      });
      if(x.produtoId!==codigo||x.ativo!==false)
       throw Error('CADASTRO_NAO_CONFIRMADO');
+     await vincularQuadradinho(indice,codigo);
      dialogo.close();void abrirProduto(codigo);
     }catch(e){estado.textContent='Não foi possível cadastrar: '+e.message;}
     finally{criar.disabled=false;}
    });
    corpo.append(idLabel,nomeLabel,descricaoLabel,criar);
-   corpo.append(linha('O produto começa como rascunho. A publicação '+
-    'continua pela central, após revisão. O vínculo ao quadrinho '+
-    'específico ainda está em integração.'));
+   corpo.append(linha('O produto ficará vinculado ao quadradinho '+indice+
+    '. Começa como rascunho; a publicação continua na central.'));
   }catch(e){estado.textContent='Não foi possível listar produtos: '+e.message;}
  }
  async function abrirProduto(id){
