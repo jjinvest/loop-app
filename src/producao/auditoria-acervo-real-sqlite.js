@@ -62,7 +62,8 @@ function auditarAcervoReal({bancoIdentidade,bancoMidia=null,limiteFotos=64}={}){
   fotosVerificadas++;
   if(!idsMidia.has(foto.produto_id)&&
      !idsPrincipais.has(foto.produto_id))fotosOrfas++;
-  if(!Buffer.isBuffer(foto.conteudo)||
+  // node:sqlite devolve BLOB como Uint8Array; Buffer é subtipo válido.
+  if(!(foto.conteudo instanceof Uint8Array)||
      !Number.isSafeInteger(foto.bytes)||
      foto.bytes!==foto.conteudo.length||
      !TIPOS.has(foto.mime)||
