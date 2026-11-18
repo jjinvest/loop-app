@@ -47,9 +47,15 @@
  // Catálogo publicado pela administração, nunca produtos ou preços de demo.
  // Ativar somente os filtros de LEITURA, sem fazer carrinho/compra.
  let produtosPublicados=[],categoria='',cor='',termo='';
+ // Dez abas, quatro fileiras de dez por aba; inicialmente duas
+ // fileiras e o restante na expansão, sem recriar CSS ou molduras.
+ let abaVitrine=0;
+ const expandidas=new Set();
+ const CORES=['ROXO','DOURADO','VERDE','CINZA',
+  'CINZA','VERDE','DOURADO','ROXO'];
  const filtrar=()=>{
   const normal=x=>String(x||'').normalize('NFD')
-   .replace(/[\u0300-\u036f]/g,'').toLocaleLowerCase('pt-BR');
+   .replace(/[\\u0300-\\u036f]/g,'').toLocaleLowerCase('pt-BR');
   const itens=produtosPublicados.filter(p=>
    (!categoria||(categoria==='fisicos'&&p.tipo==='FISICO')||
     (categoria==='novidades'&&p.novidade===true)||
@@ -64,23 +70,106 @@
      a.titulo.localeCompare(b.titulo,'pt-BR'):0);
   const lista=$('catalogoLojaLoop');
   lista.replaceChildren();
+  lista.classList.add('ak-vitrine-horizontal');
   $('akitemmVisualizacaoProduto').hidden=true;
-  for(const p of itens){
+  const filtrada=!!categoria||!!cor||!!termo;
+  const totalAbas=filtrada?Math.max(1,Math.ceil(itens.length/40)):10;
+  if(abaVitrine>=totalAbas)abaVitrine=0;
+  let nav=$('akitemmAbasProdutos');
+  if(!nav){
+   nav=document.createElement('nav');nav.id='akitemmAbasProdutos';
+   nav.setAttribute('aria-label','Abas de produtos AKITEMM');
+   $('akitemmCarregarMais').after(nav);
+  }
+  nav.replaceChildren();
+  for(let n=0;n<totalAbas;n++){
+   const btn=document.createElement('button');
+   btn.type='button';btn.textContent=String(n+1);
+   btn.setAttribute('aria-label','Aba '+(n+1)+' de '+totalAbas);
+   if(n===abaVitrine)btn.setAttribute('aria-current','page');
+   btn.addEventListener('click',()=>{
+    abaVitrine=n;filtrar();
+    $('akitemmAreaProdutos').scrollIntoView({block:'start'});
+   });
+   nav.append(btn);
+  }
+  const expandida=expandidas.has(abaVitrine);
+  const linhas=expandida?4:2;
+  const botaoMais=$('akitemmCarregarMais');
+  botaoMais.hidden=filtrada?itens.length<=abaVitrine*40+20:false;
+  botaoMais.disabled=false;
+  botaoMais.textContent=expandida?
+   'Mostrar menos produtos ↑':'Mostrar mais produtos ↓';
+  const faixas=[];
+  for(let linha=0;linha<linhas;linha++){
+   const faixa=document.createElement('div');
+   faixa.className='ak-faixa-horizontal';
+   faixa.tabIndex=0;faixa.setAttribute('role','group');
+   faixa.setAttribute('aria-label','Fileira '+(linha+1)+
+    ' da aba '+(abaVitrine+1)+'; arraste horizontalmente');
+   lista.append(faixa);faixas.push(faixa);
+  }
+  const inicio=abaVitrine*40,ate=inicio+linhas*10;
+  for(let indice=inicio;indice<ate;indice++){
+   const p=itens[indice],alvo=faixas[Math.floor((indice-inicio)/10)];
+   if(!p){
+    if(filtrada)continue;
+    const corSlot=CORES[indice%CORES.length];
+    const card=document.createElement('article');
+    card.className='produto-loja-loop akitemm-slot-vazio akitemm-slot-'+
+     corSlot.toLowerCase();
+    card.dataset.akitemmSlot=String(indice+1);
+    card.tabIndex=0;
+    card.setAttribute('aria-label','Espaço '+(indice+1)+
+     ' disponível para produto na aba '+(abaVitrine+1));
+    const imagem=document.createElement('div');
+    imagem.className='akitemm-imagem-produto';
+    const simbolo=document.createElement('span');
+    simbolo.className='akitemm-slot-icone';simbolo.textContent='+';
+    simbolo.setAttribute('aria-hidden','true');
+    imagem.append(simbolo);
+    const detalhes=document.createElement('div');
+    detalhes.className='akitemm-dados-produto';
+    const titulo=document.createElement('strong');
+    titulo.textContent='Espaço disponível';
+    const subtitulo=document.createElement('small');
+    subtitulo.textContent='Aguardando produto cadastrado';
+    detalhes.append(titulo,subtitulo);card.append(imagem,detalhes);
+    alvo.append(card);continue;
+   }
    const card=document.createElement('article');
-   card.className='produto-loja-loop';
+   card.className='produto-loja-loop '+(p.cor==='ROXO'?
+    'produto-loja-loop-especial':p.cor==='DOURADO'?
+     'produto-loja-loop-dourado':p.cor==='VERDE'?
+      'produto-loja-loop-elegivel':'produto-loja-loop-nao-elegivel');
+   card.dataset.produtoId=p.produtoId;
+   card.tabIndex=0;card.setAttribute('role','group');
+   card.setAttribute('aria-label','Produto '+p.titulo);
+   const imagem=document.createElement('div');
+   imagem.className='akitemm-imagem-produto';
+   const foto=p.fotos?.find(x=>x&&x.posicao===1)||
+    (Array.isArray(p.fotos)?p.fotos[0]:null);
+   const esperado='/api/loja/produtos/'+p.produtoId+'/foto/';
+   if(foto&&typeof foto.url==='string'&&
+      foto.url===esperado+foto.posicao&&
+      Number.isSafeInteger(foto.posicao)&&foto.posicao>=1&&foto.posicao<=10){
+    const img=document.createElement('img');
+    img.src=foto.url;img.alt='Fotografia de '+p.titulo;
+    img.loading='lazy';img.decoding='async';imagem.append(img);
+   }
+   const detalhes=document.createElement('div');
+   detalhes.className='akitemm-dados-produto';
    const tipo=document.createElement('p');
    tipo.className='tipo-loja-loop';
    tipo.textContent=p.tipo==='FISICO'?'Produto físico':'Produto';
-   const titulo=document.createElement('h3');
-   titulo.textContent=p.titulo;
+   const titulo=document.createElement('h3');titulo.textContent=p.titulo;
    const descricao=document.createElement('p');
    descricao.className='akitemm-descricao';
    descricao.textContent=p.descricao||'Informações comerciais em preparação.';
    const status=document.createElement('p');
    status.textContent='Aguardando fornecedor homologado · compra indisponível';
    const botao=document.createElement('button');
-   botao.type='button';
-   botao.className='botao-secundario-loja';
+   botao.type='button';botao.className='botao-secundario-loja';
    botao.textContent='Ver detalhes';
    botao.addEventListener('click',()=>{
     const detalhe=$('akitemmProdutoInlineConteudo');
@@ -92,21 +181,17 @@
      ['Compra: ','Indisponível até liberação comercial.']
     ]){
      const linha=document.createElement('p');
-     const forte=document.createElement('strong');
-     forte.textContent=etiqueta;
-     linha.append(forte,document.createTextNode(valor));
-     detalhe.append(linha);
+     const forte=document.createElement('strong');forte.textContent=etiqueta;
+     linha.append(forte,document.createTextNode(valor));detalhe.append(linha);
     }
     $('akitemmVisualizacaoProduto').hidden=false;
    });
-   card.append(tipo,titulo,descricao,status,botao);
-   lista.append(card);
+   detalhes.append(tipo,titulo,descricao,status,botao);
+   card.append(imagem,detalhes);alvo.append(card);
   }
-  $('akitemmResultadoProdutos').textContent=itens.length?
-   itens.length+' produto(s) publicado(s), sem checkout habilitado.':
-   categoria==='mais-vendidos'?'Ainda não há produtos com vendas confirmadas.':
-   categoria==='novidades'?'Ainda não há novidades publicadas.':
-   'Nenhum produto encontrado para esta busca ou filtro.';
+  $('akitemmResultadoProdutos').textContent=filtrada?
+   itens.length+' resultado(s) para os filtros selecionados.':
+   itens.length+' produto(s) publicado(s); dez abas com quarenta espaços cada.';
   $('akitemmFiltroTodos').setAttribute('aria-pressed',
    String(!categoria&&!cor&&!termo));
   for(const b of document.querySelectorAll('[data-akitemm-cor]'))
@@ -115,6 +200,11 @@
    b.setAttribute('aria-pressed',
     String(b.dataset.akitemmCategoria===categoria&&!!categoria));
  };
+ $('akitemmCarregarMais').addEventListener('click',()=>{
+  if(expandidas.has(abaVitrine))expandidas.delete(abaVitrine);
+  else expandidas.add(abaVitrine);
+  filtrar();
+ });
  const filtroTodos=()=>{
   categoria='';cor='';termo='';
   $('akitemmBusca').value='';
