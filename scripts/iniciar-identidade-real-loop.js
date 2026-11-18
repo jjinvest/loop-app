@@ -14,6 +14,8 @@ const {RecuperacaoReservasCheckoutSQLite}=
  require('../src/producao/recuperacao-reservas-checkout-sqlite');
 const {auditarAcervoReal}=
  require('../src/producao/auditoria-acervo-real-sqlite');
+const {emitirAuditoriaCustodiaReadOnly}=
+ require('../src/producao/emitir-auditoria-custodia-readonly');
 const {atenderMigracaoIdentidadeReal}=
  require('../src/producao/receber-migracao-identidade-real');
 const {criarCatalogoMercadoriasReal}=
@@ -267,6 +269,12 @@ async function iniciar(ambiente=process.env,opcoes={}){
   }catch{
    console.error('LOOP_ACERVO_REAL=INVENTARIO_NAO_COMPROVADO');
   }
+  // O backup restauravel foi comprovado antes deste ponto.
+  // Auditoria SOMENTE LEITURA para identificar, sem expor PII,
+  // a origem e as dependencias das sete contas fora das duas reconhecidas.
+  // Uma falha na auditoria nao altera nem elimina clientes e nao transforma
+  // um numero de registros em uma autorizacao de exclusao.
+  emitirAuditoriaCustodiaReadOnly({banco});
   const porta=Number(ambiente.PORT||3000);
   if(!Number.isSafeInteger(porta)||porta<1||porta>65535)
    throw Error('PORTA_INVALIDA');
