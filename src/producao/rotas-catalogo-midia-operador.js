@@ -6,7 +6,8 @@ const ID=/^[a-z0-9-]{3,80}$/;
 const POS=/^(?:10|[1-9])$/;
 const MIME=new Set(['image/jpeg','image/png','image/webp']);
 function montarRotasCatalogoMidiaOperador({
- app,catalogoMidia,catalogoPrincipal=null,autorizarOperador,validarCsrf
+ app,catalogoMidia,catalogoPrincipal=null,posicoesVitrine=null,
+ autorizarOperador,validarCsrf
 }={}){
  if(typeof app?.get!=='function'||typeof app?.post!=='function'||
     !catalogoMidia||typeof catalogoMidia.repo?.buscar!=='function'||
@@ -19,6 +20,9 @@ function montarRotasCatalogoMidiaOperador({
      typeof catalogoPrincipal?.listarProdutosAdministrativos!=='function'||
      typeof catalogoPrincipal?.buscarProdutoAdministrativo!=='function'||
      typeof catalogoPrincipal?.atualizarDescricaoProduto!=='function'))||
+    (posicoesVitrine!==null&&(
+     typeof posicoesVitrine?.listar!=='function'||
+     typeof posicoesVitrine?.atribuir!=='function'))||
     typeof autorizarOperador!=='function'||typeof validarCsrf!=='function')
   throw Error('OPERADOR_CATALOGO_REAL_NAO_INTEGRADO');
  const urlFoto=(id,posicao)=>'/api/admin/catalogo-midia/produtos/'+
@@ -36,6 +40,52 @@ function montarRotasCatalogoMidiaOperador({
    return res.status(404).json({erro:'FOTO_POSICAO_INVALIDA'});
   next();
  };
+ // O operador escolhe em qual dos 400 quadradinhos guardar o
+ // produto, independentemente de foto, preço ou publicação.
+ if(posicoesVitrine!==null){
+  app.get('/api/admin/catalogo-midia/slots',
+   autorizarOperador,(_req,res)=>{
+    try{return res.json({total:400,slots:posicoesVitrine.listar(),
+     checkoutReal:false});}
+    catch{return res.status(503).json({erro:'SLOTS_REAIS_INDISPONIVEIS'});}
+   });
+  app.post('/api/admin/catalogo-midia/slots/:posicao',
+   autorizarOperador,validarCsrf,(req,res)=>{
+    const n=Number(req.params.posicao),b=req.body;
+    if(!/^(?:[1-9][0-9]{0,2})$/.test(req.params.posicao)||
+       !Number.isSafeInteger(n)||n<1||n>400||
+       !req.is('application/json')||!b||Array.isArray(b)||
+       typeof b!=='object'||
+       Object.keys(b).sort().join(',')!=='produtoId,revisaoEsperada'||
+       typeof b.produtoId!=='string'||
+       !Number.isSafeInteger(b.revisaoEsperada)||b.revisaoEsperada<0)
+     return res.status(400).json({erro:'SLOT_ATRIBUICAO_INVALIDA'});
+    try{
+     const local=ID.test(b.produtoId)?
+      catalogoMidia.repo.buscar(b.produtoId):null;
+     const central=catalogoPrincipal?.
+      buscarProdutoAdministrativo({produtoId:b.produtoId});
+     if(local&&central)
+      return res.status(409).json({erro:'CATALOGO_IDS_DUPLICADOS'});
+     const resultado=posicoesVitrine.atribuir({
+      posicao:n,produtoId:b.produtoId,
+      revisaoEsperada:b.revisaoEsperada,
+      produtoExiste:()=>!!(local||central)
+     });
+     return res.status(resultado.jaVinculado?200:201).json({
+      ...resultado,checkoutReal:false
+     });
+    }catch(e){
+     const erro=e?.codigo||e?.message||'SLOT_REAL_INDISPONIVEL';
+     const status=erro.includes('CONCORRENTE')||
+      erro.includes('OCUPADO')||erro.includes('JA_POSICIONADO')?409:
+      erro.includes('NAO_ENCONTRADO')?404:
+      erro.includes('INVALIDA')?400:503;
+     return res.status(status).json({erro:status===503?
+      'SLOT_REAL_INDISPONIVEL':erro});
+    }
+   });
+ }
  app.get('/api/admin/catalogo-midia/produtos',autorizarOperador,(_req,res)=>{
   try{
    const locais=catalogoMidia.repo.listar();
