@@ -128,3 +128,12 @@ O código vigente tem portas fechadas deliberadamente para cadastro público/che
 - **META ZERO NÃO LIGA O LIVRE:** meta=0 é ausência de meta, não autorização para iniciar motor ou movimentar recursos. Modo PAUSADO permanece PAUSADO até ação explícita do operador.
 - **SEGURANÇA:** disparar somente com prova da liquidação, parcela disponível e situação válida de fila/tabuleiro; se faltar prova, mantém pendente sem gerar luz/crédito fictício. Não prometer ganho incondicional. É necessário consentimento e prova da operação financeira.
 - **ESTADO TÉCNICO:** esta é a regra de negócio a implementar. O modo livre financeiro ainda não está ligado ao motor transacional de produção e a fintech de distribuição ainda não está homologada. O registro desta regra não ativa repasses reais.
+
+## Reparo de mídia para códigos comerciais legados — 18/11/2026
+
+- Corrigida a incompatibilidade de IDs na loja definitiva: produtos do banco comercial já existentes com códigos como `SKU_ANTIGO`, letras maiúsculas, sublinhados ou códigos curtos agora são aceitos nas rotas reais de operador, foto e leitura autenticada. **Não renomear códigos, migrar titulares ou duplicar produtos no banco de mídia**.
+- O repositório de fotos só amplia a validação de IDs quando a instância real solicita explicitamente `permitirIdComercial:true`; o contrato antigo de ensaio permanece restrito. Operador exige cookie real e CSRF, fotos ficam versionadas por posição 1–10 e clientes só podem ler imagens de produto publicado.
+- Na vitrine de 400 espaços, o operador pode vincular um código legado ao quadradinho escolhido, mantendo identificador e vínculo persistentes. Teste integrado: produto antigo ocupa slot 400; produto previamente vinculado permanece em 361; produto sem vínculo usa o primeiro slot livre, sem sobreposição nem novo pedido.
+- O fluxo de leitura `/api/loja/produtos/:produtoId/foto/:posicao` foi alinhado ao mesmo contrato de identificação. Não foi alterado HTML/CSS, molduras, cores, botões, valores, checkout ou fonte única de identidade.
+- **Status de implantação:** alterações na branch ativa, auditoria completa da revisão final ainda em execução nesta anotação. Serviços Railway continuam online, identidade real e porta pública conservam as revisões anteriores; não classificar como funcionalidade pública já publicada. Persistem como gates: acesso privado testado no Railway, inventário real de contas/fotos e publicação segura da entrada pública.
+
