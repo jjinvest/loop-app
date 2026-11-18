@@ -39,6 +39,17 @@ test('gateway real nao carrega o LAB e so aceita destino Railway interno',()=>{
  assert.throws(()=>iniciar({NODE_ENV:'production',PORT:'8080'}),
   /GATEWAY_PUBLICO_REAL_NAO_AUTORIZADO/);
 });
+test('imagem publica definitiva nao leva acervo, credenciais nem LAB',()=>{
+ const {readFileSync}=require('node:fs');
+ const docker=readFileSync(require('node:path').join(__dirname,
+  '../Dockerfile.public-real'),'utf8');
+ assert.match(docker,/FROM node:24-bookworm-slim/);
+ assert.match(docker,/USER node/);
+ assert.match(docker,/COPY --chown=node:node scripts\/iniciar-gateway-publico-real-loop\.js scripts\/provar-ligacao-privada-loop\.js \.\/scripts\//);
+ assert.doesNotMatch(docker,/COPY \. \./);
+ assert.doesNotMatch(docker,/npm ci|laboratorio|src\/candidato|\.sqlite|Dockerfile\.preview/i);
+ assert.match(docker,/CMD \["node","scripts\/iniciar-gateway-publico-real-loop\.js"\]/);
+});
 test('sonda de preflight nunca aceita proxy apontado a servidor estranho',async t=>{
  const outro=await abrir((req,res)=>{
   res.writeHead(200,{'Content-Type':'application/json'});
