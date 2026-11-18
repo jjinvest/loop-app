@@ -31,8 +31,10 @@
  }
  decorar(document.querySelector('.akitemm-loja .akitemm-marca-loop'));
  decorar(document.querySelector('.cabecalho .marca'));
- document.getElementById('akitemmOperadorMais')?.remove();
- document.getElementById('loopOperadorMais')?.remove();
+ // O operador e detectado pela sessao no backend: NAO apagar seus acessos.
+ // O HTML aprovado ja deixa os botoes ocultos por padrao e os scripts
+ // autorizados so os exibem quando /api/operador/estado confirma a sessao.
+ // Remover esses nos impedia o cadastro de produto e fotos em producao.
  // A foto permanece na linha de cima; o sino fica na linha de
  // "Meu Escritório Virtual", abaixo da foto e alinhado à direita.
  const boas=document.querySelector('#painelConta .loop03-boasvindas');
