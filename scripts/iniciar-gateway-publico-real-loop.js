@@ -44,7 +44,9 @@ function caminhoSeguro(pathname){
   return {status:400};
  if(pathname.startsWith('/staging/')||pathname==='/staging'||
     pathname.startsWith('/laboratorio/')||pathname==='/laboratorio'||
-    pathname.includes('ensaio'))
+    pathname==='/api/loop/tesouraria-ensaio'||
+    pathname.startsWith('/api/loop/tesouraria-ensaio/')||
+    /^\/api\/loop\/posicoes\/[^/]+\/confirmar-ensaio$/.test(pathname))
   return {status:410};
  if(pathname==='/')return {status:302,location:'/minha-conta'};
  if(pathname==='/cadastro-real')return {path:'/minha-conta'};
