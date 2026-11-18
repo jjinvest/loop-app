@@ -5,12 +5,17 @@
 const {createHash}=require('node:crypto');
 const {validar}=require('./akitemm-midia-avaliacoes-demo');
 const ID=/^[a-z0-9-]{3,80}$/;
+// Compatibilidade opt-in apenas para os IDs existentes no catálogo comercial.
+// O contrato do catálogo de ensaio permanece inalterado.
+const ID_COMERCIAL=/^[A-Za-z0-9_-]{1,80}$/;
 function falha(codigo){const e=new Error(codigo);e.codigo=codigo;throw e;}
 class FotosProdutoCandidatoSQLite{
- constructor({banco,catalogo}={}){
-  if(typeof banco?.exec!=='function'||typeof catalogo?.buscar!=='function')
+ constructor({banco,catalogo,permitirIdComercial=false}={}){
+  if(typeof banco?.exec!=='function'||typeof catalogo?.buscar!=='function'||
+     typeof permitirIdComercial!=='boolean')
    throw new TypeError('SQLite/catalogo obrigatorios');
   this.banco=banco;this.catalogo=catalogo;
+  this.idValido=permitirIdComercial?ID_COMERCIAL:ID;
   banco.exec([
    'CREATE TABLE IF NOT EXISTS akitemm_fotos_produto_versoes_lab(',
    'produto_id TEXT NOT NULL,posicao INTEGER NOT NULL CHECK(posicao BETWEEN 1 AND 10),',
@@ -33,7 +38,8 @@ class FotosProdutoCandidatoSQLite{
   ].join(' '));
  }
  _validar(id,posicao){
-  if(typeof id!=='string'||!ID.test(id))falha('FOTO_PRODUTO_INVALIDO');
+  if(typeof id!=='string'||!this.idValido.test(id))
+   falha('FOTO_PRODUTO_INVALIDO');
   if(!Number.isSafeInteger(posicao)||posicao<1||posicao>10)
    falha('FOTO_POSICAO_INVALIDA');
  }
