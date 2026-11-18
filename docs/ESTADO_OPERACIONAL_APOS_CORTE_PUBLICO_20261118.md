@@ -18,7 +18,7 @@
 | Autenticação de operador e fotos | Testes de navegador isolado comprovam o código da entrada/edição/foto/rascunho com interface original; o acabamento deixou de apagar o atalho protegido | **Não** comprova que o proprietário já cadastrou produto na loja publicada, nem que seu próprio navegador autenticado foi exercitado |
 | Compra/PSP/motor/catracas financeiros | Checkout não liberado, eventos financeiros externos ainda não demonstrados | **Não** habilitar posição, luz, recompensa, extrato liquidado ou saque a partir de simulação |
 | `loop.com.br` | Railway descreve este domínio associado ao serviço `loop-identidade-real` | Associação no Railway não comprova DNS/TLS/acesso de ponta a ponta; não declarar este domínio validado sem checar |
-| Site público de AKITEMM pós-corte | O serviço iniciou e passou no Railway; até aqui não havia evidência externa pós-corte de requisições anônimas em todas as rotas | Criar e executar **prova externa somente leitura** para confirmar o fluxo no endereço público, sem pedir login, sem tocar em clientes |
+| Site público de AKITEMM pós-corte | **Prova EXTERNA REAL aprovada**: GitHub Actions [run 44419392685](https://github.com/jjinvest/loop-app/actions/runs/44419392685), 18/11/2026 às 23:17 UTC, consultou diretamente o domínio publicado, apenas com GET anônimo. Cadastro público reportou **FECHADO**, financeiro real **false**, convite Vilela correto, sessões protegidas e rotas de laboratório 410 | Prova de rede pública NÃO comprova login pessoal do proprietário, alteração de foto no banco definitivo nem compra liquidada |
 
 ## Prova de URL pública anônima pós-corte
 Ferramenta criada neste bloco: `scripts/provar-portal-publico-real-readonly.js` e o CI `.github/workflows/portal-real-pos-corte-readonly.yml`.
@@ -32,10 +32,12 @@ Ela realiza **somente GET sem cookies** contra `https://akitemmloop.com.br`, sem
 - `/loja/VILELA` preserva o nick de indicação no encaminhamento ao **mesmo** escritório.
 - Ativos do operador/fotos e vitrine horizontal permanecem disponíveis sem editar HTML/CSS.
 
+**Resultado observado:** a execução [44419392685](https://github.com/jjinvest/loop-app/actions/runs/44419392685) passou e emitiu `LOOP_PORTAL_PUBLICO_READONLY` com `gateway=REAL_SEM_LABORATORIO`, `identidade=DEFINITIVA`, `cadastroPublico=FECHADO`, `dinheiroRealHabilitado=false`, sem modificação de dados. Foi prova de transporte e rotas, NÃO de produtos ou transações reais.
+
 **Somente um resultado SUCCESS de execução EXTERNA** prova que as rotas responderam no domínio. Testes de servidor local, logs de inicialização, códigos 200 anteriores ao corte e status ONLINE não substituem essa evidência. Falhas de rede devem ser relatadas, jamais corrigidas liberando login, dados ou laboratório.
 
 ## Próximo bloco — ponta a ponta sem mexer nos dados do proprietário
-1. Confirmar a prova externa de URL. Manter conta pública/PSP bloqueados até autorização expressa e dependências externas cumpridas.
+1. **Prova externa de URL CONCLUÍDA e APROVADA** em 18/11 (run 44419392685). Manter cadastro público/PSP bloqueados até autorização expressa e dependências externas cumpridas.
 2. Conferir operator path no domínio real, com sessão autorizada, verificando criar rascunho, upload e foto; **não** gerar produto falso no banco definitivo. O proprietário fará o primeiro upload quando o fluxo estiver aprovado.
 3. Garantir que catálogo publicado, pedido comprovado, classificação, fila A/B, luzes e giro leiam **uma única origem**. Sem Celcoin/Asaas de produção, limitar-se a estrutura e estados pendentes honestos, sem dinheiro ou posição inventados.
 4. Verificar integridade e restauração de backup após alterações antes de habilitar qualquer rota nova. Preservar visual aprovado e as duas contas reconhecidas.
