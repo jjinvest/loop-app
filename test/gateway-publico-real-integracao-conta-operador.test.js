@@ -50,7 +50,7 @@ test('gateway e identidade reais end-to-end: mesmas telas, cookies, CSRF e opera
     titulo:'Mercadoria cadastrada sem preço homologado',
     descricao:'Apenas preparação interna',
     tipo:'FISICO',cor:'CINZA',
-    criadoEm:Date.now(),unidadesConfirmadas:0,
+    criadoEm:Date.now(),novidade:false,unidadesConfirmadas:0,
     precoCentavos:null,estoqueConfirmado:false,
     compravel:false,checkoutReal:false,fotos:[]}];
   }}
