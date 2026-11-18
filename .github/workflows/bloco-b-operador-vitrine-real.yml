@@ -6,6 +6,7 @@ on:
     paths:
       - 'scripts/validar-operador-primeiro-produto-navegador.js'
       - 'src/producao/operador-loja-fotos-real.js'
+      - 'src/shared/acabamento-visual-loop.js'
       - 'src/producao/rotas-catalogo-midia-operador.js'
       - 'src/producao/interface-aprovada-loja.js'
       - '.github/workflows/bloco-b-operador-vitrine-real.yml'
@@ -13,6 +14,7 @@ on:
     paths:
       - 'scripts/validar-operador-primeiro-produto-navegador.js'
       - 'src/producao/operador-loja-fotos-real.js'
+      - 'src/shared/acabamento-visual-loop.js'
       - 'src/producao/rotas-catalogo-midia-operador.js'
       - 'src/producao/interface-aprovada-loja.js'
       - '.github/workflows/bloco-b-operador-vitrine-real.yml'
