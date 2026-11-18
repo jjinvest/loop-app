@@ -64,6 +64,10 @@ test('gateway e identidade reais end-to-end: mesmas telas, cookies, CSRF e opera
  assert.equal(prova.identidadeReal,true);
  assert.equal(prova.origemConfirmada,true);
  assert.equal(prova.uploadOperador,true);
+ assert.equal(prova.cadastroFechado,true,
+  'pré-corte reconhece cadastro interno fechado sem liberar cliente');
+ assert.equal(prova.visuaisAprovados,true,
+  'escritório, tabuleiro e vitrine horizontal permanecem no gateway');
  await assert.rejects(
   provarLigacaoPrivada({alvo,origemReal:'https://origem-falsa.invalid'}),
   /PROVA_PRIVADA_ORIGEM_NAO_CONFERE/
