@@ -197,22 +197,26 @@ async function iniciar(ambiente=process.env,opcoes={}){
   const remessasOutbox=comercial?.leituraRemessas||null;
   const catalogoVitrine=comercial?.leituraCatalogo||
    criarLeituraCatalogoSeguro({banco,catalogo});
+  // Catálogo de mídia e conta usam o mesmo serviço e volume persistente,
+  // mas bancos separados por finalidade. Nenhuma conta é duplicada.
+  if(ambiente.LOOP_REAL_CATALOGO_EDITAVEL==='SIM')
+   catalogoMidia=criarCatalogoMercadoriasReal({
+    arquivo:'/dados-reais/catalogo-produtos.sqlite',
+    tokenRaiz:ambiente.LOOP_REAL_TABULEIRO_INTERSERVICE_TOKEN
+   });
+  const catalogoMidiaLeitura=catalogoMidia?Object.freeze({
+   banco:catalogoMidia.repo.banco,
+   listarVitrinePreparacao:args=>catalogoMidia.listarVitrinePreparacao(args)
+  }):null;
   const app=criarAppIdentidadeLoop({
    contas,motorLoop,eventosComerciais,preflightCapacidade,
-   pedidosComerciais,remessasOutbox,catalogoVitrine,
+   pedidosComerciais,remessasOutbox,catalogoVitrine,catalogoMidiaLeitura,
    origemHttps:config.origemHttps,permitirCadastro:opcoes.cadastroPublico!==false,
    captchaCadastroObrigatorio:true,
    backupEstado:()=>agendador.estado(),
    adminComercial:{catalogo,controle,sessoes,auditoria,manutencao,
     classificacaoLoop,operacaoCatraca,recuperacaoReservas}
   });
-  // Mantém catálogo, fotos e PDFs NO MESMO volume comercial persistente,
-  // sem trocar a origem aprovada durante a mudança do cadastro/administrador.
-  if(ambiente.LOOP_REAL_CATALOGO_EDITAVEL==='SIM')
-   catalogoMidia=criarCatalogoMercadoriasReal({
-    arquivo:'/dados-reais/catalogo-produtos.sqlite',
-    tokenRaiz:ambiente.LOOP_REAL_TABULEIRO_INTERSERVICE_TOKEN
-   });
   const porta=Number(ambiente.PORT||3000);
   if(!Number.isSafeInteger(porta)||porta<1||porta>65535)
    throw Error('PORTA_INVALIDA');
