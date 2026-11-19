@@ -138,7 +138,12 @@ test('interface aprovada e identidade real servidas da mesma origem protegida',a
   assert.equal(res.status,200,p);
   assert.match(res.headers.get('content-type'),/text\/css/);
  }
- assert.equal((await get('/loja')).status,401,'a vitrine exige titular autenticado');
+ assert.equal((await get('/loja')).status,200,
+  'a vitrine publica NUNCA exige login; apenas acoes pessoais exigem');
+ assert.equal((await get('/loja?ref=VILELA')).status,200,
+  'a mesma vitrine deve abrir pelo convite VILELA');
+ assert.equal((await get('/api/loja/catalogo')).status,503,
+  'sem catalogo instalado, a leitura publica nao exige login nem inventa itens');
  assert.equal((await get('/api/loja/estado')).status,401);
  assert.equal((await get('/api/loja/pedidos')).status,401);
  const documentos=titular.documentos();
