@@ -226,10 +226,15 @@ function criarAppIdentidadeLoop({contas,origemHttps,
    estado:'IDENTIDADE_NAO_PRONTA',financeiroReal:false
   });}
  });
- app.get('/api/contas/documentos',(_req,res)=>{
-  if(!cadastroLiberado())return res.status(503).json({erro:'CADASTRO_INATIVO'});
-  res.json({...contas.documentos(),
-   ...(captcha?{captchaObrigatorio:true}:{})});
+ // Cadastro novo e atualização documental de uma conta existente são
+ // operações distintas: fechar o cadastro não deve bloquear o titular.
+ // Quando fechado, documentos só saem para uma sessão real autenticada.
+ app.get('/api/contas/documentos',(req,res,next)=>{
+  if(cadastroLiberado())return next();
+  return protegido(req,res,next);
+ },(_req,res)=>{
+  res.set('Cache-Control','private, no-store').json({...contas.documentos(),
+   ...(cadastroLiberado()&&captcha?{captchaObrigatorio:true}:{})});
  });
  app.get('/api/contas/captcha-cadastro',(_req,res)=>{
   if(!cadastroLiberado()||!captcha)
