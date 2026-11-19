@@ -193,8 +193,13 @@ async function main(){
    const cadastro=await convite.newPage();
    cadastro.setDefaultTimeout(15000);
    await cadastro.goto(base+'/convite/loja?ref='+nick);
-   await cadastro.waitForURL(url=>url.pathname==='/loja'&&
-    url.searchParams.get('ref')===nick);
+   // goto ja aguarda a resposta final; ler a rota evita espera circular
+   // quando a vitrine fica aberta e nao redireciona o visitante ao login.
+   const destinoInicial=new URL(cadastro.url());
+   assert.equal(destinoInicial.pathname,'/loja',
+    'o convite deve abrir a loja; atual: '+cadastro.url());
+   assert.equal(destinoInicial.searchParams.get('ref'),nick,
+    'o convite deve preservar o indicador ate a escolha de cadastro');
    // O visitante ve primeiro a vitrine publica, antes de cadastrar.
    await cadastro.locator('#conteudoLojaLoop').waitFor({state:'visible'});
    await cadastro.locator('#akitemmAbrirConta').click();
