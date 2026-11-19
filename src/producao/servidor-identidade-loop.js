@@ -398,8 +398,10 @@ function criarAppIdentidadeLoop({contas,origemHttps,
    'SELECT 1 FROM loop_real_contas WHERE nick=?'
   ).get(nick);
   if(!existe)return res.status(404).type('text').send('Convite inexistente');
+  // Convite de loja abre a vitrine antes do login; convite do escritorio
+  // permanece no formulario de nick. A referencia acompanha a rota.
   return res.set('Cache-Control','no-store').redirect(303,
-   '/escritorio?ref='+encodeURIComponent(nick)+(origemLoja?'&origem=loja':''));
+   (origemLoja?'/loja?ref=':'/escritorio?ref=')+encodeURIComponent(nick));
  };
  app.get('/escritorio/:nick',redirecionarLinkDireto(false));
  app.get('/loja/:nick',redirecionarLinkDireto(true));
@@ -407,7 +409,8 @@ function criarAppIdentidadeLoop({contas,origemHttps,
   const nick=req.query?.ref;
   if(typeof nick!=='string'||!(/^[A-Za-z]{1,12}$/).test(nick))
    return res.status(400).type('text').send('Convite inválido');
-  return res.redirect(303,'/escritorio?ref='+encodeURIComponent(nick)+'&origem=loja');
+  return res.set('Cache-Control','no-store').redirect(303,
+   '/loja?ref='+encodeURIComponent(nick));
  });
  app.post('/api/contas/sair',mutation,protegido,csrf,(req,res)=>{
   contas.sair(cookieValor(req));
@@ -643,7 +646,9 @@ function criarAppIdentidadeLoop({contas,origemHttps,
  });
  // Pré-vitrine de itens publicados: somente leitura; nenhum preço
  // estimado, carrinho ou estoque antes de fornecedor homologado.
- app.get('/api/loja/catalogo',protegidoLoja,(_req,res)=>{
+ // A vitrine PUBLICADA e somente leitura: visitante pode explorar antes
+ // de se cadastrar, mas pedidos, saques, checkout e rascunhos seguem privados.
+ app.get('/api/loja/catalogo',(_req,res)=>{
   if(!catalogoVitrine&&!catalogoMidiaLeitura)return res.status(503).json({
    erro:'CATALOGO_NAO_CONECTADO',checkoutReal:false
   });
@@ -685,8 +690,7 @@ function criarAppIdentidadeLoop({contas,origemHttps,
  });
  // A foto de produto publicado usa a MESMA sessão cliente da loja.
  // Nunca encaminha cookies para o banco de imagens e não expõe rascunhos.
- app.get('/api/loja/produtos/:produtoId/foto/:posicao',
-  protegidoLoja,(req,res)=>{
+ app.get('/api/loja/produtos/:produtoId/foto/:posicao',(req,res)=>{
    const id=req.params.produtoId,indice=req.params.posicao;
    // Mesma regra de identificador do catalogo comercial definitivo:
    // IDs legados preservam maiusculas e _ sem publicar rascunhos.
