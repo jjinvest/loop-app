@@ -44,7 +44,9 @@ test('dois logins aceitam operador e exibem interface sem fingir conta de client
  }
  // O servico definitivo usa o mesmo administrador; a antiga instancia
  // protegida ainda tem seu proprio fluxo enquanto o dominio nao migrou.
- assert.ok(real.includes("location.assign('/administrador')"));
+ assert.ok(real.includes('abrirPainelOperador()'),
+  'OPERADOR fica na mesma tela LOOP, central somente pelo link protegido');
+ assert.ok(!real.includes("location.assign('/administrador')"));
  assert.ok(!real.includes("location.assign('/staging/cliente?modo=operador')"));
  assert.ok(candidato.includes("location.assign('/staging/cliente?modo=operador')"));
  assert.match(candidato,/abrirModoOperadorNaTela/);
