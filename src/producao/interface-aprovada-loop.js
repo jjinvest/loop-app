@@ -130,7 +130,7 @@ function renderizarLojaAprovada(){
  html=trocarExato(html,
   '<script src="/laboratorio/loja.js" defer></script>',
   '<script src="/identidade/assets/loja.js" defer></script>');
- // Reutiliza o CSS horizontal JÁ APROVADO (dez abas, 40 posições)
+ // Reutiliza o CSS horizontal aprovado (cinco abas, 40 posições cada)
  // e conecta somente o comportamento de toque do operador real.
  html=trocarExato(html,'</head>',
   '<link rel="stylesheet" href="/identidade/assets/vitrine-horizontal.css">'+
