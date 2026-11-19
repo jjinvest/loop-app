@@ -170,8 +170,10 @@ function montarInterfaceAprovada(app,{protegerLoja}={}){
     .type(rota.endsWith('.js')?'js':'css')
     .sendFile(caminho,{cacheControl:false}));
  }
- // Não abrir vitrine fictícia em produção por meio do mesmo nick.
- app.get('/loja',protegerLoja,(_req,res)=>
+ // Vitrine publicada e publica: consultar produtos nao exige login.
+ // Pedidos, posicoes, sacos, compras e operacoes do operador continuam
+ // protegidos pelos endpoints que exigem suas sessoes reais.
+ app.get('/loja',(_req,res)=>
   res.set('Cache-Control','private, no-store').type('html').send(htmlLoja));
 }
 module.exports={renderizarInterfaceAprovada,renderizarLojaAprovada,
