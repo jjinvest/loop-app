@@ -8,17 +8,21 @@
  // A credencial de operador nunca é inferida pelo nick do cliente.
  // O gateway verifica a sessão administrativa isolada antes de revelar +.
  async function atualizarAtalhoOperadorReal(){
-  const atalho=$('loopOperadorMais');
-  if(!atalho)return;
+  const atalhos=[$('loopOperadorMais'),$('loopAcessoAdminMenu')].filter(Boolean);
+  if(!atalhos.length)return;
   try{
    const r=await fetch('/api/operador/estado',{
     credentials:'same-origin',cache:'no-store'
    });
    const d=r.ok?await r.json():null;
-   if(d?.operador===true){
-    atalho.hidden=false;atalho.style.display='inline-flex';
-   }else{atalho.hidden=true;atalho.style.display='none';}
-  }catch{atalho.hidden=true;atalho.style.display='none';}
+   for(const atalho of atalhos){
+    const liberado=d?.operador===true;
+    atalho.hidden=!liberado;
+    atalho.style.display=liberado?'inline-flex':'none';
+   }
+  }catch{
+   for(const atalho of atalhos){atalho.hidden=true;atalho.style.display='none';}
+  }
  }
  void atualizarAtalhoOperadorReal();
  addEventListener('pageshow',()=>void atualizarAtalhoOperadorReal());
@@ -120,6 +124,13 @@
   $('loop03RodapeFilaIntegrado').hidden=true;
   $('loop03RodapeCoroaIntegrado').hidden=true;
   $('erroLogin').hidden=true;$('erroCadastro').hidden=true;
+  const entrada=$('conviteIndicadorEntrada');
+  if(entrada){
+   entrada.hidden=!indicadorNick;
+   entrada.textContent=indicadorNick?
+    'Convite de @'+nickVisivel(indicadorNick)+
+    ' · Você pode criar sua conta pelo link deste titular.':'';
+  }
   const campoIndicador=$('cadastroIndicador');
   if(campoIndicador){
    campoIndicador.value=indicadorNick?nickVisivel(indicadorNick):'';
