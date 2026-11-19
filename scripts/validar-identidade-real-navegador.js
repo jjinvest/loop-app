@@ -193,9 +193,15 @@ async function main(){
    const cadastro=await convite.newPage();
    cadastro.setDefaultTimeout(15000);
    await cadastro.goto(base+'/convite/loja?ref='+nick);
-   await cadastro.waitForURL(url=>url.pathname==='/escritorio'&&
+   await cadastro.waitForURL(url=>url.pathname==='/loja'&&
     url.searchParams.get('ref')===nick);
-   await cadastro.locator('#mudarParaCadastro').click();
+   // O visitante ve primeiro a vitrine publica, antes de cadastrar.
+   await cadastro.locator('#conteudoLojaLoop').waitFor({state:'visible'});
+   await cadastro.locator('#akitemmAbrirConta').click();
+   await cadastro.waitForURL(url=>url.pathname==='/escritorio'&&
+    url.searchParams.get('ref')===nick&&
+    url.searchParams.get('cadastro')==='1');
+   await cadastro.locator('#painelCadastro').waitFor({state:'visible'});
    await cadastro.locator('#cadastroIndicadorAviso').filter({
     hasText:'@'+nick.toLowerCase()
    }).waitFor({state:'visible'});
