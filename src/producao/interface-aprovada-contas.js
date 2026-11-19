@@ -120,11 +120,16 @@
   $('loop03RodapeFilaIntegrado').hidden=true;
   $('loop03RodapeCoroaIntegrado').hidden=true;
   $('erroLogin').hidden=true;$('erroCadastro').hidden=true;
+  const campoIndicador=$('cadastroIndicador');
+  if(campoIndicador){
+   campoIndicador.value=indicadorNick?nickVisivel(indicadorNick):'';
+   campoIndicador.placeholder=indicadorNick?'':'Sem indicação neste acesso';
+  }
   const aviso=$('cadastroIndicadorAviso');
   if(aviso){
    aviso.hidden=!indicadorNick;
    aviso.textContent=indicadorNick?
-    'Cadastro pelo convite de @'+indicadorNick+
+    'Você foi indicado por @'+nickVisivel(indicadorNick)+
     '. Seu vínculo de indicação será registrado no momento do cadastro.':'';
   }
  }
