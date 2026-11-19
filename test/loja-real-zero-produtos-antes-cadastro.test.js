@@ -16,7 +16,7 @@ const {criarAppIdentidadeLoop}=require('../src/producao/servidor-identidade-loop
 const ORIGEM='https://zero-produtos.example.invalid';
 const CHAVE='CredencialAdministradorSoParaTesteDeRegressao2026';
 const DOC='Documentos de ensaio descartáveis para a loja real vazia sem pagamentos, pedidos, saldo, posições ou produto publicado.';
-test('loja real sem cadastro de produtos: zero catalogados e 400 espaços, sem compra fictícia',async t=>{
+test('loja real sem cadastro de produtos: zero catalogados e 200 espaços, sem compra fictícia',async t=>{
  const banco=new DatabaseSync(':memory:');
  banco.exec('PRAGMA foreign_keys=ON');
  t.after(()=>banco.close());
@@ -38,7 +38,7 @@ test('loja real sem cadastro de produtos: zero catalogados e 400 espaços, sem c
   contas,origemHttps:ORIGEM,permitirCadastro:false,
   catalogoVitrine:{
    banco,listarVitrinePreparacao:({limite})=>{
-    assert.equal(limite,400);
+    assert.equal(limite,200);
     return []; // exatamente ZERO; não cria 'Curso Cinza' ou PDF fictício
    }
   },
@@ -67,10 +67,10 @@ test('loja real sem cadastro de produtos: zero catalogados e 400 espaços, sem c
  assert.equal(estado.checkoutReal,false);
  assert.equal(estado.precosNaoHomologados,true);
  assert.equal(estado.estoqueConfirmado,false);
- // A vitrine já aprovada exibe 10 abas de 40 quadradinhos, sem itens inventados.
+ // A vitrine aprovada exibe 5 abas de 40 quadradinhos, sem itens inventados.
  const codigo=fs.readFileSync(path.join(__dirname,
   '../src/producao/interface-aprovada-loja.js'),'utf8');
- assert.match(codigo,/const totalAbas=filtrada\?Math.max\(1,Math.ceil\(itens.length\/40\)\):10/);
+ assert.match(codigo,/const totalAbas=filtrada\?Math.max\(1,Math.ceil\(itens.length\/40\)\):5/);
  assert.match(codigo,/const linhas=expandida\?4:2/);
  assert.match(codigo,/for\(let indice=inicio;indice<ate;indice\+\+\)/);
  assert.match(codigo,/Aguardando produto cadastrado/);
