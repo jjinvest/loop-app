@@ -56,3 +56,15 @@ body.loop03-logado .cliente-integrado #loop03PainelAvisos{order:3}
 @media(max-width:600px){
  body.loop03-logado #loop03AlterarFotoTopo{width:82px;height:82px;}
 }
+
+/* Navegacao administrativa somente para sessao OPERADOR validada. */
+body.loop03-logado .cliente-integrado #loopAcessoAdminMenu{
+ display:inline-flex;align-items:center;justify-content:center;align-self:stretch;
+ min-height:46px;margin:6px 0;padding:11px 13px;
+ border:1px solid #cba15b;border-radius:999px;
+ background:linear-gradient(110deg,#4d3b25,#252335);
+ color:#fff0c5;font-weight:750;text-decoration:none;text-align:center;
+}
+body.loop03-logado .cliente-integrado #loopAcessoAdminMenu[hidden]{
+ display:none!important;
+}
