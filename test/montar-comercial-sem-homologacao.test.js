@@ -786,7 +786,12 @@ test('vitrine publicada fica operante sem chave PSP, mas produtos rascunho e com
  await once(server,'listening');
  t.after(()=>new Promise(resolve=>server.close(resolve)));
  const base='http://127.0.0.1:'+server.address().port;
- assert.equal((await fetch(base+'/api/loja/catalogo')).status,401);
+ const publico=await fetch(base+'/api/loja/catalogo');
+ assert.equal(publico.status,200,'produtos publicados visiveis sem login');
+ const publicoJson=await publico.json();
+ assert.deepEqual(publicoJson.produtos.map(p=>p.produtoId),['em_preparo'],
+  'rascunho nao pode sair na vitrine publica');
+ assert.equal(publicoJson.checkoutReal,false);
  const login=await contas.entrar({
   nick:'Alice',senha:'SenhaDeEnsaio2026!'
  });
