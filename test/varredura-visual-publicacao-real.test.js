@@ -14,9 +14,11 @@ test('varredura: quadro extra nao reaparece; sino, foto e abas originais ficam',
  for(const id of ['loop03Sino','loop03PainelAvisos','loop03AlterarFotoTopo',
   'loop03ImagemFotoTopo','arquivoFotoPerfil','formFotoPerfil',
   'loop03ImagemFotoRodape','abaTabuleiro','abaPosicoes',
-  'loopAcessoAdminMenu','conviteIndicadorEntrada','cadastroIndicador'])
+  'loopAcessoAdminMenu','acessoAdminLogin',
+  'conviteIndicadorEntrada','cadastroIndicador'])
   assert.match(html,new RegExp('id="'+id+'"'));
  assert.match(html,/id="loopAcessoAdminMenu"[^>]*hidden/);
+ assert.match(html,/id="acessoAdminLogin"[^>]*hidden/);
  assert.match(html,/id="cadastroIndicador"[^>]*readonly/);
  assert.match(html,/href="\/loja"/);
  assert.doesNotMatch(html,/href="\/staging\/loja"/);
