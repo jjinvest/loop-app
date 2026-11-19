@@ -122,7 +122,9 @@ test('admin aprovado: login distinto, cadastrar produto/oferta, editar preços e
  const fsReal=require('node:fs');
  const fonteContaReal=fsReal.readFileSync(
   require('node:path').join(__dirname,'../src/producao/interface-aprovada-contas.js'),'utf8');
- assert.ok(fonteContaReal.includes("location.assign('/administrador')"));
+ assert.ok(fonteContaReal.includes('abrirPainelOperador()'),
+  'OPERADOR primeiro abre a tela do LOOP; centro protegido pelo rodape');
+ assert.ok(!fonteContaReal.includes("location.assign('/administrador')"));
  assert.ok(!fonteContaReal.includes("location.assign('/staging/cliente"));
  const adminPagina=await get('/administrador');
  assert.equal(adminPagina.status,303);
