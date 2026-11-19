@@ -96,7 +96,8 @@ test('mesmo operador real sobe foto versionada; cliente so ve publicada, sem alt
  const vitrineFoto='/api/loja/produtos/'+produto.id+'/foto/1';
  assert.equal((await get(adminFoto+'/fotos')).status,401);
  assert.equal((await get('/api/admin/catalogo-midia/produtos')).status,401);
- assert.equal((await get(vitrineFoto)).status,401);
+ assert.equal((await get(vitrineFoto)).status,404,
+  'sem login, produto ainda nao publicado continua invisivel');
  const op=await fetch(base+'/api/operador/entrar',{
   method:'POST',headers:{Origin:ORIGEM,'Content-Type':'application/json'},
   body:JSON.stringify({nick:'operador',senha:SENHA})
