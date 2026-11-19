@@ -91,7 +91,8 @@ test('gateway e identidade reais end-to-end: mesmas telas, cookies, CSRF e opera
   body:JSON.stringify(body)
  });
  assert.equal((await get('/api/contas/me')).status,401);
- assert.equal((await get('/loja')).status,401);
+ assert.equal((await get('/loja')).status,200,
+  'vitrine publicada nao exige login e nao altera a sessao do cliente');
  assert.equal((await get('/api/operador/estado')).status,200);
  const tela=await get('/escritorio');
  assert.equal(tela.status,200);
