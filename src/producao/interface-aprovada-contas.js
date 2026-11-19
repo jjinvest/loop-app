@@ -1416,6 +1416,16 @@
    $('captchaLoginEstado').textContent='Não foi possível carregar o código. Toque em Outro código.';
   }
  }
+ // A rota do administrador e protegida e so vira atalho quando o nick
+ // OPERADOR for escolhido na entrada unica. Nenhum cliente recebe privilegio.
+ const campoOperadorLogin=$('login'),atalhoAdminLogin=$('acessoAdminLogin');
+ const atualizarEntradaAdmin=()=>{
+  const modo=campoOperadorLogin.value.trim().toLowerCase()==='operador';
+  atalhoAdminLogin.hidden=!modo;
+  atalhoAdminLogin.style.display=modo?'inline-flex':'none';
+ };
+ campoOperadorLogin.addEventListener('input',atualizarEntradaAdmin);
+ atualizarEntradaAdmin();
  onForm('formLogin',async()=>{
   if($('login').value.trim().toLowerCase()==='operador'){
    await autenticarOperadorFormulario($('login').value.trim(),$('senha').value);
