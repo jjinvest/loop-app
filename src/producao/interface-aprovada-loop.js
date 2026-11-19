@@ -82,6 +82,14 @@ function renderizarInterfaceAprovada(){
  '<label for="cadastroSenha">Senha (mínimo 12 caracteres)</label>');
  html=trocarExato(html,'  <form id="formCadastro">',
   '  <p id="cadastroIndicadorAviso" role="status" hidden></p>\n  <form id="formCadastro">');
+ // Convite tambem aparece no primeiro contato, antes do formulario de cadastro.
+ html=trocarExato(html,'  <form id="formLogin">',
+  '  <p id="conviteIndicadorEntrada" class="subtexto" role="status" hidden></p>\n  <form id="formLogin">');
+ // O acesso administrativo so aparece depois de autenticar a sessao OPERADOR.
+ html=trocarExato(html,'</nav>\n    <div class="loop03-identidade">',
+  '</nav>\n    <a id="loopAcessoAdminMenu" href="/administrador" hidden '+
+  'style="display:none" class="loop03-acesso-admin-menu">Escritório do Administrador</a>\n'+
+  '    <div class="loop03-identidade">');
  // Os dois documentos já estão no mesmo painel da interface aprovada.
  // Uma única confirmação visual preserva duas versões/hashes distintos.
  for(const id of ['documentosCadastroDetalhes','versaoPrivacidadeCadastro',
