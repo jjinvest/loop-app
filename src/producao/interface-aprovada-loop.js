@@ -42,13 +42,9 @@ function renderizarInterfaceAprovada(){
  html=trocarExato(html,
   '<a id="loopOperadorMais" href="/escritorio"',
   '<a id="loopOperadorMais" href="/administrador"');
- // As faixas de homologacao continuam na instancia real, sem aparecer na
- // vitrine e no Escritorio da previa que o cliente ve.
- html=trocarExato(html,'<header class="cabecalho">',
-  '<header class="cabecalho">\n <span class="ambiente">SEM COMPRAS OU PAGAMENTOS REAIS</span>');
- const antigaFoto="    <div class=\"loop03-acoes-topo\">\n     <button id=\"loop03Sino\" type=\"button\" class=\"loop03-sino\" aria-controls=\"loop03PainelAvisos\" aria-expanded=\"false\" aria-label=\"Ver comunicados do LOOP\">🔔 <small id=\"loop03TotalAvisos\" hidden></small></button>\n     <button type=\"button\" id=\"loop03AlterarFotoTopo\" class=\"loop03-foto-topo\" aria-label=\"Escolher minha foto de perfil\" title=\"Escolher foto de perfil\">\n      <img id=\"loop03ImagemFotoTopo\" alt=\"Sua foto de perfil\" hidden>\n      <span id=\"loop03FotoSemImagem\" aria-hidden=\"true\">👤</span>\n     </button>\n     <section id=\"loop03PainelAvisos\" class=\"loop03-painel-avisos\" aria-label=\"Mensagens oficiais do LOOP\" hidden>\n      <strong>Recados do LOOP</strong><div id=\"loop03ListaAvisos\" aria-live=\"polite\">Consulte os recados do seu escritório.</div>\n     </section>\n    </div>";
- html=trocarExato(html,antigaFoto,
-  '    <span class="ambiente">CADASTRO REAL EM PREPARAÇÃO · SEM PAGAMENTOS REAIS</span>');
+ // Preservar integralmente o cabecalho visual aprovado, incluindo a foto
+ // de perfil e o sino. Avisos de laboratorio nao substituem componentes.
+ // O backend continua impedindo operações ainda sem dependencias externas.
  // A instancia real usa seu servico de identidade proprio, que ainda nao
  // tem foto de perfil: nao exibir upload inerte nessa instancia.
  const inicioFoto=html.indexOf('   <form id="formFotoPerfil"');
