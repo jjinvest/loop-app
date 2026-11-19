@@ -20,6 +20,21 @@
    const r=await fetchJson('/api/operador/estado');
    operador=r.operador===true;
   }catch{operador=false;}
+  sincronizarEditorOfertas();
+ }
+ function sincronizarEditorOfertas(){
+  const id='akitemmGerenciarOfertasReal';
+  const atual=document.getElementById(id);
+  if(!operador){atual?.remove();return;}
+  if(atual)return;
+  const filtro=document.getElementById('akitemmFiltroOfertas');
+  if(!filtro)return;
+  const botao=document.createElement('button');
+  botao.type='button';botao.id=id;botao.className='akitemm-chip';
+  botao.textContent='Gerenciar ofertas';
+  botao.setAttribute('aria-label','Cadastrar ofertas na AKITEMM como operador');
+  botao.addEventListener('click',()=>void abrirEditorOfertas());
+  filtro.insertAdjacentElement('afterend',botao);
  }
  function modal(titulo){
   if(!dialogo){
@@ -58,6 +73,92 @@
   }
   label.append(s);return {label,s};
  };
+ // Usa a API comercial REAL da central, com o mesmo cookie de OPERADOR e CSRF.
+ // Ofertas criadas aqui ficam em RASCUNHO e nao liberam venda, PIX ou posicao.
+ async function abrirEditorOfertas(){
+  if(!operador)return;
+  const {corpo,estado}=modal('Ofertas · AKITEMM');
+  corpo.append(linha('Cadastre uma oferta comercial para um produto existente. '+
+   'Ela ficará em rascunho até a aprovação do distribuidor. '+
+   'Nenhuma compra ou pagamento será liberado.'));
+  const link=document.createElement('a');
+  link.href='/administrador#formNovaOferta';
+  link.textContent='Abrir cadastro de ofertas na central do operador';
+  corpo.append(link);
+  try{
+   const [sessao,lista]=await Promise.all([
+    fetchJson('/api/admin/comercial/sessao'),
+    fetchJson('/api/admin/comercial/produtos-cadastrados')
+   ]);
+   if(typeof sessao.csrfToken!=='string'||sessao.csrfToken.length<24||
+      !Array.isArray(lista.produtos))
+    throw Error('CADASTRO_COMERCIAL_INDISPONIVEL');
+   const produtos=lista.produtos.filter(p=>ID.test(p.produtoId));
+   if(!produtos.length){
+    estado.textContent='Nenhum produto cadastrado. Crie primeiro um produto '+
+     'tocando em um quadrinho vazio como operador ou usando a central.';
+    return;
+   }
+   const form=document.createElement('form');
+   form.autocomplete='off';
+   const produto=select('Produto cadastrado',produtos.map(p=>[
+    p.produtoId,p.titulo+' ('+p.produtoId+')'
+   ]));
+   form.append(produto.label);
+   const campo=(titulo,{maxLength=80,placeholder='',tipo='text'}={})=>{
+    const label=document.createElement('label');
+    label.textContent=titulo;
+    const input=document.createElement('input');
+    input.type=tipo;input.required=true;input.maxLength=maxLength;
+    if(placeholder)input.placeholder=placeholder;
+    label.append(input);form.append(label);
+    return input;
+   };
+   const distribuidor=campo('Código do distribuidor');
+   const sku=campo('SKU do distribuidor');
+   const preco=campo('Preço de venda (R$)',{
+    maxLength:14,placeholder:'0,00'
+   });
+   preco.inputMode='decimal';
+   const prioridade=campo('Prioridade (1 = maior)',{tipo:'number'});
+   prioridade.min='1';prioridade.max='9999';prioridade.value='100';
+   const salvar=document.createElement('button');
+   salvar.type='submit';salvar.textContent='Salvar oferta como rascunho';
+   form.append(salvar);corpo.append(form);
+   form.addEventListener('submit',async ev=>{
+    ev.preventDefault();
+    const textoPreco=preco.value.trim();
+    if(!ID.test(distribuidor.value.trim())||!ID.test(sku.value.trim())||
+       !/^(?:0|[1-9][0-9]{0,7})(?:[,.][0-9]{1,2})?$/.test(textoPreco)){
+     estado.textContent='Confira distribuidor, SKU e preço em reais.';return;
+    }
+    const centavos=Math.round(Number(textoPreco.replace(',','.'))*100);
+    const ordem=Number(prioridade.value);
+    if(!Number.isSafeInteger(centavos)||centavos<=0||
+       !Number.isSafeInteger(ordem)||ordem<1||ordem>9999){
+     estado.textContent='Preço ou prioridade inválidos.';return;
+    }
+    salvar.disabled=true;estado.textContent='Gravando oferta no catálogo real...';
+    try{
+     const dados=await fetchJson('/api/admin/comercial/ofertas-cadastrar',{
+      method:'POST',headers:{'Content-Type':'application/json',
+       'X-Loop-Admin-Csrf':sessao.csrfToken},
+      body:JSON.stringify({
+       produtoId:produto.s.value,distribuidorId:distribuidor.value.trim(),
+       sku:sku.value.trim(),precoUnitCentavos:centavos,prioridade:ordem
+      })
+     });
+     if(dados.produtoId!==produto.s.value||dados.ofertaAtiva!==false)
+      throw Error('OFERTA_NAO_CONFIRMADA');
+     form.reset();prioridade.value='100';
+     estado.textContent='Oferta gravada como rascunho na central real. '+
+      'A vitrine não anuncia ofertas não aprovadas.';
+    }catch(e){
+     estado.textContent='Oferta não gravada: '+e.message;
+    }finally{salvar.disabled=false;}
+   });
+  }catch(e){estado.textContent='Cadastro de ofertas indisponível: '+e.message;}
+ }
  async function vincularQuadradinho(indice,id){
   if(!Number.isSafeInteger(indice)||indice<1||indice>200||!ID.test(id))
    throw Error('QUADRINHO_INVALIDO');
@@ -294,6 +395,7 @@
  addEventListener('focus',()=>void verificarOperador());
  addEventListener('loop:operador-entrou',()=>void verificarOperador());
  addEventListener('loop:operador-saiu',()=>{
-  operador=false;if(dialogo?.open)dialogo.close();
+  operador=false;sincronizarEditorOfertas();
+  if(dialogo?.open)dialogo.close();
  });
 })();
