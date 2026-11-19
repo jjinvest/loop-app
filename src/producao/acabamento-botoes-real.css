@@ -68,3 +68,14 @@ body.loop03-logado .cliente-integrado #loopAcessoAdminMenu{
 body.loop03-logado .cliente-integrado #loopAcessoAdminMenu[hidden]{
  display:none!important;
 }
+
+/* Entrada alternativa aparece somente quando o nick digitado e OPERADOR. */
+body:not(.loop03-logado) #acessoAdminLogin{
+ align-items:center;justify-content:center;
+ min-height:44px;border:1px solid #ad8a52;border-radius:999px;
+ padding:10px 16px;margin:10px 0;
+ color:#f5deaf;background:#211b25;text-decoration:none;font-weight:750;
+}
+body:not(.loop03-logado) #acessoAdminLogin[hidden]{
+ display:none!important;
+}
