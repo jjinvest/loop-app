@@ -12,7 +12,7 @@
  const destinoCadastro=()=>'/escritorio?origem=loja&cadastro=1'+
   (indicadorNick?'&ref='+encodeURIComponent(indicadorNick):'');
  const solicitarCadastro=()=>location.assign(destinoCadastro());
- let visitante=false,operadorAtivo=false;
+ let visitante=true,operadorAtivo=false;
  // A navegacao na vitrine publica independe de login. Acao privada pede conta.
  $('akitemmAbrirConta')?.addEventListener('click',()=>{
   if(visitante)solicitarCadastro();
@@ -410,6 +410,7 @@
     if(voltar)voltar.href=destinoCadastro();
    }else informar('AKITEMM: catálogo do operador. Pagamentos e pedidos de clientes bloqueados.');
   }else{
+   visitante=false;
    if(!res.ok)throw Error('IDENTIDADE_INDISPONIVEL');
    const me=await res.json();
    if(typeof me.nick!=='string'||me.financeiroReal!==false)
