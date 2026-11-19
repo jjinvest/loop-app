@@ -85,12 +85,9 @@ function renderizarInterfaceAprovada(){
  // Convite tambem aparece no primeiro contato, antes do formulario de cadastro.
  html=trocarExato(html,'  <form id="formLogin">',
   '  <p id="conviteIndicadorEntrada" class="subtexto" role="status" hidden></p>\n  <form id="formLogin">');
- // A entrada alternativa aparece apenas quando o nick OPERADOR e digitado;
- // link leva ao login protegido, nunca ao painel sem credencial.
- html=trocarExato(html,'  <button type="button" class="alternar-acesso" id="abrirRecuperacao">',
-  '  <a id="acessoAdminLogin" href="/administrador/entrar" class="alternar-acesso" '+
-  'hidden style="display:none">Entrar no Escritório do Administrador</a>\n'+
-  '  <button type="button" class="alternar-acesso" id="abrirRecuperacao">');
+ // Nick e senha compartilham um UNICO formulario na tela do LOOP.
+ // A rota de contingencia /administrador/entrar continua protegida,
+ // mas nao coloca um segundo formulario na jornada principal.
  // O acesso administrativo fica no RODAPE do menu original, so apos
  // autenticacao OPERADOR. Nenhum segundo escritorio e criado.
  html=trocarExato(html,'    <button type="button" id="sair" class="loop03-sair">',
