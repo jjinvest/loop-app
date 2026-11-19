@@ -52,6 +52,7 @@
  }
  const API='/api/contas';
  let csrf=null,documentos=null,carregando=false,tela='login';
+ let modoOperadorAtual=false;
  let captchaCadastroId=null,captchaObrigatorio=false;
  let captchaLoginAtivo=false,captchaLoginId=null;
  const parametrosEntrada=new URLSearchParams(location.search);
@@ -115,7 +116,11 @@
   return dados;
  }
  function mostrarLogin(t){
-  tela=t;
+  tela=t;modoOperadorAtual=false;
+  document.body.classList.remove('loop03-modo-operador');
+  const acoes=$('loopOperadorAcoes');if(acoes)acoes.hidden=true;
+  $('loop03AbrirPerfil').disabled=false;
+  $('loop03AlterarFotoTopo').disabled=false;
   $('painelLogin').hidden=t!=='login';
   $('painelCadastro').hidden=t!=='cadastro';
   $('painelRecuperacao').hidden=t!=='recuperacao';
@@ -321,7 +326,48 @@
    });
   }catch(e){status.textContent='Não foi possível carregar os documentos. '+erro(e);}
  }
+ // Mesma tela aprovada, sem criar conta falsa nem acessar dados privados.
+ // Somente uma sessao administrativa autenticada abre este modo.
+ function abrirPainelOperador(){
+  modoOperadorAtual=true;csrf=null;
+  for(const id of ['painelLogin','painelCadastro','painelRecuperacao'])
+   $(id).hidden=true;
+  $('painelConta').hidden=false;
+  document.body.classList.add('loop03-logado','loop03-modo-operador');
+  $('loop03NickIntegrado').textContent='OPERADOR';
+  $('loop03RodapeFilaIntegrado').hidden=true;
+  $('loop03RodapeCoroaIntegrado').hidden=true;
+  $('loop03AbrirPerfil').disabled=true;
+  fecharDadosRodapeReal();
+  $('loop03AlterarFotoTopo').disabled=true;
+  $('loop03ImagemFotoTopo').hidden=true;
+  $('loop03FotoSemImagem').hidden=false;
+  $('painelVerificarEmail').hidden=true;
+  $('painelIdentidadeTeste').hidden=true;
+  $('conteudoConta').hidden=true;
+  const acoes=$('loopOperadorAcoes');if(acoes)acoes.hidden=false;
+  const indicadores=document.querySelector('.loop03-indicadores');
+  if(indicadores)indicadores.hidden=true;
+  for(const tab of document.querySelectorAll('#loop03SidebarIntegrado [role=tab]')){
+   const resumo=tab.id==='abaResumo';
+   tab.disabled=!resumo;
+   tab.setAttribute('aria-selected',String(resumo));
+   tab.setAttribute('aria-current',resumo?'page':'false');
+   tab.tabIndex=resumo?0:-1;
+   const painel=tab.getAttribute('aria-controls');
+   if(painel&&$(painel))$(painel).hidden=!resumo;
+   if(!resumo)tab.title='Acesso administrativo na central do operador';
+   else tab.removeAttribute('title');
+  }
+  $('conteudoResumo').hidden=false;
+  void atualizarAtalhoOperadorReal();
+ }
  function painelConta(s){
+  modoOperadorAtual=false;
+  document.body.classList.remove('loop03-modo-operador');
+  const acoes=$('loopOperadorAcoes');if(acoes)acoes.hidden=true;
+  $('loop03AbrirPerfil').disabled=false;
+  $('loop03AlterarFotoTopo').disabled=false;
   csrf=s.csrf;
   void apresentarAceiteMigrado(s);
   $('painelLogin').hidden=true;
@@ -1431,7 +1477,8 @@
   if($('login').value.trim().toLowerCase()==='operador'){
    await autenticarOperadorFormulario($('login').value.trim(),$('senha').value);
    $('senha').value='';
-   location.assign('/administrador');
+   abrirPainelOperador();
+   dizer('Modo OPERADOR ativo. Acesse a AKITEMM ou a central pelo rodapé.');
    return;
   }
   const body={nick:$('login').value,senha:$('senha').value};
@@ -1554,6 +1601,11 @@
  sincronizarFotoRodapeReal();
  $('sair').addEventListener('click',async()=>{
   try{
+   if(modoOperadorAtual){
+    await terminarModoOperador();
+    mostrarLogin('login');dizer('Sessão do OPERADOR encerrada.');
+    return;
+   }
    await terminarModoOperador();
    await requisitar('/sair',{method:'POST',body:{},csrfObrigatorio:true});
    csrf=null;limparFotoPerfilReal();
@@ -1647,13 +1699,18 @@
    left:pistaResumo.clientWidth*indice,behavior:'instant'
   }));
  }
- void requisitar('/me').then(s=>{
+ // Ao reabrir, uma sessao OPERADOR valida tem prioridade sobre qualquer
+ // cookie de cliente antigo; nao confundir papeis nem fabricar titular.
+ void fetch('/api/operador/estado',{
+  credentials:'same-origin',cache:'no-store'
+ }).then(async r=>{
+  const estado=r.ok?await r.json():{operador:false};
+  if(estado.operador===true){abrirPainelOperador();return;}
+  const s=await requisitar('/me');
   painelConta(s);
   if(entradaPelaLoja&&s.aceiteDocumentosDefinitivosPendente!==true)
    location.assign('/loja');
  }).catch(()=>{
-  // O visitante veio da vitrine e escolheu cadastrar-se: nao exigir
-  // login antes do primeiro acesso nem perder a referencia do indicador.
   if(entradaPelaLoja&&parametrosEntrada.get('cadastro')==='1'){
    mostrarLogin('cadastro');
    void carregarDocumentos();
