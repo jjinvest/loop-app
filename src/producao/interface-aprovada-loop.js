@@ -91,11 +91,24 @@ function renderizarInterfaceAprovada(){
   '  <a id="acessoAdminLogin" href="/administrador/entrar" class="alternar-acesso" '+
   'hidden style="display:none">Entrar no Escritório do Administrador</a>\n'+
   '  <button type="button" class="alternar-acesso" id="abrirRecuperacao">');
- // O acesso administrativo so aparece depois de autenticar a sessao OPERADOR.
- html=trocarExato(html,'</nav>\n    <div class="loop03-identidade">',
-  '</nav>\n    <a id="loopAcessoAdminMenu" href="/administrador" hidden '+
-  'style="display:none" class="loop03-acesso-admin-menu">Escritório do Administrador</a>\n'+
-  '    <div class="loop03-identidade">');
+ // O acesso administrativo fica no RODAPE do menu original, so apos
+ // autenticacao OPERADOR. Nenhum segundo escritorio e criado.
+ html=trocarExato(html,'    <button type="button" id="sair" class="loop03-sair">',
+  '    <a id="loopAcessoAdminMenu" href="/administrador" hidden '+
+  'style="display:none" class="loop03-acesso-admin-menu">'+
+  'Escritório do Administrador</a>\n'+
+  '    <button type="button" id="sair" class="loop03-sair">');
+ // A tela do cliente nao muda. O aviso interno so aparece apos login
+ // autenticado como OPERADOR e nao consulta dados pessoais de titulares.
+ html=trocarExato(html,'  <section class="painel" id="conteudoResumo" role="tabpanel" aria-labelledby="abaResumo">',
+  '  <section class="painel" id="conteudoResumo" role="tabpanel" aria-labelledby="abaResumo">\n'+
+  '   <div id="loopOperadorAcoes" class="loop03-operador-acoes" hidden>'+
+  '    <strong>Escritório Virtual · OPERADOR</strong>'+
+  '    <p>Gerencie a AKITEMM e o LOOP com sua sessão administrativa. '+
+  'As informações pessoais dos clientes continuam protegidas.</p>'+
+  '    <a href="/loja">Abrir AKITEMM</a> '+
+  '    <a href="/administrador">Escritório do Administrador</a>'+
+  '   </div>');
  // Os dois documentos já estão no mesmo painel da interface aprovada.
  // Uma única confirmação visual preserva duas versões/hashes distintos.
  for(const id of ['documentosCadastroDetalhes','versaoPrivacidadeCadastro',
