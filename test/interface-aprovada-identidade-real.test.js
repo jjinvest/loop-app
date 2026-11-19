@@ -98,7 +98,14 @@ test('interface aprovada e identidade real servidas da mesma origem protegida',a
  assert.equal(js.status,200);
  assert.match(js.headers.get('content-type'),/javascript/);
  const script=await js.text();
- assert.match(script,/Ciclo atual:/);
+ assert.doesNotMatch(script,/loopResumoMotor|loopEstadoIntegrado/,
+  'O estado permanece no tabuleiro e não cria quadro extra na home');
+ assert.doesNotMatch(paginaHtml,/id="loopEstadoIntegrado"/);
+ assert.match(paginaHtml,/id="loop03Sino"/);
+ assert.match(paginaHtml,/id="loop03AlterarFotoTopo"/);
+ assert.match(paginaHtml,/id="loopAcessoAdminMenu"/);
+ assert.match(paginaHtml,/id="conviteIndicadorEntrada"/);
+ assert.match(script,/Convite de @/);
  assert.match(script,/de 6 eventos neste ciclo/);
  assert.doesNotMatch(script,/Posições de ensaio por compra:/);
  assert.doesNotMatch(script,/Indicação qualificada em ensaio/);
