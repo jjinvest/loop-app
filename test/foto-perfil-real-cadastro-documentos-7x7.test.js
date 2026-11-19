@@ -6,6 +6,7 @@ const {randomBytes}=require('node:crypto');
 const {once}=require('node:events');
 const fs=require('node:fs');
 const path=require('node:path');
+const vm=require('node:vm');
 const {IdentidadeClienteLoopReal}=
  require('../src/producao/identidade-cliente-loop-sqlite');
 const {FotoPerfilRealSQLite}=
@@ -80,6 +81,8 @@ test('foto real privada, upload autenticado, documentos 7+7 legiveis sem abrir c
  const res=await upload({'X-Loop-Csrf':d.csrf});
  assert.equal(res.status,201);
  assert.equal((await res.json()).fotoSalva,true);
+ const imagemComRevisao=await get('/api/contas/foto-perfil?revisao=123',{Cookie:cookie});
+ assert.equal(imagemComRevisao.status,200);
  const imagem=await get('/api/contas/foto-perfil',{Cookie:cookie});
  assert.equal(imagem.status,200);
  assert.equal(imagem.headers.get('content-type'),'image/png');
@@ -87,4 +90,48 @@ test('foto real privada, upload autenticado, documentos 7+7 legiveis sem abrir c
  assert.deepEqual(new FotoPerfilRealSQLite({banco}).consultar(c.titularId).dados,PNG);
  assert.equal((await get('/api/contas/foto-perfil')).status,401);
  assert.equal(banco.prepare('PRAGMA integrity_check').get().integrity_check,'ok');
+});
+
+test('galeria Android: imagem grande e enquadrada antes do POST, sem mudar molduras',async()=>{
+ const codigo=fs.readFileSync(path.join(__dirname,
+  '../src/producao/interface-aprovada-contas.js'),'utf8');
+ const ini=codigo.indexOf('async function prepararFotoPerfilReal(arquivo){');
+ const fim=codigo.indexOf('async function salvarFotoPerfilReal(ev){',ini);
+ assert.ok(ini>0&&fim>ini,'preparador do REAL deve existir');
+ const funcao=codigo.slice(ini,fim).trim();
+ const tamanhoOriginal=5*1024*1024,arquivo={type:'image/jpeg',size:tamanhoOriginal};
+ const chamadas=[];
+ const canvas={
+  width:0,height:0,
+  getContext:()=>({
+   fillRect(){},drawImage(){},
+   set fillStyle(valor){assert.equal(valor,'#ffffff');}
+  }),
+  toBlob(callback,mime,qualidade){
+   chamadas.push({mime,qualidade,width:canvas.width,height:canvas.height});
+   callback({size:550000,type:'image/jpeg'});
+  }
+ };
+ const preparar=vm.runInNewContext('('+funcao+')',{
+  document:{createElement:tipo=>{assert.equal(tipo,'canvas');return canvas;}},
+  createImageBitmap:async()=>({width:4032,height:3024,close(){}})
+ });
+ const grande=await preparar(arquivo);
+ assert.equal(grande.mime,'image/jpeg');
+ assert.equal(grande.dados.size,550000);
+ assert.equal(canvas.width,1920);
+ assert.equal(canvas.height,1440);
+ assert.ok(chamadas.length>0);
+ const pequena={type:'image/png',size:12500};
+ const pronta=await preparar(pequena);
+ assert.equal(pronta.dados,pequena,'imagem ja compativel nao deve ser tocada');
+ assert.equal(pronta.mime,'image/png');
+ const heic=await preparar({type:'image/heic',size:4000000});
+ assert.equal(heic.mime,'image/jpeg','HEIC decodificavel pelo aparelho vira JPEG');
+ await assert.rejects(preparar({type:'text/html',size:999}),/imagem com até 24 MB/);
+ await assert.rejects(preparar({type:'image/png',size:25*1024*1024}),
+  /imagem com até 24 MB/);
+ assert.match(codigo,/const url='\\/api\\/contas\\/foto-perfil\\?revisao='/);
+ assert.doesNotMatch(codigo,/const url=URL\\.createObjectURL\\(blob\\)/);
+ assert.match(codigo,/credentials:'same-origin',cache:'no-store'/);
 });

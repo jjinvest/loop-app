@@ -201,8 +201,9 @@
    const blob=await resp.blob();
    if(atual!==numeroConsultaFotoReal)return;
    if(blob.size===0||blob.size>3*1024*1024)throw Error('FOTO_INVALIDA');
-   const url=URL.createObjectURL(blob);
-   if(fotoPerfilUrlReal)URL.revokeObjectURL(fotoPerfilUrlReal);
+   // URL autenticada no proprio dominio; CSP da conta REAL nao libera blob:.
+   const url='/api/contas/foto-perfil?revisao='+Date.now()+'-'+atual;
+   if(fotoPerfilUrlReal?.startsWith('blob:'))URL.revokeObjectURL(fotoPerfilUrlReal);
    fotoPerfilUrlReal=url;
    const topo=$('loop03ImagemFotoTopo'),rodape=$('loop03ImagemFotoRodape');
    for(const img of [topo,rodape]){img.src=url;img.hidden=false;}
@@ -213,34 +214,79 @@
    if(status)status.textContent='Não foi possível consultar sua foto agora.';
   }
  }
+ // Fotos grandes escolhidas no celular sao reduzidas ANTES da rede.
+ // O backend REAL continua validando o JPEG/PNG/WebP e removendo metadados.
+ async function prepararFotoPerfilReal(arquivo){
+  const permitidos=['image/jpeg','image/png','image/webp'];
+  const limite=3*1024*1024;
+  if(!arquivo||arquivo.size<1)throw Error('Escolha uma foto válida.');
+  if(permitidos.includes(arquivo.type)&&arquivo.size<=limite)
+   return {dados:arquivo,mime:arquivo.type};
+  if(!arquivo.type?.startsWith('image/')||arquivo.size>24*1024*1024)
+   throw Error('Escolha uma imagem com até 24 MB.');
+  if(typeof createImageBitmap!=='function')
+   throw Error('Este navegador não consegue preparar a foto. Escolha JPEG, PNG ou WebP de até 3 MB.');
+  let imagem;
+  try{
+   imagem=await createImageBitmap(arquivo);
+   if(!imagem.width||!imagem.height)throw Error('FOTO_INVALIDA');
+   const fator=Math.min(1,1920/Math.max(imagem.width,imagem.height));
+   const canvas=document.createElement('canvas');
+   canvas.width=Math.max(1,Math.round(imagem.width*fator));
+   canvas.height=Math.max(1,Math.round(imagem.height*fator));
+   const contexto=canvas.getContext('2d',{alpha:false});
+   if(!contexto)throw Error('FOTO_INVALIDA');
+   contexto.fillStyle='#ffffff';
+   contexto.fillRect(0,0,canvas.width,canvas.height);
+   contexto.drawImage(imagem,0,0,canvas.width,canvas.height);
+   for(const qualidade of [0.86,0.72,0.55,0.42]){
+    const reduzida=await new Promise(resolve=>
+     canvas.toBlob(resolve,'image/jpeg',qualidade));
+    if(reduzida?.size>0&&reduzida.size<=limite)
+     return {dados:reduzida,mime:'image/jpeg'};
+   }
+   throw Error('FOTO_GRANDE_DEMAIS');
+  }catch(e){
+   if(e.message==='FOTO_GRANDE_DEMAIS')
+    throw Error('A foto ficou grande demais. Escolha outra imagem.');
+   throw Error('O navegador não conseguiu abrir esta foto. Escolha JPEG, PNG ou WebP.');
+  }finally{
+   if(imagem?.close)imagem.close();
+  }
+ }
  async function salvarFotoPerfilReal(ev){
   ev.preventDefault();
   const campo=$('arquivoFotoPerfil'),status=$('statusFotoPerfil');
   const arquivo=campo.files?.[0];
   if(!arquivo){status.textContent='Escolha uma foto primeiro.';return;}
-  if(!['image/jpeg','image/png','image/webp'].includes(arquivo.type)||
-     arquivo.size<1||arquivo.size>3*1024*1024){
-   status.textContent='Escolha JPEG, PNG ou WebP com até 3 MB.';return;
-  }
   if(typeof csrf!=='string'||csrf.length<24){
-   status.textContent='Entre novamente na conta para salvar sua foto.';return;
+   const aviso='Entre novamente na conta para salvar sua foto.';
+   status.textContent=aviso;dizer(aviso);return;
   }
   const botao=$('formFotoPerfil').querySelector('button[type="submit"]');
-  botao.disabled=true;status.textContent='Salvando sua foto...';
+  if(botao.disabled)return;
+  botao.disabled=true;status.textContent='Preparando sua foto...';
   try{
+   const preparada=await prepararFotoPerfilReal(arquivo);
+   status.textContent='Salvando sua foto...';
    const resp=await fetch('/api/contas/foto-perfil',{
     method:'POST',credentials:'same-origin',cache:'no-store',
-    headers:{'Content-Type':arquivo.type,'X-Loop-Csrf':csrf},
-    body:arquivo
+    headers:{'Content-Type':preparada.mime,'X-Loop-Csrf':csrf},
+    body:preparada.dados
    });
    const dados=await resp.json().catch(()=>({}));
    if(resp.status!==201||dados.fotoSalva!==true)
     throw Error(dados.erro||'FOTO_NAO_GRAVADA');
    campo.value='';
    await atualizarFotoPerfilReal();
-   status.textContent='Foto atualizada no Escritório.';
-  }catch(e){status.textContent='Não foi possível salvar a foto: '+e.message;}
-  finally{botao.disabled=false;}
+   const sucesso='Foto atualizada no Escritório.';
+   status.textContent=sucesso;dizer(sucesso);
+  }catch(e){
+   const aviso='Não foi possível salvar a foto: '+e.message;
+   status.textContent=aviso;dizer(aviso);
+   // O statusFotoPerfil fica dentro da aba Minha Conta, normalmente fechada.
+   if($('conteudoConta')?.hidden&&typeof alert==='function')alert(aviso);
+  }finally{botao.disabled=false;}
  }
  function sincronizarFotoRodapeReal(){
   const topo=$('loop03ImagemFotoTopo'),rodape=$('loop03ImagemFotoRodape');
