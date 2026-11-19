@@ -37,3 +37,6 @@ Revisar também endpoints públicos, origem de dados, papel do operador, imagens
 
 ## Limitações explícitas
 Snapshot hash assegura identidade de código, não comprova a aparência desejada nem correção funcional intrínseca. GitHub Actions sozinho não impede push direto sem proteção real de branch. O predeploy Railway deve falhar ao detectar qualquer mudança indevida; a conta que pode alterar a configuração Railway deve ser protegida por permissões/MFA. A proteção do repositório, do runtime e do banco exige controles em camadas e auditoria independente; jamais afirmar risco zero.
+
+## Ajuste operacional pontual identificado pelo gate (19/11/2026)
+A sonda privada do gateway ainda pressupunha HTTP 401 para /loja, apesar de o REAL já publicar a vitrine HTTP 200 (sem autenticar pedido ou financeiro). Corrigida SOMENTE a sonda e adicionadas confirmações de que pedidos, estado privado e financeiro continuam HTTP 401 sem sessão. Código real da loja/operador não foi alterado. Esse desvio é capturado por teste de integração do gateway no workflow de proteção. O snapshot foi atualizado somente para o arquivo da sonda, antes/depois documentados no manifesto. A correção só pode ir ao Railway depois da revisão das provas da nova branch.

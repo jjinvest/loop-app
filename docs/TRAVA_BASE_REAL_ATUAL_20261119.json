@@ -308,7 +308,7 @@
     },
     {
       "path": "scripts/provar-ligacao-privada-loop.js",
-      "sha": "414db27776995ab00b982bb10f74a6f75bda5c06"
+      "sha": "617f85b699c86a3b14074ad0309879d52c1aaad2"
     },
     {
       "path": "scripts/provar-manutencao-admin-readonly-https.js",
@@ -3353,6 +3353,15 @@
     {
       "path": "test/webhook-sigkill-rollback-sqlite.test.js",
       "sha": "7fbf8c072c69fa208ec975a307d525b642e020db"
+    }
+  ],
+  "alteracoesPontuaisAutorizadas": [
+    {
+      "data": "2026-11-19",
+      "path": "scripts/provar-ligacao-privada-loop.js",
+      "antes": "414db27776995ab00b982bb10f74a6f75bda5c06",
+      "depois": "617f85b699c86a3b14074ad0309879d52c1aaad2",
+      "objetivo": "Adequar exclusivamente a sonda de startup a vitrine REAL publica (HTTP 200) e confirmar pedidos/estado/financeiro privados (HTTP 401). Sem mudancas no HTML/CSS, motor, catraca, filas, banco, API comercial ou credenciais."
     }
   ]
 }

@@ -28,6 +28,8 @@ jobs:
           node --test --test-concurrency=2 \
             test/contrato-papeis-operador-real.test.js \
             test/contrato-links-definitivos-real.test.js \
+            test/gateway-publico-real-sem-laboratorio.test.js \
+            test/gateway-publico-real-integracao-conta-operador.test.js \
             test/varredura-visual-publicacao-real.test.js \
             test/controle-caixa-catraca-loop-sqlite.test.js \
             test/catraca-autorizacao-independente-da-compra-v6.test.js \

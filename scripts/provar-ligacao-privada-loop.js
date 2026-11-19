@@ -68,8 +68,14 @@ async function provarLigacaoPrivada({alvo,origemReal,timeoutMs=5000}={}){
  if(titular.status!==401)
   falha('PROVA_PRIVADA_CLIENTE_SESSAO_ABERTA');
  const loja=await pedir({alvo,path:'/loja',timeoutMs});
- if(loja.status!==401)
-  falha('PROVA_PRIVADA_LOJA_PUBLICA_SEM_LOGIN');
+ // A vitrine REAL aprovada e publica. O checkout e os dados privados nao sao.
+ if(loja.status!==200||!String(loja.headers['content-type']||'').includes('text/html')||
+    !loja.body.includes('id="catalogoLojaLoop"'))
+  falha('PROVA_PRIVADA_VITRINE_PUBLICA_INCORRETA');
+ for(const rotaPrivada of ['/api/loja/pedidos','/api/loja/estado','/api/financeiro/me']){
+  const privado=await pedir({alvo,path:rotaPrivada,timeoutMs});
+  if(privado.status!==401)falha('PROVA_PRIVADA_DADOS_CLIENTE_EXPOSTOS');
+ }
  const operador=await pedir({alvo,path:'/api/operador/estado',timeoutMs});
  if(operador.status!==200||jsonResposta(operador).operador!==false)
   falha('PROVA_PRIVADA_OPERADOR_ISOLADO_FALHOU');
