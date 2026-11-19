@@ -1243,21 +1243,39 @@
   $('textoTermosCadastro').textContent='Consultando termos...';
   $('textoPrivacidadeCadastro').textContent='Consultando política...';
   try{
-   const dados=await requisitar('/documentos');
+   let dados,soLeitura=false;
+   try{dados=await requisitar('/documentos');}
+   catch(e){
+    if(e.status!==503)throw e;
+    dados=await requisitar('/documentos-leitura');soLeitura=true;
+   }
    const ok=o=>o&&typeof o.texto==='string'&&o.texto.length>=100&&
     typeof o.versao==='string'&&typeof o.hash==='string'&&
     /^[a-f0-9]{64}$/.test(o.hash);
    if(!ok(dados.termos)||!ok(dados.privacidade)||
       dados.financeiroReal!==false)throw Error('DOCUMENTOS_INVALIDOS');
+   const contar=o=>(o.texto.match(/^## [1-7]\. /gm)||[]).length;
+   const completos=contar(dados.termos)===7&&contar(dados.privacidade)===7;
+   const tituloDocs=$('documentosCadastroDetalhes').querySelector('summary');
+   if(tituloDocs)tituloDocs.textContent=completos?
+    'Ler os 14 tópicos completos: Termos de Uso (7) + Privacidade (7)':
+    'Ler Termos de Uso e Política de Privacidade completos';
+   $('versaoTermosCadastro').hidden=false;
+   $('versaoPrivacidadeCadastro').hidden=false;
    $('versaoTermosCadastro').textContent='Versão: '+dados.termos.versao;
    $('textoTermosCadastro').textContent=dados.termos.texto;
    $('versaoPrivacidadeCadastro').textContent='Versão: '+dados.privacidade.versao;
    $('textoPrivacidadeCadastro').textContent=dados.privacidade.texto;
-   documentos=dados;
-   captchaObrigatorio=dados.captchaObrigatorio===true;
-   $('captchaCadastroArea').hidden=!captchaObrigatorio;
-   if(captchaObrigatorio)await atualizarCaptchaCadastro();
-   documentosHabilitados(true);
+   if(soLeitura||dados.cadastroAtivo===false){
+    documentos=null;documentosHabilitados(false);
+    dizer('Os 14 tópicos podem ser lidos. O cadastro novo permanece fechado.');
+   }else{
+    documentos=dados;
+    captchaObrigatorio=dados.captchaObrigatorio===true;
+    $('captchaCadastroArea').hidden=!captchaObrigatorio;
+    if(captchaObrigatorio)await atualizarCaptchaCadastro();
+    documentosHabilitados(true);
+   }
   }catch(e){
    $('textoTermosCadastro').textContent='Termos indisponíveis.';
    $('textoPrivacidadeCadastro').textContent='Política de privacidade indisponível.';
