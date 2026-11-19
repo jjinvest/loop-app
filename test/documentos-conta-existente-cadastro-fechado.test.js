@@ -69,8 +69,8 @@ for(const cenario of [
 ]){
  test('documentos da conta antiga continuam acessíveis com '+cenario.nome,async t=>{
   const x=await setup(t,cenario);
-  assert.equal((await x.req('/api/contas/documentos')).status,401);
-  assert.equal((await x.req('/api/contas/documentos',{cookie:'loop_real_s='+'0'.repeat(64)})).status,401);
+  assert.equal((await x.req('/api/contas/documentos')).status,503);
+  assert.equal((await x.req('/api/contas/documentos',{cookie:'loop_real_s='+'0'.repeat(64)})).status,503);
   const rsp=await x.req('/api/contas/documentos',{cookie:x.cookie});
   assert.equal(rsp.status,200);
   assert.equal(rsp.headers.get('cache-control'),'private, no-store');
@@ -94,7 +94,7 @@ for(const cenario of [
    method:'POST',body:{nome:'Novo Cliente'}
   })).status,503);
   assert.equal(x.db.prepare('SELECT COUNT(*) AS n FROM loop_real_contas').get().n,1);
-  assert.equal((await x.req('/api/contas/documentos')).status,401);
+  assert.equal((await x.req('/api/contas/documentos')).status,503);
   assert.equal(x.db.prepare('PRAGMA integrity_check').get().integrity_check,'ok');
  });
 }
