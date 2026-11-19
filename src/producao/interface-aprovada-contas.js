@@ -1463,16 +1463,8 @@
    $('captchaLoginEstado').textContent='Não foi possível carregar o código. Toque em Outro código.';
   }
  }
- // A rota do administrador e protegida e so vira atalho quando o nick
- // OPERADOR for escolhido na entrada unica. Nenhum cliente recebe privilegio.
- const campoOperadorLogin=$('login'),atalhoAdminLogin=$('acessoAdminLogin');
- const atualizarEntradaAdmin=()=>{
-  const modo=campoOperadorLogin.value.trim().toLowerCase()==='operador';
-  atalhoAdminLogin.hidden=!modo;
-  atalhoAdminLogin.style.display=modo?'inline-flex':'none';
- };
- campoOperadorLogin.addEventListener('input',atualizarEntradaAdmin);
- atualizarEntradaAdmin();
+ // Um formulario: nick VILELA entra como cliente e nick OPERADOR
+ // usa a sessao administrativa sem nova tela de senha.
  onForm('formLogin',async()=>{
   if($('login').value.trim().toLowerCase()==='operador'){
    await autenticarOperadorFormulario($('login').value.trim(),$('senha').value);
