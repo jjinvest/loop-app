@@ -260,9 +260,6 @@ async function main(){
    await contexto.addCookies([{
     name:COOKIE,value:login.token,url:base,
     httpOnly:true,secure:true,sameSite:'Strict'
-   },{
-    name:COOKIE_ADMIN,value:admin.token,url:base,
-    httpOnly:true,secure:true,sameSite:'Strict'
    }]);
    const page=await contexto.newPage();
    page.setDefaultTimeout(15000);
@@ -479,6 +476,20 @@ async function main(){
    await page.locator('a.akitemm-voltar').click();
    await page.waitForURL(url=>url.pathname==='/minha-conta');
    await page.locator('#painelConta').waitFor({state:'visible'});
+   // Ativar operador na mesma sessao de navegador e garantir que
+   // nenhum dado de titular seja apresentado como propriedade dele.
+   await contexto.addCookies([{
+    name:COOKIE_ADMIN,value:admin.token,url:base,
+    httpOnly:true,secure:true,sameSite:'Strict'
+   }]);
+   await page.goto(base+'/escritorio',{waitUntil:'domcontentloaded'});
+   await page.locator('#loopOperadorAcoes').waitFor({state:'visible'});
+   assert.equal(await page.locator('#loop03NickIntegrado').innerText(),'OPERADOR');
+   assert.equal(await page.locator('#loopAcessoAdminMenu').getAttribute('hidden'),null);
+   assert.equal(await page.locator('#abaConta').isDisabled(),true);
+   await page.goto(base+'/loja');
+   await page.locator('#akitemmNomeTitular').filter({hasText:'OPERADOR'}).waitFor();
+   assert.equal(await page.locator('footer .akitemm-acesso-operador').getAttribute('hidden'),null);
    // A tela administrativa consulta a MESMA base e exige outro cookie.
    await page.goto(base+'/administrador',{waitUntil:'domcontentloaded'});
    await page.locator('#loopAdminEstado')
@@ -547,8 +558,6 @@ async function main(){
    });
    await contexto.addCookies([
     {name:COOKIE,value:login.token,url:base,
-     httpOnly:true,secure:true,sameSite:'Strict'},
-    {name:COOKIE_ADMIN,value:admin.token,url:base,
      httpOnly:true,secure:true,sameSite:'Strict'}
    ]);
    const pagina=await contexto.newPage();
@@ -683,6 +692,19 @@ async function main(){
     path:path.join(pasta,'integrado-loja-'+visual.nome+'.png'),
     fullPage:true
    });
+   // Cliente permanece cliente ate que o cookie administrativo seja validado.
+   await contexto.addCookies([{
+    name:COOKIE_ADMIN,value:admin.token,url:base,
+    httpOnly:true,secure:true,sameSite:'Strict'
+   }]);
+   await pagina.goto(base+'/escritorio');
+   await pagina.locator('#loopOperadorAcoes').waitFor({state:'visible'});
+   assert.equal(await pagina.locator('#loop03NickIntegrado').innerText(),'OPERADOR');
+   assert.equal(await pagina.locator('#abaFinanceiro').isDisabled(),true);
+   assert.equal(await pagina.locator('#loopAcessoAdminMenu').getAttribute('hidden'),null);
+   await pagina.goto(base+'/loja');
+   await pagina.locator('#akitemmNomeTitular').filter({hasText:'OPERADOR'}).waitFor();
+   assert.equal(await pagina.locator('footer .akitemm-acesso-operador').getAttribute('hidden'),null);
    await pagina.goto(base+'/administrador');
    const integrado=pagina.locator('#integracaoQualificadaEstado');
    await integrado.filter({hasText:/Confirmadas: 1/}).waitFor();
