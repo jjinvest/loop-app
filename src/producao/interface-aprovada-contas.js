@@ -49,7 +49,11 @@
  let csrf=null,documentos=null,carregando=false,tela='login';
  let captchaCadastroId=null,captchaObrigatorio=false;
  let captchaLoginAtivo=false,captchaLoginId=null;
- const ref=new URLSearchParams(location.search).get('ref');
+ const parametrosEntrada=new URLSearchParams(location.search);
+ const ref=parametrosEntrada.get('ref');
+ // /loja/NICK conserva o indicador no cadastro e abre a loja apos
+ // autenticar a conta real; nao promove convidado a operador.
+ const entradaPelaLoja=parametrosEntrada.get('origem')==='loja';
  const indicadorNick=typeof ref==='string'&&/^[A-Za-z]{1,12}$/.test(ref)?
   ref.toLowerCase():null;
  let titularesIndicados=[],redePaginando=false;
@@ -228,6 +232,7 @@
      });
      if(resp.documentosConfirmados!==true)throw Error('DOCUMENTOS_ALTERADOS_RELER');
      area.remove();dizer('Documentos confirmados. Sua conta original foi preservada.');
+     if(entradaPelaLoja)location.assign('/loja');
     }catch(e){status.textContent=erro(e);btn.disabled=false;}
    });
   }catch(e){status.textContent='Não foi possível carregar os documentos. '+erro(e);}
@@ -1338,6 +1343,8 @@
    $('captchaLoginArea').hidden=true;$('captchaLoginResposta').value='';
    $('senha').value='';
    painelConta(login);dizer('Bem-vindo ao Escritório LOOP.');
+   if(entradaPelaLoja&&login.aceiteDocumentosDefinitivosPendente!==true)
+    location.assign('/loja');
   }catch(e){
    if(['CREDENCIAIS_INVALIDAS','CAPTCHA_LOGIN_OBRIGATORIO',
      'CAPTCHA_INVALIDO'].includes(e.message))await atualizarCaptchaLogin();
@@ -1531,5 +1538,9 @@
    left:pistaResumo.clientWidth*indice,behavior:'instant'
   }));
  }
- void requisitar('/me').then(s=>painelConta(s)).catch(()=>mostrarLogin('login'));
+ void requisitar('/me').then(s=>{
+  painelConta(s);
+  if(entradaPelaLoja&&s.aceiteDocumentosDefinitivosPendente!==true)
+   location.assign('/loja');
+ }).catch(()=>mostrarLogin('login'));
 })();
