@@ -23,6 +23,8 @@ const {ControleCaixaCatracaLoopSQLite,TABELAS_CATRACA_CAIXA}=
  require('./controle-caixa-catraca-loop-sqlite');
 const {TABELAS_POSICOES_VITRINE}=
  require('./posicoes-vitrine-real-sqlite');
+const {TABELA_FOTO_PERFIL_REAL}=
+ require('./foto-perfil-real-sqlite');
 const {PromocaoPedidoMotorEnsaioSQLite,TABELAS_PROMOCAO_ENSAIO}=
  require('./promocao-pedido-motor-ensaio-sqlite');
 const {PromocaoLotesEnsaioSQLite,TABELAS_LOTES_ENSAIO}=
@@ -43,7 +45,8 @@ const TABELAS=Object.freeze([
 const TABELAS_CONTATO=Object.freeze([
  'loop_real_contatos_cadastro','loop_real_telefones_legados',
  'loop_real_migracoes_preview','loop_real_aceites_documentos',
- 'loop_captcha_login_falhas_v1','loop_captcha_cadastro_v1'
+ 'loop_captcha_login_falhas_v1','loop_captcha_cadastro_v1',
+ TABELA_FOTO_PERFIL_REAL
 ]);
 // Administração, cotações, pedidos, custo congelado e outbox são protegidos
 // juntos quando coexistem no MESMO SQLite. Liquidação PSP/banco e tributos
@@ -103,6 +106,19 @@ function validarIdentidade(arquivo){
    ...TABELAS_OUTBOX_COMPRA];
   if(lista.some(x=>!todos.includes(x)))
    falha('BACKUP_IDENTIDADE_NAO_COBRE_TABELAS_COMERCIAIS');
+  // A foto real integra o MESMO backup cifrado e não pode perder o titular.
+  if(lista.includes(TABELA_FOTO_PERFIL_REAL)){
+   const fotos=b.prepare(
+    'SELECT f.titular_id,f.dados,f.sha256 FROM '+TABELA_FOTO_PERFIL_REAL+
+    ' f LEFT JOIN loop_real_contas c ON c.id=f.titular_id'
+   ).all();
+   if(fotos.some(f=>!Buffer.isBuffer(f.dados)||!f.dados.length||
+       f.dados.length>3*1024*1024||
+       createHash('sha256').update(f.dados).digest('hex')!==f.sha256))
+    falha('BACKUP_FOTO_PERFIL_REAL_DIVERGENTE');
+   if(b.prepare('PRAGMA foreign_key_check').all().length)
+    falha('BACKUP_FOTO_PERFIL_REAL_TITULAR_INCONSISTENTE');
+  }
   const temEnsaio=TABELAS_TESOURARIA_ENSAIO.some(x=>lista.includes(x));
   if(temEnsaio){
    // Jamais promover demonstrativo ficticio como saldo contabil real.
