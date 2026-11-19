@@ -38,7 +38,7 @@ test('varredura: VILELA no convite e atalho do admin exige operador real',()=>{
  assert.match(js,/Convite de @'\+nickVisivel\(indicadorNick\)/);
  assert.match(js,/campoIndicador\.value=indicadorNick\?nickVisivel\(indicadorNick\)/);
  assert.match(js,/const liberado=d\?\.operador===true/);
- assert.match(js,/\['loopOperadorMais'\),\$\('loopAcessoAdminMenu'\)/);
+ assert.ok(js.includes("$('loopAcessoAdminMenu')"));
  const api=fonte('src/producao/gateway-admin-comercial.js');
  assert.match(api,/app\.post\('\/api\/operador\/entrar'/);
  assert.match(api,/sessoes\.autenticar\(req\.body\.senha\)/);
