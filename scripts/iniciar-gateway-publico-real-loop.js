@@ -145,8 +145,8 @@ function criarGatewayPublicoReal(opcoes={}){
    req.headers['sec-fetch-site']==='same-origin'&&
    req.headers['sec-fetch-mode']==='navigate'&&
    req.headers['sec-fetch-dest']==='document'&&
-   /^application\\/x-www-form-urlencoded(?:;|$)/i.test(
-    req.headers['content-type']||'');
+   (req.headers['content-type']||'').split(';')[0].trim()
+    .toLowerCase()==='application/x-www-form-urlencoded';
   if(mutacao&&req.headers.origin!==origemPublica&&
      !formularioAdminDoMesmoSite)
    return responder(403,'Origem não autorizada');
