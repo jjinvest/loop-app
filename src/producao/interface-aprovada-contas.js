@@ -172,7 +172,24 @@
   msg.textContent='Seu cadastro e sua indicação foram preservados. Leia e confirme os documentos oficiais para continuar. Não é necessário se cadastrar novamente.';
   const status=document.createElement('p');
   status.setAttribute('role','status');
-  area.append(titulo,msg,status);
+  // Mesmo que os documentos estejam temporariamente indisponíveis,
+  // ninguém fica preso nesta tela: pode sair ou entrar como operador.
+  const acessos=document.createElement('nav');
+  acessos.setAttribute('aria-label','Trocar acesso');
+  const sairConta=document.createElement('button');
+  sairConta.type='button';sairConta.textContent='Trocar de acesso';
+  sairConta.addEventListener('click',async()=>{
+   sairConta.disabled=true;
+   try{
+    await requisitar('/sair',{method:'POST',body:{},csrfObrigatorio:true});
+    csrf=null;area.remove();mostrarLogin('login');
+   }catch(e){status.textContent=erro(e);sairConta.disabled=false;}
+  });
+  const abrirOperador=document.createElement('a');
+  abrirOperador.href='/administrador/entrar';
+  abrirOperador.textContent='Entrar no escritório do operador';
+  acessos.append(sairConta,document.createTextNode(' '),abrirOperador);
+  area.append(titulo,msg,status,acessos);
   document.body.append(area);
   try{
    const docs=await requisitar('/documentos');
