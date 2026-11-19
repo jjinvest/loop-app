@@ -121,7 +121,7 @@ test('API de convites usa sessão e o cadastro atribui pelo nick do link',async 
  const redir=await fetch(url+'/convite/loja?ref=Alpha',{redirect:'manual'});
  assert.equal(redir.status,303);
  assert.equal(redir.headers.get('location'),
-  '/escritorio?ref=Alpha&origem=loja');
+  '/loja?ref=Alpha');
  assert.equal((await fetch(url+'/convite/loja?ref=%2Ffoo',{
   redirect:'manual'
  })).status,400);
