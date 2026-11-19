@@ -2,6 +2,7 @@
 const {test}=require('node:test');
 const assert=require('node:assert/strict');
 const {once}=require('node:events');
+const {request}=require('node:http');
 const {randomBytes}=require('node:crypto');
 const {DatabaseSync}=require('node:sqlite');
 const {criarGatewayPublicoReal}=
@@ -131,29 +132,39 @@ test('gateway e identidade reais end-to-end: mesmas telas, cookies, CSRF e opera
  assert.equal(produtos.checkoutReal,false);
  assert.equal((await get('/api/operador/estado',{Cookie:cookieCliente})).status,200);
  assert.equal((await get('/api/admin/comercial/sessao',{Cookie:cookieCliente})).status,401);
- // Envio normal do formulário em Chrome Android pode não enviar Origin
- // quando o documento tem Referrer-Policy: no-referrer.
- // Sec-Fetch-Site, Mode e Dest são definidos pelo navegador, não pelo JS.
- const formulario={
-  method:'POST',redirect:'manual',
-  headers:{'Content-Type':'application/x-www-form-urlencoded',
-   'Sec-Fetch-Site':'same-origin','Sec-Fetch-Mode':'navigate',
-   'Sec-Fetch-Dest':'document'},
-  body:new URLSearchParams({senha:ADMIN}).toString()
- };
+ // Testar o envio de formulario com HTTP puro: fetch do Node
+ // força Sec-Fetch-Mode=cors, e nao simula navegacao de navegador.
+ const enviarFormulario=({origin,site='same-origin',mode='navigate',
+   dest='document'}={})=>new Promise((resolve,reject)=>{
+  const alvo=new URL(base+'/administrador/entrar');
+  const body=new URLSearchParams({senha:ADMIN}).toString();
+  const h={'Content-Type':'application/x-www-form-urlencoded',
+   'Content-Length':Buffer.byteLength(body)};
+  if(site!==null)h['Sec-Fetch-Site']=site;
+  if(mode!==null)h['Sec-Fetch-Mode']=mode;
+  if(dest!==null)h['Sec-Fetch-Dest']=dest;
+  if(origin!==undefined)h.Origin=origin;
+  const rq=request({
+   hostname:alvo.hostname,port:Number(alvo.port),
+   method:'POST',path:alvo.pathname,headers:h
+  },resp=>{
+   let text='';
+   resp.on('data',p=>{text+=p.toString('utf8')});
+   resp.on('end',()=>resolve({status:resp.statusCode,
+    headers:resp.headers,body:text}));
+  });
+  rq.on('error',reject);rq.end(body);
+ });
  const paginaForm=await get('/administrador/entrar');
  assert.equal(paginaForm.status,200);
  assert.match(await paginaForm.text(),/Acesso do administrador/);
- assert.equal((await fetch(base+'/administrador/entrar',{
-  ...formulario,headers:{...formulario.headers,'Sec-Fetch-Site':'cross-site'}
- })).status,403,'navegação externa nunca usa exceção');
- assert.equal((await fetch(base+'/administrador/entrar',{
-  ...formulario,headers:{...formulario.headers,
-   Origin:'https://externo.example.invalid'}
- })).status,403,'origem declarada de terceiro continua vedada');
- assert.equal((await fetch(base+'/administrador/entrar',{
-  ...formulario,headers:{'Content-Type':'application/x-www-form-urlencoded'}
- })).status,403,'sem metadados confiáveis não existe exceção');
+ assert.equal((await enviarFormulario({site:'cross-site'})).status,403,
+  'navegacao externa nunca usa excecao');
+ assert.equal((await enviarFormulario({
+  origin:'https://externo.example.invalid'
+ })).status,403,'origem de terceiro bloqueada mesmo com Sec-Fetch-Site');
+ assert.equal((await enviarFormulario({site:null})).status,403,
+  'sem metadados de navegacao nao existe excecao');
  assert.equal((await fetch(base+'/api/operador/entrar',{
   method:'POST',redirect:'manual',
   headers:{'Content-Type':'application/json',
@@ -161,17 +172,12 @@ test('gateway e identidade reais end-to-end: mesmas telas, cookies, CSRF e opera
    'Sec-Fetch-Dest':'document'},
   body:JSON.stringify({nick:'operador',senha:ADMIN})
  })).status,403,'endpoint JSON continua exigindo Origin normal');
- for(const origemFormulario of [null,'null']){
-  const resposta=await fetch(base+'/administrador/entrar',{
-   ...formulario,headers:{
-    ...formulario.headers,
-    ...(origemFormulario===null?{}:{Origin:origemFormulario})
-   }
-  });
+ for(const origin of [undefined,'null']){
+  const resposta=await enviarFormulario({origin});
   assert.equal(resposta.status,303,
-   'formulário autenticado tem que entrar em vez de Origin 403');
-  assert.equal(resposta.headers.get('location'),'/administrador');
-  assert.match(resposta.headers.get('set-cookie'),
+   'formulario autenticado deve redirecionar em vez de Origin 403');
+  assert.equal(resposta.headers.location,'/administrador');
+  assert.match(resposta.headers['set-cookie'][0],
    /^akitemm_real_admin_v1=[a-f0-9]{64};/);
  }
  const op=await post('/api/operador/entrar',{nick:'operador',senha:ADMIN});
