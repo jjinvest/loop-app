@@ -147,6 +147,12 @@ test('serviço sem PSP monta cores+eventos e lê pedido do titular após reiníc
   ['listarDoTitular','contarDoTitular','consultarDoTitular']);
  assert.deepEqual(Object.keys(comercial.leituraRemessas),['consultar']);
  assert.equal(comercial.novaCompra,false);
+ assert.ok(env.banco.prepare(
+  "SELECT 1 FROM sqlite_master WHERE name='loop_real_outbox_compra_confirmada'"
+ ).get());
+ assert.equal(env.banco.prepare(
+  'SELECT COUNT(*) AS n FROM loop_real_outbox_compra_confirmada'
+ ).get().n,0);
  assert.equal(comercial.novoPagamento,false);
  assert.equal(comercial.envioFornecedor,false);
  assert.equal(typeof comercial.leituraCatalogo.listarVitrinePreparacao,'function');
