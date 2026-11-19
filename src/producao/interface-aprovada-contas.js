@@ -332,9 +332,8 @@
   // A fonte é o endpoint autenticado do mesmo SQLite, não dados LAB.
   if(s.motorLoopInterno===true){
    prepararAbasMotor();
-   $('loopEstadoIntegrado').hidden=false;
    void carregarMotor();
-  }else $('loopEstadoIntegrado').hidden=true;
+  }
   const ensaioAtivo=s.tesourariaEnsaioAtiva===true;
   ensaioFinanceiroAtivo=ensaioAtivo;
   const blocoEnsaio=$('tesourariaEnsaioModulo');
@@ -984,13 +983,8 @@
       d.catracaClientePodeGirar!==false||
       !d.redeResumo||d.redeResumo.financeiroReal!==false)
     throw Error('ESCRITORIO_RESPOSTA_INCONSISTENTE');
-   const aguardando=d.eventosComerciais?.aguardandoConciliacao??0;
-   const texto='Fila A: '+d.filaA+' · Fila B: '+d.filaB+
-    ' · Ciclo atual: '+d.tabuleiro.eventosNoCiclo+
-    ' de 6 eventos. Acompanhe suas posições e o tabuleiro.'+
-    (aguardando>0?' Pedidos em análise: '+aguardando+'.':'');
-   $('loopResumoMotor').textContent=texto;
-   // O contador ja aparece na roda; nao repetir indicadores no rodape.
+   // O estado permanece no tabuleiro, marcadores e avisos aprovados.
+   // Nao criar painel extra na pagina inicial.
    $('estadoTabuleiroIntegrado').textContent='';
    $('estadoTabuleiroIntegrado').hidden=true;
    // Mesmo componente de fila, círculo e luzes usado pelo laboratório.
@@ -1227,8 +1221,6 @@
    painel.appendChild(grade);
    void atualizarFilasAncoradas(d.minhasPosicoes,{A:d.filaA,B:d.filaB});
   }catch{
-   $('loopResumoMotor').textContent=
-    'Não foi possível carregar as posições. Tente atualizar.';
    $('estadoTabuleiroIntegrado').textContent=
     'Não foi possível atualizar o tabuleiro. Tente novamente.';
    $('estadoTabuleiroIntegrado').hidden=false;
