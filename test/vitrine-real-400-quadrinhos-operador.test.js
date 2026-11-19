@@ -94,7 +94,7 @@ test('200 fixtures tecnicas em banco descartavel, 5 abas x 40 e operador isolado
  assert.match(await js.text(),/X-Foto-Versao-Esperada/);
  const fonte=fs.readFileSync(path.join(__dirname,
   '../src/producao/interface-aprovada-loja.js'),'utf8');
- assert.match(fonte,/const totalAbas=filtrada\?Math.max\(1,Math.ceil\(itens.length\/40\)\):5/);
+ assert.match(fonte,/const totalAbas=filtrada\?Math.max\(1,Math.ceil\(slotsVisiveis.length\/40\)\):5/);
  assert.match(fonte,/const linhas=expandida\?4:2/);
  assert.match(fonte,/abaVitrine\*40/);
  assert.match(fonte,/data.*akitemmSlot|dataset.akitemmSlot/);
