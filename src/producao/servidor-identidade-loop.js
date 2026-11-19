@@ -16,6 +16,7 @@ const {LivroFinanceiroRealSQLite}=
  require('./livro-financeiro-real-sqlite');
 const {PosicoesVitrineRealSQLite}=
  require('./posicoes-vitrine-real-sqlite');
+const {FotoPerfilRealSQLite}=require('./foto-perfil-real-sqlite');
 function criarAppIdentidadeLoop({contas,origemHttps,
  permitirCadastro=false,backupEstado=null,captchaCadastroObrigatorio=false,
  pedidosComerciais=null,remessasOutbox=null,catalogoVitrine=null,
@@ -83,6 +84,8 @@ function criarAppIdentidadeLoop({contas,origemHttps,
   });
  const livroFinanceiro=motorLoop===null?null:
   new LivroFinanceiroRealSQLite({banco:contas.banco});
+ // Mesmo banco real de contas; arquivo integra o backup externo da identidade.
+ const fotosPerfil=new FotoPerfilRealSQLite({banco:contas.banco});
  if(typeof captchaCadastroObrigatorio!=='boolean')
   throw Error('CAPTCHA_CONFIGURACAO_INVALIDA');
  const captcha=captchaCadastroObrigatorio?new CaptchaCadastroSQLite({
@@ -225,6 +228,39 @@ function criarAppIdentidadeLoop({contas,origemHttps,
   }catch{return res.status(503).json({
    estado:'IDENTIDADE_NAO_PRONTA',financeiroReal:false
   });}
+ });
+ // Foto privada do cliente: nunca confundir sessão do operador com titular.
+ app.get('/api/contas/foto-perfil',protegido,(req,res)=>{
+  try{
+   const foto=fotosPerfil.consultar(req.conta.titularId);
+   if(!foto)return res.status(404).json({erro:'FOTO_AINDA_NAO_CADASTRADA'});
+   return res.set('Cache-Control','private, no-store')
+    .type(foto.mime).send(foto.dados);
+  }catch{return res.status(503).json({erro:'FOTO_REAL_INDISPONIVEL'});}
+ });
+ app.post('/api/contas/foto-perfil',protegido,(req,res,next)=>{
+  if(!origemOk(req))return res.status(403).json({erro:'ORIGEM_INVALIDA'});
+  if(req.get('x-loop-csrf')!==req.conta.csrf)
+   return res.status(403).json({erro:'CSRF_INVALIDO'});
+  if(!['image/jpeg','image/png','image/webp'].includes(req.get('content-type')))
+   return res.status(415).json({erro:'TIPO_FOTO_NAO_PERMITIDO'});
+  next();
+ },express.raw({type:['image/jpeg','image/png','image/webp'],limit:'3mb'}),
+ (req,res)=>{
+  try{
+   const salvo=fotosPerfil.salvar(req.conta.titularId,{
+    mime:req.get('content-type'),dados:req.body
+   });
+   return res.status(201).set('Cache-Control','no-store').json({
+    fotoSalva:salvo.fotoSalva
+   });
+  }catch(e){
+   const invalida=['FOTO_REAL_FORMATO_INVALIDO','FOTO_INVALIDA',
+    'FOTO_DIMENSOES_INVALIDAS','FOTO_GRANDE_DEMAIS'].includes(e.codigo);
+   return res.status(invalida?400:503).json({
+    erro:invalida?'FOTO_INVALIDA':'FOTO_REAL_INDISPONIVEL'
+   });
+  }
  });
  // Cadastro novo e atualização documental de uma conta existente são
  // operações distintas: fechar o cadastro não deve bloquear o titular.
