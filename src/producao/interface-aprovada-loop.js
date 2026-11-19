@@ -103,7 +103,6 @@ function renderizarInterfaceAprovada(){
   '    <strong>Escritório Virtual · OPERADOR</strong>'+
   '    <p>Gerencie a AKITEMM e o LOOP com sua sessão administrativa. '+
   'As informações pessoais dos clientes continuam protegidas.</p>'+
-  '    <a href="/loja">Abrir AKITEMM</a> '+
   '    <a href="/administrador">Escritório do Administrador</a>'+
   '   </div>');
  // Os dois documentos já estão no mesmo painel da interface aprovada.
