@@ -34,12 +34,11 @@
  // Nenhuma operação de compra pode ser ativada por código do navegador
  // enquanto não houver backend comercial com fornecedor e PSP homologados.
  for(const seletor of [
-  '[data-akitemm-cor]','[data-akitemm-categoria]',
   '#akitemmCarregarMais',
   '#akitemmLimparCarrinho','#registrarPedidoLoja',
   '#akitemmEscolhaLoop input',
   '#copiarDivulgarLojaLoop','#akitemmFormEntrega input',
-  '#akitemmFormEntrega button','#akitemmBusca',
+  '#akitemmFormEntrega button',
   '#akitemmAbrirAvaliacoes','#akitemmEnviarAvaliacao'
  ]){
   for(const elem of document.querySelectorAll(seletor)){
