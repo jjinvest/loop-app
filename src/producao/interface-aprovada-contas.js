@@ -140,7 +140,7 @@
    if(painel.hidden)return;
    for(const [id,chave] of [['loop03PerfilNome','nome'],
     ['loop03PerfilNick','nick'],['loop03PerfilEmail','email']])
-    $(id).textContent=typeof d[chave]==='string'?d[chave]:'—';
+    $(id).textContent=typeof d[chave]==='string'?(chave==='nick'?nickVisivel(d[chave]):d[chave]):'—';
    const ok=d.cpfConfirmado===true&&
     typeof d.cpfExibicao==='string'&&d.cpfExibicao.length>0;
    $('loop03PerfilLinhaCpf').hidden=!ok;
@@ -242,7 +242,7 @@
   document.body.classList.add('loop03-logado');
   fecharDadosRodapeReal();
   sincronizarFotoRodapeReal();
-  nickResumoReal=nickVisivel(s.nick);
+  nickResumoReal=s.nick;
   $('loop03NickIntegrado').textContent='@'+nickVisivel(s.nick);
   posicoesResumoReal=[];posicaoSelecionada='';
   atualizarSituacaoRodapeReal();
@@ -503,7 +503,7 @@
   const p=i<0?null:posicoesResumoReal[i];
   $('loop03NumeroIntegrado').textContent=p?'#'+(i+1):'—';
   $('loop03StatusPosicao').textContent=p?
-   ('@'+nickResumoReal+' · Fila '+(p.fila==='A'||p.fila==='B'?p.fila:'não definida')+
+   ('@'+nickVisivel(nickResumoReal)+' · Fila '+(p.fila==='A'||p.fila==='B'?p.fila:'não definida')+
     ' · Indicações: '+(p.indicacoesVinculadas||0)+
     ' · '+(p.local||'Em acompanhamento')+' · ID #'+p.numero):'';
   atualizarSituacaoRodapeReal();
@@ -970,7 +970,7 @@
     $('loop03NumeroIntegrado').textContent=
      selecionadaResumo?'#'+posicaoSelecionada:'—';
     $('loop03StatusPosicao').textContent=selecionadaResumo?
-     ('@'+nickResumoReal+
+     ('@'+nickVisivel(nickResumoReal)+
       ' · Fila '+(selecionadaResumo.fila==='A'||selecionadaResumo.fila==='B'?
        selecionadaResumo.fila:'não definida')+
       ' · Indicações: '+(selecionadaResumo.indicacoesVinculadas||0)+
