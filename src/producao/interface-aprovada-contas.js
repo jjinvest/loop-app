@@ -158,6 +158,73 @@
    if(!painel.hidden)$('loop03PerfilNome').textContent='Dados indisponíveis.';
   }
  }
+ let fotoPerfilUrlReal=null,numeroConsultaFotoReal=0;
+ function limparFotoPerfilReal(){
+  numeroConsultaFotoReal++;
+  if(fotoPerfilUrlReal){URL.revokeObjectURL(fotoPerfilUrlReal);fotoPerfilUrlReal=null;}
+  const topo=$('loop03ImagemFotoTopo'),rodape=$('loop03ImagemFotoRodape');
+  for(const img of [topo,rodape]){
+   if(img){img.hidden=true;img.removeAttribute('src');}
+  }
+  const vazio=$('loop03FotoSemImagem'),vazioRodape=$('loop03AvatarRodapeVazio');
+  if(vazio)vazio.hidden=false;
+  if(vazioRodape)vazioRodape.hidden=false;
+ }
+ async function atualizarFotoPerfilReal(){
+  const atual=++numeroConsultaFotoReal;
+  try{
+   const resp=await fetch('/api/contas/foto-perfil',{
+    credentials:'same-origin',cache:'no-store'
+   });
+   if(atual!==numeroConsultaFotoReal)return;
+   if(resp.status===404){limparFotoPerfilReal();return;}
+   if(!resp.ok||!['image/jpeg','image/png','image/webp'].includes(
+     resp.headers.get('content-type')?.split(';')[0]))
+    throw Error('FOTO_INDISPONIVEL');
+   const blob=await resp.blob();
+   if(atual!==numeroConsultaFotoReal)return;
+   if(blob.size===0||blob.size>3*1024*1024)throw Error('FOTO_INVALIDA');
+   const url=URL.createObjectURL(blob);
+   if(fotoPerfilUrlReal)URL.revokeObjectURL(fotoPerfilUrlReal);
+   fotoPerfilUrlReal=url;
+   const topo=$('loop03ImagemFotoTopo'),rodape=$('loop03ImagemFotoRodape');
+   for(const img of [topo,rodape]){img.src=url;img.hidden=false;}
+   $('loop03FotoSemImagem').hidden=true;
+   $('loop03AvatarRodapeVazio').hidden=true;
+  }catch{
+   const status=$('statusFotoPerfil');
+   if(status)status.textContent='Não foi possível consultar sua foto agora.';
+  }
+ }
+ async function salvarFotoPerfilReal(ev){
+  ev.preventDefault();
+  const campo=$('arquivoFotoPerfil'),status=$('statusFotoPerfil');
+  const arquivo=campo.files?.[0];
+  if(!arquivo){status.textContent='Escolha uma foto primeiro.';return;}
+  if(!['image/jpeg','image/png','image/webp'].includes(arquivo.type)||
+     arquivo.size<1||arquivo.size>3*1024*1024){
+   status.textContent='Escolha JPEG, PNG ou WebP com até 3 MB.';return;
+  }
+  if(typeof csrf!=='string'||csrf.length<24){
+   status.textContent='Entre novamente na conta para salvar sua foto.';return;
+  }
+  const botao=$('formFotoPerfil').querySelector('button[type="submit"]');
+  botao.disabled=true;status.textContent='Salvando sua foto...';
+  try{
+   const resp=await fetch('/api/contas/foto-perfil',{
+    method:'POST',credentials:'same-origin',cache:'no-store',
+    headers:{'Content-Type':arquivo.type,'X-Loop-Csrf':csrf},
+    body:arquivo
+   });
+   const dados=await resp.json().catch(()=>({}));
+   if(resp.status!==201||dados.fotoSalva!==true)
+    throw Error(dados.erro||'FOTO_NAO_GRAVADA');
+   campo.value='';
+   await atualizarFotoPerfilReal();
+   status.textContent='Foto atualizada no Escritório.';
+  }catch(e){status.textContent='Não foi possível salvar a foto: '+e.message;}
+  finally{botao.disabled=false;}
+ }
  function sincronizarFotoRodapeReal(){
   const topo=$('loop03ImagemFotoTopo'),rodape=$('loop03ImagemFotoRodape');
   // O serviço real ainda não possui custódia de fotos. Não depender
@@ -252,6 +319,7 @@
   document.body.classList.add('loop03-logado');
   fecharDadosRodapeReal();
   sincronizarFotoRodapeReal();
+  void atualizarFotoPerfilReal();
   nickResumoReal=s.nick;
   $('loop03NickIntegrado').textContent='@'+nickVisivel(s.nick);
   posicoesResumoReal=[];posicaoSelecionada='';
@@ -1458,8 +1526,11 @@
   });
  }
  const botaoFotoReal=$('loop03AlterarFotoTopo');
- if(botaoFotoReal)botaoFotoReal.addEventListener('click',()=>{
-  dizer('A foto de perfil ainda precisa ser ligada ao armazenamento real. Nenhuma imagem foi alterada.');
+ if(botaoFotoReal)botaoFotoReal.addEventListener('click',()=>
+  $('arquivoFotoPerfil').click());
+ $('formFotoPerfil').addEventListener('submit',ev=>void salvarFotoPerfilReal(ev));
+ $('arquivoFotoPerfil').addEventListener('change',ev=>{
+  if(ev.target.files?.length)void salvarFotoPerfilReal({preventDefault(){}});
  });
 
  const fotoTopoReal=$('loop03ImagemFotoTopo');
@@ -1471,7 +1542,8 @@
   try{
    await terminarModoOperador();
    await requisitar('/sair',{method:'POST',body:{},csrfObrigatorio:true});
-   csrf=null;mostrarLogin('login');dizer('Sessão encerrada.');
+   csrf=null;limparFotoPerfilReal();
+   mostrarLogin('login');dizer('Sessão encerrada.');
   }catch(e){dizer(erro(e));}
  });
  $('solicitarCodigoEmail').addEventListener('click',async()=>{
