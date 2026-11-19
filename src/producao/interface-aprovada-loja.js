@@ -212,6 +212,7 @@
   }
   $('akitemmResultadoProdutos').textContent=filtrada?
    (itens.length?itens.length+' resultado(s) para os filtros selecionados.':
+    termo?'Nenhum produto encontrado para esta busca.':
     filtroOfertas?'Nenhuma oferta publicada neste filtro.':
     'Nenhum produto publicado neste filtro.'):
    itens.length+' produto(s) publicado(s); cinco abas com quarenta espaços cada.';
