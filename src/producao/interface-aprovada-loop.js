@@ -161,7 +161,8 @@ function montarInterfaceAprovada(app,{protegerLoja}={}){
   const caminho=path.join(__dirname,arquivo);
   app.get(rota,(_req,res)=>
    res.set('Cache-Control','private, no-store')
-    .type(rota.endsWith('.js')?'js':'css').sendFile(caminho));
+    .type(rota.endsWith('.js')?'js':'css')
+    .sendFile(caminho,{cacheControl:false}));
  }
  // Não abrir vitrine fictícia em produção por meio do mesmo nick.
  app.get('/loja',protegerLoja,(_req,res)=>
