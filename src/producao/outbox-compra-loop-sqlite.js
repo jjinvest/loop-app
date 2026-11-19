@@ -75,6 +75,79 @@ class OutboxCompraLoopSQLite {
   ).run(pedidoId);
   return {cancelado:true};
  }
+ // Integridade de ponta a ponta: mesma compra, mesmo titular e PSP.
+ // Somente leitura. Não processa o evento, não ativa fila ou saldo.
+ verificar(){
+  const temEventos=!!this.db.prepare([
+   "SELECT 1 FROM sqlite_master WHERE type='table'",
+   "AND name='loop_real_eventos_comerciais'"
+  ].join(' ')).get();
+  const complemento=temEventos?[
+   'LEFT JOIN loop_real_eventos_comerciais e ON e.pedido_id=o.pedido_id',
+   'AND e.pagamento_id=o.pagamento_id'
+  ].join(' '):'';
+  const consulta=[
+   'SELECT o.pedido_id,o.titular_id,o.pagamento_id,',
+   'o.valor_total_centavos,o.estado,o.processado_em,',
+   'p.pedido_id AS pedido_encontrado,',
+   'p.titular_id AS titular_pedido,',
+   'p.pagamento_id AS pagamento_pedido,',
+   'p.valor_total_centavos AS total_pedido,',
+   'p.status AS status_pedido',
+   temEventos?',e.pedido_id AS evento_encontrado,':'',
+   temEventos?'e.titular_id AS titular_evento,':'',
+   temEventos?'e.estado AS estado_evento':'',
+   'FROM loop_real_outbox_compra_confirmada o',
+   'LEFT JOIN loja_real_pedidos p ON p.pedido_id=o.pedido_id',
+   complemento
+  ].filter(Boolean).join(' ');
+  const linhas=this.db.prepare(consulta).all();
+  let pendentes=0,processados=0,cancelados=0,
+      emRevisao=0,estornosProcessadosParaRevisar=0;
+  for(const r of linhas){
+   if(!r.pedido_encontrado||r.titular_id!==r.titular_pedido||
+      r.pagamento_id!==r.pagamento_pedido||
+      r.valor_total_centavos!==r.total_pedido)
+    falha('OUTBOX_COMPRA_PEDIDO_DIVERGENTE');
+   if(temEventos&&(!r.evento_encontrado||
+      r.titular_id!==r.titular_evento||
+      (r.status_pedido==='CANCELADO')!==(r.estado_evento==='CANCELADO')))
+    falha('OUTBOX_COMPRA_EVENTO_DIVERGENTE');
+   if(r.estado==='PENDENTE'){
+    if(r.status_pedido!=='APROVADO_PARA_EXPEDICAO')
+     falha('OUTBOX_COMPRA_PENDENTE_SEM_PEDIDO');
+    pendentes++;
+   }else if(r.estado==='PROCESSADO'){
+    processados++;
+    // O processamento antigo jamais pode ser apagado automaticamente:
+    // estorno exige revisão individual antes de qualquer compensação.
+    if(r.status_pedido==='CANCELADO')estornosProcessadosParaRevisar++;
+    else if(r.status_pedido!=='APROVADO_PARA_EXPEDICAO')
+     falha('OUTBOX_COMPRA_PROCESSAMENTO_INVALIDO');
+   }else if(r.estado==='CANCELADO'){
+    if(r.status_pedido!=='CANCELADO')
+     falha('OUTBOX_COMPRA_CANCELAMENTO_DIVERGENTE');
+    cancelados++;
+   }else if(r.estado==='REVISAO'){
+    if(!['APROVADO_PARA_EXPEDICAO','CANCELADO']
+      .includes(r.status_pedido))
+     falha('OUTBOX_COMPRA_REVISAO_DIVERGENTE');
+    emRevisao++;
+   }else falha('OUTBOX_COMPRA_ESTADO_INVALIDO');
+  }
+  // Contabiliza o histórico anterior à instalação da outbox, sem
+  // reaplicar pagamentos nem fabricar confirmações retroativas.
+  const semOutbox=this.db.prepare([
+   'SELECT COUNT(*) AS n FROM loja_real_pedidos p',
+   "WHERE p.status='APROVADO_PARA_EXPEDICAO'",
+   'AND NOT EXISTS(SELECT 1 FROM loop_real_outbox_compra_confirmada o',
+   'WHERE o.pedido_id=p.pedido_id)'
+  ].join(' ')).get().n;
+  return {integridade:'OK',registros:linhas.length,pendentes,
+   processados,cancelados,emRevisao,estornosProcessadosParaRevisar,
+   pedidosAprovadosAnterioresSemOutbox:semOutbox,
+   posicoesReaisCriadas:0,financeiroReal:false};
+ }
  listarPendentes({limite=100}={}){
   if(!Number.isInteger(limite)||limite<1||limite>500)
    falha('OUTBOX_COMPRA_LIMITE_INVALIDO');
