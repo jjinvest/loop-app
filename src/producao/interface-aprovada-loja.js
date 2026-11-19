@@ -35,7 +35,7 @@
  // enquanto não houver backend comercial com fornecedor e PSP homologados.
  for(const seletor of [
   '[data-akitemm-cor]','[data-akitemm-categoria]',
-  '#akitemmFiltroOfertas','#akitemmVerTodos','#akitemmCarregarMais',
+  '#akitemmCarregarMais',
   '#akitemmLimparCarrinho','#registrarPedidoLoja',
   '#akitemmEscolhaLoop input',
   '#copiarDivulgarLojaLoop','#akitemmFormEntrega input',
@@ -49,7 +49,7 @@
  }
  // Catálogo publicado pela administração, nunca produtos ou preços de demo.
  // Ativar somente os filtros de LEITURA, sem fazer carrinho/compra.
- let produtosPublicados=[],categoria='',cor='',termo='';
+ let produtosPublicados=[],categoria='',cor='',termo='',filtroOfertas=false;
  // Cinco abas, quatro fileiras de dez por aba; inicialmente duas
  // fileiras e o restante na expansão, sem recriar CSS ou molduras.
  let abaVitrine=0;
@@ -60,7 +60,9 @@
   const normal=x=>String(x||'').normalize('NFD')
    .replace(/[\u0300-\u036f]/g,'').toLocaleLowerCase('pt-BR');
   const itens=produtosPublicados.filter(p=>
-   (!categoria||(categoria==='fisicos'&&p.tipo==='FISICO')||
+   (!filtroOfertas||p.ofertaAtiva===true)&&
+   (!categoria||(categoria==='cursos'&&['CURSO','PDF','DIGITAL'].includes(p.tipo))||
+    (categoria==='fisicos'&&p.tipo==='FISICO')||
     (categoria==='novidades'&&p.novidade===true)||
     (categoria==='mais-vendidos'&&p.unidadesConfirmadas>0))&&
    (!cor||p.cor===cor)&&
@@ -75,7 +77,7 @@
   lista.replaceChildren();
   lista.classList.add('ak-vitrine-horizontal');
   $('akitemmVisualizacaoProduto').hidden=true;
-  const filtrada=!!categoria||!!cor||!!termo;
+  const filtrada=!!categoria||!!cor||!!termo||filtroOfertas;
   const totalAbas=filtrada?Math.max(1,Math.ceil(itens.length/40)):5;
   if(abaVitrine>=totalAbas)abaVitrine=0;
   let nav=$('akitemmAbasProdutos');
@@ -201,10 +203,12 @@
   }
   $('akitemmResultadoProdutos').textContent=filtrada?
    (itens.length?itens.length+' resultado(s) para os filtros selecionados.':
-    'Nenhum produto encontrado para esta busca ou filtro.'):
+    filtroOfertas?'Nenhuma oferta publicada neste filtro.':
+    'Nenhum produto publicado neste filtro.'):
    itens.length+' produto(s) publicado(s); cinco abas com quarenta espaços cada.';
   $('akitemmFiltroTodos').setAttribute('aria-pressed',
-   String(!categoria&&!cor&&!termo));
+   String(!categoria&&!cor&&!termo&&!filtroOfertas));
+  $('akitemmFiltroOfertas').setAttribute('aria-pressed',String(filtroOfertas));
   for(const b of document.querySelectorAll('[data-akitemm-cor]'))
    b.setAttribute('aria-pressed',String(b.dataset.akitemmCor===cor&&!!cor));
   for(const b of document.querySelectorAll('[data-akitemm-categoria]'))
@@ -217,11 +221,14 @@
   filtrar();
  });
  const filtroTodos=()=>{
-  categoria='';cor='';termo='';abaVitrine=0;
+  categoria='';cor='';termo='';filtroOfertas=false;abaVitrine=0;
   $('akitemmBusca').value='';
   filtrar();
  };
  $('akitemmFiltroTodos').addEventListener('click',filtroTodos);
+ $('akitemmFiltroOfertas').addEventListener('click',()=>{
+  filtroOfertas=!filtroOfertas;abaVitrine=0;filtrar();
+ });
  $('akitemmVerTodos').addEventListener('click',filtroTodos);
  $('akitemmVoltarProdutos').addEventListener('click',()=>{
   $('akitemmVisualizacaoProduto').hidden=true;
@@ -267,13 +274,15 @@
     throw Error('CATALOGO_FORA_DO_CONTRATO');
    produtosPublicados=dados.produtos;
    const ativo=produtosPublicados.length>0;
+   // Filtros e categorias sao navegação de leitura: funcionam mesmo com
+   // catálogo vazio. Apenas checkout e compra continuam indisponíveis.
    for(const node of [
-    $('akitemmBusca'),$('akitemmVerTodos'),
+    $('akitemmBusca'),$('akitemmVerTodos'),$('akitemmFiltroOfertas'),
     ...document.querySelectorAll('[data-akitemm-cor]'),
     ...document.querySelectorAll('[data-akitemm-categoria]')
    ]){
-    node.disabled=!ativo;
-    node.setAttribute('aria-disabled',String(!ativo));
+    node.disabled=false;
+    node.removeAttribute('aria-disabled');
    }
    $('referenciaLojaLoop').textContent=ativo?
     'Produtos publicados pela AKITEMM. Preços, estoque e compras dependem de homologação dos fornecedores.':
