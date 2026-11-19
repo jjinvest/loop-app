@@ -211,9 +211,11 @@
   $('akitemmFiltroOfertas').setAttribute('aria-pressed',String(filtroOfertas));
   for(const b of document.querySelectorAll('[data-akitemm-cor]'))
    b.setAttribute('aria-pressed',String(b.dataset.akitemmCor===cor&&!!cor));
-  for(const b of document.querySelectorAll('[data-akitemm-categoria]'))
-   b.setAttribute('aria-pressed',
-    String(b.dataset.akitemmCategoria===categoria&&!!categoria));
+  for(const b of document.querySelectorAll('[data-akitemm-categoria]')){
+   const selecionada=b.dataset.akitemmCategoria===categoria&&!!categoria;
+   b.setAttribute('aria-pressed',String(selecionada));
+   b.classList.toggle('ativo',selecionada);
+  }
  };
  $('akitemmCarregarMais').addEventListener('click',()=>{
   if(expandidas.has(abaVitrine))expandidas.delete(abaVitrine);
