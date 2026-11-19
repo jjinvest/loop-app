@@ -391,12 +391,14 @@
  const botaoPedidos=$('atualizarPedidosLoja');
  if(botaoPedidos)botaoPedidos.addEventListener('click',()=>{void atualizarPedidos();});
  try{
+  // A sessao administrativa autentica o modo da loja mesmo quando o
+  // navegador ainda tem um cookie antigo de cliente: nunca misturar perfis.
+  await atualizarAtalhoOperadorReal();
   const res=await fetch('/api/contas/me',{
    credentials:'same-origin',cache:'no-store'
   });
-  const semCliente=res.status===401;
+  const semCliente=res.status===401||operadorAtivo;
   if(semCliente){
-   await atualizarAtalhoOperadorReal();
    visitante=!operadorAtivo;
    if($('akitemmNomeTitular'))
     $('akitemmNomeTitular').textContent=visitante?'Visitante':'OPERADOR';
@@ -418,8 +420,9 @@
    if($('akitemmNomeTitular'))$('akitemmNomeTitular').textContent=nickVisivel(me.nick);
    informar('AKITEMM: loja conectada à sua conta LOOP. Vendas reais ainda não liberadas.');
   }
-  // Apenas estado do servidor, sem habilitar controles de compra desativados.
-  try{
+  // Apenas cliente autenticado pode consultar dados de suas posicoes.
+  // Operador nunca se apropria do cookie de um titular anterior.
+  if(!operadorAtivo)try{
    const respostaCapacidade=await fetch('/api/loja/capacidade',{
     credentials:'same-origin',cache:'no-store'
    });
@@ -440,7 +443,7 @@
   }catch{
    // Indisponibilidade da leitura nao libera compra nem muda as regras.
   }
-  if(!semCliente)await atualizarPedidos();
+  if(!semCliente&&!operadorAtivo)await atualizarPedidos();
   else $('pedidosLojaLoop')?.replaceChildren();
   await atualizarCatalogo();
  }catch{
