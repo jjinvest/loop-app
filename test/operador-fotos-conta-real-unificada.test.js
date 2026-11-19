@@ -125,26 +125,26 @@ test('mesmo operador real sobe foto versionada; cliente so ve publicada, sem alt
   });
  assert.equal((await get('/api/admin/catalogo-midia/slots')).status,401);
  assert.equal((await atribuirQuadradinho({
-  posicao:361,produtoId:'bone-cinza',token:'errado'
+  posicao:161,produtoId:'bone-cinza',token:'errado'
  })).status,403);
  const vinculo=await atribuirQuadradinho({
-  posicao:361,produtoId:'bone-cinza'
+  posicao:161,produtoId:'bone-cinza'
  });
  assert.equal(vinculo.status,201);
- assert.equal((await vinculo.json()).posicao,361);
+ assert.equal((await vinculo.json()).posicao,161);
  const mapa=await get('/api/admin/catalogo-midia/slots',{Cookie:cookie});
  assert.equal(mapa.status,200);
  const slots=(await mapa.json()).slots;
  assert.equal(slots.length,1);
- assert.equal(slots[0].posicao,361);
+ assert.equal(slots[0].posicao,161);
  assert.equal(slots[0].produtoId,'bone-cinza');
  assert.equal(auditoria.listar({limite:50}).some(e=>
-  e.acao==='VITRINE_PRODUTO_VINCULADO'&&e.entidade==='SLOT_361'),true);
+  e.acao==='VITRINE_PRODUTO_VINCULADO'&&e.entidade==='SLOT_161'),true);
  assert.equal((await atribuirQuadradinho({
   posicao:1,produtoId:'bone-cinza'
  })).status,409,'um produto nao pode ocupar dois quadradinhos');
  assert.equal((await atribuirQuadradinho({
-  posicao:361,produtoId:'tenis-preto-42'
+  posicao:161,produtoId:'tenis-preto-42'
  })).status,409,'nao sobrescrever quadradinho ocupado');
  const endpoint=adminFoto+'/fotos/1';
  const post=(extra={},body=FOTO)=>fetch(base+endpoint,{
@@ -240,8 +240,8 @@ test('mesmo operador real sobe foto versionada; cliente so ve publicada, sem alt
   'produto antigo com underscore continua editavel sem renomear ID');
  assert.equal((await legadoDetalhe.json()).nome,'Código Comercial Antigo');
  assert.equal((await atribuirQuadradinho({
-  posicao:400,produtoId:'SKU_ANTIGO'
- })).status,201,'quadradinho 400 aceita ID original da conta comercial');
+  posicao:200,produtoId:'SKU_ANTIGO'
+ })).status,201,'quadradinho 200 aceita ID original da conta comercial');
  const subirLegado=()=>fetch(base+legado+'/fotos/2',{
   method:'POST',headers:{Cookie:cookie,Origin:ORIGEM,
    'X-Loop-Admin-Csrf':csrf,'X-Foto-Versao-Esperada':'0',
@@ -297,10 +297,10 @@ test('mesmo operador real sobe foto versionada; cliente so ve publicada, sem alt
  assert.equal(dados.produtos.find(p=>p.produtoId===produto.id)
   .fotos[0].url,vitrineFoto);
  const bone=dados.produtos.find(p=>p.produtoId==='bone-cinza');
- assert.equal(bone.posicaoVitrine,361);
- // IDs fixados ocupam 361 e 400; o produto sem vínculo usa o primeiro espaço livre.
+ assert.equal(bone.posicaoVitrine,161);
+ // IDs fixados ocupam 161 e 200; o produto sem vínculo usa o primeiro espaço livre.
  assert.equal(dados.produtos.find(p=>p.produtoId===produto.id).posicaoVitrine,1);
- assert.equal(antigo.posicaoVitrine,400);
+ assert.equal(antigo.posicaoVitrine,200);
  assert.equal(new Set(dados.produtos.map(p=>p.posicaoVitrine)).size,3);
  assert.equal(bone.fotos.length,1);
  assert.equal(bone.fotos[0].posicao,10);
