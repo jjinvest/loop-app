@@ -89,13 +89,7 @@ function renderizarInterfaceAprovada(){
   'cadastroTermos','captchaCadastroArea'])
   if(!html.includes('id="'+id+'"'))
    throw Error('DOCUMENTOS_UNIFICADOS_NAO_ENCONTRADOS');
- // Estado real do motor na MESMA tela do Escritório, sem segundo portal.
- html=trocarExato(html,'  <div class="loop03-corpo">',
-  '  <div class="loop03-corpo">\n'+
-  '   <section class="painel" id="loopEstadoIntegrado" hidden>'+
-  '    <h3>Estado do LOOP</h3>'+
-  '    <p id="loopResumoMotor" role="status" aria-live="polite"></p>'+
-  '   </section>');
+ // O motor segue no tabuleiro e nas seis luzes; nao injetar painel na home.
  // Area opcional dentro da aba Financeiro ja aprovada: nao cria portal novo.
  // Fica escondida quando a tesouraria de ensaio nao esta montada.
  html=trocarExato(html,
