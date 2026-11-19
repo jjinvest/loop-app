@@ -50,7 +50,7 @@
  // Catálogo publicado pela administração, nunca produtos ou preços de demo.
  // Ativar somente os filtros de LEITURA, sem fazer carrinho/compra.
  let produtosPublicados=[],categoria='',cor='',termo='';
- // Dez abas, quatro fileiras de dez por aba; inicialmente duas
+ // Cinco abas, quatro fileiras de dez por aba; inicialmente duas
  // fileiras e o restante na expansão, sem recriar CSS ou molduras.
  let abaVitrine=0;
  const expandidas=new Set();
@@ -76,7 +76,7 @@
   lista.classList.add('ak-vitrine-horizontal');
   $('akitemmVisualizacaoProduto').hidden=true;
   const filtrada=!!categoria||!!cor||!!termo;
-  const totalAbas=filtrada?Math.max(1,Math.ceil(itens.length/40)):10;
+  const totalAbas=filtrada?Math.max(1,Math.ceil(itens.length/40)):5;
   if(abaVitrine>=totalAbas)abaVitrine=0;
   let nav=$('akitemmAbasProdutos');
   if(!nav){
@@ -116,7 +116,7 @@
   const inicio=abaVitrine*40,ate=inicio+linhas*10;
   const posicoesFixas=new Map(itens.filter(p=>
    Number.isSafeInteger(p.posicaoVitrine)&&
-   p.posicaoVitrine>=1&&p.posicaoVitrine<=400).map(p=>
+   p.posicaoVitrine>=1&&p.posicaoVitrine<=200).map(p=>
    [p.posicaoVitrine,p]));
   for(let indice=inicio;indice<ate;indice++){
    const p=filtrada?itens[indice]:
@@ -202,7 +202,7 @@
   $('akitemmResultadoProdutos').textContent=filtrada?
    (itens.length?itens.length+' resultado(s) para os filtros selecionados.':
     'Nenhum produto encontrado para esta busca ou filtro.'):
-   itens.length+' produto(s) publicado(s); dez abas com quarenta espaços cada.';
+   itens.length+' produto(s) publicado(s); cinco abas com quarenta espaços cada.';
   $('akitemmFiltroTodos').setAttribute('aria-pressed',
    String(!categoria&&!cor&&!termo));
   for(const b of document.querySelectorAll('[data-akitemm-cor]'))
@@ -253,7 +253,7 @@
    if(dados.origem!=='CATALOGO_ADMINISTRATIVO_PUBLICADO'||
       dados.checkoutReal!==false||dados.estoqueConfirmado!==false||
       dados.precosNaoHomologados!==true||
-      !Array.isArray(dados.produtos)||dados.produtos.length>400||
+      !Array.isArray(dados.produtos)||dados.produtos.length>200||
       dados.produtos.some(p=>
        typeof p.produtoId!=='string'||typeof p.titulo!=='string'||
        typeof p.descricao!=='string'||p.compravel!==false||
