@@ -165,10 +165,23 @@ function montarGatewayAdminComercial(app,{
    return res.redirect(303,'/administrador');
   }catch(e){
    const limite=e.codigo==='LOGIN_ADMIN_TEMPORARIAMENTE_BLOQUEADO';
+   res.set('Cache-Control','no-store');
+   res.set('Content-Security-Policy',
+    "default-src 'none'; style-src 'self'; form-action 'self'; "+
+    "frame-ancestors 'none'; base-uri 'none'");
    return res.status(limite?429:401).type('html').send(
-    '<!doctype html><html lang="pt-BR"><meta charset="utf-8">'+
-    '<title>Acesso não autorizado</title><p>Credencial inválida ou acesso temporariamente bloqueado.</p>'+
-    '<a href="/administrador/entrar">Voltar ao login</a></html>'
+    '<!doctype html><html lang="pt-BR"><head><meta charset="utf-8">'+
+    '<meta name="viewport" content="width=device-width,initial-scale=1">'+
+    '<meta name="robots" content="noindex,nofollow">'+
+    '<title>Acesso não autorizado · AKITEMM</title>'+
+    '<link rel="stylesheet" href="/identidade/assets/cliente.css"></head>'+
+    '<body><header class="cabecalho"><div><span class="marca">AKITEMM</span>'+
+    '<span class="submarca">LOOP 3.0 · Escritório Administrador</span>'+
+    '</div></header><main><h1>Acesso do administrador</h1>'+
+    '<section class="painel"><p role="alert">'+
+    'Credencial inválida ou acesso temporariamente bloqueado.</p>'+
+    '<a href="/administrador/entrar">Voltar ao login</a>'+
+    '</section></main></body></html>'
    );
   }
  });
