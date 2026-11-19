@@ -127,7 +127,8 @@ function montarComercialSemHomologacao({
  if(pedidosInternos.db!==banco||eventosComerciais.db!==banco||
     classificacaoLoop.db!==banco)
   falhar('COMERCIAL_SEGURO_BANCOS_DIVERGENTES');
- const regras=classificacaoLoop.verificar(),eventos=eventosComerciais.verificar();
+ const regras=classificacaoLoop.verificar(),eventos=eventosComerciais.verificar(),
+       outbox=outboxCompraLoop.verificar();
  if(regras.integridade!=='OK'||eventos.integridade!=='OK'||
     outbox.integridade!=='OK'||
     eventos.pedidosAprovadosSemEvento!==0)
