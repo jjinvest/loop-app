@@ -3,6 +3,7 @@
 // saldos de demonstração. Contas reais têm o mesmo nick do Escritório LOOP.
 (async()=>{
  const $=id=>document.getElementById(id);
+ const nickVisivel=nick=>typeof nick==='string'&&/^(?:vilela|operador)$/i.test(nick)?nick.toUpperCase():nick;
  const informar=msg=>{$('estadoLojaLoop').textContent=msg;};
  let operadorAtivo=false;
  // Quando a vitrine real está no domínio principal, o mesmo cookie
@@ -361,14 +362,14 @@
   if(somenteOperador){
    await atualizarAtalhoOperadorReal();
    if(!operadorAtivo){location.replace('/escritorio');return;}
-   if($('akitemmNomeTitular'))$('akitemmNomeTitular').textContent='Operador';
+   if($('akitemmNomeTitular'))$('akitemmNomeTitular').textContent='OPERADOR';
    informar('AKITEMM: catálogo do operador. Pagamentos e pedidos de clientes bloqueados.');
   }else{
    if(!res.ok)throw Error('IDENTIDADE_INDISPONIVEL');
    const me=await res.json();
    if(typeof me.nick!=='string'||me.financeiroReal!==false)
     throw Error('IDENTIDADE_INCOMPATIVEL');
-   if($('akitemmNomeTitular'))$('akitemmNomeTitular').textContent=me.nick;
+   if($('akitemmNomeTitular'))$('akitemmNomeTitular').textContent=nickVisivel(me.nick);
    informar('AKITEMM: loja conectada à sua conta LOOP. Vendas reais ainda não liberadas.');
   }
   // Apenas estado do servidor, sem habilitar controles de compra desativados.
