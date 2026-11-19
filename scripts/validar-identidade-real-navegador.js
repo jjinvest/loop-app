@@ -555,7 +555,9 @@ async function main(){
     JSON.stringify(diagnostico));
    await conferirLayoutReal(pagina,'escritorio-'+visual.nome,{mobile:visual.mobile});
    await pagina.locator('#loop03TotalIntegrado').filter({
-    hasText:new RegExp('^'+diagnostico.quantidadePosicoes+'\\s*\\/\\s*10
+    hasText:String(diagnostico.quantidadePosicoes)+' / 10'
+   }).waitFor();
+   assert.equal(await pagina.locator('#loopEstadoIntegrado').count(),0);
    if(visual.mobile)await pagina.locator('#loop03MenuIntegrado').click();
    await pagina.locator('#abaMeusPedidos').click();
    await pagina.locator('#listaPedidos').filter({hasText:compra.pedidoId}).waitFor();
