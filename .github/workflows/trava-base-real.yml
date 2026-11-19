@@ -1,0 +1,35 @@
+name: LOOP - TRAVA BASE REAL (sem fotos historicas)
+on:
+  push:
+    branches:
+      - feature/unificar-escritorio-real-20261105
+      - seguranca/trava-base-real-20261119
+  pull_request:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  impedir-desvio-da-base-real:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Inventario integral codigo REAL atual
+        run: node scripts/trava-base-real.js
+      - name: Provar reprova de mudancas nao autorizadas
+        run: node --test test/trava-base-real.test.js
+      - name: Contratos funcionais REAL de fila, catraca, operador e UI
+        run: |
+          node --test --test-concurrency=2 \
+            test/contrato-papeis-operador-real.test.js \
+            test/contrato-links-definitivos-real.test.js \
+            test/varredura-visual-publicacao-real.test.js \
+            test/controle-caixa-catraca-loop-sqlite.test.js \
+            test/catraca-autorizacao-independente-da-compra-v6.test.js \
+            test/regras-dez-posicoes-duas-tabuleiro-20261023.test.js \
+            test/empate-dez-posicoes-fila-a-tabuleiro.test.js
