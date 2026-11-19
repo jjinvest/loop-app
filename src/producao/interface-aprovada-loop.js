@@ -156,15 +156,16 @@ function montarInterfaceAprovada(app,{protegerLoja}={}){
  const html=renderizarInterfaceAprovada();
  const htmlLoja=renderizarLojaAprovada();
  app.get(['/escritorio','/minha-conta'],(_req,res)=>
-  res.type('html').send(html));
+  res.set('Cache-Control','private, no-store').type('html').send(html));
  for(const [rota,arquivo] of Object.entries(ARQUIVOS)){
   const caminho=path.join(__dirname,arquivo);
-  app.get(rota,(_req,res)=>res.type(rota.endsWith('.js')?'js':'css')
-   .sendFile(caminho));
+  app.get(rota,(_req,res)=>
+   res.set('Cache-Control','private, no-store')
+    .type(rota.endsWith('.js')?'js':'css').sendFile(caminho));
  }
  // Não abrir vitrine fictícia em produção por meio do mesmo nick.
  app.get('/loja',protegerLoja,(_req,res)=>
-  res.type('html').send(htmlLoja));
+  res.set('Cache-Control','private, no-store').type('html').send(htmlLoja));
 }
 module.exports={renderizarInterfaceAprovada,renderizarLojaAprovada,
  montarInterfaceAprovada};
