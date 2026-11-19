@@ -134,7 +134,21 @@ function criarGatewayPublicoReal(opcoes={}){
   if(req.method==='HEAD'&&rota.path.startsWith('/api/'))
    return responder(405,'Método não permitido');
   const mutacao=MUTACOES.has(req.method);
-  if(mutacao&&req.headers.origin!==origemPublica)
+  // Chrome Android pode omitir Origin (ou enviar "null") em um POST
+  // de formulário navegacional, sob Referrer-Policy: no-referrer.
+  // A exceção exige metadados de navegação impostos pelo navegador e
+  // vale APENAS para o formulário de entrada administrativa; JSON, APIs
+  // e qualquer origem externa continuam estritamente bloqueados.
+  const formularioAdminDoMesmoSite=mutacao&&
+   req.method==='POST'&&url.pathname==='/administrador/entrar'&&
+   (req.headers.origin===undefined||req.headers.origin==='null')&&
+   req.headers['sec-fetch-site']==='same-origin'&&
+   req.headers['sec-fetch-mode']==='navigate'&&
+   req.headers['sec-fetch-dest']==='document'&&
+   /^application\\/x-www-form-urlencoded(?:;|$)/i.test(
+    req.headers['content-type']||'');
+  if(mutacao&&req.headers.origin!==origemPublica&&
+     !formularioAdminDoMesmoSite)
    return responder(403,'Origem não autorizada');
   if(!mutacao&&req.headers.origin&&
      req.headers.origin!==origemPublica)
