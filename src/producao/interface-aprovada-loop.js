@@ -45,12 +45,11 @@ function renderizarInterfaceAprovada(){
  // Preservar integralmente o cabecalho visual aprovado, incluindo a foto
  // de perfil e o sino. Avisos de laboratorio nao substituem componentes.
  // O backend continua impedindo operações ainda sem dependencias externas.
- // A instancia real usa seu servico de identidade proprio, que ainda nao
- // tem foto de perfil: nao exibir upload inerte nessa instancia.
- const inicioFoto=html.indexOf('   <form id="formFotoPerfil"');
- const fimFoto=inicioFoto<0?-1:html.indexOf('   </form>',inicioFoto);
- if(inicioFoto<0||fimFoto<0)throw Error('INTERFACE_FOTO_PERFIL_DESATUALIZADA');
- html=trocarExato(html,html.slice(inicioFoto,fimFoto+'   </form>\n'.length),'');
+ // Foto da conta REAL possui custodia propria e a mesma moldura aprovada.
+ // Manter o formulario e o toque na foto redonda sem recriar a interface.
+ if(!html.includes('id="formFotoPerfil"')||
+    !html.includes('id="arquivoFotoPerfil"'))
+  throw Error('INTERFACE_FOTO_PERFIL_DESATUALIZADA');
  // A tela compartilhada da prévia passou a aceitar nicks de 1-9.
  // Esta instancia REAL tem mecanismo de identidade separado, ainda com
  // contrato legado de 1-12 ASCII. Adaptar somente o HTML emitido aqui;
