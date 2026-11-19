@@ -4,6 +4,7 @@
 // homologadas ficam inativas, sem exibir saldos ou posições fictícias.
 (()=>{
  const $=id=>document.getElementById(id);
+ const nickVisivel=nick=>typeof nick==='string'&&/^(?:vilela|operador)$/i.test(nick)?nick.toUpperCase():nick;
  // A credencial de operador nunca é inferida pelo nick do cliente.
  // O gateway verifica a sessão administrativa isolada antes de revelar +.
  async function atualizarAtalhoOperadorReal(){
@@ -241,11 +242,11 @@
   document.body.classList.add('loop03-logado');
   fecharDadosRodapeReal();
   sincronizarFotoRodapeReal();
-  nickResumoReal=s.nick;
-  $('loop03NickIntegrado').textContent='@'+s.nick;
+  nickResumoReal=nickVisivel(s.nick);
+  $('loop03NickIntegrado').textContent='@'+nickVisivel(s.nick);
   posicoesResumoReal=[];posicaoSelecionada='';
   atualizarSituacaoRodapeReal();
-  $('perfilCliente').textContent='Nick: '+s.nick+
+  $('perfilCliente').textContent='Nick: '+nickVisivel(s.nick)+
    (s.emailVerificado?' · E-mail confirmado':' · Confirme seu e-mail');
   $('painelVerificarEmail').hidden=s.emailVerificado;
   $('painelIdentidadeTeste').hidden=true;
@@ -322,12 +323,12 @@
   }
  }
  function preencherLinks(nick){
-  const endereco=location.origin,identificador=encodeURIComponent(nick);
+  const endereco=location.origin,identificador=encodeURIComponent(nickVisivel(nick));
   origemLinks={loja:endereco+'/loja/'+identificador,
    escritorio:endereco+'/escritorio/'+identificador};
   $('linkLoja').value=origemLinks.loja;
   $('linkEscritorio').value=origemLinks.escritorio;
-  $('linksNick').textContent='Links da conta @'+nick;
+  $('linksNick').textContent='Links da conta @'+nickVisivel(nick);
  }
  function exibirRede(){
   const alvo=$('listaEquipe');
@@ -1188,7 +1189,7 @@
   try{
    const dados=await requisitar('/meus-dados');
    if($('resumoEmail'))$('resumoEmail').textContent=dados.emailVerificado?'Confirmado':'Pendente';
-   $('perfilCliente').textContent='Nome: '+dados.nome+' · Nick: '+dados.nick+
+   $('perfilCliente').textContent='Nome: '+dados.nome+' · Nick: '+nickVisivel(dados.nick)+
     ' · E-mail: '+dados.email+
     (dados.emailVerificado?' (confirmado)':' (pendente)')+
     ' · Termos: '+dados.documentosAceitos.termos.versao+
