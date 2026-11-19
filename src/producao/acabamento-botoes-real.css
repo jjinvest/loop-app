@@ -79,3 +79,27 @@ body:not(.loop03-logado) #acessoAdminLogin{
 body:not(.loop03-logado) #acessoAdminLogin[hidden]{
  display:none!important;
 }
+
+/* Modo OPERADOR: mesma tela LOOP aprovada, sem exibir dados de cliente. */
+body.loop03-modo-operador #loopOperadorAcoes{
+ display:block;padding:16px 18px;margin-bottom:14px;
+ border:1px solid #b28a53;border-radius:15px;
+ background:linear-gradient(135deg,#292431,#161a20);
+ color:#f4e2bd;
+}
+body.loop03-modo-operador #loopOperadorAcoes strong{
+ color:#ffe0a0;display:block;margin-bottom:8px;
+}
+body.loop03-modo-operador #loopOperadorAcoes a{
+ display:inline-flex;align-items:center;justify-content:center;
+ margin:9px 8px 0 0;padding:10px 14px;
+ border:1px solid #bd995e;border-radius:999px;
+ color:#ffedcb;text-decoration:none;
+}
+body:not(.loop03-modo-operador) #loopOperadorAcoes[hidden],
+body.loop03-modo-operador .loop03-indicadores[hidden]{
+ display:none!important;
+}
+body.loop03-modo-operador #loop03AlterarFotoTopo:disabled{
+ cursor:default;opacity:.85;
+}
