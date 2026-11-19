@@ -5,7 +5,21 @@
  const $=id=>document.getElementById(id);
  const nickVisivel=nick=>typeof nick==='string'&&/^(?:vilela|operador)$/i.test(nick)?nick.toUpperCase():nick;
  const informar=msg=>{$('estadoLojaLoop').textContent=msg;};
- let operadorAtivo=false;
+ // A origem do convite nao e um nick de cliente: permanece ate o cadastro.
+ const ref=new URLSearchParams(location.search).get('ref');
+ const indicadorNick=typeof ref==='string'&&/^[A-Za-z]{1,12}$/.test(ref)?
+  ref.toLowerCase():null;
+ const destinoCadastro=()=>'/escritorio?origem=loja&cadastro=1'+
+  (indicadorNick?'&ref='+encodeURIComponent(indicadorNick):'');
+ const solicitarCadastro=()=>location.assign(destinoCadastro());
+ let visitante=false,operadorAtivo=false;
+ // A navegacao na vitrine publica independe de login. Acao privada pede conta.
+ $('akitemmAbrirConta')?.addEventListener('click',()=>{
+  if(visitante)solicitarCadastro();
+ });
+ $('akitemmAtualizarMeusCursos')?.addEventListener('click',()=>{
+  if(visitante)solicitarCadastro();
+ });
  // Quando a vitrine real está no domínio principal, o mesmo cookie
  // de operador do gateway permite exibir o + sem duplicar permissões.
  async function atualizarAtalhoOperadorReal(){
@@ -329,6 +343,7 @@
  // Aproveita a seção "Meus Pedidos" já aprovada. Somente dados reais do
  // titular; sem backend comercial conectado não mostra pedidos fictícios.
  async function atualizarPedidos(){
+  if(visitante){solicitarCadastro();return;}
   const lista=$('pedidosLojaLoop');
   if(!lista)return;
   lista.replaceChildren();
@@ -338,7 +353,7 @@
    const resposta=await fetch('/api/loja/pedidos',{
     credentials:'same-origin',cache:'no-store'
    });
-   if(resposta.status===401){location.replace('/escritorio');return;}
+   if(resposta.status===401){solicitarCadastro();return;}
    if(resposta.status===503){
     const item=document.createElement('li');
     item.textContent='Acompanhamento de pedidos reais ainda não habilitado.';
@@ -379,12 +394,21 @@
   const res=await fetch('/api/contas/me',{
    credentials:'same-origin',cache:'no-store'
   });
-  const somenteOperador=res.status===401;
-  if(somenteOperador){
+  const semCliente=res.status===401;
+  if(semCliente){
    await atualizarAtalhoOperadorReal();
-   if(!operadorAtivo){location.replace('/escritorio');return;}
-   if($('akitemmNomeTitular'))$('akitemmNomeTitular').textContent='OPERADOR';
-   informar('AKITEMM: catálogo do operador. Pagamentos e pedidos de clientes bloqueados.');
+   visitante=!operadorAtivo;
+   if($('akitemmNomeTitular'))
+    $('akitemmNomeTitular').textContent=visitante?'Visitante':'OPERADOR';
+   if(visitante){
+    informar('AKITEMM · vitrine aberta'+
+     (indicadorNick?' · convite de @'+nickVisivel(indicadorNick):'')+
+     '. Para criar sua conta, toque em Minha conta.');
+    const conta=$('akitemmEditarConta');
+    if(conta)conta.href=destinoCadastro();
+    const voltar=document.querySelector('.akitemm-voltar');
+    if(voltar)voltar.href=destinoCadastro();
+   }else informar('AKITEMM: catálogo do operador. Pagamentos e pedidos de clientes bloqueados.');
   }else{
    if(!res.ok)throw Error('IDENTIDADE_INDISPONIVEL');
    const me=await res.json();
@@ -415,11 +439,15 @@
   }catch{
    // Indisponibilidade da leitura nao libera compra nem muda as regras.
   }
-  if(!somenteOperador)await atualizarPedidos();
+  if(!semCliente)await atualizarPedidos();
   else $('pedidosLojaLoop')?.replaceChildren();
   await atualizarCatalogo();
  }catch{
-  informar('Não foi possível verificar a conta. Volte ao Escritório LOOP e entre novamente.');
-  if($('conteudoLojaLoop'))$('conteudoLojaLoop').hidden=true;
+  // A falha de identidade nao fecha a vitrine: dados privados seguem
+  // inacessiveis e so a leitura publica de produtos permanece permitida.
+  visitante=true;
+  informar('AKITEMM · vitrine pública disponível. Entre na sua conta para ações pessoais.');
+  if($('conteudoLojaLoop'))$('conteudoLojaLoop').hidden=false;
+  await atualizarCatalogo();
  }
 })();
