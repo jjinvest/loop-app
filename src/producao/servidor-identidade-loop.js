@@ -229,6 +229,14 @@ function criarAppIdentidadeLoop({contas,origemHttps,
  // Cadastro novo e atualização documental de uma conta existente são
  // operações distintas: fechar o cadastro não deve bloquear o titular.
  // Quando fechado, documentos só saem para uma sessão real autenticada.
+ // Consulta publica SOMENTE de leitura: mostra os 7+7 topicos reais,
+ // mesmo quando o cadastro esta fechado. Nao autoriza aceite ou nova conta.
+ app.get('/api/contas/documentos-leitura',(_req,res)=>
+  res.set('Cache-Control','no-store').json({
+   ...contas.documentos(),somenteLeitura:true,cadastroAtivo:cadastroLiberado(),
+   financeiroReal:false
+  })
+ );
  app.get('/api/contas/documentos',(req,res)=>{
   // Mantém o 503 histórico para visitantes quando o cadastro é fechado.
   // Uma sessão EXISTENTE pode ler e aceitar a versão vigente sem cadastro novo.
