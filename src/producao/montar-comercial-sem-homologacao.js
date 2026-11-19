@@ -8,6 +8,8 @@ const {ClassificacaoComercialLoopSQLite}=
  require('./classificacao-comercial-loop-sqlite');
 const {EventosComerciaisLoopSQLite}=
  require('./eventos-comerciais-loop-sqlite');
+const {OutboxCompraLoopSQLite}=
+ require('./outbox-compra-loop-sqlite');
 
 function falhar(codigo){const e=new Error(codigo);e.codigo=codigo;throw e;}
 function exigirChaveParaHistoricoComercial({banco,chavePedidos=null}={}){
@@ -21,7 +23,8 @@ function exigirChaveParaHistoricoComercial({banco,chavePedidos=null}={}){
  for(const nome of [
   'loja_real_pedidos','loja_real_cotacoes',
   'loja_real_outbox_fornecedor','loop_real_eventos_comerciais',
-  'loop_real_fotos_regras_pedido'
+  'loop_real_fotos_regras_pedido',
+  'loop_real_outbox_compra_confirmada'
  ]){
   if(!banco.prepare(
    "SELECT 1 FROM sqlite_master WHERE type='table' AND name=?"
@@ -113,16 +116,20 @@ function montarComercialSemHomologacao({
  const eventosComerciais=new EventosComerciaisLoopSQLite({
   banco,classificacaoLoop
  });
+ // Registro durável já existente, finalmente ligado ao pedido real.
+ // Sem PSP homologado, permanece vazio e nenhuma posição é criada.
+ const outboxCompraLoop=new OutboxCompraLoopSQLite({banco});
  // A composição de pedidos e eventos usa a MESMA transação SQLite.
  // Não devolver a instância de escrita para nenhuma rota pública.
  const pedidosInternos=new PedidosComerciaisSQLite({
-  ...bloqueio,classificacaoLoop,eventosComerciais
+  ...bloqueio,classificacaoLoop,eventosComerciais,outboxCompraLoop
  });
  if(pedidosInternos.db!==banco||eventosComerciais.db!==banco||
     classificacaoLoop.db!==banco)
   falhar('COMERCIAL_SEGURO_BANCOS_DIVERGENTES');
  const regras=classificacaoLoop.verificar(),eventos=eventosComerciais.verificar();
  if(regras.integridade!=='OK'||eventos.integridade!=='OK'||
+    outbox.integridade!=='OK'||
     eventos.pedidosAprovadosSemEvento!==0)
   falhar('COMERCIAL_SEGURO_AUDITORIA_DIVERGENTE');
  auditoria.verificar();
