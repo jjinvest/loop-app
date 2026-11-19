@@ -85,6 +85,12 @@ function renderizarInterfaceAprovada(){
  // Convite tambem aparece no primeiro contato, antes do formulario de cadastro.
  html=trocarExato(html,'  <form id="formLogin">',
   '  <p id="conviteIndicadorEntrada" class="subtexto" role="status" hidden></p>\n  <form id="formLogin">');
+ // A entrada alternativa aparece apenas quando o nick OPERADOR e digitado;
+ // link leva ao login protegido, nunca ao painel sem credencial.
+ html=trocarExato(html,'  <button type="button" class="alternar-acesso" id="abrirRecuperacao">',
+  '  <a id="acessoAdminLogin" href="/administrador/entrar" class="alternar-acesso" '+
+  'hidden style="display:none">Entrar no Escritório do Administrador</a>\n'+
+  '  <button type="button" class="alternar-acesso" id="abrirRecuperacao">');
  // O acesso administrativo so aparece depois de autenticar a sessao OPERADOR.
  html=trocarExato(html,'</nav>\n    <div class="loop03-identidade">',
   '</nav>\n    <a id="loopAcessoAdminMenu" href="/administrador" hidden '+
