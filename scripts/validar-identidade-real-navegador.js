@@ -423,12 +423,14 @@ async function main(){
    await page.locator('#akitemmFiltroOfertas').click();
    assert.equal(await page.locator('#akitemmFiltroOfertas').getAttribute('aria-pressed'),'true');
    assert.match(await page.locator('#akitemmResultadoProdutos').innerText(),/Nenhuma oferta publicada/);
+   assert.equal(await page.locator('#catalogoLojaLoop .akitemm-slot-vazio').count(),20);
    await page.locator('#akitemmFiltroTodos').click();
    for(const cor of ['CINZA','VERDE','DOURADO','ROXO']){
     const filtro=page.locator('[data-akitemm-cor="'+cor+'"]');
     assert.equal(await filtro.isDisabled(),false);
     await filtro.click();
     assert.equal(await filtro.getAttribute('aria-pressed'),'true');
+    assert.equal(await page.locator('#catalogoLojaLoop .akitemm-slot-vazio').count(),20);
     await page.locator('#akitemmFiltroTodos').click();
    }
    for(const categoria of ['cursos','fisicos','novidades','mais-vendidos']){
@@ -436,6 +438,7 @@ async function main(){
     assert.equal(await filtro.isDisabled(),false);
     await filtro.click();
     assert.equal(await filtro.getAttribute('aria-pressed'),'true');
+    assert.equal(await page.locator('#catalogoLojaLoop .akitemm-slot-vazio').count(),20);
     await page.locator('#akitemmFiltroTodos').click();
    }
    assert.equal(await page.locator('#akitemmAbasProdutos button').count(),5);
