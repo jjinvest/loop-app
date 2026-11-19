@@ -204,7 +204,7 @@ async function main(){
    await cadastro.locator('#conteudoLojaLoop').waitFor({state:'visible'});
    await cadastro.locator('#akitemmAbrirConta').click();
    await cadastro.waitForURL(url=>url.pathname==='/escritorio'&&
-    url.searchParams.get('ref')===nick&&
+    url.searchParams.get('ref')===nick.toLowerCase()&&
     url.searchParams.get('cadastro')==='1');
    await cadastro.locator('#painelCadastro').waitFor({state:'visible'});
    await cadastro.locator('#cadastroIndicadorAviso').filter({
