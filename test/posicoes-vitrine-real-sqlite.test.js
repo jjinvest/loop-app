@@ -5,29 +5,29 @@ const {DatabaseSync}=require('node:sqlite');
 const {PosicoesVitrineRealSQLite,TABELAS_POSICOES_VITRINE}=
  require('../src/producao/posicoes-vitrine-real-sqlite');
 
-test('quadradinho fixo 361 pertence ao produto mesmo apos reinicio e filtro de rascunho',()=>{
+test('quadradinho fixo 161 pertence ao produto mesmo apos reinicio e filtro de rascunho',()=>{
  const db=new DatabaseSync(':memory:');
  try{
   const v=new PosicoesVitrineRealSQLite({banco:db});
   assert.deepEqual(TABELAS_POSICOES_VITRINE,['loja_real_vitrine_posicoes']);
   assert.deepEqual(v.listar(),[]);
-  const a=v.atribuir({posicao:361,produtoId:'tenis-preto',
+  const a=v.atribuir({posicao:161,produtoId:'tenis-preto',
    revisaoEsperada:0,produtoExiste:()=>true});
   assert.equal(a.revisao,1);
-  assert.equal(a.posicao,361);
-  assert.equal(v.consultar({posicao:361}).produtoId,'tenis-preto');
+  assert.equal(a.posicao,161);
+  assert.equal(v.consultar({posicao:161}).produtoId,'tenis-preto');
   const novamente=new PosicoesVitrineRealSQLite({banco:db});
-  assert.equal(novamente.consultar({posicao:361}).produtoId,'tenis-preto');
-  const produtos=Array.from({length:399},(_,i)=>({
+  assert.equal(novamente.consultar({posicao:161}).produtoId,'tenis-preto');
+  const produtos=Array.from({length:199},(_,i)=>({
    produtoId:i===0?'tenis-preto':'produto-'+String(i).padStart(3,'0'),
    titulo:'Produto '+i,compravel:false,precoCentavos:null
   }));
   const projeccao=novamente.projetar(produtos);
-  assert.equal(projeccao.length,399);
-  assert.equal(projeccao[0].posicaoVitrine,361);
+  assert.equal(projeccao.length,199);
+  assert.equal(projeccao[0].posicaoVitrine,161);
   assert.equal(projeccao[1].posicaoVitrine,1);
-  assert.equal(new Set(projeccao.map(x=>x.posicaoVitrine)).size,399);
-  assert.equal(projeccao.some(x=>x.posicaoVitrine===361&&
+  assert.equal(new Set(projeccao.map(x=>x.posicaoVitrine)).size,199);
+  assert.equal(projeccao.some(x=>x.posicaoVitrine===161&&
    x.produtoId!=='tenis-preto'),false);
   assert.equal(db.prepare('PRAGMA integrity_check').get().integrity_check,'ok');
  }finally{db.close();}
@@ -48,7 +48,7 @@ test('nao duplica produto, nao desloca quadrado e nao escreve pedido ou saldo',(
    /VITRINE_REAL_PRODUTO_JA_POSICIONADO/);
   assert.throws(()=>atribuir(1,'produto-01',0),
    /VITRINE_REAL_REVISAO_CONCORRENTE/);
-  assert.throws(()=>atribuir(401,'produto-02',0),
+  assert.throws(()=>atribuir(201,'produto-02',0),
    /VITRINE_REAL_ATRIBUICAO_INVALIDA/);
   assert.throws(()=>v.atribuir({posicao:2,produtoId:'produto-02',
    produtoExiste:()=>false}),/VITRINE_REAL_PRODUTO_NAO_ENCONTRADO/);
