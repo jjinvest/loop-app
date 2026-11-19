@@ -1651,5 +1651,12 @@
   painelConta(s);
   if(entradaPelaLoja&&s.aceiteDocumentosDefinitivosPendente!==true)
    location.assign('/loja');
- }).catch(()=>mostrarLogin('login'));
+ }).catch(()=>{
+  // O visitante veio da vitrine e escolheu cadastrar-se: nao exigir
+  // login antes do primeiro acesso nem perder a referencia do indicador.
+  if(entradaPelaLoja&&parametrosEntrada.get('cadastro')==='1'){
+   mostrarLogin('cadastro');
+   void carregarDocumentos();
+  }else mostrarLogin('login');
+ });
 })();
