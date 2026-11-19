@@ -112,12 +112,15 @@ function validarIdentidade(arquivo){
     'SELECT f.titular_id,f.dados,f.sha256 FROM '+TABELA_FOTO_PERFIL_REAL+
     ' f LEFT JOIN loop_real_contas c ON c.id=f.titular_id'
    ).all();
-   if(fotos.some(f=>!Buffer.isBuffer(f.dados)||!f.dados.length||
+   if(fotos.some(f=>!(f.dados instanceof Uint8Array)||!f.dados.length||
        f.dados.length>3*1024*1024||
        createHash('sha256').update(f.dados).digest('hex')!==f.sha256))
     falha('BACKUP_FOTO_PERFIL_REAL_DIVERGENTE');
-   if(b.prepare('PRAGMA foreign_key_check').all().length)
-    falha('BACKUP_FOTO_PERFIL_REAL_TITULAR_INCONSISTENTE');
+   const semTitular=b.prepare(
+    'SELECT COUNT(*) AS n FROM '+TABELA_FOTO_PERFIL_REAL+
+    ' f LEFT JOIN loop_real_contas c ON c.id=f.titular_id WHERE c.id IS NULL'
+   ).get().n;
+   if(semTitular)falha('BACKUP_FOTO_PERFIL_REAL_TITULAR_INCONSISTENTE');
   }
   const temEnsaio=TABELAS_TESOURARIA_ENSAIO.some(x=>lista.includes(x));
   if(temEnsaio){
