@@ -2480,7 +2480,7 @@
     },
     {
       "path": "test/foto-perfil-real-cadastro-documentos-7x7.test.js",
-      "sha": "ee25525f6886911c0c701a8350d424f230b3046a"
+      "sha": "d66c3d1cf3adc323f7ca9aa6cc5cf82f09307ac9"
     },
     {
       "path": "test/gateway-publico-real-integracao-conta-operador.test.js",
@@ -3373,6 +3373,13 @@
       "antes": "ff0b849f4a1d6e1b60bd2ad1a4eddce665e34a8c",
       "depois": "ea04259a56c2bdc3bb80f23a363113f6fcea6c0a",
       "objetivo": "Foto Android: envio de imagem pesada e exibicao segura; mensagens claras de erro em foto/login/cadastro; manter interface e regras de negocio."
+    },
+    {
+      "data": "2026-11-19",
+      "path": "test/foto-perfil-real-cadastro-documentos-7x7.test.js",
+      "antes": "ee25525f6886911c0c701a8350d424f230b3046a",
+      "depois": "d66c3d1cf3adc323f7ca9aa6cc5cf82f09307ac9",
+      "objetivo": "Corrigir somente delimitador de isolamento da função no teste da foto Android."
     }
   ]
 }
