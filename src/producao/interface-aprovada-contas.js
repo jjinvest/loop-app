@@ -1417,6 +1417,21 @@
  $('abrirRecuperacao').addEventListener('click',()=>mostrarLogin('recuperacao'));
  $('voltarLogin').addEventListener('click',()=>mostrarLogin('login'));
  $('loop03AbrirPerfil').addEventListener('click',()=>void alternarDadosRodapeReal());
+ // A estrutura visual aprovada tem sino e foto. O sino abre o painel
+ // informativo; não simular comunicados nem aceitar arquivo sem backend real.
+ const sinoReal=$('loop03Sino'),painelAvisosReal=$('loop03PainelAvisos');
+ if(sinoReal&&painelAvisosReal){
+  sinoReal.addEventListener('click',()=>{
+   const aberto=painelAvisosReal.hidden;
+   painelAvisosReal.hidden=!aberto;
+   sinoReal.setAttribute('aria-expanded',String(aberto));
+  });
+ }
+ const botaoFotoReal=$('loop03AlterarFotoTopo');
+ if(botaoFotoReal)botaoFotoReal.addEventListener('click',()=>{
+  dizer('A foto de perfil ainda precisa ser ligada ao armazenamento real. Nenhuma imagem foi alterada.');
+ });
+
  const fotoTopoReal=$('loop03ImagemFotoTopo');
  if(fotoTopoReal)new MutationObserver(sincronizarFotoRodapeReal).observe(fotoTopoReal,{
   attributes:true,attributeFilter:['src','hidden']
