@@ -4,6 +4,7 @@ on:
     branches:
       - feature/unificar-escritorio-real-20261105
       - seguranca/trava-base-real-20261119
+      - fix/foto-perfil-real-android-20261119
   pull_request:
   workflow_dispatch:
 permissions:
@@ -19,6 +20,8 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '24'
+      - name: Instalar dependencias sem scripts externos
+        run: npm ci --ignore-scripts --no-fund
       - name: Inventario integral codigo REAL atual
         run: node scripts/trava-base-real.js
       - name: Provar reprova de mudancas nao autorizadas
@@ -31,6 +34,8 @@ jobs:
             test/gateway-publico-real-sem-laboratorio.test.js \
             test/gateway-publico-real-integracao-conta-operador.test.js \
             test/varredura-visual-publicacao-real.test.js \
+            test/foto-perfil-real-cadastro-documentos-7x7.test.js \
+            test/contrato-mensagens-operacionais-real.test.js \
             test/controle-caixa-catraca-loop-sqlite.test.js \
             test/catraca-autorizacao-independente-da-compra-v6.test.js \
             test/regras-dez-posicoes-duas-tabuleiro-20261023.test.js \

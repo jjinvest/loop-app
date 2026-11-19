@@ -40,3 +40,6 @@ Snapshot hash assegura identidade de código, não comprova a aparência desejad
 
 ## Ajuste operacional pontual identificado pelo gate (19/11/2026)
 A sonda privada do gateway ainda pressupunha HTTP 401 para /loja, apesar de o REAL já publicar a vitrine HTTP 200 (sem autenticar pedido ou financeiro). Corrigida SOMENTE a sonda e adicionadas confirmações de que pedidos, estado privado e financeiro continuam HTTP 401 sem sessão. Código real da loja/operador não foi alterado. Esse desvio é capturado por teste de integração do gateway no workflow de proteção. O snapshot foi atualizado somente para o arquivo da sonda, antes/depois documentados no manifesto. A correção só pode ir ao Railway depois da revisão das provas da nova branch.
+
+## Continuidade — mensagens de erro no REAL (19/11/2026)
+Toda acao que falhar deve informar a causa e orientar a proxima tentativa, junto ao controle acionado. A regra integra o contrato permanente em docs/CONTRATO_ERROS_REAL_20261119.md. O ajuste pontual tratou foto de perfil e mensagens de login/cadastro, preservando molduras, catraca, filas e financas. O inventario agora possui 835 entradas e os testes de foto e mensagens passam a integrar a verificacao de seguranca. As demais rotas devem seguir o mesmo contrato quando forem revisadas.

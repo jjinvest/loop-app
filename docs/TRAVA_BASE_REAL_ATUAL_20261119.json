@@ -1384,7 +1384,7 @@
     },
     {
       "path": "src/producao/interface-aprovada-contas.js",
-      "sha": "ff0b849f4a1d6e1b60bd2ad1a4eddce665e34a8c"
+      "sha": "ea04259a56c2bdc3bb80f23a363113f6fcea6c0a"
     },
     {
       "path": "src/producao/interface-aprovada-loja.js",
@@ -2251,6 +2251,10 @@
       "sha": "858bf9494c4adc380f636c693fdca37b595cadf7"
     },
     {
+      "path": "test/contrato-mensagens-operacionais-real.test.js",
+      "sha": "791ba3893b7bf3bff138db99e46bfcbf793a85eb"
+    },
+    {
       "path": "test/contrato-papeis-operador-real.test.js",
       "sha": "c4a94bcaefb930274295e391aa61131ca0355f3d"
     },
@@ -2476,7 +2480,7 @@
     },
     {
       "path": "test/foto-perfil-real-cadastro-documentos-7x7.test.js",
-      "sha": "a663aea698a239078c507128fd105315bd4f1b96"
+      "sha": "ee25525f6886911c0c701a8350d424f230b3046a"
     },
     {
       "path": "test/gateway-publico-real-integracao-conta-operador.test.js",
@@ -3362,6 +3366,13 @@
       "antes": "414db27776995ab00b982bb10f74a6f75bda5c06",
       "depois": "617f85b699c86a3b14074ad0309879d52c1aaad2",
       "objetivo": "Adequar exclusivamente a sonda de startup a vitrine REAL publica (HTTP 200) e confirmar pedidos/estado/financeiro privados (HTTP 401). Sem mudancas no HTML/CSS, motor, catraca, filas, banco, API comercial ou credenciais."
+    },
+    {
+      "data": "2026-11-19",
+      "path": "src/producao/interface-aprovada-contas.js",
+      "antes": "ff0b849f4a1d6e1b60bd2ad1a4eddce665e34a8c",
+      "depois": "ea04259a56c2bdc3bb80f23a363113f6fcea6c0a",
+      "objetivo": "Foto Android: envio de imagem pesada e exibicao segura; mensagens claras de erro em foto/login/cadastro; manter interface e regras de negocio."
     }
   ]
 }

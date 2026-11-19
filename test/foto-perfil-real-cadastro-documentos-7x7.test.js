@@ -131,7 +131,29 @@ test('galeria Android: imagem grande e enquadrada antes do POST, sem mudar moldu
  await assert.rejects(preparar({type:'text/html',size:999}),/imagem com até 24 MB/);
  await assert.rejects(preparar({type:'image/png',size:25*1024*1024}),
   /imagem com até 24 MB/);
- assert.match(codigo,/const url='\\/api\\/contas\\/foto-perfil\\?revisao='/);
- assert.doesNotMatch(codigo,/const url=URL\\.createObjectURL\\(blob\\)/);
+ assert.ok(codigo.includes("const url='/api/contas/foto-perfil?revisao='"));
+ assert.ok(!codigo.includes('const url=URL.createObjectURL(blob)'));
  assert.match(codigo,/credentials:'same-origin',cache:'no-store'/);
+});
+
+test('erros visiveis do REAL indicam causa sem expor detalhes internos',()=>{
+ const codigo=fs.readFileSync(path.join(__dirname,
+  '../src/producao/interface-aprovada-contas.js'),'utf8');
+ const ini=codigo.indexOf('function explicarFalhaFotoReal(e){');
+ const fim=codigo.indexOf('function avisarFalhaFotoReal(mensagem){',ini);
+ assert.ok(ini>0&&fim>ini);
+ const explicar=vm.runInNewContext('('+codigo.slice(ini,fim).trim()+')');
+ assert.match(explicar({message:'FOTO_INVALIDA'}),/foto.*inválida/i);
+ assert.match(explicar({message:'FOTO_GRANDE_DEMAIS'}),/3 MB/);
+ assert.match(explicar({message:'CSRF_INVALIDO'}),/sessão expirou/i);
+ assert.match(explicar({message:'FOTO_REAL_INDISPONIVEL',status:503}),/armazenamento/i);
+ assert.match(explicar({message:'Z',status:415}),/JPEG.*PNG.*WebP/);
+ assert.match(explicar({message:'Z',status:413}),/3 MB/);
+ assert.match(explicar({message:'Z',status:401}),/Sessão não autorizada/);
+ assert.match(explicar({message:'Z',name:'TypeError'}),/conexão/i);
+ assert.ok(!explicar({message:'INTERNAL_STACK_SECRET',status:500}).includes('INTERNAL_STACK_SECRET'));
+ assert.match(codigo,/if\(avisoId\)\{\$\(avisoId\)\.textContent=mensagem;/);
+ assert.match(codigo,/id==='formLogin'\?'erroLogin'/);
+ assert.match(codigo,/id==='formCadastro'\?'erroCadastro'/);
+ assert.match(codigo,/CREDENCIAIS_INVALIDAS:'Nick ou senha incorretos/);
 });

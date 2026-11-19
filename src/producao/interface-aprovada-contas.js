@@ -73,7 +73,7 @@
  let somentePosicoesPeloQuadrado=false,proximaAbaVemDoQuadrado=false;
  let origemLinks=null;
  const codigos={
-  CREDENCIAIS_INVALIDAS:'Confira seu nick e sua senha.',
+  CREDENCIAIS_INVALIDAS:'Nick ou senha incorretos. Confira os dados e tente novamente.',
   SENHA_ATUAL_INCORRETA:'Senha atual incorreta.',
   CONTA_BLOQUEADA:'Muitas tentativas. Aguarde 15 minutos.',
   ACESSO_TEMPORARIAMENTE_LIMITADO:'Muitos acessos. Aguarde um momento.',
@@ -100,8 +100,20 @@
   INDICADOR_NAO_ENCONTRADO:'Este convite não pertence a uma conta cadastrada.',
   AUTOINDICACAO_PROIBIDA:'Não é possível indicar a própria conta.'
  };
- const erro=e=>codigos[e?.message]||
-  'Não foi possível concluir esta operação. Confira os dados e tente novamente.';
+ const erro=e=>{
+  if(Object.prototype.hasOwnProperty.call(codigos,e?.message))
+   return codigos[e.message];
+  if(e?.name==='TypeError')
+   return 'Sem conexão com o servidor. Confira sua internet e tente novamente.';
+  if(e?.status===401)return 'Sua sessão expirou. Entre novamente.';
+  if(e?.status===403)return 'A operação foi recusada por segurança. Entre novamente.';
+  if(e?.status===413)return 'Arquivo grande demais para enviar.';
+  if(e?.status===429)return 'Muitas tentativas. Aguarde e tente novamente.';
+  if(e?.status===503)return 'Serviço temporariamente indisponível. Tente novamente.';
+  if(Number.isSafeInteger(e?.status))
+   return 'Operação não concluída (erro '+e.status+'). Confira os dados e tente novamente.';
+  return 'Não foi possível concluir esta operação. Confira os dados e tente novamente.';
+ };
  const dizer=msg=>{$('mensagem').textContent=msg;};
  async function requisitar(rota,{method='GET',body,csrfObrigatorio=false}={}){
   const res=await fetch(API+rota,{
@@ -178,7 +190,8 @@
  let fotoPerfilUrlReal=null,numeroConsultaFotoReal=0;
  function limparFotoPerfilReal(){
   numeroConsultaFotoReal++;
-  if(fotoPerfilUrlReal){URL.revokeObjectURL(fotoPerfilUrlReal);fotoPerfilUrlReal=null;}
+  if(fotoPerfilUrlReal?.startsWith('blob:'))URL.revokeObjectURL(fotoPerfilUrlReal);
+  fotoPerfilUrlReal=null;
   const topo=$('loop03ImagemFotoTopo'),rodape=$('loop03ImagemFotoRodape');
   for(const img of [topo,rodape]){
    if(img){img.hidden=true;img.removeAttribute('src');}
@@ -254,14 +267,50 @@
    if(imagem?.close)imagem.close();
   }
  }
+ // Mensagens permanentes para upload REAL: sem vazar caminhos internos ou credenciais.
+ function explicarFalhaFotoReal(e){
+  const codigo=e?.message;
+  const motivos={
+   FOTO_INVALIDA:'A foto está inválida. Escolha uma imagem JPEG, PNG ou WebP.',
+   FOTO_REAL_FORMATO_INVALIDO:'Formato não aceito. Selecione JPEG, PNG ou WebP.',
+   FOTO_DIMENSOES_INVALIDAS:'As dimensões da foto são muito grandes. Escolha outra.',
+   FOTO_GRANDE_DEMAIS:'A foto ultrapassou o limite de 3 MB.',
+   FOTO_NAO_GRAVADA:'O servidor não confirmou o salvamento da foto.',
+   FOTO_REAL_INDISPONIVEL:'O armazenamento da foto está indisponível. Tente novamente.',
+   CSRF_INVALIDO:'Sua sessão expirou. Entre novamente para salvar sua foto.'
+  };
+  if(Object.prototype.hasOwnProperty.call(motivos,codigo))return motivos[codigo];
+  if(e?.status===401||e?.status===403)
+   return 'Sessão não autorizada. Saia e entre novamente para enviar a foto.';
+  if(e?.status===413)return 'A foto ultrapassou o limite de 3 MB após o preparo.';
+  if(e?.status===415)return 'O servidor aceita apenas JPEG, PNG ou WebP.';
+  if(e?.status===503)return 'Não foi possível gravar a foto no servidor agora.';
+  if(e?.name==='TypeError')return 'Falha de conexão durante o envio da foto. Verifique sua internet.';
+  if(typeof codigo==='string'&&[
+   'Escolha uma foto válida.',
+   'Escolha uma imagem com até 24 MB.',
+   'Este navegador não consegue preparar a foto. Escolha JPEG, PNG ou WebP de até 3 MB.',
+   'A foto ficou grande demais. Escolha outra imagem.',
+   'O navegador não conseguiu abrir esta foto. Escolha JPEG, PNG ou WebP.'
+  ].includes(codigo))return codigo;
+  return 'Não foi possível salvar a foto'+
+   (Number.isSafeInteger(e?.status)?' (erro '+e.status+')':'')+
+   '. Tente novamente.';
+ }
+ function avisarFalhaFotoReal(mensagem){
+  $('statusFotoPerfil').textContent=mensagem;
+  dizer(mensagem);
+  // A aba Minha Conta costuma estar fechada quando o usuário toca na foto.
+  if($('conteudoConta')?.hidden&&typeof alert==='function')alert(mensagem);
+ }
  async function salvarFotoPerfilReal(ev){
   ev.preventDefault();
   const campo=$('arquivoFotoPerfil'),status=$('statusFotoPerfil');
   const arquivo=campo.files?.[0];
-  if(!arquivo){status.textContent='Escolha uma foto primeiro.';return;}
+  if(!arquivo){avisarFalhaFotoReal('Escolha uma foto primeiro.');return;}
   if(typeof csrf!=='string'||csrf.length<24){
    const aviso='Entre novamente na conta para salvar sua foto.';
-   status.textContent=aviso;dizer(aviso);return;
+   avisarFalhaFotoReal(aviso);return;
   }
   const botao=$('formFotoPerfil').querySelector('button[type="submit"]');
   if(botao.disabled)return;
@@ -275,23 +324,22 @@
     body:preparada.dados
    });
    const dados=await resp.json().catch(()=>({}));
-   if(resp.status!==201||dados.fotoSalva!==true)
-    throw Error(dados.erro||'FOTO_NAO_GRAVADA');
+   if(resp.status!==201||dados.fotoSalva!==true){
+    const falha=new Error(dados.erro||'FOTO_NAO_GRAVADA');
+    falha.status=resp.status;
+    throw falha;
+   }
    campo.value='';
    await atualizarFotoPerfilReal();
    const sucesso='Foto atualizada no Escritório.';
    status.textContent=sucesso;dizer(sucesso);
   }catch(e){
-   const aviso='Não foi possível salvar a foto: '+e.message;
-   status.textContent=aviso;dizer(aviso);
-   // O statusFotoPerfil fica dentro da aba Minha Conta, normalmente fechada.
-   if($('conteudoConta')?.hidden&&typeof alert==='function')alert(aviso);
+   avisarFalhaFotoReal('Não foi possível salvar a foto: '+explicarFalhaFotoReal(e));
   }finally{botao.disabled=false;}
  }
  function sincronizarFotoRodapeReal(){
   const topo=$('loop03ImagemFotoTopo'),rodape=$('loop03ImagemFotoRodape');
-  // O serviço real ainda não possui custódia de fotos. Não depender
-  // de elemento removido do HTML por esse adaptador.
+  // Foto autenticada da conta REAL, reaproveitada dentro das molduras existentes.
   const ok=!!topo&&!topo.hidden&&!!topo.getAttribute('src');
   if(ok)rodape.src=topo.src;else rodape.removeAttribute('src');
   rodape.hidden=!ok;$('loop03AvatarRodapeVazio').hidden=ok;
@@ -1451,10 +1499,17 @@
    ev.preventDefault();
    const botao=ev.currentTarget.querySelector('button[type=submit]');
    if(botao.disabled)return;
+   const avisoId=id==='formLogin'?'erroLogin':
+    id==='formCadastro'?'erroCadastro':null;
+   if(avisoId){$(avisoId).hidden=true;$(avisoId).textContent='';}
    botao.disabled=true;
    try{await run();}
-   catch(e){dizer(erro(e));}
-   finally{
+   catch(e){
+    const mensagem=erro(e);
+    dizer(mensagem);
+    // Explica o problema ao lado do formulário usado, não só fora da tela.
+    if(avisoId){$(avisoId).textContent=mensagem;$(avisoId).hidden=false;}
+   }finally{
     botao.disabled=id==='formCadastro'?!documentos:false;
    }
   });
