@@ -27,6 +27,7 @@
  void atualizarAtalhoOperadorReal();
  addEventListener('pageshow',()=>void atualizarAtalhoOperadorReal());
  addEventListener('focus',()=>void atualizarAtalhoOperadorReal());
+ addEventListener('loop:operador-saiu',()=>void atualizarAtalhoOperadorReal());
  async function terminarModoOperador(){
   const resposta=await fetch('/api/operador/sair',{
    method:'POST',credentials:'same-origin',cache:'no-store'
