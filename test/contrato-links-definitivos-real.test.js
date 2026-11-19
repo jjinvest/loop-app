@@ -28,7 +28,7 @@ test('contrato definitivo: loja abre sem nick; convite vai para a loja e nao par
   enviarEmail:async()=>true
  });
  const app=criarAppIdentidadeLoop({
-  contas,origemHttps:origem,permitirCadastro:true,
+  contas,origemHttps:origem,permitirCadastro:false,
   // Apenas produtos publicados; nenhum pedido, saldo, preco ou pagamento.
   catalogoVitrine:{banco,listarVitrinePreparacao:()=>[]}
  });
