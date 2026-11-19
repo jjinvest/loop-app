@@ -180,6 +180,57 @@ async function main(){
   const pasta=path.join(process.cwd(),'artifacts');
   fs.mkdirSync(pasta,{recursive:true});
   browser=await chromium.launch({headless:true});
+  // Prova de login UNICO real: formulario Nick/Senha -> mesmo LOOP,
+  // AKITEMM e Escritório do Administrador pelo rodape, PC e celular.
+  for(const visual of [
+   {nome:'pc',largura:1440,altura:900,mobile:false},
+   {nome:'celular',largura:390,altura:844,mobile:true}
+  ]){
+   const contextoOperador=await browser.newContext({
+    viewport:{width:visual.largura,height:visual.altura},
+    deviceScaleFactor:1,ignoreHTTPSErrors:true,
+    isMobile:visual.mobile,hasTouch:visual.mobile
+   });
+   const operadorPage=await contextoOperador.newPage();
+   operadorPage.setDefaultTimeout(15000);
+   await operadorPage.goto(base+'/escritorio');
+   await operadorPage.locator('#painelLogin').waitFor({state:'visible'});
+   await operadorPage.locator('#login').fill('OPERADOR');
+   await operadorPage.locator('#senha').fill(
+    'CredencialAdministrativaIsolada2026!Teste');
+   await operadorPage.locator('#formLogin button[type=submit]').click();
+   await operadorPage.locator('#loopOperadorAcoes').waitFor({state:'visible'});
+   assert.equal(new URL(operadorPage.url()).pathname,'/escritorio');
+   assert.equal(await operadorPage.locator('#loop03NickIntegrado').innerText(),
+    'OPERADOR');
+   assert.equal(await operadorPage.locator('#abaConta').isDisabled(),true);
+   await operadorPage.locator('#loopAcessoAdminMenu:not([hidden])')
+    .waitFor({state:'attached'});
+   await operadorPage.goto(base+'/loja');
+   await operadorPage.locator('#akitemmNomeTitular').filter({
+    hasText:'OPERADOR'
+   }).waitFor();
+   await operadorPage.locator('footer .akitemm-acesso-operador:not([hidden])')
+    .click();
+   await operadorPage.waitForURL(url=>url.pathname==='/administrador');
+   await operadorPage.locator('#loopAdminEstado').waitFor({state:'visible'});
+   await operadorPage.goto(base+'/escritorio');
+   await operadorPage.locator('#loopOperadorAcoes').waitFor({state:'visible'});
+   if(visual.mobile)await operadorPage.locator('#loop03MenuIntegrado').click();
+   await operadorPage.locator('#loopAcessoAdminMenu:not([hidden])').click();
+   await operadorPage.waitForURL(url=>url.pathname==='/administrador');
+   await operadorPage.goto(base+'/escritorio');
+   await operadorPage.locator('#loopOperadorAcoes').waitFor({state:'visible'});
+   if(visual.mobile)await operadorPage.locator('#loop03MenuIntegrado').click();
+   await operadorPage.locator('#sair').click();
+   await operadorPage.locator('#painelLogin').waitFor({state:'visible'});
+   const encerrado=await operadorPage.evaluate(async()=>{
+    const resposta=await fetch('/api/operador/estado',{cache:'no-store'});
+    return resposta.json();
+   });
+   assert.deepEqual(encerrado,{operador:false});
+   await contextoOperador.close();
+  }
   for(const item of [
    {nome:'pc',largura:1440,altura:900},
    {nome:'celular',largura:390,altura:844}
