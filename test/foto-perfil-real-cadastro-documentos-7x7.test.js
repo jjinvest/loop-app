@@ -98,7 +98,8 @@ test('galeria Android: imagem grande e enquadrada antes do POST, sem mudar moldu
  const ini=codigo.indexOf('async function prepararFotoPerfilReal(arquivo){');
  const fim=codigo.indexOf('function explicarFalhaFotoReal(e){',ini);
  assert.ok(ini>0&&fim>ini,'preparador do REAL deve existir');
- const funcao=codigo.slice(ini,fim).trim();
+ const funcao=codigo.slice(ini,fim)
+  .split('// Mensagens permanentes para upload REAL:')[0].trim();
  const tamanhoOriginal=5*1024*1024,arquivo={type:'image/jpeg',size:tamanhoOriginal};
  const chamadas=[];
  const canvas={
