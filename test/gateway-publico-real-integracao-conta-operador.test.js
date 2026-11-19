@@ -131,6 +131,49 @@ test('gateway e identidade reais end-to-end: mesmas telas, cookies, CSRF e opera
  assert.equal(produtos.checkoutReal,false);
  assert.equal((await get('/api/operador/estado',{Cookie:cookieCliente})).status,200);
  assert.equal((await get('/api/admin/comercial/sessao',{Cookie:cookieCliente})).status,401);
+ // Envio normal do formulário em Chrome Android pode não enviar Origin
+ // quando o documento tem Referrer-Policy: no-referrer.
+ // Sec-Fetch-Site, Mode e Dest são definidos pelo navegador, não pelo JS.
+ const formulario={
+  method:'POST',redirect:'manual',
+  headers:{'Content-Type':'application/x-www-form-urlencoded',
+   'Sec-Fetch-Site':'same-origin','Sec-Fetch-Mode':'navigate',
+   'Sec-Fetch-Dest':'document'},
+  body:new URLSearchParams({senha:ADMIN}).toString()
+ };
+ const paginaForm=await get('/administrador/entrar');
+ assert.equal(paginaForm.status,200);
+ assert.match(await paginaForm.text(),/Acesso do administrador/);
+ assert.equal((await fetch(base+'/administrador/entrar',{
+  ...formulario,headers:{...formulario.headers,'Sec-Fetch-Site':'cross-site'}
+ })).status,403,'navegação externa nunca usa exceção');
+ assert.equal((await fetch(base+'/administrador/entrar',{
+  ...formulario,headers:{...formulario.headers,
+   Origin:'https://externo.example.invalid'}
+ })).status,403,'origem declarada de terceiro continua vedada');
+ assert.equal((await fetch(base+'/administrador/entrar',{
+  ...formulario,headers:{'Content-Type':'application/x-www-form-urlencoded'}
+ })).status,403,'sem metadados confiáveis não existe exceção');
+ assert.equal((await fetch(base+'/api/operador/entrar',{
+  method:'POST',redirect:'manual',
+  headers:{'Content-Type':'application/json',
+   'Sec-Fetch-Site':'same-origin','Sec-Fetch-Mode':'navigate',
+   'Sec-Fetch-Dest':'document'},
+  body:JSON.stringify({nick:'operador',senha:ADMIN})
+ })).status,403,'endpoint JSON continua exigindo Origin normal');
+ for(const origemFormulario of [null,'null']){
+  const resposta=await fetch(base+'/administrador/entrar',{
+   ...formulario,headers:{
+    ...formulario.headers,
+    ...(origemFormulario===null?{}:{Origin:origemFormulario})
+   }
+  });
+  assert.equal(resposta.status,303,
+   'formulário autenticado tem que entrar em vez de Origin 403');
+  assert.equal(resposta.headers.get('location'),'/administrador');
+  assert.match(resposta.headers.get('set-cookie'),
+   /^akitemm_real_admin_v1=[a-f0-9]{64};/);
+ }
  const op=await post('/api/operador/entrar',{nick:'operador',senha:ADMIN});
  assert.equal(op.status,200);
  const cookieOp=op.headers.get('set-cookie').split(';')[0];
