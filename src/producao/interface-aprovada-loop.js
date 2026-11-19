@@ -12,6 +12,7 @@ const ARQUIVOS=Object.freeze({
  '/identidade/assets/cliente.css':'../laboratorio/checkout-staging-ui.css',
  '/identidade/assets/loop03-aprovado.css':'../laboratorio/loop-03-shell.css',
  '/identidade/assets/cliente-integrado.css':'../candidato/escritorio-cliente-integrado.css',
+ '/identidade/assets/botoes-real.css':'./acabamento-botoes-real.css',
  '/identidade/assets/catraca-visor.js':'../shared/visor-catraca.js',
  '/identidade/assets/tabuleiro-visual.js':'../shared/tabuleiro-visual-loop.js',
  '/identidade/assets/cliente.js':'./interface-aprovada-contas.js',
@@ -37,6 +38,8 @@ function renderizarInterfaceAprovada(){
  ['/staging/assets/cliente.js','/identidade/assets/cliente.js'], ]){
   html=trocarExato(html,antes,depois);
  }
+ html=trocarExato(html,'</head>',
+  '<link rel="stylesheet" href="/identidade/assets/botoes-real.css"></head>');
  // O + da tela aprovada vai à administração protegida original,
  // nunca a um segundo Escritório nem ao serviço de homologação.
  html=trocarExato(html,
