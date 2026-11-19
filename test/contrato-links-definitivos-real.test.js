@@ -23,8 +23,8 @@ test('contrato definitivo: loja abre sem nick; convite vai para a loja e nao par
  const contas=new IdentidadeClienteLoopReal({
   banco,chaveEmail:randomBytes(32),chaveCifra:randomBytes(32),
   chaveCodigo:randomBytes(32),
-  termos:{versao:'TERMOS-CONTRATO-v1',texto},
-  privacidade:{versao:'PRIVACIDADE-CONTRATO-v1',texto},
+  termos:{versao:'LOOP-TERMOS-CONTRATO-v1',texto},
+  privacidade:{versao:'LOOP-PRIVACIDADE-CONTRATO-v1',texto},
   enviarEmail:async()=>true
  });
  const app=criarAppIdentidadeLoop({
