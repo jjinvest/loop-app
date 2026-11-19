@@ -418,6 +418,27 @@ async function main(){
    // As cinco abas e as molduras são a vitrine aprovada,
    // sem produtos fictícios nem checkout.
    assert.equal(await page.locator('#akitemmAbasProdutos button').count(),5);
+   // Controles de leitura respondem mesmo sem produtos publicados.
+   assert.equal(await page.locator('#akitemmFiltroOfertas').isDisabled(),false);
+   await page.locator('#akitemmFiltroOfertas').click();
+   assert.equal(await page.locator('#akitemmFiltroOfertas').getAttribute('aria-pressed'),'true');
+   assert.match(await page.locator('#akitemmResultadoProdutos').innerText(),/Nenhuma oferta publicada/);
+   await page.locator('#akitemmFiltroTodos').click();
+   for(const cor of ['CINZA','VERDE','DOURADO','ROXO']){
+    const filtro=page.locator('[data-akitemm-cor="'+cor+'"]');
+    assert.equal(await filtro.isDisabled(),false);
+    await filtro.click();
+    assert.equal(await filtro.getAttribute('aria-pressed'),'true');
+    await page.locator('#akitemmFiltroTodos').click();
+   }
+   for(const categoria of ['cursos','fisicos','novidades','mais-vendidos']){
+    const filtro=page.locator('[data-akitemm-categoria="'+categoria+'"]');
+    assert.equal(await filtro.isDisabled(),false);
+    await filtro.click();
+    assert.equal(await filtro.getAttribute('aria-pressed'),'true');
+    await page.locator('#akitemmFiltroTodos').click();
+   }
+   assert.equal(await page.locator('#akitemmAbasProdutos button').count(),5);
    assert.equal(await page.locator('#catalogoLojaLoop .ak-faixa-horizontal').count(),2);
    assert.equal(await page.locator('#catalogoLojaLoop .akitemm-slot-vazio').count(),20);
    assert.equal(await page.locator('#catalogoLojaLoop [data-produto-id]').count(),0);
