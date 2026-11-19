@@ -1,0 +1,26 @@
+/* Ajuste isolado da instancia REAL: restaura botoes arredondados aprovados,
+   sem redesenhar molduras, posicoes, tabuleiro ou cartoes comerciais. */
+body.loop03-logado .cliente-integrado .loop03-sidebar nav.abas :is(button,a),
+body.loop03-logado .cliente-integrado .loop03-corpo .barra-conta a,
+body.loop03-logado .cliente-integrado .loop03-corpo button.primario,
+body.loop03-logado .cliente-integrado .loop03-corpo button.alternar-acesso,
+body.loop03-logado .cliente-integrado .loop03-corpo .loop03-sair,
+body.loop03-logado .cliente-integrado .loop03-corpo #finAbrirHistorico,
+body.loop03-logado .cliente-integrado .loop03-corpo #finSolicitarSaque,
+body.loop03-logado .cliente-integrado .loop03-corpo #maisEquipe,
+body.loop03-logado .cliente-integrado .loop03-corpo #equipeVerLinks,
+body.loop03-logado .cliente-integrado .loop03-corpo #copiarLinkLoja,
+body.loop03-logado .cliente-integrado .loop03-corpo #copiarLinkEscritorio,
+body.loop03-logado .cliente-integrado .loop03-corpo #tabuleiroVerPosicoesIntegrado,
+body.loop03-logado .cliente-integrado .loop03-corpo #formFotoPerfil button,
+body:not(.loop03-logado) #painelCadastro button.primario,
+body:not(.loop03-logado) #painelLogin button.primario,
+body:not(.loop03-logado) #painelRecuperacao button.primario{
+ border-radius:999px!important;
+}
+body.loop03-logado .cliente-integrado #loop03AlterarFotoTopo{
+ border-radius:50%!important;
+}
+body.loop03-logado .cliente-integrado #formFotoPerfil input[type=file]{
+ border-radius:14px;
+}
