@@ -412,23 +412,23 @@ async function main(){
    assert.equal(await page.locator('#akitemmNomeTitular').innerText(),
     nick.toLowerCase());
    assert.equal(await page.locator('#registrarPedidoLoja').isDisabled(),true);
-   assert.equal(await page.locator('#akitemmBusca').isDisabled(),true);
+   assert.equal(await page.locator('#akitemmBusca').isDisabled(),false);
    assert.match(await page.locator('#statusPedidoLoja').innerText(),
     /checkout real ainda não foi liberado/i);
-   // As dez abas e as molduras são a mesma vitrine aprovada,
+   // As cinco abas e as molduras são a vitrine aprovada,
    // sem produtos fictícios nem checkout.
-   assert.equal(await page.locator('#akitemmAbasProdutos button').count(),10);
+   assert.equal(await page.locator('#akitemmAbasProdutos button').count(),5);
    assert.equal(await page.locator('#catalogoLojaLoop .ak-faixa-horizontal').count(),2);
    assert.equal(await page.locator('#catalogoLojaLoop .akitemm-slot-vazio').count(),20);
    assert.equal(await page.locator('#catalogoLojaLoop [data-produto-id]').count(),0);
    await page.locator('#akitemmCarregarMais').click();
    assert.equal(await page.locator('#catalogoLojaLoop .ak-faixa-horizontal').count(),4);
    assert.equal(await page.locator('#catalogoLojaLoop .akitemm-slot-vazio').count(),40);
-   await page.locator('#akitemmAbasProdutos button').nth(9).click();
+   await page.locator('#akitemmAbasProdutos button').nth(4).click();
    assert.equal(await page.locator('#catalogoLojaLoop .akitemm-slot-vazio').first()
-    .getAttribute('data-akitemm-slot'),'361');
+    .getAttribute('data-akitemm-slot'),'161');
    assert.equal(await page.locator('#akitemmAbasProdutos button[aria-current="page"]')
-    .innerText(),'10');
+    .innerText(),'5');
    await page.locator('#akitemmAbasProdutos button').first().click();
    await page.locator('#akitemmCarregarMais').click();
    assert.equal(await page.locator('#catalogoLojaLoop .akitemm-slot-vazio').count(),20);
