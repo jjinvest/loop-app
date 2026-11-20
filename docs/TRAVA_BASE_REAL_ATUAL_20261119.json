@@ -424,7 +424,7 @@
     },
     {
       "path": "scripts/validar-operador-primeiro-produto-navegador.js",
-      "sha": "d4e2f6cd50f1b70ff387f4e2bb3aa3677abeb995"
+      "sha": "35faef07b778b54741aec51555ae21b165083125"
     },
     {
       "path": "scripts/validar-saques-ensaio-http.js",
@@ -3578,6 +3578,12 @@
       "antes": "ec30288194e6dd4e3eea53e22e291dcca81e2aff",
       "depois": "560cc4db8d6756ff67ad2ac943d76edb01134880",
       "objetivo": "Proteger por testes a conservacao da marca prateada original e o checkbox e contraste aprovados."
+    },
+    {
+      "path": "scripts/validar-operador-primeiro-produto-navegador.js",
+      "antes": "d4e2f6cd50f1b70ff387f4e2bb3aa3677abeb995",
+      "depois": "35faef07b778b54741aec51555ae21b165083125",
+      "objetivo": "Corrigir exclusivamente um teste legado: vitrine real aprovada possui 5 abas x 40 produtos = 200; nao alterar a vitrine, o catalogo nem o motor."
     }
   ]
 }
