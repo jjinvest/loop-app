@@ -1,7 +1,8 @@
 'use strict';
 // Comandos duraveis do operador para a catraca do MESMO motor SQLite.
 // Sem liberar creditos ou pagamentos; o motor de ensaio e vedado em producao.
-const {calcularIntervaloMeta}=require('../domain/meta-lotes-catraca-loop');
+const {calcularIntervaloMeta,proximaJanelaMetaRelogio}=
+ require('../domain/meta-lotes-catraca-loop');
 const {ControleCaixaCatracaLoopSQLite}=require('./controle-caixa-catraca-loop-sqlite');
 const TABELAS_CATRACA_ADMIN=Object.freeze([
  'loop_real_catraca_admin_meta',
@@ -133,7 +134,14 @@ class OperacaoCatracaAdminSQLite{
    girosDia<meta.centrosDia;
   const permitido=(p.limite_diario===null||girosDia<p.limite_diario)&&
    (p.modo!=='AUTOMATICA'||dentroDaMeta);
+  // O relogio e apenas uma previsao autenticada, independente de novas
+  // vendas, sem autorizar um unico giro ate a prova bancaria real.
+  const proximaLuzPrevistaEmMs=p.modo==='AUTOMATICA'&&
+   dentro&&permitido&&dentroDaMeta?
+    proximaJanelaMetaRelogio({abertura:p.inicio,fechamento:p.fim,
+     quantidade:meta.centrosDia,agoraMs:tempo.ts,horarioLocal:tempo.hora}):null;
   return {modo:p.modo,janelaInicio:p.inicio,janelaFim:p.fim,
+   agoraServidorMs:tempo.ts,proximaLuzPrevistaEmMs,
    metaCentrosDia:meta.centrosDia,metaDataAlvo:meta.dataAlvo,
    metaAplicavelHoje:metaAplicavel,
    luzesPlanejadas:Number(calculo.luzesPlanejadas),
