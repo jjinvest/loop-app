@@ -239,7 +239,7 @@ async function main(){
    await modal.locator('.mensagem-operador').last()
     .filter({hasText:'Programação gravada no motor real'}).waitFor();
    await modal.getByRole('button',{name:'Fechar'}).click();
-   assert.equal(await modal.count(),0);
+   await modal.waitFor({state:'detached'});
    assert.equal(new URL(operadorPage.url()).pathname,'/escritorio');
    await operadorPage.locator('#loopAcessoAdminMenu:not([hidden])')
     .waitFor({state:'attached'});
