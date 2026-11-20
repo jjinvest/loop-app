@@ -1384,7 +1384,7 @@
     },
     {
       "path": "src/producao/interface-aprovada-contas.js",
-      "sha": "ea04259a56c2bdc3bb80f23a363113f6fcea6c0a"
+      "sha": "d7475b27cc16e70314ded5a9ad5b7ed3b01e6b91"
     },
     {
       "path": "src/producao/interface-aprovada-loja.js",
@@ -2256,7 +2256,7 @@
     },
     {
       "path": "test/contrato-papeis-operador-real.test.js",
-      "sha": "c4a94bcaefb930274295e391aa61131ca0355f3d"
+      "sha": "6648473e73d230af5ce636423e80f0a2cb6faef4"
     },
     {
       "path": "test/contrato-visual-escritorio-aprovado.test.js",
@@ -3380,6 +3380,18 @@
       "antes": "ee25525f6886911c0c701a8350d424f230b3046a",
       "depois": "d66c3d1cf3adc323f7ca9aa6cc5cf82f09307ac9",
       "objetivo": "Corrigir somente delimitador de isolamento da função no teste da foto Android."
+    },
+    {
+      "path": "src/producao/interface-aprovada-contas.js",
+      "antes": "ea04259a56c2bdc3bb80f23a363113f6fcea6c0a",
+      "depois": "d7475b27cc16e70314ded5a9ad5b7ed3b01e6b91",
+      "objetivo": "Permitir OPERADOR visualizar o Tabuleiro real com acesso autenticado de administrador, sem copiar sessão do cliente, sem editar visual ou executar giro."
+    },
+    {
+      "path": "test/contrato-papeis-operador-real.test.js",
+      "antes": "c4a94bcaefb930274295e391aa61131ca0355f3d",
+      "depois": "6648473e73d230af5ce636423e80f0a2cb6faef4",
+      "objetivo": "Provar rota de leitura administrativa e impedir regressões de autorização e ações financeiras."
     }
   ]
 }
