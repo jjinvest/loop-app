@@ -159,7 +159,8 @@ async function principal(){
    if(!res.ok)throw Error('MAPA_DO_OPERADOR_INDISPONIVEL');
    return res.json();
   });
-  assert.equal(mapa.total,400);
+  // A vitrine REAL aprovada possui 5 abas x 40 espacos (200 no total).
+  assert.equal(mapa.total,200);
   assert.equal(mapa.slots.length,1);
   assert.equal(mapa.slots[0].posicao,1);
   // Foto enviada pela mesma sessao, pela interface que o usuario toca.
