@@ -2596,7 +2596,7 @@
     },
     {
       "path": "test/interface-aprovada-identidade-real.test.js",
-      "sha": "27f34278518ee627505c7c51b635221e95df5aa7"
+      "sha": "740ede2b6e5bfeb436f38d280a9a90dcd1cd94c0"
     },
     {
       "path": "test/interface-loop-03.test.js",
@@ -3638,6 +3638,12 @@
       "antes": "4653ecd6b53e17bb6c7828dbbb7c8cfa99abd982",
       "depois": "27f34278518ee627505c7c51b635221e95df5aa7",
       "objetivo": "Protecao funcional do input de foto do operador e dos componentes e regras de status da Minha Equipe."
+    },
+    {
+      "path": "test/interface-aprovada-identidade-real.test.js",
+      "antes": "27f34278518ee627505c7c51b635221e95df5aa7",
+      "depois": "740ede2b6e5bfeb436f38d280a9a90dcd1cd94c0",
+      "objetivo": "Atualizar exclusivamente texto de teste da Minha Equipe para exigir vinculo pendente ate comprovacao, mantendo bloqueio de posicoes nao qualificadas."
     }
   ]
 }
