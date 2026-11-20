@@ -232,14 +232,47 @@ async function main(){
    await campo('Modo','select').selectOption('AUTOMATICA');
    await campo('Abertura','input').fill('09:00');
    await campo('Fechamento','input').fill('18:00');
-   await campo('Meta diária de centros','input').fill('1');
-   assert.match(await modal.locator('.mensagem-operador').first().innerText(),
-    /90 min por luz|90 min.*por luz|90 min/i);
+   await campo('Meta diária de centros','input').fill('5');
+   const ritmo=modal.locator('.loop-operador-catraca-resumo');
+   await ritmo.getByText('5 centros × 6 = 30 luzes').waitFor();
+   assert.match(await ritmo.innerText(),/Cada luz: 18 min/);
+   assert.match(await ritmo.innerText(),/Cada centro: 108 min/);
+   assert.match(await ritmo.innerText(),/Turno: 09:00–18:00 \(540 min\)/);
+   const posicoes=await operadorPage.evaluate(()=>{
+    const modal=document.querySelector('#loopOperadorCatracaDialog');
+    const resumo=modal.querySelector('.loop-operador-catraca-resumo');
+    const salvar=[...modal.querySelectorAll('button')]
+     .find(b=>b.textContent==='Salvar programação');
+    const topo=resumo.getBoundingClientRect();
+    const rodape=salvar.getBoundingClientRect();
+    const janela=modal.getBoundingClientRect();
+    const campos=modal.querySelector('form');
+    const scroll=campos.getBoundingClientRect();
+    return {topo:topo.top,rodape:rodape.bottom,
+     modalTopo:janela.top,modalFim:janela.bottom,
+     viewport:innerHeight,campos:scroll.height,
+     scrollavel:campos.scrollHeight>campos.clientHeight};
+   });
+   assert.ok(posicoes.topo>=posicoes.modalTopo-1&&
+    posicoes.rodape<=posicoes.modalFim+1&&
+    posicoes.rodape<=posicoes.viewport+1,
+    'Resumo e botao Salvar precisam permanecer visiveis sem rolar a pagina');
+   if(visual.mobile)assert.equal(posicoes.scrollavel,true,
+    'Somente campos internos devem ter rolagem vertical no celular');
    await modal.getByRole('button',{name:'Salvar programação'}).click();
-   await modal.locator('.mensagem-operador').last()
-    .filter({hasText:'Programação gravada no motor real'}).waitFor();
+   await modal.locator('.loop-operador-catraca-rodape .mensagem-operador')
+    .filter({hasText:'Programação salva e confirmada'}).waitFor();
    await modal.getByRole('button',{name:'Fechar'}).click();
    await modal.waitFor({state:'detached'});
+   await operadorPage.locator('#atualizarTabuleiroIntegrado').click();
+   const reaberto=operadorPage.locator('#loopOperadorCatracaDialog');
+   await reaberto.waitFor({state:'visible'});
+   assert.equal(await reaberto.locator('label')
+    .filter({hasText:'Meta diária de centros'}).locator('input').inputValue(),'5');
+   assert.match(await reaberto.locator('.loop-operador-catraca-resumo').innerText(),
+    /Cada luz: 18 min/);
+   await reaberto.getByRole('button',{name:'Fechar'}).click();
+   await reaberto.waitFor({state:'detached'});
    assert.equal(new URL(operadorPage.url()).pathname,'/escritorio');
    await operadorPage.locator('#loopAcessoAdminMenu:not([hidden])')
     .waitFor({state:'attached'});

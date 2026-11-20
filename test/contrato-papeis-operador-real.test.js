@@ -66,6 +66,16 @@ test('OPERADOR configura relogio pelo controle original, sem rota paralela',()=>
  assert.match(js,/abrirControleRelogioOperador\(\)/);
  assert.match(js,/modal\.showModal\(\)/);
  assert.match(js,/modal\.id='loopOperadorCatracaDialog'/);
+ assert.match(js,/Cada luz: /);
+ assert.match(js,/Cada centro: /);
+ assert.match(js,/Próxima luz prevista:/);
+ assert.match(js,/Programação salva e confirmada/);
+ assert.match(js,/rodape\.prepend\(salvar\)/);
+ const css=codigo('src/producao/acabamento-botoes-real.css');
+ assert.match(css,/#loopOperadorCatracaDialog\[open\]/);
+ assert.match(css,/grid-template-rows:auto auto auto minmax\(0,1fr\) auto/);
+ assert.match(css,/\.loop-operador-catraca-rodape button/);
+ assert.match(css,/overflow-y:auto/);
  assert.match(js,/metaCentrosDia:Number\(meta\.value\)/);
  assert.match(js,/fetch\('\/api\/admin\/loop\/controle',[\s\S]*?method:'POST'/);
  assert.match(js,/agoraServidorMs:controle\.agoraServidorMs/);

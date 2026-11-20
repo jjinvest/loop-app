@@ -412,7 +412,7 @@
     },
     {
       "path": "scripts/validar-identidade-real-navegador.js",
-      "sha": "dcd2a63823776cf498c31bb43e26281096d935c4"
+      "sha": "64cce63156ae3f296057dc2a252c65e99ee763ba"
     },
     {
       "path": "scripts/validar-jornada-loja-cores-browser.js",
@@ -1252,7 +1252,7 @@
     },
     {
       "path": "src/producao/acabamento-botoes-real.css",
-      "sha": "9b5d18c03f1fd1b31f6937a73f4a801f9093071a"
+      "sha": "baea9126eb51be10a06bc8ad1038e526ae8d1c8c"
     },
     {
       "path": "src/producao/aceite-posicao-azul-ensaio-sqlite.js",
@@ -1384,7 +1384,7 @@
     },
     {
       "path": "src/producao/interface-aprovada-contas.js",
-      "sha": "0be1dd0c910db1a478520b19229882a1e48018aa"
+      "sha": "a452ed15040462da31c7f7dc182948e3e5175b02"
     },
     {
       "path": "src/producao/interface-aprovada-loja.js",
@@ -2256,7 +2256,7 @@
     },
     {
       "path": "test/contrato-papeis-operador-real.test.js",
-      "sha": "7c5032b53070717db6c2338d6ccc4367babc507a"
+      "sha": "4b7af6d8f789d3d3610973aeb1d5b075e05ea133"
     },
     {
       "path": "test/contrato-visual-escritorio-aprovado.test.js",
@@ -3584,6 +3584,30 @@
       "antes": "d4e2f6cd50f1b70ff387f4e2bb3aa3677abeb995",
       "depois": "35faef07b778b54741aec51555ae21b165083125",
       "objetivo": "Corrigir exclusivamente um teste legado: vitrine real aprovada possui 5 abas x 40 produtos = 200; nao alterar a vitrine, o catalogo nem o motor."
+    },
+    {
+      "path": "src/producao/interface-aprovada-contas.js",
+      "antes": "0be1dd0c910db1a478520b19229882a1e48018aa",
+      "depois": "a452ed15040462da31c7f7dc182948e3e5175b02",
+      "objetivo": "Painel do relógio original: resumo 5 centros/30 luzes/18 min por luz/108 min por centro visível, próxima luz prevista apenas da fonte real, salvar e reconferir gravação persistida, sem autorizar giros."
+    },
+    {
+      "path": "src/producao/acabamento-botoes-real.css",
+      "antes": "9b5d18c03f1fd1b31f6937a73f4a801f9093071a",
+      "depois": "baea9126eb51be10a06bc8ad1038e526ae8d1c8c",
+      "objetivo": "Sem alterar qualquer visual aprovado, resumo e salvar do relógio acessíveis no celular com rolagem dos campos limitada ao modal."
+    },
+    {
+      "path": "scripts/validar-identidade-real-navegador.js",
+      "antes": "dcd2a63823776cf498c31bb43e26281096d935c4",
+      "depois": "64cce63156ae3f296057dc2a252c65e99ee763ba",
+      "objetivo": "Provar em PC e celular cálculo por luz e centro, botão visível e config confirmada e persistida após fechar/reabrir na mesma aba."
+    },
+    {
+      "path": "test/contrato-papeis-operador-real.test.js",
+      "antes": "7c5032b53070717db6c2338d6ccc4367babc507a",
+      "depois": "4b7af6d8f789d3d3610973aeb1d5b075e05ea133",
+      "objetivo": "Proteção estática da contabilidade por luz/centro e das áreas de resumo e salvar do mesmo modal."
     }
   ]
 }
