@@ -51,7 +51,7 @@ test('gateway e identidade reais end-to-end: mesmas telas, cookies, CSRF e opera
   contas,origemHttps:REAL,permitirCadastro:false,
   adminComercial:{sessoes,catalogo,controle},motorLoop,
   catalogoVitrine:{banco,listarVitrinePreparacao:({limite})=>{
-   assert.equal(limite,200);
+   assert.equal(limite,400);
    return [{produtoId:'produto-real',
     titulo:'Mercadoria cadastrada sem preço homologado',
     descricao:'Apenas preparação interna',

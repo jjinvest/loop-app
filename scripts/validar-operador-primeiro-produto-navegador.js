@@ -116,13 +116,13 @@ async function principal(){
   assert.equal(estadoOperador.status,200);
   assert.equal(estadoOperador.corpo?.operador,true,
    'o cookie de operador precisa persistir no mesmo dominio da loja');
-  assert.equal(await page.locator('#akitemmOperadorMais').count(),1,
-   'a loja aprovada deve ter o acesso protegido do operador');
-  await page.locator('#akitemmOperadorMais').waitFor({
+  assert.equal(await page.locator('#akitemmOperadorMais').count(),0,
+   'o botao + superior nao existe na loja real');
+  await page.locator('footer .akitemm-acesso-operador').waitFor({
    state:'visible',timeout:12000
   }).catch(e=>{
-   throw Error('OPERADOR_ICONE_OCULTO_COM_SESSAO_VALIDA: '+
-    JSON.stringify({errosNavegador,iconeContagem:1,operador:true,
+   throw Error('OPERADOR_RODAPE_OCULTO_COM_SESSAO_VALIDA: '+
+    JSON.stringify({errosNavegador,operador:true,
      endereco:page.url()})+' '+e.message);
   });
   const vazio=await page.evaluate(async()=>{
@@ -159,8 +159,8 @@ async function principal(){
    if(!res.ok)throw Error('MAPA_DO_OPERADOR_INDISPONIVEL');
    return res.json();
   });
-  // A vitrine REAL aprovada possui 5 abas x 40 espacos (200 no total).
-  assert.equal(mapa.total,200);
+  // A vitrine REAL possui 10 abas x 40 espacos (400 no total).
+  assert.equal(mapa.total,400);
   assert.equal(mapa.slots.length,1);
   assert.equal(mapa.slots[0].posicao,1);
   // Foto enviada pela mesma sessao, pela interface que o usuario toca.

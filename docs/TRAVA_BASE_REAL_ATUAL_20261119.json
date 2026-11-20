@@ -412,7 +412,7 @@
     },
     {
       "path": "scripts/validar-identidade-real-navegador.js",
-      "sha": "4ae9ec2d186183fcf245d47815195cce6b046fac"
+      "sha": "92ca145469cd751db5a871b4118a9b92379f9d2d"
     },
     {
       "path": "scripts/validar-jornada-loja-cores-browser.js",
@@ -424,7 +424,7 @@
     },
     {
       "path": "scripts/validar-operador-primeiro-produto-navegador.js",
-      "sha": "35faef07b778b54741aec51555ae21b165083125"
+      "sha": "d4c100207ed49074b4c51c22ee366feaacc8d24a"
     },
     {
       "path": "scripts/validar-saques-ensaio-http.js",
@@ -1740,7 +1740,7 @@
     },
     {
       "path": "test/admin-comercial-integracao-operacional.test.js",
-      "sha": "20d0a0af1d8c5586c894ab89f8620d9bbb733163"
+      "sha": "39e952a786732e0282546fde28dbe015e419ab10"
     },
     {
       "path": "test/admin-economia-privado-akitemm.test.js",
@@ -2484,7 +2484,7 @@
     },
     {
       "path": "test/gateway-publico-real-integracao-conta-operador.test.js",
-      "sha": "20fa4b602f3036b9431db7e851fbd162947caf74"
+      "sha": "4597bc4478b0d523503ed592f53244f3d76b84e4"
     },
     {
       "path": "test/gateway-publico-real-sem-laboratorio.test.js",
@@ -2648,7 +2648,7 @@
     },
     {
       "path": "test/logout-operador-botoes.test.js",
-      "sha": "509483e8d04b3b71bb58288d4cd41efc9547cfd2"
+      "sha": "950000704db173b93723e99283790e967a8f8135"
     },
     {
       "path": "test/loja-banner-upload-persistencia.test.js",

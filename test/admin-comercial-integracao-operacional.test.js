@@ -77,7 +77,7 @@ test('admin aprovado: login distinto, cadastrar produto/oferta, editar preços e
  })).json(),{operador:false});
  const {renderizarLojaAprovada}=require('../src/producao/interface-aprovada-loop');
  const lojaOriginalSemAlteracao=renderizarLojaAprovada();
- assert.match(lojaOriginalSemAlteracao,/id="akitemmOperadorMais" href="\/administrador"/);
+ assert.doesNotMatch(lojaOriginalSemAlteracao,/id="akitemmOperadorMais"/);
  assert.match(lojaOriginalSemAlteracao,/class="akitemm-acesso-operador" hidden style="display:none"/);
  // Entrada única do operador: usa o cookie existente, sem conta cliente.
  const loginOperador=async(nick,senha,origin=ORIGEM)=>fetch(
