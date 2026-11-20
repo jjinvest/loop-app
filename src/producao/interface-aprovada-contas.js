@@ -880,7 +880,13 @@
     void carregarMotor();
   },15000);
     for(const id of ['atualizarTabuleiroIntegrado','atualizarPosicoes']){
-   $(id)?.addEventListener('click',()=>void carregarMotor());
+   $(id)?.addEventListener('click',()=>{
+    // O mesmo relogio leva o OPERADOR ao controle ja existente.
+    if(id==='atualizarTabuleiroIntegrado'&&modoOperadorAtual){
+     location.assign('/administrador#tituloMotorInternoAdmin');return;
+    }
+    void carregarMotor();
+   });
   }
     $('tabuleiroVerPosicoesIntegrado').addEventListener('click',
    ()=>$('abaPosicoes').click());
@@ -1150,6 +1156,10 @@
       !Number.isSafeInteger(d.catraca?.giros)||d.catraca.giros<0||
       controle.financeiroReal!==false||
       controle.autorizacaoFinanceiraDosGiros!==false||
+      !Number.isSafeInteger(controle.agoraServidorMs)||
+      (controle.proximaLuzPrevistaEmMs!==null&&
+       (!Number.isSafeInteger(controle.proximaLuzPrevistaEmMs)||
+        controle.proximaLuzPrevistaEmMs<=controle.agoraServidorMs))||
       !['PAUSADA','MANUAL','AUTOMATICA'].includes(controle.modo))
     throw Error('TABULEIRO_ADMIN_FONTE_INVALIDA');
    visualTabuleiro.preencherFila('motorFilaA',d.filaA,'A');
@@ -1158,14 +1168,25 @@
    for(let i=0;i<6;i++)
     visualTabuleiro.preencherVaga('tabuleiroMotorVaga'+(i+1),d.tabuleiro.vagas[i]);
    visualTabuleiro.preencherLuzes(d.tabuleiro.eventosNoCiclo);
-   // Exibe politica autentica, sem prever luz ou giro sem conciliacao financeira.
+   // Contador calculado no servidor sobre a meta gravada no MESMO SQLite.
+   // Previsao nao antecipa giro nem cria venda ou dinheiro.
+   const metaAtiva=controle.metaAplicavelHoje===true&&
+    Number.isSafeInteger(controle.metaCentrosDia)&&
+    controle.metaCentrosDia>0;
    visorCatraca.registrarAgenda({
     modoExecucao:controle.modo==='PAUSADA'?'STOP':
      controle.modo==='MANUAL'?'NATURAL':'AGENDADA',
     pausaManual:controle.modo==='PAUSADA',
     dentroDoHorario:controle.horarioPermitido===true,
     abertura:controle.janelaInicio,
-    fechamento:controle.janelaFim
+    fechamento:controle.janelaFim,
+    agoraServidorMs:controle.agoraServidorMs,
+    metaLotes:metaAtiva?{
+     ativa:true,quantidade:controle.metaCentrosDia,
+     intervaloLuzSegundos:controle.intervaloLuzSegundos,
+     proximaLuzPrevistaEmMs:controle.proximaLuzPrevistaEmMs,
+     exigeCaixaReal:true
+    }:null
    });
    visorCatraca.observar(d.catraca.giros,d.tabuleiro.eventosNoCiclo);
    $('motorContadorEventos').textContent=
