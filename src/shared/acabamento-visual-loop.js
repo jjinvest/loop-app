@@ -25,6 +25,13 @@
  function decorar(marca){
   if(!marca||marca.classList.contains('loop-marca-unificada'))return;
   if(!/LOOP\s*3\.0/i.test(marca.textContent))return;
+  // A marca de entrada ja possui span prateado aprovado: NAO substitui-lo.
+  // O replaceChildren anterior apagava a classe e devolvia o 3.0 dourado.
+  if(marca.classList.contains('loop03-marca-entrada')&&
+     marca.querySelector(':scope > .loop03-marca-versao')){
+   marca.classList.add('loop-marca-unificada');
+   return;
+  }
   marca.classList.add('loop-marca-unificada');
   const prata=document.createElement('span');prata.textContent='3.0';
   marca.replaceChildren(document.createTextNode('LOOP '),prata);
