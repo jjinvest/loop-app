@@ -125,9 +125,35 @@ function calcularIntervaloMeta({abertura,fechamento,quantidade}={}){
   intervaloMinutos:Math.max(1,Math.ceil(duracao/(quantidade*6))),
   intervaloLuzSegundos:segundos};
 }
+// Contador previsto do operador: distribui as seis janelas de cada centro
+// no turno cadastrado. Nao cria luz, evento, giro, saldo nem pagamento.
+// O horario e a data sao os da fonte de tempo do servidor em Brasilia.
+function proximaJanelaMetaRelogio({abertura,fechamento,quantidade,
+ agoraMs,horarioLocal}={}){
+ const plano=calcularIntervaloMeta({abertura,fechamento,quantidade});
+ if(!Number.isSafeInteger(agoraMs)||agoraMs<0||
+    typeof horarioLocal!=='string'||
+    !/^(?:[01][0-9]|2[0-3]):[0-5][0-9]$/.test(horarioLocal))
+  throw Error('META_RELOGIO_HORARIO_INVALIDO');
+ if(quantidade===0)return null;
+ const inicio=minutos(abertura);
+ const minutoAtual=minutos(horarioLocal);
+ const duracaoMs=plano.duracaoMinutos*60000;
+ // Modulo tambem contempla janela que atravessa a meia-noite.
+ const decorrido=((minutoAtual-inicio+1440)%1440)*60000+
+  agoraMs%60000;
+ if(decorrido>=duracaoMs)return null;
+ const total=quantidade*6;
+ const indice=Math.floor(decorrido*total/duracaoMs)+1;
+ if(indice>total)return null;
+ const proxima=agoraMs-decorrido+
+  Math.ceil(indice*duracaoMs/total);
+ return proxima>agoraMs?proxima:null;
+}
 function dadosAtivacao(agoraMs){
  const a=agoraLocal(agoraMs);
  return {ativadaDia:a.dia,
   ativadaMinuto:minutos(a.horario)};
 }
-module.exports={validarMeta,planejado,janelasDeLuz,dadosAtivacao,calcularIntervaloMeta};
+module.exports={validarMeta,planejado,janelasDeLuz,dadosAtivacao,
+ calcularIntervaloMeta,proximaJanelaMetaRelogio};
