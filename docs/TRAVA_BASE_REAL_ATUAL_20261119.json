@@ -412,7 +412,7 @@
     },
     {
       "path": "scripts/validar-identidade-real-navegador.js",
-      "sha": "3eae9d4d3f1a701d7acb63934166bf5962729922"
+      "sha": "768be6890a37f4de5687e749aded50fcc5ed01f0"
     },
     {
       "path": "scripts/validar-jornada-loja-cores-browser.js",
@@ -1252,7 +1252,7 @@
     },
     {
       "path": "src/producao/acabamento-botoes-real.css",
-      "sha": "d1a7d89ed803c1a85dbd12ac50ef50431e9e29da"
+      "sha": "f0990abd071b8ac430b9ddd462f6f52821caf501"
     },
     {
       "path": "src/producao/aceite-posicao-azul-ensaio-sqlite.js",
@@ -1292,7 +1292,7 @@
     },
     {
       "path": "src/producao/backup-identidade-real.js",
-      "sha": "9f9747c4c32fa6277c7929f8fb47a10c3932e185"
+      "sha": "319596ba3ce22452c135b0062b88d4abfdd5571f"
     },
     {
       "path": "src/producao/backup-midia-offsite.js",
@@ -1364,7 +1364,7 @@
     },
     {
       "path": "src/producao/gateway-admin-comercial.js",
-      "sha": "87b8cd833e3a452000d228ea69d80308508ff2b8"
+      "sha": "f5038dcf7af1c0f8875d000ba6e9875036e42012"
     },
     {
       "path": "src/producao/identidade-cliente-loop-sqlite.js",
@@ -1384,7 +1384,7 @@
     },
     {
       "path": "src/producao/interface-aprovada-contas.js",
-      "sha": "8a09c4248a6138e5145ab804d9299e2fd677ec3b"
+      "sha": "4779ba7ec1e0001b32fced262a754cee8f700206"
     },
     {
       "path": "src/producao/interface-aprovada-loja.js",
@@ -2256,7 +2256,7 @@
     },
     {
       "path": "test/contrato-papeis-operador-real.test.js",
-      "sha": "cfc16896cd86fd1f2f0749062d055d6bddb1c914"
+      "sha": "7c5032b53070717db6c2338d6ccc4367babc507a"
     },
     {
       "path": "test/contrato-visual-escritorio-aprovado.test.js",
@@ -2484,7 +2484,7 @@
     },
     {
       "path": "test/gateway-publico-real-integracao-conta-operador.test.js",
-      "sha": "a2609ce5cd9f92c752a8c2f33f5e6eb8b346eb12"
+      "sha": "20fa4b602f3036b9431db7e851fbd162947caf74"
     },
     {
       "path": "test/gateway-publico-real-sem-laboratorio.test.js",
@@ -3464,6 +3464,66 @@
       "antes": "6648473e73d230af5ce636423e80f0a2cb6faef4",
       "depois": "cfc16896cd86fd1f2f0749062d055d6bddb1c914",
       "objetivo": "Conectar o contador/controle operacional existente: meta diaria em seis janelas por centro, previsao por hora oficial, mesma sessao operadora, sem alterar HTML/CSS, autorizar giro ou dinheiro."
+    },
+    {
+      "path": "src/producao/gateway-admin-comercial.js",
+      "antes": "87b8cd833e3a452000d228ea69d80308508ff2b8",
+      "depois": "f5038dcf7af1c0f8875d000ba6e9875036e42012",
+      "objetivo": "Restaurar modal do relogio no tabuleiro, olhinho visivel e avatar operador proprio/seguro, sem alterar demais visuais, contas de cliente ou giros financeiros."
+    },
+    {
+      "path": "src/producao/interface-aprovada-contas.js",
+      "antes": "8a09c4248a6138e5145ab804d9299e2fd677ec3b",
+      "depois": "4779ba7ec1e0001b32fced262a754cee8f700206",
+      "objetivo": "Restaurar modal do relogio no tabuleiro, olhinho visivel e avatar operador proprio/seguro, sem alterar demais visuais, contas de cliente ou giros financeiros."
+    },
+    {
+      "path": "src/candidato/escritorio-cliente-integrado.css",
+      "antes": "8d277e4d1c694d7eb4e998278412b4ad2bc981b5",
+      "depois": "680ca1a48dd69f7d35a1ade028c79093f0d398af",
+      "objetivo": "Restaurar modal do relogio no tabuleiro, olhinho visivel e avatar operador proprio/seguro, sem alterar demais visuais, contas de cliente ou giros financeiros."
+    },
+    {
+      "path": "test/contrato-papeis-operador-real.test.js",
+      "antes": "cfc16896cd86fd1f2f0749062d055d6bddb1c914",
+      "depois": "7c5032b53070717db6c2338d6ccc4367babc507a",
+      "objetivo": "Restaurar modal do relogio no tabuleiro, olhinho visivel e avatar operador proprio/seguro, sem alterar demais visuais, contas de cliente ou giros financeiros."
+    },
+    {
+      "path": "test/gateway-publico-real-integracao-conta-operador.test.js",
+      "antes": "a2609ce5cd9f92c752a8c2f33f5e6eb8b346eb12",
+      "depois": "20fa4b602f3036b9431db7e851fbd162947caf74",
+      "objetivo": "Restaurar modal do relogio no tabuleiro, olhinho visivel e avatar operador proprio/seguro, sem alterar demais visuais, contas de cliente ou giros financeiros."
+    },
+    {
+      "path": "src/candidato/escritorio-cliente-integrado.css",
+      "antes": "680ca1a48dd69f7d35a1ade028c79093f0d398af",
+      "depois": "8d277e4d1c694d7eb4e998278412b4ad2bc981b5",
+      "objetivo": "Reverter integralmente a folha visual aprovada; nenhuma mudanca em layout protegido."
+    },
+    {
+      "path": "src/producao/acabamento-botoes-real.css",
+      "antes": "d1a7d89ed803c1a85dbd12ac50ef50431e9e29da",
+      "depois": "f0990abd071b8ac430b9ddd462f6f52821caf501",
+      "objetivo": "Estilo exclusivo da janela do relogio do OPERADOR no acabamento nao protegido, sem afetar telas existentes."
+    },
+    {
+      "path": "src/producao/backup-identidade-real.js",
+      "antes": "9f9747c4c32fa6277c7929f8fb47a10c3932e185",
+      "depois": "319596ba3ce22452c135b0062b88d4abfdd5571f",
+      "objetivo": "Incluir a foto administrativa no mesmo backup cifrado com verificacao de integridade, mantendo backups anteriores validos."
+    },
+    {
+      "path": "scripts/validar-identidade-real-navegador.js",
+      "antes": "3eae9d4d3f1a701d7acb63934166bf5962729922",
+      "depois": "98bbcf52967ad539f108e94d070871fc92c0ecc0",
+      "objetivo": "Testar navegacao e operacoes reais do relogio modal, foto do operador e olho em PC e celular; aguardar renderizacao asincrona da loja."
+    },
+    {
+      "path": "scripts/validar-identidade-real-navegador.js",
+      "antes": "98bbcf52967ad539f108e94d070871fc92c0ecc0",
+      "depois": "768be6890a37f4de5687e749aded50fcc5ed01f0",
+      "objetivo": "Aguardar o evento nativo de fechamento do modal no teste PC/celular sem modificar a interface nem o motor."
     }
   ]
 }
