@@ -580,6 +580,27 @@ async function main(){
    }).waitFor();
    assert.match(await page.locator('#listaEquipe').innerText(),
     new RegExp(novoNick,'i'));
+   const indicado=page.locator('#listaEquipe .loop03-rede-pessoa')
+    .filter({hasText:new RegExp(novoNick,'i')});
+   await indicado.waitFor({state:'visible'});
+   assert.equal(await indicado.getAttribute('data-estado'),'vermelho',
+    'cadastro pendente nunca e apresentado como qualificado');
+   const menu=indicado.locator('.loop03-rede-pessoa-menu');
+   assert.equal(await menu.getAttribute('aria-expanded'),'false');
+   await menu.click();
+   assert.equal(await menu.getAttribute('aria-expanded'),'true');
+   const detalhes=indicado.locator('.loop03-rede-pessoa-detalhes');
+   await detalhes.waitFor({state:'visible'});
+   const botoes=detalhes.locator('.loop03-rede-posicao');
+   assert.equal(await botoes.count(),10,
+    'Minha Equipe preserva os dez botoes das posicoes');
+   for(let n=1;n<=10;n++){
+    assert.equal(await botoes.nth(n-1).innerText(),String(n));
+    assert.equal(await botoes.nth(n-1).isDisabled(),true,
+     'indicacao pendente nao pode ser vinculada');
+   }
+   await menu.click();
+   await detalhes.waitFor({state:'hidden'});
    if(item.largura<=860)await page.locator('#loop03MenuIntegrado').click();
    await page.locator('#abaLinks').click();
    assert.match(await page.locator('#linkLoja').inputValue(),
