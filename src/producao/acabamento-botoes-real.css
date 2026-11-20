@@ -134,6 +134,54 @@ body.loop03-modo-operador #loop03AlterarFotoTopo:disabled{
 }
 
 
+
+/* Relogio do OPERADOR: resultado e SALVAR sempre acessiveis no celular.
+   Apenas os campos internos rolam; o Tabuleiro original nao e alterado. */
+#loopOperadorCatracaDialog[open]{
+ display:grid;grid-template-rows:auto auto auto minmax(0,1fr) auto;
+ gap:9px;height:min(90dvh,720px);max-height:90dvh;
+ overflow:hidden;padding:14px 17px;
+}
+#loopOperadorCatracaDialog .loop-operador-dialog-fechar{
+ margin:0 0 0 auto;padding:9px 15px;min-height:44px;
+}
+#loopOperadorCatracaDialog h2{margin:0;font-size:1.12rem;line-height:1.3}
+#loopOperadorCatracaDialog .loop-operador-catraca-resumo{
+ display:block;white-space:pre-line;
+ margin:0;padding:12px 13px;line-height:1.52;
+ border:1px solid #b99354;border-radius:12px;
+ background:#242634;color:#fff0d2;
+ font-weight:650;font-size:clamp(.85rem,3.1vw,1.02rem);
+}
+#loopOperadorCatracaDialog form{
+ min-height:0;overflow-y:auto;overscroll-behavior:contain;
+ align-content:start;gap:9px;padding:2px 5px 10px 0;
+ scrollbar-width:thin;
+}
+#loopOperadorCatracaDialog label{margin:0}
+#loopOperadorCatracaDialog input,
+#loopOperadorCatracaDialog select{min-height:44px}
+#loopOperadorCatracaDialog .loop-operador-catraca-rodape{
+ display:grid;gap:5px;border-top:1px solid #625840;
+ padding:11px 0 0;
+}
+#loopOperadorCatracaDialog .loop-operador-catraca-rodape button{
+ width:100%;min-height:48px;
+}
+#loopOperadorCatracaDialog .loop-operador-catraca-rodape .mensagem-operador{
+ min-height:0;max-height:65px;overflow-y:auto;
+ margin:0;font-size:.85rem;
+}
+@media(max-width:600px){
+ #loopOperadorCatracaDialog[open]{
+  width:calc(100vw - 24px);max-height:92dvh;height:92dvh;
+  padding:11px 13px;gap:8px;
+ }
+ #loopOperadorCatracaDialog .loop-operador-catraca-resumo{
+  padding:9px 11px;
+ }
+}
+
 /* Acabamento autorizado do cadastro REAL, idêntico nos links base e /escritorio/NICK:
    manter o LOOP dourado e restaurar somente "3.0" prateado. */
 body:not(.loop03-logado) > .cabecalho .marca.loop03-marca-entrada .loop03-marca-versao{
