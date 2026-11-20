@@ -127,7 +127,7 @@ test('foto do operador e olhinho sao controles reais sem confundir titular',()=>
  assert.match(html,/id="loop03ImagemFotoTopo"/);
  assert.match(html,/id="loop03AlterarFotoTopo"/);
  assert.match(html,/data-senha="senha"/);
- assert.match(js,/await atualizarFotoOperadorReal\(\)/);
+ assert.match(js,/void atualizarFotoOperadorReal\(\)/);
  assert.match(js,/\$\('loop03AlterarFotoTopo'\)\.disabled=false/);
  assert.match(js,/fetch\('\/api\/admin\/operador\/foto-perfil'/);
  assert.match(js,/modoOperadorAtual\?salvarFotoOperadorReal\(ev\):salvarFotoPerfilReal\(ev\)/);
