@@ -2,7 +2,7 @@
   "schema": 1,
   "referencia": "BASE_REAL_PUBLISH_RAILWAY_NAO_FOTOS_HISTORICAS_24",
   "proprietarioAutorizacaoExigida": true,
-  "capturadoEm": "2026-11-19",
+  "capturadoEm": "2026-11-20",
   "referenciaGit": "jjinvest/loop-app@bd1cd75f6f52cc0aa0d19436e03b8e533564595d",
   "servicos": {
     "loopIdentidadeReal": {
@@ -412,7 +412,7 @@
     },
     {
       "path": "scripts/validar-identidade-real-navegador.js",
-      "sha": "4ae9ec2d186183fcf245d47815195cce6b046fac"
+      "sha": "92ca145469cd751db5a871b4118a9b92379f9d2d"
     },
     {
       "path": "scripts/validar-jornada-loja-cores-browser.js",
@@ -424,7 +424,7 @@
     },
     {
       "path": "scripts/validar-operador-primeiro-produto-navegador.js",
-      "sha": "35faef07b778b54741aec51555ae21b165083125"
+      "sha": "d4c100207ed49074b4c51c22ee366feaacc8d24a"
     },
     {
       "path": "scripts/validar-saques-ensaio-http.js",
@@ -1388,11 +1388,11 @@
     },
     {
       "path": "src/producao/interface-aprovada-loja.js",
-      "sha": "fb794bac2f73124e42698afd66fe1a1439acf3c3"
+      "sha": "a6e0ccc84df94a73bfdbabf74c9942d8182e0d47"
     },
     {
       "path": "src/producao/interface-aprovada-loop.js",
-      "sha": "933215f19a99f543d862da87a44a3288e8e7e2d3"
+      "sha": "d38b882ff00dbf9ce36a3f80b20ad89315c7f16d"
     },
     {
       "path": "src/producao/jornada-comercial-unificada-ensaio-sqlite.js",
@@ -1436,7 +1436,7 @@
     },
     {
       "path": "src/producao/operador-loja-fotos-real.js",
-      "sha": "20b76ad3fe73137dcf46244dc9c23b2b203e960f"
+      "sha": "db2ac1fb31389f2626df4c4ed05c30e02e16ab3b"
     },
     {
       "path": "src/producao/outbox-compra-loop-sqlite.js",
@@ -1460,7 +1460,7 @@
     },
     {
       "path": "src/producao/posicoes-vitrine-real-sqlite.js",
-      "sha": "8fa808af69849474e0fba5e8a88e9a930e714000"
+      "sha": "6fd585c2e171c5f40e277758cad85663a9867f8f"
     },
     {
       "path": "src/producao/preflight-capacidade-checkout-sqlite.js",
@@ -1508,7 +1508,7 @@
     },
     {
       "path": "src/producao/rotas-catalogo-midia-operador.js",
-      "sha": "b9905aef0c7c1d80f03dab45b3d124ffdbe1eb2b"
+      "sha": "6abc4defd7e3f10ab250c2970fd759e535fed7f3"
     },
     {
       "path": "src/producao/saneamento-sete-contas-legadas-sqlite.js",
@@ -1516,7 +1516,7 @@
     },
     {
       "path": "src/producao/servidor-identidade-loop.js",
-      "sha": "0c129c23c231700da9d8f64ff72145b0b1c06aa1"
+      "sha": "bb2398b06a186f33e05ba7ee022040a163c2d9bd"
     },
     {
       "path": "src/producao/sessao-admin-comercial-sqlite.js",
@@ -1740,7 +1740,7 @@
     },
     {
       "path": "test/admin-comercial-integracao-operacional.test.js",
-      "sha": "20d0a0af1d8c5586c894ab89f8620d9bbb733163"
+      "sha": "39e952a786732e0282546fde28dbe015e419ab10"
     },
     {
       "path": "test/admin-economia-privado-akitemm.test.js",
@@ -2256,7 +2256,7 @@
     },
     {
       "path": "test/contrato-papeis-operador-real.test.js",
-      "sha": "4b7af6d8f789d3d3610973aeb1d5b075e05ea133"
+      "sha": "e55202a068c87bf8b72157ec150d71b812e02623"
     },
     {
       "path": "test/contrato-visual-escritorio-aprovado.test.js",
@@ -2484,7 +2484,7 @@
     },
     {
       "path": "test/gateway-publico-real-integracao-conta-operador.test.js",
-      "sha": "20fa4b602f3036b9431db7e851fbd162947caf74"
+      "sha": "4597bc4478b0d523503ed592f53244f3d76b84e4"
     },
     {
       "path": "test/gateway-publico-real-sem-laboratorio.test.js",
@@ -2648,7 +2648,7 @@
     },
     {
       "path": "test/logout-operador-botoes.test.js",
-      "sha": "509483e8d04b3b71bb58288d4cd41efc9547cfd2"
+      "sha": "950000704db173b93723e99283790e967a8f8135"
     },
     {
       "path": "test/loja-banner-upload-persistencia.test.js",
@@ -2664,7 +2664,7 @@
     },
     {
       "path": "test/loja-real-zero-produtos-antes-cadastro.test.js",
-      "sha": "bd7ae0c76fb0eea2fc4ac6c021586b1b31e8afd5"
+      "sha": "4058fadcdd9ec66bb1e5822f15ff7b74ce616180"
     },
     {
       "path": "test/loja-separada-da-fila-loop-demo.test.js",
@@ -2992,7 +2992,7 @@
     },
     {
       "path": "test/posicoes-vitrine-real-sqlite.test.js",
-      "sha": "c59e40b3eafc27ea73554d1f0d81b38c348d6610"
+      "sha": "08012fe3001b154d3515cbc82f4799d42d7ef262"
     },
     {
       "path": "test/prazo-saque-24h-corridas-v6.test.js",
@@ -3332,7 +3332,7 @@
     },
     {
       "path": "test/vitrine-real-400-quadrinhos-operador.test.js",
-      "sha": "1d54a3de3bb78ade73bcde0b5512787efd079377"
+      "sha": "789697c3e48f815542501ab8894ab52cb396ecad"
     },
     {
       "path": "test/webhook-antecipado-monitor-integrado.test.js",

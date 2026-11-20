@@ -160,13 +160,13 @@
   }catch(e){estado.textContent='Cadastro de ofertas indisponível: '+e.message;}
  }
  async function vincularQuadradinho(indice,id){
-  if(!Number.isSafeInteger(indice)||indice<1||indice>200||!ID.test(id))
+  if(!Number.isSafeInteger(indice)||indice<1||indice>400||!ID.test(id))
    throw Error('QUADRINHO_INVALIDO');
   const [sessao,slots]=await Promise.all([
    fetchJson('/api/admin/comercial/sessao'),
    fetchJson('/api/admin/catalogo-midia/slots')
   ]);
-  if(!Array.isArray(slots.slots)||slots.total!==200)
+  if(!Array.isArray(slots.slots)||slots.total!==400)
    throw Error('QUADRINHOS_INDISPONIVEIS');
   const atual=slots.slots.find(x=>x.posicao===indice);
   const resposta=await fetchJson(
@@ -190,7 +190,7 @@
     fetchJson('/api/admin/catalogo-midia/slots')
    ]);
    if(!Array.isArray(r.produtos)||r.checkoutReal!==false||
-      !Array.isArray(slots.slots)||slots.total!==200)
+      !Array.isArray(slots.slots)||slots.total!==400)
     throw Error('CATALOGO_ADMIN_INCONSISTENTE');
    const ocupado=slots.slots.find(x=>x.posicao===indice);
    if(ocupado){

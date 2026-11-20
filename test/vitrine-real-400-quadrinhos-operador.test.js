@@ -23,7 +23,7 @@ const SENHA='CredencialPrivadaSomenteTeste2026!Segredo';
 const DOC='Texto de termos e privacidade necessário para ensaio isolado '+
  'de contas e catálogo real sem pagamentos, sem benefício e sem compra.';
 
-test('200 fixtures tecnicas em banco descartavel, 5 abas x 40 e operador isolado',async t=>{
+test('400 fixtures tecnicas em banco descartavel, 10 abas x 40 e operador isolado',async t=>{
  const db=new DatabaseSync(':memory:');
  db.exec('PRAGMA foreign_keys=ON');
  t.after(()=>db.close());
@@ -43,7 +43,7 @@ test('200 fixtures tecnicas em banco descartavel, 5 abas x 40 e operador isolado
  });
  const agora=Date.now();
  // Volume artificial EXCLUSIVAMENTE deste teste, NAO catalogo publicado do proprietario.
- const produtos=Array.from({length:200},(_,i)=>({
+ const produtos=Array.from({length:400},(_,i)=>({
   produtoId:'produto-'+String(i+1).padStart(3,'0'),
   titulo:'Produto '+(i+1),descricao:'Mercadoria em catálogo',
   tipo:'FISICO',cor:'CINZA',criadoEm:agora,
@@ -55,7 +55,7 @@ test('200 fixtures tecnicas em banco descartavel, 5 abas x 40 e operador isolado
   contas,origemHttps:ORIGEM,permitirCadastro:false,
   catalogoVitrine:{
    banco:db,listarVitrinePreparacao:({limite})=>{
-    assert.equal(limite,200);return produtos;
+    assert.equal(limite,400);return produtos;
    }
   },
   adminComercial:{sessoes,catalogo,controle}
@@ -67,7 +67,7 @@ test('200 fixtures tecnicas em banco descartavel, 5 abas x 40 e operador isolado
  assert.equal((await get('/loja')).status,200);
  const vitrinePublica=await get('/api/loja/catalogo');
  assert.equal(vitrinePublica.status,200);
- assert.equal((await vitrinePublica.json()).total,200);
+ assert.equal((await vitrinePublica.json()).total,400);
  assert.equal((await get('/api/loja/pedidos')).status,401);
  assert.equal((await get('/api/contas/me')).status,401);
  const login=await fetch(base+'/api/operador/entrar',{
@@ -78,14 +78,17 @@ test('200 fixtures tecnicas em banco descartavel, 5 abas x 40 e operador isolado
  const cookie=login.headers.get('set-cookie').split(';')[0];
  const loja=await get('/loja',{Cookie:cookie});
  assert.equal(loja.status,200);
- assert.equal(await loja.text(),renderizarLojaAprovada());
+ const htmlLoja=await loja.text();
+ assert.equal(htmlLoja,renderizarLojaAprovada());
+ assert.doesNotMatch(htmlLoja,/id="akitemmOperadorMais"/);
+ assert.match(htmlLoja,/class="akitemm-acesso-operador" hidden/);
  const api=await get('/api/loja/catalogo',{Cookie:cookie});
  assert.equal(api.status,200);
  const resposta=await api.json();
- assert.equal(resposta.produtos.length,200);
- assert.equal(resposta.total,200);
+ assert.equal(resposta.produtos.length,400);
+ assert.equal(resposta.total,400);
  assert.equal(resposta.checkoutReal,false);
- assert.equal(resposta.produtos[199].produtoId,'produto-200');
+ assert.equal(resposta.produtos[399].produtoId,'produto-400');
  assert.ok(resposta.produtos.every(x=>x.compravel===false&&x.precoCentavos===null));
  assert.equal((await get('/api/loja/pedidos',{Cookie:cookie})).status,401);
  assert.equal((await get('/api/contas/me',{Cookie:cookie})).status,401);
@@ -98,7 +101,7 @@ test('200 fixtures tecnicas em banco descartavel, 5 abas x 40 e operador isolado
  assert.match(await js.text(),/X-Foto-Versao-Esperada/);
  const fonte=fs.readFileSync(path.join(__dirname,
   '../src/producao/interface-aprovada-loja.js'),'utf8');
- assert.match(fonte,/const totalAbas=filtrada\?Math.max\(1,Math.ceil\(slotsVisiveis.length\/40\)\):5/);
+ assert.match(fonte,/const totalAbas=filtrada\?Math.max\(1,Math.ceil\(slotsVisiveis.length\/40\)\):10/);
  assert.match(fonte,/const linhas=expandida\?4:2/);
  assert.match(fonte,/abaVitrine\*40/);
  assert.match(fonte,/data.*akitemmSlot|dataset.akitemmSlot/);

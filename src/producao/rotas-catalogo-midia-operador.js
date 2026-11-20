@@ -41,12 +41,12 @@ function montarRotasCatalogoMidiaOperador({
    return res.status(404).json({erro:'FOTO_POSICAO_INVALIDA'});
   next();
  };
- // O operador escolhe em qual dos 200 quadradinhos guardar o
+ // O operador escolhe em qual dos 400 quadradinhos guardar o
  // produto, independentemente de foto, preço ou publicação.
  if(posicoesVitrine!==null){
   app.get('/api/admin/catalogo-midia/slots',
    autorizarOperador,(_req,res)=>{
-    try{return res.json({total:200,slots:posicoesVitrine.listar(),
+    try{return res.json({total:400,slots:posicoesVitrine.listar(),
      checkoutReal:false});}
     catch{return res.status(503).json({erro:'SLOTS_REAIS_INDISPONIVEIS'});}
    });
@@ -54,7 +54,7 @@ function montarRotasCatalogoMidiaOperador({
    autorizarOperador,validarCsrf,(req,res)=>{
     const n=Number(req.params.posicao),b=req.body;
     if(!/^(?:[1-9][0-9]{0,2})$/.test(req.params.posicao)||
-       !Number.isSafeInteger(n)||n<1||n>200||
+       !Number.isSafeInteger(n)||n<1||n>400||
        !req.is('application/json')||!b||Array.isArray(b)||
        typeof b!=='object'||
        Object.keys(b).sort().join(',')!=='produtoId,revisaoEsperada'||

@@ -146,7 +146,7 @@ function renderizarLojaAprovada(){
  html=trocarExato(html,
   '<script src="/laboratorio/loja.js" defer></script>',
   '<script src="/identidade/assets/loja.js" defer></script>');
- // Reutiliza o CSS horizontal aprovado (cinco abas, 40 posições cada)
+ // Reutiliza o CSS horizontal aprovado (dez abas, 40 posições cada)
  // e conecta somente o comportamento de toque do operador real.
  html=trocarExato(html,'</head>',
   '<link rel="stylesheet" href="/identidade/assets/vitrine-horizontal.css">'+
@@ -154,9 +154,10 @@ function renderizarLojaAprovada(){
   '<script src="/identidade/assets/operador-fotos.js" defer></script></head>');
  // Manter o visual aprovado: atualizar somente o destino dos acessos
  // administrativos e ocultar o link ate a sessao real ser confirmada.
- html=trocarExato(html,
-  '<a id="akitemmOperadorMais" href="/escritorio"',
-  '<a id="akitemmOperadorMais" href="/administrador"');
+ const botaoTopo=html.match(/<a id="akitemmOperadorMais"[\s\S]*?<\/a>/g);
+ if(!botaoTopo||botaoTopo.length!==1)
+  throw Error('BOTAO_TOPO_AKITEMM_DESATUALIZADO');
+ html=html.replace(botaoTopo[0],'');
  html=trocarExato(html,
   '<a href="/escritorio" class="akitemm-acesso-operador"',
   '<a href="/administrador" class="akitemm-acesso-operador" hidden style="display:none"');

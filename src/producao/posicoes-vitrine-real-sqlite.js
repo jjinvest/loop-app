@@ -1,11 +1,11 @@
 'use strict';
-// 200 espaços aprovados: 5 abas x 4 fileiras x 10.
+// 400 espaços: 10 abas x 4 fileiras x 10.
 // Apenas indexa produtos já existentes, nunca cria pedidos, posições LOOP
 // ou movimentação financeira. Persiste no mesmo SQLite da conta real.
 const {DatabaseSync}=require('node:sqlite');
-// O CHECK original do SQLite permanece em 400 para preservar tabelas antigas.
-// A API e as novas atribuicoes sao limitadas a TOTAL (200).
-const TOTAL=200;
+// O CHECK original do SQLite já permite 400 e preserva os vínculos existentes.
+// A API e as novas atribuicoes usam o mesmo TOTAL (400).
+const TOTAL=400;
 const ID=/^[A-Za-z0-9_-]{1,80}$/;
 const TABELAS_POSICOES_VITRINE=Object.freeze(['loja_real_vitrine_posicoes']);
 function falha(codigo){const e=new Error(codigo);e.codigo=codigo;throw e;}

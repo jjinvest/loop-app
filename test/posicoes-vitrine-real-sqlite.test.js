@@ -48,7 +48,7 @@ test('nao duplica produto, nao desloca quadrado e nao escreve pedido ou saldo',(
    /VITRINE_REAL_PRODUTO_JA_POSICIONADO/);
   assert.throws(()=>atribuir(1,'produto-01',0),
    /VITRINE_REAL_REVISAO_CONCORRENTE/);
-  assert.throws(()=>atribuir(201,'produto-02',0),
+  assert.throws(()=>atribuir(401,'produto-02',0),
    /VITRINE_REAL_ATRIBUICAO_INVALIDA/);
   assert.throws(()=>v.atribuir({posicao:2,produtoId:'produto-02',
    produtoExiste:()=>false}),/VITRINE_REAL_PRODUTO_NAO_ENCONTRADO/);
@@ -74,5 +74,21 @@ test('reservar espaco para rascunho impede sobreposicao de publicado',()=>{
   const apos=v.projetar([...abertos,
    {produtoId:'produto-rascunho',compravel:false}]);
   assert.equal(apos[2].posicaoVitrine,40);
+ }finally{db.close();}
+});
+
+test('décima aba preserva vínculos em 400 e rejeita a posição 401',()=>{
+ const db=new DatabaseSync(':memory:');
+ try{
+  const v=new PosicoesVitrineRealSQLite({banco:db});
+  const novo=v.atribuir({posicao:400,produtoId:'ultima-vaga',
+   revisaoEsperada:0,produtoExiste:()=>true});
+  assert.equal(novo.posicao,400);
+  assert.equal(new PosicoesVitrineRealSQLite({banco:db})
+   .consultar({posicao:400}).produtoId,'ultima-vaga');
+  assert.throws(()=>v.atribuir({posicao:401,produtoId:'fora',
+   revisaoEsperada:0,produtoExiste:()=>true}),
+   /VITRINE_REAL_ATRIBUICAO_INVALIDA/);
+  assert.equal(db.prepare('PRAGMA integrity_check').get().integrity_check,'ok');
  }finally{db.close();}
 });

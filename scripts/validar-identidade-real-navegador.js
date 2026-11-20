@@ -624,10 +624,10 @@ async function main(){
    assert.equal(await page.locator('#akitemmBusca').isDisabled(),false);
    assert.match(await page.locator('#statusPedidoLoja').innerText(),
     /checkout real ainda não foi liberado/i);
-   // As cinco abas e as molduras são a vitrine aprovada,
+   // As dez abas e as molduras são a vitrine aprovada,
    // sem produtos fictícios nem checkout.
    await page.locator('#akitemmAbasProdutos button').first().waitFor({state:'visible'});
-   assert.equal(await page.locator('#akitemmAbasProdutos button').count(),5);
+   assert.equal(await page.locator('#akitemmAbasProdutos button').count(),10);
    // Controles de leitura respondem mesmo sem produtos publicados.
    assert.equal(await page.locator('#akitemmFiltroOfertas').isDisabled(),false);
    await page.locator('#akitemmFiltroOfertas').click();
@@ -651,18 +651,18 @@ async function main(){
     assert.equal(await page.locator('#catalogoLojaLoop .akitemm-slot-vazio').count(),20);
     await page.locator('#akitemmFiltroTodos').click();
    }
-   assert.equal(await page.locator('#akitemmAbasProdutos button').count(),5);
+   assert.equal(await page.locator('#akitemmAbasProdutos button').count(),10);
    assert.equal(await page.locator('#catalogoLojaLoop .ak-faixa-horizontal').count(),2);
    assert.equal(await page.locator('#catalogoLojaLoop .akitemm-slot-vazio').count(),20);
    assert.equal(await page.locator('#catalogoLojaLoop [data-produto-id]').count(),0);
    await page.locator('#akitemmCarregarMais').click();
    assert.equal(await page.locator('#catalogoLojaLoop .ak-faixa-horizontal').count(),4);
    assert.equal(await page.locator('#catalogoLojaLoop .akitemm-slot-vazio').count(),40);
-   await page.locator('#akitemmAbasProdutos button').nth(4).click();
+   await page.locator('#akitemmAbasProdutos button').nth(9).click();
    assert.equal(await page.locator('#catalogoLojaLoop .akitemm-slot-vazio').first()
-    .getAttribute('data-akitemm-slot'),'161');
+    .getAttribute('data-akitemm-slot'),'361');
    assert.equal(await page.locator('#akitemmAbasProdutos button[aria-current="page"]')
-    .innerText(),'5');
+    .innerText(),'10');
    await page.locator('#akitemmAbasProdutos button').first().click();
    await page.locator('#akitemmCarregarMais').click();
    assert.equal(await page.locator('#catalogoLojaLoop .akitemm-slot-vazio').count(),20);

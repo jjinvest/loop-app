@@ -48,6 +48,7 @@ test('ambos logins pessoais encerram modo operador e botoes recebem acabamento',
  // autorizada e responsavel por mostra-los; o logout volta a oculta-los.
  assert.doesNotMatch(css,
   /getElementById\(['"](?:akitemmOperadorMais|loopOperadorMais)['"]\)\?\.remove\(\)/);
- assert.match(ler('src/producao/interface-aprovada-loja.js'),/akitemmOperadorMais/);
+ assert.match(ler('src/producao/interface-aprovada-loja.js'),/akitemm-acesso-operador/);
+ assert.doesNotMatch(ler('src/producao/interface-aprovada-loja.js'),/akitemmOperadorMais/);
  assert.match(real,/loopOperadorMais/);
 });
