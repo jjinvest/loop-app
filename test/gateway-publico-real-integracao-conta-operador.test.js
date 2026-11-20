@@ -191,7 +191,8 @@ test('gateway e identidade reais end-to-end: mesmas telas, cookies, CSRF e opera
  assert.match(cookieOp,/^akitemm_real_admin_v1=[a-f0-9]{64}$/);
  const admin=await get('/api/admin/comercial/sessao',{Cookie:cookieOp});
  assert.equal(admin.status,200);
- assert.ok((await admin.json()).csrfToken.length>=24);
+ const adminSessao=await admin.json();
+ assert.ok(adminSessao.csrfToken.length>=24);
  // Foto OPERADOR nao pode ler/copiar a foto de um cliente autenticado.
  const fstatus=await get('/api/admin/operador/foto-perfil',{Cookie:cookieOp});
  assert.equal(fstatus.status,404);
@@ -202,8 +203,7 @@ test('gateway e identidade reais end-to-end: mesmas telas, cookies, CSRF e opera
    'X-Loop-Admin-Csrf':token},
   body:foto
  });
- assert.equal((await gravarFoto(cookieCliente,(await admin.clone().json()).csrfToken)).status,401);
- const adminSessao=await (await get('/api/admin/comercial/sessao',{Cookie:cookieOp})).json();
+ assert.equal((await gravarFoto(cookieCliente,adminSessao.csrfToken)).status,401);
  assert.equal((await gravarFoto(cookieOp,'invalido')).status,403);
  assert.equal((await gravarFoto(cookieOp,adminSessao.csrfToken)).status,201);
  const retrato=await get('/api/admin/operador/foto-perfil',{Cookie:cookieOp});
