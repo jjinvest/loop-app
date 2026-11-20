@@ -198,12 +198,49 @@ async function main(){
    await operadorPage.locator('#login').fill('OPERADOR');
    await operadorPage.locator('#senha').fill(
     'CredencialAdministrativaIsolada2026!Teste');
+   const olho=operadorPage.locator('.alternar-visibilidade[data-senha="senha"]');
+   await olho.click();
+   assert.equal(await operadorPage.locator('#senha').getAttribute('type'),'text');
+   assert.equal(await olho.getAttribute('aria-label'),'Ocultar senha');
+   await olho.click();
+   assert.equal(await operadorPage.locator('#senha').getAttribute('type'),'password');
+   assert.equal(await olho.getAttribute('aria-label'),'Mostrar senha');
    await operadorPage.locator('#formLogin button[type=submit]').click();
    await operadorPage.locator('#loopOperadorAcoes').waitFor({state:'visible'});
    assert.equal(new URL(operadorPage.url()).pathname,'/escritorio');
    assert.equal(await operadorPage.locator('#loop03NickIntegrado').innerText(),
     'OPERADOR');
    assert.equal(await operadorPage.locator('#abaConta').isDisabled(),true);
+   assert.equal(await operadorPage.locator('#loop03AlterarFotoTopo').isEnabled(),true);
+   // Foto de OPERADOR usa o mesmo circulo, mas sua propria tabela privada.
+   await operadorPage.locator('#arquivoFotoPerfil').setInputFiles({
+    name:'perfil-operador.png',mimeType:'image/png',
+    buffer:Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAIAAAACCAIAAAD91JpzAAAAEklEQVR4nGP4z8DAAMIM/4EAAB/uBfsL2WiLAAAAAElFTkSuQmCC','base64')
+   });
+   await operadorPage.locator('#loop03ImagemFotoTopo')
+    .waitFor({state:'visible'});
+   if(visual.mobile)await operadorPage.locator('#loop03MenuIntegrado').click();
+   await operadorPage.locator('#abaTabuleiro').click();
+   await operadorPage.locator('#conteudoTabuleiro').waitFor({state:'visible'});
+   await operadorPage.locator('#atualizarTabuleiroIntegrado').click();
+   const modal=operadorPage.locator('#loopOperadorCatracaDialog');
+   await modal.waitFor({state:'visible'});
+   assert.equal(new URL(operadorPage.url()).pathname,'/escritorio',
+    'toque no relogio NUNCA navega a outra pagina');
+   const campo=(parte,tipo)=>modal.locator('label')
+    .filter({hasText:parte}).locator(tipo);
+   await campo('Modo','select').selectOption('AUTOMATICA');
+   await campo('Abertura','input').fill('09:00');
+   await campo('Fechamento','input').fill('18:00');
+   await campo('Meta diária de centros','input').fill('1');
+   assert.match(await modal.locator('.mensagem-operador').first().innerText(),
+    /90 min por luz|90 min.*por luz|90 min/i);
+   await modal.getByRole('button',{name:'Salvar programação'}).click();
+   await modal.locator('.mensagem-operador').last()
+    .filter({hasText:'Programação gravada no motor real'}).waitFor();
+   await modal.getByRole('button',{name:'Fechar'}).click();
+   assert.equal(await modal.count(),0);
+   assert.equal(new URL(operadorPage.url()).pathname,'/escritorio');
    await operadorPage.locator('#loopAcessoAdminMenu:not([hidden])')
     .waitFor({state:'attached'});
    await operadorPage.goto(base+'/loja');
@@ -479,6 +516,7 @@ async function main(){
     /checkout real ainda não foi liberado/i);
    // As cinco abas e as molduras são a vitrine aprovada,
    // sem produtos fictícios nem checkout.
+   await page.locator('#akitemmAbasProdutos button').first().waitFor({state:'visible'});
    assert.equal(await page.locator('#akitemmAbasProdutos button').count(),5);
    // Controles de leitura respondem mesmo sem produtos publicados.
    assert.equal(await page.locator('#akitemmFiltroOfertas').isDisabled(),false);
