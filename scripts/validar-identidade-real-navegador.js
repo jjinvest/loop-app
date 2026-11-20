@@ -212,13 +212,33 @@ async function main(){
     'OPERADOR');
    assert.equal(await operadorPage.locator('#abaConta').isDisabled(),true);
    assert.equal(await operadorPage.locator('#loop03AlterarFotoTopo').isEnabled(),true);
-   // Foto de OPERADOR usa o mesmo circulo, mas sua propria tabela privada.
-   await operadorPage.locator('#arquivoFotoPerfil').setInputFiles({
+   // Foto no Android deve abrir o seletor de arquivos pelo TOQUE real
+   // no circulo, nao apenas setInputFiles sobre input escondido.
+   assert.equal(await operadorPage.locator('body > #arquivoFotoPerfil').count(),1);
+   const seletorPromise=operadorPage.waitForEvent('filechooser');
+   await operadorPage.locator('#loop03AlterarFotoTopo').click();
+   const seletor=await seletorPromise;
+   await seletor.setFiles({
     name:'perfil-operador.png',mimeType:'image/png',
     buffer:Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAIAAAACCAIAAAD91JpzAAAAEklEQVR4nGP4z8DAAMIM/4EAAB/uBfsL2WiLAAAAAElFTkSuQmCC','base64')
    });
    await operadorPage.locator('#loop03ImagemFotoTopo')
     .waitFor({state:'visible'});
+   const fotoAutenticada=await operadorPage.evaluate(async()=>{
+    const r=await fetch('/api/admin/operador/foto-perfil',{
+     credentials:'same-origin',cache:'no-store'
+    });
+    return {status:r.status,mime:r.headers.get('content-type'),
+     tamanho:(await r.blob()).size};
+   });
+   assert.equal(fotoAutenticada.status,200);
+   assert.equal(fotoAutenticada.mime,'image/png');
+   assert.ok(fotoAutenticada.tamanho>0);
+   // Verificar que a foto permanece na conta do operador ao recarregar.
+   await operadorPage.reload();
+   await operadorPage.locator('#loop03ImagemFotoTopo').waitFor({state:'visible'});
+   assert.equal(await operadorPage.locator('body > #arquivoFotoPerfil').count(),1);
+   assert.equal(await operadorPage.locator('#abaConta').isDisabled(),true);
    if(visual.mobile)await operadorPage.locator('#loop03MenuIntegrado').click();
    await operadorPage.locator('#abaTabuleiro').click();
    await operadorPage.locator('#conteudoTabuleiro').waitFor({state:'visible'});
