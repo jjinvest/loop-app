@@ -32,6 +32,11 @@ test('varredura: foto redonda, sininho abaixo, sem alerta de foto desativada',()
  const js=fonte('src/producao/interface-aprovada-contas.js');
  assert.match(css,/clip-path:circle\(50% at 50% 50%\)/);
  assert.match(css,/object-fit:cover/);
+ assert.match(css,/-webkit-text-fill-color:#e1e8f3!important/);
+ assert.match(css,/#formCadastro #cadastroTermos/);
+ const acabamento=fonte('src/shared/acabamento-visual-loop.js');
+ assert.match(acabamento,/marca\.classList\.contains\('loop03-marca-entrada'\)/);
+ assert.match(acabamento,/querySelector\(':scope > \.loop03-marca-versao'\)/);
  assert.match(css,/#loop03AlterarFotoTopo\{order:1\}/);
  assert.match(css,/#loop03Sino\{[^}]*order:2/);
  assert.match(js,/fetch\('\/api\/contas\/foto-perfil'/);
