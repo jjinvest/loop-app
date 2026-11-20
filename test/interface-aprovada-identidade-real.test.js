@@ -120,7 +120,13 @@ test('interface aprovada e identidade real servidas da mesma origem protegida',a
  assert.doesNotMatch(script,/pedido de ensaio /);
  assert.match(script,/Sem crédito financeiro disponível/);
  assert.match(script,/indicacoesQualificadasEnsaio/);
- assert.doesNotMatch(script,/COMPRA_ENSAIO_SEM_QUALIFICACAO/);
+ assert.match(script,/COMPRA_ENSAIO_SEM_QUALIFICACAO/);
+ assert.match(script,/loop03-rede-pessoa-menu/);
+ assert.match(script,/loop03-rede-alocar-posicoes/);
+ assert.match(script,/for\(let n=1;n<=10;n\+\+\)/);
+ assert.match(script,/escolha\.disabled=true/);
+ assert.match(script,/posicionarCampoFotoPerfil\(true\)/);
+ assert.match(script,/posicionarCampoFotoPerfil\(false\)/);
  assert.match(script,/seletorPosicaoMotor/);
  assert.match(script,/const capacidade=d\.limitePosicoesAtivas/);
  assert.match(script,/Array\.from\(\{length:capacidade\}/);
