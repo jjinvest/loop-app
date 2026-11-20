@@ -433,9 +433,10 @@
   $('loop03RodapeCoroaIntegrado').hidden=true;
   $('loop03AbrirPerfil').disabled=true;
   fecharDadosRodapeReal();
-  $('loop03AlterarFotoTopo').disabled=true;
-  $('loop03ImagemFotoTopo').hidden=true;
-  $('loop03FotoSemImagem').hidden=false;
+  // O operador tem seu proprio retrato; nao copia foto de titular.
+  $('loop03AlterarFotoTopo').disabled=false;
+  limparFotoPerfilReal();
+  void atualizarFotoOperadorReal();
   $('painelVerificarEmail').hidden=true;
   $('painelIdentidadeTeste').hidden=true;
   $('conteudoConta').hidden=true;
@@ -881,9 +882,9 @@
   },15000);
     for(const id of ['atualizarTabuleiroIntegrado','atualizarPosicoes']){
    $(id)?.addEventListener('click',()=>{
-    // O mesmo relogio leva o OPERADOR ao controle ja existente.
+    // O relogio abre a configuracao SOBRE o proprio Tabuleiro, sem navegar.
     if(id==='atualizarTabuleiroIntegrado'&&modoOperadorAtual){
-     location.assign('/administrador#tituloMotorInternoAdmin');return;
+     void abrirControleRelogioOperador();return;
     }
     void carregarMotor();
    });
@@ -1129,6 +1130,189 @@
     painel.append(aviso);
    }
   }));
+ }
+
+ // Foto administrativa persistida sob a propria credencial de OPERADOR.
+ // Nunca reutiliza uma foto de outro titular nem grava no perfil do cliente.
+ async function obterCsrfOperadorReal(){
+  const r=await fetch('/api/admin/comercial/sessao',{
+   credentials:'same-origin',cache:'no-store'
+  });
+  if(!r.ok)throw Error('Sessão de operador indisponível.');
+  const d=await r.json();
+  if(d.area!=='ADMIN_COMERCIAL'||typeof d.csrfToken!=='string'||
+     !/^[A-Za-z0-9_-]{24,256}$/.test(d.csrfToken))
+   throw Error('Sessão administrativa inválida.');
+  return d.csrfToken;
+ }
+ async function atualizarFotoOperadorReal(){
+  if(!modoOperadorAtual)return;
+  const consulta=++numeroConsultaFotoReal;
+  try{
+   const r=await fetch('/api/admin/operador/foto-perfil',{
+    credentials:'same-origin',cache:'no-store'
+   });
+   if(consulta!==numeroConsultaFotoReal||!modoOperadorAtual)return;
+   if(r.status===404){limparFotoPerfilReal();return;}
+   if(!r.ok||!['image/jpeg','image/png','image/webp'].includes(
+      r.headers.get('content-type')?.split(';')[0]))
+    throw Error('Foto do operador indisponível.');
+   const conteudo=await r.blob();
+   if(consulta!==numeroConsultaFotoReal||!modoOperadorAtual)return;
+   if(conteudo.size<1||conteudo.size>3*1024*1024)
+    throw Error('Foto do operador inválida.');
+   const url='/api/admin/operador/foto-perfil?revisao='+Date.now();
+   const topo=$('loop03ImagemFotoTopo'),rodape=$('loop03ImagemFotoRodape');
+   for(const img of [topo,rodape])if(img){img.src=url;img.hidden=false;}
+   $('loop03FotoSemImagem').hidden=true;
+   $('loop03AvatarRodapeVazio').hidden=true;
+  }catch(e){if(modoOperadorAtual)dizer(e.message);}
+ }
+ async function salvarFotoOperadorReal(ev){
+  ev.preventDefault();
+  if(!modoOperadorAtual)return;
+  const input=$('arquivoFotoPerfil'),arquivo=input.files?.[0];
+  if(!arquivo)return;
+  const botao=$('loop03AlterarFotoTopo');
+  botao.disabled=true;
+  try{
+   const foto=await prepararFotoPerfilReal(arquivo);
+   const token=await obterCsrfOperadorReal();
+   const r=await fetch('/api/admin/operador/foto-perfil',{
+    method:'POST',credentials:'same-origin',cache:'no-store',
+    headers:{'Content-Type':foto.mime,'X-Loop-Admin-Csrf':token},
+    body:foto.dados
+   });
+   const d=await r.json().catch(()=>({}));
+   if(!r.ok||d.fotoSalva!==true)
+    throw Error(d.erro||'Não foi possível salvar sua foto.');
+   input.value='';
+   await atualizarFotoOperadorReal();
+   dizer('Foto do OPERADOR salva no escritório.');
+  }catch(e){dizer('Não foi possível salvar a foto: '+e.message);}
+  finally{botao.disabled=false;}
+ }
+ // Mesmo painel de configuracao do relogio aprovado: abre sobre o Tabuleiro,
+ // usa a politica real existente e nunca executa giros ou cria saldo.
+ async function abrirControleRelogioOperador(){
+  if(!modoOperadorAtual)return;
+  if($('loopOperadorCatracaDialog')?.open)return;
+  const modal=document.createElement('dialog');
+  modal.id='loopOperadorCatracaDialog';
+  modal.setAttribute('aria-label','Controlar a catraca do LOOP');
+  const fechar=document.createElement('button');
+  fechar.type='button';fechar.textContent='Fechar';
+  fechar.className='loop-operador-dialog-fechar';
+  fechar.addEventListener('click',()=>modal.close());
+  const titulo=document.createElement('h2');
+  titulo.textContent='Controlar a catraca do LOOP';
+  const form=document.createElement('form');
+  form.addEventListener('submit',e=>e.preventDefault());
+  const status=document.createElement('p');
+  status.className='mensagem-operador';status.setAttribute('role','status');
+  status.textContent='Consultando a programação existente…';
+  modal.append(fechar,titulo,form,status);
+  modal.addEventListener('close',()=>modal.remove(),{once:true});
+  document.body.append(modal);modal.showModal();
+  const criarCampo=(texto,tipo,valor,opcoes=[])=>{
+   const label=document.createElement('label');label.textContent=texto;
+   const input=document.createElement(tipo==='select'?'select':'input');
+   if(tipo==='select'){
+    for(const [value,desc]of opcoes){
+     const opt=document.createElement('option');
+     opt.value=value;opt.textContent=desc;input.append(opt);
+    }
+    input.value=valor;
+   }else{input.type=tipo;input.value=valor==null?'':String(valor);}
+   label.append(input);form.append(label);return input;
+  };
+  try{
+   const r=await fetch('/api/admin/loop/controle',{
+    credentials:'same-origin',cache:'no-store'
+   });
+   const d=await r.json().catch(()=>({}));
+   if(!r.ok||!Number.isSafeInteger(d.revisao)||
+      d.politicaOperacionalConfiguravel!==true||
+      d.financeiroReal!==false||
+      !['PAUSADA','MANUAL','AUTOMATICA'].includes(d.modo))
+    throw Error('Controle administrativo indisponível.');
+   const modo=criarCampo('Modo','select',d.modo,[
+    ['PAUSADA','Parada'],['MANUAL','Manual'],
+    ['AUTOMATICA','Agendada']
+   ]);
+   const inicio=criarCampo('Abertura','time',d.janelaInicio);
+   const fim=criarCampo('Fechamento','time',d.janelaFim);
+   const limite=criarCampo('Limite de segurança de giros (vazio = livre)',
+    'number',d.limiteDiario);
+   limite.min='1';limite.max='1000000';
+   const meta=criarCampo('Meta diária de centros (0 = sem meta)',
+    'number',d.metaCentrosDia);
+   meta.min='0';meta.max='1000000';meta.step='1';
+   const data=criarCampo('Data da meta (opcional)','date',
+    d.metaDataAlvo||'');
+   const previsao=document.createElement('p');
+   previsao.className='mensagem-operador';
+   previsao.setAttribute('role','status');
+   form.append(previsao);
+   const minutosDe=h=>/^(?:[01][0-9]|2[0-3]):[0-5][0-9]$/.test(h)?
+    Number(h.slice(0,2))*60+Number(h.slice(3)):null;
+   const conferir=()=>{
+    const n=Number(meta.value),a=minutosDe(inicio.value);
+    const b=minutosDe(fim.value);
+    if(a===null||b===null||meta.value.trim()===''||
+       !Number.isSafeInteger(n)||n<0||n>1000000){
+     previsao.textContent='Confira o horário e a meta diária.';return false;
+    }
+    if(n===0){
+     previsao.textContent='Sem meta: nenhuma luz automática programada.';
+     return true;
+    }
+    const duracao=((b-a+1440)%1440)||1440;
+    const segundos=Math.max(1,Math.round(duracao*60/(n*6)));
+    previsao.textContent=n+' centro(s) × 6 luzes = '+(n*6)+
+     ' luzes em '+duracao+' minutos. Intervalo médio: '+
+     Math.floor(segundos/60)+' min'+(segundos%60?
+      ' '+segundos%60+' s':'')+
+     ' por luz. Giros exigem caixa real comprovado.';
+    return true;
+   };
+   for(const input of [inicio,fim,meta])
+    input.addEventListener('input',conferir);
+   conferir();
+   const salvar=document.createElement('button');
+   salvar.type='button';salvar.textContent='Salvar programação';
+   form.append(salvar);
+   salvar.addEventListener('click',async()=>{
+    if(!conferir())return;
+    const limiteRaw=limite.value.trim();
+    if(limiteRaw!==''&&(!/^[1-9][0-9]*$/.test(limiteRaw)||
+       Number(limiteRaw)>1000000)){
+     status.textContent='Limite de giros inválido.';return;
+    }
+    salvar.disabled=true;status.textContent='Salvando programação…';
+    try{
+     const token=await obterCsrfOperadorReal();
+     const response=await fetch('/api/admin/loop/controle',{
+      method:'POST',credentials:'same-origin',cache:'no-store',
+      headers:{'Content-Type':'application/json','X-Loop-Admin-Csrf':token},
+      body:JSON.stringify({acao:'CONFIGURAR',modo:modo.value,
+       janelaInicio:inicio.value,janelaFim:fim.value,
+       limiteDiario:limiteRaw===''?null:Number(limiteRaw),
+       metaCentrosDia:Number(meta.value),metaDataAlvo:data.value||null,
+       revisaoEsperada:d.revisao,motivo:'AJUSTE_OPERACIONAL'})
+     });
+     const resultado=await response.json().catch(()=>({}));
+     if(!response.ok||resultado.alterado!==true)
+      throw Error(resultado.erro||'Programação não foi confirmada.');
+     status.textContent='Programação gravada no motor real. '+
+      'Giros financeiros continuam bloqueados até a comprovação do caixa.';
+     await carregarTabuleiroOperador();
+     // Revisao confirmada para nova gravacao sem recarregar a pagina.
+     d.revisao=resultado.revisao;
+    }catch(e){status.textContent='Alteração não realizada: '+e.message;}
+    finally{salvar.disabled=false;}
+   });
+  }catch(e){status.textContent='Não foi possível abrir: '+e.message;}
  }
  async function carregarTabuleiroOperador(){
   try{
@@ -1769,9 +1953,12 @@
  const botaoFotoReal=$('loop03AlterarFotoTopo');
  if(botaoFotoReal)botaoFotoReal.addEventListener('click',()=>
   $('arquivoFotoPerfil').click());
- $('formFotoPerfil').addEventListener('submit',ev=>void salvarFotoPerfilReal(ev));
+ $('formFotoPerfil').addEventListener('submit',ev=>void (
+  modoOperadorAtual?salvarFotoOperadorReal(ev):salvarFotoPerfilReal(ev)));
  $('arquivoFotoPerfil').addEventListener('change',ev=>{
-  if(ev.target.files?.length)void salvarFotoPerfilReal({preventDefault(){}});
+  if(ev.target.files?.length)void (modoOperadorAtual?
+   salvarFotoOperadorReal({preventDefault(){}}):
+   salvarFotoPerfilReal({preventDefault(){}}));
  });
 
  const fotoTopoReal=$('loop03ImagemFotoTopo');
@@ -1817,6 +2004,8 @@
    if(!campo)return;
    const mostrar=campo.type==='password';campo.type=mostrar?'text':'password';
    botao.setAttribute('aria-pressed',String(mostrar));
+   botao.setAttribute('aria-label',mostrar?'Ocultar senha':'Mostrar senha');
+   botao.title=mostrar?'Ocultar senha':'Mostrar senha';
   });
  }
  $('atualizarPedidos')?.addEventListener('click',()=>void carregarPedidos());
