@@ -412,7 +412,7 @@
     },
     {
       "path": "scripts/validar-identidade-real-navegador.js",
-      "sha": "768be6890a37f4de5687e749aded50fcc5ed01f0"
+      "sha": "dcd2a63823776cf498c31bb43e26281096d935c4"
     },
     {
       "path": "scripts/validar-jornada-loja-cores-browser.js",
@@ -424,7 +424,7 @@
     },
     {
       "path": "scripts/validar-operador-primeiro-produto-navegador.js",
-      "sha": "d4e2f6cd50f1b70ff387f4e2bb3aa3677abeb995"
+      "sha": "35faef07b778b54741aec51555ae21b165083125"
     },
     {
       "path": "scripts/validar-saques-ensaio-http.js",
@@ -464,7 +464,7 @@
     },
     {
       "path": "src/candidato/checkout-candidato-ui.html",
-      "sha": "fa7c4ed5f74db469944b53cad935d64d5bfb341f"
+      "sha": "2013671607e22a9a78718ad55c75e35f51b1457c"
     },
     {
       "path": "src/candidato/checkout-candidato-ui.js",
@@ -1252,7 +1252,7 @@
     },
     {
       "path": "src/producao/acabamento-botoes-real.css",
-      "sha": "f0990abd071b8ac430b9ddd462f6f52821caf501"
+      "sha": "9b5d18c03f1fd1b31f6937a73f4a801f9093071a"
     },
     {
       "path": "src/producao/aceite-posicao-azul-ensaio-sqlite.js",
@@ -1384,7 +1384,7 @@
     },
     {
       "path": "src/producao/interface-aprovada-contas.js",
-      "sha": "4779ba7ec1e0001b32fced262a754cee8f700206"
+      "sha": "0be1dd0c910db1a478520b19229882a1e48018aa"
     },
     {
       "path": "src/producao/interface-aprovada-loja.js",
@@ -1392,7 +1392,7 @@
     },
     {
       "path": "src/producao/interface-aprovada-loop.js",
-      "sha": "f90551be44a0ae0e96db5177ee7a940169c325d5"
+      "sha": "933215f19a99f543d862da87a44a3288e8e7e2d3"
     },
     {
       "path": "src/producao/jornada-comercial-unificada-ensaio-sqlite.js",
@@ -1704,7 +1704,7 @@
     },
     {
       "path": "src/shared/acabamento-visual-loop.js",
-      "sha": "3a0cdd3ad19aa0b5aa68e53e005494694640ed94"
+      "sha": "7db646c8f5932872b0eada9158f6bde6d02e11d0"
     },
     {
       "path": "src/shared/captcha-cadastro-sqlite.js",
@@ -2596,7 +2596,7 @@
     },
     {
       "path": "test/interface-aprovada-identidade-real.test.js",
-      "sha": "aca27db9cf583824570b146170f85a3762015814"
+      "sha": "4653ecd6b53e17bb6c7828dbbb7c8cfa99abd982"
     },
     {
       "path": "test/interface-loop-03.test.js",
@@ -3272,7 +3272,7 @@
     },
     {
       "path": "test/varredura-visual-publicacao-real.test.js",
-      "sha": "952e04dbf6fe50ca1e4b88c1c1a275ace2e55947"
+      "sha": "560cc4db8d6756ff67ad2ac943d76edb01134880"
     },
     {
       "path": "test/verificacao-email-conta-unica-candidata.test.js",
@@ -3524,6 +3524,66 @@
       "antes": "98bbcf52967ad539f108e94d070871fc92c0ecc0",
       "depois": "768be6890a37f4de5687e749aded50fcc5ed01f0",
       "objetivo": "Aguardar o evento nativo de fechamento do modal no teste PC/celular sem modificar a interface nem o motor."
+    },
+    {
+      "path": "src/candidato/checkout-candidato-ui.html",
+      "antes": "fa7c4ed5f74db469944b53cad935d64d5bfb341f",
+      "depois": "2013671607e22a9a78718ad55c75e35f51b1457c",
+      "objetivo": "Autorizacao visual explicita por fotos em 20/11/2026: remover textos duplicados de convite, simplificar aceite, melhorar contraste e quadrinho, fixar marca 3.0 prata e testar a interface compartilhada em todos os links PC/celular, sem outras alteracoes."
+    },
+    {
+      "path": "src/producao/interface-aprovada-loop.js",
+      "antes": "f90551be44a0ae0e96db5177ee7a940169c325d5",
+      "depois": "933215f19a99f543d862da87a44a3288e8e7e2d3",
+      "objetivo": "Autorizacao visual explicita por fotos em 20/11/2026: remover textos duplicados de convite, simplificar aceite, melhorar contraste e quadrinho, fixar marca 3.0 prata e testar a interface compartilhada em todos os links PC/celular, sem outras alteracoes."
+    },
+    {
+      "path": "src/producao/interface-aprovada-contas.js",
+      "antes": "4779ba7ec1e0001b32fced262a754cee8f700206",
+      "depois": "0be1dd0c910db1a478520b19229882a1e48018aa",
+      "objetivo": "Autorizacao visual explicita por fotos em 20/11/2026: remover textos duplicados de convite, simplificar aceite, melhorar contraste e quadrinho, fixar marca 3.0 prata e testar a interface compartilhada em todos os links PC/celular, sem outras alteracoes."
+    },
+    {
+      "path": "src/producao/acabamento-botoes-real.css",
+      "antes": "f0990abd071b8ac430b9ddd462f6f52821caf501",
+      "depois": "9b5d18c03f1fd1b31f6937a73f4a801f9093071a",
+      "objetivo": "Autorizacao visual explicita por fotos em 20/11/2026: remover textos duplicados de convite, simplificar aceite, melhorar contraste e quadrinho, fixar marca 3.0 prata e testar a interface compartilhada em todos os links PC/celular, sem outras alteracoes."
+    },
+    {
+      "path": "test/interface-aprovada-identidade-real.test.js",
+      "antes": "aca27db9cf583824570b146170f85a3762015814",
+      "depois": "4653ecd6b53e17bb6c7828dbbb7c8cfa99abd982",
+      "objetivo": "Autorizacao visual explicita por fotos em 20/11/2026: remover textos duplicados de convite, simplificar aceite, melhorar contraste e quadrinho, fixar marca 3.0 prata e testar a interface compartilhada em todos os links PC/celular, sem outras alteracoes."
+    },
+    {
+      "path": "scripts/validar-identidade-real-navegador.js",
+      "antes": "768be6890a37f4de5687e749aded50fcc5ed01f0",
+      "depois": "dcd2a63823776cf498c31bb43e26281096d935c4",
+      "objetivo": "Autorizacao visual explicita por fotos em 20/11/2026: remover textos duplicados de convite, simplificar aceite, melhorar contraste e quadrinho, fixar marca 3.0 prata e testar a interface compartilhada em todos os links PC/celular, sem outras alteracoes."
+    },
+    {
+      "path": "test/varredura-visual-publicacao-real.test.js",
+      "antes": "952e04dbf6fe50ca1e4b88c1c1a275ace2e55947",
+      "depois": "ec30288194e6dd4e3eea53e22e291dcca81e2aff",
+      "objetivo": "Atualizar a varredura protegida para exigir o novo comportamento aprovado: sem mensagens duplicadas de convite e preservacao de campo indicador, termos completos e controles existentes."
+    },
+    {
+      "path": "src/shared/acabamento-visual-loop.js",
+      "antes": "3a0cdd3ad19aa0b5aa68e53e005494694640ed94",
+      "depois": "7db646c8f5932872b0eada9158f6bde6d02e11d0",
+      "objetivo": "Corrigir causa da regressao do 3.0: preservar no DOM o span prateado original do login/cadastro, sem recriar a marca aprovada."
+    },
+    {
+      "path": "test/varredura-visual-publicacao-real.test.js",
+      "antes": "ec30288194e6dd4e3eea53e22e291dcca81e2aff",
+      "depois": "560cc4db8d6756ff67ad2ac943d76edb01134880",
+      "objetivo": "Proteger por testes a conservacao da marca prateada original e o checkbox e contraste aprovados."
+    },
+    {
+      "path": "scripts/validar-operador-primeiro-produto-navegador.js",
+      "antes": "d4e2f6cd50f1b70ff387f4e2bb3aa3677abeb995",
+      "depois": "35faef07b778b54741aec51555ae21b165083125",
+      "objetivo": "Corrigir exclusivamente um teste legado: vitrine real aprovada possui 5 abas x 40 produtos = 200; nao alterar a vitrine, o catalogo nem o motor."
     }
   ]
 }

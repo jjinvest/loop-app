@@ -104,8 +104,12 @@ test('interface aprovada e identidade real servidas da mesma origem protegida',a
  assert.match(paginaHtml,/id="loop03Sino"/);
  assert.match(paginaHtml,/id="loop03AlterarFotoTopo"/);
  assert.match(paginaHtml,/id="loopAcessoAdminMenu"/);
- assert.match(paginaHtml,/id="conviteIndicadorEntrada"/);
- assert.match(script,/Convite de @/);
+ assert.doesNotMatch(paginaHtml,/id="conviteIndicadorEntrada"|id="cadastroIndicadorAviso"/);
+ assert.doesNotMatch(script,/Convite de @|Você foi indicado por @/);
+ assert.match(paginaHtml,/Ler Termos de Uso e Privacidade/);
+ assert.match(paginaHtml,/Li e aceito a Política de Privacidade e os Termos de Uso apresentados acima\./);
+ assert.doesNotMatch(paginaHtml,/incluindo a informação de que o indicador|14 tópicos completos/);
+ assert.match(script,/tituloDocs\.textContent=\x27Ler Termos de Uso e Privacidade\x27/);
  assert.match(script,/de 6 eventos neste ciclo/);
  assert.doesNotMatch(script,/Posições de ensaio por compra:/);
  assert.doesNotMatch(script,/Indicação qualificada em ensaio/);

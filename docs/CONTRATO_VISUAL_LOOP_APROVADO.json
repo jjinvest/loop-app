@@ -1,11 +1,11 @@
 {
   "schema": 1,
   "política": "Toda alteração de HTML/CSS exige pedido visual explícito, escopo isolado e revisão do proprietário; é proibido atualizar hashes para esconder mudanças.",
-  "autorizaçãoAtual": "17/11/2026, pedido visual explícito: alterar SOMENTE a marca LOOP 3.0 no topo da tela de login/cadastro de akitemmloop.com.br, copiando o dourado metálico do LOOP e prata do 3.0 da segunda foto do Escritório Virtual; manter subtítulo, layout, campos, logo do banner e telas logadas intactos. Renovados apenas os hashes do HTML compartilhado e CSS integrado, sem alterar identidade, autenticação ou pagamentos.",
+  "autorizaçãoAtual": "20/11/2026: proprietário autorizou em capturas de tela do cadastro REAL: remover as duas mensagens redundantes 'Convite de @' e 'Você foi indicado por @' sem alterar o vínculo nem o campo 'Indicado por'; manter no formulário apenas o rótulo 'Ler Termos de Uso e Privacidade' e 'Li e aceito a Política de Privacidade e os Termos de Uso apresentados acima.'; realçar a explicação 'Preencha seus dados...' e o quadrinho de aceite; fixar SOMENTE o '3.0' da marca de entrada em prata e o LOOP em dourado. Aplicar à mesma interface do domínio e dos convites em PC e celular. Não alterar tabuleiro, loja, menus, fotos, contratos integrais nem regras financeiras.",
   "arquivos": [
     {
       "path": "src/candidato/checkout-candidato-ui.html",
-      "sha": "fa7c4ed5f74db469944b53cad935d64d5bfb341f"
+      "sha": "2013671607e22a9a78718ad55c75e35f51b1457c"
     },
     {
       "path": "src/candidato/escritorio-admin-candidato-ui.css",
@@ -120,6 +120,7 @@
     "16/11/2026: pedido explícito em fotos e mensagens para refinar botões usando Ofertas como referência, corrigir sobreposição de Minha conta, remover Ver todos e capacidade da vitrine, alinhar sino e restaurar círculos LOOP no topo da AKITEMM. Hash renovado exclusivamente para src/laboratorio/loja-cliente-demo.css, após revisão do escopo.",
     "16/11/2026: proprietário solicitou explicitamente uniformizar LOOP 3.0 prateado da tela aprovada na loja e no cadastro/login. Autorização restrita aos dois CSS respectivos, sem mudar fluxo de autenticação.",
     "17/11/2026: pedido explícito para manter Todos amarelo aceso e Ofertas dourado em todos os estados, destacando seleção só pela borda. Diferença visual auditada: commit 51f04214 acrescentou exclusivamente regras de #akitemmFiltroTodos e #akitemmFiltroOfertas ao final de src/laboratorio/loja-cliente-demo.css. Os outros 23 arquivos protegidos preservados; hash do único CSS alterado atualizado por autorização expressa, mantendo a trava visual. Navegação operador corrigida exclusivamente no JS do admin e no gateway, não no HTML aprovado.",
-    "17/11/2026, 19h54 UTC: proprietário enviou duas fotos, pediu expressamente para igualar a cor do título LOOP 3.0 do topo da primeira tela ao dourado LOOP e prata 3.0 da segunda tela, depois confirmou 'Faz'. Alterados somente span da marca no header e regras CSS estritamente escopadas ao cabeçalho não logado. Os demais 22 arquivos e funcionalidades permanecem protegidos."
+    "17/11/2026, 19h54 UTC: proprietário enviou duas fotos, pediu expressamente para igualar a cor do título LOOP 3.0 do topo da primeira tela ao dourado LOOP e prata 3.0 da segunda tela, depois confirmou 'Faz'. Alterados somente span da marca no header e regras CSS estritamente escopadas ao cabeçalho não logado. Os demais 22 arquivos e funcionalidades permanecem protegidos.",
+    "20/11/2026: proprietário autorizou em capturas de tela do cadastro REAL: remover as duas mensagens redundantes 'Convite de @' e 'Você foi indicado por @' sem alterar o vínculo nem o campo 'Indicado por'; manter no formulário apenas o rótulo 'Ler Termos de Uso e Privacidade' e 'Li e aceito a Política de Privacidade e os Termos de Uso apresentados acima.'; realçar a explicação 'Preencha seus dados...' e o quadrinho de aceite; fixar SOMENTE o '3.0' da marca de entrada em prata e o LOOP em dourado. Aplicar à mesma interface do domínio e dos convites em PC e celular. Não alterar tabuleiro, loja, menus, fotos, contratos integrais nem regras financeiras."
   ]
 }
