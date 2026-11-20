@@ -35,6 +35,7 @@ const {TABELAS_COMERCIAIS,validarRecuperacaoComercial}=
  require('./validacao-recuperacao-comercial');
 const {TABELAS_TESOURARIA_ENSAIO,TesourariaModularEnsaioSQLite}=
  require('./tesouraria-modular-ensaio-sqlite');
+const TABELA_FOTO_OPERADOR_REAL='loop_real_operador_foto_perfil';
 const MAGIC=Buffer.from('LOOPREALBKP1','ascii');
 const HEADER=40,TAG=16;
 const TABELAS=Object.freeze([
@@ -103,7 +104,7 @@ function validarIdentidade(arquivo){
    ...TABELAS_TESOURARIA_ENSAIO,
    ...TABELAS_PROMOCAO_ENSAIO,...TABELAS_LOTES_ENSAIO,
    ...TABELAS_PREFLIGHT,...TABELAS_RECUPERACAO,...TABELAS_LIVRO,
-   ...TABELAS_OUTBOX_COMPRA];
+   ...TABELAS_OUTBOX_COMPRA,TABELA_FOTO_OPERADOR_REAL];
   if(lista.some(x=>!todos.includes(x)))
    falha('BACKUP_IDENTIDADE_NAO_COBRE_TABELAS_COMERCIAIS');
   // A foto real integra o MESMO backup cifrado e não pode perder o titular.
@@ -121,6 +122,20 @@ function validarIdentidade(arquivo){
     ' f LEFT JOIN loop_real_contas c ON c.id=f.titular_id WHERE c.id IS NULL'
    ).get().n;
    if(semTitular)falha('BACKUP_FOTO_PERFIL_REAL_TITULAR_INCONSISTENTE');
+  }
+  // Avatar do OPERADOR: registro proprio e opcional em backups antigos,
+  // coberto pelo mesmo backup cifrado e validado por digest na restauracao.
+  if(lista.includes(TABELA_FOTO_OPERADOR_REAL)){
+   const fotos=b.prepare(
+    'SELECT id,mime,dados,sha256,atualizado_em FROM '+TABELA_FOTO_OPERADOR_REAL
+   ).all();
+   if(fotos.length>1||fotos.some(f=>
+     f.id!==1||!['image/jpeg','image/png','image/webp'].includes(f.mime)||
+     !(f.dados instanceof Uint8Array)||f.dados.length<1||
+     f.dados.length>3*1024*1024||
+     !Number.isSafeInteger(f.atualizado_em)||f.atualizado_em<1||
+     createHash('sha256').update(f.dados).digest('hex')!==f.sha256))
+    falha('BACKUP_FOTO_OPERADOR_REAL_DIVERGENTE');
   }
   const temEnsaio=TABELAS_TESOURARIA_ENSAIO.some(x=>lista.includes(x));
   if(temEnsaio){
