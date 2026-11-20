@@ -38,7 +38,7 @@ test('nick e senha UNICOS: OPERADOR entra na MESMA tela LOOP e nao vai direto a 
  assert.doesNotMatch(js,/painelConta\(\{nick:'OPERADOR'/);
  assert.match(js,/const indicadores=document\.querySelector\('\.loop03-indicadores'\)/);
  assert.match(js,/\$\('loop03AbrirPerfil'\)\.disabled=true/);
- assert.match(js,/\$\('loop03AlterarFotoTopo'\)\.disabled=true/);
+ assert.match(js,/\$\('loop03AlterarFotoTopo'\)\.disabled=false/);
 });
 test('OPERADOR abre tabuleiro existente com leitura propria e sem contas nem giros',()=>{
  const js=codigo('src/producao/interface-aprovada-contas.js');
