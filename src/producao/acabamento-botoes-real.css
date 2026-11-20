@@ -103,3 +103,32 @@ body.loop03-modo-operador .loop03-indicadores[hidden]{
 body.loop03-modo-operador #loop03AlterarFotoTopo:disabled{
  cursor:default;opacity:.85;
 }
+
+
+/* Janela de configuracao do relogio do OPERADOR sobre o Tabuleiro aprovado.
+   Nao altera HTML, botoes nem estilos das telas do cliente. */
+#loopOperadorCatracaDialog{
+ box-sizing:border-box;width:min(92vw,530px);max-height:85dvh;
+ overflow:auto;border:1px solid #c5a15e;border-radius:15px;
+ background:#151921;color:#f5f1e8;padding:20px;
+}
+#loopOperadorCatracaDialog::backdrop{background:#000b}
+#loopOperadorCatracaDialog h2{margin:0 0 15px;color:#dfbf76}
+#loopOperadorCatracaDialog form{display:grid;gap:10px}
+#loopOperadorCatracaDialog label{display:grid;gap:5px;margin:0}
+#loopOperadorCatracaDialog input,
+#loopOperadorCatracaDialog select{
+ box-sizing:border-box;width:100%;background:#282e37;color:white;
+ padding:9px;border:1px solid #777;border-radius:7px;font:inherit;
+}
+#loopOperadorCatracaDialog button{
+ background:#c5a15e;color:#131313;border:0;border-radius:8px;
+ padding:9px;font:inherit;font-weight:bold;
+}
+#loopOperadorCatracaDialog button:disabled{opacity:.6}
+#loopOperadorCatracaDialog .loop-operador-dialog-fechar{
+ display:block;margin-left:auto;margin-bottom:12px;
+}
+#loopOperadorCatracaDialog .mensagem-operador{
+ min-height:20px;color:#f1d69e;white-space:pre-wrap;
+}
