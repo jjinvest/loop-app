@@ -1194,10 +1194,18 @@
   titulo.textContent='Controlar a catraca do LOOP';
   const form=document.createElement('form');
   form.addEventListener('submit',e=>e.preventDefault());
+  const resumo=document.createElement('p');
+  resumo.className='loop-operador-catraca-resumo';
+  resumo.setAttribute('role','status');
+  resumo.textContent='Consultando o ritmo da catraca…';
   const status=document.createElement('p');
   status.className='mensagem-operador';status.setAttribute('role','status');
-  status.textContent='Consultando a programação existente…';
-  modal.append(fechar,titulo,form,status);
+  status.textContent='';
+  const rodape=document.createElement('div');
+  rodape.className='loop-operador-catraca-rodape';
+  rodape.append(status);
+  // O resumo e o salvar ficam visiveis; apenas os campos rolam no celular.
+  modal.append(fechar,titulo,resumo,form,rodape);
   modal.addEventListener('close',()=>modal.remove(),{once:true});
   document.body.append(modal);modal.showModal();
   const criarCampo=(texto,tipo,valor,opcoes=[])=>{
@@ -1236,38 +1244,59 @@
    meta.min='0';meta.max='1000000';meta.step='1';
    const data=criarCampo('Data da meta (opcional)','date',
     d.metaDataAlvo||'');
-   const previsao=document.createElement('p');
-   previsao.className='mensagem-operador';
-   previsao.setAttribute('role','status');
-   form.append(previsao);
    const minutosDe=h=>/^(?:[01][0-9]|2[0-3]):[0-5][0-9]$/.test(h)?
     Number(h.slice(0,2))*60+Number(h.slice(3)):null;
+   const duracaoBonita=segundos=>{
+    const min=Math.floor(segundos/60),seg=segundos%60;
+    return min+' min'+(seg?' '+seg+' s':'');
+   };
    const conferir=()=>{
     const n=Number(meta.value),a=minutosDe(inicio.value);
     const b=minutosDe(fim.value);
     if(a===null||b===null||meta.value.trim()===''||
        !Number.isSafeInteger(n)||n<0||n>1000000){
-     previsao.textContent='Confira o horário e a meta diária.';return false;
-    }
-    if(n===0){
-     previsao.textContent='Sem meta: nenhuma luz automática programada.';
-     return true;
+     resumo.textContent='Confira o horário e a meta diária.';return false;
     }
     const duracao=((b-a+1440)%1440)||1440;
+    if(n===0){
+     resumo.textContent='SEM META DIÁRIA\nTurno: '+duracao+
+      ' min. Nenhuma luz automática programada.';return true;
+    }
     const segundos=Math.max(1,Math.round(duracao*60/(n*6)));
-    previsao.textContent=n+' centro(s) × 6 luzes = '+(n*6)+
-     ' luzes em '+duracao+' minutos. Intervalo médio: '+
-     Math.floor(segundos/60)+' min'+(segundos%60?
-      ' '+segundos%60+' s':'')+
-     ' por luz. Giros exigem caixa real comprovado.';
+    const porCentro=Math.max(1,Math.round(duracao*60/n));
+    let mensagem=n+' centros × 6 = '+(n*6)+' luzes\n'+
+     'Cada luz: '+duracaoBonita(segundos)+
+     ' · Cada centro: '+duracaoBonita(porCentro)+
+     '\nTurno: '+inicio.value+'–'+fim.value+' ('+duracao+' min)';
+    if(modo.value==='PAUSADA'){
+     mensagem+='\nCATRACA PARADA — selecione Agendada e salve para iniciar a previsão.';
+    }else if(modo.value==='MANUAL'){
+     mensagem+='\nModo Manual: não há contagem automática.';
+    }else{
+     // Só a agenda GRAVADA e ativa fornece uma próxima luz do servidor.
+     const original=modo.value===d.modo&&inicio.value===d.janelaInicio&&
+      fim.value===d.janelaFim&&n===d.metaCentrosDia&&
+      (data.value||null)===(d.metaDataAlvo||null);
+     if(original&&Number.isSafeInteger(d.proximaLuzPrevistaEmMs)&&
+        d.proximaLuzPrevistaEmMs>d.agoraServidorMs){
+      const horario=new Date(d.proximaLuzPrevistaEmMs).toLocaleTimeString(
+       'pt-BR',{timeZone:'America/Sao_Paulo',hour:'2-digit',
+        minute:'2-digit',second:'2-digit'});
+      mensagem+='\nPróxima luz prevista: '+horario+' (Brasília).';
+     }else{
+      mensagem+='\nPróxima luz prevista: após salvar, dentro do turno.';
+     }
+    }
+    mensagem+='\nSem caixa real comprovado: nenhum giro autorizado.';
+    resumo.textContent=mensagem;
     return true;
    };
-   for(const input of [inicio,fim,meta])
+   for(const input of [modo,inicio,fim,meta,data])
     input.addEventListener('input',conferir);
    conferir();
    const salvar=document.createElement('button');
    salvar.type='button';salvar.textContent='Salvar programação';
-   form.append(salvar);
+   rodape.prepend(salvar);
    salvar.addEventListener('click',async()=>{
     if(!conferir())return;
     const limiteRaw=limite.value.trim();
@@ -1290,11 +1319,26 @@
      const resultado=await response.json().catch(()=>({}));
      if(!response.ok||resultado.alterado!==true)
       throw Error(resultado.erro||'Programação não foi confirmada.');
-     status.textContent='Programação gravada no motor real. '+
-      'Giros financeiros continuam bloqueados até a comprovação do caixa.';
+     const confirmacao=await fetch('/api/admin/loop/controle',{
+      credentials:'same-origin',cache:'no-store'
+     });
+     const atual=await confirmacao.json().catch(()=>({}));
+     if(!confirmacao.ok||atual.modo!==modo.value||
+       atual.janelaInicio!==inicio.value||atual.janelaFim!==fim.value||
+       atual.metaCentrosDia!==Number(meta.value)||
+       (atual.limiteDiario??null)!==(limiteRaw===''?null:Number(limiteRaw))||
+       (atual.metaDataAlvo??null)!==(data.value||null))
+      throw Error('Programação não confirmada na leitura do servidor.');
+     d.revisao=atual.revisao;
+     d.modo=atual.modo;d.janelaInicio=atual.janelaInicio;
+     d.janelaFim=atual.janelaFim;d.metaCentrosDia=atual.metaCentrosDia;
+     d.metaDataAlvo=atual.metaDataAlvo;
+     d.agoraServidorMs=atual.agoraServidorMs;
+     d.proximaLuzPrevistaEmMs=atual.proximaLuzPrevistaEmMs;
+     conferir();
+     status.textContent='Programação salva e confirmada. '+
+      'Giros exigem saldo real comprovado.';
      await carregarTabuleiroOperador();
-     // Revisao confirmada para nova gravacao sem recarregar a pagina.
-     d.revisao=resultado.revisao;
     }catch(e){status.textContent='Alteração não realizada: '+e.message;}
     finally{salvar.disabled=false;}
    });
