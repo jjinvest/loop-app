@@ -127,7 +127,23 @@
    e.status=res.status;throw e;}
   return dados;
  }
+ // O input da foto vive originalmente em Minha Conta. Como essa aba e
+ // protegida no perfil OPERADOR, no Android o seletor de arquivo nao abre
+ // quando o input permanece dentro de um ancestral display:none.
+ // Deslocar o MESMO input (mantendo listeners) para fora da aba durante a
+ // sessao administrativa e devolve-lo ao formulario no modo cliente.
+ function posicionarCampoFotoPerfil(operador){
+  const input=$('arquivoFotoPerfil'),form=$('formFotoPerfil');
+  if(operador){
+   if(input.parentElement!==document.body)document.body.append(input);
+   input.tabIndex=-1;
+  }else{
+   if(input.parentElement!==form)form.insertBefore(input,$('avisoFotoPerfil'));
+   input.removeAttribute('tabindex');
+  }
+ }
  function mostrarLogin(t){
+  posicionarCampoFotoPerfil(false);
   tela=t;modoOperadorAtual=false;
   document.body.classList.remove('loop03-modo-operador');
   const acoes=$('loopOperadorAcoes');if(acoes)acoes.hidden=true;
@@ -410,6 +426,7 @@
  // Somente uma sessao administrativa autenticada abre este modo.
  function abrirPainelOperador(){
   modoOperadorAtual=true;csrf=null;
+  posicionarCampoFotoPerfil(true);
   for(const id of ['painelLogin','painelCadastro','painelRecuperacao'])
    $(id).hidden=true;
   $('painelConta').hidden=false;
@@ -449,6 +466,7 @@
   void atualizarAtalhoOperadorReal();
  }
  function painelConta(s){
+  posicionarCampoFotoPerfil(false);
   modoOperadorAtual=false;
   document.body.classList.remove('loop03-modo-operador');
   const acoes=$('loopOperadorAcoes');if(acoes)acoes.hidden=true;
@@ -1159,8 +1177,10 @@
   if(!modoOperadorAtual)return;
   const input=$('arquivoFotoPerfil'),arquivo=input.files?.[0];
   if(!arquivo)return;
-  const botao=$('loop03AlterarFotoTopo');
+  const botao=$('loop03AlterarFotoTopo'),status=$('statusFotoPerfil');
+  if(botao.disabled)return;
   botao.disabled=true;
+  status.textContent='Preparando foto do OPERADOR...';
   try{
    const foto=await prepararFotoPerfilReal(arquivo);
    const token=await obterCsrfOperadorReal();
@@ -1174,9 +1194,11 @@
     throw Error(d.erro||'Não foi possível salvar sua foto.');
    input.value='';
    await atualizarFotoOperadorReal();
-   dizer('Foto do OPERADOR salva no escritório.');
-  }catch(e){dizer('Não foi possível salvar a foto: '+e.message);}
-  finally{botao.disabled=false;}
+   status.textContent='Foto do OPERADOR salva no escritório.';
+   dizer(status.textContent);
+  }catch(e){
+   avisarFalhaFotoReal('Não foi possível salvar a foto: '+explicarFalhaFotoReal(e));
+  }finally{botao.disabled=false;}
  }
  // Mesmo painel de configuracao do relogio aprovado: abre sobre o Tabuleiro,
  // usa a politica real existente e nunca executa giros ou cria saldo.
