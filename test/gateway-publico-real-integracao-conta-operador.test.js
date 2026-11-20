@@ -19,6 +19,8 @@ const {ControleEconomicoLojaSQLite}=
  require('../src/producao/controle-economico-loja-sqlite');
 const {criarAppIdentidadeLoop}=
  require('../src/producao/servidor-identidade-loop');
+const {MotorLoopIntegradoSQLite}=
+ require('../src/producao/motor-loop-integrado-sqlite');
 const {renderizarInterfaceAprovada,renderizarLojaAprovada}=
  require('../src/producao/interface-aprovada-loop');
 const REAL='https://loop.com.br';
@@ -44,9 +46,10 @@ test('gateway e identidade reais end-to-end: mesmas telas, cookies, CSRF e opera
   banco,distribuidorHomologado:()=>false
  });
  const controle=new ControleEconomicoLojaSQLite({banco});
+ const motorLoop=new MotorLoopIntegradoSQLite({banco});
  const app=criarAppIdentidadeLoop({
   contas,origemHttps:REAL,permitirCadastro:false,
-  adminComercial:{sessoes,catalogo,controle},
+  adminComercial:{sessoes,catalogo,controle},motorLoop,
   catalogoVitrine:{banco,listarVitrinePreparacao:({limite})=>{
    assert.equal(limite,200);
    return [{produtoId:'produto-real',
@@ -133,6 +136,7 @@ test('gateway e identidade reais end-to-end: mesmas telas, cookies, CSRF e opera
  assert.equal(produtos.checkoutReal,false);
  assert.equal((await get('/api/operador/estado',{Cookie:cookieCliente})).status,200);
  assert.equal((await get('/api/admin/comercial/sessao',{Cookie:cookieCliente})).status,401);
+ assert.equal((await get('/api/admin/operador/foto-perfil')).status,401);
  // Testar o envio de formulario com HTTP puro: fetch do Node
  // força Sec-Fetch-Mode=cors, e nao simula navegacao de navegador.
  const enviarFormulario=({origin,site='same-origin',mode='navigate',
@@ -188,6 +192,26 @@ test('gateway e identidade reais end-to-end: mesmas telas, cookies, CSRF e opera
  const admin=await get('/api/admin/comercial/sessao',{Cookie:cookieOp});
  assert.equal(admin.status,200);
  assert.ok((await admin.json()).csrfToken.length>=24);
+ // Foto OPERADOR nao pode ler/copiar a foto de um cliente autenticado.
+ const fstatus=await get('/api/admin/operador/foto-perfil',{Cookie:cookieOp});
+ assert.equal(fstatus.status,404);
+ const foto=Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAIAAAACCAIAAAD91JpzAAAAEklEQVR4nGP4z8DAAMIM/4EAAB/uBfsL2WiLAAAAAElFTkSuQmCC','base64');
+ const gravarFoto=(cookie,token)=>fetch(base+'/api/admin/operador/foto-perfil',{
+  method:'POST',
+  headers:{Cookie:cookie,Origin:base,'Content-Type':'image/png',
+   'X-Loop-Admin-Csrf':token},
+  body:foto
+ });
+ assert.equal((await gravarFoto(cookieCliente,(await admin.clone().json()).csrfToken)).status,401);
+ const adminSessao=await (await get('/api/admin/comercial/sessao',{Cookie:cookieOp})).json();
+ assert.equal((await gravarFoto(cookieOp,'invalido')).status,403);
+ assert.equal((await gravarFoto(cookieOp,adminSessao.csrfToken)).status,201);
+ const retrato=await get('/api/admin/operador/foto-perfil',{Cookie:cookieOp});
+ assert.equal(retrato.status,200);
+ assert.match(retrato.headers.get('content-type'),/^image\/png/);
+ assert.ok((await retrato.arrayBuffer()).byteLength>30);
+ assert.equal((await get('/api/admin/operador/foto-perfil',{Cookie:cookieCliente})).status,401);
+ assert.equal((await get('/api/contas/foto-perfil',{Cookie:cookieCliente})).status,404);
  assert.equal((await get('/api/contas/me',{Cookie:cookieOp})).status,401);
  assert.equal((await get('/api/loja/pedidos',{Cookie:cookieOp})).status,401);
  assert.equal((await get('/loja',{Cookie:cookieOp})).status,200);
