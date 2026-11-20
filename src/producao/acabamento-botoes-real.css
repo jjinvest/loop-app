@@ -132,3 +132,37 @@ body.loop03-modo-operador #loop03AlterarFotoTopo:disabled{
 #loopOperadorCatracaDialog .mensagem-operador{
  min-height:20px;color:#f1d69e;white-space:pre-wrap;
 }
+
+
+/* Acabamento autorizado do cadastro REAL, idêntico nos links base e /escritorio/NICK:
+   manter o LOOP dourado e restaurar somente "3.0" prateado. */
+body:not(.loop03-logado) > .cabecalho .marca.loop03-marca-entrada .loop03-marca-versao{
+ background:none!important;
+ background-image:none!important;
+ -webkit-background-clip:initial!important;
+ background-clip:initial!important;
+ -webkit-text-fill-color:#e1e8f3!important;
+ color:#e1e8f3!important;
+ text-shadow:0 1px 0 #fff7,0 2px 3px #27313e!important;
+ -webkit-text-stroke:.25px #f2f6fe;
+}
+/* Dar a orientacao de cadastro a mesma leitura clara dos textos principais. */
+body:not(.loop03-logado) #painelCadastro > p.subtexto{
+ color:#eee9e1!important;
+ opacity:1!important;
+}
+/* Checkbox de aceite legível e arredondado, sem deslocar o texto no Android. */
+body:not(.loop03-logado) #formCadastro .aceite-documentos-cadastro{
+ display:flex;align-items:flex-start;gap:12px;
+ color:#f3e9d7;line-height:1.48;font-weight:650;
+ margin:13px 0 18px;cursor:pointer;
+}
+body:not(.loop03-logado) #formCadastro #cadastroTermos{
+ flex:0 0 25px;width:25px;height:25px;min-width:25px;
+ padding:0;margin:2px 0 0;cursor:pointer;
+ border:2px solid #cbaa6c;border-radius:7px;
+ background-color:#282723;accent-color:#d2ac5f;
+}
+body:not(.loop03-logado) #formCadastro #cadastroTermos:focus-visible{
+ outline:2px solid #fff1be;outline-offset:3px;
+}
