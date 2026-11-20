@@ -65,8 +65,13 @@ test('entrada real exibe mercadoria publicada do acervo de fotos pelo mesmo logi
  t.after(()=>new Promise(ok=>server.close(ok)));
  const base='http://127.0.0.1:'+server.address().port;
  const get=(p,headers={})=>fetch(base+p,{headers});
- assert.equal((await get('/api/loja/catalogo')).status,401);
- assert.equal((await get('/loja')).status,401);
+ // Loja e catalogo sao publicos; pedidos e identidade seguem privados.
+ const catalogoPublico=await get('/api/loja/catalogo');
+ assert.equal(catalogoPublico.status,200);
+ assert.equal((await catalogoPublico.json()).checkoutReal,false);
+ assert.equal((await get('/loja')).status,200);
+ assert.equal((await get('/api/contas/me')).status,401);
+ assert.equal((await get('/api/loja/pedidos')).status,401);
  assert.equal(await (await get('/escritorio')).status,200);
  const documentos=contas.documentos();
  await contas.cadastrar({
@@ -103,7 +108,8 @@ test('entrada real exibe mercadoria publicada do acervo de fotos pelo mesmo logi
  assert.equal(d.produtos[0].fotos.length,1);
  assert.equal(d.produtos[0].fotos[0].url,
   '/api/loja/produtos/camiseta-preta/foto/1');
- assert.equal((await get(d.produtos[0].fotos[0].url)).status,401);
+ assert.equal((await get(d.produtos[0].fotos[0].url)).status,200,
+  'foto publicada e publica; rascunhos administrativos seguem protegidos');
  const imagem=await get(d.produtos[0].fotos[0].url,params);
  assert.equal(imagem.status,200);
  assert.match(imagem.headers.get('content-type'),/^image\/png/);
