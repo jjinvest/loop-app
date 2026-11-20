@@ -40,6 +40,21 @@ test('nick e senha UNICOS: OPERADOR entra na MESMA tela LOOP e nao vai direto a 
  assert.match(js,/\$\('loop03AbrirPerfil'\)\.disabled=true/);
  assert.match(js,/\$\('loop03AlterarFotoTopo'\)\.disabled=true/);
 });
+test('OPERADOR abre tabuleiro existente com leitura propria e sem contas nem giros',()=>{
+ const js=codigo('src/producao/interface-aprovada-contas.js');
+ const backend=codigo('src/producao/gateway-admin-comercial.js');
+ assert.match(js,/const habilitada=resumo\|\|tab\.id==='abaTabuleiro'/);
+ assert.match(js,/if\(modoOperadorAtual\)return carregarTabuleiroOperador\(\)/);
+ assert.match(js,/fetch\('\/api\/admin\/loop\/estado'/);
+ assert.match(js,/fetch\('\/api\/admin\/loop\/controle'/);
+ assert.match(js,/controle\.autorizacaoFinanceiraDosGiros!==false/);
+ assert.match(js,/!Array\.isArray\(d\.minhasPosicoes\)\|\|d\.minhasPosicoes\.length!==0/);
+ assert.match(js,/visualTabuleiro\.preencherVaga\('tabuleiroMotorCentro'/);
+ assert.match(backend,/app\.get\('\/api\/admin\/loop\/estado',proteger/);
+ assert.match(backend,/app\.get\('\/api\/admin\/loop\/controle',proteger/);
+ assert.doesNotMatch(js,/fetch\('\/api\/admin\/loop\/controle',\{method:'POST'/);
+});
+
 test('link da central aparece no rodape de AMBOS os produtos, so para operador',()=>{
  const html=renderizarLojaAprovada();
  assert.match(html,/<footer class="akitemm-rodape">/);
