@@ -484,7 +484,7 @@
     },
     {
       "path": "src/candidato/escritorio-cliente-integrado.css",
-      "sha": "680ca1a48dd69f7d35a1ade028c79093f0d398af"
+      "sha": "8d277e4d1c694d7eb4e998278412b4ad2bc981b5"
     },
     {
       "path": "src/candidato/operador-em-tela.js",
@@ -1252,7 +1252,7 @@
     },
     {
       "path": "src/producao/acabamento-botoes-real.css",
-      "sha": "d1a7d89ed803c1a85dbd12ac50ef50431e9e29da"
+      "sha": "f0990abd071b8ac430b9ddd462f6f52821caf501"
     },
     {
       "path": "src/producao/aceite-posicao-azul-ensaio-sqlite.js",
@@ -3494,6 +3494,18 @@
       "antes": "a2609ce5cd9f92c752a8c2f33f5e6eb8b346eb12",
       "depois": "20fa4b602f3036b9431db7e851fbd162947caf74",
       "objetivo": "Restaurar modal do relogio no tabuleiro, olhinho visivel e avatar operador proprio/seguro, sem alterar demais visuais, contas de cliente ou giros financeiros."
+    },
+    {
+      "path": "src/candidato/escritorio-cliente-integrado.css",
+      "antes": "680ca1a48dd69f7d35a1ade028c79093f0d398af",
+      "depois": "8d277e4d1c694d7eb4e998278412b4ad2bc981b5",
+      "objetivo": "Reverter integralmente a folha visual aprovada; nenhuma mudanca em layout protegido."
+    },
+    {
+      "path": "src/producao/acabamento-botoes-real.css",
+      "antes": "d1a7d89ed803c1a85dbd12ac50ef50431e9e29da",
+      "depois": "f0990abd071b8ac430b9ddd462f6f52821caf501",
+      "objetivo": "Estilo exclusivo da janela do relogio do OPERADOR no acabamento nao protegido, sem afetar telas existentes."
     }
   ]
 }
