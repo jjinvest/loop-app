@@ -14,12 +14,16 @@ test('varredura: quadro extra nao reaparece; sino, foto e abas originais ficam',
  for(const id of ['loop03Sino','loop03PainelAvisos','loop03AlterarFotoTopo',
   'loop03ImagemFotoTopo','arquivoFotoPerfil','formFotoPerfil',
   'loop03ImagemFotoRodape','abaTabuleiro','abaPosicoes',
-  'loopAcessoAdminMenu','conviteIndicadorEntrada','cadastroIndicador'])
+  'loopAcessoAdminMenu','cadastroIndicador'])
   assert.match(html,new RegExp('id="'+id+'"'));
  assert.match(html,/id="loopAcessoAdminMenu"[^>]*hidden/);
  assert.doesNotMatch(html,/id="acessoAdminLogin"/,
   'operador usa a caixa unica de nick e senha, sem segundo login');
  assert.match(html,/id="cadastroIndicador"[^>]*readonly/);
+ assert.doesNotMatch(html,/id="conviteIndicadorEntrada"|id="cadastroIndicadorAviso"/);
+ assert.match(html,/Ler Termos de Uso e Privacidade/);
+ assert.match(html,/Li e aceito a Política de Privacidade e os Termos de Uso apresentados acima\./);
+ assert.doesNotMatch(html,/incluindo a informação de que o indicador/);
  assert.match(html,/href="\/loja"/);
  assert.doesNotMatch(html,/href="\/staging\/loja"/);
 });
@@ -37,7 +41,7 @@ test('varredura: foto redonda, sininho abaixo, sem alerta de foto desativada',()
 });
 test('varredura: VILELA no convite e atalho do admin exige operador real',()=>{
  const js=fonte('src/producao/interface-aprovada-contas.js');
- assert.match(js,/Convite de @'\+nickVisivel\(indicadorNick\)/);
+ assert.doesNotMatch(js,/Convite de @|Você foi indicado por @/);
  assert.match(js,/campoIndicador\.value=indicadorNick\?nickVisivel\(indicadorNick\)/);
  assert.match(js,/const liberado=d\?\.operador===true/);
  assert.ok(js.includes("$('loopAcessoAdminMenu')"));
