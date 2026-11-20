@@ -442,15 +442,20 @@
   const acoes=$('loopOperadorAcoes');if(acoes)acoes.hidden=false;
   const indicadores=document.querySelector('.loop03-indicadores');
   if(indicadores)indicadores.hidden=true;
+  // Abre somente a aba operacional existente; nao concede identidade de cliente.
+  posicoesResumoReal=[];posicaoSelecionada='';
+  $('posicoesPainel').replaceChildren();
+  prepararAbasMotor();
   for(const tab of document.querySelectorAll('#loop03SidebarIntegrado [role=tab]')){
    const resumo=tab.id==='abaResumo';
-   tab.disabled=!resumo;
+   const habilitada=resumo||tab.id==='abaTabuleiro';
+   tab.disabled=!habilitada;
    tab.setAttribute('aria-selected',String(resumo));
    tab.setAttribute('aria-current',resumo?'page':'false');
    tab.tabIndex=resumo?0:-1;
    const painel=tab.getAttribute('aria-controls');
    if(painel&&$(painel))$(painel).hidden=!resumo;
-   if(!resumo)tab.title='Acesso administrativo na central do operador';
+   if(!habilitada)tab.title='Acesso administrativo na central do operador';
    else tab.removeAttribute('title');
   }
   $('conteudoResumo').hidden=false;
@@ -1119,7 +1124,68 @@
    }
   }));
  }
+ async function carregarTabuleiroOperador(){
+  try{
+   // Reutiliza as rotas existentes da mesma sessao administrativa e motor real.
+   // Nunca consulta posicoes, saldo, CPF ou sessao de um cliente.
+   const [respostaMotor,respostaControle]=await Promise.all([
+    fetch('/api/admin/loop/estado',{credentials:'same-origin',cache:'no-store'}),
+    fetch('/api/admin/loop/controle',{credentials:'same-origin',cache:'no-store'})
+   ]);
+   if(!respostaMotor.ok||!respostaControle.ok)
+    throw Error('TABULEIRO_ADMIN_INDISPONIVEL');
+   const [d,controle]=await Promise.all([
+    respostaMotor.json(),respostaControle.json()
+   ]);
+   if(!modoOperadorAtual)return;
+   if(d.fonte!=='IDENTIDADE_E_MOTOR_MESMO_SQLITE'||
+      d.financeiroReal!==false||
+      !Array.isArray(d.minhasPosicoes)||d.minhasPosicoes.length!==0||
+      !Number.isSafeInteger(d.filaA)||d.filaA<0||
+      !Number.isSafeInteger(d.filaB)||d.filaB<0||
+      !d.tabuleiro||!Array.isArray(d.tabuleiro.vagas)||
+      d.tabuleiro.vagas.length!==6||
+      !Number.isSafeInteger(d.tabuleiro.eventosNoCiclo)||
+      d.tabuleiro.eventosNoCiclo<0||d.tabuleiro.eventosNoCiclo>6||
+      !Number.isSafeInteger(d.catraca?.giros)||d.catraca.giros<0||
+      controle.financeiroReal!==false||
+      controle.autorizacaoFinanceiraDosGiros!==false||
+      !['PAUSADA','MANUAL','AUTOMATICA'].includes(controle.modo))
+    throw Error('TABULEIRO_ADMIN_FONTE_INVALIDA');
+   visualTabuleiro.preencherFila('motorFilaA',d.filaA,'A');
+   visualTabuleiro.preencherFila('motorFilaB',d.filaB,'B');
+   visualTabuleiro.preencherVaga('tabuleiroMotorCentro',d.tabuleiro.centro,true);
+   for(let i=0;i<6;i++)
+    visualTabuleiro.preencherVaga('tabuleiroMotorVaga'+(i+1),d.tabuleiro.vagas[i]);
+   visualTabuleiro.preencherLuzes(d.tabuleiro.eventosNoCiclo);
+   // Exibe politica autentica, sem prever luz ou giro sem conciliacao financeira.
+   visorCatraca.registrarAgenda({
+    modoExecucao:controle.modo==='PAUSADA'?'STOP':
+     controle.modo==='MANUAL'?'NATURAL':'AGENDADA',
+    pausaManual:controle.modo==='PAUSADA',
+    dentroDoHorario:controle.horarioPermitido===true,
+    abertura:controle.janelaInicio,
+    fechamento:controle.janelaFim
+   });
+   visorCatraca.observar(d.catraca.giros,d.tabuleiro.eventosNoCiclo);
+   $('motorContadorEventos').textContent=
+    d.tabuleiro.eventosNoCiclo+' de 6 eventos neste ciclo';
+   $('loop03TotalIntegrado').textContent='—';
+   $('loop03Giros24Integrado').textContent='—';
+   $('loop03NumeroIntegrado').textContent='—';
+   $('loop03StatusPosicao').textContent='';
+   $('seletorPosicaoMotor').replaceChildren();
+   $('estadoTabuleiroIntegrado').textContent='';
+   $('estadoTabuleiroIntegrado').hidden=true;
+  }catch{
+   if(!modoOperadorAtual)return;
+   $('estadoTabuleiroIntegrado').textContent=
+    'Tabuleiro administrativo indisponível. Consulte a central do operador.';
+   $('estadoTabuleiroIntegrado').hidden=false;
+  }
+ }
  async function carregarMotor(){
+  if(modoOperadorAtual)return carregarTabuleiroOperador();
   try{
    const r=await fetch('/api/loop/estado',{
     credentials:'same-origin',cache:'no-store'

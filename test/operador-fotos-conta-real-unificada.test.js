@@ -264,7 +264,7 @@ test('mesmo operador real sobe foto versionada; cliente so ve publicada, sem alt
  assert.equal((await adminAtual.json()).produtos
   .find(p=>p.produtoId==='SKU_ANTIGO').quantidadeFotos,1);
  assert.equal((await get('/api/loja/produtos/SKU_ANTIGO/foto/2')).status,
-  401,'foto antiga segue exigindo autenticação');
+  200,'foto de produto publicado deve ser publica, sem divulgar rascunhos');
  assert.equal((await get(vitrineFoto,{Cookie:cookie})).status,404,
   'nem o operador visualiza foto de produto nao publicado');
  // A loja continua sem acesso publico e sem foto de rascunho.

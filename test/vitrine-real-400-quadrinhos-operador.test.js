@@ -64,8 +64,12 @@ test('200 fixtures tecnicas em banco descartavel, 5 abas x 40 e operador isolado
  t.after(()=>new Promise(ok=>servidor.close(ok)));
  const base='http://127.0.0.1:'+servidor.address().port;
  const get=(p,h={})=>fetch(base+p,{headers:h,redirect:'manual'});
- assert.equal((await get('/loja')).status,401);
- assert.equal((await get('/api/loja/catalogo')).status,401);
+ assert.equal((await get('/loja')).status,200);
+ const vitrinePublica=await get('/api/loja/catalogo');
+ assert.equal(vitrinePublica.status,200);
+ assert.equal((await vitrinePublica.json()).total,200);
+ assert.equal((await get('/api/loja/pedidos')).status,401);
+ assert.equal((await get('/api/contas/me')).status,401);
  const login=await fetch(base+'/api/operador/entrar',{
   method:'POST',headers:{Origin:ORIGEM,'Content-Type':'application/json'},
   body:JSON.stringify({nick:'operador',senha:SENHA})

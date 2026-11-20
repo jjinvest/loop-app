@@ -1384,7 +1384,7 @@
     },
     {
       "path": "src/producao/interface-aprovada-contas.js",
-      "sha": "ea04259a56c2bdc3bb80f23a363113f6fcea6c0a"
+      "sha": "d7475b27cc16e70314ded5a9ad5b7ed3b01e6b91"
     },
     {
       "path": "src/producao/interface-aprovada-loja.js",
@@ -2256,7 +2256,7 @@
     },
     {
       "path": "test/contrato-papeis-operador-real.test.js",
-      "sha": "c4a94bcaefb930274295e391aa61131ca0355f3d"
+      "sha": "6648473e73d230af5ce636423e80f0a2cb6faef4"
     },
     {
       "path": "test/contrato-visual-escritorio-aprovado.test.js",
@@ -2332,7 +2332,7 @@
     },
     {
       "path": "test/entrada-real-catalogo-midia-conta-unica.test.js",
-      "sha": "57f7fb7ce7109a70a611a574617a3e6279715e65"
+      "sha": "a7cfa7ce3a17f270ef6e7e3cac2a5a65ce8237ee"
     },
     {
       "path": "test/entrada-unificada-operador.test.js",
@@ -2664,7 +2664,7 @@
     },
     {
       "path": "test/loja-real-zero-produtos-antes-cadastro.test.js",
-      "sha": "fcd36dbc29974a2878ec5cdf1ac5933f3633942c"
+      "sha": "bd7ae0c76fb0eea2fc4ac6c021586b1b31e8afd5"
     },
     {
       "path": "test/loja-separada-da-fila-loop-demo.test.js",
@@ -2876,7 +2876,7 @@
     },
     {
       "path": "test/operador-fotos-conta-real-unificada.test.js",
-      "sha": "cbf04f2bab2a291fa65a7ae50665c3f34c506022"
+      "sha": "184f3889f365c127fc4e85f54b401da45cf394aa"
     },
     {
       "path": "test/operar-receptor-asaas-railway-staging.test.js",
@@ -3332,7 +3332,7 @@
     },
     {
       "path": "test/vitrine-real-400-quadrinhos-operador.test.js",
-      "sha": "ac689fec9a8f68d41c55422ac0165945738d733f"
+      "sha": "1d54a3de3bb78ade73bcde0b5512787efd079377"
     },
     {
       "path": "test/webhook-antecipado-monitor-integrado.test.js",
@@ -3380,6 +3380,42 @@
       "antes": "ee25525f6886911c0c701a8350d424f230b3046a",
       "depois": "d66c3d1cf3adc323f7ca9aa6cc5cf82f09307ac9",
       "objetivo": "Corrigir somente delimitador de isolamento da função no teste da foto Android."
+    },
+    {
+      "path": "src/producao/interface-aprovada-contas.js",
+      "antes": "ea04259a56c2bdc3bb80f23a363113f6fcea6c0a",
+      "depois": "d7475b27cc16e70314ded5a9ad5b7ed3b01e6b91",
+      "objetivo": "Permitir OPERADOR visualizar o Tabuleiro real com acesso autenticado de administrador, sem copiar sessão do cliente, sem editar visual ou executar giro."
+    },
+    {
+      "path": "test/contrato-papeis-operador-real.test.js",
+      "antes": "c4a94bcaefb930274295e391aa61131ca0355f3d",
+      "depois": "6648473e73d230af5ce636423e80f0a2cb6faef4",
+      "objetivo": "Provar rota de leitura administrativa e impedir regressões de autorização e ações financeiras."
+    },
+    {
+      "path": "test/entrada-real-catalogo-midia-conta-unica.test.js",
+      "antes": "57f7fb7ce7109a70a611a574617a3e6279715e65",
+      "depois": "a7cfa7ce3a17f270ef6e7e3cac2a5a65ce8237ee",
+      "objetivo": "Alinhar teste ao catálogo/fotos públicos já aprovados, preservando pedidos e APIs administrativas privados; nenhuma mudança de aplicação."
+    },
+    {
+      "path": "test/loja-real-zero-produtos-antes-cadastro.test.js",
+      "antes": "fcd36dbc29974a2878ec5cdf1ac5933f3633942c",
+      "depois": "bd7ae0c76fb0eea2fc4ac6c021586b1b31e8afd5",
+      "objetivo": "Alinhar teste ao catálogo/fotos públicos já aprovados, preservando pedidos e APIs administrativas privados; nenhuma mudança de aplicação."
+    },
+    {
+      "path": "test/operador-fotos-conta-real-unificada.test.js",
+      "antes": "cbf04f2bab2a291fa65a7ae50665c3f34c506022",
+      "depois": "184f3889f365c127fc4e85f54b401da45cf394aa",
+      "objetivo": "Alinhar teste ao catálogo/fotos públicos já aprovados, preservando pedidos e APIs administrativas privados; nenhuma mudança de aplicação."
+    },
+    {
+      "path": "test/vitrine-real-400-quadrinhos-operador.test.js",
+      "antes": "ac689fec9a8f68d41c55422ac0165945738d733f",
+      "depois": "1d54a3de3bb78ade73bcde0b5512787efd079377",
+      "objetivo": "Alinhar teste ao catálogo/fotos públicos já aprovados, preservando pedidos e APIs administrativas privados; nenhuma mudança de aplicação."
     }
   ]
 }
