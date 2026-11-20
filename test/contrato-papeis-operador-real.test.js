@@ -93,6 +93,7 @@ test('link da central aparece no rodape de AMBOS os produtos, so para operador',
  const html=renderizarLojaAprovada();
  assert.match(html,/<footer class="akitemm-rodape">/);
  assert.match(html,/href="\/administrador" class="akitemm-acesso-operador" hidden/);
+ assert.doesNotMatch(html,/id="akitemmOperadorMais"/);
  const js=codigo('src/producao/interface-aprovada-loja.js');
  assert.match(js,/document\.querySelector\('\.akitemm-acesso-operador'\)/);
  assert.match(js,/const semCliente=res\.status===401\|\|operadorAtivo/);

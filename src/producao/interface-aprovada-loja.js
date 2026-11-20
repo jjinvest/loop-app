@@ -20,19 +20,15 @@
  $('akitemmAtualizarMeusCursos')?.addEventListener('click',()=>{
   if(visitante)solicitarCadastro();
  });
- // Quando a vitrine real está no domínio principal, o mesmo cookie
- // de operador do gateway permite exibir o + sem duplicar permissões.
+ // Somente o link do rodapé leva à administração protegida,
+ // e apenas quando a sessão de operador é comprovada.
  async function atualizarAtalhoOperadorReal(){
-  const atalho=$('akitemmOperadorMais');
   const linkRodape=document.querySelector('.akitemm-acesso-operador');
-  if(!atalho&&!linkRodape)return;
+  if(!linkRodape)return;
   const exibir=permitido=>{
    operadorAtivo=permitido;
-   for(const link of [atalho,linkRodape]){
-    if(!link)continue;
-    link.hidden=!permitido;
-    link.style.display=permitido?'inline-flex':'none';
-   }
+   linkRodape.hidden=!permitido;
+   linkRodape.style.display=permitido?'inline-flex':'none';
   };
   try{
    const r=await fetch('/api/operador/estado',{
@@ -63,7 +59,7 @@
  // Catálogo publicado pela administração, nunca produtos ou preços de demo.
  // Ativar somente os filtros de LEITURA, sem fazer carrinho/compra.
  let produtosPublicados=[],categoria='',cor='',termo='',filtroOfertas=false;
- // Cinco abas, quatro fileiras de dez por aba; inicialmente duas
+ // Dez abas, quatro fileiras de dez por aba; inicialmente duas
  // fileiras e o restante na expansão, sem recriar CSS ou molduras.
  let abaVitrine=0;
  const expandidas=new Set();
@@ -90,21 +86,21 @@
   lista.replaceChildren();
   lista.classList.add('ak-vitrine-horizontal');
   $('akitemmVisualizacaoProduto').hidden=true;
-  // Os 200 quadrinhos existem independentemente de produtos publicados.
+  // Os 400 quadrinhos existem independentemente de produtos publicados.
   // Busca textual exige produto real; os demais filtros mantem molduras vazias.
   const filtrada=!!categoria||!!cor||!!termo||filtroOfertas;
   const produtosPorSlot=new Map(produtosPublicados.filter(p=>
    Number.isSafeInteger(p.posicaoVitrine)&&
-   p.posicaoVitrine>=1&&p.posicaoVitrine<=200).map(p=>
+   p.posicaoVitrine>=1&&p.posicaoVitrine<=400).map(p=>
    [p.posicaoVitrine,p]));
   const idsFiltrados=new Set(itens.map(p=>p.produtoId));
-  const slotsVisiveis=Array.from({length:200},(_,i)=>i+1).filter(n=>{
+  const slotsVisiveis=Array.from({length:400},(_,i)=>i+1).filter(n=>{
    const produto=produtosPorSlot.get(n);
    if(produto)return idsFiltrados.has(produto.produtoId);
    if(termo)return false;
    return !cor||CORES[(n-1)%CORES.length]===cor;
   });
-  const totalAbas=filtrada?Math.max(1,Math.ceil(slotsVisiveis.length/40)):5;
+  const totalAbas=filtrada?Math.max(1,Math.ceil(slotsVisiveis.length/40)):10;
   if(abaVitrine>=totalAbas)abaVitrine=0;
   let nav=$('akitemmAbasProdutos');
   if(!nav){
@@ -229,7 +225,7 @@
     termo?'Nenhum produto encontrado para esta busca.':
     filtroOfertas?'Nenhuma oferta publicada neste filtro.':
     'Nenhum produto publicado neste filtro.'):
-   itens.length+' produto(s) publicado(s); cinco abas com quarenta espaços cada.';
+   itens.length+' produto(s) publicado(s); dez abas com quarenta espaços cada.';
   $('akitemmFiltroTodos').setAttribute('aria-pressed',
    String(!categoria&&!cor&&!termo&&!filtroOfertas));
   $('akitemmFiltroOfertas').setAttribute('aria-pressed',String(filtroOfertas));
@@ -286,7 +282,7 @@
    if(dados.origem!=='CATALOGO_ADMINISTRATIVO_PUBLICADO'||
       dados.checkoutReal!==false||dados.estoqueConfirmado!==false||
       dados.precosNaoHomologados!==true||
-      !Array.isArray(dados.produtos)||dados.produtos.length>200||
+      !Array.isArray(dados.produtos)||dados.produtos.length>400||
       dados.produtos.some(p=>
        typeof p.produtoId!=='string'||typeof p.titulo!=='string'||
        typeof p.descricao!=='string'||p.compravel!==false||
