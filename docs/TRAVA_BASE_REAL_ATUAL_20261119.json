@@ -1704,7 +1704,7 @@
     },
     {
       "path": "src/shared/acabamento-visual-loop.js",
-      "sha": "3a0cdd3ad19aa0b5aa68e53e005494694640ed94"
+      "sha": "7db646c8f5932872b0eada9158f6bde6d02e11d0"
     },
     {
       "path": "src/shared/captcha-cadastro-sqlite.js",
@@ -3272,7 +3272,7 @@
     },
     {
       "path": "test/varredura-visual-publicacao-real.test.js",
-      "sha": "ec30288194e6dd4e3eea53e22e291dcca81e2aff"
+      "sha": "560cc4db8d6756ff67ad2ac943d76edb01134880"
     },
     {
       "path": "test/verificacao-email-conta-unica-candidata.test.js",
@@ -3566,6 +3566,18 @@
       "antes": "952e04dbf6fe50ca1e4b88c1c1a275ace2e55947",
       "depois": "ec30288194e6dd4e3eea53e22e291dcca81e2aff",
       "objetivo": "Atualizar a varredura protegida para exigir o novo comportamento aprovado: sem mensagens duplicadas de convite e preservacao de campo indicador, termos completos e controles existentes."
+    },
+    {
+      "path": "src/shared/acabamento-visual-loop.js",
+      "antes": "3a0cdd3ad19aa0b5aa68e53e005494694640ed94",
+      "depois": "7db646c8f5932872b0eada9158f6bde6d02e11d0",
+      "objetivo": "Corrigir causa da regressao do 3.0: preservar no DOM o span prateado original do login/cadastro, sem recriar a marca aprovada."
+    },
+    {
+      "path": "test/varredura-visual-publicacao-real.test.js",
+      "antes": "ec30288194e6dd4e3eea53e22e291dcca81e2aff",
+      "depois": "560cc4db8d6756ff67ad2ac943d76edb01134880",
+      "objetivo": "Proteger por testes a conservacao da marca prateada original e o checkbox e contraste aprovados."
     }
   ]
 }
