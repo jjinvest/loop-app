@@ -1,5 +1,7 @@
 'use strict';
 const express=require('express');
+const {createHash}=require('node:crypto');
+const {validar:validarFotoOperador}=require('../domain/akitemm-midia-avaliacoes-demo');
 const {COOKIE_ADMIN}=require('./sessao-admin-comercial-sqlite');
 const {OperacaoCatracaAdminSQLite}=require('./operacao-catraca-admin-sqlite');
 const {montarAdminComercialAprovado}=
@@ -120,6 +122,62 @@ function montarGatewayAdminComercial(app,{
    return res.status(403).json({erro:'CSRF_ADMIN_INVALIDO'});
   next();
  };
+ // Avatar exclusivo da sessao OPERADOR, guardado no mesmo SQLite real.
+ // Nao le, escolhe, copia ou altera foto privada de qualquer titular.
+ if(motorLoop){
+  const db=motorLoop.banco;
+  db.exec([
+   'CREATE TABLE IF NOT EXISTS loop_real_operador_foto_perfil(',
+   'id INTEGER PRIMARY KEY CHECK(id=1),',
+   "mime TEXT NOT NULL CHECK(mime IN ('image/jpeg','image/png','image/webp')),",
+   'dados BLOB NOT NULL CHECK(length(dados)>0 AND length(dados)<=3145728),',
+   'sha256 TEXT NOT NULL CHECK(length(sha256)=64),',
+   'atualizado_em INTEGER NOT NULL CHECK(atualizado_em>0));'
+  ].join(' '));
+  app.get('/api/admin/operador/foto-perfil',proteger,(_req,res)=>{
+   try{
+    const f=db.prepare('SELECT mime,dados,sha256 FROM loop_real_operador_foto_perfil WHERE id=1').get();
+    if(!f)return res.status(404).json({erro:'FOTO_OPERADOR_AINDA_NAO_CADASTRADA'});
+    const dados=Buffer.from(f.dados);
+    if(dados.length<1||dados.length>3145728||
+       createHash('sha256').update(dados).digest('hex')!==f.sha256)
+     return res.status(503).json({erro:'FOTO_OPERADOR_INTEGRIDADE_INVALIDA'});
+    return res.set('Cache-Control','private, no-store').type(f.mime).send(dados);
+   }catch{return res.status(503).json({erro:'FOTO_OPERADOR_INDISPONIVEL'});}
+  });
+  app.post('/api/admin/operador/foto-perfil',proteger,validarCsrf,
+   (req,res,next)=>{
+    if(!['image/jpeg','image/png','image/webp'].includes(req.get('content-type')))
+     return res.status(415).json({erro:'TIPO_FOTO_NAO_PERMITIDO'});
+    next();
+   },express.raw({type:['image/jpeg','image/png','image/webp'],limit:'3mb'}),
+   (req,res)=>{
+    try{
+     if(!Buffer.isBuffer(req.body)||req.body.length===0||req.body.length>3145728)
+      return res.status(400).json({erro:'FOTO_INVALIDA'});
+     const limpa=validarFotoOperador({
+      tipo:'FOTO',mime:req.get('content-type'),dados:req.body
+     }).dados;
+     if(!Buffer.isBuffer(limpa)||limpa.length<1||limpa.length>3145728)
+      return res.status(400).json({erro:'FOTO_INVALIDA'});
+     const hash=createHash('sha256').update(limpa).digest('hex');
+     db.prepare([
+      'INSERT INTO loop_real_operador_foto_perfil',
+      '(id,mime,dados,sha256,atualizado_em) VALUES(1,?,?,?,?)',
+      'ON CONFLICT(id) DO UPDATE SET mime=excluded.mime,',
+      'dados=excluded.dados,sha256=excluded.sha256,',
+      'atualizado_em=excluded.atualizado_em'
+     ].join(' ')).run(req.get('content-type'),limpa,hash,Date.now());
+     return res.status(201).json({fotoSalva:true});
+    }catch(e){
+     const ruim=['FOTO_INVALIDA','FOTO_DIMENSOES_INVALIDAS','FOTO_GRANDE_DEMAIS'].includes(e?.codigo);
+     return res.status(ruim?400:503).json({
+      erro:ruim?'FOTO_INVALIDA':'FOTO_OPERADOR_INDISPONIVEL'
+     });
+    }
+   }
+  );
+ }
  // O mesmo login administrativo da loja e do escritorio grava fotos na
  // fonte comercial persistente, sem criar permissao paralela ou pagina nova.
  if(catalogoMidia!==null)montarRotasCatalogoMidiaOperador({
