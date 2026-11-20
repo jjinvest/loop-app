@@ -55,6 +55,25 @@ test('OPERADOR abre tabuleiro existente com leitura propria e sem contas nem gir
  assert.doesNotMatch(js,/fetch\('\/api\/admin\/loop\/controle',\{method:'POST'/);
 });
 
+test('OPERADOR configura relogio pelo controle original, sem rota paralela',()=>{
+ const html=renderizarInterfaceAprovada();
+ const js=codigo('src/producao/interface-aprovada-contas.js');
+ const api=codigo('src/producao/gateway-admin-comercial.js');
+ const admin=codigo('src/producao/interface-admin-comercial-aprovada.js');
+ assert.match(html,/id="atualizarTabuleiroIntegrado"/);
+ assert.match(html,/id="relogioTabuleiroIntegrado"/);
+ assert.match(js,/location\.assign\('\/administrador#tituloMotorInternoAdmin'\)/);
+ assert.match(js,/agoraServidorMs:controle\.agoraServidorMs/);
+ assert.match(js,/proximaLuzPrevistaEmMs:controle\.proximaLuzPrevistaEmMs/);
+ assert.match(js,/intervaloLuzSegundos:controle\.intervaloLuzSegundos/);
+ assert.match(js,/exigeCaixaReal:true/);
+ assert.match(api,/app\.get\('\/api\/admin\/loop\/controle',proteger/);
+ assert.match(api,/app\.post\('\/api\/admin\/loop\/controle',proteger,validarCsrf/);
+ assert.match(admin,/id="tituloMotorInternoAdmin"/);
+ assert.match(admin,/id="metaCentrosDiaAdmin"/);
+ assert.match(admin,/id="salvarCatracaAdmin"/);
+});
+
 test('link da central aparece no rodape de AMBOS os produtos, so para operador',()=>{
  const html=renderizarLojaAprovada();
  assert.match(html,/<footer class="akitemm-rodape">/);

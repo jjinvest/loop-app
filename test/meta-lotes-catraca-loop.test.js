@@ -108,3 +108,28 @@ test('meta de centros calcula seis luzes no turno sem alterar o expediente',()=>
  assert.throws(()=>calcularIntervaloMeta({...b,quantidade:-1}),
   /META_LOTES_CONFIG_INVALIDA/);
 });
+
+test('contador de UM centro reparte seis luzes de 09h a 18h sem disparar giro',()=>{
+ const {proximaJanelaMetaRelogio}=require('../src/domain/meta-lotes-catraca-loop');
+ const prever=(hora,quantidade=1,abertura='09:00',fechamento='18:00')=>
+  proximaJanelaMetaRelogio({abertura,fechamento,quantidade,
+   agoraMs:Date.parse('2026-11-20T'+hora+'-03:00'),
+   horarioLocal:hora.slice(0,5)});
+ const hora=h=>Date.parse('2026-11-20T'+h+'-03:00');
+ assert.equal(prever('08:59:00'),null);
+ assert.equal(prever('09:00:00'),hora('10:30:00'));
+ assert.equal(prever('10:29:59'),hora('10:30:00'));
+ assert.equal(prever('10:30:00'),hora('12:00:00'));
+ assert.equal(prever('17:59:59'),hora('18:00:00'));
+ assert.equal(prever('18:00:00'),null);
+ assert.equal(prever('09:00:00',10),hora('09:09:00'));
+ assert.equal(prever('09:08:59',10),hora('09:09:00'));
+ assert.equal(prever('09:09:00',10),hora('09:18:00'));
+ assert.equal(prever('09:00:00',0),null);
+ assert.equal(prever('09:00:00',4),hora('09:22:30'));
+ assert.equal(prever('09:00:00',1,'09:00','00:00'),hora('11:30:00'));
+ assert.throws(()=>proximaJanelaMetaRelogio({
+  abertura:'09:00',fechamento:'18:00',quantidade:1,
+  agoraMs:hora('09:00:00'),horarioLocal:'invalid'
+ }),/META_RELOGIO_HORARIO_INVALIDO/);
+});

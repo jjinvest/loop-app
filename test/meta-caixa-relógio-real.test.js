@@ -20,9 +20,11 @@ function preparar(){
   consultar(){return {tabuleiro:{eventosNoCiclo:0},
    catraca:{giros:0},filaA:4,filaB:3};}
  };
- const agora=()=>new Date('2026-11-17T09:00:00-03:00');
+ let instante=Date.parse('2026-11-17T09:00:00-03:00');
+ const agora=()=>new Date(instante);
  const controle=new OperacaoCatracaAdminSQLite({banco,motor,agora});
- return {banco,motor,agora,controle};
+ return {banco,motor,agora,controle,
+  avancar:hora=>{instante=Date.parse('2026-11-17T'+hora+'-03:00');}};
 }
 
 test('meta diaria define luzes pelo horario sem venda nova ou credito',()=>{
@@ -116,5 +118,44 @@ test('controles recusam datas falsas e metas negativas; transacao intacta',()=>{
   assert.equal(banco.prepare(
    'SELECT COUNT(*) AS n FROM loop_real_catraca_admin_historico'
   ).get().n,0);
+ }finally{banco.close();}
+});
+
+test('relogio real usa a meta persistida com tempo do servidor e mantem caixa fechado',()=>{
+ const {banco,controle,avancar}=preparar();
+ try{
+  let r=controle.configurar({modo:'AUTOMATICA',
+   janelaInicio:'09:00',janelaFim:'18:00',limiteDiario:null,
+   metaCentrosDia:1,metaDataAlvo:null,revisaoEsperada:1,
+   motivo:'UM_CENTRO_DURANTE_TURNO'});
+  const momento=h=>Date.parse('2026-11-17T'+h+'-03:00');
+  assert.equal(r.intervaloLuzSegundos,5400);
+  assert.equal(r.proximaLuzPrevistaEmMs,momento('10:30:00'));
+  assert.equal(r.agoraServidorMs,momento('09:00:00'));
+  assert.equal(r.autorizacaoFinanceiraDosGiros,false);
+  assert.equal(r.luzesAutorizadasPorCaixa,0);
+  avancar('10:29:59');
+  assert.equal(controle.consultar().proximaLuzPrevistaEmMs,momento('10:30:00'));
+  avancar('10:30:00');
+  assert.equal(controle.consultar().proximaLuzPrevistaEmMs,momento('12:00:00'));
+  avancar('17:59:00');
+  assert.equal(controle.consultar().proximaLuzPrevistaEmMs,momento('18:00:00'));
+  avancar('18:00:00');
+  assert.equal(controle.consultar().proximaLuzPrevistaEmMs,null);
+  r=controle.configurar({modo:'PAUSADA',
+   janelaInicio:'09:00',janelaFim:'18:00',limiteDiario:null,
+   metaCentrosDia:10,metaDataAlvo:null,revisaoEsperada:2,
+   motivo:'PAUSA_DE_OPERADOR'});
+  assert.equal(r.proximaLuzPrevistaEmMs,null);
+  assert.equal(r.intervaloLuzSegundos,540);
+  assert.equal(r.girosTotais,0);
+  assert.equal(banco.prepare(
+   'SELECT COUNT(*) AS n FROM loop_real_catraca_admin_giros'
+  ).get().n,0);
+  const reiniciado=new OperacaoCatracaAdminSQLite({banco,
+   motor:controle.motor,agora:controle.agora});
+  assert.equal(reiniciado.consultar().metaCentrosDia,10);
+  assert.equal(reiniciado.consultar().proximaLuzPrevistaEmMs,null);
+  assert.equal(banco.prepare('PRAGMA quick_check').get().quick_check,'ok');
  }finally{banco.close();}
 });

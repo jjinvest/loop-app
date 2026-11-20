@@ -824,7 +824,7 @@
     },
     {
       "path": "src/domain/meta-lotes-catraca-loop.js",
-      "sha": "446594485f20e4daf69f23786822fc0d1aa6809f"
+      "sha": "5975ec8c20f5feb7fbd9ebecc530fb28a19354bf"
     },
     {
       "path": "src/domain/missoes-operacionais-candidato-sqlite.js",
@@ -1384,7 +1384,7 @@
     },
     {
       "path": "src/producao/interface-aprovada-contas.js",
-      "sha": "d7475b27cc16e70314ded5a9ad5b7ed3b01e6b91"
+      "sha": "8a09c4248a6138e5145ab804d9299e2fd677ec3b"
     },
     {
       "path": "src/producao/interface-aprovada-loja.js",
@@ -1432,7 +1432,7 @@
     },
     {
       "path": "src/producao/operacao-catraca-admin-sqlite.js",
-      "sha": "97f7ec0e85b2f783f7617297770b52871a3b46b7"
+      "sha": "5bce542c9b82f73e75f05765c718cda075b1db65"
     },
     {
       "path": "src/producao/operador-loja-fotos-real.js",
@@ -1720,7 +1720,7 @@
     },
     {
       "path": "src/shared/visor-catraca.js",
-      "sha": "b7e27c00269113c0b5d9bfe56f661b02f296ca95"
+      "sha": "ebb4501fa6af9e5901354e6f372833a95ba4cf46"
     },
     {
       "path": "test/acabamento-visual-unificado.test.js",
@@ -2256,7 +2256,7 @@
     },
     {
       "path": "test/contrato-papeis-operador-real.test.js",
-      "sha": "6648473e73d230af5ce636423e80f0a2cb6faef4"
+      "sha": "cfc16896cd86fd1f2f0749062d055d6bddb1c914"
     },
     {
       "path": "test/contrato-visual-escritorio-aprovado.test.js",
@@ -2800,11 +2800,11 @@
     },
     {
       "path": "test/meta-caixa-relógio-real.test.js",
-      "sha": "a04da5349c4d49cae2a30f871173b16d78da9440"
+      "sha": "f346cd13d38af4d6405fac9264fd1a37d46bf9c3"
     },
     {
       "path": "test/meta-lotes-catraca-loop.test.js",
-      "sha": "01dc5739602294f659838dd133c36603c8754b76"
+      "sha": "e21cd2fde32cd6c67c94aa44ca76ff6edb16505a"
     },
     {
       "path": "test/meus-pedidos-titular-real.test.js",
@@ -3308,7 +3308,7 @@
     },
     {
       "path": "test/visor-catraca-unico.test.js",
-      "sha": "00b54d9bba7e48ddcadaf85769c0eb27acb91e93"
+      "sha": "a52d43f097c3031c9e4ea994228574cfe1ca2d89"
     },
     {
       "path": "test/visor-filas-vizinhos-paginacao-real.test.js",
@@ -3416,6 +3416,54 @@
       "antes": "ac689fec9a8f68d41c55422ac0165945738d733f",
       "depois": "1d54a3de3bb78ade73bcde0b5512787efd079377",
       "objetivo": "Alinhar teste ao catálogo/fotos públicos já aprovados, preservando pedidos e APIs administrativas privados; nenhuma mudança de aplicação."
+    },
+    {
+      "path": "src/domain/meta-lotes-catraca-loop.js",
+      "antes": "446594485f20e4daf69f23786822fc0d1aa6809f",
+      "depois": "5975ec8c20f5feb7fbd9ebecc530fb28a19354bf",
+      "objetivo": "Conectar o contador/controle operacional existente: meta diaria em seis janelas por centro, previsao por hora oficial, mesma sessao operadora, sem alterar HTML/CSS, autorizar giro ou dinheiro."
+    },
+    {
+      "path": "src/producao/operacao-catraca-admin-sqlite.js",
+      "antes": "97f7ec0e85b2f783f7617297770b52871a3b46b7",
+      "depois": "5bce542c9b82f73e75f05765c718cda075b1db65",
+      "objetivo": "Conectar o contador/controle operacional existente: meta diaria em seis janelas por centro, previsao por hora oficial, mesma sessao operadora, sem alterar HTML/CSS, autorizar giro ou dinheiro."
+    },
+    {
+      "path": "src/producao/interface-aprovada-contas.js",
+      "antes": "d7475b27cc16e70314ded5a9ad5b7ed3b01e6b91",
+      "depois": "8a09c4248a6138e5145ab804d9299e2fd677ec3b",
+      "objetivo": "Conectar o contador/controle operacional existente: meta diaria em seis janelas por centro, previsao por hora oficial, mesma sessao operadora, sem alterar HTML/CSS, autorizar giro ou dinheiro."
+    },
+    {
+      "path": "src/shared/visor-catraca.js",
+      "antes": "b7e27c00269113c0b5d9bfe56f661b02f296ca95",
+      "depois": "ebb4501fa6af9e5901354e6f372833a95ba4cf46",
+      "objetivo": "Conectar o contador/controle operacional existente: meta diaria em seis janelas por centro, previsao por hora oficial, mesma sessao operadora, sem alterar HTML/CSS, autorizar giro ou dinheiro."
+    },
+    {
+      "path": "test/meta-lotes-catraca-loop.test.js",
+      "antes": "01dc5739602294f659838dd133c36603c8754b76",
+      "depois": "e21cd2fde32cd6c67c94aa44ca76ff6edb16505a",
+      "objetivo": "Conectar o contador/controle operacional existente: meta diaria em seis janelas por centro, previsao por hora oficial, mesma sessao operadora, sem alterar HTML/CSS, autorizar giro ou dinheiro."
+    },
+    {
+      "path": "test/meta-caixa-relógio-real.test.js",
+      "antes": "a04da5349c4d49cae2a30f871173b16d78da9440",
+      "depois": "f346cd13d38af4d6405fac9264fd1a37d46bf9c3",
+      "objetivo": "Conectar o contador/controle operacional existente: meta diaria em seis janelas por centro, previsao por hora oficial, mesma sessao operadora, sem alterar HTML/CSS, autorizar giro ou dinheiro."
+    },
+    {
+      "path": "test/visor-catraca-unico.test.js",
+      "antes": "00b54d9bba7e48ddcadaf85769c0eb27acb91e93",
+      "depois": "a52d43f097c3031c9e4ea994228574cfe1ca2d89",
+      "objetivo": "Conectar o contador/controle operacional existente: meta diaria em seis janelas por centro, previsao por hora oficial, mesma sessao operadora, sem alterar HTML/CSS, autorizar giro ou dinheiro."
+    },
+    {
+      "path": "test/contrato-papeis-operador-real.test.js",
+      "antes": "6648473e73d230af5ce636423e80f0a2cb6faef4",
+      "depois": "cfc16896cd86fd1f2f0749062d055d6bddb1c914",
+      "objetivo": "Conectar o contador/controle operacional existente: meta diaria em seis janelas por centro, previsao por hora oficial, mesma sessao operadora, sem alterar HTML/CSS, autorizar giro ou dinheiro."
     }
   ]
 }

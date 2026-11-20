@@ -84,3 +84,35 @@ test('visor nao celebra sem giro confirmado nem inventa venda',()=>{
  assert.equal(elements.tituloRelogioTabuleiro.textContent,'CATRACA PAUSADA');
  assert.equal(mensagens.length,0);
 });
+
+test('contador do OPERADOR renderiza 90 min por luz em um centro sem criar evento',()=>{
+ const agora=Date.parse('2026-11-20T09:00:00-03:00');
+ const FakeDate=class extends Date{static now(){return agora;}};
+ const elementos={
+  relogioTabuleiroIntegrado:{textContent:''},
+  tituloRelogioTabuleiro:{textContent:''},
+  estadoRelogioTabuleiro:{textContent:''},
+  conteudoTabuleiro:{hidden:false}
+ };
+ const context={window:{setInterval:()=>1,matchMedia:()=>({matches:true})},
+  document:{hidden:false},Date:FakeDate,Math,Number,String,Object};
+ vm.runInNewContext(ler('shared/visor-catraca.js'),context);
+ const visor=context.window.LoopVisorCatraca.criar({
+  elemento:id=>elementos[id]
+ });
+ visor.registrarAgenda({
+  modoExecucao:'AGENDADA',dentroDoHorario:true,pausaManual:false,
+  agoraServidorMs:agora,
+  abertura:'09:00',fechamento:'18:00',
+  metaLotes:{ativa:true,quantidade:1,intervaloLuzSegundos:5400,
+   proximaLuzPrevistaEmMs:agora+5400000,exigeCaixaReal:true}
+ });
+ assert.equal(elementos.relogioTabuleiroIntegrado.textContent,'90:00');
+ assert.match(elementos.estadoRelogioTabuleiro.textContent,/1 centro/);
+ assert.match(elementos.estadoRelogioTabuleiro.textContent,/90 min\/luz/);
+ assert.match(elementos.estadoRelogioTabuleiro.textContent,/caixa real comprovado/);
+ assert.doesNotMatch(elementos.estadoRelogioTabuleiro.textContent,/depende de vendas/);
+ visor.registrarAgenda({modoExecucao:'STOP',pausaManual:true});
+ assert.equal(elementos.relogioTabuleiroIntegrado.textContent,'--:--');
+ assert.equal(elementos.tituloRelogioTabuleiro.textContent,'CATRACA PAUSADA');
+});

@@ -25,10 +25,17 @@
      visor.textContent=String(Math.floor(segundos/60)).padStart(2,'0')+
       ':'+String(segundos%60).padStart(2,'0');
      titulo.textContent='PRÓXIMA LUZ · PREVISÃO';
-     estado.textContent=meta?.ativa===true?
+     const intervalo=meta?.intervaloLuzSegundos;
+    const descricaoIntervalo=Number.isSafeInteger(intervalo)&&intervalo>0?
+     Math.floor(intervalo/60)+' min'+(intervalo%60?
+      ' '+intervalo%60+' s':'')+'/luz':'horario a confirmar';
+    estado.textContent=meta?.ativa===true?
+     meta.exigeCaixaReal===true?
+      'Meta '+meta.quantidade+' centro(s) · '+descricaoIntervalo+
+      ' · exige caixa real comprovado':
       'Meta '+meta.quantidade+' ciclos · '+Math.round(
        meta.intervaloLuzSegundos/60)+' min/luz · depende de vendas':
-      'Janela programada · depende de vendas';
+     'Janela programada · depende de vendas';
      return;
     }
     titulo.textContent='JANELAS DO TURNO';
