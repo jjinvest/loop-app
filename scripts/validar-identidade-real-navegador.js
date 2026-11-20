@@ -212,13 +212,33 @@ async function main(){
     'OPERADOR');
    assert.equal(await operadorPage.locator('#abaConta').isDisabled(),true);
    assert.equal(await operadorPage.locator('#loop03AlterarFotoTopo').isEnabled(),true);
-   // Foto de OPERADOR usa o mesmo circulo, mas sua propria tabela privada.
-   await operadorPage.locator('#arquivoFotoPerfil').setInputFiles({
+   // Foto no Android deve abrir o seletor de arquivos pelo TOQUE real
+   // no circulo, nao apenas setInputFiles sobre input escondido.
+   assert.equal(await operadorPage.locator('body > #arquivoFotoPerfil').count(),1);
+   const seletorPromise=operadorPage.waitForEvent('filechooser');
+   await operadorPage.locator('#loop03AlterarFotoTopo').click();
+   const seletor=await seletorPromise;
+   await seletor.setFiles({
     name:'perfil-operador.png',mimeType:'image/png',
     buffer:Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAIAAAACCAIAAAD91JpzAAAAEklEQVR4nGP4z8DAAMIM/4EAAB/uBfsL2WiLAAAAAElFTkSuQmCC','base64')
    });
    await operadorPage.locator('#loop03ImagemFotoTopo')
     .waitFor({state:'visible'});
+   const fotoAutenticada=await operadorPage.evaluate(async()=>{
+    const r=await fetch('/api/admin/operador/foto-perfil',{
+     credentials:'same-origin',cache:'no-store'
+    });
+    return {status:r.status,mime:r.headers.get('content-type'),
+     tamanho:(await r.blob()).size};
+   });
+   assert.equal(fotoAutenticada.status,200);
+   assert.equal(fotoAutenticada.mime,'image/png');
+   assert.ok(fotoAutenticada.tamanho>0);
+   // Verificar que a foto permanece na conta do operador ao recarregar.
+   await operadorPage.reload();
+   await operadorPage.locator('#loop03ImagemFotoTopo').waitFor({state:'visible'});
+   assert.equal(await operadorPage.locator('body > #arquivoFotoPerfil').count(),1);
+   assert.equal(await operadorPage.locator('#abaConta').isDisabled(),true);
    if(visual.mobile)await operadorPage.locator('#loop03MenuIntegrado').click();
    await operadorPage.locator('#abaTabuleiro').click();
    await operadorPage.locator('#conteudoTabuleiro').waitFor({state:'visible'});
@@ -560,6 +580,27 @@ async function main(){
    }).waitFor();
    assert.match(await page.locator('#listaEquipe').innerText(),
     new RegExp(novoNick,'i'));
+   const indicado=page.locator('#listaEquipe .loop03-rede-pessoa')
+    .filter({hasText:new RegExp(novoNick,'i')});
+   await indicado.waitFor({state:'visible'});
+   assert.equal(await indicado.getAttribute('data-estado'),'vermelho',
+    'cadastro pendente nunca e apresentado como qualificado');
+   const menu=indicado.locator('.loop03-rede-pessoa-menu');
+   assert.equal(await menu.getAttribute('aria-expanded'),'false');
+   await menu.click();
+   assert.equal(await menu.getAttribute('aria-expanded'),'true');
+   const detalhes=indicado.locator('.loop03-rede-pessoa-detalhes');
+   await detalhes.waitFor({state:'visible'});
+   const botoes=detalhes.locator('.loop03-rede-posicao');
+   assert.equal(await botoes.count(),10,
+    'Minha Equipe preserva os dez botoes das posicoes');
+   for(let n=1;n<=10;n++){
+    assert.equal(await botoes.nth(n-1).innerText(),String(n));
+    assert.equal(await botoes.nth(n-1).isDisabled(),true,
+     'indicacao pendente nao pode ser vinculada');
+   }
+   await menu.click();
+   await detalhes.waitFor({state:'hidden'});
    if(item.largura<=860)await page.locator('#loop03MenuIntegrado').click();
    await page.locator('#abaLinks').click();
    assert.match(await page.locator('#linkLoja').inputValue(),

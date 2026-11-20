@@ -1,7 +1,7 @@
 {
   "schema": 1,
   "política": "Toda alteração de HTML/CSS exige pedido visual explícito, escopo isolado e revisão do proprietário; é proibido atualizar hashes para esconder mudanças.",
-  "autorizaçãoAtual": "20/11/2026: proprietário autorizou em capturas de tela do cadastro REAL: remover as duas mensagens redundantes 'Convite de @' e 'Você foi indicado por @' sem alterar o vínculo nem o campo 'Indicado por'; manter no formulário apenas o rótulo 'Ler Termos de Uso e Privacidade' e 'Li e aceito a Política de Privacidade e os Termos de Uso apresentados acima.'; realçar a explicação 'Preencha seus dados...' e o quadrinho de aceite; fixar SOMENTE o '3.0' da marca de entrada em prata e o LOOP em dourado. Aplicar à mesma interface do domínio e dos convites em PC e celular. Não alterar tabuleiro, loja, menus, fotos, contratos integrais nem regras financeiras.",
+  "autorizaçãoAtual": "20/11/2026: proprietário solicitou restaurar a área Minha Equipe já aprovada (cartões grandes numerados, Taísa e demais indicados reais, status de ativação, telefone, data/hora, menu de três pontinhos, grade 1–10 abaixo) e corrigir o upload da foto do OPERADOR pelo toque no círculo no celular, sem alterar o layout aprovado das demais telas, sem criar contas falsas e sem qualificar, vincular ou pagar indicação pendente. Ajuste CSS limitado à Minha Equipe; foto usa o seletor nativo, a mesma moldura e a mesma sessão administrativa autenticada. Ações pendentes não executam mutações fictícias.",
   "arquivos": [
     {
       "path": "src/candidato/checkout-candidato-ui.html",
@@ -17,7 +17,7 @@
     },
     {
       "path": "src/candidato/escritorio-cliente-integrado.css",
-      "sha": "8d277e4d1c694d7eb4e998278412b4ad2bc981b5"
+      "sha": "c52ed1792a6a2328991788809c69764ac83fcda1"
     },
     {
       "path": "src/laboratorio/admin-loop03.css",
@@ -121,6 +121,7 @@
     "16/11/2026: proprietário solicitou explicitamente uniformizar LOOP 3.0 prateado da tela aprovada na loja e no cadastro/login. Autorização restrita aos dois CSS respectivos, sem mudar fluxo de autenticação.",
     "17/11/2026: pedido explícito para manter Todos amarelo aceso e Ofertas dourado em todos os estados, destacando seleção só pela borda. Diferença visual auditada: commit 51f04214 acrescentou exclusivamente regras de #akitemmFiltroTodos e #akitemmFiltroOfertas ao final de src/laboratorio/loja-cliente-demo.css. Os outros 23 arquivos protegidos preservados; hash do único CSS alterado atualizado por autorização expressa, mantendo a trava visual. Navegação operador corrigida exclusivamente no JS do admin e no gateway, não no HTML aprovado.",
     "17/11/2026, 19h54 UTC: proprietário enviou duas fotos, pediu expressamente para igualar a cor do título LOOP 3.0 do topo da primeira tela ao dourado LOOP e prata 3.0 da segunda tela, depois confirmou 'Faz'. Alterados somente span da marca no header e regras CSS estritamente escopadas ao cabeçalho não logado. Os demais 22 arquivos e funcionalidades permanecem protegidos.",
-    "20/11/2026: proprietário autorizou em capturas de tela do cadastro REAL: remover as duas mensagens redundantes 'Convite de @' e 'Você foi indicado por @' sem alterar o vínculo nem o campo 'Indicado por'; manter no formulário apenas o rótulo 'Ler Termos de Uso e Privacidade' e 'Li e aceito a Política de Privacidade e os Termos de Uso apresentados acima.'; realçar a explicação 'Preencha seus dados...' e o quadrinho de aceite; fixar SOMENTE o '3.0' da marca de entrada em prata e o LOOP em dourado. Aplicar à mesma interface do domínio e dos convites em PC e celular. Não alterar tabuleiro, loja, menus, fotos, contratos integrais nem regras financeiras."
+    "20/11/2026: proprietário autorizou em capturas de tela do cadastro REAL: remover as duas mensagens redundantes 'Convite de @' e 'Você foi indicado por @' sem alterar o vínculo nem o campo 'Indicado por'; manter no formulário apenas o rótulo 'Ler Termos de Uso e Privacidade' e 'Li e aceito a Política de Privacidade e os Termos de Uso apresentados acima.'; realçar a explicação 'Preencha seus dados...' e o quadrinho de aceite; fixar SOMENTE o '3.0' da marca de entrada em prata e o LOOP em dourado. Aplicar à mesma interface do domínio e dos convites em PC e celular. Não alterar tabuleiro, loja, menus, fotos, contratos integrais nem regras financeiras.",
+    "20/11/2026: proprietário solicitou restaurar a área Minha Equipe já aprovada (cartões grandes numerados, Taísa e demais indicados reais, status de ativação, telefone, data/hora, menu de três pontinhos, grade 1–10 abaixo) e corrigir o upload da foto do OPERADOR pelo toque no círculo no celular, sem alterar o layout aprovado das demais telas, sem criar contas falsas e sem qualificar, vincular ou pagar indicação pendente. Ajuste CSS limitado à Minha Equipe; foto usa o seletor nativo, a mesma moldura e a mesma sessão administrativa autenticada. Ações pendentes não executam mutações fictícias."
   ]
 }

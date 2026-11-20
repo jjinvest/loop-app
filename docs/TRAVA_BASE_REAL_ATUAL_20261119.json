@@ -412,7 +412,7 @@
     },
     {
       "path": "scripts/validar-identidade-real-navegador.js",
-      "sha": "64cce63156ae3f296057dc2a252c65e99ee763ba"
+      "sha": "4ae9ec2d186183fcf245d47815195cce6b046fac"
     },
     {
       "path": "scripts/validar-jornada-loja-cores-browser.js",
@@ -484,7 +484,7 @@
     },
     {
       "path": "src/candidato/escritorio-cliente-integrado.css",
-      "sha": "8d277e4d1c694d7eb4e998278412b4ad2bc981b5"
+      "sha": "c52ed1792a6a2328991788809c69764ac83fcda1"
     },
     {
       "path": "src/candidato/operador-em-tela.js",
@@ -1252,7 +1252,7 @@
     },
     {
       "path": "src/producao/acabamento-botoes-real.css",
-      "sha": "baea9126eb51be10a06bc8ad1038e526ae8d1c8c"
+      "sha": "effe864ea8b5bdc844d4b11d2bb2120d06aa1b82"
     },
     {
       "path": "src/producao/aceite-posicao-azul-ensaio-sqlite.js",
@@ -1384,7 +1384,7 @@
     },
     {
       "path": "src/producao/interface-aprovada-contas.js",
-      "sha": "a452ed15040462da31c7f7dc182948e3e5175b02"
+      "sha": "686ee76d90a27cacc3075febd16bfae797473a34"
     },
     {
       "path": "src/producao/interface-aprovada-loja.js",
@@ -2596,7 +2596,7 @@
     },
     {
       "path": "test/interface-aprovada-identidade-real.test.js",
-      "sha": "4653ecd6b53e17bb6c7828dbbb7c8cfa99abd982"
+      "sha": "740ede2b6e5bfeb436f38d280a9a90dcd1cd94c0"
     },
     {
       "path": "test/interface-loop-03.test.js",
@@ -3608,6 +3608,42 @@
       "antes": "7c5032b53070717db6c2338d6ccc4367babc507a",
       "depois": "4b7af6d8f789d3d3610973aeb1d5b075e05ea133",
       "objetivo": "Proteção estática da contabilidade por luz/centro e das áreas de resumo e salvar do mesmo modal."
+    },
+    {
+      "path": "src/producao/interface-aprovada-contas.js",
+      "antes": "a452ed15040462da31c7f7dc182948e3e5175b02",
+      "depois": "686ee76d90a27cacc3075febd16bfae797473a34",
+      "objetivo": "Foto OPERADOR: mesmo input fora da aba escondida no Android com retorno ao cliente; Minha Equipe restaura cartoes grandes, telefone, status e menu 1 a 10, sem atribuir nao qualificados."
+    },
+    {
+      "path": "src/producao/acabamento-botoes-real.css",
+      "antes": "baea9126eb51be10a06bc8ad1038e526ae8d1c8c",
+      "depois": "effe864ea8b5bdc844d4b11d2bb2120d06aa1b82",
+      "objetivo": "Input nativo de foto do operador acessivel ao toque sem modificar layout aprovado."
+    },
+    {
+      "path": "src/candidato/escritorio-cliente-integrado.css",
+      "antes": "8d277e4d1c694d7eb4e998278412b4ad2bc981b5",
+      "depois": "c52ed1792a6a2328991788809c69764ac83fcda1",
+      "objetivo": "Restaura visual da Minha Equipe com blocos roxo/dourado grandes, menu 3 pontos e grade 1–10 responsiva."
+    },
+    {
+      "path": "scripts/validar-identidade-real-navegador.js",
+      "antes": "64cce63156ae3f296057dc2a252c65e99ee763ba",
+      "depois": "4ae9ec2d186183fcf245d47815195cce6b046fac",
+      "objetivo": "Teste de clique no avatar operador abre filechooser real, foto persiste no servidor e apos reload; Minha Equipe no PC e celular possui menu e 10 botoes, pendentes nao vinculados."
+    },
+    {
+      "path": "test/interface-aprovada-identidade-real.test.js",
+      "antes": "4653ecd6b53e17bb6c7828dbbb7c8cfa99abd982",
+      "depois": "27f34278518ee627505c7c51b635221e95df5aa7",
+      "objetivo": "Protecao funcional do input de foto do operador e dos componentes e regras de status da Minha Equipe."
+    },
+    {
+      "path": "test/interface-aprovada-identidade-real.test.js",
+      "antes": "27f34278518ee627505c7c51b635221e95df5aa7",
+      "depois": "740ede2b6e5bfeb436f38d280a9a90dcd1cd94c0",
+      "objetivo": "Atualizar exclusivamente texto de teste da Minha Equipe para exigir vinculo pendente ate comprovacao, mantendo bloqueio de posicoes nao qualificadas."
     }
   ]
 }
