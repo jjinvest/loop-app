@@ -578,52 +578,112 @@
    (Number.isSafeInteger(p.numeroCadastro)&&
     String(p.numeroCadastro)===filtro.replace(/^#/,''))
   );
-  if(!dados.length){
-   const aviso=document.createElement('p');
-   aviso.textContent='Nenhum cadastro encontrado por esse nick ou número.';
-   alvo.appendChild(aviso);return;
-  }
-  const texto=(tag,cls,value)=>{
-   const el=document.createElement(tag);
+  const texto=(tag,cls,value)=>{const el=document.createElement(tag);
    if(cls)el.className=cls;
-   el.textContent=value;return el;
+   if(value!==undefined)el.textContent=value;
+   return el;
   };
+  if(!dados.length){
+   alvo.append(texto('p','loop03-rede-vazia',
+    'Nenhum cadastro encontrado por esse nick ou número.'));
+   return;
+  }
+  // Reconstroi os mesmos cartoes grandes aprovados na Minha Equipe:
+  // bolinha numerada, situacao, telefone, detalhes e dez botoes de posicao.
+  // Nenhum convite pendente e promovido ou vinculado sem prova real.
   for(const p of dados){
+   const registroValidado=p.estado==='QUALIFICACAO_REAL_CONFIRMADA';
+   const emAnalise=p.estado==='QUALIFICACAO_ENSAIO';
+   const aguardando=p.estado==='COMPRA_ENSAIO_SEM_QUALIFICACAO';
+   const cor=registroValidado?'verde':emAnalise?'azul':
+    aguardando?'amarelo':'vermelho';
+   const situacao=registroValidado?'Indicação confirmada':
+    emAnalise?'Vínculo em análise':aguardando?
+    'Ativação pendente':'Cadastro realizado';
    const card=texto('article','loop03-rede-pessoa','');
-   card.dataset.estado='vermelho';
+   card.dataset.estado=cor;
+   const numero=Number.isSafeInteger(p.numeroCadastro)&&p.numeroCadastro>0?
+    p.numeroCadastro:null;
+   if(numero!==null)card.dataset.numeroCadastro=String(numero);
    const cab=texto('div','loop03-rede-pessoa-cabecalho','');
-   const n=Number.isSafeInteger(p.numeroCadastro)&&p.numeroCadastro>0?
-    '#'+String(p.numeroCadastro).padStart(4,'0'):'#—';
-   cab.append(
-    texto('span','loop03-rede-pessoa-numero',n),
-    texto('span','loop03-rede-pessoa-luz',''),
-    texto('strong','loop03-rede-pessoa-nick','@'+p.nick),
-    texto('span','loop03-rede-pessoa-status','Cadastro realizado')
-   );
+   const n=numero===null?'#—':'#'+String(numero).padStart(4,'0');
+   const bolinha=texto('span','loop03-rede-pessoa-numero',n);
+   bolinha.title='Ordem permanente do cadastro nesta equipe.';
+   const luz=texto('span','loop03-rede-pessoa-luz','');
+   luz.setAttribute('aria-hidden','true');
+   const botao=texto('button','loop03-rede-pessoa-menu','⋮');
+   botao.type='button';
+   botao.setAttribute('aria-label','Posições e detalhes de @'+p.nick);
+   botao.setAttribute('aria-expanded','false');
+   const detalhes=texto('div','loop03-rede-pessoa-detalhes','');
+   detalhes.hidden=true;
+   const identificador='equipePosicoes'+(numero===null?
+    String(dados.indexOf(p)):String(numero));
+   detalhes.id=identificador;botao.setAttribute('aria-controls',identificador);
+   botao.addEventListener('click',()=>{
+    const abrir=detalhes.hidden;
+    for(const painel of alvo.querySelectorAll('.loop03-rede-pessoa-detalhes')){
+     painel.hidden=true;
+     const toggle=painel.parentElement.querySelector('.loop03-rede-pessoa-menu');
+     if(toggle)toggle.setAttribute('aria-expanded','false');
+    }
+    detalhes.hidden=!abrir;
+    botao.setAttribute('aria-expanded',String(abrir));
+   });
+   cab.append(bolinha,luz,texto('strong','loop03-rede-pessoa-nick','@'+p.nick),
+    texto('span','loop03-rede-pessoa-status',situacao),botao);
    const infos=texto('div','loop03-rede-pessoa-info','');
-   const tel=typeof p.telefone==='string'&&/^[1-9][0-9][0-9]{8,9}$/.test(p.telefone)?
-    p.telefone:null;
+   const tel=typeof p.telefone==='string'&&
+    /^[1-9][0-9][0-9]{8,9}$/.test(p.telefone)?p.telefone:null;
    if(tel){
-    const span=texto('span',null,'Telefone: ');
-    const a=texto('a',null,tel);
-    a.href='tel:+55'+tel;
-    a.setAttribute('aria-label','Ligar para @'+p.nick);
-    span.append(a);infos.append(span);
+    const infoTel=texto('span',null,'Telefone: ');
+    const contato=texto('a',null,tel);
+    contato.href='tel:+55'+tel;
+    contato.setAttribute('aria-label','Ligar para @'+p.nick);
+    infoTel.append(contato);infos.append(infoTel);
    }else infos.append(texto('span',null,'Telefone: contato não informado'));
-   const registro=new Date(p.registradoEm);
-   const valido=Number.isFinite(registro.getTime());
+   const data=new Date(p.registradoEm);
+   const valido=Number.isFinite(data.getTime());
+   const format={timeZone:'America/Sao_Paulo'};
    infos.append(
     texto('span',null,'Cadastro: '+(valido?
-     registro.toLocaleDateString('pt-BR',{timeZone:'America/Sao_Paulo'}):'não informado')),
+     data.toLocaleDateString('pt-BR',format):'não informado')),
     texto('span',null,'Horário: '+(valido?
-     registro.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit',
-      hour12:false,timeZone:'America/Sao_Paulo'}):'não informado')+' (Brasília)'),
-    texto('span',null,'Fila: '+(p.filaCadastro==='B'?'B':'não informada'))
+     data.toLocaleTimeString('pt-BR',{...format,hour:'2-digit',
+      minute:'2-digit',hour12:false}):'não informado')+' (Brasília)'),
+    texto('span',null,'Fila: '+(p.filaCadastro==='A'?'A':
+     p.filaCadastro==='B'?'B':'não informada'))
    );
-   const mensagem=texto('p','loop03-rede-pessoa-vinculo',
-    'Aguardando confirmação de ativação no LOOP.');
-   card.append(cab,infos,mensagem);
-   alvo.append(card);
+   const anotacao=texto('p','loop03-rede-pessoa-vinculo',
+    registroValidado?'Indicação confirmada no LOOP.':
+    emAnalise?'Vínculo aguardando comprovação real.':
+    aguardando?'Aguardando confirmação da posição.':
+    'Aguardando ativação no LOOP.');
+   detalhes.append(texto('strong','loop03-rede-alocar-titulo',
+    'Posições para vinculação (1 a 10)'));
+   const grade=texto('div','loop03-rede-alocar-posicoes','');
+   const posicionadas=new Map(posicoesResumoReal.map(pos=>
+    [Number(pos.numero),pos]));
+   for(let n=1;n<=10;n++){
+    const pos=posicionadas.get(n);
+    const escolha=texto('button','loop03-rede-posicao',String(n));
+    escolha.type='button';
+    // O backend REAL não dispõe de uma operação de qualificação financeira
+    // comprovada para o vínculo. Não oferecer mutação fictícia ao cliente.
+    escolha.disabled=true;
+    escolha.title=registroValidado&&pos?
+     'Aguardando liberação da vinculação real pelo servidor':
+     !registroValidado?'Indicação aguardando ativação confirmada':
+     'Posição ainda não disponível para vinculação';
+    grade.append(escolha);
+   }
+   detalhes.append(grade);
+   if(emAnalise&&Number.isSafeInteger(p.posicaoDestinoEnsaio))
+    detalhes.append(texto('p','loop03-rede-pessoa-vinculo',
+     'Posição em análise: #'+p.posicaoDestinoEnsaio));
+   detalhes.append(texto('p','loop03-rede-pessoa-aviso',
+    'Vinculação definitiva somente após ativação comprovada.'));
+   card.append(cab,infos,anotacao,detalhes);alvo.append(card);
   }
  }
  async function carregarRede({mais=false}={}){
