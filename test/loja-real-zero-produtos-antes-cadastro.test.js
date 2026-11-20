@@ -51,7 +51,10 @@ test('loja real sem cadastro de produtos: zero catalogados e 200 espaços, sem c
  const requisitar=(rota,cookie)=>fetch(base+rota,{
   headers:cookie?{Cookie:cookie}:{},redirect:'manual'
  });
- assert.equal((await requisitar('/api/loja/catalogo')).status,401);
+ const vitrinePublica=await requisitar('/api/loja/catalogo');
+ assert.equal(vitrinePublica.status,200);
+ assert.equal((await vitrinePublica.json()).total,0);
+ assert.equal((await requisitar('/api/loja/pedidos')).status,401);
  const entrar=await fetch(base+'/api/operador/entrar',{
   method:'POST',headers:{Origin:ORIGEM,'Content-Type':'application/json'},
   body:JSON.stringify({nick:'operador',senha:CHAVE})
