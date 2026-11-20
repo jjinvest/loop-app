@@ -142,24 +142,10 @@
   $('loop03RodapeFilaIntegrado').hidden=true;
   $('loop03RodapeCoroaIntegrado').hidden=true;
   $('erroLogin').hidden=true;$('erroCadastro').hidden=true;
-  const entrada=$('conviteIndicadorEntrada');
-  if(entrada){
-   entrada.hidden=!indicadorNick;
-   entrada.textContent=indicadorNick?
-    'Convite de @'+nickVisivel(indicadorNick)+
-    ' · Você pode criar sua conta pelo link deste titular.':'';
-  }
   const campoIndicador=$('cadastroIndicador');
   if(campoIndicador){
    campoIndicador.value=indicadorNick?nickVisivel(indicadorNick):'';
    campoIndicador.placeholder=indicadorNick?'':'Sem indicação neste acesso';
-  }
-  const aviso=$('cadastroIndicadorAviso');
-  if(aviso){
-   aviso.hidden=!indicadorNick;
-   aviso.textContent=indicadorNick?
-    'Você foi indicado por @'+nickVisivel(indicadorNick)+
-    '. Seu vínculo de indicação será registrado no momento do cadastro.':'';
   }
  }
  function fecharDadosRodapeReal(){
@@ -1737,12 +1723,8 @@
     /^[a-f0-9]{64}$/.test(o.hash);
    if(!ok(dados.termos)||!ok(dados.privacidade)||
       dados.financeiroReal!==false)throw Error('DOCUMENTOS_INVALIDOS');
-   const contar=o=>(o.texto.match(/^## [1-7]\. /gm)||[]).length;
-   const completos=contar(dados.termos)===7&&contar(dados.privacidade)===7;
    const tituloDocs=$('documentosCadastroDetalhes').querySelector('summary');
-   if(tituloDocs)tituloDocs.textContent=completos?
-    'Ler os 14 tópicos completos: Termos de Uso (7) + Privacidade (7)':
-    'Ler Termos de Uso e Política de Privacidade completos';
+   if(tituloDocs)tituloDocs.textContent='Ler Termos de Uso e Privacidade';
    $('versaoTermosCadastro').hidden=false;
    $('versaoPrivacidadeCadastro').hidden=false;
    $('versaoTermosCadastro').textContent='Versão: '+dados.termos.versao;
@@ -1751,7 +1733,7 @@
    $('textoPrivacidadeCadastro').textContent=dados.privacidade.texto;
    if(soLeitura||dados.cadastroAtivo===false){
     documentos=null;documentosHabilitados(false);
-    dizer('Os 14 tópicos podem ser lidos. O cadastro novo permanece fechado.');
+    dizer('Cadastro indisponível neste momento.');
    }else{
     documentos=dados;
     captchaObrigatorio=dados.captchaObrigatorio===true;
