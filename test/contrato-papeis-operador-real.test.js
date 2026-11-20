@@ -62,7 +62,12 @@ test('OPERADOR configura relogio pelo controle original, sem rota paralela',()=>
  const admin=codigo('src/producao/interface-admin-comercial-aprovada.js');
  assert.match(html,/id="atualizarTabuleiroIntegrado"/);
  assert.match(html,/id="relogioTabuleiroIntegrado"/);
- assert.match(js,/location\.assign\('\/administrador#tituloMotorInternoAdmin'\)/);
+ assert.doesNotMatch(js,/location\.assign\('\/administrador#tituloMotorInternoAdmin'\)/);
+ assert.match(js,/abrirControleRelogioOperador\(\)/);
+ assert.match(js,/modal\.showModal\(\)/);
+ assert.match(js,/modal\.id='loopOperadorCatracaDialog'/);
+ assert.match(js,/metaCentrosDia:Number\(meta\.value\)/);
+ assert.match(js,/fetch\('\/api\/admin\/loop\/controle',[\s\S]*?method:'POST'/);
  assert.match(js,/agoraServidorMs:controle\.agoraServidorMs/);
  assert.match(js,/proximaLuzPrevistaEmMs:controle\.proximaLuzPrevistaEmMs/);
  assert.match(js,/intervaloLuzSegundos:controle\.intervaloLuzSegundos/);
@@ -112,4 +117,24 @@ test('credencial e papeis nao se confundem no SQLite e nao dispensam autenticaca
   assert.equal(sessao.sair(real.token),true);
   assert.equal(sessao.sessao(real.token),null);
  }finally{banco.close();}
+});
+
+
+test('foto do operador e olhinho sao controles reais sem confundir titular',()=>{
+ const js=codigo('src/producao/interface-aprovada-contas.js');
+ const gateway=codigo('src/producao/gateway-admin-comercial.js');
+ const html=renderizarInterfaceAprovada();
+ assert.match(html,/id="loop03ImagemFotoTopo"/);
+ assert.match(html,/id="loop03AlterarFotoTopo"/);
+ assert.match(html,/data-senha="senha"/);
+ assert.match(js,/await atualizarFotoOperadorReal\(\)/);
+ assert.match(js,/\$\('loop03AlterarFotoTopo'\)\.disabled=false/);
+ assert.match(js,/fetch\('\/api\/admin\/operador\/foto-perfil'/);
+ assert.match(js,/modoOperadorAtual\?salvarFotoOperadorReal\(ev\):salvarFotoPerfilReal\(ev\)/);
+ assert.match(js,/botao\.setAttribute\('aria-label',mostrar\?'Ocultar senha':'Mostrar senha'\)/);
+ assert.match(js,/campo\.type=mostrar\?'text':'password'/);
+ assert.match(gateway,/loop_real_operador_foto_perfil/);
+ assert.match(gateway,/app\.get\('\/api\/admin\/operador\/foto-perfil',proteger/);
+ assert.match(gateway,/app\.post\('\/api\/admin\/operador\/foto-perfil',proteger,validarCsrf/);
+ assert.doesNotMatch(gateway,/req\.conta\.titularId/);
 });
