@@ -3272,7 +3272,7 @@
     },
     {
       "path": "test/varredura-visual-publicacao-real.test.js",
-      "sha": "952e04dbf6fe50ca1e4b88c1c1a275ace2e55947"
+      "sha": "ec30288194e6dd4e3eea53e22e291dcca81e2aff"
     },
     {
       "path": "test/verificacao-email-conta-unica-candidata.test.js",
@@ -3560,6 +3560,12 @@
       "antes": "768be6890a37f4de5687e749aded50fcc5ed01f0",
       "depois": "dcd2a63823776cf498c31bb43e26281096d935c4",
       "objetivo": "Autorizacao visual explicita por fotos em 20/11/2026: remover textos duplicados de convite, simplificar aceite, melhorar contraste e quadrinho, fixar marca 3.0 prata e testar a interface compartilhada em todos os links PC/celular, sem outras alteracoes."
+    },
+    {
+      "path": "test/varredura-visual-publicacao-real.test.js",
+      "antes": "952e04dbf6fe50ca1e4b88c1c1a275ace2e55947",
+      "depois": "ec30288194e6dd4e3eea53e22e291dcca81e2aff",
+      "objetivo": "Atualizar a varredura protegida para exigir o novo comportamento aprovado: sem mensagens duplicadas de convite e preservacao de campo indicador, termos completos e controles existentes."
     }
   ]
 }
