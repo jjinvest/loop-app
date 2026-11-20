@@ -412,7 +412,7 @@
     },
     {
       "path": "scripts/validar-identidade-real-navegador.js",
-      "sha": "98bbcf52967ad539f108e94d070871fc92c0ecc0"
+      "sha": "768be6890a37f4de5687e749aded50fcc5ed01f0"
     },
     {
       "path": "scripts/validar-jornada-loja-cores-browser.js",
@@ -3518,6 +3518,12 @@
       "antes": "3eae9d4d3f1a701d7acb63934166bf5962729922",
       "depois": "98bbcf52967ad539f108e94d070871fc92c0ecc0",
       "objetivo": "Testar navegacao e operacoes reais do relogio modal, foto do operador e olho em PC e celular; aguardar renderizacao asincrona da loja."
+    },
+    {
+      "path": "scripts/validar-identidade-real-navegador.js",
+      "antes": "98bbcf52967ad539f108e94d070871fc92c0ecc0",
+      "depois": "768be6890a37f4de5687e749aded50fcc5ed01f0",
+      "objetivo": "Aguardar o evento nativo de fechamento do modal no teste PC/celular sem modificar a interface nem o motor."
     }
   ]
 }
