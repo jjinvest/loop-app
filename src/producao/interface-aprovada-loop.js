@@ -80,11 +80,8 @@ function renderizarInterfaceAprovada(){
   'minlength="12" maxlength="128" autocomplete="new-password"');
  html=trocarExato(html,'<label for="cadastroSenha">Senha (8 a 12 caracteres)</label>',
  '<label for="cadastroSenha">Senha (mínimo 12 caracteres)</label>');
- html=trocarExato(html,'  <form id="formCadastro">',
-  '  <p id="cadastroIndicadorAviso" role="status" hidden></p>\n  <form id="formCadastro">');
- // Convite tambem aparece no primeiro contato, antes do formulario de cadastro.
- html=trocarExato(html,'  <form id="formLogin">',
-  '  <p id="conviteIndicadorEntrada" class="subtexto" role="status" hidden></p>\n  <form id="formLogin">');
+ // O indicador ja consta no campo "Indicado por". Nao duplicar
+ // avisos acima dos formularios nem alterar o vinculo persistido.
  // Nick e senha compartilham um UNICO formulario na tela do LOOP.
  // A rota de contingencia /administrador/entrar continua protegida,
  // mas nao coloca um segundo formulario na jornada principal.
