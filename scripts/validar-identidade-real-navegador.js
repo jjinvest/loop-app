@@ -280,6 +280,41 @@ async function main(){
    });
    const cadastro=await convite.newPage();
    cadastro.setDefaultTimeout(15000);
+   // Os acessos reais base e personalizado entregam a MESMA interface.
+   await cadastro.goto(base+'/minha-conta');
+   await cadastro.locator('#painelLogin').waitFor({state:'visible'});
+   assert.equal(await cadastro.locator('#conviteIndicadorEntrada').count(),0);
+   await cadastro.goto(base+'/escritorio');
+   await cadastro.locator('#painelLogin').waitFor({state:'visible'});
+   assert.equal(await cadastro.locator('#conviteIndicadorEntrada').count(),0);
+   await cadastro.goto(base+'/escritorio/'+nick);
+   assert.equal(new URL(cadastro.url()).pathname,'/escritorio');
+   assert.equal(new URL(cadastro.url()).searchParams.get('ref'),
+    nick.toLowerCase(),'o link personalizado deve identificar o indicador');
+   await cadastro.locator('#painelLogin').waitFor({state:'visible'});
+   assert.equal(await cadastro.locator('#conviteIndicadorEntrada').count(),0);
+   await cadastro.locator('#mudarParaCadastro').click();
+   await cadastro.locator('#painelCadastro').waitFor({state:'visible'});
+   assert.equal(await cadastro.locator('#cadastroIndicador').inputValue(),
+    nick.toLowerCase());
+   assert.equal(await cadastro.locator('#cadastroIndicadorAviso').count(),0);
+   assert.equal(await cadastro.locator('#documentosCadastroDetalhes summary')
+    .innerText(),'Ler Termos de Uso e Privacidade');
+   assert.equal(await cadastro.locator('#cadastroTermos').evaluate(el=>
+    el.closest('label').textContent.trim()),
+    'Li e aceito a Política de Privacidade e os Termos de Uso apresentados acima.');
+   const prata=await cadastro.locator('.loop03-marca-entrada .loop03-marca-versao')
+    .evaluate(el=>getComputedStyle(el).webkitTextFillColor);
+   assert.equal(prata,'rgb(225, 232, 243)','3.0 sempre prateado');
+   const orientacao=await cadastro.locator('#painelCadastro > p.subtexto')
+    .evaluate(el=>getComputedStyle(el).color);
+   assert.equal(orientacao,'rgb(238, 233, 225)',
+    'orientacao do cadastro legivel no PC e celular');
+   const tamanhoQuadrinho=await cadastro.locator('#cadastroTermos')
+    .evaluate(el=>({largura:el.getBoundingClientRect().width,
+      altura:el.getBoundingClientRect().height}));
+   assert.ok(tamanhoQuadrinho.largura>=24&&tamanhoQuadrinho.altura>=24,
+    'checkbox de aceite deve ser legivel e tocavel');
    await cadastro.goto(base+'/convite/loja?ref='+nick);
    // goto ja aguarda a resposta final; ler a rota evita espera circular
    // quando a vitrine fica aberta e nao redireciona o visitante ao login.
@@ -295,9 +330,10 @@ async function main(){
     url.searchParams.get('ref')===nick.toLowerCase()&&
     url.searchParams.get('cadastro')==='1');
    await cadastro.locator('#painelCadastro').waitFor({state:'visible'});
-   await cadastro.locator('#cadastroIndicadorAviso').filter({
-    hasText:'@'+nick.toLowerCase()
-   }).waitFor({state:'visible'});
+   assert.equal(await cadastro.locator('#cadastroIndicador').inputValue(),
+    nick.toLowerCase());
+   assert.equal(await cadastro.locator('#cadastroIndicadorAviso').count(),0);
+   assert.equal(await cadastro.locator('#conviteIndicadorEntrada').count(),0);
    await cadastro.locator('#cadastroNome').fill('Pessoa Convidada');
    await cadastro.locator('#cadastroNick').fill(novoNick);
    await cadastro.locator('#cadastroEmail').fill(
