@@ -15,7 +15,7 @@
       "nota": "Os tres arquivos do Dockerfile.public-real sao iguais no commit da identidade real"
     }
   },
-  "politica": "Qualquer mudanca, adicao ou remocao no REAL exige aprovacao explicita do proprietario, testes, hash atualizado no manifesto E ancora Railway correspondente; nao reverter ou reconstruir telas historicas; ajuste de fotos cliente/operador solicitado em 21/11/2026, sem alteracao de molduras ou regra do motor; ajuste de agenda futura visivel e horario Android apenas para operador solicitado em 21/11/2026, sem modificacao do motor financeiro; correção autorizada do olhinho de login Android em 21/11/2026 sem alterar catraca, fotos, caixas ou molduras; vinculo visual real das luzes da catraca ao relogio do operador e legenda unica autorizado em 21/11/2026, preservando caixa e travas do motor",
+  "politica": "Qualquer mudanca, adicao ou remocao no REAL exige aprovacao explicita do proprietario, testes, hash atualizado no manifesto E ancora Railway correspondente; nao reverter ou reconstruir telas historicas; ajuste de fotos cliente/operador solicitado em 21/11/2026, sem alteracao de molduras ou regra do motor; ajuste de agenda futura visivel e horario Android apenas para operador solicitado em 21/11/2026, sem modificacao do motor financeiro; correção autorizada do olhinho de login Android em 21/11/2026 sem alterar catraca, fotos, caixas ou molduras; vinculo visual real das luzes da catraca ao relogio do operador e legenda unica autorizado em 21/11/2026, preservando caixa e travas do motor; diagnóstico integrado agregado somente leitura de pedidos→eventos→outbox→filas em 21/11/2026, acesso operador, sem mudar telas, temporizador, posições ou caixa",
   "algoritmo": "git-blob-sha1",
   "arquivos": [
     {
@@ -1371,6 +1371,10 @@
       "sha": "0e56d2c79288509d2453297b5a4a38657de22720"
     },
     {
+      "path": "src/producao/diagnostico-cadeia-pedidos-filas.js",
+      "sha": "cbf343f224d4b98590974ca5046401f053468b01"
+    },
+    {
       "path": "src/producao/emitir-auditoria-custodia-readonly.js",
       "sha": "bb84265135a8e84066143dfef95bb1048c73e7f4"
     },
@@ -1388,7 +1392,7 @@
     },
     {
       "path": "src/producao/gateway-admin-comercial.js",
-      "sha": "f5038dcf7af1c0f8875d000ba6e9875036e42012"
+      "sha": "31d37579d75db9cf625ee24a2f1fa9d5a11c66e2"
     },
     {
       "path": "src/producao/historico-ciclos-relacional-sqlite.js",
@@ -2337,6 +2341,10 @@
     {
       "path": "test/diagnostico-ativacao-candidato.test.js",
       "sha": "31ec0eef63c3f5520dfc67f56280c37379f76f01"
+    },
+    {
+      "path": "test/diagnostico-cadeia-pedidos-filas-real.test.js",
+      "sha": "3c62ba8147c026444fc4d8b55569718d9bb871f7"
     },
     {
       "path": "test/disponibilidade-caixa2-integracao-v6.test.js",
