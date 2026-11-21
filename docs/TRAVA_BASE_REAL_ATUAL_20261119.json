@@ -1539,6 +1539,10 @@
       "sha": "089b133c4022dbe982a12a3664a8ac819cfad670"
     },
     {
+      "path": "src/producao/snapshot-historico-externo-candidato.js",
+      "sha": "996f37f9b89af554450c458b5fdf395f7d80dc3a"
+    },
+    {
       "path": "src/producao/tesouraria-modular-ensaio-sqlite.js",
       "sha": "793cf648fc010700a51d37f693e9bb2258281594"
     },
@@ -3245,6 +3249,10 @@
     {
       "path": "test/simulador-qualificacao-candidato.test.js",
       "sha": "b49b6c46fd94f305226776162351ab93fddf3710"
+    },
+    {
+      "path": "test/snapshot-historico-externo-candidato.test.js",
+      "sha": "1eadd9e175478af07831bc4459c4125c5c7c4f11"
     },
     {
       "path": "test/solicitacoes-saque-ficticio-idempotente.test.js",
