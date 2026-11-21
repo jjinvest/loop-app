@@ -1372,7 +1372,7 @@
     },
     {
       "path": "src/producao/identidade-cliente-loop-sqlite.js",
-      "sha": "2034c70c2a28decde5f42f6c8b0b88398e104040"
+      "sha": "16365d035f92093fdd79d4163d95d48eb4088393"
     },
     {
       "path": "src/producao/inbox-extratos-asaas-sandbox-sqlite.js",
@@ -1428,7 +1428,7 @@
     },
     {
       "path": "src/producao/motor-loop-integrado-sqlite.js",
-      "sha": "ca949a49118aec2b6b545c2fd0408c9b322b8816"
+      "sha": "0ecc5ca44e05293ba74693849f2b79422db67e5a"
     },
     {
       "path": "src/producao/observacoes-psp-ensaio-sqlite.js",
