@@ -232,7 +232,8 @@ async function main(){
      tamanho:(await r.blob()).size};
    });
    assert.equal(fotoAutenticada.status,200);
-   assert.equal(fotoAutenticada.mime,'image/png');
+   assert.equal(fotoAutenticada.mime,'image/jpeg',
+    'foto da galeria deve ser convertida para JPEG leve antes do upload');
    assert.ok(fotoAutenticada.tamanho>0);
    // Verificar que a foto permanece na conta do operador ao recarregar.
    await operadorPage.reload();
