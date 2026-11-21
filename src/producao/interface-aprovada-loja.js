@@ -502,6 +502,8 @@
     const adicionar=document.createElement('button');
     adicionar.type='button';adicionar.className='botao-secundario-loja';
     adicionar.textContent='Adicionar ao carrinho';
+    adicionar.disabled=operadorAtivo;
+    if(operadorAtivo)adicionar.title='Carrinho disponível apenas para clientes';
     adicionar.setAttribute('aria-label','Adicionar '+p.titulo+' ao carrinho');
     const retorno=document.createElement('small');
     retorno.textContent='Sem cotação, cobrança ou pedido até o fornecedor ser conectado.';

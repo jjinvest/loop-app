@@ -684,8 +684,8 @@ async function main(){
    await barraLoja.click();
    await page.waitForURL(url=>url.pathname==='/loja');
    await page.locator('#conteudoLojaLoop').waitFor({state:'visible'});
-   assert.equal(await page.locator('#akitemmNomeTitular').innerText(),
-    nick.toLowerCase());
+   await page.locator('#akitemmNomeTitular').filter({
+    hasText:new RegExp('^'+nick.toLowerCase()+'
    // Botoes internos reais da AKITEMM: dados da conta e avisos.
    await page.locator('#akitemmAbrirConta').click();
    assert.equal(await page.locator('#akitemmDadosConta').isVisible(),true);
@@ -985,6 +985,442 @@ async function main(){
     fullPage:true
    });
    await pagina.goto(base+'/loja');
+   await pagina.waitForFunction(()=>document.getElementById('copiarDivulgarLojaLoop')?.disabled===false);
+   await pagina.locator('#akitemmDetalhesPedidos summary').click();
+   await pagina.locator('#atualizarPedidosLoja').click();
+   await pagina.locator('#pedidosLojaLoop').filter({
+    hasText:compra.pedidoId
+   }).waitFor({state:'visible'});
+   assert.equal(await pagina.locator('#pedidosLojaLoop li').count(),1);
+   const loja=pagina.locator('#estadoLojaLoop');
+   await conferirLayoutReal(pagina,'loja-'+visual.nome,{mobile:visual.mobile});
+   await loja.filter({hasText:/capacidade técnica da sua conta/}).waitFor();
+   await pagina.waitForFunction(()=>!document.getElementById('akitemmBusca').disabled);
+   assert.equal(await pagina.locator('#catalogoLojaLoop .produto-loja-loop[data-produto-id]').count(),1);
+   await pagina.locator('#catalogoLojaLoop .produto-loja-loop[data-produto-id] button').click();
+   assert.match(await pagina.locator('#akitemmProdutoInlineConteudo').innerText(),
+    /Sem preço, estoque ou frete homologados/);
+   // Carrinho interno no banco REAL: adicionar, atualizar quantidade,
+   // recarregar a loja e esvaziar, sem criar um pedido ou pagamento.
+   await pagina.locator('#akitemmProdutoInlineConteudo button').click();
+   await pagina.locator('#akitemmTotalItens').filter({hasText:'1'})
+    .waitFor({state:'visible'});
+   assert.equal(await pagina.locator('#itensLojaLoop .item-carrinho-loja').count(),1);
+   assert.match(await pagina.locator('#totalLojaLoop').innerText(),/Aguardando cotação/);
+   const antes=await pagina.evaluate(()=>fetch('/api/loja/carrinho',{
+    credentials:'same-origin',cache:'no-store'
+   }).then(r=>r.json()));
+   assert.equal(antes.quantidadeTotal,1);
+   assert.equal(antes.financeiroReal,false);
+   assert.equal(antes.checkoutReal,false);
+   await pagina.reload();
+   await pagina.locator('#itensLojaLoop .item-carrinho-loja').waitFor({
+    state:'visible'
+   });
+   assert.equal(await pagina.locator('#akitemmTotalItens').innerText(),'1');
+   await pagina.locator('#itensLojaLoop [aria-label^="Aumentar quantidade"]').click();
+   await pagina.locator('#akitemmTotalItens').filter({hasText:'2'}).waitFor();
+   await pagina.locator('#itensLojaLoop [aria-label^="Reduzir quantidade"]').click();
+   await pagina.locator('#akitemmTotalItens').filter({hasText:'1'}).waitFor();
+   await pagina.locator('#akitemmLimparCarrinho').click();
+   await pagina.locator('#akitemmTotalItens').filter({hasText:'0'}).waitFor();
+   assert.equal(await pagina.locator('#itensLojaLoop .item-carrinho-loja').count(),0);
+   assert.equal(await pagina.locator('#registrarPedidoLoja').isDisabled(),true);
+   await pagina.locator('#catalogoLojaLoop .produto-loja-loop[data-produto-id] button').click();
+   await pagina.locator('#akitemmVoltarProdutos').click();
+   await pagina.locator('#akitemmBusca').fill('inexistente xyz');
+   await pagina.locator('#akitemmResultadoProdutos').filter({
+    hasText:/Nenhum produto encontrado/
+   }).waitFor();
+   assert.equal(await pagina.locator('#catalogoLojaLoop .produto-loja-loop[data-produto-id]')
+    .count(),0);
+   await pagina.locator('#akitemmFiltroTodos').click();
+   await pagina.locator('[data-akitemm-cor="DOURADO"]').click();
+   assert.equal(await pagina.locator('#catalogoLojaLoop .produto-loja-loop[data-produto-id]')
+    .count(),1);
+   await pagina.locator('#atualizarCatalogoLoja').click();
+   await pagina.locator('#akitemmFiltroTodos').click();
+   await pagina.locator('[data-akitemm-categoria="novidades"]').click();
+   assert.equal(await pagina.locator('#catalogoLojaLoop .produto-loja-loop[data-produto-id]').count(),1);
+   await pagina.locator('#akitemmFiltroTodos').click();
+   await pagina.locator('[data-akitemm-categoria="mais-vendidos"]').click();
+   assert.equal(await pagina.locator('#catalogoLojaLoop .produto-loja-loop[data-produto-id]').count(),1);
+   await pagina.locator('#akitemmFiltroTodos').click();
+   assert.equal(await pagina.locator('#catalogoLojaLoop .produto-loja-loop[data-produto-id]')
+    .count(),1);
+   assert.equal(await pagina.locator('#registrarPedidoLoja').isDisabled(),true);
+   assert.equal(await pagina.locator('#akitemmBusca').isEnabled(),true);
+   await pagina.screenshot({
+    path:path.join(pasta,'integrado-loja-'+visual.nome+'.png'),
+    fullPage:true
+   });
+   // Cliente permanece cliente ate que o cookie administrativo seja validado.
+   await contexto.addCookies([{
+    name:COOKIE_ADMIN,value:admin.token,url:base,
+    httpOnly:true,secure:true,sameSite:'Strict'
+   }]);
+   await pagina.goto(base+'/escritorio');
+   await pagina.locator('#loopOperadorAcoes').waitFor({state:'visible'});
+   assert.equal(await pagina.locator('#loop03NickIntegrado').innerText(),'OPERADOR');
+   assert.equal(await pagina.locator('#abaFinanceiro').isDisabled(),true);
+   assert.equal(await pagina.locator('#loopAcessoAdminMenu').getAttribute('hidden'),null);
+   await pagina.goto(base+'/loja');
+   await pagina.locator('#akitemmNomeTitular').filter({hasText:'OPERADOR'}).waitFor();
+   assert.equal(await pagina.locator('footer .akitemm-acesso-operador').getAttribute('hidden'),null);
+   await pagina.goto(base+'/administrador');
+   const integrado=pagina.locator('#integracaoQualificadaEstado');
+   await integrado.filter({hasText:/Confirmadas: 1/}).waitFor();
+   assert.equal(await pagina.locator('#sincronizarComprasLoop').isEnabled(),true);
+   await pagina.locator('#sincronizarComprasLoop').click();
+   await integrado.filter({hasText:/Sincronizado:/}).waitFor();
+   await pagina.locator('#atualizarReservasVencidasAdmin').click();
+   await pagina.locator('#estadoReservasVencidasAdmin').filter({
+    hasText:/Reservas de pedidos sem posição: 0/
+   }).waitFor();
+   if(visual.nome==='pc'){
+    await pagina.locator('#prepararTabuleiroLoop').click();
+    await integrado.filter({hasText:/Eventos: 1\/6/}).waitFor();
+   }else{
+    await pagina.locator('#atualizarLoopAdmin').click();
+    await pagina.locator('#loopAdminEstado').filter({hasText:/Fila B:/}).waitFor();
+    await pagina.locator('#atualizarJornadaAdmin').click();
+    await pagina.locator('#estadoJornadaComercial').filter({
+     hasText:/aguardam homologação|AGUARDA_PROVEDORES/
+    }).waitFor();
+    assert.equal(await pagina.locator('#reprocessarJornadaAdmin').isDisabled(),
+     true);
+   }
+   await conferirLayoutReal(pagina,'admin-'+visual.nome,{mobile:visual.mobile});
+   const tamanho=await pagina.evaluate(()=>({
+    largura:window.innerWidth,
+    conteudo:document.documentElement.scrollWidth,
+    corpo:document.body.scrollWidth
+   }));
+   assert.ok(tamanho.conteudo<=tamanho.largura+1,
+    'Painel administrativo sem corte horizontal: '+JSON.stringify(tamanho));
+   await pagina.screenshot({
+    path:path.join(pasta,'integrado-admin-'+visual.nome+'.png'),
+    fullPage:true
+   });
+   assert.deepEqual(erros,[],
+    'Nenhuma excecao JavaScript no navegador aprovado '+visual.nome);
+   await contexto.close();
+  }
+  assert.equal(lotes.verificar().aceitesIndividuaisEnsaio,2);
+  assert.equal(motorLoop.consultar().tabuleiro.eventosNoCiclo,1);
+  console.log('NAVEGADOR_REAL_INTEGRADO=PC_E_CELULAR_CONTROLES_COM_PSP_ENSAIO');
+  assert.equal(banco.prepare('PRAGMA integrity_check').get().integrity_check,'ok');
+  console.log('NAVEGADOR_IDENTIDADE_REAL=PC_E_CELULAR_APROVADOS_SEM_CHECKOUT');
+ }finally{
+  if(browser)await browser.close();
+  await new Promise(resolve=>server.close(resolve));
+  fs.rmSync(pastaTls,{recursive:true,force:true});
+  banco.close();
+ }
+}
+main().catch(e=>{console.error(e.stack||e);process.exitCode=1});
+)
+   }).waitFor({state:'visible'});
+   // Botoes internos reais da AKITEMM: dados da conta e avisos.
+   await page.locator('#akitemmAbrirConta').click();
+   assert.equal(await page.locator('#akitemmDadosConta').isVisible(),true);
+   await page.locator('#akitemmDadosContaConteudo').filter({
+    hasText:/Nome: Pessoa de Ensaio[\s\S]*E-mail: teste@example.invalid/
+   }).waitFor({state:'visible'});
+   assert.equal(await page.locator('#akitemmAbrirConta').getAttribute('aria-expanded'),'true');
+   await page.locator('#akitemmAbrirConta').click();
+   assert.equal(await page.locator('#akitemmDadosConta').isHidden(),true);
+   await page.locator('#akitemmSino').click();
+   await page.locator('#akitemmNotificacoesConteudo').filter({
+    hasText:/E-mail confirmado/
+   }).waitFor({state:'visible'});
+   assert.equal(await page.locator('#akitemmSino').getAttribute('aria-expanded'),'true');
+   await page.locator('#akitemmSino').click();
+   assert.equal(await page.locator('#akitemmNotificacoes').isHidden(),true);
+   // O convite permanece dentro do mesmo painel retrátil aprovado.
+   await page.locator('#tituloDivulgarLojaLoop').click();
+   const linkPessoal=page.locator('#enderecoDivulgarLojaLoop');
+   assert.match(await linkPessoal.inputValue(),/\/loja\/dozeletrasab$/);
+   assert.equal(await page.locator('#copiarDivulgarLojaLoop').isEnabled(),true);
+   await page.locator('#copiarDivulgarLojaLoop').click();
+   await page.locator('#statusDivulgarLojaLoop').filter({
+    hasText:/Link pessoal copiado|Link selecionado/
+   }).waitFor({state:'visible'});
+   await page.locator('#akitemmMeusCursos summary').click();
+   await page.locator('#akitemmAtualizarMeusCursos').click();
+   await page.locator('#akitemmListaMeusCursos').filter({
+    hasText:/nenhum arquivo foi liberado|Biblioteca indisponível|Arquivos digitais|arquivos digitais/i
+   }).waitFor({state:'visible'});
+   // Rodape tem conteudo real e documento vigente, sem inventar politicas.
+   await page.locator('[data-akitemm-informacao="sobre"]').click();
+   assert.match(await page.locator('#akitemmInformacaoConteudo').innerText(),
+    /Loja Oficial conectada ao Escritório/);
+   await page.locator('#akitemmModalInformacao [aria-label="Fechar"]').click();
+   await page.locator('[data-akitemm-informacao="privacidade"]').click();
+   await page.locator('#akitemmInformacaoConteudo').filter({
+    hasText:/LOOP-PRIVACIDADE-2026/
+   }).waitFor({state:'visible'});
+   await page.locator('#akitemmModalInformacao [aria-label="Fechar"]').click();
+   await page.locator('[data-akitemm-informacao="trocas"]').click();
+   assert.match(await page.locator('#akitemmInformacaoConteudo').innerText(),
+    /política comercial de trocas e devoluções ainda não foi publicada/i);
+   await page.locator('#akitemmModalInformacao [aria-label="Fechar"]').click();
+   await page.locator('[data-akitemm-informacao="contato"]').click();
+   assert.equal(await page.locator('#akitemmSuporte').getAttribute('open'),'');
+   assert.equal(await page.locator('#registrarPedidoLoja').isDisabled(),true);
+   assert.equal(await page.locator('#akitemmBusca').isDisabled(),false);
+   assert.match(await page.locator('#statusPedidoLoja').innerText(),
+    /checkout real ainda não foi liberado/i);
+   // As dez abas e as molduras são a vitrine aprovada,
+   // sem produtos fictícios nem checkout.
+   await page.locator('#akitemmAbasProdutos button').first().waitFor({state:'visible'});
+   assert.equal(await page.locator('#akitemmAbasProdutos button').count(),10);
+   // Controles de leitura respondem mesmo sem produtos publicados.
+   assert.equal(await page.locator('#akitemmFiltroOfertas').isDisabled(),false);
+   await page.locator('#akitemmFiltroOfertas').click();
+   assert.equal(await page.locator('#akitemmFiltroOfertas').getAttribute('aria-pressed'),'true');
+   assert.match(await page.locator('#akitemmResultadoProdutos').innerText(),/Nenhuma oferta publicada/);
+   assert.equal(await page.locator('#catalogoLojaLoop .akitemm-slot-vazio').count(),20);
+   await page.locator('#akitemmFiltroTodos').click();
+   for(const cor of ['CINZA','VERDE','DOURADO','ROXO']){
+    const filtro=page.locator('[data-akitemm-cor="'+cor+'"]');
+    assert.equal(await filtro.isDisabled(),false);
+    await filtro.click();
+    assert.equal(await filtro.getAttribute('aria-pressed'),'true');
+    assert.equal(await page.locator('#catalogoLojaLoop .akitemm-slot-vazio').count(),20);
+    await page.locator('#akitemmFiltroTodos').click();
+   }
+   for(const categoria of ['cursos','fisicos','novidades','mais-vendidos']){
+    const filtro=page.locator('[data-akitemm-categoria="'+categoria+'"]');
+    assert.equal(await filtro.isDisabled(),false);
+    await filtro.click();
+    assert.equal(await filtro.getAttribute('aria-pressed'),'true');
+    assert.equal(await page.locator('#catalogoLojaLoop .akitemm-slot-vazio').count(),20);
+    await page.locator('#akitemmFiltroTodos').click();
+   }
+   assert.equal(await page.locator('#akitemmAbasProdutos button').count(),10);
+   assert.equal(await page.locator('#catalogoLojaLoop .ak-faixa-horizontal').count(),2);
+   assert.equal(await page.locator('#catalogoLojaLoop .akitemm-slot-vazio').count(),20);
+   assert.equal(await page.locator('#catalogoLojaLoop [data-produto-id]').count(),0);
+   await page.locator('#akitemmCarregarMais').click();
+   assert.equal(await page.locator('#catalogoLojaLoop .ak-faixa-horizontal').count(),4);
+   assert.equal(await page.locator('#catalogoLojaLoop .akitemm-slot-vazio').count(),40);
+   await page.locator('#akitemmAbasProdutos button').nth(9).click();
+   assert.equal(await page.locator('#catalogoLojaLoop .akitemm-slot-vazio').first()
+    .getAttribute('data-akitemm-slot'),'361');
+   assert.equal(await page.locator('#akitemmAbasProdutos button[aria-current="page"]')
+    .innerText(),'10');
+   await page.locator('#akitemmAbasProdutos button').first().click();
+   await page.locator('#akitemmCarregarMais').click();
+   assert.equal(await page.locator('#catalogoLojaLoop .akitemm-slot-vazio').count(),20);
+   assert.match(await page.locator('#estadoLojaLoop').innerText(),
+    /capacidade técnica da sua conta.*Checkout e pagamentos reais ainda não habilitados/i);
+   await page.screenshot({
+    path:path.join(pasta,'identidade-real-loja-'+item.nome+'.png'),
+    fullPage:true
+   });
+   await page.locator('a.akitemm-voltar').click();
+   await page.waitForURL(url=>url.pathname==='/minha-conta');
+   await page.locator('#painelConta').waitFor({state:'visible'});
+   // Ativar operador na mesma sessao de navegador e garantir que
+   // nenhum dado de titular seja apresentado como propriedade dele.
+   await contexto.addCookies([{
+    name:COOKIE_ADMIN,value:admin.token,url:base,
+    httpOnly:true,secure:true,sameSite:'Strict'
+   }]);
+   await page.goto(base+'/escritorio',{waitUntil:'domcontentloaded'});
+   await page.locator('#loopOperadorAcoes').waitFor({state:'visible'});
+   assert.equal(await page.locator('#loop03NickIntegrado').innerText(),'OPERADOR');
+   assert.equal(await page.locator('#loopAcessoAdminMenu').getAttribute('hidden'),null);
+   assert.equal(await page.locator('#abaConta').isDisabled(),true);
+   await page.goto(base+'/loja');
+   await page.locator('#akitemmNomeTitular').filter({hasText:'OPERADOR'}).waitFor();
+   assert.equal(await page.locator('#copiarDivulgarLojaLoop').isDisabled(),true,
+    'operador nunca recebe link privado de titular anterior');
+   assert.equal(await page.locator('#enderecoDivulgarLojaLoop').inputValue(),'');
+   await page.locator('#akitemmAbrirConta').click();
+   assert.match(await page.locator('#akitemmDadosContaConteudo').innerText(),
+    /Sessão do operador/);
+   assert.equal(await page.locator('#akitemmEditarConta').getAttribute('href'),'/administrador');
+   await page.locator('#akitemmAbrirConta').click();
+   assert.equal(await page.locator('footer .akitemm-acesso-operador').getAttribute('hidden'),null);
+   // A tela administrativa consulta a MESMA base e exige outro cookie.
+   await page.goto(base+'/administrador',{waitUntil:'domcontentloaded'});
+   await page.locator('#loopAdminEstado')
+    .filter({hasText:/Fila B: 1/}).waitFor();
+   assert.equal(await page.locator('#atualizarLoopAdmin').isVisible(),true);
+   await page.screenshot({
+    path:path.join(pasta,'identidade-real-admin-'+item.nome+'.png'),
+    fullPage:true
+   });
+   await contexto.close();
+  }
+  // Prova de ponta a ponta das FUNCIONALIDADES recentes na mesma UI
+  // aprovada: pedido -> PSP ensaio -> 2 posicoes douradas -> aceite
+  // individual na tela -> admin sincroniza/prepara e consulta reservas.
+  catalogo.criarProduto({
+   produtoId:'produtoBrowserDourado',
+   titulo:'Produto ficticio dourado para prova de navegador'
+  });
+  catalogo.vincularOferta({
+   produtoId:'produtoBrowserDourado',distribuidorId:'DIST_BROWSER',
+   sku:'SKU_BROWSER_DOURADO',precoUnitCentavos:25000
+  });
+  classificacaoLoop.configurarProduto({
+   produtoId:'produtoBrowserDourado',cor:'DOURADO',autorizado:true
+  });
+  catalogo.ativarProduto({produtoId:'produtoBrowserDourado',ativo:true});
+  const endereco={destinatario:'Pessoa de Ensaio',cep:'27250010',
+   logradouro:'Rua de Ensaio',numero:'2',bairro:'Centro',
+   cidade:'Volta Redonda',uf:'RJ',complemento:''};
+  const cotacaoId='COTACAO_BROWSER_DOURADO_2026';
+  cotacoes.set(cotacaoId,{
+   cotacaoId,titularId:cliente.titularId,cepDestino:endereco.cep,
+   status:'APROVADA',expiraEm:Date.now()+600000,
+   grupos:[{fornecedorId:'DIST_BROWSER',freteCentavos:1000,
+    itens:[{sku:'SKU_BROWSER_DOURADO',precoUnitCentavos:25000,
+     quantidade:2}]}]
+  });
+  const compra=await pedidosComerciais.criarPedido({
+   titularId:cliente.titularId,cotacaoId,
+   chaveIdempotencia:'BROWSER_COMPRA_DOURADA_UNICA_2026',
+   enderecoEntrega:endereco
+  });
+  assert.equal(compra.status,'AGUARDANDO_PAGAMENTO');
+  assert.equal(preflightCapacidade.consultar({
+   titularId:cliente.titularId
+  }).reservadas,2);
+  const confirmado=await pedidosComerciais.confirmarPagamento({
+   pedidoId:compra.pedidoId
+  });
+  assert.equal(confirmado.confirmado,true);
+  assert.equal(confirmado.integracaoInternaEnsaio?.novasPosicoes,2);
+  assert.equal(motorLoop.consultar({
+   titularId:cliente.titularId
+  }).minhasPosicoes.length,3);
+  assert.equal(preflightCapacidade.consultar({
+   titularId:cliente.titularId
+  }).reservadas,0);
+  for(const visual of [
+   {nome:'pc',largura:1440,altura:900,mobile:false},
+   {nome:'celular',largura:390,altura:844,mobile:true}
+  ]){
+   const contexto=await browser.newContext({
+    viewport:{width:visual.largura,height:visual.altura},
+    deviceScaleFactor:1,ignoreHTTPSErrors:true,
+    isMobile:visual.mobile,hasTouch:visual.mobile
+   });
+   await contexto.addCookies([
+    {name:COOKIE,value:login.token,url:base,
+     httpOnly:true,secure:true,sameSite:'Strict'}
+   ]);
+   const pagina=await contexto.newPage();
+   pagina.setDefaultTimeout(15000);
+   const erros=[];
+   pagina.on('pageerror',e=>erros.push(e.message));
+   await pagina.goto(base+'/escritorio');
+   const diagnostico=await pagina.evaluate(async()=>{
+    const resposta=await fetch('/api/loop/estado',{cache:'no-store'});
+    const d=await resposta.json().catch(()=>({}));
+    return {http:resposta.status,erro:d.erro||null,
+     filaB:d.filaB??null,quantidadePosicoes:d.minhasPosicoes?.length??null};
+   });
+   console.log('DIAGNOSTICO_ESTADO_CLIENTE_'+visual.nome+'='+
+    JSON.stringify(diagnostico));
+   await conferirLayoutReal(pagina,'escritorio-'+visual.nome,{mobile:visual.mobile});
+   await pagina.locator('#loop03TotalIntegrado').filter({
+    hasText:String(diagnostico.quantidadePosicoes)+' / 10'
+   }).waitFor();
+   assert.equal(await pagina.locator('#loopEstadoIntegrado').count(),0);
+   if(visual.mobile)await pagina.locator('#loop03MenuIntegrado').click();
+   await pagina.locator('#abaMeusPedidos').click();
+   await pagina.locator('#listaPedidos').filter({hasText:compra.pedidoId}).waitFor();
+   assert.match(await pagina.locator('#listaPedidos').innerText(),
+    /Aprovado para expedição/);
+   assert.equal(await pagina.locator('.indicadores-cliente').count(),0);
+   assert.equal(await pagina.locator('.loop03-indicadores .loop03-indicador').count(),3);
+   assert.equal(await pagina.locator('#loop03TotalIntegrado').innerText(),
+    String(diagnostico.quantidadePosicoes)+' / 10');
+   assert.ok((await pagina.locator('#pedidosPaginacao').innerText())
+    .includes('Página 1 · 1 pedido(s) no histórico'));
+   assert.equal(await pagina.locator('#pedidosAnterior').isDisabled(),true);
+   assert.equal(await pagina.locator('#pedidosProximo').isDisabled(),true);
+   assert.equal(await pagina.locator('#pedidosResumo').innerText(),'1 pedido no histórico');
+   assert.equal(await pagina.locator('#conteudoMeusPedidos #atualizarPedidos').isVisible(),true);
+   await pagina.locator('#listaPedidos .loop03-pedido-remessas > summary').click();
+   assert.equal(await pagina.locator('#listaPedidos .loop03-pedido-remessas[open]').count(),1);
+   assert.ok((await pagina.locator('#listaPedidos .loop03-pedido-remessas').innerText())
+    .includes('Fornecedor'));
+   const estiloNavegacao=await pagina.locator('#conteudoMeusPedidos .loop03-pedidos-paginacao')
+    .evaluate(el=>getComputedStyle(el).display);
+   assert.equal(estiloNavegacao,'grid',
+    'a navegação de pedidos não pode empilhar botões grandes');
+   if(visual.mobile)await pagina.locator('#loop03MenuIntegrado').click();
+   await pagina.locator('#abaPosicoes').click();
+   const confirmarAzul=pagina.locator('#posicoesPainel form.loop03-aceite-posicao');
+   const aguardados=visual.mobile?1:2;
+   // O controle fica recolhido para conservar os três cartões por fileira.
+   // A confirmação individual só pode ser tocada após a expansão.
+   await pagina.locator('#posicoesPainel .loop03-controles-cpf-termos')
+    .filter({has:pagina.locator('form.loop03-aceite-posicao')})
+    .first().locator(':scope > summary').click();
+   await confirmarAzul.first().locator('button[type=submit]').waitFor({
+    state:'visible'
+   });
+   assert.equal(await pagina.locator('#posicoesPainel .loop03-unidade-posicao').count(),10,
+    'a lista mista mantém todos os espaços disponíveis');
+   assert.equal(await pagina.locator('#posicoesPainel .loop03-posicao-vazia').count(),7,
+    'três posições ocupadas não escondem sete vagas');
+   assert.equal(await confirmarAzul.count(),aguardados,
+    'cada posicao pendente precisa ter seu proprio aceite');
+   const form=confirmarAzul.first();
+   await form.locator('details summary').click();
+   await form.locator('input[name=cpf]').fill('52998224725');
+   await form.locator('input[type=checkbox]').check();
+   await form.locator('button[type=submit]').click();
+   await pagina.waitForFunction(quantidade=>
+    document.querySelectorAll(
+     '#posicoesPainel form.loop03-aceite-posicao'
+    ).length===quantidade,aguardados-1);
+   assert.equal(lotes.verificar().aceitesIndividuaisEnsaio,
+    visual.mobile?2:1);
+   const estadoCliente=await pagina.evaluate(async()=>{
+    const r=await fetch('/api/loop/estado',{cache:'no-store'});
+    return r.json();
+   });
+   assert.equal(estadoCliente.minhasPosicoes.length,3);
+   assert.equal(estadoCliente.minhasPosicoes.filter(
+    x=>x.estadoAdesao==='ACEITE_ENSAIO').length,visual.mobile?2:1);
+   await pagina.screenshot({
+    path:path.join(pasta,'integrado-posicoes-azul-'+visual.nome+'.png'),
+    fullPage:true
+   });
+   if(visual.mobile)await pagina.locator('#loop03MenuIntegrado').click();
+   await pagina.locator('#abaTabuleiro').click();
+   await pagina.locator('#motorContadorEventos').filter({
+    hasText:/de 6 eventos neste ciclo/
+   }).waitFor();
+   assert.equal(await pagina.locator('#estadoTabuleiroIntegrado').isHidden(),true,
+    'mensagem do rodapé só reaparece diante de erro real');
+   assert.equal(await pagina.locator('#motorContadorEventos').innerText(),
+    motorLoop.consultar().tabuleiro.eventosNoCiclo+' de 6 eventos neste ciclo');
+   const centroPersistido=estadoCliente.tabuleiro?.centro;
+   const centroEsperado=centroPersistido?
+    (centroPersistido.dourada? 
+     (centroPersistido.numeroVisual?'#'+centroPersistido.numeroVisual:'●'):
+     '#'+centroPersistido.numero):'';
+   assert.equal(await pagina.locator('#tabuleiroMotorCentro').innerText(),
+    centroEsperado,'centro segue o estado do motor, nao um valor fixo');
+   assert.equal(await pagina.locator('#motorBolinha6')
+    .evaluate(el=>el.classList.contains('loop03-marcador-aceso')),false);
+   assert.equal(await pagina.locator('#motorFilaB .loop03-linha-fila').count(),
+    estadoCliente.filaB,'fila deve refletir a contagem real, sem limite fixo de uma pessoa');
+   await pagina.screenshot({
+    path:path.join(pasta,'integrado-tabuleiro-'+visual.nome+'.png'),
+    fullPage:true
+   });
+   await pagina.goto(base+'/loja');
+   await pagina.waitForFunction(()=>document.getElementById('copiarDivulgarLojaLoop')?.disabled===false);
    await pagina.locator('#akitemmDetalhesPedidos summary').click();
    await pagina.locator('#atualizarPedidosLoja').click();
    await pagina.locator('#pedidosLojaLoop').filter({
