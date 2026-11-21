@@ -51,7 +51,8 @@ async function fixture(t){
  });
  const visao=new VisaoEscritorioUnificadaSQLite({
   banco,motor,
-  consultarTelefone:args=>contas.telefoneIndicadoVinculado(args)
+  consultarTelefone:args=>contas.telefoneIndicadoVinculado(args),
+  chaveCursor:contas.keyCodigo
  });
  return {banco,contas,motor,visao,ana,bia,caio,vera};
 }
@@ -89,6 +90,27 @@ test('Uma leitura une posição, compra, fila e indicação do mesmo titular sem
  assert.equal(x.visao.listarRede({
   titularId:x.ana.titularId,limite:1
  }).temMais,true);
+ const primeira=x.visao.listarRede({
+  titularId:x.ana.titularId,limite:1
+ });
+ assert.equal(typeof primeira.proximoCursor,'string');
+ const seguinte=x.visao.listarRede({
+  titularId:x.ana.titularId,limite:1,cursor:primeira.proximoCursor
+ });
+ assert.equal(seguinte.indicados.length,1);
+ assert.equal(seguinte.indicados[0].nick,'caio');
+ assert.equal(seguinte.indicados[0].numeroCadastro,2);
+ assert.equal(seguinte.proximoCursor,null);
+ const direta=x.contas.listarIndicados(x.ana.titularId,{limite:1});
+ assert.equal(x.contas.listarIndicados(x.ana.titularId,{
+  cursor:direta.proximoCursor,limite:1
+ }).indicados[0].nick,'caio');
+ assert.throws(()=>x.visao.listarRede({
+  titularId:x.vera.titularId,cursor:primeira.proximoCursor
+ }),{codigo:'REDE_CURSOR_INVALIDO'});
+ assert.throws(()=>x.visao.listarRede({
+  titularId:x.ana.titularId,cursor:primeira.proximoCursor.slice(0,-1)+'0'
+ }),{codigo:'REDE_CURSOR_INVALIDO'});
  // Paginação é técnica: não pode impor teto de 100 mil indicações.
  assert.deepEqual(x.visao.listarRede({
   titularId:x.ana.titularId,offset:100001
@@ -149,6 +171,9 @@ test('HTTP mesmo Escritório: sessão de outra conta não lê pedidos ou equipe 
   });
  assert.equal(acimaDoTetoAntigo.status,200);
  assert.equal((await acimaDoTetoAntigo.json()).indicados.length,0);
+ assert.equal((await fetch(base+'/api/contas/minha-rede?cursor=forjado',{
+  headers:{Cookie:cookies[0]}
+ })).status,400);
  for(const offset of ['01','-1','9007199254740992','1e9']){
   assert.equal((await fetch(base+'/api/contas/minha-rede?offset='+offset,{
    headers:{Cookie:cookies[0]}
