@@ -308,7 +308,7 @@
     },
     {
       "path": "scripts/provar-carga-continua-100k-1m-loop.js",
-      "sha": "d41d476c86daf7185836e8926e520b988ae55c45"
+      "sha": "9e7faa60bba0c1ac75bab8863407cea5534b4b5d"
     },
     {
       "path": "scripts/provar-fronteira-admin-railway.js",
