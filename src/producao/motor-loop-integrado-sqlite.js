@@ -4,6 +4,8 @@
 // Não usar MotorContaUnicaEnsaioSQLite nem importar tabelas staging.
 // Não cria pagamento, posição remunerada, Pix, saldo, saque ou comissão.
 const {SimuladorLoop}=require('../domain/simulador-loop');
+const {lerEstadoMotor,gravarEstadoMotor,migrarEstadoMotorEmTransacao}=
+ require('./estado-motor-unificado-sqlite');
 const {ProjecaoFilasRelacionalSQLite}=
  require('./projecao-filas-relacional-sqlite');
 const {LIMITE_POSICOES_ATIVAS}=require('../domain/capacidade-posicoes-loop');
@@ -65,21 +67,16 @@ class MotorLoopIntegradoSQLite{
  _transacao(fn){
   this.banco.exec('BEGIN IMMEDIATE');
   try{
-   const row=this.banco.prepare(
-    'SELECT revisao,snapshot FROM loop_real_motor_estado WHERE id=1').get();
+   const row=lerEstadoMotor(this.banco);
    const sim=restaurar(row?.snapshot);
-   this.projecao.conferir({raw:row?.snapshot||'',
+   this.projecao.conferir({raw:row?.persistido||'',
     revisao:row?.revisao||0,sim});
    const resultado=fn(sim);
    const snapshot=JSON.stringify(sim.exportarSnapshot());
-   this.banco.prepare([
-    'INSERT INTO loop_real_motor_estado(id,revisao,snapshot)',
-    'VALUES(1,1,?) ON CONFLICT(id)',
-    'DO UPDATE SET revisao=revisao+1,snapshot=excluded.snapshot'
-   ].join(' ')).run(snapshot);
+   const salvo=gravarEstadoMotor(this.banco,{snapshot,anterior:row});
    this.projecao.atualizarEmTransacao({
-    revisaoAnterior:row?.revisao||0,revisao:(row?.revisao||0)+1,
-    snapshot,sim
+    revisaoAnterior:row?.revisao||0,revisao:salvo.revisao,
+    snapshot:salvo.snapshot,sim
    });
    this.banco.exec('COMMIT');
    return resultado;
@@ -95,9 +92,7 @@ class MotorLoopIntegradoSQLite{
       'SELECT 1 FROM loop_real_contas WHERE id=?'
      ).get(id))falha('LOOP_TITULAR_NAO_RECONHECIDO');
  }
- _sim(){return restaurar(this.banco.prepare(
-  'SELECT snapshot FROM loop_real_motor_estado WHERE id=1'
- ).get()?.snapshot);}
+ _sim(){return restaurar(lerEstadoMotor(this.banco)?.snapshot);}
  _ativos(sim,id){
   return [...sim.filas.filaA,...sim.filas.filaB,sim.tabuleiro.centro,
    ...sim.tabuleiro.vagas].filter(p=>p&&p.empresa!==true&&
@@ -142,25 +137,19 @@ class MotorLoopIntegradoSQLite{
   if(this.banco.isTransaction!==true)
    falha('LOOP_COMPRA_CONCILIADA_REQUER_TRANSACAO');
   this._titular(titularId);
-  const linha=this.banco.prepare(
-   'SELECT revisao,snapshot FROM loop_real_motor_estado WHERE id=1'
-  ).get();
+  const linha=lerEstadoMotor(this.banco);
   const sim=restaurar(linha?.snapshot);
-  this.projecao.conferir({raw:linha?.snapshot||'',
+  this.projecao.conferir({raw:linha?.persistido||'',
    revisao:linha?.revisao||0,sim});
   const res=this._registrarCompraEmSim(sim,{
    titularId,pedidoId,valorCentavos
   });
   if(!res.repetida){
    const snapshot=JSON.stringify(sim.exportarSnapshot());
-   this.banco.prepare([
-    'INSERT INTO loop_real_motor_estado(id,revisao,snapshot)',
-    'VALUES(1,1,?) ON CONFLICT(id)',
-    'DO UPDATE SET revisao=revisao+1,snapshot=excluded.snapshot'
-   ].join(' ')).run(snapshot);
+   const salvo=gravarEstadoMotor(this.banco,{snapshot,anterior:linha});
    this.projecao.atualizarEmTransacao({
-    revisaoAnterior:linha?.revisao||0,revisao:(linha?.revisao||0)+1,
-    snapshot,sim
+    revisaoAnterior:linha?.revisao||0,revisao:salvo.revisao,
+    snapshot:salvo.snapshot,sim
    });
   }
   return res;
@@ -268,8 +257,7 @@ class MotorLoopIntegradoSQLite{
   // Snapshot da auditoria fica consistente enquanto outras conexões escrevem.
   this.banco.exec('BEGIN');
   try{
-  const row=this.banco.prepare(
-   'SELECT snapshot FROM loop_real_motor_estado WHERE id=1').get();
+  const row=lerEstadoMotor(this.banco);
   const sim=restaurar(row?.snapshot);
   // Auditoria incremental: evita arrays proporcionais ao historico e
   // comparacoes quadráticas em eventos de indicacao acumulados.
@@ -331,7 +319,7 @@ class MotorLoopIntegradoSQLite{
    falha('LOOP_MOTOR_ENSAIO_PROIBIDO_PRODUCAO');
   // A prova espelhada usa o mesmo snapshot da transação de leitura.
   if(this.projecao?.historico)this.projecao.historico.conferir({sim});
-  if(this.projecao)this.projecao.conferir({raw:row?.snapshot||'',
+  if(this.projecao)this.projecao.conferir({raw:row?.persistido||'',
    revisao:this.banco.prepare(
     'SELECT revisao FROM loop_real_motor_estado WHERE id=1'
    ).get()?.revisao||0,sim});
@@ -341,6 +329,33 @@ class MotorLoopIntegradoSQLite{
   }catch(e){this.banco.exec('ROLLBACK');throw e;}
  }
 
+ // Converte SOMENTE o formato de armazenamento, sem movimentar fila ou saldo.
+ // Executa em uma transação única, preservando a fonte antiga via backups.
+ migrarHistoricoExterno(){
+  this.banco.exec('BEGIN IMMEDIATE');
+  try{
+   const antes=lerEstadoMotor(this.banco);
+   const sim=restaurar(antes?.snapshot);
+   this.projecao.conferir({raw:antes?.persistido||'',
+    revisao:antes?.revisao||0,sim});
+   // Banco sem nenhum movimento também nasce diretamente em V2.
+   // Isto não cria compra, posição, evento, giro ou direito financeiro.
+   const result=antes?migrarEstadoMotorEmTransacao(this.banco):
+    {...gravarEstadoMotor(this.banco,{
+     snapshot:JSON.stringify(sim.exportarSnapshot()),permitirV2:true
+    }),repetida:false};
+   if(!result.repetida)this.projecao.atualizarEmTransacao({
+    revisaoAnterior:antes?.revisao||0,revisao:result.revisao,
+    snapshot:result.snapshot,sim
+   });
+   this.projecao.conferir({raw:result.repetida?antes.persistido:result.snapshot,
+    revisao:result.repetida?antes.revisao:result.revisao,sim});
+   this.banco.exec('COMMIT');
+   return {formato:'V2',repetida:result.repetida,
+    ciclos:sim.tabuleiro.ciclosConcluidos.length,
+    semMovimento:true,financeiroReal:false};
+  }catch(e){this.banco.exec('ROLLBACK');throw e;}
+ }
  // Visor somente-leitura: âncora pertence obrigatoriamente à sessão.
  // Responde com cinco vizinhos e no máximo 30 entradas por página.
  consultarFilaPaginada({titularId,fila,posicaoId=null,pagina=0,desdeInicio=false}={}){

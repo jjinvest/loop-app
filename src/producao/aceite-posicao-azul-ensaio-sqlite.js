@@ -1,4 +1,6 @@
 'use strict';
+const {lerEstadoMotor,gravarEstadoMotor}=
+ require('./estado-motor-unificado-sqlite');
 const {ProjecaoFilasRelacionalSQLite}=
  require('./projecao-filas-relacional-sqlite');
 // Confirmacao apenas em ensaio: nao verifica CPF em base externa nem gera direitos.
@@ -53,7 +55,7 @@ class AceitePosicaoAzulEnsaioSQLite{
   ].join(' '));
  }
  _trocar({pedidoId,titularId,posicaoId,anterior,novo}){
-  const linha=this.db.prepare('SELECT snapshot FROM loop_real_motor_estado WHERE id=1').get();
+  const linha=lerEstadoMotor(this.db);
   if(this.db.isTransaction!==true||!linha)falha('AZUL_SNAPSHOT_TRANSACAO_OBRIGATORIA');
   const s=JSON.parse(linha.snapshot);
   const posicoes=[...s.filas.filaA,...s.filas.filaB,s.tabuleiro.centro,
@@ -68,9 +70,7 @@ class AceitePosicaoAzulEnsaioSQLite{
      ![...s.filas.filaA,...s.filas.filaB].some(p=>p.id===posicaoId))
    falha('AZUL_PRAZO_DE_CONFIRMACAO_ENCERRADO');
   pos.statusAdesao=novo;idx.statusAdesao=novo;
-  this.db.prepare(
-   'UPDATE loop_real_motor_estado SET revisao=revisao+1,snapshot=? WHERE id=1'
-  ).run(JSON.stringify(s));
+  gravarEstadoMotor(this.db,{snapshot:JSON.stringify(s),anterior:linha});
   ProjecaoFilasRelacionalSQLite.sincronizarMutacaoEmTransacao(this.db);
  }
  confirmar({titularId,posicaoId,cpf,versaoTermos,hashTermos,
@@ -186,7 +186,7 @@ class AceitePosicaoAzulEnsaioSQLite{
    falha('AZUL_REVERSAO_AUDITORIA_DIVERGENTE');
   // A auditoria tambem confronta o livro imutavel de aceites/reversoes
   // com o estado do motor; status no snapshot sozinho nunca vale como aceite.
-  const linha=db.prepare('SELECT snapshot FROM loop_real_motor_estado WHERE id=1').get();
+  const linha=lerEstadoMotor(db);
   const promocao=db.prepare([
    'SELECT pedido_id,titular_id,posicao_id',
    'FROM loop_real_promocoes_pedido_ensaio'
@@ -234,7 +234,7 @@ class AceitePosicaoAzulEnsaioSQLite{
   if(db.prepare(
    'SELECT 1 FROM loop_real_aceites_posicao_ensaio WHERE posicao_id=?'
   ).get(posicaoId))return 'ACEITE_ENSAIO';
-  const row=db.prepare('SELECT snapshot FROM loop_real_motor_estado WHERE id=1').get();
+  const row=lerEstadoMotor(db);
   if(row){
    const s=JSON.parse(row.snapshot);
    const atuais=[...s.filas.filaA,...s.filas.filaB,s.tabuleiro.centro,

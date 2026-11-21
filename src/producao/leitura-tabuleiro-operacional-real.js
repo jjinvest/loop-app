@@ -6,6 +6,7 @@ const fs=require('node:fs');
 const {DatabaseSync}=require('node:sqlite');
 const {timingSafeEqual}=require('node:crypto');
 const {SimuladorLoop}=require('../domain/simulador-loop');
+const {lerEstadoMotor}=require('./estado-motor-unificado-sqlite');
 const FONTE='MOTOR_REAL_SQLITE_DA_IDENTIDADE';
 const ERRO='MOTOR_REAL_NAO_ATIVO';
 function falha(codigo){
@@ -27,9 +28,7 @@ function projetarTabuleiroOperacional({banco}={}){
     "SELECT 1 FROM sqlite_master WHERE type='table' AND name=?"
    ).get(nome))falha(ERRO);
  }
- const snapshot=banco.prepare(
-  'SELECT snapshot FROM loop_real_motor_estado WHERE id=1'
- ).get()?.snapshot;
+ const snapshot=lerEstadoMotor(banco)?.snapshot;
  let sim;
  try{sim=snapshot?SimuladorLoop.restaurarSnapshot(
   JSON.parse(snapshot)):new SimuladorLoop();}

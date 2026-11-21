@@ -4,6 +4,7 @@
 // append-only do MESMO SQLite, sem mudar posições, fila, catraca ou caixa.
 const {createHash}=require('node:crypto');
 const {SimuladorLoop}=require('../domain/simulador-loop');
+const {lerEstadoMotor}=require('./estado-motor-unificado-sqlite');
 const {HistoricoCiclosRelacionalSQLite}=
  require('./historico-ciclos-relacional-sqlite');
 const FORMATO='LOOP_SNAPSHOT_HISTORICO_EXTERNO_CANDIDATO_V2';
@@ -32,9 +33,7 @@ function leitura(db,fn){
  }
 }
 function fonte(db){
- const row=db.prepare(
-  'SELECT revisao,snapshot FROM loop_real_motor_estado WHERE id=1'
- ).get();
+ const row=lerEstadoMotor(db);
  if(!Number.isSafeInteger(row?.revisao)||row.revisao<1||
     typeof row.snapshot!=='string')
   falha('SNAPSHOT_EXTERNO_FONTE_AUSENTE');

@@ -268,7 +268,7 @@
     },
     {
       "path": "scripts/iniciar-identidade-real-loop.js",
-      "sha": "dd5ea12bae0364c8ba4e5059a8ff8e09f8cc098e"
+      "sha": "c3a0d422f7c5fe7162f4abed4234b45bf299d6cb"
     },
     {
       "path": "scripts/iniciar-identidade-real-preparacao.js",
@@ -1256,7 +1256,7 @@
     },
     {
       "path": "src/producao/aceite-posicao-azul-ensaio-sqlite.js",
-      "sha": "335d7e4713dbc2af5d85fc84bf32ce09dd9cb313"
+      "sha": "db3fd502033f0d931e92fe5450ad75779e6efa42"
     },
     {
       "path": "src/producao/adaptadores-psp-readonly.js",
@@ -1359,6 +1359,10 @@
       "sha": "bb84265135a8e84066143dfef95bb1048c73e7f4"
     },
     {
+      "path": "src/producao/estado-motor-unificado-sqlite.js",
+      "sha": "74aa3d1e9b97e9bc7a970db212cb0e031baed2c4"
+    },
+    {
       "path": "src/producao/eventos-comerciais-loop-sqlite.js",
       "sha": "b6bedda67c4c9818ffcd7e38415450c8fdec07df"
     },
@@ -1372,7 +1376,7 @@
     },
     {
       "path": "src/producao/historico-ciclos-relacional-sqlite.js",
-      "sha": "5a19735fec6cd834513742d0ccf9d2e963ea99ef"
+      "sha": "f68a49523374712d5aba5ba089f4de2febdfa1ee"
     },
     {
       "path": "src/producao/identidade-cliente-loop-sqlite.js",
@@ -1408,7 +1412,7 @@
     },
     {
       "path": "src/producao/leitura-tabuleiro-operacional-real.js",
-      "sha": "06e3271b1dc617b52a0702724807500a19d126ef"
+      "sha": "e3423465f33cb94638b4e3ace8fc177a3293bb89"
     },
     {
       "path": "src/producao/livro-financeiro-real-sqlite.js",
@@ -1427,12 +1431,16 @@
       "sha": "af798b91068827fec09ee550601acdd6f663a0ac"
     },
     {
+      "path": "src/producao/migracao-historico-v2-protegida.js",
+      "sha": "df839fb1809d623364700cd566acd82737673eec"
+    },
+    {
       "path": "src/producao/montar-comercial-sem-homologacao.js",
       "sha": "832c4e8a70c9dcc7f6a6a90dd2374123b859100e"
     },
     {
       "path": "src/producao/motor-loop-integrado-sqlite.js",
-      "sha": "a1b1fee6899485821940e3caf97780fb7a7f13ae"
+      "sha": "768e3031a304c71f4a39d6805807efb8451d2736"
     },
     {
       "path": "src/producao/observacoes-psp-ensaio-sqlite.js",
@@ -1480,15 +1488,15 @@
     },
     {
       "path": "src/producao/projecao-filas-relacional-sqlite.js",
-      "sha": "a368e5bd1be9be71ae0fbb670344c421660733cf"
+      "sha": "ba5195d054dcabad3e9d6687904e797c86577382"
     },
     {
       "path": "src/producao/promocao-lotes-ensaio-sqlite.js",
-      "sha": "0785187653543a5d64691a3ebc98634f568ca89c"
+      "sha": "4796f092b37e3f270ac4ab7207638e1d10d75ae0"
     },
     {
       "path": "src/producao/promocao-pedido-motor-ensaio-sqlite.js",
-      "sha": "315e72f4105e64424fc95cdeb8ec3a14bbe59f6b"
+      "sha": "76340eb866d37d39cf5049d9ab40dded74a7b546"
     },
     {
       "path": "src/producao/prontidao-financeira-ensaio.js",
@@ -1540,7 +1548,7 @@
     },
     {
       "path": "src/producao/snapshot-historico-externo-candidato.js",
-      "sha": "996f37f9b89af554450c458b5fdf395f7d80dc3a"
+      "sha": "c0e4af9d114493f4b4bb06dc5e0600c4ae1ba3eb"
     },
     {
       "path": "src/producao/tesouraria-modular-ensaio-sqlite.js",
@@ -2455,6 +2463,10 @@
       "sha": "6289afc4f4976c9f674f5cdf8eb3b27348427824"
     },
     {
+      "path": "test/estado-motor-unificado-v2-integracao.test.js",
+      "sha": "ce5cac8107675a3a3904f4234a42fbecced61697"
+    },
+    {
       "path": "test/estado-simulacao.test.js",
       "sha": "029003aae5f354579ba811661d1433911ecf8202"
     },
@@ -2576,7 +2588,7 @@
     },
     {
       "path": "test/identidade-real-preparacao.test.js",
-      "sha": "9e335b5efecae6061b45d7bffe4c10938aeed7cf"
+      "sha": "cc33f849215611e23f6566f712f74a27892a1953"
     },
     {
       "path": "test/identidade-visual-futurista-loop-v6.test.js",
@@ -2841,6 +2853,10 @@
     {
       "path": "test/migracao-cadastros-preview-real.test.js",
       "sha": "40ee2ebf956931a038dbacfadd944fed6baf78d4"
+    },
+    {
+      "path": "test/migracao-historico-v2-protegida.test.js",
+      "sha": "302a1093a43aa778fa5473e3daf6c6c09054d9ad"
     },
     {
       "path": "test/migracao-receptor-real-continuo.test.js",

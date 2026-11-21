@@ -4,6 +4,7 @@
 // Atualizado na MESMA transacao do snapshot, com falha fechada na divergencia.
 const {createHash}=require('node:crypto');
 const {SimuladorLoop}=require('../domain/simulador-loop');
+const {lerEstadoMotor}=require('./estado-motor-unificado-sqlite');
 const {HistoricoCiclosRelacionalSQLite}=
  require('./historico-ciclos-relacional-sqlite');
 const TABELAS_PROJECAO=Object.freeze([
@@ -57,12 +58,9 @@ function igual(a,b){
   a.indicacoes_vinculadas===b.indicacoes_vinculadas;
 }
 function fonte(banco){
- const x=banco.prepare(
-  'SELECT revisao,snapshot FROM loop_real_motor_estado WHERE id=1'
- ).get();
- const raw=x?.snapshot||'';
- if(raw&&typeof raw!=='string')falha('FILA_PROJECAO_SNAPSHOT_INVALIDO');
- const sim=raw?SimuladorLoop.restaurarSnapshot(JSON.parse(raw)):
+ const x=lerEstadoMotor(banco);
+ const raw=x?.persistido||'';
+ const sim=x?SimuladorLoop.restaurarSnapshot(JSON.parse(x.snapshot)):
   new SimuladorLoop();
  return {raw,revisao:x?.revisao||0,sim};
 }

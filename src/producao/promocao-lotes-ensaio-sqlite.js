@@ -1,4 +1,6 @@
 'use strict';
+const {lerEstadoMotor,gravarEstadoMotor}=
+ require('./estado-motor-unificado-sqlite');
 const {ProjecaoFilasRelacionalSQLite}=
  require('./projecao-filas-relacional-sqlite');
 // Compra especial de ENSAIO: 1 pedido -> N posicoes (verde, dourada, roxa).
@@ -202,9 +204,8 @@ class PromocaoLotesEnsaioSQLite{
    for(const x of ids)inserir.run(pedidoId,x.ordinal,x.tipo,
     x.vendaInternaId,x.posicaoId);
    // O azul e individual. Atualizar todas as copias no snapshot no MESMO commit.
-   const foto=JSON.parse(this.db.prepare(
-    'SELECT snapshot FROM loop_real_motor_estado WHERE id=1'
-   ).get().snapshot);
+   const antesFoto=lerEstadoMotor(this.db);
+   const foto=JSON.parse(antesFoto.snapshot);
    for(const x of ids){
     const p=foto.filas.filaB.find(p=>p.id===x.posicaoId);
     const v=foto.filas.vendasRegistradas.find(v=>v[0]===x.vendaInternaId)?.[1];
@@ -213,9 +214,8 @@ class PromocaoLotesEnsaioSQLite{
     p.statusAdesao='PENDENTE';v.statusAdesao='PENDENTE';
     p.classeProdutoOrigem=x.tipo;v.classeProdutoOrigem=x.tipo;
    }
-   this.db.prepare(
-    'UPDATE loop_real_motor_estado SET revisao=revisao+1,snapshot=? WHERE id=1'
-   ).run(JSON.stringify(foto));
+   gravarEstadoMotor(this.db,{snapshot:JSON.stringify(foto),
+    anterior:antesFoto});
   ProjecaoFilasRelacionalSQLite.sincronizarMutacaoEmTransacao(this.db);
    // Um pedido com N posicoes consome a reserva de N exatamente uma vez.
    PreflightCapacidadeCheckoutSQLite.consumirEmTransacao(this.db,{
@@ -229,7 +229,7 @@ class PromocaoLotesEnsaioSQLite{
  }
  _snapshotMudar({vendaInternaId,posicaoId,titularId,novo,exigirFila}){
   if(!this.db.isTransaction)falha('LOTE_SNAPSHOT_EXIGE_TRANSACAO');
-  const row=this.db.prepare('SELECT snapshot FROM loop_real_motor_estado WHERE id=1').get();
+  const row=lerEstadoMotor(this.db);
   if(!row)falha('LOTE_SNAPSHOT_INEXISTENTE');
   const s=JSON.parse(row.snapshot);
   const vivos=[...s.filas.filaA,...s.filas.filaB,s.tabuleiro.centro,...s.tabuleiro.vagas]
@@ -250,9 +250,7 @@ class PromocaoLotesEnsaioSQLite{
   if(p&&p.empresa!==true&&
     ['PENDENTE','ACEITE_ENSAIO'].includes(p.statusAdesao))p.statusAdesao=novo;
   if(['PENDENTE','ACEITE_ENSAIO'].includes(v.statusAdesao))v.statusAdesao=novo;
-  this.db.prepare(
-   'UPDATE loop_real_motor_estado SET revisao=revisao+1,snapshot=? WHERE id=1'
-  ).run(JSON.stringify(s));
+  gravarEstadoMotor(this.db,{snapshot:JSON.stringify(s),anterior:row});
   ProjecaoFilasRelacionalSQLite.sincronizarMutacaoEmTransacao(this.db);
  }
  confirmarAzul({titularId,posicaoId,cpf,versaoTermos,hashTermos,
@@ -346,9 +344,7 @@ class PromocaoLotesEnsaioSQLite{
    'FROM loop_real_promocoes_lotes_ensaio l',
    'JOIN loop_real_eventos_comerciais e ON e.pedido_id=l.pedido_id'
   ].join(' ')).all();
-  const fila=this.db.prepare(
-   'SELECT snapshot FROM loop_real_motor_estado WHERE id=1'
-  ).get();
+  const fila=lerEstadoMotor(this.db);
   const snapshot=fila?JSON.parse(fila.snapshot):null;
   const indice=new Map(snapshot?.filas?.vendasRegistradas||[]);
   const vivos=snapshot?[...snapshot.filas.filaA,...snapshot.filas.filaB,
