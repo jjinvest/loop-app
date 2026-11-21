@@ -13,6 +13,44 @@
   (indicadorNick?'&ref='+encodeURIComponent(indicadorNick):'');
  const solicitarCadastro=()=>location.assign(destinoCadastro());
  let visitante=true,operadorAtivo=false,clienteNick=null,csrfLoja=null;
+ // A foto do cabeçalho da loja é a mesma imagem privada da conta LOOP.
+ // Nunca usar o retrato do cliente numa sessão de operador ou vice-versa.
+ const fotoTitular=$('akitemmFotoTitular');
+ let consultaFotoLoja=0;
+ async function sincronizarFotoLoja(){
+  if(!fotoTitular)return;
+  const consulta=++consultaFotoLoja;
+  fotoTitular.hidden=true;
+  fotoTitular.removeAttribute('src');
+  if(visitante&&!operadorAtivo)return;
+  const caminho=operadorAtivo?
+   '/api/admin/operador/foto-perfil':'/api/contas/foto-perfil';
+  try{
+   const r=await fetch(caminho,{credentials:'same-origin',cache:'no-store'});
+   if(consulta!==consultaFotoLoja)return;
+   if(!r.ok||!['image/jpeg','image/png','image/webp'].includes(
+    r.headers.get('content-type')?.split(';')[0]))return;
+   // URL de mesma origem autenticada: funciona sob a CSP sem blob:.
+   fotoTitular.onload=()=>{
+    if(consulta===consultaFotoLoja)fotoTitular.hidden=false;
+   };
+   fotoTitular.onerror=()=>{
+    if(consulta===consultaFotoLoja){
+     fotoTitular.hidden=true;fotoTitular.removeAttribute('src');
+    }
+   };
+   fotoTitular.src=caminho+'?versao='+Date.now();
+  }catch{
+   if(consulta===consultaFotoLoja)fotoTitular.hidden=true;
+  }
+ }
+ // Quando uma foto é trocada em outra aba do LOOP, refletir na loja
+ // assim que o cliente voltar. Sem armazenamento de fotografias no navegador.
+ window.addEventListener('pageshow',()=>{void sincronizarFotoLoja();});
+ window.addEventListener('focus',()=>{void sincronizarFotoLoja();});
+ document.addEventListener('visibilitychange',()=>{
+  if(!document.hidden)void sincronizarFotoLoja();
+ });
  let carrinhoOcupado=false;
  const quantidadesCarrinho=new Map();
  const pegar=async(url)=>{
@@ -995,6 +1033,7 @@
    // Indisponibilidade da leitura nao libera compra nem muda as regras.
   }
   inicializarEntrega();
+  await sincronizarFotoLoja();
   if(!semCliente&&!operadorAtivo)await atualizarPedidos();
   else $('pedidosLojaLoop')?.replaceChildren();
   await atualizarCatalogo();
@@ -1004,6 +1043,7 @@
   // inacessiveis e so a leitura publica de produtos permanece permitida.
   visitante=true;clienteNick=null;csrfLoja=null;prepararLinkPessoal();
   inicializarEntrega();
+  await sincronizarFotoLoja();
   informar('AKITEMM · vitrine pública disponível. Entre na sua conta para ações pessoais.');
   if($('conteudoLojaLoop'))$('conteudoLojaLoop').hidden=false;
   await atualizarCatalogo();
