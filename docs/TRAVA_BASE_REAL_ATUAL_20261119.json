@@ -1292,7 +1292,7 @@
     },
     {
       "path": "src/producao/backup-identidade-real.js",
-      "sha": "319596ba3ce22452c135b0062b88d4abfdd5571f"
+      "sha": "ec345b423dc98db96e0dc36c6356012bc0a1c53a"
     },
     {
       "path": "src/producao/backup-midia-offsite.js",
@@ -2596,7 +2596,7 @@
     },
     {
       "path": "test/interface-aprovada-identidade-real.test.js",
-      "sha": "b59577989de0786243f8e83eb35b21978fbb8aa2"
+      "sha": "c0dc9c8a193a69ebc847fab925a17b934fe0d5aa"
     },
     {
       "path": "test/interface-loop-03.test.js",

@@ -45,6 +45,7 @@ const TABELAS=Object.freeze([
 // Presente em cadastros novos; backups anteriores à migração permanecem recuperáveis.
 const TABELAS_CONTATO=Object.freeze([
  'loop_real_contatos_cadastro','loop_real_telefones_legados',
+ 'loop_real_destinos_indicacao',
  'loop_real_migracoes_preview','loop_real_aceites_documentos',
  'loop_captcha_login_falhas_v1','loop_captcha_cadastro_v1',
  TABELA_FOTO_PERFIL_REAL
@@ -107,6 +108,22 @@ function validarIdentidade(arquivo){
    ...TABELAS_OUTBOX_COMPRA,TABELA_FOTO_OPERADOR_REAL];
   if(lista.some(x=>!todos.includes(x)))
    falha('BACKUP_IDENTIDADE_NAO_COBRE_TABELAS_COMERCIAIS');
+  // A escolha de destino imutável também integra a mesma cópia cifrada.
+  // Backups históricos sem essa tabela continuam recuperáveis.
+  if(lista.includes('loop_real_destinos_indicacao')){
+   const tabela=b.prepare('PRAGMA table_info(loop_real_destinos_indicacao)')
+    .all().map(x=>x.name);
+   if(['indicado_id','indicador_id','numero_posicao','registrado_em']
+    .some(x=>!tabela.includes(x)))
+    falha('BACKUP_DESTINO_ESQUEMA_INVALIDO');
+   const invalido=b.prepare([
+    'SELECT d.indicado_id FROM loop_real_destinos_indicacao d',
+    'LEFT JOIN loop_real_vinculos_indicacao v ON v.indicado_id=d.indicado_id',
+    'WHERE v.indicado_id IS NULL OR v.indicador_id<>d.indicador_id',
+    'OR d.numero_posicao<1 OR d.numero_posicao>10 LIMIT 1'
+   ].join(' ')).get();
+   if(invalido)falha('BACKUP_DESTINO_INDICACAO_INCONSISTENTE');
+  }
   // A foto real integra o MESMO backup cifrado e não pode perder o titular.
   if(lista.includes(TABELA_FOTO_PERFIL_REAL)){
    const fotos=b.prepare(
