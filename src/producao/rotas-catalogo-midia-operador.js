@@ -8,6 +8,7 @@ const POS=/^(?:10|[1-9])$/;
 const MIME=new Set(['image/jpeg','image/png','image/webp']);
 function montarRotasCatalogoMidiaOperador({
  app,catalogoMidia,catalogoPrincipal=null,posicoesVitrine=null,
+ anunciosManuais=null,
  autorizarOperador,validarCsrf
 }={}){
  if(typeof app?.get!=='function'||typeof app?.post!=='function'||
