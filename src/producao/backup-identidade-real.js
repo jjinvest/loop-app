@@ -13,6 +13,8 @@ const {TABELAS_OUTBOX_COMPRA}=require('./outbox-compra-loop-sqlite');
 const {MotorLoopIntegradoSQLite,TABELAS_MOTOR}=require('./motor-loop-integrado-sqlite');
 const {ProjecaoFilasRelacionalSQLite,TABELAS_PROJECAO}=
  require('./projecao-filas-relacional-sqlite');
+const {HistoricoCiclosRelacionalSQLite,TABELAS_HISTORICO}=
+ require('./historico-ciclos-relacional-sqlite');
 const {LivroFinanceiroRealSQLite,TABELAS_LIVRO}=
  require('./livro-financeiro-real-sqlite');
 const {PreflightCapacidadeCheckoutSQLite,TABELAS_PREFLIGHT}=
@@ -103,7 +105,7 @@ function validarIdentidade(arquivo){
   ).all().map(x=>x.name);
   if(TABELAS.some(x=>!lista.includes(x)))falha('BACKUP_REAL_ESQUEMA_INCOMPLETO');
   const todos=[...TABELAS,...TABELAS_CONTATO,...TABELAS_ADMIN,...TABELAS_COMERCIAIS,
-   ...TABELAS_MOTOR,...TABELAS_PROJECAO,...TABELAS_CATRACA_ADMIN,...TABELAS_CATRACA_CAIXA,
+   ...TABELAS_MOTOR,...TABELAS_PROJECAO,...TABELAS_HISTORICO,...TABELAS_CATRACA_ADMIN,...TABELAS_CATRACA_CAIXA,
    ...TABELAS_POSICOES_VITRINE,
    ...TABELAS_TESOURARIA_ENSAIO,
    ...TABELAS_PROMOCAO_ENSAIO,...TABELAS_LOTES_ENSAIO,
@@ -380,6 +382,18 @@ function validarIdentidade(arquivo){
       .integridade!=='OK')
      falha('BACKUP_FILA_PROJECAO_DIVERGENTE');
    }catch{falha('BACKUP_FILA_PROJECAO_DIVERGENTE');}
+  }
+  // O arquivo de ciclos e opcional em backups antigos. Quando existe,
+  // exige cadeia inteira, seis eventos por giro e dados iguais ao motor.
+  const temHistorico=TABELAS_HISTORICO.some(t=>lista.includes(t));
+  if(temHistorico){
+   if(!temMotor||TABELAS_HISTORICO.some(t=>!lista.includes(t)))
+    falha('BACKUP_CICLOS_HISTORICO_INCOMPLETO');
+   try{
+    if(HistoricoCiclosRelacionalSQLite.verificarExistente({banco:b})
+      .integridade!=='OK')
+     falha('BACKUP_CICLOS_HISTORICO_DIVERGENTE');
+   }catch{falha('BACKUP_CICLOS_HISTORICO_DIVERGENTE');}
   }
   const integridade=b.prepare('PRAGMA integrity_check').all();
   if(integridade.length!==1||integridade[0].integrity_check!=='ok')
