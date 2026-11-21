@@ -1256,7 +1256,7 @@
     },
     {
       "path": "src/producao/aceite-posicao-azul-ensaio-sqlite.js",
-      "sha": "335d7e4713dbc2af5d85fc84bf32ce09dd9cb313"
+      "sha": "db3fd502033f0d931e92fe5450ad75779e6efa42"
     },
     {
       "path": "src/producao/adaptadores-psp-readonly.js",
@@ -1359,6 +1359,10 @@
       "sha": "bb84265135a8e84066143dfef95bb1048c73e7f4"
     },
     {
+      "path": "src/producao/estado-motor-unificado-sqlite.js",
+      "sha": "74aa3d1e9b97e9bc7a970db212cb0e031baed2c4"
+    },
+    {
       "path": "src/producao/eventos-comerciais-loop-sqlite.js",
       "sha": "b6bedda67c4c9818ffcd7e38415450c8fdec07df"
     },
@@ -1372,7 +1376,7 @@
     },
     {
       "path": "src/producao/historico-ciclos-relacional-sqlite.js",
-      "sha": "5a19735fec6cd834513742d0ccf9d2e963ea99ef"
+      "sha": "f68a49523374712d5aba5ba089f4de2febdfa1ee"
     },
     {
       "path": "src/producao/identidade-cliente-loop-sqlite.js",
@@ -1432,7 +1436,7 @@
     },
     {
       "path": "src/producao/motor-loop-integrado-sqlite.js",
-      "sha": "a1b1fee6899485821940e3caf97780fb7a7f13ae"
+      "sha": "6a2753ab65b967dd63888c0efe3bdb4d38ab5fc9"
     },
     {
       "path": "src/producao/observacoes-psp-ensaio-sqlite.js",
@@ -1480,15 +1484,15 @@
     },
     {
       "path": "src/producao/projecao-filas-relacional-sqlite.js",
-      "sha": "a368e5bd1be9be71ae0fbb670344c421660733cf"
+      "sha": "ba5195d054dcabad3e9d6687904e797c86577382"
     },
     {
       "path": "src/producao/promocao-lotes-ensaio-sqlite.js",
-      "sha": "0785187653543a5d64691a3ebc98634f568ca89c"
+      "sha": "4796f092b37e3f270ac4ab7207638e1d10d75ae0"
     },
     {
       "path": "src/producao/promocao-pedido-motor-ensaio-sqlite.js",
-      "sha": "315e72f4105e64424fc95cdeb8ec3a14bbe59f6b"
+      "sha": "76340eb866d37d39cf5049d9ab40dded74a7b546"
     },
     {
       "path": "src/producao/prontidao-financeira-ensaio.js",
@@ -2453,6 +2457,10 @@
     {
       "path": "test/escritorio-virtual-demo.test.js",
       "sha": "6289afc4f4976c9f674f5cdf8eb3b27348427824"
+    },
+    {
+      "path": "test/estado-motor-unificado-v2-integracao.test.js",
+      "sha": "cf66dd55da02d6f9503f3eb0a90473f85bd2d894"
     },
     {
       "path": "test/estado-simulacao.test.js",
