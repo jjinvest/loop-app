@@ -26,8 +26,8 @@ function prepararBanco(){
  const contas=new IdentidadeClienteLoopReal({
   banco:db,chaveEmail:randomBytes(32),chaveCifra:randomBytes(32),
   chaveCodigo:randomBytes(32),
-  termos:{versao:'TESTE_CADEIA_1',texto:'Contrato para teste local da cadeia comercial.'},
-  privacidade:{versao:'TESTE_CADEIA_1',texto:'Política de teste para fluxo interno.'},
+  termos:{versao:'TESTE_CADEIA_1',texto:'Termos técnicos para ensaio isolado de auditoria comercial do LOOP 3.0 e AKITEMM. Nenhuma pessoa real compra, recebe posições ou autoriza pagamentos.'},
+  privacidade:{versao:'TESTE_CADEIA_1',texto:'Política técnica para ensaio isolado no SQLite descartável. Não se acessa nenhum dado verdadeiro de cliente nem se promove saldo financeiro.'},
   enviarEmail:async()=>true
  });
  const motor=new MotorLoopIntegradoSQLite({banco:db});
