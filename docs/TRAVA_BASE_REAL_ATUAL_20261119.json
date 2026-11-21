@@ -412,7 +412,7 @@
     },
     {
       "path": "scripts/validar-identidade-real-navegador.js",
-      "sha": "92ca145469cd751db5a871b4118a9b92379f9d2d"
+      "sha": "84c963e9f00fafc49e9a918dfa5e9257faed9dd3"
     },
     {
       "path": "scripts/validar-jornada-loja-cores-browser.js",
@@ -1252,7 +1252,7 @@
     },
     {
       "path": "src/producao/acabamento-botoes-real.css",
-      "sha": "effe864ea8b5bdc844d4b11d2bb2120d06aa1b82"
+      "sha": "0cb59763a10769f11a5d3b233c28539fac4d4ee1"
     },
     {
       "path": "src/producao/aceite-posicao-azul-ensaio-sqlite.js",

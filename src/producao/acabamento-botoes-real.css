@@ -216,6 +216,13 @@ body:not(.loop03-logado) #formCadastro #cadastroTermos:focus-visible{
 }
 
 
+/* Minhas Posicoes: o modelo aprovado define 3 colunas, mas precisa
+   declarar display:grid. Escopo exclusivo ao painel; sem alterar molduras,
+   cores, dimensoes ou os controles de posicoes ja aprovados. */
+.cliente-integrado #conteudoPosicoes .loop03-grade-posicoes{
+ display:grid;
+}
+
 /* OPERADOR: seletor nativo de arquivo fora da aba Minha Conta bloqueada.
    Invisivel sem display:none, para funcionar no Android e no PC. */
 body.loop03-modo-operador > #arquivoFotoPerfil{
