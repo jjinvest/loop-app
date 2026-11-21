@@ -42,9 +42,8 @@ function presenca(banco){
  return tem.length===TABELAS_HISTORICO.length;
 }
 function doBanco(banco){
- const row=banco.prepare(
-  'SELECT snapshot FROM loop_real_motor_estado WHERE id=1'
- ).get();
+ const {lerEstadoMotor}=require('./estado-motor-unificado-sqlite');
+ const row=lerEstadoMotor(banco);
  const s=row?.snapshot?JSON.parse(row.snapshot):null;
  return {tabuleiro:{ciclosConcluidos:s?.tabuleiro?.ciclosConcluidos||[]}};
 }
