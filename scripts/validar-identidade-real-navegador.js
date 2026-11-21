@@ -1064,8 +1064,24 @@ async function main(){
    await pagina.waitForFunction(()=>!document.getElementById('akitemmBusca').disabled);
    assert.equal(await pagina.locator('#catalogoLojaLoop .produto-loja-loop[data-produto-id]').count(),1);
    // Mesmo cadastro de entrega do operador, habilitado somente para cliente.
+   const diagnosticoEntrega=await pagina.evaluate(async()=>{
+    const m=await fetch('/api/contas/me',{credentials:'same-origin'});
+    const d=m.ok?await m.json():null;
+    const op=await fetch('/api/operador/estado',{
+     credentials:'same-origin'
+    }).then(r=>r.json());
+    return {
+     inputDisabled:document.querySelector('#akitemmFormEntrega input[name=cep]')?.disabled,
+     botaoDisabled:document.querySelector('#akitemmFormEntrega button[type=submit]')?.disabled,
+     status:document.querySelector('#akitemmStatusEntrega')?.textContent,
+     cliente:m.status===200,csrfPresente:typeof d?.csrf==='string',
+     operador:op.operador===true
+    };
+   });
    assert.equal(await pagina.locator(
-    '#akitemmFormEntrega input[name=cep]').isEnabled(),true);
+    '#akitemmFormEntrega input[name=cep]').isEnabled(),true,
+    'Campo de CEP precisa funcionar como cliente: '+
+     JSON.stringify(diagnosticoEntrega));
    assert.equal(await pagina.locator(
     '#akitemmFormEntrega button[type=submit]').isEnabled(),true);
    assert.equal(await pagina.locator('#registrarPedidoLoja').isDisabled(),true);
