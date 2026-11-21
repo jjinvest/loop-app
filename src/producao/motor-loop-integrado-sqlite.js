@@ -154,7 +154,7 @@ class MotorLoopIntegradoSQLite{
   if(!res.repetida){
    const snapshot=JSON.stringify(sim.exportarSnapshot());
    this.banco.prepare([
-    'INSERT INTO loop_real_motor_estado(id,revisao,snapshot)'
+    'INSERT INTO loop_real_motor_estado(id,revisao,snapshot)',
     'VALUES(1,1,?) ON CONFLICT(id)',
     'DO UPDATE SET revisao=revisao+1,snapshot=excluded.snapshot'
    ].join(' ')).run(snapshot);
