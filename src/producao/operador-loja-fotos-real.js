@@ -39,7 +39,7 @@
  function modal(titulo){
   if(!dialogo){
    dialogo=document.createElement('dialog');
-   dialogo.className='akitemm-modal';
+   dialogo.className='akitemm-modal akitemm-operador-editor';
    dialogo.id='akitemmOperadorFotosReal';
    document.body.append(dialogo);
   }
@@ -49,9 +49,9 @@
   fechar.textContent='×';fechar.setAttribute('aria-label','Fechar');
   fechar.addEventListener('click',()=>dialogo.close());
   const h=document.createElement('h2');h.textContent=titulo;
-  const corpo=document.createElement('div');
+  const corpo=document.createElement('div');corpo.className='akitemm-editor-corpo';
   const estado=document.createElement('p');
-  estado.setAttribute('role','status');
+  estado.setAttribute('role','status');estado.className='akitemm-editor-status';
   dialogo.append(fechar,h,corpo,estado);
   dialogo.showModal();return {corpo,estado};
  }
@@ -159,6 +159,134 @@
    });
   }catch(e){estado.textContent='Cadastro de ofertas indisponível: '+e.message;}
  }
+
+ const campoTexto=(form,titulo,{tipo='text',maxLength=150,placeholder='',valor=''}={})=>{
+  const label=document.createElement('label');label.textContent=titulo;
+  const entrada=document.createElement(tipo==='textarea'?'textarea':'input');
+  if(tipo!=='textarea')entrada.type=tipo;
+  entrada.maxLength=maxLength;entrada.placeholder=placeholder;
+  entrada.value=valor;label.append(entrada);form.append(label);return entrada;
+ };
+ const escolhaCor=form=>select('Cor do produto',[
+  ['CINZA','Cinza'],['VERDE','Verde'],['DOURADO','Dourado'],
+  ['ROXO','Roxo']
+ ]);
+ const slugManual=()=> 'manual-'+Date.now().toString(36)+'-'+
+  Math.random().toString(36).slice(2,8).padEnd(6,'0');
+ // Recorte quadrado feito no aparelho. Não modifica cores nem o original salvo.
+ function editarFoto(form){
+  const caixa=document.createElement('section');
+  const label=document.createElement('label');
+  label.className='akitemm-escolher-foto';
+  label.textContent='Escolher foto do celular';
+  const input=document.createElement('input');
+  input.type='file';input.accept='image/jpeg,image/png,image/webp';
+  label.append(input);caixa.append(label);
+  const aviso=linha('JPEG, PNG ou WebP. Você pode ajustar o enquadramento antes de salvar.');
+  caixa.append(aviso);
+  const previa=document.createElement('canvas');
+  previa.width=640;previa.height=640;
+  previa.className='akitemm-foto-previa';previa.hidden=true;
+  caixa.append(previa);
+  const ajustes=document.createElement('div');
+  ajustes.className='akitemm-foto-ajustes';ajustes.hidden=true;
+  const controles=[];
+  for(const [titulo,valor,min,max] of [
+   ['Aproximar / afastar','1','1','3'],
+   ['Mover para os lados','50','0','100'],
+   ['Mover para cima / baixo','50','0','100']
+  ]){
+   const l=document.createElement('label');l.textContent=titulo;
+   const x=document.createElement('input');x.type='range';
+   x.min=min;x.max=max;x.step=titulo.startsWith('Aproximar')?'0.05':'1';
+   x.value=valor;l.append(x);ajustes.append(l);controles.push(x);
+  }
+  caixa.append(ajustes);form.append(caixa);
+  let imagem=null,carregando=null;
+  const redesenhar=()=>{
+   if(!imagem)return;
+   const zoom=Number(controles[0].value);
+   const lado=Math.min(imagem.naturalWidth,imagem.naturalHeight)/zoom;
+   const x=(imagem.naturalWidth-lado)*Number(controles[1].value)/100;
+   const y=(imagem.naturalHeight-lado)*Number(controles[2].value)/100;
+   const contexto=previa.getContext('2d');
+   if(!contexto)throw Error('EDICAO_FOTO_INDISPONIVEL');
+   contexto.fillStyle='#ffffff';contexto.fillRect(0,0,640,640);
+   contexto.drawImage(imagem,x,y,lado,lado,0,0,640,640);
+  };
+  for(const x of controles)x.addEventListener('input',redesenhar);
+  input.addEventListener('change',()=>{
+   imagem=null;previa.hidden=true;ajustes.hidden=true;
+   const foto=input.files?.[0];
+   if(!foto)return;
+   if(!['image/jpeg','image/png','image/webp'].includes(foto.type)||
+      foto.size<40||foto.size>15*1024*1024){
+    aviso.textContent='Selecione uma foto JPEG, PNG ou WebP de até 15 MB.';
+    input.value='';return;
+   }
+   const url=URL.createObjectURL(foto);
+   carregando=new Promise((resolve,reject)=>{
+    const img=new Image();
+    img.onload=()=>{
+     URL.revokeObjectURL(url);
+     if(img.naturalWidth<50||img.naturalHeight<50){
+      reject(Error('FOTO_RESOLUCAO_BAIXA'));return;
+     }
+     imagem=img;previa.hidden=false;ajustes.hidden=false;
+     redesenhar();aviso.textContent='Ajuste o enquadramento. A foto será cortada, sem alterar as cores.';
+     resolve();
+    };
+    img.onerror=()=>{URL.revokeObjectURL(url);reject(Error('FOTO_NAO_ABRIU'));};
+    img.src=url;
+   });
+   carregando.catch(()=>{aviso.textContent='Não foi possível abrir a imagem. Escolha outra foto.';});
+  });
+  return {
+   temFoto:()=>Boolean(input.files?.length),
+   obter:async()=>{
+    if(carregando)await carregando;
+    if(!imagem)return null;
+    redesenhar();
+    const blob=await new Promise(resolve=>previa.toBlob(resolve,'image/jpeg',0.87));
+    if(!blob||blob.size<40||blob.size>3*1024*1024)
+     throw Error('FOTO_PROCESSADA_INVALIDA');
+    return blob;
+   }
+  };
+ }
+ async function salvarFoto(id,csrf,blob,posicao=1){
+  const lista=await fetchJson('/api/admin/catalogo-midia/produtos/'+id+'/fotos');
+  const versao=lista.fotos?.find(f=>f.posicao===posicao)?.versao||0;
+  const resposta=await fetch('/api/admin/catalogo-midia/produtos/'+id+
+   '/fotos/'+posicao,{
+    method:'POST',credentials:'same-origin',cache:'no-store',
+    headers:{'Content-Type':'image/jpeg','X-Loop-Admin-Csrf':csrf,
+     'X-Foto-Versao-Esperada':String(versao)},body:blob
+   });
+  const retorno=await resposta.json().catch(()=>({}));
+  if(!resposta.ok)throw Error(retorno.erro||'FOTO_NAO_GRAVADA');
+  return retorno;
+ }
+ async function salvarCor(id,csrf,cor){
+  const regras=await fetchJson('/api/admin/comercial/classificacoes');
+  const anterior=regras.produtos?.find(r=>r.produtoId===id);
+  if(!anterior)throw Error('CLASSIFICACAO_INDISPONIVEL');
+  if(anterior.cor===cor)return anterior;
+  return fetchJson('/api/admin/comercial/classificacoes/'+id,{
+   method:'POST',headers:{'Content-Type':'application/json',
+    'X-Loop-Admin-Csrf':csrf},
+   body:JSON.stringify({cor,minimo:anterior.minimo,
+    roxasPorUnidade:anterior.roxasPorUnidade,
+    revisaoEsperada:anterior.revisao})
+  });
+ }
+ async function publicarFoto(id,csrf){
+  return fetchJson('/api/admin/catalogo-midia/produtos/'+id+'/publicacao',{
+   method:'POST',headers:{'Content-Type':'application/json',
+    'X-Loop-Admin-Csrf':csrf},body:JSON.stringify({ativo:true})
+  });
+ }
+ const atualizarLoja=()=>document.getElementById('atualizarCatalogoLoja')?.click();
  async function vincularQuadradinho(indice,id){
   if(!Number.isSafeInteger(indice)||indice<1||indice>400||!ID.test(id))
    throw Error('QUADRINHO_INVALIDO');
