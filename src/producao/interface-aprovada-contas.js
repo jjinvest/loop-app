@@ -1091,7 +1091,7 @@
   painel.className='loop03-controles-cpf-termos';
   painel.dataset.posicao=pos?String(pos.numero):'vazia';
   const abrir=document.createElement('summary');
-  abrir.textContent='CPF · Ler termos';
+  abrir.textContent='CPF';
   abrir.setAttribute('aria-label','CPF e termos da posição '+vaga);
   painel.append(abrir);
   if(liberado){
