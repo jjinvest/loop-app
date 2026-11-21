@@ -260,7 +260,7 @@ async function main(){
     return botoes.map(b=>({left:b.getBoundingClientRect().left,
      right:b.getBoundingClientRect().right}));
    });
-   assert.ok(larguras.every(b=>b.left>=0&&b.right<=visual.width+1),
+   assert.ok(larguras.every(b=>b.left>=0&&b.right<=visual.largura+1),
     'Limpar, Cancelar e Definir devem caber dentro da largura do celular');
    await seletorHorario.getByRole('button',{name:'Cancelar'}).click();
    await seletorHorario.waitFor({state:'detached'});
