@@ -127,7 +127,7 @@ test('projecao real exige livro de vendas para exibir posicao',t=>{
  const db=new DatabaseSync(ambiente.LOOP_REAL_SQLITE);
  t.after(()=>db.close());
  db.exec("CREATE TABLE loop_real_contas(id TEXT PRIMARY KEY);"+
-  "CREATE TABLE loop_real_motor_estado(id INTEGER PRIMARY KEY,snapshot TEXT);"+
+  "CREATE TABLE loop_real_motor_estado(id INTEGER PRIMARY KEY,revisao INTEGER NOT NULL,snapshot TEXT);"+
   "CREATE TABLE loop_real_motor_compras(posicao_id INTEGER PRIMARY KEY);"+
   "CREATE TABLE loop_real_motor_eventos(chave TEXT PRIMARY KEY);");
  const vazio=projetarTabuleiroOperacional({banco:db});
@@ -136,7 +136,7 @@ test('projecao real exige livro de vendas para exibir posicao',t=>{
  assert.deepEqual(vazio.tabuleiro.vagas,[null,null,null,null,null,null]);
  const sim=new SimuladorLoop();
  sim.registrarPosicaoSimulada({nome:'Teste não auditado',participanteId:'titular-falso'});
- db.prepare('INSERT INTO loop_real_motor_estado(id,snapshot) VALUES(1,?)')
+ db.prepare('INSERT INTO loop_real_motor_estado(id,revisao,snapshot) VALUES(1,1,?)')
   .run(JSON.stringify(sim.exportarSnapshot()));
  assert.throws(()=>projetarTabuleiroOperacional({banco:db}),/POSICAO_REAL_SEM_PEDIDO/);
 });
