@@ -200,20 +200,8 @@
       "gitSha": "73871188c46949d90be206f40fad47bd5366c950"
     },
     {
-      "path": "src/integracoes/aplicador-lote-catalogo-sqlite.js",
-      "gitSha": "0f8d9dd80d70e69cf6966e2a850ebaa13be3f489"
-    },
-    {
       "path": "src/integracoes/celcoin-sandbox-prova-readonly.js",
       "gitSha": "1166cb4aea09b2cd60d380dff3f4daf8325548c5"
-    },
-    {
-      "path": "src/integracoes/importador-catalogo-simulado.js",
-      "gitSha": "b8d90bcac61521517bb06917ce4953c4144eac81"
-    },
-    {
-      "path": "src/integracoes/registro-fornecedores.js",
-      "gitSha": "dd71a3ef73e3da7a9bc9dd0831c034e31a2087de"
     },
     {
       "path": "src/laboratorio/checkout-staging-ui.css",
