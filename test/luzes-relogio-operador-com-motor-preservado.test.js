@@ -89,8 +89,10 @@ test('operador: 5 contemplados entre 9h e 18h acendem 6 LEDs a cada 18 minutos',
  assert.deepEqual(x.luzes(),[true,false,false,false,false,false]);
  assert.match(x.elements.motorContadorEventos.textContent,
   /Relógio: 1 de 6 luzes · Eventos confirmados: 0 de 6/);
- assert.deepEqual(x.reais(),[false,false,false,false,false,false],
-  'nenhum evento real foi inventado para acender luz programada');
+ assert.deepEqual(x.reais(),[true,false,false,false,false,false],
+  'brilho original acompanha a luz do relógio, sem alterar o evento confirmado');
+ assert.match(x.elements.motorContadorEventos.textContent,
+  /Eventos confirmados: 0 de 6/);
 });
 
 test('horário diferente, pausa e modo manual limpam LEDs agendados',()=>{
@@ -122,7 +124,7 @@ test('sessão cliente não acende LEDs só por haver meta; vendas continuam inde
  assert.doesNotMatch(code,/registrarCompra|executarGiro|criarPosicao/);
  assert.match(interfaceReal,/luzesDoRelogioOperador:true/);
  assert.match(interfaceReal,/eventosReaisNoCiclo:d\.tabuleiro\.eventosNoCiclo/);
- assert.match(css,/loop03-relogio-luz-visual/);
+ assert.match(css,/loop03-marcador-aceso/);
 });
 
 test('turno 22h–02h atravessa meia-noite e respeita data da programação',()=>{
@@ -157,5 +159,6 @@ test('a cada consulta ao servidor recupera a posição temporal sem criar giro',
   modoExecucao:'STOP',meta:5,eventosReaisNoCiclo:3
  }));
  assert.deepEqual(x.luzes(),[false,false,false,false,false,false]);
- assert.deepEqual(x.reais(),[false,false,false,false,false,false]);
+ assert.deepEqual(x.reais(),[true,true,true,false,false,false],
+  'pausa mantém apenas os 3 eventos efetivamente contabilizados');
 });
