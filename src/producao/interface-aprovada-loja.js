@@ -730,6 +730,17 @@
     })();
    });
    detalhes.append(tipo,titulo,painelPreco,descricao,status,botao);
+   // Toque no cartão inteiro abre a ficha para o cliente;
+   // o operador mantém o toque para editar sem mudar as molduras.
+   card.addEventListener('click',ev=>{
+    if(operadorAtivo||ev.target.closest('button,a,input,select,textarea'))return;
+    botao.click();
+   });
+   card.addEventListener('keydown',ev=>{
+    if(operadorAtivo||ev.target!==card||
+       (ev.key!=='Enter'&&ev.key!==' '))return;
+    ev.preventDefault();botao.click();
+   });
    card.append(imagem,detalhes);alvo.append(card);
   }
   $('akitemmResultadoProdutos').textContent=filtrada?
