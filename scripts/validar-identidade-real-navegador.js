@@ -510,18 +510,25 @@ async function main(){
     /Posição 10[\n\r\s\S]*Sem posição/);
    // Confirmar geometria no navegador: tres cartoes lado a lado,
    // quarto na proxima linha, mesmo no telefone em pe.
-   const gradeMedida=await page.locator('#posicoesPainel .loop03-grade-posicoes')
-    .evaluate(el=>{
+   await page.locator('#posicoesPainel .loop03-grade-posicoes')
+    .waitFor({state:'visible'});
+   const gradeMedida=await page.evaluate(()=>{
+     // Buscar o elemento e medir no mesmo frame: uma atualizacao de dados
+     // nao pode entregar um no desconectado da arvore.
+     const el=document.querySelector('#posicoesPainel .loop03-grade-posicoes');
+     if(!el)return {display:'AUSENTE',caixas:[]};
      const caixas=[...el.querySelectorAll(':scope > .loop03-unidade-posicao')]
       .slice(0,4).map(n=>{
        const b=n.getBoundingClientRect();
        return {x:b.left,y:b.top,width:b.width};
       });
      return {display:getComputedStyle(el).display,
+      conectado:el.isConnected,
+      clienteIntegrado:!!el.closest('.cliente-integrado'),
       parentWidth:el.getBoundingClientRect().width,caixas};
     });
    assert.equal(gradeMedida.display,'grid',
-    'Minhas Posicoes precisa de display:grid');
+    'Minhas Posicoes precisa de display:grid: '+JSON.stringify(gradeMedida));
    assert.equal(gradeMedida.caixas.length,4);
    const [c1,c2,c3,c4]=gradeMedida.caixas;
    assert.ok(c1.x<c2.x&&c2.x<c3.x&&
