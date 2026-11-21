@@ -340,6 +340,84 @@
    elem.setAttribute('aria-disabled','true');
   }
  }
+ // O formulário de endereço já aprovado agora verifica região/frete.
+ // Nunca salva endereço como pedido nem tenta acionar pagamento/posições.
+ const formEntrega=$('akitemmFormEntrega');
+ const statusEntrega=$('akitemmStatusEntrega');
+ const botaoEntrega=formEntrega?.querySelector('button[type=submit]');
+ const inicializarEntrega=()=>{
+  if(!formEntrega||!botaoEntrega||!statusEntrega)return;
+  const explicacao=formEntrega.querySelector('p');
+  if(explicacao)explicacao.textContent=
+   'Informe seu endereço para verificar a entrega. A consulta ainda não finaliza nem registra um pedido.';
+  botaoEntrega.textContent='Verificar região e frete';
+  const permitir=!visitante&&!operadorAtivo&&typeof csrfLoja==='string';
+  for(const field of formEntrega.querySelectorAll('input,select,textarea')){
+   field.disabled=!permitir;
+  }
+  botaoEntrega.disabled=!permitir;
+  if(!permitir)statusEntrega.textContent=operadorAtivo?
+   'A consulta de endereço é exclusiva do cliente.':
+   'Entre na sua conta para consultar entrega.';
+ };
+ if(formEntrega&&botaoEntrega){
+  formEntrega.addEventListener('submit',async ev=>{
+   ev.preventDefault();
+   if(visitante){solicitarCadastro();return;}
+   if(operadorAtivo||!csrfLoja){
+    statusEntrega.textContent='Entre como cliente para consultar a entrega.';
+    return;
+   }
+   if(!formEntrega.reportValidity())return;
+   const cep=formEntrega.elements.namedItem('cep')?.value?.trim();
+   if(typeof cep!=='string'||!/^[0-9]{5}-?[0-9]{3}$/.test(cep)){
+    statusEntrega.textContent='Informe um CEP válido com 8 números.';return;
+   }
+   botaoEntrega.disabled=true;
+   statusEntrega.textContent='Verificando entrega para o endereço informado...';
+   try{
+    const resp=await fetch('/api/loja/entrega/verificar-cep',{
+     method:'POST',credentials:'same-origin',cache:'no-store',
+     headers:{'Content-Type':'application/json','X-Loop-Csrf':csrfLoja},
+     body:JSON.stringify({cep})
+    });
+    const dados=await resp.json().catch(()=>({}));
+    if(resp.status===422&&dados.entregaDisponivel===false){
+     statusEntrega.textContent='Este produto não tem entrega disponível para o endereço informado.';
+     return;
+    }
+    if(!resp.ok)throw Error(dados.erro||'ENTREGA_NAO_VERIFICADA');
+    if(dados.entregaDisponivel!==true||
+       dados.checkoutReal!==false||
+       dados.autorizaCobranca!==false)
+     throw Error('ENTREGA_RESPOSTA_INCONSISTENTE');
+    const cidade=String(dados.cidade||'');
+    const uf=String(dados.uf||'');
+    const inputCidade=formEntrega.elements.namedItem('cidade');
+    const inputUf=formEntrega.elements.namedItem('uf');
+    if(inputCidade)inputCidade.value=cidade;
+    if(inputUf)inputUf.value=uf;
+    const valor=Number.isSafeInteger(dados.taxaEntregaPropriaCentavos)&&
+     dados.taxaEntregaPropriaCentavos>=0?
+     new Intl.NumberFormat('pt-BR',{style:'currency',
+      currency:'BRL'}).format(dados.taxaEntregaPropriaCentavos/100):null;
+    let mensagem='Região atendida: '+cidade+' / '+uf+'. ';
+    if(valor!==null)mensagem+='Taxa de entrega própria: '+valor+'. ';
+    if(dados.requerOutraCotacao)
+     mensagem+='Outros produtos ainda precisam de cotação de frete. ';
+    mensagem+='Esta consulta não cria pedido nem libera pagamento.';
+    statusEntrega.textContent=mensagem;
+   }catch{
+    statusEntrega.textContent=
+     'Não foi possível verificar a entrega agora. Nenhum pedido foi criado.';
+   }finally{
+    botaoEntrega.disabled=visitante||operadorAtivo||!csrfLoja;
+   }
+  });
+  for(const x of formEntrega.querySelectorAll('input[name=cep]')){
+   x.addEventListener('input',()=>{statusEntrega.textContent='';});
+  }
+ }
  // Catálogo publicado pela administração, nunca produtos ou preços de demo.
  // Ativar somente os filtros de LEITURA, sem fazer carrinho/compra.
  let produtosPublicados=[],categoria='',cor='',termo='',filtroOfertas=false;
@@ -889,6 +967,7 @@
   }catch{
    // Indisponibilidade da leitura nao libera compra nem muda as regras.
   }
+  inicializarEntrega();
   if(!semCliente&&!operadorAtivo)await atualizarPedidos();
   else $('pedidosLojaLoop')?.replaceChildren();
   await atualizarCatalogo();
@@ -897,6 +976,7 @@
   // A falha de identidade nao fecha a vitrine: dados privados seguem
   // inacessiveis e so a leitura publica de produtos permanece permitida.
   visitante=true;clienteNick=null;csrfLoja=null;prepararLinkPessoal();
+  inicializarEntrega();
   informar('AKITEMM · vitrine pública disponível. Entre na sua conta para ações pessoais.');
   if($('conteudoLojaLoop'))$('conteudoLojaLoop').hidden=false;
   await atualizarCatalogo();
