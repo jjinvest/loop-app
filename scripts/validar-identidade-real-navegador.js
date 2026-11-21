@@ -1068,7 +1068,7 @@ async function main(){
     /Frete e compra dependem da integração comercial/);
    // Carrinho interno no banco REAL: adicionar, atualizar quantidade,
    // recarregar a loja e esvaziar, sem criar um pedido ou pagamento.
-   await pagina.locator('#akitemmProdutoInlineConteudo button').click();
+   await pagina.locator('#akitemmProdutoInlineConteudo button[aria-label^="Adicionar "]').click();
    await pagina.locator('#akitemmTotalItens').filter({hasText:'1'})
     .waitFor({state:'visible'});
    assert.equal(await pagina.locator('#itensLojaLoop .item-carrinho-loja').count(),1);
