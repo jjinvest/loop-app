@@ -492,7 +492,7 @@
     },
     {
       "path": "src/candidato/escritorio-cliente-integrado.css",
-      "sha": "5b1af64473909b047dd0e72dd5767eb776a97a12"
+      "sha": "79f6b8f97238ae8a81e8a340fdf4234521d82491"
     },
     {
       "path": "src/candidato/operador-em-tela.js",
@@ -1752,7 +1752,7 @@
     },
     {
       "path": "src/shared/visor-catraca.js",
-      "sha": "2a126a701e260061bcaed82d05bb92c943e4d4c8"
+      "sha": "808c26a00f3ad044f1aac913bb5f8b4224a5fb51"
     },
     {
       "path": "test/acabamento-visual-unificado.test.js",
@@ -2828,7 +2828,7 @@
     },
     {
       "path": "test/luzes-relogio-operador-com-motor-preservado.test.js",
-      "sha": "40cb2ca9c6122a826f868e6d12d4baffc1676ed6"
+      "sha": "e6d83f1c7ff0d5b19c77ca31f1f1be8ec9f13450"
     },
     {
       "path": "test/manutencao-comercial-online.test.js",
