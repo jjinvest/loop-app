@@ -153,9 +153,11 @@
  // quando o input permanece dentro de um ancestral display:none.
  // Deslocar o MESMO input (mantendo listeners) para fora da aba durante a
  // sessao administrativa e devolve-lo ao formulario no modo cliente.
- function posicionarCampoFotoPerfil(operador){
+ function posicionarCampoFotoPerfil(foraDaAba){
   const input=$('arquivoFotoPerfil'),form=$('formFotoPerfil');
-  if(operador){
+  // Android bloqueia o seletor de arquivos quando o input pertence a
+  // um painel oculto. A mesma solução vale para cliente e operador.
+  if(foraDaAba||$('conteudoConta')?.hidden){
    if(input.parentElement!==document.body)document.body.append(input);
    input.tabIndex=-1;
   }else{
@@ -265,8 +267,14 @@
   const tipo=String(arquivo.type||'').toLowerCase();
   if(tipo&&!tipo.startsWith('image/')&&tipo!=='application/octet-stream')
    throw Error('Escolha uma imagem com até 24 MB.');
-  if(typeof createImageBitmap!=='function')
-   throw Error('Este navegador não consegue preparar a foto. Escolha JPEG, PNG ou WebP de até 3 MB.');
+  // Navegadores mais antigos podem não ter createImageBitmap. Para
+  // fotos comuns até 3 MB, o servidor ainda valida o arquivo original.
+  if(typeof createImageBitmap!=='function'){
+   if(arquivo.size<=limite&&
+      ['image/jpeg','image/png','image/webp'].includes(tipo))
+    return {dados:arquivo,mime:tipo};
+   throw Error('O navegador não consegue reduzir esta imagem. Escolha uma foto JPEG, PNG ou WebP menor.');
+  }
   let imagem;
   try{
    imagem=await createImageBitmap(arquivo);
@@ -290,6 +298,9 @@
   }catch(e){
    if(e.message==='FOTO_GRANDE_DEMAIS')
     throw Error('A foto ficou grande demais. Escolha outra imagem.');
+   if(arquivo.size<=limite&&
+     ['image/jpeg','image/png','image/webp'].includes(tipo))
+    return {dados:arquivo,mime:tipo};
    throw Error('O navegador não conseguiu abrir esta foto. Escolha uma imagem comum do celular.');
   }finally{
    if(imagem?.close)imagem.close();
@@ -360,7 +371,7 @@
    }
    campo.value='';
    await atualizarFotoPerfilReal();
-   const sucesso='Foto atualizada no Escritório.';
+   const sucesso='Foto salva no LOOP e disponível também na AKITEMM.';
    status.textContent=sucesso;dizer(sucesso);
   }catch(e){
    avisarFalhaFotoReal('Não foi possível salvar a foto: '+explicarFalhaFotoReal(e));
@@ -517,6 +528,10 @@
   $('perfilCliente').textContent='Nick: '+nickVisivel(s.nick)+
    (s.emailVerificado?' · E-mail confirmado':' · Confirme seu e-mail');
   $('painelVerificarEmail').hidden=s.emailVerificado;
+  if(s.emailVerificado===false)restaurarContadorEmail();
+  else if(contadorEmail!==null){
+   clearInterval(contadorEmail);contadorEmail=null;
+  }
   $('painelIdentidadeTeste').hidden=true;
   $('conteudoConta').hidden=false;
   // A fonte é o endpoint autenticado do mesmo SQLite, não dados LAB.
@@ -2105,7 +2120,8 @@
     somentePosicoesPeloQuadrado=proximaAbaVemDoQuadrado;
     proximaAbaVemDoQuadrado=false;
    }
-   if(tab.id==='abaTabuleiro'||tab.id==='abaPosicoes')void carregarMotor();
+   if(!modoOperadorAtual)posicionarCampoFotoPerfil(tab.id!=='abaConta');
+  if(tab.id==='abaTabuleiro'||tab.id==='abaPosicoes')void carregarMotor();
    if(tab.id==='abaMeusPedidos')void carregarPedidos();
    if(tab.id==='abaFinanceiro'){
     if(ensaioFinanceiroAtivo)void carregarFinanceiroEnsaio();
@@ -2122,11 +2138,24 @@
   try{
    const dados=await requisitar('/meus-dados');
    if($('resumoEmail'))$('resumoEmail').textContent=dados.emailVerificado?'Confirmado':'Pendente';
-   $('perfilCliente').textContent='Nome: '+dados.nome+' · Nick: '+nickVisivel(dados.nick)+
-    ' · E-mail: '+dados.email+
-    (dados.emailVerificado?' (confirmado)':' (pendente)')+
-    ' · Termos: '+dados.documentosAceitos.termos.versao+
-    ' · Privacidade: '+dados.documentosAceitos.privacidade.versao;
+   // Resumo limpo, sem códigos internos de versões e documentos no painel.
+  const resumo=$('perfilCliente');
+  resumo.replaceChildren();
+  for(const [rotulo,valor] of [
+   ['Nome',dados.nome],['Nick','@'+nickVisivel(dados.nick)],
+   ['E-mail',dados.email],
+   ['Verificação',dados.emailVerificado?'Confirmado':'Pendente']
+  ]){
+   const linha=document.createElement('div');
+   linha.className='loop03-perfil-linha';
+   const etiqueta=document.createElement('span');
+   etiqueta.className='loop03-perfil-rotulo';
+   etiqueta.textContent=rotulo;
+   const conteudo=document.createElement('strong');
+   conteudo.className='loop03-perfil-valor';
+   conteudo.textContent=valor;
+   linha.append(etiqueta,conteudo);resumo.append(linha);
+  }
   }catch(e){dizer(erro(e));}
  }
  function documentosHabilitados(ok){
@@ -2386,15 +2415,30 @@
    sinoReal.setAttribute('aria-expanded',String(aberto));
   });
  }
+ let origemArquivoFotoReal='conta';
+ const escolherArquivoConta=$('formFotoPerfil').querySelector('.loop03-escolher-foto');
+ if(escolherArquivoConta)escolherArquivoConta.addEventListener('click',()=>{
+  origemArquivoFotoReal='conta';
+  posicionarCampoFotoPerfil(false);
+ });
  const botaoFotoReal=$('loop03AlterarFotoTopo');
- if(botaoFotoReal)botaoFotoReal.addEventListener('click',()=>
-  $('arquivoFotoPerfil').click());
+ if(botaoFotoReal)botaoFotoReal.addEventListener('click',()=>{
+  origemArquivoFotoReal='topo';
+  posicionarCampoFotoPerfil(true);
+  $('arquivoFotoPerfil').click();
+ });
  $('formFotoPerfil').addEventListener('submit',ev=>void (
   modoOperadorAtual?salvarFotoOperadorReal(ev):salvarFotoPerfilReal(ev)));
  $('arquivoFotoPerfil').addEventListener('change',ev=>{
-  if(ev.target.files?.length)void (modoOperadorAtual?
-   salvarFotoOperadorReal({preventDefault(){}}):
-   salvarFotoPerfilReal({preventDefault(){}}));
+  if(!ev.target.files?.length)return;
+  if(modoOperadorAtual||origemArquivoFotoReal==='topo'){
+   void (modoOperadorAtual?
+    salvarFotoOperadorReal({preventDefault(){}}):
+    salvarFotoPerfilReal({preventDefault(){}}));
+  }else{
+   $('statusFotoPerfil').textContent=
+    'Foto selecionada. Toque em “Salvar minha foto” para substituir a atual.';
+  }
  });
 
  const fotoTopoReal=$('loop03ImagemFotoTopo');
@@ -2415,24 +2459,101 @@
    mostrarLogin('login');dizer('Sessão encerrada.');
   }catch(e){dizer(erro(e));}
  });
+ // O backend protege o reenvio por 120 segundos e permite no máximo
+ // três solicitações por hora. O relógio visual obedece a esses limites.
+ const ESPERA_REENVIO_EMAIL_MS=120000;
+ let prazoReenvioEmail=0,contadorEmail=null,solicitouEmail=false;
+ const chaveReenvio=()=>nickResumoReal?
+  'loop-reenvio-email-'+nickResumoReal.toLowerCase():null;
+ function atualizarContadorEmail(){
+  const botao=$('solicitarCodigoEmail');
+  const relogio=$('contadorReenvioEmail');
+  const restante=Math.max(0,Math.ceil((prazoReenvioEmail-Date.now())/1000));
+  if(restante>0){
+   botao.disabled=true;
+   botao.textContent='Código solicitado';
+   relogio.hidden=false;
+   relogio.textContent='Reenviar em '+
+    Math.floor(restante/60)+':'+String(restante%60).padStart(2,'0');
+  }else{
+   botao.disabled=false;
+   botao.textContent=solicitouEmail?'Reenviar código':'Enviar código';
+   relogio.hidden=true;
+   relogio.textContent='';
+   if(contadorEmail!==null){
+    clearInterval(contadorEmail);contadorEmail=null;
+   }
+  }
+ }
+ function restaurarContadorEmail(){
+  if(contadorEmail!==null){clearInterval(contadorEmail);contadorEmail=null;}
+  const chave=chaveReenvio();
+  let anterior=0;
+  if(chave)try{
+   anterior=Number(sessionStorage.getItem(chave)||0);
+  }catch{}
+  prazoReenvioEmail=Number.isSafeInteger(anterior)&&
+   anterior>Date.now()?anterior:0;
+  solicitouEmail=prazoReenvioEmail>0;
+  atualizarContadorEmail();
+  if(prazoReenvioEmail>Date.now())
+   contadorEmail=setInterval(atualizarContadorEmail,1000);
+ }
+ function iniciarContadorEmail(){
+  prazoReenvioEmail=Date.now()+ESPERA_REENVIO_EMAIL_MS;
+  solicitouEmail=true;
+  const chave=chaveReenvio();
+  if(chave)try{
+   sessionStorage.setItem(chave,String(prazoReenvioEmail));
+  }catch{}
+  if(contadorEmail!==null)clearInterval(contadorEmail);
+  contadorEmail=setInterval(atualizarContadorEmail,1000);
+  atualizarContadorEmail();
+ }
  $('solicitarCodigoEmail').addEventListener('click',async()=>{
-  $('solicitarCodigoEmail').disabled=true;
+  const botao=$('solicitarCodigoEmail');
+  if(botao.disabled||prazoReenvioEmail>Date.now())return;
+  botao.disabled=true;
+  $('estadoEmailCodigo').textContent='Solicitando seu código...';
   try{
-   await requisitar('/email/solicitar',{
+   const resultado=await requisitar('/email/solicitar',{
     method:'POST',body:{},csrfObrigatorio:true
    });
-   dizer('Se o envio foi aceito, seu código chegará por e-mail.');
-  }catch(e){dizer(erro(e));}
-  finally{$('solicitarCodigoEmail').disabled=false;}
+   if(resultado.solicitacaoRecebida!==true)
+    throw Error('ENVIO_EMAIL_NAO_CONFIRMADO');
+   $('estadoEmailCodigo').textContent=
+    'Solicitação recebida. Confira sua caixa de entrada e a pasta de spam.';
+   iniciarContadorEmail();
+   $('codigoEmail').focus();
+  }catch(e){
+   $('estadoEmailCodigo').textContent=erro(e);
+   botao.disabled=false;
+   atualizarContadorEmail();
+  }
+ });
+ $('codigoEmail').addEventListener('input',ev=>{
+  const filtrado=ev.target.value.replace(/[^0-9]/g,'').slice(0,8);
+  if(ev.target.value!==filtrado)ev.target.value=filtrado;
  });
  onForm('formConfirmarEmail',async()=>{
-  const resultado=await requisitar('/email/confirmar',{
-   method:'POST',csrfObrigatorio:true,
-   body:{codigo:$('codigoEmail').value}
-  });
-  if(resultado.emailVerificado!==true)throw Error('CODIGO_INVALIDO');
-  const s=await requisitar('/me');painelConta(s);
-  $('codigoEmail').value='';dizer('E-mail confirmado.');
+  const estado=$('estadoEmailCodigo');
+  estado.textContent='Conferindo o código...';
+  try{
+   const resultado=await requisitar('/email/confirmar',{
+    method:'POST',csrfObrigatorio:true,
+    body:{codigo:$('codigoEmail').value}
+   });
+   if(resultado.emailVerificado!==true)throw Error('CODIGO_INVALIDO');
+   const s=await requisitar('/me');painelConta(s);
+   $('codigoEmail').value='';
+   estado.textContent='E-mail confirmado com sucesso.';
+   dizer('E-mail confirmado.');
+  }catch(e){
+   estado.textContent=e.message==='CODIGO_INVALIDO'?
+    'Código inválido, expirado ou já utilizado. Confira os 8 dígitos ou solicite outro após o prazo.':
+    erro(e);
+   throw e;
+  }
  });
  // O olhinho foi inicializado antes das demais funções da página.
  $('atualizarPedidos').addEventListener('click',()=>void carregarPedidos());

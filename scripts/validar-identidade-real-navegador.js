@@ -12,6 +12,7 @@ const {once}=require('node:events');
 const {randomBytes}=require('node:crypto');
 const {DatabaseSync}=require('node:sqlite');
 const {chromium}=require('playwright');
+const {gerarPngTeste}=require('./fixtures/gerar-png-teste');
 const {MotorLoopIntegradoSQLite}=require('../src/producao/motor-loop-integrado-sqlite');
 const {SessaoAdminComercialSQLite,COOKIE_ADMIN}=
  require('../src/producao/sessao-admin-comercial-sqlite');
@@ -492,6 +493,28 @@ async function main(){
     'Contato em claro nao pode ficar gravado no banco');
    assert.equal(contas.dadosTitular(contato.titularId).telefone,'21988887777');
    assert.equal(contas.dadosTitular(contato.titularId).cpfConfirmado,false);
+   // Esta conta convidada ainda não confirmou e-mail: provar o contador
+   // de reenvio na mesma interface, sem adulterar a conta já verificada.
+   const loginConvite=await contas.entrar({
+    nick:novoNick,senha:'SenhaDoEnsaio2026!'
+   });
+   await convite.addCookies([{
+    name:COOKIE,value:loginConvite.token,url:base,
+    httpOnly:true,secure:true,sameSite:'Strict'
+   }]);
+   await cadastro.goto(base+'/escritorio',{waitUntil:'domcontentloaded'});
+   await cadastro.locator('#painelConta').waitFor({state:'visible'});
+   if(item.largura<=860)
+    await cadastro.locator('#loop03MenuIntegrado').click();
+   await cadastro.locator('#abaConta').click();
+   await cadastro.locator('#painelVerificarEmail').waitFor({state:'visible'});
+   await cadastro.locator('#solicitarCodigoEmail').click();
+   await cadastro.locator('#contadorReenvioEmail').waitFor({state:'visible'});
+   assert.match(await cadastro.locator('#contadorReenvioEmail').innerText(),
+    /Reenviar em [12]:[0-5][0-9]/);
+   assert.equal(await cadastro.locator('#solicitarCodigoEmail').isDisabled(),true);
+   assert.match(await cadastro.locator('#estadoEmailCodigo').innerText(),
+    /Solicitação recebida/);
    await convite.close();
    const contexto=await browser.newContext({
     viewport:{width:item.largura,height:item.altura},
@@ -511,6 +534,22 @@ async function main(){
    assert.equal(await page.locator('#cadastroNick').getAttribute('maxlength'),'12');
    assert.equal(await page.locator('#login').getAttribute('maxlength'),'12');
    assert.equal(await page.locator('#conteudoResumo').isVisible(),true);
+   // Cliente troca a foto clicando no retrato do LOOP com Minha Conta fechada.
+   // A imagem deve ser salva automaticamente no SQLite real.
+   const escolhaFoto=page.waitForEvent('filechooser',{timeout:12000});
+   await page.locator('#loop03AlterarFotoTopo').click();
+   const escolher=await escolhaFoto;
+   await escolher.setFiles({
+    name:'foto-perfil.png',mimeType:'image/png',buffer:gerarPngTeste()
+   });
+   await page.waitForFunction(()=>document.getElementById('statusFotoPerfil')
+    ?.textContent.includes('Foto salva no LOOP e disponível também na AKITEMM.'));
+   await page.locator('#loop03ImagemFotoTopo').waitFor({state:'visible'});
+   const imagemLoop=await page.locator('#loop03ImagemFotoTopo').evaluate(
+    img=>({ok:img.complete&&img.naturalWidth>0,src:img.getAttribute('src')})
+   );
+   assert.equal(imagemLoop.ok,true,'foto salva deve aparecer no LOOP');
+   assert.match(imagemLoop.src,/^\/api\/contas\/foto-perfil/);
    assert.equal(await page.locator('#perfilCliente').isVisible(),false);
    assert.match(await page.locator('#perfilCliente').innerText(),/dozeletrasab/);
    const menuLoja=page.locator('.loop03-atalho-loja');
@@ -741,6 +780,28 @@ async function main(){
    if(item.largura<=860)await page.locator('#loop03MenuIntegrado').click();
    await page.locator('#abaConta').click();
    assert.equal(await page.locator('#perfilCliente').isVisible(),true);
+   await page.locator('#perfilCliente .loop03-perfil-linha').first()
+    .waitFor({state:'visible'});
+   assert.equal(await page.locator('#perfilCliente .loop03-perfil-linha').count(),4);
+   assert.doesNotMatch(await page.locator('#perfilCliente').innerText(),
+    /LOOP-TERMOS-|LOOP-PRIVACIDADE-/);
+   // Pelo painel Minha Conta a escolha NÃO grava sozinha; o botão Salvar
+   // confirma a troca, usando o mesmo endpoint privado do retrato superior.
+   const seletorConta=page.waitForEvent('filechooser',{timeout:12000});
+   await page.locator('#formFotoPerfil .loop03-escolher-foto').click();
+   await (await seletorConta).setFiles({
+    name:'foto-perfil-manual.png',mimeType:'image/png',
+    buffer:gerarPngTeste(120,45,65)
+   });
+   await page.locator('#statusFotoPerfil').filter({
+    hasText:'Foto selecionada.'
+   }).waitFor({state:'visible'});
+   await page.locator('#formFotoPerfil button[type=submit]').click();
+   await page.locator('#statusFotoPerfil').filter({
+    hasText:'Foto salva no LOOP e disponível também na AKITEMM.'
+   }).waitFor({state:'visible'});
+   // Esta conta de prova já teve e-mail confirmado: não exibe reenvio.
+   assert.equal(await page.locator('#painelVerificarEmail').isHidden(),true);
    assert.equal(await page.locator('#painelIdentidadeTeste').isHidden(),true);
    await page.screenshot({
     path:path.join(pasta,'identidade-real-escritorio-'+item.nome+'.png'),
@@ -752,6 +813,13 @@ async function main(){
    await page.locator('#akitemmNomeTitular').filter({
     hasText:nick.toLowerCase()
    }).waitFor({state:'visible'});
+   await page.locator('#akitemmFotoTitular').waitFor({state:'visible'});
+   const imagemLoja=await page.locator('#akitemmFotoTitular').evaluate(
+    img=>({ok:img.complete&&img.naturalWidth>0,src:img.getAttribute('src')})
+   );
+   assert.equal(imagemLoja.ok,true,
+    'foto do LOOP também deve aparecer na AKITEMM no mesmo titular');
+   assert.match(imagemLoja.src,/^\/api\/contas\/foto-perfil/);
    // Botoes internos reais da AKITEMM: dados da conta e avisos.
    await page.locator('#akitemmAbrirConta').click();
    assert.equal(await page.locator('#akitemmDadosConta').isVisible(),true);
