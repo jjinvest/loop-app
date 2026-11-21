@@ -15,7 +15,7 @@
       "nota": "Os tres arquivos do Dockerfile.public-real sao iguais no commit da identidade real"
     }
   },
-  "politica": "Qualquer mudanca, adicao ou remocao no REAL exige aprovacao explicita do proprietario, testes, hash atualizado no manifesto E ancora Railway correspondente; nao reverter ou reconstruir telas historicas; ajuste de fotos cliente/operador solicitado em 21/11/2026, sem alteracao de molduras ou regra do motor; ajuste de agenda futura visivel e horario Android apenas para operador solicitado em 21/11/2026, sem modificacao do motor financeiro",
+  "politica": "Qualquer mudanca, adicao ou remocao no REAL exige aprovacao explicita do proprietario, testes, hash atualizado no manifesto E ancora Railway correspondente; nao reverter ou reconstruir telas historicas; ajuste de fotos cliente/operador solicitado em 21/11/2026, sem alteracao de molduras ou regra do motor; ajuste de agenda futura visivel e horario Android apenas para operador solicitado em 21/11/2026, sem modificacao do motor financeiro; correção autorizada do olhinho de login Android em 21/11/2026 sem alterar catraca, fotos, caixas ou molduras",
   "algoritmo": "git-blob-sha1",
   "arquivos": [
     {
@@ -424,7 +424,7 @@
     },
     {
       "path": "scripts/validar-identidade-real-navegador.js",
-      "sha": "9dde0c63c2d7da9dd3741c698404b7d610273c8e"
+      "sha": "d2a29d6b924e6d3ebb4a774448ac268229fb7f71"
     },
     {
       "path": "scripts/validar-jornada-loja-cores-browser.js",
@@ -1264,7 +1264,7 @@
     },
     {
       "path": "src/producao/acabamento-botoes-real.css",
-      "sha": "5a306b3882d44238fbae8f7a9b38aeda4861c3a4"
+      "sha": "ab09180e6af0d9f9f5916220f3af8493417d0b04"
     },
     {
       "path": "src/producao/aceite-posicao-azul-ensaio-sqlite.js",
@@ -1412,7 +1412,7 @@
     },
     {
       "path": "src/producao/interface-aprovada-contas.js",
-      "sha": "718797c24ff99b29ba7d309d902212022602eeef"
+      "sha": "902c3e477d384beb7264e6550934696724b2d61a"
     },
     {
       "path": "src/producao/interface-aprovada-loja.js",
@@ -2300,7 +2300,7 @@
     },
     {
       "path": "test/contrato-papeis-operador-real.test.js",
-      "sha": "e55202a068c87bf8b72157ec150d71b812e02623"
+      "sha": "31603fd7042f392949660e571ed06a1313e02e3b"
     },
     {
       "path": "test/contrato-visual-escritorio-aprovado.test.js",
