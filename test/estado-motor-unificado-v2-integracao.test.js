@@ -11,6 +11,10 @@ const {MotorLoopIntegradoSQLite}=
 const {lerEstadoMotor,gravarEstadoMotor}=
  require('../src/producao/estado-motor-unificado-sqlite');
 const {validarIdentidade}=require('../src/producao/backup-identidade-real');
+const {projetarTabuleiroOperacional}=
+ require('../src/producao/leitura-tabuleiro-operacional-real');
+const {prepararSnapshotCandidato,reconstituirSnapshotCandidato}=
+ require('../src/producao/snapshot-historico-externo-candidato');
 const DOC='Ensaio descartável de migração de histórico, base de cadastro, '+
  'ordem das filas e catraca. Não existe pagamento, repasse, saldo, '+
  'direito a recompensa, fornecedor ou saque real.';
@@ -98,6 +102,14 @@ test('V1 migra atomicamente para V2; V2 restaura, gira e registra novas posiçõ
  assert.equal(JSON.parse(apos.snapshot).tabuleiro.ciclosConcluidos.length,3);
  assert.equal(env.motor.verificar().giros,3);
  assert.equal(env.motor.projecao.historico.conferir().totalEventos,18);
+ const visor=projetarTabuleiroOperacional({banco:env.banco});
+ assert.equal(visor.tabuleiro.ciclosConcluidos,3,
+  'visor real permanece compatível com histórico V2');
+ assert.equal(visor.catraca.giros,3);
+ const antigoCandidato=prepararSnapshotCandidato({banco:env.banco}).candidato;
+ assert.equal(reconstituirSnapshotCandidato({
+  banco:env.banco,candidato:antigoCandidato
+ }).snapshot,apos.snapshot,'restauro anterior continua compatível com V2');
  assert.equal(validarIdentidade(file).integridade,'ok');
  assert.deepEqual(env.banco.prepare('PRAGMA foreign_key_check').all(),[]);
  assert.equal(env.banco.prepare('PRAGMA integrity_check').get().integrity_check,'ok');
