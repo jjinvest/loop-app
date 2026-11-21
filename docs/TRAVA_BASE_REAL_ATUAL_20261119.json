@@ -1292,7 +1292,7 @@
     },
     {
       "path": "src/producao/backup-identidade-real.js",
-      "sha": "2b51b869680a9aa2cb8c1cebecf4332a692087e0"
+      "sha": "b003181c511b4cd3c6a3bedb70b23e26f23c69f1"
     },
     {
       "path": "src/producao/backup-midia-offsite.js",
@@ -1304,7 +1304,7 @@
     },
     {
       "path": "src/producao/carrinho-interno-real-sqlite.js",
-      "sha": "32270d69f30e451fcdc12715093525b638a534e9"
+      "sha": "af07f6778fe23862829ea66ffde2e1ea8e3b6101"
     },
     {
       "path": "src/producao/catalogo-mercadorias-real.js",
@@ -1520,7 +1520,7 @@
     },
     {
       "path": "src/producao/servidor-identidade-loop.js",
-      "sha": "8880291251a667ae9406c3cff3b2211efe6c3bb4"
+      "sha": "d71590756676edbe08ac5218ccd839452a8f6c83"
     },
     {
       "path": "src/producao/sessao-admin-comercial-sqlite.js",
@@ -2104,7 +2104,7 @@
     },
     {
       "path": "test/carrinho-interno-real-ponta-a-ponta.test.js",
-      "sha": "243ce76bdc3a7974e58fe1085b271b8b3a5321d5"
+      "sha": "be8f3ccafc510007e28bfa4d5743bdad41d2ab55"
     },
     {
       "path": "test/carrinho-loop-multiplos-itens.test.js",

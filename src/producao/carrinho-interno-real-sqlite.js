@@ -2,7 +2,7 @@
 // Carrinho PERSISTENTE do titular no banco de identidade real.
 // Armazena somente IDs e quantidades. NÃO cria pedidos, cotações,
 // cobrança, crédito, posições, frete ou autorização financeira.
-const ID=/^[A-Za-z0-9_-]{3,80}$/;
+const ID=/^[A-Za-z0-9_-]{1,80}$/;
 const TITULAR=/^titular-[a-f0-9-]{36}$/;
 function erro(c){const e=new Error(c);e.codigo=c;throw e;}
 class CarrinhoInternoRealSQLite{
@@ -94,16 +94,29 @@ class CarrinhoInternoRealSQLite{
   return this.listar({titularId});
  }
  verificar(){
-  const invalido=this.banco.prepare([
-   'SELECT c.titular_id FROM loop_real_carrinho_itens c',
+  // Conferencia sem escrita; segura para snapshots, restaurações e auditorias.
+  // A integridade deve valer para TODOS os titulares, não só o usuário ativo.
+  const linhas=this.banco.prepare([
+   'SELECT c.titular_id AS titularId,c.produto_id AS produtoId,',
+   'c.quantidade,c.atualizado_em AS atualizadoEm,t.id AS contaId',
+   'FROM loop_real_carrinho_itens c',
    'LEFT JOIN loop_real_contas t ON t.id=c.titular_id',
-   'WHERE t.id IS NULL OR c.quantidade<1 OR c.quantidade>50',
-   'OR c.atualizado_em<1 LIMIT 1'
-  ].join(' ')).get();
-  if(invalido)erro('CARRINHO_INTEGRIDADE_INVALIDA');
-  return {integridade:'OK',
-   itens:this.banco.prepare('SELECT COUNT(*) AS n FROM loop_real_carrinho_itens').get().n,
-   financeiroReal:false};
+   'ORDER BY c.titular_id,c.produto_id'
+  ].join(' ')).all();
+  const porTitular=new Map();
+  for(const item of linhas){
+   if(typeof item.titularId!=='string'||!TITULAR.test(item.titularId)||
+      item.contaId!==item.titularId||
+      typeof item.produtoId!=='string'||!ID.test(item.produtoId)||
+      !Number.isSafeInteger(item.quantidade)||item.quantidade<1||
+      item.quantidade>50||
+      !Number.isSafeInteger(item.atualizadoEm)||item.atualizadoEm<1)
+    erro('CARRINHO_INTEGRIDADE_INVALIDA');
+   const n=(porTitular.get(item.titularId)||0)+1;
+   if(n>20)erro('CARRINHO_INTEGRIDADE_INVALIDA');
+   porTitular.set(item.titularId,n);
+  }
+  return {integridade:'OK',itens:linhas.length,financeiroReal:false};
  }
 }
 module.exports={CarrinhoInternoRealSQLite};

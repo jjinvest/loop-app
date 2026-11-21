@@ -811,7 +811,7 @@ function criarAppIdentidadeLoop({contas,origemHttps,
   const produtos=new Map();
   for(const item of [...a,...b]){
    if(typeof item?.produtoId!=='string'||
-      !/^[A-Za-z0-9_-]{3,80}$/.test(item.produtoId)||
+      !/^[A-Za-z0-9_-]{1,80}$/.test(item.produtoId)||
       typeof item.titulo!=='string'||item.titulo.length<2||
       item.compravel!==false||item.checkoutReal!==false||
       produtos.has(item.produtoId))
@@ -860,7 +860,7 @@ function criarAppIdentidadeLoop({contas,origemHttps,
   try{
    if(!Number.isSafeInteger(b.quantidade)||b.quantidade<0||
       b.quantidade>50||typeof b.produtoId!=='string'||
-      !/^[A-Za-z0-9_-]{3,80}$/.test(b.produtoId))
+      !/^[A-Za-z0-9_-]{1,80}$/.test(b.produtoId))
     return res.status(400).json({erro:'CARRINHO_ITEM_INVALIDO',checkoutReal:false});
    if(b.quantidade>0&&!publicacoesCarrinho().has(b.produtoId))
     return res.status(404).json({erro:'PRODUTO_NAO_PUBLICADO',checkoutReal:false});

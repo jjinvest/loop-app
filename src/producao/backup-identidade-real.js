@@ -25,6 +25,7 @@ const {TABELAS_POSICOES_VITRINE}=
  require('./posicoes-vitrine-real-sqlite');
 const {TABELA_FOTO_PERFIL_REAL}=
  require('./foto-perfil-real-sqlite');
+const {CarrinhoInternoRealSQLite}=require('./carrinho-interno-real-sqlite');
 const {PromocaoPedidoMotorEnsaioSQLite,TABELAS_PROMOCAO_ENSAIO}=
  require('./promocao-pedido-motor-ensaio-sqlite');
 const {PromocaoLotesEnsaioSQLite,TABELAS_LOTES_ENSAIO}=
@@ -123,6 +124,21 @@ function validarIdentidade(arquivo){
     'OR d.numero_posicao<1 OR d.numero_posicao>10 LIMIT 1'
    ].join(' ')).get();
    if(invalido)falha('BACKUP_DESTINO_INDICACAO_INCONSISTENTE');
+  }
+  // Carrinho pertence ao MESMO titular e ao MESMO backup cifrado.
+  // A restauração recusa carrinhos adulterados, superlotados ou órfãos.
+  if(lista.includes('loop_real_carrinho_itens')){
+   const colunas=b.prepare('PRAGMA table_info(loop_real_carrinho_itens)')
+    .all().map(x=>x.name);
+   if(['titular_id','produto_id','quantidade','atualizado_em']
+    .some(x=>!colunas.includes(x)))
+    falha('BACKUP_CARRINHO_ESQUEMA_INVALIDO');
+   try{
+    const carrinho=Object.create(CarrinhoInternoRealSQLite.prototype);
+    carrinho.banco=b;
+    if(carrinho.verificar().integridade!=='OK')
+     falha('BACKUP_CARRINHO_INTEGRIDADE_DIVERGENTE');
+   }catch{falha('BACKUP_CARRINHO_INTEGRIDADE_DIVERGENTE');}
   }
   // A foto real integra o MESMO backup cifrado e não pode perder o titular.
   if(lista.includes(TABELA_FOTO_PERFIL_REAL)){
