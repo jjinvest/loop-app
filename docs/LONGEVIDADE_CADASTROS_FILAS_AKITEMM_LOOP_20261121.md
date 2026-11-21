@@ -31,6 +31,14 @@ Preservar: identidade única, indicação, histórico de compras, ordem A/B, pos
 - Ensaio sintético isolado: 5.000 ciclos / 30.000 eventos, paginação por ciclo e reprocessamento sem registros duplicados. Não representa 5.000 movimentações financeiras reais nem prova 1.000.000 de posições.
 - **Limite mantido:** o snapshot JSON do simulador **continua como fonte de verdade** e contém cópia de todo o histórico; não há redução comprovada do seu custo de regravação. Somente depois de uma migração com dual-read, restore e comparação de todas as regras poderá sair a cópia histórica central.
 
+## Etapa de contrato de snapshot enxuto — CANDIDATO V2
+
+- Novo módulo `snapshot-historico-externo-candidato.js` gera uma **cópia somente-leitura** do estado do motor, retirando dessa cópia o array de `ciclosConcluidos`, substituído por referência de versão, revisão do estado e resumo de SHA-256 do diário relacional já existente.
+- A reconstituição lê o arquivo de ciclos e seus eventos **sem confiar na cópia do snapshot**; confere ordem, quantidade, centro, eventos, hashes encadeados, revisão do motor e igualdade SHA-256 do JSON restaurado com o original.
+- O módulo recusa snapshot ausente, arquivo corrompido, candidato adulterado, versão antiga e histórico divergente. Não executa `UPDATE`, `INSERT`, pagamento, saque, pedido ou giro.
+- **Não está ativado como persistência principal.** O snapshot V1 completo continua no banco, porque leitores antigos (aceite, estorno, promoção de lotes, auditorias) ainda dependem dele. Este estágio prova a reversibilidade antes da substituição; ainda não reduz tamanho/tempo de gravação produtivo.
+- **Critério para ativar V2:** inventariar e migrar TODOS os leitores/escritores do snapshot, permitir estado compacto com restauração segura em um só gateway transacional, conferir restore de backup e ida/volta entre versões, e rodar cargas de 10 mil/100 mil/1 milhão separadamente para cadastros, posições e eventos, sempre sem dinheiro real fictício.
+
 ## Estado
 
 Longevidade do índice e da auditoria reforçada. Um milhão de registros e posições não está comprovado; a remodelagem do snapshot e as medições volumétricas ainda são necessárias.
