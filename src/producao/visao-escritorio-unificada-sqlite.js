@@ -2,9 +2,10 @@
 // Projecao de leitura sobre o MESMO SQLite da identidade, loja e motor.
 // Nao ativa posicao ou dinheiro real; nao permite cliente escrever no motor.
 const TITULAR=/^titular-[a-f0-9-]{36}$/;
+const {gerarCursorRede,lerCursorRede}=require('./cursor-rede-sqlite');
 function falha(c){const e=new Error(c);e.codigo=c;throw e;}
 class VisaoEscritorioUnificadaSQLite{
- constructor({banco,motor,consultarTelefone=()=>null}={}){
+ constructor({banco,motor,consultarTelefone=()=>null,chaveCursor=null}={}){
   if(!banco||typeof banco.prepare!=='function'||
      !motor||motor.banco!==banco||
      typeof motor.consultar!=='function'||
@@ -15,6 +16,7 @@ class VisaoEscritorioUnificadaSQLite{
    falha('ESCRITORIO_UNIFICADO_EXIGE_MESMO_SQLITE');
   this.banco=banco;this.motor=motor;
   this.consultarTelefone=consultarTelefone;
+  this.chaveCursor=chaveCursor;
  }
  _titular(id){
   if(typeof id!=='string'||!TITULAR.test(id)||
@@ -130,11 +132,16 @@ class VisaoEscritorioUnificadaSQLite{
    somenteLeitura:true,compraRealHabilitada:false,
    catracaClientePodeGirar:false,financeiroReal:false};
  }
- listarRede({titularId,offset=0,limite=50}={}){
+ listarRede({titularId,offset=0,limite=50,cursor=null}={}){
   this._titular(titularId);
   if(!Number.isSafeInteger(offset)||offset<0||
-     !Number.isSafeInteger(limite)||limite<1||limite>50)
+     !Number.isSafeInteger(limite)||limite<1||limite>50||
+     (cursor!==null&&offset!==0))
    falha('ESCRITORIO_PAGINACAO_INVALIDA');
+  const ponto=cursor===null?null:lerCursorRede({
+   chave:this.chaveCursor,titularId,cursor
+  });
+  const base=ponto?.numeroCadastro??offset;
   const rows=this.banco.prepare([
    'SELECT v.indicado_id AS indicadoId,c.nick,',
    'v.registrado_em AS registradoEm,',
@@ -149,13 +156,20 @@ class VisaoEscritorioUnificadaSQLite{
    'LEFT JOIN loop_real_destinos_indicacao dest',
    'ON dest.indicado_id=v.indicado_id AND dest.indicador_id=v.indicador_id',
    'WHERE v.indicador_id=?',
+   ...(ponto?[
+    'AND (v.registrado_em>? OR',
+    '(v.registrado_em=? AND v.indicado_id>?))'
+   ]:[]),
    'ORDER BY v.registrado_em ASC,v.indicado_id ASC',
-   'LIMIT ? OFFSET ?'
-  ].join(' ')).all(titularId,limite,offset);
+   ponto?'LIMIT ?':'LIMIT ? OFFSET ?'
+  ].join(' ')).all(...(ponto?[
+   titularId,ponto.registradoEm,ponto.registradoEm,
+   ponto.indicadoId,limite
+  ]:[titularId,limite,offset]));
   const resumo=this._resumoRede(titularId);
   return {indicados:rows.map((x,i)=>({
    nick:x.nick,registradoEm:x.registradoEm,
-   numeroCadastro:offset+i+1,filaCadastro:'B',
+   numeroCadastro:base+i+1,filaCadastro:'B',
    telefone:this.consultarTelefone({
     indicadorId:titularId,indicadoId:x.indicadoId
    }),
@@ -166,9 +180,16 @@ class VisaoEscritorioUnificadaSQLite{
    posicaoDestinoReservada:x.posicaoDestinoReservada,
    remuneracaoReal:false
   })),total:resumo.cadastros,
-   temMais:resumo.cadastros>offset+rows.length,
-   proximoOffset:resumo.cadastros>offset+rows.length?
-    offset+rows.length:null,resumo,remuneracoesConfirmadas:0,
+   temMais:resumo.cadastros>base+rows.length,
+   proximoOffset:resumo.cadastros>base+rows.length?
+    base+rows.length:null,
+   proximoCursor:this.chaveCursor&&rows.length&&
+    resumo.cadastros>base+rows.length?
+    gerarCursorRede({chave:this.chaveCursor,titularId,
+     registradoEm:rows.at(-1).registradoEm,
+     indicadoId:rows.at(-1).indicadoId,
+     numeroCadastro:base+rows.length}):null,
+   resumo,remuneracoesConfirmadas:0,
    qualificacoesReais:0,financeiroReal:false};
  }
 }
