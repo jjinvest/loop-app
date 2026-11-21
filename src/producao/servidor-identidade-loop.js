@@ -18,6 +18,8 @@ const {PosicoesVitrineRealSQLite}=
  require('./posicoes-vitrine-real-sqlite');
 const {AnunciosManuaisAkitemmSQLite}=
  require('./anuncios-manuais-akitemm-sqlite');
+const {EntregaLocalAkitemmSQLite}=
+ require('./entrega-local-akitemm-sqlite');
 const {FotoPerfilRealSQLite}=require('./foto-perfil-real-sqlite');
 const {CarrinhoInternoRealSQLite}=require('./carrinho-interno-real-sqlite');
 function criarAppIdentidadeLoop({contas,origemHttps,
@@ -82,6 +84,9 @@ function criarAppIdentidadeLoop({contas,origemHttps,
    auditoria:adminComercial?.auditoria||null}):null;
  const anunciosManuais=catalogoVitrine?
   new AnunciosManuaisAkitemmSQLite({banco:contas.banco,
+   auditoria:adminComercial?.auditoria||null}):null;
+ const entregaLocal=catalogoVitrine?
+  new EntregaLocalAkitemmSQLite({banco:contas.banco,
    auditoria:adminComercial?.auditoria||null}):null;
  const visaoEscritorio=motorLoop===null?null:
   new VisaoEscritorioUnificadaSQLite({
@@ -177,7 +182,7 @@ function criarAppIdentidadeLoop({contas,origemHttps,
  // Sem credencial e middleware de operador, rotas administrativas não existem.
  if(adminComercial!==null)
   montarGatewayAdminComercial(app,{...adminComercial,origemHttps,
-   posicoesVitrine,anunciosManuais,motorLoop});
+   posicoesVitrine,anunciosManuais,entregaLocal,motorLoop});
  const mutation=(req,res,next)=>{
   if(!origemOk(req))return res.status(403).json({erro:'ORIGEM_INVALIDA'});
   if(!req.is('application/json'))
