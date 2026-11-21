@@ -194,20 +194,31 @@ class ProjecaoFilasRelacionalSQLite{
   return {integridade:'OK',revisao,totalPosicoes:esperadas.length,
    somenteLeitura:true,financeiroReal:false};
  }
- consultarFila({fila,offset=0,limite=30}={}){
+ consultarFila({fila,offset=0,limite=30,aposOrdem=null}={}){
   if(!['A','B'].includes(fila)||!Number.isSafeInteger(offset)||
-     offset<0||!Number.isSafeInteger(limite)||limite<1||limite>30)
+     offset<0||!Number.isSafeInteger(limite)||limite<1||limite>30||
+     (aposOrdem!==null&&(!Number.isSafeInteger(aposOrdem)||
+      aposOrdem<1||offset!==0)))
    falha('FILA_PROJECAO_PAGINACAO_INVALIDA');
   const rows=this.db.prepare([
    'SELECT posicao_id AS numero,participante_id AS participanteId,',
    'ordem,empresa,indicacoes_vinculadas AS indicacoesVinculadas',
    'FROM loop_real_filas_projecao_posicoes',
-   'WHERE local=? ORDER BY ordem LIMIT ? OFFSET ?'
-  ].join(' ')).all(fila,limite,offset);
-  return {fila,offset,itens:rows,
-   total:this.db.prepare(
-    'SELECT COUNT(*) AS n FROM loop_real_filas_projecao_posicoes WHERE local=?'
-   ).get(fila).n,
+   aposOrdem===null?'WHERE local=?':'WHERE local=? AND ordem>?',
+   'ORDER BY ordem',
+   aposOrdem===null?'LIMIT ? OFFSET ?':'LIMIT ?'
+  ].join(' ')).all(...(aposOrdem===null?
+   [fila,limite,offset]:[fila,aposOrdem,limite]));
+  const total=this.db.prepare(
+   'SELECT COUNT(*) AS n FROM loop_real_filas_projecao_posicoes WHERE local=?'
+  ).get(fila).n;
+  const ultimo=rows.at(-1)?.ordem??null;
+  const mais=ultimo!==null&&this.db.prepare([
+   'SELECT 1 FROM loop_real_filas_projecao_posicoes',
+   'WHERE local=? AND ordem>? LIMIT 1'
+  ].join(' ')).get(fila,ultimo)!==undefined;
+  return {fila,offset,itens:rows,total,
+   proximaOrdem:mais?ultimo:null,
    fonte:'PROJECAO_RELACIONAL_SOMENTE_LEITURA',financeiroReal:false};
  }
  // Aplicado por todos os módulos que escrevem o snapshot diretamente,
