@@ -335,12 +335,17 @@ class MotorLoopIntegradoSQLite{
   this.banco.exec('BEGIN IMMEDIATE');
   try{
    const antes=lerEstadoMotor(this.banco);
-   if(!antes)falha('ESTADO_MOTOR_SNAPSHOT_AUSENTE');
-   const sim=restaurar(antes.snapshot);
-   this.projecao.conferir({raw:antes.persistido,revisao:antes.revisao,sim});
-   const result=migrarEstadoMotorEmTransacao(this.banco);
+   const sim=restaurar(antes?.snapshot);
+   this.projecao.conferir({raw:antes?.persistido||'',
+    revisao:antes?.revisao||0,sim});
+   // Banco sem nenhum movimento também nasce diretamente em V2.
+   // Isto não cria compra, posição, evento, giro ou direito financeiro.
+   const result=antes?migrarEstadoMotorEmTransacao(this.banco):
+    {...gravarEstadoMotor(this.banco,{
+     snapshot:JSON.stringify(sim.exportarSnapshot()),permitirV2:true
+    }),repetida:false};
    if(!result.repetida)this.projecao.atualizarEmTransacao({
-    revisaoAnterior:antes.revisao,revisao:result.revisao,
+    revisaoAnterior:antes?.revisao||0,revisao:result.revisao,
     snapshot:result.snapshot,sim
    });
    this.projecao.conferir({raw:result.repetida?antes.persistido:result.snapshot,
