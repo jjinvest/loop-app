@@ -125,10 +125,15 @@ test('galeria Android: imagem grande e enquadrada antes do POST, sem mudar moldu
  assert.ok(chamadas.length>0);
  const pequena={type:'image/png',size:12500};
  const pronta=await preparar(pequena);
- assert.equal(pronta.dados,pequena,'imagem ja compativel nao deve ser tocada');
- assert.equal(pronta.mime,'image/png');
+ assert.notEqual(pronta.dados,pequena,'foto pequena também deve ser normalizada para evitar incompatibilidade');
+ assert.equal(pronta.mime,'image/jpeg');
+ assert.equal(pronta.dados.size,550000);
  const heic=await preparar({type:'image/heic',size:4000000});
  assert.equal(heic.mime,'image/jpeg','HEIC decodificavel pelo aparelho vira JPEG');
+ const whatsapp=await preparar({type:'image/webp',size:220000});
+ assert.equal(whatsapp.mime,'image/jpeg','foto WebP enviada por WhatsApp vira JPEG leve');
+ const semMime=await preparar({type:'',size:220000});
+ assert.equal(semMime.mime,'image/jpeg','foto sem MIME informado pode ser decodificada');
  await assert.rejects(preparar({type:'text/html',size:999}),/imagem com até 24 MB/);
  await assert.rejects(preparar({type:'image/png',size:25*1024*1024}),
   /imagem com até 24 MB/);
@@ -148,6 +153,7 @@ test('erros visiveis do REAL indicam causa sem expor detalhes internos',()=>{
  assert.match(explicar({message:'FOTO_GRANDE_DEMAIS'}),/3 MB/);
  assert.match(explicar({message:'CSRF_INVALIDO'}),/sessão expirou/i);
  assert.match(explicar({message:'FOTO_REAL_INDISPONIVEL',status:503}),/armazenamento/i);
+ assert.match(explicar({message:'FOTO_OPERADOR_INDISPONIVEL',status:503}),/operador/i);
  assert.match(explicar({message:'Z',status:415}),/JPEG.*PNG.*WebP/);
  assert.match(explicar({message:'Z',status:413}),/3 MB/);
  assert.match(explicar({message:'Z',status:401}),/Sessão não autorizada/);

@@ -232,7 +232,8 @@ async function main(){
      tamanho:(await r.blob()).size};
    });
    assert.equal(fotoAutenticada.status,200);
-   assert.equal(fotoAutenticada.mime,'image/png');
+   assert.equal(fotoAutenticada.mime,'image/jpeg',
+    'foto da galeria deve ser convertida para JPEG leve antes do upload');
    assert.ok(fotoAutenticada.tamanho>0);
    // Verificar que a foto permanece na conta do operador ao recarregar.
    await operadorPage.reload();
@@ -310,6 +311,19 @@ async function main(){
    await operadorPage.locator('#loopAcessoAdminMenu:not([hidden])').click();
    await operadorPage.waitForURL(url=>url.pathname==='/administrador');
    await operadorPage.goto(base+'/escritorio');
+   await operadorPage.locator('#loopOperadorAcoes').waitFor({state:'visible'});
+   if(visual.mobile)await operadorPage.locator('#loop03MenuIntegrado').click();
+   // Regressao da sessao expirada: nao deixar o painel do relogio vazio.
+   await contextoOperador.clearCookies();
+   await operadorPage.locator('#abaTabuleiro').click();
+   await operadorPage.locator('#atualizarTabuleiroIntegrado').click();
+   await operadorPage.locator('#painelLogin').waitFor({state:'visible'});
+   assert.match(await operadorPage.locator('#erroLogin').innerText(),
+    /Sessão do operador encerrada/);
+   await operadorPage.locator('#login').fill('OPERADOR');
+   await operadorPage.locator('#senha').fill(
+    'CredencialAdministrativaIsolada2026!Teste');
+   await operadorPage.locator('#formLogin button[type=submit]').click();
    await operadorPage.locator('#loopOperadorAcoes').waitFor({state:'visible'});
    if(visual.mobile)await operadorPage.locator('#loop03MenuIntegrado').click();
    await operadorPage.locator('#sair').click();
