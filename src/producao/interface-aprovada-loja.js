@@ -354,8 +354,12 @@
   const permitir=!visitante&&!operadorAtivo;
   for(const field of formEntrega.querySelectorAll('input,select,textarea')){
    field.disabled=!permitir;
+   if(permitir)field.removeAttribute('aria-disabled');
+   else field.setAttribute('aria-disabled','true');
   }
   botaoEntrega.disabled=!permitir;
+  if(permitir)botaoEntrega.removeAttribute('aria-disabled');
+  else botaoEntrega.setAttribute('aria-disabled','true');
   if(!permitir)statusEntrega.textContent=operadorAtivo?
    'A consulta de endereço é exclusiva do cliente.':
    'Entre na sua conta para consultar entrega.';
