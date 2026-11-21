@@ -1063,6 +1063,25 @@ async function main(){
    await loja.filter({hasText:/capacidade técnica da sua conta/}).waitFor();
    await pagina.waitForFunction(()=>!document.getElementById('akitemmBusca').disabled);
    assert.equal(await pagina.locator('#catalogoLojaLoop .produto-loja-loop[data-produto-id]').count(),1);
+   // Mesmo cadastro de entrega do operador, habilitado somente para cliente.
+   assert.equal(await pagina.locator(
+    '#akitemmFormEntrega input[name=cep]').isEnabled(),true);
+   assert.equal(await pagina.locator(
+    '#akitemmFormEntrega button[type=submit]').isEnabled(),true);
+   assert.equal(await pagina.locator('#registrarPedidoLoja').isDisabled(),true);
+   const verificacaoInvalida=await pagina.evaluate(async()=>{
+    const me=await (await fetch('/api/contas/me',{
+     credentials:'same-origin'
+    })).json();
+    const resp=await fetch('/api/loja/entrega/verificar-cep',{
+     method:'POST',headers:{'Content-Type':'application/json',
+      'X-Loop-Csrf':me.csrf},
+     credentials:'same-origin',body:JSON.stringify({cep:'invalid'})
+    });
+    return {status:resp.status,dados:await resp.json()};
+   });
+   assert.equal(verificacaoInvalida.status,400);
+   assert.equal(verificacaoInvalida.dados.checkoutReal,false);
    await pagina.locator('#catalogoLojaLoop .produto-loja-loop[data-produto-id] button').click();
    assert.match(await pagina.locator('#akitemmProdutoInlineConteudo').innerText(),
     /Frete e compra dependem da integração comercial/);
