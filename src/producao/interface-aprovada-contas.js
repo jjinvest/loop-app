@@ -1082,6 +1082,80 @@
   });
  }
 
+
+ // Controles de CPF/Termos existentes nos DEZ cartões da própria conta.
+ // A área recolhida conserva a malha 3x por fileira aprovada, inclusive
+ // nos cartões vazios. Nenhum CPF é salvo ou confirmado só pela interface.
+ function renderizarControlesCpfTermos(corpo,pos,vaga,liberado){
+  const painel=document.createElement('details');
+  painel.className='loop03-controles-cpf-termos';
+  painel.dataset.posicao=pos?String(pos.numero):'vazia';
+  const abrir=document.createElement('summary');
+  abrir.textContent='CPF · Ler termos';
+  abrir.setAttribute('aria-label','CPF e termos da posição '+vaga);
+  painel.append(abrir);
+  if(liberado){
+   // Confirmação de ensaio já existente, protegida no servidor e no motor.
+   renderizarAceiteAzulEnsaio(painel,pos);
+  }else{
+   const form=document.createElement('form');
+   form.className='loop03-controles-cpf-form';
+   form.autocomplete='off';
+   const etiqueta=document.createElement('label');
+   etiqueta.textContent='CPF desta posição';
+   const cpf=document.createElement('input');
+   cpf.name='cpf';cpf.type='text';cpf.inputMode='numeric';
+   cpf.placeholder='000.000.000-00';cpf.maxLength=14;
+   cpf.disabled=true;cpf.autocomplete='off';
+   etiqueta.append(cpf);
+   const doc=document.createElement('details');
+   doc.className='loop03-documento-posicao';
+   const ler=document.createElement('summary');
+   ler.textContent='Ler os termos vigentes';
+   const conteudo=document.createElement('p');
+   conteudo.textContent='Toque para consultar os termos vigentes.';
+   doc.append(ler,conteudo);
+   let carregando=false,carregado=false;
+   doc.addEventListener('toggle',()=>{
+    if(!doc.open||carregado||carregando)return;
+    carregando=true;
+    conteudo.textContent='Consultando o documento vigente...';
+    void requisitar('/documentos-leitura').then(d=>{
+     const termos=d?.termos;
+     if(d.financeiroReal!==false||!termos||
+        typeof termos.texto!=='string'||termos.texto.length<100||
+        typeof termos.versao!=='string'||!termos.versao||
+        !/^[a-f0-9]{64}$/.test(termos.hash||''))
+      throw Error('TERMOS_INDISPONIVEIS');
+     conteudo.textContent='Versão: '+termos.versao+'\n'+termos.texto;
+     carregado=true;
+    }).catch(()=>{
+     conteudo.textContent='Termos indisponíveis nesta consulta. Tente novamente.';
+    }).finally(()=>{carregando=false;});
+   });
+   const aceitar=document.createElement('label');
+   const check=document.createElement('input');
+   check.type='checkbox';check.disabled=true;
+   aceitar.append(check,document.createTextNode(' Li e aceito os termos desta posição'));
+   const confirmar=document.createElement('button');
+   confirmar.type='button';confirmar.disabled=true;
+   confirmar.textContent='Confirmar CPF e termos';
+   const estado=document.createElement('small');
+   estado.className='loop03-cpf-termos-estado';
+   estado.textContent=!pos?
+    'Disponível após adquirir uma posição.':
+    pos.estadoAdesao==='ACEITE_ENSAIO'?
+    'Aceite individual registrado; identidade externa ainda pendente.':
+    pos.estadoAdesao==='CONFIRMADA'&&
+     pos.confirmacaoExternaVerificada===true?
+    'Posição já confirmada.':
+    'Confirmação real ainda não habilitada para esta posição.';
+   form.append(etiqueta,doc,aceitar,confirmar,estado);
+   painel.append(form);
+  }
+  corpo.append(painel);
+ }
+
  // A mesma caixa de Fila A/B aprovada recebe somente números reais,
  // sem nomes de terceiros e sem trocar o formato ou a paleta.
 
@@ -1623,9 +1697,12 @@
     corpo.className='loop03-cartao-posicao';
     const confirmado=pos?.confirmacaoExternaVerificada===true&&
      pos?.estadoAdesao==='CONFIRMADA';
-    const pendente=Boolean(pos)&&!confirmado;
+    // Verde também pode indicar ACEITE_INDIVIDUAL registrado em ensaio.
+    // Não representa KYC, quitação de pedido nem dinheiro liberado.
+    const aceiteRegistrado=pos?.estadoAdesao==='ACEITE_ENSAIO';
+    const luzVerde=confirmado||aceiteRegistrado;
     corpo.classList.add(!pos?'loop03-posicao-vazia':
-     confirmado?'loop03-status-confirmada':'loop03-status-pendente');
+     luzVerde?'loop03-status-confirmada':'loop03-status-pendente');
     const cabecalho=document.createElement('div');
     cabecalho.className='loop03-posicao-cabecalho';
     const rotulo=document.createElement('strong');
@@ -1634,10 +1711,12 @@
     rotulo.textContent='Posição '+vaga;
     const luz=document.createElement('span');
     luz.className='loop03-posicao-luz '+(!pos?'loop03-posicao-luz-inativa':
-     confirmado?'loop03-posicao-luz-verde':'loop03-posicao-luz-vermelha');
+     luzVerde?'loop03-posicao-luz-verde':'loop03-posicao-luz-vermelha');
     luz.setAttribute('role','img');
     luz.setAttribute('aria-label',!pos?'Espaço disponível, luz apagada':
-     confirmado?'Luz verde, posição confirmada':'Luz vermelha, confirmação pendente');
+     confirmado?'Luz verde, posição confirmada':
+     aceiteRegistrado?'Luz verde, CPF e termos aceitos em ensaio; identidade externa pendente':
+     'Luz vermelha, CPF e termos pendentes');
     cabecalho.append(rotulo,luz);
     corpo.append(cabecalho);
     const id=document.createElement('strong');
@@ -1728,12 +1807,12 @@
      });
      corpo.append(detalhes);
     }
-    // O aceite azul já existente permanece aqui: não altera a cor
-    // para verde, pois a identidade externa continua não verificada.
+    // O cartão permanece compacto. A expansão é local, por posição,
+    // e usa apenas documentos oficiais fornecidos pela conta real.
+    renderizarControlesCpfTermos(corpo,pos,vaga,
+     Boolean(pos?.aguardandoCpfTermos&&
+      d.confirmacaoAzulEnsaioDisponivel===true));
     card.append(corpo);
-    if(pos&&pos.aguardandoCpfTermos&&
-       d.confirmacaoAzulEnsaioDisponivel===true)
-     renderizarAceiteAzulEnsaio(card,pos);
     grade.appendChild(card);
    }
    if(somentePosicoesPeloQuadrado&&ordenadas.length===0){
