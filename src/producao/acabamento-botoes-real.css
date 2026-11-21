@@ -232,3 +232,56 @@ body.loop03-modo-operador > #arquivoFotoPerfil{
  clip-path:inset(50%)!important;pointer-events:none!important;
  margin:0!important;padding:0!important;border:0!important;
 }
+
+
+/* MINHAS POSICOES - restaurar CPF e termos nos dez cartões SEM alterar
+   tamanho e composição 3x por fileira quando os controles estão fechados.
+   O painel aberto ocupa toda a fileira para permitir ler os termos e digitar. */
+.cliente-integrado #conteudoPosicoes .loop03-controles-cpf-termos{
+ margin-top:auto;width:100%;min-width:0;font-size:.73rem;
+}
+.cliente-integrado #conteudoPosicoes .loop03-controles-cpf-termos>summary{
+ list-style:none;cursor:pointer;text-align:center;line-height:1.2;
+ padding:6px 2px;border:1px solid #a68657;border-radius:8px;
+ background:linear-gradient(110deg,#2a2244,#171b2d);color:#f5d58d;
+ font-weight:800;white-space:normal;overflow-wrap:anywhere;
+}
+.cliente-integrado #conteudoPosicoes .loop03-controles-cpf-termos>summary::-webkit-details-marker{display:none}
+.cliente-integrado #conteudoPosicoes .loop03-controles-cpf-termos>summary:focus-visible{
+ outline:2px solid #f4db9a;outline-offset:3px
+}
+.cliente-integrado #conteudoPosicoes .loop03-unidade-posicao:has(.loop03-controles-cpf-termos[open]){
+ grid-column:1/-1
+}
+.cliente-integrado #conteudoPosicoes .loop03-controles-cpf-form,
+.cliente-integrado #conteudoPosicoes .loop03-controles-cpf-termos .loop03-aceite-posicao{
+ display:grid;gap:9px;margin-top:10px;min-width:0
+}
+.cliente-integrado #conteudoPosicoes .loop03-controles-cpf-form>label{
+ display:flex;flex-direction:column;gap:5px;min-width:0;font-weight:700
+}
+.cliente-integrado #conteudoPosicoes .loop03-controles-cpf-form input[name=cpf],
+.cliente-integrado #conteudoPosicoes .loop03-aceite-posicao input[name=cpf]{
+ width:100%;min-width:0;box-sizing:border-box;min-height:42px;
+}
+.cliente-integrado #conteudoPosicoes .loop03-controles-cpf-form>label:has(input[type=checkbox]){
+ flex-direction:row;align-items:flex-start
+}
+.cliente-integrado #conteudoPosicoes .loop03-controles-cpf-form input[type=checkbox]{
+ width:19px;height:19px;flex:none;margin:0
+}
+.cliente-integrado #conteudoPosicoes .loop03-controles-cpf-form button,
+.cliente-integrado #conteudoPosicoes .loop03-aceite-posicao button{
+ min-height:43px;white-space:normal
+}
+.cliente-integrado #conteudoPosicoes .loop03-documento-posicao>summary{
+ cursor:pointer;color:#f1ce86;padding:7px 0;font-weight:750
+}
+.cliente-integrado #conteudoPosicoes .loop03-documento-posicao>p,
+.cliente-integrado #conteudoPosicoes .loop03-aceite-posicao details>p{
+ max-height:180px;overflow:auto;white-space:pre-wrap;
+ overflow-wrap:anywhere;font-size:.82rem;line-height:1.45
+}
+.cliente-integrado #conteudoPosicoes .loop03-cpf-termos-estado{
+ color:#e8cf98;line-height:1.4
+}

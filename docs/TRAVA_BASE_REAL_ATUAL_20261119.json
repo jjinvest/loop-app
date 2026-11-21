@@ -412,7 +412,7 @@
     },
     {
       "path": "scripts/validar-identidade-real-navegador.js",
-      "sha": "a2728af25dfcba80087e53589abae4eeea830689"
+      "sha": "c6b024ac7f268f929eb9c371624cddacd98a6a2f"
     },
     {
       "path": "scripts/validar-jornada-loja-cores-browser.js",
@@ -1252,7 +1252,7 @@
     },
     {
       "path": "src/producao/acabamento-botoes-real.css",
-      "sha": "0cb59763a10769f11a5d3b233c28539fac4d4ee1"
+      "sha": "4e90307b76f49dc3fbb14b031a9ead94671b71e1"
     },
     {
       "path": "src/producao/aceite-posicao-azul-ensaio-sqlite.js",
@@ -1384,7 +1384,7 @@
     },
     {
       "path": "src/producao/interface-aprovada-contas.js",
-      "sha": "686ee76d90a27cacc3075febd16bfae797473a34"
+      "sha": "2d9faaed2128b6eb78e9760dca86429acd20f769"
     },
     {
       "path": "src/producao/interface-aprovada-loja.js",

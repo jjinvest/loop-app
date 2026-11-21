@@ -508,6 +508,23 @@ async function main(){
    assert.equal(await page.locator('#posicoesPainel .loop03-posicao-vazia').count(),9);
    assert.match(await page.locator('#posicoesPainel .loop03-unidade-posicao').last().innerText(),
     /Posição 10[\n\r\s\S]*Sem posição/);
+   // Cada espaço tem CPF/Termos, sem exigir compra nem inventar aceites.
+   const controlesCpf=page.locator('#posicoesPainel .loop03-controles-cpf-termos');
+   assert.equal(await controlesCpf.count(),10,
+    'dez cartões preservam os controles individuais de CPF/Termos');
+   const vazio=page.locator('#posicoesPainel .loop03-unidade-posicao').nth(1);
+   await vazio.locator('.loop03-controles-cpf-termos > summary').click();
+   assert.equal(await vazio.locator('input[name=cpf]').isDisabled(),true);
+   assert.equal(await vazio.locator('input[type=checkbox]').isDisabled(),true);
+   assert.equal(await vazio.getByRole('button',{name:'Confirmar CPF e termos'}).isDisabled(),true);
+   await vazio.locator('.loop03-documento-posicao > summary').click();
+   await vazio.locator('.loop03-documento-posicao p').filter({hasText:/Versão:/})
+    .waitFor({state:'visible'});
+   assert.ok((await vazio.locator('.loop03-documento-posicao p').innerText()).length>100,
+    'texto integral dos termos vigentes sem documento inventado');
+   await vazio.locator('.loop03-controles-cpf-termos > summary').click();
+   assert.equal(await page.locator('#posicoesPainel .loop03-controles-cpf-termos[open]').count(),0);
+
    // Confirmar geometria no navegador: tres cartoes lado a lado,
    // quarto na proxima linha, mesmo no telefone em pe.
    await page.locator('#posicoesPainel .loop03-grade-posicoes')
@@ -823,6 +840,11 @@ async function main(){
    await pagina.locator('#abaPosicoes').click();
    const confirmarAzul=pagina.locator('#posicoesPainel form.loop03-aceite-posicao');
    const aguardados=visual.mobile?1:2;
+   // O controle fica recolhido para conservar os três cartões por fileira.
+   // A confirmação individual só pode ser tocada após a expansão.
+   await pagina.locator('#posicoesPainel .loop03-controles-cpf-termos')
+    .filter({has:pagina.locator('form.loop03-aceite-posicao')})
+    .first().locator(':scope > summary').click();
    await confirmarAzul.first().locator('button[type=submit]').waitFor({
     state:'visible'
    });
