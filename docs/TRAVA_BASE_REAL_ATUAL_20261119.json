@@ -1372,7 +1372,7 @@
     },
     {
       "path": "src/producao/identidade-cliente-loop-sqlite.js",
-      "sha": "2034c70c2a28decde5f42f6c8b0b88398e104040"
+      "sha": "16365d035f92093fdd79d4163d95d48eb4088393"
     },
     {
       "path": "src/producao/inbox-extratos-asaas-sandbox-sqlite.js",
@@ -1428,7 +1428,7 @@
     },
     {
       "path": "src/producao/motor-loop-integrado-sqlite.js",
-      "sha": "ca949a49118aec2b6b545c2fd0408c9b322b8816"
+      "sha": "0ecc5ca44e05293ba74693849f2b79422db67e5a"
     },
     {
       "path": "src/producao/observacoes-psp-ensaio-sqlite.js",
@@ -2681,6 +2681,10 @@
     {
       "path": "test/loja-upload-real-pdf-foto-video-avaliacoes-unificados.test.js",
       "sha": "13857a15b021f218cf8792de738fa9f83c6ea0f8"
+    },
+    {
+      "path": "test/longevidade-cadastros-filas-reais.test.js",
+      "sha": "0c4357ec432a34bba3337f8dfbbf298a3f38a91d"
     },
     {
       "path": "test/loop-douradas-1000-conversoes.test.js",

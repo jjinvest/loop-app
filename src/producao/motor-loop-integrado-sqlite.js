@@ -50,7 +50,9 @@ class MotorLoopIntegradoSQLite{
    'chave TEXT PRIMARY KEY,tipo TEXT NOT NULL',
    "CHECK(tipo IN ('INDICACAO','EVENTO','GIRO')),",
    'pedido_id TEXT REFERENCES loop_real_motor_compras(pedido_id)',
-   'ON DELETE RESTRICT);'
+   'ON DELETE RESTRICT);',
+   'CREATE INDEX IF NOT EXISTS idx_loop_real_motor_eventos_tipo',
+   'ON loop_real_motor_eventos(tipo);'
   ].join(' '));
   this.verificar();
  }
@@ -249,52 +251,66 @@ class MotorLoopIntegradoSQLite{
   const row=this.banco.prepare(
    'SELECT snapshot FROM loop_real_motor_estado WHERE id=1').get();
   const sim=restaurar(row?.snapshot);
-  const compras=this.banco.prepare(
+  // Auditoria incremental: evita arrays proporcionais ao historico e
+  // comparacoes quadráticas em eventos de indicacao acumulados.
+  let compras=0;
+  for(const item of this.banco.prepare(
    'SELECT pedido_id,titular_id,posicao_id FROM loop_real_motor_compras'
-  ).all();
-  if(compras.length!==sim.filas.vendasRegistradas.size)
-   falha('LOOP_MOTOR_COMPRA_SNAPSHOT_DIVERGENTE');
-  for(const c of compras){
-   const p=sim.filas.vendasRegistradas.get(c.pedido_id);
-   if(!p||p.id!==c.posicao_id||p.participanteId!==c.titular_id)
+  ).iterate()){
+   compras++;
+   const p=sim.filas.vendasRegistradas.get(item.pedido_id);
+   if(!p||p.id!==item.posicao_id||p.participanteId!==item.titular_id)
     falha('LOOP_MOTOR_TITULAR_POSICAO_DIVERGENTE');
   }
-  const eventos=this.banco.prepare(
+  if(compras!==sim.filas.vendasRegistradas.size)
+   falha('LOOP_MOTOR_COMPRA_SNAPSHOT_DIVERGENTE');
+  let eventos=0;
+  for(const row of this.banco.prepare(
    "SELECT chave FROM loop_real_motor_eventos WHERE tipo='EVENTO'"
-  ).all().map(x=>x.chave);
-  if(eventos.length!==sim.tabuleiro.vendasProcessadas.size||
-     eventos.some(x=>!sim.tabuleiro.vendasProcessadas.has(x)))
+  ).iterate()){
+   eventos++;
+   if(!sim.tabuleiro.vendasProcessadas.has(row.chave))
+    falha('LOOP_MOTOR_EVENTOS_DIVERGENTES');
+  }
+  if(eventos!==sim.tabuleiro.vendasProcessadas.size)
    falha('LOOP_MOTOR_EVENTOS_DIVERGENTES');
-  const qualificacoes=this.banco.prepare([
+  const eventoIndicacao=this.banco.prepare(
+   "SELECT 1 FROM loop_real_motor_eventos WHERE chave=? AND tipo='INDICACAO'"
+  );
+  let qualificacoes=0;
+  for(const q of this.banco.prepare([
    'SELECT q.indicado_id,q.indicador_id,q.pedido_id,q.posicao_id,q.evento_id,',
    'v.indicador_id AS vinculo_indicador,p.titular_id AS comprador',
    'FROM loop_real_motor_qualificacoes q',
    'JOIN loop_real_vinculos_indicacao v ON v.indicado_id=q.indicado_id',
    'JOIN loop_real_motor_compras p ON p.pedido_id=q.pedido_id'
-  ].join(' ')).all();
-  const indicacoes=this.banco.prepare(
-   "SELECT chave FROM loop_real_motor_eventos WHERE tipo='INDICACAO'"
-  ).all().map(x=>x.chave);
-  const totalIndicacoes=[...sim.filas.indicacoes.values()]
-   .reduce((s,v)=>s+v.quantidade,0);
-  if(totalIndicacoes!==qualificacoes.length||
-     qualificacoes.length!==indicacoes.length||
-     qualificacoes.length!==sim.filas.indicacoesProcessadas.size||
-     qualificacoes.some(q=>
-      q.indicador_id!==q.vinculo_indicador||
+  ].join(' ')).iterate()){
+   qualificacoes++;
+   if(q.indicador_id!==q.vinculo_indicador||
       q.comprador!==q.indicado_id||
-      !indicacoes.includes(q.evento_id)||
-      !sim.filas.indicacoesProcessadas.has(q.evento_id)))
+      !eventoIndicacao.get(q.evento_id)||
+      !sim.filas.indicacoesProcessadas.has(q.evento_id))
+    falha('LOOP_MOTOR_INDICACOES_DIVERGENTES');
+  }
+  const indicacoes=this.banco.prepare(
+   "SELECT COUNT(*) AS n FROM loop_real_motor_eventos WHERE tipo='INDICACAO'"
+  ).get().n;
+  let totalIndicacoes=0;
+  for(const v of sim.filas.indicacoes.values())
+   totalIndicacoes+=v.quantidade;
+  if(totalIndicacoes!==qualificacoes||
+     qualificacoes!==indicacoes||
+     qualificacoes!==sim.filas.indicacoesProcessadas.size)
    falha('LOOP_MOTOR_INDICACOES_DIVERGENTES');
   const giros=this.banco.prepare(
    "SELECT COUNT(*) AS n FROM loop_real_motor_eventos WHERE tipo='GIRO'"
   ).get().n;
   if(giros!==sim.giros)falha('LOOP_MOTOR_GIROS_DIVERGENTES');
   if(process.env.NODE_ENV==='production'&&
-     (compras.length>0||eventos.length>0||giros>0))
+     (compras>0||eventos>0||giros>0))
    falha('LOOP_MOTOR_ENSAIO_PROIBIDO_PRODUCAO');
   this.banco.exec('COMMIT');
-  return {integridade:'OK',compras:compras.length,eventos:eventos.length,
+  return {integridade:'OK',compras,eventos,
    giros};
   }catch(e){this.banco.exec('ROLLBACK');throw e;}
  }
@@ -403,7 +419,7 @@ class MotorLoopIntegradoSQLite{
    dourada:p.empresa===true,
    indicacoesVinculadas:p.indicacoesVinculadas||0
   }:null;
-  const posicoes=[
+  const posicoes=titularId===null?[]:[
    ...sim.filas.filaA.map(p=>({...p,local:'FILA_A'})),
    ...sim.filas.filaB.map(p=>({...p,local:'FILA_B'})),
    ...(sim.tabuleiro.centro?[{...sim.tabuleiro.centro,local:'CENTRO'}]:[]),

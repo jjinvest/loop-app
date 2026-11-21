@@ -151,6 +151,10 @@ function prepararEstruturaIdentidadeReal({
    'CHECK(indicado_id<>indicador_id));',
    'CREATE INDEX IF NOT EXISTS idx_loop_real_vinculos_indicador',
    'ON loop_real_vinculos_indicacao(indicador_id,registrado_em);',
+   // Índice cumulativo para milhões de vínculos, incluindo o desempate
+   // determinístico da fila de cadastros (sem mudar a ordem aprovada).
+   'CREATE INDEX IF NOT EXISTS idx_loop_real_vinculos_ordem',
+   'ON loop_real_vinculos_indicacao(indicador_id,registrado_em,indicado_id);',
    'CREATE TRIGGER IF NOT EXISTS loop_real_vinculos_sem_update',
    "BEFORE UPDATE ON loop_real_vinculos_indicacao BEGIN SELECT RAISE(ABORT,'vinculo imutavel'); END;",
    'CREATE TRIGGER IF NOT EXISTS loop_real_vinculos_sem_delete',
