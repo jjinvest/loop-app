@@ -81,7 +81,8 @@ function criarAppIdentidadeLoop({contas,origemHttps,
  const visaoEscritorio=motorLoop===null?null:
   new VisaoEscritorioUnificadaSQLite({
    banco:contas.banco,motor:motorLoop,
-   consultarTelefone:args=>contas.telefoneIndicadoVinculado(args)
+   consultarTelefone:args=>contas.telefoneIndicadoVinculado(args),
+   chaveCursor:contas.keyCodigo
   });
  const livroFinanceiro=motorLoop===null?null:
   new LivroFinanceiroRealSQLite({banco:contas.banco});
@@ -383,16 +384,23 @@ function criarAppIdentidadeLoop({contas,origemHttps,
  });
  // Convite registra somente um cadastro, sem ativar comissão, dinheiro ou posição.
  app.get('/api/contas/minha-rede',protegido,(req,res)=>{
-  const bruto=req.query?.offset;
-  if(bruto!==undefined&&(
-     typeof bruto!=='string'||!/^(0|[1-9][0-9]*)$/.test(bruto)||
-     !Number.isSafeInteger(Number(bruto))))
+  const bruto=req.query?.offset,cursor=req.query?.cursor;
+  if(Object.keys(req.query||{}).some(k=>!['offset','cursor'].includes(k))||
+     (bruto!==undefined&&(
+      typeof bruto!=='string'||!/^(0|[1-9][0-9]*)$/.test(bruto)||
+      !Number.isSafeInteger(Number(bruto))))||
+     (cursor!==undefined&&(typeof cursor!=='string'||
+      cursor.length>512||cursor.length<1))||
+     (cursor!==undefined&&bruto!==undefined))
    return res.status(400).json({erro:'PAGINACAO_INVALIDA'});
   const offset=bruto===undefined?0:Number(bruto);
   try{return res.set('Cache-Control','private, no-store').json(visaoEscritorio?
-   visaoEscritorio.listarRede({titularId:req.conta.titularId,offset}):
-   contas.listarIndicados(req.conta.titularId,{offset}));}
-  catch{return res.status(503).json({erro:'REDE_INDISPONIVEL'});}
+   visaoEscritorio.listarRede({titularId:req.conta.titularId,
+    offset,cursor:cursor??null}):
+   contas.listarIndicados(req.conta.titularId,{offset,cursor:cursor??null}));}
+  catch(e){return res.status(e?.codigo==='REDE_CURSOR_INVALIDO'?400:503)
+   .json({erro:e?.codigo==='REDE_CURSOR_INVALIDO'?
+    'PAGINACAO_INVALIDA':'REDE_INDISPONIVEL'});}
  });
  // Convite público definitivo com os mesmos links curtos do LOOP.
  // Não habilita cadastro nem benefício sem os gates oficiais do serviço.

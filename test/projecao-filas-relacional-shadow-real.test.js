@@ -56,6 +56,17 @@ test('espelho relacional preserva filas e tabuleiro após alterações e reiníc
  const filaB=espelho.consultarFila({fila:'B'});
  assert.deepEqual(filaB.itens.map(p=>p.numero),[1,2,3,4,5,6,7,8]);
  assert.equal(filaB.financeiroReal,false);
+ const p2=espelho.consultarFila({fila:'B',limite:3});
+ assert.deepEqual(p2.itens.map(x=>x.ordem),[1,2,3]);
+ assert.equal(p2.proximaOrdem,3);
+ const p3=espelho.consultarFila({fila:'B',aposOrdem:p2.proximaOrdem,limite:3});
+ assert.deepEqual(p3.itens.map(x=>x.ordem),[4,5,6]);
+ const p4=espelho.consultarFila({fila:'B',aposOrdem:p3.proximaOrdem,limite:3});
+ assert.deepEqual(p4.itens.map(x=>x.ordem),[7,8]);
+ assert.equal(p4.proximaOrdem,null);
+ assert.throws(()=>espelho.consultarFila({fila:'B',aposOrdem:3,offset:1}),
+  {codigo:'FILA_PROJECAO_PAGINACAO_INVALIDA'});
+
  const plano=env.banco.prepare([
   'EXPLAIN QUERY PLAN SELECT posicao_id FROM',
   'loop_real_filas_projecao_posicoes',

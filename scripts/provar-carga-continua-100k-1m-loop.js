@@ -12,6 +12,9 @@ const {IdentidadeClienteLoopReal}=
  require('../src/producao/identidade-cliente-loop-sqlite');
 const {MotorLoopIntegradoSQLite}=
  require('../src/producao/motor-loop-integrado-sqlite');
+const {VisaoEscritorioUnificadaSQLite}=
+ require('../src/producao/visao-escritorio-unificada-sqlite');
+const {gerarCursorRede}=require('../src/producao/cursor-rede-sqlite');
 
 const MARCOS=[100000,250000,500000,750000,1000000];
 const LOTE=5000;
@@ -246,6 +249,67 @@ async function verificarFinal(arquivo){
   assert.equal(final.indicados.length,1);
   assert.equal(final.indicados[0].nick,'contafinal');
   assert.equal(final.indicados[0].numeroCadastro,1000001);
+  const visao=new VisaoEscritorioUnificadaSQLite({
+   banco:db,motor:x.motor,chaveCursor:x.contas.keyCodigo
+  });
+  const anchor=db.prepare([
+   'SELECT indicado_id,registrado_em',
+   'FROM loop_real_vinculos_indicacao WHERE indicador_id=?',
+   'ORDER BY registrado_em,indicado_id LIMIT 1 OFFSET ?'
+  ].join(' ')).get(p.indicador,999949);
+  const cursor=gerarCursorRede({
+   chave:x.contas.keyCodigo,titularId:p.indicador,
+   indicadoId:anchor.indicado_id,registradoEm:anchor.registrado_em,
+   numeroCadastro:999950
+  });
+  const keysetMs=[],offsetMs=[];
+  for(let i=0;i<20;i++){
+   const a=performance.now();
+   const pagina=visao.listarRede({
+    titularId:p.indicador,cursor,limite:50
+   });
+   keysetMs.push(performance.now()-a);
+   assert.equal(pagina.indicados.length,50);
+   assert.equal(pagina.indicados[0].numeroCadastro,999951);
+   assert.equal(pagina.indicados.at(-1).numeroCadastro,1000000);
+   assert.equal(pagina.total,1000001);
+   assert.equal(pagina.resumo.cadastros,1000001);
+   assert.equal(pagina.resumo.comprasEmEnsaio,0);
+   assert.equal(pagina.financeiroReal,false);
+   if(i<3){
+    const b=performance.now();
+    const legado=visao.listarRede({
+     titularId:p.indicador,offset:999950,limite:50
+    });
+    offsetMs.push(performance.now()-b);
+    assert.deepEqual(legado.indicados,pagina.indicados);
+   }
+  }
+  const ultima=visao.listarRede({
+   titularId:p.indicador,
+   cursor:visao.listarRede({titularId:p.indicador,cursor,limite:50})
+    .proximoCursor,limite:50
+  });
+  assert.equal(ultima.indicados.length,1);
+  assert.equal(ultima.indicados[0].nick,'contafinal');
+  assert.equal(ultima.indicados[0].numeroCadastro,1000001);
+  const plano=db.prepare([
+   'EXPLAIN QUERY PLAN SELECT indicado_id',
+   'FROM loop_real_vinculos_indicacao',
+   'WHERE indicador_id=? AND (registrado_em>? OR',
+   '(registrado_em=? AND indicado_id>?))',
+   'ORDER BY registrado_em,indicado_id LIMIT 50'
+  ].join(' ')).all(p.indicador,anchor.registrado_em,
+   anchor.registrado_em,anchor.indicado_id)
+   .map(x=>x.detail).join('; ');
+  assert.match(plano,/idx_loop_real_vinculos_ordem/);
+  console.log('REDE_UM_MILHAO_CURSOR='+JSON.stringify({
+   registros:1000001,consultas:20,
+   p95CursorMs:Math.round(percentile(keysetMs,.95)),
+   p95OffsetAntigoMs:Math.round(percentile(offsetMs,.95)),
+   indiceUsado:true,mesmoResultado:true,tokenAutenticado:true,
+   alteracaoFinanceira:false
+  }));
   assert.equal(x.motor.verificar().compras,0);
   assert.equal(db.prepare('PRAGMA integrity_check').get().integrity_check,'ok');
   assert.deepEqual(db.prepare('PRAGMA foreign_key_check').all(),[]);
