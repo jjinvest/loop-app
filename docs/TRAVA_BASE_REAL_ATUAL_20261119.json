@@ -268,7 +268,7 @@
     },
     {
       "path": "scripts/iniciar-identidade-real-loop.js",
-      "sha": "dd5ea12bae0364c8ba4e5059a8ff8e09f8cc098e"
+      "sha": "a7d4b57e51ffcb77cfb700f68721975cec89c80e"
     },
     {
       "path": "scripts/iniciar-identidade-real-preparacao.js",
@@ -1431,12 +1431,16 @@
       "sha": "af798b91068827fec09ee550601acdd6f663a0ac"
     },
     {
+      "path": "src/producao/migracao-historico-v2-protegida.js",
+      "sha": "df839fb1809d623364700cd566acd82737673eec"
+    },
+    {
       "path": "src/producao/montar-comercial-sem-homologacao.js",
       "sha": "832c4e8a70c9dcc7f6a6a90dd2374123b859100e"
     },
     {
       "path": "src/producao/motor-loop-integrado-sqlite.js",
-      "sha": "6a2753ab65b967dd63888c0efe3bdb4d38ab5fc9"
+      "sha": "768e3031a304c71f4a39d6805807efb8451d2736"
     },
     {
       "path": "src/producao/observacoes-psp-ensaio-sqlite.js",
@@ -2849,6 +2853,10 @@
     {
       "path": "test/migracao-cadastros-preview-real.test.js",
       "sha": "40ee2ebf956931a038dbacfadd944fed6baf78d4"
+    },
+    {
+      "path": "test/migracao-historico-v2-protegida.test.js",
+      "sha": "302a1093a43aa778fa5473e3daf6c6c09054d9ad"
     },
     {
       "path": "test/migracao-receptor-real-continuo.test.js",
