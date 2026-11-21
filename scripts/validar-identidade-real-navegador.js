@@ -1065,7 +1065,7 @@ async function main(){
    assert.equal(await pagina.locator('#catalogoLojaLoop .produto-loja-loop[data-produto-id]').count(),1);
    await pagina.locator('#catalogoLojaLoop .produto-loja-loop[data-produto-id] button').click();
    assert.match(await pagina.locator('#akitemmProdutoInlineConteudo').innerText(),
-    /Sem preço, estoque ou frete homologados/);
+    /Frete e compra dependem da integração comercial/);
    // Carrinho interno no banco REAL: adicionar, atualizar quantidade,
    // recarregar a loja e esvaziar, sem criar um pedido ou pagamento.
    await pagina.locator('#akitemmProdutoInlineConteudo button').click();
