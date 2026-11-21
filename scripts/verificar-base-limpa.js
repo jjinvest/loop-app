@@ -10,11 +10,11 @@ for(const entry of doc.files){
  const abs=path.join(base,entry.path);
  if(!fs.existsSync(abs)){errors.push('AUSENTE '+entry.path);continue;}
  const bytes=fs.readFileSync(abs);
- const sha=crypto.createHash('sha1').update('blob '+bytes.length+'\\0').update(bytes).digest('hex');
+ const sha=crypto.createHash('sha1').update('blob '+bytes.length+'\0').update(bytes).digest('hex');
  if(sha!==entry.gitSha)errors.push('HASH '+entry.path);
  if(entry.path.endsWith('.js')){
   const code=bytes.toString('utf8');
-  const rx=/\\brequire\\s*\\(\\s*['\"](\\.[^'\"]+)['\"]\\s*\\)/g;
+  const rx=/\brequire\s*\(\s*['"](\.[^'"]+)['"]\s*\)/g;
   let match;
   while((match=rx.exec(code))!==null){
    const local=path.resolve(path.dirname(abs),match[1]);
