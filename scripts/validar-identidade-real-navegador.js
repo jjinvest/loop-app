@@ -689,14 +689,16 @@ async function main(){
    // Botoes internos reais da AKITEMM: dados da conta e avisos.
    await page.locator('#akitemmAbrirConta').click();
    assert.equal(await page.locator('#akitemmDadosConta').isVisible(),true);
-   assert.match(await page.locator('#akitemmDadosContaConteudo').innerText(),
-    /Nome: Pessoa de Ensaio[\s\S]*E-mail: teste@example.invalid/);
+   await page.locator('#akitemmDadosContaConteudo').filter({
+    hasText:/Nome: Pessoa de Ensaio[\s\S]*E-mail: teste@example.invalid/
+   }).waitFor({state:'visible'});
    assert.equal(await page.locator('#akitemmAbrirConta').getAttribute('aria-expanded'),'true');
    await page.locator('#akitemmAbrirConta').click();
    assert.equal(await page.locator('#akitemmDadosConta').isHidden(),true);
    await page.locator('#akitemmSino').click();
-   assert.match(await page.locator('#akitemmNotificacoesConteudo').innerText(),
-    /E-mail confirmado/);
+   await page.locator('#akitemmNotificacoesConteudo').filter({
+    hasText:/E-mail confirmado/
+   }).waitFor({state:'visible'});
    assert.equal(await page.locator('#akitemmSino').getAttribute('aria-expanded'),'true');
    await page.locator('#akitemmSino').click();
    assert.equal(await page.locator('#akitemmNotificacoes').isHidden(),true);
@@ -709,8 +711,9 @@ async function main(){
     /Link pessoal copiado|Link selecionado/);
    await page.locator('#akitemmMeusCursos summary').click();
    await page.locator('#akitemmAtualizarMeusCursos').click();
-   assert.match(await page.locator('#akitemmListaMeusCursos').innerText(),
-    /nenhum arquivo foi liberado|Biblioteca indisponível|Arquivos digitais|arquivos digitais/i);
+   await page.locator('#akitemmListaMeusCursos').filter({
+    hasText:/nenhum arquivo foi liberado|Biblioteca indisponível|Arquivos digitais|arquivos digitais/i
+   }).waitFor({state:'visible'});
    // Rodape tem conteudo real e documento vigente, sem inventar politicas.
    await page.locator('[data-akitemm-informacao="sobre"]').click();
    assert.match(await page.locator('#akitemmInformacaoConteudo').innerText(),
