@@ -159,6 +159,10 @@
       "sha": "e7d1967c3b536abd73c00bbfbb8a8311f4b6369a"
     },
     {
+      "path": "docs/CONTRATO_VISUAL_LOOP_APROVADO.json",
+      "sha": "d2581d7d6b643c833111286f94a117e87a7a7935"
+    },
+    {
       "path": "package-lock.json",
       "sha": "78ca05c935b4da51762d5253baeb295027b497eb"
     },
