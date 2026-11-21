@@ -124,6 +124,8 @@ test('sessão cliente não acende LEDs só por haver meta; vendas continuam inde
  assert.doesNotMatch(code,/registrarCompra|executarGiro|criarPosicao/);
  assert.match(interfaceReal,/luzesDoRelogioOperador:true/);
  assert.match(interfaceReal,/eventosReaisNoCiclo:d\.tabuleiro\.eventosNoCiclo/);
+ assert.doesNotMatch(interfaceReal,/const metaAtiva=controle\.metaAplicavelHoje===true/,
+  'data alvo do turno noturno deve ser avaliada pelo relógio local do servidor');
  assert.match(css,/loop03-marcador-aceso/);
 });
 
