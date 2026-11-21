@@ -141,3 +141,49 @@ test('banco legado sem diário abre e migra histórico sem reescrever o motor',a
  assert.throws(()=>validarIdentidade(file),e=>
   e.codigo==='BACKUP_CICLOS_HISTORICO_INCOMPLETO');
 });
+
+test('cinco mil ciclos acumulados ficam indexados e somente novos são gravados',()=>{
+ const db=new DatabaseSync(':memory:');
+ try{
+  const h=new HistoricoCiclosRelacionalSQLite({banco:db});
+  const sim={tabuleiro:{ciclosConcluidos:[]}};
+  db.exec('BEGIN IMMEDIATE');
+  h.inicializarEmTransacao({sim});
+  db.exec('COMMIT');
+  for(let i=0;i<5000;i++){
+   const centro={id:i+1,participanteId:'titular-sintetico-'+i};
+   sim.tabuleiro.ciclosConcluidos.push({
+    ciclo:i+1,centro,concluidoEm:'2030-01-01T00:00:00.000Z',
+    vendas:Array.from({length:6},(_,j)=>({
+     vendaId:'e:sintetico-'+i+'-'+j,ciclo:i+1,ordem:j+1,
+     posicaoCentroId:centro.id,
+     destinoPrevisto:j%2?'EMPRESA':'CLIENTE'
+    }))
+   });
+  }
+  db.exec('BEGIN IMMEDIATE');
+  h.sincronizarEmTransacao({sim});
+  db.exec('COMMIT');
+  const p=h.consultarPagina({inicio:4976,limite:30});
+  assert.equal(p.ciclos.length,25);
+  assert.deepEqual(p.ciclos.map(x=>x.ciclo),
+   Array.from({length:25},(_,i)=>4976+i));
+  const contagens=()=>({
+   ciclos:db.prepare(
+    'SELECT COUNT(*) AS n FROM loop_real_ciclos_historico'
+   ).get().n,
+   eventos:db.prepare(
+    'SELECT COUNT(*) AS n FROM loop_real_ciclos_historico_eventos'
+   ).get().n
+  });
+  assert.deepEqual(contagens(),{ciclos:5000,eventos:30000});
+  db.exec('BEGIN IMMEDIATE');
+  h.sincronizarEmTransacao({sim});
+  db.exec('COMMIT');
+  assert.deepEqual(contagens(),{ciclos:5000,eventos:30000},
+   'reprocessar snapshot não regrava nem duplica ciclos');
+  assert.equal(h.conferir().totalCiclos,5000);
+  assert.equal(h.conferir().totalEventos,30000);
+  assert.equal(db.prepare('PRAGMA integrity_check').get().integrity_check,'ok');
+ }finally{db.close();}
+});
