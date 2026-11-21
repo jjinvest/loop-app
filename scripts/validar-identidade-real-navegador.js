@@ -195,6 +195,9 @@ async function main(){
    operadorPage.setDefaultTimeout(15000);
    await operadorPage.goto(base+'/escritorio');
    await operadorPage.locator('#painelLogin').waitFor({state:'visible'});
+   assert.equal(await operadorPage.locator(
+    'script[src^="/identidade/assets/cliente.js?rev="]').count(),1,
+    'A entrada precisa solicitar a versao nova do JS de login');
    await operadorPage.locator('#login').fill('OPERADOR');
    await operadorPage.locator('#senha').fill(
     'CredencialAdministrativaIsolada2026!Teste');
