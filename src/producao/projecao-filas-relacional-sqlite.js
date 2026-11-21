@@ -4,6 +4,8 @@
 // Atualizado na MESMA transacao do snapshot, com falha fechada na divergencia.
 const {createHash}=require('node:crypto');
 const {SimuladorLoop}=require('../domain/simulador-loop');
+const {HistoricoCiclosRelacionalSQLite}=
+ require('./historico-ciclos-relacional-sqlite');
 const TABELAS_PROJECAO=Object.freeze([
  'loop_real_filas_projecao_meta',
  'loop_real_filas_projecao_posicoes'
@@ -98,6 +100,7 @@ class ProjecaoFilasRelacionalSQLite{
    'CREATE INDEX IF NOT EXISTS idx_loop_projecao_titular',
    'ON loop_real_filas_projecao_posicoes(participante_id,local,ordem);'
   ].join(' '));
+  this.historico=new HistoricoCiclosRelacionalSQLite({banco});
  }
  _meta(){return this.db.prepare(
   'SELECT * FROM loop_real_filas_projecao_meta WHERE id=1'
@@ -108,6 +111,7 @@ class ProjecaoFilasRelacionalSQLite{
   this.db.exec('BEGIN IMMEDIATE');
   try{
    const atual=fonte(this.db),meta=this._meta();
+   this.historico.inicializarEmTransacao({sim:atual.sim});
    if(!meta){
     const sobra=this.db.prepare(
      'SELECT 1 FROM loop_real_filas_projecao_posicoes LIMIT 1'
@@ -162,6 +166,8 @@ class ProjecaoFilasRelacionalSQLite{
    ].join(' ')).run(revisao,digest(raw),rows.length,versaoAnterior);
    if(r.changes!==1)falha('FILA_PROJECAO_REVISAO_CONCORRENTE');
   }
+  // A mesma transação preserva histórico já concluído sem reescrevê-lo.
+  this.historico?.sincronizarEmTransacao({sim});
  }
  atualizarEmTransacao({revisaoAnterior,revisao,snapshot,sim}={}){
   if(!this.db.isTransaction||!Number.isSafeInteger(revisaoAnterior)||
@@ -186,6 +192,7 @@ class ProjecaoFilasRelacionalSQLite{
     falha('FILA_PROJECAO_POSICOES_DIVERGENTES');
   }
   if(i!==esperadas.length)falha('FILA_PROJECAO_POSICOES_DIVERGENTES');
+  this.historico?.conferirRapido({sim});
   return {integridade:'OK',revisao,totalPosicoes:esperadas.length,
    somenteLeitura:true,financeiroReal:false};
  }
@@ -218,6 +225,7 @@ class ProjecaoFilasRelacionalSQLite{
    falha('FILA_PROJECAO_ESQUEMA_PARCIAL');
   const espelho=Object.create(ProjecaoFilasRelacionalSQLite.prototype);
   espelho.db=banco;
+  espelho.historico=HistoricoCiclosRelacionalSQLite.referenciaExistente(banco);
   const atual=fonte(banco),meta=espelho._meta();
   if(!meta)falha('FILA_PROJECAO_SEM_METADADOS');
   if(meta.revisao===atual.revisao)return espelho.conferir(atual);
@@ -238,6 +246,7 @@ class ProjecaoFilasRelacionalSQLite{
    falha('FILA_PROJECAO_ESQUEMA_PARCIAL');
   const espelho=Object.create(ProjecaoFilasRelacionalSQLite.prototype);
   espelho.db=banco;
+  espelho.historico=HistoricoCiclosRelacionalSQLite.referenciaExistente(banco);
   return espelho.conferir(fonte(banco));
  }
 }
