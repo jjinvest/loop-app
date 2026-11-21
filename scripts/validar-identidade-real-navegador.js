@@ -493,6 +493,23 @@ async function main(){
     'Contato em claro nao pode ficar gravado no banco');
    assert.equal(contas.dadosTitular(contato.titularId).telefone,'21988887777');
    assert.equal(contas.dadosTitular(contato.titularId).cpfConfirmado,false);
+   // Esta conta convidada ainda não confirmou e-mail: provar o contador
+   // de reenvio na mesma interface, sem adulterar a conta já verificada.
+   await cadastro.locator('#login').fill(novoNick);
+   await cadastro.locator('#senha').fill('SenhaDoEnsaio2026!');
+   await cadastro.locator('#formLogin button[type=submit]').click();
+   await cadastro.locator('#painelConta').waitFor({state:'visible'});
+   if(item.largura<=860)
+    await cadastro.locator('#loop03MenuIntegrado').click();
+   await cadastro.locator('#abaConta').click();
+   await cadastro.locator('#painelVerificarEmail').waitFor({state:'visible'});
+   await cadastro.locator('#solicitarCodigoEmail').click();
+   await cadastro.locator('#contadorReenvioEmail').waitFor({state:'visible'});
+   assert.match(await cadastro.locator('#contadorReenvioEmail').innerText(),
+    /Reenviar em [12]:[0-5][0-9]/);
+   assert.equal(await cadastro.locator('#solicitarCodigoEmail').isDisabled(),true);
+   assert.match(await cadastro.locator('#estadoEmailCodigo').innerText(),
+    /Solicitação recebida/);
    await convite.close();
    const contexto=await browser.newContext({
     viewport:{width:item.largura,height:item.altura},
@@ -778,14 +795,8 @@ async function main(){
    await page.locator('#statusFotoPerfil').filter({
     hasText:'Foto salva no LOOP e disponível também na AKITEMM.'
    }).waitFor({state:'visible'});
-   // A verificação profissional usa o prazo real de 120 s do servidor.
-   await page.locator('#solicitarCodigoEmail').click();
-   await page.locator('#contadorReenvioEmail').waitFor({state:'visible'});
-   assert.match(await page.locator('#contadorReenvioEmail').innerText(),
-    /Reenviar em [12]:[0-5][0-9]/);
-   assert.equal(await page.locator('#solicitarCodigoEmail').isDisabled(),true);
-   assert.match(await page.locator('#estadoEmailCodigo').innerText(),
-    /Solicitação recebida/);
+   // Esta conta de prova já teve e-mail confirmado: não exibe reenvio.
+   assert.equal(await page.locator('#painelVerificarEmail').isHidden(),true);
    assert.equal(await page.locator('#painelIdentidadeTeste').isHidden(),true);
    await page.screenshot({
     path:path.join(pasta,'identidade-real-escritorio-'+item.nome+'.png'),
