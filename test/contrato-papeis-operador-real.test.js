@@ -5,8 +5,9 @@ const {test}=require('node:test');
 const assert=require('node:assert/strict');
 const fs=require('node:fs');
 const path=require('node:path');
+const vm=require('node:vm');
 const {DatabaseSync}=require('node:sqlite');
-const {randomBytes}=require('node:crypto');
+const {randomBytes,createHash}=require('node:crypto');
 const {renderizarInterfaceAprovada,renderizarLojaAprovada}=
  require('../src/producao/interface-aprovada-loop');
 const {SessaoAdminComercialSQLite,COOKIE_ADMIN}=
@@ -148,4 +149,54 @@ test('foto do operador e olhinho sao controles reais sem confundir titular',()=>
  assert.match(gateway,/app\.get\('\/api\/admin\/operador\/foto-perfil',proteger/);
  assert.match(gateway,/app\.post\('\/api\/admin\/operador\/foto-perfil',proteger,validarCsrf/);
  assert.doesNotMatch(gateway,/req\.conta\.titularId/);
+});
+
+
+test('olhinho instala antes das demais rotinas e responde no Android mesmo se outra rotina falhar',()=>{
+ const js=codigo('src/producao/interface-aprovada-contas.js');
+ const inicio=js.indexOf(" document.addEventListener('click',ev=>{");
+ const fim=js.indexOf(' },true);',inicio);
+ assert.ok(inicio>0&&fim>inicio);
+ assert.ok(inicio<js.indexOf('void atualizarAtalhoOperadorReal()'),
+  'olho deve ser instalado antes do sistema administrativo');
+ assert.doesNotMatch(js,/document.querySelectorAll\('\[data-senha\]'\)/,
+  'não duplicar o listener no final do arquivo');
+ const atributos={};
+ const input={tagName:'INPUT',type:'password',value:'SenhaPreservada123!'}; 
+ const botao={disabled:false,dataset:{senha:'senha'},setAttribute(k,v){atributos[k]=v;}};
+ const eventos=[];
+ const doc={
+  addEventListener(nome,fn,captura){eventos.push({nome,fn,captura});},
+  getElementById(id){return id==='senha'?input:null;}
+ };
+ vm.runInNewContext('const $=id=>document.getElementById(id);\n'+
+  js.slice(inicio,fim+' },true);'.length),{document:doc},{timeout:1000});
+ assert.equal(eventos.length,1);
+ assert.equal(eventos[0].nome,'click');
+ assert.equal(eventos[0].captura,true);
+ const ev={target:{closest:()=>botao},preventDefault(){this.bloqueou=true;}};
+ // Falha em um modulo posterior nao remove o comando ja instalado.
+ assert.throws(()=>{throw Error('FALHA_EM_OUTRA_ROTINA');},/FALHA_EM_OUTRA_ROTINA/);
+ eventos[0].fn(ev);
+ assert.equal(ev.bloqueou,true);
+ assert.equal(input.type,'text');
+ assert.equal(input.value,'SenhaPreservada123!');
+ assert.equal(atributos['aria-pressed'],'true');
+ assert.equal(atributos['aria-label'],'Ocultar senha');
+ eventos[0].fn(ev);
+ assert.equal(input.type,'password');
+ assert.equal(input.value,'SenhaPreservada123!');
+ assert.equal(atributos['aria-pressed'],'false');
+});
+
+test('JavaScript do login tem URL versionada para nao reutilizar script antigo no Android',()=>{
+ const arquivo=fs.readFileSync(path.join(__dirname,'..',
+  'src/producao/interface-aprovada-contas.js'));
+ const rev=createHash('sha256').update(arquivo).digest('hex').slice(0,16);
+ const html=renderizarInterfaceAprovada();
+ assert.ok(html.includes('/identidade/assets/cliente.js?rev='+rev),
+  'HTML deve requisitar a versão efetiva do arquivo de login');
+ assert.doesNotMatch(html,/\/staging\/assets\/cliente\.js/);
+ assert.match(html,/id="formLogin"/);
+ assert.match(html,/data-senha="senha"/);
 });

@@ -4,6 +4,7 @@
 // bloqueados até integração comercial e revisão financeira separadas.
 const fs=require('node:fs');
 const path=require('node:path');
+const {createHash}=require('node:crypto');
 const htmlOriginal=fs.readFileSync(path.join(__dirname,
  '../candidato/checkout-candidato-ui.html'),'utf8');
 const lojaOriginal=fs.readFileSync(path.join(__dirname,
@@ -130,6 +131,13 @@ function renderizarInterfaceAprovada(){
   '<select id="seletorPosicaoMotor">'+
   '<option value="">Todas as posições</option></select></label>'+
   '<div id="posicoesPainel" aria-live="polite">Consultando posições…</div>');
+ // Cada versão de cliente.js recebe URL distinta na página real.
+ // Evita reutilizar JavaScript antigo em navegadores integrados no Android.
+ const clienteJs=fs.readFileSync(path.join(__dirname,'interface-aprovada-contas.js'));
+ const revisao= createHash('sha256').update(clienteJs).digest('hex').slice(0,16);
+ html=trocarExato(html,
+  '<script src="/identidade/assets/cliente.js" defer></script>',
+  '<script src="/identidade/assets/cliente.js?rev='+revisao+'" defer></script>');
  html=trocarExato(html,'</head>',
   '<script src="/identidade/assets/acabamento-loop.js" defer></script></head>');
  // Texto da versão de ensaio permanece fora da vista, sem ser reaproveitado

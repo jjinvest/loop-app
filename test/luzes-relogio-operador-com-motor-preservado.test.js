@@ -9,6 +9,8 @@ const interfaceReal=readFileSync(
  join(__dirname,'../src/producao/interface-aprovada-contas.js'),'utf8');
 const css=readFileSync(
  join(__dirname,'../src/candidato/escritorio-cliente-integrado.css'),'utf8');
+const cssOperador=readFileSync(
+ join(__dirname,'../src/producao/acabamento-botoes-real.css'),'utf8');
 
 function ambiente(hora='2026-11-21T09:00:00-03:00'){
  let agora=Date.parse(hora),tick=null,agendas=0;
@@ -59,13 +61,16 @@ function ambiente(hora='2026-11-21T09:00:00-03:00'){
  const luzes=()=>Array.from({length:6},(_,i)=>
   elements['motorBolinha'+(i+1)].classList.contains(
    'loop03-relogio-luz-visual'));
+ const pulsando=()=>Array.from({length:6},(_,i)=>
+  elements['motorBolinha'+(i+1)].classList.contains(
+   'loop03-relogio-luz-atual'));
  const reais=()=>Array.from({length:6},(_,i)=>
   elements['motorBolinha'+(i+1)].classList.contains(
    'loop03-marcador-aceso'));
  const mover=h=>{
   agora=Date.parse(h);assert.equal(typeof tick,'function');tick();
  };
- return {visor,elements,agenda,luzes,reais,mover,
+ return {visor,elements,agenda,luzes,pulsando,reais,mover,
   iniciar(){visor.iniciar();visor.iniciar();assert.equal(agendas,1);}};
 }
 
@@ -123,6 +128,9 @@ test('sessão cliente não acende LEDs só por haver meta; vendas continuam inde
  assert.doesNotMatch(code,/fetch\(/);
  assert.doesNotMatch(code,/registrarCompra|executarGiro|criarPosicao/);
  assert.match(interfaceReal,/luzesDoRelogioOperador:true/);
+ assert.equal((interfaceReal.match(/\$\('motorContadorEventos'\)\.textContent=/g)||[]).length,1,
+  'apenas a rota do cliente escreve a legenda: operador usa o visor do relógio');
+
  assert.match(interfaceReal,/eventosReaisNoCiclo:d\.tabuleiro\.eventosNoCiclo/);
  assert.doesNotMatch(interfaceReal,/const metaAtiva=controle\.metaAplicavelHoje===true/,
   'data alvo do turno noturno deve ser avaliada pelo relógio local do servidor');
@@ -182,4 +190,40 @@ test('agenda de amanha fica registrada no operador sem prometer pagamento',()=>{
  assert.match(texto,/pagamentos e giros financeiros ainda não autorizados/);
  assert.match(interfaceReal,/mostrarAgendaOperador\(controle\)/);
  assert.match(interfaceReal,/limparAgendaOperador\(\)/);
+});
+
+
+test('o mesmo relogio real acende e pulsa uma luz de cada vez sem antecipar eventos',()=>{
+ const x=ambiente('2026-11-22T08:59:59-03:00');
+ x.iniciar();
+ x.visor.registrarAgenda(x.agenda({
+  abertura:'09:00',fechamento:'12:00',
+  dataAlvo:'2026-11-22',meta:5,eventosReaisNoCiclo:0
+ }));
+ assert.deepEqual(x.pulsando(),[false,false,false,false,false,false]);
+ x.mover('2026-11-22T09:06:00-03:00');
+ assert.deepEqual(x.luzes(),[true,false,false,false,false,false]);
+ assert.deepEqual(x.pulsando(),[true,false,false,false,false,false]);
+ assert.match(x.elements.motorContadorEventos.textContent,/Eventos confirmados: 0 de 6/);
+ x.mover('2026-11-22T09:12:00-03:00');
+ assert.deepEqual(x.luzes(),[true,true,false,false,false,false]);
+ assert.deepEqual(x.pulsando(),[false,true,false,false,false,false]);
+ x.mover('2026-11-22T09:36:00-03:00');
+ assert.deepEqual(x.luzes(),[true,true,true,true,true,true]);
+ assert.deepEqual(x.pulsando(),[false,false,false,false,false,true]);
+ x.mover('2026-11-22T09:42:00-03:00');
+ assert.deepEqual(x.luzes(),[true,false,false,false,false,false]);
+ assert.deepEqual(x.pulsando(),[true,false,false,false,false,false]);
+ x.mover('2026-11-22T12:00:00-03:00');
+ assert.deepEqual(x.pulsando(),[false,false,false,false,false,false]);
+ x.visor.registrarAgenda(x.agenda({
+  abertura:'09:00',fechamento:'12:00',
+  dataAlvo:'2026-11-23',meta:5
+ }));
+ assert.deepEqual(x.pulsando(),[false,false,false,false,false,false],
+  'a programação de outro dia não acende as luzes');
+ assert.match(cssOperador,/loop03-relogio-luz-ativa/);
+ assert.doesNotMatch(css,/loop03-relogio-luz-ativa/,
+  'as telas do cliente nao podem receber animacao do operador');
+ assert.doesNotMatch(code,/executarGiro|registrarCompra|provisionar|creditarSaldo/);
 });

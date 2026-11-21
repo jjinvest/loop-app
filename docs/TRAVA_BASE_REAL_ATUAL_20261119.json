@@ -15,7 +15,7 @@
       "nota": "Os tres arquivos do Dockerfile.public-real sao iguais no commit da identidade real"
     }
   },
-  "politica": "Qualquer mudanca, adicao ou remocao no REAL exige aprovacao explicita do proprietario, testes, hash atualizado no manifesto E ancora Railway correspondente; nao reverter ou reconstruir telas historicas; ajuste de fotos cliente/operador solicitado em 21/11/2026, sem alteracao de molduras ou regra do motor; ajuste de agenda futura visivel e horario Android apenas para operador solicitado em 21/11/2026, sem modificacao do motor financeiro",
+  "politica": "Qualquer mudanca, adicao ou remocao no REAL exige aprovacao explicita do proprietario, testes, hash atualizado no manifesto E ancora Railway correspondente; nao reverter ou reconstruir telas historicas; ajuste de fotos cliente/operador solicitado em 21/11/2026, sem alteracao de molduras ou regra do motor; ajuste de agenda futura visivel e horario Android apenas para operador solicitado em 21/11/2026, sem modificacao do motor financeiro; correção autorizada do olhinho de login Android em 21/11/2026 sem alterar catraca, fotos, caixas ou molduras; vinculo visual real das luzes da catraca ao relogio do operador e legenda unica autorizado em 21/11/2026, preservando caixa e travas do motor",
   "algoritmo": "git-blob-sha1",
   "arquivos": [
     {
@@ -424,7 +424,7 @@
     },
     {
       "path": "scripts/validar-identidade-real-navegador.js",
-      "sha": "9dde0c63c2d7da9dd3741c698404b7d610273c8e"
+      "sha": "d42f81c80c4fac853800c19176fd943f02b30dbc"
     },
     {
       "path": "scripts/validar-jornada-loja-cores-browser.js",
@@ -1264,7 +1264,7 @@
     },
     {
       "path": "src/producao/acabamento-botoes-real.css",
-      "sha": "5a306b3882d44238fbae8f7a9b38aeda4861c3a4"
+      "sha": "c743e599ac87bd2f83cef81e076658b843a91606"
     },
     {
       "path": "src/producao/aceite-posicao-azul-ensaio-sqlite.js",
@@ -1412,7 +1412,7 @@
     },
     {
       "path": "src/producao/interface-aprovada-contas.js",
-      "sha": "718797c24ff99b29ba7d309d902212022602eeef"
+      "sha": "87cf21871e179b055e2b2017c8f24a01bc76a5c8"
     },
     {
       "path": "src/producao/interface-aprovada-loja.js",
@@ -1420,7 +1420,7 @@
     },
     {
       "path": "src/producao/interface-aprovada-loop.js",
-      "sha": "d38b882ff00dbf9ce36a3f80b20ad89315c7f16d"
+      "sha": "39d61f2fc9260b8dfcf0041916d15be040f0a9d9"
     },
     {
       "path": "src/producao/jornada-comercial-unificada-ensaio-sqlite.js",
@@ -1760,7 +1760,7 @@
     },
     {
       "path": "src/shared/visor-catraca.js",
-      "sha": "808c26a00f3ad044f1aac913bb5f8b4224a5fb51"
+      "sha": "85082a4ca842426a296da2b60dcc2dcf1d9290b9"
     },
     {
       "path": "test/acabamento-visual-unificado.test.js",
@@ -2300,7 +2300,7 @@
     },
     {
       "path": "test/contrato-papeis-operador-real.test.js",
-      "sha": "e55202a068c87bf8b72157ec150d71b812e02623"
+      "sha": "c64a0d9ac4bafa616f7dfa321d4867b948332929"
     },
     {
       "path": "test/contrato-visual-escritorio-aprovado.test.js",
@@ -2648,7 +2648,7 @@
     },
     {
       "path": "test/interface-aprovada-identidade-real.test.js",
-      "sha": "4c62cf6f3eecdc66f4ade4a5a374165ec8529796"
+      "sha": "b24ccb43506fd6510517b9c59858c2953de7d4fe"
     },
     {
       "path": "test/interface-loop-03.test.js",
@@ -2836,7 +2836,7 @@
     },
     {
       "path": "test/luzes-relogio-operador-com-motor-preservado.test.js",
-      "sha": "b8164ed85209c68e6797c04e673d50b963787360"
+      "sha": "95b8e985177bf815167592d0641da6f3c1379ce5"
     },
     {
       "path": "test/manutencao-comercial-online.test.js",

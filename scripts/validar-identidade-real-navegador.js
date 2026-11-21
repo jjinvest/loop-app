@@ -195,15 +195,40 @@ async function main(){
    operadorPage.setDefaultTimeout(15000);
    await operadorPage.goto(base+'/escritorio');
    await operadorPage.locator('#painelLogin').waitFor({state:'visible'});
+   assert.equal(await operadorPage.locator(
+    'script[src^="/identidade/assets/cliente.js?rev="]').count(),1,
+    'A entrada precisa solicitar a versao nova do JS de login');
    await operadorPage.locator('#login').fill('OPERADOR');
    await operadorPage.locator('#senha').fill(
     'CredencialAdministrativaIsolada2026!Teste');
    const olho=operadorPage.locator('.alternar-visibilidade[data-senha="senha"]');
-   await olho.click();
+   const segredoDigitado='CredencialAdministrativaIsolada2026!Teste';
+   const alternarOlho=async()=>{
+    if(visual.mobile){
+     const pos=await olho.boundingBox();
+     assert.ok(pos&&pos.width>=32&&pos.height>=32,
+      'Botão precisa ter alvo de toque no Android');
+     const x=pos.x+pos.width/2,y=pos.y+pos.height/2;
+     const acertou=await operadorPage.evaluate(({x,y})=>
+      document.elementFromPoint(x,y)?.closest(
+       'button.alternar-visibilidade[data-senha="senha"]')!==null,{x,y});
+     assert.equal(acertou,true,'toque deve atingir o botão, não o campo');
+     await operadorPage.touchscreen.tap(x,y);
+    }else await olho.click();
+   };
+   await alternarOlho();
    assert.equal(await operadorPage.locator('#senha').getAttribute('type'),'text');
+   assert.equal(await operadorPage.locator('#senha').inputValue(),segredoDigitado,
+    'Olho revela a senha completa sem apagá-la');
+   assert.equal(await olho.getAttribute('aria-pressed'),'true');
    assert.equal(await olho.getAttribute('aria-label'),'Ocultar senha');
-   await olho.click();
+   const segurancaVisual=await operadorPage.locator('#senha').evaluate(el=>
+    getComputedStyle(el).webkitTextSecurity||'none');
+   assert.notEqual(segurancaVisual,'disc','Campo revelado não pode continuar mascarado');
+   await alternarOlho();
    assert.equal(await operadorPage.locator('#senha').getAttribute('type'),'password');
+   assert.equal(await operadorPage.locator('#senha').inputValue(),segredoDigitado);
+   assert.equal(await olho.getAttribute('aria-pressed'),'false');
    assert.equal(await olho.getAttribute('aria-label'),'Mostrar senha');
    await operadorPage.locator('#formLogin button[type=submit]').click();
    await operadorPage.locator('#loopOperadorAcoes').waitFor({state:'visible'});
