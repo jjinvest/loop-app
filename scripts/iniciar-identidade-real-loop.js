@@ -213,7 +213,7 @@ async function iniciar(ambiente=process.env,opcoes={}){
     ambiente.LOOP_REAL_CADASTRO_GO==='NAO'&&
     ambiente.LOOP_REAL_APROVACAO_DOCUMENTOS==='NAO'&&
     ambiente.LOOP_REAL_OPERACAO_INTERNA==='SIM'&&
-    (ambiente.LOOP_REAL_SANEAMENTO_LEGADOS||'NAO')==='NAO';
+    ['NAO','AUDITAR'].includes(ambiente.LOOP_REAL_SANEAMENTO_LEGADOS||'NAO');
    const resultado=await migrarHistoricoV2Protegido({
     motor:motorLoop,agendador,autorizacaoInterna:interno
    });
