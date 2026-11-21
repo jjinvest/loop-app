@@ -298,11 +298,33 @@ test('mesmo operador real sobe foto versionada; cliente so ve publicada, sem alt
  assert.equal(dados.produtos.find(p=>p.produtoId===produto.id)
   .fotos[0].url,vitrineFoto);
  const bone=dados.produtos.find(p=>p.produtoId==='bone-cinza');
- assert.equal(bone.posicaoVitrine,161);
- // IDs fixados ocupam 161 e 200; o produto sem vínculo usa o primeiro espaço livre.
- assert.equal(dados.produtos.find(p=>p.produtoId===produto.id).posicaoVitrine,1);
- assert.equal(antigo.posicaoVitrine,200);
+ assert.equal(bone.posicaoVitrine,1);
+ // Os vínculos antigos persistem, mas o cliente vê posições sem lacunas.
+ assert.equal(dados.produtos.find(p=>p.produtoId===produto.id).posicaoVitrine,3);
+ assert.equal(antigo.posicaoVitrine,2);
  assert.equal(new Set(dados.produtos.map(p=>p.posicaoVitrine)).size,3);
+ // A ordem de produtos é editável apenas pelo operador, nunca pelo visitante.
+ const ordemUrl='/api/admin/catalogo-midia/reordenar-vitrine';
+ const movimento={produtoId:'SKU_ANTIGO',novaPosicao:1,revisaoEsperada:1};
+ const mover=(token,autorizado=true)=>fetch(base+ordemUrl,{
+  method:'POST',headers:{Origin:ORIGEM,'Content-Type':'application/json',
+   ...(autorizado?{Cookie:cookie}:{'Cookie':cookieCliente}),
+   'X-Loop-Admin-Csrf':token},
+  body:JSON.stringify(movimento)
+ });
+ assert.equal((await mover(csrf,false)).status,401);
+ assert.equal((await mover('token-invalido')).status,403);
+ const movido=await mover(csrf);
+ const resultadoMovido=await movido.json();
+ assert.equal(movido.status,200,JSON.stringify(resultadoMovido));
+ assert.equal(resultadoMovido.posicao,1);
+ const depoisOrdem=await (await get('/api/loja/catalogo',{
+  Cookie:cookieCliente})).json();
+ assert.equal(depoisOrdem.produtos.find(p=>p.produtoId==='SKU_ANTIGO').posicaoVitrine,1);
+ assert.equal(depoisOrdem.produtos.find(p=>p.produtoId==='bone-cinza').posicaoVitrine,2);
+ assert.equal((await mover(csrf)).status,409,'nao reordenar com revisao antiga');
+ assert.equal((await get('/api/loja/pedidos',{Cookie:cookie})).status,401);
+
  assert.equal(bone.fotos.length,1);
  assert.equal(bone.fotos[0].posicao,10);
  const fotoBone=await get(bone.fotos[0].url,{Cookie:cookieCliente});

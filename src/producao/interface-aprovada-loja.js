@@ -458,6 +458,7 @@
      'produto-loja-loop-dourado':p.cor==='VERDE'?
       'produto-loja-loop-elegivel':'produto-loja-loop-nao-elegivel');
    card.dataset.produtoId=p.produtoId;
+   card.dataset.akitemmOrdem=String(p.posicaoVitrine);
    card.tabIndex=0;card.setAttribute('role','group');
    card.setAttribute('aria-label','Produto '+p.titulo);
    const imagem=document.createElement('div');
@@ -617,6 +618,10 @@
   }finally{if(botao)botao.disabled=false;}
  }
  $('atualizarCatalogoLoja').addEventListener('click',
+  ()=>void atualizarCatalogo());
+ // Atualização interna direta do operador: funciona mesmo durante
+ // o estado disabled do botão visível usado para recarregar a loja.
+ window.addEventListener('akitemm:catalogo-atualizar',
   ()=>void atualizarCatalogo());
 
  const progresso=$('progressoMinimoLoop')?.closest('.akitemm-progresso');

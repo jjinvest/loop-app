@@ -5,7 +5,7 @@ const {DatabaseSync}=require('node:sqlite');
 const {PosicoesVitrineRealSQLite,TABELAS_POSICOES_VITRINE}=
  require('../src/producao/posicoes-vitrine-real-sqlite');
 
-test('quadradinho fixo 161 pertence ao produto mesmo apos reinicio e filtro de rascunho',()=>{
+test('espacos antigos permanecem gravados, mas vitrine organiza sem lacunas pela chegada',()=>{
  const db=new DatabaseSync(':memory:');
  try{
   const v=new PosicoesVitrineRealSQLite({banco:db});
@@ -24,11 +24,10 @@ test('quadradinho fixo 161 pertence ao produto mesmo apos reinicio e filtro de r
   }));
   const projeccao=novamente.projetar(produtos);
   assert.equal(projeccao.length,199);
-  assert.equal(projeccao[0].posicaoVitrine,161);
-  assert.equal(projeccao[1].posicaoVitrine,1);
+  assert.equal(projeccao[0].posicaoVitrine,1);
+  assert.equal(projeccao[1].posicaoVitrine,2);
   assert.equal(new Set(projeccao.map(x=>x.posicaoVitrine)).size,199);
-  assert.equal(projeccao.some(x=>x.posicaoVitrine===161&&
-   x.produtoId!=='tenis-preto'),false);
+  assert.deepEqual(projeccao.slice(0,2).map(x=>x.produtoId),['tenis-preto','produto-001']);
   assert.equal(db.prepare('PRAGMA integrity_check').get().integrity_check,'ok');
  }finally{db.close();}
 });
@@ -73,7 +72,8 @@ test('reservar espaco para rascunho impede sobreposicao de publicado',()=>{
   assert.equal(v.consultar({posicao:40}).produtoId,'produto-rascunho');
   const apos=v.projetar([...abertos,
    {produtoId:'produto-rascunho',compravel:false}]);
-  assert.equal(apos[2].posicaoVitrine,40);
+  assert.equal(apos[0].produtoId,'produto-rascunho');
+  assert.deepEqual(apos.map(x=>x.posicaoVitrine),[1,2,3]);
  }finally{db.close();}
 });
 
@@ -89,6 +89,50 @@ test('décima aba preserva vínculos em 400 e rejeita a posição 401',()=>{
   assert.throws(()=>v.atribuir({posicao:401,produtoId:'fora',
    revisaoEsperada:0,produtoExiste:()=>true}),
    /VITRINE_REAL_ATRIBUICAO_INVALIDA/);
+  assert.equal(db.prepare('PRAGMA integrity_check').get().integrity_check,'ok');
+ }finally{db.close();}
+});
+
+test('arrastar 4 para 1 desloca outros, persiste e rejeita movimento concorrente',()=>{
+ const db=new DatabaseSync(':memory:');
+ try{
+  const v=new PosicoesVitrineRealSQLite({banco:db});
+  for(const [posicao,id] of [[1,'verde'],[2,'dourado'],[3,'roxo'],[4,'cinza']])
+   v.atribuir({posicao,produtoId:id,revisaoEsperada:0,
+    produtoExiste:()=>true});
+  const mover=v.mover({produtoId:'cinza',novaPosicao:1,revisaoEsperada:1});
+  assert.equal(mover.posicao,1);
+  assert.equal(mover.revisao,2);
+  assert.deepEqual(v.listar().map(x=>x.produtoId),
+   ['cinza','verde','dourado','roxo']);
+  assert.deepEqual(v.projetar([
+   {produtoId:'roxo',criadoEm:3},{produtoId:'verde',criadoEm:1},
+   {produtoId:'cinza',criadoEm:4},{produtoId:'dourado',criadoEm:2}
+  ]).map(x=>x.produtoId),['cinza','verde','dourado','roxo']);
+  assert.throws(()=>v.mover({produtoId:'cinza',novaPosicao:4,revisaoEsperada:1}),
+   /VITRINE_REAL_REVISAO_CONCORRENTE/);
+  assert.deepEqual(v.listar().map(x=>x.produtoId),
+   ['cinza','verde','dourado','roxo']);
+  const v2=new PosicoesVitrineRealSQLite({banco:db});
+  assert.equal(v2.listar()[0].produtoId,'cinza');
+  assert.equal(db.prepare('PRAGMA integrity_check').get().integrity_check,'ok');
+  assert.equal(db.prepare("SELECT COUNT(*) n FROM sqlite_master WHERE name='loja_real_pedidos'").get().n,0);
+ }finally{db.close();}
+});
+
+test('mover um produto preserva demais slots antigos e não duplica',()=>{
+ const db=new DatabaseSync(':memory:');
+ try{
+  const v=new PosicoesVitrineRealSQLite({banco:db});
+  for(const [pos,id] of [[10,'primeiro'],[20,'segundo'],[400,'terceiro']])
+   v.atribuir({posicao:pos,produtoId:id,produtoExiste:()=>true});
+  const retorno=v.mover({produtoId:'terceiro',novaPosicao:2,revisaoEsperada:1});
+  assert.equal(retorno.posicao,2);
+  assert.deepEqual(v.listar().map(x=>x.produtoId),
+   ['primeiro','terceiro','segundo']);
+  assert.deepEqual(v.listar().map(x=>x.posicao),[1,2,3]);
+  assert.throws(()=>v.mover({produtoId:'terceiro',novaPosicao:0,revisaoEsperada:2}),
+   /VITRINE_REAL_MOVIMENTO_INVALIDO/);
   assert.equal(db.prepare('PRAGMA integrity_check').get().integrity_check,'ok');
  }finally{db.close();}
 });

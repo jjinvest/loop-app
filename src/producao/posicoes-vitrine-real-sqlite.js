@@ -89,29 +89,78 @@ class PosicoesVitrineRealSQLite{
    return {posicao,produtoId,revisao:1,jaVinculado:false};
   }catch(e){this.banco.exec('ROLLBACK');throw e;}
  }
+ // A ordem publica e sequencial: mover um item desloca os vizinhos.
+ // A operacao e atomica, auditada e nao altera nenhum estado financeiro.
+ mover({produtoId,novaPosicao,revisaoEsperada}={}){
+  if(!ID.test(produtoId)||!Number.isSafeInteger(novaPosicao)||
+     novaPosicao<1||novaPosicao>TOTAL||
+     !Number.isSafeInteger(revisaoEsperada)||revisaoEsperada<1)
+   falha('VITRINE_REAL_MOVIMENTO_INVALIDO');
+  const agora=this.agora();
+  if(!Number.isSafeInteger(agora)||agora<1)
+   falha('VITRINE_REAL_RELOGIO_INVALIDO');
+  this.banco.exec('BEGIN IMMEDIATE');
+  try{
+   const lista=this.listar();
+   const origem=lista.findIndex(x=>x.produtoId===produtoId);
+   if(origem<0)falha('VITRINE_REAL_PRODUTO_NAO_POSICIONADO');
+   if(lista[origem].revisao!==revisaoEsperada)
+    falha('VITRINE_REAL_REVISAO_CONCORRENTE');
+   if(novaPosicao>lista.length)
+    falha('VITRINE_REAL_MOVIMENTO_INVALIDO');
+   const anterior=origem+1;
+   if(anterior===novaPosicao){
+    this.banco.exec('COMMIT');
+    return {produtoId,posicao:novaPosicao,ordem:lista.length,
+     revisao:lista[origem].revisao,jaOrdenado:true};
+   }
+   const [movido]=lista.splice(origem,1);
+   lista.splice(novaPosicao-1,0,movido);
+   this.banco.prepare('DELETE FROM loja_real_vitrine_posicoes').run();
+   const gravar=this.banco.prepare([
+    'INSERT INTO loja_real_vitrine_posicoes',
+    '(posicao,produto_id,revisao,atualizado_em) VALUES(?,?,?,?)'
+   ].join(' '));
+   for(let i=0;i<lista.length;i++){
+    const atual=lista[i];
+    const mudando=atual.posicao!==i+1;
+    gravar.run(i+1,atual.produtoId,
+     atual.revisao+(mudando?1:0),mudando?agora:atual.atualizadoEm);
+   }
+   if(this.auditoria)this.auditoria.registrar({
+    acao:'VITRINE_ORDEM_ALTERADA',ator:'ADMIN_COMERCIAL',
+    entidade:'PRODUTO_'+produtoId,
+    antes:{posicao:anterior},
+    depois:{posicao:novaPosicao},revisaoNova:movido.revisao+1
+   });
+   this.banco.exec('COMMIT');
+   return {produtoId,posicao:novaPosicao,ordem:lista.length,
+    revisao:movido.revisao+1,jaOrdenado:false};
+  }catch(e){this.banco.exec('ROLLBACK');throw e;}
+ }
  projetar(produtos){
   if(!Array.isArray(produtos)||produtos.length>TOTAL||
      produtos.some(p=>typeof p?.produtoId!=='string'||
       !ID.test(p.produtoId)))
    falha('VITRINE_REAL_PRODUTOS_INVALIDOS');
   const registrados=this.listar();
-  const reservados=new Set(registrados.map(x=>x.posicao));
-  const porProduto=new Map(registrados.map(x=>[x.produtoId,x.posicao]));
-  const porPosicao=new Set();
-  let disponivel=1;
-  return produtos.map(produto=>{
-   let posicao=porProduto.get(produto.produtoId);
-   if(!posicao){
-    while(disponivel<=TOTAL&&reservados.has(disponivel))disponivel++;
-    if(disponivel>TOTAL)
-     falha('VITRINE_REAL_SEM_ESPACO_PARA_PRODUTO');
-    posicao=disponivel++;reservados.add(posicao);
-   }
-   if(porPosicao.has(posicao))
-    falha('VITRINE_REAL_POSICAO_DUPLICADA');
-   porPosicao.add(posicao);
-   return Object.freeze({...produto,posicaoVitrine:posicao});
-  });
+  const porProduto=new Map(produtos.map(p=>[p.produtoId,p]));
+  if(porProduto.size!==produtos.length)
+   falha('VITRINE_REAL_PRODUTO_DUPLICADO');
+  // Respeitar a ordem definida pelo operador, mas nunca mostrar lacunas.
+  // Produtos novos entram depois dos anteriores, pela data de cadastro.
+  const posicionados=registrados
+   .filter(r=>porProduto.has(r.produtoId))
+   .map(r=>porProduto.get(r.produtoId));
+  const vinculados=new Set(registrados.map(r=>r.produtoId));
+  const semPosicao=produtos.filter(p=>!vinculados.has(p.produtoId))
+   .sort((a,b)=>{
+    const ta=Number.isSafeInteger(a.criadoEm)?a.criadoEm:0;
+    const tb=Number.isSafeInteger(b.criadoEm)?b.criadoEm:0;
+    return ta-tb||a.produtoId.localeCompare(b.produtoId);
+   });
+  return [...posicionados,...semPosicao].map((produto,i)=>
+   Object.freeze({...produto,posicaoVitrine:i+1}));
  }
 }
 module.exports={PosicoesVitrineRealSQLite,TABELAS_POSICOES_VITRINE,TOTAL};

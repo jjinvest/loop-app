@@ -87,6 +87,26 @@ function montarRotasCatalogoMidiaOperador({
     }
    });
  }
+ // Reordenacao exclusiva do operador: indice interno, nunca numeracao publica.
+ app.post('/api/admin/catalogo-midia/reordenar-vitrine',
+  autorizarOperador,validarCsrf,(req,res)=>{
+   const b=req.body;
+   if(!posicoesVitrine||typeof posicoesVitrine.mover!=='function')
+    return res.status(503).json({erro:'VITRINE_SEM_ORDENACAO'});
+   if(!req.is('application/json')||!b||Array.isArray(b)||
+      Object.keys(b).sort().join(',')!=='novaPosicao,produtoId,revisaoEsperada')
+    return res.status(400).json({erro:'VITRINE_ORDEM_CAMPOS_INVALIDOS'});
+   try{
+    const resultado=posicoesVitrine.mover(b);
+    return res.json({...resultado,checkoutReal:false,
+     financeiroReal:false});
+   }catch(e){
+    const codigo=e?.codigo||'VITRINE_ORDEM_INDISPONIVEL';
+    return res.status(codigo.includes('CONCORRENTE')?409:
+      codigo.includes('NAO_POSICIONADO')?404:
+      codigo.includes('INVALIDO')?400:503).json({erro:codigo});
+   }
+  });
  app.get('/api/admin/catalogo-midia/produtos',autorizarOperador,(_req,res)=>{
   try{
    const locais=catalogoMidia.repo.listar();
@@ -185,6 +205,31 @@ function montarRotasCatalogoMidiaOperador({
      erro.includes('INVALID')?400:503;
     return res.status(status).json({erro:status===503?
      'PRODUTO_REAL_INDISPONIVEL':erro});
+   }
+  });
+ // O operador pode publicar uma mercadoria própria sem cadastrar distribuidor.
+ // Publicar a vitrine NÃO libera preço, estoque, checkout, frete nem pagamento.
+ app.post('/api/admin/catalogo-midia/produtos/:produtoId/publicacao',
+  autorizarOperador,validarCsrf,verificarId,(req,res)=>{
+   if(!req.is('application/json')||!req.body||
+      Array.isArray(req.body)||Object.keys(req.body).sort().join(',')!=='ativo'||
+      typeof req.body.ativo!=='boolean')
+    return res.status(400).json({erro:'PUBLICACAO_PRODUTO_CAMPOS_INVALIDOS'});
+   const produtoId=req.params.produtoId;
+   if(!catalogoPrincipal||typeof catalogoPrincipal.ativarProduto!=='function')
+    return res.status(503).json({erro:'PUBLICACAO_CATALOGO_INDISPONIVEL'});
+   try{
+    const produto=catalogoPrincipal.buscarProdutoAdministrativo({produtoId});
+    if(!produto)return res.status(404).json({erro:'PRODUTO_NAO_ENCONTRADO'});
+    if(req.body.ativo&&catalogoMidia.fotos.listar(produtoId).fotos.length===0)
+     return res.status(409).json({erro:'PUBLICACAO_REQUER_FOTO_REAL'});
+    const resultado=catalogoPrincipal.ativarProduto({produtoId,ativo:req.body.ativo});
+    return res.json({...resultado,checkoutReal:false,
+     financeiroReal:false,compravel:false});
+   }catch(e){
+    const codigo=e?.codigo||'PUBLICACAO_PRODUTO_INDISPONIVEL';
+    return res.status(codigo.includes('MANUTENCAO')?423:503)
+     .json({erro:codigo});
    }
   });
  app.get('/api/admin/catalogo-midia/produtos/:produtoId/fotos',

@@ -20,9 +20,10 @@ const {AuditoriaOperacionalSQLite}=require('../src/producao/auditoria-operaciona
 const {ManutencaoComercialSQLite}=require('../src/producao/manutencao-comercial-sqlite');
 const {criarCatalogoMercadoriasReal}=require('../src/producao/catalogo-mercadorias-real');
 const {criarAppIdentidadeLoop}=require('../src/producao/servidor-identidade-loop');
-const FOTO=Buffer.from(
- 'iVBORw0KGgoAAAANSUhEUgAAAAIAAAACCAIAAAD91JpzAAAAEklEQVR4nGP4z8DAAMIM/4EAAB/uBfsL2WiLAAAAAElFTkSuQmCC',
- 'base64');
+const {montarComercialSemHomologacao}=
+ require('../src/producao/montar-comercial-sem-homologacao');
+const {gerarPngTeste}=require('./fixtures/gerar-png-teste');
+const FOTO=gerarPngTeste();
 const SENHA='OperadorDeTesteIsoladoUnico-2026-MuitoLongo';
 const DOC='Documentos da conta descartavel usados somente para verificar o registro do primeiro produto na interface, com pagamentos inteiramente desabilitados.';
 
@@ -53,6 +54,10 @@ async function principal(){
    banco,auditoria,manutencao,distribuidorHomologado:()=>false
   });
   const controle=new ControleEconomicoLojaSQLite({banco,auditoria,manutencao});
+  const {classificacaoLoop}=montarComercialSemHomologacao({
+   banco,chavePedidos:randomBytes(32),auditoria,manutencao,
+   catalogoLeitura:catalogo
+  });
   const sessoes=new SessaoAdminComercialSQLite({
    banco,chaveAdmin:randomBytes(32),credencialAdmin:SENHA
   });
@@ -82,7 +87,8 @@ async function principal(){
    },
    catalogoMidiaLeitura,
    adminComercial:{
-    sessoes,controle,catalogo,auditoria,manutencao,catalogoMidia:midia
+    sessoes,controle,catalogo,auditoria,manutencao,
+    catalogoMidia:midia,classificacaoLoop
    }
   });
   browser=await chromium.launch({headless:true});
@@ -135,23 +141,40 @@ async function principal(){
   assert.equal(vazio.checkoutReal,false);
   assert.equal(await page.locator('#catalogoLojaLoop .akitemm-slot-vazio').count(),20);
   assert.equal(await page.locator('#catalogoLojaLoop [data-produto-id]').count(),0);
-  // Primeiro clique: abre o operador no MESMO quadradinho aprovado.
-  await page.locator('#catalogoLojaLoop [data-akitemm-slot="1"]').click();
-  await page.locator('#akitemmOperadorFotosReal[open]').waitFor();
-  await page.locator('#akitemmOperadorFotosReal').getByText(
-   'Nenhum produto cadastrado: crie o primeiro abaixo.'
-  ).waitFor();
+  // Cadastro manual direto no quadradinho, com foto e cor no mesmo painel.
   const m=page.locator('#akitemmOperadorFotosReal');
-  await m.locator('input[type=text]').first().fill('primeiro-produto');
-  await m.locator('input[type=text]').nth(1).fill('Produto de ensaio de operador');
-  await m.locator('textarea').first().fill('Descricao de teste temporaria');
-  await m.getByRole('button',{name:'Cadastrar produto'}).click();
-  await m.getByRole('heading',{name:'Editar produto · primeiro-produto'}).waitFor();
+  const criarProduto=async({slot,codigo,nome,cor})=>{
+   await page.locator('#catalogoLojaLoop [data-akitemm-slot="'+slot+'"]').click();
+   await m.waitFor({state:'visible'});
+   await m.getByRole('heading',{name:'Cadastrar produto · AKITEMM'}).waitFor();
+   await m.getByRole('textbox',{name:'Nome do produto'}).fill(nome);
+   await m.locator('textarea').first().fill('Descrição de teste temporária');
+   const codigoArea=m.locator('details').filter({hasText:'Código do produto'});
+   await codigoArea.locator('summary').click();
+   await codigoArea.locator('input').fill(codigo);
+   await m.getByLabel('Cor do produto').selectOption(cor);
+   await m.locator('input[type=file]').setInputFiles({
+    name:'imagem-prova.png',mimeType:'image/png',buffer:FOTO
+   });
+   await m.getByRole('button',{name:'Salvar produto e colocar na vitrine'}).click();
+   await m.getByText('Produto e foto salvos.',{exact:false}).waitFor({
+    timeout:15000
+   });
+   await m.locator('.akitemm-modal-fechar').click();
+   await page.locator('#catalogoLojaLoop [data-produto-id="'+codigo+'"]')
+    .waitFor({state:'visible'});
+  };
+  await criarProduto({slot:1,codigo:'primeiro-produto',
+   nome:'Produto de ensaio de operador',cor:'VERDE'});
   const produto=catalogo.buscarProdutoAdministrativo({
    produtoId:'primeiro-produto'
   });
   assert.equal(produto.titulo,'Produto de ensaio de operador');
-  assert.equal(produto.ativo,false);
+  assert.equal(produto.ativo,true);
+  assert.equal(midia.fotos.listar('primeiro-produto').fotos.length,1);
+  assert.equal(midia.fotos.listar('primeiro-produto').fotos[0].posicao,1);
+  await criarProduto({slot:2,codigo:'segundo-produto',
+   nome:'Segundo produto de ensaio',cor:'DOURADO'});
   const mapa=await page.evaluate(async()=>{
    const res=await fetch('/api/admin/catalogo-midia/slots',{
     credentials:'same-origin'
@@ -159,34 +182,92 @@ async function principal(){
    if(!res.ok)throw Error('MAPA_DO_OPERADOR_INDISPONIVEL');
    return res.json();
   });
-  // A vitrine REAL possui 10 abas x 40 espacos (400 no total).
   assert.equal(mapa.total,400);
-  assert.equal(mapa.slots.length,1);
-  assert.equal(mapa.slots[0].posicao,1);
-  // Foto enviada pela mesma sessao, pela interface que o usuario toca.
-  await m.locator('input[type=file]').setInputFiles({
-   name:'imagem-prova.png',mimeType:'image/png',buffer:FOTO
-  });
-  await m.getByRole('button',{name:'Salvar foto do produto'}).click();
-  await m.waitFor({state:'hidden'});
-  const foto=midia.fotos.listar('primeiro-produto');
-  assert.equal(foto.fotos.length,1);
-  assert.equal(foto.fotos[0].posicao,1);
-  // Produto RASCUNHO deve ficar oculto ao comprador até publicação legítima.
-  const aindaVazio=await page.evaluate(async()=>{
+  assert.deepEqual(mapa.slots.map(x=>x.produtoId),
+   ['primeiro-produto','segundo-produto']);
+  const antes=await page.evaluate(async()=>{
    const res=await fetch('/api/loja/catalogo',{credentials:'same-origin'});
    return res.json();
   });
-  assert.equal(aindaVazio.produtos.length,0);
-  // Publicacao abaixo e somente no SQLite DESCARTAVEL de teste.
-  catalogo.ativarProduto({produtoId:'primeiro-produto',ativo:true});
-  await page.locator('#atualizarCatalogoLoja').click();
-  await page.locator('#catalogoLojaLoop [data-produto-id="primeiro-produto"]').waitFor();
+  assert.equal(antes.produtos.length,2);
+  assert.equal(antes.produtos[0].produtoId,'primeiro-produto');
+  assert.equal(antes.produtos[1].produtoId,'segundo-produto');
+  // No celular, segurar a alça e arrastar o segundo até o primeiro.
+  const alca=page.locator(
+   '#catalogoLojaLoop [data-produto-id="segundo-produto"] .akitemm-alca-arrastar'
+  );
+  await alca.waitFor({state:'visible'});
+  const inicio=await alca.boundingBox();
+  const destino=await page.locator(
+   '#catalogoLojaLoop [data-produto-id="primeiro-produto"]'
+  ).boundingBox();
+  assert.ok(inicio&&destino,'origem e alvo precisam estar na tela');
+  const cdps=await ctx.newCDPSession(page);
+  const p1={x:inicio.x+inicio.width/2,y:inicio.y+inicio.height/2};
+  const p2={x:destino.x+Math.min(24,destino.width/4),
+   y:destino.y+destino.height/2};
+  await cdps.send('Input.dispatchTouchEvent',{
+   type:'touchStart',touchPoints:[p1]
+  });
+  await new Promise(resolve=>setTimeout(resolve,260));
+  for(let i=1;i<=5;i++){
+   const fracao=i/5;
+   await cdps.send('Input.dispatchTouchEvent',{
+    type:'touchMove',touchPoints:[{
+     x:p1.x+(p2.x-p1.x)*fracao,
+     y:p1.y+(p2.y-p1.y)*fracao
+    }]
+   });
+  }
+  await cdps.send('Input.dispatchTouchEvent',{type:'touchEnd',touchPoints:[]});
+  const descricaoArrasto=await page.evaluate(()=>({
+   aviso:document.querySelector('.akitemm-arrasto-aviso')?.textContent,
+   ordenacao:[...document.querySelectorAll(
+    '#catalogoLojaLoop [data-produto-id]'
+   )].map(x=>x.dataset.produtoId),
+   alcas:document.querySelectorAll('.akitemm-alca-arrastar').length
+  }));
+  console.log('ARRASTE_TOUCH_DIAGNOSTICO='+JSON.stringify(descricaoArrasto));
+  await page.getByText('Produto movido para 1º.',{exact:false}).waitFor({
+   timeout:12000
+  });
+  await page.waitForTimeout(750);
+  const comparacaoOrdem=await page.evaluate(async()=>{
+   const resposta=await fetch('/api/loja/catalogo',{cache:'no-store'});
+   const api=await resposta.json();
+   return {statusApi:resposta.status,
+    api:api.produtos?.map(p=>({id:p.produtoId,ordem:p.posicaoVitrine})),
+    dom:[...document.querySelectorAll('#catalogoLojaLoop [data-produto-id]')]
+     .map(c=>({id:c.dataset.produtoId,ordem:c.dataset.akitemmOrdem})),
+    botao:document.getElementById('atualizarCatalogoLoja')?.disabled,
+    erro:document.getElementById('akitemmResultadoProdutos')?.textContent
+   };
+  });
+  console.log('COMPARACAO_ORDEM='+JSON.stringify(comparacaoOrdem));
+  console.log('ERROS_NAVEGADOR='+JSON.stringify(errosNavegador));
+  await page.waitForFunction(()=>{
+   const cards=[...document.querySelectorAll(
+    '#catalogoLojaLoop [data-produto-id]'
+   )].map(c=>c.dataset.produtoId);
+   return cards[0]==='segundo-produto'&&cards[1]==='primeiro-produto';
+  });
+  assert.equal((await page.locator('#catalogoLojaLoop .akitemm-alca-arrastar')
+   .count())>=2,true);
+  const gravado=await page.evaluate(async()=>{
+   const res=await fetch('/api/admin/catalogo-midia/slots',{
+    credentials:'same-origin'
+   });
+   return (await res.json()).slots;
+  });
+  assert.deepEqual(gravado.map(x=>x.produtoId),
+   ['segundo-produto','primeiro-produto']);
+  // Sem identidade de cliente, o operador não pode comprar.
+  assert.equal(await page.locator('#registrarPedidoLoja').isDisabled(),true);
   const publicado=await page.evaluate(async()=>{
    const res=await fetch('/api/loja/catalogo',{credentials:'same-origin'});
    return res.json();
   });
-  assert.equal(publicado.produtos.length,1);
+  assert.equal(publicado.produtos.length,2);
   assert.equal(publicado.produtos[0].precoCentavos,null);
   assert.equal(publicado.produtos[0].compravel,false);
   assert.equal(publicado.checkoutReal,false);
@@ -197,7 +278,7 @@ async function principal(){
    })).status(),200);
   assert.equal(await page.locator('#registrarPedidoLoja').isDisabled(),true);
   assert.equal(banco.prepare('PRAGMA quick_check').get().quick_check,'ok');
-  console.log('OPERADOR_VITRINE_REAL_VALIDADO_EM_BANCO_DESCARTAVEL: ZERO -> RASCUNHO -> FOTO -> PUBLICADO_SEM_COMPRA');
+  console.log('OPERADOR_VITRINE_VALIDADO: CADASTRO_MANUAL -> FOTO -> COR -> DRAG_TOUCH -> SQLITE_SEM_COMPRA');
  }finally{
   if(browser)await browser.close();
   if(server)await new Promise(ok=>server.close(ok));
