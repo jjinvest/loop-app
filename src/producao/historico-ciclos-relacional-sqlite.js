@@ -95,12 +95,10 @@ class HistoricoCiclosRelacionalSQLite{
   ].join(' '));
  }
  _meta(){return this.db.prepare(
-  'SELECT versao,total_ciclos,ultimo_hash',
-  + ' FROM loop_real_ciclos_historico_meta WHERE id=1'
+  'SELECT versao,total_ciclos,ultimo_hash FROM loop_real_ciclos_historico_meta WHERE id=1'
  ).get();}
  _ultimo(){return this.db.prepare(
-  'SELECT ciclo,dados_json,sha256 FROM loop_real_ciclos_historico',
-  + ' ORDER BY ciclo DESC LIMIT 1'
+  'SELECT ciclo,dados_json,sha256 FROM loop_real_ciclos_historico ORDER BY ciclo DESC LIMIT 1'
  ).get();}
  inicializarEmTransacao({sim}={}){
   if(!this.db.isTransaction)falha('HISTORICO_CICLOS_TRANSACAO_OBRIGATORIA');
