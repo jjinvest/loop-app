@@ -87,6 +87,26 @@ function montarRotasCatalogoMidiaOperador({
     }
    });
  }
+ // Reordenacao exclusiva do operador: indice interno, nunca numeracao publica.
+ app.post('/api/admin/catalogo-midia/reordenar-vitrine',
+  autorizarOperador,validarCsrf,(req,res)=>{
+   const b=req.body;
+   if(!posicoesVitrine||typeof posicoesVitrine.mover!=='function')
+    return res.status(503).json({erro:'VITRINE_SEM_ORDENACAO'});
+   if(!req.is('application/json')||!b||Array.isArray(b)||
+      Object.keys(b).sort().join(',')!=='novaPosicao,produtoId,revisaoEsperada')
+    return res.status(400).json({erro:'VITRINE_ORDEM_CAMPOS_INVALIDOS'});
+   try{
+    const resultado=posicoesVitrine.mover(b);
+    return res.json({...resultado,checkoutReal:false,
+     financeiroReal:false});
+   }catch(e){
+    const codigo=e?.codigo||'VITRINE_ORDEM_INDISPONIVEL';
+    return res.status(codigo.includes('CONCORRENTE')?409:
+      codigo.includes('NAO_POSICIONADO')?404:
+      codigo.includes('INVALIDO')?400:503).json({erro:codigo});
+   }
+  });
  app.get('/api/admin/catalogo-midia/produtos',autorizarOperador,(_req,res)=>{
   try{
    const locais=catalogoMidia.repo.listar();
