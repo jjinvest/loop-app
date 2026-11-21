@@ -827,7 +827,7 @@ async function main(){
    await pagina.locator('#abaMeusPedidos').click();
    await pagina.locator('#listaPedidos').filter({hasText:compra.pedidoId}).waitFor();
    assert.match(await pagina.locator('#listaPedidos').innerText(),
-    /APROVADO_PARA_EXPEDICAO/);
+    /Aprovado para expedição/);
    assert.equal(await pagina.locator('.indicadores-cliente').count(),0);
    assert.equal(await pagina.locator('.loop03-indicadores .loop03-indicador').count(),3);
    assert.equal(await pagina.locator('#loop03TotalIntegrado').innerText(),
@@ -836,6 +836,16 @@ async function main(){
     .includes('Página 1 · 1 pedido(s) no histórico'));
    assert.equal(await pagina.locator('#pedidosAnterior').isDisabled(),true);
    assert.equal(await pagina.locator('#pedidosProximo').isDisabled(),true);
+   assert.equal(await pagina.locator('#pedidosResumo').innerText(),'1 pedido no histórico');
+   assert.equal(await pagina.locator('#conteudoMeusPedidos #atualizarPedidos').isVisible(),true);
+   await pagina.locator('#listaPedidos .loop03-pedido-remessas > summary').click();
+   assert.equal(await pagina.locator('#listaPedidos .loop03-pedido-remessas[open]').count(),1);
+   assert.ok((await pagina.locator('#listaPedidos .loop03-pedido-remessas').innerText())
+    .includes('Fornecedor'));
+   const estiloNavegacao=await pagina.locator('#conteudoMeusPedidos .loop03-pedidos-paginacao')
+    .evaluate(el=>getComputedStyle(el).display);
+   assert.equal(estiloNavegacao,'grid',
+    'a navegação de pedidos não pode empilhar botões grandes');
    if(visual.mobile)await pagina.locator('#loop03MenuIntegrado').click();
    await pagina.locator('#abaPosicoes').click();
    const confirmarAzul=pagina.locator('#posicoesPainel form.loop03-aceite-posicao');

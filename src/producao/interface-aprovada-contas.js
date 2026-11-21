@@ -714,10 +714,37 @@
  const visorCatraca=window.LoopVisorCatraca.criar({elemento:$});
  const visualTabuleiro=window.LoopTabuleiroVisual.criar({elemento:$});
  let consultaPedidosEmCurso=0,paginaPedidosReal=0,totalPedidosReal=null;
+ const rotulosPedidos={
+  AGUARDANDO_PAGAMENTO:['Aguardando pagamento','pendente'],
+  APROVADO_PARA_EXPEDICAO:['Aprovado para expedição','aprovado'],
+  CANCELADO:['Cancelado','cancelado']
+ };
+ const rotulosRemessas={
+  PENDENTE:'Aguardando encaminhamento',
+  INDETERMINADO:'Encaminhamento em verificação',
+  ENVIADO:'Encaminhado ao fornecedor',
+  AGUARDANDO_SEPARACAO:'Aguardando separação'
+ };
+ const formatoReais=new Intl.NumberFormat('pt-BR',{style:'currency',currency:'BRL'});
+ const formatoDataPedido=new Intl.DateTimeFormat('pt-BR',{
+  day:'2-digit',month:'short',year:'numeric'
+ });
+ function mensagemPedidos(painel,titulo,descricao){
+  painel.replaceChildren();
+  const bloco=document.createElement('div');
+  bloco.className='loop03-pedidos-estado';
+  const cab=document.createElement('strong');cab.textContent=titulo;
+  const nota=document.createElement('p');nota.textContent=descricao;
+  bloco.append(cab,nota);painel.append(bloco);
+ }
  async function carregarPedidos(pagina=paginaPedidosReal){
   if(!Number.isSafeInteger(pagina)||pagina<0)return;
   const token=++consultaPedidosEmCurso;
-  const painel=$('listaPedidos');painel.textContent='Consultando seu histórico...';
+  const painel=$('listaPedidos'),resumo=$('pedidosResumo');
+  const atualizar=$('atualizarPedidos');
+  atualizar.disabled=true;
+  resumo.textContent='Consultando seus pedidos...';
+  painel.textContent='Carregando histórico...';
   $('pedidosAnterior').disabled=true;$('pedidosProximo').disabled=true;
   try{
    const resposta=await fetch('/api/loja/pedidos?pagina='+pagina,{
@@ -732,48 +759,83 @@
       !Number.isSafeInteger(p.total)||p.total<0||
       typeof p.haAnterior!=='boolean'||typeof p.haMais!=='boolean')
     throw Error('PEDIDOS_ORIGEM_INVALIDA');
-   if(token!==consultaPedidosEmCurso)return;
-   paginaPedidosReal=pagina;
-   totalPedidosReal=p.total;
-   $('pedidosAnterior').disabled=!p.haAnterior;
-   $('pedidosProximo').disabled=!p.haMais;
-   painel.replaceChildren();
-   $('pedidosPaginacao').textContent='Página '+(pagina+1)+
-    ' · '+totalPedidosReal+' pedido(s) no histórico';
-   if(!d.pedidos.length){
-    painel.textContent='Nenhum pedido comercial nesta conta.';
-    return;
-   }
-   const real=new Intl.NumberFormat('pt-BR',{style:'currency',currency:'BRL'});
    for(const pedido of d.pedidos){
     if(typeof pedido.pedidoId!=='string'||typeof pedido.status!=='string'||
        !Array.isArray(pedido.remessas)||pedido.remessas.length>25)
      throw Error('PEDIDO_INVALIDO');
+   }
+   if(token!==consultaPedidosEmCurso)return;
+   paginaPedidosReal=pagina;totalPedidosReal=p.total;
+   $('pedidosAnterior').disabled=!p.haAnterior;
+   $('pedidosProximo').disabled=!p.haMais;
+   $('pedidosPaginacao').textContent='Página '+(pagina+1)+
+    ' · '+totalPedidosReal+' pedido(s) no histórico';
+   resumo.textContent=p.total===0?'Nenhum pedido registrado':
+    p.total===1?'1 pedido no histórico':p.total+' pedidos no histórico';
+   painel.replaceChildren();
+   if(!d.pedidos.length){
+    mensagemPedidos(painel,p.total===0?'Você ainda não tem pedidos':
+     'Nenhum pedido nesta página',p.total===0?
+     'Quando houver compras registradas na sua conta, elas aparecerão aqui.':
+     'Use Anterior para consultar as páginas anteriores.');
+    return;
+   }
+   for(const pedido of d.pedidos){
     const card=document.createElement('article');
-    card.className='pedido';
+    card.className='pedido loop03-pedido-cartao';
+    const cab=document.createElement('div');
+    cab.className='loop03-pedido-cabecalho';
     const titulo=document.createElement('h3');
     titulo.textContent='Pedido '+pedido.pedidoId;
-    const texto=document.createElement('p');
-    texto.className='subtexto';
-    const valor=Number.isSafeInteger(pedido.valorTotalCentavos)&&
+    const status=document.createElement('span');
+    const tipo=rotulosPedidos[pedido.status];
+    status.className='loop03-pedido-status loop03-pedido-'+(tipo?.[1]||'neutro');
+    status.textContent=tipo?.[0]||pedido.status.replaceAll('_',' ');
+    cab.append(titulo,status);
+    const informacoes=document.createElement('div');
+    informacoes.className='loop03-pedido-informacoes';
+    const valor=document.createElement('strong');
+    valor.textContent=Number.isSafeInteger(pedido.valorTotalCentavos)&&
      pedido.valorTotalCentavos>=0?
-     real.format(pedido.valorTotalCentavos/100):'Valor em revisão';
-    texto.textContent=pedido.status+' · '+valor;
-    card.append(titulo,texto);
-    for(const envio of pedido.remessas){
-     const linha=document.createElement('p');
-     linha.className='subtexto';
-     linha.textContent='Remessa '+String(envio.fornecedorId||'—')+
-      ' · '+String(envio.estado||'AGUARDANDO_SEPARACAO');
-     card.append(linha);
+     formatoReais.format(pedido.valorTotalCentavos/100):'Valor em revisão';
+    const data=document.createElement('small');
+    if(Number.isSafeInteger(pedido.criadoEm)&&pedido.criadoEm>0&&
+       !Number.isNaN(new Date(pedido.criadoEm).getTime()))
+     data.textContent='Pedido em '+formatoDataPedido.format(new Date(pedido.criadoEm));
+    else data.textContent='Data não informada';
+    informacoes.append(valor,data);
+    card.append(cab,informacoes);
+    if(pedido.remessas.length){
+     const detalhes=document.createElement('details');
+     detalhes.className='loop03-pedido-remessas';
+     const abrir=document.createElement('summary');
+     abrir.textContent='Ver '+pedido.remessas.length+
+      (pedido.remessas.length===1?' remessa':' remessas');
+     detalhes.append(abrir);
+     const lista=document.createElement('ul');
+     for(const envio of pedido.remessas){
+      const item=document.createElement('li');
+      const nome=document.createElement('strong');
+      nome.textContent='Fornecedor '+String(envio.fornecedorId||'—');
+      const estado=document.createElement('span');
+      estado.textContent=rotulosRemessas[envio.estado]||
+       String(envio.estado||'AGUARDANDO_SEPARACAO').replaceAll('_',' ');
+      item.append(nome,estado);
+      lista.append(item);
+     }
+     detalhes.append(lista);card.append(detalhes);
     }
     painel.append(card);
    }
   }catch{
    if(token!==consultaPedidosEmCurso)return;
-   painel.textContent='Histórico comercial indisponível. A consulta '+
-    'não realiza compras nem pagamentos.';
-   $('pedidosPaginacao').textContent='Consulta indisponível';
+   totalPedidosReal=null;
+   resumo.textContent='Consulta temporariamente indisponível';
+   $('pedidosPaginacao').textContent='Histórico indisponível';
+   mensagemPedidos(painel,'Não foi possível carregar os pedidos',
+    'Toque em Atualizar para tentar novamente. Seus pedidos não foram alterados.');
+  }finally{
+   if(token===consultaPedidosEmCurso)atualizar.disabled=false;
   }
  }
 
@@ -2195,7 +2257,8 @@
    botao.title=mostrar?'Ocultar senha':'Mostrar senha';
   });
  }
- $('atualizarPedidos')?.addEventListener('click',()=>void carregarPedidos());
+ $('atualizarPedidos').addEventListener('click',()=>void carregarPedidos());
+ $('pedidosVerPosicoes').addEventListener('click',()=>$('abaPosicoes').click());
  $('pedidosAnterior').addEventListener('click',()=>{
   if(paginaPedidosReal>0)void carregarPedidos(paginaPedidosReal-1);
  });

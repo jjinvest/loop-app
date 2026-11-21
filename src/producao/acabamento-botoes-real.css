@@ -285,3 +285,134 @@ body.loop03-modo-operador > #arquivoFotoPerfil{
 .cliente-integrado #conteudoPosicoes .loop03-cpf-termos-estado{
  color:#e8cf98;line-height:1.4
 }
+
+
+/* Meus Pedidos: acabamento local, sem interferencia nas outras telas. */
+.cliente-integrado #conteudoMeusPedidos .loop03-pedidos-cabecalho{
+ display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:12px
+}
+.cliente-integrado #conteudoMeusPedidos .loop03-pedidos-cabecalho h2{
+ margin:0 0 5px;color:#f5d48f
+}
+.cliente-integrado #conteudoMeusPedidos .loop03-pedidos-cabecalho .subtexto{
+ margin:0;color:#bfc6c5;font-size:.88rem;line-height:1.4
+}
+.cliente-integrado #conteudoMeusPedidos #atualizarPedidos{
+ flex:none;width:auto;min-height:42px;padding:9px 15px;
+ border:1px solid #a88e62;border-radius:12px;
+ background:linear-gradient(135deg,#342c43,#1c2731);
+ color:#f5dbac;font-weight:750
+}
+.cliente-integrado #conteudoMeusPedidos #atualizarPedidos:disabled{opacity:.6;cursor:wait}
+.cliente-integrado #conteudoMeusPedidos .loop03-pedidos-resumo{
+ display:inline-flex;max-width:100%;margin:6px 0 16px;
+ padding:8px 12px;border-radius:999px;background:#161e28;
+ border:1px solid #655d56;color:#eee0bc;font-size:.81rem;font-weight:750
+}
+.cliente-integrado #conteudoMeusPedidos .loop03-lista-pedidos{
+ display:grid;gap:12px;min-width:0
+}
+.cliente-integrado #conteudoMeusPedidos .loop03-pedidos-estado{
+ padding:22px 18px;border:1px solid #79654d;
+ border-radius:16px;background:linear-gradient(140deg,#21212b,#111b20);
+ color:#ece7de;min-width:0
+}
+.cliente-integrado #conteudoMeusPedidos .loop03-pedidos-estado strong{
+ display:block;font-size:1.03rem;color:#f3d39d
+}
+.cliente-integrado #conteudoMeusPedidos .loop03-pedidos-estado p{
+ margin:9px 0 0;font-size:.88rem;line-height:1.5;color:#c9c8d2
+}
+.cliente-integrado #conteudoMeusPedidos .loop03-pedido-cartao{
+ min-width:0;margin:0;padding:15px;
+ border:1px solid #9c8056;border-radius:16px;
+ background:linear-gradient(140deg,#211e31,#101a21);color:#f0ece8
+}
+.cliente-integrado #conteudoMeusPedidos .loop03-pedido-cabecalho{
+ display:flex;align-items:flex-start;justify-content:space-between;
+ flex-wrap:wrap;gap:9px
+}
+.cliente-integrado #conteudoMeusPedidos .loop03-pedido-cabecalho h3{
+ margin:0;min-width:0;overflow-wrap:anywhere;
+ font-size:.97rem;line-height:1.38;color:#ffe1a2
+}
+.cliente-integrado #conteudoMeusPedidos .loop03-pedido-status{
+ flex:none;display:inline-block;max-width:100%;
+ padding:6px 9px;border-radius:999px;font-size:.73rem;
+ font-weight:800;line-height:1.3;white-space:normal
+}
+.cliente-integrado #conteudoMeusPedidos .loop03-pedido-pendente{
+ background:#343020;color:#ffe6a3;border:1px solid #af8a4f
+}
+.cliente-integrado #conteudoMeusPedidos .loop03-pedido-aprovado{
+ background:#203b31;color:#bff7ce;border:1px solid #4d9366
+}
+.cliente-integrado #conteudoMeusPedidos .loop03-pedido-cancelado{
+ background:#40272d;color:#ffd0cb;border:1px solid #a76e6e
+}
+.cliente-integrado #conteudoMeusPedidos .loop03-pedido-neutro{
+ background:#2d3441;color:#e0e7f0;border:1px solid #626d7e
+}
+.cliente-integrado #conteudoMeusPedidos .loop03-pedido-informacoes{
+ display:flex;align-items:center;justify-content:space-between;
+ gap:10px;flex-wrap:wrap;margin-top:12px
+}
+.cliente-integrado #conteudoMeusPedidos .loop03-pedido-informacoes strong{
+ font-size:1.06rem;color:#f7e8c6
+}
+.cliente-integrado #conteudoMeusPedidos .loop03-pedido-informacoes small{
+ color:#bac6c4;font-size:.78rem
+}
+.cliente-integrado #conteudoMeusPedidos .loop03-pedido-remessas{
+ margin-top:13px;padding-top:12px;border-top:1px solid #72644c
+}
+.cliente-integrado #conteudoMeusPedidos .loop03-pedido-remessas summary{
+ cursor:pointer;color:#e7ca8e;font-size:.84rem;font-weight:750
+}
+.cliente-integrado #conteudoMeusPedidos .loop03-pedido-remessas ul{
+ display:grid;gap:8px;padding:11px 0 0;margin:0;list-style:none
+}
+.cliente-integrado #conteudoMeusPedidos .loop03-pedido-remessas li{
+ display:flex;align-items:start;justify-content:space-between;
+ gap:8px;flex-wrap:wrap;padding:9px;
+ border-radius:9px;background:#151d26;font-size:.79rem
+}
+.cliente-integrado #conteudoMeusPedidos .loop03-pedido-remessas li strong{overflow-wrap:anywhere}
+.cliente-integrado #conteudoMeusPedidos .loop03-pedido-remessas li span{color:#c5d4d1}
+.cliente-integrado #conteudoMeusPedidos .loop03-pedidos-paginacao{
+ display:grid;grid-template-columns:auto minmax(0,1fr) auto;
+ align-items:center;gap:10px;margin:15px 0
+}
+.cliente-integrado #conteudoMeusPedidos .loop03-pedidos-paginacao button{
+ width:auto;min-width:0;min-height:39px;margin:0;padding:8px 12px;
+ border-radius:10px;border:1px solid #9b825c;
+ background:#202331;color:#edd9b4;font-size:.81rem
+}
+.cliente-integrado #conteudoMeusPedidos .loop03-pedidos-paginacao button:disabled{
+ opacity:.48;cursor:not-allowed
+}
+.cliente-integrado #conteudoMeusPedidos #pedidosPaginacao{
+ min-width:0;text-align:center;overflow-wrap:anywhere;
+ color:#bdc9ca;font-size:.73rem;line-height:1.4
+}
+.cliente-integrado #conteudoMeusPedidos .loop03-pedidos-atalhos{
+ display:grid;grid-template-columns:repeat(2,minmax(0,1fr));
+ gap:10px;margin-top:16px
+}
+.cliente-integrado #conteudoMeusPedidos .loop03-pedidos-atalhos a,
+.cliente-integrado #conteudoMeusPedidos .loop03-pedidos-atalhos button{
+ display:flex;align-items:center;justify-content:center;
+ min-width:0;width:100%;min-height:44px;margin:0;padding:10px;
+ border:1px solid #a38a5e;border-radius:12px;
+ background:linear-gradient(125deg,#272237,#1a2930);
+ color:#f6ddb0;text-decoration:none;text-align:center;
+ font-size:.83rem;font-weight:800
+}
+@media(max-width:490px){
+ .cliente-integrado #conteudoMeusPedidos .loop03-pedidos-cabecalho{gap:8px}
+ .cliente-integrado #conteudoMeusPedidos #atualizarPedidos{padding:9px 10px}
+ .cliente-integrado #conteudoMeusPedidos .loop03-pedidos-paginacao{gap:5px}
+ .cliente-integrado #conteudoMeusPedidos .loop03-pedidos-paginacao button{
+  padding:8px 9px;font-size:.76rem
+ }
+}

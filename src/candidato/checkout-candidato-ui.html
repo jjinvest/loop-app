@@ -227,23 +227,27 @@
    </div>
   </section>
   <section class="painel" id="conteudoMeusPedidos" role="tabpanel" aria-labelledby="abaMeusPedidos" hidden>
-   <div class="linha"><h2>Meus Pedidos</h2></div>
-   <p class="subtexto">Acompanhe seus pedidos e o andamento de cada um.</p>
-   <div id="listaPedidos" aria-live="polite"><p>Nenhum pedido consultado.</p></div>
-   <nav class="linha" aria-label="Navegação do histórico de pedidos">
+   <div class="loop03-pedidos-cabecalho">
+    <div>
+     <h2>Meus Pedidos</h2>
+     <p class="subtexto">Consulte suas compras e acompanhe cada etapa.</p>
+    </div>
+    <button type="button" id="atualizarPedidos">Atualizar</button>
+   </div>
+   <p id="pedidosResumo" class="loop03-pedidos-resumo" role="status" aria-live="polite">Consultando histórico...</p>
+   <div id="listaPedidos" class="loop03-lista-pedidos" aria-live="polite"><p>Carregando pedidos...</p></div>
+   <nav class="loop03-pedidos-paginacao" aria-label="Navegação do histórico de pedidos">
     <button type="button" id="pedidosAnterior" disabled>Anterior</button>
-    <span id="pedidosPaginacao" role="status" aria-live="polite">Nenhum pedido carregado.</span>
+    <span id="pedidosPaginacao" role="status" aria-live="polite">Página não carregada</span>
     <button type="button" id="pedidosProximo" disabled>Próximos</button>
    </nav>
-    <h3>Minhas posições vinculadas a pedidos</h3>
-    <p class="subtexto">Consulte o andamento das posições relacionadas aos seus pedidos.</p>
-    <div id="minhaPreviaFilas" aria-live="polite"></div>
-    <h3>Solicitações anteriores</h3>
-    <p class="subtexto">Veja o histórico das solicitações registradas nesta conta.</p>
-    <div id="minhasPreAdesoes" aria-live="polite"></div>
-    <h3>Atualizações dos pedidos</h3>
-    <p class="subtexto">Mensagens sobre o andamento dos seus pedidos.</p>
-    <div id="comunicadosCliente" aria-live="polite"></div>
+   <div class="loop03-pedidos-atalhos" aria-label="Acessos relacionados aos pedidos">
+    <a href="/loja">Ir à AKITEMM</a>
+    <button type="button" id="pedidosVerPosicoes">Minhas Posições</button>
+   </div>
+   <div id="minhaPreviaFilas" aria-live="polite"></div>
+   <div id="minhasPreAdesoes" aria-live="polite"></div>
+   <div id="comunicadosCliente" aria-live="polite"></div>
   </section>
   <section class="painel" id="conteudoTabuleiro" role="tabpanel" aria-labelledby="abaTabuleiro" hidden>
    <div class="linha"><h2>Tabuleiro LOOP 3.0</h2><button type="button" id="atualizarTabuleiroIntegrado" aria-label="Próxima janela de luz; toque para atualizar o tabuleiro" title="Toque para atualizar o estado da catraca"><small id="tituloRelogioTabuleiro">PRÓXIMA LUZ · PREVISÃO</small><strong id="relogioTabuleiroIntegrado" role="timer" aria-label="Tempo até a próxima janela prevista de luz">--:--</strong><small id="estadoRelogioTabuleiro">Aguardando programação</small></button></div>

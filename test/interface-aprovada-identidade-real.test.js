@@ -137,6 +137,12 @@ test('interface aprovada e identidade real servidas da mesma origem protegida',a
  assert.match(script,/catracaClientePodeGirar/);
  assert.match(script,/LoopVisorCatraca\.criar/);
  assert.match(script,/carregarPedidos/);
+ assert.match(script,/rotulosPedidos/);
+ assert.match(html,/id="atualizarPedidos"/);
+ assert.match(html,/id="pedidosResumo"/);
+ assert.match(html,/id="pedidosVerPosicoes"/);
+ assert.doesNotMatch(html,/Solicitações anteriores/);
+ assert.doesNotMatch(html,/Atualizações dos pedidos/);
  assert.match(script,/\/api\/loja\/pedidos/);
  assert.match(script,/abaMeusPedidos/);
  assert.doesNotMatch(script,/termosCpfTexto'\)\.textContent='Versão'/);
