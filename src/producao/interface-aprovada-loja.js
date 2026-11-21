@@ -479,11 +479,42 @@
    tipo.className='tipo-loja-loop';
    tipo.textContent=p.tipo==='FISICO'?'Produto físico':'Produto';
    const titulo=document.createElement('h3');titulo.textContent=p.titulo;
+   const precoAtual=Number.isSafeInteger(p.precoAnunciadoCentavos)&&
+    p.precoAnunciadoCentavos>0?p.precoAnunciadoCentavos:null;
+   const precoOriginal=Number.isSafeInteger(p.precoOriginalAnunciadoCentavos)&&
+    p.precoOriginalAnunciadoCentavos>precoAtual?
+     p.precoOriginalAnunciadoCentavos:null;
+   const formatarReais=n=>new Intl.NumberFormat('pt-BR',{
+    style:'currency',currency:'BRL'}).format(n/100);
+   const painelPreco=document.createElement('div');
+   painelPreco.className='akitemm-preco-anuncio';
+   if(precoAtual!==null){
+    if(precoOriginal!==null){
+     const anterior=document.createElement('del');
+     anterior.textContent=formatarReais(precoOriginal);
+     painelPreco.append(anterior);
+    }
+    const valor=document.createElement('strong');
+    valor.textContent=formatarReais(precoAtual);
+    painelPreco.append(valor);
+    if(precoOriginal!==null){
+     const oferta=document.createElement('small');
+     oferta.textContent='Preço promocional';
+     painelPreco.append(oferta);
+    }
+   }
+   if(p.marcaVitrine){
+    const marca=document.createElement('small');
+    marca.textContent='Marca: '+p.marcaVitrine;
+    painelPreco.append(marca);
+   }
    const descricao=document.createElement('p');
    descricao.className='akitemm-descricao';
    descricao.textContent=p.descricao||'Informações comerciais em preparação.';
    const status=document.createElement('p');
-   status.textContent='Aguardando fornecedor homologado · compra indisponível';
+   status.textContent=p.origemCadastro==='PROPRIO'?
+    'Produto próprio · compra indisponível até ativação comercial':
+    'Aguardando integração comercial · compra indisponível';
    const botao=document.createElement('button');
    botao.type='button';botao.className='botao-secundario-loja';
    botao.textContent='Ver detalhes';
@@ -493,7 +524,9 @@
     for(const [etiqueta,valor] of [
      ['Produto: ',p.titulo],
      ['Descrição: ',p.descricao||'Em preparação'],
-     ['Situação: ','Sem preço, estoque ou frete homologados.'],
+     ['Categoria: ',p.categoriaVitrine||'Não informada'],
+     ['Preço anunciado: ',precoAtual!==null?formatarReais(precoAtual):'A informar'],
+     ['Situação: ','Frete e compra dependem da integração comercial.'],
      ['Compra: ','Indisponível até liberação comercial.']
     ]){
      const linha=document.createElement('p');
@@ -518,7 +551,7 @@
     detalhe.append(adicionar,retorno);
     $('akitemmVisualizacaoProduto').hidden=false;
    });
-   detalhes.append(tipo,titulo,descricao,status,botao);
+   detalhes.append(tipo,titulo,painelPreco,descricao,status,botao);
    card.append(imagem,detalhes);alvo.append(card);
   }
   $('akitemmResultadoProdutos').textContent=filtrada?
@@ -593,6 +626,14 @@
        !Number.isSafeInteger(p.criadoEm)||
        !Number.isSafeInteger(p.unidadesConfirmadas)||
        p.unidadesConfirmadas<0||
+       (p.precoAnunciadoCentavos!==undefined&&
+         p.precoAnunciadoCentavos!==null&&
+         (!Number.isSafeInteger(p.precoAnunciadoCentavos)||
+          p.precoAnunciadoCentavos<1))||
+       (p.precoOriginalAnunciadoCentavos!==undefined&&
+         p.precoOriginalAnunciadoCentavos!==null&&
+         (!Number.isSafeInteger(p.precoOriginalAnunciadoCentavos)||
+          p.precoOriginalAnunciadoCentavos<=p.precoAnunciadoCentavos))||
        !['CINZA','VERDE','DOURADO','ROXO'].includes(p.cor)))
     throw Error('CATALOGO_FORA_DO_CONTRATO');
    produtosPublicados=dados.produtos;
@@ -608,7 +649,7 @@
     node.removeAttribute('aria-disabled');
    }
    $('referenciaLojaLoop').textContent=ativo?
-    'Produtos publicados pela AKITEMM. Preços, estoque e compras dependem de homologação dos fornecedores.':
+    'Produtos da AKITEMM. Preços informados pelo operador são anúncios; frete e checkout aguardam a integração comercial.':
     'Nenhum produto publicado. Compras e pagamentos reais indisponíveis.';
    filtrar();
   }catch{
