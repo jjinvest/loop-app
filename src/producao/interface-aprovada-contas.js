@@ -1646,8 +1646,14 @@
     abertura:controle.janelaInicio,
     fechamento:controle.janelaFim,
     agoraServidorMs:controle.agoraServidorMs,
+    // Somente o operador, usando a programação salva e autenticada,
+    // acompanha a iluminação por horário, independente do livro de vendas.
+    // Eventos reais continuam separados no mesmo tabuleiro.
+    luzesDoRelogioOperador:true,
+    eventosReaisNoCiclo:d.tabuleiro.eventosNoCiclo,
     metaLotes:metaAtiva?{
      ativa:true,quantidade:controle.metaCentrosDia,
+     dataAlvo:controle.metaDataAlvo,
      intervaloLuzSegundos:controle.intervaloLuzSegundos,
      proximaLuzPrevistaEmMs:controle.proximaLuzPrevistaEmMs,
      exigeCaixaReal:true
