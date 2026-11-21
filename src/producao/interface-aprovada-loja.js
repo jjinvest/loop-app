@@ -12,14 +12,179 @@
  const destinoCadastro=()=>'/escritorio?origem=loja&cadastro=1'+
   (indicadorNick?'&ref='+encodeURIComponent(indicadorNick):'');
  const solicitarCadastro=()=>location.assign(destinoCadastro());
- let visitante=true,operadorAtivo=false;
- // A navegacao na vitrine publica independe de login. Acao privada pede conta.
- $('akitemmAbrirConta')?.addEventListener('click',()=>{
-  if(visitante)solicitarCadastro();
+ let visitante=true,operadorAtivo=false,clienteNick=null;
+ const pegar=async(url)=>{
+  const r=await fetch(url,{credentials:'same-origin',cache:'no-store'});
+  if(!r.ok)throw Error('CONSULTA_INDISPONIVEL');
+  return r.json();
+ };
+ function fecharMenus(){
+  for(const [id,botao] of [['akitemmDadosConta','akitemmAbrirConta'],
+   ['akitemmNotificacoes','akitemmSino']]){
+   $(id).hidden=true;$(botao).setAttribute('aria-expanded','false');
+  }
+ }
+ function alternarMenu(id,botao){
+  const aberto=$(id).hidden;
+  fecharMenus();$(id).hidden=!aberto;
+  $(botao).setAttribute('aria-expanded',String(aberto));
+  return aberto;
+ }
+ async function dadosConta(){
+  const alvo=$('akitemmDadosContaConteudo');
+  if(operadorAtivo){
+   alvo.textContent='Sessão do operador; os dados dos clientes estão protegidos.';
+   $('akitemmEditarConta').href='/administrador';
+   $('akitemmEditarConta').textContent='Central do operador';
+   return;
+  }
+  alvo.textContent='Consultando sua conta...';
+  try{
+   const dados=await pegar('/api/contas/meus-dados');
+   if(typeof dados.nick!=='string'||dados.nick!==clienteNick||
+      typeof dados.nome!=='string'||typeof dados.email!=='string')
+    throw Error('IDENTIDADE_DIVERGENTE');
+   if($('akitemmDadosConta').hidden)return;
+   alvo.textContent='Nome: '+dados.nome+'\nNick: @'+
+    nickVisivel(dados.nick)+'\nE-mail: '+dados.email;
+   $('akitemmEditarConta').href='/minha-conta';
+  }catch{
+   if(!$('akitemmDadosConta').hidden)
+    alvo.textContent='Dados indisponíveis. Acesse seu escritório para consultar a conta.';
+  }
+ }
+ async function avisosDaConta(){
+  const alvo=$('akitemmNotificacoesConteudo');
+  if(operadorAtivo){
+   alvo.textContent='Avisos administrativos: consulte a central do operador.';
+   return;
+  }
+  if(visitante){
+   alvo.textContent='Entre na conta para consultar avisos e seus pedidos.';
+   return;
+  }
+  alvo.textContent='Consultando seus avisos...';
+  try{
+   const me=await pegar('/api/contas/me');
+   if(me.nick!==clienteNick)throw Error('TITULAR_DIVERGENTE');
+   const email=me.emailVerificado===true?'E-mail confirmado.':
+    'Confirmação de e-mail pendente.';
+   const pedidos=await pegar('/api/loja/pedidos');
+   if(pedidos.fonte!=='PEDIDOS_COMERCIAIS_DO_TITULAR'||
+      !Number.isSafeInteger(pedidos.paginacao?.total))
+    throw Error('HISTORICO_INVALIDO');
+   alvo.textContent=email+' '+(pedidos.paginacao.total===0?
+    'Nenhum pedido registrado na conta.':
+    pedidos.paginacao.total+' pedido(s) no histórico. Consulte Meus pedidos.');
+  }catch{
+   alvo.textContent='Avisos indisponíveis nesta consulta. Seus dados não foram alterados.';
+  }
+ }
+ $('akitemmAbrirConta').addEventListener('click',()=>{
+  if(visitante&&!operadorAtivo){solicitarCadastro();return;}
+  if(alternarMenu('akitemmDadosConta','akitemmAbrirConta'))
+   void dadosConta();
  });
- $('akitemmAtualizarMeusCursos')?.addEventListener('click',()=>{
-  if(visitante)solicitarCadastro();
+ $('akitemmSino').addEventListener('click',()=>{
+  if(alternarMenu('akitemmNotificacoes','akitemmSino'))
+   void avisosDaConta();
  });
+ document.addEventListener('click',e=>{
+  if(!e.target.closest('#akitemmAbrirConta,#akitemmSino,'+
+     '#akitemmDadosConta,#akitemmNotificacoes'))fecharMenus();
+ });
+ document.addEventListener('keydown',e=>{
+  if(e.key==='Escape')fecharMenus();
+ });
+ const avisarCursos=texto=>{
+  const lista=$('akitemmListaMeusCursos');
+  lista.replaceChildren();
+  const li=document.createElement('li');li.textContent=texto;lista.append(li);
+ };
+ $('akitemmAtualizarMeusCursos').addEventListener('click',async()=>{
+  if(visitante&&!operadorAtivo){solicitarCadastro();return;}
+  if(operadorAtivo){
+   avisarCursos('O operador não é um comprador. Entre como cliente.');
+   return;
+  }
+  const botao=$('akitemmAtualizarMeusCursos');
+  botao.disabled=true;avisarCursos('Consultando a biblioteca...');
+  try{
+   const estado=await pegar('/api/loja/estado');
+   const pedidos=await pegar('/api/loja/pedidos');
+   if(estado.contaUnica!==true||estado.checkoutReal!==false||
+      pedidos.fonte!=='PEDIDOS_COMERCIAIS_DO_TITULAR')
+    throw Error('BIBLIOTECA_INVALIDA');
+   avisarCursos('Os pedidos estão vinculados à sua conta. Arquivos digitais só serão liberados após compra e pagamento confirmados; nenhuma entrega digital está habilitada neste momento.');
+  }catch{
+   avisarCursos('Biblioteca indisponível nesta consulta. Nenhum arquivo foi liberado.');
+  }finally{botao.disabled=false;}
+ });
+ function prepararLinkPessoal(){
+  const input=$('enderecoDivulgarLojaLoop');
+  const btn=$('copiarDivulgarLojaLoop');
+  const valido=!visitante&&!operadorAtivo&&
+   typeof clienteNick==='string'&&/^[A-Za-z]{1,12}$/.test(clienteNick);
+  input.value=valido?location.origin+'/loja/'+encodeURIComponent(clienteNick):'';
+  btn.disabled=!valido;btn.setAttribute('aria-disabled',String(!valido));
+  $('statusDivulgarLojaLoop').textContent=valido?
+   'Link pessoal ativo para convites e cadastro de indicados.':
+   'Entre como cliente para compartilhar seu link pessoal.';
+ }
+ $('copiarDivulgarLojaLoop').addEventListener('click',async()=>{
+  const input=$('enderecoDivulgarLojaLoop');
+  if(!input.value||visitante||operadorAtivo)return;
+  try{
+   if(!navigator.clipboard?.writeText)throw Error('SEM_CLIPBOARD');
+   await navigator.clipboard.writeText(input.value);
+   $('statusDivulgarLojaLoop').textContent='Link pessoal copiado.';
+  }catch{
+   input.focus();input.select();
+   $('statusDivulgarLojaLoop').textContent=
+    'Link selecionado. Use Copiar no seu dispositivo.';
+  }
+ });
+ document.querySelectorAll('[data-akitemm-informacao]').forEach(botao=>{
+  botao.addEventListener('click',async()=>{
+   const tipo=botao.dataset.akitemmInformacao;
+   if(tipo==='contato'){
+    const suporte=$('akitemmSuporte');
+    suporte.open=true;suporte.scrollIntoView({block:'center'});
+    return;
+   }
+   const nomes={sobre:'Sobre a AKITEMM',privacidade:'Política de Privacidade',
+    trocas:'Trocas e Devoluções'};
+   if(!Object.hasOwn(nomes,tipo))return;
+   const modal=$('akitemmModalInformacao');
+   $('akitemmInformacaoTitulo').textContent=nomes[tipo];
+   const corpo=$('akitemmInformacaoConteudo');
+   corpo.replaceChildren();
+   const p=document.createElement('p');
+   p.textContent=tipo==='sobre'?
+    'AKITEMM · Loja Oficial conectada ao Escritório LOOP 3.0. Produtos são publicados na vitrine. Compras e entregas serão habilitadas após as integrações externas.':
+    tipo==='trocas'?
+    'A política comercial de trocas e devoluções ainda não foi publicada. O checkout continua bloqueado até a disponibilização das condições oficiais.':
+    'Consultando a política de privacidade vigente...';
+   corpo.append(p);modal.showModal();
+   if(tipo!=='privacidade')return;
+   try{
+    const docs=await pegar('/api/contas/documentos-leitura');
+    const d=docs.privacidade;
+    if(docs.financeiroReal!==false||
+       typeof d?.texto!=='string'||d.texto.length<100||
+       typeof d.versao!=='string'||!/^[a-f0-9]{64}$/.test(d.hash||''))
+     throw Error('DOCUMENTOS_INVALIDOS');
+    if(modal.open){
+     p.style.whiteSpace='pre-wrap';
+     p.textContent='Versão '+d.versao+'\n'+d.texto;
+    }
+   }catch{
+    if(modal.open)
+     p.textContent='Política indisponível nesta consulta. Consulte os documentos no Escritório.';
+   }
+  });
+ });
+ prepararLinkPessoal();
  // Somente o link do rodapé leva à administração protegida,
  // e apenas quando a sessão de operador é comprovada.
  async function atualizarAtalhoOperadorReal(){
@@ -395,7 +560,8 @@
   });
   const semCliente=res.status===401||operadorAtivo;
   if(semCliente){
-   visitante=!operadorAtivo;
+   visitante=!operadorAtivo;clienteNick=null;
+   prepararLinkPessoal();
    if($('akitemmNomeTitular'))
     $('akitemmNomeTitular').textContent=visitante?'Visitante':'OPERADOR';
    if(visitante){
@@ -413,6 +579,7 @@
    const me=await res.json();
    if(typeof me.nick!=='string'||me.financeiroReal!==false)
     throw Error('IDENTIDADE_INCOMPATIVEL');
+   clienteNick=me.nick;prepararLinkPessoal();
    if($('akitemmNomeTitular'))$('akitemmNomeTitular').textContent=nickVisivel(me.nick);
    informar('AKITEMM: loja conectada à sua conta LOOP. Vendas reais ainda não liberadas.');
   }
@@ -445,7 +612,7 @@
  }catch{
   // A falha de identidade nao fecha a vitrine: dados privados seguem
   // inacessiveis e so a leitura publica de produtos permanece permitida.
-  visitante=true;
+  visitante=true;clienteNick=null;prepararLinkPessoal();
   informar('AKITEMM · vitrine pública disponível. Entre na sua conta para ações pessoais.');
   if($('conteudoLojaLoop'))$('conteudoLojaLoop').hidden=false;
   await atualizarCatalogo();
