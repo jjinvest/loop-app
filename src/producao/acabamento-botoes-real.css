@@ -182,6 +182,53 @@ body.loop03-modo-operador #loop03AlterarFotoTopo:disabled{
  }
 }
 
+
+/* Registro da agenda: visivel SOMENTE no tabuleiro do operador. */
+body.loop03-modo-operador #loopOperadorAgendaConfirmada{
+ white-space:pre-line;box-sizing:border-box;
+ margin:12px 0;padding:12px 14px;border:1px solid #bd9a58;
+ border-radius:12px;background:#242634;color:#f8e9c8;
+ font-size:clamp(.86rem,2.9vw,1rem);font-weight:650;line-height:1.5;
+ overflow-wrap:anywhere;
+}
+/* Horario do operador no Android: sem botoes nativos cortados. */
+#loopOperadorCatracaDialog .loop-operador-horario-linha{
+ display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px;
+ align-items:stretch;
+}
+#loopOperadorCatracaDialog .loop-operador-horario-linha input{
+ min-width:0;
+}
+#loopOperadorCatracaDialog .loop-operador-horario-linha button{
+ min-height:44px;padding:8px 12px;font-size:.86rem;
+}
+#loopOperadorHorarioDialog[open]{
+ box-sizing:border-box;display:grid;grid-template-rows:auto auto auto;
+ gap:20px;width:min(calc(100vw - 28px),410px);max-width:calc(100vw - 28px);
+ max-height:85dvh;padding:20px 15px 16px;border:1px solid #c5a15e;
+ border-radius:15px;background:#151921;color:#fff;
+}
+#loopOperadorHorarioDialog::backdrop{background:#000c}
+#loopOperadorHorarioDialog h2{margin:0;color:#dfbf76;font-size:1.1rem}
+#loopOperadorHorarioDialog .loop-operador-horario-seletores{
+ display:flex;justify-content:center;align-items:center;gap:10px;
+ font-size:1.5rem;
+}
+#loopOperadorHorarioDialog select{
+ width:min(40%,118px);min-height:56px;padding:8px 10px;
+ border-radius:8px;border:1px solid #a98c59;background:#272e39;
+ color:white;font-size:1.35rem;text-align:center;
+}
+#loopOperadorHorarioDialog .loop-operador-horario-acoes{
+ display:flex;align-items:center;justify-content:flex-start;gap:7px;
+ width:100%;min-width:0;
+}
+#loopOperadorHorarioDialog .loop-operador-horario-acoes button{
+ flex:1 1 0;min-width:0;min-height:46px;padding:8px 5px;
+ background:#c5a15e;color:#171717;border:0;border-radius:8px;
+ font-weight:700;font-size:clamp(.78rem,3.4vw,1rem);
+}
+
 /* Acabamento autorizado do cadastro REAL, idêntico nos links base e /escritorio/NICK:
    manter o LOOP dourado e restaurar somente "3.0" prateado. */
 body:not(.loop03-logado) > .cabecalho .marca.loop03-marca-entrada .loop03-marca-versao{

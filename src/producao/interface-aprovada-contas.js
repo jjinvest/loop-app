@@ -143,6 +143,7 @@
   }
  }
  function mostrarLogin(t){
+  limparAgendaOperador();
   posicionarCampoFotoPerfil(false);
   tela=t;modoOperadorAtual=false;
   document.body.classList.remove('loop03-modo-operador');
@@ -471,6 +472,7 @@
   void atualizarAtalhoOperadorReal();
  }
  function painelConta(s){
+  limparAgendaOperador();
   posicionarCampoFotoPerfil(false);
   modoOperadorAtual=false;
   document.body.classList.remove('loop03-modo-operador');
@@ -1441,6 +1443,94 @@
    avisarFalhaFotoReal('Não foi possível salvar a foto: '+explicarFalhaFotoReal(e));
   }finally{botao.disabled=false;}
  }
+
+ // Fonte exclusiva do operador: agenda ja persistida no SQLite real.
+ function dataAgendaOperador(d){
+  return /^\d{4}-\d{2}-\d{2}$/.test(d||'')?
+   d.slice(8,10)+'/'+d.slice(5,7)+'/'+d.slice(0,4):'todos os dias';
+ }
+ function textoAgendaOperador(d){
+  if(!d||!Number.isSafeInteger(d.metaCentrosDia))return 'Agenda não disponível.';
+  const n=d.metaCentrosDia,futura=!!d.metaDataAlvo&&d.metaDataAlvo>d.hoje;
+  const anterior=!!d.metaDataAlvo&&d.metaDataAlvo<d.hoje;
+  const situacao=d.modo==='PAUSADA'?'PAUSADA':
+   d.modo==='MANUAL'?'MODO MANUAL':n===0?'SEM META':
+   anterior?'DATA ENCERRADA':futura?'AGENDADA — AGUARDANDO DATA':
+   d.horarioPermitido?'DENTRO DO TURNO':'AGENDADA — AGUARDANDO HORÁRIO';
+  return situacao+'\n'+dataAgendaOperador(d.metaDataAlvo)+' · '+
+   d.janelaInicio+'–'+d.janelaFim+'\nMeta: '+n+' centros · '+(n*6)+
+   ' luzes.\n'+(d.autorizacaoFinanceiraDosGiros===true?
+    'Liberação condicionada ao caixa real comprovado.':
+    'CAIXA: pagamentos e giros financeiros ainda não autorizados.');
+ }
+ function limparAgendaOperador(){
+  document.getElementById('loopOperadorAgendaConfirmada')?.remove();
+ }
+ function mostrarAgendaOperador(d){
+  if(!modoOperadorAtual)return;
+  const alvo=$('estadoRelogioTabuleiro');
+  if(!alvo)return;
+  let aviso=$('loopOperadorAgendaConfirmada');
+  if(!aviso){
+   aviso=document.createElement('section');
+   aviso.id='loopOperadorAgendaConfirmada';
+   aviso.setAttribute('role','status');
+   aviso.setAttribute('aria-label','Programação exclusiva do operador');
+   alvo.insertAdjacentElement('afterend',aviso);
+  }
+  aviso.textContent=textoAgendaOperador(d);
+ }
+ // Seletor próprio: os três botões sempre cabem no Android.
+ function criarCampoHorarioOperador(form,descricao,valor){
+  const label=document.createElement('label');
+  label.textContent=descricao;
+  const linha=document.createElement('div');linha.className='loop-operador-horario-linha';
+  const input=document.createElement('input');
+  input.type='text';input.inputMode='numeric';input.maxLength=5;
+  input.placeholder='HH:MM';input.value=valor||'';
+  input.setAttribute('aria-label',descricao+' HH:MM');
+  const abrir=document.createElement('button');
+  abrir.type='button';abrir.textContent='Escolher';
+  abrir.setAttribute('aria-label','Escolher '+descricao.toLowerCase());
+  linha.append(input,abrir);label.append(linha);form.append(label);
+  abrir.addEventListener('click',()=>{
+   const janela=document.createElement('dialog');
+   janela.id='loopOperadorHorarioDialog';
+   const titulo=document.createElement('h2');titulo.textContent='Selecionar '+descricao;
+   const controles=document.createElement('div');
+   controles.className='loop-operador-horario-seletores';
+   const hora=document.createElement('select'),minuto=document.createElement('select');
+   hora.setAttribute('aria-label','Hora');minuto.setAttribute('aria-label','Minutos');
+   for(let n=0;n<24;n++){
+    const op=document.createElement('option');
+    op.value=String(n).padStart(2,'0');op.textContent=op.value;hora.append(op);
+   }
+   for(let n=0;n<60;n++){
+    const op=document.createElement('option');
+    op.value=String(n).padStart(2,'0');op.textContent=op.value;minuto.append(op);
+   }
+   const atual=/^(?:[01]\d|2[0-3]):[0-5]\d$/.test(input.value)?input.value:'09:00';
+   hora.value=atual.slice(0,2);minuto.value=atual.slice(3);
+   const sep=document.createElement('span');sep.textContent=':';
+   controles.append(hora,sep,minuto);
+   const rodape=document.createElement('div');rodape.className='loop-operador-horario-acoes';
+   const comando=(nome,acao)=>{
+    const b=document.createElement('button');b.type='button';b.textContent=nome;
+    b.addEventListener('click',acao);rodape.append(b);
+   };
+   const definir=valor=>{
+    input.value=valor;input.dispatchEvent(new Event('input',{bubbles:true}));
+    janela.close();
+   };
+   comando('Limpar',()=>definir(''));
+   comando('Cancelar',()=>janela.close());
+   comando('Definir',()=>definir(hora.value+':'+minuto.value));
+   janela.addEventListener('close',()=>janela.remove(),{once:true});
+   janela.append(titulo,controles,rodape);
+   document.body.append(janela);janela.showModal();
+  });
+  return input;
+ }
  // Mesmo painel de configuracao do relogio aprovado: abre sobre o Tabuleiro,
  // usa a politica real existente e nunca executa giros ou cria saldo.
  async function abrirControleRelogioOperador(){
@@ -1507,8 +1597,8 @@
     ['PAUSADA','Parada'],['MANUAL','Manual'],
     ['AUTOMATICA','Agendada']
    ]);
-   const inicio=criarCampo('Abertura','time',d.janelaInicio);
-   const fim=criarCampo('Fechamento','time',d.janelaFim);
+   const inicio=criarCampoHorarioOperador(form,'Abertura',d.janelaInicio);
+   const fim=criarCampoHorarioOperador(form,'Fechamento',d.janelaFim);
    const limite=criarCampo('Limite de segurança de giros (vazio = livre)',
     'number',d.limiteDiario);
    limite.min='1';limite.max='1000000';
@@ -1537,7 +1627,13 @@
     }
     const segundos=Math.max(1,Math.round(duracao*60/(n*6)));
     const porCentro=Math.max(1,Math.round(duracao*60/n));
-    let mensagem=n+' centros × 6 = '+(n*6)+' luzes\n'+
+    const gravado=modo.value===d.modo&&inicio.value===d.janelaInicio&&
+     fim.value===d.janelaFim&&n===d.metaCentrosDia&&
+     (data.value||null)===(d.metaDataAlvo||null)&&
+     (limite.value.trim()===''?null:Number(limite.value))===(d.limiteDiario??null);
+    let mensagem=(gravado&&d.revisao>1?'✓ PROGRAMAÇÃO GRAVADA NO SERVIDOR':'PRÉVIA — não salva')+'\n'+
+     'Data: '+dataAgendaOperador(data.value||null)+'\n'+
+     n+' centros × 6 = '+(n*6)+' luzes\n'+
      'Cada luz: '+duracaoBonita(segundos)+
      ' · Cada centro: '+duracaoBonita(porCentro)+
      '\nTurno: '+inicio.value+'–'+fim.value+' ('+duracao+' min)';
@@ -1556,6 +1652,8 @@
        'pt-BR',{timeZone:'America/Sao_Paulo',hour:'2-digit',
         minute:'2-digit',second:'2-digit'});
       mensagem+='\nPróxima luz prevista: '+horario+' (Brasília).';
+     }else if(data.value&&data.value>d.hoje){
+      mensagem+='\nInício previsto: '+dataAgendaOperador(data.value)+' às '+inicio.value+' (Brasília).';
      }else{
       mensagem+='\nPróxima luz prevista: após salvar, dentro do turno.';
      }
@@ -1609,8 +1707,11 @@
      d.agoraServidorMs=atual.agoraServidorMs;
      d.proximaLuzPrevistaEmMs=atual.proximaLuzPrevistaEmMs;
      conferir();
-     status.textContent='Programação salva e confirmada. '+
-      'Giros exigem saldo real comprovado.';
+     mostrarAgendaOperador(atual);
+     status.textContent='Programação salva e confirmada no servidor: '+
+      dataAgendaOperador(atual.metaDataAlvo)+' · '+atual.janelaInicio+'–'+
+      atual.janelaFim+' · '+atual.metaCentrosDia+' centros ('+
+      (atual.metaCentrosDia*6)+' luzes). Pagamentos dependem do caixa.';
      await carregarTabuleiroOperador();
     }catch(e){status.textContent='Alteração não realizada: '+e.message;}
     finally{salvar.disabled=false;}
@@ -1683,6 +1784,7 @@
     }:null
    });
    visorCatraca.observar(d.catraca.giros,d.tabuleiro.eventosNoCiclo);
+   mostrarAgendaOperador(controle);
    $('motorContadorEventos').textContent=
     d.tabuleiro.eventosNoCiclo+' de 6 eventos neste ciclo';
    $('loop03TotalIntegrado').textContent='—';
@@ -1694,6 +1796,7 @@
    $('estadoTabuleiroIntegrado').hidden=true;
   }catch{
    if(!modoOperadorAtual)return;
+   limparAgendaOperador();
    $('estadoTabuleiroIntegrado').textContent=
     'Tabuleiro administrativo indisponível. Consulte a central do operador.';
    $('estadoTabuleiroIntegrado').hidden=false;

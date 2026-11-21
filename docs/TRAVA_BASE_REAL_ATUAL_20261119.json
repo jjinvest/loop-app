@@ -15,7 +15,7 @@
       "nota": "Os tres arquivos do Dockerfile.public-real sao iguais no commit da identidade real"
     }
   },
-  "politica": "Qualquer mudanca, adicao ou remocao no REAL exige aprovacao explicita do proprietario, testes, hash atualizado no manifesto E ancora Railway correspondente; nao reverter ou reconstruir telas historicas; ajuste de fotos cliente/operador solicitado em 21/11/2026, sem alteracao de molduras ou regra do motor",
+  "politica": "Qualquer mudanca, adicao ou remocao no REAL exige aprovacao explicita do proprietario, testes, hash atualizado no manifesto E ancora Railway correspondente; nao reverter ou reconstruir telas historicas; ajuste de fotos cliente/operador solicitado em 21/11/2026, sem alteracao de molduras ou regra do motor; ajuste de agenda futura visivel e horario Android apenas para operador solicitado em 21/11/2026, sem modificacao do motor financeiro",
   "algoritmo": "git-blob-sha1",
   "arquivos": [
     {
@@ -424,7 +424,7 @@
     },
     {
       "path": "scripts/validar-identidade-real-navegador.js",
-      "sha": "f0a1357a1374a24da9ece1e6d7fb0bd7ab58d86c"
+      "sha": "9dde0c63c2d7da9dd3741c698404b7d610273c8e"
     },
     {
       "path": "scripts/validar-jornada-loja-cores-browser.js",
@@ -1264,7 +1264,7 @@
     },
     {
       "path": "src/producao/acabamento-botoes-real.css",
-      "sha": "4eac68159b823caa6ac8258e7d6877bd83d2ce74"
+      "sha": "5a306b3882d44238fbae8f7a9b38aeda4861c3a4"
     },
     {
       "path": "src/producao/aceite-posicao-azul-ensaio-sqlite.js",
@@ -1412,7 +1412,7 @@
     },
     {
       "path": "src/producao/interface-aprovada-contas.js",
-      "sha": "626611b180b52078a9021771d58ad38b14a129dd"
+      "sha": "718797c24ff99b29ba7d309d902212022602eeef"
     },
     {
       "path": "src/producao/interface-aprovada-loja.js",
@@ -2836,7 +2836,7 @@
     },
     {
       "path": "test/luzes-relogio-operador-com-motor-preservado.test.js",
-      "sha": "22c278bbb4d3deaa4917dc5edbff3990e4f00647"
+      "sha": "b8164ed85209c68e6797c04e673d50b963787360"
     },
     {
       "path": "test/manutencao-comercial-online.test.js",
