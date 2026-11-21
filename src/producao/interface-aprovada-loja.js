@@ -619,6 +619,10 @@
  }
  $('atualizarCatalogoLoja').addEventListener('click',
   ()=>void atualizarCatalogo());
+ // Atualização interna direta do operador: funciona mesmo durante
+ // o estado disabled do botão visível usado para recarregar a loja.
+ window.addEventListener('akitemm:catalogo-atualizar',
+  ()=>void atualizarCatalogo());
 
  const progresso=$('progressoMinimoLoop')?.closest('.akitemm-progresso');
  if(progresso)progresso.hidden=true;
