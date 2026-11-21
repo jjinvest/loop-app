@@ -458,6 +458,7 @@
      'produto-loja-loop-dourado':p.cor==='VERDE'?
       'produto-loja-loop-elegivel':'produto-loja-loop-nao-elegivel');
    card.dataset.produtoId=p.produtoId;
+   card.dataset.akitemmOrdem=String(p.posicaoVitrine);
    card.tabIndex=0;card.setAttribute('role','group');
    card.setAttribute('aria-label','Produto '+p.titulo);
    const imagem=document.createElement('div');
