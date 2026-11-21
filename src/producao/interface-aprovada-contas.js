@@ -1487,6 +1487,16 @@
    const r=await fetch('/api/admin/loop/controle',{
     credentials:'same-origin',cache:'no-store'
    });
+   // Sessao do operador pode expirar com a pagina ainda aberta.
+   // Nao apresentar a catraca como defeituosa; pedir novo login seguro.
+   if(r.status===401){
+    modal.close();
+    mostrarLogin('login');
+    $('login').value='OPERADOR';
+    const aviso=$('erroLogin');
+    if(aviso)aviso.textContent='Sessão do operador encerrada. Entre novamente para controlar a catraca.';
+    return;
+   }
    const d=await r.json().catch(()=>({}));
    if(!r.ok||!Number.isSafeInteger(d.revisao)||
       d.politicaOperacionalConfiguravel!==true||
