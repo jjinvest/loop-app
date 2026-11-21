@@ -58,12 +58,19 @@
   function sincronizarLuzesVisuais(estado){
    const valido=estado!==null;
    const chave=valido?estado.diaTurno+':'+estado.passadas:null;
-   // Mesmo LED do tabuleiro; classe própria distingue simulação do evento real.
+   // Usa exatamente o brilho aprovado, sem alterar o CSS do tabuleiro.
+   // A classe separada e o contador distinguem relógio de eventos confirmados.
+   const operador=agendaVisorCatraca?.luzesDoRelogioOperador===true;
+   const eventos=operador&&Number.isSafeInteger(
+    agendaVisorCatraca.eventosReaisNoCiclo)?
+    agendaVisorCatraca.eventosReaisNoCiclo:0;
    for(let i=1;i<=6;i++){
     const bola=$('motorBolinha'+i);
     if(!bola)continue;
-    const ligada=valido&&i<=estado.luzes;
+    const ligada=operador&&valido&&i<=estado.luzes;
     bola.classList.toggle('loop03-relogio-luz-visual',ligada);
+    if(operador)bola.classList.toggle('loop03-marcador-aceso',
+     ligada||i<=eventos);
     if(ligada&&chave!==ultimaJanelaVisual&&
        i===estado.luzes&&ultimaJanelaVisual!==null&&
        !document.hidden&&$('conteudoTabuleiro')?.hidden===false){
