@@ -221,3 +221,60 @@ jobs:
           grep -q 'CARGA_CONTINUA_PROVA_COMPLETA={"meta":1000000,' /tmp/loop-carga-continuada.log
           echo 'LOOP_CARGA_CONTINUA_100K_E_1M=COMPROVADA'
           echo 'LIMITE=NAO_PROVA_1M_POSICOES_NEM_USUARIOS_SIMULTANEOS'
+
+  expansao-relacional-continua:
+    if: >-
+      github.event_name == 'pull_request' &&
+      github.head_ref == 'feature/expansao-cursores-posicoes-ciclos-20261121' &&
+      github.event.pull_request.head.repo.full_name == 'jjinvest/loop-app'
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    permissions:
+      contents: read
+    env:
+      NODE_ENV: test
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+      - name: Testar 1M posicoes indexadas e 100K ciclos com 600K eventos
+        shell: bash
+        run: |
+          set -euo pipefail
+          node scripts/provar-expansao-posicoes-ciclos-relacionais.js | tee /tmp/loop-expansao.log
+          grep -q 'PROJECAO_POSICOES_ETAPA={"acumuladas":1000000,' /tmp/loop-expansao.log
+          grep -q 'PROJECAO_CICLOS_ETAPA={"acumulados":100000,' /tmp/loop-expansao.log
+          grep -q 'EXPANSAO_RELACIONAL_RESULTADO_FINAL={"posicoesSinteticasIndexadas":1000000,' /tmp/loop-expansao.log
+          grep -q 'EXPANSAO_RELACIONAL_CARGA_CONTINUA=COMPROVADA' /tmp/loop-expansao.log
+          echo 'LOOP_EXPANSAO_RELACIONAL_1M_POSICOES_100K_CICLOS=COMPROVADA'
+          echo 'LIMITE=NAO_PROVA_1M_POSICOES_ATIVAS_NO_MOTOR'
+
+  expansao-rede-um-milhao:
+    if: >-
+      github.event_name == 'pull_request' &&
+      github.head_ref == 'feature/expansao-cursores-posicoes-ciclos-20261121' &&
+      github.event.pull_request.head.repo.full_name == 'jjinvest/loop-app'
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    permissions:
+      contents: read
+    env:
+      NODE_ENV: test
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+      - name: Conferir cursor autenticado e tempo das consultas apos 1M
+        shell: bash
+        run: |
+          set -euo pipefail
+          node scripts/provar-carga-continua-100k-1m-loop.js | tee /tmp/loop-cursor-milhao.log
+          grep -q 'REDE_UM_MILHAO_CURSOR={"registros":1000001,' /tmp/loop-cursor-milhao.log
+          grep -q 'CARGA_CONTINUA_PROVA_COMPLETA={"meta":1000000,' /tmp/loop-cursor-milhao.log
+          echo 'LOOP_REDE_UM_MILHAO_CURSOR=COMPROVADO'
