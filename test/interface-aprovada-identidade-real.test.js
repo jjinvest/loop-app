@@ -55,7 +55,7 @@ test('HTML original do cliente é reaproveitado sem script LAB, nova tela ou CPF
  assert.equal((html.match(/href="\/loja"/g)||[]).length,8,
   'atalho para AKITEMM na aba Meus Pedidos sem perder os links existentes');
  assert.doesNotMatch(html,/href="\/staging\/loja"/);
- assert.match(html,/src="\/identidade\/assets\/cliente.js"/);
+ assert.match(html,/src="\/identidade\/assets\/cliente.js\?rev=[a-f0-9]{16}"/);
  assert.doesNotMatch(html,/src="\/staging\/assets\/cliente.js"/);
  assert.doesNotMatch(html,/<script[^>]*>[^<]*fetch/);
  assert.doesNotMatch(html,/Criar conta de homologação/);
@@ -82,7 +82,7 @@ test('interface aprovada e identidade real servidas da mesma origem protegida',a
  assert.match(page.headers.get('content-security-policy'),/script-src 'self'/);
  assert.match(page.headers.get('content-security-policy'),/connect-src 'self'/);
  const paginaHtml=await page.text();
- assert.match(paginaHtml,/src="\/identidade\/assets\/cliente.js"/);
+ assert.match(paginaHtml,/src="\/identidade\/assets\/cliente.js\?rev=[a-f0-9]{16}"/);
  assert.match(paginaHtml,/src="\/identidade\/assets\/catraca-visor.js"/);
  assert.match(paginaHtml,/src="\/identidade\/assets\/tabuleiro-visual.js"/);
  assert.equal((await get('/minha-conta')).status,200);
