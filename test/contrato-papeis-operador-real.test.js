@@ -7,7 +7,7 @@ const fs=require('node:fs');
 const path=require('node:path');
 const vm=require('node:vm');
 const {DatabaseSync}=require('node:sqlite');
-const {randomBytes}=require('node:crypto');
+const {randomBytes,createHash}=require('node:crypto');
 const {renderizarInterfaceAprovada,renderizarLojaAprovada}=
  require('../src/producao/interface-aprovada-loop');
 const {SessaoAdminComercialSQLite,COOKIE_ADMIN}=
@@ -187,4 +187,16 @@ test('olhinho instala antes das demais rotinas e responde no Android mesmo se ou
  assert.equal(input.type,'password');
  assert.equal(input.value,'SenhaPreservada123!');
  assert.equal(atributos['aria-pressed'],'false');
+});
+
+test('JavaScript do login tem URL versionada para nao reutilizar script antigo no Android',()=>{
+ const arquivo=fs.readFileSync(path.join(__dirname,'..',
+  'src/producao/interface-aprovada-contas.js'));
+ const rev=createHash('sha256').update(arquivo).digest('hex').slice(0,16);
+ const html=renderizarInterfaceAprovada();
+ assert.ok(html.includes('/identidade/assets/cliente.js?rev='+rev),
+  'HTML deve requisitar a versão efetiva do arquivo de login');
+ assert.doesNotMatch(html,/\/staging\/assets\/cliente\.js/);
+ assert.match(html,/id="formLogin"/);
+ assert.match(html,/data-senha="senha"/);
 });
