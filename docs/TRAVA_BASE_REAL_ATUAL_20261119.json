@@ -15,7 +15,7 @@
       "nota": "Os tres arquivos do Dockerfile.public-real sao iguais no commit da identidade real"
     }
   },
-  "politica": "Qualquer mudanca, adicao ou remocao no REAL exige aprovacao explicita do proprietario, testes, hash atualizado no manifesto E ancora Railway correspondente; nao reverter ou reconstruir telas historicas; ajuste de fotos cliente/operador solicitado em 21/11/2026, sem alteracao de molduras ou regra do motor; ajuste de agenda futura visivel e horario Android apenas para operador solicitado em 21/11/2026, sem modificacao do motor financeiro; correção autorizada do olhinho de login Android em 21/11/2026 sem alterar catraca, fotos, caixas ou molduras; vinculo visual real das luzes da catraca ao relogio do operador e legenda unica autorizado em 21/11/2026, preservando caixa e travas do motor; diagnóstico integrado agregado somente leitura de pedidos→eventos→outbox→filas em 21/11/2026, acesso operador, sem mudar telas, temporizador, posições ou caixa; avaliador real e privado de qualificacao de pedidos, usando regras vigentes, sem autorizar posição ou movimentação financeira em 21/11/2026; implementação autorizada em 21/11/2026 de cadastro manual por operador, recorte de imagem, controle de cor, ordem de chegada sem lacunas e arrastar com mouse/dedo, sem alterar aparência aprovada do cliente, relógio, motor ou operações financeiras",
+  "politica": "Qualquer mudanca, adicao ou remocao no REAL exige aprovacao explicita do proprietario, testes, hash atualizado no manifesto E ancora Railway correspondente; nao reverter ou reconstruir telas historicas; ajuste de fotos cliente/operador solicitado em 21/11/2026, sem alteracao de molduras ou regra do motor; ajuste de agenda futura visivel e horario Android apenas para operador solicitado em 21/11/2026, sem modificacao do motor financeiro; correção autorizada do olhinho de login Android em 21/11/2026 sem alterar catraca, fotos, caixas ou molduras; vinculo visual real das luzes da catraca ao relogio do operador e legenda unica autorizado em 21/11/2026, preservando caixa e travas do motor; diagnóstico integrado agregado somente leitura de pedidos→eventos→outbox→filas em 21/11/2026, acesso operador, sem mudar telas, temporizador, posições ou caixa; avaliador real e privado de qualificacao de pedidos, usando regras vigentes, sem autorizar posição ou movimentação financeira em 21/11/2026; implementação autorizada em 21/11/2026 de cadastro manual por operador, recorte de imagem, controle de cor, ordem de chegada sem lacunas e arrastar com mouse/dedo, sem alterar aparência aprovada do cliente, relógio, motor ou operações financeiras; cadastro manual normalizado com preços anunciados, preço promocional, categoria, marca e quantidade informada, somente rótulos da vitrine, sem desbloquear transações (21/11/2026)",
   "algoritmo": "git-blob-sha1",
   "arquivos": [
     {
@@ -512,7 +512,7 @@
     },
     {
       "path": "src/candidato/vitrine-horizontal.css",
-      "sha": "de42f8c3546a7b38a052dd2c749f5ecb23c434df"
+      "sha": "0d106de0d28dfa9602fe72a6336a2401fff62b16"
     },
     {
       "path": "src/domain/adesoes-posicoes-demo-sqlite.js",
@@ -1283,6 +1283,10 @@
       "sha": "2ade7c94ed15061ca6ac9426521a9c42ffe11f63"
     },
     {
+      "path": "src/producao/anuncios-manuais-akitemm-sqlite.js",
+      "sha": "7c768f50e888cc9db8d10478f99dcb9789113caa"
+    },
+    {
       "path": "src/producao/asaas-producao-readonly.js",
       "sha": "f44ec47b1e3b5cfd7509056b4cf3d50cd7b0ac4f"
     },
@@ -1296,7 +1300,7 @@
     },
     {
       "path": "src/producao/auditoria-operacional-sqlite.js",
-      "sha": "54a66fe212d5a7446c0202319b2909914cfb4133"
+      "sha": "a72e02e4fdf1ef5db440daaf249ad4f4378686ff"
     },
     {
       "path": "src/producao/avaliador-qualificacao-pedidos-real.js",
@@ -1396,7 +1400,7 @@
     },
     {
       "path": "src/producao/gateway-admin-comercial.js",
-      "sha": "a2613a54b8676f5d44e409c6ba9c657ba7a45032"
+      "sha": "dd9e3e5e60ed84808a89ef07483bbefe656eb44c"
     },
     {
       "path": "src/producao/historico-ciclos-relacional-sqlite.js",
@@ -1424,7 +1428,7 @@
     },
     {
       "path": "src/producao/interface-aprovada-loja.js",
-      "sha": "c7a11086fad6af34ded50973e66d12eb8069ed43"
+      "sha": "1fb55b661f6bcda669b007a0a55b392ee770f821"
     },
     {
       "path": "src/producao/interface-aprovada-loop.js",
@@ -1476,7 +1480,7 @@
     },
     {
       "path": "src/producao/operador-loja-fotos-real.js",
-      "sha": "a53a4d9a1682ce13320e39574c3529b201da961c"
+      "sha": "65853d1b9758e46bbb69053b9c0bb73b4705f6e1"
     },
     {
       "path": "src/producao/outbox-compra-loop-sqlite.js",
@@ -1552,7 +1556,7 @@
     },
     {
       "path": "src/producao/rotas-catalogo-midia-operador.js",
-      "sha": "5d1a92219fc03d86ae9834027cdf88a1d870d8f2"
+      "sha": "3d7f822094b3ebf9446cdd85f5d750ec7f2f4b98"
     },
     {
       "path": "src/producao/saneamento-sete-contas-legadas-sqlite.js",
@@ -1560,7 +1564,7 @@
     },
     {
       "path": "src/producao/servidor-identidade-loop.js",
-      "sha": "aaffa60296d954e55c390a1982be2c4def2749ae"
+      "sha": "d04fd651792ae25213e504b3cbd0d1466cf5b28f"
     },
     {
       "path": "src/producao/sessao-admin-comercial-sqlite.js",
@@ -1889,6 +1893,10 @@
     {
       "path": "test/antifraude-vinculos-sqlite-demo.test.js",
       "sha": "18a205cae79e6fc901bed2f3506d62dbd29647a1"
+    },
+    {
+      "path": "test/anuncios-manuais-akitemm-sqlite.test.js",
+      "sha": "05aacd759836d249327b7c4ba6a775a0ae9047dc"
     },
     {
       "path": "test/aparencia-cofres-admin.test.js",
