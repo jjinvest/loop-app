@@ -616,3 +616,12 @@ body.loop03-logado .cliente-integrado #conteudoConta #ajustarGrafiaNick h3{
   padding:14px
  }
 }
+
+/* O seletor do Android permanece clicável quando o usuário toca na foto
+   no topo, mesmo se o painel Minha Conta estiver recolhido. */
+body.loop03-logado > #arquivoFotoPerfil{
+ position:fixed!important;top:0!important;left:0!important;
+ width:1px!important;height:1px!important;opacity:0!important;
+ clip-path:inset(50%)!important;pointer-events:none!important;
+ min-width:0!important;padding:0!important;margin:0!important
+}
