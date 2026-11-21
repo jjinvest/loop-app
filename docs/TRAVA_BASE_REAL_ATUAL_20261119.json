@@ -412,7 +412,7 @@
     },
     {
       "path": "scripts/validar-identidade-real-navegador.js",
-      "sha": "8d9c9d341e8f658d656b55f1b7ba14bcb21c4d83"
+      "sha": "1a7b786876e22722a4b000e1369744e5316e9e96"
     },
     {
       "path": "scripts/validar-jornada-loja-cores-browser.js",
@@ -1292,7 +1292,7 @@
     },
     {
       "path": "src/producao/backup-identidade-real.js",
-      "sha": "ec345b423dc98db96e0dc36c6356012bc0a1c53a"
+      "sha": "2b51b869680a9aa2cb8c1cebecf4332a692087e0"
     },
     {
       "path": "src/producao/backup-midia-offsite.js",
@@ -1301,6 +1301,10 @@
     {
       "path": "src/producao/backup-midia-real-offsite.js",
       "sha": "68d04cf053e39b644a9f2db789cea5d112d2feb6"
+    },
+    {
+      "path": "src/producao/carrinho-interno-real-sqlite.js",
+      "sha": "32270d69f30e451fcdc12715093525b638a534e9"
     },
     {
       "path": "src/producao/catalogo-mercadorias-real.js",
@@ -1368,7 +1372,7 @@
     },
     {
       "path": "src/producao/identidade-cliente-loop-sqlite.js",
-      "sha": "e90c266a387af182394fbfa20858567c6d2f7385"
+      "sha": "2034c70c2a28decde5f42f6c8b0b88398e104040"
     },
     {
       "path": "src/producao/inbox-extratos-asaas-sandbox-sqlite.js",
@@ -1388,7 +1392,7 @@
     },
     {
       "path": "src/producao/interface-aprovada-loja.js",
-      "sha": "f81284984b41e8b32b2b5d6e7d381b4cf504ad69"
+      "sha": "e0dac6c14863cc2e95a135f36e0328ff1c769fec"
     },
     {
       "path": "src/producao/interface-aprovada-loop.js",
@@ -1516,7 +1520,7 @@
     },
     {
       "path": "src/producao/servidor-identidade-loop.js",
-      "sha": "1ed1662a1fdfd97e7d22cae50a64b5fa98519f06"
+      "sha": "8880291251a667ae9406c3cff3b2211efe6c3bb4"
     },
     {
       "path": "src/producao/sessao-admin-comercial-sqlite.js",
@@ -2097,6 +2101,10 @@
     {
       "path": "test/carrinho-cotacao-multidistribuidores.test.js",
       "sha": "cd781d315b3a6bea0ea88ba2e64fa3dab6bd68a4"
+    },
+    {
+      "path": "test/carrinho-interno-real-ponta-a-ponta.test.js",
+      "sha": "243ce76bdc3a7974e58fe1085b271b8b3a5321d5"
     },
     {
       "path": "test/carrinho-loop-multiplos-itens.test.js",

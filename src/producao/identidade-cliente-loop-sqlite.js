@@ -22,6 +22,7 @@ const LIMITES=Object.freeze({
  solicitar:{janelaMs:60*60000,max:12},
  confirmar:{janelaMs:15*60000,max:15},
  escolherDestino:{janelaMs:15*60000,max:20},
+ carrinho:{janelaMs:15*60000,max:120},
  trocar:{janelaMs:15*60000,max:10}
 });
 let hashes=0;

@@ -999,6 +999,33 @@ async function main(){
    await pagina.locator('#catalogoLojaLoop .produto-loja-loop[data-produto-id] button').click();
    assert.match(await pagina.locator('#akitemmProdutoInlineConteudo').innerText(),
     /Sem preço, estoque ou frete homologados/);
+   // Carrinho interno no banco REAL: adicionar, atualizar quantidade,
+   // recarregar a loja e esvaziar, sem criar um pedido ou pagamento.
+   await pagina.locator('#akitemmProdutoInlineConteudo button').click();
+   await pagina.locator('#akitemmTotalItens').filter({hasText:'1'})
+    .waitFor({state:'visible'});
+   assert.equal(await pagina.locator('#itensLojaLoop .item-carrinho-loja').count(),1);
+   assert.match(await pagina.locator('#totalLojaLoop').innerText(),/Aguardando cotação/);
+   const antes=await pagina.evaluate(()=>fetch('/api/loja/carrinho',{
+    credentials:'same-origin',cache:'no-store'
+   }).then(r=>r.json()));
+   assert.equal(antes.quantidadeTotal,1);
+   assert.equal(antes.financeiroReal,false);
+   assert.equal(antes.checkoutReal,false);
+   await pagina.reload();
+   await pagina.locator('#itensLojaLoop .item-carrinho-loja').waitFor({
+    state:'visible'
+   });
+   assert.equal(await pagina.locator('#akitemmTotalItens').innerText(),'1');
+   await pagina.locator('#itensLojaLoop [aria-label^="Aumentar quantidade"]').click();
+   await pagina.locator('#akitemmTotalItens').filter({hasText:'2'}).waitFor();
+   await pagina.locator('#itensLojaLoop [aria-label^="Reduzir quantidade"]').click();
+   await pagina.locator('#akitemmTotalItens').filter({hasText:'1'}).waitFor();
+   await pagina.locator('#akitemmLimparCarrinho').click();
+   await pagina.locator('#akitemmTotalItens').filter({hasText:'0'}).waitFor();
+   assert.equal(await pagina.locator('#itensLojaLoop .item-carrinho-loja').count(),0);
+   assert.equal(await pagina.locator('#registrarPedidoLoja').isDisabled(),true);
+   await pagina.locator('#catalogoLojaLoop .produto-loja-loop[data-produto-id] button').click();
    await pagina.locator('#akitemmVoltarProdutos').click();
    await pagina.locator('#akitemmBusca').fill('inexistente xyz');
    await pagina.locator('#akitemmResultadoProdutos').filter({

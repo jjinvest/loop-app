@@ -17,6 +17,7 @@ const {LivroFinanceiroRealSQLite}=
 const {PosicoesVitrineRealSQLite}=
  require('./posicoes-vitrine-real-sqlite');
 const {FotoPerfilRealSQLite}=require('./foto-perfil-real-sqlite');
+const {CarrinhoInternoRealSQLite}=require('./carrinho-interno-real-sqlite');
 function criarAppIdentidadeLoop({contas,origemHttps,
  permitirCadastro=false,backupEstado=null,captchaCadastroObrigatorio=false,
  pedidosComerciais=null,remessasOutbox=null,catalogoVitrine=null,
@@ -86,6 +87,7 @@ function criarAppIdentidadeLoop({contas,origemHttps,
   new LivroFinanceiroRealSQLite({banco:contas.banco});
  // Mesmo banco real de contas; arquivo integra o backup externo da identidade.
  const fotosPerfil=new FotoPerfilRealSQLite({banco:contas.banco});
+ const carrinhoInterno=new CarrinhoInternoRealSQLite({banco:contas.banco});
  if(typeof captchaCadastroObrigatorio!=='boolean')
   throw Error('CAPTCHA_CONFIGURACAO_INVALIDA');
  const captcha=captchaCadastroObrigatorio?new CaptchaCadastroSQLite({
@@ -741,7 +743,8 @@ function criarAppIdentidadeLoop({contas,origemHttps,
   catalogoComercialDisponivel:false,fornecedoresAtivos:0,
   vitrinePreparacaoConectada:catalogoVitrine!==null||
    catalogoMidiaLeitura!==null,
-  checkoutReal:false,financeiroReal:false
+  checkoutReal:false,financeiroReal:false,
+  carrinhoInternoDisponivel:true
  }));
  // "Meus Pedidos" mostra somente registros comerciais existentes e
  // remessas do próprio titular, nunca catálogo fictício ou dados de outro
@@ -793,6 +796,92 @@ function criarAppIdentidadeLoop({contas,origemHttps,
     fonte:'PEDIDOS_COMERCIAIS_DO_TITULAR',
     checkoutRealHabilitadoPorEstaConsulta:false});
   }catch{return res.status(503).json({erro:'PEDIDOS_INDISPONIVEIS'});}
+ });
+ // Carrinho de itens interno: autenticação, CPF da sessão, CSRF e SQLite
+ // do titular real. NÃO cria pedido, custo, cotação, bônus, posição ou Pix.
+ function publicacoesCarrinho(){
+  if(!catalogoVitrine&&!catalogoMidiaLeitura)
+   throw Error('CARRINHO_CATALOGO_INDISPONIVEL');
+  const a=catalogoVitrine?
+   catalogoVitrine.listarVitrinePreparacao({limite:400}):[];
+  const b=catalogoMidiaLeitura?
+   catalogoMidiaLeitura.listarVitrinePreparacao({limite:400}):[];
+  if(!Array.isArray(a)||!Array.isArray(b)||a.length+b.length>400)
+   throw Error('CARRINHO_CATALOGO_INVALIDO');
+  const produtos=new Map();
+  for(const item of [...a,...b]){
+   if(typeof item?.produtoId!=='string'||
+      !/^[A-Za-z0-9_-]{3,80}$/.test(item.produtoId)||
+      typeof item.titulo!=='string'||item.titulo.length<2||
+      item.compravel!==false||item.checkoutReal!==false||
+      produtos.has(item.produtoId))
+    throw Error('CARRINHO_CATALOGO_INVALIDO');
+   produtos.set(item.produtoId,item);
+  }
+  return produtos;
+ }
+ function projetarCarrinho(titularId){
+  const c=carrinhoInterno.listar({titularId});
+  let publicados=new Map(),catalogoDisponivel=false;
+  try{publicados=publicacoesCarrinho();catalogoDisponivel=true;}
+  catch{
+   // Permitir remover um item mesmo quando o catálogo está indisponível.
+  }
+  return {...c,catalogoDisponivel,
+   itens:c.itens.map(x=>{
+    const produto=publicados.get(x.produtoId);
+    return {...x,
+     titulo:produto?.titulo||'Produto indisponível',
+     publicado:!!produto,tipo:produto?.tipo||null,
+     cor:produto?.cor||null,precoCentavos:null,
+     compravel:false,estoqueConfirmado:false};
+   })
+  };
+ }
+ const erroCarrinho=(res,e)=>{
+  const codigo=e?.codigo||'CARRINHO_INDISPONIVEL';
+  return res.status(['CARRINHO_QUANTIDADE_INVALIDA',
+   'CARRINHO_PRODUTO_INVALIDO','CARRINHO_TITULAR_INVALIDO'].includes(codigo)?400:
+   codigo==='CARRINHO_LIMITE_ITENS'?409:503).json({
+    erro:codigo,checkoutReal:false
+   });
+ };
+ app.get('/api/loja/carrinho',protegido,(req,res)=>{
+  try{return res.set('Cache-Control','private, no-store')
+   .json(projetarCarrinho(req.conta.titularId));}
+  catch(e){return erroCarrinho(res,e);}
+ });
+ app.post('/api/loja/carrinho/itens',protegido,mutation,csrf,(req,res)=>{
+  const b=req.body;
+  if(!b||Array.isArray(b)||
+     Object.keys(b).sort().join(',')!=='produtoId,quantidade')
+   return res.status(400).json({erro:'CAMPOS_INVALIDOS',checkoutReal:false});
+  if(!limite(res,'carrinho',req.conta.titularId))return;
+  try{
+   if(!Number.isSafeInteger(b.quantidade)||b.quantidade<0||
+      b.quantidade>50||typeof b.produtoId!=='string'||
+      !/^[A-Za-z0-9_-]{3,80}$/.test(b.produtoId))
+    return res.status(400).json({erro:'CARRINHO_ITEM_INVALIDO',checkoutReal:false});
+   if(b.quantidade>0&&!publicacoesCarrinho().has(b.produtoId))
+    return res.status(404).json({erro:'PRODUTO_NAO_PUBLICADO',checkoutReal:false});
+   carrinhoInterno.definir({
+    titularId:req.conta.titularId,produtoId:b.produtoId,
+    quantidade:b.quantidade
+   });
+   return res.set('Cache-Control','private, no-store')
+    .json(projetarCarrinho(req.conta.titularId));
+  }catch(e){return erroCarrinho(res,e);}
+ });
+ app.post('/api/loja/carrinho/limpar',protegido,mutation,csrf,(req,res)=>{
+  if(!req.body||Array.isArray(req.body)||
+     Object.keys(req.body).length!==0)
+   return res.status(400).json({erro:'CAMPOS_INVALIDOS',checkoutReal:false});
+  if(!limite(res,'carrinho',req.conta.titularId))return;
+  try{
+   carrinhoInterno.limpar({titularId:req.conta.titularId});
+   return res.set('Cache-Control','private, no-store')
+    .json(projetarCarrinho(req.conta.titularId));
+  }catch(e){return erroCarrinho(res,e);}
  });
  app.all(new RegExp('^/api/loja(?:/|$)'),(_req,res)=>res.status(503).json({
   erro:'OPERACAO_COMERCIAL_NAO_HABILITADA',checkoutReal:false
