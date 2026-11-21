@@ -315,8 +315,9 @@ test('mesmo operador real sobe foto versionada; cliente so ve publicada, sem alt
  assert.equal((await mover(csrf,false)).status,401);
  assert.equal((await mover('token-invalido')).status,403);
  const movido=await mover(csrf);
- assert.equal(movido.status,200);
- assert.equal((await movido.json()).posicao,1);
+ const resultadoMovido=await movido.json();
+ assert.equal(movido.status,200,JSON.stringify(resultadoMovido));
+ assert.equal(resultadoMovido.posicao,1);
  const depoisOrdem=await (await get('/api/loja/catalogo',{
   Cookie:cookieCliente})).json();
  assert.equal(depoisOrdem.produtos.find(p=>p.produtoId==='SKU_ANTIGO').posicaoVitrine,1);
