@@ -136,7 +136,7 @@
     },
     {
       "path": ".github/workflows/testes-loop.yml",
-      "sha": "01a72f9cf76374c1940164524e009f2bef7f1c5f"
+      "sha": "a248b41b8be11bb62ac9750cb03b91928b5af5e2"
     },
     {
       "path": ".github/workflows/validar-meus-pedidos.yml",
@@ -308,7 +308,11 @@
     },
     {
       "path": "scripts/provar-carga-continua-100k-1m-loop.js",
-      "sha": "9e7faa60bba0c1ac75bab8863407cea5534b4b5d"
+      "sha": "a5e947600c58e3a49a1a54f84833cce4bc8caf1d"
+    },
+    {
+      "path": "scripts/provar-expansao-posicoes-ciclos-relacionais.js",
+      "sha": "f9e8950a568a04dc920862f4cb75b1dea21fcdce"
     },
     {
       "path": "scripts/provar-fronteira-admin-railway.js",
@@ -1363,6 +1367,10 @@
       "sha": "ecb0c2b6f8f3c883037ed608a2838ae456d7de8e"
     },
     {
+      "path": "src/producao/cursor-rede-sqlite.js",
+      "sha": "0e56d2c79288509d2453297b5a4a38657de22720"
+    },
+    {
       "path": "src/producao/emitir-auditoria-custodia-readonly.js",
       "sha": "bb84265135a8e84066143dfef95bb1048c73e7f4"
     },
@@ -1388,7 +1396,7 @@
     },
     {
       "path": "src/producao/identidade-cliente-loop-sqlite.js",
-      "sha": "16365d035f92093fdd79d4163d95d48eb4088393"
+      "sha": "cbaa31b441b03e9976bc76950212a7ca44d41a9c"
     },
     {
       "path": "src/producao/inbox-extratos-asaas-sandbox-sqlite.js",
@@ -1404,7 +1412,7 @@
     },
     {
       "path": "src/producao/interface-aprovada-contas.js",
-      "sha": "ea7fb2c4a2ec96189fda549a57923c5f2d4a7c56"
+      "sha": "f407021e04372cd79b6bfe7ff14f0cfae9901933"
     },
     {
       "path": "src/producao/interface-aprovada-loja.js",
@@ -1496,7 +1504,7 @@
     },
     {
       "path": "src/producao/projecao-filas-relacional-sqlite.js",
-      "sha": "ba5195d054dcabad3e9d6687904e797c86577382"
+      "sha": "e62c15bf984b27ebbc97c9f2b9e95205d3ec5982"
     },
     {
       "path": "src/producao/promocao-lotes-ensaio-sqlite.js",
@@ -1544,7 +1552,7 @@
     },
     {
       "path": "src/producao/servidor-identidade-loop.js",
-      "sha": "6f3c92c89b39bd1403e785f0ce7e01eeb7f41284"
+      "sha": "aaffa60296d954e55c390a1982be2c4def2749ae"
     },
     {
       "path": "src/producao/sessao-admin-comercial-sqlite.js",
@@ -1572,7 +1580,7 @@
     },
     {
       "path": "src/producao/visao-escritorio-unificada-sqlite.js",
-      "sha": "6245a8fcd09279430316fbfaa48a4b432e7a5bb9"
+      "sha": "eec55123b10a87f9fe56a774e52f6392f82e1449"
     },
     {
       "path": "src/routes/admin-akitemm-avaliacoes-demo.js",
@@ -3096,7 +3104,7 @@
     },
     {
       "path": "test/projecao-filas-relacional-shadow-real.test.js",
-      "sha": "2157856f3a2697ddb37d82316b91edce49cfff38"
+      "sha": "78606cc7527b71b5203e1f060539fa5bbfc27495"
     },
     {
       "path": "test/projecao-sustentabilidade-loop.test.js",
@@ -3372,7 +3380,7 @@
     },
     {
       "path": "test/visao-escritorio-unificada-sqlite.test.js",
-      "sha": "1b34c70443894136ad06ba5a078fbc3167e4043b"
+      "sha": "35899b8b3c9a2a9df774f6f205361d26874986dd"
     },
     {
       "path": "test/visor-catraca-unico.test.js",
