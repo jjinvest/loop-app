@@ -1,4 +1,6 @@
 'use strict';
+const {lerEstadoMotor,gravarEstadoMotor}=
+ require('./estado-motor-unificado-sqlite');
 const {ProjecaoFilasRelacionalSQLite}=
  require('./projecao-filas-relacional-sqlite');
 const {AceitePosicaoAzulEnsaioSQLite}=require('./aceite-posicao-azul-ensaio-sqlite');
@@ -149,7 +151,7 @@ class PromocaoPedidoMotorEnsaioSQLite{
     "VALUES(?,?,?,?,?,?,?,?,'OPERADOR_ENSAIO_SEM_PROVA_BANCARIA')"
    ].join(' ')).run(pedidoId,e.titular_id,pagamentoId,provaEnsaioId,
     valorCentavos,e.valor_produtos_centavos,resultado.posicaoId,ts);
-   const atual=this.db.prepare('SELECT snapshot FROM loop_real_motor_estado WHERE id=1').get();
+   const atual=lerEstadoMotor(this.db);
    if(!atual)falha('PROMOCAO_SEM_SNAPSHOT');
    const foto=JSON.parse(atual.snapshot);
    const pos=foto.filas.filaB.find(x=>x.id===resultado.posicaoId);
@@ -159,8 +161,7 @@ class PromocaoPedidoMotorEnsaioSQLite{
     falha('PROMOCAO_AZUL_DIVERGENTE');
    pos.statusAdesao='PENDENTE';
    indexada[1].statusAdesao='PENDENTE';
-   this.db.prepare('UPDATE loop_real_motor_estado SET revisao=revisao+1,snapshot=? WHERE id=1')
-    .run(JSON.stringify(foto));
+   gravarEstadoMotor(this.db,{snapshot:JSON.stringify(foto),anterior:atual});
    ProjecaoFilasRelacionalSQLite.sincronizarMutacaoEmTransacao(this.db);
    // O livro de reserva e o da posicao mudam no mesmo COMMIT.
    PreflightCapacidadeCheckoutSQLite.consumirEmTransacao(this.db,{
