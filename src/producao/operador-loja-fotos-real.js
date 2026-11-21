@@ -21,6 +21,7 @@
    operador=r.operador===true;
   }catch{operador=false;}
   sincronizarEditorOfertas();
+  prepararAlcas();
  }
  function sincronizarEditorOfertas(){
   const id='akitemmGerenciarOfertasReal';
@@ -574,9 +575,221 @@
    estado.textContent='Edição indisponível: '+e.message;
   }
  }
+
+ // Arrastar e soltar e exclusivo do operador; visitantes apenas navegam.
+ // No celular, use a alca: o resto do card continua com a rolagem natural.
+ let arrasto=null,alvoVisual=null,suprimirCliqueAte=0,animacao=null;
+ let anuncioArrasto=null;
+ const avisarArrasto=mensagem=>{
+  if(!anuncioArrasto){
+   anuncioArrasto=document.createElement('div');
+   anuncioArrasto.className='akitemm-arrasto-aviso';
+   anuncioArrasto.setAttribute('role','status');
+   anuncioArrasto.setAttribute('aria-live','polite');
+   document.body.append(anuncioArrasto);
+  }
+  anuncioArrasto.textContent=mensagem;
+ };
+ const posicaoCard=c=>{
+  const p=Number(c?.dataset?.akitemmOrdem);
+  return Number.isSafeInteger(p)&&p>=1&&p<=400?p:null;
+ };
+ function prepararAlcas(){
+  const lista=document.getElementById('catalogoLojaLoop');
+  if(!lista)return;
+  if(!operador){
+   for(const c of lista.querySelectorAll('.akitemm-ordenavel')){
+    c.classList.remove('akitemm-ordenavel');
+    c.querySelector('.akitemm-alca-arrastar')?.remove();
+   }
+   return;
+  }
+  for(const c of lista.querySelectorAll(
+   '.produto-loja-loop[data-produto-id][data-akitemm-ordem]')){
+   if(c.classList.contains('akitemm-ordenavel'))continue;
+   c.classList.add('akitemm-ordenavel');
+   const alca=document.createElement('button');
+   alca.type='button';alca.className='akitemm-alca-arrastar';
+   alca.textContent='⠿';
+   alca.title='Segure e arraste para mudar a ordem';
+   alca.setAttribute('aria-label','Arrastar produto da posição '+
+    posicaoCard(c)+'; toque para editar a posição numericamente');
+   alca.addEventListener('click',ev=>{
+    ev.preventDefault();ev.stopPropagation();
+    if(Date.now()<suprimirCliqueAte)return;
+    void abrirProduto(c.dataset.produtoId);
+   });
+   c.append(alca);
+  }
+ }
+ const observarCatalogo=()=>{
+  const lista=document.getElementById('catalogoLojaLoop');
+  if(!lista)return;
+  const observer=new MutationObserver(()=>prepararAlcas());
+  observer.observe(lista,{subtree:true,childList:true});
+  prepararAlcas();
+ };
+ function destacarDestino(card,lado){
+  if(alvoVisual&&alvoVisual!==card){
+   alvoVisual.classList.remove('akitemm-arrasto-alvo');
+   delete alvoVisual.dataset.akitemmLado;
+  }
+  alvoVisual=card;
+  if(card){
+   card.classList.add('akitemm-arrasto-alvo');
+   card.dataset.akitemmLado=lado;
+  }
+ }
+ function desfazerArrasto(){
+  if(arrasto?.temporizador)clearTimeout(arrasto.temporizador);
+  arrasto?.origem?.classList.remove('akitemm-arrastando');
+  arrasto?.fantasma?.remove();
+  destacarDestino(null,'');
+  if(animacao){cancelAnimationFrame(animacao);animacao=null;}
+  arrasto=null;
+ }
+ function apontarDestino(){
+  if(!arrasto?.ativo)return;
+  const abaixo=document.elementFromPoint(arrasto.x,arrasto.y);
+  const card=abaixo?.closest?.(
+   '#catalogoLojaLoop .produto-loja-loop[data-produto-id][data-akitemm-ordem]');
+  if(!card||card===arrasto.origem){
+   destacarDestino(null,'');return;
+  }
+  const rect=card.getBoundingClientRect();
+  destacarDestino(card,arrasto.x<rect.left+rect.width/2?'antes':'depois');
+ }
+ function flutuarArrasto(){
+  if(!arrasto?.ativo)return;
+  const d=arrasto;
+  d.fantasma.style.left=(d.x+14)+'px';
+  d.fantasma.style.top=(d.y+15)+'px';
+  apontarDestino();
+ }
+ function iniciarArrasto(){
+  if(!arrasto||arrasto.ativo||!operador)return;
+  const d=arrasto;d.ativo=true;
+  const nome=d.origem.querySelector('h3')?.textContent||'Produto';
+  const fantasma=document.createElement('div');
+  fantasma.className='akitemm-arrasto-fantasma';
+  fantasma.textContent=nome;
+  const original=d.origem.querySelector('img');
+  if(original){
+   const imagem=original.cloneNode(false);
+   imagem.removeAttribute('id');fantasma.prepend(imagem);
+  }
+  document.body.append(fantasma);d.fantasma=fantasma;
+  d.origem.classList.add('akitemm-arrastando');
+  avisarArrasto('Arraste e solte sobre outro produto para mudar a posição.');
+  flutuarArrasto();
+  const rolar=()=>{
+   if(!arrasto?.ativo)return;
+   const ponto=document.elementFromPoint(d.x,d.y);
+   const faixa=ponto?.closest?.('.ak-faixa-horizontal');
+   if(faixa){
+    const r=faixa.getBoundingClientRect();
+    if(d.x<r.left+47)faixa.scrollLeft-=14;
+    else if(d.x>r.right-47)faixa.scrollLeft+=14;
+   }
+   if(d.y<65)window.scrollBy(0,-10);
+   else if(d.y>window.innerHeight-65)window.scrollBy(0,10);
+   apontarDestino();
+   animacao=requestAnimationFrame(rolar);
+  };
+  animacao=requestAnimationFrame(rolar);
+ }
+ function soltarArrasto(){
+  const d=arrasto,alvo=alvoVisual,lado=alvo?.dataset.akitemmLado;
+  if(!d)return;
+  const teveArrasto=d.ativo;
+  const origem=d.origem.dataset.produtoId;
+  const numeroOrigem=posicaoCard(d.origem);
+  const numeroAlvo=posicaoCard(alvo);
+  desfazerArrasto();
+  if(!teveArrasto)return;
+  suprimirCliqueAte=Date.now()+700;
+  if(!alvo||!numeroOrigem||!numeroAlvo||numeroAlvo===numeroOrigem){
+   avisarArrasto('Nenhuma alteração. Solte sobre outro produto.');return;
+  }
+  const destino=numeroOrigem<numeroAlvo?
+   numeroAlvo-(lado==='antes'?1:0):
+   numeroAlvo+(lado==='antes'?0:1);
+  if(destino===numeroOrigem){
+   avisarArrasto('O produto já está nessa posição.');return;
+  }
+  avisarArrasto('Salvando a nova ordem dos produtos...');
+  void (async()=>{
+   try{
+    const [sessao,slots]=await Promise.all([
+     fetchJson('/api/admin/comercial/sessao'),
+     fetchJson('/api/admin/catalogo-midia/slots')
+    ]);
+    if(!operador||!Array.isArray(slots.slots)||
+       typeof sessao.csrfToken!=='string')
+     throw Error('OPERADOR_SESSAO_INVALIDA');
+    const registro=slots.slots.find(r=>r.produtoId===origem);
+    // Nunca ordenar por um item inexistente nem por um cadastro temporario.
+    if(!registro)throw Error('PRODUTO_SEM_POSICAO_SALVA');
+    if(destino<1||destino>slots.slots.length)
+     throw Error('DESTINO_AINDA_NAO_SALVO');
+    const resposta=await fetchJson('/api/admin/catalogo-midia/reordenar-vitrine',{
+     method:'POST',headers:{'Content-Type':'application/json',
+      'X-Loop-Admin-Csrf':sessao.csrfToken},
+     body:JSON.stringify({produtoId:origem,novaPosicao:destino,
+      revisaoEsperada:registro.revisao})
+    });
+    if(resposta.produtoId!==origem||resposta.posicao!==destino)
+     throw Error('ORDENACAO_NAO_CONFIRMADA');
+    avisarArrasto('Produto movido para '+destino+
+     'º. Os demais foram reorganizados.');
+    atualizarLoja();
+   }catch(e){
+    avisarArrasto('A ordem não foi alterada: '+e.message+
+     '. Use a posição numérica no editor se precisar.');
+   }
+  })();
+ }
+ document.addEventListener('pointerdown',ev=>{
+  if(!operador||arrasto||dialogo?.open||ev.button!==0)return;
+  const carta=ev.target.closest?.(
+   '#catalogoLojaLoop .produto-loja-loop[data-produto-id][data-akitemm-ordem]');
+  if(!carta||!posicaoCard(carta))return;
+  const alca=ev.target.closest('.akitemm-alca-arrastar');
+  if(ev.pointerType==='touch'&&!alca)return;
+  if(ev.target.closest('button,a,input,textarea,select')&&!alca)return;
+  arrasto={origem:carta,id:ev.pointerId,ativo:false,
+   x:ev.clientX,y:ev.clientY,inicioX:ev.clientX,inicioY:ev.clientY,
+   tipo:ev.pointerType,fantasma:null,temporizador:null};
+  if(alca){
+   ev.preventDefault();
+   arrasto.temporizador=setTimeout(()=>iniciarArrasto(),190);
+  }
+ },true);
+ document.addEventListener('pointermove',ev=>{
+  const d=arrasto;
+  if(!d||ev.pointerId!==d.id)return;
+  d.x=ev.clientX;d.y=ev.clientY;
+  const distancia=Math.hypot(d.x-d.inicioX,d.y-d.inicioY);
+  if(!d.ativo&&distancia>(d.tipo==='mouse'?7:12))
+   iniciarArrasto();
+  if(d.ativo){
+   ev.preventDefault();flutuarArrasto();
+  }
+ },{capture:true,passive:false});
+ document.addEventListener('pointerup',ev=>{
+  if(!arrasto||ev.pointerId!==arrasto.id)return;
+  soltarArrasto();
+ },true);
+ document.addEventListener('pointercancel',ev=>{
+  if(arrasto&&ev.pointerId===arrasto.id)desfazerArrasto();
+ },true);
+ window.addEventListener('blur',desfazerArrasto);
  // Não captura os controles de filtros nem o botão de detalhes.
  // O cliente normal continua com o comportamento aprovado.
  document.addEventListener('click',ev=>{
+  if(Date.now()<suprimirCliqueAte){
+   ev.preventDefault();ev.stopImmediatePropagation();return;
+  }
   if(!operador||dialogo?.contains(ev.target))return;
   const card=ev.target.closest(
    '#catalogoLojaLoop .produto-loja-loop[data-produto-id],'+
@@ -599,11 +812,14 @@
   else void escolherProduto(Number(card.dataset.akitemmSlot));
  },true);
  void verificarOperador();
+ if(document.readyState==='loading')
+  document.addEventListener('DOMContentLoaded',observarCatalogo,{once:true});
+ else observarCatalogo();
  addEventListener('pageshow',()=>void verificarOperador());
  addEventListener('focus',()=>void verificarOperador());
  addEventListener('loop:operador-entrou',()=>void verificarOperador());
  addEventListener('loop:operador-saiu',()=>{
-  operador=false;sincronizarEditorOfertas();
+  operador=false;sincronizarEditorOfertas();prepararAlcas();desfazerArrasto();
   if(dialogo?.open)dialogo.close();
  });
 })();
