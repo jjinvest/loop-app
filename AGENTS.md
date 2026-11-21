@@ -2,6 +2,8 @@
 
 **Ordem obrigatória do proprietário: CRIAR → TESTAR → CORRIGIR → TESTAR NOVAMENTE → PUBLICAR NO REAL → CONFERIR NO DOMÍNIO REAL.**
 
+**Antes de qualquer mudança funcional:** ler [docs/LEIA_PRIMEIRO_ESSENCIA_UNICA_LOOP_AKITEMM_21NOV2026.md](docs/LEIA_PRIMEIRO_ESSENCIA_UNICA_LOOP_AKITEMM_21NOV2026.md). Ela registra a decisão vigente do proprietário: AKITEMM vende, fila cresce mesmo com porteira fechada, caixa acumula, porteira aplica as travas, relógio dá o ritmo e catraca executa no tabuleiro. **Em mensagens, enviar somente links originais VILELA, nunca URL genérica, laboratório ou preview.** A aprovação de tela e resultado pertence ao proprietário, após publicação real verificável.
+
 Ler este documento antes de atuar no projeto. Cumprir todas as etapas em toda alteração, sem exigir que o proprietário repita esta instrução.
 
 1. Executar exatamente o pedido. Reutilizar código, rotas, banco, serviços, interface e fluxos já existentes. Não criar sistemas paralelos, prévias, atalhos, duplicações nem gambiarras.
