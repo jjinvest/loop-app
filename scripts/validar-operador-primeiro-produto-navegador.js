@@ -20,6 +20,8 @@ const {AuditoriaOperacionalSQLite}=require('../src/producao/auditoria-operaciona
 const {ManutencaoComercialSQLite}=require('../src/producao/manutencao-comercial-sqlite');
 const {criarCatalogoMercadoriasReal}=require('../src/producao/catalogo-mercadorias-real');
 const {criarAppIdentidadeLoop}=require('../src/producao/servidor-identidade-loop');
+const {montarComercialSemHomologacao}=
+ require('../src/producao/montar-comercial-sem-homologacao');
 const {gerarPngTeste}=require('./fixtures/gerar-png-teste');
 const FOTO=gerarPngTeste();
 const SENHA='OperadorDeTesteIsoladoUnico-2026-MuitoLongo';
@@ -52,6 +54,10 @@ async function principal(){
    banco,auditoria,manutencao,distribuidorHomologado:()=>false
   });
   const controle=new ControleEconomicoLojaSQLite({banco,auditoria,manutencao});
+  const {classificacaoLoop}=montarComercialSemHomologacao({
+   banco,chavePedidos:randomBytes(32),auditoria,manutencao,
+   catalogoLeitura:catalogo
+  });
   const sessoes=new SessaoAdminComercialSQLite({
    banco,chaveAdmin:randomBytes(32),credencialAdmin:SENHA
   });
@@ -81,7 +87,8 @@ async function principal(){
    },
    catalogoMidiaLeitura,
    adminComercial:{
-    sessoes,controle,catalogo,auditoria,manutencao,catalogoMidia:midia
+    sessoes,controle,catalogo,auditoria,manutencao,
+    catalogoMidia:midia,classificacaoLoop
    }
   });
   browser=await chromium.launch({headless:true});
