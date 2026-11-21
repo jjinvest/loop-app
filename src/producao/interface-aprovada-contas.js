@@ -265,8 +265,14 @@
   const tipo=String(arquivo.type||'').toLowerCase();
   if(tipo&&!tipo.startsWith('image/')&&tipo!=='application/octet-stream')
    throw Error('Escolha uma imagem com até 24 MB.');
-  if(typeof createImageBitmap!=='function')
-   throw Error('Este navegador não consegue preparar a foto. Escolha JPEG, PNG ou WebP de até 3 MB.');
+  // Navegadores mais antigos podem não ter createImageBitmap. Para
+  // fotos comuns até 3 MB, o servidor ainda valida o arquivo original.
+  if(typeof createImageBitmap!=='function'){
+   if(arquivo.size<=limite&&
+      ['image/jpeg','image/png','image/webp'].includes(tipo))
+    return {dados:arquivo,mime:tipo};
+   throw Error('O navegador não consegue reduzir esta imagem. Escolha uma foto JPEG, PNG ou WebP menor.');
+  }
   let imagem;
   try{
    imagem=await createImageBitmap(arquivo);
@@ -290,6 +296,9 @@
   }catch(e){
    if(e.message==='FOTO_GRANDE_DEMAIS')
     throw Error('A foto ficou grande demais. Escolha outra imagem.');
+   if(arquivo.size<=limite&&
+     ['image/jpeg','image/png','image/webp'].includes(tipo))
+    return {dados:arquivo,mime:tipo};
    throw Error('O navegador não conseguiu abrir esta foto. Escolha uma imagem comum do celular.');
   }finally{
    if(imagem?.close)imagem.close();
@@ -360,7 +369,7 @@
    }
    campo.value='';
    await atualizarFotoPerfilReal();
-   const sucesso='Foto atualizada no Escritório.';
+   const sucesso='Foto salva no LOOP e disponível também na AKITEMM.';
    status.textContent=sucesso;dizer(sucesso);
   }catch(e){
    avisarFalhaFotoReal('Não foi possível salvar a foto: '+explicarFalhaFotoReal(e));
@@ -2122,11 +2131,24 @@
   try{
    const dados=await requisitar('/meus-dados');
    if($('resumoEmail'))$('resumoEmail').textContent=dados.emailVerificado?'Confirmado':'Pendente';
-   $('perfilCliente').textContent='Nome: '+dados.nome+' · Nick: '+nickVisivel(dados.nick)+
-    ' · E-mail: '+dados.email+
-    (dados.emailVerificado?' (confirmado)':' (pendente)')+
-    ' · Termos: '+dados.documentosAceitos.termos.versao+
-    ' · Privacidade: '+dados.documentosAceitos.privacidade.versao;
+   // Resumo limpo, sem códigos internos de versões e documentos no painel.
+  const resumo=$('perfilCliente');
+  resumo.replaceChildren();
+  for(const [rotulo,valor] of [
+   ['Nome',dados.nome],['Nick','@'+nickVisivel(dados.nick)],
+   ['E-mail',dados.email],
+   ['Verificação',dados.emailVerificado?'Confirmado':'Pendente']
+  ]){
+   const linha=document.createElement('div');
+   linha.className='loop03-perfil-linha';
+   const etiqueta=document.createElement('span');
+   etiqueta.className='loop03-perfil-rotulo';
+   etiqueta.textContent=rotulo;
+   const conteudo=document.createElement('strong');
+   conteudo.className='loop03-perfil-valor';
+   conteudo.textContent=valor;
+   linha.append(etiqueta,conteudo);resumo.append(linha);
+  }
   }catch(e){dizer(erro(e));}
  }
  function documentosHabilitados(ok){
@@ -2386,15 +2408,28 @@
    sinoReal.setAttribute('aria-expanded',String(aberto));
   });
  }
+ let origemArquivoFotoReal='conta';
+ const escolherArquivoConta=$('formFotoPerfil').querySelector('.loop03-escolher-foto');
+ if(escolherArquivoConta)escolherArquivoConta.addEventListener('click',()=>{
+  origemArquivoFotoReal='conta';
+ });
  const botaoFotoReal=$('loop03AlterarFotoTopo');
- if(botaoFotoReal)botaoFotoReal.addEventListener('click',()=>
-  $('arquivoFotoPerfil').click());
+ if(botaoFotoReal)botaoFotoReal.addEventListener('click',()=>{
+  origemArquivoFotoReal='topo';
+  $('arquivoFotoPerfil').click();
+ });
  $('formFotoPerfil').addEventListener('submit',ev=>void (
   modoOperadorAtual?salvarFotoOperadorReal(ev):salvarFotoPerfilReal(ev)));
  $('arquivoFotoPerfil').addEventListener('change',ev=>{
-  if(ev.target.files?.length)void (modoOperadorAtual?
-   salvarFotoOperadorReal({preventDefault(){}}):
-   salvarFotoPerfilReal({preventDefault(){}}));
+  if(!ev.target.files?.length)return;
+  if(modoOperadorAtual||origemArquivoFotoReal==='topo'){
+   void (modoOperadorAtual?
+    salvarFotoOperadorReal({preventDefault(){}}):
+    salvarFotoPerfilReal({preventDefault(){}}));
+  }else{
+   $('statusFotoPerfil').textContent=
+    'Foto selecionada. Toque em “Salvar minha foto” para substituir a atual.';
+  }
  });
 
  const fotoTopoReal=$('loop03ImagemFotoTopo');
