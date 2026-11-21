@@ -1476,7 +1476,7 @@
     },
     {
       "path": "src/producao/projecao-filas-relacional-sqlite.js",
-      "sha": "7b485754ec373b6fcc64030b2ca340a1574bd960"
+      "sha": "fd52dac5e7c46693ffe9d48fc855aa671733314e"
     },
     {
       "path": "src/producao/promocao-lotes-ensaio-sqlite.js",
