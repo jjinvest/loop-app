@@ -231,13 +231,17 @@
  }
  // Fotos grandes escolhidas no celular sao reduzidas ANTES da rede.
  // O backend REAL continua validando o JPEG/PNG/WebP e removendo metadados.
+ // Cliente e operador escolhem fotos DIFERENTES; somente o ajuste e compartilhado.
+ // Fotos comuns decodificadas no aparelho (celular/WhatsApp) viram JPEG
+ // pequeno ANTES do envio ao endpoint independente de cada sessao.
  async function prepararFotoPerfilReal(arquivo){
-  const permitidos=['image/jpeg','image/png','image/webp'];
-  const limite=3*1024*1024;
-  if(!arquivo||arquivo.size<1)throw Error('Escolha uma foto válida.');
-  if(permitidos.includes(arquivo.type)&&arquivo.size<=limite)
-   return {dados:arquivo,mime:arquivo.type};
-  if(!arquivo.type?.startsWith('image/')||arquivo.size>24*1024*1024)
+  const limite=3*1024*1024,limiteEntrada=24*1024*1024;
+  if(!arquivo||!Number.isFinite(arquivo.size)||arquivo.size<1)
+   throw Error('Escolha uma foto válida.');
+  if(arquivo.size>limiteEntrada)
+   throw Error('Escolha uma imagem com até 24 MB.');
+  const tipo=String(arquivo.type||'').toLowerCase();
+  if(tipo&&!tipo.startsWith('image/')&&tipo!=='application/octet-stream')
    throw Error('Escolha uma imagem com até 24 MB.');
   if(typeof createImageBitmap!=='function')
    throw Error('Este navegador não consegue preparar a foto. Escolha JPEG, PNG ou WebP de até 3 MB.');
@@ -264,7 +268,7 @@
   }catch(e){
    if(e.message==='FOTO_GRANDE_DEMAIS')
     throw Error('A foto ficou grande demais. Escolha outra imagem.');
-   throw Error('O navegador não conseguiu abrir esta foto. Escolha JPEG, PNG ou WebP.');
+   throw Error('O navegador não conseguiu abrir esta foto. Escolha uma imagem comum do celular.');
   }finally{
    if(imagem?.close)imagem.close();
   }
@@ -279,6 +283,7 @@
    FOTO_GRANDE_DEMAIS:'A foto ultrapassou o limite de 3 MB.',
    FOTO_NAO_GRAVADA:'O servidor não confirmou o salvamento da foto.',
    FOTO_REAL_INDISPONIVEL:'O armazenamento da foto está indisponível. Tente novamente.',
+   FOTO_OPERADOR_INDISPONIVEL:'O armazenamento da foto do operador está indisponível. Tente novamente.',
    CSRF_INVALIDO:'Sua sessão expirou. Entre novamente para salvar sua foto.'
   };
   if(Object.prototype.hasOwnProperty.call(motivos,codigo))return motivos[codigo];
@@ -293,7 +298,7 @@
    'Escolha uma imagem com até 24 MB.',
    'Este navegador não consegue preparar a foto. Escolha JPEG, PNG ou WebP de até 3 MB.',
    'A foto ficou grande demais. Escolha outra imagem.',
-   'O navegador não conseguiu abrir esta foto. Escolha JPEG, PNG ou WebP.'
+   'O navegador não conseguiu abrir esta foto. Escolha uma imagem comum do celular.'
   ].includes(codigo))return codigo;
   return 'Não foi possível salvar a foto'+
    (Number.isSafeInteger(e?.status)?' (erro '+e.status+')':'')+
