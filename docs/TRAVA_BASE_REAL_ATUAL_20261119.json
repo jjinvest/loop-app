@@ -2516,7 +2516,7 @@
     },
     {
       "path": "test/historico-ciclos-relacional-sqlite.test.js",
-      "sha": "b8384f58f03cca6f28f7117f73fb060b3dd44c90"
+      "sha": "cebed0c7f52661113a63becc599c6c27977cff88"
     },
     {
       "path": "test/historico-comercial-paginado.test.js",
