@@ -4,6 +4,27 @@
 // homologadas ficam inativas, sem exibir saldos ou posições fictícias.
 (()=>{
  const $=id=>document.getElementById(id);
+
+ // Funcionamento do olhinho isolado: protegido contra falhas posteriores
+ // do painel, da catraca e dos arquivos da loja.
+ document.addEventListener('click',ev=>{
+  const alvo=ev.target;
+  const botao=typeof alvo?.closest==='function'?
+   alvo.closest('button.alternar-visibilidade[data-senha]'):null;
+  if(!botao||botao.disabled)return;
+  const campo=$(botao.dataset.senha);
+  if(!campo||campo.tagName!=='INPUT')return;
+  ev.preventDefault();
+  const senhaAnterior=campo.value;
+  const mostrar=campo.type==='password';
+  campo.type=mostrar?'text':'password';
+  // Android: manter os caracteres preenchidos ao mudar o tipo.
+  if(campo.value!==senhaAnterior)campo.value=senhaAnterior;
+  botao.setAttribute('aria-pressed',String(mostrar));
+  botao.setAttribute('aria-label',mostrar?'Ocultar senha':'Mostrar senha');
+  botao.title=mostrar?'Ocultar senha':'Mostrar senha';
+ },true);
+
  const nickVisivel=nick=>typeof nick==='string'&&/^(?:vilela|operador)$/i.test(nick)?nick.toUpperCase():nick;
  // A credencial de operador nunca é inferida pelo nick do cliente.
  // O gateway verifica a sessão administrativa isolada antes de revelar +.
@@ -2412,16 +2433,7 @@
   const s=await requisitar('/me');painelConta(s);
   $('codigoEmail').value='';dizer('E-mail confirmado.');
  });
- for(const botao of document.querySelectorAll('[data-senha]')){
-  botao.addEventListener('click',()=>{
-   const campo=$(botao.dataset.senha);
-   if(!campo)return;
-   const mostrar=campo.type==='password';campo.type=mostrar?'text':'password';
-   botao.setAttribute('aria-pressed',String(mostrar));
-   botao.setAttribute('aria-label',mostrar?'Ocultar senha':'Mostrar senha');
-   botao.title=mostrar?'Ocultar senha':'Mostrar senha';
-  });
- }
+ // O olhinho foi inicializado antes das demais funções da página.
  $('atualizarPedidos').addEventListener('click',()=>void carregarPedidos());
  $('pedidosVerPosicoes').addEventListener('click',()=>$('abaPosicoes').click());
  $('pedidosAnterior').addEventListener('click',()=>{
