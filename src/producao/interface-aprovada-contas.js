@@ -1635,8 +1635,9 @@
    visualTabuleiro.preencherLuzes(d.tabuleiro.eventosNoCiclo);
    // Contador calculado no servidor sobre a meta gravada no MESMO SQLite.
    // Previsao nao antecipa giro nem cria venda ou dinheiro.
-   const metaAtiva=controle.metaAplicavelHoje===true&&
-    Number.isSafeInteger(controle.metaCentrosDia)&&
+   // O relógio usa a data do turno, inclusive se passar da meia-noite.
+   // Eventos/pagamentos continuam seguindo a autorização do servidor.
+   const metaAtiva=Number.isSafeInteger(controle.metaCentrosDia)&&
     controle.metaCentrosDia>0;
    visorCatraca.registrarAgenda({
     modoExecucao:controle.modo==='PAUSADA'?'STOP':
