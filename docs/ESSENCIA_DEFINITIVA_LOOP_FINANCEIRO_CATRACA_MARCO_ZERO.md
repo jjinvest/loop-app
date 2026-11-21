@@ -1,5 +1,7 @@
 # ESSÊNCIA DEFINITIVA — LOOP / AKITEMM
 
+> **Complemento vigente de 21/11/2026:** consultar primeiro [ESSÊNCIA ÚNICA: loja → fila viva → porteira → catraca/tabuleiro, com caixa e relógio conectados](./LEIA_PRIMEIRO_ESSENCIA_UNICA_LOOP_AKITEMM_21NOV2026.md). A porteira parada não paralisa a fila; o processo financeiro real depende de prova externa. Em caso de conflito com histórico, registrar divergência, não substituir decisão silenciosamente.
+
 > Contrato funcional do negócio aprovado verbalmente pelo proprietário em 17/11/2026. É a regra a preservar no Marco Zero e em futuras auditorias de IA. Este arquivo **não certifica** que o dinheiro real, a fintech ou o mecanismo de contemplação já estejam operacionais.
 
 ## 1. O que é separado (não confundir)
