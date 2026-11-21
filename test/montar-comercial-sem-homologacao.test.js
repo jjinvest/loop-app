@@ -19,6 +19,8 @@ const {SessaoAdminComercialSQLite}=
  require('../src/producao/sessao-admin-comercial-sqlite');
 const {PedidosComerciaisSQLite}=
  require('../src/producao/pedidos-comerciais-sqlite');
+const {PreflightCapacidadeCheckoutSQLite}=
+ require('../src/producao/preflight-capacidade-checkout-sqlite');
 const {MotorLoopIntegradoSQLite}=
  require('../src/producao/motor-loop-integrado-sqlite');
 const {criarAppIdentidadeLoop}=
@@ -813,4 +815,102 @@ test('vitrine publicada fica operante sem chave PSP, mas produtos rascunho e com
  assert.equal((await fetch(base+'/api/loja/pedidos',{headers:h})).status,503);
  assert.equal((await fetch(base+'/api/loja/estado',{headers:h}))
   .status,200);
+});
+
+test('AKITEMM real integra catalogo, carrinho, capacidade e historico por conta sem dinheiro',async t=>{
+ const x=await preparar(t);
+ t.after(()=>{try{x.encerrar();}catch{}});
+ const {banco,contas,catalogo,motor,auditoria,manutencao}=x.env;
+ const comercial=montarComercialSemHomologacao({
+  banco,chavePedidos:x.segredos.pedidos,auditoria,manutencao,
+  catalogoLeitura:catalogo
+ });
+ const preflight=new PreflightCapacidadeCheckoutSQLite({
+  banco,motor,classificacaoLoop:comercial.classificacaoLoop
+ });
+ catalogo.criarProduto({produtoId:'a',
+  titulo:'Produto real publico com codigo curto'});
+ catalogo.ativarProduto({produtoId:'a',ativo:true});
+ catalogo.criarProduto({produtoId:'rascunho',
+  titulo:'Produto interno ainda nao publicado'});
+ const app=criarAppIdentidadeLoop({
+  contas,origemHttps:ORIGEM,permitirCadastro:false,motorLoop:motor,
+  eventosComerciais:comercial.eventosComerciais,
+  pedidosComerciais:comercial.leituraPedidos,
+  remessasOutbox:comercial.leituraRemessas,
+  catalogoVitrine:comercial.leituraCatalogo,preflightCapacidade:preflight
+ });
+ const server=app.listen(0,'127.0.0.1');
+ await once(server,'listening');
+ t.after(()=>new Promise(resolve=>server.close(resolve)));
+ const base='http://127.0.0.1:'+server.address().port;
+ const path='/api/loja/preparacao-compra';
+ assert.equal((await fetch(base+path)).status,401);
+ const alice=await contas.entrar({nick:'Alice',senha:'SenhaDeEnsaio2026!'});
+ const bruna=await contas.entrar({nick:'Bruna',senha:'SenhaDeEnsaio2026!'});
+ const cookie=s=>({Cookie:COOKIE+'='+s.token});
+ const ler=async(s,query='')=>{
+  const r=await fetch(base+path+query,{headers:cookie(s)});
+  assert.equal(r.status,200);
+  return r.json();
+ };
+ const escrever=async(s,produtoId,quantidade)=>{
+  const r=await fetch(base+'/api/loja/carrinho/itens',{
+   method:'POST',headers:{...cookie(s),Origin:ORIGEM,
+    'Content-Type':'application/json','X-Loop-Csrf':s.csrf},
+   body:JSON.stringify({produtoId,quantidade})
+  });
+  return r;
+ };
+ const inicio=await ler(alice);
+ assert.equal(inicio.caminhoInternoIntegrado,true);
+ assert.deepEqual(inicio.pendenciasInternas,[]);
+ assert.equal(inicio.carrinho.estado,'VAZIO');
+ assert.equal(inicio.pedidos.total,0);
+ assert.equal(inicio.capacidade.maximo,10);
+ assert.equal(inicio.capacidade.disponiveis,10);
+ assert.deepEqual(inicio.etapasInternas,{
+  catalogo:true,carrinhoPersistente:true,historicoPedidos:true,
+  capacidadeLoop:true
+ });
+ assert.equal(inicio.checkoutReal,false);
+ assert.equal(inicio.financeiroReal,false);
+ assert.equal(inicio.criaPedido,false);
+ assert.equal(inicio.criaPosicao,false);
+ assert.equal(inicio.autorizaCobranca,false);
+ assert.equal(inicio.dependeExterno.length,4);
+ assert.equal((await escrever(alice,'rascunho',1)).status,404);
+ assert.equal((await escrever(alice,'a',2)).status,200);
+ assert.equal((await ler(alice)).carrinho.quantidadeTotal,2);
+ assert.equal((await ler(alice,'?titularId='+bruna.titularId))
+  .carrinho.quantidadeTotal,2,
+  'parametro adversarial nao altera titular consultado');
+ assert.equal((await ler(bruna,'?titularId='+alice.titularId))
+  .carrinho.quantidadeTotal,0,
+  'uma conta nunca deve enxergar o carrinho de outra');
+ catalogo.ativarProduto({produtoId:'a',ativo:false});
+ const offline=await ler(alice);
+ assert.equal(offline.caminhoInternoIntegrado,false);
+ assert.deepEqual(offline.pendenciasInternas,
+  ['PRODUTOS_CARRINHO_NAO_PUBLICADOS']);
+ assert.deepEqual(offline.carrinho.produtosNaoPublicados,['a']);
+ assert.equal((await escrever(alice,'a',3)).status,404);
+ assert.equal((await escrever(alice,'a',0)).status,200,
+  'cliente pode remover SKU despublicado sem suporte');
+ const revisado=await ler(alice);
+ assert.equal(revisado.caminhoInternoIntegrado,true);
+ assert.equal(revisado.carrinho.quantidadeTotal,0);
+ assert.equal(banco.prepare('SELECT COUNT(*) AS n FROM loja_real_pedidos')
+  .get().n,0);
+ assert.equal(banco.prepare(
+  'SELECT COUNT(*) AS n FROM loop_real_checkout_reservas_posicoes'
+ ).get().n,0);
+ assert.equal(motor.verificar().compras,0);
+ assert.equal((await fetch(base+'/api/loja/checkout',{
+  method:'POST',headers:cookie(alice)
+ })).status,503);
+ assert.equal((await fetch(base+'/api/checkout/finalizar',{
+  method:'POST',headers:cookie(alice)
+ })).status,503);
+ assert.equal(banco.prepare('PRAGMA integrity_check').get().integrity_check,'ok');
 });
