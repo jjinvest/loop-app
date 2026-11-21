@@ -424,7 +424,7 @@
     },
     {
       "path": "scripts/validar-identidade-real-navegador.js",
-      "sha": "5cc91a31c6b137e80f5d86fba66521a138bf81c3"
+      "sha": "f0a1357a1374a24da9ece1e6d7fb0bd7ab58d86c"
     },
     {
       "path": "scripts/validar-jornada-loja-cores-browser.js",
@@ -1412,7 +1412,7 @@
     },
     {
       "path": "src/producao/interface-aprovada-contas.js",
-      "sha": "1270bcbad05619736a7bf5b0bde840a37b0b08c4"
+      "sha": "626611b180b52078a9021771d58ad38b14a129dd"
     },
     {
       "path": "src/producao/interface-aprovada-loja.js",
