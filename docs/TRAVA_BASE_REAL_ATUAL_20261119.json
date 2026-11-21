@@ -3380,7 +3380,7 @@
     },
     {
       "path": "test/visao-escritorio-unificada-sqlite.test.js",
-      "sha": "35899b8b3c9a2a9df774f6f205361d26874986dd"
+      "sha": "50b9294e756a0dd8e33891eedae2fb7577e367e5"
     },
     {
       "path": "test/visor-catraca-unico.test.js",
