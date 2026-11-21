@@ -371,18 +371,6 @@ function validarIdentidade(arquivo){
    ver('loja_real_auditoria_admin',['id','hash_anterior','hash_atual']);
    ver('loja_real_manutencao_comercial',['id','suspensa','revisao']);
   }
-  // Espelho relacional e ADITIVO: snapshots históricos sem ele são válidos.
-  // Se presente, deve estar completo e exatamente alinhado ao motor.
-  const temProjecao=TABELAS_PROJECAO.some(t=>lista.includes(t));
-  if(temProjecao){
-   if(!temMotor||TABELAS_PROJECAO.some(t=>!lista.includes(t)))
-    falha('BACKUP_FILA_PROJECAO_INCOMPLETA');
-   try{
-    if(ProjecaoFilasRelacionalSQLite.verificarExistente({banco:b})
-      .integridade!=='OK')
-     falha('BACKUP_FILA_PROJECAO_DIVERGENTE');
-   }catch{falha('BACKUP_FILA_PROJECAO_DIVERGENTE');}
-  }
   // O arquivo de ciclos e opcional em backups antigos. Quando existe,
   // exige cadeia inteira, seis eventos por giro e dados iguais ao motor.
   const temHistorico=TABELAS_HISTORICO.some(t=>lista.includes(t));
@@ -394,6 +382,18 @@ function validarIdentidade(arquivo){
       .integridade!=='OK')
      falha('BACKUP_CICLOS_HISTORICO_DIVERGENTE');
    }catch{falha('BACKUP_CICLOS_HISTORICO_DIVERGENTE');}
+  }
+  // Espelho relacional e ADITIVO: snapshots históricos sem ele são válidos.
+  // Se presente, deve estar completo e exatamente alinhado ao motor.
+  const temProjecao=TABELAS_PROJECAO.some(t=>lista.includes(t));
+  if(temProjecao){
+   if(!temMotor||TABELAS_PROJECAO.some(t=>!lista.includes(t)))
+    falha('BACKUP_FILA_PROJECAO_INCOMPLETA');
+   try{
+    if(ProjecaoFilasRelacionalSQLite.verificarExistente({banco:b})
+      .integridade!=='OK')
+     falha('BACKUP_FILA_PROJECAO_DIVERGENTE');
+   }catch{falha('BACKUP_FILA_PROJECAO_DIVERGENTE');}
   }
   const integridade=b.prepare('PRAGMA integrity_check').all();
   if(integridade.length!==1||integridade[0].integrity_check!=='ok')
