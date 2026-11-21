@@ -20,6 +20,7 @@ const {AnunciosManuaisAkitemmSQLite}=
  require('./anuncios-manuais-akitemm-sqlite');
 const {EntregaLocalAkitemmSQLite}=
  require('./entrega-local-akitemm-sqlite');
+const {localizarCepBrasil}=require('./consulta-cep-brasil');
 const {FotoPerfilRealSQLite}=require('./foto-perfil-real-sqlite');
 const {CarrinhoInternoRealSQLite}=require('./carrinho-interno-real-sqlite');
 function criarAppIdentidadeLoop({contas,origemHttps,
@@ -951,6 +952,49 @@ function criarAppIdentidadeLoop({contas,origemHttps,
     .json(projetarCarrinho(req.conta.titularId));
   }catch(e){return erroCarrinho(res,e);}
  });
+ // A taxa nao aparece na vitrine: calculo so apos cliente informar CEP.
+ // Consulta o municipio no servidor e confere todos os itens do carrinho.
+ // Nao confirma frete nacional, nao habilita pagamento nem grava pedido.
+ app.post('/api/loja/entrega/verificar-cep',
+  protegido,mutation,csrf,async(req,res)=>{
+   const b=req.body;
+   if(!b||Array.isArray(b)||Object.keys(b).join(',')!=='cep'||
+      typeof b.cep!=='string'||!/^\\d{5}-?\\d{3}$/.test(b.cep))
+    return res.status(400).json({
+     erro:'ENTREGA_CEP_INVALIDO',checkoutReal:false});
+   if(!limite(res,'carrinho',req.conta.titularId))return;
+   if(!entregaLocal)return res.status(503).json({
+    erro:'ENTREGA_REGIONAL_INDISPONIVEL',checkoutReal:false});
+   try{
+    const carrinho=carrinhoInterno.listar({
+     titularId:req.conta.titularId});
+    if(!Array.isArray(carrinho.itens)||carrinho.itens.length===0)
+     return res.status(409).json({
+      erro:'ENTREGA_CARRINHO_VAZIO',checkoutReal:false});
+    const publicos=publicacoesCarrinho();
+    if(carrinho.itens.some(i=>!publicos.has(i.produtoId)))
+     return res.status(409).json({
+      erro:'ENTREGA_PRODUTO_NAO_PUBLICADO',checkoutReal:false});
+    const local=await localizarCepBrasil(b.cep);
+    const calculo=entregaLocal.validarCarrinho({
+     produtos:carrinho.itens.map(i=>i.produtoId),
+     uf:local.uf,cidade:local.cidade
+    });
+    return res.set('Cache-Control','private, no-store')
+     .status(calculo.entregaDisponivel?200:422).json({
+      ...calculo,uf:local.uf,cidade:local.cidade,
+      consultaMunicipioConfiavel:true,
+      taxaDefinitivaDePedido:false,
+      checkoutReal:false,autorizaCobranca:false
+     });
+   }catch(e){
+    const codigo=e?.codigo||'ENTREGA_CONSULTA_INDISPONIVEL';
+    return res.status(codigo==='ENTREGA_CEP_INVALIDO'?400:
+     codigo==='ENTREGA_CEP_NAO_LOCALIZADO'?404:503).json({
+      erro:codigo,checkoutReal:false,autorizaCobranca:false
+     });
+   }
+  });
  app.post('/api/loja/carrinho/limpar',protegido,mutation,csrf,(req,res)=>{
   if(!req.body||Array.isArray(req.body)||
      Object.keys(req.body).length!==0)
