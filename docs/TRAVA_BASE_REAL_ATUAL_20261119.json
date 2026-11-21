@@ -1476,7 +1476,7 @@
     },
     {
       "path": "src/producao/operador-loja-fotos-real.js",
-      "sha": "11d79e2e7212f7b0cf0dafcaa36d9f28d05d0708"
+      "sha": "cff3bfb4deef17ba25fd82b686077f40ff04a876"
     },
     {
       "path": "src/producao/outbox-compra-loop-sqlite.js",
