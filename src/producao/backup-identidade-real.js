@@ -65,6 +65,12 @@ const TABELAS_ADMIN=Object.freeze([
  'loja_real_sessoes_admin','loja_real_limite_login_admin',
  'loja_real_auditoria_admin','loja_real_manutencao_comercial'
 ]);
+// Tabelas de anúncios, regiões e avaliações da loja REAL.
+const TABELAS_CATALOGO_OPERADOR=Object.freeze([
+ 'loja_real_anuncios_operador',
+ 'loja_real_entrega_local_produto',
+ 'loja_real_avaliacoes_verificadas'
+]);
 function falha(c){const e=new Error(c);e.codigo=c;throw e;}
 function conferir({origem,destino,chaveBackup,autorizado,restaurar=false}){
  if(autorizado!==true||!Buffer.isBuffer(chaveBackup)||
@@ -106,7 +112,7 @@ function validarIdentidade(arquivo){
   if(TABELAS.some(x=>!lista.includes(x)))falha('BACKUP_REAL_ESQUEMA_INCOMPLETO');
   const todos=[...TABELAS,...TABELAS_CONTATO,...TABELAS_ADMIN,...TABELAS_COMERCIAIS,
    ...TABELAS_MOTOR,...TABELAS_PROJECAO,...TABELAS_HISTORICO,...TABELAS_CATRACA_ADMIN,...TABELAS_CATRACA_CAIXA,
-   ...TABELAS_POSICOES_VITRINE,
+   ...TABELAS_POSICOES_VITRINE,...TABELAS_CATALOGO_OPERADOR,
    ...TABELAS_TESOURARIA_ENSAIO,
    ...TABELAS_PROMOCAO_ENSAIO,...TABELAS_LOTES_ENSAIO,
    ...TABELAS_PREFLIGHT,...TABELAS_RECUPERACAO,...TABELAS_LIVRO,
@@ -373,6 +379,19 @@ function validarIdentidade(arquivo){
   }
   // O arquivo de ciclos e opcional em backups antigos. Quando existe,
   // exige cadeia inteira, seis eventos por giro e dados iguais ao motor.
+  // Novas tabelas também devem ser restauradas junto aos produtos.
+  // Não exigir em snapshots históricos que precedem a funcionalidade.
+  if(lista.includes('loja_real_anuncios_operador'))
+   ver('loja_real_anuncios_operador',[
+    'produto_id','origem','categoria','marca','preco_centavos',
+    'promocao_centavos','quantidade','revisao']);
+  if(lista.includes('loja_real_entrega_local_produto'))
+   ver('loja_real_entrega_local_produto',[
+    'produto_id','modo','uf','municipios_json','taxa_centavos','revisao']);
+  if(lista.includes('loja_real_avaliacoes_verificadas'))
+   ver('loja_real_avaliacoes_verificadas',[
+    'id','produto_id','pedido_id','nome_exibicao','nota',
+    'comentario','verificada','visivel']);
   const temHistorico=TABELAS_HISTORICO.some(t=>lista.includes(t));
   if(temHistorico){
    if(!temMotor||TABELAS_HISTORICO.some(t=>!lista.includes(t)))
