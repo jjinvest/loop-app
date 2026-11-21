@@ -21,6 +21,8 @@ const {AnunciosManuaisAkitemmSQLite}=
 const {EntregaLocalAkitemmSQLite}=
  require('./entrega-local-akitemm-sqlite');
 const {localizarCepBrasil}=require('./consulta-cep-brasil');
+const {AvaliacoesProdutoAkitemmSQLite}=
+ require('./avaliacoes-produto-akitemm-sqlite');
 const {FotoPerfilRealSQLite}=require('./foto-perfil-real-sqlite');
 const {CarrinhoInternoRealSQLite}=require('./carrinho-interno-real-sqlite');
 function criarAppIdentidadeLoop({contas,origemHttps,
@@ -89,6 +91,8 @@ function criarAppIdentidadeLoop({contas,origemHttps,
  const entregaLocal=catalogoVitrine?
   new EntregaLocalAkitemmSQLite({banco:contas.banco,
    auditoria:adminComercial?.auditoria||null}):null;
+ const avaliacoesProduto=catalogoVitrine?
+  new AvaliacoesProdutoAkitemmSQLite({banco:contas.banco}):null;
  const visaoEscritorio=motorLoop===null?null:
   new VisaoEscritorioUnificadaSQLite({
    banco:contas.banco,motor:motorLoop,
@@ -730,6 +734,22 @@ function criarAppIdentidadeLoop({contas,origemHttps,
    return res.status(503).json({erro:'CATALOGO_INDISPONIVEL',
     checkoutReal:false});
   }
+ });
+ // Avaliações públicas vêm exclusivamente de pedidos verificados.
+ // Nenhuma API publica avaliações de fantasia nem expõe dados pessoais.
+ app.get('/api/loja/produtos/:produtoId/avaliacoes',(_req,res)=>{
+  const produtoId=_req.params.produtoId;
+  if(typeof produtoId!=='string'||!/^[A-Za-z0-9_-]{1,80}$/.test(produtoId))
+   return res.status(404).json({erro:'PRODUTO_INVALIDO'});
+  if(!catalogoVitrine||!avaliacoesProduto)
+   return res.status(503).json({erro:'AVALIACOES_INDISPONIVEIS'});
+  try{
+   const publicado=catalogoVitrine.listarVitrinePreparacao({limite:400})
+    .some(p=>p.produtoId===produtoId);
+   if(!publicado)return res.status(404).json({erro:'PRODUTO_NAO_PUBLICADO'});
+   return res.set('Cache-Control','public, max-age=60')
+    .json(avaliacoesProduto.listar({produtoId,limite:25}));
+  }catch{return res.status(503).json({erro:'AVALIACOES_INDISPONIVEIS'});}
  });
  // A foto de produto publicado usa a MESMA sessão cliente da loja.
  // Nunca encaminha cookies para o banco de imagens e não expõe rascunhos.
