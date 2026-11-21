@@ -2344,7 +2344,7 @@
     },
     {
       "path": "test/diagnostico-cadeia-pedidos-filas-real.test.js",
-      "sha": "80bc56533c2af2c37f722ee0a67cb26fb5b4f397"
+      "sha": "3c62ba8147c026444fc4d8b55569718d9bb871f7"
     },
     {
       "path": "test/disponibilidade-caixa2-integracao-v6.test.js",
