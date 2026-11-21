@@ -15,7 +15,8 @@ const {montarRotasCatalogoMidiaOperador}=
 function erro(c){const e=new Error(c);e.codigo=c;throw e;}
 function montarGatewayAdminComercial(app,{
  sessoes,controle,catalogo,auditoria=null,manutencao=null,
- catalogoMidia=null,posicoesVitrine=null,pedidosComerciais=null,
+ catalogoMidia=null,posicoesVitrine=null,anunciosManuais=null,
+ pedidosComerciais=null,
  motorLoop=null,operacaoCatraca=null,
  integradorComercialEnsaio=null,jornadaComercialEnsaio=null,
  recuperacaoReservas=null,classificacaoLoop=null,origemHttps
@@ -186,6 +187,7 @@ function montarGatewayAdminComercial(app,{
  // fonte comercial persistente, sem criar permissao paralela ou pagina nova.
  if(catalogoMidia!==null)montarRotasCatalogoMidiaOperador({
   app,catalogoMidia,catalogoPrincipal:catalogo,posicoesVitrine,
+  anunciosManuais,
   autorizarOperador:proteger,validarCsrf
  });
  app.get('/administrador/entrar',(req,res)=>{
