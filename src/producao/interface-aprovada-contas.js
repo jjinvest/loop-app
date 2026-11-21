@@ -153,9 +153,11 @@
  // quando o input permanece dentro de um ancestral display:none.
  // Deslocar o MESMO input (mantendo listeners) para fora da aba durante a
  // sessao administrativa e devolve-lo ao formulario no modo cliente.
- function posicionarCampoFotoPerfil(operador){
+ function posicionarCampoFotoPerfil(foraDaAba){
   const input=$('arquivoFotoPerfil'),form=$('formFotoPerfil');
-  if(operador){
+  // Android bloqueia o seletor de arquivos quando o input pertence a
+  // um painel oculto. A mesma solução vale para cliente e operador.
+  if(foraDaAba||$('conteudoConta')?.hidden){
    if(input.parentElement!==document.body)document.body.append(input);
    input.tabIndex=-1;
   }else{
@@ -2118,7 +2120,8 @@
     somentePosicoesPeloQuadrado=proximaAbaVemDoQuadrado;
     proximaAbaVemDoQuadrado=false;
    }
-   if(tab.id==='abaTabuleiro'||tab.id==='abaPosicoes')void carregarMotor();
+   if(!modoOperadorAtual)posicionarCampoFotoPerfil(tab.id!=='abaConta');
+  if(tab.id==='abaTabuleiro'||tab.id==='abaPosicoes')void carregarMotor();
    if(tab.id==='abaMeusPedidos')void carregarPedidos();
    if(tab.id==='abaFinanceiro'){
     if(ensaioFinanceiroAtivo)void carregarFinanceiroEnsaio();
@@ -2416,10 +2419,12 @@
  const escolherArquivoConta=$('formFotoPerfil').querySelector('.loop03-escolher-foto');
  if(escolherArquivoConta)escolherArquivoConta.addEventListener('click',()=>{
   origemArquivoFotoReal='conta';
+  posicionarCampoFotoPerfil(false);
  });
  const botaoFotoReal=$('loop03AlterarFotoTopo');
  if(botaoFotoReal)botaoFotoReal.addEventListener('click',()=>{
   origemArquivoFotoReal='topo';
+  posicionarCampoFotoPerfil(true);
   $('arquivoFotoPerfil').click();
  });
  $('formFotoPerfil').addEventListener('submit',ev=>void (
