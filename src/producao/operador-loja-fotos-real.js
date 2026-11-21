@@ -290,7 +290,8 @@
     'X-Loop-Admin-Csrf':csrf},body:JSON.stringify({ativo:true})
   });
  }
- const atualizarLoja=()=>document.getElementById('atualizarCatalogoLoja')?.click();
+ const atualizarLoja=()=>window.dispatchEvent(
+  new Event('akitemm:catalogo-atualizar'));
  async function vincularQuadradinho(indice,id){
   if(!Number.isSafeInteger(indice)||indice<1||indice>400||!ID.test(id))
    throw Error('QUADRINHO_INVALIDO');
