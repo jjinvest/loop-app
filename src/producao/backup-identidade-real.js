@@ -45,7 +45,7 @@ const TABELAS=Object.freeze([
 // Presente em cadastros novos; backups anteriores à migração permanecem recuperáveis.
 const TABELAS_CONTATO=Object.freeze([
  'loop_real_contatos_cadastro','loop_real_telefones_legados',
- 'loop_real_destinos_indicacao',
+ 'loop_real_destinos_indicacao','loop_real_carrinho_itens',
  'loop_real_migracoes_preview','loop_real_aceites_documentos',
  'loop_captcha_login_falhas_v1','loop_captcha_cadastro_v1',
  TABELA_FOTO_PERFIL_REAL

@@ -684,8 +684,9 @@ async function main(){
    await barraLoja.click();
    await page.waitForURL(url=>url.pathname==='/loja');
    await page.locator('#conteudoLojaLoop').waitFor({state:'visible'});
-   assert.equal(await page.locator('#akitemmNomeTitular').innerText(),
-    nick.toLowerCase());
+   await page.locator('#akitemmNomeTitular').filter({
+    hasText:nick.toLowerCase()
+   }).waitFor({state:'visible'});
    // Botoes internos reais da AKITEMM: dados da conta e avisos.
    await page.locator('#akitemmAbrirConta').click();
    assert.equal(await page.locator('#akitemmDadosConta').isVisible(),true);
@@ -985,6 +986,7 @@ async function main(){
     fullPage:true
    });
    await pagina.goto(base+'/loja');
+   await pagina.waitForFunction(()=>document.getElementById('copiarDivulgarLojaLoop')?.disabled===false);
    await pagina.locator('#akitemmDetalhesPedidos summary').click();
    await pagina.locator('#atualizarPedidosLoja').click();
    await pagina.locator('#pedidosLojaLoop').filter({
@@ -999,6 +1001,33 @@ async function main(){
    await pagina.locator('#catalogoLojaLoop .produto-loja-loop[data-produto-id] button').click();
    assert.match(await pagina.locator('#akitemmProdutoInlineConteudo').innerText(),
     /Sem preço, estoque ou frete homologados/);
+   // Carrinho interno no banco REAL: adicionar, atualizar quantidade,
+   // recarregar a loja e esvaziar, sem criar um pedido ou pagamento.
+   await pagina.locator('#akitemmProdutoInlineConteudo button').click();
+   await pagina.locator('#akitemmTotalItens').filter({hasText:'1'})
+    .waitFor({state:'visible'});
+   assert.equal(await pagina.locator('#itensLojaLoop .item-carrinho-loja').count(),1);
+   assert.match(await pagina.locator('#totalLojaLoop').innerText(),/Aguardando cotação/);
+   const antes=await pagina.evaluate(()=>fetch('/api/loja/carrinho',{
+    credentials:'same-origin',cache:'no-store'
+   }).then(r=>r.json()));
+   assert.equal(antes.quantidadeTotal,1);
+   assert.equal(antes.financeiroReal,false);
+   assert.equal(antes.checkoutReal,false);
+   await pagina.reload();
+   await pagina.locator('#itensLojaLoop .item-carrinho-loja').waitFor({
+    state:'visible'
+   });
+   assert.equal(await pagina.locator('#akitemmTotalItens').innerText(),'1');
+   await pagina.locator('#itensLojaLoop [aria-label^="Aumentar quantidade"]').click();
+   await pagina.locator('#akitemmTotalItens').filter({hasText:'2'}).waitFor();
+   await pagina.locator('#itensLojaLoop [aria-label^="Reduzir quantidade"]').click();
+   await pagina.locator('#akitemmTotalItens').filter({hasText:'1'}).waitFor();
+   await pagina.locator('#akitemmLimparCarrinho').click();
+   await pagina.locator('#akitemmTotalItens').filter({hasText:'0'}).waitFor();
+   assert.equal(await pagina.locator('#itensLojaLoop .item-carrinho-loja').count(),0);
+   assert.equal(await pagina.locator('#registrarPedidoLoja').isDisabled(),true);
+   await pagina.locator('#catalogoLojaLoop .produto-loja-loop[data-produto-id] button').click();
    await pagina.locator('#akitemmVoltarProdutos').click();
    await pagina.locator('#akitemmBusca').fill('inexistente xyz');
    await pagina.locator('#akitemmResultadoProdutos').filter({

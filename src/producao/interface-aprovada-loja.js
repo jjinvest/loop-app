@@ -12,7 +12,9 @@
  const destinoCadastro=()=>'/escritorio?origem=loja&cadastro=1'+
   (indicadorNick?'&ref='+encodeURIComponent(indicadorNick):'');
  const solicitarCadastro=()=>location.assign(destinoCadastro());
- let visitante=true,operadorAtivo=false,clienteNick=null;
+ let visitante=true,operadorAtivo=false,clienteNick=null,csrfLoja=null;
+ let carrinhoOcupado=false;
+ const quantidadesCarrinho=new Map();
  const pegar=async(url)=>{
   const r=await fetch(url,{credentials:'same-origin',cache:'no-store'});
   if(!r.ok)throw Error('CONSULTA_INDISPONIVEL');
@@ -206,11 +208,128 @@
  void atualizarAtalhoOperadorReal();
  addEventListener('pageshow',()=>void atualizarAtalhoOperadorReal());
  addEventListener('focus',()=>void atualizarAtalhoOperadorReal());
+
+ // Carrinho interno real: item e quantidade ficam no SQLite do titular.
+ // Nao simula dinheiro, preço, frete, pagamento, ordem ou posicao LOOP.
+ function renderizarCarrinho(c){
+  if(c.fonte!=='CARRINHO_INTERNO_REAL'||c.checkoutReal!==false||
+     c.financeiroReal!==false||c.precosConfirmados!==false||
+     !Array.isArray(c.itens)||!Number.isSafeInteger(c.quantidadeTotal))
+   throw Error('CARRINHO_INCONSISTENTE');
+  quantidadesCarrinho.clear();
+  const painel=$('itensLojaLoop');painel.replaceChildren();
+  for(const item of c.itens){
+   if(typeof item.produtoId!=='string'||
+      !Number.isSafeInteger(item.quantidade)||item.quantidade<1||
+      item.quantidade>50||typeof item.titulo!=='string')
+    throw Error('CARRINHO_ITEM_INVALIDO');
+   quantidadesCarrinho.set(item.produtoId,item.quantidade);
+   const card=document.createElement('article');
+   card.className='item-carrinho-loja';
+   const icone=document.createElement('span');
+   icone.className='akitemm-miniatura-carrinho';
+   icone.textContent='▣';icone.setAttribute('aria-hidden','true');
+   const infos=document.createElement('div');infos.className='akitemm-item-dados';
+   const titulo=document.createElement('strong');titulo.textContent=item.titulo;
+   const nota=document.createElement('small');
+   nota.textContent=item.publicado?
+    'Aguardando cotação real':'Produto temporariamente indisponível';
+   infos.append(titulo,nota);
+   const controles=document.createElement('div');
+   controles.className='akitemm-controle-quantidade';
+   const menos=document.createElement('button');
+   menos.type='button';menos.textContent='−';
+   menos.setAttribute('aria-label','Reduzir quantidade de '+item.titulo);
+   const n=document.createElement('span');n.textContent=String(item.quantidade);
+   const mais=document.createElement('button');
+   mais.type='button';mais.textContent='+';
+   mais.setAttribute('aria-label','Aumentar quantidade de '+item.titulo);
+   mais.disabled=!item.publicado||item.quantidade>=50;
+   menos.addEventListener('click',()=>void alterarCarrinho(
+    item.produtoId,item.quantidade-1));
+   mais.addEventListener('click',()=>void alterarCarrinho(
+    item.produtoId,item.quantidade+1));
+   controles.append(menos,n,mais);infos.append(controles);
+   const remover=document.createElement('button');
+   remover.type='button';remover.className='akitemm-item-remover';
+   remover.textContent='×';
+   remover.setAttribute('aria-label','Remover '+item.titulo+' do carrinho');
+   remover.addEventListener('click',()=>void alterarCarrinho(item.produtoId,0));
+   card.append(icone,infos,remover);painel.append(card);
+  }
+  if(!c.itens.length){
+   const p=document.createElement('p');
+   p.textContent='Seu carrinho está vazio.';painel.append(p);
+  }
+  $('akitemmTotalItens').textContent=String(c.quantidadeTotal);
+  const total=$('totalLojaLoop');
+  const valor=document.createElement('strong');
+  valor.textContent='Aguardando cotação';
+  total.replaceChildren(document.createTextNode('Subtotal'),valor);
+  $('akitemmLimparCarrinho').disabled=!c.itens.length;
+ }
+ async function atualizarCarrinho(){
+  if(visitante||operadorAtivo||!csrfLoja)return;
+  try{
+   const r=await fetch('/api/loja/carrinho',{
+    credentials:'same-origin',cache:'no-store'
+   });
+   if(!r.ok)throw Error('CARRINHO_INDISPONIVEL');
+   renderizarCarrinho(await r.json());
+  }catch{
+   $('akitemmLimparCarrinho').disabled=true;
+   $('itensLojaLoop').textContent=
+    'Carrinho indisponível nesta consulta. Nenhum pedido foi criado.';
+  }
+ }
+ async function alterarCarrinho(produtoId,quantidade){
+  if(visitante&&!operadorAtivo){solicitarCadastro();return;}
+  if(operadorAtivo||!csrfLoja||carrinhoOcupado)return;
+  carrinhoOcupado=true;
+  for(const b of document.querySelectorAll('#itensLojaLoop button'))b.disabled=true;
+  $('statusPedidoLoja').textContent='Salvando carrinho interno...';
+  try{
+   const r=await fetch('/api/loja/carrinho/itens',{
+    method:'POST',credentials:'same-origin',cache:'no-store',
+    headers:{'Content-Type':'application/json','X-Loop-Csrf':csrfLoja},
+    body:JSON.stringify({produtoId,quantidade})
+   });
+   if(!r.ok)throw Error('CARRINHO_NAO_SALVO');
+   renderizarCarrinho(await r.json());
+   $('statusPedidoLoja').textContent=
+    'Carrinho salvo na conta. Preços, frete e checkout aguardam integração externa.';
+  }catch{
+   $('statusPedidoLoja').textContent=
+    'Não foi possível salvar o carrinho. Tente novamente.';
+   await atualizarCarrinho();
+  }finally{carrinhoOcupado=false;}
+ }
+ $('akitemmLimparCarrinho').addEventListener('click',async()=>{
+  if(visitante||operadorAtivo||!csrfLoja||carrinhoOcupado)return;
+  carrinhoOcupado=true;
+  const btn=$('akitemmLimparCarrinho');
+  btn.disabled=true;
+  try{
+   const r=await fetch('/api/loja/carrinho/limpar',{
+    method:'POST',credentials:'same-origin',cache:'no-store',
+    headers:{'Content-Type':'application/json','X-Loop-Csrf':csrfLoja},
+    body:'{}'
+   });
+   if(!r.ok)throw Error('LIMPEZA_NAO_CONFIRMADA');
+   renderizarCarrinho(await r.json());
+   $('statusPedidoLoja').textContent='Carrinho esvaziado. Nenhum pedido foi criado.';
+  }catch{
+   $('statusPedidoLoja').textContent='Não foi possível limpar o carrinho.';
+   await atualizarCarrinho();
+  }finally{carrinhoOcupado=false;}
+ });
+ $('akitemmLimparCarrinho').disabled=true;
+
  // Nenhuma operação de compra pode ser ativada por código do navegador
  // enquanto não houver backend comercial com fornecedor e PSP homologados.
  for(const seletor of [
   '#akitemmCarregarMais',
-  '#akitemmLimparCarrinho','#registrarPedidoLoja',
+  '#registrarPedidoLoja',
   '#akitemmEscolhaLoop input',
   '#copiarDivulgarLojaLoop','#akitemmFormEntrega input',
   '#akitemmFormEntrega button',
@@ -380,6 +499,22 @@
      const forte=document.createElement('strong');forte.textContent=etiqueta;
      linha.append(forte,document.createTextNode(valor));detalhe.append(linha);
     }
+    const adicionar=document.createElement('button');
+    adicionar.type='button';adicionar.className='botao-secundario-loja';
+    adicionar.textContent='Adicionar ao carrinho';
+    adicionar.disabled=operadorAtivo;
+    if(operadorAtivo)adicionar.title='Carrinho disponível apenas para clientes';
+    adicionar.setAttribute('aria-label','Adicionar '+p.titulo+' ao carrinho');
+    const retorno=document.createElement('small');
+    retorno.textContent='Sem cotação, cobrança ou pedido até o fornecedor ser conectado.';
+    adicionar.addEventListener('click',()=>{
+     const atual=quantidadesCarrinho.get(p.produtoId)||0;
+     if(atual>=50){
+      retorno.textContent='Limite de 50 unidades por produto.';return;
+     }
+     void alterarCarrinho(p.produtoId,atual+1);
+    });
+    detalhe.append(adicionar,retorno);
     $('akitemmVisualizacaoProduto').hidden=false;
    });
    detalhes.append(tipo,titulo,descricao,status,botao);
@@ -560,7 +695,7 @@
   });
   const semCliente=res.status===401||operadorAtivo;
   if(semCliente){
-   visitante=!operadorAtivo;clienteNick=null;
+   visitante=!operadorAtivo;clienteNick=null;csrfLoja=null;
    prepararLinkPessoal();
    if($('akitemmNomeTitular'))
     $('akitemmNomeTitular').textContent=visitante?'Visitante':'OPERADOR';
@@ -579,7 +714,7 @@
    const me=await res.json();
    if(typeof me.nick!=='string'||me.financeiroReal!==false)
     throw Error('IDENTIDADE_INCOMPATIVEL');
-   clienteNick=me.nick;prepararLinkPessoal();
+   clienteNick=me.nick;csrfLoja=me.csrf;prepararLinkPessoal();
    if($('akitemmNomeTitular'))$('akitemmNomeTitular').textContent=nickVisivel(me.nick);
    informar('AKITEMM: loja conectada à sua conta LOOP. Vendas reais ainda não liberadas.');
   }
@@ -609,10 +744,11 @@
   if(!semCliente&&!operadorAtivo)await atualizarPedidos();
   else $('pedidosLojaLoop')?.replaceChildren();
   await atualizarCatalogo();
+  if(!visitante&&!operadorAtivo)await atualizarCarrinho();
  }catch{
   // A falha de identidade nao fecha a vitrine: dados privados seguem
   // inacessiveis e so a leitura publica de produtos permanece permitida.
-  visitante=true;clienteNick=null;prepararLinkPessoal();
+  visitante=true;clienteNick=null;csrfLoja=null;prepararLinkPessoal();
   informar('AKITEMM · vitrine pública disponível. Entre na sua conta para ações pessoais.');
   if($('conteudoLojaLoop'))$('conteudoLojaLoop').hidden=false;
   await atualizarCatalogo();
