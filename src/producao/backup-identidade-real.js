@@ -11,6 +11,8 @@ const {createHash,createCipheriv,createDecipheriv,randomBytes,hkdfSync}=
  require('node:crypto');
 const {TABELAS_OUTBOX_COMPRA}=require('./outbox-compra-loop-sqlite');
 const {MotorLoopIntegradoSQLite,TABELAS_MOTOR}=require('./motor-loop-integrado-sqlite');
+const {ProjecaoFilasRelacionalSQLite,TABELAS_PROJECAO}=
+ require('./projecao-filas-relacional-sqlite');
 const {LivroFinanceiroRealSQLite,TABELAS_LIVRO}=
  require('./livro-financeiro-real-sqlite');
 const {PreflightCapacidadeCheckoutSQLite,TABELAS_PREFLIGHT}=
@@ -101,7 +103,7 @@ function validarIdentidade(arquivo){
   ).all().map(x=>x.name);
   if(TABELAS.some(x=>!lista.includes(x)))falha('BACKUP_REAL_ESQUEMA_INCOMPLETO');
   const todos=[...TABELAS,...TABELAS_CONTATO,...TABELAS_ADMIN,...TABELAS_COMERCIAIS,
-   ...TABELAS_MOTOR,...TABELAS_CATRACA_ADMIN,...TABELAS_CATRACA_CAIXA,
+   ...TABELAS_MOTOR,...TABELAS_PROJECAO,...TABELAS_CATRACA_ADMIN,...TABELAS_CATRACA_CAIXA,
    ...TABELAS_POSICOES_VITRINE,
    ...TABELAS_TESOURARIA_ENSAIO,
    ...TABELAS_PROMOCAO_ENSAIO,...TABELAS_LOTES_ENSAIO,
@@ -193,6 +195,18 @@ function validarIdentidade(arquivo){
     const motor=Object.create(MotorLoopIntegradoSQLite.prototype);
     motor.banco=b;motor.verificar();
    }catch{falha('BACKUP_MOTOR_INTEGRIDADE_DIVERGENTE');}
+  }
+  // Espelho relacional e ADITIVO: snapshots históricos sem ele são válidos.
+  // Se presente, deve estar completo e exatamente alinhado ao motor.
+  const temProjecao=TABELAS_PROJECAO.some(t=>lista.includes(t));
+  if(temProjecao){
+   if(!temMotor||TABELAS_PROJECAO.some(t=>!lista.includes(t)))
+    falha('BACKUP_FILA_PROJECAO_INCOMPLETA');
+   try{
+    if(ProjecaoFilasRelacionalSQLite.verificarExistente({banco:b})
+      .integridade!=='OK')
+     falha('BACKUP_FILA_PROJECAO_DIVERGENTE');
+   }catch{falha('BACKUP_FILA_PROJECAO_DIVERGENTE');}
   }
   // Livro real pertence ao mesmo backup que identidade e motor.
   // Recusar tabela ausente e saldos negativos; nenhum ensaio vira saldo.
