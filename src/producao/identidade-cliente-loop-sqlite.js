@@ -21,6 +21,7 @@ const LIMITES=Object.freeze({
  cadastro:{janelaMs:60*60000,max:5},
  solicitar:{janelaMs:60*60000,max:12},
  confirmar:{janelaMs:15*60000,max:15},
+ escolherDestino:{janelaMs:15*60000,max:20},
  trocar:{janelaMs:15*60000,max:10}
 });
 let hashes=0;
@@ -153,6 +154,19 @@ function prepararEstruturaIdentidadeReal({
    "BEFORE UPDATE ON loop_real_vinculos_indicacao BEGIN SELECT RAISE(ABORT,'vinculo imutavel'); END;",
    'CREATE TRIGGER IF NOT EXISTS loop_real_vinculos_sem_delete',
    "BEFORE DELETE ON loop_real_vinculos_indicacao BEGIN SELECT RAISE(ABORT,'vinculo imutavel'); END;",
+   // Escolha de destino definitiva, registrada na conta sem ativar posição,
+   // pedido, comissão, fila, catraca nem financeiro.
+   'CREATE TABLE IF NOT EXISTS loop_real_destinos_indicacao(',
+   'indicado_id TEXT PRIMARY KEY REFERENCES loop_real_vinculos_indicacao(indicado_id) ON DELETE RESTRICT,',
+   'indicador_id TEXT NOT NULL REFERENCES loop_real_contas(id) ON DELETE RESTRICT,',
+   'numero_posicao INTEGER NOT NULL CHECK(numero_posicao BETWEEN 1 AND 10),',
+   'registrado_em INTEGER NOT NULL CHECK(registrado_em>0));',
+   'CREATE INDEX IF NOT EXISTS idx_loop_real_destinos_indicador',
+   'ON loop_real_destinos_indicacao(indicador_id,numero_posicao);',
+   'CREATE TRIGGER IF NOT EXISTS loop_real_destino_sem_update',
+   "BEFORE UPDATE ON loop_real_destinos_indicacao BEGIN SELECT RAISE(ABORT,'destino imutavel'); END;",
+   'CREATE TRIGGER IF NOT EXISTS loop_real_destino_sem_delete',
+   "BEFORE DELETE ON loop_real_destinos_indicacao BEGIN SELECT RAISE(ABORT,'destino imutavel'); END;",
    'CREATE TABLE IF NOT EXISTS loop_real_sessoes(',
    'token_hash TEXT PRIMARY KEY,titular_id TEXT NOT NULL',
    'REFERENCES loop_real_contas(id) ON DELETE RESTRICT,',
@@ -470,15 +484,61 @@ class IdentidadeClienteLoopReal{
    erro('INTEGRIDADE_CONTATO_INVALIDA');
   return telefone;
  }
+ // O titular escolhe uma vez a posição de destino (1..10) de um indicado
+ // que chegou pelo SEU link. Isto não é ativação de benefício ou motor.
+ reservarDestinoIndicacao({indicadorId,numeroCadastro,posicao}={}){
+  if(typeof indicadorId!=='string'||!/^titular-[a-f0-9-]{36}$/.test(indicadorId)||
+     !Number.isSafeInteger(numeroCadastro)||numeroCadastro<1||
+     numeroCadastro>10000000||!Number.isSafeInteger(posicao)||
+     posicao<1||posicao>10)erro('POSICAO_INDICACAO_INVALIDA');
+  this.banco.exec('BEGIN IMMEDIATE');
+  let aberto=true;
+  try{
+   const indicado=this.banco.prepare([
+    'SELECT indicado_id FROM loop_real_vinculos_indicacao',
+    'WHERE indicador_id=?',
+    'ORDER BY registrado_em ASC,indicado_id ASC LIMIT 1 OFFSET ?'
+   ].join(' ')).get(indicadorId,numeroCadastro-1);
+   if(!indicado)erro('CADASTRO_INDICADO_NAO_PERTENCE');
+   const anterior=this.banco.prepare([
+    'SELECT indicador_id,numero_posicao FROM loop_real_destinos_indicacao',
+    'WHERE indicado_id=?'
+   ].join(' ')).get(indicado.indicado_id);
+   if(anterior){
+    if(anterior.indicador_id!==indicadorId||
+       anterior.numero_posicao!==posicao)
+     erro('DESTINO_INDICACAO_JA_ESCOLHIDO');
+    this.banco.exec('COMMIT');aberto=false;
+    return {registrado:true,repetido:true,numeroCadastro,
+     posicaoDestinoReservada:posicao,vinculacaoAtiva:false,
+     financeiroReal:false};
+   }
+   this.banco.prepare([
+    'INSERT INTO loop_real_destinos_indicacao',
+    '(indicado_id,indicador_id,numero_posicao,registrado_em)',
+    'VALUES(?,?,?,?)'
+   ].join(' ')).run(indicado.indicado_id,indicadorId,posicao,this._agora());
+   this.banco.exec('COMMIT');aberto=false;
+   return {registrado:true,repetido:false,numeroCadastro,
+    posicaoDestinoReservada:posicao,vinculacaoAtiva:false,
+    financeiroReal:false};
+  }catch(e){
+   if(aberto)this.banco.exec('ROLLBACK');
+   throw e;
+  }
+ }
  listarIndicados(titularId,{limite=50,offset=0}={}){
   if(typeof titularId!=='string'||!/^titular-[a-f0-9-]{36}$/.test(titularId)||
      !Number.isSafeInteger(limite)||limite<1||limite>50||
      !Number.isSafeInteger(offset)||offset<0)
    erro('TITULAR_INVALIDO');
   const rows=this.banco.prepare([
-   'SELECT v.indicado_id AS indicadoId,c.nick,v.registrado_em AS registradoEm',
+   'SELECT v.indicado_id AS indicadoId,c.nick,v.registrado_em AS registradoEm,',
+   'd.numero_posicao AS posicaoDestinoReservada',
    'FROM loop_real_vinculos_indicacao v',
    'JOIN loop_real_contas c ON c.id=v.indicado_id',
+   'LEFT JOIN loop_real_destinos_indicacao d',
+   'ON d.indicado_id=v.indicado_id AND d.indicador_id=v.indicador_id',
    'WHERE v.indicador_id=?',
    'ORDER BY v.registrado_em ASC,v.indicado_id ASC LIMIT ? OFFSET ?'
   ].join(' ')).all(titularId,limite,offset);
@@ -488,6 +548,7 @@ class IdentidadeClienteLoopReal{
   return {indicados:rows.map((x,i)=>({
    nick:x.nick,registradoEm:x.registradoEm,
    numeroCadastro:offset+i+1,filaCadastro:'B',
+   posicaoDestinoReservada:x.posicaoDestinoReservada,
    telefone:this.telefoneIndicadoVinculado({
     indicadorId:titularId,indicadoId:x.indicadoId
    }),

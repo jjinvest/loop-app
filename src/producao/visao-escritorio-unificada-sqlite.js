@@ -139,12 +139,15 @@ class VisaoEscritorioUnificadaSQLite{
    'SELECT v.indicado_id AS indicadoId,c.nick,',
    'v.registrado_em AS registradoEm,',
    'q.posicao_id AS posicaoDestinoEnsaio,',
+   'dest.numero_posicao AS posicaoDestinoReservada,',
    'EXISTS(SELECT 1 FROM loop_real_motor_compras m',
    'WHERE m.titular_id=v.indicado_id) AS compraEmEnsaio',
    'FROM loop_real_vinculos_indicacao v',
    'JOIN loop_real_contas c ON c.id=v.indicado_id',
    'LEFT JOIN loop_real_motor_qualificacoes q',
    'ON q.indicado_id=v.indicado_id AND q.indicador_id=v.indicador_id',
+   'LEFT JOIN loop_real_destinos_indicacao dest',
+   'ON dest.indicado_id=v.indicado_id AND dest.indicador_id=v.indicador_id',
    'WHERE v.indicador_id=?',
    'ORDER BY v.registrado_em ASC,v.indicado_id ASC',
    'LIMIT ? OFFSET ?'
@@ -160,6 +163,7 @@ class VisaoEscritorioUnificadaSQLite{
     x.compraEmEnsaio?'COMPRA_ENSAIO_SEM_QUALIFICACAO':
     'CADASTRO_AGUARDANDO_COMPRA',
    posicaoDestinoEnsaio:x.posicaoDestinoEnsaio,
+   posicaoDestinoReservada:x.posicaoDestinoReservada,
    remuneracaoReal:false
   })),total:resumo.cadastros,
    temMais:resumo.cadastros>offset+rows.length,

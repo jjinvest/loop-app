@@ -2,7 +2,7 @@
   "schema": 1,
   "referencia": "BASE_REAL_PUBLISH_RAILWAY_NAO_FOTOS_HISTORICAS_24",
   "proprietarioAutorizacaoExigida": true,
-  "capturadoEm": "2026-11-20",
+  "capturadoEm": "2026-11-21",
   "referenciaGit": "jjinvest/loop-app@bd1cd75f6f52cc0aa0d19436e03b8e533564595d",
   "servicos": {
     "loopIdentidadeReal": {
@@ -412,7 +412,7 @@
     },
     {
       "path": "scripts/validar-identidade-real-navegador.js",
-      "sha": "0562d6b8cf6182d9f4c401445744400198f25c25"
+      "sha": "1cd898439045e6afc059f8653da762bf4ceba988"
     },
     {
       "path": "scripts/validar-jornada-loja-cores-browser.js",
@@ -484,7 +484,7 @@
     },
     {
       "path": "src/candidato/escritorio-cliente-integrado.css",
-      "sha": "c52ed1792a6a2328991788809c69764ac83fcda1"
+      "sha": "79f6b8f97238ae8a81e8a340fdf4234521d82491"
     },
     {
       "path": "src/candidato/operador-em-tela.js",
@@ -1368,7 +1368,7 @@
     },
     {
       "path": "src/producao/identidade-cliente-loop-sqlite.js",
-      "sha": "e22c0bbccdbc88b34d1d16f0f411b76278274bbf"
+      "sha": "e90c266a387af182394fbfa20858567c6d2f7385"
     },
     {
       "path": "src/producao/inbox-extratos-asaas-sandbox-sqlite.js",
@@ -1384,7 +1384,7 @@
     },
     {
       "path": "src/producao/interface-aprovada-contas.js",
-      "sha": "aab6dcfccb64b775f51d10d00afe0d447ac7eb45"
+      "sha": "f1fdfe4f1a1b898e0103875775ad847de4f853e9"
     },
     {
       "path": "src/producao/interface-aprovada-loja.js",
@@ -1516,7 +1516,7 @@
     },
     {
       "path": "src/producao/servidor-identidade-loop.js",
-      "sha": "bb2398b06a186f33e05ba7ee022040a163c2d9bd"
+      "sha": "1ed1662a1fdfd97e7d22cae50a64b5fa98519f06"
     },
     {
       "path": "src/producao/sessao-admin-comercial-sqlite.js",
@@ -1540,7 +1540,7 @@
     },
     {
       "path": "src/producao/visao-escritorio-unificada-sqlite.js",
-      "sha": "610f9322dff66aadee8524570f80254d98673f49"
+      "sha": "6245a8fcd09279430316fbfaa48a4b432e7a5bb9"
     },
     {
       "path": "src/routes/admin-akitemm-avaliacoes-demo.js",
@@ -2572,7 +2572,7 @@
     },
     {
       "path": "test/indicacoes-cadastro-real.test.js",
-      "sha": "783df78f680f0b3a3a58c3c33b2ee71665a2a353"
+      "sha": "a085bd4ab88fbf6db79a79aed62e05414e8b45ca"
     },
     {
       "path": "test/indicacoes-campanha-so-com-cadeira.test.js",

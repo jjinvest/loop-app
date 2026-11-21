@@ -642,10 +642,30 @@ async function main(){
     'Minha Equipe preserva os dez botoes das posicoes');
    for(let n=1;n<=10;n++){
     assert.equal(await botoes.nth(n-1).innerText(),String(n));
-    assert.equal(await botoes.nth(n-1).isDisabled(),true,
-     'indicacao pendente nao pode ser vinculada');
+    assert.equal(await botoes.nth(n-1).isDisabled(),false,
+     'a escolha do destino deve funcionar antes da ativacao');
    }
-   await menu.click();
+   await botoes.nth(6).click();
+   await page.locator('#mensagem').filter({
+    hasText:/Destino da indicação registrado/
+   }).waitFor({state:'visible'});
+   // A conta foi persistida e o cartão reconstruído com o menu recolhido.
+   await indicado.locator('.loop03-rede-pessoa-menu').click();
+   await indicado.locator('.loop03-rede-posicao-selecionada')
+    .waitFor({state:'visible'});
+   const escolhida=indicado.locator('.loop03-rede-posicao-selecionada');
+   assert.equal(await escolhida.innerText(),'7');
+   assert.equal(await escolhida.getAttribute('aria-pressed'),'true');
+   assert.equal(await indicado.locator('.loop03-rede-posicao:disabled').count(),10,
+    'escolha fica bloqueada apos gravar');
+   assert.match(await indicado.innerText(),/Destino fixado na posição 7/);
+   const check=await page.evaluate(()=>fetch('/api/contas/minha-rede',{
+    credentials:'same-origin',cache:'no-store'
+   }).then(r=>r.json()));
+   const escolhido=check.indicados.find(p=>p.nick===novoNick.toLowerCase());
+   assert.equal(escolhido?.posicaoDestinoReservada,7,
+    'destino deve estar salvo no servidor real');
+   await indicado.locator('.loop03-rede-pessoa-menu').click();
    await detalhes.waitFor({state:'hidden'});
    if(item.largura<=860)await page.locator('#loop03MenuIntegrado').click();
    await page.locator('#abaLinks').click();
