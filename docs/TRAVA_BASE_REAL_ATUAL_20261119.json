@@ -1424,7 +1424,7 @@
     },
     {
       "path": "src/producao/interface-aprovada-loja.js",
-      "sha": "d9ad190cfdea84ae7ea6a9a1bb72a3dbcea7a3c2"
+      "sha": "c7a11086fad6af34ded50973e66d12eb8069ed43"
     },
     {
       "path": "src/producao/interface-aprovada-loop.js",
@@ -1476,7 +1476,7 @@
     },
     {
       "path": "src/producao/operador-loja-fotos-real.js",
-      "sha": "cff3bfb4deef17ba25fd82b686077f40ff04a876"
+      "sha": "a53a4d9a1682ce13320e39574c3529b201da961c"
     },
     {
       "path": "src/producao/outbox-compra-loop-sqlite.js",
