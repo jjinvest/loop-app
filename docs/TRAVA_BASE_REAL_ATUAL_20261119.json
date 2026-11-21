@@ -15,7 +15,7 @@
       "nota": "Os tres arquivos do Dockerfile.public-real sao iguais no commit da identidade real"
     }
   },
-  "politica": "Qualquer mudanca, adicao ou remocao no REAL exige aprovacao explicita do proprietario, testes, hash atualizado no manifesto E ancora Railway correspondente; nao reverter ou reconstruir telas historicas; ajuste de fotos cliente/operador solicitado em 21/11/2026, sem alteracao de molduras ou regra do motor; ajuste de agenda futura visivel e horario Android apenas para operador solicitado em 21/11/2026, sem modificacao do motor financeiro; correção autorizada do olhinho de login Android em 21/11/2026 sem alterar catraca, fotos, caixas ou molduras; vinculo visual real das luzes da catraca ao relogio do operador e legenda unica autorizado em 21/11/2026, preservando caixa e travas do motor; diagnóstico integrado agregado somente leitura de pedidos→eventos→outbox→filas em 21/11/2026, acesso operador, sem mudar telas, temporizador, posições ou caixa; avaliador real e privado de qualificacao de pedidos, usando regras vigentes, sem autorizar posição ou movimentação financeira em 21/11/2026",
+  "politica": "Qualquer mudanca, adicao ou remocao no REAL exige aprovacao explicita do proprietario, testes, hash atualizado no manifesto E ancora Railway correspondente; nao reverter ou reconstruir telas historicas; ajuste de fotos cliente/operador solicitado em 21/11/2026, sem alteracao de molduras ou regra do motor; ajuste de agenda futura visivel e horario Android apenas para operador solicitado em 21/11/2026, sem modificacao do motor financeiro; correção autorizada do olhinho de login Android em 21/11/2026 sem alterar catraca, fotos, caixas ou molduras; vinculo visual real das luzes da catraca ao relogio do operador e legenda unica autorizado em 21/11/2026, preservando caixa e travas do motor; diagnóstico integrado agregado somente leitura de pedidos→eventos→outbox→filas em 21/11/2026, acesso operador, sem mudar telas, temporizador, posições ou caixa; avaliador real e privado de qualificacao de pedidos, usando regras vigentes, sem autorizar posição ou movimentação financeira em 21/11/2026; implementação autorizada em 21/11/2026 de cadastro manual por operador, recorte de imagem, controle de cor, ordem de chegada sem lacunas e arrastar com mouse/dedo, sem alterar aparência aprovada do cliente, relógio, motor ou operações financeiras",
   "algoritmo": "git-blob-sha1",
   "arquivos": [
     {
@@ -512,7 +512,7 @@
     },
     {
       "path": "src/candidato/vitrine-horizontal.css",
-      "sha": "42a0c1730d88890de8aa8607f26f6dcc31cc9d53"
+      "sha": "de42f8c3546a7b38a052dd2c749f5ecb23c434df"
     },
     {
       "path": "src/domain/adesoes-posicoes-demo-sqlite.js",
@@ -1424,7 +1424,7 @@
     },
     {
       "path": "src/producao/interface-aprovada-loja.js",
-      "sha": "f65080b63a665b9b7e9e734d38ab35800a94db0a"
+      "sha": "d9ad190cfdea84ae7ea6a9a1bb72a3dbcea7a3c2"
     },
     {
       "path": "src/producao/interface-aprovada-loop.js",
@@ -1476,7 +1476,7 @@
     },
     {
       "path": "src/producao/operador-loja-fotos-real.js",
-      "sha": "db2ac1fb31389f2626df4c4ed05c30e02e16ab3b"
+      "sha": "3190d768093a45b5a5f45e5cfbb156f1af93871d"
     },
     {
       "path": "src/producao/outbox-compra-loop-sqlite.js",
@@ -1500,7 +1500,7 @@
     },
     {
       "path": "src/producao/posicoes-vitrine-real-sqlite.js",
-      "sha": "6fd585c2e171c5f40e277758cad85663a9867f8f"
+      "sha": "6aa23bba81de9a8c56388fe738c4099646335cdc"
     },
     {
       "path": "src/producao/preflight-capacidade-checkout-sqlite.js",
@@ -1552,7 +1552,7 @@
     },
     {
       "path": "src/producao/rotas-catalogo-midia-operador.js",
-      "sha": "6abc4defd7e3f10ab250c2970fd759e535fed7f3"
+      "sha": "5d1a92219fc03d86ae9834027cdf88a1d870d8f2"
     },
     {
       "path": "src/producao/saneamento-sete-contas-legadas-sqlite.js",
@@ -2956,7 +2956,7 @@
     },
     {
       "path": "test/operador-fotos-conta-real-unificada.test.js",
-      "sha": "184f3889f365c127fc4e85f54b401da45cf394aa"
+      "sha": "ffc7103ad24e1aa1a67f888058a2dc91247bb005"
     },
     {
       "path": "test/operar-receptor-asaas-railway-staging.test.js",
@@ -3072,7 +3072,7 @@
     },
     {
       "path": "test/posicoes-vitrine-real-sqlite.test.js",
-      "sha": "08012fe3001b154d3515cbc82f4799d42d7ef262"
+      "sha": "1f0c23aefbc1c36858a58ef70f0b618f48a13fb6"
     },
     {
       "path": "test/prazo-saque-24h-corridas-v6.test.js",
