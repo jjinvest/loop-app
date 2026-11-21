@@ -39,6 +39,14 @@ Preservar: identidade única, indicação, histórico de compras, ordem A/B, pos
 - **Não está ativado como persistência principal.** O snapshot V1 completo continua no banco, porque leitores antigos (aceite, estorno, promoção de lotes, auditorias) ainda dependem dele. Este estágio prova a reversibilidade antes da substituição; ainda não reduz tamanho/tempo de gravação produtivo.
 - **Critério para ativar V2:** inventariar e migrar TODOS os leitores/escritores do snapshot, permitir estado compacto com restauração segura em um só gateway transacional, conferir restore de backup e ida/volta entre versões, e rodar cargas de 10 mil/100 mil/1 milhão separadamente para cadastros, posições e eventos, sempre sem dinheiro real fictício.
 
+## Migração transacional V1 → V2 com gateway único
+
+- Implementado `estado-motor-unificado-sqlite.js`: ponto de acesso com leitura V1/V2, revisão otimista, validação de SHA-256 da cadeia de ciclos, reconstrução do snapshot V1 lógico e gravação V2 **dentro da mesma transação**. Estado V2 já migrado não regride ao formato V1 numa nova operação.
+- Motor, projeções, auditoria, aceite individual de posição azul, promoção verde e promoções em lote utilizam o gateway para evitar gravadores incompatíveis. A leitura antiga ainda é válida em bancos não migrados.
+- `motor.migrarHistoricoExterno()` converte apenas a representação do histórico e atualiza a revisão e a projeção A/B de modo atômico. É **operação de migração interna, não endpoint público**, não faz compra, saque, giro ou bônus. Não é executada automaticamente na abertura de base produtiva; requer backup verificável e execução deliberada, evitando alteração silenciosa da base ativa.
+- Os ciclos continuam no histórico relacional imutável, e o snapshot gravado V2 mantém somente referência à cadeia e checksum do JSON V1. Leituras V2 reconstituem e revalidam o snapshot completo; corrupção ou perda de referência impede a operação.
+- **Limitação importante:** o motor do domínio ainda reconstrói e valida todos os ciclos em memória. A migração V2 reduz armazenamento/regravação do histórico no registro central, **não** prova tempo constante por operação nem suporte para milhões de ciclos/posições. Isso exige remodelar o processamento de estado para eventos/posições indexados sem carregar todo o passado.
+
 ## Estado
 
 Longevidade do índice e da auditoria reforçada. Um milhão de registros e posições não está comprovado; a remodelagem do snapshot e as medições volumétricas ainda são necessárias.
