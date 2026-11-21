@@ -1412,7 +1412,7 @@
     },
     {
       "path": "src/producao/leitura-tabuleiro-operacional-real.js",
-      "sha": "06e3271b1dc617b52a0702724807500a19d126ef"
+      "sha": "e3423465f33cb94638b4e3ace8fc177a3293bb89"
     },
     {
       "path": "src/producao/livro-financeiro-real-sqlite.js",
@@ -1544,7 +1544,7 @@
     },
     {
       "path": "src/producao/snapshot-historico-externo-candidato.js",
-      "sha": "996f37f9b89af554450c458b5fdf395f7d80dc3a"
+      "sha": "c0e4af9d114493f4b4bb06dc5e0600c4ae1ba3eb"
     },
     {
       "path": "src/producao/tesouraria-modular-ensaio-sqlite.js",
@@ -2460,7 +2460,7 @@
     },
     {
       "path": "test/estado-motor-unificado-v2-integracao.test.js",
-      "sha": "cf66dd55da02d6f9503f3eb0a90473f85bd2d894"
+      "sha": "ce5cac8107675a3a3904f4234a42fbecced61697"
     },
     {
       "path": "test/estado-simulacao.test.js",
