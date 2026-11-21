@@ -468,7 +468,7 @@
     },
     {
       "path": "src/candidato/checkout-candidato-ui.js",
-      "sha": "8144b0ff11d1429f56a00e5d59ad365eab329867"
+      "sha": "ef829364359866e3b8447dd0aca3448275600774"
     },
     {
       "path": "src/candidato/escritorio-admin-candidato-ui.css",
@@ -3192,7 +3192,7 @@
     },
     {
       "path": "test/servidor-escritorio-preview-railway.test.js",
-      "sha": "c1bbb2c486d699d2d1a56b7f8352619dfa938804"
+      "sha": "193b98efc887d680ba6f30d9bf746be987673c68"
     },
     {
       "path": "test/servidor-publico-bloqueio-laboratorio-marco-zero.test.js",
