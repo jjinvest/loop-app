@@ -1296,7 +1296,7 @@
     },
     {
       "path": "src/producao/auditoria-operacional-sqlite.js",
-      "sha": "4e5ec07654a8449a832719aacc2f42a379dab97f"
+      "sha": "54a66fe212d5a7446c0202319b2909914cfb4133"
     },
     {
       "path": "src/producao/avaliador-qualificacao-pedidos-real.js",
