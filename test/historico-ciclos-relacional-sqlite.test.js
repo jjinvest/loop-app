@@ -182,8 +182,8 @@ test('cinco mil ciclos acumulados ficam indexados e somente novos são gravados'
   db.exec('COMMIT');
   assert.deepEqual(contagens(),{ciclos:5000,eventos:30000},
    'reprocessar snapshot não regrava nem duplica ciclos');
-  assert.equal(h.conferir().totalCiclos,5000);
-  assert.equal(h.conferir().totalEventos,30000);
+  assert.equal(h.conferir({sim}).totalCiclos,5000);
+  assert.equal(h.conferir({sim}).totalEventos,30000);
   assert.equal(db.prepare('PRAGMA integrity_check').get().integrity_check,'ok');
  }finally{db.close();}
 });
