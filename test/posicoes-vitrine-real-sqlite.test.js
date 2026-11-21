@@ -72,8 +72,8 @@ test('reservar espaco para rascunho impede sobreposicao de publicado',()=>{
   assert.equal(v.consultar({posicao:40}).produtoId,'produto-rascunho');
   const apos=v.projetar([...abertos,
    {produtoId:'produto-rascunho',compravel:false}]);
-  assert.equal(apos[2].posicaoVitrine,1);
-  assert.deepEqual(apos.map(x=>x.posicaoVitrine),[2,3,1]);
+  assert.equal(apos[0].produtoId,'produto-rascunho');
+  assert.deepEqual(apos.map(x=>x.posicaoVitrine),[1,2,3]);
  }finally{db.close();}
 });
 
