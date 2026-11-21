@@ -125,7 +125,9 @@ test('interface aprovada e identidade real servidas da mesma origem protegida',a
  assert.match(script,/loop03-rede-pessoa-menu/);
  assert.match(script,/loop03-rede-alocar-posicoes/);
  assert.match(script,/for\(let n=1;n<=10;n\+\+\)/);
- assert.match(script,/escolha\.disabled=true/);
+ assert.match(script,/escolha\.disabled=reservada!==null/);
+ assert.match(script,/\/minha-rede\/destino/);
+ assert.doesNotMatch(script,/escolha\.disabled=true/);
  assert.match(script,/posicionarCampoFotoPerfil\(true\)/);
  assert.match(script,/posicionarCampoFotoPerfil\(false\)/);
  assert.match(script,/seletorPosicaoMotor/);
