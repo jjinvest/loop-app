@@ -1,30 +1,16 @@
 {
   "name": "loop-app",
   "version": "1.0.0",
-  "description": "loop",
-  "main": "index.js",
+  "private": true,
+  "description": "LOOP 3.0 / AKITEMM — base limpa em evolução para auditoria independente",
+  "main": "scripts/iniciar-cadastro-publico-release.js",
   "scripts": {
-    "test": "node --test",
-    "start": "node src/server.js",
-    "start:admin-demo": "node src/laboratorio/servidor-catalogo.js",
-    "simular:sustentabilidade": "node scripts/simular-sustentabilidade.js",
-    "simular:50-giros": "node scripts/simular-50-giros-loop-v6.js",
-    "demo:convites": "node scripts/gerar-cenario-convites-demo.js",
-    "start:checkout-staging": "node src/laboratorio/servidor-checkout-staging-local.js",
-    "start:asaas-railway-staging": "node src/laboratorio/receptor-webhook-asaas-railway-staging.js"
+    "test": "node --test test/*.test.js",
+    "verificar": "node scripts/verificar-base-limpa.js",
+    "start:real": "node scripts/iniciar-cadastro-publico-release.js",
+    "start:gateway": "node scripts/iniciar-gateway-publico-real-loop.js"
   },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/jjinvest/loop-app.git"
-  },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
   "type": "commonjs",
-  "bugs": {
-    "url": "https://github.com/jjinvest/loop-app/issues"
-  },
-  "homepage": "https://github.com/jjinvest/loop-app#readme",
   "dependencies": {
     "express": "^5.2.1"
   },

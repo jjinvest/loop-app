@@ -1,32 +1,37 @@
-> **INÍCIO OBRIGATÓRIO — LOOP 3.0 / AKITEMM (21/11/2026):** Para continuar o projeto sem recomeçar ou confundir loja, filas, porteira, relógio, tabuleiro e caixa, ler primeiro [ESSÊNCIA ÚNICA E LINKS ORIGINAIS](docs/LEIA_PRIMEIRO_ESSENCIA_UNICA_LOOP_AKITEMM_21NOV2026.md). As informações abaixo sobre laboratório e versões antigas são histórico, não substituem a branch real atual nem comprovam pagamentos produtivos.
+# LOOP 3.0 + AKITEMM — CÓPIA LIMPA EM EVOLUÇÃO (V0)
 
-> **CONTINUIDADE VIGENTE:** Regras aprovadas e último contexto ficam em [`docs/COMANDO_MESTRE_LOOP_03_CONTINUIDADE.md`](docs/COMANDO_MESTRE_LOOP_03_CONTINUIDADE.md). Versões anteriores e backups foram isolados conforme [`docs/ISOLAMENTO_PROTOTIPOS_ANTIGOS_LOOP_03.md`](docs/ISOLAMENTO_PROTOTIPOS_ANTIGOS_LOOP_03.md). Este repositório contém laboratório e compatibilidade histórica, não pagamentos de produção.
+**Projeto atual, separado da construção. Não é certificação de lançamento nem garantia de 100 mil usuários.**
 
-# LOOP V6 — Plataforma de loja e Escritório Virtual
+Origem do código: `jjinvest/loop-app`, branch `feature/unificar-escritorio-real-20261105`, revisão `e88a14601b3b20475098f489d44fac01acedf2c9`. Última revisão funcional confirmada no Railway na extração: `a77d8d1e5355e7eb19fb7d12ea1eb5616c79132a`. Arquivos iguais aos da aplicação, com referências Git individuais no manifesto. Esta cópia é independente do ambiente de construção, não altera banco, domínio nem pagamento.
 
-O **LOOP é uma plataforma web**, acessível por navegador em **celular, tablet e computador**, com a mesma base de dados e as mesmas regras de operação. Não é um aplicativo móvel instalável nem existem versões separadas para Android, iOS e Windows.
+## As três camadas — não confundir
 
-## Módulos do laboratório
+1. **Rascunho/construção:** branch operacional `feature/unificar-escritorio-real-20261105`, onde se corrigem e testam as mudanças. Não sincronizar automaticamente toda tentativa.
+2. **Prova real:** sistema efetivamente publicado em `https://akitemmloop.com.br`; aprovação de comportamento pelo proprietário, exames de logs, testes de segurança, integração e retenção de dados.
+3. **Cópia limpa:** esta base para revisão por outra IA e especialistas, atualizada por versões fechadas depois de verificação. Ao final, uma versão aprovada poderá assumir o papel de original sem apagar o histórico de construção.
 
-- **Vitrine pública:** `/` — apresentação e produtos, sem checkout real.
-- **Loja do participante:** `/laboratorio/loja` — catálogo, carrinho, compras de teste e divulgação por link.
-- **Escritório Virtual:** `/laboratorio/participante` — sessão fictícia, links de indicação, acompanhamento das filas A/B, tabuleiro, termos e histórico.
-- **Administração:** `/admin`, `/admin/financeiro-demo` e demais painéis do laboratório — catálogo, pedidos e controles.
-- **Catraca V6:** centro + seis vagas; novas entradas pela vaga 6; regra de prioridade 3A/1B; seis eventos por ciclo.
-- **Caixa das douradas:** posições operacionais da empresa, criadas por botão administrativo sem CPF/pedido/receita, ou assumidas do fluxo original nas condições registradas.
+## Operação do LOOP — fonte vigente
 
-## Testes de responsividade
+Leia `docs/LEIA_PRIMEIRO_ESSENCIA_UNICA_LOOP_AKITEMM_21NOV2026.md` e `docs/ESSENCIA_DEFINITIVA_LOOP_FINANCEIRO_CATRACA_MARCO_ZERO.md`. Venda qualificada → filas A/B contínuas → porteira operacional → catraca / seis luzes / tabuleiro → reservas financeiras confirmadas. Filas e caixa podem crescer com a porteira fechada. A fila determina quem avança; o operador/relógio determina quando; o caixa comprova se a execução financeira tem cobertura. Não simular crédito real.
 
-A integração Playwright usa Chromium em dois contextos distintos: telefone com toque e computador sem emulação móvel. Verifica as telas de apresentação pública, produto, loja, Escritório Virtual, administração financeira, catálogo, escritório administrativo e contas de teste, em **320, 360, 390, 412, 768, 1024 e 1366 pixels**. O teste também exerce a criação de posição dourada pela interface administrativa e verifica ausência de overflow horizontal e de controles fora da viewport.
+## Telas REALMENTE em uso
 
-Veja `scripts/testar-loja-mobile-browser.js`, `.github/workflows/mobile-loop.yml` e `docs/RESPONSIVIDADE_PLATAFORMA_LOOP_V6.md`.
+A renderização atual usa `src/producao/interface-aprovada-loop.js` e `src/producao/interface-admin-comercial-aprovada.js`. As telas provêm de `src/candidato/checkout-candidato-ui.html`, `src/candidato/escritorio-admin-candidato-ui.html` e `src/laboratorio/loja-cliente-demo.html`; os respectivos CSS do cliente/loja também são lidos por essa renderização. **Esses quatro arquivos com nomes históricos de laboratório permanecem exclusivamente porque a aplicação REAL ainda os usa como modelos visuais.** Não representam uma segunda loja ou uma prévia. Removê-los ou renomeá-los exige refatoração e prova de equivalência visual antes de copiar a mudança para a base limpa. Páginas antigas não utilizadas foram excluídas da cópia.
 
-## Como executar localmente
+## Como auditar
 
-Instale as dependências com `npm ci` e rode `npm test`. O laboratório administrativo usa o script `npm run start:admin-demo`, desde que as variáveis ambientais de laboratório estejam configuradas: `LOOP_ADMIN_CATALOGO_LOCAL=1`, `LOOP_CATALOGO_DB` apontando para arquivo SQLite **fora do repositório**, e `LOOP_ADMIN_TEST_TOKEN` com a chave fictícia local. O servidor administrativo escuta apenas em `127.0.0.1` e **não aceita execução em `NODE_ENV=production`**.
+- Node 24; `npm ci` instala as dependências travadas em `package-lock.json`.
+- `npm run verificar` audita arquivos, hash Git e imports locais presentes.
+- `npm test` executa a bateria direcionada de testes sobre os módulos copiados, sem usar banco real.
+- A CI da própria cópia verifica isso a cada atualização. Sem testes e provas não marcar a versão como pronta.
+- `MANIFESTO_BASE_LIMPA.json` contém origem, nomes, hashes, exclusões e estados dos gates.
 
-## Estado e cautelas
+## O que NÃO está certificado
 
-O código atual é um **protótipo de laboratório**, sem cobrança, split, transferência, saque, CPF real ou contemplação real. As projeções e os caixas não constituem saldos bancários. Antes de oferecer a plataforma publicamente com funções financeiras, serão necessários avaliação jurídica do modelo, viabilidade econômica, proteção ao consumidor e à LGPD, verificações de identidade, autenticação de produção, pagamentos reais, entregas, estornos e conciliação auditável.
+**Faltam:** split bancário Celcoin/Asaas em produção, fornecedor integrado, conciliação e reservas reais, giro financeiro e saque produtivos, testes de carga p95/p99 e concorrência para **100 mil usuários**, auditoria independente de segurança e jurídico/contabilidade. Um teste sintético de filas não equivale à capacidade de 100 mil pessoas simultâneas. O botão/relógio visual não autoriza pagamento.
 
-O desenvolvimento ocorre na branch de trabalho e no PR; nenhuma alteração aqui significa publicação em produção ou merge autorizado.
+Não incluir SQLite, CPFs, chaves de API, fotos privadas, backups, .env reais ou informação bancária privada ao entregar esta cópia. Reproduzir a construção em ambiente isolado, nunca apontar a auditoria ao banco dos clientes.
+
+**Links personalizados de validação do proprietário:**
+- Escritório: https://akitemmloop.com.br/escritorio/VILELA
+- Loja: https://akitemmloop.com.br/loja/VILELA

@@ -1,0 +1,582 @@
+{
+  "schema": 1,
+  "name": "LOOP 3.0 / AKITEMM — cópia limpa de código atual",
+  "version": "0.1.0",
+  "state": "EM_CONSTRUCAO_AUDITORIA_PENDENTE",
+  "sourceRepository": "jjinvest/loop-app",
+  "sourceBranch": "feature/unificar-escritorio-real-20261105",
+  "sourceCommit": "e88a14601b3b20475098f489d44fac01acedf2c9",
+  "lastVerifiedFunctionalDeploymentCommit": "a77d8d1e5355e7eb19fb7d12ea1eb5616c79132a",
+  "notes": "A cópia não inclui dados reais, nem histórico de laboratorio, nem imagens abandonadas. Arquivos com nomes antigos foram mantidos somente quando usados pela renderização ou por contratos do código operacional.",
+  "guarantees": {
+    "srcFrozen": true,
+    "financialOperationsAuthorized": false,
+    "load100kCertified": false,
+    "independentReproductionCertified": false
+  },
+  "files": [
+    {
+      "path": ".dockerignore",
+      "gitSha": "559dfc920cf41fb3ff7bb0cb69a97e2a1d805837"
+    },
+    {
+      "path": ".gitignore",
+      "gitSha": "d76fa2518e433ec4355b18246fb75038b8c421e9"
+    },
+    {
+      "path": "AGENTS.md",
+      "gitSha": "1e900b17be0c770853851f59868aa30957c07f26"
+    },
+    {
+      "path": "Dockerfile.public-real",
+      "gitSha": "e7d1967c3b536abd73c00bbfbb8a8311f4b6369a"
+    },
+    {
+      "path": "docs/CONTRATO_VISUAL_LOOP_APROVADO.json",
+      "gitSha": "0fec2f93ffe861fc2a4ae416b67dce4357e1c67b"
+    },
+    {
+      "path": "docs/ESSENCIA_DEFINITIVA_LOOP_FINANCEIRO_CATRACA_MARCO_ZERO.md",
+      "gitSha": "1cfed8d0268c583f07cced12ee51f23cf3706398"
+    },
+    {
+      "path": "docs/LEIA_PRIMEIRO_ESSENCIA_UNICA_LOOP_AKITEMM_21NOV2026.md",
+      "gitSha": "3b7b597c5a386322410f781fd735b71ebb5a7c68"
+    },
+    {
+      "path": "docs/POLITICA_PRIVACIDADE_LOOP_2026_11_PARA_APROVACAO.md",
+      "gitSha": "122f983ba92c6f9ad13647017a78cdda27aaabe3"
+    },
+    {
+      "path": "docs/PROTOCOLO_PACOTE_LIMPO_MARCO_ZERO_AUDITORIA_IA.md",
+      "gitSha": "449ef15b08673242b088a2c34dd357b4a69430b9"
+    },
+    {
+      "path": "docs/REGRAS_POSICOES_POR_COR_AKITEMM_20261105.md",
+      "gitSha": "17b5ecfa15244872e7998fa207607f83742ee22a"
+    },
+    {
+      "path": "docs/REGRA_DEFINITIVA_FILA_E_CATRACA_POR_CAIXA_17NOV2026.md",
+      "gitSha": "a2353e0f04e0fa151f03c89f910c6d017f4ca8db"
+    },
+    {
+      "path": "docs/REGRA_FILA_A_LIVRE_LIMITE_DUAS_POSICOES_TABULEIRO.md",
+      "gitSha": "7664316ee5d10732b9839c0cc5354a92346b44d4"
+    },
+    {
+      "path": "docs/TERMOS_CADASTRO_LOOP_2026_11_PARA_APROVACAO.md",
+      "gitSha": "e04de75594af9f378ebd222a64e727430d30a47f"
+    },
+    {
+      "path": "package-lock.json",
+      "gitSha": "78ca05c935b4da51762d5253baeb295027b497eb"
+    },
+    {
+      "path": "scripts/iniciar-cadastro-publico-release.js",
+      "gitSha": "6662d8e94362242a4f566d6c08e57fc79d1fa39f"
+    },
+    {
+      "path": "scripts/iniciar-gateway-publico-real-loop.js",
+      "gitSha": "491547de71b897bb006afacd6778cbf53781bbc0"
+    },
+    {
+      "path": "scripts/iniciar-identidade-cadastro-real.js",
+      "gitSha": "0ac805b5aee20e248b20c41717bcc13cf7856b2c"
+    },
+    {
+      "path": "scripts/iniciar-identidade-real-loop.js",
+      "gitSha": "c3a0d422f7c5fe7162f4abed4234b45bf299d6cb"
+    },
+    {
+      "path": "scripts/iniciar-identidade-real-preparacao.js",
+      "gitSha": "5fd8a227d48a4ad86945b647dc83fedc4f0699c2"
+    },
+    {
+      "path": "scripts/provar-ligacao-privada-loop.js",
+      "gitSha": "617f85b699c86a3b14074ad0309879d52c1aaad2"
+    },
+    {
+      "path": "scripts/validar-identidade-real-navegador.js",
+      "gitSha": "d42f81c80c4fac853800c19176fd943f02b30dbc"
+    },
+    {
+      "path": "src/adapters/email-recuperacao-resend.js",
+      "gitSha": "ab3945bd0c0e944a5ab1202e3535f4288d0cd0f3"
+    },
+    {
+      "path": "src/adapters/email-verificacao-resend.js",
+      "gitSha": "613a21182c9bb4f86e46cd3a119c72258a92728b"
+    },
+    {
+      "path": "src/candidato/checkout-candidato-ui.html",
+      "gitSha": "bd4f54a33ee59dc44e613f12fbf223b06d86d62c"
+    },
+    {
+      "path": "src/candidato/escritorio-admin-candidato-ui.css",
+      "gitSha": "3b28135c2c6a3f923b0e671d23ed8435f3e3d1eb"
+    },
+    {
+      "path": "src/candidato/escritorio-admin-candidato-ui.html",
+      "gitSha": "772b4b328cc1b163323a389a419f888a149dd481"
+    },
+    {
+      "path": "src/candidato/escritorio-cliente-integrado.css",
+      "gitSha": "79f6b8f97238ae8a81e8a340fdf4234521d82491"
+    },
+    {
+      "path": "src/candidato/vitrine-horizontal.css",
+      "gitSha": "42a0c1730d88890de8aa8607f26f6dcc31cc9d53"
+    },
+    {
+      "path": "src/domain/adesoes-posicoes-demo-sqlite.js",
+      "gitSha": "7b1939b972a6bb1e090eaea8b7f43a8858552621"
+    },
+    {
+      "path": "src/domain/agenda-catraca-loop.js",
+      "gitSha": "1de9a2c58c0aa3f96ecf670563b33ddff233f952"
+    },
+    {
+      "path": "src/domain/akitemm-config-loja-demo-sqlite.js",
+      "gitSha": "bee8f6cc37eeaa19b819087f4d5e98c218ea34b0"
+    },
+    {
+      "path": "src/domain/akitemm-midia-avaliacoes-demo.js",
+      "gitSha": "0822ae08d82233231830e6e99673f5ade77954fb"
+    },
+    {
+      "path": "src/domain/capacidade-posicoes-loop.js",
+      "gitSha": "bf1a567619a765cd00cce1f11fbe57f578c8587d"
+    },
+    {
+      "path": "src/domain/catalogo.js",
+      "gitSha": "e1425d8f316bcd1d1bcdde47bc7bbefd07fd4d99"
+    },
+    {
+      "path": "src/domain/destino-financeiro-centro-loop.js",
+      "gitSha": "5f663e817fcf5baf8a5f6e2b5d01e35a6624fab9"
+    },
+    {
+      "path": "src/domain/estado-simulacao.js",
+      "gitSha": "05ae522e74465ee3857e94e3c804e71ccf416ed7"
+    },
+    {
+      "path": "src/domain/fotos-produto-candidato-sqlite.js",
+      "gitSha": "16e2edd504de3d65fceaf1d91fd0d8d9091ea338"
+    },
+    {
+      "path": "src/domain/material-pdf-produto-candidato-sqlite.js",
+      "gitSha": "8cfea6d11e0a133202d05060b0c8a18750f2b648"
+    },
+    {
+      "path": "src/domain/meta-lotes-catraca-loop.js",
+      "gitSha": "5975ec8c20f5feb7fbd9ebecc530fb28a19354bf"
+    },
+    {
+      "path": "src/domain/motor-filas.js",
+      "gitSha": "737dc332ebc9297c98cbc1bb0620a6544948a54a"
+    },
+    {
+      "path": "src/domain/novidades-loja-candidato-sqlite.js",
+      "gitSha": "b0ea1378f5c01a39fc9d505f7e5ad6149523f433"
+    },
+    {
+      "path": "src/domain/plano-posicoes-compra-akitemm.js",
+      "gitSha": "d97fe79398f20b6bb0055c15c893f414533916e1"
+    },
+    {
+      "path": "src/domain/plano-roteamento-tres-bancos-lab.js",
+      "gitSha": "4cdb13e2f307886b7cbaab39f33ce4a34f018e84"
+    },
+    {
+      "path": "src/domain/repositorio-catalogo-sqlite.js",
+      "gitSha": "4146682439ba6c2a30219038361e6caca37297ce"
+    },
+    {
+      "path": "src/domain/simulador-loop.js",
+      "gitSha": "1ba060d45e2ae8dd7b32ac907480469b48510604"
+    },
+    {
+      "path": "src/domain/tabuleiro-loop.js",
+      "gitSha": "73871188c46949d90be206f40fad47bd5366c950"
+    },
+    {
+      "path": "src/laboratorio/checkout-staging-ui.css",
+      "gitSha": "3b8e3303d314488ef98e18d36eb2b4f0968766b8"
+    },
+    {
+      "path": "src/laboratorio/loja-cliente-demo.css",
+      "gitSha": "e211889af7534d25f27e6c4fd79668a11153c69d"
+    },
+    {
+      "path": "src/laboratorio/loja-cliente-demo.html",
+      "gitSha": "c69bfc690a93922baec4aa16fe3e0e306220331b"
+    },
+    {
+      "path": "src/laboratorio/loop-03-shell.css",
+      "gitSha": "abe92535aee5f46dfaa0c0821473a1a06203c5ec"
+    },
+    {
+      "path": "src/producao/acabamento-botoes-real.css",
+      "gitSha": "c743e599ac87bd2f83cef81e076658b843a91606"
+    },
+    {
+      "path": "src/producao/adaptadores-psp-readonly.js",
+      "gitSha": "18ffcc4235588ddfeeab241443897984d1942a38"
+    },
+    {
+      "path": "src/producao/agendador-backup-identidade-real.js",
+      "gitSha": "593bee7e6a0bd692bef26e155281e046fb059925"
+    },
+    {
+      "path": "src/producao/agendador-backup-midia-real.js",
+      "gitSha": "2ade7c94ed15061ca6ac9426521a9c42ffe11f63"
+    },
+    {
+      "path": "src/producao/asaas-producao-readonly.js",
+      "gitSha": "f44ec47b1e3b5cfd7509056b4cf3d50cd7b0ac4f"
+    },
+    {
+      "path": "src/producao/auditoria-acervo-real-sqlite.js",
+      "gitSha": "20a5582973856462993975f8255cbb885cae4e5f"
+    },
+    {
+      "path": "src/producao/auditoria-contas-migradas-readonly.js",
+      "gitSha": "9f57203028aebfbb07a5e5d2afd90b396e5890e8"
+    },
+    {
+      "path": "src/producao/auditoria-operacional-sqlite.js",
+      "gitSha": "4e5ec07654a8449a832719aacc2f42a379dab97f"
+    },
+    {
+      "path": "src/producao/backup-identidade-offsite.js",
+      "gitSha": "850c8a492c5a418afaf02fa0e8b52ded9ba62cf6"
+    },
+    {
+      "path": "src/producao/backup-identidade-real.js",
+      "gitSha": "4334e85ccd8e2601aaa99ded322988a99b888cdf"
+    },
+    {
+      "path": "src/producao/backup-midia-offsite.js",
+      "gitSha": "d3e4bfda90c7a7af54c369fc5bb46387577ad045"
+    },
+    {
+      "path": "src/producao/backup-midia-real-offsite.js",
+      "gitSha": "68d04cf053e39b644a9f2db789cea5d112d2feb6"
+    },
+    {
+      "path": "src/producao/carrinho-interno-real-sqlite.js",
+      "gitSha": "eec59b3731697abda28e108218f0b5012e9cd8a7"
+    },
+    {
+      "path": "src/producao/catalogo-mercadorias-real.js",
+      "gitSha": "e5cd1550f4d029460e12418d0dfb8cb0e32d3706"
+    },
+    {
+      "path": "src/producao/catalogo-multidistribuidores-sqlite.js",
+      "gitSha": "6cb65bbb66fff26c70e8cb3e04c4a99609f819b9"
+    },
+    {
+      "path": "src/producao/classificacao-comercial-loop-sqlite.js",
+      "gitSha": "42fbf0723ae5e1a5def2aa22f2a304c35cb81ee7"
+    },
+    {
+      "path": "src/producao/conciliacao-financeira-externa-readonly.js",
+      "gitSha": "a642c065175ed871a85049d5037f0752a3855299"
+    },
+    {
+      "path": "src/producao/conferencia-observacoes-psp.js",
+      "gitSha": "e26ff8bddf8b28bdf76f6a14dc861d7b3a2007d3"
+    },
+    {
+      "path": "src/producao/contrato-extratos-readonly.js",
+      "gitSha": "285cfe24a45855b83f1b25c7f7eabf8fb74d8752"
+    },
+    {
+      "path": "src/producao/controle-caixa-catraca-loop-sqlite.js",
+      "gitSha": "f3f089565cdeb8bff1f7ec6a9f3c3cf9a5e0e258"
+    },
+    {
+      "path": "src/producao/controle-economico-loja-sqlite.js",
+      "gitSha": "213587b166e9a28ebd4ef2d16b1d6fcdde692a43"
+    },
+    {
+      "path": "src/producao/cotacoes-multidistribuidores-sqlite.js",
+      "gitSha": "ecb0c2b6f8f3c883037ed608a2838ae456d7de8e"
+    },
+    {
+      "path": "src/producao/cursor-rede-sqlite.js",
+      "gitSha": "0e56d2c79288509d2453297b5a4a38657de22720"
+    },
+    {
+      "path": "src/producao/emitir-auditoria-custodia-readonly.js",
+      "gitSha": "bb84265135a8e84066143dfef95bb1048c73e7f4"
+    },
+    {
+      "path": "src/producao/estado-motor-unificado-sqlite.js",
+      "gitSha": "74aa3d1e9b97e9bc7a970db212cb0e031baed2c4"
+    },
+    {
+      "path": "src/producao/eventos-comerciais-loop-sqlite.js",
+      "gitSha": "b6bedda67c4c9818ffcd7e38415450c8fdec07df"
+    },
+    {
+      "path": "src/producao/foto-perfil-real-sqlite.js",
+      "gitSha": "229aa8ec40aaf77e71da28d24f05afc54e1b9ddd"
+    },
+    {
+      "path": "src/producao/gateway-admin-comercial.js",
+      "gitSha": "f5038dcf7af1c0f8875d000ba6e9875036e42012"
+    },
+    {
+      "path": "src/producao/historico-ciclos-relacional-sqlite.js",
+      "gitSha": "f68a49523374712d5aba5ba089f4de2febdfa1ee"
+    },
+    {
+      "path": "src/producao/identidade-cliente-loop-sqlite.js",
+      "gitSha": "cbaa31b441b03e9976bc76950212a7ca44d41a9c"
+    },
+    {
+      "path": "src/producao/inbox-extratos-asaas-sandbox-sqlite.js",
+      "gitSha": "377775d319a37d9069e4afd70f188ba79f7ea1cd"
+    },
+    {
+      "path": "src/producao/interface-admin-comercial-aprovada.js",
+      "gitSha": "73da75d51d70bd808dc5fe0ca923961de5bee21f"
+    },
+    {
+      "path": "src/producao/interface-admin-comercial-client.js",
+      "gitSha": "7e825b8c42893dc544ad038e8b49ed7a543d4f82"
+    },
+    {
+      "path": "src/producao/interface-aprovada-contas.js",
+      "gitSha": "87cf21871e179b055e2b2017c8f24a01bc76a5c8"
+    },
+    {
+      "path": "src/producao/interface-aprovada-loja.js",
+      "gitSha": "f65080b63a665b9b7e9e734d38ab35800a94db0a"
+    },
+    {
+      "path": "src/producao/interface-aprovada-loop.js",
+      "gitSha": "39d61f2fc9260b8dfcf0041916d15be040f0a9d9"
+    },
+    {
+      "path": "src/producao/leitura-tabuleiro-operacional-real.js",
+      "gitSha": "e3423465f33cb94638b4e3ace8fc177a3293bb89"
+    },
+    {
+      "path": "src/producao/livro-financeiro-real-sqlite.js",
+      "gitSha": "80a099daf927e532dd6064c52c2f40b286a4051f"
+    },
+    {
+      "path": "src/producao/manutencao-comercial-sqlite.js",
+      "gitSha": "5a146e7cab9e8af21ff6e8280ad8f9e4ea3056b0"
+    },
+    {
+      "path": "src/producao/material-pdf-cursos-real.js",
+      "gitSha": "c74af0d553abbdfb5c6569637937b61e545bdae2"
+    },
+    {
+      "path": "src/producao/migracao-cadastros-preview-real.js",
+      "gitSha": "af798b91068827fec09ee550601acdd6f663a0ac"
+    },
+    {
+      "path": "src/producao/migracao-historico-v2-protegida.js",
+      "gitSha": "df839fb1809d623364700cd566acd82737673eec"
+    },
+    {
+      "path": "src/producao/montar-comercial-sem-homologacao.js",
+      "gitSha": "832c4e8a70c9dcc7f6a6a90dd2374123b859100e"
+    },
+    {
+      "path": "src/producao/motor-loop-integrado-sqlite.js",
+      "gitSha": "768e3031a304c71f4a39d6805807efb8451d2736"
+    },
+    {
+      "path": "src/producao/operacao-catraca-admin-sqlite.js",
+      "gitSha": "4a71962bd2da8614171fc9127627227e3fce63fa"
+    },
+    {
+      "path": "src/producao/operador-loja-fotos-real.js",
+      "gitSha": "db2ac1fb31389f2626df4c4ed05c30e02e16ab3b"
+    },
+    {
+      "path": "src/producao/outbox-compra-loop-sqlite.js",
+      "gitSha": "41049f1466519e04b6081c48cb4621d097e7a164"
+    },
+    {
+      "path": "src/producao/pedidos-comerciais-sqlite.js",
+      "gitSha": "b04db50003a8c045553b8ae4276a805cbc99c040"
+    },
+    {
+      "path": "src/producao/pedidos-fornecedor-outbox.js",
+      "gitSha": "0326d0d1c24488294db1b5a9f9d9b050dc7bcfad"
+    },
+    {
+      "path": "src/producao/portas-financeiras-modulares.js",
+      "gitSha": "8bccf2b90bf38559dcd10ed709cc6d5c78cae9d0"
+    },
+    {
+      "path": "src/producao/posicoes-vitrine-real-sqlite.js",
+      "gitSha": "6fd585c2e171c5f40e277758cad85663a9867f8f"
+    },
+    {
+      "path": "src/producao/preflight-capacidade-checkout-sqlite.js",
+      "gitSha": "ddb81ca95ed89f907b63e4f28cbe41d9a931aaa1"
+    },
+    {
+      "path": "src/producao/preparar-nucleo-comercial-real-fechado.js",
+      "gitSha": "4855bdd0ef1979c489e2b7582c56f6319ddaf36f"
+    },
+    {
+      "path": "src/producao/projecao-filas-relacional-sqlite.js",
+      "gitSha": "e62c15bf984b27ebbc97c9f2b9e95205d3ec5982"
+    },
+    {
+      "path": "src/producao/promocao-lotes-ensaio-sqlite.js",
+      "gitSha": "4796f092b37e3f270ac4ab7207638e1d10d75ae0"
+    },
+    {
+      "path": "src/producao/promocao-pedido-motor-ensaio-sqlite.js",
+      "gitSha": "76340eb866d37d39cf5049d9ab40dded74a7b546"
+    },
+    {
+      "path": "src/producao/prova-chaves-recuperacao.js",
+      "gitSha": "3c9acaf8804be5d4e46968792b407d2007b46e8b"
+    },
+    {
+      "path": "src/producao/prova-storage-preparacao-real.js",
+      "gitSha": "3f4b2dbd800e3c2319519508c36409ccf104a1de"
+    },
+    {
+      "path": "src/producao/receber-migracao-identidade-real.js",
+      "gitSha": "842a706236fc70d40472d1a3c1325331fbdc53b6"
+    },
+    {
+      "path": "src/producao/recuperacao-independente-offsite.js",
+      "gitSha": "7bbfd6a9586d5226526a13cdc13d62d915aedcfa"
+    },
+    {
+      "path": "src/producao/recuperacao-reservas-checkout-sqlite.js",
+      "gitSha": "6a0ff22293d78fddbb9dfb5f7c8473b5bb4b7cae"
+    },
+    {
+      "path": "src/producao/rotas-admin-economia-akitemm.js",
+      "gitSha": "b9b286d0105be237d1b0ff775309561a6d8d304e"
+    },
+    {
+      "path": "src/producao/rotas-catalogo-midia-operador.js",
+      "gitSha": "6abc4defd7e3f10ab250c2970fd759e535fed7f3"
+    },
+    {
+      "path": "src/producao/saneamento-sete-contas-legadas-sqlite.js",
+      "gitSha": "70c05544110bd70470ed86cd19b6e1f6dc42945c"
+    },
+    {
+      "path": "src/producao/servidor-identidade-loop.js",
+      "gitSha": "aaffa60296d954e55c390a1982be2c4def2749ae"
+    },
+    {
+      "path": "src/producao/sessao-admin-comercial-sqlite.js",
+      "gitSha": "73ffe211165d0325aac9bd8ece8eda35f2147d01"
+    },
+    {
+      "path": "src/producao/snapshot-historico-externo-candidato.js",
+      "gitSha": "c0e4af9d114493f4b4bb06dc5e0600c4ae1ba3eb"
+    },
+    {
+      "path": "src/producao/tesouraria-modular-ensaio-sqlite.js",
+      "gitSha": "793cf648fc010700a51d37f693e9bb2258281594"
+    },
+    {
+      "path": "src/producao/validacao-recuperacao-comercial.js",
+      "gitSha": "a7ff5a40a1bc4dada679aa6b7938d0fc3e37e765"
+    },
+    {
+      "path": "src/producao/visao-escritorio-unificada-sqlite.js",
+      "gitSha": "eec55123b10a87f9fe56a774e52f6392f82e1449"
+    },
+    {
+      "path": "src/shared/acabamento-visual-loop.js",
+      "gitSha": "7db646c8f5932872b0eada9158f6bde6d02e11d0"
+    },
+    {
+      "path": "src/shared/captcha-cadastro-sqlite.js",
+      "gitSha": "b06d7cfddb62ccb0e0c61a2525807d4705ec9a3e"
+    },
+    {
+      "path": "src/shared/captcha-login-sqlite.js",
+      "gitSha": "660e724015daabaab8a57f6ad29af876379f9d99"
+    },
+    {
+      "path": "src/shared/tabuleiro-visual-loop.js",
+      "gitSha": "6ab3d189c0bc05e0b9dd50fa3e1b354e861b78da"
+    },
+    {
+      "path": "src/shared/visor-catraca.js",
+      "gitSha": "85082a4ca842426a296da2b60dcc2dcf1d9290b9"
+    },
+    {
+      "path": "test/carrinho-interno-real-ponta-a-ponta.test.js",
+      "gitSha": "66d1793b8db556e2656248d65f301a402fe79112"
+    },
+    {
+      "path": "test/classificacao-comercial-loop-sqlite.test.js",
+      "gitSha": "0b6593afac84706e4954fc03fab762d8890a7317"
+    },
+    {
+      "path": "test/contrato-links-definitivos-real.test.js",
+      "gitSha": "858bf9494c4adc380f636c693fdca37b595cadf7"
+    },
+    {
+      "path": "test/contrato-papeis-operador-real.test.js",
+      "gitSha": "c64a0d9ac4bafa616f7dfa321d4867b948332929"
+    },
+    {
+      "path": "test/controle-caixa-catraca-loop-sqlite.test.js",
+      "gitSha": "8d77db27b3eb4a2e76d8dc7e7b10be9f64aa1221"
+    },
+    {
+      "path": "test/gateway-publico-real-integracao-conta-operador.test.js",
+      "gitSha": "4597bc4478b0d523503ed592f53244f3d76b84e4"
+    },
+    {
+      "path": "test/gateway-publico-real-sem-laboratorio.test.js",
+      "gitSha": "78dc071f0a76ae97faa942b01d7c2ee6db8fc66e"
+    },
+    {
+      "path": "test/interface-aprovada-identidade-real.test.js",
+      "gitSha": "b24ccb43506fd6510517b9c59858c2953de7d4fe"
+    },
+    {
+      "path": "test/luzes-relogio-operador-com-motor-preservado.test.js",
+      "gitSha": "95b8e985177bf815167592d0641da6f3c1379ce5"
+    },
+    {
+      "path": "test/meta-lotes-catraca-loop.test.js",
+      "gitSha": "e21cd2fde32cd6c67c94aa44ca76ff6edb16505a"
+    },
+    {
+      "path": "test/motor-loop-integrado-identidade.test.js",
+      "gitSha": "1b271975982df63001a2eea5719ca53c385dae28"
+    },
+    {
+      "path": "test/nucleo-comercial-real-fechado.test.js",
+      "gitSha": "f374e32912e1d627828b788a85db26c3708db5ce"
+    },
+    {
+      "path": "test/operador-fotos-conta-real-unificada.test.js",
+      "gitSha": "184f3889f365c127fc4e85f54b401da45cf394aa"
+    },
+    {
+      "path": "test/varredura-visual-publicacao-real.test.js",
+      "gitSha": "560cc4db8d6756ff67ad2ac943d76edb01134880"
+    }
+  ],
+  "unverified": [
+    "integração financeira real",
+    "carga 100 mil usuários",
+    "restauração isolada nesta cópia",
+    "equivalência HTTP/telas da cópia"
+  ],
+  "pendingApproval": "Proprietário aprova operação e telas reais; não presumir autorização bancária."
+}
