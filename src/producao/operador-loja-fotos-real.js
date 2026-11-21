@@ -296,22 +296,48 @@
   ]);
   if(!Array.isArray(slots.slots)||slots.total!==400)
    throw Error('QUADRINHOS_INDISPONIVEIS');
-  const atual=slots.slots.find(x=>x.posicao===indice);
+  const ocupados=new Set(slots.slots.map(x=>x.posicao));
+  const destino=ocupados.has(indice)?
+   Array.from({length:400},(_,i)=>i+1).find(n=>!ocupados.has(n)):indice;
+  if(!destino)throw Error('VITRINE_SEM_ESPACO');
+  const atual=slots.slots.find(x=>x.posicao===destino);
   const resposta=await fetchJson(
-   '/api/admin/catalogo-midia/slots/'+indice,{
+   '/api/admin/catalogo-midia/slots/'+destino,{
     method:'POST',headers:{'Content-Type':'application/json',
      'X-Loop-Admin-Csrf':sessao.csrfToken},
     body:JSON.stringify({produtoId:id,revisaoEsperada:atual?.revisao||0})
    });
-  if(resposta.produtoId!==id||resposta.posicao!==indice)
+  if(resposta.produtoId!==id||resposta.posicao!==destino)
    throw Error('QUADRINHO_NAO_CONFIRMADO');
   return resposta;
  }
  async function escolherProduto(indice){
-  const {corpo,estado}=modal('Espaço '+indice+' da AKITEMM');
-  corpo.append(linha('Toque no produto que deseja fotografar. '+
-   'Seu cadastro fica na central única; nenhuma venda é criada.'));
-  corpo.append(admin());
+  if(!Number.isSafeInteger(indice)||indice<1||indice>400)return;
+  const {corpo,estado}=modal('Cadastrar produto · AKITEMM');
+  corpo.append(linha('Cadastro manual. Foto, nome e cor no mesmo lugar. '+
+   'Distribuidor e SKU não são obrigatórios.'));
+  const form=document.createElement('form');form.autocomplete='off';
+  const nome=campoTexto(form,'Nome do produto',{placeholder:'Ex.: Camiseta preta'});
+  nome.required=true;
+  const desc=campoTexto(form,'Descrição (opcional)',{tipo:'textarea',
+   maxLength:2000,placeholder:'Escreva como deseja apresentar o produto'});
+  const cor=escolhaCor();
+  form.append(cor.label);
+  const foto=editarFoto(form);
+  const opcoes=document.createElement('details');
+  const resumo=document.createElement('summary');
+  resumo.textContent='Código do produto (opcional)';
+  opcoes.append(resumo);
+  const codigo=campoTexto(opcoes,'Código interno',
+   {maxLength:80,placeholder:'Gerado automaticamente se ficar vazio'});
+  form.append(opcoes);
+  const criar=document.createElement('button');
+  criar.type='submit';criar.textContent='Salvar produto e colocar na vitrine';
+  form.append(criar);corpo.append(form);
+  const vinculo=document.createElement('details');
+  const resumoExistente=document.createElement('summary');
+  resumoExistente.textContent='Usar um produto que já cadastrei';
+  vinculo.append(resumoExistente);corpo.append(vinculo);
   try{
    const [r,slots]=await Promise.all([
     fetchJson('/api/admin/catalogo-midia/produtos'),
@@ -320,72 +346,79 @@
    if(!Array.isArray(r.produtos)||r.checkoutReal!==false||
       !Array.isArray(slots.slots)||slots.total!==400)
     throw Error('CATALOGO_ADMIN_INCONSISTENTE');
-   const ocupado=slots.slots.find(x=>x.posicao===indice);
-   if(ocupado){
-    dialogo.close();void abrirProduto(ocupado.produtoId);return;
-   }
    const vinculados=new Set(slots.slots.map(x=>x.produtoId));
-   const itens=r.produtos.filter(p=>
-    ID.test(p.produtoId)&&!vinculados.has(p.produtoId));
-   if(itens.length){
-    const escolha=select('Produto existente',itens.map(p=>[
-     p.produtoId,p.nome+' ('+p.produtoId+')'
+   const existentes=r.produtos.filter(p=>ID.test(p.produtoId)&&
+    !vinculados.has(p.produtoId));
+   if(existentes.length){
+    const seletor=select('Produto existente',existentes.map(p=>[
+     p.produtoId,p.nome+' ('+p.estado.toLowerCase()+')'
     ]));
-    const botao=document.createElement('button');
-    botao.type='button';botao.textContent='Editar produto';
-    botao.addEventListener('click',async()=>{
-     botao.disabled=true;
+    const abrir=document.createElement('button');abrir.type='button';
+    abrir.className='akitemm-editor-secundario';
+    abrir.textContent='Editar produto existente';
+    abrir.addEventListener('click',async()=>{
+     abrir.disabled=true;
      try{
-      const id=escolha.s.value;
-      await vincularQuadradinho(indice,id);
-      dialogo.close();void abrirProduto(id);
-     }catch(e){
-      estado.textContent='Não foi possível vincular o quadradinho: '+e.message;
-     }finally{botao.disabled=false;}
+      await vincularQuadradinho(indice,seletor.s.value);
+      dialogo.close();void abrirProduto(seletor.s.value);
+     }catch(e){estado.textContent='Não foi possível abrir: '+e.message;}
+     finally{abrir.disabled=false;}
     });
-    corpo.append(escolha.label,botao);
-   }else estado.textContent='Nenhum produto cadastrado: crie o primeiro abaixo.';
-   corpo.append(linha('Ou cadastre uma mercadoria sem sair da loja:'));
-   const idLabel=document.createElement('label');
-   idLabel.textContent='Código do novo produto (letras minúsculas e hífen)';
-   const idNovo=document.createElement('input');
-   idNovo.type='text';idNovo.placeholder='produto-exemplo';
-   idNovo.maxLength=80;idLabel.append(idNovo);
-   const nomeLabel=document.createElement('label');
-   nomeLabel.textContent='Nome do produto';
-   const nomeNovo=document.createElement('input');
-   nomeNovo.type='text';nomeNovo.maxLength=150;nomeLabel.append(nomeNovo);
-   const descricaoLabel=document.createElement('label');
-   descricaoLabel.textContent='Descrição';
-   const descNova=document.createElement('textarea');
-   descNova.maxLength=2000;descricaoLabel.append(descNova);
-   const criar=document.createElement('button');
-   criar.type='button';criar.textContent='Cadastrar produto';
-   criar.addEventListener('click',async()=>{
-    const codigo=idNovo.value.trim(),titulo=nomeNovo.value.trim();
-    if(!ID_NOVO.test(codigo)||titulo.length<2||titulo.length>150){
-     estado.textContent='Confira o código e o nome do produto.';return;
+    vinculo.append(seletor.label,abrir);
+   }else{
+    const vazio=linha('Nenhum produto avulso aguardando edição.');
+    vinculo.append(vazio);
+   }
+  }catch(e){estado.textContent='Produtos existentes indisponíveis: '+e.message;}
+  form.addEventListener('submit',async ev=>{
+   ev.preventDefault();
+   if(aberto)return;
+   const titulo=nome.value.trim();
+   const informado=codigo.value.trim(),id=informado||slugManual();
+   if(!ID_NOVO.test(id)||titulo.length<2||titulo.length>150){
+    estado.textContent='Informe um nome válido. Confira também o código opcional.';
+    return;
+   }
+   aberto=true;criar.disabled=true;estado.textContent='Salvando no catálogo real...';
+   let criado=false;
+   try{
+    const imagem=await foto.obter();
+    const sessao=await fetchJson('/api/admin/comercial/sessao');
+    const csrf=sessao.csrfToken;
+    if(typeof csrf!=='string')throw Error('OPERADOR_SESSAO_INVALIDA');
+    const produto=await fetchJson('/api/admin/comercial/produtos-cadastrar',{
+     method:'POST',headers:{'Content-Type':'application/json',
+      'X-Loop-Admin-Csrf':csrf},
+     body:JSON.stringify({produtoId:id,titulo,descricao:desc.value.trim()})
+    });
+    if(produto.produtoId!==id||produto.ativo!==false)
+     throw Error('CADASTRO_NAO_CONFIRMADO');
+    criado=true;
+    await vincularQuadradinho(indice,id);
+    await salvarCor(id,csrf,cor.s.value);
+    if(imagem){
+     await salvarFoto(id,csrf,imagem,1);
+     await publicarFoto(id,csrf);
+     atualizarLoja();
+     estado.textContent='Produto e foto salvos. O item agora aparece nos primeiros espaços da vitrine.';
+     criar.textContent='Produto salvo';
+    }else{
+     estado.textContent='Produto salvo sem foto, como rascunho. Selecione uma imagem para publicar.';
+     criar.textContent='Produto salvo';
     }
     criar.disabled=true;
-    try{
-     const sessao=await fetchJson('/api/admin/comercial/sessao');
-     const x=await fetchJson('/api/admin/comercial/produtos-cadastrar',{
-      method:'POST',headers:{'Content-Type':'application/json',
-       'X-Loop-Admin-Csrf':sessao.csrfToken},
-      body:JSON.stringify({produtoId:codigo,titulo,
-       descricao:descNova.value.trim()})
-     });
-     if(x.produtoId!==codigo||x.ativo!==false)
-      throw Error('CADASTRO_NAO_CONFIRMADO');
-     await vincularQuadradinho(indice,codigo);
-     dialogo.close();void abrirProduto(codigo);
-    }catch(e){estado.textContent='Não foi possível cadastrar: '+e.message;}
-    finally{criar.disabled=false;}
-   });
-   corpo.append(idLabel,nomeLabel,descricaoLabel,criar);
-   corpo.append(linha('O produto ficará vinculado ao quadradinho '+indice+
-    '. Começa como rascunho; a publicação continua na central.'));
-  }catch(e){estado.textContent='Não foi possível listar produtos: '+e.message;}
+    const editar=document.createElement('button');
+    editar.type='button';editar.className='akitemm-editor-secundario';
+    editar.textContent='Continuar editando este produto';
+    editar.addEventListener('click',()=>{dialogo.close();void abrirProduto(id);});
+    corpo.append(editar);
+   }catch(e){
+    estado.textContent=(criado?'Produto criado, mas edição incompleta: ':
+     'Não foi possível salvar: ')+e.message+
+     (criado?' Abra o produto existente para continuar.':'');
+    if(!criado)criar.disabled=false;
+   }finally{aberto=false;}
+  });
  }
  async function abrirProduto(id){
   if(!ID.test(id)){
