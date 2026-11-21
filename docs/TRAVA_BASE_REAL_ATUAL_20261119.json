@@ -15,7 +15,7 @@
       "nota": "Os tres arquivos do Dockerfile.public-real sao iguais no commit da identidade real"
     }
   },
-  "politica": "Qualquer mudanca, adicao ou remocao no REAL exige aprovacao explicita do proprietario, testes, hash atualizado no manifesto E ancora Railway correspondente; nao reverter ou reconstruir telas historicas; ajuste de fotos cliente/operador solicitado em 21/11/2026, sem alteracao de molduras ou regra do motor; ajuste de agenda futura visivel e horario Android apenas para operador solicitado em 21/11/2026, sem modificacao do motor financeiro; correção autorizada do olhinho de login Android em 21/11/2026 sem alterar catraca, fotos, caixas ou molduras; vinculo visual real das luzes da catraca ao relogio do operador e legenda unica autorizado em 21/11/2026, preservando caixa e travas do motor; diagnóstico integrado agregado somente leitura de pedidos→eventos→outbox→filas em 21/11/2026, acesso operador, sem mudar telas, temporizador, posições ou caixa",
+  "politica": "Qualquer mudanca, adicao ou remocao no REAL exige aprovacao explicita do proprietario, testes, hash atualizado no manifesto E ancora Railway correspondente; nao reverter ou reconstruir telas historicas; ajuste de fotos cliente/operador solicitado em 21/11/2026, sem alteracao de molduras ou regra do motor; ajuste de agenda futura visivel e horario Android apenas para operador solicitado em 21/11/2026, sem modificacao do motor financeiro; correção autorizada do olhinho de login Android em 21/11/2026 sem alterar catraca, fotos, caixas ou molduras; vinculo visual real das luzes da catraca ao relogio do operador e legenda unica autorizado em 21/11/2026, preservando caixa e travas do motor; diagnóstico integrado agregado somente leitura de pedidos→eventos→outbox→filas em 21/11/2026, acesso operador, sem mudar telas, temporizador, posições ou caixa; avaliador real e privado de qualificacao de pedidos, usando regras vigentes, sem autorizar posição ou movimentação financeira em 21/11/2026",
   "algoritmo": "git-blob-sha1",
   "arquivos": [
     {
@@ -1299,6 +1299,10 @@
       "sha": "4e5ec07654a8449a832719aacc2f42a379dab97f"
     },
     {
+      "path": "src/producao/avaliador-qualificacao-pedidos-real.js",
+      "sha": "27004fd78a802c39af0cda53b35481b4a6060b04"
+    },
+    {
       "path": "src/producao/backup-identidade-offsite.js",
       "sha": "850c8a492c5a418afaf02fa0e8b52ded9ba62cf6"
     },
@@ -1392,7 +1396,7 @@
     },
     {
       "path": "src/producao/gateway-admin-comercial.js",
-      "sha": "31d37579d75db9cf625ee24a2f1fa9d5a11c66e2"
+      "sha": "a2613a54b8676f5d44e409c6ba9c657ba7a45032"
     },
     {
       "path": "src/producao/historico-ciclos-relacional-sqlite.js",
@@ -2045,6 +2049,10 @@
     {
       "path": "test/autenticacao-checkout-staging-integracao.test.js",
       "sha": "a41891ec6e7aa6e4bd18ac8c1349d7bcaa260c93"
+    },
+    {
+      "path": "test/avaliador-qualificacao-pedidos-real.test.js",
+      "sha": "6f1b465fec36047a803a35bfb81f944a4fb45be3"
     },
     {
       "path": "test/backup-conta-unica-restauracao-segura.test.js",

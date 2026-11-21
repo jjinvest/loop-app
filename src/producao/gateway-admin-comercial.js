@@ -6,6 +6,8 @@ const {COOKIE_ADMIN}=require('./sessao-admin-comercial-sqlite');
 const {OperacaoCatracaAdminSQLite}=require('./operacao-catraca-admin-sqlite');
 const {diagnosticarCadeiaPedidosFilas}=
  require('./diagnostico-cadeia-pedidos-filas');
+const {analisarQualificacaoPedidosReal}=
+ require('./avaliador-qualificacao-pedidos-real');
 const {montarAdminComercialAprovado}=
  require('./interface-admin-comercial-aprovada');
 const {montarRotasCatalogoMidiaOperador}=
@@ -262,6 +264,16 @@ function montarGatewayAdminComercial(app,{
    banco:motorLoop.banco,motorLoop
   }));}
   catch{return res.status(503).json({erro:'CADEIA_COMERCIAL_CONSULTA_INDISPONIVEL'});}
+ });
+ // Qualificação de compras no banco REAL. O operador consulta a pendência,
+ // mas esta API nunca transforma pedido em posição ou saldo.
+ app.get('/api/admin/loop/qualificacao-pedidos',proteger,(_req,res)=>{
+  res.set('Cache-Control','no-store');
+  if(!motorLoop)return res.status(503).json({erro:'MOTOR_INTERNO_INDISPONIVEL'});
+  try{return res.json(analisarQualificacaoPedidosReal({
+   banco:motorLoop.banco,motorLoop,classificacaoLoop
+  }));}
+  catch{return res.status(503).json({erro:'QUALIFICACAO_REAL_CONSULTA_INDISPONIVEL'});}
  });
  // Controles de operacao da catraca: mesma sessao administrativa, motor e SQLite.
  // Nunca recebem titularId, pedidoId nem eventos inventados do navegador.
