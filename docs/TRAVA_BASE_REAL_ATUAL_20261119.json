@@ -1428,7 +1428,7 @@
     },
     {
       "path": "src/producao/motor-loop-integrado-sqlite.js",
-      "sha": "5676eea2bf622405b8f888f7eb08e05b0fde7a20"
+      "sha": "0d7f008ddf9b96159cac473c39c725a64090ce52"
     },
     {
       "path": "src/producao/observacoes-psp-ensaio-sqlite.js",
