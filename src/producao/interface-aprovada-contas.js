@@ -526,6 +526,10 @@
   $('perfilCliente').textContent='Nick: '+nickVisivel(s.nick)+
    (s.emailVerificado?' · E-mail confirmado':' · Confirme seu e-mail');
   $('painelVerificarEmail').hidden=s.emailVerificado;
+  if(s.emailVerificado===false)restaurarContadorEmail();
+  else if(contadorEmail!==null){
+   clearInterval(contadorEmail);contadorEmail=null;
+  }
   $('painelIdentidadeTeste').hidden=true;
   $('conteudoConta').hidden=false;
   // A fonte é o endpoint autenticado do mesmo SQLite, não dados LAB.
@@ -2450,24 +2454,101 @@
    mostrarLogin('login');dizer('Sessão encerrada.');
   }catch(e){dizer(erro(e));}
  });
+ // O backend protege o reenvio por 120 segundos e permite no máximo
+ // três solicitações por hora. O relógio visual obedece a esses limites.
+ const ESPERA_REENVIO_EMAIL_MS=120000;
+ let prazoReenvioEmail=0,contadorEmail=null,solicitouEmail=false;
+ const chaveReenvio=()=>nickResumoReal?
+  'loop-reenvio-email-'+nickResumoReal.toLowerCase():null;
+ function atualizarContadorEmail(){
+  const botao=$('solicitarCodigoEmail');
+  const relogio=$('contadorReenvioEmail');
+  const restante=Math.max(0,Math.ceil((prazoReenvioEmail-Date.now())/1000));
+  if(restante>0){
+   botao.disabled=true;
+   botao.textContent='Código solicitado';
+   relogio.hidden=false;
+   relogio.textContent='Reenviar em '+
+    Math.floor(restante/60)+':'+String(restante%60).padStart(2,'0');
+  }else{
+   botao.disabled=false;
+   botao.textContent=solicitouEmail?'Reenviar código':'Enviar código';
+   relogio.hidden=true;
+   relogio.textContent='';
+   if(contadorEmail!==null){
+    clearInterval(contadorEmail);contadorEmail=null;
+   }
+  }
+ }
+ function restaurarContadorEmail(){
+  if(contadorEmail!==null){clearInterval(contadorEmail);contadorEmail=null;}
+  const chave=chaveReenvio();
+  let anterior=0;
+  if(chave)try{
+   anterior=Number(sessionStorage.getItem(chave)||0);
+  }catch{}
+  prazoReenvioEmail=Number.isSafeInteger(anterior)&&
+   anterior>Date.now()?anterior:0;
+  solicitouEmail=prazoReenvioEmail>0;
+  atualizarContadorEmail();
+  if(prazoReenvioEmail>Date.now())
+   contadorEmail=setInterval(atualizarContadorEmail,1000);
+ }
+ function iniciarContadorEmail(){
+  prazoReenvioEmail=Date.now()+ESPERA_REENVIO_EMAIL_MS;
+  solicitouEmail=true;
+  const chave=chaveReenvio();
+  if(chave)try{
+   sessionStorage.setItem(chave,String(prazoReenvioEmail));
+  }catch{}
+  if(contadorEmail!==null)clearInterval(contadorEmail);
+  contadorEmail=setInterval(atualizarContadorEmail,1000);
+  atualizarContadorEmail();
+ }
  $('solicitarCodigoEmail').addEventListener('click',async()=>{
-  $('solicitarCodigoEmail').disabled=true;
+  const botao=$('solicitarCodigoEmail');
+  if(botao.disabled||prazoReenvioEmail>Date.now())return;
+  botao.disabled=true;
+  $('estadoEmailCodigo').textContent='Solicitando seu código...';
   try{
-   await requisitar('/email/solicitar',{
+   const resultado=await requisitar('/email/solicitar',{
     method:'POST',body:{},csrfObrigatorio:true
    });
-   dizer('Se o envio foi aceito, seu código chegará por e-mail.');
-  }catch(e){dizer(erro(e));}
-  finally{$('solicitarCodigoEmail').disabled=false;}
+   if(resultado.solicitacaoRecebida!==true)
+    throw Error('ENVIO_EMAIL_NAO_CONFIRMADO');
+   $('estadoEmailCodigo').textContent=
+    'Solicitação recebida. Confira sua caixa de entrada e a pasta de spam.';
+   iniciarContadorEmail();
+   $('codigoEmail').focus();
+  }catch(e){
+   $('estadoEmailCodigo').textContent=erro(e);
+   botao.disabled=false;
+   atualizarContadorEmail();
+  }
+ });
+ $('codigoEmail').addEventListener('input',ev=>{
+  const filtrado=ev.target.value.replace(/[^0-9]/g,'').slice(0,8);
+  if(ev.target.value!==filtrado)ev.target.value=filtrado;
  });
  onForm('formConfirmarEmail',async()=>{
-  const resultado=await requisitar('/email/confirmar',{
-   method:'POST',csrfObrigatorio:true,
-   body:{codigo:$('codigoEmail').value}
-  });
-  if(resultado.emailVerificado!==true)throw Error('CODIGO_INVALIDO');
-  const s=await requisitar('/me');painelConta(s);
-  $('codigoEmail').value='';dizer('E-mail confirmado.');
+  const estado=$('estadoEmailCodigo');
+  estado.textContent='Conferindo o código...';
+  try{
+   const resultado=await requisitar('/email/confirmar',{
+    method:'POST',csrfObrigatorio:true,
+    body:{codigo:$('codigoEmail').value}
+   });
+   if(resultado.emailVerificado!==true)throw Error('CODIGO_INVALIDO');
+   const s=await requisitar('/me');painelConta(s);
+   $('codigoEmail').value='';
+   estado.textContent='E-mail confirmado com sucesso.';
+   dizer('E-mail confirmado.');
+  }catch(e){
+   estado.textContent=e.message==='CODIGO_INVALIDO'?
+    'Código inválido, expirado ou já utilizado. Confira os 8 dígitos ou solicite outro após o prazo.':
+    erro(e);
+   throw e;
+  }
  });
  // O olhinho foi inicializado antes das demais funções da página.
  $('atualizarPedidos').addEventListener('click',()=>void carregarPedidos());
