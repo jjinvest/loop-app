@@ -496,7 +496,7 @@
     },
     {
       "path": "src/candidato/escritorio-cliente-integrado.css",
-      "sha": "8bf74ee74c3786ac77e6597d94d19d243c7efecb"
+      "sha": "79f6b8f97238ae8a81e8a340fdf4234521d82491"
     },
     {
       "path": "src/candidato/operador-em-tela.js",
@@ -1264,7 +1264,7 @@
     },
     {
       "path": "src/producao/acabamento-botoes-real.css",
-      "sha": "ab09180e6af0d9f9f5916220f3af8493417d0b04"
+      "sha": "c743e599ac87bd2f83cef81e076658b843a91606"
     },
     {
       "path": "src/producao/aceite-posicao-azul-ensaio-sqlite.js",
@@ -2836,7 +2836,7 @@
     },
     {
       "path": "test/luzes-relogio-operador-com-motor-preservado.test.js",
-      "sha": "e97846aaa6898fe1f0e53aaf45c326b2e03fbac6"
+      "sha": "95b8e985177bf815167592d0641da6f3c1379ce5"
     },
     {
       "path": "test/manutencao-comercial-online.test.js",
