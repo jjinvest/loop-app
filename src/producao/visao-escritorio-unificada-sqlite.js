@@ -24,25 +24,28 @@ class VisaoEscritorioUnificadaSQLite{
    falha('ESCRITORIO_TITULAR_INVALIDO');
  }
  _resumoRede(id){
-  const r=this.banco.prepare([
-   'SELECT COUNT(*) AS total,',
-   'COALESCE(SUM(CASE WHEN EXISTS(',
-   'SELECT 1 FROM loop_real_motor_compras m',
-   'WHERE m.titular_id=v.indicado_id)',
-   'THEN 1 ELSE 0 END),0) AS compras,',
-   'COALESCE(SUM(CASE WHEN q.indicado_id IS NOT NULL',
-   'THEN 1 ELSE 0 END),0) AS qualificadas',
-   'FROM loop_real_vinculos_indicacao v',
-   'LEFT JOIN loop_real_motor_qualificacoes q',
-   'ON q.indicado_id=v.indicado_id AND q.indicador_id=v.indicador_id',
+  // Em redes grandes não executar EXISTS de compras uma vez por cadastro.
+  // Contar os vínculos pelo índice; pesquisar só livros com compras reais.
+  const total=this.banco.prepare(
+   'SELECT COUNT(*) AS n FROM loop_real_vinculos_indicacao WHERE indicador_id=?'
+  ).get(id).n;
+  const compras=this.banco.prepare([
+   'SELECT COUNT(DISTINCT m.titular_id) AS n',
+   'FROM loop_real_motor_compras m',
+   'JOIN loop_real_vinculos_indicacao v ON v.indicado_id=m.titular_id',
    'WHERE v.indicador_id=?'
-  ].join(' ')).get(id);
-  if(!r||r.qualificadas>r.compras||r.compras>r.total)
+  ].join(' ')).get(id).n;
+  const qualificadas=this.banco.prepare([
+   'SELECT COUNT(*) AS n FROM loop_real_motor_qualificacoes q',
+   'JOIN loop_real_vinculos_indicacao v ON v.indicado_id=q.indicado_id',
+   'WHERE q.indicador_id=? AND v.indicador_id=?'
+  ].join(' ')).get(id,id).n;
+  if(qualificadas>compras||compras>total)
    falha('ESCRITORIO_REDE_INCONSISTENTE');
-  return Object.freeze({cadastros:r.total,comprasEmEnsaio:r.compras,
-   qualificadasEmEnsaio:r.qualificadas,
-   comprasAguardandoQualificacaoEnsaio:r.compras-r.qualificadas,
-   cadastrosAguardandoCompra:r.total-r.compras,
+  return Object.freeze({cadastros:total,comprasEmEnsaio:compras,
+   qualificadasEmEnsaio:qualificadas,
+   comprasAguardandoQualificacaoEnsaio:compras-qualificadas,
+   cadastrosAguardandoCompra:total-compras,
    comissoesReais:0,financeiroReal:false});
  }
  consultarEstado({titularId}={}){
