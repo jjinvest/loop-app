@@ -345,6 +345,10 @@
  const formEntrega=$('akitemmFormEntrega');
  const statusEntrega=$('akitemmStatusEntrega');
  const botaoEntrega=formEntrega?.querySelector('button[type=submit]');
+ const limparAvisoRegional=()=>{
+  statusEntrega?.classList.remove('akitemm-alerta-regiao');
+  statusEntrega?.setAttribute('role','status');
+ };
  const inicializarEntrega=()=>{
   if(!formEntrega||!botaoEntrega||!statusEntrega)return;
   const explicacao=formEntrega.querySelector('p');
@@ -378,6 +382,7 @@
     statusEntrega.textContent='Informe um CEP válido com 8 números.';return;
    }
    botaoEntrega.disabled=true;
+   limparAvisoRegional();
    statusEntrega.textContent='Verificando entrega para o endereço informado...';
    try{
     const resp=await fetch('/api/loja/entrega/verificar-cep',{
@@ -387,7 +392,13 @@
     });
     const dados=await resp.json().catch(()=>({}));
     if(resp.status===422&&dados.entregaDisponivel===false){
-     statusEntrega.textContent='Este produto não tem entrega disponível para o endereço informado.';
+     const quantidade=Array.isArray(dados.produtosForaDaRegiao)?
+      dados.produtosForaDaRegiao.length:1;
+     statusEntrega.classList.add('akitemm-alerta-regiao');
+     statusEntrega.setAttribute('role','alert');
+     statusEntrega.textContent=quantidade>1?
+      'Infelizmente, alguns produtos do seu carrinho não são entregues neste endereço. Confira outro CEP ou escolha outros produtos.':
+      'Infelizmente, este produto não está disponível para entrega no endereço informado. Confira outro CEP ou escolha outro produto.';
      return;
     }
     if(!resp.ok)throw Error(dados.erro||'ENTREGA_NAO_VERIFICADA');
@@ -410,6 +421,7 @@
     if(dados.requerOutraCotacao)
      mensagem+='Outros produtos ainda precisam de cotação de frete. ';
     mensagem+='Esta consulta não cria pedido nem libera pagamento.';
+    limparAvisoRegional();
     statusEntrega.textContent=mensagem;
    }catch{
     statusEntrega.textContent=
@@ -419,7 +431,9 @@
    }
   });
   for(const x of formEntrega.querySelectorAll('input[name=cep]')){
-   x.addEventListener('input',()=>{statusEntrega.textContent='';});
+   x.addEventListener('input',()=>{
+    limparAvisoRegional();statusEntrega.textContent='';
+   });
   }
  }
  // Catálogo publicado pela administração, nunca produtos ou preços de demo.
@@ -595,9 +609,7 @@
    descricao.className='akitemm-descricao';
    descricao.textContent=p.descricao||'Informações comerciais em preparação.';
    const status=document.createElement('p');
-   status.textContent=p.origemCadastro==='PROPRIO'?
-    'Produto próprio · compra indisponível até ativação comercial':
-    'Aguardando integração comercial · compra indisponível';
+   status.textContent='Frete consultado no carrinho · compra indisponível até integração comercial';
    const botao=document.createElement('button');
    botao.type='button';botao.className='botao-secundario-loja';
    botao.textContent='Ver detalhes';
