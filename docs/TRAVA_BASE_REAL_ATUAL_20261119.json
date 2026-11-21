@@ -1404,7 +1404,7 @@
     },
     {
       "path": "src/producao/interface-aprovada-contas.js",
-      "sha": "69bf3f915644f95260809831828e0a804ddf18e8"
+      "sha": "ea7fb2c4a2ec96189fda549a57923c5f2d4a7c56"
     },
     {
       "path": "src/producao/interface-aprovada-loja.js",
@@ -2828,7 +2828,7 @@
     },
     {
       "path": "test/luzes-relogio-operador-com-motor-preservado.test.js",
-      "sha": "e6d83f1c7ff0d5b19c77ca31f1f1be8ec9f13450"
+      "sha": "22c278bbb4d3deaa4917dc5edbff3990e4f00647"
     },
     {
       "path": "test/manutencao-comercial-online.test.js",
