@@ -686,6 +686,47 @@ async function main(){
    await page.locator('#conteudoLojaLoop').waitFor({state:'visible'});
    assert.equal(await page.locator('#akitemmNomeTitular').innerText(),
     nick.toLowerCase());
+   // Botoes internos reais da AKITEMM: dados da conta e avisos.
+   await page.locator('#akitemmAbrirConta').click();
+   assert.equal(await page.locator('#akitemmDadosConta').isVisible(),true);
+   assert.match(await page.locator('#akitemmDadosContaConteudo').innerText(),
+    /Nome: Pessoa de Ensaio[\s\S]*E-mail: teste@example.invalid/);
+   assert.equal(await page.locator('#akitemmAbrirConta').getAttribute('aria-expanded'),'true');
+   await page.locator('#akitemmAbrirConta').click();
+   assert.equal(await page.locator('#akitemmDadosConta').isHidden(),true);
+   await page.locator('#akitemmSino').click();
+   assert.match(await page.locator('#akitemmNotificacoesConteudo').innerText(),
+    /E-mail confirmado/);
+   assert.equal(await page.locator('#akitemmSino').getAttribute('aria-expanded'),'true');
+   await page.locator('#akitemmSino').click();
+   assert.equal(await page.locator('#akitemmNotificacoes').isHidden(),true);
+   // O convite pertence a este titular e usa a rota de cadastro existente.
+   const linkPessoal=page.locator('#enderecoDivulgarLojaLoop');
+   assert.match(await linkPessoal.inputValue(),/\/loja\/dozeletrasab$/);
+   assert.equal(await page.locator('#copiarDivulgarLojaLoop').isEnabled(),true);
+   await page.locator('#copiarDivulgarLojaLoop').click();
+   assert.match(await page.locator('#statusDivulgarLojaLoop').innerText(),
+    /Link pessoal copiado|Link selecionado/);
+   await page.locator('#akitemmMeusCursos summary').click();
+   await page.locator('#akitemmAtualizarMeusCursos').click();
+   assert.match(await page.locator('#akitemmListaMeusCursos').innerText(),
+    /nenhum arquivo foi liberado|Biblioteca indisponível|Arquivos digitais|arquivos digitais/i);
+   // Rodape tem conteudo real e documento vigente, sem inventar politicas.
+   await page.locator('[data-akitemm-informacao="sobre"]').click();
+   assert.match(await page.locator('#akitemmInformacaoConteudo').innerText(),
+    /Loja Oficial conectada ao Escritório/);
+   await page.locator('#akitemmModalInformacao [aria-label="Fechar"]').click();
+   await page.locator('[data-akitemm-informacao="privacidade"]').click();
+   await page.locator('#akitemmInformacaoConteudo').filter({
+    hasText:/LOOP-PRIVACIDADE-2026/
+   }).waitFor({state:'visible'});
+   await page.locator('#akitemmModalInformacao [aria-label="Fechar"]').click();
+   await page.locator('[data-akitemm-informacao="trocas"]').click();
+   assert.match(await page.locator('#akitemmInformacaoConteudo').innerText(),
+    /política comercial de trocas e devoluções ainda não foi publicada/i);
+   await page.locator('#akitemmModalInformacao [aria-label="Fechar"]').click();
+   await page.locator('[data-akitemm-informacao="contato"]').click();
+   assert.equal(await page.locator('#akitemmSuporte').getAttribute('open'),'');
    assert.equal(await page.locator('#registrarPedidoLoja').isDisabled(),true);
    assert.equal(await page.locator('#akitemmBusca').isDisabled(),false);
    assert.match(await page.locator('#statusPedidoLoja').innerText(),
@@ -754,6 +795,14 @@ async function main(){
    assert.equal(await page.locator('#abaConta').isDisabled(),true);
    await page.goto(base+'/loja');
    await page.locator('#akitemmNomeTitular').filter({hasText:'OPERADOR'}).waitFor();
+   assert.equal(await page.locator('#copiarDivulgarLojaLoop').isDisabled(),true,
+    'operador nunca recebe link privado de titular anterior');
+   assert.equal(await page.locator('#enderecoDivulgarLojaLoop').inputValue(),'');
+   await page.locator('#akitemmAbrirConta').click();
+   assert.match(await page.locator('#akitemmDadosContaConteudo').innerText(),
+    /Sessão do operador/);
+   assert.equal(await page.locator('#akitemmEditarConta').getAttribute('href'),'/administrador');
+   await page.locator('#akitemmAbrirConta').click();
    assert.equal(await page.locator('footer .akitemm-acesso-operador').getAttribute('hidden'),null);
    // A tela administrativa consulta a MESMA base e exige outro cookie.
    await page.goto(base+'/administrador',{waitUntil:'domcontentloaded'});
