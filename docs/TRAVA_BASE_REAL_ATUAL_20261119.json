@@ -1292,7 +1292,7 @@
     },
     {
       "path": "src/producao/backup-identidade-real.js",
-      "sha": "8672ff78794f32449e869d3f88aa51b0bea2c4ff"
+      "sha": "4334e85ccd8e2601aaa99ded322988a99b888cdf"
     },
     {
       "path": "src/producao/backup-midia-offsite.js",
@@ -1371,6 +1371,10 @@
       "sha": "f5038dcf7af1c0f8875d000ba6e9875036e42012"
     },
     {
+      "path": "src/producao/historico-ciclos-relacional-sqlite.js",
+      "sha": "5a19735fec6cd834513742d0ccf9d2e963ea99ef"
+    },
+    {
       "path": "src/producao/identidade-cliente-loop-sqlite.js",
       "sha": "16365d035f92093fdd79d4163d95d48eb4088393"
     },
@@ -1428,7 +1432,7 @@
     },
     {
       "path": "src/producao/motor-loop-integrado-sqlite.js",
-      "sha": "0d7f008ddf9b96159cac473c39c725a64090ce52"
+      "sha": "a1b1fee6899485821940e3caf97780fb7a7f13ae"
     },
     {
       "path": "src/producao/observacoes-psp-ensaio-sqlite.js",
@@ -1476,7 +1480,7 @@
     },
     {
       "path": "src/producao/projecao-filas-relacional-sqlite.js",
-      "sha": "b8f5b233f418d85a0e0200a647c333736e94bc9d"
+      "sha": "a368e5bd1be9be71ae0fbb670344c421660733cf"
     },
     {
       "path": "src/producao/promocao-lotes-ensaio-sqlite.js",
@@ -2509,6 +2513,10 @@
     {
       "path": "test/grade-posicoes-ensaios-unificada.test.js",
       "sha": "dcae30b9756c7df9385511510896c51de5b40a86"
+    },
+    {
+      "path": "test/historico-ciclos-relacional-sqlite.test.js",
+      "sha": "cebed0c7f52661113a63becc599c6c27977cff88"
     },
     {
       "path": "test/historico-comercial-paginado.test.js",

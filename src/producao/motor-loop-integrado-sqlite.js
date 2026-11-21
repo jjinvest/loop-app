@@ -330,6 +330,7 @@ class MotorLoopIntegradoSQLite{
      (compras>0||eventos>0||giros>0))
    falha('LOOP_MOTOR_ENSAIO_PROIBIDO_PRODUCAO');
   // A prova espelhada usa o mesmo snapshot da transação de leitura.
+  if(this.projecao?.historico)this.projecao.historico.conferir({sim});
   if(this.projecao)this.projecao.conferir({raw:row?.snapshot||'',
    revisao:this.banco.prepare(
     'SELECT revisao FROM loop_real_motor_estado WHERE id=1'
