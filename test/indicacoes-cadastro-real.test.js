@@ -7,6 +7,7 @@ const {once}=require('node:events');
 const {IdentidadeClienteLoopReal}=require('../src/producao/identidade-cliente-loop-sqlite');
 const {MotorLoopIntegradoSQLite}=require('../src/producao/motor-loop-integrado-sqlite');
 const {criarAppIdentidadeLoop}=require('../src/producao/servidor-identidade-loop');
+const {VisaoEscritorioUnificadaSQLite}=require('../src/producao/visao-escritorio-unificada-sqlite');
 const DOC='Termos fictícios para testar vínculos de convites, sem compras reais, '+
  'sem ganhos, sem pagamentos e sem promessa de bonificação.';
 const ORIGEM='https://contas.example.invalid';
@@ -153,4 +154,74 @@ test('API de convites usa sessão e o cadastro atribui pelo nick do link',async 
   headers:{Cookie:'loop_real_s='+login.token}
  })).status,400);
  assert.equal((await fetch(url+'/api/checkout/finalizar')).status,503);
+});
+
+test('indicada escolhe destino 1..10 uma vez, com autenticação, titularidade e sem motor',async t=>{
+ const x=preparar();
+ t.after(()=>x.banco.close());
+ const a=await x.cadastrar('Alpha');
+ const b=await x.cadastrar('Bravo','Alpha');
+ await x.cadastrar('Charlie','Alpha');
+ await x.cadastrar('Delta');
+ const app=criarAppIdentidadeLoop({
+  contas:x.contas,motorLoop:x.motor,origemHttps:ORIGEM,permitirCadastro:true
+ });
+ const server=app.listen(0,'127.0.0.1');await once(server,'listening');
+ t.after(()=>new Promise(done=>server.close(done)));
+ const base='http://127.0.0.1:'+server.address().port;
+ const loginA=await x.contas.entrar({nick:'Alpha',senha:'SenhaExemplo2026!'});
+ const loginD=await x.contas.entrar({nick:'Delta',senha:'SenhaExemplo2026!'});
+ const endpoint=base+'/api/contas/minha-rede/destino';
+ const post=(session,body,csrf=session?.csrf,origin=ORIGEM)=>fetch(endpoint,{
+  method:'POST',headers:{'Content-Type':'application/json',
+   Origin:origin,...(session?{Cookie:'loop_real_s='+session.token}:{}),
+   ...(csrf?{'X-Loop-Csrf':csrf}:{})},
+  body:JSON.stringify(body)
+ });
+ const target={numeroCadastro:1,posicao:7};
+ assert.equal((await post(null,target)).status,401);
+ assert.equal((await post(loginA,target,null)).status,403);
+ assert.equal((await post(loginA,target,loginA.csrf,'https://wrong.invalid')).status,403);
+ assert.equal((await post(loginA,{numeroCadastro:1,posicao:0})).status,400);
+ assert.equal((await post(loginA,{numeroCadastro:1,posicao:11})).status,400);
+ assert.equal((await post(loginA,{numeroCadastro:1,posicao:2.5})).status,400);
+ assert.equal((await post(loginA,{numeroCadastro:1,posicao:7,extra:true})).status,400);
+ assert.equal((await post(loginD,target)).status,404);
+ const response=await post(loginA,target);
+ assert.equal(response.status,200);
+ assert.deepEqual(await response.json(),{
+  registrado:true,repetido:false,numeroCadastro:1,
+  posicaoDestinoReservada:7,vinculacaoAtiva:false,financeiroReal:false
+ });
+ assert.equal((await post(loginA,target)).status,200);
+ const twice=await post(loginA,{numeroCadastro:1,posicao:8});
+ assert.equal(twice.status,409);
+ assert.equal((await twice.json()).erro,'DESTINO_INDICACAO_JA_ESCOLHIDO');
+ const network=await fetch(base+'/api/contas/minha-rede',{
+  headers:{Cookie:'loop_real_s='+loginA.token}
+ });
+ assert.equal(network.status,200);
+ const registered=(await network.json()).indicados;
+ assert.equal(registered[0].posicaoDestinoReservada,7);
+ assert.equal(registered[1].posicaoDestinoReservada,null);
+ const read=new VisaoEscritorioUnificadaSQLite({banco:x.banco,motor:x.motor});
+ const projection=read.listarRede({titularId:a.titularId});
+ assert.equal(projection.indicados[0].posicaoDestinoReservada,7);
+ assert.equal(projection.indicados[1].posicaoDestinoReservada,null);
+ assert.equal(x.banco.prepare(
+  'SELECT COUNT(*) n FROM loop_real_destinos_indicacao'
+ ).get().n,1);
+ assert.equal(x.banco.prepare(
+  'SELECT numero_posicao FROM loop_real_destinos_indicacao WHERE indicado_id=?'
+ ).get(b.titularId).numero_posicao,7);
+ assert.throws(()=>x.banco.prepare(
+  'UPDATE loop_real_destinos_indicacao SET numero_posicao=8 WHERE indicado_id=?'
+ ).run(b.titularId),/destino imutavel/);
+ assert.equal(x.motor.consultar({titularId:a.titularId}).posicoesReais,0);
+ assert.equal(x.motor.consultar({titularId:a.titularId}).minhasPosicoes.length,0);
+ assert.equal(x.banco.prepare(
+  'SELECT COUNT(*) n FROM loop_real_motor_qualificacoes'
+ ).get().n,0);
+ assert.equal(x.banco.prepare('PRAGMA integrity_check').get().integrity_check,'ok');
+ assert.deepEqual(x.banco.prepare('PRAGMA foreign_key_check').all(),[]);
 });

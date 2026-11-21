@@ -188,8 +188,13 @@ function criarAppIdentidadeLoop({contas,origemHttps,
    return res.status(429).json({erro:code});
   if(code==='CADASTRO_EXISTENTE')return res.status(409).json({erro:code});
   if(code==='DOCUMENTOS_ALTERADOS_RELER'||
-     code==='CREDENCIAL_ALTERADA_CONCORRENTEMENTE')
+     code==='CREDENCIAL_ALTERADA_CONCORRENTEMENTE'||
+     code==='DESTINO_INDICACAO_JA_ESCOLHIDO')
    return res.status(409).json({erro:code});
+  if(code==='POSICAO_INDICACAO_INVALIDA')
+   return res.status(400).json({erro:code});
+  if(code==='CADASTRO_INDICADO_NAO_PERTENCE')
+   return res.status(404).json({erro:code});
   if(['NOME_INVALIDO','EMAIL_INVALIDO','NICK_INVALIDO','SENHA_INVALIDA',
    'CODIGO_INVALIDO','SENHA_NOVA_DEVE_SER_DIFERENTE',
    'INDICADOR_INVALIDO','AUTOINDICACAO_PROIBIDA',
@@ -389,6 +394,21 @@ function criarAppIdentidadeLoop({contas,origemHttps,
  });
  // Convite público definitivo com os mesmos links curtos do LOOP.
  // Não habilita cadastro nem benefício sem os gates oficiais do serviço.
+ app.post('/api/contas/minha-rede/destino',protegido,mutation,csrf,
+ (req,res)=>{
+  const b=req.body;
+  if(!b||Array.isArray(b)||
+     Object.keys(b).sort().join(',')!=='numeroCadastro,posicao')
+   return res.status(400).json({erro:'CAMPOS_INVALIDOS'});
+  if(!limite(res,'escolherDestino',req.conta.titularId))return;
+  try{
+   const registrado=contas.reservarDestinoIndicacao({
+    indicadorId:req.conta.titularId,
+    numeroCadastro:b.numeroCadastro,posicao:b.posicao
+   });
+   return res.set('Cache-Control','private, no-store').json(registrado);
+  }catch(e){return falha(res,e);}
+ });
  const redirecionarLinkDireto=origemLoja=>(req,res)=>{
   const raw=req.params.nick;
   if(typeof raw!=='string'||!/^[A-Za-z]{1,12}$/.test(raw))

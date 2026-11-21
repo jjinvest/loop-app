@@ -660,29 +660,62 @@
     aguardando?'Aguardando confirmação da posição.':
     'Aguardando ativação no LOOP.');
    detalhes.append(texto('strong','loop03-rede-alocar-titulo',
-    'Posições para vinculação (1 a 10)'));
+    'Escolher posição (1 a 10)'));
    const grade=texto('div','loop03-rede-alocar-posicoes','');
-   const posicionadas=new Map(posicoesResumoReal.map(pos=>
-    [Number(pos.numero),pos]));
+   const reservada=Number.isSafeInteger(p.posicaoDestinoReservada)&&
+    p.posicaoDestinoReservada>=1&&p.posicaoDestinoReservada<=10?
+    p.posicaoDestinoReservada:null;
+   const aviso=texto('p','loop03-rede-pessoa-aviso',
+    reservada!==null?'Destino fixado na posição '+reservada+
+     '. Aguardando ativação real da indicação.':
+     'Escolha uma vez a posição de destino. O cadastro ficará reservado aqui;'+
+     ' a indicação só será ativada após comprovação.');
    for(let n=1;n<=10;n++){
-    const pos=posicionadas.get(n);
     const escolha=texto('button','loop03-rede-posicao',String(n));
     escolha.type='button';
-    // O backend REAL não dispõe de uma operação de qualificação financeira
-    // comprovada para o vínculo. Não oferecer mutação fictícia ao cliente.
-    escolha.disabled=true;
-    escolha.title=registroValidado&&pos?
-     'Aguardando liberação da vinculação real pelo servidor':
-     !registroValidado?'Indicação aguardando ativação confirmada':
-     'Posição ainda não disponível para vinculação';
+    escolha.disabled=reservada!==null||registroValidado||emAnalise||
+     numero===null;
+    escolha.setAttribute('aria-label',
+     'Escolher posição '+n+' para @'+p.nick);
+    escolha.setAttribute('aria-pressed',String(reservada===n));
+    if(reservada===n){
+     escolha.classList.add('loop03-rede-posicao-selecionada');
+     escolha.title='Destino já escolhido e preservado';
+    }else escolha.title=escolha.disabled?
+     'Destino fixado ou indicação já vinculada':
+     'Escolher posição '+n+' (escolha única)';
+    escolha.addEventListener('click',async()=>{
+     if(reservada!==null||registroValidado||emAnalise||numero===null)return;
+     for(const b of grade.querySelectorAll('button'))b.disabled=true;
+     aviso.textContent='Salvando destino da indicação...';
+     try{
+      const dado=await requisitar('/minha-rede/destino',{
+       method:'POST',csrfObrigatorio:true,
+       body:{numeroCadastro:numero,posicao:n}
+      });
+      if(dado.registrado!==true||dado.posicaoDestinoReservada!==n||
+         dado.vinculacaoAtiva!==false||dado.financeiroReal!==false)
+       throw Error('DESTINO_NAO_CONFIRMADO');
+      p.posicaoDestinoReservada=n;
+      exibirRede();
+      dizer('Destino da indicação registrado. Ativação pendente.');
+     }catch(e){
+      if(e?.status===409){
+       void carregarRede();
+       return;
+      }
+      for(const b of grade.querySelectorAll('button'))b.disabled=false;
+      aviso.textContent='Não foi possível salvar. Tente novamente.';
+      dizer(erro(e));
+     }
+    });
     grade.append(escolha);
    }
    detalhes.append(grade);
    if(emAnalise&&Number.isSafeInteger(p.posicaoDestinoEnsaio))
     detalhes.append(texto('p','loop03-rede-pessoa-vinculo',
      'Posição em análise: #'+p.posicaoDestinoEnsaio));
-   detalhes.append(texto('p','loop03-rede-pessoa-aviso',
-    'Vinculação definitiva somente após ativação comprovada.'));
+   detalhes.append(aviso);
    card.append(cab,infos,anotacao,detalhes);alvo.append(card);
   }
  }

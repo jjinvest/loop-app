@@ -1173,3 +1173,11 @@ body:not(.loop03-logado) > .cabecalho .marca.loop03-marca-entrada .loop03-marca-
   gap:6px;
  }
 }
+
+/* Destino da indicação: mesmo cartão, com número escolhido destacado. */
+.cliente-integrado #conteudoEquipe .loop03-rede-posicao-selecionada{
+ border-color:#f3d48c!important;
+ background:linear-gradient(140deg,#543c24,#282038)!important;
+ color:#ffe9ac!important;opacity:1!important;
+ box-shadow:0 0 0 1px #eac47855 inset;
+}
