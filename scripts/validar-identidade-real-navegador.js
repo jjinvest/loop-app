@@ -495,9 +495,14 @@ async function main(){
    assert.equal(contas.dadosTitular(contato.titularId).cpfConfirmado,false);
    // Esta conta convidada ainda não confirmou e-mail: provar o contador
    // de reenvio na mesma interface, sem adulterar a conta já verificada.
-   await cadastro.locator('#login').fill(novoNick);
-   await cadastro.locator('#senha').fill('SenhaDoEnsaio2026!');
-   await cadastro.locator('#formLogin button[type=submit]').click();
+   const loginConvite=await contas.entrar({
+    nick:novoNick,senha:'SenhaDoEnsaio2026!'
+   });
+   await convite.addCookies([{
+    name:COOKIE,value:loginConvite.token,url:base,
+    httpOnly:true,secure:true,sameSite:'Strict'
+   }]);
+   await cadastro.goto(base+'/escritorio',{waitUntil:'domcontentloaded'});
    await cadastro.locator('#painelConta').waitFor({state:'visible'});
    if(item.largura<=860)
     await cadastro.locator('#loop03MenuIntegrado').click();
