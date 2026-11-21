@@ -305,14 +305,14 @@ async function principal(){
   assert.equal(await cards.first().getAttribute('data-produto-id'),'segundo-produto');
   const produtoCliente=cliente.locator(
    '#catalogoLojaLoop [data-produto-id="primeiro-produto"]');
-  assert.match(await produtoCliente.innerText(),/R\\$\\s?249,90/);
+  assert.match(await produtoCliente.innerText(),/R\$\s?249,90/);
   await produtoCliente.locator('.akitemm-imagem-produto').click();
   await cliente.locator('#akitemmVisualizacaoProduto h2')
    .filter({hasText:'Produto de ensaio de operador'}).waitFor();
   assert.match(await cliente.locator('#akitemmProdutoInlineConteudo').innerText(),
-   /R\\$\\s?299,90/);
+   /R\$\s?299,90/);
   assert.match(await cliente.locator('#akitemmProdutoInlineConteudo').innerText(),
-   /R\\$\\s?249,90/);
+   /R\$\s?249,90/);
   await cliente.locator('#akitemmProdutoInlineConteudo .akitemm-detalhe-foto-principal')
    .waitFor({state:'visible'});
   await cliente.locator('#akitemmProdutoInlineConteudo .akitemm-detalhe-avaliacoes')
