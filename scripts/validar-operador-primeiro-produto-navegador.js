@@ -220,6 +220,14 @@ async function principal(){
    });
   }
   await cdps.send('Input.dispatchTouchEvent',{type:'touchEnd',touchPoints:[]});
+  const descricaoArrasto=await page.evaluate(()=>({
+   aviso:document.querySelector('.akitemm-arrasto-aviso')?.textContent,
+   ordenacao:[...document.querySelectorAll(
+    '#catalogoLojaLoop [data-produto-id]'
+   )].map(x=>x.dataset.produtoId),
+   alcas:document.querySelectorAll('.akitemm-alca-arrastar').length
+  }));
+  console.log('ARRASTE_TOUCH_DIAGNOSTICO='+JSON.stringify(descricaoArrasto));
   await page.getByText('Produto movido para 1º.',{exact:false}).waitFor({
    timeout:12000
   });
