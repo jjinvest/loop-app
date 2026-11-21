@@ -1806,8 +1806,9 @@
    });
    visorCatraca.observar(d.catraca.giros,d.tabuleiro.eventosNoCiclo);
    mostrarAgendaOperador(controle);
-   $('motorContadorEventos').textContent=
-    d.tabuleiro.eventosNoCiclo+' de 6 eventos neste ciclo';
+   // Contador da aba do OPERADOR pertence exclusivamente ao visor do
+   // relogio: evitar que leituras HTTP concorrentes substituam a legenda
+   // a cada segundo, causando a oscilacao de uma para duas frases.
    $('loop03TotalIntegrado').textContent='—';
    $('loop03Giros24Integrado').textContent='—';
    $('loop03NumeroIntegrado').textContent='—';
