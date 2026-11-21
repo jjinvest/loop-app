@@ -7,6 +7,90 @@
   const $=elemento;
  let agendaVisorCatraca=null,leituraVisorCatracaEm=0;
   let ultimoGiroCatracaVisto=null,ultimaLuzCatracaVista=null,limpezaFestaCatraca=null;
+  let ultimaJanelaVisual=null;
+  // Horário vindo do servidor (SQLite do operador), não do fuso do celular.
+  const fusoVisual=new Intl.DateTimeFormat('en-US',{
+   timeZone:'America/Sao_Paulo',year:'numeric',month:'2-digit',
+   day:'2-digit',hour:'2-digit',minute:'2-digit',
+   second:'2-digit',hourCycle:'h23'
+  });
+  function minuto(h){
+   if(typeof h!=='string'||!/^(?:[01][0-9]|2[0-3]):[0-5][0-9]$/.test(h))
+    return null;
+   return Number(h.slice(0,2))*60+Number(h.slice(3));
+  }
+  function diaAnterior(dia){
+   const x=Date.parse(dia+'T12:00:00Z');
+   return new Date(x-86400000).toISOString().slice(0,10);
+  }
+  function horarioVisual({agenda,agoraMs}){
+   const meta=agenda?.metaLotes;
+   if(agenda?.luzesDoRelogioOperador!==true||
+      agenda.modoExecucao!=='AGENDADA'||agenda.pausaManual===true||
+      meta?.ativa!==true||meta.quantidade<1||
+      !Number.isSafeInteger(meta.quantidade)||meta.quantidade>1000000)
+    return null;
+   const inicio=minuto(agenda.abertura),fim=minuto(agenda.fechamento);
+   if(inicio===null||fim===null||
+      !Number.isSafeInteger(agoraMs)||agoraMs<0)return null;
+   const partes=Object.fromEntries(
+    fusoVisual.formatToParts(new Date(agoraMs))
+     .map(x=>[x.type,x.value]));
+   const atual=Number(partes.hour)*60+Number(partes.minute);
+   const dia=partes.year+'-'+partes.month+'-'+partes.day;
+   const diaTurno=atual<inicio?diaAnterior(dia):dia;
+   if(meta.dataAlvo!==null&&meta.dataAlvo!==undefined&&
+      meta.dataAlvo!==diaTurno)return null;
+   const duracaoMin=((fim-inicio+1440)%1440)||1440;
+   const duracaoMs=duracaoMin*60000;
+   const decorrido=((atual-inicio+1440)%1440)*60000+
+    Number(partes.second)*1000+(agoraMs%1000);
+   if(decorrido>=duracaoMs)return null;
+   const total=meta.quantidade*6;
+   const passadas=Math.min(total,Math.floor(decorrido*total/duracaoMs));
+   const luzes=passadas===0?0:(passadas-1)%6+1;
+   const proxima=passadas<total?
+    agoraMs+Math.max(0,Math.ceil((passadas+1)*duracaoMs/total-decorrido)):
+    null;
+   return {luzes,passadas,total,proxima,diaTurno,
+    intervalo:Math.max(1,Math.round(duracaoMs/total/1000))};
+  }
+  function sincronizarLuzesVisuais(estado){
+   const valido=estado!==null;
+   const chave=valido?estado.diaTurno+':'+estado.passadas:null;
+   // Usa exatamente o brilho aprovado, sem alterar o CSS do tabuleiro.
+   // A classe separada e o contador distinguem relógio de eventos confirmados.
+   const operador=agendaVisorCatraca?.luzesDoRelogioOperador===true;
+   const eventos=operador&&Number.isSafeInteger(
+    agendaVisorCatraca.eventosReaisNoCiclo)?
+    agendaVisorCatraca.eventosReaisNoCiclo:0;
+   for(let i=1;i<=6;i++){
+    const bola=$('motorBolinha'+i);
+    if(!bola)continue;
+    const ligada=operador&&valido&&i<=estado.luzes;
+    bola.classList.toggle('loop03-relogio-luz-visual',ligada);
+    if(operador)bola.classList.toggle('loop03-marcador-aceso',
+     ligada||i<=eventos);
+    if(ligada&&chave!==ultimaJanelaVisual&&
+       i===estado.luzes&&ultimaJanelaVisual!==null&&
+       !document.hidden&&$('conteudoTabuleiro')?.hidden===false){
+     bola.classList.remove('loop03-pulso-luz');
+     void bola.offsetWidth;
+     bola.classList.add('loop03-pulso-luz');
+     setTimeout(()=>bola.classList.remove('loop03-pulso-luz'),920);
+    }
+   }
+   ultimaJanelaVisual=chave;
+   const contador=$('motorContadorEventos');
+   if(contador&&agendaVisorCatraca?.luzesDoRelogioOperador===true){
+    const reais=agendaVisorCatraca.eventosReaisNoCiclo;
+    contador.textContent=valido?
+     'Relógio: '+estado.luzes+' de 6 luzes · Eventos confirmados: '+
+      (Number.isSafeInteger(reais)?reais:0)+' de 6':
+     'Relógio de teste fora do turno ou pausado · Eventos confirmados: '+
+      (Number.isSafeInteger(reais)?reais:0)+' de 6';
+   }
+  }
   function atualizarMarcadorCatraca(){
    const visor=$('relogioTabuleiroIntegrado');
    const titulo=$('tituloRelogioTabuleiro');
@@ -14,6 +98,35 @@
    if(!visor||!titulo||!estado)return;
    const agenda=agendaVisorCatraca,modo=agenda?.modoExecucao;
    const meta=agenda?.metaLotes;
+   const agoraServidor=Number.isSafeInteger(agenda?.agoraServidorMs)?
+    agenda.agoraServidorMs+(Date.now()-leituraVisorCatracaEm):Date.now();
+   const visual=horarioVisual({agenda,agoraMs:agoraServidor});
+   sincronizarLuzesVisuais(visual);
+   if(agenda?.luzesDoRelogioOperador===true){
+    if(visual){
+     const proxima=visual.proxima;
+     if(proxima!==null){
+      const segundos=Math.max(0,Math.ceil((proxima-agoraServidor)/1000));
+      visor.textContent=String(Math.floor(segundos/60)).padStart(2,'0')+
+       ':'+String(segundos%60).padStart(2,'0');
+      titulo.textContent='PRÓXIMA LUZ · RELÓGIO';
+     }else{
+      visor.textContent='00:00';
+      titulo.textContent='LUZES DO TURNO COMPLETAS';
+     }
+     estado.textContent='Relógio: '+visual.luzes+'/6 luzes · '+
+      visual.passadas+'/'+visual.total+' do dia · '+
+      Math.floor(visual.intervalo/60)+' min'+
+      (visual.intervalo%60?' '+visual.intervalo%60+' s':'')+
+      '/luz · execução visual';
+    }else{
+     visor.textContent='--:--';
+     titulo.textContent=modo==='STOP'||agenda?.pausaManual===true?
+      'CATRACA PAUSADA':modo==='NATURAL'?'MODO MANUAL':'FORA DO TURNO';
+     estado.textContent='Luzes do relógio aguardando horário e meta ativa';
+    }
+    return;
+   }
    if(modo==='AGENDADA'&&agenda.dentroDoHorario===true&&
       agenda.pausaManual!==true){
     const proxima=meta?.ativa===true?
