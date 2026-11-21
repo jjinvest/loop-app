@@ -4,6 +4,8 @@ const {createHash}=require('node:crypto');
 const {validar:validarFotoOperador}=require('../domain/akitemm-midia-avaliacoes-demo');
 const {COOKIE_ADMIN}=require('./sessao-admin-comercial-sqlite');
 const {OperacaoCatracaAdminSQLite}=require('./operacao-catraca-admin-sqlite');
+const {diagnosticarCadeiaPedidosFilas}=
+ require('./diagnostico-cadeia-pedidos-filas');
 const {montarAdminComercialAprovado}=
  require('./interface-admin-comercial-aprovada');
 const {montarRotasCatalogoMidiaOperador}=
@@ -250,6 +252,16 @@ function montarGatewayAdminComercial(app,{
   });
   try{return res.json(motorLoop.consultar());}
   catch{return res.status(503).json({erro:'MOTOR_INTERNO_INDISPONIVEL'});}
+ });
+ // Prova da ligação entre pedido, evento de pagamento, outbox e fila.
+ // Somente leitura agregada; NÃO processa nem cria crédito ou posição.
+ app.get('/api/admin/loop/cadeia-comercial',proteger,(_req,res)=>{
+  res.set('Cache-Control','no-store');
+  if(!motorLoop)return res.status(503).json({erro:'MOTOR_INTERNO_INDISPONIVEL'});
+  try{return res.json(diagnosticarCadeiaPedidosFilas({
+   banco:motorLoop.banco,motorLoop
+  }));}
+  catch{return res.status(503).json({erro:'CADEIA_COMERCIAL_CONSULTA_INDISPONIVEL'});}
  });
  // Controles de operacao da catraca: mesma sessao administrativa, motor e SQLite.
  // Nunca recebem titularId, pedidoId nem eventos inventados do navegador.
