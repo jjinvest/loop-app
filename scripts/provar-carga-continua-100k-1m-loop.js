@@ -228,7 +228,7 @@ async function verificarFinal(arquivo){
   // mesmo depois dos 1 milhão de linhas sintéticas (não criar 1M logins).
   const docs=x.contas.documentos(),inicioMs=performance.now();
   const full=await x.contas.cadastrar({
-   nome:'Inscricao real de teste',nick:'CadastroFinal',
+   nome:'Inscricao real de teste',nick:'ContaFinal',
    email:'finalcarga@example.invalid',senha:'SenhaCargaContinua2026!',
    indicadorNick:'OrigemCarga',
    aceiteTermos:true,aceitePrivacidade:true,
@@ -244,7 +244,7 @@ async function verificarFinal(arquivo){
   });
   assert.equal(final.total,1000001);
   assert.equal(final.indicados.length,1);
-  assert.equal(final.indicados[0].nick,'cadastrofinal');
+  assert.equal(final.indicados[0].nick,'contafinal');
   assert.equal(final.indicados[0].numeroCadastro,1000001);
   assert.equal(x.motor.verificar().compras,0);
   assert.equal(db.prepare('PRAGMA integrity_check').get().integrity_check,'ok');
