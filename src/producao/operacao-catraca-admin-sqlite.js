@@ -78,7 +78,7 @@ class OperacaoCatracaAdminSQLite{
   banco.prepare([
    'INSERT OR IGNORE INTO loop_real_catraca_admin_politica',
    "(id,revisao,modo,inicio,fim,limite_diario,atualizado_em)",
-   "VALUES(1,1,'PAUSADA','00:00','00:00',NULL,1)"
+   "VALUES(1,1,'PAUSADA','09:00','18:00',NULL,1)"
   ].join(' ')).run();
  }
  _ensaio(){
