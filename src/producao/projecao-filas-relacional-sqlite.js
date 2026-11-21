@@ -123,28 +123,31 @@ class ProjecaoFilasRelacionalSQLite{
   const rows=posicionamento(sim);
   const antigos=new Map(this.db.prepare(SELECT_POSICOES)
    .all().map(r=>[r.posicao_id,r]));
-  const colocar=this.db.prepare([
-   'INSERT INTO loop_real_filas_projecao_posicoes(',
-   'posicao_id,participante_id,empresa,fila,local,ordem,',
-   'status_adesao,indicacoes_vinculadas) VALUES(?,?,?,?,?,?,?,?)',
-   'ON CONFLICT(posicao_id) DO UPDATE SET',
-   'participante_id=excluded.participante_id,empresa=excluded.empresa,',
-   'fila=excluded.fila,local=excluded.local,ordem=excluded.ordem,',
-   'status_adesao=excluded.status_adesao,',
-   'indicacoes_vinculadas=excluded.indicacoes_vinculadas'
-  ].join(' '));
+  // Remover primeiro TODAS as linhas alteradas evita conflito de UNIQUE
+  // quando dois titulares trocam ordem na mesma fila. Tudo transacional.
+  const novas=[],excluir=[];
   for(const row of rows){
    const antiga=antigos.get(row.posicao_id);
-   if(!antiga||!igual(antiga,row))colocar.run(
-    row.posicao_id,row.participante_id,row.empresa,row.fila,row.local,
-    row.ordem,row.status_adesao,row.indicacoes_vinculadas
-   );
+   if(!antiga||!igual(antiga,row)){
+    if(antiga)excluir.push(row.posicao_id);
+    novas.push(row);
+   }
    antigos.delete(row.posicao_id);
   }
+  for(const id of antigos.keys())excluir.push(id);
   const remover=this.db.prepare(
    'DELETE FROM loop_real_filas_projecao_posicoes WHERE posicao_id=?'
   );
-  for(const id of antigos.keys())remover.run(id);
+  for(const id of excluir)remover.run(id);
+  const colocar=this.db.prepare([
+   'INSERT INTO loop_real_filas_projecao_posicoes(',
+   'posicao_id,participante_id,empresa,fila,local,ordem,',
+   'status_adesao,indicacoes_vinculadas) VALUES(?,?,?,?,?,?,?,?)'
+  ].join(' '));
+  for(const row of novas)colocar.run(
+   row.posicao_id,row.participante_id,row.empresa,row.fila,row.local,
+   row.ordem,row.status_adesao,row.indicacoes_vinculadas
+  );
   if(versaoAnterior===null){
    this.db.prepare([
     'INSERT INTO loop_real_filas_projecao_meta',
