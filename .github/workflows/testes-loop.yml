@@ -184,3 +184,40 @@ jobs:
             process.exitCode=1;
           });
           NODE
+
+  carga-continuada-milhao:
+    # Runner isolado, sem acesso a PSP ou base real.
+    # Ativado apenas na revisão desta prova cumulativa.
+    if: >-
+      github.event_name == 'pull_request' &&
+      github.head_ref == 'feature/carga-continuada-100k-1m-20261121' &&
+      github.event.pull_request.head.repo.full_name == 'jjinvest/loop-app'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: read
+    env:
+      NODE_ENV: test
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+      - name: Persistir 100 mil e continuar ate 1 milhao no mesmo SQLite
+        shell: bash
+        run: |
+          set -euo pipefail
+          node scripts/provar-carga-continua-100k-1m-loop.js | tee /tmp/loop-carga-continuada.log
+      - name: Exigir prova real do runner para todos os marcos
+        shell: bash
+        run: |
+          set -euo pipefail
+          grep -q 'CARGA_CONTINUA_ETAPA={"acumulados":100000,' /tmp/loop-carga-continuada.log
+          grep -q 'CARGA_CONTINUA_ETAPA={"acumulados":1000000,' /tmp/loop-carga-continuada.log
+          grep -q 'CARGA_CONTINUA_RECUPERACAO_APOS_QUEDA=INICIADA' /tmp/loop-carga-continuada.log
+          grep -q 'CARGA_CONTINUA_RESULTADO_FINAL={"contasSinteticas":1000000,' /tmp/loop-carga-continuada.log
+          grep -q 'CARGA_CONTINUA_PROVA_COMPLETA={"meta":1000000,' /tmp/loop-carga-continuada.log
+          echo 'LOOP_CARGA_CONTINUA_100K_E_1M=COMPROVADA'
+          echo 'LIMITE=NAO_PROVA_1M_POSICOES_NEM_USUARIOS_SIMULTANEOS'

@@ -47,6 +47,14 @@ Preservar: identidade única, indicação, histórico de compras, ordem A/B, pos
 - Os ciclos continuam no histórico relacional imutável, e o snapshot gravado V2 mantém somente referência à cadeia e checksum do JSON V1. Leituras V2 reconstituem e revalidam o snapshot completo; corrupção ou perda de referência impede a operação.
 - **Limitação importante:** o motor do domínio ainda reconstrói e valida todos os ciclos em memória. A migração V2 reduz armazenamento/regravação do histórico no registro central, **não** prova tempo constante por operação nem suporte para milhões de ciclos/posições. Isso exige remodelar o processamento de estado para eventos/posições indexados sem carregar todo o passado.
 
+## Prova cumulativa isolada de 100 mil → 1 milhão de vínculos
+
+- Executável `scripts/provar-carga-continua-100k-1m-loop.js`: usa **o mesmo arquivo SQLite durante todo o ensaio**, acrescentando 5.000 contas/vínculos sintéticos por transação (sem zerar os dados). Marcos: 100 mil, 250 mil, 500 mil, 750 mil e 1 milhão. Faz leitura paginada e mede duração de gravação e consulta durante o crescimento, em vez de somente após a carga.
+- **Continuidade comprovável:** a cada marco o processo Node termina, o banco é reaberto por outro processo e continua do total já confirmado. Depois dos 100 mil, há uma interrupção intencional antes do `COMMIT`, seguida de recuperação automática: as 100 gravações incompletas devem ser revertidas e o ensaio precisa continuar.
+- A checagem valida índices e ordenação determinística da fila de cadastro, ausência de duplicações, `PRAGMA integrity_check`, chaves estrangeiras, inexistência de compras e giros, e o funcionamento de **uma inscrição pelo caminho real de cadastro** depois de 1 milhão de registros sintéticos. Os registros de carga não representam 1 milhão de contas autenticadas por senha, pessoas reais, pedidos ou pagamento.
+- Execução automática no **GitHub Actions em runner efêmero isolado**, sem volume Railway, chaves de PSP ou base de clientes; usa exclusivamente diretório temporário e apaga a cópia de ensaio ao terminar. A prova é reexecutável; a saída contém tempos, total e volume em disco, sem dados identificáveis.
+- **Escopo e limites:** crescimento de cadastros e vínculos na estrutura SQLite; **não comprova 1 milhão de posições de fila, milhões de sessões concorrentes ou latência da aplicação sob tráfego HTTP sustentado**. Para isso são necessários testes independentes do motor de posições e de tráfego com métricas de CPU, memória, latência p95/p99, reinício e capacidade do ambiente real.
+
 ## Estado
 
 Longevidade do índice e da auditoria reforçada. Um milhão de registros e posições não está comprovado; a remodelagem do snapshot e as medições volumétricas ainda são necessárias.

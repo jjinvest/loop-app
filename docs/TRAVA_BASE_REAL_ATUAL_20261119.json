@@ -59,6 +59,10 @@
       "sha": "7efb033c5c2017acd3148dcb5fa1e0eda93dcfa2"
     },
     {
+      "path": ".github/workflows/carga-continua-loop-1m.yml",
+      "sha": "27e1086d5a8a0dd8b10aca377244c50564e571a6"
+    },
+    {
       "path": ".github/workflows/catalogo-real-estoque-proprio.yml",
       "sha": "9936284a9242f6d49c66e3e752c81b76ec967ec3"
     },
@@ -132,7 +136,7 @@
     },
     {
       "path": ".github/workflows/testes-loop.yml",
-      "sha": "17f65038b8fb037245c4a824060ce1b7e9bde7d1"
+      "sha": "01a72f9cf76374c1940164524e009f2bef7f1c5f"
     },
     {
       "path": ".github/workflows/validar-meus-pedidos.yml",
@@ -301,6 +305,10 @@
     {
       "path": "scripts/projetar-posicao-railway-staging.js",
       "sha": "c868d653dd1d1547343a337dd7b71c4c8ad704a0"
+    },
+    {
+      "path": "scripts/provar-carga-continua-100k-1m-loop.js",
+      "sha": "9e7faa60bba0c1ac75bab8863407cea5534b4b5d"
     },
     {
       "path": "scripts/provar-fronteira-admin-railway.js",

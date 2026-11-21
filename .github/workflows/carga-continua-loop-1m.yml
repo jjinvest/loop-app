@@ -1,0 +1,45 @@
+name: LOOP - carga acumulada 100 mil ate 1 milhao
+
+on:
+  push:
+    branches:
+      - feature/carga-continuada-100k-1m-20261121
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: carga-acumulada-loop-milhao
+  cancel-in-progress: false
+
+jobs:
+  durabilidade-acumulada:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      NODE_ENV: test
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+      - name: Crescer o mesmo SQLite ate 100 mil e depois 1 milhao
+        shell: bash
+        run: |
+          set -euo pipefail
+          node scripts/provar-carga-continua-100k-1m-loop.js | tee /tmp/loop-prova-continua.log
+      - name: Exigir comprovantes de cada fase, queda abrupta e registro completo
+        shell: bash
+        run: |
+          set -euo pipefail
+          grep -q 'CARGA_CONTINUA_ETAPA={"acumulados":100000,' /tmp/loop-prova-continua.log
+          grep -q 'CARGA_CONTINUA_ETAPA={"acumulados":1000000,' /tmp/loop-prova-continua.log
+          grep -q 'CARGA_CONTINUA_RECUPERACAO_APOS_QUEDA=INICIADA' /tmp/loop-prova-continua.log
+          grep -q 'CARGA_CONTINUA_RESULTADO_FINAL={"contasSinteticas":1000000,' /tmp/loop-prova-continua.log
+          grep -q 'CARGA_CONTINUA_PROVA_COMPLETA={"meta":1000000,' /tmp/loop-prova-continua.log
+          echo 'LOOP_CARGA_CONTINUA_100K_E_1M=COMPROVADA'
+          echo 'ESCOPO=1M_CONTAS_E_VINCULOS_SINTETICOS_SEM_PSP'
+          echo 'LIMITACAO=NAO_COMPROVA_1M_POSICOES_NEM_CONCORRENCIA'
