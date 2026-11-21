@@ -1,3 +1,5 @@
+> **INÍCIO OBRIGATÓRIO — LOOP 3.0 / AKITEMM (21/11/2026):** Para continuar o projeto sem recomeçar ou confundir loja, filas, porteira, relógio, tabuleiro e caixa, ler primeiro [ESSÊNCIA ÚNICA E LINKS ORIGINAIS](docs/LEIA_PRIMEIRO_ESSENCIA_UNICA_LOOP_AKITEMM_21NOV2026.md). As informações abaixo sobre laboratório e versões antigas são histórico, não substituem a branch real atual nem comprovam pagamentos produtivos.
+
 > **CONTINUIDADE VIGENTE:** Regras aprovadas e último contexto ficam em [`docs/COMANDO_MESTRE_LOOP_03_CONTINUIDADE.md`](docs/COMANDO_MESTRE_LOOP_03_CONTINUIDADE.md). Versões anteriores e backups foram isolados conforme [`docs/ISOLAMENTO_PROTOTIPOS_ANTIGOS_LOOP_03.md`](docs/ISOLAMENTO_PROTOTIPOS_ANTIGOS_LOOP_03.md). Este repositório contém laboratório e compatibilidade histórica, não pagamentos de produção.
 
 # LOOP V6 — Plataforma de loja e Escritório Virtual
