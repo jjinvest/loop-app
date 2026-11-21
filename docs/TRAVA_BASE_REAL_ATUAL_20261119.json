@@ -492,7 +492,7 @@
     },
     {
       "path": "src/candidato/escritorio-cliente-integrado.css",
-      "sha": "79f6b8f97238ae8a81e8a340fdf4234521d82491"
+      "sha": "5b1af64473909b047dd0e72dd5767eb776a97a12"
     },
     {
       "path": "src/candidato/operador-em-tela.js",
@@ -1404,7 +1404,7 @@
     },
     {
       "path": "src/producao/interface-aprovada-contas.js",
-      "sha": "f1fdfe4f1a1b898e0103875775ad847de4f853e9"
+      "sha": "69bf3f915644f95260809831828e0a804ddf18e8"
     },
     {
       "path": "src/producao/interface-aprovada-loja.js",
@@ -1752,7 +1752,7 @@
     },
     {
       "path": "src/shared/visor-catraca.js",
-      "sha": "ebb4501fa6af9e5901354e6f372833a95ba4cf46"
+      "sha": "2a126a701e260061bcaed82d05bb92c943e4d4c8"
     },
     {
       "path": "test/acabamento-visual-unificado.test.js",
@@ -2825,6 +2825,10 @@
     {
       "path": "test/loop.test.js",
       "sha": "b58b7bb61306bc1cbf390c73d839e4e6bb0c31f8"
+    },
+    {
+      "path": "test/luzes-relogio-operador-com-motor-preservado.test.js",
+      "sha": "40cb2ca9c6122a826f868e6d12d4baffc1676ed6"
     },
     {
       "path": "test/manutencao-comercial-online.test.js",
