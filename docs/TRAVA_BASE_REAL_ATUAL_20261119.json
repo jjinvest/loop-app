@@ -1304,7 +1304,7 @@
     },
     {
       "path": "src/producao/carrinho-interno-real-sqlite.js",
-      "sha": "af07f6778fe23862829ea66ffde2e1ea8e3b6101"
+      "sha": "eec59b3731697abda28e108218f0b5012e9cd8a7"
     },
     {
       "path": "src/producao/catalogo-mercadorias-real.js",
@@ -1520,7 +1520,7 @@
     },
     {
       "path": "src/producao/servidor-identidade-loop.js",
-      "sha": "d71590756676edbe08ac5218ccd839452a8f6c83"
+      "sha": "6f3c92c89b39bd1403e785f0ce7e01eeb7f41284"
     },
     {
       "path": "src/producao/sessao-admin-comercial-sqlite.js",
@@ -2104,7 +2104,7 @@
     },
     {
       "path": "test/carrinho-interno-real-ponta-a-ponta.test.js",
-      "sha": "be8f3ccafc510007e28bfa4d5743bdad41d2ab55"
+      "sha": "66d1793b8db556e2656248d65f301a402fe79112"
     },
     {
       "path": "test/carrinho-loop-multiplos-itens.test.js",
@@ -2836,7 +2836,7 @@
     },
     {
       "path": "test/montar-comercial-sem-homologacao.test.js",
-      "sha": "3038eb4c181cfb460fcc7dc3e902b623fa4c3b3e"
+      "sha": "795c44897fdc71286eb2904ae16c108aaec7dfbe"
     },
     {
       "path": "test/motor-conta-unica-ensaio-sqlite.test.js",
