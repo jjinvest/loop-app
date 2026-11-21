@@ -840,6 +840,11 @@ async function main(){
    await pagina.locator('#abaPosicoes').click();
    const confirmarAzul=pagina.locator('#posicoesPainel form.loop03-aceite-posicao');
    const aguardados=visual.mobile?1:2;
+   // O controle fica recolhido para conservar os três cartões por fileira.
+   // A confirmação individual só pode ser tocada após a expansão.
+   await pagina.locator('#posicoesPainel .loop03-controles-cpf-termos')
+    .filter({has:pagina.locator('form.loop03-aceite-posicao')})
+    .first().locator(':scope > summary').click();
    await confirmarAzul.first().locator('button[type=submit]').waitFor({
     state:'visible'
    });
