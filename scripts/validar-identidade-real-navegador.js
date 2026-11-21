@@ -313,6 +313,19 @@ async function main(){
    await operadorPage.goto(base+'/escritorio');
    await operadorPage.locator('#loopOperadorAcoes').waitFor({state:'visible'});
    if(visual.mobile)await operadorPage.locator('#loop03MenuIntegrado').click();
+   // Regressao da sessao expirada: nao deixar o painel do relogio vazio.
+   await contextoOperador.clearCookies();
+   await operadorPage.locator('#abaTabuleiro').click();
+   await operadorPage.locator('#atualizarTabuleiroIntegrado').click();
+   await operadorPage.locator('#painelLogin').waitFor({state:'visible'});
+   assert.match(await operadorPage.locator('#erroLogin').innerText(),
+    /Sessão do operador encerrada/);
+   await operadorPage.locator('#login').fill('OPERADOR');
+   await operadorPage.locator('#senha').fill(
+    'CredencialAdministrativaIsolada2026!Teste');
+   await operadorPage.locator('#formLogin button[type=submit]').click();
+   await operadorPage.locator('#loopOperadorAcoes').waitFor({state:'visible'});
+   if(visual.mobile)await operadorPage.locator('#loop03MenuIntegrado').click();
    await operadorPage.locator('#sair').click();
    await operadorPage.locator('#painelLogin').waitFor({state:'visible'});
    const encerrado=await operadorPage.evaluate(async()=>{
