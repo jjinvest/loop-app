@@ -250,10 +250,25 @@ async function main(){
     'toque no relogio NUNCA navega a outra pagina');
    const campo=(parte,tipo)=>modal.locator('label')
     .filter({hasText:parte}).locator(tipo);
+   await modal.getByRole('button',{name:'Escolher abertura'}).click();
+   const seletorHorario=operadorPage.locator('#loopOperadorHorarioDialog');
+   await seletorHorario.waitFor({state:'visible'});
+   for(const nome of ['Limpar','Cancelar','Definir'])
+    assert.equal(await seletorHorario.getByRole('button',{name:nome}).isVisible(),true);
+   const larguras=await seletorHorario.evaluate(el=>{
+    const botoes=[...el.querySelectorAll('.loop-operador-horario-acoes button')];
+    return botoes.map(b=>({left:b.getBoundingClientRect().left,
+     right:b.getBoundingClientRect().right}));
+   });
+   assert.ok(larguras.every(b=>b.left>=0&&b.right<=visual.width+1),
+    'Limpar, Cancelar e Definir devem caber dentro da largura do celular');
+   await seletorHorario.getByRole('button',{name:'Cancelar'}).click();
+   await seletorHorario.waitFor({state:'detached'});
    await campo('Modo','select').selectOption('AUTOMATICA');
    await campo('Abertura','input').fill('09:00');
    await campo('Fechamento','input').fill('18:00');
    await campo('Meta diária de centros','input').fill('5');
+   await campo('Data da meta','input').fill('2099-11-22');
    const ritmo=modal.locator('.loop-operador-catraca-resumo');
    await ritmo.getByText('5 centros × 6 = 30 luzes').waitFor();
    assert.match(await ritmo.innerText(),/Cada luz: 18 min/);
@@ -283,6 +298,13 @@ async function main(){
    await modal.getByRole('button',{name:'Salvar programação'}).click();
    await modal.locator('.loop-operador-catraca-rodape .mensagem-operador')
     .filter({hasText:'Programação salva e confirmada'}).waitFor();
+   assert.match(await modal.locator('.loop-operador-catraca-resumo').innerText(),
+    /PROGRAMAÇÃO GRAVADA NO SERVIDOR/);
+   const comprovante=operadorPage.locator('#loopOperadorAgendaConfirmada');
+   await comprovante.waitFor({state:'visible'});
+   assert.match(await comprovante.innerText(),/AGENDADA — AGUARDANDO DATA/);
+   assert.match(await comprovante.innerText(),/22\/11\/2099 · 09:00–18:00/);
+   assert.match(await comprovante.innerText(),/5 centros · 30 luzes/);
    await modal.getByRole('button',{name:'Fechar'}).click();
    await modal.waitFor({state:'detached'});
    await operadorPage.locator('#atualizarTabuleiroIntegrado').click();
@@ -292,6 +314,10 @@ async function main(){
     .filter({hasText:'Meta diária de centros'}).locator('input').inputValue(),'5');
    assert.match(await reaberto.locator('.loop-operador-catraca-resumo').innerText(),
     /Cada luz: 18 min/);
+   assert.match(await reaberto.locator('.loop-operador-catraca-resumo').innerText(),
+    /PROGRAMAÇÃO GRAVADA NO SERVIDOR/);
+   assert.equal(await reaberto.locator('label').filter({hasText:'Data da meta'})
+    .locator('input').inputValue(),'2099-11-22');
    await reaberto.getByRole('button',{name:'Fechar'}).click();
    await reaberto.waitFor({state:'detached'});
    assert.equal(new URL(operadorPage.url()).pathname,'/escritorio');
