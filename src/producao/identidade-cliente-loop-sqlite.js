@@ -5,6 +5,7 @@
 const {randomUUID,randomBytes,randomInt,createHash,createHmac,
  timingSafeEqual,createCipheriv,createDecipheriv,scrypt}=require('node:crypto');
 const {promisify}=require('node:util');
+const {gerarCursorRede,lerCursorRede}=require('./cursor-rede-sqlite');
 const derivar=promisify(scrypt);
 const NICK=/^[a-zA-Z]{1,12}$/;
 const NOME=/^[\p{L}\p{M} .'-]{2,90}$/u;
@@ -532,11 +533,16 @@ class IdentidadeClienteLoopReal{
    throw e;
   }
  }
- listarIndicados(titularId,{limite=50,offset=0}={}){
+ listarIndicados(titularId,{limite=50,offset=0,cursor=null}={}){
   if(typeof titularId!=='string'||!/^titular-[a-f0-9-]{36}$/.test(titularId)||
      !Number.isSafeInteger(limite)||limite<1||limite>50||
-     !Number.isSafeInteger(offset)||offset<0)
+     !Number.isSafeInteger(offset)||offset<0||
+     (cursor!==null&&offset!==0))
    erro('TITULAR_INVALIDO');
+  const ponto=cursor===null?null:lerCursorRede({
+   chave:this.keyCodigo,titularId,cursor
+  });
+  const base=ponto?.numeroCadastro??offset;
   const rows=this.banco.prepare([
    'SELECT v.indicado_id AS indicadoId,c.nick,v.registrado_em AS registradoEm,',
    'd.numero_posicao AS posicaoDestinoReservada',
@@ -545,21 +551,34 @@ class IdentidadeClienteLoopReal{
    'LEFT JOIN loop_real_destinos_indicacao d',
    'ON d.indicado_id=v.indicado_id AND d.indicador_id=v.indicador_id',
    'WHERE v.indicador_id=?',
-   'ORDER BY v.registrado_em ASC,v.indicado_id ASC LIMIT ? OFFSET ?'
-  ].join(' ')).all(titularId,limite,offset);
+   ...(ponto?[
+    'AND (v.registrado_em>? OR',
+    '(v.registrado_em=? AND v.indicado_id>?))'
+   ]:[]),
+   'ORDER BY v.registrado_em ASC,v.indicado_id ASC',
+   ponto?'LIMIT ?':'LIMIT ? OFFSET ?'
+  ].join(' ')).all(...(ponto?[
+   titularId,ponto.registradoEm,ponto.registradoEm,
+   ponto.indicadoId,limite
+  ]:[titularId,limite,offset]));
   const total=this.banco.prepare(
    'SELECT COUNT(*) AS n FROM loop_real_vinculos_indicacao WHERE indicador_id=?'
   ).get(titularId).n;
   return {indicados:rows.map((x,i)=>({
    nick:x.nick,registradoEm:x.registradoEm,
-   numeroCadastro:offset+i+1,filaCadastro:'B',
+   numeroCadastro:base+i+1,filaCadastro:'B',
    posicaoDestinoReservada:x.posicaoDestinoReservada,
    telefone:this.telefoneIndicadoVinculado({
     indicadorId:titularId,indicadoId:x.indicadoId
    }),
    estado:'CADASTRO_AGUARDANDO_ATIVACAO'
-  })),total,temMais:total>offset+rows.length,
-   proximoOffset:total>offset+rows.length?offset+rows.length:null,
+  })),total,temMais:total>base+rows.length,
+   proximoOffset:total>base+rows.length?base+rows.length:null,
+   proximoCursor:total>base+rows.length&&rows.length?
+    gerarCursorRede({chave:this.keyCodigo,titularId,
+     registradoEm:rows.at(-1).registradoEm,
+     indicadoId:rows.at(-1).indicadoId,
+     numeroCadastro:base+rows.length}):null,
    remuneracoesConfirmadas:0,financeiroReal:false};
  }
  documentosPendentes(titularId){
