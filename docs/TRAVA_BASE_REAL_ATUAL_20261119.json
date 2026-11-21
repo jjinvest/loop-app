@@ -1256,7 +1256,7 @@
     },
     {
       "path": "src/producao/aceite-posicao-azul-ensaio-sqlite.js",
-      "sha": "4efff8d98af447a715b8ea7ae63047ff1e4ad0eb"
+      "sha": "335d7e4713dbc2af5d85fc84bf32ce09dd9cb313"
     },
     {
       "path": "src/producao/adaptadores-psp-readonly.js",
@@ -1292,7 +1292,7 @@
     },
     {
       "path": "src/producao/backup-identidade-real.js",
-      "sha": "329806cdfe09328b3294cbe9eabd480a010326d6"
+      "sha": "8672ff78794f32449e869d3f88aa51b0bea2c4ff"
     },
     {
       "path": "src/producao/backup-midia-offsite.js",
@@ -1476,15 +1476,15 @@
     },
     {
       "path": "src/producao/projecao-filas-relacional-sqlite.js",
-      "sha": "fd52dac5e7c46693ffe9d48fc855aa671733314e"
+      "sha": "b8f5b233f418d85a0e0200a647c333736e94bc9d"
     },
     {
       "path": "src/producao/promocao-lotes-ensaio-sqlite.js",
-      "sha": "a68b07e9ca9af2e848e30cc8fb2632330e2c1781"
+      "sha": "0785187653543a5d64691a3ebc98634f568ca89c"
     },
     {
       "path": "src/producao/promocao-pedido-motor-ensaio-sqlite.js",
-      "sha": "8a3277ac2be0a9d19e8842921f39654cdf854762"
+      "sha": "315e72f4105e64424fc95cdeb8ec3a14bbe59f6b"
     },
     {
       "path": "src/producao/prontidao-financeira-ensaio.js",
