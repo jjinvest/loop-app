@@ -277,7 +277,7 @@
    method:'POST',headers:{'Content-Type':'application/json',
     'X-Loop-Admin-Csrf':csrf},
    body:JSON.stringify({cor,minimo:anterior.minimo,
-    roxasPorUnidade:anterior.roxasPorUnidade,
+    roxasPorUnidade:cor==='ROXO'?Math.max(1,anterior.roxasPorUnidade||0):0,
     revisaoEsperada:anterior.revisao})
   });
  }
