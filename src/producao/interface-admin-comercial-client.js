@@ -589,30 +589,48 @@
    politicaCatraca.habilitadoSomenteEnsaio!==true||!politicaCatraca.podeGirar;
  }
  function atualizarPrevisaoLuzesAdmin(){
-  const n=Number($('metaCentrosDiaAdmin').value);
+  // Prévia local: não depende de cadastro, posição, vendas, saldo nem gravação.
+  const texto=$('metaCentrosDiaAdmin').value.trim();
   const abre=$('inicioCatracaAdmin').value;
   const fecha=$('fimCatracaAdmin').value;
+  const saida=$('previsaoLuzesAdmin');
   const transformar=h=>/^(?:[01][0-9]|2[0-3]):[0-5][0-9]$/.test(h)?
    Number(h.slice(0,2))*60+Number(h.slice(3)):null;
   const a=transformar(abre),b=transformar(fecha);
-  const saida=$('previsaoLuzesAdmin');
-  if(a===null||b===null||!Number.isSafeInteger(n)||n<0||n>1000000){
-   saida.textContent='Horários ou meta inválidos.';return false;
+  if(a===null||b===null){
+   saida.textContent='Preencha o horário de início e fim para ver a previsão antes de salvar.';
+   return false;
   }
-  if(n===0){
-   saida.textContent='Sem meta de centros: nenhuma luz programada automaticamente.';
-   return true;
+  if(texto===''||texto==='0'){
+   saida.textContent='Informe o número de pessoas contempladas no dia para ver o intervalo automaticamente, antes de salvar.';
+   return texto==='0';
   }
+  if(!/^[1-9][0-9]*$/.test(texto)||!Number.isSafeInteger(Number(texto))||
+     Number(texto)>1000000){
+   saida.textContent='Informe uma quantidade inteira válida de 1 a 1.000.000.';
+   return false;
+  }
+  const n=Number(texto);
   const minutos=((b-a+1440)%1440)||1440;
+  const duracao=Math.floor(minutos/60)+'h'+
+   (minutos%60?String(minutos%60).padStart(2,'0'):'');
   const segundos=Math.max(1,Math.round(minutos*60/(n*6)));
-  saida.textContent=n+' centro(s) × 6 luzes = '+(n*6)+
-   ' luzes distribuídas em '+minutos+' minutos. Intervalo médio: '+
-   Math.floor(segundos/60)+' min'+(segundos%60?' '+(segundos%60)+' s':'')+
-   '. Comprovante de caixa real obrigatório antes de qualquer giro.';
+  const porCentro=Math.max(1,Math.round(minutos*60/n));
+  const tempo=seg=>seg>=3600?
+   Math.floor(seg/3600)+'h '+Math.floor(seg%3600/60)+'min'+
+   (seg%60?' '+(seg%60)+'s':''):
+   Math.floor(seg/60)+'min'+(seg%60?' '+(seg%60)+'s':'');
+  saida.textContent='PRÉVIA ANTES DE SALVAR · '+n+
+   ' pessoa(s) contemplada(s) por dia · Horário '+abre+' às '+fecha+
+   ' ('+duracao+') · '+(n*6)+' luzes (6 por pessoa) · '+
+   'Intervalo médio: '+tempo(segundos)+' por luz · '+
+   tempo(porCentro)+' por pessoa. Esta é apenas uma previsão; não realiza giro nem pagamento.';
   return true;
  }
- for(const id of ['metaCentrosDiaAdmin','inicioCatracaAdmin','fimCatracaAdmin'])
+ for(const id of ['metaCentrosDiaAdmin','inicioCatracaAdmin','fimCatracaAdmin']){
   $(id).addEventListener('input',atualizarPrevisaoLuzesAdmin);
+  $(id).addEventListener('change',atualizarPrevisaoLuzesAdmin);
+ }
  async function atualizarCatracaAdmin(){
   try{
    const d=await apiCatraca();
@@ -621,8 +639,12 @@
       d.financeiroReal!==false)throw Error('Estado administrativo inválido.');
    politicaCatraca=d;
    $('modoCatracaAdmin').value=d.modo;
-   $('inicioCatracaAdmin').value=d.janelaInicio;
-   $('fimCatracaAdmin').value=d.janelaFim;
+   // Base legada sem agenda salva: sugerir 09–18 apenas na tela, sem
+   // alterar a política real até o operador pressionar Salvar.
+   const semHorarioConfigurado=d.revisao===1&&
+    d.janelaInicio==='00:00'&&d.janelaFim==='00:00';
+   $('inicioCatracaAdmin').value=semHorarioConfigurado?'09:00':d.janelaInicio;
+   $('fimCatracaAdmin').value=semHorarioConfigurado?'18:00':d.janelaFim;
    $('limiteCatracaAdmin').value=d.limiteDiario===null?'':String(d.limiteDiario);
    $('metaCentrosDiaAdmin').value=String(d.metaCentrosDia||0);
    $('metaDataAlvoAdmin').value=d.metaDataAlvo||'';

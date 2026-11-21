@@ -1388,11 +1388,11 @@
     },
     {
       "path": "src/producao/interface-admin-comercial-aprovada.js",
-      "sha": "385092ac015b21737941c1cd12625b3c943c711e"
+      "sha": "73da75d51d70bd808dc5fe0ca923961de5bee21f"
     },
     {
       "path": "src/producao/interface-admin-comercial-client.js",
-      "sha": "86c1342776e379bf7f6edd69e24eb657d73bccba"
+      "sha": "7e825b8c42893dc544ad038e8b49ed7a543d4f82"
     },
     {
       "path": "src/producao/interface-aprovada-contas.js",
@@ -1448,7 +1448,7 @@
     },
     {
       "path": "src/producao/operacao-catraca-admin-sqlite.js",
-      "sha": "5bce542c9b82f73e75f05765c718cda075b1db65"
+      "sha": "4a71962bd2da8614171fc9127627227e3fce63fa"
     },
     {
       "path": "src/producao/operador-loja-fotos-real.js",
@@ -3201,6 +3201,10 @@
     {
       "path": "test/relatorio-sustentabilidade.test.js",
       "sha": "2906e77445084beaef1bd8399efad86208a9645e"
+    },
+    {
+      "path": "test/relogio-catraca-previsao-imediata-admin.test.js",
+      "sha": "ddaf5e342a05c00ab167bffb1855a11fa5835533"
     },
     {
       "path": "test/repositorio-catalogo-sqlite.test.js",
