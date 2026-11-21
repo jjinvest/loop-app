@@ -62,7 +62,7 @@
  const entradaPelaLoja=parametrosEntrada.get('origem')==='loja';
  const indicadorNick=typeof ref==='string'&&/^[A-Za-z]{1,12}$/.test(ref)?
   ref.toLowerCase():null;
- let titularesIndicados=[],redePaginando=false;
+ let titularesIndicados=[],redePaginando=false,redeProximoCursor=null;
  let posicaoSelecionada='';
  let nickResumoReal='';
  let posicoesResumoReal=[],popupPosicoesRealAberto=false;
@@ -722,12 +722,19 @@
  async function carregarRede({mais=false}={}){
   if(redePaginando)return;
   redePaginando=true;
-  if(!mais)titularesIndicados=[];
+  if(!mais){titularesIndicados=[];redeProximoCursor=null;}
   try{
-   const dados=await requisitar('/minha-rede'+(mais?
-    '?offset='+titularesIndicados.length:''));
+   const pagina=mais?(redeProximoCursor?
+    '?cursor='+encodeURIComponent(redeProximoCursor):
+    '?offset='+titularesIndicados.length):'';
+   const dados=await requisitar('/minha-rede'+pagina);
    if(!Array.isArray(dados.indicados)||!Number.isSafeInteger(dados.total)||
-      dados.financeiroReal!==false)throw Error('REDE_DIVERGENTE');
+      dados.financeiroReal!==false||
+      (dados.proximoCursor!==undefined&&dados.proximoCursor!==null&&
+       (typeof dados.proximoCursor!=='string'||
+        dados.proximoCursor.length>512)))
+    throw Error('REDE_DIVERGENTE');
+   redeProximoCursor=dados.proximoCursor||null;
    titularesIndicados=mais?
     titularesIndicados.concat(dados.indicados):dados.indicados;
    $('maisEquipe').hidden=!dados.temMais;
