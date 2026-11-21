@@ -108,6 +108,41 @@ function montarRotasCatalogoMidiaOperador({
       codigo.includes('INVALIDO')?400:503).json({erro:codigo});
    }
   });
+ // Preco da etiqueta e promocao MANUAIS sao dados informados pelo dono.
+ // Nao entram no preco de transacao, compra, PIX, frete ou motor.
+ if(anunciosManuais!==null){
+  app.get('/api/admin/catalogo-midia/produtos/:produtoId/anuncio',
+   autorizarOperador,verificarId,(req,res)=>{
+    try{
+     if(!catalogoPrincipal?.buscarProdutoAdministrativo({
+      produtoId:req.params.produtoId
+     }))return res.status(404).json({erro:'PRODUTO_NAO_ENCONTRADO'});
+     return res.json({...anunciosManuais.consultar(req.params.produtoId),
+      checkoutReal:false});
+    }catch{return res.status(503).json({erro:'ANUNCIO_INDISPONIVEL'});}
+   });
+  app.post('/api/admin/catalogo-midia/produtos/:produtoId/anuncio',
+   autorizarOperador,validarCsrf,verificarId,(req,res)=>{
+    const b=req.body;
+    if(!req.is('application/json')||!b||Array.isArray(b)||
+       Object.keys(b).sort().join(',')!==
+       'categoria,marca,origem,precoCentavos,promocaoCentavos,quantidade,revisaoEsperada')
+     return res.status(400).json({erro:'ANUNCIO_CAMPOS_INVALIDOS'});
+    try{
+     const atualizado=anunciosManuais.atualizar({
+      produtoId:req.params.produtoId,...b
+     });
+     return res.json({...atualizado,checkoutReal:false,
+      compravel:false,freteCalculado:false});
+    }catch(e){
+     const codigo=e?.codigo||'ANUNCIO_INDISPONIVEL';
+     return res.status(codigo.includes('CONCORRENTE')?409:
+      codigo.includes('NAO_ENCONTRADO')?404:
+      codigo.includes('INVALIDO')||codigo.includes('INVALIDOS')?400:503)
+      .json({erro:codigo});
+    }
+   });
+ }
  app.get('/api/admin/catalogo-midia/produtos',autorizarOperador,(_req,res)=>{
   try{
    const locais=catalogoMidia.repo.listar();
