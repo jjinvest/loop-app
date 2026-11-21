@@ -6,6 +6,8 @@ const path=require('node:path');
 const http=require('node:http');
 const {DatabaseSync}=require('node:sqlite');
 const {MotorLoopIntegradoSQLite}=require('../src/producao/motor-loop-integrado-sqlite');
+const {migrarHistoricoV2Protegido}=
+ require('../src/producao/migracao-historico-v2-protegida');
 const {OperacaoCatracaAdminSQLite}=
  require('../src/producao/operacao-catraca-admin-sqlite');
 const {PreflightCapacidadeCheckoutSQLite}=
@@ -201,6 +203,22 @@ async function iniciar(ambiente=process.env,opcoes={}){
   // Falha de rede, segredo, bucket, restauração ou dados bloqueia o
   // listener; nenhuma conta real é criada sem prova de recuperação.
   await agendador.iniciar();
+  // Migrar o formato V1 para V2 SOMENTE em operação interna fechada,
+  // depois de cópia offsite restaurada. Nunca converter ao iniciar por padrão.
+  const migracaoV2=ambiente.LOOP_REAL_SNAPSHOT_V2_MIGRAR||'NAO';
+  if(!['NAO','SIM'].includes(migracaoV2))
+   throw Error('HISTORICO_V2_MODO_INVALIDO');
+  if(migracaoV2==='SIM'){
+   const interno=opcoes.cadastroPublico===false&&
+    ambiente.LOOP_REAL_CADASTRO_GO==='NAO'&&
+    ambiente.LOOP_REAL_APROVACAO_DOCUMENTOS==='NAO'&&
+    ambiente.LOOP_REAL_OPERACAO_INTERNA==='SIM'&&
+    (ambiente.LOOP_REAL_SANEAMENTO_LEGADOS||'NAO')==='NAO';
+   const resultado=await migrarHistoricoV2Protegido({
+    motor:motorLoop,agendador,autorizacaoInterna:interno
+   });
+   console.log('LOOP_SNAPSHOT_HISTORICO_V2='+JSON.stringify(resultado));
+  }
   // Janela de depuracao pre-lancamento: SOMENTE duas identidades
   // reconhecidas podem continuar. Backup unico restaurado antes de entrar.
   // Default NAO nunca modifica contas; AUDITAR so calcula; EXECUTAR exige
