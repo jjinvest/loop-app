@@ -351,7 +351,7 @@
   if(explicacao)explicacao.textContent=
    'Informe seu endereço para verificar a entrega. A consulta ainda não finaliza nem registra um pedido.';
   botaoEntrega.textContent='Verificar região e frete';
-  const permitir=!visitante&&!operadorAtivo&&typeof csrfLoja==='string';
+  const permitir=!visitante&&!operadorAtivo;
   for(const field of formEntrega.querySelectorAll('input,select,textarea')){
    field.disabled=!permitir;
   }
