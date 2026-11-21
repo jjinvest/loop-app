@@ -470,3 +470,22 @@ body.loop03-modo-operador > #arquivoFotoPerfil{
   padding:8px 9px;font-size:.76rem
  }
 }
+
+
+/* Luzes vinculadas ao agendamento real, somente no painel do operador.
+   Nao interfere na aparencia do tabuleiro do cliente. */
+body.loop03-modo-operador .cliente-integrado #conteudoTabuleiro
+ .loop03-marcadores-motor .loop03-relogio-luz-atual{
+ animation:loop03-relogio-luz-ativa 1.6s ease-in-out infinite;
+ opacity:1;
+}
+@keyframes loop03-relogio-luz-ativa{
+ 0%,100%{box-shadow:0 0 8px #dbaef4;filter:brightness(1)}
+ 50%{box-shadow:0 0 19px 4px #eec7ff;filter:brightness(1.55)}
+}
+@media(prefers-reduced-motion:reduce){
+ body.loop03-modo-operador .cliente-integrado #conteudoTabuleiro
+  .loop03-marcadores-motor .loop03-relogio-luz-atual{
+  animation:none;box-shadow:0 0 14px #dbaef4;
+ }
+}
