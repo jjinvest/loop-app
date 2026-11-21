@@ -297,8 +297,8 @@
   if(!Array.isArray(slots.slots)||slots.total!==400)
    throw Error('QUADRINHOS_INDISPONIVEIS');
   const ocupados=new Set(slots.slots.map(x=>x.posicao));
-  const destino=ocupados.has(indice)?
-   Array.from({length:400},(_,i)=>i+1).find(n=>!ocupados.has(n)):indice;
+  const destino=Array.from({length:400},(_,i)=>i+1)
+   .find(n=>!ocupados.has(n));
   if(!destino)throw Error('VITRINE_SEM_ESPACO');
   const atual=slots.slots.find(x=>x.posicao===destino);
   const resposta=await fetchJson(
