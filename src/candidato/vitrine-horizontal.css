@@ -49,3 +49,48 @@ dialog.akitemm-operador-editor .akitemm-foto-ajustes label{font-size:13px}
 dialog.akitemm-operador-editor .akitemm-editor-corpo input[type=range]{width:100%;accent-color:#eac26f}
 dialog.akitemm-operador-editor .akitemm-editor-status{margin-top:16px;font-size:14px;color:#f6dc9f;line-height:1.45}
 @media(max-width:540px){dialog.akitemm-modal.akitemm-operador-editor{padding:14px 16px}dialog.akitemm-operador-editor>h2{margin-top:36px}}
+
+/* Posição e alça visíveis SOMENTE na sessão de operador, sem alterar o cliente. */
+.akitemm-loja #catalogoLojaLoop .akitemm-ordenavel{position:relative;cursor:grab}
+.akitemm-loja #catalogoLojaLoop .akitemm-ordenavel::before{
+ content:attr(data-akitemm-ordem);position:absolute;z-index:3;left:5px;top:5px;
+ display:grid;place-items:center;min-width:23px;height:23px;padding:0 3px;
+ border-radius:7px;background:#0b171dde;color:#f0cc89;
+ font-size:12px;font-weight:800;pointer-events:none;
+ box-shadow:0 1px 5px #0009
+}
+.akitemm-loja #catalogoLojaLoop .akitemm-ordenavel>.akitemm-alca-arrastar{
+ position:absolute;z-index:5;top:5px;right:5px;display:grid;place-items:center;
+ width:38px;height:38px;min-height:38px;padding:0;border:1px solid #cda668;
+ border-radius:10px;background:#14242ce8;color:#f8d995;font-size:28px;
+ line-height:1;cursor:grab;user-select:none;-webkit-user-select:none;
+ touch-action:none;-webkit-touch-callout:none;
+}
+.akitemm-loja #catalogoLojaLoop .akitemm-ordenavel>.akitemm-alca-arrastar:focus-visible{
+ outline:2px solid #f6dfb7;outline-offset:2px
+}
+.akitemm-loja #catalogoLojaLoop .akitemm-arrastando{opacity:.37}
+.akitemm-loja #catalogoLojaLoop .akitemm-arrasto-alvo{
+ outline:3px solid #f3d17b;outline-offset:1px;box-shadow:0 0 22px #e8b65e55
+}
+.akitemm-loja #catalogoLojaLoop .akitemm-arrasto-alvo[data-akitemm-lado=antes]{
+ border-left:5px solid #fff0b9!important
+}
+.akitemm-loja #catalogoLojaLoop .akitemm-arrasto-alvo[data-akitemm-lado=depois]{
+ border-right:5px solid #fff0b9!important
+}
+.akitemm-arrasto-fantasma{
+ box-sizing:border-box;position:fixed;z-index:2147483000;pointer-events:none;
+ display:flex;gap:8px;align-items:center;width:min(220px,60vw);min-height:57px;
+ padding:8px;border:2px solid #e6c07e;border-radius:13px;
+ background:#162830f0;color:#fff0ca;font-size:14px;font-weight:700;
+ box-shadow:0 12px 30px #000a;touch-action:none
+}
+.akitemm-arrasto-fantasma img{width:43px;height:43px;border-radius:8px;object-fit:cover}
+.akitemm-arrasto-aviso{
+ position:fixed;bottom:65px;left:50%;transform:translateX(-50%);
+ z-index:2147483000;max-width:min(90vw,390px);box-sizing:border-box;
+ border:1px solid #bba16d;border-radius:12px;padding:10px 14px;
+ background:#192a34f5;color:#ffe5b7;font-size:14px;line-height:1.35;
+ box-shadow:0 9px 26px #000a;pointer-events:none
+}
