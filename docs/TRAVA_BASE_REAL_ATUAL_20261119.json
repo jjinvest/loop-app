@@ -436,7 +436,7 @@
     },
     {
       "path": "scripts/validar-operador-primeiro-produto-navegador.js",
-      "sha": "e0fec81d2378da7f2b251215943825808f70251a"
+      "sha": "792759a04551a5ef94ef70e602246705ff599444"
     },
     {
       "path": "scripts/validar-saques-ensaio-http.js",
@@ -2956,7 +2956,7 @@
     },
     {
       "path": "test/operador-fotos-conta-real-unificada.test.js",
-      "sha": "ffc7103ad24e1aa1a67f888058a2dc91247bb005"
+      "sha": "c2b066a2abcf54b259e89f4086a94c3e79a5440f"
     },
     {
       "path": "test/operar-receptor-asaas-railway-staging.test.js",
