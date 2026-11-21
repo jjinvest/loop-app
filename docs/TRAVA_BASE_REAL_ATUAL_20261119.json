@@ -424,7 +424,7 @@
     },
     {
       "path": "scripts/validar-identidade-real-navegador.js",
-      "sha": "d2a29d6b924e6d3ebb4a774448ac268229fb7f71"
+      "sha": "d42f81c80c4fac853800c19176fd943f02b30dbc"
     },
     {
       "path": "scripts/validar-jornada-loja-cores-browser.js",
@@ -1420,7 +1420,7 @@
     },
     {
       "path": "src/producao/interface-aprovada-loop.js",
-      "sha": "d38b882ff00dbf9ce36a3f80b20ad89315c7f16d"
+      "sha": "39d61f2fc9260b8dfcf0041916d15be040f0a9d9"
     },
     {
       "path": "src/producao/jornada-comercial-unificada-ensaio-sqlite.js",
@@ -2300,7 +2300,7 @@
     },
     {
       "path": "test/contrato-papeis-operador-real.test.js",
-      "sha": "31603fd7042f392949660e571ed06a1313e02e3b"
+      "sha": "c64a0d9ac4bafa616f7dfa321d4867b948332929"
     },
     {
       "path": "test/contrato-visual-escritorio-aprovado.test.js",
