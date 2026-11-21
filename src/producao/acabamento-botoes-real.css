@@ -25,6 +25,13 @@ body.loop03-logado .cliente-integrado #formFotoPerfil input[type=file]{
  border-radius:14px;
 }
 
+/* Entrada: garantir que o toque no olhinho chegue ao botao no Android,
+   independentemente de overlays do campo e sem modificar sua moldura. */
+body:not(.loop03-logado) #painelLogin .envoltorio-senha>.alternar-visibilidade{
+ z-index:4;pointer-events:auto;touch-action:manipulation;
+ -webkit-tap-highlight-color:transparent;
+}
+
 /* Foto: toque e recorte sempre circulares inclusive em navegadores Android. */
 body.loop03-logado #loop03AlterarFotoTopo{
  width:clamp(78px,15vw,128px);height:clamp(78px,15vw,128px);
