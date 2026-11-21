@@ -7,7 +7,7 @@
   "sourceBranch": "feature/unificar-escritorio-real-20261105",
   "sourceCommit": "e88a14601b3b20475098f489d44fac01acedf2c9",
   "lastVerifiedFunctionalDeploymentCommit": "a77d8d1e5355e7eb19fb7d12ea1eb5616c79132a",
-  "notes": "A cópia não inclui dados reais, nem histórico de laboratorio, nem imagens abandonadas. Arquivos com nomes antigos foram mantidos somente quando usados pela renderização ou por contratos do código operacional.",
+  "notes": "A cópia não inclui dados reais, nem histórico de laboratorio, nem imagens abandonadas. Arquivos com nomes antigos foram mantidos somente quando usados pela renderização ou por contratos do código operacional.; verificação de dependências em evolução: manter somente módulos transitivamente necessários",
   "guarantees": {
     "srcFrozen": true,
     "financialOperationsAuthorized": false,
@@ -52,16 +52,16 @@
       "gitSha": "449ef15b08673242b088a2c34dd357b4a69430b9"
     },
     {
-      "path": "docs/REGRAS_POSICOES_POR_COR_AKITEMM_20261105.md",
-      "gitSha": "17b5ecfa15244872e7998fa207607f83742ee22a"
-    },
-    {
       "path": "docs/REGRA_DEFINITIVA_FILA_E_CATRACA_POR_CAIXA_17NOV2026.md",
       "gitSha": "a2353e0f04e0fa151f03c89f910c6d017f4ca8db"
     },
     {
       "path": "docs/REGRA_FILA_A_LIVRE_LIMITE_DUAS_POSICOES_TABULEIRO.md",
       "gitSha": "7664316ee5d10732b9839c0cc5354a92346b44d4"
+    },
+    {
+      "path": "docs/REGRAS_POSICOES_POR_COR_AKITEMM_20261105.md",
+      "gitSha": "17b5ecfa15244872e7998fa207607f83742ee22a"
     },
     {
       "path": "docs/TERMOS_CADASTRO_LOOP_2026_11_PARA_APROVACAO.md",
@@ -200,6 +200,22 @@
       "gitSha": "73871188c46949d90be206f40fad47bd5366c950"
     },
     {
+      "path": "src/integracoes/aplicador-lote-catalogo-sqlite.js",
+      "gitSha": "0f8d9dd80d70e69cf6966e2a850ebaa13be3f489"
+    },
+    {
+      "path": "src/integracoes/celcoin-sandbox-prova-readonly.js",
+      "gitSha": "1166cb4aea09b2cd60d380dff3f4daf8325548c5"
+    },
+    {
+      "path": "src/integracoes/importador-catalogo-simulado.js",
+      "gitSha": "b8d90bcac61521517bb06917ce4953c4144eac81"
+    },
+    {
+      "path": "src/integracoes/registro-fornecedores.js",
+      "gitSha": "dd71a3ef73e3da7a9bc9dd0831c034e31a2087de"
+    },
+    {
       "path": "src/laboratorio/checkout-staging-ui.css",
       "gitSha": "3b8e3303d314488ef98e18d36eb2b4f0968766b8"
     },
@@ -218,6 +234,10 @@
     {
       "path": "src/producao/acabamento-botoes-real.css",
       "gitSha": "c743e599ac87bd2f83cef81e076658b843a91606"
+    },
+    {
+      "path": "src/producao/aceite-posicao-azul-ensaio-sqlite.js",
+      "gitSha": "db3fd502033f0d931e92fe5450ad75779e6efa42"
     },
     {
       "path": "src/producao/adaptadores-psp-readonly.js",
@@ -284,6 +304,10 @@
       "gitSha": "a642c065175ed871a85049d5037f0752a3855299"
     },
     {
+      "path": "src/producao/conciliacao-multibancos-ensaio-sqlite.js",
+      "gitSha": "8f4e416c91b134eb628f7f9feaa6585afabeba94"
+    },
+    {
       "path": "src/producao/conferencia-observacoes-psp.js",
       "gitSha": "e26ff8bddf8b28bdf76f6a14dc861d7b3a2007d3"
     },
@@ -298,6 +322,14 @@
     {
       "path": "src/producao/controle-economico-loja-sqlite.js",
       "gitSha": "213587b166e9a28ebd4ef2d16b1d6fcdde692a43"
+    },
+    {
+      "path": "src/producao/convergencia-unificada-financeira-ensaio.js",
+      "gitSha": "7b63f2b5daf7dcdf24d3fb289a4ebf60b0bc5bba"
+    },
+    {
+      "path": "src/producao/correspondencias-extrato-ensaio-sqlite.js",
+      "gitSha": "8aa5a5d98752d706e1b9a1042cedd0a23fb0b089"
     },
     {
       "path": "src/producao/cotacoes-multidistribuidores-sqlite.js",
@@ -392,6 +424,10 @@
       "gitSha": "768e3031a304c71f4a39d6805807efb8451d2736"
     },
     {
+      "path": "src/producao/observacoes-psp-ensaio-sqlite.js",
+      "gitSha": "61d3fa93b601dd9b6482714de118b1061e6aca3d"
+    },
+    {
       "path": "src/producao/operacao-catraca-admin-sqlite.js",
       "gitSha": "4a71962bd2da8614171fc9127627227e3fce63fa"
     },
@@ -440,6 +476,10 @@
       "gitSha": "76340eb866d37d39cf5049d9ab40dded74a7b546"
     },
     {
+      "path": "src/producao/prontidao-financeira-ensaio.js",
+      "gitSha": "1e96dbb30265dc2e59ddfb1839d02bcae1c73406"
+    },
+    {
       "path": "src/producao/prova-chaves-recuperacao.js",
       "gitSha": "3c9acaf8804be5d4e46968792b407d2007b46e8b"
     },
@@ -480,6 +520,10 @@
       "gitSha": "73ffe211165d0325aac9bd8ece8eda35f2147d01"
     },
     {
+      "path": "src/producao/sincronizador-comercial-loop-ensaio-sqlite.js",
+      "gitSha": "089b133c4022dbe982a12a3664a8ac819cfad670"
+    },
+    {
       "path": "src/producao/snapshot-historico-externo-candidato.js",
       "gitSha": "c0e4af9d114493f4b4bb06dc5e0600c4ae1ba3eb"
     },
@@ -490,6 +534,10 @@
     {
       "path": "src/producao/validacao-recuperacao-comercial.js",
       "gitSha": "a7ff5a40a1bc4dada679aa6b7938d0fc3e37e765"
+    },
+    {
+      "path": "src/producao/vinculos-contas-externas-ensaio-sqlite.js",
+      "gitSha": "d0add132adbc2b41cac4071cbc51110f3cdd4d84"
     },
     {
       "path": "src/producao/visao-escritorio-unificada-sqlite.js",
@@ -538,10 +586,6 @@
     {
       "path": "test/gateway-publico-real-integracao-conta-operador.test.js",
       "gitSha": "4597bc4478b0d523503ed592f53244f3d76b84e4"
-    },
-    {
-      "path": "test/gateway-publico-real-sem-laboratorio.test.js",
-      "gitSha": "78dc071f0a76ae97faa942b01d7c2ee6db8fc66e"
     },
     {
       "path": "test/interface-aprovada-identidade-real.test.js",
