@@ -838,6 +838,65 @@ function criarAppIdentidadeLoop({contas,origemHttps,
    })
   };
  }
+ // Última etapa INTERNA antes da futura conexão de fornecedores e PSP.
+ // Consolida apenas leituras do mesmo titular/banco: não faz cotação,
+ // pedido, reserva, cobrança, comissão, saque ou giro do LOOP.
+ app.get('/api/loja/preparacao-compra',protegido,(req,res)=>{
+  try{
+   const titularId=req.conta.titularId;
+   const carrinho=projetarCarrinho(titularId);
+   const pendentes=carrinho.itens.filter(item=>!item.publicado)
+    .map(item=>item.produtoId);
+   const internos=[];
+   if(!carrinho.catalogoDisponivel)
+    internos.push('CATALOGO_PUBLICADO_INDISPONIVEL');
+   if(!pedidosComerciais||!remessasOutbox)
+    internos.push('HISTORICO_PEDIDOS_NAO_CONECTADO');
+   if(!preflightCapacidade)
+    internos.push('CAPACIDADE_POSICOES_NAO_CONECTADA');
+   const capacidade=preflightCapacidade?
+    preflightCapacidade.consultar({titularId}):null;
+   const quantidadePedidos=pedidosComerciais&&remessasOutbox?
+    pedidosComerciais.contarDoTitular({titularId}):null;
+   if(quantidadePedidos!==null&&
+      (!Number.isSafeInteger(quantidadePedidos)||quantidadePedidos<0))
+    throw Error('PEDIDOS_CONTAGEM_INCONSISTENTE');
+   if(pendentes.length)internos.push('PRODUTOS_CARRINHO_NAO_PUBLICADOS');
+   return res.set('Cache-Control','private, no-store').json({
+    fonte:'AKITEMM_PREPARACAO_COMPRA_INTERNA_REAL',
+    titularAutenticado:true,contaUnica:true,
+    etapasInternas:{
+     catalogo:carrinho.catalogoDisponivel,
+     carrinhoPersistente:true,
+     historicoPedidos:!!pedidosComerciais&&!!remessasOutbox,
+     capacidadeLoop:!!preflightCapacidade
+    },
+    carrinho:{
+     itensDistintos:carrinho.itensDistintos,
+     quantidadeTotal:carrinho.quantidadeTotal,
+     produtosNaoPublicados:pendentes,
+     estado:carrinho.itensDistintos===0?'VAZIO':
+      pendentes.length?'REVISAR_PRODUTOS':'PUBLICADOS'
+    },
+    pedidos:{total:quantidadePedidos},capacidade,
+    caminhoInternoIntegrado:internos.length===0,
+    pendenciasInternas:internos,
+    dependeExterno:[
+     'FORNECEDORES_HOMOLOGADOS',
+     'PRECO_ESTOQUE_E_FRETE_CONFIAVEIS',
+     'PSP_E_CONCILIACAO_FINANCEIRA',
+     'EXPEDICAO_E_ENTREGA'
+    ],
+    precosConfirmados:false,checkoutReal:false,financeiroReal:false,
+    criaPedido:false,criaPosicao:false,autorizaCobranca:false
+   });
+  }catch{
+   return res.status(503).json({
+    erro:'PREPARACAO_COMPRA_INTERNA_INDISPONIVEL',
+    checkoutReal:false,financeiroReal:false
+   });
+  }
+ });
  const erroCarrinho=(res,e)=>{
   const codigo=e?.codigo||'CARRINHO_INDISPONIVEL';
   return res.status(['CARRINHO_QUANTIDADE_INVALIDA',

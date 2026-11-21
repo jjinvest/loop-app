@@ -192,3 +192,34 @@ test('carrinho AKITEMM resiste a reinicio, tem limite por pessoa e backup exige 
  ].join(' ')).run(id,'sku-21');
  assert.equal(validarIdentidade(arquivo).integridade,'ok');
 });
+
+test('auditoria de 10 mil itens de carrinhos usa cursor sem leitura total em memoria',()=>{
+ const banco=new DatabaseSync(':memory:');
+ try{
+  banco.exec('PRAGMA foreign_keys=ON;CREATE TABLE loop_real_contas(id TEXT PRIMARY KEY);');
+  const carrinho=new CarrinhoInternoRealSQLite({banco});
+  const addTitular=banco.prepare('INSERT INTO loop_real_contas(id) VALUES (?)');
+  const addItem=banco.prepare([
+   'INSERT INTO loop_real_carrinho_itens',
+   '(titular_id,produto_id,quantidade,atualizado_em)',
+   'VALUES(?,?,1,?)'
+  ].join(' '));
+  banco.exec('BEGIN IMMEDIATE');
+  try{
+   for(let i=0;i<500;i++){
+    const id='titular-'+i.toString(16).padStart(8,'0')+
+     '-0000-4000-8000-000000000000';
+    addTitular.run(id);
+    for(let j=0;j<20;j++)addItem.run(id,'sku-'+j,Date.now());
+   }
+   banco.exec('COMMIT');
+  }catch(e){banco.exec('ROLLBACK');throw e;}
+  assert.deepEqual(carrinho.verificar(),{
+   integridade:'OK',itens:10000,financeiroReal:false
+  });
+  const ultimo='titular-'+(499).toString(16).padStart(8,'0')+
+   '-0000-4000-8000-000000000000';
+  assert.equal(carrinho.listar({titularId:ultimo}).itensDistintos,20);
+  assert.equal(banco.prepare('PRAGMA integrity_check').get().integrity_check,'ok');
+ }finally{banco.close();}
+});

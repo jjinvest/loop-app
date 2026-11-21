@@ -102,8 +102,9 @@ class CarrinhoInternoRealSQLite{
    'FROM loop_real_carrinho_itens c',
    'LEFT JOIN loop_real_contas t ON t.id=c.titular_id',
    'ORDER BY c.titular_id,c.produto_id'
-  ].join(' ')).all();
-  const porTitular=new Map();
+  ].join(' ')).iterate();
+  // Cursor em streaming: memória constante mesmo com grande volume.
+  let ultimoTitular=null,contadorTitular=0,quantidadeItens=0;
   for(const item of linhas){
    if(typeof item.titularId!=='string'||!TITULAR.test(item.titularId)||
       item.contaId!==item.titularId||
@@ -112,11 +113,14 @@ class CarrinhoInternoRealSQLite{
       item.quantidade>50||
       !Number.isSafeInteger(item.atualizadoEm)||item.atualizadoEm<1)
     erro('CARRINHO_INTEGRIDADE_INVALIDA');
-   const n=(porTitular.get(item.titularId)||0)+1;
-   if(n>20)erro('CARRINHO_INTEGRIDADE_INVALIDA');
-   porTitular.set(item.titularId,n);
+   if(item.titularId!==ultimoTitular){
+    ultimoTitular=item.titularId;contadorTitular=0;
+   }
+   contadorTitular++;
+   quantidadeItens++;
+   if(contadorTitular>20)erro('CARRINHO_INTEGRIDADE_INVALIDA');
   }
-  return {integridade:'OK',itens:linhas.length,financeiroReal:false};
+  return {integridade:'OK',itens:quantidadeItens,financeiroReal:false};
  }
 }
 module.exports={CarrinhoInternoRealSQLite};
