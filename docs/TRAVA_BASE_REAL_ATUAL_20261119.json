@@ -424,7 +424,7 @@
     },
     {
       "path": "scripts/validar-identidade-real-navegador.js",
-      "sha": "2f509ae81e956e6e4d4619c4daa0afac9dc90472"
+      "sha": "1dbaf922ad18ac7d3baeb98f3a157604763bc7b6"
     },
     {
       "path": "scripts/validar-jornada-loja-cores-browser.js",
@@ -436,7 +436,7 @@
     },
     {
       "path": "scripts/validar-operador-primeiro-produto-navegador.js",
-      "sha": "5ba01378cd5844f974441cc2d1105651b9cb5648"
+      "sha": "58329f4f3c156f90f624df2ba91cdfc8997a556a"
     },
     {
       "path": "scripts/validar-saques-ensaio-http.js",
