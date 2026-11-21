@@ -143,6 +143,7 @@
   }
  }
  function mostrarLogin(t){
+  limparAgendaOperador();
   posicionarCampoFotoPerfil(false);
   tela=t;modoOperadorAtual=false;
   document.body.classList.remove('loop03-modo-operador');
@@ -471,6 +472,7 @@
   void atualizarAtalhoOperadorReal();
  }
  function painelConta(s){
+  limparAgendaOperador();
   posicionarCampoFotoPerfil(false);
   modoOperadorAtual=false;
   document.body.classList.remove('loop03-modo-operador');
@@ -1782,6 +1784,7 @@
     }:null
    });
    visorCatraca.observar(d.catraca.giros,d.tabuleiro.eventosNoCiclo);
+   mostrarAgendaOperador(controle);
    $('motorContadorEventos').textContent=
     d.tabuleiro.eventosNoCiclo+' de 6 eventos neste ciclo';
    $('loop03TotalIntegrado').textContent='—';
@@ -1793,6 +1796,7 @@
    $('estadoTabuleiroIntegrado').hidden=true;
   }catch{
    if(!modoOperadorAtual)return;
+   limparAgendaOperador();
    $('estadoTabuleiroIntegrado').textContent=
     'Tabuleiro administrativo indisponível. Consulte a central do operador.';
    $('estadoTabuleiroIntegrado').hidden=false;
