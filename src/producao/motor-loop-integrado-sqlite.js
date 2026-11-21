@@ -4,6 +4,8 @@
 // Não usar MotorContaUnicaEnsaioSQLite nem importar tabelas staging.
 // Não cria pagamento, posição remunerada, Pix, saldo, saque ou comissão.
 const {SimuladorLoop}=require('../domain/simulador-loop');
+const {ProjecaoFilasRelacionalSQLite}=
+ require('./projecao-filas-relacional-sqlite');
 const {LIMITE_POSICOES_ATIVAS}=require('../domain/capacidade-posicoes-loop');
 const TABELAS_MOTOR=Object.freeze([
  'loop_real_motor_estado','loop_real_motor_compras',
@@ -55,6 +57,10 @@ class MotorLoopIntegradoSQLite{
    'ON loop_real_motor_eventos(tipo);'
   ].join(' '));
   this.verificar();
+  // O snapshot continua soberano. Uma projeção diferente impede início,
+  // em vez de substituir silenciosamente a ordem original das filas.
+  this.projecao=new ProjecaoFilasRelacionalSQLite({banco});
+  this.projecao.inicializar();
  }
  _transacao(fn){
   this.banco.exec('BEGIN IMMEDIATE');
@@ -62,12 +68,19 @@ class MotorLoopIntegradoSQLite{
    const row=this.banco.prepare(
     'SELECT revisao,snapshot FROM loop_real_motor_estado WHERE id=1').get();
    const sim=restaurar(row?.snapshot);
+   this.projecao.conferir({raw:row?.snapshot||'',
+    revisao:row?.revisao||0,sim});
    const resultado=fn(sim);
+   const snapshot=JSON.stringify(sim.exportarSnapshot());
    this.banco.prepare([
     'INSERT INTO loop_real_motor_estado(id,revisao,snapshot)',
     'VALUES(1,1,?) ON CONFLICT(id)',
     'DO UPDATE SET revisao=revisao+1,snapshot=excluded.snapshot'
-   ].join(' ')).run(JSON.stringify(sim.exportarSnapshot()));
+   ].join(' ')).run(snapshot);
+   this.projecao.atualizarEmTransacao({
+    revisaoAnterior:row?.revisao||0,revisao:(row?.revisao||0)+1,
+    snapshot,sim
+   });
    this.banco.exec('COMMIT');
    return resultado;
   }catch(e){this.banco.exec('ROLLBACK');throw e;}
@@ -133,15 +146,22 @@ class MotorLoopIntegradoSQLite{
    'SELECT revisao,snapshot FROM loop_real_motor_estado WHERE id=1'
   ).get();
   const sim=restaurar(linha?.snapshot);
+  this.projecao.conferir({raw:linha?.snapshot||'',
+   revisao:linha?.revisao||0,sim});
   const res=this._registrarCompraEmSim(sim,{
    titularId,pedidoId,valorCentavos
   });
   if(!res.repetida){
+   const snapshot=JSON.stringify(sim.exportarSnapshot());
    this.banco.prepare([
     'INSERT INTO loop_real_motor_estado(id,revisao,snapshot)',
     'VALUES(1,1,?) ON CONFLICT(id)',
     'DO UPDATE SET revisao=revisao+1,snapshot=excluded.snapshot'
-   ].join(' ')).run(JSON.stringify(sim.exportarSnapshot()));
+   ].join(' ')).run(snapshot);
+   this.projecao.atualizarEmTransacao({
+    revisaoAnterior:linha?.revisao||0,revisao:(linha?.revisao||0)+1,
+    snapshot,sim
+   });
   }
   return res;
  }
@@ -309,6 +329,11 @@ class MotorLoopIntegradoSQLite{
   if(process.env.NODE_ENV==='production'&&
      (compras>0||eventos>0||giros>0))
    falha('LOOP_MOTOR_ENSAIO_PROIBIDO_PRODUCAO');
+  // A prova espelhada usa o mesmo snapshot da transação de leitura.
+  if(this.projecao)this.projecao.conferir({raw:row?.snapshot||'',
+   revisao:this.banco.prepare(
+    'SELECT revisao FROM loop_real_motor_estado WHERE id=1'
+   ).get()?.revisao||0,sim});
   this.banco.exec('COMMIT');
   return {integridade:'OK',compras,eventos,
    giros};

@@ -1,4 +1,6 @@
 'use strict';
+const {ProjecaoFilasRelacionalSQLite}=
+ require('./projecao-filas-relacional-sqlite');
 // Compra especial de ENSAIO: 1 pedido -> N posicoes (verde, dourada, roxa).
 // A venda fornece apenas um evento luminoso, independente das posicoes geradas.
 // Usa o mesmo SQLite e mesmo motor; nenhum credito ou pagamento real.
@@ -214,6 +216,7 @@ class PromocaoLotesEnsaioSQLite{
    this.db.prepare(
     'UPDATE loop_real_motor_estado SET revisao=revisao+1,snapshot=? WHERE id=1'
    ).run(JSON.stringify(foto));
+  ProjecaoFilasRelacionalSQLite.sincronizarMutacaoEmTransacao(this.db);
    // Um pedido com N posicoes consome a reserva de N exatamente uma vez.
    PreflightCapacidadeCheckoutSQLite.consumirEmTransacao(this.db,{
     pedidoId,quantidade:ids.length
@@ -250,6 +253,7 @@ class PromocaoLotesEnsaioSQLite{
   this.db.prepare(
    'UPDATE loop_real_motor_estado SET revisao=revisao+1,snapshot=? WHERE id=1'
   ).run(JSON.stringify(s));
+  ProjecaoFilasRelacionalSQLite.sincronizarMutacaoEmTransacao(this.db);
  }
  confirmarAzul({titularId,posicaoId,cpf,versaoTermos,hashTermos,
   aceiteExplicito=false}={}){

@@ -1,4 +1,6 @@
 'use strict';
+const {ProjecaoFilasRelacionalSQLite}=
+ require('./projecao-filas-relacional-sqlite');
 // Confirmacao apenas em ensaio: nao verifica CPF em base externa nem gera direitos.
 const {createHmac}=require('node:crypto');
 const TITULAR=/^titular-[a-f0-9-]{36}$/;
@@ -69,6 +71,7 @@ class AceitePosicaoAzulEnsaioSQLite{
   this.db.prepare(
    'UPDATE loop_real_motor_estado SET revisao=revisao+1,snapshot=? WHERE id=1'
   ).run(JSON.stringify(s));
+  ProjecaoFilasRelacionalSQLite.sincronizarMutacaoEmTransacao(this.db);
  }
  confirmar({titularId,posicaoId,cpf,versaoTermos,hashTermos,
   aceiteExplicito=false}={}){
