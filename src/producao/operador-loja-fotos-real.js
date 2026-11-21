@@ -174,6 +174,173 @@
  ]);
  const slugManual=()=> 'manual-'+Date.now().toString(36)+'-'+
   Math.random().toString(36).slice(2,8).padEnd(6,'0');
+ // Formularios usuais de e-commerce. Preco digitado nunca e convertido
+ // automaticamente em cobranca: e apenas a etiqueta da vitrine.
+ function camposAnuncio(form){
+  const origem=select('Origem do produto',[
+   ['PROPRIO','Meu produto — cadastro manual'],
+   ['API','Fornecedor / API — integrar depois']
+  ]);
+  form.append(origem.label);
+  const categoria=campoTexto(form,'Categoria (opcional)',{
+   maxLength:70,placeholder:'Ex.: Calçados, roupas, acessórios'
+  });
+  const marca=campoTexto(form,'Marca (opcional)',{maxLength:70});
+  const faixa=document.createElement('fieldset');
+  faixa.className='akitemm-editor-precos';
+  const legenda=document.createElement('legend');
+  legenda.textContent='Preço e promoção';faixa.append(legenda);
+  const normal=campoTexto(faixa,'Preço normal (R$)',{
+   maxLength:14,placeholder:'Ex.: 299,90'
+  });
+  normal.inputMode='decimal';
+  const promo=campoTexto(faixa,'Preço promocional (R$) — opcional',{
+   maxLength:14,placeholder:'Ex.: 249,90'
+  });
+  promo.inputMode='decimal';
+  const nota=linha('A promoção aparecerá como “de / por”. O preço informado é só de exibição; o pagamento ainda depende da integração comercial.');
+  faixa.append(nota);form.append(faixa);
+  const estoque=campoTexto(form,'Quantidade disponível (opcional)',{
+   tipo:'number',maxLength:8,placeholder:'Ex.: 12'
+  });
+  estoque.min='0';estoque.max='1000000';estoque.step='1';
+  const informe=linha('Frete e checkout serão calculados no fluxo de compra quando estiverem conectados. Não exige cadastro de fornecedor para produto próprio.');
+  form.append(informe);
+  const cents=v=>{
+   const t=v.trim();
+   if(!t)return null;
+   if(!/^(?:0|[1-9][0-9]{0,6})(?:[,.][0-9]{1,2})?$/.test(t))
+    throw Error('PRECO_INVALIDO');
+   const n=Math.round(Number(t.replace(',','.'))*100);
+   if(!Number.isSafeInteger(n)||n<1||n>100000000)
+    throw Error('PRECO_INVALIDO');
+   return n;
+  };
+  const deReais=n=>n===null?'':(n/100).toFixed(2).replace('.',',');
+  return {
+   preencher(d){
+    if(!d)return;
+    origem.s.value=d.origem||'PROPRIO';
+    categoria.value=d.categoria||'';
+    marca.value=d.marca||'';
+    normal.value=deReais(d.precoCentavos??null);
+    promo.value=deReais(d.promocaoCentavos??null);
+    estoque.value=d.quantidade===null?'':String(d.quantidade);
+   },
+   obter(){
+    const precoCentavos=cents(normal.value);
+    const promocaoCentavos=cents(promo.value);
+    const qtd=estoque.value.trim(),quantidade=qtd===''?null:Number(qtd);
+    if(!['PROPRIO','API'].includes(origem.s.value)||
+      (promocaoCentavos!==null&&
+        (precoCentavos===null||promocaoCentavos>=precoCentavos))||
+      (quantidade!==null&&
+       (!Number.isSafeInteger(quantidade)||quantidade<0||quantidade>1000000)))
+      throw Error('CONFIRA_PRECO_PROMOCIONAL_OU_ESTOQUE');
+    return {origem:origem.s.value,categoria:categoria.value.trim(),
+     marca:marca.value.trim(),precoCentavos,promocaoCentavos,
+     quantidade};
+   }
+  };
+ }
+ async function salvarAnuncio(id,csrf,campos,revisaoEsperada){
+  const anuncio=campos.obter();
+  return fetchJson('/api/admin/catalogo-midia/produtos/'+id+'/anuncio',{
+   method:'POST',headers:{'Content-Type':'application/json',
+    'X-Loop-Admin-Csrf':csrf},
+   body:JSON.stringify({...anuncio,revisaoEsperada})
+  });
+ }
+ // O operador configura o alcance da ENTREGA, sem mudar o anuncio visto pelo cliente.
+ function camposEntrega(form){
+  const section=document.createElement('details');
+  section.className='akitemm-editor-entrega';
+  const h=document.createElement('summary');
+  h.textContent='Região e entrega própria';section.append(h);
+  const modo=select('Onde entregar este produto',[
+   ['NACIONAL','Sem restrição regional (entrega normal)'],
+   ['VOLTA_REDONDA','Somente Volta Redonda (RJ)'],
+   ['MUNICIPIOS','Cidades escolhidas por mim']
+  ]);
+  section.append(modo.label);
+  const cidades=campoTexto(section,
+   'Cidades atendidas (separadas por vírgula)',{
+    tipo:'textarea',maxLength:1200,
+    placeholder:'Ex.: Volta Redonda, Barra Mansa, Resende'
+   });
+  const uf=select('Estado',[
+   ['RJ','Rio de Janeiro'],['SP','São Paulo'],['MG','Minas Gerais'],
+   ['ES','Espírito Santo'],['PR','Paraná'],['SC','Santa Catarina'],
+   ['RS','Rio Grande do Sul'],['BA','Bahia'],['DF','Distrito Federal'],
+   ['GO','Goiás'],['MT','Mato Grosso'],['MS','Mato Grosso do Sul'],
+   ['PE','Pernambuco'],['CE','Ceará'],['AL','Alagoas'],
+   ['AM','Amazonas'],['AP','Amapá'],['AC','Acre'],['MA','Maranhão'],
+   ['PA','Pará'],['PB','Paraíba'],['PI','Piauí'],['RN','Rio Grande do Norte'],
+   ['RO','Rondônia'],['RR','Roraima'],['SE','Sergipe'],['TO','Tocantins']
+  ]);
+  section.append(uf.label);
+  const taxa=campoTexto(section,'Taxa de entrega própria (R$)',{
+   placeholder:'Ex.: 30,00',maxLength:14
+  });
+  taxa.inputMode='decimal';
+  const nota=linha('Essa taxa só será calculada depois que o cliente informar o endereço. Não aparece na vitrine.');
+  section.append(nota);
+  form.append(section);
+  const sincronizar=()=>{
+   const nacional=modo.s.value==='NACIONAL';
+   const vr=modo.s.value==='VOLTA_REDONDA';
+   cidades.parentElement.hidden=nacional||vr;
+   uf.label.hidden=nacional||vr;
+   taxa.parentElement.hidden=nacional;
+   if(vr){uf.s.value='RJ';cidades.value='Volta Redonda';}
+   if(nacional){cidades.value='';taxa.value='';}
+  };
+  modo.s.addEventListener('change',sincronizar);
+  sincronizar();
+  const parseMoney=valor=>{
+   if(!/^(?:0|[1-9][0-9]{0,4})(?:[,.][0-9]{1,2})?$/.test(valor))
+    throw Error('TAXA_ENTREGA_INVALIDA');
+   const n=Math.round(Number(valor.replace(',','.'))*100);
+   if(!Number.isSafeInteger(n)||n<0||n>1000000)
+    throw Error('TAXA_ENTREGA_INVALIDA');
+   return n;
+  };
+  return {
+   preencher(d){
+    if(!d)return;
+    if(d.modo==='NACIONAL'){modo.s.value='NACIONAL';}
+    else if(d.uf==='RJ'&&d.municipios?.length===1&&
+      d.municipios[0].trim().toLocaleLowerCase('pt-BR')==='volta redonda')
+     modo.s.value='VOLTA_REDONDA';
+    else modo.s.value='MUNICIPIOS';
+    sincronizar();
+    if(d.modo==='MUNICIPIOS'){
+     uf.s.value=d.uf;
+     cidades.value=d.municipios.join(', ');
+     taxa.value=(d.taxaCentavos/100).toFixed(2).replace('.',',');
+    }
+   },
+   obter(){
+    if(modo.s.value==='NACIONAL')return {
+     modo:'NACIONAL',uf:'',municipios:[],taxaCentavos:null};
+    const municip=modo.s.value==='VOLTA_REDONDA'?
+     ['Volta Redonda']:cidades.value.split(',').map(x=>x.trim()).filter(Boolean);
+    if(!municip.length||municip.length>50)
+     throw Error('INFORME_MUNICIPIOS_ATENDIDOS');
+    const valor=taxa.value.trim();
+    if(!valor)throw Error('INFORME_TAXA_ENTREGA_PODE_SER_ZERO');
+    return {modo:'MUNICIPIOS',uf:modo.s.value==='VOLTA_REDONDA'?'RJ':uf.s.value,
+     municipios:municip,taxaCentavos:parseMoney(valor)};
+   }
+  };
+ }
+ async function salvarEntrega(id,csrf,campos,revisaoEsperada){
+  return fetchJson('/api/admin/catalogo-midia/produtos/'+id+'/entrega',{
+   method:'POST',headers:{'Content-Type':'application/json',
+    'X-Loop-Admin-Csrf':csrf},
+   body:JSON.stringify({...campos.obter(),revisaoEsperada})
+  });
+ }
  // Recorte quadrado feito no aparelho. Não modifica cores nem o original salvo.
  function editarFoto(form){
   const caixa=document.createElement('section');
@@ -326,6 +493,8 @@
   nome.required=true;
   const desc=campoTexto(form,'Descrição (opcional)',{tipo:'textarea',
    maxLength:2000,placeholder:'Escreva como deseja apresentar o produto'});
+  const anuncio=camposAnuncio(form);
+  const entrega=camposEntrega(form);
   const cor=escolhaCor();
   form.append(cor.label);
   const foto=editarFoto(form);
@@ -401,6 +570,8 @@
      throw Error('CADASTRO_NAO_CONFIRMADO');
     criado=true;
     await salvarCor(id,csrf,cor.s.value);
+    await salvarAnuncio(id,csrf,anuncio,0);
+    await salvarEntrega(id,csrf,entrega,0);
     if(imagem){
      await salvarFoto(id,csrf,imagem,1);
      await vincularQuadradinho(indice,id);
@@ -440,6 +611,7 @@
   const descricao=campoTexto(form,'Descrição (opcional)',{
    tipo:'textarea',maxLength:2000
   });
+  const anuncio=camposAnuncio(form);
   const cor=escolhaCor();
   form.append(cor.label);
   const foto=editarFoto(form);
@@ -448,7 +620,8 @@
   ]));
   form.append(galeriaFotos.label);
   const salvarDados=document.createElement('button');
-  salvarDados.type='submit';salvarDados.textContent='Salvar nome e descrição';
+  salvarDados.type='submit';
+  salvarDados.textContent='Salvar dados, preço, promoção e cor';
   form.append(salvarDados);
   const salvarImagem=document.createElement('button');
   salvarImagem.type='button';salvarImagem.textContent='Salvar foto e publicar na vitrine';
@@ -470,7 +643,7 @@
   const detalheOrdem=linha('A vitrine continua sem lacunas. Todas as cores ficam misturadas.');
   ordemBox.append(mover,detalheOrdem);form.append(ordemBox);
   corpo.append(form);
-  let revisaoAtual=null,csrf=null,slotsAtuais=[],estaPublicado=false;
+  let revisaoAtual=null,revisaoAnuncio=0,revisaoEntrega=0,csrf=null,slotsAtuais=[],estaPublicado=false;
   const verificar=()=>{if(!csrf||revisaoAtual===null)
    throw Error('OPERADOR_EDICAO_INDISPONIVEL');};
   const travar=(valor)=>{
@@ -494,16 +667,20 @@
   };
   try{
    travar(true);
-   const [sessao,dados,regras]=await Promise.all([
+   const [sessao,dados,regras,precos,entregaDados]=await Promise.all([
     fetchJson('/api/admin/comercial/sessao'),
     fetchJson('/api/admin/catalogo-midia/produtos/'+id),
-    fetchJson('/api/admin/comercial/classificacoes')
+    fetchJson('/api/admin/comercial/classificacoes'),
+    fetchJson('/api/admin/catalogo-midia/produtos/'+id+'/anuncio'),
+    fetchJson('/api/admin/catalogo-midia/produtos/'+id+'/entrega')
    ]);
    if(typeof sessao.csrfToken!=='string'||sessao.csrfToken.length<24||
       !Number.isSafeInteger(dados.revisao)||dados.revisao<1)
     throw Error('OPERADOR_SESSAO_INVALIDA');
    csrf=sessao.csrfToken;revisaoAtual=dados.revisao;
    nome.value=dados.nome;descricao.value=dados.descricao;
+   anuncio.preencher(precos);revisaoAnuncio=precos.revisao;
+   entrega.preencher(entregaDados);revisaoEntrega=entregaDados.revisao;
    estaPublicado=dados.estado==='PUBLICADO';
    const regra=regras.produtos?.find(r=>r.produtoId===id);
    if(regra)cor.s.value=regra.cor;
@@ -537,7 +714,12 @@
      if(res.produtoId!==id||!Number.isSafeInteger(res.revisao))
       throw Error('PRODUTO_NAO_CONFIRMADO');
      revisaoAtual=res.revisao;
-    },'Nome e descrição salvos.');
+     const resultado=await salvarAnuncio(id,csrf,anuncio,revisaoAnuncio);
+     revisaoAnuncio=resultado.revisao;
+     const entregaSalva=await salvarEntrega(id,csrf,entrega,revisaoEntrega);
+     revisaoEntrega=entregaSalva.revisao;
+     await salvarCor(id,csrf,cor.s.value);
+    },'Nome, preço, promoção, estoque e cor salvos.');
    });
    salvarClassificacao.addEventListener('click',()=>{
     void botoesAtualizar(async()=>{await salvarCor(id,csrf,cor.s.value);},

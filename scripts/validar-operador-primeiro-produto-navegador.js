@@ -149,6 +149,11 @@ async function principal(){
    await m.getByRole('heading',{name:'Cadastrar produto · AKITEMM'}).waitFor();
    await m.getByRole('textbox',{name:'Nome do produto'}).fill(nome);
    await m.locator('textarea').first().fill('Descrição de teste temporária');
+   await m.getByLabel('Categoria (opcional)').fill('Calçados');
+   await m.getByLabel('Marca (opcional)').fill('Marca própria');
+   await m.getByLabel('Preço normal (R$)').fill('299,90');
+   await m.getByLabel('Preço promocional (R$) — opcional').fill('249,90');
+   await m.getByLabel('Quantidade disponível (opcional)').fill('12');
    const codigoArea=m.locator('details').filter({hasText:'Código do produto'});
    await codigoArea.locator('summary').click();
    await codigoArea.locator('input').fill(codigo);
@@ -190,6 +195,12 @@ async function principal(){
    return res.json();
   });
   assert.equal(antes.produtos.length,2);
+  assert.equal(antes.produtos[0].precoAnunciadoCentavos,24990);
+  assert.equal(antes.produtos[0].precoOriginalAnunciadoCentavos,29990);
+  assert.equal(antes.produtos[0].estoqueInformadoOperador,12);
+  assert.equal(antes.produtos[0].precoCentavos,null);
+  assert.equal(antes.produtos[0].compravel,false);
+  assert.equal(antes.checkoutReal,false);
   assert.equal(antes.produtos[0].produtoId,'primeiro-produto');
   assert.equal(antes.produtos[1].produtoId,'segundo-produto');
   // No celular, segurar a alça e arrastar o segundo até o primeiro.
@@ -277,6 +288,50 @@ async function principal(){
     ignoreHTTPSErrors:true
    })).status(),200);
   assert.equal(await page.locator('#registrarPedidoLoja').isDisabled(),true);
+
+  // Visitante usa a MESMA vitrine real criada pelo operador,
+  // mas não recebe controles de administração nem consegue editar.
+  const ctxCliente=await browser.newContext({
+   ignoreHTTPSErrors:true,viewport:{width:390,height:844},
+   deviceScaleFactor:1,isMobile:true,hasTouch:true
+  });
+  const cliente=await ctxCliente.newPage();
+  cliente.setDefaultTimeout(12000);
+  await cliente.goto(base+'/loja',{waitUntil:'domcontentloaded'});
+  await cliente.locator('#catalogoLojaLoop [data-produto-id="primeiro-produto"]')
+   .waitFor({state:'visible'});
+  assert.equal(await cliente.locator('.akitemm-alca-arrastar').count(),0);
+  const cards=cliente.locator('#catalogoLojaLoop [data-produto-id]');
+  assert.equal(await cards.first().getAttribute('data-produto-id'),'segundo-produto');
+  const produtoCliente=cliente.locator(
+   '#catalogoLojaLoop [data-produto-id="primeiro-produto"]');
+  assert.match(await produtoCliente.innerText(),/R\$\s?249,90/);
+  await produtoCliente.locator('.akitemm-imagem-produto').click();
+  await cliente.locator('#akitemmVisualizacaoProduto h2')
+   .filter({hasText:'Produto de ensaio de operador'}).waitFor();
+  assert.match(await cliente.locator('#akitemmProdutoInlineConteudo').innerText(),
+   /R\$\s?299,90/);
+  assert.match(await cliente.locator('#akitemmProdutoInlineConteudo').innerText(),
+   /R\$\s?249,90/);
+  await cliente.locator('#akitemmProdutoInlineConteudo .akitemm-detalhe-foto-principal')
+   .waitFor({state:'visible'});
+  await cliente.locator('#akitemmProdutoInlineConteudo .akitemm-detalhe-avaliacoes')
+   .filter({hasText:'Ainda não há avaliações de compras verificadas.'}).waitFor();
+  await cliente.locator('#akitemmVoltarProdutos').click();
+  await cliente.locator('#catalogoLojaLoop [data-produto-id="primeiro-produto"]')
+   .waitFor({state:'visible'});
+  assert.equal(await cliente.locator('#akitemmVisualizacaoProduto').isHidden(),true);
+  const proibido=await cliente.evaluate(()=>fetch(
+   '/api/admin/catalogo-midia/produtos/primeiro-produto/anuncio',
+   {credentials:'same-origin'}
+  ).then(r=>r.status));
+  assert.equal(proibido,401);
+  const detalhes=await cliente.evaluate(()=>fetch(
+   '/api/loja/produtos/primeiro-produto/avaliacoes'
+  ).then(r=>r.json()));
+  assert.equal(detalhes.total,0);
+  assert.equal(detalhes.origem,'COMPRAS_VERIFICADAS');
+  await ctxCliente.close();
   assert.equal(banco.prepare('PRAGMA quick_check').get().quick_check,'ok');
   console.log('OPERADOR_VITRINE_VALIDADO: CADASTRO_MANUAL -> FOTO -> COR -> DRAG_TOUCH -> SQLITE_SEM_COMPRA');
  }finally{

@@ -16,6 +16,13 @@ const {LivroFinanceiroRealSQLite}=
  require('./livro-financeiro-real-sqlite');
 const {PosicoesVitrineRealSQLite}=
  require('./posicoes-vitrine-real-sqlite');
+const {AnunciosManuaisAkitemmSQLite}=
+ require('./anuncios-manuais-akitemm-sqlite');
+const {EntregaLocalAkitemmSQLite}=
+ require('./entrega-local-akitemm-sqlite');
+const {localizarCepBrasil}=require('./consulta-cep-brasil');
+const {AvaliacoesProdutoAkitemmSQLite}=
+ require('./avaliacoes-produto-akitemm-sqlite');
 const {FotoPerfilRealSQLite}=require('./foto-perfil-real-sqlite');
 const {CarrinhoInternoRealSQLite}=require('./carrinho-interno-real-sqlite');
 function criarAppIdentidadeLoop({contas,origemHttps,
@@ -78,6 +85,14 @@ function criarAppIdentidadeLoop({contas,origemHttps,
  const posicoesVitrine=(catalogoVitrine||catalogoMidiaLeitura)?
   new PosicoesVitrineRealSQLite({banco:contas.banco,
    auditoria:adminComercial?.auditoria||null}):null;
+ const anunciosManuais=catalogoVitrine?
+  new AnunciosManuaisAkitemmSQLite({banco:contas.banco,
+   auditoria:adminComercial?.auditoria||null}):null;
+ const entregaLocal=catalogoVitrine?
+  new EntregaLocalAkitemmSQLite({banco:contas.banco,
+   auditoria:adminComercial?.auditoria||null}):null;
+ const avaliacoesProduto=catalogoVitrine?
+  new AvaliacoesProdutoAkitemmSQLite({banco:contas.banco}):null;
  const visaoEscritorio=motorLoop===null?null:
   new VisaoEscritorioUnificadaSQLite({
    banco:contas.banco,motor:motorLoop,
@@ -172,7 +187,7 @@ function criarAppIdentidadeLoop({contas,origemHttps,
  // Sem credencial e middleware de operador, rotas administrativas não existem.
  if(adminComercial!==null)
   montarGatewayAdminComercial(app,{...adminComercial,origemHttps,
-   posicoesVitrine,motorLoop});
+   posicoesVitrine,anunciosManuais,entregaLocal,motorLoop});
  const mutation=(req,res,next)=>{
   if(!origemOk(req))return res.status(403).json({erro:'ORIGEM_INVALIDA'});
   if(!req.is('application/json'))
@@ -710,13 +725,31 @@ function criarAppIdentidadeLoop({contas,origemHttps,
     throw Error('VITRINE_NAO_CONFIAVEL');
    const posicoes=posicoesVitrine?
     posicoesVitrine.projetar(produtos):produtos;
-   return res.json({produtos:posicoes,total:posicoes.length,
+   const publicados=anunciosManuais?
+    anunciosManuais.projetar(posicoes):posicoes;
+   return res.json({produtos:publicados,total:publicados.length,
     origem:'CATALOGO_ADMINISTRATIVO_PUBLICADO',checkoutReal:false,
     estoqueConfirmado:false,precosNaoHomologados:true});
   }catch{
    return res.status(503).json({erro:'CATALOGO_INDISPONIVEL',
     checkoutReal:false});
   }
+ });
+ // Avaliações públicas vêm exclusivamente de pedidos verificados.
+ // Nenhuma API publica avaliações de fantasia nem expõe dados pessoais.
+ app.get('/api/loja/produtos/:produtoId/avaliacoes',(_req,res)=>{
+  const produtoId=_req.params.produtoId;
+  if(typeof produtoId!=='string'||!/^[A-Za-z0-9_-]{1,80}$/.test(produtoId))
+   return res.status(404).json({erro:'PRODUTO_INVALIDO'});
+  if(!catalogoVitrine||!avaliacoesProduto)
+   return res.status(503).json({erro:'AVALIACOES_INDISPONIVEIS'});
+  try{
+   const publicado=catalogoVitrine.listarVitrinePreparacao({limite:400})
+    .some(p=>p.produtoId===produtoId);
+   if(!publicado)return res.status(404).json({erro:'PRODUTO_NAO_PUBLICADO'});
+   return res.set('Cache-Control','public, max-age=60')
+    .json(avaliacoesProduto.listar({produtoId,limite:25}));
+  }catch{return res.status(503).json({erro:'AVALIACOES_INDISPONIVEIS'});}
  });
  // A foto de produto publicado usa a MESMA sessão cliente da loja.
  // Nunca encaminha cookies para o banco de imagens e não expõe rascunhos.
@@ -939,6 +972,49 @@ function criarAppIdentidadeLoop({contas,origemHttps,
     .json(projetarCarrinho(req.conta.titularId));
   }catch(e){return erroCarrinho(res,e);}
  });
+ // A taxa nao aparece na vitrine: calculo so apos cliente informar CEP.
+ // Consulta o municipio no servidor e confere todos os itens do carrinho.
+ // Nao confirma frete nacional, nao habilita pagamento nem grava pedido.
+ app.post('/api/loja/entrega/verificar-cep',
+  protegido,mutation,csrf,async(req,res)=>{
+   const b=req.body;
+   if(!b||Array.isArray(b)||Object.keys(b).join(',')!=='cep'||
+      typeof b.cep!=='string'||!/^\d{5}-?\d{3}$/.test(b.cep))
+    return res.status(400).json({
+     erro:'ENTREGA_CEP_INVALIDO',checkoutReal:false});
+   if(!limite(res,'carrinho',req.conta.titularId))return;
+   if(!entregaLocal)return res.status(503).json({
+    erro:'ENTREGA_REGIONAL_INDISPONIVEL',checkoutReal:false});
+   try{
+    const carrinho=carrinhoInterno.listar({
+     titularId:req.conta.titularId});
+    if(!Array.isArray(carrinho.itens)||carrinho.itens.length===0)
+     return res.status(409).json({
+      erro:'ENTREGA_CARRINHO_VAZIO',checkoutReal:false});
+    const publicos=publicacoesCarrinho();
+    if(carrinho.itens.some(i=>!publicos.has(i.produtoId)))
+     return res.status(409).json({
+      erro:'ENTREGA_PRODUTO_NAO_PUBLICADO',checkoutReal:false});
+    const local=await localizarCepBrasil(b.cep);
+    const calculo=entregaLocal.validarCarrinho({
+     produtos:carrinho.itens.map(i=>i.produtoId),
+     uf:local.uf,cidade:local.cidade
+    });
+    return res.set('Cache-Control','private, no-store')
+     .status(calculo.entregaDisponivel?200:422).json({
+      ...calculo,uf:local.uf,cidade:local.cidade,
+      consultaMunicipioConfiavel:true,
+      taxaDefinitivaDePedido:false,
+      checkoutReal:false,autorizaCobranca:false
+     });
+   }catch(e){
+    const codigo=e?.codigo||'ENTREGA_CONSULTA_INDISPONIVEL';
+    return res.status(codigo==='ENTREGA_CEP_INVALIDO'?400:
+     codigo==='ENTREGA_CEP_NAO_LOCALIZADO'?404:503).json({
+      erro:codigo,checkoutReal:false,autorizaCobranca:false
+     });
+   }
+  });
  app.post('/api/loja/carrinho/limpar',protegido,mutation,csrf,(req,res)=>{
   if(!req.body||Array.isArray(req.body)||
      Object.keys(req.body).length!==0)

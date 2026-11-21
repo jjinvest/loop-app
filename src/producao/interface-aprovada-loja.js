@@ -340,6 +340,88 @@
    elem.setAttribute('aria-disabled','true');
   }
  }
+ // O formulário de endereço já aprovado agora verifica região/frete.
+ // Nunca salva endereço como pedido nem tenta acionar pagamento/posições.
+ const formEntrega=$('akitemmFormEntrega');
+ const statusEntrega=$('akitemmStatusEntrega');
+ const botaoEntrega=formEntrega?.querySelector('button[type=submit]');
+ const inicializarEntrega=()=>{
+  if(!formEntrega||!botaoEntrega||!statusEntrega)return;
+  const explicacao=formEntrega.querySelector('p');
+  if(explicacao)explicacao.textContent=
+   'Informe seu endereço para verificar a entrega. A consulta ainda não finaliza nem registra um pedido.';
+  botaoEntrega.textContent='Verificar região e frete';
+  const permitir=!visitante&&!operadorAtivo;
+  for(const field of formEntrega.querySelectorAll('input,select,textarea')){
+   field.disabled=!permitir;
+   if(permitir)field.removeAttribute('aria-disabled');
+   else field.setAttribute('aria-disabled','true');
+  }
+  botaoEntrega.disabled=!permitir;
+  if(permitir)botaoEntrega.removeAttribute('aria-disabled');
+  else botaoEntrega.setAttribute('aria-disabled','true');
+  if(!permitir)statusEntrega.textContent=operadorAtivo?
+   'A consulta de endereço é exclusiva do cliente.':
+   'Entre na sua conta para consultar entrega.';
+ };
+ if(formEntrega&&botaoEntrega){
+  formEntrega.addEventListener('submit',async ev=>{
+   ev.preventDefault();
+   if(visitante){solicitarCadastro();return;}
+   if(operadorAtivo||!csrfLoja){
+    statusEntrega.textContent='Entre como cliente para consultar a entrega.';
+    return;
+   }
+   if(!formEntrega.reportValidity())return;
+   const cep=formEntrega.elements.namedItem('cep')?.value?.trim();
+   if(typeof cep!=='string'||!/^[0-9]{5}-?[0-9]{3}$/.test(cep)){
+    statusEntrega.textContent='Informe um CEP válido com 8 números.';return;
+   }
+   botaoEntrega.disabled=true;
+   statusEntrega.textContent='Verificando entrega para o endereço informado...';
+   try{
+    const resp=await fetch('/api/loja/entrega/verificar-cep',{
+     method:'POST',credentials:'same-origin',cache:'no-store',
+     headers:{'Content-Type':'application/json','X-Loop-Csrf':csrfLoja},
+     body:JSON.stringify({cep})
+    });
+    const dados=await resp.json().catch(()=>({}));
+    if(resp.status===422&&dados.entregaDisponivel===false){
+     statusEntrega.textContent='Este produto não tem entrega disponível para o endereço informado.';
+     return;
+    }
+    if(!resp.ok)throw Error(dados.erro||'ENTREGA_NAO_VERIFICADA');
+    if(dados.entregaDisponivel!==true||
+       dados.checkoutReal!==false||
+       dados.autorizaCobranca!==false)
+     throw Error('ENTREGA_RESPOSTA_INCONSISTENTE');
+    const cidade=String(dados.cidade||'');
+    const uf=String(dados.uf||'');
+    const inputCidade=formEntrega.elements.namedItem('cidade');
+    const inputUf=formEntrega.elements.namedItem('uf');
+    if(inputCidade)inputCidade.value=cidade;
+    if(inputUf)inputUf.value=uf;
+    const valor=Number.isSafeInteger(dados.taxaEntregaPropriaCentavos)&&
+     dados.taxaEntregaPropriaCentavos>=0?
+     new Intl.NumberFormat('pt-BR',{style:'currency',
+      currency:'BRL'}).format(dados.taxaEntregaPropriaCentavos/100):null;
+    let mensagem='Região atendida: '+cidade+' / '+uf+'. ';
+    if(valor!==null)mensagem+='Taxa de entrega própria: '+valor+'. ';
+    if(dados.requerOutraCotacao)
+     mensagem+='Outros produtos ainda precisam de cotação de frete. ';
+    mensagem+='Esta consulta não cria pedido nem libera pagamento.';
+    statusEntrega.textContent=mensagem;
+   }catch{
+    statusEntrega.textContent=
+     'Não foi possível verificar a entrega agora. Nenhum pedido foi criado.';
+   }finally{
+    botaoEntrega.disabled=visitante||operadorAtivo||!csrfLoja;
+   }
+  });
+  for(const x of formEntrega.querySelectorAll('input[name=cep]')){
+   x.addEventListener('input',()=>{statusEntrega.textContent='';});
+  }
+ }
  // Catálogo publicado pela administração, nunca produtos ou preços de demo.
  // Ativar somente os filtros de LEITURA, sem fazer carrinho/compra.
  let produtosPublicados=[],categoria='',cor='',termo='',filtroOfertas=false;
@@ -370,6 +452,7 @@
   lista.replaceChildren();
   lista.classList.add('ak-vitrine-horizontal');
   $('akitemmVisualizacaoProduto').hidden=true;
+  $('akitemmAreaProdutos').dataset.modo='lista';
   // Os 400 quadrinhos existem independentemente de produtos publicados.
   // Busca textual exige produto real; os demais filtros mantem molduras vazias.
   const filtrada=!!categoria||!!cor||!!termo||filtroOfertas;
@@ -479,26 +562,113 @@
    tipo.className='tipo-loja-loop';
    tipo.textContent=p.tipo==='FISICO'?'Produto físico':'Produto';
    const titulo=document.createElement('h3');titulo.textContent=p.titulo;
+   const precoAtual=Number.isSafeInteger(p.precoAnunciadoCentavos)&&
+    p.precoAnunciadoCentavos>0?p.precoAnunciadoCentavos:null;
+   const precoOriginal=Number.isSafeInteger(p.precoOriginalAnunciadoCentavos)&&
+    p.precoOriginalAnunciadoCentavos>precoAtual?
+     p.precoOriginalAnunciadoCentavos:null;
+   const formatarReais=n=>new Intl.NumberFormat('pt-BR',{
+    style:'currency',currency:'BRL'}).format(n/100);
+   const painelPreco=document.createElement('div');
+   painelPreco.className='akitemm-preco-anuncio';
+   if(precoAtual!==null){
+    if(precoOriginal!==null){
+     const anterior=document.createElement('del');
+     anterior.textContent=formatarReais(precoOriginal);
+     painelPreco.append(anterior);
+    }
+    const valor=document.createElement('strong');
+    valor.textContent=formatarReais(precoAtual);
+    painelPreco.append(valor);
+    if(precoOriginal!==null){
+     const oferta=document.createElement('small');
+     oferta.textContent='Preço promocional';
+     painelPreco.append(oferta);
+    }
+   }
+   if(p.marcaVitrine){
+    const marca=document.createElement('small');
+    marca.textContent='Marca: '+p.marcaVitrine;
+    painelPreco.append(marca);
+   }
    const descricao=document.createElement('p');
    descricao.className='akitemm-descricao';
    descricao.textContent=p.descricao||'Informações comerciais em preparação.';
    const status=document.createElement('p');
-   status.textContent='Aguardando fornecedor homologado · compra indisponível';
+   status.textContent=p.origemCadastro==='PROPRIO'?
+    'Produto próprio · compra indisponível até ativação comercial':
+    'Aguardando integração comercial · compra indisponível';
    const botao=document.createElement('button');
    botao.type='button';botao.className='botao-secundario-loja';
    botao.textContent='Ver detalhes';
    botao.addEventListener('click',()=>{
     const detalhe=$('akitemmProdutoInlineConteudo');
+    const tela=$('akitemmVisualizacaoProduto');
+    const area=$('akitemmAreaProdutos');
     detalhe.replaceChildren();
+    const topo=document.createElement('h2');topo.textContent=p.titulo;
+    detalhe.append(topo);
+    const principal=document.createElement('div');
+    principal.className='akitemm-detalhe-conteudo';
+    const galeria=document.createElement('div');
+    galeria.className='akitemm-detalhe-galeria';
+    const fotos=(Array.isArray(p.fotos)?p.fotos:[]).filter(f=>
+     f&&Number.isSafeInteger(f.posicao)&&f.posicao>=1&&f.posicao<=10&&
+     f.url==='/api/loja/produtos/'+p.produtoId+'/foto/'+f.posicao
+    ).sort((a,b)=>a.posicao-b.posicao);
+    if(fotos.length){
+     const destaque=document.createElement('img');
+     destaque.className='akitemm-detalhe-foto-principal';
+     destaque.src=fotos[0].url;destaque.alt='Foto principal de '+p.titulo;
+     galeria.append(destaque);
+     if(fotos.length>1){
+      const miniaturas=document.createElement('div');
+      miniaturas.className='akitemm-detalhe-miniaturas';
+      for(const foto of fotos){
+       const troca=document.createElement('button');
+       troca.type='button';
+       troca.setAttribute('aria-label','Ver foto '+foto.posicao+' de '+p.titulo);
+       const mini=document.createElement('img');
+       mini.src=foto.url;mini.alt='Foto '+foto.posicao;
+       mini.loading='lazy';troca.append(mini);
+       troca.addEventListener('click',()=>{
+        destaque.src=foto.url;
+        destaque.alt='Foto '+foto.posicao+' de '+p.titulo;
+       });
+       miniaturas.append(troca);
+      }
+      galeria.append(miniaturas);
+     }
+    }else{
+     const aviso=document.createElement('p');
+     aviso.textContent='Fotografias ainda não disponíveis.';
+     galeria.append(aviso);
+    }
+    const dados=document.createElement('div');
+    dados.className='akitemm-detalhe-dados';
+    const valor=document.createElement('div');
+    valor.className='akitemm-detalhe-preco';
+    if(precoOriginal!==null){
+     const anterior=document.createElement('del');
+     anterior.textContent=formatarReais(precoOriginal);
+     valor.append(anterior);
+    }
+    const atual=document.createElement('strong');
+    atual.textContent=precoAtual!==null?
+     formatarReais(precoAtual):'Preço a informar';
+    valor.append(atual);dados.append(valor);
     for(const [etiqueta,valor] of [
      ['Produto: ',p.titulo],
      ['Descrição: ',p.descricao||'Em preparação'],
-     ['Situação: ','Sem preço, estoque ou frete homologados.'],
+     ['Categoria: ',p.categoriaVitrine||'Não informada'],
+     ['Marca: ',p.marcaVitrine||'Não informada'],
+     ['Situação: ','Frete e compra dependem da integração comercial.'],
+     ['Entrega: ','Informe o endereço no carrinho para verificar a região atendida.'],
      ['Compra: ','Indisponível até liberação comercial.']
     ]){
      const linha=document.createElement('p');
      const forte=document.createElement('strong');forte.textContent=etiqueta;
-     linha.append(forte,document.createTextNode(valor));detalhe.append(linha);
+     linha.append(forte,document.createTextNode(valor));dados.append(linha);
     }
     const adicionar=document.createElement('button');
     adicionar.type='button';adicionar.className='botao-secundario-loja';
@@ -507,18 +677,74 @@
     if(operadorAtivo)adicionar.title='Carrinho disponível apenas para clientes';
     adicionar.setAttribute('aria-label','Adicionar '+p.titulo+' ao carrinho');
     const retorno=document.createElement('small');
-    retorno.textContent='Sem cotação, cobrança ou pedido até o fornecedor ser conectado.';
+    retorno.textContent='Sem cotação, cobrança ou pedido até a integração comercial.';
     adicionar.addEventListener('click',()=>{
+     if(visitante&&!operadorAtivo){solicitarCadastro();return;}
      const atual=quantidadesCarrinho.get(p.produtoId)||0;
      if(atual>=50){
       retorno.textContent='Limite de 50 unidades por produto.';return;
      }
      void alterarCarrinho(p.produtoId,atual+1);
     });
-    detalhe.append(adicionar,retorno);
-    $('akitemmVisualizacaoProduto').hidden=false;
+    dados.append(adicionar,retorno);
+    principal.append(galeria,dados);detalhe.append(principal);
+    const avaliacoes=document.createElement('section');
+    avaliacoes.className='akitemm-detalhe-avaliacoes';
+    const h=document.createElement('h3');h.textContent='Avaliações de compradores';
+    const lista=document.createElement('div');
+    lista.setAttribute('aria-live','polite');
+    lista.textContent='Consultando avaliações verificadas...';
+    avaliacoes.append(h,lista);detalhe.append(avaliacoes);
+    area.dataset.modo='detalhe';
+    tela.hidden=false;
+    tela.scrollIntoView({block:'start'});
+    void (async()=>{
+     try{
+      const r=await fetch('/api/loja/produtos/'+
+       encodeURIComponent(p.produtoId)+'/avaliacoes',{
+       credentials:'same-origin',cache:'no-store'
+      });
+      if(!r.ok)throw Error('AVALIACOES_INDISPONIVEIS');
+      const a=await r.json();
+      if(tela.hidden||detalhe.querySelector('.akitemm-detalhe-avaliacoes')!==
+         avaliacoes)return;
+      if(a.origem!=='COMPRAS_VERIFICADAS'||!Array.isArray(a.avaliacoes))
+       throw Error('AVALIACOES_INVALIDAS');
+      lista.replaceChildren();
+      if(!a.avaliacoes.length){
+       lista.textContent='Ainda não há avaliações de compras verificadas.';
+      }else{
+       for(const review of a.avaliacoes){
+        if(review.compraVerificada!==true||
+           !Number.isSafeInteger(review.nota)||review.nota<1||
+           review.nota>5||typeof review.comentario!=='string')
+         continue;
+        const item=document.createElement('article');
+        const nome=document.createElement('strong');
+        nome.textContent=review.nome+' · '+review.nota+'/5 estrelas';
+        const comentario=document.createElement('p');
+        comentario.textContent=review.comentario;
+        item.append(nome,comentario);lista.append(item);
+       }
+      }
+     }catch{
+      if(!tela.hidden&&detalhe.contains(avaliacoes))
+       lista.textContent='Avaliações indisponíveis nesta consulta.';
+     }
+    })();
    });
-   detalhes.append(tipo,titulo,descricao,status,botao);
+   detalhes.append(tipo,titulo,painelPreco,descricao,status,botao);
+   // Toque no cartão inteiro abre a ficha para o cliente;
+   // o operador mantém o toque para editar sem mudar as molduras.
+   card.addEventListener('click',ev=>{
+    if(operadorAtivo||ev.target.closest('button,a,input,select,textarea'))return;
+    botao.click();
+   });
+   card.addEventListener('keydown',ev=>{
+    if(operadorAtivo||ev.target!==card||
+       (ev.key!=='Enter'&&ev.key!==' '))return;
+    ev.preventDefault();botao.click();
+   });
    card.append(imagem,detalhes);alvo.append(card);
   }
   $('akitemmResultadoProdutos').textContent=filtrada?
@@ -555,6 +781,8 @@
  $('akitemmVerTodos').addEventListener('click',filtroTodos);
  $('akitemmVoltarProdutos').addEventListener('click',()=>{
   $('akitemmVisualizacaoProduto').hidden=true;
+  $('akitemmAreaProdutos').dataset.modo='lista';
+  $('catalogoLojaLoop').scrollIntoView({block:'nearest'});
  });
  $('akitemmBusca').addEventListener('input',e=>{
   termo=e.target.value.trim().slice(0,120);abaVitrine=0;filtrar();
@@ -593,6 +821,14 @@
        !Number.isSafeInteger(p.criadoEm)||
        !Number.isSafeInteger(p.unidadesConfirmadas)||
        p.unidadesConfirmadas<0||
+       (p.precoAnunciadoCentavos!==undefined&&
+         p.precoAnunciadoCentavos!==null&&
+         (!Number.isSafeInteger(p.precoAnunciadoCentavos)||
+          p.precoAnunciadoCentavos<1))||
+       (p.precoOriginalAnunciadoCentavos!==undefined&&
+         p.precoOriginalAnunciadoCentavos!==null&&
+         (!Number.isSafeInteger(p.precoOriginalAnunciadoCentavos)||
+          p.precoOriginalAnunciadoCentavos<=p.precoAnunciadoCentavos))||
        !['CINZA','VERDE','DOURADO','ROXO'].includes(p.cor)))
     throw Error('CATALOGO_FORA_DO_CONTRATO');
    produtosPublicados=dados.produtos;
@@ -608,7 +844,7 @@
     node.removeAttribute('aria-disabled');
    }
    $('referenciaLojaLoop').textContent=ativo?
-    'Produtos publicados pela AKITEMM. Preços, estoque e compras dependem de homologação dos fornecedores.':
+    'Produtos da AKITEMM. Preços informados pelo operador são anúncios; frete e checkout aguardam a integração comercial.':
     'Nenhum produto publicado. Compras e pagamentos reais indisponíveis.';
    filtrar();
   }catch{
@@ -746,6 +982,7 @@
   }catch{
    // Indisponibilidade da leitura nao libera compra nem muda as regras.
   }
+  inicializarEntrega();
   if(!semCliente&&!operadorAtivo)await atualizarPedidos();
   else $('pedidosLojaLoop')?.replaceChildren();
   await atualizarCatalogo();
@@ -754,6 +991,7 @@
   // A falha de identidade nao fecha a vitrine: dados privados seguem
   // inacessiveis e so a leitura publica de produtos permanece permitida.
   visitante=true;clienteNick=null;csrfLoja=null;prepararLinkPessoal();
+  inicializarEntrega();
   informar('AKITEMM · vitrine pública disponível. Entre na sua conta para ações pessoais.');
   if($('conteudoLojaLoop'))$('conteudoLojaLoop').hidden=false;
   await atualizarCatalogo();

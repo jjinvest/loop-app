@@ -499,3 +499,72 @@ test('backup recusa motor parcialmente excluído e não cria arquivo restauráve
  assert.equal(fs.existsSync(x.backup),false);
  x.banco.close();
 });
+
+test('backup da identidade protege anúncios, taxas locais e avaliação não publicada',async t=>{
+ const x=fixture(t);
+ await cadastrar(x,'Ana','ana@example.invalid');
+ const chaveAuditoria=randomBytes(32);
+ const auditoria=new AuditoriaOperacionalSQLite({
+  banco:x.banco,chaveAuditoria
+ });
+ const manutencao=new ManutencaoComercialSQLite({
+  banco:x.banco,auditoria
+ });
+ const catalogo=new CatalogoMultiDistribuidoresSQLite({
+  banco:x.banco,auditoria,manutencao,
+  distribuidorHomologado:()=>false
+ });
+ new ControleEconomicoLojaSQLite({banco:x.banco,auditoria,manutencao});
+ new SessaoAdminComercialSQLite({
+  banco:x.banco,chaveAdmin:randomBytes(32),
+  credencialAdmin:'SenhaForteSomenteTesteIntegracao2026!'
+ });
+ const {AnunciosManuaisAkitemmSQLite}=require(
+  '../src/producao/anuncios-manuais-akitemm-sqlite');
+ const {EntregaLocalAkitemmSQLite}=require(
+  '../src/producao/entrega-local-akitemm-sqlite');
+ const {AvaliacoesProdutoAkitemmSQLite}=require(
+  '../src/producao/avaliacoes-produto-akitemm-sqlite');
+ const anuncios=new AnunciosManuaisAkitemmSQLite({
+  banco:x.banco,auditoria
+ });
+ const entrega=new EntregaLocalAkitemmSQLite({
+  banco:x.banco,auditoria
+ });
+ new AvaliacoesProdutoAkitemmSQLite({banco:x.banco});
+ catalogo.criarProduto({produtoId:'tenis-teste',titulo:'Tênis teste'});
+ anuncios.atualizar({
+  produtoId:'tenis-teste',origem:'PROPRIO',categoria:'Calçados',
+  marca:'Minha marca',precoCentavos:30000,promocaoCentavos:20000,
+  quantidade:5,revisaoEsperada:0
+ });
+ entrega.configurar({
+  produtoId:'tenis-teste',modo:'MUNICIPIOS',
+  uf:'RJ',municipios:['Volta Redonda','Barra Mansa'],
+  taxaCentavos:3000,revisaoEsperada:0
+ });
+ assert.equal(validarIdentidade(x.arquivo).integridade,'ok');
+ await criarBackupIdentidadeReal({
+  origem:x.arquivo,destino:x.backup,
+  chaveBackup:x.chaveBackup,autorizado:true
+ });
+ await restaurarBackupIdentidadeReal({
+  origem:x.backup,destino:x.restauro,
+  chaveBackup:x.chaveBackup,autorizado:true
+ });
+ const restaurado=new DatabaseSync(x.restauro);
+ try{
+  assert.equal(restaurado.prepare([
+   'SELECT preco_centavos FROM loja_real_anuncios_operador',
+   "WHERE produto_id='tenis-teste'"
+  ].join(' ')).get().preco_centavos,30000);
+  assert.equal(restaurado.prepare([
+   'SELECT taxa_centavos FROM loja_real_entrega_local_produto',
+   "WHERE produto_id='tenis-teste'"
+  ].join(' ')).get().taxa_centavos,3000);
+  assert.equal(restaurado.prepare(
+   "SELECT COUNT(*) n FROM loja_real_avaliacoes_verificadas"
+  ).get().n,0);
+  assert.equal(validarIdentidade(x.restauro).integridade,'ok');
+ }finally{restaurado.close();x.banco.close();}
+});

@@ -1063,12 +1063,47 @@ async function main(){
    await loja.filter({hasText:/capacidade técnica da sua conta/}).waitFor();
    await pagina.waitForFunction(()=>!document.getElementById('akitemmBusca').disabled);
    assert.equal(await pagina.locator('#catalogoLojaLoop .produto-loja-loop[data-produto-id]').count(),1);
+   // Mesmo cadastro de entrega do operador, habilitado somente para cliente.
+   const diagnosticoEntrega=await pagina.evaluate(async()=>{
+    const m=await fetch('/api/contas/me',{credentials:'same-origin'});
+    const d=m.ok?await m.json():null;
+    const op=await fetch('/api/operador/estado',{
+     credentials:'same-origin'
+    }).then(r=>r.json());
+    return {
+     inputDisabled:document.querySelector('#akitemmFormEntrega input[name=cep]')?.disabled,
+     botaoDisabled:document.querySelector('#akitemmFormEntrega button[type=submit]')?.disabled,
+     status:document.querySelector('#akitemmStatusEntrega')?.textContent,
+     cliente:m.status===200,csrfPresente:typeof d?.csrf==='string',
+     operador:op.operador===true
+    };
+   });
+   assert.equal(await pagina.locator(
+    '#akitemmFormEntrega input[name=cep]').isEnabled(),true,
+    'Campo de CEP precisa funcionar como cliente: '+
+     JSON.stringify(diagnosticoEntrega));
+   assert.equal(await pagina.locator(
+    '#akitemmFormEntrega button[type=submit]').isEnabled(),true);
+   assert.equal(await pagina.locator('#registrarPedidoLoja').isDisabled(),true);
+   const verificacaoInvalida=await pagina.evaluate(async()=>{
+    const me=await (await fetch('/api/contas/me',{
+     credentials:'same-origin'
+    })).json();
+    const resp=await fetch('/api/loja/entrega/verificar-cep',{
+     method:'POST',headers:{'Content-Type':'application/json',
+      'X-Loop-Csrf':me.csrf},
+     credentials:'same-origin',body:JSON.stringify({cep:'invalid'})
+    });
+    return {status:resp.status,dados:await resp.json()};
+   });
+   assert.equal(verificacaoInvalida.status,400);
+   assert.equal(verificacaoInvalida.dados.checkoutReal,false);
    await pagina.locator('#catalogoLojaLoop .produto-loja-loop[data-produto-id] button').click();
    assert.match(await pagina.locator('#akitemmProdutoInlineConteudo').innerText(),
-    /Sem preço, estoque ou frete homologados/);
+    /Frete e compra dependem da integração comercial/);
    // Carrinho interno no banco REAL: adicionar, atualizar quantidade,
    // recarregar a loja e esvaziar, sem criar um pedido ou pagamento.
-   await pagina.locator('#akitemmProdutoInlineConteudo button').click();
+   await pagina.locator('#akitemmProdutoInlineConteudo button[aria-label^="Adicionar "]').click();
    await pagina.locator('#akitemmTotalItens').filter({hasText:'1'})
     .waitFor({state:'visible'});
    assert.equal(await pagina.locator('#itensLojaLoop .item-carrinho-loja').count(),1);

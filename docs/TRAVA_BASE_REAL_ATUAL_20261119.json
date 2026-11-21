@@ -15,7 +15,7 @@
       "nota": "Os tres arquivos do Dockerfile.public-real sao iguais no commit da identidade real"
     }
   },
-  "politica": "Qualquer mudanca, adicao ou remocao no REAL exige aprovacao explicita do proprietario, testes, hash atualizado no manifesto E ancora Railway correspondente; nao reverter ou reconstruir telas historicas; ajuste de fotos cliente/operador solicitado em 21/11/2026, sem alteracao de molduras ou regra do motor; ajuste de agenda futura visivel e horario Android apenas para operador solicitado em 21/11/2026, sem modificacao do motor financeiro; correção autorizada do olhinho de login Android em 21/11/2026 sem alterar catraca, fotos, caixas ou molduras; vinculo visual real das luzes da catraca ao relogio do operador e legenda unica autorizado em 21/11/2026, preservando caixa e travas do motor; diagnóstico integrado agregado somente leitura de pedidos→eventos→outbox→filas em 21/11/2026, acesso operador, sem mudar telas, temporizador, posições ou caixa; avaliador real e privado de qualificacao de pedidos, usando regras vigentes, sem autorizar posição ou movimentação financeira em 21/11/2026; implementação autorizada em 21/11/2026 de cadastro manual por operador, recorte de imagem, controle de cor, ordem de chegada sem lacunas e arrastar com mouse/dedo, sem alterar aparência aprovada do cliente, relógio, motor ou operações financeiras",
+  "politica": "Qualquer mudanca, adicao ou remocao no REAL exige aprovacao explicita do proprietario, testes, hash atualizado no manifesto E ancora Railway correspondente; nao reverter ou reconstruir telas historicas; ajuste de fotos cliente/operador solicitado em 21/11/2026, sem alteracao de molduras ou regra do motor; ajuste de agenda futura visivel e horario Android apenas para operador solicitado em 21/11/2026, sem modificacao do motor financeiro; correção autorizada do olhinho de login Android em 21/11/2026 sem alterar catraca, fotos, caixas ou molduras; vinculo visual real das luzes da catraca ao relogio do operador e legenda unica autorizado em 21/11/2026, preservando caixa e travas do motor; diagnóstico integrado agregado somente leitura de pedidos→eventos→outbox→filas em 21/11/2026, acesso operador, sem mudar telas, temporizador, posições ou caixa; avaliador real e privado de qualificacao de pedidos, usando regras vigentes, sem autorizar posição ou movimentação financeira em 21/11/2026; implementação autorizada em 21/11/2026 de cadastro manual por operador, recorte de imagem, controle de cor, ordem de chegada sem lacunas e arrastar com mouse/dedo, sem alterar aparência aprovada do cliente, relógio, motor ou operações financeiras; cadastro manual normalizado com preços anunciados, preço promocional, categoria, marca e quantidade informada, somente rótulos da vitrine, sem desbloquear transações (21/11/2026); Entrega local configurada pelo operador e validada via CEP no carrinho, ficha expandida e avaliações de compras verificadas, sem mudar relógio/motor/pagamentos, 21/11/2026; estendida cobertura do backup cifrado ao catálogo, taxa regional e avaliações, com restauração segura",
   "algoritmo": "git-blob-sha1",
   "arquivos": [
     {
@@ -424,7 +424,7 @@
     },
     {
       "path": "scripts/validar-identidade-real-navegador.js",
-      "sha": "d42f81c80c4fac853800c19176fd943f02b30dbc"
+      "sha": "c33410d0e14bd00f5e86e7b62a3fbf888068563e"
     },
     {
       "path": "scripts/validar-jornada-loja-cores-browser.js",
@@ -436,7 +436,7 @@
     },
     {
       "path": "scripts/validar-operador-primeiro-produto-navegador.js",
-      "sha": "16d9b5ee6b6b40a8ca80e54ae13bc3f59ca4f1fa"
+      "sha": "d7a67971e59383da4ee2ebf52e0db6730d9eab79"
     },
     {
       "path": "scripts/validar-saques-ensaio-http.js",
@@ -512,7 +512,7 @@
     },
     {
       "path": "src/candidato/vitrine-horizontal.css",
-      "sha": "de42f8c3546a7b38a052dd2c749f5ecb23c434df"
+      "sha": "74b4d8219807ab59e21d999ec0f3654d1e8249d8"
     },
     {
       "path": "src/domain/adesoes-posicoes-demo-sqlite.js",
@@ -1283,6 +1283,10 @@
       "sha": "2ade7c94ed15061ca6ac9426521a9c42ffe11f63"
     },
     {
+      "path": "src/producao/anuncios-manuais-akitemm-sqlite.js",
+      "sha": "7c768f50e888cc9db8d10478f99dcb9789113caa"
+    },
+    {
       "path": "src/producao/asaas-producao-readonly.js",
       "sha": "f44ec47b1e3b5cfd7509056b4cf3d50cd7b0ac4f"
     },
@@ -1296,7 +1300,11 @@
     },
     {
       "path": "src/producao/auditoria-operacional-sqlite.js",
-      "sha": "54a66fe212d5a7446c0202319b2909914cfb4133"
+      "sha": "bcd06e60684fa1deaff2716ba191d9d3fb084624"
+    },
+    {
+      "path": "src/producao/avaliacoes-produto-akitemm-sqlite.js",
+      "sha": "c9e1f5387b639118b4df312b30f2e17d44b9bb9b"
     },
     {
       "path": "src/producao/avaliador-qualificacao-pedidos-real.js",
@@ -1308,7 +1316,7 @@
     },
     {
       "path": "src/producao/backup-identidade-real.js",
-      "sha": "4334e85ccd8e2601aaa99ded322988a99b888cdf"
+      "sha": "bf149ca2d3d8cd372f0e4d7749b9c85a6df09919"
     },
     {
       "path": "src/producao/backup-midia-offsite.js",
@@ -1347,6 +1355,10 @@
       "sha": "e26ff8bddf8b28bdf76f6a14dc861d7b3a2007d3"
     },
     {
+      "path": "src/producao/consulta-cep-brasil.js",
+      "sha": "fe9c342e308f186489307cebcdcba5dd558c23fe"
+    },
+    {
       "path": "src/producao/contrato-extratos-readonly.js",
       "sha": "285cfe24a45855b83f1b25c7f7eabf8fb74d8752"
     },
@@ -1383,6 +1395,10 @@
       "sha": "bb84265135a8e84066143dfef95bb1048c73e7f4"
     },
     {
+      "path": "src/producao/entrega-local-akitemm-sqlite.js",
+      "sha": "1da897ff1d50438fd36f0b5b28032afa3b2778fb"
+    },
+    {
       "path": "src/producao/estado-motor-unificado-sqlite.js",
       "sha": "74aa3d1e9b97e9bc7a970db212cb0e031baed2c4"
     },
@@ -1396,7 +1412,7 @@
     },
     {
       "path": "src/producao/gateway-admin-comercial.js",
-      "sha": "a2613a54b8676f5d44e409c6ba9c657ba7a45032"
+      "sha": "98e5ba933b5ac721cb078ff19a33e44f065ffc38"
     },
     {
       "path": "src/producao/historico-ciclos-relacional-sqlite.js",
@@ -1424,7 +1440,7 @@
     },
     {
       "path": "src/producao/interface-aprovada-loja.js",
-      "sha": "c7a11086fad6af34ded50973e66d12eb8069ed43"
+      "sha": "e10a4db11ae6ba86fe9a55e8865df09545e17f6e"
     },
     {
       "path": "src/producao/interface-aprovada-loop.js",
@@ -1476,7 +1492,7 @@
     },
     {
       "path": "src/producao/operador-loja-fotos-real.js",
-      "sha": "a53a4d9a1682ce13320e39574c3529b201da961c"
+      "sha": "a49d4ab4370293d5a2ab95bf7a8b5892a3c11210"
     },
     {
       "path": "src/producao/outbox-compra-loop-sqlite.js",
@@ -1552,7 +1568,7 @@
     },
     {
       "path": "src/producao/rotas-catalogo-midia-operador.js",
-      "sha": "5d1a92219fc03d86ae9834027cdf88a1d870d8f2"
+      "sha": "6bcd71ed15ba8ea5c9841a4fe5db4607fc327f68"
     },
     {
       "path": "src/producao/saneamento-sete-contas-legadas-sqlite.js",
@@ -1560,7 +1576,7 @@
     },
     {
       "path": "src/producao/servidor-identidade-loop.js",
-      "sha": "aaffa60296d954e55c390a1982be2c4def2749ae"
+      "sha": "3652ac4eb524ce56eccbcf37dc2c65760944ece6"
     },
     {
       "path": "src/producao/sessao-admin-comercial-sqlite.js",
@@ -1891,6 +1907,10 @@
       "sha": "18a205cae79e6fc901bed2f3506d62dbd29647a1"
     },
     {
+      "path": "test/anuncios-manuais-akitemm-sqlite.test.js",
+      "sha": "05aacd759836d249327b7c4ba6a775a0ae9047dc"
+    },
+    {
       "path": "test/aparencia-cofres-admin.test.js",
       "sha": "07908fc6218cc0d4b8c02510f5d2ed4eb6dec05e"
     },
@@ -2068,7 +2088,7 @@
     },
     {
       "path": "test/backup-identidade-real-restauracao.test.js",
-      "sha": "7a2a7362462df58f1562c4073b9328dfa1797959"
+      "sha": "0eb3b7119a46a5aac196e54dcc94d700682b6f99"
     },
     {
       "path": "test/backup-midia-offsite.test.js",
@@ -2401,6 +2421,10 @@
     {
       "path": "test/entrada-vaga-6-azul-dourado.test.js",
       "sha": "5696bd03cf33c28df54590d13676452eb29969b2"
+    },
+    {
+      "path": "test/entrega-local-akitemm-sqlite.test.js",
+      "sha": "1ebb50226c6597b91bd3ab1a6009e0f4d302c79d"
     },
     {
       "path": "test/entrega-pdf-protegida-laboratorio.test.js",
