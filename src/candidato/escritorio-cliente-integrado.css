@@ -78,6 +78,8 @@ body.loop03-logado main>.mensagem-pagina{margin:0 0 .75rem}
 .cliente-integrado .loop03-marcadores-motor .loop03-evento-cliente{background:#9a62d6}
 .cliente-integrado .loop03-marcadores-motor .loop03-evento-empresa{background:#111;border-color:#d2a95b}
 .cliente-integrado .loop03-marcadores-motor .loop03-marcador-aceso{opacity:1;box-shadow:0 0 13px #dbaef4}
+/* Luz do relógio: acompanha o ritmo salvo pelo operador, distinta do evento financeiro. */
+.cliente-integrado .loop03-marcadores-motor .loop03-relogio-luz-visual{opacity:1;box-shadow:0 0 10px #ecca79,0 0 19px #a76aef;border-color:#f2d68a}
 .cliente-integrado #motorContadorEventos{text-align:center;margin:5px}
 .cliente-integrado .loop03-cartao-motor-selecionado{outline:2px solid #96ffcb;outline-offset:2px}
 .cliente-integrado .loop03-cartao-posicao-ensaio button{margin-top:12px;color:#e0ffe9;border:1px solid #5cbb8b;border-radius:8px;background:#1e4e39;cursor:pointer;padding:8px;font:inherit;font-size:.73rem}
