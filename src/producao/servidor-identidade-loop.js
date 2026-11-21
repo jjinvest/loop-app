@@ -979,7 +979,7 @@ function criarAppIdentidadeLoop({contas,origemHttps,
   protegido,mutation,csrf,async(req,res)=>{
    const b=req.body;
    if(!b||Array.isArray(b)||Object.keys(b).join(',')!=='cep'||
-      typeof b.cep!=='string'||!/^\\d{5}-?\\d{3}$/.test(b.cep))
+      typeof b.cep!=='string'||!/^\d{5}-?\d{3}$/.test(b.cep))
     return res.status(400).json({
      erro:'ENTREGA_CEP_INVALIDO',checkoutReal:false});
    if(!limite(res,'carrinho',req.conta.titularId))return;
