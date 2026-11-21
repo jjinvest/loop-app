@@ -15,7 +15,7 @@
       "nota": "Os tres arquivos do Dockerfile.public-real sao iguais no commit da identidade real"
     }
   },
-  "politica": "Qualquer mudanca, adicao ou remocao no REAL exige aprovacao explicita do proprietario, testes, hash atualizado no manifesto E ancora Railway correspondente; nao reverter ou reconstruir telas historicas; ajuste de fotos cliente/operador solicitado em 21/11/2026, sem alteracao de molduras ou regra do motor; ajuste de agenda futura visivel e horario Android apenas para operador solicitado em 21/11/2026, sem modificacao do motor financeiro; correção autorizada do olhinho de login Android em 21/11/2026 sem alterar catraca, fotos, caixas ou molduras",
+  "politica": "Qualquer mudanca, adicao ou remocao no REAL exige aprovacao explicita do proprietario, testes, hash atualizado no manifesto E ancora Railway correspondente; nao reverter ou reconstruir telas historicas; ajuste de fotos cliente/operador solicitado em 21/11/2026, sem alteracao de molduras ou regra do motor; ajuste de agenda futura visivel e horario Android apenas para operador solicitado em 21/11/2026, sem modificacao do motor financeiro; correção autorizada do olhinho de login Android em 21/11/2026 sem alterar catraca, fotos, caixas ou molduras; vinculo visual real das luzes da catraca ao relogio do operador e legenda unica autorizado em 21/11/2026, preservando caixa e travas do motor",
   "algoritmo": "git-blob-sha1",
   "arquivos": [
     {
@@ -496,7 +496,7 @@
     },
     {
       "path": "src/candidato/escritorio-cliente-integrado.css",
-      "sha": "79f6b8f97238ae8a81e8a340fdf4234521d82491"
+      "sha": "8bf74ee74c3786ac77e6597d94d19d243c7efecb"
     },
     {
       "path": "src/candidato/operador-em-tela.js",
@@ -1412,7 +1412,7 @@
     },
     {
       "path": "src/producao/interface-aprovada-contas.js",
-      "sha": "902c3e477d384beb7264e6550934696724b2d61a"
+      "sha": "87cf21871e179b055e2b2017c8f24a01bc76a5c8"
     },
     {
       "path": "src/producao/interface-aprovada-loja.js",
@@ -1760,7 +1760,7 @@
     },
     {
       "path": "src/shared/visor-catraca.js",
-      "sha": "808c26a00f3ad044f1aac913bb5f8b4224a5fb51"
+      "sha": "85082a4ca842426a296da2b60dcc2dcf1d9290b9"
     },
     {
       "path": "test/acabamento-visual-unificado.test.js",
@@ -2648,7 +2648,7 @@
     },
     {
       "path": "test/interface-aprovada-identidade-real.test.js",
-      "sha": "4c62cf6f3eecdc66f4ade4a5a374165ec8529796"
+      "sha": "b24ccb43506fd6510517b9c59858c2953de7d4fe"
     },
     {
       "path": "test/interface-loop-03.test.js",
@@ -2836,7 +2836,7 @@
     },
     {
       "path": "test/luzes-relogio-operador-com-motor-preservado.test.js",
-      "sha": "b8164ed85209c68e6797c04e673d50b963787360"
+      "sha": "e97846aaa6898fe1f0e53aaf45c326b2e03fbac6"
     },
     {
       "path": "test/manutencao-comercial-online.test.js",
