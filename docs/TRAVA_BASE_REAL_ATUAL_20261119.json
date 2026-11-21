@@ -2683,6 +2683,10 @@
       "sha": "13857a15b021f218cf8792de738fa9f83c6ea0f8"
     },
     {
+      "path": "test/longevidade-cadastros-filas-reais.test.js",
+      "sha": "3bbe51ae4f96a7f12b1ff38e2ca6162b139c8343"
+    },
+    {
       "path": "test/loop-douradas-1000-conversoes.test.js",
       "sha": "29c529a5e76130b28a6ef8fb8298906cd5bcfc9b"
     },
