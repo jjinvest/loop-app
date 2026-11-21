@@ -118,18 +118,19 @@ function renderizarAdminComercialAprovado(){
   '<option value="MANUAL">Manual · administrador gira</option>'+
   '<option value="AUTOMATICA">Automática · dentro da agenda e seis eventos</option>'+
   '</select></div>'+
-  '<div><label for="metaCentrosDiaAdmin">Meta diária de centros (0 = sem meta)</label>'+
+  '<div><label for="metaCentrosDiaAdmin">Pessoas contempladas por dia (0 = sem meta)</label>'+
   '<input id="metaCentrosDiaAdmin" type="number" min="0" max="1000000" step="1" value="0" inputmode="numeric" disabled></div>'+
   '<div><label for="metaDataAlvoAdmin">Data da meta (opcional)</label>'+
   '<input id="metaDataAlvoAdmin" type="date" disabled></div>'+
-  '<p id="previsaoLuzesAdmin" class="subtexto" role="status">Informe uma meta para calcular o intervalo entre luzes.</p>'+
+
   '<div><label for="limiteCatracaAdmin">Limite de segurança de giros (vazio = sem limite adicional)</label>'+
   '<input id="limiteCatracaAdmin" type="number" min="1" max="1000000" inputmode="numeric" placeholder="Sem limite" disabled></div>'+
   '<div><label for="inicioCatracaAdmin">Início da janela diária · Brasília</label>'+
-  '<input id="inicioCatracaAdmin" type="time" value="00:00" disabled></div>'+
+  '<input id="inicioCatracaAdmin" type="time" value="09:00" disabled></div>'+
   '<div><label for="fimCatracaAdmin">Fim da janela diária · Brasília</label>'+
-  '<input id="fimCatracaAdmin" type="time" value="00:00" disabled></div>'+
+  '<input id="fimCatracaAdmin" type="time" value="18:00" disabled></div>'+
   '</div>'+
+  '<p id="previsaoLuzesAdmin" class="subtexto" role="status" aria-live="polite">Informe a quantidade diária para visualizar a previsão antes de salvar.</p>'+
   '<label for="motivoCatracaAdmin">Motivo da configuração</label>'+
   '<input id="motivoCatracaAdmin" maxlength="200" value="AJUSTE_OPERACIONAL" disabled>'+
   '<div class="linha">'+
