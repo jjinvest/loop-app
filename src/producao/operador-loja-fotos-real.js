@@ -251,6 +251,96 @@
    body:JSON.stringify({...anuncio,revisaoEsperada})
   });
  }
+ // O operador configura o alcance da ENTREGA, sem mudar o anuncio visto pelo cliente.
+ function camposEntrega(form){
+  const section=document.createElement('details');
+  section.className='akitemm-editor-entrega';
+  const h=document.createElement('summary');
+  h.textContent='Região e entrega própria';section.append(h);
+  const modo=select('Onde entregar este produto',[
+   ['NACIONAL','Sem restrição regional (entrega normal)'],
+   ['VOLTA_REDONDA','Somente Volta Redonda (RJ)'],
+   ['MUNICIPIOS','Cidades escolhidas por mim']
+  ]);
+  section.append(modo.label);
+  const cidades=campoTexto(section,
+   'Cidades atendidas (separadas por vírgula)',{
+    tipo:'textarea',maxLength:1200,
+    placeholder:'Ex.: Volta Redonda, Barra Mansa, Resende'
+   });
+  const uf=select('Estado',[
+   ['RJ','Rio de Janeiro'],['SP','São Paulo'],['MG','Minas Gerais'],
+   ['ES','Espírito Santo'],['PR','Paraná'],['SC','Santa Catarina'],
+   ['RS','Rio Grande do Sul'],['BA','Bahia'],['DF','Distrito Federal'],
+   ['GO','Goiás'],['MT','Mato Grosso'],['MS','Mato Grosso do Sul'],
+   ['PE','Pernambuco'],['CE','Ceará'],['AL','Alagoas'],
+   ['AM','Amazonas'],['AP','Amapá'],['AC','Acre'],['MA','Maranhão'],
+   ['PA','Pará'],['PB','Paraíba'],['PI','Piauí'],['RN','Rio Grande do Norte'],
+   ['RO','Rondônia'],['RR','Roraima'],['SE','Sergipe'],['TO','Tocantins']
+  ]);
+  section.append(uf.label);
+  const taxa=campoTexto(section,'Taxa de entrega própria (R$)',{
+   placeholder:'Ex.: 30,00',maxLength:14
+  });
+  taxa.inputMode='decimal';
+  const nota=linha('Essa taxa só será calculada depois que o cliente informar o endereço. Não aparece na vitrine.');
+  section.append(nota);
+  form.append(section);
+  const sincronizar=()=>{
+   const nacional=modo.s.value==='NACIONAL';
+   const vr=modo.s.value==='VOLTA_REDONDA';
+   cidades.parentElement.hidden=nacional||vr;
+   uf.label.hidden=nacional||vr;
+   taxa.parentElement.hidden=nacional;
+   if(vr){uf.s.value='RJ';cidades.value='Volta Redonda';}
+   if(nacional){cidades.value='';taxa.value='';}
+  };
+  modo.s.addEventListener('change',sincronizar);
+  sincronizar();
+  const parseMoney=valor=>{
+   if(!/^(?:0|[1-9][0-9]{0,4})(?:[,.][0-9]{1,2})?$/.test(valor))
+    throw Error('TAXA_ENTREGA_INVALIDA');
+   const n=Math.round(Number(valor.replace(',','.'))*100);
+   if(!Number.isSafeInteger(n)||n<0||n>1000000)
+    throw Error('TAXA_ENTREGA_INVALIDA');
+   return n;
+  };
+  return {
+   preencher(d){
+    if(!d)return;
+    if(d.modo==='NACIONAL'){modo.s.value='NACIONAL';}
+    else if(d.uf==='RJ'&&d.municipios?.length===1&&
+      d.municipios[0].trim().toLocaleLowerCase('pt-BR')==='volta redonda')
+     modo.s.value='VOLTA_REDONDA';
+    else modo.s.value='MUNICIPIOS';
+    sincronizar();
+    if(d.modo==='MUNICIPIOS'){
+     uf.s.value=d.uf;
+     cidades.value=d.municipios.join(', ');
+     taxa.value=(d.taxaCentavos/100).toFixed(2).replace('.',',');
+    }
+   },
+   obter(){
+    if(modo.s.value==='NACIONAL')return {
+     modo:'NACIONAL',uf:'',municipios:[],taxaCentavos:null};
+    const municip=modo.s.value==='VOLTA_REDONDA'?
+     ['Volta Redonda']:cidades.value.split(',').map(x=>x.trim()).filter(Boolean);
+    if(!municip.length||municip.length>50)
+     throw Error('INFORME_MUNICIPIOS_ATENDIDOS');
+    const valor=taxa.value.trim();
+    if(!valor)throw Error('INFORME_TAXA_ENTREGA_PODE_SER_ZERO');
+    return {modo:'MUNICIPIOS',uf:modo.s.value==='VOLTA_REDONDA'?'RJ':uf.s.value,
+     municipios:municip,taxaCentavos:parseMoney(valor)};
+   }
+  };
+ }
+ async function salvarEntrega(id,csrf,campos,revisaoEsperada){
+  return fetchJson('/api/admin/catalogo-midia/produtos/'+id+'/entrega',{
+   method:'POST',headers:{'Content-Type':'application/json',
+    'X-Loop-Admin-Csrf':csrf},
+   body:JSON.stringify({...campos.obter(),revisaoEsperada})
+  });
+ }
  // Recorte quadrado feito no aparelho. Não modifica cores nem o original salvo.
  function editarFoto(form){
   const caixa=document.createElement('section');
@@ -404,6 +494,7 @@
   const desc=campoTexto(form,'Descrição (opcional)',{tipo:'textarea',
    maxLength:2000,placeholder:'Escreva como deseja apresentar o produto'});
   const anuncio=camposAnuncio(form);
+  const entrega=camposEntrega(form);
   const cor=escolhaCor();
   form.append(cor.label);
   const foto=editarFoto(form);
@@ -480,6 +571,7 @@
     criado=true;
     await salvarCor(id,csrf,cor.s.value);
     await salvarAnuncio(id,csrf,anuncio,0);
+    await salvarEntrega(id,csrf,entrega,0);
     if(imagem){
      await salvarFoto(id,csrf,imagem,1);
      await vincularQuadradinho(indice,id);
@@ -551,7 +643,7 @@
   const detalheOrdem=linha('A vitrine continua sem lacunas. Todas as cores ficam misturadas.');
   ordemBox.append(mover,detalheOrdem);form.append(ordemBox);
   corpo.append(form);
-  let revisaoAtual=null,revisaoAnuncio=0,csrf=null,slotsAtuais=[],estaPublicado=false;
+  let revisaoAtual=null,revisaoAnuncio=0,revisaoEntrega=0,csrf=null,slotsAtuais=[],estaPublicado=false;
   const verificar=()=>{if(!csrf||revisaoAtual===null)
    throw Error('OPERADOR_EDICAO_INDISPONIVEL');};
   const travar=(valor)=>{
@@ -575,11 +667,12 @@
   };
   try{
    travar(true);
-   const [sessao,dados,regras,precos]=await Promise.all([
+   const [sessao,dados,regras,precos,entregaDados]=await Promise.all([
     fetchJson('/api/admin/comercial/sessao'),
     fetchJson('/api/admin/catalogo-midia/produtos/'+id),
     fetchJson('/api/admin/comercial/classificacoes'),
-    fetchJson('/api/admin/catalogo-midia/produtos/'+id+'/anuncio')
+    fetchJson('/api/admin/catalogo-midia/produtos/'+id+'/anuncio'),
+    fetchJson('/api/admin/catalogo-midia/produtos/'+id+'/entrega')
    ]);
    if(typeof sessao.csrfToken!=='string'||sessao.csrfToken.length<24||
       !Number.isSafeInteger(dados.revisao)||dados.revisao<1)
@@ -587,6 +680,7 @@
    csrf=sessao.csrfToken;revisaoAtual=dados.revisao;
    nome.value=dados.nome;descricao.value=dados.descricao;
    anuncio.preencher(precos);revisaoAnuncio=precos.revisao;
+   entrega.preencher(entregaDados);revisaoEntrega=entregaDados.revisao;
    estaPublicado=dados.estado==='PUBLICADO';
    const regra=regras.produtos?.find(r=>r.produtoId===id);
    if(regra)cor.s.value=regra.cor;
@@ -622,6 +716,8 @@
      revisaoAtual=res.revisao;
      const resultado=await salvarAnuncio(id,csrf,anuncio,revisaoAnuncio);
      revisaoAnuncio=resultado.revisao;
+     const entregaSalva=await salvarEntrega(id,csrf,entrega,revisaoEntrega);
+     revisaoEntrega=entregaSalva.revisao;
      await salvarCor(id,csrf,cor.s.value);
     },'Nome, preço, promoção, estoque e cor salvos.');
    });
