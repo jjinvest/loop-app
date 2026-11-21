@@ -352,6 +352,18 @@ body.loop03-logado main>.mensagem-pagina{margin:0 0 .75rem}
 .cliente-integrado #conteudoTabuleiro .loop03-pulso-luz{
  animation:loop03-pulso-luz 900ms ease-out;
 }
+/* Apenas a luz alcançada pela programação real do operador pulsa.
+   As anteriores mantêm o estado aceso, sem comandar motor ou pagamentos. */
+body.loop03-modo-operador .cliente-integrado #conteudoTabuleiro
+ .loop03-marcadores-motor .loop03-relogio-luz-atual{
+ animation:loop03-relogio-luz-ativa 1.6s ease-in-out infinite;
+ opacity:1;
+}
+@keyframes loop03-relogio-luz-ativa{
+ 0%,100%{box-shadow:0 0 8px #dbaef4;filter:brightness(1)}
+ 50%{box-shadow:0 0 19px 4px #eec7ff;filter:brightness(1.55)}
+}
+
 @keyframes loop03-confete-vitoria{
  0%{opacity:0;transform:translate(-50%,-50%) scale(.3) rotate(0deg)}
  15%{opacity:1}
@@ -374,6 +386,11 @@ body.loop03-logado main>.mensagem-pagina{margin:0 0 .75rem}
  .cliente-integrado #conteudoTabuleiro .loop03-pulso-luz{
   animation:none;
  }
+ body.loop03-modo-operador .cliente-integrado #conteudoTabuleiro
+  .loop03-marcadores-motor .loop03-relogio-luz-atual{
+  animation:none;box-shadow:0 0 14px #dbaef4;
+ }
+
 }
 @media(max-width:520px){
  .cliente-integrado #conteudoTabuleiro #atualizarTabuleiroIntegrado{
