@@ -94,7 +94,7 @@ class ProjecaoFilasRelacionalSQLite{
    "CHECK((local IN ('A','B') AND ordem>0) OR",
    "(local NOT IN ('A','B') AND ordem IS NULL)));",
    'CREATE UNIQUE INDEX IF NOT EXISTS idx_loop_projecao_fila_ordem',
-   "ON loop_real_filas_projecao_posicoes(local,ordem) WHERE local IN ('A','B');",
+   'ON loop_real_filas_projecao_posicoes(local,ordem);',
    'CREATE INDEX IF NOT EXISTS idx_loop_projecao_titular',
    'ON loop_real_filas_projecao_posicoes(participante_id,local,ordem);'
   ].join(' '));
@@ -204,6 +204,30 @@ class ProjecaoFilasRelacionalSQLite{
     'SELECT COUNT(*) AS n FROM loop_real_filas_projecao_posicoes WHERE local=?'
    ).get(fila).n,
    fonte:'PROJECAO_RELACIONAL_SOMENTE_LEITURA',financeiroReal:false};
+ }
+ // Aplicado por todos os módulos que escrevem o snapshot diretamente,
+ // sempre ANTES do COMMIT, para não publicar um espelho defasado.
+ static sincronizarMutacaoEmTransacao(banco){
+  if(!banco?.isTransaction)
+   falha('FILA_PROJECAO_TRANSACAO_OBRIGATORIA');
+  const presentes=TABELAS_PROJECAO.filter(t=>banco.prepare(
+   "SELECT 1 FROM sqlite_master WHERE type='table' AND name=?"
+  ).get(t));
+  if(!presentes.length)return {legado:true};
+  if(presentes.length!==TABELAS_PROJECAO.length)
+   falha('FILA_PROJECAO_ESQUEMA_PARCIAL');
+  const espelho=Object.create(ProjecaoFilasRelacionalSQLite.prototype);
+  espelho.db=banco;
+  const atual=fonte(banco),meta=espelho._meta();
+  if(!meta)falha('FILA_PROJECAO_SEM_METADADOS');
+  if(meta.revisao===atual.revisao)return espelho.conferir(atual);
+  if(meta.revisao+1!==atual.revisao)
+   falha('FILA_PROJECAO_REVISAO_DIVERGENTE');
+  espelho.atualizarEmTransacao({
+   revisaoAnterior:meta.revisao,revisao:atual.revisao,
+   snapshot:atual.raw,sim:atual.sim
+  });
+  return espelho.conferir(atual);
  }
  static verificarExistente({banco}={}){
   const presentes=TABELAS_PROJECAO.filter(t=>banco.prepare(
