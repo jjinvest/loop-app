@@ -196,18 +196,6 @@ function validarIdentidade(arquivo){
     motor.banco=b;motor.verificar();
    }catch{falha('BACKUP_MOTOR_INTEGRIDADE_DIVERGENTE');}
   }
-  // Espelho relacional e ADITIVO: snapshots históricos sem ele são válidos.
-  // Se presente, deve estar completo e exatamente alinhado ao motor.
-  const temProjecao=TABELAS_PROJECAO.some(t=>lista.includes(t));
-  if(temProjecao){
-   if(!temMotor||TABELAS_PROJECAO.some(t=>!lista.includes(t)))
-    falha('BACKUP_FILA_PROJECAO_INCOMPLETA');
-   try{
-    if(ProjecaoFilasRelacionalSQLite.verificarExistente({banco:b})
-      .integridade!=='OK')
-     falha('BACKUP_FILA_PROJECAO_DIVERGENTE');
-   }catch{falha('BACKUP_FILA_PROJECAO_DIVERGENTE');}
-  }
   // Livro real pertence ao mesmo backup que identidade e motor.
   // Recusar tabela ausente e saldos negativos; nenhum ensaio vira saldo.
   const temLivro=TABELAS_LIVRO.some(x=>lista.includes(x));
@@ -380,6 +368,18 @@ function validarIdentidade(arquivo){
    ver('loja_real_sessoes_admin',['token_hash','csrf','expira_em']);
    ver('loja_real_auditoria_admin',['id','hash_anterior','hash_atual']);
    ver('loja_real_manutencao_comercial',['id','suspensa','revisao']);
+  }
+  // Espelho relacional e ADITIVO: snapshots históricos sem ele são válidos.
+  // Se presente, deve estar completo e exatamente alinhado ao motor.
+  const temProjecao=TABELAS_PROJECAO.some(t=>lista.includes(t));
+  if(temProjecao){
+   if(!temMotor||TABELAS_PROJECAO.some(t=>!lista.includes(t)))
+    falha('BACKUP_FILA_PROJECAO_INCOMPLETA');
+   try{
+    if(ProjecaoFilasRelacionalSQLite.verificarExistente({banco:b})
+      .integridade!=='OK')
+     falha('BACKUP_FILA_PROJECAO_DIVERGENTE');
+   }catch{falha('BACKUP_FILA_PROJECAO_DIVERGENTE');}
   }
   const integridade=b.prepare('PRAGMA integrity_check').all();
   if(integridade.length!==1||integridade[0].integrity_check!=='ok')
