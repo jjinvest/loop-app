@@ -225,11 +225,12 @@
     aviso.textContent='Selecione uma foto JPEG, PNG ou WebP de até 15 MB.';
     input.value='';return;
    }
-   const url=URL.createObjectURL(foto);
+   // A CSP da aplicação real autoriza data: e bloqueia blob:.
+   // FileReader evita abrir exceções inseguras na política de imagens.
    carregando=new Promise((resolve,reject)=>{
+    const leitor=new FileReader();
     const img=new Image();
     img.onload=()=>{
-     URL.revokeObjectURL(url);
      if(img.naturalWidth<50||img.naturalHeight<50){
       reject(Error('FOTO_RESOLUCAO_BAIXA'));return;
      }
@@ -237,8 +238,10 @@
      redesenhar();aviso.textContent='Ajuste o enquadramento. A foto será cortada, sem alterar as cores.';
      resolve();
     };
-    img.onerror=()=>{URL.revokeObjectURL(url);reject(Error('FOTO_NAO_ABRIU'));};
-    img.src=url;
+    img.onerror=()=>reject(Error('FOTO_NAO_ABRIU'));
+    leitor.onerror=()=>reject(Error('FOTO_NAO_LEIDA'));
+    leitor.onload=()=>{img.src=String(leitor.result||'');};
+    leitor.readAsDataURL(foto);
    });
    carregando.catch(()=>{aviso.textContent='Não foi possível abrir a imagem. Escolha outra foto.';});
   });
