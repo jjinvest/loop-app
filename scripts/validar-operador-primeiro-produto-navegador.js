@@ -149,6 +149,11 @@ async function principal(){
    await m.getByRole('heading',{name:'Cadastrar produto · AKITEMM'}).waitFor();
    await m.getByRole('textbox',{name:'Nome do produto'}).fill(nome);
    await m.locator('textarea').first().fill('Descrição de teste temporária');
+   await m.getByLabel('Categoria (opcional)').fill('Calçados');
+   await m.getByLabel('Marca (opcional)').fill('Marca própria');
+   await m.getByLabel('Preço normal (R$)').fill('299,90');
+   await m.getByLabel('Preço promocional (R$) — opcional').fill('249,90');
+   await m.getByLabel('Quantidade disponível (opcional)').fill('12');
    const codigoArea=m.locator('details').filter({hasText:'Código do produto'});
    await codigoArea.locator('summary').click();
    await codigoArea.locator('input').fill(codigo);
@@ -190,6 +195,12 @@ async function principal(){
    return res.json();
   });
   assert.equal(antes.produtos.length,2);
+  assert.equal(antes.produtos[0].precoAnunciadoCentavos,24990);
+  assert.equal(antes.produtos[0].precoOriginalAnunciadoCentavos,29990);
+  assert.equal(antes.produtos[0].estoqueInformadoOperador,12);
+  assert.equal(antes.produtos[0].precoCentavos,null);
+  assert.equal(antes.produtos[0].compravel,false);
+  assert.equal(antes.checkoutReal,false);
   assert.equal(antes.produtos[0].produtoId,'primeiro-produto');
   assert.equal(antes.produtos[1].produtoId,'segundo-produto');
   // No celular, segurar a alça e arrastar o segundo até o primeiro.
