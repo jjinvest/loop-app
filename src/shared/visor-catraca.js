@@ -109,7 +109,9 @@
      }
      estado.textContent='Relógio: '+visual.luzes+'/6 luzes · '+
       visual.passadas+'/'+visual.total+' do dia · '+
-      visual.intervalo+' segundos por luz · execução visual';
+      Math.floor(visual.intervalo/60)+' min'+
+      (visual.intervalo%60?' '+visual.intervalo%60+' s':'')+
+      '/luz · execução visual';
     }else{
      visor.textContent='--:--';
      titulo.textContent=modo==='STOP'||agenda?.pausaManual===true?
