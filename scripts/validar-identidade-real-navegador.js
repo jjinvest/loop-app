@@ -708,8 +708,9 @@ async function main(){
    assert.match(await linkPessoal.inputValue(),/\/loja\/dozeletrasab$/);
    assert.equal(await page.locator('#copiarDivulgarLojaLoop').isEnabled(),true);
    await page.locator('#copiarDivulgarLojaLoop').click();
-   assert.match(await page.locator('#statusDivulgarLojaLoop').innerText(),
-    /Link pessoal copiado|Link selecionado/);
+   await page.locator('#statusDivulgarLojaLoop').filter({
+    hasText:/Link pessoal copiado|Link selecionado/
+   }).waitFor({state:'visible'});
    await page.locator('#akitemmMeusCursos summary').click();
    await page.locator('#akitemmAtualizarMeusCursos').click();
    await page.locator('#akitemmListaMeusCursos').filter({
