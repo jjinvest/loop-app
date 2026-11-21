@@ -348,7 +348,7 @@
     throw Error('CATALOGO_ADMIN_INCONSISTENTE');
    const vinculados=new Set(slots.slots.map(x=>x.produtoId));
    const existentes=r.produtos.filter(p=>ID.test(p.produtoId)&&
-    !vinculados.has(p.produtoId));
+    (p.estado==='RASCUNHO'||!vinculados.has(p.produtoId)));
    if(existentes.length){
     const seletor=select('Produto existente',existentes.map(p=>[
      p.produtoId,p.nome+' ('+p.estado.toLowerCase()+')'
@@ -359,7 +359,8 @@
     abrir.addEventListener('click',async()=>{
      abrir.disabled=true;
      try{
-      await vincularQuadradinho(indice,seletor.s.value);
+      if(!vinculados.has(seletor.s.value))
+       await vincularQuadradinho(indice,seletor.s.value);
       dialogo.close();void abrirProduto(seletor.s.value);
      }catch(e){estado.textContent='Não foi possível abrir: '+e.message;}
      finally{abrir.disabled=false;}
@@ -394,10 +395,10 @@
     if(produto.produtoId!==id||produto.ativo!==false)
      throw Error('CADASTRO_NAO_CONFIRMADO');
     criado=true;
-    await vincularQuadradinho(indice,id);
     await salvarCor(id,csrf,cor.s.value);
     if(imagem){
      await salvarFoto(id,csrf,imagem,1);
+     await vincularQuadradinho(indice,id);
      await publicarFoto(id,csrf);
      atualizarLoja();
      estado.textContent='Produto e foto salvos. O item agora aparece nos primeiros espaços da vitrine.';
@@ -424,106 +425,152 @@
   if(!ID.test(id)){
    const {corpo,estado}=modal('Produto da AKITEMM');
    corpo.append(admin());
-   estado.textContent='Este código de produto precisa de normalização '+
-    'auditada para aceitar fotos, sem alterar o cadastro antigo.';
+   estado.textContent='Este código precisa de uma conferência para edição segura.';
    return;
   }
-  const {corpo,estado}=modal('Editar produto · '+id);
-  const nomeLabel=document.createElement('label');
-  nomeLabel.textContent='Nome do produto';
-  const nome=document.createElement('input');nome.type='text';
-  nome.maxLength=150;nomeLabel.append(nome);
-  const descLabel=document.createElement('label');
-  descLabel.textContent='Descrição';
-  const descricao=document.createElement('textarea');
-  descricao.maxLength=2000;descLabel.append(descricao);
-  const salvarDados=document.createElement('button');
-  salvarDados.type='button';salvarDados.textContent='Salvar nome e descrição';
-  salvarDados.disabled=true;
-  corpo.append(nomeLabel,descLabel,salvarDados);
-  const campo=select('Posição da foto (1 a 10)',Array.from({length:10},(_,i)=>[
-   String(i+1),'Foto '+(i+1)
+  const {corpo,estado}=modal('Editar produto · AKITEMM');
+  const form=document.createElement('form');
+  form.autocomplete='off';
+  const nome=campoTexto(form,'Nome do produto');
+  const descricao=campoTexto(form,'Descrição (opcional)',{
+   tipo:'textarea',maxLength:2000
+  });
+  const cor=escolhaCor();
+  form.append(cor.label);
+  const foto=editarFoto(form);
+  const galeriaFotos=select('Foto do produto',Array.from({length:10},(_,i)=>[
+   String(i+1),i===0?'Foto principal':'Foto '+(i+1)
   ]));
-  const label=document.createElement('label');
-  label.textContent='Escolher imagem JPEG, PNG ou WebP (até 3 MB)';
-  const arquivo=document.createElement('input');arquivo.type='file';
-  arquivo.accept='image/jpeg,image/png,image/webp';
-  label.append(arquivo);
-  const lista=document.createElement('p');
-  const botao=document.createElement('button');
-  botao.type='button';botao.textContent='Salvar foto do produto';
-  botao.disabled=true;
-  corpo.append(campo.label,label,lista,botao);
+  form.append(galeriaFotos.label);
+  const salvarDados=document.createElement('button');
+  salvarDados.type='submit';salvarDados.textContent='Salvar nome e descrição';
+  form.append(salvarDados);
+  const salvarImagem=document.createElement('button');
+  salvarImagem.type='button';salvarImagem.textContent='Salvar foto e publicar na vitrine';
+  form.append(salvarImagem);
+  const salvarClassificacao=document.createElement('button');
+  salvarClassificacao.type='button';
+  salvarClassificacao.className='akitemm-editor-secundario';
+  salvarClassificacao.textContent='Salvar cor do produto';
+  form.append(salvarClassificacao);
+  const ordemBox=document.createElement('section');
+  const ordemLabel=campoTexto(ordemBox,
+   'Ordem na vitrine (visível só para o operador)',{
+    tipo:'number',valor:'1'
+   });
+  ordemLabel.min='1';ordemLabel.step='1';
+  const mover=document.createElement('button');mover.type='button';
+  mover.className='akitemm-editor-secundario';
+  mover.textContent='Mover produto para esta posição';
+  const detalheOrdem=linha('A vitrine continua sem lacunas. Todas as cores ficam misturadas.');
+  ordemBox.append(mover,detalheOrdem);form.append(ordemBox);
+  corpo.append(form);
+  let revisaoAtual=null,csrf=null,slotsAtuais=[],estaPublicado=false;
+  const verificar=()=>{if(!csrf||revisaoAtual===null)
+   throw Error('OPERADOR_EDICAO_INDISPONIVEL');};
+  const travar=(valor)=>{
+   salvarDados.disabled=valor;salvarImagem.disabled=valor;
+   salvarClassificacao.disabled=valor;mover.disabled=valor;
+  };
+  const consultaOrdem=async()=>{
+   const o=await fetchJson('/api/admin/catalogo-midia/slots');
+   if(!Array.isArray(o.slots)||o.total!==400)
+    throw Error('ORDEM_VITRINE_INDISPONIVEL');
+   slotsAtuais=o.slots;
+   const indice=slotsAtuais.findIndex(x=>x.produtoId===id);
+   const posicao=indice+1;
+   ordemLabel.max=String(Math.max(1,slotsAtuais.length));
+   ordemLabel.value=String(posicao>0?posicao:slotsAtuais.length+1);
+   mover.disabled=posicao===0;
+   detalheOrdem.textContent=posicao?
+    'Posição '+posicao+' de '+slotsAtuais.length+
+     '. Alterar a ordem não muda a classificação do produto.':
+    'Ainda não está na sequência. Ao publicar, entra no próximo espaço.';
+  };
   try{
-   const [sessao,galeria,dados]=await Promise.all([
+   travar(true);
+   const [sessao,dados,regras]=await Promise.all([
     fetchJson('/api/admin/comercial/sessao'),
-    fetchJson('/api/admin/catalogo-midia/produtos/'+id+'/fotos'),
-    fetchJson('/api/admin/catalogo-midia/produtos/'+id)
+    fetchJson('/api/admin/catalogo-midia/produtos/'+id),
+    fetchJson('/api/admin/comercial/classificacoes')
    ]);
    if(typeof sessao.csrfToken!=='string'||sessao.csrfToken.length<24||
-      !Array.isArray(galeria.fotos)||
       !Number.isSafeInteger(dados.revisao)||dados.revisao<1)
     throw Error('OPERADOR_SESSAO_INVALIDA');
+   csrf=sessao.csrfToken;revisaoAtual=dados.revisao;
    nome.value=dados.nome;descricao.value=dados.descricao;
-   let revisaoAtual=dados.revisao;
-   salvarDados.disabled=false;
-   salvarDados.addEventListener('click',async()=>{
+   estaPublicado=dados.estado==='PUBLICADO';
+   const regra=regras.produtos?.find(r=>r.produtoId===id);
+   if(regra)cor.s.value=regra.cor;
+   await consultaOrdem();
+   travar(false);
+   const botoesAtualizar=async(tarefa,mensagem)=>{
     if(aberto)return;
+    aberto=true;travar(true);estado.textContent='Salvando alterações...';
+    try{
+     verificar();
+     await tarefa();
+     estado.textContent=mensagem;
+     atualizarLoja();
+    }catch(e){estado.textContent='Não foi possível salvar: '+e.message;}
+    finally{aberto=false;travar(false);}
+   };
+   form.addEventListener('submit',ev=>{
+    ev.preventDefault();
     const titulo=nome.value.trim();
-    if(titulo.length<2||titulo.length>150||descricao.value.length>2000){
+    if(titulo.length<2||titulo.length>150||
+       descricao.value.length>2000){
      estado.textContent='Confira o nome e a descrição.';return;
     }
-    aberto=true;salvarDados.disabled=true;
-    try{
-     const res=await fetchJson(
-      '/api/admin/catalogo-midia/produtos/'+id,{
-       method:'PATCH',headers:{'Content-Type':'application/json',
-        'X-Loop-Admin-Csrf':sessao.csrfToken},
-       body:JSON.stringify({titulo,descricao:descricao.value.trim(),
-        revisaoEsperada:revisaoAtual})
-      });
+    void botoesAtualizar(async()=>{
+     const res=await fetchJson('/api/admin/catalogo-midia/produtos/'+id,{
+      method:'PATCH',headers:{'Content-Type':'application/json',
+       'X-Loop-Admin-Csrf':csrf},
+      body:JSON.stringify({titulo,descricao:descricao.value.trim(),
+       revisaoEsperada:revisaoAtual})
+     });
      if(res.produtoId!==id||!Number.isSafeInteger(res.revisao))
       throw Error('PRODUTO_NAO_CONFIRMADO');
      revisaoAtual=res.revisao;
-     estado.textContent='Nome e descrição salvos no catálogo real.';
-     document.getElementById('atualizarCatalogoLoja')?.click();
-    }catch(e){estado.textContent='Não foi possível salvar: '+e.message;}
-    finally{aberto=false;salvarDados.disabled=false;}
+    },'Nome e descrição salvos.');
    });
-   lista.textContent=galeria.fotos.length+' foto(s) gravada(s). '+
-    'Escolha a posição para acrescentar ou substituir com revisão segura.';
-   botao.disabled=false;
-   botao.addEventListener('click',async()=>{
-    if(aberto)return;
-    const file=arquivo.files?.[0],pos=Number(campo.s.value);
-    if(!file||!['image/png','image/jpeg','image/webp'].includes(file.type)||
-       file.size<40||file.size>3*1024*1024||
-       !Number.isSafeInteger(pos)||pos<1||pos>10){
-     estado.textContent='Selecione JPEG, PNG ou WebP com até 3 MB.';
-     return;
-    }
-    aberto=true;botao.disabled=true;estado.textContent='Gravando foto no catálogo real...';
-    try{
-     const versao=galeria.fotos.find(f=>f.posicao===pos)?.versao||0;
-     const res=await fetch(
-      '/api/admin/catalogo-midia/produtos/'+id+'/fotos/'+pos,{
-       method:'POST',credentials:'same-origin',cache:'no-store',
-       headers:{'Content-Type':file.type,
-        'X-Loop-Admin-Csrf':sessao.csrfToken,
-        'X-Foto-Versao-Esperada':String(versao)},body:file
-      });
-     const d=await res.json().catch(()=>({}));
-     if(!res.ok)throw Error(d.erro||'FOTO_NAO_GRAVADA');
-     estado.textContent='Foto '+pos+' salva. O produto foi preservado.';
-     dialogo.close();
-     document.getElementById('atualizarCatalogoLoja')?.click();
-    }catch(e){
-     estado.textContent='Não foi possível salvar: '+e.message+
-      '. Atualize a galeria antes de tentar novamente.';
-    }finally{aberto=false;botao.disabled=false;}
+   salvarClassificacao.addEventListener('click',()=>{
+    void botoesAtualizar(async()=>{await salvarCor(id,csrf,cor.s.value);},
+     'Cor atualizada; filtros da loja respeitam a nova classificação.');
+   });
+   salvarImagem.addEventListener('click',()=>{
+    void botoesAtualizar(async()=>{
+     const imagem=await foto.obter();
+     if(!imagem)throw Error('ESCOLHA_UMA_FOTO');
+     const posicaoFoto=Number(galeriaFotos.s.value);
+     await salvarFoto(id,csrf,imagem,posicaoFoto);
+     if(!slotsAtuais.some(x=>x.produtoId===id))
+      await vincularQuadradinho(1,id);
+     if(!estaPublicado){
+      await publicarFoto(id,csrf);
+      estaPublicado=true;
+     }
+     await consultaOrdem();
+    },'Foto gravada. Produto disponível na vitrine, sem liberar checkout.');
+   });
+   mover.addEventListener('click',()=>{
+    void botoesAtualizar(async()=>{
+     const atual=slotsAtuais.find(x=>x.produtoId===id);
+     const destino=Number(ordemLabel.value);
+     if(!atual||!Number.isSafeInteger(destino)||
+       destino<1||destino>slotsAtuais.length)
+      throw Error('ESCOLHA_UMA_POSICAO_VALIDA');
+     await fetchJson('/api/admin/catalogo-midia/reordenar-vitrine',{
+      method:'POST',headers:{'Content-Type':'application/json',
+       'X-Loop-Admin-Csrf':csrf},
+      body:JSON.stringify({produtoId:id,novaPosicao:destino,
+       revisaoEsperada:atual.revisao})
+     });
+     await consultaOrdem();
+    },'Ordem alterada. Os outros produtos foram encaixados na sequência.');
    });
   }catch(e){
-   botao.disabled=true;
+   travar(true);
    estado.textContent='Edição indisponível: '+e.message;
   }
  }
