@@ -244,7 +244,7 @@ async function verificarFinal(arquivo){
   });
   assert.equal(final.total,1000001);
   assert.equal(final.indicados.length,1);
-  assert.equal(final.indicados[0].nick,'CadastroFinal');
+  assert.equal(final.indicados[0].nick,'cadastrofinal');
   assert.equal(final.indicados[0].numeroCadastro,1000001);
   assert.equal(x.motor.verificar().compras,0);
   assert.equal(db.prepare('PRAGMA integrity_check').get().integrity_check,'ok');
