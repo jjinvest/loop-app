@@ -374,25 +374,34 @@
   </section>
   <section class="painel" id="conteudoConta" role="tabpanel" aria-labelledby="abaConta" hidden>
    <h2>Minha Conta</h2>
-   <p id="perfilCliente" aria-live="polite">Consultando perfil…</p>
+   <section class="loop03-resumo-perfil" aria-label="Meus dados">
+    <div id="perfilCliente" aria-live="polite">Consultando seus dados...</div>
+   </section>
    <form id="formFotoPerfil" aria-label="Foto de perfil" class="loop03-form-foto-perfil">
-    <label for="arquivoFotoPerfil">Minha foto de perfil</label>
+    <h3>Minha foto de perfil</h3>
+    <p class="subtexto">A mesma foto aparece no LOOP e na AKITEMM.</p>
+    <label for="arquivoFotoPerfil" class="loop03-escolher-foto">Escolher ou trocar foto</label>
     <input id="arquivoFotoPerfil" type="file" accept="image/jpeg,image/png,image/webp" aria-describedby="avisoFotoPerfil">
-    <p id="avisoFotoPerfil" class="subtexto">JPEG, PNG ou WebP, até 3 MB. Toque na foto redonda do topo para escolher também.</p>
+    <p id="avisoFotoPerfil" class="subtexto">Ao tocar na foto redonda do topo, ela salva automaticamente. Aqui, escolha e confirme a alteração.</p>
     <button type="submit">Salvar minha foto</button>
     <p id="statusFotoPerfil" role="status" aria-live="polite"></p>
    </form>
    <p class="loop03-email-conta">E-mail: <strong id="resumoEmail">—</strong></p>
-<section class="painel" id="painelVerificarEmail" hidden aria-label="Confirmar e-mail de ensaio">
-   <h2>Confirmar meu e-mail</h2>
-   <p class="subtexto">Confirme seu contato com um código enviado ao e-mail cadastrado.</p>
-   <button type="button" id="solicitarCodigoEmail">Solicitar código</button>
-   <form id="formConfirmarEmail">
-    <label for="codigoEmail">Código de oito dígitos</label>
-    <input id="codigoEmail" type="text" inputmode="numeric" pattern="[0-9]{8}" minlength="8" maxlength="8" autocomplete="one-time-code" required>
-    <button type="submit">Confirmar código</button>
-   </form>
-  </section>
+   <section class="painel loop03-verificacao-email" id="painelVerificarEmail" hidden aria-label="Confirmar e-mail">
+    <h2>Confirmar meu e-mail</h2>
+    <p class="subtexto">Enviaremos um código de 8 dígitos ao e-mail cadastrado para confirmar sua conta.</p>
+    <div class="loop03-email-acoes">
+     <button type="button" id="solicitarCodigoEmail">Enviar código</button>
+     <output id="contadorReenvioEmail" role="timer" aria-live="off" hidden></output>
+    </div>
+    <p id="estadoEmailCodigo" role="status" aria-live="polite"></p>
+    <form id="formConfirmarEmail">
+     <label for="codigoEmail">Código de 8 dígitos</label>
+     <input id="codigoEmail" type="text" inputmode="numeric" pattern="[0-9]{8}" minlength="8" maxlength="8" autocomplete="one-time-code" placeholder="00000000" aria-describedby="ajudaCodigoEmail" required>
+     <p id="ajudaCodigoEmail" class="subtexto">O código vence em 15 minutos. Por segurança, são permitidos até 3 envios por hora.</p>
+     <button type="submit">Confirmar e-mail</button>
+    </form>
+   </section>
   <section class="painel" id="painelIdentidadeTeste" hidden aria-labelledby="tituloIdentidadeTeste">
    <h2 id="tituloIdentidadeTeste">Identificação dos pedidos</h2>
    <p class="subtexto">Use exclusivamente CPF fictício nesta prévia.</p>
@@ -409,7 +418,7 @@
   
       <section id="ajustarGrafiaNick">
     <h3>Definir a grafia exata do meu nick</h3>
-    <p class="subtexto" id="avisoGrafiaNick">Para contas antigas, confirme como seu nick deve aparecer e ser digitado no acesso.</p>
+
     <form id="formGrafiaNick">
      <label for="novoNickGrafia">Meu nick, com as letras maiúsculas e minúsculas exatas</label>
      <input id="novoNickGrafia" name="novoNick" minlength="1" maxlength="12" pattern="[A-Za-zÀ-ÖØ-öø-ÿ0-9]+(?: [A-Za-zÀ-ÖØ-öø-ÿ0-9]+)*" autocomplete="off" required>
