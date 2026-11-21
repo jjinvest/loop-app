@@ -1101,6 +1101,42 @@ async function main(){
    await pagina.locator('#catalogoLojaLoop .produto-loja-loop[data-produto-id] button').click();
    assert.match(await pagina.locator('#akitemmProdutoInlineConteudo').innerText(),
     /Frete e compra dependem da integração comercial/);
+   // Aparência idêntica para produto próprio e produto de terceiro.
+   const textoVitrine=await pagina.locator(
+    '#catalogoLojaLoop .produto-loja-loop[data-produto-id]'
+   ).first().innerText();
+   assert.doesNotMatch(textoVitrine,/Produto próprio|Fornecedor próprio/);
+   // Interface real da restrição regional: a tarja só aparece APÓS CEP.
+   // O servidor valida geografia separadamente; este mock prova somente a tela.
+   await pagina.locator('#akitemmEntrega summary').click();
+   await pagina.route('**/api/loja/entrega/verificar-cep',route=>
+    route.fulfill({status:422,contentType:'application/json',
+     body:JSON.stringify({
+      entregaDisponivel:false,produtosForaDaRegiao:['produto-um'],
+      checkoutReal:false,autorizaCobranca:false
+     })})
+   );
+   await pagina.evaluate(()=>{
+    const form=document.getElementById('akitemmFormEntrega');
+    const campos={
+     destinatario:'Pessoa Teste',cep:'20010000',
+     logradouro:'Rua Teste',numero:'10',bairro:'Centro',
+     cidade:'Rio de Janeiro',uf:'RJ',telefone:'11999999999'
+    };
+    for(const [nome,valor] of Object.entries(campos)){
+     const input=form.elements.namedItem(nome);
+     if(input)input.value=valor;
+    }
+    form.requestSubmit();
+   });
+   await pagina.locator('#akitemmStatusEntrega.akitemm-alerta-regiao')
+    .filter({hasText:'não está disponível para entrega'}).waitFor();
+   assert.equal(await pagina.locator('#akitemmStatusEntrega').getAttribute('role'),'alert');
+   assert.equal(await pagina.locator('#registrarPedidoLoja').isDisabled(),true);
+   await pagina.locator('#akitemmFormEntrega input[name=cep]').fill('27213000');
+   assert.equal(await pagina.locator('#akitemmStatusEntrega').evaluate(
+    el=>el.classList.contains('akitemm-alerta-regiao')),false);
+   await pagina.unroute('**/api/loja/entrega/verificar-cep');
    // Carrinho interno no banco REAL: adicionar, atualizar quantidade,
    // recarregar a loja e esvaziar, sem criar um pedido ou pagamento.
    await pagina.locator('#akitemmProdutoInlineConteudo button[aria-label^="Adicionar "]').click();

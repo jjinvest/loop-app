@@ -168,3 +168,11 @@ dialog.akitemm-operador-editor .akitemm-editor-status{margin-top:16px;font-size:
   grid-template-columns:minmax(0,1fr)
  }
 }
+/* Aviso apenas no cálculo de frete: não diferencia produtos na vitrine. */
+.akitemm-loja #akitemmStatusEntrega.akitemm-alerta-regiao{
+ display:block;margin:4px 0 0;padding:11px 13px;
+ border:1px solid #cf8e59;border-left:4px solid #dd9b67;
+ border-radius:10px;background:rgba(110,49,30,.28);
+ color:#fff1e3;font-size:12px;font-weight:600;
+ line-height:1.5;box-shadow:0 2px 10px #0002
+}
