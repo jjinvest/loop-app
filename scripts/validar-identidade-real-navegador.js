@@ -702,7 +702,8 @@ async function main(){
    assert.equal(await page.locator('#akitemmSino').getAttribute('aria-expanded'),'true');
    await page.locator('#akitemmSino').click();
    assert.equal(await page.locator('#akitemmNotificacoes').isHidden(),true);
-   // O convite pertence a este titular e usa a rota de cadastro existente.
+   // O convite permanece dentro do mesmo painel retrátil aprovado.
+   await page.locator('#tituloDivulgarLojaLoop').click();
    const linkPessoal=page.locator('#enderecoDivulgarLojaLoop');
    assert.match(await linkPessoal.inputValue(),/\/loja\/dozeletrasab$/);
    assert.equal(await page.locator('#copiarDivulgarLojaLoop').isEnabled(),true);

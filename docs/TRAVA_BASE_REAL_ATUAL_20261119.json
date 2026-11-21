@@ -412,7 +412,7 @@
     },
     {
       "path": "scripts/validar-identidade-real-navegador.js",
-      "sha": "268105c8c766b2999bc366fdeda19cd65bf40590"
+      "sha": "58e589796cdb497627611ba5ea840cf345cc643c"
     },
     {
       "path": "scripts/validar-jornada-loja-cores-browser.js",
