@@ -30,8 +30,8 @@ test('20 mil cadastros e 20 mil vinculos preservam ordem, paginacao e reinicio',
  const chaves={chaveEmail:randomBytes(32),chaveCifra:randomBytes(32),
   chaveCodigo:randomBytes(32)};
  const cfg={...chaves,enviarEmail:async()=>true,
-  termos:{versao:'ENSAIO-LONGEVIDADE-1',texto:DOC},
-  privacidade:{versao:'PRIV-LONGEVIDADE-1',texto:DOC}};
+  termos:{versao:'LOOP-ENSAIO-LONGEVIDADE-1',texto:DOC},
+  privacidade:{versao:'LOOP-PRIV-LONGEVIDADE-1',texto:DOC}};
  let db;
  try{
   const abrir=()=>{
