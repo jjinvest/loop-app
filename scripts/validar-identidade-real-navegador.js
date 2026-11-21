@@ -763,6 +763,21 @@ async function main(){
    assert.equal(await page.locator('#perfilCliente .loop03-perfil-linha').count(),4);
    assert.doesNotMatch(await page.locator('#perfilCliente').innerText(),
     /LOOP-TERMOS-|LOOP-PRIVACIDADE-/);
+   // Pelo painel Minha Conta a escolha NÃO grava sozinha; o botão Salvar
+   // confirma a troca, usando o mesmo endpoint privado do retrato superior.
+   const seletorConta=page.waitForEvent('filechooser',{timeout:12000});
+   await page.locator('#formFotoPerfil .loop03-escolher-foto').click();
+   await (await seletorConta).setFiles({
+    name:'foto-perfil-manual.png',mimeType:'image/png',
+    buffer:gerarPngTeste(120,45,65)
+   });
+   await page.locator('#statusFotoPerfil').filter({
+    hasText:'Foto selecionada.'
+   }).waitFor({state:'visible'});
+   await page.locator('#formFotoPerfil button[type=submit]').click();
+   await page.locator('#statusFotoPerfil').filter({
+    hasText:'Foto salva no LOOP e disponível também na AKITEMM.'
+   }).waitFor({state:'visible'});
    // A verificação profissional usa o prazo real de 120 s do servidor.
    await page.locator('#solicitarCodigoEmail').click();
    await page.locator('#contadorReenvioEmail').waitFor({state:'visible'});
