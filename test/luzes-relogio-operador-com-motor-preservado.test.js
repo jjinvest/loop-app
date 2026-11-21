@@ -9,6 +9,8 @@ const interfaceReal=readFileSync(
  join(__dirname,'../src/producao/interface-aprovada-contas.js'),'utf8');
 const css=readFileSync(
  join(__dirname,'../src/candidato/escritorio-cliente-integrado.css'),'utf8');
+const cssOperador=readFileSync(
+ join(__dirname,'../src/producao/acabamento-botoes-real.css'),'utf8');
 
 function ambiente(hora='2026-11-21T09:00:00-03:00'){
  let agora=Date.parse(hora),tick=null,agendas=0;
@@ -68,7 +70,7 @@ function ambiente(hora='2026-11-21T09:00:00-03:00'){
  const mover=h=>{
   agora=Date.parse(h);assert.equal(typeof tick,'function');tick();
  };
- return {visor,elements,agenda,luzes,reais,mover,
+ return {visor,elements,agenda,luzes,pulsando,reais,mover,
   iniciar(){visor.iniciar();visor.iniciar();assert.equal(agendas,1);}};
 }
 
@@ -220,6 +222,8 @@ test('o mesmo relogio real acende e pulsa uma luz de cada vez sem antecipar even
  }));
  assert.deepEqual(x.pulsando(),[false,false,false,false,false,false],
   'a programação de outro dia não acende as luzes');
- assert.match(css,/loop03-relogio-luz-ativa/);
+ assert.match(cssOperador,/loop03-relogio-luz-ativa/);
+ assert.doesNotMatch(css,/loop03-relogio-luz-ativa/,
+  'as telas do cliente nao podem receber animacao do operador');
  assert.doesNotMatch(code,/executarGiro|registrarCompra|provisionar|creditarSaldo/);
 });
