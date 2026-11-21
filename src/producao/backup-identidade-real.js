@@ -358,6 +358,8 @@ function validarIdentidade(arquivo){
   // Não aceitar snapshot administrativo parcial. Pedidos e remessas
   // são conferidos semanticamente, sem inferir conciliação bancária.
   const adminPresente=TABELAS_ADMIN.some(x=>lista.includes(x));
+  if(!adminPresente&&TABELAS_CATALOGO_OPERADOR.some(x=>lista.includes(x)))
+   falha('BACKUP_ADMIN_PARCIAL');
   if(adminPresente&&TABELAS_ADMIN.some(x=>!lista.includes(x)))
    falha('BACKUP_ADMIN_PARCIAL');
   if(adminPresente){
@@ -376,9 +378,6 @@ function validarIdentidade(arquivo){
    ver('loja_real_sessoes_admin',['token_hash','csrf','expira_em']);
    ver('loja_real_auditoria_admin',['id','hash_anterior','hash_atual']);
    ver('loja_real_manutencao_comercial',['id','suspensa','revisao']);
-  }
-  // O arquivo de ciclos e opcional em backups antigos. Quando existe,
-  // exige cadeia inteira, seis eventos por giro e dados iguais ao motor.
   // Novas tabelas também devem ser restauradas junto aos produtos.
   // Não exigir em snapshots históricos que precedem a funcionalidade.
   if(lista.includes('loja_real_anuncios_operador'))
@@ -392,6 +391,9 @@ function validarIdentidade(arquivo){
    ver('loja_real_avaliacoes_verificadas',[
     'id','produto_id','pedido_id','nome_exibicao','nota',
     'comentario','verificada','visivel']);
+  }
+  // O arquivo de ciclos e opcional em backups antigos. Quando existe,
+  // exige cadeia inteira, seis eventos por giro e dados iguais ao motor.
   const temHistorico=TABELAS_HISTORICO.some(t=>lista.includes(t));
   if(temHistorico){
    if(!temMotor||TABELAS_HISTORICO.some(t=>!lista.includes(t)))
