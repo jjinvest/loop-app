@@ -685,7 +685,8 @@ async function main(){
    await page.waitForURL(url=>url.pathname==='/loja');
    await page.locator('#conteudoLojaLoop').waitFor({state:'visible'});
    await page.locator('#akitemmNomeTitular').filter({
-    hasText:new RegExp('^'+nick.toLowerCase()+'
+    hasText:nick.toLowerCase()
+   }).waitFor({state:'visible'});
    // Botoes internos reais da AKITEMM: dados da conta e avisos.
    await page.locator('#akitemmAbrirConta').click();
    assert.equal(await page.locator('#akitemmDadosConta').isVisible(),true);
