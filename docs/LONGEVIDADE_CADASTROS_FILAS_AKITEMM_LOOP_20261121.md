@@ -22,6 +22,15 @@ Preservar: identidade única, indicação, histórico de compras, ordem A/B, pos
 4. Medir cargas distintas de 10 mil, 100 mil, 1 milhão: titulares cadastrados, posições, movimentos históricos, simultaneidade operacional, disco, CPU, RAM, tempos P95/P99, backup/restore. Dados sintéticos somente em ambientes descartáveis.
 5. Trocar fonte de verdade somente após consistência, idempotência, recuperação e testes de regressão completos; sem alteração das telas aprovadas ou liberação implícita de fornecedores, PSP, saques e bônus.
 
+## Etapa seguinte — arquivo relacional de ciclos concluídos (21/11/2026)
+
+- Os ciclos concluídos passam a ter uma **projeção relacional append-only** com chave de ciclo, centro, conteúdo serializado, hash SHA-256 encadeado ao ciclo anterior e seis eventos por ciclo (ou cinco nos históricos legados).
+- A inserção dos ciclos novos ocorre na **mesma transação** que grava o snapshot e a projeção A/B. Uma falha reverte a gravação inteira; nenhuma rotina de histórico pode autorizar giro ou pagamento.
+- A auditoria completa e os backups conferem todo o encadeamento e os eventos com o snapshot original; a escrita comum só verifica o último ciclo e acrescenta os novos. Sem reescrever os ciclos já fechados.
+- Backups antigos que ainda não contêm o arquivo de ciclos continuam restauráveis; na abertura subsequente o histórico é projetado sem trocar IDs ou alterar o snapshot.
+- Ensaio sintético isolado: 5.000 ciclos / 30.000 eventos, paginação por ciclo e reprocessamento sem registros duplicados. Não representa 5.000 movimentações financeiras reais nem prova 1.000.000 de posições.
+- **Limite mantido:** o snapshot JSON do simulador **continua como fonte de verdade** e contém cópia de todo o histórico; não há redução comprovada do seu custo de regravação. Somente depois de uma migração com dual-read, restore e comparação de todas as regras poderá sair a cópia histórica central.
+
 ## Estado
 
 Longevidade do índice e da auditoria reforçada. Um milhão de registros e posições não está comprovado; a remodelagem do snapshot e as medições volumétricas ainda são necessárias.
