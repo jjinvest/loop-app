@@ -15,7 +15,7 @@
       "nota": "Os tres arquivos do Dockerfile.public-real sao iguais no commit da identidade real"
     }
   },
-  "politica": "Qualquer mudanca, adicao ou remocao no REAL exige aprovacao explicita do proprietario, testes, hash atualizado no manifesto E ancora Railway correspondente; nao reverter ou reconstruir telas historicas",
+  "politica": "Qualquer mudanca, adicao ou remocao no REAL exige aprovacao explicita do proprietario, testes, hash atualizado no manifesto E ancora Railway correspondente; nao reverter ou reconstruir telas historicas; ajuste de fotos cliente/operador solicitado em 21/11/2026, sem alteracao de molduras ou regra do motor",
   "algoritmo": "git-blob-sha1",
   "arquivos": [
     {
@@ -1412,7 +1412,7 @@
     },
     {
       "path": "src/producao/interface-aprovada-contas.js",
-      "sha": "f407021e04372cd79b6bfe7ff14f0cfae9901933"
+      "sha": "1270bcbad05619736a7bf5b0bde840a37b0b08c4"
     },
     {
       "path": "src/producao/interface-aprovada-loja.js",
@@ -2528,7 +2528,7 @@
     },
     {
       "path": "test/foto-perfil-real-cadastro-documentos-7x7.test.js",
-      "sha": "1991c8934fc3d818fd213b8ef77e818e01fda46d"
+      "sha": "bc1605b3298310cc9ef60396fc509caf52a40fce"
     },
     {
       "path": "test/gateway-publico-real-integracao-conta-operador.test.js",
