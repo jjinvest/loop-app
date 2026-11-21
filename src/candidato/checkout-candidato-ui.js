@@ -396,6 +396,8 @@ async function atualizarPedidos(){
   $('pedidosProximo').disabled=!pag.haMais;
   $('pedidosPaginacao').textContent='Página '+(pag.pagina+1)+
    ' · '+pag.total+' pedido(s) no histórico';
+  $('pedidosResumo').textContent=pag.total===0?'Nenhum pedido registrado':
+   pag.total===1?'1 pedido no histórico':pag.total+' pedidos no histórico';
   exibirPedidos(dados.pedidos);
   const previa=await requisitar('/minha-previa-filas');
   const resumo=$('minhaPreviaFilas');resumo.replaceChildren();
@@ -433,7 +435,10 @@ async function atualizarPedidos(){
    item.append(id,mensagem);area.append(item);
   }
   dizer('Pedidos e comunicados atualizados.');
- }catch(e){dizer('Não foi possível carregar seus pedidos. Tente atualizar.');}
+ }catch(e){
+  $('pedidosResumo').textContent='Consulta de pedidos indisponível';
+  dizer('Não foi possível carregar seus pedidos. Tente atualizar.');
+ }
 }
 async function atualizarIdentidadeTeste(){
  const area=$('painelIdentidadeTeste'),form=$('formCpfTeste');
@@ -1663,6 +1668,8 @@ $('formLogin').addEventListener('submit',entrar);
 $('captchaLoginAtualizar').addEventListener('click',()=>void atualizarCaptchaLogin());
 $('captchaCadastroAtualizar').addEventListener('click',()=>void atualizarCaptchaCadastro());
 $('formCpfTeste').addEventListener('submit',registrarIdentidadeTeste);
+$('atualizarPedidos').addEventListener('click',()=>void atualizarPedidos());
+$('pedidosVerPosicoes').addEventListener('click',()=>mostrarAba('conteudoPosicoes'));
 $('pedidosAnterior').addEventListener('click',()=>{
  if(paginaPedidos>0){paginaPedidos--;atualizarPedidos();}
 });

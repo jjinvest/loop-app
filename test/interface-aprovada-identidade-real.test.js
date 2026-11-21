@@ -52,8 +52,8 @@ test('HTML original do cliente é reaproveitado sem script LAB, nova tela ou CPF
  assert.match(html,/minlength="12" maxlength="128"/);
  assert.match(html,/Nick \(1 a 12 letras\)/);
  assert.equal((html.match(/maxlength="12" pattern="\[A-Za-z\]\{1,12\}"/g)||[]).length,3);
- assert.equal((html.match(/href="\/loja"/g)||[]).length,7,
-  'dois novos banners adicionam dois links, sem perder atalhos existentes');
+ assert.equal((html.match(/href="\/loja"/g)||[]).length,8,
+  'atalho para AKITEMM na aba Meus Pedidos sem perder os links existentes');
  assert.doesNotMatch(html,/href="\/staging\/loja"/);
  assert.match(html,/src="\/identidade\/assets\/cliente.js"/);
  assert.doesNotMatch(html,/src="\/staging\/assets\/cliente.js"/);
@@ -137,6 +137,12 @@ test('interface aprovada e identidade real servidas da mesma origem protegida',a
  assert.match(script,/catracaClientePodeGirar/);
  assert.match(script,/LoopVisorCatraca\.criar/);
  assert.match(script,/carregarPedidos/);
+ assert.match(script,/rotulosPedidos/);
+ assert.match(paginaHtml,/id="atualizarPedidos"/);
+ assert.match(paginaHtml,/id="pedidosResumo"/);
+ assert.match(paginaHtml,/id="pedidosVerPosicoes"/);
+ assert.doesNotMatch(paginaHtml,/Solicitações anteriores/);
+ assert.doesNotMatch(paginaHtml,/Atualizações dos pedidos/);
  assert.match(script,/\/api\/loja\/pedidos/);
  assert.match(script,/abaMeusPedidos/);
  assert.doesNotMatch(script,/termosCpfTexto'\)\.textContent='Versão'/);

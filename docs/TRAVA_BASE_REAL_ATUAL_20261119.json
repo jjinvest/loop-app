@@ -412,7 +412,7 @@
     },
     {
       "path": "scripts/validar-identidade-real-navegador.js",
-      "sha": "c6b024ac7f268f929eb9c371624cddacd98a6a2f"
+      "sha": "0562d6b8cf6182d9f4c401445744400198f25c25"
     },
     {
       "path": "scripts/validar-jornada-loja-cores-browser.js",
@@ -464,11 +464,11 @@
     },
     {
       "path": "src/candidato/checkout-candidato-ui.html",
-      "sha": "2013671607e22a9a78718ad55c75e35f51b1457c"
+      "sha": "bd4f54a33ee59dc44e613f12fbf223b06d86d62c"
     },
     {
       "path": "src/candidato/checkout-candidato-ui.js",
-      "sha": "8144b0ff11d1429f56a00e5d59ad365eab329867"
+      "sha": "ef829364359866e3b8447dd0aca3448275600774"
     },
     {
       "path": "src/candidato/escritorio-admin-candidato-ui.css",
@@ -1252,7 +1252,7 @@
     },
     {
       "path": "src/producao/acabamento-botoes-real.css",
-      "sha": "4e90307b76f49dc3fbb14b031a9ead94671b71e1"
+      "sha": "4eac68159b823caa6ac8258e7d6877bd83d2ce74"
     },
     {
       "path": "src/producao/aceite-posicao-azul-ensaio-sqlite.js",
@@ -1384,7 +1384,7 @@
     },
     {
       "path": "src/producao/interface-aprovada-contas.js",
-      "sha": "0361f36db7c5023471657405d2c12313f40d97fb"
+      "sha": "aab6dcfccb64b775f51d10d00afe0d447ac7eb45"
     },
     {
       "path": "src/producao/interface-aprovada-loja.js",
@@ -2596,7 +2596,7 @@
     },
     {
       "path": "test/interface-aprovada-identidade-real.test.js",
-      "sha": "740ede2b6e5bfeb436f38d280a9a90dcd1cd94c0"
+      "sha": "b59577989de0786243f8e83eb35b21978fbb8aa2"
     },
     {
       "path": "test/interface-loop-03.test.js",
@@ -3192,7 +3192,7 @@
     },
     {
       "path": "test/servidor-escritorio-preview-railway.test.js",
-      "sha": "c1bbb2c486d699d2d1a56b7f8352619dfa938804"
+      "sha": "193b98efc887d680ba6f30d9bf746be987673c68"
     },
     {
       "path": "test/servidor-publico-bloqueio-laboratorio-marco-zero.test.js",

@@ -909,14 +909,16 @@ test('cadastro de convite tem CPF depois do nick antes do e-mail',async t=>{
 });
 
 
-test('abas consultam dados automaticamente sem botoes Atualizar redundantes',async t=>{
+test('abas consultam automaticamente e Meus Pedidos permite repetir a consulta',async t=>{
  const x=await preparar(t);
  const html=await (await x.consultar('/minha-conta')).text();
  const js=await (await x.consultar('/staging/assets/cliente.js')).text();
- for(const id of ['atualizarPedidos','atualizarPosicoes','atualizarEquipe']){
-  assert.equal(html.includes('id="'+id+'"'),false,'botao removido '+id);
-  assert.equal(js.includes("$('"+id+"')"),false,'listener removido '+id);
+ for(const id of ['atualizarPosicoes','atualizarEquipe']){
+  assert.equal(html.includes('id="'+id+'"'),false,'botao redundante '+id);
+  assert.equal(js.includes("$('"+id+"')"),false,'listener redundante '+id);
  }
+ assert.equal((html.match(/id="atualizarPedidos"/g)||[]).length,1);
+ assert.ok(js.includes("$('atualizarPedidos').addEventListener('click'"));
  assert.ok(js.includes("if(alvo==='conteudoMeusPedidos')atualizarPedidos()"));
  assert.ok(js.includes("if(alvo==='conteudoPosicoes')atualizarPosicoes()"));
  assert.ok(js.includes("if(alvo==='conteudoEquipe')atualizarEquipe(0)"));
