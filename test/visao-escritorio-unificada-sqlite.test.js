@@ -109,7 +109,8 @@ test('Uma leitura une posição, compra, fila e indicação do mesmo titular sem
   titularId:x.vera.titularId,cursor:primeira.proximoCursor
  }),{codigo:'REDE_CURSOR_INVALIDO'});
  assert.throws(()=>x.visao.listarRede({
-  titularId:x.ana.titularId,cursor:primeira.proximoCursor.slice(0,-1)+'0'
+  titularId:x.ana.titularId,cursor:primeira.proximoCursor.slice(0,-1)+
+   (primeira.proximoCursor.endsWith('0')?'1':'0')
  }),{codigo:'REDE_CURSOR_INVALIDO'});
  // Paginação é técnica: não pode impor teto de 100 mil indicações.
  assert.deepEqual(x.visao.listarRede({
