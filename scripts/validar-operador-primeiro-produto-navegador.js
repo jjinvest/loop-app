@@ -231,6 +231,20 @@ async function principal(){
   await page.getByText('Produto movido para 1º.',{exact:false}).waitFor({
    timeout:12000
   });
+  await page.waitForTimeout(750);
+  const comparacaoOrdem=await page.evaluate(async()=>{
+   const resposta=await fetch('/api/loja/catalogo',{cache:'no-store'});
+   const api=await resposta.json();
+   return {statusApi:resposta.status,
+    api:api.produtos?.map(p=>({id:p.produtoId,ordem:p.posicaoVitrine})),
+    dom:[...document.querySelectorAll('#catalogoLojaLoop [data-produto-id]')]
+     .map(c=>({id:c.dataset.produtoId,ordem:c.dataset.akitemmOrdem})),
+    botao:document.getElementById('atualizarCatalogoLoja')?.disabled,
+    erro:document.getElementById('akitemmResultadoProdutos')?.textContent
+   };
+  });
+  console.log('COMPARACAO_ORDEM='+JSON.stringify(comparacaoOrdem));
+  console.log('ERROS_NAVEGADOR='+JSON.stringify(errosNavegador));
   await page.waitForFunction(()=>{
    const cards=[...document.querySelectorAll(
     '#catalogoLojaLoop [data-produto-id]'
