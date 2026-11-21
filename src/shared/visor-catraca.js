@@ -68,7 +68,12 @@
     const bola=$('motorBolinha'+i);
     if(!bola)continue;
     const ligada=operador&&valido&&i<=estado.luzes;
+    const lampadaAtual=ligada&&estado.luzes>0&&i===estado.luzes;
     bola.classList.toggle('loop03-relogio-luz-visual',ligada);
+    // A lâmpada alcançada pelo próximo marco do relógio pulsa enquanto
+    // o turno está ativo. As anteriores permanecem acesas; a próxima
+    // acende exatamente ao vencer o intervalo. Sem executar giro/pagamento.
+    bola.classList.toggle('loop03-relogio-luz-atual',lampadaAtual);
     if(operador)bola.classList.toggle('loop03-marcador-aceso',
      ligada||i<=eventos);
     if(ligada&&chave!==ultimaJanelaVisual&&
