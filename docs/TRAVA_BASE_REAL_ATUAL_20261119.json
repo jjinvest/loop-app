@@ -1292,7 +1292,7 @@
     },
     {
       "path": "src/producao/backup-identidade-real.js",
-      "sha": "b003181c511b4cd3c6a3bedb70b23e26f23c69f1"
+      "sha": "329806cdfe09328b3294cbe9eabd480a010326d6"
     },
     {
       "path": "src/producao/backup-midia-offsite.js",
@@ -1428,7 +1428,7 @@
     },
     {
       "path": "src/producao/motor-loop-integrado-sqlite.js",
-      "sha": "0ecc5ca44e05293ba74693849f2b79422db67e5a"
+      "sha": "5676eea2bf622405b8f888f7eb08e05b0fde7a20"
     },
     {
       "path": "src/producao/observacoes-psp-ensaio-sqlite.js",
@@ -1473,6 +1473,10 @@
     {
       "path": "src/producao/preparar-nucleo-comercial-real-fechado.js",
       "sha": "4855bdd0ef1979c489e2b7582c56f6319ddaf36f"
+    },
+    {
+      "path": "src/producao/projecao-filas-relacional-sqlite.js",
+      "sha": "7b485754ec373b6fcc64030b2ca340a1574bd960"
     },
     {
       "path": "src/producao/promocao-lotes-ensaio-sqlite.js",
@@ -3049,6 +3053,10 @@
     {
       "path": "test/projecao-filas-candidato-sandbox.test.js",
       "sha": "56a522d69bab8860c340f7b1d1bcd6883f521af3"
+    },
+    {
+      "path": "test/projecao-filas-relacional-shadow-real.test.js",
+      "sha": "2157856f3a2697ddb37d82316b91edce49cfff38"
     },
     {
       "path": "test/projecao-sustentabilidade-loop.test.js",
