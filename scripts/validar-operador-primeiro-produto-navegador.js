@@ -288,6 +288,50 @@ async function principal(){
     ignoreHTTPSErrors:true
    })).status(),200);
   assert.equal(await page.locator('#registrarPedidoLoja').isDisabled(),true);
+
+  // Visitante usa a MESMA vitrine real criada pelo operador,
+  // mas não recebe controles de administração nem consegue editar.
+  const ctxCliente=await browser.newContext({
+   ignoreHTTPSErrors:true,viewport:{width:390,height:844},
+   deviceScaleFactor:1,isMobile:true,hasTouch:true
+  });
+  const cliente=await ctxCliente.newPage();
+  cliente.setDefaultTimeout(12000);
+  await cliente.goto(base+'/loja',{waitUntil:'domcontentloaded'});
+  await cliente.locator('#catalogoLojaLoop [data-produto-id="primeiro-produto"]')
+   .waitFor({state:'visible'});
+  assert.equal(await cliente.locator('.akitemm-alca-arrastar').count(),0);
+  const cards=cliente.locator('#catalogoLojaLoop [data-produto-id]');
+  assert.equal(await cards.first().getAttribute('data-produto-id'),'segundo-produto');
+  const produtoCliente=cliente.locator(
+   '#catalogoLojaLoop [data-produto-id="primeiro-produto"]');
+  assert.match(await produtoCliente.innerText(),/R\\$\\s?249,90/);
+  await produtoCliente.locator('.akitemm-imagem-produto').click();
+  await cliente.locator('#akitemmVisualizacaoProduto h2')
+   .filter({hasText:'Produto de ensaio de operador'}).waitFor();
+  assert.match(await cliente.locator('#akitemmProdutoInlineConteudo').innerText(),
+   /R\\$\\s?299,90/);
+  assert.match(await cliente.locator('#akitemmProdutoInlineConteudo').innerText(),
+   /R\\$\\s?249,90/);
+  await cliente.locator('#akitemmProdutoInlineConteudo .akitemm-detalhe-foto-principal')
+   .waitFor({state:'visible'});
+  await cliente.locator('#akitemmProdutoInlineConteudo .akitemm-detalhe-avaliacoes')
+   .filter({hasText:'Ainda não há avaliações de compras verificadas.'}).waitFor();
+  await cliente.locator('#akitemmVoltarProdutos').click();
+  await cliente.locator('#catalogoLojaLoop [data-produto-id="primeiro-produto"]')
+   .waitFor({state:'visible'});
+  assert.equal(await cliente.locator('#akitemmVisualizacaoProduto').isHidden(),true);
+  const proibido=await cliente.evaluate(()=>fetch(
+   '/api/admin/catalogo-midia/produtos/primeiro-produto/anuncio',
+   {credentials:'same-origin'}
+  ).then(r=>r.status));
+  assert.equal(proibido,401);
+  const detalhes=await cliente.evaluate(()=>fetch(
+   '/api/loja/produtos/primeiro-produto/avaliacoes'
+  ).then(r=>r.json()));
+  assert.equal(detalhes.total,0);
+  assert.equal(detalhes.origem,'COMPRAS_VERIFICADAS');
+  await ctxCliente.close();
   assert.equal(banco.prepare('PRAGMA quick_check').get().quick_check,'ok');
   console.log('OPERADOR_VITRINE_VALIDADO: CADASTRO_MANUAL -> FOTO -> COR -> DRAG_TOUCH -> SQLITE_SEM_COMPRA');
  }finally{
