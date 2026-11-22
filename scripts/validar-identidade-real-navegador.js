@@ -336,6 +336,18 @@ async function main(){
    assert.equal(bannerPersistido.status,200);
    assert.equal(bannerPersistido.slot.temImagem,true);
    assert.equal(bannerPersistido.slot.revisao,1);
+   // Limpeza deste ensaio: a tela dos proximos testes volta ao estado inicial.
+   const limpezaBanner=await operadorPage.evaluate(async()=>{
+    const sessao=await fetch('/api/admin/comercial/sessao',{
+     credentials:'same-origin',cache:'no-store'
+    }).then(r=>r.json());
+    return fetch('/api/admin/loop/banners/1/imagem',{
+     method:'DELETE',credentials:'same-origin',
+     headers:{'X-Loop-Admin-Csrf':sessao.csrfToken,
+      'X-Banner-Revisao-Esperada':'1'}
+    }).then(r=>r.status);
+   });
+   assert.equal(limpezaBanner,200);
    // Foto do operador somente em modo operador autenticado.
    await operadorPage.goto(base+'/loja?visao=operador',{
     waitUntil:'domcontentloaded'
