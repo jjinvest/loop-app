@@ -196,6 +196,27 @@ async function main(){
    operadorPage.setDefaultTimeout(15000);
    await operadorPage.goto(base+'/escritorio');
    await operadorPage.locator('#painelLogin').waitFor({state:'visible'});
+   // Não deve existir terceiro seletor de foto solto abaixo do login,
+   // nem no computador nem no Android. O input pode ficar no body para
+   // atender ao toque sobre a foto, mas sua caixa tem de estar fora da tela.
+   const entrada=await operadorPage.locator('#arquivoFotoPerfil')
+    .evaluate(input=>{
+     const s=getComputedStyle(input),r=input.getBoundingClientRect();
+     const visivel=s.display!=='none'&&s.visibility!=='hidden'&&
+      s.opacity!=='0'&&r.width>0&&r.height>0&&
+      r.right>0&&r.left<innerWidth&&r.bottom>0&&r.top<innerHeight;
+     return {visivel,foraDoFormulario:input.parentElement===document.body,
+      posicao:s.position,opacidade:s.opacity,esquerda:r.left,
+      ariaOculto:input.getAttribute('aria-hidden')};
+    });
+   assert.equal(entrada.visivel,false,
+    'O seletor nativo de arquivos não pode aparecer abaixo do login');
+   if(entrada.foraDoFormulario){
+    assert.equal(entrada.posicao,'fixed');
+    assert.equal(entrada.opacidade,'0');
+    assert.ok(entrada.esquerda<-1000);
+    assert.equal(entrada.ariaOculto,'true');
+   }
    assert.equal(await operadorPage.locator(
     'script[src^="/identidade/assets/cliente.js?rev="]').count(),1,
     'A entrada precisa solicitar a versao nova do JS de login');
@@ -241,6 +262,9 @@ async function main(){
    // Foto no Android deve abrir o seletor de arquivos pelo TOQUE real
    // no circulo, nao apenas setInputFiles sobre input escondido.
    assert.equal(await operadorPage.locator('body > #arquivoFotoPerfil').count(),1);
+   assert.equal(await operadorPage.locator('#arquivoFotoPerfil')
+    .evaluate(x=>getComputedStyle(x).opacity),'0',
+    'O seletor do operador deve ficar invisível, mas funcional');
    const seletorPromise=operadorPage.waitForEvent('filechooser');
    await operadorPage.locator('#loop03AlterarFotoTopo').click();
    const seletor=await seletorPromise;
