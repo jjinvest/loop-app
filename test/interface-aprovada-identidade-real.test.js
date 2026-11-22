@@ -185,7 +185,7 @@ test('interface aprovada e identidade real servidas da mesma origem protegida',a
  const lojaHtml=await loja.text();
  assert.match(lojaHtml,/id="catalogoLojaLoop"/);
  assert.match(lojaHtml,/id="akitemmFormEntrega"/);
- assert.match(lojaHtml,/src="\/identidade\/assets\/loja.js"/);
+ assert.match(lojaHtml,/src="\/identidade\/assets\/loja\.js\?rev=[a-f0-9]{16}"/);
  assert.doesNotMatch(lojaHtml,/src="\/laboratorio\/loja.js"/);
  const scriptLoja=await get('/identidade/assets/loja.js');
  assert.equal(scriptLoja.status,200);
