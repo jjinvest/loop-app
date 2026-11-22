@@ -70,8 +70,10 @@
   const s=areaFonte();
   const pixels=formato.value==='livre'?
    Math.min(1600,Math.max(largura,altura)):1600;
-  canvas.width=Math.max(1,Math.round(Math.min(1600,pixels)));
-  canvas.height=Math.max(1,Math.min(2400,Math.round(canvas.width/s.proporcao)));
+  // Limites sem esticar/distorcer fotos verticais muito altas.
+  const larguraSaida=Math.min(1600,pixels,2400*s.proporcao);
+  canvas.width=Math.max(1,Math.round(larguraSaida));
+  canvas.height=Math.max(1,Math.round(canvas.width/s.proporcao));
   const ctx=canvas.getContext('2d',{alpha:false});
   if(!ctx)throw Error('EDITOR_DE_IMAGEM_INDISPONIVEL');
   ctx.fillStyle='#ffffff';ctx.fillRect(0,0,canvas.width,canvas.height);
