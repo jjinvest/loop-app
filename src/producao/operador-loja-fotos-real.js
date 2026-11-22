@@ -919,6 +919,7 @@
        });
       if(r.excluido!==true)throw Error('EXCLUSAO_NAO_CONFIRMADA');
       card.remove();pendentes--;atualizarQuantidade();
+      estado.textContent='Rascunho descartado. '+estado.textContent;
      }catch(e){estado.textContent='Não foi possível descartar: '+e.message;}
      finally{excluir.disabled=false;}
     });
