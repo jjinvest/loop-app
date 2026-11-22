@@ -424,7 +424,7 @@
     },
     {
       "path": "scripts/validar-identidade-real-navegador.js",
-      "sha": "c9a10f8b1cdcb6cb143afe2e7e7d424fcd0a7907"
+      "sha": "b9552f8062b5f2a085154bf6c27d48123bc9662d"
     },
     {
       "path": "scripts/validar-jornada-loja-cores-browser.js",
@@ -1456,7 +1456,7 @@
     },
     {
       "path": "src/producao/interface-aprovada-loja.js",
-      "sha": "cd4264616a39db5af59804209def12fa0350dca4"
+      "sha": "092ed0c17ca73dd4fea83b964ab98a36996a2c9e"
     },
     {
       "path": "src/producao/interface-aprovada-loop.js",
@@ -1884,7 +1884,7 @@
     },
     {
       "path": "test/akitemm-aviso-automatico-e-visoes-real.test.js",
-      "sha": "f1ba18d4a50e8aed1ae89f3be9e0cf9e24859ee8"
+      "sha": "ee3623a4f47055aa0e3ad5327661153e6720e64e"
     },
     {
       "path": "test/akitemm-config-loja-demo.test.js",
@@ -2616,7 +2616,7 @@
     },
     {
       "path": "test/foto-perfil-akitemm-visoes-cliente-operador.test.js",
-      "sha": "21f386ae9d4d03edb8f944c0cb62359ad02f0c52"
+      "sha": "b7795b3686bbc30caa06214d72f2db5211f06e34"
     },
     {
       "path": "test/foto-perfil-real-cadastro-documentos-7x7.test.js",
@@ -3956,6 +3956,30 @@
       "antes": "a60ae020213f0a0cfc8568b353839506e861fc1e",
       "depois": "efd59a4e2c9916b750163a3f5f10db7252d52cb9",
       "objetivo": "Contrato de papéis 22/11/2026: operador mantém central restrita, foto de cliente do próprio titular exibida apenas na visão autenticada do cliente."
+    },
+    {
+      "path": "src/producao/interface-aprovada-loja.js",
+      "antes": "cd4264616a39db5af59804209def12fa0350dca4",
+      "depois": "092ed0c17ca73dd4fea83b964ab98a36996a2c9e",
+      "objetivo": "Preservar isolamento de sessão em 22/11/2026: na visão pública de cliente sem login pessoal não mostrar foto do operador; foto pessoal somente da conta autenticada, foto administrativa somente na visão autenticada do operador."
+    },
+    {
+      "path": "scripts/validar-identidade-real-navegador.js",
+      "antes": "c9a10f8b1cdcb6cb143afe2e7e7d424fcd0a7907",
+      "depois": "b9552f8062b5f2a085154bf6c27d48123bc9662d",
+      "objetivo": "Preservar isolamento de sessão em 22/11/2026: na visão pública de cliente sem login pessoal não mostrar foto do operador; foto pessoal somente da conta autenticada, foto administrativa somente na visão autenticada do operador."
+    },
+    {
+      "path": "test/foto-perfil-akitemm-visoes-cliente-operador.test.js",
+      "antes": "21f386ae9d4d03edb8f944c0cb62359ad02f0c52",
+      "depois": "b7795b3686bbc30caa06214d72f2db5211f06e34",
+      "objetivo": "Preservar isolamento de sessão em 22/11/2026: na visão pública de cliente sem login pessoal não mostrar foto do operador; foto pessoal somente da conta autenticada, foto administrativa somente na visão autenticada do operador."
+    },
+    {
+      "path": "test/akitemm-aviso-automatico-e-visoes-real.test.js",
+      "antes": "f1ba18d4a50e8aed1ae89f3be9e0cf9e24859ee8",
+      "depois": "ee3623a4f47055aa0e3ad5327661153e6720e64e",
+      "objetivo": "Preservar isolamento de sessão em 22/11/2026: na visão pública de cliente sem login pessoal não mostrar foto do operador; foto pessoal somente da conta autenticada, foto administrativa somente na visão autenticada do operador."
     }
   ]
 }
