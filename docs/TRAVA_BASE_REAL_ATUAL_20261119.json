@@ -2372,7 +2372,7 @@
     },
     {
       "path": "test/contrato-links-definitivos-real.test.js",
-      "sha": "858bf9494c4adc380f636c693fdca37b595cadf7"
+      "sha": "2fbccd874b020d75360f6bed4e0af001eaa1baa7"
     },
     {
       "path": "test/contrato-mensagens-operacionais-real.test.js",
@@ -3956,6 +3956,12 @@
       "antes": "89bf07dab59d2cbf74e03d115dbc50f4eec0a95b",
       "depois": "20884598628b0707df0768ade39534d55087116d",
       "objetivo": "Testar em Chromium PC e Android a foto já salva no LOOP, visível nas visões operador e cliente da AKITEMM, preservando identidade do titular."
+    },
+    {
+      "path": "test/contrato-links-definitivos-real.test.js",
+      "antes": "858bf9494c4adc380f636c693fdca37b595cadf7",
+      "depois": "2fbccd874b020d75360f6bed4e0af001eaa1baa7",
+      "objetivo": "Contrato real aceita hash de versão no JS da loja para evitar cache antigo no Chrome Android, sem alterar os links públicos."
     }
   ]
 }
