@@ -1884,7 +1884,7 @@
     },
     {
       "path": "test/akitemm-aviso-automatico-e-visoes-real.test.js",
-      "sha": "6f868adf4e080c10a4f2a2c5fcfae4426937b95f"
+      "sha": "6c94dd828602a5c487047b3ded92a561a5cb57f9"
     },
     {
       "path": "test/akitemm-config-loja-demo.test.js",
@@ -4022,6 +4022,12 @@
       "antes": "efdf97930665105bab08ec1c39b854105bc2c284",
       "depois": "57b0ae5abe312be8715461c0f98bce031d90f507",
       "objetivo": "Solicitação do titular: retirar alternância de visão duplicada da AKITEMM e mostrar no círculo do cabeçalho a foto já salva pelo próprio operador em ambas as visões; nenhuma foto de cliente é compartilhada."
+    },
+    {
+      "path": "test/akitemm-aviso-automatico-e-visoes-real.test.js",
+      "antes": "6f868adf4e080c10a4f2a2c5fcfae4426937b95f",
+      "depois": "6c94dd828602a5c487047b3ded92a561a5cb57f9",
+      "objetivo": "Contrato de regressão atualizado conforme decisão do proprietário: alternância é feita só no LOOP, a AKITEMM exibe avatar próprio do operador e permanece isolada dos dados dos clientes."
     }
   ]
 }
