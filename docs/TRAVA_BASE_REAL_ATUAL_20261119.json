@@ -2852,7 +2852,7 @@
     },
     {
       "path": "test/lixeira-rascunhos-akitemm-e-alinhamento.test.js",
-      "sha": "7b5b5eb07d5758f350dbe4d1b724e769ea2728d3"
+      "sha": "39e28a87d64b4724efac161102e3c67b5d537855"
     },
     {
       "path": "test/logout-operador-botoes.test.js",
@@ -5207,6 +5207,13 @@
       "antes": "3466a08279224240cc6a61d9b07e27105d9d773d",
       "depois": "ce112c08e0b55fc9aa0a427a98bd92d377f4ef77",
       "objetivo": "Permitir novo evento administrativo auditado VITRINE_RASCUNHO_DESVINCULADO para remoção atômica de rascunho nunca publicado sem pedidos; preservar auditoria imutável."
+    },
+    {
+      "data": "2026-11-22",
+      "path": "test/lixeira-rascunhos-akitemm-e-alinhamento.test.js",
+      "antes": "7b5b5eb07d5758f350dbe4d1b724e769ea2728d3",
+      "depois": "39e28a87d64b4724efac161102e3c67b5d537855",
+      "objetivo": "Cobrir rota real de descarte por HTTP, com vários produtos pendentes, sessões de operador, CSRF, rascunho vinculado e proteção ao publicado; sem alterações financeiras."
     }
   ]
 }
