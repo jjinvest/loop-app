@@ -232,11 +232,11 @@ async function main(){
    assert.equal(await olho.getAttribute('aria-pressed'),'false');
    assert.equal(await olho.getAttribute('aria-label'),'Mostrar senha');
    await operadorPage.locator('#formLogin button[type=submit]').click();
-   await operadorPage.locator('#loopOperadorAcoes').waitFor({state:'visible'});
+   await operadorPage.locator('#loopOperadorAtalhos').waitFor({state:'visible'});
    assert.equal(new URL(operadorPage.url()).pathname,'/escritorio');
    assert.equal(await operadorPage.locator('#loop03NickIntegrado').innerText(),
     'OPERADOR');
-   assert.equal(await operadorPage.locator('#abaConta').isDisabled(),true);
+   assert.equal(await operadorPage.locator('#abaConta').isDisabled(),false);
    assert.equal(await operadorPage.locator('#loop03AlterarFotoTopo').isEnabled(),true);
    // Foto no Android deve abrir o seletor de arquivos pelo TOQUE real
    // no circulo, nao apenas setInputFiles sobre input escondido.
@@ -265,7 +265,7 @@ async function main(){
    await operadorPage.reload();
    await operadorPage.locator('#loop03ImagemFotoTopo').waitFor({state:'visible'});
    assert.equal(await operadorPage.locator('body > #arquivoFotoPerfil').count(),1);
-   assert.equal(await operadorPage.locator('#abaConta').isDisabled(),true);
+   assert.equal(await operadorPage.locator('#abaConta').isDisabled(),false);
    if(visual.mobile)await operadorPage.locator('#loop03MenuIntegrado').click();
    await operadorPage.locator('#abaTabuleiro').click();
    await operadorPage.locator('#conteudoTabuleiro').waitFor({state:'visible'});
@@ -358,12 +358,11 @@ async function main(){
    await operadorPage.waitForURL(url=>url.pathname==='/administrador');
    await operadorPage.locator('#loopAdminEstado').waitFor({state:'visible'});
    await operadorPage.goto(base+'/escritorio');
-   await operadorPage.locator('#loopOperadorAcoes').waitFor({state:'visible'});
-   if(visual.mobile)await operadorPage.locator('#loop03MenuIntegrado').click();
-   await operadorPage.locator('#loopAcessoAdminMenu:not([hidden])').click();
+   await operadorPage.locator('#loopOperadorAtalhos').waitFor({state:'visible'});
+   await operadorPage.locator('#loopAcessoAdminMenu').click();
    await operadorPage.waitForURL(url=>url.pathname==='/administrador');
    await operadorPage.goto(base+'/escritorio');
-   await operadorPage.locator('#loopOperadorAcoes').waitFor({state:'visible'});
+   await operadorPage.locator('#loopOperadorAtalhos').waitFor({state:'visible'});
    if(visual.mobile)await operadorPage.locator('#loop03MenuIntegrado').click();
    // Regressao da sessao expirada: nao deixar o painel do relogio vazio.
    await contextoOperador.clearCookies();
@@ -376,7 +375,7 @@ async function main(){
    await operadorPage.locator('#senha').fill(
     'CredencialAdministrativaIsolada2026!Teste');
    await operadorPage.locator('#formLogin button[type=submit]').click();
-   await operadorPage.locator('#loopOperadorAcoes').waitFor({state:'visible'});
+   await operadorPage.locator('#loopOperadorAtalhos').waitFor({state:'visible'});
    if(visual.mobile)await operadorPage.locator('#loop03MenuIntegrado').click();
    await operadorPage.locator('#sair').click();
    await operadorPage.locator('#painelLogin').waitFor({state:'visible'});
@@ -928,10 +927,10 @@ async function main(){
     httpOnly:true,secure:true,sameSite:'Strict'
    }]);
    await page.goto(base+'/escritorio',{waitUntil:'domcontentloaded'});
-   await page.locator('#loopOperadorAcoes').waitFor({state:'visible'});
+   await page.locator('#loopOperadorAtalhos').waitFor({state:'visible'});
    assert.equal(await page.locator('#loop03NickIntegrado').innerText(),'OPERADOR');
    assert.equal(await page.locator('#loopAcessoAdminMenu').getAttribute('hidden'),null);
-   assert.equal(await page.locator('#abaConta').isDisabled(),true);
+   assert.equal(await page.locator('#abaConta').isDisabled(),false);
    await page.goto(base+'/loja');
    await page.locator('#akitemmNomeTitular').filter({hasText:'OPERADOR'}).waitFor();
    assert.equal(await page.locator('#copiarDivulgarLojaLoop').isDisabled(),true,
@@ -1265,9 +1264,9 @@ async function main(){
     httpOnly:true,secure:true,sameSite:'Strict'
    }]);
    await pagina.goto(base+'/escritorio');
-   await pagina.locator('#loopOperadorAcoes').waitFor({state:'visible'});
+   await pagina.locator('#loopOperadorAtalhos').waitFor({state:'visible'});
    assert.equal(await pagina.locator('#loop03NickIntegrado').innerText(),'OPERADOR');
-   assert.equal(await pagina.locator('#abaFinanceiro').isDisabled(),true);
+   assert.equal(await pagina.locator('#abaFinanceiro').isDisabled(),false);
    assert.equal(await pagina.locator('#loopAcessoAdminMenu').getAttribute('hidden'),null);
    await pagina.goto(base+'/loja');
    await pagina.locator('#akitemmNomeTitular').filter({hasText:'OPERADOR'}).waitFor();
