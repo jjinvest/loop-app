@@ -102,7 +102,9 @@
  }
  botao.addEventListener('click',e=>{e.preventDefault();abrir();});
  pista.addEventListener('scroll',exibirEditor,{passive:true});
- const obs=new MutationObserver(exibirEditor);
+ // Login de cliente/operador pode acontecer sem recarregar a página.
+ // Revalidar a sessão e buscar as quatro fotos após a troca de modo.
+ const obs=new MutationObserver(()=>{void checarAcesso();});
  obs.observe(document.body,{attributes:true,attributeFilter:['class']});
  arquivo.addEventListener('change',()=>{
   const f=arquivo.files?.[0];

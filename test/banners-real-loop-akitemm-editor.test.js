@@ -84,6 +84,7 @@ test('formulários reais: sinal + abre área de foto e envia à tabela correta',
  assert.match(frente,/api\/loop\/banners/);
  assert.match(frente,/api\/admin\/loop\/banners/);
  assert.match(frente,/document\.body\.classList\.contains\('loop03-modo-operador'\)/);
+ assert.match(frente,/MutationObserver\(\(\)=>\{void checarAcesso\(\);\}\)/);
  assert.match(lojaJs,/akitemmBannerMaisReal/);
  assert.match(lojaJs,/akitemmBannerFormularioReal/);
  assert.match(lojaJs,/api\/admin\/akitemm\/banners/);

@@ -1336,7 +1336,7 @@
     },
     {
       "path": "src/producao/banners-escritorio-real-client.js",
-      "sha": "32c6cad9d238ed572f8bfa4d178a74778d1cdecd"
+      "sha": "b16663e41a01dcb6ea823507d00efac6bb02f222"
     },
     {
       "path": "src/producao/banners-escritorio-real.js",
@@ -2164,7 +2164,7 @@
     },
     {
       "path": "test/banners-real-loop-akitemm-editor.test.js",
-      "sha": "78cb5577e32ab2b3ac4bded3512cdde806721a50"
+      "sha": "0233fb146fe5082680ad639398d5831576ee8066"
     },
     {
       "path": "test/cabecalho-relogio-tabuleiro-real.test.js",
@@ -4164,6 +4164,18 @@
       "antes": null,
       "depois": "78cb5577e32ab2b3ac4bded3512cdde806721a50",
       "objetivo": "Pedido de 22/11/2026: 4 banners LOOP separados dos 4 AKITEMM, edição por + abrindo formulário real com arquivo e ajuste automático, sem tocar em catraca, dinheiro, clientes ou telas aprovadas."
+    },
+    {
+      "path": "src/producao/banners-escritorio-real-client.js",
+      "antes": "32c6cad9d238ed572f8bfa4d178a74778d1cdecd",
+      "depois": "b16663e41a01dcb6ea823507d00efac6bb02f222",
+      "objetivo": "Após entrar sem recarregar, sessão cliente mostra banner publicado e operador tem +; revalidar papel com controle de acesso real, sem mudar design."
+    },
+    {
+      "path": "test/banners-real-loop-akitemm-editor.test.js",
+      "antes": "78cb5577e32ab2b3ac4bded3512cdde806721a50",
+      "depois": "0233fb146fe5082680ad639398d5831576ee8066",
+      "objetivo": "Após entrar sem recarregar, sessão cliente mostra banner publicado e operador tem +; revalidar papel com controle de acesso real, sem mudar design."
     }
   ]
 }
