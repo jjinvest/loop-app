@@ -248,3 +248,22 @@ dialog.akitemm-operador-editor .akitemm-campo-erro{
 .akitemm-loja #akitemmSuporte .akitemm-protocolo-atendimento p{
  overflow-wrap:anywhere
 }
+
+
+/* Alça de operador também nas molduras vazias, sem mudar a visão do cliente. */
+.akitemm-loja #catalogoLojaLoop .akitemm-slot-vazio.akitemm-ordenavel{
+ cursor:grab;
+ touch-action:pan-y;
+}
+.akitemm-loja #catalogoLojaLoop .akitemm-slot-vazio.akitemm-ordenavel>.akitemm-alca-arrastar{
+ display:grid;z-index:7;min-width:44px;min-height:44px;
+ touch-action:none;cursor:grab;
+ border-color:var(--ak-slot-cor);
+ color:var(--ak-slot-cor);
+ background:#0f2231ed
+}
+.akitemm-loja #catalogoLojaLoop .akitemm-slot-vazio.akitemm-arrasto-alvo{
+ outline:3px solid #f4d68a;
+ outline-offset:1px;
+ box-shadow:0 0 20px #eecf7255
+}
