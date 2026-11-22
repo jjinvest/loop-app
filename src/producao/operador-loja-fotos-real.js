@@ -37,6 +37,7 @@
    }catch{operador=false;}
   }
   document.getElementById('akitemmAlternarVisao')?.remove();
+  if(!operador&&dialogo?.open)dialogo.close();
   sincronizarEditorOfertas();
   prepararAlcas();
  }
