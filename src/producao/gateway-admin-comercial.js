@@ -143,7 +143,7 @@ function montarGatewayAdminComercial(app,{
  // publicadas; gravação, ordenação e enquadramento exigem operador+CSRF.
  if(motorLoop?.banco){
   const banners=new BannersLojaAkitemmRealSQLite({banco:motorLoop.banco});
-  const slot=req=>/^[1-4]$/.test(req.params.slot||'')?
+  const slot=req=>/^[1-9][0-9]{0,3}$/.test(req.params.slot||'')?
    Number(req.params.slot):null;
   const responderErro=(res,e)=>{
    const codigo=e?.codigo||'BANNER_LOJA_INDISPONIVEL';
@@ -166,7 +166,12 @@ function montarGatewayAdminComercial(app,{
   const corpoBanner=express.raw({
    type:['image/jpeg','image/png','image/webp'],limit:'4mb',inflate:false
   });
-  app.put('/api/admin/akitemm/banners/:slot/imagem',
+  app.post('/api/admin/akitemm/banners/adicionar',proteger,validarCsrf,
+   (req,res)=>{
+    try{return res.set('Cache-Control','no-store').json(banners.adicionar());}
+    catch(e){return responderErro(res,e);}
+   });
+    app.put('/api/admin/akitemm/banners/:slot/imagem',
    proteger,validarCsrf,corpoBanner,(req,res)=>{
     if(slot(req)===null)return res.status(404).json({erro:'BANNER_LOJA_SLOT_INVALIDO'});
     if(!['image/jpeg','image/png','image/webp'].includes(req.get('content-type')))
