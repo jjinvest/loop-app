@@ -9,9 +9,9 @@ test('foto da AKITEMM lê a mesma origem autenticada de cliente ou operador',()=
  const s=ler('src/producao/interface-aprovada-loja.js');
  assert.match(s,/\/api\/admin\/operador\/foto-perfil/);
  assert.match(s,/\/api\/contas\/foto-perfil/);
- assert.match(s,/const bloqueado=visitante&&!operadorAtivo;/);
+ assert.match(s,/const bloqueado=\(visitante&&!operadorAtivo\)\|\|/);
+ assert.match(s,/\(operadorAtivo&&visaoClienteLoja\)/);
  assert.match(s,/const caminho=bloqueado\?null:operadorAtivo\?/);
- assert.doesNotMatch(s,/operadorAtivo&&visaoClienteLoja\)\)/);
  assert.match(s,/caminhoFotoAtual!==caminho/);
  assert.match(s,/consulta===consultaFotoLoja\)fotoTitular.hidden=false/);
  assert.match(s,/credentials:'same-origin',cache:'no-store'/);

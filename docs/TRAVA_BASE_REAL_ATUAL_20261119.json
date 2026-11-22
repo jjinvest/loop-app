@@ -424,7 +424,7 @@
     },
     {
       "path": "scripts/validar-identidade-real-navegador.js",
-      "sha": "57b0ae5abe312be8715461c0f98bce031d90f507"
+      "sha": "24a1b78071bfcde4f811e4cbe940558414aaf5f4"
     },
     {
       "path": "scripts/validar-jornada-loja-cores-browser.js",
@@ -1456,7 +1456,7 @@
     },
     {
       "path": "src/producao/interface-aprovada-loja.js",
-      "sha": "b14d6df476e0f0da445e0f0610fb71cd769285f9"
+      "sha": "9ab86ea37a0003a2ceffc8fe44c1700db86ccc76"
     },
     {
       "path": "src/producao/interface-aprovada-loop.js",
@@ -1884,7 +1884,7 @@
     },
     {
       "path": "test/akitemm-aviso-automatico-e-visoes-real.test.js",
-      "sha": "6c94dd828602a5c487047b3ded92a561a5cb57f9"
+      "sha": "e504051971d606d614cb8d594e1b39f530a5e662"
     },
     {
       "path": "test/akitemm-config-loja-demo.test.js",
@@ -2616,7 +2616,7 @@
     },
     {
       "path": "test/foto-akitemm-sincronizacao-cliente-operador.test.js",
-      "sha": "57215f77ae4e3dc29749390e54c62c6ad3dc0ae9"
+      "sha": "10e6893ae5ce906fdb322a43ff1e46ba8967d75c"
     },
     {
       "path": "test/foto-perfil-real-cadastro-documentos-7x7.test.js",
@@ -4028,6 +4028,30 @@
       "antes": "6f868adf4e080c10a4f2a2c5fcfae4426937b95f",
       "depois": "6c94dd828602a5c487047b3ded92a561a5cb57f9",
       "objetivo": "Contrato de regressão atualizado conforme decisão do proprietário: alternância é feita só no LOOP, a AKITEMM exibe avatar próprio do operador e permanece isolada dos dados dos clientes."
+    },
+    {
+      "path": "src/producao/interface-aprovada-loja.js",
+      "antes": "b14d6df476e0f0da445e0f0610fb71cd769285f9",
+      "depois": "9ab86ea37a0003a2ceffc8fe44c1700db86ccc76",
+      "objetivo": "Regra permanente de 22/11/2026: cliente autenticado usa apenas foto de cliente, operador autenticado usa apenas foto de operador; prévia pública sem cliente identificado nunca herda retrato do operador. Botão duplicado permanece removido."
+    },
+    {
+      "path": "test/foto-akitemm-sincronizacao-cliente-operador.test.js",
+      "antes": "57215f77ae4e3dc29749390e54c62c6ad3dc0ae9",
+      "depois": "10e6893ae5ce906fdb322a43ff1e46ba8967d75c",
+      "objetivo": "Regra permanente de 22/11/2026: cliente autenticado usa apenas foto de cliente, operador autenticado usa apenas foto de operador; prévia pública sem cliente identificado nunca herda retrato do operador. Botão duplicado permanece removido."
+    },
+    {
+      "path": "test/akitemm-aviso-automatico-e-visoes-real.test.js",
+      "antes": "6c94dd828602a5c487047b3ded92a561a5cb57f9",
+      "depois": "e504051971d606d614cb8d594e1b39f530a5e662",
+      "objetivo": "Regra permanente de 22/11/2026: cliente autenticado usa apenas foto de cliente, operador autenticado usa apenas foto de operador; prévia pública sem cliente identificado nunca herda retrato do operador. Botão duplicado permanece removido."
+    },
+    {
+      "path": "scripts/validar-identidade-real-navegador.js",
+      "antes": "57b0ae5abe312be8715461c0f98bce031d90f507",
+      "depois": "24a1b78071bfcde4f811e4cbe940558414aaf5f4",
+      "objetivo": "Regra permanente de 22/11/2026: cliente autenticado usa apenas foto de cliente, operador autenticado usa apenas foto de operador; prévia pública sem cliente identificado nunca herda retrato do operador. Botão duplicado permanece removido."
     }
   ]
 }

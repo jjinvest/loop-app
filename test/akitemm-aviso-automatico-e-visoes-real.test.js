@@ -66,8 +66,8 @@ test('prévia cliente nunca herda dados financeiros, identidade ou permissões d
  assert.match(loja,/Nenhuma conta pessoal foi acessada/);
  assert.match(loja,/if\(operadorAtivo\)\{\s*const pedidos=\$\('pedidosLojaLoop'\)/);
  assert.match(loja,/if\(visitante\|\|operadorAtivo\|\|!csrfLoja\)return/);
- assert.match(loja,/const bloqueado=visitante&&!operadorAtivo;/);
- assert.doesNotMatch(loja,/const bloqueado=\\(visitante&&!operadorAtivo\\)\\|\\|/);
+ assert.match(loja,/const bloqueado=\(visitante&&!operadorAtivo\)\|\|/);
+ assert.match(loja,/\(operadorAtivo&&visaoClienteLoja\)/);
  assert.match(loja,/const caminho=bloqueado\?null:operadorAtivo\?/);
 });
 test('navegação entre LOOP e AKITEMM preserva a visão sem conceder poder ao cliente',()=>{
