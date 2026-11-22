@@ -195,7 +195,7 @@
    const caminho='/api/loja/banners/'+slot.slot+'/imagem?revisao='+
     (slot.atualizadoEm||slot.revisao);
    if(foto.getAttribute('src')!==caminho)foto.src=caminho;
-   foto.style.objectFit='contain';
+   foto.style.objectFit=slot.modo==='PREENCHER'?'cover':'contain';
    foto.alt='Banner '+slot.slot+' da AKITEMM';
   }else foto.removeAttribute('src');
   conteudo.style.display=(imagem||slot.slot!==1||adicionando)?'none':'';
