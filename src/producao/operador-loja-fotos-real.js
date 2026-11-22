@@ -279,6 +279,83 @@
   entrada.maxLength=maxLength;entrada.placeholder=placeholder;
   entrada.value=valor;label.append(entrada);form.append(label);return entrada;
  };
+
+ // Erros em cada campo: destaque, motivo legível, foco e acesso pelo resumo.
+ // A mesma regra é usada em cadastro e edição, sem alterar o cliente.
+ function criarGuiaPendencias(form,estado){
+  form.noValidate=true;
+  const resumo=document.createElement('section');
+  resumo.className='akitemm-erros-cadastro';
+  resumo.setAttribute('role','alert');
+  resumo.setAttribute('aria-live','assertive');
+  resumo.hidden=true;
+  form.prepend(resumo);
+  let ultimos=[];
+  const limpar=()=>{
+   for(const entrada of ultimos){
+    entrada.removeAttribute('aria-invalid');
+    const label=entrada.closest('label');
+    label?.classList.remove('akitemm-campo-pendente');
+    label?.querySelector('.akitemm-campo-erro')?.remove();
+   }
+   ultimos=[];resumo.replaceChildren();resumo.hidden=true;
+  };
+  const ir=entrada=>{
+   const detalhe=entrada.closest('details');
+   if(detalhe)detalhe.open=true;
+   entrada.scrollIntoView({block:'center',behavior:'smooth'});
+   try{entrada.focus({preventScroll:true});}
+   catch{entrada.focus();}
+  };
+  const mostrar=erros=>{
+   limpar();
+   if(!erros.length)return true;
+   const titulo=document.createElement('strong');
+   titulo.textContent='Confira '+erros.length+' campo(s) marcado(s):';
+   const lista=document.createElement('ol');
+   resumo.append(titulo,lista);
+   for(const {entrada,mensagem} of erros){
+    if(!entrada)continue;
+    entrada.setAttribute('aria-invalid','true');
+    const label=entrada.closest('label');
+    if(label){
+     label.classList.add('akitemm-campo-pendente');
+     const pequeno=document.createElement('small');
+     pequeno.className='akitemm-campo-erro';
+     pequeno.textContent='● '+mensagem;
+     label.append(pequeno);
+    }
+    const linha=document.createElement('li');
+    const atalho=document.createElement('button');
+    atalho.type='button';atalho.className='akitemm-atalho-erro';
+    atalho.textContent='Corrigir: '+mensagem;
+    atalho.addEventListener('click',()=>ir(entrada));
+    linha.append(atalho);lista.append(linha);
+    ultimos.push(entrada);
+   }
+   resumo.hidden=false;
+   estado.textContent='Existem campos marcados. Toque em “Corrigir” para ir ao campo.';
+   ir(erros[0].entrada);
+   return false;
+  };
+  form.addEventListener('input',ev=>{
+   if(ultimos.includes(ev.target)){
+    const label=ev.target.closest('label');
+    label?.classList.remove('akitemm-campo-pendente');
+    label?.querySelector('.akitemm-campo-erro')?.remove();
+    ev.target.removeAttribute('aria-invalid');
+   }
+  });
+  form.addEventListener('change',ev=>{
+   if(ultimos.includes(ev.target)){
+    const label=ev.target.closest('label');
+    label?.classList.remove('akitemm-campo-pendente');
+    label?.querySelector('.akitemm-campo-erro')?.remove();
+    ev.target.removeAttribute('aria-invalid');
+   }
+  });
+  return {mostrar,limpar};
+ }
  const escolhaCor=form=>select('Cor do produto',[
   ['CINZA','Cinza'],['VERDE','Verde'],['DOURADO','Dourado'],
   ['ROXO','Roxo']
@@ -294,7 +371,7 @@
    ['PLANILHA_CSV','Planilha CSV — importação de catálogo'],
    ['API_PENDENTE','API direta — requer autorização'],
    ['ERP_PENDENTE','ERP ou hub — requer conexão'],
-   ['MARKETPLACE_PENDENTE','Mercado Livre / Shopee — requer integração']
+   ['MARKETPLACE_PENDENTE','Outros canais externos — não conectados']
   ]);
   // Sem provedor credenciado, os canais automáticos não fingem funcionar.
   for(const op of origem.s.options){
@@ -315,7 +392,8 @@
   });
   const avisoOrigem=linha('Fornecedor sem API: nome, SKU e contato ficam registrados no catálogo. '+
    'Pedidos não são enviados automaticamente. A planilha CSV é importada pelo botão Importar CSV. '+
-   'API, ERP e marketplaces exigem credenciais e autorização; ainda não estão conectados.');
+   'API e ERP exigem credenciais e autorização; ainda não estão conectados. ' +
+   'A AKITEMM é uma loja própria, não uma integração com marketplaces.');
   form.append(avisoOrigem);
   const sincronizarOrigem=()=>{
    const externo=['FORNECEDOR_MANUAL','PLANILHA_CSV'].includes(origem.s.value);
@@ -403,7 +481,36 @@
       fornecedorContato:fornecedorContato.value.trim(),
       revisaoEsperada:revisaoCanal}};
    },
-   canalGravado(revisao){revisaoCanal=revisao;}
+   canalGravado(revisao){revisaoCanal=revisao;},
+   validarCampos(){
+    const erros=[],adicionar=(entrada,mensagem)=>erros.push({entrada,mensagem});
+    const precoValido=v=>!v.trim()||/^(?:0|[1-9][0-9]{0,6})(?:[,.][0-9]{1,2})?$/.test(v.trim());
+    if(!['PROPRIO','FORNECEDOR_MANUAL','PLANILHA_CSV'].includes(origem.s.value))
+     adicionar(origem.s,'Escolha uma origem disponível e funcional.');
+    if(!precoValido(normal.value)||(
+      normal.value.trim()&&Number(normal.value.replace(',','.'))<=0))
+     adicionar(normal,'Informe um preço normal válido, como 299,90.');
+    if(!precoValido(promo.value))
+     adicionar(promo,'Informe uma promoção válida, como 249,90.');
+    const preco=Number(normal.value.replace(',','.'));
+    const promocao=Number(promo.value.replace(',','.'));
+    if(promo.value.trim()&&(
+       !normal.value.trim()||!Number.isFinite(preco)||promocao>=preco))
+     adicionar(promo,'O preço promocional precisa ser menor que o normal.');
+    if(estoque.value.trim()&&(
+      !Number.isSafeInteger(Number(estoque.value))||
+      Number(estoque.value)<0||Number(estoque.value)>1000000))
+     adicionar(estoque,'Informe uma quantidade inteira de 0 a 1.000.000.');
+    if(origem.s.value==='FORNECEDOR_MANUAL'){
+     if(fornecedorNome.value.trim().length<2)
+      adicionar(fornecedorNome,'Informe o nome do fornecedor.');
+     if(!ID.test(fornecedorSku.value.trim()))
+      adicionar(fornecedorSku,'Informe o SKU válido do fornecedor.');
+     if(fornecedorContato.value.trim().length<5)
+      adicionar(fornecedorContato,'Informe o contato do fornecedor.');
+    }
+    return erros;
+   },
   };
  }
  async function salvarAnuncio(id,csrf,campos,revisaoEsperada){
@@ -664,6 +771,7 @@
   corpo.append(linha('Cadastro manual. Foto, nome e cor no mesmo lugar. '+
    'Distribuidor e SKU não são obrigatórios.'));
   const form=document.createElement('form');form.autocomplete='off';
+  const guia=criarGuiaPendencias(form,estado);
   const nome=campoTexto(form,'Nome do produto',{placeholder:'Ex.: Camiseta preta'});
   nome.required=true;
   const desc=campoTexto(form,'Descrição (opcional)',{tipo:'textarea',
@@ -725,10 +833,13 @@
    if(aberto)return;
    const titulo=nome.value.trim();
    const informado=codigo.value.trim(),id=informado||slugManual();
-   if(!ID_NOVO.test(id)||titulo.length<2||titulo.length>150){
-    estado.textContent='Informe um nome válido. Confira também o código opcional.';
-    return;
-   }
+   const erros=[];
+   if(titulo.length<2||titulo.length>150)
+    erros.push({entrada:nome,mensagem:'Digite o nome do produto (2 a 150 caracteres).'});
+   if(!ID_NOVO.test(id))
+    erros.push({entrada:codigo,mensagem:'Código: use letras minúsculas, números ou hífen (3 a 80 caracteres).'});
+   erros.push(...anuncio.validarCampos());
+   if(!guia.mostrar(erros))return;
    aberto=true;criar.disabled=true;estado.textContent='Salvando no catálogo real...';
    let criado=false;
    try{
@@ -782,6 +893,7 @@
   const {corpo,estado}=modal('Editar produto · AKITEMM');
   const form=document.createElement('form');
   form.autocomplete='off';
+  const guia=criarGuiaPendencias(form,estado);
   const nome=campoTexto(form,'Nome do produto');
   const descricao=campoTexto(form,'Descrição (opcional)',{
    tipo:'textarea',maxLength:2000
@@ -875,10 +987,13 @@
    form.addEventListener('submit',ev=>{
     ev.preventDefault();
     const titulo=nome.value.trim();
-    if(titulo.length<2||titulo.length>150||
-       descricao.value.length>2000){
-     estado.textContent='Confira o nome e a descrição.';return;
-    }
+    const erros=[];
+    if(titulo.length<2||titulo.length>150)
+     erros.push({entrada:nome,mensagem:'Digite o nome do produto (2 a 150 caracteres).'});
+    if(descricao.value.length>2000)
+     erros.push({entrada:descricao,mensagem:'A descrição aceita até 2.000 caracteres.'});
+    erros.push(...anuncio.validarCampos());
+    if(!guia.mostrar(erros))return;
     void botoesAtualizar(async()=>{
      const res=await fetchJson('/api/admin/catalogo-midia/produtos/'+id,{
       method:'PATCH',headers:{'Content-Type':'application/json',
@@ -903,7 +1018,11 @@
    salvarImagem.addEventListener('click',()=>{
     void botoesAtualizar(async()=>{
      const imagem=await foto.obter();
-     if(!imagem)throw Error('ESCOLHA_UMA_FOTO');
+     if(!imagem){estado.textContent='Selecione uma foto antes de publicar. O botão de foto está no formulário.';
+      const campo=form.querySelector('.akitemm-escolher-foto');
+      campo?.scrollIntoView({block:'center',behavior:'smooth'});
+      campo?.focus();return;
+     }
      const posicaoFoto=Number(galeriaFotos.s.value);
      await salvarFoto(id,csrf,imagem,posicaoFoto);
      if(!slotsAtuais.some(x=>x.produtoId===id))
@@ -972,8 +1091,8 @@
    const alca=document.createElement('button');
    alca.type='button';alca.className='akitemm-alca-arrastar';
    alca.textContent='⠿';
-   alca.title='Segure e arraste para mudar a ordem';
-   alca.setAttribute('aria-label','Arrastar produto da posição '+
+   alca.title='Arraste pela alça ou segure o cartão para reordenar';
+   alca.setAttribute('aria-label','Segure e arraste produto da posição '+
     posicaoCard(c)+'; toque para editar a posição numericamente');
    alca.addEventListener('click',ev=>{
     ev.preventDefault();ev.stopPropagation();
@@ -1116,14 +1235,14 @@
    '#catalogoLojaLoop .produto-loja-loop[data-produto-id][data-akitemm-ordem]');
   if(!carta||!posicaoCard(carta))return;
   const alca=ev.target.closest('.akitemm-alca-arrastar');
-  if(ev.pointerType==='touch'&&!alca)return;
+  // Toque longo no cartão também inicia a ordem; deslizar continua rolando.
   if(ev.target.closest('button,a,input,textarea,select')&&!alca)return;
   arrasto={origem:carta,id:ev.pointerId,ativo:false,
    x:ev.clientX,y:ev.clientY,inicioX:ev.clientX,inicioY:ev.clientY,
-   tipo:ev.pointerType,fantasma:null,temporizador:null};
-  if(alca){
-   ev.preventDefault();
-   arrasto.temporizador=setTimeout(()=>iniciarArrasto(),190);
+   tipo:ev.pointerType,alca:!!alca,fantasma:null,temporizador:null};
+  if(ev.pointerType==='touch'){
+   if(alca)ev.preventDefault();
+   arrasto.temporizador=setTimeout(()=>iniciarArrasto(),alca?190:350);
   }
  },true);
  document.addEventListener('pointermove',ev=>{
@@ -1131,8 +1250,12 @@
   if(!d||ev.pointerId!==d.id)return;
   d.x=ev.clientX;d.y=ev.clientY;
   const distancia=Math.hypot(d.x-d.inicioX,d.y-d.inicioY);
-  if(!d.ativo&&distancia>(d.tipo==='mouse'?7:12))
-   iniciarArrasto();
+  if(!d.ativo&&d.tipo==='touch'&&!d.alca&&distancia>12){
+   // Deslize simples rola a vitrine; somente segurar arrasta.
+   desfazerArrasto();return;
+  }
+  if(!d.ativo&&distancia>(d.tipo==='mouse'?7:12)&&
+     (d.tipo!=='touch'||d.alca))iniciarArrasto();
   if(d.ativo){
    ev.preventDefault();flutuarArrasto();
   }
