@@ -65,8 +65,7 @@ test('operador e cliente recebem o mesmo cronômetro visual e os mesmos contador
   /Relógio: [0-6]\/6 luzes/);
  assert.equal(cliente.loop03StatusPosicao.textContent,'',
   'nenhuma informacao do relogio deve sobrescrever a posicao do cliente');
- assert.match(op.loop03StatusPosicao.textContent,
-  /luzes · \d+ ciclos completos · Sem pagamento real/);
+ assert.match(op.loop03StatusPosicao.textContent,/^\d+ \/ 600 luzes$/);
  assert.equal(cliente.loop03Giros24Integrado.textContent,'0');
  assert.match(cliente.loop03LuzesHoraIntegrado.textContent,/^\d+$/);
  assert.equal(cliente.motorContadorEventos.textContent.match(
@@ -130,12 +129,11 @@ test('21/11 17h até 22/11 00h20: 338 luzes do relógio, 56 ciclos e 2/6; sem pa
  });
  const operador=criarVisor('operador',agenda,instante);
  const cliente=criarVisor('cliente',agenda,instante);
- assert.equal(operador.loop03Giros24Integrado.textContent,'56');
+ assert.equal(operador.loop03Giros24Integrado.textContent,'0');
  assert.equal(operador.loop03LuzesHoraIntegrado.textContent,'338');
  assert.equal(operador.loop03NumeroIntegrado.textContent,'2 / 6');
- assert.match(operador.loop03StatusPosicao.textContent,
-  /Relógio: 338\/600 luzes · 56 ciclos completos · Sem pagamento real/);
- assert.equal(cliente.loop03Giros24Integrado.textContent,'56');
+ assert.equal(operador.loop03StatusPosicao.textContent,'338 / 600 luzes');
+ assert.equal(cliente.loop03Giros24Integrado.textContent,'0');
  assert.equal(cliente.loop03LuzesHoraIntegrado.textContent,'338');
  assert.equal(cliente.loop03NumeroIntegrado.textContent,'—');
  assert.equal(cliente.loop03StatusPosicao.textContent,'');
@@ -149,9 +147,48 @@ test('ao fechar o turno da noite a contagem visual fica em 600 e não zera',()=>
   luzesRelogio24h:600,ciclosRelogio24h:100
  });
  const painel=criarVisor('operador',agenda,instante);
- assert.equal(painel.loop03Giros24Integrado.textContent,'100');
+ assert.equal(painel.loop03Giros24Integrado.textContent,'0');
  assert.equal(painel.loop03LuzesHoraIntegrado.textContent,'600');
  assert.equal(painel.loop03NumeroIntegrado.textContent,'6 / 6');
- assert.match(painel.loop03StatusPosicao.textContent,/100 ciclos completos/);
+ assert.equal(painel.loop03StatusPosicao.textContent,'600 / 600 luzes');
  assert.equal(painel.tituloRelogioTabuleiro.textContent,'TURNO ENCERRADO');
+});
+
+test('621 luzes de programações antigas não viram 103 contemplações na meta atual',()=>{
+ const instante=Date.parse('2026-11-22T15:45:00-03:00');
+ const agenda=projetarAgendaTabuleiroCompartilhada({
+  ...controle,janelaInicio:'09:00',janelaFim:'18:00',
+  metaCentrosDia:10,metaDataAlvo:'2026-11-22',
+  agoraServidorMs:instante,giros24h:0,ciclosConcluidos:0,
+  luzesRelogio24h:621,ciclosRelogio24h:103
+ });
+ const op=criarVisor('operador',agenda,instante);
+ const cli=criarVisor('cliente',agenda,instante);
+ assert.equal(op.loop03Giros24Integrado.textContent,'0',
+  'nenhum ciclo foi concluído pelo motor');
+ assert.equal(op.loop03LuzesHoraIntegrado.textContent,'45',
+  'usar as 45 luzes do turno vigente, não 621 de outros turnos');
+ assert.equal(op.loop03NumeroIntegrado.textContent,'3 / 6');
+ assert.equal(op.loop03StatusPosicao.textContent,'45 / 60 luzes');
+ assert.equal(cli.loop03Giros24Integrado.textContent,'0');
+ assert.equal(cli.loop03LuzesHoraIntegrado.textContent,'45');
+ assert.equal(cli.loop03StatusPosicao.textContent,'');
+ assert.equal(agenda.ciclosRelogio24h,103,
+  'o histórico permanece disponível à auditoria, sem contaminar o visor');
+ assert.equal(agenda.girosReais24h,0);
+});
+test('ciclo concluído é giro auditado, nunca conversão de luz prevista',()=>{
+ const instante=Date.parse('2026-11-22T15:45:00-03:00');
+ const agenda=projetarAgendaTabuleiroCompartilhada({
+  ...controle,janelaInicio:'09:00',janelaFim:'18:00',
+  metaCentrosDia:10,metaDataAlvo:'2026-11-22',
+  agoraServidorMs:instante,giros24h:2,ciclosConcluidos:2,
+  luzesRelogio24h:621,ciclosRelogio24h:103
+ });
+ const op=criarVisor('operador',agenda,instante);
+ const cli=criarVisor('cliente',agenda,instante);
+ assert.equal(op.loop03Giros24Integrado.textContent,'2');
+ assert.equal(cli.loop03Giros24Integrado.textContent,'2');
+ assert.equal(op.loop03LuzesHoraIntegrado.textContent,'45');
+ assert.equal(op.loop03StatusPosicao.textContent,'45 / 60 luzes');
 });

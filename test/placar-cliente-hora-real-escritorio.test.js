@@ -30,11 +30,12 @@ test('contadores separados de giros persistidos e luzes no relógio',()=>{
  assert.match(agenda,/girosReaisHora:estado\.girosHora/);
  assert.match(visor,/const luzesHora=emTurno&&!finalizado/);
  assert.match(visor,/const luzes24h=\$\('loop03LuzesHoraIntegrado'\)/);
- assert.match(visor,/if\(resumo&&compartilhado&&operadorAberto&&valido\)/);
+ assert.match(visor,/if\(resumo&&compartilhado&&operadorAberto\)/);
+ assert.match(visor,/const concluidos=agendaVisorCatraca\?\.girosReais24h/);
  assert.doesNotMatch(visor,/Nao renomear GIROS NAS ULTIMAS 24H/);
 });
 
-test('moldura central do operador usa exatamente giros e luzes por hora do cliente',()=>{
+test('moldura central do operador usa ciclos confirmados e luzes do turno do cliente',()=>{
  const vm=require('node:vm');
  const js=source('src/producao/interface-aprovada-contas.js');
  const visor=source('src/shared/visor-catraca.js');
@@ -64,7 +65,8 @@ test('moldura central do operador usa exatamente giros e luzes por hora do clien
    modoExecucao:'AGENDADA',pausaManual:false,
    luzesDoRelogioCompartilhado:true,
    abertura:'09:00',fechamento:'18:00',agoraServidorMs:agora,
-   girosReaisHora:3,girosReaisHoje:6,ciclosReaisConcluidos:1,
+   girosReaisHora:3,girosReaisHoje:6,girosReais24h:0,
+   ciclosReaisConcluidos:1,
    ciclosRelogio24h:1,luzesRelogio24h:6,
    eventosReaisNoCiclo:0,
    metaLotes:{ativa:true,quantidade:5,dataAlvo:null}
@@ -74,7 +76,7 @@ test('moldura central do operador usa exatamente giros e luzes por hora do clien
  }
  const cliente=executar(false),operador=executar(true);
  assert.deepEqual(operador,cliente);
- assert.deepEqual(cliente,{giros:'1',luzes:'6'});
+ assert.deepEqual(cliente,{giros:'0',luzes:'2'});
 });
 
 test('somente o quadro central exibe duas metades iguais no operador e cliente',()=>{
