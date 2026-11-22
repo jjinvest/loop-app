@@ -1264,7 +1264,7 @@
     },
     {
       "path": "src/producao/acabamento-botoes-real.css",
-      "sha": "54d74ee2f11797f60c4e08448822a03667e1a12c"
+      "sha": "f657e4f2dfe4d287e49d667f3b56a58a7234209e"
     },
     {
       "path": "src/producao/aceite-posicao-azul-ensaio-sqlite.js",
@@ -1448,7 +1448,7 @@
     },
     {
       "path": "src/producao/gateway-admin-comercial.js",
-      "sha": "ea1ab368b9b0cf137dd1ee8ae934ce21fea8433d"
+      "sha": "7e146c31a21e90398d3a1285fae7b24f0659ee20"
     },
     {
       "path": "src/producao/historico-ciclos-relacional-sqlite.js",
@@ -1472,7 +1472,7 @@
     },
     {
       "path": "src/producao/interface-aprovada-contas.js",
-      "sha": "1c54f051be081a65f936cfae68232b5b7f49b287"
+      "sha": "cff88cfad35a4db60bab5fcb7492ce686e1de428"
     },
     {
       "path": "src/producao/interface-aprovada-loja.js",
@@ -1615,6 +1615,10 @@
       "sha": "6a0ff22293d78fddbb9dfb5f7c8473b5bb4b7cae"
     },
     {
+      "path": "src/producao/relatorio-clientes-produtos-operador.js",
+      "sha": "ce343013ad5b28649f08e3b351e3cfd910fcf9d6"
+    },
+    {
       "path": "src/producao/rotas-admin-economia-akitemm.js",
       "sha": "b9b286d0105be237d1b0ff775309561a6d8d304e"
     },
@@ -1628,7 +1632,7 @@
     },
     {
       "path": "src/producao/servidor-identidade-loop.js",
-      "sha": "2739dd77527cf64cbb4b3d424713b0abcdb560f5"
+      "sha": "664c3a20edf2095e466495fe48683e71a9cc887a"
     },
     {
       "path": "src/producao/sessao-admin-comercial-sqlite.js",
@@ -3107,6 +3111,10 @@
       "sha": "7bceffe4a52a66b0440ce9458611bb5e0ef716bd"
     },
     {
+      "path": "test/operador-clientes-produtos-relatorio-real.test.js",
+      "sha": "4b3eef64fe7fa1e8754b9574f3cd6135671b56eb"
+    },
+    {
       "path": "test/operador-fotos-conta-real-unificada.test.js",
       "sha": "c2b066a2abcf54b259e89f4086a94c3e79a5440f"
     },
@@ -3236,7 +3244,7 @@
     },
     {
       "path": "test/posicoes-operador-quadros-20261122.test.js",
-      "sha": "491e1150f4fb8d244262ffcd25a846ee2c48c42b"
+      "sha": "843d5ee0819903ba6cc1c0df356f9343db06b71b"
     },
     {
       "path": "test/posicoes-vitrine-real-sqlite.test.js",
