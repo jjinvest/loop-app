@@ -2380,7 +2380,7 @@
     },
     {
       "path": "test/contrato-papeis-operador-real.test.js",
-      "sha": "a60ae020213f0a0cfc8568b353839506e861fc1e"
+      "sha": "efd59a4e2c9916b750163a3f5f10db7252d52cb9"
     },
     {
       "path": "test/contrato-visual-escritorio-aprovado.test.js",
@@ -3950,6 +3950,12 @@
       "antes": null,
       "depois": "21f386ae9d4d03edb8f944c0cb62359ad02f0c52",
       "objetivo": "Solicitação do proprietário em 22/11/2026: restaurar foto de perfil na AKITEMM nos papéis operador e cliente, mesmo com cookies simultâneos, usando apenas imagens autenticadas já armazenadas no LOOP."
+    },
+    {
+      "path": "test/contrato-papeis-operador-real.test.js",
+      "antes": "a60ae020213f0a0cfc8568b353839506e861fc1e",
+      "depois": "efd59a4e2c9916b750163a3f5f10db7252d52cb9",
+      "objetivo": "Contrato de papéis 22/11/2026: operador mantém central restrita, foto de cliente do próprio titular exibida apenas na visão autenticada do cliente."
     }
   ]
 }
