@@ -1962,6 +1962,7 @@
       controle.agenda.somenteLeitura!==true||
       controle.agenda.luzesDoRelogioCompartilhado!==true||
       controle.agenda.eventosReaisNoCiclo!==d.tabuleiro.eventosNoCiclo||
+      controle.agenda.ciclosReaisConcluidos!==d.tabuleiro.ciclosConcluidos||
       controle.agenda.girosReaisHoje!==controle.girosHoje||
       controle.agenda.girosReais24h!==controle.giros24h)
     throw Error('AGENDA_COMPARTILHADA_DIVERGENTE');
@@ -2032,6 +2033,7 @@
      d.agenda.origem!=='CATRACA_REAL_MESMO_SQLITE'||
      d.agenda.luzesDoRelogioCompartilhado!==true||
      d.agenda.eventosReaisNoCiclo!==d.tabuleiro.eventosNoCiclo||
+     d.agenda.ciclosReaisConcluidos!==d.tabuleiro.ciclosConcluidos||
      d.agenda.girosReais24h!==d.catraca?.giros24h))
     throw Error('AGENDA_CLIENTE_DIVERGENTE');
    visorCatraca.registrarAgenda(d.agenda);
