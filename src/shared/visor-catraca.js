@@ -120,13 +120,9 @@
       Number.isSafeInteger(ciclosReais)&&
       (operadorAberto||!/^#\d+$/.test(selecionada?.textContent||''))){
     resumo.textContent=valido?
-     'Relógio visual: '+estado.passadas+'/'+estado.total+
-      ' luzes previstas · Ciclos reais: '+ciclosReais+
-      ' · Giros reais hoje: '+giroReal+
-      ' · Giros do relógio: '+movimentosRelogio+
-      ' · Ciclos do relógio: '+ciclosRelogio:
-     'Relógio fora do turno · Ciclos reais: '+ciclosReais+
-      ' · Giros reais hoje: '+giroReal;
+     'Relógio: '+movimentosRelogio+'/'+estado.total+' luzes · '+
+      ciclosRelogio+' ciclos completos · Sem pagamento real':
+     'Relógio fora do turno · Sem pagamento real';
    }
    const contador=$('motorContadorEventos');
    if(contador&&compartilhado){
