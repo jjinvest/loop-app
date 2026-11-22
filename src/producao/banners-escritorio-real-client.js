@@ -40,7 +40,7 @@
    '<label class="banner-real-arquivo">Enquadramento'+
    '<select id="loop03BannerModoReal"><option value="PREENCHER">Preencher os quadrinhos</option>'+
    '<option value="INTEIRA">Mostrar foto inteira</option></select></label>'+
-  '<label class="banner-real-arquivo">Foto do banner (JPG, PNG ou WebP)'+
+  '<label class="banner-real-arquivo">Foto do quadro 1 (JPG, PNG ou WebP)'+
   '<input id="loop03BannerArquivoReal" type="file" accept="image/jpeg,image/png,image/webp"></label>'+
   '<img id="loop03BannerPreviaReal" class="banner-real-previa" alt="Prévia da foto" hidden>'+
    '<label class="banner-real-arquivo banner-foto-extra" data-posicao="2" hidden>'+
@@ -494,7 +494,7 @@
       'PUT',pronta,'image/jpeg');
     }
     status.textContent=estado.publicado?
-     'Banner visível ao cliente; fotos vazias podem ser preenchidas depois.':
+     'Banner salvo e publicado. Os quadros vazios podem ser preenchidos depois.':
      'Formato salvo. Envie ao menos uma foto para mostrar este banner.';
     arquivos.forEach(x=>{x.value='';});
    }
