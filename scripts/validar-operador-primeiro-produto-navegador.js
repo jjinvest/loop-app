@@ -141,6 +141,56 @@ async function principal(){
   assert.equal(vazio.checkoutReal,false);
   assert.equal(await page.locator('#catalogoLojaLoop .akitemm-slot-vazio').count(),20);
   assert.equal(await page.locator('#catalogoLojaLoop [data-produto-id]').count(),0);
+  // No operador, os 20 quadrinhos vazios possuem alça visível e funcional.
+  await page.locator(
+   '#catalogoLojaLoop [data-akitemm-slot="1"] .akitemm-alca-arrastar'
+  ).waitFor({state:'visible'});
+  assert.equal(await page.locator(
+   '#catalogoLojaLoop .akitemm-slot-vazio .akitemm-alca-arrastar'
+  ).count(),20);
+  const vazioOriginal=await page.evaluate(async()=>{
+   const r=await fetch('/api/admin/catalogo-midia/slots');
+   return (await r.json()).layoutVazio;
+  });
+  const sessaoTouch=await ctx.newCDPSession(page);
+  const puxar=await page.locator(
+   '#catalogoLojaLoop [data-akitemm-slot="1"] .akitemm-alca-arrastar'
+  ).boundingBox();
+  const soltar=await page.locator(
+   '#catalogoLojaLoop [data-akitemm-slot="2"]'
+  ).boundingBox();
+  assert.ok(puxar&&soltar);
+  const x1=puxar.x+puxar.width/2,y1=puxar.y+puxar.height/2;
+  const x2=soltar.x+soltar.width/2,y2=soltar.y+soltar.height/2;
+  await sessaoTouch.send('Input.dispatchTouchEvent',{
+   type:'touchStart',touchPoints:[{x:x1,y:y1}]
+  });
+  await new Promise(resolve=>setTimeout(resolve,260));
+  for(let i=1;i<=5;i++)await sessaoTouch.send('Input.dispatchTouchEvent',{
+   type:'touchMove',touchPoints:[{
+    x:x1+(x2-x1)*i/5,y:y1+(y2-y1)*i/5
+   }]
+  });
+  await sessaoTouch.send('Input.dispatchTouchEvent',{
+   type:'touchEnd',touchPoints:[]
+  });
+  await page.getByText('Molduras vazias trocadas entre as posições',{
+   exact:false
+  }).waitFor({timeout:12000});
+  await page.waitForFunction(cores=>document.querySelector(
+   '#catalogoLojaLoop [data-akitemm-slot="1"]'
+  )?.classList.contains('akitemm-slot-'+cores[1].toLowerCase()),
+  vazioOriginal.cores);
+  const depoisVazios=await page.evaluate(async()=>{
+   const r=await fetch('/api/admin/catalogo-midia/slots');
+   return (await r.json()).layoutVazio;
+  });
+  assert.equal(depoisVazios.revisao,vazioOriginal.revisao+1);
+  assert.equal(depoisVazios.cores[0],vazioOriginal.cores[1]);
+  assert.equal(depoisVazios.cores[1],vazioOriginal.cores[0]);
+  assert.deepEqual(depoisVazios.cores.slice().sort(),
+   vazioOriginal.cores.slice().sort());
+  await page.waitForTimeout(750);
   // Cadastro manual direto no quadradinho, com foto e cor no mesmo painel.
   const m=page.locator('#akitemmOperadorFotosReal');
   const criarProduto=async({slot,codigo,nome,cor})=>{
@@ -193,7 +243,8 @@ async function principal(){
   assert.equal(produto.ativo,true);
   assert.equal(midia.fotos.listar('primeiro-produto').fotos.length,1);
   assert.equal(midia.fotos.listar('primeiro-produto').fotos[0].posicao,1);
-  await criarProduto({slot:2,codigo:'segundo-produto',
+  // Mesmo tocando no quadrinho 18, o segundo produto vai para a posição 2.
+  await criarProduto({slot:18,codigo:'segundo-produto',
    nome:'Segundo produto de ensaio',cor:'DOURADO'});
   const mapa=await page.evaluate(async()=>{
    const res=await fetch('/api/admin/catalogo-midia/slots',{
