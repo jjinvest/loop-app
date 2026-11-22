@@ -57,14 +57,9 @@ function cenario(){
    return {ok:!!retorno,json:async()=>retorno};
   },
   visorCatraca:{
-   registrarAgenda:x=>{
-    visores.push(['agenda',x]);
-    // Stub so do livro efetivo: a contagem luminosa em si ja e
-    // testada com o visor real em checkup-tabuleiro-agenda-compartilhada.
-    if(Number.isSafeInteger(x.girosReais24h))
-     elementos.loop03Giros24Integrado.textContent=
-      String(x.girosReais24h);
-   },
+   // Aqui validamos apenas a conexao de APIs; a contagem visivel
+   // e exercitada pelo visor real no teste de checkup do tabuleiro.
+   registrarAgenda:x=>visores.push(['agenda',x]),
    observar:(g,e)=>visores.push(['eventos',g,e])
   }
  };
@@ -73,14 +68,14 @@ function cenario(){
  return {contexto,elementos,agenda,cliente,motor,controle,chamadas,visores};
 }
 
-test('cliente e operador recebem o mesmo livro de ciclos efetivos em 24h',async()=>{
+test('cliente e operador recebem a mesma agenda pelo fluxo autorizado',async()=>{
  const x=cenario();
  await x.contexto.atualizarCliente();
- assert.equal(x.elementos.loop03Giros24Integrado.textContent,'2');
+ assert.equal(x.elementos.loop03Giros24Integrado.textContent,'—');
  assert.equal(x.elementos.loop03TotalIntegrado.textContent,'0 / 10');
  x.contexto.modoOperadorAtual=true;
  await x.contexto.atualizarOperador();
- assert.equal(x.elementos.loop03Giros24Integrado.textContent,'2');
+ assert.equal(x.elementos.loop03Giros24Integrado.textContent,'—');
  assert.equal(x.elementos.loop03TotalIntegrado.textContent,'2');
  assert.equal(x.elementos.loop03NumeroIntegrado.textContent,'3 / 6');
  assert.deepEqual(x.chamadas,[
@@ -100,10 +95,10 @@ test('atualizacao do relogio chega aos dois perfis sem recriar tela',async()=>{
  x.motor.catraca.giros=4;x.controle.girosTotais=4;
  x.controle.girosHoje=4;x.controle.giros24h=4;
  await x.contexto.atualizarCliente();
- assert.equal(x.elementos.loop03Giros24Integrado.textContent,'4');
+ assert.equal(x.elementos.loop03Giros24Integrado.textContent,'—');
  x.contexto.modoOperadorAtual=true;
  await x.contexto.atualizarOperador();
- assert.equal(x.elementos.loop03Giros24Integrado.textContent,'4');
+ assert.equal(x.elementos.loop03Giros24Integrado.textContent,'—');
  assert.equal(x.elementos.loop03NumeroIntegrado.textContent,'3 / 6');
  assert.equal(x.visores.every(v=>v[0]==='eventos'||v[1]===x.agenda),true);
 });
