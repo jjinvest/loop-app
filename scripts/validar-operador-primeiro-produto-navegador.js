@@ -252,11 +252,13 @@ async function principal(){
    assert.equal(await m.getByLabel('Preço promocional (R$) — opcional')
     .evaluate(x=>document.activeElement===x),true);
    await m.getByLabel('Preço promocional (R$) — opcional').fill('249,90');
+   await m.getByLabel('Cor física do produto (escreva livremente)')
+    .fill('Colorido, azul, preto e branco');
    await m.getByLabel('Quantidade disponível (opcional)').fill('12');
    const codigoArea=m.locator('details').filter({hasText:'Código do produto'});
    await codigoArea.locator('summary').click();
    await codigoArea.locator('input').fill(codigo);
-   await m.getByLabel('Cor do produto').selectOption(cor);
+   await m.getByLabel('Classificação comercial LOOP (não é cor física)').selectOption(cor);
    await m.locator('input[type=file]').setInputFiles({
     name:'imagem-prova.png',mimeType:'image/png',buffer:FOTO
    });
