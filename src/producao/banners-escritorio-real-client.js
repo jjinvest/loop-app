@@ -5,6 +5,8 @@
  if(!pista)return;
  const molduras=[...pista.querySelectorAll('.loop03-banner-item')];
  if(molduras.length!==4)return;
+ // O carrossel original e o dinâmico não devem acionar relógios de rolagem simultâneos.
+ pista.dataset.carrosselDinamico='true';
  const area=pista.closest('.loop03-banners-resumo');
  if(!area)return;
  let dados=null,operador=false,gravando=false,slotEditor=1;
@@ -139,7 +141,6 @@
  function renderizar(){
   if(!dados?.slots)return;
   const editavel=podeEditar();
-  const publicados=dados.slots.filter(x=>x.publicado);
   for(const slot of dados.slots){
    let moldura=molduras.find(x=>Number(x.dataset.bannerSlot)===slot.slot);
    if(!moldura){
@@ -157,12 +158,14 @@
     moldura.dataset.bannerSlot=String(slot.slot);
    }
    const img=moldura.querySelector('[data-banner-imagem]');
-   const mostrar=editavel||slot.publicado||(!publicados.length&&slot.slot===1);
+   // Quatro artes originais aprovadas continuam no carrossel do cliente.
+   // Slots adicionais só entram quando suas fotos estiverem completas.
+   const mostrar=editavel||slot.publicado||slot.slot<=4;
    moldura.hidden=!mostrar;
    moldura.style.display=mostrar?'block':'none';
    moldura.querySelector('.banner-mosaico')?.remove();
    const quadros=Number(slot.colunas)||1;
-   if(quadros>1){
+   if(quadros>1&&(editavel||slot.publicado)){
     img.hidden=true;img.removeAttribute('src');
     const grade=document.createElement('div');
     grade.className='banner-mosaico';
@@ -183,7 +186,9 @@
      grade.append(quadro);
     }
     moldura.append(grade);
-   }else if(!slot.temImagem){
+   }else if(!slot.temImagem||(!editavel&&!slot.publicado)){
+    // Sem composição completa, a arte original (slots 1..4) é o fallback.
+    // Não mostrar fotos parciais de mosaicos ao cliente.
     img.hidden=true;img.removeAttribute('src');
    }else{
     img.setAttribute('data-enquadramento',slot.modo||'INTEIRA');
