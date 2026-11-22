@@ -1800,7 +1800,7 @@
     },
     {
       "path": "src/shared/visor-catraca.js",
-      "sha": "213a57547f0f4b2ccf4fdc5027ae22a6da313dc0"
+      "sha": "9ca4780091cd4dad350861ba78cd395ac491a3c6"
     },
     {
       "path": "test/acabamento-visual-unificado.test.js",
@@ -2268,7 +2268,7 @@
     },
     {
       "path": "test/checkup-tabuleiro-agenda-compartilhada.test.js",
-      "sha": "6e3e295b7ea6e3ee56719009bc0125d89b6734d4"
+      "sha": "f498e93ccc8eac439dd6474506f4d9d14d80b822"
     },
     {
       "path": "test/circuit-break-ponte-v6-demo.test.js",
