@@ -100,6 +100,28 @@ test('20 mil cadastros e 20 mil vinculos preservam ordem, paginacao e reinicio',
   assert.deepEqual(reaberta.indicados,ultima.indicados,
    'reinicio preserva os mesmos 50 ultimos indicados, sem reordenar');
   assert.equal(reaberta.total,20000);
+  assert.throws(()=>estado.contas.reservarDestinoIndicacao({
+   indicadorId:id,numeroCadastro:20000,posicao:3
+  }),{codigo:'INDICACAO_AGUARDA_CONFIRMACAO'});
+  const ultimoId='titular-'+(19999).toString(16).padStart(8,'0')+
+   '-0000-4000-8000-000000000000';
+  // Prova sintetica apenas nesta carga descartavel, sem PSP ou saldo real.
+  db.prepare([
+   'INSERT INTO loop_real_confirmacoes_cadastro',
+   '(titular_id,cpf_hmac,termos_versao,termos_hash,confirmado_em)',
+   'VALUES(?,?,?,?,?)'
+  ].join(' ')).run(ultimoId,'hmac_prova_sintetica',
+   docs.termos.versao,docs.termos.hash,1700000000001);
+  assert.throws(()=>estado.contas.reservarDestinoIndicacao({
+   indicadorId:id,numeroCadastro:20000,posicao:3
+  }),{codigo:'INDICACAO_AGUARDA_QUALIFICACAO'});
+  db.prepare([
+   'INSERT INTO loop_real_indicacoes_validas_financeiro',
+   '(indicado_id,indicador_id,pedido_id,pagamento_id,comprovante_bancario_id,',
+   'valor_qualificado_centavos,tipo,confirmado_em)',
+   "VALUES(?,?,?,?,?,25000,'COMPRA_250',?)"
+  ].join(' ')).run(ultimoId,id,'pedido_longevidade',
+   'pagamento_longevidade','comprovante_longevidade',1700000000002);
   const destino=estado.contas.reservarDestinoIndicacao({
    indicadorId:id,numeroCadastro:20000,posicao:3
   });
