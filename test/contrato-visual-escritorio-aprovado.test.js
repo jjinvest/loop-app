@@ -331,3 +331,25 @@ test('marca LOOP 3.0 premium apenas no menu lateral, sem retocar banner aprovado
  assert.ok(css.includes('.cliente-integrado .loop03-banner-topo .loop03-logomarca > span{'),
   'banner principal preservado');
 });
+
+
+test('operador conserva os dois atalhos de visão em qualquer perfil, sem conceder sessão',()=>{
+ const {renderizarInterfaceAprovada}=require('../src/producao/interface-aprovada-loop');
+ const html=renderizarInterfaceAprovada();
+ const css=ler('src/producao/acabamento-botoes-real.css');
+ const js=ler('src/producao/interface-aprovada-contas.js');
+ assert.match(html,/id="loopOperadorAtalhos"[^>]*hidden/);
+ assert.match(html,/id="loopVoltarOperador"[^>]*hidden/);
+ assert.equal((html.match(/data-visao-do-escritorio="operador"/g)||[]).length,2);
+ assert.equal((html.match(/data-visao-do-escritorio="cliente"/g)||[]).length,2);
+ assert.match(html,/id="loopAcessoAdminMenu" href="\/administrador"/);
+ assert.match(html,/href="\/escritorio\?visao=operador">Visão do Operador/);
+ assert.match(html,/href="\/escritorio\?visao=cliente">Visão do Cliente/);
+ assert.match(js,/const ativo=d\?\.operador===true/);
+ assert.match(js,/if\(barra\)barra\.hidden=!ativo\|\|!modoOperadorAtual/);
+ assert.match(js,/if\(voltar\)voltar\.hidden=!ativo\|\|modoOperadorAtual/);
+ assert.match(js,/link\.dataset\.visaoDoEscritorio/);
+ assert.match(css,/#loopOperadorAtalhos,#loopVoltarOperador\{/);
+ assert.match(css,/grid-template-columns:repeat\(2,minmax\(0,1fr\)\)/);
+ assert.match(css,/#loopOperadorAtalhos\[hidden\],#loopVoltarOperador\[hidden\]/);
+});
