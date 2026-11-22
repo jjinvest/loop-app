@@ -315,46 +315,59 @@
   leitor.readAsDataURL(f);
  });
  async function gravar(remover){
-  if(gravando||!dialogo.open)return;
-  if(!operador){
-   status.textContent='Acesso do operador não confirmado. Entre novamente como operador.';
-   return;
-  }
-  const slot=dados?.slots?.find(x=>x.slot===slotEditor),foto=arquivo.files?.[0];
-  if(!slot){
-   status.textContent='Banners indisponíveis para salvar. Atualize a página e tente novamente.';
-   void carregar();
-   return;
-  }
-  if(!remover&&(!foto||
-     !['image/jpeg','image/png','image/webp'].includes(foto.type)||
-     foto.size<40||foto.size>16*1024*1024)){
-   status.textContent='Selecione uma foto JPG, PNG ou WebP válida.';return;
+  if(gravando||!dialogo.open||!podeEditar())return;
+  const atual=dados?.slots?.find(x=>x.slot===slotEditor);
+  if(!atual){status.textContent='Banner indisponível. Atualize a página.';return;}
+  const n=Number(colunas.value),arquivos=[arquivo,...extras];
+  const selecionados=arquivos.slice(0,n).some(x=>x.files?.length);
+  const layoutMudou=atual.colunas!==n||atual.modo!==modo.value;
+  if(!remover&&!selecionados&&!layoutMudou){
+   status.textContent='Escolha uma foto ou mude o formato do banner.';return;
   }
   gravando=true;salvarBotao.disabled=true;excluirBotao.disabled=true;
-  status.textContent=remover?'Excluindo foto...':'Preparando a imagem automaticamente...';
   try{
-   const imagemPronta=remover?null:await prepararFotoBanner(foto);
-   status.textContent=remover?'Excluindo foto...':'Salvando banner no LOOP...';
    const token=await solicitar('/api/admin/comercial/sessao');
    if(typeof token.csrfToken!=='string'||token.csrfToken.length<20)
     throw Error('SESSAO_OPERADOR_INVALIDA');
-   const caminho='/api/admin/loop/banners/'+slotEditor+'/imagem';
-   const headers={'X-Loop-Admin-Csrf':token.csrfToken,
-    'X-Banner-Revisao-Esperada':String(slot.revisao)};
-   if(!remover)headers['Content-Type']='image/jpeg';
-   const resultado=await solicitar(caminho,{
-    method:remover?'DELETE':'PUT',headers,
-    ...(!remover?{body:imagemPronta}:{})
-   });
-   if(!Array.isArray(resultado.slots)||!resultado.slots.find(x=>x.slot===slotEditor))
-    throw Error('BANNER_NAO_CONFIRMADO');
-   dados=resultado;renderizar();
-   status.textContent=remover?'Foto excluída do LOOP.':'Foto salva no LOOP.';
-   if(!remover)arquivo.value='';
-   excluirBotao.disabled=!dados.slots.find(x=>x.slot===slotEditor).temImagem;
+   const auth={'X-Loop-Admin-Csrf':token.csrfToken};
+   let estado=atual;
+   const executar=async(url,method,body,mime)=>{
+    const resposta=await solicitar(url,{
+     method,headers:{...auth,
+      'X-Banner-Revisao-Esperada':String(estado.revisao),
+      ...(mime?{'Content-Type':mime}:{})},
+     ...(body!==undefined?{body}:{})
+    });
+    dados=resposta;
+    estado=dados.slots?.find(x=>x.slot===slotEditor);
+    if(!estado)throw Error('BANNER_NAO_CONFIRMADO');
+   };
+   const base='/api/admin/loop/banners/'+slotEditor;
+   if(remover){
+    await executar(base+'/imagem','DELETE');
+    status.textContent='Foto principal excluída.';
+   }else{
+    if(layoutMudou){
+     await executar(base+'/layout','POST',
+      JSON.stringify({colunas:n,modo:modo.value,
+       revisaoEsperada:estado.revisao}),'application/json');
+    }
+    for(let i=0;i<n;i++){
+     const foto=arquivos[i].files?.[0];
+     if(!foto)continue;
+     status.textContent='Preparando foto '+(i+1)+' de '+n+'...';
+     const pronta=await prepararFotoBanner(foto);
+     await executar(i===0?base+'/imagem':base+'/foto/'+(i+1),
+      'PUT',pronta,'image/jpeg');
+    }
+    status.textContent=estado.publicado?
+     'Banner salvo e publicado com '+n+' foto(s).':
+     'Formato salvo. Envie as fotos que faltam para publicar.';
+    arquivos.forEach(x=>{x.value='';});
+   }
+   renderizar();
   }catch(e){
-   status.textContent='Não foi possível salvar: '+e.message;
+   status.textContent='Não foi possível concluir: '+e.message;
    await carregar();
   }finally{
    gravando=false;salvarBotao.disabled=false;
