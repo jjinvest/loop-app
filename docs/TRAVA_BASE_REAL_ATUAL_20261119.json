@@ -436,7 +436,7 @@
     },
     {
       "path": "scripts/validar-operador-primeiro-produto-navegador.js",
-      "sha": "f993baa2c50fcffc7c3f90508b3813c75cc01b17"
+      "sha": "f0d2904198f695ebfb74c0375ebe966838800ffe"
     },
     {
       "path": "scripts/validar-saques-ensaio-http.js",
@@ -5006,6 +5006,13 @@
       "antes": "1bc25a31277e737fd25e4d645550d711dd2ca5e0",
       "depois": "f993baa2c50fcffc7c3f90508b3813c75cc01b17",
       "objetivo": "Complemento à alteração responsiva: a organização de produtos por arrastar e soltar continua operacional na coluna do celular (antes/depois por eixo Y), preservando esquerda/direita no PC; prova de gesto atualizada para atingir o interior da moldura sem borda e confirmar ordem persistida."
+    },
+    {
+      "data": "2026-11-22",
+      "path": "scripts/validar-operador-primeiro-produto-navegador.js",
+      "antes": "f993baa2c50fcffc7c3f90508b3813c75cc01b17",
+      "depois": "f0d2904198f695ebfb74c0375ebe966838800ffe",
+      "objetivo": "Prova do operador adaptada ao empilhamento solicitado: posicionar cartões origem e destino dentro da viewport móvel antes de simular gesto por CDP; não altera regras nem dados."
     }
   ]
 }
