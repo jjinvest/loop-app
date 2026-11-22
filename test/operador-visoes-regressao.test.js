@@ -24,7 +24,8 @@ test('correcao administrativa altera somente nome e telefone com auditoria',asyn
  const doc={versao:'LOOP-TERMOS-2026',texto:'Contrato de identidade e privacidade do exemplo para verificar a auditoria administrativa, com dados ficticios e testes internos.'};
  const contas=new IdentidadeClienteLoopReal({
   banco,chaveEmail:randomBytes(32),chaveCifra:randomBytes(32),
-  chaveCodigo:randomBytes(32),termos:doc,privacidade:doc,
+  chaveCodigo:randomBytes(32),termos:doc,
+  privacidade:{...doc,versao:'LOOP-PRIV-2026'},
   enviarEmail:async()=>true
  });
  const docs=contas.documentos();
