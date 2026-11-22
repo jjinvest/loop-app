@@ -52,7 +52,7 @@ class BannerMosaicoSQLite{
   const p=this.cfg.prefixo;
   const layouts=new Map(this.banco.prepare(
    'SELECT slot,colunas,modo FROM '+p+'_layout'
-  ).all().map(x=>[x.slot,x.colunas]));
+  ).all().map(x=>[x.slot,{colunas:x.colunas,modo:x.modo}]));
   const imagens=new Set(this.banco.prepare(
    'SELECT slot,posicao FROM '+p+'_foto'
   ).all().map(x=>x.slot+':'+x.posicao));
