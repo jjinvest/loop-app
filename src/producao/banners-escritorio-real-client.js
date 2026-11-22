@@ -231,6 +231,7 @@
      const f=slot.fotos?.[pos-1];
      const quadro=document.createElement('div');
      quadro.className='banner-mosaico-celula';
+     quadro.dataset.fotoPosicao=String(pos);
      if(f?.temImagem){
       const im=document.createElement('img');
       im.alt='Foto '+pos+' do banner '+slot.slot;
@@ -305,7 +306,7 @@
   }catch{operador=false;}
   await carregar();
  }
- function abrir(numero){
+ function abrir(numero,pos=0){
   if(!podeEditar()||gravando)return;
   slotEditor=numero||slotAtual();
   if(!slotEditor)return;
@@ -323,6 +324,7 @@
   descartarBotao.style.display=slotEditor<=4?'none':'inline-flex';
   descartarBotao.disabled=slotEditor<=4;
   if(!dialogo.open)dialogo.showModal();
+  if(pos)fotosEditor.abrir(pos);
  }
  async function descartarEspaco(numero){
   if(!podeEditar()||gravando||!Number.isSafeInteger(numero)||numero<=4)return;
@@ -386,7 +388,11 @@
   if(!item||item===botao||e.target.closest('.loop03-banner-lixeira')||
      e.target.closest('.banner-foto-lixeira-quadro')||
      !podeEditar()||Date.now()<bloquearCliqueAte)return;
-  e.preventDefault();abrir(Number(item.dataset.bannerSlot));
+  e.preventDefault();
+  const cel=e.target.closest('.banner-mosaico-celula');
+  const pos=Number(cel?.dataset.fotoPosicao)||
+   (e.target.matches?.('[data-banner-imagem]')?1:0);
+  abrir(Number(item.dataset.bannerSlot),pos);
  });
  pista.addEventListener('scroll',()=>{
   if(pista.clientWidth>0){
@@ -580,7 +586,6 @@
    reader.onload=()=>{
     if(pendentes.get(pos)!==f)return;
     miniaturas.set(pos,String(reader.result||''));pintar();
-    void abrirRecorte(pos);
    };
    reader.onerror=()=>{status.textContent='Não foi possível ler a foto.';};
    reader.readAsDataURL(f);
@@ -690,6 +695,11 @@
  }
  return {
   pintar,
+  abrir:pos=>{
+   if(pendentes.has(pos)||slot()?.fotos?.[pos-1]?.temImagem)
+    void abrirRecorte(pos);
+   else inputs[pos-1]?.click();
+  },
   novas:n=>[...pendentes.keys()].some(x=>x<=n),
   arquivo:pos=>pendentes.get(pos)||null,
   limpar:()=>{pendentes.clear();miniaturas.clear();inputs.forEach(x=>x.value='');pintar();}
