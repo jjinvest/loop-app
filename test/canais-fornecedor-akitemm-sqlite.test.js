@@ -2,10 +2,12 @@
 const test=require('node:test');
 const assert=require('node:assert/strict');
 const {DatabaseSync}=require('node:sqlite');
+const {randomBytes}=require('node:crypto');
+const {AuditoriaOperacionalSQLite}=require('../src/producao/auditoria-operacional-sqlite');
 const {AnunciosManuaisAkitemmSQLite}=
  require('../src/producao/anuncios-manuais-akitemm-sqlite');
 const {linhasCsv}=require('../src/producao/canais-fornecedor-akitemm-sqlite');
-function preparar(){
+function preparar({auditar=false}={}){
  const banco=new DatabaseSync(':memory:');
  banco.exec('PRAGMA foreign_keys=ON');
  banco.exec([
@@ -13,13 +15,17 @@ function preparar(){
   'produto_id TEXT PRIMARY KEY,titulo TEXT NOT NULL);',
   "INSERT INTO loja_real_produtos VALUES('camisa-1','Camisa'),('bone-2','Bone');"
  ].join(' '));
- return {banco,anuncios:new AnunciosManuaisAkitemmSQLite({banco})};
+ const auditoria=auditar?new AuditoriaOperacionalSQLite({
+  banco,chaveAuditoria:randomBytes(32)
+ }):null;
+ return {banco,anuncios:new AnunciosManuaisAkitemmSQLite({banco,auditoria}),
+  auditoria};
 }
 const CSV='\uFEFFproduto_id;fornecedor;sku_fornecedor;preco_vitrine;quantidade\r\n'+
  'camisa-1;Distribuidor Manual;SKU-123;197,90;5\r\n'+
  'bone-2;"Fornecedor; Comercial";BON-20;59,90;0\r\n';
 test('fornecedor sem API grava nome, contato e SKU no mesmo SQLite e não conecta API',()=>{
- const {banco,anuncios}=preparar();
+ const {banco,anuncios,auditoria}=preparar({auditar:true});
  try{
   const canal=anuncios.canais;
   const atual=canal.consultar('camisa-1');
@@ -36,6 +42,7 @@ test('fornecedor sem API grava nome, contato e SKU no mesmo SQLite e não conect
   assert.equal(salvo.revisao,1);
   assert.equal(salvo.fornecedorContato,'compras@distribuidor.example');
   assert.equal(salvo.automatico,false);
+  assert.equal(auditoria.verificar().total,1);
   const reiniciada=new AnunciosManuaisAkitemmSQLite({banco});
   assert.deepEqual(reiniciada.canais.consultar('camisa-1'),salvo);
   assert.throws(()=>canal.configurar({
@@ -57,7 +64,7 @@ test('fornecedor sem API grava nome, contato e SKU no mesmo SQLite e não conect
  }finally{banco.close();}
 });
 test('prévia CSV não altera dados, importação com confirmação faz lote atômico',()=>{
- const {banco,anuncios}=preparar();
+ const {banco,anuncios,auditoria}=preparar({auditar:true});
  try{
   const canal=anuncios.canais;
   const itens=linhasCsv(CSV);
@@ -78,6 +85,7 @@ test('prévia CSV não altera dados, importação com confirmação faz lote at�
   });
   assert.equal(aplicado.gravou,true);
   assert.equal(aplicado.total,2);
+  assert.equal(auditoria.verificar().total,2);
   assert.equal(aplicado.pagamentoHabilitado,false);
   assert.equal(aplicado.estoqueConfirmado,false);
   assert.equal(anuncios.consultar('camisa-1').precoCentavos,19790);
