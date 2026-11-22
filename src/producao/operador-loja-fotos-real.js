@@ -380,7 +380,7 @@
   });
   return {mostrar,limpar};
  }
- const escolhaCor=form=>select('Cor do produto',[
+ const escolhaCor=form=>select('Classificação comercial LOOP (não é cor física)',[
   ['CINZA','Cinza'],['VERDE','Verde'],['DOURADO','Dourado'],
   ['ROXO','Roxo']
  ]);
@@ -430,6 +430,9 @@
    maxLength:70,placeholder:'Ex.: Calçados, roupas, acessórios'
   });
   const marca=campoTexto(form,'Marca (opcional)',{maxLength:70});
+  const corDescricao=campoTexto(form,'Cor física do produto (escreva livremente)',{
+   maxLength:120,placeholder:'Ex.: azul, preto, colorido, azul e branco, estampado'
+  });
   const faixa=document.createElement('fieldset');
   faixa.className='akitemm-editor-precos';
   const legenda=document.createElement('legend');
@@ -474,6 +477,7 @@
     sincronizarOrigem();
     categoria.value=d.categoria||'';
     marca.value=d.marca||'';
+    corDescricao.value=d.corDescricao||'';
     normal.value=deReais(d.precoCentavos??null);
     promo.value=deReais(d.promocaoCentavos??null);
     estoque.value=d.quantidade===null?'':String(d.quantidade);
@@ -498,6 +502,7 @@
      throw Error('SKU_DO_FORNECEDOR_INVALIDO');
     return {origem:modo==='PROPRIO'?'PROPRIO':'API',
      categoria:categoria.value.trim(),marca:marca.value.trim(),
+     corDescricao:corDescricao.value.trim(),
      precoCentavos,promocaoCentavos,quantidade,
      canal:{canal:modo,fornecedorNome:fornecedorNome.value.trim(),
       fornecedorSku:fornecedorSku.value.trim(),
@@ -505,6 +510,24 @@
       revisaoEsperada:revisaoCanal}};
    },
    canalGravado(revisao){revisaoCanal=revisao;},
+   rascunho(){
+    return {origem:origem.s.value,fornecedorNome:fornecedorNome.value,
+     fornecedorSku:fornecedorSku.value,fornecedorContato:fornecedorContato.value,
+     categoria:categoria.value,marca:marca.value,
+     corDescricao:corDescricao.value,precoNormal:normal.value,
+     precoPromocional:promo.value,quantidade:estoque.value};
+   },
+   restaurarRascunho(d){
+    if(!d)return;
+    for(const [campo,valor] of [
+     [origem.s,d.origem],[fornecedorNome,d.fornecedorNome],
+     [fornecedorSku,d.fornecedorSku],[fornecedorContato,d.fornecedorContato],
+     [categoria,d.categoria],[marca,d.marca],[corDescricao,d.corDescricao],
+     [normal,d.precoNormal],[promo,d.precoPromocional],
+     [estoque,d.quantidade]])
+     if(typeof valor==='string')campo.value=valor;
+    sincronizarOrigem();
+   },
    validarCampos(){
     const erros=[],adicionar=(entrada,mensagem)=>erros.push({entrada,mensagem});
     const precoValido=v=>!v.trim()||/^(?:0|[1-9][0-9]{0,6})(?:[,.][0-9]{1,2})?$/.test(v.trim());
@@ -524,6 +547,8 @@
       !Number.isSafeInteger(Number(estoque.value))||
       Number(estoque.value)<0||Number(estoque.value)>1000000))
      adicionar(estoque,'Informe uma quantidade inteira de 0 a 1.000.000.');
+    if(corDescricao.value.trim().length>120)
+     adicionar(corDescricao,'Descreva a cor em até 120 caracteres.');
     if(origem.s.value==='FORNECEDOR_MANUAL'){
      if(fornecedorNome.value.trim().length<2)
       adicionar(fornecedorNome,'Informe o nome do fornecedor.');
@@ -935,7 +960,7 @@
   form.append(galeriaFotos.label);
   const salvarDados=document.createElement('button');
   salvarDados.type='submit';
-  salvarDados.textContent='Salvar dados, preço, promoção e cor';
+  salvarDados.textContent='Salvar dados, preços e cor física';
   form.append(salvarDados);
   const salvarImagem=document.createElement('button');
   salvarImagem.type='button';salvarImagem.textContent='Salvar foto e publicar na vitrine';
@@ -943,7 +968,7 @@
   const salvarClassificacao=document.createElement('button');
   salvarClassificacao.type='button';
   salvarClassificacao.className='akitemm-editor-secundario';
-  salvarClassificacao.textContent='Salvar cor do produto';
+  salvarClassificacao.textContent='Salvar classificação comercial';
   form.append(salvarClassificacao);
   const ordemBox=document.createElement('section');
   const ordemLabel=campoTexto(ordemBox,
@@ -954,7 +979,7 @@
   const mover=document.createElement('button');mover.type='button';
   mover.className='akitemm-editor-secundario';
   mover.textContent='Mover produto para esta posição';
-  const detalheOrdem=linha('A vitrine continua sem lacunas. Todas as cores ficam misturadas.');
+  const detalheOrdem=linha('A cor física é texto livre. A classificação comercial segue as regras do LOOP.');
   ordemBox.append(mover,detalheOrdem);form.append(ordemBox);
   corpo.append(form);
   let revisaoAtual=null,revisaoAnuncio=0,revisaoEntrega=0,csrf=null,slotsAtuais=[],estaPublicado=false;
@@ -1036,11 +1061,11 @@
      const entregaSalva=await salvarEntrega(id,csrf,entrega,revisaoEntrega);
      revisaoEntrega=entregaSalva.revisao;
      await salvarCor(id,csrf,cor.s.value);
-    },'Nome, preço, promoção, estoque e cor salvos.');
+    },'Nome, cor física, preço, promoção e estoque salvos.');
    });
    salvarClassificacao.addEventListener('click',()=>{
     void botoesAtualizar(async()=>{await salvarCor(id,csrf,cor.s.value);},
-     'Cor atualizada; filtros da loja respeitam a nova classificação.');
+     'Classificação comercial salva; os filtros seguem as regras do LOOP.');
    });
    salvarImagem.addEventListener('click',()=>{
     void botoesAtualizar(async()=>{
