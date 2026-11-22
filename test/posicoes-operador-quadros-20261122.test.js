@@ -10,7 +10,7 @@ const css=fs.readFileSync(path.join(__dirname,
  '../src/producao/acabamento-botoes-real.css'),'utf8');
 
 const inicio=js.indexOf(' function mostrarResumoPosicoesOperador(destino,d){');
-const fim=js.indexOf(' async function carregarAbaOperador(id){',inicio);
+const fim=js.indexOf(' function mostrarResumoComercialOperador(destino,d){',inicio);
 assert.ok(inicio>=0&&fim>inicio,'renderizador do painel de posições');
 const funcao=js.slice(inicio,fim);
 
