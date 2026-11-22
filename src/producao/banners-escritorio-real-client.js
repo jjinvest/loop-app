@@ -103,7 +103,7 @@
   modo.value=Number(colunas.value)>1?'PREENCHER':'INTEIRA';
   fotosEditor.pintar();
  });
- let leitura=0;
+
  // Fotos da galeria Android podem trazer EXIF, bytes finais extras ou
  // codificação JPEG que a verificação binária estrita do servidor rejeita.
  // Decodificar e reexportar como JPEG padrão (sem recortar a imagem)
@@ -422,23 +422,6 @@
  // Revalidar a sessão e buscar as quatro fotos após a troca de modo.
  const obs=new MutationObserver(()=>{void checarAcesso();});
  obs.observe(document.body,{attributes:true,attributeFilter:['class']});
- arquivo.addEventListener('change',()=>{
-  const f=arquivo.files?.[0];
-  if(!f){previa.hidden=true;return;}
-  if(!['image/jpeg','image/png','image/webp'].includes(f.type)||
-     f.size<40||f.size>16*1024*1024){
-   status.textContent='Escolha JPG, PNG ou WebP de até 16 MB.';
-   arquivo.value='';previa.hidden=true;return;
-  }
-  status.textContent='Imagem pronta para salvar.';
-  const atual=++leitura,leitor=new FileReader();
-  leitor.onload=()=>{
-   if(atual!==leitura)return;
-   previa.src=String(leitor.result);previa.hidden=false;
-  };
-  leitor.onerror=()=>{status.textContent='Não foi possível ler a imagem.';};
-  leitor.readAsDataURL(f);
- });
  async function removerFotoIndividual(numero,pos){
   if(gravando||!podeEditar()||![1,2,3].includes(pos))return;
   const item=dados?.slots?.find(x=>x.slot===numero);
