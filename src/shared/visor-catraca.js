@@ -71,7 +71,8 @@
    for(let i=1;i<=6;i++){
     const bola=$('motorBolinha'+i);
     if(!bola)continue;
-    const ligada=compartilhado&&valido&&i<=estado.luzes;
+    // Ao encerrar, apagar LEDs, preservando os totais no placar.
+    const ligada=compartilhado&&valido&&!estado.finalizado&&i<=estado.luzes;
     const lampadaAtual=ligada&&!estado.finalizado&&estado.luzes>0&&i===estado.luzes;
     bola.classList.toggle('loop03-relogio-luz-visual',ligada);
     // A lâmpada alcançada pelo próximo marco do relógio pulsa enquanto
