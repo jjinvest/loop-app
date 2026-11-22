@@ -290,6 +290,26 @@ async function main(){
    await operadorPage.locator('#loop03ImagemFotoTopo').waitFor({state:'visible'});
    assert.equal(await operadorPage.locator('body > #arquivoFotoPerfil').count(),1);
    assert.equal(await operadorPage.locator('#abaConta').isDisabled(),false);
+   // A foto do operador deve aparecer na AKITEMM sem novo upload,
+   // inclusive quando ele alterna apenas a visualização para cliente.
+   for(const visao of ['operador','cliente']){
+    await operadorPage.goto(base+'/loja?visao='+visao,{
+     waitUntil:'domcontentloaded'
+    });
+    await operadorPage.locator('#akitemmFotoTitular')
+     .waitFor({state:'visible',timeout:12000});
+    const imagem=await operadorPage.locator('#akitemmFotoTitular')
+     .evaluate(img=>({ok:img.complete&&img.naturalWidth>0,
+      src:new URL(img.src).pathname}));
+    assert.equal(imagem.ok,true,
+     'foto do operador do LOOP deve aparecer na AKITEMM: '+visao);
+    assert.equal(imagem.src,'/api/admin/operador/foto-perfil');
+   }
+   await operadorPage.goto(base+'/escritorio?visao=operador',{
+    waitUntil:'domcontentloaded'
+   });
+   await operadorPage.locator('#loop03ImagemFotoTopo')
+    .waitFor({state:'visible',timeout:12000});
    if(visual.mobile)await operadorPage.locator('#loop03MenuIntegrado').click();
    await operadorPage.locator('#abaTabuleiro').click();
    await operadorPage.locator('#conteudoTabuleiro').waitFor({state:'visible'});

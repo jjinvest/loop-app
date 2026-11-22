@@ -424,7 +424,7 @@
     },
     {
       "path": "scripts/validar-identidade-real-navegador.js",
-      "sha": "89bf07dab59d2cbf74e03d115dbc50f4eec0a95b"
+      "sha": "20884598628b0707df0768ade39534d55087116d"
     },
     {
       "path": "scripts/validar-jornada-loja-cores-browser.js",
@@ -3950,6 +3950,12 @@
       "antes": null,
       "depois": "b87f920af324803842eb3428da0912c0ca25a267",
       "objetivo": "Pedido de 22/11/2026: foto já cadastrada no LOOP aparece também na AKITEMM para cliente e operador, mantendo sessões separadas, sem alterar cadastro, molduras, dinheiro ou motor."
+    },
+    {
+      "path": "scripts/validar-identidade-real-navegador.js",
+      "antes": "89bf07dab59d2cbf74e03d115dbc50f4eec0a95b",
+      "depois": "20884598628b0707df0768ade39534d55087116d",
+      "objetivo": "Testar em Chromium PC e Android a foto já salva no LOOP, visível nas visões operador e cliente da AKITEMM, preservando identidade do titular."
     }
   ]
 }
