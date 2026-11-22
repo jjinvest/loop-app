@@ -27,6 +27,20 @@
 
  const nickVisivel=nick=>typeof nick==='string'&&/^(?:vilela|operador)$/i.test(nick)?nick.toUpperCase():nick;
  // A credencial de operador nunca é inferida pelo nick do cliente.
+ // Todos os acessos internos à AKITEMM acompanham a visão atual do LOOP;
+ // links pessoais de indicação (/loja/NICK) continuam intactos.
+ function acessosAkitemmDoEscritorio(){
+  return document.querySelectorAll(
+   '.loop03-atalho-loja, .barra-conta a.loop03-loja-prata, '+
+   '.loop03-pedidos-atalhos a[href^="/loja"], '+
+   '.loop03-banner-item[href^="/loja"], #irParaLoja'
+  );
+ }
+ function direcionarAcessosAkitemm(visao){
+  const href=visao?'/loja?visao='+visao:'/loja';
+  for(const link of acessosAkitemmDoEscritorio())
+   link.setAttribute('href',href);
+ }
  // O gateway verifica a sessão administrativa isolada antes de revelar +.
  async function atualizarAtalhoOperadorReal(){
   const antigo=$('loopOperadorMais');
@@ -41,16 +55,14 @@
    const ativo=d?.operador===true;
    if(barra)barra.hidden=!ativo||!modoOperadorAtual;
    if(voltar)voltar.hidden=!ativo||modoOperadorAtual;
-   // A loja abre na mesma visão escolhida no LOOP, sem alterar a sessão.
-   if(ativo){
-    const href='/loja?visao='+(modoOperadorAtual?'operador':'cliente');
-    for(const link of document.querySelectorAll(
-     '.loop03-atalho-loja, .barra-conta a.loop03-loja-prata'
-    ))link.href=href;
-   }
+   // Inclui Meus Pedidos e banners; a URL nunca concede permissão.
+   direcionarAcessosAkitemm(ativo?
+    (modoOperadorAtual?'operador':'cliente'):null);
   }catch{
    if(barra)barra.hidden=true;
    if(voltar)voltar.hidden=true;
+   // Falha de consulta não pode abrir por engano a visão de operador.
+   direcionarAcessosAkitemm('cliente');
   }
  }
  void atualizarAtalhoOperadorReal();
@@ -626,6 +638,7 @@
  }
  function abrirPainelOperador(){
   modoOperadorAtual=true;csrf=null;
+  direcionarAcessosAkitemm('operador');
   posicionarCampoFotoPerfil(true);
   for(const id of ['painelLogin','painelCadastro','painelRecuperacao'])
    $(id).hidden=true;
@@ -678,6 +691,7 @@
   limparAgendaOperador();
   posicionarCampoFotoPerfil(false);
   modoOperadorAtual=false;
+  direcionarAcessosAkitemm('cliente');
   document.body.classList.remove('loop03-modo-operador');
   const acoes=$('loopOperadorAcoes');if(acoes)acoes.hidden=true;
   $('loop03AbrirPerfil').disabled=false;
@@ -746,9 +760,7 @@
   if(indicators)indicators.hidden=false;
   // Mesma sessão permite visitar a AKITEMM em modo somente leitura.
   // O backend continua protegendo /loja por cookie e bloqueia checkout.
-  for(const acessoLoja of document.querySelectorAll(
-   '.loop03-atalho-loja, .barra-conta a.loop03-loja-prata'
-  )){
+  for(const acessoLoja of acessosAkitemmDoEscritorio()){
    acessoLoja.setAttribute('href','/loja');
    acessoLoja.removeAttribute('aria-disabled');
    acessoLoja.title='Abrir Loja AKITEMM (compras ainda indisponíveis)';
