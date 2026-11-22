@@ -113,6 +113,30 @@ class BannerMosaicoSQLite{
     .run(slot,posicao);
   });
  }
+ trocarEmTransacao(origem,destino){
+  this._principal(origem);this._principal(destino);
+  if(origem===destino)falhar('BANNER_MOSAICO_TROCA_INVALIDA');
+  const p=this.cfg.prefixo;
+  const layouts=this.banco.prepare(
+   'SELECT slot,colunas,modo FROM '+p+'_layout WHERE slot IN (?,?)'
+  ).all(origem,destino);
+  const fotos=this.banco.prepare(
+   'SELECT slot,posicao,mime,imagem FROM '+p+'_foto WHERE slot IN (?,?)'
+  ).all(origem,destino);
+  this.banco.prepare('DELETE FROM '+p+'_layout WHERE slot IN (?,?)')
+   .run(origem,destino);
+  this.banco.prepare('DELETE FROM '+p+'_foto WHERE slot IN (?,?)')
+   .run(origem,destino);
+  const inserirLayout=this.banco.prepare(
+   'INSERT INTO '+p+'_layout(slot,colunas,modo) VALUES(?,?,?)'
+  );
+  const inserirFoto=this.banco.prepare(
+   'INSERT INTO '+p+'_foto(slot,posicao,mime,imagem) VALUES(?,?,?,?)'
+  );
+  const oposto=x=>x===origem?destino:origem;
+  for(const l of layouts)inserirLayout.run(oposto(l.slot),l.colunas,l.modo);
+  for(const f of fotos)inserirFoto.run(oposto(f.slot),f.posicao,f.mime,f.imagem);
+ }
  imagem({slot,posicao}={}){
   this._principal(slot);
   if(![2,3].includes(posicao))falhar('BANNER_MOSAICO_POSICAO_INVALIDA');
