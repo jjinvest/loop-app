@@ -290,7 +290,7 @@
  function camposAnuncio(form){
   const origem=select('Origem e abastecimento',[
    ['PROPRIO','Meu produto — cadastro manual'],
-   ['FORNECEDOR_MANUAL','Fornecedor sem API — controle manual'],
+   ['FORNECEDOR_MANUAL','Fornecedor sem API — cadastro e contato'],
    ['PLANILHA_CSV','Planilha CSV — importação de catálogo'],
    ['API_PENDENTE','API direta — requer autorização'],
    ['ERP_PENDENTE','ERP ou hub — requer conexão'],
@@ -313,8 +313,9 @@
   const fornecedorContato=campoTexto(form,'Contato do fornecedor (e-mail ou telefone)',{
    maxLength:160,placeholder:'Canal combinado para enviar pedidos'
   });
-  const avisoOrigem=linha('Somente cadastro próprio e controle manual estão disponíveis aqui. '+
-   'A planilha CSV é importada pelo botão Importar CSV. API, ERP e marketplaces exigem credenciais e autorização do parceiro; ainda não estão conectados.');
+  const avisoOrigem=linha('Fornecedor sem API: nome, SKU e contato ficam registrados no catálogo. '+
+   'Pedidos não são enviados automaticamente. A planilha CSV é importada pelo botão Importar CSV. '+
+   'API, ERP e marketplaces exigem credenciais e autorização; ainda não estão conectados.');
   form.append(avisoOrigem);
   const sincronizarOrigem=()=>{
    const externo=['FORNECEDOR_MANUAL','PLANILHA_CSV'].includes(origem.s.value);
