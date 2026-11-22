@@ -59,12 +59,11 @@ function cenario(){
   visorCatraca:{
    registrarAgenda:x=>{
     visores.push(['agenda',x]);
-    if(!Number.isSafeInteger(x.ciclosRelogio24h)||
-       !Number.isSafeInteger(x.luzesRelogio24h))return;
-    elementos.loop03Giros24Integrado.textContent=
-     String(x.ciclosRelogio24h);
-    elementos.loop03LuzesHoraIntegrado.textContent=
-     String(x.luzesRelogio24h);
+    // Stub so do livro efetivo: a contagem luminosa em si ja e
+    // testada com o visor real em checkup-tabuleiro-agenda-compartilhada.
+    if(Number.isSafeInteger(x.girosReais24h))
+     elementos.loop03Giros24Integrado.textContent=
+      String(x.girosReais24h);
    },
    observar:(g,e)=>visores.push(['eventos',g,e])
   }
@@ -74,15 +73,14 @@ function cenario(){
  return {contexto,elementos,agenda,cliente,motor,controle,chamadas,visores};
 }
 
-test('cliente e operador mostram os mesmos ciclos visuais em 24h, sem inventar giro',async()=>{
+test('cliente e operador recebem o mesmo livro de ciclos efetivos em 24h',async()=>{
  const x=cenario();
  await x.contexto.atualizarCliente();
- assert.equal(x.elementos.loop03Giros24Integrado.textContent,'1');
- assert.equal(x.elementos.loop03LuzesHoraIntegrado.textContent,'8');
+ assert.equal(x.elementos.loop03Giros24Integrado.textContent,'2');
  assert.equal(x.elementos.loop03TotalIntegrado.textContent,'0 / 10');
  x.contexto.modoOperadorAtual=true;
  await x.contexto.atualizarOperador();
- assert.equal(x.elementos.loop03Giros24Integrado.textContent,'1');
+ assert.equal(x.elementos.loop03Giros24Integrado.textContent,'2');
  assert.equal(x.elementos.loop03TotalIntegrado.textContent,'2');
  assert.equal(x.elementos.loop03NumeroIntegrado.textContent,'3 / 6');
  assert.deepEqual(x.chamadas,[
@@ -102,8 +100,7 @@ test('atualizacao do relogio chega aos dois perfis sem recriar tela',async()=>{
  x.motor.catraca.giros=4;x.controle.girosTotais=4;
  x.controle.girosHoje=4;x.controle.giros24h=4;
  await x.contexto.atualizarCliente();
- assert.equal(x.elementos.loop03Giros24Integrado.textContent,'2');
- assert.equal(x.elementos.loop03LuzesHoraIntegrado.textContent,'12');
+ assert.equal(x.elementos.loop03Giros24Integrado.textContent,'4');
  x.contexto.modoOperadorAtual=true;
  await x.contexto.atualizarOperador();
  assert.equal(x.elementos.loop03Giros24Integrado.textContent,'2');
