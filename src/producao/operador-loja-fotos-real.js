@@ -767,32 +767,27 @@
  async function vincularQuadradinho(indice,id){
   if(!Number.isSafeInteger(indice)||indice<1||indice>400||!ID.test(id))
    throw Error('QUADRINHO_INVALIDO');
-  const [sessao,slots]=await Promise.all([
-   fetchJson('/api/admin/comercial/sessao'),
-   fetchJson('/api/admin/catalogo-midia/slots')
-  ]);
-  if(!Array.isArray(slots.slots)||slots.total!==400)
-   throw Error('QUADRINHOS_INDISPONIVEIS');
-  const ocupados=new Set(slots.slots.map(x=>x.posicao));
-  const destino=Array.from({length:400},(_,i)=>i+1)
-   .find(n=>!ocupados.has(n));
-  if(!destino)throw Error('VITRINE_SEM_ESPACO');
-  const atual=slots.slots.find(x=>x.posicao===destino);
-  const resposta=await fetchJson(
-   '/api/admin/catalogo-midia/slots/'+destino,{
-    method:'POST',headers:{'Content-Type':'application/json',
-     'X-Loop-Admin-Csrf':sessao.csrfToken},
-    body:JSON.stringify({produtoId:id,revisaoEsperada:atual?.revisao||0})
-   });
-  if(resposta.produtoId!==id||resposta.posicao!==destino)
-   throw Error('QUADRINHO_NAO_CONFIRMADO');
+  const sessao=await fetchJson('/api/admin/comercial/sessao');
+  if(typeof sessao.csrfToken!=='string')
+   throw Error('OPERADOR_SESSAO_INVALIDA');
+  // O número tocado ABRE o cadastro, mas NUNCA determina a posição.
+  // A escolha é atômica e sequencial no serviço real, sem buracos.
+  const resposta=await fetchJson('/api/admin/catalogo-midia/vincular-proximo',{
+   method:'POST',headers:{'Content-Type':'application/json',
+    'X-Loop-Admin-Csrf':sessao.csrfToken},
+   body:JSON.stringify({produtoId:id})
+  });
+  if(resposta.produtoId!==id||resposta.automatico!==true||
+     !Number.isSafeInteger(resposta.posicao)||resposta.posicao<1||
+     resposta.posicao>400)throw Error('QUADRINHO_NAO_CONFIRMADO');
   return resposta;
  }
  async function escolherProduto(indice){
   if(!Number.isSafeInteger(indice)||indice<1||indice>400)return;
   const {corpo,estado}=modal('Cadastrar produto · AKITEMM');
   corpo.append(linha('Cadastro na AKITEMM. Cada campo com erro será marcado e terá um atalho para correção. '+
-   'Distribuidor e SKU só são necessários ao escolher fornecedor externo.'));
+   'Distribuidor e SKU só são necessários ao escolher fornecedor externo. ' +
+   'Ao publicar, o produto entra na primeira posição livre, independentemente do quadrinho tocado.'));
   const form=document.createElement('form');form.autocomplete='off';
   const guia=criarGuiaPendencias(form,estado);
   const nome=campoTexto(form,'Nome do produto',{placeholder:'Ex.: Camiseta preta'});
@@ -883,10 +878,11 @@
     await salvarEntrega(id,csrf,entrega,0);
     if(imagem){
      await salvarFoto(id,csrf,imagem,1);
-     await vincularQuadradinho(indice,id);
+     const posicaoSalva=await vincularQuadradinho(indice,id);
      await publicarFoto(id,csrf);
      atualizarLoja();
-     estado.textContent='Produto e foto salvos. O item agora aparece nos primeiros espaços da vitrine.';
+     estado.textContent='Produto e foto salvos na posição '+posicaoSalva.posicao+
+      '. A entrada segue a ordem sequencial dos produtos.';
      criar.textContent='Produto salvo';
     }else{
      estado.textContent='Produto salvo sem foto, como rascunho. Selecione uma imagem para publicar.';
@@ -1094,7 +1090,7 @@
   anuncioArrasto.textContent=mensagem;
  };
  const posicaoCard=c=>{
-  const p=Number(c?.dataset?.akitemmOrdem);
+  const p=Number(c?.dataset?.akitemmOrdem||c?.dataset?.akitemmSlot);
   return Number.isSafeInteger(p)&&p>=1&&p<=400?p:null;
  };
  function prepararAlcas(){
@@ -1108,21 +1104,28 @@
    return;
   }
   for(const c of lista.querySelectorAll(
-   '.produto-loja-loop[data-produto-id][data-akitemm-ordem]')){
+   '.produto-loja-loop[data-produto-id][data-akitemm-ordem],'+
+   '.akitemm-slot-vazio[data-akitemm-slot]')){
    if(c.classList.contains('akitemm-ordenavel'))continue;
    c.classList.add('akitemm-ordenavel');
-   // Impedir que o navegador arraste a foto em vez de reordenar o produto.
+   const vazio=c.classList.contains('akitemm-slot-vazio');
+   // A alça aparece mesmo no quadrinho vazio, sem produto cadastrado.
    for(const imagem of c.querySelectorAll('img'))imagem.draggable=false;
    const alca=document.createElement('button');
    alca.type='button';alca.className='akitemm-alca-arrastar';
    alca.textContent='⠿';
-   alca.title='Arraste pela alça ou segure o cartão para reordenar';
-   alca.setAttribute('aria-label','Segure e arraste produto da posição '+
-    posicaoCard(c)+'; toque para editar a posição numericamente');
+   alca.title=vazio?'Arraste para trocar com outro espaço vazio':
+    'Arraste produto para reorganizar a vitrine';
+   alca.setAttribute('aria-label',vazio?
+    'Arrastar espaço vazio da posição '+posicaoCard(c)+
+    '; toque para abrir o cadastro de produto':
+    'Segure e arraste produto da posição '+posicaoCard(c)+
+    '; toque para editar a posição numericamente');
    alca.addEventListener('click',ev=>{
     ev.preventDefault();ev.stopPropagation();
     if(Date.now()<suprimirCliqueAte)return;
-    void abrirProduto(c.dataset.produtoId);
+    if(vazio)void escolherProduto(posicaoCard(c));
+    else void abrirProduto(c.dataset.produtoId);
    });
    c.append(alca);
   }
@@ -1157,12 +1160,15 @@
   if(!arrasto?.ativo)return;
   const abaixo=document.elementFromPoint(arrasto.x,arrasto.y);
   const card=abaixo?.closest?.(
-   '#catalogoLojaLoop .produto-loja-loop[data-produto-id][data-akitemm-ordem]');
-  if(!card||card===arrasto.origem){
+   '#catalogoLojaLoop .produto-loja-loop[data-produto-id][data-akitemm-ordem],'+
+   '#catalogoLojaLoop .akitemm-slot-vazio[data-akitemm-slot]');
+  if(!card||card===arrasto.origem||
+     !!card.dataset.produtoId!==!!arrasto.origem.dataset.produtoId){
    destacarDestino(null,'');return;
   }
   const rect=card.getBoundingClientRect();
-  destacarDestino(card,arrasto.x<rect.left+rect.width/2?'antes':'depois');
+  destacarDestino(card,card.dataset.akitemmSlot?'trocar':
+   arrasto.x<rect.left+rect.width/2?'antes':'depois');
  }
  function flutuarArrasto(){
   if(!arrasto?.ativo)return;
@@ -1174,7 +1180,9 @@
  function iniciarArrasto(){
   if(!arrasto||arrasto.ativo||!operador)return;
   const d=arrasto;d.ativo=true;
-  const nome=d.origem.querySelector('h3')?.textContent||'Produto';
+  const nome=d.origem.dataset.akitemmSlot?
+   'Espaço vazio '+posicaoCard(d.origem):
+   d.origem.querySelector('h3')?.textContent||'Produto';
   const fantasma=document.createElement('div');
   fantasma.className='akitemm-arrasto-fantasma';
   fantasma.textContent=nome;
@@ -1185,7 +1193,9 @@
   }
   document.body.append(fantasma);d.fantasma=fantasma;
   d.origem.classList.add('akitemm-arrastando');
-  avisarArrasto('Arraste e solte sobre outro produto para mudar a posição.');
+  avisarArrasto(d.origem.dataset.akitemmSlot?
+   'Arraste até outro espaço vazio para trocar as molduras.':
+   'Arraste e solte sobre outro produto para mudar a posição.');
   flutuarArrasto();
   const rolar=()=>{
    if(!arrasto?.ativo)return;
@@ -1214,7 +1224,42 @@
   if(!teveArrasto)return;
   suprimirCliqueAte=Date.now()+700;
   if(!alvo||!numeroOrigem||!numeroAlvo||numeroAlvo===numeroOrigem){
-   avisarArrasto('Nenhuma alteração. Solte sobre outro produto.');return;
+   avisarArrasto('Nenhuma alteração. Solte sobre outro quadrinho compatível.');return;
+  }
+  if(d.origem.dataset.akitemmSlot){
+   if(!alvo.dataset.akitemmSlot){
+    avisarArrasto('Para trocar molduras vazias, solte sobre outra moldura vazia.');
+    return;
+   }
+   avisarArrasto('Salvando a nova posição das molduras vazias...');
+   void (async()=>{
+    try{
+     const [sessao,slots]=await Promise.all([
+      fetchJson('/api/admin/comercial/sessao'),
+      fetchJson('/api/admin/catalogo-midia/slots')
+     ]);
+     if(!operador||!slots.layoutVazio||
+        !Number.isSafeInteger(slots.layoutVazio.revisao)||
+        typeof sessao.csrfToken!=='string')
+      throw Error('OPERADOR_SESSAO_INVALIDA');
+     const resposta=await fetchJson(
+      '/api/admin/catalogo-midia/trocar-espacos-vazios',{
+       method:'POST',headers:{'Content-Type':'application/json',
+        'X-Loop-Admin-Csrf':sessao.csrfToken},
+       body:JSON.stringify({origem:numeroOrigem,destino:numeroAlvo,
+        revisaoEsperada:slots.layoutVazio.revisao})
+      });
+     if(resposta.confirmado!==true||resposta.origem!==numeroOrigem||
+        resposta.destino!==numeroAlvo)
+      throw Error('TROCA_VAZIOS_NAO_CONFIRMADA');
+     avisarArrasto('Molduras vazias trocadas entre as posições '+
+      numeroOrigem+' e '+numeroAlvo+'. Produtos seguem a ordem de cadastro.');
+     atualizarLoja();
+    }catch(e){
+     avisarArrasto('Molduras não alteradas: '+e.message);
+    }
+   })();
+   return;
   }
   const destino=numeroOrigem<numeroAlvo?
    numeroAlvo-(lado==='antes'?1:0):
@@ -1261,7 +1306,8 @@
  document.addEventListener('pointerdown',ev=>{
   if(!operador||arrasto||dialogo?.open||ev.button!==0)return;
   const carta=ev.target.closest?.(
-   '#catalogoLojaLoop .produto-loja-loop[data-produto-id][data-akitemm-ordem]');
+   '#catalogoLojaLoop .produto-loja-loop[data-produto-id][data-akitemm-ordem],'+
+   '#catalogoLojaLoop .akitemm-slot-vazio[data-akitemm-slot]');
   if(!carta||!posicaoCard(carta))return;
   const alca=ev.target.closest('.akitemm-alca-arrastar');
   // Toque longo no cartão também inicia a ordem; deslizar continua rolando.
