@@ -889,6 +889,36 @@
      resposta.posicao>400)throw Error('QUADRINHO_NAO_CONFIRMADO');
   return resposta;
  }
+ // Mensagens ficam junto à lixeira clicada; o rodapé do modal pode estar
+ // fora do campo visível quando há vários produtos não publicados.
+ const mensagemExclusao=codigo=>{
+  const m=String(codigo||'SERVICO_INDISPONIVEL');
+  if(/PRODUTO_COM_PEDIDOS|HISTORICO_PUBLICACAO|PUBLICADO/.test(m))
+   return 'Este produto tem publicação ou pedidos no histórico e não pode ser apagado por esta lixeira.';
+  if(/PRODUTO_JA_VINCULADO/.test(m))
+   return 'Este produto tem um vínculo protegido na vitrine; não foi apagado.';
+  if(/CONFLITO_REVISAO|REVISAO_CONCORRENTE|NAO_ENCONTRADO/.test(m))
+   return 'O cadastro mudou desde a abertura. Feche e abra a lista novamente.';
+  if(/SESSAO|CSRF|LOGIN|OPERADOR/.test(m))
+   return 'Sua sessão de operador precisa ser renovada antes de excluir.';
+  return 'Não foi possível excluir: '+m;
+ };
+ const avisoExclusao=()=>{
+  const p=document.createElement('p');
+  p.className='akitemm-exclusao-aviso';
+  p.setAttribute('role','status');
+  p.setAttribute('aria-live','polite');
+  p.style.cssText='padding:9px 12px;border:1px solid #bf8c77;'+
+   'border-radius:10px;color:#ffe7cf;background:#502c3e;'+
+   'overflow-wrap:anywhere;font-weight:650;';
+  p.hidden=true;
+  return p;
+ };
+ const erroNaFicha=(aviso,erro,estado)=>{
+  const mensagem=mensagemExclusao(erro?.message||erro);
+  aviso.textContent=mensagem;aviso.hidden=false;
+  estado.textContent=mensagem;
+ };
  // Aqui aparecem tanto cadastros reais RASCUNHO como formulários
  // interrompidos antes da criação. Nenhum item desta lista é publicado.
  async function abrirRascunhosNaoPublicados(){
@@ -929,12 +959,13 @@
     const excluir=document.createElement('button');
     excluir.type='button';excluir.textContent='🗑️ Excluir';
     excluir.className='akitemm-lixeira-rascunho';
+    const aviso=avisoExclusao();
     // Mantém o nome acessível anterior para teclado e regressão existente.
     excluir.setAttribute('aria-label','Descartar este rascunho');
     excluir.addEventListener('click',async()=>{
      if(!window.confirm('Descartar os dados deste formulário não publicado?'))
       return;
-     excluir.disabled=true;
+     excluir.disabled=true;aviso.hidden=true;aviso.textContent='';
      try{
       const sessao=await fetchJson('/api/admin/comercial/sessao');
       const r=await fetchJson(
@@ -945,10 +976,10 @@
       if(r.excluido!==true)throw Error('EXCLUSAO_NAO_CONFIRMADA');
       card.remove();pendentes--;atualizarQuantidade();
       estado.textContent='Rascunho descartado. '+estado.textContent;
-     }catch(e){estado.textContent='Não foi possível descartar: '+e.message;}
+     }catch(e){erroNaFicha(aviso,e,estado);}
      finally{excluir.disabled=false;}
     });
-    card.append(titulo,data,continuar,excluir);corpo.append(card);
+    card.append(titulo,data,continuar,excluir,aviso);corpo.append(card);
    }
    for(const item of produtos){
     const card=document.createElement('section');
@@ -964,12 +995,13 @@
     excluir.className='akitemm-lixeira-rascunho';
     excluir.textContent='🗑️ Excluir';
     excluir.setAttribute('aria-label','Excluir produto não publicado '+(item.nome||item.produtoId));
+    const aviso=avisoExclusao();
     excluir.addEventListener('click',async()=>{
      if(!operador)return;
      if(!window.confirm('Excluir o produto não publicado "'+
        (item.nome||item.produtoId)+'" da lista? Produtos publicados não serão afetados.'))
       return;
-     excluir.disabled=true;
+     excluir.disabled=true;aviso.hidden=true;aviso.textContent='';
      try{
       const [sessao,produto]=await Promise.all([
        fetchJson('/api/admin/comercial/sessao'),
@@ -988,10 +1020,10 @@
       if(r.excluido!==true||r.arquivado!==true)
        throw Error('EXCLUSAO_NAO_CONFIRMADA');
       card.remove();pendentes--;atualizarQuantidade();
-     }catch(e){estado.textContent='Não foi possível excluir: '+e.message;}
+     }catch(e){erroNaFicha(aviso,e,estado);}
      finally{excluir.disabled=false;}
     });
-    card.append(titulo,d,continuar,excluir);corpo.append(card);
+    card.append(titulo,d,continuar,excluir,aviso);corpo.append(card);
    }
   }catch(e){estado.textContent='Não foi possível carregar rascunhos: '+e.message;}
  }

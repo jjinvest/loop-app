@@ -128,3 +128,138 @@ test('lixeira na tela usa confirmação e API real, sem quebrar visualização d
  assert.match(css,/#akitemmAbasProdutos/);
  assert.match(css,/max-width:calc\(100vw - 12px\)/);
 });
+
+
+test('lixeira do operador permite descartar rascunho vinculado que nunca foi publicado',t=>{
+ const db=new DatabaseSync(':memory:');t.after(()=>db.close());
+ db.exec('PRAGMA foreign_keys=ON');
+ const auditoria=new AuditoriaOperacionalSQLite({
+  banco:db,chaveAuditoria:randomBytes(32)
+ });
+ const c=new CatalogoMultiDistribuidoresSQLite({
+  banco:db,distribuidorHomologado:()=>false,auditoria
+ });
+ db.exec('CREATE TABLE loja_real_vitrine_posicoes('+
+  'posicao INTEGER PRIMARY KEY,produto_id TEXT UNIQUE,'+
+  'revisao INTEGER NOT NULL,atualizado_em INTEGER NOT NULL)');
+ c.criarProduto({produtoId:'manual-tenis-draft',titulo:'Tênis ainda não publicado'});
+ db.prepare('INSERT INTO loja_real_vitrine_posicoes VALUES(?,?,?,?)')
+  .run(2,'manual-tenis-draft',1,Date.now());
+ const r=c.buscarProdutoAdministrativo({produtoId:'manual-tenis-draft'});
+ assert.equal(r.ativo,false);
+ assert.throws(()=>c.arquivarRascunho({
+  produtoId:'manual-tenis-draft',revisaoEsperada:r.revisao
+ }),/PRODUTO_JA_VINCULADO_NAO_EXCLUIR/);
+ const ok=c.arquivarRascunho({
+  produtoId:'manual-tenis-draft',revisaoEsperada:r.revisao,
+  desvincularVitrine:true
+ });
+ assert.equal(ok.excluido,true);
+ assert.equal(c.buscarProdutoAdministrativo({produtoId:'manual-tenis-draft'}),null);
+ assert.equal(db.prepare('SELECT COUNT(*) n FROM loja_real_vitrine_posicoes').get().n,0);
+ assert.equal(db.prepare("SELECT COUNT(*) n FROM loja_real_auditoria_admin WHERE acao='VITRINE_RASCUNHO_DESVINCULADO'").get().n,1);
+ assert.equal(db.prepare('PRAGMA integrity_check').get().integrity_check,'ok');
+});
+test('mesmo com permissão de lixeira, nunca remove histórico publicado ou pedidos',t=>{
+ const db=new DatabaseSync(':memory:');t.after(()=>db.close());
+ db.exec('PRAGMA foreign_keys=ON');
+ const auditoria=new AuditoriaOperacionalSQLite({
+  banco:db,chaveAuditoria:randomBytes(32)
+ });
+ const c=new CatalogoMultiDistribuidoresSQLite({
+  banco:db,distribuidorHomologado:()=>false,auditoria
+ });
+ db.exec('CREATE TABLE loja_real_vitrine_posicoes('+
+  'posicao INTEGER PRIMARY KEY,produto_id TEXT UNIQUE,'+
+  'revisao INTEGER NOT NULL,atualizado_em INTEGER NOT NULL)');
+ c.criarProduto({produtoId:'historico-tenis',titulo:'Tênis com publicação anterior'});
+ db.prepare('INSERT INTO loja_real_vitrine_posicoes VALUES(?,?,?,?)')
+  .run(1,'historico-tenis',1,Date.now());
+ c.ativarProduto({produtoId:'historico-tenis',ativo:true});
+ c.ativarProduto({produtoId:'historico-tenis',ativo:false});
+ const r=c.buscarProdutoAdministrativo({produtoId:'historico-tenis'});
+ assert.throws(()=>c.arquivarRascunho({
+  produtoId:'historico-tenis',revisaoEsperada:r.revisao,
+  desvincularVitrine:true
+ }),/PRODUTO_COM_HISTORICO_PUBLICACAO/);
+ assert.equal(db.prepare('SELECT COUNT(*) n FROM loja_real_vitrine_posicoes').get().n,1);
+ assert.equal(c.buscarProdutoAdministrativo({produtoId:'historico-tenis'}).ativo,false);
+ assert.equal(db.prepare('PRAGMA integrity_check').get().integrity_check,'ok');
+});
+
+
+test('rota real remove vários rascunhos distintos, preserva publicados e exige sessão',async t=>{
+ const express=require('express');
+ const {once}=require('node:events');
+ const {montarRotasCatalogoMidiaOperador}=
+  require('../src/producao/rotas-catalogo-midia-operador');
+ const db=new DatabaseSync(':memory:');
+ db.exec('PRAGMA foreign_keys=ON');
+ t.after(()=>db.close());
+ const audit=new AuditoriaOperacionalSQLite({
+  banco:db,chaveAuditoria:randomBytes(32)
+ });
+ const catalogo=new CatalogoMultiDistribuidoresSQLite({
+  banco:db,distribuidorHomologado:()=>false,auditoria:audit
+ });
+ db.exec('CREATE TABLE loja_real_vitrine_posicoes('+
+  'posicao INTEGER PRIMARY KEY,produto_id TEXT UNIQUE,'+
+  'revisao INTEGER NOT NULL,atualizado_em INTEGER NOT NULL)');
+ for(const produtoId of ['manual-tenis-1','manual-tenis-2','manual-publicado']){
+  catalogo.criarProduto({produtoId,titulo:'Tênis de teste '+produtoId});
+ }
+ db.prepare('INSERT INTO loja_real_vitrine_posicoes VALUES(?,?,?,?)')
+  .run(1,'manual-tenis-2',1,Date.now());
+ catalogo.ativarProduto({produtoId:'manual-publicado',ativo:true});
+ const midia={
+  repo:{banco:db,buscar:()=>null,listar:()=>[],
+   buscarRegistro:()=>null,arquivarRascunho:()=>{throw Error('nao deve ser chamado');}},
+  fotos:{banco:db,salvar:()=>{},listar:()=>({fotos:[]}),abrir:()=>{}}
+ };
+ const app=express();app.use(express.json());
+ const auth=(req,res,next)=>req.get('x-operador')==='sim'?next():
+  res.status(401).json({erro:'OPERADOR_NAO_AUTORIZADO'});
+ const csrf=(req,res,next)=>req.get('x-csrf')==='valido'?next():
+  res.status(403).json({erro:'CSRF_INVALIDO'});
+ montarRotasCatalogoMidiaOperador({
+  app,catalogoMidia:midia,catalogoPrincipal:catalogo,
+  posicoesVitrine:{listar:()=>db.prepare(
+   'SELECT produto_id AS produtoId,posicao FROM loja_real_vitrine_posicoes'
+  ).all(),atribuir:()=>{}},
+  autorizarOperador:auth,validarCsrf:csrf
+ });
+ const server=app.listen(0,'127.0.0.1');await once(server,'listening');
+ t.after(()=>new Promise(resolve=>server.close(resolve)));
+ const base='http://127.0.0.1:'+server.address().port;
+ const request=(p,method='GET',body=undefined,headers={})=>fetch(base+p,{
+  method,headers:{'x-operador':'sim','x-csrf':'valido',
+   ...(body?{'Content-Type':'application/json'}:{}),...headers},
+  ...(body?{body:JSON.stringify(body)}:{})
+ });
+ const list=await request('/api/admin/catalogo-midia/produtos');
+ assert.equal(list.status,200);
+ assert.equal((await list.json()).produtos.length,3);
+ for(const id of ['manual-tenis-1','manual-tenis-2']){
+  const url='/api/admin/catalogo-midia/produtos/'+id;
+  const atual=await request(url);assert.equal(atual.status,200);
+  const {revisao,estado}=await atual.json();assert.equal(estado,'RASCUNHO');
+  const forbidden=await request(url+'/excluir-rascunho','POST',
+   {revisaoEsperada:revisao},{'x-csrf':'invalido'});
+  assert.equal(forbidden.status,403);
+  const deleted=await request(url+'/excluir-rascunho','POST',
+   {revisaoEsperada:revisao});
+  assert.equal(deleted.status,200);
+  assert.equal((await deleted.json()).excluido,true);
+ }
+ assert.deepEqual(catalogo.listarProdutosAdministrativos().map(x=>x.produtoId),
+  ['manual-publicado']);
+ assert.equal(db.prepare('SELECT COUNT(*) n FROM loja_real_vitrine_posicoes').get().n,0);
+ const pub=catalogo.buscarProdutoAdministrativo({produtoId:'manual-publicado'});
+ const protectedResponse=await request('/api/admin/catalogo-midia/produtos/manual-publicado/excluir-rascunho',
+  'POST',{revisaoEsperada:pub.revisao});
+ assert.equal(protectedResponse.status,409);
+ const noauth=await request('/api/admin/catalogo-midia/produtos/manual-publicado',
+  'GET',undefined,{'x-operador':'nao'});
+ assert.equal(noauth.status,401);
+ assert.equal(db.prepare('PRAGMA integrity_check').get().integrity_check,'ok');
+});

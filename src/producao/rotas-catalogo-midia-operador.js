@@ -354,20 +354,25 @@ function montarRotasCatalogoMidiaOperador({
    try{
     const vinculado=posicoesVitrine?.listar().some(
      x=>x.produtoId===produtoId);
-    if(vinculado)return res.status(409).json({
-     erro:'PRODUTO_JA_VINCULADO_NAO_EXCLUIR'
-    });
     const principal=catalogoPrincipal?.
      buscarProdutoAdministrativo({produtoId});
     const local=ID_MIDIA.test(produtoId)?
      catalogoMidia.repo.buscarRegistro(produtoId):null;
     if(principal&&local)
      return res.status(409).json({erro:'CATALOGO_IDS_DUPLICADOS'});
+    // O acervo de mídia não tem trilha de auditoria para desvincular com
+    // segurança: nunca retirar um vínculo dele por este endpoint.
+    if(vinculado&&!principal)return res.status(409).json({
+     erro:'PRODUTO_JA_VINCULADO_NAO_EXCLUIR'
+    });
     if(!principal&&!local)
      return res.status(404).json({erro:'RASCUNHO_NAO_ENCONTRADO'});
     const r=principal?
      catalogoPrincipal.arquivarRascunho({
-      produtoId,revisaoEsperada:req.body.revisaoEsperada
+      produtoId,revisaoEsperada:req.body.revisaoEsperada,
+      // Rascunho do comercial pode ter sido posicionado antes da
+      // publicação: arquivar e liberar a moldura de forma transacional.
+      desvincularVitrine:true
      }):
      catalogoMidia.repo.arquivarRascunho({
       id:produtoId,revisaoEsperada:req.body.revisaoEsperada
@@ -377,7 +382,7 @@ function montarRotasCatalogoMidiaOperador({
     });
    }catch(e){
     const codigo=e?.codigo||e?.message||'RASCUNHO_EXCLUSAO_INDISPONIVEL';
-    const status=/PUBLICADO|VINCULADO|CONFLITO|HISTORICO/.test(codigo)?409:
+    const status=/PUBLICADO|VINCULADO|CONFLITO|HISTORICO|PEDIDOS/.test(codigo)?409:
      /NAO_ENCONTRADO|NAO_EXISTE/.test(codigo)?404:
      /INVALID/.test(codigo)?400:503;
     return res.status(status).json({erro:codigo});
