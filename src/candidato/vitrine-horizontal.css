@@ -437,8 +437,7 @@ dialog.akitemm-operador-editor .akitemm-card-rascunho
   flex-direction:column!important;
   align-items:stretch;
   gap:11px;
-  overflow-x:hidden;
-  overflow-y:visible;
+  overflow:visible;
   scroll-snap-type:none;
   padding:3px 3px 10px;
  }
