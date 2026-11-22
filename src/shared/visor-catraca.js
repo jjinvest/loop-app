@@ -110,14 +110,27 @@
    const ciclosRelogio=Math.floor(movimentosRelogio/6);
    if(compartilhado){
     const giros=$('loop03Giros24Integrado');
-    // Mesmo placar central para cliente e operador: giros reais por
-    // hora e luzes projetadas por hora, lidos da agenda compartilhada.
-    const hora=agendaVisorCatraca?.girosReaisHora;
-    if(giros)giros.textContent=Number.isSafeInteger(hora)&&hora>=0?
-     String(hora):'—';
-    const luzesHora=$('loop03LuzesHoraIntegrado');
-    if(luzesHora)luzesHora.textContent=valido?
-     String(estado.luzesHora):'0';
+    // Mesmo placar central para os dois perfis: ciclos e luzes do
+    // RELOGIO nas ultimas 24h, reconstruidos das revisoes no SQLite.
+    // Jamais usar esta contagem como giro ou pagamento confirmado.
+    const agenda=agendaVisorCatraca;
+    const base=Number.isSafeInteger(agenda?.agoraServidorMs)?
+     horarioVisual({agenda,agoraMs:agenda.agoraServidorMs}):null;
+    // Entre leituras HTTP, manter o placar na mesma cadencia dos LEDs
+    // locais, sem requisicoes por segundo e sem inventar evento bancario.
+    const deltaLuzes=valido&&base?
+     Math.max(0,estado.passadas-base.passadas):0;
+    const deltaCiclos=valido&&base?
+     Math.max(0,Math.floor(estado.passadas/6)-
+      Math.floor(base.passadas/6)):0;
+    const ciclos=agenda?.ciclosRelogio24h;
+    if(giros)giros.textContent=Number.isSafeInteger(ciclos)&&ciclos>=0?
+     String(ciclos+deltaCiclos):'—';
+    const luzes24h=$('loop03LuzesHoraIntegrado');
+    const luzes=agenda?.luzesRelogio24h;
+    if(luzes24h)luzes24h.textContent=
+     Number.isSafeInteger(luzes)&&luzes>=0?
+      String(luzes+deltaLuzes):'—';
     if(operadorAberto&&selecionada&&valido){
      selecionada.textContent=estado.luzes+' / 6';
      const titulo=selecionada.parentElement?.querySelector?.('small');
