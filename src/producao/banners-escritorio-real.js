@@ -95,10 +95,10 @@ function montarBannersEscritorioReal(app,{
  app.post('/api/admin/loop/banners/:slot/layout',protegerOperador,(req,res)=>{
   if(slot(req)===null)return res.status(404).end();
   const {colunas,revisaoEsperada}=req.body||{};
-  if(Object.keys(req.body||{}).sort().join(',')!=='colunas,revisaoEsperada')
+  if(Object.keys(req.body||{}).sort().join(',')!=='colunas,modo,revisaoEsperada')
    return res.status(400).json({erro:'BANNER_MOSAICO_CAMPOS_INVALIDOS'});
   try{return res.json(banners.configurarMosaico({
-   slot:slot(req),colunas,revisaoEsperada
+   slot:slot(req),colunas,modo:req.body.modo,revisaoEsperada
   }));}catch(e){return erro(res,e);}
  });
  app.put('/api/admin/loop/banners/:slot/foto/:posicao',
