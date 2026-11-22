@@ -147,11 +147,26 @@ async function principal(){
    await page.locator('#catalogoLojaLoop [data-akitemm-slot="'+slot+'"]').click();
    await m.waitFor({state:'visible'});
    await m.getByRole('heading',{name:'Cadastrar produto · AKITEMM'}).waitFor();
+   // A ajuda deve mostrar exatamente ONDE corrigir, não só mensagem genérica.
+   await m.getByRole('button',{name:'Salvar produto e colocar na vitrine'}).click();
+   await m.locator('.akitemm-erros-cadastro:not([hidden])').waitFor();
+   assert.equal(await m.getByRole('textbox',{name:'Nome do produto'})
+    .getAttribute('aria-invalid'),'true');
+   await m.getByRole('button',{name:/Corrigir: Digite o nome do produto/}).click();
+   assert.equal(await m.getByRole('textbox',{name:'Nome do produto'})
+    .evaluate(x=>document.activeElement===x),true);
    await m.getByRole('textbox',{name:'Nome do produto'}).fill(nome);
    await m.locator('textarea').first().fill('Descrição de teste temporária');
    await m.getByLabel('Categoria (opcional)').fill('Calçados');
    await m.getByLabel('Marca (opcional)').fill('Marca própria');
    await m.getByLabel('Preço normal (R$)').fill('299,90');
+   await m.getByLabel('Preço promocional (R$) — opcional').fill('350,00');
+   await m.getByRole('button',{name:'Salvar produto e colocar na vitrine'}).click();
+   assert.equal(await m.getByLabel('Preço promocional (R$) — opcional')
+    .getAttribute('aria-invalid'),'true');
+   await m.getByRole('button',{name:/Corrigir: O preço promocional precisa ser menor/}).click();
+   assert.equal(await m.getByLabel('Preço promocional (R$) — opcional')
+    .evaluate(x=>document.activeElement===x),true);
    await m.getByLabel('Preço promocional (R$) — opcional').fill('249,90');
    await m.getByLabel('Quantidade disponível (opcional)').fill('12');
    const codigoArea=m.locator('details').filter({hasText:'Código do produto'});
