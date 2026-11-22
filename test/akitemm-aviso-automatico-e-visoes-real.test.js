@@ -110,5 +110,5 @@ test('navegação entre LOOP e AKITEMM preserva a visão sem conceder poder ao c
  assert.match(loop,/modoOperadorAtual\?'operador':'cliente'/);
  assert.match(loja,/\/escritorio\?visao=/);
  assert.match(loja,/visaoClienteLoja\?'cliente':'operador'/);
- assert.match(loja,/if\(ativo\)/); // checagem visual de sessão
+ assert.match(loja,/voltarLoop\.href=permitido\?/); // depende da sessão de operador
 });
