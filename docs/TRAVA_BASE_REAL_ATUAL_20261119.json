@@ -1468,7 +1468,7 @@
     },
     {
       "path": "src/producao/interface-aprovada-contas.js",
-      "sha": "ac791e50d4ba5f8973cfe71508fc77738f3fe427"
+      "sha": "7d9c283ffe5088a486ce345f6452ddb27fcfccfc"
     },
     {
       "path": "src/producao/interface-aprovada-loja.js",
@@ -1832,7 +1832,7 @@
     },
     {
       "path": "src/shared/visor-catraca.js",
-      "sha": "5acaed416cc2f90cac6d6245bd065bfcaa5d9d33"
+      "sha": "0bbf4eefeb61e175947de2ac3c9a64913b853420"
     },
     {
       "path": "test/acabamento-visual-unificado.test.js",
@@ -2312,7 +2312,7 @@
     },
     {
       "path": "test/checkup-tabuleiro-agenda-compartilhada.test.js",
-      "sha": "917a589087f4066917c24b235542eb4c2a6b828c"
+      "sha": "775b9df9c3e09127f29ed323ce4cc8e0bc2ac46b"
     },
     {
       "path": "test/circuit-break-ponte-v6-demo.test.js",
@@ -3156,11 +3156,11 @@
     },
     {
       "path": "test/placar-cliente-hora-real-escritorio.test.js",
-      "sha": "2dca348cf9b2f3c01011df4a0d34d1239cd6e91a"
+      "sha": "2314e8e44682aa09a3658755f7bdc8a9042a6896"
     },
     {
       "path": "test/placar-compartilhado-cliente-operador-20261122.test.js",
-      "sha": "ad9a3705140f710929b8b4facac115dd2e043e3c"
+      "sha": "e79dde0e3aa5b10058d3deb905397609bcc7155d"
     },
     {
       "path": "test/planejamento-vendas-fisicas-demo.test.js",
@@ -4714,6 +4714,41 @@
       "antes": null,
       "depois": "ad9a3705140f710929b8b4facac115dd2e043e3c",
       "objetivo": "Pedido expresso de 22/11/2026: exibir ciclos e luzes visuais do relógio em 24h nos painéis cliente e operador; manter giros e caixa reais separados e bloqueados até comprovação; revisar testes e navegação em PC/celular sem mudar fotos, vendas, filas ou financeiro."
+    },
+    {
+      "data": "2026-11-22",
+      "path": "src/producao/interface-aprovada-contas.js",
+      "antes": "ac791e50d4ba5f8973cfe71508fc77738f3fe427",
+      "depois": "7d9c283ffe5088a486ce345f6452ddb27fcfccfc",
+      "objetivo": "Correção autorizada após foto do proprietário: CICLOS/24H só quando a catraca concluiu giro efetivo; LUZES/24H exibem apenas o turno atual do mesmo relógio, sem acumular 621 luzes de programações antigas; cartão direito mantém somente 45 / 60 luzes e 3 / 6; sem mexer em caixa, filas, pagamentos ou visual aprovado."
+    },
+    {
+      "data": "2026-11-22",
+      "path": "src/shared/visor-catraca.js",
+      "antes": "5acaed416cc2f90cac6d6245bd065bfcaa5d9d33",
+      "depois": "0bbf4eefeb61e175947de2ac3c9a64913b853420",
+      "objetivo": "Correção autorizada após foto do proprietário: CICLOS/24H só quando a catraca concluiu giro efetivo; LUZES/24H exibem apenas o turno atual do mesmo relógio, sem acumular 621 luzes de programações antigas; cartão direito mantém somente 45 / 60 luzes e 3 / 6; sem mexer em caixa, filas, pagamentos ou visual aprovado."
+    },
+    {
+      "data": "2026-11-22",
+      "path": "test/checkup-tabuleiro-agenda-compartilhada.test.js",
+      "antes": "917a589087f4066917c24b235542eb4c2a6b828c",
+      "depois": "775b9df9c3e09127f29ed323ce4cc8e0bc2ac46b",
+      "objetivo": "Correção autorizada após foto do proprietário: CICLOS/24H só quando a catraca concluiu giro efetivo; LUZES/24H exibem apenas o turno atual do mesmo relógio, sem acumular 621 luzes de programações antigas; cartão direito mantém somente 45 / 60 luzes e 3 / 6; sem mexer em caixa, filas, pagamentos ou visual aprovado."
+    },
+    {
+      "data": "2026-11-22",
+      "path": "test/placar-cliente-hora-real-escritorio.test.js",
+      "antes": "2dca348cf9b2f3c01011df4a0d34d1239cd6e91a",
+      "depois": "2314e8e44682aa09a3658755f7bdc8a9042a6896",
+      "objetivo": "Correção autorizada após foto do proprietário: CICLOS/24H só quando a catraca concluiu giro efetivo; LUZES/24H exibem apenas o turno atual do mesmo relógio, sem acumular 621 luzes de programações antigas; cartão direito mantém somente 45 / 60 luzes e 3 / 6; sem mexer em caixa, filas, pagamentos ou visual aprovado."
+    },
+    {
+      "data": "2026-11-22",
+      "path": "test/placar-compartilhado-cliente-operador-20261122.test.js",
+      "antes": "ad9a3705140f710929b8b4facac115dd2e043e3c",
+      "depois": "e79dde0e3aa5b10058d3deb905397609bcc7155d",
+      "objetivo": "Correção autorizada após foto do proprietário: CICLOS/24H só quando a catraca concluiu giro efetivo; LUZES/24H exibem apenas o turno atual do mesmo relógio, sem acumular 621 luzes de programações antigas; cartão direito mantém somente 45 / 60 luzes e 3 / 6; sem mexer em caixa, filas, pagamentos ou visual aprovado."
     }
   ]
 }
