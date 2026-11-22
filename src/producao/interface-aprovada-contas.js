@@ -1400,10 +1400,60 @@
     ' / '+String(d.limitePosicoesAtivas);
    atualizarTopoPosicaoReal();
    if(popupPosicoesRealAberto)preencherPopupReal();
+   // A mesma hora civil e o mesmo livro de giros apresentados ao operador.
+   const girosHora=d.agenda.girosReaisHora;
+   $('loop03Giros24Integrado').textContent=
+    Number.isSafeInteger(girosHora)&&girosHora>=0?String(girosHora):'—';
    visorCatraca.registrarAgenda(d.agenda);
   }catch{
    // Uma leitura indisponível não altera cartões, posições ou contas.
   }finally{placarClienteConsultando=false;}
+ }
+
+ // O placar administrativo permanece vivo também fora da aba Tabuleiro.
+ // Consulta somente as duas fontes reais que a própria aba já utiliza.
+ let placarOperadorConsultando=false;
+ async function atualizarPlacarOperador(){
+  if(placarOperadorConsultando||!modoOperadorAtual||
+     $('painelConta')?.hidden!==false)return;
+  placarOperadorConsultando=true;
+  try{
+   const [respostaMotor,respostaControle]=await Promise.all([
+    fetch('/api/admin/loop/estado',{credentials:'same-origin',cache:'no-store'}),
+    fetch('/api/admin/loop/controle',{credentials:'same-origin',cache:'no-store'})
+   ]);
+   if(!respostaMotor.ok||!respostaControle.ok)return;
+   const [d,controle]=await Promise.all([
+    respostaMotor.json(),respostaControle.json()
+   ]);
+   if(!modoOperadorAtual||$('painelConta')?.hidden!==false)return;
+   const agenda=controle.agenda;
+   if(d.fonte!=='IDENTIDADE_E_MOTOR_MESMO_SQLITE'||
+      d.financeiroReal!==false||controle.financeiroReal!==false||
+      !Number.isSafeInteger(d.filaA)||!Number.isSafeInteger(d.filaB)||
+      !Number.isSafeInteger(d.tabuleiro?.eventosNoCiclo)||
+      !Number.isSafeInteger(d.tabuleiro?.ciclosConcluidos)||
+      !Number.isSafeInteger(d.catraca?.giros)||
+      agenda?.origem!=='CATRACA_REAL_MESMO_SQLITE'||
+      agenda.somenteLeitura!==true||
+      agenda.luzesDoRelogioCompartilhado!==true||
+      !Number.isSafeInteger(agenda.girosReaisHora)||
+      agenda.girosReaisHora<0||
+      agenda.eventosReaisNoCiclo!==d.tabuleiro.eventosNoCiclo||
+      agenda.ciclosReaisConcluidos!==d.tabuleiro.ciclosConcluidos||
+      agenda.girosReaisHoje!==controle.girosHoje||
+      agenda.girosReais24h!==controle.giros24h||
+      controle.girosTotais!==d.catraca.giros||
+      controle.filaA!==d.filaA||controle.filaB!==d.filaB)return;
+   $('loop03TotalIntegrado').textContent=String(d.filaA+d.filaB);
+   $('loop03Giros24Integrado').textContent=String(agenda.girosReaisHora);
+   $('loop03NumeroIntegrado').textContent=
+    d.tabuleiro.eventosNoCiclo+' / 6';
+   visorCatraca.registrarAgenda(agenda);
+   visorCatraca.observar(d.catraca.giros,d.tabuleiro.eventosNoCiclo);
+  }catch{
+   // Falha de leitura não altera o painel nem autoriza eventos.
+  }finally{placarOperadorConsultando=false;}
  }
 
  function prepararAbasMotor(){
@@ -1418,6 +1468,8 @@
    if(document.hidden)return;
    if($('conteudoTabuleiro')?.hidden===false){
     void carregarMotor();
+   }else if(modoOperadorAtual&&$('painelConta')?.hidden===false){
+    void atualizarPlacarOperador();
    }else if(!modoOperadorAtual&&$('painelConta')?.hidden===false){
     void atualizarPlacarCliente();
    }
