@@ -81,6 +81,8 @@ test('formulários reais: sinal + abre área de foto e envia à tabela correta',
  const gateway=ler('scripts/iniciar-gateway-publico-real-loop.js');
  assert.match(frente,/loop03BannerMaisReal/);
  assert.match(frente,/loop03BannerFormularioReal/);
+ assert.match(frente,/img\.loading='eager'/);
+ assert.match(frente,/img\.hidden=false/);
  assert.match(frente,/api\/loop\/banners/);
  assert.match(frente,/api\/admin\/loop\/banners/);
  assert.match(frente,/document\.body\.classList\.contains\('loop03-modo-operador'\)/);
