@@ -72,7 +72,7 @@
     const bola=$('motorBolinha'+i);
     if(!bola)continue;
     const ligada=compartilhado&&valido&&i<=estado.luzes;
-    const lampadaAtual=ligada&&estado.luzes>0&&i===estado.luzes;
+    const lampadaAtual=ligada&&!estado.finalizado&&estado.luzes>0&&i===estado.luzes;
     bola.classList.toggle('loop03-relogio-luz-visual',ligada);
     // A lâmpada alcançada pelo próximo marco do relógio pulsa enquanto
     // o turno está ativo. As anteriores permanecem acesas; a próxima
@@ -80,7 +80,7 @@
     bola.classList.toggle('loop03-relogio-luz-atual',lampadaAtual);
     if(compartilhado)bola.classList.toggle('loop03-marcador-aceso',
      ligada||i<=eventos);
-    if(ligada&&chave!==ultimaJanelaVisual&&
+    if(ligada&&!estado.finalizado&&chave!==ultimaJanelaVisual&&
        i===estado.luzes&&ultimaJanelaVisual!==null&&
        !document.hidden&&$('conteudoTabuleiro')?.hidden===false){
      bola.classList.remove('loop03-pulso-luz');
