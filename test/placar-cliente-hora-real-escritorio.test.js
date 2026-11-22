@@ -31,7 +31,7 @@ test('contadores separados de giros persistidos e luzes no relógio',()=>{
  assert.match(visor,/const luzesHora=emTurno&&!finalizado/);
  assert.match(visor,/const luzes24h=\$\('loop03LuzesHoraIntegrado'\)/);
  assert.match(visor,/if\(resumo&&compartilhado&&operadorAberto\)/);
- assert.match(visor,/const concluidos=agendaVisorCatraca\?\.girosReais24h/);
+ assert.match(visor,/String\(Math\.floor\(estado\.passadas\/6\)\)/);
  assert.doesNotMatch(visor,/Nao renomear GIROS NAS ULTIMAS 24H/);
 });
 
