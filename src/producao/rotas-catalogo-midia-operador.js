@@ -48,8 +48,25 @@ function montarRotasCatalogoMidiaOperador({
   app.get('/api/admin/catalogo-midia/slots',
    autorizarOperador,(_req,res)=>{
     try{return res.json({total:400,slots:posicoesVitrine.listar(),
+     layoutVazio:posicoesVitrine.consultarLayoutVazio(),
      checkoutReal:false});}
     catch{return res.status(503).json({erro:'SLOTS_REAIS_INDISPONIVEIS'});}
+   });
+  // Mover molduras vazias: troca somente a cor visual dos espaços.
+  // Não movimenta cadastros, produtos, fila, pedidos nem pagamentos.
+  app.post('/api/admin/catalogo-midia/trocar-espacos-vazios',
+   autorizarOperador,validarCsrf,(req,res)=>{
+    const b=req.body;
+    if(!req.is('application/json')||!b||Array.isArray(b)||
+       Object.keys(b).sort().join(',')!=='destino,origem,revisaoEsperada')
+     return res.status(400).json({erro:'VITRINE_ESPACOS_TROCA_INVALIDA'});
+    try{return res.json(posicoesVitrine.trocarEspacosVazios(b));}
+    catch(e){
+     const cod=e.codigo||'VITRINE_ESPACOS_TROCA_INDISPONIVEL';
+     return res.status(cod.includes('CONCORRENTE')||cod.includes('OCUPA')?409:
+      cod.endsWith('_INVALIDA')||cod.endsWith('_MESMA_COR')?400:503)
+      .json({erro:cod});
+    }
    });
   app.post('/api/admin/catalogo-midia/slots/:posicao',
    autorizarOperador,validarCsrf,(req,res)=>{
