@@ -126,6 +126,10 @@
  }
  const estado=document.createElement('p');estado.id='akitemmBannerStatus';
  estado.setAttribute('role','status');
+ fotosExtras.forEach((x,i)=>x.arquivo.addEventListener('change',()=>{
+  if(x.arquivo.files?.[0])
+   estado.textContent='Foto '+(i+2)+' selecionada. Clique em Salvar banner.';
+ }));
  const lixeirasFotos=[escolher,...fotosExtras.map(x=>x.arquivo)].map((input,i)=>{
   const b=document.createElement('button');
   b.type='button';b.className='banner-foto-lixeira';
