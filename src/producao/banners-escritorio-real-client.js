@@ -64,10 +64,24 @@
  const modo=dialogo.querySelector('#loop03BannerModoReal');
  const extras=[2,3].map(n=>dialogo.querySelector('#loop03BannerArquivo'+n));
  const camposExtras=[...dialogo.querySelectorAll('.banner-foto-extra')];
+ const lixeirasFotos=[arquivo,...extras].map((input,i)=>{
+  const b=document.createElement('button');b.type='button';
+  b.className='banner-foto-lixeira';
+  b.textContent='🗑 Excluir foto '+(i+1);
+  b.setAttribute('aria-label','Excluir foto '+(i+1)+' deste banner');
+  b.addEventListener('click',()=>void removerFotoIndividual(slotEditor,i+1));
+  input.parentElement.insertAdjacentElement('afterend',b);
+  return b;
+ });
  function mostrarCampos(){
   camposExtras.forEach(x=>{
    const visivel=Number(x.dataset.posicao)<=Number(colunas.value);
    x.hidden=!visivel;x.style.display=visivel?'flex':'none';
+  });
+  const atual=dados?.slots?.find(x=>x.slot===slotEditor);
+  lixeirasFotos.forEach((b,i)=>{
+   const existe=atual?.fotos?.[i]?.temImagem===true;
+   b.hidden=!podeEditar()||i+1>Number(colunas.value)||!existe;
   });
  }
  colunas.addEventListener('change',mostrarCampos);
@@ -206,6 +220,18 @@
       im.src='/api/loop/banners/'+slot.slot+'/foto/'+pos+
        '?rev='+slot.revisao;
       quadro.append(im);
+      if(editavel){
+       const lixeira=document.createElement('button');
+       lixeira.type='button';lixeira.className='banner-foto-lixeira-quadro';
+       lixeira.textContent='🗑';
+       lixeira.setAttribute('aria-label','Excluir foto '+pos+' do banner '+slot.slot);
+       lixeira.title='Excluir somente a foto '+pos;
+       lixeira.addEventListener('click',e=>{
+        e.preventDefault();e.stopPropagation();
+        void removerFotoIndividual(slot.slot,pos);
+       });
+       quadro.append(lixeira);
+      }
      }else if(editavel)quadro.textContent='Foto '+pos+' · adicionar';
      grade.append(quadro);
     }
@@ -340,6 +366,7 @@
  pista.addEventListener('click',e=>{
   const item=e.target.closest('.loop03-banner-item');
   if(!item||item===botao||e.target.closest('.loop03-banner-lixeira')||
+     e.target.closest('.banner-foto-lixeira-quadro')||
      !podeEditar()||Date.now()<bloquearCliqueAte)return;
   e.preventDefault();abrir(Number(item.dataset.bannerSlot));
  });
@@ -388,6 +415,38 @@
   leitor.onerror=()=>{status.textContent='Não foi possível ler a imagem.';};
   leitor.readAsDataURL(f);
  });
+ async function removerFotoIndividual(numero,pos){
+  if(gravando||!podeEditar()||![1,2,3].includes(pos))return;
+  const item=dados?.slots?.find(x=>x.slot===numero);
+  if(!item?.fotos?.[pos-1]?.temImagem)return;
+  if(!window.confirm('Excluir somente a foto '+pos+' do banner '+numero+
+    '? As outras fotos continuam no mesmo banner.'))return;
+  gravando=true;
+  lixeirasFotos.forEach(b=>{b.disabled=true;});
+  try{
+   const sessao=await solicitar('/api/admin/comercial/sessao');
+   if(typeof sessao.csrfToken!=='string'||sessao.csrfToken.length<20)
+    throw Error('SESSAO_OPERADOR_INVALIDA');
+   const url='/api/admin/loop/banners/'+numero+
+    (pos===1?'/imagem':'/foto/'+pos);
+   const resposta=await solicitar(url,{
+    method:'DELETE',headers:{
+     'X-Loop-Admin-Csrf':sessao.csrfToken,
+     'X-Banner-Revisao-Esperada':String(item.revisao)
+    }
+   });
+   dados=resposta;
+   if(dialogo.open)status.textContent='Foto '+pos+' excluída.';
+   renderizar();
+   if(dialogo.open)mostrarCampos();
+  }catch(e){
+   if(dialogo.open)status.textContent='Não foi possível excluir: '+e.message;
+   else window.alert('Não foi possível excluir a foto: '+e.message);
+   await carregar();
+  }finally{
+   gravando=false;lixeirasFotos.forEach(b=>{b.disabled=false;});
+  }
+ }
  async function gravar(remover){
   if(gravando||!dialogo.open||!podeEditar())return;
   const atual=dados?.slots?.find(x=>x.slot===slotEditor);
@@ -435,8 +494,8 @@
       'PUT',pronta,'image/jpeg');
     }
     status.textContent=estado.publicado?
-     'Banner salvo e publicado com '+n+' foto(s).':
-     'Formato salvo. Envie as fotos que faltam para publicar.';
+     'Banner visível ao cliente; fotos vazias podem ser preenchidas depois.':
+     'Formato salvo. Envie ao menos uma foto para mostrar este banner.';
     arquivos.forEach(x=>{x.value='';});
    }
    renderizar();
