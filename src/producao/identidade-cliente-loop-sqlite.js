@@ -145,6 +145,16 @@ function prepararEstruturaIdentidadeReal({
    'cpf_iv TEXT NOT NULL,cpf_ct TEXT NOT NULL,cpf_tag TEXT NOT NULL,',
    'telefone_iv TEXT NOT NULL,telefone_ct TEXT NOT NULL,telefone_tag TEXT NOT NULL,',
    'registrado_em INTEGER NOT NULL);',
+   // Confirmação explícita do próprio CPF e dos termos, separada da compra,
+   // da qualificação e de qualquer verificação bancária ou financeira.
+   'CREATE TABLE IF NOT EXISTS loop_real_confirmacoes_cadastro(',
+   'titular_id TEXT PRIMARY KEY REFERENCES loop_real_contas(id) ON DELETE RESTRICT,',
+   'cpf_hmac TEXT NOT NULL,termos_versao TEXT NOT NULL,',
+   'termos_hash TEXT NOT NULL,confirmado_em INTEGER NOT NULL CHECK(confirmado_em>0));',
+   'CREATE TRIGGER IF NOT EXISTS loop_real_confirmacao_sem_update',
+   "BEFORE UPDATE ON loop_real_confirmacoes_cadastro BEGIN SELECT RAISE(ABORT,'confirmacao imutavel'); END;",
+   'CREATE TRIGGER IF NOT EXISTS loop_real_confirmacao_sem_delete',
+   "BEFORE DELETE ON loop_real_confirmacoes_cadastro BEGIN SELECT RAISE(ABORT,'confirmacao imutavel'); END;",
    // Vínculo de cadastro: não é bonificação nem indicação remunerada.
    'CREATE TABLE IF NOT EXISTS loop_real_vinculos_indicacao(',
    'indicado_id TEXT PRIMARY KEY REFERENCES loop_real_contas(id) ON DELETE RESTRICT,',
@@ -546,11 +556,13 @@ class IdentidadeClienteLoopReal{
   const base=ponto?.numeroCadastro??offset;
   const rows=this.banco.prepare([
    'SELECT v.indicado_id AS indicadoId,c.nick,v.registrado_em AS registradoEm,',
-   'd.numero_posicao AS posicaoDestinoReservada',
+   'd.numero_posicao AS posicaoDestinoReservada,',
+   'x.titular_id AS confirmacaoTitularId',
    'FROM loop_real_vinculos_indicacao v',
    'JOIN loop_real_contas c ON c.id=v.indicado_id',
    'LEFT JOIN loop_real_destinos_indicacao d',
    'ON d.indicado_id=v.indicado_id AND d.indicador_id=v.indicador_id',
+   'LEFT JOIN loop_real_confirmacoes_cadastro x ON x.titular_id=v.indicado_id',
    'WHERE v.indicador_id=?',
    ...(ponto?[
     'AND (v.registrado_em>? OR',
@@ -565,9 +577,24 @@ class IdentidadeClienteLoopReal{
   const total=this.banco.prepare(
    'SELECT COUNT(*) AS n FROM loop_real_vinculos_indicacao WHERE indicador_id=?'
   ).get(titularId).n;
+  const contagem=this.banco.prepare([
+   'SELECT COUNT(*) AS confirmados,',
+   'COALESCE(SUM(CASE WHEN d.indicado_id IS NULL THEN 1 ELSE 0 END),0)',
+   'AS aDistribuir',
+   'FROM loop_real_vinculos_indicacao v',
+   'JOIN loop_real_confirmacoes_cadastro x ON x.titular_id=v.indicado_id',
+   'LEFT JOIN loop_real_destinos_indicacao d',
+   'ON d.indicado_id=v.indicado_id AND d.indicador_id=v.indicador_id',
+   'WHERE v.indicador_id=?'
+  ].join(' ')).get(titularId);
+  const vinculadas=this.banco.prepare([
+   'SELECT COUNT(*) AS n FROM loop_real_destinos_indicacao',
+   'WHERE indicador_id=?'
+  ].join(' ')).get(titularId).n;
   return {indicados:rows.map((x,i)=>({
    nick:x.nick,registradoEm:x.registradoEm,
    numeroCadastro:base+i+1,filaCadastro:'B',
+   cadastroConfirmado:x.confirmacaoTitularId!==null,
    posicaoDestinoReservada:x.posicaoDestinoReservada,
    telefone:this.telefoneIndicadoVinculado({
     indicadorId:titularId,indicadoId:x.indicadoId
@@ -580,6 +607,8 @@ class IdentidadeClienteLoopReal{
      registradoEm:rows.at(-1).registradoEm,
      indicadoId:rows.at(-1).indicadoId,
      numeroCadastro:base+rows.length}):null,
+   resumo:{cadastrosConfirmados:contagem.confirmados,
+    indicacoesVinculadas:vinculadas,aDistribuir:contagem.aDistribuir},
    remuneracoesConfirmadas:0,financeiroReal:false};
  }
  documentosPendentes(titularId){
@@ -631,6 +660,48 @@ class IdentidadeClienteLoopReal{
    return {documentosConfirmados:true,aceiteRepetido:false};
   }catch(e){this.banco.exec('ROLLBACK');throw e;}
  }
+ // Este aceite exige CPF informado novamente pelo titular e clique explícito.
+ // Não presume confirmação só pelo cadastro nem concede direitos financeiros.
+ confirmarCadastro({titularId,cpf,aceiteExplicito=false,versaoTermos,hashTermos}={}){
+  if(typeof titularId!=='string'||!/^titular-[a-f0-9-]{36}$/.test(titularId)||
+     aceiteExplicito!==true||versaoTermos!==this.termos.versao||
+     hashTermos!==this.termos.hash)
+   erro('CONFIRMACAO_CADASTRO_INVALIDA');
+  const cpfHmac=assinar(this.keyEmail,'CPF-CADASTRO',validarCpfCadastro(cpf));
+  this.banco.exec('BEGIN IMMEDIATE');
+  try{
+   const conta=this.banco.prepare([
+    'SELECT termos_versao,termos_hash FROM loop_real_contas WHERE id=?'
+   ].join(' ')).get(titularId);
+   const contato=this.banco.prepare([
+    'SELECT cpf_hmac FROM loop_real_contatos_cadastro WHERE titular_id=?'
+   ].join(' ')).get(titularId);
+   if(!conta||!contato||!igual(contato.cpf_hmac,cpfHmac))
+    erro('CPF_CADASTRO_NAO_CONFERE');
+   if(conta.termos_versao!==versaoTermos||conta.termos_hash!==hashTermos||
+      this.documentosPendentes(titularId))
+    erro('DOCUMENTOS_ALTERADOS_RELER');
+   const anterior=this.banco.prepare([
+    'SELECT cpf_hmac,termos_versao,termos_hash',
+    'FROM loop_real_confirmacoes_cadastro WHERE titular_id=?'
+   ].join(' ')).get(titularId);
+   if(anterior){
+    if(!igual(anterior.cpf_hmac,cpfHmac)||
+       anterior.termos_versao!==versaoTermos||
+       anterior.termos_hash!==hashTermos)
+     erro('CONFIRMACAO_CADASTRO_DIVERGENTE');
+    this.banco.exec('COMMIT');
+    return {cadastroConfirmado:true,repetido:true,financeiroReal:false};
+   }
+   this.banco.prepare([
+    'INSERT INTO loop_real_confirmacoes_cadastro',
+    '(titular_id,cpf_hmac,termos_versao,termos_hash,confirmado_em)',
+    'VALUES(?,?,?,?,?)'
+   ].join(' ')).run(titularId,cpfHmac,versaoTermos,hashTermos,this._agora());
+   this.banco.exec('COMMIT');
+   return {cadastroConfirmado:true,repetido:false,financeiroReal:false};
+  }catch(e){this.banco.exec('ROLLBACK');throw e;}
+ }
  dadosTitular(titularId){
   // Consulta apenas por ID extraído de uma sessão autenticada pelo servidor;
   // nunca aceitar titularId arbitrário de query/body do navegador.
@@ -661,6 +732,9 @@ class IdentidadeClienteLoopReal{
   return {
    nick:row.nick,
    telefone,cpfRecebido:!!contato,cpfConfirmado:false,
+   cadastroConfirmado:!!this.banco.prepare(
+    'SELECT 1 FROM loop_real_confirmacoes_cadastro WHERE titular_id=?'
+   ).get(titularId),
    cpfExibicao:cpf?'***.***.***-'+cpf.slice(-2):null,
    nome:decifrar(this.keyCipher,row.nome_iv,row.nome_ct,row.nome_tag),
    email:decifrar(this.keyCipher,row.email_iv,row.email_ct,row.email_tag),

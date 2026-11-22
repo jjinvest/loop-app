@@ -40,9 +40,30 @@ class VisaoEscritorioUnificadaSQLite{
    'JOIN loop_real_vinculos_indicacao v ON v.indicado_id=q.indicado_id',
    'WHERE q.indicador_id=? AND v.indicador_id=?'
   ].join(' ')).get(id,id).n;
-  if(qualificadas>compras||compras>total)
+  // Contar a rede inteira no SQLite, sem depender da página de 50 fichas.
+  // CPF de cadastro sozinho não é confirmação: precisa de registro explícito.
+  const cadastro=this.banco.prepare([
+   'SELECT COUNT(*) AS confirmados,',
+   'COALESCE(SUM(CASE WHEN d.indicado_id IS NULL THEN 1 ELSE 0 END),0)',
+   'AS aDistribuir',
+   'FROM loop_real_vinculos_indicacao v',
+   'JOIN loop_real_confirmacoes_cadastro x ON x.titular_id=v.indicado_id',
+   'LEFT JOIN loop_real_destinos_indicacao d',
+   'ON d.indicado_id=v.indicado_id AND d.indicador_id=v.indicador_id',
+   'WHERE v.indicador_id=?'
+  ].join(' ')).get(id);
+  const vinculadas=this.banco.prepare([
+   'SELECT COUNT(*) AS n FROM loop_real_destinos_indicacao',
+   'WHERE indicador_id=?'
+  ].join(' ')).get(id).n;
+  if(qualificadas>compras||compras>total||
+     cadastro.confirmados>total||vinculadas>total||
+     cadastro.aDistribuir>cadastro.confirmados)
    falha('ESCRITORIO_REDE_INCONSISTENTE');
-  return Object.freeze({cadastros:total,comprasEmEnsaio:compras,
+  return Object.freeze({cadastros:total,
+   cadastrosConfirmados:cadastro.confirmados,
+   indicacoesVinculadas:vinculadas,aDistribuir:cadastro.aDistribuir,
+   comprasEmEnsaio:compras,
    qualificadasEmEnsaio:qualificadas,
    comprasAguardandoQualificacaoEnsaio:compras-qualificadas,
    cadastrosAguardandoCompra:total-compras,
@@ -150,6 +171,7 @@ class VisaoEscritorioUnificadaSQLite{
    'v.registrado_em AS registradoEm,',
    'q.posicao_id AS posicaoDestinoEnsaio,',
    'dest.numero_posicao AS posicaoDestinoReservada,',
+   'x.titular_id AS confirmacaoTitularId,',
    'EXISTS(SELECT 1 FROM loop_real_motor_compras m',
    'WHERE m.titular_id=v.indicado_id) AS compraEmEnsaio',
    'FROM loop_real_vinculos_indicacao v',
@@ -158,6 +180,7 @@ class VisaoEscritorioUnificadaSQLite{
    'ON q.indicado_id=v.indicado_id AND q.indicador_id=v.indicador_id',
    'LEFT JOIN loop_real_destinos_indicacao dest',
    'ON dest.indicado_id=v.indicado_id AND dest.indicador_id=v.indicador_id',
+   'LEFT JOIN loop_real_confirmacoes_cadastro x ON x.titular_id=v.indicado_id',
    'WHERE v.indicador_id=?',
    ...(ponto?[
     'AND (v.registrado_em>? OR',
@@ -173,6 +196,7 @@ class VisaoEscritorioUnificadaSQLite{
   return {indicados:rows.map((x,i)=>({
    nick:x.nick,registradoEm:x.registradoEm,
    numeroCadastro:base+i+1,filaCadastro:'B',
+   cadastroConfirmado:x.confirmacaoTitularId!==null,
    telefone:this.consultarTelefone({
     indicadorId:titularId,indicadoId:x.indicadoId
    }),

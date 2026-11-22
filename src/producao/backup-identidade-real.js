@@ -49,7 +49,8 @@ const TABELAS=Object.freeze([
 ]);
 // Presente em cadastros novos; backups anteriores à migração permanecem recuperáveis.
 const TABELAS_CONTATO=Object.freeze([
- 'loop_real_contatos_cadastro','loop_real_telefones_legados',
+ 'loop_real_contatos_cadastro','loop_real_confirmacoes_cadastro',
+ 'loop_real_telefones_legados',
  'loop_real_destinos_indicacao','loop_real_carrinho_itens',
  'loop_real_migracoes_preview','loop_real_aceites_documentos',
  'loop_captcha_login_falhas_v1','loop_captcha_cadastro_v1',
@@ -136,6 +137,24 @@ function validarIdentidade(arquivo){
     'OR d.numero_posicao<1 OR d.numero_posicao>10 LIMIT 1'
    ].join(' ')).get();
    if(invalido)falha('BACKUP_DESTINO_INDICACAO_INCONSISTENTE');
+  }
+  // A confirmação explícita de CPF/termos também precisa sobreviver ao
+  // backup. Cadastros antigos sem a tabela continuam restauráveis.
+  if(lista.includes('loop_real_confirmacoes_cadastro')){
+   if(!lista.includes('loop_real_contatos_cadastro'))
+    falha('BACKUP_CONFIRMACAO_SEM_CPF');
+   const campos=b.prepare('PRAGMA table_info(loop_real_confirmacoes_cadastro)')
+    .all().map(x=>x.name);
+   if(['titular_id','cpf_hmac','termos_versao','termos_hash','confirmado_em']
+    .some(x=>!campos.includes(x)))
+    falha('BACKUP_CONFIRMACAO_ESQUEMA_INVALIDO');
+   const incorreto=b.prepare([
+    'SELECT x.titular_id FROM loop_real_confirmacoes_cadastro x',
+    'LEFT JOIN loop_real_contatos_cadastro c ON c.titular_id=x.titular_id',
+    'WHERE c.titular_id IS NULL OR x.cpf_hmac<>c.cpf_hmac',
+    'OR x.confirmado_em<1 LIMIT 1'
+   ].join(' ')).get();
+   if(incorreto)falha('BACKUP_CONFIRMACAO_INCONSISTENTE');
   }
   // Carrinho pertence ao MESMO titular e ao MESMO backup cifrado.
   // A restauração recusa carrinhos adulterados, superlotados ou órfãos.

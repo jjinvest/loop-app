@@ -746,6 +746,9 @@
  function prepararRede(){
   if(redePreparada)return;
   redePreparada=true;
+  const tituloConfirmados=$('redeTotalCadastros')?.parentElement?.querySelector('small');
+  if(tituloConfirmados)tituloConfirmados.textContent='CADASTROS CONFIRMADOS';
+  $('redeADistribuirEnsaio')?.removeAttribute('aria-label');
   $('atualizarEquipe')?.addEventListener('click',()=>void carregarRede());
   $('maisEquipe').addEventListener('click',()=>void carregarRede({mais:true}));
   $('buscarEquipe').addEventListener('input',()=>exibirRede());
@@ -798,12 +801,14 @@
   // bolinha numerada, situacao, telefone, detalhes e dez botoes de posicao.
   // Nenhum convite pendente e promovido ou vinculado sem prova real.
   for(const p of dados){
-   const registroValidado=p.estado==='QUALIFICACAO_REAL_CONFIRMADA';
+   // Verde é a confirmação explícita do CPF/termos do indicado,
+   // não a simples criação da conta nem uma compra de ensaio.
+   const registroValidado=p.cadastroConfirmado===true;
    const emAnalise=p.estado==='QUALIFICACAO_ENSAIO';
    const aguardando=p.estado==='COMPRA_ENSAIO_SEM_QUALIFICACAO';
    const cor=registroValidado?'verde':emAnalise?'azul':
     aguardando?'amarelo':'vermelho';
-   const situacao=registroValidado?'Indicação confirmada':
+   const situacao=registroValidado?'Cadastro confirmado':
     emAnalise?'Vínculo em análise':aguardando?
     'Ativação pendente':'Cadastro realizado';
    const card=texto('article','loop03-rede-pessoa','');
@@ -861,7 +866,7 @@
      p.filaCadastro==='B'?'B':'não informada'))
    );
    const anotacao=texto('p','loop03-rede-pessoa-vinculo',
-    registroValidado?'Indicação confirmada no LOOP.':
+    registroValidado?'Cadastro confirmado. Ativação no LOOP depende da qualificação.':
     emAnalise?'Vínculo aguardando comprovação real.':
     aguardando?'Aguardando confirmação da posição.':
     'Aguardando ativação no LOOP.');
@@ -879,8 +884,7 @@
    for(let n=1;n<=10;n++){
     const escolha=texto('button','loop03-rede-posicao',String(n));
     escolha.type='button';
-    escolha.disabled=reservada!==null||registroValidado||emAnalise||
-     numero===null;
+    escolha.disabled=reservada!==null||emAnalise||numero===null;
     escolha.setAttribute('aria-label',
      'Escolher posição '+n+' para @'+p.nick);
     escolha.setAttribute('aria-pressed',String(reservada===n));
@@ -891,7 +895,7 @@
      'Destino fixado ou indicação já vinculada':
      'Escolher posição '+n+' (escolha única)';
     escolha.addEventListener('click',async()=>{
-     if(reservada!==null||registroValidado||emAnalise||numero===null)return;
+     if(reservada!==null||emAnalise||numero===null)return;
      for(const b of grade.querySelectorAll('button'))b.disabled=true;
      aviso.textContent='Salvando destino da indicação...';
      try{
@@ -944,12 +948,16 @@
    titularesIndicados=mais?
     titularesIndicados.concat(dados.indicados):dados.indicados;
    $('maisEquipe').hidden=!dados.temMais;
-   $('redeTotalCadastros').textContent=String(dados.total);
-   $('redeAlocadasEnsaio').textContent=String(
-    dados.resumo?.qualificadasEmEnsaio??0);
-   $('redeADistribuirEnsaio').textContent=String(
-    dados.resumo?.comprasAguardandoQualificacaoEnsaio??0);
-   $('equipeResumo').textContent=dados.total+
+   const contagens=[dados.resumo?.cadastrosConfirmados,
+    dados.resumo?.indicacoesVinculadas,dados.resumo?.aDistribuir];
+   if(contagens.some(n=>!Number.isSafeInteger(n)||n<0)||
+      contagens[0]>dados.total||contagens[1]>dados.total||
+      contagens[2]>contagens[0])throw Error('REDE_CONTADORES_INVALIDOS');
+   const contar=n=>n.toLocaleString('pt-BR');
+   $('redeTotalCadastros').textContent=contar(contagens[0]);
+   $('redeAlocadasEnsaio').textContent=contar(contagens[1]);
+   $('redeADistribuirEnsaio').textContent=contar(contagens[2]);
+   $('equipeResumo').textContent=contar(dados.total)+
     ' cadastro(s) pelo seu link.';
    exibirRede();
   }catch{
@@ -2327,6 +2335,90 @@
    conteudo.className='loop03-perfil-valor';
    conteudo.textContent=valor;
    linha.append(etiqueta,conteudo);resumo.append(linha);
+  }
+  // O cadastro no link NÃO equivale à confirmação. O próprio titular
+  // apresenta novamente o CPF e aceita os termos, sem precisar comprar.
+  $('loop03ConfirmarCadastro')?.remove();
+  if(dados.cadastroConfirmado!==true){
+   const area=document.createElement('section');
+   area.id='loop03ConfirmarCadastro';area.className='loop03-resumo-perfil';
+   area.setAttribute('aria-label','Confirmar meu cadastro');
+   const titulo=document.createElement('h3');
+   titulo.textContent='Confirmar meu cadastro';
+   const instrucao=document.createElement('p');
+   instrucao.textContent='Confirme seu CPF e leia os termos para aparecer como '+
+    'cadastro confirmado na equipe do seu indicador. Isto não libera pagamentos.';
+   const form=document.createElement('form');
+   const etiqueta=document.createElement('label');
+   etiqueta.textContent='CPF informado no cadastro';
+   const campo=document.createElement('input');
+   campo.name='cpf';campo.inputMode='numeric';campo.type='text';
+   campo.maxLength=14;campo.required=true;campo.autocomplete='off';
+   etiqueta.append(campo);
+   const detalhes=document.createElement('details');
+   const abrir=document.createElement('summary');
+   abrir.textContent='Ler Termos de Uso';
+   const documento=document.createElement('p');
+   documento.textContent='Consultando os termos vigentes...';
+   detalhes.append(abrir,documento);
+   const confirmar=document.createElement('label');
+   const check=document.createElement('input');
+   check.type='checkbox';check.required=true;
+   confirmar.append(check,document.createTextNode(
+    ' Li os termos e confirmo meu próprio cadastro.'));
+   const enviar=document.createElement('button');
+   enviar.type='submit';enviar.textContent='Confirmar cadastro';
+   enviar.disabled=true;
+   const status=document.createElement('p');
+   status.setAttribute('role','status');
+   form.append(etiqueta,detalhes,confirmar,enviar,status);
+   area.append(titulo,instrucao,form);
+   $('conteudoConta').insertBefore(area,$('formFotoPerfil'));
+   let termosAtuais=null;
+   void requisitar('/documentos').then(d=>{
+    const termos=d?.termos;
+    if(d.financeiroReal!==false||typeof termos?.texto!=='string'||
+       termos.texto.length<100||typeof termos.versao!=='string'||
+       !/^[a-f0-9]{64}$/.test(termos.hash||''))
+     throw Error('DOCUMENTOS_INVALIDOS');
+    termosAtuais=termos;documento.textContent='Versão: '+termos.versao+
+     '\\n'+termos.texto;enviar.disabled=false;
+   }).catch(()=>{
+    documento.textContent='Termos indisponíveis. Atualize a página.';
+    status.textContent='Não é possível confirmar sem consultar os termos.';
+   });
+   form.addEventListener('submit',async ev=>{
+    ev.preventDefault();
+    if(!termosAtuais||!check.checked||!detalhes.open||!csrf)return;
+    enviar.disabled=true;
+    status.textContent='Registrando sua confirmação...';
+    try{
+     const confirmado=await requisitar('/confirmar-cadastro',{
+      method:'POST',csrfObrigatorio:true,
+      body:{cpf:campo.value,aceiteExplicito:true,
+       versaoTermos:termosAtuais.versao,hashTermos:termosAtuais.hash}
+     });
+     if(confirmado.cadastroConfirmado!==true||confirmado.financeiroReal!==false)
+      throw Error('CONFIRMACAO_CADASTRO_INCONSISTENTE');
+     campo.value='';check.checked=false;
+     await carregarDados();
+     if($('conteudoEquipe')?.hidden===false)await carregarRede();
+     dizer('Cadastro confirmado com CPF e termos.');
+    }catch(e){
+     campo.value='';enviar.disabled=false;
+     status.textContent='Não foi possível confirmar: '+erro(e);
+    }
+   });
+  }else{
+   const linha=document.createElement('div');
+   linha.className='loop03-perfil-linha';
+   const etiqueta=document.createElement('span');
+   etiqueta.className='loop03-perfil-rotulo';
+   etiqueta.textContent='Cadastro';
+   const valor=document.createElement('strong');
+   valor.className='loop03-perfil-valor';
+   valor.textContent='Confirmado com CPF e termos';
+   linha.append(etiqueta,valor);resumo.append(linha);
   }
   }catch(e){dizer(erro(e));}
  }
