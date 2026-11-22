@@ -286,10 +286,10 @@ async function main(){
    assert.deepEqual(quadros.rotulos,[
     ['Fila A','Fila B'],['Eventos no ciclo','Centros concluídos']
    ]);
-   assert.match(quadros.valores[0][0],/^\\d+$/);
-   assert.match(quadros.valores[0][1],/^\\d+$/);
-   assert.match(quadros.valores[1][0],/^\\d+ \\/ 6$/);
-   assert.match(quadros.valores[1][1],/^\\d+$/);
+   assert.match(quadros.valores[0][0],/^\d+$/);
+   assert.match(quadros.valores[0][1],/^\d+$/);
+   assert.match(quadros.valores[1][0],/^\d+ \/ 6$/);
+   assert.match(quadros.valores[1][1],/^\d+$/);
    assert.equal(quadros.contidos,true,
     'cartões não podem fugir das molduras no celular');
    await operadorPage.locator('#adminAtualizarPosicoes').click();
