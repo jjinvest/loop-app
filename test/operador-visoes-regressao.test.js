@@ -59,3 +59,61 @@ test('correcao administrativa altera somente nome e telefone com auditoria',asyn
  }),{codigo:'NENHUMA_ALTERACAO'});
  assert.equal(banco.prepare('SELECT COUNT(*) AS n FROM loop_real_auditoria_cadastros_operador').get().n,1);
 });
+
+test('AKITEMM preserva cliente mesmo com cookie administrativo antigo',async()=>{
+ const vm=require('node:vm');
+ const js=fs.readFileSync('src/producao/interface-aprovada-loja.js','utf8');
+ const selIni=js.indexOf(' function deveAtivarOperadorLoja(');
+ const selFim=js.indexOf(' // Foto individual por identidade REAL',selIni);
+ const navIni=js.indexOf(' async function atualizarAtalhoOperadorReal(){');
+ const navFim=js.indexOf(' // A revalidação de sessão/foto',navIni);
+ assert.ok(selIni>=0&&selFim>selIni&&navIni>=0&&navFim>navIni);
+ const selecao=js.slice(selIni,selFim);
+ const navegacao=js.slice(navIni,navFim);
+ async function verificar({visao='',admin=false,cliente=false,indisponivel=false}){
+  const rodape={hidden:false,style:{display:''}};
+  const voltar={href:null};
+  const consultas=[];
+  const ctx={
+   visaoClienteLoja:visao==='cliente',visaoOperadorLoja:visao==='operador',
+   operadorAtivo:false,operadorAutenticadoLoja:false,
+   document:{querySelector(s){
+    if(s==='.akitemm-acesso-operador')return rodape;
+    if(s==='.akitemm-voltar')return voltar;
+    return null;
+   }},
+   fetch:async url=>{
+    consultas.push(url);
+    if(url==='/api/operador/estado')
+     return {ok:true,json:async()=>({operador:admin})};
+    if(url==='/api/contas/me'){
+     if(indisponivel)throw Error('CONSULTA_INDISPONIVEL');
+     return {ok:cliente,status:cliente?200:401};
+    }
+    throw Error('ROTA_INESPERADA');
+   }
+  };
+  const resultado=vm.runInNewContext(selecao+navegacao+
+   ';(async()=>{await atualizarAtalhoOperadorReal();return {'+
+   'operadorAtivo,operadorAutenticadoLoja};})()',ctx);
+  return {...await resultado,rodape,voltar,consultas};
+ }
+ const clienteExplicito=await verificar({visao:'cliente',admin:true,cliente:true});
+ assert.equal(clienteExplicito.operadorAtivo,false);
+ assert.equal(clienteExplicito.rodape.hidden,true);
+ assert.equal(clienteExplicito.voltar.href,'/escritorio?visao=cliente');
+ const clienteDireto=await verificar({admin:true,cliente:true});
+ assert.equal(clienteDireto.operadorAtivo,false);
+ assert.ok(clienteDireto.consultas.includes('/api/contas/me'));
+ const operadorExplicito=await verificar({visao:'operador',admin:true,cliente:true});
+ assert.equal(operadorExplicito.operadorAtivo,true);
+ assert.equal(operadorExplicito.rodape.hidden,false);
+ assert.equal(operadorExplicito.voltar.href,'/escritorio?visao=operador');
+ assert.equal((await verificar({visao:'operador',admin:false,cliente:true})).operadorAtivo,false);
+ assert.equal((await verificar({admin:true,cliente:false})).operadorAtivo,true);
+ assert.equal((await verificar({visao:'cliente',admin:true,cliente:false})).operadorAtivo,false);
+ assert.equal((await verificar({admin:true,indisponivel:true})).operadorAtivo,false);
+ assert.match(js,/const semCliente=res\.status===401\|\|operadorAtivo;/);
+ assert.match(js,/akitemmEditarConta'\)\.href=operadorAutenticadoLoja\?/);
+ assert.match(js,/cadastro=1&visao=cliente/);
+});
