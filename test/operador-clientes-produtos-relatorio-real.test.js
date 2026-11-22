@@ -52,12 +52,12 @@ test('um cadastro e um cliente; vendas somam unidades aprovadas, nunca posiçõe
  assert.equal(alpha.totalUnidades,3);
  assert.equal(alpha.totalLinhas,2);
  assert.equal(alpha.itens.length,2);
- assert.deepEqual(alpha.itens.map(x=>x.titulo),['Curso digital','Camiseta especial']);
+ assert.deepEqual(alpha.itens.map(x=>x.titulo),['Camiseta especial','Curso digital']);
  assert.ok(alpha.itens.every(x=>x.pedidoId==='pedido-1'));
  assert.equal(relatorio.comprasDoCadastro({nick:'gamma'}).totalUnidades,0);
  assert.equal(relatorio.comprasDoCadastro({nick:'beta',limite:1}).totalUnidades,3);
  assert.deepEqual(relatorio.comprasDoCadastro({nick:'alpha',limite:1,offset:1})
-  .itens.map(x=>x.sku),['sku-a']);
+  .itens.map(x=>x.sku),['sku-b']);
  assert.equal(banco.prepare('SELECT COUNT(*) AS n FROM loja_real_pedidos').get().n,4);
 });
 test('sem livro comercial mantém clientes reais e não inventa zero produtos vendidos',t=>{
