@@ -19,12 +19,14 @@ test('nick e senha UNICOS: OPERADOR entra na MESMA tela LOOP e nao vai direto a 
  assert.equal((html.match(/id="formLogin"/g)||[]).length,1);
  assert.equal((html.match(/id="login"/g)||[]).length,1);
  assert.doesNotMatch(html,/id="acessoAdminLogin"/);
- assert.match(html,/id="loopOperadorAcoes"[^>]*hidden/);
- assert.match(html,/id="loopAcessoAdminMenu"[^>]*href="\/administrador"[^>]*hidden/);
- assert.ok(html.indexOf('id="loop03NickIntegrado"')<
-  html.indexOf('id="loopAcessoAdminMenu"'));
+ assert.doesNotMatch(html,/id="loopOperadorAcoes"/);
+ assert.match(html,/id="loopOperadorAtalhos"[^>]*hidden/);
+ assert.match(html,/id="loopAcessoAdminMenu" href="\/administrador"/);
+ assert.ok(html.indexOf('id="loopAcessoAdminMenu"')>
+  html.indexOf('class="primario loop03-loja-prata"'));
  assert.ok(html.indexOf('id="loopAcessoAdminMenu"')<
-  html.indexOf('id="sair"'));
+  html.indexOf('id="conteudoResumo"'));
+ assert.match(html,/id="loopVoltarOperador"[^>]*hidden/);
  const js=codigo('src/producao/interface-aprovada-contas.js');
  assert.match(js,/\.toLowerCase\(\)==='operador'/);
  assert.match(js,/await autenticarOperadorFormulario\(/);
@@ -33,7 +35,8 @@ test('nick e senha UNICOS: OPERADOR entra na MESMA tela LOOP e nao vai direto a 
  assert.match(js,/void atualizarAtalhoOperadorReal\(\)/);
  assert.match(js,/document\.body\.classList\.add\('loop03-logado','loop03-modo-operador'\)/);
  assert.match(js,/const estado=r\.ok\?await r\.json\(\):\{operador:false\}/);
- assert.match(js,/if\(estado\.operador===true\)\{abrirPainelOperador\(\);return;\}/);
+ assert.match(js,/if\(estado\.operador===true&&visaoSolicitada!=='cliente'\)/);
+ assert.match(js,/visaoSolicitada!=='cliente'\)await terminarModoOperador\(\)/);
  assert.match(js,/if\(modoOperadorAtual\)\{[\s\S]*?await terminarModoOperador\(\)/);
  // Nao inventar conta, posicoes nem permissoes de cliente para a sessao admin.
  assert.doesNotMatch(js,/painelConta\(\{nick:'OPERADOR'/);
@@ -44,7 +47,9 @@ test('nick e senha UNICOS: OPERADOR entra na MESMA tela LOOP e nao vai direto a 
 test('OPERADOR abre tabuleiro existente com leitura propria e sem contas nem giros',()=>{
  const js=codigo('src/producao/interface-aprovada-contas.js');
  const backend=codigo('src/producao/gateway-admin-comercial.js');
- assert.match(js,/const habilitada=resumo\|\|tab\.id==='abaTabuleiro'/);
+ assert.match(js,/const habilitada=true/);
+ assert.match(js,/prepararPaineisOperador\(\)/);
+ assert.match(js,/fetch\('\/api\/admin\/contas\/cadastro\?nick='/);
  assert.match(js,/if\(modoOperadorAtual\)return carregarTabuleiroOperador\(\)/);
  assert.match(js,/fetch\('\/api\/admin\/loop\/estado'/);
  assert.match(js,/fetch\('\/api\/admin\/loop\/controle'/);
@@ -101,8 +106,8 @@ test('link da central aparece no rodape de AMBOS os produtos, so para operador',
  assert.match(js,/if\(!operadorAtivo\)try\{/);
  assert.match(js,/visitante=!operadorAtivo/);
  const login=codigo('src/producao/interface-aprovada-contas.js');
- assert.match(login,/const liberado=d\?\.operador===true/);
- assert.match(login,/atalho\.hidden=!liberado/);
+ assert.match(login,/const ativo=d\?\.operador===true/);
+ assert.match(login,/barra\.hidden=!ativo\|\|!modoOperadorAtual/);
  const back=codigo('src/producao/gateway-admin-comercial.js');
  assert.match(back,/app\.get\('\/api\/operador\/estado'/);
  assert.match(back,/app\.post\('\/api\/operador\/entrar'/);

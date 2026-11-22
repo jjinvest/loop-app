@@ -83,26 +83,18 @@ function renderizarInterfaceAprovada(){
  '<label for="cadastroSenha">Senha (mínimo 12 caracteres)</label>');
  // O indicador ja consta no campo "Indicado por". Nao duplicar
  // avisos acima dos formularios nem alterar o vinculo persistido.
- // Nick e senha compartilham um UNICO formulario na tela do LOOP.
- // A rota de contingencia /administrador/entrar continua protegida,
- // mas nao coloca um segundo formulario na jornada principal.
- // O acesso administrativo fica no RODAPE do menu original, so apos
- // autenticacao OPERADOR. Nenhum segundo escritorio e criado.
- html=trocarExato(html,'    <button type="button" id="sair" class="loop03-sair">',
-  '    <a id="loopAcessoAdminMenu" href="/administrador" hidden '+
-  'style="display:none" class="loop03-acesso-admin-menu">'+
-  'Escritório do Administrador</a>\n'+
-  '    <button type="button" id="sair" class="loop03-sair">');
- // A tela do cliente nao muda. O aviso interno so aparece apos login
- // autenticado como OPERADOR e nao consulta dados pessoais de titulares.
- html=trocarExato(html,'  <section class="painel" id="conteudoResumo" role="tabpanel" aria-labelledby="abaResumo">',
-  '  <section class="painel" id="conteudoResumo" role="tabpanel" aria-labelledby="abaResumo">\n'+
-  '   <div id="loopOperadorAcoes" class="loop03-operador-acoes" hidden>'+
-  '    <strong>Escritório Virtual · OPERADOR</strong>'+
-  '    <p>Gerencie a AKITEMM e o LOOP com sua sessão administrativa. '+
-  'As informações pessoais dos clientes continuam protegidas.</p>'+
-  '    <a href="/administrador">Escritório do Administrador</a>'+
-  '   </div>');
+ // A sessão do operador tem as próprias funções, mas a mesma moldura.
+ // O botão administrativo acompanha AKITEMM, sem quadro explicativo na home.
+ const lojaBarra='<div class="barra-conta"><a href="/loja" class="primario loop03-loja-prata" aria-label="Abrir loja AKITEMM"><span class="loop03-loja-prata-texto">AKITEMM</span></a></div>';
+ html=trocarExato(html,lojaBarra,lojaBarra+
+  '<div id="loopOperadorAtalhos" class="loop03-operador-atalhos" hidden>'+
+  '<a id="loopAcessoAdminMenu" href="/administrador">Escritório do Administrador</a>'+
+  '<a href="/escritorio?visao=cliente">Visão do Cliente</a>'+
+  '</div>'+
+  '<div id="loopVoltarOperador" class="loop03-operador-atalhos" hidden>'+
+  '<a href="/escritorio?visao=operador">Voltar ao Escritório do Administrador</a>'+
+  '</div>');
+
  // Os dois documentos já estão no mesmo painel da interface aprovada.
  // Uma única confirmação visual preserva duas versões/hashes distintos.
  for(const id of ['documentosCadastroDetalhes','versaoPrivacidadeCadastro',

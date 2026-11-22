@@ -625,3 +625,50 @@ body.loop03-logado > #arquivoFotoPerfil{
  clip-path:inset(50%)!important;pointer-events:none!important;
  min-width:0!important;padding:0!important;margin:0!important
 }
+
+
+/* Escritório do Operador 2026-11-22 — botões na posição aprovada.
+   CSS externo obrigatório: CSP do serviço real permite somente style-src 'self'. */
+#loopOperadorMais{display:none!important}
+#loopOperadorAtalhos[hidden],#loopVoltarOperador[hidden]{display:none!important}
+#loopOperadorAtalhos,#loopVoltarOperador{
+ display:flex;flex-direction:column;gap:9px;margin:7px 0 14px;width:100%;
+}
+#loopOperadorAtalhos a,#loopVoltarOperador a{
+ display:flex;width:100%;box-sizing:border-box;min-height:48px;
+ align-items:center;justify-content:center;border-radius:999px;
+ border:1px solid #b49562;
+ background:linear-gradient(135deg,#2f3038,#151823 72%,#37303a);
+ color:#f2d69d;text-decoration:none;font-weight:750;text-align:center;
+ padding:10px 14px;
+ box-shadow:inset 0 1px 0 #ffffff22,0 3px 9px #0006;
+}
+#loopOperadorAtalhos a:focus-visible,#loopVoltarOperador a:focus-visible{
+ outline:2px solid #f4ce81;outline-offset:2px;
+}
+body.loop03-modo-operador #conteudoPosicoes>:not(.loop03-admin-section),
+body.loop03-modo-operador #conteudoEquipe>:not(.loop03-admin-section),
+body.loop03-modo-operador #conteudoFinanceiro>:not(.loop03-admin-section),
+body.loop03-modo-operador #conteudoMeusPedidos>:not(.loop03-admin-section),
+body.loop03-modo-operador #conteudoLinks>:not(.loop03-admin-section),
+body.loop03-modo-operador #conteudoConta>:not(.loop03-admin-section){
+ display:none!important;
+}
+body.loop03-modo-operador .loop03-admin-section{
+ display:grid;gap:12px;min-width:0;
+}
+body.loop03-modo-operador .loop03-admin-section .loop03-admin-campos{
+ display:grid;gap:8px;
+}
+body.loop03-modo-operador .loop03-admin-section .loop03-admin-acoes{
+ display:flex;flex-wrap:wrap;gap:9px;
+}
+body.loop03-modo-operador .loop03-admin-section .loop03-admin-acoes a,
+body.loop03-modo-operador .loop03-admin-section .loop03-admin-acoes button{
+ border-radius:14px;min-height:42px;padding:10px 14px;
+ border:1px solid #af9156;background:#222535;color:#f0d59f;text-decoration:none;
+}
+body.loop03-modo-operador .loop03-admin-section .loop03-admin-dado{
+ border:1px solid #967b51;border-radius:14px;
+ background:#171a27;padding:12px;white-space:pre-line;line-height:1.5;
+}

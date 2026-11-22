@@ -16,6 +16,7 @@ function erro(c){const e=new Error(c);e.codigo=c;throw e;}
 function montarGatewayAdminComercial(app,{
  sessoes,controle,catalogo,auditoria=null,manutencao=null,
  catalogoMidia=null,posicoesVitrine=null,anunciosManuais=null,
+ contas=null,
  entregaLocal=null,
  pedidosComerciais=null,
  motorLoop=null,operacaoCatraca=null,
@@ -128,6 +129,41 @@ function montarGatewayAdminComercial(app,{
    return res.status(403).json({erro:'CSRF_ADMIN_INVALIDO'});
   next();
  };
+
+ // Gestão de cadastro: só a sessão autenticada como OPERADOR tem acesso.
+ // Leitura exige nick exato; escrita exige CSRF, motivo e auditoria no SQLite.
+ if(contas){
+  app.get('/api/admin/contas/cadastro',proteger,(req,res)=>{
+   res.set('Cache-Control','private, no-store');
+   if(Object.keys(req.query).join(',')!=='nick'||
+      typeof req.query.nick!=='string'||
+      !/^[A-Za-z]{1,12}$/.test(req.query.nick))
+    return res.status(400).json({erro:'NICK_INVALIDO'});
+   try{return res.json({cadastro:contas.consultarCadastroOperador({
+    nick:req.query.nick
+   })});}
+   catch(e){
+    return res.status(e.codigo==='CADASTRO_NAO_LOCALIZADO'?404:503)
+     .json({erro:e.codigo||'CONSULTA_CADASTRO_INDISPONIVEL'});
+   }
+  });
+  app.post('/api/admin/contas/cadastro/corrigir',proteger,validarCsrf,(req,res)=>{
+   res.set('Cache-Control','private, no-store');
+   if(!req.is('application/json')||!req.body||
+      Array.isArray(req.body)||
+      Object.keys(req.body).sort().join(',')!=='motivo,nick,nome,telefone')
+    return res.status(400).json({erro:'DADOS_CORRECAO_INVALIDOS'});
+   try{return res.json(contas.corrigirCadastroOperador(req.body));}
+   catch(e){
+    const cod=e.codigo||'CORRECAO_CADASTRO_INDISPONIVEL';
+    const invalido=['NOME_INVALIDO','TELEFONE_INVALIDO','NICK_INVALIDO',
+     'MOTIVO_CORRECAO_OBRIGATORIO','TELEFONE_SEM_CADASTRO_ORIGINAL',
+     'NENHUMA_ALTERACAO'].includes(cod);
+    return res.status(invalido?400:cod==='CADASTRO_NAO_LOCALIZADO'?404:503)
+     .json({erro:cod});
+   }
+  });
+ }
  // Avatar exclusivo da sessao OPERADOR, guardado no mesmo SQLite real.
  // Nao le, escolhe, copia ou altera foto privada de qualquer titular.
  if(motorLoop){
