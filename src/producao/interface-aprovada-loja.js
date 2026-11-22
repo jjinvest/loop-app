@@ -15,24 +15,36 @@
  let visitante=true,operadorAtivo=false,clienteNick=null,csrfLoja=null;
  const visaoClienteLoja=new URLSearchParams(location.search)
   .get('visao')==='cliente';
- // A foto do cabeçalho da loja é a mesma imagem privada da conta LOOP.
- // Nunca usar o retrato do cliente numa sessão de operador ou vice-versa.
+ // A foto segue a credencial exibida: titular vê a sua, operador a sua.
+ // A visão de cliente do operador não troca de titular nem deve apagar
+ // a foto DO OPERADOR que ele já gravou em sua própria sessão.
  const fotoTitular=$('akitemmFotoTitular');
- let consultaFotoLoja=0;
+ let consultaFotoLoja=0,caminhoFotoAtual=null;
  async function sincronizarFotoLoja(){
   if(!fotoTitular)return;
   const consulta=++consultaFotoLoja;
-  fotoTitular.hidden=true;
-  fotoTitular.removeAttribute('src');
-  if((visitante&&!operadorAtivo)||(operadorAtivo&&visaoClienteLoja))return;
   const caminho=operadorAtivo?
-   '/api/admin/operador/foto-perfil':'/api/contas/foto-perfil';
+   '/api/admin/operador/foto-perfil':
+   visitante?null:'/api/contas/foto-perfil';
+  if(!caminho){
+   caminhoFotoAtual=null;fotoTitular.hidden=true;
+   fotoTitular.removeAttribute('src');return;
+  }
+  // Nunca conservar o retrato de outro perfil ao trocar de sessão.
+  if(caminhoFotoAtual!==caminho){
+   caminhoFotoAtual=caminho;
+   fotoTitular.hidden=true;fotoTitular.removeAttribute('src');
+  }
   try{
    const r=await fetch(caminho,{credentials:'same-origin',cache:'no-store'});
    if(consulta!==consultaFotoLoja)return;
    if(!r.ok||!['image/jpeg','image/png','image/webp'].includes(
-    r.headers.get('content-type')?.split(';')[0]))return;
-   // URL de mesma origem autenticada: funciona sob a CSP sem blob:.
+    r.headers.get('content-type')?.split(';')[0])){
+    fotoTitular.hidden=true;fotoTitular.removeAttribute('src');return;
+   }
+   // Duas consultas podem ocorrer juntas no Android (pageshow/focus).
+   // A última vence SEM esconder uma imagem já carregada no mesmo perfil.
+   const url=caminho+'?revisao='+Date.now()+'-'+consulta;
    fotoTitular.onload=()=>{
     if(consulta===consultaFotoLoja)fotoTitular.hidden=false;
    };
@@ -41,9 +53,11 @@
      fotoTitular.hidden=true;fotoTitular.removeAttribute('src');
     }
    };
-   fotoTitular.src=caminho+'?versao='+Date.now();
+   fotoTitular.src=url;
   }catch{
-   if(consulta===consultaFotoLoja)fotoTitular.hidden=true;
+   if(consulta===consultaFotoLoja){
+    fotoTitular.hidden=true;fotoTitular.removeAttribute('src');
+   }
   }
  }
  // Quando uma foto é trocada em outra aba do LOOP, refletir na loja

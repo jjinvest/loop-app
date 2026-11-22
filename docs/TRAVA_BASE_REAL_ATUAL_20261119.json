@@ -1456,11 +1456,11 @@
     },
     {
       "path": "src/producao/interface-aprovada-loja.js",
-      "sha": "223cdfe58a23ed5cc4622f727644b93e173fc849"
+      "sha": "48595b04d60be979ad35060416821fd1114a8c28"
     },
     {
       "path": "src/producao/interface-aprovada-loop.js",
-      "sha": "43e995265f08df4ac63b3a5637706b9200a9a347"
+      "sha": "d35e2b05282b0ee7d65fe28597e38156e699b2be"
     },
     {
       "path": "src/producao/jornada-comercial-unificada-ensaio-sqlite.js",
@@ -2613,6 +2613,10 @@
     {
       "path": "test/fonte-unica-pagamento-pedido-sandbox-lab.test.js",
       "sha": "5464f6a1b8b12a4fe25a31ddfaaf8ed70b073e44"
+    },
+    {
+      "path": "test/foto-akitemm-sincronizacao-cliente-operador.test.js",
+      "sha": "b87f920af324803842eb3428da0912c0ca25a267"
     },
     {
       "path": "test/foto-perfil-real-cadastro-documentos-7x7.test.js",
@@ -3928,6 +3932,24 @@
       "antes": "6023c582166d352f26f9a059341d610c433bad62",
       "depois": "89bf07dab59d2cbf74e03d115dbc50f4eec0a95b",
       "objetivo": "Atualização autorizada em 22/11/2026 dos testes de navegador e relógio para novo placar real por hora: detalhes exclusivos no Tabuleiro, posição selecionada sem relógio."
+    },
+    {
+      "path": "src/producao/interface-aprovada-loja.js",
+      "antes": "223cdfe58a23ed5cc4622f727644b93e173fc849",
+      "depois": "48595b04d60be979ad35060416821fd1114a8c28",
+      "objetivo": "Pedido de 22/11/2026: foto já cadastrada no LOOP aparece também na AKITEMM para cliente e operador, mantendo sessões separadas, sem alterar cadastro, molduras, dinheiro ou motor."
+    },
+    {
+      "path": "src/producao/interface-aprovada-loop.js",
+      "antes": "43e995265f08df4ac63b3a5637706b9200a9a347",
+      "depois": "d35e2b05282b0ee7d65fe28597e38156e699b2be",
+      "objetivo": "Pedido de 22/11/2026: foto já cadastrada no LOOP aparece também na AKITEMM para cliente e operador, mantendo sessões separadas, sem alterar cadastro, molduras, dinheiro ou motor."
+    },
+    {
+      "path": "test/foto-akitemm-sincronizacao-cliente-operador.test.js",
+      "antes": null,
+      "depois": "b87f920af324803842eb3428da0912c0ca25a267",
+      "objetivo": "Pedido de 22/11/2026: foto já cadastrada no LOOP aparece também na AKITEMM para cliente e operador, mantendo sessões separadas, sem alterar cadastro, molduras, dinheiro ou motor."
     }
   ]
 }
