@@ -1,5 +1,5 @@
 'use strict';
-// Recorte opcional compartilhado: LOOP, AKITEMM, banners, produtos e perfis.
+// Recorte opcional compartilhado: banners LOOP/AKITEMM e produtos, nunca foto de perfil.
 // O envio original permanece inalterado se "Recortar foto" nao for utilizado.
 (()=>{
  const TIPO=/^image\/(?:jpeg|png|webp)$/;
@@ -157,6 +157,9 @@
   finally{aplicar.disabled=false;}
  });
  function vincular(input){
+  // O titular (cliente e operador) envia sua foto sem recorte.
+  // Não acrescentar botão ao campo da foto de perfil.
+  if(input.id==='arquivoFotoPerfil'||input.closest?.('#formFotoPerfil'))return;
   if(vistos.has(input)||input.type!=='file'||!input.accept.includes('image/')||
     input.dataset.recorteNativo==='sim')
    return;
@@ -164,13 +167,8 @@
   const botao=el('button','loop-recorte-botao','Recortar foto (opcional)');
   botao.type='button';
   botao.setAttribute('aria-label','Escolher ou recortar uma foto antes de salvar');
-  const alvo=input.id==='arquivoFotoPerfil'?
-   document.getElementById('loop03AlterarFotoTopo'):null;
-  if(alvo)alvo.insertAdjacentElement('afterend',botao);
-  else{
-   const pai=input.closest('label');
-   (pai||input).insertAdjacentElement('afterend',botao);
-  }
+  const pai=input.closest('label');
+  (pai||input).insertAdjacentElement('afterend',botao);
   botao.addEventListener('click',()=>{
    if(input.files?.[0]){void mostrar(input,input.files[0]);return;}
    // Seleção específica para recorte, sem disparar o upload automático.
