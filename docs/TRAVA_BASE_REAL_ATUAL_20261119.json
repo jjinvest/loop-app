@@ -424,7 +424,7 @@
     },
     {
       "path": "scripts/validar-identidade-real-navegador.js",
-      "sha": "2228e6706c8023ba8eae8ba82bccb8cc68c6b55c"
+      "sha": "24656088d615161854fe63d85722aade60b66b60"
     },
     {
       "path": "scripts/validar-jornada-loja-cores-browser.js",
@@ -1468,7 +1468,7 @@
     },
     {
       "path": "src/producao/interface-aprovada-contas.js",
-      "sha": "eda3ba2d3da7ac78651171291bda0b6fd829c8d3"
+      "sha": "ac791e50d4ba5f8973cfe71508fc77738f3fe427"
     },
     {
       "path": "src/producao/interface-aprovada-loja.js",
@@ -1476,7 +1476,7 @@
     },
     {
       "path": "src/producao/interface-aprovada-loop.js",
-      "sha": "038f5149c64945644d844508fe117d28f81ba27c"
+      "sha": "1e5660665104c51d0f41e8c23ba8e8ca2943070d"
     },
     {
       "path": "src/producao/jornada-comercial-unificada-ensaio-sqlite.js",
@@ -1520,7 +1520,7 @@
     },
     {
       "path": "src/producao/operacao-catraca-admin-sqlite.js",
-      "sha": "2005ce4c48bf9f9f01fa208da3d991428cc56ab5"
+      "sha": "02747a08f6abcf07d9bc7c2cffdc06b1386c1310"
     },
     {
       "path": "src/producao/operador-loja-fotos-real.js",
@@ -1560,7 +1560,7 @@
     },
     {
       "path": "src/producao/projecao-agenda-tabuleiro-compartilhada.js",
-      "sha": "03404dcdef6c905415720d1f1b569853e179fa05"
+      "sha": "208162a84285e75ffccf0e46fa59b7baa4c682f6"
     },
     {
       "path": "src/producao/projecao-filas-relacional-sqlite.js",
@@ -1832,7 +1832,7 @@
     },
     {
       "path": "src/shared/visor-catraca.js",
-      "sha": "8b7a07cbb40852d8705458813b6ea698aa908f68"
+      "sha": "5acaed416cc2f90cac6d6245bd065bfcaa5d9d33"
     },
     {
       "path": "test/acabamento-visual-unificado.test.js",
@@ -2312,7 +2312,7 @@
     },
     {
       "path": "test/checkup-tabuleiro-agenda-compartilhada.test.js",
-      "sha": "c122adf64301b9fa3c9332569f36e5f671b5c4e7"
+      "sha": "917a589087f4066917c24b235542eb4c2a6b828c"
     },
     {
       "path": "test/circuit-break-ponte-v6-demo.test.js",
@@ -2393,6 +2393,10 @@
     {
       "path": "test/conta-unica-login-concorrente-regressao.test.js",
       "sha": "5707d1945a5d364dfc55874ce9905440f7549165"
+    },
+    {
+      "path": "test/contagem-relogio-24h-fila-financeiro-isolado.test.js",
+      "sha": "96b363dbee391cad7f5889da28dcb42c3c0e9254"
     },
     {
       "path": "test/contas-participantes-demo.test.js",
@@ -3152,7 +3156,11 @@
     },
     {
       "path": "test/placar-cliente-hora-real-escritorio.test.js",
-      "sha": "627491d28c19e8633c410538ba0a00efaf33016c"
+      "sha": "2dca348cf9b2f3c01011df4a0d34d1239cd6e91a"
+    },
+    {
+      "path": "test/placar-compartilhado-cliente-operador-20261122.test.js",
+      "sha": "ad9a3705140f710929b8b4facac115dd2e043e3c"
     },
     {
       "path": "test/planejamento-vendas-fisicas-demo.test.js",
@@ -4636,6 +4644,76 @@
       "antes": "a806f7a49de8bbb3d6458962abdc52000f23528a",
       "depois": "2228e6706c8023ba8eae8ba82bccb8cc68c6b55c",
       "objetivo": "22/11/2026: teste de largura do total de cadastros considera corretamente padding e bordas preservadas da moldura, sem reduzir a área do resumo nem editar visual aprovado."
+    },
+    {
+      "data": "2026-11-22",
+      "path": "scripts/validar-identidade-real-navegador.js",
+      "antes": "2228e6706c8023ba8eae8ba82bccb8cc68c6b55c",
+      "depois": "24656088d615161854fe63d85722aade60b66b60",
+      "objetivo": "Pedido expresso de 22/11/2026: exibir ciclos e luzes visuais do relógio em 24h nos painéis cliente e operador; manter giros e caixa reais separados e bloqueados até comprovação; revisar testes e navegação em PC/celular sem mudar fotos, vendas, filas ou financeiro."
+    },
+    {
+      "data": "2026-11-22",
+      "path": "src/producao/interface-aprovada-contas.js",
+      "antes": "eda3ba2d3da7ac78651171291bda0b6fd829c8d3",
+      "depois": "ac791e50d4ba5f8973cfe71508fc77738f3fe427",
+      "objetivo": "Pedido expresso de 22/11/2026: exibir ciclos e luzes visuais do relógio em 24h nos painéis cliente e operador; manter giros e caixa reais separados e bloqueados até comprovação; revisar testes e navegação em PC/celular sem mudar fotos, vendas, filas ou financeiro."
+    },
+    {
+      "data": "2026-11-22",
+      "path": "src/producao/interface-aprovada-loop.js",
+      "antes": "038f5149c64945644d844508fe117d28f81ba27c",
+      "depois": "1e5660665104c51d0f41e8c23ba8e8ca2943070d",
+      "objetivo": "Pedido expresso de 22/11/2026: exibir ciclos e luzes visuais do relógio em 24h nos painéis cliente e operador; manter giros e caixa reais separados e bloqueados até comprovação; revisar testes e navegação em PC/celular sem mudar fotos, vendas, filas ou financeiro."
+    },
+    {
+      "data": "2026-11-22",
+      "path": "src/producao/operacao-catraca-admin-sqlite.js",
+      "antes": "2005ce4c48bf9f9f01fa208da3d991428cc56ab5",
+      "depois": "02747a08f6abcf07d9bc7c2cffdc06b1386c1310",
+      "objetivo": "Pedido expresso de 22/11/2026: exibir ciclos e luzes visuais do relógio em 24h nos painéis cliente e operador; manter giros e caixa reais separados e bloqueados até comprovação; revisar testes e navegação em PC/celular sem mudar fotos, vendas, filas ou financeiro."
+    },
+    {
+      "data": "2026-11-22",
+      "path": "src/producao/projecao-agenda-tabuleiro-compartilhada.js",
+      "antes": "03404dcdef6c905415720d1f1b569853e179fa05",
+      "depois": "208162a84285e75ffccf0e46fa59b7baa4c682f6",
+      "objetivo": "Pedido expresso de 22/11/2026: exibir ciclos e luzes visuais do relógio em 24h nos painéis cliente e operador; manter giros e caixa reais separados e bloqueados até comprovação; revisar testes e navegação em PC/celular sem mudar fotos, vendas, filas ou financeiro."
+    },
+    {
+      "data": "2026-11-22",
+      "path": "src/shared/visor-catraca.js",
+      "antes": "8b7a07cbb40852d8705458813b6ea698aa908f68",
+      "depois": "5acaed416cc2f90cac6d6245bd065bfcaa5d9d33",
+      "objetivo": "Pedido expresso de 22/11/2026: exibir ciclos e luzes visuais do relógio em 24h nos painéis cliente e operador; manter giros e caixa reais separados e bloqueados até comprovação; revisar testes e navegação em PC/celular sem mudar fotos, vendas, filas ou financeiro."
+    },
+    {
+      "data": "2026-11-22",
+      "path": "test/checkup-tabuleiro-agenda-compartilhada.test.js",
+      "antes": "c122adf64301b9fa3c9332569f36e5f671b5c4e7",
+      "depois": "917a589087f4066917c24b235542eb4c2a6b828c",
+      "objetivo": "Pedido expresso de 22/11/2026: exibir ciclos e luzes visuais do relógio em 24h nos painéis cliente e operador; manter giros e caixa reais separados e bloqueados até comprovação; revisar testes e navegação em PC/celular sem mudar fotos, vendas, filas ou financeiro."
+    },
+    {
+      "data": "2026-11-22",
+      "path": "test/contagem-relogio-24h-fila-financeiro-isolado.test.js",
+      "antes": null,
+      "depois": "96b363dbee391cad7f5889da28dcb42c3c0e9254",
+      "objetivo": "Pedido expresso de 22/11/2026: exibir ciclos e luzes visuais do relógio em 24h nos painéis cliente e operador; manter giros e caixa reais separados e bloqueados até comprovação; revisar testes e navegação em PC/celular sem mudar fotos, vendas, filas ou financeiro."
+    },
+    {
+      "data": "2026-11-22",
+      "path": "test/placar-cliente-hora-real-escritorio.test.js",
+      "antes": "627491d28c19e8633c410538ba0a00efaf33016c",
+      "depois": "2dca348cf9b2f3c01011df4a0d34d1239cd6e91a",
+      "objetivo": "Pedido expresso de 22/11/2026: exibir ciclos e luzes visuais do relógio em 24h nos painéis cliente e operador; manter giros e caixa reais separados e bloqueados até comprovação; revisar testes e navegação em PC/celular sem mudar fotos, vendas, filas ou financeiro."
+    },
+    {
+      "data": "2026-11-22",
+      "path": "test/placar-compartilhado-cliente-operador-20261122.test.js",
+      "antes": null,
+      "depois": "ad9a3705140f710929b8b4facac115dd2e043e3c",
+      "objetivo": "Pedido expresso de 22/11/2026: exibir ciclos e luzes visuais do relógio em 24h nos painéis cliente e operador; manter giros e caixa reais separados e bloqueados até comprovação; revisar testes e navegação em PC/celular sem mudar fotos, vendas, filas ou financeiro."
     }
   ]
 }
