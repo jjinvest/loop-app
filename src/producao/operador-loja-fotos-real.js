@@ -1096,6 +1096,8 @@
    '.produto-loja-loop[data-produto-id][data-akitemm-ordem]')){
    if(c.classList.contains('akitemm-ordenavel'))continue;
    c.classList.add('akitemm-ordenavel');
+   // Impedir que o navegador arraste a foto em vez de reordenar o produto.
+   for(const imagem of c.querySelectorAll('img'))imagem.draggable=false;
    const alca=document.createElement('button');
    alca.type='button';alca.className='akitemm-alca-arrastar';
    alca.textContent='⠿';
@@ -1237,6 +1239,10 @@
    }
   })();
  }
+ document.addEventListener('dragstart',ev=>{
+  if(operador&&ev.target.closest?.('#catalogoLojaLoop .akitemm-ordenavel'))
+   ev.preventDefault();
+ },true);
  document.addEventListener('pointerdown',ev=>{
   if(!operador||arrasto||dialogo?.open||ev.button!==0)return;
   const carta=ev.target.closest?.(
