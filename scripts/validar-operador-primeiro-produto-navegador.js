@@ -261,7 +261,7 @@ async function principal(){
     name:'imagem-prova.png',mimeType:'image/png',buffer:FOTO
    });
    await m.getByRole('button',{name:'Salvar produto e colocar na vitrine'}).click();
-   await m.getByText('Produto e foto salvos.',{exact:false}).waitFor({
+   await m.getByText('Produto e foto salvos na posição ',{exact:false}).waitFor({
     timeout:15000
    });
    await m.locator('.akitemm-modal-fechar').click();
