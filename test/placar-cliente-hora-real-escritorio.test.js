@@ -75,3 +75,21 @@ test('moldura central do operador usa exatamente giros e luzes por hora do clien
  assert.deepEqual(operador,cliente);
  assert.deepEqual(cliente,{giros:'3',luzes:'2'});
 });
+
+test('somente o quadro central exibe duas metades iguais no operador e cliente',()=>{
+ const css=source('src/producao/acabamento-botoes-real.css');
+ const html=require('../src/producao/interface-aprovada-loop')
+  .renderizarInterfaceAprovada();
+ assert.match(html,/class="loop03-indicador loop03-placar-hora"/);
+ assert.match(html,/class="loop03-placar-metade loop03-placar-giros"/);
+ assert.match(html,/class="loop03-placar-metade loop03-placar-luzes"/);
+ assert.match(css,/body\.loop03-logado \.cliente-integrado \.loop03-placar-hora\{/);
+ assert.match(css,/body\.loop03-logado \.cliente-integrado \.loop03-placar-metade\{/);
+ assert.match(css,/body\.loop03-logado \.cliente-integrado \.loop03-placar-metade\+ \.loop03-placar-metade\{/);
+ assert.match(css,/border-top:1px solid #a98755/);
+ assert.doesNotMatch(css,/loop03-modo-operador \.cliente-integrado \.loop03-placar-luzes\s*\{\s*display:none/);
+ assert.doesNotMatch(css,/not\(\.loop03-modo-operador\) \.cliente-integrado \.loop03-placar-metade/);
+ // Nao abrir a regra dos dois quadros laterais para o operador.
+ assert.match(css,/body\.loop03-logado:not\(\.loop03-modo-operador\) \.cliente-integrado #loop03IrPosicoesIntegrado\{/);
+ assert.match(css,/body\.loop03-logado:not\(\.loop03-modo-operador\) \.cliente-integrado \.loop03-placar-posicao\{/);
+});
