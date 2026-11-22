@@ -14,7 +14,7 @@ const controle={
  agoraServidorMs:agora,proximaLuzPrevistaEmMs:agora+72000,
  metaCentrosDia:100,metaDataAlvo:'2026-11-21',
  intervaloLuzSegundos:78,horarioPermitido:true,
- eventosNoCiclo:0,girosHoje:0,giros24h:0
+ eventosNoCiclo:0,ciclosConcluidos:0,girosHoje:0,giros24h:0
 };
 function criarVisor(visao,agenda){
  const e={
@@ -47,6 +47,7 @@ test('operador e cliente recebem o mesmo cronômetro visual e os mesmos contador
  assert.equal(mesmaAgenda.somenteLeitura,true);
  assert.equal(mesmaAgenda.financeiroReal,false);
  assert.equal(mesmaAgenda.eventosReaisNoCiclo,0);
+ assert.equal(mesmaAgenda.ciclosReaisConcluidos,0);
  assert.equal(mesmaAgenda.girosReaisHoje,0);
  assert.equal(mesmaAgenda.girosReais24h,0);
  assert.equal(mesmaAgenda.metaLotes.quantidade,100);
@@ -60,7 +61,7 @@ test('operador e cliente recebem o mesmo cronômetro visual e os mesmos contador
  assert.match(cliente.estadoRelogioTabuleiro.textContent,
   /Relógio: [0-6]\/6 luzes/);
  assert.match(cliente.loop03StatusPosicao.textContent,
-  /luzes previstas · Giros reais hoje: 0/);
+  /luzes previstas · Ciclos reais: 0 · Giros reais hoje: 0/);
  assert.equal(cliente.motorContadorEventos.textContent.match(
   /Eventos confirmados: 0 de 6/)?.[0],
   'Eventos confirmados: 0 de 6');
