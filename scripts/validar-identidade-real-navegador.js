@@ -418,7 +418,8 @@ async function main(){
    assert.equal(new URL(operadorPage.url()).pathname,'/escritorio');
    await operadorPage.locator('#loopAcessoAdminMenu:not([hidden])')
     .waitFor({state:'attached'});
-   await operadorPage.goto(base+'/loja');
+   // Acessar loja no papel operador explicitamente, mesmo com conta cliente ativa.
+   await operadorPage.goto(base+'/loja?visao=operador');
    await operadorPage.locator('#akitemmNomeTitular').filter({
     hasText:'OPERADOR'
    }).waitFor();
