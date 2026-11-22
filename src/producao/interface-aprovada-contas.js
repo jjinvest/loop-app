@@ -55,6 +55,14 @@
    const ativo=d?.operador===true;
    if(barra)barra.hidden=!ativo||!modoOperadorAtual;
    if(voltar)voltar.hidden=!ativo||modoOperadorAtual;
+   // A sessão controla a permissão; os dois atalhos de visão permanecem
+   // disponíveis ao operador, sem depender da tela ou do dispositivo.
+   for(const link of document.querySelectorAll(
+    '.loop03-operador-atalhos [data-visao-do-escritorio]')){
+    const selecionado=link.dataset.visaoDoEscritorio===
+     (modoOperadorAtual?'operador':'cliente');
+    link.setAttribute('aria-current',selecionado?'page':'false');
+   }
    // Inclui Meus Pedidos e banners; a URL nunca concede permissão.
    direcionarAcessosAkitemm(ativo?
     (modoOperadorAtual?'operador':'cliente'):null);
