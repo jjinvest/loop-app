@@ -263,6 +263,14 @@ async function principal(){
    await m.getByRole('button',{name:'Salvar produto e colocar na vitrine'}).click();
    await m.getByText('Produto e foto salvos na posição ',{exact:false}).waitFor({
     timeout:15000
+   }).catch(async e=>{
+    const diag=await m.evaluate(d=>({
+     status:d.querySelector('.akitemm-editor-status')?.textContent,
+     pendencias:d.querySelector('.akitemm-erros-cadastro')?.textContent,
+     titulo:d.querySelector('h2')?.textContent
+    }));
+    throw Error('CADASTRO_PRODUTO_NAO_CONFIRMADO '+JSON.stringify(diag)+
+     ' '+e.message);
    });
    await m.locator('.akitemm-modal-fechar').click();
    await page.locator('#catalogoLojaLoop [data-produto-id="'+codigo+'"]')
