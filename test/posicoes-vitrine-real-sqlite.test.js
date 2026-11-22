@@ -199,3 +199,46 @@ test('molduras vazias trocam de cor sem criar produto nem mexer em posição',()
   assert.equal(db.prepare('PRAGMA foreign_key_check').all().length,0);
  }finally{db.close();}
 });
+
+
+test('ordem automática é modificável: produto 2 arrastado para espaço vazio 18',()=>{
+ const db=new DatabaseSync(':memory:');
+ try{
+  const v=new PosicoesVitrineRealSQLite({banco:db});
+  const a=v.atribuirProximo({produtoId:'camisa',produtoExiste:()=>true});
+  const b=v.atribuirProximo({produtoId:'tenis',produtoExiste:()=>true});
+  assert.equal(a.posicao,1);
+  assert.equal(b.posicao,2);
+  const mover=v.mover({produtoId:'tenis',novaPosicao:18,
+   revisaoEsperada:b.revisao});
+  assert.equal(mover.manual,true);
+  assert.equal(mover.posicao,18);
+  assert.equal(v.consultarLayoutVazio().posicoesExplicitas,true);
+  const exibidos=v.projetar([
+   {produtoId:'tenis',criadoEm:2},{produtoId:'camisa',criadoEm:1}
+  ]);
+  assert.deepEqual(exibidos.map(x=>[x.produtoId,x.posicaoVitrine]),
+   [['camisa',1],['tenis',18]]);
+  const reinicio=new PosicoesVitrineRealSQLite({banco:db});
+  assert.equal(reinicio.consultarLayoutVazio().posicoesExplicitas,true);
+  assert.equal(reinicio.projetar([
+   {produtoId:'tenis',criadoEm:2},{produtoId:'camisa',criadoEm:1}
+  ])[1].posicaoVitrine,18);
+  const terceiro=v.atribuirProximo({
+   produtoId:'bone',produtoExiste:()=>true
+  });
+  assert.equal(terceiro.posicao,2);
+  const depois=v.projetar([
+   {produtoId:'tenis',criadoEm:2},
+   {produtoId:'camisa',criadoEm:1},
+   {produtoId:'bone',criadoEm:3}
+  ]);
+  assert.deepEqual(depois.map(p=>p.posicaoVitrine),[1,2,18]);
+  const trocado=v.mover({produtoId:'camisa',novaPosicao:18,
+   revisaoEsperada:1});
+  assert.equal(trocado.posicao,18);
+  assert.deepEqual(v.listar().map(x=>[x.produtoId,x.posicao]),
+   [['tenis',1],['bone',2],['camisa',18]]);
+  assert.equal(db.prepare('PRAGMA integrity_check').get().integrity_check,'ok');
+ }finally{db.close();}
+});
