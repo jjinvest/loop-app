@@ -1,7 +1,7 @@
 {
   "schema": 1,
   "política": "Toda alteração de HTML/CSS exige pedido visual explícito, escopo isolado e revisão do proprietário; é proibido atualizar hashes para esconder mudanças.",
-  "autorizaçãoAtual": "21/11/2026: pedido expresso do proprietário com quatro capturas de tela para restaurar a foto única do titular entre LOOP e AKITEMM, aprimorar exclusivamente o painel Minha Conta (resumo legível, seleção e confirmação de foto), remover a descrição redundante da grafia do nick e organizar a verificação de e-mail com temporizador verdadeiro e reenvio seguro. Mudança HTML limitada a src/candidato/checkout-candidato-ui.html; CSS de acabamento somente na instância real. Preservar os outros 23 arquivos visuais, logins, catraca, tabuleiro, loja e dados financeiros.",
+  "autorizaçãoAtual": "22/11/2026: pedido explícito do proprietário, com duas fotos, para corrigir exclusivamente o cabeçalho da loja AKITEMM: LOOP e símbolo dourados, versão 3.0 prateada, como a identidade aprovada do Escritório. No mesmo atendimento, restabelecer os quatro banners originais do Escritório do cliente, que estavam reduzidos visualmente a dois devido à filtragem, mantendo os extras publicados e o editor somente no operador. Alteração visual restrita ao arquivo src/laboratorio/loja-cliente-demo.css; os outros 23 HTML/CSS continuam sem modificações. Preservar os banners originais e dados, e todos os demais painéis, tabuleiro, catraca e financeiro.",
   "arquivos": [
     {
       "path": "src/candidato/checkout-candidato-ui.html",
@@ -69,7 +69,7 @@
     },
     {
       "path": "src/laboratorio/loja-cliente-demo.css",
-      "sha": "e211889af7534d25f27e6c4fd79668a11153c69d"
+      "sha": "96d78c9e699fd936f655bf910ed48a6388e9061a"
     },
     {
       "path": "src/laboratorio/loja-cliente-demo.html",
@@ -125,6 +125,7 @@
     "20/11/2026: proprietário solicitou restaurar a área Minha Equipe já aprovada (cartões grandes numerados, Taísa e demais indicados reais, status de ativação, telefone, data/hora, menu de três pontinhos, grade 1–10 abaixo) e corrigir o upload da foto do OPERADOR pelo toque no círculo no celular, sem alterar o layout aprovado das demais telas, sem criar contas falsas e sem qualificar, vincular ou pagar indicação pendente. Ajuste CSS limitado à Minha Equipe; foto usa o seletor nativo, a mesma moldura e a mesma sessão administrativa autenticada. Ações pendentes não executam mutações fictícias.",
     "21/11/2026: proprietário solicitou melhorar exclusivamente a aba Meus Pedidos do Escritório LOOP real, tornando o histórico mais funcional para o cliente. Autorização restrita à seção #conteudoMeusPedidos no HTML aprovado: cabeçalho com Atualizar, resumo de histórico, paginação compacta, atalhos para AKITEMM e Minhas Posições, remoção de títulos de seções vazias, preservando os IDs internos. JS e CSS de acabamento têm escopo isolado. Não há alteração nos demais 23 arquivos visuais protegidos, na conta, no motor, no cadastro, no pagamento, nos pedidos armazenados, na titularidade ou na interface de outras abas.",
     "21/11/2026: autorização do proprietário para restaurar exclusivamente, em Minha Equipe, o clique e salvamento da escolha de destino 1..10 pelo indicador. O menu de três pontos, cartões, textos, luzes, telefones, molduras e layout previamente aprovados permanecem intactos. No CSS visual, apenas a classe do número escolhido é destacada. A escolha é persistida, imutável e não ativa indicação financeira, motor, catraca nem pagamento.",
-    "21/11/2026: pedido expresso do proprietário com quatro capturas de tela para restaurar a foto única do titular entre LOOP e AKITEMM, aprimorar exclusivamente o painel Minha Conta (resumo legível, seleção e confirmação de foto), remover a descrição redundante da grafia do nick e organizar a verificação de e-mail com temporizador verdadeiro e reenvio seguro. Mudança HTML limitada a src/candidato/checkout-candidato-ui.html; CSS de acabamento somente na instância real. Preservar os outros 23 arquivos visuais, logins, catraca, tabuleiro, loja e dados financeiros."
+    "21/11/2026: pedido expresso do proprietário com quatro capturas de tela para restaurar a foto única do titular entre LOOP e AKITEMM, aprimorar exclusivamente o painel Minha Conta (resumo legível, seleção e confirmação de foto), remover a descrição redundante da grafia do nick e organizar a verificação de e-mail com temporizador verdadeiro e reenvio seguro. Mudança HTML limitada a src/candidato/checkout-candidato-ui.html; CSS de acabamento somente na instância real. Preservar os outros 23 arquivos visuais, logins, catraca, tabuleiro, loja e dados financeiros.",
+    "22/11/2026: pedido explícito do proprietário, com duas fotos, para corrigir exclusivamente o cabeçalho da loja AKITEMM: LOOP e símbolo dourados, versão 3.0 prateada, como a identidade aprovada do Escritório. No mesmo atendimento, restabelecer os quatro banners originais do Escritório do cliente, que estavam reduzidos visualmente a dois devido à filtragem, mantendo os extras publicados e o editor somente no operador. Alteração visual restrita ao arquivo src/laboratorio/loja-cliente-demo.css; os outros 23 HTML/CSS continuam sem modificações. Preservar os banners originais e dados, e todos os demais painéis, tabuleiro, catraca e financeiro."
   ]
 }
