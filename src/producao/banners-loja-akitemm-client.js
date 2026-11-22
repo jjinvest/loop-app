@@ -55,7 +55,7 @@
  topo.append(titulo,fechar);
  const explicacao=document.createElement('p');
  explicacao.className='banner-real-explicacao';
- explicacao.textContent='Escolha 1, 2 ou 3 fotos dentro do mesmo banner.';
+ explicacao.textContent='Toque nas fotos para adicionar ou ajustar.';
  const linhaColunas=document.createElement('label');
  linhaColunas.className='banner-real-arquivo';
  linhaColunas.textContent='Formato do banner';
@@ -78,6 +78,7 @@
   modo.append(op);
  }
  linhaModo.append(modo);
+ linhaModo.classList.add('banner-editor-modo-oculto');
  const rotulo=document.createElement('label');
  rotulo.className='banner-real-arquivo';
  rotulo.textContent='Foto do quadro 1 (JPG, PNG ou WebP)';
@@ -88,6 +89,7 @@
  const previa=document.createElement('img');
  previa.id='akitemmBannerPreviaReal';previa.className='banner-real-previa';
  previa.alt='Prévia do banner AKITEMM';previa.hidden=true;
+ previa.classList.add('banner-editor-previa-oculta');
  const fotosExtras=[2,3].map(n=>{
   const linha=document.createElement('label');
   linha.className='banner-real-arquivo banner-foto-extra';
@@ -105,6 +107,11 @@
    x.linha.hidden=!visivel;
    x.linha.style.display=visivel?'flex':'none';
   });
+  const atual=current();
+  lixeirasFotos.forEach((b,i)=>{
+   b.hidden=!operador||i+1>Number(colunas.value)||
+    !atual?.fotos?.[i]?.temImagem;
+  });
  }
  colunas.addEventListener('change',mostrarCampos);
  const controles=document.createElement('div');
@@ -121,22 +128,48 @@
  }
  const estado=document.createElement('p');estado.id='akitemmBannerStatus';
  estado.setAttribute('role','status');
+ fotosExtras.forEach((x,i)=>x.arquivo.addEventListener('change',()=>{
+  if(x.arquivo.files?.[0])
+   estado.textContent='Foto '+(i+2)+' selecionada. Clique em Salvar banner.';
+ }));
+ const lixeirasFotos=[escolher,...fotosExtras.map(x=>x.arquivo)].map((input,i)=>{
+  const b=document.createElement('button');
+  b.type='button';b.className='banner-foto-lixeira';
+  b.textContent='🗑 Excluir foto '+(i+1);b.hidden=true;
+  b.setAttribute('aria-label','Excluir foto '+(i+1)+' deste banner');
+  b.addEventListener('click',()=>void removerFotoIndividual(current()?.slot,i+1));
+  input.parentElement.insertAdjacentElement('afterend',b);
+  return b;
+ });
  caixa.append(topo,explicacao,linhaColunas,linhaModo,
   rotulo,previa,...fotosExtras.map(x=>x.linha),estado,controles);
  dialogo.append(caixa);document.body.append(dialogo);
- let leitorFoto=0;
- function abrirFormulario(){
+ lixeirasFotos.forEach(b=>b.classList.add('banner-editor-lixeira-oculta'));
+ controles.querySelector('[data-acao="remover"]').classList.add('banner-editor-acoes-excluir-oculto');
+ const fotosEditor=fotosNoProprioQuadro({dialogo,antes:rotulo,
+  inputs:[escolher,...fotosExtras.map(x=>x.arquivo)],colunas,status:estado,
+  razao:2.2,slot:()=>current(),
+  urlFoto:pos=>'/api/loja/banners/'+current()?.slot+'/foto/'+pos+
+   '?rev='+(current()?.revisao||0),
+  apagar:pos=>removerFotoIndividual(current()?.slot,pos)});
+ colunas.addEventListener('change',()=>{
+  modo.value=Number(colunas.value)>1?'PREENCHER':'INTEIRA';
+  fotosEditor.pintar();
+ });
+
+ function abrirFormulario(pos=0){
   if(!operador||bloqueio||!slots)return;
   const atual=current();if(!atual)return;
   if(atual.adicionar){void criarBanner();return;}
   titulo.textContent='Banner '+atual.slot+' · AKITEMM';
   escolher.value='';previa.hidden=true;previa.removeAttribute('src');
-  fotosExtras.forEach(x=>{x.arquivo.value='';});
+  fotosEditor.limpar();
   colunas.value=String(atual.colunas||1);
   modo.value=atual.modo||(atual.colunas===1?'INTEIRA':'PREENCHER');
-  mostrarCampos();
+  mostrarCampos();fotosEditor.pintar();
   estado.textContent='';
   if(!dialogo.open){parar();dialogo.showModal();}
+   if(pos)fotosEditor.abrir(pos);
  }
  mais.addEventListener('click',e=>{e.preventDefault();abrirFormulario();});
  function visiveis(){
@@ -180,12 +213,24 @@
    for(let pos=1;pos<=quadros;pos++){
     const sub=slot.fotos?.[pos-1],quadro=document.createElement('div');
     quadro.className='banner-mosaico-celula';
+     quadro.dataset.fotoPosicao=String(pos);
     if(sub?.temImagem){
      const im=document.createElement('img');
      im.alt='Foto '+pos+' do banner '+slot.slot;
      im.src='/api/loja/banners/'+slot.slot+'/foto/'+pos+
       '?rev='+slot.revisao;
      quadro.append(im);
+     if(operador){
+      const b=document.createElement('button');
+      b.type='button';b.className='banner-foto-lixeira-quadro';
+      b.textContent='🗑';b.title='Excluir apenas a foto '+pos;
+      b.setAttribute('aria-label','Excluir foto '+pos+' do banner '+slot.slot);
+      b.addEventListener('click',e=>{
+       e.preventDefault();e.stopPropagation();
+       void removerFotoIndividual(slot.slot,pos);
+      });
+      quadro.append(b);
+     }
     }else if(operador)quadro.textContent='Foto '+pos+' · adicionar';
     mosaico.append(quadro);
    }
@@ -290,13 +335,92 @@
    await carregar();
   }finally{bloqueio=false;rodar();}
  }
+ async function removerFotoIndividual(numero,pos){
+  if(bloqueio||!operador||!Number.isSafeInteger(numero)||
+     ![1,2,3].includes(pos))return;
+  const item=slots?.find(x=>x.slot===numero);
+  if(!item?.fotos?.[pos-1]?.temImagem)return;
+  if(!window.confirm('Excluir só a foto '+pos+' do banner '+numero+
+    '? As demais fotos serão preservadas.'))return;
+  bloqueio=true;parar();
+  lixeirasFotos.forEach(b=>{b.disabled=true;});
+  try{
+   const sessao=await requisitar('/api/admin/comercial/sessao');
+   if(typeof sessao.csrfToken!=='string'||sessao.csrfToken.length<20)
+    throw Error('SESSAO_OPERADOR_INVALIDA');
+   const base='/api/admin/akitemm/banners/'+numero;
+   const resp=await requisitar(base+(pos===1?'/imagem':'/foto/'+pos),{
+    method:'DELETE',headers:{
+     'X-Loop-Admin-Csrf':sessao.csrfToken,
+     'X-Banner-Revisao-Esperada':String(item.revisao)
+    }
+   });
+   if(!Array.isArray(resp.slots))throw Error('BANNER_NAO_CONFIRMADO');
+   slots=resp.slots;
+   if(dialogo.open)estado.textContent='Foto '+pos+' excluída.';
+   renderizar();
+  }catch(e){
+   const msg='Não foi possível excluir a foto: '+e.message;
+   if(dialogo.open)estado.textContent=msg;
+   else window.alert(msg);
+   await carregar();
+  }finally{
+   bloqueio=false;lixeirasFotos.forEach(b=>{b.disabled=false;});
+   renderizar();if(dialogo.open){mostrarCampos();fotosEditor.pintar();}rodar();
+  }
+ }
+ async function prepararFotoBanner(foto){
+  if(!foto||!['image/jpeg','image/png','image/webp'].includes(foto.type)||
+     foto.size<40||foto.size>16*1024*1024)
+   throw Error('SELECIONE_IMAGEM_JPG_PNG_WEBP_ATE_16MB');
+  const imagem=new Image();
+  const src=await new Promise((resolve,reject)=>{
+   const leitor=new FileReader();
+   leitor.onload=()=>resolve(String(leitor.result||''));
+   leitor.onerror=()=>reject(Error('IMAGEM_NAO_PODE_SER_LIDA'));
+   leitor.readAsDataURL(foto);
+  });
+  // Content-Security-Policy da identidade permite data:, mas nao blob:.
+  try{
+   imagem.src=src;
+   try{await imagem.decode();}
+   catch{throw Error('IMAGEM_NAO_PODE_SER_ABERTA');}
+   const origemLargura=imagem.naturalWidth,origemAltura=imagem.naturalHeight;
+   if(!origemLargura||!origemAltura||
+      origemLargura>12000||origemAltura>12000||
+      origemLargura*origemAltura>40000000)
+    throw Error('IMAGEM_DIMENSOES_INVALIDAS');
+   const escala=Math.min(1,2600/Math.max(origemLargura,origemAltura));
+   let largura=Math.max(1,Math.round(origemLargura*escala));
+   let altura=Math.max(1,Math.round(origemAltura*escala));
+   const canvas=document.createElement('canvas');
+   const contexto=canvas.getContext('2d',{alpha:false});
+   if(!contexto)throw Error('IMAGEM_NAO_PODE_SER_PROCESSADA');
+   for(let tentativa=0;tentativa<4;tentativa++){
+    canvas.width=largura;canvas.height=altura;
+    contexto.fillStyle='#ffffff';
+    contexto.fillRect(0,0,largura,altura);
+    contexto.drawImage(imagem,0,0,largura,altura);
+    for(const qualidade of [0.92,0.85,0.76]){
+     const convertido=await new Promise(resolve=>
+      canvas.toBlob(resolve,'image/jpeg',qualidade));
+     if(convertido?.type==='image/jpeg'&&convertido.size>=40&&
+        convertido.size<=4*1024*1024)return convertido;
+    }
+    largura=Math.max(1,Math.round(largura*0.76));
+    altura=Math.max(1,Math.round(altura*0.76));
+   }
+   throw Error('IMAGEM_NAO_CABE_EM_4MB');
+  }finally{imagem.src='';}
+ }
+
  async function salvarComposicao(){
   if(bloqueio||!operador||!current()||current().adicionar)return;
   const atual=current(),n=Number(colunas.value);
   const inputs=[escolher,...fotosExtras.map(x=>x.arquivo)];
   const fotos=inputs.slice(0,n);
   const layoutMudou=atual.colunas!==n||atual.modo!==modo.value;
-  if(!layoutMudou&&!fotos.some(x=>x.files?.length)){
+  if(!layoutMudou&&!fotosEditor.novas(n)){
    estado.textContent='Escolha uma foto ou mude o formato do banner.';return;
   }
   bloqueio=true;parar();
@@ -325,19 +449,18 @@
     }),'application/json');
    }
    for(let i=0;i<n;i++){
-    const foto=fotos[i].files?.[0];
+    const foto=fotosEditor.arquivo(i+1);
     if(!foto)continue;
-    if(!['image/jpeg','image/png','image/webp'].includes(foto.type)||
-       foto.size<40||foto.size>4*1024*1024)
-     throw Error('A foto '+(i+1)+' deve ser JPG, PNG ou WebP de até 4 MB.');
+    estado.textContent='Preparando foto '+(i+1)+' de '+n+'...';
+    const pronta=await prepararFotoBanner(foto);
     estado.textContent='Salvando foto '+(i+1)+' de '+n+'...';
     await executar(i===0?base+'/imagem':base+'/foto/'+(i+1),
-     'PUT',foto,foto.type);
+     'PUT',pronta,'image/jpeg');
    }
    estado.textContent=escolhido.publicado?
-    'Banner publicado com '+n+' foto(s).':
-    'Formato salvo. Adicione as fotos que faltam para publicar.';
-   fotos.forEach(x=>{x.value='';});
+    'Banner salvo e publicado. Os quadros vazios podem ser preenchidos depois.':
+    'Formato salvo. Envie ao menos uma foto para exibir o banner.';
+   fotosEditor.limpar();
    indice=slots.findIndex(x=>x.slot===atual.slot);
    renderizar();
   }catch(e){
@@ -388,23 +511,6 @@
    bloqueio=false;renderizar();rodar();
   }
  }
- escolher.addEventListener('change',()=>{
-  const f=escolher.files?.[0];
-  if(!f){previa.hidden=true;return;}
-  if(!['image/jpeg','image/png','image/webp'].includes(f.type)||
-     f.size<40||f.size>4*1024*1024){
-   estado.textContent='Escolha JPG, PNG ou WebP com até 4 MB.';
-   escolher.value='';previa.hidden=true;return;
-  }
-  estado.textContent='Imagem pronta para salvar.';
-  const atual=++leitorFoto,leitor=new FileReader();
-  leitor.onload=()=>{
-   if(atual!==leitorFoto)return;
-   previa.src=String(leitor.result);previa.hidden=false;
-  };
-  leitor.onerror=()=>{estado.textContent='Não foi possível abrir a imagem.';};
-  leitor.readAsDataURL(f);
- });
  controles.addEventListener('click',e=>{
   const botao=e.target.closest('button[data-acao]');
   if(!botao||!operador||bloqueio)return;
@@ -413,15 +519,17 @@
    void salvarComposicao();return;
   }
   if(acao==='remover'&&!window.confirm(
-   'Excluir esta foto da AKITEMM? Os outros banners continuam iguais.'))return;
+   'Excluir somente a foto 1? As outras fotos continuam no banner.'))return;
   if(acao==='anterior'||acao==='proximo')
    void salvar('trocar',null,acao==='anterior'?-1:1);
+  else if(acao==='remover')void removerFotoIndividual(current()?.slot,1);
   else void salvar(acao);
  });
  area.addEventListener('click',e=>{
   if(!operador||bloqueio||Date.now()<bloquearCliqueAte||
      e.target.closest('button,input,a'))return;
-  abrirFormulario();
+  const cel=e.target.closest('.banner-mosaico-celula');
+  abrirFormulario(Number(cel?.dataset.fotoPosicao)||(e.target===foto?1:0));
  });
  esquerda.addEventListener('click',()=>selecionar(indice-1));
  direita.addEventListener('click',()=>selecionar(indice+1));
@@ -443,5 +551,170 @@
  window.addEventListener('loop:operador-saiu',()=>{
   operador=false;renderizar();void carregar();
  });
+ function fotosNoProprioQuadro(op){
+ const {dialogo,antes,inputs,colunas,status,slot,urlFoto,apagar,razao}=op;
+ const pendentes=new Map(),miniaturas=new Map();
+ const grade=document.createElement('div');grade.className='banner-editor-grade';
+ antes.before(grade);
+ const tiles=inputs.map((input,index)=>{
+  const pos=index+1;
+  input.dataset.recorteNativo='sim';
+  input.parentElement.classList.add('banner-editor-arquivo-oculto');
+  const cel=document.createElement('div');cel.className='banner-editor-celula';
+  cel.tabIndex=0;cel.setAttribute('role','button');
+  cel.setAttribute('aria-label','Adicionar ou ajustar foto '+pos);
+  const img=document.createElement('img');img.alt='Foto '+pos;img.hidden=true;
+  const sinal=document.createElement('span');sinal.className='banner-editor-sinal';
+  const nome=document.createElement('span');nome.className='banner-editor-nome';
+  nome.textContent='Foto '+pos;
+  const lixo=document.createElement('button');lixo.type='button';
+  lixo.className='banner-editor-lixeira';lixo.textContent='🗑';
+  lixo.setAttribute('aria-label','Excluir somente foto '+pos);
+  lixo.addEventListener('click',async e=>{
+   e.stopPropagation();e.preventDefault();
+   const salva=slot()?.fotos?.[index]?.temImagem===true;
+   pendentes.delete(pos);miniaturas.delete(pos);input.value='';
+   if(salva)await apagar(pos);
+   pintar();
+  });
+  cel.append(img,sinal,nome,lixo);
+  const acionar=()=>pendentes.has(pos)||slot()?.fotos?.[index]?.temImagem?
+   void abrirRecorte(pos):input.click();
+  cel.addEventListener('click',e=>{if(!e.target.closest('button'))acionar();});
+  cel.addEventListener('keydown',e=>{
+   if(e.target!==cel||!['Enter',' '].includes(e.key))return;
+   e.preventDefault();acionar();
+  });
+  input.addEventListener('change',()=>{
+   const f=input.files?.[0];if(!f)return;
+   if(!['image/jpeg','image/png','image/webp'].includes(f.type)||
+      f.size<40||f.size>16*1024*1024){
+    status.textContent='Escolha JPG, PNG ou WebP de até 16 MB.';
+    input.value='';return;
+   }
+   pendentes.set(pos,f);
+   const reader=new FileReader();
+   reader.onload=()=>{
+    if(pendentes.get(pos)!==f)return;
+    miniaturas.set(pos,String(reader.result||''));pintar();
+   };
+   reader.onerror=()=>{status.textContent='Não foi possível ler a foto.';};
+   reader.readAsDataURL(f);
+  });
+  grade.append(cel);
+  return {cel,img,sinal,lixo,pos};
+ });
+ const painel=document.createElement('div');
+ painel.className='banner-editor-painel';painel.hidden=true;
+ painel.innerHTML='<section class="banner-editor-ajuste">'+
+  '<header><strong>Ajustar foto</strong><button type="button" data-acao="cancelar" aria-label="Fechar">×</button></header>'+
+  '<canvas aria-label="Arraste para enquadrar a foto"></canvas>'+
+  '<label>Ampliar <input type="range" min="100" max="300" value="100" step="1"></label>'+
+  '<footer><button type="button" data-acao="trocar">Trocar</button>'+
+  '<button type="button" data-acao="cancelar">Cancelar</button>'+
+  '<button type="button" data-acao="aplicar">Aplicar</button></footer></section>';
+ dialogo.append(painel);
+ const canvas=painel.querySelector('canvas'),zoom=painel.querySelector('input');
+ let crop=null,seq=0;
+ const dataURL=blob=>new Promise((ok,fail)=>{
+  const r=new FileReader();r.onload=()=>ok(String(r.result||''));
+  r.onerror=()=>fail(Error('Foto indisponível'));
+  r.readAsDataURL(blob);
+ });
+ function desenhar(){
+  if(!crop)return;
+  const img=crop.imagem,w=canvas.width,h=canvas.height;
+  const ctx=canvas.getContext('2d',{alpha:false});if(!ctx)return;
+  const escala=Math.max(w/img.naturalWidth,h/img.naturalHeight)*crop.zoom;
+  const dw=escala*img.naturalWidth,dh=escala*img.naturalHeight;
+  const maxX=Math.max(0,(dw-w)/2),maxY=Math.max(0,(dh-h)/2);
+  crop.x=Math.max(-maxX,Math.min(maxX,crop.x));
+  crop.y=Math.max(-maxY,Math.min(maxY,crop.y));
+  ctx.fillStyle='#10141d';ctx.fillRect(0,0,w,h);
+  ctx.drawImage(img,(w-dw)/2+crop.x,(h-dh)/2+crop.y,dw,dh);
+ }
+ async function abrirRecorte(pos){
+  const ticket=++seq;
+  try{
+   let b=pendentes.get(pos);
+   if(!b){
+    const r=await fetch(urlFoto(pos),{credentials:'same-origin',cache:'no-store'});
+    if(!r.ok)throw Error('Não foi possível abrir a foto.');
+    b=await r.blob();
+   }
+   const im=new Image();im.src=await dataURL(b);await im.decode();
+   if(ticket!==seq)return;
+   if(!im.naturalWidth||!im.naturalHeight)throw Error('Imagem inválida.');
+   canvas.width=1000;canvas.height=Math.round(1000*Number(colunas.value)/razao);
+   zoom.value='100';
+   crop={pos,imagem:im,zoom:1,x:0,y:0,arrasto:null};
+   painel.hidden=false;desenhar();
+  }catch(e){status.textContent='Erro ao ajustar: '+e.message;}
+ }
+ function fechar(){seq++;crop=null;painel.hidden=true;}
+ canvas.addEventListener('pointerdown',e=>{
+  if(!crop)return;
+  e.preventDefault();canvas.setPointerCapture(e.pointerId);
+  crop.arrasto={id:e.pointerId,x:e.clientX,y:e.clientY};
+ });
+ canvas.addEventListener('pointermove',e=>{
+  if(!crop?.arrasto||crop.arrasto.id!==e.pointerId)return;
+  e.preventDefault();
+  const r=canvas.getBoundingClientRect();
+  if(!r.width||!r.height)return;
+  crop.x+=(e.clientX-crop.arrasto.x)*canvas.width/r.width;
+  crop.y+=(e.clientY-crop.arrasto.y)*canvas.height/r.height;
+  crop.arrasto={id:e.pointerId,x:e.clientX,y:e.clientY};
+  desenhar();
+ });
+ function soltar(e){if(crop?.arrasto?.id===e.pointerId)crop.arrasto=null;}
+ canvas.addEventListener('pointerup',soltar);
+ canvas.addEventListener('pointercancel',soltar);
+ zoom.addEventListener('input',()=>{
+  if(crop){crop.zoom=Number(zoom.value)/100;desenhar();}
+ });
+ painel.addEventListener('click',async e=>{
+  const acao=e.target.closest('[data-acao]')?.dataset.acao;
+  if(!acao||!crop)return;
+  if(acao==='cancelar'){fechar();return;}
+  if(acao==='trocar'){
+   const pos=crop.pos;fechar();inputs[pos-1].click();return;
+  }
+  if(acao==='aplicar'){
+   const pos=crop.pos;
+   const foto=await new Promise(ok=>canvas.toBlob(ok,'image/jpeg',.87));
+   if(!foto){status.textContent='Não foi possível gerar a foto.';return;}
+   pendentes.set(pos,foto);
+   miniaturas.set(pos,canvas.toDataURL('image/jpeg',.8));
+   status.textContent='Foto '+pos+' ajustada. Salve o banner.';
+   fechar();pintar();
+  }
+ });
+ dialogo.addEventListener('close',fechar);
+ function pintar(){
+  grade.style.setProperty('--colunas',String(colunas.value));
+  tiles.forEach(({cel,img,sinal,lixo,pos})=>{
+   cel.hidden=pos>Number(colunas.value);
+   const salva=slot()?.fotos?.[pos-1]?.temImagem===true;
+   const src=miniaturas.get(pos)||(salva?urlFoto(pos):'');
+   img.hidden=!src;
+   if(src&&img.getAttribute('src')!==src)img.src=src;
+   if(!src)img.removeAttribute('src');
+   sinal.textContent=src?'✎':'＋';
+   lixo.hidden=!salva&&!pendentes.has(pos);
+  });
+ }
+ return {
+  pintar,
+  abrir:pos=>{
+   if(pendentes.has(pos)||slot()?.fotos?.[pos-1]?.temImagem)
+    void abrirRecorte(pos);
+   else inputs[pos-1]?.click();
+  },
+  novas:n=>[...pendentes.keys()].some(x=>x<=n),
+  arquivo:pos=>pendentes.get(pos)||null,
+  limpar:()=>{pendentes.clear();miniaturas.clear();inputs.forEach(x=>x.value='');pintar();}
+ };
+}
  void atualizarAcesso();
 })();

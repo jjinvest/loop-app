@@ -45,7 +45,7 @@ test('ampliação aditiva mantém os quatro banners originais de LOOP e AKITEMM'
   assert.equal(db.prepare('PRAGMA integrity_check').get().integrity_check,'ok');
  }finally{db.close();}
 });
-test('um banner com dois ou três quadros só publica quando todas as fotos estão preenchidas',()=>{
+test('cada banner publica com uma imagem, mantendo dois ou três quadros independentes',()=>{
  const db=new DatabaseSync(':memory:');
  try{
   const loop=new BannersEscritorioCandidatoSQLite({banco:db});
@@ -56,8 +56,11 @@ test('um banner com dois ou três quadros só publica quando todas as fotos est�
    assert.equal(entrada(a,slot).colunas,3);
    assert.equal(entrada(a,slot).publicado,false);
    enviar(a,slot,1);
+   assert.equal(entrada(a,slot).publicado,true);
+   assert.deepEqual(entrada(a,slot).fotos.map(x=>x.temImagem),
+    [true,false,false]);
    enviar(a,slot,2);
-   assert.equal(entrada(a,slot).publicado,false);
+   assert.equal(entrada(a,slot).publicado,true);
    enviar(a,slot,3);
    assert.equal(entrada(a,slot).publicado,true);
    assert.deepEqual(entrada(a,slot).fotos.map(x=>x.temImagem),
@@ -69,18 +72,30 @@ test('um banner com dois ou três quadros só publica quando todas as fotos est�
    a.removerFotoMosaico({
     slot,posicao:2,revisaoEsperada:entrada(a,slot).revisao
    });
-   assert.equal(entrada(a,slot).publicado,false);
+   assert.equal(entrada(a,slot).publicado,true);
+   assert.deepEqual(entrada(a,slot).fotos.map(x=>x.temImagem),
+    [true,false,true]);
    layout(a,slot,1,'INTEIRA');
    assert.equal(entrada(a,slot).publicado,true);
    layout(a,slot,2,'PREENCHER');
+   assert.equal(entrada(a,slot).publicado,true);
+   a.remover({slot,revisaoEsperada:entrada(a,slot).revisao});
    assert.equal(entrada(a,slot).publicado,false);
    enviar(a,slot,2);
+   assert.equal(entrada(a,slot).publicado,true);
+   assert.deepEqual(entrada(a,slot).fotos.map(x=>x.temImagem),
+    [false,true,true]);
+   a.removerFotoMosaico({
+    slot,posicao:2,revisaoEsperada:entrada(a,slot).revisao
+   });
+   assert.equal(entrada(a,slot).publicado,false);
+   layout(a,slot,3,'PREENCHER');
    assert.equal(entrada(a,slot).publicado,true);
   }
   const aposLoop=new BannersEscritorioCandidatoSQLite({banco:db});
   const aposLoja=new BannersLojaAkitemmRealSQLite({banco:db});
-  assert.equal(entrada(aposLoop,5).colunas,2);
-  assert.equal(entrada(aposLoja,5).colunas,2);
+  assert.equal(entrada(aposLoop,5).colunas,3);
+  assert.equal(entrada(aposLoja,5).colunas,3);
   assert.equal(entrada(aposLoop,5).publicado,true);
   assert.equal(entrada(aposLoja,5).publicado,true);
   assert.equal(db.prepare('PRAGMA integrity_check').get().integrity_check,'ok');
@@ -104,5 +119,14 @@ test('mosaicos compartilham o estado de publicação com o carrossel, não o mot
  assert.match(backLoop,/\/:slot\/layout/);
  assert.match(backLoja,/\/:slot\/layout/);
  assert.match(css,/grid-template-columns:repeat\(var\(--banner-quadros\)/);
+ assert.match(loop,/removerFotoIndividual/);
+ assert.match(loja,/removerFotoIndividual/);
+ assert.match(loja,/prepararFotoBanner/);
+ assert.match(loop,/banner-foto-lixeira-quadro/);
+ assert.match(loja,/banner-foto-lixeira-quadro/);
+ assert.match(css,/banner-foto-lixeira-quadro/);
+ const motor=ler('src/producao/banner-mosaico-sqlite.js');
+ assert.match(motor,/fotos\.slice\(0,colunas\)\.some\(x=>x\.temImagem\)/);
+
  assert.doesNotMatch(backLoop,/consulta.*caixa|processarAgenda|criarPedido/);
 });

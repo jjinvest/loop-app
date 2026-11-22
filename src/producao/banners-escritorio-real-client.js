@@ -32,7 +32,7 @@
  dialogo.innerHTML='<form method="dialog" class="banner-real-caixa">'+
   '<div class="banner-real-cabecalho"><h3 id="loop03BannerTituloEditor">Banner LOOP</h3>'+
   '<button type="submit" class="banner-real-fechar" aria-label="Fechar">×</button></div>'+
-  '<p class="banner-real-explicacao">Escolha o formato e envie até três fotos para um banner.</p>'+
+  '<p class="banner-real-explicacao">Toque nas fotos para adicionar ou ajustar.</p>'+
    '<label class="banner-real-arquivo">Formato do banner'+
    '<select id="loop03BannerColunasReal"><option value="1">1 foto comprida</option>'+
    '<option value="2">2 quadros lado a lado</option>'+
@@ -40,7 +40,7 @@
    '<label class="banner-real-arquivo">Enquadramento'+
    '<select id="loop03BannerModoReal"><option value="PREENCHER">Preencher os quadrinhos</option>'+
    '<option value="INTEIRA">Mostrar foto inteira</option></select></label>'+
-  '<label class="banner-real-arquivo">Foto do banner (JPG, PNG ou WebP)'+
+  '<label class="banner-real-arquivo">Foto do quadro 1 (JPG, PNG ou WebP)'+
   '<input id="loop03BannerArquivoReal" type="file" accept="image/jpeg,image/png,image/webp"></label>'+
   '<img id="loop03BannerPreviaReal" class="banner-real-previa" alt="Prévia da foto" hidden>'+
    '<label class="banner-real-arquivo banner-foto-extra" data-posicao="2" hidden>'+
@@ -64,14 +64,46 @@
  const modo=dialogo.querySelector('#loop03BannerModoReal');
  const extras=[2,3].map(n=>dialogo.querySelector('#loop03BannerArquivo'+n));
  const camposExtras=[...dialogo.querySelectorAll('.banner-foto-extra')];
+ modo.parentElement.classList.add('banner-editor-modo-oculto');
+ previa.classList.add('banner-editor-previa-oculta');
+ excluirBotao.classList.add('banner-editor-acoes-excluir-oculto');
+ const lixeirasFotos=[arquivo,...extras].map((input,i)=>{
+  const b=document.createElement('button');b.type='button';
+  b.className='banner-foto-lixeira';
+  b.textContent='🗑 Excluir foto '+(i+1);
+  b.setAttribute('aria-label','Excluir foto '+(i+1)+' deste banner');
+  b.addEventListener('click',()=>void removerFotoIndividual(slotEditor,i+1));
+  input.parentElement.insertAdjacentElement('afterend',b);
+  return b;
+ });
  function mostrarCampos(){
   camposExtras.forEach(x=>{
    const visivel=Number(x.dataset.posicao)<=Number(colunas.value);
    x.hidden=!visivel;x.style.display=visivel?'flex':'none';
   });
+  const atual=dados?.slots?.find(x=>x.slot===slotEditor);
+  lixeirasFotos.forEach((b,i)=>{
+   const existe=atual?.fotos?.[i]?.temImagem===true;
+   b.hidden=!podeEditar()||i+1>Number(colunas.value)||!existe;
+  });
  }
  colunas.addEventListener('change',mostrarCampos);
- let leitura=0;
+ extras.forEach((input,i)=>input.addEventListener('change',()=>{
+  const foto=input.files?.[0];
+  if(foto)status.textContent='Foto '+(i+2)+' selecionada. Clique em Salvar banner.';
+ }));
+ lixeirasFotos.forEach(b=>b.classList.add('banner-editor-lixeira-oculta'));
+ const fotosEditor=fotosNoProprioQuadro({dialogo,antes:arquivo.parentElement,
+  inputs:[arquivo,...extras],colunas,status,razao:1.88,
+  slot:()=>dados?.slots?.find(x=>x.slot===slotEditor),
+  urlFoto:pos=>'/api/loop/banners/'+slotEditor+'/foto/'+pos+
+   '?rev='+(dados?.slots?.find(x=>x.slot===slotEditor)?.revisao||0),
+  apagar:pos=>removerFotoIndividual(slotEditor,pos)});
+ colunas.addEventListener('change',()=>{
+  modo.value=Number(colunas.value)>1?'PREENCHER':'INTEIRA';
+  fotosEditor.pintar();
+ });
+
  // Fotos da galeria Android podem trazer EXIF, bytes finais extras ou
  // codificação JPEG que a verificação binária estrita do servidor rejeita.
  // Decodificar e reexportar como JPEG padrão (sem recortar a imagem)
@@ -199,6 +231,7 @@
      const f=slot.fotos?.[pos-1];
      const quadro=document.createElement('div');
      quadro.className='banner-mosaico-celula';
+     quadro.dataset.fotoPosicao=String(pos);
      if(f?.temImagem){
       const im=document.createElement('img');
       im.alt='Foto '+pos+' do banner '+slot.slot;
@@ -206,6 +239,18 @@
       im.src='/api/loop/banners/'+slot.slot+'/foto/'+pos+
        '?rev='+slot.revisao;
       quadro.append(im);
+      if(editavel){
+       const lixeira=document.createElement('button');
+       lixeira.type='button';lixeira.className='banner-foto-lixeira-quadro';
+       lixeira.textContent='🗑';
+       lixeira.setAttribute('aria-label','Excluir foto '+pos+' do banner '+slot.slot);
+       lixeira.title='Excluir somente a foto '+pos;
+       lixeira.addEventListener('click',e=>{
+        e.preventDefault();e.stopPropagation();
+        void removerFotoIndividual(slot.slot,pos);
+       });
+       quadro.append(lixeira);
+      }
      }else if(editavel)quadro.textContent='Foto '+pos+' · adicionar';
      grade.append(quadro);
     }
@@ -261,7 +306,7 @@
   }catch{operador=false;}
   await carregar();
  }
- function abrir(numero){
+ function abrir(numero,pos=0){
   if(!podeEditar()||gravando)return;
   slotEditor=numero||slotAtual();
   if(!slotEditor)return;
@@ -271,14 +316,15 @@
   const atual=dados?.slots?.find(x=>x.slot===slotEditor);
   colunas.value=String(atual?.colunas||1);
   modo.value=atual?.modo||(atual?.colunas===1?'INTEIRA':'PREENCHER');
-  extras.forEach(x=>{x.value='';});
-  mostrarCampos();
+  fotosEditor.limpar();
+  mostrarCampos();fotosEditor.pintar();
   status.textContent='';
   excluirBotao.disabled=!dados?.slots?.find(x=>x.slot===slotEditor)?.temImagem;
   descartarBotao.hidden=slotEditor<=4;
   descartarBotao.style.display=slotEditor<=4?'none':'inline-flex';
   descartarBotao.disabled=slotEditor<=4;
   if(!dialogo.open)dialogo.showModal();
+  if(pos)fotosEditor.abrir(pos);
  }
  async function descartarEspaco(numero){
   if(!podeEditar()||gravando||!Number.isSafeInteger(numero)||numero<=4)return;
@@ -340,8 +386,13 @@
  pista.addEventListener('click',e=>{
   const item=e.target.closest('.loop03-banner-item');
   if(!item||item===botao||e.target.closest('.loop03-banner-lixeira')||
+     e.target.closest('.banner-foto-lixeira-quadro')||
      !podeEditar()||Date.now()<bloquearCliqueAte)return;
-  e.preventDefault();abrir(Number(item.dataset.bannerSlot));
+  e.preventDefault();
+  const cel=e.target.closest('.banner-mosaico-celula');
+  const pos=Number(cel?.dataset.fotoPosicao)||
+   (e.target.matches?.('[data-banner-imagem]')?1:0);
+  abrir(Number(item.dataset.bannerSlot),pos);
  });
  pista.addEventListener('scroll',()=>{
   if(pista.clientWidth>0){
@@ -371,29 +422,44 @@
  // Revalidar a sessão e buscar as quatro fotos após a troca de modo.
  const obs=new MutationObserver(()=>{void checarAcesso();});
  obs.observe(document.body,{attributes:true,attributeFilter:['class']});
- arquivo.addEventListener('change',()=>{
-  const f=arquivo.files?.[0];
-  if(!f){previa.hidden=true;return;}
-  if(!['image/jpeg','image/png','image/webp'].includes(f.type)||
-     f.size<40||f.size>16*1024*1024){
-   status.textContent='Escolha JPG, PNG ou WebP de até 16 MB.';
-   arquivo.value='';previa.hidden=true;return;
+ async function removerFotoIndividual(numero,pos){
+  if(gravando||!podeEditar()||![1,2,3].includes(pos))return;
+  const item=dados?.slots?.find(x=>x.slot===numero);
+  if(!item?.fotos?.[pos-1]?.temImagem)return;
+  if(!window.confirm('Excluir somente a foto '+pos+' do banner '+numero+
+    '? As outras fotos continuam no mesmo banner.'))return;
+  gravando=true;
+  lixeirasFotos.forEach(b=>{b.disabled=true;});
+  try{
+   const sessao=await solicitar('/api/admin/comercial/sessao');
+   if(typeof sessao.csrfToken!=='string'||sessao.csrfToken.length<20)
+    throw Error('SESSAO_OPERADOR_INVALIDA');
+   const url='/api/admin/loop/banners/'+numero+
+    (pos===1?'/imagem':'/foto/'+pos);
+   const resposta=await solicitar(url,{
+    method:'DELETE',headers:{
+     'X-Loop-Admin-Csrf':sessao.csrfToken,
+     'X-Banner-Revisao-Esperada':String(item.revisao)
+    }
+   });
+   dados=resposta;
+   if(dialogo.open)status.textContent='Foto '+pos+' excluída.';
+   renderizar();
+   if(dialogo.open){mostrarCampos();fotosEditor.pintar();}
+  }catch(e){
+   if(dialogo.open)status.textContent='Não foi possível excluir: '+e.message;
+   else window.alert('Não foi possível excluir a foto: '+e.message);
+   await carregar();
+  }finally{
+   gravando=false;lixeirasFotos.forEach(b=>{b.disabled=false;});
   }
-  status.textContent='Imagem pronta para salvar.';
-  const atual=++leitura,leitor=new FileReader();
-  leitor.onload=()=>{
-   if(atual!==leitura)return;
-   previa.src=String(leitor.result);previa.hidden=false;
-  };
-  leitor.onerror=()=>{status.textContent='Não foi possível ler a imagem.';};
-  leitor.readAsDataURL(f);
- });
+ }
  async function gravar(remover){
   if(gravando||!dialogo.open||!podeEditar())return;
   const atual=dados?.slots?.find(x=>x.slot===slotEditor);
   if(!atual){status.textContent='Banner indisponível. Atualize a página.';return;}
   const n=Number(colunas.value),arquivos=[arquivo,...extras];
-  const selecionados=arquivos.slice(0,n).some(x=>x.files?.length);
+  const selecionados=fotosEditor.novas(n);
   const layoutMudou=atual.colunas!==n||atual.modo!==modo.value;
   if(!remover&&!selecionados&&!layoutMudou){
    status.textContent='Escolha uma foto ou mude o formato do banner.';return;
@@ -427,7 +493,7 @@
        revisaoEsperada:estado.revisao}),'application/json');
     }
     for(let i=0;i<n;i++){
-     const foto=arquivos[i].files?.[0];
+     const foto=fotosEditor.arquivo(i+1);
      if(!foto)continue;
      status.textContent='Preparando foto '+(i+1)+' de '+n+'...';
      const pronta=await prepararFotoBanner(foto);
@@ -435,9 +501,9 @@
       'PUT',pronta,'image/jpeg');
     }
     status.textContent=estado.publicado?
-     'Banner salvo e publicado com '+n+' foto(s).':
-     'Formato salvo. Envie as fotos que faltam para publicar.';
-    arquivos.forEach(x=>{x.value='';});
+     'Banner salvo e publicado. Os quadros vazios podem ser preenchidos depois.':
+     'Formato salvo. Envie ao menos uma foto para mostrar este banner.';
+    fotosEditor.limpar();
    }
    renderizar();
   }catch(e){
@@ -458,5 +524,170 @@
  document.addEventListener('visibilitychange',()=>{
   if(!document.hidden)void checarAcesso();
  });
+ function fotosNoProprioQuadro(op){
+ const {dialogo,antes,inputs,colunas,status,slot,urlFoto,apagar,razao}=op;
+ const pendentes=new Map(),miniaturas=new Map();
+ const grade=document.createElement('div');grade.className='banner-editor-grade';
+ antes.before(grade);
+ const tiles=inputs.map((input,index)=>{
+  const pos=index+1;
+  input.dataset.recorteNativo='sim';
+  input.parentElement.classList.add('banner-editor-arquivo-oculto');
+  const cel=document.createElement('div');cel.className='banner-editor-celula';
+  cel.tabIndex=0;cel.setAttribute('role','button');
+  cel.setAttribute('aria-label','Adicionar ou ajustar foto '+pos);
+  const img=document.createElement('img');img.alt='Foto '+pos;img.hidden=true;
+  const sinal=document.createElement('span');sinal.className='banner-editor-sinal';
+  const nome=document.createElement('span');nome.className='banner-editor-nome';
+  nome.textContent='Foto '+pos;
+  const lixo=document.createElement('button');lixo.type='button';
+  lixo.className='banner-editor-lixeira';lixo.textContent='🗑';
+  lixo.setAttribute('aria-label','Excluir somente foto '+pos);
+  lixo.addEventListener('click',async e=>{
+   e.stopPropagation();e.preventDefault();
+   const salva=slot()?.fotos?.[index]?.temImagem===true;
+   pendentes.delete(pos);miniaturas.delete(pos);input.value='';
+   if(salva)await apagar(pos);
+   pintar();
+  });
+  cel.append(img,sinal,nome,lixo);
+  const acionar=()=>pendentes.has(pos)||slot()?.fotos?.[index]?.temImagem?
+   void abrirRecorte(pos):input.click();
+  cel.addEventListener('click',e=>{if(!e.target.closest('button'))acionar();});
+  cel.addEventListener('keydown',e=>{
+   if(e.target!==cel||!['Enter',' '].includes(e.key))return;
+   e.preventDefault();acionar();
+  });
+  input.addEventListener('change',()=>{
+   const f=input.files?.[0];if(!f)return;
+   if(!['image/jpeg','image/png','image/webp'].includes(f.type)||
+      f.size<40||f.size>16*1024*1024){
+    status.textContent='Escolha JPG, PNG ou WebP de até 16 MB.';
+    input.value='';return;
+   }
+   pendentes.set(pos,f);
+   const reader=new FileReader();
+   reader.onload=()=>{
+    if(pendentes.get(pos)!==f)return;
+    miniaturas.set(pos,String(reader.result||''));pintar();
+   };
+   reader.onerror=()=>{status.textContent='Não foi possível ler a foto.';};
+   reader.readAsDataURL(f);
+  });
+  grade.append(cel);
+  return {cel,img,sinal,lixo,pos};
+ });
+ const painel=document.createElement('div');
+ painel.className='banner-editor-painel';painel.hidden=true;
+ painel.innerHTML='<section class="banner-editor-ajuste">'+
+  '<header><strong>Ajustar foto</strong><button type="button" data-acao="cancelar" aria-label="Fechar">×</button></header>'+
+  '<canvas aria-label="Arraste para enquadrar a foto"></canvas>'+
+  '<label>Ampliar <input type="range" min="100" max="300" value="100" step="1"></label>'+
+  '<footer><button type="button" data-acao="trocar">Trocar</button>'+
+  '<button type="button" data-acao="cancelar">Cancelar</button>'+
+  '<button type="button" data-acao="aplicar">Aplicar</button></footer></section>';
+ dialogo.append(painel);
+ const canvas=painel.querySelector('canvas'),zoom=painel.querySelector('input');
+ let crop=null,seq=0;
+ const dataURL=blob=>new Promise((ok,fail)=>{
+  const r=new FileReader();r.onload=()=>ok(String(r.result||''));
+  r.onerror=()=>fail(Error('Foto indisponível'));
+  r.readAsDataURL(blob);
+ });
+ function desenhar(){
+  if(!crop)return;
+  const img=crop.imagem,w=canvas.width,h=canvas.height;
+  const ctx=canvas.getContext('2d',{alpha:false});if(!ctx)return;
+  const escala=Math.max(w/img.naturalWidth,h/img.naturalHeight)*crop.zoom;
+  const dw=escala*img.naturalWidth,dh=escala*img.naturalHeight;
+  const maxX=Math.max(0,(dw-w)/2),maxY=Math.max(0,(dh-h)/2);
+  crop.x=Math.max(-maxX,Math.min(maxX,crop.x));
+  crop.y=Math.max(-maxY,Math.min(maxY,crop.y));
+  ctx.fillStyle='#10141d';ctx.fillRect(0,0,w,h);
+  ctx.drawImage(img,(w-dw)/2+crop.x,(h-dh)/2+crop.y,dw,dh);
+ }
+ async function abrirRecorte(pos){
+  const ticket=++seq;
+  try{
+   let b=pendentes.get(pos);
+   if(!b){
+    const r=await fetch(urlFoto(pos),{credentials:'same-origin',cache:'no-store'});
+    if(!r.ok)throw Error('Não foi possível abrir a foto.');
+    b=await r.blob();
+   }
+   const im=new Image();im.src=await dataURL(b);await im.decode();
+   if(ticket!==seq)return;
+   if(!im.naturalWidth||!im.naturalHeight)throw Error('Imagem inválida.');
+   canvas.width=1000;canvas.height=Math.round(1000*Number(colunas.value)/razao);
+   zoom.value='100';
+   crop={pos,imagem:im,zoom:1,x:0,y:0,arrasto:null};
+   painel.hidden=false;desenhar();
+  }catch(e){status.textContent='Erro ao ajustar: '+e.message;}
+ }
+ function fechar(){seq++;crop=null;painel.hidden=true;}
+ canvas.addEventListener('pointerdown',e=>{
+  if(!crop)return;
+  e.preventDefault();canvas.setPointerCapture(e.pointerId);
+  crop.arrasto={id:e.pointerId,x:e.clientX,y:e.clientY};
+ });
+ canvas.addEventListener('pointermove',e=>{
+  if(!crop?.arrasto||crop.arrasto.id!==e.pointerId)return;
+  e.preventDefault();
+  const r=canvas.getBoundingClientRect();
+  if(!r.width||!r.height)return;
+  crop.x+=(e.clientX-crop.arrasto.x)*canvas.width/r.width;
+  crop.y+=(e.clientY-crop.arrasto.y)*canvas.height/r.height;
+  crop.arrasto={id:e.pointerId,x:e.clientX,y:e.clientY};
+  desenhar();
+ });
+ function soltar(e){if(crop?.arrasto?.id===e.pointerId)crop.arrasto=null;}
+ canvas.addEventListener('pointerup',soltar);
+ canvas.addEventListener('pointercancel',soltar);
+ zoom.addEventListener('input',()=>{
+  if(crop){crop.zoom=Number(zoom.value)/100;desenhar();}
+ });
+ painel.addEventListener('click',async e=>{
+  const acao=e.target.closest('[data-acao]')?.dataset.acao;
+  if(!acao||!crop)return;
+  if(acao==='cancelar'){fechar();return;}
+  if(acao==='trocar'){
+   const pos=crop.pos;fechar();inputs[pos-1].click();return;
+  }
+  if(acao==='aplicar'){
+   const pos=crop.pos;
+   const foto=await new Promise(ok=>canvas.toBlob(ok,'image/jpeg',.87));
+   if(!foto){status.textContent='Não foi possível gerar a foto.';return;}
+   pendentes.set(pos,foto);
+   miniaturas.set(pos,canvas.toDataURL('image/jpeg',.8));
+   status.textContent='Foto '+pos+' ajustada. Salve o banner.';
+   fechar();pintar();
+  }
+ });
+ dialogo.addEventListener('close',fechar);
+ function pintar(){
+  grade.style.setProperty('--colunas',String(colunas.value));
+  tiles.forEach(({cel,img,sinal,lixo,pos})=>{
+   cel.hidden=pos>Number(colunas.value);
+   const salva=slot()?.fotos?.[pos-1]?.temImagem===true;
+   const src=miniaturas.get(pos)||(salva?urlFoto(pos):'');
+   img.hidden=!src;
+   if(src&&img.getAttribute('src')!==src)img.src=src;
+   if(!src)img.removeAttribute('src');
+   sinal.textContent=src?'✎':'＋';
+   lixo.hidden=!salva&&!pendentes.has(pos);
+  });
+ }
+ return {
+  pintar,
+  abrir:pos=>{
+   if(pendentes.has(pos)||slot()?.fotos?.[pos-1]?.temImagem)
+    void abrirRecorte(pos);
+   else inputs[pos-1]?.click();
+  },
+  novas:n=>[...pendentes.keys()].some(x=>x<=n),
+  arquivo:pos=>pendentes.get(pos)||null,
+  limpar:()=>{pendentes.clear();miniaturas.clear();inputs.forEach(x=>x.value='');pintar();}
+ };
+}
  void checarAcesso();
 })();
