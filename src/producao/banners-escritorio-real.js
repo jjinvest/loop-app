@@ -12,7 +12,7 @@ function montarBannersEscritorioReal(app,{
     typeof origem!=='string')
   throw Error('BANNERS_LOOP_REAL_CONFIGURACAO_INVALIDA');
  const banners=new BannersEscritorioCandidatoSQLite({banco});
- const slot=req=>/^[1-4]$/.test(req.params.slot||'')?
+ const slot=req=>/^[1-9][0-9]{0,3}$/.test(req.params.slot||'')?
   Number(req.params.slot):null;
  const protegerOperador=(req,res,next)=>{
   const s=sessaoOperador(req);
@@ -46,7 +46,11 @@ function montarBannersEscritorioReal(app,{
  });
  const upload=express.raw({type:['image/png','image/jpeg','image/webp'],
   limit:'4mb',inflate:false});
- app.put('/api/admin/loop/banners/:slot/imagem',
+ app.post('/api/admin/loop/banners/adicionar',protegerOperador,(req,res)=>{
+  try{return res.set('Cache-Control','no-store').json(banners.adicionar());}
+  catch(e){return erro(res,e);}
+ });
+  app.put('/api/admin/loop/banners/:slot/imagem',
   protegerOperador,(req,res,next)=>{
    if(slot(req)===null)return res.status(404).json({erro:'BANNER_SLOT_INVALIDO'});
    if(!['image/png','image/jpeg','image/webp'].includes(req.get('content-type')?.split(';')[0]))
