@@ -306,6 +306,11 @@ async function main(){
     Buffer.from(jpegBase64,'base64'),
     Buffer.from('ANDROID-TRAILING-METADATA')
    ]);
+   const revisaoBannerAntes=await operadorPage.evaluate(async()=>{
+    const r=await fetch('/api/loop/banners',{credentials:'same-origin',cache:'no-store'});
+    const d=await r.json();return d.slots?.[0]?.revisao;
+   });
+   assert.ok(Number.isSafeInteger(revisaoBannerAntes));
    const botaoBanner=operadorPage.locator('#loop03BannerMaisReal');
    await botaoBanner.waitFor({state:'visible',timeout:12000});
    await botaoBanner.click();
@@ -363,18 +368,18 @@ async function main(){
    });
    assert.equal(bannerPersistido.status,200);
    assert.equal(bannerPersistido.slot.temImagem,true);
-   assert.equal(bannerPersistido.slot.revisao,2);
+   assert.equal(bannerPersistido.slot.revisao,revisaoBannerAntes+2);
    // Limpeza deste ensaio: a tela dos proximos testes volta ao estado inicial.
-   const limpezaBanner=await operadorPage.evaluate(async()=>{
+   const limpezaBanner=await operadorPage.evaluate(async revisaoEsperada=>{
     const sessao=await fetch('/api/admin/comercial/sessao',{
      credentials:'same-origin',cache:'no-store'
     }).then(r=>r.json());
     return fetch('/api/admin/loop/banners/1/imagem',{
      method:'DELETE',credentials:'same-origin',
      headers:{'X-Loop-Admin-Csrf':sessao.csrfToken,
-      'X-Banner-Revisao-Esperada':'2'}
+      'X-Banner-Revisao-Esperada':String(revisaoEsperada)}
     }).then(r=>r.status);
-   });
+   },bannerPersistido.slot.revisao);
    assert.equal(limpezaBanner,200);
    // Foto do operador somente em modo operador autenticado.
    await operadorPage.goto(base+'/loja?visao=operador',{
