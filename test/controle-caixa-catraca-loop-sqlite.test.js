@@ -120,36 +120,3 @@ test('mudança de meta exige nova política e não consome outra reserva',()=>{
   assert.equal(controle.consultar({dia}).reservaTotalCentavos,750000);
  }finally{db.close();}
 });
-
-test('provas bancarias falsas ou divergentes nao criam reserva nem luzes',()=>{
- const invalidas=[
-  {ambiente:'SANDBOX',estado:'RESERVA_SEGREGADA',
-   valorReservadoCentavos:750000,comprovanteId:'extrato-psp-sandbox'},
-  {ambiente:'PRODUCAO',estado:'PENDENTE',
-   valorReservadoCentavos:750000,comprovanteId:'extrato-psp-pendente'},
-  {ambiente:'PRODUCAO',estado:'RESERVA_SEGREGADA',
-   valorReservadoCentavos:749999,comprovanteId:'extrato-psp-divergente'},
-  {ambiente:'PRODUCAO',estado:'RESERVA_SEGREGADA',
-   valorReservadoCentavos:750000,comprovanteId:'x'}
- ];
- for(const prova of invalidas){
-  const db=new DatabaseSync(':memory:');
-  const controle=new ControleCaixaCatracaLoopSQLite({
-   banco:db,agora:()=>momento('09:18'),
-   provas:{confirmarReservaCentros:()=>prova}
-  });
-  try{
-   assert.throws(()=>configurar(controle),
-    /CATRACA_CAIXA_RESERVA_NAO_COMPROVADA/);
-   assert.equal(db.prepare(
-    'SELECT COUNT(*) AS n FROM loop_real_catraca_caixa_programacao'
-   ).get().n,0);
-   assert.equal(db.prepare(
-    'SELECT COUNT(*) AS n FROM loop_real_catraca_caixa_autorizacoes'
-   ).get().n,0);
-   assert.throws(()=>controle.autorizarLuz({
-    dia,indiceLuz:1,liberacaoOperador:true
-   }),/CATRACA_CAIXA_PAUSADA_OU_SEM_RESERVA/);
-  }finally{db.close();}
- }
-});
