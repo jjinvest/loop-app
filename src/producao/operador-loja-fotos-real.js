@@ -975,6 +975,13 @@
   };
   form.addEventListener('input',agendarRascunho);
   form.addEventListener('change',agendarRascunho);
+  // Fechar pelo X também tenta gravar a última alteração, sem publicar.
+  dialogo.addEventListener('close',()=>{
+   if(!formularioFinalizado){
+    clearTimeout(temporizadorRascunho);
+    void salvarRascunho().catch(falhaRascunho);
+   }
+  },{once:true});
   const salvarParcial=document.createElement('button');
   salvarParcial.type='button';salvarParcial.className='akitemm-editor-secundario';
   salvarParcial.textContent='Salvar rascunho e continuar depois';
@@ -982,6 +989,7 @@
    salvarParcial.disabled=true;
    try{
     await salvarRascunho();
+    formularioFinalizado=true;
     dialogo.close();void abrirRascunhosNaoPublicados();
    }catch(e){falhaRascunho(e);}
    finally{salvarParcial.disabled=false;}
@@ -1045,9 +1053,10 @@
   form.addEventListener('submit',async ev=>{
    ev.preventDefault();
    if(aberto)return;
-   // Mesmo quando há erro de validação, conservar o que foi digitado.
+   aberto=true;
+   // Bloqueia cliques duplos enquanto grava até o rascunho incompleto.
    try{await salvarRascunho();}
-   catch(e){falhaRascunho(e);return;}
+   catch(e){falhaRascunho(e);aberto=false;return;}
    const titulo=nome.value.trim();
    const informado=codigo.value.trim(),id=informado||slugManual();
    const erros=[];
@@ -1056,8 +1065,8 @@
    if(!ID_NOVO.test(id))
     erros.push({entrada:codigo,mensagem:'Código: use letras minúsculas, números ou hífen (3 a 80 caracteres).'});
    erros.push(...anuncio.validarCampos());
-   if(!guia.mostrar(erros))return;
-   aberto=true;criar.disabled=true;estado.textContent='Salvando no catálogo real...';
+   if(!guia.mostrar(erros)){aberto=false;return;}
+   criar.disabled=true;estado.textContent='Salvando no catálogo real...';
    let criado=false;
    try{
     const imagem=await foto.obter();
