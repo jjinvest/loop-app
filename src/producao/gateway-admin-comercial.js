@@ -14,10 +14,12 @@ const {montarAdminComercialAprovado}=
  require('./interface-admin-comercial-aprovada');
 const {montarRotasCatalogoMidiaOperador}=
  require('./rotas-catalogo-midia-operador');
+const express=require('express');
 function erro(c){const e=new Error(c);e.codigo=c;throw e;}
 function montarGatewayAdminComercial(app,{
  sessoes,controle,catalogo,auditoria=null,manutencao=null,
  catalogoMidia=null,posicoesVitrine=null,anunciosManuais=null,
+ bannersAkitemm=null,
  contas=null,atendimento=null,
  entregaLocal=null,
  pedidosComerciais=null,
@@ -132,6 +134,63 @@ function montarGatewayAdminComercial(app,{
   next();
  };
 
+ // As quatro imagens do banner usam a sessão e o CSRF do MESMO operador.
+ // Todos os dados ficam no SQLite real; sem nova identidade ou PSP.
+ if(bannersAkitemm!==null){
+  if(typeof bannersAkitemm.listar!=='function'||
+     typeof bannersAkitemm.salvar!=='function'||
+     typeof bannersAkitemm.trocar!=='function')
+   erro('BANNERS_AKITEMM_NAO_INTEGRADOS');
+  const numero=str=>/^[1-4]$/.test(str)?Number(str):null;
+  const revisao=req=>{
+   const valor=req.get('x-banner-revisao-esperada');
+   return typeof valor==='string'&&/^(0|[1-9][0-9]*)$/.test(valor)&&
+    Number.isSafeInteger(Number(valor))?Number(valor):null;
+  };
+  const falhaBanner=(res,e)=>{
+   const codigo=e?.codigo||'BANNER_INDISPONIVEL';
+   const status=codigo.includes('CONFLITO')?409:
+    codigo.includes('SEM_IMAGEM')?404:
+    codigo.endsWith('_INVALIDO')||codigo.endsWith('_INVALIDA')?400:503;
+   return res.status(status).set('Cache-Control','no-store')
+    .json({erro:codigo});
+  };
+  app.get('/api/admin/akitemm/banners',proteger,(_req,res)=>
+   res.set('Cache-Control','no-store').json(bannersAkitemm.listar()));
+  app.put('/api/admin/akitemm/banners/:slot',proteger,validarCsrf,
+   express.raw({type:['image/jpeg','image/png','image/webp'],limit:'3mb'}),
+   (req,res)=>{
+    const slot=numero(req.params.slot),rev=revisao(req);
+    if(slot===null||rev===null)
+     return res.status(400).json({erro:'BANNER_REVISAO_INVALIDA'});
+    try{
+     const out=bannersAkitemm.salvar({
+      slot,revisaoEsperada:rev,mime:req.get('content-type'),
+      dados:req.body,enquadramento:req.get('x-banner-enquadramento')||'INTEIRA'
+     });
+     return res.set('Cache-Control','no-store').json(out);
+    }catch(e){return falhaBanner(res,e);}
+   });
+  app.delete('/api/admin/akitemm/banners/:slot',proteger,validarCsrf,
+   (req,res)=>{
+    const slot=numero(req.params.slot),rev=revisao(req);
+    if(slot===null||rev===null)
+     return res.status(400).json({erro:'BANNER_REVISAO_INVALIDA'});
+    try{return res.set('Cache-Control','no-store').json(
+     bannersAkitemm.remover({slot,revisaoEsperada:rev})
+    );}catch(e){return falhaBanner(res,e);}
+   });
+  app.post('/api/admin/akitemm/banners/trocar',proteger,validarCsrf,
+   (req,res)=>{
+    if(!req.is('application/json')||!req.body||
+      Array.isArray(req.body)||Object.keys(req.body).sort().join(',')!==
+      'destino,origem,revisaoDestino,revisaoOrigem')
+     return res.status(400).json({erro:'BANNER_TROCA_INVALIDA'});
+    try{return res.set('Cache-Control','no-store').json(
+     bannersAkitemm.trocar(req.body)
+    );}catch(e){return falhaBanner(res,e);}
+   });
+ }
  // Caixa de entrada do atendimento AKITEMM, independente de marketplaces.
  if(atendimento){
   app.get('/api/admin/akitemm/atendimentos',proteger,(_req,res)=>{
