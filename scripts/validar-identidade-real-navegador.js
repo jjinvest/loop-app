@@ -1144,7 +1144,8 @@ async function main(){
    assert.equal(await page.locator('#akitemmFiltroOfertas').isDisabled(),false);
    await page.locator('#akitemmFiltroOfertas').click();
    assert.equal(await page.locator('#akitemmFiltroOfertas').getAttribute('aria-pressed'),'true');
-   assert.match(await page.locator('#akitemmResultadoProdutos').innerText(),/Nenhuma oferta publicada/);
+   assert.equal((await page.locator('#akitemmResultadoProdutos').innerText()).trim(),'',
+    'a vitrine não exibe a mensagem de ausência de ofertas');
    assert.equal(await page.locator('#catalogoLojaLoop .akitemm-slot-vazio').count(),20);
    await page.locator('#akitemmFiltroTodos').click();
    for(const cor of ['CINZA','VERDE','DOURADO','ROXO']){
@@ -1167,6 +1168,34 @@ async function main(){
    assert.equal(await page.locator('#catalogoLojaLoop .ak-faixa-horizontal').count(),2);
    assert.equal(await page.locator('#catalogoLojaLoop .akitemm-slot-vazio').count(),20);
    assert.equal(await page.locator('#catalogoLojaLoop [data-produto-id]').count(),0);
+   const cartoes=await page.evaluate(()=>{
+    const faixa=document.querySelector('#catalogoLojaLoop .ak-faixa-horizontal');
+    const lista=[...faixa.querySelectorAll('.produto-loja-loop')].slice(0,4)
+      .map(el=>{
+       const r=el.getBoundingClientRect();
+       return {left:r.left,top:r.top,width:r.width,height:r.height};
+      });
+    const largura=faixa.getBoundingClientRect().width;
+    return {lista,largura,larguraTela:innerWidth,
+     larguraDocumento:document.documentElement.scrollWidth};
+   });
+   assert.equal(cartoes.lista.length,4);
+   if(item.largura<=900){
+    assert.ok(cartoes.lista.every(c=>c.width>=cartoes.largura-14),
+     'no celular cada quadrinho usa toda a largura da fileira');
+    for(let i=1;i<4;i++)assert.ok(
+     cartoes.lista[i].top>=cartoes.lista[i-1].top+cartoes.lista[i-1].height,
+     'no celular os quadrinhos ficam um abaixo do outro');
+   }else{
+    for(let i=1;i<4;i++){
+     assert.ok(Math.abs(cartoes.lista[i].top-cartoes.lista[0].top)<3,
+      'no computador os quadrinhos ficam na mesma fileira');
+     assert.ok(cartoes.lista[i].left>cartoes.lista[i-1].left,
+      'no computador os quadrinhos ficam lado a lado');
+    }
+   }
+   assert.ok(cartoes.larguraDocumento<=cartoes.larguraTela+1,
+    'vitrine sem transbordamento horizontal');
    await page.locator('#akitemmCarregarMais').click();
    assert.equal(await page.locator('#catalogoLojaLoop .ak-faixa-horizontal').count(),4);
    assert.equal(await page.locator('#catalogoLojaLoop .akitemm-slot-vazio').count(),40);

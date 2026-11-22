@@ -350,15 +350,34 @@ async function principal(){
    '#catalogoLojaLoop [data-produto-id="segundo-produto"] .akitemm-alca-arrastar'
   );
   await alca.waitFor({state:'visible'});
+  // Na lista vertical os produtos ficam um abaixo do outro: centralizar
+  // o primeiro cartão deixa ambos na viewport para o gesto CDP de toque.
+  await page.evaluate(()=>{
+   document.querySelector(
+    '#catalogoLojaLoop [data-produto-id="primeiro-produto"]'
+   )?.scrollIntoView({block:'center',inline:'nearest',behavior:'instant'});
+  });
+  await page.waitForTimeout(100);
   const inicio=await alca.boundingBox();
   const destino=await page.locator(
    '#catalogoLojaLoop [data-produto-id="primeiro-produto"]'
   ).boundingBox();
   assert.ok(inicio&&destino,'origem e alvo precisam estar na tela');
+  console.log('GESTO_PRODUTO_POSICOES='+JSON.stringify({
+   inicio,destino,viewport:await page.evaluate(()=>({
+    largura:innerWidth,altura:innerHeight,
+    elementoOrigem:document.elementFromPoint(
+     document.querySelector('[data-produto-id="segundo-produto"] .akitemm-alca-arrastar')
+      ?.getBoundingClientRect().left+22,
+     document.querySelector('[data-produto-id="segundo-produto"] .akitemm-alca-arrastar')
+      ?.getBoundingClientRect().top+22
+    )?.className||null
+   }))
+  }));
   const cdps=await ctx.newCDPSession(page);
   const p1={x:inicio.x+inicio.width/2,y:inicio.y+inicio.height/2};
-  const p2={x:destino.x+Math.min(24,destino.width/4),
-   y:destino.y+destino.height/2};
+  const p2={x:destino.x+destino.width*0.35,
+   y:destino.y+destino.height*0.30};
   await cdps.send('Input.dispatchTouchEvent',{
    type:'touchStart',touchPoints:[p1]
   });
