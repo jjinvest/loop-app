@@ -357,8 +357,8 @@ async function principal(){
   assert.ok(inicio&&destino,'origem e alvo precisam estar na tela');
   const cdps=await ctx.newCDPSession(page);
   const p1={x:inicio.x+inicio.width/2,y:inicio.y+inicio.height/2};
-  const p2={x:destino.x+Math.min(24,destino.width/4),
-   y:destino.y+destino.height/2};
+  const p2={x:destino.x+destino.width*0.35,
+   y:destino.y+destino.height*0.30};
   await cdps.send('Input.dispatchTouchEvent',{
    type:'touchStart',touchPoints:[p1]
   });
