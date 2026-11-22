@@ -357,11 +357,14 @@
   resumo.setAttribute('role','alert');
   resumo.setAttribute('aria-live','assertive');
   resumo.hidden=true;
+  resumo.style.cssText='border:1px solid #c78a68;border-radius:12px;'+
+   'padding:12px;margin:10px 0 16px;color:#ffe0bd;background:rgba(95,31,25,.28)';
   form.prepend(resumo);
   let ultimos=[];
   const limpar=()=>{
    for(const entrada of ultimos){
     entrada.removeAttribute('aria-invalid');
+    entrada.style.removeProperty('outline');
     const label=entrada.closest('label');
     label?.classList.remove('akitemm-campo-pendente');
     label?.querySelector('.akitemm-campo-erro')?.remove();
@@ -385,11 +388,13 @@
    for(const {entrada,mensagem} of erros){
     if(!entrada)continue;
     entrada.setAttribute('aria-invalid','true');
+    entrada.style.outline='2px solid #ff8c74';
     const label=entrada.closest('label');
     if(label){
      label.classList.add('akitemm-campo-pendente');
      const pequeno=document.createElement('small');
      pequeno.className='akitemm-campo-erro';
+     pequeno.style.cssText='display:block;color:#ffbc9e;margin:5px 0;font-weight:700';
      pequeno.textContent='● '+mensagem;
      label.append(pequeno);
     }
@@ -412,6 +417,7 @@
     label?.classList.remove('akitemm-campo-pendente');
     label?.querySelector('.akitemm-campo-erro')?.remove();
     ev.target.removeAttribute('aria-invalid');
+    ev.target.style.removeProperty('outline');
    }
   });
   form.addEventListener('change',ev=>{
@@ -420,6 +426,7 @@
     label?.classList.remove('akitemm-campo-pendente');
     label?.querySelector('.akitemm-campo-erro')?.remove();
     ev.target.removeAttribute('aria-invalid');
+    ev.target.style.removeProperty('outline');
    }
   });
   return {mostrar,limpar};
@@ -593,12 +600,13 @@
      adicionar(estoque,'Informe uma quantidade inteira de 0 a 1.000.000.');
     if(corDescricao.value.trim().length>120)
      adicionar(corDescricao,'Descreva a cor em até 120 caracteres.');
-    if(origem.s.value==='FORNECEDOR_MANUAL'){
+    if(['FORNECEDOR_MANUAL','PLANILHA_CSV'].includes(origem.s.value)){
      if(fornecedorNome.value.trim().length<2)
       adicionar(fornecedorNome,'Informe o nome do fornecedor.');
      if(!ID.test(fornecedorSku.value.trim()))
       adicionar(fornecedorSku,'Informe o SKU válido do fornecedor.');
-     if(fornecedorContato.value.trim().length<5)
+     if(origem.s.value==='FORNECEDOR_MANUAL'&&
+        fornecedorContato.value.trim().length<5)
       adicionar(fornecedorContato,'Informe o contato do fornecedor.');
     }
     return erros;
@@ -706,6 +714,23 @@
     if(typeof d.entregaUf==='string'&&d.entregaUf)uf.s.value=d.entregaUf;
     if(typeof d.entregaMunicipios==='string')cidades.value=d.entregaMunicipios;
     if(typeof d.entregaTaxa==='string')taxa.value=d.entregaTaxa;
+   },
+   validarCampos(){
+    const erros=[],adicionar=(entrada,mensagem)=>erros.push({entrada,mensagem});
+    if(modo.s.value==='NACIONAL')return erros;
+    if(!['VOLTA_REDONDA','MUNICIPIOS'].includes(modo.s.value))
+     adicionar(modo.s,'Escolha a região de entrega.');
+    if(modo.s.value==='MUNICIPIOS'){
+     const municipios=cidades.value.split(',').map(s=>s.trim()).filter(Boolean);
+     if(municipios.length<1||municipios.length>50)
+      adicionar(cidades,'Informe de 1 a 50 cidades atendidas, separadas por vírgula.');
+    }
+    const valor=taxa.value.trim();
+    if(!valor)adicionar(taxa,'Informe a taxa de entrega, mesmo que seja 0,00.');
+    else if(!/^(?:0|[1-9][0-9]{0,4})(?:[,.][0-9]{1,2})?$/.test(valor)||
+       Number(valor.replace(',','.'))>10000)
+     adicionar(taxa,'Informe uma taxa válida de 0,00 até 10.000,00.');
+    return erros;
    },
    obter(){
     if(modo.s.value==='NACIONAL')return {
@@ -1140,6 +1165,7 @@
    if(!ID_NOVO.test(id))
     erros.push({entrada:codigo,mensagem:'Código: use letras minúsculas, números ou hífen (3 a 80 caracteres).'});
    erros.push(...anuncio.validarCampos());
+   erros.push(...entrega.validarCampos());
    if(!guia.mostrar(erros)){
     aberto=false;
     void salvarRascunho().catch(falhaRascunho);

@@ -1448,7 +1448,7 @@
     },
     {
       "path": "src/producao/interface-admin-comercial-client.js",
-      "sha": "7e825b8c42893dc544ad038e8b49ed7a543d4f82"
+      "sha": "a232f90902696a1b39db33eed61ac27710f42d99"
     },
     {
       "path": "src/producao/interface-aprovada-contas.js",
@@ -1508,7 +1508,7 @@
     },
     {
       "path": "src/producao/operador-loja-fotos-real.js",
-      "sha": "df8fef402bf072d958e4f092b8678dbead3ce483"
+      "sha": "5fc627577e6096bb8afe5cf5c659bb3547ae8457"
     },
     {
       "path": "src/producao/outbox-compra-loop-sqlite.js",
@@ -2633,6 +2633,10 @@
     {
       "path": "test/grade-posicoes-ensaios-unificada.test.js",
       "sha": "dcae30b9756c7df9385511510896c51de5b40a86"
+    },
+    {
+      "path": "test/guia-cadastro-produtos-operador-real.test.js",
+      "sha": "9f683f56d378d566361e786d078085d96477e88d"
     },
     {
       "path": "test/historico-ciclos-relacional-sqlite.test.js",
@@ -3824,6 +3828,24 @@
       "antes": "27f34278518ee627505c7c51b635221e95df5aa7",
       "depois": "740ede2b6e5bfeb436f38d280a9a90dcd1cd94c0",
       "objetivo": "Atualizar exclusivamente texto de teste da Minha Equipe para exigir vinculo pendente ate comprovacao, mantendo bloqueio de posicoes nao qualificadas."
+    },
+    {
+      "path": "src/producao/interface-admin-comercial-client.js",
+      "antes": "7e825b8c42893dc544ad038e8b49ed7a543d4f82",
+      "depois": "a232f90902696a1b39db33eed61ac27710f42d99",
+      "objetivo": "Autorização de 22/11/2026: indicar campos pendentes ao cadastrar produto/distribuidor na AKITEMM real, validar entrega antes da criação e preservar os visuais e o motor."
+    },
+    {
+      "path": "src/producao/operador-loja-fotos-real.js",
+      "antes": "df8fef402bf072d958e4f092b8678dbead3ce483",
+      "depois": "5fc627577e6096bb8afe5cf5c659bb3547ae8457",
+      "objetivo": "Autorização de 22/11/2026: indicar campos pendentes ao cadastrar produto/distribuidor na AKITEMM real, validar entrega antes da criação e preservar os visuais e o motor."
+    },
+    {
+      "path": "test/guia-cadastro-produtos-operador-real.test.js",
+      "antes": null,
+      "depois": "9f683f56d378d566361e786d078085d96477e88d",
+      "objetivo": "Autorização de 22/11/2026: indicar campos pendentes ao cadastrar produto/distribuidor na AKITEMM real, validar entrega antes da criação e preservar os visuais e o motor."
     }
   ]
 }
