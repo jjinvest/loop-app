@@ -159,10 +159,6 @@
       "sha": "e7d1967c3b536abd73c00bbfbb8a8311f4b6369a"
     },
     {
-      "path": "docs/CONTRATO_VISUAL_LOOP_APROVADO.json",
-      "sha": "3dd25870f341c669750c041782ef96476909e99d"
-    },
-    {
       "path": "package-lock.json",
       "sha": "78ca05c935b4da51762d5253baeb295027b497eb"
     },
@@ -5141,6 +5137,13 @@
       "antes": null,
       "depois": "3dd25870f341c669750c041782ef96476909e99d",
       "objetivo": "Pedido expresso: quatro slots originais preservados no operador, cliente recebe somente completos publicados, lixeira do operador em slots extras com CSRF, revisão, confirmação, limpeza transacional e prova de segurança; alinhamento de identidade da marca mantido."
+    },
+    {
+      "data": "2026-11-22",
+      "path": "docs/TRAVA_BASE_REAL_ATUAL_20261119.json",
+      "antes": null,
+      "depois": null,
+      "objetivo": "Corrigir inventário da trava de base: seu escopo inclui apenas src/scripts/public/test/.github/workflows e arquivos de raiz obrigatórios. O contrato visual em docs é checado por proteção visual separada e não pode inflar a contagem de arquivos da trava."
     }
   ]
 }
