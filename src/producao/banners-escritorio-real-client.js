@@ -85,6 +85,10 @@
   });
  }
  colunas.addEventListener('change',mostrarCampos);
+ extras.forEach((input,i)=>input.addEventListener('change',()=>{
+  const foto=input.files?.[0];
+  if(foto)status.textContent='Foto '+(i+2)+' selecionada. Clique em Salvar banner.';
+ }));
  let leitura=0;
  // Fotos da galeria Android podem trazer EXIF, bytes finais extras ou
  // codificação JPEG que a verificação binária estrita do servidor rejeita.
