@@ -26,10 +26,12 @@
  function sincronizarEditorOfertas(){
   const id='akitemmGerenciarOfertasReal';
   const csvId='akitemmImportarFornecedorCsvReal';
+  const suporteId='akitemmAcessarAtendimentosReal';
   const atual=document.getElementById(id);
   const importar=document.getElementById(csvId);
+  const suporteBotao=document.getElementById(suporteId);
   const dica=document.getElementById('akitemmInstrucaoArrastar');
-  if(!operador){atual?.remove();importar?.remove();dica?.remove();return;}
+  if(!operador){atual?.remove();importar?.remove();suporteBotao?.remove();dica?.remove();return;}
   const filtro=document.getElementById('akitemmFiltroOfertas');
   if(!filtro)return;
   if(!atual){
@@ -47,6 +49,19 @@
    botao.setAttribute('aria-label','Importar catálogo de fornecedor por planilha CSV');
    botao.addEventListener('click',()=>void abrirImportacaoFornecedorCsv());
    (document.getElementById(id)||filtro).insertAdjacentElement('afterend',botao);
+  }
+  if(!suporteBotao){
+   const btn=document.createElement('button');
+   btn.type='button';btn.id=suporteId;btn.className='akitemm-chip';
+   btn.textContent='Atendimentos AKITEMM';
+   btn.setAttribute('aria-label','Abrir protocolos de atendimento da loja como operador');
+   btn.addEventListener('click',()=>{
+    const painel=document.getElementById('akitemmSuporte');
+    if(!painel)return;
+    painel.open=true;
+    painel.scrollIntoView({block:'center',behavior:'smooth'});
+   });
+   (document.getElementById(csvId)||filtro).insertAdjacentElement('afterend',btn);
   }
   if(!document.getElementById('akitemmInstrucaoArrastar')){
    const instrucao=document.createElement('p');
