@@ -349,6 +349,51 @@
    renderizar();if(dialogo.open)mostrarCampos();rodar();
   }
  }
+ async function prepararFotoBanner(foto){
+  if(!foto||!['image/jpeg','image/png','image/webp'].includes(foto.type)||
+     foto.size<40||foto.size>16*1024*1024)
+   throw Error('SELECIONE_IMAGEM_JPG_PNG_WEBP_ATE_16MB');
+  const imagem=new Image();
+  const src=await new Promise((resolve,reject)=>{
+   const leitor=new FileReader();
+   leitor.onload=()=>resolve(String(leitor.result||''));
+   leitor.onerror=()=>reject(Error('IMAGEM_NAO_PODE_SER_LIDA'));
+   leitor.readAsDataURL(foto);
+  });
+  // Content-Security-Policy da identidade permite data:, mas nao blob:.
+  try{
+   imagem.src=src;
+   try{await imagem.decode();}
+   catch{throw Error('IMAGEM_NAO_PODE_SER_ABERTA');}
+   const origemLargura=imagem.naturalWidth,origemAltura=imagem.naturalHeight;
+   if(!origemLargura||!origemAltura||
+      origemLargura>12000||origemAltura>12000||
+      origemLargura*origemAltura>40000000)
+    throw Error('IMAGEM_DIMENSOES_INVALIDAS');
+   const escala=Math.min(1,2600/Math.max(origemLargura,origemAltura));
+   let largura=Math.max(1,Math.round(origemLargura*escala));
+   let altura=Math.max(1,Math.round(origemAltura*escala));
+   const canvas=document.createElement('canvas');
+   const contexto=canvas.getContext('2d',{alpha:false});
+   if(!contexto)throw Error('IMAGEM_NAO_PODE_SER_PROCESSADA');
+   for(let tentativa=0;tentativa<4;tentativa++){
+    canvas.width=largura;canvas.height=altura;
+    contexto.fillStyle='#ffffff';
+    contexto.fillRect(0,0,largura,altura);
+    contexto.drawImage(imagem,0,0,largura,altura);
+    for(const qualidade of [0.92,0.85,0.76]){
+     const convertido=await new Promise(resolve=>
+      canvas.toBlob(resolve,'image/jpeg',qualidade));
+     if(convertido?.type==='image/jpeg'&&convertido.size>=40&&
+        convertido.size<=4*1024*1024)return convertido;
+    }
+    largura=Math.max(1,Math.round(largura*0.76));
+    altura=Math.max(1,Math.round(altura*0.76));
+   }
+   throw Error('IMAGEM_NAO_CABE_EM_4MB');
+  }finally{imagem.src='';}
+ }
+
  async function salvarComposicao(){
   if(bloqueio||!operador||!current()||current().adicionar)return;
   const atual=current(),n=Number(colunas.value);
@@ -386,12 +431,11 @@
    for(let i=0;i<n;i++){
     const foto=fotos[i].files?.[0];
     if(!foto)continue;
-    if(!['image/jpeg','image/png','image/webp'].includes(foto.type)||
-       foto.size<40||foto.size>4*1024*1024)
-     throw Error('A foto '+(i+1)+' deve ser JPG, PNG ou WebP de até 4 MB.');
+    estado.textContent='Preparando foto '+(i+1)+' de '+n+'...';
+    const pronta=await prepararFotoBanner(foto);
     estado.textContent='Salvando foto '+(i+1)+' de '+n+'...';
     await executar(i===0?base+'/imagem':base+'/foto/'+(i+1),
-     'PUT',foto,foto.type);
+     'PUT',pronta,'image/jpeg');
    }
    estado.textContent=escolhido.publicado?
     'Banner visível ao cliente; os quadros vazios podem ser preenchidos depois.':
