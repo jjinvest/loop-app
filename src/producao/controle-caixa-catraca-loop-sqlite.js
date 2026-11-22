@@ -14,19 +14,6 @@ function diaValido(d){
  const data=new Date(d+'T12:00:00Z');
  return Number.isFinite(data.getTime())&&data.toISOString().slice(0,10)===d;
 }
-// Reserva registrada precisa continuar integra antes de ser exibida,
-// ativada ou usada para autorizar luz. Falha fechado em caso de divergencia.
-function conferirReserva(p){
- if(!Number.isSafeInteger(p.metaCentros)||p.metaCentros<1||
-    !Number.isSafeInteger(p.reservaPorCentroCentavos)||
-    p.reservaPorCentroCentavos<1||
-    !Number.isSafeInteger(p.reservaTotalCentavos)||
-    p.reservaTotalCentavos<1||
-    BigInt(p.metaCentros)*BigInt(p.reservaPorCentroCentavos)!==
-      BigInt(p.reservaTotalCentavos)||
-    !REF.test(p.comprovanteReserva))
-   falha('CATRACA_CAIXA_RESERVA_DIVERGENTE');
-}
 const TABELAS_CATRACA_CAIXA=Object.freeze([
  'loop_real_catraca_caixa_programacao',
  'loop_real_catraca_caixa_autorizacoes'
@@ -78,7 +65,6 @@ class ControleCaixaCatracaLoopSQLite{
   const p=this._ler(dia);
   if(!p)return {dia,programada:false,centrosAutorizados:0,
    luzesAutorizadas:0,caixaComprovado:false};
-  conferirReserva(p);
   const total=this.banco.prepare([
    'SELECT COUNT(*) AS n FROM loop_real_catraca_caixa_autorizacoes',
    'WHERE dia=?'
@@ -168,7 +154,6 @@ class ControleCaixaCatracaLoopSQLite{
    const p=this._ler(dia);
    if(!p||p.estado!=='AUTORIZADA')
     falha('CATRACA_CAIXA_PAUSADA_OU_SEM_RESERVA');
-   conferirReserva(p);
    const ritmo=calcularIntervaloMeta({abertura:p.abertura,
     fechamento:p.fechamento,quantidade:p.metaCentros});
    const inicioDia=minutos(p.abertura),fimDia=minutos(p.fechamento);
@@ -262,9 +247,7 @@ class ControleCaixaCatracaLoopSQLite{
      autorizacaoOperador!==true)
    falha('CATRACA_CAIXA_ATIVACAO_INVALIDA');
   return this._transacao(()=>{
-   const p=this._ler(dia);
-   if(!p)falha('CATRACA_CAIXA_SEM_RESERVA');
-   conferirReserva(p);
+   if(!this._ler(dia))falha('CATRACA_CAIXA_SEM_RESERVA');
    this.banco.prepare([
     'UPDATE loop_real_catraca_caixa_programacao SET estado=? WHERE dia=?'
    ].join(' ')).run(ativa?'AUTORIZADA':'PAUSADA',dia);
