@@ -500,7 +500,7 @@
   const areas={
    conteudoPosicoes:[
     '<h2>Posições e filas · Operador</h2>',
-    '<div id="adminResumoPosicoes" class="loop03-admin-dado" role="status">Consultando filas do servidor…</div>',
+    '<div id="adminResumoPosicoes" class="loop03-resumo-duplo" role="status" aria-live="polite">Consultando filas do servidor…</div>',
     '<div class="loop03-admin-acoes"><button type="button" id="adminAtualizarPosicoes">Atualizar posições</button><a href="/administrador">Gerenciar na Central</a></div>'
    ],
    conteudoEquipe:[
@@ -600,6 +600,44 @@
    finally{botao.disabled=false;}
   });
  }
+ function mostrarResumoPosicoesOperador(destino,d){
+  // Dois grupos visuais, uma única fonte autenticada do motor.
+  // Nenhum contador é inventado, e nenhuma operação financeira é executada.
+  const totalA=d?.filaA,totalB=d?.filaB;
+  const eventos=d?.tabuleiro?.eventosNoCiclo;
+  const centros=d?.tabuleiro?.ciclosConcluidos;
+  if(![totalA,totalB,eventos,centros].every(x=>
+     Number.isSafeInteger(x)&&x>=0)||eventos>6)
+   throw Error('RESUMO_POSICOES_MOTOR_INVALIDO');
+  const cartao=(titulo,rotulo,pares,tipo)=>{
+   const quadro=document.createElement('section');
+   quadro.className='loop03-resumo-quadro loop03-resumo-'+tipo;
+   quadro.setAttribute('aria-label',rotulo);
+   const cabecalho=document.createElement('h3');
+   cabecalho.textContent=titulo;
+   quadro.appendChild(cabecalho);
+   for(const [nome,valor] of pares){
+    const indicador=document.createElement('div');
+    indicador.className='loop03-resumo-indicador';
+    const etiqueta=document.createElement('span');
+    etiqueta.textContent=nome;
+    const quantidade=document.createElement('strong');
+    quantidade.textContent=String(valor);
+    indicador.append(etiqueta,quantidade);
+    quadro.appendChild(indicador);
+   }
+   return quadro;
+  };
+  destino.replaceChildren(
+   cartao('FILAS','Posições das filas A e B',[
+    ['Fila A',totalA],['Fila B',totalB]
+   ],'filas'),
+   cartao('TABULEIRO','Eventos e centros concluídos pelo motor',[
+    ['Eventos no ciclo',eventos+' / 6'],
+    ['Centros concluídos',centros]
+   ],'tabuleiro')
+  );
+ }
  async function carregarAbaOperador(id){
   if(!modoOperadorAtual)return;
   const rotas={
@@ -616,9 +654,7 @@
    if(!r.ok)throw Error(d.erro||'Consulta indisponível.');
    if(!modoOperadorAtual)return;
    if(id==='abaPosicoes'){
-    destino.textContent='Fila A: '+d.filaA+' posições\nFila B: '+d.filaB+
-     ' posições\nEventos no ciclo: '+d.tabuleiro.eventosNoCiclo+
-     ' de 6\nCentros concluídos: '+d.tabuleiro.ciclosConcluidos;
+    mostrarResumoPosicoesOperador(destino,d);
    }else if(id==='abaFinanceiro'){
     destino.textContent='Modo da catraca: '+d.modo+
      '\nGiros de hoje: '+d.girosHoje+
