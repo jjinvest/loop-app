@@ -51,10 +51,16 @@
   if(!foto||!['image/jpeg','image/png','image/webp'].includes(foto.type)||
      foto.size<40||foto.size>16*1024*1024)
    throw Error('SELECIONE_IMAGEM_JPG_PNG_WEBP_ATE_16MB');
-  const url=URL.createObjectURL(foto);
+  const imagem=new Image();
+  const src=await new Promise((resolve,reject)=>{
+   const leitor=new FileReader();
+   leitor.onload=()=>resolve(String(leitor.result||''));
+   leitor.onerror=()=>reject(Error('IMAGEM_NAO_PODE_SER_LIDA'));
+   leitor.readAsDataURL(foto);
+  });
+  // Content-Security-Policy da identidade permite data:, mas nao blob:.
   try{
-   const imagem=new Image();
-   imagem.src=url;
+   imagem.src=src;
    try{await imagem.decode();}
    catch{throw Error('IMAGEM_NAO_PODE_SER_ABERTA');}
    const origemLargura=imagem.naturalWidth,origemAltura=imagem.naturalHeight;
@@ -83,7 +89,7 @@
     altura=Math.max(1,Math.round(altura*0.76));
    }
    throw Error('IMAGEM_NAO_CABE_EM_4MB');
-  }finally{URL.revokeObjectURL(url);}
+  }finally{imagem.src='';}
  }
  function slotAtual(){
   if(!pista.clientWidth)return 1;
