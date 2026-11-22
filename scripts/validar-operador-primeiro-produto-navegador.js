@@ -313,7 +313,7 @@ async function principal(){
    alcas:document.querySelectorAll('.akitemm-alca-arrastar').length
   }));
   console.log('ARRASTE_TOUCH_DIAGNOSTICO='+JSON.stringify(descricaoArrasto));
-  await page.getByText('Produto movido para 1º.',{exact:false}).waitFor({
+  await page.getByText('Produto movido para o quadrinho 1.',{exact:false}).waitFor({
    timeout:12000
   });
   await page.waitForTimeout(750);
@@ -346,6 +346,37 @@ async function principal(){
   });
   assert.deepEqual(gravado.map(x=>x.produtoId),
    ['segundo-produto','primeiro-produto']);
+  // Correção manual: colocar o produto no quadrinho 18 vazio,
+  // manter a ordem publicada e confirmar no banco real.
+  const movimentoLivre=await page.evaluate(async()=>{
+   const s=await fetch('/api/admin/comercial/sessao',{credentials:'same-origin'});
+   const sessao=await s.json();
+   const atual=await fetch('/api/admin/catalogo-midia/slots',{
+    credentials:'same-origin'
+   });
+   const slots=(await atual.json()).slots;
+   const produto=slots.find(x=>x.produtoId==='primeiro-produto');
+   const res=await fetch('/api/admin/catalogo-midia/reordenar-vitrine',{
+    method:'POST',credentials:'same-origin',
+    headers:{'Content-Type':'application/json',
+     'X-Loop-Admin-Csrf':sessao.csrfToken},
+    body:JSON.stringify({produtoId:'primeiro-produto',
+     novaPosicao:18,revisaoEsperada:produto.revisao})
+   });
+   return {status:res.status,corpo:await res.json()};
+  });
+  assert.equal(movimentoLivre.status,200);
+  assert.equal(movimentoLivre.corpo.posicao,18);
+  assert.equal(movimentoLivre.corpo.manual,true);
+  await page.waitForFunction(()=>document.querySelector(
+   '#catalogoLojaLoop [data-produto-id="primeiro-produto"]'
+  )?.dataset.akitemmOrdem==='18');
+  const registrado=await page.evaluate(async()=>{
+   const r=await fetch('/api/loja/catalogo',{cache:'no-store'});
+   const dados=await r.json();
+   return dados.produtos.map(p=>[p.produtoId,p.posicaoVitrine]);
+  });
+  assert.deepEqual(registrado,[['segundo-produto',1],['primeiro-produto',18]]);
   // Sem identidade de cliente, o operador não pode comprar.
   assert.equal(await page.locator('#registrarPedidoLoja').isDisabled(),true);
   const publicado=await page.evaluate(async()=>{
