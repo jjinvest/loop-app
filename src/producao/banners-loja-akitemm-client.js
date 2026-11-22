@@ -25,23 +25,62 @@
  const placeholder=document.createElement('div');
  placeholder.className='akitemm-banner-espaco-livre';placeholder.hidden=true;
  foto.insertAdjacentElement('afterend',placeholder);
+ const mais=document.createElement('button');
+ mais.type='button';mais.id='akitemmBannerMaisReal';
+ mais.className='banner-real-mais';mais.textContent='+';
+ mais.title='Cadastrar ou trocar banner da AKITEMM';
+ mais.setAttribute('aria-label','Editar banner da AKITEMM');
+ mais.hidden=true;area.append(mais);
+ const dialogo=document.createElement('dialog');
+ dialogo.id='akitemmBannerFormularioReal';
+ dialogo.className='banner-real-formulario';
+ const caixa=document.createElement('div');caixa.className='banner-real-caixa';
+ const topo=document.createElement('div');topo.className='banner-real-cabecalho';
+ const titulo=document.createElement('h3');titulo.textContent='Banner AKITEMM';
+ const fechar=document.createElement('button');fechar.type='button';
+ fechar.className='banner-real-fechar';fechar.textContent='×';
+ fechar.setAttribute('aria-label','Fechar formulário');
+ fechar.addEventListener('click',()=>dialogo.close());
+ topo.append(titulo,fechar);
+ const explicacao=document.createElement('p');
+ explicacao.className='banner-real-explicacao';
+ explicacao.textContent='Escolha a imagem. Ela será ajustada automaticamente sem cortar a arte.';
+ const rotulo=document.createElement('label');
+ rotulo.className='banner-real-arquivo';
+ rotulo.textContent='Foto do banner (JPG, PNG ou WebP)';
  const escolher=document.createElement('input');
  escolher.id='akitemmBannerArquivoOperador';escolher.type='file';
- escolher.accept='image/jpeg,image/png,image/webp';escolher.hidden=true;
- area.append(escolher);
+ escolher.accept='image/jpeg,image/png,image/webp';
+ rotulo.append(escolher);
+ const previa=document.createElement('img');
+ previa.id='akitemmBannerPreviaReal';previa.className='banner-real-previa';
+ previa.alt='Prévia do banner AKITEMM';previa.hidden=true;
  const controles=document.createElement('div');
  controles.id='akitemmBannerControlesOperador';
- controles.className='akitemm-banner-controles-operador';controles.hidden=true;
- const botoes=[['foto','📷 Subir foto'],['anterior','Mover para esquerda'],
-  ['proximo','Mover para direita'],['enquadrar','Enquadramento'],
-  ['remover','Excluir foto']];
+ controles.className='banner-real-acoes';
+ const botoes=[['foto','Salvar banner'],['anterior','Mover para esquerda'],
+  ['proximo','Mover para direita'],['remover','Excluir foto']];
  for(const [acao,texto] of botoes){
   const b=document.createElement('button');b.type='button';
-  b.dataset.acao=acao;b.textContent=texto;controles.append(b);
+  b.dataset.acao=acao;b.textContent=texto;
+  if(acao==='foto')b.className='banner-real-salvar';
+  if(acao==='remover')b.className='banner-real-excluir';
+  controles.append(b);
  }
  const estado=document.createElement('p');estado.id='akitemmBannerStatus';
- estado.setAttribute('role','status');controles.append(estado);
- area.insertAdjacentElement('afterend',controles);
+ estado.setAttribute('role','status');
+ caixa.append(topo,explicacao,rotulo,previa,estado,controles);
+ dialogo.append(caixa);document.body.append(dialogo);
+ let leitorFoto=0;
+ function abrirFormulario(){
+  if(!operador||bloqueio||!slots)return;
+  const atual=current();if(!atual)return;
+  titulo.textContent='Banner '+atual.slot+' · AKITEMM';
+  escolher.value='';previa.hidden=true;previa.removeAttribute('src');
+  estado.textContent='';
+  if(!dialogo.open)dialogo.showModal();
+ }
+ mais.addEventListener('click',e=>{e.preventDefault();abrirFormulario();});
  function visiveis(){
   if(!slots)return [];
   if(operador)return slots;
@@ -73,7 +112,7 @@
    const caminho='/api/loja/banners/'+slot.slot+'/imagem?revisao='+
     (slot.atualizadoEm||slot.revisao);
    if(foto.getAttribute('src')!==caminho)foto.src=caminho;
-   foto.style.objectFit=slot.enquadramento==='INTEIRA'?'contain':'cover';
+   foto.style.objectFit='contain';
    foto.alt='Banner '+slot.slot+' da AKITEMM';
   }else foto.removeAttribute('src');
   conteudo.style.display=(imagem||slot.slot!==1)?'none':'';
@@ -99,14 +138,15 @@
    b.addEventListener('click',()=>selecionar(i));
    pontos.append(b);
   });
-  controles.hidden=!operador;
+  mais.hidden=!operador;
+  if(!operador&&dialogo.open)dialogo.close();
   if(operador){
    const acao=n=>controles.querySelector('[data-acao="'+n+'"]');
-   acao('foto').textContent='📷 '+(imagem?'Trocar foto':'Subir foto')+
-    ' · banner '+slot.slot;
+   mais.setAttribute('aria-label','Editar banner '+slot.slot+' da AKITEMM');
+   acao('foto').textContent='Salvar banner '+slot.slot;
+   acao('foto').disabled=bloqueio;
    acao('anterior').disabled=slot.slot===1||bloqueio;
    acao('proximo').disabled=slot.slot===4||bloqueio;
-   acao('enquadrar').disabled=!imagem||bloqueio;
    acao('remover').disabled=!imagem||bloqueio;
   }
  }
@@ -150,15 +190,11 @@
        arquivo.size<40||arquivo.size>4*1024*1024)
      throw Error('Escolha JPG, PNG ou WebP de até 4 MB.');
     method='PUT';body=arquivo;headers['Content-Type']=arquivo.type;
-    headers['X-Banner-Enquadramento']='PREENCHER';
+    headers['X-Banner-Enquadramento']='INTEIRA';
    }else if(acao==='remover')method='DELETE';
    else{
     method='POST';headers['Content-Type']='application/json';
-    if(acao==='enquadrar'){
-     url=base+'/'+slot.slot+'/enquadramento';
-     body=JSON.stringify({revisaoEsperada:slot.revisao,
-      enquadramento:slot.enquadramento==='INTEIRA'?'PREENCHER':'INTEIRA'});
-    }else if(acao==='trocar'){
+    if(acao==='trocar'){
      const destino=slot.slot+direcao,outra=slots.find(x=>x.slot===destino);
      if(!outra)throw Error('BANNER_ORDEM_INVALIDA');
      url=base+'/trocar';
@@ -182,16 +218,32 @@
  }
  escolher.addEventListener('change',()=>{
   const f=escolher.files?.[0];
-  escolher.value='';
-  if(f&&operador)void salvar('foto',f);
+  if(!f){previa.hidden=true;return;}
+  if(!['image/jpeg','image/png','image/webp'].includes(f.type)||
+     f.size<40||f.size>4*1024*1024){
+   estado.textContent='Escolha JPG, PNG ou WebP com até 4 MB.';
+   escolher.value='';previa.hidden=true;return;
+  }
+  estado.textContent='Imagem pronta para salvar.';
+  const atual=++leitorFoto,leitor=new FileReader();
+  leitor.onload=()=>{
+   if(atual!==leitorFoto)return;
+   previa.src=String(leitor.result);previa.hidden=false;
+  };
+  leitor.onerror=()=>{estado.textContent='Não foi possível abrir a imagem.';};
+  leitor.readAsDataURL(f);
  });
  controles.addEventListener('click',e=>{
   const botao=e.target.closest('button[data-acao]');
   if(!botao||!operador||bloqueio)return;
   const acao=botao.dataset.acao;
-  if(acao==='foto'){escolher.click();return;}
+  if(acao==='foto'){
+   const f=escolher.files?.[0];
+   if(!f){estado.textContent='Selecione uma imagem antes de salvar.';return;}
+   void salvar('foto',f);return;
+  }
   if(acao==='remover'&&!window.confirm(
-   'Remover a foto deste banner? Os outros não serão alterados.'))return;
+   'Excluir esta foto da AKITEMM? Os outros banners continuam iguais.'))return;
   if(acao==='anterior'||acao==='proximo')
    void salvar('trocar',null,acao==='anterior'?-1:1);
   else void salvar(acao);
@@ -199,7 +251,7 @@
  area.addEventListener('click',e=>{
   if(!operador||bloqueio||Date.now()<bloquearCliqueAte||
      e.target.closest('button,input,a'))return;
-  escolher.click();
+  abrirFormulario();
  });
  esquerda.addEventListener('click',()=>selecionar(indice-1));
  direita.addEventListener('click',()=>selecionar(indice+1));

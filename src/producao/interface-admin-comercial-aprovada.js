@@ -140,9 +140,14 @@ function renderizarAdminComercialAprovado(){
   '<button id="girarCatracaAdmin" type="button" disabled>Executar próximo giro (6 eventos)</button>'+
   '<button id="atualizarCatracaAdmin" type="button">Atualizar controle</button>'+
   '</div></section>';
+ const bannersLoop='<section class="painel" aria-label="Banners exclusivos do LOOP">'+
+  '<h2>Quatro banners do LOOP</h2>'+
+  '<p class="subtexto">As imagens do Escritório LOOP são independentes das quatro imagens da AKITEMM. O acesso de edição utiliza seu login de operador.</p>'+
+  '<a class="primario" href="/escritorio?visao=operador">Editar banners do LOOP no escritório</a>'+
+  '</section>';
  const destino='<section class="painel" aria-labelledby="tituloContabilidadeAdmin">';
  if(!pagina.includes(destino))throw Error('PAINEL_ADMIN_APROVADO_DESATUALIZADO');
- return pagina.replace(destino,motorPainel+adicao+classificacaoPainel+manutencaoPainel+auditoriaPainel+destino);
+ return pagina.replace(destino,bannersLoop+motorPainel+adicao+classificacaoPainel+manutencaoPainel+auditoriaPainel+destino);
 }
 function montarAdminComercialAprovado(app,{
  controle,catalogo,auditoria=null,manutencao=null,

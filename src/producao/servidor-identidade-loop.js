@@ -8,6 +8,7 @@ const {CaptchaCadastroSQLite}=require('../shared/captcha-cadastro-sqlite');
 const {CaptchaLoginSQLite}=require('../shared/captcha-login-sqlite');
 const {montarInterfaceAprovada}=require('./interface-aprovada-loop');
 const {montarGatewayAdminComercial}=require('./gateway-admin-comercial');
+const {montarBannersEscritorioReal}=require('./banners-escritorio-real');
 const {VisaoEscritorioUnificadaSQLite}=
  require('./visao-escritorio-unificada-sqlite');
 const {autorizarInterno,projetarTabuleiroOperacional}=
@@ -196,6 +197,10 @@ function criarAppIdentidadeLoop({contas,origemHttps,
  // Mantem exatamente a interface aprovada, sem exigir cadastro extra
  // do operador para consultar o catalogo.
  montarInterfaceAprovada(app,{protegerLoja:protegidoLoja});
+ // Quatro banners próprios do LOOP, no SQLite real e nas sessões reais.
+ // Escrita exclusiva do operador com CSRF, leitura para conta autenticada.
+ montarBannersEscritorioReal(app,{banco:contas.banco,protegidoLoja,
+  sessaoOperador,origem});
  // Sessão de administrador é completamente separada do login de cliente.
  // Sem credencial e middleware de operador, rotas administrativas não existem.
  if(adminComercial!==null)

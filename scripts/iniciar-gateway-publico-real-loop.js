@@ -60,6 +60,7 @@ function caminhoSeguro(pathname){
     /^\/administrador\/[a-z0-9-]{1,80}$/.test(pathname))
   return {path:pathname};
  if(/^\/api\/(?:contas|operador|admin|loja|financeiro)(?:\/|$)/.test(pathname)||
+    /^\/api\/loop\/banners(?:\/|$)/.test(pathname)||
     ['/api/loop/estado','/api/loop/fila',
      '/api/loop/eventos-comerciais'].includes(pathname))
   return {path:pathname};

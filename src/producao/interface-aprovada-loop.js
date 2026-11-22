@@ -21,6 +21,8 @@ const ARQUIVOS=Object.freeze({
  '/identidade/assets/loja.js':'./interface-aprovada-loja.js',
  '/identidade/assets/operador-fotos.js':'./operador-loja-fotos-real.js',
  '/identidade/assets/loja-banners.js':'./banners-loja-akitemm-client.js',
+ '/identidade/assets/loop-banners-real.js':'./banners-escritorio-real-client.js',
+ '/identidade/assets/banners-editor-real.css':'./banners-editor-real.css',
  '/identidade/assets/vitrine-horizontal.css':'../candidato/vitrine-horizontal.css',
  '/identidade/assets/acabamento-loop.js':'../shared/acabamento-visual-loop.js'
 });
@@ -135,6 +137,11 @@ function renderizarInterfaceAprovada(){
   '<script src="/identidade/assets/cliente.js" defer></script>',
   '<script src="/identidade/assets/cliente.js?rev='+revisao+'" defer></script>');
  html=trocarExato(html,'</head>',
+  '<link rel="stylesheet" href="/identidade/assets/banners-editor-real.css">'+
+  '<script src="/identidade/assets/loop-banners-real.js?rev='+
+  createHash('sha256').update(fs.readFileSync(path.join(__dirname,
+   'banners-escritorio-real-client.js'))).digest('hex').slice(0,16)+
+  '" defer></script>'+
   '<script src="/identidade/assets/acabamento-loop.js" defer></script></head>');
  // Texto da versão de ensaio permanece fora da vista, sem ser reaproveitado
  // como conteúdo comercial. Não expor recursos financeiros incompletos.
@@ -159,7 +166,11 @@ function renderizarLojaAprovada(){
   '<link rel="stylesheet" href="/identidade/assets/vitrine-horizontal.css">'+
   '<script src="/identidade/assets/acabamento-loop.js" defer></script>'+
   '<script src="/identidade/assets/operador-fotos.js" defer></script>'+ 
-  '<script src="/identidade/assets/loja-banners.js" defer></script></head>');
+  '<link rel="stylesheet" href="/identidade/assets/banners-editor-real.css">'+
+  '<script src="/identidade/assets/loja-banners.js?rev='+
+  createHash('sha256').update(fs.readFileSync(path.join(__dirname,
+   'banners-loja-akitemm-client.js'))).digest('hex').slice(0,16)+
+  '" defer></script></head>');
  // Manter o visual aprovado: atualizar somente o destino dos acessos
  // administrativos e ocultar o link ate a sessao real ser confirmada.
  const botaoTopo=html.match(/<a id="akitemmOperadorMais"[\s\S]*?<\/a>/g);
