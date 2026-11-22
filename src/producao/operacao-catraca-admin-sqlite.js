@@ -33,6 +33,53 @@ function dentroJanela(hora,inicio,fim){
  if(inicio===fim)return true; // mesma hora = dia inteiro, sem janela artificial
  return inicio<fim?hora>=inicio&&hora<=fim:hora>=inicio||hora<=fim;
 }
+// Relatorio do RELOGIO VISUAL nas ultimas 24h, nunca livro financeiro.
+// Reconstrucao por revisoes persistidas da politica: pausar ou mudar a
+// programacao nao reconta retroativamente as luzes anteriores.
+const formatoLocalSegundos=new Intl.DateTimeFormat('en-US',{
+ timeZone:FUSO,year:'numeric',month:'2-digit',day:'2-digit',
+ hour:'2-digit',minute:'2-digit',second:'2-digit',hourCycle:'h23'
+});
+function instanteLocalPseudoutc(ts){
+ const p=Object.fromEntries(formatoLocalSegundos.formatToParts(
+  new Date(ts)).filter(x=>x.type!=='literal').map(x=>[x.type,x.value]));
+ return Date.UTC(Number(p.year),Number(p.month)-1,Number(p.day),
+  Number(p.hour),Number(p.minute),Number(p.second),ts%1000);
+}
+function contarRelogioNaJanela(politica,deMs,ateMs){
+ if(!politica||politica.modo!=='AUTOMATICA'||
+    !horaOk(politica.janelaInicio)||!horaOk(politica.janelaFim)||
+    !Number.isSafeInteger(politica.metaCentrosDia)||
+    politica.metaCentrosDia<1||politica.metaCentrosDia>1000000||
+    ateMs<=deMs)return {luzes:0,ciclos:0};
+ const comeco=instanteLocalPseudoutc(deMs);
+ const fim=instanteLocalPseudoutc(ateMs);
+ if(fim<=comeco)return {luzes:0,ciclos:0};
+ const abertura=Number(politica.janelaInicio.slice(0,2))*60+
+  Number(politica.janelaInicio.slice(3));
+ const fechamento=Number(politica.janelaFim.slice(0,2))*60+
+  Number(politica.janelaFim.slice(3));
+ const duracaoMin=((fechamento-abertura+1440)%1440)||1440;
+ const duracaoMs=duracaoMin*60000,total=politica.metaCentrosDia*6;
+ const diaBase=Math.floor(comeco/86400000)*86400000;
+ const ateIndice=(tempo,inicio)=>Math.max(0,Math.min(total,
+  Math.floor(Math.max(0,Math.min(duracaoMs,tempo-inicio))*total/duracaoMs)));
+ let luzes=0,ciclos=0;
+ // Um turno pode cruzar meia-noite; a janela de 24h abrange no maximo
+ // tres datas locais de inicio de turno.
+ for(let deslocamento=-1;deslocamento<=1;deslocamento++){
+  const diaMs=diaBase+deslocamento*86400000;
+  const dia=new Date(diaMs).toISOString().slice(0,10);
+  if(politica.metaDataAlvo!==null&&politica.metaDataAlvo!==undefined&&
+     politica.metaDataAlvo!==dia)continue;
+  const inicio=diaMs+abertura*60000;
+  const de=ateIndice(comeco,inicio),ate=ateIndice(fim,inicio);
+  if(ate<de)falha('CATRACA_RELOGIO_HISTORICO_INCONSISTENTE');
+  luzes+=ate-de;
+  ciclos+=Math.floor(ate/6)-Math.floor(de/6);
+ }
+ return {luzes,ciclos};
+}
 class OperacaoCatracaAdminSQLite{
  constructor({banco,motor,agora=()=>new Date(),controleCaixa=null}={}){
   if(typeof banco?.prepare!=='function'||typeof banco?.exec!=='function'||
@@ -128,6 +175,28 @@ class OperacaoCatracaAdminSQLite{
    'WHERE executado_em>? AND executado_em<=?'
   ].join(' ')).get(agoraMs-86400000,agoraMs).n;
  }
+ _relatorioRelogio24h(agoraMs){
+  const desde=agoraMs-86400000;
+  const antigo=this.db.prepare([
+   'SELECT detalhes FROM loop_real_catraca_admin_historico',
+   "WHERE acao='CONFIGURAR' AND executado_em<=?",
+   'ORDER BY executado_em DESC,id DESC LIMIT 1'
+  ].join(' ')).get(desde);
+  const mudancas=this.db.prepare([
+   'SELECT detalhes,executado_em AS em FROM loop_real_catraca_admin_historico',
+   "WHERE acao='CONFIGURAR' AND executado_em>? AND executado_em<=?",
+   'ORDER BY executado_em,id'
+  ].join(' ')).all(desde,agoraMs);
+  let atual=antigo?JSON.parse(antigo.detalhes):null;
+  let inicio=desde,luzes=0,ciclos=0;
+  for(const mudanca of [...mudancas,{em:agoraMs,detalhes:null}]){
+   const parcial=contarRelogioNaJanela(atual,inicio,mudanca.em);
+   luzes+=parcial.luzes;ciclos+=parcial.ciclos;
+   inicio=mudanca.em;
+   if(mudanca.detalhes!==null)atual=JSON.parse(mudanca.detalhes);
+  }
+  return {luzesRelogio24h:luzes,ciclosRelogio24h:ciclos};
+ }
  _log(acao,detalhes,ts){
   this.db.prepare([
    'INSERT INTO loop_real_catraca_admin_historico(acao,detalhes,executado_em)',
@@ -183,6 +252,7 @@ class OperacaoCatracaAdminSQLite{
    limiteDiario:p.limite_diario,revisao:p.revisao,
    girosHoje:girosDia,girosHora:this._girosHora(tempo.ts,tempo.hora),
    giros24h:this._giros24h(tempo.ts),
+   ...this._relatorioRelogio24h(tempo.ts),
    hoje:tempo.dia,horaLocal:tempo.hora,
    fuso:FUSO,horarioPermitido:dentro,
    limiteNaoAtingido:permitido,
