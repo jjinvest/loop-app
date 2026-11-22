@@ -93,12 +93,16 @@
    const resumo=$('loop03StatusPosicao'),selecionada=$('loop03NumeroIntegrado');
    const operadorAberto=document.body?.classList?.contains?.('loop03-modo-operador')===true;
    const giroReal=agendaVisorCatraca?.girosReaisHoje;
+   const ciclosReais=agendaVisorCatraca?.ciclosReaisConcluidos;
    if(resumo&&compartilhado&&Number.isSafeInteger(giroReal)&&
+      Number.isSafeInteger(ciclosReais)&&
       (operadorAberto||selecionada?.textContent==='—')){
     resumo.textContent=valido?
      'Relógio visual: '+estado.passadas+'/'+estado.total+
-      ' luzes previstas · Giros reais hoje: '+giroReal:
-     'Relógio sem turno ativo · Giros reais hoje: '+giroReal;
+      ' luzes previstas · Ciclos reais: '+ciclosReais+
+      ' · Giros reais hoje: '+giroReal:
+     'Relógio fora do turno · Ciclos reais: '+ciclosReais+
+      ' · Giros reais hoje: '+giroReal;
    }
    const contador=$('motorContadorEventos');
    if(contador&&compartilhado){
