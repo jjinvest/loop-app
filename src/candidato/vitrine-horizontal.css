@@ -212,3 +212,39 @@ dialog.akitemm-operador-editor .akitemm-campo-erro{
 .akitemm-loja #catalogoLojaLoop .akitemm-ordenavel>.akitemm-alca-arrastar{
  width:44px;height:44px;min-height:44px;font-size:30px
 }
+
+
+/* Atendimento próprio da AKITEMM no painel Suporte já aprovado. */
+.akitemm-loja #akitemmSuporte .akitemm-atendimento-proprio{
+ display:grid;gap:12px;min-width:0;margin-top:10px
+}
+.akitemm-loja #akitemmSuporte .akitemm-atendimento-proprio form,
+.akitemm-loja #akitemmSuporte .akitemm-protocolo-atendimento{
+ display:grid;gap:10px;padding:12px;border:1px solid #9b875e;
+ border-radius:14px;background:#192831
+}
+.akitemm-loja #akitemmSuporte .akitemm-atendimento-proprio label{
+ display:grid;gap:5px;color:#efe2c6;font-weight:650
+}
+.akitemm-loja #akitemmSuporte .akitemm-atendimento-proprio select,
+.akitemm-loja #akitemmSuporte .akitemm-atendimento-proprio textarea{
+ width:100%;min-width:0;box-sizing:border-box;border-radius:10px;
+ border:1px solid #8c9da7;padding:10px 12px;
+ background:#23343e;color:#fff;font:inherit
+}
+.akitemm-loja #akitemmSuporte .akitemm-atendimento-proprio textarea{
+ min-height:105px;resize:vertical
+}
+.akitemm-loja #akitemmSuporte .akitemm-atendimento-proprio button{
+ padding:10px;border-radius:12px;border:1px solid #bc955c;
+ background:#26333b;color:#f3dab0;min-height:43px
+}
+.akitemm-loja #akitemmSuporte .akitemm-atendimento-proprio [aria-invalid=true]{
+ outline:3px solid #efb15b;outline-offset:2px
+}
+.akitemm-loja #akitemmSuporte .akitemm-atendimento-status{
+ font-size:14px;color:#f0d18b;line-height:1.5
+}
+.akitemm-loja #akitemmSuporte .akitemm-protocolo-atendimento p{
+ overflow-wrap:anywhere
+}
