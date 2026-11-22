@@ -264,7 +264,7 @@
     },
     {
       "path": "scripts/iniciar-gateway-publico-real-loop.js",
-      "sha": "491547de71b897bb006afacd6778cbf53781bbc0"
+      "sha": "d60822c11e7cd1706f6215262acbb6bdda888e70"
     },
     {
       "path": "scripts/iniciar-identidade-cadastro-real.js",
@@ -1331,8 +1331,20 @@
       "sha": "68d04cf053e39b644a9f2db789cea5d112d2feb6"
     },
     {
+      "path": "src/producao/banners-editor-real.css",
+      "sha": "2da5fe5d61d1eb8fe98d5afbe43243b67bb4ba64"
+    },
+    {
+      "path": "src/producao/banners-escritorio-real-client.js",
+      "sha": "32c6cad9d238ed572f8bfa4d178a74778d1cdecd"
+    },
+    {
+      "path": "src/producao/banners-escritorio-real.js",
+      "sha": "015718efde22aff07aeec4ec75232d72c3f89b44"
+    },
+    {
       "path": "src/producao/banners-loja-akitemm-client.js",
-      "sha": "f41b3d8e0a6e0c4767ea9c1b34c46497e8c6b0ad"
+      "sha": "c584bcf107841d795b05272b498d0804eafabdda"
     },
     {
       "path": "src/producao/banners-loja-akitemm-real-sqlite.js",
@@ -1444,7 +1456,7 @@
     },
     {
       "path": "src/producao/interface-admin-comercial-aprovada.js",
-      "sha": "73da75d51d70bd808dc5fe0ca923961de5bee21f"
+      "sha": "0cdc1bea9b747d00d17bdde1bcb15db1e0324bf1"
     },
     {
       "path": "src/producao/interface-admin-comercial-client.js",
@@ -1460,7 +1472,7 @@
     },
     {
       "path": "src/producao/interface-aprovada-loop.js",
-      "sha": "d35e2b05282b0ee7d65fe28597e38156e699b2be"
+      "sha": "256e05d9b926d80ebad454d30c123389cce0607c"
     },
     {
       "path": "src/producao/jornada-comercial-unificada-ensaio-sqlite.js",
@@ -1600,7 +1612,7 @@
     },
     {
       "path": "src/producao/servidor-identidade-loop.js",
-      "sha": "7309038830b299c4a352eefa81e0e376122f092e"
+      "sha": "74748f658e137994d459a65234638eddd0e0ac7b"
     },
     {
       "path": "src/producao/sessao-admin-comercial-sqlite.js",
@@ -2148,7 +2160,11 @@
     },
     {
       "path": "test/banners-loja-akitemm-real-quatro-slots.test.js",
-      "sha": "fa29045a4bd87217a45ae81bbde68dca5f3f9856"
+      "sha": "7e36fa7e6e47c9147f79719be6b9ce579818dc81"
+    },
+    {
+      "path": "test/banners-real-loop-akitemm-editor.test.js",
+      "sha": "78cb5577e32ab2b3ac4bded3512cdde806721a50"
     },
     {
       "path": "test/cabecalho-relogio-tabuleiro-real.test.js",
@@ -4088,6 +4104,66 @@
       "antes": "05a81a9a05e2be0f81f8f593aba611413ffbdb06",
       "depois": "606f144d79a319a5361130e00d7cef45313695d5",
       "objetivo": "Revalidação única da sessão real antes de ler avatar quando usuário retorna ao LOOP/AKITEMM: evita corrida Android que mostra foto errada em troca de acesso; aplica regra global a todos."
+    },
+    {
+      "path": "src/producao/banners-escritorio-real.js",
+      "antes": null,
+      "depois": "015718efde22aff07aeec4ec75232d72c3f89b44",
+      "objetivo": "Pedido de 22/11/2026: 4 banners LOOP separados dos 4 AKITEMM, edição por + abrindo formulário real com arquivo e ajuste automático, sem tocar em catraca, dinheiro, clientes ou telas aprovadas."
+    },
+    {
+      "path": "src/producao/servidor-identidade-loop.js",
+      "antes": "7309038830b299c4a352eefa81e0e376122f092e",
+      "depois": "74748f658e137994d459a65234638eddd0e0ac7b",
+      "objetivo": "Pedido de 22/11/2026: 4 banners LOOP separados dos 4 AKITEMM, edição por + abrindo formulário real com arquivo e ajuste automático, sem tocar em catraca, dinheiro, clientes ou telas aprovadas."
+    },
+    {
+      "path": "scripts/iniciar-gateway-publico-real-loop.js",
+      "antes": "491547de71b897bb006afacd6778cbf53781bbc0",
+      "depois": "d60822c11e7cd1706f6215262acbb6bdda888e70",
+      "objetivo": "Pedido de 22/11/2026: 4 banners LOOP separados dos 4 AKITEMM, edição por + abrindo formulário real com arquivo e ajuste automático, sem tocar em catraca, dinheiro, clientes ou telas aprovadas."
+    },
+    {
+      "path": "src/producao/interface-admin-comercial-aprovada.js",
+      "antes": "73da75d51d70bd808dc5fe0ca923961de5bee21f",
+      "depois": "0cdc1bea9b747d00d17bdde1bcb15db1e0324bf1",
+      "objetivo": "Pedido de 22/11/2026: 4 banners LOOP separados dos 4 AKITEMM, edição por + abrindo formulário real com arquivo e ajuste automático, sem tocar em catraca, dinheiro, clientes ou telas aprovadas."
+    },
+    {
+      "path": "src/producao/banners-escritorio-real-client.js",
+      "antes": null,
+      "depois": "32c6cad9d238ed572f8bfa4d178a74778d1cdecd",
+      "objetivo": "Pedido de 22/11/2026: 4 banners LOOP separados dos 4 AKITEMM, edição por + abrindo formulário real com arquivo e ajuste automático, sem tocar em catraca, dinheiro, clientes ou telas aprovadas."
+    },
+    {
+      "path": "src/producao/banners-editor-real.css",
+      "antes": null,
+      "depois": "2da5fe5d61d1eb8fe98d5afbe43243b67bb4ba64",
+      "objetivo": "Pedido de 22/11/2026: 4 banners LOOP separados dos 4 AKITEMM, edição por + abrindo formulário real com arquivo e ajuste automático, sem tocar em catraca, dinheiro, clientes ou telas aprovadas."
+    },
+    {
+      "path": "src/producao/banners-loja-akitemm-client.js",
+      "antes": "f41b3d8e0a6e0c4767ea9c1b34c46497e8c6b0ad",
+      "depois": "c584bcf107841d795b05272b498d0804eafabdda",
+      "objetivo": "Pedido de 22/11/2026: 4 banners LOOP separados dos 4 AKITEMM, edição por + abrindo formulário real com arquivo e ajuste automático, sem tocar em catraca, dinheiro, clientes ou telas aprovadas."
+    },
+    {
+      "path": "src/producao/interface-aprovada-loop.js",
+      "antes": "d35e2b05282b0ee7d65fe28597e38156e699b2be",
+      "depois": "256e05d9b926d80ebad454d30c123389cce0607c",
+      "objetivo": "Pedido de 22/11/2026: 4 banners LOOP separados dos 4 AKITEMM, edição por + abrindo formulário real com arquivo e ajuste automático, sem tocar em catraca, dinheiro, clientes ou telas aprovadas."
+    },
+    {
+      "path": "test/banners-loja-akitemm-real-quatro-slots.test.js",
+      "antes": "fa29045a4bd87217a45ae81bbde68dca5f3f9856",
+      "depois": "7e36fa7e6e47c9147f79719be6b9ce579818dc81",
+      "objetivo": "Pedido de 22/11/2026: 4 banners LOOP separados dos 4 AKITEMM, edição por + abrindo formulário real com arquivo e ajuste automático, sem tocar em catraca, dinheiro, clientes ou telas aprovadas."
+    },
+    {
+      "path": "test/banners-real-loop-akitemm-editor.test.js",
+      "antes": null,
+      "depois": "78cb5577e32ab2b3ac4bded3512cdde806721a50",
+      "objetivo": "Pedido de 22/11/2026: 4 banners LOOP separados dos 4 AKITEMM, edição por + abrindo formulário real com arquivo e ajuste automático, sem tocar em catraca, dinheiro, clientes ou telas aprovadas."
     }
   ]
 }

@@ -84,7 +84,12 @@ test('loja preserva formato original e upload depende da sessão de operador',()
  assert.match(front,/api\/operador\/estado/);
  assert.match(front,/visaoCliente/);
  assert.match(front,/atualizarAcesso/);
- assert.match(front,/escolher\.click\(\)/);
+ assert.match(front,/abrirFormulario\(\)/);
+ assert.match(front,/akitemmBannerMaisReal/);
+ assert.match(front,/akitemmBannerFormularioReal/);
+ assert.match(front,/readAsDataURL\(f\)/);
+ assert.match(front,/X-Banner-Enquadramento'\]='INTEIRA'/);
+ assert.doesNotMatch(front,/acao\('enquadrar'\)/);
  assert.match(front,/api\/admin\/akitemm\/banners/);
  assert.match(front,/Mover para esquerda/);
  assert.match(front,/Mover para direita/);

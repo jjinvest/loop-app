@@ -1,0 +1,73 @@
+/* Formulário de banners REAL, separado por área; sem mudar as telas aprovadas. */
+.cliente-integrado #conteudoResumo .loop03-banners-resumo{position:relative}
+.cliente-integrado .banner-real-mais,
+.akitemm-loja .banner-real-mais{
+ position:absolute;top:12px;right:12px;z-index:12;
+ display:grid;place-items:center;width:43px;height:43px;
+ padding:0;border:2px solid #f3d695;border-radius:50%;
+ color:#fdf2d5;background:linear-gradient(145deg,#684e2b,#1d2634);
+ box-shadow:0 3px 15px #0009;font:800 30px/1 system-ui,sans-serif;
+ cursor:pointer;touch-action:manipulation;
+}
+.cliente-integrado .banner-real-mais[hidden],
+.akitemm-loja .banner-real-mais[hidden]{display:none!important}
+.banner-real-formulario{
+ position:fixed;margin:auto;inset:0;
+ width:min(480px,calc(100vw - 24px));max-width:calc(100vw - 24px);
+ max-height:calc(100dvh - 28px);padding:0;overflow-y:auto;
+ background:linear-gradient(145deg,#192430,#121720);
+ color:#f0e3c7;border:2px solid #c8a15b;border-radius:18px;
+ box-shadow:0 20px 65px #000c;font:inherit;
+}
+.banner-real-formulario::backdrop{background:rgba(2,5,12,.82)}
+.banner-real-formulario .banner-real-caixa{
+ display:flex;flex-direction:column;gap:12px;padding:18px;
+ box-sizing:border-box;min-width:0;
+}
+.banner-real-formulario .banner-real-cabecalho{
+ display:flex;justify-content:space-between;align-items:center;gap:12px;
+}
+.banner-real-formulario h3{margin:0;color:#f9d992;font-size:1.15rem}
+.banner-real-formulario p{margin:0;line-height:1.45}
+.banner-real-formulario .banner-real-explicacao{color:#c8cfdb;font-size:.86rem}
+.banner-real-formulario .banner-real-fechar{
+ font:600 25px/1 system-ui,sans-serif;background:transparent;color:#e6d4ab;
+ border:1px solid #8d805e;border-radius:50%;width:37px;height:37px;
+ cursor:pointer;flex:none
+}
+.banner-real-formulario .banner-real-arquivo{
+ display:flex;flex-direction:column;gap:9px;min-width:0;font-weight:700
+}
+.banner-real-formulario input[type=file]{
+ max-width:100%;min-width:0;box-sizing:border-box;padding:12px;
+ background:#263442;border:1px solid #8e7855;border-radius:12px;
+ color:#f7e5bf;font:inherit
+}
+.banner-real-formulario .banner-real-previa{
+ display:block;width:100%;height:auto;max-height:225px;aspect-ratio:16/7;
+ object-fit:contain;object-position:center;background:#090f1a;
+ border:1px solid #685837;border-radius:12px
+}
+.banner-real-formulario .banner-real-previa[hidden]{display:none!important}
+.banner-real-formulario .banner-real-acoes{
+ display:flex;flex-wrap:wrap;gap:10px
+}
+.banner-real-formulario .banner-real-acoes button{
+ min-height:44px;flex:1 1 125px;padding:10px;border-radius:11px;
+ background:#293743;color:#f4ddad;border:1px solid #b8995e;
+ font:700 .88rem system-ui,sans-serif;cursor:pointer
+}
+.banner-real-formulario .banner-real-acoes .banner-real-salvar{
+ background:linear-gradient(135deg,#ad7930,#5e3d22);color:#fff8df
+}
+.banner-real-formulario button:disabled{opacity:.48;cursor:not-allowed}
+.banner-real-formulario button:focus-visible,
+.cliente-integrado .banner-real-mais:focus-visible,
+.akitemm-loja .banner-real-mais:focus-visible{
+ outline:3px solid #fff1c8;outline-offset:3px
+}
+@media(max-width:500px){
+ .banner-real-formulario .banner-real-caixa{padding:14px;gap:10px}
+ .cliente-integrado .banner-real-mais,
+ .akitemm-loja .banner-real-mais{top:8px;right:8px;width:38px;height:38px;font-size:27px}
+}
