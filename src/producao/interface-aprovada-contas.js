@@ -41,6 +41,13 @@
    const ativo=d?.operador===true;
    if(barra)barra.hidden=!ativo||!modoOperadorAtual;
    if(voltar)voltar.hidden=!ativo||modoOperadorAtual;
+   // A loja abre na mesma visão escolhida no LOOP, sem alterar a sessão.
+   if(ativo){
+    const href='/loja?visao='+(modoOperadorAtual?'operador':'cliente');
+    for(const link of document.querySelectorAll(
+     '.loop03-atalho-loja, .barra-conta a.loop03-loja-prata'
+    ))link.href=href;
+   }
   }catch{
    if(barra)barra.hidden=true;
    if(voltar)voltar.hidden=true;
@@ -737,6 +744,9 @@
    acessoLoja.removeAttribute('aria-disabled');
    acessoLoja.title='Abrir Loja AKITEMM (compras ainda indisponíveis)';
   }
+  // Reavaliar a sessão de operador após montar a conta: links da AKITEMM
+  // acompanham a mesma visualização do LOOP, sem expor dados administrativos.
+  void atualizarAtalhoOperadorReal();
   prepararRede();
   preencherLinks(s.nick);
   void carregarRede();
